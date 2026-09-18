@@ -1,0 +1,39 @@
+{
+  "_comment": "Built-in text used when the Player2 AI is unavailable. {slot} words are filled from the lists of the same name. Keep it grounded and grim.",
+  "tavern": {
+    "name_pattern": ["The {adjective} {noun}", "The {adjective} {noun}", "The {noun} and {noun}", "The {noun}'s {part}", "{family}'s {house}"],
+    "adjective": ["Drowned", "Crooked", "Hanged", "Salted", "Black", "Red", "Lame", "Blind", "Tarred", "Gilded", "Rusted", "Sour", "Broken", "Burnt", "Leaning", "Weeping", "Toothless", "Grey", "Frozen", "Last"],
+    "noun": ["Crow", "Bell", "Ox", "Hound", "Wheel", "Ferryman", "Gallows", "Lantern", "Pike", "Stag", "Widow", "Bishop", "Anvil", "Kettle", "Nail", "Barrow", "Plough", "Goose", "Boar", "Tinker", "Heron", "Mule", "Saint", "Drover"],
+    "part": ["Head", "Rest", "Tooth", "Arms", "Cup", "Shoe", "Folly"],
+    "house": ["Rest", "House", "Alehouse", "Taproom", "Hall", "Cellar"],
+    "sign_state": ["the paint flaking away in long strips", "one chain snapped so it hangs askew", "sun-bleached almost to nothing", "pocked with old crossbow bolts", "newly repainted by someone with more will than skill", "black with soot from a fire nobody talks about"],
+    "building": ["A long, low building of wattle and daub, its thatch green with moss", "A stone house that was a toll post once, its arrow slits stuffed with rags", "A timber hall leaning against the old town wall", "A sprawling inn with a stable yard ankle-deep in manure", "A squat house of fieldstone, half sunk into the hillside"],
+    "light": ["a single rushlight gutters on each table", "the hearth gives more smoke than light", "tallow candles throw a greasy yellow glow", "grey daylight leaks through the shutters and shows every stain"],
+    "smell": ["wet wool and tallow", "sour ale and old rushes", "woodsmoke, onions and unwashed bodies", "boiled mutton, with a whiff of the privy from the yard", "pitch, fish and spilled beer", "damp dog and burnt fat"],
+    "sound": ["someone in the corner coughs and does not stop", "a fiddler saws at a tune nobody asked for", "dice rattle against a tabletop", "the keeper's wife shouts at a boy in the kitchen", "rain drums on the shutters", "two drovers argue about the price of wool"],
+    "crowd": ["a handful of drovers nurse their cups by the hearth", "the tables are mostly empty, and the few drinkers keep their backs to the wall", "a pair of soldiers in faded livery watch the door", "farmhands crowd the benches, muddy to the knee", "a pedlar sleeps sitting up, one hand on his pack"],
+    "detail": ["A notice nailed by the door offers two silver for wolf ears.", "Someone has carved a tally of forty-odd marks into the bar.", "A dark stain on the floorboards has been scrubbed at and not quite removed.", "Bundles of feverfew hang from the rafters to keep off sickness.", "A rusted pike hangs over the hearth, notched along the blade.", "The only window is patched with oiled parchment.", "A dog with one ear sleeps under the stairs and growls at every new boot."],
+    "description": [
+      "{building}. Inside, {light}, and the air is thick with {smell}. {crowd}; {sound}. {detail}",
+      "The door sticks and has to be shouldered open. Low beams, black with years of smoke, press close over a room that smells of {smell}. {crowd}. {detail}",
+      "{building}. The common room smells of {smell}, and {sound}. {crowd}. {detail}"
+    ],
+    "manner": [
+      "{keeper} looks every stranger up and down and asks for coin before pouring.",
+      "{keeper} is friendly enough, but never takes an eye off the door.",
+      "{keeper} says little, waters the ale and remembers every face.",
+      "{keeper} greets travellers loudly and overcharges them cheerfully.",
+      "{keeper} keeps a cudgel under the counter and has used it this week."
+    ],
+    "overheard": [
+      "\"Third one this month. River gave him back without his hands.\"",
+      "\"Tax man came through again. Took the seed grain this time.\"",
+      "\"Don't drink from the mill brook. My sister's boy did, and now he's shitting blood.\"",
+      "\"If the lord wants soldiers, he can come and drag them off himself.\"",
+      "\"Wolves were at the sheep again. Big ones. Bigger than wolves ought to be.\"",
+      "\"Priest says the fever's a punishment. Punishment for what, I'd like to know.\""
+    ],
+    "region": ["a rain-sodden river valley", "windswept moorland", "pine-dark hill country", "a salt-marsh coast", "a frost-bitten border march", "rich farmland still scarred by last year's war"],
+    "season": ["late autumn", "deep winter", "a wet spring", "high summer"]
+  }
+}

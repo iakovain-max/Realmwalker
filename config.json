@@ -1,0 +1,7 @@
+{
+  "_comment": "Game-level settings. Player preferences live in %APPDATA%\\Realmwalker\\settings.json instead.",
+  "player2_game_client_id": "",
+  "player2_base_url": "",
+  "debug_console": true,
+  "ai_workers": 2
+}

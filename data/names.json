@@ -1,0 +1,47 @@
+{
+  "_comment": "Fallback name lists per culture, used whenever the AI is unavailable. Add names freely.",
+  "cultures": {
+    "heartland": {
+      "label": "Heartland (lowland human)",
+      "male": ["Aldric", "Anselm", "Baldwin", "Bertram", "Cuthbert", "Edric", "Gervase", "Giles", "Godwin", "Hamon", "Hereward", "Hugh", "Jocelyn", "Lambert", "Odo", "Osric", "Piers", "Ralf", "Reynard", "Roger", "Simon", "Tobias", "Walter", "Warin", "Wystan"],
+      "female": ["Agnes", "Aldith", "Alys", "Avice", "Beatrix", "Cecily", "Edith", "Emma", "Ermengarde", "Hawise", "Idony", "Isolde", "Joan", "Juliana", "Mabel", "Margery", "Matilda", "Muriel", "Petronel", "Rohesia", "Sybil", "Wenna"],
+      "family": ["Ashdown", "Blackwater", "Bramley", "Cole", "Cooper", "Crane", "Draycott", "Fenwick", "Fletcher", "Gorse", "Hale", "Harrow", "Hollin", "Ketter", "Marsh", "Miller", "Pike", "Radley", "Stroud", "Tanner", "Thorne", "Underhill", "Wadley", "Wexley"]
+    },
+    "northmarch": {
+      "label": "Northmarch (highland human)",
+      "male": ["Arnulf", "Asgaut", "Bjorn", "Brand", "Egil", "Eyvind", "Grim", "Hallstein", "Halvard", "Ivar", "Ketil", "Orm", "Ragnar", "Sigurd", "Thorgeir", "Torvald", "Ulf", "Vemund"],
+      "female": ["Aslaug", "Asta", "Bergljot", "Dagny", "Frida", "Gudrun", "Gyda", "Hild", "Ingrid", "Ragna", "Ragnhild", "Sigrid", "Solveig", "Thora", "Unn", "Yrsa"],
+      "family": ["Brenna", "Eyrr", "Grimstad", "Hallsted", "Hrafnholm", "Isgard", "Kolvik", "Ormstad", "Skarsfell", "Skeggi", "Tjorn", "Vindholm"]
+    },
+    "southron": {
+      "label": "Southron (coastal human)",
+      "male": ["Alonso", "Beltran", "Cosimo", "Dario", "Esteban", "Fausto", "Gaspar", "Inigo", "Lorenzo", "Matteo", "Nuno", "Orsino", "Rodrigo", "Sancho", "Tomaso", "Vasco"],
+      "female": ["Alba", "Beatriz", "Catalina", "Dulce", "Elvira", "Fiametta", "Giulia", "Ines", "Leonor", "Mencia", "Oriana", "Rosalba", "Sancha", "Teresa", "Urraca", "Violante"],
+      "family": ["Albarran", "Castellan", "Dovizi", "Escobar", "Ferrante", "Gallo", "Lucchesi", "Mendaro", "Ormeno", "Pazzano", "Quintal", "Salvi", "Torrano", "Valdes", "Varga"]
+    },
+    "elven": {
+      "label": "Elven",
+      "male": ["Aerion", "Caelthas", "Elorin", "Faelan", "Ilvar", "Lothen", "Maerith", "Naeris", "Saevel", "Taeral", "Vaelen", "Iscarion", "Thalanor", "Ruvael"],
+      "female": ["Aelyth", "Caelinne", "Elowen", "Faenya", "Ilsareth", "Lirien", "Maelis", "Naerwen", "Saelith", "Sylvanne", "Thessaly", "Vaeris", "Yllanthe"],
+      "family": ["Aerendyl", "Arvaelis", "Caelindor", "Elthalion", "Faenmere", "Ithrandel", "Lorawyn", "Morvaine", "Nethrial", "Quessadel", "Sylvaris", "Vaelith"]
+    },
+    "dwarven": {
+      "label": "Dwarven",
+      "male": ["Bardrek", "Brokk", "Dorvik", "Durgan", "Galdur", "Grundi", "Hrodmar", "Kazrik", "Korgan", "Maldrun", "Norgrim", "Ottar", "Rurik", "Skaldur", "Thorvek", "Varnik", "Yorgun"],
+      "female": ["Amra", "Bergit", "Dagrun", "Eldis", "Gunnloda", "Helja", "Ingra", "Kelda", "Morgra", "Runa", "Sigrun", "Thyra", "Yrsel"],
+      "family": ["Coalbeard", "Deepdelve", "Flintmantle", "Grimforge", "Hollowhelm", "Ironvein", "Oathbrand", "Saltdelve", "Stonehelm", "Blackseam", "Copperjaw", "Hammerwell"]
+    },
+    "halfling": {
+      "label": "Halfling",
+      "male": ["Andry", "Barnabas", "Cob", "Eldon", "Halric", "Jory", "Lyle", "Ned", "Osborn", "Perrin", "Roscoe", "Tam", "Wat", "Wendel"],
+      "female": ["Bree", "Callie", "Daisy", "Elsie", "Hetty", "Kitty", "Lavinia", "Maisie", "Nell", "Posy", "Rosie", "Tansy", "Verbena", "Winnie"],
+      "family": ["Applecot", "Barrowbank", "Burrows", "Cobblefoot", "Fernsby", "Goodbarrel", "Hedgewick", "Millstone", "Pottle", "Quickthistle", "Rushlight", "Tealeaf", "Underbough", "Whitloam"]
+    },
+    "orcish": {
+      "label": "Orcish",
+      "male": ["Brug", "Durkha", "Gorth", "Grask", "Hrothak", "Karg", "Lurz", "Mogash", "Narg", "Rokh", "Ugrak", "Vrakk", "Zhurg"],
+      "female": ["Agra", "Brakka", "Gashna", "Hurza", "Kansha", "Morza", "Nargha", "Oshka", "Ruzha", "Shagra", "Tharka", "Ulga", "Vorza", "Yazga"],
+      "family": ["Ashfang", "Blacktusk", "Crowmaw", "Ironjaw", "Redhand", "Splitshield", "Stonegut", "Wolfsbane"]
+    }
+  }
+}
