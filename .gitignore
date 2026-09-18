@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+
+# Runtime output
+logs/*
+!logs/.gitkeep
+screenshots/
+
+# Packaging output
+build/
+dist/
+Realmwalker.zip
+
+# Editors / OS
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
