@@ -101,7 +101,26 @@ class MarketScreen(Screen):
             self.act()
         elif ev.key in ("h", "H"):
             self.haggle()
+        elif ev.key in ("s", "S") and self.side == 0:
+            self.steal()
         return True
+
+    def steal(self) -> None:
+        """Palm one of their goods (Sleight of Hand). Being caught is a crime."""
+        from realmwalker.game import law
+
+        rows = self.theirs()
+        if not rows or not self.game.world.factions:
+            return
+        r = rows[min(self.sel[0], len(rows) - 1)]
+        if r["used"] is not None:
+            self.message = "Second-hand goods are kept behind the counter."
+            return
+        ok, self.message = law.steal_from_shop(self.game, self.npc, r["item_id"])
+        self.game.say(self.message, "loot" if ok else "danger")
+        self.clamp()
+        if not ok or self.game.arrest is not None:
+            self.close()
 
     # ------------------------------------------------------------------ drawing
     def render(self, canvas: Canvas) -> None:
@@ -154,6 +173,9 @@ class MarketScreen(Screen):
         bx = canvas.button(bx + 3, h - 3, "Switch side", lambda: self.handle_key(KeyEvent("tab")), hotkey="Tab")
         if shop.get("haggle_day") != game.moment.total_days:
             bx = canvas.button(bx + 3, h - 3, "Haggle", self.haggle, hotkey="h")
+        if self.side == 0 and game.world.factions:
+            bx = canvas.button(bx + 3, h - 3, "Steal", self.steal, hotkey="s",
+                               tooltip="Sleight of Hand. Being caught is a crime.")
         canvas.button(bx + 3, h - 3, "Back", self.close, hotkey="Esc")
 
     def _column(self, canvas: Canvas, x: int, y: int, w: int, h: int, side: int, title: str, rows: list) -> None:

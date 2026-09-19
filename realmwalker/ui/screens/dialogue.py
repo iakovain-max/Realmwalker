@@ -58,14 +58,15 @@ class DialogueScreen(Screen):
     # ------------------------------------------------------------------ actions
     def hotkeys(self) -> dict[str, int]:
         """Key -> menu index: letters for the fixed entries, numbers for everything else."""
-        fixed = {"threaten": "t", "offer_bribe": "o", "goodbye": "g", "back": "b"}
+        fixed = {"threaten": "t", "offer_bribe": "o", "goodbye": "g", "back": "b", "attack": "a"}
+        spare = [str(d) for d in range(1, 10)] + list("cdefhijklmnpqrsuvwxyz")
         keys: dict[str, int] = {}
-        n = 1
+        n = 0
         for i, choice in enumerate(self.conv.menu()):
             if choice.id in fixed:
                 keys[fixed[choice.id]] = i
-            elif n <= 9:
-                keys[str(n)] = i
+            elif n < len(spare):
+                keys[spare[n]] = i
                 n += 1
         return keys
 
@@ -132,7 +133,7 @@ class DialogueScreen(Screen):
             header += " <dim>· …</>"
         canvas.markup(2, 1, header, max_width=text_w)
         menu = conv.menu()
-        menu_h = min(len(menu), 12) + 1
+        menu_h = min(len(menu), 16, max(6, h // 2 - 2)) + 1
         log_top, log_bottom = 3, h - 3 - menu_h
         # The conversation so far.
         lines: list = []
@@ -154,7 +155,7 @@ class DialogueScreen(Screen):
         canvas.hline(1, log_bottom, text_w + 2, "─", colors.FAINT)
         # The menu.
         by_index = {i: k for k, i in self.hotkeys().items()}
-        for i, choice in enumerate(menu[:12]):
+        for i, choice in enumerate(menu[: menu_h - 1]):
             y = log_bottom + 1 + i
             key = by_index.get(i, " ")
             if choice.enabled:

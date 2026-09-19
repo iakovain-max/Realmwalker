@@ -31,6 +31,8 @@ def sheltered(game, activity: str) -> bool:
     """Under a roof: resting or sleeping in a settlement, or inside a building on a close-up map."""
     p = game.player
     lm = game.local
+    if getattr(game, "confined", None):
+        return True
     if lm is not None and lm.building_at(p.lx, p.ly) is not None:
         return True
     return activity != "walk" and game.world.settlement_at(p.x, p.y) is not None
@@ -73,7 +75,7 @@ def tick(game, minutes: int, activity: str) -> None:
         rng = game.world.rng.child(f"health/{game.world.time}/{char.name}")
         for text, color in health.tick(char, game.tables, ctx, minutes, rng):
             game.say(text, color)
-        if getattr(game, "auto_supplies", True) and activity != "fight":
+        if (getattr(game, "auto_supplies", True) or getattr(game, "confined", None)) and activity != "fight":
             feed(game, char)
         check_death(game, char)
     game._wading = False
@@ -237,6 +239,11 @@ def drink_from(game, char: Character, kind: str, pints: float, where: str) -> st
 
 def feed(game, char: Character) -> None:
     """Eat and drink from the pack when hungry or thirsty (the 'eat and drink automatically' setting)."""
+    if getattr(game, "confined", None):
+        from realmwalker.game.law import prison_rations
+
+        prison_rations(char)
+        return
     camp = getattr(game, "camp", None)
     fire = bool(camp and camp.fire)
     if char.hunger >= AUTO_EAT_AT:

@@ -284,6 +284,8 @@ class InventoryScreen(Screen):
             return "Drink"
         if d.get("use", {}).get("painkiller"):
             return "Take"
+        if d.get("use", {}).get("disguise"):
+            return "Disguise yourself"
         if self.game.tables.items.slots_for(it) or self.char.slot_of(it.uid):
             return "Remove" if self.char.slot_of(it.uid) else "Wear / wield"
         return "Use"
@@ -303,6 +305,10 @@ class InventoryScreen(Screen):
 
             for msg in care.painkiller(self.game, self.char):
                 self.game.say(msg, "info")
+        elif name == "Disguise yourself":
+            from realmwalker.game import law
+
+            self.game.say(law.put_on_disguise(self.game, self.char), "info")
         elif name == "Use":
             self.game.say("You can't use that here. (Bandages, herbs and kits are used on the Health screen, h.)",
                           "system")

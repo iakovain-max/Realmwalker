@@ -232,6 +232,14 @@ class GameScreen(Screen):
             from realmwalker.ui.screens.battle import BattleScreen
 
             self.app.push(BattleScreen(self.app, game))
+        elif game.sentence is not None:
+            from realmwalker.ui.screens.law import SentenceScreen
+
+            self.app.push(SentenceScreen(self.app, game))
+        elif game.arrest is not None:
+            from realmwalker.ui.screens.law import ArrestScreen
+
+            self.app.push(ArrestScreen(self.app, game))
         elif game.talk_to is not None:
             from realmwalker.ui.screens.dialogue import DialogueScreen
 

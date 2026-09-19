@@ -9,7 +9,7 @@
                 ["candle", 2, 8], ["oil_flask", 1, 4], ["lantern", 0, 1], ["rope", 1, 2], ["sack", 2, 6], ["iron_pot", 0, 1],
                 ["mess_kit", 1, 2], ["tent", 0, 1], ["fishing_tackle", 0, 2], ["hunting_trap", 0, 1], ["shovel", 0, 1],
                 ["crowbar", 0, 1], ["soap", 1, 4], ["whetstone", 1, 3], ["bandages", 3, 8], ["splint", 0, 2], ["firewood", 2, 5],
-                ["common_clothes", 1, 3], ["travelers_clothes", 0, 2], ["wool_cloak", 0, 2], ["hooded_cloak", 0, 1], ["hood", 1, 2],
+                ["common_clothes", 1, 3], ["travelers_clothes", 0, 2], ["wool_cloak", 0, 2], ["hooded_cloak", 0, 1], ["hood", 1, 2], ["disguise_kit", 0, 1],
                 ["wool_gloves", 0, 2], ["boots", 0, 2], ["wool_underclothes", 0, 2], ["arrows", 10, 40], ["bolts", 0, 20],
                 ["ale", 1, 4], ["spirits", 0, 2], ["salt", 1, 3], ["wool_bolt", 0, 2]],
       "markup": 1.0

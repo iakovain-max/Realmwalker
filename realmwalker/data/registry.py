@@ -136,6 +136,51 @@ def _check_faction_refs(files: dict[str, Any]) -> list[str]:
     for culture in cultures:
         if culture not in data["culture_laws"]:
             errors.append(f"data/factions.json: culture_laws needs laws for the '{culture}' people.")
+    errors.extend(_check_law_refs(files, cultures))
+    return errors
+
+
+def _check_law_refs(files: dict[str, Any], cultures: set) -> list[str]:
+    from realmwalker.data.schemas import PUNISHMENT_STEPS
+
+    law = files.get("law.json")
+    if not law:
+        return []
+    errors: list[str] = []
+    items = set(files.get("items.json", {}).get("items", {}))
+    creatures = set(files.get("creatures.json", {}).get("creatures", {}))
+    classes = set(files.get("classes.json", {}).get("classes", {}))
+    kinds = set(files.get("factions.json", {}).get("kinds", {}))
+    for level in ("lenient", "stern", "harsh", "cruel"):
+        if level not in law["punishments"]:
+            errors.append(f"data/law.json: punishments needs a '{level}' list.")
+    for level, table in law["punishments"].items():
+        for steps in table:
+            for step in steps:
+                if step.split(":")[0] not in PUNISHMENT_STEPS:
+                    errors.append(f"data/law.json: punishments.{level} has an unknown step {step!r}.")
+    for culture in cultures:
+        for key in ("contraband", "hunting"):
+            if culture not in law[key]:
+                errors.append(f"data/law.json: {key} needs an entry for the '{culture}' people.")
+    for culture, banned in law["contraband"].items():
+        for item in banned:
+            if items and item not in items:
+                errors.append(f"data/law.json: contraband.{culture} names unknown item {item!r}.")
+    for cid in law["rewards"]:
+        if creatures and cid not in creatures:
+            errors.append(f"data/law.json: rewards names unknown creature {cid!r}.")
+    for kind, spec in law["join"].items():
+        if kinds and kind not in kinds:
+            errors.append(f"data/law.json: join names unknown faction kind {kind!r}.")
+        for cls in spec.get("classes", []):
+            if classes and cls not in classes:
+                errors.append(f"data/law.json: join.{kind} names unknown class {cls!r}.")
+        if spec.get("tool") and items and spec["tool"] not in items:
+            errors.append(f"data/law.json: join.{kind} needs unknown tool {spec['tool']!r}.")
+    for crime in ("theft", "assault", "murder", "trespass", "resisting_arrest", "jailbreak", "fleeing_arrest"):
+        if crime not in law["crimes"]:
+            errors.append(f"data/law.json: the game needs a crime called '{crime}'.")
     return errors
 
 

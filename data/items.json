@@ -123,6 +123,7 @@
     "ink_and_quill": {"name": "ink and quill", "category": "gear", "weight": 0.2, "value": 1000, "material": "glass"},
     "parchment": {"name": "sheet of parchment", "category": "gear", "weight": 0.05, "value": 10, "material": "paper", "stack": true},
     "thieves_tools": {"name": "thieves' tools", "category": "tool", "tool": "thieves_tools", "weight": 1, "value": 2500, "material": "steel"},
+    "disguise_kit": {"name": "disguise kit", "category": "tool", "tool": "disguise_kit", "weight": 3, "value": 2500, "material": "leather", "use": {"disguise": true}, "description": "Paints, powders, false hair, a little mirror. Enough to become someone else for a day."},
     "herbalism_kit": {"name": "herbalism kit", "category": "tool", "tool": "herbalism_kit", "weight": 3, "value": 500, "material": "leather"},
     "smiths_tools": {"name": "smith's tools", "category": "tool", "tool": "smiths_tools", "weight": 8, "value": 2000, "material": "iron"},
     "carpenters_tools": {"name": "carpenter's tools", "category": "tool", "tool": "carpenters_tools", "weight": 6, "value": 800, "material": "iron"},

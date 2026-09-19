@@ -1,0 +1,51 @@
+{
+  "_comment": "Law and crime (M6). crimes: severity 1 (petty) to 4 (capital), fine in copper (theft adds value x value_mult), standing lost with the realm and the victim's people when reported, infamy gained, and the words used in news ({victim}, {place}). punishments: per realm harshness (data/factions.json laws), the sentence for the worst crime on your record, by severity 1-4; steps are fine, jail:days, labour:days, flogging, branding, death. rewards: what the watch pays for live prisoners, by creature. join: what it takes to join a kind of faction (standing, fee in copper, a skill, a class, a tool, faith), and rank names by standing. titles: what a realm's ruler may grant to the honoured.",
+  "crimes": {
+    "theft": {"name": "theft", "severity": 1, "fine": 1000, "value_mult": 3, "standing": -8, "infamy": 2, "news": "stealing in {place}"},
+    "pickpocket": {"name": "pickpocketing", "severity": 1, "fine": 1000, "value_mult": 3, "standing": -6, "infamy": 2, "news": "cutting purses in {place}"},
+    "trespass": {"name": "trespass", "severity": 1, "fine": 500, "standing": -3, "infamy": 1, "news": "breaking into a house in {place}"},
+    "assault": {"name": "assault", "severity": 2, "fine": 3000, "standing": -12, "infamy": 3, "news": "attacking {victim} in {place}"},
+    "murder": {"name": "murder", "severity": 4, "fine": 25000, "standing": -40, "infamy": 15, "news": "the murder of {victim} in {place}"},
+    "poaching": {"name": "poaching", "severity": 1, "fine": 1000, "standing": -5, "infamy": 1, "news": "poaching the lord's game near {place}"},
+    "smuggling": {"name": "smuggling", "severity": 2, "fine": 2000, "value_mult": 3, "standing": -6, "infamy": 2, "news": "smuggling into {place}"},
+    "unlicensed_magic": {"name": "working magic without a licence", "severity": 1, "fine": 1500, "standing": -5, "infamy": 2, "news": "working magic without a licence in {place}"},
+    "forbidden_magic": {"name": "witchcraft", "severity": 3, "fine": 6000, "standing": -15, "infamy": 6, "news": "witchcraft in {place}"},
+    "heresy": {"name": "heresy", "severity": 3, "fine": 5000, "standing": -15, "infamy": 5, "news": "heresy in {place}"},
+    "resisting_arrest": {"name": "resisting arrest", "severity": 2, "fine": 3000, "standing": -10, "infamy": 3, "news": "fighting the watch in {place}"},
+    "fleeing_arrest": {"name": "fleeing the watch", "severity": 1, "fine": 1500, "standing": -4, "infamy": 1, "news": "running from the watch in {place}"},
+    "jailbreak": {"name": "breaking out of jail", "severity": 2, "fine": 4000, "standing": -10, "infamy": 3, "news": "breaking out of the jail in {place}"}
+  },
+  "punishments": {
+    "lenient": [["fine"], ["fine"], ["fine", "jail:14"], ["jail:60"]],
+    "stern": [["fine"], ["fine", "jail:5"], ["fine", "flogging", "jail:14"], ["death"]],
+    "harsh": [["fine", "flogging"], ["fine", "flogging", "labour:14"], ["branding", "labour:30"], ["death"]],
+    "cruel": [["flogging", "fine"], ["branding", "labour:14"], ["death"], ["death"]]
+  },
+  "fine_per_jail_day": 500,
+  "report_minutes": [45, 240],
+  "bribe": {"share": 0.5, "minimum": 500, "dc": 12},
+  "run_dc": 13,
+  "escape_dc": 15,
+  "gallows_escape_dc": 19,
+  "recognise_chance": 0.35,
+  "guard_sight": 8,
+  "gate_search_chance": 0.12,
+  "contraband": {"northmarch": ["poppy_milk"], "southron": [], "heartland": [], "dwarven": [], "elven": [], "halfling": [], "orcish": []},
+  "hunting": {"heartland": "lords_only", "southron": "lords_only", "northmarch": "free", "dwarven": "free", "elven": "lords_only", "halfling": "free", "orcish": "free"},
+  "licence_fee": 2500,
+  "rewards": {"bandit": 800, "bandit_archer": 800, "bandit_captain": 4000, "thug": 500, "deserter": 600, "cultist": 1200, "cult_fanatic": 3000, "orc": 1500, "goblin": 400, "ogre": 3000},
+  "ransom_share": 3.0,
+  "join": {
+    "merchant_guild": {"standing": 10, "fee": 2500, "ranks": ["associate", "member", "trusted member", "master of the guild"], "discount": 0.05},
+    "smiths_guild": {"standing": 10, "fee": 1500, "tool": "smiths_tools", "ranks": ["apprentice", "journeyman", "master smith", "anvil-warden"], "discount": 0.05},
+    "healers_guild": {"standing": 10, "fee": 1500, "skill": "medicine", "ranks": ["student", "physician", "master physician", "warden of the guild"], "discount": 0.1},
+    "mages_circle": {"standing": 10, "fee": 3000, "skill": "arcana", "ranks": ["novice", "adept", "magister", "high magister"], "discount": 0.05},
+    "mercenary_company": {"standing": 0, "fee": 0, "classes": ["fighter", "rogue"], "ranks": ["recruit", "sword", "sergeant", "lieutenant"], "discount": 0.0},
+    "temple": {"standing": 15, "fee": 500, "faith": true, "ranks": ["lay brother or sister", "devout", "deacon", "elder of the faith"], "discount": 0.1},
+    "knightly_order": {"standing": 30, "fee": 0, "classes": ["fighter", "cleric"], "faith": true, "ranks": ["squire", "knight", "knight-captain", "knight-commander"], "discount": 0.05},
+    "thieves_guild": {"standing": 5, "fee": 1000, "skill": "sleight_of_hand", "ranks": ["footpad", "cutpurse", "shadow", "master thief"], "discount": 0.0},
+    "cult": {"standing": 10, "fee": 0, "ranks": ["initiate", "brother or sister", "keeper", "chosen"], "discount": 0.0}
+  },
+  "rank_standing": [0, 25, 50, 75],
+  "titles": {"standing": 50, "fame": 15, "names": {"kingdom": ["Sir", "Dame"], "noble_house": ["Sir", "Dame"], "free_city": ["Freeholder", "Freeholder"], "clan": ["Stone-friend", "Stone-friend"], "highland_clan": ["Clan-friend", "Clan-friend"], "elven_realm": ["Elf-friend", "Elf-friend"]}}
+}

@@ -251,6 +251,10 @@ def hunt(game) -> list[str]:
         got.append(game.tables.items.get(hide)["name"])
     for c in game.party:
         c.dirt = min(100.0, c.dirt + 10)
+    if game.world.factions:
+        from realmwalker.game import law
+
+        law.poaching_check(game)
     return msgs + [f"You bring down {name}: {', '.join(got)}. Cook the meat before it turns."]
 
 

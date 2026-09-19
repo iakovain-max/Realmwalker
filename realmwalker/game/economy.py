@@ -108,7 +108,23 @@ def buy_price(game, npc: NPC, item_id: str, item: Item | None = None) -> int:
     value = items.unit_value(item) if item is not None else int(items.get(item_id)["value"])
     price = value * local_factor(game, settlement, item_id) * float(spec.get("markup", 1.0))
     price *= MOOD_BUY[npc.mood()] * (1.0 + float(npc.flags.get("price_mod", 0.0))) * (1.0 - haggle_bonus(game, npc, shop))
+    price *= standing_factor(game, npc)
     return max(1, int(round(price)))
+
+
+def standing_factor(game, npc: NPC) -> float:
+    """Your name with the merchant's guild or lord moves their prices; guild members get a discount."""
+    if not getattr(game.world, "factions", None):
+        return 1.0
+    from realmwalker.game.people import npc_factions
+    from realmwalker.game.reputation import member_discount, standing
+
+    facs = npc_factions(game, npc)
+    if not facs:
+        return 1.0
+    score = standing(game, facs[0].id)
+    factor = 1.3 if score <= -50 else 1.1 if score <= -15 else 0.9 if score >= 50 else 0.95 if score >= 15 else 1.0
+    return factor * (1.0 - member_discount(game, facs))
 
 
 def sell_price(game, npc: NPC, item: Item) -> tuple[int | None, str]:
@@ -121,7 +137,10 @@ def sell_price(game, npc: NPC, item: Item) -> tuple[int | None, str]:
     if d["category"] not in spec["buys"]:
         return None, f"they don't deal in {d['category']}"
     if "stolen" in item.tags:
-        return None, "they won't touch stolen goods"
+        from realmwalker.game.law import is_fence
+
+        if not is_fence(game, npc):
+            return None, "they won't touch stolen goods"
     shop = shop_state(game, npc)
     settlement = game.world.settlements[npc.settlement]
     econ = game.tables.economy

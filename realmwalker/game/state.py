@@ -91,6 +91,9 @@ class GameState:
         from realmwalker.game.reputation import Renown
 
         self.renown = Renown()  # standing with factions, bounties, crimes, news heard (game.reputation)
+        self.arrest: dict | None = None  # the watch has hold of the player (game.law)
+        self.sentence: dict | None = None  # the law's punishment, being carried out (game.law)
+        self.confined: dict | None = None  # in jail or at hard labour: fed and sheltered, going nowhere
         self._realm_here: int | None = None
         self._wading = False
         self._remaps: dict[str, np.ndarray] = {}
@@ -168,7 +171,16 @@ class GameState:
                 self.world.time += remaining
                 break
         after = self.moment
+        if self.world.factions and after.total_days * 24 + after.hour != before.total_days * 24 + before.hour:
+            from realmwalker.game import law
+
+            law.tick(self)
         if after.total_days != before.total_days:
+            if self.world.factions:
+                from realmwalker.game import news, reputation
+
+                reputation.tick(self)
+                news.prune(self.world)
             if self.leader.animals:
                 from realmwalker.game.services import feed_animals
 
@@ -217,7 +229,8 @@ class GameState:
     def busy(self) -> bool:
         """Something must be dealt with first: trouble on the road, a fight or its aftermath, or death."""
         return (self.encounter is not None or self.battle is not None or self.aftermath is not None
-                or self.over is not None or self.event is not None)
+                or self.over is not None or self.event is not None or self.arrest is not None
+                or self.sentence is not None)
 
     def move(self, dx: int, dy: int) -> bool:
         if self.busy:
@@ -444,6 +457,11 @@ class GameState:
             from realmwalker.game.people import populate_town, update_positions
 
             self.say(f"You walk into <place>{where.name}</>.", "place")
+            if lm.kind == "settlement" and self.world.factions:
+                from realmwalker.game import law
+
+                for text in law.gate_search(self, where):
+                    self.say(text, "warn")
             if lm.kind == "settlement":
                 town = populate_town(self, lm, where)
                 update_positions(self, lm)
@@ -509,8 +527,14 @@ class GameState:
             return True
         if not T.walk[t]:
             return False
+        before_building = lm.building_at(p.lx, p.ly)
         p.lx, p.ly = nx, ny
         p.steps += 1
+        now_building = lm.building_at(nx, ny)
+        if now_building is not None and now_building is not before_building and self.world.factions:
+            from realmwalker.game import law
+
+            law.trespass_check(self, lm.buildings.index(now_building))
         self.pass_seconds(int(LOCAL_STEP_SECONDS * float(T.cost[t]) * (1.41 if dx and dy else 1.0) * pace), "walk")
         here = lm.items.get((nx, ny))
         if here:
@@ -519,6 +543,10 @@ class GameState:
         if self.over is None:
             self._creatures_act(lm)
             self._people_act(lm)
+            if self.world.factions and lm.kind == "settlement":
+                from realmwalker.game import law
+
+                law.watch(self)
         return True
 
     def _people_act(self, lm: LocalMap) -> None:

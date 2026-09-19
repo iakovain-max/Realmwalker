@@ -179,7 +179,13 @@ def apply_outcome(game, out: dict, rng: RNG) -> list[str]:
         for c in game.party:
             c.effects[name] = float(hours)
     if out.get("deed"):
-        leader.deeds.append(out["deed"])
+        if game.world.factions:
+            from realmwalker.game.reputation import deed, realm_here
+
+            realm = realm_here(game)
+            deed(game, out["deed"], {realm.id: 2.0} if realm is not None else {}, fame=1)
+        else:
+            leader.deeds.append(out["deed"])
     if out.get("news"):
         msgs.append(hear_news(game, rng))
     if out.get("xp"):

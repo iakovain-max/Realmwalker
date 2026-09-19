@@ -249,6 +249,8 @@ def _timed_effects(char: Character, hours: float) -> list[tuple[str, str]]:
                 events.append((f"{n}'s poppy dream fades, and the pain comes back.", "warn"))
             elif key == "hangover":
                 events.append((f"{n}'s head clears at last.", "dim"))
+            elif key == "disguised":
+                events.append((f"{n}'s disguise has worn off.", "dim"))
     # Drink wears off, and real drunkenness leaves a hangover.
     if char.intoxication > 0:
         if char.intoxication >= 45:

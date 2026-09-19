@@ -622,3 +622,33 @@ def test_the_factions_screen_and_realm_map(make_app, size):
     app.handle_event(KeyEvent("z"))
     render(app, size)
     assert app.error_count == 0
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_the_arrest_and_sentence_windows(make_app, size):
+    from realmwalker.game import law
+    from realmwalker.game.people import npcs_in
+    from realmwalker.ui.screens.law import ArrestScreen, SentenceScreen
+    from realmwalker.world import factions as fx
+
+    app = make_app()
+    start_small_world(app)
+    game = app.game
+    game.survival = False
+    s = next(s for s in game.world.settlements if s.kind in ("town", "city") and fx.owner_of(game.world, s))
+    game.player.x, game.player.y = s.x, s.y
+    game.enter_local()
+    guard = next(n for n in npcs_in(game.world, s.id) if n.job == "guard")
+    law.commit(game, "assault", witnesses=[guard])
+    render(app, size)
+    assert isinstance(app.top, ArrestScreen)
+    app.handle_event(KeyEvent("b"))
+    render(app, size)
+    app.handle_event(KeyEvent("q"))
+    render(app, size)
+    assert isinstance(app.top, SentenceScreen)
+    for _ in range(6):
+        app.handle_event(KeyEvent("enter"))
+        render(app, size)
+    assert game.sentence is None or game.over is not None
+    assert app.error_count == 0

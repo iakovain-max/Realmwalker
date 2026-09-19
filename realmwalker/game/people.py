@@ -555,10 +555,19 @@ def faction_impression(game, npc: NPC) -> int:
     if secret is not None and secret in game.renown.members:
         score += 15
     realm = fx.realm_of_settlement(game.world, game.world.settlements[npc.settlement])
-    if realm is not None and game.renown.bounties.get(realm.id, 0) > 0:
+    if realm is not None and game.renown.bounties.get(realm.id, 0) > 0 and not game.leader.effects.get("disguised"):
         score -= 25 if npc.job == "guard" else 8
-        if realm is not None and "xenophobic" in realm.values and game.leader.race != npc.race:
-            score -= 5
+    if realm is not None and "xenophobic" in realm.values and game.leader.race != npc.race:
+        score -= 5
+    thief = secret is not None and game.world.factions.get(secret) is not None and \
+        game.world.factions[secret].kind in ("thieves_guild", "cult")
+    r = game.renown
+    score += min(8, r.fame // 5)
+    score -= 0 if thief else min(12, r.infamy // 3)
+    if "branded" in r.marks and not thief:
+        score -= 10
+    if r.flags.get("titles") and npc.social == "high":
+        score += 6
     return score
 
 

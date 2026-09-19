@@ -125,10 +125,10 @@ class Conversation:
         return out
 
     def role_choices(self) -> list[Choice]:
-        """Trade and services, added by the economy (M5 parts 3 and 4)."""
-        from realmwalker.game import services
+        """Trade and services (M5), and the law and the factions (M6)."""
+        from realmwalker.game import law_talk, services
 
-        return services.choices(self)
+        return services.choices(self) + law_talk.choices(self)
 
     # ------------------------------------------------------------------ doing
     def choose(self, choice: Choice) -> str | None:
@@ -166,6 +166,10 @@ class Conversation:
             self.mode = "main"
         elif cid == "goodbye":
             self.goodbye()
+        elif cid in LAW_CHOICES:
+            from realmwalker.game import law_talk
+
+            return law_talk.choose(self, choice)
         else:
             from realmwalker.game import services
 
@@ -441,6 +445,10 @@ class Conversation:
             game.encounter = make_encounter(game, "town_watch", self.rng)
             game.leader.deeds.append(f"had the watch called on them in {self.settlement.name}")
         self.ended = True
+
+
+LAW_CHOICES = {"pay_fines", "surrender", "prisoners", "licence", "hush_pay", "hush_threat", "probe", "join", "title",
+               "pickpocket", "attack"}
 
 
 def builtin_special(game, npc: NPC, rng: RNG) -> list[dict]:

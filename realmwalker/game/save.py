@@ -246,6 +246,8 @@ def character_entries(game: GameState) -> dict[str, bytes | str]:
         "log": game.log.to_dict(),
         "party": [c.to_dict() for c in game.party],
         "renown": game.renown.to_dict(),
+        "arrest": game.arrest,
+        "sentence": game.sentence,
     }
     return {"manifest.json": _manifest("character"), "character.json": json.dumps(body),
             "explored.npy": _npy(p.explored)}
@@ -270,7 +272,8 @@ def load_player(folder: Path) -> tuple[PlayerState, MessageLog, list[Character] 
     )
     party = body.get("party")
     party_chars = [Character.from_dict(c) for c in party] if party else None
-    return player, MessageLog.from_dict(body.get("log", {})), party_chars, body.get("renown", {})
+    extra = {"renown": body.get("renown", {}), "arrest": body.get("arrest"), "sentence": body.get("sentence")}
+    return player, MessageLog.from_dict(body.get("log", {})), party_chars, extra
 
 
 # ---------------------------------------------------------------------------- whole game
@@ -292,7 +295,7 @@ def load_game(folder: Path, tables: Tables) -> GameState:
 
     world = load_world(folder)
     ensure_factions(world, tables)
-    player, messages, party, renown = load_player(folder)
+    player, messages, party, extra = load_player(folder)
     if player.local_key is not None and player.local_key not in world.local_maps:
         player.local_key = None
     try:
@@ -301,7 +304,9 @@ def load_game(folder: Path, tables: Tables) -> GameState:
         raise SaveError(f"The character in this save could not be understood ({exc}).") from exc
     if party is None:
         player.name = game.leader.name
-    game.renown = Renown.from_dict(renown)
+    game.renown = Renown.from_dict(extra["renown"])
+    game.arrest = extra.get("arrest")
+    game.sentence = extra.get("sentence")
     if not game.renown.flags.get("started"):
         starting_knowledge(game)  # a character from before M6
     return game

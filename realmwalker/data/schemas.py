@@ -531,3 +531,33 @@ REQUIRED_FACTION_KINDS = ("kingdom", "noble_house", "free_city", "clan", "highla
                           "smiths_guild", "temple", "knightly_order", "cult", "bandit_gang", "pirate_crew")
 
 DATA_FILES.update({"factions.json": FACTIONS})
+
+# ---------------------------------------------------------------------------- law and crime (M6)
+CRIME = Obj({"name": Str(max_len=60), "severity": Int(min=1, max=4), "fine": Int(min=0, max=10**7),
+             "value_mult": Float(min=0, max=20, optional=True), "standing": Int(min=-100, max=0),
+             "infamy": Int(min=0, max=100), "news": Str(max_len=120)})
+JOIN = Obj({"standing": Int(min=-100, max=100), "fee": Int(min=0, max=10**7), "ranks": word_list(4, 40),
+            "discount": Float(min=0, max=0.5), "skill": Str(max_len=30, optional=True),
+            "tool": Str(max_len=30, optional=True), "classes": List(Str(max_len=30), optional=True),
+            "faith": Bool(optional=True)})
+LAW = Obj(
+    {
+        "crimes": Map(CRIME, min_items=1),
+        "punishments": Map(List(List(Str(max_len=20), min_items=1), min_items=4, max_items=4), min_items=4),
+        "fine_per_jail_day": Int(min=1, max=10**6),
+        "report_minutes": List(Int(min=0, max=10000), min_items=2, max_items=2),
+        "bribe": Obj({"share": Float(min=0, max=5), "minimum": Int(min=0), "dc": Int(min=0, max=40)}),
+        "run_dc": Int(min=0, max=40), "escape_dc": Int(min=0, max=40), "gallows_escape_dc": Int(min=0, max=40),
+        "recognise_chance": Float(min=0, max=1), "guard_sight": Int(min=1, max=40),
+        "gate_search_chance": Float(min=0, max=1),
+        "contraband": Map(List(Str(max_len=40))), "hunting": Map(Str(choices=["free", "lords_only"])),
+        "licence_fee": Int(min=0, max=10**7),
+        "rewards": Map(Int(min=0, max=10**7)), "ransom_share": Float(min=0, max=100),
+        "join": Map(JOIN), "rank_standing": List(Int(min=-100, max=100), min_items=4, max_items=4),
+        "titles": Obj({"standing": Int(min=0, max=100), "fame": Int(min=0, max=10**4),
+                       "names": Map(List(Str(max_len=30), min_items=2, max_items=2))}),
+    }
+)
+PUNISHMENT_STEPS = ("fine", "jail", "labour", "flogging", "branding", "death")
+
+DATA_FILES.update({"law.json": LAW})

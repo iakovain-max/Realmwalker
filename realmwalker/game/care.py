@@ -98,4 +98,8 @@ def cast(game, caster: Character, patient: Character, wound, spell_id: str) -> l
         msgs += health.magic_restore(patient, t)
     game.pass_time(1, "rest")
     game.dirty = True
+    if game.world.factions:
+        from realmwalker.game import law
+
+        law.magic_check(game, caster)
     return msgs

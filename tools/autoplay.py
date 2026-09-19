@@ -53,6 +53,7 @@ class AutoplayReport:
     fights: int = 0
     events: int = 0
     talks: int = 0
+    crimes: int = 0
     battle_turns: int = 0
     elapsed: float = 0.0
 
@@ -67,7 +68,7 @@ class AutoplayReport:
             f"  AI requests: {self.ai_stats}  mock chat calls: {self.mock_calls}",
             f"  turns inside a game: {self.game_turns}  save/load round trips checked: {self.save_checks}",
             f"  fights started by the bot: {self.fights}  travel events: {self.events}  talks: {self.talks}  "
-            f"turns spent in battle: {self.battle_turns}",
+            f"crimes: {self.crimes}  turns spent in battle: {self.battle_turns}",
             "  RESULT: " + ("OK" if self.ok else f"FAILED ({len(self.errors)} problems)"),
         ]
         lines += [f"    - {e}" for e in self.errors[:20]]
@@ -210,6 +211,7 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
                 if f.state not in ("fighting", "fleeing", "down", "dead", "fled", "surrendered"):
                     fail(f"{f.name} is in an unknown state {f.state!r}")
         _check_factions(game, fail)
+        _check_law(game, fail)
         if not game.leader.alive and game.over is None and b is None and game.aftermath is None:
             fail("the leader is dead but the game goes on")
         if game.over is None and any(not c.alive for c in game.party) and b is None and game.aftermath is None:
@@ -242,6 +244,31 @@ def _check_factions(game, fail) -> None:
         fail(f"a negative bounty: {r.bounties}")
     if any(fid not in w.factions for fid in r.known):
         fail("the player knows of a faction that does not exist")
+
+
+def _check_law(game, fail) -> None:
+    """M6: the law's records make sense."""
+    w = game.world
+    r = game.renown
+    for rec in r.crimes:
+        if rec.get("crime") not in game.tables.law["crimes"] and rec.get("crime") != "old":
+            fail(f"an unknown crime on the record: {rec.get('crime')}")
+        if rec.get("realm") not in w.factions:
+            fail("a crime recorded against a realm that does not exist")
+    if game.arrest is not None and game.arrest.get("realm") not in w.factions:
+        fail("arrested by a realm that does not exist")
+    if game.sentence is not None:
+        for step in game.sentence.get("steps", []):
+            if step.split(":")[0] not in ("fine", "jail", "labour", "flogging", "branding", "death"):
+                fail(f"an impossible sentence step {step}")
+    if game.confined is not None and game.sentence is None:
+        fail("confined without a sentence")
+    held = r.flags.get("confiscated")
+    if held is not None and (held.get("money", 0) < 0 or not isinstance(held.get("items"), list)):
+        fail("confiscated belongings are broken")
+    for c in r.flags.get("captives", []):
+        if c.get("def_id") not in game.tables.creatures:
+            fail(f"a captive of unknown kind {c.get('def_id')}")
 
 
 _LAST_TIME: dict[str, int] = {}
@@ -285,6 +312,16 @@ def _start_a_fight(app: App, rng: random.Random, report: AutoplayReport) -> None
         if not game.in_local:
             game.enter_local()
         people = [n for n in npcs_in(game.world, here.id) if n.alive and n.present]
+        if people and rng.random() < 0.25 and game.world.factions:
+            # Now and then the bot breaks the law in front of the watch (or not), to exercise arrests and sentences.
+            from realmwalker.game import law
+
+            crime = rng.choice(["theft", "assault", "trespass", "pickpocket", "murder"])
+            guards = [n for n in people if n.job == "guard"]
+            seen = [rng.choice(guards)] if guards and rng.random() < 0.6 else rng.sample(people, min(2, len(people)))
+            if law.commit(game, crime, victim=rng.choice(people), value=rng.randint(0, 300), witnesses=seen):
+                report.crimes += 1
+            return
         if people:
             game.talk_to = rng.choice(people).id
             report.talks += 1

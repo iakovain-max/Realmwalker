@@ -89,6 +89,10 @@ def finish_battle(game) -> Aftermath:
             lm.actors.remove(actor)
     after = Aftermath(result.outcome, "")
     _settle_townsfolk(game, battle, result)
+    if result.outcome in ("victory", "parley") and game.world.factions:
+        from realmwalker.game.reputation import battle_deeds
+
+        battle_deeds(game, result)
     from realmwalker.rules import health
 
     # Survivors of the party who were down get back on their feet (or die of their wounds).
@@ -194,6 +198,10 @@ def _settle_townsfolk(game, battle: Battle, result: BattleResult) -> None:
             npc.alive = False
             npc.present = False
             game.leader.deeds.append(f"killed {npc.name}, the {npc.title}")
+            if game.world.factions:
+                from realmwalker.game import law
+
+                law.commit(game, "murder", victim=npc, witnesses=law.witnesses_here(game, exclude=[npc]))
         else:
             npc.disposition = -100
             npc.remember("was attacked by the traveller")
@@ -357,7 +365,22 @@ def decide_captive(game, creature: Creature, fate: str) -> str:
     cname = name[:1].upper() + name[1:]
     text = ""
     if fate == "capture":
-        return "No town here will pay for prisoners yet. (Bounties and ransoms arrive with factions and law.)"
+        reward = int(game.tables.law["rewards"].get(creature.def_id, 0))
+        if reward <= 0:
+            return f"No one would pay for {name}."
+        from realmwalker.game.reputation import foe_faction
+
+        faction = foe_faction(game, creature.def_id)
+        game.renown.flags.setdefault("captives", []).append({
+            "def_id": creature.def_id, "name": name, "reward": reward, "since": game.world.time,
+            "faction": faction.id if faction is not None else -1})
+        text = (f"You bind {name}'s hands and take them along. The watch in any town will pay for them "
+                f"({money_text(reward)}), if they don't slip away first.")
+        leader.deeds.append(f"took {name} prisoner")
+        after.fates[creature.uid] = fate
+        game.say(text, "info")
+        game.dirty = True
+        return text
     if fate == "spare":
         text = f"{cname} stares at you, then goes, fast, without looking back."
         leader.deeds.append(f"spared a beaten {game.tables.creatures[creature.def_id]['name']}")

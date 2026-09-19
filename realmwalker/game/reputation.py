@@ -12,6 +12,9 @@ from dataclasses import dataclass, field
 
 from realmwalker.world import factions as fx
 
+RIPPLE = 0.5  # how much of a deed's weight reaches a faction's friends (and, reversed, its enemies)
+RIPPLE_MIN_RELATION = 20  # factions that feel less strongly than this about each other don't care
+
 
 @dataclass
 class Renown:
@@ -70,6 +73,239 @@ def change_standing(game, fid: int, amount: float) -> float:
     before = game.renown.standing.get(fid, 0.0)
     set_standing(game, fid, before + amount)
     return game.renown.standing[fid] - before
+
+
+# ---------------------------------------------------------------------------- deeds and their ripples
+def ripple(world, amounts: dict[int, float]) -> dict[int, float]:
+    """How a deed that changes standing with some factions changes it with everyone who cares about them."""
+    out: dict[int, float] = {}
+    for f in fx.active_factions(world):
+        if f.id in amounts:
+            continue
+        total = 0.0
+        for fid, amount in amounts.items():
+            r = fx.relation(world, f.id, fid)
+            if abs(r) >= RIPPLE_MIN_RELATION:
+                total += amount * r / 100.0 * RIPPLE
+        if abs(total) >= 0.5:
+            out[f.id] = total
+    return out
+
+
+def deed(game, text: str, amounts: dict[int, float], *, x: int | None = None, y: int | None = None,
+         witnessed: bool = True, immediate=(), importance: int = 2, fame: int = 0, infamy: int = 0,
+         news_text: str | None = None) -> None:
+    """Something the player did that people will talk about. amounts: standing change with each faction
+    directly concerned; those in `immediate` know at once (they were there). Everyone else, including the
+    friends and enemies of those concerned, learns of it when the news reaches them."""
+    from realmwalker.game import news
+
+    w = game.world
+    x = game.player.x if x is None else x
+    y = game.player.y if y is None else y
+    game.leader.deeds.append(text)
+    if not witnessed:
+        return
+    r = game.renown
+    r.fame += int(fame)
+    r.infamy += int(infamy)
+    later: dict[int, float] = {}
+    for fid, amount in amounts.items():
+        if fid not in w.factions:
+            continue
+        if fid in immediate:
+            change_standing(game, fid, amount)
+            know(game, fid)
+        else:
+            later[fid] = amount
+    for fid, amount in ripple(w, amounts).items():
+        later.setdefault(fid, amount)
+    if later:
+        r.pending.append({"x": int(x), "y": int(y), "day": news.now_days(w),
+                          "effects": {str(k): round(v, 2) for k, v in later.items()}})
+    if news_text:
+        news.add(w, news_text, x, y, kind="deed", importance=importance, factions=list(amounts), player=True)
+
+
+def tick(game) -> None:
+    """Deeds reach the factions who care, as the news travels."""
+    from realmwalker.game import news
+
+    w = game.world
+    today = news.now_days(w)
+    keep = []
+    for entry in game.renown.pending:
+        left = {}
+        for key, amount in entry["effects"].items():
+            f = w.factions.get(int(key))
+            if f is None or not f.active:
+                continue
+            place = news.faction_place(w, f)
+            if place is None or today >= entry["day"] + news.travel_days(entry["x"], entry["y"], *place):
+                change_standing(game, int(key), amount)
+            else:
+                left[key] = amount
+        if left:
+            entry["effects"] = left
+            keep.append(entry)
+    game.renown.pending = keep
+
+
+FOE_KINDS = {"bandit": "bandit_gang", "bandit_archer": "bandit_gang", "bandit_captain": "bandit_gang",
+             "thug": "bandit_gang", "cultist": "cult", "cult_fanatic": "cult", "orc": "tribe", "goblin": "tribe",
+             "ogre": "tribe"}
+
+
+def foe_faction(game, def_id: str):
+    """The faction a foe of this kind here most likely belongs to: the gang whose country this is, the nearest
+    cult, the tribe of these lands."""
+    kind = FOE_KINDS.get(def_id)
+    w = game.world
+    if kind is None or not w.factions:
+        return None
+    from realmwalker.game.news import faction_place
+
+    p = game.player
+    best, best_d = None, 10**9
+    for f in fx.active_factions(w, kind):
+        place = faction_place(w, f)
+        if place is None:
+            continue
+        d = abs(place[0] - p.x) + abs(place[1] - p.y)
+        limit = int(f.flags.get("range", 30 if kind == "tribe" else 40))
+        if d <= limit and d < best_d:
+            best, best_d = f, d
+    return best
+
+
+def battle_deeds(game, result) -> None:
+    """Beating outlaws, cultists or raiders pleases the lords of the land and angers their fellows."""
+    counts: dict[int, int] = {}
+    for c in list(result.dead) + list(result.captives):
+        f = foe_faction(game, c.def_id)
+        if f is not None:
+            counts[f.id] = counts.get(f.id, 0) + 1
+    if not counts:
+        return
+    w = game.world
+    realm = realm_here(game)
+    for fid, n in counts.items():
+        f = w.factions[fid]
+        amounts = {fid: -min(25.0, 5.0 * n)}
+        if realm is not None:
+            amounts[realm.id] = min(10.0, 2.0 * n)
+        survivors = bool(result.fled)
+        place = w.area_at(game.player.x, game.player.y)
+        where = place.name if place is not None else "the road"
+        know(game, fid)
+        deed(game, f"fought {f.name}", amounts, immediate=(fid,) if survivors else (), fame=max(1, n // 2),
+             importance=1 if n < 4 else 2, news_text=f"{game.leader.name} cut down {n} of {f.name} in {where}")
+
+
+def realm_here(game):
+    """The realm whose lands the player stands in (None in the wild)."""
+    lord = fx.lord_at(game.world, game.player.x, game.player.y) if game.world.factions else None
+    if lord is None or lord.kind == "tribe":
+        return None
+    return fx.top_liege(game.world, lord)
+
+
+# ---------------------------------------------------------------------------- membership and titles
+def rank(game, fid: int) -> int | None:
+    if fid not in game.renown.members:
+        return None
+    thresholds = game.tables.law["rank_standing"]
+    score = standing(game, fid)
+    return max(0, sum(1 for t in thresholds if score >= t) - 1)
+
+
+def rank_name(game, fid: int) -> str:
+    f = game.world.factions.get(fid)
+    r = rank(game, fid)
+    if f is None or r is None:
+        return ""
+    spec = game.tables.law["join"].get(f.kind)
+    return spec["ranks"][min(r, len(spec["ranks"]) - 1)] if spec else "member"
+
+
+def join_problem(game, f) -> str | None:
+    """Why the player can't join a faction (None if they can)."""
+    from realmwalker.rules.items import money_text
+
+    spec = game.tables.law["join"].get(f.kind)
+    if spec is None:
+        return "they do not take members"
+    if f.id in game.renown.members:
+        return "you are already one of them"
+    c = game.leader
+    if standing(game, f.id) < spec["standing"]:
+        return f"they need to think better of you first (at least {spec['standing']:+d})"
+    if spec.get("skill") and spec["skill"] not in c.skills:
+        return f"they want someone trained in {spec['skill'].replace('_', ' ')}"
+    if spec.get("tool") and spec["tool"] not in c.tools:
+        return f"they want someone who knows {game.tables.rules['tools'].get(spec['tool'], spec['tool'])}"
+    if spec.get("classes") and c.cls not in spec["classes"]:
+        return "they don't want your kind"
+    if spec.get("faith") and fx.faith_for_culture(game.tables, c.culture) != f.faith:
+        return "you are not of their faith"
+    if sum(m.money for m in game.party) < spec["fee"]:
+        return f"the fee is {money_text(spec['fee'])}"
+    return None
+
+
+def join(game, f) -> str:
+    from realmwalker.game.law import take_money
+    from realmwalker.rules.items import money_text
+
+    problem = join_problem(game, f)
+    if problem:
+        return f"You can't join: {problem}."
+    spec = game.tables.law["join"][f.kind]
+    take_money(game, spec["fee"])
+    game.renown.members[f.id] = 0
+    change_standing(game, f.id, 10)
+    know(game, f.id)
+    fee = f" (the fee: {money_text(spec['fee'])})" if spec["fee"] else ""
+    return f"<good>You are sworn into {f.name}</> as {rank_name(game, f.id)}{fee}."
+
+
+def member_discount(game, factions) -> float:
+    """Price cut for members of the seller's guild or church."""
+    best = 0.0
+    for f in factions:
+        r = rank(game, f.id)
+        spec = game.tables.law["join"].get(f.kind)
+        if r is not None and spec:
+            best = max(best, float(spec.get("discount", 0)) * (1 + r * 0.5))
+    return min(0.3, best)
+
+
+def title_problem(game, realm) -> str | None:
+    spec = game.tables.law["titles"]
+    if realm.kind not in spec["names"]:
+        return "they grant no titles"
+    if any(t.get("realm") == realm.id for t in game.renown.flags.get("titles", [])):
+        return "they have already honoured you"
+    if standing(game, realm.id) < spec["standing"]:
+        return "you are not honoured enough here"
+    if game.renown.fame < spec["fame"]:
+        return "you are not famous enough"
+    return None
+
+
+def grant_title(game, realm) -> str:
+    problem = title_problem(game, realm)
+    if problem:
+        return f"No title for you: {problem}."
+    names = game.tables.law["titles"]["names"][realm.kind]
+    title = names[0] if game.leader.sex == "male" else names[1]
+    game.renown.flags.setdefault("titles", []).append({"realm": realm.id, "title": title})
+    game.renown.fame += 5
+    return f"<good>You kneel, and rise as {title} {game.leader.name}</>, honoured by {realm.name}."
+
+
+def titles(game) -> list[str]:
+    return [t["title"] for t in game.renown.flags.get("titles", [])]
 
 
 # ---------------------------------------------------------------------------- knowing about factions
