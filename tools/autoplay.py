@@ -54,6 +54,7 @@ class AutoplayReport:
     events: int = 0
     talks: int = 0
     crimes: int = 0
+    hires: int = 0
     battle_turns: int = 0
     elapsed: float = 0.0
 
@@ -68,7 +69,7 @@ class AutoplayReport:
             f"  AI requests: {self.ai_stats}  mock chat calls: {self.mock_calls}",
             f"  turns inside a game: {self.game_turns}  save/load round trips checked: {self.save_checks}",
             f"  fights started by the bot: {self.fights}  travel events: {self.events}  talks: {self.talks}  "
-            f"crimes: {self.crimes}  turns spent in battle: {self.battle_turns}",
+            f"crimes: {self.crimes}  companions hired: {self.hires}  turns spent in battle: {self.battle_turns}",
             "  RESULT: " + ("OK" if self.ok else f"FAILED ({len(self.errors)} problems)"),
         ]
         lines += [f"    - {e}" for e in self.errors[:20]]
@@ -216,6 +217,7 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
                     fail(f"{f.name} is in an unknown state {f.state!r}")
         _check_factions(game, fail)
         _check_law(game, fail)
+        _check_companions(game, fail)
         if not game.leader.alive and game.over is None and b is None and game.aftermath is None:
             fail("the leader is dead but the game goes on")
         if game.over is None and any(not c.alive for c in game.party) and b is None and game.aftermath is None:
@@ -272,6 +274,27 @@ def _check_factions(game, fail) -> None:
         fail(f"a negative bounty: {r.bounties}")
     if any(fid not in w.factions for fid in r.known):
         fail("the player knows of a faction that does not exist")
+
+
+def _check_companions(game, fail) -> None:
+    """M7: a party of at most five, loyalty in range, companions tied to real townsfolk."""
+    if len(game.party) > 1 + int(game.tables.companions["max_companions"]):
+        fail(f"the party is too big ({len(game.party)})")
+    if game.party and game.party[0].companion:
+        fail("a companion is leading the party")
+    for c in list(game.party[1:]) + list(getattr(game, "waiting", [])):
+        k = c.companion
+        if not k:
+            fail(f"{c.name} travels with you but is no companion")
+            continue
+        if not 0 <= k.get("loyalty", -1) <= 100:
+            fail(f"{c.name} has loyalty {k.get('loyalty')}")
+        if k.get("npc") not in game.world.npcs:
+            fail(f"{c.name} came from nowhere")
+        if c in getattr(game, "waiting", []) and not k.get("wait_at"):
+            fail(f"{c.name} is waiting nowhere")
+        if not c.alive:
+            fail(f"dead {c.name} is still in the party")
 
 
 def _check_law(game, fail) -> None:
@@ -334,12 +357,22 @@ def _start_a_fight(app: App, rng: random.Random, report: AutoplayReport) -> None
 
         here = game.world.settlement_at(game.player.x, game.player.y)
         if here is None:
-            here = rng.choice(game.world.settlements)
+            towns = [t for t in game.world.settlements if t.kind in ("town", "city")]
+            here = rng.choice(towns if towns and rng.random() < 0.6 else game.world.settlements)
             game.player.local_key = None
             game.player.x, game.player.y = here.x, here.y
         if not game.in_local:
             game.enter_local()
         people = [n for n in npcs_in(game.world, here.id) if n.alive and n.present]
+        hires = [n for n in people if n.flags.get("recruit") and not n.flags.get("companion")]
+        if hires and rng.random() < 0.5 and len(game.party) < 3:
+            from realmwalker.game import companions
+
+            game.leader.money += 5000
+            hires[0].met, hires[0].disposition = True, max(hires[0].disposition, 10)
+            if companions.hire(game, hires[0]) and hires[0].flags.get("companion"):
+                report.hires += 1
+            return
         if people and rng.random() < 0.25 and game.world.factions:
             # Now and then the bot breaks the law in front of the watch (or not), to exercise arrests and sentences.
             from realmwalker.game import law

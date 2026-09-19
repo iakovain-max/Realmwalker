@@ -106,18 +106,20 @@ class Town:
     visited: int = -1  # world minute of the first visit
     seen: bool = False  # the description has been shown (so it is never replaced)
     names_seen: list[int] = field(default_factory=list)  # buildings whose sign the player has read
+    flags: dict = field(default_factory=dict)
 
     def to_dict(self) -> dict:
         return {"settlement": self.settlement, "npcs": list(self.npcs), "description": self.description,
                 "description_source": self.description_source, "names": {str(k): v for k, v in self.names.items()},
                 "shops": {str(k): v for k, v in self.shops.items()}, "visited": self.visited, "seen": self.seen,
-                "names_seen": list(self.names_seen)}
+                "names_seen": list(self.names_seen), "flags": self.flags}
 
     @classmethod
     def from_dict(cls, d: dict) -> Town:
         return cls(d["settlement"], list(d.get("npcs", [])), d.get("description", ""), d.get("description_source", ""),
                    {int(k): v for k, v in d.get("names", {}).items()}, {int(k): v for k, v in d.get("shops", {}).items()},
-                   d.get("visited", -1), bool(d.get("seen", False)), list(d.get("names_seen", [])))
+                   d.get("visited", -1), bool(d.get("seen", False)), list(d.get("names_seen", [])),
+                   dict(d.get("flags", {})))
 
 
 # ---------------------------------------------------------------------------- the world's registry
@@ -363,6 +365,62 @@ def link_figures(game, town: Town, settlement, lm, inside, rng: RNG) -> None:
             add(w, town, npc)
         if npc is not None:
             become_figure(game, npc, fig, rng.child(f"figure/{fig.id}"))
+
+
+TRAVELLERS = {"hamlet": (0, 0), "village": (0, 1), "town": (1, 2), "city": (2, 3), "hold": (0, 1), "elfhall": (0, 1)}
+TRAVELLER_DAYS = 30
+
+
+def refresh_travellers(game, lm, settlement) -> None:
+    """Travellers looking for work come and go at the inns, a new lot every month or so. In a mercenary
+    company's home town some of its sell-swords are free to hire."""
+    from realmwalker.world import factions as fx
+
+    world = game.world
+    town = world.towns.get(settlement.id)
+    if town is None or not town.npcs or lm.kind != "settlement" or not getattr(game.tables, "companions", None):
+        return
+    day = game.moment.total_days
+    if day - int(town.flags.get("travellers_day", -10**6)) < TRAVELLER_DAYS:
+        return
+    town.flags["travellers_day"] = day
+    for n in npcs_in(world, settlement.id):
+        if n.job == "adventurer" and not n.flags.get("companion") and n.alive:
+            n.alive = False  # moved on (they are not dead; they are simply gone from here)
+            n.present = False
+            n.flags["moved_on"] = True
+    inns = [i for i, b in enumerate(lm.buildings) if b.kind == "inn"]
+    if not inns:
+        return
+    rng = world.rng.child(f"travellers/{settlement.id}/{day}")
+    arch = game.tables.companions["archetypes"]
+    at_inn = [a for a, spec in arch.items() if "inn" in spec["where"]]
+    lo, hi = TRAVELLERS.get(settlement.kind, (0, 1))
+    count = rng.randint(lo, hi)
+    company = next((f for f in fx.active_factions(world, "mercenary_company") if f.seat == settlement.id), None)
+    walk = game.tables.terrain.walk[game.remap_for(lm)[lm.terrain]]
+    taken = {(n.x, n.y) for n in npcs_in(world, settlement.id)}
+    for i in range(count + (2 if company is not None else 0)):
+        from_company = company is not None and i >= count
+        pool = [a for a, spec in arch.items() if "company" in spec["where"]] if from_company else at_inn
+        a = rng.weighted(pool, [float(arch[x]["weight"]) for x in pool])
+        bi = rng.choice(inns)
+        b = lm.buildings[bi]
+        cells = [(int(x), int(y)) for x in range(b.x + 1, b.x + b.w - 1) for y in range(b.y + 1, b.y + b.h - 1)
+                 if walk[x, y] and (x, y) not in taken]
+        if not cells:
+            continue
+        spot = rng.choice(cells)
+        taken.add(spot)
+        npc = make_npc(game, settlement, "adventurer", rng.child(f"traveller/{i}"), building=bi, post=spot, home=spot)
+        npc.title = arch[a]["name"]
+        npc.flags["recruit"] = a
+        if from_company:
+            npc.flags["company"] = company.id
+            npc.title = f"sell-sword of {company.name}"
+        npc.profile["backstory"] = rng.choice(arch[a]["story"])
+        add(world, town, npc)
+    update_positions(game, lm)
 
 
 def refresh_figures(game, lm, settlement) -> None:

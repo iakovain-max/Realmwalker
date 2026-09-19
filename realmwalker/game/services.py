@@ -186,6 +186,10 @@ def perform(game, npc: NPC, sid: str, arg: str | None = None) -> list[str]:
     c = game.leader
     handler = HANDLERS[sid]
     msgs = handler(game, npc, svc, arg)
+    if sid in ("prayer_healing", "cure_disease") and game.party[1:]:
+        from realmwalker.game.companions import react
+
+        react(game, "prayer", quiet=True)
     game.dirty = True
     npc.remember(f"did business with the traveller on {game.moment.date_text()}")
     return msgs

@@ -67,6 +67,11 @@ def start_battle(game, creatures: list[Creature], intro: str, *, surprised: str 
                     show_dice=getattr(game, "show_dice", True), title=title, now=game.world.time)
     battle.start(intro)
     game.battle = battle
+    others = [c for c in game.party[1:] if c.alive]
+    if others and rng.chance(0.4):
+        from realmwalker.game.companions import say
+
+        say(game, "battle", rng.choice(others))
     game.battle_actor = actor
     game.encounter = None
     game.travel = None
@@ -89,6 +94,13 @@ def finish_battle(game) -> Aftermath:
             lm.actors.remove(actor)
     after = Aftermath(result.outcome, "")
     _settle_townsfolk(game, battle, result)
+    if game.party[1:]:
+        from realmwalker.game.companions import react
+
+        tags = {"victory": ("victory",), "fled": ("fleeing",), "surrendered": ("surrender",)}.get(result.outcome, ())
+        if result.outcome == "victory" and result.xp >= 100:
+            tags += ("hard_fight",)
+        react(game, *tags)
     if result.outcome in ("victory", "parley") and game.world.factions:
         from realmwalker.game.reputation import battle_deeds
 
@@ -164,8 +176,11 @@ def finish_battle(game) -> Aftermath:
             lm.actors.remove(actor)
     leader_alive = game.party and game.party[0].alive
     if dead_party and leader_alive:
+        from realmwalker.game.companions import died
+
         for c in dead_party:
             after.notes.append(f"<danger>{c.name} is dead.</>")
+            died(game, c)
         game.party = [c for c in game.party if c.alive]
     elif not leader_alive and game.over is None:
         game.over = {"cause": "died of wounds after a fight", "place": battle.env.ground}
@@ -329,8 +344,13 @@ def take_loot(game, items: list[Item] | None = None, money: bool = True) -> list
             add_existing(leader, game.tables.items, it)
             taken.append(game.tables.items.name(it))
     if money and after.money:
-        leader.money += after.money
-        taken.append(money_text(after.money))
+        from realmwalker.game.companions import react, share_loot
+
+        kept = share_loot(game, after.money)
+        leader.money += kept
+        taken.append(money_text(after.money) + (f" (your share {money_text(kept)})" if kept != after.money else ""))
+        if game.party[1:]:
+            react(game, "loot", quiet=True)
         after.money = 0
     game.dirty = True
     return taken
@@ -414,6 +434,11 @@ def decide_captive(game, creature: Creature, fate: str) -> str:
         leader.kills[game.tables.creatures[creature.def_id]["name"]] = leader.kills.get(game.tables.creatures[creature.def_id]["name"], 0) + 1
     after.fates[creature.uid] = fate
     game.say(text, "info" if fate != "execute" else "danger")
+    if game.party[1:]:
+        from realmwalker.game.companions import react
+
+        react(game, *{"spare": ("mercy",), "rob": ("robbing_surrendered",), "execute": ("execution", "cruelty"),
+                      "interrogate": ()}.get(fate, ()))
     game.dirty = True
     return text
 
@@ -455,11 +480,27 @@ def rest(game, kind: str) -> list[str]:
                     notes.append("Eyes glint beyond the firelight in the night, but they do not come closer.")
                     enc = None
             if enc is not None:
-                enc.asleep = True
+                from realmwalker.game.companions import watching
+
+                if watching(game):
+                    enc.asleep = False
+                    notes.append("<warn>The one on watch shakes you awake: something is coming.</>")
+                else:
+                    enc.asleep = True
                 enc.spotted_first = False
                 game.encounter = enc
                 notes.append(f"<danger>Your rest is broken after {hour + 1} hour{'s' if hour else ''}.</>")
                 return notes
+    if kind == "long" and lm is None and game.party[1:]:
+        from realmwalker.game import camp as camping
+        from realmwalker.game import companions
+
+        for c in companions.foragers(game):
+            notes += camping.forage_while_resting(game, c)
+        companions.react(game, "rest", quiet=True)
+        talkers = companions.companions(game)
+        if talkers and rng.chance(0.35):
+            notes.append(companions.line(game, "camp", rng.choice(talkers), rng))
     for c in game.party:
         if kind == "short":
             notes += progression.short_rest(c, game.tables, rng)

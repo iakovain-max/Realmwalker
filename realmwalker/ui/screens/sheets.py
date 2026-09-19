@@ -344,6 +344,25 @@ class InventoryScreen(Screen):
         else:
             self.toggle_equip()
 
+    def give(self) -> None:
+        """Hand the chosen thing to the next member of the party."""
+        it = self.current()
+        if it is None or len(self.game.party) < 2:
+            return
+        from realmwalker.rules.inventory import add_existing, remove_item
+
+        c = self.char
+        if c.slot_of(it.uid) is not None:
+            self.game.say("Take it off first.", "system")
+            return
+        other = self.game.party[(self.index + 1) % len(self.game.party)]
+        taken = remove_item(c, it.uid, it.qty)
+        if taken is not None:
+            add_existing(other, self.game.tables.items, taken)
+            self.game.say(f"{c.name.split()[0]} gives {self.game.tables.items.name(taken)} to "
+                          f"{other.name.split()[0]}.", "info")
+            self.game.dirty = True
+
     def eat(self, it: Item) -> None:
         from realmwalker.game.survival import eat_item
 
@@ -468,6 +487,10 @@ class InventoryScreen(Screen):
         bx = canvas.button(bx + 3, h - 3, "Drop", self.drop, hotkey="d")
         bx = canvas.button(bx + 3, h - 3, "Drop one", lambda: self.drop(False), hotkey="D")
         bx = canvas.button(bx + 3, h - 3, "Equipment", lambda: self.app.replace(EquipmentScreen(self.app, g, self.index)), hotkey="e")
+        if len(g.party) > 1:
+            other = g.party[(self.index + 1) % len(g.party)].name.split()[0]
+            bx = canvas.button(bx + 3, h - 3, f"Give to {other}", self.give, hotkey="G")
+            bx = canvas.button(bx + 3, h - 3, "Next member", lambda: self.handle_key(KeyEvent("tab")), hotkey="Tab")
         canvas.button(bx + 3, h - 3, "Back", self.close, hotkey="Esc")
 
     def _set_filter(self, i: int) -> None:
@@ -510,6 +533,11 @@ class InventoryScreen(Screen):
             self.app.replace(EquipmentScreen(self.app, self.game, self.index))
         elif ev.key == "c":
             self.app.replace(CharacterScreen(self.app, self.game, self.index))
+        elif ev.key == "G":
+            self.give()
+        elif ev.key == "tab" and len(self.game.party) > 1:
+            self.index = (self.index + 1) % len(self.game.party)
+            self.selected = 0
         else:
             return False
         return True

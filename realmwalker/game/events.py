@@ -191,6 +191,10 @@ def apply_outcome(game, out: dict, rng: RNG) -> list[str]:
 
             realm = realm_here(game)
             deed(game, out["deed"], {realm.id: 2.0} if realm is not None else {}, fame=1)
+            if game.party[1:]:
+                from realmwalker.game.companions import react
+
+                react(game, "charity" if int(out.get("money", 0)) < 0 else "help_poor")
         else:
             leader.deeds.append(out["deed"])
     if out.get("news"):

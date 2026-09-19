@@ -1,0 +1,47 @@
+{
+  "_comment": "Companions (M7). archetypes: the sorts of people who will travel with you: their classes and background, their values (what they like and hate you doing, see values), what they want (pay, a share of the loot, a cause, knowledge, revenge), where they are found (inn, company), and how often. values: deed tags each value likes or hates (the game tags what you do: mercy, execution, theft...). wage: copper a day, base plus per level; share: part of the loot money for those who want loot. loyalty: 0 to 100; below 'complain' they grumble, below 'desert' they may leave in the night (taking something), above 'devoted' they will follow you anywhere. lines: what they say ({name} is the speaker, {leader} you).",
+  "max_companions": 4,
+  "archetypes": {
+    "sellsword": {"name": "sell-sword", "classes": ["fighter"], "background": "soldier", "values": ["mercenary", "brave"], "want": "pay", "where": ["inn", "company"], "weight": 4, "story": ["Fought for three lords and was paid by one.", "Left a free company after a quarrel over a dead man's boots.", "Has a scar for every border in the region."]},
+    "old_soldier": {"name": "old soldier", "classes": ["fighter"], "background": "soldier", "values": ["honourable", "lawful"], "want": "pay", "where": ["inn"], "weight": 2, "story": ["Too old for the lord's levy, too stubborn to stop.", "Buried a whole company in the last war and walked home alone."]},
+    "hedge_wizard": {"name": "hedge wizard", "classes": ["wizard"], "background": "sage", "values": ["learned", "cautious"], "want": "knowledge", "where": ["inn"], "weight": 2, "story": ["Was thrown out of a circle of mages for asking the wrong questions.", "Taught themselves from a stolen book, and it shows."]},
+    "wandering_priest": {"name": "wandering priest", "classes": ["cleric"], "background": "acolyte", "values": ["devout", "compassionate"], "want": "cause", "where": ["inn"], "weight": 2, "story": ["Walks the roads to tend the dying where no priest will go.", "Left a rich temple to do what the god actually asked."]},
+    "zealot": {"name": "zealot", "classes": ["cleric"], "background": "acolyte", "values": ["devout", "cruel"], "want": "cause", "where": ["inn"], "weight": 1, "story": ["Hunts witches, and has found a great many.", "Burned the heretics of their own village, and would do it again."]},
+    "cutpurse": {"name": "cutpurse", "classes": ["rogue"], "background": "criminal", "values": ["greedy", "rebel"], "want": "loot", "where": ["inn"], "weight": 3, "story": ["Owes money to people who break fingers.", "Grew up in the gutters and means never to go back."]},
+    "outlaw_hunter": {"name": "outlaw hunter", "classes": ["fighter", "rogue"], "background": "outlander", "values": ["brave", "compassionate"], "want": "revenge", "where": ["inn", "company"], "weight": 2, "story": ["Bandits burned the family farm; they have been hunting bandits since.", "Lost a brother on the road and wants the men who did it."]},
+    "runaway_serf": {"name": "runaway serf", "classes": ["rogue", "fighter"], "background": "folk_hero", "values": ["rebel", "compassionate"], "want": "cause", "where": ["inn"], "weight": 2, "story": ["Ran from a cruel lord's fields, with his bailiff's blood on their hands.", "Wants to see the high and mighty brought low."]}
+  },
+  "values": {
+    "devout": {"label": "devout", "likes": ["prayer", "mercy", "help_poor", "cult_hunted"], "hates": ["desecration", "heresy", "forbidden_magic", "cult", "murder"]},
+    "mercenary": {"label": "in it for the money", "likes": ["paid", "loot", "victory"], "hates": ["unpaid", "fleeing", "charity"]},
+    "compassionate": {"label": "kind", "likes": ["mercy", "help_poor", "healing"], "hates": ["cruelty", "execution", "murder", "robbing_surrendered"]},
+    "honourable": {"label": "honourable", "likes": ["mercy", "victory", "paying_debts", "prisoners_to_law"], "hates": ["theft", "murder", "execution", "robbing_surrendered", "jailbreak"]},
+    "lawful": {"label": "law-abiding", "likes": ["paying_debts", "prisoners_to_law"], "hates": ["theft", "murder", "assault", "jailbreak", "smuggling", "forbidden_magic"]},
+    "rebel": {"label": "no friend of lords", "likes": ["theft", "jailbreak", "defiance"], "hates": ["cruelty", "title"]},
+    "greedy": {"label": "greedy", "likes": ["loot", "theft", "paid"], "hates": ["charity", "unpaid"]},
+    "cruel": {"label": "cruel", "likes": ["execution", "cruelty", "cult_hunted"], "hates": ["mercy", "charity"]},
+    "brave": {"label": "brave", "likes": ["victory", "hard_fight"], "hates": ["fleeing", "surrender"]},
+    "learned": {"label": "learned", "likes": ["discovery", "scroll", "ruins"], "hates": ["forbidden_magic"]},
+    "cautious": {"label": "cautious", "likes": ["rest", "fleeing"], "hates": ["hard_fight"]}
+  },
+  "reactions": {"likes": 6, "hates": -8},
+  "wage": {"base": 40, "per_level": 25, "upfront_days": 3},
+  "share": 0.2,
+  "loyalty": {"start": 55, "complain": 30, "desert": 12, "devoted": 80},
+  "lines": {
+    "hired": ["\"Right. Where are we going, then?\"", "\"I'll get my things. They won't take long.\"", "\"Pay me on time and you'll have no trouble from me.\""],
+    "approve": ["\"That was well done.\"", "\"Good. That's the right way.\"", "{name} nods, as if something has been settled.", "\"I'll remember that.\""],
+    "disapprove": ["\"That was wrong, and you know it.\"", "{name} spits and looks away.", "\"I didn't sign on for that.\"", "\"Do that again and we'll talk.\""],
+    "complain": ["\"I'm starting to wonder why I'm here.\"", "{name} walks apart from the rest of you today.", "\"There are other roads, you know. Other people to walk them with.\""],
+    "unpaid": ["\"My purse is as light as yesterday. Lighter.\"", "\"We agreed on a wage. I remember. Do you?\""],
+    "desert": ["In the morning {name} is gone, and so is some of your coin.", "{name} slipped away in the night. They did not go empty-handed."],
+    "leave": ["\"Well. It was something.\" {name} shoulders their pack and goes.", "{name} takes their pay and walks off without looking back."],
+    "devoted": ["\"Wherever you go, {leader}. I mean it.\"", "{name} has stopped counting the days. They will follow you anywhere now."],
+    "battle": ["\"Here they come!\"", "\"Stay close!\"", "{name} spits on their hands and grips their weapon.", "\"Not today. Not me.\""],
+    "camp": ["{name} stares into the fire and says nothing for a long time.", "{name} tells a story about a pig, a priest and a flooded ford. Nobody laughs; everybody grins.", "{name} checks their gear twice before sleeping.", "\"Strange country, this. I don't like the quiet.\""],
+    "level_up": ["\"I'm getting better at this. Don't tell anyone.\"", "{name} moves like someone who has survived a lot of mornings."],
+    "mood_good": ["\"Better than I've been in years, if you want the truth.\"", "\"No complaints. Well. Few.\""],
+    "mood_fair": ["\"I'm here, aren't I?\"", "\"Could be worse. Could be better.\""],
+    "mood_bad": ["\"Since you ask: not well. Not well at all.\"", "\"Don't pretend you care.\""]
+  }
+}

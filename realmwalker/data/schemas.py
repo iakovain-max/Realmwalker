@@ -593,3 +593,26 @@ POLITICS_RATES = ("war_base", "war_hostility", "war_battles_per_month", "peace_a
                   "dragon", "assassination", "marriage", "relation_drift", "military_regrowth", "treaty")
 
 DATA_FILES.update({"politics.json": POLITICS})
+
+# ---------------------------------------------------------------------------- companions (M7)
+ARCHETYPE = Obj({"name": Str(max_len=40), "classes": word_list(1, 30), "background": Str(max_len=30),
+                 "values": word_list(1, 30), "want": Str(choices=["pay", "loot", "cause", "knowledge", "revenge"]),
+                 "where": List(Str(choices=["inn", "company"]), min_items=1), "weight": Float(min=0, max=100),
+                 "story": word_list(1, 300)})
+COMPANIONS = Obj(
+    {
+        "max_companions": Int(min=0, max=8),
+        "archetypes": Map(ARCHETYPE, min_items=1),
+        "values": Map(Obj({"label": Str(max_len=40), "likes": word_list(0, 40), "hates": word_list(0, 40)})),
+        "reactions": Obj({"likes": Float(min=0, max=50), "hates": Float(min=-50, max=0)}),
+        "wage": Obj({"base": Int(min=0), "per_level": Int(min=0), "upfront_days": Int(min=0, max=60)}),
+        "share": Float(min=0, max=1),
+        "loyalty": Obj({"start": Int(min=0, max=100), "complain": Int(min=0, max=100), "desert": Int(min=0, max=100),
+                        "devoted": Int(min=0, max=100)}),
+        "lines": Map(word_list(1, 300)),
+    }
+)
+COMPANION_LINES = ("hired", "approve", "disapprove", "complain", "unpaid", "desert", "leave", "devoted", "battle",
+                   "camp", "level_up", "mood_good", "mood_fair", "mood_bad")
+
+DATA_FILES.update({"companions.json": COMPANIONS})

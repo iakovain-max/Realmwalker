@@ -157,6 +157,10 @@ def hand_over(game, npc) -> str:
         if fid in w_factions(game):
             amounts[fid] = amounts.get(fid, 0.0) - 6.0
     names = ", ".join(c["name"] for c in captives[:3]) + (" and the rest" if len(captives) > 3 else "")
+    if game.party[1:]:
+        from realmwalker.game.companions import react
+
+        react(game, "prisoners_to_law")
     reputation.deed(game, f"handed {len(captives)} prisoner(s) to the law", amounts,
                     immediate=(realm.id,) if realm is not None else (), fame=len(captives),
                     importance=1 + (len(captives) >= 3),

@@ -138,6 +138,31 @@ def _check_faction_refs(files: dict[str, Any]) -> list[str]:
             errors.append(f"data/factions.json: culture_laws needs laws for the '{culture}' people.")
     errors.extend(_check_law_refs(files, cultures))
     errors.extend(_check_politics_refs(files))
+    errors.extend(_check_companion_refs(files))
+    return errors
+
+
+def _check_companion_refs(files: dict[str, Any]) -> list[str]:
+    from realmwalker.data.schemas import COMPANION_LINES
+
+    data = files.get("companions.json")
+    if not data:
+        return []
+    errors: list[str] = []
+    classes = set(files.get("classes.json", {}).get("classes", {}))
+    backgrounds = set(files.get("backgrounds.json", {}).get("backgrounds", {}))
+    for aid, a in data["archetypes"].items():
+        for cls in a["classes"]:
+            if classes and cls not in classes:
+                errors.append(f"data/companions.json: archetypes.{aid} names unknown class {cls!r}.")
+        if backgrounds and a["background"] not in backgrounds:
+            errors.append(f"data/companions.json: archetypes.{aid} names unknown background {a['background']!r}.")
+        for v in a["values"]:
+            if v not in data["values"]:
+                errors.append(f"data/companions.json: archetypes.{aid} has value {v!r}, which is not in 'values'.")
+    for kind in COMPANION_LINES:
+        if kind not in data["lines"]:
+            errors.append(f"data/companions.json: lines needs '{kind}'.")
     return errors
 
 

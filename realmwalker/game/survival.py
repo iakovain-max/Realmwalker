@@ -109,6 +109,9 @@ def check_death(game, char: Character) -> None:
         game.travel = None
     else:
         game.party = [c for c in game.party if c.alive]
+        from realmwalker.game.companions import died
+
+        died(game, char)
 
 
 def death_cause(char: Character, exhausted: bool) -> str:
@@ -140,7 +143,8 @@ def spoiled(game, item) -> bool:
 def food_choices(game, char: Character, *, desperate: bool = False, fire: bool = False) -> list:
     """Food this character would eat now, best first (whatever spoils soonest, safe food before risky)."""
     out = []
-    for it in char.inventory:
+    packs = [char] + [m for m in getattr(game, "party", []) if m is not char]  # own pack first, then the others'
+    for it in (it for m in packs for it in m.inventory):
         d = game.tables.items.get(it.def_id)
         food = d.get("food")
         if not food:
@@ -161,7 +165,8 @@ def eat_item(game, char: Character, item, units: int = 1) -> str:
     food = d.get("food", {})
     risky_spoiled = spoiled(game, item)
     raw = bool(food.get("raw"))
-    removed = remove_item(char, item.uid, units)
+    owner = next((m for m in getattr(game, "party", []) if any(it is item for it in m.inventory)), char)
+    removed = remove_item(owner, item.uid, units)
     if removed is None:
         return ""
     body.eat(char, float(food.get("nutrition", 0.3)) * removed.qty)
@@ -177,7 +182,8 @@ def eat_item(game, char: Character, item, units: int = 1) -> str:
 
 def water_sources(game, char: Character) -> list:
     """Containers with water in them, cleanest first."""
-    skins = [it for it in char.inventory if it.fill > 0 and container_capacity(game.tables.items, it)]
+    packs = [char] + [m for m in getattr(game, "party", []) if m is not char]
+    skins = [it for m in packs for it in m.inventory if it.fill > 0 and container_capacity(game.tables.items, it)]
     return sorted(skins, key=lambda it: WATER_RISK.get(it.fill_kind, 2))
 
 

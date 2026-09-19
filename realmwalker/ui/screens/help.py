@@ -54,8 +54,9 @@ Choose <loot>New World</> on the title screen, pick a size and seed, and the lan
 Roads are much faster than open country. Forests, hills and marshes are slow; mountains very slow. Rivers without a bridge must be waded. Any key stops a journey.
 
 <title>Your character</title>
-  <loot>c</>               Character sheet: abilities, skills, features, ties, backstory
-  <loot>i</>               Inventory: Enter wears/wields/removes, d drops, D drops one, ← → filters, s sorts
+  <loot>c</>               Character sheet: abilities, skills, features, ties, backstory (<loot>l</> level-up choices, <loot>Tab</> next member)
+  <loot>p</>               The party: companions, their loyalty, pay and orders
+  <loot>i</>               Inventory: Enter wears/wields/removes/uses, d drops, D drops one, ← → filters, s sorts, G gives to the next member, Tab next member
   <loot>e</>               Equipment: what you wear in each slot, which body parts are protected, warmth
   <loot>g</> or <loot>,</>          Pick up what is lying here (on foot, in the close view)
 Carrying weight matters: worn armour and clothes count half. Above your limit you are slowed; far above it you cannot walk. Coins weigh too.
@@ -63,6 +64,15 @@ Carrying weight matters: worn armour and clothes count half. Above your limit yo
   <loot>h</>               Health: needs, warmth, blood, pain, wounds and their treatment, sickness
   <loot>w</>               Fill your waterskins (and drink) at a well, river or lake
   <loot>W</>               Wash (at water)
+
+<title>Levels and spells</title>
+Experience comes from fights, deeds and discovery. On a new level you gain hit points and features at once; the choices wait for you on the level-up screen, which opens by itself (or later: c, then l): a path at level 2 or 3 (Champion or Knight, Thief or Cutthroat, a wizard's school), ability increases at levels 4 and 8 (+2 to one or +1 to two), and a wizard's new spells and cantrips. "Choose for me" makes sensible choices.
+Spell scrolls are sold where mages gather. A wizard can copy one into the spellbook (Enter on it in the pack: an Arcana check, 50 gold crowns and two hours a spell level; the scroll is used up either way). Anyone can read a scroll aloud once in a fight, from the spell menu (a check if it is not their kind of magic).
+
+<title>Companions</title>
+Travellers looking for work wait at the inns (and sell-swords in a mercenary company's town). Talk to them: "Would you travel with me?" shows their price: a daily wage, some of it up front, and for some a share of the loot. Up to four can travel with you. They are whole people, with needs, wounds, sicknesses and a class and level of their own, and they can die. In a fight you command each of them.
+Each has values: a devout priest hates desecration and heresy, a sell-sword wants pay and victories, a kind soul hates cruelty, an honourable one hates theft and murder, and so on. What you do raises or lowers their loyalty, and they say so. Unpaid wages sour them fast. An unhappy companion grumbles; a mutinous one slips away in the night with some of your coin; a devoted one will follow you anywhere.
+On the party screen (p): Talk, give Orders (follow, keep watch when you camp so you are not caught asleep, forage while the others sleep, or wait at this spot until you come back), Raise their pay, or Dismiss them. The party shares its food and water.
 
 <title>Staying alive</title>
 Your body matters as much as your sword. The side panel shows anything that is wrong.

@@ -57,6 +57,10 @@ def copy_scroll(game, char, item) -> list[str]:
     bonus = sheet.skill_bonus("arcana")
     dc = 10 + level
     check = f"<dim>(Arcana {roll} {bonus:+d} = {roll + bonus} vs DC {dc})</>"
+    if game.party[1:]:
+        from realmwalker.game.companions import react
+
+        react(game, "scroll", quiet=True)
     if roll + bonus >= dc:
         char.spells.setdefault("spellbook", []).append(sid)
         game.dirty = True

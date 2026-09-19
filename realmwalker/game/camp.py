@@ -193,6 +193,27 @@ def boil_water(game) -> list[str]:
 
 
 # ---------------------------------------------------------------------------- living off the land
+def forage_while_resting(game, forager) -> list[str]:
+    """A companion told to forage looks for food around the camp while the rest of you sleep."""
+    if game.world.settlement_at(game.player.x, game.player.y) is not None:
+        return []
+    spec = game.tables.camping["forage"].get(land(game))
+    if spec is None:
+        return []
+    dc = int(spec["dc"]) + (int(spec.get("winter_dc", 0)) if game.moment.season == "winter" else 0)
+    rng = game.world.rng.child(f"camp-forage/{forager.name}/{game.world.time}")
+    roll = dice.d20(rng).natural + game.sheet(forager).skill_bonus("survival")
+    who = forager.name.split()[0]
+    if roll < dc:
+        return [f"{who} forages around the camp and finds nothing worth eating."]
+    found = []
+    for item_id, amount in spec["find"]:
+        n = max(1, dice.roll(str(amount), rng).total)
+        add_item(forager, game.tables.items, item_id, n, made_at=game.world.time)
+        found.append(f"{game.tables.items.get(item_id)['name']}" + (f" ×{n}" if n > 1 else ""))
+    return [f"{who} forages around the camp: {', '.join(found)}."]
+
+
 def forage(game) -> list[str]:
     if game.world.settlement_at(game.player.x, game.player.y) is not None:
         return ["There is nothing to forage in a town: buy food instead."]

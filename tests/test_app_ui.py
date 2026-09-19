@@ -704,3 +704,37 @@ def test_the_level_up_window(make_app, size):
     render(app, size)
     assert not game.leader.pending
     assert app.error_count == 0
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_the_party_window(make_app, size):
+    from realmwalker.game import companions
+    from realmwalker.game.people import npcs_in
+    from realmwalker.ui.screens.party import PartyScreen
+
+    app = make_app()
+    start_small_world(app)
+    game = app.game
+    game.leader.money = 100000
+    for s in game.world.settlements:
+        if s.kind not in ("town", "city"):
+            continue
+        game.player.local_key = None
+        game.player.x, game.player.y = s.x, s.y
+        game.enter_local()
+        folk = [n for n in npcs_in(game.world, s.id) if n.flags.get("recruit")]
+        if folk:
+            folk[0].met, folk[0].disposition = True, 20
+            companions.hire(game, folk[0])
+            break
+    app.handle_event(KeyEvent("p"))
+    assert isinstance(app.top, PartyScreen)
+    for key in ("down", "t", "o", "o", "w", "up", "down", "pagedown"):
+        render(app, size)
+        app.handle_event(KeyEvent(key))
+    render(app, size)
+    app.handle_event(KeyEvent("i"))
+    render(app, size)
+    app.handle_event(KeyEvent("tab"))
+    render(app, size)
+    assert app.error_count == 0

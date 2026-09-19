@@ -198,6 +198,11 @@ def battle_deeds(game, result) -> None:
         place = w.area_at(game.player.x, game.player.y)
         where = place.name if place is not None else "the road"
         know(game, fid)
+        if game.party[1:]:
+            from realmwalker.game.companions import react
+
+            react(game, "cult_hunted" if f.kind == "cult" else "outlaws_beaten" if f.kind == "bandit_gang" else
+                  "victory", quiet=f.kind not in ("cult", "bandit_gang"))
         deed(game, f"fought {f.name}", amounts, immediate=(fid,) if survivors else (), fame=max(1, n // 2),
              importance=1 if n < 4 else 2, news_text=f"{game.leader.name} cut down {n} of {f.name} in {where}")
 
@@ -266,6 +271,11 @@ def join(game, f) -> str:
     change_standing(game, f.id, 10)
     know(game, f.id)
     fee = f" (the fee: {money_text(spec['fee'])})" if spec["fee"] else ""
+    if game.party[1:]:
+        from realmwalker.game.companions import react
+
+        react(game, "cult" if f.kind == "cult" else "theft" if f.kind == "thieves_guild" else
+              "prayer" if f.kind in ("temple", "knightly_order") else "joined")
     return f"<good>You are sworn into {f.name}</> as {rank_name(game, f.id)}{fee}."
 
 
@@ -301,6 +311,10 @@ def grant_title(game, realm) -> str:
     title = names[0] if game.leader.sex == "male" else names[1]
     game.renown.flags.setdefault("titles", []).append({"realm": realm.id, "title": title})
     game.renown.fame += 5
+    if game.party[1:]:
+        from realmwalker.game.companions import react
+
+        react(game, "title")
     return f"<good>You kneel, and rise as {title} {game.leader.name}</>, honoured by {realm.name}."
 
 

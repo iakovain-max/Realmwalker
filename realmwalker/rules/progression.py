@@ -30,6 +30,11 @@ def award_xp(char: Character, xp: int, tables, rng: RNG, *, auto: bool = False) 
 def level_up(char: Character, tables, rng: RNG, *, auto: bool = False) -> list[str]:
     """Up a level: hit points and features now; choices wait in char.pending (made now if auto)."""
     notes = _level_up(char, tables, rng)
+    if char.companion and rng.chance(0.5) and tables.companions:
+        from realmwalker.core import textgen
+
+        text = rng.choice(tables.companions["lines"]["level_up"])
+        notes.append(textgen.fill(text, rng, {}, {"name": char.name.split()[0], "leader": "you"}))
     if char.pending:
         notes.append(f"<info>{char.name.split()[0]} has choices to make</> (the character sheet, c, then l).")
     if auto:

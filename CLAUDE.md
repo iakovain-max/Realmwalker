@@ -46,7 +46,8 @@ realmwalker/
                            economy (shops, prices, trade, haggling), services (inns, healers, temples, smiths,
                            stables, animals, labour), reputation (standing, deeds and their ripples, joining,
                            titles), law (crimes, witnesses, the watch, sentences, jail, disguise), law_talk (law and
-                           faction choices in conversations), news (what the player hears), notices (town boards)
+                           faction choices in conversations), news (what the player hears), notices (town boards),
+                           companions (hiring, wages, loyalty, orders, desertion), magic (copying spell scrolls)
   rules/                   character (Character + Sheet: derived numbers), items, inventory (equip rules), creation,
                            combat (Battle: rank combat on 5e dice), creatures, spells, wounds, progression (XP, rests),
                            body (needs, body heat, wetness, exhaustion), health (blood, pain, infection, healing,
@@ -105,6 +106,11 @@ tools/                     autoplay.py, mock_player2.py, build_friends.py
 - `world/politics.Politics` runs in history mode (narrative only; never destroys today's factions or changes
   today's holdings) and live mode (`politics.tick` from `pass_time`, a week per step, with consequences). Every
   event becomes news via `world/news.add`; the player hears it through `game/news.hear`.
+- Level-ups add hit points and features at once; choices wait in `Character.pending` (`rules/progression`:
+  `options`, `resolve`, `auto_resolve`). Pass `auto=True` to `award_xp` where nobody can choose.
+- Companions are ordinary `Character`s in `game.party[1:]` with a `companion` dict (loyalty, wage, values, order,
+  npc id); `game.waiting` holds those told to wait. When the player does something a companion might care about,
+  call `companions.react(game, "<tag>")`; tags are matched against data/companions.json values and wants.
 - Battles: `rules/combat.Battle` is pure logic driven by `step()` / `pending_party()` / `do_*()`; the screen
   (`ui/screens/battle.py`) only paces and asks. `GameState.busy` (encounter, battle, aftermath or death pending)
   blocks moving; `GameScreen._open_event_screen()` opens the right screen. Debug console: `fight <group>`.

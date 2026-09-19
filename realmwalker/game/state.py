@@ -95,6 +95,7 @@ class GameState:
         self.sentence: dict | None = None  # the law's punishment, being carried out (game.law)
         self.confined: dict | None = None  # in jail or at hard labour: fed and sheltered, going nowhere
         self.read_board = False  # walked into a notice board (the screen shows it)
+        self.waiting: list[Character] = []  # companions told to wait somewhere (game.companions)
         self._realm_here: int | None = None
         self._wading = False
         self._remaps: dict[str, np.ndarray] = {}
@@ -184,6 +185,10 @@ class GameState:
                 if getattr(self, "politics_live", True):
                     politics.tick(self.world, self.tables)
                 reputation.tick(self)
+                if self.party[1:] or self.waiting:
+                    from realmwalker.game import companions
+
+                    companions.daily(self)
                 here = self.world.settlement_at(self.player.x, self.player.y)
                 if here is not None and here.status.get("plague") and self.survival:
                     from realmwalker.rules import health
@@ -396,11 +401,20 @@ class GameState:
                 biome = self.biome_def(p.x, p.y)
                 desc = self.world.rng.child(f"areadesc{area.id}").choice(biome["descriptions"])
                 self.say(f"You enter <place>{area.name}</>. {desc}", "place")
+                if self.party[1:]:
+                    from realmwalker.game.companions import react
+
+                    react(self, "discovery", quiet=True)
             elif area.id not in self._recent_areas:
                 self.say(f"You are back in <place>{area.name}</>.", "place")
             # Walking along a border should not repeat the same announcement every step.
             self._recent_areas = ([area.id] + [a for a in self._recent_areas if a != area.id])[:4]
         self._check_realm()
+        if self.waiting:
+            from realmwalker.game.companions import rejoin
+
+            for text in rejoin(self):
+                self.say(text, "good")
         s = self.world.settlement_at(p.x, p.y)
         if s is not None:
             from realmwalker.game.reputation import learn_place
@@ -517,6 +531,9 @@ class GameState:
                     from realmwalker.game.people import refresh_figures
 
                     refresh_figures(self, lm, where)
+                from realmwalker.game.people import refresh_travellers
+
+                refresh_travellers(self, lm, where)
                 for text in self.settlement_troubles(where):
                     self.say(text, "warn")
                 if not town.seen and town.description:

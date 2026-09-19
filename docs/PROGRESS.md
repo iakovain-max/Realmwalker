@@ -13,9 +13,74 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | M4 — Body and survival | ✅ Done (2026-09-19) |
 | M5 — Settlements and people | ✅ Done (2026-09-19) |
 | M6 — Factions and politics | ✅ Done (2026-09-19) |
-| M7 — Companions and progression | ⏳ Next |
-| M8 — Adventure content | — |
+| M7 — Companions and progression | ✅ Done (2026-09-19) |
+| M8 — Adventure content | ⏳ Next |
 | M9 — Death, legacy and release | — |
+
+---
+
+## M7 — Companions and progression (done)
+
+**What you can do now**
+- **Level-up choices.** Levels still bring hit points and features at once, but the choices are yours now: a
+  path (Champion or Knight, Thief or Cutthroat, Life or War, Evocation or Abjuration), ability increases at levels
+  4 and 8 (+2 to one or +1 to two; Constitution adds hit points at every level), and a wizard's new spells and
+  cantrips. The level-up screen opens by itself after a level-up; **Choose for me** makes sensible choices; you can
+  also come back later (character sheet **c**, then **l**).
+- **Spell scrolls.** Scrolls of every spell are sold where mages gather (cities, and towns with a circle of mages).
+  A wizard can copy one into the spellbook (Enter on it in the pack): an Arcana check, 50 gold crowns and two hours
+  per spell level, and the scroll is used up either way. Anyone can read a scroll aloud once in a fight from the
+  spell menu (with a check if it isn't their kind of magic).
+- **Companions**, up to four. Travellers looking for work wait at the inns of villages, towns and cities (a new lot
+  every month or so), and sell-swords are for hire in a mercenary company's town. They are sell-swords, old
+  soldiers, hedge wizards, wandering priests, zealots, cutpurses, outlaw hunters and runaway serfs. Ask
+  "Would you travel with me?" and they name their price: a daily wage, some of it up front, and for cutpurses a
+  share of the loot.
+  - They are full characters of their class and about your level, with their own gear, needs, wounds and
+    sicknesses. They level up with you, and you make their choices. In a fight you command each one. They can
+    die, for good.
+  - **Loyalty** moves with what you do, by their values (devout, in it for the money, kind, honourable,
+    law-abiding, no friend of lords, greedy, cruel, brave, learned, cautious) and what they want (revenge on
+    outlaws, knowledge, a cause, loot, pay). They say what they think. Unpaid wages sour them fast. Unhappy
+    companions grumble, and mutinous ones slip away in the night with some of your coin. Devoted ones say so.
+  - **Orders** on the party screen (**p**): follow, keep watch when you camp (you are woken before an attack), forage
+    while the others sleep, or wait at this spot until you return. You can also talk to them, raise their pay or
+    dismiss them.
+  - The party shares its food and water. **G** in the pack hands something to the next member; **Tab** switches
+    between members on the sheets.
+
+**How to try it**
+1. Double-click `Play.bat`, **Continue** (or a new world). Go to a town, walk into the inn, and talk to a traveller.
+2. Hire them, then press **p** to see the party, and **c**/**i**/**e** for their sheet, pack and gear.
+3. Fight something together; after a level-up, make your choices.
+4. Do something your companion hates (or loves) and watch the log.
+
+**What to look for:** Are companions worth their pay? Is loyalty too touchy, or not touchy enough? Are the
+level-up choices clear?
+
+**How it was verified**
+- 479 automated tests pass. New ones cover: the fighter's path at level 3; ability increases (and hit points from
+  Constitution); wizard spell choices; choices made for you; a scroll for every spell; copying (success, failure,
+  who may); reading a scroll in a fight; scrolls for sale; travellers at the inns and their coming and going;
+  hiring (and who won't come); hiring in conversation; loyalty following values and crimes; wages, unpaid days and
+  desertion; loot shares; waiting and rejoining; keeping watch and foraging at camp; shared food; a companion's
+  death; saving the party and those waiting; companions under your command in battle; and the level-up and party
+  windows at every size.
+- Autoplay: thousands of turns in both AI modes, now also hiring companions, with checks on party size, loyalty,
+  waiting companions and level-up choices. No errors.
+
+**Decisions (and why)**
+1. **Companions are townsfolk turned into full characters** at hiring (their name, looks and story carry over), so
+   everything that works for you (needs, wounds, levels, battle) works for them.
+2. **Loyalty reactions come from tags** that the game already knows (mercy, execution, theft, prayer, loot...), so
+   any new deed can be given a tag and every companion reacts to it by their values.
+3. **Dismissed or deserting companions go home** as townsfolk (a deserter does not like you any more).
+4. **Personal quests for devoted companions** come with the quest system (M8).
+
+**Known issues**
+- Freed prisoners and grateful townsfolk joining you come with quests (M8).
+- Devotion has no effect in battle yet beyond their word; mutiny never turns to outright betrayal yet.
+- Towns you visited before M7 get their travellers on your next visit.
 
 ---
 

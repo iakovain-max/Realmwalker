@@ -254,6 +254,7 @@ def character_entries(game: GameState) -> dict[str, bytes | str]:
         "renown": game.renown.to_dict(),
         "arrest": game.arrest,
         "sentence": game.sentence,
+        "waiting": [c.to_dict() for c in game.waiting],
     }
     return {"manifest.json": _manifest("character"), "character.json": json.dumps(body),
             "explored.npy": _npy(p.explored)}
@@ -278,7 +279,8 @@ def load_player(folder: Path) -> tuple[PlayerState, MessageLog, list[Character] 
     )
     party = body.get("party")
     party_chars = [Character.from_dict(c) for c in party] if party else None
-    extra = {"renown": body.get("renown", {}), "arrest": body.get("arrest"), "sentence": body.get("sentence")}
+    extra = {"renown": body.get("renown", {}), "arrest": body.get("arrest"), "sentence": body.get("sentence"),
+             "waiting": [Character.from_dict(c) for c in body.get("waiting", [])]}
     return player, MessageLog.from_dict(body.get("log", {})), party_chars, extra
 
 
@@ -316,6 +318,7 @@ def load_game(folder: Path, tables: Tables) -> GameState:
     game.renown = Renown.from_dict(extra["renown"])
     game.arrest = extra.get("arrest")
     game.sentence = extra.get("sentence")
+    game.waiting = extra.get("waiting", [])
     if not game.renown.flags.get("started"):
         starting_knowledge(game)  # a character from before M6
     return game

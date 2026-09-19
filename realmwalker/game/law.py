@@ -111,6 +111,10 @@ def commit(game, cid: str, *, victim=None, value: int = 0, witnesses=None, repor
     }
     game.renown.flags["next_crime"] = rec["id"] + 1
     game.renown.crimes.append(rec)
+    if game.party[1:]:
+        from realmwalker.game.companions import react_to_crime
+
+        react_to_crime(game, cid)
     if victim is not None:
         victim.remember(f"was wronged by the traveller ({spec['name']})")
     for n in witnesses:
@@ -270,6 +274,10 @@ def pay_bounty(game, realm_id: int) -> str:
     take_money(game, bounty)
     settle(game, realm_id)
     reputation.change_standing(game, realm_id, 2)
+    if game.party[1:]:
+        from realmwalker.game.companions import react
+
+        react(game, "paying_debts")
     back = return_confiscated(game, realm_id)
     realm = game.world.factions[realm_id]
     return f"You pay {money_text(bounty)}. Your record in {realm.name} is clean." + (f" {back}" if back else "")

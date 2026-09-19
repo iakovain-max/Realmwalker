@@ -126,9 +126,9 @@ class Conversation:
 
     def role_choices(self) -> list[Choice]:
         """Trade and services (M5), and the law and the factions (M6)."""
-        from realmwalker.game import law_talk, services
+        from realmwalker.game import companions, law_talk, services
 
-        return services.choices(self) + law_talk.choices(self)
+        return companions.talk_choices(self) + services.choices(self) + law_talk.choices(self)
 
     # ------------------------------------------------------------------ doing
     def choose(self, choice: Choice) -> str | None:
@@ -166,6 +166,10 @@ class Conversation:
             self.mode = "main"
         elif cid == "goodbye":
             self.goodbye()
+        elif cid == "recruit":
+            from realmwalker.game import companions
+
+            companions.talk_choose(self, choice)
         elif cid in LAW_CHOICES:
             from realmwalker.game import law_talk
 

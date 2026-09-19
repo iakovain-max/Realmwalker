@@ -162,6 +162,10 @@ class GameScreen(Screen):
             from realmwalker.ui.screens.chronicle import ChronicleScreen
 
             self.app.push(ChronicleScreen(self.app, game))
+        elif ev.key == "p":
+            from realmwalker.ui.screens.party import PartyScreen
+
+            self.app.push(PartyScreen(self.app, game))
         elif ev.key == "m":
             self.open_world_map()
         elif ev.key == "t":
@@ -486,7 +490,7 @@ class GameScreen(Screen):
             ("arrows", "walk"), (">", "enter the land here") if not game.in_local else ("<", "back to the overworld"),
             ("l", "look"), ("m t", "world map · travel"), ("c i e", "character · pack · gear"),
             ("g", "pick up") if game.in_local else (".", "wait an hour"), ("r h", "camp · health"),
-            ("w W", "water · wash"), ("f n", "factions · news"), ("L /", "log · legend"), ("Esc", "menu"),
+            ("w W", "water · wash"), ("p f n", "party · factions · news"), ("L /", "log · legend"), ("Esc", "menu"),
         ]
         ky = h - len(keys) - 1
         for key, what in keys:
@@ -507,7 +511,14 @@ class GameScreen(Screen):
             bar_w = max(4, w - 22)
             filled = int(round(bar_w * ratio))
             cls = game.tables.classes[member.cls]["name"]
-            canvas.markup(x, y, f"<name>{markup.escape(member.name.split()[0])}</> <dim>{cls} {member.level}</>", max_width=w)
+            mood = ""
+            if member.companion:
+                from realmwalker.game.companions import loyalty_word
+
+                word, wcolor = loyalty_word(member.companion.get("loyalty", 50))
+                mood = f" <{wcolor}>{word}</>"
+            canvas.markup(x, y, f"<name>{markup.escape(member.name.split()[0])}</> <dim>{cls} {member.level}</>{mood}",
+                          max_width=w)
             y += 1
             canvas.text(x, y, "█" * filled, colors.named(color))
             canvas.text(x + filled, y, "░" * (bar_w - filled), colors.FAINT)
@@ -555,4 +566,4 @@ class GameScreen(Screen):
     def autoplay_keys(self) -> list[KeyEvent]:
         moves = [KeyEvent(k) for k in ("up", "down", "left", "right", "upleft", "upright", "downleft", "downright")]
         return moves * 4 + [KeyEvent(k) for k in (">", "<", "l", "enter", "escape", ".", "m", "t", "L", "/",
-                                                   "c", "i", "e", "g", "r", "h", "w", "W", "f", "n")]
+                                                   "c", "i", "e", "g", "r", "h", "w", "W", "f", "n", "p")]
