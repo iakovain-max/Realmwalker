@@ -81,6 +81,7 @@ class Character:
     injuries: list[str] = field(default_factory=list)  # lasting injuries (scar, limp, lost eye...)
     addictions: dict[str, float] = field(default_factory=dict)
     effects: dict[str, float] = field(default_factory=dict)  # timed effects, hours left (poppy, herbal, hangover...)
+    animals: list[dict] = field(default_factory=list)  # mules and horses: {"kind", "name", "unfed", "bought"}
     next_uid: int = 1
     is_player: bool = True
     alive: bool = True
@@ -334,7 +335,13 @@ class Sheet:
         """(encumbered above, heavily encumbered above, cannot move above), in pounds."""
         s = self.c.abilities.get("str", 10)
         carry = self.rules["carry"]
-        return (s * carry["encumbered_per_strength"], s * carry["heavily_per_strength"], s * carry["per_strength"])
+        extra = 0
+        if self.c.animals:
+            from realmwalker.game.services import animal_carry
+
+            extra = animal_carry(self.c, self.t)
+        return (s * carry["encumbered_per_strength"] + extra, s * carry["heavily_per_strength"] + extra,
+                s * carry["per_strength"] + extra)
 
     def load(self) -> float:
         """Weight that counts against strength: worn armour and clothes count half (the body carries them)."""

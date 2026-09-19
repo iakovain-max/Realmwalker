@@ -20,6 +20,9 @@ DAY_START, DAY_END = 7, 19
 STAYS_AT_POST = {"innkeeper", "serving_hand", "guard", "priest", "lord"}
 WANDERS = {"guard", "farmer", "labourer", "weaver", "carter", "washerwoman", "beggar", "fisher", "woodcutter", "miner"}
 MOODS = [(-50, "hostile"), (-15, "unfriendly"), (15, "neutral"), (50, "friendly")]
+CLASHING_TRAITS = {frozenset(p) for p in (("kind", "cruel"), ("trusting", "suspicious"), ("greedy", "generous"),
+                                           ("cheerful", "bitter"), ("brave", "nervous"), ("honest", "sly"),
+                                           ("gossipy", "taciturn"), ("proud", "weary"))}
 
 
 @dataclass
@@ -171,13 +174,20 @@ def make_npc(game, settlement, job: str, rng: RNG, *, building: int = -1, post=(
     race, culture = race_for(settlement.culture, rng)
     names = t.names["cultures"].get(culture) or next(iter(t.names["cultures"].values()))
     sex = occ.get("sex") or rng.choice(["male", "female"])
+    taken = {n.first_name for n in npcs_in(game.world, settlement.id)}
     first = rng.choice(names[sex])
+    for _ in range(8):  # two Gydas in one village is confusing
+        if first not in taken:
+            break
+        first = rng.choice(names[sex])
     family = rng.choice(names["family"])
     age_lo, age_hi = {"lord": (22, 66), "headman": (35, 70), "beggar": (18, 75), "serving_hand": (14, 30),
                       "acolyte": (16, 30), "guard": (18, 50)}.get(job, (18, 68))
     title = occ.get("titles", {}).get(settlement.kind, occ["name"])
     lo, hi = occ.get("purse", [0, 100])
     traits = rng.sample(sorted(people["personality"]), 2)
+    while frozenset(traits) in CLASHING_TRAITS:
+        traits = rng.sample(sorted(people["personality"]), 2)
     npc = NPC(
         id=new_id(game.world), name=f"{first} {family}", sex=sex, age=rng.randint(age_lo, age_hi), race=race,
         culture=culture, job=job, title=title, settlement=settlement.id, notable=bool(occ.get("notable")),
@@ -197,7 +207,7 @@ def fallback_profile(game, npc: NPC, rng: RNG) -> dict:
     feature = rng.choice(t["feature"])
     values = {
         "build": rng.choice(t["build"]), "hair": rng.choice(t["hair_old" if old else "hair_young"]),
-        "feature": feature, "Feature_sentence": f"{pron['They']} {pron['have']} {feature}.",
+        "feature": feature, "feature_sentence": f"{pron['They']} {pron['have']} {feature}.",
         "clothes": rng.choice(t[f"clothes_{npc.social}"]),
         "person": {"male": "man", "female": "woman"}[npc.sex] if npc.age >= 18 else ("boy" if npc.sex == "male" else "girl"),
     }

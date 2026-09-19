@@ -195,9 +195,13 @@ class Conversation:
         d = self.game.tables.dialogue
         self.you_say(f"What should I know about {s.name}?")
         others = [n for n in npcs_in(self.game.world, s.id) if n.notable and n.id != self.npc.id and n.alive]
-        services = "; ".join(f"the {n.title} is {n.first_name}" for n in others[:5])
-        for n in others[:5]:
+        by_title: dict[str, list[str]] = {}
+        for n in others[:6]:
+            by_title.setdefault(n.title, []).append(n.first_name)
             n.known = True
+        services = "; ".join(f"the {title} is {names[0]}" if len(names) == 1 else
+                             f"the {title}s are {', '.join(names[:-1])} and {names[-1]}"
+                             for title, names in by_title.items())
         line = self.fill(self.pick("about_place"), size_line=d["size_line"].get(s.kind, ""),
                          services_line=(services[:1].upper() + services[1:] + ".") if services else "")
         self.npc_says(line)

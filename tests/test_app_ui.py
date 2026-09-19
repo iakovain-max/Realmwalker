@@ -571,3 +571,27 @@ def test_the_market_window(make_app, size):
         app.handle_event(KeyEvent(key))
         render(app, size)
     assert app.error_count == 0
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_the_services_window(make_app, size):
+    from realmwalker.game.people import npcs_in, prepare_town
+    from realmwalker.ui.screens.services import ServicesScreen
+
+    app = make_app()
+    start_small_world(app)
+    game = app.game
+    game.leader.money = 100000
+    for s in game.world.settlements:
+        prepare_town(game, s)
+        npc = next((n for n in npcs_in(game.world, s.id) if n.job in ("innkeeper", "stablemaster")), None)
+        if npc is not None:
+            break
+    else:
+        pytest.skip("no inn or stable")
+    app.push(ServicesScreen(app, game, npc))
+    render(app, size)
+    for key in ("3", "1", "escape", "4", "1", "escape"):
+        app.handle_event(KeyEvent(key))
+        render(app, size)
+    assert app.error_count == 0

@@ -234,6 +234,9 @@ def _rob_party(game, rng) -> str:
     for it in valuables[: rng.randint(1, 2)]:
         remove_item(leader, it.uid)
         taken.append(game.tables.items.name(it))
+    if leader.animals:
+        taken.append(", ".join(a["name"] for a in leader.animals) + " (your animals)")
+        leader.animals = []
     return ", ".join(taken) if taken else "nothing, having found nothing worth taking"
 
 

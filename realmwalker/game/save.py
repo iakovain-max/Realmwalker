@@ -39,7 +39,7 @@ from realmwalker.world.tables import Tables
 
 log = logging.getLogger("realmwalker.save")
 
-FORMAT_VERSION = 4
+FORMAT_VERSION = 5
 WORLD_FILE = "world.zip"
 CHARACTER_FILE = "character.zip"
 
@@ -68,8 +68,14 @@ def _v3_to_v4(kind: str, body: dict) -> dict:
     return body
 
 
+def _v4_to_v5(kind: str, body: dict) -> dict:
+    """Format 5 added animals (mules and horses) to characters and shop stock to towns (M5). Missing fields take
+    their defaults."""
+    return body
+
+
 # format number -> function upgrading a loaded JSON body (of a given kind) to the next format.
-MIGRATIONS: dict[int, Callable[[str, dict], dict]] = {1: _v1_to_v2, 2: _v2_to_v3, 3: _v3_to_v4}
+MIGRATIONS: dict[int, Callable[[str, dict], dict]] = {1: _v1_to_v2, 2: _v2_to_v3, 3: _v3_to_v4, 4: _v4_to_v5}
 
 
 class SaveError(Exception):

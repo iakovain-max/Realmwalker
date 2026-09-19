@@ -474,6 +474,14 @@ ECONOMY = Obj(
         "sell_ratio": Float(min=0, max=1), "sell_ratio_trade": Float(min=0, max=1),
         "restock_days": Int(min=1, max=365),
         "haggle": Obj({"dc": Int(min=0, max=40), "per_point": Float(min=0, max=1), "max": Float(min=0, max=1)}),
+        "animals": Map(Obj({"name": Str(max_len=40), "price": Int(min=0, max=10**7), "carry": Int(min=0, max=2000),
+                            "ride": Float(min=0.1, max=2), "days_without_food": Int(min=1, max=30)}), min_items=1),
+        "grazing": List(Str(max_len=30)),
+        "services": Obj({"room_common": Int(min=0), "room_private": Int(min=0), "meal": Int(min=0), "bath": Int(min=0),
+                         "size_factor": Map(Float(min=0.1, max=10)), "treat_per_wound": Map(Int(min=0)),
+                         "surgery": Int(min=0), "herbal_cure": Int(min=0), "prayer_healing": Int(min=0),
+                         "cure_disease": Int(min=0), "repair_share": Float(min=0, max=2),
+                         "labour_pay": List(Int(min=0), min_items=2, max_items=2)}),
     }
 )
 

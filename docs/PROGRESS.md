@@ -11,11 +11,94 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | M2 — Character | ✅ Done (2026-09-19) |
 | M3 — Combat | ✅ Done (2026-09-19) |
 | M4 — Body and survival | ✅ Done (2026-09-19) |
-| M5 — Settlements and people | ⏳ Next |
-| M6 — Factions and politics | — |
+| M5 — Settlements and people | ✅ Done (2026-09-19) |
+| M6 — Factions and politics | ⏳ Next |
 | M7 — Companions and progression | — |
 | M8 — Adventure content | — |
 | M9 — Death, legacy and release | — |
+
+---
+
+## M5 — Settlements and people (done)
+
+**What you can do now**
+- **Towns are full of people.** Walking into a settlement (`>`) you find its innkeepers, priests, smiths,
+  shopkeepers, healers (barber-surgeons in towns), stablemasters, headman or reeve or mayor or alderman
+  (a thane in dwarven holds, an elder among elves), a lord in the keep of a city, market traders at their stalls,
+  the watch, and ordinary folk: farmers, weavers, carters, washerwomen, beggars, fishers, woodcutters, miners.
+  Each has a name from their people, an age, a personality (two traits), a purse, a home and a place of work.
+  They keep to day and night: shops shut at dusk and most folk go home; the inn, the temple and the watch stay.
+  Some wander the streets. New buildings: general stores, healers' houses and stables, and market stalls in
+  towns. (Dwarven holds now have buildings too; they had none before.)
+- **Talking** (walk into someone): who they are, what to know about the place (they name the other notable
+  people), news and rumours (dangerous roads, and places you did not know, which go on your map), other people
+  in town, threats (Intimidation), bribes, and one to three skill-check options. Outcomes come from a fixed list
+  (information, liking you more or less, prices, a small gift, a fight, calling the watch, running off, a new
+  topic), so nobody can promise what the game cannot deliver. **First impressions** depend on your clothes,
+  cleanliness, bleeding wounds, race and background; people **remember** what you did (threats, bribes, help)
+  and greet you accordingly. Hostile people won't talk. Fight townsfolk and the dead stay dead; the rest hate you.
+- **With the Player2 AI running**: when you set out for a town or stand at its gate, one background request
+  writes its description, its inn signs and full profiles of its notable people (looks, personality, speech,
+  backstory, a secret, what they want). When you talk to a notable (at most once a day each), one request writes
+  their opening line and proposes options that fit the person and the moment, e.g. "[Insight] She is hiding
+  something about the bell". A short "…" appears; if the AI is slow, the built-in lines take over. AI words only
+  ever replace text you have not seen.
+- **Markets**: every merchant has stock and coin, restocks weekly, only buys their own trade, and won't touch
+  stolen goods. Prices follow the land (salt cheap on the coast, iron in the hills, furs in the cold north, grain
+  on the plains), trade goods are dear where nobody makes them, cities pay more for food, holds less for steel,
+  winter food is dear, and the merchant's feelings and a daily haggle move them. **Trading pays**: in a test
+  world salt bought on the coast sold inland for 2.8 times as much, furs 2.3 times, iron 1.8 times.
+- **Services** ("What can you do for me?"): a bed in the common room or a private room (a safe night's sleep),
+  hot meals, baths, performing for coin (Performance) and dice at the inn; healers treat all your wounds at once,
+  operate on internal bleeding and sell herbal cures; priests pray for healing or to lift a sickness (for a
+  donation); smiths mend weapons and armour; a day's paid work at the smithy, the stable or on a farm.
+- **Animals**: mules (carry 200 lb for you), ponies, draft horses and riding horses from the stable. Riding makes
+  open ground and roads quicker if everyone has a mount. They need a bag of fodder a day, or grazing outside
+  winter; unfed they starve after a few days. Robbers take them. They show in the side panel.
+
+**How to try it**
+1. Double-click `Play.bat`, **Continue**. Press `>` in a town. Walk into people (the `☺` symbols).
+2. Talk to the innkeeper: ask for news, then "What can you do for me?" for a meal or a bed.
+3. Visit the smith or shopkeeper: "Let me see your goods", buy and sell with Enter, haggle with `h`.
+4. Buy a mule at a stable (towns and cities) and see your carrying limit rise (`i`).
+
+**What to look for:** Do towns feel alive? Are conversations readable? Are prices sensible, and is trading
+worth it? If Player2 is running, do the AI lines fit the people?
+
+**How it was verified**
+- 382 automated tests pass. New: every kind of settlement has its people, none in walls or on top of each
+  other; people are made once; shops close and folk go home at night; first impressions; walking into someone
+  starts a talk; the menu and its answers; special options; threats remembered; bribes; fighting townsfolk; people
+  survive saving; the AI requests list the right facts; AI words only replace unseen text; AI options are kept to
+  what that person can deliver; a conversation with the (mock) AI; a slow AI falls back and late replies are
+  ignored; heading for a town asks for its words; every kind of merchant has stock and coin; cities stock more;
+  trade goods are cheap where made; winter food is dear; mood and haggling move prices; buying and selling;
+  merchants only buy their trade and run out of coin; restocking; trading in conversation; shops survive saving;
+  inns, healers, temples, smiths, labour; animals (carrying, riding, selling, starving, saving); hostile people
+  offer nothing; every new window renders at every size.
+- Autoplay: 10,000 turns with AI off and 10,000 with the fake AI on several seeds, now walking into towns and
+  talking, trading and using services, checking townsfolk never stand in walls or on each other and shops never
+  go below zero. No errors.
+- The window smoke test now talks to a townsperson, and **always runs with the AI off** (it had been using the
+  real Player2 app when it was running; that is fixed so tests never spend your AI energy).
+
+**Decisions (and why)**
+1. **Code names people** (from their culture's name lists) and decides everything mechanical; the AI writes only
+   words, in one rich request per town and one per conversation, to spend Player2 energy sparingly. Towns merely
+   passed on a journey are not asked about; ordinary folk use built-in text only.
+2. **Conversation outcomes come from a whitelist** that is narrowed per person (no prices from a priest, no gifts
+   from someone with nothing, no watch where there are no guards).
+3. **Prices** are driven by production near each town rather than a full simulated supply chain; that gives real
+   trade routes now. Caravans, war and famine moving prices arrive with the world simulation (M6).
+4. **Animals add carrying capacity to the leader** rather than having their own packs, to keep the inventory
+   simple.
+
+**Known issues**
+- Law, crime, bounties and reputation with factions come with M6 (for now, attacking townsfolk is only
+  remembered by them and recorded in your deeds).
+- Quests and work beyond day labour: M8. Recruiting companions: M7.
+- Settlements visited before this update have no general store, healer or stable (their maps were already made);
+  their people appear on your next visit.
 
 ---
 

@@ -165,6 +165,11 @@ class GameState:
                 break
         after = self.moment
         if after.total_days != before.total_days:
+            if self.leader.animals:
+                from realmwalker.game.services import feed_animals
+
+                for text in feed_animals(self):
+                    self.say(text, "warn")
             if self.day_log.get("miles"):
                 self.narration.append(self.day_log)
                 self.narration = self.narration[-3:]
@@ -238,6 +243,10 @@ class GameState:
         p.x, p.y = nx, ny
         p.steps += 1
         minutes = int(round(minutes * self.weather.travel_factor()))
+        if self.leader.animals:
+            from realmwalker.game.services import riding_factor
+
+            minutes = max(1, int(round(minutes * riding_factor(self))))
         self._wading = fording
         self.pass_time(minutes, "walk")
         if self.over is not None:

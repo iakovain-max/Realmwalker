@@ -40,7 +40,11 @@ realmwalker/
                            encounters (road trouble, local-map inhabitants), fight (start/finish battles, loot,
                            prisoners, rest), vision (field of view), survival (the body as time passes: weather,
                            eating, drinking, water sources, death), care (treatment, healing magic), camp (fire,
-                           cooking, foraging, hunting, fishing), events (travel events, news, pedlars)
+                           cooking, foraging, hunting, fishing), events (travel events, news, pedlars),
+                           people (townsfolk: making, placing, day/night, impressions, memory), dialogue
+                           (conversations, whitelisted outcomes), people_ai (AI facts in, validated words out),
+                           economy (shops, prices, trade, haggling), services (inns, healers, temples, smiths,
+                           stables, animals, labour)
   rules/                   character (Character + Sheet: derived numbers), items, inventory (equip rules), creation,
                            combat (Battle: rank combat on 5e dice), creatures, spells, wounds, progression (XP, rests),
                            body (needs, body heat, wetness, exhaustion), health (blood, pain, infection, healing,
@@ -81,6 +85,11 @@ tools/                     autoplay.py, mock_player2.py, build_friends.py
 - Time: `GameState.pass_time(minutes, activity)` ("walk", "rest", "sleep", "fight") runs `game/survival.tick` in
   30-minute chunks (body, health, eating/drinking, death). Tests about travel alone can set `game.survival = False`
   and monkeypatch `encounters.encounter_chance`, `events.event_chance` and `GameState.lost_dc`.
+- Townsfolk live in `world.npcs` / `world.towns` (saved with the world). A town is filled by
+  `people.populate_town` on first entry (or `prepare_town` ahead of arrival). Walking into someone sets
+  `game.talk_to`; the game screen opens the conversation. AI conversation outcomes must stay in
+  `dialogue.OUTCOMES`, narrowed per person by `people_ai.allowed_outcomes`.
+- The smoke test always runs with the AI off; tests use the mock. Never let a test reach the real Player2 app.
 - Battles: `rules/combat.Battle` is pure logic driven by `step()` / `pending_party()` / `do_*()`; the screen
   (`ui/screens/battle.py`) only paces and asks. `GameState.busy` (encounter, battle, aftermath or death pending)
   blocks moving; `GameScreen._open_event_screen()` opens the right screen. Debug console: `fight <group>`.

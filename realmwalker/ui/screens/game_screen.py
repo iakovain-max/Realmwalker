@@ -474,6 +474,10 @@ class GameScreen(Screen):
             load = "" if enc == 0 else f" · <{ecolor}>{word}</>"
             canvas.markup(x, y, f"<loot>{money_text(member.money)}</>{load}", max_width=w)
             y += 1
+            if member.animals:
+                specs = game.tables.economy["animals"]
+                beasts = ", ".join(f"{a['name']} the {specs.get(a['kind'], {}).get('name', 'animal')}" for a in member.animals)
+                y += canvas.wrapped(x, y, f"<dim>With</> {markup.escape(beasts)}", w, max_lines=2)
             from realmwalker.ui.screens.health import status_words
 
             words = status_words(member, game.tables)

@@ -73,6 +73,16 @@ Your body matters as much as your sword. The side panel shows anything that is w
   <loot>Sickness</> comes from bad water or food, bites, cold and wet, marsh country and filth. It takes hold after some hours or days; rest, warmth, clean water and herbs help you recover. Some diseases kill.
   <loot>The road:</> travel is slower in storms, snow and heat, and when hurt or tired. Off the road in fog, storms or darkness you can lose your way. You will meet people as well as trouble: pedlars, pilgrims, patrols, refugees and more. Each day of travel is written up in the log.
 
+<title>Towns and people</title>
+Press <loot>></> on a settlement to walk its streets. People show as <loot>☺</>: walk into someone to talk. By day shops and stalls are open; at night most folk go home and only the inn, the temple and the watch are about. Everyone has a name, a trade, a personality and a memory: first impressions depend on your clothes, cleanliness, wounds, race and background, and they remember threats, bribes and kindness.
+  <loot>1-9</>             Choose what to say (the numbers shown)
+  <loot>t o g</>           Threaten · offer money · goodbye (Esc also leaves)
+Ask who they are, about the place, for news (dangerous roads, places you did not know, which then appear on your map) and about the other people in town. Some choices are skill checks, shown like <loot>[Insight]</>; when the Player2 AI is running, notable people speak in their own words and suggest checks that fit the moment.
+<title>Trade</title>
+Shopkeepers, smiths, healers, market traders, innkeepers and stablemasters trade. In the market window, <loot>Enter</> buys or sells one, <loot>Tab</> switches between their goods and yours, <loot>h</> haggles (once a day). Prices depend on the place: goods are cheap where they are made (salt on the coast, iron in the hills, furs in the cold north, grain on the plains) and dear where nobody makes them, so carrying trade goods between towns pays. Merchants have only so much coin, restock every week, and won't buy stolen goods.
+<title>Services</title>
+Ask "What can you do for me?": beds for the night (a real sleep, safe from the wilds), hot meals, baths, performing and dice at the inn; healers who treat every wound at once, operate on internal bleeding and sell herbal cures; priests who pray for healing and cures (for a donation); smiths who mend battered weapons and armour; a day's paid work; and at the stable, mules, ponies and horses. A mule carries 200 lb for you; horses make open ground and roads quicker if everyone rides. Animals need a bag of fodder a day, or grazing outside winter, or they starve.
+
 <title>Danger</title>
 The wilds are not empty. The more dangerous the region (shown in the side panel), the more likely something finds you, and night is worse; roads are a little safer. When trouble comes on the road you can <loot>F</>ight, <loot>A</>mbush (if you saw them first), <loot>S</>lip away (Stealth), or <loot>T</>alk your way past. Ruins, caves, barrows and towers have inhabitants; in the close view they show as letters, with a red background once they have noticed you. Walk into them to attack.
 
@@ -102,7 +112,7 @@ Blows land on a part of the body and may leave wounds: cuts bleed until bandaged
 The game uses the free Player2 app to write names, descriptions and dialogue. Keep Player2 running for AI text. Without it the game still works, using its own built-in text. The indicator in the bottom-right corner shows which is in use. The AI never decides what happens: dice and rules do.
 
 <title>More to come</title>
-Survival, towns and their people, factions, companions, quests and a proper obituary arrive milestone by milestone. This page lists every key as they are added.
+Factions and law, companions, quests and a proper obituary arrive milestone by milestone. This page lists every key as they are added.
 """
 
 

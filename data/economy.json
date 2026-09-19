@@ -63,6 +63,23 @@
     "hold": {"stock": 1.0, "coin": 8000},
     "elfhall": {"stock": 0.6, "coin": 2500}
   },
+  "animals": {
+    "_comment": "Animals bought at a stable. carry: extra pounds before you count as laden; ride: travel time multiplier on open ground and roads (1 = no faster); days_without_food: how long it lasts unfed.",
+    "mule": {"name": "mule", "price": 800, "carry": 200, "ride": 1.0, "days_without_food": 4},
+    "pony": {"name": "pony", "price": 3000, "carry": 120, "ride": 0.85, "days_without_food": 3},
+    "draft_horse": {"name": "draft horse", "price": 5000, "carry": 250, "ride": 0.9, "days_without_food": 3},
+    "riding_horse": {"name": "riding horse", "price": 7500, "carry": 100, "ride": 0.65, "days_without_food": 3}
+  },
+  "grazing": ["plains", "hills", "forest", "coast", "marsh"],
+  "services": {
+    "_comment": "Prices in copper. Inn rooms and meals scale with the settlement: price x size factor.",
+    "room_common": 10, "room_private": 50, "meal": 30, "bath": 20,
+    "size_factor": {"hamlet": 0.6, "village": 0.8, "town": 1.0, "city": 1.4, "hold": 1.2, "elfhall": 1.0},
+    "treat_per_wound": {"1": 50, "2": 200, "3": 500}, "surgery": 1000, "herbal_cure": 400,
+    "prayer_healing": 1000, "cure_disease": 2500,
+    "repair_share": 0.3,
+    "labour_pay": [10, 20]
+  },
   "production": {
     "plains": {"wheat": 0.55, "bread": 0.75, "oats": 0.6, "rations": 0.85, "wool_bolt": 0.8, "apples": 0.6, "cheese": 0.8},
     "forest": {"firewood": 0.5, "hides": 0.7, "furs": 0.8, "raw_meat": 0.7, "quarterstaff": 0.7},

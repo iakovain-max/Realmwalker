@@ -56,6 +56,19 @@ class DialogueScreen(Screen):
             conv.greet()
 
     # ------------------------------------------------------------------ actions
+    def hotkeys(self) -> dict[str, int]:
+        """Key -> menu index: letters for the fixed entries, numbers for everything else."""
+        fixed = {"threaten": "t", "offer_bribe": "o", "goodbye": "g", "back": "b"}
+        keys: dict[str, int] = {}
+        n = 1
+        for i, choice in enumerate(self.conv.menu()):
+            if choice.id in fixed:
+                keys[fixed[choice.id]] = i
+            elif n <= 9:
+                keys[str(n)] = i
+                n += 1
+        return keys
+
     def choose(self, i: int) -> None:
         menu = self.conv.menu()
         if not 0 <= i < len(menu):
@@ -95,8 +108,8 @@ class DialogueScreen(Screen):
             else:
                 self.conv.goodbye()
                 self.finish()
-        elif ev.is_text and ev.key.isdigit() and ev.key != "0":
-            self.choose(int(ev.key) - 1)
+        elif ev.is_text and ev.key in self.hotkeys():
+            self.choose(self.hotkeys()[ev.key])
         elif ev.key in ("pageup", "up"):
             self.scroll += 3
         elif ev.key in ("pagedown", "down"):
@@ -134,14 +147,16 @@ class DialogueScreen(Screen):
                 lines += markup.wrap(text, text_w)
             lines.append([])
         avail = max(1, log_bottom - log_top)
+        self.scroll = min(self.scroll, max(0, len(lines) - avail))
         end = max(0, len(lines) - self.scroll)
         for i, line in enumerate(lines[max(0, end - avail):end]):
             canvas.spans(2, log_top + i, line, max_width=text_w)
         canvas.hline(1, log_bottom, text_w + 2, "─", colors.FAINT)
         # The menu.
+        by_index = {i: k for k, i in self.hotkeys().items()}
         for i, choice in enumerate(menu[:12]):
             y = log_bottom + 1 + i
-            key = str(i + 1) if i < 9 else " "
+            key = by_index.get(i, " ")
             if choice.enabled:
                 canvas.button(2, y, markup.plain(choice.label)[: text_w - 5], lambda i=i: self.choose(i), hotkey=key)
             else:
@@ -149,7 +164,7 @@ class DialogueScreen(Screen):
                               max_width=text_w)
         if side:
             self._render_side(canvas, w - 36, 2, 34, h - 5)
-        canvas.text(2, h - 2, "1-9 choose · ↑↓ scroll · Esc leave", colors.FAINT, max_width=w - 4)
+        canvas.text(2, h - 2, "1-9 or the letter shown to choose · ↑↓ scroll · Esc leave", colors.FAINT, max_width=w - 4)
 
     def _render_side(self, canvas: Canvas, x: int, y: int, w: int, h: int) -> None:
         npc = self.npc
@@ -168,4 +183,4 @@ class DialogueScreen(Screen):
             y += canvas.wrapped(x, y, f, w, max_lines=6) + 1
 
     def autoplay_keys(self) -> list[KeyEvent]:
-        return [KeyEvent(str(i)) for i in range(1, 9)] + [KeyEvent("escape")]
+        return [KeyEvent(str(i)) for i in range(1, 9)] + [KeyEvent(k) for k in ("t", "o", "b", "escape")]

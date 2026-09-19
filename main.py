@@ -1,7 +1,7 @@
 """Realmwalker entry point. Double-click Play.bat, or run: python main.py
 
 Options (for developers):
-  --smoke-test [PATH]  open the window, visit a few screens, save a screenshot, exit
+  --smoke-test [PATH]  open the window, visit a few screens, save a screenshot, exit (AI always off)
   --home DIR           use DIR instead of %APPDATA%\\Realmwalker for settings, saves and logs
 """
 
@@ -71,10 +71,36 @@ def smoke_script():
     shots[frame - 4] = "health"
     press("escape", "m", "w")
     shots[frame - 4] = "weather"
-    press("escape", ">")
-    press("left", "left", "left", "up", "up", gap=3)
-    shots[frame - 1] = "local"
-    press("<")
+    press("escape")
+
+    def home(app):
+        game = app.game
+        if game is not None and not game.in_local:
+            town = min(game.world.settlements, key=lambda s: abs(s.x - game.player.x) + abs(s.y - game.player.y))
+            game.player.x, game.player.y = town.x, town.y
+
+    steps.append((frame, home))
+    frame += 4
+    press(">")  # into the nearest town, on foot
+    shots[frame - 2] = "local"
+    press("left", "up", gap=3)
+
+    def chat(app):
+        from realmwalker.game.people import npcs_in
+
+        game = app.game
+        if game is None:
+            return
+        s = game.world.settlement_at(game.player.x, game.player.y)
+        people = [n for n in npcs_in(game.world, s.id) if n.notable] if s is not None else []
+        if people:
+            game.talk_to = people[0].id
+
+    steps.append((frame, chat))
+    frame += 6
+    press("1", "2", gap=10)
+    shots[frame - 2] = "talk"
+    press("escape", "escape", "<")
 
     def trouble(app):
         from realmwalker.game.encounters import make_encounter
@@ -107,7 +133,9 @@ def main(argv: list[str] | None = None) -> int:
         from realmwalker.app import App
         from realmwalker.ui import window
 
-        app = App(home=args.home)
+        # The smoke test never talks to the real Player2 app: it must not spend the player's AI energy.
+        overrides = {"ai_enabled": False} if args.smoke_test else None
+        app = App(home=args.home, settings_overrides=overrides)
     except Exception:
         text = traceback.format_exc()
         crash = write_crash_file(text)
