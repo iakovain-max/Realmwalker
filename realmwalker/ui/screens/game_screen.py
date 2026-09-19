@@ -77,8 +77,18 @@ class GameScreen(Screen):
         self.app.save_game()
 
     def leave(self) -> None:
-        if self.game.in_local:
-            self.game.leave_local()
+        game = self.game
+        if game.local is not None and game.local.kind == "dungeon":
+            from realmwalker.game import dungeon
+
+            p = game.player
+            if dungeon.terrain_id(game, game.local, p.lx, p.ly) == "stairs_up":
+                dungeon.ascend(game)
+            else:
+                game.say("You are underground: find the stairs up (<) and walk onto them.", "system")
+            return
+        if game.in_local:
+            game.leave_local()
             self.app.save_game()
 
     def wait(self) -> None:
@@ -166,6 +176,11 @@ class GameScreen(Screen):
             from realmwalker.ui.screens.party import PartyScreen
 
             self.app.push(PartyScreen(self.app, game))
+        elif ev.key == "s" and game.in_local:
+            from realmwalker.game import dungeon
+
+            for text in dungeon.search(game):
+                game.say(text, "info")
         elif ev.key == "m":
             self.open_world_map()
         elif ev.key == "t":
@@ -435,16 +450,40 @@ class GameScreen(Screen):
         canvas.section(ix, row, iw, "Where")
         row += 1
         world = game.world
-        area = world.area_at(p.x, p.y)
-        settlement = world.settlement_at(p.x, p.y)
-        if settlement is not None:
+        if game.local is not None and game.local.kind == "dungeon":
+            from realmwalker.game.dungeon import site_here
+
+            meta = game.local.meta
+            site = site_here(game)
+            if site is not None:
+                canvas.markup(ix, row, f"<place>{markup.escape(cap(site.name))}</>", max_width=iw)
+                row += 1
+            depth = int(meta.get("depth", 1))
+            where = f"the {meta.get('name', 'dark')}" + (f", level {meta.get('level', 1)} of {depth}" if depth > 1 else "")
+            canvas.markup(ix, row, f"Underground: {where}", max_width=iw)
+            row += 1
+            lit = game.lit
+            if lit and lit.get("hours", 0) > 0:
+                name = game.tables.items.get(lit["def_id"])["name"]
+                mins = int(lit["hours"] * 60)
+                canvas.markup(ix, row, f"<loot>Light:</> {name} <dim>({mins} min left)</>", max_width=iw)
+            else:
+                canvas.markup(ix, row, "<warn>No light: you see only what you touch.</>", max_width=iw)
+            row += 2
+            area = None
+        else:
+            area = world.area_at(p.x, p.y)
+        settlement = world.settlement_at(p.x, p.y) if area is not None or not (
+            game.local is not None and game.local.kind == "dungeon") else None
+        underground = game.local is not None and game.local.kind == "dungeon"
+        if settlement is not None and not underground:
             kind = game.tables.sites["settlement_types"][settlement.kind]["name"]
             canvas.markup(ix, row, f"<place>{settlement.name}</> <dim>({kind})</>", max_width=iw)
             row += 1
         if area is not None:
             canvas.markup(ix, row, f"<place>{cap(area.name)}</>", max_width=iw)
             row += 1
-        if world.factions:
+        if world.factions and not underground:
             from realmwalker.world.factions import lord_at, top_liege
 
             lord = lord_at(world, p.x, p.y)
@@ -456,12 +495,13 @@ class GameScreen(Screen):
                 if game.renown.bounties.get(top.id if top else lord.id):
                     canvas.markup(ix, row, "<danger>You are wanted here.</>", max_width=iw)
                     row += 1
-        canvas.text(ix, row, cap(game.biome_def(p.x, p.y)["name"]) + (" · on the road" if world.road[p.x, p.y] else ""),
-                    colors.FG, max_width=iw)
-        row += 1
-        canvas.markup(ix, row, f"Wilds: {danger_text(int(world.danger[p.x, p.y]))}", max_width=iw)
-        row += 1
-        if game.in_local:
+        if not underground:
+            canvas.text(ix, row, cap(game.biome_def(p.x, p.y)["name"]) + (" · on the road" if world.road[p.x, p.y] else ""),
+                        colors.FG, max_width=iw)
+            row += 1
+            canvas.markup(ix, row, f"Wilds: {danger_text(int(world.danger[p.x, p.y]))}", max_width=iw)
+            row += 1
+        if game.in_local and not underground:
             lm = game.local
             b = lm.building_at(p.lx, p.ly) if lm else None
             canvas.markup(ix, row, "<dim>On foot, looking closely" + (f"; inside a {b.kind}" if b else "") + ".</>", max_width=iw)
@@ -487,9 +527,11 @@ class GameScreen(Screen):
                 canvas.text(ix, row, hint, colors.FAINT, max_width=iw)
 
         keys = [
-            ("arrows", "walk"), (">", "enter the land here") if not game.in_local else ("<", "back to the overworld"),
+            ("arrows", "walk"), (">", "enter the land here") if not game.in_local else
+            ("<", "climb the stairs") if (game.local is not None and game.local.kind == "dungeon") else
+            ("<", "back to the overworld"),
             ("l", "look"), ("m t", "world map · travel"), ("c i e", "character · pack · gear"),
-            ("g", "pick up") if game.in_local else (".", "wait an hour"), ("r h", "camp · health"),
+            ("g s", "pick up · search") if game.in_local else (".", "wait an hour"), ("r h", "camp · health"),
             ("w W", "water · wash"), ("p f n", "party · factions · news"), ("L /", "log · legend"), ("Esc", "menu"),
         ]
         ky = h - len(keys) - 1
@@ -566,4 +608,4 @@ class GameScreen(Screen):
     def autoplay_keys(self) -> list[KeyEvent]:
         moves = [KeyEvent(k) for k in ("up", "down", "left", "right", "upleft", "upright", "downleft", "downright")]
         return moves * 4 + [KeyEvent(k) for k in (">", "<", "l", "enter", "escape", ".", "m", "t", "L", "/",
-                                                   "c", "i", "e", "g", "r", "h", "w", "W", "f", "n", "p")]
+                                                   "c", "i", "e", "g", "r", "h", "w", "W", "f", "n", "p", "s")]

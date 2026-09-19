@@ -37,6 +37,11 @@ def sight_blockers(game, lm, woodland: bool = False) -> np.ndarray:
 def sight_radius(game, lm) -> tuple[int, bool]:
     """(radius, woodland) for the player's eyes right now. Radius 0 means unlimited."""
     p = game.player
+    if lm.kind == "dungeon":
+        from realmwalker.game.dungeon import light_radius
+
+        dark_sight = game.sheet().darkvision // 5 if game.party else 0
+        return max(1, light_radius(game), dark_sight), False
     woodland_radius = WOODLAND_SIGHT.get(game.biome_key(p.x, p.y)) if lm.kind != "settlement" else None
     light = game.light
     radius = 0 if light >= 0.9 else max(4, int(4 + light * 28))

@@ -264,6 +264,52 @@
       "glyph": "T", "color": [90, 130, 90],
       "descriptions": ["A troll: gangling, green-grey and horribly quick, its wounds closing even as you watch."]
     },
+    "wight": {
+      "name": "wight", "plural": "wights", "kind": "undead", "body": "humanoid", "size": "medium", "cr": 3, "xp": 700,
+      "ac": 14, "hp": "6d8+18", "speed": 30, "abilities": {"str": 15, "dex": 14, "con": 16, "int": 10, "wis": 13, "cha": 15},
+      "skills": {"perception": 3, "stealth": 4}, "darkvision": 60,
+      "attacks": [{"name": "longsword", "kind": "melee", "bonus": 4, "damage": "1d8+2", "damage_type": "slashing", "wound": "cut"},
+                  {"name": "life drain", "kind": "melee", "bonus": 4, "damage": "1d6+2", "damage_type": "necrotic"},
+                  {"name": "longbow", "kind": "ranged", "bonus": 4, "damage": "1d8+2", "damage_type": "piercing"}],
+      "multiattack": 2, "traits": ["undead", "sunlight_sensitive"], "immune": ["poison"], "morale": "fanatic", "rank": "front",
+      "gear": [["longsword", 1]], "money": {"dice": "4d6", "mult": 100}, "loot": [],
+      "glyph": "W", "color": [170, 170, 200],
+      "descriptions": ["A barrow-lord still in its rotted mail, eyes like cold stars. It hates the living, and it remembers how to fight."]
+    },
+    "goblin_boss": {
+      "name": "goblin boss", "plural": "goblin bosses", "kind": "humanoid", "body": "humanoid", "size": "small", "cr": 1, "xp": 200,
+      "ac": 17, "hp": "6d6", "speed": 30, "abilities": {"str": 10, "dex": 14, "con": 10, "int": 10, "wis": 8, "cha": 10},
+      "skills": {"stealth": 6}, "darkvision": 60,
+      "attacks": [{"name": "scimitar", "kind": "melee", "bonus": 4, "damage": "1d6+2", "damage_type": "slashing", "item": "scimitar"},
+                  {"name": "javelin", "kind": "ranged", "bonus": 2, "damage": "1d6", "damage_type": "piercing"}],
+      "multiattack": 2, "traits": ["leader"], "morale": "bandit", "rank": "front",
+      "gear": [["scimitar", 1], ["chain_shirt", 1]], "money": {"dice": "3d6", "mult": 10}, "loot": [],
+      "glyph": "G", "color": [150, 190, 90],
+      "descriptions": ["Bigger than the others, meaner than the others, and wearing somebody's mail shirt."]
+    },
+    "orc_warchief": {
+      "name": "orc warchief", "plural": "orc warchiefs", "kind": "humanoid", "body": "humanoid", "size": "medium", "cr": 4, "xp": 1100,
+      "ac": 16, "hp": "11d8+44", "speed": 30, "abilities": {"str": 18, "dex": 12, "con": 18, "int": 11, "wis": 11, "cha": 16},
+      "skills": {"intimidation": 5}, "darkvision": 60,
+      "attacks": [{"name": "greataxe", "kind": "melee", "bonus": 6, "damage": "1d12+4", "damage_type": "slashing", "item": "greataxe", "wound": "cut"},
+                  {"name": "spear", "kind": "ranged", "bonus": 6, "damage": "1d6+4", "damage_type": "piercing"}],
+      "multiattack": 2, "traits": ["leader"], "morale": "warrior", "rank": "front",
+      "gear": [["greataxe", 1], ["chain_mail", 1]], "money": {"dice": "5d6", "mult": 100}, "loot": [],
+      "glyph": "O", "color": [200, 90, 60],
+      "descriptions": ["Scarred, tusked and hung with trophies. The others are afraid of it, and they are right to be."]
+    },
+    "young_dragon": {
+      "name": "young dragon", "plural": "young dragons", "kind": "dragon", "body": "quadruped", "size": "large", "cr": 10, "xp": 5900,
+      "ac": 18, "hp": "17d10+85", "speed": 40, "abilities": {"str": 23, "dex": 10, "con": 21, "int": 14, "wis": 11, "cha": 19},
+      "skills": {"perception": 8, "stealth": 4}, "darkvision": 120,
+      "attacks": [{"name": "bite", "kind": "melee", "bonus": 10, "damage": "2d10+6", "damage_type": "piercing", "wound": "bite", "reach": true},
+                  {"name": "claws", "kind": "melee", "bonus": 10, "damage": "2d6+6", "damage_type": "slashing", "wound": "cut"},
+                  {"name": "fire breath", "kind": "ranged", "bonus": 10, "damage": "10d6", "damage_type": "fire", "wound": "burn"}],
+      "multiattack": 3, "traits": ["keen_senses"], "immune": ["fire"], "morale": "warrior", "rank": "front",
+      "gear": [], "money": {"dice": "10d6", "mult": 1000}, "loot": [],
+      "glyph": "D", "color": [220, 70, 40],
+      "descriptions": ["A dragon. Not the oldest or the greatest of them, but the heat of it reaches you from across the cave, and it has already seen you."]
+    },
     "commoner": {
       "name": "commoner", "plural": "townsfolk", "kind": "humanoid", "body": "humanoid", "size": "medium", "cr": 0, "xp": 10,
       "ac": 10, "hp": "1d8", "speed": 30, "abilities": {"str": 10, "dex": 10, "con": 10, "int": 10, "wis": 10, "cha": 10}, "skills": {}, "darkvision": 0,
@@ -349,7 +395,19 @@
     "troll": {"name": "a troll", "members": [["troll", "1"]], "biomes": ["mountains", "high_mountains", "pine_forest", "marsh"], "danger": [8, 10], "time": "night", "weight": 1,
                    "intro": ["A troll. You have heard the stories. They are all true, and it is already running."]},
     "spiders": {"name": "giant spiders", "members": [["giant_spider", "1d2"]], "biomes": ["forest", "pine_forest", "marsh"], "danger": [5, 10], "time": "night", "weight": 1,
-                   "intro": ["Webs between the trees, thick as rope, and something heavy moving along them."]}
+                   "intro": ["Webs between the trees, thick as rope, and something heavy moving along them."]},
+    "barrow_wight": {"name": "the barrow's lord", "members": [["wight", "1"], ["skeleton", "1d2+1"]], "biomes": ["none"], "danger": [0, 10], "time": "any", "weight": 0,
+                   "intro": ["In the deepest chamber something in rotted mail rises from its bier, and the dead around it rise too."]},
+    "goblin_warband": {"name": "a goblin warband", "members": [["goblin_boss", "1"], ["goblin", "1d3+2"]], "biomes": ["none"], "danger": [0, 10], "time": "any", "weight": 0,
+                   "intro": ["The warren's chief, and all its kin, screaming."]},
+    "orc_warband": {"name": "an orc warband", "members": [["orc_warchief", "1"], ["orc", "1d2+1"]], "biomes": ["none"], "danger": [0, 10], "time": "any", "weight": 0,
+                   "intro": ["The warchief stands, and its guards close around it."]},
+    "cult_temple": {"name": "the cult's inner circle", "members": [["cult_fanatic", "1d2"], ["cultist", "1d3+1"]], "biomes": ["none"], "danger": [0, 10], "time": "any", "weight": 0,
+                   "intro": ["The chanting stops. Every hooded face turns to you."]},
+    "bandit_hideout": {"name": "the outlaws' captain", "members": [["bandit_captain", "1"], ["bandit", "1d2+1"], ["bandit_archer", "1"]], "biomes": ["none"], "danger": [0, 10], "time": "any", "weight": 0,
+                   "intro": ["The captain kicks over the table and draws. \"Nobody leaves.\""]},
+    "dragon": {"name": "the dragon", "members": [["young_dragon", "1"]], "biomes": ["none"], "danger": [0, 10], "time": "any", "weight": 0,
+                   "intro": ["Gold, a mountain of it. And on the gold, the dragon."]}
   },
   "site_inhabitants": {
     "ruin": ["bandits", "cultists", "goblins", "restless_dead", "deserters"],

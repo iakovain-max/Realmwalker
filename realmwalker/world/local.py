@@ -50,6 +50,8 @@ class LocalMap:
     items: dict = field(default_factory=dict)  # (x, y) -> list of Item lying on the ground
     actors: list = field(default_factory=list)  # bands of creatures (game.encounters.LocalActor)
     populated: bool = False  # inhabitants have been placed
+    features: dict = field(default_factory=dict)  # (x, y) -> hidden or special things: traps, locks, chests (M8)
+    meta: dict = field(default_factory=dict)  # dungeons: site, level, depth, style, rooms (world/dungeon.py)
 
     def __post_init__(self) -> None:
         if self.seen is None:

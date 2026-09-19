@@ -55,6 +55,7 @@ class AutoplayReport:
     talks: int = 0
     crimes: int = 0
     hires: int = 0
+    dungeons: int = 0
     battle_turns: int = 0
     elapsed: float = 0.0
 
@@ -69,7 +70,7 @@ class AutoplayReport:
             f"  AI requests: {self.ai_stats}  mock chat calls: {self.mock_calls}",
             f"  turns inside a game: {self.game_turns}  save/load round trips checked: {self.save_checks}",
             f"  fights started by the bot: {self.fights}  travel events: {self.events}  talks: {self.talks}  "
-            f"crimes: {self.crimes}  companions hired: {self.hires}  turns spent in battle: {self.battle_turns}",
+            f"crimes: {self.crimes}  companions hired: {self.hires}  dungeons: {self.dungeons}  turns spent in battle: {self.battle_turns}",
             "  RESULT: " + ("OK" if self.ok else f"FAILED ({len(self.errors)} problems)"),
         ]
         lines += [f"    - {e}" for e in self.errors[:20]]
@@ -386,6 +387,16 @@ def _start_a_fight(app: App, rng: random.Random, report: AutoplayReport) -> None
         if people:
             game.talk_to = rng.choice(people).id
             report.talks += 1
+        return
+    if roll < 0.4 and game.world.sites:
+        from realmwalker.game import dungeon
+
+        site = rng.choice(game.world.sites)
+        game.player.local_key = None
+        game.player.x, game.player.y = site.x, site.y
+        game.enter_local()
+        dungeon.descend(game, 1)
+        report.dungeons += 1
         return
     if roll < 0.55:
         from realmwalker.game.events import make_event

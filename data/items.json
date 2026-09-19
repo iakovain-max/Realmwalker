@@ -172,7 +172,11 @@
     "hides": {"name": "cured hide", "category": "trade", "weight": 8, "value": 200, "material": "hide", "stack": true},
     "pepper": {"name": "pouch of pepper", "category": "trade", "weight": 0.5, "value": 200, "material": "food", "stack": true},
     "copper_ingot": {"name": "copper ingot", "category": "trade", "weight": 5, "value": 250, "material": "iron", "stack": true},
-    "silver_ingot": {"name": "silver ingot", "category": "trade", "weight": 2, "value": 1000, "material": "silver", "stack": true}
+    "silver_ingot": {"name": "silver ingot", "category": "trade", "weight": 2, "value": 1000, "material": "silver", "stack": true},
+    "gold_ring": {"name": "gold ring", "category": "trade", "weight": 0.1, "value": 2500, "material": "gold", "description": "A heavy gold ring, taken from a dead hand."},
+    "silver_chalice": {"name": "silver chalice", "category": "trade", "weight": 1, "value": 1500, "material": "silver", "description": "A cup for wine or for the gods, dented."},
+    "gemstone": {"name": "gemstone", "category": "trade", "weight": 0.1, "value": 5000, "material": "stone", "description": "A cut stone that takes the light."},
+    "jewelled_brooch": {"name": "jewelled brooch", "category": "trade", "weight": 0.1, "value": 4000, "material": "gold", "description": "A cloak-pin set with red stones, very old."}
   },
   "starting_packs": {
     "everyone": [["underclothes", 1], ["backpack", 1], ["blanket", 1], ["waterskin", 1], ["tinderbox", 1], ["rations", 2], ["torch", 2], ["bandages", 2]]

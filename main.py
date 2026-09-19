@@ -121,6 +121,35 @@ def smoke_script():
     shots[frame - 2] = "talk"
     press("escape", "escape", "<")
 
+    def underground(app):
+        from realmwalker.game import dungeon
+        from realmwalker.ui.screens.game_screen import GameScreen
+
+        game = app.game
+        if game is None:
+            return
+        while app.screens and not isinstance(app.top, GameScreen):
+            app.pop()
+        game.player.local_key = None
+        site = min(game.world.sites, key=lambda s: abs(s.x - game.player.x) + abs(s.y - game.player.y))
+        game.player.x, game.player.y = site.x, site.y
+        game.enter_local()
+        dungeon.descend(game, 1)
+        for a in game.local.actors:
+            a.alert = False
+
+    steps.append((frame, underground))
+    frame += 8
+    shots[frame] = "dungeon"
+    frame += 4
+
+    def surface(app):
+        if app.game is not None:
+            app.game.player.local_key = None
+
+    steps.append((frame, surface))
+    frame += 4
+
     def trouble(app):
         from realmwalker.game.encounters import make_encounter
 

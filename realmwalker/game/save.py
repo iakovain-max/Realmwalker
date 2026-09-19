@@ -170,7 +170,7 @@ def world_entries(world: World) -> dict[str, bytes | str]:
     for name, arr in world.arrays().items():
         entries[f"arrays/{name}.npy"] = _npy(arr)
     for key, lm in world.local_maps.items():
-        safe = key.replace(",", "_")
+        safe = key.replace(",", "_").replace("/", "-")
         entries[f"local/{safe}.json"] = json.dumps({
             "key": lm.key, "kind": lm.kind, "width": lm.width, "height": lm.height,
             "terrain_ids": lm.terrain_ids, "entry": list(lm.entry),
@@ -178,6 +178,8 @@ def world_entries(world: World) -> dict[str, bytes | str]:
             "items": [[x, y, [i.to_dict() for i in pile]] for (x, y), pile in sorted(lm.items.items()) if pile],
             "actors": [a.to_dict() for a in lm.actors],
             "populated": lm.populated,
+            "features": [[x, y, f] for (x, y), f in sorted(lm.features.items())],
+            "meta": lm.meta,
         })
         entries[f"local/{safe}.terrain.npy"] = _npy(lm.terrain)
         entries[f"local/{safe}.variant.npy"] = _npy(lm.variant)
@@ -198,7 +200,7 @@ def load_world(folder: Path) -> World:
             arrays = {name: _load_npy(z.read(f"arrays/{name}.npy")) for name in ARRAY_NAMES}
             local_maps = {}
             for key in body.get("local_maps", []):
-                safe = key.replace(",", "_")
+                safe = key.replace(",", "_").replace("/", "-")
                 info = json.loads(z.read(f"local/{safe}.json"))
                 local_maps[key] = LocalMap(
                     key=info["key"], kind=info["kind"], width=info["width"], height=info["height"],
@@ -211,6 +213,8 @@ def load_world(folder: Path) -> World:
                     items={(x, y): [Item.from_dict(i) for i in pile] for x, y, pile in info.get("items", [])},
                     actors=[LocalActor.from_dict(a) for a in info.get("actors", [])],
                     populated=bool(info.get("populated", False)),
+                    features={(int(x), int(y)): f for x, y, f in info.get("features", [])},
+                    meta=info.get("meta", {}),
                 )
     except (OSError, KeyError, ValueError, zipfile.BadZipFile) as exc:
         raise SaveError(f"The world save could not be read ({exc}).") from exc
@@ -255,6 +259,7 @@ def character_entries(game: GameState) -> dict[str, bytes | str]:
         "arrest": game.arrest,
         "sentence": game.sentence,
         "waiting": [c.to_dict() for c in game.waiting],
+        "lit": game.lit,
     }
     return {"manifest.json": _manifest("character"), "character.json": json.dumps(body),
             "explored.npy": _npy(p.explored)}
@@ -280,7 +285,7 @@ def load_player(folder: Path) -> tuple[PlayerState, MessageLog, list[Character] 
     party = body.get("party")
     party_chars = [Character.from_dict(c) for c in party] if party else None
     extra = {"renown": body.get("renown", {}), "arrest": body.get("arrest"), "sentence": body.get("sentence"),
-             "waiting": [Character.from_dict(c) for c in body.get("waiting", [])]}
+             "waiting": [Character.from_dict(c) for c in body.get("waiting", [])], "lit": body.get("lit")}
     return player, MessageLog.from_dict(body.get("log", {})), party_chars, extra
 
 
@@ -319,6 +324,7 @@ def load_game(folder: Path, tables: Tables) -> GameState:
     game.arrest = extra.get("arrest")
     game.sentence = extra.get("sentence")
     game.waiting = extra.get("waiting", [])
+    game.lit = extra.get("lit")
     if not game.renown.flags.get("started"):
         starting_knowledge(game)  # a character from before M6
     return game

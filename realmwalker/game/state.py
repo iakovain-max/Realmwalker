@@ -96,6 +96,7 @@ class GameState:
         self.confined: dict | None = None  # in jail or at hard labour: fed and sheltered, going nowhere
         self.read_board = False  # walked into a notice board (the screen shows it)
         self.waiting: list[Character] = []  # companions told to wait somewhere (game.companions)
+        self.lit: dict | None = None  # the torch or lantern burning underground (game.dungeon)
         self._realm_here: int | None = None
         self._wading = False
         self._remaps: dict[str, np.ndarray] = {}
@@ -162,6 +163,10 @@ class GameState:
         whole = int(minutes)
         if whole <= 0:
             return
+        if self.lit and self.local is not None and self.local.kind == "dungeon":
+            from realmwalker.game import dungeon
+
+            dungeon.burn(self, whole)
         before = self.moment
         remaining = whole
         while remaining > 0:
@@ -514,6 +519,11 @@ class GameState:
         from realmwalker.game.encounters import populate_local
 
         populate_local(self, lm)
+        site = self.world.site_at(p.x, p.y)
+        if site is not None and lm.kind != "settlement":
+            from realmwalker.world.dungeon import add_entrance
+
+            add_entrance(self.tables, lm)
         where = self.world.settlement_at(p.x, p.y)
         if where is not None:
             from realmwalker.game.people import populate_town, update_positions
@@ -550,6 +560,9 @@ class GameState:
 
     def leave_local(self) -> None:
         if not self.in_local:
+            return
+        if self.local is not None and self.local.kind == "dungeon":
+            self.say("You are underground. Find the stairs up (<) first.", "system")
             return
         self.player.local_key = None
         self.say("You return to the road and the wider land.", "flavor")
@@ -594,6 +607,11 @@ class GameState:
         if self.tables.terrain.has_tag(t, "notice_board"):
             self.read_board = True
             return True
+        if tid in ("door_locked", "chest", "sarcophagus"):
+            from realmwalker.game import dungeon
+
+            dungeon.bump(self, nx, ny)
+            return True
         if tid == "door_closed":
             lm.terrain[nx, ny] = lm.terrain_ids.index("door_open") if "door_open" in lm.terrain_ids else lm.terrain[nx, ny]
             self.pass_seconds(LOCAL_STEP_SECONDS)
@@ -614,6 +632,12 @@ class GameState:
         if here:
             names = ", ".join(self.tables.items.name(i) for i in here[:4]) + (" and more" if len(here) > 4 else "")
             self.say(f"Here: <loot>{names}</>. <dim>(g to pick up)</>", "loot")
+        if tid in ("stairs_down", "stairs_up") or lm.kind == "dungeon":
+            from realmwalker.game import dungeon
+
+            dungeon.on_step(self, nx, ny)
+            if self.local is not lm:
+                return True
         if self.over is None:
             self._creatures_act(lm)
             self._people_act(lm)
@@ -655,6 +679,14 @@ class GameState:
             self.say("There is nothing here to pick up.", "system")
             return 0
         pile = lm.items.pop((p.lx, p.ly), [])
+        if not pile and lm.kind == "dungeon":
+            from realmwalker.game import dungeon
+
+            got = dungeon.take_hoard(self)
+            for text in got:
+                self.say(text, "loot")
+            if got:
+                return 1
         if not pile:
             self.say("There is nothing here to pick up.", "system")
             return 0

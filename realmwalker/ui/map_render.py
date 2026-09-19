@@ -180,7 +180,7 @@ def draw_local(con, game, x: int, y: int, w: int, h: int, cursor: tuple[int, int
     t = remap[lm.terrain[sl]]
     var = lm.variant[sl].astype(np.int64)
     ch = T.glyphs[t, var % T.glyph_counts[t]]
-    fg, bg = apply_light(T.fg[t], T.bg[t], max(game.light, 0.45))
+    fg, bg = apply_light(T.fg[t], T.bg[t], max(game.light, 0.45) if lm.kind != "dungeon" else 0.8)
     fg, bg = fg.copy(), bg.copy()
     visible = fov[sl]
     seen = lm.seen[sl]
@@ -189,6 +189,11 @@ def draw_local(con, game, x: int, y: int, w: int, h: int, cursor: tuple[int, int
     bg[memory] = (bg[memory].astype(np.float32) * 0.35).astype(np.uint8)
     ch[~seen] = ord(" ")
     bg[~seen] = UNSEEN_BG
+    for (fx_, fy_), f in lm.features.items():
+        sx, sy = fx_ - mx0, fy_ - my0
+        if f.get("kind") == "trap" and f.get("found") and 0 <= sx < mw and 0 <= sy < mh and seen[sx, sy]:
+            ch[sx, sy] = ord("^")
+            fg[sx, sy] = (200, 80, 60) if not f.get("spent") else (110, 90, 80)
     for a in lm.actors:
         sx, sy = a.x - mx0, a.y - my0
         if 0 <= sx < mw and 0 <= sy < mh and visible[sx, sy] and a.creatures:
