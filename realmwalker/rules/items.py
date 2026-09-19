@@ -111,7 +111,7 @@ class ItemTable:
         if cat == "clothing":
             return [d["slot"]]
         if cat in ("focus",) or d.get("light"):
-            return ["off_hand"]
+            return ["off_hand"]  # holy symbols, foci, torches and lanterns are held
         return []
 
 

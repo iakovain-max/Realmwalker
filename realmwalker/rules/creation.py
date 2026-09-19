@@ -280,6 +280,13 @@ class CharacterBuilder:
         for def_id, qty in t.items.starting_packs.get("everyone", []) + kit["items"] + bg["items"]:
             add_item(char, items, def_id, int(qty), made_at=world_time)
         equip_everything_sensible(char, items)
+        from realmwalker.rules.spells import init_spells
+
+        init_spells(char, t)
+        if "channel_divinity" in char.features or self.cls == "cleric":
+            char.uses.setdefault("channel_divinity", 0)
+        if self.subclass == "war":
+            char.uses["war_priest"] = max(1, modifier(abilities["wis"]))
         return char
 
 

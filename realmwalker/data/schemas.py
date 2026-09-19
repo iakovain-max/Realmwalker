@@ -223,7 +223,7 @@ ITEM = Obj(
         "warmth": Float(min=0, max=10, optional=True), "wind": Float(min=0, max=1, optional=True),
         "water": Float(min=0, max=1, optional=True), "social": Int(min=-3, max=3, optional=True), "hood": Bool(optional=True),
         "tool": Str(max_len=40, optional=True), "light": Any_(optional=True), "container": Any_(optional=True),
-        "food": Any_(optional=True), "drink": Any_(optional=True),
+        "food": Any_(optional=True), "drink": Any_(optional=True), "use": Any_(optional=True),
     }
 )
 ITEMS = Obj(
@@ -250,4 +250,74 @@ DATA_FILES.update({
     "backgrounds.json": BACKGROUNDS,
     "items.json": ITEMS,
     "appearance.json": APPEARANCE,
+})
+
+# ---------------------------------------------------------------------------- combat (M3)
+ATTACK = Obj(
+    {
+        "name": Str(max_len=40), "kind": Str(choices=["melee", "ranged", "spell_melee", "spell_ranged"]),
+        "bonus": Int(min=-5, max=20), "damage": Str(max_len=12),
+        "damage_type": Str(choices=["slashing", "piercing", "bludgeoning", "fire", "cold", "lightning", "necrotic",
+                                    "radiant", "force", "thunder", "poison", "acid", "psychic"]),
+        "item": Str(max_len=40, optional=True), "wound": Str(max_len=20, optional=True), "reach": Bool(optional=True),
+        "trip_dc": Int(min=1, max=30, optional=True), "paralyze_dc": Int(min=1, max=30, optional=True),
+        "poison": Any_(optional=True), "disease": Str(max_len=40, optional=True),
+    }
+)
+CREATURE = Obj(
+    {
+        "name": Str(max_len=40), "plural": Str(max_len=40),
+        "kind": Str(choices=["beast", "humanoid", "undead", "giant", "monstrosity", "dragon"]),
+        "body": Str(choices=["humanoid", "quadruped", "spider"]), "size": Str(choices=["tiny", "small", "medium", "large", "huge"]),
+        "cr": Float(min=0, max=30), "xp": Int(min=0, max=200000), "ac": Int(min=1, max=30), "hp": Str(max_len=12),
+        "speed": Int(min=0, max=120), "abilities": Obj({a: Int(min=1, max=30) for a in ABILITY_IDS}),
+        "skills": Map(Int(min=-5, max=20)), "darkvision": Int(min=0, max=120),
+        "attacks": List(ATTACK, min_items=1), "multiattack": Int(min=1, max=6, optional=True),
+        "traits": List(Str(max_len=40)), "morale": Str(choices=["beast", "bandit", "soldier", "coward", "warrior", "fanatic", "mindless"]),
+        "rank": Str(choices=["front", "back"]), "names": Str(max_len=30, optional=True),
+        "gear": List(List(Any_(), min_items=2, max_items=2)), "money": Any_(optional=True),
+        "loot": List(List(Any_(), min_items=2, max_items=2), optional=True),
+        "butcher": List(List(Any_(), min_items=2, max_items=2), optional=True),
+        "vulnerable": List(Str(max_len=20), optional=True), "immune": List(Str(max_len=20), optional=True),
+        "glyph": Str(max_len=1), "color": COLOR, "descriptions": word_list(1, 300),
+    }
+)
+ENCOUNTER = Obj(
+    {
+        "name": Str(max_len=60), "members": List(List(Any_(), min_items=2, max_items=2), min_items=1),
+        "biomes": List(Str(max_len=30), min_items=1), "danger": List(Int(min=0, max=10), min_items=2, max_items=2),
+        "time": Str(choices=["any", "day", "night"]), "weight": Float(min=0, max=100), "road": Bool(optional=True),
+        "intro": word_list(1, 300),
+    }
+)
+CREATURES = Obj({"creatures": Map(CREATURE, min_items=1), "encounters": Map(ENCOUNTER, min_items=1),
+                 "site_inhabitants": Map(List(Str(max_len=40)))})
+
+SPELL = Obj(
+    {
+        "name": Str(max_len=40), "level": Int(min=0, max=9), "school": Str(max_len=20), "classes": List(Str(max_len=20), min_items=1),
+        "kind": Str(choices=["attack", "auto", "save", "heal", "buff", "condition", "sleep", "stabilize", "cure", "summon",
+                             "aura", "move", "revive"]),
+        "target": Str(choices=["enemy", "ally", "self", "downed_ally", "dead_ally", "enemy_front", "enemy_back", "all_enemies",
+                               "all_allies"]),
+        "text": Str(max_len=300),
+    },
+    strict=False,
+)
+SPELLS = Obj({"spells": Map(SPELL, min_items=1), "starting": Map(Any_())})
+
+COMBAT_TEXT = Obj(
+    {
+        "locations": Map(WEIGHTED), "part_names": Map(Map(word_list(1))), "hit": Map(word_list(1, 200)),
+        "crit": word_list(1), "miss": word_list(1, 200), "armored_miss": word_list(1, 200),
+        "wound": Map(Map(word_list(1, 200))), "down": word_list(1, 200), "dead": word_list(1, 200),
+        "flee": word_list(1, 200), "surrender": word_list(1, 200), "beg": word_list(1, 200),
+        "aftermath": Map(word_list(1, 400)),
+    }
+)
+
+DATA_FILES.update({
+    "creatures.json": CREATURES,
+    "spells.json": SPELLS,
+    "combat_text.json": COMBAT_TEXT,
 })

@@ -1,0 +1,125 @@
+"""Creatures and encounter groups from data/creatures.json."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+
+from realmwalker.core import dice
+from realmwalker.core.rng import RNG
+from realmwalker.rules.items import Item
+from realmwalker.rules.wounds import Wound
+
+
+@dataclass
+class Creature:
+    uid: int
+    def_id: str
+    name: str  # what the game calls this one: "wolf", "Wat" (named humanoids)
+    hp: int
+    max_hp: int
+    money: int = 0
+    inventory: list[Item] = field(default_factory=list)
+    wounds: list[Wound] = field(default_factory=list)
+    conditions: dict[str, int] = field(default_factory=dict)
+    uses: dict[str, int] = field(default_factory=dict)
+    alive: bool = True
+    named: bool = False
+
+    def to_dict(self) -> dict:
+        return {"uid": self.uid, "def_id": self.def_id, "name": self.name, "hp": self.hp, "max_hp": self.max_hp,
+                "money": self.money, "inventory": [i.to_dict() for i in self.inventory],
+                "wounds": [w.to_dict() for w in self.wounds], "conditions": dict(self.conditions),
+                "uses": dict(self.uses), "alive": self.alive, "named": self.named}
+
+    @classmethod
+    def from_dict(cls, d: dict) -> Creature:
+        return cls(uid=d["uid"], def_id=d["def_id"], name=d["name"], hp=d["hp"], max_hp=d["max_hp"],
+                   money=d.get("money", 0), inventory=[Item.from_dict(i) for i in d.get("inventory", [])],
+                   wounds=[Wound.from_dict(w) for w in d.get("wounds", [])], conditions=dict(d.get("conditions", {})),
+                   uses=dict(d.get("uses", {})), alive=d.get("alive", True), named=d.get("named", False))
+
+
+class CreatureTable:
+    def __init__(self, data: dict) -> None:
+        self.defs: dict[str, dict] = {k: v for k, v in data["creatures"].items() if not k.startswith("_")}
+        self.encounters: dict[str, dict] = {k: v for k, v in data["encounters"].items() if not k.startswith("_")}
+        self.site_inhabitants: dict[str, list[str]] = data.get("site_inhabitants", {})
+
+    def __getitem__(self, def_id: str) -> dict:
+        return self.defs[def_id]
+
+
+def spawn(tables, def_id: str, rng: RNG, uid: int, *, now: int = 0) -> Creature:
+    d = tables.creatures[def_id]
+    hp = max(1, dice.roll(d["hp"], rng).total)
+    name = d["name"]
+    named = False
+    culture = d.get("names")
+    if culture and culture in tables.names["cultures"] and rng.chance(0.7):
+        c = tables.names["cultures"][culture]
+        name = rng.choice(c[rng.choice(["male", "male", "female"])])
+        named = True
+    money = 0
+    if d.get("money"):
+        money = dice.roll(d["money"]["dice"], rng).total * int(d["money"].get("mult", 1))
+    creature = Creature(uid=uid, def_id=def_id, name=name, hp=hp, max_hp=hp, money=money, named=named)
+    next_uid = 1
+    for item_id, qty in d.get("gear", []) + d.get("loot", []):
+        if item_id in tables.items:
+            condition = rng.randint(35, 95)
+            creature.inventory.append(Item(next_uid, item_id, int(qty), condition=condition, made_at=now))
+            next_uid += 1
+    if "relentless" in d.get("traits", []):
+        creature.uses["relentless"] = 1
+    return creature
+
+
+def spawn_group(tables, group_id: str, rng: RNG, first_uid: int = 1, *, now: int = 0, party_size: int = 3) -> list[Creature]:
+    """Spawn an encounter group. Groups are written for a small party; a lone traveller meets fewer
+    of the rank and file (the kind of creature still follows the danger of the region)."""
+    group = tables.creatures.encounters[group_id]
+    out: list[Creature] = []
+    uid = first_uid
+    scale = min(1.3, 0.45 + 0.2 * max(1, party_size))
+    for def_id, count in group["members"]:
+        n = max(1, dice.roll(str(count), rng).total)
+        if n > 1:
+            n = max(1, int(round(n * scale)))
+        for _ in range(n):
+            out.append(spawn(tables, def_id, rng, uid, now=now))
+            uid += 1
+    # Tell apart unnamed creatures of the same kind: "wolf", "second wolf"...
+    seen: dict[str, int] = {}
+    ordinals = ["", "second ", "third ", "fourth ", "fifth ", "sixth "]
+    for c in out:
+        if c.named:
+            continue
+        seen[c.name] = seen.get(c.name, 0) + 1
+        if seen[c.name] > 1:
+            c.name = f"{ordinals[min(seen[c.name] - 1, len(ordinals) - 1)]}{c.name}"
+    return out
+
+
+def choose_encounter(tables, biome: str, danger: int, night: bool, on_road: bool, rng: RNG) -> str | None:
+    """Pick a hostile group suited to the place, the danger level and the time of day."""
+    options, weights = [], []
+    for gid, g in tables.creatures.encounters.items():
+        lo, hi = g["danger"]
+        if not lo <= danger <= hi:
+            continue
+        if "any" not in g["biomes"] and biome not in g["biomes"]:
+            continue
+        if g["time"] == "night" and not night or g["time"] == "day" and night:
+            continue
+        weight = float(g.get("weight", 1))
+        if g.get("road") and on_road:
+            weight *= 2
+        options.append(gid)
+        weights.append(weight)
+    if not options:
+        return None
+    return rng.weighted(options, weights)
+
+
+def group_xp(tables, creatures: list[Creature]) -> int:
+    return sum(int(tables.creatures[c.def_id]["xp"]) for c in creatures)

@@ -86,7 +86,8 @@ def test_doors_open_when_walked_into(game, tables):
     assert tables.terrain.ids[game.remap_for(lm)[lm.terrain[dx_, dy_]]] == "door_open"
 
 
-def test_travel_plan_and_journey(game):
+def test_travel_plan_and_journey(game, monkeypatch):
+    monkeypatch.setattr("realmwalker.game.encounters.encounter_chance", lambda *a: 0.0)
     world = game.world
     p = game.player
     target = max((s for s in world.settlements if s.kind != "hamlet"), key=lambda s: abs(s.x - p.x) + abs(s.y - p.y))
@@ -195,7 +196,8 @@ def test_old_format_1_saves_still_load(game, tables, tmp_path):
     assert loaded.leader.name == "The Wanderer" and loaded.leader.inventory
 
 
-def test_heavy_loads_slow_travel(game, tables):
+def test_heavy_loads_slow_travel(game, tables, monkeypatch):
+    monkeypatch.setattr("realmwalker.game.encounters.encounter_chance", lambda *a: 0.0)
     from realmwalker.rules.inventory import add_item
 
     p = game.player

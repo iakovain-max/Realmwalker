@@ -48,6 +48,8 @@ class LocalMap:
     entry: tuple[int, int] = (0, 0)
     seen: np.ndarray | None = None  # bool [x, y] cells the player has seen
     items: dict = field(default_factory=dict)  # (x, y) -> list of Item lying on the ground
+    actors: list = field(default_factory=list)  # bands of creatures (game.encounters.LocalActor)
+    populated: bool = False  # inhabitants have been placed
 
     def __post_init__(self) -> None:
         if self.seen is None:

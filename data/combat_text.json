@@ -1,0 +1,66 @@
+{
+  "_comment": "Combat prose, built from templates. {A} attacker, {T} target, {weapon}, {part}, {their} = target's possessive, {armor} = armour on the part hit. Keep it concrete and brief.",
+  "locations": {
+    "humanoid": [["head", 10], ["torso", 40], ["left_arm", 12], ["right_arm", 12], ["left_leg", 13], ["right_leg", 13]],
+    "quadruped": [["head", 16], ["torso", 44], ["left_arm", 10], ["right_arm", 10], ["left_leg", 10], ["right_leg", 10]],
+    "spider": [["head", 20], ["torso", 50], ["left_leg", 15], ["right_leg", 15]]
+  },
+  "part_names": {
+    "humanoid": {
+      "head": ["head", "face", "jaw", "temple", "scalp"],
+      "torso": ["chest", "belly", "side", "ribs", "shoulder", "back"],
+      "left_arm": ["left arm", "left forearm", "left shoulder", "left hand"],
+      "right_arm": ["right arm", "right forearm", "right shoulder", "sword hand"],
+      "left_leg": ["left thigh", "left knee", "left calf", "left hip"],
+      "right_leg": ["right thigh", "right knee", "right calf", "right hip"]
+    },
+    "quadruped": {
+      "head": ["head", "muzzle", "skull"], "torso": ["flank", "side", "belly", "shoulder", "haunch"],
+      "left_arm": ["left foreleg"], "right_arm": ["right foreleg"], "left_leg": ["left hind leg"], "right_leg": ["right hind leg"]
+    },
+    "spider": {"head": ["head", "eyes"], "torso": ["swollen body", "abdomen"], "left_leg": ["legs"], "right_leg": ["legs"]}
+  },
+  "hit": {
+    "slashing": ["{A}'s {weapon} bites into {T}'s {part}.", "{A} slashes {T} across the {part}.", "{A}'s {weapon} opens {T}'s {part}.", "{A} hacks at {T} and catches the {part}."],
+    "piercing": ["{A}'s {weapon} punches into {T}'s {part}.", "{A} drives the {weapon} into {T}'s {part}.", "The point of {A}'s {weapon} finds {T}'s {part}."],
+    "bludgeoning": ["{A}'s {weapon} cracks against {T}'s {part}.", "{A} smashes {T} in the {part}.", "{A}'s {weapon} thuds into {T}'s {part}."],
+    "bite": ["{A} sinks its teeth into {T}'s {part}.", "{A}'s jaws close on {T}'s {part} and wrench.", "{A} snaps and tears at {T}'s {part}."],
+    "claws": ["{A} rakes {T}'s {part} with its claws.", "{A}'s claws tear across {T}'s {part}."],
+    "fire": ["Fire engulfs {T}'s {part}; hair and cloth flare.", "{T}'s {part} blisters and blackens in the flame."],
+    "cold": ["Frost bites into {T}'s {part}.", "{T}'s {part} goes white and dead with cold."],
+    "lightning": ["Lightning cracks through {T}; the smell of scorched meat.", "{T} jerks as the lightning passes through."],
+    "necrotic": ["{T}'s {part} greys and withers.", "Flesh on {T}'s {part} sloughs as if long dead."],
+    "radiant": ["Searing light falls on {T}.", "{T} cries out as holy fire burns."],
+    "force": ["Invisible force slams into {T}'s {part}.", "{T} is struck by bolts of force."],
+    "thunder": ["A thunderclap hammers {T}.", "{T} reels, bleeding from the ears."],
+    "poison": ["Poison burns in {T}'s blood."],
+    "acid": ["Acid eats into {T}'s {part}."]
+  },
+  "crit": ["A terrible blow.", "A perfect strike.", "Right where it hurts.", "A killing blow, almost."],
+  "miss": ["{A}'s {weapon} cuts only air.", "{T} twists aside from {A}'s {weapon}.", "{A} lunges and misses.", "{A} overreaches, and {T} is not there."],
+  "armored_miss": ["The blow rings off {T}'s {armor}.", "{T}'s {armor} turns {A}'s {weapon}.", "{A}'s {weapon} skids across {T}'s {armor}."],
+  "wound": {
+    "cut": {"1": ["A shallow cut; it bleeds."], "2": ["The cut is deep and bleeds freely."], "3": ["The wound gapes to the bone."]},
+    "puncture": {"1": ["A small, deep hole."], "2": ["It went in deep; blood wells dark."], "3": ["It went right in. Something inside is broken."]},
+    "blunt": {"1": ["It will bruise black."], "2": ["Something cracks under the blow."], "3": ["Bone gives way with a wet crunch."]},
+    "fracture": {"2": ["Bone cracks."], "3": ["Bone snaps like green wood."]},
+    "bite": {"1": ["Teeth marks, bleeding."], "2": ["A ragged bite, flesh torn."], "3": ["Flesh torn away in a mouthful."]},
+    "burn": {"1": ["The skin reddens and blisters."], "2": ["A deep, weeping burn."], "3": ["Charred to the meat."]},
+    "frostbite": {"1": ["Numb and white."], "2": ["Blackening frostbite."], "3": ["Frozen solid; dead flesh."]}
+  },
+  "down": ["{T} goes down and lies there, bleeding.", "{T} folds over and drops.", "{T} collapses into the mud.", "{T}'s legs give way."],
+  "dead": ["{T} is dead.", "{T} does not get up again.", "{T} twitches, and is still."],
+  "flee": ["{T} breaks and runs.", "{T} turns tail and flees.", "{T} backs away, then bolts."],
+  "surrender": ["{T} throws down {their} weapon. 'Enough! Enough!'", "{T} drops to {their} knees with hands raised.", "'I yield! Gods, I yield!' {T} flings the weapon away."],
+  "beg": ["'Please. I've children.'", "'Mercy, for the gods' sake!'", "'Don't. Please don't.'", "'I only wanted to eat.'"],
+  "aftermath": {
+    "victory": [
+      "It is over. {dead} lie still on the {ground}, and the {weather} settles over them. {survivors}",
+      "The fight ends as fights do: suddenly, and with the smell of blood and opened bowels. {dead} will not rise. {survivors}",
+      "Silence, then your own breath, loud. {dead} are down for good. {survivors}"
+    ],
+    "fled": ["You run, and do not stop until your lungs burn and the sounds behind you are gone."],
+    "parley": ["Weapons lowered, slowly. Nobody else will die here today."],
+    "robbed": ["You wake with a headache and empty pockets. They took what they wanted and left you for the crows, who have not yet come."]
+  }
+}

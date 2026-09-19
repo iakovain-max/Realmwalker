@@ -9,6 +9,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 
 from realmwalker.rules.items import BODY_PARTS, EQUIP_SLOTS, Item, coin_weight
+from realmwalker.rules.wounds import Wound
 
 ABILITIES = ("str", "dex", "con", "int", "wis", "cha")
 
@@ -61,6 +62,9 @@ class Character:
     flaw: str = ""
     ties: list[dict] = field(default_factory=list)
     conditions: list[str] = field(default_factory=list)
+    wounds: list[Wound] = field(default_factory=list)
+    kills: dict[str, int] = field(default_factory=dict)
+    deeds: list[str] = field(default_factory=list)
     next_uid: int = 1
     is_player: bool = True
     alive: bool = True
@@ -69,12 +73,14 @@ class Character:
     def to_dict(self) -> dict:
         d = asdict(self)
         d["inventory"] = [i.to_dict() for i in self.inventory]
+        d["wounds"] = [w.to_dict() for w in self.wounds]
         return d
 
     @classmethod
     def from_dict(cls, d: dict) -> Character:
         d = dict(d)
         d["inventory"] = [Item.from_dict(i) for i in d.get("inventory", [])]
+        d["wounds"] = [Wound.from_dict(w) for w in d.get("wounds", [])]
         d["equipped"] = {k: int(v) for k, v in d.get("equipped", {}).items()}
         known = set(cls.__dataclass_fields__)
         return cls(**{k: v for k, v in d.items() if k in known})

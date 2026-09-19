@@ -27,6 +27,7 @@ import numpy as np
 from realmwalker import __version__
 from realmwalker.ai.store import FlavorStore
 from realmwalker.core.rng import RNG
+from realmwalker.game.encounters import LocalActor
 from realmwalker.game.log import MessageLog
 from realmwalker.game.state import GameState, PlayerState
 from realmwalker.rules.character import Character
@@ -121,6 +122,8 @@ def world_entries(world: World) -> dict[str, bytes | str]:
             "terrain_ids": lm.terrain_ids, "entry": list(lm.entry),
             "buildings": [asdict(b) for b in lm.buildings],
             "items": [[x, y, [i.to_dict() for i in pile]] for (x, y), pile in sorted(lm.items.items()) if pile],
+            "actors": [a.to_dict() for a in lm.actors],
+            "populated": lm.populated,
         })
         entries[f"local/{safe}.terrain.npy"] = _npy(lm.terrain)
         entries[f"local/{safe}.variant.npy"] = _npy(lm.variant)
@@ -152,6 +155,8 @@ def load_world(folder: Path) -> World:
                     entry=tuple(info["entry"]),
                     seen=_load_npy(z.read(f"local/{safe}.seen.npy")),
                     items={(x, y): [Item.from_dict(i) for i in pile] for x, y, pile in info.get("items", [])},
+                    actors=[LocalActor.from_dict(a) for a in info.get("actors", [])],
+                    populated=bool(info.get("populated", False)),
                 )
     except (OSError, KeyError, ValueError, zipfile.BadZipFile) as exc:
         raise SaveError(f"The world save could not be read ({exc}).") from exc

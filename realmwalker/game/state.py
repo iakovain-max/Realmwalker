@@ -73,6 +73,12 @@ class GameState:
         B = tables.biomes
         self._biome_remap = np.array([B.index.get(b, B.index["plains"]) for b in world.biome_ids], dtype=np.int32)
         self.dirty = False  # something changed since the last save
+        self.encounter = None  # a hostile group met on the road, before the fight (game.encounters)
+        self.battle = None  # the fight in progress (rules.combat.Battle)
+        self.battle_actor = None  # the local-map band being fought, if any
+        self.aftermath = None  # what the last fight left behind (game.fight.Aftermath)
+        self.over: dict | None = None  # set when the character has died
+        self.show_dice = True
         self._remaps: dict[str, np.ndarray] = {}
         self._recent_areas: list[int] = []
 
@@ -194,6 +200,13 @@ class GameState:
             self.say(f"You wade across {name}, waist-deep and numbingly cold.", "warn")
         self.reveal()
         self._arrive(prev_area)
+        if self.encounter is None and self.battle is None:
+            from realmwalker.game.encounters import roll_encounter
+
+            enc = roll_encounter(self, minutes)
+            if enc is not None:
+                self.encounter = enc
+                self.travel = None
         return True
 
     def reveal(self) -> None:
@@ -255,6 +268,9 @@ class GameState:
         lm = get_local_map(self.world, self.tables, p.x, p.y)
         p.local_key = lm.key
         p.lx, p.ly = lm.entry
+        from realmwalker.game.encounters import populate_local
+
+        populate_local(self, lm)
         where = self.world.settlement_at(p.x, p.y)
         if where is not None:
             self.say(f"You walk into <place>{where.name}</>.", "place")
@@ -279,7 +295,21 @@ class GameState:
             return False
         nx, ny = p.lx + dx, p.ly + dy
         if not lm.in_bounds(nx, ny):
+            if any(a.alert for a in lm.actors):
+                self.say("You break away and leave them behind.", "warn")
             self.leave_local()
+            return True
+        from realmwalker.game.encounters import actor_at, move_actors
+
+        target = actor_at(lm, nx, ny)
+        if target is not None:
+            from realmwalker.game.fight import start_battle
+            from realmwalker.rules.combat import FOE
+
+            name = self.tables.creatures.encounters.get(target.group, {}).get("name", "them")
+            intro = f"You fall on {name}!" if not target.alert else f"You close with {name}."
+            start_battle(self, target.creatures, intro, surprised=None if target.alert else FOE, actor=target,
+                         title=name[:1].upper() + name[1:])
             return True
         pace = self.pace()
         if pace is None:
@@ -302,6 +332,17 @@ class GameState:
         if here:
             names = ", ".join(self.tables.items.name(i) for i in here[:4]) + (" and more" if len(here) > 4 else "")
             self.say(f"Here: <loot>{names}</>. <dim>(g to pick up)</>", "loot")
+        was_seen = {a.id: a.seen for a in lm.actors}
+        hunter = move_actors(self, lm)
+        if hunter is not None and self.battle is None:
+            from realmwalker.game.fight import start_battle
+            from realmwalker.rules.combat import PARTY
+
+            name = self.tables.creatures.encounters.get(hunter.group, {}).get("name", "something")
+            intro = self.world.rng.child(f"intro/{self.world.time}").choice(self.tables.creatures.encounters[hunter.group]["intro"])
+            surprised = None if was_seen.get(hunter.id) else PARTY
+            start_battle(self, hunter.creatures, intro, surprised=surprised, actor=hunter,
+                         title=name[:1].upper() + name[1:])
         return True
 
     # ------------------------------------------------------------------ items on the ground

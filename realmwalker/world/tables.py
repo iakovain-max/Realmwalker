@@ -92,3 +92,9 @@ class Tables:
         self.items = ItemTable(data["items.json"])
         self.appearance = data["appearance.json"]
         self.fallback = data["fallback_text.json"]
+        from realmwalker.rules.creatures import CreatureTable
+        from realmwalker.rules.spells import SpellTable
+
+        self.creatures = CreatureTable(data["creatures.json"])
+        self.spells = SpellTable(data["spells.json"])
+        self.combat_text = data["combat_text.json"]

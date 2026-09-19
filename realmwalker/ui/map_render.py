@@ -148,49 +148,11 @@ def draw_overworld(con, game, picture: OverworldPicture, x: int, y: int, w: int,
     return mx0, my0, ox, oy
 
 
-_SIGHT_CACHE: dict[int, tuple[int, bool, np.ndarray]] = {}
-# In woods you see a short way in every direction rather than down long gaps between trunks.
-WOODLAND_SIGHT = {"forest": 10, "pine_forest": 12, "marsh": 16}
-
-
-def sight_blockers(game, lm, woodland: bool = False) -> np.ndarray:
-    """Which cells let light through. Walls and closed doors block sight. A lone tree does not
-    hide what lies behind it; thickets of three or more trees do, except in woodland, where
-    sight is short instead (see WOODLAND_SIGHT)."""
-    T = game.tables.terrain
-    remap = game.remap_for(lm)
-    terrain = remap[lm.terrain]
-    stamp = hash(lm.terrain.tobytes())
-    cached = _SIGHT_CACHE.get(id(lm))
-    if cached is not None and cached[0] == stamp and cached[1] == woodland:
-        return cached[2]
-    see = T.see[terrain].copy()
-    tree = T.tag_mask("tree")[terrain]
-    if woodland:
-        see[tree] = True
-    else:
-        padded = np.pad(tree, 1)
-        neighbours = sum(padded[1 + dx: 1 + dx + tree.shape[0], 1 + dy: 1 + dy + tree.shape[1]]
-                         for dx in (-1, 0, 1) for dy in (-1, 0, 1) if dx or dy)
-        see[tree & (neighbours < 3)] = True
-    _SIGHT_CACHE[id(lm)] = (stamp, woodland, see)
-    return see
-
-
 def local_visibility(game, lm) -> np.ndarray:
     """Cells the player can see right now; also marks them as remembered."""
-    import tcod.map
+    from realmwalker.game.vision import player_fov
 
-    p = game.player
-    woodland_radius = WOODLAND_SIGHT.get(game.biome_key(p.x, p.y)) if lm.kind != "settlement" else None
-    see = sight_blockers(game, lm, woodland=woodland_radius is not None)
-    light = game.light
-    radius = 0 if light >= 0.9 else max(4, int(4 + light * 28))
-    if woodland_radius:
-        radius = min(radius, woodland_radius) if radius else woodland_radius
-    fov = tcod.map.compute_fov(see, (p.lx, p.ly), radius=radius, light_walls=True)
-    lm.seen |= fov
-    return fov
+    return player_fov(game, lm, remember=True)
 
 
 def draw_local(con, game, x: int, y: int, w: int, h: int, cursor: tuple[int, int] | None = None) -> tuple[int, int, int, int]:
@@ -215,6 +177,14 @@ def draw_local(con, game, x: int, y: int, w: int, h: int, cursor: tuple[int, int
     bg[memory] = (bg[memory].astype(np.float32) * 0.35).astype(np.uint8)
     ch[~seen] = ord(" ")
     bg[~seen] = UNSEEN_BG
+    for a in lm.actors:
+        sx, sy = a.x - mx0, a.y - my0
+        if 0 <= sx < mw and 0 <= sy < mh and visible[sx, sy] and a.creatures:
+            d = game.tables.creatures[a.creatures[0].def_id]
+            ch[sx, sy] = ord(d["glyph"])
+            fg[sx, sy] = d["color"]
+            if a.alert:
+                bg[sx, sy] = (70, 16, 12)
     if lm.items:
         from realmwalker.ui import colors
         from realmwalker.ui.screens.sheets import item_glyph

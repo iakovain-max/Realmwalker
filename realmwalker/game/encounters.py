@@ -1,0 +1,202 @@
+"""Hostile encounters: on the road (overworld) and creatures living on local maps.
+
+Encounters depend on the region's danger, the land, whether it is night, and roads (bandits like
+roads). Local maps of ruins, caves, barrows and towers are inhabited; wild country sometimes is.
+Travel events that are not fights (merchants, pilgrims, refugees...) arrive with M4.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+
+import numpy as np
+import tcod.path
+
+from realmwalker.core import dice
+from realmwalker.core.rng import RNG
+from realmwalker.rules.creatures import Creature, choose_encounter, spawn_group
+
+ALERT_RADIUS = 12
+
+
+@dataclass
+class PendingEncounter:
+    """Something hostile met on the road, before anyone has drawn steel."""
+
+    group: str
+    creatures: list[Creature]
+    intro: str
+    spotted_first: bool  # the party saw them before being seen
+    threat: str  # plain words on how dangerous this looks
+
+
+@dataclass
+class LocalActor:
+    """A band of creatures on a local map."""
+
+    id: int
+    group: str
+    x: int
+    y: int
+    creatures: list[Creature] = field(default_factory=list)
+    alert: bool = False
+    seen: bool = False  # the player can see them right now
+
+    def to_dict(self) -> dict:
+        return {"id": self.id, "group": self.group, "x": self.x, "y": self.y, "alert": self.alert,
+                "creatures": [c.to_dict() for c in self.creatures]}
+
+    @classmethod
+    def from_dict(cls, d: dict) -> LocalActor:
+        return cls(d["id"], d["group"], d["x"], d["y"], [Creature.from_dict(c) for c in d["creatures"]], d.get("alert", False))
+
+
+def threat_words(tables, creatures: list[Creature], party) -> str:
+    """How dangerous a group looks next to the party (5e encounter difficulty, in words)."""
+    xp = sum(int(tables.creatures[c.def_id]["xp"]) for c in creatures)
+    count = len(creatures)
+    mult = 1.0 if count == 1 else (1.5 if count == 2 else (2.0 if count <= 6 else 2.5))
+    adjusted = xp * mult
+    budget = sum(25 * c.level for c in party if c.alive)
+    ratio = adjusted / max(1, budget)
+    if ratio < 1:
+        return "<good>You could take them.</>"
+    if ratio < 2:
+        return "<fg>A fair fight: it could go either way.</>"
+    if ratio < 3:
+        return "<warn>They look dangerous. Think twice.</>"
+    return "<danger>This will very likely kill you.</>"
+
+
+def encounter_chance(danger: int, minutes: float, night: bool, on_road: bool) -> float:
+    per_hour = 0.004 + 0.009 * danger
+    if night:
+        per_hour *= 1.6
+    if on_road:
+        per_hour *= 0.7
+    return min(0.9, per_hour * minutes / 60.0)
+
+
+def roll_encounter(game, minutes: float) -> PendingEncounter | None:
+    """Maybe something finds the party while it travels or camps."""
+    w = game.world
+    p = game.player
+    if w.settlement_at(p.x, p.y) is not None:
+        return None
+    danger = int(w.danger[p.x, p.y])
+    night = game.light < 0.5
+    on_road = bool(w.road[p.x, p.y])
+    rng = w.rng.child(f"enc/{w.time}/{p.x},{p.y}")
+    if not rng.chance(encounter_chance(danger, minutes, night, on_road)):
+        return None
+    group = choose_encounter(game.tables, game.biome_key(p.x, p.y), danger, night, on_road, rng)
+    if group is None:
+        return None
+    return make_encounter(game, group, rng)
+
+
+def make_encounter(game, group: str, rng: RNG) -> PendingEncounter:
+    tables = game.tables
+    creatures = spawn_group(tables, group, rng, now=game.world.time, party_size=len(game.party))
+    g = tables.creatures.encounters[group]
+    stealth = max(int(tables.creatures[c.def_id].get("skills", {}).get("stealth", 0)) for c in creatures)
+    their_roll = dice.d20(rng).natural + stealth
+    our_best = max(game.sheet(c).passive_perception for c in game.party if c.alive)
+    if game.light < 0.5 and not any(game.sheet(c).darkvision for c in game.party):
+        our_best -= 5
+    return PendingEncounter(group, creatures, rng.choice(g["intro"]), our_best >= their_roll,
+                            threat_words(tables, creatures, game.party))
+
+
+# ---------------------------------------------------------------------------- local maps
+def populate_local(game, lm) -> None:
+    """Give a local map its inhabitants the first time anyone sets foot there."""
+    if getattr(lm, "populated", False):
+        return
+    lm.populated = True
+    w = game.world
+    p = game.player
+    rng = w.rng.child(f"populate/{lm.key}")
+    site = w.site_at(p.x, p.y)
+    danger = int(w.danger[p.x, p.y])
+    groups: list[str] = []
+    if site is not None:
+        options = game.tables.creatures.site_inhabitants.get(site.kind, [])
+        valid = [g for g in options if g in game.tables.creatures.encounters]
+        if valid:
+            groups.append(rng.choice(valid))
+    elif w.settlement_at(p.x, p.y) is None and rng.chance(min(0.6, 0.05 * danger)):
+        night = game.light < 0.5
+        g = choose_encounter(game.tables, game.biome_key(p.x, p.y), danger, night, False, rng)
+        if g:
+            groups.append(g)
+    walk = game.tables.terrain.walk[game.remap_for(lm)[lm.terrain]]
+    ex, ey = lm.entry
+    for i, group in enumerate(groups):
+        spot = _far_spot(walk, (ex, ey), rng, min_dist=18)
+        if spot is None:
+            continue
+        creatures = spawn_group(game.tables, group, rng.child(str(i)), now=w.time, party_size=len(game.party))
+        lm.actors.append(LocalActor(len(lm.actors) + 1, group, spot[0], spot[1], creatures))
+
+
+def _far_spot(walk: np.ndarray, frm: tuple[int, int], rng: RNG, min_dist: int) -> tuple[int, int] | None:
+    cells = np.argwhere(walk)
+    if len(cells) == 0:
+        return None
+    d = np.maximum(np.abs(cells[:, 0] - frm[0]), np.abs(cells[:, 1] - frm[1]))
+    far = cells[d >= min_dist]
+    if len(far) == 0:
+        far = cells
+    x, y = far[rng.randint(0, len(far) - 1)]
+    return int(x), int(y)
+
+
+def actor_at(lm, x: int, y: int) -> LocalActor | None:
+    for a in lm.actors:
+        if a.x == x and a.y == y:
+            return a
+    return None
+
+
+def move_actors(game, lm) -> LocalActor | None:
+    """Creatures react to the player's step. Returns an actor that has reached the player (a fight)."""
+    from realmwalker.game.vision import can_see, player_fov
+
+    p = game.player
+    if not lm.actors:
+        return None
+    fov = player_fov(game, lm, remember=False)
+    walk = game.tables.terrain.walk[game.remap_for(lm)[lm.terrain]]
+    for a in lm.actors:
+        a.seen = bool(fov[a.x, a.y])
+        dist = max(abs(a.x - p.lx), abs(a.y - p.ly))
+        if not a.alert and dist <= ALERT_RADIUS:
+            rng = game.world.rng.child(f"notice/{lm.key}/{a.id}/{game.world.time}")
+            chance = 0.9 if dist <= 6 else 0.5
+            if game.light < 0.5:
+                chance *= 0.6
+            if can_see(game, lm, (a.x, a.y), (p.lx, p.ly), ALERT_RADIUS) and rng.chance(chance):
+                a.alert = True
+                if a.seen:
+                    game.say(f"<danger>{_group_name(game, a)} {'has' if len(a.creatures) == 1 else 'have'} seen you!</>", "danger")
+        if a.alert and dist > 1:
+            cost = np.where(walk, 1, 0).astype(np.int32)
+            for other in lm.actors:
+                if other is not a:
+                    cost[other.x, other.y] = 0
+            cost[p.lx, p.ly] = 1
+            path = tcod.path.path2d(cost, start_points=[(a.x, a.y)], end_points=[(p.lx, p.ly)], cardinal=2, diagonal=3)
+            if len(path) >= 2:
+                nx, ny = (int(v) for v in path[1])
+                if (nx, ny) != (p.lx, p.ly):
+                    a.x, a.y = nx, ny
+                    dist = max(abs(a.x - p.lx), abs(a.y - p.ly))
+        if a.alert and dist <= 1:
+            return a
+    return None
+
+
+def _group_name(game, a: LocalActor) -> str:
+    name = game.tables.creatures.encounters.get(a.group, {}).get("name", "something")
+    return name[:1].upper() + name[1:]
