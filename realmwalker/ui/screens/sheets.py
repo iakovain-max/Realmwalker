@@ -44,6 +44,10 @@ def item_details(game: GameState, item: Item) -> str:
     lines = [f"<loot>{markup.escape(t.name(item))}</>"]
     if d.get("description"):
         lines.append(d["description"])
+    if item.magic:
+        from realmwalker.game.magic_items import describe
+
+        lines += describe(game, item)
     cat = d["category"]
     if cat == "weapon":
         props = ", ".join(p.replace("_", "-") for p in d.get("properties", [])) or "none"
@@ -305,6 +309,8 @@ class InventoryScreen(Screen):
             return "Disguise yourself"
         if d.get("use", {}).get("scroll"):
             return "Copy into spellbook" if self.char.cls == "wizard" else "Read"
+        if it.magic and not it.magic.get("identified") and not self.game.tables.items.slots_for(it):
+            return "Study it"
         if self.game.tables.items.slots_for(it) or self.char.slot_of(it.uid):
             return "Remove" if self.char.slot_of(it.uid) else "Wear / wield"
         return "Use"
@@ -328,6 +334,11 @@ class InventoryScreen(Screen):
             from realmwalker.game import law
 
             self.game.say(law.put_on_disguise(self.game, self.char), "info")
+        elif name == "Study it":
+            from realmwalker.game import magic_items
+
+            for line in magic_items.study(self.game, self.char, it):
+                self.game.say(line, "magic")
         elif name == "Copy into spellbook":
             from realmwalker.game import magic
 

@@ -1,0 +1,18 @@
+@max_tokens: 3000
+@temperature: 0.9
+# The name and history of a magic item found in the world. One call per item, in the background.
+# Slots: {base} {rarity} {powers} {cursed} {hero} {place} {year} {faction} {schema}
+Name a magic item and write its history, for a grim, low-magic world.
+
+Facts (use them; do not contradict them; do not invent other powers):
+- It is a {base}, {rarity}.
+- What it does: {powers}.
+- Cursed: {cursed}.
+- Real history you may tie it to: {hero}; the place {place}; the year {year}; {faction}.
+
+The name is 2 to 6 words, like a thing people would really call it. The history is two or three plain sentences:
+who made or carried it, and what happened. If it is cursed, the history should hint at why, without saying so.
+No poetry.
+
+Reply with only this JSON object:
+{schema}

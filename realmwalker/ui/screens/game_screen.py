@@ -371,6 +371,28 @@ class GameScreen(Screen):
 
         self.app.ai.submit(TRAVEL_DAY, variables, priority=Priority.BACKGROUND, callback=done)
 
+    def _dress_magic_items(self) -> None:
+        """Magic items in the packs get an AI-written name and history before they are identified."""
+        from realmwalker.game import magic_items
+
+        if not self.app.ai.usable():
+            return
+        from realmwalker.ai.service import Priority
+        from realmwalker.ai.tasks import MAGIC_ITEM
+
+        for c in self.game.party:
+            for it in c.inventory:
+                if magic_items.needs_dressing(it):
+                    it.magic["ai_asked"] = True
+
+                    def done(result, it=it) -> None:
+                        if result.ok and result.data:
+                            magic_items.apply_dressing(it, result.data)
+
+                    self.app.ai.submit(MAGIC_ITEM, magic_items.dressing_facts(self.game, it),
+                                       priority=Priority.BACKGROUND, callback=done)
+                    return  # one at a time
+
     def water(self) -> None:
         from realmwalker.game.survival import fill_skins
 
@@ -402,6 +424,7 @@ class GameScreen(Screen):
             from realmwalker.ui.screens.chronicle import request_chronicle
 
             request_chronicle(self.app, game)
+        self._dress_magic_items()
         if game.travel is not None:
             now = self.app.clock()
             if now - self._last_travel_step >= TRAVEL_STEP_SECONDS or self.app.headless:

@@ -263,7 +263,7 @@ class BattleResult:
 
 def spell_id(value: str) -> str:
     """The spell behind a spell-menu value (a spell id, or "scroll:<uid>:<spell id>")."""
-    return value.split(":", 2)[2] if value.startswith("scroll:") else value
+    return value.split(":", 2)[2] if value.startswith(("scroll:", "charge:")) else value
 
 
 class Battle:
@@ -542,7 +542,10 @@ class Battle:
         ability = "dex" if use_dex else "str"
         prof = s.proficiency if s.proficient_with_weapon(it) else 0
         quality = int(self.t.items.qualities.get(it.quality, {}).get("attack", 0))
-        bonus = s.mod(ability) + prof + quality + s.attack_condition(ranged)
+        from realmwalker.rules import magic
+
+        enchant = magic.item_bonus(it)
+        bonus = s.mod(ability) + prof + quality + s.attack_condition(ranged) + enchant + magic.total(f.char, "attack")
         if ranged and f.char.fighting_style == "archery":
             bonus += 2
         dmg = d["damage"]
@@ -551,6 +554,7 @@ class Battle:
         mod = s.mod(ability)
         if key == "off" and not thrown:
             mod = min(0, mod)  # the off hand adds no bonus damage
+        mod += enchant
         if f.char.fighting_style == "dueling" and not ranged and "two_handed" not in props and key == "main":
             off = f.char.equipped_item("off_hand")
             if off is None or self.t.items.category(off) == "shield":
@@ -768,6 +772,10 @@ class Battle:
             if dtype in target.cdef.get("vulnerable", []):
                 amount *= 2
         resist = [r for b in target.buffs for r in b.get("resist", [])]
+        if target.char is not None:
+            from realmwalker.rules import magic
+
+            resist += magic.resistances(target.char)
         if dtype in resist or (dtype == "poison" and target.has_trait("poison_resilience")):
             amount = max(1, amount // 2)
         if target.char and target.has_trait("uncanny_dodge") and target.uncanny_used_round != self.round and att is not None:
@@ -1275,6 +1283,12 @@ class Battle:
             sid = self.t.items.get(it.def_id).get("use", {}).get("scroll")
             if sid in self.t.spells and self.t.spells[sid]["kind"] != "revive":
                 out.append((f"scroll:{it.uid}:{sid}", True, ""))
+        from realmwalker.rules import magic
+
+        for it, p in magic.charges(f.char):
+            if p["spell"] in self.t.spells:
+                left = int(p.get("left", p.get("value", 1)))
+                out.append((f"charge:{it.uid}:{p['spell']}", left > 0, "no charges left until dawn"))
         return out
 
     def spell_targets(self, f: Fighter, sid: str) -> list[Fighter]:
@@ -1293,6 +1307,19 @@ class Battle:
 
     def do_cast(self, f: Fighter, sid: str, target: Fighter | None, slot_level: int | None = None) -> None:
         scroll = None
+        charged = None
+        if sid.startswith("charge:"):
+            _, uid, sid = sid.split(":", 2)
+            item = f.char.item(int(uid))
+            from realmwalker.rules import magic
+
+            charged = next((p for p in magic.props(item) if p.get("kind") == "charges" and p.get("spell") == sid),
+                           None) if item is not None else None
+            if charged is None or int(charged.get("left", charged.get("value", 1))) <= 0:
+                self.say("It has no power left until dawn.", "warn")
+                return
+            charged["left"] = int(charged.get("left", charged.get("value", 1))) - 1
+            self.say(f"{f.the_name} calls on the power in the {self.t.items.name(item, False)}.", "magic")
         if sid.startswith("scroll:"):
             _, uid, sid = sid.split(":", 2)
             scroll = f.char.item(int(uid))
@@ -1314,6 +1341,8 @@ class Battle:
                     return
             self.say(f"{f.the_name} reads from a scroll.", "magic")
             level = 0  # the scroll's own magic: no spell slot
+        if charged is not None:
+            level = 0  # the item's own magic
         if level > 0:
             slot_level = slot_level or spellrules.lowest_free_slot(c, self.t, level)
             if slot_level is None:

@@ -25,6 +25,8 @@ def add_existing(char: Character, items: ItemTable, item: Item) -> Item:
     """Take an item that came from somewhere else (the ground, another character)."""
     it = add_item(char, items, item.def_id, item.qty, quality=item.quality, condition=item.condition,
                   made_at=item.made_at, name=item.name, tags=item.tags)
+    if item.magic:
+        it.magic = item.magic
     if item.fill and it.qty == 1:
         it.fill, it.fill_kind = item.fill, item.fill_kind
     return it
@@ -66,6 +68,8 @@ def remove_item(char: Character, uid: int, qty: int | None = None) -> Item | Non
     take = it.qty if qty is None else max(1, min(qty, it.qty))
     if take >= it.qty:
         slot = char.slot_of(uid)
+        if slot is not None and cursed(it):
+            return None  # it will not come off
         if slot is not None:
             del char.equipped[slot]
         char.inventory.remove(it)
@@ -74,7 +78,13 @@ def remove_item(char: Character, uid: int, qty: int | None = None) -> Item | Non
     return Item(0, it.def_id, take, it.quality, it.condition, it.name, it.made_at, list(it.tags))
 
 
+def cursed(item: Item | None) -> bool:
+    return bool(item is not None and item.magic and item.magic.get("cursed"))
+
+
 def unequip(char: Character, slot: str) -> Item | None:
+    if cursed(char.equipped_item(slot)):
+        return None  # cursed things cling
     uid = char.equipped.pop(slot, None)
     return char.item(uid) if uid is not None else None
 
@@ -95,6 +105,11 @@ def equip(char: Character, items: ItemTable, uid: int, slot: str | None = None) 
             slot = "off_hand"  # a second light weapon goes in the other hand
     if slot not in slots:
         return False, f"The {items.name(it, False)} doesn't go there."
+    there = char.equipped_item(slot)
+    if cursed(there) and there.uid != uid:
+        there.magic["curse_known"] = True
+        return False, (f"The {items.name(there, False)} will not come off. It is cursed; a priest may be able to "
+                       f"lift it.")
     current = char.slot_of(uid)
     if current is not None:
         del char.equipped[current]
@@ -115,6 +130,9 @@ def equip(char: Character, items: ItemTable, uid: int, slot: str | None = None) 
     char.equipped[slot] = uid
     verb = "wield" if d["category"] == "weapon" else ("hold" if slot == "off_hand" else "put on")
     messages.append(f"You {verb} the {items.name(it, False)}.")
+    if cursed(it) and not it.magic.get("curse_known"):
+        it.magic["curse_known"] = True
+        messages.append("A chill runs through you, and something tightens. It will not come off.")
     return True, " ".join(messages)
 
 

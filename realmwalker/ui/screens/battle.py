@@ -139,6 +139,8 @@ class BattleScreen(Screen):
                 lvl = "cantrip" if sp["level"] == 0 else f"level {sp['level']}"
                 if sid.startswith("scroll:"):
                     lvl = "from a scroll"
+                elif sid.startswith("charge:"):
+                    lvl = "from a magic item"
                 if ok and sp["target"] in ("enemy", "ally", "downed_ally", "dead_ally") and not b.spell_targets(f, sid):
                     ok, why = False, "no one to cast it on"
                 rows.append((f"{sp['name']} <dim>({lvl}) {sp['text']}</>", sid, ok, why))

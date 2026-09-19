@@ -139,6 +139,24 @@ def _check_faction_refs(files: dict[str, Any]) -> list[str]:
     errors.extend(_check_law_refs(files, cultures))
     errors.extend(_check_politics_refs(files))
     errors.extend(_check_companion_refs(files))
+    errors.extend(_check_magic_refs(files))
+    return errors
+
+
+def _check_magic_refs(files: dict[str, Any]) -> list[str]:
+    data = files.get("magic.json")
+    if not data:
+        return []
+    errors: list[str] = []
+    items = files.get("items.json", {}).get("items", {})
+    spells = files.get("spells.json", {}).get("spells", {})
+    for kind, bases in data["bases"].items():
+        for b in bases:
+            if items and b not in items:
+                errors.append(f"data/magic.json: bases.{kind} names unknown item {b!r}.")
+    for sid in data["charge_spells"]:
+        if spells and sid not in spells:
+            errors.append(f"data/magic.json: charge_spells names unknown spell {sid!r}.")
     return errors
 
 

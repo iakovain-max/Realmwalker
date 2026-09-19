@@ -9,16 +9,17 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 
 BODY_PARTS = ("head", "torso", "arms", "legs", "hands", "feet")
-EQUIP_SLOTS = ("main_hand", "off_hand", "armor", "helmet", "outer", "main", "under", "head", "hands", "feet")
+EQUIP_SLOTS = ("main_hand", "off_hand", "armor", "helmet", "outer", "main", "under", "head", "hands", "feet",
+               "neck", "ring")
 SLOT_NAMES = {
     "main_hand": "Main hand", "off_hand": "Off hand", "armor": "Armour", "helmet": "Helmet",
     "outer": "Cloak / coat", "main": "Clothes", "under": "Underclothes", "head": "Hat / hood",
-    "hands": "Gloves", "feet": "Footwear",
+    "hands": "Gloves", "feet": "Footwear", "neck": "Neck", "ring": "Ring",
 }
 CATEGORY_NAMES = {
     "weapon": "Weapons", "ammo": "Ammunition", "armor": "Armour", "shield": "Shields", "helmet": "Helmets",
     "clothing": "Clothing", "gear": "Gear", "tool": "Tools", "focus": "Holy symbols & foci", "book": "Books & papers",
-    "food": "Food", "drink": "Drink", "trade": "Trade goods",
+    "food": "Food", "drink": "Drink", "trade": "Trade goods", "jewellery": "Rings & amulets",
 }
 UNKNOWN = {"name": "strange object", "category": "gear", "weight": 1, "value": 0, "material": "stone"}
 
@@ -33,6 +34,7 @@ class Item:
     name: str = ""  # custom name for unique items
     made_at: int = 0  # world minute it was made or caught (food spoilage)
     tags: list[str] = field(default_factory=list)  # e.g. "stolen"
+    magic: dict = field(default_factory=dict)  # magic items: rarity, properties, curse, name (rules/magic.py)
     fill: float = 0.0  # containers: pints held
     fill_kind: str = ""  # containers: "clean", "boiled", "river", "marsh"
 
@@ -72,11 +74,16 @@ class ItemTable:
 
     # ------------------------------------------------------------------ descriptions
     def base_name(self, item: Item) -> str:
+        if item.magic:
+            base = self.get(item.def_id)["name"]
+            if item.magic.get("identified"):
+                return item.magic.get("title") or item.name or f"magic {base}"
+            return f"strange {base}"
         return item.name or self.get(item.def_id)["name"]
 
     def name(self, item: Item, with_qty: bool = True) -> str:
         name = self.base_name(item)
-        if item.quality != "common" and not item.name:
+        if item.quality != "common" and not item.name and not item.magic:
             name = f"{self.qualities.get(item.quality, {}).get('name', item.quality)} {name}"
         if with_qty and item.qty > 1:
             name = f"{name} ×{item.qty}"
@@ -92,13 +99,16 @@ class ItemTable:
         d = self.get(item.def_id)
         mult = self.qualities.get(item.quality, {}).get("value", 1.0)
         wear = 0.3 + 0.7 * max(0, min(100, item.condition)) / 100.0
-        return int(round(d["value"] * mult * wear))
+        value = d["value"] * mult * wear
+        if item.magic and item.magic.get("identified"):
+            value += int(item.magic.get("value", 0))
+        return int(round(value))
 
     def value(self, item: Item) -> int:
         return self.unit_value(item) * item.qty
 
     def stackable(self, item: Item) -> bool:
-        return bool(self.get(item.def_id).get("stack"))
+        return bool(self.get(item.def_id).get("stack")) and not item.magic
 
     def condition_word(self, item: Item) -> str:
         c = item.condition
@@ -123,7 +133,7 @@ class ItemTable:
             return ["armor"]
         if cat == "helmet":
             return ["helmet"]
-        if cat == "clothing":
+        if cat in ("clothing", "jewellery"):
             return [d["slot"]]
         if cat in ("focus",) or d.get("light"):
             return ["off_hand"]  # holy symbols, foci, torches and lanterns are held

@@ -111,4 +111,5 @@ class Tables:
         self.law = data["law.json"]
         self.politics = data["politics.json"]
         self.companions = data["companions.json"]
+        self.magic = data["magic.json"]
         self.travel_events = {k: v for k, v in data["travel_events.json"]["events"].items() if not k.startswith("_")}

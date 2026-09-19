@@ -215,7 +215,7 @@ BACKGROUNDS = Obj({"backgrounds": Map(BACKGROUND, min_items=1), "tie_words": Map
 ITEM = Obj(
     {
         "name": Str(max_len=60), "category": Str(choices=["weapon", "ammo", "armor", "shield", "helmet", "clothing", "gear",
-                                                          "tool", "focus", "book", "food", "drink", "trade"]),
+                                                          "tool", "focus", "book", "food", "drink", "trade", "jewellery"]),
         "weight": Float(min=0, max=1000), "value": Int(min=0, max=10**8), "material": Str(max_len=20),
         "description": Str(max_len=400, optional=True), "stack": Bool(optional=True),
         "damage": Str(max_len=10, optional=True), "damage_type": Str(choices=["slashing", "piercing", "bludgeoning"], optional=True),
@@ -226,7 +226,7 @@ ITEM = Obj(
         "str_req": Int(min=0, max=30, optional=True), "stealth_disadvantage": Bool(optional=True),
         "covers": List(Str(choices=["head", "torso", "arms", "legs", "hands", "feet"]), optional=True),
         "ac_bonus": Int(min=0, max=5, optional=True), "perception_penalty": Int(min=0, max=10, optional=True),
-        "slot": Str(choices=["under", "main", "outer", "head", "hands", "feet"], optional=True),
+        "slot": Str(choices=["under", "main", "outer", "head", "hands", "feet", "ring", "neck"], optional=True),
         "warmth": Float(min=0, max=10, optional=True), "wind": Float(min=0, max=1, optional=True),
         "water": Float(min=0, max=1, optional=True), "social": Int(min=-3, max=3, optional=True), "hood": Bool(optional=True),
         "tool": Str(max_len=40, optional=True), "light": Any_(optional=True), "container": Any_(optional=True),
@@ -616,3 +616,22 @@ COMPANION_LINES = ("hired", "approve", "disapprove", "complain", "unpaid", "dese
                    "camp", "level_up", "mood_good", "mood_fair", "mood_bad")
 
 DATA_FILES.update({"companions.json": COMPANIONS})
+
+# ---------------------------------------------------------------------------- magic items (M8)
+MAGIC = Obj(
+    {
+        "rarities": Map(Obj({"budget": Float(min=0, max=10), "value_mult": Float(min=0, max=1000),
+                             "value_add": Int(min=0, max=10**8), "tier": Int(min=0, max=10)}), min_items=1),
+        "properties": Map(Obj({"label": Str(max_len=60), "cost": Float(min=0, max=10), "max": Int(min=1, max=10),
+                               "step": Int(min=1, max=20, optional=True), "for": word_list(1, 20)}), min_items=1),
+        "skills": word_list(1, 30), "resist_types": word_list(1, 20), "abilities": word_list(1, 5),
+        "charge_spells": word_list(1, 40), "cursed_chance": Float(min=0, max=1),
+        "curses": List(Obj({"text": Str(max_len=200), "effect": Str(max_len=20), "value": Int(min=-20, max=0),
+                            "skill": Str(max_len=30, optional=True)}), min_items=1),
+        "bases": Map(word_list(1, 40)),
+        "names": Obj({"patterns": word_list(1, 80), "epithets": word_list(1, 30)}),
+        "stories": word_list(1, 300),
+    }
+)
+
+DATA_FILES.update({"magic.json": MAGIC})

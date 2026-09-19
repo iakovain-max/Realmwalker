@@ -173,6 +173,8 @@
     "pepper": {"name": "pouch of pepper", "category": "trade", "weight": 0.5, "value": 200, "material": "food", "stack": true},
     "copper_ingot": {"name": "copper ingot", "category": "trade", "weight": 5, "value": 250, "material": "iron", "stack": true},
     "silver_ingot": {"name": "silver ingot", "category": "trade", "weight": 2, "value": 1000, "material": "silver", "stack": true},
+    "plain_ring": {"name": "ring", "category": "jewellery", "slot": "ring", "weight": 0.05, "value": 500, "material": "silver", "description": "A plain band."},
+    "amulet": {"name": "amulet", "category": "jewellery", "slot": "neck", "weight": 0.2, "value": 800, "material": "silver", "description": "A pendant on a chain."},
     "gold_ring": {"name": "gold ring", "category": "trade", "weight": 0.1, "value": 2500, "material": "gold", "description": "A heavy gold ring, taken from a dead hand."},
     "silver_chalice": {"name": "silver chalice", "category": "trade", "weight": 1, "value": 1500, "material": "silver", "description": "A cup for wine or for the gods, dented."},
     "gemstone": {"name": "gemstone", "category": "trade", "weight": 0.1, "value": 5000, "material": "stone", "description": "A cut stone that takes the light."},

@@ -123,6 +123,16 @@ CHRONICLE = AITask(
 )
 
 
+# ---------------------------------------------------------------------------- magic items (M8)
+MAGIC_ITEM = AITask(
+    name="magic_item",
+    schema=Obj({"name": Str("the item's name, 2 to 6 words", max_len=60),
+                "history": Str("two or three sentences of its history", max_len=500)}),
+    max_tokens=3000,
+    temperature=0.9,
+)
+
+
 # ---------------------------------------------------------------------------- settlements and people
 def _settlement_task() -> AITask:
     from realmwalker.core.schema import Int, List

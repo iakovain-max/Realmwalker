@@ -1,0 +1,31 @@
+{
+  "_comment": "Magic items (M8). rarities: how much power an item may have (budget, in points) and what it is worth (value_mult times its base value plus value_add in copper). properties: the whitelist; each has a cost in points per step and what kinds of item may have it ('weapon', 'armor', 'shield', 'jewellery', 'clothing', 'focus'). The AI may only name and describe; code picks the properties and keeps within the budget. cursed_chance: some items are cursed (they cannot be taken off, and carry a hidden flaw) until a temple lifts it. names/stories: built-in words when the AI is not there ({base}, {hero}, {place}, {epithet}, {faction}, {year}).",
+  "rarities": {
+    "uncommon": {"budget": 1, "value_mult": 4, "value_add": 10000, "tier": 1},
+    "rare": {"budget": 2, "value_mult": 10, "value_add": 50000, "tier": 3},
+    "very_rare": {"budget": 3, "value_mult": 25, "value_add": 200000, "tier": 5}
+  },
+  "properties": {
+    "bonus": {"label": "+{value} to hit and damage", "cost": 1, "max": 3, "for": ["weapon"]},
+    "ac": {"label": "+{value} to armour class", "cost": 1, "max": 2, "for": ["armor", "shield", "jewellery", "clothing"]},
+    "save": {"label": "+{value} to every saving throw", "cost": 1, "max": 2, "for": ["jewellery", "clothing", "armor", "shield"]},
+    "skill": {"label": "+{value} to {skill}", "cost": 1, "max": 1, "step": 3, "for": ["jewellery", "clothing", "armor", "weapon", "focus"]},
+    "resist": {"label": "resistance to {type} damage", "cost": 1, "max": 1, "for": ["armor", "shield", "jewellery", "clothing"]},
+    "light": {"label": "sheds light ({value} yards)", "cost": 0.5, "max": 1, "step": 6, "for": ["weapon", "jewellery", "focus"]},
+    "warmth": {"label": "keeps you warm (+{value})", "cost": 0.5, "max": 1, "step": 3, "for": ["clothing", "armor", "jewellery"]},
+    "ability": {"label": "+{value} {ability}", "cost": 2, "max": 1, "step": 2, "for": ["jewellery", "clothing"]},
+    "charges": {"label": "{spell}, {value} times a day", "cost": 1, "max": 1, "step": 3, "for": ["focus", "jewellery", "weapon"]}
+  },
+  "skills": ["stealth", "perception", "persuasion", "intimidation", "athletics", "survival", "insight", "arcana", "medicine", "sleight_of_hand"],
+  "resist_types": ["fire", "cold", "lightning", "poison", "necrotic", "slashing", "piercing", "bludgeoning"],
+  "abilities": ["str", "dex", "con", "int", "wis", "cha"],
+  "charge_spells": ["magic_missile", "cure_wounds", "shield", "burning_hands", "healing_word", "bless", "guiding_bolt", "scorching_ray", "hold_person", "misty_step"],
+  "cursed_chance": 0.1,
+  "curses": [{"text": "It drinks a little of your strength each night.", "effect": "save", "value": -2}, {"text": "It whispers, and your aim wavers.", "effect": "attack", "value": -1}, {"text": "Beasts and dogs hate the smell of it.", "effect": "skill", "skill": "animal_handling", "value": -5}],
+  "bases": {"weapon": ["longsword", "shortsword", "dagger", "mace", "warhammer", "battleaxe", "longbow", "spear", "rapier", "handaxe"], "armor": ["chain_mail", "leather_armor", "scale_mail", "chain_shirt", "studded_leather"], "shield": ["shield"], "jewellery": ["plain_ring", "amulet"], "clothing": ["wool_cloak", "hooded_cloak", "boots", "wool_gloves"], "focus": ["holy_symbol", "arcane_focus"]},
+  "names": {
+    "patterns": ["{base} of {hero}", "{hero}'s {base}", "the {epithet} {base}", "the {base} of {place}", "the {epithet} {base} of {hero}"],
+    "epithets": ["Black", "Weeping", "Oathbound", "Grey", "Last", "Bright", "Hollow", "Red", "Sleepless", "Widow's", "Iron", "Starlit"]
+  },
+  "stories": ["It was made for {hero}, and carried at {place} in {year}.", "Taken from the dead at {place}, in the year {year}. The dead did not give it up easily.", "{faction} kept it in a locked room for a hundred years, and then lost it.", "An old smith's masterwork; the smith was hanged, the story says, for what went into it.", "Nobody remembers who made it. Everybody remembers who died holding it."]
+}

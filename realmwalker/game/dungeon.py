@@ -121,10 +121,13 @@ def on_step(game, x: int, y: int) -> None:
 
 # ---------------------------------------------------------------------------- light
 def light_radius(game) -> int:
+    from realmwalker.rules import magic
+
+    glow = max((magic.light(c) for c in game.party), default=0)
     lit = getattr(game, "lit", None)
     if lit and lit.get("hours", 0) > 0:
-        return int(game.tables.items.get(lit["def_id"]).get("light", {}).get("radius", 5))
-    return 0
+        return max(glow, int(game.tables.items.get(lit["def_id"]).get("light", {}).get("radius", 5)))
+    return glow
 
 
 def light_up(game) -> str | None:
@@ -132,6 +135,10 @@ def light_up(game) -> str | None:
     lit = getattr(game, "lit", None)
     if lit and lit.get("hours", 0) > 0:
         return None
+    from realmwalker.rules import magic
+
+    if any(magic.light(c) for c in game.party):
+        return None  # something magic already sheds light
     items = game.tables.items
     best = None
     for c in game.party:

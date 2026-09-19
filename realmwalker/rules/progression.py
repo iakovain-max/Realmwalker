@@ -256,4 +256,7 @@ def long_rest(char: Character, tables, rng: RNG) -> list[str]:
     if char.subclass == "war":
         char.uses["war_priest"] = max(1, modifier(char.abilities["wis"]))
     char.uses["arcane_recovery"] = 1
+    from realmwalker.rules import magic
+
+    magic.recharge(char)
     return [f"{char.name.split()[0]} wakes rested."]

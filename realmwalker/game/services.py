@@ -144,7 +144,17 @@ def services_for(game, npc: NPC) -> list[Service]:
             out.append(Service("cure_disease", "Ask the gods to lift a sickness (a donation)", price, ok and sick,
                                why if sick else "you are not sick"))
         elif sid == "blessing":
-            continue
+            unknown = [it for m in game.party for it in m.inventory if it.magic and not it.magic.get("identified")]
+            price = fee(game, npc, 2000)
+            options = [(f"{game.party.index(m)}:{it.uid}", game.tables.items.name(it), price)
+                       for m in game.party for it in m.inventory if it.magic and not it.magic.get("identified")]
+            out.append(Service("identify", "Ask what a strange thing is (a donation)", 0, bool(unknown),
+                               "you carry nothing strange", options=options))
+            cursed = [(f"{game.party.index(m)}:{it.uid}", game.tables.items.name(it), fee(game, npc, 6000))
+                      for m in game.party for it in m.inventory if it.magic and it.magic.get("cursed")
+                      and it.magic.get("curse_known")]
+            if cursed:
+                out.append(Service("remove_curse", "Have a curse lifted (a donation)", 0, True, "", options=cursed))
         elif sid == "repair":
             options = []
             for it in c.inventory:
@@ -408,10 +418,52 @@ def _sell_animal(game, npc, svc, arg):
     return [f"You sell {a['name']} for {money_text(price)}."]
 
 
+def _pick_item(game, arg: str | None):
+    if not arg or ":" not in arg:
+        return None, None
+    i, uid = arg.split(":", 1)
+    try:
+        m = game.party[int(i)]
+    except (ValueError, IndexError):
+        return None, None
+    return m, m.item(int(uid))
+
+
+def _identify(game, npc: NPC, svc, arg) -> list[str]:
+    from realmwalker.game import magic_items
+
+    m, it = _pick_item(game, arg)
+    if it is None:
+        return ["Show them what?"]
+    price = dict((o[0], o[2]) for o in svc.options).get(arg, 0)
+    if money(game) < price:
+        return [f"You need {money_text(price)}."]
+    charge(game, npc, price)
+    return [f"{npc.first_name} holds it to the light and murmurs over it for a long while."] + \
+        magic_items.identify(game, it)
+
+
+def _remove_curse(game, npc: NPC, svc, arg) -> list[str]:
+    from realmwalker.game import magic_items
+
+    m, it = _pick_item(game, arg)
+    if it is None:
+        return ["Show them what?"]
+    price = dict((o[0], o[2]) for o in svc.options).get(arg, 0)
+    if money(game) < price:
+        return [f"You need {money_text(price)}."]
+    charge(game, npc, price)
+    magic_items.lift_curse(it)
+    game.pass_time(60, "rest")
+    return [f"Candles, bitter smoke and an hour of prayer. At the end of it the {game.tables.items.name(it, False)} "
+            f"is only a thing again, and it comes off in your hand when you want it to."]
+
+
 HANDLERS = {
     "room_common": _room, "room_private": _room, "meal": _meal, "bath": _bath, "perform": _perform, "gamble": _gamble,
     "treat_wounds": _treat, "surgery": _surgery, "herbal_cure": _herbal, "prayer_healing": _prayer,
     "cure_disease": _cure, "repair": _repair, "labour": _labour, "buy_animal": _buy_animal, "sell_animal": _sell_animal,
+    "identify": _identify, "remove_curse": _remove_curse,
 }
 
 

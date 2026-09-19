@@ -138,7 +138,12 @@ class Sheet:
 
     # ------------------------------------------------------------------ basics
     def mod(self, ability: str) -> int:
-        return modifier(self.c.abilities.get(ability, 10))
+        score = self.c.abilities.get(ability, 10)
+        if self.c.equipped:
+            from realmwalker.rules import magic
+
+            score = min(24, score + magic.total(self.c, "ability", ability=ability))
+        return modifier(score)
 
     @property
     def proficiency(self) -> int:
@@ -156,6 +161,10 @@ class Sheet:
             helm = self.c.equipped_item("helmet")
             if helm is not None:
                 bonus -= int(self.items.get(helm.def_id).get("perception_penalty", 0))
+        if self.c.equipped:
+            from realmwalker.rules import magic
+
+            bonus += magic.total(self.c, "skill", skill=skill)
         return bonus + self.skill_condition(skill)
 
     def skill_condition(self, skill: str) -> int:
@@ -178,6 +187,10 @@ class Sheet:
     def save_bonus(self, ability: str) -> int:
         bonus = self.mod(ability) + (self.proficiency if ability in self.c.saves else 0)
         c = self.c
+        if c.equipped:
+            from realmwalker.rules import magic
+
+            bonus += magic.total(c, "save")
         if c.wounds or c.diseases or c.exhaustion or c.effects or c.intoxication or c.hunger >= 55 or c.thirst >= 60                 or c.fatigue >= 70 or abs(c.body_heat) >= 40 or c.blood < 80:
             from realmwalker.rules import health
 
@@ -257,6 +270,10 @@ class Sheet:
         shield = self.c.equipped_item("off_hand")
         if shield is not None and self.items.category(shield) == "shield":
             ac += int(self.items.get(shield.def_id).get("ac_bonus", 2))
+        if self.c.equipped:
+            from realmwalker.rules import magic
+
+            ac += magic.total(self.c, "ac")
         return ac
 
     def proficient_with_armor(self, item: Item) -> bool:
@@ -297,6 +314,10 @@ class Sheet:
             d = self.items.get(it.def_id)
             w = float(d.get("warmth", 0))
             total += w * (0.5 + 0.5 * it.condition / 100.0)
+        if self.c.equipped:
+            from realmwalker.rules import magic
+
+            total += magic.total(self.c, "warmth")
         return round(total, 1)
 
     def wind_protection(self) -> float:
