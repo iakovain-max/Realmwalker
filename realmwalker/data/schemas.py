@@ -37,12 +37,16 @@ TAVERN_TABLES = (
 
 TRAVEL_DAY_TABLES = ("passage", "opening", "walking", "closing")
 
-FALLBACK_TEXT = Obj({"tavern": table_set(*TAVERN_TABLES), "travel_day": table_set(*TRAVEL_DAY_TABLES)})
+SETTLEMENT_TABLES = ("passage", "approach", "sight", "smell", "detail")
+
+FALLBACK_TEXT = Obj({"tavern": table_set(*TAVERN_TABLES), "travel_day": table_set(*TRAVEL_DAY_TABLES),
+                     "settlement": table_set(*SETTLEMENT_TABLES)})
 
 # Slots that code fills in itself (not from a table), per table set.
 RUNTIME_SLOTS: dict[str, set[str]] = {
     "tavern": {"family", "keeper"},
     "travel_day": {"name", "miles", "lands", "weather", "mood", "season", "events", "road"},
+    "settlement": {"name", "kind", "land", "season"},
 }
 
 PLACE_NAMES = Obj(

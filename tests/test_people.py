@@ -129,7 +129,7 @@ def test_a_conversation_menu_and_its_answers(game):
     s = visit(game, "town")
     npc = next(n for n in npcs_in(game.world, s.id) if n.job == "innkeeper")
     conv = Conversation(game, npc)
-    assert npc.met and conv.lines and conv.lines[0][0] == "npc"
+    assert npc.met and conv.lines and any(who == "npc" for who, _ in conv.lines)
     labels = {c.id for c in conv.menu()}
     assert {"who", "place", "rumours", "ask_person", "threaten", "offer_bribe", "goodbye"} <= labels
     for cid in ("who", "place", "rumours", "who"):

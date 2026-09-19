@@ -33,7 +33,7 @@ class Choice:
 
 
 class Conversation:
-    def __init__(self, game, npc: NPC) -> None:
+    def __init__(self, game, npc: NPC, *, defer_greeting: bool = False) -> None:
         self.game = game
         self.npc = npc
         self.lines: list[tuple[str, str]] = []  # (who, text): "npc", "you", "note"
@@ -48,7 +48,12 @@ class Conversation:
         first = not npc.met
         meet(game, npc)
         self.first = first
-        self.greet()
+        self.greeted = False
+        if first:
+            self.note(npc.profile.get("appearance", ""))
+            npc.profile_seen = True
+        if not defer_greeting:
+            self.greet()
         self.special = [dict(o, used=False) for o in builtin_special(game, npc, self.rng)]
 
     # ------------------------------------------------------------------ helpers
@@ -76,6 +81,9 @@ class Conversation:
 
     # ------------------------------------------------------------------ opening
     def greet(self) -> None:
+        if self.greeted:
+            return
+        self.greeted = True
         npc = self.npc
         d = self.game.tables.dialogue
         if any("threatened" in m for m in npc.memory) and npc.disposition < 0:
@@ -84,9 +92,6 @@ class Conversation:
             self.npc_says(self.fill(self.rng.choice(d["remember_help"])))
         else:
             self.npc_says(self.fill(self.rng.choice(d["greeting"][npc.mood()])))
-        if self.first:
-            self.note(npc.profile.get("appearance", ""))
-            npc.profile_seen = True
 
     # ------------------------------------------------------------------ the menu
     def menu(self) -> list[Choice]:

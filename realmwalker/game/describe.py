@@ -116,6 +116,9 @@ def describe_local(game: GameState, x: int, y: int) -> str:
         s = game.world.settlement_at(p.x, p.y)
         town = game.world.towns.get(s.id) if s is not None else None
         if town is not None:
-            name = town.names.get(lm.buildings.index(b), "")
+            bi = lm.buildings.index(b)
+            name = town.names.get(bi, "")
+            if name and bi not in town.names_seen:
+                town.names_seen.append(bi)
         lines.append(f"<dim>Part of {kind}{': ' + name if name else ''}.</>")
     return "\n".join(lines)

@@ -49,3 +49,8 @@ def a_or_an(word: str) -> str:
 
 def slots(template: str) -> list[str]:
     return _SLOT_RE.findall(template)
+
+
+def escape_markup(text: str) -> str:
+    """Make outside text (AI or player) safe to show inside colour markup (same as ui.markup.escape)."""
+    return text.replace("<", "(").replace(">", ")")

@@ -8,6 +8,8 @@ from realmwalker.ui.input import KeyEvent
 from realmwalker.ui.screens.base import Screen
 from realmwalker.ui.widgets import Canvas
 
+AI_TALK_TIMEOUT = 9.0  # seconds to wait for the AI's opening line before using built-in text
+
 
 class DialogueScreen(Screen):
     title = "Talk"
@@ -16,12 +18,42 @@ class DialogueScreen(Screen):
         super().__init__(app)
         self.game = game
         self.npc = npc
-        self.conv = Conversation(game, npc)
+        self.ticket = None
+        self.asked_at = 0.0
+        wants_ai = npc.notable and app.ai.usable() and npc.flags.get("ai_day") != game.moment.total_days
+        self.conv = Conversation(game, npc, defer_greeting=wants_ai)
         self.scroll = 0
-        self.after_open()
+        if wants_ai:
+            self.ask_ai()
 
-    def after_open(self) -> None:
-        """Hook for the AI (part 2): ask for lines and special options in the background."""
+    def ask_ai(self) -> None:
+        """Ask the AI for their opening line and special options; the built-in ones stand in if it is slow."""
+        from realmwalker.ai.service import Priority
+        from realmwalker.ai.tasks import DIALOGUE
+        from realmwalker.game.people_ai import apply_dialogue, dialogue_variables
+
+        conv = self.conv
+        conv.pending_ai = True
+        self.asked_at = self.app.clock()
+
+        def done(result) -> None:
+            if not conv.pending_ai:
+                return  # too late: the built-in lines are already in use
+            conv.pending_ai = False
+            if result.ok and result.data:
+                apply_dialogue(conv, result.data)
+            conv.greet()
+
+        self.ticket = self.app.ai.submit(DIALOGUE, dialogue_variables(self.game, self.npc), priority=Priority.URGENT,
+                                         callback=done)
+
+    def update(self) -> None:
+        conv = self.conv
+        if conv.pending_ai and self.app.clock() - self.asked_at > AI_TALK_TIMEOUT:
+            conv.pending_ai = False
+            if self.ticket is not None:
+                self.ticket.cancel()
+            conv.greet()
 
     # ------------------------------------------------------------------ actions
     def choose(self, i: int) -> None:
@@ -46,6 +78,10 @@ class DialogueScreen(Screen):
         trade.open_request(self, request, choice)
 
     def finish(self) -> None:
+        if self.conv.pending_ai:
+            self.conv.pending_ai = False
+            if self.ticket is not None:
+                self.ticket.cancel()
         if self.conv.minutes:
             self.game.pass_time(self.conv.minutes, "rest")
         self.game.dirty = True

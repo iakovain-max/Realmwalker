@@ -101,17 +101,20 @@ class Town:
     names: dict = field(default_factory=dict)  # building index -> sign name (inns, shops)
     shops: dict = field(default_factory=dict)  # merchant npc id -> shop state (economy)
     visited: int = -1  # world minute of the first visit
+    seen: bool = False  # the description has been shown (so it is never replaced)
+    names_seen: list[int] = field(default_factory=list)  # buildings whose sign the player has read
 
     def to_dict(self) -> dict:
         return {"settlement": self.settlement, "npcs": list(self.npcs), "description": self.description,
                 "description_source": self.description_source, "names": {str(k): v for k, v in self.names.items()},
-                "shops": {str(k): v for k, v in self.shops.items()}, "visited": self.visited}
+                "shops": {str(k): v for k, v in self.shops.items()}, "visited": self.visited, "seen": self.seen,
+                "names_seen": list(self.names_seen)}
 
     @classmethod
     def from_dict(cls, d: dict) -> Town:
         return cls(d["settlement"], list(d.get("npcs", [])), d.get("description", ""), d.get("description_source", ""),
                    {int(k): v for k, v in d.get("names", {}).items()}, {int(k): v for k, v in d.get("shops", {}).items()},
-                   d.get("visited", -1))
+                   d.get("visited", -1), bool(d.get("seen", False)), list(d.get("names_seen", [])))
 
 
 # ---------------------------------------------------------------------------- the world's registry
@@ -233,6 +236,14 @@ def populate_town(game, lm, settlement) -> Town:
         return town
     town.visited = world.time
     rng = world.rng.child(f"people/{settlement.id}")
+    from realmwalker.game.people_ai import fallback_description, fallback_inn_name
+
+    if not town.description:
+        town.description = fallback_description(game, settlement, rng.child("description"))
+        town.description_source = "fallback"
+    for bi, b in enumerate(lm.buildings):
+        if b.kind == "inn" and bi not in town.names:
+            town.names[bi] = fallback_inn_name(game, rng.child(f"inn/{bi}"))
     people = game.tables.people
     walk = game.tables.terrain.walk[game.remap_for(lm)[lm.terrain]]
     taken: set[tuple[int, int]] = set()
@@ -309,6 +320,16 @@ def populate_town(game, lm, settlement) -> Town:
         add(world, town, make_npc(game, settlement, job, rng.child(f"common/{i}"), post=street(), home=a_home()))
     update_positions(game, lm)
     return town
+
+
+def prepare_town(game, settlement) -> Town:
+    """Make a settlement's close-up map and people ahead of arrival (so the AI can dress them in time)."""
+    from realmwalker.world.local import get_local_map
+
+    lm = get_local_map(game.world, game.tables, settlement.x, settlement.y)
+    if lm.kind != "settlement":
+        return town_of(game.world, settlement.id)
+    return populate_town(game, lm, settlement)
 
 
 def add(world, town: Town, npc: NPC) -> None:

@@ -396,10 +396,16 @@ class GameState:
         if where is not None:
             from realmwalker.game.people import populate_town, update_positions
 
-            if lm.kind == "settlement":
-                populate_town(self, lm, where)
-                update_positions(self, lm)
             self.say(f"You walk into <place>{where.name}</>.", "place")
+            if lm.kind == "settlement":
+                town = populate_town(self, lm, where)
+                update_positions(self, lm)
+                if not town.seen and town.description:
+                    from realmwalker.core.textgen import escape_markup
+
+                    self.say(("<ai>" if town.description_source == "ai" else "") + escape_markup(town.description)
+                             + ("</>" if town.description_source == "ai" else ""), "flavor")
+                town.seen = True
         else:
             biome = self.biome_def(p.x, p.y)
             self.say(f"You leave the track and look about you: {biome['name']}.", "flavor")

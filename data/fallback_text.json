@@ -182,5 +182,38 @@
       "You end the day {mood}.",
       "At the end of it: {mood}, and still walking."
     ]
+  },
+  "settlement": {
+    "passage": [
+      "{approach} {sight} {smell} {detail}",
+      "{sight} {approach} {detail} {smell}"
+    ],
+    "approach": [
+      "The road into {name} is churned to mud by carts and cattle.",
+      "{name} sits low in the {land}, as if it would rather not be noticed.",
+      "You come into {name} past a row of leaning fence-posts and a dog that does not bark.",
+      "The way into {name} runs between ditches full of brown water."
+    ],
+    "sight": [
+      "Smoke hangs over the roofs; somewhere a hammer rings on iron.",
+      "Faces turn to watch you from doorways, then turn away.",
+      "Washing hangs stiff on lines strung between the houses.",
+      "Children stop their game to stare at the stranger.",
+      "The houses are mean and close together, their thatch dark with damp."
+    ],
+    "smell": [
+      "It smells of woodsmoke, dung and boiled cabbage.",
+      "The air smells of wet ash and animals.",
+      "Somebody is baking bread, and somebody else is tanning hides.",
+      "There is a sour smell from the midden behind the houses."
+    ],
+    "detail": [
+      "A notice by the well has been torn down, leaving only the nails.",
+      "The temple bell is cracked and gives a flat, ugly note.",
+      "Somebody has painted a sign against the evil eye on every door.",
+      "Two men are arguing over a pig in the square, and nobody is stopping them.",
+      "Fresh graves have been dug at the edge of the churchyard.",
+      "It is quiet, the kind of quiet that means people are listening."
+    ]
   }
 }

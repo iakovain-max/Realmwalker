@@ -248,6 +248,53 @@ class GameScreen(Screen):
             return False
         return True
 
+    def _prefetch_town(self) -> None:
+        """Setting out for a settlement, or standing at its gate: have the AI write it up before we walk in.
+        Towns merely passed on a journey are not asked about (AI energy is scarce)."""
+        game = self.game
+        if not self.app.ai.usable():
+            return
+        p = game.player
+        targets = []
+        if game.travel is not None:
+            d = game.world.settlement_at(*game.travel.destination)
+            if d is not None:
+                targets.append(d)
+        here = game.world.settlement_at(p.x, p.y)
+        if here is not None:
+            targets.append(here)
+        elif game.travel is None:
+            # Walking step by step towards a town right next to you (passing by on a journey doesn't count).
+            targets += [s for s in game.world.settlements if abs(s.x - p.x) <= 1 and abs(s.y - p.y) <= 1]
+        asked = self.app.__dict__.setdefault("_towns_asked", set())
+        for s in targets:
+            town = game.world.towns.get(s.id)
+            if s.id in asked or (town is not None and (town.seen and all(
+                    game.world.npcs[i].profile_seen or not game.world.npcs[i].notable for i in town.npcs))):
+                continue
+            if town is not None and any(game.world.npcs[i].profile_source == "ai" for i in town.npcs if i in game.world.npcs):
+                continue
+            asked.add(s.id)
+            self._ask_town(s)
+            return
+
+    def _ask_town(self, settlement) -> None:
+        from realmwalker.ai.service import Priority
+        from realmwalker.ai.tasks import SETTLEMENT
+        from realmwalker.game.people import prepare_town
+        from realmwalker.game.people_ai import apply_settlement, settlement_variables
+
+        game = self.game
+        town = prepare_town(game, settlement)
+
+        def done(result) -> None:
+            if result.ok and result.data:
+                apply_settlement(game, settlement, town, result.data)
+                game.dirty = True
+
+        self.app.ai.submit(SETTLEMENT, settlement_variables(game, settlement, town), priority=Priority.BACKGROUND,
+                           callback=done)
+
     def _narrate(self) -> None:
         """Write up a finished day on the road: by the AI if it is there, or from built-in text at once."""
         from realmwalker.ai.service import Priority
@@ -301,6 +348,7 @@ class GameScreen(Screen):
             return
         if game.narration:
             self._narrate()
+        self._prefetch_town()
         if game.travel is not None:
             now = self.app.clock()
             if now - self._last_travel_step >= TRAVEL_STEP_SECONDS or self.app.headless:

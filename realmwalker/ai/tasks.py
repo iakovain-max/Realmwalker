@@ -113,4 +113,69 @@ def travel_day_fallback(rng: RNG, data: DataRegistry, variables: dict) -> dict:
     return {"passage": textgen.tidy(text)}
 
 
-ALL_TASKS: list[AITask] = [SAMPLE_TAVERN, BACKSTORY, TRAVEL_DAY]
+# ---------------------------------------------------------------------------- settlements and people
+def _settlement_task() -> AITask:
+    from realmwalker.core.schema import Int, List
+
+    return AITask(
+        name="settlement",
+        schema=Obj(
+            {
+                "description": Str("3 or 4 sentences: arriving there", max_len=900),
+                "inn_names": List(Str("an inn's name, 2 to 5 words", max_len=48), max_items=4, optional=True),
+                "people": List(
+                    Obj(
+                        {
+                            "id": Int("the person's id", min=0, max=10**9),
+                            "appearance": Str("one sentence", max_len=300),
+                            "personality": Str("one sentence", max_len=300),
+                            "speech": Str("a few words", max_len=80, optional=True),
+                            "backstory": Str("two sentences", max_len=500),
+                            "secret": Str("one short clause", max_len=200),
+                            "want": Str("one short clause", max_len=200),
+                        }
+                    ),
+                    max_items=14,
+                    optional=True,
+                ),
+            }
+        ),
+        max_tokens=3000,
+        temperature=0.9,
+    )
+
+
+def _dialogue_task() -> AITask:
+    from realmwalker.core.schema import List
+    from realmwalker.game.dialogue import OUTCOMES, SKILLS_ALLOWED
+
+    result = {"outcome": Str(choices=OUTCOMES), "line": Str("a short reaction", max_len=260)}
+    return AITask(
+        name="dialogue",
+        schema=Obj(
+            {
+                "line": Str("their opening words, in double quotes", max_len=300),
+                "options": List(
+                    Obj(
+                        {
+                            "text": Str("the traveller's intent, 3 to 12 words", max_len=100),
+                            "skill": Str(choices=sorted(SKILLS_ALLOWED)),
+                            "difficulty": Str(choices=["easy", "medium", "hard", "very hard"]),
+                            "success": Obj({**result, "topic": Str("a subject, 1 to 4 words", max_len=40, optional=True)}),
+                            "failure": Obj(result),
+                        }
+                    ),
+                    max_items=3,
+                    optional=True,
+                ),
+            }
+        ),
+        max_tokens=3000,
+        temperature=0.9,
+    )
+
+
+SETTLEMENT = _settlement_task()
+DIALOGUE = _dialogue_task()
+
+ALL_TASKS: list[AITask] = [SAMPLE_TAVERN, BACKSTORY, TRAVEL_DAY, SETTLEMENT, DIALOGUE]
