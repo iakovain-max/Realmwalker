@@ -561,3 +561,35 @@ LAW = Obj(
 PUNISHMENT_STEPS = ("fine", "jail", "labour", "flogging", "branding", "death")
 
 DATA_FILES.update({"law.json": LAW})
+
+# ---------------------------------------------------------------------------- politics and history (M6)
+RACE_NUMBERS = Map(Float(min=0.1, max=20))
+POLITICS = Obj(
+    {
+        "history_years": Int(min=0, max=2000),
+        "lifespan": RACE_NUMBERS,
+        "mortality": Obj({"base": Float(min=0, max=1), "from_age": Int(min=0, max=200),
+                          "doubling_years": Float(min=1, max=100)}),
+        "reign": Map(List(Int(min=1, max=2000), min_items=2, max_items=2)),
+        "birth_rate": Float(min=0, max=1),
+        "rates": Map(Float(min=0, max=100)),
+        "war_reasons": Map(Str(max_len=80)),
+        "causes": Map(word_list(1, 80)),
+        "dragons": Obj({"names": word_list(1, 40), "colors": word_list(1, 20), "epithets": word_list(1, 40)}),
+        "artifacts": Obj({"kinds": List(List(Str(max_len=30), min_items=2, max_items=2), min_items=1),
+                          "of": word_list(1, 40), "fates": word_list(1, 120)}),
+        "legends": Obj({"deeds": word_list(1, 120), "epithets": word_list(1, 40)}),
+        "text": Map(word_list(1, 200)),
+        "ruin_causes": word_list(1, 60),
+        "notices": word_list(1, 200),
+    }
+)
+POLITICS_TEXT = ("succession", "crisis", "elected", "gang_ended", "war", "battle", "siege", "taken", "sacked", "relieved",
+                 "peace", "rebellion", "freedom", "crushed", "plague", "famine", "raid", "burned", "cult", "cult_purged",
+                 "cult_incident", "gang_new", "gang_destroyed", "dragon", "dragon_slain", "dragon_sleeps", "founded",
+                 "ruin", "legend", "artifact", "marriage", "assassination", "treaty", "chapter")
+POLITICS_RATES = ("war_base", "war_hostility", "war_battles_per_month", "peace_after_years", "rebellion", "plague",
+                  "famine", "tribe_raid", "cult_spread", "cult_purge", "cult_incident", "gang_destroyed", "gang_new",
+                  "dragon", "assassination", "marriage", "relation_drift", "military_regrowth", "treaty")
+
+DATA_FILES.update({"politics.json": POLITICS})

@@ -318,6 +318,27 @@ def touch(world) -> None:
 
 
 # ---------------------------------------------------------------------------- making them
+def make_figure(world, tables, rng: RNG, culture: str, *, year: int, faction: Faction | None = None,
+                role: str = "member", title: str = "", family: str | None = None, sex: str | None = None,
+                age: tuple[int, int] = (25, 65), race: str | None = None) -> Figure:
+    """A new person of note, of a people's names."""
+    cultures = tables.names["cultures"]
+    names = cultures.get(culture) or cultures["heartland"]
+    sex = sex or rng.choice(["male", "female"])
+    family = family or rng.choice(names["family"])
+    fig = Figure(
+        id=world.next_figure_id, name=f"{rng.choice(names[sex])} {family}", sex=sex,
+        race=race or CULTURE_RACE.get(culture, "human"), culture=culture,
+        born=year - rng.randint(*age), faction=faction.id if faction else -1, title=title, role=role,
+        traits=rng.sample(sorted(tables.people["personality"]), 2),
+    )
+    world.next_figure_id += 1
+    world.figures[fig.id] = fig
+    if faction is not None:
+        faction.members.append(fig.id)
+    return fig
+
+
 def generate_factions(world, tables, rng: RNG) -> None:
     FactionMaker(world, tables, rng).run()
 
@@ -432,21 +453,8 @@ class FactionMaker:
     def new_figure(self, culture: str, *, faction: Faction | None = None, role: str = "member", title: str = "",
                    family: str | None = None, sex: str | None = None, age: tuple[int, int] = (25, 65),
                    race: str | None = None) -> Figure:
-        w = self.w
-        names = self.names_for(culture)
-        sex = sex or self.rng.choice(["male", "female"])
-        family = family or self.rng.choice(names["family"])
-        fig = Figure(
-            id=w.next_figure_id, name=f"{self.rng.choice(names[sex])} {family}", sex=sex,
-            race=race or CULTURE_RACE.get(culture, "human"), culture=culture,
-            born=self.year - self.rng.randint(*age), faction=faction.id if faction else -1, title=title, role=role,
-            traits=self.rng.sample(sorted(self.t.people["personality"]), 2),
-        )
-        w.next_figure_id += 1
-        w.figures[fig.id] = fig
-        if faction is not None:
-            faction.members.append(fig.id)
-        return fig
+        return make_figure(self.w, self.t, self.rng, culture, year=self.year, faction=faction, role=role, title=title,
+                           family=family, sex=sex, age=age, race=race)
 
     def give_leader(self, f: Faction, *, family: str | None = None, dynasty: bool = False,
                     age: tuple[int, int] = (28, 68)) -> Figure:
@@ -614,6 +622,8 @@ class FactionMaker:
             group = [s for s in halls if dist(s, seat) <= 45]
             area = w.area_at(seat.x, seat.y)
             land = area.name if area is not None else self.namer.settlement("elven")
+            if any(land in f.name for f in active_factions(w, "elven_realm")):
+                land = self.namer.settlement("elven")
             r = self.new_faction("elven_realm", "elven", self.make_name("elven_realm", land=land), seat=seat.id)
             r.founded = self.year - rng.randint(800, 3000)
             self.give_leader(r, dynasty=True, age=(150, 700))

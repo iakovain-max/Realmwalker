@@ -500,6 +500,12 @@ def faction_details(game, f) -> str:
             text = laws[key].get(str(value).lower(), "")
             if text:
                 lines.append(f"· {text}")
+    wars = [x for x in w.wars if x.get("active") and f.id in (x["attacker"], x["defender"])]
+    for war in wars:
+        other = w.factions.get(war["defender"] if war["attacker"] == f.id else war["attacker"])
+        if other is not None:
+            since = t.calendar.at(int(war["started"] * 1440)).year if war["started"] > -10**6 else "?"
+            lines.append(f"<danger>At war with {esc(other.name)}</> <dim>(since {since}).</>")
     friends, enemies = [], []
     for other in known_factions(game):
         if other.id == f.id:

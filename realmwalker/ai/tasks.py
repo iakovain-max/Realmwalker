@@ -113,6 +113,16 @@ def travel_day_fallback(rng: RNG, data: DataRegistry, variables: dict) -> dict:
     return {"passage": textgen.tidy(text)}
 
 
+# ---------------------------------------------------------------------------- the chronicle of the world (M6)
+CHRONICLE = AITask(
+    name="chronicle",
+    schema=Obj({"title": Str("the chronicle's title, 3 to 8 words", max_len=80),
+                "chronicle": Str("five to eight short paragraphs separated by blank lines", max_len=6000)}),
+    max_tokens=3000,
+    temperature=0.85,
+)
+
+
 # ---------------------------------------------------------------------------- settlements and people
 def _settlement_task() -> AITask:
     from realmwalker.core.schema import Int, List

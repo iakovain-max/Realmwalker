@@ -40,7 +40,16 @@ def settlement_line(game: GameState, s) -> str:
     walls = ", walled" if s.walled else ""
     size = f"about {round(s.population, -1 if s.population < 1000 else -2):,} people"
     line = f"<place>{s.name}</>: {spec['name']}{walls}, {size}. <dim>{culture} folk.</>"
-    return line + holder_line(game, s)
+    line += holder_line(game, s)
+    p = getattr(game, "player", None)  # (the character creation screen shows these lines too)
+    if p is not None and abs(s.x - p.x) + abs(s.y - p.y) <= 12:  # close enough to see the smoke
+        st = s.status
+        words = [w for key, w in (("siege", "<danger>under siege</>"), ("plague", "<danger>plague</>"),
+                                  ("sacked", "<danger>sacked</>"), ("burned", "<warn>burned</>"),
+                                  ("famine", "<warn>hungry</>"), ("raided", "<warn>raided</>")) if st.get(key) is not None]
+        if words:
+            line += " " + ", ".join(words).capitalize() + "."
+    return line
 
 
 def holder_line(game: GameState, s) -> str:

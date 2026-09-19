@@ -58,7 +58,20 @@ def smoke_script():
     press("enter", "enter", "enter")  # people, calling, background
     shots[frame + 4] = "creation"
     press("enter", "enter", "enter", "enter", "enter")  # abilities, skills, identity, start, begin
-    frame += 10
+    frame += 4
+
+    def peaceful(app):
+        """The tour must not be hijacked by a random bandit on the road (its own fight comes at the end)."""
+        from realmwalker.game import encounters, events
+
+        encounters.encounter_chance = lambda *args, **kwargs: 0.0
+        events.event_chance = lambda *args, **kwargs: 0.0
+        if app.game is not None:
+            app.game.encounter = None
+            app.game.event = None
+
+    steps.append((frame, peaceful))
+    frame += 6
     press("right", "right", "down", "down", gap=4)
     shots[frame - 1] = "overworld"
     press("c")
@@ -75,6 +88,8 @@ def smoke_script():
     shots[frame - 4] = "realms"
     press("escape", "f", "down", "down")
     shots[frame - 4] = "factions"
+    press("escape", "n", "2")
+    shots[frame - 4] = "chronicle"
     press("escape")
 
     def home(app):

@@ -65,7 +65,14 @@ def roll_event(game, minutes: float) -> PendingEvent | None:
     options = [(eid, e) for eid, e in game.tables.travel_events.items() if fits(e, game, p.x, p.y, night)]
     if not options:
         return None
-    eid = rng.weighted([o[0] for o in options], [float(o[1]["weight"]) for o in options])
+    weights = [float(o[1]["weight"]) for o in options]
+    if getattr(w, "wars", None):
+        from realmwalker.world.politics import war_near
+
+        if war_near(w, p.x, p.y):
+            weights = [wt * (3.0 if eid in ("refugees", "hungry_deserters", "patrol") else 1.0)
+                       for (eid, _), wt in zip(options, weights)]
+    eid = rng.weighted([o[0] for o in options], weights)
     return PendingEvent(eid, rng.choice(game.tables.travel_events[eid]["intro"]), rng.randint(0, 2**30))
 
 
@@ -231,6 +238,17 @@ def pay(game, amount: int) -> None:
 
 
 def hear_news(game, rng: RNG) -> str:
+    """Travellers' talk: news from the wider world if any has reached here, else a place you did not know."""
+    if getattr(game.world, "news", None):
+        from realmwalker.game import news
+
+        heard = news.hear(game, count=1, rng=rng)
+        if heard:
+            return heard[0]
+    return hear_place(game, rng)
+
+
+def hear_place(game, rng: RNG) -> str:
     """Learn of a place you did not know: the nearest unknown site or settlement."""
     p = game.player
     w = game.world

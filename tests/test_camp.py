@@ -214,7 +214,7 @@ def test_options_need_what_they_ask_for(game):
 
 def test_news_puts_places_on_the_map(game):
     before = int(game.player.explored.sum()) + len(game.player.known_settlements)
-    text = events.hear_news(game, RNG(1))
+    text = events.hear_place(game, RNG(1))
     after = int(game.player.explored.sum()) + len(game.player.known_settlements)
     assert "hear of" in text and after > before
 

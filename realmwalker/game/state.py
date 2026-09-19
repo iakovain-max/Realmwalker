@@ -94,6 +94,7 @@ class GameState:
         self.arrest: dict | None = None  # the watch has hold of the player (game.law)
         self.sentence: dict | None = None  # the law's punishment, being carried out (game.law)
         self.confined: dict | None = None  # in jail or at hard labour: fed and sheltered, going nowhere
+        self.read_board = False  # walked into a notice board (the screen shows it)
         self._realm_here: int | None = None
         self._wading = False
         self._remaps: dict[str, np.ndarray] = {}
@@ -178,8 +179,19 @@ class GameState:
         if after.total_days != before.total_days:
             if self.world.factions:
                 from realmwalker.game import news, reputation
+                from realmwalker.world import politics
 
+                if getattr(self, "politics_live", True):
+                    politics.tick(self.world, self.tables)
                 reputation.tick(self)
+                here = self.world.settlement_at(self.player.x, self.player.y)
+                if here is not None and here.status.get("plague") and self.survival:
+                    from realmwalker.rules import health
+
+                    rng = self.world.rng.child(f"plague-day/{self.world.time}")
+                    for c in self.party:
+                        if rng.chance(0.15):
+                            health.expose(c, self.tables, "plague", rng)
                 news.prune(self.world)
             if self.leader.animals:
                 from realmwalker.game.services import feed_animals
@@ -433,6 +445,42 @@ class GameState:
         else:
             self.say(f"You cross into the lands of {lord.name}.", "place")
 
+    def settlement_troubles(self, s) -> list[str]:
+        """Siege, sack, fire, plague and hunger, as you see them walking in. Plague may follow you out."""
+        from realmwalker.world import factions as fx
+
+        out = []
+        st = s.status
+        if st.get("siege"):
+            by = self.world.factions.get(st["siege"].get("by", -1))
+            out.append(f"<danger>{s.name} is under siege{' by ' + by.name if by else ''}.</> Soldiers' fires ring the "
+                       f"walls, and food is dear inside them.")
+        if st.get("sacked") is not None:
+            out.append(f"<danger>{s.name} was sacked not long ago.</> Burned roofs, fresh graves, and people who look "
+                       f"at strangers with hate.")
+        if st.get("burned") is not None:
+            out.append(f"<warn>Much of {s.name} has been burned.</> What is left huddles among the black beams.")
+        if st.get("raided"):
+            out.append(f"<warn>{s.name} was raided days ago.</> The people are frightened and angry.")
+        if st.get("famine"):
+            out.append("<warn>There is hunger here.</> Bread costs what meat should, and the children are thin.")
+        if st.get("plague"):
+            out.append(f"<danger>Plague is in {s.name}.</> Doors are marked with chalk, and the dead-carts go by.")
+            from realmwalker.rules import health
+
+            rng = self.world.rng.child(f"plague/{s.id}/{self.world.time}")
+            for c in self.party:
+                if rng.chance(0.2):
+                    health.expose(c, self.tables, "plague", rng)
+        realm = fx.realm_of_settlement(self.world, s) if self.world.factions else None
+        if realm is not None and not out:
+            from realmwalker.world.politics import at_war
+
+            if at_war(self.world, realm.id):
+                out.append(f"<dim>{realm.name[:1].upper() + realm.name[1:]} is at war; there are more soldiers "
+                           f"about than usual, and fewer young men.</>")
+        return out
+
     def settlement_arrival_text(self, s, first: bool) -> str:
         spec = self.tables.sites["settlement_types"][s.kind]
         kind = spec["name"]
@@ -465,6 +513,12 @@ class GameState:
             if lm.kind == "settlement":
                 town = populate_town(self, lm, where)
                 update_positions(self, lm)
+                if self.world.factions:
+                    from realmwalker.game.people import refresh_figures
+
+                    refresh_figures(self, lm, where)
+                for text in self.settlement_troubles(where):
+                    self.say(text, "warn")
                 if not town.seen and town.description:
                     from realmwalker.core.textgen import escape_markup
 
@@ -520,6 +574,9 @@ class GameState:
         T = self.tables.terrain
         t = int(self.remap_for(lm)[lm.terrain[nx, ny]])
         tid = T.ids[t]
+        if self.tables.terrain.has_tag(t, "notice_board"):
+            self.read_board = True
+            return True
         if tid == "door_closed":
             lm.terrain[nx, ny] = lm.terrain_ids.index("door_open") if "door_open" in lm.terrain_ids else lm.terrain[nx, ny]
             self.pass_seconds(LOCAL_STEP_SECONDS)

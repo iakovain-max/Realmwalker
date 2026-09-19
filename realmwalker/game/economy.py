@@ -56,6 +56,30 @@ def local_factor(game, settlement, item_id: str) -> float:
     factor *= float(kind.get(item_id, kind.get(cat, 1.0)))
     season = econ["season_prices"].get(game.moment.season, {})
     factor *= float(season.get(item_id, season.get(cat, 1.0)))
+    return factor * troubles_factor(game, settlement, cat)
+
+
+def troubles_factor(game, settlement, cat: str) -> float:
+    """War, siege, famine and plague make things dear."""
+    st = getattr(settlement, "status", {})
+    factor = 1.0
+    food = cat in ("food", "drink")
+    arms = cat in ("weapon", "armor", "shield", "helmet", "ammo")
+    if st.get("siege"):
+        factor *= 2.0 if food else 1.3 if arms else 1.15
+    if st.get("famine"):
+        factor *= 1.7 if food else 1.0
+    if st.get("plague"):
+        factor *= 1.1
+    if st.get("sacked") is not None:
+        factor *= 1.2
+    if getattr(game.world, "wars", None):
+        from realmwalker.world import factions as fx
+        from realmwalker.world.politics import at_war
+
+        realm = fx.realm_of_settlement(game.world, settlement)
+        if realm is not None and at_war(game.world, realm.id):
+            factor *= 1.15 if food else 1.3 if arms else 1.0
     return factor
 
 

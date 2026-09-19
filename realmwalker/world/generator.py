@@ -124,6 +124,9 @@ class WorldGenerator:
         from realmwalker.world.factions import generate_factions
 
         generate_factions(world, self.tables, self.rng.child("factions"))
+        from realmwalker.world.history import generate_history
+
+        generate_history(world, self.tables, self.rng.child("history"))
         log.info("Generated world '%s' (seed %d, %s) in %.1f s: %d settlements, %d sites, %d named areas",
                  world.meta.name, world.meta.seed, world.meta.size, time.monotonic() - started,
                  len(world.settlements), len(world.sites), len(world.areas))

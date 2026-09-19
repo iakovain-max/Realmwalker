@@ -137,6 +137,31 @@ def _check_faction_refs(files: dict[str, Any]) -> list[str]:
         if culture not in data["culture_laws"]:
             errors.append(f"data/factions.json: culture_laws needs laws for the '{culture}' people.")
     errors.extend(_check_law_refs(files, cultures))
+    errors.extend(_check_politics_refs(files))
+    return errors
+
+
+def _check_politics_refs(files: dict[str, Any]) -> list[str]:
+    from realmwalker.data.schemas import POLITICS_RATES, POLITICS_TEXT
+
+    data = files.get("politics.json")
+    if not data:
+        return []
+    errors: list[str] = []
+    for kind in POLITICS_TEXT:
+        if kind not in data["text"]:
+            errors.append(f"data/politics.json: text needs words for '{kind}'.")
+    for rate in POLITICS_RATES:
+        if rate not in data["rates"]:
+            errors.append(f"data/politics.json: rates needs '{rate}'.")
+    races = set(files.get("races.json", {}).get("races", {}))
+    for key in ("lifespan", "reign"):
+        for race in races:
+            if race not in data[key]:
+                errors.append(f"data/politics.json: {key} needs an entry for {race!r}.")
+    for cause in ("old", "illness", "battle", "murder", "accident", "plague"):
+        if cause not in data["causes"]:
+            errors.append(f"data/politics.json: causes needs '{cause}'.")
     return errors
 
 

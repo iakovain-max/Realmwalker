@@ -89,6 +89,11 @@ The land is divided among kingdoms and the noble houses sworn to them, free citi
 What you do spreads as news, about 24 miles a day along the roads. Helping a faction pleases its friends and angers its enemies once they hear of it. Beating bandits angers their gang and pleases the lord of the land. Your fame and infamy go before you.
 Join a guild, church, order or company by asking one of its people (you need their good opinion, and sometimes a skill, a trade, a faith or a fee). Members rise in rank as their standing grows and get better prices. The thieves' guild and the cults hide among ordinary folk: the right question may find them. A ruler who honours you may grant you a title.
 
+<title>News, history and a world that moves on</title>
+  <loot>n</>               News and history: what you have heard, the chronicle of the land, dragons, lost treasures and legends
+The world has centuries of history behind it: dynasties, wars, plagues, dragons and heroes. And it does not stand still while you play. Rulers grow old and die, and their heirs (or whoever seizes the seat) follow. Neighbours who hate each other go to war, fight battles, besiege and take towns, and make peace. Vassals rebel. Plague and famine come and go, tribes raid the borders, cults spread in secret, outlaw gangs rise and are hanged.
+Everything that happens becomes news, travelling about 24 miles a day along the roads: you hear it in inns, from travellers and on the <loot>¶</> notice board in a town's square (walk into it to read it). A besieged town is dear and hungry; war brings soldiers, refugees and deserters to the roads; plague can follow you home.
+
 <title>Law and crime</title>
 Each realm has its own laws: magic may need a licence or be forbidden, some goods are contraband, some lords keep the game for themselves, and punishments run from lenient to cruel. Theft, pickpocketing, trespass (in someone's house at night), assault, murder, poaching, smuggling, unlicensed magic, witchcraft and heresy are crimes.
 A crime needs a witness. A guard who sees it arrests you on the spot; anyone else goes to the watch within a few hours, unless you persuade, pay or frighten them into silence (talk to them). Unwitnessed crimes are never traced. A reported crime puts a price on your head in that realm; where you are wanted, the watch may recognise you.
@@ -125,7 +130,7 @@ Blows land on a part of the body and may leave wounds: cuts bleed until bandaged
 The game uses the free Player2 app to write names, descriptions and dialogue. Keep Player2 running for AI text. Without it the game still works, using its own built-in text. The indicator in the bottom-right corner shows which is in use. The AI never decides what happens: dice and rules do.
 
 <title>More to come</title>
-Factions and law, companions, quests and a proper obituary arrive milestone by milestone. This page lists every key as they are added.
+Companions, quests and a proper obituary arrive milestone by milestone. This page lists every key as they are added.
 """
 
 

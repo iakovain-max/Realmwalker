@@ -365,6 +365,33 @@ def link_figures(game, town: Town, settlement, lm, inside, rng: RNG) -> None:
             become_figure(game, npc, fig, rng.child(f"figure/{fig.id}"))
 
 
+def refresh_figures(game, lm, settlement) -> None:
+    """A new ruler (the old one died while you were away) now sits in the hall."""
+    world = game.world
+    town = world.towns.get(settlement.id)
+    if town is None or not town.npcs or lm.kind != "settlement":
+        return
+    rng = world.rng.child(f"refresh/{settlement.id}/{world.time}")
+    walk = game.tables.terrain.walk[game.remap_for(lm)[lm.terrain]]
+    taken = {(n.x, n.y) for n in npcs_in(world, settlement.id)}
+
+    def inside(b) -> tuple[int, int]:
+        cells = [(int(x), int(y)) for x in range(b.x + 1, b.x + b.w - 1) for y in range(b.y + 1, b.y + b.h - 1)
+                 if walk[x, y] and (x, y) not in taken and (x, y) != tuple(b.door)]
+        spot = rng.choice(cells) if cells else (int(b.x + b.w // 2), int(b.y + b.h // 2))
+        taken.add(spot)
+        return spot
+
+    before = set(town.npcs)
+    for npc in npcs_in(world, settlement.id):
+        fig = world.figures.get(npc.flags.get("figure", -1))
+        if fig is not None and not fig.alive:
+            npc.flags.pop("figure", None)  # the dead lord's chair is empty; their heir will take it
+    link_figures(game, town, settlement, lm, inside, rng)
+    if set(town.npcs) != before:
+        update_positions(game, lm)
+
+
 def become_figure(game, npc: NPC, fig, rng: RNG) -> None:
     """A townsperson takes on the name, age and nature of a figure of history."""
     npc.name, npc.sex, npc.race, npc.culture = fig.name, fig.sex, fig.race, fig.culture

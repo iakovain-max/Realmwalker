@@ -12,10 +12,93 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | M3 — Combat | ✅ Done (2026-09-19) |
 | M4 — Body and survival | ✅ Done (2026-09-19) |
 | M5 — Settlements and people | ✅ Done (2026-09-19) |
-| M6 — Factions and politics | ⏳ Next |
-| M7 — Companions and progression | — |
+| M6 — Factions and politics | ✅ Done (2026-09-19) |
+| M7 — Companions and progression | ⏳ Next |
 | M8 — Adventure content | — |
 | M9 — Death, legacy and release | — |
+
+---
+
+## M6 — Factions and politics (done)
+
+**What you can do now**
+- **The powers of the land.** Every world now has kingdoms and the noble houses sworn to them, free cities,
+  dwarven clans, highland clans and elven realms, and tribes of orcs, goblins or nomads in the wild. It also has
+  churches (one per faith) and a knightly order, guilds (merchants, mages, healers, smiths), mercenary
+  companies, a hidden thieves' guild, secret cults, bandit gangs and pirate crews. Each has a leader, values
+  (pious, mercantile, warlike...), friends and enemies, and realms have their own laws. Every town is held by
+  someone; the king lives in the keep of his capital, the lady in her hall, the high priest in the great temple.
+  Press **f** for the Factions screen, and **p** on the world map to colour the land by realm. Crossing a border
+  is announced.
+- **Your standing** with each faction (Hated, Distrusted, Neutral, Respected, Honoured), plus fame and infamy.
+  People who answer to a faction treat you by it, and prices follow it. Your background ties are now real: the
+  soldier served an actual lord (and a deserter is remembered), the acolyte belongs to a real church, the noble
+  has a family house, and the criminal has a real price on their head.
+- **Deeds ripple.** Helping a faction pleases its friends and angers its enemies, but only once the news reaches
+  them. Beating bandits angers their gang and pleases the lord of the land; the same goes for cultists and
+  raiders. Take prisoners after a fight and hand them to any watch for a reward.
+- **Law and crime.** Theft (steal in a market with **s**), pickpocketing, trespass (in a house at night),
+  assault and murder are crimes, and so are poaching, smuggling, magic without a licence, witchcraft and
+  heresy, each by the local law. A crime needs a witness: a guard arrests you on the spot; anyone else goes to
+  the watch within hours unless you persuade, pay or frighten them into silence. When the watch takes you, you
+  can pay, go quietly, bribe, run or fight. Sentences range from a fine or jail (your belongings are held until
+  you are released) to the lash, the brand, hard labour or the rope, and you can try to escape. A disguise kit
+  hides your face.
+- **Joining.** Ask a guild's, church's or order's people to swear you in (they need your good opinion, and
+  sometimes a skill, a trade, a faith or a fee). Ranks rise with standing and bring better prices. The right
+  question may find the thieves' guild or a cult. A ruler who honours you may grant you a title.
+- **History.** Each world has 250 years of history: dynasties with their usurpers, wars and conquests, plagues
+  and famines, ruins with a past, dragons (some slain, some only sleeping), legendary heroes and lost
+  artifacts. Press **n** for News and history: the news you have heard, the chronicle of the land, and its
+  legends. With the Player2 AI running, one background request per world writes the chronicle as a monk would.
+- **The world moves on.** While you play, rulers age, sicken and die, and their heirs or usurpers follow.
+  Neighbours go to war, fight battles, besiege and take towns (borders really change), and make peace. Vassals
+  rebel, plague and famine come and go, tribes raid, cults spread and are rooted out, gangs rise and are
+  hanged. All of it becomes news that travels about 24 miles a day: you hear it at inns, from travellers, and on
+  the notice board (¶) in a town square, which also has wanted posters (perhaps your own) and the lord's
+  orders. War makes food and arms dear and fills the roads with refugees and deserters. A besieged town is
+  hungry. Plague can follow you out of a town.
+
+**How to try it**
+1. Double-click `Play.bat`, start a **New World** (older worlds get their factions and history when loaded).
+2. Press **f** to see who rules, **n** for the news and the chronicle, **m** then **p** for the realm map.
+3. In a town, walk into the ¶ board in the square. At the inn, ask for news.
+4. Try your luck with **s** in a market, or pick a pocket, and see what the watch does.
+
+**What to look for:** Does the world feel like it has a past and a present? Do the factions and their quarrels
+make sense? Is the law too harsh or too soft? Is the news interesting, or too much?
+
+**How it was verified**
+- 449 automated tests pass. New ones cover: every size of world has its powers; the structure of realms; the
+  realm map; saving; older worlds; starting knowledge; background ties; rulers in their seats; first
+  impressions; borders; witnesses and reports; unseen crimes; no law in the wild; fines; sentences (jail, lash,
+  brand, rope, escape); bribes and running; fighting the watch; recognition; disguise; deeds rippling;
+  gangs angered; prisoners; settling debts; silencing witnesses; joining and ranks; titles; theft; pickpockets;
+  contraband; history (rulers, conquests that agree with the map); the world moving on for years; succession;
+  a war with a siege; plague coming and going; prices in hard times; news travelling at the right pace; news at
+  the inn; notice boards; the chronicle, built-in and by the (mock) AI; and every new window at every size.
+- Autoplay: thousands of turns with AI off and with the fake AI on several seeds. It now commits crimes in front
+  of the watch (arrests, sentences, escapes) and checks the factions, the law's records, wars, sieges and news.
+  No errors. A separate stress run of 30 years of live politics on three worlds found no broken state.
+- The window smoke test now shows the factions, the realm map and the chronicle. Its tour is now free of random
+  road encounters, which could hijack it.
+
+**Decisions (and why)**
+1. **Code decides all politics**; the AI only writes the chronicle (one request per world, in the background).
+2. **History is told, not replayed onto the map.** The map of today is made first; history then runs the same
+   politics engine over 250 years for grudges, wars and plagues, but only tells of conquests that agree with
+   today's borders. Wars still being fought at the end of history are today's wars.
+3. **The live simulation runs a week at a time** and is cheap (30 years in about a second).
+4. **Deeds reach factions at the speed of news**, from where they happened to each faction's seat.
+5. **Crimes are judged by the realm at the top of the chain of lords**; a bounty in one kingdom means nothing in
+   the next.
+6. **Towns you visited before this update** keep their old maps (no notice board); new towns have one.
+
+**Known issues**
+- Quests, work for guilds, and hunting dragons and lost artifacts come with M8. Membership gives prices and ranks
+  for now.
+- Companions: M7. Joining sieges and battles yourself is on the ideas list for after v1.
+- The built-in chronicle is plain and list-like; the AI version reads much better.
 
 ---
 

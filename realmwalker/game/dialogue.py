@@ -264,6 +264,11 @@ class Conversation:
         npc.flags["rumour_day"] = day
         self.npc_says(self.fill(self.pick("rumour_intro")))
         count = 2 if "gossipy" in npc.traits or npc.job == "innkeeper" else 1
+        from realmwalker.game import news
+
+        for line in news.hear(game, count=count, rng=self.rng) if game.world.news else []:
+            self.note(line)
+            count -= 1
         for _ in range(count):
             self.tell_rumour()
 
@@ -275,9 +280,9 @@ class Conversation:
                 self.npc_says(line)
                 return
         if roll < 0.8:
-            from realmwalker.game.events import hear_news
+            from realmwalker.game.events import hear_place
 
-            self.note(hear_news(self.game, self.rng))
+            self.note(hear_place(self.game, self.rng))
             return
         self.npc_says(self.pick("flavour_rumours"))
 

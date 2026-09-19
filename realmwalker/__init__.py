@@ -2,4 +2,4 @@
 
 GAME_NAME = "Realmwalker"
 __version__ = "0.1.0"
-MILESTONE = "M5 - Settlements and people"
+MILESTONE = "M6 - Factions and politics"

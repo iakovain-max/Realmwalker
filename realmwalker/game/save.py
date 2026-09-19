@@ -293,8 +293,11 @@ def load_game(folder: Path, tables: Tables) -> GameState:
     from realmwalker.game.reputation import Renown, starting_knowledge
     from realmwalker.world.factions import ensure_factions
 
+    from realmwalker.world.history import ensure_history
+
     world = load_world(folder)
     ensure_factions(world, tables)
+    ensure_history(world, tables)
     player, messages, party, extra = load_player(folder)
     if player.local_key is not None and player.local_key not in world.local_maps:
         player.local_key = None

@@ -652,3 +652,29 @@ def test_the_arrest_and_sentence_windows(make_app, size):
         render(app, size)
     assert game.sentence is None or game.over is not None
     assert app.error_count == 0
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_the_chronicle_and_notice_board_windows(make_app, size):
+    from realmwalker.game import news
+    from realmwalker.ui.screens.chronicle import ChronicleScreen
+    from realmwalker.ui.screens.notices import NoticeBoardScreen
+
+    app = make_app()
+    start_small_world(app)
+    game = app.game
+    s = next(s for s in game.world.settlements if s.kind in ("town", "city"))
+    news.add(game.world, "a great battle was fought", s.x, s.y, kind="battle", importance=4)
+    news.hear(game, count=5, x=s.x, y=s.y)
+    app.handle_event(KeyEvent("n"))
+    assert isinstance(app.top, ChronicleScreen)
+    for key in ("pagedown", "tab", "pagedown", "tab", "down", "1"):
+        render(app, size)
+        app.handle_event(KeyEvent(key))
+    render(app, size)
+    app.handle_event(KeyEvent("escape"))
+    app.push(NoticeBoardScreen(app, game, s))
+    render(app, size)
+    app.handle_event(KeyEvent("pagedown"))
+    render(app, size)
+    assert app.error_count == 0

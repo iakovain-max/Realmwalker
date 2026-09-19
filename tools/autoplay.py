@@ -237,6 +237,30 @@ def _check_factions(game, fail) -> None:
                 break
         if f.active and f.leader not in w.figures:
             fail(f"{f.name} has no leader")
+    for war in w.wars:
+        if war.get("attacker") not in w.factions or war.get("defender") not in w.factions:
+            fail(f"a war between factions that do not exist: {war}")
+        if war.get("active") and war.get("attacker") == war.get("defender"):
+            fail("a faction at war with itself")
+    for s in w.settlements:
+        if not isinstance(s.status, dict):
+            fail(f"{s.name} has a broken status")
+        elif s.status.get("siege") and not any(x.get("active") and x.get("siege") and
+                                                x["siege"].get("settlement") == s.id for x in w.wars):
+            fail(f"{s.name} is besieged by no war")
+        if s.population <= 0:
+            fail(f"{s.name} has no people left ({s.population})")
+    ids = [n["id"] for n in w.news]
+    if len(ids) != len(set(ids)):
+        fail("two pieces of news share an id")
+    if len(w.news) > 500:
+        fail(f"news is piling up ({len(w.news)} items)")
+    years = [e["year"] for e in w.history]
+    if years != sorted(years):
+        fail("the history is out of order")
+    for f in w.factions.values():
+        if f.active and f.leader in w.figures and not w.figures[f.leader].alive:
+            fail(f"{f.name} is led by the dead")
     r = game.renown
     if any(not -100 <= v <= 100 for v in r.standing.values()):
         fail(f"a standing is out of range: {r.standing}")

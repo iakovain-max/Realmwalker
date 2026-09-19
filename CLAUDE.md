@@ -44,12 +44,18 @@ realmwalker/
                            people (townsfolk: making, placing, day/night, impressions, memory), dialogue
                            (conversations, whitelisted outcomes), people_ai (AI facts in, validated words out),
                            economy (shops, prices, trade, haggling), services (inns, healers, temples, smiths,
-                           stables, animals, labour)
+                           stables, animals, labour), reputation (standing, deeds and their ripples, joining,
+                           titles), law (crimes, witnesses, the watch, sentences, jail, disguise), law_talk (law and
+                           faction choices in conversations), news (what the player hears), notices (town boards)
   rules/                   character (Character + Sheet: derived numbers), items, inventory (equip rules), creation,
                            combat (Battle: rank combat on 5e dice), creatures, spells, wounds, progression (XP, rests),
                            body (needs, body heat, wetness, exhaustion), health (blood, pain, infection, healing,
                            injuries, diseases, treatment, drink, poppy)
   world/weather.py         weather as a deterministic function of seed, place and time (moving fronts)
+  world/factions.py        factions and figures (model, generation, territory map, relations, laws)
+  world/politics.py        the politics engine: succession, wars, sieges, plague, raids, cults, gangs (history + live)
+  world/history.py         250 years of history at world creation; the built-in chronicle
+  world/news.py            news items and how they travel along the roads
   ui/                      window loop, fonts (tileset built at runtime), input, markup, widgets, map_render, screens/
 data/                      ALL game data as JSON (names, fallback text, ... later races, items, creatures)
 ai/prompts/                prompt templates (plain text, @max_tokens header, {slots})
@@ -90,6 +96,15 @@ tools/                     autoplay.py, mock_player2.py, build_friends.py
   `game.talk_to`; the game screen opens the conversation. AI conversation outcomes must stay in
   `dialogue.OUTCOMES`, narrowed per person by `people_ai.allowed_outcomes`.
 - The smoke test always runs with the AI off; tests use the mock. Never let a test reach the real Player2 app.
+- Factions live in `world.factions` / `world.figures` (saved with the world); a settlement's `owner` is the
+  faction holding it, its realm is `factions.top_liege(owner)`. After changing holdings call `factions.touch(world)`
+  (territory cache). Player standing, crimes, bounties and heard news are in `game.renown` (saved with the character).
+- Deeds go through `reputation.deed()` (standing, ripples by relation, news); crimes through `law.commit()`
+  (witnesses, reports, bounties, arrests). Arrests and sentences are pending states (`game.arrest`,
+  `game.sentence`) opened by `GameScreen._open_event_screen()`.
+- `world/politics.Politics` runs in history mode (narrative only; never destroys today's factions or changes
+  today's holdings) and live mode (`politics.tick` from `pass_time`, a week per step, with consequences). Every
+  event becomes news via `world/news.add`; the player hears it through `game/news.hear`.
 - Battles: `rules/combat.Battle` is pure logic driven by `step()` / `pending_party()` / `do_*()`; the screen
   (`ui/screens/battle.py`) only paces and asks. `GameState.busy` (encounter, battle, aftermath or death pending)
   blocks moving; `GameScreen._open_event_screen()` opens the right screen. Debug console: `fight <group>`.

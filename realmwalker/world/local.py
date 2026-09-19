@@ -331,6 +331,8 @@ class LocalBuilder:
         sq = 3 if s.kind in ("hamlet", "village", "elfhall") else 5
         self.fill_rect(cx - sq, cy - sq // 2 - 1, sq * 2 + 1, sq + 2, street)
         self.set(cx + 2, cy - 1, "well")
+        if s.kind != "hamlet" and "notice_board" in self.tables.terrain.index:
+            self.set(cx - 2, cy - 1, "notice_board")
         if s.kind in ("town", "city"):
             for sx in (cx - sq + 1, cx - sq + 3, cx + sq - 3, cx + sq - 1):
                 self.set(sx, cy - sq // 2 - 1, "stall")
