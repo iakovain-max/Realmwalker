@@ -444,3 +444,72 @@ def test_inventory_eats_and_drinks(make_app):
     assert c.thirst < 60
     render(app)
     assert app.error_count == 0
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_camp_event_and_trade_screens(make_app, size):
+    import random
+
+    from realmwalker.game.events import make_event
+    from realmwalker.ui.screens.camp import CampScreen
+    from realmwalker.ui.screens.event import EventScreen, TradeScreen
+
+    app = make_app()
+    start_small_world(app)
+    game = app.game
+    app.handle_event(KeyEvent("r"))
+    assert isinstance(app.top, CampScreen)
+    text = screen_text(render(app, size))
+    assert "Light a fire" in text or "Put out the fire" in text
+    for key in ("e", "s", "w", "escape"):
+        app.handle_event(KeyEvent(key))
+        render(app, size)
+    game.event = make_event(game, "pedlar")
+    render(app, size)
+    assert isinstance(app.top, EventScreen)
+    app.handle_event(KeyEvent("1"))
+    assert isinstance(app.top, TradeScreen)
+    money = game.leader.money
+    app.handle_event(KeyEvent("enter"))
+    render(app, size)
+    assert game.leader.money < money
+    app.handle_event(KeyEvent("escape"))
+    app.handle_event(KeyEvent("3"))
+    render(app, size)
+    app.handle_event(KeyEvent("enter"))
+    render(app, size)
+    assert game.event is None and not isinstance(app.top, EventScreen)
+    rng = random.Random(size[0])
+    for eid in sorted(app.tables.travel_events):
+        game.event = make_event(game, eid)
+        for _ in range(12):
+            render(app, size)
+            if app.game is None or not (game.busy or not isinstance(app.top, type(app.top))):
+                break
+            app.handle_event(rng.choice(app.top.autoplay_keys()))
+    assert app.error_count == 0
+
+
+@pytest.mark.parametrize("with_ai", [False, True])
+def test_travel_days_are_written_up(make_app, mock_p2, with_ai):
+    app = make_app(base_url=mock_p2.base_url, ai=True) if with_ai else make_app()
+    start_small_world(app)
+    game = app.game
+    if with_ai:
+        for _ in range(100):
+            app.update()
+            if app.ai.usable():
+                break
+            import time
+
+            time.sleep(0.05)
+        assert app.ai.usable()
+    before = len(game.log.messages)
+    game.narration.append({"miles": 18, "lands": ["grassland", "hills"], "weather": "rain", "road": 4, "off_road": 2})
+    render(app)
+    if with_ai:
+        app.ai.wait_idle(10)
+        app.update()
+    flavor = [m for m in game.log.messages[before:] if m.category == "flavor"]
+    assert flavor and "{" not in flavor[-1].text
+    assert not game.narration

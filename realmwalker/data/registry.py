@@ -199,6 +199,42 @@ def _check_combat_refs(files: dict[str, Any]) -> list[str]:
         lasting = d.get("lasting") if isinstance(d, dict) else None
         if lasting and injuries and lasting.get("injury") not in injuries:
             errors.append(f"data/diseases.json: {did} leaves unknown injury '{lasting.get('injury')}'.")
+    items = set(files.get("items.json", {}).get("items", {}))
+    groups = set((data or {}).get("encounters", {}))
+    skills = set(files.get("rules.json", {}).get("skills", {}))
+    camping = files.get("camping.json")
+    if camping and items:
+        for biome, spec in camping.get("forage", {}).items():
+            for entry in spec.get("find", []) + spec.get("extra", []):
+                if entry[0] not in items:
+                    errors.append(f"data/camping.json: forage.{biome} finds unknown item '{entry[0]}'.")
+        for biome, spec in camping.get("hunt", {}).items():
+            for g in spec.get("game", []):
+                if g[3] and g[3] not in items:
+                    errors.append(f"data/camping.json: hunt.{biome} gives unknown item '{g[3]}'.")
+        for raw, recipe in camping.get("cooking", {}).items():
+            for i in (raw, recipe.get("becomes")):
+                if i not in items:
+                    errors.append(f"data/camping.json: cooking mentions unknown item '{i}'.")
+    for eid, ev in files.get("travel_events.json", {}).get("events", {}).items():
+        if eid.startswith("_") or not isinstance(ev, dict):
+            continue
+        for opt in ev.get("options", []):
+            outs = [opt.get("outcome") or {}]
+            if opt.get("check"):
+                outs += [opt["check"].get("success", {}), opt["check"].get("failure", {})]
+                if skills and opt["check"].get("skill") not in skills:
+                    errors.append(f"data/travel_events.json: {eid} checks unknown skill '{opt['check'].get('skill')}'.")
+            listed = [e[0] for e in opt.get("shop", {}).get("stock", [])]
+            listed += [e[0] for e in opt.get("requires", {}).get("items", [])]
+            for out in outs:
+                listed += [e[0] for e in out.get("items", []) + out.get("loot", [])]
+                for g in [out.get("fight")] + ([out["ambush"][0]] if out.get("ambush") else []):
+                    if g and groups and g not in groups:
+                        errors.append(f"data/travel_events.json: {eid} starts a fight with unknown group '{g}'.")
+            for i in listed:
+                if items and i not in items:
+                    errors.append(f"data/travel_events.json: {eid} mentions unknown item '{i}'.")
     spells = files.get("spells.json")
     if spells:
         known = {k for k in spells["spells"] if not k.startswith("_")}

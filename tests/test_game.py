@@ -88,6 +88,8 @@ def test_doors_open_when_walked_into(game, tables):
 
 def test_travel_plan_and_journey(game, monkeypatch):
     monkeypatch.setattr("realmwalker.game.encounters.encounter_chance", lambda *a: 0.0)
+    monkeypatch.setattr("realmwalker.game.events.event_chance", lambda *a: 0.0)
+    monkeypatch.setattr("realmwalker.game.state.GameState.lost_dc", lambda self: None)
     game.survival = False  # a journey of many days; hunger and thirst are tested elsewhere
     world = game.world
     p = game.player
@@ -200,6 +202,8 @@ def test_old_format_1_saves_still_load(game, tables, tmp_path):
 
 def test_heavy_loads_slow_travel(game, tables, monkeypatch):
     monkeypatch.setattr("realmwalker.game.encounters.encounter_chance", lambda *a: 0.0)
+    monkeypatch.setattr("realmwalker.game.events.event_chance", lambda *a: 0.0)
+    monkeypatch.setattr("realmwalker.game.state.GameState.lost_dc", lambda self: None)
     from realmwalker.rules.inventory import add_item
 
     p = game.player

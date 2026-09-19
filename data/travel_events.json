@@ -1,0 +1,157 @@
+{
+  "_comment": "Things met on the road that are not (at first) a fight. where: road (true = only on roads, false = only off them, missing = either), biomes (or [\"any\"]), danger [min, max], time any/day/night, season list or any. Each option has a label and one of: outcome, check (skill, dc, success, failure) or shop (stock [item, qty], markup). Outcomes: text (one is chosen; {name} is the leader), items [[item, qty or dice]] (negative qty = given away), money (copper; negative = paid), xp, deed, news (true: hear of a place you don't know), fatigue (change), effect [name, hours], loot [[item, dice, chance]], fight (an encounter group), ambush [group, chance], time (minutes). requires: items [[item, qty]] and/or money.",
+  "events": {
+    "pedlar": {
+      "name": "a travelling pedlar",
+      "where": {"road": true, "biomes": ["any"], "danger": [0, 6], "time": "day", "season": "any"},
+      "weight": 4,
+      "intro": ["A pedlar comes the other way, bent under a pack twice his width, a cudgel through his belt. He raises a hand: friendly, careful.",
+                "A woman leading a laden mule has stopped by the road to rest it. She looks you over and decides you might be customers."],
+      "options": [
+        {"label": "See what there is to buy", "shop": {"stock": [["rations", 4], ["bread", 3], ["cheese", 2], ["bandages", 5], ["waterskin", 2], ["spirits", 2], ["torch", 4], ["splint", 2], ["firewood", 2]], "markup": 1.5}},
+        {"label": "Ask about the road ahead", "outcome": {"text": ["The talk is of prices, tolls and weather, and then, lower: of a place you did not know about."], "news": true, "time": 15}},
+        {"label": "Go on your way", "outcome": {"text": ["You nod and walk on."]}}
+      ]
+    },
+    "pilgrims": {
+      "name": "pilgrims",
+      "where": {"road": true, "biomes": ["any"], "danger": [0, 5], "time": "day", "season": "any"},
+      "weight": 3,
+      "intro": ["A file of pilgrims in grey wool trudges along the verge, singing badly. Their leader carries a staff hung with little bells.",
+                "Five pilgrims sit by a milestone, sharing a loaf. One waves you over."],
+      "options": [
+        {"label": "Walk a while with them", "outcome": {"text": ["They share bread and gossip, and ask nothing of you. It is the easiest mile in weeks."], "items": [["bread", 1]], "news": true, "fatigue": -10, "time": 60}},
+        {"label": "Give them alms (1 silver)", "requires": {"money": 10}, "outcome": {"text": ["The leader blesses you in a language you do not know. It sounds sincere."], "money": -10, "xp": 10, "deed": "gave alms to pilgrims"}},
+        {"label": "Go on your way", "outcome": {"text": ["You leave them to their singing."]}}
+      ]
+    },
+    "patrol": {
+      "name": "a patrol",
+      "where": {"road": true, "biomes": ["any"], "danger": [0, 4], "time": "any", "season": "any"},
+      "weight": 3,
+      "intro": ["Four spearmen and a sergeant on a tired horse block the road. \"Where from, and where to?\"",
+                "A patrol in the lord's colours waves you to the side of the road. They look bored and underpaid."],
+      "options": [
+        {"label": "Answer their questions", "check": {"skill": "persuasion", "dc": 10,
+          "success": {"text": ["The sergeant grunts, waves you on, and as you pass mentions trouble further on."], "news": true, "time": 10},
+          "failure": {"text": ["They do not like your answers. They go through your pack and keep a \"road toll\" for their trouble."], "money": -50, "time": 20}}},
+        {"label": "Ask them about the dangers hereabouts", "outcome": {"text": ["\"Stay on the road,\" says the sergeant, and tells you why."], "news": true, "time": 10}},
+        {"label": "Offer them a drink (1 silver)", "requires": {"money": 10}, "outcome": {"text": ["Coin changes hands. Suddenly everyone is friends, and the sergeant has a great deal to say about the country ahead."], "money": -10, "news": true, "time": 20}}
+      ]
+    },
+    "refugees": {
+      "name": "refugees",
+      "where": {"road": true, "biomes": ["any"], "danger": [3, 10], "time": "day", "season": "any"},
+      "weight": 2,
+      "intro": ["A cart with a broken wheel, and around it a family: two children, a grandmother, a man with his arm in a sling. Everything they own is on the cart.",
+                "People on the road with bundles and handcarts, faces grey with tiredness, all going the same way: away."],
+      "options": [
+        {"label": "Share food with them (2 rations)", "requires": {"items": [["rations", 2]]}, "outcome": {"text": ["The children eat as if they had forgotten how. The grandmother holds your hand and will not let go for a while."], "items": [["rations", -2]], "xp": 25, "deed": "shared food with refugees"}},
+        {"label": "Give them money (5 silver)", "requires": {"money": 50}, "outcome": {"text": ["The man takes it without a word, then turns away so you won't see his face."], "money": -50, "xp": 15, "deed": "gave money to refugees"}},
+        {"label": "Ask what happened", "outcome": {"text": ["Raiders, soldiers, it hardly matters which: the village is ash. They tell you where, and whom to avoid."], "news": true, "time": 15}},
+        {"label": "Walk on", "outcome": {"text": ["You walk on. They do not call after you."]}}
+      ]
+    },
+    "wounded_traveller": {
+      "name": "a wounded traveller",
+      "where": {"biomes": ["any"], "danger": [1, 10], "time": "day", "season": "any"},
+      "weight": 2,
+      "intro": ["A man sits against a tree, grey-faced, his hands pressed to his side. There is a lot of blood on the grass.",
+                "A woman lies by the roadside, one leg twisted under her. She has been there a while."],
+      "options": [
+        {"label": "Tend the wound (uses a bandage)", "requires": {"items": [["bandages", 1]]}, "check": {"skill": "medicine", "dc": 12,
+          "success": {"text": ["You stop the bleeding and get water into them. Later, they press a few coins on you and will not take them back."], "items": [["bandages", -1]], "money": 60, "xp": 30, "deed": "saved a wounded stranger", "time": 40},
+          "failure": {"text": ["You do what you can. It is not enough. They die holding your sleeve."], "items": [["bandages", -1]], "xp": 10, "deed": "tried to save a dying stranger", "time": 40}}},
+        {"label": "Search their belongings", "outcome": {"text": ["They watch you do it. Neither of you says anything."], "loot": [["rations", "1", 0.6], ["torch", "1", 0.3], ["dagger", "1", 0.3]], "money": 30, "deed": "robbed a dying stranger"}},
+        {"label": "Leave them", "outcome": {"text": ["You walk on. The sound follows you further than it should."]}}
+      ]
+    },
+    "abandoned_camp": {
+      "name": "an abandoned camp",
+      "where": {"road": false, "biomes": ["any"], "danger": [1, 10], "time": "any", "season": "any"},
+      "weight": 2,
+      "intro": ["A cold fire-pit, a torn lean-to, scattered belongings. Whoever camped here left in a hurry, or didn't leave at all.",
+                "Somebody's camp, a few days old: tracks everywhere, a smashed pot, a bedroll kicked into the bushes."],
+      "options": [
+        {"label": "Search it", "check": {"skill": "investigation", "dc": 10,
+          "success": {"text": ["Under the lean-to and in the bushes you find what the owners never came back for."], "loot": [["rations", "1d2", 0.7], ["torch", "1d2", 0.5], ["rope", "1", 0.3], ["bandages", "1d2", 0.4], ["waterskin", "1", 0.3]], "money": 25, "time": 30, "ambush": ["bandits", 0.15]},
+          "failure": {"text": ["You turn over the mess for half an hour and find nothing worth carrying."], "time": 30, "ambush": ["bandits", 0.15]}}},
+        {"label": "Leave it alone", "outcome": {"text": ["Whatever happened here, you don't need it to happen to you."]}}
+      ]
+    },
+    "hunters": {
+      "name": "hunters",
+      "where": {"biomes": ["forest", "pine_forest", "hills", "tundra", "plains"], "danger": [0, 7], "time": "day", "season": "any"},
+      "weight": 2,
+      "intro": ["Two hunters with a deer slung on a pole between them stop to look you over.",
+                "A trapper with a string of pelts over one shoulder falls into step beside you."],
+      "options": [
+        {"label": "Trade with them", "shop": {"stock": [["raw_meat", 6], ["hides", 2], ["furs", 1], ["firewood", 2]], "markup": 1.2}},
+        {"label": "Ask where the game is", "outcome": {"text": ["They tell you, more or less. Hunters never tell you everything."], "effect": ["hunting_tip", 48], "time": 10}},
+        {"label": "Go on your way", "outcome": {"text": ["They watch you go, then carry on."]}}
+      ]
+    },
+    "carcass": {
+      "name": "a fresh carcass",
+      "where": {"biomes": ["forest", "pine_forest", "plains", "hills", "tundra"], "danger": [0, 10], "time": "any", "season": "any"},
+      "weight": 1,
+      "intro": ["A deer lies dead in the grass, throat torn, barely touched. Whatever killed it will be back.",
+                "The carcass of an elk, killed within the hour. Crows are gathering but nothing else has come yet."],
+      "options": [
+        {"label": "Butcher what you can carry", "check": {"skill": "survival", "dc": 10,
+          "success": {"text": ["You work fast and cut away good meat."], "items": [["raw_meat", "1d4+2"]], "time": 30, "ambush": ["wolf_pack", 0.25]},
+          "failure": {"text": ["You make a mess of it and save little."], "items": [["raw_meat", "1"]], "time": 30, "ambush": ["wolf_pack", 0.25]}}},
+        {"label": "Leave it", "outcome": {"text": ["You leave it to whatever killed it."]}}
+      ]
+    },
+    "shrine": {
+      "name": "a wayside shrine",
+      "where": {"biomes": ["any"], "danger": [0, 10], "time": "any", "season": "any"},
+      "weight": 2,
+      "intro": ["A little stone shrine stands at the crossroads, its saint worn faceless by weather. Someone has left fresh flowers and a few coins.",
+                "A wooden shrine on a post, roofed with bark. Inside: a carved figure, candle stubs, and offerings."],
+      "options": [
+        {"label": "Pray a while", "outcome": {"text": ["For a few minutes the world is quiet. You feel steadier when you stand."], "fatigue": -15, "xp": 5, "time": 20}},
+        {"label": "Leave an offering (1 silver)", "requires": {"money": 10}, "outcome": {"text": ["You add your coin to the others."], "money": -10, "deed": "left an offering at a shrine"}},
+        {"label": "Take the offerings", "outcome": {"text": ["A handful of copper and a cheap brass ring. Nobody saw. Probably."], "money": 35, "deed": "robbed a wayside shrine"}}
+      ]
+    },
+    "herbs": {
+      "name": "a patch of herbs",
+      "where": {"road": false, "biomes": ["forest", "plains", "hills", "marsh"], "danger": [0, 10], "time": "day", "season": ["spring", "summer", "autumn"]},
+      "weight": 2,
+      "intro": ["In a sheltered hollow, a patch of plants you half recognise: yarrow, comfrey, perhaps woundwort."],
+      "options": [
+        {"label": "Gather them", "check": {"skill": "nature", "dc": 11,
+          "success": {"text": ["You pick the right ones and bundle them carefully."], "items": [["healing_herbs", "1d3"]], "time": 30},
+          "failure": {"text": ["You are not sure which are which, and leave them rather than guess."], "time": 20}}},
+        {"label": "Leave them", "outcome": {"text": ["You walk on."]}}
+      ]
+    },
+    "hungry_deserters": {
+      "name": "hungry deserters",
+      "where": {"biomes": ["any"], "danger": [2, 8], "time": "any", "season": "any"},
+      "weight": 2,
+      "intro": ["Three men in stained soldiers' coats step out of the trees. They have weapons but they look more hungry than dangerous. \"Food,\" one says. \"Please.\""],
+      "options": [
+        {"label": "Give them food (2 rations)", "requires": {"items": [["rations", 2]]}, "outcome": {"text": ["They eat standing up, like dogs. Then they nod, and go back into the trees."], "items": [["rations", -2]], "xp": 20, "deed": "fed hungry deserters"}},
+        {"label": "Tell them to be off", "check": {"skill": "intimidation", "dc": 13,
+          "success": {"text": ["They look at you, and at each other, and decide you are not worth it."]},
+          "failure": {"text": ["\"Wrong answer,\" says the one in front, and they draw."], "fight": "deserters"}}},
+        {"label": "Draw steel", "outcome": {"text": ["You draw. So do they."], "fight": "deserters"}}
+      ]
+    },
+    "gibbet": {
+      "name": "a gibbet",
+      "where": {"road": true, "biomes": ["any"], "danger": [0, 10], "time": "any", "season": "any"},
+      "weight": 1,
+      "intro": ["A gibbet at the crossroads, and in it what is left of a man. A board nailed below says what he did.",
+                "Two bodies hang from the old oak by the road, turning slowly. The crows have been at them."],
+      "options": [
+        {"label": "Read the notice", "outcome": {"text": ["Banditry on the king's road, it says, and names where. The lord wants the rest of them found."], "news": true, "time": 5}},
+        {"label": "Cut them down and bury them", "outcome": {"text": ["It takes an hour. Nobody thanks you, and somebody may mind."], "xp": 10, "deed": "buried the hanged at a crossroads", "fatigue": 10, "time": 60}},
+        {"label": "Walk on", "outcome": {"text": ["You walk on, not looking up."]}}
+      ]
+    }
+  }
+}

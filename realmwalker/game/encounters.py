@@ -28,6 +28,7 @@ class PendingEncounter:
     intro: str
     spotted_first: bool  # the party saw them before being seen
     threat: str  # plain words on how dangerous this looks
+    asleep: bool = False  # it came in the night, while the party slept
 
 
 @dataclass

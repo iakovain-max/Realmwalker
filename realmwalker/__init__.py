@@ -2,4 +2,4 @@
 
 GAME_NAME = "Realmwalker"
 __version__ = "0.1.0"
-MILESTONE = "M3 - Combat"
+MILESTONE = "M4 - Body and survival"

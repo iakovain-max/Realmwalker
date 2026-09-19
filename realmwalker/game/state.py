@@ -82,6 +82,10 @@ class GameState:
         self.auto_supplies = True  # eat and drink from the packs when needed (a setting)
         self.survival = True  # needs, weather and wounds over time (tests may switch it off)
         self.camp = None  # the camp while resting outdoors (game.camp.Camp)
+        self.event = None  # a travel event waiting for the player's choice (game.events.PendingEvent)
+        self.lost = False  # off the road in fog or darkness, with no idea where
+        self.day_log: dict = {}  # today's journey, for the evening's narrated passage
+        self.narration: list[dict] = []  # finished travel days waiting to be written up (by the screen)
         self._wading = False
         self._remaps: dict[str, np.ndarray] = {}
         self._recent_areas: list[int] = []
@@ -159,6 +163,10 @@ class GameState:
                 break
         after = self.moment
         if after.total_days != before.total_days:
+            if self.day_log.get("miles"):
+                self.narration.append(self.day_log)
+                self.narration = self.narration[-3:]
+            self.day_log = {}
             self.say(f"<title>{after.date_text()}.</>", "system")
         self.dirty = True
 
@@ -198,17 +206,19 @@ class GameState:
     def busy(self) -> bool:
         """Something must be dealt with first: trouble on the road, a fight or its aftermath, or death."""
         return (self.encounter is not None or self.battle is not None or self.aftermath is not None
-                or self.over is not None)
+                or self.over is not None or self.event is not None)
 
     def move(self, dx: int, dy: int) -> bool:
         if self.busy:
             return False
+        self.camp = None  # moving on breaks camp
         if self.in_local:
             return self._move_local(dx, dy)
         return self._move_overworld(dx, dy)
 
     def _move_overworld(self, dx: int, dy: int) -> bool:
         p = self.player
+        dx, dy = self._maybe_stray(dx, dy)
         nx, ny = p.x + dx, p.y + dy
         pace = self.pace()
         if pace is None:
@@ -230,6 +240,8 @@ class GameState:
         self.pass_time(minutes, "walk")
         if self.over is not None:
             return True
+        self._log_step(nx, ny)
+        self._check_bearings()
         if fording:
             river = self.world.river_at(nx, ny)
             name = f"the {river.name.removeprefix('the ')}" if river else "a river"
@@ -243,7 +255,77 @@ class GameState:
             if enc is not None:
                 self.encounter = enc
                 self.travel = None
+            else:
+                from realmwalker.game.events import roll_event
+
+                ev = roll_event(self, minutes)
+                if ev is not None:
+                    self.event = ev
+                    self.travel = None
+                    self.day_log.setdefault("events", []).append(self.tables.travel_events[ev.event_id]["name"])
         return True
+
+    # ------------------------------------------------------------------ the day's journey and getting lost
+    def _log_step(self, x: int, y: int) -> None:
+        log = self.day_log
+        log["miles"] = log.get("miles", 0) + MILES_PER_TILE
+        land = self.biome_def(x, y)["name"]
+        lands = log.setdefault("lands", [])
+        if land not in lands:
+            lands.append(land)
+        key = "road" if self.world.road[x, y] else "off_road"
+        log[key] = log.get(key, 0) + 1
+        from realmwalker.world.weather import KIND_WORDS
+
+        log["weather"] = KIND_WORDS.get(self.weather.kind, self.weather.kind)
+
+    def lost_dc(self) -> int | None:
+        """How hard it is to keep your bearings here, or None if there is no danger of getting lost."""
+        p = self.player
+        w = self.world
+        if w.road[p.x, p.y] or w.settlement_at(p.x, p.y) is not None:
+            return None
+        vis = self.weather.visibility
+        dark = self.light < 0.3
+        if vis >= 0.6 and not dark:
+            return None
+        return 10 + (6 if vis < 0.3 else (3 if vis < 0.6 else 0)) + (3 if dark else 0)
+
+    def _maybe_stray(self, dx: int, dy: int) -> tuple[int, int]:
+        """Lost, you may walk the wrong way without knowing it."""
+        if not self.lost:
+            return dx, dy
+        rng = self.world.rng.child(f"stray/{self.world.time}")
+        if rng.chance(0.5):
+            options = [(ddx, ddy) for ddx in (-1, 0, 1) for ddy in (-1, 0, 1) if (ddx or ddy)]
+            return rng.choice(options)
+        return dx, dy
+
+    def _check_bearings(self) -> None:
+        from realmwalker.game.camp import check
+
+        p = self.player
+        if self.lost:
+            if self.world.road[p.x, p.y] or self.world.settlement_at(p.x, p.y) is not None:
+                self.lost = False
+                self.say("You strike a road you know. Your bearings come back.", "good")
+                return
+            dc = self.lost_dc()
+            ok, roll = check(self, "survival", dc or 8, tag="bearings")
+            if ok:
+                self.lost = False
+                self.say(f"{roll} You find your bearings again.", "good")
+            return
+        dc = self.lost_dc()
+        if dc is None:
+            return
+        ok, roll = check(self, "survival", dc, tag="lost")
+        if not ok:
+            self.lost = True
+            self.travel = None
+            what = "fog" if self.weather.kind == "fog" else ("storm" if self.weather.visibility < 0.6 else "dark")
+            self.say(f"{roll} <warn>In the {what} you lose your way.</> You are no longer sure which way you are "
+                     f"walking. Find a road, or wait for better light.", "warn")
 
     def reveal(self) -> None:
         """Mark overworld tiles around the player as explored."""

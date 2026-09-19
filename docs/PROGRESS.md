@@ -10,12 +10,117 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | M1 — World and movement | ✅ Done (2026-09-19) |
 | M2 — Character | ✅ Done (2026-09-19) |
 | M3 — Combat | ✅ Done (2026-09-19) |
-| M4 — Body and survival | ⏳ Next |
-| M5 — Settlements and people | — |
+| M4 — Body and survival | ✅ Done (2026-09-19) |
+| M5 — Settlements and people | ⏳ Next |
 | M6 — Factions and politics | — |
 | M7 — Companions and progression | — |
 | M8 — Adventure content | — |
 | M9 — Death, legacy and release | — |
+
+---
+
+## M4 — Body and survival (done)
+
+**What you can do now**
+- **Weather.** Rain, drizzle, storms, snow, blizzards, fog and heat waves roll across the map as moving fronts,
+  on top of each place's climate (latitude, height, season, day and night). The side panel shows the weather
+  where you are; the world map shows it for the whole land (`m`, then `w`). Weather slows travel, shortens how
+  far you can see (fog!), soaks you, and follows you into fights (rain spoils bowshots, fog hides the enemy).
+- **Your body over time.** Hunger, thirst, tiredness and dirt grow as you go (faster when walking, in the heat,
+  or when shivering). **Body heat** comes from the air, wind, rain, what you wear (warmth, wind and rain
+  protection of each layer), whether you are wet, what you are doing, shelter, bedding and fire. Clear stages
+  with warnings: peckish → hungry → starving; thirsty → parched → dehydrated; chilled → cold → hypothermic →
+  freezing; hot → overheated → heat exhaustion → heatstroke. **5e exhaustion** (levels 1–6) builds up from the
+  worst of these, with its real effects (disadvantage, half speed, half hit points...), and level 6 is death.
+  A night's sleep with food and water takes one level away.
+- **Food and water.** Eating and drinking happen by themselves from your pack when needed (a setting you can
+  turn off; then use Enter on food or a waterskin in the inventory). Waterskins hold 4 pints and weigh what the
+  water weighs. Wells in towns are safe; rivers, lakes and marshes may give you dysentery or marsh fever unless
+  you boil the water. Food spoils (fresh bread in days, rations in months); spoiled or raw food may poison you.
+  `w` fills your waterskins, `W` washes.
+- **Health (h).** Wounds from battle now live on: bleeding wounds lose blood until bandaged (small cuts clot by
+  themselves; gushing ones kill in hours), dirty open wounds may **fester** and poison the blood, **broken
+  bones** heal straight only if splinted, **critical** wounds and unset bones may leave **lasting injuries**
+  (a scar, a scarred face, a lost eye, lost fingers, a weak arm, a limp, bad lungs). Healing takes days
+  (minor), one to three weeks (serious, critical) or about a month (bones). **Pain** and **blood loss** make
+  everything harder. Treat wounds on the Health screen: bandage, clean, stitch, splint, cauterize, poultice;
+  poppy milk dulls pain (and can hook you); drink helps too (and leaves a hangover). Clerics can cast Cure
+  Wounds, Healing Word and Lesser Restoration outside battle.
+- **Ten diseases** (all in `data/diseases.json`): dysentery, food poisoning, wound fever, lung fever, marsh fever,
+  camp fever, plague, filth fever, the frothing sickness (from animal bites: always fatal once it shows, unless
+  magic cures it first) and grave rot (from the dead). Each has its own way of spreading, time before it
+  shows, stages, treatments, chance of death and after-effects. Rest, warmth, clean water and herbs help you
+  throw them off.
+- **Effects that matter in a fight:** exhaustion gives disadvantage, a broken arm can't hold a weapon (and
+  two-handed weapons need both arms), head wounds can make you black out, great pain can put you in shock.
+- **Camp (r).** Light a fire (easy in woods, hard in the open, impossible in a storm without a tent; you need a
+  tinderbox, and firewood where there is none), pitch a tent, eat, cook raw meat and fish, boil water, forage
+  (1 hour), hunt (2 hours), fish (2 hours, at water), see to wounds, rest or sleep. A fire warms, dries, cooks
+  and keeps most beasts off, but people see it from afar. Something may find you while you hunt or sleep; if
+  it comes while you sleep, you are caught unawares.
+- **After a fight with beasts** you can butcher the carcasses for meat, hides and furs.
+- **The road.** Travel takes longer in bad weather, and when you are hurt, sick, starving or exhausted.
+  **Off the road in fog, storms or darkness you can lose your way** (Survival); a road or clear weather brings
+  you back. **Twelve kinds of travel event** (all in `data/travel_events.json`): a pedlar (buy food, water,
+  bandages...), pilgrims, a patrol, refugees, a wounded traveller, an abandoned camp, hunters (buy meat and
+  hides; learn where the game is), a fresh carcass, a wayside shrine, a patch of healing herbs, hungry
+  deserters, a gibbet. Choices use your skills, cost or gain things, add to your deeds, and some turn into
+  fights. **Each day of travel is written up in the log**: by the Player2 AI when it is running (one small
+  request per day, in the background), otherwise from built-in text.
+- Everyone now starts with two bandages. New items: spirits, poppy milk, healing herbs, roast meat, fish, porridge,
+  wild food, firewood.
+
+**How to try it**
+1. Double-click `Play.bat`, **Continue**. Press `h` to see your Health screen and `r` for the camp.
+2. Walk out of town into the wilds and keep going for a few days: watch the weather, the side panel, and the
+   log at each new day. Try the world map's weather view (`m`, `w`).
+3. Get into a fight (or use the debug console: `` ` `` then `fight wolf_pack`), then look at your wounds with `h`
+   and treat them. Rest in camp with `r` → `l`.
+4. Try a winter night in the open without a fire (it is dangerous), then with one.
+
+**What to look for:** Is survival interesting or just busywork? Are the warnings clear before things get
+deadly? Is the Health screen understandable? Are travel events fun? Do the daily passages read well?
+
+**How it was verified**
+- 329 automated tests pass. New: weather is deterministic, varied and plausible; seasons are smooth; fronts move;
+  needs grow and sleep restores; a winter night outside is dangerous and a fire or shelter prevents it; rain
+  soaks and fire dries; heat waves; starvation and thirst build exhaustion and kill; long rests need food;
+  eating, drinking, wells, river sickness, spoiled food; death ends the game; the new body fields and waterskin
+  contents survive saving; wounds bleed, clot, fester (dirty more than clean), heal over days and bones over
+  weeks; unset bones leave limps; wound fever; diseases incubate, strike or pass, can be recovered from, and
+  the frothing sickness kills unless magic cures it early; treatments use supplies and skill; cautery; splints;
+  poultices; healing magic outside battle; poppy and withdrawal; drink and hangovers; penalties in skills,
+  saves and attacks; broken arms; exhaustion in battle; health state survives saving; fire, cooking, boiling,
+  camps breaking when you move; foraging, hunting, fishing; butchering; every travel event and option can be
+  played; requirements; news; events on roads; getting lost in fog and found by a road; travel days written up
+  with and without the AI (mock); every new screen renders at every window size.
+- Balance simulations (200 characters each): a bandaged minor cut heals in under 2 days; an untreated serious
+  cut kills about 1 in 11 (by festering), 1 in 100 if cleaned and bandaged; a gushing critical wound left alone
+  is usually fatal, almost never if treated; broken legs take 3–4 weeks; plague kills about 1 in 6 hardy
+  fighters. A soldier sleeping at -8°C with a blanket and no fire wakes hypothermic; with a fire, fine.
+- Autoplay: 10,000 turns with AI off and 10,000 with the fake AI on each of two seeds, meeting fights and travel
+  events, checking body values, wounds, diseases and waterskins stay within bounds. No errors.
+- The window smoke test now visits the Health screen and the weather map.
+
+**Decisions (and why)**
+1. **Weather is computed, not stored**: a smooth function of the world seed, place and time. Fronts really
+   move and saves need nothing extra; the same moment always has the same weather.
+2. **Eating and drinking are automatic by default** (the pack is used when you are hungry or thirsty). Survival
+   stays meaningful (supplies run out, water can be bad, food spoils) without tedious micromanagement. It can be
+   turned off in Settings.
+3. **Exhaustion** uses the 5e track as the design asks; for checks and saves outside true rolls it counts as -5
+   (the 5e passive-check equivalent of disadvantage); in battle it is real disadvantage.
+4. **Hit points stay stamina**: blood loss, pain, festering and sickness are the body's real state, and they are
+   what kill you slowly. Hit points only drop at the extremes (freezing, heatstroke, sepsis, the worst diseases).
+5. **Travel-day passages use the AI sparingly**: one small background request per day of travel, skipped when
+   energy is low (the built-in text is used instead).
+6. **Animals (mules and horses)** are left for M5, where they can be bought; the travel rules are ready for them.
+
+**Known issues**
+- A camp is not saved: if you quit while camped, the fire is out when you come back.
+- Getting lost is not saved either (you know where you are after loading).
+- Inns, baths, healers and surgeons arrive with towns (M5); plague outbreaks in towns with the world simulation.
+- Companions (who can keep watch and treat each other) arrive in M7.
 
 ---
 
@@ -119,8 +224,8 @@ key hurries them)? Are level-1 fights too hard or too easy? Is anything in the b
 **Known issues**
 - Quitting in the middle of a fight doesn't save the fight: you continue from just before it (inhabitants
   of a close-up map keep any hurts you gave them; a band met on the road is gone).
-- Wounds don't heal, fester or bleed outside battle yet, and you can't bandage outside battle yet: M4.
-- Only hostile encounters for now; merchants, pilgrims and other travel events come with M4.
+- ~~Wounds don't heal, fester or bleed outside battle yet~~: done in M4.
+- ~~Only hostile encounters for now~~: travel events added in M4.
 - Prisoners can't be taken to a town for bounty or ransom yet (M6).
 - One character only; companions (and fighting side by side) arrive in M7.
 

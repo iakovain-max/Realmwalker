@@ -26,6 +26,7 @@ NAMED: dict[str, Color] = {
     "good": (116, 196, 96),  # healing, success, safety
     "loot": (240, 212, 84),  # money and items
     "info": (122, 170, 222),  # neutral information, rules text
+    "dice": (104, 150, 200),  # dice rolls shown in the log
     "magic": (184, 128, 234),  # spells and the uncanny
     "name": (226, 222, 164),  # people
     "place": (150, 204, 200),  # places

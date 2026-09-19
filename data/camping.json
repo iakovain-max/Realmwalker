@@ -1,0 +1,37 @@
+{
+  "_comment": "Living off the land. firewood: how easy it is to find fuel in each land (plenty/some/little/none). forage: Survival DC to find something to eat (winter adds winter_dc), what you find (item, dice) and extras found on a good roll (item, dice, chance). hunt: Survival DC, and the game you might take: [name, weight, meat dice, hide item or null]. fish: DC and catch. cooking: what raw food becomes over a fire (needs_pot: needs a pot or mess kit).",
+  "firewood": {
+    "forest": "plenty", "pine_forest": "plenty", "hills": "some", "plains": "some", "marsh": "some", "coast": "some",
+    "mountains": "little", "high_mountains": "none", "tundra": "little", "desert": "none"
+  },
+  "forage": {
+    "forest": {"dc": 11, "winter_dc": 5, "find": [["wild_food", "1d3"]], "extra": [["healing_herbs", "1d2", 0.35]]},
+    "pine_forest": {"dc": 13, "winter_dc": 4, "find": [["wild_food", "1d2"]], "extra": [["healing_herbs", "1", 0.2]]},
+    "plains": {"dc": 12, "winter_dc": 6, "find": [["wild_food", "1d2"]], "extra": [["healing_herbs", "1d2", 0.3]]},
+    "hills": {"dc": 13, "winter_dc": 5, "find": [["wild_food", "1d2"]], "extra": [["healing_herbs", "1", 0.25]]},
+    "marsh": {"dc": 12, "winter_dc": 4, "find": [["wild_food", "1d2"]], "extra": [["healing_herbs", "1d2", 0.3]]},
+    "coast": {"dc": 11, "winter_dc": 3, "find": [["wild_food", "1d3"]], "extra": []},
+    "mountains": {"dc": 15, "winter_dc": 5, "find": [["wild_food", "1"]], "extra": [["healing_herbs", "1", 0.15]]},
+    "high_mountains": {"dc": 19, "winter_dc": 5, "find": [["wild_food", "1"]], "extra": []},
+    "tundra": {"dc": 16, "winter_dc": 5, "find": [["wild_food", "1"]], "extra": []},
+    "desert": {"dc": 17, "winter_dc": 0, "find": [["wild_food", "1"]], "extra": []}
+  },
+  "hunt": {
+    "forest": {"dc": 12, "game": [["a roe deer", 3, "3d4", "hides"], ["a brace of hares", 4, "1d3", null], ["a wild pig", 1, "2d4", "hides"], ["a wood pigeon", 3, "1", null]]},
+    "pine_forest": {"dc": 13, "game": [["an elk calf", 1, "4d4", "hides"], ["a hare", 4, "1d2", null], ["a grouse", 3, "1", null]]},
+    "plains": {"dc": 12, "game": [["a hare", 5, "1d2", null], ["a pair of partridges", 3, "1", null], ["an antelope", 1, "3d4", "hides"]]},
+    "hills": {"dc": 13, "game": [["a wild goat", 2, "2d4", "hides"], ["a hare", 4, "1d2", null], ["a grouse", 3, "1", null]]},
+    "marsh": {"dc": 13, "game": [["a pair of ducks", 4, "1d2", null], ["a heron", 1, "1", null], ["an otter", 1, "1", "furs"]]},
+    "coast": {"dc": 12, "game": [["gull eggs and a gull", 3, "1", null], ["a seal pup", 1, "2d4", "furs"]]},
+    "mountains": {"dc": 15, "game": [["a mountain goat", 2, "2d4", "hides"], ["a marmot", 3, "1", null]]},
+    "high_mountains": {"dc": 18, "game": [["a mountain goat", 1, "2d4", "hides"]]},
+    "tundra": {"dc": 15, "game": [["a hare", 3, "1d2", null], ["a reindeer", 1, "4d4", "furs"], ["a ptarmigan", 3, "1", null]]},
+    "desert": {"dc": 17, "game": [["a lizard", 3, "1", null], ["a desert hare", 2, "1", null]]}
+  },
+  "fish": {"dc": 11, "tackle_bonus": 5, "catch": ["raw_fish", "1d3"]},
+  "cooking": {
+    "raw_meat": {"becomes": "cooked_meat"},
+    "raw_fish": {"becomes": "cooked_fish"},
+    "oats": {"becomes": "porridge", "needs_pot": true}
+  }
+}

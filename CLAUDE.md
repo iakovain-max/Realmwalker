@@ -38,9 +38,14 @@ realmwalker/
                            tables (numpy lookups from data), model (World + save-friendly dataclasses)
   game/                    state (player, party, actions, travel, time), save (versioned zips), log, describe,
                            encounters (road trouble, local-map inhabitants), fight (start/finish battles, loot,
-                           prisoners, rest), vision (field of view)
+                           prisoners, rest), vision (field of view), survival (the body as time passes: weather,
+                           eating, drinking, water sources, death), care (treatment, healing magic), camp (fire,
+                           cooking, foraging, hunting, fishing), events (travel events, news, pedlars)
   rules/                   character (Character + Sheet: derived numbers), items, inventory (equip rules), creation,
-                           combat (Battle: rank combat on 5e dice), creatures, spells, wounds, progression (XP, rests)
+                           combat (Battle: rank combat on 5e dice), creatures, spells, wounds, progression (XP, rests),
+                           body (needs, body heat, wetness, exhaustion), health (blood, pain, infection, healing,
+                           injuries, diseases, treatment, drink, poppy)
+  world/weather.py         weather as a deterministic function of seed, place and time (moving fronts)
   ui/                      window loop, fonts (tileset built at runtime), input, markup, widgets, map_render, screens/
 data/                      ALL game data as JSON (names, fallback text, ... later races, items, creatures)
 ai/prompts/                prompt templates (plain text, @max_tokens header, {slots})
@@ -73,6 +78,9 @@ tools/                     autoplay.py, mock_player2.py, build_friends.py
   breaking saves; always go through `GameState.remap_for()` / `_biome_remap` when reading them.
 - New save fields: bump `game/save.py` FORMAT_VERSION and add a MIGRATIONS entry; never break old saves.
 - The autoplay bot checks game invariants (`tools/autoplay.py`); add checks there as systems are added.
+- Time: `GameState.pass_time(minutes, activity)` ("walk", "rest", "sleep", "fight") runs `game/survival.tick` in
+  30-minute chunks (body, health, eating/drinking, death). Tests about travel alone can set `game.survival = False`
+  and monkeypatch `encounters.encounter_chance`, `events.event_chance` and `GameState.lost_dc`.
 - Battles: `rules/combat.Battle` is pure logic driven by `step()` / `pending_party()` / `do_*()`; the screen
   (`ui/screens/battle.py`) only paces and asks. `GameState.busy` (encounter, battle, aftermath or death pending)
   blocks moving; `GameScreen._open_event_screen()` opens the right screen. Debug console: `fight <group>`.

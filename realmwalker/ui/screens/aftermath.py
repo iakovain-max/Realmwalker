@@ -79,6 +79,16 @@ class AftermathScreen(Screen):
         self.marked.clear()
         self.cursor = min(self.cursor, max(0, len(self.after.loot) - 1))
 
+    def butcher(self) -> None:
+        from realmwalker.game.camp import butcher
+
+        items, msgs = butcher(self.game, self.after.carcasses)
+        self.after.carcasses = []
+        self.after.loot.extend(items)
+        for m in msgs:
+            self.game.say(m, "info")
+        self.fate_texts += msgs
+
     def done(self) -> None:
         if self.phase == "captives" and self._undecided():
             self.app.notify("Decide what happens to your prisoners first.", "warn")
@@ -117,6 +127,8 @@ class AftermathScreen(Screen):
             self.toggle(self.cursor)
         elif ev.key == "a":
             self.take_all()
+        elif ev.key == "b" and self.after.carcasses:
+            self.butcher()
         elif ev.key == "t":
             self.take_marked()
         elif ev.key == "enter":
@@ -146,7 +158,7 @@ class AftermathScreen(Screen):
                 break
             y += canvas.wrapped(x, y, note, iw, max_lines=2)
         for text in self.fate_texts[-3:]:
-            y += canvas.wrapped(x, y, markup.escape(text), iw, fg=colors.DIM, max_lines=2)
+            y += canvas.wrapped(x, y, text, iw, fg=colors.DIM, max_lines=2)
         y += 1
         if after.outcome == "death":
             canvas.button(x, h - 2, "Continue", self._close, hotkey="Enter")
@@ -204,16 +216,20 @@ class AftermathScreen(Screen):
             y += 2
             bx = canvas.button(x, y, "Take all", self.take_all, hotkey="A")
             bx = canvas.button(bx + 3, y, "Take marked", self.take_marked, hotkey="T")
-            canvas.button(bx + 3, y, "Leave the rest", self.done, hotkey="L")
+            bx = canvas.button(bx + 3, y, "Leave the rest", self.done, hotkey="L")
+            if after.carcasses:
+                canvas.button(bx + 3, y, "Butcher the carcasses", self.butcher, hotkey="B")
             canvas.text(x, y + 1, "Space marks an item · Enter takes marked (or all) and goes on", colors.FAINT, max_width=w)
         else:
             canvas.text(x, y, "There is nothing here worth taking." if after.outcome == "victory" else "", colors.DIM)
-            canvas.button(x, y + 2, "Continue", self.done, hotkey="Enter")
+            bx = canvas.button(x, y + 2, "Continue", self.done, hotkey="Enter")
+            if after.carcasses:
+                canvas.button(bx + 3, y + 2, "Butcher the carcasses (30 min)", self.butcher, hotkey="B")
 
     def autoplay_keys(self) -> list[KeyEvent]:
         if self.phase == "captives" and self.after.outcome != "death":
             return [KeyEvent(k) for k in ("1", "2", "3", "4", "5")]
-        return [KeyEvent(k) for k in ("down", " ", "t", "a", "enter", "l", "enter")]
+        return [KeyEvent(k) for k in ("down", " ", "t", "b", "a", "enter", "l", "enter")]
 
 
 class DeathScreen(Screen):

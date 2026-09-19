@@ -44,8 +44,10 @@ def bedding(game, char: Character) -> float:
 
 
 def environment(game, char: Character, activity: str) -> Environment:
+    from realmwalker.game.camp import camp_here
+
     w = weather(game)
-    camp = getattr(game, "camp", None)
+    camp = camp_here(game)
     return Environment(
         air=w.temp, wind=w.wind, wet_per_hour=w.wet_per_hour, activity=activity,
         sheltered=sheltered(game, activity), fire=bool(camp and camp.fire and activity != "walk"),

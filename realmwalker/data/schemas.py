@@ -35,11 +35,14 @@ TAVERN_TABLES = (
     "sound", "crowd", "detail", "description", "manner", "overheard", "region", "season",
 )
 
-FALLBACK_TEXT = Obj({"tavern": table_set(*TAVERN_TABLES)})
+TRAVEL_DAY_TABLES = ("passage", "opening", "walking", "closing")
+
+FALLBACK_TEXT = Obj({"tavern": table_set(*TAVERN_TABLES), "travel_day": table_set(*TRAVEL_DAY_TABLES)})
 
 # Slots that code fills in itself (not from a table), per table set.
 RUNTIME_SLOTS: dict[str, set[str]] = {
     "tavern": {"family", "keeper"},
+    "travel_day": {"name", "miles", "lands", "weather", "mood", "season", "events", "road"},
 }
 
 PLACE_NAMES = Obj(
@@ -356,4 +359,61 @@ HEALTH = Obj({"injuries": Map(INJURY, min_items=1)})
 DATA_FILES.update({
     "diseases.json": DISEASES,
     "health.json": HEALTH,
+})
+
+CAMPING = Obj(
+    {
+        "firewood": Map(Str(choices=["plenty", "some", "little", "none"])),
+        "forage": Map(Obj({"dc": Int(min=0, max=30), "winter_dc": Int(min=0, max=20),
+                           "find": List(List(Any_(), min_items=2, max_items=2), min_items=1),
+                           "extra": List(List(Any_(), min_items=3, max_items=3))})),
+        "hunt": Map(Obj({"dc": Int(min=0, max=30), "game": List(List(Any_(), min_items=4, max_items=4), min_items=1)})),
+        "fish": Obj({"dc": Int(min=0, max=30), "tackle_bonus": Int(min=0, max=10), "catch": List(Any_(), min_items=2, max_items=2)}),
+        "cooking": Map(Obj({"becomes": Str(max_len=40), "needs_pot": Bool(optional=True)})),
+    }
+)
+
+
+def outcome_spec(optional: bool = False) -> Obj:
+    """What happens after a travel-event choice (see data/travel_events.json)."""
+    return Obj(
+        {
+            "text": word_list(1, 400), "items": List(List(Any_(), min_items=2, max_items=2), optional=True),
+            "loot": List(List(Any_(), min_items=3, max_items=3), optional=True),
+            "money": Int(min=-100000, max=100000, optional=True), "xp": Int(min=0, max=10000, optional=True),
+            "deed": Str(max_len=120, optional=True), "news": Bool(optional=True),
+            "fatigue": Float(min=-100, max=100, optional=True),
+            "effect": List(Any_(), min_items=2, max_items=2, optional=True), "fight": Str(max_len=40, optional=True),
+            "ambush": List(Any_(), min_items=2, max_items=2, optional=True), "time": Int(min=0, max=10000, optional=True),
+        },
+        optional=optional,
+    )
+
+
+OUTCOME = outcome_spec()
+EVENT_OPTION = Obj(
+    {
+        "label": Str(max_len=80), "requires": Obj({"items": List(List(Any_(), min_items=2, max_items=2), optional=True),
+                                                  "money": Int(min=0, max=10**7, optional=True)}, optional=True),
+        "outcome": outcome_spec(optional=True),
+        "check": Obj({"skill": Str(max_len=30), "dc": Int(min=0, max=40), "success": OUTCOME, "failure": OUTCOME},
+                     optional=True),
+        "shop": Obj({"stock": List(List(Any_(), min_items=2, max_items=2), min_items=1), "markup": Float(min=0.1, max=10)},
+                    optional=True),
+    }
+)
+TRAVEL_EVENT = Obj(
+    {
+        "name": Str(max_len=60),
+        "where": Obj({"road": Bool(optional=True), "biomes": List(Str(max_len=30), min_items=1),
+                      "danger": List(Int(min=0, max=10), min_items=2, max_items=2), "time": Str(choices=["any", "day", "night"]),
+                      "season": Any_()}),
+        "weight": Float(min=0, max=100), "intro": word_list(1, 400), "options": List(EVENT_OPTION, min_items=1),
+    }
+)
+TRAVEL_EVENTS = Obj({"events": Map(TRAVEL_EVENT, min_items=1)})
+
+DATA_FILES.update({
+    "camping.json": CAMPING,
+    "travel_events.json": TRAVEL_EVENTS,
 })

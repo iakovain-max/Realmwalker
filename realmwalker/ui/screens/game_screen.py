@@ -94,6 +94,10 @@ class GameScreen(Screen):
         if game.in_local:
             game.say("Leave this place first (press <) to travel across country.", "system")
             return
+        if game.lost:
+            game.say("You have lost your bearings: you can't plan a journey until you find a road or the weather "
+                     "clears. Walk (arrow keys) and hope.", "warn")
+            return
         plan = game.plan_travel(dest)
         if plan is None:
             game.say("You can see no way to get there on foot.", "warn")
@@ -224,6 +228,10 @@ class GameScreen(Screen):
             from realmwalker.ui.screens.battle import BattleScreen
 
             self.app.push(BattleScreen(self.app, game))
+        elif game.event is not None:
+            from realmwalker.ui.screens.event import EventScreen
+
+            self.app.push(EventScreen(self.app, game))
         elif game.encounter is not None:
             from realmwalker.ui.screens.encounter import EncounterScreen
 
@@ -231,6 +239,33 @@ class GameScreen(Screen):
         else:
             return False
         return True
+
+    def _narrate(self) -> None:
+        """Write up a finished day on the road: by the AI if it is there, or from built-in text at once."""
+        from realmwalker.ai.service import Priority
+        from realmwalker.ai.tasks import TRAVEL_DAY, travel_day_fallback
+        from realmwalker.game.events import travel_day_facts
+
+        game = self.game
+        day = game.narration.pop(0)
+        variables = travel_day_facts(game, day)
+
+        def fallback() -> None:
+            rng = game.world.rng.child(f"narrate/{game.world.time}")
+            text = travel_day_fallback(rng, self.app.data, variables)["passage"]
+            game.say(markup.escape(text), "flavor")
+
+        if not self.app.ai.usable():
+            fallback()
+            return
+
+        def done(result) -> None:
+            if result.ok and result.data and result.data.get("passage"):
+                game.say(f"<ai>{markup.escape(result.data['passage'])}</>", "flavor")
+            else:
+                fallback()
+
+        self.app.ai.submit(TRAVEL_DAY, variables, priority=Priority.BACKGROUND, callback=done)
 
     def water(self) -> None:
         from realmwalker.game.survival import fill_skins
@@ -245,9 +280,9 @@ class GameScreen(Screen):
             self.game.say(text, "info")
 
     def rest(self) -> None:
-        from realmwalker.ui.screens.camp import RestScreen
+        from realmwalker.ui.screens.camp import CampScreen
 
-        self.app.push(RestScreen(self.app, self.game))
+        self.app.push(CampScreen(self.app, self.game))
 
     # ------------------------------------------------------------------ frame
     def update(self) -> None:
@@ -256,6 +291,8 @@ class GameScreen(Screen):
         game.auto_supplies = self.app.settings.auto_supplies
         if self._open_event_screen():
             return
+        if game.narration:
+            self._narrate()
         if game.travel is not None:
             now = self.app.clock()
             if now - self._last_travel_step >= TRAVEL_STEP_SECONDS or self.app.headless:
@@ -323,6 +360,9 @@ class GameScreen(Screen):
             b = lm.building_at(p.lx, p.ly) if lm else None
             canvas.markup(ix, row, "<dim>On foot, looking closely" + (f"; inside a {b.kind}" if b else "") + ".</>", max_width=iw)
             row += 1
+        if game.lost:
+            canvas.markup(ix, row, "<warn>Lost: you don't know which way you're going.</>", max_width=iw)
+            row += 1
         if game.travel is not None:
             row += 1
             canvas.markup(ix, row, f"<good>Travelling</> <dim>— {len(game.travel.path) * 3} miles to go</>", max_width=iw)
@@ -343,7 +383,7 @@ class GameScreen(Screen):
         keys = [
             ("arrows", "walk"), (">", "enter the land here") if not game.in_local else ("<", "back to the overworld"),
             ("l", "look"), ("m t", "world map · travel"), ("c i e", "character · pack · gear"),
-            ("g", "pick up") if game.in_local else (".", "wait an hour"), ("r h", "rest · health"),
+            ("g", "pick up") if game.in_local else (".", "wait an hour"), ("r h", "camp · health"),
             ("w W", "water · wash"), ("L /", "log · legend"), ("Esc", "menu"),
         ]
         ky = h - len(keys) - 1

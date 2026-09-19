@@ -51,6 +51,7 @@ class AutoplayReport:
     save_checks: int = 0
     game_turns: int = 0
     fights: int = 0
+    events: int = 0
     battle_turns: int = 0
     elapsed: float = 0.0
 
@@ -64,7 +65,7 @@ class AutoplayReport:
             f"  screens visited: {dict(self.screens.most_common())}",
             f"  AI requests: {self.ai_stats}  mock chat calls: {self.mock_calls}",
             f"  turns inside a game: {self.game_turns}  save/load round trips checked: {self.save_checks}",
-            f"  fights started by the bot: {self.fights}  turns spent in battle: {self.battle_turns}",
+            f"  fights started by the bot: {self.fights}  travel events: {self.events}  turns spent in battle: {self.battle_turns}",
             "  RESULT: " + ("OK" if self.ok else f"FAILED ({len(self.errors)} problems)"),
         ]
         lines += [f"    - {e}" for e in self.errors[:20]]
@@ -222,6 +223,12 @@ def _start_a_fight(app: App, rng: random.Random, report: AutoplayReport) -> None
 
     game = app.game
     if game is None or game.busy or not isinstance(app.top, GameScreen):
+        return
+    if rng.random() < 0.4:
+        from realmwalker.game.events import make_event
+
+        game.event = make_event(game, rng.choice(sorted(app.tables.travel_events)))
+        report.events += 1
         return
     group = rng.choice(sorted(app.tables.creatures.encounters))
     game.encounter = make_encounter(game, group, game.world.rng.child(f"autoplay/{game.world.time}/{group}"))

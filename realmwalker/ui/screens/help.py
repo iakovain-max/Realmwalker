@@ -59,7 +59,19 @@ Roads are much faster than open country. Forests, hills and marshes are slow; mo
   <loot>e</>               Equipment: what you wear in each slot, which body parts are protected, warmth
   <loot>g</> or <loot>,</>          Pick up what is lying here (on foot, in the close view)
 Carrying weight matters: worn armour and clothes count half. Above your limit you are slowed; far above it you cannot walk. Coins weigh too.
-  <loot>r</>               Rest: a short rest (1 hour, spend hit dice to heal) or a long rest (8 hours)
+  <loot>r</>               Camp: fire, tent, eat, cook, boil water, forage, hunt, fish, rest, sleep
+  <loot>h</>               Health: needs, warmth, blood, pain, wounds and their treatment, sickness
+  <loot>w</>               Fill your waterskins (and drink) at a well, river or lake
+  <loot>W</>               Wash (at water)
+
+<title>Staying alive</title>
+Your body matters as much as your sword. The side panel shows anything that is wrong.
+  <loot>Hunger, thirst, tiredness</> grow as time passes (faster when walking, in heat, or shivering). Food spoils; a day's rations feeds you for a day. By default you eat and drink from your pack when needed (Settings). Wells in towns are safe; rivers, lakes and marshes can make you sick unless you boil the water at a campfire (you need a pot).
+  <loot>Cold and heat:</> what you wear, wind, rain, shelter, fire and what you are doing all count. Wet clothes lose their warmth. A winter night in the open without a fire can kill; so can a heat wave in armour. Check the Warmth bar on the Health screen.
+  <loot>Exhaustion</> (5e, levels 1 to 6) builds up from starving, thirst, no sleep, freezing or heat. A night's sleep with food and water removes one level. Level 6 is death.
+  <loot>Wounds</> heal over days (minor), weeks (serious, critical) or a month (broken bones). Bleeding wounds lose blood until bandaged; dirty wounds can fester and poison the blood. On the Health screen: <loot>b</> bandage, <loot>c</> clean, <loot>s</> stitch, <loot>p</> splint, <loot>f</> cauterize, <loot>o</> poultice, <loot>k</> poppy milk, <loot>m</> healing magic.
+  <loot>Sickness</> comes from bad water or food, bites, cold and wet, marsh country and filth. It takes hold after some hours or days; rest, warmth, clean water and herbs help you recover. Some diseases kill.
+  <loot>The road:</> travel is slower in storms, snow and heat, and when hurt or tired. Off the road in fog, storms or darkness you can lose your way. You will meet people as well as trouble: pedlars, pilgrims, patrols, refugees and more. Each day of travel is written up in the log.
 
 <title>Danger</title>
 The wilds are not empty. The more dangerous the region (shown in the side panel), the more likely something finds you, and night is worse; roads are a little safer. When trouble comes on the road you can <loot>F</>ight, <loot>A</>mbush (if you saw them first), <loot>S</>lip away (Stealth), or <loot>T</>alk your way past. Ruins, caves, barrows and towers have inhabitants; in the close view they show as letters, with a red background once they have noticed you. Walk into them to attack.

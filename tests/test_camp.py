@@ -1,0 +1,267 @@
+"""Camping, living off the land, travel events, getting lost and the day's passage."""
+
+import copy
+
+import numpy as np
+import pytest
+
+from realmwalker.core.rng import RNG
+from realmwalker.game import camp, events, fight
+from realmwalker.game.state import new_game
+from realmwalker.rules.creation import CharacterBuilder
+from realmwalker.rules.inventory import add_item
+from realmwalker.world.generator import WorldGenerator, WorldOptions
+from realmwalker.world.tables import Tables
+from realmwalker.world.weather import Weather
+
+
+@pytest.fixture(scope="module")
+def tables(data):
+    return Tables(data)
+
+
+@pytest.fixture(scope="module")
+def world(tables):
+    return WorldGenerator(WorldOptions("Campland", 41, "small"), tables).generate()
+
+
+def hero(tables, seed=1):
+    b = CharacterBuilder(tables, RNG(seed, "hero"))
+    b.set_race("human")
+    b.set_class("fighter")
+    b.set_background("outlander")
+    return b.build()
+
+
+@pytest.fixture
+def game(tables, world):
+    return new_game(copy.deepcopy(world), tables, hero(tables))
+
+
+def go_to(game, biome: str, road: bool | None = None, river: bool | None = None):
+    w = game.world
+    idx = w.biome_ids.index(biome)
+    cells = np.argwhere(w.biome == idx)
+    for x, y in cells:
+        x, y = int(x), int(y)
+        if w.settlement_at(x, y) is not None:
+            continue
+        if road is not None and bool(w.road[x, y]) != road:
+            continue
+        if river is not None and bool(w.river[x, y]) != river:
+            continue
+        game.player.x, game.player.y = x, y
+        return x, y
+    pytest.skip(f"no {biome} tile to test in")
+
+
+def set_weather(game, kind="clear", temp=10.0, vis=1.0, wind=5.0, precip=0.0):
+    from realmwalker.world.weather import WeatherCache
+
+    game._weather_cache = WeatherCache(minutes=10 ** 9)
+    game._weather_cache._value = Weather(kind, temp, wind, precip, 0.5, vis)
+    game._weather_cache._key = (game.player.x, game.player.y, game.world.time // 10 ** 9)
+
+
+# ---------------------------------------------------------------------------- fire and food
+def test_fire_needs_fuel_and_a_tinderbox(game):
+    go_to(game, "forest")
+    set_weather(game)
+    assert any("fire" in m for m in camp.light_fire(game))
+    assert camp.camp_here(game).fire
+    game.camp = None
+    go_to(game, "desert") if "desert" in game.world.biome_ids and (game.world.biome == game.world.biome_ids.index("desert")).any() \
+        else go_to(game, "tundra")
+    set_weather(game)
+    for c in game.party:
+        c.inventory = [i for i in c.inventory if i.def_id != "firewood"]
+    msgs = camp.light_fire(game)
+    lit = camp.camp_here(game).fire
+    add_item(game.leader, game.tables.items, "firewood", 1)
+    if not lit:
+        assert any("firewood" in m or "burn" in m for m in msgs)
+        camp.light_fire(game)
+        assert camp.camp_here(game).fire
+
+
+def test_no_fire_in_a_storm_without_shelter(game):
+    go_to(game, "forest")
+    set_weather(game, "storm", 8, 0.55, 50, 0.9)
+    msgs = camp.light_fire(game)
+    assert not camp.camp_here(game).fire and "weather" in msgs[0]
+
+
+def test_cooking_and_boiling(game):
+    go_to(game, "forest")
+    set_weather(game)
+    c = game.leader
+    add_item(c, game.tables.items, "raw_meat", 3, made_at=game.world.time)
+    assert "fire" in camp.cook(game)[0]
+    camp.light_fire(game)
+    camp.cook(game)
+    assert not any(i.def_id == "raw_meat" for i in c.inventory)
+    assert sum(i.qty for i in c.inventory if i.def_id == "cooked_meat") == 3
+    skin = next(i for i in c.inventory if i.def_id == "waterskin")
+    skin.fill_kind = "river"
+    assert "pot" in camp.boil_water(game)[0]
+    add_item(c, game.tables.items, "iron_pot")
+    camp.boil_water(game)
+    assert skin.fill_kind == "boiled"
+
+
+def test_the_camp_breaks_when_you_move(game):
+    go_to(game, "plains")
+    set_weather(game)
+    camp.make_camp(game)
+    assert camp.camp_here(game) is not None
+    for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+        if game.move(dx, dy):
+            break
+    assert game.camp is None
+
+
+def test_a_fire_keeps_a_winter_night_at_bay(game):
+    go_to(game, "plains")
+    results = {}
+    for fire in (False, True):
+        g = copy.deepcopy(game)
+        set_weather(g, "clear", -8, 1.0, 15)
+        c = camp.make_camp(g)
+        c.fire = fire
+        g.encounter = None
+        for _ in range(8):
+            g.pass_time(60, "sleep")
+        results[fire] = g.leader.body_heat
+    assert results[False] < -15 and results[True] > results[False] + 15
+
+
+# ---------------------------------------------------------------------------- the land provides
+@pytest.mark.parametrize("action", ["forage", "hunt"])
+def test_living_off_the_land_sometimes_works(game, action):
+    go_to(game, "forest")
+    set_weather(game)
+    got = 0
+    for i in range(12):
+        before = sum(it.qty for it in game.leader.inventory if game.tables.items.get(it.def_id).get("food"))
+        getattr(camp, action)(game)
+        after = sum(it.qty for it in game.leader.inventory if game.tables.items.get(it.def_id).get("food"))
+        got += after > before
+        game.world.time += 97
+    assert 1 <= got <= 12
+
+
+def test_fishing_needs_water(game):
+    go_to(game, "plains", river=False)
+    assert "no water" in camp.fish(game)[0]
+    go_to(game, "plains", river=True)
+    add_item(game.leader, game.tables.items, "fishing_tackle")
+    caught = 0
+    for _ in range(8):
+        msgs = camp.fish(game)
+        caught += "catch" in msgs[-1]
+        game.world.time += 131
+    assert caught >= 1
+
+
+def test_butchering_beasts_after_a_fight(game):
+    from realmwalker.game.encounters import make_encounter
+
+    go_to(game, "forest")
+    game.encounter = make_encounter(game, "wolf_pack", RNG(3))
+    fight.encounter_fight(game, ambush=False)
+    for f in game.battle.side("foe"):
+        f.state = "dead"
+        f.creature.alive = False
+    game.battle._check_end()
+    after = fight.finish_battle(game)
+    assert after.carcasses
+    items, msgs = camp.butcher(game, after.carcasses)
+    assert any(i.def_id == "raw_meat" for i in items) or "waste" in msgs[-1]
+
+
+# ---------------------------------------------------------------------------- travel events
+def test_every_event_and_option_can_be_played(game):
+    c = game.leader
+    c.money = 100000
+    for item in ("rations", "bandages"):
+        add_item(c, game.tables.items, item, 10)
+    for eid, spec in game.tables.travel_events.items():
+        for i, opt in enumerate(spec["options"]):
+            g = copy.deepcopy(game)
+            ev = events.make_event(g, eid)
+            g.event = ev
+            shop = events.choose(g, ev, i)
+            if "shop" in opt:
+                assert shop is not None
+                stock = {item: int(q) for item, q in shop["stock"]}
+                item = next(iter(stock))
+                money = events.party_money(g)
+                assert "buy" in events.buy(g, item, shop["markup"], stock)
+                assert events.party_money(g) < money
+            else:
+                assert ev.done and ev.result, (eid, i)
+
+
+def test_options_need_what_they_ask_for(game):
+    c = game.leader
+    c.money = 0
+    c.inventory = [i for i in c.inventory if i.def_id != "rations"]
+    ev = events.make_event(game, "refugees")
+    opts = events.options(game, ev)
+    assert not opts[0][1] and "rations" in opts[0][2]
+    assert not opts[1][1]
+
+
+def test_news_puts_places_on_the_map(game):
+    before = int(game.player.explored.sum()) + len(game.player.known_settlements)
+    text = events.hear_news(game, RNG(1))
+    after = int(game.player.explored.sum()) + len(game.player.known_settlements)
+    assert "hear of" in text and after > before
+
+
+def test_events_happen_on_the_road(game, monkeypatch):
+    monkeypatch.setattr("realmwalker.game.encounters.encounter_chance", lambda *a: 0.0)
+    go_to(game, "plains", road=True)
+    seen = 0
+    for i in range(300):
+        game.world.time += 60
+        ev = events.roll_event(game, 120)
+        seen += ev is not None
+    assert seen >= 5
+
+
+# ---------------------------------------------------------------------------- getting lost
+def test_fog_off_the_road_can_lose_you_and_a_road_finds_you(game, monkeypatch):
+    monkeypatch.setattr("realmwalker.game.encounters.encounter_chance", lambda *a: 0.0)
+    monkeypatch.setattr("realmwalker.game.events.event_chance", lambda *a: 0.0)
+    go_to(game, "plains", road=False)
+    set_weather(game, "fog", 5, 0.25, 3)
+    assert game.lost_dc() is not None and game.lost_dc() >= 15
+    for _ in range(30):
+        game._check_bearings()
+        if game.lost:
+            break
+    assert game.lost
+    x, y = go_to(game, "plains", road=True)
+    game._check_bearings()
+    assert not game.lost
+
+
+# ---------------------------------------------------------------------------- the day's passage
+def test_a_day_on_the_road_is_written_up(game, data, monkeypatch):
+    from realmwalker.ai.tasks import travel_day_fallback
+
+    monkeypatch.setattr("realmwalker.game.encounters.encounter_chance", lambda *a: 0.0)
+    monkeypatch.setattr("realmwalker.game.events.event_chance", lambda *a: 0.0)
+    monkeypatch.setattr("realmwalker.game.state.GameState.lost_dc", lambda self: None)
+    game.survival = False
+    start_day = game.moment.total_days
+    for _ in range(200):
+        moved = any(game.move(dx, dy) for dx, dy in ((1, 0), (0, 1), (-1, 0), (0, -1)))
+        if game.narration or not moved:
+            break
+    assert game.moment.total_days > start_day
+    assert game.narration and game.narration[0]["miles"] > 0
+    facts = events.travel_day_facts(game, game.narration[0])
+    text = travel_day_fallback(RNG(2), data, facts)["passage"]
+    assert "{" not in text and str(facts["miles"]) in text or facts["lands"] in text or len(text) > 40

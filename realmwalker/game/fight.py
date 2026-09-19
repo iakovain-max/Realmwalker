@@ -29,6 +29,7 @@ class Aftermath:
     captives: list[Creature] = field(default_factory=list)
     fates: dict[int, str] = field(default_factory=dict)  # creature uid -> fate chosen
     significant: bool = False
+    carcasses: list[Creature] = field(default_factory=list)  # dead beasts that could be butchered
 
 
 def party_has_light(game) -> bool:
@@ -108,6 +109,7 @@ def finish_battle(game) -> Aftermath:
         after.loot = list(result.loot_items)
         after.money = result.loot_money
         after.captives = list(result.captives)
+        after.carcasses = [c for c in result.dead if game.tables.creatures[c.def_id].get("butcher")]
         after.significant = result.xp >= 100 or bool(dead_party) or len(result.dead) >= 3
         dead_text = _list_names(game, result.dead) or "Your enemies"
         survivors = ""
@@ -216,7 +218,7 @@ def _rob_party(game, rng) -> str:
 # ---------------------------------------------------------------------------- encounters on the road
 def encounter_fight(game, ambush: bool) -> Battle:
     enc = game.encounter
-    surprised = FOE if ambush and enc.spotted_first else None
+    surprised = FOE if ambush and enc.spotted_first else (PARTY if enc.asleep else None)
     return start_battle(game, enc.creatures, enc.intro, surprised=surprised, title=_encounter_title(game, enc.group))
 
 
@@ -389,13 +391,24 @@ def rest(game, kind: str) -> list[str]:
     rng = game.world.rng.child(f"rest/{game.world.time}")
     notes = []
     hours = 1 if kind == "short" else 8
+    from realmwalker.game.camp import camp_here
+
+    camp = camp_here(game)
+    fire = bool(camp and camp.fire)
     for hour in range(hours):
         game.pass_time(60, "sleep" if kind == "long" else "rest")
         if game.over is not None:
             return notes
         if lm is None and kind == "long":
-            enc = roll_encounter(game, 60 * 0.5)
+            # A fire is seen from afar, but beasts fear it; a cold camp is harder to find.
+            enc = roll_encounter(game, 60 * (0.6 if fire else 0.4))
+            if enc is not None and fire and all(game.tables.creatures[c.def_id]["kind"] == "beast" for c in enc.creatures):
+                if game.world.rng.child(f"firelight/{game.world.time}").chance(0.6):
+                    notes.append("Eyes glint beyond the firelight in the night, but they do not come closer.")
+                    enc = None
             if enc is not None:
+                enc.asleep = True
+                enc.spotted_first = False
                 game.encounter = enc
                 notes.append(f"<danger>Your rest is broken after {hour + 1} hour{'s' if hour else ''}.</>")
                 return notes

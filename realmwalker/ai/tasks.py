@@ -98,4 +98,19 @@ def backstory_variables(builder, tables, home_name: str, tie_text: str) -> dict:
     }
 
 
-ALL_TASKS: list[AITask] = [SAMPLE_TAVERN, BACKSTORY]
+# ---------------------------------------------------------------------------- a day on the road
+TRAVEL_DAY = AITask(
+    name="travel_day",
+    schema=Obj({"passage": Str("2 or 3 sentences, second person, past tense", max_len=600)}),
+    max_tokens=3000,
+    temperature=0.9,
+)
+
+
+def travel_day_fallback(rng: RNG, data: DataRegistry, variables: dict) -> dict:
+    tables = data.fallback["travel_day"]
+    text = textgen.fill(rng.choice(tables["passage"]), rng, tables, {k: str(v) for k, v in variables.items()})
+    return {"passage": textgen.tidy(text)}
+
+
+ALL_TASKS: list[AITask] = [SAMPLE_TAVERN, BACKSTORY, TRAVEL_DAY]
