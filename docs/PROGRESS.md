@@ -9,13 +9,120 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | M0 — Setup | ✅ Done (2026-09-19) |
 | M1 — World and movement | ✅ Done (2026-09-19) |
 | M2 — Character | ✅ Done (2026-09-19) |
-| M3 — Combat | ⏳ Next |
-| M4 — Body and survival | — |
+| M3 — Combat | ✅ Done (2026-09-19) |
+| M4 — Body and survival | ⏳ Next |
 | M5 — Settlements and people | — |
 | M6 — Factions and politics | — |
 | M7 — Companions and progression | — |
 | M8 — Adventure content | — |
 | M9 — Death, legacy and release | — |
+
+---
+
+## M3 — Combat (done)
+
+**What you can do now**
+- **The wilds are dangerous.** While you walk, travel or wait outside a town, something may find you. The
+  wilder the region (the "Wilds" line in the side panel), the more likely; night is worse and roads are a
+  little safer. What you meet depends on the land: wolves and boars in the woods, bandits and deserters on
+  the roads, the restless dead near ruins, orcs and ogres in the hills, a troll if you are unlucky.
+- **Trouble on the road** gives you a choice before any blood is spilled: **Fight**, **Ambush** them (only
+  if you saw them first), **Slip away** (a Stealth roll), or **Talk your way past** (Persuasion; animals and
+  fanatics won't listen). It also tells you how dangerous they look, from "You could take them" to "This
+  will very likely kill you".
+- **Ruins, caves, barrows and towers are inhabited.** On their close-up maps the inhabitants show as
+  letters; once they notice you they turn red and come for you. Walk into them to attack (catching them
+  unawares if they hadn't seen you); if they reach you first and you hadn't seen them, *you* are surprised.
+- **The battle screen**: your side and theirs, each in a front and a back rank, with health bars, the order
+  of battle along the top and the battle log. On your turn: Attack, Cast a spell, Use an item, Class
+  ability, Dodge, Help / first aid, Shove or grapple, Change rank, Parley, Surrender, Flee. Pick a weapon or
+  spell, then a target (number keys, arrows, or click). Clicking an enemy attacks it straight away.
+- **5e rules**: initiative, attack rolls against armour class, advantage and disadvantage (prone, helped,
+  dodging, darkness, shooting while in melee, pack tactics...), critical hits, saving throws, sneak attack,
+  second wind, action surge, fighting styles, racial traits (halfling luck, half-orc endurance, dwarven
+  poison resilience). With "Show dice rolls" on (Settings), every roll is shown in the log.
+- **Ranks**: melee reaches only the enemy front rank unless it is empty or you have a reach weapon; from the
+  back you need a bow, a thrown weapon or a spell. Archers fall back to shoot; brutes push forward.
+- **Where blows land**: every hit strikes a body part, described in plain grim words ("Aldith slashes
+  Jocelyn across the left hand"). Hard hits leave **wounds**: cuts that bleed each round until bandaged,
+  broken bones, bites. Armour on that part makes a wound less likely. Wounds stay after the fight (healing
+  them over time comes with M4).
+- **Falling**: at 0 hit points you go down and start **bleeding out**: a few rounds, fewer if hit again. A
+  friend can stop it (Help, a healer's kit, or Spare the Dying). Monsters simply die.
+- **Morale**: badly hurt enemies, and bands that lose half their number or their leader, may break. Beasts
+  run; bandits and soldiers may throw down their weapons; fanatics and the dead never do.
+- **Surrender and robbery**: bandits, thugs and deserters take prisoners. If they beat you (or you
+  surrender), they take your money and your best valuables and leave you alive. Wolves, the dead and
+  cultists do not take prisoners.
+- **Spells**: wizards and clerics cast from spell slots (cantrips are free): Fire Bolt, Magic Missile, Sleep,
+  Burning Hands, Thunderwave, Shield, Mage Armor; Sacred Flame, Cure Wounds, Healing Word, Bless, Guiding
+  Bolt, Command and more; higher levels up to Fireball, Spirit Guardians and Cone of Cold (35 spells). Turn
+  Undead for clerics from level 2.
+- **After the fight**: what the field looks like, experience (shared out; **levels go up automatically**
+  with more hit points and new features), the fate of **prisoners** (let go, rob, question, kill; taking them
+  for a bounty needs M6) and the **spoils** (take all, mark and take some, or leave the rest; on a close-up
+  map what you leave stays on the ground).
+- **Rest** (`r`): a short rest (an hour, spend hit dice to heal) or a long rest (eight hours: full hit
+  points, spell slots and features back). A long rest in the wilds can be interrupted.
+- **Death is permanent.** A death screen tells how, where and when, what you killed and what you did. The
+  world stays; start a new character in it from the title screen. (The AI-written obituary is M9.)
+- 22 kinds of creature in 23 encounter groups, all from data (`data/creatures.json`), with original
+  descriptions; rules numbers follow the SRD 5.1.
+
+**How to try it**
+1. Double-click `Play.bat`, **Continue** (or make a new world). Walk out of town into country marked
+   "dangerous" or worse, and wait (`.`) or travel at night. Or find a ruin or cave on the world map (`m`),
+   go there and press `>`.
+2. In battle, try `a` then Enter then `1`; try `c` as a wizard or cleric; try `p` against bandits.
+3. Afterwards press `r` to rest.
+4. (Testing shortcut: the debug console, the backquote key left of 1, has `fight bandits`, `fight list`,
+   `heal`, `gold 50` and `xp 300`.)
+
+**What to look for:** Are fights readable? Is the pace of enemy turns right (about half a second each; any
+key hurries them)? Are level-1 fights too hard or too easy? Is anything in the battle screen confusing?
+
+**How it was verified**
+- 261 automated tests pass. New: battles against seven kinds of foes over many seeds always finish with sane
+  numbers; every class can fight; initiative order; the same seed gives the same fight; ranks limit melee;
+  going down, bleeding out and first aid; wounds from heavy hits; bandits surrendering and fleeing; fanatics
+  and undead never breaking; parley and surrender rules; fleeing sometimes working; wizard slots, cantrips,
+  Sleep; cleric healing and Turn Undead; Second Wind; potions; XP and level-up; short and long rests; a whole
+  encounter to victory with loot and XP; defeat by bandits meaning robbery and by wolves meaning death;
+  prisoner fates; slipping away and talking; encounter odds; inhabited sites surviving a save; fights played
+  through the screens at every window size and against every encounter group; the death screen; broken
+  creature data being reported on the data-error screen.
+- Balance check (200 simulated fights each, a level-1 fighter alone): one wolf 83% won, two bandits 80%, three
+  bandits about 40%, two wolves 28%. The design's target is that two wolves or three bandits are "a real
+  threat" at level 1; a lone character also has evading, talking, fleeing and surrender. Groups are scaled
+  down for a party of one until companions arrive (M7).
+- Autoplay: 20,000 turns with AI off and 20,000 with the fake AI (plus 4,000 each on another seed), now
+  starting about one fight every 150 turns and checking during battles: hit points in range, valid states,
+  creatures never standing in walls, the dead never walking on. No errors.
+- The window smoke test now meets bandits on the road and screenshots the encounter, the battle screen, the
+  attack menu and target choice.
+
+**Decisions (and why)**
+1. **One action per turn**, no reactions, bonus actions, opportunity attacks or concentration (the design's
+   v1 simplification). Fleeing is a group roll instead of movement. Ranged attacks from the front rank while
+   engaged have disadvantage instead of provoking.
+2. **Hit locations and wounds** use the design's list (head, torso, arms, legs); armour lowers the chance a
+   hit becomes a wound rather than the damage. Severity scales with the share of hit points lost.
+3. **Robbers keep you alive** (bandits, thugs, deserters); beasts, the dead and cultists kill. This makes
+   defeat a setback rather than the end in many fights, as the design's "surrender" option intends.
+4. **Enemy groups are scaled to party size** (a lone character meets smaller bands). Once companions exist
+   (M7) full bands appear.
+5. **Levels go up automatically** with sensible choices (average hit points, the class's features); choices
+   such as subclass and spells can be revisited when M7 adds the full levelling screen.
+6. **Knowledge checks**: at the start of a fight the party's best Nature/History/Religion roll decides whether
+   you know an enemy's exact numbers; otherwise you only see "wounded", "badly hurt" and so on.
+
+**Known issues**
+- Quitting in the middle of a fight doesn't save the fight: you continue from just before it (inhabitants
+  of a close-up map keep any hurts you gave them; a band met on the road is gone).
+- Wounds don't heal, fester or bleed outside battle yet, and you can't bandage outside battle yet: M4.
+- Only hostile encounters for now; merchants, pilgrims and other travel events come with M4.
+- Prisoners can't be taken to a town for bounty or ransom yet (M6).
+- One character only; companions (and fighting side by side) arrive in M7.
 
 ---
 
@@ -89,7 +196,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 5. Sex is male/female as the design lists; pronouns in built-in text follow it.
 
 **Known issues**
-- Spells are listed as a feature but can't be cast yet (M3).
+- ~~Spells can't be cast yet~~: done in M3.
 - Items in the overworld can't be dropped (enter the land first); by design for now.
 
 ---

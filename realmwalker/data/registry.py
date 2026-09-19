@@ -97,6 +97,7 @@ def check_cross_references(files: dict[str, Any]) -> list[str]:
                     errors.append(f"data/place_names.json: settlements.{culture} pattern {pattern!r} uses "
                                   f"{{{slot}}} but there is no '{slot}' list.")
     errors.extend(_check_character_refs(files))
+    errors.extend(_check_combat_refs(files))
     regions = names.get("regions", {})
     for kind, patterns in regions.items():
         for pattern in patterns:
@@ -153,6 +154,46 @@ def _check_character_refs(files: dict[str, Any]) -> list[str]:
             need("item", item["ammo"], set(items), f"data/items.json: {iid} ammo")
         if "tool" in item:
             need("tool", item["tool"], tools, f"data/items.json: {iid}")
+    return errors
+
+
+def _check_combat_refs(files: dict[str, Any]) -> list[str]:
+    """Creatures carry real items, encounter groups name real creatures, sites name real groups,
+    and class spell lists name real spells."""
+    errors: list[str] = []
+    data = files.get("creatures.json")
+    items = set(files.get("items.json", {}).get("items", {}))
+    if data:
+        creatures = {k for k in data["creatures"] if not k.startswith("_")}
+        groups = {k for k in data["encounters"] if not k.startswith("_")}
+        for cid in creatures:
+            d = data["creatures"][cid]
+            for item_id, _ in d.get("gear", []) + d.get("loot", []):
+                if items and item_id not in items:
+                    errors.append(f"data/creatures.json: {cid} carries unknown item '{item_id}'.")
+            if not d.get("attacks"):
+                errors.append(f"data/creatures.json: {cid} has no attacks.")
+        for gid in groups:
+            g = data["encounters"][gid]
+            for member in g["members"]:
+                if member[0] not in creatures:
+                    errors.append(f"data/creatures.json: encounter group {gid} names unknown creature '{member[0]}'.")
+            if not g.get("intro"):
+                errors.append(f"data/creatures.json: encounter group {gid} needs at least one intro line.")
+        for kind, listed in data.get("site_inhabitants", {}).items():
+            if kind.startswith("_"):
+                continue
+            for gid in listed:
+                if gid not in groups:
+                    errors.append(f"data/creatures.json: site_inhabitants.{kind} names unknown group '{gid}'.")
+    spells = files.get("spells.json")
+    if spells:
+        known = {k for k in spells["spells"] if not k.startswith("_")}
+        for cls, start in spells.get("starting", {}).items():
+            for key in ("cantrips", "spellbook"):
+                for sid in start.get(key, []):
+                    if sid not in known:
+                        errors.append(f"data/spells.json: starting.{cls}.{key} names unknown spell '{sid}'.")
     return errors
 
 

@@ -73,3 +73,19 @@ def test_template_fill_uses_tables_and_values():
 def test_unknown_template_slots_are_reported():
     errors = check_template_slots({"tavern": {"description": ["a {nonsense} here"], "name_pattern": ["x"]}})
     assert errors and "{nonsense}" in errors[0]
+
+
+def test_broken_creature_references_are_reported(tmp_path):
+    import shutil
+
+    src = Paths().data
+    for f in src.glob("*.json"):
+        shutil.copy(f, tmp_path / f.name)
+    data = json.loads((tmp_path / "creatures.json").read_text(encoding="utf-8"))
+    data["creatures"]["wolf"]["gear"] = [["golden_spoon", 1]]
+    first_group = next(k for k in data["encounters"] if not k.startswith("_"))
+    data["encounters"][first_group]["members"].append(["dragon_that_is_not_there", "1"])
+    (tmp_path / "creatures.json").write_text(json.dumps(data), encoding="utf-8")
+    _, errors = DataRegistry.load(tmp_path)
+    assert any("golden_spoon" in e for e in errors)
+    assert any("dragon_that_is_not_there" in e for e in errors)

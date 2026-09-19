@@ -50,6 +50,8 @@ class AutoplayReport:
     mock_calls: int = 0
     save_checks: int = 0
     game_turns: int = 0
+    fights: int = 0
+    battle_turns: int = 0
     elapsed: float = 0.0
 
     @property
@@ -62,6 +64,7 @@ class AutoplayReport:
             f"  screens visited: {dict(self.screens.most_common())}",
             f"  AI requests: {self.ai_stats}  mock chat calls: {self.mock_calls}",
             f"  turns inside a game: {self.game_turns}  save/load round trips checked: {self.save_checks}",
+            f"  fights started by the bot: {self.fights}  turns spent in battle: {self.battle_turns}",
             "  RESULT: " + ("OK" if self.ok else f"FAILED ({len(self.errors)} problems)"),
         ]
         lines += [f"    - {e}" for e in self.errors[:20]]
@@ -147,6 +150,27 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
             for pile in lm.items.values():
                 if any(it.qty <= 0 for it in pile):
                     fail("an item on the ground has zero quantity")
+            walk = app.tables.terrain.walk[game.remap_for(lm)[lm.terrain]]
+            for a in lm.actors:
+                if not lm.in_bounds(a.x, a.y) or not walk[a.x, a.y]:
+                    fail(f"creatures of {a.group} stand in a wall at {(a.x, a.y)}")
+                if not a.creatures:
+                    fail(f"an empty band of {a.group} is on the map")
+                if any(not 0 < c.hp <= c.max_hp for c in a.creatures):
+                    fail(f"a creature of {a.group} has impossible hit points")
+        b = game.battle
+        if b is not None:
+            if b.outcome is None and not b.order:
+                fail("a battle is running without a turn order")
+            for f in b.fighters:
+                if not 0 <= f.hp <= f.max_hp:
+                    fail(f"{f.name} has {f.hp}/{f.max_hp} hit points in battle")
+                if f.state not in ("fighting", "fleeing", "down", "dead", "fled", "surrendered"):
+                    fail(f"{f.name} is in an unknown state {f.state!r}")
+        if not game.leader.alive and game.over is None and b is None and game.aftermath is None:
+            fail("the leader is dead but the game goes on")
+        if game.over is None and any(not c.alive for c in game.party) and b is None and game.aftermath is None:
+            fail("a dead companion is still in the party")
 
 
 _LAST_TIME: dict[str, int] = {}
@@ -168,6 +192,19 @@ def _check_save_round_trip(app: App, report: AutoplayReport, turn: int) -> None:
     if diffs:
         report.errors.append(f"turn {turn}: save/load round trip differs in {diffs[:5]}")
     report.save_checks += 1
+
+
+def _start_a_fight(app: App, rng: random.Random, report: AutoplayReport) -> None:
+    """Random walking rarely meets trouble, so now and then trouble is sent to find the bot."""
+    from realmwalker.game.encounters import make_encounter
+    from realmwalker.ui.screens.game_screen import GameScreen
+
+    game = app.game
+    if game is None or game.busy or not isinstance(app.top, GameScreen):
+        return
+    group = rng.choice(sorted(app.tables.creatures.encounters))
+    game.encounter = make_encounter(game, group, game.world.rng.child(f"autoplay/{game.world.time}/{group}"))
+    report.fights += 1
 
 
 def run_autoplay(*, turns: int = 3000, seed: int = 1, ai: str = "off", home: Path | None = None) -> AutoplayReport:
@@ -206,6 +243,10 @@ def run_autoplay(*, turns: int = 3000, seed: int = 1, ai: str = "off", home: Pat
                 report.game_turns += 1
                 if report.game_turns % 400 == 0:
                     _check_save_round_trip(app, report, turn)
+                if report.game_turns % 150 == 0:
+                    _start_a_fight(app, rng, report)
+                if app.game is not None and app.game.battle is not None:
+                    report.battle_turns += 1
             report.turns = turn + 1
             if not app.running:
                 ai_totals.update(app.ai.stats)

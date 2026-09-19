@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 
 from realmwalker.core import dice
 from realmwalker.rules import progression
-from realmwalker.rules.combat import FOE, MERCIFUL, PARTY, Battle, BattleResult, Env
+from realmwalker.rules.combat import FEARLESS, FOE, MERCIFUL, PARTY, Battle, BattleResult, Env
 from realmwalker.rules.creatures import Creature
 from realmwalker.rules.inventory import add_existing, remove_item
 from realmwalker.rules.items import Item, money_text
@@ -76,11 +76,22 @@ def finish_battle(game) -> Aftermath:
     game.pass_seconds(result.rounds * ROUND_SECONDS)
     actor = game.battle_actor
     lm = game.local
+    if actor is not None:
+        # The dead stay dead; survivors keep their hurts if the band lives on.
+        actor.creatures = [c for c in actor.creatures if c.alive and c.hp > 0]
+        if not actor.creatures and lm is not None and actor in lm.actors:
+            lm.actors.remove(actor)
     after = Aftermath(result.outcome, "")
     # Survivors of the party who were down get back on their feet (or die of their wounds).
     for f in battle.side(PARTY):
         c = f.char
-        if f.state == "down" and f.stable or f.state == "down" and result.outcome in ("victory", "parley"):
+        if f.state != "down":
+            continue
+        if result.outcome == "fled":
+            c.alive = False
+            c.hp = 0
+            after.notes.append(f"<danger>{c.name.split()[0]} was left behind.</>")
+        elif f.stable or result.outcome in ("victory", "parley"):
             c.hp = max(1, c.hp)
             after.notes.append(f"{c.name.split()[0]} comes round, weak and hurting.")
     dead_party = [c for c in game.party if not c.alive]
@@ -109,10 +120,10 @@ def finish_battle(game) -> Aftermath:
             after.outcome = "robbed"
             after.text = rng.choice(game.tables.combat_text["aftermath"]["robbed"])
             after.notes.append(f"They took {taken}.")
+            for c in game.party:
+                if c.alive:
+                    c.hp = max(1, c.hp)
             if result.outcome == "defeat":
-                for c in game.party:
-                    if c.alive:
-                        c.hp = max(1, c.hp)
                 hours = dice.roll("1d4", rng).total
                 game.pass_time(hours * 60)
                 after.notes.append(f"You lay senseless for {hours} hour{'s' if hours > 1 else ''}.")
@@ -217,7 +228,44 @@ def encounter_evade(game) -> bool:
         game.encounter = None
     else:
         game.say("They have seen you. There is no getting away now.", "danger")
+        start_battle(game, enc.creatures, enc.intro, title=_encounter_title(game, enc.group))
     return ok
+
+
+def encounter_talk_dc(game) -> tuple[int | None, str]:
+    """How hard it is to talk your way past (Persuasion), or why it cannot be done."""
+    enc = game.encounter
+    defs = [game.tables.creatures[c.def_id] for c in enc.creatures]
+    if any(d["kind"] == "beast" for d in defs):
+        return None, "animals do not bargain"
+    if all(d.get("morale") in FEARLESS for d in defs):
+        return None, "they are past words"
+    party = sum(1 for c in game.party if c.alive)
+    dc = 12 + 2 * (len(enc.creatures) - party) + (2 if not enc.spotted_first else 0)
+    return max(8, min(22, dc)), ""
+
+
+def encounter_talk(game) -> bool:
+    """Try to talk your way past before blood is spilled. Failure means a fight, with no surprise."""
+    enc = game.encounter
+    dc, why = encounter_talk_dc(game)
+    if dc is None:
+        game.say(f"You try to talk, but {why}.", "warn")
+        start_battle(game, enc.creatures, enc.intro, title=_encounter_title(game, enc.group))
+        return False
+    rng = game.world.rng.child(f"talk/{game.world.time}")
+    s = game.sheet()
+    roll = dice.d20(rng).natural
+    bonus = s.skill_bonus("persuasion")
+    game.say(f"<dice>Persuasion: {roll} {'+' if bonus >= 0 else '-'} {abs(bonus)} = {roll + bonus} vs DC {dc}</>", "dice")
+    if roll + bonus >= dc:
+        game.say("Words are exchanged, hands stay near hilts, and in the end they let you pass.", "good")
+        game.pass_time(10)
+        game.encounter = None
+        return True
+    game.say("They hear you out, and laugh, and draw.", "danger")
+    start_battle(game, enc.creatures, enc.intro, title=_encounter_title(game, enc.group))
+    return False
 
 
 def _encounter_title(game, group: str) -> str:

@@ -36,8 +36,11 @@ realmwalker/
   ai/                      client (Player2 HTTP), service (workers/queue/ping), parsing, prompts, tasks, store
   world/                   generator (terrain, rivers, climate, biomes, towns, roads), local maps, calendar,
                            tables (numpy lookups from data), model (World + save-friendly dataclasses)
-  game/                    state (player, party, actions, travel, time), save (versioned zips), log, describe
-  rules/                   character (Character + Sheet: derived numbers), items, inventory (equip rules), creation
+  game/                    state (player, party, actions, travel, time), save (versioned zips), log, describe,
+                           encounters (road trouble, local-map inhabitants), fight (start/finish battles, loot,
+                           prisoners, rest), vision (field of view)
+  rules/                   character (Character + Sheet: derived numbers), items, inventory (equip rules), creation,
+                           combat (Battle: rank combat on 5e dice), creatures, spells, wounds, progression (XP, rests)
   ui/                      window loop, fonts (tileset built at runtime), input, markup, widgets, map_render, screens/
 data/                      ALL game data as JSON (names, fallback text, ... later races, items, creatures)
 ai/prompts/                prompt templates (plain text, @max_tokens header, {slots})
@@ -70,6 +73,9 @@ tools/                     autoplay.py, mock_player2.py, build_friends.py
   breaking saves; always go through `GameState.remap_for()` / `_biome_remap` when reading them.
 - New save fields: bump `game/save.py` FORMAT_VERSION and add a MIGRATIONS entry; never break old saves.
 - The autoplay bot checks game invariants (`tools/autoplay.py`); add checks there as systems are added.
+- Battles: `rules/combat.Battle` is pure logic driven by `step()` / `pending_party()` / `do_*()`; the screen
+  (`ui/screens/battle.py`) only paces and asks. `GameState.busy` (encounter, battle, aftermath or death pending)
+  blocks moving; `GameScreen._open_event_screen()` opens the right screen. Debug console: `fight <group>`.
 
 ## Player2 facts (verified 2026-09-19 against the local docs at http://127.0.0.1:4315/docs, v0.10.79)
 

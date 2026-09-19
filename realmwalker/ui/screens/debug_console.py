@@ -88,6 +88,55 @@ class DebugConsole(Screen):
         def _clear(args):
             self.output.clear()
 
+        def need_game():
+            if app.game is None:
+                self.say("<warn>Start or continue a game first.</>")
+            return app.game
+
+        @self.command("fight", "fight <group> — meet an encounter group (fight list: show groups)")
+        def _fight(args):
+            game = need_game()
+            if game is None:
+                return
+            groups = sorted(app.tables.creatures.encounters)
+            if not args or args[0] == "list" or args[0] not in groups:
+                self.say("Groups: " + ", ".join(groups))
+                return
+            from realmwalker.game.encounters import make_encounter
+
+            if game.busy:
+                self.say("<warn>Finish what is happening first.</>")
+                return
+            game.encounter = make_encounter(game, args[0], game.world.rng.child(f"debug/{game.world.time}/{args[0]}"))
+            self.close()
+
+        @self.command("heal", "heal the party fully (and close wounds)")
+        def _heal(args):
+            game = need_game()
+            if game is None:
+                return
+            for c in game.party:
+                c.hp = c.max_hp
+                c.wounds.clear()
+            self.say("Healed.")
+
+        @self.command("gold", "gold <n> — give the leader n gold pieces")
+        def _gold(args):
+            game = need_game()
+            if game is not None and args and args[0].lstrip("-").isdigit():
+                game.leader.money = max(0, game.leader.money + int(args[0]) * 100)
+                self.say(f"Money: {game.leader.money // 100} gp")
+
+        @self.command("xp", "xp <n> — give the leader experience")
+        def _xp(args):
+            game = need_game()
+            if game is not None and args and args[0].isdigit():
+                from realmwalker.rules.progression import award_xp
+
+                for note in award_xp(game.leader, int(args[0]), app.tables, game.world.rng.child("debug-xp")):
+                    self.say(note)
+                self.say(f"Level {game.leader.level}, {game.leader.xp} XP")
+
     def run(self, text: str) -> None:
         text = text.strip()
         if not text:

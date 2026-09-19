@@ -287,3 +287,113 @@ def test_mouse_hover_describes_the_map(make_app):
     sx, sy = p.x - mx0 + vx + ox, p.y - my0 + vy + oy
     app.handle_event(MouseEvent("move", sx, sy))
     assert "You are here" in screen_text(render(app))
+
+
+# ---------------------------------------------------------------------------- M3 screens
+def fight_through_screens(app, group, seed, keys_rng, size=(120, 45), max_steps=800):
+    """Meet a group on the road and play the fight out with the screens' own sensible keys."""
+    from realmwalker.core.rng import RNG
+    from realmwalker.game.encounters import make_encounter
+
+    game = app.game
+    game.encounter = make_encounter(game, group, RNG(seed, "ui-enc"))
+    seen = set()
+    for step in range(max_steps):
+        render(app, size)
+        name = type(app.top).__name__
+        seen.add(name)
+        if name == "TitleScreen" or (name == "GameScreen" and not game.busy and step > 2):
+            break
+        app.handle_event(keys_rng.choice(app.top.autoplay_keys()))
+    else:
+        raise AssertionError(f"fight did not end; stuck on {type(app.top).__name__}")
+    return seen
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_battle_screens_render_at_every_size(make_app, size):
+    import random
+
+    app = make_app()
+    start_small_world(app)
+    seen = fight_through_screens(app, "bandits", 3, random.Random(size[0]), size)
+    assert "EncounterScreen" in seen
+    assert app.error_count == 0
+
+
+def test_many_fights_through_the_screens(make_app):
+    import random
+
+    app = make_app()
+    start_small_world(app)
+    rng = random.Random(7)
+    groups = sorted(app.tables.creatures.encounters)
+    screens = set()
+    for i, group in enumerate(groups):
+        if app.game is None:
+            start_small_world(app, seed=i)
+        for c in app.game.party:
+            c.hp = c.max_hp
+        screens |= fight_through_screens(app, group, i, rng)
+        assert app.error_count == 0, group
+    assert {"EncounterScreen", "BattleScreen", "AftermathScreen"} <= screens
+
+
+def test_battle_keys_attack_and_targets(make_app):
+    from realmwalker.game import fight
+    from realmwalker.ui.screens.battle import BattleScreen
+
+    app = make_app()
+    start_small_world(app)
+    game = app.game
+    from realmwalker.core.rng import RNG
+    from realmwalker.game.encounters import make_encounter
+
+    game.encounter = make_encounter(game, "wolf_pack", RNG(2, "k"))
+    fight.encounter_fight(game, ambush=False)
+    render(app)
+    screen = app.top
+    assert isinstance(screen, BattleScreen)
+    for _ in range(50):
+        if screen.actor() is not None:
+            break
+        render(app)
+    assert screen.actor() is not None
+    log_len = len(game.battle.log)
+    app.handle_event(KeyEvent("a"))
+    assert screen.mode == "choose"
+    app.handle_event(KeyEvent("enter"))
+    assert screen.mode == "target"
+    app.handle_event(KeyEvent("1"))
+    assert len(game.battle.log) > log_len
+    assert screen.mode in ("menu", "over")
+    app.handle_event(KeyEvent("?"))  # help from the battle
+    assert app.error_count == 0
+
+
+def test_rest_screen(make_app):
+    app = make_app()
+    start_small_world(app)
+    app.game.leader.hp = 1
+    app.handle_event(KeyEvent("r"))
+    render(app)
+    app.handle_event(KeyEvent("l"))
+    for _ in range(3):
+        render(app)
+    assert app.game.leader.hp > 1  # a long rest in town is never interrupted
+    assert app.error_count == 0
+
+
+def test_death_returns_to_title_and_frees_the_world(make_app):
+    from realmwalker.game.save import list_saves
+
+    app = make_app()
+    start_small_world(app)
+    game = app.game
+    game.over = {"cause": "killed in a test", "place": "here"}
+    render(app)
+    assert type(app.top).__name__ == "DeathScreen"
+    assert "killed in a test" in screen_text(render(app))
+    app.handle_event(KeyEvent("enter"))
+    assert app.game is None and type(app.top).__name__ == "TitleScreen"
+    assert all(s.character is None for s in list_saves(app.paths.saves))

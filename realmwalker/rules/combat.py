@@ -373,7 +373,7 @@ class Battle:
                 self.known.add(def_id)
                 danger = "a real threat" if d["cr"] >= 1 else ("dangerous in numbers" if d["cr"] >= 0.25 else "weak alone")
                 self.say(f"{best.name} knows {d['plural']}: {danger} (AC {d['ac']}).", "info")
-            self.dice_say(f"{self.t.rules['skills'][skill]['name']} ({best.name}): {roll} + {best.skill(skill)} = {total} vs DC {dc}")
+            self.dice_say(f"{self.t.rules['skills'][skill]['name']} ({best.name}): {roll} {signed_mod(best.skill(skill))} = {total} vs DC {dc}")
 
     # ------------------------------------------------------------------ turn engine
     def step(self) -> bool:

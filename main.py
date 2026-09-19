@@ -69,6 +69,27 @@ def smoke_script():
     shots[frame - 4] = "equipment"
     press("escape", ">")
     press("left", "left", "left", "up", "up", gap=3)
+    shots[frame - 1] = "local"
+    press("<")
+
+    def trouble(app):
+        from realmwalker.game.encounters import make_encounter
+
+        game = app.game
+        if game is not None and not game.busy:
+            game.encounter = make_encounter(game, "bandits", game.world.rng.child("smoke-test"))
+
+    steps.append((frame, trouble))
+    frame += 12
+    shots[frame] = "encounter"
+    frame += 4
+    press("f", gap=150)  # fight; give the enemy time to act if they are quicker
+    shots[frame - 4] = "battle"
+    press("a")
+    shots[frame - 3] = "battle_attack"
+    press("enter")
+    shots[frame - 3] = "battle_target"
+    press("enter", gap=20)
     return steps, frame, shots
 
 

@@ -170,7 +170,15 @@ class GameState:
             hours *= 1.41
         return max(1, int(round(hours * MINUTES_PER_HOUR)))
 
+    @property
+    def busy(self) -> bool:
+        """Something must be dealt with first: trouble on the road, a fight or its aftermath, or death."""
+        return (self.encounter is not None or self.battle is not None or self.aftermath is not None
+                or self.over is not None)
+
     def move(self, dx: int, dy: int) -> bool:
+        if self.busy:
+            return False
         if self.in_local:
             return self._move_local(dx, dy)
         return self._move_overworld(dx, dy)
@@ -299,7 +307,7 @@ class GameState:
                 self.say("You break away and leave them behind.", "warn")
             self.leave_local()
             return True
-        from realmwalker.game.encounters import actor_at, move_actors
+        from realmwalker.game.encounters import actor_at
 
         target = actor_at(lm, nx, ny)
         if target is not None:
@@ -332,6 +340,13 @@ class GameState:
         if here:
             names = ", ".join(self.tables.items.name(i) for i in here[:4]) + (" and more" if len(here) > 4 else "")
             self.say(f"Here: <loot>{names}</>. <dim>(g to pick up)</>", "loot")
+        self._creatures_act(lm)
+        return True
+
+    def _creatures_act(self, lm: LocalMap) -> None:
+        """Creatures on this map react to the player; one that reaches the player starts a fight."""
+        from realmwalker.game.encounters import move_actors
+
         was_seen = {a.id: a.seen for a in lm.actors}
         hunter = move_actors(self, lm)
         if hunter is not None and self.battle is None:
@@ -343,7 +358,6 @@ class GameState:
             surprised = None if was_seen.get(hunter.id) else PARTY
             start_battle(self, hunter.creatures, intro, surprised=surprised, actor=hunter,
                          title=name[:1].upper() + name[1:])
-        return True
 
     # ------------------------------------------------------------------ items on the ground
     def pick_up(self) -> int:
@@ -387,9 +401,16 @@ class GameState:
 
     # ------------------------------------------------------------------ waiting
     def wait(self, minutes: int) -> None:
+        if self.busy:
+            return
         self.pass_time(minutes)
-        if not self.in_local:
+        if self.in_local and self.local is not None:
+            self._creatures_act(self.local)
+        elif not self.in_local:
             self.reveal()
+            from realmwalker.game.encounters import roll_encounter
+
+            self.encounter = roll_encounter(self, minutes * 0.5)  # sitting still draws less notice
 
     # ------------------------------------------------------------------ travel
     def travel_costs(self) -> np.ndarray:
@@ -435,6 +456,8 @@ class GameState:
             self.travel = None
             return False
         plan.path.pop(0)
+        if self.travel is None:  # interrupted on the way
+            return False
         if not plan.path:
             self.say("You have reached your destination.", "good")
             self.travel = None

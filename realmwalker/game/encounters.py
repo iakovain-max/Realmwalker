@@ -59,11 +59,13 @@ def threat_words(tables, creatures: list[Creature], party) -> str:
     adjusted = xp * mult
     budget = sum(25 * c.level for c in party if c.alive)
     ratio = adjusted / max(1, budget)
-    if ratio < 1:
+    # Thresholds tuned against simulated fights: one wolf or two bandits against a level-1 fighter
+    # is "fair" (about 80% won), two wolves or three bandits "dangerous" (30-40% won).
+    if ratio < 1.5:
         return "<good>You could take them.</>"
-    if ratio < 2:
+    if ratio < 3.5:
         return "<fg>A fair fight: it could go either way.</>"
-    if ratio < 3:
+    if ratio < 6.5:
         return "<warn>They look dangerous. Think twice.</>"
     return "<danger>This will very likely kill you.</>"
 

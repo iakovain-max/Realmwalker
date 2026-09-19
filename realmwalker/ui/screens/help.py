@@ -59,6 +59,27 @@ Roads are much faster than open country. Forests, hills and marshes are slow; mo
   <loot>e</>               Equipment: what you wear in each slot, which body parts are protected, warmth
   <loot>g</> or <loot>,</>          Pick up what is lying here (on foot, in the close view)
 Carrying weight matters: worn armour and clothes count half. Above your limit you are slowed; far above it you cannot walk. Coins weigh too.
+  <loot>r</>               Rest: a short rest (1 hour, spend hit dice to heal) or a long rest (8 hours)
+
+<title>Danger</title>
+The wilds are not empty. The more dangerous the region (shown in the side panel), the more likely something finds you, and night is worse; roads are a little safer. When trouble comes on the road you can <loot>F</>ight, <loot>A</>mbush (if you saw them first), <loot>S</>lip away (Stealth), or <loot>T</>alk your way past. Ruins, caves, barrows and towers have inhabitants; in the close view they show as letters, with a red background once they have noticed you. Walk into them to attack.
+
+<title>Battle</title>
+Each side stands in two ranks. Melee blows reach only the enemy's front rank (unless it is empty, or you have a reach weapon); from the back rank you need a bow, a thrown weapon or a spell. Everyone acts in order of initiative. On your turn:
+  <loot>a</>               Attack (pick a weapon, then a target: number keys, arrows, or click)
+  <loot>c</>               Cast a spell (cantrips are free; others use a spell slot)
+  <loot>u</>               Use an item: potions, bandages, healer's kit
+  <loot>b</>               Class ability: Second Wind, Action Surge, Turn Undead...
+  <loot>d</>               Dodge: attacks against you have disadvantage until your turn
+  <loot>h</>               Help an ally (advantage), or first aid for someone bleeding out
+  <loot>s</>               Shove (knock down, push back) or grapple
+  <loot>r</>               Change rank (front / back)
+  <loot>p</>               Parley: talk them down, threaten, or calm animals
+  <loot>y</>               Surrender (only to those who take prisoners)
+  <loot>f</>               Flee (everyone standing must get away)
+  <loot>Click an enemy</>  Attack it with the first weapon that reaches
+  <loot>PgUp PgDn</>       Scroll the battle log
+Blows land on a part of the body and may leave wounds: cuts bleed until bandaged, broken bones stay broken. At 0 hit points you fall and start bleeding out; a friend can stop it (Help, a healer's kit, or a healing spell). Enemies lose heart: beasts run, bandits and soldiers may surrender, fanatics and the dead never do. Afterwards you decide the fate of prisoners and take what you want from the fallen. Death is permanent.
 
 <title>Other screens</title>
   <loot>L</>               The full message log
@@ -69,7 +90,7 @@ Carrying weight matters: worn armour and clothes count half. Above your limit yo
 The game uses the free Player2 app to write names, descriptions and dialogue. Keep Player2 running for AI text. Without it the game still works, using its own built-in text. The indicator in the bottom-right corner shows which is in use. The AI never decides what happens: dice and rules do.
 
 <title>More to come</title>
-Characters, combat, survival, towns and their people, factions, companions, quests and death arrive milestone by milestone. This page lists every key as they are added.
+Survival, towns and their people, factions, companions, quests and a proper obituary arrive milestone by milestone. This page lists every key as they are added.
 """
 
 

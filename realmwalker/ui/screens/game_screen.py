@@ -134,6 +134,8 @@ class GameScreen(Screen):
             self.look = self.player_pos()
         elif ev.key in ("g", ","):
             self.game.pick_up()
+        elif ev.key == "r":
+            self.rest()
         elif ev.key in ("c", "i", "e"):
             from realmwalker.ui.screens.sheets import CharacterScreen, EquipmentScreen, InventoryScreen
 
@@ -199,9 +201,40 @@ class GameScreen(Screen):
             self.plan_travel_to(target)
         return True
 
+    def _open_event_screen(self) -> bool:
+        """Death, the aftermath of a fight, a fight, or trouble on the road take over the screen."""
+        game = self.game
+        if game.over is not None:
+            from realmwalker.ui.screens.aftermath import DeathScreen
+
+            self.app.push(DeathScreen(self.app, game))
+        elif game.aftermath is not None:
+            from realmwalker.ui.screens.aftermath import AftermathScreen
+
+            self.app.push(AftermathScreen(self.app, game, game.aftermath))
+        elif game.battle is not None:
+            from realmwalker.ui.screens.battle import BattleScreen
+
+            self.app.push(BattleScreen(self.app, game))
+        elif game.encounter is not None:
+            from realmwalker.ui.screens.encounter import EncounterScreen
+
+            self.app.push(EncounterScreen(self.app, game))
+        else:
+            return False
+        return True
+
+    def rest(self) -> None:
+        from realmwalker.ui.screens.camp import RestScreen
+
+        self.app.push(RestScreen(self.app, self.game))
+
     # ------------------------------------------------------------------ frame
     def update(self) -> None:
         game = self.game
+        game.show_dice = self.app.settings.show_dice
+        if self._open_event_screen():
+            return
         if game.travel is not None:
             now = self.app.clock()
             if now - self._last_travel_step >= TRAVEL_STEP_SECONDS or self.app.headless:
@@ -286,7 +319,8 @@ class GameScreen(Screen):
         keys = [
             ("arrows", "walk"), (">", "enter the land here") if not game.in_local else ("<", "back to the overworld"),
             ("l", "look"), ("m t", "world map · travel"), ("c i e", "character · pack · gear"),
-            ("g", "pick up") if game.in_local else (".", "wait an hour"), ("L /", "log · legend"), ("Esc", "menu"),
+            ("g", "pick up") if game.in_local else (".", "wait an hour"), ("r", "rest"), ("L /", "log · legend"),
+            ("Esc", "menu"),
         ]
         ky = h - len(keys) - 1
         for key, what in keys:
@@ -343,4 +377,4 @@ class GameScreen(Screen):
     def autoplay_keys(self) -> list[KeyEvent]:
         moves = [KeyEvent(k) for k in ("up", "down", "left", "right", "upleft", "upright", "downleft", "downright")]
         return moves * 4 + [KeyEvent(k) for k in (">", "<", "l", "enter", "escape", ".", "m", "t", "L", "/",
-                                                   "c", "i", "e", "g")]
+                                                   "c", "i", "e", "g", "r")]
