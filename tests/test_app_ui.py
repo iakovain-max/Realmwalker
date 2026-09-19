@@ -738,3 +738,66 @@ def test_the_party_window(make_app, size):
     app.handle_event(KeyEvent("tab"))
     render(app, size)
     assert app.error_count == 0
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_the_journal_window(make_app, size):
+    from realmwalker.game import quests
+    from realmwalker.game.people import npcs_in
+    from realmwalker.ui.screens.journal import JournalScreen
+
+    app = make_app()
+    start_small_world(app)
+    game = app.game
+    taken = 0
+    for s in game.world.settlements:
+        if s.kind not in ("town", "city"):
+            continue
+        game.player.local_key = None
+        game.player.x, game.player.y = s.x, s.y
+        game.enter_local()
+        for npc in npcs_in(game.world, s.id):
+            q = quests.offer_for(game, npc)
+            if q is not None:
+                quests.accept(game, q)
+                taken += 1
+        if taken >= 3:
+            break
+    assert taken, "nobody in this world had any work"
+    app.handle_event(KeyEvent("j"))
+    assert isinstance(app.top, JournalScreen)
+    for key in ("down", "down", "pagedown", "up"):
+        render(app, size)
+        app.handle_event(KeyEvent(key))
+    render(app, size)
+    app.handle_event(KeyEvent("a"))  # give one up: it asks first
+    assert isinstance(app.top, ConfirmBox)
+    render(app, size)
+    app.handle_event(KeyEvent("y"))
+    render(app, size)
+    assert any(q["state"] == "abandoned" for q in game.quests)
+    app.handle_event(KeyEvent("escape"))
+    assert app.error_count == 0
+
+
+def test_taking_a_bounty_from_the_board(make_app):
+    from realmwalker.game import quests
+    from realmwalker.ui.screens.notices import NoticeBoardScreen
+
+    app = make_app()
+    start_small_world(app)
+    game = app.game
+    for s in game.world.settlements:
+        game.player.x, game.player.y = s.x, s.y
+        screen = NoticeBoardScreen(app, game, s)
+        if screen.bounties:
+            break
+    else:
+        pytest.skip("no bounties posted anywhere in this world")
+    app.push(screen)
+    render(app)
+    app.handle_event(KeyEvent("1"))
+    render(app)
+    assert any(q["template"] == "bounty" and q["state"] == "active" for q in game.quests)
+    app.handle_event(KeyEvent("escape"))
+    assert app.error_count == 0

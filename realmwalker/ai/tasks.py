@@ -133,6 +133,16 @@ MAGIC_ITEM = AITask(
 )
 
 
+# ---------------------------------------------------------------------------- quests (M8)
+QUEST = AITask(
+    name="quest",
+    schema=Obj({"title": Str("a short name for the job, 2 to 6 words", max_len=60),
+                "pitch": Str("what the giver says, in double quotes, 2 to 4 sentences", max_len=600)}),
+    max_tokens=3000,
+    temperature=0.9,
+)
+
+
 # ---------------------------------------------------------------------------- settlements and people
 def _settlement_task() -> AITask:
     from realmwalker.core.schema import Int, List
@@ -198,4 +208,4 @@ def _dialogue_task() -> AITask:
 SETTLEMENT = _settlement_task()
 DIALOGUE = _dialogue_task()
 
-ALL_TASKS: list[AITask] = [SAMPLE_TAVERN, BACKSTORY, TRAVEL_DAY, SETTLEMENT, DIALOGUE]
+ALL_TASKS: list[AITask] = [SAMPLE_TAVERN, BACKSTORY, TRAVEL_DAY, SETTLEMENT, DIALOGUE, CHRONICLE, MAGIC_ITEM, QUEST]

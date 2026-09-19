@@ -121,6 +121,35 @@ def smoke_script():
     shots[frame - 2] = "talk"
     press("escape", "escape", "<")
 
+    def work(app):
+        """Take on a job or two, so the journal has something in it."""
+        from realmwalker.game import quests
+        from realmwalker.game.people import npcs_in
+        from realmwalker.ui.screens.game_screen import GameScreen
+
+        game = app.game
+        while app.screens and not isinstance(app.top, GameScreen):
+            app.pop()
+        if game is None:
+            return
+        here = game.world.settlement_at(game.player.x, game.player.y)
+        if here is None:
+            return
+        taken = 0
+        for npc in npcs_in(game.world, here.id):
+            q = quests.offer_for(game, npc)
+            if q is not None:
+                quests.accept(game, q)
+                taken += 1
+                if taken >= 2:
+                    break
+
+    steps.append((frame, work))
+    frame += 4
+    press("j", "down")
+    shots[frame - 4] = "journal"
+    press("escape")
+
     def underground(app):
         from realmwalker.game import dungeon
         from realmwalker.ui.screens.game_screen import GameScreen

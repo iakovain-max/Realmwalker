@@ -30,16 +30,14 @@ def notices(game, settlement) -> list[dict]:
                         "text": f"{esc(game.leader.name)}, for {', '.join(what) or 'crimes against the realm'}. "
                                 f"{money_text(max(100, bounty // 2))} for their capture, alive. By order of "
                                 f"{esc(realm.name)}. <dim>(The likeness is crude, but it is you.)</>"})
-    for gang in fx.active_factions(w, "bandit_gang"):
-        place = news.faction_place(w, gang)
-        if place is None or abs(place[0] - settlement.x) + abs(place[1] - settlement.y) > 30:
-            continue
-        leader = fx.leader_of(w, gang)
-        reward = int(t.law["rewards"].get("bandit_captain", 2000)) * 2
-        who = leader.full_name() if leader is not None else "their captain"
-        out.append({"kind": "wanted", "title": "WANTED",
-                    "text": f"{esc(who)} and the outlaws called {esc(gang.name)}, for robbery and murder on the "
-                            f"roads. {money_text(reward)} for the captain, brought in alive."})
+    from realmwalker.game import quests
+
+    for q in quests.board_bounties(game, settlement):
+        words = q["words"]
+        out.append({"kind": "wanted", "title": "WANTED", "bounty": q,
+                    "text": f"{esc(words['target'])} and the outlaws called {esc(words['gang'])}, for robbery and "
+                            f"murder on the roads. They hide at {esc(words['site'])}. {money_text(q['reward'])} from "
+                            f"the watch of {esc(settlement.name)} for the end of them, within {q['days']} days."})
     heard = []
     for item in news.known_at(w, settlement.x, settlement.y):
         if item.get("kind") in PROCLAIMED and not item.get("player") and item["importance"] >= 2:

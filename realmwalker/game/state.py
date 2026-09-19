@@ -97,6 +97,7 @@ class GameState:
         self.read_board = False  # walked into a notice board (the screen shows it)
         self.waiting: list[Character] = []  # companions told to wait somewhere (game.companions)
         self.lit: dict | None = None  # the torch or lantern burning underground (game.dungeon)
+        self.quests: list[dict] = []  # work taken on: the journal (game.quests)
         self._realm_here: int | None = None
         self._wading = False
         self._remaps: dict[str, np.ndarray] = {}
@@ -194,6 +195,10 @@ class GameState:
                     from realmwalker.game import companions
 
                     companions.daily(self)
+            if self.quests:
+                from realmwalker.game import quests
+
+                quests.daily(self)
                 here = self.world.settlement_at(self.player.x, self.player.y)
                 if here is not None and here.status.get("plague") and self.survival:
                     from realmwalker.rules import health
@@ -433,6 +438,10 @@ class GameState:
         if site is not None:
             spec = self.tables.sites["site_types"].get(site.kind, {})
             self.say(f"You come upon <place>{_cap(site.name)}</>. {spec.get('desc', '')}", "place")
+        if self.quests:
+            from realmwalker.game import quests
+
+            quests.on_arrive(self)
 
     def _check_realm(self) -> None:
         """Crossing a border: say whose lands these are."""

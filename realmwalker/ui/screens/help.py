@@ -131,6 +131,23 @@ Each side stands in two ranks. Melee blows reach only the enemy's front rank (un
   <loot>PgUp PgDn</>       Scroll the battle log
 Blows land on a part of the body and may leave wounds: cuts bleed until bandaged, broken bones stay broken. At 0 hit points you fall and start bleeding out; a friend can stop it (Help, a healer's kit, or a healing spell). Enemies lose heart: beasts run, bandits and soldiers may surrender, fanatics and the dead never do. Afterwards you decide the fate of prisoners and take what you want from the fallen. Death is permanent.
 
+<title>Underground</title>
+Ruins, caves, barrows, towers and the lairs of gangs and cults have something below them. In the close view, the steps down show as <loot>></>: walk onto them. Deeper levels are worse, and the master of the place waits at the bottom.
+It is dark down there. Light a torch or a lantern from your pack (they burn out; carry spares) or you see only what is under your nose; dwarves and elves see a little in the dark. Doors may be locked (walk into them: thieves' tools help, or force them), chests and coffins are opened the same way, and opening a coffin may wake what lies in it.
+  <loot>s</>               Search where you stand: traps, secret doors, hidden rooms (Perception)
+  <loot><</> <loot>></>             Stairs up and down
+Traps are hidden until you spot them: darts, pits, falling stone, gas, and worse. Search before you walk into a room you don't like the look of. A dragon's hoard is guarded by the dragon.
+
+<title>Magic items</title>
+Magic is rare, and most of it is old. What you find looks like "a strange sword" until you know it: <loot>Enter</> on it in your pack studies it for an hour (Arcana, once a day for each thing), or a priest will tell you what it is for a donation. Known items list what they do and carry the name and history the world remembers.
+Some things are cursed: they cannot be taken off, and they work against you. A temple can lift a curse. Wands and rings with charges refill after a long rest.
+
+<title>Work and the journal</title>
+  <loot>j</>               The journal: work in hand, what is left to do, and how it ended
+Ask people in a town "Is there any work?". Anyone of standing (and now and then an ordinary soul) may have something: a bounty on a real gang's captain, a lair to clear, a named beast to hunt, a sealed letter to carry, an heirloom or a lost treasure of the old days to bring back, a son or daughter taken by outlaws, a debt to collect, or people going missing. Wanted posters on the <loot>¶</> notice board can be taken down and taken on (press the number shown).
+Each job has a reward and a number of days. The journal marks where to go; the place is put on your map. When it is done, go back to whoever set it and say so. Failing it, or giving it up (<loot>a</> in the journal), sours the giver and their people.
+Not everything is as it was told to you. Outlaws may turn out to be starving deserters you could talk into leaving instead of killing; the debtor may have nothing but children and an empty house; a sealed letter may be worth reading, and once read it can be delivered anyway, taken to the lord, or held over the sender's head. Your companions notice what you choose.
+
 <title>Other screens</title>
   <loot>L</>               The full message log
   <loot>/</>               Map legend: what every symbol means
@@ -140,7 +157,7 @@ Blows land on a part of the body and may leave wounds: cuts bleed until bandaged
 The game uses the free Player2 app to write names, descriptions and dialogue. Keep Player2 running for AI text. Without it the game still works, using its own built-in text. The indicator in the bottom-right corner shows which is in use. The AI never decides what happens: dice and rules do.
 
 <title>More to come</title>
-Companions, quests and a proper obituary arrive milestone by milestone. This page lists every key as they are added.
+A proper death and obituary, and more to find in the deep places, arrive milestone by milestone. This page lists every key as they are added.
 """
 
 

@@ -140,6 +140,42 @@ def _check_faction_refs(files: dict[str, Any]) -> list[str]:
     errors.extend(_check_politics_refs(files))
     errors.extend(_check_companion_refs(files))
     errors.extend(_check_magic_refs(files))
+    errors.extend(_check_quest_refs(files))
+    return errors
+
+
+def _check_quest_refs(files: dict[str, Any]) -> list[str]:
+    from realmwalker.data.schemas import QUEST_TEMPLATES
+
+    data = files.get("quests.json")
+    if not data:
+        return []
+    errors: list[str] = []
+    jobs = set(files.get("people.json", {}).get("occupations", {}))
+    groups = set(files.get("creatures.json", {}).get("encounters", {}))
+    items = files.get("items.json", {}).get("items", {})
+    for tid in QUEST_TEMPLATES:
+        if tid not in data["templates"]:
+            errors.append(f"data/quests.json: templates needs '{tid}'.")
+        if tid not in data["text"]:
+            errors.append(f"data/quests.json: text needs '{tid}'.")
+    for tid, t in data["templates"].items():
+        if tid not in QUEST_TEMPLATES:
+            errors.append(f"data/quests.json: templates.{tid} is not a kind of work the game knows.")
+        for job in t["givers"]:
+            if jobs and job not in jobs:
+                errors.append(f"data/quests.json: templates.{tid} names unknown occupation {job!r}.")
+        if t["reward"][0] > t["reward"][1] or t["days"][0] > t["days"][1]:
+            errors.append(f"data/quests.json: templates.{tid} has a range the wrong way round.")
+        for h in t["hidden"]:
+            if h not in data["text"].get(tid, {}).get("hidden", {}):
+                errors.append(f"data/quests.json: templates.{tid} has hidden side {h!r} but no text.hidden.{h}.")
+    for b in data["beasts"]:
+        if groups and b[0] not in groups:
+            errors.append(f"data/quests.json: beasts names unknown encounter group {b[0]!r}.")
+    for name, base in data["heirlooms"]:
+        if items and base not in items:
+            errors.append(f"data/quests.json: heirlooms names unknown item {base!r}.")
     return errors
 
 

@@ -40,6 +40,7 @@ class Conversation:
         self.special: list[dict] = []
         self.topics: list[dict] = []  # unlocked topics: {"label", "info"}
         self.mode = "main"
+        self.pending_offer: dict | None = None  # work being offered, waiting for a yes or no (game.quests)
         self.ended = False
         self.pending_ai = False
         self.minutes = 0
@@ -101,6 +102,10 @@ class Conversation:
             others = [n for n in npcs_in(game.world, npc.settlement) if n.notable and n.id != npc.id and n.alive]
             out = [Choice("person", f"{n.label()}" if n.known else f"the {n.title}", data={"other": n.id}) for n in others]
             return out + [Choice("back", "Never mind.")]
+        if self.mode == "quest_offer":
+            from realmwalker.game import quests
+
+            return quests.talk_choices(self)
         if self.mode == "bribe":
             money = sum(c.money for c in game.party)
             out = [Choice("bribe", f"Offer {money_text(a)}", money >= a, "you don't have that much", {"amount": a})
@@ -125,10 +130,11 @@ class Conversation:
         return out
 
     def role_choices(self) -> list[Choice]:
-        """Trade and services (M5), and the law and the factions (M6)."""
-        from realmwalker.game import companions, law_talk, services
+        """Trade and services (M5), the law and the factions (M6), companions (M7) and work (M8)."""
+        from realmwalker.game import companions, law_talk, quests, services
 
-        return companions.talk_choices(self) + services.choices(self) + law_talk.choices(self)
+        return (quests.talk_choices(self) + companions.talk_choices(self) + services.choices(self)
+                + law_talk.choices(self))
 
     # ------------------------------------------------------------------ doing
     def choose(self, choice: Choice) -> str | None:
@@ -170,6 +176,10 @@ class Conversation:
             from realmwalker.game import companions
 
             companions.talk_choose(self, choice)
+        elif cid in quests_choices():
+            from realmwalker.game import quests
+
+            quests.talk_choose(self, choice)
         elif cid in LAW_CHOICES:
             from realmwalker.game import law_talk
 
@@ -454,6 +464,12 @@ class Conversation:
             game.encounter = make_encounter(game, "town_watch", self.rng)
             game.leader.deeds.append(f"had the watch called on them in {self.settlement.name}")
         self.ended = True
+
+
+def quests_choices() -> set[str]:
+    from realmwalker.game.quests import QUEST_CHOICES
+
+    return QUEST_CHOICES
 
 
 LAW_CHOICES = {"pay_fines", "surrender", "prisoners", "licence", "hush_pay", "hush_threat", "probe", "join", "title",

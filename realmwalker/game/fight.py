@@ -193,6 +193,10 @@ def finish_battle(game) -> Aftermath:
         after.notes.insert(0, f"<good>+{share} experience</> each." if len(living) > 1 else f"<good>+{share} experience.</>")
     for text in after.notes:
         game.say(text, "good" if "experience" in text or "level" in text else "info")
+    if game.quests and game.over is None:
+        from realmwalker.game import quests
+
+        quests.on_battle(game, result, actor)
     game.battle = None
     game.battle_actor = None
     game.aftermath = after

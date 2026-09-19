@@ -1,0 +1,80 @@
+{
+  "_comment": "Quests (M8). Code makes them from these templates and ties them to real things in the world (a real gang's captain in a real hideout, a real person to carry a letter to). templates: who may give them (occupations), reward in copper [min, max] scaled by how far and how hard, days allowed [min, max], standing gained with the giver's people, xp for each member of the party, and the chance of a hidden side. text: the built-in words ({slots} filled by code; the AI writes its own when it is there): pitch (what the giver says), title, journal (what you write down), done (when it is finished), failed.",
+  "templates": {
+    "bounty": {"givers": ["guard", "headman", "lord"], "reward": [3000, 9000], "days": [20, 40], "standing": 8, "xp": 300, "hidden": {"deserters": 0.25}},
+    "clear_lair": {"givers": ["headman", "lord", "innkeeper", "farmer", "priest"], "reward": [2000, 7000], "days": [15, 35], "standing": 6, "xp": 250, "hidden": {}},
+    "hunt_beast": {"givers": ["headman", "farmer", "innkeeper", "stablemaster"], "reward": [1500, 5000], "days": [10, 25], "standing": 5, "xp": 200, "hidden": {}},
+    "deliver": {"givers": ["shopkeeper", "innkeeper", "priest", "smith", "headman", "lord", "healer", "market_trader"], "reward": [500, 2500], "days": [8, 20], "standing": 3, "xp": 60, "hidden": {"incriminating": 0.25}},
+    "retrieve": {"givers": ["priest", "lord", "headman", "shopkeeper", "smith"], "reward": [3000, 10000], "days": [20, 45], "standing": 8, "xp": 300, "hidden": {}},
+    "rescue": {"givers": ["headman", "innkeeper", "farmer", "washerwoman", "carter", "lord"], "reward": [2000, 6000], "days": [8, 18], "standing": 10, "xp": 300, "hidden": {}},
+    "collect_debt": {"givers": ["shopkeeper", "innkeeper", "smith", "market_trader"], "reward": [800, 3000], "days": [10, 25], "standing": 3, "xp": 80, "hidden": {"destitute": 0.35}},
+    "investigate": {"givers": ["priest", "guard", "headman", "healer"], "reward": [2500, 7000], "days": [20, 40], "standing": 8, "xp": 300, "hidden": {}}
+  },
+  "beasts": [["dire_wolves", "the Grey Wolf", "a wolf the size of a pony, and too clever by half"], ["brown_bear", "the Hill Bear", "a bear that has learned people are easy meat"], ["troll", "the Bridge Troll", "a troll that has made a crossing its own"], ["spiders", "the Weaver", "something with too many legs that takes sheep, and lately children"], ["ogre", "the Ogre of the Fells", "an ogre that comes down in the dark for cattle"]],
+  "heirlooms": [["signet ring", "gold_ring"], ["silver cup", "silver_chalice"], ["prayer book", "prayer_book"], ["grandmother's brooch", "gold_ring"], ["father's sword", "longsword"]],
+  "kin": ["son", "daughter", "brother", "sister", "husband", "wife", "apprentice"],
+  "text": {
+    "bounty": {
+      "title": ["Wanted: {target}"],
+      "pitch": ["\"{target} and {gang} have been bleeding the roads dry. Their hole is {site}, {where}. Bring the captain in, or put an end to them, and there's {reward} in it. You have {days} days before the lord sends men who'll burn half the county doing it.\"", "\"There's a price on {target}: {reward}. They hide out at {site}, {where}. Do it inside {days} days.\""],
+      "journal": ["{giver} of {town} will pay {reward} for the end of {target}, captain of {gang}, who hides at {site} ({where}). {days} days."],
+      "hidden": {"deserters": ["When you reach {site} you understand: the 'outlaws' are soldiers who deserted a lost war, starving and half-mad with it. You could still kill them. You could also talk them into leaving."]},
+      "done": ["The captain is dead or taken. {giver} can pay you now."],
+      "failed": ["Too late: the lord's men went in after {target} themselves."]
+    },
+    "clear_lair": {
+      "title": ["The thing in {site}"],
+      "pitch": ["\"Something has moved into {site}, {where}. We've lost stock, and a boy. Clear it out and there's {reward} for you. Soon, mind: {days} days, and then we'll have to leave.\"", "\"{site}, {where}. Whatever lives in it now comes out at night. Go in, kill what you find, and come back. {reward}.\""],
+      "journal": ["{giver} of {town} wants {site} cleared ({where}). The worst of it will be in the deepest part. {reward}, {days} days."],
+      "done": ["{site} is quiet now. Go back to {giver}."],
+      "failed": ["You were too slow. The people of {town} have given up on you."]
+    },
+    "hunt_beast": {
+      "title": ["Hunt {beast}"],
+      "pitch": ["\"There's a beast about: {beast}, {beast_what}. Last seen {where}. Kill it and bring me proof. {reward}.\""],
+      "journal": ["{giver} of {town} will pay {reward} for the death of {beast}, {beast_what}, last seen {where}. {days} days."],
+      "done": ["{beast} is dead. {giver} will want to hear it."],
+      "failed": ["{beast} has moved on, or someone else killed it."]
+    },
+    "deliver": {
+      "title": ["A letter for {recipient_name}"],
+      "pitch": ["\"This goes to {recipient} in {dest}: into their own hands and no one else's. Sealed, and it stays sealed. {reward} when it's done: they'll pay you. {days} days.\"", "\"Take this to {recipient} in {dest}. Don't open it. They'll give you {reward}. {days} days.\""],
+      "journal": ["Carry a sealed letter from {giver} of {town} to {recipient} in {dest}, who will pay {reward}. {days} days."],
+      "hidden": {"incriminating": ["You broke the seal. The letter is from {giver} to {recipient}, and if the lord saw it, {giver} would hang: it names names, and prices. You could still deliver it. You could take it to the lord of {town}. Or you could ask {giver} what it's worth to them."]},
+      "done": ["The letter is delivered."],
+      "failed": ["The letter is too late to matter now."]
+    },
+    "retrieve": {
+      "title": ["{item}"],
+      "pitch": ["\"{item} lies in {site}, {where}. It was ours, once. Bring it back and there's {reward} in it.\"", "\"You've heard of {item}? It's in {site}, {where}, if the stories are true. I want it. {reward}.\""],
+      "journal": ["{giver} of {town} wants {item}, which lies somewhere in {site} ({where}). {reward}. {days} days."],
+      "done": ["You have {item}. Take it to {giver}."],
+      "failed": ["{giver} has lost patience, and hope."]
+    },
+    "rescue": {
+      "title": ["Bring back {captive}"],
+      "pitch": ["\"They took my {kin}, {captive}. Dragged off to {site}, {where}. I have {reward}, all of it; it's yours if you bring them home. Please. {days} days, and they'll be dead.\""],
+      "journal": ["{captive}, {giver}'s {kin}, is held at {site} ({where}). Bring them home to {town}. {reward}. {days} days."],
+      "done": ["{captive} is free and follows you. Take them home to {town}."],
+      "failed": ["It was too late for {captive}."]
+    },
+    "collect_debt": {
+      "title": ["{debtor_name}'s debt"],
+      "pitch": ["\"{debtor} in {dest}, owes me {debt} and has for a year. Get it out of them and a quarter is yours. I don't much care how.\""],
+      "journal": ["{debtor} in {dest}, owes {giver} of {town} {debt}. A quarter of it is yours if you collect. {days} days."],
+      "hidden": {"destitute": ["{debtor_name} has nothing. The house is bare, and there are children. You could still take what little there is."]},
+      "done": ["You have the money. Take it to {giver}."],
+      "failed": ["{giver} has written the debt off, and you with it."]
+    },
+    "investigate": {
+      "title": ["The missing of {town}"],
+      "pitch": ["\"People are going missing. Three this season. Nobody saw anything, which means somebody saw everything. Find out where they go. {reward}.\""],
+      "journal": ["People are disappearing from {town}. Ask around the town (the ordinary folk see most), then find where they are taken. {giver} will pay {reward}. {days} days."],
+      "clue": ["\"The missing? ... They say there's lights at night out {where}, at {site}. I never said that.\""],
+      "done": ["You know where the missing went: {site}, and {cult}. Tell {giver}, or finish it yourself first."],
+      "failed": ["More have gone missing, and {giver} no longer asks you about it."]
+    }
+  },
+  "letters": ["A letter, sealed, addressed to {recipient} of {dest}.", "A folded letter with a broken seal; the hand is hurried."],
+  "rewards_text": ["{giver} counts out {reward}.", "{giver} pays you {reward}, and does not look sorry to see it go."]
+}

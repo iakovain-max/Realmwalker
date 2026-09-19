@@ -318,12 +318,12 @@ def populate_town(game, lm, settlement) -> Town:
         add(world, town, make_npc(game, settlement, "guard", rng.child(f"guard/{i}"), post=spot, home=spot))
     lo, hi = spec["commoners"]
     jobs = people["commoner_jobs"]
-    p = game.player
-    around = {game.biome_key(nx, ny) for _, nx, ny in world.neighbours(p.x, p.y)}
+    sx, sy = settlement.x, settlement.y  # (the town may be made ahead of arrival, or for a quest far away)
+    around = {game.biome_key(nx, ny) for _, nx, ny in world.neighbours(sx, sy)}
     for i in range(rng.randint(lo, hi)):
         job = rng.choice(jobs)
         near = people["occupations"][job].get("near")
-        if near == "water" and not (world.river[p.x, p.y] or "lake" in around or "ocean" in around or "coast" in around):
+        if near == "water" and not (world.river[sx, sy] or "lake" in around or "ocean" in around or "coast" in around):
             job = "labourer"
         if near == "forest" and not around & {"forest", "pine_forest"}:
             job = "farmer"

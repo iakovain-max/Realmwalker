@@ -56,6 +56,7 @@ class AutoplayReport:
     crimes: int = 0
     hires: int = 0
     dungeons: int = 0
+    quests: int = 0
     battle_turns: int = 0
     elapsed: float = 0.0
 
@@ -70,7 +71,8 @@ class AutoplayReport:
             f"  AI requests: {self.ai_stats}  mock chat calls: {self.mock_calls}",
             f"  turns inside a game: {self.game_turns}  save/load round trips checked: {self.save_checks}",
             f"  fights started by the bot: {self.fights}  travel events: {self.events}  talks: {self.talks}  "
-            f"crimes: {self.crimes}  companions hired: {self.hires}  dungeons: {self.dungeons}  turns spent in battle: {self.battle_turns}",
+            f"crimes: {self.crimes}  companions hired: {self.hires}  dungeons: {self.dungeons}  work taken on: "
+            f"{self.quests}  turns spent in battle: {self.battle_turns}",
             "  RESULT: " + ("OK" if self.ok else f"FAILED ({len(self.errors)} problems)"),
         ]
         lines += [f"    - {e}" for e in self.errors[:20]]
@@ -218,6 +220,7 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
                     fail(f"{f.name} is in an unknown state {f.state!r}")
         _check_factions(game, fail)
         _check_law(game, fail)
+        _check_quests(game, fail)
         _check_companions(game, fail)
         if not game.leader.alive and game.over is None and b is None and game.aftermath is None:
             fail("the leader is dead but the game goes on")
@@ -323,6 +326,40 @@ def _check_law(game, fail) -> None:
             fail(f"a captive of unknown kind {c.get('def_id')}")
 
 
+def _check_quests(game, fail) -> None:
+    """M8: the journal holds real work, tied to things that exist."""
+    w = game.world
+    states = ("offered", "active", "return", "finished", "failed", "abandoned")
+    seen = set()
+    for q in game.quests:
+        where = f"quest {q.get('id')} ({q.get('template')})"
+        if q.get("template") not in game.tables.quests["templates"]:
+            fail(f"{where} is of no known kind")
+            continue
+        if q.get("state") not in states:
+            fail(f"{where} is in state {q.get('state')!r}")
+        if q["id"] in seen:
+            fail(f"{where} is in the journal twice")
+        seen.add(q["id"])
+        if q["state"] in ("active", "return") and q.get("deadline") is None:
+            fail(f"{where} has no deadline")
+        if q.get("giver", -1) >= 0 and q["giver"] not in w.npcs:
+            fail(f"{where} was given by nobody")
+        if not 0 <= q.get("town", -1) < len(w.settlements):
+            fail(f"{where} belongs to no town")
+        if q.get("reward", 0) < 0:
+            fail(f"{where} pays {q.get('reward')}")
+        t = q.get("target", {})
+        if "site" in t and not 0 <= t["site"] < len(w.sites):
+            fail(f"{where} points at no site")
+        if "dest" in t and not 0 <= t["dest"] < len(w.settlements):
+            fail(f"{where} points at no town")
+        if "npc" in t and t["npc"] not in w.npcs:
+            fail(f"{where} points at nobody")
+        if q["state"] == "return" and not q.get("done"):
+            fail(f"{where} is finished and not finished at once")
+
+
 _LAST_TIME: dict[str, int] = {}
 
 
@@ -365,6 +402,16 @@ def _start_a_fight(app: App, rng: random.Random, report: AutoplayReport) -> None
         if not game.in_local:
             game.enter_local()
         people = [n for n in npcs_in(game.world, here.id) if n.alive and n.present]
+        if people and rng.random() < 0.35:
+            # Ask someone for work, and take it on (M8).
+            from realmwalker.game import quests
+
+            for npc in rng.sample(people, min(4, len(people))):
+                q = quests.offer_for(game, npc)
+                if q is not None:
+                    quests.accept(game, q)
+                    report.quests += 1
+                    return
         hires = [n for n in people if n.flags.get("recruit") and not n.flags.get("companion")]
         if hires and rng.random() < 0.5 and len(game.party) < 3:
             from realmwalker.game import companions

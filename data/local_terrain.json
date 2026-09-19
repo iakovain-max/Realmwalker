@@ -55,6 +55,8 @@
     "chest": {"name": "chest", "glyphs": ["■"], "fg": [200, 160, 80], "bg": [30, 26, 20], "walk": false, "see": true, "cost": 1, "tags": ["furniture", "container"], "desc": "An iron-bound chest. Walk into it to open it."},
     "chest_open": {"name": "open chest", "glyphs": ["□"], "fg": [150, 120, 70], "bg": [30, 26, 20], "walk": false, "see": true, "cost": 1, "tags": ["furniture"], "desc": "An empty chest, its lid thrown back."},
     "sarcophagus": {"name": "sarcophagus", "glyphs": ["∩"], "fg": [170, 170, 160], "bg": [34, 32, 30], "walk": false, "see": true, "cost": 1, "tags": ["furniture", "container", "grave"], "desc": "A stone coffin with a carved lid. Walk into it to open it (the dead may not thank you)."},
+    "captive": {"name": "a captive", "glyphs": ["☺"], "fg": [230, 200, 170], "bg": [30, 28, 26], "walk": false, "see": true, "cost": 1, "tags": ["furniture"], "desc": "Someone chained to the wall, alive. Walk into them to break the chains."},
+    "chains": {"name": "chains", "glyphs": ["§"], "fg": [140, 140, 150], "bg": [30, 28, 26], "walk": true, "see": true, "cost": 1, "tags": [], "desc": "Empty chains, hanging from a ring in the wall."},
     "bones": {"name": "bones", "glyphs": ["%"], "fg": [200, 195, 170], "bg": [30, 28, 26], "walk": true, "see": true, "cost": 1, "tags": [], "desc": "Old bones, gnawed."},
     "hoard": {"name": "a dragon's hoard", "glyphs": ["$"], "fg": [250, 210, 70], "bg": [60, 44, 12], "walk": true, "see": true, "cost": 1.5, "tags": ["hoard"], "desc": "Gold, silver, gems and the armour of dead heroes, heaped up and slept on."},
     "bedroll": {"name": "bedroll", "glyphs": ["="], "fg": [150, 120, 90], "bg": [30, 26, 22], "walk": true, "see": true, "cost": 1, "tags": ["bed"], "desc": "A filthy bedroll."},

@@ -168,6 +168,10 @@ class GameScreen(Screen):
             from realmwalker.ui.screens.factions import FactionsScreen
 
             self.app.push(FactionsScreen(self.app, game))
+        elif ev.key == "j":
+            from realmwalker.ui.screens.journal import JournalScreen
+
+            self.app.push(JournalScreen(self.app, game))
         elif ev.key == "n":
             from realmwalker.ui.screens.chronicle import ChronicleScreen
 
@@ -393,6 +397,34 @@ class GameScreen(Screen):
                                        priority=Priority.BACKGROUND, callback=done)
                     return  # one at a time
 
+    def _word_quests(self) -> None:
+        """Work people in this town might offer gets AI-written words before anyone asks (one at a time)."""
+        game = self.game
+        if not game.in_local or game.busy or not self.app.ai.usable():
+            return
+        here = game.world.settlement_at(game.player.x, game.player.y)
+        if here is None:
+            return
+        from realmwalker.game import quests
+
+        stamp = (here.id, game.moment.total_days)
+        if getattr(self, "_offers_stamp", None) != stamp:
+            self._offers_stamp = stamp
+            self._offers = quests.offers_in(game, here)
+        from realmwalker.ai.service import Priority
+        from realmwalker.ai.tasks import QUEST
+
+        for q in getattr(self, "_offers", []):
+            if quests.needs_words(q):
+                q["ai_asked"] = True
+
+                def done(result, q=q) -> None:
+                    if result.ok and result.data:
+                        quests.apply_words(q, result.data)
+
+                self.app.ai.submit(QUEST, quests.ai_facts(game, q), priority=Priority.BACKGROUND, callback=done)
+                return
+
     def water(self) -> None:
         from realmwalker.game.survival import fill_skins
 
@@ -425,6 +457,7 @@ class GameScreen(Screen):
 
             request_chronicle(self.app, game)
         self._dress_magic_items()
+        self._word_quests()
         if game.travel is not None:
             now = self.app.clock()
             if now - self._last_travel_step >= TRAVEL_STEP_SECONDS or self.app.headless:
@@ -555,7 +588,8 @@ class GameScreen(Screen):
             ("<", "back to the overworld"),
             ("l", "look"), ("m t", "world map · travel"), ("c i e", "character · pack · gear"),
             ("g s", "pick up · search") if game.in_local else (".", "wait an hour"), ("r h", "camp · health"),
-            ("w W", "water · wash"), ("p f n", "party · factions · news"), ("L /", "log · legend"), ("Esc", "menu"),
+            ("w W", "water · wash"), ("p f n", "party · factions · news"), ("j", "journal"),
+            ("L /", "log · legend"), ("Esc", "menu"),
         ]
         ky = h - len(keys) - 1
         for key, what in keys:
@@ -631,4 +665,4 @@ class GameScreen(Screen):
     def autoplay_keys(self) -> list[KeyEvent]:
         moves = [KeyEvent(k) for k in ("up", "down", "left", "right", "upleft", "upright", "downleft", "downright")]
         return moves * 4 + [KeyEvent(k) for k in (">", "<", "l", "enter", "escape", ".", "m", "t", "L", "/",
-                                                   "c", "i", "e", "g", "r", "h", "w", "W", "f", "n", "p", "s")]
+                                                   "c", "i", "e", "g", "r", "h", "w", "W", "f", "n", "p", "s", "j")]

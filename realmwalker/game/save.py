@@ -40,7 +40,7 @@ from realmwalker.world.tables import Tables
 
 log = logging.getLogger("realmwalker.save")
 
-FORMAT_VERSION = 7
+FORMAT_VERSION = 8
 WORLD_FILE = "world.zip"
 CHARACTER_FILE = "character.zip"
 
@@ -93,9 +93,17 @@ def _v6_to_v7(kind: str, body: dict) -> dict:
     return body
 
 
+def _v7_to_v8(kind: str, body: dict) -> dict:
+    """Format 8 added the journal of quests to the character (M8). An old character has no work in hand."""
+    if kind == "character":
+        body = dict(body)
+        body.setdefault("quests", [])
+    return body
+
+
 # format number -> function upgrading a loaded JSON body (of a given kind) to the next format.
 MIGRATIONS: dict[int, Callable[[str, dict], dict]] = {1: _v1_to_v2, 2: _v2_to_v3, 3: _v3_to_v4, 4: _v4_to_v5,
-                                                      5: _v5_to_v6, 6: _v6_to_v7}
+                                                      5: _v5_to_v6, 6: _v6_to_v7, 7: _v7_to_v8}
 
 
 class SaveError(Exception):
@@ -260,6 +268,7 @@ def character_entries(game: GameState) -> dict[str, bytes | str]:
         "sentence": game.sentence,
         "waiting": [c.to_dict() for c in game.waiting],
         "lit": game.lit,
+        "quests": game.quests,
     }
     return {"manifest.json": _manifest("character"), "character.json": json.dumps(body),
             "explored.npy": _npy(p.explored)}
@@ -285,7 +294,8 @@ def load_player(folder: Path) -> tuple[PlayerState, MessageLog, list[Character] 
     party = body.get("party")
     party_chars = [Character.from_dict(c) for c in party] if party else None
     extra = {"renown": body.get("renown", {}), "arrest": body.get("arrest"), "sentence": body.get("sentence"),
-             "waiting": [Character.from_dict(c) for c in body.get("waiting", [])], "lit": body.get("lit")}
+             "waiting": [Character.from_dict(c) for c in body.get("waiting", [])], "lit": body.get("lit"),
+             "quests": list(body.get("quests", []))}
     return player, MessageLog.from_dict(body.get("log", {})), party_chars, extra
 
 
@@ -325,6 +335,7 @@ def load_game(folder: Path, tables: Tables) -> GameState:
     game.sentence = extra.get("sentence")
     game.waiting = extra.get("waiting", [])
     game.lit = extra.get("lit")
+    game.quests = extra.get("quests", [])
     if not game.renown.flags.get("started"):
         starting_knowledge(game)  # a character from before M6
     return game

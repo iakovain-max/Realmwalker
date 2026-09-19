@@ -71,6 +71,10 @@ def descend(game, level: int, *, from_below: bool = False) -> None:
             x, y = int(found[0][0]), int(found[0][1])
     p.lx, p.ly = x, y
     populate(game, lm)
+    if game.quests:
+        from realmwalker.game import quests
+
+        quests.on_arrive_dungeon(game, lm)
     name = lm.meta.get("name", "dark")
     if from_below:
         game.say(f"You climb back up to level {level} of the {name}.", "place")
@@ -319,6 +323,11 @@ def bump(game, x: int, y: int) -> bool:
     if tid in ("chest", "sarcophagus"):
         open_chest(game, lm, x, y)
         return True
+    if tid == "captive":
+        from realmwalker.game import quests
+
+        quests.free_captive(game, lm, x, y)
+        return True
     return False
 
 
@@ -341,6 +350,10 @@ def open_chest(game, lm, x: int, y: int) -> None:
 
     rng = rng_for(game, "chest")
     items, money = treasure.roll(game, int(f.get("treasure", 1)), rng, grave=grave)
+    if f.get("quest") is not None:
+        from realmwalker.game import quests
+
+        items = quests.on_chest(game, f) + items
     p = game.player
     if items:
         lm.items.setdefault((p.lx, p.ly), []).extend(items)
@@ -431,6 +444,11 @@ def populate(game, lm) -> None:
     walk = game.tables.terrain.walk[game.remap_for(lm)[lm.terrain]]
     groups: list[tuple[int, str]] = []
     boss = BOSSES.get(style)
+    if game.quests and site is not None:
+        from realmwalker.game import quests
+
+        boss = quests.boss_for(game, site, boss)
+    meta["boss"] = boss
     hidden = set(meta.get("hidden", []))
     open_rooms = [i for i in range(len(rooms)) if i not in hidden]
     last = open_rooms[-1] if open_rooms else len(rooms) - 1

@@ -635,3 +635,25 @@ MAGIC = Obj(
 )
 
 DATA_FILES.update({"magic.json": MAGIC})
+
+# ---------------------------------------------------------------------------- quests (M8)
+QUEST_TEMPLATES = ("bounty", "clear_lair", "hunt_beast", "deliver", "retrieve", "rescue", "collect_debt", "investigate")
+QUESTS = Obj(
+    {
+        "templates": Map(Obj({"givers": word_list(1, 30), "reward": List(Int(min=0, max=10**7), min_items=2, max_items=2),
+                              "days": List(Int(min=1, max=365), min_items=2, max_items=2),
+                              "standing": Float(min=0, max=50), "xp": Int(min=0, max=100000),
+                              "hidden": Map(Float(min=0, max=1))}), min_items=1),
+        "beasts": List(List(Str(max_len=120), min_items=3, max_items=3), min_items=1),
+        "kin": word_list(1, 30),
+        "heirlooms": List(List(Str(max_len=60), min_items=2, max_items=2), min_items=1),
+        "text": Map(Obj({"title": word_list(1, 80), "pitch": word_list(1, 600), "journal": word_list(1, 600),
+                         "done": word_list(1, 300), "failed": word_list(1, 300),
+                         "hidden": Map(word_list(1, 600), optional=True),
+                         "clue": List(Str(max_len=400), min_items=1, optional=True)})),
+        "letters": word_list(1, 200),
+        "rewards_text": word_list(1, 200),
+    }
+)
+
+DATA_FILES.update({"quests.json": QUESTS})
