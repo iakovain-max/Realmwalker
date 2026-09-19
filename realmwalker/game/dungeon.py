@@ -83,6 +83,12 @@ def descend(game, level: int, *, from_below: bool = False) -> None:
         game.say(f"You go down into {where}. " + ("The air is cold and still." if level == 1 else
                                                   "It is colder down here, and quieter."), "place")
     light_up(game)
+    if game.world.politics.get("dragons"):
+        from realmwalker.game import dragons
+
+        warning = dragons.descend_warning(game, lm)
+        if warning:
+            game.say(warning, "danger")
     game.dirty = True
 
 

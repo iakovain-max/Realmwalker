@@ -575,7 +575,8 @@ POLITICS = Obj(
         "rates": Map(Float(min=0, max=100)),
         "war_reasons": Map(Str(max_len=80)),
         "causes": Map(word_list(1, 80)),
-        "dragons": Obj({"names": word_list(1, 40), "colors": word_list(1, 20), "epithets": word_list(1, 40)}),
+        "dragons": Obj({"names": word_list(1, 40), "colors": word_list(1, 20), "epithets": word_list(1, 40),
+                        "signs": word_list(1, 200)}),
         "artifacts": Obj({"kinds": List(List(Str(max_len=30), min_items=2, max_items=2), min_items=1),
                           "of": word_list(1, 40), "fates": word_list(1, 120)}),
         "legends": Obj({"deeds": word_list(1, 120), "epithets": word_list(1, 40)}),
@@ -586,7 +587,8 @@ POLITICS = Obj(
 )
 POLITICS_TEXT = ("succession", "crisis", "elected", "gang_ended", "war", "battle", "siege", "taken", "sacked", "relieved",
                  "peace", "rebellion", "freedom", "crushed", "plague", "famine", "raid", "burned", "cult", "cult_purged",
-                 "cult_incident", "gang_new", "gang_destroyed", "dragon", "dragon_slain", "dragon_sleeps", "founded",
+                 "cult_incident", "gang_new", "gang_destroyed", "dragon", "dragon_tribute", "dragon_slain",
+                 "dragon_sleeps", "founded",
                  "ruin", "legend", "artifact", "marriage", "assassination", "treaty", "chapter")
 POLITICS_RATES = ("war_base", "war_hostility", "war_battles_per_month", "peace_after_years", "rebellion", "plague",
                   "famine", "tribe_raid", "cult_spread", "cult_purge", "cult_incident", "gang_destroyed", "gang_new",
@@ -637,7 +639,8 @@ MAGIC = Obj(
 DATA_FILES.update({"magic.json": MAGIC})
 
 # ---------------------------------------------------------------------------- quests (M8)
-QUEST_TEMPLATES = ("bounty", "clear_lair", "hunt_beast", "deliver", "retrieve", "rescue", "collect_debt", "investigate")
+QUEST_TEMPLATES = ("bounty", "clear_lair", "hunt_beast", "deliver", "retrieve", "rescue", "collect_debt",
+                   "investigate", "slay_dragon")
 QUESTS = Obj(
     {
         "templates": Map(Obj({"givers": word_list(1, 30), "reward": List(Int(min=0, max=10**7), min_items=2, max_items=2),

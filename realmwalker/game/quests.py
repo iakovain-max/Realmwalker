@@ -32,7 +32,7 @@ DEBT_DC = 12
 BLACKMAIL_DC = 13
 LIVE = ("active", "return")
 TAGS = {"bounty": ("victory",), "clear_lair": ("victory",), "hunt_beast": ("victory",), "rescue": ("help_poor",),
-        "investigate": ("cult_hunted",), "retrieve": ("discovery",)}
+        "investigate": ("cult_hunted",), "retrieve": ("discovery",), "slay_dragon": ("victory", "hard_fight")}
 
 
 class _Spot:
@@ -366,7 +366,31 @@ def _investigate(game, npc, rng):
     return q
 
 
-BUILDERS = {"bounty": _bounty, "clear_lair": _clear_lair, "hunt_beast": _hunt_beast, "deliver": _deliver,
+def _slay_dragon(game, npc, rng):
+    """The one job a lord will not offer to just anyone: it is a way of dying, for most."""
+    from realmwalker.game import dragons
+
+    w = game.world
+    town = w.settlements[npc.settlement]
+    level = max(c.level for c in game.party) if game.party else 1
+    desperate = bool(town.status.get("tribute") or town.status.get("burned"))
+    if level < 4 and not (desperate and level >= 3):
+        return None
+    near = [d for d in dragons.living(w) if dist(w.sites[d["lair"]], town) <= 20
+            and not any(q["target"].get("dragon") == d["name"] for q in _all_quests(game))]
+    if not near:
+        return None
+    d = min(near, key=lambda d: dist(w.sites[d["lair"]], town))
+    site = w.sites[d["lair"]]
+    q = base_quest(game, npc, "slay_dragon", rng, hard=1.0)
+    q["target"] = {"site": site.id, "dragon": d["name"]}
+    q["words"].update(dragon=d["name"], colour=d.get("color", "great"), site=site.name,
+                      where=direction(town, site))
+    allow_for(q, dist(site, town) * 2)
+    return q
+
+
+BUILDERS = {"bounty": _bounty, "slay_dragon": _slay_dragon, "clear_lair": _clear_lair, "hunt_beast": _hunt_beast, "deliver": _deliver,
             "retrieve": _retrieve, "rescue": _rescue, "collect_debt": _collect_debt, "investigate": _investigate}
 
 
@@ -500,7 +524,7 @@ def site_cleared(game, site_id: int) -> None:
     for q in active(game):
         if q["target"].get("site") != site_id or q["done"]:
             continue
-        if q["template"] in ("clear_lair", "bounty"):
+        if q["template"] in ("clear_lair", "bounty", "slay_dragon"):
             mark_done(game, q)
         elif q["template"] == "investigate":
             q["ended"] = True
@@ -1044,6 +1068,8 @@ def ai_facts(game, q) -> dict:
         "collect_debt": f"collect a debt of {words.get('debt')} from {words.get('debtor')} in {words.get('dest')}; "
                         f"the traveller keeps a quarter",
         "investigate": f"find out where the people who have gone missing from {town.name} are being taken",
+        "slay_dragon": f"kill the dragon {words.get('dragon')}, which lairs at {words.get('site')} "
+                       f"({words.get('where')}) and has burned and bled this country for years",
     }[q["template"]]
     return {
         "giver": q["giver_name"], "job": giver.title if giver is not None else "watch captain",

@@ -142,6 +142,13 @@ Traps are hidden until you spot them: darts, pits, falling stone, gas, and worse
 Magic is rare, and most of it is old. What you find looks like "a strange sword" until you know it: <loot>Enter</> on it in your pack studies it for an hour (Arcana, once a day for each thing), or a priest will tell you what it is for a donation. Known items list what they do and carry the name and history the world remembers.
 Some things are cursed: they cannot be taken off, and they work against you. A temple can lift a curse. Wands and rings with charges refill after a long rest.
 
+<title>Dragons</title>
+Every land has its dragon, and everyone knows its name. Most were killed by heroes long ago; one or two are only sleeping, each in a lair in the high country. A sleeping dragon still comes down now and then to burn a village or take cattle and silver as tribute, and the news travels. The country around a lair tells you: burned trees, bones in the grass, no birds singing.
+It is a very hard fight and it will kill an unready party. Its hoard is real gold, heaped up and slept on, and taking any of it wakes the owner. Kill one and the world hears of it: your name goes into the chronicle (n) beside the old heroes, the tribute stops, and lords pay well for the head. Some of them will pay in advance, if you ask for work.
+
+<title>Paper</title>
+Few can read, so books, maps and letters are treasure. In your pack, <loot>Enter</> reads one (an hour). A map puts real places on your map; a book of histories tells you who held this country and adds a faction to your list; old lore names where one of the world's lost treasures came to rest; a dead stranger's letter points at somewhere worth going. Everything they say is true of this world, and they say the same thing every time you read them.
+
 <title>Work and the journal</title>
   <loot>j</>               The journal: work in hand, what is left to do, and how it ended
 Ask people in a town "Is there any work?". Anyone of standing (and now and then an ordinary soul) may have something: a bounty on a real gang's captain, a lair to clear, a named beast to hunt, a sealed letter to carry, an heirloom or a lost treasure of the old days to bring back, a son or daughter taken by outlaws, a debt to collect, or people going missing. Wanted posters on the <loot>¶</> notice board can be taken down and taken on (press the number shown).

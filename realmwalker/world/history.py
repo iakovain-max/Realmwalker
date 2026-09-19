@@ -213,6 +213,13 @@ class HistoryMaker:
                     record["lair"] = lair.id
                 self.event(record["last_seen"], "dragon_sleeps", {"dragon": name}, importance=3)
             dragons.append(record)
+        # Every world keeps one wyrm asleep somewhere: a world with no dragon left in it is a poorer world.
+        if mountain_sites and not any(d["alive"] and d["lair"] >= 0 for d in dragons):
+            last = dragons[-1] if dragons else None
+            if last is not None:
+                last["alive"] = True
+                last["lair"] = self.rng.choice(mountain_sites).id
+                self.event(last["last_seen"], "dragon_sleeps", {"dragon": last["name"]}, importance=3)
         w.politics["dragons"] = dragons
         facs = fx.active_factions(w)
         sites = [s for s in w.sites if s.kind in ("ruin", "barrow", "tower", "cave")]

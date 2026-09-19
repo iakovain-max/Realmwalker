@@ -89,6 +89,9 @@ class ChronicleScreen(Screen):
                     where = f" Some say its lair is {lair.name}." if lair is not None else ""
                     lines.append(f"<danger>{markup.escape(d['name'])}</>, a {d['color']} dragon: last seen in "
                                  f"{d['last_seen']}.{markup.escape(where)} It may only be sleeping.")
+                elif d.get("slain_by"):
+                    lines.append(f"<good>{markup.escape(d['name'])}, a {d['color']} dragon: slain by "
+                                 f"{markup.escape(d['slain_by'])} in {d.get('slain_year', '')}.</>")
                 else:
                     lines.append(f"<dim>{markup.escape(d['name'])}, a {d['color']} dragon: slain long ago.</>")
             lines += ["", "<title>Lost treasures</>"]

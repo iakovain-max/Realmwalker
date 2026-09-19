@@ -27,7 +27,8 @@
   "dragons": {
     "names": ["Vorthax", "Skaldrith", "Uthmerog", "Kessalyn", "Mordrake", "Ashgorath", "Velsinder", "Thrumak", "Ysolde", "Crannoch"],
     "colors": ["red", "black", "green", "white", "blue", "copper"],
-    "epithets": ["the Burner", "the Old Wyrm", "Ash-wing", "the Widowmaker", "the Hungry", "the Unsleeping", "the Grey Death"]
+    "epithets": ["the Burner", "the Old Wyrm", "Ash-wing", "the Widowmaker", "the Hungry", "the Unsleeping", "the Grey Death"],
+    "signs": ["The trees here stand burned and branchless, in a swathe a mile wide.", "There are bones in the grass: cattle, and not only cattle.", "Nothing sings here. The quiet has weight to it.", "The rock is glazed black in places, as if a furnace had breathed on it.", "A dead sheep lies half-eaten and untouched by crows, who know better."]
   },
   "artifacts": {
     "kinds": [["sword", "the Sword"], ["crown", "the Crown"], ["shield", "the Shield"], ["staff", "the Staff"], ["ring", "the Ring"], ["book", "the Book"], ["horn", "the Horn"], ["spear", "the Spear"], ["cup", "the Cup"], ["banner", "the Banner"]],
@@ -63,6 +64,7 @@
     "gang_new": ["{gang} began to prey on the roads near {place}.", "A new band of outlaws, {gang}, haunts the country near {place}."],
     "gang_destroyed": ["{lord} hanged the last of {gang}.", "{gang} were hunted down by the men of {lord}."],
     "dragon": ["The dragon {dragon} burned {place}.", "{dragon} came out of the mountains and burned {place}."],
+    "dragon_tribute": ["{dragon} came to {place}. They drove out cattle and set out silver, and were spared.", "{place} pays tribute to {dragon} now: beasts, gold, and once a year something worse."],
     "dragon_slain": ["{legend} slew the dragon {dragon}.", "{dragon} was killed by {legend}, at a price."],
     "dragon_sleeps": ["{dragon} went back to its lair and has not been seen since.", "No one has seen {dragon} for many years. Some say it only sleeps."],
     "founded": ["{place} was founded.", "Settlers raised the first houses of {place}."],

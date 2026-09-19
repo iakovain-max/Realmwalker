@@ -11,7 +11,8 @@ from realmwalker.rules.items import money_text
 from realmwalker.world import factions as fx
 
 PROCLAIMED = ("war", "peace", "succession", "crisis", "elected", "taken", "sacked", "siege", "plague", "famine",
-              "rebellion", "freedom", "crushed", "gang_new", "gang_destroyed", "treaty", "marriage", "cult_purged")
+              "rebellion", "freedom", "crushed", "gang_new", "gang_destroyed", "treaty", "marriage", "cult_purged",
+              "dragon", "dragon_tribute", "dragon_slain")
 
 
 def notices(game, settlement) -> list[dict]:

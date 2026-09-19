@@ -8,6 +8,7 @@
     "retrieve": {"givers": ["priest", "lord", "headman", "shopkeeper", "smith"], "reward": [3000, 10000], "days": [20, 45], "standing": 8, "xp": 300, "hidden": {}},
     "rescue": {"givers": ["headman", "innkeeper", "farmer", "washerwoman", "carter", "lord"], "reward": [2000, 6000], "days": [8, 18], "standing": 10, "xp": 300, "hidden": {}},
     "collect_debt": {"givers": ["shopkeeper", "innkeeper", "smith", "market_trader"], "reward": [800, 3000], "days": [10, 25], "standing": 3, "xp": 80, "hidden": {"destitute": 0.35}},
+    "slay_dragon": {"givers": ["lord", "headman", "priest"], "reward": [40000, 90000], "days": [60, 120], "standing": 20, "xp": 1500, "hidden": {}},
     "investigate": {"givers": ["priest", "guard", "headman", "healer"], "reward": [2500, 7000], "days": [20, 40], "standing": 8, "xp": 300, "hidden": {}}
   },
   "beasts": [["dire_wolves", "the Grey Wolf", "a wolf the size of a pony, and too clever by half"], ["brown_bear", "the Hill Bear", "a bear that has learned people are easy meat"], ["troll", "the Bridge Troll", "a troll that has made a crossing its own"], ["spiders", "the Weaver", "something with too many legs that takes sheep, and lately children"], ["ogre", "the Ogre of the Fells", "an ogre that comes down in the dark for cattle"]],
@@ -65,6 +66,13 @@
       "hidden": {"destitute": ["{debtor_name} has nothing. The house is bare, and there are children. You could still take what little there is."]},
       "done": ["You have the money. Take it to {giver}."],
       "failed": ["{giver} has written the debt off, and you with it."]
+    },
+    "slay_dragon": {
+      "title": ["Kill {dragon}"],
+      "pitch": ["\"You have heard of {dragon}. Everyone has. It lairs at {site}, {where}, and it comes down when it pleases: cattle, roofs, children. The treasury will pay {reward} to whoever brings me its head, and I will say the words over your graves myself if it goes badly.\"", "\"{dragon}. A {colour} wyrm, old as the hills, sleeping at {site}, {where}. We have paid it in cattle for years. I would rather pay {reward} once, to you, and be done.\""],
+      "journal": ["{giver} of {town} will pay {reward} for the death of {dragon}, which lairs at {site} ({where}). Its hoard is its own. {days} days."],
+      "done": ["{dragon} is dead. The world will hear of it. {giver} owes you {reward}."],
+      "failed": ["{dragon} still sleeps at {site}, and {giver} has stopped speaking of it."]
     },
     "investigate": {
       "title": ["The missing of {town}"],

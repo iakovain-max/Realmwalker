@@ -438,6 +438,10 @@ class GameState:
         if site is not None:
             spec = self.tables.sites["site_types"].get(site.kind, {})
             self.say(f"You come upon <place>{_cap(site.name)}</>. {spec.get('desc', '')}", "place")
+        if self.world.politics.get("dragons"):
+            from realmwalker.game import dragons
+
+            dragons.arrive(self)
         if self.quests:
             from realmwalker.game import quests
 
@@ -488,6 +492,9 @@ class GameState:
                        f"at strangers with hate.")
         if st.get("burned") is not None:
             out.append(f"<warn>Much of {s.name} has been burned.</> What is left huddles among the black beams.")
+        if st.get("tribute"):
+            out.append(f"<danger>{s.name} pays tribute to {st['tribute']}.</> Cattle are driven up the mountain "
+                       f"roads, and nobody looks at the sky for long.")
         if st.get("raided"):
             out.append(f"<warn>{s.name} was raided days ago.</> The people are frightened and angry.")
         if st.get("famine"):

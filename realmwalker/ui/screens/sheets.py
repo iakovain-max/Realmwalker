@@ -311,6 +311,8 @@ class InventoryScreen(Screen):
             return "Copy into spellbook" if self.char.cls == "wizard" else "Read"
         if it.magic and not it.magic.get("identified") and not self.game.tables.items.slots_for(it):
             return "Study it"
+        if d.get("use", {}).get("read"):
+            return "Read it"
         if it.def_id == "sealed_letter" and any(tag.startswith("quest:") for tag in it.tags):
             return "Break the seal" if it.name.startswith("sealed") else "Read the letter"
         if self.game.tables.items.slots_for(it) or self.char.slot_of(it.uid):
@@ -341,6 +343,11 @@ class InventoryScreen(Screen):
 
             for line in magic_items.study(self.game, self.char, it):
                 self.game.say(line, "magic")
+        elif name == "Read it":
+            from realmwalker.game import books
+
+            for line in books.read(self.game, self.char, it):
+                self.game.say(line, "info")
         elif name in ("Break the seal", "Read the letter"):
             from realmwalker.game import quests
 

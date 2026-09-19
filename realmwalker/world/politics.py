@@ -574,6 +574,10 @@ class Politics:
         for cult in fx.active_factions(w, "cult"):
             self.cult_year(cult, share)
         if not self.history:
+            for d in w.politics.get("dragons", []):
+                if d.get("alive") and self.rng.chance(float(rates["dragon"]) * share * 12):
+                    self.dragon_wakes(d)
+        if not self.history:
             for gang in fx.active_factions(w, "bandit_gang"):
                 if self.rng.chance(float(rates["gang_destroyed"]) * share):
                     self.hang_gang(gang)
@@ -581,6 +585,29 @@ class Politics:
                 self.new_gang()
         if not self.history:
             self.expire_status()
+
+    def dragon_wakes(self, d: dict) -> None:
+        """A dragon comes down from its lair: a village burns, or buys its life with cattle and silver."""
+        w = self.w
+        if not 0 <= d.get("lair", -1) < len(w.sites):
+            return
+        lair = w.sites[d["lair"]]
+        near = [s for s in w.settlements if abs(s.x - lair.x) + abs(s.y - lair.y) <= 14]
+        if not near:
+            return
+        s = self.rng.choice(near)
+        d["last_seen"] = self.year
+        realm = fx.realm_of_settlement(w, s)
+        if self.rng.chance(0.45):
+            s.status["burned"] = self.day
+            s.population = max(10, int(s.population * self.rng.uniform(0.5, 0.8)))
+            self.say("dragon", {"dragon": d["name"], "place": s.name}, where=(s.x, s.y), importance=4,
+                     factions=[realm] if realm else [], places=[s])
+        else:
+            s.status["tribute"] = d["name"]
+            self.say("dragon_tribute", {"dragon": d["name"], "place": s.name}, where=(s.x, s.y), importance=3,
+                     factions=[realm] if realm else [], places=[s])
+        self.changed = True
 
     def expire_status(self) -> None:
         for s in self.w.settlements:
