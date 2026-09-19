@@ -64,6 +64,7 @@ class Settings:
     verbosity: str = "normal"
     autosave_minutes: int = 5
     ai_debug_log: bool = False
+    auto_supplies: bool = True  # eat and drink from the pack when needed
 
     def normalise(self) -> None:
         if self.font_size not in FONT_SIZES:

@@ -1,0 +1,319 @@
+"""Survival at the level of the game: what the weather and the place do to the party as time passes,
+eating and drinking from the packs, water sources, and death from exposure, hunger or thirst.
+
+GameState.pass_time() calls tick() for every chunk of time with what the party was doing.
+"""
+
+from __future__ import annotations
+
+from realmwalker.rules import body
+from realmwalker.rules.body import Environment
+from realmwalker.rules.character import Character, Sheet
+from realmwalker.rules.inventory import WATER_RISK, container_capacity, remove_item
+from realmwalker.world.weather import Weather, WeatherCache
+
+AUTO_EAT_AT = 30.0  # hunger at which a meal is taken
+AUTO_DRINK_AT = 30.0
+EXPOSURE_CHANCE = {"stream": 0.03, "river": 0.05, "lake": 0.05, "marsh": 0.14}
+WATER_NAMES = {"clean": "clean water", "boiled": "boiled water", "stream": "stream water", "river": "river water",
+               "lake": "lake water", "marsh": "marsh water"}
+
+
+def weather(game) -> Weather:
+    cache = getattr(game, "_weather_cache", None)
+    if cache is None:
+        cache = game._weather_cache = WeatherCache()
+    p = game.player
+    return cache.get(game.world, game.tables, p.x, p.y, game.world.time)
+
+
+def sheltered(game, activity: str) -> bool:
+    """Under a roof: resting or sleeping in a settlement, or inside a building on a close-up map."""
+    p = game.player
+    lm = game.local
+    if lm is not None and lm.building_at(p.lx, p.ly) is not None:
+        return True
+    return activity != "walk" and game.world.settlement_at(p.x, p.y) is not None
+
+
+def bedding(game, char: Character) -> float:
+    best = 0.0
+    for it in char.inventory:
+        best = max(best, float(game.tables.items.get(it.def_id).get("bedding", 0)))
+    return best
+
+
+def environment(game, char: Character, activity: str) -> Environment:
+    w = weather(game)
+    camp = getattr(game, "camp", None)
+    return Environment(
+        air=w.temp, wind=w.wind, wet_per_hour=w.wet_per_hour, activity=activity,
+        sheltered=sheltered(game, activity), fire=bool(camp and camp.fire and activity != "walk"),
+        tent=bool(camp and camp.tent and activity != "walk"), bedding=bedding(game, char),
+        wading=bool(getattr(game, "_wading", False)),
+    )
+
+
+def tick(game, minutes: int, activity: str) -> None:
+    """The party lives through some minutes."""
+    if not getattr(game, "survival", True):
+        return
+    for char in list(game.party):
+        if not char.alive:
+            continue
+        sheet = Sheet(char, game.tables)
+        env = environment(game, char, activity)
+        for text, color in body.tick(char, sheet, env, minutes):
+            game.say(text, color)
+        if getattr(game, "auto_supplies", True) and activity != "fight":
+            feed(game, char)
+        check_death(game, char)
+    game._wading = False
+
+
+def check_death(game, char: Character) -> None:
+    if not char.alive:
+        return
+    cause = None
+    if char.exhaustion >= 6:
+        cause = death_cause(char, exhausted=True)
+    elif char.hp <= 0:
+        cause = death_cause(char, exhausted=False)
+    if cause is None:
+        return
+    char.alive = False
+    char.hp = 0
+    game.say(f"<danger>{char.name} is dead: {cause}.</>", "danger")
+    if char is game.leader:
+        game.over = {"cause": cause, "place": ""}
+        game.travel = None
+    else:
+        game.party = [c for c in game.party if c.alive]
+
+
+def death_cause(char: Character, exhausted: bool) -> str:
+    if char.body_heat <= -60:
+        return "froze to death"
+    if char.body_heat >= 70:
+        return "died of heatstroke"
+    if char.thirst >= 85:
+        return "died of thirst"
+    if char.hunger >= 80:
+        return "starved to death"
+    if char.blood < 25:
+        return "bled to death"
+    if char.diseases:
+        return "died of sickness"
+    return "died of exhaustion" if exhausted else "died of their hurts"
+
+
+# ---------------------------------------------------------------------------- food and water
+def spoiled(game, item) -> bool:
+    food = game.tables.items.get(item.def_id).get("food")
+    if not food or not food.get("spoil_days"):
+        return False
+    return game.world.time - item.made_at > float(food["spoil_days"]) * 24 * 60
+
+
+def food_choices(game, char: Character, *, desperate: bool = False, fire: bool = False) -> list:
+    """Food this character would eat now, best first (whatever spoils soonest, safe food before risky)."""
+    out = []
+    for it in char.inventory:
+        d = game.tables.items.get(it.def_id)
+        food = d.get("food")
+        if not food:
+            continue
+        risky = spoiled(game, it) or food.get("raw")
+        if food.get("needs_cooking") and not fire:
+            continue
+        if risky and not desperate:
+            continue
+        left = float(food.get("spoil_days", 999)) * 24 * 60 - (game.world.time - it.made_at)
+        out.append((1 if risky else 0, left, it))
+    out.sort(key=lambda t: (t[0], t[1]))
+    return [it for _, _, it in out]
+
+
+def eat_item(game, char: Character, item, units: int = 1) -> str:
+    d = game.tables.items.get(item.def_id)
+    food = d.get("food", {})
+    risky_spoiled = spoiled(game, item)
+    raw = bool(food.get("raw"))
+    removed = remove_item(char, item.uid, units)
+    if removed is None:
+        return ""
+    body.eat(char, float(food.get("nutrition", 0.3)) * removed.qty)
+    rng = game.world.rng.child(f"eat/{game.world.time}/{item.uid}")
+    if risky_spoiled and rng.chance(0.35):
+        char.conditions.append("exposed:food_poisoning")
+    elif raw and rng.chance(0.2):
+        char.conditions.append("exposed:food_poisoning")
+    name = game.tables.items.name(removed)
+    warn = " It had turned." if risky_spoiled else (" Raw." if raw else "")
+    return f"{body.first(char)} eats {name}.{warn}"
+
+
+def water_sources(game, char: Character) -> list:
+    """Containers with water in them, cleanest first."""
+    skins = [it for it in char.inventory if it.fill > 0 and container_capacity(game.tables.items, it)]
+    return sorted(skins, key=lambda it: WATER_RISK.get(it.fill_kind, 2))
+
+
+def water_here(game) -> tuple[str, str] | None:
+    """(kind, where) of drinkable water at the player's position, if any."""
+    p = game.player
+    w = game.world
+    if w.settlement_at(p.x, p.y) is not None:
+        return "clean", "the well"
+    lm = game.local
+    if lm is not None:
+        # On foot you must stand by the water itself.
+        nearby = local_terrain_near(game, lm)
+        if "well" in nearby:
+            return "clean", "the well"
+        if not nearby & LOCAL_WATER:
+            return None
+    river = int(w.river[p.x, p.y])
+    biome = game.biome_key(p.x, p.y)
+    if river:
+        r = w.river_at(p.x, p.y)
+        name = f"the {r.name.removeprefix('the ')}" if r else ("the stream" if river == 1 else "the river")
+        return ("stream" if river == 1 else "river"), name
+    if biome == "marsh":
+        return "marsh", "the marsh pools"
+    for _, nx, ny in w.neighbours(p.x, p.y):
+        if w.biome_id(nx, ny) == "lake":
+            area = w.area_at(nx, ny)
+            return "lake", (area.name if area else "the lake")
+    if lm is not None:
+        return "stream", "the pool"  # standing water on the close-up map, with no river on the big map
+    return None
+
+
+LOCAL_WATER = {"river", "ford", "shallow_water", "deep_water", "marsh_reeds"}
+
+
+def local_terrain_near(game, lm) -> set[str]:
+    p = game.player
+    remap = game.remap_for(lm)
+    ids = game.tables.terrain.ids
+    out = set()
+    for dx in (-1, 0, 1):
+        for dy in (-1, 0, 1):
+            x, y = p.lx + dx, p.ly + dy
+            if lm.in_bounds(x, y):
+                out.add(ids[int(remap[lm.terrain[x, y]])])
+    return out
+
+
+def drink_from(game, char: Character, kind: str, pints: float, where: str) -> str:
+    body.drink(char, pints)
+    if kind in EXPOSURE_CHANCE:
+        rng = game.world.rng.child(f"drink/{game.world.time}/{char.name}")
+        if rng.chance(EXPOSURE_CHANCE[kind]):
+            char.conditions.append("exposed:marsh_fever" if kind == "marsh" else "exposed:dysentery")
+    return f"{body.first(char)} drinks from {where}."
+
+
+def feed(game, char: Character) -> None:
+    """Eat and drink from the pack when hungry or thirsty (the 'eat and drink automatically' setting)."""
+    camp = getattr(game, "camp", None)
+    fire = bool(camp and camp.fire)
+    if char.hunger >= AUTO_EAT_AT:
+        eaten = []
+        desperate = char.hunger >= 80
+        for _ in range(6):
+            if char.hunger < 12:
+                break
+            choices = food_choices(game, char, desperate=desperate, fire=fire)
+            if not choices:
+                break
+            text = eat_item(game, char, choices[0])
+            if text:
+                eaten.append(text)
+        for text in eaten[:2]:
+            game.say(text, "dim")
+        if not eaten and char.hunger >= 55 and not getattr(game, "_warned_food", False):
+            game.say(f"<warn>{body.first(char)} has nothing fit to eat.</> Forage, hunt or buy food.", "warn")
+            game._warned_food = True
+        elif eaten:
+            game._warned_food = False
+    if char.thirst >= AUTO_DRINK_AT:
+        here = water_here(game)
+        if here is not None and here[0] == "clean":
+            pints = max(1.0, round(char.thirst / body.PINT_POINTS))
+            game.say(drink_from(game, char, "clean", pints, here[1]), "dim")
+            return
+        drank = 0.0
+        for skin in water_sources(game, char):
+            if char.thirst < 8:
+                break
+            risky = WATER_RISK.get(skin.fill_kind, 2) > 0
+            if risky and here is not None:
+                break  # drink from the source instead of a risky skin
+            want = min(skin.fill, max(1.0, round(char.thirst / body.PINT_POINTS)))
+            skin.fill = round(skin.fill - want, 2)
+            body.drink(char, want)
+            drank += want
+            if risky:
+                drink_from(game, char, skin.fill_kind, 0, "")
+            if skin.fill <= 0:
+                skin.fill, skin.fill_kind = 0.0, ""
+        if drank:
+            left = sum(it.fill for it in water_sources(game, char))
+            tail = f" ({left:g} pints left)" if left else " <warn>The waterskins are empty.</>"
+            game.say(f"{body.first(char)} drinks.{tail}", "dim")
+        elif here is not None and char.thirst >= AUTO_DRINK_AT:
+            pints = max(1.0, round(char.thirst / body.PINT_POINTS))
+            game.say(drink_from(game, char, here[0], pints, here[1]), "dim")
+        elif char.thirst >= 60 and not getattr(game, "_warned_water", False):
+            drinks = [it for it in char.inventory if game.tables.items.get(it.def_id).get("drink")]
+            if drinks:
+                it = drinks[0]
+                d = game.tables.items.get(it.def_id)["drink"]
+                remove_item(char, it.uid, 1)
+                body.drink(char, float(d.get("water", 0.5)) * 2, float(d.get("alcohol", 0)))
+                game.say(f"{body.first(char)} drinks {game.tables.items.get(it.def_id)['name']}.", "dim")
+            else:
+                game.say(f"<warn>{body.first(char)} has no water.</> Find a river, a lake or a well (w fills skins).",
+                         "warn")
+                game._warned_water = True
+    if char.thirst < 35:
+        game._warned_water = False
+
+
+def fill_skins(game) -> list[str]:
+    """Fill every waterskin from the water here. Returns messages."""
+    from realmwalker.rules.inventory import fill_containers
+
+    here = water_here(game)
+    if here is None:
+        return ["There is no water here. Rivers, lakes and wells are marked on the map."]
+    kind, where = here
+    out = []
+    total = 0.0
+    for c in game.party:
+        total += fill_containers(c, game.tables.items, kind)
+        if c.thirst >= 10:
+            out.append(drink_from(game, c, kind, max(1.0, round(c.thirst / body.PINT_POINTS)), where))
+    if total:
+        risk = "" if kind == "clean" else " <warn>It may not be safe to drink unboiled.</>"
+        out.insert(0, f"You fill the waterskins from {where} ({total:g} pints).{risk}")
+    elif not out:
+        out.append("The waterskins are already full.")
+    game.pass_time(5 if total else 1)
+    return out
+
+
+def wash(game) -> list[str]:
+    here = water_here(game)
+    if here is None:
+        return ["There is nowhere to wash here."]
+    w = weather(game)
+    for c in game.party:
+        c.dirt = max(0.0, c.dirt - 70.0)
+        if here[1] != "the well" and not sheltered(game, "rest"):
+            c.wet = max(c.wet, 40.0)
+    game.pass_time(20)
+    cold = " The water is bitterly cold." if w.temp < 8 else ""
+    return [f"You wash in {here[1]}.{cold}"]

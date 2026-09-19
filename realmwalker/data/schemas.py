@@ -224,6 +224,7 @@ ITEM = Obj(
         "water": Float(min=0, max=1, optional=True), "social": Int(min=-3, max=3, optional=True), "hood": Bool(optional=True),
         "tool": Str(max_len=40, optional=True), "light": Any_(optional=True), "container": Any_(optional=True),
         "food": Any_(optional=True), "drink": Any_(optional=True), "use": Any_(optional=True),
+        "bedding": Float(min=0, max=15, optional=True),
     }
 )
 ITEMS = Obj(

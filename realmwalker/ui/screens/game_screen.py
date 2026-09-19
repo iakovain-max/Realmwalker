@@ -136,6 +136,14 @@ class GameScreen(Screen):
             self.game.pick_up()
         elif ev.key == "r":
             self.rest()
+        elif ev.key == "h":
+            from realmwalker.ui.screens.health import HealthScreen
+
+            self.app.push(HealthScreen(self.app, game))
+        elif ev.key == "w":
+            self.water()
+        elif ev.key == "W":
+            self.wash()
         elif ev.key in ("c", "i", "e"):
             from realmwalker.ui.screens.sheets import CharacterScreen, EquipmentScreen, InventoryScreen
 
@@ -224,6 +232,18 @@ class GameScreen(Screen):
             return False
         return True
 
+    def water(self) -> None:
+        from realmwalker.game.survival import fill_skins
+
+        for text in fill_skins(self.game):
+            self.game.say(text, "info")
+
+    def wash(self) -> None:
+        from realmwalker.game.survival import wash
+
+        for text in wash(self.game):
+            self.game.say(text, "info")
+
     def rest(self) -> None:
         from realmwalker.ui.screens.camp import RestScreen
 
@@ -233,6 +253,7 @@ class GameScreen(Screen):
     def update(self) -> None:
         game = self.game
         game.show_dice = self.app.settings.show_dice
+        game.auto_supplies = self.app.settings.auto_supplies
         if self._open_event_screen():
             return
         if game.travel is not None:
@@ -273,6 +294,9 @@ class GameScreen(Screen):
         part = m.part_of_day(game.latitude)
         canvas.markup(ix, row, f"{m.time_text()} · {part} · {m.season}", max_width=iw)
         row += 1
+        from realmwalker.world.weather import describe as describe_weather
+
+        row += canvas.wrapped(ix, row, f"<info>{describe_weather(game.weather)}</>", iw, max_lines=2)
         temp = typical_temperature(game, p.x, p.y)
         canvas.markup(ix, row, f"<dim>Usually</> {temperature_word(temp)} <dim>this month</>", max_width=iw)
         row += 2
@@ -319,8 +343,8 @@ class GameScreen(Screen):
         keys = [
             ("arrows", "walk"), (">", "enter the land here") if not game.in_local else ("<", "back to the overworld"),
             ("l", "look"), ("m t", "world map · travel"), ("c i e", "character · pack · gear"),
-            ("g", "pick up") if game.in_local else (".", "wait an hour"), ("r", "rest"), ("L /", "log · legend"),
-            ("Esc", "menu"),
+            ("g", "pick up") if game.in_local else (".", "wait an hour"), ("r h", "rest · health"),
+            ("w W", "water · wash"), ("L /", "log · legend"), ("Esc", "menu"),
         ]
         ky = h - len(keys) - 1
         for key, what in keys:
@@ -354,6 +378,14 @@ class GameScreen(Screen):
             load = "" if enc == 0 else f" · <{ecolor}>{word}</>"
             canvas.markup(x, y, f"<loot>{money_text(member.money)}</>{load}", max_width=w)
             y += 1
+            from realmwalker.ui.screens.health import status_words
+
+            words = status_words(member)
+            if words:
+                used = canvas.wrapped(x, y, " · ".join(words), w, max_lines=2)
+                canvas.hit(x, y, w, used, action=lambda: self.handle_key(KeyEvent("h")),
+                           tooltip="Click (or press h) for the Health screen.")
+                y += used
         return y
 
     def _render_log(self, canvas: Canvas, x: int, y: int, w: int, h: int) -> None:
@@ -377,4 +409,4 @@ class GameScreen(Screen):
     def autoplay_keys(self) -> list[KeyEvent]:
         moves = [KeyEvent(k) for k in ("up", "down", "left", "right", "upleft", "upright", "downleft", "downright")]
         return moves * 4 + [KeyEvent(k) for k in (">", "<", "l", "enter", "escape", ".", "m", "t", "L", "/",
-                                                   "c", "i", "e", "g", "r")]
+                                                   "c", "i", "e", "g", "r", "h", "w", "W")]

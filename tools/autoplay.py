@@ -140,6 +140,19 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
                 fail(f"{member.name} has two items with the same id")
             if any(it.qty <= 0 for it in member.inventory):
                 fail(f"{member.name} carries an item stack of zero or fewer")
+            for need in ("hunger", "thirst", "fatigue", "dirt", "wet", "intoxication"):
+                value = getattr(member, need)
+                if not 0 <= value <= 100:
+                    fail(f"{member.name} has {need} {value}")
+            if not -100 <= member.body_heat <= 100 or not 0 <= member.blood <= 100:
+                fail(f"{member.name} has body heat {member.body_heat} and blood {member.blood}")
+            if not 0 <= member.exhaustion <= 6:
+                fail(f"{member.name} has exhaustion {member.exhaustion}")
+            from realmwalker.rules.inventory import container_capacity
+
+            for it in member.inventory:
+                if it.fill < 0 or it.fill > container_capacity(app.tables.items, it) + 1e-6:
+                    fail(f"{member.name}'s {it.def_id} holds {it.fill} pints")
             equipped = list(member.equipped.values())
             if len(equipped) != len(set(equipped)):
                 fail(f"{member.name} wears one item in two places")

@@ -79,6 +79,10 @@ class GameState:
         self.aftermath = None  # what the last fight left behind (game.fight.Aftermath)
         self.over: dict | None = None  # set when the character has died
         self.show_dice = True
+        self.auto_supplies = True  # eat and drink from the packs when needed (a setting)
+        self.survival = True  # needs, weather and wounds over time (tests may switch it off)
+        self.camp = None  # the camp while resting outdoors (game.camp.Camp)
+        self._wading = False
         self._remaps: dict[str, np.ndarray] = {}
         self._recent_areas: list[int] = []
 
@@ -92,12 +96,15 @@ class GameState:
 
     def pace(self) -> float | None:
         """How much slower than an unburdened walker the party moves (None = someone cannot move)."""
+        from realmwalker.rules import body
+
         worst = 1.0
         for member in self.party:
             m = Sheet(member, self.tables).travel_multiplier()
-            if m is None:
+            b = body.travel_multiplier(member)
+            if m is None or b is None:
                 return None
-            worst = max(worst, m)
+            worst = max(worst, m * b)
         return worst
 
     @property
@@ -132,22 +139,39 @@ class GameState:
         self.log.add(text, category, self.world.time)
 
     # ------------------------------------------------------------------ time
-    def pass_time(self, minutes: float) -> None:
-        """Advance the world clock. Later milestones hook needs, weather and politics in here."""
+    def pass_time(self, minutes: float, activity: str = "rest") -> None:
+        """Advance the world clock; the party lives through it (needs, weather, wounds) in chunks.
+        activity: "walk", "rest", "sleep" or "fight"."""
+        from realmwalker.game import survival
+
         whole = int(minutes)
         if whole <= 0:
             return
         before = self.moment
-        self.world.time += whole
+        remaining = whole
+        while remaining > 0:
+            step = min(30, remaining)
+            self.world.time += step
+            remaining -= step
+            survival.tick(self, step, activity)
+            if self.over is not None:
+                self.world.time += remaining
+                break
         after = self.moment
         if after.total_days != before.total_days:
             self.say(f"<title>{after.date_text()}.</>", "system")
         self.dirty = True
 
-    def pass_seconds(self, seconds: int) -> None:
+    def pass_seconds(self, seconds: int, activity: str = "rest") -> None:
         self.player.seconds += seconds
         minutes, self.player.seconds = divmod(self.player.seconds, 60)
-        self.pass_time(minutes)
+        self.pass_time(minutes, activity)
+
+    @property
+    def weather(self):
+        from realmwalker.game.survival import weather
+
+        return weather(self)
 
     # ------------------------------------------------------------------ overworld movement
     def step_minutes(self, x0: int, y0: int, x1: int, y1: int) -> int | None:
@@ -201,7 +225,11 @@ class GameState:
         prev_area = self.world.area_at(p.x, p.y)
         p.x, p.y = nx, ny
         p.steps += 1
-        self.pass_time(minutes)
+        minutes = int(round(minutes * self.weather.travel_factor()))
+        self._wading = fording
+        self.pass_time(minutes, "walk")
+        if self.over is not None:
+            return True
         if fording:
             river = self.world.river_at(nx, ny)
             name = f"the {river.name.removeprefix('the ')}" if river else "a river"
@@ -224,6 +252,7 @@ class GameState:
         radius = {"hills": 5, "mountains": 6, "high_mountains": 8, "forest": 2, "pine_forest": 2}.get(biome, 3)
         if self.light < 0.5:
             radius = max(1, radius - 1)
+        radius = max(1, int(round(radius * self.weather.visibility)))
         x0, x1 = max(0, p.x - radius), min(self.world.width, p.x + radius + 1)
         y0, y1 = max(0, p.y - radius), min(self.world.height, p.y + radius + 1)
         xs = np.arange(x0, x1)[:, None]
@@ -335,12 +364,13 @@ class GameState:
             return False
         p.lx, p.ly = nx, ny
         p.steps += 1
-        self.pass_seconds(int(LOCAL_STEP_SECONDS * float(T.cost[t]) * (1.41 if dx and dy else 1.0) * pace))
+        self.pass_seconds(int(LOCAL_STEP_SECONDS * float(T.cost[t]) * (1.41 if dx and dy else 1.0) * pace), "walk")
         here = lm.items.get((nx, ny))
         if here:
             names = ", ".join(self.tables.items.name(i) for i in here[:4]) + (" and more" if len(here) > 4 else "")
             self.say(f"Here: <loot>{names}</>. <dim>(g to pick up)</>", "loot")
-        self._creatures_act(lm)
+        if self.over is None:
+            self._creatures_act(lm)
         return True
 
     def _creatures_act(self, lm: LocalMap) -> None:
@@ -404,6 +434,8 @@ class GameState:
         if self.busy:
             return
         self.pass_time(minutes)
+        if self.over is not None:
+            return
         if self.in_local and self.local is not None:
             self._creatures_act(self.local)
         elif not self.in_local:

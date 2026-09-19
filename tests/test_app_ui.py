@@ -397,3 +397,50 @@ def test_death_returns_to_title_and_frees_the_world(make_app):
     app.handle_event(KeyEvent("enter"))
     assert app.game is None and type(app.top).__name__ == "TitleScreen"
     assert all(s.character is None for s in list_saves(app.paths.saves))
+
+
+# ---------------------------------------------------------------------------- M4 screens
+@pytest.mark.parametrize("size", SIZES)
+def test_health_screen_and_weather_map_render(make_app, size):
+    from realmwalker.ui.screens.health import HealthScreen
+    from realmwalker.ui.screens.world_map import WorldMapScreen
+
+    app = make_app()
+    gs = start_small_world(app)
+    c = app.game.leader
+    c.hunger, c.thirst, c.body_heat, c.wet, c.exhaustion = 70, 90, -65, 80, 2
+    render(app, size)
+    assert "hypothermic" in screen_text(render(app, size))
+    app.push(HealthScreen(app, app.game))
+    text = screen_text(render(app, size))
+    assert "Exhaustion 2" in text and "Needs" in text
+    app.pop()
+    wm = WorldMapScreen(app, gs)
+    app.push(wm)
+    app.handle_event(KeyEvent("w"))
+    assert wm.show_weather
+    render(app, size)
+    assert app.error_count == 0
+
+
+def test_inventory_eats_and_drinks(make_app):
+    from realmwalker.ui.screens.sheets import InventoryScreen
+
+    app = make_app()
+    start_small_world(app)
+    c = app.game.leader
+    c.hunger, c.thirst = 60, 60
+    inv = InventoryScreen(app, app.game)
+    app.push(inv)
+    items = inv.visible_items()
+    inv.selected = next(i for i, it in enumerate(items) if it.def_id == "rations")
+    assert inv.action_name(inv.current()) == "Eat"
+    app.handle_event(KeyEvent("enter"))
+    assert c.hunger < 60
+    items = inv.visible_items()
+    inv.selected = next(i for i, it in enumerate(items) if it.def_id == "waterskin")
+    assert inv.action_name(inv.current()) == "Drink"
+    app.handle_event(KeyEvent("enter"))
+    assert c.thirst < 60
+    render(app)
+    assert app.error_count == 0

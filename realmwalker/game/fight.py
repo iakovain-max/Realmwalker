@@ -49,9 +49,14 @@ def battle_env(game, surprised: str | None) -> Env:
     else:
         ground = game.biome_def(game.player.x, game.player.y)["name"]
     light = game.light
-    if lm is not None and lm.building_at(game.player.lx, game.player.ly) is not None:
+    indoors = lm is not None and lm.building_at(game.player.lx, game.player.ly) is not None
+    if indoors:
         light = max(light, 0.6)  # hearths and rushlights indoors
-    return Env(light=light, rain=False, ground=ground, party_light=party_has_light(game), surprised=surprised)
+    w = game.weather
+    rain = not indoors and (w.raining or w.snowing) and w.precip > 0.2
+    if not indoors and w.visibility < 0.5:
+        light = min(light, 0.45)  # fog and blizzards hide the enemy almost as well as night
+    return Env(light=light, rain=rain, ground=ground, party_light=party_has_light(game), surprised=surprised)
 
 
 def start_battle(game, creatures: list[Creature], intro: str, *, surprised: str | None = None, actor=None,
@@ -73,7 +78,7 @@ def finish_battle(game) -> Aftermath:
     battle: Battle = game.battle
     result: BattleResult = battle.result()
     rng = game.world.rng.child(f"after/{game.world.time}")
-    game.pass_seconds(result.rounds * ROUND_SECONDS)
+    game.pass_seconds(result.rounds * ROUND_SECONDS, "fight")
     actor = game.battle_actor
     lm = game.local
     if actor is not None:
@@ -224,7 +229,7 @@ def encounter_evade(game) -> bool:
     game.say(f"<dice>Stealth: {roll} + {stealth + bonus} = {roll + stealth + bonus} vs {best_eyes}</>", "dice")
     if ok:
         game.say("You slip away unseen, and give the place a wide berth.", "good")
-        game.pass_time(30)
+        game.pass_time(30, "walk")
         game.encounter = None
     else:
         game.say("They have seen you. There is no getting away now.", "danger")
@@ -376,11 +381,15 @@ def rest(game, kind: str) -> list[str]:
     lm = game.local
     if lm is not None and any(a.alert for a in lm.actors):
         return ["You can't rest with enemies hunting you."]
+    from realmwalker.rules import body
+
     rng = game.world.rng.child(f"rest/{game.world.time}")
     notes = []
     hours = 1 if kind == "short" else 8
     for hour in range(hours):
-        game.pass_time(60)
+        game.pass_time(60, "sleep" if kind == "long" else "rest")
+        if game.over is not None:
+            return notes
         if lm is None and kind == "long":
             enc = roll_encounter(game, 60 * 0.5)
             if enc is not None:
@@ -388,5 +397,15 @@ def rest(game, kind: str) -> list[str]:
                 notes.append(f"<danger>Your rest is broken after {hour + 1} hour{'s' if hour else ''}.</>")
                 return notes
     for c in game.party:
-        notes += progression.short_rest(c, game.tables, rng) if kind == "short" else progression.long_rest(c, game.tables, rng)
+        if kind == "short":
+            notes += progression.short_rest(c, game.tables, rng)
+        elif c.hunger >= 80 or c.thirst >= 85:
+            notes.append(f"<warn>{c.name.split()[0]} is too {'hungry' if c.hunger >= 80 else 'thirsty'} to rest "
+                         f"properly.</> Only a short rest's worth of good came of it.")
+            notes += progression.short_rest(c, game.tables, rng)
+        else:
+            notes += progression.long_rest(c, game.tables, rng)
+        if kind == "long":
+            notes += body.sleep_recovery(c)
+        body.clamp_hp(c)
     return notes

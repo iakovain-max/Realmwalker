@@ -83,7 +83,7 @@ def roll_encounter(game, minutes: float) -> PendingEncounter | None:
     """Maybe something finds the party while it travels or camps."""
     w = game.world
     p = game.player
-    if w.settlement_at(p.x, p.y) is not None:
+    if w.settlement_at(p.x, p.y) is not None or game.over is not None or not any(c.alive for c in game.party):
         return None
     danger = int(w.danger[p.x, p.y])
     night = game.light < 0.5

@@ -26,6 +26,8 @@ class WorldMapScreen(Screen):
         self.cursor = (p.x, p.y)
         self.travel_mode = travel_mode
         self.fit = False  # False: 1 tile per cell; True: squeeze the whole world onto the screen
+        self.show_weather = False
+        self._weather: tuple[int, tuple] | None = None
         self.view = (0, 0, 1, 0, 0)  # x0, y0 of map on screen, scale, first tile x, first tile y
 
     # ------------------------------------------------------------------ drawing
@@ -57,6 +59,8 @@ class WorldMapScreen(Screen):
             padded[: world.width, : world.height] = p.explored
             blocks = padded.reshape(cols, scale, rows, scale).any(axis=(1, 3))
             explored = blocks[x0:x0 + vw, y0:y0 + vh]
+        if self.show_weather:
+            self._tint_weather(grid, fg, bg, explored)
         ch[~explored] = ord(" ")
         bg[~explored] = UNSEEN_BG
         stypes = self.game.tables.sites["settlement_types"]
@@ -82,6 +86,25 @@ class WorldMapScreen(Screen):
         canvas.hit(ox, oy, vw, vh)
         self._side(canvas, mw, 0, SIDE_W, h)
 
+    def _tint_weather(self, grid, fg, bg, explored) -> None:
+        """Rain shows blue, snow white and heavy cloud grey, over the land you have seen."""
+        from realmwalker.world.weather import weather_grid
+
+        game = self.game
+        key = game.world.time // 30
+        if self._weather is None or self._weather[0] != key:
+            self._weather = (key, weather_grid(game.world, game.tables, game.world.time))
+        precip, temp, cloud = (a[grid] for a in self._weather[1])
+        bgf = bg.astype(np.float32)
+        rain = (precip > 0) & (temp > 0.5)
+        snow = (precip > 0) & (temp <= 0.5)
+        grey = (cloud > 0.7) & (precip <= 0)
+        for mask, color, strength in ((grey, (70, 70, 78), 0.35), (rain, (40, 70, 150), 0.45), (snow, (200, 200, 215), 0.5)):
+            if mask.any():
+                k = (strength + 0.4 * precip[mask])[:, None] if mask is not grey else strength
+                bgf[mask] = bgf[mask] * (1 - k) + np.array(color, dtype=np.float32) * k
+        bg[:] = bgf.astype(np.uint8)
+
     def _side(self, canvas: Canvas, x: int, y: int, w: int, h: int) -> None:
         title = "Travel: choose where" if self.travel_mode else self.title
         canvas.frame(x, y, w, h, title, double=True)
@@ -95,8 +118,9 @@ class WorldMapScreen(Screen):
         if plan is not None:
             canvas.wrapped(ix, row, f"<good>Journey:</> {self.game.describe_plan(plan)}.", iw, max_lines=3)
             row += 3
-        keys = [("arrows", "move the cursor"), ("Shift+arrows", "move faster"), ("Enter", "travel to the cursor"),
-                ("z", "zoom out / in"), ("@", "back to yourself"), ("Esc", "close")]
+        keys = [("arrows", "move the cursor"), ("Shift+arrows", "move faster"), ("Enter", "travel there"),
+                ("z", "zoom out / in"), ("w", "weather: " + ("shown" if self.show_weather else "hidden")),
+                ("@", "back to yourself"), ("Esc", "close")]
         ky = h - len(keys) - 1
         for key, what in keys:
             canvas.markup(ix, ky, f"<loot>{key:>12}</> <dim>{what}</>", max_width=iw)
@@ -123,6 +147,8 @@ class WorldMapScreen(Screen):
             self._travel()
         elif ev.key in ("z", "Z"):
             self.fit = not self.fit
+        elif ev.key == "w":
+            self.show_weather = not self.show_weather
         elif ev.key == "@":
             self.cursor = (self.game.player.x, self.game.player.y)
         elif ev.key in ("escape", "m", "t"):
@@ -147,7 +173,7 @@ class WorldMapScreen(Screen):
         return False
 
     def autoplay_keys(self) -> list[KeyEvent]:
-        return [KeyEvent(k) for k in ("up", "down", "left", "right", "z", "@", "escape")] + [KeyEvent("enter")]
+        return [KeyEvent(k) for k in ("up", "down", "left", "right", "z", "w", "@", "escape")] + [KeyEvent("enter")]
 
 
 def canvas_width_guard(app) -> int:

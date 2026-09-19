@@ -65,6 +65,21 @@ class Character:
     wounds: list[Wound] = field(default_factory=list)
     kills: dict[str, int] = field(default_factory=dict)
     deeds: list[str] = field(default_factory=list)
+    # The body over time (rules/body.py and rules/health.py). 0 = fine for the needs.
+    hunger: float = 0.0
+    thirst: float = 0.0
+    fatigue: float = 0.0
+    dirt: float = 0.0
+    body_heat: float = 0.0  # -100 freezing .. 0 comfortable .. +100 heatstroke
+    wet: float = 0.0
+    exhaustion: int = 0  # 5e exhaustion, 0..6
+    strain: float = 0.0  # builds towards the next level of exhaustion
+    hurt_carry: float = 0.0  # fractions of hit points lost to cold, heat or sickness
+    blood: float = 100.0  # 100 = all of it
+    intoxication: float = 0.0
+    diseases: list[dict] = field(default_factory=list)
+    injuries: list[str] = field(default_factory=list)  # lasting injuries (scar, limp, lost eye...)
+    addictions: dict[str, float] = field(default_factory=dict)
     next_uid: int = 1
     is_player: bool = True
     alive: bool = True

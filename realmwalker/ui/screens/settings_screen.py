@@ -42,6 +42,9 @@ class SettingsScreen(Screen):
                    "The game also saves on important events and when you quit. There is no manual reload."),
             Option("AI debug log", lambda: _onoff(s.ai_debug_log), lambda d: app.set_ai_debug_log(not s.ai_debug_log),
                    "Write every AI request and reply to logs/ai_debug.log. Useful when tuning prompts."),
+            Option("Eat and drink by yourself", lambda: _onoff(s.auto_supplies), lambda d: self._toggle("auto_supplies"),
+                   "Take meals and drinks from the pack when hungry or thirsty. Off: you must eat and drink "
+                   "from the inventory yourself (Enter on food or a waterskin)."),
         ]
 
     def _toggle(self, name: str) -> None:

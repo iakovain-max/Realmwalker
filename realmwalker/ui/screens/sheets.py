@@ -77,6 +77,22 @@ def item_details(game: GameState, item: Item) -> str:
         spoil = spoilage_text(game, item)
         if spoil:
             lines.append(f"Keeps: {spoil}")
+    elif cat == "drink":
+        drink = d["drink"]
+        lines.append("Strong drink." if drink.get("alcohol", 0) >= 3 else "Quenches thirst" +
+                     (", and goes to the head." if drink.get("alcohol") else "."))
+    if d.get("container"):
+        from realmwalker.game.survival import WATER_NAMES
+
+        cap = d["container"].get("liquid", 0) * item.qty
+        if item.fill:
+            risky = item.fill_kind not in ("clean", "boiled")
+            warn = " <warn>(not safe unboiled)</>" if risky else ""
+            lines.append(f"Holds {cap:g} pints: {item.fill:g} of {WATER_NAMES.get(item.fill_kind, 'water')}{warn}.")
+        else:
+            lines.append(f"Holds {cap:g} pints. Empty. Fill it at a well, river or lake (w).")
+    if d.get("bedding"):
+        lines.append(f"Bedding: {d['bedding']} warmth while you sleep.")
     if d.get("light"):
         lines.append(f"Gives light for about {d['light']['hours']} hour(s).")
     weight = t.weight(item)
@@ -258,6 +274,76 @@ class InventoryScreen(Screen):
         return items[self.selected]
 
     # ------------------------------------------------------------------ actions
+    def action_name(self, it: Item | None) -> str:
+        if it is None:
+            return "Use"
+        d = self.game.tables.items.get(it.def_id)
+        if d.get("food"):
+            return "Eat"
+        if d.get("drink") or (d.get("container") and it.fill > 0):
+            return "Drink"
+        if self.game.tables.items.slots_for(it) or self.char.slot_of(it.uid):
+            return "Remove" if self.char.slot_of(it.uid) else "Wear / wield"
+        return "Use"
+
+    def use(self) -> None:
+        """Enter: wear or take off, eat, or drink, depending on the item."""
+        it = self.current()
+        if it is None:
+            return
+        name = self.action_name(it)
+        if name == "Eat":
+            self.eat(it)
+        elif name == "Drink":
+            self.drink(it)
+        elif name == "Use":
+            self.game.say("You can't use that here. (Bandages and kits are used on the Health screen, h.)", "system")
+        else:
+            self.toggle_equip()
+
+    def eat(self, it: Item) -> None:
+        from realmwalker.game.survival import eat_item
+
+        c = self.char
+        if c.hunger < 5:
+            self.game.say(f"{c.name.split()[0]} is not hungry.", "system")
+            return
+        food = self.game.tables.items.get(it.def_id)["food"]
+        if food.get("needs_cooking") and not (self.game.camp and self.game.camp.fire):
+            self.game.say("That needs cooking over a fire first (make camp with a fire: r).", "warn")
+            return
+        self.game.say(eat_item(self.game, c, it), "info")
+        self.game.pass_time(10)
+        self.game.dirty = True
+
+    def drink(self, it: Item) -> None:
+        from realmwalker.game import survival
+        from realmwalker.rules import body
+
+        c = self.char
+        d = self.game.tables.items.get(it.def_id)
+        if d.get("drink"):
+            from realmwalker.rules.inventory import remove_item
+
+            drink = d["drink"]
+            remove_item(c, it.uid, 1)
+            body.drink(c, float(drink.get("water", 0.5)) * 2, float(drink.get("alcohol", 0)))
+            self.game.say(f"{c.name.split()[0]} drinks the {d['name']}.", "info")
+        else:
+            if c.thirst < 3:
+                self.game.say(f"{c.name.split()[0]} is not thirsty.", "system")
+                return
+            pints = min(it.fill, max(1.0, round(c.thirst / body.PINT_POINTS)))
+            kind = it.fill_kind
+            it.fill = round(it.fill - pints, 2)
+            if it.fill <= 0:
+                it.fill, it.fill_kind = 0.0, ""
+            survival.drink_from(self.game, c, kind, pints, "the waterskin")
+            self.game.say(f"{c.name.split()[0]} drinks {pints:g} pint{'s' if pints != 1 else ''} of "
+                          f"{survival.WATER_NAMES.get(kind, 'water')}.", "info")
+        self.game.pass_time(2)
+        self.game.dirty = True
+
     def toggle_equip(self) -> None:
         it = self.current()
         if it is None:
@@ -335,7 +421,7 @@ class InventoryScreen(Screen):
         if cur is not None:
             canvas.wrapped(dx + 1, 5, item_details(g, cur), w - dx - 3, max_lines=h - 12)
         canvas.markup(2, h - 4, f"{load_line(s)} · <dim>Money:</> <loot>{money_text(c.money)}</>", max_width=w - 4)
-        bx = canvas.button(2, h - 3, "Wear / wield / remove", self.toggle_equip, hotkey="Enter")
+        bx = canvas.button(2, h - 3, self.action_name(cur), self.use, hotkey="Enter")
         bx = canvas.button(bx + 3, h - 3, "Drop", self.drop, hotkey="d")
         bx = canvas.button(bx + 3, h - 3, "Drop one", lambda: self.drop(False), hotkey="D")
         bx = canvas.button(bx + 3, h - 3, "Equipment", lambda: self.app.replace(EquipmentScreen(self.app, g, self.index)), hotkey="e")
@@ -348,7 +434,7 @@ class InventoryScreen(Screen):
 
     def _click(self, idx: int) -> None:
         if idx == self.selected:
-            self.toggle_equip()
+            self.use()
         self.selected = idx
 
     def _select_and(self, idx: int, fn) -> None:
@@ -372,7 +458,7 @@ class InventoryScreen(Screen):
         elif ev.key == "s":
             self.sort = (self.sort + 1) % len(SORTS)
         elif ev.key == "enter":
-            self.toggle_equip()
+            self.use()
         elif ev.key == "d":
             self.drop(True)
         elif ev.key == "D":

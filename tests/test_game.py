@@ -88,6 +88,7 @@ def test_doors_open_when_walked_into(game, tables):
 
 def test_travel_plan_and_journey(game, monkeypatch):
     monkeypatch.setattr("realmwalker.game.encounters.encounter_chance", lambda *a: 0.0)
+    game.survival = False  # a journey of many days; hunger and thirst are tested elsewhere
     world = game.world
     p = game.player
     target = max((s for s in world.settlements if s.kind != "hamlet"), key=lambda s: abs(s.x - p.x) + abs(s.y - p.y))
@@ -100,7 +101,8 @@ def test_travel_plan_and_journey(game, monkeypatch):
         steps += 1
         assert steps < 5000
     assert (p.x, p.y) == (target.x, target.y)
-    assert world.time - t0 == plan.minutes
+    # Rain, snow and storms slow the walk; the plan is the estimate for fair weather.
+    assert plan.minutes <= world.time - t0 <= plan.minutes * 2
     assert "day" in game.describe_plan(plan) or "hour" in game.describe_plan(plan)
 
 

@@ -38,7 +38,7 @@ from realmwalker.world.tables import Tables
 
 log = logging.getLogger("realmwalker.save")
 
-FORMAT_VERSION = 2
+FORMAT_VERSION = 3
 WORLD_FILE = "world.zip"
 CHARACTER_FILE = "character.zip"
 
@@ -50,8 +50,14 @@ def _v1_to_v2(kind: str, body: dict) -> dict:
     return body
 
 
+def _v2_to_v3(kind: str, body: dict) -> dict:
+    """Format 3 added the body over time (needs, body heat, exhaustion, blood, diseases, injuries) and
+    waterskin contents (M4). Missing fields take their defaults when characters and items load."""
+    return body
+
+
 # format number -> function upgrading a loaded JSON body (of a given kind) to the next format.
-MIGRATIONS: dict[int, Callable[[str, dict], dict]] = {1: _v1_to_v2}
+MIGRATIONS: dict[int, Callable[[str, dict], dict]] = {1: _v1_to_v2, 2: _v2_to_v3}
 
 
 class SaveError(Exception):

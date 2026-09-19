@@ -45,6 +45,10 @@ def sight_radius(game, lm) -> tuple[int, bool]:
         radius = max(radius, dark_sight)
     if woodland_radius:
         radius = min(radius, woodland_radius) if radius else woodland_radius
+    visibility = game.weather.visibility if game.party else 1.0
+    if visibility < 0.99 and lm.building_at(p.lx, p.ly) is None:
+        weather_radius = max(3, int(40 * visibility))
+        radius = min(radius, weather_radius) if radius else weather_radius
     return radius, woodland_radius is not None
 
 

@@ -33,13 +33,15 @@ class Item:
     name: str = ""  # custom name for unique items
     made_at: int = 0  # world minute it was made or caught (food spoilage)
     tags: list[str] = field(default_factory=list)  # e.g. "stolen"
+    fill: float = 0.0  # containers: pints held
+    fill_kind: str = ""  # containers: "clean", "boiled", "river", "marsh"
 
     def to_dict(self) -> dict:
         return asdict(self)
 
     @classmethod
     def from_dict(cls, d: dict) -> Item:
-        return cls(**{k: d[k] for k in ("uid", "def_id", "qty", "quality", "condition", "name", "made_at", "tags") if k in d})
+        return cls(**{k: d[k] for k in cls.__dataclass_fields__ if k in d})
 
 
 class ItemTable:
@@ -71,7 +73,7 @@ class ItemTable:
         return self.get(item.def_id)["category"]
 
     def weight(self, item: Item) -> float:
-        return float(self.get(item.def_id)["weight"]) * item.qty
+        return float(self.get(item.def_id)["weight"]) * item.qty + item.fill  # a pint of water weighs a pound
 
     def unit_value(self, item: Item) -> int:
         d = self.get(item.def_id)

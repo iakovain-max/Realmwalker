@@ -11,7 +11,7 @@ import math
 from realmwalker.core import textgen
 from realmwalker.core.rng import RNG
 from realmwalker.rules.character import ABILITIES, Character, modifier
-from realmwalker.rules.inventory import add_item, equip_everything_sensible
+from realmwalker.rules.inventory import add_item, equip_everything_sensible, fill_containers
 
 SEXES = ("male", "female")
 # Default skill picks, most generally useful first.
@@ -280,6 +280,7 @@ class CharacterBuilder:
         for def_id, qty in t.items.starting_packs.get("everyone", []) + kit["items"] + bg["items"]:
             add_item(char, items, def_id, int(qty), made_at=world_time)
         equip_everything_sensible(char, items)
+        fill_containers(char, items, "clean")
         from realmwalker.rules.spells import init_spells
 
         init_spells(char, t)

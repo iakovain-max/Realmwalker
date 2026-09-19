@@ -67,6 +67,10 @@ def smoke_script():
     shots[frame - 4] = "inventory"
     press("escape", "e")
     shots[frame - 4] = "equipment"
+    press("escape", "h")
+    shots[frame - 4] = "health"
+    press("escape", "m", "w")
+    shots[frame - 4] = "weather"
     press("escape", ">")
     press("left", "left", "left", "up", "up", gap=3)
     shots[frame - 1] = "local"

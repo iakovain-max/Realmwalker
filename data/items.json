@@ -90,8 +90,8 @@
     "sandals": {"name": "sandals", "category": "clothing", "slot": "feet", "weight": 1, "value": 20, "material": "leather", "warmth": 0, "wind": 0, "water": 0, "social": 0},
 
     "backpack": {"name": "backpack", "category": "gear", "weight": 5, "value": 200, "material": "leather"},
-    "bedroll": {"name": "bedroll", "category": "gear", "weight": 7, "value": 100, "material": "wool", "description": "A rolled blanket and ground-sheet. Keeps the cold earth off you."},
-    "blanket": {"name": "blanket", "category": "gear", "weight": 3, "value": 50, "material": "wool"},
+    "bedroll": {"name": "bedroll", "category": "gear", "weight": 7, "value": 100, "material": "wool", "bedding": 6, "description": "A rolled blanket and ground-sheet. Keeps the cold earth off you."},
+    "blanket": {"name": "blanket", "category": "gear", "weight": 3, "value": 50, "material": "wool", "bedding": 3},
     "candle": {"name": "tallow candle", "category": "gear", "weight": 0.1, "value": 1, "material": "wax", "stack": true, "light": {"radius": 2, "hours": 1}},
     "torch": {"name": "torch", "category": "gear", "weight": 1, "value": 1, "material": "wood", "stack": true, "light": {"radius": 6, "hours": 1}, "description": "Pitch-soaked rags on a stick. Burns about an hour."},
     "lantern": {"name": "hooded lantern", "category": "gear", "weight": 2, "value": 500, "material": "iron", "light": {"radius": 8, "hours": 6, "fuel": "oil_flask"}},

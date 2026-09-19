@@ -23,8 +23,39 @@ def add_item(char: Character, items: ItemTable, def_id: str, qty: int = 1, *, qu
 
 def add_existing(char: Character, items: ItemTable, item: Item) -> Item:
     """Take an item that came from somewhere else (the ground, another character)."""
-    return add_item(char, items, item.def_id, item.qty, quality=item.quality, condition=item.condition,
-                    made_at=item.made_at, name=item.name, tags=item.tags)
+    it = add_item(char, items, item.def_id, item.qty, quality=item.quality, condition=item.condition,
+                  made_at=item.made_at, name=item.name, tags=item.tags)
+    if item.fill and it.qty == 1:
+        it.fill, it.fill_kind = item.fill, item.fill_kind
+    return it
+
+
+def fill_containers(char: Character, items: ItemTable, kind: str = "clean") -> float:
+    """Top up every waterskin (and other liquid containers). Returns pints added."""
+    added = 0.0
+    for it in char.inventory:
+        cap = container_capacity(items, it)
+        if cap and it.fill < cap:
+            if it.fill > 0 and it.fill_kind != kind:
+                kind_now = worse_water(it.fill_kind, kind)
+            else:
+                kind_now = kind
+            added += cap - it.fill
+            it.fill = float(cap)
+            it.fill_kind = kind_now
+    return added
+
+
+def container_capacity(items: ItemTable, item: Item) -> float:
+    return float(items.get(item.def_id).get("container", {}).get("liquid", 0)) * item.qty
+
+
+WATER_RISK = {"clean": 0, "boiled": 0, "stream": 1, "river": 2, "lake": 2, "marsh": 3}
+
+
+def worse_water(a: str, b: str) -> str:
+    """Mixing water: the result is as risky as the worst of the two."""
+    return a if WATER_RISK.get(a, 2) >= WATER_RISK.get(b, 2) else b
 
 
 def remove_item(char: Character, uid: int, qty: int | None = None) -> Item | None:
