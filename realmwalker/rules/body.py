@@ -248,7 +248,13 @@ def hp_cap(char: Character) -> int:
 
 
 def first(char: Character) -> str:
-    return char.name.split()[0]
+    """What to call them in a sentence: their first name, but not an article ("The Wanderer")."""
+    parts = char.name.split()
+    if not parts:
+        return char.name
+    if parts[0].lower() in ("the", "a", "an", "old", "young") and len(parts) > 1:
+        return char.name
+    return parts[0]
 
 
 def snapshot(char: Character) -> dict:

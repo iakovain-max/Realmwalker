@@ -1,0 +1,241 @@
+"""Balance harness (M9): measure the design's balance targets instead of guessing at them.
+
+    .venv\\Scripts\\python.exe tools\\balance.py            # every check, 200 runs each
+    .venv\\Scripts\\python.exe tools\\balance.py --runs 50  # quicker
+    .venv\\Scripts\\python.exe tools\\balance.py --only fights
+
+The design (docs/DESIGN.md, section 16) asks for:
+  - at level 1, two wolves or three bandits are a real threat;
+  - a winter night without shelter or fire is dangerous;
+  - an untreated serious wound is genuinely risky;
+  - a careful player can still survive and prosper.
+
+Everything here is headless and seeded, so the numbers are repeatable. `tests/test_balance.py` asserts that
+they stay inside sensible bands; this script prints them, for tuning.
+"""
+
+from __future__ import annotations
+
+import argparse
+import copy
+import sys
+from pathlib import Path
+
+if __package__ is None:  # running as a script
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from realmwalker.core.rng import RNG
+from realmwalker.data.registry import DataRegistry
+from realmwalker.paths import Paths
+from realmwalker.rules.creation import CharacterBuilder
+from realmwalker.rules.combat import BACK, FOE, PARTY, Battle, Env
+from realmwalker.rules.creatures import spawn_group
+from realmwalker.world.tables import Tables
+
+PARTY_CLASSES = ("fighter", "rogue", "cleric", "wizard")
+FIGHT_CASES = [("wolf_pack", 2), ("bandits", 3), ("goblins", 3), ("wolf_pack", 1), ("bandits", 1)]
+
+
+def load_tables() -> Tables:
+    data, errors = DataRegistry.load(Paths().data)
+    if errors:
+        raise SystemExit("\n".join(errors))
+    return Tables(data)
+
+
+def make_hero(tables, cls: str, level: int, seed: int):
+    b = CharacterBuilder(tables, RNG(seed, f"balance/{cls}"))
+    b.set_race("human")
+    b.set_class(cls)
+    b.set_background("soldier" if cls in ("fighter", "rogue") else "acolyte")
+    c = b.build()
+    if level > 1:
+        from realmwalker.rules.progression import level_up
+
+        for _ in range(level - 1):
+            level_up(c, tables, RNG(seed, "up"), auto=True)
+    return c
+
+
+def fight_once(tables, group: str, size: int, level: int, party_size: int, seed: int) -> dict:
+    """One fight, played by a simple 'hit the weakest thing you can reach' policy."""
+    party = [make_hero(tables, PARTY_CLASSES[i % len(PARTY_CLASSES)], level, seed * 10 + i) for i in range(party_size)]
+    rng = RNG(seed, "balance-fight")
+    foes = spawn_group(tables, group, rng, party_size=party_size)[:size] if size else \
+        spawn_group(tables, group, rng, party_size=party_size)
+    b = Battle(tables, party, foes, Env(), rng)
+    b.start("A balance check.")
+    for _ in range(3000):
+        if b.outcome is not None:
+            break
+        if b.step():
+            continue
+        f = b.pending_party()
+        if f is None:
+            break
+        for opt in b.attack_options(f):
+            targets = b.targets_for(f, opt.kind, opt.reach)
+            if opt.available and targets and (not opt.is_melee or b.can_melee(f, opt)[0]):
+                b.do_attack(f, opt, min(targets, key=lambda t: t.hp))
+                break
+        else:
+            if f.rank == BACK:
+                b.do_change_rank(f)
+            else:
+                b.do_dodge(f)
+    result = b.result()
+    ours = b.side(PARTY)
+    hurt = [f for f in ours if f.hp <= f.max_hp // 3]
+    return {
+        "outcome": result.outcome,
+        "party_dead": len(result.party_dead),
+        "wipe": all(not c.alive for c in party),
+        "down": sum(1 for f in ours if f.state in ("down", "dead")),
+        "hurt": len(hurt),
+        "hp_left": sum(max(0, f.hp) for f in ours) / max(1, sum(f.max_hp for f in ours)),
+    }
+
+
+def fights(tables, runs: int) -> list[str]:
+    out = []
+    for group, size in FIGHT_CASES:
+        for party_size in (1, 3):
+            for level in (1, 3):
+                rows = [fight_once(tables, group, size, level, party_size, seed) for seed in range(runs)]
+                won = sum(1 for r in rows if r["outcome"] in ("victory", "parley"))
+                died = sum(1 for r in rows if r["party_dead"] or r["wipe"])
+                downed = sum(1 for r in rows if r["down"])
+                hp = sum(r["hp_left"] for r in rows) / len(rows)
+                out.append(f"  {group} x{size or '?'} vs {party_size} at level {level}: "
+                           f"won {100 * won // len(rows)}%, someone down {100 * downed // len(rows)}%, "
+                           f"someone dead {100 * died // len(rows)}%, hit points left {hp:.0%}")
+    return out
+
+
+# ---------------------------------------------------------------------------- the body
+def wild_spot(world, tables, target: float = -5.0):
+    """A tile out in the wilds at about this temperature: no roof, no town, no help."""
+    import numpy as np
+
+    temp = world.temperature.astype(float)
+    score = np.abs(temp - target)
+    for s in world.settlements:
+        score[max(0, s.x - 2): s.x + 3, max(0, s.y - 2): s.y + 3] = 10**6
+    passable = tables.biomes.passable[world.biome]
+    score[~passable] = 10**6
+    score[world.biome_ids.index("high_mountains") == world.biome] = 10**6
+    x, y = np.unravel_index(int(np.argmin(score)), score.shape)
+    return int(x), int(y)
+
+
+def winter_night(tables, runs: int, *, fire: bool, tent: bool, clothes: str = "warm") -> dict:
+    """A night outdoors in deep winter, asleep, far from any roof. How many wake up?"""
+    from realmwalker.game.state import new_game
+    from realmwalker.rules.inventory import add_item, equip, remove_item
+    from realmwalker.world.generator import WorldGenerator, WorldOptions
+
+    world = WorldGenerator(WorldOptions("Coldland", 7, "small"), tables).generate()
+    spot = wild_spot(world, tables)
+    winter = next((i for i, day in enumerate(range(0, tables.calendar.days_per_year))
+                   if tables.calendar.at(day * 1440).season == "winter"), 0)
+    dead = hurt = cold = 0
+    for seed in range(runs):
+        game = new_game(copy.deepcopy(world), tables)
+        c = game.leader
+        game.player.x, game.player.y = spot
+        if clothes == "poor":
+            for it in list(c.inventory):
+                if tables.items.get(it.def_id)["category"] == "clothing":
+                    remove_item(c, it.uid)
+        else:
+            for item in ("wool_cloak", "wool_tunic", "wool_trousers", "boots", "wool_gloves"):
+                if item in tables.items:
+                    it = add_item(c, tables.items, item)
+                    if it is not None:
+                        equip(c, tables.items, it.uid)
+        game.world.time = (winter + 20) * 1440 + 21 * 60  # deep winter, late evening
+        if fire or tent:
+            from realmwalker.game.camp import Camp
+
+            p = game.player
+            game.camp = Camp(p.x, p.y, p.local_key, p.lx, p.ly, since=game.world.time, fire=fire, tent=tent)
+        game.survival = True
+        game.pass_time(8 * 60, "sleep")
+        if not c.alive or game.over is not None:
+            dead += 1
+        elif c.exhaustion >= 2:
+            hurt += 1
+        elif c.body_heat <= -40:
+            cold += 1
+    return {"dead": dead, "hurt": hurt, "cold": cold, "runs": runs}
+
+
+def untreated_wound(tables, runs: int, *, treat: bool) -> dict:
+    """A serious, dirty wound, left alone (or bound and cleaned), for a week of resting indoors with food
+    and water (so that what is measured is the wound, and nothing else)."""
+    from realmwalker.game.state import new_game
+    from realmwalker.rules.wounds import make_wound
+    from realmwalker.world.generator import WorldGenerator, WorldOptions
+
+    world = WorldGenerator(WorldOptions("Woundland", 3, "small"), tables).generate()
+    dead = sick = fine = 0
+    for seed in range(runs):
+        game = new_game(copy.deepcopy(world), tables)
+        game.survival = True
+        c = game.leader
+        rng = RNG(seed, "wound")
+        wound = make_wound("torso", "slashing", 2, rng, now=game.world.time)
+        if treat:
+            wound.bandaged = True
+            wound.cleaned = True
+        c.wounds.append(wound)
+        c.hp = max(1, c.max_hp // 2)
+        for _ in range(7):  # a week of resting days and sleeping nights, fed and watered
+            for minutes, doing in ((16 * 60, "rest"), (8 * 60, "sleep")):
+                c.hunger = min(c.hunger, 20.0)
+                c.thirst = min(c.thirst, 20.0)
+                c.body_heat = max(c.body_heat, 0.0)
+                game.pass_time(minutes, doing)
+                if not c.alive or game.over is not None:
+                    break
+            if not c.alive or game.over is not None:
+                break
+        if not c.alive or game.over is not None:
+            dead += 1
+        elif any(w.infection > 0 for w in c.wounds) or c.diseases:
+            sick += 1
+        else:
+            fine += 1
+    return {"dead": dead, "sick": sick, "fine": fine, "runs": runs}
+
+
+def main(argv=None) -> int:
+    ap = argparse.ArgumentParser(description="Balance checks for Realmwalker")
+    ap.add_argument("--runs", type=int, default=200)
+    ap.add_argument("--only", choices=["fights", "cold", "wounds"], default=None)
+    args = ap.parse_args(argv)
+    tables = load_tables()
+    if args.only in (None, "fights"):
+        print("Fights (the policy is simple: hit the weakest thing you can reach)")
+        for line in fights(tables, args.runs):
+            print(line)
+    if args.only in (None, "cold"):
+        print("A winter night in the open, asleep, 8 hours")
+        for label, kw in (("no fire, no tent", {"fire": False, "tent": False}),
+                          ("a fire", {"fire": True, "tent": False}),
+                          ("fire and tent", {"fire": True, "tent": True}),
+                          ("poor clothes, no fire", {"fire": False, "tent": False, "clothes": "poor"})):
+            r = winter_night(tables, max(10, args.runs // 10), **kw)
+            print(f"  {label}: died {100 * r['dead'] // r['runs']}%, exhausted {100 * r['hurt'] // r['runs']}%, "
+                  f"badly chilled {100 * r['cold'] // r['runs']}%")
+    if args.only in (None, "wounds"):
+        print("A serious, dirty wound for a week")
+        for label, treat in (("untreated", False), ("bandaged and cleaned", True)):
+            r = untreated_wound(tables, max(10, args.runs // 10), treat=treat)
+            print(f"  {label}: died {100 * r['dead'] // r['runs']}%, still sick {100 * r['sick'] // r['runs']}%, "
+                  f"well {100 * r['fine'] // r['runs']}%")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

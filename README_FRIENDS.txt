@@ -9,11 +9,36 @@ travel, trade, fight, scheme, survive... and eventually die. The world goes on.
 For adults (18+): violence, cruelty and grim themes.
 
 
+WHAT YOU CAN DO
+---------------
+* Travel a generated world of kingdoms, clans, free cities, tribes and outlaws,
+  with 250 years of its own history behind it and politics that keep moving
+  while you play: wars, plagues, sieges, new rulers, gangs rising and hanging.
+* Make a character (eight short steps, Enter through anything you don't care
+  about), then live: walk, camp, cook, hunt, trade, haggle, work for a day's pay.
+* Stay alive: hunger, thirst, cold, heat, exhaustion, wounds that bleed and
+  fester, sickness, and treatment that matters (bandage, clean, stitch, splint).
+* Fight in rank-based D&D 5e combat, with wounds, morale, surrender and prisoners.
+* Talk to everyone. They have names, trades, memories and opinions of you.
+* Hire companions, pay them, keep them loyal (or don't), and command them in a fight.
+* Take on work: bounties, lairs to clear, beasts to hunt, letters to carry,
+  heirlooms to find, captives to free, debts to collect, people going missing.
+  Press J for your journal. Not every job is what you were told it was.
+* Go underground: cellars, crypts, hideouts, caves and barrows, with traps,
+  locked doors, secret rooms, chests, and something waiting at the bottom.
+  Take a torch. Press S to search.
+* Find magic items, learn what they do (or ask a priest), and beware the cursed ones.
+* Kill a dragon, if you think you can. The world will remember who did it.
+* Die. It is permanent. The world keeps your story and goes on without you, and
+  you can begin a new life in the same world (New Character on the title screen).
+
+
 HOW TO PLAY
 -----------
 1. Unzip Realmwalker.zip anywhere (for example your Desktop or Documents).
 2. Open the Realmwalker folder and double-click Realmwalker.exe.
-3. Press F1 in the game for help and all the keys.
+3. Press F1 in the game for help and all the keys (it lists every one).
+4. It saves itself as you play. There is no reload: death is permanent.
 
 You do not need to install Python or anything else.
 

@@ -3,3 +3,4 @@
 *.png binary
 *.ttf binary
 *.ico binary
+README_FRIENDS.txt text eol=crlf
