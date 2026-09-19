@@ -429,6 +429,15 @@ class Battle:
                 f.hp += healed
                 self.say(f"{f.the_name}'s wounds knit closed before your eyes.", "danger")
         f.took_fire = False
+        if f.char and f.state == "fighting" and "stunned" not in f.conditions:
+            from realmwalker.rules import health
+
+            if health.concussed(f.char) and self.rng.chance(0.06):
+                f.conditions["stunned"] = 1
+                self.say(f"{f.the_name}'s sight swims and goes dark for a moment.", "danger")
+            elif health.pain(f.char, self.t) >= 15 and not self._save(f, "con", 10, quiet=True):
+                f.conditions["stunned"] = 1
+                self.say(f"The pain is too much: {f.the_name} can only gasp.", "danger")
         for b in list(f.buffs):
             if "spirit_weapon" in b:
                 targets = [x for x in self.enemies_of(f) if x.rank == FRONT] or self.enemies_of(f)
@@ -509,8 +518,13 @@ class Battle:
                 opt = self._weapon_option(f, s, it, f"throw{it.uid}", thrown=True)
                 opt.name = f"throw {d['name']}"
                 out.append(opt)
-        unarmed_bonus = s.proficiency + s.mod("str")
-        out.append(AttackOption("unarmed", "fists", "melee", unarmed_bonus, str(max(1, 1 + s.mod("str"))), "bludgeoning"))
+        unarmed_bonus = s.proficiency + s.mod("str") + s.attack_condition()
+        fists = AttackOption("unarmed", "fists", "melee", unarmed_bonus, str(max(1, 1 + s.mod("str"))), "bludgeoning")
+        from realmwalker.rules import health
+
+        if health.broken_arm(c, "right") and health.broken_arm(c, "left"):
+            fists.available, fists.reason = False, "both arms are broken"
+        out.append(fists)
         return out
 
     def _weapon_option(self, f: Fighter, s: Sheet, it, key: str, *, two_handed_free: bool = False,
@@ -523,7 +537,7 @@ class Battle:
         ability = "dex" if use_dex else "str"
         prof = s.proficiency if s.proficient_with_weapon(it) else 0
         quality = int(self.t.items.qualities.get(it.quality, {}).get("attack", 0))
-        bonus = s.mod(ability) + prof + quality
+        bonus = s.mod(ability) + prof + quality + s.attack_condition(ranged)
         if ranged and f.char.fighting_style == "archery":
             bonus += 2
         dmg = d["damage"]
@@ -539,6 +553,14 @@ class Battle:
         damage = f"{dmg}{signed_mod(mod)}"
         opt = AttackOption(key, d["name"], "ranged" if ranged else "melee", bonus, damage, d["damage_type"],
                            reach="reach" in props, properties=list(props), item_uid=it.uid)
+        # A broken arm cannot hold a weapon; two-handed weapons need both.
+        from realmwalker.rules import health
+
+        right, left = health.broken_arm(f.char, "right"), health.broken_arm(f.char, "left")
+        if key == "main" and right or key == "off" and left or thrown and right and left:
+            opt.available, opt.reason = False, "that arm is broken"
+        elif "two_handed" in props and (right or left):
+            opt.available, opt.reason = False, "it needs two good arms"
         if "ammunition" in props:
             ammo = d.get("ammo")
             opt.ammo_def = ammo
@@ -588,6 +610,9 @@ class Battle:
         if any(c in att.conditions for c in ("prone", "frightened", "poisoned", "blinded", "restrained")):
             dis = True
             why.append("hampered")
+        if att.char and att.char.exhaustion >= 3:
+            dis = True
+            why.append("exhausted")
         dark = self.env.light < 0.35
         if dark and att.darkvision <= 0 and not (att.side == PARTY and self.env.party_light):
             if not (att.side == FOE and self.env.party_light):
@@ -679,7 +704,7 @@ class Battle:
             if not immune and not self._save(target, "con", int(opt.extra["paralyze_dc"])):
                 target.conditions["stunned"] = 2
                 self.say(f"{target.the_name} goes rigid, paralysed by the touch.", "danger")
-        if opt.extra.get("disease") and target.char:
+        if opt.extra.get("disease") and target.char and self.rng.chance(float(opt.extra.get("disease_chance", 1.0))):
             target.char.conditions.append(f"exposed:{opt.extra['disease']}")
         return True
 
@@ -714,6 +739,8 @@ class Battle:
                      *, quiet: bool = False) -> None:
         amount = dice.roll(expr, self.rng).total
         saved = self._save(target, ability, dc, quiet=quiet)
+        if dtype == "poison" and not saved and target.char and not target.has_trait("poison_resilience"):
+            target.conditions["poisoned"] = 10
         if saved:
             if ability == "dex" and target.char and target.has_trait("evasion"):
                 amount = 0
@@ -1266,7 +1293,7 @@ class Battle:
         up = max(0, (slot_level or level) - level)
         mod = s.mod(spellrules.casting_ability(c, self.t))
         dc = spellrules.save_dc(s, self.t)
-        bonus = spellrules.attack_bonus(s, self.t)
+        bonus = spellrules.attack_bonus(s, self.t) + s.attack_condition()
         mult = spellrules.cantrip_multiplier(c.level) if spell.get("cantrip_scaling") else 1
         kind = spell["kind"]
         self.say(f"{f.the_name} casts <magic>{spell['name']}</>.", "magic")

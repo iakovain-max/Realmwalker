@@ -1,0 +1,12 @@
+{
+  "_comment": "Lasting injuries left by badly healed wounds and some diseases. effects: skills = changes to skill bonuses; attack = to attack rolls; travel = multiplier on journey time; speed = feet; social = how people see you (M5). parts: which wounds can leave it.",
+  "injuries": {
+    "scar": {"name": "a scar", "text": "A pale, puckered line where the wound closed. It aches in the cold.", "parts": ["torso", "left_arm", "right_arm", "left_leg", "right_leg"], "effects": {}},
+    "facial_scar": {"name": "a scarred face", "text": "The face will never be quite what it was. Some look away; some look twice.", "parts": ["head"], "effects": {"skills": {"intimidation": 1, "persuasion": -1}}},
+    "lost_eye": {"name": "a lost eye", "text": "One eye is gone. Distances are hard to judge and the blind side is always there.", "parts": ["head"], "effects": {"skills": {"perception": -3}, "ranged_attack": -1}},
+    "lost_fingers": {"name": "lost fingers", "text": "Two fingers gone from one hand. Fine work is clumsy now.", "parts": ["left_arm", "right_arm"], "effects": {"skills": {"sleight_of_hand": -2}, "attack": -1}},
+    "weak_arm": {"name": "a weak arm", "text": "The bone set crooked. The arm tires fast and never grips quite true.", "parts": ["left_arm", "right_arm"], "effects": {"skills": {"athletics": -2}, "attack": -1}},
+    "limp": {"name": "a limp", "text": "The leg healed short or stiff. Every road is a little longer now.", "parts": ["left_leg", "right_leg"], "effects": {"skills": {"acrobatics": -2, "stealth": -1}, "travel": 1.1, "speed": -5}},
+    "bad_lungs": {"name": "bad lungs", "text": "Since the fever, a cough that never quite goes, and no wind for running.", "parts": [], "effects": {"skills": {"athletics": -1}, "travel": 1.05}}
+  }
+}

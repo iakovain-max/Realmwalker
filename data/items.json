@@ -150,6 +150,9 @@
     "oats": {"name": "bag of oats", "category": "food", "weight": 2, "value": 4, "material": "food", "stack": true, "food": {"nutrition": 1.0, "spoil_days": 180, "state": "dried", "needs_cooking": true}},
     "raw_meat": {"name": "raw meat", "category": "food", "weight": 1, "value": 5, "material": "food", "stack": true, "food": {"nutrition": 0.6, "spoil_days": 2, "state": "fresh", "raw": true}},
     "ale": {"name": "skin of ale", "category": "drink", "weight": 2, "value": 4, "material": "food", "stack": true, "drink": {"water": 0.5, "alcohol": 2}},
+    "spirits": {"name": "flask of spirits", "category": "drink", "weight": 1, "value": 30, "material": "glass", "stack": true, "drink": {"water": 0.1, "alcohol": 6}, "description": "Clear, fierce stuff. Warms the belly, dulls the pain, and cleans a wound better than water."},
+    "poppy_milk": {"name": "vial of poppy milk", "category": "gear", "weight": 0.1, "value": 150, "material": "glass", "stack": true, "use": {"painkiller": true}, "description": "Bitter white syrup. It takes pain away for a night, and some people never stop wanting it."},
+    "healing_herbs": {"name": "bundle of healing herbs", "category": "gear", "weight": 0.2, "value": 5, "material": "herb", "stack": true, "use": {"poultice": true}, "description": "Yarrow, comfrey and woundwort, for poultices against festering."},
     "wine": {"name": "bottle of wine", "category": "drink", "weight": 2, "value": 100, "material": "glass", "stack": true, "drink": {"water": 0.3, "alcohol": 4}},
 
     "wheat": {"name": "sack of wheat", "category": "trade", "weight": 50, "value": 100, "material": "food", "stack": true},
@@ -164,6 +167,6 @@
     "silver_ingot": {"name": "silver ingot", "category": "trade", "weight": 2, "value": 1000, "material": "silver", "stack": true}
   },
   "starting_packs": {
-    "everyone": [["underclothes", 1], ["backpack", 1], ["blanket", 1], ["waterskin", 1], ["tinderbox", 1], ["rations", 2], ["torch", 2]]
+    "everyone": [["underclothes", 1], ["backpack", 1], ["blanket", 1], ["waterskin", 1], ["tinderbox", 1], ["rations", 2], ["torch", 2], ["bandages", 2]]
   }
 }

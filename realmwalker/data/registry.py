@@ -186,6 +186,19 @@ def _check_combat_refs(files: dict[str, Any]) -> list[str]:
             for gid in listed:
                 if gid not in groups:
                     errors.append(f"data/creatures.json: site_inhabitants.{kind} names unknown group '{gid}'.")
+    diseases = files.get("diseases.json", {}).get("diseases", {})
+    injuries = files.get("health.json", {}).get("injuries", {})
+    if data and diseases:
+        for cid, d in data["creatures"].items():
+            if cid.startswith("_"):
+                continue
+            for a in d.get("attacks", []):
+                if a.get("disease") and a["disease"] not in diseases:
+                    errors.append(f"data/creatures.json: {cid} spreads unknown disease '{a['disease']}'.")
+    for did, d in diseases.items():
+        lasting = d.get("lasting") if isinstance(d, dict) else None
+        if lasting and injuries and lasting.get("injury") not in injuries:
+            errors.append(f"data/diseases.json: {did} leaves unknown injury '{lasting.get('injury')}'.")
     spells = files.get("spells.json")
     if spells:
         known = {k for k in spells["spells"] if not k.startswith("_")}

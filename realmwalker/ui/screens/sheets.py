@@ -282,6 +282,8 @@ class InventoryScreen(Screen):
             return "Eat"
         if d.get("drink") or (d.get("container") and it.fill > 0):
             return "Drink"
+        if d.get("use", {}).get("painkiller"):
+            return "Take"
         if self.game.tables.items.slots_for(it) or self.char.slot_of(it.uid):
             return "Remove" if self.char.slot_of(it.uid) else "Wear / wield"
         return "Use"
@@ -296,8 +298,14 @@ class InventoryScreen(Screen):
             self.eat(it)
         elif name == "Drink":
             self.drink(it)
+        elif name == "Take":
+            from realmwalker.game import care
+
+            for msg in care.painkiller(self.game, self.char):
+                self.game.say(msg, "info")
         elif name == "Use":
-            self.game.say("You can't use that here. (Bandages and kits are used on the Health screen, h.)", "system")
+            self.game.say("You can't use that here. (Bandages, herbs and kits are used on the Health screen, h.)",
+                          "system")
         else:
             self.toggle_equip()
 

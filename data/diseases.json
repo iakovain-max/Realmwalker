@@ -1,0 +1,137 @@
+{
+  "_comment": "Diseases. spread: what can give it to you (see rules/health.py for each source). incubation_hours: [min, max] before symptoms; at the end a Constitution save against save_dc throws it off. stages: each lasts 'hours'; effects apply while in the stage (penalty to rolls, multipliers on thirst/hunger/fatigue, strain towards exhaustion per hour, hp lost per day, travel slowdown, pain). Each day of sickness a Constitution save against recovery_dc (plus treatment bonuses) counts towards 'recoveries' needed. After the last stage: 'fatal' diseases kill on a failed save against death_dc, others linger in the last stage. cure: spells that end it at once (before symptoms only, if cure_before_symptoms). immunity: can't catch it again. recurring: chance per month of a relapse.",
+  "diseases": {
+    "dysentery": {
+      "name": "the bloody flux",
+      "text": "Cramps, then the flux: running bowels, blood in them, and a thirst that no water satisfies.",
+      "spread": ["bad_water", "filth"],
+      "incubation_hours": [24, 72], "save_dc": 11,
+      "stages": [
+        {"name": "cramps", "hours": 24, "effects": {"penalty": 1, "thirst": 1.5}},
+        {"name": "the flux", "hours": 72, "effects": {"penalty": 2, "thirst": 2.5, "hunger": 1.3, "strain": 0.5, "travel": 1.2}},
+        {"name": "wasting", "hours": 96, "effects": {"penalty": 3, "thirst": 3.0, "hunger": 1.5, "strain": 1.0, "hp_per_day": 2, "travel": 1.4}}
+      ],
+      "recovery_dc": 12, "recoveries": 2,
+      "treatments": {"rest": 2, "clean_water": 2, "herbs": 2},
+      "cure": ["lesser_restoration"], "fatal": false, "immunity": false
+    },
+    "food_poisoning": {
+      "name": "food poisoning",
+      "text": "Something you ate was bad. The body is trying very hard to get rid of it.",
+      "spread": ["bad_food"],
+      "incubation_hours": [2, 8], "save_dc": 10,
+      "stages": [
+        {"name": "retching", "hours": 18, "effects": {"penalty": 2, "thirst": 2.0, "hunger": 0.3, "travel": 1.3, "pain": 2}}
+      ],
+      "recovery_dc": 8, "recoveries": 1,
+      "treatments": {"rest": 2, "clean_water": 2},
+      "cure": ["lesser_restoration"], "fatal": false, "immunity": false
+    },
+    "wound_fever": {
+      "name": "wound fever",
+      "text": "A festering wound has put poison in the blood. Fever, chills, and a hot red line creeping from the wound.",
+      "spread": ["infection"],
+      "incubation_hours": [0, 0], "save_dc": 0,
+      "stages": [
+        {"name": "fever", "hours": 9999, "effects": {"penalty": 2, "thirst": 1.5, "fatigue": 1.3, "pain": 1}}
+      ],
+      "recovery_dc": 0, "recoveries": 0,
+      "treatments": {},
+      "cure": ["lesser_restoration"], "fatal": false, "immunity": false
+    },
+    "lung_fever": {
+      "name": "lung fever",
+      "text": "Cold, wet and worn out, the chest fills: a wet cough, fever, and every breath a labour.",
+      "spread": ["cold_wet"],
+      "incubation_hours": [12, 48], "save_dc": 12,
+      "stages": [
+        {"name": "a cough", "hours": 48, "effects": {"penalty": 1, "fatigue": 1.3}},
+        {"name": "fever and fluid in the chest", "hours": 96, "effects": {"penalty": 3, "fatigue": 1.6, "strain": 0.6, "travel": 1.3, "pain": 2}},
+        {"name": "drowning on dry land", "hours": 72, "effects": {"penalty": 4, "fatigue": 2.0, "strain": 1.2, "hp_per_day": 3, "travel": 1.6, "pain": 3}}
+      ],
+      "recovery_dc": 13, "recoveries": 2,
+      "treatments": {"rest": 2, "warmth": 3, "herbs": 2},
+      "cure": ["lesser_restoration"], "fatal": true, "death_dc": 12, "immunity": false,
+      "lasting": {"chance": 0.2, "injury": "bad_lungs"}
+    },
+    "marsh_fever": {
+      "name": "marsh fever",
+      "text": "Bad air and biting flies in the wet country. Shaking chills, then a burning fever, then the chills again.",
+      "spread": ["marsh"],
+      "incubation_hours": [168, 336], "save_dc": 11,
+      "stages": [
+        {"name": "chills", "hours": 48, "effects": {"penalty": 2, "fatigue": 1.4, "travel": 1.2}},
+        {"name": "burning fever", "hours": 96, "effects": {"penalty": 3, "thirst": 1.8, "fatigue": 1.6, "strain": 0.4, "travel": 1.4}}
+      ],
+      "recovery_dc": 12, "recoveries": 2,
+      "treatments": {"rest": 2, "herbs": 3},
+      "cure": ["lesser_restoration"], "fatal": false, "immunity": false, "recurring": 0.15
+    },
+    "camp_fever": {
+      "name": "camp fever",
+      "text": "Lice and filth bring it. A spotted rash, a splitting head, a fever that makes the mind wander.",
+      "spread": ["filth"],
+      "incubation_hours": [96, 240], "save_dc": 12,
+      "stages": [
+        {"name": "headache and rash", "hours": 72, "effects": {"penalty": 2, "fatigue": 1.3}},
+        {"name": "high fever", "hours": 120, "effects": {"penalty": 4, "thirst": 1.6, "fatigue": 1.6, "strain": 0.8, "hp_per_day": 1, "travel": 1.5}}
+      ],
+      "recovery_dc": 13, "recoveries": 2,
+      "treatments": {"rest": 2, "clean": 2, "herbs": 2},
+      "cure": ["lesser_restoration"], "fatal": true, "death_dc": 10, "immunity": true
+    },
+    "plague": {
+      "name": "the plague",
+      "text": "Swellings in the armpit and groin, black and hard. Fever. Very many who catch it die of it.",
+      "spread": ["town", "rat_bite"],
+      "incubation_hours": [48, 144], "save_dc": 13,
+      "stages": [
+        {"name": "fever and swellings", "hours": 72, "effects": {"penalty": 3, "thirst": 1.5, "fatigue": 1.5, "strain": 0.8, "pain": 3, "travel": 1.5}},
+        {"name": "the black swellings", "hours": 96, "effects": {"penalty": 5, "thirst": 2.0, "fatigue": 2.0, "strain": 1.5, "hp_per_day": 3, "pain": 5, "travel": 2.0}}
+      ],
+      "recovery_dc": 15, "recoveries": 2,
+      "treatments": {"rest": 2, "herbs": 1},
+      "cure": ["lesser_restoration"], "fatal": true, "death_dc": 14, "immunity": true
+    },
+    "filth_fever": {
+      "name": "filth fever",
+      "text": "From the bite of rats and the muck they live in. Aching muscles, weakness, a slow fever.",
+      "spread": ["rat_bite", "filth"],
+      "incubation_hours": [24, 96], "save_dc": 11,
+      "stages": [
+        {"name": "aching and weak", "hours": 72, "effects": {"penalty": 2, "fatigue": 1.3, "travel": 1.2}},
+        {"name": "fever", "hours": 96, "effects": {"penalty": 3, "thirst": 1.5, "fatigue": 1.5, "strain": 0.5, "travel": 1.3}}
+      ],
+      "recovery_dc": 11, "recoveries": 2,
+      "treatments": {"rest": 2, "herbs": 2, "clean": 1},
+      "cure": ["lesser_restoration"], "fatal": false, "immunity": false
+    },
+    "frothing_sickness": {
+      "name": "the frothing sickness",
+      "text": "From the bite of a sick animal. It waits for weeks. When it shows itself, with fear of water and foam at the mouth, it is already too late.",
+      "spread": ["animal_bite"],
+      "incubation_hours": [240, 720], "save_dc": 0,
+      "stages": [
+        {"name": "fever and fear of water", "hours": 48, "effects": {"penalty": 3, "thirst": 2.0, "strain": 1.0, "pain": 2, "travel": 1.5}},
+        {"name": "madness and foam", "hours": 48, "effects": {"penalty": 6, "strain": 3.0, "hp_per_day": 4, "pain": 4, "travel": 3.0}}
+      ],
+      "recovery_dc": 99, "recoveries": 99,
+      "treatments": {},
+      "cure": ["lesser_restoration"], "cure_before_symptoms": true, "fatal": true, "death_dc": 99, "immunity": false
+    },
+    "grave_rot": {
+      "name": "grave rot",
+      "text": "The touch of the dead. The flesh around the wound goes grey, then black, and the rot spreads.",
+      "spread": ["undead"],
+      "incubation_hours": [12, 36], "save_dc": 12,
+      "stages": [
+        {"name": "grey flesh", "hours": 72, "effects": {"penalty": 2, "pain": 2, "hp_per_day": 1}},
+        {"name": "black rot", "hours": 120, "effects": {"penalty": 3, "pain": 4, "strain": 0.6, "hp_per_day": 3, "travel": 1.3}}
+      ],
+      "recovery_dc": 14, "recoveries": 3,
+      "treatments": {"rest": 1, "herbs": 2, "clean": 2},
+      "cure": ["lesser_restoration"], "fatal": true, "death_dc": 12, "immunity": false,
+      "lasting": {"chance": 0.5, "injury": "scar"}
+    }
+  }
+}

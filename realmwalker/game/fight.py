@@ -87,9 +87,12 @@ def finish_battle(game) -> Aftermath:
         if not actor.creatures and lm is not None and actor in lm.actors:
             lm.actors.remove(actor)
     after = Aftermath(result.outcome, "")
+    from realmwalker.rules import health
+
     # Survivors of the party who were down get back on their feet (or die of their wounds).
     for f in battle.side(PARTY):
         c = f.char
+        health.carry_battle_state(c, f.conditions)
         if f.state != "down":
             continue
         if result.outcome == "fled":

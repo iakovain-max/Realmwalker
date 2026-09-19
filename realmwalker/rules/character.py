@@ -80,6 +80,7 @@ class Character:
     diseases: list[dict] = field(default_factory=list)
     injuries: list[str] = field(default_factory=list)  # lasting injuries (scar, limp, lost eye...)
     addictions: dict[str, float] = field(default_factory=dict)
+    effects: dict[str, float] = field(default_factory=dict)  # timed effects, hours left (poppy, herbal, hangover...)
     next_uid: int = 1
     is_player: bool = True
     alive: bool = True
@@ -152,10 +153,46 @@ class Sheet:
             helm = self.c.equipped_item("helmet")
             if helm is not None:
                 bonus -= int(self.items.get(helm.def_id).get("perception_penalty", 0))
-        return bonus
+        return bonus + self.skill_condition(skill)
+
+    def skill_condition(self, skill: str) -> int:
+        """What the body's state does to a skill: pain, hunger, sickness..., exhaustion (5e disadvantage,
+        counted as -5 like a passive check), concussion for Int and Wis, lasting injuries."""
+        from realmwalker.rules import health
+
+        c = self.c
+        if not (c.wounds or c.injuries or c.diseases or c.exhaustion or c.effects or c.intoxication
+                or c.hunger >= 55 or c.thirst >= 60 or c.fatigue >= 70 or abs(c.body_heat) >= 40 or c.blood < 80):
+            return 0
+        total = health.penalty(c, self.t)
+        if c.exhaustion >= 1:
+            total -= 5
+        if self.rules["skills"][skill]["ability"] in ("int", "wis") and health.concussed(c):
+            total -= 5
+        total += health.injury_effects(c, self.t)["skills"].get(skill, 0)
+        return total
 
     def save_bonus(self, ability: str) -> int:
-        return self.mod(ability) + (self.proficiency if ability in self.c.saves else 0)
+        bonus = self.mod(ability) + (self.proficiency if ability in self.c.saves else 0)
+        c = self.c
+        if c.wounds or c.diseases or c.exhaustion or c.effects or c.intoxication or c.hunger >= 55 or c.thirst >= 60                 or c.fatigue >= 70 or abs(c.body_heat) >= 40 or c.blood < 80:
+            from realmwalker.rules import health
+
+            bonus += health.penalty(c, self.t)
+            if c.exhaustion >= 3:
+                bonus -= 5
+        return bonus
+
+    def attack_condition(self, ranged: bool = False) -> int:
+        """Pain, hunger, sickness and old injuries on attack rolls (exhaustion 3+ is true disadvantage)."""
+        c = self.c
+        if not (c.wounds or c.injuries or c.diseases or c.effects or c.intoxication or c.hunger >= 55
+                or c.thirst >= 60 or c.fatigue >= 70 or abs(c.body_heat) >= 40 or c.blood < 80):
+            return 0
+        from realmwalker.rules import health
+
+        inj = health.injury_effects(c, self.t)
+        return health.penalty(c, self.t) + inj["attack"] + (inj["ranged_attack"] if ranged else 0)
 
     @property
     def initiative(self) -> int:
@@ -332,6 +369,10 @@ class Sheet:
 
     def speed(self) -> int:
         speed = int(self.race["speed"])
+        if self.c.injuries:
+            from realmwalker.rules import health
+
+            speed += health.injury_effects(self.c, self.t)["speed"]
         if self.armor_too_heavy():
             speed -= 10
         enc = self.encumbrance()

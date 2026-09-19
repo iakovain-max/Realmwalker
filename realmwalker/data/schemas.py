@@ -262,7 +262,7 @@ ATTACK = Obj(
                                     "radiant", "force", "thunder", "poison", "acid", "psychic"]),
         "item": Str(max_len=40, optional=True), "wound": Str(max_len=20, optional=True), "reach": Bool(optional=True),
         "trip_dc": Int(min=1, max=30, optional=True), "paralyze_dc": Int(min=1, max=30, optional=True),
-        "poison": Any_(optional=True), "disease": Str(max_len=40, optional=True),
+        "poison": Any_(optional=True), "disease": Str(max_len=40, optional=True), "disease_chance": Float(min=0, max=1, optional=True),
     }
 )
 CREATURE = Obj(
@@ -321,4 +321,39 @@ DATA_FILES.update({
     "creatures.json": CREATURES,
     "spells.json": SPELLS,
     "combat_text.json": COMBAT_TEXT,
+})
+
+STAGE_EFFECTS = Obj(
+    {"penalty": Int(min=0, max=10, optional=True), "thirst": Float(min=0, max=5, optional=True),
+     "hunger": Float(min=0, max=5, optional=True), "fatigue": Float(min=0, max=5, optional=True),
+     "strain": Float(min=0, max=10, optional=True), "hp_per_day": Int(min=0, max=50, optional=True),
+     "travel": Float(min=1, max=5, optional=True), "pain": Int(min=0, max=10, optional=True)}
+)
+DISEASE = Obj(
+    {
+        "name": Str(max_len=40), "text": Str(max_len=400),
+        "spread": List(Str(choices=["bad_water", "bad_food", "filth", "infection", "cold_wet", "marsh", "town",
+                                    "rat_bite", "animal_bite", "undead"]), min_items=1),
+        "incubation_hours": List(Int(min=0, max=5000), min_items=2, max_items=2), "save_dc": Int(min=0, max=30),
+        "stages": List(Obj({"name": Str(max_len=60), "hours": Int(min=1, max=10000), "effects": STAGE_EFFECTS}),
+                       min_items=1),
+        "recovery_dc": Int(min=0, max=99), "recoveries": Int(min=0, max=99),
+        "treatments": Map(Int(min=0, max=10)), "cure": List(Str(max_len=40)),
+        "cure_before_symptoms": Bool(optional=True), "fatal": Bool(), "death_dc": Int(min=0, max=99, optional=True),
+        "immunity": Bool(), "recurring": Float(min=0, max=1, optional=True),
+        "lasting": Obj({"chance": Float(min=0, max=1), "injury": Str(max_len=40)}, optional=True),
+    }
+)
+DISEASES = Obj({"diseases": Map(DISEASE, min_items=1)})
+INJURY = Obj(
+    {"name": Str(max_len=40), "text": Str(max_len=300), "parts": List(Str(max_len=20)),
+     "effects": Obj({"skills": Map(Int(min=-10, max=10), optional=True), "attack": Int(min=-5, max=5, optional=True),
+                     "ranged_attack": Int(min=-5, max=5, optional=True), "travel": Float(min=1, max=3, optional=True),
+                     "speed": Int(min=-30, max=0, optional=True)})}
+)
+HEALTH = Obj({"injuries": Map(INJURY, min_items=1)})
+
+DATA_FILES.update({
+    "diseases.json": DISEASES,
+    "health.json": HEALTH,
 })

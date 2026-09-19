@@ -31,6 +31,18 @@ class Wound:
     bandaged: bool = False
     infected: bool = False
     note: str = ""  # e.g. the source: "wolf bite"
+    # Healing over time (rules/health.py).
+    healing: float = 0.0  # hours of healing towards the next step down in severity
+    infection: float = 0.0  # 0 clean .. 100 fatal
+    clock: float = 0.0  # hours since the body last fought the infection
+    cleaned: bool = False
+    stitched: bool = False
+    splinted: bool = False
+    internal: bool = False  # bleeding inside (critical body wounds)
+    peak: int = 0  # the worst it has been
+
+    def __post_init__(self) -> None:
+        self.peak = max(self.peak, self.severity)
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -81,9 +93,10 @@ def make_wound(part: str, damage_type: str, severity: int, rng: RNG, *, bite: bo
         kind = "fracture"
     bleed = {"cut": severity, "puncture": severity, "bite": severity, "blunt": 0, "fracture": max(0, severity - 2),
              "burn": 0, "frostbite": 0}.get(kind, 0)
-    if part == "torso" and kind in ("puncture", "blunt") and severity == 3:
-        bleed = max(bleed, 2)  # internal bleeding
-    return Wound(part, kind, severity, bleed, now, note=note)
+    internal = part == "torso" and kind in ("puncture", "blunt") and severity == 3 and rng.chance(0.5)
+    if internal:
+        bleed = max(bleed, 2)
+    return Wound(part, kind, severity, bleed, now, note=note, internal=internal)
 
 
 def worst(wounds: list[Wound]) -> Wound | None:

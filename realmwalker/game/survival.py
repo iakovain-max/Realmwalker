@@ -58,6 +58,9 @@ def tick(game, minutes: int, activity: str) -> None:
     """The party lives through some minutes."""
     if not getattr(game, "survival", True):
         return
+    from realmwalker.rules import health
+
+    ctx = health_context(game, activity)
     for char in list(game.party):
         if not char.alive:
             continue
@@ -65,19 +68,32 @@ def tick(game, minutes: int, activity: str) -> None:
         env = environment(game, char, activity)
         for text, color in body.tick(char, sheet, env, minutes):
             game.say(text, color)
+        rng = game.world.rng.child(f"health/{game.world.time}/{char.name}")
+        for text, color in health.tick(char, game.tables, ctx, minutes, rng):
+            game.say(text, color)
         if getattr(game, "auto_supplies", True) and activity != "fight":
             feed(game, char)
         check_death(game, char)
     game._wading = False
 
 
+def health_context(game, activity: str):
+    from realmwalker.rules.health import HealthContext
+
+    p = game.player
+    season = game.moment.season
+    warm = season == "summer" or (season in ("spring", "autumn") and weather(game).temp > 16)
+    return HealthContext(activity=activity, marsh=game.biome_key(p.x, p.y) == "marsh", warm_season=warm,
+                         now=game.world.time)
+
+
 def check_death(game, char: Character) -> None:
     if not char.alive:
         return
-    cause = None
-    if char.exhaustion >= 6:
+    cause = getattr(char, "death_cause", None)
+    if cause is None and char.exhaustion >= 6:
         cause = death_cause(char, exhausted=True)
-    elif char.hp <= 0:
+    elif cause is None and char.hp <= 0:
         cause = death_cause(char, exhausted=False)
     if cause is None:
         return
@@ -102,7 +118,9 @@ def death_cause(char: Character, exhausted: bool) -> str:
         return "starved to death"
     if char.blood < 25:
         return "bled to death"
-    if char.diseases:
+    if any(w.infection >= 70 for w in char.wounds):
+        return "died of blood poisoning from a festering wound"
+    if any(d.get("phase") == "sick" for d in char.diseases):
         return "died of sickness"
     return "died of exhaustion" if exhausted else "died of their hurts"
 

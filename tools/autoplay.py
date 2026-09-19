@@ -148,6 +148,14 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
                 fail(f"{member.name} has body heat {member.body_heat} and blood {member.blood}")
             if not 0 <= member.exhaustion <= 6:
                 fail(f"{member.name} has exhaustion {member.exhaustion}")
+            for w in member.wounds:
+                if not 1 <= w.severity <= 3 or not 0 <= w.bleed <= 3 or not 0 <= w.infection <= 100:
+                    fail(f"{member.name} has an impossible wound {w}")
+            for d in member.diseases:
+                if d.get("phase") not in ("incubating", "sick", "dormant", "immune") or d.get("id") not in app.tables.diseases:
+                    fail(f"{member.name} has an impossible disease {d}")
+            if any(v < -1e-6 for k, v in member.effects.items() if not k.endswith("_clean")):
+                fail(f"{member.name} has an expired timed effect {member.effects}")
             from realmwalker.rules.inventory import container_capacity
 
             for it in member.inventory:

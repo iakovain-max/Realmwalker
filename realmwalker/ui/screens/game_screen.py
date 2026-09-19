@@ -380,7 +380,7 @@ class GameScreen(Screen):
             y += 1
             from realmwalker.ui.screens.health import status_words
 
-            words = status_words(member)
+            words = status_words(member, game.tables)
             if words:
                 used = canvas.wrapped(x, y, " · ".join(words), w, max_lines=2)
                 canvas.hit(x, y, w, used, action=lambda: self.handle_key(KeyEvent("h")),

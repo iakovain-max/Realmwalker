@@ -96,7 +96,7 @@ class GameState:
 
     def pace(self) -> float | None:
         """How much slower than an unburdened walker the party moves (None = someone cannot move)."""
-        from realmwalker.rules import body
+        from realmwalker.rules import body, health
 
         worst = 1.0
         for member in self.party:
@@ -104,7 +104,7 @@ class GameState:
             b = body.travel_multiplier(member)
             if m is None or b is None:
                 return None
-            worst = max(worst, m * b)
+            worst = max(worst, m * b * health.travel_multiplier(member, self.tables))
         return worst
 
     @property
