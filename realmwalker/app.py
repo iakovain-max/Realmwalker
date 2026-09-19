@@ -25,11 +25,14 @@ from realmwalker.config import DEFAULT_FONT_SIZE, FONT_SIZES, GameConfig, Settin
 from realmwalker.core.logs import set_ai_debug, setup_logging
 from realmwalker.core.rng import RNG
 from realmwalker.data.registry import DataRegistry
+from realmwalker.game.save import SaveError, list_saves, load_game, save_game
+from realmwalker.game.state import GameState
 from realmwalker.paths import Paths
 from realmwalker.ui import colors
 from realmwalker.ui.input import InputEvent, KeyEvent, MouseEvent
 from realmwalker.ui.screens.base import MessageBox, Screen
 from realmwalker.ui.widgets import Canvas, Region
+from realmwalker.world.tables import Tables
 
 log = logging.getLogger("realmwalker.app")
 
@@ -75,6 +78,15 @@ class App:
         self.data, self.data_errors = DataRegistry.load(self.paths.data)
         self.prompts = PromptLibrary(self.paths.prompts)
         self.data_errors += self._check_prompts()
+        self.tables: Tables | None = None
+        if not self.data_errors:
+            try:
+                self.tables = Tables(self.data)
+            except Exception as exc:  # data passed validation but still could not be used
+                log.exception("Could not build game tables")
+                self.data_errors.append(f"The game data could not be prepared: {exc}")
+        self.game: GameState | None = None
+        self._last_autosave = clock()
 
         self.ai = AIService(
             prompts=self.prompts,
@@ -362,11 +374,70 @@ class App:
             canvas.text(x + 2, y, toast.text, toast.color)
             y -= 1
 
+    # ------------------------------------------------------------------ game sessions
+    def start_game(self, game: GameState) -> None:
+        """Begin playing: save at once, then show the main game screen over the title."""
+        from realmwalker.ui.screens.game_screen import GameScreen
+
+        self.game = game
+        self.save_game()
+        while len(self.screens) > 1:
+            self.pop()
+        self.push(GameScreen(self, game))
+
+    def save_game(self) -> bool:
+        if self.game is None:
+            return False
+        try:
+            save_game(self.game, self.paths.saves)
+            self._last_autosave = self.clock()
+            return True
+        except Exception:
+            self.report_error("saving the game")
+            return False
+
+    def maybe_autosave(self) -> None:
+        if self.game is not None and self.game.dirty:
+            if self.clock() - self._last_autosave >= self.settings.autosave_minutes * 60:
+                if self.save_game():
+                    self.notify("Game saved.", "dim", 1.5)
+
+    def end_game(self) -> None:
+        """Save and leave the current game (back to the title screen)."""
+        self.save_game()
+        self.game = None
+        from realmwalker.ui.screens.title import TitleScreen
+
+        while self.screens:
+            self.screens.pop().on_exit()
+        self.push(TitleScreen(self))
+
+    def saves_with_characters(self) -> list:
+        try:
+            return [s for s in list_saves(self.paths.saves) if s.character]
+        except OSError:
+            return []
+
+    def continue_game(self, folder) -> bool:
+        if self.tables is None:
+            return False
+        try:
+            game = load_game(folder, self.tables)
+        except SaveError as exc:
+            self.push(MessageBox(self, "Could not load", f"{exc} The files are still there, untouched.",
+                                 color=colors.named("danger")))
+            return False
+        self.start_game(game)
+        game.say("You take up your journey again.", "system")
+        return True
+
     # ------------------------------------------------------------------ shutdown
     def request_quit(self) -> None:
         self.running = False
 
     def shutdown(self) -> None:
+        if self.game is not None:
+            self.save_game()
         try:
             self.ai.stop()
         except Exception:

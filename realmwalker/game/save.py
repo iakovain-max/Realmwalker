@@ -1,0 +1,259 @@
+"""Saving and loading. Versioned, compressed, and written safely (to a temp file, then swapped in).
+
+Layout on disk (%APPDATA%\\Realmwalker\\saves\\<world id>\\):
+  world.zip      the world: arrays (.npy), settlements, sites, areas, local maps, clock, flavour text
+  character.zip  the living character: position, knowledge, message log
+The world outlives characters: when a character dies only character.zip is removed (M9).
+
+Each zip holds manifest.json with a format number. Older formats are upgraded by MIGRATIONS
+when loaded, so game updates do not break existing saves. Arrays are stored as plain numeric
+.npy data (numpy's loader refuses anything executable by default); everything else is JSON.
+"""
+
+from __future__ import annotations
+
+import datetime
+import io
+import json
+import logging
+import os
+import zipfile
+from collections.abc import Callable
+from dataclasses import asdict, dataclass
+from pathlib import Path
+
+import numpy as np
+
+from realmwalker import __version__
+from realmwalker.ai.store import FlavorStore
+from realmwalker.core.rng import RNG
+from realmwalker.game.log import MessageLog
+from realmwalker.game.state import GameState, PlayerState
+from realmwalker.world.local import Building, LocalMap
+from realmwalker.world.model import ARRAY_NAMES, Area, Settlement, Site, World, WorldMeta
+from realmwalker.world.tables import Tables
+
+log = logging.getLogger("realmwalker.save")
+
+FORMAT_VERSION = 1
+WORLD_FILE = "world.zip"
+CHARACTER_FILE = "character.zip"
+
+# format number -> function upgrading a loaded JSON body to the next format.
+MIGRATIONS: dict[int, Callable[[dict], dict]] = {}
+
+
+class SaveError(Exception):
+    pass
+
+
+# ---------------------------------------------------------------------------- helpers
+def _npy(arr: np.ndarray) -> bytes:
+    if arr.dtype == object:
+        raise SaveError("refusing to save a non-numeric array")
+    buf = io.BytesIO()
+    np.save(buf, np.ascontiguousarray(arr))
+    return buf.getvalue()
+
+
+def _load_npy(data: bytes) -> np.ndarray:
+    return np.load(io.BytesIO(data))
+
+
+def _write_zip(path: Path, entries: dict[str, bytes | str]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(".tmp")
+    with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED, compresslevel=6) as z:
+        for name, data in entries.items():
+            z.writestr(name, data)
+    os.replace(tmp, path)
+
+
+def _manifest(kind: str) -> str:
+    return json.dumps({
+        "format": FORMAT_VERSION,
+        "kind": kind,
+        "game_version": __version__,
+        "saved": datetime.datetime.now().isoformat(timespec="seconds"),
+    })
+
+
+def _migrate(manifest: dict, body: dict) -> dict:
+    fmt = int(manifest.get("format", 1))
+    if fmt > FORMAT_VERSION:
+        raise SaveError("This save was made by a newer version of the game.")
+    while fmt < FORMAT_VERSION:
+        body = MIGRATIONS[fmt](body)
+        fmt += 1
+    return body
+
+
+# ---------------------------------------------------------------------------- world
+def world_entries(world: World) -> dict[str, bytes | str]:
+    body = {
+        "meta": asdict(world.meta),
+        "width": world.width,
+        "height": world.height,
+        "biome_ids": world.biome_ids,
+        "time": world.time,
+        "rng": world.rng.get_state(),
+        "flavor": world.flavor.to_dict(),
+        **world.objects_dict(),
+        "local_maps": sorted(world.local_maps),
+    }
+    entries: dict[str, bytes | str] = {"manifest.json": _manifest("world"), "world.json": json.dumps(body)}
+    for name, arr in world.arrays().items():
+        entries[f"arrays/{name}.npy"] = _npy(arr)
+    for key, lm in world.local_maps.items():
+        safe = key.replace(",", "_")
+        entries[f"local/{safe}.json"] = json.dumps({
+            "key": lm.key, "kind": lm.kind, "width": lm.width, "height": lm.height,
+            "terrain_ids": lm.terrain_ids, "entry": list(lm.entry),
+            "buildings": [asdict(b) for b in lm.buildings],
+        })
+        entries[f"local/{safe}.terrain.npy"] = _npy(lm.terrain)
+        entries[f"local/{safe}.variant.npy"] = _npy(lm.variant)
+        entries[f"local/{safe}.seen.npy"] = _npy(lm.seen)
+    return entries
+
+
+def save_world(world: World, folder: Path) -> None:
+    _write_zip(folder / WORLD_FILE, world_entries(world))
+
+
+def load_world(folder: Path) -> World:
+    path = folder / WORLD_FILE
+    try:
+        with zipfile.ZipFile(path) as z:
+            manifest = json.loads(z.read("manifest.json"))
+            body = _migrate(manifest, json.loads(z.read("world.json")))
+            arrays = {name: _load_npy(z.read(f"arrays/{name}.npy")) for name in ARRAY_NAMES}
+            local_maps = {}
+            for key in body.get("local_maps", []):
+                safe = key.replace(",", "_")
+                info = json.loads(z.read(f"local/{safe}.json"))
+                local_maps[key] = LocalMap(
+                    key=info["key"], kind=info["kind"], width=info["width"], height=info["height"],
+                    terrain_ids=info["terrain_ids"],
+                    terrain=_load_npy(z.read(f"local/{safe}.terrain.npy")),
+                    variant=_load_npy(z.read(f"local/{safe}.variant.npy")),
+                    buildings=[Building(**{**b, "door": tuple(b.get("door", (0, 0)))}) for b in info["buildings"]],
+                    entry=tuple(info["entry"]),
+                    seen=_load_npy(z.read(f"local/{safe}.seen.npy")),
+                )
+    except (OSError, KeyError, ValueError, zipfile.BadZipFile) as exc:
+        raise SaveError(f"The world save could not be read ({exc}).") from exc
+    return World(
+        meta=WorldMeta(**body["meta"]),
+        width=body["width"],
+        height=body["height"],
+        biome_ids=body["biome_ids"],
+        settlements=[Settlement(**s) for s in body["settlements"]],
+        sites=[Site(**s) for s in body["sites"]],
+        areas=[Area(**a) for a in body["areas"]],
+        time=int(body["time"]),
+        local_maps=local_maps,
+        flavor=FlavorStore.from_dict(body.get("flavor", {})),
+        rng=RNG.from_state(body["rng"]),
+        **arrays,
+    )
+
+
+# ---------------------------------------------------------------------------- character
+def character_entries(game: GameState) -> dict[str, bytes | str]:
+    p = game.player
+    body = {
+        "name": p.name, "x": p.x, "y": p.y, "local_key": p.local_key, "lx": p.lx, "ly": p.ly,
+        "alive": p.alive, "home": p.home, "seconds": p.seconds, "steps": p.steps,
+        "known_settlements": sorted(p.known_settlements),
+        "visited_settlements": sorted(p.visited_settlements),
+        "visited_areas": sorted(p.visited_areas),
+        "log": game.log.to_dict(),
+    }
+    return {"manifest.json": _manifest("character"), "character.json": json.dumps(body),
+            "explored.npy": _npy(p.explored)}
+
+
+def load_player(folder: Path) -> tuple[PlayerState, MessageLog]:
+    path = folder / CHARACTER_FILE
+    try:
+        with zipfile.ZipFile(path) as z:
+            manifest = json.loads(z.read("manifest.json"))
+            body = _migrate(manifest, json.loads(z.read("character.json")))
+            explored = _load_npy(z.read("explored.npy"))
+    except (OSError, KeyError, ValueError, zipfile.BadZipFile) as exc:
+        raise SaveError(f"The character save could not be read ({exc}).") from exc
+    player = PlayerState(
+        name=body["name"], x=body["x"], y=body["y"], explored=explored, local_key=body.get("local_key"),
+        lx=body.get("lx", 0), ly=body.get("ly", 0), alive=body.get("alive", True), home=body.get("home", -1),
+        known_settlements=set(body.get("known_settlements", [])),
+        visited_settlements=set(body.get("visited_settlements", [])),
+        visited_areas=set(body.get("visited_areas", [])),
+        seconds=body.get("seconds", 0), steps=body.get("steps", 0),
+    )
+    return player, MessageLog.from_dict(body.get("log", {}))
+
+
+# ---------------------------------------------------------------------------- whole game
+def world_folder(saves_dir: Path, world: World) -> Path:
+    return saves_dir / world.meta.id
+
+
+def save_game(game: GameState, saves_dir: Path) -> Path:
+    folder = world_folder(saves_dir, game.world)
+    save_world(game.world, folder)
+    _write_zip(folder / CHARACTER_FILE, character_entries(game))
+    game.dirty = False
+    return folder
+
+
+def load_game(folder: Path, tables: Tables) -> GameState:
+    world = load_world(folder)
+    player, messages = load_player(folder)
+    if player.local_key is not None and player.local_key not in world.local_maps:
+        player.local_key = None
+    return GameState(world, player, tables, messages)
+
+
+@dataclass
+class SaveSummary:
+    folder: Path
+    world_name: str
+    world_id: str
+    seed: int
+    size: str
+    created: str
+    character: str | None
+    saved: str
+
+
+def list_saves(saves_dir: Path) -> list[SaveSummary]:
+    """All worlds on disk, most recently saved first. Unreadable folders are skipped."""
+    out: list[SaveSummary] = []
+    if not saves_dir.exists():
+        return out
+    for folder in saves_dir.iterdir():
+        wpath = folder / WORLD_FILE
+        if not wpath.exists():
+            continue
+        try:
+            with zipfile.ZipFile(wpath) as z:
+                manifest = json.loads(z.read("manifest.json"))
+                body = json.loads(z.read("world.json"))
+            meta = body["meta"]
+            character = None
+            saved = manifest.get("saved", "")
+            cpath = folder / CHARACTER_FILE
+            if cpath.exists():
+                with zipfile.ZipFile(cpath) as z:
+                    cm = json.loads(z.read("manifest.json"))
+                    cb = json.loads(z.read("character.json"))
+                if cb.get("alive", True):
+                    character = cb.get("name")
+                    saved = max(saved, cm.get("saved", ""))
+            out.append(SaveSummary(folder, meta["name"], meta["id"], meta["seed"], meta["size"],
+                                   meta.get("created", ""), character, saved))
+        except Exception:
+            log.warning("Skipping unreadable save folder %s", folder, exc_info=True)
+    out.sort(key=lambda s: s.saved, reverse=True)
+    return out

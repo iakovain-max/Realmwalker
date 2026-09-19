@@ -54,8 +54,8 @@ def test_title_menu_opens_screens(make_app):
 
 def test_disabled_item_explains_itself(make_app):
     app = make_app()
-    app.handle_event(KeyEvent("n"))
-    assert any("Milestone 1" in t.text for t in app.toasts)
+    app.handle_event(KeyEvent("r"))
+    assert any("Milestone 2" in t.text for t in app.toasts)
 
 
 def test_mouse_click_on_menu(make_app):
@@ -189,3 +189,91 @@ def test_tileset_builds_with_box_and_block_glyphs(home):
     assert horizontal[:, 0].max() == 255 and horizontal[:, -1].max() == 255  # reaches both edges
     letter = ts.get_tile(ord("A"))[:, :, 3]
     assert 0 < np.count_nonzero(letter) < letter.size
+
+
+# ---------------------------------------------------------------------------- M1 screens
+def start_small_world(app, seed=5):
+    from realmwalker.game.state import new_game
+    from realmwalker.world.generator import WorldGenerator, WorldOptions
+
+    world = WorldGenerator(WorldOptions("Screenland", seed, "small"), app.tables).generate()
+    app.start_game(new_game(world, app.tables))
+    return app.top
+
+
+def game_screens(app, gs):
+    from realmwalker.ui.screens.game_menu import ContinueScreen, GameMenu
+    from realmwalker.ui.screens.legend import LegendScreen
+    from realmwalker.ui.screens.log_screen import LogScreen
+    from realmwalker.ui.screens.new_world import NewWorldScreen
+    from realmwalker.ui.screens.world_map import WorldMapScreen
+
+    return [WorldMapScreen(app, gs), LegendScreen(app), LogScreen(app, gs.game), GameMenu(app), ContinueScreen(app),
+            NewWorldScreen(app)]
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_game_screens_render_at_every_size(make_app, size):
+    from realmwalker.ui.screens.game_screen import GameScreen
+
+    app = make_app()
+    gs = start_small_world(app)
+    assert isinstance(gs, GameScreen)
+    render(app, size)
+    gs.enter()
+    render(app, size)
+    for screen in game_screens(app, gs):
+        app.push(screen)
+        render(app, size)
+        app.pop()
+    assert app.error_count == 0
+
+
+def test_new_world_flow_generates_and_starts(make_app):
+    from realmwalker.ui.screens.game_screen import GameScreen
+
+    app = make_app()
+    app.handle_event(KeyEvent("n"))
+    app.handle_event(KeyEvent("enter"))
+    deadline = time.monotonic() + 30
+    while not isinstance(app.top, GameScreen) and time.monotonic() < deadline:
+        render(app)
+        time.sleep(0.02)
+    assert isinstance(app.top, GameScreen)
+    assert app.game is not None and app.saves_with_characters()
+
+
+def test_walk_look_travel_and_continue(make_app):
+    from realmwalker.ui.screens.game_screen import GameScreen
+
+    app = make_app()
+    gs = start_small_world(app)
+    t0 = app.game.world.time
+    for key in ["right", "down", "l", "up", "escape", ".", ">", "left", "<"]:
+        app.handle_event(KeyEvent(key))
+        render(app)
+    assert app.game.world.time > t0
+    app.handle_event(KeyEvent("t"))
+    for key in ["right", "right", "right", "enter"]:
+        app.handle_event(KeyEvent(key))
+    if isinstance(app.top, ConfirmBox):
+        app.handle_event(KeyEvent("y"))
+        for _ in range(200):
+            render(app)
+    assert app.error_count == 0
+    app.handle_event(KeyEvent("escape"))
+    app.handle_event(KeyEvent("t"))  # save and return to the title
+    assert app.game is None
+    app.handle_event(KeyEvent("c"))
+    assert isinstance(app.top, GameScreen) and app.game is not None
+
+
+def test_mouse_hover_describes_the_map(make_app):
+    app = make_app()
+    gs = start_small_world(app)
+    con = render(app)
+    p = app.game.player
+    vx, vy, mx0, my0, ox, oy = gs.view
+    sx, sy = p.x - mx0 + vx + ox, p.y - my0 + vy + oy
+    app.handle_event(MouseEvent("move", sx, sy))
+    assert "You are here" in screen_text(render(app))

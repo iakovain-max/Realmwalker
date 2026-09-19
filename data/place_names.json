@@ -1,0 +1,54 @@
+{
+  "_comment": "Parts for building place names per culture, and region-name patterns per biome. {prefix}{suffix} etc. are filled at random.",
+  "settlements": {
+    "heartland": {
+      "patterns": ["{prefix}{suffix}", "{prefix}{suffix}", "{prefix}{suffix}", "Long {prefix}{suffix}", "{prefix}{suffix} Cross"],
+      "prefix": ["Ash", "Black", "Bram", "Cold", "Dun", "Elm", "Fern", "Gal", "Har", "Holt", "Kings", "Lang", "Mar", "Mill", "Nether", "Oak", "Red", "Rook", "Salt", "Stan", "Thorn", "Wick", "Wolf", "Wych", "Chal", "Brad", "Hen", "Aus", "Bex"],
+      "suffix": ["ford", "ley", "ton", "by", "wick", "ham", "stead", "bury", "field", "well", "combe", "mere", "cote", "hollow", "bridge", "gate", "moor", "worth", "den"]
+    },
+    "northmarch": {
+      "patterns": ["{prefix}{suffix}", "{prefix}{suffix}", "{prefix}{suffix}"],
+      "prefix": ["Skar", "Hvit", "Grim", "Ulf", "Kol", "Brek", "Hrafn", "Sval", "Tor", "Is", "Vind", "Egg", "Hjal", "Stav", "Fros", "Myr"],
+      "suffix": ["heim", "vik", "stad", "fell", "by", "holt", "nes", "dal", "gard", "sund", "vang", "tun"]
+    },
+    "southron": {
+      "patterns": ["{prefix}{suffix}", "{prefix} {epithet}", "{prefix}{suffix}"],
+      "prefix": ["Castel", "Porto", "Monte", "Santa", "Valle", "Torre", "Aqua", "Villa", "Ponte", "Rocca", "Bel", "Sarra", "Mira", "Casa"],
+      "suffix": ["mar", "nera", "via", "lenta", "rossa", "sole", "vento", "oro", "bruna", "salda"],
+      "epithet": ["Verde", "Alba", "Negra", "Mora", "Oscura", "dei Lupi", "del Sale", "Vecchia", "dei Corvi"]
+    },
+    "elven": {
+      "patterns": ["{prefix}{suffix}", "{prefix}{suffix}"],
+      "prefix": ["Ael", "Cael", "Eld", "Ith", "Lor", "Mel", "Nae", "Syl", "Thal", "Vael", "Ser", "Quel"],
+      "suffix": ["arin", "eth", "ielle", "ondra", "ynn", "oriel", "asse", "umbra", "elis", "avarre"]
+    },
+    "dwarven": {
+      "patterns": ["{prefix}{suffix}", "{prefix}{suffix}", "{prefix}{suffix} Hold"],
+      "prefix": ["Dun", "Kar", "Brok", "Gund", "Thar", "Mor", "Grom", "Hald", "Barak", "Dvar", "Orn", "Skal"],
+      "suffix": ["dur", "hold", "grim", "delve", "hame", "gard", "forge", "rock", "deep", "mund"]
+    },
+    "halfling": {
+      "patterns": ["{prefix}{suffix}", "{prefix}{suffix}"],
+      "prefix": ["Apple", "Bramble", "Bucket", "Clover", "Hazel", "Honey", "Mossy", "Pudding", "Tansy", "Thistle", "Barley", "Pipe"],
+      "suffix": ["bottom", "burrow", "dale", "hollow", "wick", "by", "combe", "green", "brook"]
+    }
+  },
+  "regions": {
+    "adjective": ["Black", "Grey", "Red", "Ashen", "Bitter", "Cold", "Hollow", "Weeping", "Iron", "Broken", "Drowned", "Hanging", "Long", "Pale", "Shivering", "Sorrow", "Wolf", "Crow", "Bone", "Salt", "Thorn", "Widow's", "Hag's", "King's", "Old", "Burnt", "Silent", "Mourning", "Rotten", "Twisted"],
+    "noun": ["Wyrm", "Crow", "Wolf", "Giant", "Hag", "Saint", "Bone", "Raven", "Boar", "Dragon", "Widow", "Hangman", "Beggar", "Shepherd", "Drowned Man"],
+    "stem": ["Ash", "Black", "Grey", "Wold", "Crane", "Rook", "Fen", "Gall", "Harrow", "Mire", "Sedge", "Wither", "Mor", "Oak", "Scar", "Stark"],
+    "forest": ["the {adjective} Wood", "{stem}wood", "the {adjective} Weald", "the {noun}'s Wood", "{stem}holt Forest"],
+    "pine_forest": ["the {adjective} Pinewood", "{stem}holt", "the {adjective} Firs", "the {noun}'s Pines"],
+    "mountains": ["the {adjective} Mountains", "the {noun}back Mountains", "the {noun}'s Teeth", "the {adjective} Peaks", "the {stem}crag Range"],
+    "hills": ["the {adjective} Hills", "the {stem} Downs", "the {adjective} Fells", "the {noun}'s Barrows"],
+    "marsh": ["the {adjective} Fen", "{stem}mire", "the {adjective} Marshes", "the {noun}'s Bog"],
+    "plains": ["the {adjective} Plain", "the {stem} Vale", "the {adjective} Wold", "{stem}field Moor", "the {adjective} Heath"],
+    "desert": ["the {adjective} Waste", "the {adjective} Sands", "the {noun}'s Anvil"],
+    "tundra": ["the {adjective} Barrens", "the {adjective} Wastes", "the {noun}'s Rest"],
+    "coast": ["the {adjective} Strand", "the {stem} Shore", "the {adjective} Coast"],
+    "lake": ["Lake {stem}", "{stem}mere", "the {adjective} Water", "the {adjective} Mere"],
+    "river": ["the {stem}water", "the River {stem}", "the {adjective} River", "the {stem}burn"],
+    "ocean": ["the {adjective} Sea", "the Sea of {noun}s"],
+    "world": ["{stem}mark", "{stem}land", "the {adjective} Kingdoms", "the {adjective} Reach", "{stem}march", "the Realms of {stem}"]
+  }
+}

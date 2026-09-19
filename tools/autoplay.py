@@ -48,6 +48,8 @@ class AutoplayReport:
     screens: Counter = field(default_factory=Counter)
     ai_stats: dict = field(default_factory=dict)
     mock_calls: int = 0
+    save_checks: int = 0
+    game_turns: int = 0
     elapsed: float = 0.0
 
     @property
@@ -59,6 +61,7 @@ class AutoplayReport:
             f"Autoplay ({self.ai_mode} AI): {self.turns} turns, {self.restarts} restarts, {self.elapsed:.1f} s",
             f"  screens visited: {dict(self.screens.most_common())}",
             f"  AI requests: {self.ai_stats}  mock chat calls: {self.mock_calls}",
+            f"  turns inside a game: {self.game_turns}  save/load round trips checked: {self.save_checks}",
             "  RESULT: " + ("OK" if self.ok else f"FAILED ({len(self.errors)} problems)"),
         ]
         lines += [f"    - {e}" for e in self.errors[:20]]
@@ -102,6 +105,49 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
     for key, value in app.ai.stats.items():
         if not isinstance(value, int) or value < 0:
             fail(f"AI stat {key} has invalid value {value!r}")
+    game = app.game
+    if game is not None:
+        w, p = game.world, game.player
+        if not w.in_bounds(p.x, p.y):
+            fail(f"player off the world at {(p.x, p.y)}")
+        elif not app.tables.biomes.passable[game._biome_remap[w.biome[p.x, p.y]]]:
+            fail(f"player standing in impassable {game.biome_key(p.x, p.y)} at {(p.x, p.y)}")
+        if game.in_local:
+            lm = game.local
+            if lm is None or not lm.in_bounds(p.lx, p.ly):
+                fail("player outside the local map")
+            else:
+                t = int(game.remap_for(lm)[lm.terrain[p.lx, p.ly]])
+                if not app.tables.terrain.walk[t]:
+                    fail(f"player inside solid {app.tables.terrain.ids[t]} on a local map")
+        key = w.meta.id
+        last = _LAST_TIME.get(key)
+        if last is not None and w.time < last:
+            fail(f"time ran backwards: {last} -> {w.time}")
+        _LAST_TIME[key] = w.time
+        if p.explored.shape != (w.width, w.height):
+            fail("explored map has the wrong shape")
+
+
+_LAST_TIME: dict[str, int] = {}
+
+
+def _check_save_round_trip(app: App, report: AutoplayReport, turn: int) -> None:
+    """Saving and loading must give back exactly the same game."""
+    from realmwalker.game import save
+
+    game = app.game
+    if game is None:
+        return
+    folder = save.save_game(game, app.paths.saves)
+    loaded = save.load_game(folder, app.tables)
+    a, b = save.world_entries(game.world), save.world_entries(loaded.world)
+    c, d = save.character_entries(game), save.character_entries(loaded)
+    diffs = [k for k in a if k != "manifest.json" and a[k] != b.get(k)]
+    diffs += [k for k in c if k != "manifest.json" and c[k] != d.get(k)]
+    if diffs:
+        report.errors.append(f"turn {turn}: save/load round trip differs in {diffs[:5]}")
+    report.save_checks += 1
 
 
 def run_autoplay(*, turns: int = 3000, seed: int = 1, ai: str = "off", home: Path | None = None) -> AutoplayReport:
@@ -136,6 +182,10 @@ def run_autoplay(*, turns: int = 3000, seed: int = 1, ai: str = "off", home: Pat
             if app.top is not None:
                 report.screens[type(app.top).__name__] += 1
             _check_invariants(app, report, turn)
+            if app.game is not None:
+                report.game_turns += 1
+                if report.game_turns % 400 == 0:
+                    _check_save_round_trip(app, report, turn)
             report.turns = turn + 1
             if not app.running:
                 ai_totals.update(app.ai.stats)

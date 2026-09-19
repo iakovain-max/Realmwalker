@@ -39,11 +39,26 @@ def write_crash_file(text: str) -> Path | None:
 
 
 def smoke_script():
-    """A short scripted tour of the screens, used by --smoke-test."""
+    """A scripted tour used by --smoke-test: title screens, then a new world, walking and a local map."""
     from realmwalker.ui.input import KeyEvent
 
-    keys = ["p", None, "escape", "s", "down", "escape", "f1", "pagedown", "escape", "p"]
-    return [(10 + i * 8, KeyEvent(k)) for i, k in enumerate(keys) if k]
+    steps = []
+    frame = 10
+    for key in ["p", "escape", "s", "down", "escape", "f1", "pagedown", "escape", "n", "enter"]:
+        steps.append((frame, KeyEvent(key)))
+        frame += 8
+    frame += 120  # world generation
+    for key in ["right", "right", "down", "down", "l", "up", "up", "right"]:
+        steps.append((frame, KeyEvent(key)))
+        frame += 4
+    steps.append((frame, KeyEvent("escape")))
+    frame += 6
+    steps.append((frame, KeyEvent(">")))
+    frame += 6
+    for key in ["left", "left", "left", "up", "up"]:
+        steps.append((frame, KeyEvent(key)))
+        frame += 3
+    return steps, frame
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -65,7 +80,11 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         if args.smoke_test:
-            window.run(app, script=smoke_script(), max_frames=120, screenshot_to=Path(args.smoke_test))
+            script, last = smoke_script()
+            shot = Path(args.smoke_test)
+            overworld_shot = shot.with_name(shot.stem + "_overworld" + shot.suffix)
+            window.run(app, script=script, max_frames=last + 20, screenshot_to=shot,
+                       screenshots_at={last - 30: overworld_shot})
         else:
             window.run(app)
     except Exception:

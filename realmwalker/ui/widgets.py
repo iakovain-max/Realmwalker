@@ -261,6 +261,38 @@ class Menu:
             canvas.text(cx, row, item.label, fg, bg, max_width=x + width - cx)
 
 
+class TextField:
+    """A one-line text input. `allowed` limits which characters can be typed."""
+
+    def __init__(self, value: str = "", max_len: int = 30, allowed: str | None = None) -> None:
+        self.value = value
+        self.max_len = max_len
+        self.allowed = allowed
+
+    def handle_key(self, ev: KeyEvent) -> bool:
+        if ev.key == "backspace":
+            self.value = self.value[:-1]
+            return True
+        if ev.key == "delete" or (ev.ctrl and ev.key in ("u", "U")):
+            self.value = ""
+            return True
+        if ev.is_text:
+            if self.allowed is not None and ev.key not in self.allowed:
+                return True
+            if len(self.value) < self.max_len:
+                self.value += ev.key
+            return True
+        return False
+
+    def render(self, canvas: Canvas, x: int, y: int, width: int, focused: bool) -> None:
+        bg = (34, 30, 22) if focused else (20, 19, 18)
+        canvas.fill(x, y, width, 1, bg)
+        shown = self.value[-(width - 2):]
+        canvas.text(x + 1, y, shown, colors.SELECT_FG if focused else colors.FG, bg)
+        if focused:
+            canvas.text(x + 1 + len(shown), y, "_", colors.TITLE, bg)
+
+
 class ScrollText:
     """A scrollable block of marked-up text (help pages, long descriptions, logs)."""
 

@@ -55,9 +55,55 @@ class DataRegistry:
                 files[filename] = data
         if "fallback_text.json" in files:
             errors.extend(check_template_slots(files["fallback_text.json"]))
+        errors.extend(check_cross_references(files))
         for e in errors:
             log.error("Data problem: %s", e)
         return cls(files), errors
+
+
+def check_cross_references(files: dict[str, Any]) -> list[str]:
+    """Things one file refers to in another must exist (e.g. a biome's ground types)."""
+    from realmwalker.data.schemas import REQUIRED_BIOMES, REQUIRED_SETTLEMENT_TYPES
+
+    errors: list[str] = []
+    terrain = set(files.get("local_terrain.json", {}).get("terrain", {}))
+    biomes = files.get("biomes.json", {}).get("biomes", {})
+    if biomes:
+        for bid in REQUIRED_BIOMES:
+            if bid not in biomes:
+                errors.append(f"data/biomes.json: the game needs a biome called '{bid}'.")
+    if biomes and terrain:
+        for bid, b in biomes.items():
+            if bid.startswith("_"):
+                continue
+            for i, pair in enumerate(b["local"]["ground"]):
+                if not isinstance(pair[0], str) or pair[0] not in terrain:
+                    errors.append(f"data/biomes.json: {bid}.local.ground[{i}] names unknown terrain {pair[0]!r}.")
+                if not isinstance(pair[1], (int, float)) or pair[1] <= 0:
+                    errors.append(f"data/biomes.json: {bid}.local.ground[{i}] needs a positive weight.")
+            for t in b["local"]["tree_types"]:
+                if t not in terrain:
+                    errors.append(f"data/biomes.json: {bid}.local.tree_types names unknown terrain {t!r}.")
+    sites = files.get("sites.json", {})
+    if sites:
+        for kind in REQUIRED_SETTLEMENT_TYPES:
+            if kind not in sites.get("settlement_types", {}):
+                errors.append(f"data/sites.json: the game needs a settlement type called '{kind}'.")
+    names = files.get("place_names.json", {})
+    for culture, tables in names.get("settlements", {}).items():
+        for pattern in tables.get("patterns", []):
+            for slot in textgen.slots(pattern):
+                if slot not in tables:
+                    errors.append(f"data/place_names.json: settlements.{culture} pattern {pattern!r} uses "
+                                  f"{{{slot}}} but there is no '{slot}' list.")
+    regions = names.get("regions", {})
+    for kind, patterns in regions.items():
+        for pattern in patterns:
+            for slot in textgen.slots(pattern):
+                if slot not in regions:
+                    errors.append(f"data/place_names.json: regions.{kind} pattern {pattern!r} uses {{{slot}}}, "
+                                  f"which is not a list in 'regions'.")
+    return errors
 
 
 def check_template_slots(fallback: dict) -> list[str]:

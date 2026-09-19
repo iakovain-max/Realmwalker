@@ -35,7 +35,7 @@ def save_screenshot(tileset, console: tcod.console.Console, path: Path) -> Path:
 
 
 def run(app: App, *, script: list[ScriptStep] | None = None, max_frames: int | None = None,
-        screenshot_to: Path | None = None) -> None:
+        screenshot_to: Path | None = None, screenshots_at: dict[int, Path] | None = None) -> None:
     font_path = fonts.default_font_path(app.paths.fonts)
     tileset = fonts.build_tileset(app.settings.font_size, font_path)
     flags = tcod.context.SDL_WINDOW_RESIZABLE | tcod.context.SDL_WINDOW_MAXIMIZED
@@ -86,6 +86,8 @@ def run(app: App, *, script: list[ScriptStep] | None = None, max_frames: int | N
                 app.notify(f"Screenshot saved: {path.name}", "info")
             app.window_requests.clear()
 
+            if screenshots_at and frame in screenshots_at and console is not None:
+                save_screenshot(tileset, console, screenshots_at[frame])
             frame += 1
             if max_frames is not None and frame >= max_frames:
                 if screenshot_to is not None and console is not None:

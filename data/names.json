@@ -2,19 +2,19 @@
   "_comment": "Fallback name lists per culture, used whenever the AI is unavailable. Add names freely.",
   "cultures": {
     "heartland": {
-      "label": "Heartland (lowland human)",
+      "label": "Heartland",
       "male": ["Aldric", "Anselm", "Baldwin", "Bertram", "Cuthbert", "Edric", "Gervase", "Giles", "Godwin", "Hamon", "Hereward", "Hugh", "Jocelyn", "Lambert", "Odo", "Osric", "Piers", "Ralf", "Reynard", "Roger", "Simon", "Tobias", "Walter", "Warin", "Wystan"],
       "female": ["Agnes", "Aldith", "Alys", "Avice", "Beatrix", "Cecily", "Edith", "Emma", "Ermengarde", "Hawise", "Idony", "Isolde", "Joan", "Juliana", "Mabel", "Margery", "Matilda", "Muriel", "Petronel", "Rohesia", "Sybil", "Wenna"],
       "family": ["Ashdown", "Blackwater", "Bramley", "Cole", "Cooper", "Crane", "Draycott", "Fenwick", "Fletcher", "Gorse", "Hale", "Harrow", "Hollin", "Ketter", "Marsh", "Miller", "Pike", "Radley", "Stroud", "Tanner", "Thorne", "Underhill", "Wadley", "Wexley"]
     },
     "northmarch": {
-      "label": "Northmarch (highland human)",
+      "label": "Northmarch",
       "male": ["Arnulf", "Asgaut", "Bjorn", "Brand", "Egil", "Eyvind", "Grim", "Hallstein", "Halvard", "Ivar", "Ketil", "Orm", "Ragnar", "Sigurd", "Thorgeir", "Torvald", "Ulf", "Vemund"],
       "female": ["Aslaug", "Asta", "Bergljot", "Dagny", "Frida", "Gudrun", "Gyda", "Hild", "Ingrid", "Ragna", "Ragnhild", "Sigrid", "Solveig", "Thora", "Unn", "Yrsa"],
       "family": ["Brenna", "Eyrr", "Grimstad", "Hallsted", "Hrafnholm", "Isgard", "Kolvik", "Ormstad", "Skarsfell", "Skeggi", "Tjorn", "Vindholm"]
     },
     "southron": {
-      "label": "Southron (coastal human)",
+      "label": "Southron",
       "male": ["Alonso", "Beltran", "Cosimo", "Dario", "Esteban", "Fausto", "Gaspar", "Inigo", "Lorenzo", "Matteo", "Nuno", "Orsino", "Rodrigo", "Sancho", "Tomaso", "Vasco"],
       "female": ["Alba", "Beatriz", "Catalina", "Dulce", "Elvira", "Fiametta", "Giulia", "Ines", "Leonor", "Mencia", "Oriana", "Rosalba", "Sancha", "Teresa", "Urraca", "Violante"],
       "family": ["Albarran", "Castellan", "Dovizi", "Escobar", "Ferrante", "Gallo", "Lucchesi", "Mendaro", "Ormeno", "Pazzano", "Quintal", "Salvi", "Torrano", "Valdes", "Varga"]

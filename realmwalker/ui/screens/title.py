@@ -30,15 +30,19 @@ def logo_rows() -> list[str]:
 class TitleScreen(Screen):
     def __init__(self, app) -> None:
         super().__init__(app)
+        self.saves = app.saves_with_characters() if app.tables is not None else []
         self.menu = Menu(self._items(), on_disabled=self._disabled)
+        if not self.saves:
+            self.menu.selected = 1
 
     def _items(self) -> list[MenuItem]:
         return [
-            MenuItem("New World", self._new_world, "N", enabled=False,
-                     note="Create a new world. Arrives in Milestone 1 (world generation and movement)."),
+            MenuItem("Continue", self._continue, "C", enabled=bool(self.saves),
+                     note="Carry on with your living character." if self.saves else "No saved characters yet."),
+            MenuItem("New World", self._new_world, "N",
+                     note="Create a new world: its land, rivers, towns and roads. Then set out into it."),
             MenuItem("New Character", None, "R", enabled=False,
                      note="Start a new character in an existing world. Arrives with character creation (Milestone 2)."),
-            MenuItem("Continue", None, "C", enabled=False, note="Continue your living character. Arrives with saving (Milestone 1)."),
             MenuItem("Player2 Connection Test", self._player2_test, "P",
                      note="Check the connection to the Player2 AI app and try a sample generation."),
             MenuItem("Settings", self._settings, "S", note="Text size, dice display, AI on/off and more."),
@@ -50,7 +54,24 @@ class TitleScreen(Screen):
         self.app.notify(item.note or "Not available yet.", "warn", 5)
 
     def _new_world(self) -> None:
-        pass
+        from realmwalker.ui.screens.new_world import NewWorldScreen
+
+        self.app.push(NewWorldScreen(self.app))
+
+    def _continue(self) -> None:
+        if len(self.saves) == 1:
+            self.app.continue_game(self.saves[0].folder)
+        else:
+            from realmwalker.ui.screens.game_menu import ContinueScreen
+
+            self.app.push(ContinueScreen(self.app))
+
+    def on_enter(self) -> None:
+        # Refresh the Continue entry when coming back to the title.
+        self.saves = self.app.saves_with_characters() if self.app.tables is not None else []
+        selected = self.menu.selected
+        self.menu = Menu(self._items(), on_disabled=self._disabled)
+        self.menu.selected = selected if self.saves or selected != 0 else 1
 
     def _player2_test(self) -> None:
         from realmwalker.ui.screens.player2_test import Player2TestScreen
@@ -110,4 +131,5 @@ class TitleScreen(Screen):
         return self.menu.handle_key(ev)
 
     def autoplay_keys(self) -> list[KeyEvent]:
-        return [KeyEvent("up"), KeyEvent("down"), KeyEvent("enter"), KeyEvent("p"), KeyEvent("s"), KeyEvent("?"), KeyEvent("n")]
+        return [KeyEvent("up"), KeyEvent("down"), KeyEvent("enter"), KeyEvent("p"), KeyEvent("s"), KeyEvent("?"),
+                KeyEvent("n"), KeyEvent("n"), KeyEvent("c"), KeyEvent("c"), KeyEvent("c")]

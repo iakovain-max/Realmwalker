@@ -1,0 +1,77 @@
+{
+  "_comment": "Overworld biomes. move_hours = hours to cross one region tile (about 3 miles) on foot, off-road. glyphs are picked per tile for texture. 'local' controls what the local map looks like when you enter.",
+  "biomes": {
+    "ocean": {
+      "name": "open sea", "glyphs": ["≈", "~"], "fg": [52, 92, 170], "bg": [10, 20, 46],
+      "move_hours": 0, "passable": false,
+      "local": {"ground": [["deep_water", 1]], "trees": 0, "tree_types": [], "rocks": 0, "bushes": 0, "water": 0},
+      "descriptions": ["Grey water to the horizon, heaving and cold.", "The sea, restless and the colour of slate."]
+    },
+    "lake": {
+      "name": "lake", "glyphs": ["≈", "~"], "fg": [70, 120, 190], "bg": [14, 30, 56],
+      "move_hours": 0, "passable": false,
+      "local": {"ground": [["deep_water", 1]], "trees": 0, "tree_types": [], "rocks": 0, "bushes": 0, "water": 0},
+      "descriptions": ["A wide stretch of still, dark water.", "Lake water, brown with peat and very cold."]
+    },
+    "coast": {
+      "name": "coast", "glyphs": [".", ",", "·"], "fg": [196, 184, 132], "bg": [34, 32, 22],
+      "move_hours": 1.2, "passable": true,
+      "local": {"ground": [["sand", 5], ["gravel", 2], ["grass", 2]], "trees": 0.01, "tree_types": ["tree_pine"], "rocks": 0.03, "bushes": 0.03, "water": 0},
+      "descriptions": ["Shingle beaches and dunes, stinking of rotting kelp.", "A windy shore of sand, gravel and gull-cries."]
+    },
+    "plains": {
+      "name": "grassland", "glyphs": [".", ",", "\"", "'"], "fg": [112, 160, 72], "bg": [18, 28, 12],
+      "move_hours": 1.0, "passable": true,
+      "local": {"ground": [["grass", 6], ["tall_grass", 3], ["dirt", 1]], "trees": 0.015, "tree_types": ["tree_broadleaf"], "rocks": 0.01, "bushes": 0.03, "water": 0},
+      "descriptions": ["Open grassland under a wide sky, grazed short by sheep.", "Rolling pasture and old field-strips, hedged with thorn."]
+    },
+    "forest": {
+      "name": "forest", "glyphs": ["♣", "♣", "♠"], "fg": [52, 128, 48], "bg": [10, 24, 10],
+      "move_hours": 1.6, "passable": true,
+      "local": {"ground": [["grass", 3], ["leaf_litter", 5], ["dirt", 1]], "trees": 0.32, "tree_types": ["tree_broadleaf", "tree_broadleaf", "tree_broadleaf", "tree_broadleaf", "tree_broadleaf", "tree_broadleaf", "tree_broadleaf", "dead_tree"], "rocks": 0.01, "bushes": 0.08, "water": 0},
+      "descriptions": ["Old oak and ash wood, dim and quiet, thick with bramble.", "Broadleaf forest where the paths are narrow and the light is green."]
+    },
+    "pine_forest": {
+      "name": "pine forest", "glyphs": ["↑", "↑", "♠"], "fg": [40, 110, 76], "bg": [8, 20, 14],
+      "move_hours": 1.6, "passable": true,
+      "local": {"ground": [["needles", 5], ["grass", 1], ["rock_floor", 1]], "trees": 0.28, "tree_types": ["tree_pine", "tree_pine", "tree_pine", "tree_pine", "tree_pine", "tree_pine", "tree_pine", "dead_tree"], "rocks": 0.03, "bushes": 0.03, "water": 0},
+      "descriptions": ["Dark ranks of pine, resin-scented, the ground soft with needles.", "Conifer forest, silent but for the wind in the crowns."]
+    },
+    "hills": {
+      "name": "hills", "glyphs": ["∩", "n"], "fg": [150, 138, 88], "bg": [26, 24, 14],
+      "move_hours": 1.8, "passable": true,
+      "local": {"ground": [["grass", 4], ["heather", 3], ["rock_floor", 2], ["gravel", 1]], "trees": 0.02, "tree_types": ["tree_broadleaf", "tree_pine"], "rocks": 0.07, "bushes": 0.06, "water": 0},
+      "descriptions": ["Bare, sheep-bitten hills of heather and scree.", "Rolling uplands cut by stony becks and drystone walls."]
+    },
+    "mountains": {
+      "name": "mountains", "glyphs": ["▲"], "fg": [150, 146, 140], "bg": [30, 28, 28],
+      "move_hours": 4.0, "passable": true,
+      "local": {"ground": [["rock_floor", 5], ["gravel", 3], ["snow", 1]], "trees": 0.01, "tree_types": ["tree_pine"], "rocks": 0.16, "bushes": 0.01, "water": 0},
+      "descriptions": ["Steep, broken mountainside, loose stone underfoot and wind that never stops.", "Crags and gullies where a slip means a long fall."]
+    },
+    "high_mountains": {
+      "name": "high peaks", "glyphs": ["▲"], "fg": [226, 230, 236], "bg": [44, 46, 52],
+      "move_hours": 6.0, "passable": true,
+      "local": {"ground": [["snow", 5], ["ice", 2], ["rock_floor", 2]], "trees": 0, "tree_types": [], "rocks": 0.12, "bushes": 0, "water": 0},
+      "descriptions": ["Snowfields and bare rock above the clouds, thin-aired and deadly cold.", "The high peaks: ice, wind and silence."]
+    },
+    "marsh": {
+      "name": "marsh", "glyphs": ["\"", "⌠", ","], "fg": [84, 140, 110], "bg": [14, 26, 22],
+      "move_hours": 2.6, "passable": true,
+      "local": {"ground": [["mud", 4], ["marsh_reeds", 4], ["grass", 1]], "trees": 0.03, "tree_types": ["dead_tree", "tree_broadleaf"], "rocks": 0, "bushes": 0.05, "water": 0.22},
+      "descriptions": ["Sucking fen and reedbed, loud with insects, the water brown and foul.", "Marshland where the path is wherever the ground holds you."]
+    },
+    "tundra": {
+      "name": "tundra", "glyphs": [".", "·", ","], "fg": [170, 180, 170], "bg": [26, 30, 30],
+      "move_hours": 1.5, "passable": true,
+      "local": {"ground": [["snow", 3], ["frozen_ground", 4], ["heather", 1]], "trees": 0.005, "tree_types": ["dead_tree"], "rocks": 0.04, "bushes": 0.02, "water": 0},
+      "descriptions": ["Treeless barrens, frozen hard, the wind carrying ice.", "Flat, pale waste of moss and frost under a low sky."]
+    },
+    "desert": {
+      "name": "scrub desert", "glyphs": ["·", "~", "."], "fg": [214, 180, 110], "bg": [44, 34, 18],
+      "move_hours": 1.8, "passable": true,
+      "local": {"ground": [["sand", 5], ["dry_earth", 3], ["gravel", 1]], "trees": 0.003, "tree_types": ["dead_tree"], "rocks": 0.04, "bushes": 0.03, "water": 0},
+      "descriptions": ["Dry scrub and dust, the ground cracked and glaring.", "Sand and thornbush, and no water anywhere you can see."]
+    }
+  }
+}

@@ -1,0 +1,385 @@
+"""The running game: the player's position and knowledge, and every action that moves time on.
+
+Pure logic. Screens call these methods and draw the results; nothing here draws anything.
+The player is a placeholder wanderer until character creation arrives (M2).
+"""
+
+from __future__ import annotations
+
+import logging
+import math
+from dataclasses import dataclass, field
+
+import numpy as np
+import tcod.path
+
+from realmwalker.core import textgen
+from realmwalker.game.log import MessageLog
+from realmwalker.world.calendar import MINUTES_PER_HOUR, Moment, duration_text
+from realmwalker.world.local import LocalMap, get_local_map, terrain_remap
+from realmwalker.world.model import DIRS, World
+from realmwalker.world.tables import Tables
+
+log = logging.getLogger("realmwalker.game")
+
+LOCAL_STEP_SECONDS = 6  # one local-map step: about one 5e round
+MILES_PER_TILE = 3
+FORD_MINUTES = 45
+ROAD_HOURS = {"mountains": 1.6, "high_mountains": 3.0, "marsh": 1.2, "hills": 0.9}
+DEFAULT_ROAD_HOURS = 0.75
+WALKING_HOURS_PER_DAY = 8
+HOME_RADIUS = 12  # tiles of home district the wanderer already knows
+
+
+@dataclass
+class PlayerState:
+    name: str
+    x: int
+    y: int
+    explored: np.ndarray  # bool [x, y] overworld tiles seen
+    local_key: str | None = None
+    lx: int = 0
+    ly: int = 0
+    alive: bool = True
+    home: int = -1  # settlement id
+    known_settlements: set[int] = field(default_factory=set)
+    visited_settlements: set[int] = field(default_factory=set)
+    visited_areas: set[int] = field(default_factory=set)
+    seconds: int = 0  # sub-minute time carried from local-map steps
+    steps: int = 0
+
+
+@dataclass
+class TravelPlan:
+    path: list[tuple[int, int]]  # overworld tiles, not including the start
+    minutes: int
+    miles: int
+    destination: tuple[int, int]
+
+
+class GameState:
+    def __init__(self, world: World, player: PlayerState, tables: Tables, messages: MessageLog | None = None) -> None:
+        self.world = world
+        self.player = player
+        self.tables = tables
+        self.log = messages or MessageLog()
+        self.travel: TravelPlan | None = None
+        self._cost_cache: np.ndarray | None = None
+        B = tables.biomes
+        self._biome_remap = np.array([B.index.get(b, B.index["plains"]) for b in world.biome_ids], dtype=np.int32)
+        self.dirty = False  # something changed since the last save
+        self._remaps: dict[str, np.ndarray] = {}
+        self._recent_areas: list[int] = []
+
+    # ------------------------------------------------------------------ queries
+    @property
+    def moment(self) -> Moment:
+        return self.tables.calendar.at(self.world.time)
+
+    @property
+    def latitude(self) -> float:
+        return self.world.latitude(self.player.y)
+
+    @property
+    def light(self) -> float:
+        return self.moment.light(self.latitude)
+
+    @property
+    def in_local(self) -> bool:
+        return self.player.local_key is not None
+
+    @property
+    def local(self) -> LocalMap | None:
+        if self.player.local_key is None:
+            return None
+        return self.world.local_maps.get(self.player.local_key)
+
+    def biome_def(self, x: int, y: int) -> dict:
+        return self.tables.biomes.defs[int(self._biome_remap[self.world.biome[x, y]])]
+
+    def biome_key(self, x: int, y: int) -> str:
+        return self.tables.biomes.ids[int(self._biome_remap[self.world.biome[x, y]])]
+
+    def say(self, text: str, category: str = "info") -> None:
+        self.log.add(text, category, self.world.time)
+
+    # ------------------------------------------------------------------ time
+    def pass_time(self, minutes: float) -> None:
+        """Advance the world clock. Later milestones hook needs, weather and politics in here."""
+        whole = int(minutes)
+        if whole <= 0:
+            return
+        before = self.moment
+        self.world.time += whole
+        after = self.moment
+        if after.total_days != before.total_days:
+            self.say(f"<title>{after.date_text()}.</>", "system")
+        self.dirty = True
+
+    def pass_seconds(self, seconds: int) -> None:
+        self.player.seconds += seconds
+        minutes, self.player.seconds = divmod(self.player.seconds, 60)
+        self.pass_time(minutes)
+
+    # ------------------------------------------------------------------ overworld movement
+    def step_minutes(self, x0: int, y0: int, x1: int, y1: int) -> int | None:
+        """Minutes to walk from one overworld tile to a neighbour, or None if impossible."""
+        w = self.world
+        if not w.in_bounds(x1, y1):
+            return None
+        target = self.biome_def(x1, y1)
+        if not target["passable"]:
+            return None
+        diagonal = x0 != x1 and y0 != y1
+        if w.road[x0, y0] and w.road[x1, y1]:
+            hours = ROAD_HOURS.get(self.biome_key(x1, y1), DEFAULT_ROAD_HOURS)
+        else:
+            here = self.biome_def(x0, y0)
+            hours = (float(here["move_hours"]) + float(target["move_hours"])) / 2.0
+            if w.river[x1, y1] and not w.road[x1, y1]:
+                hours += FORD_MINUTES / 60.0
+        if diagonal:
+            hours *= 1.41
+        return max(1, int(round(hours * MINUTES_PER_HOUR)))
+
+    def move(self, dx: int, dy: int) -> bool:
+        if self.in_local:
+            return self._move_local(dx, dy)
+        return self._move_overworld(dx, dy)
+
+    def _move_overworld(self, dx: int, dy: int) -> bool:
+        p = self.player
+        nx, ny = p.x + dx, p.y + dy
+        minutes = self.step_minutes(p.x, p.y, nx, ny)
+        if minutes is None:
+            if self.world.in_bounds(nx, ny):
+                self.say(f"The {self.biome_def(nx, ny)['name']} bars the way. There is no crossing without a boat.", "warn")
+            return False
+        fording = bool(self.world.river[nx, ny]) and not self.world.road[nx, ny]
+        prev_area = self.world.area_at(p.x, p.y)
+        p.x, p.y = nx, ny
+        p.steps += 1
+        self.pass_time(minutes)
+        if fording:
+            river = self.world.river_at(nx, ny)
+            name = f"the {river.name.removeprefix('the ')}" if river else "a river"
+            self.say(f"You wade across {name}, waist-deep and numbingly cold.", "warn")
+        self.reveal()
+        self._arrive(prev_area)
+        return True
+
+    def reveal(self) -> None:
+        """Mark overworld tiles around the player as explored."""
+        p = self.player
+        biome = self.biome_key(p.x, p.y)
+        radius = {"hills": 5, "mountains": 6, "high_mountains": 8, "forest": 2, "pine_forest": 2}.get(biome, 3)
+        if self.light < 0.5:
+            radius = max(1, radius - 1)
+        x0, x1 = max(0, p.x - radius), min(self.world.width, p.x + radius + 1)
+        y0, y1 = max(0, p.y - radius), min(self.world.height, p.y + radius + 1)
+        xs = np.arange(x0, x1)[:, None]
+        ys = np.arange(y0, y1)[None, :]
+        circle = (xs - p.x) ** 2 + (ys - p.y) ** 2 <= radius * radius + 1
+        p.explored[x0:x1, y0:y1] |= circle
+        # Settlements announce themselves from a little further (smoke, bells, roads).
+        for s in self.world.settlements:
+            if abs(s.x - p.x) <= radius + 2 and abs(s.y - p.y) <= radius + 2:
+                p.known_settlements.add(s.id)
+
+    def _arrive(self, prev_area) -> None:
+        p = self.player
+        area = self.world.area_at(p.x, p.y)
+        if area is not None and area is not prev_area:
+            first = area.id not in p.visited_areas
+            p.visited_areas.add(area.id)
+            if first:
+                biome = self.biome_def(p.x, p.y)
+                desc = self.world.rng.child(f"areadesc{area.id}").choice(biome["descriptions"])
+                self.say(f"You enter <place>{area.name}</>. {desc}", "place")
+            elif area.id not in self._recent_areas:
+                self.say(f"You are back in <place>{area.name}</>.", "place")
+            # Walking along a border should not repeat the same announcement every step.
+            self._recent_areas = ([area.id] + [a for a in self._recent_areas if a != area.id])[:4]
+        s = self.world.settlement_at(p.x, p.y)
+        if s is not None:
+            first = s.id not in p.visited_settlements
+            p.visited_settlements.add(s.id)
+            p.known_settlements.add(s.id)
+            self.say(self.settlement_arrival_text(s, first), "place")
+        site = self.world.site_at(p.x, p.y)
+        if site is not None:
+            spec = self.tables.sites["site_types"].get(site.kind, {})
+            self.say(f"You come upon <place>{_cap(site.name)}</>. {spec.get('desc', '')}", "place")
+
+    def settlement_arrival_text(self, s, first: bool) -> str:
+        spec = self.tables.sites["settlement_types"][s.kind]
+        kind = spec["name"]
+        if not first:
+            return f"You reach <place>{s.name}</> again."
+        culture = self.tables.names["cultures"].get(s.culture, {}).get("label", s.culture)
+        souls = f"about {round(s.population, -1 if s.population < 1000 else -2):,} souls"
+        walls = " behind its walls" if s.walled else ""
+        return f"You reach <place>{s.name}</>, {textgen.a_or_an(kind)} of {souls}{walls}. <dim>{culture} folk live here.</>"
+
+    # ------------------------------------------------------------------ local maps
+    def enter_local(self) -> LocalMap:
+        p = self.player
+        lm = get_local_map(self.world, self.tables, p.x, p.y)
+        p.local_key = lm.key
+        p.lx, p.ly = lm.entry
+        where = self.world.settlement_at(p.x, p.y)
+        if where is not None:
+            self.say(f"You walk into <place>{where.name}</>.", "place")
+        else:
+            biome = self.biome_def(p.x, p.y)
+            self.say(f"You leave the track and look about you: {biome['name']}.", "flavor")
+        self.dirty = True
+        return lm
+
+    def leave_local(self) -> None:
+        if not self.in_local:
+            return
+        self.player.local_key = None
+        self.say("You return to the road and the wider land.", "flavor")
+        self.dirty = True
+
+    def _move_local(self, dx: int, dy: int) -> bool:
+        lm = self.local
+        p = self.player
+        if lm is None:
+            p.local_key = None
+            return False
+        nx, ny = p.lx + dx, p.ly + dy
+        if not lm.in_bounds(nx, ny):
+            self.leave_local()
+            return True
+        T = self.tables.terrain
+        t = int(self.remap_for(lm)[lm.terrain[nx, ny]])
+        tid = T.ids[t]
+        if tid == "door_closed":
+            lm.terrain[nx, ny] = lm.terrain_ids.index("door_open") if "door_open" in lm.terrain_ids else lm.terrain[nx, ny]
+            self.pass_seconds(LOCAL_STEP_SECONDS)
+            self.say("You open the door.", "flavor")
+            return True
+        if not T.walk[t]:
+            return False
+        p.lx, p.ly = nx, ny
+        p.steps += 1
+        self.pass_seconds(int(LOCAL_STEP_SECONDS * float(T.cost[t]) * (1.41 if dx and dy else 1.0)))
+        return True
+
+    def remap_for(self, lm: LocalMap) -> np.ndarray:
+        """Stored terrain index -> current data terrain index, cached per map."""
+        cached = self._remaps.get(lm.key)
+        if cached is None or len(cached) != len(lm.terrain_ids):
+            cached = terrain_remap(lm, self.tables)
+            self._remaps[lm.key] = cached
+        return cached
+
+    # ------------------------------------------------------------------ waiting
+    def wait(self, minutes: int) -> None:
+        self.pass_time(minutes)
+        if not self.in_local:
+            self.reveal()
+
+    # ------------------------------------------------------------------ travel
+    def travel_costs(self) -> np.ndarray:
+        """Integer cost grid (minutes per tile, 0 = impassable) for path-finding."""
+        if self._cost_cache is None:
+            B = self.tables.biomes
+            hours = B.move_hours[self._biome_remap[self.world.biome]]
+            cost = hours * 60.0
+            cost = np.where(self.world.river > 0, cost + FORD_MINUTES, cost)
+            cost = np.where(self.world.road, DEFAULT_ROAD_HOURS * 60.0, cost)
+            passable = B.passable[self._biome_remap[self.world.biome]]
+            self._cost_cache = np.where(passable, np.maximum(1, cost), 0).astype(np.int32)
+        return self._cost_cache
+
+    def plan_travel(self, dest: tuple[int, int]) -> TravelPlan | None:
+        p = self.player
+        if dest == (p.x, p.y) or not self.world.in_bounds(*dest):
+            return None
+        path = tcod.path.path2d(self.travel_costs(), start_points=[(p.x, p.y)], end_points=[dest], cardinal=100, diagonal=141)
+        if len(path) < 2:
+            return None
+        points = [tuple(int(v) for v in pt) for pt in path.tolist()][1:]
+        minutes = 0
+        x, y = p.x, p.y
+        for nx, ny in points:
+            step = self.step_minutes(x, y, nx, ny)
+            if step is None:
+                return None
+            minutes += step
+            x, y = nx, ny
+        return TravelPlan(points, minutes, len(points) * MILES_PER_TILE, dest)
+
+    def travel_step(self) -> bool:
+        """Take one step of a planned journey. Returns False when the journey is over."""
+        plan = self.travel
+        if plan is None or not plan.path:
+            self.travel = None
+            return False
+        nx, ny = plan.path[0]
+        ok = self._move_overworld(nx - self.player.x, ny - self.player.y)
+        if not ok:
+            self.say("Your way is blocked; you stop to find another route.", "warn")
+            self.travel = None
+            return False
+        plan.path.pop(0)
+        if not plan.path:
+            self.say("You have reached your destination.", "good")
+            self.travel = None
+            return False
+        return True
+
+    def describe_plan(self, plan: TravelPlan) -> str:
+        walking = duration_text(plan.minutes)
+        if plan.minutes <= WALKING_HOURS_PER_DAY * MINUTES_PER_HOUR:
+            return f"{plan.miles} miles, about {walking} on foot"
+        days = plan.minutes / (WALKING_HOURS_PER_DAY * MINUTES_PER_HOUR)
+        return f"{plan.miles} miles: {walking} of walking, about {days:.0f} days at a steady pace"
+
+    # ------------------------------------------------------------------ bookkeeping
+    def distance_to(self, x: int, y: int) -> float:
+        return math.hypot(x - self.player.x, y - self.player.y)
+
+
+SEASON_LINES = {
+    "spring": "Early spring: the roads are mud and the nights still freeze.",
+    "summer": "Summer: long days, short tempers, and fever in the low places.",
+    "autumn": "Autumn: harvest, slaughter, and the first frosts.",
+    "winter": "Winter: the killing season. Nobody travels who does not have to.",
+}
+
+
+def _cap(s: str) -> str:
+    return s[:1].upper() + s[1:]
+
+
+def new_game(world: World, tables: Tables, name: str = "The Wanderer", start_settlement: int | None = None) -> GameState:
+    """Start a placeholder wanderer at a settlement (character creation replaces this in M2)."""
+    rng = world.rng.child("start")
+    towns = [s for s in world.settlements if s.kind in ("town", "village")] or world.settlements
+    if start_settlement is not None:
+        start = world.settlements[start_settlement]
+    else:
+        start = rng.choice(towns)
+    player = PlayerState(name=name, x=start.x, y=start.y, explored=np.zeros((world.width, world.height), dtype=bool),
+                         home=start.id)
+    game = GameState(world, player, tables)
+    # You know your own district, and have heard of the big towns within a few days' walk.
+    for s in world.settlements:
+        if s.kind in ("city", "town") and math.hypot(s.x - start.x, s.y - start.y) < 45:
+            player.known_settlements.add(s.id)
+    xs = np.arange(world.width)[:, None]
+    ys = np.arange(world.height)[None, :]
+    player.explored |= (xs - start.x) ** 2 + (ys - start.y) ** 2 <= HOME_RADIUS ** 2
+    # ...and the roads out of it, as far as the next towns.
+    near_roads = world.road & ((xs - start.x) ** 2 + (ys - start.y) ** 2 <= (HOME_RADIUS * 2) ** 2)
+    player.explored |= near_roads
+    game.reveal()
+    m = game.moment
+    game.say(f"<title>{m.long_text()}.</> {SEASON_LINES.get(m.season, '')}", "system")
+    game._arrive(None)
+    game.say("Press <loot>F1</> for help. Arrow keys or the number pad walk; <loot>></> enters the land around you.", "system")
+    return game

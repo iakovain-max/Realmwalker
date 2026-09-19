@@ -34,7 +34,10 @@ realmwalker/
   core/                    rng (the one seeded RNG), dice, schema (validation), textgen (fallback templates), logs
   data/                    registry.py loads + validates data/*.json; schemas.py describes each file
   ai/                      client (Player2 HTTP), service (workers/queue/ping), parsing, prompts, tasks, store
-  ui/                      window loop, fonts (tileset built at runtime), input, markup, widgets, screens/
+  world/                   generator (terrain, rivers, climate, biomes, towns, roads), local maps, calendar,
+                           tables (numpy lookups from data), model (World + save-friendly dataclasses)
+  game/                    state (player, actions, travel, time), save (versioned zips), log, describe (look text)
+  ui/                      window loop, fonts (tileset built at runtime), input, markup, widgets, map_render, screens/
 data/                      ALL game data as JSON (names, fallback text, ... later races, items, creatures)
 ai/prompts/                prompt templates (plain text, @max_tokens header, {slots})
 assets/fonts/              DejaVu Sans Mono + licence
@@ -61,6 +64,11 @@ tools/                     autoplay.py, mock_player2.py, build_friends.py
   Always `markup.escape()` text from the AI or the player.
 - Screens: subclass `ui/screens/base.Screen`; implement `render(canvas)`, `handle_key(ev)`,
   `autoplay_keys()` (sensible keys for the bot). Register clickable areas with `canvas.hit()` / `canvas.button()`.
+- **Arrays are indexed [x, y]** (shape (width, height)) everywhere, matching tcod consoles (order="F").
+- Saves store id lists (biome_ids, terrain_ids) next to index arrays so data files can change without
+  breaking saves; always go through `GameState.remap_for()` / `_biome_remap` when reading them.
+- New save fields: bump `game/save.py` FORMAT_VERSION and add a MIGRATIONS entry; never break old saves.
+- The autoplay bot checks game invariants (`tools/autoplay.py`); add checks there as systems are added.
 
 ## Player2 facts (verified 2026-09-19 against the local docs at http://127.0.0.1:4315/docs, v0.10.79)
 

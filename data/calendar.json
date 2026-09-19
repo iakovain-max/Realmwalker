@@ -1,0 +1,21 @@
+{
+  "_comment": "The world's calendar. 12 months of 30 days. daylight = hours of daylight at mid-latitude; temp_offset = degrees C added to a place's yearly average.",
+  "era": "of the Reckoning",
+  "start_year": 1047,
+  "days_per_month": 30,
+  "weekdays": ["Moonsday", "Tiwsday", "Wodensday", "Thunorsday", "Freyasday", "Saturnsday", "Sunsday"],
+  "months": [
+    {"name": "Thawmonth", "season": "spring", "daylight": 12, "temp_offset": -2},
+    {"name": "Seedmonth", "season": "spring", "daylight": 13.5, "temp_offset": 1},
+    {"name": "Blossomtide", "season": "spring", "daylight": 15, "temp_offset": 4},
+    {"name": "Highsun", "season": "summer", "daylight": 16, "temp_offset": 7},
+    {"name": "Haymonth", "season": "summer", "daylight": 15.5, "temp_offset": 9},
+    {"name": "Harvestmonth", "season": "summer", "daylight": 14, "temp_offset": 8},
+    {"name": "Reaping", "season": "autumn", "daylight": 12.5, "temp_offset": 5},
+    {"name": "Leaffall", "season": "autumn", "daylight": 11, "temp_offset": 1},
+    {"name": "Bloodmonth", "season": "autumn", "daylight": 9.5, "temp_offset": -3},
+    {"name": "Frostfall", "season": "winter", "daylight": 8.5, "temp_offset": -7},
+    {"name": "Deepwinter", "season": "winter", "daylight": 8, "temp_offset": -10},
+    {"name": "Wolfmonth", "season": "winter", "daylight": 9.5, "temp_offset": -8}
+  ]
+}
