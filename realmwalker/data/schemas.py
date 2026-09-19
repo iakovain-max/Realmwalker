@@ -486,3 +486,48 @@ ECONOMY = Obj(
 )
 
 DATA_FILES.update({"economy.json": ECONOMY})
+
+# ---------------------------------------------------------------------------- factions (M6)
+VALUE_IDS = ("pious", "mercantile", "xenophobic", "honor-bound", "expansionist", "secretive", "warlike", "tolerant",
+             "cruel", "learned")
+FAITH = Obj(
+    {
+        "name": Str(max_len=60), "god": Str(max_len=60), "short": Str(max_len=40), "about": Str(max_len=120),
+        "cultures": List(Str(max_len=30)), "church": Bool(optional=True), "cult": Bool(optional=True),
+        "values": List(Str(choices=VALUE_IDS)),
+    }
+)
+FACTION_KIND = Obj(
+    {
+        "label": Str(max_len=40), "group": Str(choices=["realms", "wild", "guilds", "faiths", "outlaws"]),
+        "secret": Bool(optional=True), "leader": List(Str(max_len=30), min_items=2, max_items=2),
+        "names": word_list(1, 80), "values": List(List(Any_(), min_items=2, max_items=2), min_items=1),
+        "wealth": List(Int(min=0, max=10**6), min_items=2, max_items=2),
+        "military": List(Int(min=0, max=10**6), min_items=2, max_items=2),
+    }
+)
+LAW_SET = Obj({"magic": Str(choices=["legal", "licensed", "forbidden"]),
+               "weapons": Str(choices=["open", "peace_bond", "forbidden"]),
+               "religion": Str(choices=["tolerant", "state_only"]), "serfdom": Bool(), "slavery": Bool(),
+               "harshness": Str(choices=["lenient", "stern", "harsh", "cruel"])})
+FACTIONS = Obj(
+    {
+        "faiths": Map(FAITH, min_items=1),
+        "kinds": Map(FACTION_KIND, min_items=1),
+        "groups": Map(Str(max_len=60)),
+        "words": Map(word_list(1, 40)),
+        "values": Map(Obj({"label": Str(max_len=30), "text": Str(max_len=120), "clashes": List(Str(choices=VALUE_IDS))})),
+        "laws": Map(Map(Str(max_len=200))),
+        "culture_laws": Map(LAW_SET, min_items=1),
+        "value_laws": Map(Map(Str(max_len=30))),
+        "standings": List(List(Any_(), min_items=3, max_items=3), min_items=2),
+        "relation_states": List(List(Any_(), min_items=3, max_items=3), min_items=2),
+        "counts": Map(List(Int(min=0, max=20), min_items=3, max_items=3)),
+        "realm_colors": List(COLOR, min_items=4),
+    }
+)
+REQUIRED_FACTION_KINDS = ("kingdom", "noble_house", "free_city", "clan", "highland_clan", "elven_realm", "tribe",
+                          "merchant_guild", "thieves_guild", "mages_circle", "mercenary_company", "healers_guild",
+                          "smiths_guild", "temple", "knightly_order", "cult", "bandit_gang", "pirate_crew")
+
+DATA_FILES.update({"factions.json": FACTIONS})

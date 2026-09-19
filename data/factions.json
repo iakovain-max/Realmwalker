@@ -1,0 +1,87 @@
+{
+  "_comment": "Factions (M6). faiths: the gods people follow; cult faiths are forbidden everywhere. kinds: every sort of faction, with its leader's title, name patterns ({slots} from words, plus {land} {seat} {family} {faith} {god} {leader} filled by code), values it tends to hold [value, weight], and rough wealth/strength. values: what a faction cares about; clashing values sour relations. culture_laws: the laws a realm of that people starts with (values may change them). standings: your reputation names by lowest score. relation_states: how factions feel about each other, by lowest score. counts: how many of the roaming factions each world size gets [small, medium, large].",
+  "faiths": {
+    "radiant": {"name": "the Radiant Church", "god": "Solun the Bright", "short": "Solun", "about": "the sun, law and the harvest", "cultures": ["heartland", "southron"], "church": true, "values": ["pious", "honor-bound"]},
+    "old_ways": {"name": "the Old Ways", "god": "the Mother and the Hunter", "short": "the Mother", "about": "hearth and hunt and the turning year", "cultures": ["northmarch", "halfling"], "church": true, "values": ["tolerant"]},
+    "stone": {"name": "the Hall of the Stone Fathers", "god": "the Stone Fathers", "short": "the Fathers", "about": "ancestors, craft and oaths kept", "cultures": ["dwarven"], "church": true, "values": ["honor-bound"]},
+    "evergreen": {"name": "the Evergreen Song", "god": "the Evergreen", "short": "the Evergreen", "about": "the forest, memory and the stars", "cultures": ["elven"], "church": true, "values": ["learned"]},
+    "drowned": {"name": "the Drowned God", "god": "the Drowned God", "short": "the Drowned God", "about": "the sea, storms and what the sea takes", "cultures": [], "church": false, "values": ["cruel"]},
+    "red_jaw": {"name": "the Red Jaw", "god": "the Red Jaw", "short": "the Red Jaw", "about": "war, hunger and the strong", "cultures": ["orcish"], "church": false, "values": ["warlike"]},
+    "hollow_king": {"name": "the Hollow King", "god": "the Hollow King", "short": "the Hollow King", "about": "death that does not end", "cultures": [], "cult": true, "values": ["secretive", "cruel"]},
+    "pale_mother": {"name": "the Pale Mother", "god": "the Pale Mother", "short": "the Pale Mother", "about": "plague, rot and the mercy of an ending", "cultures": [], "cult": true, "values": ["secretive"]},
+    "whisperer": {"name": "the Whisperer Below", "god": "the Whisperer Below", "short": "the Whisperer", "about": "secrets, bargains and hunger", "cultures": [], "cult": true, "values": ["secretive", "mercantile"]}
+  },
+  "kinds": {
+    "kingdom": {"label": "kingdom", "group": "realms", "leader": ["King", "Queen"], "names": ["the Kingdom of {land}", "the Kingdom of {land}", "the Crown of {land}"], "values": [["pious", 3], ["expansionist", 2], ["honor-bound", 2], ["mercantile", 1], ["warlike", 2], ["xenophobic", 1], ["cruel", 1], ["tolerant", 1], ["learned", 1]], "wealth": [1, 1], "military": [1, 1]},
+    "noble_house": {"label": "noble house", "group": "realms", "leader": ["Lord", "Lady"], "names": ["House {family}"], "values": [["honor-bound", 2], ["expansionist", 1], ["mercantile", 1], ["pious", 1], ["cruel", 1], ["secretive", 1], ["warlike", 1]], "wealth": [1, 1], "military": [1, 1]},
+    "free_city": {"label": "free city", "group": "realms", "leader": ["Lord Mayor", "Lady Mayor"], "names": ["the Free City of {seat}"], "values": [["mercantile", 4], ["tolerant", 2], ["learned", 1], ["secretive", 1]], "wealth": [1, 1], "military": [1, 1]},
+    "clan": {"label": "dwarven clan", "group": "realms", "leader": ["Thane", "Thane"], "names": ["Clan {family}", "the {family} Clan"], "values": [["honor-bound", 3], ["xenophobic", 1], ["mercantile", 1], ["warlike", 1], ["pious", 1]], "wealth": [1, 1], "military": [1, 1]},
+    "highland_clan": {"label": "highland clan", "group": "realms", "leader": ["Chief", "Chief"], "names": ["Clan {family}", "the {family}s"], "values": [["warlike", 2], ["honor-bound", 2], ["xenophobic", 1], ["tolerant", 1]], "wealth": [1, 1], "military": [1, 1]},
+    "elven_realm": {"label": "elven realm", "group": "realms", "leader": ["Elder-King", "Elder-Queen"], "names": ["the Hidden Realm of {land}", "the Realm of {land}"], "values": [["xenophobic", 3], ["learned", 2], ["secretive", 2], ["tolerant", 1]], "wealth": [1, 1], "military": [1, 1]},
+    "tribe": {"label": "tribe", "group": "wild", "leader": ["Warchief", "Warchief"], "names": ["the {tribe_adj} {tribe_noun} tribe", "the {tribe_noun}s of {land}", "the {tribe_adj} {tribe_noun}s", "the {tribe_noun}-{tribe_noun2} tribe"], "values": [["warlike", 3], ["cruel", 2], ["xenophobic", 1], ["honor-bound", 1]], "wealth": [20, 150], "military": [60, 300]},
+    "merchant_guild": {"label": "merchants' guild", "group": "guilds", "leader": ["Guildmaster", "Guildmistress"], "names": ["the Merchants' Guild of {seat}", "the Guild of the {noun}", "the Company of {seat} Merchants"], "values": [["mercantile", 5], ["secretive", 1], ["tolerant", 1]], "wealth": [800, 4000], "military": [10, 40]},
+    "thieves_guild": {"label": "thieves' guild", "group": "guilds", "secret": true, "leader": ["Nightmaster", "Nightmistress"], "names": ["the {adj} Hand", "the {adj} {noun}s", "the Brotherhood of the {noun}"], "values": [["secretive", 4], ["mercantile", 2], ["cruel", 1]], "wealth": [300, 1500], "military": [15, 50]},
+    "mages_circle": {"label": "circle of mages", "group": "guilds", "leader": ["Archmage", "Archmage"], "names": ["the {adj} Circle", "the Collegium of {seat}", "the Circle of the {noun}"], "values": [["learned", 5], ["secretive", 2], ["tolerant", 1]], "wealth": [500, 2500], "military": [5, 20]},
+    "mercenary_company": {"label": "mercenary company", "group": "guilds", "leader": ["Captain", "Captain"], "names": ["the {adj} Company", "the {noun}s of {seat}", "the Free Company of the {noun}"], "values": [["warlike", 3], ["mercantile", 2], ["honor-bound", 1], ["cruel", 1]], "wealth": [200, 1200], "military": [80, 300]},
+    "healers_guild": {"label": "healers' guild", "group": "guilds", "leader": ["Master Healer", "Mistress Healer"], "names": ["the Guild of Barber-Surgeons", "the Order of the Clean Hand", "the Worshipful Company of Healers"], "values": [["learned", 3], ["tolerant", 2], ["pious", 1]], "wealth": [300, 1500], "military": [0, 5]},
+    "smiths_guild": {"label": "smiths' guild", "group": "guilds", "leader": ["Anvil-Master", "Anvil-Mistress"], "names": ["the Brotherhood of the Anvil", "the Guild of the Hammer", "the Worshipful Company of Smiths"], "values": [["honor-bound", 2], ["mercantile", 2]], "wealth": [300, 1500], "military": [5, 20]},
+    "temple": {"label": "church", "group": "faiths", "leader": ["High Priest", "High Priestess"], "names": ["{faith}"], "values": [["pious", 5]], "wealth": [600, 3000], "military": [5, 30]},
+    "knightly_order": {"label": "knightly order", "group": "faiths", "leader": ["Grand Master", "Grand Master"], "names": ["the Knights of the {adj} {noun}", "the Order of the {noun}", "the Knights of {god}"], "values": [["honor-bound", 4], ["pious", 3], ["warlike", 1]], "wealth": [400, 2000], "military": [50, 150]},
+    "cult": {"label": "cult", "group": "faiths", "secret": true, "leader": ["the Voice", "the Voice"], "names": ["the Children of {god}", "the {adj} Brethren", "the Keepers of the {noun}"], "values": [["secretive", 5], ["cruel", 2]], "wealth": [50, 500], "military": [10, 40]},
+    "bandit_gang": {"label": "bandit gang", "group": "outlaws", "leader": ["Captain", "Captain"], "names": ["{leader}'s Company", "{leader}'s Crew", "the {adj} {noun}s", "the {noun}s of {land}", "the {adj} Band"], "values": [["cruel", 2], ["mercantile", 1], ["secretive", 1]], "wealth": [20, 200], "military": [10, 40]},
+    "pirate_crew": {"label": "pirate crew", "group": "outlaws", "leader": ["Captain", "Captain"], "names": ["the crew of the {ship}", "the {ship}'s crew"], "values": [["cruel", 2], ["mercantile", 1], ["warlike", 1]], "wealth": [100, 600], "military": [20, 60]}
+  },
+  "groups": {"realms": "Realms and lords", "wild": "Tribes of the wild", "guilds": "Guilds and companies", "faiths": "Churches, orders and cults", "outlaws": "Outlaws"},
+  "words": {
+    "adj": ["Black", "Red", "Grey", "Iron", "Silver", "Broken", "Crimson", "Hollow", "Pale", "Golden", "Bloody", "Burning", "Silent", "Crooked", "White", "Bitter", "Rusted", "Ashen", "Green", "Seventh"],
+    "noun": ["Hand", "Crow", "Raven", "Blade", "Lantern", "Rose", "Chain", "Boar", "Hound", "Serpent", "Hammer", "Star", "Skull", "Eye", "Stag", "Spear", "Fang", "Key", "Candle", "Oak", "Scale", "Tower", "Gate", "Moon"],
+    "tribe_adj": ["Bloody", "Broken", "Black", "Red", "Howling", "Burning", "Grey", "Split", "Rotten", "Blind", "Iron", "Yellow"],
+    "tribe_noun": ["Spear", "Fang", "Skull", "Tusk", "Claw", "Boar", "Eye", "Hand", "Axe", "Bone", "Moon", "Toe", "Ear", "Maw"],
+    "tribe_noun2": ["Eater", "Breaker", "Taker", "Biter", "Splitter", "Burner", "Chewer", "Cutter"],
+    "land_suffix_heartland": ["mark", "land", "shire", "wold", "march", "moor", "vale", "reach", "dale"],
+    "land_suffix_northmarch": ["mark", "heim", "land", "gard", "fjell", "vik", "mere"],
+    "land_suffix_southron": ["ia", "ona", "enza", "ara", "ossa", "eria", "anto"],
+    "ship": ["Widowmaker", "Salt Maiden", "Grey Gull", "Red Heron", "Merry Drowning", "Black Swan", "Bitter Tide", "Long Night", "Kestrel", "Sea-Wolf"],
+    "epithet": ["the Bold", "the Old", "the Young", "the Fair", "the Grim", "the Cruel", "the Wise", "the Pious", "the Lame", "the Unready", "the Tall", "Ironhand", "the Just", "the Black", "the Red", "the Fat", "the Quiet", "the Good", "the Mad", "Longshanks", "the Great", "the Pale"]
+  },
+  "values": {
+    "pious": {"label": "pious", "text": "they take the gods seriously, and their own god most of all", "clashes": ["secretive", "learned"]},
+    "mercantile": {"label": "mercantile", "text": "money talks, and they listen", "clashes": ["honor-bound", "warlike"]},
+    "xenophobic": {"label": "xenophobic", "text": "they distrust other peoples", "clashes": ["tolerant", "mercantile"]},
+    "honor-bound": {"label": "honour-bound", "text": "an oath is an oath, and a grudge is a grudge", "clashes": ["secretive", "mercantile", "cruel"]},
+    "expansionist": {"label": "expansionist", "text": "they want more land than they have", "clashes": ["tolerant"]},
+    "secretive": {"label": "secretive", "text": "they say little and hide much", "clashes": ["honor-bound", "pious"]},
+    "warlike": {"label": "warlike", "text": "they settle quarrels with steel", "clashes": ["mercantile", "learned"]},
+    "tolerant": {"label": "tolerant", "text": "they let people be", "clashes": ["xenophobic", "pious", "cruel"]},
+    "cruel": {"label": "cruel", "text": "they rule by fear", "clashes": ["tolerant", "honor-bound"]},
+    "learned": {"label": "learned", "text": "they prize books and knowing things", "clashes": ["warlike", "pious"]}
+  },
+  "laws": {
+    "magic": {"legal": "Magic is legal.", "licensed": "Magic needs a licence; casting in a town without one is a crime.", "forbidden": "Magic is forbidden, and witches burn."},
+    "weapons": {"open": "Weapons may be carried openly.", "peace_bond": "Weapons must be peace-bonded in towns; drawing steel is a crime.", "forbidden": "Commoners may not bear arms in towns."},
+    "religion": {"tolerant": "Other faiths are tolerated.", "state_only": "Only the state faith may be practised; other rites are heresy."},
+    "serfdom": {"true": "The common folk are serfs, bound to the land.", "false": "The common folk are free."},
+    "slavery": {"true": "Slavery is lawful.", "false": "Slavery is forbidden."},
+    "harshness": {"lenient": "Punishments are lenient: fines, mostly.", "stern": "Punishments are stern: fines, the stocks and jail.", "harsh": "Punishments are harsh: the lash, the brand, hard labour and the rope.", "cruel": "Punishments are cruel: the lash for little, the rope for much."}
+  },
+  "culture_laws": {
+    "heartland": {"magic": "licensed", "weapons": "peace_bond", "religion": "tolerant", "serfdom": true, "slavery": false, "harshness": "stern"},
+    "northmarch": {"magic": "forbidden", "weapons": "open", "religion": "tolerant", "serfdom": false, "slavery": false, "harshness": "harsh"},
+    "southron": {"magic": "legal", "weapons": "peace_bond", "religion": "state_only", "serfdom": false, "slavery": true, "harshness": "harsh"},
+    "halfling": {"magic": "legal", "weapons": "open", "religion": "tolerant", "serfdom": false, "slavery": false, "harshness": "lenient"},
+    "dwarven": {"magic": "licensed", "weapons": "open", "religion": "tolerant", "serfdom": false, "slavery": false, "harshness": "harsh"},
+    "elven": {"magic": "legal", "weapons": "open", "religion": "tolerant", "serfdom": false, "slavery": false, "harshness": "stern"},
+    "orcish": {"magic": "legal", "weapons": "open", "religion": "tolerant", "serfdom": false, "slavery": true, "harshness": "cruel"}
+  },
+  "value_laws": {
+    "pious": {"religion": "state_only", "magic": "licensed"},
+    "tolerant": {"religion": "tolerant", "harshness": "lenient"},
+    "cruel": {"harshness": "cruel"},
+    "learned": {"magic": "legal"},
+    "mercantile": {"harshness": "stern"}
+  },
+  "standings": [[-100, "Hated", "danger"], [-50, "Distrusted", "warn"], [-15, "Neutral", "dim"], [15, "Respected", "good"], [50, "Honoured", "good"]],
+  "relation_states": [[-100, "hostile", "danger"], [-60, "rival", "warn"], [-25, "neutral", "dim"], [25, "friendly", "good"], [60, "allied", "good"]],
+  "counts": {"kingdom": [2, 2, 3], "free_city": [1, 1, 2], "tribe": [1, 2, 3], "bandit_gang": [2, 3, 5], "pirate_crew": [0, 1, 2], "cult": [1, 2, 3], "thieves_guild": [1, 1, 2], "mercenary_company": [1, 1, 2]},
+  "realm_colors": [[160, 60, 50], [60, 90, 160], [170, 140, 50], [70, 130, 70], [130, 70, 140], [60, 140, 140], [170, 100, 60], [120, 120, 130], [150, 80, 100], [90, 110, 60], [100, 80, 60], [60, 70, 120]]
+}

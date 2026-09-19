@@ -153,6 +153,10 @@ class GameScreen(Screen):
 
             screen = {"c": CharacterScreen, "i": InventoryScreen, "e": EquipmentScreen}[ev.key]
             self.app.push(screen(self.app, game))
+        elif ev.key == "f":
+            from realmwalker.ui.screens.factions import FactionsScreen
+
+            self.app.push(FactionsScreen(self.app, game))
         elif ev.key == "m":
             self.open_world_map()
         elif ev.key == "t":
@@ -406,6 +410,18 @@ class GameScreen(Screen):
         if area is not None:
             canvas.markup(ix, row, f"<place>{cap(area.name)}</>", max_width=iw)
             row += 1
+        if world.factions:
+            from realmwalker.world.factions import lord_at, top_liege
+
+            lord = lord_at(world, p.x, p.y)
+            if lord is not None:
+                top = top_liege(world, lord)
+                realm = cap(top.name) if top is not None else cap(lord.name)
+                canvas.markup(ix, row, f"<info>{markup.escape(realm)}</>", max_width=iw)
+                row += 1
+                if game.renown.bounties.get(top.id if top else lord.id):
+                    canvas.markup(ix, row, "<danger>You are wanted here.</>", max_width=iw)
+                    row += 1
         canvas.text(ix, row, cap(game.biome_def(p.x, p.y)["name"]) + (" · on the road" if world.road[p.x, p.y] else ""),
                     colors.FG, max_width=iw)
         row += 1
@@ -440,7 +456,7 @@ class GameScreen(Screen):
             ("arrows", "walk"), (">", "enter the land here") if not game.in_local else ("<", "back to the overworld"),
             ("l", "look"), ("m t", "world map · travel"), ("c i e", "character · pack · gear"),
             ("g", "pick up") if game.in_local else (".", "wait an hour"), ("r h", "camp · health"),
-            ("w W", "water · wash"), ("L /", "log · legend"), ("Esc", "menu"),
+            ("w W", "water · wash"), ("f", "factions"), ("L /", "log · legend"), ("Esc", "menu"),
         ]
         ky = h - len(keys) - 1
         for key, what in keys:
@@ -509,4 +525,4 @@ class GameScreen(Screen):
     def autoplay_keys(self) -> list[KeyEvent]:
         moves = [KeyEvent(k) for k in ("up", "down", "left", "right", "upleft", "upright", "downleft", "downright")]
         return moves * 4 + [KeyEvent(k) for k in (">", "<", "l", "enter", "escape", ".", "m", "t", "L", "/",
-                                                   "c", "i", "e", "g", "r", "h", "w", "W")]
+                                                   "c", "i", "e", "g", "r", "h", "w", "W", "f")]

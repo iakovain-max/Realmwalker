@@ -39,7 +39,27 @@ def settlement_line(game: GameState, s) -> str:
     culture = game.tables.names["cultures"].get(s.culture, {}).get("label", s.culture)
     walls = ", walled" if s.walled else ""
     size = f"about {round(s.population, -1 if s.population < 1000 else -2):,} people"
-    return f"<place>{s.name}</>: {spec['name']}{walls}, {size}. <dim>{culture} folk.</>"
+    line = f"<place>{s.name}</>: {spec['name']}{walls}, {size}. <dim>{culture} folk.</>"
+    return line + holder_line(game, s)
+
+
+def holder_line(game: GameState, s) -> str:
+    """ Held by House Draycott, sworn to the Kingdom of Ashmere."""
+    from realmwalker.world import factions as fx
+
+    owner = fx.owner_of(game.world, s)
+    if owner is None:
+        return " <dim>No lord holds it.</>" if game.world.factions else ""
+    top = fx.top_liege(game.world, owner)
+    if owner.seat == s.id and owner.kind in ("kingdom", "free_city", "clan", "highland_clan", "elven_realm"):
+        return f" <dim>Seat of</> <info>{owner.name}</>."
+    if owner.seat == s.id:
+        text = f" <dim>Seat of</> <info>{owner.name}</>"
+    else:
+        text = f" <dim>Held by</> <info>{owner.name}</>"
+    if top is not None and top is not owner:
+        text += f"<dim>, sworn to {top.name}</>"
+    return text + "."
 
 
 def describe_overworld(game: GameState, x: int, y: int) -> str:
@@ -65,6 +85,17 @@ def describe_overworld(game: GameState, x: int, y: int) -> str:
     area = w.area_at(x, y)
     where = f"{cap(biome['name'])}" + (f", in <place>{area.name}</>" if area else "")
     lines.append(where + ".")
+    if w.factions and settlement is None:
+        from realmwalker.world import factions as fx
+
+        lord = fx.lord_at(w, x, y)
+        if lord is not None:
+            top = fx.top_liege(w, lord)
+            if lord.kind == "tribe":
+                lines.append(f"<warn>{cap(lord.name)} roam here.</>")
+            else:
+                lines.append(f"<dim>The lands of</> <info>{lord.name}</>" +
+                             (f"<dim>, sworn to {top.name}</>" if top is not None and top is not lord else "") + ".")
     extras = []
     if w.river[x, y]:
         river = w.river_at(x, y)

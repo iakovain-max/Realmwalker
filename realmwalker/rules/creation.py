@@ -343,25 +343,49 @@ def make_ties(world, tables, character: Character, start_id: int, rng: RNG) -> l
         options.sort(key=lambda s: math.hypot(s.x - start.x, s.y - start.y))
         return rng.choice(options[:4]) if options else start
 
+    from realmwalker.world import factions as fx
+
     tie = bg["tie"]
     values: dict[str, str] = {k: rng.choice(v) for k, v in words.items()}
-    refs: dict[str, int] = {}
+    refs: dict = {}
     kind = tie["kind"]
+    have_factions = bool(getattr(world, "factions", None))
     if kind == "lord_served":
         seat = nearby(("town", "city"))
-        values.update(lord=person("Lord", "Lady"), house=f"House {rng.choice(culture['family'])}", place=seat.name)
+        lord_faction = fx.owner_of(world, seat) if have_factions else None
+        leader = fx.leader_of(world, lord_faction)
+        if lord_faction is not None and leader is not None:
+            house = lord_faction.name if lord_faction.kind == "noble_house" else                 f"House {lord_faction.flags.get('dynasty') or leader.name.split()[-1]}"
+            values.update(lord=leader.full_name(), house=house, place=seat.name)
+            deserted = "desert" in values.get("how", "")
+            refs.update(faction=lord_faction.id, standing=-30 if deserted else 15)
+        else:
+            values.update(lord=person("Lord", "Lady"), house=f"House {rng.choice(culture['family'])}", place=seat.name)
         refs["place"] = seat.id
     elif kind == "temple":
         values.update(place=start.name, priest=person("Father", "Mother"))
         refs["place"] = start.id
+        church = fx.church_of(world, fx.faith_for_culture(tables, start.culture)) if have_factions else None
+        if church is not None:
+            refs.update(faction=church.id, standing=25)
     elif kind == "criminal":
         other = nearby(("town", "city", "village"), exclude=start.id)
         bounty = rng.choice([15, 20, 25, 40, 50])
         values.update(contact=person(), place=start.name, bounty_place=other.name, bounty=f"{bounty} gold crowns")
-        refs.update(place=start.id, bounty_place=other.id, bounty=bounty * 100)
+        refs.update(place=start.id, bounty_place=other.id, bounty=bounty * 100, crime=values.get("crime", ""))
+        if have_factions:
+            realm = fx.realm_of_settlement(world, other)
+            if realm is not None:
+                refs["bounty_faction"] = realm.id
+            thieves = [f for f in fx.active_factions(world, "thieves_guild") if start.id in f.presence]
+            if thieves:
+                refs.update(faction=thieves[0].id, standing=20)
     elif kind == "home_village":
         values.update(place=start.name, headman=person())
         refs["place"] = start.id
+        lord_faction = fx.owner_of(world, start) if have_factions else None
+        if lord_faction is not None:
+            refs.update(faction=lord_faction.id, standing=10)
     elif kind == "noble_house":
         family = character.name.split()[-1]
         seat = nearby(("town", "city"))
@@ -371,11 +395,26 @@ def make_ties(world, tables, character: Character, start_id: int, rng: RNG) -> l
         city = nearby(("city", "town"))
         values.update(master=person("Master", "Mistress"), place=city.name)
         refs["place"] = city.id
+        circles = fx.active_factions(world, "mages_circle") if have_factions else []
+        if circles:
+            refs.update(faction=circles[0].id, standing=15)
     elif kind == "clan":
         values.update(place=start.name, chief=person())
         refs["place"] = start.id
+        clans = sorted(fx.active_factions(world, "highland_clan", "clan") if have_factions else [],
+                       key=lambda f: math.hypot(world.settlements[f.seat].x - start.x, world.settlements[f.seat].y - start.y))
+        if clans and math.hypot(world.settlements[clans[0].seat].x - start.x, world.settlements[clans[0].seat].y - start.y) < 40:
+            clan = clans[0]
+            leader = fx.leader_of(world, clan)
+            values.update(clan=clan.name, place=world.settlements[clan.seat].name,
+                          chief=leader.full_name() if leader else person())
+            refs.update(faction=clan.id, standing=30, place=clan.seat)
     elif kind == "guild":
         values.update(place=start.name, master=person())
         refs["place"] = start.id
+        want = "smiths_guild" if "Smith" in values.get("guild", "") else "merchant_guild"
+        guilds = fx.active_factions(world, want) if have_factions else []
+        if guilds:
+            refs.update(faction=guilds[0].id, standing=5)
     text = textgen.fill(tie["text"], rng, {}, values)
     return [{"kind": kind, "text": text, "names": {k: v for k, v in values.items() if k not in words}, "refs": refs}]

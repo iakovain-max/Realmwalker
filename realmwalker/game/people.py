@@ -15,7 +15,7 @@ from realmwalker.core import textgen
 from realmwalker.core.rng import RNG
 from realmwalker.rules.items import Item
 
-CULTURE_RACE = {"elven": "elf", "dwarven": "dwarf", "halfling": "halfling", "orcish": "half_orc"}
+from realmwalker.world.factions import CULTURE_RACE  # noqa: E402  (kept importable from here)
 DAY_START, DAY_END = 7, 19
 STAYS_AT_POST = {"innkeeper", "serving_hand", "guard", "priest", "lord"}
 WANDERS = {"guard", "farmer", "labourer", "weaver", "carter", "washerwoman", "beggar", "fisher", "woodcutter", "miner"}
@@ -328,8 +328,95 @@ def populate_town(game, lm, settlement) -> Town:
         if near == "hills" and not around & {"hills", "mountains"}:
             job = "labourer"
         add(world, town, make_npc(game, settlement, job, rng.child(f"common/{i}"), post=street(), home=a_home()))
+    link_figures(game, town, settlement, lm, inside, rng)
+    secret_members(game, town, settlement, rng)
     update_positions(game, lm)
     return town
+
+
+# ---------------------------------------------------------------------------- townsfolk and factions (M6)
+FIGURE_JOBS = {"kingdom": "lord", "noble_house": "lord", "free_city": "lord", "highland_clan": "headman",
+               "clan": "headman", "elven_realm": "headman", "temple": "priest", "merchant_guild": "shopkeeper",
+               "smiths_guild": "smith", "healers_guild": "healer"}
+
+
+def link_figures(game, town: Town, settlement, lm, inside, rng: RNG) -> None:
+    """The rulers and masters who live here are the people of history: the king in the keep, the lady in the
+    hall, the high priest in the temple."""
+    from realmwalker.world import factions as fx
+
+    w = game.world
+    for f in fx.active_factions(w):
+        if f.seat != settlement.id or f.kind not in FIGURE_JOBS or f.flags.get("minor"):
+            continue
+        fig = fx.leader_of(w, f)
+        if fig is None or not fig.alive or (fig.npc >= 0 and fig.npc in w.npcs):
+            continue
+        job = FIGURE_JOBS[f.kind]
+        npc = next((n for n in npcs_in(w, settlement.id) if n.job == job and "figure" not in n.flags), None)
+        if npc is None and job == "lord":
+            hall = next((i for i, b in enumerate(lm.buildings) if b.kind in ("keep", "hall")), None)
+            if hall is None:
+                continue
+            spot = inside(lm.buildings[hall])
+            npc = make_npc(game, settlement, "lord", rng.child(f"lord/{f.id}"), building=hall, post=spot, home=spot)
+            add(w, town, npc)
+        if npc is not None:
+            become_figure(game, npc, fig, rng.child(f"figure/{fig.id}"))
+
+
+def become_figure(game, npc: NPC, fig, rng: RNG) -> None:
+    """A townsperson takes on the name, age and nature of a figure of history."""
+    npc.name, npc.sex, npc.race, npc.culture = fig.name, fig.sex, fig.race, fig.culture
+    npc.age = max(14, fig.age(game.moment.year))
+    npc.title = fig.title.lower() if not fig.title.startswith("the ") else npc.title
+    if fig.traits:
+        npc.traits = list(fig.traits)
+    npc.notable = True
+    if fig.role == "ruler" and npc.job in ("lord", "headman"):
+        npc.social = "high" if npc.job == "lord" else npc.social
+    npc.flags["figure"] = fig.id
+    fig.npc = npc.id
+    npc.profile = fallback_profile(game, npc, rng)
+    npc.profile_source = "fallback"
+
+
+def secret_members(game, town: Town, settlement, rng: RNG) -> None:
+    """Thieves and cultists hide among ordinary folk."""
+    from realmwalker.world import factions as fx
+
+    w = game.world
+    folk = [n for n in npcs_in(w, settlement.id) if not n.notable and n.job not in ("guard", "acolyte")]
+    for f in fx.active_factions(w, "thieves_guild", "cult"):
+        if settlement.id not in f.presence and f.seat != settlement.id:
+            continue
+        free = [n for n in folk if "secret" not in n.flags]
+        for n in rng.sample(free, min(len(free), 2 if f.kind == "thieves_guild" else 1)):
+            n.flags["secret"] = f.id
+
+
+def npc_factions(game, npc: NPC) -> list:
+    """The factions a townsperson answers to, most important first (secret ones are not included)."""
+    from realmwalker.world import factions as fx
+
+    w = game.world
+    out = []
+    fig = w.figures.get(npc.flags.get("figure", -1))
+    if fig is not None and fig.faction in w.factions:
+        out.append(w.factions[fig.faction])
+    settlement = w.settlements[npc.settlement]
+    guild_for = {"priest": ("temple",), "acolyte": ("temple",), "smith": ("smiths_guild",),
+                 "shopkeeper": ("merchant_guild",), "market_trader": ("merchant_guild",), "healer": ("healers_guild",)}
+    kinds = guild_for.get(npc.job)
+    for f in fx.active_factions(w, *kinds) if kinds else []:
+        if f not in out and (settlement.id in f.presence or f.seat == settlement.id):
+            if f.kind != "temple" or f.faith == fx.faith_for_culture(game.tables, settlement.culture):
+                out.append(f)
+                break
+    owner = fx.owner_of(w, settlement)
+    if owner is not None and owner not in out:
+        out.append(owner)
+    return out
 
 
 def prepare_town(game, settlement) -> Town:
@@ -447,7 +534,32 @@ def first_impression(game, npc: NPC) -> int:
         score += 10
     if c.race == npc.race and c.culture == npc.culture:
         score += 3
+    score += faction_impression(game, npc)
     return max(-80, min(80, score))
+
+
+def faction_impression(game, npc: NPC) -> int:
+    """What your name is worth with their people, and whether there is a price on your head here."""
+    from realmwalker.game.reputation import standing
+    from realmwalker.world import factions as fx
+
+    if not game.world.factions:
+        return 0
+    score = 0
+    facs = npc_factions(game, npc)
+    if facs:
+        score += int(max(-25, min(20, standing(game, facs[0].id) / 3)))
+        if any(f.id in game.renown.members for f in facs):
+            score += 10
+    secret = npc.flags.get("secret")
+    if secret is not None and secret in game.renown.members:
+        score += 15
+    realm = fx.realm_of_settlement(game.world, game.world.settlements[npc.settlement])
+    if realm is not None and game.renown.bounties.get(realm.id, 0) > 0:
+        score -= 25 if npc.job == "guard" else 8
+        if realm is not None and "xenophobic" in realm.values and game.leader.race != npc.race:
+            score -= 5
+    return score
 
 
 def meet(game, npc: NPC) -> None:

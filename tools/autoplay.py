@@ -209,10 +209,39 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
                     fail(f"{f.name} has {f.hp}/{f.max_hp} hit points in battle")
                 if f.state not in ("fighting", "fleeing", "down", "dead", "fled", "surrendered"):
                     fail(f"{f.name} is in an unknown state {f.state!r}")
+        _check_factions(game, fail)
         if not game.leader.alive and game.over is None and b is None and game.aftermath is None:
             fail("the leader is dead but the game goes on")
         if game.over is None and any(not c.alive for c in game.party) and b is None and game.aftermath is None:
             fail("a dead companion is still in the party")
+
+
+def _check_factions(game, fail) -> None:
+    """M6: holdings point at living realms, relations are symmetric, standings and bounties are in range."""
+    w = game.world
+    if not w.factions:
+        fail("the world has no factions")
+        return
+    for s in w.settlements:
+        if s.owner >= 0 and (s.owner not in w.factions or w.factions[s.owner].kind not in (
+                "kingdom", "noble_house", "free_city", "clan", "highland_clan", "elven_realm")):
+            fail(f"{s.name} is held by something that is not a realm ({s.owner})")
+    for f in w.factions.values():
+        if f.liege == f.id:
+            fail(f"{f.name} is its own liege")
+        for other, v in f.relations.items():
+            if not -100 <= v <= 100 or w.factions.get(other) is None or w.factions[other].relations.get(f.id) != v:
+                fail(f"relation between {f.name} and {other} is broken ({v})")
+                break
+        if f.active and f.leader not in w.figures:
+            fail(f"{f.name} has no leader")
+    r = game.renown
+    if any(not -100 <= v <= 100 for v in r.standing.values()):
+        fail(f"a standing is out of range: {r.standing}")
+    if any(v < 0 for v in r.bounties.values()):
+        fail(f"a negative bounty: {r.bounties}")
+    if any(fid not in w.factions for fid in r.known):
+        fail("the player knows of a faction that does not exist")
 
 
 _LAST_TIME: dict[str, int] = {}

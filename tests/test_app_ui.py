@@ -595,3 +595,30 @@ def test_the_services_window(make_app, size):
         app.handle_event(KeyEvent(key))
         render(app, size)
     assert app.error_count == 0
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_the_factions_screen_and_realm_map(make_app, size):
+    from realmwalker.ui.screens.factions import FactionsScreen
+    from realmwalker.ui.screens.world_map import WorldMapScreen
+
+    app = make_app()
+    gs = start_small_world(app)
+    game = app.game
+    for f in game.world.factions.values():
+        game.renown.known.add(f.id)
+    game.renown.bounties[next(iter(game.world.factions))] = 1500
+    app.handle_event(KeyEvent("f"))
+    assert isinstance(app.top, FactionsScreen)
+    con = render(app, size)
+    assert "Factions" in screen_text(con)
+    for key in ("down", "down", "end", "pagedown", "pageup", "home", "up"):
+        app.handle_event(KeyEvent(key))
+        render(app, size)
+    app.handle_event(KeyEvent("escape"))
+    app.push(WorldMapScreen(app, gs))
+    app.handle_event(KeyEvent("p"))
+    render(app, size)
+    app.handle_event(KeyEvent("z"))
+    render(app, size)
+    assert app.error_count == 0

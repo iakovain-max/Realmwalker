@@ -33,13 +33,14 @@ from realmwalker.game.log import MessageLog
 from realmwalker.game.state import GameState, PlayerState
 from realmwalker.rules.character import Character
 from realmwalker.rules.items import Item
+from realmwalker.world.factions import Faction, Figure
 from realmwalker.world.local import Building, LocalMap
 from realmwalker.world.model import ARRAY_NAMES, Area, Settlement, Site, World, WorldMeta
 from realmwalker.world.tables import Tables
 
 log = logging.getLogger("realmwalker.save")
 
-FORMAT_VERSION = 5
+FORMAT_VERSION = 6
 WORLD_FILE = "world.zip"
 CHARACTER_FILE = "character.zip"
 
@@ -74,8 +75,21 @@ def _v4_to_v5(kind: str, body: dict) -> dict:
     return body
 
 
+def _v5_to_v6(kind: str, body: dict) -> dict:
+    """Format 6 added factions, history, wars and news to the world, and reputation to the character (M6).
+    Older worlds get their factions made when they are loaded (world.factions.ensure_factions)."""
+    if kind == "world":
+        body = dict(body)
+        for key in ("factions", "figures", "wars", "history", "news"):
+            body.setdefault(key, [])
+        body.setdefault("politics", {})
+        body.setdefault("next_figure_id", 0)
+    return body
+
+
 # format number -> function upgrading a loaded JSON body (of a given kind) to the next format.
-MIGRATIONS: dict[int, Callable[[str, dict], dict]] = {1: _v1_to_v2, 2: _v2_to_v3, 3: _v3_to_v4, 4: _v4_to_v5}
+MIGRATIONS: dict[int, Callable[[str, dict], dict]] = {1: _v1_to_v2, 2: _v2_to_v3, 3: _v3_to_v4, 4: _v4_to_v5,
+                                                      5: _v5_to_v6}
 
 
 class SaveError(Exception):
@@ -138,6 +152,13 @@ def world_entries(world: World) -> dict[str, bytes | str]:
         "npcs": [n.to_dict() for _, n in sorted(world.npcs.items())],
         "towns": [t.to_dict() for _, t in sorted(world.towns.items())],
         "next_npc_id": world.next_npc_id,
+        "factions": [f.to_dict() for _, f in sorted(world.factions.items())],
+        "figures": [f.to_dict() for _, f in sorted(world.figures.items())],
+        "next_figure_id": world.next_figure_id,
+        "wars": world.wars,
+        "history": world.history,
+        "news": world.news,
+        "politics": world.politics,
     }
     entries: dict[str, bytes | str] = {"manifest.json": _manifest("world"), "world.json": json.dumps(body)}
     for name, arr in world.arrays().items():
@@ -202,6 +223,13 @@ def load_world(folder: Path) -> World:
         npcs={n["id"]: NPC.from_dict(n) for n in body.get("npcs", [])},
         towns={t["settlement"]: Town.from_dict(t) for t in body.get("towns", [])},
         next_npc_id=int(body.get("next_npc_id", 0)),
+        factions={f["id"]: Faction.from_dict(f) for f in body.get("factions", [])},
+        figures={f["id"]: Figure.from_dict(f) for f in body.get("figures", [])},
+        next_figure_id=int(body.get("next_figure_id", 0)),
+        wars=body.get("wars", []),
+        history=body.get("history", []),
+        news=body.get("news", []),
+        politics=body.get("politics", {}),
         **arrays,
     )
 
@@ -217,12 +245,13 @@ def character_entries(game: GameState) -> dict[str, bytes | str]:
         "visited_areas": sorted(p.visited_areas),
         "log": game.log.to_dict(),
         "party": [c.to_dict() for c in game.party],
+        "renown": game.renown.to_dict(),
     }
     return {"manifest.json": _manifest("character"), "character.json": json.dumps(body),
             "explored.npy": _npy(p.explored)}
 
 
-def load_player(folder: Path) -> tuple[PlayerState, MessageLog, list[Character] | None]:
+def load_player(folder: Path) -> tuple[PlayerState, MessageLog, list[Character] | None, dict]:
     path = folder / CHARACTER_FILE
     try:
         with zipfile.ZipFile(path) as z:
@@ -241,7 +270,7 @@ def load_player(folder: Path) -> tuple[PlayerState, MessageLog, list[Character] 
     )
     party = body.get("party")
     party_chars = [Character.from_dict(c) for c in party] if party else None
-    return player, MessageLog.from_dict(body.get("log", {})), party_chars
+    return player, MessageLog.from_dict(body.get("log", {})), party_chars, body.get("renown", {})
 
 
 # ---------------------------------------------------------------------------- whole game
@@ -258,8 +287,12 @@ def save_game(game: GameState, saves_dir: Path) -> Path:
 
 
 def load_game(folder: Path, tables: Tables) -> GameState:
+    from realmwalker.game.reputation import Renown, starting_knowledge
+    from realmwalker.world.factions import ensure_factions
+
     world = load_world(folder)
-    player, messages, party = load_player(folder)
+    ensure_factions(world, tables)
+    player, messages, party, renown = load_player(folder)
     if player.local_key is not None and player.local_key not in world.local_maps:
         player.local_key = None
     try:
@@ -268,6 +301,9 @@ def load_game(folder: Path, tables: Tables) -> GameState:
         raise SaveError(f"The character in this save could not be understood ({exc}).") from exc
     if party is None:
         player.name = game.leader.name
+    game.renown = Renown.from_dict(renown)
+    if not game.renown.flags.get("started"):
+        starting_knowledge(game)  # a character from before M6
     return game
 
 

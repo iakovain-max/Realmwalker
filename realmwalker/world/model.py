@@ -45,6 +45,8 @@ class Settlement:
     population: int
     walled: bool = False
     area: int = -1
+    owner: int = -1  # the faction holding it (world.factions)
+    status: dict = field(default_factory=dict)  # siege, sack, plague... (game.politics)
 
 
 @dataclass
@@ -55,6 +57,7 @@ class Site:
     y: int
     name: str
     danger: int = 1
+    faction: int = -1  # the tribe, gang, cult or circle that uses it
 
 
 @dataclass
@@ -95,6 +98,14 @@ class World:
     npcs: dict = field(default_factory=dict)  # id -> game.people.NPC
     towns: dict = field(default_factory=dict)  # settlement id -> game.people.Town
     next_npc_id: int = 0
+    factions: dict = field(default_factory=dict)  # id -> world.factions.Faction
+    figures: dict = field(default_factory=dict)  # id -> world.factions.Figure
+    next_figure_id: int = 0
+    wars: list = field(default_factory=list)  # game.politics war records (dicts)
+    history: list = field(default_factory=list)  # world.history events (dicts), oldest first
+    news: list = field(default_factory=list)  # game.news items (dicts)
+    politics: dict = field(default_factory=dict)  # counters and dates for the politics simulation
+    faction_version: int = 0  # bumped when holdings change (cached territory maps)
 
     def __post_init__(self) -> None:
         if self.rng is None:

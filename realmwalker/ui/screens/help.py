@@ -49,7 +49,7 @@ Choose <loot>New World</> on the title screen, pick a size and seed, and the lan
   <loot>Right-click</>     Look at a spot
 
 <title>Journeys</title>
-  <loot>m</>               World map (<loot>z</> zooms out to the whole world)
+  <loot>m</>               World map (<loot>z</> zooms out to the whole world, <loot>w</> weather, <loot>p</> realms)
   <loot>t</>               Travel: pick a destination on the world map and see how long it takes
 Roads are much faster than open country. Forests, hills and marshes are slow; mountains very slow. Rivers without a bridge must be waded. Any key stops a journey.
 
@@ -82,6 +82,10 @@ Ask who they are, about the place, for news (dangerous roads, places you did not
 Shopkeepers, smiths, healers, market traders, innkeepers and stablemasters trade. In the market window, <loot>Enter</> buys or sells one, <loot>Tab</> switches between their goods and yours, <loot>h</> haggles (once a day). Prices depend on the place: goods are cheap where they are made (salt on the coast, iron in the hills, furs in the cold north, grain on the plains) and dear where nobody makes them, so carrying trade goods between towns pays. Merchants have only so much coin, restock every week, and won't buy stolen goods.
 <title>Services</title>
 Ask "What can you do for me?": beds for the night (a real sleep, safe from the wilds), hot meals, baths, performing and dice at the inn; healers who treat every wound at once, operate on internal bleeding and sell herbal cures; priests who pray for healing and cures (for a donation); smiths who mend battered weapons and armour; a day's paid work; and at the stable, mules, ponies and horses. A mule carries 200 lb for you; horses make open ground and roads quicker if everyone rides. Animals need a bag of fodder a day, or grazing outside winter, or they starve.
+
+<title>Factions</title>
+  <loot>f</>               Factions: the realms, lords, churches, guilds, tribes and outlaws you know of
+The land is divided among kingdoms and the noble houses sworn to them, free cities, dwarven clans, highland clans and elven realms; tribes hold the wild country. Churches, knightly orders, guilds, mercenary companies, and secret thieves and cults work within and across them. Each has a leader, values, friends and enemies, and realms have their own laws. You have a standing with each (<danger>Hated</>, <warn>Distrusted</>, Neutral, <good>Respected</>, <good>Honoured</>): people who answer to a faction treat you by it, and a price on your head makes the watch unfriendly. Your background may have given you friends, a family, or a bounty. Rulers live in their seats: the king in the keep, the lady in her hall.
 
 <title>Danger</title>
 The wilds are not empty. The more dangerous the region (shown in the side panel), the more likely something finds you, and night is worse; roads are a little safer. When trouble comes on the road you can <loot>F</>ight, <loot>A</>mbush (if you saw them first), <loot>S</>lip away (Stealth), or <loot>T</>alk your way past. Ruins, caves, barrows and towers have inhabitants; in the close view they show as letters, with a red background once they have noticed you. Walk into them to attack.

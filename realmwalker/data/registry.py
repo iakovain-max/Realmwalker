@@ -98,6 +98,7 @@ def check_cross_references(files: dict[str, Any]) -> list[str]:
                                   f"{{{slot}}} but there is no '{slot}' list.")
     errors.extend(_check_character_refs(files))
     errors.extend(_check_combat_refs(files))
+    errors.extend(_check_faction_refs(files))
     regions = names.get("regions", {})
     for kind, patterns in regions.items():
         for pattern in patterns:
@@ -105,6 +106,36 @@ def check_cross_references(files: dict[str, Any]) -> list[str]:
                 if slot not in regions:
                     errors.append(f"data/place_names.json: regions.{kind} pattern {pattern!r} uses {{{slot}}}, "
                                   f"which is not a list in 'regions'.")
+    return errors
+
+
+def _check_faction_refs(files: dict[str, Any]) -> list[str]:
+    from realmwalker.data.schemas import REQUIRED_FACTION_KINDS, VALUE_IDS
+
+    data = files.get("factions.json")
+    if not data:
+        return []
+    errors: list[str] = []
+    runtime = {"land", "seat", "family", "faith", "god", "leader"}
+    for kind in REQUIRED_FACTION_KINDS:
+        if kind not in data["kinds"]:
+            errors.append(f"data/factions.json: the game needs a faction kind called '{kind}'.")
+    for kid, k in data["kinds"].items():
+        for pattern in k["names"]:
+            for slot in textgen.slots(pattern):
+                if slot not in data["words"] and slot not in runtime:
+                    errors.append(f"data/factions.json: kinds.{kid} name {pattern!r} uses {{{slot}}}, which is not a "
+                                  f"list in 'words'.")
+        for i, pair in enumerate(k["values"]):
+            if pair[0] not in VALUE_IDS or not isinstance(pair[1], (int, float)):
+                errors.append(f"data/factions.json: kinds.{kid}.values[{i}] should be [value, weight].")
+    for vid in VALUE_IDS:
+        if vid not in data["values"]:
+            errors.append(f"data/factions.json: values needs an entry for '{vid}'.")
+    cultures = set(files.get("names.json", {}).get("cultures", {}))
+    for culture in cultures:
+        if culture not in data["culture_laws"]:
+            errors.append(f"data/factions.json: culture_laws needs laws for the '{culture}' people.")
     return errors
 
 

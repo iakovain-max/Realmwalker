@@ -106,4 +106,5 @@ class Tables:
         self.people = data["people.json"]
         self.dialogue = data["dialogue.json"]
         self.economy = data["economy.json"]
+        self.factions = data["factions.json"]
         self.travel_events = {k: v for k, v in data["travel_events.json"]["events"].items() if not k.startswith("_")}

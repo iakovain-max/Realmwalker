@@ -178,6 +178,7 @@ class Conversation:
         if not npc.known:
             npc.known = True
             self.npc_says(self.fill(self.pick("who_are_you")))
+            self.faction_note()
             return
         mood = npc.mood()
         if mood in ("hostile", "unfriendly"):
@@ -186,6 +187,20 @@ class Conversation:
         self.npc_says(f"\"{npc.profile.get('backstory', '')}\"" if npc.profile.get("backstory") else "\"Not much to tell.\"")
         if mood in ("friendly", "warm") and npc.profile.get("want"):
             self.note(f"What {npc.first_name} wants: {npc.profile['want']}.")
+
+    def faction_note(self) -> None:
+        """Rulers and masters: which faction they lead (and the player now knows of it)."""
+        from realmwalker.game.reputation import know
+        from realmwalker.world import factions as fx
+
+        w = self.game.world
+        fig = w.figures.get(self.npc.flags.get("figure", -1))
+        if fig is None or fig.faction not in w.factions:
+            return
+        f = w.factions[fig.faction]
+        know(self.game, f.id)
+        role = "the head" if f.kind == "noble_house" or fig.title.startswith("the ") else fig.title.lower()
+        self.note(f"{self.npc.first_name} is {role} of {fx.faction_title(w, self.game.tables, f)}.")
 
     def about_place(self) -> None:
         from realmwalker.game.people import town_of
@@ -205,8 +220,34 @@ class Conversation:
         line = self.fill(self.pick("about_place"), size_line=d["size_line"].get(s.kind, ""),
                          services_line=(services[:1].upper() + services[1:] + ".") if services else "")
         self.npc_says(line)
+        self.holder_line()
         if town.description:
             self.note(town.description)
+
+    def holder_line(self) -> None:
+        """Who rules here, in their words."""
+        from realmwalker.game.reputation import know
+        from realmwalker.world import factions as fx
+
+        w = self.game.world
+        s = self.settlement
+        owner = fx.owner_of(w, s)
+        if owner is None:
+            if w.factions:
+                self.npc_says("\"No lord holds this place. We look after ourselves.\"")
+            return
+        know(self.game, owner.id)
+        leader = fx.leader_of(w, owner)
+        top = fx.top_liege(w, owner)
+        who = f"{leader.full_name()}" if leader is not None and leader.alive else owner.name
+        if owner.seat == s.id:
+            text = f"\"{who} rules here"
+        else:
+            text = f"\"We answer to {owner.name}"
+        if top is not None and top is not owner:
+            know(self.game, top.id)
+            text += f", sworn to {top.name}"
+        self.npc_says(text + ".\"")
 
     def rumours(self) -> None:
         npc = self.npc

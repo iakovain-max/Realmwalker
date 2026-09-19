@@ -27,6 +27,7 @@ class WorldMapScreen(Screen):
         self.travel_mode = travel_mode
         self.fit = False  # False: 1 tile per cell; True: squeeze the whole world onto the screen
         self.show_weather = False
+        self.show_realms = False
         self._weather: tuple[int, tuple] | None = None
         self.view = (0, 0, 1, 0, 0)  # x0, y0 of map on screen, scale, first tile x, first tile y
 
@@ -63,6 +64,8 @@ class WorldMapScreen(Screen):
             self._tint_weather(grid, fg, bg, explored)
         ch[~explored] = ord(" ")
         bg[~explored] = UNSEEN_BG
+        if self.show_realms:
+            self._tint_realms(grid, bg, explored)
         stypes = self.game.tables.sites["settlement_types"]
         for s in world.settlements:
             if s.id not in p.known_settlements and not p.explored[s.x, s.y]:
@@ -105,6 +108,32 @@ class WorldMapScreen(Screen):
                 bgf[mask] = bgf[mask] * (1 - k) + np.array(color, dtype=np.float32) * k
         bg[:] = bgf.astype(np.uint8)
 
+    def _tint_realms(self, grid, bg, explored) -> None:
+        """Each realm's lands in its own colour. Borders of realms you know of are common knowledge, so they show
+        (faintly) even where you have not been; lands of realms you do not know show grey where you have."""
+        from realmwalker.world.factions import territory
+
+        world = self.game.world
+        if not world.factions:
+            return
+        _, realm = territory(world)
+        ids = realm[grid]
+        known = self.game.renown.known
+        bgf = bg.astype(np.float32)
+        for fid in np.unique(ids):
+            if fid < 0:
+                continue
+            f = world.factions.get(int(fid))
+            if f is None:
+                continue
+            color = np.array(f.color if int(fid) in known else (90, 90, 96), dtype=np.float32)
+            seen = (ids == fid) & explored
+            bgf[seen] = bgf[seen] * 0.45 + color * 0.55
+            if int(fid) in known:
+                unseen = (ids == fid) & ~explored
+                bgf[unseen] = bgf[unseen] * 0.7 + color * 0.3
+        bg[:] = bgf.astype(np.uint8)
+
     def _side(self, canvas: Canvas, x: int, y: int, w: int, h: int) -> None:
         title = "Travel: choose where" if self.travel_mode else self.title
         canvas.frame(x, y, w, h, title, double=True)
@@ -120,6 +149,7 @@ class WorldMapScreen(Screen):
             row += 3
         keys = [("arrows", "move the cursor"), ("Shift+arrows", "move faster"), ("Enter", "travel there"),
                 ("z", "zoom out / in"), ("w", "weather: " + ("shown" if self.show_weather else "hidden")),
+                ("p", "realms: " + ("shown" if self.show_realms else "hidden")),
                 ("@", "back to yourself"), ("Esc", "close")]
         ky = h - len(keys) - 1
         for key, what in keys:
@@ -149,6 +179,8 @@ class WorldMapScreen(Screen):
             self.fit = not self.fit
         elif ev.key == "w":
             self.show_weather = not self.show_weather
+        elif ev.key == "p":
+            self.show_realms = not self.show_realms
         elif ev.key == "@":
             self.cursor = (self.game.player.x, self.game.player.y)
         elif ev.key in ("escape", "m", "t"):
@@ -173,7 +205,7 @@ class WorldMapScreen(Screen):
         return False
 
     def autoplay_keys(self) -> list[KeyEvent]:
-        return [KeyEvent(k) for k in ("up", "down", "left", "right", "z", "w", "@", "escape")] + [KeyEvent("enter")]
+        return [KeyEvent(k) for k in ("up", "down", "left", "right", "z", "w", "p", "@", "escape")] + [KeyEvent("enter")]
 
 
 def canvas_width_guard(app) -> int:

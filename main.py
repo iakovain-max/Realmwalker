@@ -71,6 +71,10 @@ def smoke_script():
     shots[frame - 4] = "health"
     press("escape", "m", "w")
     shots[frame - 4] = "weather"
+    press("w", "p", "z")
+    shots[frame - 4] = "realms"
+    press("escape", "f", "down", "down")
+    shots[frame - 4] = "factions"
     press("escape")
 
     def home(app):

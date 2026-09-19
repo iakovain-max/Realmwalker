@@ -88,6 +88,10 @@ class GameState:
         self.talk_to: int | None = None  # a townsperson the player has just walked up to (the screen opens a talk)
         self.battle_npcs: dict[int, int] = {}  # creature uid -> townsperson id, while fighting townsfolk
         self.narration: list[dict] = []  # finished travel days waiting to be written up (by the screen)
+        from realmwalker.game.reputation import Renown
+
+        self.renown = Renown()  # standing with factions, bounties, crimes, news heard (game.reputation)
+        self._realm_here: int | None = None
         self._wading = False
         self._remaps: dict[str, np.ndarray] = {}
         self._recent_areas: list[int] = []
@@ -371,16 +375,50 @@ class GameState:
                 self.say(f"You are back in <place>{area.name}</>.", "place")
             # Walking along a border should not repeat the same announcement every step.
             self._recent_areas = ([area.id] + [a for a in self._recent_areas if a != area.id])[:4]
+        self._check_realm()
         s = self.world.settlement_at(p.x, p.y)
         if s is not None:
+            from realmwalker.game.reputation import learn_place
+
             first = s.id not in p.visited_settlements
             p.visited_settlements.add(s.id)
             p.known_settlements.add(s.id)
             self.say(self.settlement_arrival_text(s, first), "place")
+            learn_place(self, s, quiet=False)
         site = self.world.site_at(p.x, p.y)
         if site is not None:
             spec = self.tables.sites["site_types"].get(site.kind, {})
             self.say(f"You come upon <place>{_cap(site.name)}</>. {spec.get('desc', '')}", "place")
+
+    def _check_realm(self) -> None:
+        """Crossing a border: say whose lands these are."""
+        from realmwalker.world import factions as fx
+
+        if not self.world.factions:
+            return
+        p = self.player
+        lord = fx.lord_at(self.world, p.x, p.y)
+        here = lord.id if lord is not None else -1
+        if self._realm_here is None:
+            self._realm_here = here
+            return
+        if here == self._realm_here:
+            return
+        before = self.world.factions.get(self._realm_here)
+        self._realm_here = here
+        if lord is None:
+            if before is not None:
+                self.say(f"You leave the lands of {before.name}. <dim>No lord's law runs here.</>", "place")
+            return
+        from realmwalker.game.reputation import know
+
+        know(self, lord.id)
+        top = fx.top_liege(self.world, lord)
+        if top is not None and top is not lord:
+            know(self, top.id)
+            self.say(f"You cross into the lands of {lord.name}, <dim>sworn to {top.name}.</>", "place")
+        else:
+            self.say(f"You cross into the lands of {lord.name}.", "place")
 
     def settlement_arrival_text(self, s, first: bool) -> str:
         spec = self.tables.sites["settlement_types"][s.kind]
@@ -673,6 +711,9 @@ def new_game(world: World, tables: Tables, character: Character | None = None,
     near_roads = world.road & ((xs - start.x) ** 2 + (ys - start.y) ** 2 <= (HOME_RADIUS * 2) ** 2)
     player.explored |= near_roads
     game.reveal()
+    from realmwalker.game.reputation import starting_knowledge
+
+    starting_knowledge(game)
     m = game.moment
     game.say(f"<title>{m.long_text()}.</> {SEASON_LINES.get(m.season, '')}", "system")
     game._arrive(None)
