@@ -153,6 +153,7 @@
     "cooked_fish": {"name": "grilled fish", "category": "food", "weight": 1, "value": 5, "material": "food", "stack": true, "food": {"nutrition": 0.4, "spoil_days": 2, "state": "cooked"}},
     "porridge": {"name": "bowl of porridge", "category": "food", "weight": 1, "value": 2, "material": "food", "stack": true, "food": {"nutrition": 1.0, "spoil_days": 1, "state": "cooked"}},
     "wild_food": {"name": "handful of wild food", "category": "food", "weight": 0.5, "value": 1, "material": "food", "stack": true, "food": {"nutrition": 0.3, "spoil_days": 3, "state": "fresh"}, "description": "Berries, nuts, roots and greens: whatever the land offered."},
+    "fodder": {"name": "bag of fodder", "category": "gear", "weight": 10, "value": 5, "material": "food", "stack": true, "description": "Oats and hay: a day's feed for a horse or mule."},
     "firewood": {"name": "bundle of firewood", "category": "gear", "weight": 10, "value": 1, "material": "wood", "stack": true, "description": "Enough dry wood for a night's fire."},
     "raw_meat": {"name": "raw meat", "category": "food", "weight": 1, "value": 5, "material": "food", "stack": true, "food": {"nutrition": 0.6, "spoil_days": 2, "state": "fresh", "raw": true}},
     "ale": {"name": "skin of ale", "category": "drink", "weight": 2, "value": 4, "material": "food", "stack": true, "drink": {"water": 0.5, "alcohol": 2}},

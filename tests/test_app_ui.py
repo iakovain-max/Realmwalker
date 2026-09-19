@@ -544,3 +544,30 @@ def test_talking_to_townsfolk(make_app, size):
         if game.busy:
             break
     assert app.error_count == 0
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_the_market_window(make_app, size):
+    from realmwalker.game import economy
+    from realmwalker.game.people import npcs_in
+    from realmwalker.ui.screens.trade import MarketScreen
+
+    app = make_app()
+    start_small_world(app)
+    game = app.game
+    game.enter_local()
+    s = game.world.settlement_at(game.player.x, game.player.y)
+    npc = next((n for n in npcs_in(game.world, s.id) if economy.shop_kind(game, n)), None)
+    if npc is None:
+        pytest.skip("nobody here trades")
+    game.leader.money = 100000
+    app.push(MarketScreen(app, game, npc))
+    render(app, size)
+    money = game.leader.money
+    app.handle_event(KeyEvent("enter"))
+    render(app, size)
+    assert game.leader.money < money
+    for key in ("tab", "down", "enter", "h", "pagedown", "tab", "up", "escape"):
+        app.handle_event(KeyEvent(key))
+        render(app, size)
+    assert app.error_count == 0

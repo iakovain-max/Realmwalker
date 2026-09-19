@@ -235,6 +235,14 @@ def _check_combat_refs(files: dict[str, Any]) -> list[str]:
             for i in listed:
                 if items and i not in items:
                     errors.append(f"data/travel_events.json: {eid} mentions unknown item '{i}'.")
+    econ = files.get("economy.json", {})
+    for kind, shop in econ.get("shops", {}).items():
+        for entry in shop.get("stock", []):
+            if items and entry[0] not in items:
+                errors.append(f"data/economy.json: shop '{kind}' stocks unknown item '{entry[0]}'.")
+    for trade in {o.get("trade") for o in files.get("people.json", {}).get("occupations", {}).values() if o.get("trade")}:
+        if econ.get("shops") and trade not in econ["shops"]:
+            errors.append(f"data/people.json: an occupation trades as unknown shop kind '{trade}'.")
     spells = files.get("spells.json")
     if spells:
         known = {k for k in spells["spells"] if not k.startswith("_")}

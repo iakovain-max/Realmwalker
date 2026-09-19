@@ -1,0 +1,96 @@
+{
+  "_comment": "Markets. Prices start from each item's value (5e prices, in copper) and change with what the land around a settlement produces (production: cheap near where it is made), scarcity of trade goods made nowhere near, the settlement's size and the season, the merchant's feelings towards you, and haggling. shops: what each kind of merchant stocks ([item, min, max] per restock, scaled by settlement size) and which categories they will buy. Merchants have limited coin and restock every restock_days.",
+  "shops": {
+    "general": {
+      "name": "general goods",
+      "buys": ["gear", "tool", "food", "drink", "clothing", "trade", "book", "focus", "ammo"],
+      "stock": [["rations", 4, 10], ["bread", 2, 6], ["cheese", 1, 4], ["salt_pork", 1, 4], ["dried_fish", 0, 4], ["oats", 1, 4],
+                ["waterskin", 1, 3], ["backpack", 0, 2], ["bedroll", 0, 2], ["blanket", 1, 3], ["tinderbox", 1, 3], ["torch", 4, 10],
+                ["candle", 2, 8], ["oil_flask", 1, 4], ["lantern", 0, 1], ["rope", 1, 2], ["sack", 2, 6], ["iron_pot", 0, 1],
+                ["mess_kit", 1, 2], ["tent", 0, 1], ["fishing_tackle", 0, 2], ["hunting_trap", 0, 1], ["shovel", 0, 1],
+                ["crowbar", 0, 1], ["soap", 1, 4], ["whetstone", 1, 3], ["bandages", 3, 8], ["splint", 0, 2], ["firewood", 2, 5],
+                ["common_clothes", 1, 3], ["travelers_clothes", 0, 2], ["wool_cloak", 0, 2], ["hooded_cloak", 0, 1], ["hood", 1, 2],
+                ["wool_gloves", 0, 2], ["boots", 0, 2], ["wool_underclothes", 0, 2], ["arrows", 10, 40], ["bolts", 0, 20],
+                ["ale", 1, 4], ["spirits", 0, 2], ["salt", 1, 3], ["wool_bolt", 0, 2]],
+      "markup": 1.0
+    },
+    "smith": {
+      "name": "arms and armour",
+      "buys": ["weapon", "armor", "shield", "helmet", "ammo", "trade"],
+      "stock": [["dagger", 1, 3], ["knife", 1, 3], ["handaxe", 0, 2], ["spear", 1, 3], ["mace", 0, 1], ["shortsword", 0, 2],
+                ["longsword", 0, 2], ["battleaxe", 0, 1], ["warhammer", 0, 1], ["greatsword", 0, 1], ["greataxe", 0, 1],
+                ["halberd", 0, 1], ["javelin", 0, 4], ["arrows", 20, 60], ["bolts", 10, 40], ["shortbow", 0, 1], ["longbow", 0, 1],
+                ["light_crossbow", 0, 1], ["leather_armor", 0, 1], ["hide_armor", 0, 1], ["chain_shirt", 0, 1], ["scale_mail", 0, 1],
+                ["ring_mail", 0, 1], ["chain_mail", 0, 1], ["shield", 1, 2], ["leather_cap", 0, 2], ["iron_helm", 0, 1],
+                ["iron_bar", 1, 4], ["whetstone", 1, 3]],
+      "markup": 1.1
+    },
+    "apothecary": {
+      "name": "remedies",
+      "buys": ["gear", "tool", "trade"],
+      "stock": [["bandages", 5, 15], ["splint", 1, 4], ["needle_thread", 1, 3], ["healers_kit", 0, 2], ["healing_herbs", 3, 10],
+                ["poppy_milk", 1, 4], ["spirits", 1, 4], ["herbalism_kit", 0, 1], ["soap", 2, 6], ["potion_healing", 0, 1]],
+      "markup": 1.2
+    },
+    "market": {
+      "name": "market goods",
+      "buys": ["food", "drink", "trade", "clothing"],
+      "stock": [["bread", 3, 10], ["cheese", 2, 6], ["apples", 4, 12], ["oats", 2, 6], ["salt_pork", 1, 4], ["dried_fish", 1, 6],
+                ["raw_meat", 1, 6], ["raw_fish", 0, 6], ["ale", 2, 6], ["wine", 0, 2], ["wheat", 1, 6], ["salt", 1, 5],
+                ["wool_bolt", 0, 3], ["linen_bolt", 0, 2], ["hides", 0, 3], ["furs", 0, 1], ["pepper", 0, 2], ["iron_bar", 0, 3],
+                ["copper_ingot", 0, 2], ["silver_ingot", 0, 1], ["common_clothes", 0, 2], ["firewood", 1, 4]],
+      "markup": 0.95
+    },
+    "inn": {
+      "name": "food and drink",
+      "buys": ["food", "drink"],
+      "stock": [["bread", 2, 6], ["cheese", 1, 3], ["cooked_meat", 1, 4], ["ale", 3, 10], ["wine", 1, 3], ["spirits", 1, 3],
+                ["rations", 1, 4]],
+      "markup": 1.25
+    },
+    "stable": {
+      "name": "tack and fodder",
+      "buys": ["gear", "trade"],
+      "stock": [["fodder", 5, 15], ["sack", 1, 4], ["rope", 1, 2], ["blanket", 1, 2]],
+      "markup": 1.1
+    }
+  },
+  "size": {
+    "hamlet": {"stock": 0.4, "coin": 300},
+    "village": {"stock": 0.7, "coin": 1500},
+    "town": {"stock": 1.0, "coin": 6000},
+    "city": {"stock": 1.6, "coin": 25000},
+    "hold": {"stock": 1.0, "coin": 8000},
+    "elfhall": {"stock": 0.6, "coin": 2500}
+  },
+  "production": {
+    "plains": {"wheat": 0.55, "bread": 0.75, "oats": 0.6, "rations": 0.85, "wool_bolt": 0.8, "apples": 0.6, "cheese": 0.8},
+    "forest": {"firewood": 0.5, "hides": 0.7, "furs": 0.8, "raw_meat": 0.7, "quarterstaff": 0.7},
+    "pine_forest": {"firewood": 0.5, "furs": 0.65, "hides": 0.75, "raw_meat": 0.7},
+    "hills": {"iron_bar": 0.7, "copper_ingot": 0.7, "wool_bolt": 0.65, "cheese": 0.75},
+    "mountains": {"iron_bar": 0.55, "copper_ingot": 0.6, "silver_ingot": 0.7},
+    "high_mountains": {"silver_ingot": 0.6},
+    "coast": {"salt": 0.45, "dried_fish": 0.5, "raw_fish": 0.5},
+    "marsh": {"healing_herbs": 0.6, "raw_fish": 0.7},
+    "tundra": {"furs": 0.55, "hides": 0.7},
+    "desert": {"salt": 0.6, "pepper": 0.7}
+  },
+  "trade_goods_scarcity": 1.55,
+  "kind_prices": {
+    "city": {"food": 1.2, "drink": 1.1, "weapon": 0.95, "armor": 0.95, "clothing": 0.95},
+    "town": {"food": 1.05},
+    "hold": {"weapon": 0.85, "armor": 0.85, "shield": 0.85, "helmet": 0.85, "food": 1.25},
+    "elfhall": {"weapon": 1.1, "armor": 1.2},
+    "hamlet": {"food": 0.9, "weapon": 1.2, "armor": 1.3}
+  },
+  "season_prices": {
+    "winter": {"food": 1.3, "firewood": 1.6},
+    "spring": {"food": 1.15},
+    "summer": {"food": 0.95},
+    "autumn": {"food": 0.85}
+  },
+  "sell_ratio": 0.5,
+  "sell_ratio_trade": 0.8,
+  "restock_days": 7,
+  "haggle": {"dc": 12, "per_point": 0.02, "max": 0.15}
+}

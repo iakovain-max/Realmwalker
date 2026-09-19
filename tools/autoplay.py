@@ -187,6 +187,10 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
 
                 here = settlement_here(game)
                 spots = set()
+                town = game.world.towns.get(here.id) if here is not None else None
+                for shop in (town.shops.values() if town is not None else []):
+                    if shop["coin"] < 0 or any(q < 0 for q in shop["stock"].values()):
+                        fail(f"a shop in {here.name} has negative coin or stock")
                 for npc in npcs_in(game.world, here.id) if here is not None else []:
                     if not -100 <= npc.disposition <= 100:
                         fail(f"{npc.name} has disposition {npc.disposition}")

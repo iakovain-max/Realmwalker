@@ -460,3 +460,21 @@ DATA_FILES.update({
     "people.json": PEOPLE,
     "dialogue.json": DIALOGUE,
 })
+
+SHOP = Obj({"name": Str(max_len=40), "buys": List(Str(max_len=20), min_items=1),
+            "stock": List(List(Any_(), min_items=3, max_items=3), min_items=1), "markup": Float(min=0.1, max=5)})
+ECONOMY = Obj(
+    {
+        "shops": Map(SHOP, min_items=1),
+        "size": Map(Obj({"stock": Float(min=0, max=10), "coin": Int(min=0, max=10**7)}), min_items=1),
+        "production": Map(Map(Float(min=0.05, max=5))),
+        "trade_goods_scarcity": Float(min=0.5, max=5),
+        "kind_prices": Map(Map(Float(min=0.1, max=5))),
+        "season_prices": Map(Map(Float(min=0.1, max=5))),
+        "sell_ratio": Float(min=0, max=1), "sell_ratio_trade": Float(min=0, max=1),
+        "restock_days": Int(min=1, max=365),
+        "haggle": Obj({"dc": Int(min=0, max=40), "per_point": Float(min=0, max=1), "max": Float(min=0, max=1)}),
+    }
+)
+
+DATA_FILES.update({"economy.json": ECONOMY})
