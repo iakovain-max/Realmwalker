@@ -92,6 +92,9 @@ class World:
     local_maps: dict = field(default_factory=dict)  # key "x,y" -> LocalMap
     flavor: FlavorStore = field(default_factory=FlavorStore)
     rng: RNG | None = None
+    npcs: dict = field(default_factory=dict)  # id -> game.people.NPC
+    towns: dict = field(default_factory=dict)  # settlement id -> game.people.Town
+    next_npc_id: int = 0
 
     def __post_init__(self) -> None:
         if self.rng is None:

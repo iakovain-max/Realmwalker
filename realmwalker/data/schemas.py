@@ -417,3 +417,42 @@ DATA_FILES.update({
     "camping.json": CAMPING,
     "travel_events.json": TRAVEL_EVENTS,
 })
+
+OCCUPATION = Obj(
+    {
+        "name": Str(max_len=40), "titles": Map(Str(max_len=40), optional=True),
+        "place": Str(choices=["inn", "temple", "smithy", "store", "healer", "stable", "hall", "keep", "stall", "street"]),
+        "notable": Bool(optional=True), "social": Str(choices=["low", "middle", "high"]),
+        "purse": List(Int(min=0, max=10**7), min_items=2, max_items=2), "stats": Str(max_len=40),
+        "trade": Str(max_len=40, optional=True), "services": List(Str(max_len=40), optional=True),
+        "sex": Str(choices=["male", "female"], optional=True), "near": Str(max_len=20, optional=True),
+    }
+)
+PEOPLE = Obj(
+    {
+        "occupations": Map(OCCUPATION, min_items=1),
+        "settlement_people": Map(Obj({"notables": List(Str(max_len=40)), "commoners": List(Int(min=0, max=50), min_items=2, max_items=2),
+                                      "guards": List(Int(min=0, max=20), min_items=2, max_items=2)})),
+        "commoner_jobs": List(Str(max_len=40), min_items=1),
+        "personality": Map(Obj({"disposition": Int(min=-50, max=50), "bribe": Int(min=-50, max=50),
+                                "threat": Int(min=-10, max=10), "words": Str(max_len=60)}), min_items=2),
+        "speech": word_list(1),
+        "text": Map(word_list(1, 300)),
+    }
+)
+DIALOGUE = Obj(
+    {
+        "greeting": Map(word_list(1, 300)), "remember_threat": word_list(1, 300), "remember_help": word_list(1, 300),
+        "who_are_you": word_list(1, 300), "about_place": word_list(1, 300), "size_line": Map(Str(max_len=300)),
+        "no_rumours": word_list(1, 300), "rumour_intro": word_list(1, 300), "flavour_rumours": word_list(1, 300),
+        "danger_rumour": word_list(1, 300), "threat_words": Map(Str(max_len=100)), "about_person": word_list(1, 300),
+        "person_lines": word_list(1, 300), "threaten_success": word_list(1, 300), "threaten_failure": word_list(1, 300),
+        "bribe_accept": word_list(1, 300), "bribe_refuse": word_list(1, 300), "refuse_talk": word_list(1, 300),
+        "closed": word_list(1, 300), "goodbye": word_list(1, 300), "special": Map(List(Any_())),
+    }
+)
+
+DATA_FILES.update({
+    "people.json": PEOPLE,
+    "dialogue.json": DIALOGUE,
+})

@@ -52,6 +52,7 @@ class AutoplayReport:
     game_turns: int = 0
     fights: int = 0
     events: int = 0
+    talks: int = 0
     battle_turns: int = 0
     elapsed: float = 0.0
 
@@ -65,7 +66,8 @@ class AutoplayReport:
             f"  screens visited: {dict(self.screens.most_common())}",
             f"  AI requests: {self.ai_stats}  mock chat calls: {self.mock_calls}",
             f"  turns inside a game: {self.game_turns}  save/load round trips checked: {self.save_checks}",
-            f"  fights started by the bot: {self.fights}  travel events: {self.events}  turns spent in battle: {self.battle_turns}",
+            f"  fights started by the bot: {self.fights}  travel events: {self.events}  talks: {self.talks}  "
+            f"turns spent in battle: {self.battle_turns}",
             "  RESULT: " + ("OK" if self.ok else f"FAILED ({len(self.errors)} problems)"),
         ]
         lines += [f"    - {e}" for e in self.errors[:20]]
@@ -180,6 +182,20 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
                     fail(f"an empty band of {a.group} is on the map")
                 if any(not 0 < c.hp <= c.max_hp for c in a.creatures):
                     fail(f"a creature of {a.group} has impossible hit points")
+            if lm.kind == "settlement":
+                from realmwalker.game.people import npcs_in, settlement_here
+
+                here = settlement_here(game)
+                spots = set()
+                for npc in npcs_in(game.world, here.id) if here is not None else []:
+                    if not -100 <= npc.disposition <= 100:
+                        fail(f"{npc.name} has disposition {npc.disposition}")
+                    if npc.alive and npc.present:
+                        if not lm.in_bounds(npc.x, npc.y) or not walk[npc.x, npc.y]:
+                            fail(f"{npc.name} the {npc.title} stands in a wall at {(npc.x, npc.y)}")
+                        if (npc.x, npc.y) in spots:
+                            fail(f"two townsfolk stand at {(npc.x, npc.y)}")
+                        spots.add((npc.x, npc.y))
         b = game.battle
         if b is not None:
             if b.outcome is None and not b.order:
@@ -224,7 +240,23 @@ def _start_a_fight(app: App, rng: random.Random, report: AutoplayReport) -> None
     game = app.game
     if game is None or game.busy or not isinstance(app.top, GameScreen):
         return
-    if rng.random() < 0.4:
+    roll = rng.random()
+    if roll < 0.3:
+        from realmwalker.game.people import npcs_in
+
+        here = game.world.settlement_at(game.player.x, game.player.y)
+        if here is None:
+            here = rng.choice(game.world.settlements)
+            game.player.local_key = None
+            game.player.x, game.player.y = here.x, here.y
+        if not game.in_local:
+            game.enter_local()
+        people = [n for n in npcs_in(game.world, here.id) if n.alive and n.present]
+        if people:
+            game.talk_to = rng.choice(people).id
+            report.talks += 1
+        return
+    if roll < 0.55:
         from realmwalker.game.events import make_event
 
         game.event = make_event(game, rng.choice(sorted(app.tables.travel_events)))

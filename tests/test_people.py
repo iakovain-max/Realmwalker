@@ -1,0 +1,218 @@
+"""Townsfolk: who lives where, days and nights, first impressions, memory, and conversations."""
+
+import copy
+
+import pytest
+
+from realmwalker.core.rng import RNG
+from realmwalker.game import save
+from realmwalker.game.dialogue import Conversation
+from realmwalker.game.people import first_impression, is_day, npc_at, npcs_in, update_positions
+from realmwalker.game.state import new_game
+from realmwalker.rules.creation import CharacterBuilder
+from realmwalker.world.generator import WorldGenerator, WorldOptions
+from realmwalker.world.tables import Tables
+
+
+@pytest.fixture(scope="module")
+def tables(data):
+    return Tables(data)
+
+
+@pytest.fixture(scope="module")
+def world(tables):
+    return WorldGenerator(WorldOptions("Peopleland", 8, "medium"), tables).generate()
+
+
+def hero(tables, seed=1, background="soldier", race="human"):
+    b = CharacterBuilder(tables, RNG(seed, "hero"))
+    b.set_race(race)
+    b.set_class("fighter")
+    b.set_background(background)
+    return b.build()
+
+
+@pytest.fixture
+def game(tables, world):
+    return new_game(copy.deepcopy(world), tables, hero(tables))
+
+
+def visit(game, kind: str):
+    s = next((s for s in game.world.settlements if s.kind == kind), None)
+    if s is None:
+        pytest.skip(f"no {kind} in this world")
+    game.player.local_key = None
+    game.player.x, game.player.y = s.x, s.y
+    game.enter_local()
+    return s
+
+
+def at_noon(game):
+    m = game.moment
+    game.world.time += ((12 - m.hour) % 24) * 60 - m.minute
+
+
+@pytest.mark.parametrize("kind", ["hamlet", "village", "town", "city", "hold", "elfhall"])
+def test_every_settlement_has_its_people(game, kind):
+    at_noon(game)
+    s = visit(game, kind)
+    people = npcs_in(game.world, s.id)
+    assert people
+    jobs = {n.job for n in people}
+    assert "headman" in jobs or kind in ("town", "city") and "innkeeper" in jobs or kind == "hold"
+    if kind in ("town", "city"):
+        assert {"innkeeper", "priest", "smith", "shopkeeper", "guard"} <= jobs
+    walk = game.tables.terrain.walk[game.remap_for(game.local)[game.local.terrain]]
+    for n in people:
+        assert n.profile.get("appearance") and n.profile_source == "fallback"
+        if n.present:
+            assert walk[n.x, n.y], f"{n.title} stands in a wall"
+    positions = [(n.x, n.y) for n in people if n.present]
+    assert len(positions) == len(set(positions)), "two people in one place"
+
+
+def test_people_are_made_once(game):
+    s = visit(game, "town")
+    before = [n.id for n in npcs_in(game.world, s.id)]
+    game.leave_local()
+    game.enter_local()
+    assert [n.id for n in npcs_in(game.world, s.id)] == before
+
+
+def test_shops_close_and_people_go_home_at_night(game):
+    s = visit(game, "town")
+    lm = game.local
+    at_noon(game)
+    update_positions(game, lm)
+    assert is_day(game)
+    day = {n.id for n in npcs_in(game.world, s.id) if n.present}
+    game.world.time += 12 * 60
+    assert not is_day(game)
+    update_positions(game, lm)
+    night = {n.id for n in npcs_in(game.world, s.id) if n.present}
+    assert night < day
+    jobs_at_night = {game.world.npcs[i].job for i in night}
+    assert jobs_at_night <= {"innkeeper", "serving_hand", "guard", "priest", "lord", "acolyte"}
+
+
+def test_first_impressions(game, tables):
+    s = visit(game, "town")
+    npc = next(n for n in npcs_in(game.world, s.id) if n.job == "shopkeeper")
+    npc.traits = ["honest", "cheerful"]
+    clean = first_impression(game, npc)
+    game.leader.dirt = 90
+    assert first_impression(game, npc) < clean
+    game.leader.dirt = 0
+    npc.traits = ["suspicious", "gruff"]
+    assert first_impression(game, npc) < clean
+
+
+def test_walking_into_someone_starts_a_conversation(game):
+    at_noon(game)
+    s = visit(game, "village")
+    lm = game.local
+    npc = next(n for n in npcs_in(game.world, s.id) if n.present)
+    for dx, dy in ((-1, 0), (1, 0), (0, -1), (0, 1)):
+        x, y = npc.x + dx, npc.y + dy
+        if lm.in_bounds(x, y) and game.tables.terrain.walk[game.remap_for(lm)[lm.terrain[x, y]]] \
+                and npc_at(game, x, y) is None:
+            game.player.lx, game.player.ly = x, y
+            t = game.world.time
+            game.move(-dx, -dy)
+            assert game.talk_to == npc.id and (game.player.lx, game.player.ly) == (x, y)
+            return
+    pytest.skip("nowhere to stand beside them")
+
+
+def test_a_conversation_menu_and_its_answers(game):
+    at_noon(game)
+    s = visit(game, "town")
+    npc = next(n for n in npcs_in(game.world, s.id) if n.job == "innkeeper")
+    conv = Conversation(game, npc)
+    assert npc.met and conv.lines and conv.lines[0][0] == "npc"
+    labels = {c.id for c in conv.menu()}
+    assert {"who", "place", "rumours", "ask_person", "threaten", "offer_bribe", "goodbye"} <= labels
+    for cid in ("who", "place", "rumours", "who"):
+        choice = next(c for c in conv.menu() if c.id == cid)
+        conv.choose(choice)
+    assert npc.known
+    conv.choose(next(c for c in conv.menu() if c.id == "ask_person"))
+    person = next(c for c in conv.menu() if c.id == "person")
+    conv.choose(person)
+    assert game.world.npcs[person.data["other"]].known
+    # Rumours once a day.
+    lines = len(conv.lines)
+    conv.choose(next(c for c in conv.menu() if c.id == "rumours"))
+    assert any("\"" in t for _, t in conv.lines[lines:])
+    conv.choose(next(c for c in conv.menu() if c.id == "goodbye"))
+    assert conv.ended
+
+
+def test_special_options_resolve_to_whitelisted_outcomes(game):
+    at_noon(game)
+    s = visit(game, "town")
+    for npc in npcs_in(game.world, s.id):
+        if npc.job == "guard":
+            continue
+        conv = Conversation(game, npc)
+        specials = [c for c in conv.menu() if c.id == "special"]
+        for c in specials:
+            conv.choose(c)
+        assert all(opt["used"] for opt in conv.special)
+        if game.busy:
+            break
+
+
+def test_threats_are_remembered(game):
+    at_noon(game)
+    s = visit(game, "town")
+    npc = next(n for n in npcs_in(game.world, s.id) if n.job == "weaver" or n.job == "farmer" or n.job == "labourer")
+    conv = Conversation(game, npc)
+    before = npc.disposition
+    conv.choose(next(c for c in conv.menu() if c.id == "threaten"))
+    assert npc.disposition < before and any("threatened" in m for m in npc.memory)
+
+
+def test_bribes(game):
+    at_noon(game)
+    s = visit(game, "town")
+    npc = next(n for n in npcs_in(game.world, s.id) if n.job in ("farmer", "labourer", "weaver", "carter", "beggar",
+                                                                   "washerwoman", "fisher"))
+    npc.traits = ["greedy", "weary"]
+    game.leader.money = 5000
+    conv = Conversation(game, npc)
+    before = npc.disposition
+    conv.choose(next(c for c in conv.menu() if c.id == "offer_bribe"))
+    conv.choose(next(c for c in conv.menu() if c.id == "bribe" and c.data["amount"] == 1000))
+    assert npc.disposition > before and game.leader.money == 4000
+
+
+def test_fighting_townsfolk_has_consequences(game):
+    from realmwalker.game.fight import finish_battle
+
+    at_noon(game)
+    s = visit(game, "town")
+    npc = next(n for n in npcs_in(game.world, s.id) if n.job == "labourer" or n.job == "farmer")
+    conv = Conversation(game, npc)
+    conv.start_fight()
+    assert game.battle is not None and game.battle_npcs
+    for f in game.battle.side("foe"):
+        f.state = "dead"
+        f.creature.alive = False
+    game.battle._check_end()
+    finish_battle(game)
+    assert not npc.alive and any(npc.name in d for d in game.leader.deeds)
+
+
+def test_people_survive_saving(game, tmp_path):
+    at_noon(game)
+    s = visit(game, "city")
+    npc = next(n for n in npcs_in(game.world, s.id) if n.notable)
+    npc.disposition = 42
+    npc.remember("was bought a drink by the traveller")
+    npc.known = True
+    folder = save.save_game(game, tmp_path)
+    loaded = save.load_game(folder, game.tables)
+    again = loaded.world.npcs[npc.id]
+    assert again.to_dict() == npc.to_dict()
+    assert loaded.world.towns[s.id].npcs == game.world.towns[s.id].npcs

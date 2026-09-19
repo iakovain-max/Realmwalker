@@ -228,6 +228,14 @@ class GameScreen(Screen):
             from realmwalker.ui.screens.battle import BattleScreen
 
             self.app.push(BattleScreen(self.app, game))
+        elif game.talk_to is not None:
+            from realmwalker.ui.screens.dialogue import DialogueScreen
+
+            npc = game.world.npcs.get(game.talk_to)
+            game.talk_to = None
+            if npc is None or not npc.alive:
+                return False
+            self.app.push(DialogueScreen(self.app, game, npc))
         elif game.event is not None:
             from realmwalker.ui.screens.event import EventScreen
 

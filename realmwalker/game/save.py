@@ -28,6 +28,7 @@ from realmwalker import __version__
 from realmwalker.ai.store import FlavorStore
 from realmwalker.core.rng import RNG
 from realmwalker.game.encounters import LocalActor
+from realmwalker.game.people import NPC, Town
 from realmwalker.game.log import MessageLog
 from realmwalker.game.state import GameState, PlayerState
 from realmwalker.rules.character import Character
@@ -38,7 +39,7 @@ from realmwalker.world.tables import Tables
 
 log = logging.getLogger("realmwalker.save")
 
-FORMAT_VERSION = 3
+FORMAT_VERSION = 4
 WORLD_FILE = "world.zip"
 CHARACTER_FILE = "character.zip"
 
@@ -56,8 +57,19 @@ def _v2_to_v3(kind: str, body: dict) -> dict:
     return body
 
 
+def _v3_to_v4(kind: str, body: dict) -> dict:
+    """Format 4 added townsfolk and towns to the world (M5). Older worlds start with nobody known; settlement
+    maps made before M5 have no shops or stables, but their people are made on the next visit."""
+    if kind == "world":
+        body = dict(body)
+        body.setdefault("npcs", [])
+        body.setdefault("towns", [])
+        body.setdefault("next_npc_id", 0)
+    return body
+
+
 # format number -> function upgrading a loaded JSON body (of a given kind) to the next format.
-MIGRATIONS: dict[int, Callable[[str, dict], dict]] = {1: _v1_to_v2, 2: _v2_to_v3}
+MIGRATIONS: dict[int, Callable[[str, dict], dict]] = {1: _v1_to_v2, 2: _v2_to_v3, 3: _v3_to_v4}
 
 
 class SaveError(Exception):
@@ -117,6 +129,9 @@ def world_entries(world: World) -> dict[str, bytes | str]:
         "flavor": world.flavor.to_dict(),
         **world.objects_dict(),
         "local_maps": sorted(world.local_maps),
+        "npcs": [n.to_dict() for _, n in sorted(world.npcs.items())],
+        "towns": [t.to_dict() for _, t in sorted(world.towns.items())],
+        "next_npc_id": world.next_npc_id,
     }
     entries: dict[str, bytes | str] = {"manifest.json": _manifest("world"), "world.json": json.dumps(body)}
     for name, arr in world.arrays().items():
@@ -178,6 +193,9 @@ def load_world(folder: Path) -> World:
         local_maps=local_maps,
         flavor=FlavorStore.from_dict(body.get("flavor", {})),
         rng=RNG.from_state(body["rng"]),
+        npcs={n["id"]: NPC.from_dict(n) for n in body.get("npcs", [])},
+        towns={t["settlement"]: Town.from_dict(t) for t in body.get("towns", [])},
+        next_npc_id=int(body.get("next_npc_id", 0)),
         **arrays,
     )
 

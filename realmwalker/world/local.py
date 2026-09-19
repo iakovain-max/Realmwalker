@@ -312,8 +312,8 @@ class LocalBuilder:
         if s.kind == "hold":
             # Dwarven holds are cut into the mountain: rock all round, halls inside.
             self.t[:, :] = np.where(self.np.random((self.w, self.h)) < 0.9, self.tid("cave_wall"), self.tid("rubble"))
-            self.fill_rect(x0, y0, x1 - x0, y1 - y0, "floor_stone")
-            street = "floor_stone"
+            self.fill_rect(x0, y0, x1 - x0, y1 - y0, "rock_floor")
+            street = "cobbles"
 
         # Main streets: one across, one down, plus side streets in bigger places.
         streets = [(x0, cy, x1 - x0, 1), (cx, y0, 1, y1 - y0)]
@@ -331,6 +331,9 @@ class LocalBuilder:
         sq = 3 if s.kind in ("hamlet", "village", "elfhall") else 5
         self.fill_rect(cx - sq, cy - sq // 2 - 1, sq * 2 + 1, sq + 2, street)
         self.set(cx + 2, cy - 1, "well")
+        if s.kind in ("town", "city"):
+            for sx in (cx - sq + 1, cx - sq + 3, cx + sq - 3, cx + sq - 1):
+                self.set(sx, cy - sq // 2 - 1, "stall")
 
         kinds = self._building_kinds(s.kind, n_buildings)
         placed = 0
@@ -368,11 +371,12 @@ class LocalBuilder:
     def _building_kinds(self, kind: str, n: int) -> list[str]:
         special = {
             "hamlet": [],
-            "village": ["inn", "temple"],
-            "town": ["inn", "inn", "temple", "smithy", "hall"],
-            "city": ["inn", "inn", "inn", "temple", "temple", "smithy", "smithy", "hall", "keep"],
-            "hold": ["hall", "smithy", "smithy", "temple", "inn"],
-            "elfhall": ["hall", "temple"],
+            "village": ["inn", "temple", "store", "smithy"],
+            "town": ["inn", "inn", "temple", "smithy", "hall", "store", "healer", "stable"],
+            "city": ["inn", "inn", "inn", "temple", "temple", "smithy", "smithy", "hall", "keep", "store", "store", "healer",
+                     "stable"],
+            "hold": ["hall", "smithy", "smithy", "temple", "inn", "store"],
+            "elfhall": ["hall", "temple", "healer"],
         }.get(kind, [])
         kinds = special + ["house"] * max(0, n - len(special))
         return kinds
@@ -438,6 +442,12 @@ class LocalBuilder:
         elif b.kind == "smithy":
             put(ix0 + 1, iy0 + 1, "anvil")
             put(ix0, iy0, "hearth")
+        elif b.kind in ("store", "healer"):
+            for x in range(ix0 + 1, ix1):
+                put(x, iy0, "table")
+        elif b.kind == "stable":
+            for y in range(iy0, iy1 + 1, 2):
+                put(ix1, y, "fence")
         elif b.kind in ("hall", "keep"):
             put(ix0, iy0, "hearth")
             put(ix1, iy0, "hearth")

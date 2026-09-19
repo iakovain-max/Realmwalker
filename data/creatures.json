@@ -263,9 +263,47 @@
       "gear": [], "money": {"dice": "6d6", "mult": 10}, "loot": [],
       "glyph": "T", "color": [90, 130, 90],
       "descriptions": ["A troll: gangling, green-grey and horribly quick, its wounds closing even as you watch."]
+    },
+    "commoner": {
+      "name": "commoner", "plural": "townsfolk", "kind": "humanoid", "body": "humanoid", "size": "medium", "cr": 0, "xp": 10,
+      "ac": 10, "hp": "1d8", "speed": 30, "abilities": {"str": 10, "dex": 10, "con": 10, "int": 10, "wis": 10, "cha": 10}, "skills": {}, "darkvision": 0,
+      "attacks": [{"name": "club", "kind": "melee", "bonus": 2, "damage": "1d4", "damage_type": "bludgeoning", "item": "club"}],
+      "traits": [], "morale": "coward", "rank": "front", "names": "heartland",
+      "gear": [["common_clothes", 1]], "money": {"dice": "1d6", "mult": 1}, "loot": [], "glyph": "p", "color": [190, 180, 160],
+      "descriptions": ["An ordinary person, frightened and angry, holding whatever came to hand."]
+    },
+    "guard": {
+      "name": "guard", "plural": "guards", "kind": "humanoid", "body": "humanoid", "size": "medium", "cr": 0.125, "xp": 25,
+      "ac": 16, "hp": "2d8+2", "speed": 30, "abilities": {"str": 13, "dex": 12, "con": 12, "int": 10, "wis": 11, "cha": 10}, "skills": {"perception": 2}, "darkvision": 0,
+      "attacks": [{"name": "spear", "kind": "melee", "bonus": 3, "damage": "1d6+1", "damage_type": "piercing", "item": "spear"}],
+      "traits": [], "morale": "soldier", "rank": "front", "names": "heartland",
+      "gear": [["spear", 1], ["chain_shirt", 1], ["shield", 1], ["common_clothes", 1], ["boots", 1]], "money": {"dice": "2d6", "mult": 10}, "loot": [],
+      "glyph": "G", "color": [150, 170, 210],
+      "descriptions": ["A town guard in a dented cap and a chain shirt, holding a spear the way you hold a tool you use every day."]
+    },
+    "acolyte": {
+      "name": "acolyte", "plural": "acolytes", "kind": "humanoid", "body": "humanoid", "size": "medium", "cr": 0.25, "xp": 50,
+      "ac": 10, "hp": "2d8", "speed": 30, "abilities": {"str": 10, "dex": 10, "con": 10, "int": 10, "wis": 14, "cha": 11}, "skills": {"medicine": 4, "religion": 2}, "darkvision": 0,
+      "attacks": [{"name": "club", "kind": "melee", "bonus": 2, "damage": "1d4", "damage_type": "bludgeoning", "item": "club"}],
+      "traits": [], "morale": "coward", "rank": "back", "names": "heartland",
+      "gear": [["vestments", 1]], "money": {"dice": "1d6", "mult": 10}, "loot": [], "glyph": "p", "color": [220, 210, 170],
+      "descriptions": ["A priest of the temple, soft-handed, more used to prayers than blows."]
+    },
+    "noble": {
+      "name": "noble", "plural": "nobles", "kind": "humanoid", "body": "humanoid", "size": "medium", "cr": 0.125, "xp": 25,
+      "ac": 15, "hp": "2d8", "speed": 30, "abilities": {"str": 11, "dex": 12, "con": 11, "int": 12, "wis": 14, "cha": 16}, "skills": {"insight": 4, "persuasion": 5}, "darkvision": 0,
+      "attacks": [{"name": "rapier", "kind": "melee", "bonus": 3, "damage": "1d8+1", "damage_type": "piercing", "item": "rapier"}],
+      "traits": [], "morale": "soldier", "rank": "back", "names": "heartland",
+      "gear": [["rapier", 1], ["breastplate", 1], ["fine_clothes", 1], ["fine_boots", 1]], "money": {"dice": "5d6", "mult": 100}, "loot": [],
+      "glyph": "N", "color": [230, 200, 120],
+      "descriptions": ["Someone used to being obeyed, and not used to this."]
     }
   },
   "encounters": {
+    "town_watch": {"name": "the town watch", "members": [["guard", "1d2+1"]], "biomes": ["none"], "danger": [0, 10], "time": "any", "weight": 0,
+      "intro": ["\"Watch! Stand where you are!\""]},
+    "angry_townsfolk": {"name": "angry townsfolk", "members": [["commoner", "1"]], "biomes": ["none"], "danger": [0, 10], "time": "any", "weight": 0,
+      "intro": ["They come at you, shouting."]},
     "lone_wolf": {"name": "a lone wolf", "members": [["wolf", "1"]], "biomes": ["forest", "pine_forest", "hills", "tundra", "plains", "mountains"], "danger": [0, 3], "time": "any", "weight": 2,
                    "intro": ["A wolf breaks from the trees and comes at you low and fast."]},
     "wolf_pack": {"name": "a pack of wolves", "members": [["wolf", "1d2+1"]], "biomes": ["forest", "pine_forest", "hills", "tundra", "plains", "mountains"], "danger": [2, 7], "time": "any", "weight": 3,

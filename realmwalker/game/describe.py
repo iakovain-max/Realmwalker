@@ -102,9 +102,20 @@ def describe_local(game: GameState, x: int, y: int) -> str:
     if pile:
         names = ", ".join(game.tables.items.name(i) for i in pile[:5])
         lines.append(f"<loot>On the ground: {names}.</>")
+    if lm.kind == "settlement":
+        from realmwalker.game.people import describe_npc, npc_at
+
+        npc = npc_at(game, x, y)
+        if npc is not None and (x, y) != (p.lx, p.ly):
+            lines.insert(0, describe_npc(game, npc) + " <dim>(walk into them to talk)</>")
     b = lm.building_at(x, y)
     if b is not None:
-        kind = {"house": "a house", "inn": "an inn", "temple": "a temple", "smithy": "a smithy",
-                "hall": "a guild hall", "keep": "the keep"}.get(b.kind, b.kind)
-        lines.append(f"<dim>Part of {kind}.</>")
+        kind = {"house": "a house", "inn": "an inn", "temple": "a temple", "smithy": "a smithy", "store": "a shop",
+                "healer": "a healer's house", "stable": "a stable", "hall": "the hall", "keep": "the keep"}.get(b.kind, b.kind)
+        name = ""
+        s = game.world.settlement_at(p.x, p.y)
+        town = game.world.towns.get(s.id) if s is not None else None
+        if town is not None:
+            name = town.names.get(lm.buildings.index(b), "")
+        lines.append(f"<dim>Part of {kind}{': ' + name if name else ''}.</>")
     return "\n".join(lines)

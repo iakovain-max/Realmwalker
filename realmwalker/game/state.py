@@ -85,6 +85,8 @@ class GameState:
         self.event = None  # a travel event waiting for the player's choice (game.events.PendingEvent)
         self.lost = False  # off the road in fog or darkness, with no idea where
         self.day_log: dict = {}  # today's journey, for the evening's narrated passage
+        self.talk_to: int | None = None  # a townsperson the player has just walked up to (the screen opens a talk)
+        self.battle_npcs: dict[int, int] = {}  # creature uid -> townsperson id, while fighting townsfolk
         self.narration: list[dict] = []  # finished travel days waiting to be written up (by the screen)
         self._wading = False
         self._remaps: dict[str, np.ndarray] = {}
@@ -392,6 +394,11 @@ class GameState:
         populate_local(self, lm)
         where = self.world.settlement_at(p.x, p.y)
         if where is not None:
+            from realmwalker.game.people import populate_town, update_positions
+
+            if lm.kind == "settlement":
+                populate_town(self, lm, where)
+                update_positions(self, lm)
             self.say(f"You walk into <place>{where.name}</>.", "place")
         else:
             biome = self.biome_def(p.x, p.y)
@@ -419,7 +426,12 @@ class GameState:
             self.leave_local()
             return True
         from realmwalker.game.encounters import actor_at
+        from realmwalker.game.people import npc_at
 
+        npc = npc_at(self, nx, ny)
+        if npc is not None:
+            self.talk_to = npc.id
+            return True
         target = actor_at(lm, nx, ny)
         if target is not None:
             from realmwalker.game.fight import start_battle
@@ -453,7 +465,16 @@ class GameState:
             self.say(f"Here: <loot>{names}</>. <dim>(g to pick up)</>", "loot")
         if self.over is None:
             self._creatures_act(lm)
+            self._people_act(lm)
         return True
+
+    def _people_act(self, lm: LocalMap) -> None:
+        if lm.kind != "settlement":
+            return
+        from realmwalker.game.people import update_positions, wander
+
+        update_positions(self, lm)
+        wander(self, lm)
 
     def _creatures_act(self, lm: LocalMap) -> None:
         """Creatures on this map react to the player; one that reaches the player starts a fight."""
@@ -520,6 +541,7 @@ class GameState:
             return
         if self.in_local and self.local is not None:
             self._creatures_act(self.local)
+            self._people_act(self.local)
         elif not self.in_local:
             self.reveal()
             from realmwalker.game.encounters import roll_encounter

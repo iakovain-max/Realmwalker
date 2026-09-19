@@ -1,0 +1,437 @@
+"""Townsfolk: who lives in each settlement, where they are through the day, what they think of you,
+and what they remember. Code decides everything mechanical (job, class, purse, stats, personality);
+words (appearance, backstory, secret, what they want) come from the AI when it is there, otherwise
+from data/people.json. A settlement's people are made the first time the player walks into it and
+are then kept in the world save.
+"""
+
+from __future__ import annotations
+
+from dataclasses import asdict, dataclass, field
+
+import numpy as np
+
+from realmwalker.core import textgen
+from realmwalker.core.rng import RNG
+from realmwalker.rules.items import Item
+
+CULTURE_RACE = {"elven": "elf", "dwarven": "dwarf", "halfling": "halfling", "orcish": "half_orc"}
+DAY_START, DAY_END = 7, 19
+STAYS_AT_POST = {"innkeeper", "serving_hand", "guard", "priest", "lord"}
+WANDERS = {"guard", "farmer", "labourer", "weaver", "carter", "washerwoman", "beggar", "fisher", "woodcutter", "miner"}
+MOODS = [(-50, "hostile"), (-15, "unfriendly"), (15, "neutral"), (50, "friendly")]
+
+
+@dataclass
+class NPC:
+    id: int
+    name: str
+    sex: str
+    age: int
+    race: str
+    culture: str
+    job: str
+    title: str
+    settlement: int
+    notable: bool = False
+    social: str = "low"
+    purse: int = 0
+    stats: str = "commoner"
+    traits: list[str] = field(default_factory=list)
+    speech: str = ""
+    disposition: int = 0
+    met: bool = False  # the player has spoken to them (so their disposition has been set)
+    known: bool = False  # the player knows their name
+    memory: list[str] = field(default_factory=list)
+    profile: dict = field(default_factory=dict)  # appearance, personality, backstory, secret, want
+    profile_source: str = ""  # "fallback" or "ai"
+    profile_seen: bool = False
+    alive: bool = True
+    building: int = -1  # index of their workplace in the local map's buildings, or -1
+    post: tuple[int, int] = (0, 0)  # where they work by day
+    home: tuple[int, int] = (0, 0)  # where they sleep
+    x: int = 0
+    y: int = 0
+    present: bool = True  # visible on the map right now (not shut away at home)
+    flags: dict = field(default_factory=dict)
+    inventory: list[Item] = field(default_factory=list)
+
+    def to_dict(self) -> dict:
+        d = asdict(self)
+        d["inventory"] = [i.to_dict() for i in self.inventory]
+        d["post"] = [int(v) for v in self.post]
+        d["home"] = [int(v) for v in self.home]
+        d["x"], d["y"] = int(self.x), int(self.y)
+        return d
+
+    @classmethod
+    def from_dict(cls, d: dict) -> NPC:
+        d = dict(d)
+        d["inventory"] = [Item.from_dict(i) for i in d.get("inventory", [])]
+        d["post"] = tuple(d.get("post", (0, 0)))
+        d["home"] = tuple(d.get("home", (0, 0)))
+        known = set(cls.__dataclass_fields__)
+        return cls(**{k: v for k, v in d.items() if k in known})
+
+    @property
+    def first_name(self) -> str:
+        return self.name.split()[0]
+
+    def label(self) -> str:
+        """How the player refers to them: 'Aldith, the innkeeper' or 'the innkeeper'."""
+        return f"{self.first_name}, the {self.title}" if self.known else f"the {self.title}"
+
+    def mood(self) -> str:
+        for limit, word in MOODS:
+            if self.disposition < limit:
+                return word
+        return "warm"
+
+    def remember(self, fact: str) -> None:
+        self.memory.append(fact)
+        self.memory = self.memory[-8:]
+
+
+@dataclass
+class Town:
+    settlement: int
+    npcs: list[int] = field(default_factory=list)
+    description: str = ""
+    description_source: str = ""
+    names: dict = field(default_factory=dict)  # building index -> sign name (inns, shops)
+    shops: dict = field(default_factory=dict)  # merchant npc id -> shop state (economy)
+    visited: int = -1  # world minute of the first visit
+
+    def to_dict(self) -> dict:
+        return {"settlement": self.settlement, "npcs": list(self.npcs), "description": self.description,
+                "description_source": self.description_source, "names": {str(k): v for k, v in self.names.items()},
+                "shops": {str(k): v for k, v in self.shops.items()}, "visited": self.visited}
+
+    @classmethod
+    def from_dict(cls, d: dict) -> Town:
+        return cls(d["settlement"], list(d.get("npcs", [])), d.get("description", ""), d.get("description_source", ""),
+                   {int(k): v for k, v in d.get("names", {}).items()}, {int(k): v for k, v in d.get("shops", {}).items()},
+                   d.get("visited", -1))
+
+
+# ---------------------------------------------------------------------------- the world's registry
+def town_of(world, sid: int) -> Town:
+    town = world.towns.get(sid)
+    if town is None:
+        town = world.towns[sid] = Town(sid)
+    return town
+
+
+def npcs_in(world, sid: int) -> list[NPC]:
+    town = world.towns.get(sid)
+    if town is None:
+        return []
+    return [world.npcs[i] for i in town.npcs if i in world.npcs]
+
+
+def npc_at(game, x: int, y: int) -> NPC | None:
+    """A living, present townsperson standing at a local-map cell."""
+    s = settlement_here(game)
+    if s is None:
+        return None
+    for npc in npcs_in(game.world, s.id):
+        if npc.alive and npc.present and npc.x == x and npc.y == y:
+            return npc
+    return None
+
+
+def settlement_here(game):
+    p = game.player
+    if game.local is None or game.local.kind != "settlement":
+        return None
+    return game.world.settlement_at(p.x, p.y)
+
+
+# ---------------------------------------------------------------------------- making people
+def new_id(world) -> int:
+    world.next_npc_id += 1
+    return world.next_npc_id
+
+
+def race_for(culture: str, rng: RNG) -> tuple[str, str]:
+    """(race, culture) for a townsperson: mostly the settlement's people, sometimes an outsider."""
+    if rng.chance(0.1):
+        outsider = rng.choice(["heartland", "northmarch", "southron", "dwarven", "halfling", "elven"])
+        return CULTURE_RACE.get(outsider, "human"), outsider
+    return CULTURE_RACE.get(culture, "human"), culture
+
+
+def make_npc(game, settlement, job: str, rng: RNG, *, building: int = -1, post=(0, 0), home=(0, 0)) -> NPC:
+    t = game.tables
+    people = t.people
+    occ = people["occupations"][job]
+    race, culture = race_for(settlement.culture, rng)
+    names = t.names["cultures"].get(culture) or next(iter(t.names["cultures"].values()))
+    sex = occ.get("sex") or rng.choice(["male", "female"])
+    first = rng.choice(names[sex])
+    family = rng.choice(names["family"])
+    age_lo, age_hi = {"lord": (22, 66), "headman": (35, 70), "beggar": (18, 75), "serving_hand": (14, 30),
+                      "acolyte": (16, 30), "guard": (18, 50)}.get(job, (18, 68))
+    title = occ.get("titles", {}).get(settlement.kind, occ["name"])
+    lo, hi = occ.get("purse", [0, 100])
+    traits = rng.sample(sorted(people["personality"]), 2)
+    npc = NPC(
+        id=new_id(game.world), name=f"{first} {family}", sex=sex, age=rng.randint(age_lo, age_hi), race=race,
+        culture=culture, job=job, title=title, settlement=settlement.id, notable=bool(occ.get("notable")),
+        social=occ.get("social", "low"), purse=rng.randint(int(lo), int(hi)), stats=occ.get("stats", "commoner"),
+        traits=traits, speech=rng.choice(people["speech"]), building=building, post=tuple(post), home=tuple(home),
+        x=post[0], y=post[1],
+    )
+    npc.profile = fallback_profile(game, npc, rng)
+    npc.profile_source = "fallback"
+    return npc
+
+
+def fallback_profile(game, npc: NPC, rng: RNG) -> dict:
+    t = game.tables.people["text"]
+    old = npc.age >= 50
+    pron = pronouns(npc)
+    feature = rng.choice(t["feature"])
+    values = {
+        "build": rng.choice(t["build"]), "hair": rng.choice(t["hair_old" if old else "hair_young"]),
+        "feature": feature, "Feature_sentence": f"{pron['They']} {pron['have']} {feature}.",
+        "clothes": rng.choice(t[f"clothes_{npc.social}"]),
+        "person": {"male": "man", "female": "woman"}[npc.sex] if npc.age >= 18 else ("boy" if npc.sex == "male" else "girl"),
+    }
+    appearance = textgen.tidy(textgen.fill(rng.choice(t["appearance"]), rng, t, values))
+    story_key = f"backstory_{npc.job}" if f"backstory_{npc.job}" in t else "backstory_common"
+    backstory = rng.choice(t[story_key])
+    secret = rng.choice(t["secret"])
+    want = rng.choice(t["want"])
+    words = [game.tables.people["personality"][tr]["words"] for tr in npc.traits]
+    personality = f"{pron['They']} {pron['are']} {words[0]} and {words[1]}; {pron['their']} speech is {npc.speech}."
+    return {"appearance": appearance, "personality": fill_pronouns(personality, pron),
+            "backstory": fill_pronouns(backstory, pron), "secret": fill_pronouns(secret, pron),
+            "want": fill_pronouns(want, pron)}
+
+
+def pronouns(npc: NPC) -> dict:
+    if npc.sex == "female":
+        return {"they": "she", "They": "She", "them": "her", "their": "her", "themselves": "herself", "are": "is",
+                "have": "has", "s": "s"}
+    return {"they": "he", "They": "He", "them": "him", "their": "his", "themselves": "himself", "are": "is",
+            "have": "has", "s": "s"}
+
+
+def fill_pronouns(text: str, pron: dict) -> str:
+    for k, v in pron.items():
+        text = text.replace("{" + k + "}", v)
+    return text
+
+
+# ---------------------------------------------------------------------------- filling a town
+def populate_town(game, lm, settlement) -> Town:
+    """Put people into a settlement's close-up map the first time anyone arrives."""
+    world = game.world
+    town = town_of(world, settlement.id)
+    if town.npcs:
+        return town
+    town.visited = world.time
+    rng = world.rng.child(f"people/{settlement.id}")
+    people = game.tables.people
+    walk = game.tables.terrain.walk[game.remap_for(lm)[lm.terrain]]
+    taken: set[tuple[int, int]] = set()
+
+    def inside(b) -> tuple[int, int]:
+        cells = [(int(x), int(y)) for x in range(b.x + 1, b.x + b.w - 1) for y in range(b.y + 1, b.y + b.h - 1)
+                 if walk[x, y] and (x, y) not in taken and (x, y) != tuple(b.door)]
+        spot = rng.choice(cells) if cells else (int(b.x + b.w // 2), int(b.y + b.h // 2))
+        taken.add(spot)
+        return spot
+
+    houses = [i for i, b in enumerate(lm.buildings) if b.kind == "house"]
+
+    def a_home() -> tuple[int, int]:
+        if not houses:
+            return lm.entry
+        return inside(lm.buildings[rng.choice(houses)])
+
+    street_cells = outdoor_cells(game, lm, walk)
+
+    def street() -> tuple[int, int]:
+        free = [c for c in street_cells if c not in taken]
+        spot = rng.choice(free) if free else lm.entry
+        taken.add(spot)
+        return spot
+
+    role_for = {"inn": ["innkeeper", "serving_hand"], "temple": ["priest"], "smithy": ["smith"], "store": ["shopkeeper"],
+                "healer": ["healer"], "stable": ["stablemaster"], "hall": ["headman"], "keep": ["lord"]}
+    seen_roles: set[str] = set()
+    for bi, b in enumerate(lm.buildings):
+        for job in role_for.get(b.kind, []):
+            if job == "serving_hand" and (settlement.kind in ("hamlet", "village") or rng.chance(0.4)):
+                continue
+            if job in ("innkeeper", "priest", "smith", "shopkeeper") or job not in seen_roles or settlement.kind == "city":
+                spot = inside(b)
+                npc = make_npc(game, settlement, job, rng.child(f"{bi}/{job}"), building=bi, post=spot,
+                               home=spot if job in STAYS_AT_POST else a_home())
+                add(world, town, npc)
+                seen_roles.add(job)
+        if b.kind == "temple" and settlement.kind in ("town", "city"):
+            spot = inside(b)
+            add(world, town, make_npc(game, settlement, "acolyte", rng.child(f"{bi}/acolyte"), building=bi, post=spot, home=spot))
+    spec = people["settlement_people"].get(settlement.kind, people["settlement_people"]["village"])
+    for job in spec["notables"]:
+        if job not in seen_roles:
+            home = a_home()
+            add(world, town, make_npc(game, settlement, job, rng.child(f"notable/{job}"), post=home, home=home))
+    # Market traders at the stalls.
+    stalls = [(int(x), int(y)) for x, y in zip(*np.nonzero(game.remap_for(lm)[lm.terrain] == game.tables.terrain.index.get("stall", -1)))]
+    for i, (sx, sy) in enumerate(stalls[:4]):
+        spot = next(((sx + dx, sy + dy) for dx, dy in ((0, 1), (0, -1), (1, 0), (-1, 0))
+                     if lm.in_bounds(sx + dx, sy + dy) and walk[sx + dx, sy + dy] and (sx + dx, sy + dy) not in taken), None)
+        if spot is None:
+            continue
+        taken.add(spot)
+        add(world, town, make_npc(game, settlement, "market_trader", rng.child(f"stall/{i}"), post=spot, home=a_home()))
+    lo, hi = spec["guards"]
+    for i in range(rng.randint(lo, hi)):
+        spot = street()
+        add(world, town, make_npc(game, settlement, "guard", rng.child(f"guard/{i}"), post=spot, home=spot))
+    lo, hi = spec["commoners"]
+    jobs = people["commoner_jobs"]
+    p = game.player
+    around = {game.biome_key(nx, ny) for _, nx, ny in world.neighbours(p.x, p.y)}
+    for i in range(rng.randint(lo, hi)):
+        job = rng.choice(jobs)
+        near = people["occupations"][job].get("near")
+        if near == "water" and not (world.river[p.x, p.y] or "lake" in around or "ocean" in around or "coast" in around):
+            job = "labourer"
+        if near == "forest" and not around & {"forest", "pine_forest"}:
+            job = "farmer"
+        if near == "hills" and not around & {"hills", "mountains"}:
+            job = "labourer"
+        add(world, town, make_npc(game, settlement, job, rng.child(f"common/{i}"), post=street(), home=a_home()))
+    update_positions(game, lm)
+    return town
+
+
+def add(world, town: Town, npc: NPC) -> None:
+    world.npcs[npc.id] = npc
+    town.npcs.append(npc.id)
+
+
+def outdoor_cells(game, lm, walk=None) -> list[tuple[int, int]]:
+    """Streets and open ground inside the settlement, where people walk about."""
+    if walk is None:
+        walk = game.tables.terrain.walk[game.remap_for(lm)[lm.terrain]]
+    ids = game.tables.terrain.index
+    street = {ids.get(n, -1) for n in ("road", "cobbles", "dirt")}
+    terrain = game.remap_for(lm)[lm.terrain]
+    mask = np.isin(terrain, list(street)) & walk
+    cells = [(int(x), int(y)) for x, y in zip(*np.nonzero(mask))]
+    cx, cy = lm.width // 2, lm.height // 2
+    return [c for c in cells if abs(c[0] - cx) < 36 and abs(c[1] - cy) < 22 and lm.building_at(*c) is None]
+
+
+# ---------------------------------------------------------------------------- days and nights
+def is_day(game) -> bool:
+    h = game.moment.hour
+    return DAY_START <= h < DAY_END
+
+
+def update_positions(game, lm) -> None:
+    """Morning and evening: people go to work, or home. During the day some wander."""
+    s = settlement_here(game)
+    if s is None:
+        return
+    day = is_day(game)
+    occupied = {(game.player.lx, game.player.ly)} | {(a.x, a.y) for a in lm.actors}
+    for npc in npcs_in(game.world, s.id):
+        if not npc.alive:
+            npc.present = False
+            continue
+        if npc.job in STAYS_AT_POST:
+            target, present = npc.post, True
+        elif day:
+            target, present = npc.post, True
+        else:
+            target, present = npc.home, False  # at home behind a shut door
+        if npc.flags.get("fled_until", -1) > game.world.time:
+            present = False
+        was_day = npc.flags.get("day")
+        if was_day != day or not present:
+            if target not in occupied:
+                npc.x, npc.y = target
+        npc.flags["day"] = day
+        npc.present = present
+        if present:
+            occupied.add((npc.x, npc.y))
+
+
+def wander(game, lm) -> None:
+    """Some people drift about the streets as you walk."""
+    s = settlement_here(game)
+    if s is None:
+        return
+    rng = game.world.rng.child(f"wander/{game.world.time}/{game.player.steps}")
+    walk = game.tables.terrain.walk[game.remap_for(lm)[lm.terrain]]
+    people = npcs_in(game.world, s.id)
+    occupied = {(n.x, n.y) for n in people if n.alive and n.present}
+    occupied.add((game.player.lx, game.player.ly))
+    for npc in people:
+        if not (npc.alive and npc.present and npc.job in WANDERS) or rng.random() > 0.35:
+            continue
+        dx, dy = rng.choice([(1, 0), (-1, 0), (0, 1), (0, -1)])
+        nx, ny = npc.x + dx, npc.y + dy
+        if not lm.in_bounds(nx, ny) or not walk[nx, ny] or (nx, ny) in occupied or lm.building_at(nx, ny) is not None:
+            continue
+        if abs(nx - npc.post[0]) > 7 or abs(ny - npc.post[1]) > 5:
+            continue
+        occupied.discard((npc.x, npc.y))
+        npc.x, npc.y = nx, ny
+        occupied.add((nx, ny))
+
+
+# ---------------------------------------------------------------------------- first impressions
+def first_impression(game, npc: NPC) -> int:
+    """How they feel about you the first time you speak."""
+    from realmwalker.rules.character import Sheet
+
+    t = game.tables
+    c = game.leader
+    s = Sheet(c, t)
+    score = sum(int(t.people["personality"][tr]["disposition"]) for tr in npc.traits)
+    expected = {"low": 0, "middle": 1, "high": 2}[npc.social]
+    score += max(-15, min(10, (s.social() - expected) * 5))
+    if c.dirt >= 85:
+        score -= 20
+    elif c.dirt >= 60:
+        score -= 10
+    if any(w.bleed and not w.bandaged for w in c.wounds):
+        score += 5 if "kind" in npc.traits else -5
+    if c.race != npc.race:
+        if c.race == "half_orc":
+            score -= 5 if "kind" in npc.traits else 12
+        else:
+            score -= 3
+    if c.background == "noble" and npc.social == "high":
+        score += 8
+    if c.background == "acolyte" and npc.job in ("priest", "acolyte"):
+        score += 10
+    if c.race == npc.race and c.culture == npc.culture:
+        score += 3
+    return max(-80, min(80, score))
+
+
+def meet(game, npc: NPC) -> None:
+    if not npc.met:
+        npc.met = True
+        npc.disposition = first_impression(game, npc)
+        npc.remember(f"first met the traveller on {game.moment.date_text()}")
+
+
+def change_disposition(npc: NPC, amount: int) -> None:
+    npc.disposition = max(-100, min(100, npc.disposition + amount))
+
+
+def describe_npc(game, npc: NPC) -> str:
+    """For looking at someone."""
+    who = f"<name>{npc.first_name}</>, the {npc.title}" if npc.known else f"The {npc.title}"
+    mood = "" if not npc.met else f" <dim>({npc.mood()})</>"
+    return f"{who}{mood}. {npc.profile.get('appearance', '')}"

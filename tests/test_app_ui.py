@@ -513,3 +513,34 @@ def test_travel_days_are_written_up(make_app, mock_p2, with_ai):
     flavor = [m for m in game.log.messages[before:] if m.category == "flavor"]
     assert flavor and "{" not in flavor[-1].text
     assert not game.narration
+
+
+# ---------------------------------------------------------------------------- M5 screens
+@pytest.mark.parametrize("size", SIZES)
+def test_talking_to_townsfolk(make_app, size):
+    import random
+
+    from realmwalker.game.people import npcs_in
+    from realmwalker.ui.screens.dialogue import DialogueScreen
+
+    app = make_app()
+    start_small_world(app)
+    game = app.game
+    game.enter_local()
+    s = game.world.settlement_at(game.player.x, game.player.y)
+    rng = random.Random(size[0])
+    for npc in npcs_in(game.world, s.id)[:6]:
+        game.talk_to = npc.id
+        render(app, size)
+        assert isinstance(app.top, DialogueScreen)
+        for _ in range(12):
+            if not isinstance(app.top, DialogueScreen):
+                break
+            app.handle_event(rng.choice(app.top.autoplay_keys()))
+            render(app, size)
+        while app.top is not None and not type(app.top).__name__ == "GameScreen" and not game.busy:
+            app.handle_event(KeyEvent("escape"))
+            render(app, size)
+        if game.busy:
+            break
+    assert app.error_count == 0

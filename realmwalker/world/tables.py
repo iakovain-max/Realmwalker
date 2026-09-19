@@ -103,4 +103,6 @@ class Tables:
         self.diseases = DiseaseTable(data["diseases.json"])
         self.health = data["health.json"]
         self.camping = data["camping.json"]
+        self.people = data["people.json"]
+        self.dialogue = data["dialogue.json"]
         self.travel_events = {k: v for k, v in data["travel_events.json"]["events"].items() if not k.startswith("_")}

@@ -1,0 +1,76 @@
+{
+  "_comment": "Built-in dialogue, used when the AI is unavailable (and for ordinary townsfolk). {slots}: name (theirs), player (the player's first name), place (the settlement), job (their occupation), title (theirs), size (a word for the place), plus others where noted. greeting: by how they feel about you. special: built-in skill-check options (the AI proposes its own when it can); outcome ids are the same whitelist the AI chooses from.",
+  "greeting": {
+    "hostile": ["\"You. Get out of my sight.\"", "\"I've nothing to say to you.\"", "They look at you the way you'd look at a rat in the flour."],
+    "unfriendly": ["\"What do you want?\"", "\"Make it quick.\"", "\"Hm. Another stranger.\"", "They don't stop what they're doing."],
+    "neutral": ["\"Aye?\"", "\"Help you?\"", "\"Stranger. What brings you to {place}?\"", "\"Good day to you. Or what passes for one.\""],
+    "friendly": ["\"Well met, traveller.\"", "\"Ah, it's you. Come in, come in.\"", "\"Good to see a face that isn't trouble.\""],
+    "warm": ["\"{player}! Good to see you again.\"", "\"There you are. Sit, sit.\"", "\"Friend. What can I do for you?\""]
+  },
+  "remember_threat": ["\"You're the one who threatened me. I haven't forgotten.\""],
+  "remember_help": ["\"I owe you one. I haven't forgotten that either.\""],
+  "who_are_you": ["\"{name}. I'm the {job} here.\"", "\"Name's {name}. {job}, since you ask.\"", "\"They call me {name}. I'm the {job}.\""],
+  "about_place": [
+    "\"{place}? {size_line} {services_line}\"",
+    "\"Not much to tell. {size_line} {services_line}\""
+  ],
+  "size_line": {
+    "hamlet": "A few houses and a lot of mud.",
+    "village": "A village like any other: fields, a well, a temple, and everybody knows your business.",
+    "town": "A market town. Busy on market days, dull the rest.",
+    "city": "A city. Keep a hand on your purse.",
+    "hold": "The hold. Stone above and stone below, and good steel from the forges.",
+    "elfhall": "The hall among the trees. We keep to ourselves."
+  },
+  "no_rumours": ["\"Nothing you'd want to hear.\"", "\"Quiet enough, lately.\"", "\"I keep my head down. You should too.\""],
+  "rumour_intro": ["\"Well, since you ask...\"", "\"They're saying...\"", "\"You didn't hear it from me, but...\"", "\"I'll tell you what I heard.\""],
+  "flavour_rumours": [
+    "\"The lord's steward is skimming the tithe. Everyone knows. Nobody says.\"",
+    "\"Two carts went missing on the east road last month. Just the carts. No sign of the carters.\"",
+    "\"Grain's going to be dear this winter. Mark my words.\"",
+    "\"There's a man in the tavern paying good silver for wolf pelts.\"",
+    "\"The miller's wife ran off with a tinker. Took the mule, too.\"",
+    "\"Somebody's been digging in the old graveyard at night.\"",
+    "\"The priest says the fever last spring was a judgement. On what, he didn't say.\"",
+    "\"Soldiers came through asking about deserters. Hanged two by the crossroads.\""
+  ],
+  "danger_rumour": ["\"The {direction} road's bad. {threat}.\"", "\"Don't go {direction} without friends. {threat}.\""],
+  "threat_words": {
+    "beasts": "Wolves, and worse", "bandits": "Bandits, bold as you like", "dead": "Things that should be in their graves",
+    "cult": "Folk in robes, doing things in the woods at night", "monsters": "Something big, that nobody has seen twice"
+  },
+  "about_person": ["\"{other}? {other_line}\""],
+  "person_lines": ["Decent enough.", "I'd count my fingers after shaking hands.", "Keeps to themselves.", "Owes me money.", "Knows everybody's business.", "Good at their trade, I'll give them that.", "Don't mention my name."],
+  "threaten_success": ["They go pale. \"All right, all right. Just... calm down.\"", "\"No need for that. No need at all.\" Their hands are shaking."],
+  "threaten_failure": ["\"Is that a threat? In {place}? Try it.\"", "They laugh at you. It is not a nice laugh."],
+  "bribe_accept": ["The coin disappears. \"Well. Maybe I can help after all.\"", "\"Generous. Very generous.\" Suddenly they're your friend."],
+  "bribe_refuse": ["\"Keep your money. I'm not for sale.\"", "They look at the coin, then at you, with contempt."],
+  "refuse_talk": ["\"I said I've nothing to say to you.\"", "They turn their back on you."],
+  "closed": ["\"We're shut. Come back in the morning.\"", "A voice through the door: \"Closed! Morning!\""],
+  "goodbye": ["\"Mind how you go.\"", "\"Aye.\"", "\"Don't get yourself killed.\"", "\"Go well.\""],
+  "special": {
+    "any": [
+      {"text": "[Insight] Something is worrying them.", "skill": "insight", "difficulty": "medium",
+       "success": {"outcome": "reveal_info", "line": "\"...It's nothing. All right: it's not nothing.\" They tell you what's been keeping them up at night."},
+       "failure": {"outcome": "disposition_down", "line": "\"I don't know what you mean. Are we done?\""}},
+      {"text": "[Persuasion] Tell them about your travels and win them over.", "skill": "persuasion", "difficulty": "easy",
+       "success": {"outcome": "disposition_up", "line": "They laugh despite themselves. \"You've been about, I'll give you that.\""},
+       "failure": {"outcome": "none", "line": "They listen politely and are not impressed."}}
+    ],
+    "merchant": [
+      {"text": "[Persuasion] Ask for a better price, as a friend.", "skill": "persuasion", "difficulty": "hard",
+       "success": {"outcome": "price_down", "line": "\"Ach. Fine. For you, a little off.\""},
+       "failure": {"outcome": "disposition_down", "line": "\"Friends pay full price. That's what makes them friends.\""}}
+    ],
+    "innkeeper": [
+      {"text": "[Insight] Ask what they overhear from the drinkers.", "skill": "insight", "difficulty": "easy",
+       "success": {"outcome": "reveal_info", "line": "\"Drinkers talk. Innkeepers listen.\" They lean closer."},
+       "failure": {"outcome": "none", "line": "\"I hear a lot of nonsense. Most of it I forget.\""}}
+    ],
+    "guard": [
+      {"text": "[Intimidation] Ask whether the watch is actually good for anything.", "skill": "intimidation", "difficulty": "hard",
+       "success": {"outcome": "reveal_info", "line": "Stung, the guard tells you exactly what the watch knows and isn't doing about it."},
+       "failure": {"outcome": "disposition_down", "line": "\"Move along, before I find a reason to lock you up.\""}}
+    ]
+  }
+}

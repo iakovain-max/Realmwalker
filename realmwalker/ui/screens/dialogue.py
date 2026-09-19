@@ -1,0 +1,135 @@
+"""Talking to someone: what they say, what you say, and the menu of what you can say next."""
+
+from __future__ import annotations
+
+from realmwalker.game.dialogue import Conversation
+from realmwalker.ui import colors, markup
+from realmwalker.ui.input import KeyEvent
+from realmwalker.ui.screens.base import Screen
+from realmwalker.ui.widgets import Canvas
+
+
+class DialogueScreen(Screen):
+    title = "Talk"
+
+    def __init__(self, app, game, npc) -> None:
+        super().__init__(app)
+        self.game = game
+        self.npc = npc
+        self.conv = Conversation(game, npc)
+        self.scroll = 0
+        self.after_open()
+
+    def after_open(self) -> None:
+        """Hook for the AI (part 2): ask for lines and special options in the background."""
+
+    # ------------------------------------------------------------------ actions
+    def choose(self, i: int) -> None:
+        menu = self.conv.menu()
+        if not 0 <= i < len(menu):
+            return
+        choice = menu[i]
+        if not choice.enabled:
+            self.app.notify(choice.why or "You can't.", "warn")
+            return
+        request = self.conv.choose(choice)
+        self.scroll = 0
+        if request:
+            self.open_request(request, choice)
+        if self.conv.ended:
+            self.finish()
+
+    def open_request(self, request: str, choice) -> None:
+        """Trade and service windows (M5 parts 3 and 4)."""
+        from realmwalker.ui.screens import trade
+
+        trade.open_request(self, request, choice)
+
+    def finish(self) -> None:
+        if self.conv.minutes:
+            self.game.pass_time(self.conv.minutes, "rest")
+        self.game.dirty = True
+        self.close()
+
+    # ------------------------------------------------------------------ input
+    def handle_key(self, ev: KeyEvent) -> bool:
+        if ev.key == "escape":
+            if self.conv.mode != "main":
+                self.conv.mode = "main"
+            else:
+                self.conv.goodbye()
+                self.finish()
+        elif ev.is_text and ev.key.isdigit() and ev.key != "0":
+            self.choose(int(ev.key) - 1)
+        elif ev.key in ("pageup", "up"):
+            self.scroll += 3
+        elif ev.key in ("pagedown", "down"):
+            self.scroll = max(0, self.scroll - 3)
+        return True
+
+    # ------------------------------------------------------------------ drawing
+    def render(self, canvas: Canvas) -> None:
+        npc = self.npc
+        conv = self.conv
+        w, h = canvas.width, canvas.height
+        title = f"{npc.first_name}, the {npc.title}" if npc.known else f"The {npc.title}"
+        canvas.frame(0, 0, w, h - 1, markup.escape(title), double=True)
+        side = w >= 110
+        text_w = (w - 40) if side else (w - 4)
+        mood = npc.mood()
+        mood_color = {"hostile": "danger", "unfriendly": "warn", "neutral": "dim", "friendly": "good", "warm": "good"}[mood]
+        header = f"<name>{markup.escape(npc.name if npc.known else 'The ' + npc.title)}</> <dim>·</> <{mood_color}>{mood}</>"
+        if conv.pending_ai:
+            header += " <dim>· …</>"
+        canvas.markup(2, 1, header, max_width=text_w)
+        menu = conv.menu()
+        menu_h = min(len(menu), 12) + 1
+        log_top, log_bottom = 3, h - 3 - menu_h
+        # The conversation so far.
+        lines: list = []
+        for who, text in conv.lines:
+            if not text:
+                continue
+            if who == "you":
+                lines += markup.wrap(f"<title>You:</> <dim>{text}</>", text_w)
+            elif who == "note":
+                lines += markup.wrap(f"<dim>{text}</>", text_w)
+            else:
+                lines += markup.wrap(text, text_w)
+            lines.append([])
+        avail = max(1, log_bottom - log_top)
+        end = max(0, len(lines) - self.scroll)
+        for i, line in enumerate(lines[max(0, end - avail):end]):
+            canvas.spans(2, log_top + i, line, max_width=text_w)
+        canvas.hline(1, log_bottom, text_w + 2, "─", colors.FAINT)
+        # The menu.
+        for i, choice in enumerate(menu[:12]):
+            y = log_bottom + 1 + i
+            key = str(i + 1) if i < 9 else " "
+            if choice.enabled:
+                canvas.button(2, y, markup.plain(choice.label)[: text_w - 5], lambda i=i: self.choose(i), hotkey=key)
+            else:
+                canvas.markup(2, y, f"<faint>[{key}] {markup.escape(markup.plain(choice.label))}: {choice.why}</>",
+                              max_width=text_w)
+        if side:
+            self._render_side(canvas, w - 36, 2, 34, h - 5)
+        canvas.text(2, h - 2, "1-9 choose · ↑↓ scroll · Esc leave", colors.FAINT, max_width=w - 4)
+
+    def _render_side(self, canvas: Canvas, x: int, y: int, w: int, h: int) -> None:
+        npc = self.npc
+        canvas.section(x, y, w, "What you know")
+        y += 1
+        facts = [f"<dim>{npc.age}, {self.game.tables.races.get(npc.race, {}).get('name', npc.race)}</>"]
+        if npc.profile.get("appearance"):
+            facts.append(markup.escape(npc.profile["appearance"]))
+        if npc.known and npc.mood() in ("neutral", "friendly", "warm") and npc.profile.get("personality"):
+            facts.append(markup.escape(npc.profile["personality"]))
+        if npc.memory:
+            facts.append("<dim>They remember: " + "; ".join(markup.escape(m) for m in npc.memory[-3:]) + ".</>")
+        for f in facts:
+            if y >= h:
+                break
+            y += canvas.wrapped(x, y, f, w, max_lines=6) + 1
+
+    def autoplay_keys(self) -> list[KeyEvent]:
+        return [KeyEvent(str(i)) for i in range(1, 9)] + [KeyEvent("escape")]

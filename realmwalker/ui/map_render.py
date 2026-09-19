@@ -148,6 +148,18 @@ def draw_overworld(con, game, picture: OverworldPicture, x: int, y: int, w: int,
     return mx0, my0, ox, oy
 
 
+NPC_COLORS = {"guard": (150, 170, 220), "priest": (200, 160, 240), "acolyte": (200, 160, 240), "lord": (240, 200, 110),
+              "market_trader": (230, 200, 90), "beggar": (140, 130, 120)}
+
+
+def npc_color(npc) -> tuple[int, int, int]:
+    if npc.job in NPC_COLORS:
+        return NPC_COLORS[npc.job]
+    if npc.notable:
+        return (240, 225, 150)
+    return (190, 185, 170)
+
+
 def local_visibility(game, lm) -> np.ndarray:
     """Cells the player can see right now; also marks them as remembered."""
     from realmwalker.game.vision import player_fov
@@ -185,6 +197,15 @@ def draw_local(con, game, x: int, y: int, w: int, h: int, cursor: tuple[int, int
             fg[sx, sy] = d["color"]
             if a.alert:
                 bg[sx, sy] = (70, 16, 12)
+    if lm.kind == "settlement":
+        from realmwalker.game.people import npcs_in, settlement_here
+
+        s = settlement_here(game)
+        for npc in npcs_in(game.world, s.id) if s is not None else []:
+            sx, sy = npc.x - mx0, npc.y - my0
+            if npc.alive and npc.present and 0 <= sx < mw and 0 <= sy < mh and visible[sx, sy]:
+                ch[sx, sy] = ord("☺")
+                fg[sx, sy] = npc_color(npc)
     if lm.items:
         from realmwalker.ui import colors
         from realmwalker.ui.screens.sheets import item_glyph

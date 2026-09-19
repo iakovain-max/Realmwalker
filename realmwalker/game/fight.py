@@ -88,6 +88,7 @@ def finish_battle(game) -> Aftermath:
         if not actor.creatures and lm is not None and actor in lm.actors:
             lm.actors.remove(actor)
     after = Aftermath(result.outcome, "")
+    _settle_townsfolk(game, battle, result)
     from realmwalker.rules import health
 
     # Survivors of the party who were down get back on their feet (or die of their wounds).
@@ -178,6 +179,27 @@ def finish_battle(game) -> Aftermath:
     game.aftermath = after
     game.dirty = True
     return after
+
+
+def _settle_townsfolk(game, battle: Battle, result: BattleResult) -> None:
+    """Townsfolk who fought: the dead are dead, the beaten hate you, the fled run home."""
+    mapping = getattr(game, "battle_npcs", {})
+    if not mapping:
+        return
+    for f in battle.side(FOE):
+        npc = game.world.npcs.get(mapping.get(f.creature.uid, -1))
+        if npc is None:
+            continue
+        if f.state == "dead":
+            npc.alive = False
+            npc.present = False
+            game.leader.deeds.append(f"killed {npc.name}, the {npc.title}")
+        else:
+            npc.disposition = -100
+            npc.remember("was attacked by the traveller")
+            npc.flags["fled_until"] = game.world.time + 12 * 60
+            npc.present = False
+    game.battle_npcs = {}
 
 
 def _list_names(game, creatures: list[Creature]) -> str:
