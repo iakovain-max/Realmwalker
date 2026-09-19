@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from realmwalker.game.describe import cap, danger_text, describe_local, describe_overworld, temperature_word, typical_temperature
 from realmwalker.game.state import GameState
+from realmwalker.rules import progression
 from realmwalker.ui import colors, markup
 from realmwalker.ui.input import DIRECTIONS, KeyEvent, MouseEvent
 from realmwalker.ui.map_render import OverworldPicture, draw_local, draw_overworld
@@ -244,6 +245,11 @@ class GameScreen(Screen):
             from realmwalker.ui.screens.law import ArrestScreen
 
             self.app.push(ArrestScreen(self.app, game))
+        elif any(progression.has_new_choices(c) for c in game.party):
+            from realmwalker.ui.screens.levelup import LevelUpScreen
+
+            index = next(i for i, c in enumerate(game.party) if progression.has_new_choices(c))
+            self.app.push(LevelUpScreen(self.app, game, index))
         elif game.read_board:
             from realmwalker.ui.screens.notices import NoticeBoardScreen
 

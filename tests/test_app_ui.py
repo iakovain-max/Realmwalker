@@ -678,3 +678,29 @@ def test_the_chronicle_and_notice_board_windows(make_app, size):
     app.handle_event(KeyEvent("pagedown"))
     render(app, size)
     assert app.error_count == 0
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_the_level_up_window(make_app, size):
+    from realmwalker.core.rng import RNG
+    from realmwalker.rules import progression
+    from realmwalker.ui.screens.levelup import LevelUpScreen
+
+    app = make_app()
+    start_small_world(app)
+    game = app.game
+    progression.award_xp(game.leader, 14000, game.tables, RNG(1))
+    assert game.leader.pending
+    render(app, size)
+    assert isinstance(app.top, LevelUpScreen), "a level-up opens the choices"
+    for key in ("down", "enter", "pagedown", "enter", "escape"):
+        app.handle_event(KeyEvent(key))
+        render(app, size)
+    app.handle_event(KeyEvent("c"))
+    render(app, size)
+    app.handle_event(KeyEvent("l"))
+    render(app, size)
+    app.handle_event(KeyEvent("a"))
+    render(app, size)
+    assert not game.leader.pending
+    assert app.error_count == 0

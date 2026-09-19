@@ -261,6 +261,11 @@ class BattleResult:
     robbed_money: int = 0
 
 
+def spell_id(value: str) -> str:
+    """The spell behind a spell-menu value (a spell id, or "scroll:<uid>:<spell id>")."""
+    return value.split(":", 2)[2] if value.startswith("scroll:") else value
+
+
 class Battle:
     def __init__(self, tables, party: list[Character], foes: list[Creature], env: Env, rng: RNG, *,
                  show_dice: bool = True, title: str = "", now: int = 0) -> None:
@@ -1147,10 +1152,12 @@ class Battle:
             self._after_action(f)
 
     # ------------------------------------------------------------------ items and abilities
-    def usable_items(self, f: Fighter) -> list:
+    def usable_items(self, f: Fighter) -> list:  # (scrolls are read from the spell menu)
         if not f.char:
             return []
-        return [i for i in f.char.inventory if self.t.items.get(i.def_id).get("use")]
+        return [i for i in f.char.inventory if self.t.items.get(i.def_id).get("use")
+                and not self.t.items.get(i.def_id)["use"].get("scroll")
+                and not self.t.items.get(i.def_id)["use"].get("disguise")]
 
     def do_item(self, f: Fighter, uid: int, target: Fighter) -> None:
         it = f.char.item(uid)
@@ -1254,6 +1261,7 @@ class Battle:
 
     # ------------------------------------------------------------------ spells
     def spell_options(self, f: Fighter) -> list[tuple[str, bool, str]]:
+        """(spell id, possible, why not). Scrolls in the pack appear as "scroll:<item uid>:<spell id>"."""
         if not f.char:
             return []
         out = []
@@ -1263,10 +1271,14 @@ class Battle:
             if ok and spell["kind"] == "revive" and not any(i.def_id == "diamond" for i in f.char.inventory):
                 ok, why = False, "needs a diamond"
             out.append((sid, ok, why))
+        for it in f.char.inventory:
+            sid = self.t.items.get(it.def_id).get("use", {}).get("scroll")
+            if sid in self.t.spells and self.t.spells[sid]["kind"] != "revive":
+                out.append((f"scroll:{it.uid}:{sid}", True, ""))
         return out
 
     def spell_targets(self, f: Fighter, sid: str) -> list[Fighter]:
-        spell = self.t.spells[sid]
+        spell = self.t.spells[spell_id(sid)]
         target = spell["target"]
         if target == "enemy":
             kind = "spell_melee" if spell.get("attack") == "melee" or spell.get("touch") else "spell_ranged"
@@ -1280,10 +1292,28 @@ class Battle:
         return []
 
     def do_cast(self, f: Fighter, sid: str, target: Fighter | None, slot_level: int | None = None) -> None:
+        scroll = None
+        if sid.startswith("scroll:"):
+            _, uid, sid = sid.split(":", 2)
+            scroll = f.char.item(int(uid))
+            if scroll is None:
+                return
         spell = self.t.spells[sid]
         c = f.char
         s = f.sheet
         level = spell["level"]
+        if scroll is not None:
+            remove_item(c, scroll.uid, 1)
+            if c.cls not in spell["classes"]:
+                roll = dice.d20(self.rng).natural
+                bonus = f.skill("arcana")
+                self.dice_say(f"Arcana ({f.name}): {roll} {signed_mod(bonus)} = {roll + bonus} vs DC {10 + level}")
+                if roll + bonus < 10 + level:
+                    self.say(f"{f.the_name} stumbles over the words of the scroll, and it crumbles to dust.", "warn")
+                    self._after_action(f)
+                    return
+            self.say(f"{f.the_name} reads from a scroll.", "magic")
+            level = 0  # the scroll's own magic: no spell slot
         if level > 0:
             slot_level = slot_level or spellrules.lowest_free_slot(c, self.t, level)
             if slot_level is None:

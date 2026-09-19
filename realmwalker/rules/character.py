@@ -65,6 +65,8 @@ class Character:
     wounds: list[Wound] = field(default_factory=list)
     kills: dict[str, int] = field(default_factory=dict)
     deeds: list[str] = field(default_factory=list)
+    pending: list[dict] = field(default_factory=list)  # level-up choices waiting (rules/progression.py)
+    companion: dict = field(default_factory=dict)  # for companions: loyalty, wages, orders (game/companions.py)
     # The body over time (rules/body.py and rules/health.py). 0 = fine for the needs.
     hunger: float = 0.0
     thirst: float = 0.0

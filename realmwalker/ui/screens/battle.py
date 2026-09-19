@@ -7,7 +7,7 @@ asks the player what each party member does, and hands over to the aftermath whe
 from __future__ import annotations
 
 from realmwalker.rules import spells as spellrules
-from realmwalker.rules.combat import BACK, FOE, FRONT, PARTY, Battle, Fighter
+from realmwalker.rules.combat import BACK, FOE, FRONT, PARTY, Battle, Fighter, spell_id
 from realmwalker.ui import colors, markup
 from realmwalker.ui.input import KeyEvent
 from realmwalker.ui.screens.base import ConfirmBox, Screen
@@ -135,8 +135,10 @@ class BattleScreen(Screen):
             self.slots_line = "slots " + " ".join(f"L{i + 1}:{n}" for i, n in enumerate(slots) if n or i == 0) if slots else ""
             rows = []
             for sid, ok, why in spells:
-                sp = tables.spells[sid]
+                sp = tables.spells[spell_id(sid)]
                 lvl = "cantrip" if sp["level"] == 0 else f"level {sp['level']}"
+                if sid.startswith("scroll:"):
+                    lvl = "from a scroll"
                 if ok and sp["target"] in ("enemy", "ally", "downed_ally", "dead_ally") and not b.spell_targets(f, sid):
                     ok, why = False, "no one to cast it on"
                 rows.append((f"{sp['name']} <dim>({lvl}) {sp['text']}</>", sid, ok, why))
@@ -249,7 +251,7 @@ class BattleScreen(Screen):
         if kind == "attack":
             self._open_targets("attack", b.targets_for(f, value.kind, value.reach))
         elif kind == "cast":
-            sp = self.game.tables.spells[value]
+            sp = self.game.tables.spells[spell_id(value)]
             if sp["target"] in ("enemy", "ally", "downed_ally", "dead_ally"):
                 self._open_targets("cast", b.spell_targets(f, value))
             else:

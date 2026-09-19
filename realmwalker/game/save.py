@@ -40,7 +40,7 @@ from realmwalker.world.tables import Tables
 
 log = logging.getLogger("realmwalker.save")
 
-FORMAT_VERSION = 6
+FORMAT_VERSION = 7
 WORLD_FILE = "world.zip"
 CHARACTER_FILE = "character.zip"
 
@@ -87,9 +87,15 @@ def _v5_to_v6(kind: str, body: dict) -> dict:
     return body
 
 
+def _v6_to_v7(kind: str, body: dict) -> dict:
+    """Format 7 added level-up choices waiting and companion details to characters (M7). Missing fields take
+    their defaults (nothing waiting; not a companion)."""
+    return body
+
+
 # format number -> function upgrading a loaded JSON body (of a given kind) to the next format.
 MIGRATIONS: dict[int, Callable[[str, dict], dict]] = {1: _v1_to_v2, 2: _v2_to_v3, 3: _v3_to_v4, 4: _v4_to_v5,
-                                                      5: _v5_to_v6}
+                                                      5: _v5_to_v6, 6: _v6_to_v7}
 
 
 class SaveError(Exception):

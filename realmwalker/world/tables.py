@@ -97,6 +97,7 @@ class Tables:
 
         self.creatures = CreatureTable(data["creatures.json"])
         self.spells = SpellTable(data["spells.json"])
+        self.items.add_scrolls(self.spells)
         self.combat_text = data["combat_text.json"]
         from realmwalker.rules.health import DiseaseTable
 

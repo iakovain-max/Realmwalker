@@ -110,6 +110,11 @@ def restock(game, npc: NPC, shop: dict) -> dict:
         qty = int(round(rng.randint(int(lo), int(hi)) * float(size["stock"])))
         if qty > 0:
             stock[item_id] = qty
+    if shop["kind"] in ("apothecary", "general"):
+        from realmwalker.game.magic import scroll_stock
+
+        for item_id, qty in scroll_stock(game, settlement, rng.child("scrolls")).items():
+            stock[item_id] = stock.get(item_id, 0) + qty
     shop["stock"] = stock
     # Things the player sold them are sold on after a month.
     shop["used"] = [u for u in shop.get("used", []) if game.world.time - u.get("sold_at", 0) < 30 * DAY]

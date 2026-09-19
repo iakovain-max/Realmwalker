@@ -51,6 +51,19 @@ class ItemTable:
         self.materials = data["materials"]
         self.starting_packs = data.get("starting_packs", {})
 
+    def add_scrolls(self, spells) -> None:
+        """A scroll for each spell above cantrips (made from data/spells.json, not listed in items.json)."""
+        for sid, spell in spells.defs.items():
+            level = int(spell["level"])
+            if level <= 0:
+                continue
+            self.defs[f"scroll_{sid}"] = {
+                "name": f"scroll of {spell['name']}", "category": "book", "weight": 0.1, "value": 2500 * level,
+                "material": "paper", "use": {"scroll": sid},
+                "description": f"A spell of the {spell.get('school', 'arcane')} school, level {level}, written out in "
+                               f"full. A wizard can copy it into a spellbook; in a fight it can be read aloud once.",
+            }
+
     def get(self, def_id: str) -> dict:
         return self.defs.get(def_id, UNKNOWN)
 

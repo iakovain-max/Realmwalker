@@ -201,7 +201,20 @@ class CharacterScreen(Screen):
         self.notes.render(canvas, col3, 2, max(20, w - col3 - 2), h - 6)
         bx = canvas.button(2, h - 3, "Inventory", lambda: self._switch(InventoryScreen), hotkey="i")
         bx = canvas.button(bx + 3, h - 3, "Equipment", lambda: self._switch(EquipmentScreen), hotkey="e")
+        if c.pending:
+            bx = canvas.button(bx + 3, h - 3, f"Level-up choices ({len(c.pending)})", self.level_up, hotkey="l")
+        if len(g.party) > 1:
+            bx = canvas.button(bx + 3, h - 3, "Next member", self.next_member, hotkey="Tab")
         canvas.button(bx + 3, h - 3, "Back", self.close, hotkey="Esc")
+
+    def level_up(self) -> None:
+        from realmwalker.ui.screens.levelup import LevelUpScreen
+
+        self.app.push(LevelUpScreen(self.app, self.game, self.index))
+
+    def next_member(self) -> None:
+        self.index = (self.index + 1) % len(self.game.party)
+        self.notes.set_text("")
 
     def _switch(self, cls) -> None:
         self.app.replace(cls(self.app, self.game, self.index))
@@ -213,12 +226,16 @@ class CharacterScreen(Screen):
             self._switch(InventoryScreen)
         elif ev.key == "e":
             self._switch(EquipmentScreen)
+        elif ev.key == "l" and self.char.pending:
+            self.level_up()
+        elif ev.key == "tab" and len(self.game.party) > 1:
+            self.next_member()
         else:
             return self.notes.handle_key(ev)
         return True
 
     def autoplay_keys(self) -> list[KeyEvent]:
-        return [KeyEvent(k) for k in ("down", "pagedown", "i", "e", "escape")]
+        return [KeyEvent(k) for k in ("down", "pagedown", "tab", "l", "i", "e", "escape")]
 
 
 # ---------------------------------------------------------------------------- inventory
@@ -286,6 +303,8 @@ class InventoryScreen(Screen):
             return "Take"
         if d.get("use", {}).get("disguise"):
             return "Disguise yourself"
+        if d.get("use", {}).get("scroll"):
+            return "Copy into spellbook" if self.char.cls == "wizard" else "Read"
         if self.game.tables.items.slots_for(it) or self.char.slot_of(it.uid):
             return "Remove" if self.char.slot_of(it.uid) else "Wear / wield"
         return "Use"
@@ -309,6 +328,16 @@ class InventoryScreen(Screen):
             from realmwalker.game import law
 
             self.game.say(law.put_on_disguise(self.game, self.char), "info")
+        elif name == "Copy into spellbook":
+            from realmwalker.game import magic
+
+            for line in magic.copy_scroll(self.game, self.char, it):
+                self.game.say(line, "magic")
+        elif name == "Read":
+            sid = self.game.tables.items.get(it.def_id)["use"]["scroll"]
+            spell = self.game.tables.spells[sid]
+            self.game.say(f"The scroll holds {spell['name']}: {spell['text']} It can be read aloud once in a fight "
+                          f"(Cast a spell).", "magic")
         elif name == "Use":
             self.game.say("You can't use that here. (Bandages, herbs and kits are used on the Health screen, h.)",
                           "system")

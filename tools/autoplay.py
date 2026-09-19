@@ -165,6 +165,10 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
             for it in member.inventory:
                 if it.fill < 0 or it.fill > container_capacity(app.tables.items, it) + 1e-6:
                     fail(f"{member.name}'s {it.def_id} holds {it.fill} pints")
+            if any(p.get("kind") not in ("subclass", "asi", "spells", "cantrips") for p in member.pending):
+                fail(f"{member.name} has an impossible level-up choice waiting: {member.pending}")
+            if any(not 1 <= v <= 20 for v in member.abilities.values()):
+                fail(f"{member.name} has an ability out of range: {member.abilities}")
             equipped = list(member.equipped.values())
             if len(equipped) != len(set(equipped)):
                 fail(f"{member.name} wears one item in two places")
