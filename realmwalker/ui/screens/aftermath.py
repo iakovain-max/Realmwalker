@@ -233,59 +233,68 @@ class AftermathScreen(Screen):
 
 
 class DeathScreen(Screen):
-    """The end of a life. (The AI-written obituary and the legacy in the world arrive with M9.)"""
+    """The end of a life: the obituary, and what the world will remember (game/death.py)."""
 
     title = "Death"
 
     def __init__(self, app, game) -> None:
         super().__init__(app)
+        from realmwalker.game import death
+
         self.game = game
         game.player.alive = False
-        self.lines = self._obituary()
+        self.record = death.die(game)
+        self.lines = death.fallback_obituary(game, self.record)
+        self.asked = False
+        self.offset = 0
         game.say(f"<danger>{markup.escape(game.leader.name)} is dead.</>", "danger")
         app.save_game()
 
-    def _obituary(self) -> list[str]:
-        game = self.game
-        c = game.leader
-        t = game.tables
-        over = game.over or {}
-        race = t.races[c.race]["name"]
-        cls = t.classes[c.cls]["name"]
-        m = game.moment
-        lines = [
-            f"<title>{markup.escape(c.name)}</>",
-            f"<dim>{race} {cls}, level {c.level}, aged {c.age}</>",
-            "",
-            f"Died {m.date_text()}, {markup.escape(over.get('cause', 'of misfortune'))}.",
-        ]
-        where = game.world.area_at(game.player.x, game.player.y)
-        if where is not None:
-            lines.append(f"<dim>The body lies in {markup.escape(where.name)}; no one will come looking.</>")
-        if c.kills:
-            kills = ", ".join(f"{n} {k}{'s' if n > 1 and not k.endswith('s') else ''}" for k, n in
-                              sorted(c.kills.items(), key=lambda kv: -kv[1])[:6])
-            lines += ["", f"Killed: {markup.escape(kills)}."]
-        if c.deeds:
-            lines += ["", "Remembered for:"] + [f"  · {markup.escape(d)}" for d in c.deeds[-6:]]
-        lines += ["", "<dim>Everything they carried is gone. The world goes on without them.</>",
-                  "<dim>You can begin a new life in this world from the title screen (New Character).</>"]
-        return lines
+    def update(self) -> None:
+        """Ask the AI for the obituary once, and put its words in when they come."""
+        from realmwalker.game import death
+
+        if self.asked or self.record.get("obituary_source") == "ai" or not self.app.ai.usable():
+            return
+        from realmwalker.ai.service import Priority
+        from realmwalker.ai.tasks import OBITUARY
+
+        self.asked = True
+
+        def done(result) -> None:
+            if result.ok and death.apply_obituary(self.game, self.record, result.data):
+                self.lines = death.fallback_obituary(self.game, self.record)
+                self.app.save_game()
+
+        self.app.ai.submit(OBITUARY, death.obituary_facts(self.game, self.record), priority=Priority.URGENT,
+                           callback=done)
 
     def render(self, canvas: Canvas) -> None:
         w, h = canvas.width, canvas.height
         canvas.frame(0, 0, w, h, "Here ends the tale", double=True, fg=colors.named("danger"))
-        y = max(2, h // 2 - len(self.lines) // 2 - 3)
-        canvas.centered(y - 1, "†", colors.DIM)
+        width = min(76, w - 8)
+        wrapped: list = []
         for line in self.lines:
-            if y >= h - 3:
-                break
-            canvas.centered(y + 1, line)
+            wrapped.extend(markup.wrap(line, width) or [[]])
+        room = h - 6
+        self.offset = max(0, min(self.offset, max(0, len(wrapped) - room)))
+        visible = wrapped[self.offset: self.offset + room]
+        y = max(2, (h - len(visible)) // 2 - 1)
+        canvas.centered(y - 1, "†", colors.DIM)
+        x0 = (w - width) // 2
+        for spans in visible:
+            canvas.spans(x0, y + 1, spans, max_width=width)
             y += 1
-        canvas.button(w // 2 - 8, h - 3, "Back to the title", self.app.end_game, hotkey="Enter")
+        canvas.button(w // 2 - 10, h - 2, "Back to the title", self.app.end_game, hotkey="Enter")
+        if len(wrapped) > room:
+            canvas.text(w // 2 + 10, h - 2, "↑↓ scroll", colors.FAINT)
 
     def handle_key(self, ev: KeyEvent) -> bool:
-        if ev.key in ("enter", "escape", " "):
+        if ev.key == "up":
+            self.offset = max(0, self.offset - 1)
+        elif ev.key == "down":
+            self.offset += 1
+        elif ev.key in ("enter", "escape", " "):
             self.app.end_game()
         return True
 

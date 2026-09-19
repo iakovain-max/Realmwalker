@@ -206,6 +206,12 @@ class CreationScreen(Screen):
             self.b.apply_backstory(self.b.fallback_backstory(self.home_name()), "built-in")
         self._refresh_places()
         start = self.b.start_settlement
+        # A world that has been lived in before does not wait: weeks or months pass before the new life begins.
+        from realmwalker.game import interlude
+
+        summary = None
+        if interlude.should_pass(self.world):
+            summary = interlude.pass_the_years(self.world, self.t)
         char = self.b.build(self.world.time)
         if start is not None:
             char.ties = make_ties(self.world, self.t, char, start, self.world.rng.child(f"ties/{char.name}"))
@@ -213,6 +219,10 @@ class CreationScreen(Screen):
         for tie in char.ties:
             game.say(f"<dim>{markup.escape(tie['text'])}</>", "flavor")
         self.app.start_game(game)
+        if summary is not None:
+            from realmwalker.ui.screens.interlude import InterludeScreen
+
+            self.app.push(InterludeScreen(self.app, game, summary))
 
     def leave(self) -> None:
         def go_back() -> None:

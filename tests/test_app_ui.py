@@ -801,3 +801,35 @@ def test_taking_a_bounty_from_the_board(make_app):
     assert any(q["template"] == "bounty" and q["state"] == "active" for q in game.quests)
     app.handle_event(KeyEvent("escape"))
     assert app.error_count == 0
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_the_death_screen_and_the_world_after(make_app, size):
+    """M9: the obituary at every size, and the 'while you were away' page for the next character."""
+    from realmwalker.game import death, interlude
+    from realmwalker.ui.screens.interlude import InterludeScreen
+
+    app = make_app()
+    start_small_world(app)
+    game = app.game
+    game.leader.deeds.append("cleared the barrow at Ashfell")
+    game.leader.kills["bandit"] = 5
+    game.renown.fame = 12
+    game.over = {"cause": "killed by a dragon, of all things", "place": "the mountains"}
+    render(app, size)
+    assert type(app.top).__name__ == "DeathScreen"
+    text = screen_text(render(app, size))
+    assert "dragon" in text and "bandits" in text
+    app.handle_event(KeyEvent("down"))
+    render(app, size)
+    assert death.fallen(game.world)[-1]["name"] == game.leader.name
+    # The next character is told what changed while nobody was watching.
+    summary = interlude.pass_the_years(game.world, app.tables, days=90)
+    app.push(InterludeScreen(app, game, summary))
+    text = screen_text(render(app, size))
+    assert "months" in text or "days" in text
+    app.handle_event(KeyEvent("pagedown"))
+    render(app, size)
+    app.handle_event(KeyEvent("enter"))
+    render(app, size)
+    assert app.error_count == 0

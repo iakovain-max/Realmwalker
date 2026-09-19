@@ -374,6 +374,7 @@ def starting_knowledge(game) -> None:
         know(game, church.id)
     apply_ties(game)
     game.renown.flags["started"] = True
+    game.renown.flags["start_day"] = game.moment.total_days
 
 
 def apply_ties(game) -> None:
