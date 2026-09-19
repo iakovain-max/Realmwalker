@@ -47,12 +47,17 @@ realmwalker/
                            stables, animals, labour), reputation (standing, deeds and their ripples, joining,
                            titles), law (crimes, witnesses, the watch, sentences, jail, disguise), law_talk (law and
                            faction choices in conversations), news (what the player hears), notices (town boards),
-                           companions (hiring, wages, loyalty, orders, desertion), magic (copying spell scrolls)
+                           companions (hiring, wages, loyalty, orders, desertion), magic (copying spell scrolls),
+                           dungeon (going under, light, traps, locks, chests, hoards), treasure (what is in them),
+                           magic_items (making, identifying, curses, AI names), quests (work from templates tied to
+                           real things, the journal), dragons (lairs, tribute, killing one), books (maps, histories,
+                           lore, letters)
   rules/                   character (Character + Sheet: derived numbers), items, inventory (equip rules), creation,
                            combat (Battle: rank combat on 5e dice), creatures, spells, wounds, progression (XP, rests),
                            body (needs, body heat, wetness, exhaustion), health (blood, pain, infection, healing,
                            injuries, diseases, treatment, drink, poppy)
   world/weather.py         weather as a deterministic function of seed, place and time (moving fronts)
+  world/dungeon.py         dungeon levels under a site: styles, rooms, caves, doors, secrets, traps, chests
   world/factions.py        factions and figures (model, generation, territory map, relations, laws)
   world/politics.py        the politics engine: succession, wars, sieges, plague, raids, cults, gangs (history + live)
   world/history.py         250 years of history at world creation; the built-in chronicle
@@ -111,6 +116,23 @@ tools/                     autoplay.py, mock_player2.py, build_friends.py
 - Companions are ordinary `Character`s in `game.party[1:]` with a `companion` dict (loyalty, wage, values, order,
   npc id); `game.waiting` holds those told to wait. When the player does something a companion might care about,
   call `companions.react(game, "<tag>")`; tags are matched against data/companions.json values and wants.
+- Dungeons live in `world.local_maps` under the key `"x,y/level"` (`world/dungeon.get_dungeon`), with `features`
+  {(x, y): trap/lock/chest/secret/captive} and `meta` {site, level, depth, style, rooms, hidden, boss, name}.
+  `game/dungeon.py` drives them (descend/ascend, light from `game.lit`, search, unlock, bump, chests, the hoard).
+  A level is built and populated once and then kept in the save.
+- Magic items: `Item.magic` {rarity, props, identified, cursed, curse, title, story, source, value}; effects are
+  read through `rules/magic.total(char, kind, **match)`. Code picks the properties within a budget
+  (`game/magic_items.make`); the AI may only name and tell its history (task MAGIC_ITEM).
+- Quests (`game/quests.py`) are plain dicts in `game.quests` (saved with the character) made from
+  `data/quests.json` templates and tied to real things: a faction, a site, a settlement, an npc, an artifact.
+  Offers live in `Town.flags["offers"]` (one per person, a new one about once a week). Progress is noticed where
+  it happens: `quests.on_battle` (from `fight.finish_battle`), `on_arrive` (overworld), `on_arrive_dungeon` and
+  `on_chest`/`free_captive` (from `game/dungeon.py`), and the conversation choices in `quests.QUEST_CHOICES`.
+  Rewards go through `reputation.deed`; failure through `quests.daily` (from `pass_time`). The AI (task QUEST)
+  may write the giver's words only; the game always shows the terms.
+- Dragons: records in `world.politics["dragons"]` (made by `world/history.py`, which always leaves one asleep).
+  `world/politics.dragon_wakes` burns or taxes a village while you play; `game/dragons.py` has the warning signs,
+  the descent warning and `on_battle`, which marks one slain for good (news, history, fame, tribute lifted).
 - Battles: `rules/combat.Battle` is pure logic driven by `step()` / `pending_party()` / `do_*()`; the screen
   (`ui/screens/battle.py`) only paces and asks. `GameState.busy` (encounter, battle, aftermath or death pending)
   blocks moving; `GameScreen._open_event_screen()` opens the right screen. Debug console: `fight <group>`.

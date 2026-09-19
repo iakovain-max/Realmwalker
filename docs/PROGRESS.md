@@ -14,8 +14,97 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | M5 — Settlements and people | ✅ Done (2026-09-19) |
 | M6 — Factions and politics | ✅ Done (2026-09-19) |
 | M7 — Companions and progression | ✅ Done (2026-09-19) |
-| M8 — Adventure content | ⏳ Next |
-| M9 — Death, legacy and release | — |
+| M8 — Adventure content | ✅ Done (2026-09-20) |
+| M9 — Death, legacy and release | ⏳ Next |
+
+---
+
+## M8 — Adventure content (done)
+
+**What you can do now**
+- **Dungeons under every ruin, cave, barrow and tower.** Walk onto the steps down (`>`) in the close view and go
+  under: cellars, crypts, hideouts, warrens, hidden temples, mage towers, caves and dragon lairs, one to three
+  levels deep, each built from real rooms and corridors (or gnawed cave tunnels), with doors, locked doors, secret
+  doors, hidden rooms, chests, coffins and traps. The master of the place waits at the bottom.
+  - It is dark: light a torch or lantern (they burn down, so carry spares), or see only what is under your nose;
+    dwarves and elves see a little in the dark.
+  - **s** searches where you stand for traps, secret doors and hidden rooms. Walking into a locked door or a chest
+    tries to open it (thieves' tools help). Opening a coffin may wake what is in it.
+- **Magic items**, rare and mostly old. What you find looks like "a strange sword" until you know it: **Enter** on
+  it in your pack studies it for an hour (Arcana, once a day per item), or a priest will tell you for a donation.
+  Known items list exactly what they do (to hit and damage, armour class, saves, a skill, resistance, light,
+  warmth, an ability, or a spell a few times a day) and carry a name and a history drawn from the world's own past
+  — the AI writes those when Player2 is running. Some are cursed: they will not come off and they work against you
+  until a temple lifts it.
+- **Work, and a journal (j).** Ask people in towns "Is there any work?". A bounty on a real gang's captain in
+  their real hideout; a lair to clear; a named beast to hunt (it is really out there, where they said); a sealed
+  letter to carry to a real person in another town; an heirloom — or one of the world's lost treasures from the
+  chronicle — to bring back from a real barrow; a son or daughter taken by outlaws, chained in the deepest room;
+  a debt to collect; people going missing, and the cult that takes them. Wanted posters on the notice board can be
+  taken down and taken on (press the number).
+  - Each job has a reward and a deadline, and the place goes on your map. Finish it and go back to whoever set it.
+    Fail it or give it up (**a** in the journal) and they, and their people, remember.
+  - **Not everything is as you were told.** The outlaws may be starving deserters you can talk into leaving
+    instead of killing (half pay, and your kinder companions approve). The debtor may have nothing but children
+    and an empty house: take it anyway, or forgive it. A sealed letter may be worth reading — and once read, it
+    can still be delivered (for half), taken to the lord (for more, and the sender is disgraced), or held over the
+    sender's head for everything in their purse.
+- **Dragons.** Every world keeps one asleep in a lair in the high country. While you play it wakes now and then to
+  burn a village or take tribute in cattle and silver, and the news travels. The country around a lair shows it:
+  burned trees, bones in the grass, no birds. It is a killing fight; its hoard is real gold, and taking any of it
+  wakes the owner. Kill it and the tribute stops, the realms nearby remember it, and the chronicle (**n**) records
+  who did it, beside the old heroes. Lords near a lair will pay for the head — but only offer it to a party that
+  looks like it might live.
+- **Paper is treasure.** Old maps, books of histories, books of old lore and dead strangers' letters turn up in
+  chests and graves. **Enter** reads one (an hour): real places go on your map, a faction that really holds this
+  land joins your list, one of the world's lost artifacts is named along with where it came to rest, or a cult's
+  hidden temple is pointed out. They say the same thing every time you read them.
+
+**How to try it**
+1. Double-click `Play.bat` and **Continue** (old saves are upgraded).
+2. In a town, talk to the innkeeper, the headman, a priest, a smith, a guard: **"Is there any work?"**. Take
+   something on, then press **j** for the journal. Read the notice board in the square (**¶**) and press **1**.
+3. Walk to the place on your map, press **>** to go into the close view, find the steps down (**>**) and go under.
+   Light a torch first (**i**, Enter on it). Press **s** now and then.
+4. Kill what is at the bottom, take what it was sitting on, and go back to whoever set you the work.
+5. Try the other side of a job: break the seal on a letter you are carrying (**i**, Enter), and see what it says.
+
+**What to look for:** Is the work worth doing (pay, distance, deadlines)? Is the journal clear about what is left
+to do? Are the dungeons interesting to walk through, or a maze? Is a magic item exciting when you find one?
+
+**How it was verified**
+- 532 automated tests pass. New ones cover: dungeon layouts (every room reachable, stairs, secret rooms, coffins
+  that do not block doorways), light and darkness, traps, searching, locks and chests; magic items (budgets,
+  effects, identifying, curses, charges, treasure, the AI's names, saving); quests (offers tied to real gangs,
+  sites, beasts, people and artifacts; taking work in conversation and from the board; clearing a lair; a bounty
+  paid by the watch; deserters talked away; hunting a named beast; retrieving a thing from the deepest level;
+  freeing a captive or finding them dead; a letter delivered, opened, or used against its sender; collecting a
+  debt from someone who can pay and someone who cannot; investigating the missing; deadlines and dead givers;
+  saving; the AI wording an offer through the mock server); dragons (lairs, the warning signs, waking to burn or
+  take tribute, killing one for good, and a lord's reward); books, maps and letters; and the journal window at
+  every size.
+- The smoke test tours the new journal window; autoplay ran clean in both AI modes (12,000 turns each), now also
+  taking on work, with invariant checks on the journal.
+
+**Decisions (and why)**
+1. **Quests are made from what the world already has.** No quest invents a gang, a village or a treasure: it
+   points at a faction, a site, a person or an artifact that exists, so finishing one changes the world (a gang
+   loses its captain, a site is cleared, a cult is found, a dragon dies) and the news spreads like any other deed.
+2. **Code owns the terms; the AI only speaks.** The reward, the deadline, the target and the outcome are the
+   game's; the AI may write the giver's words, and the game always shows the pay and the days itself.
+3. **Hidden sides instead of moral labels.** A job can turn out to be something else when you get there; the game
+   never says which choice is right, but your companions have opinions.
+4. **One job at a time from each person, a new one about once a week**, kept with the town (so a town you visit
+   often keeps changing) and thought of before you ask, so the AI has time to word it.
+5. **The dragon is guaranteed.** A world where the last dragon was killed in the chronicle felt smaller, so world
+   generation always leaves one asleep somewhere.
+
+**Known issues**
+- Companions have no personal quests of their own yet (M9 or later).
+- A job's giver dying (plague, war, your own sword) closes the job with a note rather than passing it to their
+  heir.
+- Dungeon levels are built when you first go down and kept in the save, so a level you have seen does not change
+  if the data files change.
 
 ---
 
