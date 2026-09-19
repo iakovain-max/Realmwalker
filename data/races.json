@@ -1,0 +1,90 @@
+{
+  "_comment": "Playable races (simplified 5e traits that matter in play). Traits with a 'rule' tag are used by the game's systems; text is for the player. standing: how some peoples tend to regard this race (used from M5/M6).",
+  "races": {
+    "human": {
+      "name": "Human",
+      "description": "The most numerous people of the realm: farmers, soldiers, priests and kings. Short-lived, ambitious and quarrelsome, humans rule most of the land and most of its troubles.",
+      "ability_bonus": {"str": 1, "dex": 1, "con": 1, "int": 1, "wis": 1, "cha": 1},
+      "speed": 30, "size": "medium", "darkvision": 0,
+      "cultures": ["heartland", "northmarch", "southron"],
+      "languages": ["Common"], "extra_languages": 1,
+      "skills": [],
+      "age": {"adult": 16, "old": 55, "max": 80},
+      "traits": [
+        {"id": "versatile", "name": "Versatile", "text": "+1 to every ability score."}
+      ],
+      "standing": {"elven": -5, "dwarven": 0, "orcish": -10}
+    },
+    "elf": {
+      "name": "Elf",
+      "description": "Long-lived and few, keeping to deep forests and old halls. Many humans think them proud and uncanny; many elves think humans are a plague that learned to build.",
+      "ability_bonus": {"dex": 2, "int": 1},
+      "speed": 30, "size": "medium", "darkvision": 60,
+      "cultures": ["elven"],
+      "languages": ["Common", "Elvish"], "extra_languages": 1,
+      "skills": ["perception"],
+      "age": {"adult": 100, "old": 500, "max": 750},
+      "traits": [
+        {"id": "darkvision", "name": "Darkvision", "text": "You see in dim light as if it were bright, and in darkness as if it were dim, out to 60 feet.", "rule": "darkvision"},
+        {"id": "keen_senses", "name": "Keen Senses", "text": "You are proficient in Perception."},
+        {"id": "fey_ancestry", "name": "Fey Ancestry", "text": "Advantage on saves against being charmed; magic cannot put you to sleep.", "rule": "fey_ancestry"},
+        {"id": "trance", "name": "Trance", "text": "You rest in a waking trance: four hours count as a full night's sleep.", "rule": "trance"}
+      ],
+      "standing": {"heartland": -10, "northmarch": -15, "southron": -5, "dwarven": -10}
+    },
+    "dwarf": {
+      "name": "Dwarf",
+      "description": "Stubborn, long-memoried folk of the mountain holds. They trade iron and grudges with equal care, and outlive three generations of the humans who cheat them.",
+      "ability_bonus": {"con": 2, "wis": 1},
+      "speed": 25, "size": "medium", "darkvision": 60,
+      "cultures": ["dwarven"],
+      "languages": ["Common", "Dwarvish"], "extra_languages": 0,
+      "skills": [],
+      "tools_choice": ["smiths_tools", "carpenters_tools"],
+      "age": {"adult": 50, "old": 250, "max": 350},
+      "hp_per_level": 1,
+      "traits": [
+        {"id": "darkvision", "name": "Darkvision", "text": "You see in dim light as if it were bright, and in darkness as if it were dim, out to 60 feet.", "rule": "darkvision"},
+        {"id": "dwarven_resilience", "name": "Dwarven Resilience", "text": "Advantage on saves against poison and resistance to poison damage. Your gut shrugs off some of the rot that kills others.", "rule": "poison_resilience"},
+        {"id": "dwarven_toughness", "name": "Dwarven Toughness", "text": "+1 hit point for every level.", "rule": "hp_per_level"},
+        {"id": "stonecunning", "name": "Stonecunning", "text": "You read stonework like a book: double proficiency when judging masonry and underground ways."},
+        {"id": "sturdy", "name": "Sturdy", "text": "Heavy armour does not slow you."}
+      ],
+      "standing": {"elven": -10, "orcish": -20, "heartland": 0}
+    },
+    "halfling": {
+      "name": "Halfling",
+      "description": "Small, quick and practical people of the farm country, easily overlooked and glad of it. They survive what kills bigger folk by being somewhere else when it arrives.",
+      "ability_bonus": {"dex": 2, "cha": 1},
+      "speed": 25, "size": "small", "darkvision": 0,
+      "cultures": ["halfling", "heartland"],
+      "languages": ["Common", "Halfling"], "extra_languages": 0,
+      "skills": [],
+      "age": {"adult": 20, "old": 100, "max": 150},
+      "traits": [
+        {"id": "lucky", "name": "Lucky", "text": "When you roll a natural 1 on an attack, check or save, you may roll again.", "rule": "lucky"},
+        {"id": "brave", "name": "Brave", "text": "Advantage on saves against being frightened.", "rule": "brave"},
+        {"id": "nimble", "name": "Halfling Nimbleness", "text": "You can slip past anyone larger than you."},
+        {"id": "stealthy", "name": "Naturally Stealthy", "text": "You can hide behind someone bigger than you.", "rule": "naturally_stealthy"}
+      ],
+      "standing": {}
+    },
+    "half_orc": {
+      "name": "Half-Orc",
+      "description": "Born between two peoples and trusted by neither. Strong and hard to kill, half-orcs find work as soldiers, labourers and enforcers, and are blamed first when things go missing.",
+      "ability_bonus": {"str": 2, "con": 1},
+      "speed": 30, "size": "medium", "darkvision": 60,
+      "cultures": ["heartland", "northmarch", "orcish"],
+      "languages": ["Common", "Orcish"], "extra_languages": 0,
+      "skills": ["intimidation"],
+      "age": {"adult": 14, "old": 45, "max": 75},
+      "traits": [
+        {"id": "darkvision", "name": "Darkvision", "text": "You see in dim light as if it were bright, and in darkness as if it were dim, out to 60 feet.", "rule": "darkvision"},
+        {"id": "menacing", "name": "Menacing", "text": "You are proficient in Intimidation."},
+        {"id": "relentless_endurance", "name": "Relentless Endurance", "text": "Once per long rest, when you would fall to 0 hit points, you drop to 1 instead.", "rule": "relentless_endurance"},
+        {"id": "savage_attacks", "name": "Savage Attacks", "text": "When you score a critical hit with a melee weapon, roll one extra weapon die.", "rule": "savage_attacks"}
+      ],
+      "standing": {"heartland": -15, "northmarch": -10, "southron": -15, "elven": -20, "dwarven": -20}
+    }
+  }
+}

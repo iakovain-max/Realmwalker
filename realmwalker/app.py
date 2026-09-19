@@ -418,6 +418,25 @@ class App:
         except OSError:
             return []
 
+    def worlds_without_characters(self) -> list:
+        try:
+            return [s for s in list_saves(self.paths.saves) if not s.character]
+        except OSError:
+            return []
+
+    def create_character_in(self, folder) -> bool:
+        """Open character creation for a saved world that has no living character."""
+        from realmwalker.game.save import load_world
+        from realmwalker.ui.screens.creation import CreationScreen
+
+        try:
+            world = load_world(folder)
+        except SaveError as exc:
+            self.push(MessageBox(self, "Could not load", f"{exc}", color=colors.named("danger")))
+            return False
+        self.push(CreationScreen(self, world))
+        return True
+
     def continue_game(self, folder) -> bool:
         if self.tables is None:
             return False

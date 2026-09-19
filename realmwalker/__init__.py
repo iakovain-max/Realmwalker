@@ -2,4 +2,4 @@
 
 GAME_NAME = "Realmwalker"
 __version__ = "0.1.0"
-MILESTONE = "M1 - World and movement"
+MILESTONE = "M2 - Character"

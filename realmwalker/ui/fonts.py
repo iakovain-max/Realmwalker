@@ -17,7 +17,7 @@ from PIL import Image, ImageDraw, ImageFont
 FONT_FILE = "DejaVuSansMono.ttf"
 
 # Useful characters beyond CP437 (all present in DejaVu Sans Mono).
-EXTRA_CHARS = "†‡…–—‘’“”«»×·•√∞≈≠≤≥←↑→↓↔↕▪▫◊○●◘◙◦☼♀♂♠♣♥♦♪♫⌂▲►▼◄"
+EXTRA_CHARS = "†‡…–—‘’“”«»×·•√∞≈≠≤≥←↑→↓↔↕▪▫◊○●◘◙◦☼♀♂♠♣♥♦♪♫⌂▲►▼◄◆"
 
 # Box-drawing characters in CP437: (up, down, left, right) with 1 = single line, 2 = double line.
 BOX_ARMS: dict[str, tuple[int, int, int, int]] = {

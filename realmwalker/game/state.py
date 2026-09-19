@@ -14,7 +14,10 @@ import numpy as np
 import tcod.path
 
 from realmwalker.core import textgen
+from realmwalker.core.rng import RNG
 from realmwalker.game.log import MessageLog
+from realmwalker.rules.character import Character, Sheet
+from realmwalker.rules.inventory import add_existing, remove_item
 from realmwalker.world.calendar import MINUTES_PER_HOUR, Moment, duration_text
 from realmwalker.world.local import LocalMap, get_local_map, terrain_remap
 from realmwalker.world.model import DIRS, World
@@ -58,11 +61,13 @@ class TravelPlan:
 
 
 class GameState:
-    def __init__(self, world: World, player: PlayerState, tables: Tables, messages: MessageLog | None = None) -> None:
+    def __init__(self, world: World, player: PlayerState, tables: Tables, messages: MessageLog | None = None,
+                 party: list[Character] | None = None) -> None:
         self.world = world
         self.player = player
         self.tables = tables
         self.log = messages or MessageLog()
+        self.party: list[Character] = party if party is not None else [default_wanderer(tables, world)]
         self.travel: TravelPlan | None = None
         self._cost_cache: np.ndarray | None = None
         B = tables.biomes
@@ -72,6 +77,23 @@ class GameState:
         self._recent_areas: list[int] = []
 
     # ------------------------------------------------------------------ queries
+    @property
+    def leader(self) -> Character:
+        return self.party[0]
+
+    def sheet(self, char: Character | None = None) -> Sheet:
+        return Sheet(char or self.leader, self.tables)
+
+    def pace(self) -> float | None:
+        """How much slower than an unburdened walker the party moves (None = someone cannot move)."""
+        worst = 1.0
+        for member in self.party:
+            m = Sheet(member, self.tables).travel_multiplier()
+            if m is None:
+                return None
+            worst = max(worst, m)
+        return worst
+
     @property
     def moment(self) -> Moment:
         return self.tables.calendar.at(self.world.time)
@@ -150,7 +172,13 @@ class GameState:
     def _move_overworld(self, dx: int, dy: int) -> bool:
         p = self.player
         nx, ny = p.x + dx, p.y + dy
+        pace = self.pace()
+        if pace is None:
+            self.say("You are carrying too much to walk. Drop something first (i: inventory).", "warn")
+            return False
         minutes = self.step_minutes(p.x, p.y, nx, ny)
+        if minutes is not None:
+            minutes = int(round(minutes * pace))
         if minutes is None:
             if self.world.in_bounds(nx, ny):
                 self.say(f"The {self.biome_def(nx, ny)['name']} bars the way. There is no crossing without a boat.", "warn")
@@ -253,6 +281,10 @@ class GameState:
         if not lm.in_bounds(nx, ny):
             self.leave_local()
             return True
+        pace = self.pace()
+        if pace is None:
+            self.say("You are carrying too much to move. Drop something first (i: inventory).", "warn")
+            return False
         T = self.tables.terrain
         t = int(self.remap_for(lm)[lm.terrain[nx, ny]])
         tid = T.ids[t]
@@ -265,7 +297,43 @@ class GameState:
             return False
         p.lx, p.ly = nx, ny
         p.steps += 1
-        self.pass_seconds(int(LOCAL_STEP_SECONDS * float(T.cost[t]) * (1.41 if dx and dy else 1.0)))
+        self.pass_seconds(int(LOCAL_STEP_SECONDS * float(T.cost[t]) * (1.41 if dx and dy else 1.0) * pace))
+        here = lm.items.get((nx, ny))
+        if here:
+            names = ", ".join(self.tables.items.name(i) for i in here[:4]) + (" and more" if len(here) > 4 else "")
+            self.say(f"Here: <loot>{names}</>. <dim>(g to pick up)</>", "loot")
+        return True
+
+    # ------------------------------------------------------------------ items on the ground
+    def pick_up(self) -> int:
+        lm = self.local
+        p = self.player
+        if lm is None:
+            self.say("There is nothing here to pick up.", "system")
+            return 0
+        pile = lm.items.pop((p.lx, p.ly), [])
+        if not pile:
+            self.say("There is nothing here to pick up.", "system")
+            return 0
+        for item in pile:
+            add_existing(self.leader, self.tables.items, item)
+            self.say(f"You pick up the <loot>{self.tables.items.name(item)}</>.", "loot")
+        self.pass_seconds(LOCAL_STEP_SECONDS)
+        self.dirty = True
+        return len(pile)
+
+    def drop(self, uid: int, qty: int | None = None) -> bool:
+        lm = self.local
+        if lm is None:
+            self.say("Enter the land around you (>) to put things down; by the roadside they would be lost.", "system")
+            return False
+        item = remove_item(self.leader, uid, qty)
+        if item is None:
+            return False
+        p = self.player
+        lm.items.setdefault((p.lx, p.ly), []).append(item)
+        self.say(f"You put down the {self.tables.items.name(item)}.", "info")
+        self.dirty = True
         return True
 
     def remap_for(self, lm: LocalMap) -> np.ndarray:
@@ -356,17 +424,29 @@ def _cap(s: str) -> str:
     return s[:1].upper() + s[1:]
 
 
-def new_game(world: World, tables: Tables, name: str = "The Wanderer", start_settlement: int | None = None) -> GameState:
-    """Start a placeholder wanderer at a settlement (character creation replaces this in M2)."""
+def default_wanderer(tables: Tables, world: World) -> Character:
+    """A ready-made character, for quick starts, tests and saves from before character creation."""
+    from realmwalker.rules.creation import CharacterBuilder
+
+    builder = CharacterBuilder(tables, RNG(world.meta.seed, "wanderer"))
+    builder.name = "The Wanderer"
+    builder.apply_backstory(builder.fallback_backstory("the lowlands"), "built-in")
+    return builder.build(world.time)
+
+
+def new_game(world: World, tables: Tables, character: Character | None = None,
+             start_settlement: int | None = None) -> GameState:
+    """Start playing: a character (or the default wanderer) at a settlement."""
     rng = world.rng.child("start")
     towns = [s for s in world.settlements if s.kind in ("town", "village")] or world.settlements
     if start_settlement is not None:
         start = world.settlements[start_settlement]
     else:
         start = rng.choice(towns)
-    player = PlayerState(name=name, x=start.x, y=start.y, explored=np.zeros((world.width, world.height), dtype=bool),
-                         home=start.id)
-    game = GameState(world, player, tables)
+    character = character or default_wanderer(tables, world)
+    player = PlayerState(name=character.name, x=start.x, y=start.y,
+                         explored=np.zeros((world.width, world.height), dtype=bool), home=start.id)
+    game = GameState(world, player, tables, party=[character])
     # You know your own district, and have heard of the big towns within a few days' walk.
     for s in world.settlements:
         if s.kind in ("city", "town") and math.hypot(s.x - start.x, s.y - start.y) < 45:

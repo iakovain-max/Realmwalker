@@ -8,14 +8,89 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 |---|---|
 | M0 — Setup | ✅ Done (2026-09-19) |
 | M1 — World and movement | ✅ Done (2026-09-19) |
-| M2 — Character | ⏳ Next |
-| M3 — Combat | — |
+| M2 — Character | ✅ Done (2026-09-19) |
+| M3 — Combat | ⏳ Next |
 | M4 — Body and survival | — |
 | M5 — Settlements and people | — |
 | M6 — Factions and politics | — |
 | M7 — Companions and progression | — |
 | M8 — Adventure content | — |
 | M9 — Death, legacy and release | — |
+
+---
+
+## M2 — Character (done)
+
+**What you can do now**
+- After **New World** (or **New Character** on the title screen, for a world without a living character),
+  you create your character in eight steps. Each step starts with a sensible choice, so you can press
+  **Enter** through anything you don't care about:
+  1. **People:** Human (Heartland, Northmarch or Southron culture), Elf, Dwarf, Halfling, Half-Orc, with their
+     traits (darkvision, dwarven resilience against poison, halfling luck, half-orc endurance...).
+  2. **Calling:** Fighter, Rogue, Cleric, Wizard, with hit dice, saves, proficiencies and features.
+  3. **Background:** Soldier, Acolyte, Criminal, Folk Hero, Noble, Sage, Outlander, Guild Artisan: skills,
+     tools, gear, money, a background feature, and **social ties**.
+  4. **Abilities:** 5e point buy (27 points, 8–15), racial bonuses on top, "S" for a suggested spread.
+  5. **Skills & training:** class skills, Rogue expertise, Fighter fighting style, Cleric domain (Life/War),
+     and a choice of equipment kits.
+  6. **Who you are:** name (type or random), sex, age, looks, and a backstory with personality, ideal, bond
+     and flaw. Press **W** to have the Player2 AI write it (one request, about 2 energy), or use built-in text.
+  7. **Where you start:** three or four real places in the world that suit your background.
+  8. **Begin.**
+- **Social ties are real places and people:** a soldier served a named lord whose seat is a real town; a
+  criminal has a fence in one town and a bounty in another; a noble belongs to a house seated nearby; and so
+  on. (The people and houses become full characters and factions in M5/M6.)
+- **Character sheet** (`c`): abilities, saves, all 18 skills (● trained, ♦ expert), HP, AC, speed,
+  initiative, passive perception, proficiencies, traits and features, ties, looks, backstory.
+- **Inventory** (`i`): everything you carry with weight, value, condition and how long food keeps; filter by
+  type, sort, wear/wield/remove, drop. Items lie where you drop them (on the close-up maps) and stay there;
+  `g` picks them up.
+- **Equipment** (`e`): a paper doll of slots (hands, armour, helmet, cloak, clothes, underclothes, hat,
+  gloves, footwear), a body diagram showing which parts your armour protects, total warmth, wind and rain
+  protection, and how respectable you look.
+- **Weight matters:** 5e carrying limits. Worn armour and clothes count half. Over your limit you walk slower
+  (journeys take longer); far over it you can't move. Dwarves and halflings walk a little slower too.
+- The side panel shows your HP bar, AC, money and whether you are laden.
+- Over 100 base items from data: all 5e weapons and armour, helmets, clothing layers with warmth, gear,
+  tools, food (with spoilage) and trade goods.
+
+**How to try it**
+1. Double-click `Play.bat`, **New World**, Enter. Walk through the character steps (try the arrow keys
+   on each one, and **W** on step 6 if you want an AI backstory).
+2. In the game press `c`, `i` and `e`. In the pack, select an item and press Enter to take it off/put it on.
+3. Press `>` to enter the land, then in the pack press `d` to drop something, walk away and come back, `g` to
+   pick it up.
+
+**What to look for:** Is creation clear? Are the defaults sensible? Is anything on the sheets confusing?
+
+**How it was verified**
+- 176 automated tests pass (added: every race × class builds with its defaults, spends all points, starts
+  dressed, armed and not overloaded; point-buy limits; racial bonuses and traits; skills and expertise; armour
+  class rules; two-handed weapons and shields; stacking; carrying limits slowing and stopping you; clothing
+  warmth and status; character save round trip; every background's ties point at real places; dropping and
+  picking up; items on the ground surviving a save; an M1-era save still loading).
+- Autoplay: 5000 turns with AI off and 5000 with the fake AI, now also creating characters (including AI
+  backstories from the fake server), using the character sheet, inventory and equipment screens, and checking
+  after every action: HP in range, no negative money, no zero-sized stacks, nothing worn twice, nothing worn
+  that isn't carried. Save/load round trips identical. No errors.
+- The window smoke test now goes through character creation, the character sheet, inventory, equipment and a
+  local map.
+
+**Decisions (and why)**
+1. **Worn armour and clothes count half toward carrying limits**, and everyone starts with a blanket (not a
+   7 lb bedroll) and two days' rations. With the 5e variant limits, most characters otherwise started
+   over-burdened. Weak characters are still close to their limit, which is realistic.
+2. **Subclasses:** Fighter Champion/Knight and Rogue Thief/Cutthroat unlock at level 3; Cleric Life/War domains
+   at level 1; Wizard Evocation/Abjuration at level 2. The Knight and Cutthroat are simplified originals in
+   the spirit of the design's examples. Spells arrive with combat (M3) and levelling (M7).
+3. **Backgrounds, features and descriptions are original text**; the 5e rules (point buy, skills, weapon and
+   armour stats) follow the free SRD 5.1 (Creative Commons licence; credit added in `docs/CREDITS.md`).
+4. **Saves moved to format 2** (characters). M1 saves still load and get a ready-made wanderer.
+5. Sex is male/female as the design lists; pronouns in built-in text follow it.
+
+**Known issues**
+- Spells are listed as a feature but can't be cast yet (M3).
+- Items in the overworld can't be dropped (enter the land first); by design for now.
 
 ---
 
@@ -126,10 +201,8 @@ fun? Is anything hard to read (colours, symbols)? Which parts feel dull or confu
    `font N`, `test-error`). Switched off in friend builds.
 
 **Needs your attention (when you have a moment)**
-- **Player2 energy:** your account showed 10 energy today and a rich AI request costs about 2. Testing used 7
-  (the two failed calls above plus one successful call), so 3 are left today. The game works fine without AI, but
-  AI text will be rare at this budget. If Player2 lets you pick a different AI model or a higher tier in its own
-  app, a cheaper model would stretch the energy much further. Nothing to do otherwise.
+- **Player2 energy:** your account showed 10 energy at first, and testing used 7. After the daily refill it showed
+  **91**, so there is far more room than first feared (a rich AI request costs about 2). Nothing to do.
 
 **Known issues**
 - None open.

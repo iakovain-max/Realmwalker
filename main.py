@@ -39,26 +39,37 @@ def write_crash_file(text: str) -> Path | None:
 
 
 def smoke_script():
-    """A scripted tour used by --smoke-test: title screens, then a new world, walking and a local map."""
+    """A scripted tour used by --smoke-test: title screens, a new world, character creation, walking,
+    the character sheet, the pack and a local map. Returns (steps, last frame, {frame: screenshot name})."""
     from realmwalker.ui.input import KeyEvent
 
     steps = []
+    shots = {}
     frame = 10
-    for key in ["p", "escape", "s", "down", "escape", "f1", "pagedown", "escape", "n", "enter"]:
-        steps.append((frame, KeyEvent(key)))
-        frame += 8
-    frame += 120  # world generation
-    for key in ["right", "right", "down", "down", "l", "up", "up", "right"]:
-        steps.append((frame, KeyEvent(key)))
-        frame += 4
-    steps.append((frame, KeyEvent("escape")))
-    frame += 6
-    steps.append((frame, KeyEvent(">")))
-    frame += 6
-    for key in ["left", "left", "left", "up", "up"]:
-        steps.append((frame, KeyEvent(key)))
-        frame += 3
-    return steps, frame
+
+    def press(*keys, gap=8):
+        nonlocal frame
+        for key in keys:
+            steps.append((frame, KeyEvent(key)))
+            frame += gap
+
+    press("p", "escape", "s", "down", "escape", "f1", "pagedown", "escape", "n", "enter")
+    frame += 110  # world generation
+    press("enter", "enter", "enter")  # people, calling, background
+    shots[frame + 4] = "creation"
+    press("enter", "enter", "enter", "enter", "enter")  # abilities, skills, identity, start, begin
+    frame += 10
+    press("right", "right", "down", "down", gap=4)
+    shots[frame - 1] = "overworld"
+    press("c")
+    shots[frame - 4] = "character"
+    press("escape", "i")
+    shots[frame - 4] = "inventory"
+    press("escape", "e")
+    shots[frame - 4] = "equipment"
+    press("escape", ">")
+    press("left", "left", "left", "up", "up", gap=3)
+    return steps, frame, shots
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -80,11 +91,10 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         if args.smoke_test:
-            script, last = smoke_script()
+            script, last, shots = smoke_script()
             shot = Path(args.smoke_test)
-            overworld_shot = shot.with_name(shot.stem + "_overworld" + shot.suffix)
-            window.run(app, script=script, max_frames=last + 20, screenshot_to=shot,
-                       screenshots_at={last - 30: overworld_shot})
+            named = {f: shot.with_name(f"{shot.stem}_{name}{shot.suffix}") for f, name in shots.items()}
+            window.run(app, script=script, max_frames=last + 20, screenshot_to=shot, screenshots_at=named)
         else:
             window.run(app)
     except Exception:

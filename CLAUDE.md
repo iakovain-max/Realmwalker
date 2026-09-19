@@ -36,7 +36,8 @@ realmwalker/
   ai/                      client (Player2 HTTP), service (workers/queue/ping), parsing, prompts, tasks, store
   world/                   generator (terrain, rivers, climate, biomes, towns, roads), local maps, calendar,
                            tables (numpy lookups from data), model (World + save-friendly dataclasses)
-  game/                    state (player, actions, travel, time), save (versioned zips), log, describe (look text)
+  game/                    state (player, party, actions, travel, time), save (versioned zips), log, describe
+  rules/                   character (Character + Sheet: derived numbers), items, inventory (equip rules), creation
   ui/                      window loop, fonts (tileset built at runtime), input, markup, widgets, map_render, screens/
 data/                      ALL game data as JSON (names, fallback text, ... later races, items, creatures)
 ai/prompts/                prompt templates (plain text, @max_tokens header, {slots})
@@ -78,7 +79,7 @@ tools/                     autoplay.py, mock_player2.py, build_friends.py
 - **Do not send `response_format`** — the current model then returns empty content.
 - **The model thinks silently**: ~600 hidden tokens before a ~180-token answer. Too small a `max_tokens`
   gives an EMPTY reply that still costs energy. Keep `@max_tokens` generous (3000 for rich prompts).
-- **Energy is scarce**: ~2 joules per rich call; the user's Patron Basic account had ~10 joules/day.
+- **Energy**: ~2 joules per rich call. The user's account showed 10 before its daily refill and 91 after.
   Background requests stop below `AIService.energy_reserve`. Never burn real energy in tests — use the mock.
 
 ## Git

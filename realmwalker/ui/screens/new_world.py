@@ -8,7 +8,6 @@ import traceback
 
 import numpy as np
 
-from realmwalker.game.state import new_game
 from realmwalker.ui import colors, markup
 from realmwalker.ui.input import KeyEvent
 from realmwalker.ui.screens.base import MessageBox, Screen
@@ -182,8 +181,14 @@ class WorldGenScreen(Screen):
                                         "Try another seed.", color=colors.named("danger")))
         elif self.world is not None:
             self.finished = True
-            game = new_game(self.world, self.app.tables)
-            self.app.start_game(game)
+            from realmwalker.game.save import save_world, world_folder
+            from realmwalker.ui.screens.creation import CreationScreen
+
+            try:
+                save_world(self.world, world_folder(self.app.paths.saves, self.world))
+            except Exception:
+                self.app.report_error("saving the new world")
+            self.app.replace(CreationScreen(self.app, self.world))
 
     def render(self, canvas: Canvas) -> None:
         w, h = canvas.width, canvas.height

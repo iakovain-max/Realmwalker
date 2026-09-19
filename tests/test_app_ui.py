@@ -55,7 +55,7 @@ def test_title_menu_opens_screens(make_app):
 def test_disabled_item_explains_itself(make_app):
     app = make_app()
     app.handle_event(KeyEvent("r"))
-    assert any("Milestone 2" in t.text for t in app.toasts)
+    assert any("New World" in t.text for t in app.toasts)
 
 
 def test_mouse_click_on_menu(make_app):
@@ -232,15 +232,25 @@ def test_game_screens_render_at_every_size(make_app, size):
 def test_new_world_flow_generates_and_starts(make_app):
     from realmwalker.ui.screens.game_screen import GameScreen
 
+    from realmwalker.ui.screens.creation import CreationScreen
+
     app = make_app()
     app.handle_event(KeyEvent("n"))
     app.handle_event(KeyEvent("enter"))
     deadline = time.monotonic() + 30
-    while not isinstance(app.top, GameScreen) and time.monotonic() < deadline:
+    while not isinstance(app.top, CreationScreen) and time.monotonic() < deadline:
         render(app)
         time.sleep(0.02)
+    assert isinstance(app.top, CreationScreen)
+    # Accepting every default makes a playable character.
+    for _ in range(12):
+        if isinstance(app.top, GameScreen):
+            break
+        app.handle_event(KeyEvent("enter"))
+        render(app)
     assert isinstance(app.top, GameScreen)
     assert app.game is not None and app.saves_with_characters()
+    assert app.game.leader.ties and app.game.leader.backstory
 
 
 def test_walk_look_travel_and_continue(make_app):

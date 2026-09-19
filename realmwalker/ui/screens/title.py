@@ -31,6 +31,7 @@ class TitleScreen(Screen):
     def __init__(self, app) -> None:
         super().__init__(app)
         self.saves = app.saves_with_characters() if app.tables is not None else []
+        self.empty_worlds = app.worlds_without_characters() if app.tables is not None else []
         self.menu = Menu(self._items(), on_disabled=self._disabled)
         if not self.saves:
             self.menu.selected = 1
@@ -41,8 +42,9 @@ class TitleScreen(Screen):
                      note="Carry on with your living character." if self.saves else "No saved characters yet."),
             MenuItem("New World", self._new_world, "N",
                      note="Create a new world: its land, rivers, towns and roads. Then set out into it."),
-            MenuItem("New Character", None, "R", enabled=False,
-                     note="Start a new character in an existing world. Arrives with character creation (Milestone 2)."),
+            MenuItem("New Character", self._new_character, "R", enabled=bool(self.empty_worlds),
+                     note="Create a character in a world you already made." if self.empty_worlds
+                     else "Every world you have made has a living character. Make a New World, or Continue."),
             MenuItem("Player2 Connection Test", self._player2_test, "P",
                      note="Check the connection to the Player2 AI app and try a sample generation."),
             MenuItem("Settings", self._settings, "S", note="Text size, dice display, AI on/off and more."),
@@ -58,6 +60,11 @@ class TitleScreen(Screen):
 
         self.app.push(NewWorldScreen(self.app))
 
+    def _new_character(self) -> None:
+        from realmwalker.ui.screens.game_menu import WorldPickScreen
+
+        self.app.push(WorldPickScreen(self.app, self.empty_worlds))
+
     def _continue(self) -> None:
         if len(self.saves) == 1:
             self.app.continue_game(self.saves[0].folder)
@@ -69,6 +76,7 @@ class TitleScreen(Screen):
     def on_enter(self) -> None:
         # Refresh the Continue entry when coming back to the title.
         self.saves = self.app.saves_with_characters() if self.app.tables is not None else []
+        self.empty_worlds = self.app.worlds_without_characters() if self.app.tables is not None else []
         selected = self.menu.selected
         self.menu = Menu(self._items(), on_disabled=self._disabled)
         self.menu.selected = selected if self.saves or selected != 0 else 1

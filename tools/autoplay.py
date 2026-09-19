@@ -127,6 +127,26 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
         _LAST_TIME[key] = w.time
         if p.explored.shape != (w.width, w.height):
             fail("explored map has the wrong shape")
+        for member in game.party:
+            if not 0 <= member.hp <= member.max_hp:
+                fail(f"{member.name} has {member.hp}/{member.max_hp} hit points")
+            if member.money < 0:
+                fail(f"{member.name} has negative money")
+            uids = [it.uid for it in member.inventory]
+            if len(uids) != len(set(uids)):
+                fail(f"{member.name} has two items with the same id")
+            if any(it.qty <= 0 for it in member.inventory):
+                fail(f"{member.name} carries an item stack of zero or fewer")
+            equipped = list(member.equipped.values())
+            if len(equipped) != len(set(equipped)):
+                fail(f"{member.name} wears one item in two places")
+            if any(member.item(uid) is None for uid in equipped):
+                fail(f"{member.name} has something equipped that is not in the pack")
+        lm = game.local
+        if lm is not None:
+            for pile in lm.items.values():
+                if any(it.qty <= 0 for it in pile):
+                    fail("an item on the ground has zero quantity")
 
 
 _LAST_TIME: dict[str, int] = {}

@@ -215,6 +215,16 @@ def draw_local(con, game, x: int, y: int, w: int, h: int, cursor: tuple[int, int
     bg[memory] = (bg[memory].astype(np.float32) * 0.35).astype(np.uint8)
     ch[~seen] = ord(" ")
     bg[~seen] = UNSEEN_BG
+    if lm.items:
+        from realmwalker.ui import colors
+        from realmwalker.ui.screens.sheets import item_glyph
+
+        for (ix, iy), pile in lm.items.items():
+            sx, sy = ix - mx0, iy - my0
+            if pile and 0 <= sx < mw and 0 <= sy < mh and seen[sx, sy]:
+                glyph, color = item_glyph(game.tables.items.category(pile[-1]))
+                ch[sx, sy] = ord(glyph)
+                fg[sx, sy] = colors.named(color) if visible[sx, sy] else (90, 84, 60)
     px, py = p.lx - mx0, p.ly - my0
     ch[px, py] = ord("@")
     fg[px, py] = PLAYER_FG

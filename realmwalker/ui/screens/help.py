@@ -25,7 +25,16 @@ A grim, open-world party role-playing game built on the rules of Dungeons & Drag
   <loot>← →</>             Change a setting
 
 <title>Getting started</title>
-Choose <loot>New World</> on the title screen, pick a size and seed, and the land is made in a few seconds. You start as a nameless wanderer in a town or village (character creation arrives in the next milestone). The game saves itself as you go; <loot>Continue</> picks up where you left off.
+Choose <loot>New World</> on the title screen, pick a size and seed, and the land is made in a few seconds. Then create your character in eight short steps; every step starts with a sensible choice, so you can press <loot>Enter</> through anything you don't care about. The game saves itself as you go; <loot>Continue</> picks up where you left off. <loot>New Character</> makes a character in a world you already have (one living character per world).
+
+<title>Character creation</title>
+  <loot>↑ ↓</>             Choose; the details show on the right
+  <loot>← →</>             Change a value (culture, ability score, fighting style, equipment kit, age...)
+  <loot>Space</>           Tick or untick a skill
+  <loot>Enter</>           Accept and go to the next step
+  <loot>Tab</> / <loot>Shift+Tab</>  Next / previous step (or click a step)
+  <loot>W</>               Ask the AI to write your backstory (uses a little Player2 energy)
+  <loot>R</>               New random name and looks
 
 <title>Walking and looking</title>
   <loot>Arrow keys</>      Walk north, south, east, west
@@ -43,6 +52,13 @@ Choose <loot>New World</> on the title screen, pick a size and seed, and the lan
   <loot>m</>               World map (<loot>z</> zooms out to the whole world)
   <loot>t</>               Travel: pick a destination on the world map and see how long it takes
 Roads are much faster than open country. Forests, hills and marshes are slow; mountains very slow. Rivers without a bridge must be waded. Any key stops a journey.
+
+<title>Your character</title>
+  <loot>c</>               Character sheet: abilities, skills, features, ties, backstory
+  <loot>i</>               Inventory: Enter wears/wields/removes, d drops, D drops one, ← → filters, s sorts
+  <loot>e</>               Equipment: what you wear in each slot, which body parts are protected, warmth
+  <loot>g</> or <loot>,</>          Pick up what is lying here (on foot, in the close view)
+Carrying weight matters: worn armour and clothes count half. Above your limit you are slowed; far above it you cannot walk. Coins weigh too.
 
 <title>Other screens</title>
   <loot>L</>               The full message log

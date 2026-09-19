@@ -132,6 +132,13 @@ class GameScreen(Screen):
             self.leave()
         elif ev.key == "l":
             self.look = self.player_pos()
+        elif ev.key in ("g", ","):
+            self.game.pick_up()
+        elif ev.key in ("c", "i", "e"):
+            from realmwalker.ui.screens.sheets import CharacterScreen, EquipmentScreen, InventoryScreen
+
+            screen = {"c": CharacterScreen, "i": InventoryScreen, "e": EquipmentScreen}[ev.key]
+            self.app.push(screen(self.app, game))
         elif ev.key == "m":
             self.open_world_map()
         elif ev.key == "t":
@@ -221,9 +228,10 @@ class GameScreen(Screen):
     def _render_panel(self, canvas: Canvas, x: int, y: int, w: int, h: int) -> None:
         game = self.game
         p = game.player
-        canvas.frame(x, y, w, h, markup.escape(p.name), fg=colors.BORDER, bg=colors.PANEL_BG)
+        canvas.frame(x, y, w, h, markup.escape(game.leader.name), fg=colors.BORDER, bg=colors.PANEL_BG)
         ix, iw = x + 2, w - 4
         row = y + 2
+        row = self._render_party(canvas, ix, row, iw) + 1
         m = game.moment
         canvas.text(ix, row, m.date_text(), colors.TITLE, max_width=iw)
         row += 1
@@ -277,14 +285,42 @@ class GameScreen(Screen):
 
         keys = [
             ("arrows", "walk"), (">", "enter the land here") if not game.in_local else ("<", "back to the overworld"),
-            ("l", "look"), ("m", "world map"), ("t", "travel to…"), ("L", "message log"), ("/", "map legend"),
-            (".", "wait"), ("Esc", "menu"),
+            ("l", "look"), ("m t", "world map · travel"), ("c i e", "character · pack · gear"),
+            ("g", "pick up") if game.in_local else (".", "wait an hour"), ("L /", "log · legend"), ("Esc", "menu"),
         ]
         ky = h - len(keys) - 1
         for key, what in keys:
             if ky > row:
                 canvas.markup(ix, ky, f"<loot>{key:>6}</> <dim>{what}</>", max_width=iw)
             ky += 1
+
+    def _render_party(self, canvas: Canvas, x: int, y: int, w: int) -> int:
+        from realmwalker.rules.character import Sheet
+        from realmwalker.rules.items import money_text
+        from realmwalker.ui.screens.sheets import ENCUMBRANCE_WORDS
+
+        game = self.game
+        for member in game.party:
+            s = Sheet(member, game.tables)
+            ratio = member.hp / max(1, member.max_hp)
+            color = "good" if ratio > 0.6 else ("warn" if ratio > 0.3 else "danger")
+            bar_w = max(4, w - 22)
+            filled = int(round(bar_w * ratio))
+            cls = game.tables.classes[member.cls]["name"]
+            canvas.markup(x, y, f"<name>{markup.escape(member.name.split()[0])}</> <dim>{cls} {member.level}</>", max_width=w)
+            y += 1
+            canvas.text(x, y, "█" * filled, colors.named(color))
+            canvas.text(x + filled, y, "░" * (bar_w - filled), colors.FAINT)
+            canvas.markup(x + bar_w + 1, y, f"<{color}>{member.hp}/{member.max_hp}</> <dim>AC</> {s.armor_class()}", max_width=w - bar_w - 1)
+            canvas.hit(x, y - 1, w, 2, action=lambda: self.handle_key(KeyEvent("c")),
+                       tooltip="Click (or press c) for the character sheet.")
+            y += 1
+            enc = s.encumbrance()
+            word, ecolor = ENCUMBRANCE_WORDS[enc]
+            load = "" if enc == 0 else f" · <{ecolor}>{word}</>"
+            canvas.markup(x, y, f"<loot>{money_text(member.money)}</>{load}", max_width=w)
+            y += 1
+        return y
 
     def _render_log(self, canvas: Canvas, x: int, y: int, w: int, h: int) -> None:
         canvas.frame(x, y, w, h, "Messages", fg=colors.FAINT, bg=colors.PANEL_BG, title_fg=colors.DIM)
@@ -306,4 +342,5 @@ class GameScreen(Screen):
 
     def autoplay_keys(self) -> list[KeyEvent]:
         moves = [KeyEvent(k) for k in ("up", "down", "left", "right", "upleft", "upright", "downleft", "downright")]
-        return moves * 4 + [KeyEvent(k) for k in (">", "<", "l", "enter", "escape", ".", "m", "t", "L", "/")]
+        return moves * 4 + [KeyEvent(k) for k in (">", "<", "l", "enter", "escape", ".", "m", "t", "L", "/",
+                                                   "c", "i", "e", "g")]

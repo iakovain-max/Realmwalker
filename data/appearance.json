@@ -1,0 +1,34 @@
+{
+  "_comment": "Random appearance and backstory building blocks (built-in text, used without the AI).",
+  "hair": {
+    "human": ["black", "brown", "mouse-brown", "red", "fair", "greying", "close-cropped dark", "lank blond"],
+    "elf": ["silver-fair", "black", "pale gold", "copper", "ash-grey"],
+    "dwarf": ["iron-grey", "black", "rust-red", "brown", "white-streaked"],
+    "halfling": ["curly brown", "sandy", "black", "chestnut", "tawny"],
+    "half_orc": ["coarse black", "dark brown", "shaven", "grey-black", "matted"]
+  },
+  "eyes": ["brown", "grey", "blue", "green", "dark", "hazel", "pale"],
+  "build": {
+    "human": ["lean", "stocky", "broad-shouldered", "wiry", "heavy", "slight", "raw-boned"],
+    "elf": ["slender", "tall and narrow", "lithe", "willowy"],
+    "dwarf": ["barrel-chested", "squat and powerful", "thick-armed", "broad"],
+    "halfling": ["round-cheeked", "quick and slight", "plump", "wiry"],
+    "half_orc": ["hulking", "heavy-browed and broad", "long-armed", "scarred and massive"]
+  },
+  "mark": ["a badly healed nose", "a burn scar on one hand", "pox scars across the cheeks", "a missing front tooth", "a notched ear", "tattooed knuckles", "a white scar through one eyebrow", "calloused, ink-stained fingers", "a slight limp from an old break", "no distinguishing marks worth a watchman's time"],
+  "backstory": {
+    "opening": ["{name} was born in {home}, {years} years ago, in a {season} that people still remember as a hard one.", "{name} grew up in {home}, the {nth} child of a family with more mouths than bread.", "{name} was raised in {home}, among {culture} folk who expected little of the world and got less."],
+    "middle": ["{background_line}", "{background_line} It left marks that have not faded."],
+    "closing": ["Now {pronoun} is on the road, with {coin} in {possessive} purse and no one to answer to.", "{pronoun_cap} left with a pack, a grudge and a reason not to look back.", "Whatever {pronoun} was, the road does not care; it only asks whether {pronoun} can keep walking."]
+  },
+  "background_lines": {
+    "soldier": "Years in the ranks taught {object} to march, to dig, and to keep quiet when officers argued over the dead.",
+    "acolyte": "The temple fed and clothed {object}, and taught {object} its prayers and which of its priests to fear.",
+    "criminal": "Cold nights and quick hands taught {object} a trade the watch would hang {object} for.",
+    "folk_hero": "When trouble came to the village it was {name} who stood up, and the village has never let {object} forget it.",
+    "noble": "Born to a name and land, {name} learned manners, swordplay and the thousand small cruelties of a great house.",
+    "sage": "Long years among books gave {object} learning, bad eyesight and a head full of unanswered questions.",
+    "outlander": "The wild country taught {object} to track, to hunt and to go days without speaking to another soul.",
+    "guild_artisan": "A guild master's beatings and a long apprenticeship made {object} good at a trade that pays badly."
+  }
+}

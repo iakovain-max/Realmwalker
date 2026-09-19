@@ -29,18 +29,28 @@ from realmwalker.ai.store import FlavorStore
 from realmwalker.core.rng import RNG
 from realmwalker.game.log import MessageLog
 from realmwalker.game.state import GameState, PlayerState
+from realmwalker.rules.character import Character
+from realmwalker.rules.items import Item
 from realmwalker.world.local import Building, LocalMap
 from realmwalker.world.model import ARRAY_NAMES, Area, Settlement, Site, World, WorldMeta
 from realmwalker.world.tables import Tables
 
 log = logging.getLogger("realmwalker.save")
 
-FORMAT_VERSION = 1
+FORMAT_VERSION = 2
 WORLD_FILE = "world.zip"
 CHARACTER_FILE = "character.zip"
 
-# format number -> function upgrading a loaded JSON body to the next format.
-MIGRATIONS: dict[int, Callable[[dict], dict]] = {}
+def _v1_to_v2(kind: str, body: dict) -> dict:
+    """Format 2 added characters (M2). Older saves get the default wanderer when loaded."""
+    if kind == "character":
+        body = dict(body)
+        body.setdefault("party", None)
+    return body
+
+
+# format number -> function upgrading a loaded JSON body (of a given kind) to the next format.
+MIGRATIONS: dict[int, Callable[[str, dict], dict]] = {1: _v1_to_v2}
 
 
 class SaveError(Exception):
@@ -83,7 +93,7 @@ def _migrate(manifest: dict, body: dict) -> dict:
     if fmt > FORMAT_VERSION:
         raise SaveError("This save was made by a newer version of the game.")
     while fmt < FORMAT_VERSION:
-        body = MIGRATIONS[fmt](body)
+        body = MIGRATIONS[fmt](manifest.get("kind", ""), body)
         fmt += 1
     return body
 
@@ -110,6 +120,7 @@ def world_entries(world: World) -> dict[str, bytes | str]:
             "key": lm.key, "kind": lm.kind, "width": lm.width, "height": lm.height,
             "terrain_ids": lm.terrain_ids, "entry": list(lm.entry),
             "buildings": [asdict(b) for b in lm.buildings],
+            "items": [[x, y, [i.to_dict() for i in pile]] for (x, y), pile in sorted(lm.items.items()) if pile],
         })
         entries[f"local/{safe}.terrain.npy"] = _npy(lm.terrain)
         entries[f"local/{safe}.variant.npy"] = _npy(lm.variant)
@@ -140,6 +151,7 @@ def load_world(folder: Path) -> World:
                     buildings=[Building(**{**b, "door": tuple(b.get("door", (0, 0)))}) for b in info["buildings"]],
                     entry=tuple(info["entry"]),
                     seen=_load_npy(z.read(f"local/{safe}.seen.npy")),
+                    items={(x, y): [Item.from_dict(i) for i in pile] for x, y, pile in info.get("items", [])},
                 )
     except (OSError, KeyError, ValueError, zipfile.BadZipFile) as exc:
         raise SaveError(f"The world save could not be read ({exc}).") from exc
@@ -169,12 +181,13 @@ def character_entries(game: GameState) -> dict[str, bytes | str]:
         "visited_settlements": sorted(p.visited_settlements),
         "visited_areas": sorted(p.visited_areas),
         "log": game.log.to_dict(),
+        "party": [c.to_dict() for c in game.party],
     }
     return {"manifest.json": _manifest("character"), "character.json": json.dumps(body),
             "explored.npy": _npy(p.explored)}
 
 
-def load_player(folder: Path) -> tuple[PlayerState, MessageLog]:
+def load_player(folder: Path) -> tuple[PlayerState, MessageLog, list[Character] | None]:
     path = folder / CHARACTER_FILE
     try:
         with zipfile.ZipFile(path) as z:
@@ -191,7 +204,9 @@ def load_player(folder: Path) -> tuple[PlayerState, MessageLog]:
         visited_areas=set(body.get("visited_areas", [])),
         seconds=body.get("seconds", 0), steps=body.get("steps", 0),
     )
-    return player, MessageLog.from_dict(body.get("log", {}))
+    party = body.get("party")
+    party_chars = [Character.from_dict(c) for c in party] if party else None
+    return player, MessageLog.from_dict(body.get("log", {})), party_chars
 
 
 # ---------------------------------------------------------------------------- whole game
@@ -209,10 +224,16 @@ def save_game(game: GameState, saves_dir: Path) -> Path:
 
 def load_game(folder: Path, tables: Tables) -> GameState:
     world = load_world(folder)
-    player, messages = load_player(folder)
+    player, messages, party = load_player(folder)
     if player.local_key is not None and player.local_key not in world.local_maps:
         player.local_key = None
-    return GameState(world, player, tables, messages)
+    try:
+        game = GameState(world, player, tables, messages, party=party)
+    except (KeyError, TypeError, ValueError) as exc:
+        raise SaveError(f"The character in this save could not be understood ({exc}).") from exc
+    if party is None:
+        player.name = game.leader.name
+    return game
 
 
 @dataclass

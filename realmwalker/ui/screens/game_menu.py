@@ -54,6 +54,41 @@ class GameMenu(Screen):
         return [KeyEvent("escape"), KeyEvent("escape"), KeyEvent("down"), KeyEvent("enter"), KeyEvent("t")]
 
 
+class WorldPickScreen(Screen):
+    """Choose a world (without a living character) to create a new character in."""
+
+    title = "New Character: choose a world"
+
+    def __init__(self, app, worlds) -> None:
+        super().__init__(app)
+        self.worlds = worlds
+        items = [MenuItem(f"{w.world_name} ({w.size}, seed {w.seed})", lambda w=w: self._pick(w),
+                          note=f"Created {w.created}.") for w in worlds]
+        items.append(MenuItem("Back", self.close, "Esc"))
+        self.menu = Menu(items)
+
+    def _pick(self, summary) -> None:
+        self.close()
+        self.app.create_character_in(summary.folder)
+
+    def render(self, canvas: Canvas) -> None:
+        w, h = canvas.width, canvas.height
+        width = min(80, w - 2)
+        height = min(len(self.menu.items) + 6, h - 1)
+        x0, y0 = (w - width) // 2, max(0, (h - height) // 2)
+        canvas.frame(x0, y0, width, height, self.title, double=True)
+        self.menu.render(canvas, x0 + 2, y0 + 2, width - 4)
+
+    def handle_key(self, ev: KeyEvent) -> bool:
+        if ev.key == "escape":
+            self.close()
+            return True
+        return self.menu.handle_key(ev)
+
+    def autoplay_keys(self) -> list[KeyEvent]:
+        return [KeyEvent("down"), KeyEvent("enter")]
+
+
 class ContinueScreen(Screen):
     title = "Continue"
 

@@ -1,0 +1,169 @@
+{
+  "_comment": "Classes, levels 1-10. Features are simplified 5e (SRD 5.1, CC-BY-4.0) adapted to rank combat. 'rule' tags are used by game systems; kits are starting equipment packages (item ids from items.json).",
+  "classes": {
+    "fighter": {
+      "name": "Fighter",
+      "description": "A trained killer: soldier, mercenary, bodyguard or duellist. Fighters wear the best armour they can afford and know how to use every weapon in the rack.",
+      "hit_die": 10, "primary": ["str", "dex", "con"],
+      "saves": ["str", "con"],
+      "armor": ["light", "medium", "heavy", "shield"], "weapons": ["simple", "martial"], "tools": [],
+      "skill_count": 2,
+      "skill_choices": ["acrobatics", "animal_handling", "athletics", "history", "insight", "intimidation", "perception", "survival"],
+      "suggested": {"str": 15, "dex": 13, "con": 14, "int": 8, "wis": 12, "cha": 10},
+      "choices_at_1": ["fighting_style"],
+      "fighting_styles": {
+        "archery": {"name": "Archery", "text": "+2 to hit with ranged weapons."},
+        "defense": {"name": "Defence", "text": "+1 to AC while wearing armour."},
+        "dueling": {"name": "Duelling", "text": "+2 damage with a one-handed melee weapon and nothing in the other hand but a shield."},
+        "great_weapon": {"name": "Great Weapon Fighting", "text": "Reroll damage dice of 1 or 2 with two-handed melee weapons (once)."},
+        "protection": {"name": "Protection", "text": "With a shield, impose disadvantage on an attack against an ally in your rank."}
+      },
+      "features": [
+        {"level": 1, "id": "fighting_style", "name": "Fighting Style", "text": "A trained way of fighting, chosen at creation.", "rule": "fighting_style"},
+        {"level": 1, "id": "second_wind", "name": "Second Wind", "text": "Once per rest, catch your breath in battle: regain 1d10 + level hit points.", "rule": "second_wind"},
+        {"level": 2, "id": "action_surge", "name": "Action Surge", "text": "Once per rest, push past exhaustion and take a second action on your turn.", "rule": "action_surge"},
+        {"level": 3, "id": "subclass", "name": "Martial Archetype", "text": "Choose how you fight: Champion or Knight."},
+        {"level": 4, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two."},
+        {"level": 5, "id": "extra_attack", "name": "Extra Attack", "text": "Attack twice when you take the Attack action.", "rule": "extra_attack"},
+        {"level": 6, "id": "asi", "name": "Ability Score Improvement", "text": "Fighters train harder than anyone: +2 to one ability, or +1 to two."},
+        {"level": 8, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two."},
+        {"level": 9, "id": "indomitable", "name": "Indomitable", "text": "Once per long rest, reroll a failed saving throw.", "rule": "indomitable"}
+      ],
+      "subclasses": {
+        "champion": {"name": "Champion", "text": "Raw skill and endurance.", "features": [
+          {"level": 3, "id": "improved_critical", "name": "Improved Critical", "text": "Your weapon attacks score a critical hit on a roll of 19 or 20.", "rule": "crit_19"},
+          {"level": 7, "id": "remarkable_athlete", "name": "Remarkable Athlete", "text": "Add half your proficiency bonus to Strength, Dexterity and Constitution checks you are not proficient in."},
+          {"level": 10, "id": "additional_style", "name": "Additional Fighting Style", "text": "Learn a second fighting style.", "rule": "fighting_style"}
+        ]},
+        "knight": {"name": "Knight", "text": "A shield for others: you hold the line and draw the enemy's blows.", "features": [
+          {"level": 3, "id": "hold_the_line", "name": "Hold the Line", "text": "Enemies in the front rank have disadvantage attacking your allies while you stand beside them.", "rule": "hold_the_line"},
+          {"level": 7, "id": "commanding_presence", "name": "Commanding Presence", "text": "Add your Wisdom bonus to Persuasion and Intimidation when giving orders or demanding surrender."},
+          {"level": 10, "id": "rallying_cry", "name": "Rallying Cry", "text": "When you use Second Wind, allies in your rank regain hit points equal to your level.", "rule": "rallying_cry"}
+        ]}
+      },
+      "kits": [
+        {"name": "Man-at-arms", "items": [["chain_mail", 1], ["longsword", 1], ["shield", 1], ["light_crossbow", 1], ["bolts", 20], ["iron_helm", 1]]},
+        {"name": "Skirmisher", "items": [["leather_armor", 1], ["longbow", 1], ["arrows", 20], ["handaxe", 2], ["leather_cap", 1]]},
+        {"name": "Heavy hitter", "items": [["scale_mail", 1], ["greataxe", 1], ["javelin", 3], ["iron_helm", 1]]}
+      ]
+    },
+    "rogue": {
+      "name": "Rogue",
+      "description": "Thief, spy, scout or cutthroat. Rogues live by quick hands, sharp eyes and the knife in the dark, and they rarely fight fair.",
+      "hit_die": 8, "primary": ["dex", "int", "cha"],
+      "saves": ["dex", "int"],
+      "armor": ["light"], "weapons": ["simple", "hand_crossbow", "longsword", "rapier", "shortsword"], "tools": ["thieves_tools"],
+      "skill_count": 4,
+      "skill_choices": ["acrobatics", "athletics", "deception", "insight", "intimidation", "investigation", "perception", "performance", "persuasion", "sleight_of_hand", "stealth"],
+      "suggested": {"str": 8, "dex": 15, "con": 14, "int": 13, "wis": 12, "cha": 10},
+      "choices_at_1": ["expertise"],
+      "features": [
+        {"level": 1, "id": "expertise", "name": "Expertise", "text": "Double your proficiency bonus with two chosen skills.", "rule": "expertise"},
+        {"level": 1, "id": "sneak_attack", "name": "Sneak Attack", "text": "Once per turn, deal extra damage (1d6, growing every other level) when you have advantage, or an ally is fighting your target.", "rule": "sneak_attack"},
+        {"level": 1, "id": "thieves_cant", "name": "Thieves' Cant", "text": "The secret slang and signs of the criminal world."},
+        {"level": 2, "id": "cunning_action", "name": "Cunning Action", "text": "Change rank, hide or disengage and still attack in the same turn.", "rule": "cunning_action"},
+        {"level": 3, "id": "subclass", "name": "Roguish Archetype", "text": "Choose your trade: Thief or Cutthroat."},
+        {"level": 4, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two."},
+        {"level": 5, "id": "uncanny_dodge", "name": "Uncanny Dodge", "text": "Once per round, halve the damage of an attack you can see.", "rule": "uncanny_dodge"},
+        {"level": 6, "id": "expertise_2", "name": "Expertise", "text": "Two more skills gain double proficiency.", "rule": "expertise"},
+        {"level": 7, "id": "evasion", "name": "Evasion", "text": "Take no damage from area effects you save against, and half if you fail.", "rule": "evasion"},
+        {"level": 8, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two."},
+        {"level": 10, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two."}
+      ],
+      "subclasses": {
+        "thief": {"name": "Thief", "text": "Burglar, climber, pickpocket.", "features": [
+          {"level": 3, "id": "fast_hands", "name": "Fast Hands", "text": "Use an item or pick a pocket as part of a Cunning Action.", "rule": "fast_hands"},
+          {"level": 3, "id": "second_story_work", "name": "Second-Story Work", "text": "Climb as fast as you walk."},
+          {"level": 9, "id": "supreme_sneak", "name": "Supreme Sneak", "text": "Advantage on Stealth if you move no faster than half speed."}
+        ]},
+        "cutthroat": {"name": "Cutthroat", "text": "Killer for hire: the first blow is the last.", "features": [
+          {"level": 3, "id": "assassinate", "name": "Assassinate", "text": "Advantage against anyone who has not acted yet in a fight; hits on surprised foes are critical.", "rule": "assassinate"},
+          {"level": 3, "id": "poisoners_kit", "name": "Poisoner", "text": "Proficiency with the poisoner's kit."},
+          {"level": 9, "id": "infiltration", "name": "Infiltration Expertise", "text": "You can maintain a false identity for weeks."}
+        ]}
+      },
+      "kits": [
+        {"name": "Burglar", "items": [["leather_armor", 1], ["shortsword", 1], ["dagger", 2], ["shortbow", 1], ["arrows", 20], ["thieves_tools", 1], ["sack", 1]]},
+        {"name": "Duellist", "items": [["leather_armor", 1], ["rapier", 1], ["dagger", 2], ["thieves_tools", 1], ["hooded_cloak", 1]]}
+      ]
+    },
+    "cleric": {
+      "name": "Cleric",
+      "description": "A priest with a god's power in their hands. Temples hold divine magic jealously; a cleric heals, blesses and condemns in the name of a faith, and answers to its hierarchy.",
+      "hit_die": 8, "primary": ["wis", "con", "str"],
+      "saves": ["wis", "cha"],
+      "armor": ["light", "medium", "shield"], "weapons": ["simple"], "tools": [],
+      "skill_count": 2,
+      "skill_choices": ["history", "insight", "medicine", "persuasion", "religion"],
+      "suggested": {"str": 14, "dex": 8, "con": 13, "int": 10, "wis": 15, "cha": 12},
+      "choices_at_1": ["subclass"],
+      "spellcasting": {"ability": "wis", "type": "prepared",
+        "cantrips": [3, 3, 3, 4, 4, 4, 4, 4, 4, 5],
+        "slots": [[2], [3], [4, 2], [4, 3], [4, 3, 2], [4, 3, 3], [4, 3, 3, 1], [4, 3, 3, 2], [4, 3, 3, 3, 1], [4, 3, 3, 3, 2]]},
+      "features": [
+        {"level": 1, "id": "spellcasting", "name": "Spellcasting", "text": "Pray each morning for the prayers your god will grant today.", "rule": "spellcasting"},
+        {"level": 1, "id": "subclass", "name": "Divine Domain", "text": "Your god's aspect: Life or War."},
+        {"level": 2, "id": "channel_divinity", "name": "Channel Divinity", "text": "Once per rest, call on your god directly: Turn Undead, or your domain's power.", "rule": "channel_divinity"},
+        {"level": 4, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two."},
+        {"level": 5, "id": "destroy_undead", "name": "Destroy Undead", "text": "Weak undead that you turn are destroyed outright.", "rule": "destroy_undead"},
+        {"level": 8, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two."},
+        {"level": 10, "id": "divine_intervention", "name": "Divine Intervention", "text": "Beg your god to act. It rarely listens.", "rule": "divine_intervention"}
+      ],
+      "subclasses": {
+        "life": {"name": "Life Domain", "text": "Healers and midwives of the faith.", "armor": ["heavy"], "features": [
+          {"level": 1, "id": "disciple_of_life", "name": "Disciple of Life", "text": "Your healing spells restore 2 + the spell's level extra hit points.", "rule": "disciple_of_life"},
+          {"level": 2, "id": "preserve_life", "name": "Channel Divinity: Preserve Life", "text": "Share out healing equal to five times your level among the wounded.", "rule": "preserve_life"},
+          {"level": 6, "id": "blessed_healer", "name": "Blessed Healer", "text": "Healing others heals you a little too."},
+          {"level": 8, "id": "divine_strike", "name": "Divine Strike", "text": "Once per turn your weapon deals an extra 1d8 radiant damage.", "rule": "divine_strike"}
+        ]},
+        "war": {"name": "War Domain", "text": "Chaplains of armies and the gods of battle.", "armor": ["heavy"], "weapons": ["martial"], "features": [
+          {"level": 1, "id": "war_priest", "name": "War Priest", "text": "A few times per rest, make an extra weapon attack.", "rule": "war_priest"},
+          {"level": 2, "id": "guided_strike", "name": "Channel Divinity: Guided Strike", "text": "Add +10 to one attack roll.", "rule": "guided_strike"},
+          {"level": 6, "id": "war_gods_blessing", "name": "War God's Blessing", "text": "Grant an ally +10 on an attack."},
+          {"level": 8, "id": "divine_strike", "name": "Divine Strike", "text": "Once per turn your weapon deals an extra 1d8 damage.", "rule": "divine_strike"}
+        ]}
+      },
+      "kits": [
+        {"name": "Temple guard", "items": [["scale_mail", 1], ["mace", 1], ["shield", 1], ["holy_symbol", 1], ["light_crossbow", 1], ["bolts", 20]]},
+        {"name": "Mendicant", "items": [["leather_armor", 1], ["quarterstaff", 1], ["holy_symbol", 1], ["healers_kit", 1], ["bandages", 5]]}
+      ]
+    },
+    "wizard": {
+      "name": "Wizard",
+      "description": "A scholar of forbidden power. Wizards learn magic from books, at ruinous cost in years and coin; some kingdoms license them, others burn them.",
+      "hit_die": 6, "primary": ["int", "con", "dex"],
+      "saves": ["int", "wis"],
+      "armor": [], "weapons": ["dagger", "dart", "sling", "quarterstaff", "light_crossbow"], "tools": [],
+      "skill_count": 2,
+      "skill_choices": ["arcana", "history", "insight", "investigation", "medicine", "religion"],
+      "suggested": {"str": 8, "dex": 14, "con": 13, "int": 15, "wis": 12, "cha": 10},
+      "choices_at_1": [],
+      "spellcasting": {"ability": "int", "type": "spellbook",
+        "cantrips": [3, 3, 3, 4, 4, 4, 4, 4, 4, 5],
+        "slots": [[2], [3], [4, 2], [4, 3], [4, 3, 2], [4, 3, 3], [4, 3, 3, 1], [4, 3, 3, 2], [4, 3, 3, 3, 1], [4, 3, 3, 3, 2]]},
+      "features": [
+        {"level": 1, "id": "spellcasting", "name": "Spellcasting", "text": "Cast spells from your spellbook; copy new ones from scrolls and books.", "rule": "spellcasting"},
+        {"level": 1, "id": "arcane_recovery", "name": "Arcane Recovery", "text": "Once a day, after a short rest, recover spent spell slots (total levels up to half your level).", "rule": "arcane_recovery"},
+        {"level": 2, "id": "subclass", "name": "Arcane Tradition", "text": "Choose your school: Evocation or Abjuration."},
+        {"level": 4, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two."},
+        {"level": 8, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two."}
+      ],
+      "subclasses": {
+        "evocation": {"name": "School of Evocation", "text": "Fire, frost and lightning.", "features": [
+          {"level": 2, "id": "sculpt_spells", "name": "Sculpt Spells", "text": "Your area spells spare allies you choose.", "rule": "sculpt_spells"},
+          {"level": 6, "id": "potent_cantrip", "name": "Potent Cantrip", "text": "Targets who save against your cantrips still take half damage."},
+          {"level": 10, "id": "empowered_evocation", "name": "Empowered Evocation", "text": "Add your Intelligence bonus to evocation damage.", "rule": "empowered_evocation"}
+        ]},
+        "abjuration": {"name": "School of Abjuration", "text": "Wards, seals and banishings.", "features": [
+          {"level": 2, "id": "arcane_ward", "name": "Arcane Ward", "text": "Casting abjurations raises a ward that soaks up damage.", "rule": "arcane_ward"},
+          {"level": 6, "id": "projected_ward", "name": "Projected Ward", "text": "Your ward can protect an ally."},
+          {"level": 10, "id": "improved_abjuration", "name": "Improved Abjuration", "text": "Add your proficiency bonus when you try to end a spell or effect."}
+        ]}
+      },
+      "kits": [
+        {"name": "Scholar", "items": [["quarterstaff", 1], ["spellbook", 1], ["component_pouch", 1], ["ink_and_quill", 1], ["parchment", 5]]},
+        {"name": "Hedge mage", "items": [["dagger", 2], ["light_crossbow", 1], ["bolts", 20], ["spellbook", 1], ["arcane_focus", 1]]}
+      ]
+    }
+  }
+}

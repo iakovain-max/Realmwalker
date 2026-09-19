@@ -1,0 +1,19 @@
+@max_tokens: 3000
+@temperature: 0.9
+# Character creation: a short backstory from the player's choices. One call.
+# Slots: {name} {sex} {age} {race} {culture} {class_name} {background} {background_text} {home} {tie} {appearance} {schema}
+Write a short backstory for a new adventurer.
+
+Facts (use them; do not contradict them):
+- Name: {name}. {sex}, {age} years old.
+- People: {race}, of {culture} stock.
+- Trade: {class_name}. Background: {background}: {background_text}
+- Grew up in or near: {home}.
+- A tie to the world: {tie}
+- Looks: {appearance}
+
+The backstory is 3 to 5 sentences in the third person: where they came from, one specific thing that went wrong, and why they are on the road now. Concrete and unsentimental. Do not invent magic items, titles, riches or great deeds.
+Then give one sentence each for personality, an ideal, a bond and a flaw, in the first person ("I ...").
+
+Reply with only this JSON object:
+{schema}

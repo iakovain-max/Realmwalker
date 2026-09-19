@@ -96,6 +96,7 @@ def check_cross_references(files: dict[str, Any]) -> list[str]:
                 if slot not in tables:
                     errors.append(f"data/place_names.json: settlements.{culture} pattern {pattern!r} uses "
                                   f"{{{slot}}} but there is no '{slot}' list.")
+    errors.extend(_check_character_refs(files))
     regions = names.get("regions", {})
     for kind, patterns in regions.items():
         for pattern in patterns:
@@ -103,6 +104,55 @@ def check_cross_references(files: dict[str, Any]) -> list[str]:
                 if slot not in regions:
                     errors.append(f"data/place_names.json: regions.{kind} pattern {pattern!r} uses {{{slot}}}, "
                                   f"which is not a list in 'regions'.")
+    return errors
+
+
+def _check_character_refs(files: dict[str, Any]) -> list[str]:
+    """Races, classes and backgrounds must only mention skills, tools, items and cultures that exist."""
+    errors: list[str] = []
+    rules = files.get("rules.json")
+    items = files.get("items.json", {}).get("items")
+    if not rules or items is None:
+        return errors
+    skills = set(rules["skills"])
+    tools = set(rules["tools"])
+    cultures = set(files.get("names.json", {}).get("cultures", {}))
+
+    def need(kind: str, value: str, pool: set, where: str) -> None:
+        if value not in pool:
+            errors.append(f"{where} mentions unknown {kind} '{value}'.")
+
+    for rid, race in files.get("races.json", {}).get("races", {}).items():
+        for s in race["skills"]:
+            need("skill", s, skills, f"data/races.json: {rid}")
+        for t in race.get("tools_choice", []):
+            need("tool", t, tools, f"data/races.json: {rid}")
+        for c in race["cultures"]:
+            if cultures:
+                need("culture", c, cultures, f"data/races.json: {rid}")
+    for cid, cls in files.get("classes.json", {}).get("classes", {}).items():
+        for s in cls["skill_choices"]:
+            need("skill", s, skills, f"data/classes.json: {cid}")
+        for t in cls["tools"]:
+            need("tool", t, tools, f"data/classes.json: {cid}")
+        for kit in cls["kits"]:
+            for item_id, qty in kit["items"]:
+                need("item", item_id, set(items), f"data/classes.json: {cid} kit '{kit['name']}'")
+    for bid, bg in files.get("backgrounds.json", {}).get("backgrounds", {}).items():
+        for s in bg["skills"]:
+            need("skill", s, skills, f"data/backgrounds.json: {bid}")
+        for t in bg["tools"]:
+            need("tool", t, tools, f"data/backgrounds.json: {bid}")
+        for item_id, qty in bg["items"]:
+            need("item", item_id, set(items), f"data/backgrounds.json: {bid}")
+    for pack, entries in files.get("items.json", {}).get("starting_packs", {}).items():
+        for item_id, qty in entries:
+            need("item", item_id, set(items), f"data/items.json: starting pack '{pack}'")
+    for iid, item in items.items():
+        if "ammo" in item:
+            need("item", item["ammo"], set(items), f"data/items.json: {iid} ammo")
+        if "tool" in item:
+            need("tool", item["tool"], tools, f"data/items.json: {iid}")
     return errors
 
 

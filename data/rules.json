@@ -1,0 +1,53 @@
+{
+  "_comment": "Core 5e numbers. Skill and ability names follow the SRD 5.1 (CC-BY-4.0, Wizards of the Coast).",
+  "abilities": {
+    "str": {"name": "Strength", "short": "STR"},
+    "dex": {"name": "Dexterity", "short": "DEX"},
+    "con": {"name": "Constitution", "short": "CON"},
+    "int": {"name": "Intelligence", "short": "INT"},
+    "wis": {"name": "Wisdom", "short": "WIS"},
+    "cha": {"name": "Charisma", "short": "CHA"}
+  },
+  "skills": {
+    "acrobatics": {"name": "Acrobatics", "ability": "dex"},
+    "animal_handling": {"name": "Animal Handling", "ability": "wis"},
+    "arcana": {"name": "Arcana", "ability": "int"},
+    "athletics": {"name": "Athletics", "ability": "str"},
+    "deception": {"name": "Deception", "ability": "cha"},
+    "history": {"name": "History", "ability": "int"},
+    "insight": {"name": "Insight", "ability": "wis"},
+    "intimidation": {"name": "Intimidation", "ability": "cha"},
+    "investigation": {"name": "Investigation", "ability": "int"},
+    "medicine": {"name": "Medicine", "ability": "wis"},
+    "nature": {"name": "Nature", "ability": "int"},
+    "perception": {"name": "Perception", "ability": "wis"},
+    "performance": {"name": "Performance", "ability": "cha"},
+    "persuasion": {"name": "Persuasion", "ability": "cha"},
+    "religion": {"name": "Religion", "ability": "int"},
+    "sleight_of_hand": {"name": "Sleight of Hand", "ability": "dex"},
+    "stealth": {"name": "Stealth", "ability": "dex"},
+    "survival": {"name": "Survival", "ability": "wis"}
+  },
+  "point_buy": {"budget": 27, "min": 8, "max": 15, "costs": {"8": 0, "9": 1, "10": 2, "11": 3, "12": 4, "13": 5, "14": 7, "15": 9}},
+  "proficiency_bonus": [2, 2, 2, 2, 3, 3, 3, 3, 4, 4],
+  "xp_for_level": [0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000],
+  "max_level": 10,
+  "asi_levels": [4, 8],
+  "carry": {"per_strength": 15, "encumbered_per_strength": 5, "heavily_per_strength": 10},
+  "languages": ["Common", "Elvish", "Dwarvish", "Halfling", "Orcish", "Old Imperial", "Northern Tongue", "Southron Cant", "Thieves' Cant"],
+  "tools": {
+    "thieves_tools": "thieves' tools",
+    "herbalism_kit": "herbalism kit",
+    "smiths_tools": "smith's tools",
+    "carpenters_tools": "carpenter's tools",
+    "leatherworkers_tools": "leatherworker's tools",
+    "cooks_utensils": "cook's utensils",
+    "calligraphers_supplies": "calligrapher's supplies",
+    "dice_set": "dice set",
+    "playing_cards": "playing cards",
+    "lute": "lute",
+    "flute": "flute",
+    "healers_kit": "healer's kit",
+    "navigators_tools": "navigator's tools"
+  }
+}

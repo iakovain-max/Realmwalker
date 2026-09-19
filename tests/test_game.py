@@ -152,3 +152,58 @@ def test_days_are_announced(game):
     before = len(game.log.messages)
     game.wait(60 * 24)
     assert len(game.log.messages) > before
+
+
+def test_drop_and_pick_up_items(game):
+    game.enter_local()
+    leader = game.leader
+    torch = next(i for i in leader.inventory if i.def_id == "torch")
+    count = torch.qty
+    assert game.drop(torch.uid, 1)
+    assert sum(i.qty for i in leader.inventory if i.def_id == "torch") == count - 1
+    assert game.pick_up() == 1
+    assert sum(i.qty for i in leader.inventory if i.def_id == "torch") == count
+
+
+def test_items_on_the_ground_survive_saving(game, tables, tmp_path):
+    game.enter_local()
+    blanket = next((i for i in game.leader.inventory if i.def_id == "blanket"), None)
+    assert blanket is not None
+    game.drop(blanket.uid)
+    folder = save.save_game(game, tmp_path)
+    loaded = save.load_game(folder, tables)
+    lm = loaded.local
+    assert any(i.def_id == "blanket" for pile in lm.items.values() for i in pile)
+
+
+def test_old_format_1_saves_still_load(game, tables, tmp_path):
+    """Saves from M1 (before characters) load with a default wanderer."""
+    folder = save.save_game(game, tmp_path)
+    path = folder / save.CHARACTER_FILE
+    with zipfile.ZipFile(path) as z:
+        entries = {n: z.read(n) for n in z.namelist()}
+    body = json.loads(entries["character.json"])
+    del body["party"]
+    manifest = json.loads(entries["manifest.json"])
+    manifest["format"] = 1
+    entries["character.json"] = json.dumps(body).encode()
+    entries["manifest.json"] = json.dumps(manifest).encode()
+    with zipfile.ZipFile(path, "w") as z:
+        for n, d in entries.items():
+            z.writestr(n, d)
+    loaded = save.load_game(folder, tables)
+    assert loaded.leader.name == "The Wanderer" and loaded.leader.inventory
+
+
+def test_heavy_loads_slow_travel(game, tables):
+    from realmwalker.rules.inventory import add_item
+
+    p = game.player
+    dx, dy = next((dx, dy) for dx, dy in neighbours(game) if game.step_minutes(p.x, p.y, p.x + dx, p.y + dy))
+    base = game.step_minutes(p.x, p.y, p.x + dx, p.y + dy)
+    add_item(game.leader, tables.items, "iron_bar", 12)
+    t0 = game.world.time
+    assert game.move(dx, dy)
+    assert game.world.time - t0 > base
+    add_item(game.leader, tables.items, "iron_bar", 30)
+    assert not game.move(-dx, -dy)

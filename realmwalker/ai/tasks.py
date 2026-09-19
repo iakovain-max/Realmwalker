@@ -69,4 +69,33 @@ def sample_tavern_fallback(rng: RNG, data: DataRegistry, variables: dict | None 
     }
 
 
-ALL_TASKS: list[AITask] = [SAMPLE_TAVERN]
+# ---------------------------------------------------------------------------- character backstory
+BACKSTORY = AITask(
+    name="backstory",
+    schema=Obj(
+        {
+            "backstory": Str("3 to 5 sentences of backstory, third person", max_len=900),
+            "personality": Str("one sentence: a personality trait, first person", max_len=200),
+            "ideal": Str("one sentence: an ideal they hold, first person", max_len=200),
+            "bond": Str("one sentence: a bond to a person or place, first person", max_len=200),
+            "flaw": Str("one sentence: a flaw, first person", max_len=200),
+        }
+    ),
+    max_tokens=3000,
+    temperature=0.9,
+)
+
+
+def backstory_variables(builder, tables, home_name: str, tie_text: str) -> dict:
+    race = tables.races[builder.race]
+    bg = tables.backgrounds[builder.background]
+    culture = tables.names["cultures"].get(builder.culture, {}).get("label", builder.culture)
+    return {
+        "name": builder.name, "sex": builder.sex.capitalize(), "age": builder.age, "race": race["name"],
+        "culture": culture, "class_name": tables.classes[builder.cls]["name"], "background": bg["name"],
+        "background_text": bg["description"], "home": home_name, "tie": tie_text or "none worth mentioning",
+        "appearance": builder.appearance,
+    }
+
+
+ALL_TASKS: list[AITask] = [SAMPLE_TAVERN, BACKSTORY]

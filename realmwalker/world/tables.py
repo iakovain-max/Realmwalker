@@ -80,6 +80,15 @@ class Tables:
         self.sites = data["sites.json"]
         self.place_names = data["place_names.json"]
         self.names = data["names.json"]
+        from realmwalker.rules.items import ItemTable
         from realmwalker.world.calendar import Calendar
 
         self.calendar = Calendar(self.calendar_data)
+        self.rules = data["rules.json"]
+        self.races = {k: v for k, v in data["races.json"]["races"].items() if not k.startswith("_")}
+        self.classes = {k: v for k, v in data["classes.json"]["classes"].items() if not k.startswith("_")}
+        self.backgrounds_data = data["backgrounds.json"]
+        self.backgrounds = {k: v for k, v in self.backgrounds_data["backgrounds"].items() if not k.startswith("_")}
+        self.items = ItemTable(data["items.json"])
+        self.appearance = data["appearance.json"]
+        self.fallback = data["fallback_text.json"]
