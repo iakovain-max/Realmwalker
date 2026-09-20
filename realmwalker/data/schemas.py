@@ -367,6 +367,7 @@ DATA_FILES.update({
     "health.json": HEALTH,
 })
 
+NIGHT_SOUNDS = Map(word_list(1, 200), min_items=1)
 CAMPING = Obj(
     {
         "firewood": Map(Str(choices=["plenty", "some", "little", "none"])),
@@ -376,6 +377,7 @@ CAMPING = Obj(
         "hunt": Map(Obj({"dc": Int(min=0, max=30), "game": List(List(Any_(), min_items=4, max_items=4), min_items=1)})),
         "fish": Obj({"dc": Int(min=0, max=30), "tackle_bonus": Int(min=0, max=10), "catch": List(Any_(), min_items=2, max_items=2)}),
         "cooking": Map(Obj({"becomes": Str(max_len=40), "needs_pot": Bool(optional=True)})),
+        "night": NIGHT_SOUNDS,
     }
 )
 

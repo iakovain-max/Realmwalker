@@ -265,3 +265,13 @@ def test_a_day_on_the_road_is_written_up(game, data, monkeypatch):
     facts = events.travel_day_facts(game, game.narration[0])
     text = travel_day_fallback(RNG(2), data, facts)["passage"]
     assert "{" not in text and str(facts["miles"]) in text or facts["lands"] in text or len(text) > 40
+
+
+def test_a_night_in_the_open_is_heard(game):
+    """A long rest outdoors brings one thing heard: the land, or the fire, or nothing much."""
+    from realmwalker.game.camp import night_sound
+
+    heard = {night_sound(game) for _ in range(1) for game.world.time in
+             range(game.world.time, game.world.time + 400, 37)}
+    assert heard and all(line and "{" not in line for line in heard)
+    assert len(heard) > 1, heard

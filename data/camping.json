@@ -29,6 +29,41 @@
     "desert": {"dc": 17, "game": [["a lizard", 3, "1", null], ["a desert hare", 2, "1", null]]}
   },
   "fish": {"dc": 11, "tackle_bonus": 5, "catch": ["raw_fish", "1d3"]},
+  "night": {
+      "any": [
+          "Something moves out there, a long way off, and does not come back.",
+          "An owl, twice, and then nothing.",
+          "The wind gets up in the small hours and worries at everything that is not tied down.",
+          "You wake once, for no reason you can name, and lie listening until you don't.",
+          "Far off, a dog. Or something that wants to be taken for one.",
+          "The cold finds the gap between your cloak and the ground, and keeps it."
+      ],
+      "fire": [
+          "The fire ticks and settles, and throws a shape on the ground that is not there when you look.",
+          "You feed the fire at some hour and watch it take, which is worth doing for its own sake.",
+          "Sparks go up and out, and for a moment you can see nothing at all beyond them."
+      ],
+      "forest": [
+          "The trees work all night, creaking and settling like a house.",
+          "Something small and busy goes through the leaf litter, over and over, until it stops."
+      ],
+      "marsh": [
+          "The frogs stop all at once, and start again, and you do not learn why.",
+          "Gas comes up out of the water somewhere and smells of the inside of a grave."
+      ],
+      "mountains": [
+          "Stones go down a slope somewhere above you, and take a long time about it.",
+          "The cold up here has a smell to it, like iron and snow."
+      ],
+      "tundra": [
+          "The silence is complete enough to hear your own blood.",
+          "The sky is scoured clean and there are more stars than anybody could want."
+      ],
+      "plains": [
+          "Grass, all night, moving like water.",
+          "A long way off, lights: a village, or somebody else's fire."
+      ]
+  },
   "cooking": {
     "raw_meat": {"becomes": "cooked_meat"},
     "raw_fish": {"becomes": "cooked_fish"},

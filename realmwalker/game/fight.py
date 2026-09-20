@@ -509,6 +509,12 @@ def rest(game, kind: str) -> list[str]:
                 game.encounter = enc
                 notes.append(f"<danger>Your rest is broken after {hour + 1} hour{'s' if hour else ''}.</>")
                 return notes
+    if kind == "long" and lm is None and game.over is None:
+        from realmwalker.game.camp import night_sound
+
+        heard = night_sound(game)
+        if heard and rng.chance(0.7):
+            notes.append(heard)
     if kind == "long" and lm is None and game.party[1:]:
         from realmwalker.game import camp as camping
         from realmwalker.game import companions

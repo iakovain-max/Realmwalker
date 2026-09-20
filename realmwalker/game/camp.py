@@ -300,6 +300,22 @@ def fish(game) -> list[str]:
     return msgs + [f"You catch {n} fish in {here[1]}."]
 
 
+def night_sound(game) -> str:
+    """One thing heard in the night in the open: the land, the fire, or nothing much."""
+    spec = game.tables.camping.get("night", {})
+    if not spec:
+        return ""
+    pools = list(spec.get("any", []))
+    camp = camp_here(game)
+    if camp is not None and camp.fire:
+        pools += spec.get("fire", [])
+    pools += spec.get(game.biome_key(game.player.x, game.player.y), [])
+    if not pools:
+        return ""
+    rng = game.world.rng.child(f"night/{game.world.time}/{game.player.x},{game.player.y}")
+    return rng.choice(pools)
+
+
 def _risk(game, minutes: int) -> list[str]:
     """Out in the wilds for a while: something may find you."""
     from realmwalker.game.encounters import roll_encounter
