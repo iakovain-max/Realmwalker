@@ -756,10 +756,12 @@ class GameState:
         p.lx, p.ly = nx, ny
         p.steps += 1
         now_building = lm.building_at(nx, ny)
-        if now_building is not None and now_building is not before_building and self.world.factions:
-            from realmwalker.game import law
+        if now_building is not None and now_building is not before_building:
+            if self.world.factions:
+                from realmwalker.game import law
 
-            law.trespass_check(self, lm.buildings.index(now_building))
+                law.trespass_check(self, lm.buildings.index(now_building))
+            self._walk_in(lm, now_building)
         self.pass_seconds(int(LOCAL_STEP_SECONDS * float(T.cost[t]) * (1.41 if dx and dy else 1.0) * pace), "walk")
         here = lm.items.get((nx, ny))
         if here:
@@ -783,6 +785,25 @@ class GameState:
 
                 law.watch(self)
         return True
+
+    def _walk_in(self, lm, building) -> None:
+        """Stepping into the common room of an inn: what the place is like, once per inn."""
+        if lm.kind != "settlement" or building.kind != "inn" or self.busy or not self.flavour():
+            return
+        s = self.world.settlement_at(self.player.x, self.player.y)
+        town = self.world.towns.get(s.id) if s is not None else None
+        if town is None:
+            return
+        from realmwalker.game.people_ai import taproom
+
+        bi = lm.buildings.index(building)
+        seen = town.flags.setdefault("taprooms_seen", [])
+        if bi in seen:
+            return
+        seen.append(bi)
+        name = town.names.get(bi, "")
+        text = taproom(self, town, bi)
+        self.say((f"<place>{name}</>: " if name else "") + text, "flavor")
 
     def _shut_for_the_night(self, lm, x: int, y: int) -> None:
         """Trades keep hours. Push a shop door open after dark and a voice answers through it."""

@@ -308,3 +308,26 @@ def test_people_greet_you_out_of_their_trade_and_not_all_alike(game):
     jobs = {n.job for n in folk} & set(trades)
     assert jobs, "somebody in a town has a trade"
     assert any(line in said for job in jobs for line in trades[job]), "and it shows in how they say hello"
+
+
+def test_walking_into_an_inn_says_what_the_room_is_like(game):
+    """The tavern writing has been in the data since the first week; walking in now shows it, once."""
+    s = visit(game, "town")
+    lm = game.local
+    inns = [(i, b) for i, b in enumerate(lm.buildings) if b.kind == "inn"]
+    if not inns:
+        pytest.skip("no inn in this town")
+    bi, inn = inns[0]
+    before = len(game.log.messages)
+    game.player.lx, game.player.ly = inn.x + inn.w // 2, inn.y + inn.h // 2
+    game._walk_in(lm, inn)
+    said = [m.text for m in game.log.messages[before:]]
+    assert said, "the common room is worth a look"
+    assert len(said[0]) > 80, f"and more than a line of it: {said[0]}"
+    assert "{" not in said[0], f"every slot is filled: {said[0]}"
+    again = len(game.log.messages)
+    game._walk_in(lm, inn)
+    assert len(game.log.messages) == again, "but only the first time you push the door open"
+    town = game.world.towns[s.id]
+    kept = town.flags["taprooms"][str(bi)]
+    assert kept in said[0], "and what it said is kept in the save"

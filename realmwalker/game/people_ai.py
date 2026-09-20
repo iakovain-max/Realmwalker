@@ -79,6 +79,23 @@ def fallback_inn_name(game, rng: RNG) -> str:
     return textgen.fill(rng.choice(tavern["name_pattern"]), rng, tavern, {"family": family})
 
 
+def taproom(game, town: Town, building: int) -> str:
+    """What the common room of this inn is like: written once, kept in the save, the same every time you
+    push the door open. The tavern tables have been in the data since the first week; nothing showed them."""
+    kept = town.flags.setdefault("taprooms", {})
+    said = kept.get(str(building))
+    if said:
+        return said
+    tables = game.tables.fallback["tavern"]
+    rng = game.world.rng.child(f"taproom/{town.settlement}/{building}")
+    parts = [textgen.fill(rng.choice(tables["description"]), rng, tables)]
+    if rng.chance(0.6):
+        parts.append(rng.choice(tables["overheard"]))
+    text = textgen.tidy(" ".join(parts))
+    kept[str(building)] = text
+    return text
+
+
 # ---------------------------------------------------------------------------- conversations
 OUTCOME_HELP = {
     "reveal_info": "they share a rumour or piece of local knowledge",

@@ -86,37 +86,32 @@
       "A stone house that was a toll post once, its arrow slits stuffed with rags",
       "A timber hall leaning against the old town wall",
       "A sprawling inn with a stable yard ankle-deep in manure",
-      "A squat house of fieldstone, half sunk into the hillside"
-    ],
+      "A squat house of fieldstone, half sunk into the hillside", "A long low house with a turf roof and a door you have to duck under", "Two cottages knocked into one, badly, with the join still showing", "A wayside house with a yard, a well, and a bench worn into a hollow by sitters", "A brick front that was somebody's town house before it came down in the world"],
     "light": [
       "a single rushlight gutters on each table",
       "the hearth gives more smoke than light",
       "tallow candles throw a greasy yellow glow",
-      "grey daylight leaks through the shutters and shows every stain"
-    ],
+      "grey daylight leaks through the shutters and shows every stain", "a fire at one end and nothing else leaves half the room to guesswork", "the open shutters let in a grey light that is no help at all", "one lamp over the counter leaves the corners to themselves"],
     "smell": [
       "wet wool and tallow",
       "sour ale and old rushes",
       "woodsmoke, onions and unwashed bodies",
       "boiled mutton, with a whiff of the privy from the yard",
       "pitch, fish and spilled beer",
-      "damp dog and burnt fat"
-    ],
+      "damp dog and burnt fat", "wet dog, tallow and yesterday's cabbage", "smoke, and under it something turning", "new bread, which is the best thing about the place", "horses, close by, and the straw they stand in"],
     "sound": [
       "someone in the corner coughs and does not stop",
       "a fiddler saws at a tune nobody asked for",
       "dice rattle against a tabletop",
       "the keeper's wife shouts at a boy in the kitchen",
       "rain drums on the shutters",
-      "two drovers argue about the price of wool"
-    ],
+      "two drovers argue about the price of wool", "two men going through an argument they have clearly had before", "a child crying somewhere upstairs and nobody going to it", "the keeper counting coin, slowly, out loud", "rain on the shutters and nobody in a hurry to leave"],
     "crowd": [
       "a handful of drovers nurse their cups by the hearth",
       "the tables are mostly empty, and the few drinkers keep their backs to the wall",
       "a pair of soldiers in faded livery watch the door",
       "farmhands crowd the benches, muddy to the knee",
-      "a pedlar sleeps sitting up, one hand on his pack"
-    ],
+      "a pedlar sleeps sitting up, one hand on his pack", "a wedding party, three days in and past enjoying itself, holds the long table", "carters and their boys fill one end and will not be moved from the fire", "half a dozen pilgrims eat in silence, staves against the wall", "one old man in the corner looks up hopefully at every sound"],
     "detail": [
       "A notice nailed by the door offers two silver for wolf ears.",
       "Someone has carved a tally of forty-odd marks into the bar.",
@@ -124,28 +119,24 @@
       "Bundles of feverfew hang from the rafters to keep off sickness.",
       "A rusted pike hangs over the hearth, notched along the blade.",
       "The only window is patched with oiled parchment.",
-      "A dog with one ear sleeps under the stairs and growls at every new boot."
-    ],
+      "A dog with one ear sleeps under the stairs and growls at every new boot.", "A board by the door lists what is owed and by whom; several names are scratched out.", "There is a sword over the mantel with no edge left on it and a story attached.", "A shutter has been mended with the lid of a coffin, and not repainted.", "Somebody has carved a tally of years into the doorpost, and stopped at eleven.", "The floor slopes enough that a dropped coin always goes the same way.", "A cat sits on the counter and is not asked to move."],
     "description": [
       "{building}. Inside, {light}, and the air is thick with {smell}. {crowd}; {sound}. {detail}",
       "The door sticks and has to be shouldered open. Low beams, black with years of smoke, press close over a room that smells of {smell}. {crowd}. {detail}",
-      "{building}. The common room smells of {smell}, and {sound}. {crowd}. {detail}"
-    ],
+      "{building}. The common room smells of {smell}, and {sound}. {crowd}. {detail}", "{building}. Inside, {light}, and the whole room smells of {smell}. {crowd}; {sound}. {detail}", "{building}. It is warm, at least, and it smells of {smell}. {crowd}; somewhere {sound}. {detail}"],
     "manner": [
       "{keeper} looks every stranger up and down and asks for coin before pouring.",
       "{keeper} is friendly enough, but never takes an eye off the door.",
       "{keeper} says little, waters the ale and remembers every face.",
       "{keeper} greets travellers loudly and overcharges them cheerfully.",
-      "{keeper} keeps a cudgel under the counter and has used it this week."
-    ],
+      "{keeper} keeps a cudgel under the counter and has used it this week.", "The keeper takes your money first and your name not at all.", "{keeper} looks at your boots, your sword and your purse, in that order.", "{keeper} is friendly in the way of someone who is counting."],
     "overheard": [
       "\"Third one this month. River gave him back without his hands.\"",
       "\"Tax man came through again. Took the seed grain this time.\"",
       "\"Don't drink from the mill brook. My sister's boy did, and now he's shitting blood.\"",
       "\"If the lord wants soldiers, he can come and drag them off himself.\"",
       "\"Wolves were at the sheep again. Big ones. Bigger than wolves ought to be.\"",
-      "\"Priest says the fever's a punishment. Punishment for what, I'd like to know.\""
-    ],
+      "\"Priest says the fever's a punishment. Punishment for what, I'd like to know.\"", "\"They found the carter's horse. Just the horse.\"", "\"Nobody's been up to the old place since spring, and nobody's going.\"", "\"The lord's man was here Tuesday, asking who had been on the north road.\"", "\"Three houses have it now. They're saying don't drink from the low well.\"", "\"That's the second lot through here this month looking for the same thing.\"", "\"My brother swears he saw lights up on the ridge, and my brother doesn't drink.\""],
     "region": [
       "a rain-sodden river valley",
       "windswept moorland",

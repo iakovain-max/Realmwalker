@@ -141,6 +141,13 @@ and three of a thinner sort: the sky turns five ways for each kind of weather in
 how you know it (a boundary stone grown over, a gibbet with the chain rusted through, two riders on the rise),
 and coming back to a town you know says it six ways.
 
+**Inns have a common room again.** The tavern writing — the building, the light, the smell, who is drinking,
+one telling detail, a line somebody says about local trouble — has been sitting in the data since the first week
+of the project and only ever appeared on the Player2 test screen. Walk into an inn now and the game tells you
+what the room is like, once per inn, kept in the save so it is the same place when you come back. There is a
+good deal more of that writing now too: nine ways for the building to look, ten smells, ten sounds, thirteen
+details, twelve things to overhear.
+
 **The dark has something to say.** Four thousand steps underground used to be ninety lines, nearly all of them
 stairs. Now the passage breathes, water keeps time with nothing, a draught comes from somewhere that should not
 have a somewhere, and a bone is underfoot before you see it — lines for any dark place and lines of its own for
