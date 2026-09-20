@@ -843,7 +843,8 @@ class GameState:
 
     def _underground(self, lm: LocalMap) -> None:
         """Now and then, something the dark does while you are walking through it."""
-        if self.busy or not self.flavour() or not self.lit:
+        seeing = bool(self.lit) or (self.party and self.sheet().darkvision)
+        if self.busy or not self.flavour() or not seeing:
             return
         steps = self.player.steps
         if steps - int(self._last_moment) < (12 if self.flavour(2) else 20):

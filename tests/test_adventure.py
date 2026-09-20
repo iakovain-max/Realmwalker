@@ -214,11 +214,12 @@ def test_the_dark_says_something_now_and_then(game):
         moments.update(game.tables.sites["dungeon_moments"].get(key, []))
     assert moments, "a dungeon has things it can say"
     game.lit = None
-    said = len(game.log.messages)
-    for step in range(60):
-        game.player.steps += 1
-        game._underground(lm)
-    assert len(game.log.messages) == said, "in the dark you see nothing at all"
+    if not game.sheet().darkvision:  # a dwarf or an elf would still see a little
+        said = len(game.log.messages)
+        for step in range(60):
+            game.player.steps += 1
+            game._underground(lm)
+        assert len(game.log.messages) == said, "in the dark you see nothing at all"
     game.lit = {"item": "torch", "left": 600.0}
     heard = set()
     for step in range(400):

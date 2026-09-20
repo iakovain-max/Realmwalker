@@ -141,6 +141,14 @@ and three of a thinner sort: the sky turns five ways for each kind of weather in
 how you know it (a boundary stone grown over, a gibbet with the chain rusted through, two riders on the rise),
 and coming back to a town you know says it six ways.
 
+**The dark has something to say.** Four thousand steps underground used to be ninety lines, nearly all of them
+stairs. Now the passage breathes, water keeps time with nothing, a draught comes from somewhere that should not
+have a somewhere, and a bone is underfoot before you see it — lines for any dark place and lines of its own for
+cellars, crypts, towers, hideouts, temples, caves, warrens and lairs. Only when you can see (a light, or a
+dwarf's or elf's eyes), only at normal text detail and above, and never oftener than once every dozen steps.
+Going down and coming up have several ways of saying it, and a deeper level is "the third level of the barrows"
+rather than "level 3".
+
 **A test for the first evening.** A new character in a new world is now checked, in two different worlds, for
 the things a new player needs: people in the first town, money in the purse, somebody who sells food, work on
 offer, work that goes into the journal and lights the map, and a road that takes them closer to it.
