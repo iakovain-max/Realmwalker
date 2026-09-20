@@ -18,6 +18,7 @@ gameplay terms, give Windows click-by-click steps when they must do something, n
 | Autoplay bot (AI off + mocked AI) | `.venv\Scripts\python.exe tools\autoplay.py --turns 3000` |
 | Mock Player2 server | `.venv\Scripts\python.exe tools\mock_player2.py --port 4316 --mode chaos` |
 | Friend build (tests, exe, smoke check, zip) | double-click `Build_For_Friends.bat` (runs `tools\build_friends.py`) |
+| Balance numbers (fights, cold, wounds) | `.venv\Scripts\python.exe tools\balance.py --runs 60` |
 
 Milestone "done" = all tests pass + the game launches (smoke test) + autoplay ran clean in both AI modes.
 Then commit, update PROGRESS.md, and stop for user feedback (unless the user said to keep going).
@@ -51,7 +52,8 @@ realmwalker/
                            dungeon (going under, light, traps, locks, chests, hoards), treasure (what is in them),
                            magic_items (making, identifying, curses, AI names), quests (work from templates tied to
                            real things, the journal), dragons (lairs, tribute, killing one), books (maps, histories,
-                           lore, letters)
+                           lore, letters), death (the obituary and what the world keeps), interlude (the weeks that
+                           pass before a new life in an old world)
   rules/                   character (Character + Sheet: derived numbers), items, inventory (equip rules), creation,
                            combat (Battle: rank combat on 5e dice), creatures, spells, wounds, progression (XP, rests),
                            body (needs, body heat, wetness, exhaustion), health (blood, pain, infection, healing,
@@ -67,7 +69,7 @@ data/                      ALL game data as JSON (names, fallback text, ... late
 ai/prompts/                prompt templates (plain text, @max_tokens header, {slots})
 assets/fonts/              DejaVu Sans Mono + licence
 tests/                     pytest suite (headless; AI tests use tools/mock_player2.py, never the real app)
-tools/                     autoplay.py, mock_player2.py, build_friends.py
+tools/                     autoplay.py, mock_player2.py, build_friends.py, balance.py (the design's targets)
 ```
 
 ## Rules of the codebase
@@ -133,6 +135,14 @@ tools/                     autoplay.py, mock_player2.py, build_friends.py
 - Dragons: records in `world.politics["dragons"]` (made by `world/history.py`, which always leaves one asleep).
   `world/politics.dragon_wakes` burns or taxes a village while you play; `game/dragons.py` has the warning signs,
   the descent warning and `on_battle`, which marks one slain for good (news, history, fame, tribute lifted).
+- Death: `game/death.die(game)` writes the character into `world.politics["fallen"]` (chronicle, news, companions
+  released) and the death screen shows `fallback_obituary`, replaced by the AI's words (task OBITUARY) when they
+  arrive. Nothing carries over to the next character except what the world remembers.
+- A new character in a world that has been played runs `game/interlude.pass_the_years` first (real politics for
+  three weeks to five months) and is shown what changed.
+- Balance: `tools/balance.py` measures the design's targets (fights at level 1 and 3, a winter night, an
+  untreated wound); `tests/test_balance.py` keeps them inside bands. Change combat, cold or bleeding numbers and
+  run it before and after.
 - Battles: `rules/combat.Battle` is pure logic driven by `step()` / `pending_party()` / `do_*()`; the screen
   (`ui/screens/battle.py`) only paces and asks. `GameState.busy` (encounter, battle, aftermath or death pending)
   blocks moving; `GameScreen._open_event_screen()` opens the right screen. Debug console: `fight <group>`.

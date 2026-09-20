@@ -15,7 +15,76 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | M6 — Factions and politics | ✅ Done (2026-09-19) |
 | M7 — Companions and progression | ✅ Done (2026-09-19) |
 | M8 — Adventure content | ✅ Done (2026-09-20) |
-| M9 — Death, legacy and release | ⏳ Next |
+| M9 — Death, legacy and release | ✅ Done (2026-09-20) |
+
+---
+
+## M9 — Death, legacy and release (done)
+
+**What you can do now**
+- **Die properly.** Death is still permanent, but now it means something. The death screen gives you an
+  obituary: what you were, how and where you died, what you killed, the work you finished, who you travelled
+  with, what you did that anyone will remember, and what the powers of the land thought of you. With Player2
+  running, the AI writes it in its own words; the words are kept with the world.
+- **The world keeps your story.** A death is written into the world itself: famous ones go into the chronicle
+  (**n**) and travel as news; unknown ones pass without remark, as they should. Everything you carried is gone —
+  no body, no grave, no gear to recover, exactly as the design asks.
+- **Companions outlive you.** Those still standing go home, remember who they travelled with and how it ended,
+  and can be hired again by whoever comes next.
+- **A new life in an old world.** **New Character** on the title screen makes a character in a world you have
+  already played, starting wherever you choose. The world does not wait: three weeks to five months of politics
+  run first, and you are told what changed before your first step — towns taken, new rulers, wars begun and
+  ended, plague, famine, gangs, a dragon awake — along with what people are saying and who walked this land
+  before you.
+- **Help for everything.** The help screen (**F1**) now covers every system and every key, including the
+  underground, magic items, work and the journal, dragons, books and paper, death and new lives, and where the
+  game keeps your saves and its error log.
+- **A build to send to friends.** `Build_For_Friends.bat` runs the tests, builds `Realmwalker.exe`, checks that
+  the packaged game starts, and zips it (about 35 MB) with a readme that says what the game is and how to run it.
+
+**How to try it**
+1. Double-click `Play.bat` and **Continue**.
+2. Get yourself killed (it is not hard). Read the obituary.
+3. On the title screen choose **New Character**, pick the same world, and make someone new. Read what happened
+   while nobody was watching, then walk into it.
+4. To send the game to someone: double-click `Build_For_Friends.bat` and wait a few minutes; it leaves
+   `Realmwalker.zip` in the project folder.
+
+**What to look for:** Does the obituary feel like a proper ending? Is the world noticeably different when you
+come back to it as someone new? Is anything in the help missing or wrong?
+
+**How it was verified**
+- 550 automated tests pass, including new ones for the death record, unremarkable deaths, companions going
+  home, the obituary (built-in and AI), saving the dead with the world, the years between lives, and the death
+  and interlude windows at every size.
+- **A balance pass, measured** (`tools/balance.py`, locked in by `tests/test_balance.py`):
+  - at level 1 alone, two wolves are won 48% of the time and put you on your back in half the fights; three
+    bandits are won 38% of the time; a lone wolf or a single bandit is a fight, not a death sentence (80-95%);
+  - a party of three at level 1 usually wins those fights but pays for them (someone down in 40%, someone dead
+    in 3-8%); at level 3 the same fights are comfortable;
+  - a winter night in the open without fire or shelter leaves you at 1-6 hit points and exhausted; a fire stops
+    the damage; a fire and a tent leave you merely cold;
+  - an untreated critical wound bleeds you to death within hours, and binding it saves you.
+  Nothing needed retuning: the numbers already sit where the design asks.
+- The smoke test tours every screen; autoplay ran clean in both AI modes; the packaged build was made and its
+  exe smoke-tested.
+
+**Decisions (and why)**
+1. **The obituary is kept in the world, not the character**, so the next character can be told who came before
+   them — the only thing that carries over is the story.
+2. **Reputation does not carry over.** Standing, money and gear die with the character; the world's memory of
+   the deeds does not.
+3. **The interlude runs the real politics engine**, not a summary generator, so what you are told about is what
+   actually happened while you were away.
+4. **Balance is measured, not asserted.** The harness prints the numbers so they can be tuned later with
+   evidence, and the tests fail if the game drifts much softer or much deadlier.
+
+**Known issues**
+- The interlude does not age or replace ordinary townsfolk (only the great ones, who are simulated).
+- A world with no living character keeps its local maps and townsfolk as they were, so a town you emptied stays
+  empty for the next character.
+- Companion personal quests, escorts, smuggling, assassinations and faction rank-up tasks are in the parking
+  lot below, not in v1.
 
 ---
 

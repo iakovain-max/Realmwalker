@@ -155,6 +155,11 @@ Ask people in a town "Is there any work?". Anyone of standing (and now and then 
 Each job has a reward and a number of days. The journal marks where to go; the place is put on your map. When it is done, go back to whoever set it and say so. Failing it, or giving it up (<loot>a</> in the journal), sours the giver and their people.
 Not everything is as it was told to you. Outlaws may turn out to be starving deserters you could talk into leaving instead of killing; the debtor may have nothing but children and an empty house; a sealed letter may be worth reading, and once read it can be delivered anyway, taken to the lord, or held over the sender's head. Your companions notice what you choose.
 
+<title>When you die</title>
+Death is permanent. There is no reload: the game saves as you go, and that save is the only one. When you die you get an obituary — what you were, how you died, what you killed, what you did that anyone will remember, and what the powers of the land thought of you — and everything you carried is gone. There is no body and no grave to loot.
+What is left is the world. Your deeds stay in its history and its news; famous deaths are remembered in the chronicle. Companions who outlived you go home and can be hired by whoever comes next.
+From the title screen, <loot>New Character</> begins a new life in a world you have already played. Weeks or months pass first — rulers die, wars begin and end, towns change hands, plague comes and goes — and you are told what changed before you take your first step into it.
+
 <title>Other screens</title>
   <loot>L</>               The full message log
   <loot>/</>               Map legend: what every symbol means
@@ -163,8 +168,8 @@ Not everything is as it was told to you. Outlaws may turn out to be starving des
 <title>Player2 AI</title>
 The game uses the free Player2 app to write names, descriptions and dialogue. Keep Player2 running for AI text. Without it the game still works, using its own built-in text. The indicator in the bottom-right corner shows which is in use. The AI never decides what happens: dice and rules do.
 
-<title>More to come</title>
-A proper death and obituary, and more to find in the deep places, arrive milestone by milestone. This page lists every key as they are added.
+<title>If something goes wrong</title>
+The game tries never to crash: if something breaks it says so, writes the details to <loot>%APPDATA%\Realmwalker\logs\errors.log</> and carries on. That file is the thing to send if you report a problem. Your saves, settings and screenshots live in the same folder.
 """
 
 
