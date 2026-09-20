@@ -413,6 +413,10 @@ class GameScreen(Screen):
         text = f"<info>Work:</> {len(live)} in hand"
         if ready:
             text += f", <good>{ready} to report</>"
+        walking = [q for q in live if q["template"] == "escort" and not q["done"]]
+        if walking:
+            who = walking[0]["words"].get("traveller", "someone")
+            text += f" <dim>· {markup.escape(who)} walks with you</>"
         if soon is not None:
             color = "danger" if soon <= 2 else "warn" if soon <= 5 else "dim"
             text += f" <{color}>(next due in {max(0, soon)} d)</>"

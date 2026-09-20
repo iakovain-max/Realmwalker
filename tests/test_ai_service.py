@@ -259,3 +259,46 @@ def test_background_requests_pause_when_energy_is_low():
             assert mock.chat_calls == 1
         finally:
             svc.stop()
+
+
+def test_every_prompt_is_filled_by_the_facts_the_game_gives_it(data):
+    """A prompt with a slot nothing fills would go to the AI with '{slot}' in it."""
+    import copy
+
+    from realmwalker.ai import tasks
+    from realmwalker.game import death, magic_items, quests
+    from realmwalker.game.state import new_game
+    from realmwalker.world.generator import WorldGenerator, WorldOptions
+    from realmwalker.world.tables import Tables
+
+    tables = Tables(data)
+    world = WorldGenerator(WorldOptions("Promptland", 8, "small"), tables).generate()
+    game = new_game(copy.deepcopy(world), tables)
+    game.survival = False
+    lib = PromptLibrary(Paths().prompts)
+
+    item = None
+    for i in range(50):
+        item = magic_items.make(game, RNG(i, "prompt"), tier=4)
+        if item is not None:
+            break
+    assert item is not None
+    from realmwalker.game.people import npcs_in, prepare_town
+
+    town = next(s for s in game.world.settlements if s.kind in ("town", "city"))
+    prepare_town(game, town)
+    npc = next(n for n in npcs_in(game.world, town.id) if n.job in quests.giver_jobs(game))
+    quest = quests.make_offer(game, npc, game.world.rng.child("prompt-quest"))
+    game.over = {"cause": "killed in a test", "place": "nowhere"}
+    record = death.die(game)
+
+    cases = [(tasks.MAGIC_ITEM, magic_items.dressing_facts(game, item)),
+             (tasks.OBITUARY, death.obituary_facts(game, record))]
+    if quest is not None:
+        cases.append((tasks.QUEST, quests.ai_facts(game, quest)))
+    for task, facts in cases:
+        template = lib.get(task.name)
+        text = template.render({**{k: str(v) for k, v in facts.items()}, "schema": "{}"})
+        for slot in ("{giver}", "{task}", "{name}", "{powers}", "{deeds}", "{who}", "{death}", "{base}"):
+            assert slot not in text, (task.name, slot)
+        assert len(text) > 100
