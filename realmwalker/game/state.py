@@ -60,6 +60,8 @@ class TravelPlan:
     destination: tuple[int, int]
 
 
+# "Text detail" in Settings: 0 brief (only what matters), 1 normal, 2 rich (more of the world's voice).
+VERBOSITY = {"brief": 0, "normal": 1, "rich": 2}
 WEATHER_NEWS = ("fog", "drizzle", "rain", "storm", "flurries", "snow", "blizzard", "heat")
 
 
@@ -103,6 +105,7 @@ class GameState:
         self.quests: list[dict] = []  # work taken on: the journal (game.quests)
         self._last_moment = -10**6  # the step count when street life was last remarked on
         self._last_weather: str | None = None  # the sky as it was, to notice when it turns
+        self.verbosity = "normal"  # set from the player's settings by the game screen
         self._weather_said = -10**6  # world minute of the last remark about the sky
         self._realm_here: int | None = None
         self._wading = False
@@ -162,6 +165,10 @@ class GameState:
         self.log.add(text, category, self.world.time)
 
     # ------------------------------------------------------------------ time
+    def flavour(self, need: int = 1) -> bool:
+        """Is the player's 'Text detail' setting at least this high? (1 normal, 2 rich.)"""
+        return VERBOSITY.get(self.verbosity, 1) >= need
+
     def bury_the_dead(self) -> None:
         """Nobody dead travels with you: whatever killed them, they leave the party and the waiting."""
         if self.over is not None or self.battle is not None:
@@ -722,7 +729,7 @@ class GameState:
 
     def _weather_moment(self) -> None:
         """A line when the weather turns, said outdoors and not more than once a change."""
-        if self.busy or self.over is not None:
+        if self.busy or self.over is not None or not self.flavour():
             return
         if self.local is not None and self.local.kind == "dungeon":
             return
@@ -750,10 +757,10 @@ class GameState:
     def _street_life(self, lm: LocalMap) -> None:
         """Now and then, something small happening in the street (game/people.town_moment)."""
         s = self.world.settlement_at(self.player.x, self.player.y)
-        if s is None or self.busy:
+        if s is None or self.busy or not self.flavour():
             return
         steps = self.player.steps
-        if steps - int(self._last_moment) < 25:  # counted in steps: a town street is walked quickly
+        if steps - int(self._last_moment) < (15 if self.flavour(2) else 25):  # counted in steps
             return
         rng = self.world.rng.child(f"street/{s.id}/{steps}")  # a new roll each step, not each minute
         if not rng.chance(0.2):

@@ -229,7 +229,7 @@ def react(game, *tags: str, quiet: bool = False) -> list[str]:
 def road_talk(game) -> None:
     """Somebody says something on the road: about the walking, the weather, the dark, or nothing at all."""
     party = [c for c in companions(game) if c.alive]
-    if not party or game.busy:
+    if not party or game.busy or not game.flavour():
         return
     steps = game.player.steps
     flags = game.renown.flags

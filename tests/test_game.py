@@ -247,3 +247,25 @@ def test_landmarks_are_seen_from_a_distance(game):
     said = len(game.log.messages)
     game.reveal()  # a place already seen is not announced twice
     assert len(game.log.messages) == said
+
+
+def test_text_detail_is_honoured(game):
+    """'Text detail' in Settings decides how much of the world's voice you hear."""
+    s = next(x for x in game.world.settlements if x.kind in ("town", "city"))
+    game.player.x, game.player.y = s.x, s.y
+    lm = game.enter_local()
+    game.verbosity = "brief"
+    said = []
+    game.say = lambda text, color="fg": said.append(text)
+    for _ in range(80):
+        game.player.steps += 1
+        game._street_life(lm)
+    assert not said, said
+    game.verbosity = "normal"
+    for _ in range(80):
+        game.player.steps += 1
+        game._street_life(lm)
+    assert said
+    assert game.flavour() and not game.flavour(2)
+    game.verbosity = "rich"
+    assert game.flavour(2)

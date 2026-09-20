@@ -512,7 +512,7 @@ def rest(game, kind: str) -> list[str]:
     if kind == "long" and lm is None and game.over is None:
         from realmwalker.game.camp import night_sound
 
-        heard = night_sound(game)
+        heard = night_sound(game) if game.flavour() else ""
         if heard and rng.chance(0.7):
             notes.append(heard)
     if kind == "long" and lm is None and game.party[1:]:

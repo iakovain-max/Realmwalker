@@ -400,7 +400,7 @@ class GameScreen(Screen):
     def _word_area(self) -> None:
         """The country the party is walking through gets AI words, once per region."""
         game = self.game
-        if game.in_local or game.busy or not self.app.ai_extras():
+        if game.in_local or game.busy or not self.app.ai_extras() or not game.flavour():
             return
         area = game.world.area_at(game.player.x, game.player.y)
         if area is None or area.size < 20:
@@ -528,6 +528,7 @@ class GameScreen(Screen):
     def update(self) -> None:
         game = self.game
         game.show_dice = self.app.settings.show_dice
+        game.verbosity = self.app.settings.verbosity
         game.auto_supplies = self.app.settings.auto_supplies
         if self._open_event_screen():
             return

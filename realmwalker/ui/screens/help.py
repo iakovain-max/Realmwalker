@@ -173,6 +173,9 @@ Death is permanent. There is no reload: the game saves as you go, and that save 
 What is left is the world. Your deeds stay in its history and its news; famous deaths are remembered in the chronicle. Companions who outlived you go home and can be hired by whoever comes next.
 From the title screen, <loot>New Character</> begins a new life in a world you have already played. Weeks or months pass first — rulers die, wars begin and end, towns change hands, plague comes and goes — and you are told what changed before you take your first step into it.
 
+<title>How much the game says</title>
+Settings has <loot>Text detail</>: <loot>Brief</> keeps only what matters (fights, needs, news, what you find), <loot>Normal</> adds the world's voice — street life in towns, companions talking on the road, the weather turning, what you hear in the night — and <loot>Rich</> gives you more of it.
+
 <title>Other screens</title>
   <loot>L</>               The full message log
   <loot>/</>               Map legend: what every symbol means

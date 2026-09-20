@@ -40,7 +40,8 @@ class SettingsScreen(Screen):
                    "Let the AI also write regions, dungeons, magic items, work and obituaries. Off: the AI is "
                    "kept for people, places and conversation, which saves Player2 energy."),
             Option("Text detail", lambda: s.verbosity.capitalize(), self._verbosity,
-                   "How much descriptive prose the game shows: brief, normal or rich."),
+                   "How much of the world's voice you hear: street life in towns, companions talking on the "
+                   "road, the weather turning, sounds in the night. Brief keeps only what matters."),
             Option("Autosave every", lambda: f"{s.autosave_minutes} min", self._autosave,
                    "The game also saves on important events and when you quit. There is no manual reload."),
             Option("AI debug log", lambda: _onoff(s.ai_debug_log), lambda d: app.set_ai_debug_log(not s.ai_debug_log),
