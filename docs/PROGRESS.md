@@ -99,6 +99,13 @@ through it — an offer from one of their people says whose eyes are on it, pays
 when it is done. If your standing runs two ranks ahead of what they have given you, they give in and promote you
 anyway, so nobody is ever stuck.
 
+**The journal remembers people** (Tab): everyone you have spoken to, by town, with what they are, how they feel
+about you, what work of theirs you carry, and what they remember about you.
+
+**How it runs** (measured on a large world of 106 settlements and 65 sites): the world is made in about a second;
+a frame takes 2 ms on the overworld, in a city of 15,000 and underground alike; a save is 87 ms and about half a
+megabyte, and loads in 48 ms. Twenty years of politics with nobody watching takes under a second.
+
 **Help and energy.** The help opens with "Your first hour": seven steps from the title screen to a first piece of
 finished work, and what to buy before leaving town. Settings gains **AI extras**, which keeps Player2's limited
 energy for people, places and conversation if you would rather not spend it on regions, dungeons, items, the
