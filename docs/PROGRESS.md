@@ -177,8 +177,9 @@ come back to it as someone new? Is anything in the help missing or wrong?
 - The interlude does not age or replace ordinary townsfolk (only the great ones, who are simulated).
 - A world with no living character keeps its local maps and townsfolk as they were, so a town you emptied stays
   empty for the next character.
-- Companion personal quests, escorts, smuggling, assassinations and faction rank-up tasks are in the parking
-  lot below, not in v1.
+- Faction rank-up tasks (a trial before each promotion) are still in the parking lot; rank rises with standing,
+  and doing a faction's work is what raises it. (Companion personal quests, escorts, smuggling and assassinations
+  were on this list and have since been built — see "After v1" at the top.)
 
 ---
 
@@ -263,7 +264,8 @@ to do? Are the dungeons interesting to walk through, or a maze? Is a magic item 
    generation always leaves one asleep somewhere.
 
 **Known issues**
-- Companions have no personal quests of their own yet (M9 or later).
+- ~~Companions have no personal quests of their own yet~~ — built after v1: a devoted companion asks for one
+  job of their own (party screen, **b**).
 - A job's giver dying (plague, war, your own sword) closes the job with a note rather than passing it to their
   heir.
 - Dungeon levels are built when you first go down and kept in the save, so a level you have seen does not change
