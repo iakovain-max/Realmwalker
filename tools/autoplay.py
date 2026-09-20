@@ -57,6 +57,7 @@ class AutoplayReport:
     hires: int = 0
     dungeons: int = 0
     quests: int = 0
+    quest_trips: int = 0
     battle_turns: int = 0
     elapsed: float = 0.0
 
@@ -72,7 +73,7 @@ class AutoplayReport:
             f"  turns inside a game: {self.game_turns}  save/load round trips checked: {self.save_checks}",
             f"  fights started by the bot: {self.fights}  travel events: {self.events}  talks: {self.talks}  "
             f"crimes: {self.crimes}  companions hired: {self.hires}  dungeons: {self.dungeons}  work taken on: "
-            f"{self.quests}  turns spent in battle: {self.battle_turns}",
+            f"{self.quests} (visited: {self.quest_trips})  turns spent in battle: {self.battle_turns}",
             "  RESULT: " + ("OK" if self.ok else f"FAILED ({len(self.errors)} problems)"),
         ]
         lines += [f"    - {e}" for e in self.errors[:20]]
@@ -406,7 +407,7 @@ def _start_a_fight(app: App, rng: random.Random, report: AutoplayReport) -> None
         if not game.in_local:
             game.enter_local()
         people = [n for n in npcs_in(game.world, here.id) if n.alive and n.present]
-        if people and rng.random() < 0.35:
+        if people and rng.random() < 0.6:
             # Ask someone for work, and take it on (M8).
             from realmwalker.game import quests
 
@@ -439,6 +440,34 @@ def _start_a_fight(app: App, rng: random.Random, report: AutoplayReport) -> None
             game.talk_to = rng.choice(people).id
             report.talks += 1
         return
+    if roll < 0.38 and game.quests:
+        # Go where the work is: arrivals, raids, escorts and beasts all happen on the spot.
+        from realmwalker.game import quests
+
+        live = [q for q in quests.active(game) if not q["done"]]
+        if live:
+            q = rng.choice(live)
+            t = q["target"]
+            where = None
+            if "site" in t and 0 <= t["site"] < len(game.world.sites):
+                site = game.world.sites[t["site"]]
+                where = (site.x, site.y)
+            elif "dest" in t and 0 <= t["dest"] < len(game.world.settlements):
+                s = game.world.settlements[t["dest"]]
+                where = (s.x, s.y)
+            elif q["template"] == "hunt_beast":
+                where = (int(t["x"]), int(t["y"]))
+            elif q["template"] == "defend" and 0 <= t.get("settlement", -1) < len(game.world.settlements):
+                s = game.world.settlements[t["settlement"]]
+                where = (s.x, s.y)
+            if where is not None:
+                game.player.local_key = None
+                game.player.x, game.player.y = where
+                game._arrive(None)
+                if rng.random() < 0.5 and not game.busy:
+                    game.enter_local()
+                report.quest_trips += 1
+                return
     if roll < 0.4 and game.world.sites:
         from realmwalker.game import dungeon
 
