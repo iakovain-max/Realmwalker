@@ -848,7 +848,7 @@ def default_wanderer(tables: Tables, world: World) -> Character:
     from realmwalker.rules.creation import CharacterBuilder
 
     builder = CharacterBuilder(tables, RNG(world.meta.seed, "wanderer"))
-    builder.name = "The Wanderer"
+    # A real name: "The Wanderer" reads badly in the middle of a sentence ("The is cold", "Survival (The)").
     builder.apply_backstory(builder.fallback_backstory("the lowlands"), "built-in")
     return builder.build(world.time)
 

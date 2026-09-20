@@ -197,7 +197,7 @@ def test_old_format_1_saves_still_load(game, tables, tmp_path):
         for n, d in entries.items():
             z.writestr(n, d)
     loaded = save.load_game(folder, tables)
-    assert loaded.leader.name == "The Wanderer" and loaded.leader.inventory
+    assert loaded.leader.name == game.leader.name and loaded.leader.inventory
 
 
 def test_heavy_loads_slow_travel(game, tables, monkeypatch):

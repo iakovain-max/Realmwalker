@@ -123,7 +123,7 @@ def offer_for(game, npc) -> dict | None:
         rng = game.world.rng.child(f"offer/{npc.id}/{day}")
         if not rng.chance(0.6 if npc.notable else 0.3):
             return None  # not everyone has work worth paying for, every week
-        q = make_offer(game, npc, rng)
+        q = make_offer(game, npc, rng, avoid=[o.get("template") for o in offers.values()])
         if q is None:
             return None
         offers[str(npc.id)] = q
@@ -143,9 +143,12 @@ def offers_in(game, settlement) -> list[dict]:
     return out
 
 
-def make_offer(game, npc, rng: RNG, template: str | None = None) -> dict | None:
+def make_offer(game, npc, rng: RNG, template: str | None = None, avoid=()) -> dict | None:
     kinds = [template] if template else [t for t, s in spec(game)["templates"].items() if npc.job in s["givers"]]
     rng.shuffle(kinds)
+    # A town where three people all want an heirloom fetched is a dull town: spread the kinds about.
+    counts = {k: sum(1 for a in avoid if a == k) for k in kinds}
+    kinds.sort(key=lambda k: counts.get(k, 0))
     for kind in kinds:
         q = BUILDERS[kind](game, npc, rng)
         if q is not None:
@@ -299,8 +302,10 @@ def _retrieve(game, npc, rng):
     if not sites:
         return None
     site = rng.choice(sites)
-    thing, base = rng.choice(spec(game)["heirlooms"])
-    name = f"the {npc.name.split()[-1]} {thing}"
+    family = npc.name.split()[-1]
+    # Keyed on the family, so two houses in one town do not both want the same thing.
+    thing, base = w.rng.child(f"heirloom/{family}/{npc.id}").choice(spec(game)["heirlooms"])
+    name = f"the {family} {thing}"
     q = base_quest(game, npc, "retrieve", rng, hard=1 + site.danger / 6)
     q["target"] = {"site": site.id, "item": name, "base": base}
     q["words"].update(item=cap(name), site=site.name, where=direction(town, site))

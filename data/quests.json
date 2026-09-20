@@ -19,7 +19,7 @@
     "investigate": {"givers": ["priest", "guard", "headman", "healer"], "reward": [2500, 7000], "days": [20, 40], "standing": 8, "xp": 300, "hidden": {}}
   },
   "beasts": [["dire_wolves", "the Grey Wolf", "a wolf the size of a pony, and too clever by half"], ["brown_bear", "the Hill Bear", "a bear that has learned people are easy meat"], ["troll", "the Bridge Troll", "a troll that has made a crossing its own"], ["spiders", "the Weaver", "something with too many legs that takes sheep, and lately children"], ["ogre", "the Ogre of the Fells", "an ogre that comes down in the dark for cattle"]],
-  "heirlooms": [["signet ring", "gold_ring"], ["silver cup", "silver_chalice"], ["prayer book", "prayer_book"], ["grandmother's brooch", "gold_ring"], ["father's sword", "longsword"]],
+  "heirlooms": [["signet ring", "gold_ring"], ["silver cup", "silver_chalice"], ["prayer book", "prayer_book"], ["brooch", "jewelled_brooch"], ["sword", "longsword"], ["seal", "gold_ring"], ["chalice", "silver_chalice"], ["locket", "jewelled_brooch"], ["war-horn", "silver_ingot"], ["dagger", "dagger"], ["psalter", "prayer_book"], ["ring", "gold_ring"]],
   "kin": ["son", "daughter", "brother", "sister", "husband", "wife", "apprentice"],
   "text": {
     "bounty": {
