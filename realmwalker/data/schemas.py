@@ -665,7 +665,6 @@ QUESTS = Obj(
                          "done": word_list(1, 300), "failed": word_list(1, 300),
                          "hidden": Map(word_list(1, 600), optional=True),
                          "clue": List(Str(max_len=400), min_items=1, optional=True)})),
-        "letters": word_list(1, 200),
         "rewards_text": word_list(1, 200),
     }
 )

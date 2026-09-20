@@ -1210,7 +1210,13 @@ def reward(game, q, *, share: float = 1.0, text: str | None = None) -> list[str]
     if giver is not None and giver.alive:
         change_disposition(giver, 20)
         giver.remember(f"the traveller did the work they asked ({title(game, q)})")
-    line = text or f"{q['words'].get('giver', 'They')} pays you {money_text(money)}."
+    if text:
+        line = text
+    else:
+        rng2 = w.rng.child(f"quest-pay/{q['id']}")
+        pattern = rng2.choice(spec(game)["rewards_text"])
+        line = cap(textgen.fill(pattern, rng2, {}, {"giver": q["words"].get("giver", "They"),
+                                                    "reward": money_text(money)}))
     q["journal"].append(line)
     out = [f"<good>{line}</> <dim>(+{int(s['xp'] * min(1.0, share))} experience each)</>"] + notes
     if q.get("trial") is not None and share >= 1.0:

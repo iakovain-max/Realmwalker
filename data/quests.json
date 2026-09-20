@@ -147,6 +147,9 @@
       "failed": ["More have gone missing, and {giver} no longer asks you about it."]
     }
   },
-  "letters": ["A letter, sealed, addressed to {recipient} of {dest}.", "A folded letter with a broken seal; the hand is hurried."],
-  "rewards_text": ["{giver} counts out {reward}.", "{giver} pays you {reward}, and does not look sorry to see it go."]
+  "rewards_text": ["{giver} counts out {reward}.", "{giver} pays you {reward}, and does not look sorry to see it go.",
+    "{giver} unties a purse and puts {reward} into your hand without counting it twice.",
+    "{giver} pays what was promised: {reward}, coin by coin, off the table edge.",
+    "{giver} fetches {reward} from somewhere behind the wall and says nothing while you take it.",
+    "{giver} hands over {reward} and holds on a moment longer than a happy man would."]
 }
