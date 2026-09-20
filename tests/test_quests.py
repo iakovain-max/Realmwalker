@@ -541,3 +541,39 @@ def test_picking_a_pocket_for_someone_else(game, monkeypatch):
     conv = Conversation(game, npc)
     conv.choose(next(c for c in conv.menu() if c.id == "quest_turn_in"))
     assert q["state"] == "finished" and not quests.holds_quest_item(game, q)
+
+
+def test_standing_with_a_village_when_the_raid_comes(game):
+    q, npc = offer(game, "defend")
+    quests.accept(game, q)
+    t = q["target"]
+    town = game.world.settlements[t["settlement"]]
+    assert t["when"] > game.moment.total_days and t["group"] in game.tables.creatures.encounters
+    # Not the day yet: nothing happens.
+    game.player.x, game.player.y = town.x, town.y
+    quests.on_arrive(game)
+    assert game.encounter is None
+    # The day comes, and you are there.
+    game.world.time += (t["when"] - game.moment.total_days) * 1440
+    quests.on_arrive(game)
+    assert game.encounter is not None and t["spawned"]
+    quests.on_battle(game, result(dead=list(game.encounter.creatures)))
+    assert q["done"]
+    money = game.leader.money
+    conv = Conversation(game, npc)
+    conv.choose(next(c for c in conv.menu() if c.id == "quest_turn_in"))
+    assert q["state"] == "finished" and game.leader.money == money + q["reward"]
+
+
+def test_the_village_burns_if_you_are_not_there(game):
+    q, npc = offer(game, "defend")
+    quests.accept(game, q)
+    t = q["target"]
+    town = game.world.settlements[t["settlement"]]
+    far = next(s for s in game.world.settlements if s.id != town.id)
+    game.player.x, game.player.y = far.x, far.y
+    game.world.time += (t["when"] - game.moment.total_days + 1) * 1440
+    quests.daily(game)
+    assert q["state"] == "failed"
+    assert town.status.get("raided")
+    assert any(town.name in n["text"] for n in game.world.news)

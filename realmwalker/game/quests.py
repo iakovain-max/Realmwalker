@@ -390,6 +390,48 @@ def _slay_dragon(game, npc, rng):
     return q
 
 
+RAIDER_GROUPS = {"tribe": ("orc_raiders", "goblin_warband", "orc_warband"), "bandit_gang": ("bandit_gang",),
+                 "cult": ("cultists",)}
+
+
+def _defend(game, npc, rng):
+    """They came last year, and they are coming again. Be there on the day."""
+    w = game.world
+    town = w.settlements[npc.settlement]
+    if town.kind in ("city",):
+        return None  # a city has walls and a watch of its own
+    threats = [f for f in fx.active_factions(w, "tribe", "bandit_gang", "cult")
+               if news_place(w, f) is not None and dist(_Spot(*news_place(w, f)), town) <= 25]
+    if not threats:
+        return None
+    foe = rng.choice(threats)
+    groups = [g for g in RAIDER_GROUPS.get(foe.kind, ()) if g in game.tables.creatures.encounters]
+    if not groups:
+        return None
+    when = game.moment.total_days + rng.randint(3, 8)
+    q = base_quest(game, npc, "defend", rng, hard=1.4)
+    q["target"] = {"settlement": town.id, "group": rng.choice(groups), "when": when, "faction": foe.id}
+    q["days"] = when - game.moment.total_days + 2
+    spot = _Spot(*news_place(w, foe))
+    q["words"].update(raiders=foe.name, where=direction(town, spot).split(" of ")[0], when=when_text(game, when))
+    return q
+
+
+def news_place(world, faction):
+    from realmwalker.world import news as world_news
+
+    return world_news.faction_place(world, faction)
+
+
+def when_text(game, day: int) -> str:
+    left = day - game.moment.total_days
+    if left <= 1:
+        return "tomorrow"
+    if left <= 3:
+        return f"in {left} days"
+    return f"in {left} days, at the turn of the moon"
+
+
 def _escort(game, npc, rng):
     """Somebody who has to get somewhere, and knows what the roads are like."""
     from realmwalker.game.people import npcs_in
@@ -482,7 +524,7 @@ def _steal(game, npc, rng):
 
 
 BUILDERS = {"bounty": _bounty, "slay_dragon": _slay_dragon, "escort": _escort, "assassinate": _assassinate,
-            "cure": _cure, "feud": _feud, "steal": _steal, "clear_lair": _clear_lair, "hunt_beast": _hunt_beast, "deliver": _deliver,
+            "cure": _cure, "feud": _feud, "steal": _steal, "defend": _defend, "clear_lair": _clear_lair, "hunt_beast": _hunt_beast, "deliver": _deliver,
             "retrieve": _retrieve, "rescue": _rescue, "collect_debt": _collect_debt, "investigate": _investigate}
 
 
@@ -630,6 +672,13 @@ def site_cleared(game, site_id: int) -> None:
                 found_cult(game, q)
 
 
+def defended(game, result) -> None:
+    for q in active(game):
+        if q["template"] == "defend" and not q["done"] and q["target"].get("spawned") and \
+                at_settlement(game, q["target"].get("settlement")) and result.outcome in ("victory", "parley"):
+            mark_done(game, q)
+
+
 def on_battle(game, result, actor=None) -> None:
     """After a fight: a lair's master beaten, a gang's captain dead or taken, a named beast brought down —
     or somebody you were supposed to be keeping alive, dead."""
@@ -637,6 +686,7 @@ def on_battle(game, result, actor=None) -> None:
         for q in escorting(game):
             lost_escort(game, q, f"{q['words']['traveller']} did not survive the fight.")
         return
+    defended(game, result)
     lm = game.local
     site = game.world.site_at(game.player.x, game.player.y)
     beaten = list(result.dead) + list(result.captives)
@@ -655,6 +705,51 @@ def on_battle(game, result, actor=None) -> None:
             name = q["words"].get("beast")
             if any(c.name == name for c in beaten):
                 mark_done(game, q)
+
+
+def raid_due(game, q) -> bool:
+    t = q["target"]
+    return not t.get("spawned") and game.moment.total_days >= int(t.get("when", 0))
+
+
+def at_settlement(game, sid) -> bool:
+    if sid is None or not 0 <= sid < len(game.world.settlements):
+        return False
+    s = game.world.settlements[sid]
+    return (game.player.x, game.player.y) == (s.x, s.y)
+
+
+def spring_raid(game, q) -> bool:
+    """The day has come and you are here: they come out of the trees."""
+    from realmwalker.game.encounters import make_encounter
+
+    if game.encounter is not None or game.battle is not None or game.busy:
+        return False
+    t = q["target"]
+    rng = game.world.rng.child(f"raid/{q['id']}")
+    enc = make_encounter(game, t["group"], rng)
+    enc.intro = f"They come at dusk, out of the fields: {q['words'].get('raiders', 'raiders')}. " + enc.intro
+    enc.spotted_first = True
+    t["spawned"] = True
+    game.encounter = enc
+    game.travel = None
+    game.say(f"<danger>{q['words'].get('raiders', 'Raiders')} are here.</>", "danger")
+    return True
+
+
+def raid_missed(game, q) -> None:
+    """They came, and you were somewhere else."""
+    from realmwalker.world import news
+
+    w = game.world
+    s = w.settlements[q["target"]["settlement"]]
+    s.status["raided"] = {"until": news.now_days(w) + 20}
+    if s.kind in ("hamlet", "village") and w.rng.child(f"raid-burn/{q['id']}").chance(0.4):
+        s.status["burned"] = news.now_days(w)
+        s.population = max(10, int(s.population * 0.75))
+    news.add(w, f"{q['words'].get('raiders', 'raiders')} fell on {s.name}", s.x, s.y, kind="raid", importance=3,
+             places=[s.id])
+    fail(game, q)
 
 
 def escorting(game) -> list[dict]:
@@ -694,8 +789,13 @@ def lost_escort(game, q, why: str) -> None:
 
 
 def on_arrive(game) -> None:
-    """Walking onto a tile of the wide world: a hunted beast may be waiting there, or a journey may end."""
+    """Walking onto a tile of the wide world: a hunted beast may be waiting there, a journey may end, or a
+    village you promised to stand with may be about to be attacked."""
     p = game.player
+    for q in active(game):
+        if q["template"] == "defend" and not q["done"] and raid_due(game, q) and \
+                at_settlement(game, q["target"].get("settlement")):
+            spring_raid(game, q)
     for q in escorting(game):
         dest = game.world.settlements[q["target"]["dest"]]
         if (p.x, p.y) == (dest.x, dest.y):
@@ -1073,8 +1173,14 @@ def fail(game, q, why: str | None = None) -> None:
 
 
 def daily(game) -> None:
-    """Deadlines, and givers who are no longer there to pay."""
+    """Deadlines, raids that fall due, and givers who are no longer there to pay."""
     today = game.moment.total_days
+    for q in active(game):
+        if q["template"] == "defend" and not q["done"] and raid_due(game, q):
+            if at_settlement(game, q["target"].get("settlement")):
+                spring_raid(game, q)
+            elif today > int(q["target"].get("when", 0)):
+                raid_missed(game, q)
     for q in active(game):
         giver = game.world.npcs.get(q["giver"])
         if q.get("personal") is None and q["giver"] >= 0 and (giver is None or not giver.alive):
@@ -1453,6 +1559,7 @@ def ai_facts(game, q) -> dict:
         "cure": f"bring {words.get('count')} lots of healing herbs for the sickness in {town.name}",
         "feud": f"make peace between {words.get('one')} and {words.get('two')}, who have not spoken in two years",
         "steal": f"pick {words.get('mark')}'s pocket in {words.get('dest')} and bring back {words.get('item')}",
+        "defend": f"be in {town.name} {words.get('when')}, when {words.get('raiders')} come, and fight them off",
         "slay_dragon": f"kill the dragon {words.get('dragon')}, which lairs at {words.get('site')} "
                        f"({words.get('where')}) and has burned and bled this country for years",
     }[q["template"]]
