@@ -65,8 +65,9 @@ class CraftScreen(Screen):
             canvas.hit(x + 1, row, w - 2, 1, lambda i=i: self.choose(i))
             text = f"<loot>[{i + 1}]</> {label}" if ok else f"<faint>[{i + 1}] {markup.plain(label)}: {why}</>"
             canvas.markup(x + 2, row, text, max_width=w - 4)
-        canvas.button(x + 2, y + h - 2, "Back", self.close, hotkey="Esc")
-        canvas.text(x + 12, y + h - 2, "↑↓ choose · Enter or the number to make it", colors.FAINT, max_width=w - 14)
+        bx = canvas.button(x + 2, y + h - 2, "Back", self.close, hotkey="Esc")
+        canvas.text(bx + 2, y + h - 2, "↑↓ choose · Enter or the number to make it", colors.FAINT,
+                    max_width=max(0, x + w - bx - 4))
 
     def autoplay_keys(self) -> list[KeyEvent]:
         return [KeyEvent(k) for k in ("down", "1", "enter", "escape")]
