@@ -16,7 +16,11 @@ FLOORS = {
     "dialogue:person_lines": 10, "dialogue:no_rumours": 5, "dialogue:refuse_talk": 2,
     "dialogue:closed": 2,
     # people.json — the life of a street
-    "people:text.moments": 8, "people:text.moments_day": 4, "people:text.moments_night": 4,
+    "people:text.moments": 12, "people:text.moments_day": 8, "people:text.moments_night": 8,
+    "people:text.moments_market": 5, "people:text.moments_plague": 5, "people:text.moments_famine": 5,
+    "people:text.moments_raided": 5, "people:text.moments_siege": 5,
+    # camping.json — every night on the road
+    "camping:night.any": 8, "camping:night.fire": 5,
 }
 
 
@@ -53,6 +57,11 @@ def test_a_town_can_greet_you_in_many_ways(data):
     assert not missing, f"these trades say nothing of their own: {sorted(missing)}"
     for job, lines in trades.items():
         assert len(lines) >= 2, f"{job} has only {len(lines)} greeting"
+
+
+def test_every_land_sounds_like_itself_at_night(data):
+    for land, lines in data["camping.json"]["night"].items():
+        assert len(lines) >= 5, f"nights in {land} have only {len(lines)} sounds"
 
 
 def test_there_is_plenty_to_meet_on_the_road(data):

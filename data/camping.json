@@ -159,33 +159,26 @@
           "The wind gets up in the small hours and worries at everything that is not tied down.",
           "You wake once, for no reason you can name, and lie listening until you don't.",
           "Far off, a dog. Or something that wants to be taken for one.",
-          "The cold finds the gap between your cloak and the ground, and keeps it."
-      ],
+          "The cold finds the gap between your cloak and the ground, and keeps it.", "Rain starts on the canvas, or on your face, and you decide it is not worth moving for.", "Somebody in the party talks in their sleep, a few words, and none of them are for you.", "You lie awake doing sums about food and days, and get a different answer each time.", "A fox screams, close, like a woman being murdered, and then goes about its evening."],
       "fire": [
           "The fire ticks and settles, and throws a shape on the ground that is not there when you look.",
           "You feed the fire at some hour and watch it take, which is worth doing for its own sake.",
-          "Sparks go up and out, and for a moment you can see nothing at all beyond them."
-      ],
+          "Sparks go up and out, and for a moment you can see nothing at all beyond them.", "The fire burns down to a red eye and watches you back.", "Green wood spits and a coal lands on your cloak; you brush it off before it wakes you properly.", "The smoke changes its mind about which way to go, and finds you."],
       "forest": [
           "The trees work all night, creaking and settling like a house.",
-          "Something small and busy goes through the leaf litter, over and over, until it stops."
-      ],
+          "Something small and busy goes through the leaf litter, over and over, until it stops.", "An owl goes over, low, and you hear the air in its feathers.", "A branch comes down somewhere with a long tearing crack and then silence.", "Water drips off leaves for an hour after the rain has stopped.", "Something walks a circle round the camp, well out, and does not come closer."],
       "marsh": [
           "The frogs stop all at once, and start again, and you do not learn why.",
-          "Gas comes up out of the water somewhere and smells of the inside of a grave."
-      ],
+          "Gas comes up out of the water somewhere and smells of the inside of a grave.", "A bird you cannot name calls once an hour, all night, from a different place each time.", "Mist comes up to knee height and stays there, moving without wind.", "The ground under the bedroll is dry when you lie down and wet by morning.", "A light shows out over the water and goes out when you sit up."],
       "mountains": [
           "Stones go down a slope somewhere above you, and take a long time about it.",
-          "The cold up here has a smell to it, like iron and snow."
-      ],
+          "The cold up here has a smell to it, like iron and snow.", "Wind comes down the valley in one piece, hits the camp, and goes on.", "Ice cracks somewhere above, a sound like a door in an empty house.", "The stars do not twinkle up here; they just sit there, hard and close.", "You wake short of breath for no reason and take a while to settle."],
       "tundra": [
           "The silence is complete enough to hear your own blood.",
-          "The sky is scoured clean and there are more stars than anybody could want."
-      ],
+          "The sky is scoured clean and there are more stars than anybody could want.", "The light never quite goes, and you sleep badly under it.", "Frost forms on the outside of your blanket and on the inside of it.", "Something crosses the snow a long way off, dark against white, and is gone.", "The cold gets into the water skins; you break the skin of ice with your thumb."],
       "plains": [
           "Grass, all night, moving like water.",
-          "A long way off, lights: a village, or somebody else's fire."
-      ]
+          "A long way off, lights: a village, or somebody else's fire.", "The horizon flickers with a storm too far off to hear.", "Something big moves through the grass and never shows itself.", "The wind lies down at midnight and the silence wakes you.", "Dew comes down heavy and everything you own is damp by morning."]
   },
   "cooking": {
     "raw_meat": {"becomes": "cooked_meat"},
