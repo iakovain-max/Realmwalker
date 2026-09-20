@@ -130,6 +130,12 @@ business in the town, the beggar asks for a coin before you have said anything. 
 in the game — had four ways to miss and one way to describe each wound; both are three times as many now, along
 with more ways for every kind of blow to land, for a fight to end, and for a beaten man to beg.
 
+Three more places where the game used to say one thing forever: every kind of trouble on the road (thirty-six
+of them, from the watch to a dragon) now has three ways of arriving instead of one; every land has six things it
+can do at a night's camp instead of two; and a town in plague, famine, siege or market day has three times as
+much going on in its streets. The tests now keep a floor under all of these lists, so they cannot quietly thin
+out again.
+
 **A test for the first evening.** A new character in a new world is now checked, in two different worlds, for
 the things a new player needs: people in the first town, money in the purse, somebody who sells food, work on
 offer, work that goes into the journal and lights the map, and a road that takes them closer to it.
