@@ -262,11 +262,12 @@ def character_entries(game: GameState) -> dict[str, bytes | str]:
         "visited_settlements": sorted(p.visited_settlements),
         "visited_areas": sorted(p.visited_areas),
         "log": game.log.to_dict(),
-        "party": [c.to_dict() for c in game.party],
+        # The dead do not travel: a companion who died is never written into the save.
+        "party": [c.to_dict() for c in game.party if c.alive or c is game.party[0]],
         "renown": game.renown.to_dict(),
         "arrest": game.arrest,
         "sentence": game.sentence,
-        "waiting": [c.to_dict() for c in game.waiting],
+        "waiting": [c.to_dict() for c in game.waiting if c.alive],
         "lit": game.lit,
         "quests": game.quests,
     }
@@ -333,7 +334,9 @@ def load_game(folder: Path, tables: Tables) -> GameState:
     game.renown = Renown.from_dict(extra["renown"])
     game.arrest = extra.get("arrest")
     game.sentence = extra.get("sentence")
-    game.waiting = extra.get("waiting", [])
+    game.waiting = [c for c in extra.get("waiting", []) if c.alive]
+    if len(game.party) > 1:  # an old save may still hold a companion who died
+        game.party = [c for c in game.party if c.alive or c is game.party[0]]
     game.lit = extra.get("lit")
     game.quests = extra.get("quests", [])
     if not game.renown.flags.get("started"):

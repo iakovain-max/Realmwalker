@@ -182,6 +182,7 @@ def finish_battle(game) -> Aftermath:
             after.notes.append(f"<danger>{c.name} is dead.</>")
             died(game, c)
         game.party = [c for c in game.party if c.alive]
+        game.waiting = [c for c in game.waiting if c.alive]
     elif not leader_alive and game.over is None:
         game.over = {"cause": "died of wounds after a fight", "place": battle.env.ground}
         after.outcome = "death"
@@ -226,6 +227,10 @@ def _settle_townsfolk(game, battle: Battle, result: BattleResult) -> None:
                 from realmwalker.game import law
 
                 law.commit(game, "murder", victim=npc, witnesses=law.witnesses_here(game, exclude=[npc]))
+            if game.quests:
+                from realmwalker.game import quests
+
+                quests.on_npc_death(game, npc)
         else:
             npc.disposition = -100
             npc.remember("was attacked by the traveller")

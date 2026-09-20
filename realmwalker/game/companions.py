@@ -312,9 +312,16 @@ def wait_here(game, c: Character) -> str:
 
 
 def rejoin(game) -> list[str]:
-    """Companions waiting where you now stand join you again."""
+    """Companions waiting where you now stand join you again (the dead do not)."""
     out = []
-    for c in waiting(game):
+    for c in list(game.waiting):
+        if not c.alive:
+            game.waiting.remove(c)
+            died(game, c)
+            out.append(f"<danger>{c.name} is dead.</>")
+            continue
+        if not c.companion:
+            continue
         if c.companion.get("wait_at") == [game.player.x, game.player.y]:
             game.waiting.remove(c)
             c.companion["order"] = "follow"

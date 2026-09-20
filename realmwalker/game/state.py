@@ -156,6 +156,21 @@ class GameState:
         self.log.add(text, category, self.world.time)
 
     # ------------------------------------------------------------------ time
+    def bury_the_dead(self) -> None:
+        """Nobody dead travels with you: whatever killed them, they leave the party and the waiting."""
+        if self.over is not None or self.battle is not None:
+            return
+        gone = [c for c in list(self.party[1:]) + list(self.waiting) if not c.alive]
+        if not gone:
+            return
+        from realmwalker.game.companions import died
+
+        self.party = [c for c in self.party if c.alive or c is self.party[0]]
+        self.waiting = [c for c in self.waiting if c.alive]
+        for c in gone:
+            if c.companion:
+                died(self, c)
+
     def pass_time(self, minutes: float, activity: str = "rest") -> None:
         """Advance the world clock; the party lives through it (needs, weather, wounds) in chunks.
         activity: "walk", "rest", "sleep" or "fight"."""
@@ -178,6 +193,7 @@ class GameState:
             if self.over is not None:
                 self.world.time += remaining
                 break
+        self.bury_the_dead()
         after = self.moment
         if self.world.factions and after.total_days * 24 + after.hour != before.total_days * 24 + before.hour:
             from realmwalker.game import law

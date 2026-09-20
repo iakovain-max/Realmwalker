@@ -390,7 +390,99 @@ def _slay_dragon(game, npc, rng):
     return q
 
 
-BUILDERS = {"bounty": _bounty, "slay_dragon": _slay_dragon, "clear_lair": _clear_lair, "hunt_beast": _hunt_beast, "deliver": _deliver,
+def _escort(game, npc, rng):
+    """Somebody who has to get somewhere, and knows what the roads are like."""
+    from realmwalker.game.people import npcs_in
+
+    w = game.world
+    town = w.settlements[npc.settlement]
+    dests = [s for s in w.settlements if s.id != town.id and 6 <= dist(s, town) <= 30]
+    folk = [n for n in npcs_in(w, town.id) if n.alive and not n.notable and not n.flags.get("companion")
+            and not n.flags.get("escort") and n.job not in ("guard", "beggar")]
+    if not dests or not folk:
+        return None
+    dest = rng.choice(dests)
+    who = rng.choice(folk)
+    q = base_quest(game, npc, "escort", rng, hard=1 + dist(dest, town) / 30)
+    q["target"] = {"dest": dest.id, "npc": who.id}
+    q["words"].update(traveller=who.name, dest=dest.name, where=direction(town, dest))
+    allow_for(q, dist(dest, town))
+    return q
+
+
+def _assassinate(game, npc, rng):
+    """A knife in the dark, for money. The law does not care who paid."""
+    w = game.world
+    town = w.settlements[npc.settlement]
+    dests = [s for s in w.settlements if s.id != town.id and 4 <= dist(s, town) <= 30]
+    if not dests:
+        return None
+    dest = rng.choice(dests)
+    mark = _someone_in(game, dest, rng)
+    if mark is None:
+        return None
+    q = base_quest(game, npc, "assassinate", rng, hard=1 + dist(dest, town) / 30)
+    q["target"] = {"dest": dest.id, "npc": mark.id}
+    q["words"].update(target=mark.name, dest=dest.name, where=direction(town, dest))
+    allow_for(q, dist(dest, town) * 2)
+    return q
+
+
+def _cure(game, npc, rng):
+    """The sickness is here, and the herbs are not."""
+    w = game.world
+    town = w.settlements[npc.settlement]
+    if not town.status.get("plague") and not town.status.get("famine"):
+        return None
+    if "healing_herbs" not in game.tables.items:
+        return None
+    q = base_quest(game, npc, "cure", rng, hard=1.2)
+    q["target"] = {"count": rng.randint(4, 7), "item": "healing_herbs", "settlement": town.id}
+    q["words"].update(count=str(q["target"]["count"]))
+    return q
+
+
+def _feud(game, npc, rng):
+    """Two people who will not speak, and a town taking sides."""
+    from realmwalker.game.people import npcs_in
+
+    w = game.world
+    town = w.settlements[npc.settlement]
+    folk = [n for n in npcs_in(w, town.id) if n.alive and n.notable and n.id != npc.id]
+    if len(folk) < 2:
+        return None
+    one, two = rng.sample(folk, 2)
+    q = base_quest(game, npc, "feud", rng)
+    q["target"] = {"a": one.id, "b": two.id, "agreed": []}
+    q["words"].update(one=one.name, two=two.name)
+    return q
+
+
+STEAL_THINGS = [("a ledger", "ledger"), ("a bundle of letters", "letters"), ("a signet", "signet"),
+                ("a deed of land", "deed"), ("a key", "key")]
+
+
+def _steal(game, npc, rng):
+    """Something small, in somebody else's pocket."""
+    w = game.world
+    town = w.settlements[npc.settlement]
+    places = [s for s in w.settlements if dist(s, town) <= 25]
+    rng.shuffle(places)
+    for dest in places:
+        mark = _someone_in(game, dest, rng)
+        if mark is None or mark.id == npc.id:
+            continue
+        what, kind = rng.choice(STEAL_THINGS)
+        q = base_quest(game, npc, "steal", rng, hard=1 + dist(dest, town) / 25)
+        q["target"] = {"dest": dest.id, "npc": mark.id, "kind": kind}
+        q["words"].update(item=what, mark=mark.name, dest=dest.name, where=direction(town, dest))
+        allow_for(q, dist(dest, town) * 2)
+        return q
+    return None
+
+
+BUILDERS = {"bounty": _bounty, "slay_dragon": _slay_dragon, "escort": _escort, "assassinate": _assassinate,
+            "cure": _cure, "feud": _feud, "steal": _steal, "clear_lair": _clear_lair, "hunt_beast": _hunt_beast, "deliver": _deliver,
             "retrieve": _retrieve, "rescue": _rescue, "collect_debt": _collect_debt, "investigate": _investigate}
 
 
@@ -452,6 +544,12 @@ def accept(game, q) -> list[str]:
     if q["template"] == "hunt_beast":
         game.player.explored[t["x"], t["y"]] = True
         notes.append("<info>Where it was last seen is marked on your map.</>")
+    if q["template"] == "escort":
+        who = w.npcs.get(t["npc"])
+        if who is not None:
+            who.flags["escort"] = q["id"]
+            who.present = False
+            notes.append(f"<info>{who.name} gathers their things and falls in behind you.</>")
     if q["template"] == "deliver":
         letter = Item(uid=0, def_id="sealed_letter", qty=1, made_at=w.time,
                       name=f"sealed letter for {q['words']['recipient'].split(',')[0]}", tags=[f"quest:{q['id']}"])
@@ -533,8 +631,11 @@ def site_cleared(game, site_id: int) -> None:
 
 
 def on_battle(game, result, actor=None) -> None:
-    """After a fight: a lair's master beaten, a gang's captain dead or taken, a named beast brought down."""
+    """After a fight: a lair's master beaten, a gang's captain dead or taken, a named beast brought down —
+    or somebody you were supposed to be keeping alive, dead."""
     if result.outcome not in ("victory", "parley"):
+        for q in escorting(game):
+            lost_escort(game, q, f"{q['words']['traveller']} did not survive the fight.")
         return
     lm = game.local
     site = game.world.site_at(game.player.x, game.player.y)
@@ -556,11 +657,51 @@ def on_battle(game, result, actor=None) -> None:
                 mark_done(game, q)
 
 
+def escorting(game) -> list[dict]:
+    """Jobs whose traveller is walking with you right now."""
+    return [q for q in active(game) if q["template"] == "escort" and not q["done"]]
+
+
+def deliver_escort(game, q) -> None:
+    """The traveller is where they wanted to be, and pays on the spot."""
+    from realmwalker.game.people import town_of
+
+    w = game.world
+    who = w.npcs.get(q["target"]["npc"])
+    dest = w.settlements[q["target"]["dest"]]
+    if who is not None:
+        old = town_of(w, who.settlement)
+        if who.id in old.npcs:
+            old.npcs.remove(who.id)
+        who.settlement = dest.id
+        who.present = True
+        who.flags.pop("escort", None)
+        who.post = who.home = (0, 0)
+        who.building = -1
+        town_of(w, dest.id).npcs.append(who.id)
+    mark_done(game, q)
+    for line in reward(game, q, text=f"{q['words']['traveller']} counts out {money_text(q['reward'])} at the gate, "
+                                     f"and does not look back."):
+        game.say(line, "good")
+
+
+def lost_escort(game, q, why: str) -> None:
+    who = game.world.npcs.get(q["target"]["npc"])
+    if who is not None:
+        who.alive = False
+        who.flags.pop("escort", None)
+    fail(game, q, why)
+
+
 def on_arrive(game) -> None:
-    """Walking onto a tile of the wide world: a hunted beast may be waiting there."""
+    """Walking onto a tile of the wide world: a hunted beast may be waiting there, or a journey may end."""
+    p = game.player
+    for q in escorting(game):
+        dest = game.world.settlements[q["target"]["dest"]]
+        if (p.x, p.y) == (dest.x, dest.y):
+            deliver_escort(game, q)
     if game.encounter is not None or game.battle is not None:
         return
-    p = game.player
     for q in active(game):
         t = q["target"]
         if q["template"] != "hunt_beast" or q["done"] or (p.x, p.y) != (t["x"], t["y"]):
@@ -698,6 +839,58 @@ def free_captive(game, lm, x: int, y: int) -> None:
         react(game, "mercy", "help_poor")
 
 
+def on_pickpocket(game, npc) -> list[str]:
+    """A hand in the right pocket: a job may be after what is in it."""
+    out = []
+    for q in active(game):
+        if q["template"] == "steal" and q["target"].get("npc") == npc.id and not q["done"]:
+            it = Item(uid=0, def_id="sealed_letter", qty=1, made_at=game.world.time,
+                      name=q["words"]["item"], tags=[f"quest:{q['id']}"])
+            from realmwalker.rules.inventory import add_existing
+
+            add_existing(game.leader, game.tables.items, it)
+            mark_done(game, q)
+            out.append(f"<loot>Among the coins: {q['words']['item']}.</>")
+            if q.get("hidden") == "framed":
+                reveal(game, q)
+    return out
+
+
+def on_npc_death(game, npc) -> None:
+    """Someone has died: a job may have wanted exactly that, or the opposite."""
+    for q in active(game):
+        t = q["target"]
+        if q["done"]:
+            continue
+        if q["template"] == "assassinate" and t.get("npc") == npc.id:
+            mark_done(game, q)
+        elif q["template"] == "escort" and t.get("npc") == npc.id:
+            fail(game, q, f"{q['words']['traveller']} is dead.")
+        elif q["template"] == "feud" and npc.id in (t.get("a"), t.get("b")):
+            fail(game, q, "One of them is past making peace.")
+        elif q["template"] in ("deliver", "collect_debt", "steal") and t.get("npc") == npc.id:
+            fail(game, q, f"{npc.name} is dead, and that is the end of that.")
+
+
+def herbs_held(game, q) -> int:
+    kind = q["target"].get("item", "healing_herbs")
+    return sum(it.qty for c in game.party for it in c.inventory if it.def_id == kind)
+
+
+def take_herbs(game, q) -> None:
+    from realmwalker.rules.inventory import remove_item
+
+    left = int(q["target"].get("count", 0))
+    for c in game.party:
+        for it in list(c.inventory):
+            if left <= 0:
+                return
+            if it.def_id == q["target"].get("item", "healing_herbs"):
+                take = min(left, it.qty)
+                remove_item(c, it.uid, take)
+                left -= take
+
+
 def holds_quest_item(game, q) -> bool:
     tag = f"quest:{q['id']}"
     return any(tag in it.tags for c in game.party for it in c.inventory)
@@ -806,7 +999,8 @@ def payer(game, q, npc) -> bool:
 
 # ---------------------------------------------------------------------------- conversation
 QUEST_CHOICES = {"work", "work_accept", "work_decline", "quest_turn_in", "deliver_letter", "show_letter",
-                 "blackmail", "collect_debt", "debt_take", "debt_forgive", "ask_missing"}
+                 "blackmail", "collect_debt", "debt_take", "debt_forgive", "ask_missing", "make_peace",
+                 "buy_peace", "warn_target", "hand_over_goods"}
 
 
 def talk_choices(conv) -> list:
@@ -824,7 +1018,7 @@ def talk_choices(conv) -> list:
         tpl = q["template"]
         name = title(game, q)
         if q["done"] and payer(game, q, npc):
-            if tpl == "retrieve" and not holds_quest_item(game, q):
+            if tpl in ("retrieve", "steal") and not holds_quest_item(game, q):
                 out.append(Choice("quest_turn_in", f"About {name}...", False, "you don't have it with you",
                                   {"q": q["id"]}))
             elif tpl == "collect_debt" and game.leader.money < t.get("collected", 0):
@@ -850,6 +1044,19 @@ def talk_choices(conv) -> list:
                 tried = t.get("tried") == game.moment.total_days
                 out.append(Choice("collect_debt", f"[Persuasion or Intimidation] You owe {q['giver_name']} money.",
                                   not tried, "they will not hear of it again today", {"q": q["id"]}))
+        if tpl == "feud" and not q["done"] and npc.id in (t.get("a"), t.get("b")) and \
+                npc.id not in t.get("agreed", []):
+            out.append(Choice("make_peace", f"[Persuasion] About {other_name(game, q, npc)}...",
+                              data={"q": q["id"]}))
+            price = peace_price(q)
+            out.append(Choice("buy_peace", f"Offer {money_text(price)} to let it go.",
+                              game.leader.money >= price, "you don't have that much", {"q": q["id"]}))
+        if tpl == "assassinate" and not q["done"] and npc.id == t.get("npc") and q.get("revealed"):
+            out.append(Choice("warn_target", "Someone is paying to have you killed.", data={"q": q["id"]}))
+        if tpl == "cure" and q["done"] and payer(game, q, npc):
+            pass  # handled by quest_turn_in
+        if tpl == "cure" and not q["done"] and payer(game, q, npc) and herbs_held(game, q) >= t.get("count", 0):
+            out.append(Choice("hand_over_goods", f"I have the herbs.", data={"q": q["id"]}))
         if tpl == "investigate" and not q["done"] and here == q["town"] and not npc.notable and \
                 npc.id not in t.get("asked", []) and not t.get("clue"):
             out.append(Choice("ask_missing", "What do you know about the people going missing?", data={"q": q["id"]}))
@@ -898,7 +1105,7 @@ def talk_choose(conv, choice) -> None:
         conv.you_say("It's done.")
         share = 1.0
         text = None
-        if q["template"] == "retrieve":
+        if q["template"] in ("retrieve", "steal"):
             take_quest_item(game, q)
         elif q["template"] == "collect_debt":
             game.leader.money -= t.get("collected", 0)
@@ -1012,6 +1219,61 @@ def talk_choose(conv, choice) -> None:
         from realmwalker.game.people import change_disposition
 
         change_disposition(npc, 30)
+    elif cid == "make_peace":
+        conv.you_say(f"About {other_name(game, npc=npc, q=q)}...")
+        roll = dice.d20(rng).natural + sheet.skill_bonus("persuasion")
+        dc = 13 + (2 if "proud" in npc.traits or "suspicious" in npc.traits else 0)
+        if roll >= dc:
+            t.setdefault("agreed", []).append(npc.id)
+            conv.npc_says("\"... Fine. For you, and for the sake of the place. Not for them.\"")
+            conv.note(f"<dim>(Persuasion {roll} vs {dc})</>")
+            check_feud(game, q, conv)
+        else:
+            conv.npc_says("\"You don't know what they did. Don't come to me about it again.\"")
+            conv.note(f"<dim>(Persuasion {roll} vs {dc})</>")
+    elif cid == "buy_peace":
+        price = peace_price(q)
+        if game.leader.money < price:
+            return
+        game.leader.money -= price
+        npc.purse += price
+        t.setdefault("agreed", []).append(npc.id)
+        from realmwalker.game.people import change_disposition
+
+        change_disposition(npc, 15)
+        conv.note(f"You pay {money_text(price)}. It is remarkable what that settles.")
+        check_feud(game, q, conv)
+    elif cid == "warn_target":
+        conv.you_say("Someone is paying to have you killed.")
+        conv.npc_says("A long silence. \"Who?\"")
+        q["state"] = "finished"
+        q["journal"].append(f"You warned {q['words']['target']} instead of killing them. {q['giver_name']} will "
+                            f"learn of it sooner or later.")
+        paid = min(max(npc.purse, 0), q["reward"])
+        npc.purse -= paid
+        game.leader.money += paid
+        from realmwalker.game.people import change_disposition
+
+        change_disposition(npc, 40)
+        npc.remember(f"was warned by the traveller that {q['giver_name']} wanted them dead")
+        giver = game.world.npcs.get(q["giver"])
+        if giver is not None:
+            giver.disposition = -70
+            giver.remember("was betrayed by the traveller")
+        conv.note(f"<loot>{npc.first_name} gives you {money_text(paid)} and tells you to go.</>")
+        from realmwalker.game.companions import react
+
+        react(game, "mercy")
+    elif cid == "hand_over_goods":
+        conv.you_say("I have the herbs.")
+        take_herbs(game, q)
+        mark_done(game, q)
+        settlement = game.world.settlements[t.get("settlement", q["town"])]
+        settlement.status.pop("plague", None)
+        conv.npc_says("\"Thank God. Thank you. Now go and wash your hands.\"")
+        for line in reward(game, q, text=f"{npc.first_name} pays you {money_text(q['reward'])}, which is everything "
+                                         f"the parish had."):
+            conv.note(line)
     elif cid == "ask_missing":
         conv.you_say("What do you know about the people going missing?")
         t.setdefault("asked", []).append(npc.id)
@@ -1026,6 +1288,26 @@ def talk_choose(conv, choice) -> None:
             conv.npc_says(rng.choice(["\"Nothing. I don't know anything. Ask someone else.\"",
                                       "\"Keep your voice down. ... No. I can't.\"",
                                       "\"People leave. It's a hard place.\""]))
+
+
+def other_name(game, q=None, npc=None) -> str:
+    """In a feud, the other one."""
+    t = q["target"]
+    other = t["b"] if npc.id == t.get("a") else t["a"]
+    who = game.world.npcs.get(other)
+    return who.name if who is not None else "them"
+
+
+def peace_price(q) -> int:
+    return max(200, int(q["reward"] * 0.4))
+
+
+def check_feud(game, q, conv=None) -> None:
+    t = q["target"]
+    if len(set(t.get("agreed", []))) >= 2:
+        mark_done(game, q)
+        if conv is not None:
+            conv.note("<good>That is both of them. Tell whoever asked.</>")
 
 
 def read_letter(game, it) -> list[str]:
@@ -1068,6 +1350,11 @@ def ai_facts(game, q) -> dict:
         "collect_debt": f"collect a debt of {words.get('debt')} from {words.get('debtor')} in {words.get('dest')}; "
                         f"the traveller keeps a quarter",
         "investigate": f"find out where the people who have gone missing from {town.name} are being taken",
+        "escort": f"walk with {words.get('traveller')} as far as {words.get('dest')} and keep them alive",
+        "assassinate": f"kill {words.get('target')} in {words.get('dest')}, quietly",
+        "cure": f"bring {words.get('count')} lots of healing herbs for the sickness in {town.name}",
+        "feud": f"make peace between {words.get('one')} and {words.get('two')}, who have not spoken in two years",
+        "steal": f"pick {words.get('mark')}'s pocket in {words.get('dest')} and bring back {words.get('item')}",
         "slay_dragon": f"kill the dragon {words.get('dragon')}, which lairs at {words.get('site')} "
                        f"({words.get('where')}) and has burned and bled this country for years",
     }[q["template"]]

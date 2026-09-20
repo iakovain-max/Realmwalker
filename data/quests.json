@@ -8,6 +8,11 @@
     "retrieve": {"givers": ["priest", "lord", "headman", "shopkeeper", "smith"], "reward": [3000, 10000], "days": [20, 45], "standing": 8, "xp": 300, "hidden": {}},
     "rescue": {"givers": ["headman", "innkeeper", "farmer", "washerwoman", "carter", "lord"], "reward": [2000, 6000], "days": [8, 18], "standing": 10, "xp": 300, "hidden": {}},
     "collect_debt": {"givers": ["shopkeeper", "innkeeper", "smith", "market_trader"], "reward": [800, 3000], "days": [10, 25], "standing": 3, "xp": 80, "hidden": {"destitute": 0.35}},
+    "escort": {"givers": ["innkeeper", "shopkeeper", "market_trader", "priest", "healer", "headman", "lord"], "reward": [1500, 5000], "days": [10, 25], "standing": 5, "xp": 200, "hidden": {"hunted": 0.3}},
+    "assassinate": {"givers": ["lord", "shopkeeper", "innkeeper"], "reward": [6000, 20000], "days": [25, 50], "standing": 6, "xp": 400, "hidden": {"innocent": 0.4}},
+    "cure": {"givers": ["healer", "priest", "headman"], "reward": [2000, 6000], "days": [8, 20], "standing": 10, "xp": 250, "hidden": {}},
+    "feud": {"givers": ["headman", "priest", "innkeeper", "lord"], "reward": [1200, 4000], "days": [10, 25], "standing": 6, "xp": 200, "hidden": {}},
+    "steal": {"givers": ["shopkeeper", "market_trader", "innkeeper", "smith"], "reward": [2000, 7000], "days": [10, 25], "standing": 4, "xp": 250, "hidden": {"framed": 0.25}},
     "slay_dragon": {"givers": ["lord", "headman", "priest"], "reward": [40000, 90000], "days": [60, 120], "standing": 20, "xp": 1500, "hidden": {}},
     "investigate": {"givers": ["priest", "guard", "headman", "healer"], "reward": [2500, 7000], "days": [20, 40], "standing": 8, "xp": 300, "hidden": {}}
   },
@@ -66,6 +71,49 @@
       "hidden": {"destitute": ["{debtor_name} has nothing. The house is bare, and there are children. You could still take what little there is."]},
       "done": ["You have the money. Take it to {giver}."],
       "failed": ["{giver} has written the debt off, and you with it."]
+    },
+    "escort": {"givers": ["innkeeper", "shopkeeper", "market_trader", "priest", "healer", "headman", "lord"], "reward": [1500, 5000], "days": [10, 25], "standing": 5, "xp": 200, "hidden": {"hunted": 0.3}},
+    "assassinate": {"givers": ["lord", "shopkeeper", "innkeeper"], "reward": [6000, 20000], "days": [25, 50], "standing": 6, "xp": 400, "hidden": {"innocent": 0.4}},
+    "cure": {"givers": ["healer", "priest", "headman"], "reward": [2000, 6000], "days": [8, 20], "standing": 10, "xp": 250, "hidden": {}},
+    "feud": {"givers": ["headman", "priest", "innkeeper", "lord"], "reward": [1200, 4000], "days": [10, 25], "standing": 6, "xp": 200, "hidden": {}},
+    "steal": {"givers": ["shopkeeper", "market_trader", "innkeeper", "smith"], "reward": [2000, 7000], "days": [10, 25], "standing": 4, "xp": 250, "hidden": {"framed": 0.25}},
+    "escort": {
+      "title": ["Take {traveller} to {dest}"],
+      "pitch": ["\"{traveller} has to reach {dest}, and the roads are what they are. Walk with them, keep them breathing, and they'll pay you {reward} when you get there. {days} days.\"", "\"I'll not send {traveller} out alone. Go with them as far as {dest} and there's {reward} in it at the other end.\""],
+      "journal": ["{traveller} is walking with you to {dest} ({where}). They pay {reward} on arrival. If you are beaten on the road, they will not survive it. {days} days."],
+      "hidden": {"hunted": ["{traveller} tells you, somewhere past the second night, why they are really leaving: there are people behind them who would rather they never arrived."]},
+      "done": ["{traveller} is safe in {dest}."],
+      "failed": ["{traveller} will not be reaching {dest} now."]
+    },
+    "assassinate": {
+      "title": ["{target} must die"],
+      "pitch": ["\"There is a man in {dest} called {target}. I want him dead, and I want it quiet. {reward}, and we never spoke. {days} days.\"", "\"{target}, in {dest}. Do it however you like, but do it. {reward} when I hear they are in the ground.\""],
+      "journal": ["{giver} of {town} is paying {reward} for the death of {target}, in {dest} ({where}). {days} days. Murder is murder, and the law is the law."],
+      "hidden": {"innocent": ["Face to face with {target}, the story falls apart: they are no rival and no traitor, only someone who saw or refused something. {giver} lied to you. You can still do it. You can also tell them who paid."]},
+      "done": ["{target} is dead."],
+      "failed": ["{target} is still breathing, and {giver} has found someone else."]
+    },
+    "cure": {
+      "title": ["The sickness in {town}"],
+      "pitch": ["\"It is in half the houses now, and I have nothing left to give them. Bring me {count} lots of healing herbs — the hills have them, or a healer will sell them — and I can hold this back. {reward}, everything the parish has. {days} days.\""],
+      "journal": ["{giver} of {town} needs {count} lots of healing herbs to fight the sickness here. Forage for them, or buy them from a healer. {reward}. {days} days."],
+      "done": ["You have the herbs. Take them to {giver}."],
+      "failed": ["The sickness in {town} took its course without you."]
+    },
+    "feud": {
+      "title": ["{one} and {two}"],
+      "pitch": ["\"{one} and {two} have not spoken in two years, and the whole place is taking sides. Talk to them both. Get it settled, however you have to. {reward} for peace and quiet. {days} days.\""],
+      "journal": ["{one} and {two}, both of {town}, are feuding. Talk each of them round (persuasion, or money). {giver} pays {reward}. {days} days."],
+      "done": ["{one} and {two} will speak to each other again. {giver} owes you {reward}."],
+      "failed": ["The quarrel between {one} and {two} has gone past talking."]
+    },
+    "steal": {
+      "title": ["{item}, from {mark}"],
+      "pitch": ["\"{mark} carries {item}. I want it. Lift it, don't ask why, and there's {reward} in it. Get caught and I never heard of you. {days} days.\""],
+      "journal": ["Lift {item} from {mark} in {dest} ({where}) for {giver} of {town}: get close, and pick their pocket. {reward}. {days} days."],
+      "hidden": {"framed": ["Looking at {item} properly, you understand what it is: not {giver}'s property at all. Handing it over makes you part of something; handing it to the law makes you an informer."]},
+      "done": ["You have {item}. Now get it to {giver}."],
+      "failed": ["{mark} knows to watch their pockets now."]
     },
     "slay_dragon": {
       "title": ["Kill {dragon}"],

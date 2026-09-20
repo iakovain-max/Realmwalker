@@ -255,6 +255,11 @@ def pickpocket(conv) -> None:
         game.leader.money += take
         conv.note(f"<loot>Your fingers find their purse: {money_text(take)}.</> <dim>(Sleight of Hand {roll} vs {watch})</>"
                   if take else f"<dim>Their purse is empty. (Sleight of Hand {roll} vs {watch})</>")
+        if game.quests:
+            from realmwalker.game import quests
+
+            for line in quests.on_pickpocket(game, npc):
+                conv.note(line)
         others = [n for n in law.witnesses_here(game, exclude=[npc]) if dice.d20(rng).natural + 2 >= roll]
         if others:
             game.say(f"<warn>{others[0].label().capitalize()} saw that.</>", "warn")

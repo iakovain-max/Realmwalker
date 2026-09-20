@@ -109,6 +109,7 @@ def check_death(game, char: Character) -> None:
         game.travel = None
     else:
         game.party = [c for c in game.party if c.alive]
+        game.waiting = [c for c in getattr(game, "waiting", []) if c.alive]
         from realmwalker.game.companions import died
 
         died(game, char)

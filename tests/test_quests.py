@@ -93,7 +93,9 @@ def test_offers_are_tied_to_real_things(game):
             if "gang" in t:
                 assert w.factions[t["gang"]].kind == "bandit_gang"
             if "npc" in t:
-                assert w.npcs[t["npc"]].settlement == t["dest"]
+                assert t["npc"] in w.npcs
+                if q["template"] != "escort":  # the one you escort starts where the work was offered
+                    assert w.npcs[t["npc"]].settlement == t["dest"]
             for kind in ("title", "pitch", "journal", "done", "failed"):
                 text = quests.fill(game, q, kind)
                 assert text and "{" not in text, (q["template"], kind, text)
@@ -431,3 +433,111 @@ def test_the_ai_can_word_an_offer_through_the_mock(game, mock_p2):
         svc.stop()
     assert q["source"] == "ai" and quests.pitch(game, q).startswith('"')
     assert quests.terms(q) == f"{quests.money_text(q['reward'])}, {q['days']} days"
+
+
+# ---------------------------------------------------------------------------- the rest of the work (M9+)
+def test_walking_someone_home(game):
+    q, npc = offer(game, "escort")
+    quests.accept(game, q)
+    who = game.world.npcs[q["target"]["npc"]]
+    assert who.flags.get("escort") == q["id"] and not who.present
+    dest = game.world.settlements[q["target"]["dest"]]
+    money = game.leader.money
+    game.player.x, game.player.y = dest.x, dest.y
+    quests.on_arrive(game)
+    assert q["state"] == "finished" and game.leader.money == money + q["reward"]
+    assert who.settlement == dest.id and who.present and not who.flags.get("escort")
+
+
+def test_losing_the_one_you_were_walking_with(game):
+    q, npc = offer(game, "escort")
+    quests.accept(game, q)
+    who = game.world.npcs[q["target"]["npc"]]
+    quests.on_battle(game, result("fled"))
+    assert q["state"] == "failed" and not who.alive
+
+
+def test_a_knife_in_the_dark_or_a_warning(game):
+    q, npc = offer(game, "assassinate")
+    quests.accept(game, q)
+    mark = game.world.npcs[q["target"]["npc"]]
+    quests.on_npc_death(game, mark)
+    assert q["done"]
+    money = game.leader.money
+    conv = Conversation(game, npc)
+    conv.choose(next(c for c in conv.menu() if c.id == "quest_turn_in"))
+    assert q["state"] == "finished" and game.leader.money == money + q["reward"]
+    # The other way: warn them instead.
+    q2, npc2 = offer(game, "assassinate")
+    q2["hidden"] = "innocent"
+    quests.accept(game, q2)
+    quests.reveal(game, q2)
+    mark2 = game.world.npcs[q2["target"]["npc"]]
+    mark2.purse = 5000
+    s = game.world.settlements[mark2.settlement]
+    game.player.x, game.player.y = s.x, s.y
+    conv = Conversation(game, mark2)
+    conv.choose(next(c for c in conv.menu() if c.id == "warn_target"))
+    assert q2["state"] == "finished" and mark2.disposition > 0
+    assert game.world.npcs[q2["giver"]].disposition <= -70
+
+
+def test_herbs_against_the_sickness(game):
+    s = a_town(game)
+    s.status["plague"] = {"until": 10**6}
+    folk = visit(game, s)
+    npc = next(n for n in folk if n.job in ("healer", "priest", "headman"))
+    q = quests.make_offer(game, npc, game.world.rng.child("cure"), "cure")
+    assert q is not None
+    quests.accept(game, q)
+    conv = Conversation(game, npc)
+    assert not any(c.id == "hand_over_goods" for c in conv.menu())  # you have no herbs yet
+    from realmwalker.rules.inventory import add_item
+
+    add_item(game.leader, game.tables.items, "healing_herbs", q["target"]["count"])
+    money = game.leader.money
+    conv = Conversation(game, npc)
+    conv.choose(next(c for c in conv.menu() if c.id == "hand_over_goods"))
+    assert q["state"] == "finished" and game.leader.money == money + q["reward"]
+    assert not s.status.get("plague")  # the sickness is checked, for now
+    assert quests.herbs_held(game, q) == 0
+
+
+def test_settling_a_feud(game, monkeypatch):
+    q, npc = offer(game, "feud")
+    quests.accept(game, q)
+    one = game.world.npcs[q["target"]["a"]]
+    two = game.world.npcs[q["target"]["b"]]
+    s = game.world.settlements[one.settlement]
+    game.player.x, game.player.y = s.x, s.y
+    fixed_d20(monkeypatch, 20)
+    conv = Conversation(game, one)
+    conv.choose(next(c for c in conv.menu() if c.id == "make_peace"))
+    assert one.id in q["target"]["agreed"] and not q["done"]
+    # The other one takes money instead.
+    game.leader.money = 100000
+    conv = Conversation(game, two)
+    conv.choose(next(c for c in conv.menu() if c.id == "buy_peace"))
+    assert q["done"]
+    conv = Conversation(game, npc)
+    conv.choose(next(c for c in conv.menu() if c.id == "quest_turn_in"))
+    assert q["state"] == "finished"
+
+
+def test_picking_a_pocket_for_someone_else(game, monkeypatch):
+    from realmwalker.game import law_talk
+
+    q, npc = offer(game, "steal")
+    quests.accept(game, q)
+    mark = game.world.npcs[q["target"]["npc"]]
+    mark.purse = 500
+    s = game.world.settlements[mark.settlement]
+    game.player.x, game.player.y = s.x, s.y
+    game.enter_local()
+    fixed_d20(monkeypatch, 20)
+    conv = Conversation(game, mark)
+    law_talk.pickpocket(conv)
+    assert q["done"] and quests.holds_quest_item(game, q)
+    conv = Conversation(game, npc)
+    conv.choose(next(c for c in conv.menu() if c.id == "quest_turn_in"))
+    assert q["state"] == "finished" and not quests.holds_quest_item(game, q)

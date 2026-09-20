@@ -247,3 +247,22 @@ def test_companions_fight_under_your_command(game):
         seen.add(f.char.name)
         b.do_dodge(f)
     assert c.name in seen or b.outcome is not None
+
+
+def test_the_dead_do_not_travel_with_you(game):
+    """Whatever kills a companion, they leave the party and those waiting (autoplay caught one lingering)."""
+    c, npc, s = hire_one(game)
+    game.leave_local()
+    # One who dies while waiting somewhere is not picked up again.
+    comp.set_order(game, c, "wait")
+    assert c in game.waiting
+    c.alive = False
+    game._arrive(None)
+    assert c not in game.waiting and c not in game.party
+    assert not npc.alive  # the town hears of it
+    # And one who dies in the party is buried as time passes.
+    c.alive = True
+    game.party.append(c)
+    c.alive = False
+    game.bury_the_dead()
+    assert c not in game.party and c not in game.waiting

@@ -184,12 +184,14 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
                 if any(it.qty <= 0 for it in pile):
                     fail("an item on the ground has zero quantity")
             walk = app.tables.terrain.walk[game.remap_for(lm)[lm.terrain]]
+            # A band being fought right now holds its dead until the battle is settled.
+            quiet = game.battle is None and game.aftermath is None
             for a in lm.actors:
                 if not lm.in_bounds(a.x, a.y) or not walk[a.x, a.y]:
                     fail(f"creatures of {a.group} stand in a wall at {(a.x, a.y)}")
-                if not a.creatures:
+                if not a.creatures and quiet:
                     fail(f"an empty band of {a.group} is on the map")
-                if any(not 0 < c.hp <= c.max_hp for c in a.creatures):
+                if quiet and any(not 0 < c.hp <= c.max_hp for c in a.creatures):
                     fail(f"a creature of {a.group} has impossible hit points")
             if lm.kind == "settlement":
                 from realmwalker.game.people import npcs_in, settlement_here
@@ -281,7 +283,9 @@ def _check_factions(game, fail) -> None:
 
 
 def _check_companions(game, fail) -> None:
-    """M7: a party of at most five, loyalty in range, companions tied to real townsfolk."""
+    """M7: a party of at most five, loyalty in range, companions tied to real townsfolk.
+    (One killed in a fight stays in the party until the battle and its aftermath are over.)"""
+    settled = game.battle is None and game.aftermath is None and game.over is None
     if len(game.party) > 1 + int(game.tables.companions["max_companions"]):
         fail(f"the party is too big ({len(game.party)})")
     if game.party and game.party[0].companion:
@@ -297,7 +301,7 @@ def _check_companions(game, fail) -> None:
             fail(f"{c.name} came from nowhere")
         if c in getattr(game, "waiting", []) and not k.get("wait_at"):
             fail(f"{c.name} is waiting nowhere")
-        if not c.alive:
+        if not c.alive and settled:
             fail(f"dead {c.name} is still in the party")
 
 
