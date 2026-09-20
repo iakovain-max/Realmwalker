@@ -111,6 +111,16 @@ finished work, and what to buy before leaving town. Settings gains **AI extras**
 energy for people, places and conversation if you would rather not spend it on regions, dungeons, items, the
 wording of work and obituaries.
 
+**Prisoners are worth more to their own people.** Bind a beaten bandit and you could only ever hand them to the
+watch. If you are sworn to the thieves' guild, their fence will take your prisoners out by the back door and come
+back with three times the head price. Nothing of it is ever spoken about (no news, no fame, only infamy), the
+outlaw's friends think better of you, the local realm thinks worse, and companions who like the law say so.
+
+**Writing the game had and never used.** Sixteen pieces of work all ended with the same sentence about being paid;
+the six pay lines that were sitting in the data are used now (and there are more of them). A trade's door pushed
+open after dark answers "We're shut. Come back in the morning." Somebody who hates you will no longer gossip with
+you about the town or the people in it.
+
 **Fixes.** "Text detail" in Settings did nothing at all until now (it governs street life, companions on the
 road, the weather turning, the sounds of the night and whether the AI is asked to describe regions). The dead no
 longer linger in the party or among those waiting (cleared as time passes, on rejoining,
