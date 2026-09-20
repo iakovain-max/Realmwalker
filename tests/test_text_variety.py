@@ -82,6 +82,8 @@ def test_every_band_can_find_you_three_ways(data):
 
 def test_there_is_plenty_to_meet_on_the_road(data):
     assert len(data["travel_events.json"]["events"]) >= 20
+    for name, event in data["travel_events.json"]["events"].items():
+        assert len(event["intro"]) >= 3, f"{name} always begins the same way"
     assert len(data["quests.json"]["templates"]) >= 16
     assert len(data["quests.json"]["rewards_text"]) >= 4
     for template, words in data["quests.json"]["text"].items():

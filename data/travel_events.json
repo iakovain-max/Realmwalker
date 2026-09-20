@@ -6,7 +6,7 @@
       "where": {"biomes": ["any"], "danger": [0, 10], "time": "any", "season": "any"},
       "weight": 2,
       "intro": ["The ford is under brown water, moving fast, carrying branches. The marker stones are gone.",
-                "Rain upriver: the crossing is a torrent, and the far bank is further away than it was."],
+                "Rain upriver: the crossing is a torrent, and the far bank is further away than it was.", "The river has taken the ford and a good deal of the bank with it. You can hear stones moving in the current."],
       "options": [
         {"label": "Wade it anyway", "check": {"skill": "athletics", "dc": 13,
           "success": {"text": ["You cross with the water at your chest and your heart in your mouth, and come out shaking."], "fatigue": 10, "xp": 10, "time": 40},
@@ -20,7 +20,7 @@
       "where": {"biomes": ["plains", "forest", "hills", "marsh"], "danger": [2, 10], "time": "any", "season": "any"},
       "weight": 2,
       "intro": ["Black beams, a fallen roof, and a yard where nothing moves. It happened weeks ago, and nobody came back.",
-                "A farmstead burned to the sill stones. A dog's chain lies in the ash, with no dog on it."],
+                "A farmstead burned to the sill stones. A dog's chain lies in the ash, with no dog on it.", "A burnt steading, the thatch gone, the walls standing. Somebody's boots are still by the door."],
       "options": [
         {"label": "Search the ruin", "check": {"skill": "investigation", "dc": 11,
           "success": {"text": ["In a pit under the hearthstone: what they hid and never came back for."], "loot": [["salt", "1d2", 0.5], ["wool_bolt", "1", 0.3], ["iron_pot", "1", 0.4]], "money": 80, "time": 40},
@@ -34,7 +34,7 @@
       "where": {"road": true, "biomes": ["any"], "danger": [0, 6], "time": "day", "season": "any"},
       "weight": 3,
       "intro": ["A rope across the road, two men with spears, and a third with a ledger. \"Bridge toll. Lord's orders.\"",
-                "A toll post: a pole, a hut, and men who look as though the arrangement is recent, and theirs."],
+                "A toll post: a pole, a hut, and men who look as though the arrangement is recent, and theirs.", "A chain across the road, a brazier, and three men who ask for the toll before they say good day."],
       "options": [
         {"label": "Pay the toll (2 silver)", "requires": {"money": 20}, "outcome": {"text": ["The rope comes down. The man with the ledger writes nothing in it."], "money": -20, "time": 10}},
         {"label": "[Persuasion] Argue that you are exempt", "check": {"skill": "persuasion", "dc": 13,
@@ -48,7 +48,7 @@
       "where": {"road": true, "biomes": ["any"], "danger": [0, 8], "time": "day", "season": "any"},
       "weight": 3,
       "intro": ["A cart is down to its axle in the ruts, one wheel off, and a carter is arguing with an ox about it.",
-                "A wagon leans in the mud with its load shifted. The driver is old, and the light is going."],
+                "A wagon leans in the mud with its load shifted. The driver is old, and the light is going.", "A carter is heaving at a cart with a split shaft, alone, and getting nowhere."],
       "options": [
         {"label": "Put your back into it", "check": {"skill": "athletics", "dc": 12,
           "success": {"text": ["Between you the cart comes up and the wheel goes on. They press what they can spare on you, which is little, and mean it."], "money": 120, "items": [["bread", "1"]], "deed": "helped a carter out of the mud", "xp": 15, "fatigue": 10, "time": 50},
@@ -62,7 +62,7 @@
       "where": {"biomes": ["plains", "hills", "tundra", "forest"], "danger": [0, 10], "time": "any", "season": "any"},
       "weight": 1,
       "intro": ["Nine stones, or eight and the stump of one, in a ring on the open ground. Older than anything with a name.",
-                "Standing stones, lichened and leaning. Sheep have worn a path around the outside, and nothing grows inside."],
+                "Standing stones, lichened and leaning. Sheep have worn a path around the outside, and nothing grows inside.", "A ring of stones on the skyline, and a track that goes round it rather than through."],
       "options": [
         {"label": "Camp inside the ring", "outcome": {"text": ["You sleep badly, and dream of people walking in a circle, and wake with the feeling of having been counted."], "fatigue": -20, "xp": 10, "time": 240}},
         {"label": "Look the stones over", "check": {"skill": "arcana", "dc": 12,
@@ -76,7 +76,7 @@
       "where": {"biomes": ["forest", "pine_forest"], "danger": [0, 8], "time": "any", "season": "any"},
       "weight": 2,
       "intro": ["Smoke from a covered mound, and two soot-black figures who watch you come with the patience of people who cannot leave their fire.",
-                "A charcoal camp in a clearing: the mound smoking, a lean-to, and a dog that does not bark."],
+                "A charcoal camp in a clearing: the mound smoking, a lean-to, and a dog that does not bark.", "A hut of turf and a smoking mound, and a man who watches you the whole way past without a word."],
       "options": [
         {"label": "Share their fire and their talk", "outcome": {"text": ["They talk about the forest the way other people talk about a difficult relative. You warm through, and hear what has been on the roads."], "fatigue": -12, "news": true, "xp": 5, "time": 60}},
         {"label": "Buy charcoal and a meal", "requires": {"money": 30}, "outcome": {"text": ["Black bread, black hands, and fuel that will light in any weather."], "money": -30, "items": [["firewood", "2"], ["bread", "1"]], "time": 30}},
@@ -88,7 +88,7 @@
       "where": {"biomes": ["any"], "danger": [0, 6], "time": "any", "season": "any"},
       "weight": 2,
       "intro": ["A woman comes out of a turf cottage at the sound of you and asks, without preamble, whether you have anything for a fever.",
-                "A cottage, a thin dog, and a man holding a child who is too quiet. \"Is one of you a healer?\""],
+                "A cottage, a thin dog, and a man holding a child who is too quiet. \"Is one of you a healer?\"", "A cottage with the shutters closed in daylight, and somebody inside coughing badly."],
       "options": [
         {"label": "Give them healing herbs", "requires": {"items": [["healing_herbs", 1]]}, "outcome": {"text": ["You show them how to steep it. The child drinks, and sleeps, and the fever will break or it will not \u2014 but they have something now."], "items": [["healing_herbs", -1]], "deed": "gave medicine to a sick child", "xp": 20, "time": 40}},
         {"label": "[Medicine] Do what you can", "check": {"skill": "medicine", "dc": 13,
@@ -103,7 +103,7 @@
       "where": {"biomes": ["marsh", "plains", "forest"], "danger": [0, 10], "time": "any", "season": "any"},
       "weight": 1,
       "intro": ["Face down in the reeds, a week in the water, with the crows already disappointed.",
-                "A body in the shallows, caught on a root, turning slowly with the current."],
+                "A body in the shallows, caught on a root, turning slowly with the current.", "Something pale turns over in the eddy under the bank, and turns over again."],
       "options": [
         {"label": "Go through his pockets", "outcome": {"text": ["A purse, swollen leather, and a letter too wet to read. Whoever he was, he is not using them."], "money": 150, "loot": [["found_letter", "1", 0.5], ["gold_ring", "1", 0.2]], "deed": "robbed a drowned man", "time": 20}},
         {"label": "Pull him out and cover him", "outcome": {"text": ["He is heavier than he looks, and you are wet to the waist, and there are stones enough to keep the crows off."], "deed": "gave a drowned stranger a grave", "xp": 15, "fatigue": 12, "time": 45}},
@@ -115,7 +115,7 @@
       "where": {"road": true, "biomes": ["any"], "danger": [0, 8], "time": "day", "season": "any"},
       "weight": 3,
       "intro": ["Six carts, twenty oxen and a dozen hired swords, going the other way at the pace of the slowest wheel.",
-                "A caravan is halted at the roadside, resting the beasts. The guards watch you the way guards do; the factor does not look up from his tally."],
+                "A caravan is halted at the roadside, resting the beasts. The guards watch you the way guards do; the factor does not look up from his tally.", "A line of carts on the road ahead, moving at the pace of the slowest ox, with outriders watching the treeline."],
       "options": [
         {"label": "See what they are carrying", "shop": {"stock": [["salt", 6], ["pepper", 2], ["wool_bolt", 3], ["linen_bolt", 3], ["wheat", 6], ["rations", 6], ["fodder", 4], ["iron_bar", 2], ["oil_flask", 3]], "markup": 1.35}},
         {"label": "Walk with them for a while", "outcome": {"text": ["You match their pace for a few hours. Nothing troubles a column this size, and the factor is glad of another sword; at the parting he gives you what he can spare."], "money": 60, "xp": 10, "fatigue": 8, "news": true, "time": 180}},
@@ -131,7 +131,7 @@
       "where": {"road": true, "biomes": ["any"], "danger": [0, 6], "time": "day", "season": "any"},
       "weight": 4,
       "intro": ["A pedlar comes the other way, bent under a pack twice his width, a cudgel through his belt. He raises a hand: friendly, careful.",
-                "A woman leading a laden mule has stopped by the road to rest it. She looks you over and decides you might be customers."],
+                "A woman leading a laden mule has stopped by the road to rest it. She looks you over and decides you might be customers.", "A pedlar sits on his pack at the roadside, rubbing his feet, and brightens when he sees company."],
       "options": [
         {"label": "See what there is to buy", "shop": {"stock": [["rations", 4], ["bread", 3], ["cheese", 2], ["bandages", 5], ["waterskin", 2], ["spirits", 2], ["torch", 4], ["splint", 2], ["firewood", 2]], "markup": 1.5}},
         {"label": "Ask about the road ahead", "outcome": {"text": ["The talk is of prices, tolls and weather, and then, lower: of a place you did not know about."], "news": true, "time": 15}},
@@ -143,7 +143,7 @@
       "where": {"road": true, "biomes": ["any"], "danger": [0, 5], "time": "day", "season": "any"},
       "weight": 3,
       "intro": ["A file of pilgrims in grey wool trudges along the verge, singing badly. Their leader carries a staff hung with little bells.",
-                "Five pilgrims sit by a milestone, sharing a loaf. One waves you over."],
+                "Five pilgrims sit by a milestone, sharing a loaf. One waves you over.", "Pilgrims, twenty of them, walking two abreast and praying out of step."],
       "options": [
         {"label": "Walk a while with them", "outcome": {"text": ["They share bread and gossip, and ask nothing of you. It is the easiest mile in weeks."], "items": [["bread", 1]], "news": true, "fatigue": -10, "time": 60}},
         {"label": "Give them alms (1 silver)", "requires": {"money": 10}, "outcome": {"text": ["The leader blesses you in a language you do not know. It sounds sincere."], "money": -10, "xp": 10, "deed": "gave alms to pilgrims"}},
@@ -155,7 +155,7 @@
       "where": {"road": true, "biomes": ["any"], "danger": [0, 4], "time": "any", "season": "any"},
       "weight": 3,
       "intro": ["Four spearmen and a sergeant on a tired horse block the road. \"Where from, and where to?\"",
-                "A patrol in the lord's colours waves you to the side of the road. They look bored and underpaid."],
+                "A patrol in the lord's colours waves you to the side of the road. They look bored and underpaid.", "Horsemen come up the road at a trot and slow when they see you."],
       "options": [
         {"label": "Answer their questions", "check": {"skill": "persuasion", "dc": 10,
           "success": {"text": ["The sergeant grunts, waves you on, and as you pass mentions trouble further on."], "news": true, "time": 10},
@@ -169,7 +169,7 @@
       "where": {"road": true, "biomes": ["any"], "danger": [3, 10], "time": "day", "season": "any"},
       "weight": 2,
       "intro": ["A cart with a broken wheel, and around it a family: two children, a grandmother, a man with his arm in a sling. Everything they own is on the cart.",
-                "People on the road with bundles and handcarts, faces grey with tiredness, all going the same way: away."],
+                "People on the road with bundles and handcarts, faces grey with tiredness, all going the same way: away.", "A column of people on foot, carrying what they could, nobody talking."],
       "options": [
         {"label": "Share food with them (2 rations)", "requires": {"items": [["rations", 2]]}, "outcome": {"text": ["The children eat as if they had forgotten how. The grandmother holds your hand and will not let go for a while."], "items": [["rations", -2]], "xp": 25, "deed": "shared food with refugees"}},
         {"label": "Give them money (5 silver)", "requires": {"money": 50}, "outcome": {"text": ["The man takes it without a word, then turns away so you won't see his face."], "money": -50, "xp": 15, "deed": "gave money to refugees"}},
@@ -182,7 +182,7 @@
       "where": {"biomes": ["any"], "danger": [1, 10], "time": "day", "season": "any"},
       "weight": 2,
       "intro": ["A man sits against a tree, grey-faced, his hands pressed to his side. There is a lot of blood on the grass.",
-                "A woman lies by the roadside, one leg twisted under her. She has been there a while."],
+                "A woman lies by the roadside, one leg twisted under her. She has been there a while.", "Somebody is calling out from the ditch, and has been for a while by the sound of it."],
       "options": [
         {"label": "Tend the wound (uses a bandage)", "requires": {"items": [["bandages", 1]]}, "check": {"skill": "medicine", "dc": 12,
           "success": {"text": ["You stop the bleeding and get water into them. Later, they press a few coins on you and will not take them back."], "items": [["bandages", -1]], "money": 60, "xp": 30, "deed": "saved a wounded stranger", "time": 40},
@@ -196,7 +196,7 @@
       "where": {"road": false, "biomes": ["any"], "danger": [1, 10], "time": "any", "season": "any"},
       "weight": 2,
       "intro": ["A cold fire-pit, a torn lean-to, scattered belongings. Whoever camped here left in a hurry, or didn't leave at all.",
-                "Somebody's camp, a few days old: tracks everywhere, a smashed pot, a bedroll kicked into the bushes."],
+                "Somebody's camp, a few days old: tracks everywhere, a smashed pot, a bedroll kicked into the bushes.", "A camp nobody broke properly: the fire kicked over, a boot left behind, the tracks going one way fast."],
       "options": [
         {"label": "Search it", "check": {"skill": "investigation", "dc": 10,
           "success": {"text": ["Under the lean-to and in the bushes you find what the owners never came back for."], "loot": [["rations", "1d2", 0.7], ["torch", "1d2", 0.5], ["rope", "1", 0.3], ["bandages", "1d2", 0.4], ["waterskin", "1", 0.3]], "money": 25, "time": 30, "ambush": ["bandits", 0.15]},
@@ -209,7 +209,7 @@
       "where": {"biomes": ["forest", "pine_forest", "hills", "tundra", "plains"], "danger": [0, 7], "time": "day", "season": "any"},
       "weight": 2,
       "intro": ["Two hunters with a deer slung on a pole between them stop to look you over.",
-                "A trapper with a string of pelts over one shoulder falls into step beside you."],
+                "A trapper with a string of pelts over one shoulder falls into step beside you.", "A hunter steps out of the wood with a bow strung and a hare at his belt, and looks you over."],
       "options": [
         {"label": "Trade with them", "shop": {"stock": [["raw_meat", 6], ["hides", 2], ["furs", 1], ["firewood", 2]], "markup": 1.2}},
         {"label": "Ask where the game is", "outcome": {"text": ["They tell you, more or less. Hunters never tell you everything."], "effect": ["hunting_tip", 48], "time": 10}},
@@ -221,7 +221,7 @@
       "where": {"biomes": ["forest", "pine_forest", "plains", "hills", "tundra"], "danger": [0, 10], "time": "any", "season": "any"},
       "weight": 1,
       "intro": ["A deer lies dead in the grass, throat torn, barely touched. Whatever killed it will be back.",
-                "The carcass of an elk, killed within the hour. Crows are gathering but nothing else has come yet."],
+                "The carcass of an elk, killed within the hour. Crows are gathering but nothing else has come yet.", "Flies, a smell, and a sheep opened up ten yards off the road."],
       "options": [
         {"label": "Butcher what you can carry", "check": {"skill": "survival", "dc": 10,
           "success": {"text": ["You work fast and cut away good meat."], "items": [["raw_meat", "1d4+2"]], "time": 30, "ambush": ["wolf_pack", 0.25]},
@@ -234,7 +234,7 @@
       "where": {"biomes": ["any"], "danger": [0, 10], "time": "any", "season": "any"},
       "weight": 2,
       "intro": ["A little stone shrine stands at the crossroads, its saint worn faceless by weather. Someone has left fresh flowers and a few coins.",
-                "A wooden shrine on a post, roofed with bark. Inside: a carved figure, candle stubs, and offerings."],
+                "A wooden shrine on a post, roofed with bark. Inside: a carved figure, candle stubs, and offerings.", "A cairn with a cross wedged into the top of it, and pennies pushed between the stones."],
       "options": [
         {"label": "Pray a while", "outcome": {"text": ["For a few minutes the world is quiet. You feel steadier when you stand."], "fatigue": -15, "xp": 5, "time": 20}},
         {"label": "Leave an offering (1 silver)", "requires": {"money": 10}, "outcome": {"text": ["You add your coin to the others."], "money": -10, "deed": "left an offering at a shrine"}},
@@ -245,7 +245,7 @@
       "name": "a patch of herbs",
       "where": {"road": false, "biomes": ["forest", "plains", "hills", "marsh"], "danger": [0, 10], "time": "day", "season": ["spring", "summer", "autumn"]},
       "weight": 2,
-      "intro": ["In a sheltered hollow, a patch of plants you half recognise: yarrow, comfrey, perhaps woundwort."],
+      "intro": ["In a sheltered hollow, a patch of plants you half recognise: yarrow, comfrey, perhaps woundwort.", "A bank of plants in the shelter of a wall: yarrow, and something that might be comfrey.", "Somebody's old physic garden gone wild at the edge of a ruin, and still useful."],
       "options": [
         {"label": "Gather them", "check": {"skill": "nature", "dc": 11,
           "success": {"text": ["You pick the right ones and bundle them carefully."], "items": [["healing_herbs", "1d3"]], "time": 30},
@@ -257,7 +257,7 @@
       "name": "hungry deserters",
       "where": {"biomes": ["any"], "danger": [2, 8], "time": "any", "season": "any"},
       "weight": 2,
-      "intro": ["Three men in stained soldiers' coats step out of the trees. They have weapons but they look more hungry than dangerous. \"Food,\" one says. \"Please.\""],
+      "intro": ["Three men in stained soldiers' coats step out of the trees. They have weapons but they look more hungry than dangerous. \"Food,\" one says. \"Please.\"", "Men in soldiers' rags sit by the road and get up when they see you, slowly, without enthusiasm.", "Four of them, thin, with spears they are holding like walking sticks."],
       "options": [
         {"label": "Give them food (2 rations)", "requires": {"items": [["rations", 2]]}, "outcome": {"text": ["They eat standing up, like dogs. Then they nod, and go back into the trees."], "items": [["rations", -2]], "xp": 20, "deed": "fed hungry deserters"}},
         {"label": "Tell them to be off", "check": {"skill": "intimidation", "dc": 13,
@@ -271,7 +271,7 @@
       "where": {"road": true, "biomes": ["any"], "danger": [0, 10], "time": "any", "season": "any"},
       "weight": 1,
       "intro": ["A gibbet at the crossroads, and in it what is left of a man. A board nailed below says what he did.",
-                "Two bodies hang from the old oak by the road, turning slowly. The crows have been at them."],
+                "Two bodies hang from the old oak by the road, turning slowly. The crows have been at them.", "A gibbet, empty, with the cage hanging open and the chain oiled."],
       "options": [
         {"label": "Read the notice", "outcome": {"text": ["Banditry on the king's road, it says, and names where. The lord wants the rest of them found."], "news": true, "time": 5}},
         {"label": "Cut them down and bury them", "outcome": {"text": ["It takes an hour. Nobody thanks you, and somebody may mind."], "xp": 10, "deed": "buried the hanged at a crossroads", "fatigue": 10, "time": 60}},
