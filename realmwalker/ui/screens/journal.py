@@ -32,7 +32,10 @@ def details(game, q) -> str:
     w = game.world
     town = w.settlements[q["town"]]
     lines = [f"<title>{esc(quests.title(game, q))}</>", status_markup(game, q), ""]
-    lines.append(f"<dim>For</> {esc(q['giver_name'])} <dim>of</> {esc(town.name)}")
+    if q.get("personal") is not None:
+        lines.append(f"<dim>For</> {esc(q['giver_name'])} <dim>(who travels with you)</>")
+    else:
+        lines.append(f"<dim>For</> {esc(q['giver_name'])} <dim>of</> {esc(town.name)}")
     reward = q["reward"]
     if q["template"] == "collect_debt":
         lines.append(f"<dim>Pay</> a quarter of what you collect (the debt is {esc(q['words'].get('debt', '?'))})")

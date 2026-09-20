@@ -910,6 +910,94 @@ def take_quest_item(game, q) -> None:
                 remove_item(c, it.uid)
 
 
+# ---------------------------------------------------------------------------- a companion's own business
+# What a devoted companion finally asks you for, by what they want out of all this.
+PERSONAL = {"revenge": ("bounty", "clear_lair"), "knowledge": ("retrieve", "investigate"),
+            "cause": ("investigate", "clear_lair"), "loot": ("steal", "retrieve"),
+            "pay": ("collect_debt", "bounty")}
+PERSONAL_PREFACE = {
+    "revenge": "\"I've never asked you for anything. I'm asking now.\"",
+    "knowledge": "\"There is something I have wanted to see since before I met you.\"",
+    "cause": "\"You know what I believe. Here is what it asks of us.\"",
+    "loot": "\"A word. Quietly. There's something I've had my eye on.\"",
+    "pay": "\"Before you ask: this one is mine, not yours.\"",
+}
+
+
+def devoted(game, c) -> bool:
+    spec = game.tables.companions["loyalty"]
+    return bool(c.companion) and float(c.companion.get("loyalty", 0)) >= float(spec["devoted"])
+
+
+def personal_offer(game, c) -> dict | None:
+    """The job a devoted companion asks you for, made once and then kept with them."""
+    comp = c.companion
+    if not comp or comp.get("personal_done") or not devoted(game, c):
+        return None
+    taken = comp.get("personal")
+    if taken is not None:
+        return by_id(game, taken)
+    kept = comp.get("personal_offer")
+    if kept is not None:
+        return kept
+    npc = game.world.npcs.get(comp.get("npc", -1))
+    if npc is None:
+        return None
+    rng = game.world.rng.child(f"personal/{comp.get('npc')}/{game.moment.total_days}")
+    want = comp.get("want", "pay")
+    q = None
+    for template in PERSONAL.get(want, ("bounty",)):
+        q = make_offer(game, npc, rng, template)
+        if q is not None:
+            break
+    if q is None:
+        return None
+    q["personal"] = comp.get("npc", -1)
+    q["reward"] = max(10, q["reward"] // 2)  # a favour, not a contract
+    q["giver_name"] = c.name
+    q["words"]["giver"] = c.name.split()[0]
+    comp["personal_offer"] = q
+    return q
+
+
+def personal_pitch(game, c, q) -> str:
+    want = c.companion.get("want", "pay")
+    return f"{PERSONAL_PREFACE.get(want, '')} {pitch(game, q)}".strip()
+
+
+def accept_personal(game, c, q) -> list[str]:
+    comp = c.companion
+    comp.pop("personal_offer", None)
+    comp["personal"] = q["id"]
+    notes = accept(game, q)
+    from realmwalker.game.companions import change_loyalty
+
+    change_loyalty(c, 5)
+    return notes
+
+
+def refuse_personal(game, c) -> str:
+    from realmwalker.game.companions import change_loyalty, first
+
+    comp = c.companion
+    comp.pop("personal_offer", None)
+    comp["personal_done"] = True
+    change_loyalty(c, -12)
+    return f"{first(c)} says nothing for a while, and then talks about the weather."
+
+
+def finish_personal(game, c, q) -> list[str]:
+    """Telling a companion their own business is settled."""
+    from realmwalker.game.companions import change_loyalty, first
+
+    c.companion["personal_done"] = True
+    change_loyalty(c, 20)
+    out = reward(game, q, text=f"{first(c)} pays you {money_text(q['reward'])} out of their own purse, and you know "
+                               f"better than to refuse it.")
+    out.append(f"<good>{first(c)} will follow you anywhere now.</>")
+    return out
+
+
 # ---------------------------------------------------------------------------- the end of it
 def reward(game, q, *, share: float = 1.0, text: str | None = None) -> list[str]:
     from realmwalker.game import reputation
@@ -973,6 +1061,14 @@ def fail(game, q, why: str | None = None) -> None:
         giver.remember(f"the traveller let them down ({title(game, q)})")
     if q["template"] == "deliver":
         take_quest_item(game, q)
+    if q.get("personal") is not None:
+        from realmwalker.game.companions import change_loyalty, companions
+
+        for c in companions(game):
+            if c.companion.get("personal") == q["id"]:
+                c.companion["personal_done"] = True
+                change_loyalty(c, -15)
+                game.say(f"<warn>{c.name.split()[0]} will not talk about it.</>", "warn")
     game.dirty = True
 
 
@@ -981,7 +1077,7 @@ def daily(game) -> None:
     today = game.moment.total_days
     for q in active(game):
         giver = game.world.npcs.get(q["giver"])
-        if q["giver"] >= 0 and (giver is None or not giver.alive):
+        if q.get("personal") is None and q["giver"] >= 0 and (giver is None or not giver.alive):
             q["state"] = "finished"
             q["journal"].append(f"{q['giver_name']} is dead. Nobody will pay for this now.")
             game.say(f"<warn>Journal: {title(game, q)}: {q['giver_name']} is dead.</>", "warn")
@@ -992,6 +1088,8 @@ def daily(game) -> None:
 
 def payer(game, q, npc) -> bool:
     """Is this the person to report to?"""
+    if q.get("personal") is not None:
+        return False  # you tell them yourself, on the party screen
     if q["giver"] >= 0:
         return npc.id == q["giver"]
     return npc.settlement == q["town"] and npc.job in AUTHORITY_JOBS

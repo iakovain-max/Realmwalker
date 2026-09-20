@@ -266,3 +266,48 @@ def test_the_dead_do_not_travel_with_you(game):
     c.alive = False
     game.bury_the_dead()
     assert c not in game.party and c not in game.waiting
+
+
+def test_a_devoted_companion_asks_something_of_you(game):
+    """M8/M9: high loyalty brings a personal job, and seeing it through binds them to you."""
+    from realmwalker.game import quests
+
+    c, npc, s = hire_one(game)
+    c.companion["loyalty"] = 95
+    c.companion["want"] = "revenge"
+    q = quests.personal_offer(game, c)
+    if q is None:
+        pytest.skip("nothing for them to want in this world")
+    assert q["personal"] == npc.id and q["state"] == "offered"
+    assert quests.personal_offer(game, c) is q  # they ask once, and keep asking the same thing
+    assert q["giver_name"] == c.name
+    pitch = quests.personal_pitch(game, c, q)
+    assert pitch and "{" not in pitch
+    loyalty = c.companion["loyalty"]
+    quests.accept_personal(game, c, q)
+    assert q in game.quests and q["state"] == "active"
+    assert c.companion["personal"] == q["id"]
+    # Nobody in a town can close it for you.
+    other = next(n for n in npcs_in(game.world, s.id) if n.alive and n.notable)
+    assert not quests.payer(game, q, other)
+    quests.mark_done(game, q)
+    money = game.leader.money
+    for text in quests.finish_personal(game, c, q):
+        assert "{" not in text
+    assert q["state"] == "finished" and game.leader.money == money + q["reward"]
+    assert c.companion["loyalty"] >= loyalty and c.companion["personal_done"]
+    assert quests.personal_offer(game, c) is None  # they only ask once
+
+
+def test_refusing_a_companion_hurts(game):
+    from realmwalker.game import quests
+
+    c, npc, s = hire_one(game)
+    c.companion["loyalty"] = 95
+    c.companion["want"] = "knowledge"
+    q = quests.personal_offer(game, c)
+    if q is None:
+        pytest.skip("nothing for them to want in this world")
+    text = quests.refuse_personal(game, c)
+    assert text and c.companion["loyalty"] < 95 and c.companion["personal_done"]
+    assert quests.personal_offer(game, c) is None

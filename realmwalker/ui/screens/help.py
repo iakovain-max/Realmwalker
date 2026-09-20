@@ -73,6 +73,7 @@ Spell scrolls are sold where mages gather. A wizard can copy one into the spellb
 Travellers looking for work wait at the inns (and sell-swords in a mercenary company's town). Talk to them: "Would you travel with me?" shows their price: a daily wage, some of it up front, and for some a share of the loot. Up to four can travel with you. They are whole people, with needs, wounds, sicknesses and a class and level of their own, and they can die. In a fight you command each of them.
 Each has values: a devout priest hates desecration and heresy, a sell-sword wants pay and victories, a kind soul hates cruelty, an honourable one hates theft and murder, and so on. What you do raises or lowers their loyalty, and they say so. Unpaid wages sour them fast. An unhappy companion grumbles; a mutinous one slips away in the night with some of your coin; a devoted one will follow you anywhere.
 On the party screen (p): Talk, give Orders (follow, keep watch when you camp so you are not caught asleep, forage while the others sleep, or wait at this spot until you come back), Raise their pay, or Dismiss them. The party shares its food and water.
+A companion who becomes devoted to you will finally ask you for something of their own: revenge on the gang that ruined them, a book they have wanted all their life, a cult they want ended, a debt nobody else will collect. Press <loot>b</> on the party screen to hear it, take it on, or turn them down (they will remember which). Seeing it through binds them to you for good.
 
 <title>Staying alive</title>
 Your body matters as much as your sword. The side panel shows anything that is wrong.
@@ -151,9 +152,9 @@ Few can read, so books, maps and letters are treasure. In your pack, <loot>Enter
 
 <title>Work and the journal</title>
   <loot>j</>               The journal: work in hand, what is left to do, and how it ended
-Ask people in a town "Is there any work?". Anyone of standing (and now and then an ordinary soul) may have something: a bounty on a real gang's captain, a lair to clear, a named beast to hunt, a sealed letter to carry, an heirloom or a lost treasure of the old days to bring back, a son or daughter taken by outlaws, a debt to collect, or people going missing. Wanted posters on the <loot>¶</> notice board can be taken down and taken on (press the number shown).
+Ask people in a town "Is there any work?". Anyone of standing (and now and then an ordinary soul) may have something: a bounty on a real gang's captain, a lair to clear, a named beast to hunt, a sealed letter to carry, an heirloom or a lost treasure of the old days to bring back, a son or daughter taken by outlaws, a debt to collect, people going missing, someone to walk safely to another town, herbs for a sickness, a feud to settle, a pocket to pick — and, if you look like you might live through it, a dragon. Wanted posters on the <loot>¶</> notice board can be taken down and taken on (press the number shown).
 Each job has a reward and a number of days. The journal marks where to go; the place is put on your map. When it is done, go back to whoever set it and say so. Failing it, or giving it up (<loot>a</> in the journal), sours the giver and their people.
-Not everything is as it was told to you. Outlaws may turn out to be starving deserters you could talk into leaving instead of killing; the debtor may have nothing but children and an empty house; a sealed letter may be worth reading, and once read it can be delivered anyway, taken to the lord, or held over the sender's head. Your companions notice what you choose.
+Not everything is as it was told to you. Outlaws may turn out to be starving deserters you could talk into leaving instead of killing; the debtor may have nothing but children and an empty house; a sealed letter may be worth reading, and once read it can be delivered anyway, taken to the lord, or held over the sender's head; the man you were paid to kill may be nobody's enemy, and telling him who paid is worth something too. Your companions notice what you choose.
 
 <title>When you die</title>
 Death is permanent. There is no reload: the game saves as you go, and that save is the only one. When you die you get an obituary — what you were, how you died, what you killed, what you did that anyone will remember, and what the powers of the land thought of you — and everything you carried is gone. There is no body and no grave to loot.
@@ -169,7 +170,7 @@ From the title screen, <loot>New Character</> begins a new life in a world you h
 The game uses the free Player2 app to write names, descriptions and dialogue. Keep Player2 running for AI text. Without it the game still works, using its own built-in text. The indicator in the bottom-right corner shows which is in use. The AI never decides what happens: dice and rules do.
 
 <title>If something goes wrong</title>
-The game tries never to crash: if something breaks it says so, writes the details to <loot>%APPDATA%\Realmwalker\logs\errors.log</> and carries on. That file is the thing to send if you report a problem. Your saves, settings and screenshots live in the same folder.
+The game tries never to crash: if something breaks it says so, writes the details to <loot>%APPDATA%\\Realmwalker\\logs\\errors.log</> and carries on. That file is the thing to send if you report a problem. Your saves, settings and screenshots live in the same folder.
 """
 
 

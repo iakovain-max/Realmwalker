@@ -41,6 +41,37 @@ class PartyScreen(Screen):
             return
         self.message = f"{c.name.split()[0]}: {comp.mood_line(self.game, c)}"
 
+    def their_business(self) -> None:
+        """A devoted companion's own job: hear it, take it, or tell them it is done."""
+        from realmwalker.game import quests
+
+        c = self.current()
+        if c is None or not c.companion:
+            return
+        q = quests.personal_offer(self.game, c)
+        if q is None:
+            self.message = f"{c.name.split()[0]} keeps their own business to themselves."
+            return
+        if q.get("state") == "offered":
+            def yes(c=c, q=q) -> None:
+                for text in quests.accept_personal(self.game, c, q):
+                    self.game.say(text, "info")
+                self.message = f"{c.name.split()[0]}: \"Thank you. I won't forget it.\""
+
+            def no(c=c) -> None:
+                self.message = quests.refuse_personal(self.game, c)
+
+            self.app.push(ConfirmBox(self.app, quests.personal_pitch(self.game, c, q) +
+                                     f"\n\n<dim>({quests.terms(q)})</>", yes, no,
+                                     title=f"{c.name.split()[0]} asks something of you"))
+            return
+        if q.get("done"):
+            for text in quests.finish_personal(self.game, c, q):
+                self.game.say(text, "good")
+            self.message = f"{c.name.split()[0]}: it is settled."
+            return
+        self.message = f"{c.name.split()[0]} is waiting on you: {quests.title(self.game, q)}."
+
     def order(self) -> None:
         c = self.current()
         if c is None or not c.companion or c not in self.game.party:
@@ -93,6 +124,8 @@ class PartyScreen(Screen):
             self.talk()
         elif ev.key == "o":
             self.order()
+        elif ev.key == "b":
+            self.their_business()
         elif ev.key == "w":
             self.raise_pay()
         elif ev.key == "d":
@@ -167,6 +200,13 @@ class PartyScreen(Screen):
         bx = 2
         if cur is not None and cur.companion:
             bx = canvas.button(bx, h - 3, "Talk", self.talk, hotkey="t")
+            from realmwalker.game import quests
+
+            offer = quests.personal_offer(self.game, cur)
+            if offer is not None:
+                label = ("Their own business" if offer.get("state") == "offered" else
+                         "It is done" if offer.get("done") else "Their job")
+                bx = canvas.button(bx + 2, h - 3, label, self.their_business, hotkey="b")
             bx = canvas.button(bx + 2, h - 3, "Orders", self.order, hotkey="o")
             bx = canvas.button(bx + 2, h - 3, "Raise pay", self.raise_pay, hotkey="w")
             bx = canvas.button(bx + 2, h - 3, "Dismiss", self.dismiss, hotkey="d")
@@ -176,4 +216,4 @@ class PartyScreen(Screen):
         canvas.button(bx + 2, h - 3, "Back", self.close, hotkey="Esc")
 
     def autoplay_keys(self) -> list[KeyEvent]:
-        return [KeyEvent(k) for k in ("down", "t", "o", "up", "down", "escape")]
+        return [KeyEvent(k) for k in ("down", "t", "b", "o", "up", "down", "escape")]
