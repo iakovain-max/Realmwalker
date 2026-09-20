@@ -16,6 +16,37 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | M7 — Companions and progression | ✅ Done (2026-09-19) |
 | M8 — Adventure content | ✅ Done (2026-09-20) |
 | M9 — Death, legacy and release | ✅ Done (2026-09-20) |
+| After v1 | 🔨 Continuing |
+
+---
+
+## After v1 — continuing work (2026-09-20)
+
+The nine milestones are done; this is what has been added since, in the same spirit (all of it from the design's
+own v1 lists).
+
+**More kinds of work** (design section 13). Besides bounties, lairs, beasts, letters, heirlooms, captives, debts,
+disappearances and dragons, people now offer:
+- **escort**: walk someone to another town. They travel with you and pay at the gate. Lose a fight on the road and
+  they do not survive it. Some of them are running from something, and only say so on the second night.
+- **assassinate**: a name, a town, and money for a quiet death. Face to face the story sometimes falls apart —
+  then you can still do it, or tell them who paid and take their gratitude (and their purse) instead.
+- **cure**: bring healing herbs to a town the sickness is in, and it lifts.
+- **feud**: two notables who have not spoken in years. Talk each of them round, or pay them off.
+- **steal**: lift a named thing from a named pocket, with the law where the law always is.
+
+**Companions ask for things.** A companion who becomes devoted finally asks you for one job of their own, chosen by
+what they want: revenge on a real gang, a book they have wanted all their life, a cult they want ended, a pocket
+worth picking, a debt nobody else will collect (press **b** on the party screen). It pays half, out of their own
+purse. Seeing it through binds them to you; refusing or failing it loses them.
+
+**Finding the work.** Every place your journal wants you is lit like lamplight on the map and the world map, and
+the side panel shows how much work is in hand and when the next piece is due (click it, or press **j**).
+
+**Fixes.** The dead no longer linger in the party or among those waiting (cleared as time passes, on rejoining,
+and never written into a save); `first()` no longer calls a character named "The Wanderer" "The"; the autoplay
+bot's invariants no longer complain about a companion or a band of enemies holding their dead while the battle is
+still being fought. The debug console gained `quest <kind>` for trying a piece of work on the spot.
 
 ---
 

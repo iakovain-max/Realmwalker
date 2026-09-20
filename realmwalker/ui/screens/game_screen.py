@@ -397,6 +397,30 @@ class GameScreen(Screen):
                                        priority=Priority.BACKGROUND, callback=done)
                     return  # one at a time
 
+    def _work_line(self, canvas: Canvas, x: int, y: int, w: int) -> int:
+        """One line about the work in hand: how much, and how soon it is due."""
+        game = self.game
+        if not game.quests:
+            return 0
+        from realmwalker.game import quests
+
+        live = quests.active(game)
+        if not live:
+            return 0
+        ready = sum(1 for q in live if q["done"])
+        days = [d for d in (quests.days_left(game, q) for q in live) if d is not None]
+        soon = min(days) if days else None
+        text = f"<info>Work:</> {len(live)} in hand"
+        if ready:
+            text += f", <good>{ready} to report</>"
+        if soon is not None:
+            color = "danger" if soon <= 2 else "warn" if soon <= 5 else "dim"
+            text += f" <{color}>(next due in {max(0, soon)} d)</>"
+        used = canvas.wrapped(x, y + 1, text, w, max_lines=2)
+        canvas.hit(x, y + 1, w, used, action=lambda: self.handle_key(KeyEvent("j")),
+                   tooltip="Click (or press j) for the journal.")
+        return used + 1
+
     def _word_quests(self) -> None:
         """Work people in this town might offer gets AI-written words before anyone asks (one at a time)."""
         game = self.game
@@ -569,6 +593,7 @@ class GameScreen(Screen):
             row += 1
             canvas.markup(ix, row, f"<good>Travelling</> <dim>— {len(game.travel.path) * 3} miles to go</>", max_width=iw)
             row += 1
+        row += self._work_line(canvas, ix, row, iw)
         row += 1
 
         target = self.look or self.hover

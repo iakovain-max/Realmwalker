@@ -110,6 +110,34 @@ class DebugConsole(Screen):
             game.encounter = make_encounter(game, args[0], game.world.rng.child(f"debug/{game.world.time}/{args[0]}"))
             self.close()
 
+        @self.command("quest", "quest <kind> — take on work of that kind (quest list: show kinds)")
+        def _quest(args):
+            game = need_game()
+            if game is None:
+                return
+            from realmwalker.game import quests
+            from realmwalker.game.people import npcs_in
+
+            kinds = sorted(quests.spec(game)["templates"])
+            if not args or args[0] == "list" or args[0] not in kinds:
+                self.say("Kinds: " + ", ".join(kinds))
+                return
+            kind = args[0]
+            here = game.world.settlement_at(game.player.x, game.player.y)
+            folk = [n for n in npcs_in(game.world, here.id) if n.alive] if here is not None else []
+            folk = [n for n in folk if n.job in quests.spec(game)["templates"][kind]["givers"]] or folk
+            if not folk:
+                self.say("<warn>Stand in a town with people in it first (> to enter it).</>")
+                return
+            rng = game.world.rng.child(f"debug-quest/{game.world.time}/{kind}")
+            q = quests.make_offer(game, folk[0], rng, kind)
+            if q is None:
+                self.say(f"<warn>Nothing in this world fits '{kind}' from here.</>")
+                return
+            for text in quests.accept(game, q):
+                self.say(text)
+            self.say(f"<good>{quests.title(game, q)}</> — {quests.pitch(game, q)}")
+
         @self.command("heal", "heal the party fully (and close wounds)")
         def _heal(args):
             game = need_game()
