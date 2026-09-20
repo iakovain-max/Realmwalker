@@ -141,6 +141,10 @@ and three of a thinner sort: the sky turns five ways for each kind of weather in
 how you know it (a boundary stone grown over, a gibbet with the chain rusted through, two riders on the rise),
 and coming back to a town you know says it six ways.
 
+**The chronicle does not repeat itself.** Two hundred and fifty years of history, and every siege, succession,
+plague and dragon was written up in one of two sentences. Four each now — and the same lines carry the news you
+hear in taverns while you play, so the world sounds less like a form being filled in.
+
 **Inns have a common room again.** The tavern writing — the building, the light, the smell, who is drinking,
 one telling detail, a line somebody says about local trouble — has been sitting in the data since the first week
 of the project and only ever appeared on the Player2 test screen. Walk into an inn now and the game tells you

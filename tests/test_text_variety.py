@@ -59,6 +59,12 @@ def test_a_town_can_greet_you_in_many_ways(data):
         assert len(lines) >= 2, f"{job} has only {len(lines)} greeting"
 
 
+def test_the_world_reports_itself_in_more_than_one_way(data):
+    """Two hundred and fifty years of history, and every siege told in the same two sentences, was too few."""
+    for kind, lines in data["politics.json"]["text"].items():
+        assert len(lines) >= 4, f"{kind} is written up only {len(lines)} ways"
+
+
 def test_the_sky_turns_in_more_than_one_way(data):
     for kind, lines in data["fallback_text.json"]["weather_change"].items():
         assert len(lines) >= 4, f"{kind} weather is announced only {len(lines)} ways"
