@@ -422,3 +422,35 @@ def test_law_survives_saving(game, tmp_path):
     assert loaded.arrest == game.arrest
     assert loaded.renown.bounties == game.renown.bounties
     assert loaded.renown.crimes == game.renown.crimes
+
+
+def test_fence_ransoms_prisoners_for_more_than_the_watch(game):
+    """The guild sells prisoners back to their own people, quietly, at the data's ransom share."""
+    from realmwalker.game import law_talk
+
+    st, _ = in_town(game)
+    w = game.world
+    guild = next((f for f in w.factions.values() if f.kind == "thieves_guild"), None)
+    assert guild is not None
+    npc = someone(game, st)
+    npc.flags["secret"] = guild.id
+    game.renown.known.add(guild.id)
+    game.renown.members[guild.id] = {"rank": 0, "since": w.time}
+    assert law.is_fence(game, npc)
+    game.renown.flags["captives"] = [
+        {"def_id": "bandit", "name": "a bandit", "reward": 800, "since": w.time, "faction": -1}]
+    before_money, before_news = game.leader.money, len(w.news)
+    text = law_talk.ransom(game, npc)
+    share = float(game.tables.law["ransom_share"])
+    assert game.leader.money - before_money == int(800 * share)
+    assert not game.renown.flags.get("captives")
+    assert len(w.news) == before_news, "quiet work is not talked about"
+    assert "gp" in text or "sp" in text
+
+
+def test_ransom_needs_prisoners(game):
+    from realmwalker.game import law_talk
+
+    st, _ = in_town(game)
+    game.renown.flags.pop("captives", None)
+    assert "no prisoners" in law_talk.ransom(game, someone(game, st)).lower()

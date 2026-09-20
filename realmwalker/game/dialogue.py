@@ -271,6 +271,9 @@ class Conversation:
         npc = self.npc
         game = self.game
         self.you_say("Heard any news?")
+        if self.hostile:
+            self.npc_says(self.fill(self.pick("refuse_talk")))
+            return
         day = game.moment.total_days
         if npc.flags.get("rumour_day") == day:
             self.npc_says(self.fill(self.pick("no_rumours")))
@@ -302,6 +305,9 @@ class Conversation:
 
     def about_person(self, other: NPC) -> None:
         self.you_say(f"What about {other.label() if other.known else 'the ' + other.title}?")
+        if self.hostile:
+            self.npc_says(self.fill(self.pick("refuse_talk")))
+            return
         other.known = True
         line = self.pick("person_lines")
         self.npc_says(f"\"{other.first_name}? {line}\" <dim>({other.first_name} is the {other.title}.)</>")
@@ -472,8 +478,8 @@ def quests_choices() -> set[str]:
     return QUEST_CHOICES
 
 
-LAW_CHOICES = {"pay_fines", "surrender", "prisoners", "licence", "hush_pay", "hush_threat", "probe", "join", "title",
-               "pickpocket", "attack"}
+LAW_CHOICES = {"pay_fines", "surrender", "prisoners", "ransom", "licence", "hush_pay", "hush_threat", "probe",
+               "join", "title", "pickpocket", "attack"}
 
 
 def builtin_special(game, npc: NPC, rng: RNG) -> list[dict]:

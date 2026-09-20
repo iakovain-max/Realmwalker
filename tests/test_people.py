@@ -257,3 +257,37 @@ def test_a_town_has_street_life(game):
     plague = {town_moment(game, s) for _ in range(40) if (setattr(game.player, "steps", game.player.steps + 1)
                                                          or True)}
     assert any("chalk" in line or "dead-cart" in line or "herbs" in line for line in plague), plague
+
+
+def test_someone_who_hates_you_will_not_gossip(game):
+    """A hostile person answers questions about the town and its people with a closed door."""
+    s = visit(game, "town")
+    npc = next(n for n in npcs_in(game.world, s.id) if n.alive and n.job != "guard")
+    other = next(n for n in npcs_in(game.world, s.id) if n.alive and n is not npc)
+    conv = Conversation(game, npc)  # meeting someone sets their first impression, so sour it afterwards
+    npc.disposition = -90
+    assert npc.mood() == "hostile"
+    conv.rumours()
+    said = " ".join(t for _, t in conv.lines)
+    assert any(line.strip('"').split(".")[0] in said for line in game.tables.dialogue["refuse_talk"])
+    before = len(conv.lines)
+    conv.about_person(other)
+    assert len(conv.lines) == before + 2, "one question, one refusal"
+
+
+def test_a_shop_door_after_dark_says_it_is_shut(game):
+    """Push a trade's door open at night and a voice answers through it."""
+    s = visit(game, "town")
+    lm = game.local
+    trade = next((b for b in lm.buildings if b.kind in ("store", "smithy", "inn")), None)
+    if trade is None:
+        pytest.skip("no trades in this town")
+    game.world.time += (23 - game.moment.hour) * 60  # on towards eleven at night
+    before = len(game.log.messages)
+    game._shut_for_the_night(lm, trade.x + trade.w // 2, trade.y + trade.h // 2)
+    said = " ".join(m.text for m in game.log.messages[before:])
+    assert "shut" in said.lower() or "closed" in said.lower()
+    game.world.time += 12 * 60  # and on to eleven in the morning
+    before = len(game.log.messages)
+    game._shut_for_the_night(lm, trade.x + trade.w // 2, trade.y + trade.h // 2)
+    assert len(game.log.messages) == before, "by day the door just opens"

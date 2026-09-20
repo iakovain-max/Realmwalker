@@ -61,6 +61,7 @@ class TravelPlan:
 
 
 # "Text detail" in Settings: 0 brief (only what matters), 1 normal, 2 rich (more of the world's voice).
+TRADES = ("inn", "store", "smithy", "healer", "stable", "market")
 VERBOSITY = {"brief": 0, "normal": 1, "rich": 2}
 WEATHER_NEWS = ("fog", "drizzle", "rain", "storm", "flurries", "snow", "blizzard", "heat")
 
@@ -694,6 +695,7 @@ class GameState:
             lm.terrain[nx, ny] = lm.terrain_ids.index("door_open") if "door_open" in lm.terrain_ids else lm.terrain[nx, ny]
             self.pass_seconds(LOCAL_STEP_SECONDS)
             self.say("You open the door.", "flavor")
+            self._shut_for_the_night(lm, nx, ny)
             return True
         if not T.walk[t]:
             return False
@@ -726,6 +728,18 @@ class GameState:
 
                 law.watch(self)
         return True
+
+    def _shut_for_the_night(self, lm, x: int, y: int) -> None:
+        """Trades keep hours. Push a shop door open after dark and a voice answers through it."""
+        from realmwalker.game.people import is_day
+
+        if lm.kind != "settlement" or is_day(self):
+            return
+        b = lm.building_at(x, y)
+        if b is None or b.kind not in TRADES:
+            return
+        rng = self.world.rng.child(f"shut/{self.player.steps}")
+        self.say(rng.choice(self.tables.dialogue["closed"]), "flavor")
 
     def _weather_moment(self) -> None:
         """A line when the weather turns, said outdoors and not more than once a change."""

@@ -64,6 +64,10 @@ def choices(conv) -> list:
             fee = int(law_data["licence_fee"])
             out.append(Choice("licence", f"I need a licence to work magic ({money_text(fee)}).",
                               law.party_money(game) >= fee, "you don't have enough"))
+    if law.is_fence(game, npc) and game.renown.flags.get("captives"):
+        captives = game.renown.flags["captives"]
+        out.append(Choice("ransom", f"I have {len(captives)} prisoner{'s' if len(captives) > 1 else ''}. "
+                                    f"Their own people would pay to have them back."))
     if law.unreported_seen_by(game, npc):
         cost = hush_price(game, npc)
         out.append(Choice("hush_pay", f"[Persuasion] About what you saw... ({money_text(cost)})",
@@ -115,6 +119,9 @@ def choose(conv, choice) -> str | None:
     elif cid == "prisoners":
         conv.you_say("I have prisoners for the law.")
         conv.note(hand_over(game, npc))
+    elif cid == "ransom":
+        conv.you_say("I have prisoners. Their own people would pay to have them back.")
+        conv.note(ransom(game, npc))
     elif cid == "licence":
         conv.you_say("I need a licence to work magic.")
         conv.note(law.buy_licence(game, realm_of_npc(game, npc).id))
@@ -167,6 +174,39 @@ def hand_over(game, npc) -> str:
                     news_text=f"{game.leader.name} brought {len(captives)} outlaw(s) to the law in "
                               f"{game.world.settlements[npc.settlement].name}")
     return f"<good>The watch takes {names} off your hands and pays {money_text(total)}.</>"
+
+
+def ransom(game, npc) -> str:
+    """Sell prisoners back to their own people through the guild. It pays better than the watch and it is
+    never spoken of: no news, no fame, and their friends remember who let them go."""
+    captives = game.renown.flags.pop("captives", [])
+    if not captives:
+        return "You have no prisoners."
+    share = float(game.tables.law["ransom_share"])
+    total = sum(int(int(c["reward"]) * share) for c in captives)
+    game.leader.money += total
+    amounts = {}
+    guild = game.world.factions.get(npc.flags.get("secret", -1))
+    if guild is not None:
+        amounts[guild.id] = 4.0
+    for c in captives:
+        fid = c.get("faction", -1)
+        if fid in w_factions(game):
+            amounts[fid] = amounts.get(fid, 0.0) + 6.0
+    realm = realm_of_npc(game, npc)
+    if realm is not None:
+        amounts[realm.id] = amounts.get(realm.id, 0.0) - 3.0 * len(captives)
+    names = ", ".join(c["name"] for c in captives[:3]) + (" and the rest" if len(captives) > 3 else "")
+    if game.party[1:]:
+        from realmwalker.game.companions import react
+
+        react(game, "ransom")
+    reputation.deed(game, f"sold {len(captives)} prisoner(s) back to their own people",
+                    amounts, immediate=(guild.id,) if guild is not None else (),
+                    fame=0, infamy=len(captives), importance=1, news_text=None)
+    change_disposition(npc, 4)
+    return (f"<good>{npc.first_name} takes {names} away by a back door and comes back with "
+            f"{money_text(total)}.</> <dim>Nobody will hear of it from them.</>")
 
 
 def w_factions(game) -> dict:

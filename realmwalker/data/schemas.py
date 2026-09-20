@@ -156,7 +156,6 @@ RULES = Obj(
         "proficiency_bonus": List(Int(min=1, max=10), min_items=10),
         "xp_for_level": List(Int(min=0, max=10**7), min_items=10),
         "max_level": Int(min=1, max=20),
-        "asi_levels": List(Int(min=1, max=20)),
         "carry": Obj({"per_strength": Int(min=1, max=100), "encumbered_per_strength": Int(min=1, max=100),
                       "heavily_per_strength": Int(min=1, max=100)}),
         "languages": word_list(1, 40),
