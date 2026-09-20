@@ -66,6 +66,7 @@ Roads are much faster than open country. Forests, hills and marshes are slow; mo
 <title>Your character</title>
   <loot>c</>               Character sheet: abilities, skills, features, ties, backstory (<loot>l</> level-up choices, <loot>Tab</> next member)
   <loot>p</>               The party: companions, their loyalty, pay and orders
+  <loot>S</>               Spells: what each caster knows, what it does, and how many slots are left today
   <loot>i</>               Inventory: Enter wears/wields/removes/uses, d drops, D drops one, ← → filters, s sorts, G gives to the next member, Tab next member
   <loot>e</>               Equipment: what you wear in each slot, which body parts are protected, warmth
   <loot>g</> or <loot>,</>          Pick up what is lying here (on foot, in the close view)

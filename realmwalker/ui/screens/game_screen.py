@@ -168,6 +168,11 @@ class GameScreen(Screen):
             from realmwalker.ui.screens.factions import FactionsScreen
 
             self.app.push(FactionsScreen(self.app, game))
+        elif ev.key == "S":
+            from realmwalker.ui.screens.spells import SpellsScreen
+
+            caster = next((i for i, c in enumerate(game.party) if c.spells), 0)
+            self.app.push(SpellsScreen(self.app, game, caster))
         elif ev.key == "j":
             from realmwalker.ui.screens.journal import JournalScreen
 
@@ -674,7 +679,7 @@ class GameScreen(Screen):
             ("<", "back to the overworld"),
             ("l", "look"), ("m t", "world map · travel"), ("c i e", "character · pack · gear"),
             ("g s", "pick up · search") if game.in_local else (".", "wait an hour"), ("r h", "camp · health"),
-            ("w W", "water · wash"), ("p f n", "party · factions · news"), ("j", "journal"),
+            ("w W", "water · wash"), ("p f n", "party · factions · news"), ("j S", "journal · spells"),
             ("L /", "log · legend"), ("Esc", "menu"),
         ]
         ky = h - len(keys) - 1
@@ -751,4 +756,4 @@ class GameScreen(Screen):
     def autoplay_keys(self) -> list[KeyEvent]:
         moves = [KeyEvent(k) for k in ("up", "down", "left", "right", "upleft", "upright", "downleft", "downright")]
         return moves * 4 + [KeyEvent(k) for k in (">", "<", "l", "enter", "escape", ".", "m", "t", "L", "/",
-                                                   "c", "i", "e", "g", "r", "h", "w", "W", "f", "n", "p", "s", "j")]
+                                                   "c", "i", "e", "g", "r", "h", "w", "W", "f", "n", "p", "s", "j", "S")]

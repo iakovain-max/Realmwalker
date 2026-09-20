@@ -966,3 +966,27 @@ def test_a_life_ends_and_another_begins_in_the_same_world(make_app):
     assert isinstance(app.top, GameScreen)
     assert death.fallen(app.game.world)[-1]["name"] == first_name
     assert app.error_count == 0
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_the_spells_window(make_app, size):
+    """A caster can see what they know, what it does and how many slots are left."""
+    from realmwalker.rules import spells as sp
+    from realmwalker.ui.screens.spells import SpellsScreen
+
+    app = make_app()
+    start_small_world(app)
+    game = app.game
+    c = game.leader
+    if not sp.is_caster(c, game.tables):  # make the leader a wizard for the test
+        c.cls = "wizard"
+        sp.init_spells(c, game.tables)
+    app.handle_event(KeyEvent("S"))
+    assert isinstance(app.top, SpellsScreen)
+    text = screen_text(render(app, size))
+    assert "Cantrips" in text or "Slots" in text
+    for key in ("down", "tab", "pagedown"):
+        app.handle_event(KeyEvent(key))
+        render(app, size)
+    app.handle_event(KeyEvent("escape"))
+    assert app.error_count == 0
