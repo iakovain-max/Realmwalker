@@ -64,6 +64,11 @@ def test_every_land_sounds_like_itself_at_night(data):
         assert len(lines) >= 5, f"nights in {land} have only {len(lines)} sounds"
 
 
+def test_every_band_can_find_you_three_ways(data):
+    for group, spec in data["creatures.json"]["encounters"].items():
+        assert len(spec["intro"]) >= 3, f"meeting {group} always reads the same"
+
+
 def test_there_is_plenty_to_meet_on_the_road(data):
     assert len(data["travel_events.json"]["events"]) >= 20
     assert len(data["quests.json"]["templates"]) >= 16
