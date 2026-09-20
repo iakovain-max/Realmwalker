@@ -1,0 +1,63 @@
+"""How much the game can say before it starts repeating itself.
+
+These are floors, not targets: a player reads the same fight text hundreds of times in an evening and the same
+greetings in every town, so the lists that feed them must not quietly shrink. If a change here fails, either put
+the lines back or raise the game's variety somewhere else first."""
+
+import pytest
+
+FLOORS = {
+    # combat_text.json — read more often than anything else in the game
+    "combat_text:miss": 8, "combat_text:armored_miss": 5, "combat_text:crit": 6,
+    "combat_text:down": 5, "combat_text:dead": 4, "combat_text:flee": 4,
+    "combat_text:surrender": 4, "combat_text:beg": 6,
+    # dialogue.json — every town, every person
+    "dialogue:rumour_intro": 8, "dialogue:flavour_rumours": 12, "dialogue:goodbye": 8,
+    "dialogue:person_lines": 10, "dialogue:no_rumours": 5, "dialogue:refuse_talk": 2,
+    "dialogue:closed": 2,
+    # people.json — the life of a street
+    "people:text.moments": 8, "people:text.moments_day": 4, "people:text.moments_night": 4,
+}
+
+
+def get(data, path):
+    node = data
+    for key in path.split("."):
+        node = node[key]
+    return node
+
+
+@pytest.mark.parametrize("where,least", sorted(FLOORS.items()))
+def test_the_game_has_enough_ways_to_say_it(data, where, least):
+    name, path = where.split(":")
+    lines = get(data[f"{name}.json"], path)
+    assert len(lines) >= least, f"{where} is down to {len(lines)} lines; a player would hear them all in an hour"
+
+
+def test_every_kind_of_blow_and_wound_has_more_than_one_line(data):
+    text = data["combat_text.json"]
+    for kind, lines in text["hit"].items():
+        assert len(lines) >= 3, f"hits of kind {kind} have only {len(lines)} lines"
+    for kind, by_severity in text["wound"].items():
+        for severity, lines in by_severity.items():
+            assert len(lines) >= 2, f"{kind} wounds at {severity} have only {len(lines)} lines"
+
+
+def test_a_town_can_greet_you_in_many_ways(data):
+    greeting = data["dialogue.json"]["greeting"]
+    for mood, lines in greeting.items():
+        assert len(lines) >= 5, f"{mood} people have only {len(lines)} ways to say hello"
+    trades = data["dialogue.json"]["greeting_job"]
+    jobs = set(data["people.json"]["occupations"])
+    missing = jobs - set(trades)
+    assert not missing, f"these trades say nothing of their own: {sorted(missing)}"
+    for job, lines in trades.items():
+        assert len(lines) >= 2, f"{job} has only {len(lines)} greeting"
+
+
+def test_there_is_plenty_to_meet_on_the_road(data):
+    assert len(data["travel_events.json"]["events"]) >= 20
+    assert len(data["quests.json"]["templates"]) >= 16
+    assert len(data["quests.json"]["rewards_text"]) >= 4
+    for template, words in data["quests.json"]["text"].items():
+        assert len(words["pitch"]) >= 2, f"{template} is always asked for in the same words"
