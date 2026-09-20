@@ -302,3 +302,67 @@ def test_making_things_at_camp(game):
     assert any("torch" in line for line in out)
     assert sum(i.qty for i in c.inventory if i.def_id == "torch") > before
     assert not sum(i.qty for i in c.inventory if i.def_id == "firewood") >= 2  # the wood was used
+
+
+def test_being_lost_lasts_until_the_weather_lifts(game, monkeypatch):
+    """You lose the way once and stay lost: no losing and finding it again at every step."""
+    monkeypatch.setattr("realmwalker.game.encounters.encounter_chance", lambda *a: 0.0)
+    monkeypatch.setattr("realmwalker.game.events.event_chance", lambda *a: 0.0)
+    go_to(game, "plains", road=False)
+    set_weather(game, "fog", 5, 0.25, 3)
+    for _ in range(30):
+        game._check_bearings()
+        if game.lost:
+            break
+    assert game.lost
+    said = len(game.log.messages)
+    for _ in range(10):
+        game.world.time += 90
+        game._check_bearings()
+    assert game.lost, "the fog is still down"
+    assert len(game.log.messages) == said, "and it says so once, not once a step"
+    set_weather(game, "clear", 15, 1.0, 0)
+    game.world.time += (12 - game.moment.hour) * 60  # noon
+    game._check_bearings()
+    assert not game.lost
+
+
+def test_crossing_a_river_is_told_and_the_cold_is_felt(game, monkeypatch):
+    """Wading is remarked on every time, in words that change, and winter water says so."""
+    monkeypatch.setattr("realmwalker.game.encounters.encounter_chance", lambda *a: 0.0)
+    monkeypatch.setattr("realmwalker.game.events.event_chance", lambda *a: 0.0)
+    w = game.world
+    spot = None
+    for x, y in np.argwhere(w.river):
+        x, y = int(x), int(y)
+        if w.road[x, y] or w.settlement_at(x, y) is not None:
+            continue
+        for dx, dy in ((-1, 0), (1, 0), (0, -1), (0, 1)):
+            if w.in_bounds(x - dx, y - dy) and not w.river[x - dx, y - dy] and                     game.step_minutes(x - dx, y - dy, x, y) is not None:
+                spot = (x - dx, y - dy, dx, dy)
+                break
+        if spot:
+            break
+    if spot is None:
+        pytest.skip("no river to wade in this world")
+    sx, sy, dx, dy = spot
+
+    def wade(temp):
+        game.player.x, game.player.y = sx + dx, sy + dy  # pin the weather where the wading happens
+        set_weather(game, "clear", temp, 1.0, 0)
+        game.player.x, game.player.y = sx, sy
+        game.lost = False  # hours pass with every step; don't let a dark night send us the wrong way
+        game.world.time += (12 - game.moment.hour) * 60
+        before = len(game.log.messages)
+        game.move(dx, dy)
+        said = [m.text for m in game.log.messages[before:] if "river" in m.text.lower()]
+        assert said, "crossing a river is worth saying"
+        assert said[0][:1].isupper(), f"and it starts like a sentence: {said[0]}"
+        return said[0]
+
+    warm = {wade(14.0) for _ in range(8)}
+    assert len(warm) >= 2, f"and it does not say it the same way every time: {warm}"
+    cold = {wade(-2.0) for _ in range(8)}
+    assert cold & {"There is ice at the edges of a river. You cross anyway, and cannot feel your legs at the "
+                   "far side.", "A river is snowmelt to the waist, and it takes your breath away.",
+                   "You wade a river. The cold of it goes through you like a nail."} or         any("cold" in c or "ice" in c or "snowmelt" in c for c in cold), f"winter water is worse: {cold}"

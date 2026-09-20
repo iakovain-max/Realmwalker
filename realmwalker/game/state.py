@@ -62,6 +62,19 @@ class TravelPlan:
 
 # "Text detail" in Settings: 0 brief (only what matters), 1 normal, 2 rich (more of the world's voice).
 TRADES = ("inn", "store", "smithy", "healer", "stable", "market")
+FORDING = ("You wade {river}, waist-deep and numbingly cold, holding your pack over your head.",
+           "You find a shallow place and cross {river}, feeling for the bottom with each foot.",
+           "{river} comes up to your waist and pulls at you the whole way over.",
+           "You cross {river}. The stones underfoot are round and green and want you off them.")
+FORDING_COLD = ("You wade {river}. The cold of it goes through you like a nail.",
+                "There is ice at the edges of {river}. You cross anyway, and cannot feel your legs at the far side.",
+                "{river} is snowmelt to the waist, and it takes your breath away.")
+FOUND_LIGHT = ("Dawn comes up grey behind you, and the country makes sense again. You know where you are.",
+               "With the light, a hill you know stands up out of the murk. You have your bearings.",
+               "Morning finds you, and the land with it: you know which way you are walking now.")
+FOUND_CLEAR = ("The weather lifts and the way is plain again.",
+               "The murk thins, goes ragged, and blows off. You know where you are.",
+               "It clears enough to see a long way, and nothing about it puzzles you any more.")
 VERBOSITY = {"brief": 0, "normal": 1, "rich": 2}
 WEATHER_NEWS = ("fog", "drizzle", "rain", "storm", "flurries", "snow", "blizzard", "heat")
 
@@ -335,7 +348,10 @@ class GameState:
         if fording:
             river = self.world.river_at(nx, ny)
             name = f"the {river.name.removeprefix('the ')}" if river else "a river"
-            self.say(f"You wade across {name}, waist-deep and numbingly cold.", "warn")
+            rng = self.world.rng.child(f"ford/{self.player.steps}")
+            cold = self.weather.temp < 4
+            line = rng.choice(FORDING_COLD if cold else FORDING).format(river=name)
+            self.say(line[:1].upper() + line[1:], "warn")
         self.reveal()
         self._arrive(prev_area)
         if self.encounter is None and self.battle is None:
@@ -400,11 +416,14 @@ class GameState:
                 self.lost = False
                 self.say("You strike a road you know. Your bearings come back.", "good")
                 return
-            dc = self.lost_dc()
-            ok, roll = check(self, "survival", dc or 8, tag="bearings")
-            if ok:
+            if self.lost_dc() is None:  # the light is back, or the weather has cleared
                 self.lost = False
-                self.say(f"{roll} You find your bearings again.", "good")
+                rng = self.world.rng.child(f"found/{self.player.steps}")
+                if self.light >= 0.3 and self.weather.visibility >= 0.6:
+                    lines = FOUND_LIGHT if self.moment.hour < 9 else FOUND_CLEAR
+                else:
+                    lines = FOUND_CLEAR
+                self.say(rng.choice(lines), "good")
             return
         dc = self.lost_dc()
         if dc is None:
