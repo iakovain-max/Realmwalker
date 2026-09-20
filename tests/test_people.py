@@ -291,3 +291,20 @@ def test_a_shop_door_after_dark_says_it_is_shut(game):
     before = len(game.log.messages)
     game._shut_for_the_night(lm, trade.x + trade.w // 2, trade.y + trade.h // 2)
     assert len(game.log.messages) == before, "by day the door just opens"
+
+
+def test_people_greet_you_out_of_their_trade_and_not_all_alike(game):
+    """A smith does not open with the same words as a beggar, and a town is not four sentences."""
+    s = visit(game, "town")
+    folk = [n for n in npcs_in(game.world, s.id) if n.alive]
+    said = set()
+    for npc in folk:
+        for _ in range(4):
+            npc.flags.pop("greeted", None)
+            conv = Conversation(game, npc)
+            said.update(t for kind, t in conv.lines if kind == "npc")
+    assert len(said) >= 20, f"a town should not run out of words this fast: {len(said)}"
+    trades = game.tables.dialogue["greeting_job"]
+    jobs = {n.job for n in folk} & set(trades)
+    assert jobs, "somebody in a town has a trade"
+    assert any(line in said for job in jobs for line in trades[job]), "and it shows in how they say hello"

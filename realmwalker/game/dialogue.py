@@ -92,7 +92,10 @@ class Conversation:
         elif any("helped" in m for m in npc.memory) and npc.disposition > 15:
             self.npc_says(self.fill(self.rng.choice(d["remember_help"])))
         else:
-            self.npc_says(self.fill(self.rng.choice(d["greeting"][npc.mood()])))
+            # People who don't mind you greet you out of their trade as often as not.
+            trade = d["greeting_job"].get(npc.job) if npc.mood() in ("neutral", "friendly", "warm") else None
+            lines = trade if trade and self.rng.chance(0.5) else d["greeting"][npc.mood()]
+            self.npc_says(self.fill(self.rng.choice(lines)))
 
     # ------------------------------------------------------------------ the menu
     def menu(self) -> list[Choice]:
