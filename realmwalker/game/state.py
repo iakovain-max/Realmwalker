@@ -62,6 +62,32 @@ class TravelPlan:
 
 # "Text detail" in Settings: 0 brief (only what matters), 1 normal, 2 rich (more of the world's voice).
 TRADES = ("inn", "store", "smithy", "healer", "stable", "market")
+COMING_BACK = (
+    "You reach {place} again.",
+    "{place} comes up out of the country ahead, and you know the shape of it.",
+    "The road brings you back to {place}.",
+    "Here is {place} again, no better and no worse.",
+    "You come back into {place} by the same road you left by.",
+    "{place}, again: the smell of it before the sight of it.",
+)
+BORDER_SIGNS = (
+    "A boundary stone, chipped and grown over, with arms on it that were cut deep and are not deep now.",
+    "A gibbet at the roadside, old enough that the cage is empty and the chain has rusted through.",
+    "Somebody has painted a device on the end wall of a barn, and repainted it recently.",
+    "The field walls change: different stone, laid a different way.",
+    "A shrine at the crossroads, swept, with fresh flowers in it.",
+    "Two riders sit their horses on the rise and watch you the whole length of the valley.",
+    "A toll post, unmanned, with the bar up and nobody minding it.",
+    "The road is suddenly better kept, and then it is not.",
+    "A cairn with a pole in it, and rags tied to the pole.",
+    "The milestone here is new, and the one behind you was not.",
+)
+NO_LAW = (
+    "No lord's law runs here.",
+    "Nobody's writ reaches this country.",
+    "From here on, whatever happens to you is nobody's business but yours.",
+    "There is no lord over this, and no watch in it.",
+)
 FORDING = ("You wade {river}, waist-deep and numbingly cold, holding your pack over your head.",
            "You find a shallow place and cross {river}, feeling for the bottom with each foot.",
            "{river} comes up to your waist and pulls at you the whole way over.",
@@ -547,17 +573,22 @@ class GameState:
         self._realm_here = here
         if lord is None:
             if before is not None:
-                self.say(f"You leave the lands of {before.name}. <dim>No lord's law runs here.</>", "place")
+                rng = self.world.rng.child(f"nolaw/{p.steps}")
+                self.say(f"You leave the lands of {before.name}. <dim>{rng.choice(NO_LAW)}</>", "place")
             return
         from realmwalker.game.reputation import know
 
         know(self, lord.id)
         top = fx.top_liege(self.world, lord)
+        sign = ""
+        if self.flavour(1):
+            rng = self.world.rng.child(f"border/{lord.id}/{p.steps}")
+            sign = rng.choice(BORDER_SIGNS) + " "
         if top is not None and top is not lord:
             know(self, top.id)
-            self.say(f"You cross into the lands of {lord.name}, <dim>sworn to {top.name}.</>", "place")
+            self.say(f"{sign}You cross into the lands of {lord.name}, <dim>sworn to {top.name}.</>", "place")
         else:
-            self.say(f"You cross into the lands of {lord.name}.", "place")
+            self.say(f"{sign}You cross into the lands of {lord.name}.", "place")
 
     def settlement_troubles(self, s) -> list[str]:
         """Siege, sack, fire, plague and hunger, as you see them walking in. Plague may follow you out."""
@@ -602,7 +633,10 @@ class GameState:
         spec = self.tables.sites["settlement_types"][s.kind]
         kind = spec["name"]
         if not first:
-            return f"You reach <place>{s.name}</> again."
+            if not self.flavour(1):
+                return f"You reach <place>{s.name}</> again."
+            rng = self.world.rng.child(f"return/{s.id}/{self.player.steps}")
+            return rng.choice(COMING_BACK).format(place=f"<place>{s.name}</>")
         culture = self.tables.names["cultures"].get(s.culture, {}).get("label", s.culture)
         souls = f"about {round(s.population, -1 if s.population < 1000 else -2):,} souls"
         walls = " behind its walls" if s.walled else ""
