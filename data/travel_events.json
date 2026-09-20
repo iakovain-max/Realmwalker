@@ -110,6 +110,22 @@
         {"label": "Leave him to the river", "outcome": {"text": ["The river had him first."]}}
       ]
     },
+    "caravan": {
+      "name": "a merchant caravan",
+      "where": {"road": true, "biomes": ["any"], "danger": [0, 8], "time": "day", "season": "any"},
+      "weight": 3,
+      "intro": ["Six carts, twenty oxen and a dozen hired swords, going the other way at the pace of the slowest wheel.",
+                "A caravan is halted at the roadside, resting the beasts. The guards watch you the way guards do; the factor does not look up from his tally."],
+      "options": [
+        {"label": "See what they are carrying", "shop": {"stock": [["salt", 6], ["pepper", 2], ["wool_bolt", 3], ["linen_bolt", 3], ["wheat", 6], ["rations", 6], ["fodder", 4], ["iron_bar", 2], ["oil_flask", 3]], "markup": 1.35}},
+        {"label": "Walk with them for a while", "outcome": {"text": ["You match their pace for a few hours. Nothing troubles a column this size, and the factor is glad of another sword; at the parting he gives you what he can spare."], "money": 60, "xp": 10, "fatigue": 8, "news": true, "time": 180}},
+        {"label": "[Intimidation] Ask for a toll of your own", "check": {"skill": "intimidation", "dc": 15,
+          "success": {"text": ["The factor looks at the guards, and the guards look at the road, and a purse changes hands. Nobody says the word robbery."], "money": 200, "deed": "shook down a caravan on the road", "news": true, "time": 20},
+          "failure": {"text": ["\"Move along.\" Twelve hired swords do not need to say anything else."], "time": 15}}},
+        {"label": "Take what they have", "outcome": {"text": ["The guards form up before you have finished speaking."], "fight": "town_watch", "deed": "attacked a caravan on the road", "news": true}},
+        {"label": "Let them pass", "outcome": {"text": ["You step off the road and let the carts go by, and the dust settles slowly."], "time": 10}}
+      ]
+    },
     "pedlar": {
       "name": "a travelling pedlar",
       "where": {"road": true, "biomes": ["any"], "danger": [0, 6], "time": "day", "season": "any"},
