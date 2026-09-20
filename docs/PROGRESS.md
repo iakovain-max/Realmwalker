@@ -121,6 +121,19 @@ the six pay lines that were sitting in the data are used now (and there are more
 open after dark answers "We're shut. Come back in the morning." Somebody who hates you will no longer gossip with
 you about the town or the people in it.
 
+**The game says things more ways.** Walking in fog used to be nothing but losing and finding the way again —
+a dice roll and two lines at every step; now you lose the way once and stay lost until you strike a road, the
+weather lifts or the light comes back, which is what the game already told you to do. Wading a river is
+described differently every time, and says the cold when the water is near freezing. A town has three times as
+many greetings, and people greet you out of their trade: the smith says mind the sparks, the guard asks your
+business in the town, the beggar asks for a coin before you have said anything. Fights — the most-read writing
+in the game — had four ways to miss and one way to describe each wound; both are three times as many now, along
+with more ways for every kind of blow to land, for a fight to end, and for a beaten man to beg.
+
+**A test for the first evening.** A new character in a new world is now checked, in two different worlds, for
+the things a new player needs: people in the first town, money in the purse, somebody who sells food, work on
+offer, work that goes into the journal and lights the map, and a road that takes them closer to it.
+
 **Fixes.** "Text detail" in Settings did nothing at all until now (it governs street life, companions on the
 road, the weather turning, the sounds of the night and whether the AI is asked to describe regions). The dead no
 longer linger in the party or among those waiting (cleared as time passes, on rejoining,
