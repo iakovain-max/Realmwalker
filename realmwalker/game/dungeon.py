@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from realmwalker.core import dice
 from realmwalker.core.rng import RNG
+from realmwalker.rules import body
 from realmwalker.rules.inventory import remove_item
 from realmwalker.rules.items import money_text
 from realmwalker.world import dungeon as gen
@@ -28,6 +29,12 @@ POOLS = {
 }
 BOSSES = {"crypt": "barrow_wight", "warren": "goblin_warband", "temple": "cult_temple", "hideout": "bandit_hideout",
           "lair": "dragon", "cave": "ogre", "cellars": "bandit_gang", "tower": "cult_circle"}
+# Who else a master of that kind keeps about them, and what lives in any dark place.
+KIN = {"bandit_gang": ["bandits", "footpads", "thugs"], "bandit_hideout": ["bandits", "footpads", "thugs"],
+       "barrow_wight": ["restless_dead", "zombies", "ghouls"], "goblin_warband": ["goblins", "orc_raiders"],
+       "cult_temple": ["cultists", "cult_circle"], "cult_circle": ["cultists"],
+       "ogre": ["wolf_pack", "bear", "spiders"], "dragon": []}
+VERMIN = ("rats", "spiders", "wild_dogs")
 
 
 def in_dungeon(game) -> bool:
@@ -174,7 +181,10 @@ def light_up(game) -> str | None:
     else:
         remove_item(c, it.uid, 1)
     game.lit = {"def_id": it.def_id, "hours": float(light.get("hours", 1))}
-    text = f"{c.name.split()[0]} lights {items.get(it.def_id)['name']}."
+    from realmwalker.core.textgen import a_or_an
+
+    name = items.get(it.def_id)["name"]
+    text = f"{body.first(c)} lights {a_or_an(name)}."
     game.say(text, "dim")
     return text
 
@@ -443,7 +453,7 @@ def populate(game, lm) -> None:
     rng = game.world.rng.child(f"dungeon-folk/{lm.key}")
     site = game.world.sites[meta["site"]] if 0 <= meta.get("site", -1) < len(game.world.sites) else None
     pool = [g for g in POOLS.get(style, []) if g in game.tables.creatures.encounters]
-    if site is not None and style in ("cave", "cellars", "tower"):
+    if site is not None and style == "cave":
         extra = [g for g in game.tables.creatures.site_inhabitants.get(site.kind, [])
                  if g in game.tables.creatures.encounters]
         pool = pool + extra
@@ -455,6 +465,9 @@ def populate(game, lm) -> None:
 
         boss = quests.boss_for(game, site, boss)
     meta["boss"] = boss
+    # Whoever holds the place holds most of it: a bandit cellar is bandits, with rats in the corners.
+    kin = [g for g in KIN.get(boss, []) if g in game.tables.creatures.encounters] or pool
+    pool = kin * 3 + [g for g in pool if g in VERMIN]
     hidden = set(meta.get("hidden", []))
     open_rooms = [i for i in range(len(rooms)) if i not in hidden]
     last = open_rooms[-1] if open_rooms else len(rooms) - 1
