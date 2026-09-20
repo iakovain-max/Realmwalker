@@ -19,6 +19,8 @@ from realmwalker.world.factions import CULTURE_RACE  # noqa: E402  (kept importa
 DAY_START, DAY_END = 7, 19
 STAYS_AT_POST = {"innkeeper", "serving_hand", "guard", "priest", "lord"}
 WANDERS = {"guard", "farmer", "labourer", "weaver", "carter", "washerwoman", "beggar", "fisher", "woodcutter", "miner"}
+MARKET_DAYS = ("Freyasday", "Saturnsday")  # when the square fills up
+
 MOODS = [(-50, "hostile"), (-15, "unfriendly"), (15, "neutral"), (50, "friendly")]
 CLASHING_TRAITS = {frozenset(p) for p in (("kind", "cruel"), ("trusting", "suspicious"), ("greedy", "generous"),
                                            ("cheerful", "bitter"), ("brave", "nervous"), ("honest", "sly"),
@@ -679,6 +681,23 @@ def meet(game, npc: NPC) -> None:
 
 def change_disposition(npc: NPC, amount: int) -> None:
     npc.disposition = max(-100, min(100, npc.disposition + amount))
+
+
+def town_moment(game, settlement) -> str:
+    """One small thing seen in the street: idle life, or what the town is going through."""
+    text = game.tables.people["text"]
+    pools = ["moments"]
+    pools.append("moments_day" if is_day(game) else "moments_night")
+    for state in ("plague", "famine", "raided", "siege"):
+        if settlement.status.get(state):
+            pools.append(f"moments_{state}")
+    if is_day(game) and settlement.kind in ("town", "city") and game.moment.weekday in MARKET_DAYS:
+        pools.append("moments_market")
+    lines = [line for pool in pools for line in text.get(pool, [])]
+    if not lines:
+        return ""
+    rng = game.world.rng.child(f"moment/{settlement.id}/{game.world.time}/{game.player.steps}")
+    return rng.choice(lines)
 
 
 def describe_npc(game, npc: NPC) -> str:

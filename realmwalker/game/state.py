@@ -98,6 +98,7 @@ class GameState:
         self.waiting: list[Character] = []  # companions told to wait somewhere (game.companions)
         self.lit: dict | None = None  # the torch or lantern burning underground (game.dungeon)
         self.quests: list[dict] = []  # work taken on: the journal (game.quests)
+        self._last_moment = -10**6  # the step count when street life was last remarked on
         self._realm_here: int | None = None
         self._wading = False
         self._remaps: dict[str, np.ndarray] = {}
@@ -679,11 +680,31 @@ class GameState:
         if self.over is None:
             self._creatures_act(lm)
             self._people_act(lm)
+            if lm.kind == "settlement":
+                self._street_life(lm)
             if self.world.factions and lm.kind == "settlement":
                 from realmwalker.game import law
 
                 law.watch(self)
         return True
+
+    def _street_life(self, lm: LocalMap) -> None:
+        """Now and then, something small happening in the street (game/people.town_moment)."""
+        s = self.world.settlement_at(self.player.x, self.player.y)
+        if s is None or self.busy:
+            return
+        steps = self.player.steps
+        if steps - int(self._last_moment) < 25:  # counted in steps: a town street is walked quickly
+            return
+        rng = self.world.rng.child(f"street/{s.id}/{steps}")  # a new roll each step, not each minute
+        if not rng.chance(0.2):
+            return
+        from realmwalker.game.people import town_moment
+
+        text = town_moment(self, s)
+        if text:
+            self._last_moment = steps
+            self.say(text, "flavor")
 
     def _people_act(self, lm: LocalMap) -> None:
         if lm.kind != "settlement":

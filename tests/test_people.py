@@ -236,3 +236,24 @@ def test_a_name_goes_before_you(game):
     assert hated < plain
     ordinary = next(n for n in npcs_in(game.world, s.id) if not n.notable)
     assert abs(fame_impression(game, ordinary)) <= abs(fame_impression(game, npc))
+
+
+def test_a_town_has_street_life(game):
+    """Walking a town's streets shows small things: idle life by day and night, and what it is going through."""
+    from realmwalker.game.people import town_moment
+
+    s = next(x for x in game.world.settlements if x.kind in ("town", "city"))
+    game.player.x, game.player.y = s.x, s.y
+    game.enter_local()
+    seen = set()
+    for i in range(40):
+        game.player.steps += 1
+        game.world.time += 7
+        line = town_moment(game, s)
+        assert line and "{" not in line
+        seen.add(line)
+    assert len(seen) > 3, seen
+    s.status["plague"] = {"until": 10**9}
+    plague = {town_moment(game, s) for _ in range(40) if (setattr(game.player, "steps", game.player.steps + 1)
+                                                         or True)}
+    assert any("chalk" in line or "dead-cart" in line or "herbs" in line for line in plague), plague
