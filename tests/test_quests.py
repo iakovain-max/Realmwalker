@@ -637,3 +637,20 @@ def test_smuggling_past_the_gate(game, monkeypatch):
     lines = law.gate_search(game, walled)
     assert any("take it" in line for line in lines), lines
     assert q2["state"] == "failed" and not quests.holds_quest_item(game, q2)
+
+
+def test_work_cannot_be_taken_on_twice(game):
+    q, npc = offer(game, "clear_lair")
+    quests.accept(game, q)
+    before = len(game.quests)
+    assert quests.accept(game, q) == []
+    assert len(game.quests) == before
+
+
+def test_giving_up_on_someone_sends_them_home(game):
+    q, npc = offer(game, "escort")
+    quests.accept(game, q)
+    who = game.world.npcs[q["target"]["npc"]]
+    quests.abandon(game, q)
+    assert who.alive and who.present and not who.flags.get("escort")
+    assert q["state"] == "abandoned"

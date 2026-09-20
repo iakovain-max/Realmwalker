@@ -71,7 +71,17 @@ def set_standing(game, fid: int, value: float) -> None:
 def change_standing(game, fid: int, amount: float) -> float:
     """Change standing with one faction only (no ripple). Returns the change actually made."""
     before = game.renown.standing.get(fid, 0.0)
+    was = rank(game, fid)
     set_standing(game, fid, before + amount)
+    now = rank(game, fid)
+    if was is not None and now is not None and now != was:
+        f = game.world.factions.get(fid)
+        if f is not None:
+            name = rank_name(game, fid)
+            if now > was:
+                game.say(f"<good>{f.name} calls you {name} now.</>", "good")
+            else:
+                game.say(f"<warn>{f.name} counts you no more than {name} now.</>", "warn")
     return game.renown.standing[fid] - before
 
 

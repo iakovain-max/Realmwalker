@@ -424,17 +424,20 @@ class GameScreen(Screen):
     def _word_quests(self) -> None:
         """Work people in this town might offer gets AI-written words before anyone asks (one at a time)."""
         game = self.game
-        if not game.in_local or game.busy or not self.app.ai.usable():
+        if not game.in_local or game.busy:
             return
         here = game.world.settlement_at(game.player.x, game.player.y)
         if here is None:
             return
         from realmwalker.game import quests
 
+        # Think of the work these people have before anyone asks (it can mean making a town far away ready).
         stamp = (here.id, game.moment.total_days)
         if getattr(self, "_offers_stamp", None) != stamp:
             self._offers_stamp = stamp
             self._offers = quests.offers_in(game, here)
+        if not self.app.ai.usable():
+            return
         from realmwalker.ai.service import Priority
         from realmwalker.ai.tasks import QUEST
 

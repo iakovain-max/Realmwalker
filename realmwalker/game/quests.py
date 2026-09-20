@@ -581,6 +581,8 @@ def accept(game, q) -> list[str]:
     from realmwalker.game.people import town_of
     from realmwalker.rules.inventory import add_existing
 
+    if q.get("state") != "offered" or by_id(game, q["id"]) is not None:
+        return []
     town = town_of(game.world, q["town"])
     for key in ("offers", "board"):
         pool = town.flags.get(key, {})
@@ -1194,6 +1196,12 @@ def fail(game, q, why: str | None = None) -> None:
         giver.remember(f"the traveller let them down ({title(game, q)})")
     if q["template"] == "deliver":
         take_quest_item(game, q)
+    if q["template"] == "escort":
+        who = game.world.npcs.get(q["target"].get("npc", -1))
+        if who is not None and who.alive:
+            who.flags.pop("escort", None)
+            who.present = True
+            who.remember("was left on the road by the traveller")
     if q.get("personal") is not None:
         from realmwalker.game.companions import change_loyalty, companions
 
