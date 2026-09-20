@@ -1043,3 +1043,38 @@ def test_the_make_something_window(make_app, size):
     render(app, size)
     assert any(i.def_id == "torch" for i in game.leader.inventory)
     assert app.error_count == 0
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_the_journal_remembers_people(make_app, size):
+    """The journal's People tab: everyone you have spoken to, where they are, and what they think of you."""
+    from realmwalker.game.dialogue import Conversation
+    from realmwalker.game.people import npcs_in
+    from realmwalker.ui.screens.journal import JournalScreen, met_people
+
+    app = make_app()
+    start_small_world(app)
+    game = app.game
+    town = next(s for s in game.world.settlements if s.kind in ("town", "city"))
+    game.player.x, game.player.y = town.x, town.y
+    game.enter_local()
+    folk = [n for n in npcs_in(game.world, town.id) if n.alive][:3]
+    for npc in folk:
+        Conversation(game, npc)  # meeting them is what puts them in the journal
+    assert len(met_people(game)) >= len(folk)
+    app.handle_event(KeyEvent("j"))
+    screen = app.top
+    assert isinstance(screen, JournalScreen)
+    app.handle_event(KeyEvent("tab"))
+    assert screen.tab == 1
+    text = screen_text(render(app, size))
+    assert folk[0].name.split()[0] in text
+    for key in ("down", "down", "pagedown"):
+        app.handle_event(KeyEvent(key))
+        render(app, size)
+    app.handle_event(KeyEvent("a"))  # "give it up" does nothing on the people tab
+    assert not isinstance(app.top, ConfirmBox)
+    app.handle_event(KeyEvent("tab"))
+    assert screen.tab == 0
+    app.handle_event(KeyEvent("escape"))
+    assert app.error_count == 0
