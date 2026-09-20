@@ -26,7 +26,7 @@ The nine milestones are done; this is what has been added since, in the same spi
 own v1 lists).
 
 **More kinds of work** (design section 13). Besides bounties, lairs, beasts, letters, heirlooms, captives, debts,
-disappearances and dragons, people now offer:
+disappearances and dragons, people now offer (sixteen kinds in all):
 - **escort**: walk someone to another town. They travel with you and pay at the gate. Lose a fight on the road and
   they do not survive it. Some of them are running from something, and only say so on the second night.
 - **assassinate**: a name, a town, and money for a quiet death. Face to face the story sometimes falls apart —
@@ -34,6 +34,12 @@ disappearances and dragons, people now offer:
 - **cure**: bring healing herbs to a town the sickness is in, and it lifts.
 - **feud**: two notables who have not spoken in years. Talk each of them round, or pay them off.
 - **steal**: lift a named thing from a named pocket, with the law where the law always is.
+- **defend**: a village knows the raiders are coming, and roughly when. Be there on the day and they come out of
+  the fields at dusk; be somewhere else and the place is sacked, sometimes burned, and the news travels.
+- **smuggle**: a sealed crate that must reach another walled town without the gate wardens seeing it (they search
+  travellers already; now they look for this too, and taking it is smuggling, whoever asked you to carry it).
+Work of the quiet kind — killing, lifting, smuggling — brings no news and no fame, only infamy and the standing
+of whoever paid.
 
 **Companions ask for things.** A companion who becomes devoted finally asks you for one job of their own, chosen by
 what they want: revenge on a real gang, a book they have wanted all their life, a cult they want ended, a pocket
@@ -43,10 +49,21 @@ purse. Seeing it through binds them to you; refusing or failing it loses them.
 **Finding the work.** Every place your journal wants you is lit like lamplight on the map and the world map, and
 the side panel shows how much work is in hand and when the next piece is due (click it, or press **j**).
 
+**More on the road.** Eight new travel events: a flooded ford, a burnt farm, toll men whose arrangement may be
+their own, a carter axle-deep in the ruts, a ring of standing stones, charcoal burners, a sick child at a cottage,
+and a body in the reeds. Twenty in all, each with real choices.
+
+**A dungeon belongs to whoever holds it.** The bottom of a bandit cellar used to hold bandits, goblins, rats and
+the restless dead at once; now a place takes its character from its master, with vermin in the corners.
+
 **Fixes.** The dead no longer linger in the party or among those waiting (cleared as time passes, on rejoining,
 and never written into a save); `first()` no longer calls a character named "The Wanderer" "The"; the autoplay
 bot's invariants no longer complain about a companion or a band of enemies holding their dead while the battle is
-still being fought. The debug console gained `quest <kind>` for trying a piece of work on the spot.
+still being fought. A battle's dice used to come from a stream keyed on how many messages were in the log, so
+saying one more thing before a fight changed the fight; each battle now has its own numbered stream. The balance
+harness was measuring one run twelve times (the body and health dice are keyed on the world clock, and every run
+started at the same minute), which is now fixed and the numbers are real. The debug console gained
+`quest <kind>` for trying a piece of work on the spot.
 
 ---
 
