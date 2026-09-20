@@ -233,3 +233,17 @@ def test_a_region_can_be_described_by_the_ai(game):
     game.player.visited_areas.discard(area.id)
     game._arrive(None)
     assert any("Wet heather" in m.text for m in game.log.messages[-3:])
+
+
+def test_landmarks_are_seen_from_a_distance(game):
+    """A ruin or a cave coming into view is remarked on, and goes on the map."""
+    site = min(game.world.sites, key=lambda s: abs(s.x - game.player.x) + abs(s.y - game.player.y))
+    game.player.explored[:] = False
+    game.player.x, game.player.y = site.x + 2, site.y
+    said = len(game.log.messages)
+    game.reveal()
+    text = " ".join(m.text for m in game.log.messages[said:])
+    assert "miles off" in text and game.player.explored[site.x, site.y]
+    said = len(game.log.messages)
+    game.reveal()  # a place already seen is not announced twice
+    assert len(game.log.messages) == said

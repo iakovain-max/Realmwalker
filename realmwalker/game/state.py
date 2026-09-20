@@ -418,11 +418,33 @@ class GameState:
         xs = np.arange(x0, x1)[:, None]
         ys = np.arange(y0, y1)[None, :]
         circle = (xs - p.x) ** 2 + (ys - p.y) ** 2 <= radius * radius + 1
+        seen_now = [site for site in self.world.sites
+                    if x0 <= site.x < x1 and y0 <= site.y < y1 and not p.explored[site.x, site.y]
+                    and circle[site.x - x0, site.y - y0]]
         p.explored[x0:x1, y0:y1] |= circle
+        for site in seen_now[:1]:  # one landmark at a time: the rest are on the map
+            self._landmark(site)
         # Settlements announce themselves from a little further (smoke, bells, roads).
         for s in self.world.settlements:
             if abs(s.x - p.x) <= radius + 2 and abs(s.y - p.y) <= radius + 2:
                 p.known_settlements.add(s.id)
+
+    def _landmark(self, site) -> None:
+        """Something man-made or old, seen from a distance: it goes on the map, and you are told."""
+        from realmwalker.game.events import compass
+
+        p = self.player
+        dx, dy = site.x - p.x, site.y - p.y
+        if dx == 0 and dy == 0:
+            return  # you are standing on it; arriving says its name
+        miles = int(round(math.hypot(dx, dy) * MILES_PER_TILE))
+        from realmwalker.core.textgen import a_or_an
+
+        spec = self.tables.sites["site_types"].get(site.kind, {})
+        what = a_or_an(spec.get("name", site.kind))
+        far = "on the skyline" if miles >= 15 else "away"
+        self.say(f"<place>{what[:1].upper() + what[1:]}</>, {far} to the {compass(dx, dy)}, about {miles} miles off.",
+                 "place")
 
     def _arrive(self, prev_area) -> None:
         p = self.player
