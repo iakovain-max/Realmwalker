@@ -37,7 +37,8 @@ realmwalker/
   ai/                      client (Player2 HTTP), service (workers/queue/ping), parsing, prompts, tasks, store
   world/                   generator (terrain, rivers, climate, biomes, towns, roads), local maps, calendar,
                            tables (numpy lookups from data), model (World + save-friendly dataclasses)
-  game/                    state (player, party, actions, travel, time), save (versioned zips), log, describe,
+  game/                    state (player, party, actions, travel, time; street life, the weather turning,
+                           landmarks), save (versioned zips), log, describe,
                            encounters (road trouble, local-map inhabitants), fight (start/finish battles, loot,
                            prisoners, rest), vision (field of view), survival (the body as time passes: weather,
                            eating, drinking, water sources, death), care (treatment, healing magic), camp (fire,
@@ -143,6 +144,17 @@ tools/                     autoplay.py, mock_player2.py, build_friends.py, balan
 - Balance: `tools/balance.py` measures the design's targets (fights at level 1 and 3, a winter night, an
   untreated wound); `tests/test_balance.py` keeps them inside bands. Change combat, cold or bleeding numbers and
   run it before and after.
+- The world's voice (street life in towns, companions talking on the road, the weather turning, night sounds,
+  region and dungeon descriptions) is gated by `GameState.flavour(level)`, which reads the player's "Text detail"
+  setting; AI flourishes are gated by `App.ai_extras()` ("AI extras" in Settings). Keep new flavour behind both.
+- Faction rank: `reputation.rank` is `min(standing_rank, confirmed_rank)`. A promotion is confirmed by doing that
+  faction's work (`quests.mark_trial` flags the offer, `reward` calls `reputation.confirm_rank`), or automatically
+  when standing runs two ranks ahead (`reputation.tick`).
+- Crafting at camp is data-driven (`data/camping.json` "crafts"); `camp.crafts(game)` lists what is possible here
+  and `camp.make(game, id)` does it on a skill check.
+- Screens added after v1: `ui/screens/spells.py` (S), `ui/screens/journal.py` (j; Tab switches Work/People),
+  `CraftScreen` in `ui/screens/camp.py` (m at camp), `ui/screens/interlude.py` (after a new character in an old
+  world).
 - Battles: `rules/combat.Battle` is pure logic driven by `step()` / `pending_party()` / `do_*()`; the screen
   (`ui/screens/battle.py`) only paces and asks. `GameState.busy` (encounter, battle, aftermath or death pending)
   blocks moving; `GameScreen._open_event_screen()` opens the right screen. Debug console: `fight <group>`.
