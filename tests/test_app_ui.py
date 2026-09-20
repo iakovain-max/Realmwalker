@@ -833,3 +833,68 @@ def test_the_death_screen_and_the_world_after(make_app, size):
     app.handle_event(KeyEvent("enter"))
     render(app, size)
     assert app.error_count == 0
+
+
+def test_a_job_from_the_first_word_to_the_pay(make_app):
+    """Through the screens: ask for work, take it, see it in the journal, finish it, get paid."""
+    from realmwalker.game import quests
+    from realmwalker.game.people import npcs_in
+    from realmwalker.ui.screens.dialogue import DialogueScreen
+    from realmwalker.ui.screens.journal import JournalScreen
+
+    app = make_app()
+    start_small_world(app)
+    game = app.game
+    town = next(s for s in game.world.settlements if s.kind in ("town", "city"))
+    game.player.x, game.player.y = town.x, town.y
+    game.enter_local()
+    offer = npc = None
+    for person in npcs_in(game.world, town.id):
+        offer = quests.offer_for(game, person)
+        if offer is not None:
+            npc = person
+            break
+    assert offer is not None, "nobody in this town has work"
+
+    game.talk_to = npc.id
+    render(app)
+    assert isinstance(app.top, DialogueScreen)
+    screen = app.top
+    menu = screen.conv.menu()
+    work = next(i for i, c in enumerate(menu) if c.id == "work")
+    screen.choose(work)
+    render(app)
+    assert screen.conv.mode == "quest_offer"
+    yes = next(i for i, c in enumerate(screen.conv.menu()) if c.id == "work_accept")
+    screen.choose(yes)
+    render(app)
+    assert offer in game.quests and offer["state"] == "active"
+    app.handle_event(KeyEvent("escape"))
+
+    app.handle_event(KeyEvent("j"))
+    assert isinstance(app.top, JournalScreen)
+    text = screen_text(render(app))
+    assert quests.title(game, offer).split()[0] in text
+    app.handle_event(KeyEvent("escape"))
+
+    # The work is done (however it was done); now go back and say so.
+    quests.mark_done(game, offer)
+    if offer["template"] in ("retrieve", "steal"):
+        from realmwalker.rules.inventory import add_existing
+
+        add_existing(game.leader, game.tables.items, quests.quest_item(game, offer))
+    if offer["template"] == "collect_debt":
+        offer["target"]["collected"] = 0
+    money = game.leader.money
+    game.talk_to = npc.id
+    render(app)
+    screen = app.top
+    assert isinstance(screen, DialogueScreen)
+    turn_in = next((i for i, c in enumerate(screen.conv.menu()) if c.id == "quest_turn_in"), None)
+    if turn_in is None:  # some work is reported to somebody else (a letter, a crate, a companion)
+        assert offer["template"] in ("deliver", "smuggle", "escort", "cure") or offer.get("personal") is not None
+        return
+    screen.choose(turn_in)
+    render(app)
+    assert offer["state"] == "finished" and game.leader.money > money
+    assert app.error_count == 0
