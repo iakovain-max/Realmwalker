@@ -1358,236 +1358,292 @@ def talk_choices(conv) -> list:
 
 
 def talk_choose(conv, choice) -> None:
+    """Carry out a work-related choice. One small handler per choice (CHOICE_HANDLERS below)."""
     game = conv.game
-    npc = conv.npc
     cid = choice.id
     if cid == "work":
-        conv.you_say("Is there any work?")
-        q = offer_for(game, npc)
-        if q is None:
-            conv.npc_says("\"Not for you. Not today.\"")
-            return
-        conv.npc_says(pitch(game, q))
-        if q.get("pitch_ai"):
-            conv.note(f"<dim>({terms(q)})</>")
-        if q.get("trial") is not None:
-            conv.note(trial_note(game, q))
-        conv.pending_offer = q
-        conv.mode = "quest_offer"
-        return
+        return _offer_work(conv)
     if cid in ("work_accept", "work_decline"):
-        q = conv.pending_offer
-        conv.mode = "main"
-        conv.pending_offer = None
-        if cid == "work_decline" or q is None:
-            conv.you_say("Not now.")
-            return
-        conv.you_say("I'll do it.")
-        conv.npc_says(conv.rng.choice(["\"Good.\"", "\"Don't make me sorry.\"", "\"Then go. Time's short.\"",
-                                       "\"I'll believe it when it's done.\""]))
-        for text in accept(game, q):
-            conv.note(text)
-        return
+        return _answer_offer(conv, cid)
     q = by_id(game, choice.data.get("q", -1))
-    if q is None:
+    handler = CHOICE_HANDLERS.get(cid)
+    if q is None or handler is None:
         return
-    t = q["target"]
-    rng = conv.rng
+    handler(conv, q)
+
+
+def _offer_work(conv) -> None:
+    game, npc = conv.game, conv.npc
+    conv.you_say("Is there any work?")
+    q = offer_for(game, npc)
+    if q is None:
+        conv.npc_says("\"Not for you. Not today.\"")
+        return
+    conv.npc_says(pitch(game, q))
+    if q.get("pitch_ai"):
+        conv.note(f"<dim>({terms(q)})</>")
+    if q.get("trial") is not None:
+        conv.note(trial_note(game, q))
+    conv.pending_offer = q
+    conv.mode = "quest_offer"
+
+
+def _answer_offer(conv, cid: str) -> None:
+    q = conv.pending_offer
+    conv.mode = "main"
+    conv.pending_offer = None
+    if cid == "work_decline" or q is None:
+        conv.you_say("Not now.")
+        return
+    conv.you_say("I'll do it.")
+    conv.npc_says(conv.rng.choice(["\"Good.\"", "\"Don't make me sorry.\"", "\"Then go. Time's short.\"",
+                                   "\"I'll believe it when it's done.\""]))
+    for text in accept(conv.game, q):
+        conv.note(text)
+
+
+def _turn_in(conv, q) -> None:
+    """Telling whoever set the work that it is done, and being paid for it."""
+    game, npc, t = conv.game, conv.npc, q["target"]
+    conv.you_say("It's done.")
+    share, text = 1.0, None
+    if q["template"] in ("retrieve", "steal"):
+        take_quest_item(game, q)
+    elif q["template"] == "collect_debt":
+        game.leader.money -= t.get("collected", 0)
+        q["reward"] = t.get("collected", 0) // 4
+        text = (f"You hand over {money_text(t.get('collected', 0))}; {npc.first_name} counts it and gives you "
+                f"your quarter: {money_text(q['reward'])}.")
+    elif q["template"] == "rescue":
+        text = (f"{t['captive']} is home. {npc.first_name} cannot speak for a while, then presses "
+                f"{money_text(q['reward'])} on you.")
+    elif q["template"] == "investigate" and q.get("ended"):
+        share = 1.5
+    if q.get("mercy"):
+        share = 0.5
+        conv.npc_says("\"Gone, you say. Not dead. ... Well. Gone will do. Half, then.\"")
+    else:
+        conv.npc_says(conv.rng.choice(["\"Good. That's good.\"", "\"I didn't think you'd come back.\"",
+                                       "\"Then it's paid for.\""]))
+    for line in reward(game, q, share=share, text=text):
+        conv.note(line)
+
+
+def _deliver_letter(conv, q) -> None:
+    from realmwalker.game.people import change_disposition
+
+    game, npc = conv.game, conv.npc
+    conv.you_say("I have a letter for you.")
+    take_quest_item(game, q)
+    q["done"] = True
+    if q.get("opened"):
+        change_disposition(npc, -15)
+        conv.npc_says("\"This seal has been broken.\" A long look. \"Half. And be glad of it.\"")
+        lines = reward(game, q, share=0.5,
+                       text=f"{npc.first_name} pays you {money_text(q['reward'] // 2)}, and not kindly.")
+    else:
+        lines = reward(game, q, text=f"{npc.first_name} breaks the seal, reads, and pays you "
+                                     f"{money_text(q['reward'])}.")
+    for line in lines:
+        conv.note(line)
+
+
+def _deliver_goods(conv, q) -> None:
+    game, npc = conv.game, conv.npc
+    conv.you_say("I have your crate.")
+    take_quest_item(game, q)
+    mark_done(game, q)
+    conv.npc_says("They look at the seal, not at you. \"Good. Forget the way here.\"")
+    for line in reward(game, q, text=f"{npc.first_name} pays you {money_text(q['reward'])} in small coin."):
+        conv.note(line)
+
+
+def _show_letter(conv, q) -> None:
+    """Taking an incriminating letter to the lord instead of its addressee."""
+    from realmwalker.world import news
+
+    game, npc = conv.game, conv.npc
+    conv.you_say(f"There is a letter you should see, from {q['giver_name']}.")
+    take_quest_item(game, q)
+    giver = game.world.npcs.get(q["giver"])
+    if giver is not None:
+        giver.flags["disgraced"] = True
+        giver.disposition = -80
+        giver.remember("was betrayed to the law by the traveller")
+    q["done"] = True
+    q["faction"] = -1  # the giver's people will not thank you for this
+    conv.npc_says("They read it twice. \"Leave this with me. And say nothing.\"")
+    for line in reward(game, q, share=1.5,
+                       text=f"{npc.first_name} pays you {money_text(int(q['reward'] * 1.5))} for your honesty."):
+        conv.note(line)
+    town = game.world.settlements[q["town"]]
+    news.add(game.world, f"{q['giver_name']} of {town.name} was disgraced, on the word of a traveller",
+             town.x, town.y, kind="crime", importance=2, places=[town.id])
+
+
+def _blackmail(conv, q) -> None:
+    game, npc, rng = conv.game, conv.npc, conv.rng
     sheet = game.sheet()
-    if cid == "quest_turn_in":
-        conv.you_say("It's done.")
-        share = 1.0
-        text = None
-        if q["template"] in ("retrieve", "steal"):
-            take_quest_item(game, q)
-        elif q["template"] == "collect_debt":
-            game.leader.money -= t.get("collected", 0)
-            q["reward"] = t.get("collected", 0) // 4
-            text = f"You hand over {money_text(t.get('collected', 0))}; {npc.first_name} counts it and gives you " \
-                   f"your quarter: {money_text(q['reward'])}."
-        elif q["template"] == "rescue":
-            text = (f"{t['captive']} is home. {npc.first_name} cannot speak for a while, then presses "
-                    f"{money_text(q['reward'])} on you.")
-        elif q["template"] == "investigate" and q.get("ended"):
-            share = 1.5
-        if q.get("mercy"):
-            share = 0.5
-            conv.npc_says("\"Gone, you say. Not dead. ... Well. Gone will do. Half, then.\"")
-        else:
-            conv.npc_says(rng.choice(["\"Good. That's good.\"", "\"I didn't think you'd come back.\"",
-                                      "\"Then it's paid for.\""]))
-        for line in reward(game, q, share=share, text=text):
-            conv.note(line)
-    elif cid == "deliver_letter":
-        conv.you_say("I have a letter for you.")
-        take_quest_item(game, q)
-        q["done"] = True
-        if q.get("opened"):
-            from realmwalker.game.people import change_disposition
+    conv.you_say("I read your letter. What is it worth to you?")
+    roll = dice.d20(rng).natural + sheet.skill_bonus("intimidation")
+    if roll < BLACKMAIL_DC:
+        conv.npc_says("\"Get out. Do what you like with it.\"")
+        conv.note(f"<dim>(Intimidation {roll} vs {BLACKMAIL_DC})</>")
+        return
+    from realmwalker.game.companions import react
 
-            change_disposition(npc, -15)
-            conv.npc_says("\"This seal has been broken.\" A long look. \"Half. And be glad of it.\"")
-            lines = reward(game, q, share=0.5, text=f"{npc.first_name} pays you {money_text(q['reward'] // 2)}, "
-                                                    f"and not kindly.")
-        else:
-            lines = reward(game, q, text=f"{npc.first_name} breaks the seal, reads, and pays you "
-                                         f"{money_text(q['reward'])}.")
-        for line in lines:
-            conv.note(line)
-    elif cid == "deliver_goods":
-        conv.you_say("I have your crate.")
-        take_quest_item(game, q)
+    paid = max(q["reward"], min(max(0, npc.purse), q["reward"] * 3))
+    npc.purse = max(0, npc.purse - paid)
+    game.leader.money += paid
+    npc.disposition = -90
+    npc.remember("was blackmailed by the traveller")
+    take_quest_item(game, q)
+    q["state"] = "finished"
+    q["journal"].append(f"{q['giver_name']} paid {money_text(paid)} to have the letter back, and will hate you "
+                        f"for it.")
+    conv.npc_says("A long silence. Then the money, counted out with shaking hands.")
+    conv.note(f"<loot>You get {money_text(paid)}.</> <dim>(Intimidation {roll})</>")
+    react(game, "cruelty", "theft")
+
+
+def _collect_debt(conv, q) -> None:
+    game, npc, t, rng = conv.game, conv.npc, q["target"], conv.rng
+    sheet = game.sheet()
+    conv.you_say(f"You owe {q['giver_name']} money.")
+    if q.get("hidden") == "destitute" and not q.get("revealed"):
+        reveal(game, q)
+        conv.npc_says("\"Look around you. Does it look like I have it?\"")
+        return
+    t["tried"] = game.moment.total_days
+    skill = max(("persuasion", "intimidation"), key=lambda s: sheet.skill_bonus(s))
+    roll = dice.d20(rng).natural + sheet.skill_bonus(skill)
+    if roll >= DEBT_DC:
+        t["collected"] = t["debt"]
+        game.leader.money += t["debt"]
+        conv.npc_says("\"Fine. Take it. Tell them we're square.\"")
+        conv.note(f"<loot>You collect {money_text(t['debt'])} for {q['giver_name']}.</> "
+                  f"<dim>({skill.capitalize()} {roll})</>")
         mark_done(game, q)
-        conv.npc_says("They look at the seal, not at you. \"Good. Forget the way here.\"")
-        for line in reward(game, q, text=f"{npc.first_name} pays you {money_text(q['reward'])} in small coin."):
-            conv.note(line)
-    elif cid == "show_letter":
-        conv.you_say(f"There is a letter you should see, from {q['giver_name']}.")
-        take_quest_item(game, q)
-        giver = game.world.npcs.get(q["giver"])
-        if giver is not None:
-            giver.flags["disgraced"] = True
-            giver.disposition = -80
-            giver.remember("was betrayed to the law by the traveller")
-        q["done"] = True
-        q["faction"] = -1  # the giver's people will not thank you for this
-        conv.npc_says("They read it twice. \"Leave this with me. And say nothing.\"")
-        for line in reward(game, q, share=1.5, text=f"{npc.first_name} pays you {money_text(int(q['reward'] * 1.5))} "
-                                                    f"for your honesty."):
-            conv.note(line)
-        from realmwalker.world import news
+    else:
+        conv.npc_says("\"I'll pay when I can. Now get out.\"")
+        conv.note(f"<dim>({skill.capitalize()} {roll} vs {DEBT_DC}; you can try again another day)</>")
 
-        town = game.world.settlements[q["town"]]
-        news.add(game.world, f"{q['giver_name']} of {town.name} was disgraced, on the word of a traveller",
-                 town.x, town.y, kind="crime", importance=2, places=[town.id])
-    elif cid == "blackmail":
-        conv.you_say("I read your letter. What is it worth to you?")
-        roll = dice.d20(rng).natural + sheet.skill_bonus("intimidation")
-        if roll >= BLACKMAIL_DC:
-            paid = max(q["reward"], min(max(0, npc.purse), q["reward"] * 3))
-            npc.purse = max(0, npc.purse - paid)
-            game.leader.money += paid
-            npc.disposition = -90
-            npc.remember("was blackmailed by the traveller")
-            take_quest_item(game, q)
-            q["state"] = "finished"
-            q["journal"].append(f"{q['giver_name']} paid {money_text(paid)} to have the letter back, and will "
-                                f"hate you for it.")
-            conv.npc_says("A long silence. Then the money, counted out with shaking hands.")
-            conv.note(f"<loot>You get {money_text(paid)}.</> <dim>(Intimidation {roll})</>")
-            from realmwalker.game.companions import react
 
-            react(game, "cruelty", "theft")
-        else:
-            conv.npc_says("\"Get out. Do what you like with it.\"")
-            conv.note(f"<dim>(Intimidation {roll} vs {BLACKMAIL_DC})</>")
-    elif cid == "collect_debt":
-        conv.you_say(f"You owe {q['giver_name']} money.")
-        if q.get("hidden") == "destitute" and not q.get("revealed"):
-            reveal(game, q)
-            conv.npc_says("\"Look around you. Does it look like I have it?\"")
-            return
-        t["tried"] = game.moment.total_days
-        skill = max(("persuasion", "intimidation"), key=lambda s: sheet.skill_bonus(s))
-        roll = dice.d20(rng).natural + sheet.skill_bonus(skill)
-        if roll >= DEBT_DC:
-            t["collected"] = t["debt"]
-            game.leader.money += t["debt"]
-            conv.npc_says("\"Fine. Take it. Tell them we're square.\"")
-            conv.note(f"<loot>You collect {money_text(t['debt'])} for {q['giver_name']}.</> "
-                      f"<dim>({skill.capitalize()} {roll})</>")
-            mark_done(game, q)
-        else:
-            conv.npc_says("\"I'll pay when I can. Now get out.\"")
-            conv.note(f"<dim>({skill.capitalize()} {roll} vs {DEBT_DC}; you can try again another day)</>")
-    elif cid == "debt_take":
-        little = max(100, t["debt"] // 5)
-        t["collected"] = little
-        game.leader.money += little
-        conv.note(f"You take {money_text(little)}, which is everything they have. Nobody looks at you as you go.")
-        from realmwalker.game.companions import react
+def _debt_take(conv, q) -> None:
+    from realmwalker.game.companions import react
 
-        react(game, "cruelty")
-        mark_done(game, q)
-    elif cid == "debt_forgive":
-        conv.note("You leave them what they have. You will have to tell the lender something.")
-        from realmwalker.game.companions import react
+    game, t = conv.game, q["target"]
+    little = max(100, t["debt"] // 5)
+    t["collected"] = little
+    game.leader.money += little
+    conv.note(f"You take {money_text(little)}, which is everything they have. Nobody looks at you as you go.")
+    react(game, "cruelty")
+    mark_done(game, q)
 
-        react(game, "mercy", "charity", "help_poor")
-        q["state"] = "finished"
-        q["journal"].append(f"You let {q['words']['debtor']} keep what little they had. There is no pay for that.")
-        from realmwalker.game.people import change_disposition
 
-        change_disposition(npc, 30)
-    elif cid == "make_peace":
-        conv.you_say(f"About {other_name(game, npc=npc, q=q)}...")
-        roll = dice.d20(rng).natural + sheet.skill_bonus("persuasion")
-        dc = 13 + (2 if "proud" in npc.traits or "suspicious" in npc.traits else 0)
-        if roll >= dc:
-            t.setdefault("agreed", []).append(npc.id)
-            conv.npc_says("\"... Fine. For you, and for the sake of the place. Not for them.\"")
-            conv.note(f"<dim>(Persuasion {roll} vs {dc})</>")
-            check_feud(game, q, conv)
-        else:
-            conv.npc_says("\"You don't know what they did. Don't come to me about it again.\"")
-            conv.note(f"<dim>(Persuasion {roll} vs {dc})</>")
-    elif cid == "buy_peace":
-        price = peace_price(q)
-        if game.leader.money < price:
-            return
-        game.leader.money -= price
-        npc.purse += price
+def _debt_forgive(conv, q) -> None:
+    from realmwalker.game.companions import react
+    from realmwalker.game.people import change_disposition
+
+    game, npc = conv.game, conv.npc
+    conv.note("You leave them what they have. You will have to tell the lender something.")
+    react(game, "mercy", "charity", "help_poor")
+    q["state"] = "finished"
+    q["journal"].append(f"You let {q['words']['debtor']} keep what little they had. There is no pay for that.")
+    change_disposition(npc, 30)
+
+
+def _make_peace(conv, q) -> None:
+    game, npc, t, rng = conv.game, conv.npc, q["target"], conv.rng
+    sheet = game.sheet()
+    conv.you_say(f"About {other_name(game, npc=npc, q=q)}...")
+    roll = dice.d20(rng).natural + sheet.skill_bonus("persuasion")
+    dc = 13 + (2 if "proud" in npc.traits or "suspicious" in npc.traits else 0)
+    if roll >= dc:
         t.setdefault("agreed", []).append(npc.id)
-        from realmwalker.game.people import change_disposition
-
-        change_disposition(npc, 15)
-        conv.note(f"You pay {money_text(price)}. It is remarkable what that settles.")
+        conv.npc_says("\"... Fine. For you, and for the sake of the place. Not for them.\"")
+        conv.note(f"<dim>(Persuasion {roll} vs {dc})</>")
         check_feud(game, q, conv)
-    elif cid == "warn_target":
-        conv.you_say("Someone is paying to have you killed.")
-        conv.npc_says("A long silence. \"Who?\"")
-        q["state"] = "finished"
-        q["journal"].append(f"You warned {q['words']['target']} instead of killing them. {q['giver_name']} will "
-                            f"learn of it sooner or later.")
-        paid = min(max(npc.purse, 0), q["reward"])
-        npc.purse -= paid
-        game.leader.money += paid
-        from realmwalker.game.people import change_disposition
+    else:
+        conv.npc_says("\"You don't know what they did. Don't come to me about it again.\"")
+        conv.note(f"<dim>(Persuasion {roll} vs {dc})</>")
 
-        change_disposition(npc, 40)
-        npc.remember(f"was warned by the traveller that {q['giver_name']} wanted them dead")
-        giver = game.world.npcs.get(q["giver"])
-        if giver is not None:
-            giver.disposition = -70
-            giver.remember("was betrayed by the traveller")
-        conv.note(f"<loot>{npc.first_name} gives you {money_text(paid)} and tells you to go.</>")
-        from realmwalker.game.companions import react
 
-        react(game, "mercy")
-    elif cid == "hand_over_goods":
-        conv.you_say("I have the herbs.")
-        take_herbs(game, q)
-        mark_done(game, q)
-        settlement = game.world.settlements[t.get("settlement", q["town"])]
-        settlement.status.pop("plague", None)
-        conv.npc_says("\"Thank God. Thank you. Now go and wash your hands.\"")
-        for line in reward(game, q, text=f"{npc.first_name} pays you {money_text(q['reward'])}, which is everything "
-                                         f"the parish had."):
-            conv.note(line)
-    elif cid == "ask_missing":
-        conv.you_say("What do you know about the people going missing?")
-        t.setdefault("asked", []).append(npc.id)
-        if len(t["asked"]) >= 2 or rng.chance(0.3):
-            t["clue"] = True
-            conv.npc_says(fill(game, q, "clue"))
-            site = game.world.sites[t["site"]]
-            game.player.explored[site.x, site.y] = True
-            q["journal"].append(f"The trail leads to {site.name}.")
-            conv.note("<info>(It is on your map now.)</>")
-        else:
-            conv.npc_says(rng.choice(["\"Nothing. I don't know anything. Ask someone else.\"",
-                                      "\"Keep your voice down. ... No. I can't.\"",
-                                      "\"People leave. It's a hard place.\""]))
+def _buy_peace(conv, q) -> None:
+    from realmwalker.game.people import change_disposition
+
+    game, npc, t = conv.game, conv.npc, q["target"]
+    price = peace_price(q)
+    if game.leader.money < price:
+        return
+    game.leader.money -= price
+    npc.purse += price
+    t.setdefault("agreed", []).append(npc.id)
+    change_disposition(npc, 15)
+    conv.note(f"You pay {money_text(price)}. It is remarkable what that settles.")
+    check_feud(game, q, conv)
+
+
+def _warn_target(conv, q) -> None:
+    """Telling the person you were paid to kill who paid for it."""
+    from realmwalker.game.companions import react
+    from realmwalker.game.people import change_disposition
+
+    game, npc = conv.game, conv.npc
+    conv.you_say("Someone is paying to have you killed.")
+    conv.npc_says("A long silence. \"Who?\"")
+    q["state"] = "finished"
+    q["journal"].append(f"You warned {q['words']['target']} instead of killing them. {q['giver_name']} will learn "
+                        f"of it sooner or later.")
+    paid = min(max(npc.purse, 0), q["reward"])
+    npc.purse -= paid
+    game.leader.money += paid
+    change_disposition(npc, 40)
+    npc.remember(f"was warned by the traveller that {q['giver_name']} wanted them dead")
+    giver = game.world.npcs.get(q["giver"])
+    if giver is not None:
+        giver.disposition = -70
+        giver.remember("was betrayed by the traveller")
+    conv.note(f"<loot>{npc.first_name} gives you {money_text(paid)} and tells you to go.</>")
+    react(game, "mercy")
+
+
+def _hand_over_goods(conv, q) -> None:
+    game, npc, t = conv.game, conv.npc, q["target"]
+    conv.you_say("I have the herbs.")
+    take_herbs(game, q)
+    mark_done(game, q)
+    settlement = game.world.settlements[t.get("settlement", q["town"])]
+    settlement.status.pop("plague", None)
+    conv.npc_says("\"Thank God. Thank you. Now go and wash your hands.\"")
+    for line in reward(game, q, text=f"{npc.first_name} pays you {money_text(q['reward'])}, which is everything "
+                                     f"the parish had."):
+        conv.note(line)
+
+
+def _ask_missing(conv, q) -> None:
+    game, npc, t, rng = conv.game, conv.npc, q["target"], conv.rng
+    conv.you_say("What do you know about the people going missing?")
+    t.setdefault("asked", []).append(npc.id)
+    if len(t["asked"]) >= 2 or rng.chance(0.3):
+        t["clue"] = True
+        conv.npc_says(fill(game, q, "clue"))
+        site = game.world.sites[t["site"]]
+        game.player.explored[site.x, site.y] = True
+        q["journal"].append(f"The trail leads to {site.name}.")
+        conv.note("<info>(It is on your map now.)</>")
+    else:
+        conv.npc_says(rng.choice(["\"Nothing. I don't know anything. Ask someone else.\"",
+                                  "\"Keep your voice down. ... No. I can't.\"",
+                                  "\"People leave. It's a hard place.\""]))
+
+
+CHOICE_HANDLERS = {
+    "quest_turn_in": _turn_in, "deliver_letter": _deliver_letter, "deliver_goods": _deliver_goods,
+    "show_letter": _show_letter, "blackmail": _blackmail, "collect_debt": _collect_debt,
+    "debt_take": _debt_take, "debt_forgive": _debt_forgive, "make_peace": _make_peace, "buy_peace": _buy_peace,
+    "warn_target": _warn_target, "hand_over_goods": _hand_over_goods, "ask_missing": _ask_missing,
+}
 
 
 def other_name(game, q=None, npc=None) -> str:
