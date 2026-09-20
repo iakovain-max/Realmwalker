@@ -53,6 +53,20 @@ the side panel shows how much work is in hand and when the next piece is due (cl
 their own, a carter axle-deep in the ruts, a ring of standing stones, charcoal burners, a sick child at a cottage,
 and a body in the reeds. Twenty in all, each with real choices.
 
+**More things that live out there.** Gnolls, hobgoblins, bugbears, berserkers and stirges, each in bands of
+their own and in country that suits them (measured with the balance harness: a gnoll pack or a hobgoblin patrol
+is a real fight at level 1; berserkers are a decision, not a fight, until about level 3).
+
+**Every level under the ground says what it is like** — cut stone and old grain in a cellar, burial niches three
+deep in a crypt, scorched rock and opened armour in a lair — once, when you first come down. With Player2 running
+the AI writes it instead, from the real facts of that level, and only while the built-in words are unread. Dark
+places also look lived in now: fallen stone, old bones, tables and beds, pillars in the crypts and temples, water
+in the low places of caves.
+
+**Your own story.** The character sheet lists what you are known for (your last deeds, with fame and infamy), and
+the chronicle's Legends tab has "Those who came before": the characters who lived and died in this world, with
+their obituaries, beside the old heroes and the dragons.
+
 **A dungeon belongs to whoever holds it.** The bottom of a bandit cellar used to hold bandits, goblins, rats and
 the restless dead at once; now a place takes its character from its master, with vermin in the corners.
 
@@ -102,7 +116,7 @@ started at the same minute), which is now fixed and the numbers are real. The de
 come back to it as someone new? Is anything in the help missing or wrong?
 
 **How it was verified**
-- 550 automated tests pass, including new ones for the death record, unremarkable deaths, companions going
+- 550 automated tests pass at the close of M9 (572 now, with the work since), including new ones for the death record, unremarkable deaths, companions going
   home, the obituary (built-in and AI), saving the dead with the world, the years between lives, and the death
   and interlude windows at every size.
 - **A balance pass, measured** (`tools/balance.py`, locked in by `tests/test_balance.py`):
