@@ -169,6 +169,7 @@ From the title screen, <loot>New Character</> begins a new life in a world you h
 
 <title>Player2 AI</title>
 The game uses the free Player2 app to write names, descriptions and dialogue. Keep Player2 running for AI text. Without it the game still works, using its own built-in text. The indicator in the bottom-right corner shows which is in use. The AI never decides what happens: dice and rules do.
+Player2 gives a limited amount of free energy a day, so the game spends it carefully: people, places and conversation first. In Settings, <loot>AI extras</> turns off the rest (regions, dungeons, magic items, the wording of work, obituaries) if you would rather keep the energy for the people.
 
 <title>If something goes wrong</title>
 The game tries never to crash: if something breaks it says so, writes the details to <loot>%APPDATA%\\Realmwalker\\logs\\errors.log</> and carries on. That file is the thing to send if you report a problem. Your saves, settings and screenshots live in the same folder.

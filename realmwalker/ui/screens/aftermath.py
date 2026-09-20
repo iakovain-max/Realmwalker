@@ -254,7 +254,7 @@ class DeathScreen(Screen):
         """Ask the AI for the obituary once, and put its words in when they come."""
         from realmwalker.game import death
 
-        if self.asked or self.record.get("obituary_source") == "ai" or not self.app.ai.usable():
+        if self.asked or self.record.get("obituary_source") == "ai" or not self.app.ai_extras():
             return
         from realmwalker.ai.service import Priority
         from realmwalker.ai.tasks import OBITUARY

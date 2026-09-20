@@ -65,6 +65,7 @@ class Settings:
     autosave_minutes: int = 5
     ai_debug_log: bool = False
     auto_supplies: bool = True  # eat and drink from the pack when needed
+    ai_extras: bool = True  # AI words for scenery and things (off: keep the energy for people and places)
 
     def normalise(self) -> None:
         if self.font_size not in FONT_SIZES:

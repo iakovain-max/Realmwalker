@@ -36,6 +36,9 @@ class SettingsScreen(Screen):
                    "Show every roll in the message log, e.g. 'Persuasion: 14 + 3 = 17 vs DC 15 — success.'"),
             Option("AI text (Player2)", lambda: _onoff(s.ai_enabled), lambda d: app.set_ai_enabled(not s.ai_enabled),
                    "Use the Player2 AI for names, descriptions and dialogue. When off, built-in text is used."),
+            Option("AI extras", lambda: _onoff(s.ai_extras), lambda d: self._toggle("ai_extras"),
+                   "Let the AI also write regions, dungeons, magic items, work and obituaries. Off: the AI is "
+                   "kept for people, places and conversation, which saves Player2 energy."),
             Option("Text detail", lambda: s.verbosity.capitalize(), self._verbosity,
                    "How much descriptive prose the game shows: brief, normal or rich."),
             Option("Autosave every", lambda: f"{s.autosave_minutes} min", self._autosave,

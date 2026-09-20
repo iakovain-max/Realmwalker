@@ -122,6 +122,11 @@ class App:
     def _make_client(self) -> Player2Client:
         return Player2Client(self.config.player2_base_url or None, self.config.player2_game_client_id)
 
+    def ai_extras(self) -> bool:
+        """Is there AI (and permission) for the background flourishes: regions, dungeons, items, work?
+        People and places come first; this can be switched off to save Player2 energy for them."""
+        return self.ai.usable() and self.settings.ai_extras
+
     def _check_prompts(self) -> list[str]:
         errors = []
         for name in [SYSTEM_PROMPT] + [t.name for t in ALL_TASKS]:

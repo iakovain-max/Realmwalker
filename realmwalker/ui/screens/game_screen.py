@@ -379,7 +379,7 @@ class GameScreen(Screen):
         """Magic items in the packs get an AI-written name and history before they are identified."""
         from realmwalker.game import magic_items
 
-        if not self.app.ai.usable():
+        if not self.app.ai_extras():
             return
         from realmwalker.ai.service import Priority
         from realmwalker.ai.tasks import MAGIC_ITEM
@@ -400,7 +400,7 @@ class GameScreen(Screen):
     def _word_area(self) -> None:
         """The country the party is walking through gets AI words, once per region."""
         game = self.game
-        if game.in_local or game.busy or not self.app.ai.usable():
+        if game.in_local or game.busy or not self.app.ai_extras():
             return
         area = game.world.area_at(game.player.x, game.player.y)
         if area is None or area.size < 20:
@@ -431,7 +431,7 @@ class GameScreen(Screen):
         """A level the party has just reached gets AI words before they read the built-in ones."""
         game = self.game
         lm = game.local
-        if not self.app.ai.usable():
+        if not self.app.ai_extras():
             return
         from realmwalker.game import dungeon
 
@@ -491,7 +491,7 @@ class GameScreen(Screen):
         if getattr(self, "_offers_stamp", None) != stamp:
             self._offers_stamp = stamp
             self._offers = quests.offers_in(game, here)
-        if not self.app.ai.usable():
+        if not self.app.ai_extras():
             return
         from realmwalker.ai.service import Priority
         from realmwalker.ai.tasks import QUEST

@@ -26,7 +26,7 @@ def ensure_chronicle(app, game) -> dict:
 def request_chronicle(app, game) -> None:
     """Ask the AI to write the chronicle, in the background, once per world (before anyone reads it)."""
     w = game.world
-    if w.politics.get("chronicle") is not None or w.politics.get("chronicle_asked") or not app.ai.usable():
+    if w.politics.get("chronicle") is not None or w.politics.get("chronicle_asked") or not app.ai_extras():
         return
     if not w.history:
         return

@@ -898,3 +898,24 @@ def test_a_job_from_the_first_word_to_the_pay(make_app):
     render(app)
     assert offer["state"] == "finished" and game.leader.money > money
     assert app.error_count == 0
+
+
+def test_ai_extras_can_be_switched_off(make_app):
+    """The setting keeps Player2 energy for people and places: no background flourishes are asked for."""
+    app = make_app()
+    app.settings.ai_enabled = True
+    assert not app.ai_extras()  # the AI is not online in tests, so nothing is asked for at all
+    app.settings.ai_extras = False
+    calls = []
+    app.ai.usable = lambda: True  # pretend it is online
+    app.ai.submit = lambda *a, **k: calls.append(a)
+    assert app.ai.usable() and not app.ai_extras()
+    start_small_world(app)
+    gs = app.top
+    gs._dress_magic_items()
+    gs._word_dungeon()
+    gs._word_area()
+    gs._word_quests()
+    assert not calls
+    app.settings.ai_extras = True
+    assert app.ai_extras()
