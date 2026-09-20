@@ -165,8 +165,10 @@ class JournalScreen(Screen):
                 self.detail.set_text(details(game, sel))
                 self._shown = key
             self.detail.render(canvas, dx, top, w - dx - 2, bottom - top)
-        hint = "↑↓ choose · PgUp PgDn scroll · a give it up · Esc close"
-        canvas.text(2, h - 2, hint, colors.FAINT, max_width=w - 4)
+        bx = canvas.button(2, h - 2, "Close", self.close, hotkey="Esc")
+        if sel is not None and sel["state"] in quests.LIVE:
+            bx = canvas.button(bx + 2, h - 2, "Give it up", self.ask_abandon, hotkey="a")
+        canvas.text(bx + 2, h - 2, "↑↓ choose · PgUp PgDn scroll", colors.FAINT, max_width=max(0, w - bx - 4))
 
     def autoplay_keys(self) -> list[KeyEvent]:
         return [KeyEvent(k) for k in ("down", "up", "pagedown", "escape")]

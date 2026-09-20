@@ -884,4 +884,6 @@ def new_game(world: World, tables: Tables, character: Character | None = None,
     game.say(f"<title>{m.long_text()}.</> {SEASON_LINES.get(m.season, '')}", "system")
     game._arrive(None)
     game.say("Press <loot>F1</> for help. Arrow keys or the number pad walk; <loot>></> enters the land around you.", "system")
+    game.say("Walk into a town, talk to the people in it, and ask <loot>\"Is there any work?\"</> — that is how you "
+             "start. <loot>j</> is your journal.", "system")
     return game

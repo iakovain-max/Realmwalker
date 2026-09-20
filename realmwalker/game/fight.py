@@ -62,7 +62,11 @@ def battle_env(game, surprised: str | None) -> Env:
 
 def start_battle(game, creatures: list[Creature], intro: str, *, surprised: str | None = None, actor=None,
                  title: str = "") -> Battle:
-    rng = game.world.rng.child(f"battle/{game.world.time}/{len(game.log.messages)}")
+    # A battle's dice come from its own numbered stream: the number of messages in the log is no business of the
+    # dice, and saying one more thing before a fight should not change how it goes.
+    fought = int(game.world.politics.get("next_battle", 0))
+    game.world.politics["next_battle"] = fought + 1
+    rng = game.world.rng.child(f"battle/{fought}/{game.world.time}")
     battle = Battle(game.tables, [c for c in game.party if c.alive], creatures, battle_env(game, surprised), rng,
                     show_dice=getattr(game, "show_dice", True), title=title, now=game.world.time)
     battle.start(intro)
