@@ -128,7 +128,8 @@ SETTLEMENT_TYPE = Obj(
     }
 )
 SITE_TYPE = Obj({"name": Str(max_len=40), "glyph": Str(max_len=1), "fg": COLOR, "desc": Str(max_len=300)})
-SITES = Obj({"settlement_types": Map(SETTLEMENT_TYPE, min_items=1), "site_types": Map(SITE_TYPE, min_items=1)})
+SITES = Obj({"settlement_types": Map(SETTLEMENT_TYPE, min_items=1), "site_types": Map(SITE_TYPE, min_items=1),
+             "dungeon_styles": Map(word_list(1, 300), min_items=1)})
 REQUIRED_SETTLEMENT_TYPES = ("hamlet", "village", "town", "city", "hold", "elfhall")
 
 DATA_FILES: dict[str, Spec] = {

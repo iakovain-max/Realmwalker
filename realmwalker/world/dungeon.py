@@ -31,6 +31,11 @@ TRAPS = {"pit": ("a pit trap", "2d6", "bludgeoning"), "darts": ("poisoned darts"
          "blade": ("a swinging blade", "2d8", "slashing"), "fire": ("a gout of fire", "3d6", "fire")}
 
 
+def style_description(tables, style: str, rng) -> str:
+    options = tables.sites.get("dungeon_styles", {}).get(style, [])
+    return rng.choice(options) if options else ""
+
+
 def dungeon_key(x: int, y: int, level: int) -> str:
     return f"{x},{y}/{level}"
 
@@ -106,7 +111,8 @@ class DungeonBuilder:
             terrain_ids=list(self.tables.terrain.ids), terrain=self.t, variant=variant, entry=entry,
             features=self.features,
             meta={"site": self.site.id, "level": self.level, "depth": self.depth, "style": self.style,
-                  "rooms": self.rooms, "hidden": sorted(self.hidden), "name": self.spec["name"]},
+                  "rooms": self.rooms, "hidden": sorted(self.hidden), "name": self.spec["name"],
+                  "desc": style_description(self.tables, self.style, self.rng), "desc_source": "fallback"},
         )
 
     # ------------------------------------------------------------------ rooms and corridors

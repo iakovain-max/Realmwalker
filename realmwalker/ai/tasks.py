@@ -133,6 +133,15 @@ MAGIC_ITEM = AITask(
 )
 
 
+# ---------------------------------------------------------------------------- dungeons (M8)
+DUNGEON = AITask(
+    name="dungeon",
+    schema=Obj({"description": Str("two or three sentences: what this level is like", max_len=500)}),
+    max_tokens=3000,
+    temperature=0.9,
+)
+
+
 # ---------------------------------------------------------------------------- death (M9)
 OBITUARY = AITask(
     name="obituary",
@@ -218,4 +227,4 @@ SETTLEMENT = _settlement_task()
 DIALOGUE = _dialogue_task()
 
 ALL_TASKS: list[AITask] = [SAMPLE_TAVERN, BACKSTORY, TRAVEL_DAY, SETTLEMENT, DIALOGUE, CHRONICLE, MAGIC_ITEM,
-                           QUEST, OBITUARY]
+                           QUEST, OBITUARY, DUNGEON]

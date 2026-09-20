@@ -1,0 +1,17 @@
+@max_tokens: 3000
+@temperature: 0.9
+# What one level under a ruin, cave, barrow or tower is like. One call per level, as the party goes down.
+# Slots: {place} {kind} {style} {level} {depth} {master} {sights} {schema}
+Describe the inside of an underground level, for a grim, low-magic world, in two or three plain sentences.
+
+Facts (use them; invent nothing that is not here):
+- It is under {place}, {kind}: the {style}, level {level} of {depth}.
+- Living here: {master}.
+- What can be seen: {sights}.
+
+Write what a torch shows and what the place smells and sounds like. No adjective piles, no poetry, no
+second person plural. Do not mention treasure that is not listed, do not invent doors, stairs or monsters,
+and do not tell the player what to do. If the level is bare, say so plainly.
+
+Reply with only this JSON object:
+{schema}

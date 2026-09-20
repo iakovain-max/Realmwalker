@@ -397,6 +397,27 @@ class GameScreen(Screen):
                                        priority=Priority.BACKGROUND, callback=done)
                     return  # one at a time
 
+    def _word_dungeon(self) -> None:
+        """A level the party has just reached gets AI words before they read the built-in ones."""
+        game = self.game
+        lm = game.local
+        if not self.app.ai.usable():
+            return
+        from realmwalker.game import dungeon
+
+        if not dungeon.needs_words(lm):
+            return
+        from realmwalker.ai.service import Priority
+        from realmwalker.ai.tasks import DUNGEON
+
+        lm.meta["ai_asked"] = True
+
+        def done(result, lm=lm) -> None:
+            if result.ok and result.data:
+                dungeon.apply_description(lm, result.data)
+
+        self.app.ai.submit(DUNGEON, dungeon.dressing_facts(game, lm), priority=Priority.HIGH, callback=done)
+
     def _work_line(self, canvas: Canvas, x: int, y: int, w: int) -> int:
         """One line about the work in hand: how much, and how soon it is due."""
         game = self.game
@@ -489,6 +510,7 @@ class GameScreen(Screen):
             request_chronicle(self.app, game)
         self._dress_magic_items()
         self._word_quests()
+        self._word_dungeon()
         if game.travel is not None:
             now = self.app.clock()
             if now - self._last_travel_step >= TRAVEL_STEP_SECONDS or self.app.headless:
