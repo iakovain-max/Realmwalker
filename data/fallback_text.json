@@ -162,17 +162,17 @@
     ]
   },
   "weather_change": {
-    "clear": ["The cloud breaks up and goes east, and there is a sky behind it.", "The rain stops as suddenly as it started, and everything drips."],
-    "cloudy": ["Cloud comes up out of the west, in pieces at first.", "The sun goes behind something and does not come out again."],
-    "overcast": ["The sky closes over, low and grey, and the light goes flat.", "Cloud settles on the land like a lid."],
-    "fog": ["Fog comes up out of the ground, and the world shrinks to twenty paces.", "The air thickens; trees go from black to grey to gone."],
-    "drizzle": ["A fine rain starts, the kind that soaks you without seeming to fall.", "Drizzle, drifting rather than falling, and no shelter in sight."],
-    "rain": ["The rain comes on properly, and the road begins to run.", "It starts to rain, and settles into it."],
-    "storm": ["The wind gets up, and then the rain arrives sideways.", "Thunder, and then the sky opens. Anything not tied down is moving."],
-    "flurries": ["A few flakes go past, not sure of themselves.", "Snow begins, thin and dry, blowing along the ground."],
-    "snow": ["Snow starts falling, big and slow and silent.", "It begins to snow in earnest, and the world goes quiet."],
-    "blizzard": ["The snow turns to a wall of white, and the wind screams in it.", "A blizzard. You cannot see the person in front of you."],
-    "heat": ["The air stops moving and the heat settles on you like a coat.", "By midday the heat is a solid thing, and the flies have found you."]
+    "clear": ["The cloud breaks up and goes east, and there is a sky behind it.", "The rain stops as suddenly as it started, and everything drips.", "The last of the rain goes over the hill and takes the cloud with it.", "It clears from the west, and the light comes back along the fields towards you.", "The sky opens, and everything steams."],
+    "cloudy": ["Cloud comes up out of the west, in pieces at first.", "The sun goes behind something and does not come out again.", "Cloud piles up over the hills and starts to come your way.", "The light goes thin and silvery, and the shadows lose their edges.", "A wind gets up and pushes cloud across the sun, on and off, all morning."],
+    "overcast": ["The sky closes over, low and grey, and the light goes flat.", "Cloud settles on the land like a lid.", "The whole sky goes one colour, and stays that colour.", "It clouds over for good; there will be no more sun today.", "The day gives up on brightness and settles into grey."],
+    "fog": ["Fog comes up out of the ground, and the world shrinks to twenty paces.", "The air thickens; trees go from black to grey to gone.", "Fog fills the low ground first, and then comes up to meet you.", "The far trees go, then the near ones, and then the road ahead of your feet.", "Everything sounds closer than it is, and nothing can be seen at all."],
+    "drizzle": ["A fine rain starts, the kind that soaks you without seeming to fall.", "Drizzle, drifting rather than falling, and no shelter in sight.", "A mist of rain starts, too fine to see and cold enough to matter.", "It begins to drizzle, and every leaf starts to drip.", "Rain so small it hangs in the air, and gets into everything anyway."],
+    "rain": ["The rain comes on properly, and the road begins to run.", "It starts to rain, and settles into it.", "The rain comes down hard and the ruts fill.", "Proper rain: it drums on your hood and finds the gap at your collar.", "It rains as if it means to keep it up all day, which it does."],
+    "storm": ["The wind gets up, and then the rain arrives sideways.", "Thunder, and then the sky opens. Anything not tied down is moving.", "Lightning stands up over the hills, and the thunder comes long after.", "The wind changes and turns nasty, and the first hail arrives with it.", "A storm rolls in fast and the trees start losing branches."],
+    "flurries": ["A few flakes go past, not sure of themselves.", "Snow begins, thin and dry, blowing along the ground.", "Snow comes in fits, a handful at a time, out of a hard grey sky.", "Flakes go past horizontally and hardly touch the ground.", "It spits snow, stops, and spits again."],
+    "snow": ["Snow starts falling, big and slow and silent.", "It begins to snow in earnest, and the world goes quiet.", "Snow settles on your shoulders and stays there.", "The track disappears under white while you are still on it.", "Snow comes down steadily and takes the sound out of the country."],
+    "blizzard": ["The snow turns to a wall of white, and the wind screams in it.", "A blizzard. You cannot see the person in front of you.", "The wind picks the snow up off the ground and throws it back at you.", "White, and noise, and no direction in any of it.", "The blizzard closes round you, and the cold comes with it."],
+    "heat": ["The air stops moving and the heat settles on you like a coat.", "By midday the heat is a solid thing, and the flies have found you.", "The heat comes up off the road as much as down out of the sky.", "There is no shade and no wind and the water in the skin is warm.", "It gets hotter than it has any right to be, and the birds stop."]
   },
   "travel_day": {
     "passage": [

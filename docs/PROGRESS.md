@@ -136,6 +136,11 @@ can do at a night's camp instead of two; and a town in plague, famine, siege or 
 much going on in its streets. The tests now keep a floor under all of these lists, so they cannot quietly thin
 out again.
 
+A walk of four thousand steps now reads a hundred and thirteen different lines where it used to read a hundred
+and three of a thinner sort: the sky turns five ways for each kind of weather instead of two, a border shows you
+how you know it (a boundary stone grown over, a gibbet with the chain rusted through, two riders on the rise),
+and coming back to a town you know says it six ways.
+
 **A test for the first evening.** A new character in a new world is now checked, in two different worlds, for
 the things a new player needs: people in the first town, money in the purse, somebody who sells food, work on
 offer, work that goes into the journal and lights the map, and a road that takes them closer to it.

@@ -59,6 +59,11 @@ def test_a_town_can_greet_you_in_many_ways(data):
         assert len(lines) >= 2, f"{job} has only {len(lines)} greeting"
 
 
+def test_the_sky_turns_in_more_than_one_way(data):
+    for kind, lines in data["fallback_text.json"]["weather_change"].items():
+        assert len(lines) >= 4, f"{kind} weather is announced only {len(lines)} ways"
+
+
 def test_every_land_sounds_like_itself_at_night(data):
     for land, lines in data["camping.json"]["night"].items():
         assert len(lines) >= 5, f"nights in {land} have only {len(lines)} sounds"
