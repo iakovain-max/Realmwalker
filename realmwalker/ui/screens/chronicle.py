@@ -97,6 +97,17 @@ class ChronicleScreen(Screen):
             lines += ["", "<title>Lost treasures</>"]
             for a in w.politics.get("artifacts", []):
                 lines.append(f"<loot>{markup.escape(a['name'])}</>: it {markup.escape(a['fate'])}.")
+            fallen = w.politics.get("fallen", [])
+            if fallen:
+                lines += ["", "<title>Those who came before</>"]
+                for r in reversed(fallen[-8:]):
+                    kills = sum(r.get("kills", {}).values())
+                    lines.append(f"<name>{markup.escape(r['name'])}</> ({r['year']}): "
+                                 f"{markup.escape(r['cause'])}, at {markup.escape(r['place'])}."
+                                 + (f" {kills} things killed." if kills else ""))
+                    if r.get("obituary"):
+                        colour = "ai" if r.get("obituary_source") == "ai" else "dim"
+                        lines.append(f"  <{colour}>{markup.escape(r['obituary'])}</>")
             lines += ["", "<title>Legends</>"]
             for fig in w.figures.values():
                 if fig.role == "legend":

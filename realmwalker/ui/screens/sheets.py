@@ -192,7 +192,12 @@ class CharacterScreen(Screen):
         notes.append("")
         for tie in c.ties:
             notes.append(f"<title>Tie:</> {markup.escape(tie['text'])}")
-        notes.append("")
+        if c is g.leader and (c.deeds or g.renown.fame or g.renown.infamy):
+            r = g.renown
+            notes.append(f"<title>Known for</> <dim>(fame {r.fame}, infamy {r.infamy})</>")
+            for deed in c.deeds[-6:][::-1]:
+                notes.append(f"  · {markup.escape(deed)}")
+            notes.append("")
         notes.append(f"<title>Looks:</> {markup.escape(c.appearance)}")
         for label, value in (("Personality", c.personality), ("Ideal", c.ideal), ("Bond", c.bond), ("Flaw", c.flaw)):
             if value:

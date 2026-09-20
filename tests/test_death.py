@@ -167,3 +167,27 @@ def test_the_ai_writes_the_obituary_through_the_mock(game, mock_p2):
         svc.stop()
     assert record["obituary_source"] == "ai" and record["obituary"]
     assert record["obituary"] in "\n".join(death.fallback_obituary(game, record))
+
+
+def test_those_who_came_before_are_in_the_chronicle(game, tmp_path):
+    """The next character can read about the one before, in the same book as the old legends."""
+    from realmwalker.ui.screens.chronicle import ChronicleScreen
+
+    game.leader.kills["wolf"] = 2
+    kill_the_leader(game, "of a wound that festered")
+    record = death.die(game)
+    death.apply_obituary(game, record, {"obituary": "They were owed money by half the county."})
+
+    class FakeApp:
+        class ai:
+            @staticmethod
+            def usable():
+                return False
+
+        def __init__(self):
+            self.error_count = 0
+
+    screen = ChronicleScreen(FakeApp(), game, tab=2)
+    screen.build(2)
+    text = screen.views[2].text if hasattr(screen.views[2], "text") else ""
+    assert record["name"] in text and "festered" in text and "owed money" in text
