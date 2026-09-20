@@ -990,3 +990,33 @@ def test_the_spells_window(make_app, size):
         render(app, size)
     app.handle_event(KeyEvent("escape"))
     assert app.error_count == 0
+
+
+def test_drawing_steel_on_a_townsman_asks_first(make_app):
+    """The design asks for a confirmation before dangerous things; attacking somebody is one."""
+    from realmwalker.game.people import npcs_in
+    from realmwalker.ui.screens.dialogue import DialogueScreen
+
+    app = make_app()
+    start_small_world(app)
+    game = app.game
+    town = next(s for s in game.world.settlements if s.kind in ("town", "city"))
+    game.player.x, game.player.y = town.x, town.y
+    game.enter_local()
+    npc = next(n for n in npcs_in(game.world, town.id) if n.alive)
+    game.talk_to = npc.id
+    render(app)
+    screen = app.top
+    assert isinstance(screen, DialogueScreen)
+    attack = next(i for i, c in enumerate(screen.conv.menu()) if c.id == "attack")
+    screen.choose(attack)
+    assert isinstance(app.top, ConfirmBox), "it should ask first"
+    assert game.battle is None
+    render(app)
+    app.handle_event(KeyEvent("n"))  # no: nothing happens
+    assert game.battle is None
+    screen.choose(attack)
+    app.handle_event(KeyEvent("y"))
+    render(app)
+    assert game.battle is not None or game.encounter is not None
+    assert app.error_count == 0

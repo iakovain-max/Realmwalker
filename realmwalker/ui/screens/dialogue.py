@@ -19,6 +19,7 @@ class DialogueScreen(Screen):
         self.game = game
         self.npc = npc
         self.ticket = None
+        self._asked_attack = False  # the confirmation for drawing steel is asked once
         self.asked_at = 0.0
         wants_ai = npc.notable and app.ai.usable() and npc.flags.get("ai_day") != game.moment.total_days
         self.conv = Conversation(game, npc, defer_greeting=wants_ai)
@@ -78,12 +79,29 @@ class DialogueScreen(Screen):
         if not choice.enabled:
             self.app.notify(choice.why or "You can't.", "warn")
             return
+        if choice.id == "attack" and not self._asked_attack:
+            self._confirm_attack(choice)
+            return
         request = self.conv.choose(choice)
         self.scroll = 0
         if request:
             self.open_request(request, choice)
         if self.conv.ended:
             self.finish()
+
+    def _confirm_attack(self, choice) -> None:
+        """Drawing steel on somebody in their own town is not a thing to do by pressing a key twice."""
+        from realmwalker.ui.screens.base import ConfirmBox
+
+        npc = self.npc
+        what = "a guard of the watch" if npc.job == "guard" else f"the {markup.escape(npc.title)}"
+        warning = " The watch will come, and the town will remember it." if self.game.world.factions else ""
+
+        def yes() -> None:
+            self._asked_attack = True
+            self.choose(self.conv.menu().index(choice) if choice in self.conv.menu() else 0)
+
+        self.app.push(ConfirmBox(self.app, f"Draw steel on {what}?{warning}", yes, title="Attack?", danger=True))
 
     def open_request(self, request: str, choice) -> None:
         """Trade and service windows (M5 parts 3 and 4)."""
