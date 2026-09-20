@@ -39,8 +39,8 @@ def spell_lines(game, char) -> list[str]:
                 bits.append(f"{spell['attack']} attack")
             tail = f" <dim>({', '.join(bits)})</>" if bits else ""
             head = f"<magic>{name}</>" if ok else f"<dim>{name}</>"
-            out.append(f"  {head}{tail}")
-            out.append(f"    <dim>{markup.escape(spell.get('text', ''))}</>"
+            out.append(f"<dim>·</> {head}{tail}")
+            out.append(f"<dim>{markup.escape(spell.get('text', ''))}</>"
                        + ("" if ok else f" <warn>{markup.escape(why)}</>"))
         out.append("")
     return out
