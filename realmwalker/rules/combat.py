@@ -833,6 +833,12 @@ class Battle:
                     target.hp = 1
                     self.say(f"{target.the_name} shudders and keeps coming.", "danger")
                     return
+            ward = next((b for b in target.buffs if b.get("death_ward")), None)
+            if ward is not None:
+                target.buffs.remove(ward)
+                target.hp = 1
+                self.say(f"<magic>The ward over {target.the_name} takes the blow instead.</>", "good")
+                return
             if target.char and target.char.uses.get("relentless_endurance"):
                 target.char.uses["relentless_endurance"] = 0
                 target.hp = 1

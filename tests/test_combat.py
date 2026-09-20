@@ -481,3 +481,16 @@ def test_creature_data_is_consistent(tables):
     for kind, groups in tables.creatures.site_inhabitants.items():
         for g in groups:
             assert g in tables.creatures.encounters, f"{kind} lists unknown group {g}"
+
+
+def test_death_ward_takes_the_blow(tables):
+    """A cleric's ward turns the blow that would put somebody down, once."""
+    c = hero(tables, "cleric")
+    b = battle(tables, [c], foes(tables, "wolf"))
+    f = next(x for x in b.fighters if x.char is c)
+    f.buffs.append({"death_ward": 1, "rounds": 10, "source": "death_ward"})
+    f.hp = 3
+    b._apply_hp_loss(f, 30, source=None, cause="test")
+    assert f.hp == 1 and f.state == "fighting" and not any("death_ward" in x for x in f.buffs)
+    b._apply_hp_loss(f, 30, source=None, cause="test")
+    assert f.state == "down"

@@ -72,6 +72,8 @@
                   "heal": "1d4", "add_mod": true, "upcast": "1d4", "text": "Heals every ally a little."},
     "revivify": {"name": "Revivify", "level": 3, "school": "necromancy", "classes": ["cleric"], "kind": "revive", "target": "dead_ally",
                   "text": "Brings back someone dead less than a minute, with 1 hit point. Needs a diamond worth 300 gold.", "component": "diamond"},
+    "guardian_of_faith": {"name": "Guardian of Faith", "level": 4, "school": "conjuration", "classes": ["cleric"], "kind": "aura", "save": "dex", "on_save": "half", "target": "enemy_front", "damage": "4d8", "damage_type": "radiant", "upcast": "1d8", "rounds": 10, "text": "A faceless guardian in armour stands over you and strikes at whoever comes close."},
+    "death_ward": {"name": "Death Ward", "level": 4, "school": "abjuration", "classes": ["cleric"], "kind": "buff", "target": "ally", "buff": {"death_ward": 1}, "rounds": 600, "text": "The first blow that would kill them leaves them standing at one hit point instead."},
     "mass_cure_wounds": {"name": "Mass Cure Wounds", "level": 5, "school": "evocation", "classes": ["cleric"], "kind": "heal", "target": "all_allies",
                   "heal": "3d8", "add_mod": true, "upcast": "1d8", "mends_wound": true, "text": "Heals and eases a wound on every ally."},
     "flame_strike": {"name": "Flame Strike", "level": 5, "school": "evocation", "classes": ["cleric"], "kind": "save", "save": "dex", "on_save": "half", "target": "enemy_front",
