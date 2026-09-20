@@ -70,6 +70,22 @@ their obituaries, beside the old heroes and the dragons.
 **A dungeon belongs to whoever holds it.** The bottom of a bandit cellar used to hold bandits, goblins, rats and
 the restless dead at once; now a place takes its character from its master, with vermin in the corners.
 
+**The world feels lived in.** Towns have street life (a rug beaten against a wall, a loose pig and three
+people chasing it, the watch going by with a lantern and a long look) that changes with the hour, with market
+days, and with what the town is going through — chalk on a door in plague, children stripping bark in a famine,
+new shutters after a raid. The sky says when it turns: rain starting and stopping, fog coming up out of the
+ground, the first flakes, the heat settling on you. And every named region can describe itself, in the AI's words
+when Player2 is running, from the real facts of the place.
+
+**Your name goes before you.** Fame and infamy now change how a stranger takes you the first time you speak:
+notables have heard more and sooner than a farmhand, fame impresses the proud and the greedy, and a bad name
+frightens the kind and the nervous worst of all.
+
+**Help and energy.** The help opens with "Your first hour": seven steps from the title screen to a first piece of
+finished work, and what to buy before leaving town. Settings gains **AI extras**, which keeps Player2's limited
+energy for people, places and conversation if you would rather not spend it on regions, dungeons, items, the
+wording of work and obituaries.
+
 **Fixes.** The dead no longer linger in the party or among those waiting (cleared as time passes, on rejoining,
 and never written into a save); `first()` no longer calls a character named "The Wanderer" "The"; the autoplay
 bot's invariants no longer complain about a companion or a band of enemies holding their dead while the battle is
