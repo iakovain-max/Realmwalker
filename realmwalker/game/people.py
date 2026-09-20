@@ -620,7 +620,21 @@ def first_impression(game, npc: NPC) -> int:
     if c.race == npc.race and c.culture == npc.culture:
         score += 3
     score += faction_impression(game, npc)
+    score += fame_impression(game, npc)
     return max(-80, min(80, score))
+
+
+def fame_impression(game, npc: NPC) -> int:
+    """People have heard of you, or heard something about you. Notables hear more, and sooner."""
+    r = game.renown
+    weight = 1.0 if npc.notable else 0.6
+    good = min(15, int(r.fame / 3 * weight))
+    bad = min(25, int(r.infamy / 2 * weight))
+    if "greedy" in npc.traits or "proud" in npc.traits:
+        good = int(good * 1.5)  # fame impresses some people more than it should
+    if "kind" in npc.traits or "nervous" in npc.traits:
+        bad = int(bad * 1.5)  # and a bad name frightens others more
+    return good - bad
 
 
 def faction_impression(game, npc: NPC) -> int:

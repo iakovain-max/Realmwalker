@@ -216,3 +216,23 @@ def test_people_survive_saving(game, tmp_path):
     again = loaded.world.npcs[npc.id]
     assert again.to_dict() == npc.to_dict()
     assert loaded.world.towns[s.id].npcs == game.world.towns[s.id].npcs
+
+
+def test_a_name_goes_before_you(game):
+    """Fame and infamy change how a stranger takes you: notables hear more, and sooner."""
+    from realmwalker.game.people import fame_impression, first_impression, npcs_in
+
+    s = next(x for x in game.world.settlements if x.kind in ("town", "city"))
+    game.player.x, game.player.y = s.x, s.y
+    game.enter_local()
+    npc = next(n for n in npcs_in(game.world, s.id) if n.notable)
+    plain = first_impression(game, npc)
+    game.renown.fame = 30
+    famous = first_impression(game, npc)
+    assert famous > plain
+    game.renown.fame = 0
+    game.renown.infamy = 30
+    hated = first_impression(game, npc)
+    assert hated < plain
+    ordinary = next(n for n in npcs_in(game.world, s.id) if not n.notable)
+    assert abs(fame_impression(game, ordinary)) <= abs(fame_impression(game, npc))
