@@ -319,6 +319,10 @@ class GameState:
         if self.over is not None:
             return True
         self._log_step(nx, ny)
+        if self.party[1:]:
+            from realmwalker.game.companions import road_talk
+
+            road_talk(self)
         self._check_bearings()
         if fording:
             river = self.world.river_at(nx, ny)

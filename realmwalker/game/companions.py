@@ -226,6 +226,30 @@ def react(game, *tags: str, quiet: bool = False) -> list[str]:
     return [msg]
 
 
+def road_talk(game) -> None:
+    """Somebody says something on the road: about the walking, the weather, the dark, or nothing at all."""
+    party = [c for c in companions(game) if c.alive]
+    if not party or game.busy:
+        return
+    steps = game.player.steps
+    flags = game.renown.flags
+    if steps - int(flags.get("road_talk", -10**6)) < 25:
+        return
+    rng = game.world.rng.child(f"road-talk/{steps}")
+    if not rng.chance(0.3):
+        return
+    c = rng.choice(party)
+    kind = "road"
+    if c.fatigue >= 60 or c.exhaustion >= 1:
+        kind = "road_tired"
+    elif game.weather.precip > 0.3:
+        kind = "road_wet"
+    elif game.light < 0.4:
+        kind = "road_night"
+    flags["road_talk"] = steps
+    game.say(line(game, kind, c, rng), "flavor")
+
+
 def react_to_crime(game, crime: str) -> None:
     tag = CRIME_TAGS.get(crime)
     if tag:

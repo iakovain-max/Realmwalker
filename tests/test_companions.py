@@ -311,3 +311,17 @@ def test_refusing_a_companion_hurts(game):
     text = quests.refuse_personal(game, c)
     assert text and c.companion["loyalty"] < 95 and c.companion["personal_done"]
     assert quests.personal_offer(game, c) is None
+
+
+def test_companions_talk_on_the_road(game):
+    """Somebody says something every so often while walking, and what they say fits the hour and the weather."""
+    c, npc, s = hire_one(game)
+    game.leave_local()
+    said = []
+    game.say = lambda text, color="fg": said.append(text)
+    for step in range(200):
+        game.player.steps += 1
+        comp.road_talk(game)
+    assert 2 <= len(said) <= 12, len(said)
+    assert all("{" not in line for line in said)
+    assert any(comp.first(c) in line for line in said)
