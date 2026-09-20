@@ -9,6 +9,16 @@ from realmwalker.ui.widgets import Canvas, ScrollText
 HELP_TEXT = """<title>Realmwalker</title>
 A grim, open-world party role-playing game built on the rules of Dungeons & Dragons 5th Edition. Travel, trade, fight, scheme, survive, and eventually die. The world goes on without you.
 
+<title>Your first hour</title>
+1. <loot>New World</>, then make a character (press <loot>Enter</> through anything you don't care about).
+2. You start in a town. Press <loot>></> to walk its streets, and walk into people (<loot>☺</>) to talk to them.
+3. Ask everyone <loot>"Is there any work?"</>. Take something small — a lair to clear, a letter to carry — and press <loot>j</> to see it in your journal. The place is lit on your map.
+4. Buy a <loot>torch</> or two, <loot>rations</>, a <loot>waterskin</> and <loot>bandages</> before you leave (talk to a shopkeeper: "Let me see your goods").
+5. Walk there (<loot>m</> for the map, <loot>t</> to travel). Camp at night (<loot>r</>): a fire and a tent keep you alive.
+6. Fight only what you must; at level 1, two wolves or three bandits can kill you. Run, talk, or ambush if you can.
+7. Go back to whoever set you the work and say it is done. Then do it again, with better boots.
+Everything else — hunger, wounds, factions, dungeons, dragons, death — is below, and the game explains itself as it goes.
+
 <title>Keys that work everywhere</title>
   <loot>F1</>              This help
   <loot>Esc</>             Back / close
