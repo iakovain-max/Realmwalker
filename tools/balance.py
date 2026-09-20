@@ -153,7 +153,9 @@ def winter_night(tables, runs: int, *, fire: bool, tent: bool, clothes: str = "w
                     it = add_item(c, tables.items, item)
                     if it is not None:
                         equip(c, tables.items, it.uid)
-        game.world.time = (winter + 20) * 1440 + 21 * 60  # deep winter, late evening
+        # Deep winter, late evening. The minute differs per run: the body and health streams are keyed on the
+        # world clock, so without this every run would roll exactly the same dice.
+        game.world.time = (winter + 20) * 1440 + 21 * 60 + seed
         if fire or tent:
             from realmwalker.game.camp import Camp
 
@@ -182,6 +184,7 @@ def untreated_wound(tables, runs: int, *, treat: bool) -> dict:
     for seed in range(runs):
         game = new_game(copy.deepcopy(world), tables)
         game.survival = True
+        game.world.time += seed  # each run rolls its own dice (the health stream is keyed on the clock)
         c = game.leader
         rng = RNG(seed, "wound")
         wound = make_wound("torso", "slashing", 2, rng, now=game.world.time)

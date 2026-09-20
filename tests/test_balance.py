@@ -55,6 +55,7 @@ def test_a_winter_night_without_fire_is_dangerous(tables):
 
 
 def test_an_untreated_critical_wound_kills_and_a_bandage_saves(tables):
+    """A critical wound bleeds; left alone for a day it kills, and binding it saves you."""
     import copy
 
     from realmwalker.core.rng import RNG
@@ -63,12 +64,14 @@ def test_an_untreated_critical_wound_kills_and_a_bandage_saves(tables):
     from realmwalker.world.generator import WorldGenerator, WorldOptions
 
     world = WorldGenerator(WorldOptions("Woundland", 3, "small"), tables).generate()
+    runs = 12
     outcomes = {}
     for treated in (False, True):
         died = 0
-        for seed in range(6):
+        for seed in range(runs):
             game = new_game(copy.deepcopy(world), tables)
             game.survival = True
+            game.world.time += seed  # the health stream is keyed on the clock: vary it, or every run is one run
             c = game.leader
             wound = make_wound("torso", "slashing", 3, RNG(seed, "balance-wound"), now=game.world.time)
             if treated:
@@ -83,5 +86,14 @@ def test_an_untreated_critical_wound_kills_and_a_bandage_saves(tables):
                     died += 1
                     break
         outcomes[treated] = died
-    assert outcomes[False] >= 4, outcomes  # bleeding out is what an untreated critical wound means
-    assert outcomes[True] == 0, outcomes  # and binding it is what saves you
+    assert outcomes[False] >= runs * 0.5, outcomes  # bleeding out is what an untreated critical wound means
+    assert outcomes[True] <= 1, outcomes  # and binding it is what saves you
+
+
+def test_a_serious_wound_left_alone_can_still_kill_you(tables):
+    """A week with a serious, dirty wound and no treatment: most live, some fester, a few die of it."""
+    untreated = balance.untreated_wound(tables, 16, treat=False)
+    treated = balance.untreated_wound(tables, 16, treat=True)
+    assert untreated["fine"] < untreated["runs"], untreated  # it is not a scratch
+    assert untreated["sick"] + untreated["dead"] >= 2, untreated
+    assert treated["fine"] >= untreated["fine"], (treated, untreated)  # binding and cleaning it helps

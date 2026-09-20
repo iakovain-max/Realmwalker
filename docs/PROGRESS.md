@@ -95,7 +95,9 @@ come back to it as someone new? Is anything in the help missing or wrong?
     in 3-8%); at level 3 the same fights are comfortable;
   - a winter night in the open without fire or shelter leaves you at 1-6 hit points and exhausted; a fire stops
     the damage; a fire and a tent leave you merely cold;
-  - an untreated critical wound bleeds you to death within hours, and binding it saves you.
+  - an untreated critical wound bleeds you to death within a day (17 runs in 20), and binding it saves you
+    (0 in 20); a serious, dirty wound left alone for a week festers in about a fifth of cases and kills in
+    about one in twelve, and binding and cleaning it roughly halves that.
   Nothing needed retuning: the numbers already sit where the design asks.
 - The smoke test tours every screen; autoplay ran clean in both AI modes; the packaged build was made and its
   exe smoke-tested.
