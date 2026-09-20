@@ -31,6 +31,7 @@ AUTHORITY_JOBS = ("guard", "headman", "lord")  # who pays a bounty posted on the
 DEBT_DC = 12
 BLACKMAIL_DC = 13
 LIVE = ("active", "return")
+COVERT = ("assassinate", "steal", "smuggle")  # work nobody boasts about, and nobody hears of
 TAGS = {"bounty": ("victory",), "clear_lair": ("victory",), "hunt_beast": ("victory",), "rescue": ("help_poor",),
         "investigate": ("cult_hunted",), "retrieve": ("discovery",), "slay_dragon": ("victory", "hard_fight")}
 
@@ -1163,9 +1164,16 @@ def reward(game, q, *, share: float = 1.0, text: str | None = None) -> list[str]
         amounts[target["gang"]] = -15.0
     if q["template"] == "investigate" and target.get("cult") in w.factions:
         amounts[target["cult"]] = -20.0
-    reputation.deed(game, f"did the work of {q['giver_name']} of {town.name}: {title(game, q)}", amounts,
-                    immediate=tuple(amounts), fame=2 if s["xp"] >= 200 else 1, importance=1,
-                    news_text=f"{game.leader.name} did the work of {q['giver_name']} of {town.name}")
+    # Quiet work is quiet: nobody puts it about that you killed a man or lifted a ledger for pay.
+    covert = q["template"] in COVERT
+    if covert:
+        amounts = {q["faction"]: float(s["standing"])} if q["faction"] in w.factions else {}
+    deed_text = (f"did quiet work for {q['giver_name']} of {town.name}" if covert else
+                 f"did the work of {q['giver_name']} of {town.name}: {title(game, q)}")
+    reputation.deed(game, deed_text, amounts, immediate=tuple(amounts),
+                    fame=0 if covert else (2 if s["xp"] >= 200 else 1), infamy=1 if covert else 0, importance=1,
+                    news_text=None if covert else
+                    f"{game.leader.name} did the work of {q['giver_name']} of {town.name}")
     rng = w.rng.child(f"quest-xp/{q['id']}")
     notes = []
     for c in game.party:
@@ -1303,12 +1311,12 @@ def talk_choices(conv) -> list:
             price = peace_price(q)
             out.append(Choice("buy_peace", f"Offer {money_text(price)} to let it go.",
                               game.leader.money >= price, "you don't have that much", {"q": q["id"]}))
-        if tpl == "assassinate" and not q["done"] and npc.id == t.get("npc") and q.get("revealed"):
-            out.append(Choice("warn_target", "Someone is paying to have you killed.", data={"q": q["id"]}))
-        if tpl == "cure" and q["done"] and payer(game, q, npc):
-            pass  # handled by quest_turn_in
+        if tpl == "assassinate" and not q["done"] and npc.id == t.get("npc"):
+            reveal(game, q)  # face to face, you see what they are (if there is anything to see)
+            if q.get("revealed"):
+                out.append(Choice("warn_target", "Someone is paying to have you killed.", data={"q": q["id"]}))
         if tpl == "cure" and not q["done"] and payer(game, q, npc) and herbs_held(game, q) >= t.get("count", 0):
-            out.append(Choice("hand_over_goods", f"I have the herbs.", data={"q": q["id"]}))
+            out.append(Choice("hand_over_goods", "I have the herbs.", data={"q": q["id"]}))
         if tpl == "investigate" and not q["done"] and here == q["town"] and not npc.notable and \
                 npc.id not in t.get("asked", []) and not t.get("clue"):
             out.append(Choice("ask_missing", "What do you know about the people going missing?", data={"q": q["id"]}))

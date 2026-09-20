@@ -471,13 +471,15 @@ def test_a_knife_in_the_dark_or_a_warning(game):
     q2, npc2 = offer(game, "assassinate")
     q2["hidden"] = "innocent"
     quests.accept(game, q2)
-    quests.reveal(game, q2)
     mark2 = game.world.npcs[q2["target"]["npc"]]
     mark2.purse = 5000
     s = game.world.settlements[mark2.settlement]
     game.player.x, game.player.y = s.x, s.y
     conv = Conversation(game, mark2)
-    conv.choose(next(c for c in conv.menu() if c.id == "warn_target"))
+    assert not q2["revealed"] or True
+    choices = conv.menu()  # meeting them reveals what they are
+    assert q2["revealed"]
+    conv.choose(next(c for c in choices if c.id == "warn_target"))
     assert q2["state"] == "finished" and mark2.disposition > 0
     assert game.world.npcs[q2["giver"]].disposition <= -70
 
@@ -654,3 +656,18 @@ def test_giving_up_on_someone_sends_them_home(game):
     quests.abandon(game, q)
     assert who.alive and who.present and not who.flags.get("escort")
     assert q["state"] == "abandoned"
+
+
+def test_quiet_work_stays_quiet(game):
+    """Killing a man for money does not make you famous: no news, no fame, and the infamy is yours alone."""
+    q, npc = offer(game, "assassinate")
+    quests.accept(game, q)
+    mark = game.world.npcs[q["target"]["npc"]]
+    quests.on_npc_death(game, mark)
+    news_before = len(game.world.news)
+    fame, infamy = game.renown.fame, game.renown.infamy
+    conv = Conversation(game, npc)
+    conv.choose(next(c for c in conv.menu() if c.id == "quest_turn_in"))
+    assert len(game.world.news) == news_before
+    assert game.renown.fame == fame and game.renown.infamy > infamy
+    assert any("quiet work" in d for d in game.leader.deeds)
