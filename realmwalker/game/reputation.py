@@ -159,6 +159,12 @@ def tick(game) -> None:
             entry["effects"] = left
             keep.append(entry)
     game.renown.pending = keep
+    # A faction cannot keep calling you an apprentice for ever: two ranks of goodwill promote you anyway.
+    for fid in list(game.renown.members):
+        if standing_rank(game, fid) >= confirmed_rank(game, fid) + 2:
+            said = confirm_rank(game, fid)
+            if said:
+                game.say(f"<good>{said}</> <dim>(They could hardly go on calling you what they did.)</>", "good")
 
 
 FOE_KINDS = {"bandit": "bandit_gang", "bandit_archer": "bandit_gang", "bandit_captain": "bandit_gang",
@@ -226,12 +232,41 @@ def realm_here(game):
 
 
 # ---------------------------------------------------------------------------- membership and titles
-def rank(game, fid: int) -> int | None:
-    if fid not in game.renown.members:
-        return None
+def standing_rank(game, fid: int) -> int:
+    """The rank your standing with them would allow, if they were willing."""
     thresholds = game.tables.law["rank_standing"]
     score = standing(game, fid)
     return max(0, sum(1 for t in thresholds if score >= t) - 1)
+
+
+def confirmed_rank(game, fid: int) -> int:
+    """The rank they have actually given you. Old saves keep the rank they had."""
+    ranks = game.renown.flags.setdefault("ranks", {})
+    key = str(fid)
+    if key not in ranks:
+        ranks[key] = standing_rank(game, fid)
+    return int(ranks[key])
+
+
+def confirm_rank(game, fid: int) -> str:
+    """They have seen what you can do: the next step is yours."""
+    ranks = game.renown.flags.setdefault("ranks", {})
+    key = str(fid)
+    ranks[key] = min(standing_rank(game, fid), confirmed_rank(game, fid) + 1)
+    game.dirty = True
+    f = game.world.factions.get(fid)
+    return f"{f.name} calls you {rank_name(game, fid)} now." if f is not None else ""
+
+
+def needs_trial(game, fid: int) -> bool:
+    """Your standing would carry you higher; they want a piece of work first."""
+    return fid in game.renown.members and standing_rank(game, fid) > confirmed_rank(game, fid)
+
+
+def rank(game, fid: int) -> int | None:
+    if fid not in game.renown.members:
+        return None
+    return min(standing_rank(game, fid), confirmed_rank(game, fid))
 
 
 def rank_name(game, fid: int) -> str:
@@ -268,6 +303,10 @@ def join_problem(game, f) -> str | None:
     return None
 
 
+def start_at_the_bottom(game, fid: int) -> None:
+    game.renown.flags.setdefault("ranks", {})[str(fid)] = 0
+
+
 def join(game, f) -> str:
     from realmwalker.game.law import take_money
     from realmwalker.rules.items import money_text
@@ -278,6 +317,7 @@ def join(game, f) -> str:
     spec = game.tables.law["join"][f.kind]
     take_money(game, spec["fee"])
     game.renown.members[f.id] = 0
+    start_at_the_bottom(game, f.id)  # however well they think of you, you start where everyone starts
     change_standing(game, f.id, 10)
     know(game, f.id)
     fee = f" (the fee: {money_text(spec['fee'])})" if spec["fee"] else ""

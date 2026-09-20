@@ -93,6 +93,12 @@ frightens the kind and the nervous worst of all.
 - **A confirmation before drawing steel** on somebody in conversation, as the design asks for dangerous acts.
 - **Landmarks on the skyline**: a ruin, a cave or an old tower coming into view is remarked on and goes on your map.
 
+**Factions make you earn each promotion** (the design's "faction rank-up tasks"). You join at the bottom
+whatever your standing; standing opens the door to the next rank, and a piece of that faction's work walks you
+through it — an offer from one of their people says whose eyes are on it, pays a little more, and promotes you
+when it is done. If your standing runs two ranks ahead of what they have given you, they give in and promote you
+anyway, so nobody is ever stuck.
+
 **Help and energy.** The help opens with "Your first hour": seven steps from the title screen to a first piece of
 finished work, and what to buy before leaving town. Settings gains **AI extras**, which keeps Player2's limited
 energy for people, places and conversation if you would rather not spend it on regions, dungeons, items, the
@@ -177,9 +183,8 @@ come back to it as someone new? Is anything in the help missing or wrong?
 - The interlude does not age or replace ordinary townsfolk (only the great ones, who are simulated).
 - A world with no living character keeps its local maps and townsfolk as they were, so a town you emptied stays
   empty for the next character.
-- Faction rank-up tasks (a trial before each promotion) are still in the parking lot; rank rises with standing,
-  and doing a faction's work is what raises it. (Companion personal quests, escorts, smuggling and assassinations
-  were on this list and have since been built — see "After v1" at the top.)
+- (Companion personal quests, escorts, smuggling, assassinations and faction rank-up trials were on this list
+  and have since been built — see "After v1" at the top.)
 
 ---
 

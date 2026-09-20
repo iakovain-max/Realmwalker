@@ -249,3 +249,31 @@ def test_faction_details_read_well(world, tables):
         text = reputation.faction_details(game, f)
         assert "Your standing" in text
         assert "{" not in text and "None" not in text
+
+
+def test_a_promotion_has_to_be_earned(tables, world):
+    game = start(tables, world)
+    """Standing opens the door; a piece of the faction's work walks you through it."""
+    from realmwalker.game import quests, reputation
+
+    f = next(x for x in game.world.factions.values() if x.active and x.kind in
+             ("merchant_guild", "smiths_guild", "healers_guild", "temple", "knightly_order"))
+    game.renown.members[f.id] = 0
+    reputation.start_at_the_bottom(game, f.id)
+    reputation.set_standing(game, f.id, 60)
+    assert reputation.standing_rank(game, f.id) > 0
+    assert reputation.rank(game, f.id) == 0, "they do not hand out rank for goodwill alone"
+    assert reputation.needs_trial(game, f.id)
+    said = reputation.confirm_rank(game, f.id)
+    assert said and reputation.rank(game, f.id) == 1
+    # A job from one of their people is that trial, and finishing it promotes you.
+    q = {"id": 999, "template": "clear_lair", "state": "active", "giver": -1, "giver_name": "the guild",
+         "giver_job": "guard", "town": 0, "faction": f.id, "reward": 100, "days": 10, "hidden": None,
+         "revealed": False, "done": True, "target": {}, "words": {"giver": "the guild", "town": "Anywhere"},
+         "journal": [], "source": "fallback", "trial": f.id}
+    game.quests.append(q)
+    reputation.set_standing(game, f.id, 80)
+    before = reputation.rank(game, f.id)
+    out = quests.reward(game, q)
+    assert any("calls you" in line for line in out), out
+    assert reputation.rank(game, f.id) > before

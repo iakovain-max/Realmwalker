@@ -343,9 +343,14 @@ def test_joining_a_guild_and_its_ranks(game):
     assert reputation.join_problem(game, f) is None
     text = reputation.join(game, f)
     assert "sworn" in text and f.id in game.renown.members
-    assert reputation.rank_name(game, f.id) == spec["ranks"][1]
+    assert reputation.rank_name(game, f.id) == spec["ranks"][0]  # everyone starts at the bottom
     reputation.set_standing(game, f.id, 80)
-    assert reputation.rank_name(game, f.id) == spec["ranks"][3]
+    assert reputation.needs_trial(game, f.id)  # standing opens the door; their work walks you through it
+    assert reputation.rank_name(game, f.id) == spec["ranks"][0]
+    reputation.tick(game)  # ...but they cannot go on calling you an apprentice for ever
+    assert reputation.rank_name(game, f.id) == spec["ranks"][1]
+    reputation.confirm_rank(game, f.id)
+    assert reputation.rank_name(game, f.id) == spec["ranks"][2]
     assert reputation.member_discount(game, [f]) > 0
 
 

@@ -127,8 +127,31 @@ def offer_for(game, npc) -> dict | None:
         q = make_offer(game, npc, rng, avoid=[o.get("template") for o in offers.values()])
         if q is None:
             return None
+        mark_trial(game, npc, q)
         offers[str(npc.id)] = q
     return q
+
+
+def mark_trial(game, npc, q) -> None:
+    """If this person's faction is waiting to promote you, their work is the trial for it."""
+    from realmwalker.game.people import npc_factions
+    from realmwalker.game.reputation import needs_trial
+
+    for f in npc_factions(game, npc):
+        if needs_trial(game, f.id):
+            q["trial"] = f.id
+            q["reward"] = int(q["reward"] * 1.2)
+            return
+
+
+def trial_note(game, q) -> str:
+    f = game.world.factions.get(q.get("trial", -1))
+    if f is None:
+        return ""
+    from realmwalker.game.reputation import rank_name
+
+    return (f"<info>{f.name} is watching this one. Do it, and you will be more than "
+            f"{rank_name(game, f.id)} to them.</>")
 
 
 def offers_in(game, settlement) -> list[dict]:
@@ -1189,8 +1212,16 @@ def reward(game, q, *, share: float = 1.0, text: str | None = None) -> list[str]
         giver.remember(f"the traveller did the work they asked ({title(game, q)})")
     line = text or f"{q['words'].get('giver', 'They')} pays you {money_text(money)}."
     q["journal"].append(line)
+    out = [f"<good>{line}</> <dim>(+{int(s['xp'] * min(1.0, share))} experience each)</>"] + notes
+    if q.get("trial") is not None and share >= 1.0:
+        from realmwalker.game.reputation import confirm_rank
+
+        said = confirm_rank(game, q["trial"])
+        if said:
+            q["journal"].append(said)
+            out.append(f"<good>{said}</>")
     game.dirty = True
-    return [f"<good>{line}</> <dim>(+{int(s['xp'] * min(1.0, share))} experience each)</>"] + notes
+    return out
 
 
 def fail(game, q, why: str | None = None) -> None:
@@ -1339,6 +1370,8 @@ def talk_choose(conv, choice) -> None:
         conv.npc_says(pitch(game, q))
         if q.get("pitch_ai"):
             conv.note(f"<dim>({terms(q)})</>")
+        if q.get("trial") is not None:
+            conv.note(trial_note(game, q))
         conv.pending_offer = q
         conv.mode = "quest_offer"
         return
