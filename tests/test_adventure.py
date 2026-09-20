@@ -197,3 +197,34 @@ def test_paper_turns_up_in_treasure(game):
         items, _ = treasure.roll(game, 3, RNG(i, "paper"))
         found += sum(1 for it in items if books.kind_of(game, it))
     assert found > 3
+
+
+def test_the_dark_says_something_now_and_then(game):
+    """Walking a dungeon is not silent: water, draughts, a bone underfoot — but only with a light."""
+    from realmwalker.game import dungeon
+
+    site = game.world.sites[0]
+    game.player.local_key = None
+    game.player.x, game.player.y = site.x, site.y
+    game.enter_local()
+    dungeon.descend(game, 1)
+    lm = game.local
+    moments = set()
+    for key in ("any", lm.meta.get("style", "")):
+        moments.update(game.tables.sites["dungeon_moments"].get(key, []))
+    assert moments, "a dungeon has things it can say"
+    game.lit = None
+    said = len(game.log.messages)
+    for step in range(60):
+        game.player.steps += 1
+        game._underground(lm)
+    assert len(game.log.messages) == said, "in the dark you see nothing at all"
+    game.lit = {"item": "torch", "left": 600.0}
+    heard = set()
+    for step in range(400):
+        game.player.steps += 1
+        before = len(game.log.messages)
+        game._underground(lm)
+        heard.update(m.text for m in game.log.messages[before:])
+    assert heard <= moments, f"and what it says comes from the data: {heard - moments}"
+    assert len(heard) >= 4, f"in more than one way: {heard}"

@@ -776,6 +776,8 @@ class GameState:
             self._people_act(lm)
             if lm.kind == "settlement":
                 self._street_life(lm)
+            elif lm.kind == "dungeon":
+                self._underground(lm)
             if self.world.factions and lm.kind == "settlement":
                 from realmwalker.game import law
 
@@ -838,6 +840,23 @@ class GameState:
         if text:
             self._last_moment = steps
             self.say(text, "flavor")
+
+    def _underground(self, lm: LocalMap) -> None:
+        """Now and then, something the dark does while you are walking through it."""
+        if self.busy or not self.flavour() or not self.lit:
+            return
+        steps = self.player.steps
+        if steps - int(self._last_moment) < (12 if self.flavour(2) else 20):
+            return
+        rng = self.world.rng.child(f"under/{lm.key}/{steps}")
+        if not rng.chance(0.2):
+            return
+        moments = self.tables.sites.get("dungeon_moments", {})
+        lines = list(moments.get("any", [])) + list(moments.get(lm.meta.get("style", ""), []))
+        if not lines:
+            return
+        self._last_moment = steps
+        self.say(rng.choice(lines), "flavor")
 
     def _people_act(self, lm: LocalMap) -> None:
         if lm.kind != "settlement":

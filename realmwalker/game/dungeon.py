@@ -91,6 +91,33 @@ def site_here(game):
     return game.world.site_at(game.player.x, game.player.y)
 
 
+ORDINALS = ("first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth")
+FIRST_DOWN = (
+    "The air is cold and still.",
+    "The cold comes up the steps to meet you.",
+    "The daylight gives out three steps in.",
+    "The air down here has not been breathed for a long while.",
+    "Your own noise comes back to you off the walls.",
+)
+DEEPER_DOWN = (
+    "It is colder down here, and quieter.",
+    "The quiet gets heavier the further down you go.",
+    "The air is worse at this depth, and still.",
+    "Whatever sound you make stays close to you down here.",
+    "The dark down here has weight to it.",
+)
+BACK_UP = (
+    "You climb up into daylight, or what passes for it.",
+    "You come up into the open air and stand in it a moment.",
+    "Daylight, and the smell of living things, and wind.",
+    "You climb out. Whatever the weather is doing, it is better than down there.",
+)
+
+
+def ordinal(n: int) -> str:
+    return ORDINALS[n - 1] if 1 <= n <= len(ORDINALS) else f"{n}th"
+
+
 def terrain_id(game, lm, x: int, y: int) -> str:
     return lm.terrain_ids[int(lm.terrain[x, y])]
 
@@ -128,12 +155,14 @@ def descend(game, level: int, *, from_below: bool = False) -> None:
 
         quests.on_arrive_dungeon(game, lm)
     name = lm.meta.get("name", "dark")
+    rng = game.world.rng.child(f"descend/{lm.key}/{game.player.steps}")
+    deep = lm.meta.get("depth", 1) > 1
+    where = f"the {ordinal(level)} level of the {name}" if deep else f"the {name}"
     if from_below:
-        game.say(f"You climb back up to level {level} of the {name}.", "place")
+        game.say(f"You climb back up to {where}.", "place")
     else:
-        where = f"level {level} of the {name}" if lm.meta.get("depth", 1) > 1 else f"the {name}"
-        game.say(f"You go down into {where}. " + ("The air is cold and still." if level == 1 else
-                                                  "It is colder down here, and quieter."), "place")
+        air = rng.choice(FIRST_DOWN if level == 1 else DEEPER_DOWN)
+        game.say(f"You go down into {where}. {air}", "place")
     light_up(game)
     if lm.meta.get("desc") and not lm.meta.get("desc_seen"):
         lm.meta["desc_seen"] = True
@@ -160,7 +189,8 @@ def ascend(game) -> None:
     surface = get_local_map(game.world, game.tables, game.player.x, game.player.y)
     game.player.local_key = surface.key
     game.player.lx, game.player.ly = gen.add_entrance(game.tables, surface)
-    game.say("You climb up into daylight, or what passes for it.", "place")
+    rng = game.world.rng.child(f"surface/{game.player.steps}")
+    game.say(rng.choice(BACK_UP), "place")
     game.dirty = True
 
 

@@ -34,6 +34,17 @@
              "A hall not built but melted, and a smell of metal and burning.",
              "The floor is scattered with the armour of people who came before you, most of it opened like a nutshell."]
   },
+  "dungeon_moments": {
+    "any": ["Water drips somewhere behind you, and keeps time with nothing.", "A draught comes from somewhere that should not have a somewhere.", "Grit shifts overhead, and a little of it comes down.", "Your light finds a mark on the wall: somebody counted days here.", "Something skitters out of the light and does not come back.", "The passage breathes: in for a while, then out.", "A bone, old and gnawed, is underfoot before you see it.", "Far off, or not far off, stone moves against stone."],
+    "cellars": ["A barrel hoop lies rusted into the floor, the staves long gone.", "Your foot goes through something soft that used to be a sack of grain.", "A rat has made a nest out of somebody's ledger."],
+    "crypt": ["A name on a shelf is still legible, and it is a common name still used above.", "Dust lifts where nothing has walked, and settles again.", "One of the stone lids is off, and set carefully aside, which is worse than broken."],
+    "tower": ["A stair goes up into rubble, and stops.", "Chalk lines on the floor, half scuffed away, and none of them are straight.", "Glass grits under your boots, coloured glass, from a window that is not here."],
+    "hideout": ["A fire pit, still warm enough to notice.", "Somebody has scratched a tally into the door frame and then given up.", "Bedding, recently slept in, and pulled back in a hurry."],
+    "temple": ["The carvings here follow you round the room, which is a trick of the light.", "A bowl of something dark, set in a niche, and not old.", "The air tastes of old incense and something under it."],
+    "cave": ["Water has been at this rock for longer than anything above has been standing.", "The floor slopes away and the sound of falling water comes up out of it.", "A pool, still as glass, and nothing living in it."],
+    "warren": ["The ceiling comes down and you go on bent double for a while.", "Something has been dragged along this floor, repeatedly, in one direction.", "The stink gets worse, and then better, which tells you where they sleep."],
+    "lair": ["The rock here is glazed with old heat.", "A scale the size of your palm, half trodden into the floor.", "Bones, big ones, cracked open for the marrow."]
+  },
   "site_types": {
     "ruin":   {"name": "ruin", "glyph": "π", "fg": [150, 140, 130], "desc": "Tumbled walls and empty windows: something stood here once."},
     "cave":   {"name": "cave", "glyph": "○", "fg": [140, 120, 100], "desc": "A cave mouth, black and cold-breathed."},
