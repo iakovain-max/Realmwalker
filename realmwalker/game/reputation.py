@@ -590,7 +590,10 @@ def faction_details(game, f) -> str:
     lines.append("")
     lines.append(f"Your standing: {standing_markup(game, f.id)}")
     if f.id in game.renown.members:
-        lines.append("<good>You are one of them.</>")
+        lines.append(f"<good>You are one of them:</> {rank_name(game, f.id)}.")
+        if needs_trial(game, f.id):
+            lines.append("<info>They think well enough of you for the next step, and are waiting to see you do "
+                         "a piece of their work first.</>")
     bounty = game.renown.bounties.get(f.id, 0)
     if bounty:
         from realmwalker.rules.items import money_text
