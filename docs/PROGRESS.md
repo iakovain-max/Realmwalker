@@ -81,12 +81,26 @@ when Player2 is running, from the real facts of the place.
 notables have heard more and sooner than a farmhand, fame impresses the proud and the greedy, and a bad name
 frightens the kind and the nervous worst of all.
 
+**Things the design asked for that the game did not have yet.**
+- A **Spells screen** (**S**): every spell a caster knows, grouped by level, what it does, whether it can be cast
+  now, the spell attack bonus and save DC, slots left today, and the size of a wizard's book. Until now you could
+  only see your spells in the middle of a fight.
+- **Simple crafting** at camp (**m**): torches and splints from firewood, bandages from linen, salted meat and
+  smoked fish that keep, and a herbal remedy from healing herbs with a kit and a fire, each on a Survival or
+  Medicine check.
+- **Caravans** on the road: trade with them, walk with them for safety and a little pay, lean on the factor for a
+  toll, or take what they have and meet their dozen hired swords.
+- **A confirmation before drawing steel** on somebody in conversation, as the design asks for dangerous acts.
+- **Landmarks on the skyline**: a ruin, a cave or an old tower coming into view is remarked on and goes on your map.
+
 **Help and energy.** The help opens with "Your first hour": seven steps from the title screen to a first piece of
 finished work, and what to buy before leaving town. Settings gains **AI extras**, which keeps Player2's limited
 energy for people, places and conversation if you would rather not spend it on regions, dungeons, items, the
 wording of work and obituaries.
 
-**Fixes.** The dead no longer linger in the party or among those waiting (cleared as time passes, on rejoining,
+**Fixes.** "Text detail" in Settings did nothing at all until now (it governs street life, companions on the
+road, the weather turning, the sounds of the night and whether the AI is asked to describe regions). The dead no
+longer linger in the party or among those waiting (cleared as time passes, on rejoining,
 and never written into a save); `first()` no longer calls a character named "The Wanderer" "The"; the autoplay
 bot's invariants no longer complain about a companion or a band of enemies holding their dead while the battle is
 still being fought. A battle's dice used to come from a stream keyed on how many messages were in the log, so
