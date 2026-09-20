@@ -317,6 +317,23 @@ class DungeonBuilder:
             elif style in ("warren", "lair", "cave"):
                 for x, y in rng.sample(cells, min(len(cells), rng.randint(0, 3))):
                     self.set(x, y, "bones")
+            elif style in ("cellars", "tower"):
+                for x, y in rng.sample(cells, min(len(cells), rng.randint(0, 2))):
+                    self.set(x, y, rng.weighted(["table", "rubble", "bed"], [3, 3, 1]))
+            # Every dark place has fallen stone in it, and old bones somewhere.
+            cells = self.open_cells(i)
+            for x, y in rng.sample(cells, min(len(cells), rng.randint(0, 2))):
+                self.set(x, y, rng.weighted(["rubble", "bones"], [3, 1]))
+            if style in ("crypt", "temple", "tower") and rng.chance(0.35):
+                cells = self.open_cells(i)
+                if cells:
+                    x, y = rng.choice(cells)
+                    self.set(x, y, "pillar")
+            if style == "cave" and rng.chance(0.3):
+                cells = self.open_cells(i)
+                if cells:
+                    x, y = rng.choice(cells)
+                    self.set(x, y, "shallow_water")  # water gathers in the low places
         if style == "temple":
             biggest = max(range(1, len(self.rooms)), key=lambda i: self.rooms[i][2] * self.rooms[i][3], default=0)
             cells = self.open_cells(biggest)
