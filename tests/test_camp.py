@@ -183,7 +183,7 @@ def test_butchering_beasts_after_a_fight(game):
 def test_every_event_and_option_can_be_played(game):
     c = game.leader
     c.money = 100000
-    for item in ("rations", "bandages"):
+    for item in ("rations", "bandages", "healing_herbs"):
         add_item(c, game.tables.items, item, 10)
     for eid, spec in game.tables.travel_events.items():
         for i, opt in enumerate(spec["options"]):

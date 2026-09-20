@@ -1,6 +1,115 @@
 {
   "_comment": "Things met on the road that are not (at first) a fight. where: road (true = only on roads, false = only off them, missing = either), biomes (or [\"any\"]), danger [min, max], time any/day/night, season list or any. Each option has a label and one of: outcome, check (skill, dc, success, failure) or shop (stock [item, qty], markup). Outcomes: text (one is chosen; {name} is the leader), items [[item, qty or dice]] (negative qty = given away), money (copper; negative = paid), xp, deed, news (true: hear of a place you don't know), fatigue (change), effect [name, hours], loot [[item, dice, chance]], fight (an encounter group), ambush [group, chance], time (minutes). requires: items [[item, qty]] and/or money.",
   "events": {
+    "flooded_ford": {
+      "name": "a flooded ford",
+      "where": {"biomes": ["any"], "danger": [0, 10], "time": "any", "season": "any"},
+      "weight": 2,
+      "intro": ["The ford is under brown water, moving fast, carrying branches. The marker stones are gone.",
+                "Rain upriver: the crossing is a torrent, and the far bank is further away than it was."],
+      "options": [
+        {"label": "Wade it anyway", "check": {"skill": "athletics", "dc": 13,
+          "success": {"text": ["You cross with the water at your chest and your heart in your mouth, and come out shaking."], "fatigue": 10, "xp": 10, "time": 40},
+          "failure": {"text": ["The current takes your legs. You come out a hundred paces down, soaked, bruised and lighter than you were."], "fatigue": 25, "money": -40, "time": 60}}},
+        {"label": "Walk upstream for a crossing", "outcome": {"text": ["Three hours of wet ground and thorns, and then a fallen tree wide enough to cross on."], "fatigue": 12, "time": 180}},
+        {"label": "Wait for it to drop", "outcome": {"text": ["You make a fire on the bank and watch the water go down, which it does, slowly, the way water does."], "fatigue": -10, "time": 300}}
+      ]
+    },
+    "burnt_farm": {
+      "name": "a burnt farm",
+      "where": {"biomes": ["plains", "forest", "hills", "marsh"], "danger": [2, 10], "time": "any", "season": "any"},
+      "weight": 2,
+      "intro": ["Black beams, a fallen roof, and a yard where nothing moves. It happened weeks ago, and nobody came back.",
+                "A farmstead burned to the sill stones. A dog's chain lies in the ash, with no dog on it."],
+      "options": [
+        {"label": "Search the ruin", "check": {"skill": "investigation", "dc": 11,
+          "success": {"text": ["In a pit under the hearthstone: what they hid and never came back for."], "loot": [["salt", "1d2", 0.5], ["wool_bolt", "1", 0.3], ["iron_pot", "1", 0.4]], "money": 80, "time": 40},
+          "failure": {"text": ["Ash, nails, and a child's shoe. You leave it where it is."], "time": 30}}},
+        {"label": "Bury what is left of them", "outcome": {"text": ["It takes an hour, and there is no priest, but it is done, and done properly."], "deed": "buried the dead at a burnt farm", "xp": 15, "fatigue": 12, "time": 70}},
+        {"label": "Walk on", "outcome": {"text": ["You keep the ruin on your left and do not look at it twice."]}}
+      ]
+    },
+    "toll_men": {
+      "name": "toll men on the road",
+      "where": {"road": true, "biomes": ["any"], "danger": [0, 6], "time": "day", "season": "any"},
+      "weight": 3,
+      "intro": ["A rope across the road, two men with spears, and a third with a ledger. \"Bridge toll. Lord's orders.\"",
+                "A toll post: a pole, a hut, and men who look as though the arrangement is recent, and theirs."],
+      "options": [
+        {"label": "Pay the toll (2 silver)", "requires": {"money": 20}, "outcome": {"text": ["The rope comes down. The man with the ledger writes nothing in it."], "money": -20, "time": 10}},
+        {"label": "[Persuasion] Argue that you are exempt", "check": {"skill": "persuasion", "dc": 13,
+          "success": {"text": ["\"...Right. Go on, then. Quickly, before the sergeant looks up.\""], "xp": 15, "time": 15},
+          "failure": {"text": ["\"Everyone is exempt, to hear them tell it.\" You pay, and they take a little extra for the trouble."], "money": -35, "time": 25}}},
+        {"label": "Walk straight through", "outcome": {"text": ["Shouting behind you, and a spear that lands nowhere near. Whoever they answer to will hear a description of you."], "deed": "refused a toll on the road", "news": true, "fatigue": 8, "time": 5}}
+      ]
+    },
+    "broken_cart": {
+      "name": "a carter in trouble",
+      "where": {"road": true, "biomes": ["any"], "danger": [0, 8], "time": "day", "season": "any"},
+      "weight": 3,
+      "intro": ["A cart is down to its axle in the ruts, one wheel off, and a carter is arguing with an ox about it.",
+                "A wagon leans in the mud with its load shifted. The driver is old, and the light is going."],
+      "options": [
+        {"label": "Put your back into it", "check": {"skill": "athletics", "dc": 12,
+          "success": {"text": ["Between you the cart comes up and the wheel goes on. They press what they can spare on you, which is little, and mean it."], "money": 120, "items": [["bread", "1"]], "deed": "helped a carter out of the mud", "xp": 15, "fatigue": 10, "time": 50},
+          "failure": {"text": ["An hour of heaving and swearing, and the cart is where it was. They thank you anyway."], "xp": 5, "fatigue": 18, "time": 60}}},
+        {"label": "Take what is on the cart", "outcome": {"text": ["The old carter backs away and lets you. They will describe you to the first guard they meet."], "loot": [["wheat", "1d2", 0.6], ["wool_bolt", "1", 0.4], ["salt", "1", 0.3]], "money": 60, "deed": "robbed a carter on the road", "news": true, "time": 20}},
+        {"label": "Go around", "outcome": {"text": ["The mud is deep at the edge, but it is not your cart."], "time": 10}}
+      ]
+    },
+    "stone_circle": {
+      "name": "a ring of standing stones",
+      "where": {"biomes": ["plains", "hills", "tundra", "forest"], "danger": [0, 10], "time": "any", "season": "any"},
+      "weight": 1,
+      "intro": ["Nine stones, or eight and the stump of one, in a ring on the open ground. Older than anything with a name.",
+                "Standing stones, lichened and leaning. Sheep have worn a path around the outside, and nothing grows inside."],
+      "options": [
+        {"label": "Camp inside the ring", "outcome": {"text": ["You sleep badly, and dream of people walking in a circle, and wake with the feeling of having been counted."], "fatigue": -20, "xp": 10, "time": 240}},
+        {"label": "Look the stones over", "check": {"skill": "arcana", "dc": 12,
+          "success": {"text": ["The marks are not decoration. You cannot read them, but you understand that they were a warning, and that it was not meant for you."], "xp": 25, "time": 30},
+          "failure": {"text": ["Weather-worn scratches, a beetle, and your own patience running out."], "time": 20}}},
+        {"label": "Leave them alone", "outcome": {"text": ["Some things are best walked past."]}}
+      ]
+    },
+    "charcoal_burners": {
+      "name": "charcoal burners",
+      "where": {"biomes": ["forest", "pine_forest"], "danger": [0, 8], "time": "any", "season": "any"},
+      "weight": 2,
+      "intro": ["Smoke from a covered mound, and two soot-black figures who watch you come with the patience of people who cannot leave their fire.",
+                "A charcoal camp in a clearing: the mound smoking, a lean-to, and a dog that does not bark."],
+      "options": [
+        {"label": "Share their fire and their talk", "outcome": {"text": ["They talk about the forest the way other people talk about a difficult relative. You warm through, and hear what has been on the roads."], "fatigue": -12, "news": true, "xp": 5, "time": 60}},
+        {"label": "Buy charcoal and a meal", "requires": {"money": 30}, "outcome": {"text": ["Black bread, black hands, and fuel that will light in any weather."], "money": -30, "items": [["firewood", "2"], ["bread", "1"]], "time": 30}},
+        {"label": "Keep walking", "outcome": {"text": ["They watch you out of the clearing and go back to the mound."]}}
+      ]
+    },
+    "sick_child": {
+      "name": "a sick child at a cottage",
+      "where": {"biomes": ["any"], "danger": [0, 6], "time": "any", "season": "any"},
+      "weight": 2,
+      "intro": ["A woman comes out of a turf cottage at the sound of you and asks, without preamble, whether you have anything for a fever.",
+                "A cottage, a thin dog, and a man holding a child who is too quiet. \"Is one of you a healer?\""],
+      "options": [
+        {"label": "Give them healing herbs", "requires": {"items": [["healing_herbs", 1]]}, "outcome": {"text": ["You show them how to steep it. The child drinks, and sleeps, and the fever will break or it will not \u2014 but they have something now."], "items": [["healing_herbs", -1]], "deed": "gave medicine to a sick child", "xp": 20, "time": 40}},
+        {"label": "[Medicine] Do what you can", "check": {"skill": "medicine", "dc": 13,
+          "success": {"text": ["Cool water, a clean cloth and an hour of patience. By the end of it the child is asking for bread."], "deed": "brought a child through a fever", "xp": 30, "time": 90},
+          "failure": {"text": ["You do what can be done, which is not much, and leave them with instructions they will follow and hope they work."], "xp": 10, "time": 60}}},
+        {"label": "Give them money for a healer", "requires": {"money": 100}, "outcome": {"text": ["A silver piece is a week's work here. They will walk to the town tonight."], "money": -100, "deed": "paid for a healer for a stranger's child", "xp": 10, "time": 15}},
+        {"label": "Say you can do nothing", "outcome": {"text": ["It is true, and they know it is true, and it does not help either of you."], "time": 5}}
+      ]
+    },
+    "drowned_man": {
+      "name": "a body in the reeds",
+      "where": {"biomes": ["marsh", "plains", "forest"], "danger": [0, 10], "time": "any", "season": "any"},
+      "weight": 1,
+      "intro": ["Face down in the reeds, a week in the water, with the crows already disappointed.",
+                "A body in the shallows, caught on a root, turning slowly with the current."],
+      "options": [
+        {"label": "Go through his pockets", "outcome": {"text": ["A purse, swollen leather, and a letter too wet to read. Whoever he was, he is not using them."], "money": 150, "loot": [["found_letter", "1", 0.5], ["gold_ring", "1", 0.2]], "deed": "robbed a drowned man", "time": 20}},
+        {"label": "Pull him out and cover him", "outcome": {"text": ["He is heavier than he looks, and you are wet to the waist, and there are stones enough to keep the crows off."], "deed": "gave a drowned stranger a grave", "xp": 15, "fatigue": 12, "time": 45}},
+        {"label": "Leave him to the river", "outcome": {"text": ["The river had him first."]}}
+      ]
+    },
     "pedlar": {
       "name": "a travelling pedlar",
       "where": {"road": true, "biomes": ["any"], "danger": [0, 6], "time": "day", "season": "any"},
