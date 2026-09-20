@@ -212,7 +212,7 @@ started at the same minute), which is now fixed and the numbers are real. The de
 come back to it as someone new? Is anything in the help missing or wrong?
 
 **How it was verified**
-- 550 automated tests pass at the close of M9 (572 now, with the work since), including new ones for the death record, unremarkable deaths, companions going
+- 550 automated tests pass at the close of M9 (645 now, with the work since), including new ones for the death record, unremarkable deaths, companions going
   home, the obituary (built-in and AI), saving the dead with the world, the years between lives, and the death
   and interlude windows at every size.
 - **A balance pass, measured** (`tools/balance.py`, locked in by `tests/test_balance.py`):
