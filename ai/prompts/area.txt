@@ -1,0 +1,18 @@
+@max_tokens: 3000
+@temperature: 0.9
+# What a named stretch of country is like. One call per region, in the background, as the party walks into it.
+# Slots: {name} {land} {size} {season} {weather} {danger} {realm} {towns} {sites} {schema}
+Describe a named region of a grim, low-magic world in two or three plain sentences, for a traveller walking into it.
+
+Facts (use them; invent nothing that is not here):
+- It is called {name}: {land}, and it is {size}.
+- Season and weather right now: {season}, {weather}.
+- How dangerous the wilds are here, 0 to 10: {danger}.
+- Whose lands these are: {realm}.
+- Places within a day or two: {towns}. Old places: {sites}.
+
+Write what the traveller sees, hears and smells, and what the country is like to walk through and to live in.
+Name no people, promise no treasure, invent no ruins or roads, and do not tell the player what to do.
+
+Reply with only this JSON object:
+{schema}

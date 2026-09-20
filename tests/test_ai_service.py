@@ -266,7 +266,7 @@ def test_every_prompt_is_filled_by_the_facts_the_game_gives_it(data):
     import copy
 
     from realmwalker.ai import tasks
-    from realmwalker.game import death, magic_items, quests
+    from realmwalker.game import death, describe, magic_items, quests
     from realmwalker.game.state import new_game
     from realmwalker.world.generator import WorldGenerator, WorldOptions
     from realmwalker.world.tables import Tables
@@ -300,13 +300,14 @@ def test_every_prompt_is_filled_by_the_facts_the_game_gives_it(data):
     level = gen.get_dungeon(game.world, tables, site, 1)
     cases = [(tasks.MAGIC_ITEM, magic_items.dressing_facts(game, item)),
              (tasks.OBITUARY, death.obituary_facts(game, record)),
-             (tasks.DUNGEON, dungeon.dressing_facts(game, level))]
+             (tasks.DUNGEON, dungeon.dressing_facts(game, level)),
+             (tasks.AREA, describe.area_facts(game, next(a for a in game.world.areas if a.kind != "river")))]
     if quest is not None:
         cases.append((tasks.QUEST, quests.ai_facts(game, quest)))
     for task, facts in cases:
         template = lib.get(task.name)
         text = template.render({**{k: str(v) for k, v in facts.items()}, "schema": "{}"})
         for slot in ("{giver}", "{task}", "{name}", "{powers}", "{deeds}", "{who}", "{death}", "{base}",
-                     "{place}", "{style}", "{master}", "{sights}"):
+                     "{place}", "{style}", "{master}", "{sights}", "{land}", "{realm}", "{towns}"):
             assert slot not in text, (task.name, slot)
         assert len(text) > 100

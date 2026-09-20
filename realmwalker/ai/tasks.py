@@ -133,6 +133,15 @@ MAGIC_ITEM = AITask(
 )
 
 
+# ---------------------------------------------------------------------------- the country itself
+AREA = AITask(
+    name="area",
+    schema=Obj({"description": Str("two or three sentences: what this country is like", max_len=500)}),
+    max_tokens=3000,
+    temperature=0.9,
+)
+
+
 # ---------------------------------------------------------------------------- dungeons (M8)
 DUNGEON = AITask(
     name="dungeon",
@@ -227,4 +236,4 @@ SETTLEMENT = _settlement_task()
 DIALOGUE = _dialogue_task()
 
 ALL_TASKS: list[AITask] = [SAMPLE_TAVERN, BACKSTORY, TRAVEL_DAY, SETTLEMENT, DIALOGUE, CHRONICLE, MAGIC_ITEM,
-                           QUEST, OBITUARY, DUNGEON]
+                           QUEST, OBITUARY, DUNGEON, AREA]

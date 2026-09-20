@@ -215,3 +215,21 @@ def test_heavy_loads_slow_travel(game, tables, monkeypatch):
     assert game.world.time - t0 > base
     add_item(game.leader, tables.items, "iron_bar", 30)
     assert not game.move(-dx, -dy)
+
+
+def test_a_region_can_be_described_by_the_ai(game):
+    """The country you walk into says what it is like: built-in words, or the AI's if it has written any."""
+    from realmwalker.game.describe import area_facts, area_text, keep_area_text
+
+    area = next(a for a in game.world.areas if a.kind != "river")
+    facts = area_facts(game, area)
+    assert facts["name"] == area.name and facts["land"] and facts["towns"]
+    assert "{" not in " ".join(str(v) for v in facts.values())
+    assert not area_text(game.world, area)
+    assert keep_area_text(game.world, area, {"description": "Wet heather as far as anyone cares to walk."})
+    assert not keep_area_text(game.world, area, {"description": "Something else."})  # written once
+    assert area_text(game.world, area).startswith("Wet heather")
+    game.player.x, game.player.y = area.x, area.y
+    game.player.visited_areas.discard(area.id)
+    game._arrive(None)
+    assert any("Wet heather" in m.text for m in game.log.messages[-3:])

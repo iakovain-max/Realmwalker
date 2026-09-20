@@ -397,6 +397,36 @@ class GameScreen(Screen):
                                        priority=Priority.BACKGROUND, callback=done)
                     return  # one at a time
 
+    def _word_area(self) -> None:
+        """The country the party is walking through gets AI words, once per region."""
+        game = self.game
+        if game.in_local or game.busy or not self.app.ai.usable():
+            return
+        area = game.world.area_at(game.player.x, game.player.y)
+        if area is None or area.size < 20:
+            return  # a few tiles of scrub does not need its own paragraph
+        joules = self.app.ai.joules
+        if joules is not None and joules < self.app.ai.energy_reserve * 3:
+            return  # the country can wait: energy is better spent on the people in it
+        from realmwalker.game.describe import area_facts, area_text, keep_area_text
+
+        if area_text(game.world, area) or area.id in getattr(self, "_areas_asked", ()):
+            return
+        asked = getattr(self, "_areas_asked", None)
+        if asked is None:
+            asked = self._areas_asked = set()
+        asked.add(area.id)
+        from realmwalker.ai.service import Priority
+        from realmwalker.ai.tasks import AREA
+
+        def done(result, area=area) -> None:
+            if result.ok and keep_area_text(game.world, area, result.data):
+                game.dirty = True
+                if game.world.area_at(game.player.x, game.player.y) is area:
+                    game.say(f"<ai>{result.data['description'].strip()}</>", "place")
+
+        self.app.ai.submit(AREA, area_facts(game, area), priority=Priority.BACKGROUND, callback=done)
+
     def _word_dungeon(self) -> None:
         """A level the party has just reached gets AI words before they read the built-in ones."""
         game = self.game
@@ -511,6 +541,7 @@ class GameScreen(Screen):
         self._dress_magic_items()
         self._word_quests()
         self._word_dungeon()
+        self._word_area()
         if game.travel is not None:
             now = self.app.clock()
             if now - self._last_travel_step >= TRAVEL_STEP_SECONDS or self.app.headless:

@@ -424,9 +424,15 @@ class GameState:
             first = area.id not in p.visited_areas
             p.visited_areas.add(area.id)
             if first:
-                biome = self.biome_def(p.x, p.y)
-                desc = self.world.rng.child(f"areadesc{area.id}").choice(biome["descriptions"])
-                self.say(f"You enter <place>{area.name}</>. {desc}", "place")
+                from realmwalker.game.describe import area_text
+
+                written = area_text(self.world, area)
+                if written:
+                    self.say(f"You enter <place>{area.name}</>. <ai>{written}</>", "place")
+                else:
+                    biome = self.biome_def(p.x, p.y)
+                    desc = self.world.rng.child(f"areadesc{area.id}").choice(biome["descriptions"])
+                    self.say(f"You enter <place>{area.name}</>. {desc}", "place")
                 if self.party[1:]:
                     from realmwalker.game.companions import react
 
