@@ -71,7 +71,8 @@ Roads are much faster than open country. Forests, hills and marshes are slow; mo
   <loot>e</>               Equipment: what you wear in each slot, which body parts are protected, warmth
   <loot>g</> or <loot>,</>          Pick up what is lying here (on foot, in the close view)
 Carrying weight matters: worn armour and clothes count half. Above your limit you are slowed; far above it you cannot walk. Coins weigh too.
-  <loot>r</>               Camp: fire, tent, eat, cook, boil water, forage, hunt, fish, rest, sleep
+  <loot>r</>               Camp: fire, tent, eat, cook, boil water, forage, hunt, fish, make things, rest, sleep
+At camp, <loot>m</> makes what a traveller can make: torches and splints out of firewood, bandages out of linen, salted meat (with salt) and dried fish (over the fire) that keep, and — with a herbalism kit, a fire and three lots of healing herbs — a remedy worth carrying. A Survival or Medicine check decides how much you get out of it.
   <loot>h</>               Health: needs, warmth, blood, pain, wounds and their treatment, sickness
   <loot>w</>               Fill your waterskins (and drink) at a well, river or lake
   <loot>W</>               Wash (at water)

@@ -29,6 +29,129 @@
     "desert": {"dc": 17, "game": [["a lizard", 3, "1", null], ["a desert hare", 2, "1", null]]}
   },
   "fish": {"dc": 11, "tackle_bonus": 5, "catch": ["raw_fish", "1d3"]},
+  "crafts": {
+      "torches": {
+          "name": "torches",
+          "needs": [
+              [
+                  "firewood",
+                  1
+              ]
+          ],
+          "gives": [
+              [
+                  "torch",
+                  3
+              ]
+          ],
+          "minutes": 30,
+          "skill": "survival",
+          "dc": 8,
+          "text": "You split the wood, wrap the heads and make torches."
+      },
+      "bandages": {
+          "name": "bandages",
+          "needs": [
+              [
+                  "linen_bolt",
+                  1
+              ]
+          ],
+          "gives": [
+              [
+                  "bandages",
+                  6
+              ]
+          ],
+          "minutes": 30,
+          "skill": "medicine",
+          "dc": 8,
+          "text": "You tear the linen into strips and roll them."
+      },
+      "splints": {
+          "name": "splints",
+          "needs": [
+              [
+                  "firewood",
+                  1
+              ]
+          ],
+          "gives": [
+              [
+                  "splint",
+                  2
+              ]
+          ],
+          "minutes": 25,
+          "skill": "survival",
+          "dc": 9,
+          "text": "You cut and trim two splints, and pad them with what you have."
+      },
+      "salted_meat": {
+          "name": "salted meat",
+          "needs": [
+              [
+                  "raw_meat",
+                  2
+              ],
+              [
+                  "salt",
+                  1
+              ]
+          ],
+          "gives": [
+              [
+                  "salt_pork",
+                  2
+              ]
+          ],
+          "minutes": 60,
+          "skill": "survival",
+          "dc": 10,
+          "text": "You rub the meat with salt and pack it. It will keep now."
+      },
+      "dried_fish": {
+          "name": "dried fish",
+          "needs": [
+              [
+                  "raw_fish",
+                  2
+              ]
+          ],
+          "gives": [
+              [
+                  "dried_fish",
+                  2
+              ]
+          ],
+          "minutes": 120,
+          "skill": "survival",
+          "dc": 10,
+          "fire": true,
+          "text": "You split the fish and hang them in the smoke until they are hard and dark."
+      },
+      "remedy": {
+          "name": "a herbal remedy",
+          "needs": [
+              [
+                  "healing_herbs",
+                  3
+              ]
+          ],
+          "gives": [
+              [
+                  "potion_healing",
+                  1
+              ]
+          ],
+          "minutes": 90,
+          "skill": "medicine",
+          "dc": 13,
+          "tool": "herbalism_kit",
+          "fire": true,
+          "text": "You boil the herbs down to something bitter, dark and worth carrying."
+      }
+  },
   "night": {
       "any": [
           "Something moves out there, a long way off, and does not come back.",

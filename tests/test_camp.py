@@ -275,3 +275,30 @@ def test_a_night_in_the_open_is_heard(game):
              range(game.world.time, game.world.time + 400, 37)}
     assert heard and all(line and "{" not in line for line in heard)
     assert len(heard) > 1, heard
+
+
+def test_making_things_at_camp(game):
+    """Simple crafting (design section 11): torches, bandages, splints, salting, drying, a remedy."""
+    from realmwalker.game import camp as camplogic
+
+    c = game.leader
+    ids = {cid for cid, *_ in camplogic.crafts(game)}
+    assert {"torches", "bandages", "splints", "salted_meat", "dried_fish", "remedy"} <= ids
+    # Nothing to work with: every recipe says why not.
+    for it in list(c.inventory):
+        remove = it.def_id in ("firewood", "linen_bolt", "salt", "raw_meat", "raw_fish", "healing_herbs")
+        if remove:
+            from realmwalker.rules.inventory import remove_item
+
+            remove_item(c, it.uid)
+    assert all(not ok for _, _, ok, _ in camplogic.crafts(game))
+    assert "can't" in camplogic.make(game, "torches")[0]
+    # With wood, torches can be made.
+    add_item(c, game.tables.items, "firewood", 2)
+    options = {cid: (ok, why) for cid, _, ok, why in camplogic.crafts(game)}
+    assert options["torches"][0], options["torches"]
+    before = sum(i.qty for i in c.inventory if i.def_id == "torch")
+    out = camplogic.make(game, "torches")
+    assert any("torch" in line for line in out)
+    assert sum(i.qty for i in c.inventory if i.def_id == "torch") > before
+    assert not sum(i.qty for i in c.inventory if i.def_id == "firewood") >= 2  # the wood was used

@@ -12,6 +12,66 @@ from realmwalker.ui.screens.base import Screen
 from realmwalker.ui.widgets import Canvas
 
 
+class CraftScreen(Screen):
+    """What can be made here, out of what you are carrying."""
+
+    modal = True
+    title = "Make something"
+
+    def __init__(self, app, game, camp_screen) -> None:
+        super().__init__(app)
+        self.game = game
+        self.camp = camp_screen
+        self.selected = 0
+
+    def options(self) -> list:
+        return camplogic.crafts(self.game)
+
+    def choose(self, i: int) -> None:
+        opts = self.options()
+        if not 0 <= i < len(opts):
+            return
+        cid, label, ok, why = opts[i]
+        if not ok:
+            self.app.notify(f"{markup.plain(label)}: {why}.", "warn")
+            return
+        self.close()
+        self.camp.run(lambda: camplogic.make(self.game, cid))
+
+    def handle_key(self, ev: KeyEvent) -> bool:
+        opts = self.options()
+        if ev.key in ("escape", "m"):
+            self.close()
+        elif ev.key == "up":
+            self.selected = max(0, self.selected - 1)
+        elif ev.key == "down":
+            self.selected = min(len(opts) - 1, self.selected + 1)
+        elif ev.key == "enter":
+            self.choose(self.selected)
+        elif len(ev.key) == 1 and ev.key.isdigit() and ev.key != "0":
+            self.choose(int(ev.key) - 1)
+        return True
+
+    def render(self, canvas: Canvas) -> None:
+        from realmwalker.ui.screens.base import modal_box
+
+        opts = self.options()
+        self.selected = max(0, min(self.selected, max(0, len(opts) - 1)))
+        x, y, w, h = modal_box(canvas, min(76, canvas.width - 4), len(opts) + 6, "Make something")
+        for i, (cid, label, ok, why) in enumerate(opts):
+            row = y + 2 + i
+            if i == self.selected:
+                canvas.fill(x + 1, row, w - 2, 1, colors.HILITE_BG)
+            canvas.hit(x + 1, row, w - 2, 1, lambda i=i: self.choose(i))
+            text = f"<loot>[{i + 1}]</> {label}" if ok else f"<faint>[{i + 1}] {markup.plain(label)}: {why}</>"
+            canvas.markup(x + 2, row, text, max_width=w - 4)
+        canvas.button(x + 2, y + h - 2, "Back", self.close, hotkey="Esc")
+        canvas.text(x + 12, y + h - 2, "↑↓ choose · Enter or the number to make it", colors.FAINT, max_width=w - 14)
+
+    def autoplay_keys(self) -> list[KeyEvent]:
+        return [KeyEvent(k) for k in ("down", "1", "enter", "escape")]
+
+
 class CampScreen(Screen):
     title = "Camp"
 
@@ -43,6 +103,7 @@ class CampScreen(Screen):
             ("u", "Hunt (2 hours)", lambda: camplogic.hunt(g), wild, "not in a town"),
             ("i", "Fish (2 hours)", lambda: camplogic.fish(g), water is not None and water[0] != "clean",
              "no river, lake or marsh here"),
+            ("m", "Make something", self._make, True, ""),
             ("h", "See to wounds", self._health, True, ""),
             ("s", "Short rest (1 hour)", lambda: self._rest("short"), True, ""),
             ("l", "Sleep (8 hours)", lambda: self._rest("long"), True, ""),
@@ -69,6 +130,11 @@ class CampScreen(Screen):
             if c.alive:
                 out += camplogic.eat_meal(self.game, c)
         return out
+
+    def _make(self) -> list[str]:
+        """Torches, bandages, splints, salted meat, dried fish, a herbal remedy."""
+        self.app.push(CraftScreen(self.app, self.game, self))
+        return []
 
     def _health(self) -> list[str]:
         from realmwalker.ui.screens.health import HealthScreen

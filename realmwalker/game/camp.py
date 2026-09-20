@@ -300,6 +300,68 @@ def fish(game) -> list[str]:
     return msgs + [f"You catch {n} fish in {here[1]}."]
 
 
+def party_has(game, item_id: str, qty: int) -> bool:
+    return sum(it.qty for c in game.party for it in c.inventory if it.def_id == item_id) >= qty
+
+
+def take_from_party(game, item_id: str, qty: int) -> None:
+    left = qty
+    for c in game.party:
+        for it in list(c.inventory):
+            if left <= 0:
+                return
+            if it.def_id == item_id:
+                take = min(left, it.qty)
+                remove_item(c, it.uid, take)
+                left -= take
+
+
+def crafts(game) -> list[tuple[str, str, bool, str]]:
+    """(id, label, possible, why not) for everything the party could make here."""
+    out = []
+    camp = camp_here(game)
+    fire = bool(camp and camp.fire)
+    items = game.tables.items
+    for cid, spec in game.tables.camping.get("crafts", {}).items():
+        needs = ", ".join(f"{qty} × {items.get(item)['name']}" for item, qty in spec["needs"])
+        label = f"{spec['name']} <dim>({needs}, {spec['minutes']} min)</>"
+        why = ""
+        if spec.get("fire") and not fire:
+            why = "needs a fire"
+        elif spec.get("tool") and has(game, (spec["tool"],))[1] is None:
+            why = f"needs {items.get(spec['tool'])['name']}"
+        else:
+            missing = [item for item, qty in spec["needs"] if not party_has(game, item, int(qty))]
+            if missing:
+                why = "you don't have " + ", ".join(items.get(m)["name"] for m in missing)
+        out.append((cid, label, not why, why))
+    return out
+
+
+def make(game, cid: str) -> list[str]:
+    """Make something: the materials go, the time passes, and a check decides how well it goes."""
+    spec = game.tables.camping.get("crafts", {}).get(cid)
+    if spec is None:
+        return ["You would not know where to start."]
+    possible = {c[0]: (c[2], c[3]) for c in crafts(game)}
+    ok, why = possible.get(cid, (False, "not here"))
+    if not ok:
+        return [f"You can't: {why}."]
+    for item, qty in spec["needs"]:
+        take_from_party(game, item, int(qty))
+    good, roll = check(game, spec["skill"], int(spec["dc"]), tag=cid)
+    game.pass_time(int(spec["minutes"]), "rest")
+    made = []
+    who = game.leader
+    for item, qty in spec["gives"]:
+        n = int(qty) if good else max(1, int(qty) // 2)
+        it = add_item(who, game.tables.items, item, n, made_at=game.world.time)
+        if it is not None:
+            made.append(f"{game.tables.items.get(item)['name']}" + (f" ×{n}" if n > 1 else ""))
+    text = spec["text"] if good else "It takes longer than it should, and you spoil some of it."
+    return [roll, f"{text} <loot>You have {', '.join(made)}.</>"]
+
+
 def night_sound(game) -> str:
     """One thing heard in the night in the open: the land, the fire, or nothing much."""
     spec = game.tables.camping.get("night", {})

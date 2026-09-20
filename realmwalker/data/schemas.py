@@ -378,6 +378,11 @@ CAMPING = Obj(
         "fish": Obj({"dc": Int(min=0, max=30), "tackle_bonus": Int(min=0, max=10), "catch": List(Any_(), min_items=2, max_items=2)}),
         "cooking": Map(Obj({"becomes": Str(max_len=40), "needs_pot": Bool(optional=True)})),
         "night": NIGHT_SOUNDS,
+        "crafts": Map(Obj({"name": Str(max_len=40), "needs": List(List(Any_(), min_items=2, max_items=2), min_items=1),
+                           "gives": List(List(Any_(), min_items=2, max_items=2), min_items=1),
+                           "minutes": Int(min=1, max=600), "skill": Str(max_len=20), "dc": Int(min=0, max=30),
+                           "text": Str(max_len=200), "fire": Bool(optional=True),
+                           "tool": Str(max_len=30, optional=True)})),
     }
 )
 

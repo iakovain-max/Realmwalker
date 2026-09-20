@@ -1020,3 +1020,26 @@ def test_drawing_steel_on_a_townsman_asks_first(make_app):
     render(app)
     assert game.battle is not None or game.encounter is not None
     assert app.error_count == 0
+
+
+@pytest.mark.parametrize("size", SIZES)
+def test_the_make_something_window(make_app, size):
+    from realmwalker.rules.inventory import add_item
+    from realmwalker.ui.screens.camp import CampScreen, CraftScreen
+
+    app = make_app()
+    start_small_world(app)
+    game = app.game
+    add_item(game.leader, game.tables.items, "firewood", 2)
+    app.push(CampScreen(app, game))
+    render(app, size)
+    app.handle_event(KeyEvent("m"))
+    assert isinstance(app.top, CraftScreen)
+    text = screen_text(render(app, size))
+    assert "torches" in text
+    app.handle_event(KeyEvent("down"))
+    render(app, size)
+    app.handle_event(KeyEvent("1"))  # make torches
+    render(app, size)
+    assert any(i.def_id == "torch" for i in game.leader.inventory)
+    assert app.error_count == 0
