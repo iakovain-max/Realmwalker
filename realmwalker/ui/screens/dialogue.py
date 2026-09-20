@@ -133,7 +133,8 @@ class DialogueScreen(Screen):
             header += " <dim>· …</>"
         canvas.markup(2, 1, header, max_width=text_w)
         menu = conv.menu()
-        menu_h = min(len(menu), 16, max(6, h // 2 - 2)) + 1
+        # Choices matter more than the words already said: give the menu the room it needs, within reason.
+        menu_h = min(len(menu), max(6, h - 12)) + 1
         log_top, log_bottom = 3, h - 3 - menu_h
         # The conversation so far.
         lines: list = []
@@ -163,6 +164,10 @@ class DialogueScreen(Screen):
             else:
                 canvas.markup(2, y, f"<faint>[{key}] {markup.escape(markup.plain(choice.label))}: {choice.why}</>",
                               max_width=text_w)
+        hidden = len(menu) - (menu_h - 1)
+        if hidden > 0:
+            canvas.markup(2, log_bottom + menu_h, f"<dim>… and {hidden} more (press the letter shown for them, "
+                                                  f"or make the window bigger)</>", max_width=text_w)
         if side:
             self._render_side(canvas, w - 36, 2, 34, h - 5)
         canvas.text(2, h - 2, "1-9 or the letter shown to choose · ↑↓ scroll · Esc leave", colors.FAINT, max_width=w - 4)

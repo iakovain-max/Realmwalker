@@ -146,3 +146,24 @@ def test_a_new_character_is_told_about_the_world(game):
     summary = interlude.pass_the_years(game.world, game.tables, RNG(9, "gap"), days=60)
     text = "\n".join(interlude.summary_text(game.world, game.tables, summary))
     assert record["name"] in text  # the one who came before is remembered
+
+
+def test_the_ai_writes_the_obituary_through_the_mock(game, mock_p2):
+    """End to end with the mock Player2 server: the facts go out, the words come back and are kept."""
+    from realmwalker.ai.tasks import OBITUARY
+    from tests.test_ai_service import make_service, wait_for
+
+    game.leader.deeds.append("cleared the barrow at Ashfell")
+    kill_the_leader(game, "of a wound that festered")
+    record = death.die(game)
+    svc = make_service(mock_p2.base_url)
+    try:
+        results = []
+        svc.submit(OBITUARY, death.obituary_facts(game, record), callback=results.append)
+        assert wait_for(lambda: svc.poll() or results, 10)
+        assert results[0].ok, results[0].error
+        assert death.apply_obituary(game, record, results[0].data)
+    finally:
+        svc.stop()
+    assert record["obituary_source"] == "ai" and record["obituary"]
+    assert record["obituary"] in "\n".join(death.fallback_obituary(game, record))
