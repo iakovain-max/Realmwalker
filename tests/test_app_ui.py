@@ -919,3 +919,50 @@ def test_ai_extras_can_be_switched_off(make_app):
     assert not calls
     app.settings.ai_extras = True
     assert app.ai_extras()
+
+
+def test_a_life_ends_and_another_begins_in_the_same_world(make_app):
+    """M9 through the screens: die, go back to the title, make a new character in the same world."""
+    from realmwalker.game import death
+    from realmwalker.ui.screens.creation import CreationScreen
+    from realmwalker.ui.screens.game_menu import WorldPickScreen
+    from realmwalker.ui.screens.game_screen import GameScreen
+    from realmwalker.ui.screens.interlude import InterludeScreen
+    from realmwalker.ui.screens.title import TitleScreen
+
+    app = make_app()
+    start_small_world(app)
+    game = app.game
+    world_id = game.world.meta.id
+    first_name = game.leader.name
+    game.leader.deeds.append("killed the wolf of Ashfell")
+    game.renown.fame = 15
+    game.over = {"cause": "killed by a bear", "place": "the hills"}
+    render(app)
+    assert type(app.top).__name__ == "DeathScreen"
+    app.handle_event(KeyEvent("enter"))
+    assert isinstance(app.top, TitleScreen) and app.game is None
+
+    # The world is still there, without a living character in it.
+    empty = [s for s in app.worlds_without_characters() if s.folder.name == world_id]
+    assert empty, "the world should be waiting for a new character"
+    app.handle_event(KeyEvent("r"))
+    assert isinstance(app.top, WorldPickScreen)
+    app.handle_event(KeyEvent("enter"))
+    assert isinstance(app.top, CreationScreen)
+    screen = app.top
+    for _ in range(12):  # Enter through every step: sensible defaults all the way
+        render(app)
+        app.handle_event(KeyEvent("enter"))
+        if not isinstance(app.top, CreationScreen):
+            break
+    assert app.game is not None and app.game.world.meta.id == world_id
+    assert app.game.leader.name != first_name
+    # The world moved on, and says so; behind that page is the game.
+    if isinstance(app.top, InterludeScreen):
+        text = screen_text(render(app))
+        assert "moved on" in text or "pass" in text
+        app.handle_event(KeyEvent("enter"))
+    assert isinstance(app.top, GameScreen)
+    assert death.fallen(app.game.world)[-1]["name"] == first_name
+    assert app.error_count == 0
