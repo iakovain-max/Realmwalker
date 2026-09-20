@@ -237,3 +237,27 @@ def test_weather_slows_travel_and_shortens_sight(game):
     game._weather_cache._key = (game.player.x, game.player.y, game.world.time // 10)
     radius, _ = sight_radius(game, game.local)
     assert 0 < radius <= 12
+
+
+def test_the_sky_says_when_it_turns(game, monkeypatch):
+    """Rain, snow, fog and heat are remarked on when they start and when they stop; cloud is not."""
+    from realmwalker.world.weather import Weather
+
+    kinds = ["clear", "cloudy", "overcast", "rain", "rain", "clear", "fog"]
+    state = {"i": 0}
+
+    def fake_weather(g):
+        return Weather(kind=kinds[min(state["i"], len(kinds) - 1)], temp=10.0, wind=5.0, precip=0.0,
+                       cloud=0.5, visibility=1.0)
+
+    monkeypatch.setattr("realmwalker.game.survival.weather", fake_weather)
+    said = []
+    game.say = lambda text, color="fg": said.append(text)
+    for i in range(len(kinds)):
+        state["i"] = i
+        game.world.time += 200  # past the cooldown
+        game._weather_moment()
+    text = " ".join(said)
+    assert "rain" in text.lower() and ("fog" in text.lower() or "world shrinks" in text)
+    assert not any("cloud comes up" in line.lower() for line in said[:1])
+    assert len(said) <= 4, said  # cloud thickening and thinning is not news

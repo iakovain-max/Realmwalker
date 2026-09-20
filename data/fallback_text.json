@@ -161,6 +161,19 @@
       "high summer"
     ]
   },
+  "weather_change": {
+    "clear": ["The cloud breaks up and goes east, and there is a sky behind it.", "The rain stops as suddenly as it started, and everything drips."],
+    "cloudy": ["Cloud comes up out of the west, in pieces at first.", "The sun goes behind something and does not come out again."],
+    "overcast": ["The sky closes over, low and grey, and the light goes flat.", "Cloud settles on the land like a lid."],
+    "fog": ["Fog comes up out of the ground, and the world shrinks to twenty paces.", "The air thickens; trees go from black to grey to gone."],
+    "drizzle": ["A fine rain starts, the kind that soaks you without seeming to fall.", "Drizzle, drifting rather than falling, and no shelter in sight."],
+    "rain": ["The rain comes on properly, and the road begins to run.", "It starts to rain, and settles into it."],
+    "storm": ["The wind gets up, and then the rain arrives sideways.", "Thunder, and then the sky opens. Anything not tied down is moving."],
+    "flurries": ["A few flakes go past, not sure of themselves.", "Snow begins, thin and dry, blowing along the ground."],
+    "snow": ["Snow starts falling, big and slow and silent.", "It begins to snow in earnest, and the world goes quiet."],
+    "blizzard": ["The snow turns to a wall of white, and the wind screams in it.", "A blizzard. You cannot see the person in front of you."],
+    "heat": ["The air stops moving and the heat settles on you like a coat.", "By midday the heat is a solid thing, and the flies have found you."]
+  },
   "travel_day": {
     "passage": [
       "{opening} {walking} {closing}",

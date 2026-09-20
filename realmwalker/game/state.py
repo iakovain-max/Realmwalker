@@ -60,6 +60,9 @@ class TravelPlan:
     destination: tuple[int, int]
 
 
+WEATHER_NEWS = ("fog", "drizzle", "rain", "storm", "flurries", "snow", "blizzard", "heat")
+
+
 class GameState:
     def __init__(self, world: World, player: PlayerState, tables: Tables, messages: MessageLog | None = None,
                  party: list[Character] | None = None) -> None:
@@ -99,6 +102,8 @@ class GameState:
         self.lit: dict | None = None  # the torch or lantern burning underground (game.dungeon)
         self.quests: list[dict] = []  # work taken on: the journal (game.quests)
         self._last_moment = -10**6  # the step count when street life was last remarked on
+        self._last_weather: str | None = None  # the sky as it was, to notice when it turns
+        self._weather_said = -10**6  # world minute of the last remark about the sky
         self._realm_here: int | None = None
         self._wading = False
         self._remaps: dict[str, np.ndarray] = {}
@@ -195,6 +200,7 @@ class GameState:
                 self.world.time += remaining
                 break
         self.bury_the_dead()
+        self._weather_moment()
         after = self.moment
         if self.world.factions and after.total_days * 24 + after.hour != before.total_days * 24 + before.hour:
             from realmwalker.game import law
@@ -687,6 +693,33 @@ class GameState:
 
                 law.watch(self)
         return True
+
+    def _weather_moment(self) -> None:
+        """A line when the weather turns, said outdoors and not more than once a change."""
+        if self.busy or self.over is not None:
+            return
+        if self.local is not None and self.local.kind == "dungeon":
+            return
+        kind = self.weather.kind
+        if kind == self._last_weather:
+            return
+        was = self._last_weather
+        self._last_weather = kind
+        if was is None:
+            return  # the weather you started in is not news
+        # Cloud thickening and thinning is not news; rain, snow, fog, storms and heat are, and so is their end.
+        if kind not in WEATHER_NEWS and was not in WEATHER_NEWS:
+            return
+        if kind not in WEATHER_NEWS and was in WEATHER_NEWS:
+            kind = "clear"
+        if self.world.time - int(self._weather_said) < 90:
+            return
+        lines = self.tables.fallback.get("weather_change", {}).get(kind, [])
+        if not lines:
+            return
+        self._weather_said = self.world.time
+        rng = self.world.rng.child(f"weather-say/{self.world.time}")
+        self.say(rng.choice(lines), "flavor")
 
     def _street_life(self, lm: LocalMap) -> None:
         """Now and then, something small happening in the street (game/people.town_moment)."""

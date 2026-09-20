@@ -40,7 +40,8 @@ TRAVEL_DAY_TABLES = ("passage", "opening", "walking", "closing")
 SETTLEMENT_TABLES = ("passage", "approach", "sight", "smell", "detail")
 
 FALLBACK_TEXT = Obj({"tavern": table_set(*TAVERN_TABLES), "travel_day": table_set(*TRAVEL_DAY_TABLES),
-                     "settlement": table_set(*SETTLEMENT_TABLES)})
+                     "settlement": table_set(*SETTLEMENT_TABLES),
+                     "weather_change": Map(word_list(1, 200), min_items=1)})
 
 # Slots that code fills in itself (not from a table), per table set.
 RUNTIME_SLOTS: dict[str, set[str]] = {
