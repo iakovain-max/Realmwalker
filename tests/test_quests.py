@@ -577,3 +577,63 @@ def test_the_village_burns_if_you_are_not_there(game):
     assert q["state"] == "failed"
     assert town.status.get("raided")
     assert any(town.name in n["text"] for n in game.world.news)
+
+
+def test_every_kind_of_work_can_be_worded(game):
+    """Each template must have built-in words, AI facts and a title that fills in: a missing one is a crash."""
+    kinds = set(game.tables.quests["templates"])
+    assert kinds == set(quests.BUILDERS)
+    made = {}
+    for s in game.world.settlements:
+        if len(made) == len(kinds):
+            break
+        folk = npcs_in(game.world, s.id) or (prepare_town(game, s) and npcs_in(game.world, s.id))
+        s.status.setdefault("plague", {"until": 10**9})  # so 'cure' can be offered somewhere
+        for npc in folk:
+            for kind in kinds - set(made):
+                if npc.job not in game.tables.quests["templates"][kind]["givers"]:
+                    continue
+                for c in game.party:
+                    c.level = 6  # a dragon is not offered to beginners
+                q = quests.make_offer(game, npc, game.world.rng.child(f"all/{npc.id}/{kind}"), kind)
+                if q is not None:
+                    made[kind] = q
+    missing = kinds - set(made)
+    assert not missing - {"slay_dragon"}, missing  # every kind but the dragon should be findable here
+    for kind, q in made.items():
+        for what in ("title", "pitch", "journal", "done", "failed"):
+            text = quests.fill(game, q, what)
+            assert text and "{" not in text, (kind, what, text)
+        facts = quests.ai_facts(game, q)
+        assert facts["task"] and "{" not in facts["task"] and "None" not in facts["task"], (kind, facts)
+        for hidden in game.tables.quests["templates"][kind].get("hidden", {}):
+            text = quests.fill(game, q, "hidden", hidden)
+            assert text and "{" not in text, (kind, hidden, text)
+
+
+def test_smuggling_past_the_gate(game, monkeypatch):
+    from realmwalker.game import law
+
+    q, npc = offer(game, "smuggle")
+    quests.accept(game, q)
+    assert quests.holds_quest_item(game, q)
+    crate = next(it for it in game.leader.inventory if f"quest:{q['id']}" in it.tags)
+    assert "contraband" in crate.tags
+    dest = game.world.settlements[q["target"]["dest"]]
+    who = game.world.npcs[q["target"]["npc"]]
+    game.player.x, game.player.y = dest.x, dest.y
+    money = game.leader.money
+    conv = Conversation(game, who)
+    conv.choose(next(c for c in conv.menu() if c.id == "deliver_goods"))
+    assert q["state"] == "finished" and game.leader.money == money + q["reward"]
+    assert not quests.holds_quest_item(game, q)
+    # The other way: the wardens find it.
+    q2, npc2 = offer(game, "smuggle")
+    quests.accept(game, q2)
+    walled = next(s for s in game.world.settlements if s.walled)
+    game.player.x, game.player.y = walled.x, walled.y
+    monkeypatch.setattr(law, "rng_for", lambda g, what: __import__("realmwalker.core.rng", fromlist=["RNG"]).RNG(1, "x"))
+    monkeypatch.setitem(game.tables.law, "gate_search_chance", 1.0)
+    lines = law.gate_search(game, walled)
+    assert any("take it" in line for line in lines), lines
+    assert q2["state"] == "failed" and not quests.holds_quest_item(game, q2)

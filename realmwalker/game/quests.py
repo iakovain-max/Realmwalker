@@ -394,6 +394,25 @@ RAIDER_GROUPS = {"tribe": ("orc_raiders", "goblin_warband", "orc_warband"), "ban
                  "cult": ("cultists",)}
 
 
+def _smuggle(game, npc, rng):
+    """A crate that must not be seen. Walled towns search travellers at the gate (game/law.py)."""
+    w = game.world
+    town = w.settlements[npc.settlement]
+    dests = [s for s in w.settlements if s.id != town.id and 8 <= dist(s, town) <= 35 and s.walled]
+    if not dests:
+        return None
+    dest = rng.choice(dests)
+    who = _someone_in(game, dest, rng, jobs=("innkeeper", "shopkeeper", "market_trader", "smith"))
+    if who is None:
+        return None
+    q = base_quest(game, npc, "smuggle", rng, hard=1 + dist(dest, town) / 25)
+    q["target"] = {"dest": dest.id, "npc": who.id}
+    q["words"].update(recipient=f"{who.name}, the {who.title}", recipient_name=who.name, dest=dest.name,
+                      where=direction(town, dest))
+    allow_for(q, dist(dest, town))
+    return q
+
+
 def _defend(game, npc, rng):
     """They came last year, and they are coming again. Be there on the day."""
     w = game.world
@@ -524,7 +543,7 @@ def _steal(game, npc, rng):
 
 
 BUILDERS = {"bounty": _bounty, "slay_dragon": _slay_dragon, "escort": _escort, "assassinate": _assassinate,
-            "cure": _cure, "feud": _feud, "steal": _steal, "defend": _defend, "clear_lair": _clear_lair, "hunt_beast": _hunt_beast, "deliver": _deliver,
+            "cure": _cure, "feud": _feud, "steal": _steal, "defend": _defend, "smuggle": _smuggle, "clear_lair": _clear_lair, "hunt_beast": _hunt_beast, "deliver": _deliver,
             "retrieve": _retrieve, "rescue": _rescue, "collect_debt": _collect_debt, "investigate": _investigate}
 
 
@@ -592,6 +611,12 @@ def accept(game, q) -> list[str]:
             who.flags["escort"] = q["id"]
             who.present = False
             notes.append(f"<info>{who.name} gathers their things and falls in behind you.</>")
+    if q["template"] == "smuggle":
+        crate = Item(uid=0, def_id="sealed_crate", qty=1, made_at=w.time,
+                     name=f"sealed crate for {q['words']['recipient_name']}",
+                     tags=[f"quest:{q['id']}", "contraband"])
+        add_existing(game.leader, game.tables.items, crate)
+        notes.append("<loot>You take the crate. It is heavy, and it must not be seen at a gate.</>")
     if q["template"] == "deliver":
         letter = Item(uid=0, def_id="sealed_letter", qty=1, made_at=w.time,
                       name=f"sealed letter for {q['words']['recipient'].split(',')[0]}", tags=[f"quest:{q['id']}"])
@@ -956,6 +981,14 @@ def on_pickpocket(game, npc) -> list[str]:
     return out
 
 
+def on_goods_seized(game) -> None:
+    """The wardens took what you were carrying: any job that depended on it is over."""
+    for q in active(game):
+        if q["template"] in ("smuggle", "deliver", "retrieve", "steal") and not holds_quest_item(game, q) \
+                and not q["done"]:
+            fail(game, q, "The watch has it now.")
+
+
 def on_npc_death(game, npc) -> None:
     """Someone has died: a job may have wanted exactly that, or the opposite."""
     for q in active(game):
@@ -1204,7 +1237,7 @@ def payer(game, q, npc) -> bool:
 # ---------------------------------------------------------------------------- conversation
 QUEST_CHOICES = {"work", "work_accept", "work_decline", "quest_turn_in", "deliver_letter", "show_letter",
                  "blackmail", "collect_debt", "debt_take", "debt_forgive", "ask_missing", "make_peace",
-                 "buy_peace", "warn_target", "hand_over_goods"}
+                 "buy_peace", "warn_target", "hand_over_goods", "deliver_goods"}
 
 
 def talk_choices(conv) -> list:
@@ -1230,6 +1263,8 @@ def talk_choices(conv) -> list:
                                   {"q": q["id"]}))
             elif tpl != "deliver":
                 out.append(Choice("quest_turn_in", f"About {name}: it's done.", data={"q": q["id"]}))
+        if tpl == "smuggle" and not q["done"] and holds_quest_item(game, q) and npc.id == t.get("npc"):
+            out.append(Choice("deliver_goods", "I have your crate.", data={"q": q["id"]}))
         if tpl == "deliver" and not q["done"] and holds_quest_item(game, q):
             if npc.id == t.get("npc"):
                 out.append(Choice("deliver_letter", "I have a letter for you.", data={"q": q["id"]}))
@@ -1344,6 +1379,13 @@ def talk_choose(conv, choice) -> None:
             lines = reward(game, q, text=f"{npc.first_name} breaks the seal, reads, and pays you "
                                          f"{money_text(q['reward'])}.")
         for line in lines:
+            conv.note(line)
+    elif cid == "deliver_goods":
+        conv.you_say("I have your crate.")
+        take_quest_item(game, q)
+        mark_done(game, q)
+        conv.npc_says("They look at the seal, not at you. \"Good. Forget the way here.\"")
+        for line in reward(game, q, text=f"{npc.first_name} pays you {money_text(q['reward'])} in small coin."):
             conv.note(line)
     elif cid == "show_letter":
         conv.you_say(f"There is a letter you should see, from {q['giver_name']}.")
@@ -1560,6 +1602,8 @@ def ai_facts(game, q) -> dict:
         "feud": f"make peace between {words.get('one')} and {words.get('two')}, who have not spoken in two years",
         "steal": f"pick {words.get('mark')}'s pocket in {words.get('dest')} and bring back {words.get('item')}",
         "defend": f"be in {town.name} {words.get('when')}, when {words.get('raiders')} come, and fight them off",
+        "smuggle": f"carry a sealed crate to {words.get('recipient')} in {words.get('dest')} without the gate "
+                   f"wardens finding it",
         "slay_dragon": f"kill the dragon {words.get('dragon')}, which lairs at {words.get('site')} "
                        f"({words.get('where')}) and has burned and bled this country for years",
     }[q["template"]]

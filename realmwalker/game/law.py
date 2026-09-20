@@ -684,11 +684,11 @@ def gate_search(game, settlement) -> list[str]:
     if not rng.chance(game.tables.law["gate_search_chance"]):
         return []
     banned = set(contraband_for(game, realm.id))
-    found = []
-    for c in game.party:
-        for it in list(c.inventory):
-            if it.def_id in banned:
-                found.append(it)
+
+    def forbidden(it) -> bool:
+        return it.def_id in banned or "contraband" in it.tags
+
+    found = [it for c in game.party for it in list(c.inventory) if forbidden(it)]
     if not found:
         return ["The gate wardens go through your packs, find nothing they care about, and wave you in."]
     from realmwalker.rules.inventory import remove_item
@@ -696,11 +696,15 @@ def gate_search(game, settlement) -> list[str]:
     value = 0
     for c in game.party:
         for it in list(c.inventory):
-            if it.def_id in banned:
+            if forbidden(it):
                 value += game.tables.items.get(it.def_id)["value"] * it.qty
                 remove_item(c, it.uid, it.qty)
     names = ", ".join(sorted({game.tables.items.name(it) for it in found}))
     commit(game, "smuggling", value=value, witnesses=[], reported=True)
+    if game.quests:
+        from realmwalker.game import quests
+
+        quests.on_goods_seized(game)
     return [f"<warn>The gate wardens search your packs and find {names}.</> That is forbidden here. They take it."]
 
 

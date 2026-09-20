@@ -8,6 +8,7 @@
     "retrieve": {"givers": ["priest", "lord", "headman", "shopkeeper", "smith"], "reward": [3000, 10000], "days": [20, 45], "standing": 8, "xp": 300, "hidden": {}},
     "rescue": {"givers": ["headman", "innkeeper", "farmer", "washerwoman", "carter", "lord"], "reward": [2000, 6000], "days": [8, 18], "standing": 10, "xp": 300, "hidden": {}},
     "collect_debt": {"givers": ["shopkeeper", "innkeeper", "smith", "market_trader"], "reward": [800, 3000], "days": [10, 25], "standing": 3, "xp": 80, "hidden": {"destitute": 0.35}},
+    "smuggle": {"givers": ["shopkeeper", "market_trader", "innkeeper"], "reward": [4000, 12000], "days": [10, 25], "standing": 4, "xp": 300, "hidden": {}},
     "defend": {"givers": ["headman", "priest", "innkeeper", "farmer", "lord", "guard"], "reward": [2500, 8000], "days": [6, 14], "standing": 12, "xp": 350, "hidden": {}},
     "escort": {"givers": ["innkeeper", "shopkeeper", "market_trader", "priest", "healer", "headman", "lord"], "reward": [1500, 5000], "days": [10, 25], "standing": 5, "xp": 200, "hidden": {"hunted": 0.3}},
     "assassinate": {"givers": ["lord", "shopkeeper", "innkeeper"], "reward": [6000, 20000], "days": [25, 50], "standing": 6, "xp": 400, "hidden": {"innocent": 0.4}},
@@ -78,6 +79,13 @@
     "cure": {"givers": ["healer", "priest", "headman"], "reward": [2000, 6000], "days": [8, 20], "standing": 10, "xp": 250, "hidden": {}},
     "feud": {"givers": ["headman", "priest", "innkeeper", "lord"], "reward": [1200, 4000], "days": [10, 25], "standing": 6, "xp": 200, "hidden": {}},
     "steal": {"givers": ["shopkeeper", "market_trader", "innkeeper", "smith"], "reward": [2000, 7000], "days": [10, 25], "standing": 4, "xp": 250, "hidden": {"framed": 0.25}},
+    "smuggle": {
+      "title": ["A crate for {recipient_name}"],
+      "pitch": ["\"There is a crate. It goes to {recipient} in {dest}, and it does not go past the gate wardens, because they would take it and hang me with the rope it came tied in. Keep it out of sight, get it there, and there's {reward}. {days} days.\"", "\"{dest}. {recipient}. One crate, no questions, and it is not to be opened. {reward} when it is delivered. If the watch takes it, we never met.\""],
+      "journal": ["Carry a sealed crate to {recipient} in {dest} ({where}) for {giver} of {town}, without the gate wardens finding it. It is heavy. {reward}. {days} days."],
+      "done": ["The crate is delivered, and nobody asked what was in it."],
+      "failed": ["The crate is gone, and so is the money."]
+    },
     "defend": {
       "title": ["Stand with {town} when they come"],
       "pitch": ["\"They came last year and they will come again: {raiders}, down out of {where}. We have hayforks and one old sword. Be here when it happens — {when} — and stand with us, and the village will give you {reward}. It is everything we have.\"", "\"{raiders} are coming for {town}. Not today; {when}. If there is a sword in this place that day, we might keep our roofs. {reward}, and our thanks, which are worth less.\""],

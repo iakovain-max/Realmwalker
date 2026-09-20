@@ -120,6 +120,7 @@
     "history_book": {"name": "book of histories", "category": "book", "weight": 4, "value": 3000, "material": "paper", "use": {"read": "history"}, "description": "Somebody's account of who held this country, and what became of them."},
     "lore_book": {"name": "book of old lore", "category": "book", "weight": 3, "value": 4000, "material": "paper", "use": {"read": "lore"}, "description": "Lost things, old things, and where they were last seen."},
     "found_letter": {"name": "water-stained letter", "category": "book", "weight": 0.05, "value": 0, "material": "paper", "use": {"read": "letter"}, "description": "Somebody wrote this and did not come home. Read it."},
+    "sealed_crate": {"name": "sealed crate", "category": "trade", "weight": 25, "value": 0, "material": "wood", "description": "Nailed shut, unmarked, and heavier than it looks. Whatever is in it, somebody wants it somewhere it is not allowed."},
     "sealed_letter": {"name": "sealed letter", "category": "book", "weight": 0.05, "value": 0, "material": "paper", "description": "Folded, sealed with wax, and not for you. Breaking the seal would show."},
     "incense": {"name": "block of incense", "category": "gear", "weight": 0.1, "value": 1, "material": "wax", "stack": true},
     "spellbook": {"name": "spellbook", "category": "book", "weight": 3, "value": 5000, "material": "paper", "description": "Vellum pages dense with diagrams and notation. Worth more than your life to you."},

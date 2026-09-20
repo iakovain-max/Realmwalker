@@ -640,7 +640,8 @@ DATA_FILES.update({"magic.json": MAGIC})
 
 # ---------------------------------------------------------------------------- quests (M8)
 QUEST_TEMPLATES = ("bounty", "clear_lair", "hunt_beast", "deliver", "retrieve", "rescue", "collect_debt",
-                   "investigate", "slay_dragon", "escort", "assassinate", "cure", "feud", "steal", "defend")
+                   "investigate", "slay_dragon", "escort", "assassinate", "cure", "feud", "steal", "defend",
+                   "smuggle")
 QUESTS = Obj(
     {
         "templates": Map(Obj({"givers": word_list(1, 30), "reward": List(Int(min=0, max=10**7), min_items=2, max_items=2),
