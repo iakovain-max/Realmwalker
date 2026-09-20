@@ -35,7 +35,8 @@ def legend_text(tables) -> str:
         out.append(f"  {_glyph(spec['glyph'], spec['fg'])}      {spec['name'].capitalize()}")
     for kind, spec in tables.sites["site_types"].items():
         out.append(f"  {_glyph(spec['glyph'], spec['fg'])}      {spec['name'].capitalize()} <dim>— {spec['desc']}</>")
-    out += ["", "<title>On foot (local maps)</>", ""]
+    out += ["", "<dim>A tile lit like lamplight is somewhere the work in your journal (j) wants you.</>",
+            "", "<title>On foot (local maps)</>", ""]
     for tid, t in zip(tables.terrain.ids, tables.terrain.defs):
         unique = list(dict.fromkeys(t["glyphs"]))
         glyphs = " ".join(_glyph(g, t["fg"]) for g in unique) + " " * (6 - 2 * len(unique))

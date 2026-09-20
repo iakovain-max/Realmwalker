@@ -74,6 +74,12 @@ class WorldMapScreen(Screen):
             if 0 <= sx < vw and 0 <= sy < vh:
                 ch[sx, sy] = ord(stypes[s.kind]["glyph"])
                 fg[sx, sy] = stypes[s.kind]["fg"]
+        from realmwalker.ui.map_render import QUEST_BG, quest_marks
+
+        for qx, qy in quest_marks(self.game):
+            mx, my = qx // scale - x0, qy // scale - y0
+            if 0 <= mx < vw and 0 <= my < vh:
+                bg[mx, my] = QUEST_BG
         px, py = p.x // scale - x0, p.y // scale - y0
         if 0 <= px < vw and 0 <= py < vh:
             ch[px, py] = ord("@")

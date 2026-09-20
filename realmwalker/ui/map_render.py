@@ -110,6 +110,30 @@ UNSEEN_BG = (6, 6, 9)
 PLAYER_FG = (255, 244, 200)
 
 
+QUEST_BG = (70, 54, 20)  # a patch of lamplight on the map: somewhere work wants you
+
+
+def quest_marks(game) -> list[tuple[int, int]]:
+    """Where the work you have in hand wants you: sites, towns and a patch of wild country."""
+    if not getattr(game, "quests", None):
+        return []
+    from realmwalker.game import quests
+
+    w = game.world
+    out = []
+    for q in quests.active(game):
+        if q["done"]:
+            continue
+        t = q["target"]
+        if "site" in t and 0 <= t["site"] < len(w.sites):
+            out.append((w.sites[t["site"]].x, w.sites[t["site"]].y))
+        if "dest" in t and 0 <= t["dest"] < len(w.settlements):
+            out.append((w.settlements[t["dest"]].x, w.settlements[t["dest"]].y))
+        if q["template"] == "hunt_beast":
+            out.append((int(t["x"]), int(t["y"])))
+    return out
+
+
 def draw_overworld(con, game, picture: OverworldPicture, x: int, y: int, w: int, h: int,
                    cursor: tuple[int, int] | None = None) -> tuple[int, int, int, int]:
     """Draw the overworld into console rect (x, y, w, h). Returns (map_x0, map_y0, off_x, off_y)
@@ -134,6 +158,10 @@ def draw_overworld(con, game, picture: OverworldPicture, x: int, y: int, w: int,
         if 0 <= lx < mw and 0 <= ly < mh and not explored[lx, ly]:
             ch[lx, ly] = ord(stypes[s.kind]["glyph"])
             fg[lx, ly] = tuple(int(c * 0.6) for c in stypes[s.kind]["fg"])
+    for qx, qy in quest_marks(game):
+        lx, ly = qx - mx0, qy - my0
+        if 0 <= lx < mw and 0 <= ly < mh:
+            bg[lx, ly] = QUEST_BG
     px, py = p.x - mx0, p.y - my0
     ch[px, py] = ord("@")
     fg[px, py] = PLAYER_FG
