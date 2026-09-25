@@ -6,12 +6,15 @@ gameplay terms, give Windows click-by-click steps when they must do something, n
 
 - Source of truth for the design: `docs/DESIGN.md` (verbatim copy of the user's document).
 - Status, decisions, known bugs, how to test: `docs/PROGRESS.md`. **Update it at the end of every session.**
+- **Running in a cloud session** (Linux, no window, no Player2 app)? Read `docs/CLOUD_HANDOFF.md` first: it says
+  what can and cannot be verified there, what "done" means without a window, and how work reaches the user.
 
 ## Running things (Windows, from the project folder)
 
 | What | Command |
 |---|---|
 | Play (what the user does) | double-click `Play.bat` (sets up `.venv` on first run) |
+| Get the newest version and play | double-click `Update_And_Play.bat` (git pull, then `Play.bat`) |
 | Run from a terminal | `.venv\Scripts\python.exe main.py` |
 | Window smoke test (opens, tours screens, screenshots, exits) | `.venv\Scripts\python.exe main.py --smoke-test out.png` |
 | All tests | `.venv\Scripts\python.exe -m pytest` |

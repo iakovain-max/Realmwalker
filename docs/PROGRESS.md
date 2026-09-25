@@ -160,6 +160,12 @@ dwarf's or elf's eyes), only at normal text detail and above, and never oftener 
 Going down and coming up have several ways of saying it, and a deeper level is "the third level of the barrows"
 rather than "level 3".
 
+**Ready to be worked on from the cloud.** `docs/CLOUD_HANDOFF.md` is a briefing for a Claude Code session
+running on GitHub instead of your PC: what it can check there (all the tests, the autoplay bot, the balance
+numbers), what it cannot (the window itself, the friend build — both need Windows), that it must never touch
+your real Player2 energy, and how its work comes back to you as a pull request. `Update_And_Play.bat` fetches
+the newest version and starts the game, so getting a change is one double-click.
+
 **A test for the first evening.** A new character in a new world is now checked, in two different worlds, for
 the things a new player needs: people in the first town, money in the purse, somebody who sells food, work on
 offer, work that goes into the journal and lights the map, and a road that takes them closer to it.
