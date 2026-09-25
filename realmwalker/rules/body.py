@@ -45,6 +45,7 @@ EXHAUSTION_EFFECTS = [
 ]
 STRAIN_PER_LEVEL = 24.0  # strain hours per level of exhaustion (see strain rates below)
 COMFORT_LOW = 14.0
+FIRE_DRYING_IN_RAIN = 25.0  # wetness per hour a fire takes off you while the rain still falls
 COMFORT_HIGH = 32.0
 
 
@@ -180,7 +181,11 @@ def tick(char: Character, sheet: Sheet, env: Environment, minutes: float) -> lis
     if env.wading:
         char.wet = max(char.wet, 70.0 * (1.0 - 0.5 * sheet.water_protection()))
     covered = env.sheltered or env.tent
-    if env.wet_per_hour > 0 and not covered:
+    if env.wet_per_hour > 0 and not covered and env.fire:
+        # Hunched close to a fire in the rain: it steams you dry about as fast as all but a downpour wets you.
+        soak = env.wet_per_hour * (1.0 - sheet.water_protection()) * 0.5
+        char.wet = max(0.0, min(100.0, char.wet + (soak - FIRE_DRYING_IN_RAIN) * hours))
+    elif env.wet_per_hour > 0 and not covered:
         char.wet = min(100.0, char.wet + env.wet_per_hour * (1.0 - sheet.water_protection()) * hours)
     elif char.wet > 0:
         dry = 40.0 if env.fire else (20.0 if covered else 5.0 + max(0.0, env.air) * 0.5 + env.wind * 0.15)

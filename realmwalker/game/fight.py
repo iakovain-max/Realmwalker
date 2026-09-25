@@ -166,7 +166,7 @@ def finish_battle(game) -> Aftermath:
                     c.alive = False
                     c.hp = 0
             killers = _list_names(game, [f.creature for f in battle.side(FOE)])
-            game.over = {"cause": f"killed by {killers}", "place": battle.env.ground}
+            game.over = {"cause": f"killed by {killers[:1].lower() + killers[1:]}", "place": battle.env.ground}
             after.outcome = "death"
             after.text = "It is over. Nobody will come."
     elif result.outcome == "fled":
@@ -484,11 +484,19 @@ def rest(game, kind: str) -> list[str]:
     hours = 1 if kind == "short" else 8
     from realmwalker.game.camp import camp_here
 
+    from realmwalker.game import journey
+
     camp = camp_here(game)
     fire = bool(camp and camp.fire)
+    lay_down = set(journey.dangers(game))
     for hour in range(hours):
         game.pass_time(60, "sleep" if kind == "long" else "rest")
         if game.over is not None:
+            return notes
+        # Nobody sleeps through freezing to death: the body wakes them, and the rest is broken.
+        woke = journey.woken(game, lay_down) if kind == "long" and hour < hours - 1 else None
+        if woke is not None:
+            notes.append(f"<danger>{woke}</> Your night is broken after {hour + 1} hour{'s' if hour else ''}.")
             return notes
         if lm is None and kind == "long":
             # A fire is seen from afar, but beasts fear it; a cold camp is harder to find.
