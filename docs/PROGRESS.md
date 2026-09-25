@@ -106,6 +106,27 @@ about you, what work of theirs you carry, and what they remember about you.
 a frame takes 2 ms on the overworld, in a city of 15,000 and underground alike; a save is 87 ms and about half a
 megabyte, and loads in 48 ms. Twenty years of politics with nobody watching takes under a second.
 
+### Cloud session, 2026-09-25: screens that fit
+
+(Pull request "Screens that fit". Found by watching the side of every box and the edge of the window while the
+autoplay bot played, and while every screen was drawn with a full party, ten jobs, five wounds, a level-10 wizard's
+spells, all twenty road events and forty kinds of trouble, at six window sizes.)
+- **The road-trouble box** let a greyed-out choice run past its border at every size ("Ambush them (they are caught
+  unawares): they have already seen you"); now "Ambush them: they have already seen you", and anything too long
+  ends in "…" with the whole of it in the tooltip.
+- **Said twice:** "[Persuasion] Argue that you are exempt (Persuasion, DC 13)" is "(DC 13)"; an inn's prices were
+  shown at the end of each line and again in the price column, and are shown once.
+- **A big fight shows everyone.** The battle board held three cards a rank whatever the window, so four bandits in
+  the front rank were two and "+2 more" above an empty third of the screen. It grows now when there is room.
+- **Small windows:** the character sheet's notes column ran off an 80-column window (it now takes the skills'
+  place there, **s** switches); the pack's buttons ran over the border with a companion along (those that do not
+  fit are left out, their keys still work); the title screen said "M7 - Companions and progression" and ran off the
+  edge; the creation hint ran off the edge; the side panel left "d)" alone on a line ("next due in 11 days" now).
+
+Checked by `tests/test_screens_fit.py` (it watches the borders and the edge at five sizes). At the two smallest
+window sizes a few lines still lose their last few characters (the market's top line, a hint on the health
+screen); nothing important is hidden.
+
 **Help and energy.** The help opens with "Your first hour": seven steps from the title screen to a first piece of
 finished work, and what to buy before leaving town. Settings gains **AI extras**, which keeps Player2's limited
 energy for people, places and conversation if you would rather not spend it on regions, dungeons, items, the
