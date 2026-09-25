@@ -249,18 +249,23 @@ def hear_news(game, rng: RNG) -> str:
         heard = news.hear(game, count=1, rng=rng)
         if heard:
             return heard[0]
-    return hear_place(game, rng)
+    return hear_place(game, rng) or "They tell you nothing you do not already know."
 
 
-def hear_place(game, rng: RNG) -> str:
-    """Learn of a place you did not know: the nearest unknown site or settlement."""
+HEARSAY_REACH = 40  # tiles (120 miles): nobody in a village talks about a ruin a fortnight's walk away
+
+
+def hear_place(game, rng: RNG) -> str | None:
+    """Learn of a place you did not know: the nearest unknown site or settlement, if there is one near enough for
+    anyone here to talk about (None when there is not)."""
     p = game.player
     w = game.world
-    unknown_sites = [s for s in w.sites if not p.explored[s.x, s.y]]
-    unknown_towns = [s for s in w.settlements if s.id not in p.known_settlements]
+    near = lambda s: max(abs(s.x - p.x), abs(s.y - p.y)) <= HEARSAY_REACH  # noqa: E731
+    unknown_sites = [s for s in w.sites if not p.explored[s.x, s.y] and near(s)]
+    unknown_towns = [s for s in w.settlements if s.id not in p.known_settlements and near(s)]
     pool = [("site", s) for s in unknown_sites] + [("town", s) for s in unknown_towns]
     if not pool:
-        return "They tell you nothing you do not already know."
+        return None
     kind, place = min(pool, key=lambda t: abs(t[1].x - p.x) + abs(t[1].y - p.y) + rng.random() * 4)
     miles = int(round(((place.x - p.x) ** 2 + (place.y - p.y) ** 2) ** 0.5 * 3))
     direction = compass(place.x - p.x, place.y - p.y)

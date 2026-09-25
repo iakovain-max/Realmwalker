@@ -252,7 +252,7 @@ def _clear_lair(game, npc, rng):
     site = rng.choice(sites)
     q = base_quest(game, npc, "clear_lair", rng, hard=1 + site.danger / 6)
     q["target"] = {"site": site.id}
-    q["words"].update(site=cap(site.name), where=direction(town, site))
+    q["words"].update(site=site.name, where=direction(town, site))
     return q
 
 
@@ -319,7 +319,7 @@ def _retrieve(game, npc, rng):
         site = w.sites[a["site"]]
         q = base_quest(game, npc, "retrieve", rng, hard=2.5)
         q["target"] = {"site": site.id, "artifact": i, "item": a["name"]}
-        q["words"].update(item=cap(a["name"]), site=site.name, where=direction(town, site))
+        q["words"].update(item=a["name"], site=site.name, where=direction(town, site))
         allow_for(q, dist(site, town) * 2)
         return q
     sites = [s for s in w.sites if 4 <= dist(s, town) <= 25]
@@ -332,7 +332,7 @@ def _retrieve(game, npc, rng):
     name = f"the {family} {thing}"
     q = base_quest(game, npc, "retrieve", rng, hard=1 + site.danger / 6)
     q["target"] = {"site": site.id, "item": name, "base": base}
-    q["words"].update(item=cap(name), site=site.name, where=direction(town, site))
+    q["words"].update(item=name, site=site.name, where=direction(town, site))
     return q
 
 
@@ -382,11 +382,14 @@ def _collect_debt(game, npc, rng):
 def _investigate(game, npc, rng):
     w = game.world
     town = w.settlements[npc.settlement]
+    # The missing are taken somewhere a cart can reach in a night or two, not to a ruin a fortnight's walk away:
+    # a cult with a foothold in the town is the likeliest, but only if its hiding place is near enough.
     cults = [f for f in fx.active_factions(w, "cult") if 0 <= f.site < len(w.sites)
-             and (town.id in f.presence or dist(w.sites[f.site], town) <= 30)]
+             and dist(w.sites[f.site], town) <= 30]
     if not cults:
         return None
-    cult = rng.choice(cults)
+    rooted = [f for f in cults if town.id in f.presence]
+    cult = rng.choice(rooted or cults)
     site = w.sites[cult.site]
     q = base_quest(game, npc, "investigate", rng)
     q["target"] = {"site": site.id, "cult": cult.id, "asked": []}

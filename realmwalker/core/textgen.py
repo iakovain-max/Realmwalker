@@ -39,8 +39,8 @@ def fill(template: str, rng: RNG, tables: Mapping[str, Sequence[str]], values: M
 def tidy(text: str) -> str:
     text = re.sub(r"\s+", " ", text).strip()
     text = re.sub(r"\s+([,.;:!?])", r"\1", text)
-    # Capitalise the start of each sentence.
-    return re.sub(r"(^|[.!?]\s+)([a-z])", lambda m: m.group(1) + m.group(2).upper(), text)
+    # Capitalise the start of each sentence, and of speech that opens one ("the Grey Wolf. A wolf..." -> "The...").
+    return re.sub(r"(^|[.!?]\s+)([\"“]?)([a-z])", lambda m: m.group(1) + m.group(2) + m.group(3).upper(), text)
 
 
 def a_or_an(word: str) -> str:
