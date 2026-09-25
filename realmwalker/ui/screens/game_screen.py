@@ -475,7 +475,10 @@ class GameScreen(Screen):
             text += f" <dim>· {markup.escape(who)} walks with you</>"
         if soon is not None:
             color = "danger" if soon <= 2 else "warn" if soon <= 5 else "dim"
-            text += f" <{color}>(next due in {max(0, soon)} d)</>"
+            days = max(0, soon)
+            due = f"<{color}>(next due in {days} day{'s' if days != 1 else ''})</>"
+            # On a line of its own when it will not fit whole, rather than leaving "days)" dangling on the next.
+            text += ("\n" if markup.length(text) + 1 + markup.length(due) > w else " ") + due
         used = canvas.wrapped(x, y + 1, text, w, max_lines=2)
         canvas.hit(x, y + 1, w, used, action=lambda: self.handle_key(KeyEvent("j")),
                    tooltip="Click (or press j) for the journal.")

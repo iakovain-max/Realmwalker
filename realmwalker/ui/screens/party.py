@@ -189,8 +189,8 @@ class PartyScreen(Screen):
             canvas.markup(3, y, f"{markup.escape(c.name)}{tag}", max_width=list_w - 2)
             y += 1
         n = len(comp.companions(g)) + len(comp.waiting(g))
-        canvas.markup(2, y + 1, f"<dim>{n} of {comp.data(g)['max_companions']} companions. Find more at inns.</>",
-                      max_width=list_w)
+        canvas.wrapped(2, y + 1, f"<dim>{n} of {comp.data(g)['max_companions']} companions. Find more at inns.</>",
+                       list_w, max_lines=2)
         if cur is not None:
             self.detail.set_text(self.details(cur))
             self.detail.render(canvas, list_w + 5, 2, w - list_w - 8, h - 9)

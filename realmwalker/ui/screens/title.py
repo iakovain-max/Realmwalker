@@ -115,7 +115,14 @@ class TitleScreen(Screen):
         note = self.menu.items[self.menu.selected].note
         if note:
             canvas.wrapped(max(2, (w - 70) // 2), my + len(self.menu.items) + 1, f"<dim>{note}</>", min(70, w - 4))
-        canvas.text(1, h - 1, f"v{__version__} · {MILESTONE} · F1 help · Ctrl +/- text size · F11 fullscreen", colors.FAINT)
+        # As much of the line as fits: a narrow window loses the key hints first, never half a word.
+        parts = [f"v{__version__}", MILESTONE, "F1 help", "Ctrl +/- text size", "F11 fullscreen"]
+        line = parts[0]
+        for part in parts[1:]:
+            if len(line) + 3 + len(part) > w - 2:
+                break
+            line += " · " + part
+        canvas.text(1, h - 1, line, colors.FAINT)
 
     def _draw_backdrop(self, canvas: Canvas) -> None:
         """Faint stars and a mountain ridge along the bottom."""

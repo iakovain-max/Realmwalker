@@ -483,7 +483,8 @@ class CreationScreen(Screen):
             canvas.text(x, ry, ("► " if selected else "  ") + label, colors.TITLE if selected else colors.FG)
             if label == "Name":
                 self.name_field.render(canvas, x + 12, ry, 34, selected)
-                canvas.text(x + 48, ry, "(R: new random character)", colors.FAINT)
+                hint = "(R: new random character)" if canvas.width - (x + 48) > 27 else "(R: random)"
+                canvas.text(x + 48, ry, hint, colors.FAINT, max_width=canvas.width - (x + 48) - 2)
             else:
                 canvas.markup(x + 12, ry, value, max_width=w - 12)
         ty = y + 11
