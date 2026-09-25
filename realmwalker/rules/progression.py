@@ -34,7 +34,8 @@ def level_up(char: Character, tables, rng: RNG, *, auto: bool = False) -> list[s
         from realmwalker.core import textgen
 
         text = rng.choice(tables.companions["lines"]["level_up"])
-        notes.append(textgen.fill(text, rng, {}, {"name": char.name.split()[0], "leader": "you"}))
+        notes.append(textgen.fill(text, rng, {}, {"name": char.name.split()[0], "leader": "you",
+                                                  **textgen.pronoun_values(char.sex)}))
     if char.pending:
         notes.append(f"<info>{char.name.split()[0]} has choices to make</> (the character sheet, c, then l).")
     if auto:

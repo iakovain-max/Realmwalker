@@ -217,6 +217,10 @@ def _check_companion_refs(files: dict[str, Any]) -> list[str]:
     for kind in COMPANION_LINES:
         if kind not in data["lines"]:
             errors.append(f"data/companions.json: lines needs '{kind}'.")
+    for key in data["lines"]:
+        # "road_devout": what somebody who cares about that says, in place of an ordinary "road" line.
+        if key not in COMPANION_LINES and not any(key == f"{kind}_{v}" for kind in COMPANION_LINES for v in data["values"]):
+            errors.append(f"data/companions.json: lines has '{key}', which is no kind of line (or no value) the game knows.")
     return errors
 
 

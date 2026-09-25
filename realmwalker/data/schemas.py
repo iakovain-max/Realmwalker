@@ -626,7 +626,7 @@ COMPANIONS = Obj(
 )
 COMPANION_LINES = ("hired", "approve", "disapprove", "complain", "unpaid", "desert", "leave", "devoted", "battle",
                    "camp", "level_up", "mood_good", "mood_fair", "mood_bad", "road", "road_tired", "road_wet",
-                   "road_night")
+                   "road_night", "road_cold", "road_hot")
 
 DATA_FILES.update({"companions.json": COMPANIONS})
 

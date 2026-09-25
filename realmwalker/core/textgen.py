@@ -43,6 +43,20 @@ def tidy(text: str) -> str:
     return re.sub(r"(^|[.!?]\s+)([a-z])", lambda m: m.group(1) + m.group(2).upper(), text)
 
 
+def pronoun_values(sex: str) -> dict[str, str]:
+    """Slots for writing about someone: {they} {them} {their} {themselves} {They} {Their}, and {s} {are} {have}
+    for the verb that follows ("{they} walk{s}")."""
+    if sex == "female":
+        p = {"they": "she", "them": "her", "their": "her", "themselves": "herself", "s": "s", "are": "is", "have": "has"}
+    elif sex == "male":
+        p = {"they": "he", "them": "him", "their": "his", "themselves": "himself", "s": "s", "are": "is", "have": "has"}
+    else:
+        p = {"they": "they", "them": "them", "their": "their", "themselves": "themselves", "s": "", "are": "are",
+             "have": "have"}
+    p["They"], p["Their"] = p["they"].capitalize(), p["their"].capitalize()
+    return p
+
+
 def a_or_an(word: str) -> str:
     return ("an " if word[:1].lower() in "aeiou" else "a ") + word
 

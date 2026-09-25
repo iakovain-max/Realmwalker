@@ -56,10 +56,20 @@ def wage_for(game, level: int) -> int:
     return int(w["base"] + w["per_level"] * max(0, level - 1))
 
 
-def line(game, kind: str, c: Character, rng: RNG | None = None) -> str:
+def line(game, kind: str, c: Character, rng: RNG | None = None, value: str | None = None) -> str:
+    """Something a companion says. Now and then it is in the voice of what they care about ("road_devout",
+    "disapprove_mercenary"), and always with the right pronouns for them."""
     rng = rng or game.world.rng.child(f"bark/{kind}/{c.name}/{game.world.time}")
-    text = rng.choice(data(game)["lines"][kind])
-    return textgen.fill(text, rng, {}, {"name": first(c), "leader": first(game.leader)})
+    lines = data(game)["lines"]
+    pool = lines[kind]
+    if value is not None and f"{kind}_{value}" in lines and rng.chance(0.7):
+        pool = lines[f"{kind}_{value}"]  # the thing they care about is what they are reacting to
+    else:
+        own = [lines[f"{kind}_{v}"] for v in c.companion.get("values", []) if f"{kind}_{v}" in lines]
+        if own and rng.chance(0.4):
+            pool = rng.choice(own)
+    values = {"name": first(c), "leader": first(game.leader), **textgen.pronoun_values(c.sex)}
+    return textgen.fill(rng.choice(pool), rng, {}, values)
 
 
 def say(game, kind: str, c: Character, color: str = "info") -> None:
@@ -203,23 +213,27 @@ def react(game, *tags: str, quiet: bool = False) -> list[str]:
         return []
     spec = data(game)
     likes, hates = float(spec["reactions"]["likes"]), float(spec["reactions"]["hates"])
-    loudest, loudest_delta = None, 0.0
+    loudest, loudest_delta, why = None, 0.0, None
     for c in companions(game):
         delta = 0.0
+        strongest, strongest_delta = None, 0.0  # the value of theirs that this touched most
         for v in c.companion.get("values", []):
             val = spec["values"].get(v, {})
-            delta += likes * sum(1 for t in tags if t in val.get("likes", []))
-            delta += hates * sum(1 for t in tags if t in val.get("hates", []))
+            moved = likes * sum(1 for t in tags if t in val.get("likes", []))
+            moved += hates * sum(1 for t in tags if t in val.get("hates", []))
+            delta += moved
+            if abs(moved) > abs(strongest_delta):
+                strongest, strongest_delta = v, moved
         delta += likes * sum(1 for t in tags if t in WANT_LIKES.get(c.companion.get("want", ""), ()))
         if delta:
             change_loyalty(c, delta)
             if abs(delta) > abs(loudest_delta):
-                loudest, loudest_delta = c, delta
+                loudest, loudest_delta, why = c, delta, strongest
     if loudest is None or quiet:
         return []
     kind = "approve" if loudest_delta > 0 else "disapprove"
     color = "good" if loudest_delta > 0 else "warn"
-    text = line(game, kind, loudest)
+    text = line(game, kind, loudest, value=why)
     word = "approves" if loudest_delta > 0 else "disapproves"
     msg = f"<{color}>{first(loudest)} {word}.</> " + (text if not text.startswith('"') else text)
     game.say(msg, color)
@@ -240,12 +254,17 @@ def road_talk(game) -> None:
         return
     c = rng.choice(party)
     kind = "road"
+    w = game.weather
     if c.fatigue >= 60 or c.exhaustion >= 1:
         kind = "road_tired"
-    elif game.weather.precip > 0.3:
+    elif w.precip > 0.3:
         kind = "road_wet"
     elif game.light < 0.4:
         kind = "road_night"
+    elif w.temp < 2 or c.body_heat <= -20:
+        kind = "road_cold"
+    elif w.kind == "heat" or c.body_heat >= 30:
+        kind = "road_hot"
     flags["road_talk"] = steps
     game.say(line(game, kind, c, rng), "flavor")
 
