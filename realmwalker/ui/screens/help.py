@@ -62,6 +62,7 @@ Choose <loot>New World</> on the title screen, pick a size and seed, and the lan
   <loot>m</>               World map (<loot>z</> zooms out to the whole world, <loot>w</> weather, <loot>p</> realms)
   <loot>t</>               Travel: pick a destination on the world map and see how long it takes
 Roads are much faster than open country. Forests, hills and marshes are slow; mountains very slow. Rivers without a bridge must be waded. Any key stops a journey.
+Before you set out, the plan says how many nights the journey means in the open, whether your food and water will last, and whether the nights are cold enough to kill. On the way you stop by yourself when night comes on, and when something is wrong: someone weary, hungry, parched, cold, bleeding or sick, or the water gone. The stop says where the nearest roof or water is, if you know of one close by. Make camp (<loot>r</>), or press <loot>t</> and Enter to go on: the map opens on where you were going. The cold, thirst or a bleeding wound will wake you from sleep before they kill you.
 
 <title>Your character</title>
   <loot>c</>               Character sheet: abilities, skills, features, ties, backstory (<loot>l</> level-up choices, <loot>Tab</> next member)

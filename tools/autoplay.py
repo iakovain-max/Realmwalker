@@ -225,6 +225,10 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
         _check_law(game, fail)
         _check_quests(game, fail)
         _check_companions(game, fail)
+        if game.travel is not None and game.pace() is None:
+            fail("a journey marches on though nobody can walk")
+        if not isinstance(getattr(game, "heeded", set()), set):
+            fail("what the journey has stopped for is not a set")
         if not game.leader.alive and game.over is None and b is None and game.aftermath is None:
             fail("the leader is dead but the game goes on")
         if game.over is None and any(not c.alive for c in game.party) and b is None and game.aftermath is None:

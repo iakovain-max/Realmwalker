@@ -109,6 +109,11 @@ class GameScreen(Screen):
             game.say("You have lost your bearings: you can't plan a journey until you find a road or the weather "
                      "clears. Walk (arrow keys) and hope.", "warn")
             return
+        if game.pace() is None:
+            from realmwalker.game.journey import why_cannot_walk
+
+            game.say(why_cannot_walk(game), "warn")
+            return
         plan = game.plan_travel(dest)
         if plan is None:
             game.say("You can see no way to get there on foot.", "warn")
