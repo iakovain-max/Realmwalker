@@ -166,6 +166,11 @@ numbers), what it cannot (the window itself, the friend build — both need Wind
 your real Player2 energy, and how its work comes back to you as a pull request. `Update_And_Play.bat` fetches
 the newest version and starts the game, so getting a change is one double-click.
 
+His decisions on 2026-09-26: **old saves do not need to keep working** for now (a save whose shape has changed
+is refused with a friendly message and he starts a new character), and cloud work should come in **large finished
+batches** rather than small tweaks he would have to try one at a time — he is at work while it runs, and will
+check how things look on his own PC afterwards.
+
 **A test for the first evening.** A new character in a new world is now checked, in two different worlds, for
 the things a new player needs: people in the first town, money in the purse, somebody who sells food, work on
 offer, work that goes into the journal and lights the map, and a road that takes them closer to it.

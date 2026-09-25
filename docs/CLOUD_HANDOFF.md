@@ -8,8 +8,13 @@ what is different up here and how work gets back to him.
 
 Anton. **He is not a programmer.** Explain what you did in terms of what changed *in the game*, never in terms
 of functions and files. If he has to do something, give Windows click-by-click steps. Never ask him to edit code.
-He plays the game on Windows; you only ever see Linux. He leaves sessions running and prefers you to keep
-working rather than stop to check in — but ask when a choice would change what the work *is*.
+He plays the game on Windows; you only ever see Linux.
+
+**He is usually at work while you run, and cannot try each small tweak.** So do not work in small steps and wait
+for him. Take a whole theme, do all of it, and have it finished and pushed by the time he looks. Do not stop to
+ask a question you can answer from the design, the code, or a sensible default: make the call, write down what you
+assumed in the PR, and carry on. The only things worth stopping for are decisions that would waste the work if
+guessed wrong — and even then, do everything that does not depend on the answer first.
 
 ## The project in three lines
 
@@ -41,25 +46,62 @@ and is otherwise ignored.
 | Friend build (`.exe` + zip) | ❌ | PyInstaller would build a Linux binary. Only Anton's Windows machine makes `Realmwalker.zip` |
 | The real Player2 app | ❌ | It lives at `127.0.0.1:4315` on Anton's PC and is not reachable here. **Never** try; a stray call costs him real energy (it happened once, ~15 joules). Tests and the smoke test must always use the mock or the AI off |
 
-## Definition of done for a cloud change
+## How to work through a long unattended stretch
+
+Big sweeping batches are what he wants, and they are safe here because nothing reaches him until he merges.
+
+- **One branch, many commits, one pull request per theme.** Name it for the work: `cloud/town-life`,
+  `cloud/combat-feel`. Put everything belonging to that theme on it, however much that is. Do not open a second
+  branch off `main` for work that builds on the first — it would not contain it until he merges. If two themes are
+  genuinely independent, separate branches are better, because he can take one and drop the other.
+- **Commit after every working step, with the tests green at that commit.** That way a step that turns out bad can
+  be dropped without losing the rest, and he can read the branch as a story.
+- **Never leave `main` broken**; it is what he plays.
+- **Keep going after a finished batch.** Don't wait to be told: pick the next item from the list in
+  `docs/PROGRESS.md`, start a new branch, and keep working until the list is done or you run out of session.
+- **If the session stops in the middle** (a usage limit, a crash, being closed), everything committed is safe and
+  pushed, so the next session picks up from the branch. Push as you go rather than only at the end.
+- A batch of forty commits is fine. A batch that cannot be verified is not.
+
+**Done for each batch means:**
 
 1. `pytest` green.
 2. Autoplay clean in both modes (`RESULT: OK` twice).
-3. `tools/balance.py` still inside the bands (`tests/test_balance.py` covers this) if you touched combat, cold,
-   bleeding or XP.
-4. `docs/PROGRESS.md` updated — every session, in his language, under "After v1 — continuing work".
-5. Commits are small and readable, message ending with:
+3. `tools/balance.py` inside its bands if you touched combat, cold, bleeding or XP.
+4. `docs/PROGRESS.md` updated in his language, under "After v1 — continuing work".
+5. Commit messages readable, each ending with:
    `Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>`
-6. One pull request per piece of work, with a description Anton can read: what is different when he plays, what
-   you verified, and an explicit line saying **the window smoke test and the friend build still need running on
-   Windows** (unless the dummy-display run above worked, in which case say so).
+6. A pull request whose description he can read without knowing any code, in this shape:
+   - **What is different when you play** — grouped by theme, in game terms.
+   - **How to see it** — for each visible thing, where to look: which screen, which key, whether it needs a fresh
+     world or a new character.
+   - **What I could not check here** — the window itself, how it looks, anything needing the real Player2 AI, and
+     the friend build. Say plainly that these are owed on Windows.
+   - **Anything you assumed** because you did not stop to ask.
+
+## Because you cannot see the game
+
+This is the real limit of working up here, so work with it rather than against it:
+
+- Prefer changes a test or a small measuring script can prove. Scripts that walk the world for four thousand
+  steps, hold a hundred conversations, or fight forty fights and then count which lines repeat have found more
+  real problems in this project than reading code did. Keep them in the session's scratch directory, not the repo.
+- For anything about **layout, colour or how a screen reads**, write the change, then say exactly where he (or a
+  Claude Code session on his PC) should look. He will run one locally to check how it looks and to debug — leave
+  it what it needs: notes in `docs/PROGRESS.md`, a short "how to see this" line per item, and no half-finished
+  work on the branch.
+- Rendering code can still be exercised headlessly: screens can be pushed and rendered into a `tcod.console.Console`
+  in a test (see `tests/test_app_ui.py`), which catches crashes and wrong text even without a window.
 
 ## Rules it is expensive to break
 
 The full set is in `CLAUDE.md`. These are the ones that bite hardest, and the ones a fresh session gets wrong:
 
-- **His saves are real now.** New fields in a save mean bumping `FORMAT_VERSION` in `realmwalker/game/save.py`
-  and adding a `MIGRATIONS` entry. Never break an old save.
+- **Old saves do not matter yet** (he said so on 2026-09-26). Bump `FORMAT_VERSION` in
+  `realmwalker/game/save.py` when a save's shape changes, but a `MIGRATIONS` entry is optional: without one an old
+  save is refused with a friendly "Could not load ... The files are still there, untouched." box, which is fine.
+  Put a line in the PR saying old characters will not load, so he knows to start a new one. A crash, or deleting
+  his files, is never fine.
 - **One seeded RNG per world** (`core/rng.py`), `rng.child("purpose")` for streams, no `random` module in game
   logic. Key streams on **stable counters** (`player.steps`, a per-battle counter) and never on the world clock
   or the length of the log: two bugs came from exactly that.
@@ -86,15 +128,15 @@ a new character to be visible, say so in the PR in one line.
 
 ## Where to start
 
-1. Ask him what felt rough when he played — he said on 2026-09-26 that the game is good enough but "quite rough
-   around the edges", and that list is the best possible backlog. Write his answers into `docs/PROGRESS.md` as a
-   plain list, then work through them in small PRs, one rough edge at a time.
-2. Useful shape for that work, based on what has paid off so far: measure before writing. Scripts that walk the
-   world, hold a hundred conversations, or fight forty fights and then count which lines repeat found more real
-   problems than reading code did. Keep them in the session scratch directory, not in the repo.
+1. **Get his list of rough edges** — he said on 2026-09-26 that the game is good enough but "quite rough around
+   the edges", and his own list beats anything you would invent. Ask once, early, in one message; write the
+   answers into `docs/PROGRESS.md` as a plain list. If he is at work and does not answer, **do not idle**: start
+   on the rough edges you can find yourself with the measuring scripts above, and take his list when it comes.
+2. Work through that list in themed batches, biggest nuisance first.
 3. The "Ideas parking lot" at the bottom of `docs/PROGRESS.md` (more races and classes, sailing, owning property,
    joining sieges, full smithing, AI voices, romance, a warband, a main story) is the long list. **Do not start
-   any of it without asking him** — it is explicitly marked "do not build yet".
+   any of it without asking him** — it is explicitly marked "do not build yet". Polish, fixes and more content of
+   kinds that already exist need no permission.
 
 ## Local quirks worth knowing
 

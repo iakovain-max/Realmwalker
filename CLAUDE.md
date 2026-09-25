@@ -98,7 +98,11 @@ tools/                     autoplay.py, mock_player2.py, build_friends.py, balan
 - **Arrays are indexed [x, y]** (shape (width, height)) everywhere, matching tcod consoles (order="F").
 - Saves store id lists (biome_ids, terrain_ids) next to index arrays so data files can change without
   breaking saves; always go through `GameState.remap_for()` / `_biome_remap` when reading them.
-- New save fields: bump `game/save.py` FORMAT_VERSION and add a MIGRATIONS entry; never break old saves.
+- New save fields: bump `game/save.py` FORMAT_VERSION. A MIGRATIONS entry is **optional** while the game is
+  young — the user said on 2026-09-26 that old saves do not matter yet. Without one, an older save is refused
+  with a friendly "Could not load ... The files are still there, untouched." box (a KeyError inside `_migrate`
+  becomes a `SaveError`), which is acceptable: say so in the commit or PR so he knows to start a new character.
+  What is never acceptable is a crash, or deleting his files.
 - The autoplay bot checks game invariants (`tools/autoplay.py`); add checks there as systems are added.
 - Time: `GameState.pass_time(minutes, activity)` ("walk", "rest", "sleep", "fight") runs `game/survival.tick` in
   30-minute chunks (body, health, eating/drinking, death). Tests about travel alone can set `game.survival = False`
