@@ -85,8 +85,11 @@ class ServicesScreen(Screen):
         for i, (key, label, ok, why) in enumerate(rows):
             hk = str(i + 1) if i < 9 else " "
             if ok:
-                canvas.button(x + 2, row, markup.plain(label)[: iw - 5], lambda i=i: self.pick(i), hotkey=hk)
                 price_tag = label.split("<loot>")[-1].split("</>")[0] if "<loot>" in label else ""
+                # The price goes in its own column, once, not also at the end of the words.
+                words = markup.plain(label.rsplit("<loot>", 1)[0]).rstrip(" ·:,") if price_tag else markup.plain(label)
+                canvas.button(x + 2, row, words, lambda i=i: self.pick(i), hotkey=hk,
+                              max_width=iw - (len(price_tag) + 2 if price_tag else 0))
                 if price_tag:
                     canvas.text(x + w - 3 - len(price_tag), row, price_tag, colors.named("loot"))
             else:

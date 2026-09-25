@@ -87,8 +87,10 @@ class EncounterScreen(Screen):
         canvas.markup(x + 2, row, seen, max_width=iw)
         row += 2
         for key, label, action, enabled, why in self.options():
-            canvas.button(x + 2, row, label if enabled else f"{label}: {why}", lambda a=action: self.act(a),
-                          hotkey=key.upper(), enabled=enabled)
+            # A greyed-out choice says why, in place of its bracketed note: "Ambush them: they have already seen you".
+            text = label if enabled else f"{label.split(' (')[0]}: {why}"
+            canvas.button(x + 2, row, text, lambda a=action: self.act(a), hotkey=key.upper(), enabled=enabled,
+                          max_width=iw)
             row += 1
         canvas.hit(0, 0, canvas.width, canvas.height)
 

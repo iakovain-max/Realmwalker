@@ -152,8 +152,13 @@ class Canvas:
         self.hline(x + len(label), y, w - len(label), "─", fg)
 
     def button(self, x: int, y: int, label: str, action: Callable[[], None], *, hotkey: str | None = None,
-               tooltip: str | None = None, enabled: bool = True) -> int:
-        """[G] Generate  - clickable, highlighted on hover. Returns the x after it."""
+               tooltip: str | None = None, enabled: bool = True, max_width: int | None = None) -> int:
+        """[G] Generate  - clickable, highlighted on hover. Returns the x after it. With max_width, a label too long
+        to fit ends in "…" (and the whole of it is the tooltip)."""
+        room = None if max_width is None else max_width - (len(hotkey) + 3 if hotkey else 4)
+        if room is not None and len(label) > room > 1:
+            tooltip = tooltip or label
+            label = label[: room - 1].rstrip() + "…"
         text = f"[{hotkey}] {label}" if hotkey else f"[ {label} ]"
         over = self.hit(x, y, len(text), 1, action if enabled else None, tooltip)
         bg = colors.HOVER_BG if over and enabled else None
@@ -165,6 +170,17 @@ class Canvas:
             self.text(x + 1 + len(hotkey), y, "] ", colors.DIM, bg)
             return self.text(x + 3 + len(hotkey), y, label, colors.SELECT_FG if over else colors.FG, bg)
         return self.text(x, y, text, colors.SELECT_FG if over else colors.FG, bg)
+
+    def button_row(self, x: int, y: int, right: int, buttons: list[tuple[str, Callable[[], None], str]]) -> int:
+        """A row of [key] buttons three apart, as many as fit before `right`; the last (Back, usually) always does.
+        The keys of those left out still work: this only decides what is drawn."""
+        width = lambda b: len(b[0]) + len(b[2]) + 3  # noqa: E731
+        keep = list(buttons)
+        while len(keep) > 1 and x + sum(width(b) for b in keep) + 3 * (len(keep) - 1) > right:
+            keep.pop(-2)
+        for label, action, key in keep:
+            x = self.button(x, y, label, action, hotkey=key) + 3
+        return x
 
     def draw_tooltip(self) -> None:
         if not self.tooltip or self.mouse[0] < 0:

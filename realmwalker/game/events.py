@@ -108,7 +108,9 @@ def options(game, ev: PendingEvent) -> list[tuple[str, bool, str]]:
         label = opt["label"]
         if "check" in opt:
             c = opt["check"]
-            label += f" ({game.tables.rules['skills'][c['skill']]['name']}, DC {c['dc']})"
+            skill = game.tables.rules["skills"][c["skill"]]["name"]
+            # "[Persuasion] Argue that you are exempt (DC 13)", not "... (Persuasion, DC 13)" as well
+            label += f" (DC {c['dc']})" if label.startswith(f"[{skill}]") else f" ({skill}, DC {c['dc']})"
         out.append((label, ok, why))
     return out
 
