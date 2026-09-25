@@ -55,7 +55,7 @@
       "armor": ["light"], "weapons": ["simple", "hand_crossbow", "longsword", "rapier", "shortsword"], "tools": ["thieves_tools"],
       "skill_count": 4,
       "skill_choices": ["acrobatics", "athletics", "deception", "insight", "intimidation", "investigation", "perception", "performance", "persuasion", "sleight_of_hand", "stealth"],
-      "suggested": {"str": 8, "dex": 15, "con": 14, "int": 13, "wis": 12, "cha": 10},
+      "suggested": {"str": 10, "dex": 15, "con": 14, "int": 11, "wis": 12, "cha": 10},
       "choices_at_1": ["expertise"],
       "features": [
         {"level": 1, "id": "expertise", "name": "Expertise", "text": "Double your proficiency bonus with two chosen skills.", "rule": "expertise"},

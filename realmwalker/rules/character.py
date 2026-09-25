@@ -367,12 +367,15 @@ class Sheet:
                 s * carry["per_strength"] + extra)
 
     def load(self) -> float:
-        """Weight that counts against strength: worn armour and clothes count half (the body carries them)."""
+        """Weight that counts against strength: worn armour counts half (the body carries it), and the clothes
+        you are dressed in not at all; what is in your hands and your pack counts in full."""
         worn = {uid for slot, uid in self.c.equipped.items() if slot not in ("main_hand", "off_hand")}
         total = 0.0
         for it in self.c.inventory:
             w = self.items.weight(it)
-            total += w * 0.5 if it.uid in worn else w
+            if it.uid in worn:
+                w *= 0.0 if self.items.get(it.def_id).get("category") == "clothing" else 0.5
+            total += w
         return round(total + coin_weight(self.c.money), 1)
 
     def encumbrance(self) -> int:
