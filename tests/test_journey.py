@@ -224,3 +224,15 @@ def test_a_fire_dries_you_in_a_drizzle(tables):
         env = Environment(air=6.0, wind=10.0, wet_per_hour=30.0, activity="rest", fire=fire)
         body.tick(c, Sheet(c, tables), env, 60)
         assert (c.wet < 80.0) == drier, (fire, c.wet)
+
+
+def test_too_exhausted_to_take_a_step_in_town_is_not_called_too_heavy(game):
+    town = game.world.settlements[0]
+    game.player.x, game.player.y = town.x, town.y
+    game.player.local_key = None
+    game.enter_local()
+    game.leader.exhaustion = 5
+    for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+        game.move(dx, dy)
+    assert any("too far gone" in m.text for m in game.log.messages[-4:])
+    assert not any("carrying too much" in m.text for m in game.log.messages[-4:])

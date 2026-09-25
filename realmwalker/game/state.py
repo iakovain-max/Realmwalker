@@ -740,7 +740,9 @@ class GameState:
             return True
         pace = self.pace()
         if pace is None:
-            self.say("You are carrying too much to move. Drop something first (i: inventory).", "warn")
+            from realmwalker.game.journey import why_cannot_walk
+
+            self.say(why_cannot_walk(self), "warn")
             return False
         T = self.tables.terrain
         t = int(self.remap_for(lm)[lm.terrain[nx, ny]])
