@@ -77,6 +77,20 @@ new shutters after a raid. The sky says when it turns: rain starting and stoppin
 ground, the first flakes, the heat settling on you. And every named region can describe itself, in the AI's words
 when Player2 is running, from the real facts of the place.
 
+### Cloud session, 2026-09-25: companions with more to say
+
+(Pull request "Companions with more to say".) A companion walks beside you for weeks, and had ten things to say on
+the road, four at camp, four ways to approve or disapprove of you and two for most moods: over a month of travel
+they said nine road lines chosen from ten. Now there are 259 lines where there were about 60:
+- more of every kind (22 on the road, 14 at camp, 10 each to approve, disapprove and shout in battle, 8 each for
+  rain, dark and weariness), and words for the **cold** and the **heat** on the road;
+- **their own voice:** four lines in ten on the road and at camp come from what they care about (a devout
+  companion stops at every shrine, a mercenary works out what the day was worth, a rebel spits at a lord's
+  boundary stone), and when they judge something you did, they say it in the voice of the value it touched;
+- **the right pronouns:** "He did not go empty-handed", not "They did not go".
+
+Checked by `tests/test_companion_voices.py` and floors in `tests/test_text_variety.py`. Old saves load.
+
 **Your name goes before you.** Fame and infamy now change how a stranger takes you the first time you speak:
 notables have heard more and sooner than a farmhand, fame impresses the proud and the greedy, and a bad name
 frightens the kind and the nervous worst of all.
