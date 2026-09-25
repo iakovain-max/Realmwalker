@@ -309,6 +309,12 @@ def buy(game, item_id: str, markup: float, stock: dict) -> str:
     return f"You buy {game.tables.items.name(it, with_qty=False)} for {money_text(price)}."
 
 
+def _and(words: list[str]) -> str:
+    """grassland; grassland and forest; grassland, forest and hills."""
+    words = list(words)
+    return ", ".join(words[:-1]) + " and " + words[-1] if len(words) > 1 else "".join(words)
+
+
 def travel_day_facts(game, day: dict) -> dict:
     """Variables for the day's narrated passage (AI prompt or built-in text)."""
     c = game.leader
@@ -323,8 +329,9 @@ def travel_day_facts(game, day: dict) -> dict:
     if c.wounds:
         moods.append("wounded")
     return {
-        "name": c.name.split()[0], "miles": day.get("miles", 0), "lands": ", ".join(day.get("lands", [])) or "open country",
-        "weather": day.get("weather", "grey skies"), "mood": ", ".join(moods) or "well enough",
+        "name": c.name.split()[0], "miles": day.get("miles", 0), "lands": _and(day.get("lands", [])) or "open country",
+        "weather": day.get("weather", "grey skies"), "sky": day.get("sky", "overcast"),
+        "mood": ", ".join(moods) or "well enough",
         "season": game.moment.season, "events": "; ".join(day.get("events", [])) or "nothing much",
         "road": "mostly on the road" if day.get("road", 0) > day.get("off_road", 0) else "mostly across country",
     }
