@@ -216,11 +216,13 @@ def fallback_profile(game, npc: NPC, rng: RNG) -> dict:
         "person": {"male": "man", "female": "woman"}[npc.sex] if npc.age >= 18 else ("boy" if npc.sex == "male" else "girl"),
     }
     appearance = textgen.tidy(textgen.fill(rng.choice(t["appearance"]), rng, t, values))
-    story_key = f"backstory_{npc.job}" if f"backstory_{npc.job}" in t else "backstory_common"
-    backstory = rng.choice(t[story_key])
+    # A trade's own stories, mixed (for ordinary folk) with the ones anybody might have.
+    own = t.get(f"backstory_{npc.job}")
+    backstory = rng.choice(own if own and (npc.social != "low" or rng.chance(0.6)) else t["backstory_common"])
     secret = rng.choice(t["secret"])
     want = rng.choice(t["want"])
     words = [game.tables.people["personality"][tr]["words"] for tr in npc.traits]
+    words.sort(key=lambda w: w.startswith(("a ", "an ")))  # "generous and a gossip", not "a gossip and generous"
     personality = f"{pron['They']} {pron['are']} {words[0]} and {words[1]}; {pron['their']} speech is {npc.speech}."
     return {"appearance": appearance, "personality": fill_pronouns(personality, pron),
             "backstory": fill_pronouns(backstory, pron), "secret": fill_pronouns(secret, pron),

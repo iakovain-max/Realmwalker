@@ -32,6 +32,31 @@ class Choice:
     data: dict = field(default_factory=dict)
 
 
+def plural(title: str) -> str:
+    """innkeeper -> innkeepers, lady -> ladies, headman -> headmen, guildmistress -> guildmistresses,
+    traveller at the inn -> travellers at the inn."""
+    for joint in (" of ", " at ", " in "):
+        if joint in title:
+            head, _, tail = title.partition(joint)
+            return plural(head) + joint + tail
+    if title.endswith("man"):
+        return title[:-3] + "men"
+    if title.endswith(("s", "x", "ch", "sh")):
+        return title + "es"
+    if title.endswith("y") and title[-2:-1] not in "aeiou":
+        return title[:-1] + "ies"
+    return title + "s"
+
+
+def story_note(npc: NPC, story: str) -> str:
+    """A built-in life story is a note about them ("Took over the inn when his father..."), not their own words:
+    it is told as what you learn from them."""
+    from realmwalker.game.people import pronouns
+
+    pron = pronouns(npc)
+    return f"{npc.first_name}'s story, as {pron['they']} tell{pron['s']} it: {story[:1].lower() + story[1:]}"
+
+
 class Conversation:
     def __init__(self, game, npc: NPC, *, defer_greeting: bool = False) -> None:
         self.game = game
@@ -198,14 +223,24 @@ class Conversation:
         self.you_say("Who are you?" if not npc.known else "Tell me about yourself.")
         if not npc.known:
             npc.known = True
-            self.npc_says(self.fill(self.pick("who_are_you")))
+            fig = self.game.world.figures.get(npc.flags.get("figure", -1))
+            if fig is not None and fig.alive and fig.role == "ruler":
+                # The great do not say "I'm the king": they give you their style, and expect you to know it.
+                self.npc_says(self.fill(self.pick("who_are_you_ruler"), full=f"{fig.title} {npc.name}"))
+            else:
+                self.npc_says(self.fill(self.pick("who_are_you")))
             self.faction_note()
             return
         mood = npc.mood()
         if mood in ("hostile", "unfriendly"):
             self.npc_says("\"That's none of your business.\"")
             return
-        self.npc_says(f"\"{npc.profile.get('backstory', '')}\"" if npc.profile.get("backstory") else "\"Not much to tell.\"")
+        story = npc.profile.get("backstory", "")
+        if not story:
+            self.npc_says("\"Not much to tell.\"")
+        else:
+            self.npc_says(self.fill(self.pick("tell_about_self")))
+            self.note(story if npc.profile_source == "ai" else story_note(npc, story))
         if mood in ("friendly", "warm") and npc.profile.get("want"):
             self.note(f"What {npc.first_name} wants: {npc.profile['want']}.")
 
@@ -233,16 +268,20 @@ class Conversation:
         others = [n for n in npcs_in(self.game.world, s.id) if n.notable and n.id != self.npc.id and n.alive]
         by_title: dict[str, list[str]] = {}
         for n in others[:6]:
-            by_title.setdefault(n.title, []).append(n.first_name)
+            # Nobody tells a stranger which of the travellers at the inn is the cutpurse, or the runaway serf.
+            title = "traveller at the inn" if n.flags.get("recruit") and not n.flags.get("company") else n.title
+            by_title.setdefault(title, []).append(n.first_name)
             n.known = True
         services = "; ".join(f"the {title} is {names[0]}" if len(names) == 1 else
-                             f"the {title}s are {', '.join(names[:-1])} and {names[-1]}"
+                             f"the {plural(title)} are {', '.join(names[:-1])} and {names[-1]}"
                              for title, names in by_title.items())
         line = self.fill(self.pick("about_place"), size_line=d["size_line"].get(s.kind, ""),
                          services_line=(services[:1].upper() + services[1:] + ".") if services else "")
         self.npc_says(line)
         self.holder_line()
-        if town.description:
+        today = self.game.moment.total_days
+        if town.description and town.flags.get("described_day") != today:
+            town.flags["described_day"] = today  # the place is described once a day, not by everyone you ask
             self.note(town.description)
 
     def holder_line(self) -> None:
@@ -302,8 +341,10 @@ class Conversation:
         if roll < 0.8:
             from realmwalker.game.events import hear_place
 
-            self.note(hear_place(self.game, self.rng))
-            return
+            heard = hear_place(self.game, self.rng)
+            if heard:
+                self.note(heard)
+                return
         self.npc_says(self.pick("flavour_rumours"))
 
     def about_person(self, other: NPC) -> None:

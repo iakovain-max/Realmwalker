@@ -14,11 +14,15 @@ FLOORS = {
     # dialogue.json — every town, every person
     "dialogue:rumour_intro": 8, "dialogue:flavour_rumours": 12, "dialogue:goodbye": 8,
     "dialogue:person_lines": 10, "dialogue:no_rumours": 5, "dialogue:refuse_talk": 2,
-    "dialogue:closed": 2,
+    "dialogue:closed": 2, "dialogue:who_are_you": 8, "dialogue:who_are_you_ruler": 5, "dialogue:tell_about_self": 8,
+    "dialogue:remember_threat": 5, "dialogue:remember_help": 5, "dialogue:about_place": 4, "dialogue:danger_rumour": 5,
+    "dialogue:threaten_success": 5, "dialogue:threaten_failure": 5, "dialogue:bribe_accept": 5, "dialogue:bribe_refuse": 5,
     # people.json — the life of a street
     "people:text.moments": 12, "people:text.moments_day": 8, "people:text.moments_night": 8,
     "people:text.moments_market": 5, "people:text.moments_plague": 5, "people:text.moments_famine": 5,
     "people:text.moments_raided": 5, "people:text.moments_siege": 5,
+    # people.json — what a stranger learns when they ask
+    "people:text.backstory_common": 12, "people:text.secret": 20, "people:text.want": 20,
     # camping.json — every night on the road
     "camping:night.any": 8, "camping:night.fire": 5,
 }
