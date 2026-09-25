@@ -17,7 +17,7 @@
   },
   "mark": ["a badly healed nose", "a burn scar on one hand", "pox scars across the cheeks", "a missing front tooth", "a notched ear", "tattooed knuckles", "a white scar through one eyebrow", "calloused, ink-stained fingers", "a slight limp from an old break", "no distinguishing marks worth a watchman's time"],
   "backstory": {
-    "opening": ["{name} was born in {home}, {years} years ago, in a {season} that people still remember as a hard one.", "{name} grew up in {home}, the {nth} child of a family with more mouths than bread.", "{name} was raised in {home}, among {culture} folk who expected little of the world and got less."],
+    "opening": ["{name} was born in {home}, {years} years ago, in a hard {season} that people there still remember.", "{name} grew up in {home}, the {nth} child of a family with more mouths than bread.", "{name} was raised in {home}, among {culture} folk who expected little of the world and got less."],
     "middle": ["{background_line}", "{background_line} It left marks that have not faded."],
     "closing": ["Now {pronoun} is on the road, with {coin} in {possessive} purse and no one to answer to.", "{pronoun_cap} left with a pack, a grudge and a reason not to look back.", "Whatever {pronoun} was, the road does not care; it only asks whether {pronoun} can keep walking."]
   },

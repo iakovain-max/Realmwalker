@@ -47,7 +47,7 @@ FALLBACK_TEXT = Obj({"tavern": table_set(*TAVERN_TABLES), "travel_day": table_se
 RUNTIME_SLOTS: dict[str, set[str]] = {
     "tavern": {"family", "keeper"},
     "travel_day": {"name", "miles", "lands", "weather", "mood", "season", "events", "road"},
-    "settlement": {"name", "kind", "land", "season"},
+    "settlement": {"name", "kind", "land", "land_in", "season"},
 }
 
 PLACE_NAMES = Obj(

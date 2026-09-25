@@ -67,8 +67,10 @@ def apply_settlement(game, settlement, town: Town, data: dict) -> int:
 
 def fallback_description(game, settlement, rng: RNG) -> str:
     tables = game.tables.fallback["settlement"]
+    land = game.biome_def(settlement.x, settlement.y)["name"]
     values = {"name": settlement.name, "kind": KIND_WORDS.get(settlement.kind, settlement.kind),
-              "land": game.biome_def(settlement.x, settlement.y)["name"], "season": game.moment.season}
+              "land": land, "land_in": "on the coast" if land == "coast" else f"in the {land}",
+              "season": game.moment.season}
     return textgen.tidy(textgen.fill(rng.choice(tables["passage"]), rng, tables, values))
 
 

@@ -194,7 +194,7 @@
     ],
     "approach": [
       "The road into {name} is churned to mud by carts and cattle.",
-      "{name} sits low in the {land}, as if it would rather not be noticed.",
+      "{name} sits low {land_in}, as if it would rather not be noticed.",
       "You come into {name} past a row of leaning fence-posts and a dog that does not bark.",
       "The way into {name} runs between ditches full of brown water."
     ],
