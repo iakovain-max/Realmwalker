@@ -35,6 +35,7 @@ def member(tables, cls, seed):
 def companion(tables, cls="fighter", seed=5):
     c = member(tables, cls, seed)
     c.is_player = False
+    c.money = 0  # a companion's pay is theirs: they carry no purse for the party
     c.companion = {"npc": -1, "archetype": "sellsword", "values": [], "want": "pay", "loyalty": 55.0, "wage": 100,
                    "share": 0.0, "hired": 0, "order": "follow", "home": 0, "unpaid": 0}
     return c
