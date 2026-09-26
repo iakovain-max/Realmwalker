@@ -62,7 +62,7 @@ bot in nine worlds and searching it for slips. Built-in text now says "an" befor
 starts as the one that suits the chosen kit — Defence with mail and a shield, Archery with the longbow, Great Weapon
 Fighting with the greataxe — instead of always Archery, until you pick one yourself. A death reads right wherever it
 is told ("who froze to death", "was killed by the wolf"; it said "who died died of thirst"). "About a day and a half"
-instead of "about 1 days"; "1 pint"; no more "hour(s)". "Born to the Ironvein Clan", not "the the"; "Your old
+instead of "about 1 days"; no more "hour(s)". "Born to the Ironvein Clan", not "the the"; "Your old
 teacher, Master Dario" instead of "Your old master Master Dario". A conversation choice you can't take yet reads
 "I want to join the Guild of the Star — they need to think better of you first". Checked by
 `tests/test_first_minutes.py`.
