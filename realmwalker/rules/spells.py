@@ -2,11 +2,22 @@
 
 Wizards cast from their spellbook (they copy new spells in from scrolls and books, M8). Clerics
 may call on any cleric prayer of a level they have slots for. v1 has no separate preparation step.
+
+A spell that lasts ten minutes or more (Mage Armour, Shield of Faith, Stoneskin, Death Ward) outlives the fight it
+was cast in, and can be cast on the road before one: it is kept on the character as a timed effect,
+`Character.effects["spell:<id>"]` = hours left, which wears off as time passes like any other (rules/health.py).
+The sheet counts its armour; a battle carries the rest of it (resistances, the ward) while it lasts.
 """
 
 from __future__ import annotations
 
 from realmwalker.rules.character import Character, Sheet
+
+
+LASTING = "spell:"  # the key prefix in Character.effects
+MIN_LASTING_ROUNDS = 100  # ten minutes (a round is six seconds): long enough to be worth casting before a fight
+ROUNDS_PER_HOUR = 600
+SHEET_KEYS = ("ac", "mage_armor")  # the parts of a lasting spell the character sheet already counts
 
 
 class SpellTable:
@@ -79,6 +90,55 @@ def can_cast(char: Character, tables, spell_id: str) -> tuple[bool, str]:
     if any(left[i] > 0 for i in range(spell["level"] - 1, len(left))):
         return True, ""
     return False, "no spell slots of that level left (rest to recover)"
+
+
+def lasts(tables, spell_id: str) -> bool:
+    """A spell that outlives a fight: a buff of ten minutes or more."""
+    spell = tables.spells[spell_id]
+    return spell.get("kind") == "buff" and int(spell.get("rounds", 0)) >= MIN_LASTING_ROUNDS
+
+
+def lasting(char: Character, tables=None) -> dict[str, float]:
+    """The spells still working on someone: spell id -> hours left."""
+    out = {k[len(LASTING):]: float(v) for k, v in char.effects.items() if k.startswith(LASTING) and v > 0}
+    return {k: v for k, v in out.items() if tables is None or k in tables.spells}
+
+
+def keep(char: Character, tables, spell_id: str) -> float:
+    """A lasting spell has just been cast on this character: it works for its full time from now (casting it
+    again renews it; the same spell never stacks). Returns the hours it will last."""
+    hours = int(tables.spells[spell_id].get("rounds", 0)) / ROUNDS_PER_HOUR
+    key = LASTING + spell_id
+    char.effects[key] = max(float(char.effects.get(key, 0.0)), hours)
+    return hours
+
+
+def end(char: Character, spell_id: str) -> None:
+    char.effects.pop(LASTING + spell_id, None)
+
+
+def lasting_values(char: Character, tables, key: str) -> list:
+    """One part of the lasting spells on a character (their "ac" bonuses, a "mage_armor" base...)."""
+    if not char.effects:
+        return []
+    return [tables.spells[sid]["buff"][key] for sid in lasting(char, tables)
+            if key in tables.spells[sid].get("buff", {})]
+
+
+def battle_part(tables, spell_id: str) -> dict:
+    """What a battle has to carry of a lasting spell (the sheet already counts its armour): {} for nothing."""
+    part = {k: v for k, v in tables.spells[spell_id].get("buff", {}).items() if k not in SHEET_KEYS}
+    return {**part, "lasting": spell_id, "source": spell_id} if part else {}
+
+
+def on_the_road(tables, spell_id: str) -> tuple[bool, str]:
+    """Whether a spell is any use outside a fight, and why not."""
+    spell = tables.spells[spell_id]
+    if spell["kind"] in ("heal", "cure") or lasts(tables, spell_id):
+        return True, ""
+    if spell["kind"] == "buff":
+        return False, "over too quickly to cast before a fight"
+    return False, "only in a fight"
 
 
 def lowest_free_slot(char: Character, tables, level: int) -> int | None:

@@ -1,10 +1,18 @@
-"""Spell scrolls outside battle (M7): a wizard can copy one into their spellbook. It takes an Arcana check, costly
-inks (50 gold crowns a spell level) and two hours a level, and the scroll is used up either way. Reading scrolls
-in battle is in rules/combat.py."""
+"""Magic outside battle.
+
+Spell scrolls (M7): a wizard can copy one into their spellbook. It takes an Arcana check, costly inks (50 gold
+crowns a spell level) and two hours a level, and the scroll is used up either way. Reading scrolls in battle is in
+rules/combat.py.
+
+Casting on the road (after v1): from the Spells screen, a spell that lasts (Mage Armour before the day's walk,
+Stoneskin before the dungeon door) or one that heals. It takes a minute and a slot, and the law of the place may
+have something to say about it. Spells that only make sense in a fight say so.
+"""
 
 from __future__ import annotations
 
 from realmwalker.core import dice
+from realmwalker.rules import spells as spellrules
 from realmwalker.rules.inventory import remove_item
 from realmwalker.rules.items import money_text
 
@@ -90,3 +98,87 @@ def scroll_stock(game, settlement, rng) -> dict[str, int]:
             pick = rng.choice(scrolls)
             out[pick] = out.get(pick, 0) + 1
     return out
+
+
+# ---------------------------------------------------------------------------- casting on the road
+def road_targets(game, caster, spell_id: str) -> list:
+    """Who a spell cast outside battle can be aimed at (empty when it takes everyone, or only the caster)."""
+    target = game.tables.spells[spell_id]["target"]
+    if target in ("ally", "downed_ally"):
+        return [c for c in game.party if c.alive]
+    return []
+
+
+def lasting_text(hours: float) -> str:
+    minutes = round(hours * 60)
+    if minutes < 60:
+        return f"{minutes} minute{'s' if minutes != 1 else ''}"
+    h = round(hours)
+    return {1: "an hour", 8: "eight hours"}.get(h, f"{h} hours")
+
+
+def _needs(game, spell, target) -> bool:
+    if spell["kind"] == "cure":
+        return bool([d for d in target.diseases if d.get("phase") in ("sick", "incubating") and d["id"] != "wound_fever"]
+                    or [w for w in target.wounds if w.infection > 0])
+    who = [c for c in game.party if c.alive] if spell["target"] == "all_allies" else [target]
+    return any(c.hp < c.max_hp or c.wounds for c in who)
+
+
+def road_problem(game, caster, spell_id: str, target=None) -> str | None:
+    """Why this spell can't be cast here and now (None when it can)."""
+    t = game.tables
+    spell = t.spells[spell_id]
+    ok, why = spellrules.on_the_road(t, spell_id)
+    if not ok:
+        return why
+    if game.battle is not None:
+        return "you are in a fight"
+    ok, why = spellrules.can_cast(caster, t, spell_id)
+    if not ok:
+        return why
+    target = target or caster
+    if spell["kind"] in ("heal", "cure") and not _needs(game, spell, target):
+        return "there is nothing for it to mend" if spell["kind"] == "cure" else "nobody needs healing"
+    on = caster if spell["target"] == "self" else target
+    left = spellrules.lasting(on, t).get(spell_id, 0.0)
+    if spell["target"] != "all_allies" and left > int(spell.get("rounds", 0)) / spellrules.ROUNDS_PER_HOUR / 2:
+        return f"it is still working ({lasting_text(left)} left)"
+    return None
+
+
+def cast_on_road(game, caster, spell_id: str, target=None) -> list[str]:
+    """Cast a spell outside battle. Healing goes through game/care.py (the worst wound first); a lasting spell is
+    kept on whoever it was cast on. Returns what to say."""
+    from realmwalker.game import care
+
+    t = game.tables
+    spell = t.spells[spell_id]
+    target = target or caster
+    why = road_problem(game, caster, spell_id, target)
+    if why:
+        return [f"{spell['name']}: {why}."]
+    if spell["kind"] in ("heal", "cure"):
+        wound = max(target.wounds, key=lambda w: (w.severity, w.bleed), default=None)
+        return care.cast(game, caster, target, wound, spell_id)
+    level = spell["level"]
+    slot = spellrules.lowest_free_slot(caster, t, level) if level else None
+    if level and slot is None:
+        return ["No spell slot left for that. A long rest restores them."]
+    if slot:
+        spellrules.spend_slot(caster, slot)
+    who = [c for c in game.party if c.alive] if spell["target"] == "all_allies" else \
+        [caster if spell["target"] == "self" else target]
+    hours = 0.0
+    for c in who:
+        hours = spellrules.keep(c, t, spell_id)
+    first = caster.name.split()[0]
+    on = "" if who == [caster] else (" on the party" if len(who) > 1 else f" on {who[0].name.split()[0]}")
+    msgs = [f"{first} casts <magic>{spell['name']}</>{on}. <dim>It will last {lasting_text(hours)}.</>"]
+    game.pass_time(1, "rest")
+    game.dirty = True
+    if game.world.factions:
+        from realmwalker.game import law
+
+        law.magic_check(game, caster)
+    return msgs

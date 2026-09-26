@@ -266,7 +266,9 @@ class Sheet:
             if self.c.fighting_style == "defense":
                 ac += 1
         else:
-            ac = 10 + dex
+            from realmwalker.rules import spells
+
+            ac = max([10] + [int(b) for b in spells.lasting_values(self.c, self.t, "mage_armor")]) + dex
         shield = self.c.equipped_item("off_hand")
         if shield is not None and self.items.category(shield) == "shield":
             ac += int(self.items.get(shield.def_id).get("ac_bonus", 2))
@@ -274,6 +276,10 @@ class Sheet:
             from realmwalker.rules import magic
 
             ac += magic.total(self.c, "ac")
+        if self.c.effects:
+            from realmwalker.rules import spells
+
+            ac += sum(int(b) for b in spells.lasting_values(self.c, self.t, "ac"))
         return ac
 
     def proficient_with_armor(self, item: Item) -> bool:
