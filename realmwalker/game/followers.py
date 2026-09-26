@@ -314,7 +314,7 @@ def restless_choice(conv) -> list:
     asked = npc.flags.get("restless_day")
     problem = problem_with(game, npc) or ("give them time to think about it" if asked is not None and
                                           game.moment.total_days - int(asked) < 7 else None)
-    return [Choice("recruit", f"[Persuasion] There is more to the world than {conv.settlement.name}. Come with me.",
+    return [Choice("recruit", "[Persuasion] There's more to the world than this. Come with me.",
                    problem is None, problem or "", {"how": "restless"})]
 
 
@@ -473,7 +473,7 @@ def talk_choices(conv) -> list:
     f = lender_of(game, npc)
     if f is not None:
         problem = sworn_problem(game, f)
-        out.append(Choice("recruit", f"Ask {npc.first_name} for one of {f.name}'s own to ride with you.",
+        out.append(Choice("recruit", "Ask for one of their own to ride with you.",
                           problem is None, problem or "", {"how": "sworn", "faction": f.id}))
     if dreamer(game, npc):
         out += dreamer_choices(conv)

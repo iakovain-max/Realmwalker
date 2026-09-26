@@ -567,7 +567,7 @@ def _durgin(game, r, say) -> list:
 
     if not dragons.living(game.world) or not r.get("dragon"):
         return [say("Then fight beside me.", "oath")]
-    return [say(f"I will go down into {w['site']} with you, and put {w['dragon']} in the ground.", "oath",
+    return [say(f"I swear it: we kill {w['dragon']} together.", "oath",
                 game.leader.level >= 3, "he will not take the unblooded against a dragon (level 3)")]
 
 
@@ -604,7 +604,7 @@ def _grusha(game, r, say) -> list:
     if not r.get("told"):
         return [say("What are you atoning for?", "tell")]
     if not r.get("ready"):
-        return [say("[Insight] You are not scrubbing floors for penance. You are hiding.", "insight",
+        return [say("[Insight] You are not doing penance. You are hiding.", "insight",
                     r.get("pressed") != game.moment.total_days, "give her time")]
     if infamous(game):
         return [say(f"I will walk with you to {w['village']}.", "go", False, "she will not ride with your kind")]

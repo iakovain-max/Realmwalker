@@ -430,3 +430,16 @@ def test_the_party_screen_shows_who_they_are(make_app, world):
     text = "\n".join("".join(chr(ch) for ch in con.rgb["ch"][:, y]) for y in range(con.height))
     assert "Twice-Hanged" in text and "Raise pay" not in text
     assert app.error_count == 0
+
+
+def test_talk_of_them_puts_their_town_on_your_map(game):
+    from realmwalker.game import news
+
+    uniques.ensure(game)
+    r = uniques.rec(game, "tobiah")
+    s = game.world.settlements[r["town"]]
+    game.player.known_settlements.discard(s.id)
+    game.player.x, game.player.y = s.x, s.y
+    heard = news.hear(game, count=40)
+    assert any("Tobiah" in h or "hanged twice" in h for h in heard)
+    assert s.id in game.player.known_settlements
