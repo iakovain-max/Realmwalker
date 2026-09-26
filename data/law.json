@@ -36,16 +36,19 @@
   "rewards": {"bandit": 800, "bandit_archer": 800, "bandit_captain": 4000, "thug": 500, "deserter": 600, "cultist": 1200, "cult_fanatic": 3000, "orc": 1500, "goblin": 400, "ogre": 3000},
   "ransom_share": 3.0,
   "join": {
-    "merchant_guild": {"standing": 10, "fee": 2500, "ranks": ["associate", "member", "trusted member", "master of the guild"], "discount": 0.05},
-    "smiths_guild": {"standing": 10, "fee": 1500, "tool": "smiths_tools", "ranks": ["apprentice", "journeyman", "master smith", "anvil-warden"], "discount": 0.05},
-    "healers_guild": {"standing": 10, "fee": 1500, "skill": "medicine", "ranks": ["student", "physician", "master physician", "warden of the guild"], "discount": 0.1},
-    "mages_circle": {"standing": 10, "fee": 3000, "skill": "arcana", "ranks": ["novice", "adept", "magister", "high magister"], "discount": 0.05},
-    "mercenary_company": {"standing": 0, "fee": 0, "classes": ["fighter", "rogue"], "ranks": ["recruit", "sword", "sergeant", "lieutenant"], "discount": 0.0},
-    "temple": {"standing": 15, "fee": 500, "faith": true, "ranks": ["lay brother or sister", "devout", "deacon", "elder of the faith"], "discount": 0.1},
-    "knightly_order": {"standing": 30, "fee": 0, "classes": ["fighter", "cleric"], "faith": true, "ranks": ["squire", "knight", "knight-captain", "knight-commander"], "discount": 0.05},
-    "thieves_guild": {"standing": 5, "fee": 1000, "skill": "sleight_of_hand", "ranks": ["footpad", "cutpurse", "shadow", "master thief"], "discount": 0.0},
-    "cult": {"standing": 10, "fee": 0, "ranks": ["initiate", "brother or sister", "keeper", "chosen"], "discount": 0.0}
+    "merchant_guild": {"standing": 10, "fee": 2500, "ranks": ["associate", "member", "trusted member", "master of the guild"], "discount": 0.05, "trains": ["persuasion", "insight"]},
+    "smiths_guild": {"standing": 10, "fee": 1500, "tool": "smiths_tools", "ranks": ["apprentice", "journeyman", "master smith", "anvil-warden"], "discount": 0.05, "trains": ["athletics", "investigation"]},
+    "healers_guild": {"standing": 10, "fee": 1500, "skill": "medicine", "ranks": ["student", "physician", "master physician", "warden of the guild"], "discount": 0.1, "trains": ["medicine", "nature"]},
+    "mages_circle": {"standing": 10, "fee": 3000, "skill": "arcana", "ranks": ["novice", "adept", "magister", "high magister"], "discount": 0.05, "trains": ["arcana", "history"]},
+    "mercenary_company": {"standing": 0, "fee": 0, "classes": ["fighter", "rogue"], "ranks": ["recruit", "sword", "sergeant", "lieutenant"], "discount": 0.0, "trains": ["athletics", "intimidation", "survival"]},
+    "temple": {"standing": 15, "fee": 500, "faith": true, "ranks": ["lay brother or sister", "devout", "deacon", "elder of the faith"], "discount": 0.1, "trains": ["religion", "insight"]},
+    "knightly_order": {"standing": 30, "fee": 0, "classes": ["fighter", "cleric"], "faith": true, "ranks": ["squire", "knight", "knight-captain", "knight-commander"], "discount": 0.05, "trains": ["athletics", "history", "animal_handling"]},
+    "thieves_guild": {"standing": 5, "fee": 1000, "skill": "sleight_of_hand", "ranks": ["footpad", "cutpurse", "shadow", "master thief"], "discount": 0.0, "trains": ["stealth", "sleight_of_hand", "deception"]},
+    "cult": {"standing": 10, "fee": 0, "ranks": ["initiate", "brother or sister", "keeper", "chosen"], "discount": 0.0, "trains": ["deception", "religion"]}
   },
   "rank_standing": [0, 25, 50, 75],
+  "_training": "From the second rank of a guild, order or church, one of its people will teach you one of its skills (join.<kind>.trains) for each rank you have risen: a long day and the fee (copper), more for each lesson after the first. A thieves' guild safehouse hides you for three days for its fee and halves your bounty in that realm, once a week.",
+  "training": {"fee": 5000, "more_per_lesson": 2500, "hours": 10},
+  "safehouse": {"fee": 1500, "days": 3, "bounty_left": 0.5, "every_days": 7},
   "titles": {"standing": 50, "fame": 15, "names": {"kingdom": ["Sir", "Dame"], "noble_house": ["Sir", "Dame"], "free_city": ["Freeholder", "Freeholder"], "clan": ["Stone-friend", "Stone-friend"], "highland_clan": ["Clan-friend", "Clan-friend"], "elven_realm": ["Elf-friend", "Elf-friend"]}}
 }

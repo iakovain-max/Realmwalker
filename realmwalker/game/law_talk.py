@@ -95,6 +95,18 @@ def choices(conv) -> list:
             if problem != "they have already honoured you":
                 out.append(Choice("title", f"Ask {fig.first_name} for an honour.", problem is None, problem or "",
                                   {"faction": f.id}))
+    from realmwalker.game import guilds
+
+    for f, skill, fee, ok, why in guilds.offers(game, npc)[:3]:
+        if skill is None:
+            out.append(Choice("train", "Will you teach me what you know?", False, why))
+        else:
+            name = game.tables.rules["skills"][skill]["name"]
+            out.append(Choice("train", f"Teach me {name}. ({money_text(fee)}, a long day)", ok, why,
+                              {"faction": f.id, "skill": skill}))
+    hide = guilds.safehouse_offer(game, npc)
+    if hide is not None:
+        out.append(Choice("lie_low", f"I need somewhere to lie low. ({money_text(hide[1])})", hide[2], hide[3]))
     out.append(Choice("pickpocket", "[Sleight of Hand] Try for their purse."))
     out.append(Choice("attack", "Attack them."))
     return out
@@ -144,6 +156,21 @@ def choose(conv, choice) -> str | None:
         f = w.factions[choice.data["faction"]]
         conv.you_say("I have served your house well. I ask for an honour.")
         conv.note(reputation.grant_title(game, f))
+    elif cid in ("train", "lie_low"):
+        from realmwalker.game import guilds
+
+        if cid == "train":
+            f = w.factions[choice.data["faction"]]
+            skill = game.tables.rules["skills"][choice.data["skill"]]["name"]
+            conv.you_say(f"Will you teach me {skill}?")
+            conv.npc_says("\"For one of ours? Sit down. We start with how you are holding your hands.\"")
+            for text in guilds.train(game, npc, f, choice.data["skill"]):
+                conv.note(text)
+        else:
+            conv.you_say("I need somewhere to lie low for a while.")
+            conv.npc_says("\"Say nothing, and follow me. Not so close.\"")
+            for text in guilds.lie_low(game, npc):
+                conv.note(text)
     elif cid == "pickpocket":
         pickpocket(conv)
     elif cid == "attack":

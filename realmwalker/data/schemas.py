@@ -555,7 +555,10 @@ CRIME = Obj({"name": Str(max_len=60), "severity": Int(min=1, max=4), "fine": Int
 JOIN = Obj({"standing": Int(min=-100, max=100), "fee": Int(min=0, max=10**7), "ranks": word_list(4, 40),
             "discount": Float(min=0, max=0.5), "skill": Str(max_len=30, optional=True),
             "tool": Str(max_len=30, optional=True), "classes": List(Str(max_len=30), optional=True),
-            "faith": Bool(optional=True)})
+            "faith": Bool(optional=True), "trains": List(Str(choices=[
+                "acrobatics", "animal_handling", "arcana", "athletics", "deception", "history", "insight",
+                "intimidation", "investigation", "medicine", "nature", "perception", "performance", "persuasion",
+                "religion", "sleight_of_hand", "stealth", "survival"]), optional=True)})
 LAW = Obj(
     {
         "crimes": Map(CRIME, min_items=1),
@@ -570,6 +573,10 @@ LAW = Obj(
         "licence_fee": Int(min=0, max=10**7),
         "rewards": Map(Int(min=0, max=10**7)), "ransom_share": Float(min=0, max=100),
         "join": Map(JOIN), "rank_standing": List(Int(min=-100, max=100), min_items=4, max_items=4),
+        "training": Obj({"fee": Int(min=0, max=10**7), "more_per_lesson": Int(min=0, max=10**7),
+                         "hours": Int(min=1, max=100)}, optional=True),
+        "safehouse": Obj({"fee": Int(min=0, max=10**7), "days": Int(min=1, max=30), "bounty_left": Float(min=0, max=1),
+                          "every_days": Int(min=1, max=100)}, optional=True),
         "titles": Obj({"standing": Int(min=0, max=100), "fame": Int(min=0, max=10**4),
                        "names": Map(List(Str(max_len=30), min_items=2, max_items=2))}),
     }

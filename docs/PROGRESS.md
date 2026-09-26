@@ -216,6 +216,17 @@ ground underfoot now: the pine needles, the sand, the road). Checked by `tests/t
 - **A confirmation before drawing steel** on somebody in conversation, as the design asks for dangerous acts.
 - **Landmarks on the skyline**: a ruin, a cave or an old tower coming into view is remarked on and goes on your map.
 
+### Cloud session, 2026-09-26: what rank buys you
+
+(Pull request "What rank buys you".) The design says rising in rank unlocks quests, discounts, training, safehouses
+and titles; the game had the quests, discounts and titles. **Lessons**: from the second rank of a guild, order or
+church, its people will teach you one of its skills for each rank you rise — merchants Persuasion and Insight,
+healers Medicine and Nature, mages Arcana and History, thieves Stealth, Sleight of Hand and Deception, and so on —
+for a long day and 50 gold crowns (25 more for each lesson after). **A safehouse**: a fence of the thieves' guild
+can hide a wanted member for three days for 15 gold crowns, and the price on their head in that realm is halved
+(once a week). Both are conversation choices; the numbers are in `data/law.json`. Checked by
+`tests/test_rank_perks.py`.
+
 **Factions make you earn each promotion** (the design's "faction rank-up tasks"). You join at the bottom
 whatever your standing; standing opens the door to the next rank, and a piece of that faction's work walks you
 through it — an offer from one of their people says whose eyes are on it, pays a little more, and promotes you
