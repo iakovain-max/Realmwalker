@@ -53,6 +53,7 @@ one stack); waiting, dismissal or desertion takes only what they wear and wield;
 rest. Older saves with separate packs are poured into one when loaded. Also fixed: a companion dying after the
 leader had died could leave the party with nobody in it. Checked by `tests/test_shared_pack.py`, bot checks, and a
 soak of twelve busy party lives (travel, fights, camps, waits, dismissals, deaths, saves and reloads).
+Anton's decision the same day: **Guidance outside fights is postponed** (it would touch every check in the game).
 
 **Companions ask for things.** A companion who becomes devoted finally asks you for one job of their own, chosen by
 what they want: revenge on a real gang, a book they have wanted all their life, a cult they want ended, a pocket
