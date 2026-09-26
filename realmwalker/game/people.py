@@ -389,7 +389,7 @@ def refresh_travellers(game, lm, settlement) -> None:
         return
     town.flags["travellers_day"] = day
     for n in npcs_in(world, settlement.id):
-        if n.job == "adventurer" and not n.flags.get("companion") and n.alive:
+        if n.job == "adventurer" and not n.flags.get("companion") and not n.flags.get("grateful") and n.alive:
             n.alive = False  # moved on (they are not dead; they are simply gone from here)
             n.present = False
             n.flags["moved_on"] = True

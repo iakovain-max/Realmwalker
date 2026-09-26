@@ -321,6 +321,9 @@ def _check_companions(game, fail) -> None:
         fail(f"the party is too big ({len(game.party)})")
     if game.party and game.party[0].companion:
         fail("a companion is leading the party")
+    kinds = game.tables.companions["archetypes"]
+    if any(n.flags.get("grateful") and n.flags.get("recruit") not in kinds for n in game.world.npcs.values()):
+        fail("someone freed from chains waits at an inn but cannot be taken on")
     for c in list(game.party[1:]) + list(getattr(game, "waiting", [])):
         k = c.companion
         if not k:
