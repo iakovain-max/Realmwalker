@@ -187,6 +187,9 @@ def finish_battle(game) -> Aftermath:
             died(game, c)
         game.party = [c for c in game.party if c.alive]
         game.waiting = [c for c in game.waiting if c.alive]
+        from realmwalker.game import pack
+
+        pack.sync(game)  # what they carried stays with the party
     elif not leader_alive and game.over is None:
         game.over = {"cause": "died of wounds after a fight", "place": battle.env.ground}
         after.outcome = "death"
@@ -270,7 +273,9 @@ def _rob_party(game, rng) -> str:
     if total:
         taken.append(money_text(total))
     leader = game.party[0]
-    valuables = [i for i in leader.inventory if leader.slot_of(i.uid) is None and game.tables.items.value(i) >= 100]
+    from realmwalker.rules.inventory import worn_by
+
+    valuables = [i for i in leader.inventory if worn_by(leader, i.uid)[1] is None and game.tables.items.value(i) >= 100]
     valuables.sort(key=lambda i: -game.tables.items.value(i))
     for it in valuables[: rng.randint(1, 2)]:
         remove_item(leader, it.uid)

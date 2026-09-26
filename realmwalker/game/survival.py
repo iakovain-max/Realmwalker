@@ -9,7 +9,7 @@ from __future__ import annotations
 from realmwalker.rules import body
 from realmwalker.rules.body import Environment
 from realmwalker.rules.character import Character, Sheet
-from realmwalker.rules.inventory import WATER_RISK, container_capacity, remove_item
+from realmwalker.rules.inventory import WATER_RISK, container_capacity, distinct_packs, remove_item
 from realmwalker.world.weather import Weather, WeatherCache
 
 AUTO_EAT_AT = 30.0  # hunger at which a meal is taken
@@ -108,8 +108,11 @@ def check_death(game, char: Character) -> None:
         game.over = {"cause": cause, "place": ""}
         game.travel = None
     else:
-        game.party = [c for c in game.party if c.alive]
+        game.party = [c for c in game.party if c.alive or c is game.party[0]]  # never the leader: they lead, dead or not
         game.waiting = [c for c in getattr(game, "waiting", []) if c.alive]
+        from realmwalker.game import pack
+
+        pack.sync(game)  # what they carried stays with the party
         from realmwalker.game.companions import died
 
         died(game, char)
@@ -144,7 +147,7 @@ def spoiled(game, item) -> bool:
 def food_choices(game, char: Character, *, desperate: bool = False, fire: bool = False) -> list:
     """Food this character would eat now, best first (whatever spoils soonest, safe food before risky)."""
     out = []
-    packs = [char] + [m for m in getattr(game, "party", []) if m is not char]  # own pack first, then the others'
+    packs = distinct_packs([char] + [m for m in getattr(game, "party", []) if m is not char])  # own pack first
     for it in (it for m in packs for it in m.inventory):
         d = game.tables.items.get(it.def_id)
         food = d.get("food")
@@ -183,7 +186,7 @@ def eat_item(game, char: Character, item, units: int = 1) -> str:
 
 def water_sources(game, char: Character) -> list:
     """Containers with water in them, cleanest first."""
-    packs = [char] + [m for m in getattr(game, "party", []) if m is not char]
+    packs = distinct_packs([char] + [m for m in getattr(game, "party", []) if m is not char])
     skins = [it for m in packs for it in m.inventory if it.fill > 0 and container_capacity(game.tables.items, it)]
     return sorted(skins, key=lambda it: WATER_RISK.get(it.fill_kind, 2))
 

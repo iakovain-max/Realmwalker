@@ -14,6 +14,7 @@ from __future__ import annotations
 from realmwalker.core import dice
 from realmwalker.core.rng import RNG
 from realmwalker.game import news, reputation
+from realmwalker.rules.inventory import distinct_packs
 from realmwalker.rules.items import Item, money_text
 from realmwalker.world import factions as fx
 
@@ -633,13 +634,16 @@ def confiscate(game, realm_id: int) -> None:
         return
     items = []
     money = 0
+    keep: set[int] = set()  # the clothes on their backs (the party may share one pack: rules/inventory.py)
     for c in game.party:
-        keep = {uid for slot, uid in c.equipped.items()
-                if game.tables.items.get(c.item(uid).def_id).get("category") == "clothing"} if c.equipped else set()
+        keep |= {uid for slot, uid in c.equipped.items()
+                 if c.item(uid) is not None and game.tables.items.get(c.item(uid).def_id).get("category") == "clothing"}
+    for c in distinct_packs(game.party):
         taken = [it for it in c.inventory if it.uid not in keep]
-        c.inventory = [it for it in c.inventory if it.uid in keep]
-        c.equipped = {slot: uid for slot, uid in c.equipped.items() if uid in keep}
+        c.inventory[:] = [it for it in c.inventory if it.uid in keep]  # in place: the pack stays shared
         items += [it.to_dict() for it in taken]
+    for c in game.party:
+        c.equipped = {slot: uid for slot, uid in c.equipped.items() if uid in keep}
         money += c.money
         c.money = 0
     s = game.sentence or {}

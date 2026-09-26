@@ -287,6 +287,13 @@ def _check_companions(game, fail) -> None:
     """M7: a party of at most five, loyalty in range, companions tied to real townsfolk.
     (One killed in a fight stays in the party until the battle and its aftermath are over.)"""
     settled = game.battle is None and game.aftermath is None and game.over is None
+    if settled and any(c.alive and c.inventory is not game.party[0].inventory for c in game.party):
+        fail("someone in the party carries apart from the party's one pack")
+    worn = [uid for c in game.party if c.alive for uid in c.equipped.values()]
+    if len(worn) != len(set(worn)):
+        fail("two people in the party wear the same thing")
+    if any(c.inventory is game.party[0].inventory for c in getattr(game, "waiting", [])):
+        fail("a companion left waiting still carries from the party's pack")
     if len(game.party) > 1 + int(game.tables.companions["max_companions"]):
         fail(f"the party is too big ({len(game.party)})")
     if game.party and game.party[0].companion:

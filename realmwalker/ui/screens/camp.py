@@ -188,8 +188,10 @@ class CampScreen(Screen):
             words = status_words(c, g.tables) or ["<good>well</>"]
             y += canvas.wrapped(x, y, f"<name>{markup.escape(c.name.split()[0])}</> {c.hp}/{c.max_hp} hp · "
                                       + " · ".join(words), col, max_lines=3)
-        food = sum(it.qty for c in g.party for it in c.inventory if g.tables.items.get(it.def_id).get("food"))
-        water = sum(it.fill for c in g.party for it in c.inventory)
+        from realmwalker.rules.inventory import carried
+
+        food = sum(it.qty for it in carried(g.party) if g.tables.items.get(it.def_id).get("food"))
+        water = sum(it.fill for it in carried(g.party))
         canvas.markup(x, y, f"<dim>Food in the packs:</> {food} · <dim>water:</> {water:g} pints", max_width=col)
         y += 2
         for key, label, fn, ok, why in self.actions():

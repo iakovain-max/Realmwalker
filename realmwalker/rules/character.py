@@ -122,8 +122,9 @@ class Character:
         return None
 
     def new_uid(self) -> int:
-        uid = self.next_uid
-        self.next_uid += 1
+        # The party shares one pack (rules/inventory.py), so a number must be free in it, not just in our own count.
+        uid = max(self.next_uid, max((it.uid for it in self.inventory), default=0) + 1)
+        self.next_uid = uid + 1
         return uid
 
 
@@ -377,8 +378,8 @@ class Sheet:
 
     def encumbrance(self) -> int:
         """0 unburdened, 1 encumbered, 2 heavily encumbered, 3 overloaded (cannot travel)."""
-        w = self.load()
-        light, heavy, limit = self.capacity()
+        w = self.pack_load()
+        light, heavy, limit = self.pack_capacity()
         if w > limit:
             return 3
         if w > heavy:
@@ -386,6 +387,27 @@ class Sheet:
         if w > light:
             return 1
         return 0
+
+    def pack_load(self) -> float:
+        """What the party carries together when it shares one pack (rules/inventory.py): the pack once, each
+        member's worn things counted the way load() counts them, and everyone's coin. Alone, just load()."""
+        from realmwalker.rules.inventory import pack_mates
+
+        mates = pack_mates(self.c)
+        if len(mates) <= 1:
+            return self.load()
+        whole = sum(self.items.weight(it) for it in self.c.inventory)
+        return round(sum(Sheet(m, self.t).load() for m in mates) - (len(mates) - 1) * whole, 1)
+
+    def pack_capacity(self) -> tuple[float, float, float]:
+        """Everyone's strength together (and the animals) when the party shares one pack. Alone, just capacity()."""
+        from realmwalker.rules.inventory import pack_mates
+
+        mates = pack_mates(self.c)
+        if len(mates) <= 1:
+            return self.capacity()
+        caps = [Sheet(m, self.t).capacity() for m in mates]
+        return tuple(sum(c[i] for c in caps) for i in range(3))  # type: ignore[return-value]
 
     def armor_too_heavy(self) -> bool:
         armor = self.c.equipped_item("armor")

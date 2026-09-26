@@ -61,17 +61,18 @@ def worse_water(a: str, b: str) -> str:
 
 
 def remove_item(char: Character, uid: int, qty: int | None = None) -> Item | None:
-    """Take items out of the pack (unequipping first). Returns the removed items as a new stack."""
+    """Take items out of the pack (unequipping first, whoever in the party has it on). Returns the removed items as
+    a new stack."""
     it = char.item(uid)
     if it is None:
         return None
     take = it.qty if qty is None else max(1, min(qty, it.qty))
     if take >= it.qty:
-        slot = char.slot_of(uid)
+        wearer, slot = worn_by(char, uid)
         if slot is not None and cursed(it):
             return None  # it will not come off
         if slot is not None:
-            del char.equipped[slot]
+            del wearer.equipped[slot]
         char.inventory.remove(it)
         return it
     it.qty -= take
@@ -105,6 +106,9 @@ def equip(char: Character, items: ItemTable, uid: int, slot: str | None = None) 
             slot = "off_hand"  # a second light weapon goes in the other hand
     if slot not in slots:
         return False, f"The {items.name(it, False)} doesn't go there."
+    wearer, _ = worn_by(char, uid)
+    if wearer is not None and wearer is not char:
+        return False, f"{wearer.name.split()[0]} has the {items.name(it, False)}. Take it off them first."
     there = char.equipped_item(slot)
     if cursed(there) and there.uid != uid:
         there.magic["curse_known"] = True
@@ -137,8 +141,8 @@ def equip(char: Character, items: ItemTable, uid: int, slot: str | None = None) 
 
 
 def best_slot_items(char: Character, items: ItemTable, slot: str) -> list[Item]:
-    """Everything in the pack that could go in this slot."""
-    return [it for it in char.inventory if slot in items.slots_for(it)]
+    """Everything in the pack that could go in this slot (and nobody else in the party has on)."""
+    return [it for it in char.inventory if slot in items.slots_for(it) and worn_by(char, it.uid)[0] in (None, char)]
 
 
 def equip_everything_sensible(char: Character, items: ItemTable) -> None:
@@ -167,3 +171,87 @@ def equip_everything_sensible(char: Character, items: ItemTable) -> None:
             if items.category(it) == "shield":
                 equip(char, items, it.uid, "off_hand")
                 break
+
+
+# ---------------------------------------------------------------------------- the party's one pack
+# Everyone travelling together shares one pack: every member's `inventory` is the same list (the leader's), so
+# whoever needs the arrows, the bandages or the bread finds them, and nobody hands things about. What each wears
+# and wields stays theirs (`equipped`, by item number in the shared list). The weight is carried together:
+# Sheet.pack_load / pack_capacity. game/pack.py keeps the party in step as people join, leave and die.
+def pack_mates(char: Character) -> list[Character]:
+    """Everyone sharing this character's pack, themselves included."""
+    mates = getattr(char, "_pack_mates", None)
+    if mates and any(m is char for m in mates) and all(m.inventory is char.inventory for m in mates):
+        return mates
+    return [char]
+
+
+def worn_by(char: Character, uid: int) -> tuple[Character | None, str | None]:
+    """(who has it on, and where) among those sharing this pack, or (None, None)."""
+    for m in pack_mates(char):
+        slot = m.slot_of(uid)
+        if slot is not None:
+            return m, slot
+    return None, None
+
+
+def distinct_packs(chars) -> list[Character]:
+    """One character for each separate pack among these: the party shares one, so usually just the leader. Loop over
+    these, not over the party, to count or list what is carried without counting it twice."""
+    seen: set[int] = set()
+    out = []
+    for c in chars:
+        if id(c.inventory) not in seen:
+            seen.add(id(c.inventory))
+            out.append(c)
+    return out
+
+
+def carried(chars) -> list[Item]:
+    """Everything these characters carry, each thing once."""
+    return [it for c in distinct_packs(chars) for it in c.inventory]
+
+
+def merge_into(shared: list[Item], char: Character, items: ItemTable | None = None) -> None:
+    """Pour a character's things into the shared pack. What they do not wear joins a like stack if there is one (a
+    quiver of bolts on a quiver of bolts); anything else keeps its number unless that is taken there, and then gets
+    a free one (what they wear follows it)."""
+    if char.inventory is shared:
+        return
+    taken = {it.uid for it in shared}
+    top = max(taken, default=0)
+    renumber: dict[int, int] = {}
+    worn = set(char.equipped.values())
+    for it in char.inventory:
+        if items is not None and it.uid not in worn and items.stackable(it) and not it.magic:
+            like = next((x for x in shared if x.def_id == it.def_id and x.quality == it.quality
+                         and x.condition == it.condition and x.name == it.name and sorted(x.tags) == sorted(it.tags)
+                         and abs(x.made_at - it.made_at) < 60 * 24 and not x.magic and x.fill == it.fill), None)
+            if like is not None:
+                like.qty += it.qty
+                continue
+        if it.uid in taken:
+            top += 1
+            renumber[it.uid] = top
+            it.uid = top
+        taken.add(it.uid)
+        top = max(top, it.uid)
+        shared.append(it)
+    char.equipped = {slot: renumber.get(uid, uid) for slot, uid in char.equipped.items()}
+    char.inventory = shared
+
+
+def take_out(char: Character, *, keep_gear: bool = True) -> None:
+    """Leave the shared pack: with what they wear and wield (keep_gear), or with nothing, leaving it all to the
+    rest (the dead)."""
+    shared = char.inventory
+    if keep_gear:
+        worn = set(char.equipped.values())
+        own = [it for it in shared if it.uid in worn]
+        for it in own:
+            shared.remove(it)
+        char.inventory = own
+    else:
+        char.equipped = {}
+        char.inventory = []
+    char._pack_mates = None
