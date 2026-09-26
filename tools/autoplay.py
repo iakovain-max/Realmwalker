@@ -139,6 +139,9 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
         _LAST_TIME[key] = w.time
         if p.explored.shape != (w.width, w.height):
             fail("explored map has the wrong shape")
+        walk = getattr(game, "walk_to", None)
+        if walk is not None and (game.local is None or not game.local.in_bounds(*walk)):
+            fail(f"walking to {walk}, which is not on this map")
         for member in game.party:
             if not 0 <= member.hp <= member.max_hp:
                 fail(f"{member.name} has {member.hp}/{member.max_hp} hit points")
@@ -225,9 +228,6 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
         _check_law(game, fail)
         _check_quests(game, fail)
         _check_companions(game, fail)
-        walk = getattr(game, "walk_to", None)
-        if walk is not None and (game.local is None or not game.local.in_bounds(*walk)):
-            fail(f"walking to {walk}, which is not on this map")
         if not game.leader.alive and game.over is None and b is None and game.aftermath is None:
             fail("the leader is dead but the game goes on")
         if game.over is None and any(not c.alive for c in game.party) and b is None and game.aftermath is None:
