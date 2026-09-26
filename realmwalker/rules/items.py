@@ -72,6 +72,10 @@ class ItemTable:
     def __contains__(self, def_id: str) -> bool:
         return def_id in self.defs
 
+    def proficiency_words(self, keys: list[str]) -> str:
+        """Weapon or armour training as words: a group ("simple", "martial") stays, an item id becomes its name."""
+        return ", ".join(self.defs[k]["name"] if k in self.defs else k.replace("_", " ") for k in keys)
+
     # ------------------------------------------------------------------ descriptions
     def base_name(self, item: Item) -> str:
         if item.magic:

@@ -165,7 +165,8 @@ def describe_overworld(game: GameState, x: int, y: int) -> str:
         if (x, y) != (p.x, p.y) and abs(x - p.x) <= 1 and abs(y - p.y) <= 1:
             minutes = game.step_minutes(p.x, p.y, x, y)
             if minutes:
-                lines.append(f"<dim>About {max(1, round(minutes / 60))} hour(s) to walk there.</>")
+                hours = max(1, round(minutes / 60))
+                lines.append(f"<dim>About {'an hour' if hours == 1 else f'{hours} hours'} to walk there.</>")
     return "\n".join(lines)
 
 

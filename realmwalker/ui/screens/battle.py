@@ -508,7 +508,7 @@ class BattleScreen(Screen):
         wounds = "; ".join(w.label for w in f.creature.wounds)
         known = f.creature.def_id in self.battle.known
         stats = f" <dim>AC {f.ac()}, {f.hp}/{f.max_hp} hp.</>" if known else ""
-        return desc + stats + (f" <danger>{wounds}.</>" if wounds else "")
+        return desc + stats + (f" <danger>{wounds[:1].upper() + wounds[1:]}.</>" if wounds else "")
 
     def _render_log(self, canvas: Canvas, x: int, y: int, w: int, h: int) -> None:
         if h <= 0 or w <= 4:

@@ -78,7 +78,7 @@
       "items": [["ink_and_quill", 1], ["parchment", 10], ["knife", 1], ["colleague_letter", 1], ["common_clothes", 1], ["boots", 1], ["wool_cloak", 1]],
       "money": 1000,
       "feature": {"name": "Researcher", "text": "If you don't know something, you usually know where it is written down, and who guards the book."},
-      "tie": {"kind": "scholar", "text": "Your old master {master} keeps a library in {place}. You left owing a book and an explanation."},
+      "tie": {"kind": "scholar", "text": "Your old teacher, {master}, keeps a library in {place}. You left owing a book and an explanation."},
       "start": {"kinds": ["city", "town"]},
       "personality": ["I use polysyllabic words to seem clever.", "I'm used to helping out those who aren't as smart as I am.", "I'm easily distracted by a promising thought."],
       "ideal": ["Knowledge: the path to power is understanding.", "Beauty: what is beautiful points toward what is true.", "No limits: nothing should fetter possibility."],

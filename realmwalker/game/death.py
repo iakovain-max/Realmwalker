@@ -15,6 +15,7 @@ stays, in the world.
 
 from __future__ import annotations
 
+from realmwalker.core.textgen import a_or_an
 from realmwalker.core.textgen import escape_markup as esc
 from realmwalker.rules.items import money_text
 from realmwalker.world import factions as fx
@@ -77,13 +78,25 @@ def die(game) -> dict:
     return record
 
 
+def how_they_died(cause: str) -> str:
+    """A death as it reads after a name. Causes are kept as they happen ("froze to death", "died of thirst",
+    "killed by the wolf", "of misfortune"); this makes each one follow a name: "... was killed by the wolf"."""
+    cause = (cause or "").strip() or "died"
+    words = cause.split()
+    if words[0] == "of":
+        return f"died {cause}"
+    if len(words) > 1 and words[1] == "by":
+        return f"was {cause}"
+    return cause
+
+
 def remember(game, record: dict) -> None:
     """The world hears of it: the chronicle for the famous, news for anyone people had heard of."""
     from realmwalker.world import news
 
     w = game.world
     known = record["fame"] + record["infamy"]
-    text = f"{record['name']} died {record['cause']}, at {record['place']}"
+    text = f"{record['name']} {how_they_died(record['cause'])}, at {record['place']}"
     if known >= 8 or record["level"] >= 4:
         w.history.append({"year": record["year"], "kind": "legend", "text": text, "factions": [], "places": [],
                           "figures": [], "importance": 3 if known >= 20 else 2, "player": True})
@@ -108,7 +121,8 @@ def release_companions(game) -> None:
         released(game, c, npc)  # sell-swords can be hired again; the rest go back to who they were
         npc.alive = True
         npc.present = True
-        npc.remember(f"travelled with {game.leader.name}, who died {game.over.get('cause', 'badly') if game.over else 'badly'}")
+        how = how_they_died(game.over.get("cause", "") if game.over else "") if game.over else "died badly"
+        npc.remember(f"travelled with {game.leader.name}, who {how}")
         town = town_of(w, npc.settlement)
         if npc.id not in town.npcs:
             town.npcs.append(npc.id)
@@ -144,7 +158,8 @@ def fallback_obituary(game, record: dict) -> list[str]:
         f"<title>{esc(record['name'])}</>",
         f"<dim>{race} {cls}, level {record['level']}, aged {record['age']}</>",
         "",
-        f"Died {esc(record['date'])}, {esc(record['cause'])}, at {esc(record['place'])}.",
+        f"{esc(record['name'].split()[0])} {esc(how_they_died(record['cause']))} on {esc(record['date'])}, "
+        f"at {esc(record['place'])}.",
     ]
     if record.get("obituary"):
         lines += ["", *[f"<ai>{esc(p)}</>" if record.get("obituary_source") == "ai" else esc(p)
@@ -178,9 +193,9 @@ def obituary_facts(game, record: dict) -> dict:
             standings.append(f"{f.name}: {word}")
     return {
         "name": record["name"],
-        "who": f"a {t.races[record['race']]['name'].lower()} {t.classes[record['cls']]['name'].lower()}, "
+        "who": f"{a_or_an(t.races[record['race']]['name'].lower())} {t.classes[record['cls']]['name'].lower()}, "
                f"level {record['level']}, aged {record['age']}",
-        "death": f"{record['cause']}, at {record['place']}, in the year {record['year']}",
+        "death": f"{how_they_died(record['cause'])}, at {record['place']}, in the year {record['year']}",
         "deeds": "; ".join(record.get("deeds", [])) or "nothing anyone wrote down",
         "kills": kill_list(game, record) or "nothing worth counting",
         "standing": "; ".join(standings) or "nobody of importance had an opinion",

@@ -109,6 +109,7 @@ def changes(world, tables, before: dict, after: dict) -> list[str]:
 def summary_text(world, tables, summary: dict) -> list[str]:
     """The whole 'while you were away' page, marked up."""
     from realmwalker.core.textgen import escape_markup as esc
+    from realmwalker.game import death
 
     days = summary["days"]
     span = f"{days} days" if days < 60 else f"{days // 30} months"
@@ -123,6 +124,6 @@ def summary_text(world, tables, summary: dict) -> list[str]:
     fallen = world.politics.get("fallen", [])
     if fallen:
         last = fallen[-1]
-        out += ["", f"<dim>The last traveller to walk this land was {esc(last['name'])}, who died "
-                    f"{esc(last['cause'])} at {esc(last['place'])} in {last['year']}.</>"]
+        out += ["", f"<dim>The last traveller to walk this land was {esc(last['name'])}, who "
+                    f"{esc(death.how_they_died(last['cause']))} at {esc(last['place'])} in {last['year']}.</>"]
     return out

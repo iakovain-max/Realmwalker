@@ -294,6 +294,7 @@ def test_prisoners_for_the_law(game):
     money = game.leader.money
     conv.choose(next(c for c in conv.menu() if c.id == "prisoners"))
     assert game.leader.money == money + 800 and not game.renown.flags.get("captives")
+    assert game.leader.deeds[-1] == "handed a prisoner to the law"  # not "1 prisoner(s)"
 
 
 def test_settling_debts_in_conversation(game):

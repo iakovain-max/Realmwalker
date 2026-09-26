@@ -36,8 +36,30 @@ def fill(template: str, rng: RNG, tables: Mapping[str, Sequence[str]], values: M
     return tidy(expand(template, 0))
 
 
+# Words starting with a vowel letter that still take "a" (a one-eyed man, a useful knife, a ewe), and the few
+# with a silent h that take "an"; a lone "a" before a little word ("plan a is") is a letter, not an article.
+_A_BEFORE = ("one", "once", "uni", "use", "usu", "ure", "uti", "eu", "ewe", "uku")
+_AN_BEFORE = ("hour", "honest", "honour", "honor", "heir")
+_NOT_ARTICLE = {"is", "in", "and", "or", "as", "at", "if", "it", "of", "on", "an", "am", "are", "a", "i", "up"}
+_A_VOWEL_RE = re.compile(r"\b([Aa]) ([AEIOUaeiouHh][\w-]*)")
+
+
+def _an(m: re.Match) -> str:
+    word = m.group(2).lower()
+    if word in _NOT_ARTICLE:
+        return m.group(0)
+    if word[0] == "h":
+        return f"{m.group(1)}n {m.group(2)}" if word.startswith(_AN_BEFORE) else m.group(0)
+    return m.group(0) if word.startswith(_A_BEFORE) else f"{m.group(1)}n {m.group(2)}"
+
+
+def articles(text: str) -> str:
+    """Fix "a" before a vowel: a template's "in a {season}" filled with "autumn" reads "in an autumn"."""
+    return _A_VOWEL_RE.sub(_an, text)
+
+
 def tidy(text: str) -> str:
-    text = re.sub(r"\s+", " ", text).strip()
+    text = articles(re.sub(r"\s+", " ", text).strip())
     text = re.sub(r"\s+([,.;:!?])", r"\1", text)
     # Capitalise the start of each sentence, and of speech that opens one ("the Grey Wolf. A wolf..." -> "The...").
     return re.sub(r"(^|[.!?]\s+)([\"“]?)([a-z])", lambda m: m.group(1) + m.group(2) + m.group(3).upper(), text)

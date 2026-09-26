@@ -94,6 +94,20 @@ the side panel shows how much work is in hand and when the next piece is due (cl
 their own, a carter axle-deep in the ruts, a ring of standing stones, charcoal burners, a sick child at a cottage,
 and a body in the reeds. Twenty in all, each with real choices.
 
+### Cloud session, 2026-09-26: the first minutes read right
+
+(Pull request "The first minutes read right".) Found by recording every line the game draws during long runs of the
+bot in nine worlds and searching it for slips. Built-in text now says "an" before a vowel ("born in an autumn",
+"Places that suit an acolyte", "formerly an outlander"). Weapon training is listed by name ("hand crossbow", not
+"hand_crossbow"). Food in the pack says "keeps 60 days" (it read like sixty days of food). A fighter's fighting style
+starts as the one that suits the chosen kit — Defence with mail and a shield, Archery with the longbow, Great Weapon
+Fighting with the greataxe — instead of always Archery, until you pick one yourself. A death reads right wherever it
+is told ("who froze to death", "was killed by the wolf"; it said "who died died of thirst"). "About a day and a half"
+instead of "about 1 days"; no more "hour(s)". "Born to the Ironvein Clan", not "the the"; "Your old
+teacher, Master Dario" instead of "Your old master Master Dario". A conversation choice you can't take yet reads
+"I want to join the Guild of the Star — they need to think better of you first". Checked by
+`tests/test_first_minutes.py`.
+
 **More things that live out there.** Gnolls, hobgoblins, bugbears, berserkers and stirges, each in bands of
 their own and in country that suits them (measured with the balance harness: a gnoll pack or a hobgoblin patrol
 is a real fight at level 1; berserkers are a decision, not a fight, until about level 3).

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from realmwalker.ai.service import AIResult, Priority, Ticket
 from realmwalker.ai.tasks import BACKSTORY, backstory_variables
+from realmwalker.core.textgen import a_or_an
 from realmwalker.game.describe import cap, settlement_line
 from realmwalker.game.state import new_game
 from realmwalker.rules.character import ABILITIES, modifier, signed
@@ -146,11 +147,12 @@ class CreationScreen(Screen):
             if kind == "style":
                 styles = list(cls["fighting_styles"])
                 self.b.fighting_style = styles[(styles.index(self.b.fighting_style) + delta) % len(styles)]
+                self.b.style_chosen = True
             elif kind == "subclass":
                 subs = list(cls["subclasses"])
                 self.b.subclass = subs[(subs.index(self.b.subclass) + delta) % len(subs)]
             elif kind == "kit":
-                self.b.kit = (self.b.kit + delta) % len(cls["kits"])
+                self.b.set_kit((self.b.kit + delta) % len(cls["kits"]))
         elif self.step == 5:
             if row == 1:
                 self.b.sex = SEXES[(SEXES.index(self.b.sex) + 1) % 2]
@@ -371,7 +373,8 @@ class CreationScreen(Screen):
         feats = "\n".join(f"<loot>{f['name']}</> <dim>(level {f['level']})</>: {f['text']}" for f in c["features"] if f["level"] <= 5)
         text = (f"<name>{c['name']}</>\n{c['description']}\n\n"
                 f"<dim>Hit die:</> d{c['hit_die']} · <dim>Saves:</> {', '.join(abil[a]['name'] for a in c['saves'])}\n"
-                f"<dim>Armour:</> {', '.join(c['armor']) or 'none'} · <dim>Weapons:</> {', '.join(c['weapons'])}\n"
+                f"<dim>Armour:</> {', '.join(c['armor']) or 'none'} · "
+                f"<dim>Weapons:</> {self.t.items.proficiency_words(c['weapons'])}\n"
                 f"<dim>Skills:</> choose {c['skill_count']}\n\n{feats}")
         self._detail(canvas, x + 22, y, w - 22, h, text)
 
@@ -505,7 +508,7 @@ class CreationScreen(Screen):
     def _r_start(self, canvas, x, y, w, h) -> None:
         self._refresh_places()
         bg = self.t.backgrounds[self.b.background]
-        canvas.wrapped(x, y, f"Places that suit a {bg['name'].lower()}:", w)
+        canvas.wrapped(x, y, f"Places that suit {a_or_an(bg['name'].lower())}:", w)
         for i, sid in enumerate(self.places):
             s = self.world.settlements[sid]
             selected = i == self.cursor[6]
@@ -527,7 +530,7 @@ class CreationScreen(Screen):
         home = self.home_name()
         lines = [
             f"<name>{markup.escape(self.name_field.value)}</>, {b.sex}, {b.age}: {t.races[b.race]['name']} "
-            f"{t.classes[b.cls]['name']}, formerly a {t.backgrounds[b.background]['name'].lower()}.",
+            f"{t.classes[b.cls]['name']}, formerly {a_or_an(t.backgrounds[b.background]['name'].lower())}.",
             f"<dim>Starts in</> <place>{home}</>.",
             "",
             f"<dim>Skills:</> {', '.join(t.rules['skills'][s]['name'] + (' ♦' if s in b.expertise else '') for s in b.all_skills())}",
