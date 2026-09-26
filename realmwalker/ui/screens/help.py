@@ -66,7 +66,7 @@ Roads are much faster than open country. Forests, hills and marshes are slow; mo
 <title>Your character</title>
   <loot>c</>               Character sheet: abilities, skills, features, ties, backstory (<loot>l</> level-up choices, <loot>Tab</> next member)
   <loot>p</>               The party: companions, their loyalty, pay and orders
-  <loot>S</>               Spells: what each caster knows, what it does, and how many slots are left today
+  <loot>S</>               Spells: what each caster knows, what it does, how many slots are left today; Enter casts one outside a fight
   <loot>i</>               Inventory: Enter wears/wields/removes/uses, d drops, D drops one, ← → filters, s sorts, G gives to the next member, Tab next member
   <loot>e</>               Equipment: what you wear in each slot, which body parts are protected, warmth
   <loot>g</> or <loot>,</>          Pick up what is lying here (on foot, in the close view)
@@ -80,6 +80,7 @@ At camp, <loot>m</> makes what a traveller can make: torches and splints out of 
 <title>Levels and spells</title>
 Experience comes from fights, deeds and discovery. On a new level you gain hit points and features at once; the choices wait for you on the level-up screen, which opens by itself (or later: c, then l): a path at level 2 or 3 (Champion or Knight, Thief or Cutthroat, a wizard's school), ability increases at levels 4 and 8 (+2 to one or +1 to two), and a wizard's new spells and cantrips. "Choose for me" makes sensible choices.
 Spell scrolls are sold where mages gather. A wizard can copy one into the spellbook (Enter on it in the pack: an Arcana check, 50 gold crowns and two hours a spell level; the scroll is used up either way). Anyone can read a scroll aloud once in a fight, from the spell menu (a check if it is not their kind of magic).
+Some spells are worth casting before the fight: Mage Armour lasts eight hours, Stoneskin and Death Ward an hour, Shield of Faith ten minutes. Cast them from the Spells screen (S, pick it, Enter; left and right choose who it is for). They stay on through any fight in that time, the sheet shows them, and the log says when one fades. Healing spells can be cast from there too, or from the health screen (h) to choose the wound.
 
 <title>Companions</title>
 Travellers looking for work wait at the inns (and sell-swords in a mercenary company's town). Talk to them: "Would you travel with me?" shows their price: a daily wage, some of it up front, and for some a share of the loot. Up to four can travel with you. They are whole people, with needs, wounds, sicknesses and a class and level of their own, and they can die. In a fight you command each of them.

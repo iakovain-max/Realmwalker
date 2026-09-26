@@ -111,6 +111,21 @@ finished work, and what to buy before leaving town. Settings gains **AI extras**
 energy for people, places and conversation if you would rather not spend it on regions, dungeons, items, the
 wording of work and obituaries.
 
+### Cloud session, 2026-09-26: magic on the road
+
+(Pull request "Magic on the road".) Mage Armour said "for eight hours" but only ever lasted the one fight, and a
+wizard could not put it on before setting out, so its first turn in every fight went on armour. Now the spells that
+last ten minutes or more (Mage Armour eight hours, Stoneskin and Death Ward an hour, Shield of Faith ten minutes) can
+be cast on the road from the Spells screen, stay on through every fight in that time, and are still on after a fight
+they were cast in. The side panel and the sheet count their armour, the sheet lists them with the time left, and the
+log says when one fades. The same spell renews rather than stacks, and the fight's spell menu says "already working
+on you" instead of spending a second slot. The Spells screen (**S**) is now a list you can pick from, with the chosen
+spell described on the right, a green dot on what can be cast here, and **Enter** to cast (**left**/**right** choose
+who it is for); healing spells can be cast from there too, on the worst wound. Spells that only make sense in a fight
+say so. Kept as a timed effect on the character (`Character.effects["spell:<id>"]`, saved already, so old characters
+still load). `rules/spells.py` (`lasting`, `keep`), `game/magic.py` (`cast_on_road`); checked by
+`tests/test_road_magic.py`.
+
 **Prisoners are worth more to their own people.** Bind a beaten bandit and you could only ever hand them to the
 watch. If you are sworn to the thieves' guild, their fence will take your prisoners out by the back door and come
 back with three times the head price. Nothing of it is ever spoken about (no news, no fame, only infamy), the
