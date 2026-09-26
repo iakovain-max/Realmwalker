@@ -73,6 +73,11 @@ class GameScreen(Screen):
         if self.game.in_local:
             self.game.say("You are already on foot among the details. Walk off the edge, or press < to leave.", "system")
             return
+        if self.game.gate_shut():
+            from realmwalker.game import events
+
+            self.game.event = events.make_event(self.game, "shut_gate")  # the event screen opens by itself
+            return
         self.game.enter_local()
         self.app.save_game()
 
@@ -185,6 +190,8 @@ class GameScreen(Screen):
             from realmwalker.ui.screens.party import PartyScreen
 
             self.app.push(PartyScreen(self.app, game))
+        elif ev.key == "z":
+            game.say(game.toggle_sneak(), "info")
         elif ev.key == "s" and game.in_local:
             from realmwalker.game import dungeon
 
@@ -652,6 +659,9 @@ class GameScreen(Screen):
             b = lm.building_at(p.lx, p.ly) if lm else None
             canvas.markup(ix, row, "<dim>On foot, looking closely" + (f"; inside a {b.kind}" if b else "") + ".</>", max_width=iw)
             row += 1
+        if game.sneaking:
+            canvas.markup(ix, row, f"<info>Creeping</> <dim>(Stealth {game.sneak_roll}; z to stop)</>", max_width=iw)
+            row += 1
         if game.lost:
             canvas.markup(ix, row, "<warn>Lost: you don't know which way you're going.</>", max_width=iw)
             row += 1
@@ -678,7 +688,7 @@ class GameScreen(Screen):
             ("<", "climb the stairs") if (game.local is not None and game.local.kind == "dungeon") else
             ("<", "back to the overworld"),
             ("l", "look"), ("m t", "world map · travel"), ("c i e", "character · pack · gear"),
-            ("g s", "pick up · search") if game.in_local else (".", "wait an hour"), ("r h", "camp · health"),
+            ("g s z", "pick up · search · creep") if game.in_local else (".", "wait an hour"), ("r h", "camp · health"),
             ("w W", "water · wash"), ("p f n", "party · factions · news"), ("j S", "journal · spells"),
             ("L /", "log · legend"), ("Esc", "menu"),
         ]
@@ -756,4 +766,4 @@ class GameScreen(Screen):
     def autoplay_keys(self) -> list[KeyEvent]:
         moves = [KeyEvent(k) for k in ("up", "down", "left", "right", "upleft", "upright", "downleft", "downright")]
         return moves * 4 + [KeyEvent(k) for k in (">", "<", "l", "enter", "escape", ".", "m", "t", "L", "/",
-                                                   "c", "i", "e", "g", "r", "h", "w", "W", "f", "n", "p", "s", "j", "S")]
+                                                   "c", "i", "e", "g", "r", "h", "w", "W", "f", "n", "p", "s", "j", "S", "z")]

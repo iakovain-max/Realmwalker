@@ -470,6 +470,30 @@ def _nearest_unknown_site(game):
 
 
 # ---------------------------------------------------------------------------- rest
+RUSTLING_CHANCE = 0.02  # a night in the open with animals tethered, plus a little more for each step of danger
+
+
+def _rustlers(game, fire: bool) -> list[str]:
+    """A night in the wild with mules or horses: now and then somebody comes for them. Someone on watch sees them
+    off; a fire shows where you are."""
+    from realmwalker.game.companions import watching
+
+    p = game.player
+    rng = game.world.rng.child(f"rustlers/{game.world.time}/{p.x},{p.y}")
+    chance = (RUSTLING_CHANCE + 0.01 * int(game.world.danger[p.x, p.y])) * (1.3 if fire else 1.0)
+    if not rng.chance(chance):
+        return []
+    if watching(game):
+        return ["<warn>In the small hours the one on watch shouts: someone was at the animals.</> Whoever it was runs "
+                "off into the dark with nothing."]
+    animal = rng.choice(game.leader.animals)
+    game.leader.animals.remove(animal)
+    game.dirty = True
+    what = f"{animal['name']} the {str(animal.get('kind', 'animal')).replace('_', ' ')}"
+    return [f"<danger>In the morning {what} is gone:</> a cut tether, and hoofprints going away into the dark. "
+            f"Someone on watch might have stopped it."]
+
+
 def rest(game, kind: str) -> list[str]:
     """Rest: 'short' (1 hour) or 'long' (8 hours). A long rest in the wilds may be interrupted."""
     from realmwalker.game.encounters import roll_encounter
@@ -509,6 +533,8 @@ def rest(game, kind: str) -> list[str]:
                 game.encounter = enc
                 notes.append(f"<danger>Your rest is broken after {hour + 1} hour{'s' if hour else ''}.</>")
                 return notes
+    if kind == "long" and lm is None and game.over is None and game.leader.animals:
+        notes += _rustlers(game, fire)
     if kind == "long" and lm is None and game.over is None:
         from realmwalker.game.camp import night_sound
 

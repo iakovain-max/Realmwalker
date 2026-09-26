@@ -277,6 +277,26 @@
         {"label": "Cut them down and bury them", "outcome": {"text": ["It takes an hour. Nobody thanks you, and somebody may mind."], "xp": 10, "deed": "buried the hanged at a crossroads", "fatigue": 10, "time": 60}},
         {"label": "Walk on", "outcome": {"text": ["You walk on, not looking up."]}}
       ]
+    },
+    "shut_gate": {
+      "_comment": "Not met on the road: a walled town or city after dark, when you press > at its gate (game/state.py gate_shut).",
+      "name": "a shut gate",
+      "where": {"biomes": ["none"], "danger": [0, 10], "time": "night", "season": "any"},
+      "weight": 0,
+      "intro": ["The gates are shut for the night. A lantern moves on the wall above, and stops.",
+                "The gate is barred. Somewhere behind it a dog barks, and a shutter in the postern slides open a hand's width.",
+                "Too late: the great doors are shut and chained, and the walls are dark but for one watch fire."],
+      "options": [
+        {"label": "Knock at the postern and pay the warden", "requires": {"money": 20},
+         "outcome": {"text": ["Two silver pennies through the grille, and the little door in the big one opens just wide enough.", "\"Late, aren't you,\" says the warden, and takes the coin, and lets you through the postern."], "money": -20, "let_in": true, "time": 5}},
+        {"label": "Talk your way in", "check": {"skill": "persuasion", "dc": 13,
+          "success": {"text": ["The warden hears you out, grumbles, and draws the bolt on the postern.", "\"Go on, then. And I never saw you.\" The postern opens."], "let_in": true, "time": 10},
+          "failure": {"text": ["\"Come back at dawn like everyone else.\" The shutter slams."], "time": 10}}},
+        {"label": "Climb the wall where it is low", "check": {"skill": "athletics", "dc": 14,
+          "success": {"text": ["Over the wall where the stones are loose and the watch is far away, and down into a stinking alley."], "let_in": true, "fatigue": 5, "time": 20},
+          "failure": {"text": ["Halfway up, a stone comes away in your hand. You land hard in the ditch."], "hurt": "1d6", "fatigue": 5, "time": 20}}},
+        {"label": "Sleep under the walls until dawn", "outcome": {"text": ["You find a corner out of the wind below the walls and sleep as well as you can. At dawn the gates open with a great deal of shouting."], "until_dawn": true}}
+      ]
     }
   }
 }
