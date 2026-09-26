@@ -117,6 +117,12 @@ def lasting_text(hours: float) -> str:
     return {1: "an hour", 8: "eight hours"}.get(h, f"{h} hours")
 
 
+def strange_things(game, caster) -> list:
+    """Magic things in the party's packs whose nature is still hidden, the caster's own first."""
+    order = [caster] + [c for c in game.party if c is not caster]
+    return [it for c in order if c.alive for it in c.inventory if it.magic and not it.magic.get("identified")]
+
+
 def _needs(game, spell, target) -> bool:
     if spell["kind"] == "cure":
         return bool([d for d in target.diseases if d.get("phase") in ("sick", "incubating") and d["id"] != "wound_fever"]
@@ -138,6 +144,8 @@ def road_problem(game, caster, spell_id: str, target=None) -> str | None:
     if not ok:
         return why
     target = target or caster
+    if spell["kind"] == "identify" and not strange_things(game, caster):
+        return "nothing you carry is strange to you"
     if spell["kind"] in ("heal", "cure") and not _needs(game, spell, target):
         return "there is nothing for it to mend" if spell["kind"] == "cure" else "nobody needs healing"
     on = caster if spell["target"] == "self" else target
@@ -167,6 +175,19 @@ def cast_on_road(game, caster, spell_id: str, target=None) -> list[str]:
         return ["No spell slot left for that. A long rest restores them."]
     if slot:
         spellrules.spend_slot(caster, slot)
+    if spell["kind"] == "identify":
+        from realmwalker.game import magic_items
+
+        item = strange_things(game, caster)[0]
+        name = game.tables.items.name(item, False)
+        game.pass_time(10, "rest")
+        msgs = [f"{caster.name.split()[0]} casts <magic>{spell['name']}</> over the {name}."]
+        msgs += magic_items.identify(game, item)
+        if game.world.factions:
+            from realmwalker.game import law
+
+            law.magic_check(game, caster)
+        return msgs
     who = [c for c in game.party if c.alive] if spell["target"] == "all_allies" else \
         [caster if spell["target"] == "self" else target]
     hours = 0.0

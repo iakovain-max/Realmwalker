@@ -134,7 +134,7 @@ def battle_part(tables, spell_id: str) -> dict:
 def on_the_road(tables, spell_id: str) -> tuple[bool, str]:
     """Whether a spell is any use outside a fight, and why not."""
     spell = tables.spells[spell_id]
-    if spell["kind"] in ("heal", "cure") or lasts(tables, spell_id):
+    if spell["kind"] in ("heal", "cure", "identify") or lasts(tables, spell_id):
         return True, ""
     if spell["kind"] == "buff":
         return False, "over too quickly to cast before a fight"

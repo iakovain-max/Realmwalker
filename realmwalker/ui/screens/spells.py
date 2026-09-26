@@ -76,7 +76,10 @@ def spell_detail(game, char, sid: str, target) -> list[str]:
         whom = ""
         if magic.road_targets(game, char, sid):
             whom = " on yourself" if target is char else f" on {markup.escape(target.name.split()[0])}"
-        if spell["kind"] in ("heal", "cure"):
+        if spell["kind"] == "identify":
+            thing = game.tables.items.name(magic.strange_things(game, char)[0], False)
+            lines.append(f"<good>Enter casts it over the {markup.escape(thing)} now.</> <dim>It takes ten minutes.</>")
+        elif spell["kind"] in ("heal", "cure"):
             lines.append(f"<good>Enter casts it{whom} now.</> <dim>It takes a minute.</>")
         else:
             hours = int(spell.get("rounds", 0)) / sp.ROUNDS_PER_HOUR

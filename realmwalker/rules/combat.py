@@ -1294,10 +1294,12 @@ class Battle:
                 ok, why = False, "needs a diamond"
             if ok and spell["target"] == "self" and sid in spellrules.lasting(f.char, self.t):
                 ok, why = False, "already working on you"
+            if ok and spell["kind"] == "identify":
+                ok, why = False, "not in a fight"
             out.append((sid, ok, why))
         for it in f.char.inventory:
             sid = self.t.items.get(it.def_id).get("use", {}).get("scroll")
-            if sid in self.t.spells and self.t.spells[sid]["kind"] != "revive":
+            if sid in self.t.spells and self.t.spells[sid]["kind"] not in ("revive", "identify"):
                 out.append((f"scroll:{it.uid}:{sid}", True, ""))
         from realmwalker.rules import magic
 

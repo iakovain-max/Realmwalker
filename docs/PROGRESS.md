@@ -122,7 +122,7 @@ log says when one fades. The same spell renews rather than stacks, and the fight
 on you" instead of spending a second slot. The Spells screen (**S**) is now a list you can pick from, with the chosen
 spell described on the right, a green dot on what can be cast here, and **Enter** to cast (**left**/**right** choose
 who it is for); healing spells can be cast from there too, on the worst wound. Spells that only make sense in a fight
-say so. Kept as a timed effect on the character (`Character.effects["spell:<id>"]`, saved already, so old characters
+say so. A new first-level wizard spell, **Identify**, is cast the same way: ten minutes over the first strange thing in the packs tells you what it is, what it does and whether it is cursed (the design names it as one of the three ways to know a magic item). Kept as a timed effect on the character (`Character.effects["spell:<id>"]`, saved already, so old characters
 still load). `rules/spells.py` (`lasting`, `keep`), `game/magic.py` (`cast_on_road`); checked by
 `tests/test_road_magic.py`.
 

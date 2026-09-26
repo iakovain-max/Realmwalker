@@ -207,3 +207,26 @@ def test_the_spells_screen_casts(make_app):
         app.handle_event(KeyEvent(key))
         app.render(tcod.console.Console(80, 30, order="F"))
     assert app.error_count == 0
+
+
+def test_identify_tells_a_wizard_what_a_strange_thing_is(world, tables):
+    from realmwalker.game import magic_items
+
+    wiz = hero(tables, "wizard")
+    wiz.spells["spellbook"].append("identify")
+    game = game_with(world, tables, wiz)
+    assert magic.road_problem(game, wiz, "identify") == "nothing you carry is strange to you"
+    from realmwalker.rules.inventory import add_existing
+
+    ring = add_existing(wiz, tables.items, magic_items.make(game, game.world.rng.child("test-ring"), rarity="uncommon"))
+    ring.magic["identified"] = False
+    assert not ring.magic.get("identified")
+    slots = sp.slots_left(wiz, tables)[0]
+    t0 = game.world.time
+    said = magic.cast_on_road(game, wiz, "identify")
+    assert "Identify" in said[0] and ring.magic["identified"]
+    assert sp.slots_left(wiz, tables)[0] == slots - 1 and game.world.time - t0 == 10
+    # Never in a fight, and never from a scroll read aloud in one.
+    b = fight(tables, [wiz])
+    menu = {sid: (ok, why) for sid, ok, why in b.spell_options(b.side(PARTY)[0])}
+    assert menu["identify"] == (False, "not in a fight")
