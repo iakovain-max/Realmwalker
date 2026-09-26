@@ -482,7 +482,7 @@ def quests_choices() -> set[str]:
 
 
 LAW_CHOICES = {"pay_fines", "surrender", "prisoners", "ransom", "licence", "hush_pay", "hush_threat", "probe",
-               "join", "title", "pickpocket", "attack"}
+               "join", "title", "pickpocket", "attack", "train", "lie_low"}
 
 
 def builtin_special(game, npc: NPC, rng: RNG) -> list[dict]:

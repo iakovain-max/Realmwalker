@@ -323,6 +323,9 @@ def _check_law(game, fail) -> None:
                 fail(f"an impossible sentence step {step}")
     if game.confined is not None and game.sentence is None:
         fail("confined without a sentence")
+    for fid, skills in r.flags.get("trained", {}).items():
+        if any(sk not in game.leader.skills for sk in skills):  # what was taught stays, even if they cast you out
+            fail(f"lessons from faction {fid} that did not take: {skills}")
     held = r.flags.get("confiscated")
     if held is not None and (held.get("money", 0) < 0 or not isinstance(held.get("items"), list)):
         fail("confiscated belongings are broken")
