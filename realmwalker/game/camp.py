@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from realmwalker.core import dice
 from realmwalker.rules import body
 from realmwalker.rules.character import Character, Sheet
-from realmwalker.rules.inventory import WATER_RISK, add_item, container_capacity, remove_item
+from realmwalker.rules.inventory import WATER_RISK, add_item, carried, container_capacity, distinct_packs, remove_item
 
 POTS = ("iron_pot", "mess_kit", "cooks_utensils")
 FIRE_DC = {"plenty": 0, "some": 10, "little": 15, "none": 99}
@@ -181,7 +181,7 @@ def boil_water(game) -> list[str]:
     if pot is None:
         return ["You need a pot or mess kit to boil water in."]
     pints = 0.0
-    for c in game.party:
+    for c in distinct_packs(game.party):
         for it in c.inventory:
             if container_capacity(game.tables.items, it) and it.fill > 0 and WATER_RISK.get(it.fill_kind, 2) > 0:
                 pints += it.fill
@@ -301,7 +301,7 @@ def fish(game) -> list[str]:
 
 
 def party_has(game, item_id: str, qty: int) -> bool:
-    return sum(it.qty for c in game.party for it in c.inventory if it.def_id == item_id) >= qty
+    return sum(it.qty for it in carried(game.party) if it.def_id == item_id) >= qty
 
 
 def take_from_party(game, item_id: str, qty: int) -> None:

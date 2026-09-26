@@ -71,6 +71,20 @@ disappearances and dragons, people now offer (sixteen kinds in all):
 Work of the quiet kind — killing, lifting, smuggling — brings no news and no fame, only infamy and the standing
 of whoever paid.
 
+### Cloud session, 2026-09-26: one pack for the whole party (Anton's request)
+
+(Pull request "One pack for the whole party".) To end the micromanagement, the party now carries from one pack,
+with or without companions. The inventory (**i**) is everyone's; what someone wears or wields is marked with their
+name, **Tab** chooses who eats, drinks or puts things on, and **G** has the next one take a weapon up or put a thing
+on. The weight is carried together — everyone's strength and the animals against everything in the pack ("Party
+load") — so everyone is burdened alike and nothing needs shifting. Companions find what they need in it (the
+archer's arrows, the healer's bandages, the bread at supper). Joining pours someone's things in (like supplies join
+one stack); waiting, dismissal or desertion takes only what they wear and wield; the dead leave everything to the
+rest. Older saves with separate packs are poured into one when loaded. Also fixed: a companion dying after the
+leader had died could leave the party with nobody in it. Checked by `tests/test_shared_pack.py`, bot checks, and a
+soak of twelve busy party lives (travel, fights, camps, waits, dismissals, deaths, saves and reloads).
+Anton's decision the same day: **Guidance outside fights is postponed** (it would touch every check in the game).
+
 **Companions ask for things.** A companion who becomes devoted finally asks you for one job of their own, chosen by
 what they want: revenge on a real gang, a book they have wanted all their life, a cult they want ended, a pocket
 worth picking, a debt nobody else will collect (press **b** on the party screen). It pays half, out of their own

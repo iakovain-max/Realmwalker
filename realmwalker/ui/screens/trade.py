@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from realmwalker.game import economy
 from realmwalker.rules.character import Sheet
+from realmwalker.rules.inventory import worn_by
 from realmwalker.rules.items import money_text
 from realmwalker.ui import colors, markup
 from realmwalker.ui.input import KeyEvent
@@ -44,8 +45,9 @@ class MarketScreen(Screen):
         out = []
         for it in sorted(c.inventory, key=lambda i: (self.game.tables.items.category(i), self.game.tables.items.name(i))):
             price, why = economy.sell_price(self.game, self.npc, it)
-            if c.slot_of(it.uid) is not None and it.qty <= 1:
-                price, why = None, "you are wearing it"
+            wearer, slot = worn_by(c, it.uid)
+            if slot is not None and it.qty <= 1:
+                price, why = None, "you are wearing it" if wearer is c else f"{wearer.name.split()[0]} has it on"
             out.append((it, price, why))
         return out
 
@@ -135,7 +137,7 @@ class MarketScreen(Screen):
         s = Sheet(game.leader, game.tables)
         haggle = economy.haggle_bonus(game, npc, shop)
         head = (f"<dim>Your money:</> <loot>{money_text(party_money(game))}</>   <dim>Their coin:</> "
-                f"<loot>{money_text(shop['coin'])}</>   <dim>Load:</> {s.load():g} / {s.capacity()[0]:g} lb")
+                f"<loot>{money_text(shop['coin'])}</>   <dim>Load:</> {s.pack_load():g} / {s.pack_capacity()[0]:g} lb")
         if haggle:
             head += f"   <good>haggled: {int(haggle * 100)}% better</>"
         canvas.markup(2, 1, head, max_width=w - 4)

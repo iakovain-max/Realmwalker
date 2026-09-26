@@ -6,7 +6,7 @@ from realmwalker.game.magic import lasting_text
 from realmwalker.game.state import GameState
 from realmwalker.rules import spells as spellrules
 from realmwalker.rules.character import ABILITIES, Sheet, signed
-from realmwalker.rules.inventory import best_slot_items, equip, unequip
+from realmwalker.rules.inventory import best_slot_items, equip, pack_mates, unequip, worn_by
 from realmwalker.rules.items import CATEGORY_NAMES, EQUIP_SLOTS, SLOT_NAMES, Item, money_text
 from realmwalker.ui import colors, markup
 from realmwalker.ui.input import KeyEvent
@@ -113,10 +113,12 @@ def item_details(game: GameState, item: Item) -> str:
 
 
 def load_line(sheet: Sheet) -> str:
-    light, heavy, limit = sheet.capacity()
+    """The load against what can be carried: the whole party's, when it shares one pack."""
+    light, heavy, limit = sheet.pack_capacity()
     enc = sheet.encumbrance()
     word, color = ENCUMBRANCE_WORDS[enc]
-    return f"Load {sheet.load():g} / {light:g} lb · <{color}>{word}</>"
+    who = "Party load" if len(pack_mates(sheet.c)) > 1 else "Load"
+    return f"{who} {sheet.pack_load():g} / {light:g} lb · <{color}>{word}</>"
 
 
 # ---------------------------------------------------------------------------- character sheet
@@ -349,8 +351,11 @@ class InventoryScreen(Screen):
             return "Read it"
         if it.def_id == "sealed_letter" and any(tag.startswith("quest:") for tag in it.tags):
             return "Break the seal" if it.name.startswith("sealed") else "Read the letter"
-        if self.game.tables.items.slots_for(it) or self.char.slot_of(it.uid):
-            return "Remove" if self.char.slot_of(it.uid) else "Wear / wield"
+        wearer, _ = worn_by(self.char, it.uid)
+        if wearer is not None:
+            return "Remove" if wearer is self.char else f"Take it off {wearer.name.split()[0]}"
+        if self.game.tables.items.slots_for(it):
+            return "Wear / wield"
         return "Use"
 
     def use(self) -> None:
@@ -418,10 +423,24 @@ class InventoryScreen(Screen):
         from realmwalker.rules.inventory import add_existing, remove_item
 
         c = self.char
+        other = self.game.party[(self.index + 1) % len(self.game.party)]
+        if other.inventory is c.inventory:
+            # One pack for the whole party: handing it over means they take it up or put it on.
+            t = self.game.tables.items
+            if not t.slots_for(it):
+                self.game.say("You all carry from the one pack already; there is nothing to hand over.", "system")
+                return
+            wearer, slot = worn_by(c, it.uid)
+            if wearer is not None and wearer is not other:
+                unequip(wearer, slot)
+            ok, msg = equip(other, t, it.uid)
+            self.game.say(f"{other.name.split()[0]} takes the {t.name(it, False)}." if ok else msg,
+                          "info" if ok else "warn")
+            self.game.dirty = True
+            return
         if c.slot_of(it.uid) is not None:
             self.game.say("Take it off first.", "system")
             return
-        other = self.game.party[(self.index + 1) % len(self.game.party)]
         taken = remove_item(c, it.uid, it.qty)
         if taken is not None:
             add_existing(other, self.game.tables.items, taken)
@@ -478,10 +497,13 @@ class InventoryScreen(Screen):
             return
         c = self.char
         t = self.game.tables.items
-        slot = c.slot_of(it.uid)
+        wearer, slot = worn_by(c, it.uid)
         if slot is not None:
-            unequip(c, slot)
-            self.game.say(f"You take off the {t.name(it, False)}.", "info")
+            if unequip(wearer, slot) is None:
+                self.game.say(f"The {t.name(it, False)} will not come off.", "warn")
+            else:
+                who = "You take" if wearer is self.game.leader else f"{wearer.name.split()[0]} takes"
+                self.game.say(f"{who} off the {t.name(it, False)}.", "info")
         else:
             ok, msg = equip(c, t, it.uid)
             self.game.say(msg, "info" if ok else "warn")
@@ -509,7 +531,9 @@ class InventoryScreen(Screen):
         t = g.tables.items
         s = Sheet(c, g.tables)
         w, h = canvas.width, canvas.height
-        canvas.frame(0, 0, w, h - 1, f"Inventory — {markup.escape(c.name)}", double=True)
+        shared = len(pack_mates(c)) > 1
+        title = f"The party's pack · {markup.escape(c.name.split()[0])} (Tab)" if shared else markup.escape(c.name)
+        canvas.frame(0, 0, w, h - 1, f"Inventory — {title}", double=True)
         x = 2
         for i, (name, _) in enumerate(FILTERS):
             label = f"[{name}]" if i == self.filter else f" {name} "
@@ -533,9 +557,13 @@ class InventoryScreen(Screen):
             bg = colors.HILITE_BG if selected else (colors.HOVER_BG if over else None)
             if bg:
                 canvas.fill(2, y, list_w, 1, bg)
-            worn = "▪" if c.slot_of(it.uid) else " "
-            name = markup.escape(t.name(it))[:31]
-            canvas.text(2, y, f"{worn} ", colors.named("good"), bg)
+            wearer, _ = worn_by(c, it.uid)
+            worn = "▪" if wearer is not None else " "
+            name = markup.escape(t.name(it))
+            if wearer is not None and wearer is not c:
+                name = f"{name[:31 - len(wearer.name.split()[0]) - 3]} ({wearer.name.split()[0]})"
+            name = name[:31]
+            canvas.text(2, y, f"{worn} ", colors.named("good") if wearer is c else colors.DIM, bg)
             canvas.text(4, y, name, colors.SELECT_FG if selected else colors.FG, bg)
             canvas.text(36, y, f"{t.weight(it):>6g}", colors.DIM, bg)
             canvas.text(42, y, f"{money_text(t.value(it)):>10}"[-10:], colors.named("loot"), bg)

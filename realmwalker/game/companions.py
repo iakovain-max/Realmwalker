@@ -147,6 +147,9 @@ def hire(game, npc) -> list[str]:
     take_money(game, t["upfront"])
     char = make_character(game, npc, t)
     game.party.append(char)
+    from realmwalker.game import pack
+
+    pack.sync(game)  # what they bring goes in the party's pack
     npc.present = False
     npc.flags["companion"] = True
     npc.remember(f"joined the traveller on {game.moment.date_text()}")
@@ -285,6 +288,9 @@ def dismiss(game, c: Character, *, deserted: bool = False) -> list[str]:
         game.party.remove(c)
     if c in getattr(game, "waiting", []):
         game.waiting.remove(c)
+    from realmwalker.game import pack
+
+    pack.sync(game)  # they go with what they wear and wield
     npc = game.world.npcs.get(c.companion.get("npc", -1))
     if npc is not None:
         npc.flags.pop("companion", None)
@@ -483,6 +489,9 @@ def wait_here(game, c: Character) -> str:
     c.companion["order"] = "wait"
     c.companion["wait_at"] = [game.player.x, game.player.y]
     game.waiting.append(c)
+    from realmwalker.game import pack
+
+    pack.sync(game)  # they keep what they wear and wield; the pack stays with you
     here = game.world.settlement_at(game.player.x, game.player.y)
     where = here.name if here is not None else "here"
     return f"{first(c)} will wait for you in {where}." + (" (Wages still run.)" if c.companion.get("wage") else "")
@@ -504,6 +513,9 @@ def rejoin(game) -> list[str]:
             c.companion["order"] = "follow"
             c.companion.pop("wait_at", None)
             game.party.append(c)
+            from realmwalker.game import pack
+
+            pack.sync(game)
             out.append(f"<good>{first(c)} joins you again.</>")
     return out
 

@@ -83,7 +83,9 @@ def make_event(game, eid: str) -> PendingEvent:
 
 # ---------------------------------------------------------------------------- options
 def count_item(game, item_id: str) -> int:
-    return sum(it.qty for c in game.party for it in c.inventory if it.def_id == item_id)
+    from realmwalker.rules.inventory import carried
+
+    return sum(it.qty for it in carried(game.party) if it.def_id == item_id)
 
 
 def party_money(game) -> int:

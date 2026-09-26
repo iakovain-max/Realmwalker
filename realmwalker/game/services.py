@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from realmwalker.core import dice
 from realmwalker.game.people import NPC, change_disposition
 from realmwalker.rules.character import Sheet
+from realmwalker.rules.inventory import distinct_packs
 from realmwalker.rules.items import money_text
 
 DAY = 24 * 60
@@ -144,14 +145,15 @@ def services_for(game, npc: NPC) -> list[Service]:
             out.append(Service("cure_disease", "Ask the gods to lift a sickness (a donation)", price, ok and sick,
                                why if sick else "you are not sick"))
         elif sid == "blessing":
-            unknown = [it for m in game.party for it in m.inventory if it.magic and not it.magic.get("identified")]
+            packs = distinct_packs(game.party)  # the party shares one: list each thing once
+            unknown = [it for m in packs for it in m.inventory if it.magic and not it.magic.get("identified")]
             price = fee(game, npc, 2000)
             options = [(f"{game.party.index(m)}:{it.uid}", game.tables.items.name(it), price)
-                       for m in game.party for it in m.inventory if it.magic and not it.magic.get("identified")]
+                       for m in packs for it in m.inventory if it.magic and not it.magic.get("identified")]
             out.append(Service("identify", "Ask what a strange thing is (a donation)", 0, bool(unknown),
                                "you carry nothing strange", options=options))
             cursed = [(f"{game.party.index(m)}:{it.uid}", game.tables.items.name(it), fee(game, npc, 6000))
-                      for m in game.party for it in m.inventory if it.magic and it.magic.get("cursed")
+                      for m in packs for it in m.inventory if it.magic and it.magic.get("cursed")
                       and it.magic.get("curse_known")]
             if cursed:
                 out.append(Service("remove_curse", "Have a curse lifted (a donation)", 0, True, "", options=cursed))

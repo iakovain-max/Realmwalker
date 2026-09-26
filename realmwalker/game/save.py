@@ -260,6 +260,9 @@ def load_world(folder: Path) -> World:
 
 # ---------------------------------------------------------------------------- character
 def character_entries(game: GameState) -> dict[str, bytes | str]:
+    from realmwalker.game import pack
+
+    pack.sync(game)
     p = game.player
     body = {
         "name": p.name, "x": p.x, "y": p.y, "local_key": p.local_key, "lx": p.lx, "ly": p.ly,
@@ -278,6 +281,11 @@ def character_entries(game: GameState) -> dict[str, bytes | str]:
         "lit": game.lit,
         "quests": game.quests,
     }
+    # The party shares one pack: it is written once, with the leader. Companions keep only what they have on,
+    # which points into it; loading joins them to it again (game/pack.py).
+    for c, d in zip([c for c in game.party if c.alive or c is game.party[0]], body["party"]):
+        if c is not game.party[0] and c.inventory is game.party[0].inventory:
+            d["inventory"] = []
     return {"manifest.json": _manifest("character"), "character.json": json.dumps(body),
             "explored.npy": _npy(p.explored)}
 
@@ -352,6 +360,9 @@ def load_game(folder: Path, tables: Tables) -> GameState:
     game.quests = extra.get("quests", [])
     if not game.renown.flags.get("started"):
         starting_knowledge(game)  # a character from before M6
+    from realmwalker.game import pack
+
+    pack.sync(game)  # companions join the leader's pack again (and older saves are poured into one)
     return game
 
 

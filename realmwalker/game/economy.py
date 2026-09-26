@@ -12,7 +12,7 @@ from realmwalker.core import dice
 from realmwalker.core.rng import RNG
 from realmwalker.game.people import NPC, change_disposition, town_of
 from realmwalker.rules.character import Sheet
-from realmwalker.rules.inventory import add_existing, add_item, remove_item
+from realmwalker.rules.inventory import add_existing, add_item, remove_item, worn_by
 from realmwalker.rules.items import Item, money_text
 
 MOOD_BUY = {"hostile": 1.3, "unfriendly": 1.12, "neutral": 1.0, "friendly": 0.95, "warm": 0.9}
@@ -239,8 +239,9 @@ def sell(game, npc: NPC, char, uid: int, qty: int = 1) -> str:
     total = price * qty
     if total > shop["coin"]:
         return f"{npc.first_name} can't pay that much right now ({money_text(shop['coin'])} in the till)."
-    if char.slot_of(uid) is not None and qty >= it.qty:
-        return "Take it off first."
+    wearer, slot = worn_by(char, uid)
+    if slot is not None and qty >= it.qty:
+        return "Take it off first." if wearer is char else f"{wearer.name.split()[0]} has it on."
     sold = remove_item(char, uid, qty)
     if sold is None:
         return "You no longer have that."

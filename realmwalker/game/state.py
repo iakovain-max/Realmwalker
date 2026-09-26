@@ -235,8 +235,9 @@ class GameState:
     def pass_time(self, minutes: float, activity: str = "rest") -> None:
         """Advance the world clock; the party lives through it (needs, weather, wounds) in chunks.
         activity: "walk", "rest", "sleep" or "fight"."""
-        from realmwalker.game import survival
+        from realmwalker.game import pack, survival
 
+        pack.sync(self)  # whoever is with the party now shares its pack
         whole = int(minutes)
         if whole <= 0:
             return

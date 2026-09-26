@@ -1085,7 +1085,9 @@ def on_npc_death(game, npc) -> None:
 
 def herbs_held(game, q) -> int:
     kind = q["target"].get("item", "healing_herbs")
-    return sum(it.qty for c in game.party for it in c.inventory if it.def_id == kind)
+    from realmwalker.rules.inventory import carried
+
+    return sum(it.qty for it in carried(game.party) if it.def_id == kind)
 
 
 def take_herbs(game, q) -> None:
