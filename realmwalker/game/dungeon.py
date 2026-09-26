@@ -320,6 +320,7 @@ def spring(game, lm, x: int, y: int, f: dict) -> None:
         from realmwalker.rules.wounds import make_wound
 
         part = "left_leg" if f.get("trap") == "pit" else rng.choice(["torso", "left_arm", "right_arm", "right_leg"])
+        part = "torso" if f"lost_{part}" in c.injuries else part
         w = make_wound(part, dtype, 1 if dmg < 14 else 2, rng, now=game.world.time, note=name)
         if w is not None:
             c.wounds.append(w)

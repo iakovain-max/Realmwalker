@@ -549,7 +549,8 @@ class Battle:
         if ranged and f.char.fighting_style == "archery":
             bonus += 2
         dmg = d["damage"]
-        if "versatile" in props and two_handed_free and not ranged:
+        if "versatile" in props and two_handed_free and not ranged and not ("lost_left_arm" in f.char.injuries
+                                                                            or "lost_right_arm" in f.char.injuries):
             dmg = d.get("versatile", dmg)
         mod = s.mod(ability)
         if key == "off" and not thrown:
@@ -568,8 +569,10 @@ class Battle:
         right, left = health.broken_arm(f.char, "right"), health.broken_arm(f.char, "left")
         if key == "main" and right or key == "off" and left or thrown and right and left:
             opt.available, opt.reason = False, "that arm is broken"
-        elif "two_handed" in props and (right or left):
+        elif "two_handed" in props and (right or left or health.one_armed(f.char)):
             opt.available, opt.reason = False, "it needs two good arms"
+        elif key == "off" and health.one_armed(f.char):
+            opt.available, opt.reason = False, "there is only one hand"
         if "ammunition" in props:
             ammo = d.get("ammo")
             opt.ammo_def = ammo
@@ -785,6 +788,8 @@ class Battle:
         if dtype in ("fire", "acid"):
             target.took_fire = True
         part = roll_location(self.t.combat_text["locations"].get(target.body, self.t.combat_text["locations"]["humanoid"]), self.rng)
+        if target.char and f"lost_{part}" in target.char.injuries:
+            part = "torso"  # the blow meant for the arm that is not there lands on the body
         names = self.t.combat_text["part_names"].get(target.body, self.t.combat_text["part_names"]["humanoid"])
         part_text = self.rng.choice(names.get(part, [part.replace("_", " ")]))
         style = "bite" if bite else ("claws" if claws else dtype)

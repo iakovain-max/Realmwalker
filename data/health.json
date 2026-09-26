@@ -7,6 +7,10 @@
     "lost_fingers": {"name": "lost fingers", "text": "Two fingers gone from one hand. Fine work is clumsy now.", "parts": ["left_arm", "right_arm"], "effects": {"skills": {"sleight_of_hand": -2}, "attack": -1}},
     "weak_arm": {"name": "a weak arm", "text": "The bone set crooked. The arm tires fast and never grips quite true.", "parts": ["left_arm", "right_arm"], "effects": {"skills": {"athletics": -2}, "attack": -1}},
     "limp": {"name": "a limp", "text": "The leg healed short or stiff. Every road is a little longer now.", "parts": ["left_leg", "right_leg"], "effects": {"skills": {"acrobatics": -2, "stealth": -1}, "travel": 1.1, "speed": -5}},
+    "lost_left_arm": {"name": "a lost left arm", "text": "The left arm ends above the elbow. One hand does everything now: no shield, nothing that needs two hands.", "parts": [], "effects": {"skills": {"athletics": -3, "sleight_of_hand": -2}}},
+    "lost_right_arm": {"name": "a lost right arm", "text": "The right arm ends above the elbow. The left hand has had to learn everything: no shield, nothing that needs two hands.", "parts": [], "effects": {"skills": {"athletics": -3, "sleight_of_hand": -3}, "attack": -1}},
+    "lost_left_leg": {"name": "a lost left leg", "text": "The left leg ends at the knee. A crutch, a peg, and every mile twice as long.", "parts": [], "effects": {"skills": {"acrobatics": -5, "athletics": -3, "stealth": -3}, "travel": 1.6, "speed": -15}},
+    "lost_right_leg": {"name": "a lost right leg", "text": "The right leg ends at the knee. A crutch, a peg, and every mile twice as long.", "parts": [], "effects": {"skills": {"acrobatics": -5, "athletics": -3, "stealth": -3}, "travel": 1.6, "speed": -15}},
     "bad_lungs": {"name": "bad lungs", "text": "Since the fever, a cough that never quite goes, and no wind for running.", "parts": [], "effects": {"skills": {"athletics": -1}, "travel": 1.05}}
   }
 }

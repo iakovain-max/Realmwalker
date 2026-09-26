@@ -163,6 +163,12 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
             for d in member.diseases:
                 if d.get("phase") not in ("incubating", "sick", "dormant", "immune") or d.get("id") not in app.tables.diseases:
                     fail(f"{member.name} has an impossible disease {d}")
+            for inj in member.injuries:
+                if inj.startswith("lost_") and any(w.part == inj[5:] and w.note not in ("the stump", "cautery")
+                                                   for w in member.wounds):
+                    fail(f"{member.name} has a new wound on a {inj[5:].replace('_', ' ')} that is not there")
+            if ("lost_left_arm" in member.injuries or "lost_right_arm" in member.injuries) and member.equipped.get("off_hand"):
+                fail(f"{member.name} holds something in a hand that is gone")
             if any(v < -1e-6 for k, v in member.effects.items() if not k.endswith("_clean")):
                 fail(f"{member.name} has an expired timed effect {member.effects}")
             from realmwalker.rules.inventory import container_capacity

@@ -142,6 +142,25 @@ def concussed(char: Character) -> bool:
     return any(w.part == "head" and w.severity >= 2 and w.kind in ("blunt", "fracture") for w in char.wounds)
 
 
+LIMBS = ("left_arm", "right_arm", "left_leg", "right_leg")
+
+
+def one_armed(char: Character) -> bool:
+    """An arm taken off: one hand holds everything, and nothing needs two."""
+    return "lost_left_arm" in char.injuries or "lost_right_arm" in char.injuries
+
+
+def lost(char: Character, part: str) -> bool:
+    return f"lost_{part}" in char.injuries
+
+
+def beyond_saving(w: Wound) -> bool:
+    """A limb that will kill its owner or never mend: festering towards the blood, or smashed, burnt or frozen
+    past repair. Only then is taking it off offered."""
+    return w.part in LIMBS and (w.infection >= 40 or w.severity >= 3 and w.kind in ("fracture", "blunt", "burn",
+                                                                                     "frostbite"))
+
+
 def broken_arm(char: Character, side: str) -> bool:
     """A broken bone (or a critical wound) in this arm: the hand can't hold a weapon."""
     part = f"{side}_arm"
@@ -576,7 +595,18 @@ TREATMENTS = {
                                   "fire or a torch."),
     "poultice": ("Poultice", 15, "Herbs against festering. Healing herbs or a herbalism kit. Medicine (or Nature) "
                                  "DC 12."),
+    "amputate": ("Amputate", 60, "Take off a limb that cannot be saved, to save a life. Needs a blade; fire or a torch "
+                                 "seals the stump. Medicine DC 13, much harder on yourself. It cannot be undone."),
 }
+
+
+def _blade(char: Character, tables):
+    """Something sharp enough to take a limb: a cutting weapon or a knife."""
+    for it in char.inventory:
+        d = tables.items.get(it.def_id)
+        if d.get("category") == "weapon" and d.get("damage_type") == "slashing":
+            return it
+    return None
 
 
 def _find(char: Character, tables, def_ids: tuple[str, ...]):
@@ -648,6 +678,10 @@ def treatment_options(healer: Character, patient: Character, wound: Wound, table
         ok = _find(healer, tables, ("healing_herbs",)) is not None or \
             _find(healer, tables, ("herbalism_kit",)) is not None
         out.append(("poultice", "Poultice", ok, "no healing herbs or herbalism kit"))
+    # Amputate: only for a limb that cannot be saved
+    if beyond_saving(wound):
+        out.append(("amputate", "Amputate the limb", _blade(healer, tables) is not None,
+                    "no blade to do it with (a knife, an axe, a sword)"))
     return out
 
 
@@ -773,7 +807,51 @@ def treat(healer: Character, patient: Character, wound: Wound, action: str, tabl
             msgs.append(f"A green, bitter-smelling poultice goes on the {where} wound.")
         else:
             msgs.append("The herbs are the wrong ones, or wrongly prepared.")
+    elif action == "amputate":
+        msgs += _amputate(healer, patient, wound, tables, rng, fire=fire, now=now)
+        success = not any("botched" in m for m in msgs)
+        if any("faints" in m for m in msgs):
+            minutes += 60
     return success, msgs, minutes
+
+
+def _amputate(healer: Character, patient: Character, wound: Wound, tables, rng: RNG, *, fire: bool,
+              now: int) -> list[str]:
+    """The limb comes off either way; skill decides whether the stump is clean or a second danger."""
+    from realmwalker.rules.inventory import unequip
+
+    who = body.first(patient)
+    where = PART_LABEL.get(wound.part, wound.part)
+    dc = 13 + (5 if healer is patient else 0)
+    success, dice_text = _medicine(healer, tables, rng, dc, 2 if _kit(healer) else 0)
+    msgs = [dice_text]
+    torch = None if fire else _find(healer, tables, ("torch",))
+    sealed = fire or torch is not None
+    if torch is not None:
+        remove_item(healer, torch.uid, 1)
+    patient.wounds = [w for w in patient.wounds if w.part != wound.part]
+    patient.wounds.append(Wound(wound.part, "cut", 2 if success else 3, 0 if sealed else (1 if success else 3), now,
+                                note="the stump", cleaned=success, infection=0.0 if success else 15.0))
+    if sealed:
+        patient.wounds.append(Wound(wound.part, "burn", 1, 0, now, note="cautery"))
+    patient.blood = max(5.0, patient.blood - (10.0 if success else 25.0))
+    injury = f"lost_{wound.part}"
+    if injury in tables.health["injuries"] and injury not in patient.injuries:
+        patient.injuries.append(injury)
+    if wound.part in ("left_arm", "right_arm"):
+        unequip(patient, "off_hand")  # one hand left, and it holds the main weapon
+        main = patient.equipped_item("main_hand")
+        if main is not None and "two_handed" in tables.items.get(main.def_id).get("properties", []):
+            unequip(patient, "main_hand")
+    if success:
+        msgs.append(f"It is done quickly, the way a surgeon does it. {who}'s {where} is gone, and the stump is "
+                    f"closed{' and seared' if sealed else ''} clean.")
+    else:
+        msgs.append(f"It is botched: a long, sawing business. {who}'s {where} is gone, and the stump is ragged and "
+                    f"{'seared badly' if sealed else 'pouring blood'}.")
+    if dice.d20(rng).natural + Sheet(patient, tables).save_bonus("con") < 15:
+        msgs.append(f"{who} faints.")
+    return msgs
 
 
 def take_poppy(char: Character) -> str:

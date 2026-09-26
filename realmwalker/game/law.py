@@ -539,7 +539,8 @@ def brand(game, realm_id: int) -> list[str]:
     from realmwalker.rules.wounds import Wound
 
     c = game.leader
-    c.wounds.append(Wound("right_arm", "burn", 1, created=game.world.time, note="the brand"))
+    arm = "left_arm" if "lost_right_arm" in c.injuries else "right_arm"
+    c.wounds.append(Wound(arm, "burn", 1, created=game.world.time, note="the brand"))
     realm = game.world.factions[realm_id]
     if "branded" not in game.renown.marks:
         game.renown.marks.append("branded")

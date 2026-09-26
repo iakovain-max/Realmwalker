@@ -15,7 +15,8 @@ from realmwalker.ui.widgets import Canvas
 
 NEEDS = [("hunger", "Food", "fed"), ("thirst", "Water", "quenched"), ("fatigue", "Rest", "rested"),
          ("dirt", "Cleanliness", "clean")]
-TREAT_KEYS = {"bandage": "b", "clean": "c", "stitch": "s", "splint": "p", "cauterize": "f", "poultice": "o"}
+TREAT_KEYS = {"bandage": "b", "clean": "c", "stitch": "s", "splint": "p", "cauterize": "f", "poultice": "o",
+              "amputate": "a"}
 
 
 def need_bar(canvas: Canvas, x: int, y: int, label: str, value: float, word: str, color: str, width: int) -> None:
@@ -28,7 +29,7 @@ def need_bar(canvas: Canvas, x: int, y: int, label: str, value: float, word: str
     canvas.markup(x + 13 + bar_w, y, f"<{color}>{word}</>", max_width=width - bar_w - 13)
 
 
-def heat_bar(canvas: Canvas, x: int, y: int, value: float, width: int) -> None:
+def heat_bar(canvas: Canvas, x: int, y: int, value: float, width: int, heading: str = "") -> None:
     """A thermometer from freezing (left) to heatstroke (right), with comfort in the middle."""
     canvas.text(x, y, f"{'Warmth':<12}", colors.DIM)
     bar_w = max(9, min(25, width - 30)) | 1
@@ -48,7 +49,7 @@ def heat_bar(canvas: Canvas, x: int, y: int, value: float, width: int) -> None:
         canvas.text(x + 12 + i, y, "█" if i == pos else "─", colors.SELECT_FG if i == pos else c)
     st = body.heat_stage(value)
     word, color = st if st else ("comfortable", "good")
-    canvas.markup(x + 13 + bar_w, y, f"<{color}>{word}</>", max_width=width - bar_w - 13)
+    canvas.markup(x + 13 + bar_w, y, f"<{color}>{word}{heading}</>", max_width=width - bar_w - 13)
 
 
 def status_words(char, tables=None) -> list[str]:
@@ -68,7 +69,8 @@ def status_words(char, tables=None) -> list[str]:
         out.append("<danger>sick</>")
     st = body.heat_stage(char.body_heat)
     if st:
-        out.append(f"<{st[1]}>{st[0]}</>")
+        going = body.trend_words("body_heat", char.body_heat, body.trend(char).get("body_heat"))
+        out.append(f"<{st[1]}>{st[0]}</>" + (f" <dim>({going})</>" if going else ""))
     for key in ("thirst", "hunger", "fatigue"):
         st = body.stage(key, getattr(char, key))
         if st:
@@ -127,6 +129,18 @@ class HealthScreen(Screen):
         ok, why = opts.get(action, (False, ""))
         if not ok:
             self.app.notify(f"{TREATMENTS[action][0]}: {why}.", "warn")
+            return
+        if action == "amputate":
+            from realmwalker.ui.screens.base import ConfirmBox
+
+            def cut(w=w) -> None:
+                self.say(care.treat(self.game, self.char, w, action))
+                self.selected = 0
+                self._check_over()
+
+            where = PART_LABEL.get(w.part, w.part)
+            self.app.push(ConfirmBox(self.app, f"Take off {markup.escape(self.char.name.split()[0])}'s {where}? It "
+                                     f"may save a life, and it can never be undone.", cut, title="Amputate"))
             return
         self.say(care.treat(self.game, self.char, w, action))
         self._check_over()
@@ -233,16 +247,22 @@ class HealthScreen(Screen):
         y += 1
         canvas.section(x, y, col_w, "Needs")
         y += 1
+        rates = body.trend(c)
+
+        def heading(key: str) -> str:
+            words = body.trend_words(key, getattr(c, key), rates.get(key))
+            return f"</><dim> · {words}" if words else ""
+
         for key, label, fine in NEEDS:
             st = body.stage(key, getattr(c, key))
             word, color = st if st else (fine, "good")
-            need_bar(canvas, x, y, label, getattr(c, key), word, color, col_w)
+            need_bar(canvas, x, y, label, getattr(c, key), word + heading(key), color, col_w)
             y += 1
-        heat_bar(canvas, x, y, c.body_heat, col_w)
+        heat_bar(canvas, x, y, c.body_heat, col_w, heading("body_heat"))
         y += 1
         st = body.stage("wet", c.wet)
         word, color = st if st else ("dry", "good")
-        need_bar(canvas, x, y, "Dryness", c.wet, word, color, col_w)
+        need_bar(canvas, x, y, "Dryness", c.wet, word + heading("wet"), color, col_w)
         y += 2
         if c.exhaustion:
             effects = "; ".join(body.EXHAUSTION_EFFECTS[1:c.exhaustion + 1])
