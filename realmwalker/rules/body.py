@@ -375,7 +375,7 @@ def _hours(h: float) -> str:
     if h < 1:
         return "within the hour"
     n = round(h)
-    return "in about an hour" if n == 1 else f"in about {n} hours"
+    return "in an hour" if n == 1 else f"in {n} hours"
 
 
 def trend_words(kind: str, value: float, rate: float | None) -> str:

@@ -33,7 +33,7 @@ def game(world, tables):
 
 # ---------------------------------------------------------------------------- trends
 @pytest.mark.parametrize("kind, value, rate, words", [
-    ("hunger", 20, 2.0, "peckish in about 5 hours"),
+    ("hunger", 20, 2.0, "peckish in 5 hours"),
     ("hunger", 29.5, 2.0, "peckish within the hour"),
     ("thirst", 90, 2.0, "worsening"),
     ("fatigue", 60, -13.0, "easing"),

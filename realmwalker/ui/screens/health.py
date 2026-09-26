@@ -22,7 +22,7 @@ TREAT_KEYS = {"bandage": "b", "clean": "c", "stitch": "s", "splint": "p", "caute
 def need_bar(canvas: Canvas, x: int, y: int, label: str, value: float, word: str, color: str, width: int) -> None:
     """A bar that empties as the need grows: full = fine."""
     canvas.text(x, y, f"{label:<12}", colors.DIM)
-    bar_w = max(6, min(24, width - 30))
+    bar_w = max(6, min(16, width - 30))  # room after it for the stage and where it is heading
     filled = int(round(bar_w * (100 - value) / 100))
     canvas.text(x + 12, y, "█" * filled, colors.named(color if color != "dim" else "good"))
     canvas.text(x + 12 + filled, y, "░" * (bar_w - filled), colors.FAINT)
@@ -32,7 +32,7 @@ def need_bar(canvas: Canvas, x: int, y: int, label: str, value: float, word: str
 def heat_bar(canvas: Canvas, x: int, y: int, value: float, width: int, heading: str = "") -> None:
     """A thermometer from freezing (left) to heatstroke (right), with comfort in the middle."""
     canvas.text(x, y, f"{'Warmth':<12}", colors.DIM)
-    bar_w = max(9, min(25, width - 30)) | 1
+    bar_w = max(9, min(17, width - 30)) | 1
     mid = bar_w // 2
     pos = int(round(mid + value / 100 * mid))
     for i in range(bar_w):
@@ -309,7 +309,7 @@ class HealthScreen(Screen):
         canvas.text(x, y, "↑↓ choose a wound, then treat it with the keys below.", colors.FAINT, max_width=w)
         y += 1
         for i, wd in enumerate(c.wounds):
-            if y >= bottom - 10:
+            if y >= bottom - 10 and i > self.selected:  # the chosen wound is always shown
                 canvas.text(x, y, f"... and {len(c.wounds) - i} more", colors.DIM)
                 y += 1
                 break
@@ -331,7 +331,11 @@ class HealthScreen(Screen):
             return y
         canvas.markup(x, y, f"<title>Treat the {PART_LABEL.get(wd.part, wd.part)} wound:</>", max_width=w)
         y += 1
-        for action, label, ok, why in care.options(self.game, c, wd):
+        # What can be done first; what can't, and why, as far as there is room.
+        options = sorted(care.options(self.game, c, wd), key=lambda o: not o[2])
+        for action, label, ok, why in options:
+            if y >= bottom and not ok:
+                break
             key = TREAT_KEYS[action]
             if ok:
                 canvas.button(x, y, label, lambda a=action: self.do_treat(a), hotkey=key, tooltip=TREATMENTS[action][2])
