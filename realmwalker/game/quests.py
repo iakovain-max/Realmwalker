@@ -1210,6 +1210,7 @@ def reward(game, q, *, share: float = 1.0, text: str | None = None) -> list[str]
     if giver is not None and giver.alive:
         change_disposition(giver, 20)
         giver.remember(f"the traveller did the work they asked ({title(game, q)})")
+    freed = q["template"] == "rescue" and target.get("freed") and share >= 1.0
     if text:
         line = text
     else:
@@ -1219,6 +1220,10 @@ def reward(game, q, *, share: float = 1.0, text: str | None = None) -> list[str]
                                                     "reward": money_text(money)}))
     q["journal"].append(line)
     out = [f"<good>{line}</> <dim>(+{int(s['xp'] * min(1.0, share))} experience each)</>"] + notes
+    if freed:
+        from realmwalker.game.companions import grateful
+
+        out += grateful(game, q)
     if q.get("trial") is not None and share >= 1.0:
         from realmwalker.game.reputation import confirm_rank
 

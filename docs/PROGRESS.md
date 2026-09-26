@@ -99,6 +99,14 @@ through it — an offer from one of their people says whose eyes are on it, pays
 when it is done. If your standing runs two ranks ahead of what they have given you, they give in and promote you
 anyway, so nobody is ever stuck.
 
+### Cloud session, 2026-09-26: grateful companions
+
+(Pull request "Grateful companions".) The design says companions come from taverns, guilds, freed prisoners and
+grateful people; they only ever came from inns and mercenary companies. Now someone you break out of a dungeon's
+chains on a rescue, once the work is handed in, waits at the inn of that town: "If you ever want someone at your
+back, I'm yours. No coin. Just keep me fed." They ask half a wage and nothing up front, start out more loyal than a
+hired sword, and do not drift away with the travellers who come and go each month. Checked by `tests/test_grateful.py`.
+
 **The journal remembers people** (Tab): everyone you have spoken to, by town, with what they are, how they feel
 about you, what work of theirs you carry, and what they remember about you.
 

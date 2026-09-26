@@ -88,6 +88,8 @@ def terms(game, npc) -> dict:
     upfront = wage * int(data(game)["wage"]["upfront_days"])
     if npc.flags.get("company") is not None:
         upfront *= 2  # the company takes its cut
+    if npc.flags.get("grateful"):
+        wage, upfront = wage // 2, 0  # they owe you their life: they ask only for their keep
     return {"level": level, "wage": wage, "share": share, "upfront": upfront, "archetype": archetype_of(npc)}
 
 
@@ -168,7 +170,8 @@ def make_character(game, npc, t: dict) -> Character:
     char.money = rng.randint(0, 200)
     char.companion = {
         "npc": npc.id, "archetype": t["archetype"], "values": list(arch["values"]), "want": arch["want"],
-        "loyalty": float(data(game)["loyalty"]["start"]), "wage": t["wage"], "share": t["share"],
+        "loyalty": float(data(game)["loyalty"]["start"]) + (20.0 if npc.flags.get("grateful") else 0.0),
+        "wage": t["wage"], "share": t["share"],
         "hired": game.world.time, "order": "follow", "home": npc.settlement, "unpaid": 0,
     }
     return char
@@ -403,3 +406,51 @@ def died(game, c: Character) -> None:
         npc.alive = False
         npc.present = False
         npc.flags.pop("companion", None)
+
+
+# ---------------------------------------------------------------------------- the grateful
+GRATEFUL_ARCHETYPES = ("old_soldier", "runaway_serf", "outlaw_hunter", "wandering_priest", "sellsword")
+
+
+def grateful(game, q: dict) -> list[str]:
+    """Someone you broke out of a dungeon's chains, home again, waits at the inn: they will travel with you for
+    their keep (half a wage, nothing up front) and start out loyal. Design section 12: companions come from
+    "freed prisoners, grateful NPCs and so on"."""
+    from realmwalker.game.people import add, make_npc
+
+    w = game.world
+    lm = game.local
+    s = w.settlements[q["town"]]
+    town = w.towns.get(s.id)
+    target = q["target"]
+    if town is None or lm is None or lm.kind != "settlement" or not getattr(game.tables, "companions", None):
+        return []
+    rng = w.rng.child(f"grateful/{q['id']}")
+    inns = [i for i, b in enumerate(lm.buildings) if b.kind == "inn"] or list(range(len(lm.buildings)))
+    walk = game.tables.terrain.walk[game.remap_for(lm)[lm.terrain]]
+    taken = {(n.x, n.y) for n in w.npcs.values() if n.settlement == s.id and n.alive and n.present}
+    for bi in inns:
+        b = lm.buildings[bi]
+        cells = [(x, y) for x in range(b.x + 1, b.x + b.w - 1) for y in range(b.y + 1, b.y + b.h - 1)
+                 if walk[x, y] and (x, y) not in taken]
+        if cells:
+            break
+    else:
+        return []
+    spot = rng.choice(cells)
+    npc = make_npc(game, s, "adventurer", rng.child("npc"), building=bi, post=spot, home=spot)
+    npc.name = target.get("captive", npc.name)
+    if target.get("sex") in ("male", "female"):
+        npc.sex = target["sex"]
+    arch = rng.choice([a for a in GRATEFUL_ARCHETYPES if a in data(game)["archetypes"]])
+    site = w.sites[target["site"]].name if 0 <= target.get("site", -1) < len(w.sites) else "that place"
+    npc.title = "the one you freed"
+    npc.flags.update(recruit=arch, grateful=True)
+    npc.met, npc.disposition = True, max(npc.disposition, 60)
+    npc.profile["backstory"] = (f"You broke the chains that held them in {site}. They have not forgotten it, and "
+                                f"say they never will.")
+    npc.remember(f"was freed from {site} by the traveller")
+    add(w, town, npc)
+    first_name = npc.name.split()[0]
+    return [f"<good>{first_name} is at the inn, washed and fed:</> \"If you ever want someone at your back, I'm yours. "
+            f"No coin. Just keep me fed.\" <dim>(Talk to them: \"Would you travel with me?\")</>"]
