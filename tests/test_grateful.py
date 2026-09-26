@@ -54,9 +54,8 @@ def test_the_freed_wait_at_the_inn_and_ask_only_for_their_keep(game):
     assert said and "Mary is at the inn" in said[0]
     npc = next(n for n in npcs_in(game.world, s.id) if n.name == "Mary Tanner")
     assert npc.flags["grateful"] and npc.sex == "female" and npc.present
-    usual = companions.wage_for(game, companions.terms(game, npc)["level"])
     t = companions.terms(game, npc)
-    assert t["upfront"] == 0 and t["wage"] <= usual // 2 + 1
+    assert t["upfront"] == 0 and t["wage"] == 0 and "keep" in companions.terms_text(game, npc)
     game.leader.money = 0  # no coin needed to take them on
     said = companions.hire(game, npc)
     c = game.party[-1]

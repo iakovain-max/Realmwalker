@@ -89,7 +89,7 @@ def terms(game, npc) -> dict:
     if npc.flags.get("company") is not None:
         upfront *= 2  # the company takes its cut
     if npc.flags.get("grateful"):
-        wage, upfront = wage // 2, 0  # they owe you their life: they ask only for their keep
+        wage, upfront, share = 0, 0, 0.0  # they owe you their life: no coin, only their keep
     return {"level": level, "wage": wage, "share": share, "upfront": upfront, "archetype": archetype_of(npc)}
 
 
@@ -112,6 +112,8 @@ def recruit_problem(game, npc) -> str | None:
 
 def terms_text(game, npc) -> str:
     t = terms(game, npc)
+    if not t["wage"] and not t["share"]:
+        return "no wage: only their keep"
     share = f" and {int(t['share'] * 100)}% of any coin we take" if t["share"] else ""
     return f"{money_text(t['wage'])} a day{share}; {money_text(t['upfront'])} now"
 
@@ -132,7 +134,7 @@ def hire(game, npc) -> list[str]:
     game.dirty = True
     msgs = [f"<good>{first(char)} joins you</>: a level {char.level} "
             f"{game.tables.classes[char.cls]['name'].lower()}, {data(game)['archetypes'][t['archetype']]['name']}. "
-            f"<dim>({terms_text_for(game, char)})</>"]
+            f"<dim>({terms_text_for(game, char) if char.companion['wage'] else 'no wage: only their keep'})</>"]
     msgs.append(f"<name>{first(char)}:</> {line(game, 'hired', char)}")
     return msgs
 
