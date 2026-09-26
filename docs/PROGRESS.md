@@ -25,65 +25,6 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 The nine milestones are done; this is what has been added since, in the same spirit (all of it from the design's
 own v1 lists).
 
-### Cloud session, 2026-09-26: why they follow you, and seven who are like no one else (Anton's request)
-
-Anton asked: companions' own money should be hidden or not exist, with only the player's money usable; more companions
-who follow out of respect or because they have nowhere left to go (a realm's knight for someone it reveres, a drunk
-or a foolish farm lad talked into it with a lucrative job, others won with a good skill check); and a new group of
-**unique companions**, stronger and more interesting, usually unpaid but hard to get (a quest, or being found who
-knows where), and not made up by the game: the same in every world. "Like, seven."
-
-- **One purse.** Companions carry no coin. Wages and loot shares are paid to them and gone (the party screen says how
-  much they have had of you); only your money is ever spent or shown. An older save's companion coin is handed to the
-  leader when it loads.
-- **Why they follow you.** Every companion now has a reason, shown on the party screen and the side panel: hired,
-  grateful, sworn, for a share, to see the world, homeless, for your name, or their own. Only the hired take a wage,
-  and "Raise pay" only shows for them.
-- **Sworn swords.** A kingdom, noble house, free city, clan or elven realm that honours you (standing 50 or more)
-  lends you one of its own if you ask its ruler: a knight of the household, a sergeant of the city guard, a
-  hearth-guard. The realm pays them. Below 15, or with a price on your head there, they are called home. One at a
-  time from each realm; if theirs dies with you, they think less of you and lend no other for a season.
-- **Dreamers.** Tell a young farm hand, fisher, serving girl, beggar or drunk about paying work you have taken
-  (Persuasion 12) and they come for a fifth of every reward. Tell them it will make them rich (Deception 10) and they
-  remember it when the money comes, unless it really was riches. A week with no paying work in hand and they start to
-  wonder. Level 1, poor kit, and a little weaker than a soldier.
-- **The restless.** A hard word (Persuasion 16, once a week) can talk a young guard, acolyte, woodcutter or miner
-  who is brave, proud or bitter, or who wants to leave, into coming with you.
-- **The homeless.** Survivors of places burned in the last year, sacked in the last four months, or raided, wait at
-  the inns within a few days' walk, and come for their keep.
-- **Admirers.** Once your fame is 10 or more (and more than your infamy), someone who has heard of you may be waiting
-  at an inn. They cool as your infamy outgrows your fame.
-- **Seven who are like no one else** (`data/uniques.json`, `game/uniques.py`). The same seven, with the same faces,
-  words and gear, in every world; only where they are is the world's. They take no wage, join a level above you (or
-  their own least level), have their own voices, likes and dislikes, talk to each other on the road, and are rumoured
-  about in the news. If you part, they go home and come back as they left; if they die, they are gone for good.
-  - **Sir Osric Vane**, last knight of the Grey Lantern, keeps a vigil over a barrow near where he lodges. Clear it and
-    he is yours. He keeps watch every night, whatever his orders.
-  - **Durgin Ashbeard**, last of Kharak-Dûl, drinks in the alehouse nearest the sleeping dragon. Out-drink him
-    (Constitution), then swear to kill it with him (level 3). He marks every dragon's lair; his shield turns fire.
-    He does not forgive a broken oath.
-  - **Tobiah Vell, Twice-Hanged**, is in the cells of the greatest city. Pay the gaoler 25 gp, speak for him
-    (Persuasion 17, easier where they think well of you), or pick the lock (a jailbreak if anyone sees). The first
-    blow that should kill him each day does not.
-  - **Sister Wendeline**, the Plague-Bell, is where the sickness is (or was). Work a day beside her (Medicine 12), or
-    have brought the cure to a sick town. She never catches anything, and her bell heals. The infamous she turns away.
-  - **Grusha Nine-Fingers**, the Penitent, scrubs a temple floor near orc country. Ask what she atones for, see that
-    she is hiding (Insight 14), and take her to the village she helped to burn. There its headman hears you: speak
-    for her, let her speak, pay the blood-price, hand her over, or take her away. Orcs and goblins know her name.
-  - **Aelith of the Long Memory** keeps the memory-books in an elven hall. Give her a book to read, tell her
-    something she does not know (History 17), or show her something strange. She remembers what happened in every
-    town you walk into, and knows magic things at a glance.
-  - **Wren Underbough**, the Night-Road, is the best smuggler on the back roads. Run her crate past a gate (or be
-    one of the thieves' guild). With her, gate-wardens never search your packs.
-- **Fixed on the way.** Companions who outlived a dead character were marked for hire without saying as what, so the
-  next character could not talk to them; now sell-swords can be hired again and the rest go back to who they were.
-  And a companion's death on the road no longer drops a dead leader out of the party (the same fix as the shared
-  pack's).
-
-Checked by `tests/test_followers.py` and `tests/test_uniques.py`, and by a soak that recruited all seven about
-twenty times each across twelve worlds, with sworn swords, dreamers and the restless, then travelled, fought,
-rested, saved and loaded, died and started again, checking the party after every step: no problems.
-
 **More kinds of work** (design section 13). Besides bounties, lairs, beasts, letters, heirlooms, captives, debts,
 disappearances and dragons, people now offer (sixteen kinds in all):
 - **escort**: walk someone to another town. They travel with you and pay at the gate. Lose a fight on the road and
@@ -232,6 +173,65 @@ cellars, crypts, towers, hideouts, temples, caves, warrens and lairs. Only when 
 dwarf's or elf's eyes), only at normal text detail and above, and never oftener than once every dozen steps.
 Going down and coming up have several ways of saying it, and a deeper level is "the third level of the barrows"
 rather than "level 3".
+
+### Cloud session, 2026-09-26: why they follow you, and seven who are like no one else (Anton's request)
+
+Anton asked: companions' own money should be hidden or not exist, with only the player's money usable; more companions
+who follow out of respect or because they have nowhere left to go (a realm's knight for someone it reveres, a drunk
+or a foolish farm lad talked into it with a lucrative job, others won with a good skill check); and a new group of
+**unique companions**, stronger and more interesting, usually unpaid but hard to get (a quest, or being found who
+knows where), and not made up by the game: the same in every world. "Like, seven."
+
+- **One purse.** Companions carry no coin. Wages and loot shares are paid to them and gone (the party screen says how
+  much they have had of you); only your money is ever spent or shown. An older save's companion coin is handed to the
+  leader when it loads.
+- **Why they follow you.** Every companion now has a reason, shown on the party screen and the side panel: hired,
+  grateful, sworn, for a share, to see the world, homeless, for your name, or their own. Only the hired take a wage,
+  and "Raise pay" only shows for them.
+- **Sworn swords.** A kingdom, noble house, free city, clan or elven realm that honours you (standing 50 or more)
+  lends you one of its own if you ask its ruler: a knight of the household, a sergeant of the city guard, a
+  hearth-guard. The realm pays them. Below 15, or with a price on your head there, they are called home. One at a
+  time from each realm; if theirs dies with you, they think less of you and lend no other for a season.
+- **Dreamers.** Tell a young farm hand, fisher, serving girl, beggar or drunk about paying work you have taken
+  (Persuasion 12) and they come for a fifth of every reward. Tell them it will make them rich (Deception 10) and they
+  remember it when the money comes, unless it really was riches. A week with no paying work in hand and they start to
+  wonder. Level 1, poor kit, and a little weaker than a soldier.
+- **The restless.** A hard word (Persuasion 16, once a week) can talk a young guard, acolyte, woodcutter or miner
+  who is brave, proud or bitter, or who wants to leave, into coming with you.
+- **The homeless.** Survivors of places burned in the last year, sacked in the last four months, or raided, wait at
+  the inns within a few days' walk, and come for their keep.
+- **Admirers.** Once your fame is 10 or more (and more than your infamy), someone who has heard of you may be waiting
+  at an inn. They cool as your infamy outgrows your fame.
+- **Seven who are like no one else** (`data/uniques.json`, `game/uniques.py`). The same seven, with the same faces,
+  words and gear, in every world; only where they are is the world's. They take no wage, join a level above you (or
+  their own least level), have their own voices, likes and dislikes, talk to each other on the road, and are rumoured
+  about in the news. If you part, they go home and come back as they left; if they die, they are gone for good.
+  - **Sir Osric Vane**, last knight of the Grey Lantern, keeps a vigil over a barrow near where he lodges. Clear it and
+    he is yours. He keeps watch every night, whatever his orders.
+  - **Durgin Ashbeard**, last of Kharak-Dûl, drinks in the alehouse nearest the sleeping dragon. Out-drink him
+    (Constitution), then swear to kill it with him (level 3). He marks every dragon's lair; his shield turns fire.
+    He does not forgive a broken oath.
+  - **Tobiah Vell, Twice-Hanged**, is in the cells of the greatest city. Pay the gaoler 25 gp, speak for him
+    (Persuasion 17, easier where they think well of you), or pick the lock (a jailbreak if anyone sees). The first
+    blow that should kill him each day does not.
+  - **Sister Wendeline**, the Plague-Bell, is where the sickness is (or was). Work a day beside her (Medicine 12), or
+    have brought the cure to a sick town. She never catches anything, and her bell heals. The infamous she turns away.
+  - **Grusha Nine-Fingers**, the Penitent, scrubs a temple floor near orc country. Ask what she atones for, see that
+    she is hiding (Insight 14), and take her to the village she helped to burn. There its headman hears you: speak
+    for her, let her speak, pay the blood-price, hand her over, or take her away. Orcs and goblins know her name.
+  - **Aelith of the Long Memory** keeps the memory-books in an elven hall. Give her a book to read, tell her
+    something she does not know (History 17), or show her something strange. She remembers what happened in every
+    town you walk into, and knows magic things at a glance.
+  - **Wren Underbough**, the Night-Road, is the best smuggler on the back roads. Run her crate past a gate (or be
+    one of the thieves' guild). With her, gate-wardens never search your packs.
+- **Fixed on the way.** Companions who outlived a dead character were marked for hire without saying as what, so the
+  next character could not talk to them; now sell-swords can be hired again and the rest go back to who they were.
+  And a companion's death on the road no longer drops a dead leader out of the party (the same fix as the shared
+  pack's).
+
+Checked by `tests/test_followers.py` and `tests/test_uniques.py`, and by a soak that recruited all seven about
+twenty times each across twelve worlds, with sworn swords, dreamers and the restless, then travelled, fought,
+rested, saved and loaded, died and started again, checking the party after every step: no problems.
 
 **Ready to be worked on from the cloud.** `docs/CLOUD_HANDOFF.md` is a briefing for a Claude Code session
 running on GitHub instead of your PC: what it can check there (all the tests, the autoplay bot, the balance
