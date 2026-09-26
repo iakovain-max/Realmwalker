@@ -21,6 +21,8 @@
                   "buff": {"ac": 5}, "rounds": 1, "text": "An invisible barrier: +5 AC until your next turn."},
     "mage_armor": {"name": "Mage Armour", "level": 1, "school": "abjuration", "classes": ["wizard"], "kind": "buff", "target": "self",
                   "buff": {"mage_armor": 13}, "rounds": 4800, "text": "Your AC becomes 13 + Dex while unarmoured, for eight hours."},
+    "identify": {"name": "Identify", "level": 1, "school": "divination", "classes": ["wizard"], "kind": "identify", "target": "item",
+                 "text": "Ten minutes with a strange thing, and you know what it is, what it does and whether it is cursed. Not in a fight."},
     "scorching_ray": {"name": "Scorching Ray", "level": 2, "school": "evocation", "classes": ["wizard"], "kind": "attack", "attack": "ranged", "target": "enemy",
                   "rays": 3, "damage": "2d6", "damage_type": "fire", "upcast_rays": 1, "text": "Three rays of fire, each aimed separately."},
     "hold_person": {"name": "Hold Person", "level": 2, "school": "enchantment", "classes": ["wizard", "cleric"], "kind": "condition", "save": "wis", "target": "enemy",

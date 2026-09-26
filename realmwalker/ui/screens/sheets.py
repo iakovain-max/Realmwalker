@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+from realmwalker.game.magic import lasting_text
 from realmwalker.game.state import GameState
+from realmwalker.rules import spells as spellrules
 from realmwalker.rules.character import ABILITIES, Sheet, signed
 from realmwalker.rules.inventory import best_slot_items, equip, unequip
 from realmwalker.rules.items import CATEGORY_NAMES, EQUIP_SLOTS, SLOT_NAMES, Item, money_text
@@ -158,6 +160,12 @@ class CharacterScreen(Screen):
             f"<dim>Initiative</>   {signed(s.initiative)}",
             f"<dim>Proficiency</>  +{s.proficiency}",
             f"<dim>Passive Perception</> {s.passive_perception}",
+        ]
+        on = spellrules.lasting(c, t)
+        if on:
+            lines.append("<dim>Spells on you:</> " + ", ".join(
+                f"<magic>{t.spells[sid]['name']}</> <dim>({lasting_text(hours)})</>" for sid, hours in on.items()))
+        lines += [
             "",
             "<title>Ability      Score  Mod  Save</>",
         ]

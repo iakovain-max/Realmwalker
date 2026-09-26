@@ -280,7 +280,13 @@ class Battle:
         fid = 1
         for i, c in enumerate(party):
             rank = FRONT if i == 0 or self._prefers_front(c) else BACK
-            self.fighters.append(Fighter(fid, PARTY, rank, tables, char=c))
+            f = Fighter(fid, PARTY, rank, tables, char=c)
+            # Spells cast before the fight and still working (Stoneskin, Death Ward...) come into it with them.
+            for sid in spellrules.lasting(c, tables):
+                part = spellrules.battle_part(tables, sid)
+                if part:
+                    f.buffs.append(part)
+            self.fighters.append(f)
             fid += 1
         for cr in foes:
             rank = tables.creatures[cr.def_id].get("rank", FRONT)
@@ -836,6 +842,8 @@ class Battle:
             ward = next((b for b in target.buffs if b.get("death_ward")), None)
             if ward is not None:
                 target.buffs.remove(ward)
+                if ward.get("lasting") and target.char:
+                    spellrules.end(target.char, ward["lasting"])  # spent: it does not come into the next fight
                 target.hp = 1
                 self.say(f"<magic>The ward over {target.the_name} takes the blow instead.</>", "good")
                 return
@@ -1284,10 +1292,14 @@ class Battle:
             spell = self.t.spells[sid]
             if ok and spell["kind"] == "revive" and not any(i.def_id == "diamond" for i in f.char.inventory):
                 ok, why = False, "needs a diamond"
+            if ok and spell["target"] == "self" and sid in spellrules.lasting(f.char, self.t):
+                ok, why = False, "already working on you"
+            if ok and spell["kind"] == "identify":
+                ok, why = False, "not in a fight"
             out.append((sid, ok, why))
         for it in f.char.inventory:
             sid = self.t.items.get(it.def_id).get("use", {}).get("scroll")
-            if sid in self.t.spells and self.t.spells[sid]["kind"] != "revive":
+            if sid in self.t.spells and self.t.spells[sid]["kind"] not in ("revive", "identify"):
                 out.append((f"scroll:{it.uid}:{sid}", True, ""))
         from realmwalker.rules import magic
 
@@ -1422,7 +1434,16 @@ class Battle:
             targets = [x for x in self.side(f.side) if x.active] if spell["target"] == "all_allies" else \
                 ([f] if spell["target"] == "self" else [target])
             for x in targets:
-                if x is not None:
+                if x is None:
+                    continue
+                if x.char is not None and spellrules.lasts(self.t, sid):
+                    # It outlives the fight: kept on them (the sheet counts its armour), the rest carried here.
+                    spellrules.keep(x.char, self.t, sid)
+                    x.buffs = [b for b in x.buffs if b.get("lasting") != sid]
+                    part = spellrules.battle_part(self.t, sid)
+                    if part:
+                        x.buffs.append(part)
+                else:
                     x.buffs.append({**spell["buff"], "rounds": int(spell.get("rounds", 10)), "source": sid})
             self.say(spell["text"], "magic")
         elif kind == "condition":

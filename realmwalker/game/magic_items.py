@@ -133,8 +133,8 @@ def describe(game, item) -> list[str]:
     if not magic:
         return []
     if not magic.get("identified"):
-        out = ["<magic>There is something strange about it.</> Its nature is hidden: study it (Arcana), or ask a "
-               "priest."]
+        out = ["<magic>There is something strange about it.</> Its nature is hidden: study it (Arcana), ask a "
+               "priest, or have a wizard cast Identify (the Spells screen, S)."]
         if magic.get("cursed") and magic.get("curse_known"):
             out.append("<danger>It is cursed, and it will not come off.</>")
         return out

@@ -197,7 +197,7 @@ def tick(char: Character, tables, ctx: HealthContext, minutes: float, rng: RNG) 
     n = body.first(char)
     resting = ctx.activity in ("rest", "sleep")
     _take_exposures(char, tables, rng)
-    events += _timed_effects(char, hours)
+    events += _timed_effects(char, hours, tables)
     events += _environment_exposures(char, tables, ctx, hours, rng)
     events += _bleeding(char, hours, resting, rng)
     events += _infection(char, tables, ctx, hours, resting, rng)
@@ -237,7 +237,7 @@ def _hurt(char: Character, amount: float) -> None:
         char.hp = max(0, char.hp - whole)
 
 
-def _timed_effects(char: Character, hours: float) -> list[tuple[str, str]]:
+def _timed_effects(char: Character, hours: float, tables=None) -> list[tuple[str, str]]:
     events = []
     n = body.first(char)
     for key in list(char.effects):
@@ -253,6 +253,8 @@ def _timed_effects(char: Character, hours: float) -> list[tuple[str, str]]:
                 events.append((f"{n}'s head clears at last.", "dim"))
             elif key == "disguised":
                 events.append((f"{n}'s disguise has worn off.", "dim"))
+            elif key.startswith("spell:") and tables is not None and key[6:] in tables.spells:
+                events.append((f"The {tables.spells[key[6:]]['name']} on {n} fades.", "dim"))
     # Drink wears off, and real drunkenness leaves a hangover.
     if char.intoxication > 0:
         if char.intoxication >= 45:

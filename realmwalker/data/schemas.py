@@ -308,9 +308,9 @@ SPELL = Obj(
     {
         "name": Str(max_len=40), "level": Int(min=0, max=9), "school": Str(max_len=20), "classes": List(Str(max_len=20), min_items=1),
         "kind": Str(choices=["attack", "auto", "save", "heal", "buff", "condition", "sleep", "stabilize", "cure", "summon",
-                             "aura", "move", "revive"]),
+                             "aura", "move", "revive", "identify"]),
         "target": Str(choices=["enemy", "ally", "self", "downed_ally", "dead_ally", "enemy_front", "enemy_back", "all_enemies",
-                               "all_allies"]),
+                               "all_allies", "item"]),
         "text": Str(max_len=300),
     },
     strict=False,

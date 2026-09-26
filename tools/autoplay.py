@@ -168,6 +168,15 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
                     fail(f"{member.name} has an impossible disease {d}")
             if any(v < -1e-6 for k, v in member.effects.items() if not k.endswith("_clean")):
                 fail(f"{member.name} has an expired timed effect {member.effects}")
+            from realmwalker.rules import spells as spellrules
+
+            for sid, hours in spellrules.lasting(member).items():
+                if sid not in app.tables.spells or not spellrules.lasts(app.tables, sid) or \
+                        hours > int(app.tables.spells[sid]["rounds"]) / spellrules.ROUNDS_PER_HOUR + 1e-6:
+                    fail(f"{member.name} has an impossible lasting spell {sid} ({hours} hours)")
+            used = member.spells.get("slots_used", []) if member.spells else []
+            if any(u > n for u, n in zip(used, spellrules.slots_total(member, app.tables))):
+                fail(f"{member.name} has spent more spell slots than they have: {used}")
             from realmwalker.rules.inventory import container_capacity
 
             for it in member.inventory:
