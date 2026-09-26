@@ -337,6 +337,9 @@ def load_game(folder: Path, tables: Tables) -> GameState:
     game.waiting = [c for c in extra.get("waiting", []) if c.alive]
     if len(game.party) > 1:  # an old save may still hold a companion who died
         game.party = [c for c in game.party if c.alive or c is game.party[0]]
+    from realmwalker.game.companions import one_purse
+
+    one_purse(game)  # companions from before carried coin of their own; it is the leader's now
     game.lit = extra.get("lit")
     game.quests = extra.get("quests", [])
     if not game.renown.flags.get("started"):

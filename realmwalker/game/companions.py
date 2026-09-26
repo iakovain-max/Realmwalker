@@ -8,6 +8,9 @@ die. In a fight you command each of them.
 Loyalty (0 to 100) rises and falls with what you do (`react`, called with a tag when you do something), with
 pay, and with time. Low loyalty brings grumbling, then desertion in the night (with some of your coin); high
 loyalty brings devotion. Outside a fight they take simple orders: follow, wait here, keep watch at camp, forage.
+
+They carry no purse of their own (after v1): what you pay them, wages or a share of the loot, is theirs and gone
+(counted in `paid`), and only your money is ever spent.
 """
 
 from __future__ import annotations
@@ -151,6 +154,14 @@ def terms_text_for(game, c: Character) -> str:
     return f"{money_text(comp['wage'])} a day{share}"
 
 
+def pay_word(game, c: Character) -> str:
+    """A few words for the side panel, in place of a purse: what they are paid."""
+    comp = c.companion
+    if comp.get("wage"):
+        return f"{money_text(comp['wage'])} a day"
+    return f"{int(comp.get('share', 0) * 100)}% of the loot" if comp.get("share") else "no wage"
+
+
 def make_character(game, npc, t: dict) -> Character:
     """The townsperson as a full character of their class, at about the party's level."""
     from realmwalker.rules import progression
@@ -175,7 +186,7 @@ def make_character(game, npc, t: dict) -> Character:
     if t["level"] > 1:
         xp = tables.rules["xp_for_level"][t["level"] - 1]
         progression.award_xp(char, xp, tables, rng, auto=True)
-    char.money = rng.randint(0, 200)
+    char.money = 0  # what you pay them is theirs, and gone: only your purse is ever spent
     char.companion = {
         "npc": npc.id, "archetype": t["archetype"], "values": list(arch["values"]), "want": arch["want"],
         "loyalty": float(data(game)["loyalty"]["start"]), "wage": t["wage"], "share": t["share"],
@@ -289,7 +300,7 @@ def daily(game) -> None:
         if wage:
             if sum(m.money for m in game.party) >= wage:
                 take_money(game, wage)
-                c.money += wage
+                comp["paid"] = int(comp.get("paid", 0)) + wage  # sent home, drunk, saved: theirs, not the party's
                 comp["unpaid"] = 0
                 if "mercenary" in comp.get("values", []) or "greedy" in comp.get("values", []):
                     change_loyalty(c, 0.5)
@@ -314,7 +325,6 @@ def desert(game, c: Character, rng: RNG) -> None:
 
     days = 5 if "greedy" not in c.companion.get("values", []) else 12
     stolen = take_money(game, min(sum(m.money for m in game.party) // 4, wage_for(game, c.level) * days))
-    c.money += stolen
     for text in dismiss(game, c, deserted=True):
         game.say(f"<danger>{text}</>" + (f" ({money_text(stolen)} is missing.)" if stolen else ""), "danger")
 
@@ -326,9 +336,17 @@ def share_loot(game, money: int) -> int:
         share = float(c.companion.get("share", 0.0))
         if share and money > 0:
             cut = int(money * share)
-            c.money += cut
+            c.companion["paid"] = int(c.companion.get("paid", 0)) + cut
             left -= cut
     return max(0, left)
+
+
+def one_purse(game) -> None:
+    """Companions carry no purse of their own. An older save's companions may still have coin: it is yours."""
+    for c in list(game.party[1:]) + waiting(game):
+        if c.companion and c.money:
+            game.leader.money += c.money
+            c.money = 0
 
 
 # ---------------------------------------------------------------------------- orders

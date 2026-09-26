@@ -304,6 +304,8 @@ def _check_companions(game, fail) -> None:
             fail(f"{c.name} is waiting nowhere")
         if not c.alive and settled:
             fail(f"dead {c.name} is still in the party")
+        if c.money:
+            fail(f"{c.name} carries coin of their own ({c.money}); only the leader's purse is spent")
 
 
 def _check_law(game, fail) -> None:

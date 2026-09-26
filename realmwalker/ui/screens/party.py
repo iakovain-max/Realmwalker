@@ -143,7 +143,7 @@ class PartyScreen(Screen):
         lines = [f"<title>{markup.escape(c.name)}</>",
                  f"<dim>{t.races[c.race]['name']} {t.classes[c.cls]['name'].lower()}, level {c.level}"
                  + (f" ({t.classes[c.cls]['subclasses'][c.subclass]['name']})" if c.subclass else "") + "</>",
-                 f"Hit points {c.hp}/{c.max_hp}. Money {money_text(c.money)}."]
+                 f"Hit points {c.hp}/{c.max_hp}." + ("" if c.companion else f" Money {money_text(c.money)}.")]
         if c.pending:
             lines.append("<info>Has level-up choices waiting (c, then l).</>")
         if c.companion:
@@ -159,7 +159,8 @@ class PartyScreen(Screen):
                 f"Loyalty: <{color}>{word}</> <dim>({int(k.get('loyalty', 50))})</>",
                 f"They are {' and '.join(values)}. They want {k.get('want', 'pay')}.",
                 f"Pay: {comp.terms_text_for(g, c)}." + (f" <warn>Unpaid for {k['unpaid']} days.</>" if k.get("unpaid")
-                                                          else ""),
+                                                          else "")
+                + (f" <dim>(paid {money_text(k['paid'])} so far)</>" if k.get("paid") else ""),
                 f"Orders: {comp.ORDERS.get(k.get('order', 'follow'), 'follow')}."
                 + (" <dim>(waiting)</>" if c not in g.party else ""),
             ]

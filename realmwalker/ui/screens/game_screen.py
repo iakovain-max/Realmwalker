@@ -719,7 +719,13 @@ class GameScreen(Screen):
             enc = s.encumbrance()
             word, ecolor = ENCUMBRANCE_WORDS[enc]
             load = "" if enc == 0 else f" · <{ecolor}>{word}</>"
-            canvas.markup(x, y, f"<loot>{money_text(member.money)}</>{load}", max_width=w)
+            if member.companion:  # no purse of their own: what they are with you for instead
+                from realmwalker.game.companions import pay_word
+
+                purse = f"<dim>{pay_word(game, member)}</>"
+            else:
+                purse = f"<loot>{money_text(member.money)}</>"
+            canvas.markup(x, y, f"{purse}{load}", max_width=w)
             y += 1
             if member.animals:
                 specs = game.tables.economy["animals"]
