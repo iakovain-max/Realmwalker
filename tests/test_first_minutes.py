@@ -151,3 +151,41 @@ def test_travel_days_read_like_speech(make_app):
         assert words in game.describe_plan(plan), game.describe_plan(plan)
     assert "1 days" not in game.describe_plan(TravelPlan(path=[(0, 0)], minutes=10 * 60 + 50, miles=18,
                                                           destination=(0, 0)))
+
+
+SLIPS = {
+    "a raw id": r"(?<![\w/.])[a-z]+_[a-z0-9_]+(?![\w/.])",
+    "the the": r"\b[Tt]he the\b",
+    "died died": r"\bdied died\b",
+    "1 and a plural": r"(?<![\d.,])1 (days|hours|pints|miles|weeks)\b",
+    "(s)": r"\w\(s\)",
+    ".:": r"\w\.: ",
+}
+
+
+def test_nothing_on_screen_reads_wrong_during_a_run(tmp_path, monkeypatch):
+    """The bot plays for a while; nothing drawn may carry an internal id or one of the slips fixed above."""
+    import re
+    import sys
+    from pathlib import Path
+
+    from realmwalker.ui import widgets
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
+    from autoplay import run_autoplay
+
+    found: dict[str, set] = {}
+    spans = widgets.Canvas.spans
+    patterns = {name: re.compile(p) for name, p in SLIPS.items()}
+
+    def watch(canvas, x, y, parts, bg=None, max_width=None):
+        s = "".join(t for t, _ in parts)
+        for name, pat in patterns.items():
+            if pat.search(s):
+                found.setdefault(name, set()).add(s.strip()[:100])
+        return spans(canvas, x, y, parts, bg, max_width)
+
+    monkeypatch.setattr(widgets.Canvas, "spans", watch)
+    report = run_autoplay(turns=800, seed=6, ai="off", home=tmp_path / "home")
+    assert report.ok, report.summary()
+    assert not found, found
