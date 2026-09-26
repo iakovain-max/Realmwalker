@@ -63,7 +63,7 @@
     "clothes_low": ["patched homespun", "a stained apron", "a threadbare smock", "clothes that have been mended past the point of sense", "a sheepskin vest"],
     "clothes_middle": ["a good wool coat", "a clean linen shirt and a leather apron", "a dyed tunic, a little faded", "sober dark clothes of decent cloth"],
     "clothes_high": ["velvet the colour of wine", "a fur-trimmed cloak and rings on three fingers", "fine black wool and a gold chain"],
-    "appearance": ["{build}, with {hair} and {feature}. Wears {clothes}.", "A {build} {person} with {hair}. {feature_sentence} Dressed in {clothes}."],
+    "appearance": ["{build}, with {hair} and {feature}. Wears {clothes}.", "A {build} {person} with {hair}. {feature_sentence} Dressed in {clothes}.", "A {person} in {clothes}: {build}, with {hair} and {feature}.", "You notice {feature} first; then the rest: {build}, with {hair}, in {clothes}.", "A {build} {person}, {hair}, in {clothes}. {feature_sentence}"],
     "backstory_innkeeper": ["Took over the inn when {their} father drank himself into the churchyard.", "Came here as a serving hand twenty years ago and married the owner's child.", "Bought the inn with money nobody asks about."],
     "backstory_priest": ["Sent here by the temple after some trouble in a bigger place that nobody discusses.", "Born in this parish, and has buried half of it.", "Took orders after a fever took {their} whole family."],
     "backstory_smith": ["Learned the trade from {their} mother, who learned it from hers.", "Spent ten years making spearheads for an army, and does not talk about it.", "Came from the mountains with nothing but a hammer."],

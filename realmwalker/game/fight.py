@@ -47,8 +47,13 @@ def battle_env(game, surprised: str | None) -> Env:
     if lm is not None:
         t = game.tables.terrain[int(game.remap_for(lm)[lm.terrain[game.player.lx, game.player.ly]])]
         ground = t["name"]
+    elif game.world.road[game.player.x, game.player.y]:
+        ground = "road"
     else:
-        ground = game.biome_def(game.player.x, game.player.y)["name"]
+        # What is underfoot in that land ("the leaf litter", "the pine needles"), not the land ("the pine forest").
+        ground_ids = game.biome_def(game.player.x, game.player.y)["local"]["ground"]
+        top = max(ground_ids, key=lambda g: g[1])[0]
+        ground = game.tables.terrain[game.tables.terrain.index[top]]["name"] if top in game.tables.terrain.index else "ground"
     light = game.light
     indoors = lm is not None and lm.building_at(game.player.lx, game.player.ly) is not None
     if indoors:
@@ -139,8 +144,10 @@ def finish_battle(game) -> Aftermath:
         elif result.fled:
             survivors = f"{_list_names(game, result.fled)} got away, and may be back."
         template = rng.choice(game.tables.combat_text["aftermath"]["victory"])
+        one = len(result.dead) == 1  # "The wolf lies still", "Two wolves lie still"
         after.text = template.replace("{dead}", dead_text).replace("{ground}", battle.env.ground).replace(
-            "{weather}", "dark" if battle.env.light < 0.5 else "grey light").replace("{survivors}", survivors)
+            "{weather}", "dark" if battle.env.light < 0.5 else "grey light").replace("{survivors}", survivors).replace(
+            "{lie}", "lies" if one else "lie").replace("{are}", "is" if one else "are").strip()
         if actor is not None and lm is not None and actor in lm.actors:
             lm.actors.remove(actor)
     elif result.outcome in ("defeat", "surrendered"):

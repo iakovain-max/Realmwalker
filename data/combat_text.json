@@ -40,13 +40,13 @@
   "miss": ["{A}'s {weapon} cuts only air.", "{T} twists aside from {A}'s {weapon}.", "{A} lunges and misses.", "{A} overreaches, and {T} is not there.", "{A} swings too early, and the {weapon} goes wide.", "{T} steps inside the swing and out again.", "{A}'s {weapon} rings off the ground.", "{A} strikes at where {T} was standing.", "{T} sways back, and the {weapon} passes a finger's width clear."],
   "armored_miss": ["The blow rings off {T}'s {armor}.", "{T}'s {armor} turns {A}'s {weapon}.", "{A}'s {weapon} skids across {T}'s {armor}.", "{A}'s {weapon} finds {T}'s {armor} and stops there.", "{T} takes it on the {armor} and hardly feels it.", "The {weapon} bites {T}'s {armor} and sticks a moment before {A} wrenches it free."],
   "wound": {
-    "cut": {"1": ["A shallow cut; it bleeds.", "A clean cut, no deeper than a finger's nail.", "The skin parts and beads red along the line."], "2": ["The cut is deep and bleeds freely.", "A long cut, and it does not stop.", "Deep enough to want stitching, and soon."], "3": ["The wound gapes to the bone.", "The cut runs deep and wide, and the blood comes in pulses.", "Laid open. You can see what ought not to be seen."]},
-    "puncture": {"1": ["A small, deep hole.", "A neat hole, welling slowly.", "Narrow, and deeper than it looks."], "2": ["It went in deep; blood wells dark.", "Punched clean through the muscle.", "The hole is dark and does not want to close."], "3": ["It went right in. Something inside is broken.", "Through, and out the other side.", "Deep in, and whatever it found in there is leaking."]},
-    "blunt": {"1": ["It will bruise black.", "A dull ache that will be purple by morning.", "The flesh swells where it landed."], "2": ["Something cracks under the blow.", "Something has given under the skin.", "The shape of it is wrong now."], "3": ["Bone gives way with a wet crunch.", "Crushed. The limb hangs wrong.", "Flesh and bone both give, and keep giving."]},
-    "fracture": {"2": ["Bone cracks.", "A crack, and then the sick weight of it.", "Bone grates on bone at every movement."], "3": ["Bone snaps like green wood.", "The bone goes, and the ends grind.", "Snapped through, and the limb is finished for now."]},
-    "bite": {"1": ["Teeth marks, bleeding.", "A half-moon of punctures, welling.", "Teeth have taken the skin off in a strip."], "2": ["A ragged bite, flesh torn.", "A mouthful of flesh worried loose.", "Torn where the teeth held and pulled."], "3": ["Flesh torn away in a mouthful.", "A piece is gone, and will not come back.", "Chewed to the bone and shaken."]},
-    "burn": {"1": ["The skin reddens and blisters.", "Red, shiny, and screaming to be touched by nothing.", "The hair is gone and the skin with it."], "2": ["A deep, weeping burn.", "The skin has lifted away in a sheet.", "Weeping, and the pain arrives late and stays."], "3": ["Charred to the meat.", "Black at the middle, red at the edges, and no feeling in either.", "Cooked through. It has stopped hurting, which is worse."]},
-    "frostbite": {"1": ["Numb and white.", "White and waxy, and no feeling in it at all.", "The skin is stiff and does not answer."], "2": ["Blackening frostbite.", "Going black at the tips.", "Hard to the touch, and the colour is leaving."], "3": ["Frozen solid; dead flesh.", "Frozen through; the flesh is lost.", "Dead and hard as wood, whatever comes after."]}
+    "cut": {"1": ["A shallow cut; it bleeds.", "A clean cut, no deeper than a finger's nail.", "The skin parts and beads red along the line.", "A nick, and a thin red line.", "It stings more than it bleeds."], "2": ["The cut is deep and bleeds freely.", "A long cut, and it does not stop.", "Deep enough to want stitching, and soon.", "Opened up, and bleeding freely down the arm or leg or side.", "A deep slice that pulls apart at every movement."], "3": ["The wound gapes to the bone.", "The cut runs deep and wide, and the blood comes in pulses.", "Laid open. You can see what ought not to be seen.", "A terrible gash, and it is pouring.", "Cut to the bone, and the blood will not stop for anything."]},
+    "puncture": {"1": ["A small, deep hole.", "A neat hole, welling slowly.", "Narrow, and deeper than it looks.", "A jab that barely broke the skin, and bleeds anyway.", "In and out, quick and small."], "2": ["It went in deep; blood wells dark.", "Punched clean through the muscle.", "The hole is dark and does not want to close.", "A deep stab; the blood comes dark and slow.", "It went in a hand's breadth and came out red."], "3": ["It went right in. Something inside is broken.", "Through, and out the other side.", "Deep in, and whatever it found in there is leaking.", "Driven in to the hilt, or near it.", "A deep wound, and the breath comes wrong after it."]},
+    "blunt": {"1": ["It will bruise black.", "A dull ache that will be purple by morning.", "The flesh swells where it landed.", "A knot rises where it hit.", "Bruised to the bone, but whole."], "2": ["Something cracks under the blow.", "Something has given under the skin.", "The shape of it is wrong now.", "Something inside gave way with a pop.", "The swelling comes up fast and hot."], "3": ["Bone gives way with a wet crunch.", "Crushed. The limb hangs wrong.", "Flesh and bone both give, and keep giving.", "Smashed. There is no other word for it.", "The blow caves it in."]},
+    "fracture": {"2": ["Bone cracks.", "A crack, and then the sick weight of it.", "Bone grates on bone at every movement.", "A bone gives with a sound like a stick over a knee.", "Broken; the limb will not take weight."], "3": ["Bone snaps like green wood.", "The bone goes, and the ends grind.", "Snapped through, and the limb is finished for now.", "The bone breaks in two places at once.", "Shattered, and the pieces move under the skin."]},
+    "bite": {"1": ["Teeth marks, bleeding.", "A half-moon of punctures, welling.", "Teeth have taken the skin off in a strip.", "A nip that drew blood.", "The teeth caught, and let go."], "2": ["A ragged bite, flesh torn.", "A mouthful of flesh worried loose.", "Torn where the teeth held and pulled.", "Teeth sank deep and dragged.", "Bitten through, and the edges are ragged and dirty."], "3": ["Flesh torn away in a mouthful.", "A piece is gone, and will not come back.", "Chewed to the bone and shaken.", "The jaws closed and shook and tore.", "Savaged. The bite is deep, and filthy with it."]},
+    "burn": {"1": ["The skin reddens and blisters.", "Red, shiny, and screaming to be touched by nothing.", "The hair is gone and the skin with it.", "A scorch mark, already blistering.", "The skin tightens and burns long after."], "2": ["A deep, weeping burn.", "The skin has lifted away in a sheet.", "Weeping, and the pain arrives late and stays.", "A bad burn, raw and wet.", "Seared, and the smell of it stays."], "3": ["Charred to the meat.", "Black at the middle, red at the edges, and no feeling in either.", "Cooked through. It has stopped hurting, which is worse.", "Burned black, and the flesh beneath is ruined.", "The fire took the skin and went looking for more."]},
+    "frostbite": {"1": ["Numb and white.", "White and waxy, and no feeling in it at all.", "The skin is stiff and does not answer.", "The skin has gone grey and dead to the touch.", "No feeling at all, which is the worrying part."], "2": ["Blackening frostbite.", "Going black at the tips.", "Hard to the touch, and the colour is leaving.", "Blistered with cold, and darkening.", "Swollen, blotched, and hard."], "3": ["Frozen solid; dead flesh.", "Frozen through; the flesh is lost.", "Dead and hard as wood, whatever comes after.", "Black, and it will not come back.", "Frozen to the core. The flesh is gone."]}
   },
   "down": ["{T} goes down and lies there, bleeding.", "{T} folds over and drops.", "{T} collapses into the mud.", "{T}'s legs give way.", "{T} sits down suddenly and cannot get up.", "{T}'s legs go, and {T} is on the ground and staying there.", "{T} drops the weapon first, then follows it down."],
   "dead": ["{T} is dead.", "{T} does not get up again.", "{T} twitches, and is still.", "{T} is finished.", "There is no more fight in {T}, and no more anything.", "{T} stops, in the middle of moving, and stays stopped."],
@@ -55,12 +55,39 @@
   "beg": ["'Please. I've children.'", "'Mercy, for the gods' sake!'", "'Don't. Please don't.'", "'I only wanted to eat.'", "'Don't. Please. I'll tell you anything.'", "'I was only paid to be here.'", "'Let me go and you'll never see me again.'"],
   "aftermath": {
     "victory": [
-      "It is over. {dead} lie still on the {ground}, and the {weather} settles over them. {survivors}",
+      "It is over. {dead} {lie} still on the {ground}, and the {weather} settles over them. {survivors}",
       "The fight ends as fights do: suddenly, and with the smell of blood and opened bowels. {dead} will not rise. {survivors}",
-      "Silence, then your own breath, loud. {dead} are down for good. {survivors}"
+      "Silence, then your own breath, loud. {dead} {are} down for good. {survivors}",
+      "Your hands are shaking now that it is over. {dead} {are} not going anywhere. {survivors}",
+      "Somebody is breathing hard, and it is you. {dead} {lie} on the {ground} like dropped sacks. {survivors}",
+      "It was quicker than it felt. {dead} {are} finished, and the {weather} shows the rest. {survivors}",
+      "The last blow lands, and nothing answers it. {dead} will not trouble anyone again. {survivors}",
+      "You wipe the blade, or your hands, and look at what was done. {dead} {lie} still. {survivors}",
+      "Crows are already circling. {dead} will give them a good day. {survivors}",
+      "Nobody cheers. {dead} {are} dead, and you are not, and that is all. {survivors}",
+      "The noise stops all at once, and the {weather} comes back. {dead} {lie} on the {ground}. {survivors}",
+      "Blood on the {ground}, some of it yours. {dead} {are} down. {survivors}"
     ],
-    "fled": ["You run, and do not stop until your lungs burn and the sounds behind you are gone."],
-    "parley": ["Weapons lowered, slowly. Nobody else will die here today."],
-    "robbed": ["You wake with a headache and empty pockets. They took what they wanted and left you for the crows, who have not yet come."]
+    "fled": [
+      "You run, and do not stop until your lungs burn and the sounds behind you are gone.",
+      "You break and run, and keep running, and nobody catches you. Not this time.",
+      "You get clear, somehow, and stand bent over with your hands on your knees until the world stops swimming.",
+      "They let you go, or lose you; you do not wait to find out which.",
+      "Behind you the shouting fades. Ahead there is only the road, and your own heart going like a drum."
+    ],
+    "parley": [
+      "Weapons lowered, slowly. Nobody else will die here today.",
+      "Words, in the end, and not steel. Both sides back away, watching.",
+      "A nod, a spat oath, and it is done. Nobody wants to be the one who starts it again.",
+      "Terms are agreed, whoever's they are, and everyone walks away.",
+      "Blades go back into sheaths, reluctantly. The quiet afterwards is almost worse."
+    ],
+    "robbed": [
+      "You wake with a headache and empty pockets. They took what they wanted and left you for the crows, who have not yet come.",
+      "You come to face down in the dirt. Your purse is gone, and your pride with it.",
+      "When your eyes open the sky is a different colour, and your pack is lighter.",
+      "You wake to flies and a pounding head. They have been through everything you carried.",
+      "Somebody kicked you once more on the way out, by the feel of it. They took what they wanted."
+    ]
   }
 }

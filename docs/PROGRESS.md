@@ -133,6 +133,16 @@ Checked by `tests/test_companion_voices.py` and floors in `tests/test_text_varie
 notables have heard more and sooner than a farmhand, fame impresses the proud and the greedy, and a bad name
 frightens the kind and the nervous worst of all.
 
+### Cloud session, 2026-09-25: more words where they are read most
+
+(Pull request "More words where they are read most". A census of every list of words in the data, looking for thin
+ones the player meets often.) A won fight was written up one of three ways (twelve now), fleeing, a parley and being
+robbed one way each (five now); every kind of wound at every severity five ways instead of three; each kind of land
+two ways, so named regions shared descriptions (six now); fifteen trades two greetings each (four now); everyone you
+meet was described in one of two sentence shapes (five now); and travellers for hire have four life stories each.
+Two slips fixed on the way: "The wolf lie still" (the verb follows the number) and dying "on the pine forest" (the
+ground underfoot now: the pine needles, the sand, the road). Checked by `tests/test_more_words.py`.
+
 **Things the design asked for that the game did not have yet.**
 - A **Spells screen** (**S**): every spell a caster knows, grouped by level, what it does, whether it can be cast
   now, the spell attack bonus and save DC, slots left today, and the size of a wizard's book. Until now you could
