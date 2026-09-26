@@ -96,13 +96,18 @@ def test_travel_plan_and_journey(game, monkeypatch):
     target = max((s for s in world.settlements if s.kind != "hamlet"), key=lambda s: abs(s.x - p.x) + abs(s.y - p.y))
     plan = game.plan_travel((target.x, target.y))
     assert plan is not None and plan.minutes > 0 and plan.miles > 0
-    game.travel = plan
+    game.set_out(plan)
     t0 = world.time
-    steps = 0
-    while game.travel_step():
+    steps = stops = 0
+    while (p.x, p.y) != (target.x, target.y):
+        if game.travel is None:  # stopped for the night: t, Enter, and on again
+            stops += 1
+            game.set_out(game.plan_travel((target.x, target.y)))
+        game.travel_step()
         steps += 1
         assert steps < 5000
     assert (p.x, p.y) == (target.x, target.y)
+    assert stops >= 1, "a journey of days stops for the night"
     # Rain, snow and storms slow the walk; the plan is the estimate for fair weather.
     assert plan.minutes <= world.time - t0 <= plan.minutes * 2
     assert "day" in game.describe_plan(plan) or "hour" in game.describe_plan(plan)

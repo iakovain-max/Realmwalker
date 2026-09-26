@@ -353,6 +353,7 @@ def test_crossing_a_river_is_told_and_the_cold_is_felt(game, monkeypatch):
         game.player.x, game.player.y = sx, sy
         game.lost = False  # hours pass with every step; don't let a dark night send us the wrong way
         game.world.time += (12 - game.moment.hour) * 60
+        game.say("(wading again)", "system")  # the log folds a line repeated straight after itself into a count
         before = len(game.log.messages)
         game.move(dx, dy)
         said = [m.text for m in game.log.messages[before:] if "river" in m.text.lower()]

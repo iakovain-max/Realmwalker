@@ -24,6 +24,10 @@ class WorldMapScreen(Screen):
         self.game = game_screen.game
         p = self.game.player
         self.cursor = (p.x, p.y)
+        # A journey that stopped on the way (for the night, for trouble) opens on where it was going.
+        going = getattr(self.game, "journey_to", None)
+        if travel_mode and going is not None and going != (p.x, p.y) and self.game.world.in_bounds(*going):
+            self.cursor = going
         self.travel_mode = travel_mode
         self.fit = False  # False: 1 tile per cell; True: squeeze the whole world onto the screen
         self.show_weather = False

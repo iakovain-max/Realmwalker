@@ -109,15 +109,26 @@ class GameScreen(Screen):
             game.say("You have lost your bearings: you can't plan a journey until you find a road or the weather "
                      "clears. Walk (arrow keys) and hope.", "warn")
             return
+        if game.pace() is None:
+            from realmwalker.game.journey import why_cannot_walk
+
+            game.say(why_cannot_walk(game), "warn")
+            return
         plan = game.plan_travel(dest)
         if plan is None:
             game.say("You can see no way to get there on foot.", "warn")
             return
+        from realmwalker.game.journey import outlook
+
         target = markup.plain(describe_overworld(game, *dest).split("\n")[0])
-        text = f"Travel to: {markup.escape(target)}\n\n{game.describe_plan(plan)}.\n\n<dim>Any key stops the journey.</>"
+        notes = "".join(f"{line}\n" for line in outlook(game, plan))
+        text = (f"Travel to: {markup.escape(target)}\n\n{game.describe_plan(plan)}.\n\n"
+                + (f"{notes}\n" if notes else "")
+                + "<dim>Any key stops the journey. You stop by yourself for the night, and when something is "
+                  "wrong; t and Enter go on.</>")
 
         def go() -> None:
-            game.travel = plan
+            game.set_out(plan)
             game.say(f"You set out: {game.describe_plan(plan)}.", "info")
 
         self.app.push(ConfirmBox(self.app, text, go, title="Set out?"))

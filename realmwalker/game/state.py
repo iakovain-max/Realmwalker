@@ -151,6 +151,8 @@ class GameState:
         self._wading = False
         self._remaps: dict[str, np.ndarray] = {}
         self._recent_areas: list[int] = []
+        self.heeded: set[str] = set()  # what a journey has already stopped for (game.journey)
+        self.journey_to: tuple[int, int] | None = None  # where an unfinished journey was going
 
     # ------------------------------------------------------------------ queries
     @property
@@ -343,7 +345,9 @@ class GameState:
         nx, ny = p.x + dx, p.y + dy
         pace = self.pace()
         if pace is None:
-            self.say("You are carrying too much to walk. Drop something first (i: inventory).", "warn")
+            from realmwalker.game.journey import why_cannot_walk
+
+            self.say(why_cannot_walk(self), "warn")
             return False
         minutes = self.step_minutes(p.x, p.y, nx, ny)
         if minutes is not None:
@@ -454,6 +458,11 @@ class GameState:
         dc = self.lost_dc()
         if dc is None:
             return
+        if self.travel is not None and self.weather.visibility >= 0.6:
+            from realmwalker.game.journey import night_unheeded
+
+            if night_unheeded(self):
+                return  # a traveller stops at dusk, before the dark can lose them (game.journey)
         ok, roll = check(self, "survival", dc, tag="lost")
         if not ok:
             self.lost = True
@@ -734,7 +743,9 @@ class GameState:
             return True
         pace = self.pace()
         if pace is None:
-            self.say("You are carrying too much to move. Drop something first (i: inventory).", "warn")
+            from realmwalker.game.journey import why_cannot_walk
+
+            self.say(why_cannot_walk(self), "warn")
             return False
         T = self.tables.terrain
         t = int(self.remap_for(lm)[lm.terrain[nx, ny]])
@@ -1008,10 +1019,14 @@ class GameState:
         if plan is None or not plan.path:
             self.travel = None
             return False
+        from realmwalker.game import journey
+
+        self.journey_to = plan.destination
         nx, ny = plan.path[0]
         ok = self._move_overworld(nx - self.player.x, ny - self.player.y)
         if not ok:
-            self.say("Your way is blocked; you stop to find another route.", "warn")
+            if self.pace() is not None:  # (otherwise the reason has been given already)
+                self.say("Your way is blocked; you stop to find another route.", "warn")
             self.travel = None
             return False
         plan.path.pop(0)
@@ -1020,8 +1035,22 @@ class GameState:
         if not plan.path:
             self.say("You have reached your destination.", "good")
             self.travel = None
+            self.journey_to = None
+            return False
+        why = journey.reason_to_stop(self, nearly_there=len(plan.path) <= 1)
+        if why is not None:
+            self.travel = None
+            self.say(f"<warn>You stop.</> {why} <dim>(r: make camp · t, Enter: go on)</>", "warn")
             return False
         return True
+
+    def set_out(self, plan: TravelPlan) -> None:
+        """Begin a journey. What is already wrong (the dark, a limp) was seen before setting out."""
+        from realmwalker.game import journey
+
+        journey.begin(self)
+        self.travel = plan
+        self.journey_to = plan.destination
 
     def describe_plan(self, plan: TravelPlan) -> str:
         walking = duration_text(plan.minutes)

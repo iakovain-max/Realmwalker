@@ -45,6 +45,18 @@ def test_every_combination_builds_with_defaults(tables, race, cls):
 
 
 @pytest.mark.parametrize("bg", ["soldier", "acolyte", "criminal", "folk_hero", "noble", "sage", "outlander", "guild_artisan"])
+@pytest.mark.parametrize("race", ["human", "elf", "dwarf", "halfling", "half_orc"])
+def test_nobody_starts_slowed_by_their_pack_or_dressed_for_summer(tables, race, bg):
+    """Half of all new characters used to start encumbered, and acolytes and sages set out in sandals."""
+    for cls in ("fighter", "rogue", "cleric", "wizard"):
+        c = build(tables, race, cls, bg).build()
+        s = Sheet(c, tables)
+        assert s.encumbrance() == 0, f"{race} {cls} {bg} starts encumbered: {s.load()} of {s.capacity()[0]} lb"
+        assert s.warmth() >= 6, f"{race} {cls} {bg} starts with warmth {s.warmth()}"
+        assert c.equipped.get("outer") is not None and c.equipped.get("feet") is not None
+
+
+@pytest.mark.parametrize("bg", ["soldier", "acolyte", "criminal", "folk_hero", "noble", "sage", "outlander", "guild_artisan"])
 def test_backgrounds_give_ties_and_places(tables, world, bg):
     b = build(tables, bg=bg)
     places = starting_places(world, tables, bg, b.race, RNG(1))

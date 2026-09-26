@@ -259,6 +259,41 @@ harness was measuring one run twelve times (the body and health dice are keyed o
 started at the same minute), which is now fixed and the numbers are real. The debug console gained
 `quest <kind>` for trying a piece of work on the spot.
 
+### Cloud sessions (from 2026-09-25)
+
+Work done in a Claude Code cloud session comes as one pull request per theme. **Your list of rough edges:** asked
+for on 2026-09-25; no answer yet, so the first themes are rough edges found by measuring the game (scripts that
+walk the world for weeks, hold hundreds of conversations and survey every offer of work). Your list goes here when
+it comes, and is worked through first.
+
+**Journeys that look after you** (pull request "Journeys that look after you"). Measured before the change: of
+forty new characters using **t** to travel from town to town, sixteen died on the road within a week — eight froze,
+two died of thirst, two bled out, one of heatstroke, three to animals while worn out — because a journey walked on
+through the night, through "exhausted", "no water", "hypothermic" and even "cannot walk", until the traveller
+dropped. Now:
+- A journey **stops by itself** when night comes on, and when someone becomes weary, worn down, hungry with nothing
+  to eat, parched, cold, overheated, bleeding, faint, sick or festering, or when the last of the water is gone. It
+  says why, once; being weary again tomorrow stops you again. It stops at dusk before the dark can lose you.
+- The stop says **where the nearest roof is** (a town within about six miles) and, when you are dry, **the nearest
+  water you have seen**.
+- **t** then **Enter** takes the journey up again: the world map opens on where you were going.
+- **Before setting out**, the plan says how many nights it means in the open, whether the food and water will last
+  (in red when they will not), and whether the nights there are cold enough to kill.
+- **Sleep is broken** when the cold, thirst, hunger or a bleeding wound turns dangerous ("The cold wakes you"),
+  instead of being slept through to the end. A traveller measured before this froze to death beside a lit fire,
+  asleep, and then "woke rested".
+- **A fire dries you even in the rain** (all but a downpour); before, rain kept you soaked beside it all night.
+- **Nobody starts slowed by their pack.** Half of all new characters (78 of 160 combinations) started encumbered.
+  The clothes you are dressed in no longer count against your strength (armour still counts half); the outlander's
+  25 lb hunting trap (which did nothing) is fishing tackle now, the folk hero's shovel is gone and the iron pot is a
+  mess kit, the criminal's crowbar is gone, and the suggested rogue has strength 10.
+- **Acolytes and sages set out in boots and a cloak** instead of sandals (warmth 3, the rest had 8 to 13).
+- "Too exhausted to walk" no longer says you are carrying too much; a death in battle reads "killed by the wolf".
+
+How it was checked: tests for each of these (`tests/test_journey.py`, and every race, class and background in
+`tests/test_character.py`); the balance numbers are unchanged (the harness's winter nights are dry and do not go
+through sleep); autoplay clean in both modes. Old saves still load.
+
 ---
 
 ## M9 — Death, legacy and release (done)

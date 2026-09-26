@@ -62,6 +62,7 @@ Choose <loot>New World</> on the title screen, pick a size and seed, and the lan
   <loot>m</>               World map (<loot>z</> zooms out to the whole world, <loot>w</> weather, <loot>p</> realms)
   <loot>t</>               Travel: pick a destination on the world map and see how long it takes
 Roads are much faster than open country. Forests, hills and marshes are slow; mountains very slow. Rivers without a bridge must be waded. Any key stops a journey.
+Before you set out, the plan says how many nights the journey means in the open, whether your food and water will last, and whether the nights are cold enough to kill. On the way you stop by yourself when night comes on, and when something is wrong: someone weary, hungry, parched, cold, bleeding or sick, or the water gone. The stop says where the nearest roof or water is, if you know of one close by. Make camp (<loot>r</>), or press <loot>t</> and Enter to go on: the map opens on where you were going. The cold, thirst or a bleeding wound will wake you from sleep before they kill you.
 
 <title>Your character</title>
   <loot>c</>               Character sheet: abilities, skills, features, ties, backstory (<loot>l</> level-up choices, <loot>Tab</> next member)
@@ -70,7 +71,7 @@ Roads are much faster than open country. Forests, hills and marshes are slow; mo
   <loot>i</>               Inventory: Enter wears/wields/removes/uses, d drops, D drops one, ← → filters, s sorts, G gives to the next member, Tab next member
   <loot>e</>               Equipment: what you wear in each slot, which body parts are protected, warmth
   <loot>g</> or <loot>,</>          Pick up what is lying here (on foot, in the close view)
-Carrying weight matters: worn armour and clothes count half. Above your limit you are slowed; far above it you cannot walk. Coins weigh too.
+Carrying weight matters: worn armour counts half, and the clothes you are dressed in not at all. Above your limit you are slowed; far above it you cannot walk. Coins weigh too.
   <loot>r</>               Camp: fire, tent, eat, cook, boil water, forage, hunt, fish, make things, rest, sleep
 At camp, <loot>m</> makes what a traveller can make: torches and splints out of firewood, bandages out of linen, salted meat (with salt) and dried fish (over the fire) that keep, and — with a herbalism kit, a fire and three lots of healing herbs — a remedy worth carrying. A Survival or Medicine check decides how much you get out of it.
   <loot>h</>               Health: needs, warmth, blood, pain, wounds and their treatment, sickness
