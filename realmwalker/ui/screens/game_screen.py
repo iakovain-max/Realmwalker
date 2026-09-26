@@ -15,6 +15,7 @@ PANEL_W = 38
 LOG_H = 9
 KEY_DIRECTIONS = {**DIRECTIONS, "home": (-1, -1), "pageup": (1, -1), "end": (-1, 1), "pagedown": (1, 1)}
 TRAVEL_STEP_SECONDS = 0.04
+WALK_STEP_SECONDS = 0.03  # a walk across a close-up map, one step a frame or so
 
 
 def key_direction(ev: KeyEvent) -> tuple[int, int] | None:
@@ -38,7 +39,7 @@ class GameScreen(Screen):
 
     @property
     def animating(self) -> bool:  # type: ignore[override]
-        return self.game.travel is not None
+        return self.game.travel is not None or self.game.walk_to is not None
 
     # ------------------------------------------------------------------ helpers
     def _map_rect(self, canvas: Canvas) -> tuple[int, int, int, int]:
@@ -145,6 +146,9 @@ class GameScreen(Screen):
             game.travel = None
             game.say("You stop.", "system")
             return True
+        if game.walk_to is not None:
+            game.walk_to = None  # any key stops a walk across a close-up map
+            return True
         if self.look is not None:
             return self._look_key(ev)
         d = key_direction(ev)
@@ -237,6 +241,20 @@ class GameScreen(Screen):
             dest = self.look
             self.look = None
             self.plan_travel_to(dest)
+        elif ev.key == "enter":
+            from realmwalker.game import wayfinding
+
+            dest = self.look
+            self.look = None
+            wayfinding.begin(self.game, dest)
+        elif ev.key == "tab" and self.game.in_local:
+            # Jump between the places you have seen here: the inn, the shop, the stairs...
+            from realmwalker.game import wayfinding
+
+            spots = [(x, y) for x, y, _ in wayfinding.places(self.game)]
+            if spots:
+                i = spots.index(self.look) if self.look in spots else -1
+                self.look = spots[(i + (-1 if ev.shift else 1)) % len(spots)]
         elif ev.key in ("escape", "l"):
             self.look = None
         return True
@@ -259,6 +277,10 @@ class GameScreen(Screen):
             self.move(dx, dy)
         elif (dx, dy) != (0, 0) and not self.game.in_local:
             self.plan_travel_to(target)
+        elif (dx, dy) != (0, 0):
+            from realmwalker.game import wayfinding
+
+            wayfinding.begin(self.game, target)  # walk there, or up to whoever is standing there
         return True
 
     def _open_event_screen(self) -> bool:
@@ -568,6 +590,15 @@ class GameScreen(Screen):
                 self._last_travel_step = now
                 if not game.travel_step():
                     self.app.save_game()
+        elif game.walk_to is not None:
+            now = self.app.clock()
+            if now - self._last_travel_step >= WALK_STEP_SECONDS or self.app.headless:
+                from realmwalker.game import wayfinding
+
+                self._last_travel_step = now
+                was = game.player.local_key
+                if not wayfinding.step(game) and game.player.local_key != was:
+                    self.app.save_game()
         self.app.maybe_autosave()
 
     def render(self, canvas: Canvas) -> None:
@@ -684,8 +715,9 @@ class GameScreen(Screen):
             used = canvas.wrapped(ix, row, text, iw, max_lines=max(1, h - row - 9))
             row += used + 1
             if self.look is not None:
-                hint = "arrows move · Enter: travel there · Esc: stop" if not game.in_local else "arrows move · Esc: stop looking"
-                canvas.text(ix, row, hint, colors.FAINT, max_width=iw)
+                hint = ("arrows move · Enter: travel there · Esc: stop" if not game.in_local else
+                        "arrows move · Tab: next place · Enter: walk there · Esc: stop")
+                canvas.wrapped(ix, row, f"<faint>{hint}</>", iw, max_lines=2)
 
         keys = [
             ("arrows", "walk"), (">", "enter the land here") if not game.in_local else

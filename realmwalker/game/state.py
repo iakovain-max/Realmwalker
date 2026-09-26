@@ -131,6 +131,8 @@ class GameState:
         self.lost = False  # off the road in fog or darkness, with no idea where
         self.day_log: dict = {}  # today's journey, for the evening's narrated passage
         self.talk_to: int | None = None  # a townsperson the player has just walked up to (the screen opens a talk)
+        self.walk_to: tuple[int, int] | None = None  # a spot on this close-up map being walked to (game.wayfinding)
+        self.walk_talk: int | None = None  # ...and the townsperson there, when it is them you are walking up to
         self.battle_npcs: dict[int, int] = {}  # creature uid -> townsperson id, while fighting townsfolk
         self.narration: list[dict] = []  # finished travel days waiting to be written up (by the screen)
         from realmwalker.game.reputation import Renown

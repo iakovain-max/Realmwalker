@@ -54,8 +54,8 @@ Choose <loot>New World</> on the title screen, pick a size and seed, and the lan
   <loot>.</> or <loot>5</>          Wait (an hour on the overworld, a minute on foot)
   <loot>></>               Enter the land around you: see it up close (towns, forests, rivers)
   <loot><</>               Leave the close view and return to the overworld (or walk off its edge)
-  <loot>l</>               Look around: move a cursor to examine anything. Enter travels there.
-  <loot>Mouse</>           Hover over the map to examine; click next to you to step; click further to travel
+  <loot>l</>               Look around: move a cursor to examine anything. Enter travels there (on foot: walks there). On foot, <loot>Tab</> jumps between the places you have seen: the inn, the shop, the smithy, the healer, the temple, the people worth knowing, the stairs underground.
+  <loot>Mouse</>           Hover over the map to examine; click next to you to step; click further to travel (on foot: to walk there, or up to whoever you clicked, to talk). Any key stops you.
   <loot>Right-click</>     Look at a spot
 
 <title>Journeys</title>
