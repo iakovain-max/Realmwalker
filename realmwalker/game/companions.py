@@ -155,44 +155,117 @@ def terms_text_for(game, c: Character) -> str:
 
 
 def pay_word(game, c: Character) -> str:
-    """A few words for the side panel, in place of a purse: what they are paid."""
+    """A few words for the side panel, in place of a purse: what they are paid, or what they came for."""
     comp = c.companion
     if comp.get("wage"):
         return f"{money_text(comp['wage'])} a day"
-    return f"{int(comp.get('share', 0) * 100)}% of the loot" if comp.get("share") else "no wage"
+    if comp.get("share"):
+        return f"{int(comp['share'] * 100)}% of the loot"
+    if bond_of(c) == "unique":
+        from realmwalker.game import uniques
+
+        return uniques.pay_word(game, c)
+    return bonds(game).get(bond_of(c), {}).get("label", "no wage")
 
 
-def make_character(game, npc, t: dict) -> Character:
-    """The townsperson as a full character of their class, at about the party's level."""
+def build(game, npc, cls: str, background: str, level: int, rng: RNG, story: list[str] = ("",)) -> Character:
+    """The townsperson as a full character of a class, at a level."""
     from realmwalker.rules import progression
     from realmwalker.rules.creation import CharacterBuilder
 
     tables = game.tables
-    arch = data(game)["archetypes"][t["archetype"]]
-    rng = game.world.rng.child(f"companion/{npc.id}")
     b = CharacterBuilder(tables, rng)
     race = npc.race if npc.race in tables.races else "human"
     b.set_race(race)
     if npc.culture in tables.races[race]["cultures"]:
         b.set_culture(npc.culture)
-    b.set_class(rng.choice(arch["classes"]))
-    b.set_background(arch["background"] if arch["background"] in tables.backgrounds else "soldier")
+    b.set_class(cls)
+    b.set_background(background if background in tables.backgrounds else "soldier")
     b.sex = npc.sex if npc.sex in ("male", "female") else b.sex
     b.name = npc.name
     b.age = npc.age
     b.appearance = npc.profile.get("appearance") or b.appearance
-    b.backstory = npc.profile.get("backstory") or rng.choice(arch.get("story", [""]))
+    b.backstory = npc.profile.get("backstory") or textgen.fill(rng.choice(list(story)), rng, {},
+                                                               textgen.pronoun_values(b.sex))
     char = b.build(game.world.time)
-    if t["level"] > 1:
-        xp = tables.rules["xp_for_level"][t["level"] - 1]
+    if level > 1:
+        xp = tables.rules["xp_for_level"][min(level, len(tables.rules["xp_for_level"])) - 1]
         progression.award_xp(char, xp, tables, rng, auto=True)
+    return char
+
+
+def make_character(game, npc, t: dict) -> Character:
+    """The townsperson as a full character of their class, at about the party's level."""
+    arch = data(game)["archetypes"][t["archetype"]]
+    rng = game.world.rng.child(f"companion/{npc.id}")
+    char = build(game, npc, rng.choice(arch["classes"]), arch["background"], t["level"], rng, arch.get("story", [""]))
     char.money = 0  # what you pay them is theirs, and gone: only your purse is ever spent
     char.companion = {
         "npc": npc.id, "archetype": t["archetype"], "values": list(arch["values"]), "want": arch["want"],
         "loyalty": float(data(game)["loyalty"]["start"]), "wage": t["wage"], "share": t["share"],
         "hired": game.world.time, "order": "follow", "home": npc.settlement, "unpaid": 0,
     }
+    char.companion["bond"] = "grateful" if npc.flags.get("grateful") else "hired"
     return char
+
+
+# ---------------------------------------------------------------------------- why they follow you
+def bonds(game) -> dict:
+    return data(game)["bonds"]
+
+
+def bond_of(c: Character) -> str:
+    return c.companion.get("bond") or "hired"  # everyone from before bonds was hired
+
+
+def enlist(game, npc, char: Character, bond: str, **facts) -> list[str]:
+    """Someone who comes with you for reasons of their own: no wage, nothing up front (game/followers.py)."""
+    spec = bonds(game).get(bond, {})
+    char.money = 0
+    char.companion = {
+        "npc": npc.id, "archetype": "", "values": list(facts.pop("values", spec.get("values", ["brave"]))),
+        "want": facts.pop("want", spec.get("want", "cause")),
+        "loyalty": float(facts.pop("loyalty", spec.get("loyalty", data(game)["loyalty"]["start"]))),
+        "wage": 0, "share": 0.0, "hired": game.world.time, "order": "follow", "home": npc.settlement, "unpaid": 0,
+        "bond": bond, **facts,
+    }
+    game.party.append(char)
+    npc.present = False
+    npc.flags["companion"] = True
+    npc.remember(f"joined the traveller on {game.moment.date_text()}")
+    game.dirty = True
+    cls = game.tables.classes[char.cls]["name"].lower()
+    return [f"<good>{first(char)} joins you</>: a level {char.level} {cls}. <dim>({bond_text(game, char)})</>"]
+
+
+def who_they_are(game, c: Character) -> str:
+    """A sell-sword, a knight of the royal household, a farmer: what to call them."""
+    comp = c.companion
+    if comp.get("title"):
+        return comp["title"]
+    arch = data(game)["archetypes"].get(comp.get("archetype"))
+    if arch:
+        return arch["name"]
+    npc = game.world.npcs.get(comp.get("npc", -1))
+    return npc.title if npc is not None else "companion"
+
+
+def bond_text(game, c: Character) -> str:
+    """Why they are with you, in a sentence (the party screen)."""
+    comp = c.companion
+    bond = bond_of(c)
+    if bond == "hired":
+        return f"Hired, for {terms_text_for(game, c)}."
+    if bond == "unique":
+        from realmwalker.game import uniques
+
+        return uniques.bond_text(game, c)
+    w = game.world
+    lender = w.factions.get(comp.get("lender", -1))
+    values = {"lender": lender.name if lender is not None else "a lord who is no more",
+              "home": comp.get("home_name", "home"), "ruin": comp.get("ruin", "was lost"),
+              "share": f"{int(float(comp.get('cut', 0)) * 100)}%", **textgen.pronoun_values(c.sex)}
+    return textgen.fill(bonds(game)[bond]["text"], game.world.rng.child("bond"), {}, values)
 
 
 def dismiss(game, c: Character, *, deserted: bool = False) -> list[str]:
@@ -317,6 +390,9 @@ def daily(game) -> None:
             desert(game, c, rng)
         elif value < loyal["complain"] and c in game.party and rng.chance(0.3):
             game.say(f"<warn>{line(game, 'complain', c, rng)}</>", "warn")
+    from realmwalker.game import followers
+
+    followers.daily(game)  # those who follow you for reasons other than pay
 
 
 def desert(game, c: Character, rng: RNG) -> None:
@@ -369,7 +445,7 @@ def wait_here(game, c: Character) -> str:
     game.waiting.append(c)
     here = game.world.settlement_at(game.player.x, game.player.y)
     where = here.name if here is not None else "here"
-    return f"{first(c)} will wait for you in {where}. (Wages still run.)"
+    return f"{first(c)} will wait for you in {where}." + (" (Wages still run.)" if c.companion.get("wage") else "")
 
 
 def rejoin(game) -> list[str]:
@@ -408,6 +484,8 @@ def mood_line(game, c: Character) -> str:
 
 def raise_wage(game, c: Character) -> str:
     comp = c.companion
+    if not comp.get("wage"):
+        return f"{first(c)} is not with you for a wage."
     comp["wage"] = int(comp.get("wage", 0) * 1.25) + 5
     change_loyalty(c, 10)
     return f"{first(c)} will have {money_text(comp['wage'])} a day now, and is pleased about it."
@@ -418,14 +496,23 @@ def talk_choices(conv) -> list:
     from realmwalker.game.dialogue import Choice
 
     npc = conv.npc
-    if archetype_of(npc) is None or npc.flags.get("companion"):
+    if npc.flags.get("companion"):
         return []
+    if archetype_of(npc) is None:  # not looking for work: some may come for other reasons
+        from realmwalker.game import followers
+
+        return followers.talk_choices(conv)
     problem = recruit_problem(conv.game, npc)
     return [Choice("recruit", f"Would you travel with me? ({terms_text(conv.game, npc)})", problem is None,
                    problem or "")]
 
 
 def talk_choose(conv, choice) -> None:
+    if choice.data.get("how"):
+        from realmwalker.game import followers
+
+        followers.talk_choose(conv, choice)
+        return
     conv.you_say("Would you travel with me?")
     for text in hire(conv.game, conv.npc):
         conv.note(text)
@@ -435,6 +522,9 @@ def talk_choose(conv, choice) -> None:
 
 def died(game, c: Character) -> None:
     """A companion is dead: the town they came from will hear of it."""
+    from realmwalker.game import followers
+
+    followers.died(game, c)  # a realm that lent you its sword, the world that loses someone like no one else
     npc = game.world.npcs.get(c.companion.get("npc", -1)) if c.companion else None
     if npc is not None:
         npc.alive = False

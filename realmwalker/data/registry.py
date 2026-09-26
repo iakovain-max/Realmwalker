@@ -221,6 +221,25 @@ def _check_companion_refs(files: dict[str, Any]) -> list[str]:
         # "road_devout": what somebody who cares about that says, in place of an ordinary "road" line.
         if key not in COMPANION_LINES and not any(key == f"{kind}_{v}" for kind in COMPANION_LINES for v in data["values"]):
             errors.append(f"data/companions.json: lines has '{key}', which is no kind of line (or no value) the game knows.")
+    from realmwalker.data.schemas import BONDS
+
+    jobs = set(files.get("people.json", {}).get("occupations", {}))
+    bonds = {k: v for k, v in data["bonds"].items() if not k.startswith("_")}
+    for bond in BONDS:
+        if bond not in bonds:
+            errors.append(f"data/companions.json: bonds needs '{bond}'.")
+    for bid, b in bonds.items():
+        for cls in b.get("classes", []):
+            if classes and cls not in classes:
+                errors.append(f"data/companions.json: bonds.{bid} names unknown class {cls!r}.")
+        if backgrounds and b.get("background", "soldier") not in backgrounds:
+            errors.append(f"data/companions.json: bonds.{bid} names unknown background {b['background']!r}.")
+        for v in b.get("values", []):
+            if v not in data["values"]:
+                errors.append(f"data/companions.json: bonds.{bid} has value {v!r}, which is not in 'values'.")
+        for job in b.get("jobs", []):
+            if jobs and job not in jobs:
+                errors.append(f"data/companions.json: bonds.{bid} names unknown job {job!r}.")
     return errors
 
 

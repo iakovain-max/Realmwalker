@@ -621,12 +621,22 @@ COMPANIONS = Obj(
         "share": Float(min=0, max=1),
         "loyalty": Obj({"start": Int(min=0, max=100), "complain": Int(min=0, max=100), "desert": Int(min=0, max=100),
                         "devoted": Int(min=0, max=100)}),
+        "bonds": Map(Obj({"label": Str(max_len=30), "text": Str(max_len=300), "loyalty": Int(min=0, max=100, optional=True),
+                          "classes": List(Str(max_len=30), min_items=1, optional=True),
+                          "background": Str(max_len=30, optional=True), "values": List(Str(max_len=30), optional=True),
+                          "want": Str(choices=["pay", "loot", "cause", "knowledge", "revenge"], optional=True),
+                          "share": Float(min=0, max=1, optional=True), "jobs": List(Str(max_len=30), optional=True),
+                          "story": List(Str(max_len=300), min_items=1, optional=True),
+                          "titles": Map(Str(max_len=60), optional=True),
+                          "kit": Map(List(List(Any_(), min_items=2, max_items=2)), optional=True),
+                          "lines": Map(word_list(1, 300), optional=True)}), min_items=1),
         "lines": Map(word_list(1, 300)),
     }
 )
 COMPANION_LINES = ("hired", "approve", "disapprove", "complain", "unpaid", "desert", "leave", "devoted", "battle",
                    "camp", "level_up", "mood_good", "mood_fair", "mood_bad", "road", "road_tired", "road_wet",
                    "road_night", "road_cold", "road_hot")
+BONDS = ("hired", "grateful", "sworn", "dreamer", "restless", "refugee", "admirer")  # why they follow you
 
 DATA_FILES.update({"companions.json": COMPANIONS})
 

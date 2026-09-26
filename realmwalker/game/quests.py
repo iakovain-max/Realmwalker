@@ -1164,7 +1164,7 @@ def finish_personal(game, c, q) -> list[str]:
 
 # ---------------------------------------------------------------------------- the end of it
 def reward(game, q, *, share: float = 1.0, text: str | None = None) -> list[str]:
-    from realmwalker.game import reputation
+    from realmwalker.game import followers, reputation
     from realmwalker.game.companions import react
     from realmwalker.game.people import change_disposition
     from realmwalker.rules.progression import award_xp
@@ -1172,7 +1172,8 @@ def reward(game, q, *, share: float = 1.0, text: str | None = None) -> list[str]
     w = game.world
     s = spec(game)["templates"][q["template"]]
     money = int(q["reward"] * share)
-    game.leader.money += money
+    kept, shared = followers.on_reward(game, q, money)  # those who came for a share of it take theirs first
+    game.leader.money += kept
     q["state"] = "finished"
     q["finished"] = game.moment.total_days
     amounts: dict[int, float] = {}
@@ -1226,6 +1227,7 @@ def reward(game, q, *, share: float = 1.0, text: str | None = None) -> list[str]
         if said:
             q["journal"].append(said)
             out.append(f"<good>{said}</>")
+    out += shared
     game.dirty = True
     return out
 
@@ -1260,6 +1262,9 @@ def fail(game, q, why: str | None = None) -> None:
                 c.companion["personal_done"] = True
                 change_loyalty(c, -15)
                 game.say(f"<warn>{c.name.split()[0]} will not talk about it.</>", "warn")
+    from realmwalker.game import followers
+
+    followers.on_fail(game, q)  # those who came along for a share of it
     game.dirty = True
 
 

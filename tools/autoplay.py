@@ -306,6 +306,15 @@ def _check_companions(game, fail) -> None:
             fail(f"dead {c.name} is still in the party")
         if c.money:
             fail(f"{c.name} carries coin of their own ({c.money}); only the leader's purse is spent")
+        from realmwalker.data.schemas import BONDS
+
+        bond = k.get("bond", "hired")
+        if bond not in BONDS + ("unique",):
+            fail(f"{c.name} follows you for no reason the game knows ({bond})")
+        elif bond not in ("hired", "grateful") and k.get("wage"):
+            fail(f"{c.name} is {bond} but takes a wage")
+        elif bond == "sworn" and k.get("lender") not in game.world.factions:
+            fail(f"{c.name} was lent by a realm that never was")
 
 
 def _check_law(game, fail) -> None:
