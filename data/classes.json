@@ -42,9 +42,9 @@
         ]}
       },
       "kits": [
-        {"name": "Man-at-arms", "items": [["chain_mail", 1], ["longsword", 1], ["shield", 1], ["light_crossbow", 1], ["bolts", 20], ["iron_helm", 1]]},
-        {"name": "Skirmisher", "items": [["leather_armor", 1], ["longbow", 1], ["arrows", 20], ["handaxe", 2], ["leather_cap", 1]]},
-        {"name": "Heavy hitter", "items": [["scale_mail", 1], ["greataxe", 1], ["javelin", 3], ["iron_helm", 1]]}
+        {"name": "Man-at-arms", "style": "defense", "items": [["chain_mail", 1], ["longsword", 1], ["shield", 1], ["light_crossbow", 1], ["bolts", 20], ["iron_helm", 1]]},
+        {"name": "Skirmisher", "style": "archery", "items": [["leather_armor", 1], ["longbow", 1], ["arrows", 20], ["handaxe", 2], ["leather_cap", 1]]},
+        {"name": "Heavy hitter", "style": "great_weapon", "items": [["scale_mail", 1], ["greataxe", 1], ["javelin", 3], ["iron_helm", 1]]}
       ]
     },
     "rogue": {

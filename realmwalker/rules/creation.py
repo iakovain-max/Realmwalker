@@ -32,6 +32,7 @@ class CharacterBuilder:
         self.class_skills: list[str] = []
         self.expertise: list[str] = []
         self.fighting_style: str | None = None
+        self.style_chosen = False  # the player picked the fighting style by hand
         self.subclass: str | None = None
         self.kit = 0
         self.sex = "male"
@@ -59,12 +60,23 @@ class CharacterBuilder:
             self.culture = culture
             self.randomize_identity(keep_sex=True)
 
+    def set_kit(self, kit: int) -> None:
+        """Choose the equipment; until a fighting style has been picked by hand, the one that suits it goes with it
+        (Defence with mail and a shield, Archery with a longbow)."""
+        c = self.t.classes[self.cls]
+        self.kit = max(0, min(kit, len(c["kits"]) - 1))
+        style = c["kits"][self.kit].get("style")
+        if self.fighting_style is not None and not self.style_chosen and style in c.get("fighting_styles", {}):
+            self.fighting_style = style
+
     def set_class(self, cls: str) -> None:
         self.cls = cls
         c = self.t.classes[cls]
         self.scores = dict(c["suggested"])
         self.kit = 0
         self.fighting_style = next(iter(c.get("fighting_styles", {})), None) if "fighting_style" in c["choices_at_1"] else None
+        self.style_chosen = False
+        self.set_kit(0)
         subs = list(c.get("subclasses", {}))
         self.subclass = subs[0] if "subclass" in c["choices_at_1"] and subs else None
         self.class_skills = []

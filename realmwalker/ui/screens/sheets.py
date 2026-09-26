@@ -24,7 +24,8 @@ def item_glyph(category: str) -> tuple[str, str]:
     }.get(category, ("=", "loot"))
 
 
-def spoilage_text(game: GameState, item: Item) -> str:
+def spoilage_text(game: GameState, item: Item, in_list: bool = False) -> str:
+    """How long food keeps: "60 days" (in a list, "keeps 60 days", or it reads like 60 days of food)."""
     food = game.tables.items.get(item.def_id).get("food")
     if not food or not food.get("spoil_days"):
         return ""
@@ -34,6 +35,8 @@ def spoilage_text(game: GameState, item: Item) -> str:
         return "<danger>spoiled</>"
     if left < 2:
         return "<warn>going off</>"
+    if in_list:
+        return "<dim>keeps months</>" if left >= 100 else f"<dim>keeps {int(left)} days</>"
     return f"<dim>{int(left)} days</>"
 
 
@@ -164,7 +167,7 @@ class CharacterScreen(Screen):
         lines += ["", f"<dim>Languages:</> {', '.join(c.languages)}",
                   f"<dim>Tools:</> {', '.join(t.rules['tools'].get(x, x) for x in c.tools) or 'none'}",
                   f"<dim>Armour:</> {', '.join(c.armor_prof) or 'none'}",
-                  f"<dim>Weapons:</> {', '.join(c.weapon_prof)}"]
+                  f"<dim>Weapons:</> {t.items.proficiency_words(c.weapon_prof) or 'none'}"]
         y = 2
         for line in lines:
             y += canvas.wrapped(col1, y, line, 36, max_lines=2)
@@ -510,8 +513,8 @@ class InventoryScreen(Screen):
             canvas.text(4, y, name, colors.SELECT_FG if selected else colors.FG, bg)
             canvas.text(36, y, f"{t.weight(it):>6g}", colors.DIM, bg)
             canvas.text(42, y, f"{money_text(t.value(it)):>10}"[-10:], colors.named("loot"), bg)
-            note = spoilage_text(g, it) or ("" if it.condition >= 90 else f"<dim>{t.condition_word(it)}</>")
-            canvas.markup(54, y, note, bg=bg, max_width=list_w - 52)
+            note = spoilage_text(g, it, in_list=True) or ("" if it.condition >= 90 else f"<dim>{t.condition_word(it)}</>")
+            canvas.markup(53, y, note, bg=bg, max_width=list_w - 51)
         if not items:
             canvas.text(4, 5, "Nothing here.", colors.DIM)
         dx = 2 + list_w + 2
