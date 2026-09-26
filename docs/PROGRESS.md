@@ -46,6 +46,17 @@ what they want: revenge on a real gang, a book they have wanted all their life, 
 worth picking, a debt nobody else will collect (press **b** on the party screen). It pays half, out of their own
 purse. Seeing it through binds them to you; refusing or failing it loses them.
 
+### Cloud session, 2026-09-25: finding your way in town
+
+(Pull request "Finding your way in town".) Every building looks the same from the street and a city is a hundred key
+presses across; the help promised "click further to travel", but on a close-up map a click only said "Leave this
+place first". Now a click on a close-up map walks you there, a step at a time, stopping for any key and for anything
+worth stopping for (a warning, a band that has seen you, a fight); a click on a person walks you up to them (following
+if they wander) and opens the conversation; and in look mode (**l**) **Tab** jumps between the places you have seen,
+nearest first (inn, shop, smithy, healer, temple, stable, hall, notice board, the people worth knowing; underground
+the stairs, chests and coffins), and **Enter** walks you there. `game/wayfinding.py`; checked by
+`tests/test_wayfinding.py`.
+
 **Finding the work.** Every place your journal wants you is lit like lamplight on the map and the world map, and
 the side panel shows how much work is in hand and when the next piece is due (click it, or press **j**).
 
