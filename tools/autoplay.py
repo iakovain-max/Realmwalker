@@ -139,6 +139,8 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
         _LAST_TIME[key] = w.time
         if p.explored.shape != (w.width, w.height):
             fail("explored map has the wrong shape")
+        if any(not d.startswith(("site:", "deeper:")) for d in p.discoveries):
+            fail(f"an unknown kind of discovery: {sorted(p.discoveries)[:5]}")
         for member in game.party:
             if not 0 <= member.hp <= member.max_hp:
                 fail(f"{member.name} has {member.hp}/{member.max_hp} hit points")
@@ -174,6 +176,10 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
                 fail(f"{member.name} has an impossible level-up choice waiting: {member.pending}")
             if any(not 1 <= v <= 20 for v in member.abilities.values()):
                 fail(f"{member.name} has an ability out of range: {member.abilities}")
+            table = app.tables.rules["xp_for_level"]
+            earned = min(app.tables.rules["max_level"], sum(1 for need in table if member.xp >= need))
+            if member.level != earned:
+                fail(f"{member.name} is level {member.level} with {member.xp} experience (should be {earned})")
             equipped = list(member.equipped.values())
             if len(equipped) != len(set(equipped)):
                 fail(f"{member.name} wears one item in two places")

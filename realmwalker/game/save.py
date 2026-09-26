@@ -40,7 +40,7 @@ from realmwalker.world.tables import Tables
 
 log = logging.getLogger("realmwalker.save")
 
-FORMAT_VERSION = 8
+FORMAT_VERSION = 9
 WORLD_FILE = "world.zip"
 CHARACTER_FILE = "character.zip"
 
@@ -101,9 +101,15 @@ def _v7_to_v8(kind: str, body: dict) -> dict:
     return body
 
 
+def _v8_to_v9(kind: str, body: dict) -> dict:
+    """Format 9 added the places a character has discovered (for experience; after v1). An old character starts
+    with none, so the sites and levels they already knew give experience once more."""
+    return body
+
+
 # format number -> function upgrading a loaded JSON body (of a given kind) to the next format.
 MIGRATIONS: dict[int, Callable[[str, dict], dict]] = {1: _v1_to_v2, 2: _v2_to_v3, 3: _v3_to_v4, 4: _v4_to_v5,
-                                                      5: _v5_to_v6, 6: _v6_to_v7, 7: _v7_to_v8}
+                                                      5: _v5_to_v6, 6: _v6_to_v7, 7: _v7_to_v8, 8: _v8_to_v9}
 
 
 class SaveError(Exception):
@@ -261,6 +267,7 @@ def character_entries(game: GameState) -> dict[str, bytes | str]:
         "known_settlements": sorted(p.known_settlements),
         "visited_settlements": sorted(p.visited_settlements),
         "visited_areas": sorted(p.visited_areas),
+        "discoveries": sorted(p.discoveries),
         "log": game.log.to_dict(),
         # The dead do not travel: a companion who died is never written into the save.
         "party": [c.to_dict() for c in game.party if c.alive or c is game.party[0]],
@@ -290,6 +297,7 @@ def load_player(folder: Path) -> tuple[PlayerState, MessageLog, list[Character] 
         known_settlements=set(body.get("known_settlements", [])),
         visited_settlements=set(body.get("visited_settlements", [])),
         visited_areas=set(body.get("visited_areas", [])),
+        discoveries=set(body.get("discoveries", [])),
         seconds=body.get("seconds", 0), steps=body.get("steps", 0),
     )
     party = body.get("party")

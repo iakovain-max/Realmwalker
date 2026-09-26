@@ -162,7 +162,10 @@ def descend(game, level: int, *, from_below: bool = False) -> None:
         game.say(f"You climb back up to {where}.", "place")
     else:
         air = rng.choice(FIRST_DOWN if level == 1 else DEEPER_DOWN)
-        game.say(f"You go down into {where}. {air}", "place")
+        gained, notes = game.discover("deeper", f"deeper:{site.id}/{level}")
+        game.say(f"You go down into {where}. {air}{gained}", "place")
+        for note in notes:
+            game.say(note, "good")
     light_up(game)
     if lm.meta.get("desc") and not lm.meta.get("desc_seen"):
         lm.meta["desc_seen"] = True
