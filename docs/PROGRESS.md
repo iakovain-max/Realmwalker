@@ -100,6 +100,14 @@ their obituaries, beside the old heroes and the dragons.
 **A dungeon belongs to whoever holds it.** The bottom of a bandit cellar used to hold bandits, goblins, rats and
 the restless dead at once; now a place takes its character from its master, with vermin in the corners.
 
+### Cloud session, 2026-09-25: small fixes
+
+(Pull request "Small fixes".) Loose ends found while measuring: "Footpads has seen you!" (the verb follows the
+band's name now); a death on a trap underground was written up as "died of their hurts" (it is "killed by poisoned
+darts"); a chest of coins left a stray space; and a few rescues and beast hunts were offered that nobody could reach
+in time, because deadlines were set from a straight line on the map. Every offer now measures the real walk, there
+and back, at eight hours' walking a day, with three days to spare. Checked by `tests/test_small_fixes.py`.
+
 **The world feels lived in.** Towns have street life (a rug beaten against a wall, a loose pig and three
 people chasing it, the watch going by with a lantern and a long look) that changes with the hour, with market
 days, and with what the town is going through — chalk on a door in plague, children stripping bark in a famine,

@@ -323,6 +323,8 @@ def spring(game, lm, x: int, y: int, f: dict) -> None:
         w = make_wound(part, dtype, 1 if dmg < 14 else 2, rng, now=game.world.time, note=name)
         if w is not None:
             c.wounds.append(w)
+    if c.hp <= 0 and getattr(c, "death_cause", None) is None:
+        c.death_cause = f"killed by {name}"  # not "died of their hurts": the darts did it
     from realmwalker.game import survival
 
     survival.check_death(game, c)
@@ -459,7 +461,7 @@ def open_chest(game, lm, x: int, y: int) -> None:
     what = "the coffin" if grave else "the chest"
     if items or money:
         game.say(f"<loot>In {what}: {names}{', and ' if names and money else ''}"
-                 f"{money_text(money) if money else ''}.</> " + ("<dim>(g to pick up)</>" if items else ""), "loot")
+                 f"{money_text(money) if money else ''}.</>" + (" <dim>(g to pick up)</>" if items else ""), "loot")
     else:
         game.say(f"{what.capitalize()} holds nothing but dust.", "dim")
     if grave:

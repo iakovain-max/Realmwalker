@@ -178,8 +178,50 @@ def make_offer(game, npc, rng: RNG, template: str | None = None, avoid=()) -> di
     for kind in kinds:
         q = BUILDERS[kind](game, npc, rng)
         if q is not None:
+            allow_the_walk(game, q)
             return q
     return None
+
+
+WALKING_DAY_MINUTES = 8 * 60  # a day's walking, stopping for the nights
+ONE_WAY = ("deliver", "escort", "smuggle")  # work that ends where it is taken, not back with the giver
+
+
+def walking_minutes(game, frm, to) -> int | None:
+    """How long the real walk takes between two places, by the roads and the lie of the land."""
+    import tcod.path
+
+    path = tcod.path.path2d(game.travel_costs(), start_points=[(frm.x, frm.y)], end_points=[(to.x, to.y)],
+                            cardinal=100, diagonal=141)
+    if len(path) < 2:
+        return None
+    total, x, y = 0, frm.x, frm.y
+    for nx, ny in path.tolist()[1:]:
+        step = game.step_minutes(x, y, int(nx), int(ny))
+        if step is None:
+            return None
+        total, x, y = total + step, int(nx), int(ny)
+    return total
+
+
+def allow_the_walk(game, q: dict) -> None:
+    """Enough days for the real walk there (and back), walking by day, with a few to spare: a straight line on
+    the map is not the way through hills and forest, and a rescue could be offered that nobody could reach."""
+    w = game.world
+    t = q.get("target", {})
+    if "site" in t:
+        to = w.sites[t["site"]]
+    elif "dest" in t:
+        to = w.settlements[t["dest"]]
+    elif "x" in t:
+        to = _Spot(t["x"], t["y"])
+    else:
+        return
+    minutes = walking_minutes(game, w.settlements[q["town"]], to)
+    if minutes is None:
+        return
+    trips = 1 if q["template"] in ONE_WAY else 2
+    q["days"] = max(int(q["days"]), math.ceil(minutes * trips / WALKING_DAY_MINUTES) + 3)
 
 
 def base_quest(game, npc, template: str, rng: RNG, *, hard: float = 1.0, town=None) -> dict:

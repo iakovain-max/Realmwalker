@@ -182,7 +182,8 @@ def move_actors(game, lm) -> LocalActor | None:
             if can_see(game, lm, (a.x, a.y), (p.lx, p.ly), ALERT_RADIUS) and rng.chance(chance):
                 a.alert = True
                 if a.seen:
-                    game.say(f"<danger>{_group_name(game, a)} {'has' if len(a.creatures) == 1 else 'have'} seen you!</>", "danger")
+                    name = _group_name(game, a)
+                    game.say(f"<danger>{name} {'has' if _one(name) else 'have'} seen you!</>", "danger")
         if a.alert and dist > 1:
             cost = np.where(walk, 1, 0).astype(np.int32)
             for other in lm.actors:
@@ -198,6 +199,12 @@ def move_actors(game, lm) -> LocalActor | None:
         if a.alert and dist <= 1:
             return a
     return None
+
+
+def _one(name: str) -> bool:
+    """Does a band's name take "has"? A bear, a gnoll pack, the barrow's lord: yes. Footpads, hired thugs: no."""
+    words = name.lower().split()
+    return words[0] in ("a", "an") or words[-1] in ("lord", "circle", "dragon", "captain", "watch")
 
 
 def _group_name(game, a: LocalActor) -> str:
