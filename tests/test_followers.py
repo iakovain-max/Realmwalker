@@ -368,3 +368,18 @@ def test_followers_survive_saving(game, tmp_path, lucky):
     c = loaded.party[-1]
     assert comp.bond_of(c) == "dreamer" and c.companion["work"] == q["id"]
     assert comp.pay_word(loaded, c) == "for a share"
+
+
+def test_a_companion_is_not_also_standing_in_town(game):
+    """They were: a hired traveller's townsperson came back to the inn by day while travelling with you."""
+    from realmwalker.game.people import update_positions
+
+    c, npc, s = hire_one(game)
+    for _ in range(8):
+        game.world.time += 6 * 60
+        update_positions(game, game.local)
+        assert not npc.present
+    comp.dismiss(game, c)
+    game.world.time += 24 * 60 - game.moment.hour * 60 + 12 * 60  # noon, some day
+    update_positions(game, game.local)
+    assert npc.present, "home again once they leave you"
