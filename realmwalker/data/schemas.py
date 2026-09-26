@@ -652,6 +652,7 @@ UNIQUE_ITEM = Obj({"base": Str(max_len=30), "title": Str(max_len=60), "rarity": 
 UNIQUE = Obj(
     {
         "name": Str(max_len=40), "known_as": Str(max_len=60), "epithet": Str(max_len=80), "title": Str(max_len=40),
+        "role": Str(max_len=40),
         "sex": Str(choices=["male", "female"]), "age": Int(min=14, max=2000), "race": Str(max_len=30),
         "culture": Str(max_len=30), "class": Str(max_len=30), "subclass": Str(max_len=30, optional=True),
         "background": Str(max_len=30), "style": Str(max_len=30, optional=True), "level": Int(min=1, max=10),

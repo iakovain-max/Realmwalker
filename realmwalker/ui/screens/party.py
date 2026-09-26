@@ -163,6 +163,12 @@ class PartyScreen(Screen):
                 markup.escape(comp.bond_text(g, c)) + (f" <warn>Unpaid for {k['unpaid']} days.</>" if k.get("unpaid")
                                                        else "")
                 + (f" <dim>(paid {money_text(k['paid'])} so far)</>" if k.get("paid") else ""),
+            ]
+            if k.get("unique"):
+                from realmwalker.game import uniques
+
+                lines.append(f"<info>Gift:</> {markup.escape(uniques.gift(g, c))}")
+            lines += [
                 f"Orders: {comp.ORDERS.get(k.get('order', 'follow'), 'follow')}."
                 + (" <dim>(waiting)</>" if c not in g.party else ""),
             ]

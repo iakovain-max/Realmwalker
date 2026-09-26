@@ -353,7 +353,7 @@ def join(game, uid: str, npc, *, said: str = "") -> list[str]:
     kept = r.pop("char", None)
     char = Character.from_dict(kept) if kept else make_character(game, uid)
     char.alive = True
-    comp.enlist(game, npc, char, "unique", unique=uid, title=u["title"], values=list(u["values"]), want=u["want"],
+    comp.enlist(game, npc, char, "unique", unique=uid, title=u["role"], values=list(u["values"]), want=u["want"],
                 loyalty=r.pop("loyalty", LOYALTY))
     for key in ("penance", "oath"):
         if key in r:
@@ -435,6 +435,11 @@ def bond_text(game, c: Character) -> str:
     state = k.get("penance") if uid == "grusha" else k.get("oath")
     text = u["bond_text"].get(state or "default") or u["bond_text"]["default"]
     return f"{u['known_as']}, {u['epithet']}. {fill(game, uid, text)}"
+
+
+def gift(game, c: Character) -> str:
+    u = data(game).get(unique_of(c))
+    return u["perk_text"] if u else ""
 
 
 def pay_word(game, c: Character) -> str:
