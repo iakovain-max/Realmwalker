@@ -386,6 +386,10 @@ class BattleScreen(Screen):
         box_h = 5
         bottom_min = 10
         slots = max(1, min(MAX_PER_RANK, (h - 5 - bottom_min) // box_h))
+        # A big fight gets a bigger board when the window has room for it (the log and the orders keep 13 rows),
+        # so that nobody on either side is hidden behind "+2 more".
+        crowd = max(len(rank_members(b, side, rank)) for side in (PARTY, FOE) for rank in (FRONT, BACK))
+        slots = max(slots, min(crowd, (h - 5 - 13) // box_h))
         field_h = slots * box_h
         mid = 1 + half
         canvas.text(2, 3, "YOUR SIDE", colors.named("good"))

@@ -2,4 +2,4 @@
 
 GAME_NAME = "Realmwalker"
 __version__ = "0.1.0"
-MILESTONE = "M7 - Companions and progression"
+MILESTONE = "v1 done (M0-M9), polishing"

@@ -122,10 +122,14 @@ class CharacterScreen(Screen):
         self.game = game
         self.index = index
         self.notes = ScrollText("")
+        self.show_skills = True  # in a narrow window the notes take the skills' place (s switches)
 
     @property
     def char(self):
         return self.game.party[self.index]
+
+    def narrow(self, width: int) -> bool:
+        return width - (2 + 38 + 34) - 2 < 24
 
     def render(self, canvas: Canvas) -> None:
         g = self.game
@@ -170,12 +174,17 @@ class CharacterScreen(Screen):
             y += canvas.wrapped(col1, y, line, 36, max_lines=2)
             if y > h - 4:
                 break
-        canvas.text(col2, 2, "Skills", colors.TITLE)
-        for i, (sid, sk) in enumerate(t.rules["skills"].items()):
-            mark = "♦" if sid in c.expertise else ("●" if sid in c.skills else "·")
-            fg = colors.FG if sid in c.skills else colors.DIM
-            canvas.text(col2, 3 + i, f"{mark} {sk['name']:<16} {signed(s.skill_bonus(sid)):>3} {sk['ability'].upper()}", fg)
-        canvas.text(col2, 4 + len(t.rules["skills"]), "● trained  ♦ expert", colors.FAINT)
+        narrow = self.narrow(w)
+        if narrow and not self.show_skills:
+            col3 = col2  # the notes, where the skills were
+        else:
+            canvas.text(col2, 2, "Skills", colors.TITLE)
+            for i, (sid, sk) in enumerate(t.rules["skills"].items()):
+                mark = "♦" if sid in c.expertise else ("●" if sid in c.skills else "·")
+                fg = colors.FG if sid in c.skills else colors.DIM
+                canvas.text(col2, 3 + i, f"{mark} {sk['name']:<16} {signed(s.skill_bonus(sid)):>3} {sk['ability'].upper()}",
+                            fg, max_width=w - col2 - 1)
+            canvas.text(col2, 4 + len(t.rules["skills"]), "● trained  ♦ expert", colors.FAINT, max_width=w - col2 - 1)
 
         notes = []
         for trait in s.race["traits"]:
@@ -207,14 +216,20 @@ class CharacterScreen(Screen):
         text = "\n".join(notes)
         if self.notes.text != text:
             self.notes.set_text(text)
-        self.notes.render(canvas, col3, 2, max(20, w - col3 - 2), h - 6)
+        if not narrow or not self.show_skills:
+            self.notes.render(canvas, col3, 2, w - col3 - 2, h - 6)
         bx = canvas.button(2, h - 3, "Inventory", lambda: self._switch(InventoryScreen), hotkey="i")
+        if narrow:
+            bx = canvas.button(bx + 3, h - 3, "Notes" if self.show_skills else "Skills", self.toggle_skills, hotkey="s")
         bx = canvas.button(bx + 3, h - 3, "Equipment", lambda: self._switch(EquipmentScreen), hotkey="e")
         if c.pending:
             bx = canvas.button(bx + 3, h - 3, f"Level-up choices ({len(c.pending)})", self.level_up, hotkey="l")
         if len(g.party) > 1:
             bx = canvas.button(bx + 3, h - 3, "Next member", self.next_member, hotkey="Tab")
         canvas.button(bx + 3, h - 3, "Back", self.close, hotkey="Esc")
+
+    def toggle_skills(self) -> None:
+        self.show_skills = not self.show_skills
 
     def level_up(self) -> None:
         from realmwalker.ui.screens.levelup import LevelUpScreen
@@ -239,12 +254,14 @@ class CharacterScreen(Screen):
             self.level_up()
         elif ev.key == "tab" and len(self.game.party) > 1:
             self.next_member()
+        elif ev.key == "s" and self.narrow(self.app.last_console_size[0]):
+            self.toggle_skills()
         else:
             return self.notes.handle_key(ev)
         return True
 
     def autoplay_keys(self) -> list[KeyEvent]:
-        return [KeyEvent(k) for k in ("down", "pagedown", "tab", "l", "i", "e", "escape")]
+        return [KeyEvent(k) for k in ("down", "pagedown", "tab", "l", "i", "e", "s", "escape")]
 
 
 # ---------------------------------------------------------------------------- inventory
@@ -486,7 +503,7 @@ class InventoryScreen(Screen):
             label = f"[{name}]" if i == self.filter else f" {name} "
             over = canvas.hit(x, 2, len(label), 1, action=lambda i=i: self._set_filter(i))
             x = canvas.text(x, 2, label, colors.SELECT_FG if i == self.filter else (colors.FG if over else colors.DIM)) + 1
-        canvas.text(x + 2, 2, f"sort: {SORTS[self.sort]} (s)", colors.FAINT)
+        canvas.text(x + 2, 2, f"sort: {SORTS[self.sort]} (s)", colors.FAINT, max_width=w - x - 4)
         list_w = min(64, w - 40)
         canvas.text(2, 4, f"{'':2}{'Item':<32}{'Wt':>6}{'Value':>10}  Note", colors.DIM)
         items = self.visible_items()
@@ -520,15 +537,13 @@ class InventoryScreen(Screen):
         if cur is not None:
             canvas.wrapped(dx + 1, 5, item_details(g, cur), w - dx - 3, max_lines=h - 12)
         canvas.markup(2, h - 4, f"{load_line(s)} · <dim>Money:</> <loot>{money_text(c.money)}</>", max_width=w - 4)
-        bx = canvas.button(2, h - 3, self.action_name(cur), self.use, hotkey="Enter")
-        bx = canvas.button(bx + 3, h - 3, "Drop", self.drop, hotkey="d")
-        bx = canvas.button(bx + 3, h - 3, "Drop one", lambda: self.drop(False), hotkey="D")
-        bx = canvas.button(bx + 3, h - 3, "Equipment", lambda: self.app.replace(EquipmentScreen(self.app, g, self.index)), hotkey="e")
+        row = [(self.action_name(cur), self.use, "Enter"), ("Drop", self.drop, "d"),
+               ("Drop one", lambda: self.drop(False), "D"),
+               ("Equipment", lambda: self.app.replace(EquipmentScreen(self.app, g, self.index)), "e")]
         if len(g.party) > 1:
             other = g.party[(self.index + 1) % len(g.party)].name.split()[0]
-            bx = canvas.button(bx + 3, h - 3, f"Give to {other}", self.give, hotkey="G")
-            bx = canvas.button(bx + 3, h - 3, "Next member", lambda: self.handle_key(KeyEvent("tab")), hotkey="Tab")
-        canvas.button(bx + 3, h - 3, "Back", self.close, hotkey="Esc")
+            row += [(f"Give to {other}", self.give, "G"), ("Next member", lambda: self.handle_key(KeyEvent("tab")), "Tab")]
+        canvas.button_row(2, h - 3, w - 2, row + [("Back", self.close, "Esc")])
 
     def _set_filter(self, i: int) -> None:
         self.filter = i
