@@ -95,6 +95,9 @@ def equip(char: Character, items: ItemTable, uid: int, slot: str | None = None) 
     it = char.item(uid)
     if it is None:
         return False, "You don't have that."
+    wearer, _ = worn_by(char, uid)  # the party shares one pack: it may be on someone else
+    if wearer is not None and wearer is not char:
+        return False, f"{wearer.name.split()[0]} has the {items.name(it, False)}. Take it off them first."
     d = items.get(it.def_id)
     slots = items.slots_for(it)
     if not slots:
@@ -106,9 +109,6 @@ def equip(char: Character, items: ItemTable, uid: int, slot: str | None = None) 
             slot = "off_hand"  # a second light weapon goes in the other hand
     if slot not in slots:
         return False, f"The {items.name(it, False)} doesn't go there."
-    wearer, _ = worn_by(char, uid)
-    if wearer is not None and wearer is not char:
-        return False, f"{wearer.name.split()[0]} has the {items.name(it, False)}. Take it off them first."
     there = char.equipped_item(slot)
     if cursed(there) and there.uid != uid:
         there.magic["curse_known"] = True

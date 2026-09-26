@@ -192,7 +192,8 @@ class CampScreen(Screen):
 
         food = sum(it.qty for it in carried(g.party) if g.tables.items.get(it.def_id).get("food"))
         water = sum(it.fill for it in carried(g.party))
-        canvas.markup(x, y, f"<dim>Food in the packs:</> {food} · <dim>water:</> {water:g} pints", max_width=col)
+        canvas.markup(x, y, f"<dim>Food in the packs:</> {food} · <dim>water:</> {water:g} pint{'' if water == 1 else 's'}",
+                      max_width=col)
         y += 2
         for key, label, fn, ok, why in self.actions():
             if y >= h - 3:
