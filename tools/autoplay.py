@@ -132,6 +132,8 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
                 t = int(game.remap_for(lm)[lm.terrain[p.lx, p.ly]])
                 if not app.tables.terrain.walk[t]:
                     fail(f"player inside solid {app.tables.terrain.ids[t]} on a local map")
+        if any(not d.startswith(("site:", "deeper:")) for d in p.discoveries):
+            fail(f"an unknown kind of discovery: {sorted(p.discoveries)[:5]}")
         key = w.meta.id
         last = _LAST_TIME.get(key)
         if last is not None and w.time < last:
@@ -186,6 +188,10 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
                 fail(f"{member.name} has an impossible level-up choice waiting: {member.pending}")
             if any(not 1 <= v <= 20 for v in member.abilities.values()):
                 fail(f"{member.name} has an ability out of range: {member.abilities}")
+            table = app.tables.rules["xp_for_level"]
+            earned = min(app.tables.rules["max_level"], sum(1 for need in table if member.xp >= need))
+            if member.level != earned:
+                fail(f"{member.name} is level {member.level} with {member.xp} experience (should be {earned})")
             equipped = list(member.equipped.values())
             if len(equipped) != len(set(equipped)):
                 fail(f"{member.name} wears one item in two places")

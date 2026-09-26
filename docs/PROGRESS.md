@@ -112,6 +112,18 @@ teacher, Master Dario" instead of "Your old master Master Dario". A conversation
 their own and in country that suits them (measured with the balance harness: a gnoll pack or a hobgoblin patrol
 is a real fight at level 1; berserkers are a decision, not a fight, until about level 3).
 
+### Cloud session, 2026-09-26: experience for discovery
+
+(Pull request "Experience for discovery".) The design says experience comes from fights, work, discovery (new
+regions, ruins, lore) and deeds, and the help said so too, but only books gave any for discovery. A measuring script
+that wandered and explored for thirty days without taking work never reached level 2. Now the first time a character
+enters a region they gain 10 experience times their level; the first time they reach a site (a ruin, a lair, a
+barrow, a tower) 25 times their level; and each new level under the ground 25 times their level. The line that tells
+of it says "(+25 experience)", everyone in the party gains it, the region you begin in does not count, and a piece of
+work still pays about ten times as much. Measured again: an active explorer now reaches level 2 in two to three
+weeks without taking work, and a very active one level 3 in a month. The numbers are in `data/rules.json`
+("discovery_xp"). Save format 9; older saves still load. Checked by `tests/test_discovery.py`.
+
 **Every level under the ground says what it is like** — cut stone and old grain in a cellar, burial niches three
 deep in a crypt, scorched rock and opened armour in a lair — once, when you first come down. With Player2 running
 the AI writes it instead, from the real facts of that level, and only while the built-in words are unread. Dark

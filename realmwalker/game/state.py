@@ -48,6 +48,7 @@ class PlayerState:
     known_settlements: set[int] = field(default_factory=set)
     visited_settlements: set[int] = field(default_factory=set)
     visited_areas: set[int] = field(default_factory=set)
+    discoveries: set[str] = field(default_factory=set)  # "site:<id>", "deeper:<site id>/<level>" (experience given)
     seconds: int = 0  # sub-minute time carried from local-map steps
     steps: int = 0
 
@@ -528,12 +529,15 @@ class GameState:
                 from realmwalker.game.describe import area_text
 
                 written = area_text(self.world, area)
+                gained, notes = self.discover("region") if p.steps else ("", [])  # not where you were born
                 if written:
-                    self.say(f"You enter <place>{area.name}</>. <ai>{written}</>", "place")
+                    self.say(f"You enter <place>{area.name}</>. <ai>{written}</>{gained}", "place")
                 else:
                     biome = self.biome_def(p.x, p.y)
                     desc = self.world.rng.child(f"areadesc{area.id}").choice(biome["descriptions"])
-                    self.say(f"You enter <place>{area.name}</>. {desc}", "place")
+                    self.say(f"You enter <place>{area.name}</>. {desc}{gained}", "place")
+                for note in notes:
+                    self.say(note, "good")
                 if self.party[1:]:
                     from realmwalker.game.companions import react
 
@@ -560,7 +564,10 @@ class GameState:
         site = self.world.site_at(p.x, p.y)
         if site is not None:
             spec = self.tables.sites["site_types"].get(site.kind, {})
-            self.say(f"You come upon <place>{_cap(site.name)}</>. {spec.get('desc', '')}", "place")
+            gained, notes = self.discover("site", f"site:{site.id}") if p.steps else ("", [])
+            self.say(f"You come upon <place>{_cap(site.name)}</>. {spec.get('desc', '')}{gained}", "place")
+            for note in notes:
+                self.say(note, "good")
         if self.world.politics.get("dragons"):
             from realmwalker.game import dragons
 
@@ -569,6 +576,26 @@ class GameState:
             from realmwalker.game import quests
 
             quests.on_arrive(self)
+
+    def discover(self, kind: str, key: str | None = None) -> tuple[str, list[str]]:
+        """Experience for finding somewhere new (the design's discovery): a region, a site, a level deeper under the
+        ground, each once per character, for everyone in the party (data/rules.json "discovery_xp", times each one's
+        level). Returns the note for the line that tells of it (" (+10 experience)") and any level-up messages."""
+        if key is not None:
+            if key in self.player.discoveries:
+                return "", []
+            self.player.discoveries.add(key)
+        per_level = int(self.tables.rules.get("discovery_xp", {}).get(kind, 0))
+        if per_level <= 0:
+            return "", []
+        from realmwalker.rules.progression import award_xp
+
+        rng = self.world.rng.child(f"discovery/{kind}/{self.player.steps}")
+        notes: list[str] = []
+        for c in self.party:
+            if c.alive:
+                notes += award_xp(c, per_level * c.level, self.tables, rng)
+        return f" <dim>(+{per_level * self.leader.level} experience)</>", notes
 
     def _check_realm(self) -> None:
         """Crossing a border: say whose lands these are."""
