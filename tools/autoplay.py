@@ -132,6 +132,8 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
                 t = int(game.remap_for(lm)[lm.terrain[p.lx, p.ly]])
                 if not app.tables.terrain.walk[t]:
                     fail(f"player inside solid {app.tables.terrain.ids[t]} on a local map")
+        if any(not d.startswith(("site:", "deeper:")) for d in p.discoveries):
+            fail(f"an unknown kind of discovery: {sorted(p.discoveries)[:5]}")
         key = w.meta.id
         last = _LAST_TIME.get(key)
         if last is not None and w.time < last:
@@ -139,8 +141,6 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
         _LAST_TIME[key] = w.time
         if p.explored.shape != (w.width, w.height):
             fail("explored map has the wrong shape")
-        if any(not d.startswith(("site:", "deeper:")) for d in p.discoveries):
-            fail(f"an unknown kind of discovery: {sorted(p.discoveries)[:5]}")
         for member in game.party:
             if not 0 <= member.hp <= member.max_hp:
                 fail(f"{member.name} has {member.hp}/{member.max_hp} hit points")
