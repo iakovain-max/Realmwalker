@@ -189,3 +189,10 @@ def test_nothing_on_screen_reads_wrong_during_a_run(tmp_path, monkeypatch):
     report = run_autoplay(turns=800, seed=6, ai="off", home=tmp_path / "home")
     assert report.ok, report.summary()
     assert not found, found
+
+
+def test_asking_whether_a_creature_exists_is_safe(tables):
+    """The bot's law check asks this of a captive's kind; it used to fail with KeyError: 0 now and then."""
+    assert "wolf" in tables.creatures
+    assert "no_such_beast" not in tables.creatures
+    assert None not in tables.creatures

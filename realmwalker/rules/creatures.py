@@ -48,6 +48,10 @@ class CreatureTable:
     def __getitem__(self, def_id: str) -> dict:
         return self.defs[def_id]
 
+    def __contains__(self, def_id: object) -> bool:
+        # Without this, "x in tables.creatures" walks the table as if it were a list, from index 0: KeyError: 0.
+        return def_id in self.defs
+
 
 def spawn(tables, def_id: str, rng: RNG, uid: int, *, now: int = 0) -> Creature:
     d = tables.creatures[def_id]
