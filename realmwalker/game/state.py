@@ -1025,7 +1025,8 @@ class GameState:
         if plan.minutes <= WALKING_HOURS_PER_DAY * MINUTES_PER_HOUR:
             return f"{plan.miles} miles, about {walking} on foot"
         days = plan.minutes / (WALKING_HOURS_PER_DAY * MINUTES_PER_HOUR)
-        return f"{plan.miles} miles: {walking} of walking, about {days:.0f} days at a steady pace"
+        days = "a day" if days < 1.25 else "a day and a half" if days < 1.75 else f"{round(days)} days"
+        return f"{plan.miles} miles: {walking} of walking, about {days} at a steady pace"
 
     # ------------------------------------------------------------------ bookkeeping
     def distance_to(self, x: int, y: int) -> float:

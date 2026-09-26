@@ -418,7 +418,8 @@ def make_ties(world, tables, character: Character, start_id: int, rng: RNG) -> l
         if clans and math.hypot(world.settlements[clans[0].seat].x - start.x, world.settlements[clans[0].seat].y - start.y) < 40:
             clan = clans[0]
             leader = fx.leader_of(world, clan)
-            values.update(clan=clan.name, place=world.settlements[clan.seat].name,
+            name = clan.name[4:] if clan.name.lower().startswith("the ") else clan.name  # "born to the {clan}"
+            values.update(clan=name, place=world.settlements[clan.seat].name,
                           chief=leader.full_name() if leader else person())
             refs.update(faction=clan.id, standing=30, place=clan.seat)
     elif kind == "guild":

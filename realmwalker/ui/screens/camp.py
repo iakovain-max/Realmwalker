@@ -190,7 +190,8 @@ class CampScreen(Screen):
                                       + " · ".join(words), col, max_lines=3)
         food = sum(it.qty for c in g.party for it in c.inventory if g.tables.items.get(it.def_id).get("food"))
         water = sum(it.fill for c in g.party for it in c.inventory)
-        canvas.markup(x, y, f"<dim>Food in the packs:</> {food} · <dim>water:</> {water:g} pints", max_width=col)
+        canvas.markup(x, y, f"<dim>Food in the packs:</> {food} · <dim>water:</> {water:g} pint{'' if water == 1 else 's'}",
+                      max_width=col)
         y += 2
         for key, label, fn, ok, why in self.actions():
             if y >= h - 3:

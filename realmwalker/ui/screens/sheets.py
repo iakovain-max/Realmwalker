@@ -101,7 +101,8 @@ def item_details(game: GameState, item: Item) -> str:
     if d.get("bedding"):
         lines.append(f"Bedding: {d['bedding']} warmth while you sleep.")
     if d.get("light"):
-        lines.append(f"Gives light for about {d['light']['hours']} hour(s).")
+        hours = d["light"]["hours"]
+        lines.append(f"Gives light for about {hours:g} hour{'' if hours == 1 else 's'}.")
     weight = t.weight(item)
     lines.append(f"<dim>Weight {weight:g} lb · worth about {money_text(t.value(item))} · condition: {t.condition_word(item)}</>")
     if "stolen" in item.tags:

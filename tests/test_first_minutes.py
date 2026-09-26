@@ -103,3 +103,51 @@ def test_creation_speaks_of_an_acolyte(make_app):
     assert not re.search(r"[a-z]_[a-z]", text)  # no raw ids (the name field's cursor is a lone "_")
     app.handle_event(KeyEvent("escape"))
     assert app.error_count == 0
+
+
+@pytest.mark.parametrize("cause, reads", [
+    ("froze to death", "froze to death"),
+    ("died of thirst", "died of thirst"),
+    ("killed by the wolf", "was killed by the wolf"),
+    ("hanged by the Crown of Rookmark", "was hanged by the Crown of Rookmark"),
+    ("of misfortune", "died of misfortune"),
+    ("", "died"),
+])
+def test_a_death_reads_after_a_name(cause, reads):
+    from realmwalker.game import death
+
+    assert death.how_they_died(cause) == reads
+
+
+def test_ties_never_say_the_the_or_master_master(tables):
+    from realmwalker.rules.creation import make_ties, starting_places
+    from realmwalker.world.generator import WorldGenerator, WorldOptions
+
+    seen = []
+    for seed in range(6):
+        world = WorldGenerator(WorldOptions("Kin", 40 + seed, "small"), tables).generate()
+        for bg in ("outlander", "sage"):
+            b = CharacterBuilder(tables, RNG(seed, "hero"))
+            b.set_race("dwarf")
+            b.set_background(bg)
+            c = b.build()
+            places = starting_places(world, tables, bg, c.race, RNG(seed))
+            for tie in make_ties(world, tables, c, places[0], RNG(seed)):
+                seen.append(tie["text"])
+    text = " ".join(seen)
+    assert "the the" not in text.lower() and "master master" not in text.lower()
+    assert "born to the" in text
+
+
+def test_travel_days_read_like_speech(make_app):
+    from realmwalker.game.state import TravelPlan, new_game
+    from realmwalker.world.generator import WorldGenerator, WorldOptions
+
+    app = make_app()
+    world = WorldGenerator(WorldOptions("Miles", 8, "small"), app.tables).generate()
+    game = new_game(world, app.tables, CharacterBuilder(app.tables, RNG(1, "hero")).build())
+    for minutes, words in ((13 * 60, "about a day and a half"), (9 * 60, "about a day at"), (40 * 60, "about 5 days")):
+        plan = TravelPlan(path=[(0, 0)], minutes=minutes, miles=20, destination=(0, 0))
+        assert words in game.describe_plan(plan), game.describe_plan(plan)
+    assert "1 days" not in game.describe_plan(TravelPlan(path=[(0, 0)], minutes=10 * 60 + 50, miles=18,
+                                                          destination=(0, 0)))

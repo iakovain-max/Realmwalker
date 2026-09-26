@@ -180,7 +180,8 @@ class DialogueScreen(Screen):
             if choice.enabled:
                 canvas.button(2, y, markup.plain(choice.label)[: text_w - 5], lambda i=i: self.choose(i), hotkey=key)
             else:
-                canvas.markup(2, y, f"<faint>[{key}] {markup.escape(markup.plain(choice.label))}: {choice.why}</>",
+                label = markup.escape(markup.plain(choice.label)).rstrip(".")
+                canvas.markup(2, y, f"<faint>[{key}] {label} — {choice.why}</>",
                               max_width=text_w)
         hidden = len(menu) - (menu_h - 1)
         if hidden > 0:
