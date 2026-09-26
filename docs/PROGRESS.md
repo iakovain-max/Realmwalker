@@ -25,6 +25,36 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 The nine milestones are done; this is what has been added since, in the same spirit (all of it from the design's
 own v1 lists).
 
+### Cloud session, 2026-09-25: words that sound right
+
+(Pull request "Words that sound right". Found by holding a few thousand conversations and reading every piece of
+work, notice, history line and day's write-up the game makes without the AI.)
+- **People tell their own stories.** "Tell me about yourself" used to put a note about them in their own mouth, in
+  quotes ("Took over the inn when his father drank himself into the churchyard."). Now they say a line of their
+  own and the story is told as what you learn: *Yrsa's story, as she tells it: took over the inn when her father
+  drank himself into the churchyard.* Rulers and guild heads give their style ("Guildmistress Agnes Tanner. Most who
+  come before me know that already.") instead of "They call me Edric. I'm the king."
+- **Nobody names the cutpurse.** Asked about the town, people used to list the hireable travellers at the inn by
+  trade, cutpurse and runaway serf included. They are "travellers at the inn" now, until you talk to them. The
+  town is described once a day, not by everyone you ask, and titles take proper plurals (the ladies, the headmen).
+- **Rumours and work within reach.** Townsfolk no longer tell of ruins 400 miles away; the missing of a town are
+  no longer taken to a hideout up to 491 miles off (every other kind of work was already within about 120 miles).
+- **Capitals where they belong.** One offer in twenty to hunt a beast began in lowercase, and heirloom offers
+  said "You've heard of The Fernsby ring?". Fixed, along with "sits low in the coast", "born in a autumn", "is not
+  who she say she is" and "a gossip and generous".
+- **More to say.** Who someone is (3 ways to 11), remembering a threat or a kindness (1 to 6 each), bribes and
+  threats (2 to 6 each), dangerous roads (2 to 6). Twelve common trades have life stories of their own; across a
+  world, 1,286 townsfolk shared 40 stories, 13 secrets and 12 wants, and now share 92, 28 and 32.
+- **The day's walk remembers its weather.** The written-up day of travel had three openings, four middles and three
+  endings and did not know what the sky had done ("Under rain, the hours went by"). Every kind of weather has lines
+  of its own now, and the day is remembered by the weather that held most of it.
+- **The same fight rolls the same dice.** In a fight, sizing up the enemy (the knowledge check) happened in an
+  order that changed every time the game started, so a fight rolled different dice after a reload. Fixed, and the
+  roll now comes before what it told you.
+
+Checked by `tests/test_words.py` and new floors in `tests/test_text_variety.py`; autoplay clean in both modes.
+Old saves load; people already met keep the stories they had.
+
 **More kinds of work** (design section 13). Besides bounties, lairs, beasts, letters, heirlooms, captives, debts,
 disappearances and dragons, people now offer (sixteen kinds in all):
 - **escort**: walk someone to another town. They travel with you and pay at the gate. Lose a fight on the road and

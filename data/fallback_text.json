@@ -167,24 +167,95 @@
   },
   "travel_day": {
     "passage": [
-      "{opening} {walking} {closing}",
-      "{walking} {opening} {closing}"
+      "{opening} {sky} {closing}",
+      "{sky} {opening} {closing}",
+      "{opening} {sky} {walking} {closing}",
+      "{opening} {walking} {sky} {closing}",
+      "{sky} {walking} {opening} {closing}"
     ],
     "opening": [
       "Another day on the road: {miles} miles, {road}, through {lands}.",
       "{miles} miles today, {road}. {lands}, and more of it.",
-      "The day's walk: {miles} miles of {lands}."
+      "The day's walk: {miles} miles of {lands}.",
+      "{miles} miles, {road}, through {lands}.",
+      "You made {miles} miles today, {road}, through {lands}.",
+      "A day of {lands}: {miles} miles of it, {road}.",
+      "Another {miles} miles behind you, {road}, through {lands}.",
+      "{miles} miles of {lands} went under your feet today, {road}."
     ],
     "walking": [
-      "The weather was {weather}, and you felt every mile of it.",
-      "Under {weather}, the hours went by one step at a time.",
-      "{weather}: the kind of day you only notice when it is over.",
-      "Your boots knew the ground better than your eyes did by the end. {weather}."
+      "You felt every mile of it.",
+      "The hours went by one step at a time.",
+      "Your boots knew the ground better than your eyes did by the end.",
+      "You stopped twice to eat and once to argue with a blister.",
+      "Nothing on the road but the road.",
+      "Your pack found every sore place on your shoulders, and kept finding them.",
+      "By the afternoon you had stopped looking at anything but the next few steps."
     ],
     "closing": [
       "By evening you were {mood}.",
       "You end the day {mood}.",
-      "At the end of it: {mood}, and still walking."
+      "At the end of it: {mood}, and still walking.",
+      "When you stopped you were {mood}.",
+      "Dusk found you {mood}.",
+      "You came to the end of it {mood}.",
+      "By the last of the light: {mood}."
+    ],
+    "sky_clear": [
+      "The sky stayed open all day, and the light was hard on the eyes by the end of it.",
+      "A clear day: you could see weather coming from a long way off, and none came.",
+      "Sun on your back, and a long shadow in front of you by the afternoon.",
+      "Clear skies: the kind of day you only notice when it is over."
+    ],
+    "sky_cloudy": [
+      "Cloud came and went, and the light moved over the land in patches.",
+      "Broken cloud all day, and a wind that never settled on a direction.",
+      "The sun kept going in and coming out, as if it could not make up its mind."
+    ],
+    "sky_overcast": [
+      "A low grey lid of cloud all day, and no telling the hour by it.",
+      "The sky pressed down, grey and heavy, and the land went flat and colourless under it.",
+      "No sun at all. The day was the same colour from morning to dusk."
+    ],
+    "sky_fog": [
+      "Fog all day. The world was twenty paces wide, and it moved with you.",
+      "You walked in a white nothing that swallowed sound and left your cloak beaded with wet.",
+      "The fog would not lift. Trees came out of it and went back into it, one at a time."
+    ],
+    "sky_drizzle": [
+      "A fine drizzle that never quite became rain, and never quite stopped.",
+      "It spat and misted all day, and by evening everything you wore was damp through.",
+      "The drizzle was too thin to see and too steady to ignore."
+    ],
+    "sky_rain": [
+      "It rained, and went on raining, and found its way inside everything.",
+      "Rain all day: in your face, down your collar, pooling in the ruts.",
+      "The rain came in bands, each wetter than the last, and the ground turned to mud under it."
+    ],
+    "sky_storm": [
+      "A storm blew in and stayed, and you walked bent into it with your hood pulled tight.",
+      "Wind and rain together, hard enough to hurt, and thunder walking the hills.",
+      "The storm tore at your cloak all day, and every step had to be argued for."
+    ],
+    "sky_flurries": [
+      "A few flakes drifted down now and then, and melted where they landed.",
+      "Snow in the air, not much of it, and a cold that got into the fingers.",
+      "Now and then the wind brought a scatter of snow, and then took it away again."
+    ],
+    "sky_snow": [
+      "Snow fell all day, and the land went white and quiet and hard to read.",
+      "You walked in falling snow, lifting your feet high, your breath smoking.",
+      "The snow came down steadily, filling your tracks behind you almost as fast as you made them."
+    ],
+    "sky_blizzard": [
+      "A blizzard: white, roaring, blind. You walked because stopping was worse.",
+      "The snow came sideways and would not stop, and you could not see your own hand held out.",
+      "Wind and snow and nothing else, all day long. You were lucky to keep the way."
+    ],
+    "sky_heat": [
+      "The heat lay on the land like a weight, and the sweat dried white on your clothes.",
+      "No shade, and a sun that did not care. Every mile was paid for in water.",
+      "The air shimmered over the ground, and the flies found you early."
     ]
   },
   "settlement": {
@@ -194,7 +265,7 @@
     ],
     "approach": [
       "The road into {name} is churned to mud by carts and cattle.",
-      "{name} sits low in the {land}, as if it would rather not be noticed.",
+      "{name} sits low {land_in}, as if it would rather not be noticed.",
       "You come into {name} past a row of leaning fence-posts and a dog that does not bark.",
       "The way into {name} runs between ditches full of brown water."
     ],

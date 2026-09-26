@@ -109,7 +109,11 @@ TRAVEL_DAY = AITask(
 
 def travel_day_fallback(rng: RNG, data: DataRegistry, variables: dict) -> dict:
     tables = data.fallback["travel_day"]
-    text = textgen.fill(rng.choice(tables["passage"]), rng, tables, {k: str(v) for k, v in variables.items()})
+    values = {k: str(v) for k, v in variables.items()}
+    # What the sky did all day, in words of its own (the facts carry its kind as "sky").
+    skies = tables.get(f"sky_{variables.get('sky', '')}") or tables.get("sky_overcast")
+    values["sky"] = rng.choice(skies)
+    text = textgen.fill(rng.choice(tables["passage"]), rng, tables, values)
     return {"passage": textgen.tidy(text)}
 
 

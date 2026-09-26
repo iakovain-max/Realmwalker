@@ -35,7 +35,8 @@ TAVERN_TABLES = (
     "sound", "crowd", "detail", "description", "manner", "overheard", "region", "season",
 )
 
-TRAVEL_DAY_TABLES = ("passage", "opening", "walking", "closing")
+SKIES = ("clear", "cloudy", "overcast", "fog", "drizzle", "rain", "storm", "flurries", "snow", "blizzard", "heat")
+TRAVEL_DAY_TABLES = ("passage", "opening", "walking", "closing") + tuple(f"sky_{k}" for k in SKIES)
 
 SETTLEMENT_TABLES = ("passage", "approach", "sight", "smell", "detail")
 
@@ -46,8 +47,8 @@ FALLBACK_TEXT = Obj({"tavern": table_set(*TAVERN_TABLES), "travel_day": table_se
 # Slots that code fills in itself (not from a table), per table set.
 RUNTIME_SLOTS: dict[str, set[str]] = {
     "tavern": {"family", "keeper"},
-    "travel_day": {"name", "miles", "lands", "weather", "mood", "season", "events", "road"},
-    "settlement": {"name", "kind", "land", "season"},
+    "travel_day": {"name", "miles", "lands", "weather", "mood", "season", "events", "road", "sky"},
+    "settlement": {"name", "kind", "land", "land_in", "season"},
 }
 
 PLACE_NAMES = Obj(
@@ -457,7 +458,8 @@ DIALOGUE = Obj(
     {
         "greeting": Map(word_list(1, 300)), "greeting_job": Map(word_list(1, 300)),
         "remember_threat": word_list(1, 300), "remember_help": word_list(1, 300),
-        "who_are_you": word_list(1, 300), "about_place": word_list(1, 300), "size_line": Map(Str(max_len=300)),
+        "who_are_you": word_list(1, 300), "who_are_you_ruler": word_list(1, 300), "tell_about_self": word_list(1, 300),
+        "about_place": word_list(1, 300), "size_line": Map(Str(max_len=300)),
         "no_rumours": word_list(1, 300), "rumour_intro": word_list(1, 300), "flavour_rumours": word_list(1, 300),
         "danger_rumour": word_list(1, 300), "threat_words": Map(Str(max_len=100)), "about_person": word_list(1, 300),
         "person_lines": word_list(1, 300), "threaten_success": word_list(1, 300), "threaten_failure": word_list(1, 300),

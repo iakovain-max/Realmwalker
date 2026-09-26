@@ -365,7 +365,7 @@ class Battle:
         """The party sizes up each kind of foe (Nature for beasts, History for people, Religion for the dead)."""
         skill_for = {"beast": "nature", "humanoid": "history", "undead": "religion", "giant": "nature"}
         party = [f for f in self.side(PARTY) if f.char]
-        for def_id in {f.creature.def_id for f in self.side(FOE)}:
+        for def_id in sorted({f.creature.def_id for f in self.side(FOE)}):  # sorted: a set's order changes per run
             d = self.t.creatures[def_id]
             skill = skill_for.get(d["kind"], "arcana")
             dc = 8 + int(round(d["cr"] * 3))
@@ -374,11 +374,11 @@ class Battle:
                 continue
             roll = dice.d20(self.rng).natural
             total = roll + best.skill(skill)
+            self.dice_say(f"{self.t.rules['skills'][skill]['name']} ({best.name}): {roll} {signed_mod(best.skill(skill))} = {total} vs DC {dc}")
             if total >= dc:
                 self.known.add(def_id)
                 danger = "a real threat" if d["cr"] >= 1 else ("dangerous in numbers" if d["cr"] >= 0.25 else "weak alone")
                 self.say(f"{best.name} knows {d['plural']}: {danger} (AC {d['ac']}).", "info")
-            self.dice_say(f"{self.t.rules['skills'][skill]['name']} ({best.name}): {roll} {signed_mod(best.skill(skill))} = {total} vs DC {dc}")
 
     # ------------------------------------------------------------------ turn engine
     def step(self) -> bool:

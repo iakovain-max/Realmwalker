@@ -413,7 +413,11 @@ class GameState:
         log[key] = log.get(key, 0) + 1
         from realmwalker.world.weather import KIND_WORDS
 
-        log["weather"] = KIND_WORDS.get(self.weather.kind, self.weather.kind)
+        # The day is remembered by the weather that held most of it, not by the last hour's.
+        skies = log.setdefault("skies", {})
+        skies[self.weather.kind] = skies.get(self.weather.kind, 0) + 1
+        sky = max(skies, key=skies.get)
+        log["sky"], log["weather"] = sky, KIND_WORDS.get(sky, sky)
 
     def lost_dc(self) -> int | None:
         """How hard it is to keep your bearings here, or None if there is no danger of getting lost."""
