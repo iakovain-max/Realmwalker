@@ -216,3 +216,12 @@ def test_someone_on_watch_sees_the_thieves_off(game, monkeypatch):
     monkeypatch.setattr(companions, "watching", lambda g: True)
     notes = fight._rustlers(game, fire=True)
     assert game.leader.animals and "on watch" in notes[0]
+
+
+def test_the_wardens_let_back_in_someone_they_saw_go_out(game):
+    walled_town(game)
+    at_hour(game, 12)
+    game.enter_local()
+    at_hour(game, 23)
+    game.leave_local()
+    assert not game.gate_shut()
