@@ -402,6 +402,7 @@ def outcome_spec(optional: bool = False) -> Obj:
             "fatigue": Float(min=-100, max=100, optional=True),
             "effect": List(Any_(), min_items=2, max_items=2, optional=True), "fight": Str(max_len=40, optional=True),
             "ambush": List(Any_(), min_items=2, max_items=2, optional=True), "time": Int(min=0, max=10000, optional=True),
+            "let_in": Bool(optional=True), "until_dawn": Bool(optional=True), "hurt": Str(max_len=20, optional=True),
         },
         optional=optional,
     )

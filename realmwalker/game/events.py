@@ -208,8 +208,19 @@ def apply_outcome(game, out: dict, rng: RNG) -> list[str]:
             if c.alive:
                 msgs += award_xp(c, int(out["xp"]), game.tables, rng)
         msgs.append(f"<good>+{int(out['xp'])} experience.</>")
+    if out.get("hurt"):
+        lost = dice.roll(str(out["hurt"]), rng).total
+        leader.hp = max(1, leader.hp - lost)  # a bad landing, not a death
+        msgs.append(f"<warn>{leader.name.split()[0]} loses {lost} hit points.</>")
     if out.get("time"):
         game.pass_time(int(out["time"]), "rest")
+    if out.get("until_dawn"):
+        game.pass_time(game.minutes_to_dawn(), "sleep")
+    if out.get("let_in") or out.get("until_dawn"):
+        here = game.world.settlement_at(game.player.x, game.player.y)
+        if here is not None:
+            game.let_in = (here.id, game._night_of())
+            msgs.append("<dim>(> to go in.)</>")
     fight = out.get("fight")
     if not fight and out.get("ambush"):
         group, chance = out["ambush"]

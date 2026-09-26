@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 import numpy as np
 import tcod.path
 
-from realmwalker.core import textgen
+from realmwalker.core import dice, textgen
 from realmwalker.core.rng import RNG
 from realmwalker.game.log import MessageLog
 from realmwalker.rules.character import Character, Sheet
@@ -143,6 +143,9 @@ class GameState:
         self.sentence: dict | None = None  # the law's punishment, being carried out (game.law)
         self.confined: dict | None = None  # in jail or at hard labour: fed and sheltered, going nowhere
         self.read_board = False  # walked into a notice board (the screen shows it)
+        self.sneaking = False  # creeping on a close-up map (z): slower, and seen only by those who beat sneak_roll
+        self.sneak_roll = 0  # the party's Stealth roll when they began to creep (the worst of them)
+        self.let_in: tuple[int, int] | None = None  # (settlement id, day): let through a shut gate tonight
         self.waiting: list[Character] = []  # companions told to wait somewhere (game.companions)
         self.lit: dict | None = None  # the torch or lantern burning underground (game.dungeon)
         self.quests: list[dict] = []  # work taken on: the journal (game.quests)
@@ -685,6 +688,50 @@ class GameState:
         return f"You reach <place>{s.name}</>, {textgen.a_or_an(kind)} of {souls}{walls}. <dim>{culture} folk live here.</>"
 
     # ------------------------------------------------------------------ local maps
+    # ------------------------------------------------------------------ after dark
+    def toggle_sneak(self) -> str:
+        """Begin or stop creeping on a close-up map. Beginning rolls the party's Stealth once: the worst of them,
+        at a disadvantage in armour that clanks. Anyone who might see you must beat it with their Perception."""
+        if self.sneaking:
+            self.sneaking = False
+            return "You stop creeping and walk upright."
+        if not self.in_local:
+            return "You can only creep about on foot, in the close view (> first)."
+        rng = self.world.rng.child(f"sneak/{self.player.steps}")
+        worst = None
+        for c in self.party:
+            if not c.alive:
+                continue
+            armor = c.equipped_item("armor")
+            clanks = armor is not None and bool(self.tables.items.get(armor.def_id).get("stealth_disadvantage"))
+            roll = dice.d20(rng, disadvantage=clanks).natural + self.sheet(c).skill_bonus("stealth")
+            if worst is None or roll < worst[0]:
+                worst = (roll, c, clanks)
+        roll, c, clanks = worst
+        self.sneaking, self.sneak_roll = True, roll
+        who = "" if len(self.party) == 1 else f" {c.name.split()[0]}'s is the worst."
+        armour = " Armour that clanks makes it harder." if clanks else ""
+        return (f"You keep low and move quietly. <dice>(Stealth {roll}.{who}{armour})</> "
+                f"<dim>Slower going; z to stop.</>")
+
+    def gate_shut(self) -> bool:
+        """A walled town or city shuts its gates from nightfall until dawn, unless you have been let in tonight."""
+        s = self.world.settlement_at(self.player.x, self.player.y)
+        if s is None or not s.walled or s.kind not in ("town", "city") or self.in_local:
+            return False
+        if self.moment.part_of_day(self.latitude) not in ("night", "before dawn"):
+            return False
+        return self.let_in != (s.id, self._night_of())
+
+    def _night_of(self) -> int:
+        """Which night it is: the day it began (the hours after midnight belong to the evening before)."""
+        return (self.world.time - 12 * 60) // (24 * 60)
+
+    def minutes_to_dawn(self) -> int:
+        m = self.moment
+        sunrise, _ = m.sun_times(self.latitude)
+        return int(round(((sunrise - 0.5 - m.fractional_hour) % 24) * 60))
+
     def enter_local(self) -> LocalMap:
         p = self.player
         lm = get_local_map(self.world, self.tables, p.x, p.y)
@@ -741,7 +788,11 @@ class GameState:
         if self.local is not None and self.local.kind == "dungeon":
             self.say("You are underground. Find the stairs up (<) first.", "system")
             return
+        here = self.world.settlement_at(self.player.x, self.player.y)
+        if here is not None:
+            self.let_in = (here.id, self._night_of())  # the wardens have seen you go out: they will let you back in
         self.player.local_key = None
+        self.sneaking = False
         self.say("You return to the road and the wider land.", "flavor")
         self.dirty = True
 
@@ -809,7 +860,8 @@ class GameState:
 
                 law.trespass_check(self, lm.buildings.index(now_building))
             self._walk_in(lm, now_building)
-        self.pass_seconds(int(LOCAL_STEP_SECONDS * float(T.cost[t]) * (1.41 if dx and dy else 1.0) * pace), "walk")
+        creep = 2.0 if self.sneaking else 1.0
+        self.pass_seconds(int(LOCAL_STEP_SECONDS * float(T.cost[t]) * (1.41 if dx and dy else 1.0) * pace * creep), "walk")
         here = lm.items.get((nx, ny))
         if here:
             names = ", ".join(self.tables.items.name(i) for i in here[:4]) + (" and more" if len(here) > 4 else "")

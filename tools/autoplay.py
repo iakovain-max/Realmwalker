@@ -120,6 +120,8 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
     game = app.game
     if game is not None:
         w, p = game.world, game.player
+        if getattr(game, "sneaking", False) and not game.in_local:
+            fail("creeping about on the overworld")
         if not w.in_bounds(p.x, p.y):
             fail(f"player off the world at {(p.x, p.y)}")
         elif not app.tables.biomes.passable[game._biome_remap[w.biome[p.x, p.y]]]:

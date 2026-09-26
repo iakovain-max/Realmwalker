@@ -80,9 +80,20 @@ def witnesses_here(game, *, exclude=(), radius: int | None = None) -> list:
             continue
         if max(abs(n.x - p.lx), abs(n.y - p.ly)) > radius:
             continue
-        if can_see(game, lm, (n.x, n.y), (p.lx, p.ly), radius):
+        if can_see(game, lm, (n.x, n.y), (p.lx, p.ly), radius) and not _unseen(game, n):
             out.append(n)
     return out
+
+
+def _unseen(game, npc) -> bool:
+    """Creeping (z), you are seen only by those whose Perception beats your Stealth: the watch look harder,
+    the dark and distance help."""
+    if not getattr(game, "sneaking", False):
+        return False
+    p = game.player
+    dist = max(abs(npc.x - p.lx), abs(npc.y - p.ly))
+    sharp = 10 + (3 if npc.job == "guard" else 0) + (5 if dist <= 2 else 0) - (5 if game.light < 0.5 else 0)
+    return sharp < game.sneak_roll
 
 
 # ---------------------------------------------------------------------------- committing a crime

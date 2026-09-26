@@ -147,6 +147,17 @@ also no longer runs its treatments over the Back button. Checked by `tests/test_
 the chronicle's Legends tab has "Those who came before": the characters who lived and died in this world, with
 their obituaries, beside the old heroes and the dragons.
 
+### Cloud session, 2026-09-26: after dark
+
+(Pull request "After dark".) Three things the design asked for. **Creeping** (**z** on a close-up map): slower
+steps, one Stealth roll for the party (the worst of you, harder in clanking armour), and a band notices you only if
+its Perception beats it — the dark helps, standing close does not. Fall on a band that has not seen you and you
+strike first; townsfolk witness a crime only if they beat your roll too. **Gates that shut at night**: a walled town
+or city is shut from nightfall until dawn, and **>** at its gate brings the warden — pay two silver at the postern,
+talk your way in, climb the wall (a fall hurts), or sleep under the walls until morning. Villages stay open.
+**Thieves in the camp**: a night in the wild with a mule or a horse can end with it gone, unless a companion keeps
+watch. Checked by `tests/test_after_dark.py`.
+
 **A dungeon belongs to whoever holds it.** The bottom of a bandit cellar used to hold bandits, goblins, rats and
 the restless dead at once; now a place takes its character from its master, with vermin in the corners.
 
