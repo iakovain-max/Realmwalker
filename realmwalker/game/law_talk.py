@@ -13,6 +13,11 @@ from realmwalker.world import factions as fx
 AUTHORITIES = ("guard", "headman", "lord")
 
 
+def _count(n: int, word: str) -> str:
+    """How many, in words: "a prisoner", "3 prisoners"."""
+    return f"a {word}" if n == 1 else f"{n} {word}s"
+
+
 def realm_of_npc(game, npc):
     return fx.realm_of_settlement(game.world, game.world.settlements[npc.settlement])
 
@@ -168,10 +173,11 @@ def hand_over(game, npc) -> str:
         from realmwalker.game.companions import react
 
         react(game, "prisoners_to_law")
-    reputation.deed(game, f"handed {len(captives)} prisoner(s) to the law", amounts,
+    n = len(captives)
+    reputation.deed(game, f"handed {_count(n, 'prisoner')} to the law", amounts,
                     immediate=(realm.id,) if realm is not None else (), fame=len(captives),
                     importance=1 + (len(captives) >= 3),
-                    news_text=f"{game.leader.name} brought {len(captives)} outlaw(s) to the law in "
+                    news_text=f"{game.leader.name} brought {_count(n, 'outlaw')} to the law in "
                               f"{game.world.settlements[npc.settlement].name}")
     return f"<good>The watch takes {names} off your hands and pays {money_text(total)}.</>"
 
@@ -201,7 +207,7 @@ def ransom(game, npc) -> str:
         from realmwalker.game.companions import react
 
         react(game, "ransom")
-    reputation.deed(game, f"sold {len(captives)} prisoner(s) back to their own people",
+    reputation.deed(game, f"sold {_count(len(captives), 'prisoner')} back to their own people",
                     amounts, immediate=(guild.id,) if guild is not None else (),
                     fame=0, infamy=len(captives), importance=1, news_text=None)
     change_disposition(npc, 4)

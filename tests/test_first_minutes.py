@@ -158,7 +158,7 @@ SLIPS = {
     "the the": r"\b[Tt]he the\b",
     "died died": r"\bdied died\b",
     "1 and a plural": r"(?<![\d.,])1 (days|hours|pints|miles|weeks)\b",
-    "(s)": r"\w\(s\)",
+    "(s)": r"[a-z]\(s\)",
     ".:": r"\w\.: ",
 }
 
