@@ -103,7 +103,9 @@ def release_companions(game) -> None:
         if npc is None:
             continue
         npc.flags.pop("companion", None)
-        npc.flags["recruit"] = True
+        from realmwalker.game.companions import released
+
+        released(game, c, npc)  # sell-swords can be hired again; the rest go back to who they were
         npc.alive = True
         npc.present = True
         npc.remember(f"travelled with {game.leader.name}, who died {game.over.get('cause', 'badly') if game.over else 'badly'}")

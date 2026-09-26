@@ -315,6 +315,27 @@ def _check_companions(game, fail) -> None:
             fail(f"{c.name} is {bond} but takes a wage")
         elif bond == "sworn" and k.get("lender") not in game.world.factions:
             fail(f"{c.name} was lent by a realm that never was")
+    # The seven unique companions: each is one person, in one place at a time.
+    from realmwalker.game import uniques
+
+    seen: dict[str, int] = {}
+    for c in list(game.party[1:]) + list(getattr(game, "waiting", [])):
+        uid = uniques.unique_of(c)
+        if uid:
+            seen[uid] = seen.get(uid, 0) + 1
+            if uniques.records(game.world).get(uid, {}).get("state") != "with" and settled:
+                fail(f"{c.name} travels with you, but the world thinks they are elsewhere")
+    for uid, n in seen.items():
+        if n > 1:
+            fail(f"{uid} is in the party {n} times")
+    for uid, r in uniques.records(game.world).items():
+        if r.get("state") not in ("waiting", "with", "dead"):
+            fail(f"{uid} is in no state the game knows ({r.get('state')})")
+        if not 0 <= r.get("town", -1) < len(game.world.settlements):
+            fail(f"{uid} lives nowhere")
+    faces = [n.flags["unique"] for n in game.world.npcs.values() if n.flags.get("unique") and n.alive]
+    if len(faces) != len(set(faces)):
+        fail(f"two townsfolk share one unique face: {sorted(faces)}")
 
 
 def _check_law(game, fail) -> None:

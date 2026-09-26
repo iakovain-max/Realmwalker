@@ -87,6 +87,8 @@ def pitch(game, q) -> str:
 
 
 def terms(q) -> str:
+    if q.get("unique") and not q["reward"]:
+        return f"{q['words'].get('pay', 'no money')}, {q['days']} days"  # one of the seven asks it of you
     return f"{money_text(q['reward'])}, {q['days']} days"
 
 
@@ -1110,7 +1112,9 @@ def personal_offer(game, c) -> dict | None:
     rng = game.world.rng.child(f"personal/{comp.get('npc')}/{game.moment.total_days}")
     want = comp.get("want", "pay")
     q = None
-    for template in PERSONAL.get(want, ("bounty",)):
+    from realmwalker.game.uniques import personal
+
+    for template in personal(c, game.tables) or PERSONAL.get(want, ("bounty",)):
         q = make_offer(game, npc, rng, template)
         if q is not None:
             break
@@ -1290,8 +1294,8 @@ def daily(game) -> None:
 
 def payer(game, q, npc) -> bool:
     """Is this the person to report to?"""
-    if q.get("personal") is not None:
-        return False  # you tell them yourself, on the party screen
+    if q.get("personal") is not None or q.get("unique"):
+        return False  # you tell them yourself: on the party screen, or in their own words
     if q["giver"] >= 0:
         return npc.id == q["giver"]
     return npc.settlement == q["town"] and npc.job in AUTHORITY_JOBS

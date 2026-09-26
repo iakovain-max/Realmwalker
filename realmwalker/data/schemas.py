@@ -640,6 +640,41 @@ BONDS = ("hired", "grateful", "sworn", "dreamer", "restless", "refugee", "admire
 
 DATA_FILES.update({"companions.json": COMPANIONS})
 
+# ---------------------------------------------------------------------------- unique companions (after v1)
+UNIQUE_PERKS = ("vigil", "dragonlore", "unhangable", "plaguebell", "tribes", "remembrance", "backroads")
+UNIQUE_PLACES = ("barrow", "dragon", "gaol", "sickness", "penance", "memory", "road")
+UNIQUE_ITEM = Obj({"base": Str(max_len=30), "title": Str(max_len=60), "rarity": Str(choices=["uncommon", "rare", "very_rare"]),
+                   "props": List(Obj({"kind": Str(max_len=20), "value": Int(min=0, max=20),
+                                      "skill": Str(max_len=30, optional=True), "type": Str(max_len=20, optional=True),
+                                      "ability": Str(max_len=5, optional=True), "spell": Str(max_len=30, optional=True)}),
+                                 min_items=1),
+                   "story": Str(max_len=400)})
+UNIQUE = Obj(
+    {
+        "name": Str(max_len=40), "known_as": Str(max_len=60), "epithet": Str(max_len=80), "title": Str(max_len=40),
+        "sex": Str(choices=["male", "female"]), "age": Int(min=14, max=2000), "race": Str(max_len=30),
+        "culture": Str(max_len=30), "class": Str(max_len=30), "subclass": Str(max_len=30, optional=True),
+        "background": Str(max_len=30), "style": Str(max_len=30, optional=True), "level": Int(min=1, max=10),
+        "scores": Obj({a: Int(min=3, max=18) for a in ("str", "dex", "con", "int", "wis", "cha")}),
+        "skills": word_list(1, 30), "expertise": List(Str(max_len=30)),
+        "cantrips": List(Str(max_len=30), optional=True), "spells": List(Str(max_len=30), optional=True),
+        "kit": List(List(Any_(), min_items=2, max_items=2)), "item": UNIQUE_ITEM,
+        "values": word_list(1, 30), "likes": List(Str(max_len=30)), "hates": List(Str(max_len=30)),
+        "want": Str(choices=["pay", "loot", "cause", "knowledge", "revenge"]),
+        "perk": Str(choices=UNIQUE_PERKS), "perk_text": Str(max_len=200), "personal": word_list(1, 30),
+        "where": Str(choices=UNIQUE_PLACES), "building": word_list(1, 20), "stats": Str(max_len=30),
+        "traits": word_list(1, 30), "speech": Str(max_len=200),
+        "profile": Obj({k: Str(max_len=700) for k in ("appearance", "personality", "backstory", "secret", "want")}),
+        "bond": Str(max_len=30), "bond_text": Map(Str(max_len=300), min_items=1),
+        "rumours": word_list(1, 300), "talk": Map(word_list(1, 900), min_items=1),
+        "lines": Map(word_list(1, 300), min_items=1),
+    }
+)
+UNIQUES = Obj({"uniques": Map(UNIQUE, min_items=1), "banter": Map(word_list(1, 400)),
+               "remembrance": word_list(1, 300)})
+
+DATA_FILES.update({"uniques.json": UNIQUES})
+
 # ---------------------------------------------------------------------------- magic items (M8)
 MAGIC = Obj(
     {

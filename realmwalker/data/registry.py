@@ -139,6 +139,7 @@ def _check_faction_refs(files: dict[str, Any]) -> list[str]:
     errors.extend(_check_law_refs(files, cultures))
     errors.extend(_check_politics_refs(files))
     errors.extend(_check_companion_refs(files))
+    errors.extend(_check_unique_refs(files))
     errors.extend(_check_magic_refs(files))
     errors.extend(_check_quest_refs(files))
     return errors
@@ -240,6 +241,80 @@ def _check_companion_refs(files: dict[str, Any]) -> list[str]:
         for job in b.get("jobs", []):
             if jobs and job not in jobs:
                 errors.append(f"data/companions.json: bonds.{bid} names unknown job {job!r}.")
+    return errors
+
+
+def _check_unique_refs(files: dict[str, Any]) -> list[str]:
+    """The seven unique companions may only be made of things the game has."""
+    from realmwalker.data.schemas import COMPANION_LINES
+
+    data = files.get("uniques.json")
+    if not data:
+        return []
+    errors: list[str] = []
+    races = files.get("races.json", {}).get("races", {})
+    classes = files.get("classes.json", {}).get("classes", {})
+    backgrounds = files.get("backgrounds.json", {}).get("backgrounds", {})
+    items = files.get("items.json", {}).get("items", {})
+    spells = files.get("spells.json", {}).get("spells", {})
+    skills = files.get("rules.json", {}).get("skills", {})
+    props = files.get("magic.json", {}).get("properties", {})
+    creatures = files.get("creatures.json", {}).get("creatures", {})
+    traits = files.get("people.json", {}).get("personality", {})
+    values = files.get("companions.json", {}).get("values", {})
+    uniques = {k: v for k, v in data["uniques"].items() if not k.startswith("_")}
+
+    def bad(uid: str, what: str) -> None:
+        errors.append(f"data/uniques.json: {uid} {what}.")
+
+    for uid, u in uniques.items():
+        race = races.get(u["race"])
+        if races and race is None:
+            bad(uid, f"is of unknown race {u['race']!r}")
+        elif race is not None and u["culture"] not in race["cultures"]:
+            bad(uid, f"has culture {u['culture']!r}, which {u['race']} do not have")
+        cls = classes.get(u["class"])
+        if classes and cls is None:
+            bad(uid, f"is of unknown class {u['class']!r}")
+        elif cls is not None:
+            if u.get("subclass") and u["subclass"] not in cls.get("subclasses", {}):
+                bad(uid, f"names unknown subclass {u['subclass']!r}")
+            if u.get("style") and u["style"] not in cls.get("fighting_styles", {}):
+                bad(uid, f"names unknown fighting style {u['style']!r}")
+        if backgrounds and u["background"] not in backgrounds:
+            bad(uid, f"names unknown background {u['background']!r}")
+        for s in u["skills"] + u["expertise"]:
+            if skills and s not in skills:
+                bad(uid, f"names unknown skill {s!r}")
+        for s in u.get("cantrips", []) + u.get("spells", []):
+            if spells and s not in spells:
+                bad(uid, f"names unknown spell {s!r}")
+        for pair in u["kit"]:
+            if items and (not isinstance(pair[0], str) or pair[0] not in items):
+                bad(uid, f"carries unknown item {pair[0]!r}")
+        if items and u["item"]["base"] not in items:
+            bad(uid, f"has a signature item made of unknown item {u['item']['base']!r}")
+        for p in u["item"]["props"]:
+            if props and p["kind"] not in props:
+                bad(uid, f"has a signature item with unknown property {p['kind']!r}")
+            if p.get("spell") and spells and p["spell"] not in spells:
+                bad(uid, f"has a signature item that casts unknown spell {p['spell']!r}")
+        for v in u["values"]:
+            if values and v not in values:
+                bad(uid, f"has value {v!r}, which is not in data/companions.json")
+        if creatures and u["stats"] not in creatures:
+            bad(uid, f"fights as unknown creature {u['stats']!r}")
+        for t in u["traits"]:
+            if traits and t not in traits:
+                bad(uid, f"has unknown personality trait {t!r}")
+        for kind in u["lines"]:
+            if kind not in COMPANION_LINES:
+                bad(uid, f"has lines of unknown kind {kind!r}")
+        if "default" not in u["bond_text"]:
+            bad(uid, "needs a 'default' bond_text")
+    for pair in data["banter"]:
+        if not pair.startswith("_") and any(p not in uniques for p in pair.split("+")):
+            errors.append(f"data/uniques.json: banter {pair!r} names someone who is not one of the uniques.")
     return errors
 
 

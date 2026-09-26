@@ -165,6 +165,8 @@ def expose(char: Character, tables, disease_id: str, rng: RNG) -> bool:
     """Something that could give a disease happened. Returns True if it starts to incubate."""
     if disease_id not in tables.diseases or any(d["id"] == disease_id for d in char.diseases):
         return False
+    if "plague_proof" in char.features:  # Sister Wendeline has never once been ill
+        return False
     d = tables.diseases[disease_id]
     lo, hi = d["incubation_hours"]
     char.diseases.append({"id": disease_id, "phase": "incubating", "stage": 0, "hours": 0.0,

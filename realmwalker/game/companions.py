@@ -65,6 +65,12 @@ def line(game, kind: str, c: Character, rng: RNG | None = None, value: str | Non
     rng = rng or game.world.rng.child(f"bark/{kind}/{c.name}/{game.world.time}")
     lines = data(game)["lines"]
     pool = lines[kind]
+    if c.companion.get("unique"):
+        from realmwalker.game import uniques
+
+        own = uniques.lines(game, c).get(kind)
+        if own:  # someone like no one else speaks for themselves
+            return textgen.fill(rng.choice(own), rng, {}, {"name": first(c), "leader": first(game.leader)})
     if value is not None and f"{kind}_{value}" in lines and rng.chance(0.7):
         pool = lines[f"{kind}_{value}"]  # the thing they care about is what they are reacting to
     else:
@@ -282,7 +288,25 @@ def dismiss(game, c: Character, *, deserted: bool = False) -> list[str]:
         if deserted:
             npc.disposition = min(npc.disposition, -30)
     game.dirty = True
+    if c.companion.get("unique"):
+        from realmwalker.game import uniques
+
+        uniques.left(game, c)  # home again, as they are, to be found there
     return [line(game, "desert" if deserted else "leave", c)]
+
+
+def released(game, c: Character, npc) -> None:
+    """Their leader is dead and they go home. Sell-swords can be hired again by whoever comes next; the others go
+    back to being who they were."""
+    arch = c.companion.get("archetype") if c.companion else None
+    if arch in data(game)["archetypes"]:
+        npc.flags["recruit"] = arch
+    else:
+        npc.flags.pop("recruit", None)
+    if c.companion.get("unique"):
+        from realmwalker.game import uniques
+
+        uniques.left(game, c)
 
 
 # ---------------------------------------------------------------------------- loyalty
@@ -309,6 +333,10 @@ def react(game, *tags: str, quiet: bool = False) -> list[str]:
             if abs(moved) > abs(strongest_delta):
                 strongest, strongest_delta = v, moved
         delta += likes * sum(1 for t in tags if t in WANT_LIKES.get(c.companion.get("want", ""), ()))
+        if c.companion.get("unique"):
+            from realmwalker.game import uniques
+
+            delta += uniques.feelings(game, c, tags)  # what one of the seven cares about beyond their values
         if delta:
             change_loyalty(c, delta)
             if abs(delta) > abs(loudest_delta):
@@ -350,6 +378,13 @@ def road_talk(game) -> None:
     elif w.kind == "heat" or c.body_heat >= 30:
         kind = "road_hot"
     flags["road_talk"] = steps
+    if kind == "road" and rng.chance(0.3):
+        from realmwalker.game import uniques
+
+        said = uniques.banter(game, rng)  # two of the seven, talking to each other
+        if said:
+            game.say(textgen.escape_markup(said), "flavor")
+            return
     game.say(line(game, kind, c, rng), "flavor")
 
 
@@ -469,7 +504,11 @@ def rejoin(game) -> list[str]:
 
 
 def watching(game) -> bool:
-    return any(c.companion.get("order") == "watch" and c.alive for c in companions(game))
+    from realmwalker.game import uniques
+
+    # Osric keeps watch every night, whatever you have told him.
+    return any(c.companion.get("order") == "watch" and c.alive for c in companions(game)) or \
+        uniques.perk(game, "vigil") is not None
 
 
 def foragers(game) -> list[Character]:

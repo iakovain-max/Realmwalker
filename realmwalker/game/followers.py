@@ -276,9 +276,13 @@ def on_reward(game, q, money: int) -> tuple[int, list[str]]:
 
 
 def on_fail(game, q) -> None:
-    """Work that fails or is given up: those who came for a share of it lose heart."""
+    """Work that fails or is given up: those who came for a share of it lose heart; Durgin keeps his oaths."""
     for c in [c for c in game.party[1:] if c.alive and comp.bond_of(c) == "dreamer"]:
         comp.change_loyalty(c, -15 if c.companion.get("work") == q["id"] else -5)
+    if q.get("unique"):
+        from realmwalker.game import uniques
+
+        uniques.on_fail(game, q)
 
 
 def dreamers_daily(game) -> None:
@@ -364,10 +368,13 @@ def arrive_town(game, lm, settlement) -> None:
     about once a month, like the travellers looking for work."""
     from realmwalker.game.people import TRAVELLER_DAYS, add, make_npc, npcs_in, update_positions
 
+    from realmwalker.game import uniques
+
     w = game.world
     town = w.towns.get(settlement.id)
     if town is None or not town.npcs or lm.kind != "settlement":
         return
+    uniques.arrive_town(game, lm, settlement)  # whoever of the seven lives here, and what they remember of it
     day = game.moment.total_days
     if day - int(town.flags.get("followers_day", -10**6)) < TRAVELLER_DAYS:
         return
@@ -460,7 +467,9 @@ def talk_choices(conv) -> list:
         problem = problem_with(game, npc)
         label = "Would you travel with me? (For your keep.)" if kind == "refugee" else "Would you travel with me?"
         return [Choice("recruit", label, problem is None, problem or "", {"how": kind})]
-    out = []
+    from realmwalker.game import uniques
+
+    out = uniques.reckoning_choices(conv)  # Grusha's village has something to say to her
     f = lender_of(game, npc)
     if f is not None:
         problem = sworn_problem(game, f)
@@ -502,6 +511,9 @@ def daily(game) -> None:
     recall_check(game)
     dreamers_daily(game)
     admirers_daily(game)
+    from realmwalker.game import uniques
+
+    uniques.daily(game)
 
 
 def died(game, c: Character) -> None:

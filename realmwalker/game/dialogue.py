@@ -86,6 +86,11 @@ class Conversation:
             return
         self.greeted = True
         npc = self.npc
+        if npc.flags.get("unique"):
+            from realmwalker.game.uniques import greeting
+
+            self.npc_says(greeting(self.game, npc, self.rng))  # someone like no one else says hello their own way
+            return
         d = self.game.tables.dialogue
         if any("threatened" in m for m in npc.memory) and npc.disposition < 0:
             self.npc_says(self.fill(self.rng.choice(d["remember_threat"])))

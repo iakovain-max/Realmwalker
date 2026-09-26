@@ -64,7 +64,7 @@ def test_every_settlement_has_its_people(game, kind):
         assert {"innkeeper", "priest", "smith", "shopkeeper", "guard"} <= jobs
     walk = game.tables.terrain.walk[game.remap_for(game.local)[game.local.terrain]]
     for n in people:
-        assert n.profile.get("appearance") and n.profile_source == "fallback"
+        assert n.profile.get("appearance") and n.profile_source in ("fallback", "unique")  # (built-in words, not AI)
         if n.present:
             assert walk[n.x, n.y], f"{n.title} stands in a wall"
     positions = [(n.x, n.y) for n in people if n.present]
