@@ -358,3 +358,51 @@ def sleep_recovery(char: Character) -> list[str]:
     elif char.exhaustion > 0:
         notes.append(f"{first(char)} slept, but on an empty belly or a dry throat it did not restore much.")
     return notes
+
+
+# ---------------------------------------------------------------------------- where each need is heading
+TREND_KINDS = ("hunger", "thirst", "fatigue", "dirt", "wet", "body_heat")
+
+
+def note_trend(char: Character, before: dict[str, float], minutes: float) -> None:
+    """Remember how fast each need moved over the time just passed (points an hour), for the Health screen. Eating
+    and drinking come after, so a meal does not hide how fast hunger is rising. Not saved: after loading, the
+    trend returns with the first half hour that passes."""
+    if minutes > 0:
+        char._trend = {k: (getattr(char, k) - v) * 60.0 / minutes for k, v in before.items()}
+
+
+def trend(char: Character) -> dict[str, float]:
+    return getattr(char, "_trend", {})
+
+
+def _hours(h: float) -> str:
+    if h < 1:
+        return "within the hour"
+    n = round(h)
+    return "in an hour" if n == 1 else f"in {n} hours"
+
+
+def trend_words(kind: str, value: float, rate: float | None) -> str:
+    """Where a need is heading, in words ("" when it is steady or unknown): "hungry in about 5 hours", "easing",
+    "warming", "drying"."""
+    if rate is None:
+        return ""
+    if kind == "body_heat":
+        if value < -5:
+            return "warming" if rate > 1.0 else "getting colder" if rate < -1.0 else ""
+        if value > 5:
+            return "cooling" if rate < -1.0 else "getting hotter" if rate > 1.0 else ""
+        return "getting colder" if rate < -4.0 else "getting hotter" if rate > 4.0 else ""
+    if kind == "wet":
+        return "drying" if rate < -1.0 and value > 1 else "getting wetter" if rate > 1.0 else ""
+    if rate < -0.5:
+        return "easing"
+    if rate <= 0.05:
+        return ""
+    worse = [(limit, word) for limit, word, _ in STAGES[kind] if limit > value]
+    if not worse:
+        return "worsening"
+    limit, word = min(worse)
+    hours = (limit - value) / rate
+    return f"{word} {_hours(hours)}" if hours <= 36 else ""

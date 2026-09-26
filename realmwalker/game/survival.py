@@ -70,11 +70,13 @@ def tick(game, minutes: int, activity: str) -> None:
             continue
         sheet = Sheet(char, game.tables)
         env = environment(game, char, activity)
+        before = {k: getattr(char, k) for k in body.TREND_KINDS}
         for text, color in body.tick(char, sheet, env, minutes):
             game.say(text, color)
         rng = game.world.rng.child(f"health/{game.world.time}/{char.name}")
         for text, color in health.tick(char, game.tables, ctx, minutes, rng):
             game.say(text, color)
+        body.note_trend(char, before, minutes)
         if (getattr(game, "auto_supplies", True) or getattr(game, "confined", None)) and activity != "fight":
             feed(game, char)
         check_death(game, char)

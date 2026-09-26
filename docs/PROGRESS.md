@@ -130,6 +130,19 @@ the AI writes it instead, from the real facts of that level, and only while the 
 places also look lived in now: fallen stone, old bones, tables and beds, pillars in the crypts and temples, water
 in the low places of caves.
 
+### Cloud session, 2026-09-26: the body
+
+(Pull request "The body".) Two things the design asked for. **Needs with their trend**: the Health screen now says
+where each need is heading — "fed · peckish in 2 hours", "tired · weary in 2 hours", "easing" while you sleep,
+"wet · drying" by a fire, "cold · getting colder" or "warming" — and the side panel adds "(warming)" or "(getting
+colder)" to someone cold or hot, so you can see whether the fire is enough. **Amputation** as a last resort: a limb
+wound that cannot be saved (festering towards the blood, or a critical fracture, crush, burn or frostbite) can be
+taken off from the Health screen (**a**, after a confirmation). It needs a blade; fire or a torch seals the stump; a
+Medicine check (much harder on yourself) decides whether the stump is clean or ragged and bleeding. The infection
+goes with the limb and the wound fever breaks, but what is left is for good: a lost arm means one hand for
+everything (no shield, nothing two-handed), a lost leg makes every mile longer. The smallest window's Health screen
+also no longer runs its treatments over the Back button. Checked by `tests/test_body.py`.
+
 **Your own story.** The character sheet lists what you are known for (your last deeds, with fame and infamy), and
 the chronicle's Legends tab has "Those who came before": the characters who lived and died in this world, with
 their obituaries, beside the old heroes and the dragons.

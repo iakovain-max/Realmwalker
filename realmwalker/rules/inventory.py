@@ -105,6 +105,11 @@ def equip(char: Character, items: ItemTable, uid: int, slot: str | None = None) 
             slot = "off_hand"  # a second light weapon goes in the other hand
     if slot not in slots:
         return False, f"The {items.name(it, False)} doesn't go there."
+    if "lost_left_arm" in char.injuries or "lost_right_arm" in char.injuries:
+        if slot == "off_hand":
+            return False, "With one hand left, there is nothing to hold it in."
+        if "two_handed" in d.get("properties", []):
+            return False, f"The {items.name(it, False)} needs two hands."
     there = char.equipped_item(slot)
     if cursed(there) and there.uid != uid:
         there.magic["curse_known"] = True
