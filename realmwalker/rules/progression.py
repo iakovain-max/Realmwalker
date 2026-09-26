@@ -33,8 +33,10 @@ def level_up(char: Character, tables, rng: RNG, *, auto: bool = False) -> list[s
     if char.companion and rng.chance(0.5) and tables.companions:
         from realmwalker.core import textgen
 
-        text = rng.choice(tables.companions["lines"]["level_up"])
-        notes.append(textgen.fill(text, rng, {}, {"name": char.name.split()[0], "leader": "you"}))
+        own = tables.uniques["uniques"].get(char.companion.get("unique"), {}).get("lines", {}).get("level_up")
+        text = rng.choice(own or tables.companions["lines"]["level_up"])
+        notes.append(textgen.fill(text, rng, {}, {"name": char.name.split()[0], "leader": "you",
+                                                  **textgen.pronoun_values(char.sex)}))
     if char.pending:
         notes.append(f"<info>{char.name.split()[0]} has choices to make</> (the character sheet, c, then l).")
     if auto:
@@ -251,7 +253,8 @@ def long_rest(char: Character, tables, rng: RNG) -> list[str]:
     for f in SHORT_REST_FEATURES:
         if f in char.features or (f == "channel_divinity" and f in char.uses):
             char.uses[f] = 1
-    if "relentless_endurance" in [t.get("rule") for t in tables.races[char.race]["traits"]]:
+    if "relentless_endurance" in [t.get("rule") for t in tables.races[char.race]["traits"]] or \
+            "relentless_endurance" in char.features:  # a half-orc's toughness, or a man the rope would not take
         char.uses["relentless_endurance"] = 1
     if char.subclass == "war":
         char.uses["war_priest"] = max(1, modifier(char.abilities["wis"]))

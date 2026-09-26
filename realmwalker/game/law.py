@@ -683,6 +683,11 @@ def gate_search(game, settlement) -> list[str]:
     rng = rng_for(game, f"gate/{settlement.id}")
     if not rng.chance(game.tables.law["gate_search_chance"]):
         return []
+    from realmwalker.game import uniques
+
+    waved = uniques.waved_through(game)  # Wren knows every gate-warden in the land
+    if waved:
+        return [waved]
     banned = set(contraband_for(game, realm.id))
 
     def forbidden(it) -> bool:

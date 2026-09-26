@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from realmwalker.core import textgen
 from realmwalker.game import companions as comp
 from realmwalker.rules.items import money_text
 from realmwalker.ui import colors, markup
@@ -143,7 +144,7 @@ class PartyScreen(Screen):
         lines = [f"<title>{markup.escape(c.name)}</>",
                  f"<dim>{t.races[c.race]['name']} {t.classes[c.cls]['name'].lower()}, level {c.level}"
                  + (f" ({t.classes[c.cls]['subclasses'][c.subclass]['name']})" if c.subclass else "") + "</>",
-                 f"Hit points {c.hp}/{c.max_hp}. Money {money_text(c.money)}."]
+                 f"Hit points {c.hp}/{c.max_hp}." + ("" if c.companion else f" Money {money_text(c.money)}.")]
         if c.pending:
             lines.append("<info>Has level-up choices waiting (c, then l).</>")
         if c.companion:
@@ -153,13 +154,21 @@ class PartyScreen(Screen):
             word, color = comp.loyalty_word(k.get("loyalty", 50))
             values = [spec["values"][v]["label"] for v in k.get("values", []) if v in spec["values"]]
             days = max(0, (g.world.time - int(k.get("hired", g.world.time))) // 1440)
+            who = arch.get("name") or comp.who_they_are(g, c)
             lines += [
                 "",
-                f"A {arch.get('name', 'companion')}, with you for {days} day{'s' if days != 1 else ''}.",
+                f"{textgen.a_or_an(who).capitalize()}, with you for {days} day{'s' if days != 1 else ''}.",
                 f"Loyalty: <{color}>{word}</> <dim>({int(k.get('loyalty', 50))})</>",
                 f"They are {' and '.join(values)}. They want {k.get('want', 'pay')}.",
-                f"Pay: {comp.terms_text_for(g, c)}." + (f" <warn>Unpaid for {k['unpaid']} days.</>" if k.get("unpaid")
-                                                          else ""),
+                markup.escape(comp.bond_text(g, c)) + (f" <warn>Unpaid for {k['unpaid']} days.</>" if k.get("unpaid")
+                                                       else "")
+                + (f" <dim>(paid {money_text(k['paid'])} so far)</>" if k.get("paid") else ""),
+            ]
+            if k.get("unique"):
+                from realmwalker.game import uniques
+
+                lines.append(f"<info>Gift:</> {markup.escape(uniques.gift(g, c))}")
+            lines += [
                 f"Orders: {comp.ORDERS.get(k.get('order', 'follow'), 'follow')}."
                 + (" <dim>(waiting)</>" if c not in g.party else ""),
             ]
@@ -208,7 +217,8 @@ class PartyScreen(Screen):
                          "It is done" if offer.get("done") else "Their job")
                 bx = canvas.button(bx + 2, h - 3, label, self.their_business, hotkey="b")
             bx = canvas.button(bx + 2, h - 3, "Orders", self.order, hotkey="o")
-            bx = canvas.button(bx + 2, h - 3, "Raise pay", self.raise_pay, hotkey="w")
+            if cur.companion.get("wage"):  # the others do not come for pay
+                bx = canvas.button(bx + 2, h - 3, "Raise pay", self.raise_pay, hotkey="w")
             bx = canvas.button(bx + 2, h - 3, "Dismiss", self.dismiss, hotkey="d")
             bx += 2
         bx = canvas.button(bx, h - 3, "Sheet", lambda: self.sheet("c"), hotkey="c")

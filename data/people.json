@@ -22,6 +22,7 @@
     "fisher": {"name": "fisher", "place": "street", "social": "low", "purse": [5, 100], "stats": "commoner", "near": "water"},
     "woodcutter": {"name": "woodcutter", "place": "street", "social": "low", "purse": [5, 100], "stats": "commoner", "near": "forest"},
     "adventurer": {"name": "traveller", "place": "inn", "notable": true, "social": "low", "purse": [50, 800], "stats": "guard"},
+    "wayfarer": {"name": "wayfarer", "place": "inn", "notable": true, "social": "low", "purse": [0, 50], "stats": "guard"},
     "miner": {"name": "miner", "place": "street", "social": "low", "purse": [5, 150], "stats": "commoner", "near": "hills"}
   },
   "settlement_people": {

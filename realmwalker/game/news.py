@@ -29,6 +29,11 @@ def hear(game, *, count: int = 1, rng=None, x: int | None = None, y: int | None 
         heard.add(n["id"])
         when = age_text(today - n["day"])
         out.append(f"<info>{escape_markup(n['text'][:1].upper() + n['text'][1:])}</> <dim>({when})</>")
+        if n.get("kind") == "unique":  # talk of where one of the seven is to be found: it goes on your map
+            fresh_places = [sid for sid in n.get("places", []) if sid not in game.player.known_settlements]
+            game.player.known_settlements.update(fresh_places)
+            if fresh_places:
+                out[-1] += " (It is on your map now.)"
         for fid in n.get("factions", []):
             from realmwalker.game.reputation import know
 

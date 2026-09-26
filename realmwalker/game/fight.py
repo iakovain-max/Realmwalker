@@ -318,7 +318,12 @@ def encounter_talk_dc(game) -> tuple[int | None, str]:
         return None, "they are past words"
     party = sum(1 for c in game.party if c.alive)
     dc = 12 + 2 * (len(enc.creatures) - party) + (2 if not enc.spotted_first else 0)
-    return max(8, min(22, dc)), ""
+    dc = max(8, min(22, dc))
+    from realmwalker.game import uniques
+
+    if uniques.talked_past(game, enc.creatures):
+        dc = max(5, dc - 8)  # orcs and goblins know Grusha's name, and argue among themselves about it
+    return dc, ""
 
 
 def encounter_talk(game) -> bool:

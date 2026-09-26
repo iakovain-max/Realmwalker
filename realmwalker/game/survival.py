@@ -108,7 +108,7 @@ def check_death(game, char: Character) -> None:
         game.over = {"cause": cause, "place": ""}
         game.travel = None
     else:
-        game.party = [c for c in game.party if c.alive]
+        game.party = [c for c in game.party if c.alive or c is game.party[0]]  # never the leader: they lead, dead or not
         game.waiting = [c for c in getattr(game, "waiting", []) if c.alive]
         from realmwalker.game.companions import died
 

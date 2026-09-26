@@ -676,6 +676,9 @@ class GameState:
                 from realmwalker.game.people import refresh_travellers
 
                 refresh_travellers(self, lm, where)
+                from realmwalker.game.followers import arrive_town
+
+                arrive_town(self, lm, where)  # the homeless of places nearby, and those who have heard of you
                 for text in self.settlement_troubles(where):
                     self.say(text, "warn")
                 if not town.seen and town.description:

@@ -133,7 +133,9 @@ def test_wages_and_desertion(game, monkeypatch):
     wage = c.companion["wage"]
     money = sum(m.money for m in game.party)
     comp.daily(game)
-    assert c.companion["unpaid"] == 0 and sum(m.money for m in game.party) == money
+    # The wage is theirs and gone: it does not sit in their pocket for you to spend again.
+    assert c.companion["unpaid"] == 0 and sum(m.money for m in game.party) == money - wage
+    assert c.money == 0 and c.companion["paid"] == wage
     for m in game.party:
         m.money = 0
     before = c.companion["loyalty"]
@@ -151,9 +153,8 @@ def test_wages_and_desertion(game, monkeypatch):
 def test_loot_shares(game):
     c, npc, s = hire_one(game, "city")
     c.companion["share"] = 0.2
-    before = c.money
     left = comp.share_loot(game, 1000)
-    assert left == 800 and c.money == before + 200
+    assert left == 800 and c.money == 0 and c.companion["paid"] == 200
 
 
 def test_waiting_and_rejoining(game):

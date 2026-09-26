@@ -87,6 +87,8 @@ def pitch(game, q) -> str:
 
 
 def terms(q) -> str:
+    if q.get("unique") and not q["reward"]:
+        return f"{q['words'].get('pay', 'no money')}, {q['days']} days"  # one of the seven asks it of you
     return f"{money_text(q['reward'])}, {q['days']} days"
 
 
@@ -1110,7 +1112,9 @@ def personal_offer(game, c) -> dict | None:
     rng = game.world.rng.child(f"personal/{comp.get('npc')}/{game.moment.total_days}")
     want = comp.get("want", "pay")
     q = None
-    for template in PERSONAL.get(want, ("bounty",)):
+    from realmwalker.game.uniques import personal
+
+    for template in personal(c, game.tables) or PERSONAL.get(want, ("bounty",)):
         q = make_offer(game, npc, rng, template)
         if q is not None:
             break
@@ -1164,7 +1168,7 @@ def finish_personal(game, c, q) -> list[str]:
 
 # ---------------------------------------------------------------------------- the end of it
 def reward(game, q, *, share: float = 1.0, text: str | None = None) -> list[str]:
-    from realmwalker.game import reputation
+    from realmwalker.game import followers, reputation
     from realmwalker.game.companions import react
     from realmwalker.game.people import change_disposition
     from realmwalker.rules.progression import award_xp
@@ -1172,7 +1176,8 @@ def reward(game, q, *, share: float = 1.0, text: str | None = None) -> list[str]
     w = game.world
     s = spec(game)["templates"][q["template"]]
     money = int(q["reward"] * share)
-    game.leader.money += money
+    kept, shared = followers.on_reward(game, q, money)  # those who came for a share of it take theirs first
+    game.leader.money += kept
     q["state"] = "finished"
     q["finished"] = game.moment.total_days
     amounts: dict[int, float] = {}
@@ -1226,6 +1231,7 @@ def reward(game, q, *, share: float = 1.0, text: str | None = None) -> list[str]
         if said:
             q["journal"].append(said)
             out.append(f"<good>{said}</>")
+    out += shared
     game.dirty = True
     return out
 
@@ -1260,6 +1266,9 @@ def fail(game, q, why: str | None = None) -> None:
                 c.companion["personal_done"] = True
                 change_loyalty(c, -15)
                 game.say(f"<warn>{c.name.split()[0]} will not talk about it.</>", "warn")
+    from realmwalker.game import followers
+
+    followers.on_fail(game, q)  # those who came along for a share of it
     game.dirty = True
 
 
@@ -1285,8 +1294,8 @@ def daily(game) -> None:
 
 def payer(game, q, npc) -> bool:
     """Is this the person to report to?"""
-    if q.get("personal") is not None:
-        return False  # you tell them yourself, on the party screen
+    if q.get("personal") is not None or q.get("unique"):
+        return False  # you tell them yourself: on the party screen, or in their own words
     if q["giver"] >= 0:
         return npc.id == q["giver"]
     return npc.settlement == q["town"] and npc.job in AUTHORITY_JOBS

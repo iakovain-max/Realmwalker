@@ -21,6 +21,11 @@ FLOORS = {
     "people:text.moments_raided": 5, "people:text.moments_siege": 5,
     # camping.json — every night on the road
     "camping:night.any": 8, "camping:night.fire": 5,
+    # companions.json — weeks of walking beside the same people
+    "companions:lines.road": 20, "companions:lines.camp": 12, "companions:lines.approve": 8,
+    "companions:lines.disapprove": 8, "companions:lines.battle": 8, "companions:lines.road_tired": 6,
+    "companions:lines.road_wet": 6, "companions:lines.road_night": 6, "companions:lines.road_cold": 5,
+    "companions:lines.road_hot": 4, "companions:lines.hired": 6, "companions:lines.complain": 6,
 }
 
 
@@ -88,3 +93,11 @@ def test_there_is_plenty_to_meet_on_the_road(data):
     assert len(data["quests.json"]["rewards_text"]) >= 4
     for template, words in data["quests.json"]["text"].items():
         assert len(words["pitch"]) >= 2, f"{template} is always asked for in the same words"
+
+
+def test_every_kind_of_companion_has_a_voice_of_their_own(data):
+    """What a companion cares about colours what they say on the road, at camp, and when they judge you."""
+    comp = data["companions.json"]
+    for value in comp["values"]:
+        for kind in ("road", "camp", "approve", "disapprove"):
+            assert len(comp["lines"].get(f"{kind}_{value}", [])) >= 2, f"a {value} companion has no {kind} lines"

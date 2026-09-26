@@ -8,6 +8,7 @@
     "warm": ["\"{player}! Good to see you again.\"", "\"There you are. Sit, sit.\"", "\"Friend. What can I do for you?\"", "\"{player}. I was only saying your name the other day.\"", "\"Whatever you want, it's yours, and we'll argue about the price after.\"", "They take your hand in both of theirs."]
   },
   "greeting_job": {
+    "wayfarer": ["\"Just passing through. Like you.\"", "\"Sit, if you like. The road will wait.\"", "\"Evening. Or morning. It is hard to tell, in here.\""],
     "innkeeper": ["\"Room, ale, or trouble?\"", "\"There's a fire and there's stew. Both cost.\"", "\"Sit anywhere that isn't wet.\""],
     "serving_hand": ["\"With you in a moment — mind your feet.\"", "\"Ale? Food? Both?\""],
     "priest": ["\"Peace on you, traveller.\"", "\"You've come a long way for a small church.\"", "\"Kneel if you like. Talk if you'd rather.\""],

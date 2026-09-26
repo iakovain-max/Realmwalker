@@ -17,7 +17,7 @@ from realmwalker.rules.items import Item
 
 from realmwalker.world.factions import CULTURE_RACE  # noqa: E402  (kept importable from here)
 DAY_START, DAY_END = 7, 19
-STAYS_AT_POST = {"innkeeper", "serving_hand", "guard", "priest", "lord"}
+STAYS_AT_POST = {"innkeeper", "serving_hand", "guard", "priest", "lord", "wayfarer"}
 WANDERS = {"guard", "farmer", "labourer", "weaver", "carter", "washerwoman", "beggar", "fisher", "woodcutter", "miner"}
 MARKET_DAYS = ("Freyasday", "Saturnsday")  # when the square fills up
 
@@ -548,8 +548,8 @@ def update_positions(game, lm) -> None:
     day = is_day(game)
     occupied = {(game.player.lx, game.player.ly)} | {(a.x, a.y) for a in lm.actors}
     for npc in npcs_in(game.world, s.id):
-        if not npc.alive:
-            npc.present = False
+        if not npc.alive or npc.flags.get("companion") or npc.flags.get("escort") is not None:
+            npc.present = False  # (those travelling with you are with you, not here as well)
             continue
         if npc.job in STAYS_AT_POST:
             target, present = npc.post, True
