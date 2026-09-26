@@ -162,6 +162,29 @@ def actor_at(lm, x: int, y: int) -> LocalActor | None:
     return None
 
 
+def passive_perception(game, a: LocalActor) -> int:
+    """The sharpest of a band: 10 + their Perception."""
+    best = 0
+    for c in a.creatures:
+        d = game.tables.creatures[c.def_id]
+        best = max(best, int(d.get("skills", {}).get("perception", (int(d["abilities"]["wis"]) - 10) // 2)))
+    return 10 + best
+
+
+def notice_chance(game, a: LocalActor, dist: int) -> float:
+    """How likely a band that could see you is to notice you this step. Walking openly it is a matter of luck
+    and light; creeping (z), it is their Perception against your Stealth, which the dark helps and nearness
+    hurts."""
+    if not getattr(game, "sneaking", False):
+        return (0.9 if dist <= 6 else 0.5) * (0.6 if game.light < 0.5 else 1.0)
+    sharp = passive_perception(game, a)
+    sharp += 5 if dist <= 2 else 2 if dist <= 5 else -2 if dist > 8 else 0
+    sees_dark = any(int(game.tables.creatures[c.def_id].get("darkvision", 0)) for c in a.creatures)
+    if game.light < 0.5 and not sees_dark:
+        sharp -= 5
+    return 1.0 if sharp >= game.sneak_roll else 0.0
+
+
 def move_actors(game, lm) -> LocalActor | None:
     """Creatures react to the player's step. Returns an actor that has reached the player (a fight)."""
     from realmwalker.game.vision import can_see, player_fov
@@ -196,29 +219,6 @@ def move_actors(game, lm) -> LocalActor | None:
         if a.alert and dist <= 1:
             return a
     return None
-
-
-def passive_perception(game, a: LocalActor) -> int:
-    """The sharpest of a band: 10 + their Perception."""
-    best = 0
-    for c in a.creatures:
-        d = game.tables.creatures[c.def_id]
-        best = max(best, int(d.get("skills", {}).get("perception", (int(d["abilities"]["wis"]) - 10) // 2)))
-    return 10 + best
-
-
-def notice_chance(game, a: LocalActor, dist: int) -> float:
-    """How likely a band that could see you is to notice you this step. Walking openly it is a matter of luck
-    and light; creeping (z), it is their Perception against your Stealth, which the dark helps and nearness
-    hurts."""
-    if not getattr(game, "sneaking", False):
-        return (0.9 if dist <= 6 else 0.5) * (0.6 if game.light < 0.5 else 1.0)
-    sharp = passive_perception(game, a)
-    sharp += 5 if dist <= 2 else 2 if dist <= 5 else -2 if dist > 8 else 0
-    sees_dark = any(int(game.tables.creatures[c.def_id].get("darkvision", 0)) for c in a.creatures)
-    if game.light < 0.5 and not sees_dark:
-        sharp -= 5
-    return 1.0 if sharp >= game.sneak_roll else 0.0
 
 
 def _group_name(game, a: LocalActor) -> str:
