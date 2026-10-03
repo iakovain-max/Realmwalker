@@ -98,13 +98,85 @@ def camp(canvas, game, rect, now: float) -> None:
     canvas.under(*theme.panel(x, y, w, h, "inset", ornaments=False, border=True)[2:])
 
 
-def figure(canvas, char, tables, rect) -> None:
-    """A character standing in a frame (character creation, the character sheet)."""
+def figure(canvas, char, tables, rect, most: int = 224) -> tuple[float, float, int] | None:
+    """A character standing in a frame (character creation, the character sheet, the health screen), at most `most`
+    pixels tall. Returns where the figure went (x, y, size in pixels), so marks can be put on it."""
     x, y, w, h = rect
+    size = max(32, min(int(min(w - 12, h - 12)), most) // 32 * 32)
+    w = min(w, size + 40)
+    h = min(h, size + 20)
     canvas.under(*theme.panel(x, y, w, h, "glass", ornaments=False))
     canvas.under(Rect(x + 3, y + h * 0.7, w - 6, h * 0.3 - 3, (0, 0, 0, 70)))
-    size = max(32, int(min(w - 12, h - 12)) // 32 * 32)
-    cmd = dolls.draw(canvas.gfx.atlas, dolls.character(char, tables, atlas=canvas.gfx.atlas), x + (w - size) / 2,
-                     y + h - size - 6, size)
+    fx, fy = int(x + (w - size) / 2), int(y + h - size - 6)
+    cmd = dolls.draw(canvas.gfx.atlas, dolls.character(char, tables, atlas=canvas.gfx.atlas), fx, fy, size)
     if cmd is not None:
         canvas.under(cmd)
+        return fx, fy, size
+    return None
+
+
+def bust(canvas, parts, rect, light=(1.0, 1.0, 1.0), panel: bool = True) -> None:
+    """Head and shoulders in a small frame, each pixel a whole number of screen pixels (lists of people)."""
+    x, y, w, h = rect
+    atlas = canvas.gfx.atlas
+    if panel:
+        canvas.under(*theme.panel(x, y, w, h, "inset", ornaments=False))
+    crop = dolls.bust(atlas, parts)
+    k = max(1, int(min(w - 4, h - 4)) // crop[2])
+    size = crop[2] * k
+    cmd = dolls.draw(atlas, parts, int(x + (w - size) / 2), int(y + (h - size) / 2), size, light, crop=crop)
+    if cmd is not None:
+        canvas.under(cmd)
+
+
+# Where each part of the body is on a figure, as fractions of its picture (the tiles' "figures" record gives each
+# body's own; these are a fallback). The figure faces you: its right arm is on your left.
+PARTS = {"head": (0.5, 0.2), "torso": (0.5, 0.45), "right_arm": (0.25, 0.5), "left_arm": (0.75, 0.5),
+         "right_leg": (0.42, 0.82), "left_leg": (0.58, 0.82)}
+
+
+def wound_marks(canvas, char, at: tuple[float, float, int], now: float, selected=None, animate: bool = True):
+    """Marks on a figure where it is hurt: red where it bleeds (pulsing), a white strip where it is bandaged, a
+    sickly ring where it festers, larger the worse it is. Returns [(wound index, x, y, r)] for clicking."""
+    import math
+
+    x, y, size = at
+    atlas = canvas.gfx.atlas
+    body = dolls.body_key(char.race, char.sex)
+    parts = atlas.figures.get("parts", {}).get(body, {})
+    out = []
+    count: dict[str, int] = {}
+    for i, wd in enumerate(char.wounds):
+        fx, fy = parts.get(wd.part, PARTS.get(wd.part, (0.5, 0.5)))
+        if parts:  # body pixels to fractions
+            fx, fy = (fx + 0.5) / atlas.tile, (fy + 0.5) / atlas.tile
+        n = count.get(wd.part, 0)
+        count[wd.part] = n + 1
+        px = x + fx * size + (n % 2) * size * 0.05 - (n // 2) * size * 0.04
+        py = y + fy * size + n * size * 0.035
+        r = size * (0.035 + 0.02 * wd.severity)
+        if wd.bleed and not wd.bandaged:
+            pulse = 0.65 + 0.35 * math.sin(now * 5 + i) if animate else 1.0
+            colour = (220, 30, 24, int(230 * pulse))
+        elif wd.infected or wd.infection > 30:
+            colour = (170, 190, 60, 220)
+        elif wd.bandaged:
+            colour = (236, 230, 214, 230)
+        else:
+            colour = (150, 40, 34, 220)
+        canvas.over(Image("wound", _wound_dot, (px - r, py - r, 2 * r, 2 * r), rgba=colour))
+        if wd.bandaged:
+            canvas.over(Rect(px - r, py - r * 0.25, 2 * r, r * 0.5, (240, 236, 224, 230)))
+        if selected is not None and i == selected:
+            canvas.over(Rect(px - r - 3, py - r - 3, 2 * r + 6, 2 * r + 6, (255, 214, 110, 230), line=2))
+        out.append((i, px, py, r))
+    return out
+
+
+def _wound_dot():
+    from PIL import Image as PImage, ImageDraw
+
+    im = PImage.new("RGBA", (32, 32), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    d.ellipse([3, 3, 28, 28], fill=(255, 255, 255, 255), outline=(40, 20, 20, 255), width=3)
+    return im

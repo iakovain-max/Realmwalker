@@ -184,19 +184,37 @@ class PartyScreen(Screen):
         cur = self.current()
         list_w = min(40, max(24, w // 3))
         y = 2
+        pictures = canvas.gfx is not None and h >= 4 * len(members) + 12
+        rows = 3 if pictures else 1
         for i, c in enumerate(members):
             chosen = c is cur
             if chosen:
-                canvas.fill(2, y, list_w, 1, colors.HILITE_BG)
-            canvas.hit(2, y, list_w, 1, lambda i=i: setattr(self, "sel", i))
+                canvas.fill(2, y, list_w, rows, colors.HILITE_BG)
+            canvas.hit(2, y, list_w, rows, lambda i=i: setattr(self, "sel", i))
             tag = ""
             if c.companion:
                 word, color = comp.loyalty_word(c.companion.get("loyalty", 50))
                 tag = f" <{color}>{word}</>" if c in g.party else " <dim>waiting</>"
             elif c is g.leader:
                 tag = " <dim>you</>"
-            canvas.markup(3, y, f"{markup.escape(c.name)}{tag}", max_width=list_w - 2)
-            y += 1
+            if pictures:  # a face, the name, what they are, how hurt
+                from realmwalker.ui.gfx import dolls, scenes
+
+                canvas.clear_cells(2, y, 6, 3)
+                parts = dolls.character(c, g.tables, atlas=canvas.gfx.atlas)
+                scenes.bust(canvas, parts, tuple(int(v) for v in canvas.cell_rect(2, y, 6, 3)))
+                canvas.markup(9, y, f"{markup.escape(c.name)}{tag}", max_width=list_w - 8)
+                cls = g.tables.classes[c.cls]["name"]
+                canvas.markup(9, y + 1, f"<dim>{g.tables.races[c.race]['name']} {cls.lower()}, level {c.level}</>",
+                              max_width=list_w - 8)
+                ratio = c.hp / max(1, c.max_hp)
+                canvas.bar(9, y + 2, min(16, list_w - 18), ratio,
+                           colors.named("good" if ratio > 0.6 else ("warn" if ratio > 0.3 else "danger")))
+                canvas.text(9 + min(16, list_w - 18) + 1, y + 2, f"{c.hp}/{c.max_hp}", colors.DIM)
+                y += 4
+            else:
+                canvas.markup(3, y, f"{markup.escape(c.name)}{tag}", max_width=list_w - 2)
+                y += 1
         n = len(comp.companions(g)) + len(comp.waiting(g))
         canvas.wrapped(2, y + 1, f"<dim>{n} of {comp.data(g)['max_companions']} companions. Find more at inns.</>",
                        list_w, max_lines=2)

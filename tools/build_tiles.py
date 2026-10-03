@@ -446,6 +446,29 @@ def fetch_pack() -> Path:
     return next(dest.glob("*/dungeon")).parent
 
 
+def body_parts(b) -> dict[str, list[float]]:
+    """Where each part of a body is (the middle of it, in the figure's pixels), for marking wounds. The figure
+    faces you, so its right arm and leg are on your left."""
+    import figure_art as fa
+    import numpy as np
+
+    g = b.grid
+    c = b.c
+    out = {}
+    for name, codes, side in (("head", (fa.HEAD,), 0), ("torso", (fa.TORSO, fa.PELVIS), 0),
+                              ("right_arm", (fa.UARM, fa.LARM), -1), ("left_arm", (fa.UARM, fa.LARM), 1),
+                              ("right_leg", (fa.ULEG, fa.LLEG), -1), ("left_leg", (fa.ULEG, fa.LLEG), 1)):
+        m = np.isin(g, codes)
+        if side < 0:
+            m[:, c:] = False
+        elif side > 0:
+            m[:, :c] = False
+        ys, xs = np.nonzero(m)
+        if len(xs):
+            out[name] = [round(float(xs.mean()), 1), round(float(ys.mean()), 1)]
+    return out
+
+
 def figure_tiles() -> tuple[dict[str, Image.Image], dict]:
     """People in pixel art (tools/figure_art.py, tools/figure_gear.py): bodies, what they wear, what they hold.
     Returns the tiles and the facts the game needs to stack them (each body's hands)."""
@@ -492,7 +515,8 @@ def figure_tiles() -> tuple[dict[str, Image.Image], dict]:
         for em in fg.EMBLEMS[1:]:
             keep(f"fig/shield/{kind}/{em}", fg.shield(kind, left, em))
     meta = {"ref": "human_male", "hands": {k: [list(b.hands[0]), list(b.hands[1])] for k, b in bodies.items()},
-            "heads": {k: list(b.head) for k, b in bodies.items()}}
+            "heads": {k: list(b.head) for k, b in bodies.items()},
+            "parts": {k: body_parts(b) for k, b in bodies.items()}}
     return out, meta
 
 

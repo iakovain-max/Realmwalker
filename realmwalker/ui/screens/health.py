@@ -268,6 +268,19 @@ class HealthScreen(Screen):
         water = sum(it.fill for it in c.inventory if it.fill)
         canvas.markup(x, y, f"<dim>Water carried:</> {water:g} pints", max_width=col_w)
         y += 1
+        room = (h - 5) - (y + 1)
+        if canvas.gfx is not None and room >= 8:  # the body, with its wounds marked on it
+            from realmwalker.ui.gfx import scenes
+
+            fw = min(col_w, max(16, room * canvas.cell_h // canvas.cell_w))
+            canvas.clear_cells(x, y + 1, fw, room)
+            at = scenes.figure(canvas, c, t, tuple(int(v) for v in canvas.cell_rect(x, y + 1, fw, room)))
+            if at is not None:
+                marks = scenes.wound_marks(canvas, c, at, canvas.gfx.now, self.selected, canvas.gfx.ambient)
+                for i, px, py, r in marks:
+                    cx, cy = int(px // canvas.cell_w), int(py // canvas.cell_h)
+                    canvas.hit(cx - 1, cy, 3, 1, action=lambda i=i: setattr(self, "selected", i),
+                               tooltip=c.wounds[i].label)
 
         if wide:
             x2, y2, w2 = col_w + 5, 2, w - col_w - 8

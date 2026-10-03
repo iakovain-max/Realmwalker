@@ -224,6 +224,16 @@ class WorldView:
         px_, py_ = self.cell_px(*pos)
         canvas.under(Image("shadow_w", _shadow_image, (px_ + ppc / 2 - size * 0.3, py_ + ppc * 0.85 - size * 0.08,
                                                         size * 0.6, size * 0.2), rgba=(255, 255, 255, 160)))
+        # Companions a little behind and to the side (no more than three drawn: the road is narrow).
+        for i, c in enumerate(game.party[1:4]):
+            side = -1 if i % 2 == 0 else 1
+            k = 0.75 if size >= 64 else 1.0
+            fs = int(size * k)
+            cmd = dolls.draw(gfx.atlas, dolls.character(c, game.tables, atlas=gfx.atlas),
+                             px_ + ppc / 2 - fs / 2 + side * size * (0.32 + 0.14 * (i // 2)),
+                             py_ + ppc * 0.95 - fs - size * (0.18 + 0.08 * (i // 2)), fs, (0.92, 0.92, 0.92))
+            if cmd is not None:
+                canvas.under(cmd)
         cmd = dolls.draw(gfx.atlas, dolls.character(game.leader, game.tables, atlas=gfx.atlas),
                          px_ + ppc / 2 - size / 2, py_ + ppc * 0.95 - size, size)
         if cmd is not None:

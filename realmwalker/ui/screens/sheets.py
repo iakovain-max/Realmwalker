@@ -199,6 +199,14 @@ class CharacterScreen(Screen):
                 canvas.text(col2, 3 + i, f"{mark} {sk['name']:<16} {signed(s.skill_bonus(sid)):>3} {sk['ability'].upper()}",
                             fg, max_width=w - col2 - 1)
             canvas.text(col2, 4 + len(t.rules["skills"]), "● trained  ♦ expert", colors.FAINT, max_width=w - col2 - 1)
+            top = 6 + len(t.rules["skills"])
+            room = h - 5 - top
+            if canvas.gfx is not None and room >= 7:  # the person, as they stand, in what they wear
+                from realmwalker.ui.gfx import scenes
+
+                fw = min(col3 - col2 - 3, max(14, room * canvas.cell_h // canvas.cell_w))
+                canvas.clear_cells(col2, top, fw, room)
+                scenes.figure(canvas, c, t, tuple(int(v) for v in canvas.cell_rect(col2, top, fw, room)))
 
         notes = []
         for trait in s.race["traits"]:

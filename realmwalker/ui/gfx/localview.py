@@ -379,6 +379,19 @@ class LocalView:
         me = dolls.character(game.leader, game.tables, lit=lit and (lm.kind == "dungeon" or game.light < 0.4),
                              atlas=atlas)
         people.append((ppos[1] + 0.001, me, *self.cell_px(*ppos), T, (1.0, 1.0, 1.0), False))
+        # Companions follow a step or two behind, where you have just been.
+        followers = list(game.party[1:])
+        if followers:
+            taken = {(a.x, a.y) for a in lm.actors}
+            if lm.kind == "settlement":
+                from realmwalker.game.people import npcs_in, settlement_here
+
+                s = settlement_here(game)
+                taken |= {(n.x, n.y) for n in (npcs_in(game.world, s.id) if s is not None else []) if n.alive and n.present}
+            for i, (cx_, cy_) in enumerate(self._follow(game, lm, taken)[:len(followers)]):
+                fx, fy = self.pos(("comp", i), cx_, cy_, now, animate)
+                people.append((fy, dolls.character(followers[i], game.tables, atlas=atlas), *self.cell_px(fx, fy), T,
+                               _cell_light(light, cx_ - x0, cy_ - y0), False))
         people.sort(key=lambda t: t[0])
         out = []
         for _, names, px_, py_, size, col, alert in people:
@@ -392,6 +405,31 @@ class LocalView:
             if cmd is not None:
                 out.append(cmd)
         canvas.under(*out)
+
+    def _follow(self, game, lm, taken: set) -> list[tuple[int, int]]:
+        """Where companions stand: the squares you were last on, then the free squares beside you."""
+        p = game.player
+        cur = (p.lx, p.ly)
+        if getattr(self, "trail_key", None) != lm.key:
+            self.trail_key, self.trail, self.last_cell = lm.key, [], None
+        if self.last_cell is not None and self.last_cell != cur:
+            if abs(self.last_cell[0] - cur[0]) <= 1 and abs(self.last_cell[1] - cur[1]) <= 1:
+                self.trail.insert(0, self.last_cell)
+            else:  # a jump (a door, a stair): start again
+                self.trail = []
+        self.trail = [c for c in self.trail if c != cur][:8]
+        self.last_cell = cur
+        walk = game.tables.terrain.walk
+        remap = game.remap_for(lm)
+        out: list[tuple[int, int]] = []
+        around = [(cur[0] + dx, cur[1] + dy) for dx, dy in ((-1, 1), (1, 1), (0, 1), (-1, 0), (1, 0), (-1, -1), (1, -1), (0, -1))]
+        for x, y in self.trail + around:
+            if (x, y) == cur or (x, y) in out or (x, y) in taken or not lm.in_bounds(x, y):
+                continue
+            if not walk[remap[lm.terrain[x, y]]]:
+                continue
+            out.append((x, y))
+        return out
 
     def _light(self, game, lm, art, sl, vis, seen, now, ambient) -> np.ndarray:
         w, h = vis.shape

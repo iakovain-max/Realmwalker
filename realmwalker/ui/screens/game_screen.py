@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import numpy as np
+
 from realmwalker.game.describe import cap, danger_text, describe_local, describe_overworld, temperature_word, typical_temperature
 from realmwalker.game.state import GameState
 from realmwalker.rules import progression
@@ -759,6 +761,15 @@ class GameScreen(Screen):
                     self.app.save_game()
         self.app.maybe_autosave()
 
+    def _weather(self, canvas: Canvas, rect) -> None:
+        """Rain, snow and fog over the map, when animations are on."""
+        gfx = canvas.gfx
+        if gfx is None or not gfx.ambient:
+            return
+        from realmwalker.ui.gfx import weatherfx
+
+        weatherfx.draw(canvas, rect, self.game.weather, gfx.now, float(self.game.light))
+
     def render(self, canvas: Canvas) -> None:
         game = self.game
         mx, my, mw, mh = self._map_rect(canvas)
@@ -775,6 +786,35 @@ class GameScreen(Screen):
 
             canvas.under(Clip(rect))
             self.local_view.draw(canvas, game, rect, self.app.settings.map_zoom, fov)
+            lm = game.local
+            if lm.kind != "dungeon" and lm.building_at(game.player.lx, game.player.ly) is None and fov.any():
+                # Only over what you can see: rain over darkness looks like stars.
+                xs, ys = np.nonzero(fov)
+                ax, ay = self.local_view.cell_px(int(xs.min()), int(ys.min()))
+                bx, by = self.local_view.cell_px(int(xs.max()) + 1, int(ys.max()) + 1)
+                x0, y0 = max(rect[0], int(ax)), max(rect[1], int(ay))
+                x1, y1 = min(rect[0] + rect[2], int(bx)), min(rect[1] + rect[3], int(by))
+                if x1 > x0 and y1 > y0:
+                    canvas.under(Clip((x0, y0, x1 - x0, y1 - y0)))
+                    self._weather(canvas, (x0, y0, x1 - x0, y1 - y0))
+                    canvas.under(Clip(rect))
+                    if canvas.gfx.ambient and not lm.seen.all():  # and none over ground never seen
+                        from realmwalker.ui.gfx.scene import Image as Pic
+
+                        seen = lm.seen.copy()
+                        for b in lm.buildings:  # a building is drawn whole once any of it is seen
+                            if seen[b.x:b.x + b.w, b.y:b.y + b.h].any():
+                                seen[b.x:b.x + b.w, max(0, b.y - 3):b.y + b.h] = True
+                        T = self.local_view.tile
+                        ox, oy = self.local_view.cell_px(0, 0)
+
+                        def unseen(seen=seen):
+                            a = np.zeros((seen.shape[1], seen.shape[0], 4), np.uint8)
+                            a[~seen.T] = (*colors.BG, 255)
+                            return a
+
+                        canvas.under(Pic(("unseen", lm.key, int(lm.seen.sum())), unseen,
+                                         (ox, oy, lm.width * T, lm.height * T), smooth=False))
             canvas.under(Clip(None))
             self.tiles_drawn = True
             if self.hover is not None and cursor is None:
@@ -791,6 +831,11 @@ class GameScreen(Screen):
             rect = tuple(int(v) for v in canvas.cell_rect(mx, my, mw, mh))
             self.world_view.draw(canvas, game, rect, self.app.settings.world_zoom, quests=quest_marks(game),
                                  look=cursor, hover=self.hover if cursor is None else None)
+            from realmwalker.ui.gfx.scene import Clip
+
+            canvas.under(Clip(rect))
+            self._weather(canvas, rect)
+            canvas.under(Clip(None))
             self.tiles_drawn = True
             camera = (0, 0, 0, 0)
         else:
