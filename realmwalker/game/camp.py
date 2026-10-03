@@ -142,11 +142,12 @@ def build_shelter(game) -> list[str]:
     dc = int(game.tables.camping.get("shelter", {}).get(land(game), 12))
     w = game.weather
     if w.kind in ("storm", "blizzard"):
-        dc += 2
+        dc += 1
     ok, roll = check(game, "survival", dc, tag="shelter")
-    game.pass_time(60, "walk")
     if not ok:
+        game.pass_time(30, "walk")
         return [roll, "The wind has it down as fast as you put it up. You could try again."]
+    game.pass_time(60, "walk")
     camp.shelter = True
     what = {"forest": "a lean-to of boughs and bracken", "pine_forest": "a lean-to of pine boughs",
             "hills": "a hollow behind a wall of turf and stones", "mountains": "a hollow in the lee of the rocks",

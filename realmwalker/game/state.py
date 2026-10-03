@@ -475,11 +475,11 @@ class GameState:
         dc = self.lost_dc()
         if dc is None:
             return
-        if self.travel is not None and self.weather.visibility >= 0.6:
+        if self.travel is not None:
             from realmwalker.game.journey import night_unheeded
 
             if night_unheeded(self):
-                return  # a traveller stops at dusk, before the dark can lose them (game.journey)
+                return  # a traveller stops at dusk, before the dark (or the storm with it) can lose them (game.journey)
         ok, roll = check(self, "survival", dc, tag="lost")
         if not ok:
             self.lost = True

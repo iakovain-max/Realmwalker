@@ -237,3 +237,21 @@ def test_worn_to_exhaustion_five_you_can_still_stagger(tables):
     assert body.travel_multiplier(c) == 4.0
     c.exhaustion = 6
     assert body.travel_multiplier(c) is None
+
+
+def test_a_fur_cloak_does_not_cook_you_in_an_inn(tables):
+    """Warm clothes warm you up to comfortable and no further when it is mild: you would open the cloak. (A traveller
+    died of heatstroke sitting in a town at 16 C in a fur cloak.)"""
+    from realmwalker.rules.inventory import equip
+
+    c = hero(tables)
+    it = add_item(c, tables.items, "fur_cloak")
+    equip(c, tables.items, it.uid)
+    s = Sheet(c, tables)
+    for _ in range(24):
+        body.tick(c, s, Environment(18, 0, 0, "rest", sheltered=True), 60)
+    assert body.heat_index(c.body_heat) == 0, c.body_heat
+    hot = hero(tables)
+    for _ in range(6):
+        body.tick(hot, Sheet(hot, tables), Environment(36, 5, 0, "walk"), 60)
+    assert body.heat_index(hot.body_heat) >= 2, "a heat wave on the march is still dangerous"

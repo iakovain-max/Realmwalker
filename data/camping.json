@@ -5,8 +5,8 @@
     "mountains": "little", "high_mountains": "none", "tundra": "little", "desert": "none"
   },
   "shelter": {
-    "forest": 8, "pine_forest": 8, "hills": 11, "plains": 12, "marsh": 13, "coast": 12,
-    "mountains": 11, "high_mountains": 15, "tundra": 15, "desert": 14
+    "forest": 8, "pine_forest": 8, "hills": 10, "plains": 11, "marsh": 12, "coast": 11,
+    "mountains": 10, "high_mountains": 15, "tundra": 14, "desert": 13
   },
   "forage": {
     "forest": {"dc": 11, "winter_dc": 5, "find": [["wild_food", "1d3"]], "extra": [["healing_herbs", "1d2", 0.35]]},

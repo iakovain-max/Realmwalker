@@ -89,6 +89,10 @@ def details(game, q) -> str:
                      f"<dim>({esc(quests.direction(town, w.settlements[t['dest']]))})</>")
     if q["template"] == "hunt_beast":
         lines.append(f"<dim>Where</> {esc(q['words'].get('where', ''))} <dim>(marked on your map)</>")
+    if q["state"] in quests.LIVE and not q.get("done"):
+        danger = quests.danger_note(game, q)  # how the beast or the raiders measure up against the party now
+        if danger:
+            lines.append(danger)
     if q.get("revealed"):
         lines.append("<warn>There is more to this than you were told.</>")
     lines.append("")

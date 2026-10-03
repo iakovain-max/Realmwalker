@@ -329,7 +329,7 @@ def _hunt_beast(game, npc, rng):
 
 
 def beast_ratio(game, group: str) -> float:
-    """How a beast (and whatever runs with it) measures up against the party as it is now."""
+    """How a beast (and whatever runs with it), or a band of raiders, measures up against the party as it is now."""
     alive = [c for c in game.party if c.alive] or game.party
     return threat_ratio(game.tables, typical_group(game.tables, group, len(alive)), alive)
 
@@ -338,9 +338,11 @@ def danger_note(game, q: dict) -> str:
     """What a sensible person thinks on hearing what the work is: how the beast measures up (the same words the road
     uses for a band you meet), or "" when there is nothing to judge."""
     group = q.get("target", {}).get("group")
-    if q.get("template") != "hunt_beast" or group not in game.tables.creatures.encounters:
+    if q.get("template") not in ("hunt_beast", "defend") or group not in game.tables.creatures.encounters:
         return ""
     words = ratio_words(beast_ratio(game, group))
+    if q["template"] == "defend":
+        return f"<dim>Standing against {q['words'].get('raiders', 'the raiders')}:</> {words}"
     return f"<dim>Hunting {q['words'].get('beast', 'it')}:</> {words}"
 
 

@@ -309,7 +309,7 @@ def _rob_party(game, rng) -> str:
     return ", ".join(taken) if taken else "nothing, having found nothing worth taking"
 
 
-MAULED_DC = 6  # plus one for each beast still on its feet: a Constitution save to wake up at all
+MAULED_DC = 5  # plus one for each beast still on its feet: a Constitution save to wake up at all
 
 
 def _left_for_dead(game, battle: Battle, rng, after: Aftermath, beasts: int) -> None:
@@ -379,12 +379,13 @@ def _lay_words(minutes: int) -> str:
     return "an hour" if hours == 1 else f"{hours} hours"
 
 
-NOT_WORTH_STEALING = {"spellbook", "holy_symbol", "arcane_focus", "component_pouch", "prayer_book"}
+NOT_WORTH_STEALING = {"spellbook", "holy_symbol", "arcane_focus", "component_pouch", "prayer_book", "backpack"}
 
 
 def _keepsake(game, item) -> bool:
     """What robbers leave: a wizard's spellbook, a priest's holy symbol and the like (worth nothing to a fence, and
-    everything to their owner), and whatever a piece of work has given you to carry."""
+    everything to their owner), the pack everything else is carried in, and whatever a piece of work has given you to
+    carry."""
     return item.def_id in NOT_WORTH_STEALING or any(t.startswith("quest:") for t in item.tags)
 
 

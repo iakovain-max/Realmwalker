@@ -14,8 +14,8 @@ A grim, open-world party role-playing game built on the rules of Dungeons & Drag
 2. You start in a town. Press <loot>></> to walk its streets, and walk into people (<loot>☺</>) to talk to them.
 3. Ask everyone <loot>"Is there any work?"</>. Take something small — a lair to clear, a letter to carry — and press <loot>j</> to see it in your journal. The place is lit on your map.
 4. Buy a <loot>torch</> or two, <loot>rations</>, a <loot>waterskin</> and <loot>bandages</> before you leave (talk to a shopkeeper and choose <loot>"Let me see your general goods."</>).
-5. Walk there (<loot>m</> for the map, <loot>t</> to travel). Camp at night (<loot>r</>): a fire and a tent keep you alive.
-6. Fight only what you must; at level 1, two wolves or three bandits can kill you. Run, talk, or ambush if you can.
+5. Walk there (<loot>m</> for the map, <loot>t</> to travel). Camp at night (<loot>r</>): a fire and a tent (or a rough shelter, if you have no tent) keep you alive, and sleep lasts until morning.
+6. Fight only what you must; at level 1, two wolves or three bandits can kill you. Run, talk, ambush, pay robbers off or throw beasts your food.
 7. Go back to whoever set you the work and say it is done. Then do it again, with better boots.
 Everything else — hunger, wounds, factions, dungeons, dragons, death — is below, and the game explains itself as it goes.
 
@@ -62,7 +62,7 @@ Choose <loot>New World</> on the title screen, pick a size and seed, and the lan
   <loot>m</>               World map (<loot>z</> zooms out to the whole world, <loot>w</> weather, <loot>p</> realms)
   <loot>t</>               Travel: pick a destination on the world map and see how long it takes
 Roads are much faster than open country. Forests, hills and marshes are slow; mountains very slow. Rivers without a bridge must be waded. Any key stops a journey.
-Before you set out, the plan says how many nights the journey means in the open, whether your food and water will last, and whether the nights are cold enough to kill. On the way you stop by yourself when night comes on, and when something is wrong: someone weary, hungry, parched, cold, bleeding or sick, or the water gone. The stop says where the nearest roof or water is, if you know of one close by. Make camp (<loot>r</>), or press <loot>t</> and Enter to go on: the map opens on where you were going. The cold, thirst or a bleeding wound will wake you from sleep before they kill you.
+Before you set out, the plan says how many nights the journey means in the open, whether your food and water will last, and whether the nights are cold enough to kill. On the way you stop by yourself when night comes on, when a storm breaks, and when something is wrong: someone weary, hungry, parched, cold, bleeding or sick, or the water gone. The stop says where the nearest roof or water is, if you know of one close by. Make camp (<loot>r</>), or press <loot>t</> and Enter to go on: the map opens on where you were going. The cold, thirst or a bleeding wound will wake you from sleep before they kill you.
 
 <title>Your character</title>
   <loot>c</>               Character sheet: abilities, skills, features, ties, backstory (<loot>l</> level-up choices, <loot>Tab</> next member)
@@ -72,10 +72,10 @@ Before you set out, the plan says how many nights the journey means in the open,
   <loot>e</>               Equipment: what you wear in each slot, which body parts are protected, warmth
   <loot>g</> or <loot>,</>          Pick up what is lying here (on foot, in the close view)
 Carrying weight matters: worn armour counts half, and the clothes you are dressed in not at all. Above your limit you are slowed; far above it you cannot walk. Coins weigh too.
-  <loot>r</>               Camp: fire, tent, eat, cook, boil water, forage, hunt, fish, make things, rest, sleep
-At camp, <loot>m</> makes what a traveller can make: torches and splints out of firewood, bandages out of linen, salted meat (with salt) and dried fish (over the fire) that keep, and — with a herbalism kit, a fire and three lots of healing herbs — a remedy worth carrying. A Survival or Medicine check decides how much you get out of it.
+  <loot>r</>               Camp: fire, tent or rough shelter, eat, cook, boil water, forage, hunt, fish, make things, rest, sleep
+Without a tent, <loot>t</> at camp builds a rough shelter (an hour, and a Survival check): out of the wind and most of the rain, and a fire will burn in its lee even in a storm. Begun after dark, a sleep lasts until first light. At camp, <loot>m</> makes what a traveller can make: torches and splints out of firewood, bandages out of linen, salted meat (with salt) and dried fish (over the fire) that keep, and — with a herbalism kit, a fire and three lots of healing herbs — a remedy worth carrying. A Survival or Medicine check decides how much you get out of it.
   <loot>h</>               Health: needs, warmth, blood, pain, wounds and their treatment, sickness
-  <loot>w</>               Fill your waterskins (and drink) at a well, river or lake
+  <loot>w</>               Fill your waterskins (and drink) at a well, river or lake, or from the rain (snow, melted at a fire)
   <loot>W</>               Wash (at water)
 
 <title>Levels and spells</title>
@@ -93,9 +93,9 @@ And seven people are like no one else. They are the same in every world, only fo
 
 <title>Staying alive</title>
 Your body matters as much as your sword. The side panel shows anything that is wrong.
-  <loot>Hunger, thirst, tiredness</> grow as time passes (faster when walking, in heat, or shivering). Food spoils; a day's rations feeds you for a day. By default you eat and drink from your pack when needed (Settings). Wells in towns are safe; rivers, lakes and marshes can make you sick unless you boil the water at a campfire (you need a pot).
+  <loot>Hunger, thirst, tiredness</> grow as time passes (faster when walking, in heat, or shivering). Food spoils; a day's rations feeds you for a day. By default you eat and drink from your pack when needed (Settings), and fill your skins at a town's well as you pass, and from streams and the rain when they run dry. Wells in towns are safe; rivers, lakes and marshes can make you sick unless you boil the water at a campfire (you need a pot).
   <loot>Cold and heat:</> what you wear, wind, rain, shelter, fire and what you are doing all count. Wet clothes lose their warmth. A winter night in the open without a fire can kill; so can a heat wave in armour. Check the Warmth bar on the Health screen.
-  <loot>Exhaustion</> (5e, levels 1 to 6) builds up from starving, thirst, no sleep, freezing or heat. A night's sleep with food and water removes one level. Level 6 is death.
+  <loot>Exhaustion</> (5e, levels 1 to 6) builds up from starving, thirst, no sleep, freezing or heat. A night's sleep with food and water removes one level. At level 5 you can only stagger, slowly; level 6 is death.
   <loot>Wounds</> heal over days (minor), weeks (serious, critical) or a month (broken bones). Bleeding wounds lose blood until bandaged; dirty wounds can fester and poison the blood. On the Health screen: <loot>b</> bandage, <loot>c</> clean, <loot>s</> stitch, <loot>p</> splint, <loot>f</> cauterize, <loot>o</> poultice, <loot>k</> poppy milk, <loot>m</> healing magic. When a limb cannot be saved (festering towards the blood, or smashed beyond mending), <loot>a</> amputates it: a blade, and fire or a torch for the stump. It saves a life and leaves a lost arm or leg for good. Each need on that screen also says where it is heading: "peckish in about 5 hours", "warming", "drying".
   <loot>Sickness</> comes from bad water or food, bites, cold and wet, marsh country and filth. It takes hold after some hours or days; rest, warmth, clean water and herbs help you recover. Some diseases kill.
   <loot>The road:</> travel is slower in storms, snow and heat, and when hurt or tired. Off the road in fog, storms or darkness you can lose your way. You will meet people as well as trouble: pedlars, pilgrims, patrols, refugees and more. Each day of travel is written up in the log.
@@ -131,7 +131,7 @@ Walled towns and cities shut their gates from nightfall until dawn: at the gate 
 A disguise kit (general stores) lets you become a stranger for half a day: crimes are blamed on the stranger, and the watch may not know your face. Take prisoners after a fight and hand them to any town's watch for a reward. If you are sworn to the thieves' guild, their people will instead sell your prisoners back to their own kind, quietly, for three times what the watch pays: no news of it travels, but the law loses respect for you if it is ever put together, and honest companions will not stand for it.
 
 <title>Danger</title>
-The wilds are not empty. The more dangerous the region (shown in the side panel), the more likely something finds you, and night is worse; roads are a little safer. When trouble comes on the road you can <loot>F</>ight, <loot>A</>mbush (if you saw them first), <loot>S</>lip away (Stealth), or <loot>T</>alk your way past. Ruins, caves, barrows and towers have inhabitants; in the close view they show as letters, with a red background once they have noticed you. Walk into them to attack.
+The wilds are not empty. The more dangerous the region (shown in the side panel), the more likely something finds you, and night is worse; roads are a little safer. When trouble comes on the road you can <loot>F</>ight, <loot>A</>mbush (if you saw them first), <loot>S</>lip away (Stealth, much easier if you saw them first), or <loot>T</>alk your way past. Robbers will take half your purse instead of a fight (<loot>P</>), and hungry beasts will take food thrown to them (<loot>B</>). Beaten by robbers, you are robbed and left; beaten by beasts, you may wake hours later, mauled, with half the food gone. Ruins, caves, barrows and towers have inhabitants; in the close view they show as letters, with a red background once they have noticed you. Walk into them to attack.
 
 <title>Battle</title>
 Each side stands in two ranks. Melee blows reach only the enemy's front rank (unless it is empty, or you have a reach weapon); from the back rank you need a bow, a thrown weapon or a spell. Everyone acts in order of initiative. On your turn:

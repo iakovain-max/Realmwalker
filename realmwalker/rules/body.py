@@ -119,7 +119,8 @@ def felt_temperature(char: Character, sheet: Sheet, env: Environment) -> float:
     if env.sheltered:
         air = max(air, 12.0) if air < 24 else min(air, 26.0)
     warmth = sheet.warmth() * (1.0 - 0.55 * char.wet / 100.0)
-    felt = air + warmth * insulation_factor(env.air)
+    clothes = warmth * insulation_factor(env.air)
+    felt = air
     felt -= wind * 0.25 * (1.0 - sheet.wind_protection()) * (1.0 if air < 20 else 0.3)
     felt -= char.wet / 100.0 * (6.0 if air < 20 else 2.0)  # wet skin loses heat fast
     felt += {"walk": 4.0, "fight": 6.0, "sleep": -3.0}.get(env.activity, 0.0)
@@ -129,6 +130,11 @@ def felt_temperature(char: Character, sheet: Sheet, env: Environment) -> float:
         felt += 4.0
     elif env.shelter:
         felt += 2.0
+    # Clothes warm you as much as you need and, when it is mild, no more: anyone getting too hot opens the cloak or
+    # takes it off (a fur-cloaked traveller once died of heatstroke sitting in an inn at 16 C). Real heat is another
+    # matter: in a heat wave, or marching hard, what you wear still counts against you.
+    room = COMFORT_HIGH - 1.0 - felt
+    felt += min(clothes, max(room, 0.25 * clothes))  # (a quarter of it is the armour and the shirt you cannot shed)
     if env.fire:
         felt = max(felt, min(felt + 12.0, FIRE_COMFORT))
     return felt
