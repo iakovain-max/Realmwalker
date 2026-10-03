@@ -42,8 +42,13 @@ class WorldView:
         self._fog_key = None
 
     def close(self) -> None:
-        if self.cache is not None:
+        if self.cache is not None and not getattr(self, "shared", False):
             self.cache.close()
+
+    def share(self, other: "WorldView") -> None:
+        """Use another view's painter and painted pieces (the world map borrows the game screen's)."""
+        self.world, self.painter, self.cache = other.world, other.painter, other.cache
+        self.shared = True
 
     def ready(self, game) -> None:
         if self.world is not game.world:
@@ -88,7 +93,8 @@ class WorldView:
         return g[0] + (g[2] - g[0]) * t, g[1] + (g[3] - g[1]) * t
 
     # ------------------------------------------------------------------ drawing
-    def draw(self, canvas, game, rect_px, ppc: int, *, quests=(), look=None, hover=None) -> None:
+    def draw(self, canvas, game, rect_px, ppc: int, *, quests=(), look=None, hover=None, focus=None,
+             overlays=(), route=None, figure: bool = True) -> None:
         self.ready(game)
         gfx = canvas.gfx
         now = gfx.now
@@ -100,7 +106,7 @@ class WorldView:
             self.cam = None
         self.ppc = ppc
         pos = self._player_pos(p.x, p.y, now, gfx.animate)
-        target = (pos[0] + 0.5, pos[1] + 0.5)
+        target = (pos[0] + 0.5, pos[1] + 0.5) if focus is None else (focus[0] + 0.5, focus[1] + 0.5)
         dt = max(0.0, now - self.last_t)
         self.last_t = now
         if self.cam is None or not gfx.animate:
@@ -144,6 +150,8 @@ class WorldView:
         self.cache.want([k for k in wanted if self.cache.get(k) is None])
         # Fog over what you have not seen: a soft edge, from a picture one pixel per square.
         explored = p.explored
+        for key, make, alpha in overlays:  # realms, weather: one pixel per square, blended
+            canvas.under(Image(key, make, (ox, oy, world.width * ppc, world.height * ppc), rgba=(255, 255, 255, alpha)))
         fog_key = ("fog", id(world), int(explored.sum()))
         canvas.under(Image(fog_key, lambda: _fog_image(explored), (ox, oy, world.width * ppc, world.height * ppc)))
         # Places.
@@ -191,16 +199,27 @@ class WorldView:
             canvas.under(Image("ring", _ring_image, (sx + ppc / 2 - r, sy + ppc / 2 - r, 2 * r, 2 * r),
                                rgba=(255, 200, 90, int(140 + 90 * pulse))))
         # The road ahead.
-        if game.travel is not None and game.travel.path:
-            pts = [(pos[0] + 0.5, pos[1] + 0.5)] + [(x + 0.5, y + 0.5) for x, y in game.travel.path]
+        path = route if route is not None else (game.travel.path if game.travel is not None else None)
+        if path:
+            pts = [(pos[0] + 0.5, pos[1] + 0.5)] + [(x + 0.5, y + 0.5) for x, y in path]
             line = [(ox + x * ppc, oy + y * ppc) for x, y in pts]
             canvas.under(Lines(line, max(2, ppc * 0.12), (30, 20, 10, 200), dash=(ppc * 0.45, ppc * 0.3)))
             canvas.under(Lines(line, max(1, ppc * 0.07), (250, 214, 120, 235), dash=(ppc * 0.45, ppc * 0.3)))
-            dx, dy = game.travel.destination
+            dx, dy = path[-1]
             fx, fy = self.cell_px(dx, dy)
             canvas.under(Image("flag", _flag_image, (fx + ppc * 0.3, fy - ppc * 0.6, ppc * 0.9, ppc * 1.2)))
         # You.
-        size = max(ppc * 1.15, 26)
+        if figure:
+            self._figure(canvas, game, pos, max(ppc * 1.15, 26))
+        for spot, rgba in ((hover, (255, 255, 255, 110)), (look, (255, 214, 110, 235))):
+            if spot is not None:
+                sx, sy = self.cell_px(*spot)
+                canvas.under(Rect(sx, sy, ppc, ppc, rgba, line=2))
+        canvas.under(Clip(None))
+
+    def _figure(self, canvas, game, pos, size) -> None:
+        gfx = canvas.gfx
+        ppc = self.ppc
         px_, py_ = self.cell_px(*pos)
         canvas.under(Image("shadow_w", _shadow_image, (px_ + ppc / 2 - size * 0.3, py_ + ppc * 0.85 - size * 0.08,
                                                         size * 0.6, size * 0.2), rgba=(255, 255, 255, 160)))
@@ -208,17 +227,19 @@ class WorldView:
         if me:
             d = np.tile(np.array([[px_ + ppc / 2 - size / 2, py_ + ppc * 0.95 - size, size, size]], np.float32), (len(me), 1))
             canvas.under(*tile_batch(gfx.atlas, me, d))
-        for spot, rgba in ((hover, (255, 255, 255, 110)), (look, (255, 214, 110, 235))):
-            if spot is not None:
-                sx, sy = self.cell_px(*spot)
-                canvas.under(Rect(sx, sy, ppc, ppc, rgba, line=2))
-        canvas.under(Clip(None))
 
 
 def _fog_image(explored: np.ndarray):
-    a = np.zeros((explored.shape[1], explored.shape[0], 4), np.uint8)
+    """Fog at four pixels per square, softened, so its edge is a cloud and not a staircase."""
+    from PIL import Image as PImage, ImageFilter
+
+    k = 4
+    m = np.where(explored.T, 0, 255).astype(np.uint8)
+    big = PImage.fromarray(m, "L").resize((m.shape[1] * k, m.shape[0] * k), PImage.NEAREST)
+    big = big.filter(ImageFilter.GaussianBlur(k * 0.9))
+    a = np.zeros((big.height, big.width, 4), np.uint8)
     a[..., 0], a[..., 1], a[..., 2] = FOG_RGB
-    a[..., 3] = np.where(explored.T, 0, 255)
+    a[..., 3] = np.asarray(big)
     return a
 
 

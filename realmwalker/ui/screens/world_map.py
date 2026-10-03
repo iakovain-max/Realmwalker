@@ -34,11 +34,28 @@ class WorldMapScreen(Screen):
         self.show_realms = False
         self._weather: tuple[int, tuple] | None = None
         self.view = (0, 0, 1, 0, 0)  # x0, y0 of map on screen, scale, first tile x, first tile y
+        self.painted = None  # a WorldView when the map is drawn as a picture
+        self._plan_key = None
+        self._plan = None
+
+    def plan(self):
+        """The journey to the cursor (worked out once per cursor position)."""
+        key = (self.cursor, self.game.player.x, self.game.player.y, self.game.world.time // 60)
+        if key != self._plan_key:
+            self._plan_key = key
+            here = (self.game.player.x, self.game.player.y)
+            self._plan = self.game.plan_travel(self.cursor) if self.cursor != here else None
+        return self._plan
 
     # ------------------------------------------------------------------ drawing
     def render(self, canvas: Canvas) -> None:
         w, h = canvas.width, canvas.height
         mw, mh = w - SIDE_W, h - 1
+        if canvas.tiles:
+            self._render_painted(canvas, mw, mh)
+            self._side(canvas, mw, 0, SIDE_W, h)
+            return
+        self.painted = None
         world = self.game.world
         pic = self.gs.picture
         scale = 1
@@ -99,6 +116,101 @@ class WorldMapScreen(Screen):
         canvas.hit(ox, oy, vw, vh)
         self._side(canvas, mw, 0, SIDE_W, h)
 
+    def _render_painted(self, canvas: Canvas, mw: int, mh: int) -> None:
+        from realmwalker.ui.gfx.worldview import WorldView
+        from realmwalker.ui.map_render import quest_marks
+
+        game = self.game
+        world = game.world
+        if self.painted is None:
+            self.painted = WorldView()
+            self.gs.world_view.ready(game)
+            self.painted.share(self.gs.world_view)
+        rect = tuple(int(v) for v in canvas.cell_rect(0, 0, mw, mh))
+        if self.fit:
+            ppc = max(3, int(min(rect[2] / world.width, rect[3] / world.height)))
+            focus = (world.width // 2, world.height // 2)
+        else:
+            ppc = 16
+            focus = self.cursor
+        canvas.clear_cells(0, 0, mw, mh)
+        overlays = []
+        if self.show_realms:
+            overlays.append(self._realm_overlay())
+        if self.show_weather:
+            overlays.append(self._weather_overlay())
+        plan = self.plan()
+        self.painted.draw(canvas, game, rect, ppc, quests=quest_marks(game), look=self.cursor, focus=focus,
+                          overlays=[o for o in overlays if o], route=plan.path if plan else None)
+        canvas.hit(0, 0, mw, mh)
+
+    def _realm_overlay(self):
+        from realmwalker.world.factions import territory
+
+        world = self.game.world
+        if not world.factions:
+            return None
+        _, realm = territory(world)
+        known = self.game.renown.known
+        explored = self.game.player.explored
+        key = ("realms", id(world), world.faction_version, int(explored.sum()), len(known))
+
+        def make():
+            """Four pixels per square: a light wash of each realm's colour and a firm line along its border.
+            Realms you have not heard of are only outlined, faintly."""
+            from PIL import Image as PImage, ImageFilter
+
+            k = 4
+            big = np.repeat(np.repeat(realm.T, k, axis=0), k, axis=1)
+            seen = np.repeat(np.repeat(explored.T, k, axis=0), k, axis=1)
+            a = np.zeros((big.shape[0], big.shape[1], 4), np.uint8)
+            border = np.zeros(big.shape, bool)
+            border[:-1, :] |= big[:-1, :] != big[1:, :]
+            border[1:, :] |= big[:-1, :] != big[1:, :]
+            border[:, :-1] |= big[:, :-1] != big[:, 1:]
+            border[:, 1:] |= big[:, :-1] != big[:, 1:]
+            for fid in np.unique(realm):
+                if fid < 0:
+                    continue
+                f = world.factions.get(int(fid))
+                if f is None:
+                    continue
+                mine = big == fid
+                is_known = int(fid) in known
+                show = mine & (seen | is_known)
+                if is_known:
+                    a[show, :3] = f.color
+                    a[show, 3] = 60
+                    a[show & border, 3] = 230
+                else:
+                    a[show & border, :3] = (150, 150, 156)
+                    a[show & border, 3] = 110
+            im = PImage.fromarray(a, "RGBA").filter(ImageFilter.GaussianBlur(0.6))
+            return im
+
+        return (key, make, 255)
+
+    def _weather_overlay(self):
+        from realmwalker.world.weather import weather_grid
+
+        game = self.game
+        key = game.world.time // 30
+        if self._weather is None or self._weather[0] != key:
+            self._weather = (key, weather_grid(game.world, game.tables, game.world.time))
+        precip, temp, cloud = self._weather[1]
+
+        def make():
+            a = np.zeros((precip.shape[1], precip.shape[0], 4), np.uint8)
+            grey = (cloud > 0.7) & (precip <= 0)
+            rain = (precip > 0) & (temp > 0.5)
+            snow = (precip > 0) & (temp <= 0.5)
+            for mask, color, alpha in ((grey, (70, 70, 80), 90), (rain, (50, 90, 190), 150), (snow, (230, 232, 245), 160)):
+                a[mask.T, :3] = color
+                a[mask.T, 3] = alpha
+            return a
+
+        return (("weather", id(game.world), key), make, 255)
+
     def _tint_weather(self, grid, fg, bg, explored) -> None:
         """Rain shows blue, snow white and heavy cloud grey, over the land you have seen."""
         from realmwalker.world.weather import weather_grid
@@ -153,7 +265,7 @@ class WorldMapScreen(Screen):
         row += 2
         text = describe_overworld(self.game, *self.cursor)
         row += canvas.wrapped(ix, row, text, iw, max_lines=max(3, h - 22)) + 1
-        plan = self.game.plan_travel(self.cursor) if self.cursor != (self.game.player.x, self.game.player.y) else None
+        plan = self.plan()
         if plan is not None:
             canvas.wrapped(ix, row, f"<good>Journey:</> {self.game.describe_plan(plan)}.", iw, max_lines=3)
             row += 3
@@ -202,6 +314,15 @@ class WorldMapScreen(Screen):
     def handle_mouse(self, ev: MouseEvent) -> bool:
         ox, oy, scale, x0, y0 = self.view
         tx, ty = (ev.x - ox + x0) * scale + scale // 2, (ev.y - oy + y0) * scale + scale // 2
+        if self.painted is not None:
+            px, py = ev.px, ev.py
+            if px < 0 and self.app.gfx is not None:
+                px, py = (ev.x + 0.5) * self.app.gfx.cell_w, (ev.y + 0.5) * self.app.gfx.cell_h
+            cell = self.painted.to_cell(px, py)
+            tx, ty = cell if cell is not None else (-1, -1)
+            if ev.kind == "wheel" and cell is not None:
+                self.fit = ev.dy < 0
+                return True
         world = self.game.world
         if ev.x >= canvas_width_guard(self.app) - SIDE_W or not world.in_bounds(tx, ty):
             return False
