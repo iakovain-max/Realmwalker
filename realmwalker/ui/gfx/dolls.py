@@ -137,7 +137,7 @@ class Figure:
             bits = (spec.split("@") + ["", "", ""])[:4]
             field = colour(self.t, look.get("cloth") or bits[1] or dye or choose(["red", "navy", "forest", "brown"], self.key + "sh"))
             emblem = look.get("emblem") or bits[2] or ""
-            ecol = colour(self.t, look.get("trim") or bits[3] or "white")
+            ecol = colour(self.t, look.get("trim") or look.get("metal") or bits[3] or "white")
             self.shield = (bits[0] or "heater", field, emblem if emblem != "none" else "", ecol)
             return
         name = look.get("metal") if rest in self.f["metals"] or thing in METAL_THINGS else None
@@ -333,6 +333,36 @@ def problems(tables, atlas) -> list[str]:
                if not any(k in s for s in f["skins"].values()))
     out.extend(f"hair word {w}: no colour {k}" for w, k in f["hair_words"] if k not in f["hair_colours"])
     return sorted(set(out))
+
+
+def item_parts(item, tables, atlas) -> list[Part] | None:
+    """A weapon or shield on its own, in its own colours (a rare blade's metal and glow, a shield's field and device),
+    for the inventory card; None for things not drawn this way."""
+    spec = _fig(tables)["worn"].get(item.def_id) or {}
+    if "held" not in spec and "shield" not in spec:
+        return None
+    look = item_look(item, tables)
+    fig = Figure(tables, "human", "male", f"item{item.uid}")
+    dyes = spec.get("dyes")
+    dye = look.get("cloth") or (dyes[stable(f"item{item.uid}", len(dyes))] if dyes else None)
+    for key in ("held", "shield"):
+        if key in spec:
+            fig.wear(key, spec[key], dye, look)
+    parts = [p for p in fig.parts(atlas) if not p[0].startswith(("fig/body/", "fig/wear/", "fig/hair/", "fig/beard/"))]
+    return parts or None
+
+
+def bounds(atlas, parts: list[Part], pad: int = 1) -> tuple[int, int, int, int]:
+    """The smallest square around what is drawn (x, y, side), in the figure's own pixels."""
+    a = compose(atlas, parts)[..., 3] > 0
+    if not a.any():
+        return 0, 0, atlas.tile, atlas.tile
+    ys, xs = np.nonzero(a)
+    x0, x1, y0, y1 = int(xs.min()), int(xs.max()) + 1, int(ys.min()), int(ys.max()) + 1
+    side = min(atlas.tile, max(x1 - x0, y1 - y0) + 2 * pad)
+    x = max(0, min(atlas.tile - side, (x0 + x1) // 2 - side // 2))
+    y = max(0, min(atlas.tile - side, (y0 + y1) // 2 - side // 2))
+    return x, y, side, side
 
 
 def item_look(item, tables) -> dict:

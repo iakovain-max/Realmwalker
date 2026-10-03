@@ -84,7 +84,44 @@ def make(game, rng: RNG, *, tier: int = 1, kind: str | None = None, rarity: str 
     magic["value"] = int(items.get(base)["value"] * float(r["value_mult"]) + int(r["value_add"]))
     title, story = built_in_words(game, base, rng)
     magic.update(title=title, story=story, source="fallback")
+    magic["look"] = look_for(game, magic, rng.child("look"))
     return Item(uid=0, def_id=base, qty=1, quality="fine", condition=100, made_at=game.world.time, magic=magic)
+
+
+def look_for(game, magic: dict, rng: RNG) -> dict:
+    """How a magic item looks, from the words in its name and story and from its powers: its metal, the colour of its
+    cloth (or a shield's field), an emblem, and maybe a faint glow. The AI may choose again when it names the thing."""
+    spec = data(game)["looks"]
+    words = set(textgen_words(f"{magic.get('title', '')} {magic.get('story', '')}"))
+
+    def by_words(table: str, pool: str) -> str:
+        for keys, value in spec[table]:
+            if words & set(keys):
+                return value
+        return rng.choice(spec[pool])
+
+    look = {"metal": by_words("metal", "metals"), "cloth": by_words("cloth", "cloths"),
+            "emblem": by_words("emblem", "emblems")}
+    glow = None
+    for p in magic.get("props", []):
+        key = p["kind"] + (":" + str(p.get("type") or p.get("ability") or "") if p.get("type") or p.get("ability") else "")
+        glow = spec["glow_props"].get(key) or spec["glow_props"].get(p["kind"])
+        if glow:
+            break
+    chance = float(spec["glow_chance"].get(magic.get("rarity", "uncommon"), 0.2))
+    if glow is None and rng.chance(chance):
+        glow = rng.choice(spec["glows"])
+    elif glow is not None and not rng.chance(min(1.0, chance + 0.4)):
+        glow = None
+    if glow:
+        look["glow"] = glow
+    return look
+
+
+def textgen_words(text: str) -> list[str]:
+    import re
+
+    return re.findall(r"[a-z]+", text.lower())
 
 
 def lore(game, rng: RNG) -> dict:
@@ -217,7 +254,8 @@ def dressing_facts(game, item) -> dict:
 
 
 def apply_dressing(item, result: dict) -> bool:
-    """Keep the AI's name and history, unless the player already knows the old ones."""
+    """Keep the AI's name and history, unless the player already knows the old ones; and the look it chose (each
+    word already one of a whitelist, ai/tasks.py LOOK_*), which is how the thing will be drawn."""
     m = item.magic
     if not m or m.get("identified"):
         return False
@@ -225,5 +263,16 @@ def apply_dressing(item, result: dict) -> bool:
         m["title"] = result["name"]
     if result.get("history"):
         m["story"] = result["history"]
+    look = dict(m.get("look") or {})
+    for key in ("metal", "cloth", "emblem"):
+        if result.get(key):
+            look[key] = result[key]
+    if result.get("glow"):
+        if result["glow"] == "none":
+            look.pop("glow", None)
+        else:
+            look["glow"] = result["glow"]
+    if look:
+        m["look"] = look
     m["source"] = "ai"
     return True

@@ -14,5 +14,9 @@ The name is 2 to 6 words, like a thing people would really call it. The history 
 who made or carried it, and what happened. If it is cursed, the history should hint at why, without saying so.
 No poetry.
 
+Also choose how it looks, to fit its name and history: "metal" (what its metal parts are), "cloth" (the colour of
+its cloth, leather or field), "glow" (a faint light about it; "none" for most things) and "emblem" (a device on it,
+if it is a shield or bears one; else "none"). Pick each from the list shown.
+
 Reply with only this JSON object:
 {schema}

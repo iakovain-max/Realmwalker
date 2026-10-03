@@ -128,10 +128,22 @@ CHRONICLE = AITask(
 
 
 # ---------------------------------------------------------------------------- magic items (M8)
+# How a rare thing looks: the AI may only pick from these (they are colours in data/sprites.json "figures").
+LOOK_METALS = ("steel", "iron", "blackened", "bronze", "gold", "silver", "rusty", "mithril", "red_steel", "bone")
+LOOK_CLOTHS = ("crimson", "wine", "navy", "sky", "forest", "moss", "purple", "violet", "black", "white", "grey",
+               "ochre", "yellow", "teal", "orange", "rose", "brown", "undyed", "fur", "dark_leather")
+LOOK_GLOWS = ("none", "gold", "blue", "violet", "green", "red", "white", "shadow", "frost")
+LOOK_EMBLEMS = ("none", "cross", "saltire", "chevron", "pale", "bend", "sun", "moon", "star", "tree", "skull", "tower",
+                "crown", "beast", "flame", "eye")
+
 MAGIC_ITEM = AITask(
     name="magic_item",
     schema=Obj({"name": Str("the item's name, 2 to 6 words", max_len=60),
-                "history": Str("two or three sentences of its history", max_len=500)}),
+                "history": Str("two or three sentences of its history", max_len=500),
+                "metal": Str(choices=LOOK_METALS, optional=True, lenient=True),
+                "cloth": Str(choices=LOOK_CLOTHS, optional=True, lenient=True),
+                "glow": Str(choices=LOOK_GLOWS, optional=True, lenient=True),
+                "emblem": Str(choices=LOOK_EMBLEMS, optional=True, lenient=True)}),
     max_tokens=3000,
     temperature=0.9,
 )

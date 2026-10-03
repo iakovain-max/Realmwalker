@@ -289,6 +289,9 @@ def signature(game, uid: str) -> Item:
     magic = {"rarity": it["rarity"], "props": props, "identified": True, "cursed": False, "title": it["title"],
              "story": fill(game, uid, it["story"]), "source": "unique", "unique": uid,
              "value": int(base["value"] * float(spec["value_mult"]) + int(spec["value_add"]))}
+    from realmwalker.game.magic_items import look_for
+
+    magic["look"] = dict(it.get("look") or look_for(game, magic, game.world.rng.child(f"unique_look/{uid}")))
     return Item(uid=0, def_id=it["base"], qty=1, quality="fine", condition=100, made_at=game.world.time, magic=magic)
 
 

@@ -7,7 +7,7 @@ from realmwalker.game.state import GameState
 from realmwalker.rules import spells as spellrules
 from realmwalker.rules.character import ABILITIES, Sheet, signed
 from realmwalker.rules.inventory import best_slot_items, equip, pack_mates, unequip, worn_by
-from realmwalker.rules.items import CATEGORY_NAMES, EQUIP_SLOTS, SLOT_NAMES, Item, money_text
+from realmwalker.rules.items import CATEGORY_NAMES, EQUIP_SLOTS, SLOT_NAMES, Item, money_short, money_text
 from realmwalker.ui import colors, markup
 from realmwalker.ui.input import KeyEvent
 from realmwalker.ui.screens.base import ConfirmBox, Screen, modal_box
@@ -300,6 +300,34 @@ def item_icon(canvas, game, it) -> str:
     if canvas.gfx is None:
         return ""
     return item_sprite(canvas.gfx.atlas, game.tables, it) or ""
+
+
+def item_picture(canvas, game, it, x: float, y: float, size: float) -> None:
+    """A thing, large: a weapon or shield in its own colours (a rare one as it was made, glowing if it glows), else
+    its picture; magic things with a faint light behind them."""
+    from realmwalker.ui.gfx import dolls
+    from realmwalker.ui.gfx.scene import Image
+
+    atlas = canvas.gfx.atlas
+    magic = it.magic or {}
+    glow = (magic.get("look") or {}).get("glow") if magic else None
+    if magic and (glow or magic.get("identified")):
+        rgb = dolls.colour(game.tables, glow, {"uncommon": (120, 200, 120), "rare": (110, 150, 255),
+                                               "very_rare": (190, 120, 255)}.get(magic.get("rarity"), (200, 200, 200)))
+        from realmwalker.ui.gfx.battlefx import _glow as _glow_image
+
+        canvas.under(Image("item_glow", _glow_image, (x - size * 0.15, y - size * 0.15, size * 1.3, size * 1.3),
+                           rgba=(*rgb, 150)))
+    parts = dolls.item_parts(it, game.tables, atlas)
+    if parts:
+        crop = dolls.bounds(atlas, parts)
+        k = max(1, int(size // crop[2]))  # a whole number of screen pixels to each of its own
+        side = k * crop[2]
+        cmd = dolls.draw(atlas, parts, int(x + (size - side) / 2), int(y + (size - side) / 2), side, crop=crop)
+        if cmd is not None:
+            canvas.under(cmd)
+            return
+    canvas.sprite(item_icon(canvas, game, it), x, y, size, size)
 
 
 class InventoryScreen(Screen):
@@ -733,7 +761,7 @@ class InventoryScreen(Screen):
             color = colors.SELECT_FG if selected else (colors.named("magic") if it.magic else colors.FG)
             canvas.markup(name_x, ry, name, fg=color, bg=bg, max_width=name_w)
             canvas.text(x + w - cols_w, ry, f"{t.weight(it):>5g}", colors.DIM, bg)
-            canvas.text(x + w - cols_w + 5, ry, f"{money_text(t.value(it)):>9}"[-9:], colors.named("loot"), bg)
+            canvas.text(x + w - cols_w + 5, ry, f"{money_short(t.value(it)):>9}"[-9:], colors.named("loot"), bg)
         if not items:
             canvas.text(name_x, y + 2, "Nothing here.", colors.DIM)
         if len(rows) > room:
@@ -760,7 +788,7 @@ class InventoryScreen(Screen):
             size = 3 * ch
             canvas.clear_cells(ix, top, 7, 3)
             canvas.under(*theme.panel(ix * cw - 2, top * ch - 2, size + 4, size + 4, "glass", ornaments=False))
-            canvas.sprite(item_icon(canvas, g, cur), ix * cw, top * ch, size, size)
+            item_picture(canvas, g, cur, ix * cw, top * ch, size)
             canvas.clear_cells(ix + 7, top, iw - 7, 1)
             canvas.over(Text((ix + 7) * cw, top * ch + ch / 2, t.name(cur), "heading", 17,
                              (214, 176, 108, 255) if not cur.magic else (200, 160, 250, 255), anchor="lm"))

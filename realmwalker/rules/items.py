@@ -153,6 +153,18 @@ def money_text(cp: int) -> str:
     return " ".join(p for p in parts if p) or "0 cp"
 
 
+def money_short(cp: int) -> str:
+    """Money in at most nine letters, for a column: '2412 gp', '3 gp 4 sp', '4 sp 2 cp'."""
+    cp = max(0, int(cp))
+    gp, rem = divmod(cp, 100)
+    if gp >= 10:
+        return f"{gp} gp" if gp < 1000000 else f"{gp // 1000}k gp"
+    sp, c = divmod(rem, 10)
+    if gp:
+        return f"{gp} gp {sp} sp" if sp else f"{gp} gp"
+    return money_text(cp)
+
+
 def coin_weight(cp: int) -> float:
     """Coins weigh 50 to the pound; money is carried in the fewest coins."""
     gp, rem = divmod(max(0, cp), 100)

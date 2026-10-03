@@ -663,7 +663,10 @@ UNIQUE_ITEM = Obj({"base": Str(max_len=30), "title": Str(max_len=60), "rarity": 
                                       "skill": Str(max_len=30, optional=True), "type": Str(max_len=20, optional=True),
                                       "ability": Str(max_len=5, optional=True), "spell": Str(max_len=30, optional=True)}),
                                  min_items=1),
-                   "story": Str(max_len=400)})
+                   "story": Str(max_len=400),
+                   "look": Obj({"metal": Str(max_len=20, optional=True), "cloth": Str(max_len=20, optional=True),
+                                "emblem": Str(max_len=20, optional=True), "glow": Str(max_len=20, optional=True)},
+                               optional=True)})
 UNIQUE = Obj(
     {
         "name": Str(max_len=40), "known_as": Str(max_len=60), "epithet": Str(max_len=80), "title": Str(max_len=40),
@@ -705,6 +708,11 @@ MAGIC = Obj(
         "bases": Map(word_list(1, 40)),
         "names": Obj({"patterns": word_list(1, 80), "epithets": word_list(1, 30)}),
         "stories": word_list(1, 300),
+        "looks": Obj({
+            "metal": List(List(Any_(), min_items=2, max_items=2)), "cloth": List(List(Any_(), min_items=2, max_items=2)),
+            "emblem": List(List(Any_(), min_items=2, max_items=2)), "glow_props": Map(Str(max_len=20)),
+            "glow_chance": Map(Float(min=0, max=1)), "glows": word_list(1, 20), "metals": word_list(1, 20),
+            "cloths": word_list(1, 20), "emblems": word_list(1, 20)}),
     }
 )
 

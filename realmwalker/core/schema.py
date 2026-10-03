@@ -70,12 +70,14 @@ class Str(Spec):
         min_len: int = 1,
         choices: list[str] | tuple[str, ...] | None = None,
         optional: bool = False,
+        lenient: bool = False,
     ) -> None:
         self.hint = hint
         self.max_len = max_len
         self.min_len = min_len
         self.choices = list(choices) if choices else None
         self.optional = optional
+        self.lenient = lenient  # a word not among the choices is dropped (None), not an error
 
     def check(self, value, path, errors):
         if not isinstance(value, str):
@@ -99,6 +101,8 @@ class Str(Spec):
             key = text.lower().strip(" .!\"'")
             if key in lowered:
                 return lowered[key]
+            if self.lenient:
+                return None
             raise SchemaError(f"{path or 'value'}: {text!r} is not one of {', '.join(self.choices)}")
         if len(text) < self.min_len:
             raise SchemaError(f"{path or 'value'}: text is empty")
@@ -284,7 +288,10 @@ class Obj(Spec):
                 if spec.optional:
                     continue
                 raise SchemaError(f"{join_path(path, key)}: missing")
-            out[key] = spec.clean(raw, join_path(path, key))
+            cleaned = spec.clean(raw, join_path(path, key))
+            if cleaned is None and spec.optional:
+                continue
+            out[key] = cleaned
         return out
 
     def example(self):
