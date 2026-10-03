@@ -15,6 +15,10 @@ from realmwalker.ui import colors, markup
 from realmwalker.ui.colors import Color
 from realmwalker.ui.input import KeyEvent
 
+WASHES = {colors.HILITE_BG, colors.HOVER_BG}  # highlight colours drawn as soft washes when there are pictures
+
+WASH_MARK = (1, 2, 3)  # cells already washed by a highlight picture (see Canvas._wash)
+
 SINGLE = "┌─┐│ │└─┘"
 DOUBLE = "╔═╗║ ║╚═╝"
 
@@ -193,6 +197,9 @@ class Canvas:
             x = 0
         s = s[: max(0, self.width - x)]
         if s:
+            if self.gfx is not None and bg is not None and tuple(bg[:3]) in WASHES:
+                self._wash(x, y, len(s), 1, tuple(bg[:3]), only_new=True)
+                bg = None
             if bg is not None and len(bg) > 3:
                 alpha, bg = bg[3], tuple(bg[:3])
             else:
@@ -201,6 +208,22 @@ class Canvas:
             if bg is not None and self.gfx is not None:
                 self.con.rgba["bg"][x : x + len(s), y, 3] = alpha
         return x + len(s)
+
+    def _wash(self, x: int, y: int, w: int, h: int, bg: Color, only_new: bool = False) -> None:
+        """A highlight drawn as a soft picture under see-through cells (cells already washed are left alone)."""
+        from realmwalker.ui.gfx import theme
+
+        x0, y0 = max(0, x), max(0, y)
+        x1, y1 = min(self.width, x + w), min(self.height, y + h)
+        if x1 <= x0 or y1 <= y0:
+            return
+        cells = self.con.rgba["bg"][x0:x1, y0:y1]
+        if only_new and (cells[..., :3] == WASH_MARK).all(axis=-1).all():
+            return
+        cells[...] = (*WASH_MARK, 0)
+        kind = "select" if bg == colors.HILITE_BG else "hover"
+        cw, ch = self.cell_w, self.cell_h
+        self.under(theme.row_highlight(x0 * cw, y0 * ch, (x1 - x0) * cw, (y1 - y0) * ch, kind))
 
     def spans(self, x: int, y: int, spans: list[markup.Span], bg: Color | None = None, max_width: int | None = None) -> int:
         limit = x + max_width if max_width is not None else self.width
@@ -234,6 +257,11 @@ class Canvas:
         if x1 <= x0 or y1 <= y0:
             return
         self.con.rgb["ch"][x0:x1, y0:y1] = ord(ch)
+        if self.gfx is not None and tuple(bg[:3]) in WASHES:
+            self._wash(x0, y0, x1 - x0, y1 - y0, tuple(bg[:3]))
+            if fg is not None:
+                self.con.rgb["fg"][x0:x1, y0:y1] = fg
+            return
         if len(bg) > 3:
             self.con.rgb["bg"][x0:x1, y0:y1] = bg[:3]
             if self.gfx is not None:
@@ -246,8 +274,12 @@ class Canvas:
             self.con.rgb["fg"][x0:x1, y0:y1] = fg
 
     def frame(self, x: int, y: int, w: int, h: int, title: str = "", *, fg: Color = colors.BORDER,
-              bg: Color | None = colors.PANEL_BG, double: bool = False, title_fg: Color = colors.TITLE) -> None:
+              bg: Color | None = colors.PANEL_BG, double: bool = False, title_fg: Color = colors.TITLE,
+              style: str | None = None) -> None:
         if w < 2 or h < 2:
+            return
+        if self.gfx is not None:
+            self._panel(x, y, w, h, title, fg, bg, style)
             return
         if bg is not None:
             self.fill(x, y, w, h, bg)
@@ -262,11 +294,46 @@ class Canvas:
             label = f" {title} "
             self.text(x + 2, y, label[: max(0, w - 4)], title_fg)
 
+    def _panel(self, x: int, y: int, w: int, h: int, title: str, fg: Color, bg: Color | None, style: str | None) -> None:
+        """A frame as a picture: a textured panel with a bronze edge, its title on a plate."""
+        from realmwalker.ui.gfx import theme
+
+        if style is None:
+            if tuple(fg) == colors.named("danger") or tuple(fg) == colors.named("red"):
+                style = "danger"
+            elif tuple(fg) == colors.named("magic"):
+                style = "magic"
+            elif bg is None or tuple(fg) == colors.FAINT:
+                style = "inset"
+            elif tuple(fg) == colors.DIM:
+                style = "glass"
+            else:
+                style = "panel"
+        self.clear_cells(x, y, w, h)
+        cw, ch = self.cell_w, self.cell_h
+        size = 18 if w * cw > 500 else 15
+        self.under(*theme.panel(x * cw, y * ch, w * cw, h * ch, style, title=markup.plain(title) if title else "",
+                                title_size=size, ornaments=style in ("panel", "danger", "magic")))
+
     def hline(self, x: int, y: int, w: int, ch: str = "─", fg: Color = colors.BORDER) -> None:
+        if self.gfx is not None and ch in "─═" and w > 0:
+            from realmwalker.ui.gfx import theme
+
+            self.clear_cells(x, y, w, 1)
+            cw, chh = self.cell_w, self.cell_h
+            self.under(*theme.rule(x * cw, y * chh + chh / 2, w * cw))
+            return
         self.text(x, y, ch * max(0, w), fg)
 
     def section(self, x: int, y: int, w: int, title: str, fg: Color = colors.BORDER) -> None:
         """A divider line with a heading: ── Title ─────"""
+        if self.gfx is not None:
+            from realmwalker.ui.gfx import theme
+
+            self.clear_cells(x, y, w, 1)
+            cw, ch = self.cell_w, self.cell_h
+            self.over(*theme.heading(x * cw, y * ch + ch / 2, w * cw, markup.plain(title), max(12, int(ch * 0.78))))
+            return
         label = f"── {title} "
         self.text(x, y, label, colors.TITLE)
         self.hline(x + len(label), y, w - len(label), "─", fg)
@@ -281,6 +348,8 @@ class Canvas:
             label = label[: room - 1].rstrip() + "…"
         text = f"[{hotkey}] {label}" if hotkey else f"[ {label} ]"
         over = self.hit(x, y, len(text), 1, action if enabled else None, tooltip)
+        if self.gfx is not None:
+            return self._button(x, y, text, label, hotkey, over, enabled)
         bg = colors.HOVER_BG if over and enabled else None
         if not enabled:
             return self.text(x, y, text, colors.FAINT)
@@ -290,6 +359,23 @@ class Canvas:
             self.text(x + 1 + len(hotkey), y, "] ", colors.DIM, bg)
             return self.text(x + 3 + len(hotkey), y, label, colors.SELECT_FG if over else colors.FG, bg)
         return self.text(x, y, text, colors.SELECT_FG if over else colors.FG, bg)
+
+    def _button(self, x: int, y: int, text: str, label: str, hotkey: str | None, over: bool, enabled: bool) -> int:
+        """A button as a picture: the same cells as "[k] Label", drawn as a raised plate with the key on a badge."""
+        from realmwalker.ui.gfx import theme
+
+        n = len(text)
+        self.clear_cells(x, y, n, 1)
+        cw, ch = self.cell_w, self.cell_h
+        state = "off" if not enabled else ("hover" if over else "normal")
+        self.under(theme.button(x * cw - 3, y * ch + 1, n * cw + 6, ch - 2, state))
+        fg = colors.FAINT if not enabled else (colors.SELECT_FG if over else colors.FG)
+        if hotkey:
+            k = len(hotkey)
+            self.under(theme.badge(x * cw + 1, y * ch + 3, (k + 2) * cw - 4, ch - 6, over))
+            self.text(x + 1, y, hotkey, colors.TITLE if enabled else colors.FAINT)
+            return self.text(x + 3 + k, y, label, fg)
+        return self.text(x + 2, y, label, fg) + 2
 
     def button_row(self, x: int, y: int, right: int, buttons: list[tuple[str, Callable[[], None], str]]) -> int:
         """A row of [key] buttons three apart, as many as fit before `right`; the last (Back, usually) always does.
@@ -311,7 +397,7 @@ class Canvas:
         mx, my = self.mouse
         x = mx + 2 if mx + 2 + width <= self.width else max(0, mx - width - 1)
         y = my + 1 if my + 1 + h <= self.height else max(0, my - h)
-        self.frame(x, y, width, h, fg=colors.DIM, bg=(24, 22, 20))
+        self.frame(x, y, width, h, fg=colors.DIM, bg=(24, 22, 20), style="glass")
         for i, line in enumerate(lines):
             self.spans(x + 1, y + 1 + i, line)
 
@@ -474,6 +560,15 @@ class ScrollText:
             bar_h = max(1, h * h // len(self._lines))
             max_offset = max(1, len(self._lines) - h)
             bar_y = y + (h - bar_h) * self.offset // max_offset
+            if canvas.gfx is not None:
+                from realmwalker.ui.gfx.scene import Rect
+
+                cw, ch = canvas.cell_w, canvas.cell_h
+                bx = (x + w - 1) * cw + cw / 2 - 2
+                canvas.clear_cells(x + w - 1, y, 1, h)
+                canvas.under(Rect(bx, y * ch + 2, 4, h * ch - 4, (8, 7, 9, 200)),
+                             Rect(bx, bar_y * ch + 2, 4, bar_h * ch - 4, (150, 120, 76, 230)))
+                return
             for yy in range(y, y + h):
                 canvas.text(x + w - 1, yy, "│", colors.FAINT)
             for yy in range(bar_y, bar_y + bar_h):

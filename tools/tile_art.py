@@ -847,6 +847,181 @@ def icon(name: str) -> Image.Image:
             d.ellipse([P(4, 4), P(22, 22)], outline=g, width=w)
             d.line([P(20, 20), P(28, 28)], fill=g, width=w + s)
             d.line([P(9, 13), P(17, 13)], fill=g, width=w)
+        elif name == "hunger":  # a bowl
+            c = (214, 160, 90, 255)
+            d.chord([P(4, 8), P(28, 30)], 0, 180, fill=c, outline=g, width=s)
+            d.line([P(3, 19), P(29, 19)], fill=g, width=w)
+            d.line([P(20, 4), P(14, 16)], fill=(200, 200, 200, 255), width=w)
+        elif name == "thirst":  # a drop
+            c = (110, 170, 236, 255)
+            d.polygon([P(16, 3), P(7, 18), P(25, 18)], fill=c)
+            d.ellipse([P(7, 11), P(25, 29)], fill=c)
+            d.ellipse([P(11, 16), P(15, 21)], fill=(210, 230, 255, 255))
+        elif name == "tired":  # a closed eye and z
+            d.arc([P(3, 6), P(21, 24)], 20, 160, fill=g, width=w)
+            for k in range(4):
+                d.line([P(5 + k * 4, 19), P(4 + k * 4, 23)], fill=g, width=s)
+            d.line([P(21, 4), P(29, 4)], fill=(170, 190, 240, 255), width=w)
+            d.line([P(29, 4), P(21, 12)], fill=(170, 190, 240, 255), width=w)
+            d.line([P(21, 12), P(29, 12)], fill=(170, 190, 240, 255), width=w)
+        elif name == "cold":  # a snowflake
+            c = (170, 210, 255, 255)
+            for k in range(3):
+                a = k * math.pi / 3
+                d.line([P(16 + 13 * math.cos(a), 16 + 13 * math.sin(a)), P(16 - 13 * math.cos(a), 16 - 13 * math.sin(a))],
+                       fill=c, width=w)
+            d.ellipse([P(13, 13), P(19, 19)], fill=c)
+        elif name == "hot":  # a sun
+            c = (250, 170, 60, 255)
+            d.ellipse([P(9, 9), P(23, 23)], fill=c)
+            for k in range(8):
+                a = k * math.pi / 4
+                d.line([P(16 + 10 * math.cos(a), 16 + 10 * math.sin(a)), P(16 + 15 * math.cos(a), 16 + 15 * math.sin(a))],
+                       fill=c, width=w)
+        elif name == "wet":  # drops falling
+            c = (120, 160, 220, 255)
+            for x, y in ((8, 6), (20, 4), (14, 16), (24, 18), (6, 22)):
+                d.line([P(x, y), P(x - 2, y + 7)], fill=c, width=w)
+        elif name == "dirty":  # a smudge
+            for x, y, r in ((12, 14, 7), (20, 18, 6), (14, 22, 5)):
+                d.ellipse([P(x - r, y - r), P(x + r, y + r)], fill=(120, 96, 70, 230))
+        elif name == "bleed":  # a red drop
+            c = (210, 40, 36, 255)
+            d.polygon([P(16, 2), P(6, 18), P(26, 18)], fill=c)
+            d.ellipse([P(6, 10), P(26, 30)], fill=c)
+            d.ellipse([P(10, 15), P(14, 20)], fill=(255, 140, 130, 255))
+        elif name == "pain":  # a jagged star
+            c = (236, 90, 70, 255)
+            pts = []
+            for k in range(14):
+                a = k * math.pi / 7
+                r = 14 if k % 2 == 0 else 6
+                pts.append(P(16 + r * math.cos(a), 16 + r * math.sin(a)))
+            d.polygon(pts, fill=c)
+        elif name == "sick":  # a green face, crossed eyes
+            d.ellipse([P(4, 4), P(28, 28)], fill=(130, 170, 80, 255), outline=g, width=s)
+            for x in (11, 21):
+                d.line([P(x - 2, 11), P(x + 2, 15)], fill=(30, 40, 20, 255), width=s)
+                d.line([P(x + 2, 11), P(x - 2, 15)], fill=(30, 40, 20, 255), width=s)
+            d.arc([P(10, 18), P(22, 28)], 200, 340, fill=(30, 40, 20, 255), width=s)
+        elif name == "drunk":  # a tankard
+            d.rectangle([P(7, 8), P(21, 28)], fill=(170, 120, 60, 255), outline=g, width=s)
+            d.arc([P(17, 12), P(27, 22)], 270, 90, fill=g, width=w)
+            d.ellipse([P(6, 4), P(22, 11)], fill=(240, 236, 220, 255))
+        elif name == "weight":  # a heavy sack
+            d.ellipse([P(5, 10), P(27, 30)], fill=(150, 116, 74, 255), outline=g, width=s)
+            d.polygon([P(12, 4), P(20, 4), P(18, 11), P(14, 11)], fill=(150, 116, 74, 255))
+        elif name == "festering":
+            d.ellipse([P(5, 5), P(27, 27)], fill=(150, 160, 60, 255))
+            for x, y in ((11, 11), (20, 14), (14, 20)):
+                d.ellipse([P(x - 2, y - 2), P(x + 2, y + 2)], fill=(90, 100, 30, 255))
+        elif name == "sun":
+            c = (250, 214, 100, 255)
+            d.ellipse([P(9, 9), P(23, 23)], fill=c)
+            for k in range(8):
+                a = k * math.pi / 4
+                d.line([P(16 + 10 * math.cos(a), 16 + 10 * math.sin(a)), P(16 + 15 * math.cos(a), 16 + 15 * math.sin(a))],
+                       fill=c, width=w)
+        elif name == "moon":
+            d.ellipse([P(6, 5), P(26, 25)], fill=(220, 224, 236, 255))
+            d.ellipse([P(12, 2), P(30, 21)], fill=(0, 0, 0, 0))
+        elif name == "dusk":
+            d.chord([P(5, 12), P(27, 34)], 180, 360, fill=(240, 150, 70, 255))
+            d.line([P(2, 23), P(30, 23)], fill=g, width=w)
+        elif name in ("cloud", "rain", "snow", "storm", "fog"):
+            c = (190, 194, 204, 255) if name != "storm" else (120, 122, 136, 255)
+            d.ellipse([P(4, 10), P(16, 22)], fill=c)
+            d.ellipse([P(11, 5), P(25, 20)], fill=c)
+            d.ellipse([P(18, 11), P(29, 22)], fill=c)
+            d.rectangle([P(9, 15), P(24, 22)], fill=c)
+            if name == "rain":
+                for x in (10, 16, 22):
+                    d.line([P(x, 24), P(x - 2, 30)], fill=(110, 160, 230, 255), width=w)
+            elif name == "snow":
+                for x in (10, 16, 22):
+                    d.ellipse([P(x - 1.5, 25), P(x + 1.5, 28)], fill=(240, 244, 255, 255))
+            elif name == "storm":
+                d.polygon([P(17, 21), P(11, 30), P(16, 27), P(14, 32), P(21, 23), P(16, 25)], fill=(250, 220, 90, 255))
+            elif name == "fog":
+                for y in (24, 28):
+                    d.line([P(4, y), P(28, y)], fill=(170, 174, 184, 220), width=w)
+        elif name == "coin":
+            d.ellipse([P(5, 5), P(27, 27)], fill=(220, 180, 70, 255), outline=(120, 90, 30, 255), width=w)
+            d.ellipse([P(10, 10), P(22, 22)], outline=(150, 112, 40, 255), width=s)
+        elif name == "place":  # a compass rose
+            d.polygon([P(16, 2), P(19, 16), P(16, 30), P(13, 16)], fill=g)
+            d.polygon([P(2, 16), P(16, 13), P(30, 16), P(16, 19)], fill=GOLD_DARK + (255,))
+            d.ellipse([P(13, 13), P(19, 19)], fill=(200, 60, 44, 255))
+        elif name == "danger":  # a skull
+            d.ellipse([P(7, 4), P(25, 22)], fill=(222, 216, 200, 255))
+            d.rectangle([P(11, 19), P(21, 27)], fill=(222, 216, 200, 255))
+            d.ellipse([P(10, 10), P(15, 15)], fill=(30, 24, 20, 255))
+            d.ellipse([P(17, 10), P(22, 15)], fill=(30, 24, 20, 255))
+            for x in (13, 16, 19):
+                d.line([P(x, 22), P(x, 27)], fill=(30, 24, 20, 255), width=s)
+        elif name == "work":  # a sealed letter
+            d.rectangle([P(4, 8), P(28, 26)], fill=(220, 206, 170, 255), outline=g, width=s)
+            d.line([P(4, 8), P(16, 18), P(28, 8)], fill=GOLD_DARK + (255,), width=s)
+            d.ellipse([P(13, 15), P(19, 21)], fill=(170, 40, 34, 255))
+        elif name == "realm":  # a crown
+            d.polygon([P(4, 24), P(4, 10), P(10, 16), P(16, 6), P(22, 16), P(28, 10), P(28, 24)], fill=g)
+            d.rectangle([P(4, 24), P(28, 28)], fill=g)
+        elif name == "more":  # three dots
+            for x in (8, 16, 24):
+                d.ellipse([P(x - 3, 13), P(x + 3, 19)], fill=g)
+        elif name == "stairs_down":
+            for k in range(4):
+                d.rectangle([P(4 + k * 6, 6 + k * 6), P(28, 12 + k * 6)], outline=g, width=s)
+            d.polygon([P(8, 20), P(14, 20), P(11, 27)], fill=g)
+        elif name == "stairs_up":
+            for k in range(4):
+                d.rectangle([P(4, 6 + k * 6), P(28 - k * 6, 12 + k * 6)], outline=g, width=s)
+            d.polygon([P(20, 12), P(26, 12), P(23, 5)], fill=g)
+        elif name == "attack":  # crossed swords
+            for a, b in (((5, 27), (25, 5)), ((27, 27), (7, 5))):
+                d.line([P(*a), P(*b)], fill=(220, 220, 228, 255), width=w + s)
+            d.line([P(6, 20), P(12, 26)], fill=g, width=w)
+            d.line([P(26, 20), P(20, 26)], fill=g, width=w)
+        elif name == "defend":  # a shield
+            d.polygon([P(6, 4), P(26, 4), P(26, 16), P(16, 29), P(6, 16)], fill=(120, 130, 150, 255), outline=g, width=w)
+            d.line([P(16, 6), P(16, 26)], fill=g, width=s)
+        elif name == "flee":  # a running arrow
+            d.line([P(4, 16), P(24, 16)], fill=g, width=w + s)
+            d.polygon([P(20, 8), P(30, 16), P(20, 24)], fill=g)
+            d.line([P(4, 9), P(14, 9)], fill=g, width=s)
+            d.line([P(4, 23), P(14, 23)], fill=g, width=s)
+        elif name == "cast":  # a sparkle
+            c = (200, 160, 250, 255)
+            d.polygon([P(16, 2), P(19, 13), P(30, 16), P(19, 19), P(16, 30), P(13, 19), P(2, 16), P(13, 13)], fill=c)
+        elif name == "item":  # a potion
+            d.ellipse([P(7, 12), P(25, 30)], fill=(200, 60, 60, 255), outline=g, width=s)
+            d.rectangle([P(13, 4), P(19, 13)], fill=(200, 200, 210, 255), outline=g, width=s)
+        elif name == "ability":  # a fist
+            d.rounded_rectangle([P(8, 10), P(24, 26)], 3 * s, fill=(220, 180, 140, 255), outline=g, width=s)
+            for x in (12, 16, 20):
+                d.line([P(x, 10), P(x, 16)], fill=GOLD_DARK + (255,), width=s)
+        elif name == "rank":  # arrows front/back
+            d.polygon([P(4, 10), P(14, 4), P(14, 16)], fill=g)
+            d.line([P(12, 10), P(26, 10)], fill=g, width=w)
+            d.polygon([P(28, 22), P(18, 16), P(18, 28)], fill=g)
+            d.line([P(6, 22), P(20, 22)], fill=g, width=w)
+        elif name == "parley":  # a white flag
+            d.line([P(8, 3), P(8, 30)], fill=g, width=w)
+            d.polygon([P(9, 5), P(28, 7), P(24, 12), P(28, 18), P(9, 17)], fill=(236, 232, 220, 255))
+        elif name == "shove":  # a hand pushing
+            d.rounded_rectangle([P(10, 8), P(22, 26)], 3 * s, outline=g, width=w)
+            d.line([P(22, 17), P(30, 17)], fill=g, width=w)
+            d.polygon([P(27, 12), P(31, 17), P(27, 22)], fill=g)
+        elif name == "surrender":  # bowed
+            d.ellipse([P(11, 3), P(21, 13)], outline=g, width=w)
+            d.line([P(16, 13), P(16, 24)], fill=g, width=w)
+            d.line([P(6, 12), P(16, 18), P(26, 12)], fill=g, width=w)
+        elif name == "trade":  # scales
+            d.line([P(16, 4), P(16, 28)], fill=g, width=w)
+            d.line([P(5, 9), P(27, 9)], fill=g, width=w)
+            d.chord([P(2, 12), P(12, 22)], 0, 180, fill=g)
+            d.chord([P(20, 12), P(30, 22)], 0, 180, fill=g)
+            d.line([P(10, 28), P(22, 28)], fill=g, width=w)
         else:
             raise KeyError(name)
 
@@ -865,7 +1040,11 @@ def icon(name: str) -> Image.Image:
 
 ICON_NAMES = ["look", "search", "wait", "camp", "water", "wash", "sneak", "pickup", "enter", "leave", "map", "travel",
               "character", "inventory", "health", "journal", "spells", "party", "factions", "news", "log", "legend",
-              "menu", "help", "talk", "rest", "equipment", "drop", "eat", "close", "trash", "zoom_in", "zoom_out"]
+              "menu", "help", "talk", "rest", "equipment", "drop", "eat", "close", "trash", "zoom_in", "zoom_out",
+              "hunger", "thirst", "tired", "cold", "hot", "wet", "dirty", "bleed", "pain", "sick", "drunk", "weight",
+              "festering", "sun", "moon", "dusk", "cloud", "rain", "snow", "storm", "fog", "coin", "place", "danger",
+              "work", "realm", "more", "stairs_down", "stairs_up", "attack", "defend", "flee", "cast", "item",
+              "ability", "rank", "parley", "shove", "surrender", "trade"]
 
 
 def all_drawn() -> dict[str, Image.Image]:
