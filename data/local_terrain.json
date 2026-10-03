@@ -64,6 +64,14 @@
     "notice_board": {"name": "notice board", "glyphs": ["¶"], "fg": [210, 180, 120], "bg": [44, 32, 18], "walk": false, "see": true, "cost": 1, "tags": ["furniture", "notice_board"], "desc": "A board of weathered planks, stuck with notices. Walk into it to read them."},
     "stall": {"name": "market stall", "glyphs": ["Γ", "π"], "fg": [200, 160, 90], "bg": [44, 32, 18], "walk": false, "see": true, "cost": 1, "tags": ["furniture"], "desc": "A trestle stall under a patched awning."},
     "grave": {"name": "grave", "glyphs": ["†", "+"], "fg": [170, 170, 160], "bg": [22, 22, 20], "walk": true, "see": true, "cost": 1, "tags": ["grave"], "desc": "A grave marker, the name worn away."},
+    "barrels": {"name": "barrels", "glyphs": ["o"], "fg": [150, 104, 60], "bg": [30, 24, 18], "walk": false, "see": true, "cost": 1, "tags": ["furniture"], "desc": "Barrels against the wall: ale, salt fish, rainwater."},
+    "crates": {"name": "crates", "glyphs": ["#"], "fg": [170, 130, 80], "bg": [30, 24, 18], "walk": false, "see": true, "cost": 1, "tags": ["furniture"], "desc": "Crates, nailed shut and stencilled with a merchant's mark."},
+    "woodpile": {"name": "woodpile", "glyphs": ["≡"], "fg": [190, 150, 100], "bg": [30, 24, 18], "walk": false, "see": true, "cost": 1, "tags": ["furniture"], "desc": "Split logs stacked under a scrap of roof, for the winter."},
+    "haystack": {"name": "haystack", "glyphs": ["∩"], "fg": [210, 176, 90], "bg": [34, 28, 16], "walk": false, "see": true, "cost": 1, "tags": ["furniture"], "desc": "A stack of hay, a little damp on the north side."},
+    "cart": {"name": "handcart", "glyphs": ["Θ"], "fg": [150, 110, 70], "bg": [30, 24, 18], "walk": false, "see": true, "cost": 1, "tags": ["furniture"], "desc": "A handcart with a load roped down under a cloth."},
+    "trough": {"name": "water trough", "glyphs": ["="], "fg": [110, 150, 190], "bg": [30, 24, 18], "walk": false, "see": true, "cost": 1, "tags": ["furniture"], "desc": "A trough of water for the animals. Not for drinking, if you can help it."},
+    "planter": {"name": "flower box", "glyphs": ["*"], "fg": [210, 110, 110], "bg": [30, 24, 18], "walk": false, "see": true, "cost": 1, "tags": ["furniture"], "desc": "A box of flowers someone takes care of."},
+    "sacks": {"name": "sacks", "glyphs": ["s"], "fg": [200, 184, 150], "bg": [30, 24, 18], "walk": false, "see": true, "cost": 1, "tags": ["furniture"], "desc": "Sacks of grain, waiting for the mill or the market."},
     "cave_wall": {"name": "rock", "glyphs": ["█", "▓"], "fg": [90, 84, 78], "bg": [24, 22, 20], "walk": false, "see": false, "cost": 1, "tags": ["wall"], "desc": "Solid rock."}
   }
 }

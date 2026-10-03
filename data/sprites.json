@@ -63,6 +63,10 @@
     "pillar": {"object": "feature/column"},
     "notice_board": {"object": "feature/notice_board"},
     "stall": {"object": "feature/stall"},
+    "barrels": {"object": "feature/barrels"}, "crates": {"object": "feature/crates"},
+    "woodpile": {"object": "feature/woodpile"}, "haystack": {"object": "feature/haystack"},
+    "cart": {"object": "feature/cart"}, "trough": {"object": "feature/trough"},
+    "planter": {"object": "feature/planter"}, "sacks": {"object": "feature/sacks"},
     "grave": {"ground": "floor/grass", "object": "feature/grave"},
     "cave_wall": {"wall": "wall/cave"}
   },

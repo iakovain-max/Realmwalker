@@ -24,8 +24,9 @@ UNDERGROUND = {"stairs_up": "the stairs up", "stairs_down": "the stairs down", "
 
 
 def _grid(game, lm):
-    """(cost grid for walking, terrain ids by cell). Closed doors open as you reach them; people and bands are
-    in the way."""
+    """(cost grid for walking, terrain ids by cell). Closed doors open as you reach them. People are walked
+    round when there is room, and otherwise up to (they move, and the walk stops in front of them with a word);
+    bands of strangers are not walked through at all."""
     T = game.tables.terrain
     t = game.remap_for(lm)[lm.terrain]
     ids = np.array(T.ids)[t]
@@ -36,8 +37,8 @@ def _grid(game, lm):
 
         s = settlement_here(game)
         for npc in npcs_in(game.world, s.id) if s is not None else []:
-            if npc.alive and npc.present and lm.in_bounds(npc.x, npc.y):
-                cost[npc.x, npc.y] = 0
+            if npc.alive and npc.present and lm.in_bounds(npc.x, npc.y) and cost[npc.x, npc.y]:
+                cost[npc.x, npc.y] = 25
     for a in lm.actors:
         if lm.in_bounds(a.x, a.y):
             cost[a.x, a.y] = 0

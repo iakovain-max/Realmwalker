@@ -457,7 +457,12 @@ class LocalView:
         base = tuple(int(255 * min(1.0, v)) for v in getattr(self, "base_light", DAY))
         covered: list = []
         out = []
+        glows = []
         smoke = []
+        r = roofs.pixel_size(T)
+        k = T // r  # screen pixels to a building pixel
+        lit = float(game.light) < 0.45
+        shadow = []
         for i, b in enumerate(lm.buildings):
             if b is inside or b.x >= x1 or b.y >= y1 or b.x + b.w <= x0 or b.y + b.h <= y0:
                 continue
@@ -467,32 +472,46 @@ class LocalView:
             covered.append(b)
             key = f"{lm.key}/{i}"
             style = roofs.style_for(skind, b.kind, key)
+            wall = roofs.wall_for(skind, b.kind, key)
+            form = roofs.form_for(b.kind, b.w, b.h, key)
             seed = zlib_key(key)
             chimney = b.kind in ("house", "inn", "smithy", "healer") and seed % 10 < 7
-            w_px, h_px = b.w * T, b.h * T
+            door = (b.door[0] - b.x, b.door[1] - b.y)
+            E = roofs.extra_top(form, r)
             px_, py_ = self.cell_px(b.x, b.y)
-            out.append(Image(("roof", w_px, h_px, style, seed, chimney),
-                             lambda w_px=w_px, h_px=h_px, style=style, seed=seed, chimney=chimney:
-                             roofs.roof(w_px, h_px, style, seed, chimney),
-                             (px_, py_, w_px, h_px), rgba=(*base, 255), smooth=False))
+            args = (b.w, b.h, r, style, wall, form, b.kind, door, seed, chimney, lit)
+            dst = (px_, py_ - E * k, b.w * T, (b.h * r + E) * k)
+            # A shadow on the ground to the south-east, the light being from the north-west.
+            shadow.append(Rect(px_ + b.w * T, py_ + T * 0.35, T * 0.3, b.h * T - T * 0.35, (0, 0, 0, 60)))
+            shadow.append(Rect(px_ + T * 0.3, py_ + b.h * T, b.w * T, T * 0.22, (0, 0, 0, 60)))
+            out.append(Image(("bld", *args), lambda args=args: roofs.building(*args)[0], dst, rgba=(*base, 255), smooth=False))
+            if lit and roofs.building(*args)[1] is not None:
+                glows.append(Image(("bldglow", *args), lambda args=args: roofs.building(*args)[1], dst,
+                                   rgba=(255, 255, 255, 235), smooth=False))
             sign = roofs.SIGNS.get(b.kind)
             if sign and canvas.gfx.atlas.has(sign):
-                sz = T * 0.9
+                sz = T * 0.7
                 dx, dy = self.cell_px(b.door[0], b.door[1])
-                # The sign hangs on the roof just inside the door.
-                sx = min(max(dx, px_), px_ + w_px - T)
-                sy = min(max(dy, py_), py_ + h_px - T)
-                out.append(Image("plaque", _plaque_image, (sx + (T - sz) / 2 - 2, sy + (T - sz) / 2 - 2, sz + 4, sz + 4),
-                                 rgba=(*base, 235)))
+                if door[1] == b.h - 1:  # beside a door in the front wall, hung from a bracket
+                    sx = min(dx + T * 0.85, px_ + b.w * T - sz)
+                    sy = dy - T * 0.55
+                else:  # on the roof beside a door on another side (not over the gap that shows the door)
+                    ix = dx + (T if door[0] == 0 else (-T if door[0] == b.w - 1 else 0))
+                    iy = dy + (T if door[1] == 0 else 0)
+                    sx = min(max(ix, px_), px_ + b.w * T - T) + (T - sz) / 2
+                    sy = min(max(iy, py_), py_ + b.h * T - T) + (T - sz) / 2
+                out.append(Image("plaque", _plaque_image, (sx - 2, sy - 2, sz + 4, sz + 4), rgba=(*base, 235)))
                 from realmwalker.ui.gfx.scene import tile_batch
 
-                out.extend(tile_batch(canvas.gfx.atlas, [sign], np.array([[sx + (T - sz * 0.8) / 2, sy + (T - sz * 0.8) / 2,
-                                                                         sz * 0.8, sz * 0.8]], np.float32),
+                out.extend(tile_batch(canvas.gfx.atlas, [sign], np.array([[sx + sz * 0.1, sy + sz * 0.1, sz * 0.8, sz * 0.8]],
+                                                                         np.float32),
                                       np.array([[base[0] / 255, base[1] / 255, base[2] / 255, 1.0]], np.float32)))
             if chimney and ambient:
-                cx, cy = roofs.chimney_spot(w_px, h_px, seed)
-                smoke.append((px_ + cx, py_ + cy, seed))
+                fx, fy = roofs.chimney_spot(b.w, b.h, seed, form)
+                smoke.append((px_ + b.w * T * fx + T * 0.2, py_ + b.h * T * fy - T * 0.25, seed))
+        canvas.under(*shadow)
         canvas.under(*out)
+        canvas.under(*glows)
         for cx, cy, seed in smoke:
             for k in range(3):
                 t = (now * 0.22 + k / 3 + (seed % 97) / 97) % 1.0

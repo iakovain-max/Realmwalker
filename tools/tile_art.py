@@ -1047,6 +1047,132 @@ ICON_NAMES = ["look", "search", "wait", "camp", "water", "wash", "sneak", "picku
               "ability", "rank", "parley", "shove", "surrender", "trade"]
 
 
+
+# ---------------------------------------------------------------------------- yards (towns)
+def barrels(seed: int) -> Image.Image:
+    """Two or three barrels, staves and iron hoops."""
+    im = blank()
+    d = ImageDraw.Draw(im)
+    r = rng(seed)
+    spots = [(4, 12), (16, 14), (10, 4)] if seed % 2 else [(5, 10), (17, 12)]
+    for i, (x, y) in enumerate(spots):
+        wood = shade((128, 86, 50, 255), float(r.uniform(0.85, 1.1)))
+        d.ellipse([x, y + 10, x + 11, y + 17], fill=shade(wood, 0.7))
+        d.rectangle([x, y + 3, x + 11, y + 13], fill=wood)
+        d.rectangle([x + 1, y + 3, x + 3, y + 13], fill=shade(wood, 1.18))
+        d.line([(x, y + 6), (x + 11, y + 6)], fill=(70, 70, 76, 255))
+        d.line([(x, y + 11), (x + 11, y + 11)], fill=(70, 70, 76, 255))
+        d.ellipse([x, y, x + 11, y + 6], fill=shade(wood, 1.1), outline=(70, 70, 76, 255))
+        d.ellipse([x + 3, y + 2, x + 8, y + 4], fill=shade(wood, 0.8))
+    return shadow(outline(im))
+
+
+def crates(seed: int) -> Image.Image:
+    """Crates stacked by a wall."""
+    im = blank()
+    d = ImageDraw.Draw(im)
+    wood = (150, 112, 66, 255)
+    boxes = [(3, 14, 15, 27), (15, 16, 28, 28), (6, 3, 17, 15)] if seed % 2 else [(4, 12, 18, 27), (17, 17, 28, 28)]
+    for x0, y0, x1, y1 in boxes:
+        d.rectangle([x0, y0, x1, y1], fill=wood)
+        d.rectangle([x0, y0, x1, y0 + 2], fill=shade(wood, 1.15))
+        d.line([(x0, y0), (x1, y1)], fill=shade(wood, 0.7))
+        d.line([(x0, y1), (x1, y0)], fill=shade(wood, 0.7))
+        d.rectangle([x0, y0, x1, y1], outline=shade(wood, 0.55))
+    return shadow(outline(im))
+
+
+def woodpile(seed: int) -> Image.Image:
+    """Split logs stacked against a wall, ends showing."""
+    im = blank()
+    d = ImageDraw.Draw(im)
+    r = rng(seed)
+    d.rectangle([3, 8, 28, 27], fill=(96, 66, 40, 255))
+    for row in range(4):
+        for col in range(5):
+            x = 3 + col * 5 + (row % 2) * 2
+            y = 9 + row * 5
+            if x > 25:
+                continue
+            c = shade((196, 160, 110, 255), float(r.uniform(0.85, 1.1)))
+            d.ellipse([x, y, x + 4, y + 4], fill=c, outline=(110, 76, 46, 255))
+            d.point((x + 2, y + 2), fill=(150, 114, 74, 255))
+    d.polygon([(2, 8), (16, 3), (29, 8)], fill=(88, 70, 56, 255))  # a little lean-to roof
+    return shadow(outline(im))
+
+
+def haystack(seed: int) -> Image.Image:
+    """A rounded stack of hay."""
+    im = blank()
+    d = ImageDraw.Draw(im)
+    d.ellipse([3, 6, 28, 29], fill=(206, 170, 86, 255))
+    d.ellipse([5, 7, 18, 18], fill=(226, 194, 112, 255))
+    r = rng(seed)
+    for _ in range(30):
+        x, y = int(r.integers(5, 27)), int(r.integers(8, 28))
+        if (x - 15.5) ** 2 / 156 + (y - 17.5) ** 2 / 132 < 1:
+            d.line([(x, y), (x + int(r.integers(-1, 2)), y + 2)], fill=(168, 132, 60, 255))
+    return shadow(outline(im))
+
+
+def cart(seed: int) -> Image.Image:
+    """A handcart with a load under a cloth."""
+    im = blank()
+    d = ImageDraw.Draw(im)
+    wood = (132, 92, 54, 255)
+    d.line([(1, 22), (8, 18)], fill=shade(wood, 0.8), width=2)  # the shafts
+    d.rectangle([7, 10, 28, 21], fill=wood)
+    d.rectangle([7, 10, 28, 12], fill=shade(wood, 1.15))
+    cloth = [(150, 140, 110, 255), (120, 60, 50, 255), (90, 110, 80, 255)][seed % 3]
+    d.ellipse([9, 4, 27, 15], fill=cloth)
+    d.ellipse([11, 5, 19, 10], fill=shade(cloth, 1.15))
+    for cx in (11, 24):
+        d.ellipse([cx - 4, 19, cx + 4, 28], fill=(70, 50, 34, 255), outline=(40, 30, 22, 255))
+        d.point((cx, 23), fill=(150, 150, 150, 255))
+    return shadow(outline(im))
+
+
+def trough(seed: int) -> Image.Image:
+    """A water trough on legs."""
+    im = blank()
+    d = ImageDraw.Draw(im)
+    wood = (120, 86, 52, 255)
+    d.rectangle([3, 12, 28, 22], fill=wood)
+    d.rectangle([5, 13, 26, 17], fill=(70, 110, 140, 255))
+    d.line([(6, 14), (12, 14)], fill=(140, 180, 210, 255))
+    d.rectangle([5, 22, 7, 27], fill=shade(wood, 0.7))
+    d.rectangle([24, 22, 26, 27], fill=shade(wood, 0.7))
+    return shadow(outline(im))
+
+
+def planter(seed: int) -> Image.Image:
+    """A box of flowers under a window."""
+    im = blank()
+    d = ImageDraw.Draw(im)
+    d.rectangle([3, 18, 28, 26], fill=(110, 76, 46, 255))
+    d.rectangle([3, 18, 28, 19], fill=(140, 100, 62, 255))
+    r = rng(seed)
+    colours = [(200, 70, 60), (230, 200, 80), (200, 120, 190), (240, 240, 230), (120, 140, 230)]
+    for x in range(5, 27, 3):
+        d.line([(x, 18), (x, 13)], fill=(70, 110, 50, 255))
+        c = colours[int(r.integers(0, len(colours)))]
+        d.ellipse([x - 2, 10, x + 1, 13], fill=c + (255,))
+    return shadow(outline(im))
+
+
+def sacks(seed: int) -> Image.Image:
+    """Sacks of grain or flour."""
+    im = blank()
+    d = ImageDraw.Draw(im)
+    for i, (x, y) in enumerate([(3, 12), (15, 14), (9, 6)][: 3 if seed % 2 else 2]):
+        c = shade((196, 178, 140, 255), 1.0 - 0.06 * i)
+        d.ellipse([x, y, x + 13, y + 15], fill=c)
+        d.ellipse([x + 4, y - 2, x + 9, y + 3], fill=shade(c, 0.85))
+        d.line([(x + 4, y + 3), (x + 9, y + 3)], fill=(110, 90, 60, 255))
+        d.ellipse([x + 2, y + 3, x + 6, y + 8], fill=shade(c, 1.1))
+    return shadow(outline(im))
+
+
 def all_drawn() -> dict[str, Image.Image]:
     """Every tile this module draws, by its name in the atlas."""
     out: dict[str, Image.Image] = {}
@@ -1088,6 +1214,15 @@ def all_drawn() -> dict[str, Image.Image]:
         out[f"feature/rock_{i}"] = boulder(685 + i)
     out["feature/well"] = well(690)
     out["feature/chains"] = chains(700)
+    for i in range(2):
+        out[f"feature/barrels_{i}"] = barrels(730 + i)
+        out[f"feature/crates_{i}"] = crates(740 + i)
+        out[f"feature/woodpile_{i}"] = woodpile(750 + i)
+        out[f"feature/haystack_{i}"] = haystack(760 + i)
+        out[f"feature/cart_{i}"] = cart(770 + i)
+        out[f"feature/planter_{i}"] = planter(780 + i)
+        out[f"feature/sacks_{i}"] = sacks(790 + i)
+    out["feature/trough"] = trough(800)
     out["feature/bones"] = bones(710)
     out["feature/bridge_h"] = bridge(False, 720)
     out["feature/bridge_v"] = bridge(True, 721)

@@ -358,6 +358,8 @@ class LocalBuilder:
             self._furnish(b)
             self.buildings.append(b)
             placed += 1
+        for b in self.buildings:  # after all are placed, so a woodpile never stops a house going up
+            self._yard(b, s.kind)
 
         if s.kind == "elfhall":
             # Elves leave their trees standing between the halls.
@@ -418,7 +420,9 @@ class LocalBuilder:
                             return r
             return best
 
-        door = min(options, key=street_distance)
+        # The front (south) wall when the street is about as near from there: the door is then in plain view.
+        dist = [street_distance(o) for o in options]
+        door = options[1] if dist[1] <= min(dist) + 1 else options[dist.index(min(dist))]
         self.set(door[0], door[1], "door_closed")
         return door
 
@@ -457,6 +461,44 @@ class LocalBuilder:
             put(ix1, iy0, "hearth")
             for x in range(ix0 + 2, ix1 - 1):
                 put(x, (iy0 + iy1) // 2, "table")
+
+    YARD = {"house": ("woodpile", "barrels", "planter", "sacks", "woodpile"), "inn": ("barrels", "barrels", "crates", "cart"),
+            "smithy": ("woodpile", "barrels", "crates"), "store": ("crates", "sacks", "barrels", "cart"),
+            "stable": ("haystack", "haystack", "trough", "cart"), "healer": ("planter", "barrels"),
+            "temple": ("planter",), "hall": ("planter", "barrels"), "keep": ("crates", "barrels")}
+
+    def _yard(self, b: Building, settlement_kind: str) -> None:
+        """A few things against the outside walls (barrels, a woodpile, a flower box), never in a street or near
+        the door, so the way in stays open."""
+        if settlement_kind == "hold":
+            return
+        rng = self.rng.child(f"yard/{b.x},{b.y}")
+        things = list(self.YARD.get(b.kind, ()))
+        if settlement_kind in ("hamlet", "village") and b.kind == "house" and rng.chance(0.4):
+            things.append("haystack")
+        n = min(len(things), rng.randint(1, 3) if b.kind != "temple" else 1)
+        dx, dy = b.door
+        ground = ("grass", "tall_grass", "dirt", "dry_earth", "leaf_litter", "needles", "heather", "gravel", "mud")
+        spots = []
+        for x in range(b.x - 1, b.x + b.w + 1):
+            for y in (b.y - 1, b.y + b.h):
+                spots.append((x, y))
+        for y in range(b.y, b.y + b.h):
+            for x in (b.x - 1, b.x + b.w):
+                spots.append((x, y))
+        spots = [(x, y) for x, y in spots if 1 <= x < self.w - 1 and 1 <= y < self.h - 1
+                 and abs(x - dx) + abs(y - dy) > 2 and self.is_(x, y, *ground)
+                 and not (x in (b.x - 1, b.x + b.w) and y in (b.y - 1, b.y + b.h))]  # not the corners: paths go round
+        for _ in range(n):
+            if not spots:
+                break
+            x, y = spots.pop(rng.randint(0, len(spots) - 1))
+            # Leave a way past: nothing that would close the gap to another building or a wall.
+            around = [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]
+            blocked = sum(1 for ax, ay in around if not self.tables.terrain.walk[self.t[ax, ay]])
+            if blocked >= 2:
+                continue
+            self.set(x, y, things.pop(rng.randint(0, len(things) - 1)))
 
     def _walls(self, x0: int, y0: int, x1: int, y1: int, wall: str) -> None:
         x0, y0 = max(1, x0), max(1, y0)
