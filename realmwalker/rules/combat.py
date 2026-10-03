@@ -277,6 +277,9 @@ class Battle:
         self.title = title
         self.now = now
         self.log: list[tuple[str, str]] = []
+        # What happened, for the battle screen to show (who struck whom, hit or missed, damage, healing, spells).
+        # Pure record: nothing in the rules reads it.
+        self.events: list[dict] = []
         self.fighters: list[Fighter] = []
         fid = 1
         for i, c in enumerate(party):
@@ -314,6 +317,9 @@ class Battle:
     # ------------------------------------------------------------------ helpers
     def say(self, text: str, category: str = "info") -> None:
         self.log.append((text[:1].upper() + text[1:], category))
+
+    def _event(self, kind: str, **data) -> None:
+        self.events.append({"kind": kind, **data})
 
     def dice_say(self, text: str) -> None:
         if self.show_dice:
@@ -439,6 +445,7 @@ class Battle:
             healed = min(10, f.max_hp - f.hp)
             if healed:
                 f.hp += healed
+                self._event("heal", to=f.id, amount=healed)
                 self.say(f"{f.the_name}'s wounds knit closed before your eyes.", "danger")
         f.took_fire = False
         if f.char and f.state == "fighting" and "stunned" not in f.conditions:
@@ -675,6 +682,8 @@ class Battle:
         ac = target.ac()
         hit = crit or (natural != 1 and total >= ac)
         att.helped = False
+        self._event("attack", by=att.id, to=target.id, hit=hit, crit=crit, how=opt.kind, melee=opt.is_melee,
+                    weapon=opt.name, dtype=opt.damage_type)
         mode = " (adv)" if adv and not dis else (" (dis)" if dis and not adv else "")
         self.dice_say(f"{att.name} → {target.name}, {opt.name}{mode}: {natural} {signed_mod(opt.bonus + bless)} = {total} vs AC {ac}"
                       f" — {'critical!' if crit else ('hit' if hit else 'miss')}" + (f" [{', '.join(why)}]" if why else ""))
@@ -778,6 +787,7 @@ class Battle:
         if target.creature:
             if dtype in target.cdef.get("immune", []):
                 self.say(f"{target.the_name} does not seem to feel it.", "flavor")
+                self._event("immune", to=target.id, by=att.id if att else None)
                 return
             if dtype in target.cdef.get("vulnerable", []):
                 amount *= 2
@@ -806,6 +816,7 @@ class Battle:
             text = f"{self.rng.choice(self.t.combat_text['crit'])} {text}"
         hp_before = target.hp
         self.say(f"{text} <dim>({amount})</>", "danger" if target.side == PARTY else "info")
+        self._event("damage", to=target.id, by=att.id if att else None, amount=amount, dtype=dtype, crit=crit)
         self._apply_hp_loss(target, amount, source=att, cause=f"{att.the_name if att else 'a wound'}'s {weapon}" if att else weapon)
         target.damage_taken += amount
         if target.state not in ("dead",) and hp_before > 0:
@@ -1390,6 +1401,8 @@ class Battle:
         mult = spellrules.cantrip_multiplier(c.level) if spell.get("cantrip_scaling") else 1
         kind = spell["kind"]
         self.say(f"{f.the_name} casts <magic>{spell['name']}</>.", "magic")
+        self._event("cast", by=f.id, to=target.id if target is not None else None, spell=spell_id(sid), effect=kind,
+                    dtype=spell.get("damage_type", ""), area=spell.get("target", ""))
 
         def dmg_expr(base: str) -> str:
             n, sides, flat = dice.parse(base)
@@ -1535,6 +1548,7 @@ class Battle:
         if f.state == "dead":
             return
         f.hp = min(f.max_hp, f.hp + amount)
+        self._event("heal", to=f.id, amount=amount)
         if f.state == "down" and f.hp > 0:
             f.state = "fighting"
             f.conditions.pop("unconscious", None)

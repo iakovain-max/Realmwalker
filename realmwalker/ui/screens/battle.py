@@ -34,6 +34,9 @@ ACTION_HELP = {
     "surrender": "Give up. Robbers and soldiers may let you live; beasts and the dead will not.",
     "flee": "Run for it. Everyone standing must get away; anyone down is left behind.",
 }
+ACTION_ICONS = {"attack": "attack", "cast": "cast", "item": "item", "ability": "ability", "dodge": "defend",
+                "help": "health", "shove": "shove", "rank": "rank", "parley": "parley", "surrender": "surrender",
+                "flee": "flee"}
 HEALTH_WORDS = [(0.99, "unhurt", "good"), (0.75, "scratched", "good"), (0.5, "wounded", "warn"),
                 (0.25, "badly hurt", "danger"), (0.0, "near death", "danger")]
 LOG_COLORS = {"danger": "danger", "good": "good", "dice": "info", "flavor": "dim", "system": "dim",
@@ -76,6 +79,11 @@ class BattleScreen(Screen):
         self.slots_line = ""
         self.last_step = app.clock()
         self.log_scroll = 0
+        from realmwalker.ui.gfx.battlefx import BattleStage
+
+        self.stage = BattleStage()
+        self.staged = False  # the last frame drew the stage with pictures
+        self.hover_fighter = None
 
     # ------------------------------------------------------------------ flow
     def update(self) -> None:
@@ -88,6 +96,8 @@ class BattleScreen(Screen):
         now = self.app.clock()
         if not self.app.headless and now - self.last_step < ENEMY_STEP_SECONDS:
             return
+        if self.staged and self.stage.busy(now) and not self.app.headless:
+            return  # let the blow land before the next one
         self.last_step = now
         # Run automatic steps until something worth reading happens or the player must choose.
         seen = len(b.log)
@@ -323,6 +333,7 @@ class BattleScreen(Screen):
             return True
         if self.actor() is None:
             self.last_step = 0.0  # any key hurries the enemy along
+            self.stage.busy_until = 0.0
             return True
         if self.mode == "menu":
             for key, _, action in ACTIONS:
@@ -375,7 +386,19 @@ class BattleScreen(Screen):
         self.confirm_choice()
 
     # ------------------------------------------------------------------ drawing
+    @property
+    def moving(self) -> bool:
+        return self.staged and (self.stage.busy(self.app.clock()) or bool(self.stage.fx))
+
+    @property
+    def ambient(self) -> bool:
+        return self.staged
+
     def render(self, canvas: Canvas) -> None:
+        if canvas.tiles:
+            self._render_stage(canvas)
+            return
+        self.staged = False
         b = self.battle
         w, h = canvas.width, canvas.height
         title = f"Battle: {b.title}" if b.title else "Battle"
@@ -412,6 +435,86 @@ class BattleScreen(Screen):
         for yy in range(y0 + 1, h - 1):
             canvas.text(2 + log_w + 1, yy, "│", colors.FAINT)
         self._render_menu(canvas, 4 + log_w, y0 + 1, menu_w - 1, h - y0 - 2)
+
+    def _render_stage(self, canvas: Canvas) -> None:
+        """The fight as a picture: everyone standing on the ground where it happens, the blows shown as they land."""
+        b = self.battle
+        w, h = canvas.width, canvas.height
+        title = f"Battle: {b.title}" if b.title else "Battle"
+        canvas.frame(0, 0, w, h, markup.escape(title), double=True, fg=colors.named("danger"))
+        self._render_order_pictures(canvas, 2, 2, w - 4)
+        bottom = max(11, min(16, h * 3 // 10))
+        stage_rows = h - 4 - bottom
+        canvas.clear_cells(1, 3, w - 2, stage_rows)
+        rect = tuple(int(v) for v in canvas.cell_rect(1, 3, w - 2, stage_rows))
+        now = canvas.now
+        self.staged = True
+        self.stage.feed(b, now, canvas.gfx.animate)
+        current = b.current if (b.order and b.outcome is None) else None
+        targets = {t.id for t in self.targets} if self.mode == "target" else set()
+        target = self.targets[self.target_index] if self.mode == "target" and self.targets else None
+        from realmwalker.ui.gfx.scene import Clip
+
+        canvas.under(Clip(rect))
+        self.stage.draw(canvas, self.game, b, rect, now, current=current, targets=targets, target=target,
+                        hover=self.hover_fighter)
+        canvas.under(Clip(None))
+        self.hover_fighter = None
+        for fid, (cx, cy, cw, ch) in self.stage.cells.items():
+            f = b.fighter(fid)
+            if f.state == "fled":
+                continue
+            if canvas.hit(cx, cy, cw, ch, action=lambda f=f: self._click_fighter(f), tooltip=self._tooltip(f)):
+                self.hover_fighter = fid
+        if b.outcome is not None:
+            from realmwalker.ui.gfx.scene import Text
+
+            words = {"victory": ("Victory", (236, 200, 120)), "defeat": ("Fallen", (220, 70, 56)),
+                     "fled": ("Escaped", (220, 180, 110)), "parley": ("They let you go", (180, 220, 160)),
+                     "surrendered": ("Surrendered", (200, 170, 140))}.get(b.outcome, (str(b.outcome), (220, 220, 220)))
+            canvas.over(Text(rect[0] + rect[2] / 2, rect[1] + rect[3] * 0.22, words[0], "heading", 44, (*words[1], 255),
+                             anchor="mm", outline=True, shadow=True))
+        y0 = 3 + stage_rows
+        canvas.hline(1, y0, w - 2, "─", colors.FAINT)
+        menu_w = max(30, min(58, w * 2 // 5))
+        log_w = w - menu_w - 5
+        self._render_log(canvas, 2, y0 + 1, log_w, h - y0 - 2)
+        for yy in range(y0 + 1, h - 1):
+            canvas.text(2 + log_w + 1, yy, "│", colors.FAINT)
+        self._render_menu(canvas, 4 + log_w, y0 + 1, menu_w - 1, h - y0 - 2)
+
+    def _render_order_pictures(self, canvas: Canvas, x: int, y: int, w: int) -> None:
+        """The order of battle as a row of small figures, whoever acts now first and lit."""
+        from realmwalker.ui.gfx.battlefx import _figure
+
+        b = self.battle
+        cx = canvas.text(x, y, f"Round {b.round}", colors.DIM) + 2
+        n = len(b.order)
+        if not n:
+            return
+        start = b.turn if b.outcome is None else 0
+        for k in range(n):
+            f = b.fighter(b.order[(start + k) % n])
+            if not f.active and f.state != "down":
+                continue
+            label = f.name
+            width = len(label) + 4
+            if cx + width > x + w:
+                canvas.text(cx, y, "…", colors.DIM)
+                break
+            current = k == 0 and b.outcome is None
+            if current:
+                canvas.fill(cx, y, width - 1, 1, colors.HILITE_BG)
+            names = _figure(f, self.game)
+            cw, ch = canvas.cell_w, canvas.cell_h
+            for name in names:
+                canvas.sprite(name, cx * cw, y * ch - 2, ch + 2, ch + 2, (255, 255, 255, 255 if f.standing else 120))
+            color = colors.named("good") if f.side == PARTY else colors.named("danger")
+            if not f.standing:
+                color = colors.FAINT
+            canvas.text(cx + 3, y, label, colors.SELECT_FG if current else color)
+            canvas.hit(cx, y, width, 1, tooltip=self._tooltip(f))
+            cx += width + 1
 
     def _render_order(self, canvas: Canvas, x: int, y: int, w: int) -> None:
         b = self.battle
@@ -545,13 +648,17 @@ class BattleScreen(Screen):
         canvas.markup(x, y, f"<title>{markup.escape(f.name)}</> <dim>({f.rank} rank)</>: your move", max_width=w)
         if self.mode == "menu":
             col_w = w // 2
+            icons = canvas.gfx is not None
             for i, (key, label, action) in enumerate(ACTIONS):
                 bx = x + (i % 2) * col_w
                 by = y + 2 + i // 2
                 if by >= y + h:
                     break
-                canvas.button(bx, by, label[: max(4, col_w - 5)], lambda a=action: self.pick_action(a), hotkey=key,
-                              tooltip=ACTION_HELP[action])
+                if icons:
+                    canvas.icon(bx, by, f"icon/{ACTION_ICONS.get(action, 'more')}")
+                    bx += 2
+                canvas.button(bx, by, label[: max(4, col_w - 5 - (2 if icons else 0))], lambda a=action: self.pick_action(a),
+                              hotkey=key, tooltip=ACTION_HELP[action])
             hint_y = y + 2 + (len(ACTIONS) + 1) // 2 + 1
             if hint_y < y + h:
                 canvas.text(x, hint_y, "Click an enemy to attack it.", colors.FAINT, max_width=w)
