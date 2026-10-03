@@ -408,3 +408,49 @@ def list_saves(saves_dir: Path) -> list[SaveSummary]:
             log.warning("Skipping unreadable save folder %s", folder, exc_info=True)
     out.sort(key=lambda s: s.saved, reverse=True)
     return out
+
+
+def delete_world(folder: Path, saves_dir: Path) -> str:
+    """Delete one saved world (and the character in it). Only a folder directly inside the saves folder that holds a
+    world is ever touched. On Windows it goes to the Recycle Bin, so a mistake can be undone; elsewhere it is removed.
+    Returns where it went ("recycle bin" or "deleted"); raises SaveError if it is not a save or cannot be removed."""
+    folder = Path(folder).resolve()
+    saves_dir = Path(saves_dir).resolve()
+    if folder.parent != saves_dir or not (folder / WORLD_FILE).exists():
+        raise SaveError("That is not a saved world, so it was left alone.")
+    if _to_recycle_bin(folder):
+        return "recycle bin"
+    import shutil
+
+    try:
+        shutil.rmtree(folder)
+    except OSError as exc:
+        raise SaveError(f"The world could not be deleted ({exc}).") from exc
+    return "deleted"
+
+
+def _to_recycle_bin(path: Path) -> bool:
+    """Send a folder to the Windows Recycle Bin. False when that is not possible here (then it is deleted instead)."""
+    import sys
+
+    if sys.platform != "win32":
+        return False
+    try:
+        import ctypes
+        from ctypes import wintypes
+
+        class SHFILEOPSTRUCTW(ctypes.Structure):
+            _fields_ = [("hwnd", wintypes.HWND), ("wFunc", wintypes.UINT), ("pFrom", wintypes.LPCWSTR),
+                        ("pTo", wintypes.LPCWSTR), ("fFlags", ctypes.c_ushort), ("fAnyOperationsAborted", wintypes.BOOL),
+                        ("hNameMappings", ctypes.c_void_p), ("lpszProgressTitle", wintypes.LPCWSTR)]
+
+        FO_DELETE, FOF_ALLOWUNDO, FOF_NOCONFIRMATION, FOF_SILENT, FOF_NOERRORUI = 3, 0x40, 0x10, 0x4, 0x400
+        op = SHFILEOPSTRUCTW()
+        op.wFunc = FO_DELETE
+        op.pFrom = str(path) + "\0"  # the list of paths ends with a double nul
+        op.fFlags = FOF_ALLOWUNDO | FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI
+        result = ctypes.windll.shell32.SHFileOperationW(ctypes.byref(op))
+        return result == 0 and not op.fAnyOperationsAborted and not path.exists()
+    except Exception:
+        log.warning("Could not use the Recycle Bin for %s", path, exc_info=True)
+        return False

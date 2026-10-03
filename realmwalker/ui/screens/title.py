@@ -45,6 +45,8 @@ class TitleScreen(Screen):
             MenuItem("New Character", self._new_character, "R", enabled=bool(self.empty_worlds),
                      note="Create a character in a world you already made." if self.empty_worlds
                      else "Every world you have made has a living character. Make a New World, or Continue."),
+            MenuItem("Saved Worlds", self._worlds, "W", enabled=bool(self.saves or self.empty_worlds),
+                     note="Every world you have made: play on, start a new character, or delete one."),
             MenuItem("Player2 Connection Test", self._player2_test, "P",
                      note="Check the connection to the Player2 AI app and try a sample generation."),
             MenuItem("Settings", self._settings, "S", note="Text size, dice display, AI on/off and more."),
@@ -54,6 +56,11 @@ class TitleScreen(Screen):
 
     def _disabled(self, item: MenuItem) -> None:
         self.app.notify(item.note or "Not available yet.", "warn", 5)
+
+    def _worlds(self) -> None:
+        from realmwalker.ui.screens.game_menu import WorldsScreen
+
+        self.app.push(WorldsScreen(self.app))
 
     def _new_world(self) -> None:
         from realmwalker.ui.screens.new_world import NewWorldScreen
@@ -69,9 +76,9 @@ class TitleScreen(Screen):
         if len(self.saves) == 1:
             self.app.continue_game(self.saves[0].folder)
         else:
-            from realmwalker.ui.screens.game_menu import ContinueScreen
+            from realmwalker.ui.screens.game_menu import WorldsScreen
 
-            self.app.push(ContinueScreen(self.app))
+            self.app.push(WorldsScreen(self.app, living_only=True))
 
     def on_enter(self) -> None:
         # Refresh the Continue entry when coming back to the title.
@@ -97,7 +104,14 @@ class TitleScreen(Screen):
         self.app.push(HelpScreen(self.app))
 
     # ------------------------------------------------------------------
+    @property
+    def ambient(self) -> bool:
+        return True
+
     def render(self, canvas: Canvas) -> None:
+        if canvas.gfx is not None:
+            self._render_painted(canvas)
+            return
         w, h = canvas.width, canvas.height
         self._draw_backdrop(canvas)
         rows = logo_rows()
@@ -123,6 +137,38 @@ class TitleScreen(Screen):
                 break
             line += " · " + part
         canvas.text(1, h - 1, line, colors.FAINT)
+
+    def _render_painted(self, canvas: Canvas) -> None:
+        """Night over the mountains; the name in blackletter; the menu on a pane of dark glass."""
+        from realmwalker.ui.gfx import theme, titleart
+        from realmwalker.ui.gfx.scene import Text
+
+        w, h = canvas.width, canvas.height
+        canvas.clear_cells(0, 0, w, h)
+        titleart.draw(canvas, canvas.now, canvas.gfx.ambient)
+        cw, ch = canvas.cell_w, canvas.cell_h
+        size = max(48, min(120, int(h * ch * 0.11)))
+        top = max(1, h // 2 - 15)
+        titleart.logo(canvas, w * cw / 2, top * ch, size)
+        canvas.over(Text(w * cw / 2, top * ch + size * 1.08, TAGLINE, "prose", max(16, size // 4), (200, 190, 170, 235),
+                         anchor="mt", shadow=True))
+        menu_w = 34
+        mx = (w - menu_w) // 2
+        my = top + max(7, int(size * 1.6 // ch) + 2)
+        n = len(self.menu.items)
+        canvas.under(*theme.panel((mx - 3) * cw, (my - 1) * ch, (menu_w + 6) * cw, (n + 2) * ch, "glass", ornaments=True))
+        self.menu.render(canvas, mx, my, menu_w)
+        note = self.menu.items[self.menu.selected].note
+        if note:
+            nw = min(70, w - 4)
+            canvas.wrapped(max(2, (w - nw) // 2), my + n + 2, f"<dim>{note}</>", nw)
+        parts = [f"v{__version__}", MILESTONE, "F1 help", "Ctrl +/- text size", "F11 fullscreen"]
+        line = parts[0]
+        for part in parts[1:]:
+            if len(line) + 3 + len(part) > w - 2:
+                break
+            line += " · " + part
+        canvas.text(1, h - 1, line, colors.DIM)
 
     def _draw_backdrop(self, canvas: Canvas) -> None:
         """Faint stars and a mountain ridge along the bottom."""
