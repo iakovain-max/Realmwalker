@@ -317,6 +317,15 @@ class CreationScreen(Screen):
                         max_width=w)
         sy = y + len(STEPS) + 2
         b = self.b
+        if canvas.gfx is not None and h - (sy - y) > 20:
+            preview = self._preview_character()
+            if preview is not None:
+                from realmwalker.ui.gfx import scenes
+
+                rows = 6
+                canvas.clear_cells(x, sy, w, rows)
+                scenes.figure(canvas, preview, self.t, tuple(int(v) for v in canvas.cell_rect(x, sy, min(w, 14), rows)))
+                sy += rows + 1
         race = self.t.races[b.race]["name"]
         cls = self.t.classes[b.cls]["name"]
         lines = [
@@ -332,6 +341,21 @@ class CreationScreen(Screen):
         for i, line in enumerate(lines):
             if sy + i < y + h:
                 canvas.markup(x, sy + i, line, max_width=w)
+
+    def _preview_character(self):
+        """The character as they would be now (dressed in the chosen kit), for the figure; kept until a choice changes."""
+        b = self.b
+        key = (b.race, b.sex, b.cls, b.kit, b.background, b.appearance, b.subclass)
+        if getattr(self, "_preview_key", None) != key:
+            self._preview_key = key
+            try:
+                saved_name = b.name
+                b.name = b.name or "?"
+                self._preview = b.build()
+                b.name = saved_name
+            except Exception:
+                self._preview = None
+        return self._preview
 
     def _list(self, canvas: Canvas, x: int, y: int, keys: list[str], names: list[str], width: int) -> None:
         row = self.cursor[self.step]

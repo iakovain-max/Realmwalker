@@ -14,3 +14,8 @@ pytest (MIT).
 
 **AI text.** Optional flavour text is written by the Player2 app (https://player2.game) on the player's own
 account.
+
+**Tiles.** Dungeon Crawl Stone Soup 32x32 tiles, released into the public domain (CC0):
+https://opengameart.org/content/dungeon-crawl-32x32-tiles . Toned and partly redrawn for Realmwalker.
+
+**Typefaces.** Cinzel, EB Garamond and Grenze Gotisch, under the SIL Open Font Licence (see `assets/fonts`).

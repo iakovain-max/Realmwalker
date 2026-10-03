@@ -25,6 +25,36 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 The nine milestones are done; this is what has been added since, in the same spirit (all of it from the design's
 own v1 lists).
 
+### Local session, 2026-10-03: graphics and interface for 1.0 (Anton's request) — branch `graphics-ui`, in progress
+
+Anton asked for the last two big updates before 1.0: graphics ("more detailed, informative, beautiful", simple
+animations that are not irritating, a better-looking world, characters and townsfolk) and a full interface overhaul
+(the inventory, fights without animation, too many walls of text), plus a button to delete a world, no Shift keys,
+and play with the mouse alone.
+
+**Done (each committed on the branch, tests green, autoplay clean in both modes, smoke test run in a window):**
+- A picture engine beside the text grid (`ui/gfx`): layers of text cells and pictures drawn by the GPU. Tiles from
+  the public-domain Dungeon Crawl set (CC0), toned darker, plus furniture, fences, crops, pines, town marks and ~90
+  icons drawn in code (`tools/build_tiles.py`, `tools/tile_art.py`). Fonts: Cinzel, EB Garamond, Grenze Gotisch (OFL).
+  `data/sprites.json` says which picture shows what.
+- Close-up maps in tiles with light (day, dusk, night, torches, hearths), soft edges of sight, roofs and shop signs,
+  chimney smoke, water shimmer, people as dressed figures who glide; mouse-wheel zoom. Local maps are now laid out
+  for square tiles (round lakes and woods).
+- The overworld and the world map painted like a fantasy map (blended country, hill shading, coasts, rivers and
+  roads as curves, trees, hills, mountains, towns with names, fog, realms outlined, the route as a dotted line).
+- The interface: textured panels, title plates, buttons with key badges, soft highlights, pixel bars and gauges.
+  The main view has portraits, health bars, status icons, an action bar with every action, right-click menus.
+- The pack rebuilt (figure with worn slots, things by kind with pictures, item card with buttons and comparison).
+- Fights on a stage with animation (lunges, arrows and spells in flight, hits, rising numbers, falls).
+- Title screen with a painted night scene; Saved Worlds with Delete (Recycle Bin on Windows).
+- Conversation portrait, camp scene, creation preview figure; Settings: Graphics, Animations, map scales; Help.
+- Keys without Shift: Enter (obvious action), x leave, a spells, b wash, o log, k legend, +/- zoom; d/g/u in the pack.
+
+**Still to do on this branch:** weather drawn on the maps (rain, snow), companions walking behind you, pictures in
+the trade, party and character screens, a body diagram on the Health screen, a last look at every screen at 80x30,
+the friend build (PyInstaller must include `assets/tiles`: add it to `realmwalker.spec`), then a pull request.
+Old saves load; local maps already visited keep their old shape.
+
 ### Cloud session, 2026-10-03: fair chances, and a final bug hunt (Anton's request)
 
 Anton asked for a final pass through the code to fix every bug found, several simulated games, and a slightly

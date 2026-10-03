@@ -8,6 +8,7 @@ a = Analysis(
         ("data", "data"),
         ("ai/prompts", "ai/prompts"),
         ("assets/fonts", "assets/fonts"),
+        ("assets/tiles", "assets/tiles"),
     ],
     hiddenimports=[],
     excludes=["pytest", "tkinter", "matplotlib", "IPython", "PyInstaller"],

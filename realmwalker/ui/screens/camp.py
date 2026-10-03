@@ -75,6 +75,7 @@ class CraftScreen(Screen):
 
 class CampScreen(Screen):
     title = "Camp"
+    ambient = True  # the fire flickers
 
     def __init__(self, app, game) -> None:
         super().__init__(app)
@@ -216,6 +217,13 @@ class CampScreen(Screen):
         # Right: what happened.
         if w >= 100:
             x2, y2, w2 = col + 5, 2, w - col - 8
+            if canvas.gfx is not None and h >= 30:
+                from realmwalker.ui.gfx import scenes
+
+                rows = min(12, h // 3)
+                canvas.clear_cells(x2, y2, w2, rows)
+                scenes.camp(canvas, g, tuple(int(v) for v in canvas.cell_rect(x2, y2, w2, rows)), canvas.now)
+                y2 += rows + 1
             canvas.section(x2, y2, w2, "What happened")
             y2 += 1
             for msg in self.messages:
