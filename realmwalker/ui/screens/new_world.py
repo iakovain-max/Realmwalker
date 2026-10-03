@@ -195,8 +195,7 @@ class WorldGenScreen(Screen):
         canvas.frame(0, 0, w, h - 1, f"{self.title}: {markup.escape(self.options.name)}", double=True)
         canvas.text(2, 2, self.gen.stage + "…", colors.TITLE)
         bar_w = min(60, w - 6)
-        filled = int(bar_w * self.gen.fraction)
-        canvas.text(2, 3, "█" * filled + "░" * (bar_w - filled), colors.named("gold"))
+        canvas.bar(2, 3, bar_w, self.gen.fraction, colors.named("gold"))
         canvas.text(2 + bar_w + 2, 3, f"{int(self.gen.fraction * 100)}%", colors.DIM)
         self._preview(canvas, 2, 5, w - 4, h - 8)
 

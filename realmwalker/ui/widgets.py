@@ -141,6 +141,48 @@ class Canvas:
         (self.over if over else self.under)(*cmds)
         return bool(cmds)
 
+    def bar(self, x: int, y: int, w: int, ratio: float, color: Color, *, empty: Color = colors.FAINT,
+            lag: float | None = None) -> None:
+        """A bar w cells long, filled to ratio: a lit picture when there are pictures, block letters otherwise."""
+        ratio = max(0.0, min(1.0, ratio))
+        if self.gfx is not None:
+            from realmwalker.ui.gfx import theme
+
+            self.clear_cells(x, y, w, 1)
+            cw, ch = self.cell_w, self.cell_h
+            self.under(*theme.bar(x * cw, y * ch + 4, w * cw, ch - 8, ratio, color, lag=lag))
+            return
+        filled = int(round(w * ratio))
+        self.text(x, y, "█" * filled, color)
+        self.text(x + filled, y, "░" * (w - filled), empty)
+
+    def gauge(self, x: int, y: int, w: int, pos: float, stops: list[tuple[float, Color]]) -> None:
+        """A scale from cold to hot (or any other), coloured along its length, with a marker at pos (0..1)."""
+        pos = max(0.0, min(1.0, pos))
+        if self.gfx is not None:
+            from realmwalker.ui.gfx.scene import Rect
+
+            self.clear_cells(x, y, w, 1)
+            cw, ch = self.cell_w, self.cell_h
+            px, py, pw, ph = x * cw, y * ch + 6, w * cw, ch - 12
+            self.under(Rect(px - 1, py - 1, pw + 2, ph + 2, (6, 5, 7, 255)))
+            n = len(stops)
+            for i, (at, color) in enumerate(stops):
+                nxt = stops[i + 1][0] if i + 1 < n else 1.0
+                self.under(Rect(px + pw * at, py, pw * (nxt - at) + 1, ph, (*color, 255)))
+            mx = px + pw * pos
+            self.over(Rect(mx - 3, py - 4, 6, ph + 8, (255, 236, 190, 255)), Rect(mx - 3, py - 4, 6, ph + 8, (20, 16, 12, 255),
+                                                                                    line=1))
+            return
+        mark = int(round(pos * (w - 1)))
+        for i in range(w):
+            t = i / max(1, w - 1)
+            color = stops[0][1]
+            for at, c in stops:
+                if t >= at:
+                    color = c
+            self.text(x + i, y, "█" if i == mark else "─", colors.SELECT_FG if i == mark else color)
+
     def icon(self, x: int, y: int, name: str, glyph: str = "", fg: Color = colors.FG, *, cells: int = 2,
              rgba=(255, 255, 255, 255)) -> int:
         """A square picture `cells` wide and cells/2 tall at cell (x, y), or a letter in its place.
@@ -312,8 +354,10 @@ class Canvas:
         self.clear_cells(x, y, w, h)
         cw, ch = self.cell_w, self.cell_h
         size = 18 if w * cw > 500 else 15
+        if y == 0:
+            size = max(11, min(size, ch - 7))  # along the top of the screen: the title must fit its row
         self.under(*theme.panel(x * cw, y * ch, w * cw, h * ch, style, title=markup.plain(title) if title else "",
-                                title_size=size, ornaments=style in ("panel", "danger", "magic")))
+                                title_size=size, ornaments=style in ("panel", "danger", "magic"), row_h=ch))
 
     def hline(self, x: int, y: int, w: int, ch: str = "─", fg: Color = colors.BORDER) -> None:
         if self.gfx is not None and ch in "─═" and w > 0:

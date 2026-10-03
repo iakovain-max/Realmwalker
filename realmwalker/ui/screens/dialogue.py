@@ -193,6 +193,8 @@ class DialogueScreen(Screen):
 
     def _render_side(self, canvas: Canvas, x: int, y: int, w: int, h: int) -> None:
         npc = self.npc
+        if canvas.gfx is not None:
+            y = self._portrait(canvas, x, y, w)
         canvas.section(x, y, w, "What you know")
         y += 1
         facts = [f"<dim>{npc.age}, {self.game.tables.races.get(npc.race, {}).get('name', npc.race)}</>"]
@@ -206,6 +208,35 @@ class DialogueScreen(Screen):
             if y >= h:
                 break
             y += canvas.wrapped(x, y, f, w, max_lines=6) + 1
+
+    def _portrait(self, canvas: Canvas, x: int, y: int, w: int) -> int:
+        """The person, large, in the light of where you meet them; their trade and mood under it."""
+        from realmwalker.ui.gfx import dolls, theme
+        from realmwalker.ui.gfx.scene import Rect, Text
+
+        npc = self.npc
+        cw, ch = canvas.cell_w, canvas.cell_h
+        rows = 9
+        canvas.clear_cells(x, y, w, rows)
+        px, py, pw, phh = x * cw, y * ch, w * cw, rows * ch
+        indoors = False
+        lm = self.game.local
+        if lm is not None:
+            indoors = lm.building_at(self.game.player.lx, self.game.player.ly) is not None
+        top, bottom = ((46, 34, 26), (20, 14, 12)) if indoors else ((70, 84, 104), (34, 40, 36))
+        canvas.under(Rect(px, py, pw, phh, (*top, 255), bottom=(*bottom, 255)))
+        canvas.under(*theme.panel(px, py, pw, phh, "inset", ornaments=False))
+        canvas.under(Rect(px + 4, py + phh * 0.72, pw - 8, phh * 0.28 - 4, (0, 0, 0, 60)))
+        size = min(pw - 20, phh - 30)
+        mood_tint = {"hostile": (255, 200, 190), "unfriendly": (245, 225, 210)}.get(npc.mood(), (255, 255, 255))
+        for name in dolls.npc(npc, self.game.tables):
+            canvas.sprite(name, px + (pw - size) / 2, py + phh - size - 8, size, size, (*mood_tint, 255), over=False)
+        trade = self.game.tables.people["occupations"].get(npc.job, {}).get("name", npc.job.replace("_", " "))
+        canvas.over(Text(px + pw / 2, py + 6, npc.name if npc.known else f"the {npc.title}",
+                         "heading", 16, (214, 176, 108, 255), anchor="mt", outline=True, shadow=False))
+        canvas.over(Text(px + pw / 2, py + 26, str(trade), "prose", 15, (200, 190, 170, 255), anchor="mt",
+                         outline=True, shadow=False))
+        return y + rows + 1
 
     def autoplay_keys(self) -> list[KeyEvent]:
         return [KeyEvent(str(i)) for i in range(1, 9)] + [KeyEvent(k) for k in ("t", "o", "b", "escape")]

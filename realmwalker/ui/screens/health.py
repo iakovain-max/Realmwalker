@@ -23,9 +23,7 @@ def need_bar(canvas: Canvas, x: int, y: int, label: str, value: float, word: str
     """A bar that empties as the need grows: full = fine."""
     canvas.text(x, y, f"{label:<12}", colors.DIM)
     bar_w = max(6, min(16, width - 30))  # room after it for the stage and where it is heading
-    filled = int(round(bar_w * (100 - value) / 100))
-    canvas.text(x + 12, y, "█" * filled, colors.named(color if color != "dim" else "good"))
-    canvas.text(x + 12 + filled, y, "░" * (bar_w - filled), colors.FAINT)
+    canvas.bar(x + 12, y, bar_w, (100 - value) / 100, colors.named(color if color != "dim" else "good"))
     canvas.markup(x + 13 + bar_w, y, f"<{color}>{word}</>", max_width=width - bar_w - 13)
 
 
@@ -33,20 +31,9 @@ def heat_bar(canvas: Canvas, x: int, y: int, value: float, width: int, heading: 
     """A thermometer from freezing (left) to heatstroke (right), with comfort in the middle."""
     canvas.text(x, y, f"{'Warmth':<12}", colors.DIM)
     bar_w = max(9, min(17, width - 30)) | 1
-    mid = bar_w // 2
-    pos = int(round(mid + value / 100 * mid))
-    for i in range(bar_w):
-        if i < mid * 0.3:
-            c = (70, 110, 200)
-        elif i < mid * 0.8:
-            c = (110, 150, 200)
-        elif i <= bar_w - mid * 0.8:
-            c = (110, 170, 90)
-        elif i <= bar_w - mid * 0.3:
-            c = (220, 150, 60)
-        else:
-            c = (220, 70, 50)
-        canvas.text(x + 12 + i, y, "█" if i == pos else "─", colors.SELECT_FG if i == pos else c)
+    canvas.gauge(x + 12, y, bar_w, 0.5 + max(-100.0, min(100.0, value)) / 200,
+                 [(0.0, (70, 110, 200)), (0.15, (110, 150, 200)), (0.4, (110, 170, 90)), (0.6, (220, 150, 60)),
+                  (0.85, (220, 70, 50))])
     st = body.heat_stage(value)
     word, color = st if st else ("comfortable", "good")
     canvas.markup(x + 13 + bar_w, y, f"<{color}>{word}{heading}</>", max_width=width - bar_w - 13)

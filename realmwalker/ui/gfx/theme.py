@@ -149,7 +149,7 @@ def bar_image(w: int, h: int, color: tuple):
 
 # ---------------------------------------------------------------------------- commands
 def panel(x: float, y: float, w: float, h: float, style: str = "panel", *, title: str = "", title_size: int = 18,
-          border: bool = True, ornaments: bool = True) -> list:
+          border: bool = True, ornaments: bool = True, row_h: int = 20) -> list:
     st = STYLES.get(style, STYLES["panel"])
     a = st["alpha"]
     out: list = [Rect(x, y, w, h, (*st["top"], a), bottom=(*st["bottom"], a))]
@@ -166,12 +166,12 @@ def panel(x: float, y: float, w: float, h: float, style: str = "panel", *, title
                 out.append(Image(("corner", s, fx, fy, col), lambda s=s, fx=fx, fy=fy, col=col: corner(s, fx, fy, col),
                                  (cx, cy, s, s)))
     if title:
-        out.extend(title_plate(x, y, w, title, title_size, st))
+        out.extend(title_plate(x, y, w, title, title_size, st, row_h))
     return out
 
 
-def title_plate(x: float, y: float, w: float, title: str, size: int, st: dict | None = None) -> list:
-    """A heading set into the top edge of a panel."""
+def title_plate(x: float, y: float, w: float, title: str, size: int, st: dict | None = None, row_h: int = 20) -> list:
+    """A heading set into the top edge of a panel (inside its top row when the panel starts at the screen's edge)."""
     from realmwalker.ui.gfx import typefaces
 
     st = st or STYLES["panel"]
@@ -179,7 +179,11 @@ def title_plate(x: float, y: float, w: float, title: str, size: int, st: dict | 
     pw = min(w - 24, tw + 34)
     px = x + 14
     ph = th + 10
-    py = y - ph / 2 + 2 if y > ph / 2 else y + 3
+    if y > ph / 2:
+        py = y - ph / 2 + 2
+    else:
+        ph = min(ph, row_h - 1)
+        py = y + 1
     out = [Rect(px, py, pw, ph, (*st["bottom"], 255), bottom=(*st["top"], 255)),
            Rect(px, py, pw, ph, (*EDGE_DARK, 255), line=1),
            Rect(px + 1, py + 1, pw - 2, ph - 2, (*st["edge"], 255), line=1),
