@@ -328,7 +328,7 @@ class BattleStage:
 def _figure(f, game) -> list:
     if f.char is not None:
         return dolls.character(f.char, game.tables)
-    return dolls.creature(f.creature.def_id, game.tables, f"foe{f.id}")
+    return dolls.creature(f.creature.def_id, game.tables, f"foe{f.id}", sex=getattr(f.creature, "sex", ""))
 
 
 def _missile(weapon: str, kind: str, dtype: str) -> str:

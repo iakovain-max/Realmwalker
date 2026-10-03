@@ -224,12 +224,12 @@ def npc(npc, tables, atlas=None) -> list[Part]:
     return fig.parts(atlas or _atlas())
 
 
-def creature(def_id: str, tables, key: str, atlas=None) -> list[Part]:
-    """A creature: its own picture, or a dressed figure for people (bandits, guards...)."""
+def creature(def_id: str, tables, key: str, atlas=None, sex: str = "") -> list[Part]:
+    """A creature: its own picture, or a dressed figure for people (bandits, guards...); `sex` when their name says."""
     spec = _fig(tables)["creatures"].get(def_id)
     if spec is None:
         return [(f"creature/{def_id}", WHITE, 0, 0)]
-    sex = "female" if stable(key + "sex", 5) == 0 else "male"
+    sex = sex or ("female" if stable(key + "sex", 5) == 0 else "male")
     fig = Figure(tables, spec.get("race", ["human"])[0] if isinstance(spec.get("race"), list) else "human", sex, key)
     fig.looks("")
     fig.outfit({k: v for k, v in spec.items() if k != "race"})

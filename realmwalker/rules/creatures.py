@@ -24,19 +24,21 @@ class Creature:
     uses: dict[str, int] = field(default_factory=dict)
     alive: bool = True
     named: bool = False
+    sex: str = ""  # for named people: the sex their name goes with (so their picture matches)
 
     def to_dict(self) -> dict:
         return {"uid": self.uid, "def_id": self.def_id, "name": self.name, "hp": self.hp, "max_hp": self.max_hp,
                 "money": self.money, "inventory": [i.to_dict() for i in self.inventory],
                 "wounds": [w.to_dict() for w in self.wounds], "conditions": dict(self.conditions),
-                "uses": dict(self.uses), "alive": self.alive, "named": self.named}
+                "uses": dict(self.uses), "alive": self.alive, "named": self.named, "sex": self.sex}
 
     @classmethod
     def from_dict(cls, d: dict) -> Creature:
         return cls(uid=d["uid"], def_id=d["def_id"], name=d["name"], hp=d["hp"], max_hp=d["max_hp"],
                    money=d.get("money", 0), inventory=[Item.from_dict(i) for i in d.get("inventory", [])],
                    wounds=[Wound.from_dict(w) for w in d.get("wounds", [])], conditions=dict(d.get("conditions", {})),
-                   uses=dict(d.get("uses", {})), alive=d.get("alive", True), named=d.get("named", False))
+                   uses=dict(d.get("uses", {})), alive=d.get("alive", True), named=d.get("named", False),
+                   sex=d.get("sex", ""))
 
 
 class CreatureTable:
@@ -58,15 +60,17 @@ def spawn(tables, def_id: str, rng: RNG, uid: int, *, now: int = 0) -> Creature:
     hp = max(1, dice.roll(d["hp"], rng).total)
     name = d["name"]
     named = False
+    sex = ""
     culture = d.get("names")
     if culture and culture in tables.names["cultures"] and rng.chance(0.7):
         c = tables.names["cultures"][culture]
-        name = rng.choice(c[rng.choice(["male", "male", "female"])])
+        sex = rng.choice(["male", "male", "female"])
+        name = rng.choice(c[sex])
         named = True
     money = 0
     if d.get("money"):
         money = dice.roll(d["money"]["dice"], rng).total * int(d["money"].get("mult", 1))
-    creature = Creature(uid=uid, def_id=def_id, name=name, hp=hp, max_hp=hp, money=money, named=named)
+    creature = Creature(uid=uid, def_id=def_id, name=name, hp=hp, max_hp=hp, money=money, named=named, sex=sex)
     next_uid = 1
     for item_id, qty in d.get("gear", []) + d.get("loot", []):
         if item_id in tables.items:
@@ -95,8 +99,17 @@ def spawn_group(tables, group_id: str, rng: RNG, first_uid: int = 1, *, now: int
     # Tell apart unnamed creatures of the same kind: "wolf", "second wolf"...
     seen: dict[str, int] = {}
     ordinals = ["", "second ", "third ", "fourth ", "fifth ", "sixth "]
+    names = {c.name for c in out if c.named}
     for c in out:
         if c.named:
+            # Two bandits called Isolde would be one too many: the next free name from the same list.
+            others = [o for o in out if o is not c and o.named and o.name == c.name]
+            culture = tables.creatures[c.def_id].get("names")
+            pool = tables.names["cultures"].get(culture, {}).get(c.sex or "male", []) if others else []
+            if others and c.name in pool and others[0].uid < c.uid:
+                i = pool.index(c.name)
+                c.name = next((n for n in pool[i + 1:] + pool[:i] if n not in names), c.name)
+                names.add(c.name)
             continue
         seen[c.name] = seen.get(c.name, 0) + 1
         if seen[c.name] > 1:

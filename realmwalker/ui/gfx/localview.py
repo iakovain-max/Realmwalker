@@ -356,10 +356,10 @@ class LocalView:
             if roofed(a.x, a.y):
                 continue
             ax, ay = self.pos(("band", a.id), a.x, a.y, now, animate)
-            names = dolls.creature(a.creatures[0].def_id, game.tables, f"band{a.id}", atlas)
+            names = dolls.creature(a.creatures[0].def_id, game.tables, f"band{a.id}", atlas, a.creatures[0].sex)
             people.append((ay, names, *self.cell_px(ax, ay), T, _cell_light(light, a.x - x0, a.y - y0), bool(a.alert)))
             if len(a.creatures) > 1:  # the rest of the band, a little behind
-                second = dolls.creature(a.creatures[1].def_id, game.tables, f"band{a.id}b", atlas)
+                second = dolls.creature(a.creatures[1].def_id, game.tables, f"band{a.id}b", atlas, a.creatures[1].sex)
                 bx, by = self.cell_px(ax, ay)
                 people.append((ay - 0.01, second, bx - T * 0.28, by - T * 0.18, T * 0.82,
                                tuple(v * 0.85 for v in _cell_light(light, a.x - x0, a.y - y0)), False))
