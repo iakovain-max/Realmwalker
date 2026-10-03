@@ -162,6 +162,12 @@ tools/                     autoplay.py, mock_player2.py, build_friends.py, balan
 - Screens added after v1: `ui/screens/spells.py` (S), `ui/screens/journal.py` (j; Tab switches Work/People),
   `CraftScreen` in `ui/screens/camp.py` (m at camp), `ui/screens/interlude.py` (after a new character in an old
   world).
+- Fair chances (2026-10, Anton: "too easy to randomly die"): outside a battle 0 hit points is down, not dead (traps
+  call `fight.lie_senseless`; only a blow taking a whole life's worth below zero kills). `fight.finish_battle` passes
+  the fight's minutes only after the downed have come round, been robbed or been left for dead (beasts that win roll
+  `_left_for_dead`). Underground counts as sheltered and dark (`survival.sheltered`, `fight.battle_env`). Water from the
+  sky is `survival.sky_water`; skins top up on the move via `survival.top_up`. Measure deadliness with a scripted
+  "careful player" over many lives before and after changing combat, cold, encounters or wounds.
 - Battles: `rules/combat.Battle` is pure logic driven by `step()` / `pending_party()` / `do_*()`; the screen
   (`ui/screens/battle.py`) only paces and asks. `GameState.busy` (encounter, battle, aftermath or death pending)
   blocks moving; `GameScreen._open_event_screen()` opens the right screen. Debug console: `fight <group>`.

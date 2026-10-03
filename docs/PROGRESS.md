@@ -25,6 +25,58 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 The nine milestones are done; this is what has been added since, in the same spirit (all of it from the design's
 own v1 lists).
 
+### Cloud session, 2026-10-03: fair chances, and a final bug hunt (Anton's request)
+
+Anton asked for a final pass through the code to fix every bug found, several simulated games, and a slightly
+easier game: "it is too easy to randomly die right now". (Pull request "Fair chances, and a final bug hunt".)
+
+**How it was measured.** A script played ninety lives as a careful new player would: walk from town to town, buy
+food, take work, fight what looks fair and avoid what looks dangerous, camp at night, bind wounds. Before: half of
+them were dead within a week, and the middle one lived five or six days. After: five in ninety died in the first
+week, and the middle one lives three to four weeks. Most deaths were things a careful player could not see coming
+or could do nothing about, and each of those is now fixed or fair:
+
+- **Bugs that killed people.** When a fight ended with someone knocked down, the fight's minutes passed before they
+  came round, and a body still at 0 hit points was found dead of its hurts: bandits who rob you and leave you
+  killed you after all, and companions downed in a fight you *won* died afterwards. Lying senseless after a beating,
+  your wounds bled the whole time with no chance to bind them. A trap that took the last hit point killed outright
+  (in a fight, 0 is down, not dead): now it knocks you senseless. Underground, the rain fell and the wind blew, and
+  it was noon down there whenever it was noon outside: now it is dry, still and dark. A fur cloak gave heatstroke to
+  someone sitting in an inn at 16 °C, and resting beside a campfire in mild weather cooked you: clothes and fires now
+  warm you up to comfortable and no further (a real heat wave still counts what you wear against you).
+- **Losing a fight to animals** no longer always kills: beasts lose interest in what has stopped moving and drag off
+  half the food instead. Each of the fallen makes a Constitution save to wake (most do), hours later and hurt.
+  Robbers still rob; the dead, the mad and the monstrous still finish you.
+- **Work fits the worker.** Nobody sends a level-1 traveller after a troll or an ogre: beast hunts now fit the party
+  (an old boar, an orchard bear, a widow's wolf, a pack of wild dogs at first; trolls and ogres once you have made a
+  name), and the offer and the journal say how the beast, or a raid you are asked to stand against, measures up.
+- **Sure ways out on the road**, at a price: hand over half your purse to robbers (**P**), or throw hungry beasts your
+  food and back away (**B**). Slipping away is much easier when you saw them first. Trouble finds you a third less
+  often, and a night's camp is found less often.
+- **Weather you can live through.** A rough shelter (**t** at camp when you have no tent: an hour, a Survival check)
+  keeps off the wind and most of the rain, and a fire will burn in its lee even in a storm. A journey stops when a
+  storm breaks, and at nightfall it stops before the dark (or the storm) can lose you. Sleep begun after dark lasts
+  until first light, at camp or at an inn, so you do not wake at three in the morning and walk on into the cold. The
+  cold takes heat 20% more slowly.
+- **Water.** Rain fills a waterskin (**w**), and snow does by a fire. Your skins are topped up as you pass a town's
+  well, and from streams and rain when they run dry. A journey stop names water up to 24 miles off. Worn to
+  exhaustion 5 you can still stagger (slowly) to the water that would save you.
+- **Smaller mercies.** Robbers leave the spellbook, the holy symbol, the pack and anything a piece of work gave you
+  to carry. A five-point scratch on a level-1 wizard is no longer a gushing, critical wound (wounds are sized against
+  a body of at least 14 hit points). A festering wound that is cleaned and bound no longer drifts towards the grave
+  (left alone it still can kill). A death in battle names who did it ("killed by the bandit").
+
+What has not changed: fights are still a real threat at level 1 (the balance numbers are the same), a winter night
+without a fire and a tent is still dangerous, and an untreated serious wound still kills one in ten.
+
+**The bug hunt** also took the game through forty dungeon dives, two hundred conversations (trade, services,
+bribes, threats, pickpocketing), six hundred battles using every action there is, a month of travel with hired
+companions, and the autoplay bot for over a hundred thousand turns on eleven seeds. The fixes are the ones above,
+plus creeping (z) being dropped on the big map whatever way you leave the close view.
+
+Checked by `tests/test_fair_chances.py`, new cases in `tests/test_combat.py`, `tests/test_screens_fit.py` and
+`tests/test_small_fixes.py`. Old saves still load (nothing in the save changed).
+
 ### Cloud session, 2026-09-25: words that sound right
 
 (Pull request "Words that sound right". Found by holding a few thousand conversations and reading every piece of

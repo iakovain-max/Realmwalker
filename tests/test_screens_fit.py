@@ -105,6 +105,44 @@ def test_trouble_on_the_road_fits_its_box(game, monkeypatch):
     assert not watch.problems, watch.problems
 
 
+def test_trouble_with_a_purse_or_food_to_give_still_fits(game, monkeypatch):
+    """The sure ways out (2026-10): half the purse to robbers, food thrown to hungry beasts."""
+    from realmwalker.game.encounters import make_encounter
+    from realmwalker.rules.inventory import add_item
+    from realmwalker.ui.screens.encounter import EncounterScreen
+
+    app, g = game
+    g.leader.money = 123456
+    add_item(g.leader, g.tables.items, "raw_meat", 6)
+    watch = Watch(monkeypatch)
+    for group, words in (("bandits", "Hand over your purse"), ("wolf_pack", "Throw them food")):
+        g.encounter = make_encounter(g, group, RNG(2, "fit"))
+        g.encounter.spotted_first = True  # the long "Slip away (..., with the advantage of seeing them first)"
+        for size in SIZES:
+            shown = watch.render(EncounterScreen(app, g), size)
+            assert words in shown, (group, size)
+    assert not watch.problems, watch.problems
+
+
+def test_the_camp_at_night_fits_and_offers_sleep_until_morning(game, monkeypatch):
+    from realmwalker.ui.screens.camp import CampScreen
+
+    app, g = game
+    for s in g.world.settlements:  # out of town, so the shelter is offered
+        g.player.x, g.player.y = s.x + 2, s.y
+        if g.world.settlement_at(g.player.x, g.player.y) is None and \
+                g.step_minutes(g.player.x, g.player.y, g.player.x, g.player.y) is not None:
+            break
+    m = g.moment
+    g.world.time = (m.total_days + 1) * 1440 + 21 * 60
+    watch = Watch(monkeypatch)
+    for size in SIZES:
+        shown = watch.render(CampScreen(app, g), size)
+        if size[1] >= 34:
+            assert "Sleep until morning" in shown, size
+    assert not watch.problems, watch.problems
+
+
 def test_every_road_event_fits_and_names_its_skill_once(game, monkeypatch):
     from realmwalker.game import events
     from realmwalker.ui.screens.event import EventScreen
