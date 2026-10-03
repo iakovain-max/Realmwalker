@@ -83,14 +83,17 @@ def camp(canvas, game, rect, now: float) -> None:
     else:
         canvas.under(Sprite("feature/campfire_0", fx - size / 2, fy - size * 0.8, size, size, (90, 80, 80, 255)))
     lit = 0.45 + (0.55 if fire else 0.0) * (1 - k) + 0.5 * k
+    fs = 64 if size >= 48 else 32
     tint = (int(255 * min(1, lit)), int(235 * min(1, lit)), int(215 * min(1, lit)))
     party = list(game.party)
     for i, member in enumerate(party):
         ang = math.pi * (0.85 + 0.9 * i / max(1, len(party)))
         px = fx + math.cos(ang) * size * 1.9 * (1.2 if len(party) > 2 else 1)
         py = fy + math.sin(ang) * size * 0.35 - size * 0.1
-        for name in dolls.character(member, game.tables):
-            canvas.under(Sprite(name, px - size / 2, py - size, size, size, (*tint, 255)))
+        cmd = dolls.draw(atlas, dolls.character(member, game.tables, atlas=atlas), px - fs / 2, py - fs, fs,
+                         tuple(c / 255 for c in tint))
+        if cmd is not None:
+            canvas.under(cmd)
     canvas.under(Clip(None))
     canvas.under(*theme.panel(x, y, w, h, "inset", ornaments=False, border=True)[2:])
 
@@ -100,6 +103,8 @@ def figure(canvas, char, tables, rect) -> None:
     x, y, w, h = rect
     canvas.under(*theme.panel(x, y, w, h, "glass", ornaments=False))
     canvas.under(Rect(x + 3, y + h * 0.7, w - 6, h * 0.3 - 3, (0, 0, 0, 70)))
-    size = min(w - 12, h - 12)
-    for name in dolls.character(char, tables):
-        canvas.sprite(name, x + (w - size) / 2, y + h - size - 6, size, size, over=False)
+    size = max(32, int(min(w - 12, h - 12)) // 32 * 32)
+    cmd = dolls.draw(canvas.gfx.atlas, dolls.character(char, tables, atlas=canvas.gfx.atlas), x + (w - size) / 2,
+                     y + h - size - 6, size)
+    if cmd is not None:
+        canvas.under(cmd)

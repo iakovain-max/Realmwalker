@@ -77,12 +77,13 @@ class Image:
     """A picture made by code (a painted map, a panel), kept on the GPU under `key` until it is not used for a while.
     `make` returns a PIL image or an (h, w, 4) uint8 array; it is only called the first time the key is drawn."""
 
-    __slots__ = ("key", "make", "dst", "src", "rgba", "smooth")
+    __slots__ = ("key", "make", "dst", "src", "rgba", "smooth", "angle")
 
     def __init__(self, key, make: Callable, dst: tuple[float, float, float, float],
                  src: tuple[float, float, float, float] | None = None, rgba: RGBA = (255, 255, 255, 255),
-                 smooth: bool = True) -> None:
+                 smooth: bool = True, angle: float = 0.0) -> None:
         self.key, self.make, self.dst, self.src, self.rgba, self.smooth = key, make, dst, src, rgba, smooth
+        self.angle = angle
 
 
 class Clip:

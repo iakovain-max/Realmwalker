@@ -356,10 +356,10 @@ class LocalView:
             if roofed(a.x, a.y):
                 continue
             ax, ay = self.pos(("band", a.id), a.x, a.y, now, animate)
-            names = dolls.creature(a.creatures[0].def_id, game.tables, f"band{a.id}")
+            names = dolls.creature(a.creatures[0].def_id, game.tables, f"band{a.id}", atlas)
             people.append((ay, names, *self.cell_px(ax, ay), T, _cell_light(light, a.x - x0, a.y - y0), bool(a.alert)))
             if len(a.creatures) > 1:  # the rest of the band, a little behind
-                second = dolls.creature(a.creatures[1].def_id, game.tables, f"band{a.id}b")
+                second = dolls.creature(a.creatures[1].def_id, game.tables, f"band{a.id}b", atlas)
                 bx, by = self.cell_px(ax, ay)
                 people.append((ay - 0.01, second, bx - T * 0.28, by - T * 0.18, T * 0.82,
                                tuple(v * 0.85 for v in _cell_light(light, a.x - x0, a.y - y0)), False))
@@ -373,10 +373,11 @@ class LocalView:
                 if not fov[npc.x, npc.y] or roofed(npc.x, npc.y):
                     continue
                 nx, ny = self.pos(("npc", npc.id), npc.x, npc.y, now, animate)
-                people.append((ny, dolls.npc(npc, game.tables), *self.cell_px(nx, ny), T,
+                people.append((ny, dolls.npc(npc, game.tables, atlas), *self.cell_px(nx, ny), T,
                                _cell_light(light, npc.x - x0, npc.y - y0), False))
         lit = bool(game.lit and game.lit.get("hours", 0) > 0) if getattr(game, "lit", None) else False
-        me = dolls.character(game.leader, game.tables, lit=lit and (lm.kind == "dungeon" or game.light < 0.4))
+        me = dolls.character(game.leader, game.tables, lit=lit and (lm.kind == "dungeon" or game.light < 0.4),
+                             atlas=atlas)
         people.append((ppos[1] + 0.001, me, *self.cell_px(*ppos), T, (1.0, 1.0, 1.0), False))
         people.sort(key=lambda t: t[0])
         out = []
@@ -387,7 +388,9 @@ class LocalView:
                 pulse = 0.5 + 0.5 * math.sin(now * 6) if ambient else 1.0
                 out.append(Image("alert", _alert_image, (px_ - size * 0.1, py_ + size * 0.55, size * 1.2, size * 0.5),
                                  rgba=(255, 70, 50, int(110 + 90 * pulse))))
-            out.extend(_doll(atlas, names, px_, py_ + (T - size), size, col))
+            cmd = dolls.draw(atlas, names, px_, py_ + (T - size), size, col)
+            if cmd is not None:
+                out.append(cmd)
         canvas.under(*out)
 
     def _light(self, game, lm, art, sl, vis, seen, now, ambient) -> np.ndarray:
@@ -555,17 +558,6 @@ def _sprites(atlas, items) -> list[Batch]:
     from realmwalker.ui.gfx.scene import tile_batch
 
     return tile_batch(atlas, names, np.array(dst, np.float32).reshape(-1, 4), np.array(col, np.float32).reshape(-1, 4))
-
-
-def _doll(atlas, names: list[str], x: float, y: float, size: float, col) -> list[Batch]:
-    from realmwalker.ui.gfx.scene import tile_batch
-
-    names = [n for n in names if atlas.has(n)]
-    if not names:
-        return []
-    dst = np.tile(np.array([[x, y, size, size]], np.float32), (len(names), 1))
-    c = np.tile(np.array([[*col[:3], 1.0]], np.float32), (len(names), 1))
-    return tile_batch(atlas, names, dst, c)
 
 
 def item_sprite(atlas, tables, item) -> str | None:

@@ -446,8 +446,57 @@ def fetch_pack() -> Path:
     return next(dest.glob("*/dungeon")).parent
 
 
+def figure_tiles() -> tuple[dict[str, Image.Image], dict]:
+    """People in pixel art (tools/figure_art.py, tools/figure_gear.py): bodies, what they wear, what they hold.
+    Returns the tiles and the facts the game needs to stack them (each body's hands)."""
+    import figure_art as fa
+    import figure_gear as fg
+    from PIL import ImageFilter
+
+    out: dict[str, Image.Image] = {}
+    bodies = fa.bodies()
+    ref = bodies["human_male"]
+
+    def keep(name: str, im: Image.Image) -> None:
+        if np.asarray(im)[..., 3].any():
+            out[name] = im
+
+    for key, b in bodies.items():
+        keep(f"fig/body/{key}", fa.base(b))
+        for g in fg.GARMENTS:
+            keep(f"fig/wear/{key}/{g}", fg.garment(b, g))
+        for h in fg.HAIR:
+            keep(f"fig/hair/{key}/{h}", fg.hair(b, h))
+        for bd in fg.BEARDS:
+            keep(f"fig/beard/{key}/{bd}", fg.beard(b, bd))
+        for hg in fg.HEADGEAR:
+            keep(f"fig/head/{key}/{hg}", fg.headgear(b, hg))
+        keep(f"fig/cloak/{key}/back", fg.cloak(b, "back"))
+        keep(f"fig/cloak/{key}/front", fg.cloak(b, "front"))
+    right, left = ref.hands
+    for w in fg.WEAPONS:
+        metal = fg.held(w, right, "metal")
+        keep(f"fig/held/{w}/metal", metal)
+        keep(f"fig/held/{w}/rest", fg.held(w, right, "rest"))
+        shape = np.asarray(fg.held(w, right, "all"))[..., 3] > 0
+        glow = np.zeros((32, 32, 4), np.uint8)
+        glow[..., :3] = 255
+        glow[..., 3] = np.where(shape, 255, 0)
+        g = Image.fromarray(glow, "RGBA").filter(ImageFilter.MaxFilter(3)).filter(ImageFilter.GaussianBlur(1.2))
+        keep(f"fig/held/{w}/glow", g)
+        keep(f"fig/held/{w}/left_metal", fg.held(w, left, "metal"))
+        keep(f"fig/held/{w}/left_rest", fg.held(w, left, "rest"))
+    for kind in fg.SHIELDS:
+        keep(f"fig/shield/{kind}/field", fg.shield(kind, left, "field"))
+        keep(f"fig/shield/{kind}/rim", fg.shield(kind, left, "rim"))
+        for em in fg.EMBLEMS[1:]:
+            keep(f"fig/shield/{kind}/{em}", fg.shield(kind, left, em))
+    meta = {"ref": "human_male", "hands": {k: [list(b.hands[0]), list(b.hands[1])] for k, b in bodies.items()},
+            "heads": {k: list(b.head) for k, b in bodies.items()}}
+    return out, meta
+
+
 def gather(pack: Path) -> dict[str, Image.Image]:
-    collect_doll(pack)
     tiles: dict[str, Image.Image] = {}
     missing = []
     for name, (path, which, extra) in PICKS.items():
@@ -486,6 +535,8 @@ def gather(pack: Path) -> dict[str, Image.Image]:
         a = np.asarray(tiles[k], np.float32).copy()
         a[..., :3] = np.clip(a[..., :3] * 1.9 + 14, 0, 255)
         tiles[f"floor/rock_{i}"] = Image.fromarray(a.astype(np.uint8), "RGBA")
+    figs, _ = figure_tiles()
+    tiles.update(figs)
     for name, im in tile_art.all_drawn().items():
         which = "none" if name.startswith(("icon/", "map/")) else ("ground" if name.startswith(("floor/", "wall/")) else "feature")
         tiles[name] = grade(im, which) if which != "none" else im
@@ -550,7 +601,7 @@ def main(argv=None) -> int:
         files.append(fn)
     meta = {"_comment": "Built by tools/build_tiles.py from the Dungeon Crawl Stone Soup tiles (CC0) and tools/tile_art.py. "
                         "name: [sheet, x, y, w, h].",
-            "tile": 32, "sheets": files, "tiles": {k: index[k] for k in sorted(index)}}
+            "tile": 32, "sheets": files, "figures": figure_tiles()[1], "tiles": {k: index[k] for k in sorted(index)}}
     (OUT / "tiles.json").write_text(json.dumps(meta, indent=0, separators=(",", ":")), encoding="utf-8", newline="\n")
     print(f"{len(tiles)} tiles in {len(sheets)} sheets -> {OUT}")
     if args.preview:

@@ -580,8 +580,12 @@ class InventoryScreen(Screen):
             from realmwalker.ui.gfx import theme
 
             canvas.under(*theme.panel(px - 6, top * ch + 2, size + 12, size + 4, "glass", ornaments=False))
-            for name in dolls.character(c, g.tables):
-                canvas.sprite(name, px, top * ch + 4, size, size)
+            size = max(32, int(size) // 32 * 32)
+            px = x * cw + (w * cw - size) / 2
+            cmd = dolls.draw(canvas.gfx.atlas, dolls.character(c, g.tables, atlas=canvas.gfx.atlas), px,
+                             top * ch + 4 + (7 * ch - 8 - size), size)
+            if cmd is not None:
+                canvas.over(cmd)
             top += 8
         else:
             top += 1
@@ -1002,13 +1006,26 @@ class EquipmentScreen(Screen):
         cover = s.coverage()
         bx, by = 66, 3
         canvas.text(bx, by - 1, "Protection", colors.TITLE)
-        for i, (text, part) in enumerate(BODY):
-            fg = colors.named("good") if cover[part] else colors.FAINT
-            canvas.text(bx, by + i, text, fg)
+        tx = bx + 13
+        if canvas.gfx is not None:  # the person themselves, in what they wear
+            from realmwalker.ui.gfx import dolls, theme
+
+            cw, ch = canvas.cell_w, canvas.cell_h
+            size = 32 * max(2, min(20 * cw // 32, 12 * ch // 32))
+            canvas.under(*theme.panel(bx * cw, by * ch, size + 16, size + 12, "glass", ornaments=False))
+            cmd = dolls.draw(canvas.gfx.atlas, dolls.character(c, g.tables, atlas=canvas.gfx.atlas), bx * cw + 8,
+                             by * ch + 4, size)
+            if cmd is not None:
+                canvas.under(cmd)
+            tx = bx + (size + 16) // cw + 2
+        else:
+            for i, (text, part) in enumerate(BODY):
+                fg = colors.named("good") if cover[part] else colors.FAINT
+                canvas.text(bx, by + i, text, fg)
         ly = by
         for part in ("head", "torso", "arms", "legs", "hands", "feet"):
             items = ", ".join(cover[part]) or "<dim>unprotected</>"
-            canvas.markup(bx + 13, ly, f"<dim>{part.capitalize():<6}</> {items}", max_width=w - bx - 15)
+            canvas.markup(tx, ly, f"<dim>{part.capitalize():<6}</> {items}", max_width=w - tx - 2)
             ly += 2
         y = 3 + len(EQUIP_SLOTS) + 2
         social = SOCIAL_WORDS.get(s.social(), "plain")

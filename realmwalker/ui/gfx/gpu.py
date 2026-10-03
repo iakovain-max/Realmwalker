@@ -264,7 +264,10 @@ class Gpu:
         alpha = int(cmd.rgba[3])
         tex.color_mod = tint
         tex.alpha_mod = alpha
-        self.r.copy(tex, source=cmd.src, dest=cmd.dst)
+        if cmd.angle:
+            self.r.copy(tex, source=cmd.src, dest=cmd.dst, angle=cmd.angle)
+        else:
+            self.r.copy(tex, source=cmd.src, dest=cmd.dst)
         if tint != (255, 255, 255):
             tex.color_mod = (255, 255, 255)
         if alpha != 255:

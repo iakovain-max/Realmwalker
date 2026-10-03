@@ -78,7 +78,7 @@ def test_every_terrain_creature_item_and_outfit_has_a_picture(make_app, atlas):
     for tid in t.terrain.ids:
         assert tid in sp["terrain"], f"local terrain {tid} has no picture in data/sprites.json"
     for cid in t.creatures.defs:
-        for name in dolls.creature(cid, t, "test"):
+        for name, *_ in dolls.creature(cid, t, "test", atlas):
             if not atlas.has(name):
                 missing.append(f"creature {cid}: {name}")
     from realmwalker.ui.gfx.localview import item_sprite
@@ -88,19 +88,7 @@ def test_every_terrain_creature_item_and_outfit_has_a_picture(make_app, atlas):
         name = item_sprite(atlas, t, Item(0, iid))
         if not atlas.has(name):
             missing.append(f"item {iid}: {name}")
-    for job, outfit in sp["outfits"].items():
-        for layer, options in outfit.items():
-            for o in options:
-                if o and not atlas.has(o if "/" in o else f"doll/{layer}/{o}"):
-                    missing.append(f"outfit {job} {layer}: {o}")
-    for iid, parts in sp["worn"].items():
-        for layer, o in parts.items():
-            if not atlas.has(f"doll/{layer}/{o}"):
-                missing.append(f"worn {iid} {layer}: {o}")
-    for race, r in sp["races"].items():
-        for sex in ("male", "female"):
-            if not atlas.has(r[sex]):
-                missing.append(f"race {race} {sex}")
+    missing += dolls.problems(t, atlas)
     for kind, name in list(sp["world"]["settlements"].items()) + list(sp["world"]["sites"].items()):
         if not atlas.has(name):
             missing.append(f"map mark {kind}: {name}")
@@ -117,13 +105,37 @@ def test_townsfolk_and_the_player_are_dressed(pictured, atlas):
     assert people
     looks = set()
     for npc in people:
-        names = dolls.npc(npc, game.tables)
-        assert names and all(atlas.has(n) for n in names), names
-        assert any("/base/" in n for n in names)
-        looks.add(tuple(names))
+        parts = dolls.npc(npc, game.tables, atlas)
+        assert parts and all(atlas.has(p[0]) for p in parts), parts
+        assert any(p[0].startswith("fig/body/") for p in parts)
+        looks.add(tuple(parts))
     assert len(looks) > len(people) // 2, "townsfolk should not all look alike"
-    me = dolls.character(game.leader, game.tables)
-    assert all(atlas.has(n) for n in me) and any("/body/" in n for n in me)
+    me = dolls.character(game.leader, game.tables, atlas=atlas)
+    assert all(atlas.has(p[0]) for p in me) and any(p[0].startswith("fig/body/") for p in me)
+    picture = dolls.compose(atlas, me)
+    assert picture.shape == (32, 32, 4) and (picture[..., 3] > 0).sum() > 150
+
+
+def test_figures_read_their_looks_from_words_and_wear_what_they_wear(pictured, atlas):
+    from realmwalker.rules.items import Item
+
+    app, game = pictured
+    t = game.tables
+    f = dolls.Figure(t, "human", "male", "x")
+    f.looks("Heavy, with straw-coloured hair, in sober dark clothes")
+    assert f.hair == tuple(t.sprites["figures"]["hair_colours"]["blond"]), "'coloured' is not 'red'"
+    f = dolls.Figure(t, "human", "female", "y")
+    f.looks("A pale face and a shaven head")
+    assert f.hair_style == "" and f.skin == tuple(t.sprites["figures"]["skins"]["human"]["fair"])
+    me = game.leader
+    blade = Item(990001, "longsword")
+    blade.magic = {"rarity": "rare", "look": {"metal": "red_steel", "glow": "red"}}
+    me.inventory.append(blade)
+    me.equipped["main_hand"] = blade.uid
+    parts = dolls.character(me, t, atlas=atlas)
+    held = {p[0]: p[1] for p in parts if p[0].startswith("fig/held/longsword/")}
+    assert held["fig/held/longsword/metal"][:3] == tuple(t.sprites["figures"]["metals"]["red_steel"])
+    assert "fig/held/longsword/glow" in held
 
 
 # ---------------------------------------------------------------------------- screens draw with pictures
@@ -190,7 +202,7 @@ def test_a_conversation_shows_who_you_are_talking_to(pictured):
     render(app)
     canvas = render(app)
     assert type(app.top).__name__ == "DialogueScreen"
-    assert commands(canvas, Batch), "the portrait is drawn"
+    assert any(isinstance(c.key, tuple) and c.key[0] == "fig" for c in commands(canvas, Image)), "the portrait is drawn"
     assert app.error_count == 0
 
 

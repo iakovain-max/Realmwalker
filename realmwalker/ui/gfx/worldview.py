@@ -210,7 +210,7 @@ class WorldView:
             canvas.under(Image("flag", _flag_image, (fx + ppc * 0.3, fy - ppc * 0.6, ppc * 0.9, ppc * 1.2)))
         # You.
         if figure:
-            self._figure(canvas, game, pos, max(ppc * 1.15, 26))
+            self._figure(canvas, game, pos, 64 if ppc >= 40 else 32)
         for spot, rgba in ((hover, (255, 255, 255, 110)), (look, (255, 214, 110, 235))):
             if spot is not None:
                 sx, sy = self.cell_px(*spot)
@@ -223,10 +223,10 @@ class WorldView:
         px_, py_ = self.cell_px(*pos)
         canvas.under(Image("shadow_w", _shadow_image, (px_ + ppc / 2 - size * 0.3, py_ + ppc * 0.85 - size * 0.08,
                                                         size * 0.6, size * 0.2), rgba=(255, 255, 255, 160)))
-        me = [n for n in dolls.character(game.leader, game.tables) if gfx.atlas.has(n)]
-        if me:
-            d = np.tile(np.array([[px_ + ppc / 2 - size / 2, py_ + ppc * 0.95 - size, size, size]], np.float32), (len(me), 1))
-            canvas.under(*tile_batch(gfx.atlas, me, d))
+        cmd = dolls.draw(gfx.atlas, dolls.character(game.leader, game.tables, atlas=gfx.atlas),
+                         px_ + ppc / 2 - size / 2, py_ + ppc * 0.95 - size, size)
+        if cmd is not None:
+            canvas.under(cmd)
 
 
 def _fog_image(explored: np.ndarray):

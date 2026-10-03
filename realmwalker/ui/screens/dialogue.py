@@ -227,10 +227,15 @@ class DialogueScreen(Screen):
         canvas.under(Rect(px, py, pw, phh, (*top, 255), bottom=(*bottom, 255)))
         canvas.under(*theme.panel(px, py, pw, phh, "inset", ornaments=False))
         canvas.under(Rect(px + 4, py + phh * 0.72, pw - 8, phh * 0.28 - 4, (0, 0, 0, 60)))
-        size = min(pw - 20, phh - 30)
         mood_tint = {"hostile": (255, 200, 190), "unfriendly": (245, 225, 210)}.get(npc.mood(), (255, 255, 255))
-        for name in dolls.npc(npc, self.game.tables):
-            canvas.sprite(name, px + (pw - size) / 2, py + phh - size - 8, size, size, (*mood_tint, 255), over=False)
+        atlas = canvas.gfx.atlas
+        parts = dolls.npc(npc, self.game.tables, atlas)
+        crop = dolls.bust(atlas, parts)  # head and shoulders, each pixel a whole square
+        size = crop[2] * max(2, int(min(pw - 20, phh - 44)) // crop[2])
+        cmd = dolls.draw(atlas, parts, px + (pw - size) / 2, py + phh - size * crop[3] / crop[2] - 4, size,
+                         tuple(c / 255 for c in mood_tint), crop=crop)
+        if cmd is not None:
+            canvas.under(cmd)
         trade = self.game.tables.people["occupations"].get(npc.job, {}).get("name", npc.job.replace("_", " "))
         canvas.over(Text(px + pw / 2, py + 6, npc.name if npc.known else f"the {npc.title}",
                          "heading", 16, (214, 176, 108, 255), anchor="mt", outline=True, shadow=False))

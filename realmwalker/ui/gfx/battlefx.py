@@ -150,7 +150,7 @@ class BattleStage:
         gfx = canvas.gfx
         atlas = gfx.atlas
         x, y, w, h = rect
-        size = max(48.0, min(h * 0.30, 112.0))
+        size = float(32 * max(2, min(4, int(h * 0.30) // 32)))  # whole multiples of the 32-pixel figures stay sharp
         self.layout(battle, rect, size)
         self._backdrop(canvas, game, rect)
         order = sorted(self.pos.items(), key=lambda kv: kv[1][1])
@@ -192,14 +192,10 @@ class BattleStage:
             if f.state == "dead" and fid in self.fell:
                 canvas.under(Image("blood", _blood, (cx - s * 0.4, fy - s * 0.1, s * 0.8, s * 0.22),
                                    rgba=(140, 20, 16, 170)))
-            for name in names:
-                if not atlas.has(name):
-                    continue
-                if angle:
-                    canvas.under(Sprite(name, cx - s / 2, fy - s * 0.85, s, s, (*tint, alpha), angle=angle))
-                else:
-                    canvas.under(*tile_batch(atlas, [name], np.array([[cx - s / 2, fy - s + bob, s, s]], np.float32),
-                                             np.array([[tint[0] / 255, tint[1] / 255, tint[2] / 255, alpha / 255]], np.float32)))
+            top = fy - s * 0.85 if angle else fy - s + bob
+            cmd = dolls.draw(atlas, names, cx - s / 2, top, s, tuple(c / 255 for c in tint), alpha / 255, angle)
+            if cmd is not None:
+                canvas.under(cmd)
             self._label(canvas, battle, f, cx, fy, s)
             # The cells it covers, for clicks.
             cw, ch = canvas.cell_w, canvas.cell_h
@@ -329,7 +325,7 @@ class BattleStage:
         canvas.under(Clip(None))
 
 
-def _figure(f, game) -> list[str]:
+def _figure(f, game) -> list:
     if f.char is not None:
         return dolls.character(f.char, game.tables)
     return dolls.creature(f.creature.def_id, game.tables, f"foe{f.id}")

@@ -505,10 +505,13 @@ class BattleScreen(Screen):
             current = k == 0 and b.outcome is None
             if current:
                 canvas.fill(cx, y, width - 1, 1, colors.HILITE_BG)
-            names = _figure(f, self.game)
+            from realmwalker.ui.gfx import dolls
+
             cw, ch = canvas.cell_w, canvas.cell_h
-            for name in names:
-                canvas.sprite(name, cx * cw, y * ch - 2, ch + 2, ch + 2, (255, 255, 255, 255 if f.standing else 120))
+            cmd = dolls.draw(canvas.gfx.atlas, _figure(f, self.game), cx * cw, y * ch - 2, ch + 2,
+                             alpha=1.0 if f.standing else 0.5)
+            if cmd is not None:
+                canvas.over(cmd)
             color = colors.named("good") if f.side == PARTY else colors.named("danger")
             if not f.standing:
                 color = colors.FAINT

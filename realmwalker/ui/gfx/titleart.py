@@ -147,8 +147,16 @@ def draw(canvas, now: float, animate: bool) -> None:
         ex = fx + math.sin(t * 2 + k * 2.1) * fs * 0.4 * p
         ey = fy - fs * 0.6 - p * fs * 3
         canvas.under(Image("star", _dot, (ex - 2, ey - 2, 4, 4), rgba=(255, 170, 80, int(255 * (1 - p)))))
-    canvas.under(Sprite("doll/base/human_male", fx - fs * 1.7, fy - fs * 1.05, fs * 1.1, fs * 1.1, (60, 44, 40, 255)))
-    canvas.under(Sprite("doll/cloak/brown", fx - fs * 1.7, fy - fs * 1.05, fs * 1.1, fs * 1.1, (60, 44, 40, 255)))
+    from realmwalker.ui.gfx import dolls
+
+    sitter = [("fig/cloak/human_male/back", (70, 52, 40, 255), 0, 0), ("fig/body/human_male", (90, 64, 52, 255), 0, 0),
+              ("fig/wear/human_male/tunic", (70, 52, 40, 255), 0, 0), ("fig/wear/human_male/pants", (60, 46, 36, 255), 0, 0),
+              ("fig/cloak/human_male/front", (70, 52, 40, 255), 0, 0), ("fig/head/human_male/hood", (70, 52, 40, 255), 0, 0),
+              ("fig/held/quarterstaff/rest", (120, 90, 70, 255), 0, 0)]
+    k = 32 * max(1, int(fs * 1.3) // 32)
+    cmd = dolls.draw(canvas.gfx.atlas, sitter, fx - fs * 1.2 - k / 2, fy - k * 0.9, k)
+    if cmd is not None:
+        canvas.under(cmd)
 
 
 def logo(canvas, cx: float, y: float, size: int) -> None:

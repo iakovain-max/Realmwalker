@@ -28,6 +28,7 @@ class Atlas:
         self.sheet_files: list[str] = []
         self._sheets: list[np.ndarray] | None = None
         self.families: dict[str, list[str]] = {}
+        self.figures: dict = {}  # each figure body's hands (tools/build_tiles.py figure_tiles)
         if folder is None:
             return
         index = folder / "tiles.json"
@@ -42,6 +43,7 @@ class Atlas:
         self.tile = int(meta.get("tile", 32))
         self.sheet_files = list(meta.get("sheets", []))
         self.rects = {k: tuple(v) for k, v in meta.get("tiles", {}).items()}
+        self.figures = meta.get("figures", {})
         fam: dict[str, list[tuple[int, str]]] = {}
         for name in self.rects:
             m = _NUMBERED.match(name)

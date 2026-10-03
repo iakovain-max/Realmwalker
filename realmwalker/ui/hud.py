@@ -229,8 +229,10 @@ def render_party(gs, canvas: Canvas, x: int, y: int, w: int) -> int:
             cw, ch = canvas.cell_w, canvas.cell_h
             canvas.under(*theme.panel(x * cw, y * ch + 2, 5 * cw, 3 * ch - 4, "inset", ornaments=False))
             size = min(5 * cw - 6, 3 * ch - 8)
-            for name in dolls.character(member, game.tables):
-                canvas.sprite(name, x * cw + (5 * cw - size) / 2, y * ch + 4, size, size, over=True)
+            cmd = dolls.draw(canvas.gfx.atlas, dolls.character(member, game.tables, atlas=canvas.gfx.atlas),
+                             x * cw + (5 * cw - size) / 2, y * ch + (3 * ch - size) / 2, size)
+            if cmd is not None:
+                canvas.over(cmd)
             canvas.clear_cells(x, y, 5, 3)
             tx = x + 6
         tw = w - (tx - x)
