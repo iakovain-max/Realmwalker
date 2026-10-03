@@ -103,6 +103,8 @@ class App:
         self.toasts: list[Toast] = []
         self.regions: list[Region] = []
         self.mouse = (-1, -1)
+        self.mouse_px = (-1.0, -1.0)
+        self.gfx = None  # a ui.gfx.GfxContext when running in a window that can draw pictures
         self.window_requests: set[str] = set()
         self._render_failures: dict[int, int] = {}
         self.last_console_size = (MIN_COLUMNS, MIN_ROWS)
@@ -203,6 +205,7 @@ class App:
     def _handle_mouse(self, ev: MouseEvent) -> None:
         if ev.x >= 0:
             self.mouse = (ev.x, ev.y)
+            self.mouse_px = (ev.px, ev.py)
         top = self.top
         if top is not None and top.handle_mouse(ev):
             return
@@ -298,13 +301,32 @@ class App:
 
     def frame_timeout(self) -> float:
         """How long the window may sleep waiting for input before redrawing."""
+        moving = self.gfx is not None and self.gfx.animate and getattr(self.top, "moving", False)
+        if moving:
+            return 1 / 60  # something on screen is in motion: keep it smooth
         busy = self.toasts or self.ai.pending or getattr(self.top, "animating", False)
-        return 0.05 if busy else 0.25
+        if busy:
+            return 0.05
+        if self.gfx is not None and self.gfx.ambient and getattr(self.top, "ambient", False):
+            return 1 / 30  # water, fire and weather keep moving
+        return 0.25
+
+    def gfx_frame(self):
+        """The picture context for this frame (None headless), brought up to date with the settings and the clock."""
+        g = self.gfx
+        if g is None:
+            return None
+        g.now = self.clock()
+        g.tiles = self.settings.graphics == "tiles"
+        g.motion = self.settings.animations
+        return g
 
     def render(self, console: tcod.console.Console) -> None:
         self.last_console_size = (console.width, console.height)
         console.clear(fg=colors.FG, bg=colors.BG)
-        canvas = Canvas(console, self.mouse)
+        canvas = Canvas(console, self.mouse, gfx=self.gfx_frame(),
+                        mouse_px=self.mouse_px if self.mouse_px[0] >= 0 else None)
+        self.last_canvas = canvas
         start = len(self.screens) - 1
         while start > 0 and self.screens[start].modal:
             start -= 1
@@ -314,9 +336,9 @@ class App:
             screen = self.screens[i]
             canvas.interactive = i == len(self.screens) - 1
             if screen.modal and i > start:
-                # Dim what lies beneath a dialog.
-                console.rgb["fg"] = console.rgb["fg"] // 2
-                console.rgb["bg"] = console.rgb["bg"] // 2
+                # Dim what lies beneath a dialog, and draw the dialog above any picture.
+                canvas.dim()
+                canvas.push_layer()
             try:
                 screen.render(canvas)
                 self._render_failures.pop(id(screen), None)
@@ -324,6 +346,7 @@ class App:
                 self._render_failed(screen)
                 return
         try:
+            canvas.push_layer()  # the status line, notices and tooltips sit above every picture
             if self.top is not None and self.top.show_status:
                 self._render_status(canvas)
             self._render_toasts(canvas)

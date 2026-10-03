@@ -35,7 +35,10 @@ class Region:
 
 
 class Canvas:
-    def __init__(self, console: tcod.console.Console, mouse: tuple[int, int] = (-1, -1), interactive: bool = True) -> None:
+    def __init__(self, console: tcod.console.Console, mouse: tuple[int, int] = (-1, -1), interactive: bool = True,
+                 gfx=None, mouse_px: tuple[float, float] | None = None) -> None:
+        from realmwalker.ui.gfx.scene import Layer
+
         self.con = console
         self.width = console.width
         self.height = console.height
@@ -43,6 +46,110 @@ class Canvas:
         self.interactive = interactive
         self.regions: list[Region] = []
         self.tooltip: str | None = None
+        self.gfx = gfx  # a GfxContext when pictures can be drawn (a real window), else None
+        self.layers = [Layer(console)]
+        if mouse_px is None:
+            mouse_px = (mouse[0] * self.cell_w + self.cell_w / 2, mouse[1] * self.cell_h + self.cell_h / 2) \
+                if mouse[0] >= 0 else (-1.0, -1.0)
+        self.mouse_px = mouse_px
+
+    # ------------------------------------------------------------------ pictures and layers
+    @property
+    def cell_w(self) -> int:
+        return self.gfx.cell_w if self.gfx is not None else 10
+
+    @property
+    def cell_h(self) -> int:
+        return self.gfx.cell_h if self.gfx is not None else 20
+
+    @property
+    def tiles(self) -> bool:
+        """Draw maps and people as pictures (a window, with Graphics set to tiles)."""
+        return self.gfx is not None and self.gfx.tiles and self.gfx.atlas.ok
+
+    @property
+    def now(self) -> float:
+        return self.gfx.now if self.gfx is not None else 0.0
+
+    def px(self, x: float, y: float) -> tuple[float, float]:
+        """The pixel position of the top left of cell (x, y)."""
+        return x * self.cell_w, y * self.cell_h
+
+    def cell_rect(self, x: float, y: float, w: float, h: float) -> tuple[float, float, float, float]:
+        return x * self.cell_w, y * self.cell_h, w * self.cell_w, h * self.cell_h
+
+    def push_layer(self) -> None:
+        """Start a new layer above everything drawn so far (a dialog over the map). Headless, a no-op."""
+        if self.gfx is None:
+            return
+        from realmwalker.ui.gfx.scene import Layer
+
+        con = tcod.console.Console(self.width, self.height, order="F")
+        con.rgba["bg"] = (0, 0, 0, 0)
+        con.rgba["fg"] = (*colors.FG, 255)
+        self.con = con
+        self.layers.append(Layer(con))
+
+    def under(self, *cmds) -> None:
+        """Pictures beneath this layer's text (a map, a panel)."""
+        if self.gfx is not None:
+            self.layers[-1].under.extend(cmds)
+
+    def over(self, *cmds) -> None:
+        """Pictures above this layer's text (a cursor, a floating number)."""
+        if self.gfx is not None:
+            self.layers[-1].over.extend(cmds)
+
+    def clear_cells(self, x: int, y: int, w: int, h: int) -> None:
+        """Make cells see-through, so the pictures under them show (only with pictures)."""
+        if self.gfx is None:
+            return
+        x0, y0 = max(0, x), max(0, y)
+        x1, y1 = min(self.width, x + w), min(self.height, y + h)
+        if x1 > x0 and y1 > y0:
+            self.con.rgba["bg"][x0:x1, y0:y1] = (0, 0, 0, 0)
+            self.con.rgba["ch"][x0:x1, y0:y1] = 32
+
+    def dim(self) -> None:
+        """Darken everything drawn so far (under a dialog)."""
+        if self.gfx is None:
+            self.con.rgb["fg"] = self.con.rgb["fg"] // 2
+            self.con.rgb["bg"] = self.con.rgb["bg"] // 2
+            return
+        from realmwalker.ui.gfx.scene import Rect
+
+        self.over(Rect(0, 0, self.width * self.cell_w, self.height * self.cell_h, (4, 3, 6, 150)))
+
+    def sprite(self, name: str, x: float, y: float, w: float, h: float, rgba=(255, 255, 255, 255), *,
+               over: bool = True) -> bool:
+        """A tile at pixel rect (x, y, w, h). False when there are no pictures (the caller draws letters)."""
+        if self.gfx is None or not self.gfx.atlas.ok:
+            return False
+        from realmwalker.ui.gfx.scene import tile_batch
+
+        import numpy as np
+
+        name = self.gfx.atlas.resolve(name)
+        if name is None:
+            return False
+        c = np.array([[v / 255 for v in rgba]], np.float32)
+        cmds = tile_batch(self.gfx.atlas, [name], np.array([[x, y, w, h]], np.float32), c)
+        (self.over if over else self.under)(*cmds)
+        return bool(cmds)
+
+    def icon(self, x: int, y: int, name: str, glyph: str = "", fg: Color = colors.FG, *, cells: int = 2,
+             rgba=(255, 255, 255, 255)) -> int:
+        """A square picture `cells` wide and cells/2 tall at cell (x, y), or a letter in its place.
+        Returns the x after it."""
+        cw, ch = self.cell_w, self.cell_h
+        size = min(cells * cw, max(1, cells // 2) * ch)
+        px = x * cw + (cells * cw - size) / 2
+        py = y * ch + (max(1, cells // 2) * ch - size) / 2
+        if self.sprite(name, px, py, size, size, rgba):
+            self.clear_cells(x, y, cells, max(1, cells // 2))
+        elif glyph:
+            self.text(x + (cells - len(glyph)) // 2, y, glyph, fg)
+        return x + cells
 
     # ------------------------------------------------------------------ mouse
     def hovered(self, x: int, y: int, w: int, h: int) -> bool:
@@ -86,7 +193,13 @@ class Canvas:
             x = 0
         s = s[: max(0, self.width - x)]
         if s:
+            if bg is not None and len(bg) > 3:
+                alpha, bg = bg[3], tuple(bg[:3])
+            else:
+                alpha = 255
             self.con.print(x, y, s, fg=fg, bg=bg)
+            if bg is not None and self.gfx is not None:
+                self.con.rgba["bg"][x : x + len(s), y, 3] = alpha
         return x + len(s)
 
     def spans(self, x: int, y: int, spans: list[markup.Span], bg: Color | None = None, max_width: int | None = None) -> int:
@@ -121,7 +234,14 @@ class Canvas:
         if x1 <= x0 or y1 <= y0:
             return
         self.con.rgb["ch"][x0:x1, y0:y1] = ord(ch)
-        self.con.rgb["bg"][x0:x1, y0:y1] = bg
+        if len(bg) > 3:
+            self.con.rgb["bg"][x0:x1, y0:y1] = bg[:3]
+            if self.gfx is not None:
+                self.con.rgba["bg"][x0:x1, y0:y1, 3] = bg[3]
+        else:
+            self.con.rgb["bg"][x0:x1, y0:y1] = bg
+            if self.gfx is not None:
+                self.con.rgba["bg"][x0:x1, y0:y1, 3] = 255
         if fg is not None:
             self.con.rgb["fg"][x0:x1, y0:y1] = fg
 

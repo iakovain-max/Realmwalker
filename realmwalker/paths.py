@@ -62,6 +62,10 @@ class Paths:
         return self.resources / "assets" / "fonts"
 
     @property
+    def tiles(self) -> Path:
+        return self.resources / "assets" / "tiles"
+
+    @property
     def config_file(self) -> Path:
         """Game-level configuration (Player2 client id, debug switches)."""
         near_exe = install_dir() / "config.json"

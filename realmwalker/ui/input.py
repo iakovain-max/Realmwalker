@@ -39,11 +39,14 @@ class KeyEvent:
 
 @dataclass(frozen=True)
 class MouseEvent:
-    kind: str  # "move", "click", "wheel"
-    x: int = -1
+    kind: str  # "move", "click", "wheel", "release"
+    x: int = -1  # the text cell
     y: int = -1
     button: str = "left"  # "left", "right", "middle"
     dy: int = 0
+    px: float = -1.0  # the pixel in the frame (-1: not known; tests and the bot work in cells)
+    py: float = -1.0
+    clicks: int = 1  # 2 for a double click
 
 
 InputEvent = KeyEvent | MouseEvent
@@ -70,9 +73,20 @@ _MOUSE_BUTTONS = {1: "left", 2: "middle", 3: "right"}
 
 
 class EventTranslator:
-    def __init__(self) -> None:
+    """Turns SDL events into game events. `to_frame` maps a window pixel to (frame pixel x, y, cell x, y); without
+    it, event positions are taken to be cells already (tcod's convert_event)."""
+
+    def __init__(self, to_frame=None) -> None:
         self._swallow_text: str | None = None
         self.mouse = (-1, -1)
+        self.mouse_px = (-1.0, -1.0)
+        self.to_frame = to_frame
+
+    def _where(self, event) -> tuple[int, int, float, float]:
+        x, y = float(event.position.x), float(event.position.y)
+        if self.to_frame is None:
+            return int(x), int(y), -1.0, -1.0
+        return self.to_frame(x, y)
 
     def translate(self, event: tcod.event.Event) -> list[InputEvent]:
         if isinstance(event, tcod.event.KeyDown):
@@ -85,15 +99,24 @@ class EventTranslator:
             self._swallow_text = None
             return [KeyEvent(ch) for ch in text if ch.isprintable()]
         if isinstance(event, tcod.event.MouseMotion):
-            self.mouse = (int(event.position.x), int(event.position.y))
-            return [MouseEvent("move", *self.mouse)]
+            cx, cy, px, py = self._where(event)
+            self.mouse, self.mouse_px = (cx, cy), (px, py)
+            return [MouseEvent("move", cx, cy, px=px, py=py)]
         if isinstance(event, tcod.event.MouseButtonDown):
-            pos = (int(event.position.x), int(event.position.y))
-            self.mouse = pos
-            return [MouseEvent("click", *pos, button=_MOUSE_BUTTONS.get(int(event.button), "left"))]
+            cx, cy, px, py = self._where(event)
+            self.mouse, self.mouse_px = (cx, cy), (px, py)
+            try:
+                clicks = int(event.sdl_event.button.clicks)
+            except Exception:
+                clicks = 1
+            return [MouseEvent("click", cx, cy, button=_MOUSE_BUTTONS.get(int(event.button), "left"), px=px, py=py,
+                               clicks=clicks)]
+        if isinstance(event, tcod.event.MouseButtonUp):
+            cx, cy, px, py = self._where(event)
+            return [MouseEvent("release", cx, cy, button=_MOUSE_BUTTONS.get(int(event.button), "left"), px=px, py=py)]
         if isinstance(event, tcod.event.MouseWheel):
             dy = -int(event.y) if event.flipped else int(event.y)
-            return [MouseEvent("wheel", *self.mouse, dy=dy)]
+            return [MouseEvent("wheel", *self.mouse, dy=dy, px=self.mouse_px[0], py=self.mouse_px[1])]
         return []
 
     def _key(self, event: tcod.event.KeyDown) -> list[InputEvent]:
