@@ -778,7 +778,7 @@ SPRITES = Obj(
         "world": Obj({"biomes": Map(Obj({"color": COLOR, "deep": List(Int(min=0, max=255), min_items=3, max_items=3, optional=True),
                                           "marks": Str(max_len=30, optional=True),
                                           "density": Float(min=0, max=1, optional=True)})),
-                      "road": COLOR, "river": COLOR, "ink": COLOR, "shore": COLOR,
+                      "road": COLOR, "river": COLOR, "ink": COLOR, "shore": COLOR, "paper": COLOR, "sea": COLOR,
                       "settlements": Map(Str(max_len=60)), "sites": Map(Str(max_len=60))}),
     }
 )

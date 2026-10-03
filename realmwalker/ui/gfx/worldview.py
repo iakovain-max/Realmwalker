@@ -150,8 +150,9 @@ class WorldView:
         self.cache.want([k for k in wanted if self.cache.get(k) is None])
         # Fog over what you have not seen: a soft edge, from a picture one pixel per square.
         explored = p.explored
-        for key, make, alpha in overlays:  # realms, weather: one pixel per square, blended
-            canvas.under(Image(key, make, (ox, oy, world.width * ppc, world.height * ppc), rgba=(255, 255, 255, alpha)))
+        for key, make, alpha, *sharp in overlays:  # realms (in map pixels, sharp), weather (a pixel a square, soft)
+            canvas.under(Image(key, make, (ox, oy, world.width * ppc, world.height * ppc), rgba=(255, 255, 255, alpha),
+                               smooth=not (sharp and sharp[0])))
         fog_key = ("fog", id(world), int(explored.sum()))
         canvas.under(Image(fog_key, lambda: _fog_image(explored), (ox, oy, world.width * ppc, world.height * ppc)))
         # Places.

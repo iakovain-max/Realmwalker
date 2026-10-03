@@ -1,26 +1,44 @@
-"""The overworld painted like a map: colour that blends from one country to the next, hills shaded from the
-north-west, coasts, rivers and roads drawn as lines, and little trees, hills and mountains stamped on.
+"""The overworld drawn as a map on parchment, in sharp pixels: each country's colour printed flat on the paper, hills
+shaded from the north-west in dithered steps, an ink line along every coast with ripple lines out to sea, rivers in
+blue, roads dashed, and little pixel-drawn trees, hills and mountains with ink outlines.
 
-Pure Pillow and numpy, no window: a WorldPainter paints any square piece of the world ("a chunk") at any number
-of pixels per square of country, and a whole-world picture for the world map. Chunks are painted in a background
-thread by ChunkCache so walking never waits for them.
+The map is painted in "map pixels" (about a dozen to a square of country) and enlarged by a whole number, so every
+pixel stays a sharp square at any zoom. Pure Pillow and numpy, no window: a WorldPainter paints any square piece of
+the world ("a chunk") at any number of screen pixels per square, and the whole world for the world map. Chunks are
+painted in a background thread by ChunkCache so walking never waits for them; each is painted with a margin and
+cut, and everything that could differ across a seam is worked out from absolute positions, so pieces meet.
 """
 
 from __future__ import annotations
 
-import math
 import threading
 import zlib
 from collections import OrderedDict
 from functools import lru_cache
 
 import numpy as np
-from PIL import Image, ImageDraw, ImageFilter
+from PIL import Image, ImageDraw
 
 from realmwalker.world.model import DIRS
 
 MARKS = {"grass": 1, "broadleaf": 2, "pine": 3, "hills": 4, "mountains": 5, "peaks": 6, "marsh": 7, "tundra": 8, "dunes": 9}
 CHUNK_PX = 768  # a chunk is about this many pixels across, whatever the scale
+MARGIN = 2  # squares painted around a chunk and cut away, so coasts and stamps meet across the seams
+BAYER = (np.array([[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]], np.float32) + 0.5) / 16.0
+
+
+def pixel_scale(ppc: int) -> int:
+    """Screen pixels to one map pixel: the whole divisor of ppc nearest ppc / 12 (so a square is about 12 map
+    pixels across, and the map is enlarged without any pixel drawn wider than its neighbour)."""
+    divisors = [d for d in range(1, ppc + 1) if ppc % d == 0]
+    return min(divisors, key=lambda d: (abs(d - ppc / 12.0), d))
+
+
+def _paperise(rgb: np.ndarray, paper: np.ndarray, amount: float) -> np.ndarray:
+    """A colour as if printed on the paper: a little greyer, a little of the paper showing through."""
+    grey = rgb.mean(axis=-1, keepdims=True)
+    rgb = rgb * 0.8 + grey * 0.2
+    return rgb * (1 - amount) + paper * amount * (rgb.mean(axis=-1, keepdims=True) / paper.mean())
 
 
 class WorldPainter:
@@ -32,22 +50,20 @@ class WorldPainter:
         biomes = sp["biomes"]
         keys = list(world.biome_ids)
         default = biomes.get("plains", {"color": [100, 110, 70]})
+        self.paper = np.array(sp.get("paper", [222, 204, 162]), np.float32)
+        self.ink = np.array(sp["ink"], np.float32)
         pal = np.array([biomes.get(k, default)["color"] for k in keys], np.float32)
-        deep = np.array([biomes.get(k, default).get("deep", biomes.get(k, default)["color"]) for k in keys], np.float32)
+        self.pal = np.clip(_paperise(pal, self.paper, 0.42) * 1.12, 0, 255).astype(np.float32)
+        self.sea = _paperise(np.array(sp.get("sea", [52, 86, 108]), np.float32), self.paper, 0.3)
         marks = np.array([MARKS.get(biomes.get(k, {}).get("marks", ""), 0) for k in keys], np.int64)
         dens = np.array([biomes.get(k, {}).get("density", 0.0) for k in keys], np.float32)
         water_b = np.array([k in ("ocean", "lake") for k in keys], bool)
         b = world.biome.astype(np.int64)
+        self.biome = b
         elev = world.elevation.astype(np.float32)
         self.water = water_b[b]
-        depth = np.clip(-elev / 400.0, 0, 1)[..., None]
-        color = np.where(self.water[..., None], pal[b] * (1 - depth) + deep[b] * depth, pal[b]).astype(np.float32)
-        land = ~self.water
-        # Soften the land's colours a little where countries meet (water keeps its own).
-        soft = _blur(color * land[..., None], 1) / np.maximum(_blur(land.astype(np.float32), 1), 1e-3)[..., None]
-        self.color = np.where(land[..., None], soft * 0.6 + color * 0.4, color).astype(np.float32)
         self.elev = np.where(self.water, 0, np.maximum(elev, 0)).astype(np.float32)
-        # Shading worked out per square from a smoothed height, then blended: light from the north-west.
+        # Shading worked out per square from a smoothed height: light from the north-west.
         e = _blur(_blur(self.elev, 1), 1)
         gx = np.zeros_like(e)
         gy = np.zeros_like(e)
@@ -56,10 +72,8 @@ class WorldPainter:
         self.shade = np.clip(1.0 - (gx + gy) / 260.0, 0.6, 1.32).astype(np.float32)
         self.marks = marks[b]
         self.density = dens[b]
-        self.road_rgb = tuple(sp["road"])
-        self.river_rgb = tuple(sp["river"])
-        self.ink = tuple(sp["ink"])
-        self.shore = tuple(sp["shore"])
+        self.road_rgb = tuple(int(c) for c in sp["road"])
+        self.river_rgb = tuple(int(c) for c in sp["river"])
         self.W, self.H = W, H
         self.rivers = self._trace_rivers()
         self.roads = self._road_segments()
@@ -160,97 +174,115 @@ class WorldPainter:
         return max(8, CHUNK_PX // max(1, ppc))
 
     def paint(self, x0: int, y0: int, nx: int, ny: int, ppc: int, *, detail: bool = True) -> Image.Image:
-        """Squares [x0, x0+nx) x [y0, y0+ny) at ppc pixels per square, as an RGBA image."""
-        Wpx, Hpx = nx * ppc, ny * ppc
-        seed = zlib.crc32(f"{self.seed}/{x0}/{y0}/{ppc}".encode())
-        # Smooth fields are worked out on a coarser grid (every `step` pixels) and enlarged; edges are cut sharp
-        # afterwards at full size.
-        step = max(1, ppc // 6)
-        Wl, Hl = -(-Wpx // step), -(-Hpx // step)
-        u = x0 + ((np.arange(Wl, dtype=np.float32) + 0.5) * step) / ppc - 0.5
-        v = y0 + ((np.arange(Hl, dtype=np.float32) + 0.5) * step) / ppc - 0.5
-        warp_cell = max(6.0, ppc * 0.9) / step
+        """Squares [x0, x0+nx) x [y0, y0+ny) at ppc screen pixels per square, as an RGBA image."""
+        s = pixel_scale(ppc)
+        k = ppc // s  # map pixels to a square
+        m = MARGIN
+        X0, Y0, NX, NY = x0 - m, y0 - m, nx + 2 * m, ny + 2 * m
+        Wl, Hl = NX * k, NY * k
+        ax = np.arange(Wl) + X0 * k  # absolute map-pixel columns and rows: the same on both sides of a seam
+        ay = np.arange(Hl) + Y0 * k
+        u = (ax + 0.5) / k - 0.5
+        v = (ay + 0.5) / k - 0.5
+        # The borders between countries wander (a warp of noise), so the squares do not show.
         gseed = self.seed & 0xFFFF
-        ox, oy = x0 * ppc // step, y0 * ppc // step
-        wx = _world_noise(Wl, Hl, warp_cell, gseed + 1, ox, oy) * 0.42
-        wy = _world_noise(Wl, Hl, warp_cell, gseed + 2, ox, oy) * 0.42
-        wx += _world_noise(Wl, Hl, warp_cell * 3.1, gseed + 3, ox, oy) * 0.35
-        wy += _world_noise(Wl, Hl, warp_cell * 3.1, gseed + 4, ox, oy) * 0.35
+        cell = max(3.0, k * 1.1)
+        wx = _world_noise(Wl, Hl, cell, gseed + 1, X0 * k, Y0 * k) * 0.45
+        wy = _world_noise(Wl, Hl, cell, gseed + 2, X0 * k, Y0 * k) * 0.45
+        wx += _world_noise(Wl, Hl, cell * 3.3, gseed + 3, X0 * k, Y0 * k) * 0.4
+        wy += _world_noise(Wl, Hl, cell * 3.3, gseed + 4, X0 * k, Y0 * k) * 0.4
         U = u[:, None] + wx
         V = v[None, :] + wy
-        col = _up(_bilinear(self.color, U, V), Wpx, Hpx)
-        wat = _up(_bilinear(self.water.astype(np.float32), U, V), Wpx, Hpx)
-        shade = _up(_bilinear(self.shade, u[:, None] + wx * 0.2, v[None, :] + wy * 0.2), Wpx, Hpx)
-        ripple_f = _up(V * 9.0 + wx * 6.0, Wpx, Hpx)
-        land = wat < 0.5
-        col *= np.where(land, shade, 1.0)[..., None]
-        # Coasts: a pale shore and a dark line where land meets water; water darker away from it.
-        edge = np.abs(wat - 0.5)
-        shore = land & (edge < 0.13)
-        col[shore] = col[shore] * 0.6 + np.array(self.shore, np.float32) * 0.4
-        coastline = edge < 0.035
-        col[coastline] = np.array(self.ink, np.float32) * 0.7 + col[coastline] * 0.3
+        bi = self.biome[np.clip(np.rint(U).astype(np.int64), 0, self.W - 1),
+                        np.clip(np.rint(V).astype(np.int64), 0, self.H - 1)]
+        col = self.pal[bi].copy()
+        land = _bilinear(self.water.astype(np.float32), U, V) < 0.5
+        # Hills shaded from the north-west in three dithered tones.
+        shade = _bilinear(self.shade, u[:, None] + wx * 0.3, v[None, :] + wy * 0.3)
+        t = np.clip((shade - 1.0) / 0.22, -1, 1)
+        thr = BAYER[(ax % 4)[:, None], (ay % 4)[None, :]]
+        darker = land & (-t > thr)
+        lighter = land & (t > thr)
+        col[darker] *= 0.80
+        col[lighter] = col[lighter] * 0.82 + self.paper * 0.207
+        # The sea: paler near the shore, ripple lines following the coast, deep water a dithered shade darker.
+        far = 7
+        dist = np.full((Wl, Hl), far + 1, np.int16)
+        grown = land.copy()
+        for d in range(1, far + 1):
+            nb = grown.copy()
+            nb[1:] |= grown[:-1]
+            nb[:-1] |= grown[1:]
+            nb[:, 1:] |= grown[:, :-1]
+            nb[:, :-1] |= grown[:, 1:]
+            dist[nb & ~grown] = d
+            grown = nb
         sea = ~land
-        if sea.any():
-            fade = np.clip((wat - 0.5) * 2.0, 0, 1)
-            col[sea] *= (1.0 - 0.25 * fade[sea])[:, None]
-            ripple = (0.5 + 0.5 * np.sin(ripple_f * math.pi)) > 0.93
-            ripple &= sea & (edge > 0.12)
-            col[ripple] *= 1.18
-        # Paper grain.
-        grain = np.random.default_rng(seed).normal(1.0, 0.035, (Wpx, Hpx)).astype(np.float32)
-        col *= grain[..., None]
-        rgb = np.clip(col, 0, 255).astype(np.uint8).transpose(1, 0, 2)
-        im = Image.fromarray(np.ascontiguousarray(rgb), "RGB").convert("RGBA")
-        draw = ImageDraw.Draw(im)
-        self._draw_rivers(draw, x0, y0, nx, ny, ppc)
-        self._draw_roads(draw, x0, y0, nx, ny, ppc)
-        if detail and ppc >= 6:
-            self._stamp(im, x0, y0, nx, ny, ppc)
+        col[sea] = self.sea
+        col[sea & (dist <= 3)] = self.sea * 0.75 + self.paper * 0.2125
+        col[sea & ((dist == 2) | (dist == 5))] = self.sea * 0.45 + self.paper * 0.495
+        col[sea & (dist > far) & (thr < 0.5)] *= 0.9
+        # An ink line along every coast.
+        near_sea = np.zeros_like(sea)
+        near_sea[1:] |= sea[:-1]
+        near_sea[:-1] |= sea[1:]
+        near_sea[:, 1:] |= sea[:, :-1]
+        near_sea[:, :-1] |= sea[:, 1:]
+        col[land & near_sea] = self.ink
+        # A faint grain in the paper, in whole map pixels.
+        grain = np.random.default_rng(zlib.crc32(f"{self.seed}/{X0}/{Y0}/{k}".encode())).normal(1.0, 0.015, (Wl, Hl))
+        col *= grain.astype(np.float32)[..., None]
+        rgba = np.empty((Hl, Wl, 4), np.uint8)
+        rgba[..., :3] = np.clip(col, 0, 255).astype(np.uint8).transpose(1, 0, 2)
+        rgba[..., 3] = 255
+        rgba = self._draw_rivers(rgba, X0, Y0, NX, NY, k)
+        self._draw_roads(rgba, X0, Y0, NX, NY, k)
+        if detail:
+            self._stamp(rgba, X0, Y0, NX, NY, k)
+        im = Image.fromarray(np.ascontiguousarray(rgba[m * k:(m + ny) * k, m * k:(m + nx) * k]), "RGBA")
+        if s > 1:
+            im = im.resize((im.width * s, im.height * s), Image.NEAREST)
         return im
 
-    def _draw_rivers(self, draw, x0, y0, nx, ny, ppc) -> None:
-        widths = {1: 0.10, 2: 0.17, 3: 0.26}
-        margin = 2
+    def _draw_rivers(self, rgba: np.ndarray, X0, Y0, NX, NY, k) -> np.ndarray:
+        im = Image.fromarray(rgba, "RGBA")
+        draw = ImageDraw.Draw(im)
+        colour = self.river_rgb + (255,)
         for chain in self.rivers:
-            pts = [((x - x0) * ppc, (y - y0) * ppc, s) for x, y, s in chain]
-            for (ax, ay, s), (bx, by, _) in zip(pts[:-1], pts[1:]):
-                if max(ax, bx) < -margin * ppc or min(ax, bx) > (nx + margin) * ppc:
-                    continue
-                if max(ay, by) < -margin * ppc or min(ay, by) > (ny + margin) * ppc:
-                    continue
-                w = max(1, int(ppc * widths.get(s, 0.12)))
-                draw.line([(ax, ay), (bx, by)], fill=tuple(int(c * 0.55) for c in self.river_rgb) + (255,), width=w + 2)
-        for chain in self.rivers:
-            pts = [((x - x0) * ppc, (y - y0) * ppc, s) for x, y, s in chain]
-            for (ax, ay, s), (bx, by, _) in zip(pts[:-1], pts[1:]):
-                if max(ax, bx) < -margin * ppc or min(ax, bx) > (nx + margin) * ppc:
-                    continue
-                if max(ay, by) < -margin * ppc or min(ay, by) > (ny + margin) * ppc:
-                    continue
-                w = max(1, int(ppc * widths.get(s, 0.12)))
-                draw.line([(ax, ay), (bx, by)], fill=self.river_rgb + (255,), width=w)
-                r = w / 2
-                draw.ellipse([bx - r, by - r, bx + r, by + r], fill=self.river_rgb + (255,))
+            pts = [((x - X0) * k, (y - Y0) * k, sz) for x, y, sz in chain]
+            if all(px < -k or px > (NX + 1) * k or py < -k or py > (NY + 1) * k for px, py, _ in pts):
+                continue
+            for (ax, ay, sz), (bx, by, _) in zip(pts[:-1], pts[1:]):
+                w = 1 if (sz <= 1 or k < 8) else (2 if sz == 2 or k < 12 else 3)
+                draw.line([(ax, ay), (bx, by)], fill=colour, width=w)
+        return np.array(im)
 
-    def _draw_roads(self, draw, x0, y0, nx, ny, ppc) -> None:
-        w = max(1, int(ppc * 0.11))
-        dark = tuple(int(c * 0.5) for c in self.road_rgb) + (255,)
-        segs = [((ax - x0) * ppc, (ay - y0) * ppc, (bx - x0) * ppc, (by - y0) * ppc) for ax, ay, bx, by in self.roads
-                if x0 - 3 <= ax <= x0 + nx + 3 and y0 - 3 <= ay <= y0 + ny + 3]
-        for ax, ay, bx, by in segs:
-            draw.line([(ax, ay), (bx, by)], fill=dark, width=w + 2)
-        for ax, ay, bx, by in segs:
-            draw.line([(ax, ay), (bx, by)], fill=self.road_rgb + (255,), width=w)
-            r = w / 2
-            draw.ellipse([ax - r, ay - r, ax + r, ay + r], fill=self.road_rgb + (255,))
-            draw.ellipse([bx - r, by - r, bx + r, by + r], fill=self.road_rgb + (255,))
+    def _draw_roads(self, rgba: np.ndarray, X0, Y0, NX, NY, k) -> None:
+        """Roads as dashes of ink-brown; which pixels are dashes depends on where they are in the world, so a road
+        is dashed the same way on both sides of a seam."""
+        H, W = rgba.shape[:2]
+        road = self.road_rgb
+        for ax, ay, bx, by in self.roads:
+            if not (X0 - 2 <= ax <= X0 + NX + 2 and Y0 - 2 <= ay <= Y0 + NY + 2):
+                continue
+            px0, py0, px1, py1 = (ax - X0) * k, (ay - Y0) * k, (bx - X0) * k, (by - Y0) * k
+            n = int(max(abs(px1 - px0), abs(py1 - py0))) + 1
+            xs = np.rint(np.linspace(px0, px1, n)).astype(np.int64)
+            ys = np.rint(np.linspace(py0, py1, n)).astype(np.int64)
+            ok = (xs >= 0) & (xs < W) & (ys >= 0) & (ys < H)
+            if k >= 6:
+                ok &= ((xs + X0 * k + ys + Y0 * k) % 5) < 3
+            rgba[ys[ok], xs[ok], :3] = road
+            if k >= 12:  # a broader road: two pixels
+                ok2 = ok & (ys + 1 < H)
+                rgba[ys[ok2] + 1, xs[ok2], :3] = road
 
-    def _stamp(self, im: Image.Image, x0, y0, nx, ny, ppc) -> None:
+    def _stamp(self, rgba: np.ndarray, X0, Y0, NX, NY, k) -> None:
         """Trees, hills and mountains, back to front."""
-        m = 2
-        xa, ya = max(0, x0 - m), max(0, y0 - m)
-        xb, yb = min(self.W, x0 + nx + m), min(self.H, y0 + ny + m)
+        xa, ya = max(0, X0), max(0, Y0)
+        xb, yb = min(self.W, X0 + NX), min(self.H, Y0 + NY)
+        if xb <= xa or yb <= ya:
+            return
         marks = self.marks[xa:xb, ya:yb]
         if not marks.any():
             return
@@ -259,65 +291,60 @@ class WorldPainter:
         road = self.world.road[xa:xb, ya:yb]
         river = self.world.river[xa:xb, ya:yb] > 0
         settled = (self.world.settlement_grid[xa:xb, ya:yb] >= 0) | (self.world.site_grid[xa:xb, ya:yb] >= 0)
-        items: list[tuple[float, Image.Image, int, int]] = []
+        items: list[tuple[float, np.ndarray, int, int]] = []
+
+        def put(kind: str, variant: int, tx: float, ty: float) -> None:
+            st = sprite(kind, k, variant)
+            items.append((ty, st, int(tx - st.shape[1] / 2), int(ty - st.shape[0])))
+
         for (i, j) in np.argwhere(marks > 0):
-            kind = int(marks[i, j])
-            cx, cy = xa + int(i), ya + int(j)
             if settled[i, j]:
                 continue
+            kind = int(marks[i, j])
             r = jit[i, j]
             if r[0] > dens[i, j]:
                 continue
-            px = (cx - x0) * ppc
-            py = (cy - y0) * ppc
+            px, py = (xa + int(i) - X0) * k, (ya + int(j) - Y0) * k
             busy = road[i, j] or river[i, j]
             if kind in (2, 3):
-                n = 3 if ppc >= 16 else 2
-                for k in range(n):
-                    if busy and k > 0:
+                n = 3 if k >= 10 else (2 if k >= 6 else 1)
+                for q in range(n):
+                    if busy and q > 0:
                         break
-                    tx = px + ppc * (0.15 + 0.7 * r[1 + k])
-                    ty = py + ppc * (0.25 + 0.65 * r[4 + (k % 4)])
-                    st = stamp("tree" if kind == 2 else "pine", ppc, int(r[7] * 4 + k) % 4)
-                    items.append((ty, st, int(tx - st.width / 2), int(ty - st.height)))
-            elif kind == 4:
-                if busy:
-                    continue
-                st = stamp("hill", ppc, int(r[1] * 3))
-                tx, ty = px + ppc * (0.5 + 0.3 * (r[2] - 0.5)), py + ppc * (0.7 + 0.2 * r[3])
-                items.append((ty, st, int(tx - st.width / 2), int(ty - st.height)))
+                    put("tree" if kind == 2 else "pine", int(r[7] * 4 + q) % 4,
+                        px + k * (0.15 + 0.7 * r[1 + q]), py + k * (0.3 + 0.65 * r[4 + (q % 4)]))
+            elif kind == 4 and not busy:
+                for q in range(2 if r[5] > 0.7 else 1):
+                    put("hill", int(r[1 + q] * 6), px + k * (0.15 + 0.7 * r[2 + q]), py + k * (0.35 + 0.6 * r[4 + q]))
             elif kind in (5, 6):
-                st = stamp("peak" if kind == 6 else "mountain", ppc, int(r[1] * 4))
-                tx, ty = px + ppc * (0.5 + 0.35 * (r[2] - 0.5)), py + ppc * (0.85 + 0.15 * r[3])
-                items.append((ty, st, int(tx - st.width / 2), int(ty - st.height)))
-            elif kind == 7:
-                for k in range(2):
-                    st = stamp("reeds", ppc, int(r[1 + k] * 3))
-                    tx, ty = px + ppc * (0.2 + 0.6 * r[2 + k]), py + ppc * (0.3 + 0.6 * r[4 + k])
-                    items.append((ty, st, int(tx - st.width / 2), int(ty - st.height)))
-            elif kind == 1 and ppc >= 12:
-                st = stamp("tuft", ppc, int(r[1] * 3))
-                tx, ty = px + ppc * r[2], py + ppc * (0.3 + 0.6 * r[3])
-                items.append((ty, st, int(tx - st.width / 2), int(ty - st.height)))
-            elif kind == 8 and ppc >= 12:
-                st = stamp("scrub", ppc, int(r[1] * 3))
-                tx, ty = px + ppc * r[2], py + ppc * (0.3 + 0.6 * r[3])
-                items.append((ty, st, int(tx - st.width / 2), int(ty - st.height)))
-            elif kind == 9 and ppc >= 10:
-                st = stamp("dune", ppc, int(r[1] * 3))
-                tx, ty = px + ppc * (0.5 + 0.3 * (r[2] - 0.5)), py + ppc * (0.5 + 0.4 * r[3])
-                items.append((ty, st, int(tx - st.width / 2), int(ty - st.height)))
+                if r[6] < 0.12:
+                    continue  # a gap now and then: a range is not a wall
+                put("peak" if kind == 6 else "mountain", int(r[1] * 8), px + k * (0.2 + 0.6 * r[2]),
+                    py + k * (0.65 + 0.4 * r[3]))
+            elif kind == 7 and k >= 6:
+                for q in range(2):
+                    put("reeds", int(r[1 + q] * 3), px + k * (0.2 + 0.6 * r[2 + q]), py + k * (0.3 + 0.6 * r[4 + q]))
+            elif kind == 1 and k >= 10 and r[5] < 0.5:
+                put("tuft", int(r[1] * 3), px + k * r[2], py + k * (0.3 + 0.6 * r[3]))
+            elif kind == 8 and k >= 10 and r[5] < 0.4:
+                put("scrub", int(r[1] * 3), px + k * r[2], py + k * (0.3 + 0.6 * r[3]))
+            elif kind == 9 and k >= 8:
+                put("dune", int(r[1] * 3), px + k * (0.5 + 0.3 * (r[2] - 0.5)), py + k * (0.5 + 0.4 * r[3]))
         items.sort(key=lambda t: t[0])
-        W, H = im.size
+        H, W = rgba.shape[:2]
         for _, st, x, y in items:
-            if x >= W or y >= H or x + st.width <= 0 or y + st.height <= 0:
+            h, w = st.shape[:2]
+            x0, y0 = max(0, x), max(0, y)
+            x1, y1 = min(W, x + w), min(H, y + h)
+            if x1 <= x0 or y1 <= y0:
                 continue
-            sx, sy = max(0, -x), max(0, -y)
-            im.alpha_composite(st, (x + sx, y + sy), (sx, sy))
+            sub = st[y0 - y:y1 - y, x0 - x:x1 - x]
+            m = sub[..., 3] > 0
+            rgba[y0:y1, x0:x1][m] = sub[m]
 
     def overview(self, ppc: int) -> Image.Image:
         """The whole world at a small scale (the world map, and a stand-in while chunks are painted)."""
-        return self.paint(0, 0, self.W, self.H, ppc, detail=ppc >= 6)
+        return self.paint(0, 0, self.W, self.H, ppc, detail=ppc >= 4)
 
 
 def _world_noise(w: int, h: int, cell: float, seed: int, ox: int, oy: int) -> np.ndarray:
@@ -359,16 +386,6 @@ def _blur(a: np.ndarray, r: int) -> np.ndarray:
     return out
 
 
-def _up(a: np.ndarray, W: int, H: int) -> np.ndarray:
-    """Enlarge a field [x, y] or [x, y, channel] to (W, H) with bilinear filtering."""
-    if a.shape[0] == W and a.shape[1] == H:
-        return a.astype(np.float32)
-    if a.ndim == 3:
-        return np.stack([_up(a[..., k], W, H) for k in range(a.shape[2])], axis=2)
-    im = Image.fromarray(np.ascontiguousarray(a.T.astype(np.float32)), "F").resize((W, H), Image.BILINEAR)
-    return np.asarray(im, np.float32).T
-
-
 def _bilinear(field: np.ndarray, U: np.ndarray, V: np.ndarray) -> np.ndarray:
     W, H = field.shape[:2]
     U = np.clip(U, 0, W - 1.001)
@@ -401,97 +418,134 @@ def _chaikin(pts: list[tuple[float, float, int]], rounds: int) -> list[tuple[flo
     return pts
 
 
-# ---------------------------------------------------------------------------- stamps
-INK = (36, 28, 20, 255)
+# ---------------------------------------------------------------------------- the little drawings
+INK = (52, 38, 26, 255)
 
 
-@lru_cache(maxsize=256)
-def stamp(kind: str, ppc: int, variant: int) -> Image.Image:
-    """A small drawing: a tree, a pine, a hill, a mountain... sized for ppc pixels per square."""
-    sc = 4
-    rng = np.random.default_rng(zlib.crc32(f"{kind}/{variant}".encode()))
+def _outline(mask: np.ndarray) -> np.ndarray:
+    o = np.zeros_like(mask)
+    o[1:] |= mask[:-1]
+    o[:-1] |= mask[1:]
+    o[:, 1:] |= mask[:, :-1]
+    o[:, :-1] |= mask[:, 1:]
+    return o & ~mask
+
+
+@lru_cache(maxsize=512)
+def sprite(kind: str, k: int, variant: int) -> np.ndarray:
+    """A little pixel drawing, (h, w, 4), sized for k map pixels to a square, with an ink outline."""
+    rng = np.random.default_rng(zlib.crc32(f"{kind}/{k}/{variant}".encode()))
+    if kind in ("mountain", "peak"):
+        w = max(5, int(round(k * (1.1 + 0.12 * (variant % 5))))) | 1
+        h = max(4, int(round(w * (0.72 + 0.12 * rng.random()))))
+        apex = int(round(w * (0.38 + 0.24 * rng.random())))
+        H, W = h + 1, w + 2
+        mask = np.zeros((H, W), bool)
+        face = np.zeros((H, W), np.int8)  # 1 lit, 2 in shadow
+        for y in range(h):
+            f = (y + 1) / h
+            left = int(round(apex - apex * f))
+            right = int(round(apex + (w - 1 - apex) * f))
+            mask[y + 1, 1 + left:2 + right] = True
+            face[y + 1, 1 + left:2 + apex] = 1
+            face[y + 1, 2 + apex:2 + right] = 2
+        lit, dark = ((150, 138, 120), (96, 86, 74)) if kind == "mountain" else ((168, 166, 168), (116, 116, 124))
+        out = np.zeros((H, W, 4), np.uint8)
+        out[face == 1] = (*lit, 255)
+        out[face == 2] = (*dark, 255)
+        snow = int(round(h * (0.30 if kind == "mountain" else 0.55)))
+        for y in range(1, snow + 1):
+            if y > snow - 1 - int(rng.integers(0, 2)):
+                continue
+            out[y][mask[y] & (face[y] == 1)] = (240, 240, 236, 255)
+            out[y][mask[y] & (face[y] == 2)] = (196, 200, 210, 255)
+        if k >= 8:  # a ridge down the shaded side
+            for y in range(h // 2, h):
+                xx = 2 + apex + int((y - h // 2) * 0.6)
+                if 0 <= xx < W and mask[y + 1, xx]:
+                    out[y + 1, xx] = (*(int(c * 0.75) for c in dark), 255)
+        o = _outline(mask)
+        o[-1] = False  # no line along the foot
+        out[o] = INK
+        return out
+    if kind == "hill":
+        w = max(4, int(round(k * (0.6 + 0.12 * (variant % 4)))))
+        h = max(2, int(round(w * (0.34 + 0.06 * (variant % 3)))))
+        H, W = h + 1, w + 2
+        mask = np.zeros((H, W), bool)
+        for x in range(w):
+            t = (x + 0.5) / w * 2 - 1
+            mask[1 + int(round(h * (1 - (1 - t * t) ** 0.5))):H, 1 + x] = True
+        out = np.zeros((H, W, 4), np.uint8)
+        out[mask] = (150, 140, 96, 255)
+        lit = mask.copy()
+        lit[:, 1 + w // 2:] = False
+        out[lit] = (172, 160, 112, 255)
+        o = _outline(mask)
+        o[-1] = False
+        o[:, 0] = False
+        o[:, -1] = False
+        out[o] = INK
+        return out
     if kind == "tree":
-        s = max(5, int(ppc * (0.55 + 0.1 * (variant % 2))))
-        big = Image.new("RGBA", (s * sc, int(s * 1.25) * sc), (0, 0, 0, 0))
-        d = ImageDraw.Draw(big)
-        W, H = big.size
-        green = [(58, 86, 46), (66, 94, 50), (50, 78, 44), (74, 98, 54)][variant % 4]
-        d.rectangle([W * 0.45, H * 0.6, W * 0.55, H * 0.98], fill=(70, 52, 34, 255))
-        d.ellipse([W * 0.06, H * 0.05, W * 0.94, H * 0.78], fill=green + (255,), outline=INK, width=sc)
-        d.ellipse([W * 0.22, H * 0.14, W * 0.6, H * 0.45], fill=tuple(min(255, int(c * 1.22)) for c in green) + (255,))
-    elif kind == "pine":
-        s = max(5, int(ppc * 0.48))
-        big = Image.new("RGBA", (s * sc, int(s * 1.6) * sc), (0, 0, 0, 0))
-        d = ImageDraw.Draw(big)
-        W, H = big.size
-        green = [(40, 66, 50), (46, 72, 54), (36, 60, 46), (52, 76, 58)][variant % 4]
-        d.rectangle([W * 0.44, H * 0.8, W * 0.56, H * 0.99], fill=(64, 46, 30, 255))
-        d.polygon([(W * 0.5, H * 0.02), (W * 0.98, H * 0.84), (W * 0.02, H * 0.84)], fill=green + (255,), outline=INK)
-        d.polygon([(W * 0.5, H * 0.02), (W * 0.5, H * 0.84), (W * 0.02, H * 0.84)],
-                  fill=tuple(min(255, int(c * 1.2)) for c in green) + (255,))
-    elif kind == "hill":
-        s = max(6, int(ppc * 0.95))
-        big = Image.new("RGBA", (s * sc, int(s * 0.55) * sc), (0, 0, 0, 0))
-        d = ImageDraw.Draw(big)
-        W, H = big.size
-        d.chord([0, 0, W - 1, H * 2], 180, 360, fill=(128, 120, 80, 255))
-        d.chord([0, 0, W * 0.55, H * 2], 180, 360, fill=(146, 138, 92, 255))
-        d.arc([0, 0, W - 1, H * 2], 190, 350, fill=INK, width=sc)
-    elif kind in ("mountain", "peak"):
-        s = max(8, int(ppc * (1.35 + 0.15 * (variant % 2))))
-        big = Image.new("RGBA", (s * sc, int(s * 0.85) * sc), (0, 0, 0, 0))
-        d = ImageDraw.Draw(big)
-        W, H = big.size
-        top = W * (0.42 + 0.16 * rng.random())
-        rock = (128, 120, 110) if kind == "mountain" else (150, 150, 156)
-        dark = (88, 82, 76) if kind == "mountain" else (112, 114, 124)
-        d.polygon([(0, H - 1), (top, H * 0.05), (W - 1, H - 1)], fill=dark + (255,))
-        d.polygon([(0, H - 1), (top, H * 0.05), (top + W * 0.05, H - 1)], fill=rock + (255,))
-        snow = 0.32 if kind == "mountain" else 0.55
-        d.polygon([(top - W * snow * 0.32, H * snow), (top, H * 0.05), (top + W * snow * 0.32, H * snow),
-                   (top + W * 0.06, H * snow * 0.8), (top - W * 0.05, H * snow * 1.05)], fill=(232, 234, 238, 255))
-        d.line([(0, H - 1), (top, H * 0.05), (W - 1, H - 1)], fill=INK, width=sc + 1)
-    elif kind == "reeds":
-        s = max(4, int(ppc * 0.35))
-        big = Image.new("RGBA", (s * sc, s * sc), (0, 0, 0, 0))
-        d = ImageDraw.Draw(big)
-        W, H = big.size
-        for k in range(4):
-            x = W * (0.15 + 0.23 * k)
-            d.line([(x, H), (x + (k - 1.5) * sc, H * 0.15)], fill=(70, 90, 52, 255), width=sc)
-        d.line([(0, H - sc), (W, H - sc)], fill=(60, 84, 96, 255), width=sc)
-    elif kind == "tuft":
-        s = max(3, int(ppc * 0.25))
-        big = Image.new("RGBA", (s * sc, s * sc), (0, 0, 0, 0))
-        d = ImageDraw.Draw(big)
-        W, H = big.size
-        for k in range(3):
-            x = W * (0.2 + 0.3 * k)
-            d.line([(x, H), (x + (k - 1) * sc * 1.5, H * 0.2)], fill=(84, 104, 56, 200), width=sc)
-    elif kind == "scrub":
-        s = max(3, int(ppc * 0.22))
-        big = Image.new("RGBA", (s * sc, s * sc), (0, 0, 0, 0))
-        d = ImageDraw.Draw(big)
-        W, H = big.size
-        d.ellipse([0, H * 0.3, W, H], fill=(108, 112, 96, 220))
-    elif kind == "dune":
-        s = max(5, int(ppc * 0.7))
-        big = Image.new("RGBA", (s * sc, int(s * 0.4) * sc), (0, 0, 0, 0))
-        d = ImageDraw.Draw(big)
-        W, H = big.size
-        d.arc([0, 0, W, H * 2], 200, 340, fill=(120, 98, 62, 200), width=sc)
-    else:
-        big = Image.new("RGBA", (4, 4), (0, 0, 0, 0))
-    out = big.resize((max(1, big.width // sc), max(1, big.height // sc)), Image.LANCZOS)
-    if kind in ("tree", "pine", "mountain", "peak"):
-        sh = Image.new("RGBA", (out.width + 3, out.height + 2), (0, 0, 0, 0))
-        a = np.asarray(out)[..., 3]
-        shadow = np.zeros((sh.height, sh.width, 4), np.uint8)
-        shadow[2:2 + a.shape[0], 3:3 + a.shape[1], 3] = (a * 0.35).astype(np.uint8)
-        sh = Image.fromarray(shadow, "RGBA").filter(ImageFilter.GaussianBlur(1))
-        sh.alpha_composite(out, (0, 0))
-        out = sh
-    return out
+        r = max(1, int(round(k * 0.2)))
+        d = 2 * r + 1
+        H, W = d + max(1, r // 2) + 2, d + 2
+        mask = np.zeros((H, W), bool)
+        yy, xx = np.mgrid[0:d, 0:d]
+        mask[1:1 + d, 1:1 + d] = (xx - r) ** 2 + (yy - r) ** 2 <= r * r + r * 0.6
+        trunk = np.zeros((H, W), bool)
+        trunk[1 + d:H - 1, 1 + r] = True
+        g = np.array([(70, 100, 54), (78, 106, 56), (62, 92, 50), (84, 110, 60)][variant % 4])
+        out = np.zeros((H, W, 4), np.uint8)
+        out[mask] = (*g, 255)
+        ys, xs = np.mgrid[0:H, 0:W]
+        out[mask & (ys <= 1 + r * 0.7) & (xs <= 1 + r * 0.9)] = (*np.minimum(255, g * 1.25).astype(int), 255)
+        out[trunk] = (86, 62, 40, 255)
+        out[_outline(mask | trunk)] = INK
+        return out
+    if kind == "pine":
+        w = max(3, int(round(k * 0.36))) | 1
+        h = max(4, int(round(k * 0.62)))
+        H, W = h + 3, w + 2
+        mask = np.zeros((H, W), bool)
+        c = w // 2
+        for y in range(h):
+            half = int(round(c * (y + 1) / h))
+            mask[1 + y, 1 + c - half:2 + c + half] = True
+        trunk = np.zeros((H, W), bool)
+        trunk[1 + h:H - 1, 1 + c] = True
+        g = np.array([(50, 80, 62), (56, 86, 64), (46, 74, 58), (60, 90, 68)][variant % 4])
+        out = np.zeros((H, W, 4), np.uint8)
+        out[mask] = (*g, 255)
+        lit = mask.copy()
+        lit[:, 2 + c:] = False
+        out[lit] = (*np.minimum(255, g * 1.22).astype(int), 255)
+        out[trunk] = (80, 58, 38, 255)
+        out[_outline(mask | trunk)] = INK
+        return out
+    if kind == "reeds":
+        h = max(2, k // 4)
+        out = np.zeros((h + 1, 5, 4), np.uint8)
+        for x in (0, 2, 4):
+            out[(x // 2) % 2:h + 1, x] = (70, 92, 56, 255)
+        return out
+    if kind == "tuft":
+        out = np.zeros((2, 3, 4), np.uint8)
+        out[0, 0] = out[0, 2] = out[1, 1] = (86, 104, 58, 255)
+        return out
+    if kind == "scrub":
+        out = np.zeros((2, 3, 4), np.uint8)
+        out[0, 1] = out[1, 0] = out[1, 2] = (110, 112, 92, 255)
+        out[1, 1] = (92, 96, 80, 255)
+        return out
+    if kind == "dune":
+        w = max(4, int(k * 0.7))
+        out = np.zeros((2, w, 4), np.uint8)
+        out[0, 1:w - 1] = (130, 104, 66, 255)
+        out[1, 0] = out[1, w - 1] = (130, 104, 66, 255)
+        return out
+    return np.zeros((1, 1, 4), np.uint8)
 
 
 # ---------------------------------------------------------------------------- chunk cache

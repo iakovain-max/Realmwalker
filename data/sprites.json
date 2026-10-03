@@ -236,10 +236,12 @@
       "tundra": {"color": [144, 150, 142], "marks": "tundra", "density": 0.3},
       "desert": {"color": [168, 146, 100], "marks": "dunes", "density": 0.5}
     },
-    "road": [132, 104, 66],
-    "river": [62, 98, 128],
-    "ink": [34, 26, 18],
+    "road": [112, 64, 42],
+    "river": [92, 138, 168],
+    "ink": [52, 38, 26],
     "shore": [196, 186, 150],
+    "paper": [222, 204, 162],
+    "sea": [52, 86, 108],
     "settlements": {"hamlet": "map/hamlet", "village": "map/village", "town": "map/town", "city": "map/city", "hold": "map/hold", "elfhall": "map/elfhall"},
     "sites": {"ruin": "map/ruin", "cave": "map/cave", "barrow": "map/barrow", "tower": "map/tower", "lair": "map/lair"}
   }

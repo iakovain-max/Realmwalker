@@ -136,7 +136,7 @@ class WorldMapScreen(Screen):
         canvas.clear_cells(0, 0, mw, mh)
         overlays = []
         if self.show_realms:
-            overlays.append(self._realm_overlay())
+            overlays.append(self._realm_overlay(ppc))
         if self.show_weather:
             overlays.append(self._weather_overlay())
         plan = self.plan()
@@ -144,7 +144,8 @@ class WorldMapScreen(Screen):
                           overlays=[o for o in overlays if o], route=plan.path if plan else None)
         canvas.hit(0, 0, mw, mh)
 
-    def _realm_overlay(self):
+    def _realm_overlay(self, ppc: int):
+        from realmwalker.ui.gfx.paint import pixel_scale
         from realmwalker.world.factions import territory
 
         world = self.game.world
@@ -153,14 +154,13 @@ class WorldMapScreen(Screen):
         _, realm = territory(world)
         known = self.game.renown.known
         explored = self.game.player.explored
-        key = ("realms", id(world), world.faction_version, int(explored.sum()), len(known))
+        k = ppc // pixel_scale(ppc)  # in the painted map's own pixels, so the lines sit on its pixels
+        key = ("realms", id(world), world.faction_version, int(explored.sum()), len(known), k)
 
         def make():
-            """Four pixels per square: a light wash of each realm's colour and a firm line along its border.
-            Realms you have not heard of are only outlined, faintly."""
-            from PIL import Image as PImage, ImageFilter
-
-            k = 4
+            """Each realm hatched in its colour, as on a printed map, with a dashed line along its border; both
+            realms draw their own line, so a border is two colours side by side. Realms you have not heard of are
+            only outlined, faintly, in grey."""
             big = np.repeat(np.repeat(realm.T, k, axis=0), k, axis=1)
             seen = np.repeat(np.repeat(explored.T, k, axis=0), k, axis=1)
             a = np.zeros((big.shape[0], big.shape[1], 4), np.uint8)
@@ -169,6 +169,9 @@ class WorldMapScreen(Screen):
             border[1:, :] |= big[:-1, :] != big[1:, :]
             border[:, :-1] |= big[:, :-1] != big[:, 1:]
             border[:, 1:] |= big[:, :-1] != big[:, 1:]
+            ys, xs = np.mgrid[0:big.shape[0], 0:big.shape[1]]
+            hatch = (xs - ys) % 4 == 0
+            dash = (xs + ys) % 6 < 4
             for fid in np.unique(realm):
                 if fid < 0:
                     continue
@@ -180,15 +183,17 @@ class WorldMapScreen(Screen):
                 show = mine & (seen | is_known)
                 if is_known:
                     a[show, :3] = f.color
-                    a[show, 3] = 60
-                    a[show & border, 3] = 230
+                    a[show, 3] = 34
+                    a[show & hatch, 3] = 110
+                    line = show & border & dash
+                    a[line, 3] = 235
                 else:
-                    a[show & border, :3] = (150, 150, 156)
-                    a[show & border, 3] = 110
-            im = PImage.fromarray(a, "RGBA").filter(ImageFilter.GaussianBlur(0.6))
-            return im
+                    line = show & border & dash
+                    a[line, :3] = (150, 150, 156)
+                    a[line, 3] = 120
+            return a
 
-        return (key, make, 255)
+        return (key, make, 255, True)
 
     def _weather_overlay(self):
         from realmwalker.world.weather import weather_grid
