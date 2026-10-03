@@ -52,27 +52,39 @@ class LocalActor:
         return cls(d["id"], d["group"], d["x"], d["y"], [Creature.from_dict(c) for c in d["creatures"]], d.get("alert", False))
 
 
+DEADLY_RATIO = 6.5  # at or above this, a band "will very likely kill you" (threat_words)
+
+
+def threat_ratio(tables, def_ids: list[str], party) -> float:
+    """How a band measures up against the party: its 5e adjusted experience over the party's budget."""
+    xp = sum(int(tables.creatures[d]["xp"]) for d in def_ids)
+    count = len(def_ids)
+    mult = 1.0 if count == 1 else (1.5 if count == 2 else (2.0 if count <= 6 else 2.5))
+    budget = sum(25 * c.level for c in party if c.alive)
+    return xp * mult / max(1, budget)
+
+
 def threat_words(tables, creatures: list[Creature], party) -> str:
     """How dangerous a group looks next to the party (5e encounter difficulty, in words)."""
-    xp = sum(int(tables.creatures[c.def_id]["xp"]) for c in creatures)
-    count = len(creatures)
-    mult = 1.0 if count == 1 else (1.5 if count == 2 else (2.0 if count <= 6 else 2.5))
-    adjusted = xp * mult
-    budget = sum(25 * c.level for c in party if c.alive)
-    ratio = adjusted / max(1, budget)
+    return ratio_words(threat_ratio(tables, [c.def_id for c in creatures], party))
+
+
+def ratio_words(ratio: float) -> str:
     # Thresholds tuned against simulated fights: one wolf or two bandits against a level-1 fighter
     # is "fair" (about 80% won), two wolves or three bandits "dangerous" (30-40% won).
     if ratio < 1.5:
         return "<good>You could take them.</>"
     if ratio < 3.5:
         return "<fg>A fair fight: it could go either way.</>"
-    if ratio < 6.5:
+    if ratio < DEADLY_RATIO:
         return "<warn>They look dangerous. Think twice.</>"
     return "<danger>This will very likely kill you.</>"
 
 
 def encounter_chance(danger: int, minutes: float, night: bool, on_road: bool) -> float:
-    per_hour = 0.004 + 0.009 * danger
+    # A third rarer than it was until 2026-10 (0.004 + 0.009 a step of danger): a lone traveller met trouble every
+    # two or three days, lost a third of those fights at level one, and rarely lived a month.
+    per_hour = 0.003 + 0.006 * danger
     if night:
         per_hour *= 1.6
     if on_road:

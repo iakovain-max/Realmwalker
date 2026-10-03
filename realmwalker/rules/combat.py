@@ -26,6 +26,7 @@ from realmwalker.rules.wounds import ARMOR_FACTOR, PART_GROUP, make_wound, roll_
 FRONT, BACK = "front", "back"
 PARTY, FOE = "party", "foe"
 SIZES = ["tiny", "small", "medium", "large", "huge", "gargantuan"]
+WOUND_HP_FLOOR = 14  # hit points a character's body counts as having, at least, when a blow is sized as a wound
 MORALE_HP = {"beast": 0.4, "bandit": 0.35, "coward": 0.6, "soldier": 0.3, "warrior": 0.15}
 FEARLESS = {"fanatic", "mindless"}
 MERCIFUL = {"bandit", "coward", "soldier"}  # these rob a beaten party and leave it alive
@@ -808,9 +809,13 @@ class Battle:
         self._apply_hp_loss(target, amount, source=att, cause=f"{att.the_name if att else 'a wound'}'s {weapon}" if att else weapon)
         target.damage_taken += amount
         if target.state not in ("dead",) and hp_before > 0:
-            chance = wound_chance(amount, target.max_hp, target.hp, crit, target.armor_factor(part))
+            # A wound is judged against the body, not the hit points: a level-1 wizard's seven are luck and nerve,
+            # and a 5-point scratch on them is not a gushing wound. Below WOUND_HP_FLOOR the floor is used.
+            body_hp = max(target.max_hp, WOUND_HP_FLOOR) if target.char else target.max_hp
+            hp_now = target.hp + (body_hp - target.max_hp)
+            chance = wound_chance(amount, body_hp, hp_now, crit, target.armor_factor(part))
             if self.rng.chance(chance):
-                severity = severity_for(amount, target.max_hp, crit, self.rng)
+                severity = severity_for(amount, body_hp, crit, self.rng)
                 wound = make_wound(part, dtype, severity, self.rng, bite=bite, now=self.now,
                                    note=f"{att.cdef['name'] if att and att.creature else weapon}")
                 if wound is not None:
@@ -830,7 +835,7 @@ class Battle:
                 target.stable = False
                 target.dying -= 2 if amount < target.max_hp else 99
                 if target.dying <= 0:
-                    self._kill(target, cause)
+                    self._kill(target, cause, killer=source)
             return
         new_hp = target.hp - amount
         if new_hp <= 0:
@@ -882,6 +887,12 @@ class Battle:
                 killer.char.kills[f.cdef["name"]] = killer.char.kills.get(f.cdef["name"], 0) + 1
         else:
             f.char.alive = False
+            # What the chronicle will say: who did it, or what it was they bled to death fighting.
+            if killer is not None and killer.creature is not None:
+                f.char.death_cause = f"killed by {killer.the_name}"
+            else:
+                kinds = [x.cdef["plural"] for x in self.side(FOE) if x.creature is not None]
+                f.char.death_cause = f"bled to death fighting {kinds[0]}" if kinds else "bled to death in a fight"
             self.say(f"<danger>{f.the_name} is dead.</> ({cause})", "danger")
         self._morale_losses(f.side)
         if f.creature and "leader" in f.cdef.get("traits", []):
@@ -1498,6 +1509,7 @@ class Battle:
                     remove_item(c, diamond.uid, 1)
                     target.state = "fighting"
                     target.char.alive = True
+                    target.char.death_cause = None  # (or the body would be found dead of it again as time passed)
                     target.hp = 1
                     target.conditions = {"prone": -1}
                     self.say(f"{target.the_name} draws a ragged breath.", "magic")

@@ -1,8 +1,12 @@
 {
-  "_comment": "Living off the land. firewood: how easy it is to find fuel in each land (plenty/some/little/none). forage: Survival DC to find something to eat (winter adds winter_dc), what you find (item, dice) and extras found on a good roll (item, dice, chance). hunt: Survival DC, and the game you might take: [name, weight, meat dice, hide item or null]. fish: DC and catch. cooking: what raw food becomes over a fire (needs_pot: needs a pot or mess kit).",
+  "_comment": "Living off the land. firewood: how easy it is to find fuel in each land (plenty/some/little/none). shelter: Survival DC to build a rough shelter (a lean-to, a hollow in the lee of rocks) in each land. forage: Survival DC to find something to eat (winter adds winter_dc), what you find (item, dice) and extras found on a good roll (item, dice, chance). hunt: Survival DC, and the game you might take: [name, weight, meat dice, hide item or null]. fish: DC and catch. cooking: what raw food becomes over a fire (needs_pot: needs a pot or mess kit).",
   "firewood": {
     "forest": "plenty", "pine_forest": "plenty", "hills": "some", "plains": "some", "marsh": "some", "coast": "some",
     "mountains": "little", "high_mountains": "none", "tundra": "little", "desert": "none"
+  },
+  "shelter": {
+    "forest": 8, "pine_forest": 8, "hills": 10, "plains": 11, "marsh": 12, "coast": 11,
+    "mountains": 10, "high_mountains": 15, "tundra": 14, "desert": 13
   },
   "forage": {
     "forest": {"dc": 11, "winter_dc": 5, "find": [["wild_food", "1d3"]], "extra": [["healing_herbs", "1d2", 0.35]]},

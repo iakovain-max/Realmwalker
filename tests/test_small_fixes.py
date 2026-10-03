@@ -74,6 +74,7 @@ def test_a_trap_that_kills_is_named(game):
     dungeon.descend(game, 1)
     lm = game.local
     game.leader.hp = 1
+    game.leader.max_hp = 1  # so frail that the darts kill outright (more than a whole life's hit points below nothing)
     trap = {"kind": "trap", "trap": "darts", "dc": 30}
     for c in game.party:
         c.abilities["wis"] = 1  # nobody will spot it
@@ -81,6 +82,24 @@ def test_a_trap_that_kills_is_named(game):
     if game.over is None:
         pytest.skip("the darts missed")
     assert game.over["cause"].startswith("killed by"), game.over
+
+
+def test_a_trap_that_takes_the_last_hit_point_knocks_you_senseless(game):
+    """0 hit points from a trap is down, as in a fight, not dead (2026-10)."""
+    from realmwalker.game import dungeon
+
+    site = game.world.sites[0]
+    game.player.x, game.player.y = site.x, site.y
+    game.player.local_key = None
+    game.enter_local()
+    dungeon.descend(game, 1)
+    game.leader.hp = 1
+    for c in game.party:
+        c.abilities["wis"] = 1
+    start = game.world.time
+    dungeon.spring(game, game.local, game.player.lx, game.player.ly, {"kind": "trap", "trap": "pit", "dc": 30})
+    assert game.over is None and game.leader.alive and game.leader.hp >= 1
+    assert game.world.time - start >= 30  # lying senseless
 
 
 def test_a_chest_of_coins_does_not_end_in_a_space(game, monkeypatch):

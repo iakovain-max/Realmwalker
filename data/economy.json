@@ -64,12 +64,14 @@
     "elfhall": {"stock": 0.6, "coin": 2500}
   },
   "animals": {
-    "_comment": "Animals bought at a stable. carry: extra pounds before you count as laden; ride: travel time multiplier on open ground and roads (1 = no faster); days_without_food: how long it lasts unfed.",
+    "_comment": "Animals bought at a stable. carry: extra pounds before you count as laden; ride: travel time multiplier on open ground and roads when everyone in the party rides (1 = no faster); days_without_food: how long it lasts unfed.",
     "mule": {"name": "mule", "price": 800, "carry": 200, "ride": 1.0, "days_without_food": 4},
     "pony": {"name": "pony", "price": 3000, "carry": 120, "ride": 0.85, "days_without_food": 3},
     "draft_horse": {"name": "draft horse", "price": 5000, "carry": 250, "ride": 0.9, "days_without_food": 3},
     "riding_horse": {"name": "riding horse", "price": 7500, "carry": 100, "ride": 0.65, "days_without_food": 3}
   },
+  "ride_lands": {"plains": 1.0, "coast": 1.0, "tundra": 1.0, "desert": 1.0, "hills": 1.0, "forest": 0.5,
+                 "pine_forest": 0.4, "marsh": 0.0, "mountains": 0.0, "high_mountains": 0.0},
   "grazing": ["plains", "hills", "forest", "coast", "marsh"],
   "services": {
     "_comment": "Prices in copper. Inn rooms and meals scale with the settlement: price x size factor.",

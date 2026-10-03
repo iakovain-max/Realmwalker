@@ -87,7 +87,9 @@ def test_needs_grow_and_sleep_restores(tables):
 
 def test_a_winter_night_outside_is_dangerous_and_a_fire_saves_you(tables):
     cold = live(hero(tables), tables, Environment(-8, 15, 0, "sleep", bedding=3), 8)
-    assert body.heat_index(cold.body_heat) <= -3, "hypothermic by morning"
+    assert body.heat_index(cold.body_heat) <= -2, "cold and shivering by morning"
+    longer = live(hero(tables), tables, Environment(-8, 15, 0, "sleep", bedding=3), 12)
+    assert body.heat_index(longer.body_heat) <= -3, "and hypothermic if it goes on"
     warm = live(hero(tables), tables, Environment(-8, 15, 0, "sleep", fire=True, bedding=3), 8)
     assert body.heat_index(warm.body_heat) == 0
     inn = live(hero(tables), tables, Environment(-8, 15, 0, "sleep", sheltered=True, bedding=3), 8)

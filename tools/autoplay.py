@@ -478,6 +478,7 @@ def _start_a_fight(app: App, rng: random.Random, report: AutoplayReport) -> None
             towns = [t for t in game.world.settlements if t.kind in ("town", "city")]
             here = rng.choice(towns if towns and rng.random() < 0.6 else game.world.settlements)
             game.player.local_key = None
+            game.sneaking = False
             game.player.x, game.player.y = here.x, here.y
         if not game.in_local:
             game.enter_local()
@@ -537,6 +538,7 @@ def _start_a_fight(app: App, rng: random.Random, report: AutoplayReport) -> None
                 where = (s.x, s.y)
             if where is not None:
                 game.player.local_key = None
+                game.sneaking = False
                 game.player.x, game.player.y = where
                 game._arrive(None)
                 if rng.random() < 0.5 and not game.busy:
@@ -548,6 +550,7 @@ def _start_a_fight(app: App, rng: random.Random, report: AutoplayReport) -> None
 
         site = rng.choice(game.world.sites)
         game.player.local_key = None
+        game.sneaking = False
         game.player.x, game.player.y = site.x, site.y
         game.enter_local()
         dungeon.descend(game, 1)

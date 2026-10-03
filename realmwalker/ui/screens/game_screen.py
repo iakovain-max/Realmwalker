@@ -617,6 +617,7 @@ class GameScreen(Screen):
         else:
             if game.in_local:
                 game.player.local_key = None
+                game.sneaking = False
             camera = draw_overworld(canvas.con, game, self.picture, mx, my, mw, mh, cursor)
         self.view = (mx, my, *camera)
         canvas.hit(mx, my, mw, mh, tooltip=None)
@@ -784,9 +785,11 @@ class GameScreen(Screen):
             canvas.markup(x, y, f"{purse}{load}", max_width=w)
             y += 1
             if member.animals:
-                specs = game.tables.economy["animals"]
-                beasts = ", ".join(f"{a['name']} the {specs.get(a['kind'], {}).get('name', 'animal')}" for a in member.animals)
-                y += canvas.wrapped(x, y, f"<dim>With</> {markup.escape(beasts)}", w, max_lines=2)
+                from realmwalker.game import mounts
+
+                riding = " · ".join(mounts.who_rides_what(game))
+                walks = "" if mounts.all_mounted(game) else " <warn>(at a walk)</>"
+                y += canvas.wrapped(x, y, f"<dim>Riding:</> {markup.escape(riding)}{walks}", w, max_lines=3)
             from realmwalker.ui.screens.health import status_words
 
             words = status_words(member, game.tables)

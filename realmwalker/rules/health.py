@@ -29,6 +29,10 @@ HEAL_HOURS = {1: 72.0, 2: 240.0, 3: 360.0}  # hours to heal one step of severity
 FRACTURE_HEAL_HOURS = {1: 300.0, 2: 600.0, 3: 720.0}
 OPEN_KINDS = {"cut", "puncture", "bite", "burn", "frostbite"}
 INFECTION_PER_DAY = {1: 0.06, 2: 0.14, 3: 0.25}  # chance a fresh open wound festers, per day
+# Each day a festering wound is fought: a good day takes this much off, a bad day adds this (until 2026-10, 12 off and
+# 20 on: even a cleaned, bound wound on a resting body drifted towards the grave once it had turned).
+INFECTION_EASES = 14.0
+INFECTION_SPREADS = 16.0
 BLOOD_REGEN_PER_HOUR = 1.0
 PAIN_STAGES = [(15, "in shock", "danger"), (10, "in agony", "danger"), (6, "in pain", "warn"), (3, "hurting", "dim")]
 BLOOD_STAGES = [(25, "bleeding to death", "danger"), (40, "collapsing", "danger"), (60, "faint", "warn"), (80, "pale", "dim")]
@@ -167,10 +171,12 @@ def broken_arm(char: Character, side: str) -> bool:
     return any(w.part == part and (w.kind == "fracture" and w.severity >= 2 or w.severity >= 3) for w in char.wounds)
 
 
-def travel_multiplier(char: Character, tables) -> float:
-    m = injury_effects(char, tables)["travel"]
+def travel_multiplier(char: Character, tables, riding: bool = False) -> float:
+    """How much an injured or sick body slows the party. In the saddle, legs do not matter (a lost or broken leg, a
+    wounded thigh): sickness, blood loss and pain still do."""
+    m = 1.0 if riding else injury_effects(char, tables)["travel"]
     for w in char.wounds:
-        if w.part in ("left_leg", "right_leg"):
+        if w.part in ("left_leg", "right_leg") and not riding:
             m *= {1: 1.0, 2: 1.3, 3: 1.7}[w.severity] * (1.15 if w.kind == "fracture" and not w.splinted else 1.0)
     for e in disease_effects(char, tables):
         m *= float(e.get("travel", 1.0))
@@ -370,13 +376,13 @@ def _infection(char: Character, tables, ctx: HealthContext, hours: float, restin
             bonus += 1 if resting else 0
             roll = dice.d20(rng).natural + sheet.save_bonus("con") + bonus
             if roll >= 10 + w.severity:
-                w.infection = max(0.0, w.infection - 12.0)
+                w.infection = max(0.0, w.infection - INFECTION_EASES)
                 if w.infection <= 0:
                     w.infected = False
                     events.append((f"The {where} wound on {n} is clean at last.", "good"))
             else:
                 before = w.infection
-                w.infection = min(100.0, w.infection + 20.0)
+                w.infection = min(100.0, w.infection + INFECTION_SPREADS)
                 if before < 70 <= w.infection:
                     events.append((f"<danger>Red streaks run from the {where} wound on {n}: the poison is in the blood.</>",
                                    "danger"))

@@ -110,6 +110,12 @@ def outlook(game, plan) -> list[str]:
 
     hours = walking_hours(game, plan)
     out: list[str] = []
+    if game.leader.animals:
+        from realmwalker.game import mounts
+
+        how = mounts.summary(game)
+        if how:
+            out.append(how)
     n = nights(game, plan)
     if n == 0:
         if hours >= 2:
@@ -166,6 +172,11 @@ def worries(game, nearly_there: bool = False) -> dict[str, str]:
     night = _night_key(game)
     if night is not None and not nearly_there:
         out[night] = "Night is coming on."
+    sky = game.weather
+    if sky.kind in ("storm", "blizzard"):
+        m = game.moment
+        out[f"storm/{m.total_days}"] = (f"A {sky.kind} is breaking: no fire will catch in the open, and the cold will get "
+                                        f"into you. Find a roof, or build a rough shelter (r).")
     food, water = food_days(game) > 0, water_pints(game) > 0
     for c in game.party:
         if not c.alive:
@@ -227,7 +238,7 @@ def reason_to_stop(game, nearly_there: bool = False) -> str | None:
         return None
     kinds = {key.split("/")[0] for key in fresh}
     text = " ".join(now[key] for key in fresh[:3])
-    if kinds & {"night", "tired", "worn", "cold", "hot", "sick", "blood"}:
+    if kinds & {"night", "tired", "worn", "cold", "hot", "sick", "blood", "storm"}:
         roof = nearest_roof(game)
         if roof is not None:
             text += f" {roof}"
@@ -257,7 +268,7 @@ def nearest_roof(game, reach: int = 2) -> str | None:
     return f"{s.name} is {_where(game, s.x, s.y)}: a roof for the night."
 
 
-def nearest_water(game, reach: int = 4) -> str | None:
+def nearest_water(game, reach: int = 8) -> str | None:
     """The nearest water you have seen: a stream, a river, a lake, a town's well."""
     w = game.world
     p = game.player

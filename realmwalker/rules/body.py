@@ -40,13 +40,14 @@ EXHAUSTION_EFFECTS = [
     "speed halved",
     "disadvantage on attacks and saving throws",
     "hit point maximum halved",
-    "cannot walk",
+    "can barely stagger",
     "death",
 ]
 STRAIN_PER_LEVEL = 24.0  # strain hours per level of exhaustion (see strain rates below)
 COMFORT_LOW = 14.0
 FIRE_DRYING_IN_RAIN = 25.0  # wetness per hour a fire takes off you while the rain still falls
 COMFORT_HIGH = 32.0
+FIRE_COMFORT = 28.0  # a fire warms you up to about this, and no further: anyone too hot sits back from it
 
 
 @dataclass
@@ -54,10 +55,11 @@ class Environment:
     air: float  # degrees C
     wind: float  # km/h
     wet_per_hour: float  # how fast rain soaks an unprotected person
-    activity: str = "rest"  # "walk", "rest", "sleep", "fight"
+    activity: str = "rest"  # "walk", "ride", "rest", "sleep", "fight"
     sheltered: bool = False  # a roof and walls (town, building)
     fire: bool = False  # warming by a fire
     tent: bool = False
+    shelter: bool = False  # a rough shelter: out of the wind and most of the rain, but colder than canvas
     bedding: float = 0.0  # warmth of blankets and bedrolls while sleeping
     wading: bool = False  # just waded a river
 
@@ -113,26 +115,38 @@ def insulation_factor(air: float) -> float:
 def felt_temperature(char: Character, sheet: Sheet, env: Environment) -> float:
     """What the body feels, all things considered (degrees C)."""
     air = env.air
-    wind = 0.0 if env.sheltered or env.tent else env.wind
+    wind = 0.0 if env.sheltered or env.tent or env.shelter else env.wind
     if env.sheltered:
         air = max(air, 12.0) if air < 24 else min(air, 26.0)
     warmth = sheet.warmth() * (1.0 - 0.55 * char.wet / 100.0)
-    felt = air + warmth * insulation_factor(env.air)
+    clothes = warmth * insulation_factor(env.air)
+    felt = air
     felt -= wind * 0.25 * (1.0 - sheet.wind_protection()) * (1.0 if air < 20 else 0.3)
     felt -= char.wet / 100.0 * (6.0 if air < 20 else 2.0)  # wet skin loses heat fast
-    felt += {"walk": 4.0, "fight": 6.0, "sleep": -3.0}.get(env.activity, 0.0)
+    felt += {"walk": 4.0, "ride": 1.5, "fight": 6.0, "sleep": -3.0}.get(env.activity, 0.0)
     if env.activity == "sleep":
         felt += env.bedding
     if env.tent:
         felt += 4.0
+    elif env.shelter:
+        felt += 2.0
+    # Clothes warm you as much as you need and, when it is mild, no more: anyone getting too hot opens the cloak or
+    # takes it off (a fur-cloaked traveller once died of heatstroke sitting in an inn at 16 C). Real heat is another
+    # matter: in a heat wave, or marching hard, what you wear still counts against you.
+    room = COMFORT_HIGH - 1.0 - felt
+    felt += min(clothes, max(room, 0.25 * clothes))  # (a quarter of it is the armour and the shirt you cannot shed)
     if env.fire:
-        felt += 12.0
+        felt = max(felt, min(felt + 12.0, FIRE_COMFORT))
     return felt
+
+
+COLD_RATE = 0.6  # body heat lost per hour for each degree felt below comfort (0.75 until 2026-10: soaked in a cold
+# spring rain, a traveller went from comfortable to dead in about twelve hours, with no time to find a roof)
 
 
 def heat_change_per_hour(felt: float) -> float:
     if felt < COMFORT_LOW:
-        return -(COMFORT_LOW - felt) * 0.75
+        return -(COMFORT_LOW - felt) * COLD_RATE
     if felt > COMFORT_HIGH:
         return (felt - COMFORT_HIGH) * 1.0
     return 0.0
@@ -148,14 +162,15 @@ def tick(char: Character, sheet: Sheet, env: Environment, minutes: float) -> lis
     hours = minutes / 60.0
     before = snapshot(char)
     walking = env.activity in ("walk", "fight")
+    riding = env.activity == "ride"  # in the saddle: on the move, but the horse does the walking
     sleeping = env.activity == "sleep"
 
     # Hunger and thirst.
-    h_mult = 1.3 if walking else (0.6 if sleeping else 1.0)
+    h_mult = 1.3 if walking else (1.1 if riding else (0.6 if sleeping else 1.0))
     if char.body_heat <= -40:
         h_mult *= 1.3  # shivering burns food
     char.hunger = min(100.0, char.hunger + HUNGER_PER_HOUR * h_mult * hours)
-    t_mult = 1.4 if walking else (0.5 if sleeping else 1.0)
+    t_mult = 1.4 if walking else (1.15 if riding else (0.5 if sleeping else 1.0))
     if env.air > 25 and not env.sheltered:
         t_mult *= 1.0 + (env.air - 25) * 0.08
     if char.body_heat >= 50:
@@ -166,11 +181,11 @@ def tick(char: Character, sheet: Sheet, env: Environment, minutes: float) -> lis
     if sleeping:
         char.fatigue = max(0.0, char.fatigue - SLEEP_RECOVERY_PER_HOUR * hours)
     else:
-        f_mult = 1.5 if walking else 1.0
+        f_mult = 1.5 if walking else (1.15 if riding else 1.0)
         char.fatigue = min(100.0, char.fatigue + FATIGUE_PER_HOUR * f_mult * hours)
 
     # Dirt.
-    d_mult = 1.5 if walking else 1.0
+    d_mult = 1.5 if walking or riding else 1.0
     if any(w.bleed and not w.bandaged for w in char.wounds):
         d_mult += 1.0
     if not env.sheltered and env.wet_per_hour > 30:
@@ -180,7 +195,7 @@ def tick(char: Character, sheet: Sheet, env: Environment, minutes: float) -> lis
     # Getting wet and drying out.
     if env.wading:
         char.wet = max(char.wet, 70.0 * (1.0 - 0.5 * sheet.water_protection()))
-    covered = env.sheltered or env.tent
+    covered = env.sheltered or env.tent or env.shelter
     if env.wet_per_hour > 0 and not covered and env.fire:
         # Hunched close to a fire in the rain: it steams you dry about as fast as all but a downpour wets you.
         soak = env.wet_per_hour * (1.0 - sheet.water_protection()) * 0.5
@@ -324,10 +339,12 @@ def condition_penalty(char: Character) -> int:
 
 
 def travel_multiplier(char: Character) -> float | None:
-    """Extra time taken on the road because of the body's state (None = cannot walk)."""
-    if char.exhaustion >= 5:
-        return None
-    m = 2.0 if char.exhaustion >= 2 else 1.0
+    """Extra time taken on the road because of the body's state. At exhaustion 5 the body can still stagger, slowly:
+    enough to reach the water or the roof that would save it, which the rules once did not allow (None was "cannot
+    walk", and a traveller three miles from a river died of thirst where they sat)."""
+    if char.exhaustion >= 6:
+        return None  # (dead)
+    m = 4.0 if char.exhaustion >= 5 else 2.0 if char.exhaustion >= 2 else 1.0
     if char.fatigue >= 90:
         m *= 1.25
     if char.hunger >= 80:

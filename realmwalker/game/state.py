@@ -59,6 +59,7 @@ class TravelPlan:
     minutes: int
     miles: int
     destination: tuple[int, int]
+    riding: bool = False  # everyone rides, and the minutes count it (game/mounts.py)
 
 
 # "Text detail" in Settings: 0 brief (only what matters), 1 normal, 2 rich (more of the world's voice).
@@ -172,13 +173,17 @@ class GameState:
         """How much slower than an unburdened walker the party moves (None = someone cannot move)."""
         from realmwalker.rules import body, health
 
+        from realmwalker.game import mounts
+
+        ridden = mounts.assign(self)[0] if not self.in_local and self.leader.animals else {}
         worst = 1.0
         for member in self.party:
             m = Sheet(member, self.tables).travel_multiplier()
             b = body.travel_multiplier(member)
             if m is None or b is None:
                 return None
-            worst = max(worst, m * b * health.travel_multiplier(member, self.tables))
+            # A rider's lame leg does not slow the party (on the big map, with a mount under them).
+            worst = max(worst, m * b * health.travel_multiplier(member, self.tables, riding=id(member) in ridden))
         return worst
 
     @property
@@ -348,6 +353,7 @@ class GameState:
 
     def _move_overworld(self, dx: int, dy: int) -> bool:
         p = self.player
+        self.sneaking = False  # creeping is for the close view: on the road nobody creeps
         dx, dy = self._maybe_stray(dx, dy)
         nx, ny = p.x + dx, p.y + dy
         pace = self.pace()
@@ -365,13 +371,14 @@ class GameState:
             return False
         fording = bool(self.world.river[nx, ny]) and not self.world.road[nx, ny]
         prev_area = self.world.area_at(p.x, p.y)
+        x0, y0 = p.x, p.y
         p.x, p.y = nx, ny
         p.steps += 1
         minutes = int(round(minutes * self.weather.travel_factor()))
         if self.leader.animals:
-            from realmwalker.game.services import riding_factor
+            from realmwalker.game import mounts
 
-            minutes = max(1, int(round(minutes * riding_factor(self))))
+            minutes = max(1, int(round(minutes * mounts.step_factor(self, x0, y0, nx, ny))))
         self._wading = fording
         self.pass_time(minutes, "walk")
         if self.over is not None:
@@ -391,6 +398,12 @@ class GameState:
             self.say(line[:1].upper() + line[1:], "warn")
         self.reveal()
         self._arrive(prev_area)
+        if not self.busy and self.survival:
+            from realmwalker.game.survival import top_up
+
+            filled = top_up(self)
+            if filled:
+                self.say(filled, "info")
         if self.encounter is None and self.battle is None:
             from realmwalker.game.encounters import roll_encounter
 
@@ -469,11 +482,11 @@ class GameState:
         dc = self.lost_dc()
         if dc is None:
             return
-        if self.travel is not None and self.weather.visibility >= 0.6:
+        if self.travel is not None:
             from realmwalker.game.journey import night_unheeded
 
             if night_unheeded(self):
-                return  # a traveller stops at dusk, before the dark can lose them (game.journey)
+                return  # a traveller stops at dusk, before the dark (or the storm with it) can lose them (game.journey)
         ok, roll = check(self, "survival", dc, tag="lost")
         if not ok:
             self.lost = True
@@ -1089,15 +1102,18 @@ class GameState:
         if len(path) < 2:
             return None
         points = [tuple(int(v) for v in pt) for pt in path.tolist()][1:]
-        minutes = 0
+        from realmwalker.game import mounts
+
+        riding = bool(self.leader.animals) and mounts.all_mounted(self)
+        minutes = 0.0
         x, y = p.x, p.y
         for nx, ny in points:
             step = self.step_minutes(x, y, nx, ny)
             if step is None:
                 return None
-            minutes += step
+            minutes += step * (mounts.step_factor(self, x, y, nx, ny) if riding else 1.0)
             x, y = nx, ny
-        return TravelPlan(points, minutes, len(points) * MILES_PER_TILE, dest)
+        return TravelPlan(points, int(round(minutes)), len(points) * MILES_PER_TILE, dest, riding=riding)
 
     def travel_step(self) -> bool:
         """Take one step of a planned journey. Returns False when the journey is over."""
@@ -1141,10 +1157,10 @@ class GameState:
     def describe_plan(self, plan: TravelPlan) -> str:
         walking = duration_text(plan.minutes)
         if plan.minutes <= WALKING_HOURS_PER_DAY * MINUTES_PER_HOUR:
-            return f"{plan.miles} miles, about {walking} on foot"
+            return f"{plan.miles} miles, about {walking} {'in the saddle' if plan.riding else 'on foot'}"
         days = plan.minutes / (WALKING_HOURS_PER_DAY * MINUTES_PER_HOUR)
         days = "a day" if days < 1.25 else "a day and a half" if days < 1.75 else f"{round(days)} days"
-        return f"{plan.miles} miles: {walking} of walking, about {days} at a steady pace"
+        return f"{plan.miles} miles: {walking} of {'riding' if plan.riding else 'walking'}, about {days} at a steady pace"
 
     # ------------------------------------------------------------------ bookkeeping
     def distance_to(self, x: int, y: int) -> float:

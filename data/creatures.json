@@ -1,5 +1,5 @@
 {
-  "_comment": "Creatures. Numbers follow SRD 5.1 (CC-BY-4.0) where one exists; text is original. morale: beast (flees when badly hurt), bandit (surrenders or flees), soldier (breaks when the line breaks), coward (runs early), warrior (fights hard), fanatic and mindless (to the death). hp is dice; money is copper dice times mult. rank: which rank it prefers.",
+  "_comment": "Creatures. Numbers follow SRD 5.1 (CC-BY-4.0) where one exists; text is original. traits: takes_food means a beast that will let you go for food thrown to it. morale: beast (flees when badly hurt), bandit (surrenders or flees), soldier (breaks when the line breaks), coward (runs early), warrior (fights hard), fanatic and mindless (to the death). hp is dice; money is copper dice times mult. rank: which rank it prefers.",
   "creatures": {
     "wolf": {
       "name": "wolf", "plural": "wolves", "kind": "beast", "body": "quadruped", "size": "medium", "cr": 0.25, "xp": 50,
@@ -7,7 +7,7 @@
       "abilities": {"str": 12, "dex": 15, "con": 12, "int": 3, "wis": 12, "cha": 6},
       "skills": {"perception": 3, "stealth": 4}, "darkvision": 0,
       "attacks": [{"name": "bite", "kind": "melee", "bonus": 4, "damage": "2d4+2", "damage_type": "piercing", "wound": "bite", "disease": "frothing_sickness", "disease_chance": 0.04, "trip_dc": 11}],
-      "traits": ["pack_tactics", "keen_senses"], "morale": "beast", "rank": "front",
+      "traits": ["pack_tactics", "keen_senses", "takes_food"], "morale": "beast", "rank": "front",
       "gear": [], "money": null, "butcher": [["raw_meat", 3], ["hides", 1]],
       "glyph": "w", "color": [170, 160, 150],
       "descriptions": ["A grey wolf, ribs showing under a winter coat, eyes fixed on your throat.", "Lean, yellow-eyed and patient. Where there is one there are always more."]
@@ -18,7 +18,7 @@
       "abilities": {"str": 17, "dex": 15, "con": 15, "int": 3, "wis": 12, "cha": 7},
       "skills": {"perception": 3, "stealth": 4}, "darkvision": 0,
       "attacks": [{"name": "bite", "kind": "melee", "bonus": 5, "damage": "2d6+3", "damage_type": "piercing", "wound": "bite", "disease": "frothing_sickness", "disease_chance": 0.04, "trip_dc": 13}],
-      "traits": ["pack_tactics", "keen_senses"], "morale": "beast", "rank": "front",
+      "traits": ["pack_tactics", "keen_senses", "takes_food"], "morale": "beast", "rank": "front",
       "gear": [], "money": null, "butcher": [["raw_meat", 8], ["furs", 1]],
       "glyph": "W", "color": [130, 124, 120],
       "descriptions": ["A wolf the size of a pony, its muzzle grey with age and old blood.", "Too big to be a wolf. It moves like one anyway."]
@@ -29,7 +29,7 @@
       "abilities": {"str": 11, "dex": 14, "con": 12, "int": 3, "wis": 12, "cha": 6},
       "skills": {"perception": 3}, "darkvision": 0,
       "attacks": [{"name": "bite", "kind": "melee", "bonus": 3, "damage": "1d6+1", "damage_type": "piercing", "wound": "bite", "disease": "frothing_sickness", "disease_chance": 0.04}],
-      "traits": ["pack_tactics"], "morale": "beast", "rank": "front",
+      "traits": ["pack_tactics", "takes_food"], "morale": "beast", "rank": "front",
       "gear": [], "money": null, "butcher": [["raw_meat", 1]],
       "glyph": "d", "color": [170, 140, 100],
       "descriptions": ["A mangy feral dog, one of a pack gone wild since the villages emptied."]
@@ -40,7 +40,7 @@
       "abilities": {"str": 13, "dex": 11, "con": 12, "int": 2, "wis": 9, "cha": 5},
       "skills": {}, "darkvision": 0,
       "attacks": [{"name": "tusks", "kind": "melee", "bonus": 3, "damage": "1d6+1", "damage_type": "slashing", "wound": "cut"}],
-      "traits": ["relentless"], "morale": "beast", "rank": "front",
+      "traits": ["relentless", "takes_food"], "morale": "beast", "rank": "front",
       "gear": [], "money": null, "butcher": [["raw_meat", 6], ["hides", 1]],
       "glyph": "b", "color": [140, 100, 70],
       "descriptions": ["A bristling black boar with tusks like curved knives. Hunters fear them more than wolves."]
@@ -52,7 +52,7 @@
       "skills": {"perception": 3}, "darkvision": 0,
       "attacks": [{"name": "bite", "kind": "melee", "bonus": 3, "damage": "1d6+2", "damage_type": "piercing", "wound": "bite"},
                   {"name": "claws", "kind": "melee", "bonus": 3, "damage": "2d4+2", "damage_type": "slashing", "wound": "cut"}],
-      "multiattack": 2, "traits": ["keen_senses"], "morale": "beast", "rank": "front",
+      "multiattack": 2, "traits": ["keen_senses", "takes_food"], "morale": "beast", "rank": "front",
       "gear": [], "money": null, "butcher": [["raw_meat", 10], ["furs", 1]],
       "glyph": "B", "color": [60, 50, 45],
       "descriptions": ["A black bear, lean from the winter and short-tempered with it."]
@@ -64,7 +64,7 @@
       "skills": {"perception": 3}, "darkvision": 0,
       "attacks": [{"name": "bite", "kind": "melee", "bonus": 6, "damage": "1d8+4", "damage_type": "piercing", "wound": "bite"},
                   {"name": "claws", "kind": "melee", "bonus": 6, "damage": "2d6+4", "damage_type": "slashing", "wound": "cut"}],
-      "multiattack": 2, "traits": ["keen_senses"], "morale": "beast", "rank": "front",
+      "multiattack": 2, "traits": ["keen_senses", "takes_food"], "morale": "beast", "rank": "front",
       "gear": [], "money": null, "butcher": [["raw_meat", 16], ["furs", 2]],
       "glyph": "B", "color": [140, 90, 50],
       "descriptions": ["A brown bear as tall as a door when it rears, with claws that could take a man's face off."]
@@ -75,7 +75,7 @@
       "abilities": {"str": 7, "dex": 15, "con": 11, "int": 2, "wis": 10, "cha": 4},
       "skills": {}, "darkvision": 60,
       "attacks": [{"name": "bite", "kind": "melee", "bonus": 4, "damage": "1d4+2", "damage_type": "piercing", "wound": "bite", "disease": "filth_fever"}],
-      "traits": ["pack_tactics", "keen_senses"], "morale": "beast", "rank": "front",
+      "traits": ["pack_tactics", "keen_senses", "takes_food"], "morale": "beast", "rank": "front",
       "gear": [], "money": null, "butcher": [],
       "glyph": "r", "color": [150, 120, 110],
       "descriptions": ["A rat the size of a dog, bald-tailed and bold, with filth crusted on its teeth."]

@@ -55,14 +55,22 @@ def battle_env(game, surprised: str | None) -> Env:
         top = max(ground_ids, key=lambda g: g[1])[0]
         ground = game.tables.terrain[game.tables.terrain.index[top]]["name"] if top in game.tables.terrain.index else "ground"
     light = game.light
-    indoors = lm is not None and lm.building_at(game.player.lx, game.player.ly) is not None
-    if indoors:
+    underground = lm is not None and lm.kind == "dungeon"
+    indoors = underground or (lm is not None and lm.building_at(game.player.lx, game.player.ly) is not None)
+    party_light = party_has_light(game)
+    if underground:
+        # No sun under the ground (it used to be noon down there whenever it was noon outside): only what you carry.
+        from realmwalker.game.dungeon import light_radius
+
+        light = 0.0
+        party_light = party_light or light_radius(game) > 0
+    elif indoors:
         light = max(light, 0.6)  # hearths and rushlights indoors
     w = game.weather
     rain = not indoors and (w.raining or w.snowing) and w.precip > 0.2
     if not indoors and w.visibility < 0.5:
         light = min(light, 0.45)  # fog and blizzards hide the enemy almost as well as night
-    return Env(light=light, rain=rain, ground=ground, party_light=party_has_light(game), surprised=surprised)
+    return Env(light=light, rain=rain, ground=ground, party_light=party_light, surprised=surprised)
 
 
 def start_battle(game, creatures: list[Creature], intro: str, *, surprised: str | None = None, actor=None,
@@ -93,7 +101,6 @@ def finish_battle(game) -> Aftermath:
     battle: Battle = game.battle
     result: BattleResult = battle.result()
     rng = game.world.rng.child(f"after/{game.world.time}")
-    game.pass_seconds(result.rounds * ROUND_SECONDS, "fight")
     actor = game.battle_actor
     lm = game.local
     if actor is not None:
@@ -162,20 +169,24 @@ def finish_battle(game) -> Aftermath:
                 if c.alive:
                     c.hp = max(1, c.hp)
             if result.outcome == "defeat":
-                hours = dice.roll("1d4", rng).total
-                game.pass_time(hours * 60)
-                after.notes.append(f"You lay senseless for {hours} hour{'s' if hours > 1 else ''}.")
+                after.notes.append(lie_senseless(game, dice.roll("1d4", rng).total))
             if actor is not None and lm is not None and actor in lm.actors:
                 lm.actors.remove(actor)
         else:
-            for c in game.party:
-                if c.alive:
-                    c.alive = False
-                    c.hp = 0
-            killers = _list_names(game, [f.creature for f in battle.side(FOE)])
-            game.over = {"cause": f"killed by {killers[:1].lower() + killers[1:]}", "place": battle.env.ground}
-            after.outcome = "death"
-            after.text = "It is over. Nobody will come."
+            beasts = bool(foes) and all(f.kind == "beast" for f in foes)
+            if beasts and any(c.alive for c in game.party):
+                _left_for_dead(game, battle, rng, after, len(foes))
+                if actor is not None and lm is not None and actor in lm.actors:
+                    lm.actors.remove(actor)  # they have had what they came for, and gone
+            if after.outcome != "mauled" or not game.party[0].alive:
+                for c in game.party:
+                    if c.alive and after.outcome != "mauled":
+                        c.alive = False
+                        c.hp = 0
+                killers = _list_names(game, [f.creature for f in battle.side(FOE)])
+                game.over = {"cause": f"killed by {killers[:1].lower() + killers[1:]}", "place": battle.env.ground}
+                after.outcome = "death"
+                after.text = "It is over. Nobody will come."
     elif result.outcome == "fled":
         after.text = rng.choice(game.tables.combat_text["aftermath"]["fled"])
         if lm is not None:
@@ -185,6 +196,10 @@ def finish_battle(game) -> Aftermath:
         after.xp = result.xp
         if actor is not None and lm is not None and actor in lm.actors:
             lm.actors.remove(actor)
+    # The fight's minutes pass only now: anyone knocked down has come round (or been robbed and left, or mauled and
+    # left) by this point. Before, a body still at 0 hit points was found dead of its hurts the moment time moved.
+    game.pass_seconds(result.rounds * ROUND_SECONDS, "fight")
+    dead_party = [c for c in game.party if not c.alive]  # (left for dead, not everyone wakes)
     leader_alive = game.party and game.party[0].alive
     if dead_party and leader_alive:
         from realmwalker.game.companions import died
@@ -198,7 +213,8 @@ def finish_battle(game) -> Aftermath:
 
         pack.sync(game)  # what they carried stays with the party
     elif not leader_alive and game.over is None:
-        game.over = {"cause": "died of wounds after a fight", "place": battle.env.ground}
+        cause = getattr(game.party[0], "death_cause", None) if game.party else None
+        game.over = {"cause": cause or "died of wounds after a fight", "place": battle.env.ground}
         after.outcome = "death"
     if after.xp and game.over is None:
         living = [c for c in game.party if c.alive]
@@ -282,7 +298,8 @@ def _rob_party(game, rng) -> str:
     leader = game.party[0]
     from realmwalker.rules.inventory import worn_by
 
-    valuables = [i for i in leader.inventory if worn_by(leader, i.uid)[1] is None and game.tables.items.value(i) >= 100]
+    valuables = [i for i in leader.inventory if worn_by(leader, i.uid)[1] is None and game.tables.items.value(i) >= 100
+                 and not _keepsake(game, i)]
     valuables.sort(key=lambda i: -game.tables.items.value(i))
     for it in valuables[: rng.randint(1, 2)]:
         remove_item(leader, it.uid)
@@ -291,6 +308,86 @@ def _rob_party(game, rng) -> str:
         taken.append(", ".join(a["name"] for a in leader.animals) + " (your animals)")
         leader.animals = []
     return ", ".join(taken) if taken else "nothing, having found nothing worth taking"
+
+
+MAULED_DC = 5  # plus one for each beast still on its feet: a Constitution save to wake up at all
+
+
+def _left_for_dead(game, battle: Battle, rng, after: Aftermath, beasts: int) -> None:
+    """Beasts that have beaten the party lose interest in what has stopped moving, and go for the food in the pack
+    instead. Each of the fallen makes a Constitution save to wake at all; whoever does wakes hours later, hurt and
+    alone. (Bandits rob a beaten party; the dead, the mad and the monstrous still finish it.)"""
+    from realmwalker.rules.character import Sheet
+    from realmwalker.rules.inventory import distinct_packs
+
+    dc = MAULED_DC + beasts
+    woke = []
+    for f in battle.side(PARTY):
+        c = f.char
+        if c is None or not c.alive:
+            continue
+        roll = dice.d20(rng).natural
+        sheet = Sheet(c, game.tables)  # the body's own toughness: pain and blood loss are what it is surviving
+        bonus = sheet.mod("con") + (sheet.proficiency if "con" in c.saves else 0)
+        game.say(f"<dice>{c.name.split()[0]} (Constitution save): {roll} {'+' if bonus >= 0 else '-'} {abs(bonus)} = "
+                 f"{roll + bonus} vs DC {dc}</>", "dice")
+        if roll + bonus >= dc:
+            c.hp = max(1, c.hp)
+            woke.append(c)
+        else:
+            c.alive = False
+            c.hp = 0
+            if c is not game.party[0]:
+                after.notes.append(f"<danger>{c.name.split()[0]} never wakes.</>")
+    if not woke or not game.party[0].alive:
+        return
+    after.outcome = "mauled"
+    after.text = rng.choice(game.tables.combat_text["aftermath"]["mauled"])
+    eaten = []
+    for m in distinct_packs(game.party):
+        for it in list(m.inventory):
+            if not game.tables.items.get(it.def_id).get("food"):
+                continue
+            gone = (it.qty + 1) // 2
+            if gone and remove_item(m, it.uid, gone) is not None:
+                eaten.append(game.tables.items.name(it, with_qty=False))
+    if eaten:
+        after.notes.append(f"They tore the pack open and dragged off half the food ({', '.join(sorted(set(eaten)))}).")
+    note = lie_senseless(game, dice.roll("1d4", rng).total + 1)
+    after.notes.append(note + (" Your wounds want seeing to." if note.startswith("You lay") else ""))
+
+
+def lie_senseless(game, hours: int) -> str:
+    """Lying where you fell after a beating, for some hours, or less: losing blood brings you round while there is
+    still time to bind the wound (nobody bleeds to death in a faint they never had the chance to wake from)."""
+    lay = 0
+    for _ in range(hours * 2):
+        game.pass_time(30)
+        lay += 30
+        if game.over is not None:
+            break
+        if any(c.alive and any(w.bleed and not w.bandaged for w in c.wounds) and c.blood < 70 for c in game.party):
+            return f"The bleeding brings you round after {_lay_words(lay)}. Bind it, now."
+    return f"You lay senseless for {_lay_words(lay)}."
+
+
+def _lay_words(minutes: int) -> str:
+    hours, half = divmod(minutes, 60)
+    if hours == 0:
+        return "half an hour"
+    if half:
+        return "an hour and a half" if hours == 1 else f"{hours} and a half hours"
+    return "an hour" if hours == 1 else f"{hours} hours"
+
+
+NOT_WORTH_STEALING = {"spellbook", "holy_symbol", "arcane_focus", "component_pouch", "prayer_book", "backpack"}
+
+
+def _keepsake(game, item) -> bool:
+    """What robbers leave: a wizard's spellbook, a priest's holy symbol and the like (worth nothing to a fence, and
+    everything to their owner), the pack everything else is carried in, and whatever a piece of work has given you to
+    carry."""
+    return item.def_id in NOT_WORTH_STEALING or any(t.startswith("quest:") for t in item.tags)
 
 
 # ---------------------------------------------------------------------------- encounters on the road
@@ -306,10 +403,13 @@ def encounter_evade(game) -> bool:
     rng = game.world.rng.child(f"evade/{game.world.time}")
     stealth = min(game.sheet(c).skill_bonus("stealth") for c in game.party if c.alive)
     best_eyes = max(10 + int(game.tables.creatures[c.def_id].get("skills", {}).get("perception", 0)) for c in enc.creatures)
-    roll = dice.d20(rng).natural
+    # Seeing them first is most of slipping away: advantage on the roll, and five more besides.
+    roll = dice.d20(rng, advantage=enc.spotted_first).natural
     bonus = 5 if enc.spotted_first else 0
     ok = roll + stealth + bonus >= best_eyes
-    game.say(f"<dice>Stealth: {roll} + {stealth + bonus} = {roll + stealth + bonus} vs {best_eyes}</>", "dice")
+    adv = " (adv)" if enc.spotted_first else ""
+    game.say(f"<dice>Stealth{adv}: {roll} {'+' if stealth + bonus >= 0 else '-'} {abs(stealth + bonus)} = "
+             f"{roll + stealth + bonus} vs {best_eyes}</>", "dice")
     if ok:
         game.say("You slip away unseen, and give the place a wide berth.", "good")
         game.pass_time(30, "walk")
@@ -359,6 +459,86 @@ def encounter_talk(game) -> bool:
     game.say("They hear you out, and laugh, and draw.", "danger")
     start_battle(game, enc.creatures, enc.intro, title=_encounter_title(game, enc.group))
     return False
+
+
+def encounter_pay_cost(game) -> tuple[int | None, str]:
+    """What it costs to hand over your purse to men who would rather rob you than fight you (half of what you carry),
+    or None and why not."""
+    enc = game.encounter
+    defs = [game.tables.creatures[c.def_id] for c in enc.creatures]
+    if not defs or not all(d.get("morale") in MERCIFUL for d in defs):
+        return None, "they want blood, not money"
+    purse = sum(c.money for c in game.party if c.alive)
+    if purse <= 0:
+        return None, "you have nothing to give them"
+    return max(1, purse // 2), ""
+
+
+def encounter_pay(game) -> bool:
+    """Hand over the purse: no fight, no beating, and half your money gone."""
+    cost, why = encounter_pay_cost(game)
+    if cost is None:
+        game.say(f"You offer what you have, but {why}.", "warn")
+        start_battle(game, game.encounter.creatures, game.encounter.intro,
+                     title=_encounter_title(game, game.encounter.group))
+        return False
+    from realmwalker.game.events import pay
+
+    pay(game, cost)
+    game.say(f"You hold out your purse. They take {money_text(cost)} out of it, weigh the rest of you with their eyes, "
+             f"and let you go.", "warn")
+    game.leader.deeds.append("paid off robbers on the road")
+    if game.party[1:]:
+        from realmwalker.game.companions import react
+
+        react(game, "surrender", quiet=True)
+    game.pass_time(10)
+    game.encounter = None
+    game.dirty = True
+    return True
+
+
+def encounter_bait_food(game) -> tuple[list | None, str]:
+    """The food that would buy off hungry beasts (a meal's worth for each), meat first, or None and why not."""
+    enc = game.encounter
+    defs = [game.tables.creatures[c.def_id] for c in enc.creatures]
+    if not defs or not all("takes_food" in d.get("traits", []) for d in defs):
+        return None, "these are not after your food"
+    from realmwalker.rules.inventory import distinct_packs
+
+    items = game.tables.items
+    food = [(m, it) for m in distinct_packs(game.party) for it in m.inventory
+            if items.get(it.def_id).get("food") and float(items.get(it.def_id)["food"].get("nutrition", 0)) >= 0.3]
+    food.sort(key=lambda p: (0 if "meat" in p[1].def_id or "pork" in p[1].def_id or "fish" in p[1].def_id else 1,
+                             -float(items.get(p[1].def_id)["food"].get("nutrition", 0))))
+    need, out = len(enc.creatures), []
+    for m, it in food:
+        take = min(it.qty, need)
+        out.append((m, it, take))
+        need -= take
+        if need <= 0:
+            return out, ""
+    return None, "you have not enough food to throw them"
+
+
+def encounter_bait(game) -> bool:
+    """Throw them food and back away: beasts that are hungry, not mad, take it and let you go."""
+    food, why = encounter_bait_food(game)
+    if food is None:
+        game.say(f"You have nothing to throw them: {why}.", "warn")
+        start_battle(game, game.encounter.creatures, game.encounter.intro,
+                     title=_encounter_title(game, game.encounter.group))
+        return False
+    names = []
+    for m, it, n in food:
+        names.append(game.tables.items.name(it, with_qty=False))
+        remove_item(m, it.uid, n)
+    game.say(f"You throw down {', '.join(dict.fromkeys(names))} and back away, slowly, not turning your back. They fall "
+             f"on it, and by the time they look up again you are gone.", "warn")
+    game.pass_time(15, "walk")
+    game.encounter = None
+    game.dirty = True
+    return True
 
 
 def _encounter_title(game, group: str) -> str:
@@ -512,7 +692,9 @@ def _rustlers(game, fire: bool) -> list[str]:
 
 
 def rest(game, kind: str) -> list[str]:
-    """Rest: 'short' (1 hour) or 'long' (8 hours). A long rest in the wilds may be interrupted."""
+    """Rest: 'short' (1 hour), 'long' (8 hours) or 'night' (sleep until first light: at least 8 hours, at most 14; an
+    8-hour sleep begun at dusk wakes you at three in the morning, in the dark, with the night's cold still to come).
+    A long rest in the wilds may be interrupted."""
     from realmwalker.game.encounters import roll_encounter
 
     lm = game.local
@@ -523,6 +705,9 @@ def rest(game, kind: str) -> list[str]:
     rng = game.world.rng.child(f"rest/{game.world.time}")
     notes = []
     hours = 1 if kind == "short" else 8
+    if kind == "night":
+        hours = max(8, min(14, round(game.minutes_to_dawn() / 60))) if game.light < 0.5 else 8
+        kind = "long"
     from realmwalker.game.camp import camp_here
 
     from realmwalker.game import journey
@@ -541,7 +726,7 @@ def rest(game, kind: str) -> list[str]:
             return notes
         if lm is None and kind == "long":
             # A fire is seen from afar, but beasts fear it; a cold camp is harder to find.
-            enc = roll_encounter(game, 60 * (0.6 if fire else 0.4))
+            enc = roll_encounter(game, 60 * (0.4 if fire else 0.25))
             if enc is not None and fire and all(game.tables.creatures[c.def_id]["kind"] == "beast" for c in enc.creatures):
                 if game.world.rng.child(f"firelight/{game.world.time}").chance(0.6):
                     notes.append("Eyes glint beyond the firelight in the night, but they do not come closer.")
