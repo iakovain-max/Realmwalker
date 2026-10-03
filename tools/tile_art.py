@@ -479,6 +479,23 @@ def bones(seed: int) -> Image.Image:
     return outline(im)
 
 
+def boulder(seed: int) -> Image.Image:
+    """A grey rock, lit from the top left."""
+    r = rng(seed)
+    im = blank()
+    d = ImageDraw.Draw(im)
+    pts = []
+    for k in range(9):
+        ang = k / 9 * math.tau
+        rad = 11 + r.uniform(-2, 2)
+        pts.append((16 + math.cos(ang) * rad * 1.1, 18 + math.sin(ang) * rad * 0.85))
+    d.polygon(pts, fill=(112, 110, 104, 255))
+    d.ellipse([9, 9, 19, 17], fill=(146, 144, 136, 255))
+    d.ellipse([18, 19, 27, 26], fill=(84, 82, 78, 255))
+    d.line([(14, 20), (19, 23)], fill=(70, 68, 64, 255))
+    return shadow(outline(noise_shade(im, seed, 0.08)))
+
+
 def rubble(seed: int) -> Image.Image:
     return pebbles(seed, n=11, color=(118, 112, 104))
 
@@ -888,6 +905,8 @@ def all_drawn() -> dict[str, Image.Image]:
         out[f"feature/bed_{i}"] = bed(660 + i, c)
     out["feature/bedroll"] = bedroll(670)
     out["feature/anvil"] = anvil(680)
+    for i in range(3):
+        out[f"feature/rock_{i}"] = boulder(685 + i)
     out["feature/well"] = well(690)
     out["feature/chains"] = chains(700)
     out["feature/bones"] = bones(710)

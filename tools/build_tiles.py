@@ -36,9 +36,9 @@ SHEET = 1024
 
 # How each family is toned: (saturation, brightness, warmth). The pack is bright and cheerful; the game is not.
 GRADES = {
-    "ground": (0.62, 0.74, 0.04),
-    "water": (0.55, 0.70, -0.02),
-    "wall": (0.62, 0.80, 0.03),
+    "ground": (0.70, 0.86, 0.04),
+    "water": (0.62, 0.80, -0.02),
+    "wall": (0.66, 0.86, 0.03),
     "feature": (0.75, 0.88, 0.03),
     "tree": (0.70, 0.80, 0.02),
     "creature": (0.82, 0.94, 0.02),
@@ -479,8 +479,13 @@ def gather(pack: Path) -> dict[str, Image.Image]:
     grass = sorted(k for k in tiles if k.startswith("floor/grass_") and k[len("floor/grass_"):].isdigit())
     for i, k in enumerate(grass):
         tiles[f"floor/drygrass_{i}"] = tile_art.tinted(tiles[k], (150, 136, 80), 0.45)
-        tiles[f"floor/heath_{i}"] = tile_art.tinted(tiles[k], (104, 92, 84), 0.5)
+        tiles[f"floor/heath_{i}"] = tile_art.tinted(tiles[k], (122, 112, 92), 0.55)
         tiles[f"floor/frost_{i}"] = tile_art.tinted(tiles[k], (176, 188, 196), 0.35)
+    # Bare rock in the open is lighter than a cave's floor.
+    for i, k in enumerate(sorted(k for k in tiles if k.startswith("floor/greydirt_"))):
+        a = np.asarray(tiles[k], np.float32).copy()
+        a[..., :3] = np.clip(a[..., :3] * 1.9 + 14, 0, 255)
+        tiles[f"floor/rock_{i}"] = Image.fromarray(a.astype(np.uint8), "RGBA")
     for name, im in tile_art.all_drawn().items():
         which = "none" if name.startswith(("icon/", "map/")) else ("ground" if name.startswith(("floor/", "wall/")) else "feature")
         tiles[name] = grade(im, which) if which != "none" else im
@@ -546,7 +551,7 @@ def main(argv=None) -> int:
     meta = {"_comment": "Built by tools/build_tiles.py from the Dungeon Crawl Stone Soup tiles (CC0) and tools/tile_art.py. "
                         "name: [sheet, x, y, w, h].",
             "tile": 32, "sheets": files, "tiles": {k: index[k] for k in sorted(index)}}
-    (OUT / "tiles.json").write_text(json.dumps(meta, indent=0, separators=(",", ":")), encoding="utf-8")
+    (OUT / "tiles.json").write_text(json.dumps(meta, indent=0, separators=(",", ":")), encoding="utf-8", newline="\n")
     print(f"{len(tiles)} tiles in {len(sheets)} sheets -> {OUT}")
     if args.preview:
         preview(tiles, Path(args.preview))

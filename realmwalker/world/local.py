@@ -18,7 +18,7 @@ from realmwalker.world.tables import Tables
 
 LOCAL_W = 96
 LOCAL_H = 60
-ASPECT = 0.5  # screen cells are about twice as tall as wide; keep patches round on screen
+ASPECT = 1.0  # the map is drawn in square tiles: patches are round (it was 0.5 for tall letter cells)
 
 
 @dataclass

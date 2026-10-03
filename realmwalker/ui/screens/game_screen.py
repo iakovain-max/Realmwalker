@@ -36,17 +36,36 @@ class GameScreen(Screen):
         self.view = (0, 0, 0, 0, 0, 0)  # viewport x, y and the camera from the last draw
         self._last_travel_step = 0.0
         self._in_local_before = game.in_local
+        from realmwalker.ui.gfx.localview import LocalView
+
+        self.local_view = LocalView()
+        self.tiles_drawn = False  # the last frame drew the map with pictures
 
     @property
     def animating(self) -> bool:  # type: ignore[override]
         return self.game.travel is not None or self.game.walk_to is not None
+
+    @property
+    def moving(self) -> bool:
+        """Something glides on the map right now (the window keeps drawing smoothly)."""
+        return self.tiles_drawn and self.local_view.moving(self.app.clock())
+
+    @property
+    def ambient(self) -> bool:
+        return self.tiles_drawn
 
     # ------------------------------------------------------------------ helpers
     def _map_rect(self, canvas: Canvas) -> tuple[int, int, int, int]:
         # The bottom row is left free for the AI status line.
         return 0, 0, max(20, canvas.width - PANEL_W), max(10, canvas.height - 1 - LOG_H)
 
-    def screen_to_map(self, sx: int, sy: int) -> tuple[int, int] | None:
+    def screen_to_map(self, sx: int, sy: int, px: float = -1.0, py: float = -1.0) -> tuple[int, int] | None:
+        if self.tiles_drawn and self.game.in_local:
+            if px < 0:
+                px, py = (sx + 0.5) * self.app.gfx.cell_w, (sy + 0.5) * self.app.gfx.cell_h
+            cell = self.local_view.to_cell(px, py)
+            lm = self.game.local
+            return cell if cell is not None and lm is not None and lm.in_bounds(*cell) else None
         vx, vy, mx0, my0, ox, oy = self.view
         x, y = sx - vx - ox + mx0, sy - vy - oy + my0
         if self.game.in_local:
@@ -266,13 +285,25 @@ class GameScreen(Screen):
             self.look = None
         return True
 
+    def zoom(self, step: int) -> None:
+        """Closer or further: the close-up map's squares, in pixels."""
+        from realmwalker.config import MAP_ZOOMS
+
+        s = self.app.settings
+        i = MAP_ZOOMS.index(s.map_zoom) if s.map_zoom in MAP_ZOOMS else 2
+        s.map_zoom = MAP_ZOOMS[max(0, min(len(MAP_ZOOMS) - 1, i + step))]
+        self.app.save_settings()
+
     def handle_mouse(self, ev: MouseEvent) -> bool:
         if ev.kind == "move":
-            self.hover = self.screen_to_map(ev.x, ev.y)
+            self.hover = self.screen_to_map(ev.x, ev.y, ev.px, ev.py)
             return False
+        if ev.kind == "wheel" and self.tiles_drawn and self.screen_to_map(ev.x, ev.y, ev.px, ev.py) is not None:
+            self.zoom(1 if ev.dy > 0 else -1)
+            return True
         if ev.kind != "click":
             return False
-        target = self.screen_to_map(ev.x, ev.y)
+        target = self.screen_to_map(ev.x, ev.y, ev.px, ev.py)
         if target is None:
             return False
         if ev.button == "right":
@@ -612,7 +643,26 @@ class GameScreen(Screen):
         game = self.game
         mx, my, mw, mh = self._map_rect(canvas)
         cursor = self.look
-        if game.in_local and game.local is not None:
+        self.tiles_drawn = False
+        if game.in_local and game.local is not None and canvas.tiles:
+            from realmwalker.ui.gfx.localview import cursor_cmd
+            from realmwalker.ui.map_render import local_visibility
+
+            fov = local_visibility(game, game.local)
+            canvas.clear_cells(mx, my, mw, mh)
+            rect = tuple(int(v) for v in canvas.cell_rect(mx, my, mw, mh))
+            from realmwalker.ui.gfx.scene import Clip
+
+            canvas.under(Clip(rect))
+            self.local_view.draw(canvas, game, rect, self.app.settings.map_zoom, fov)
+            canvas.under(Clip(None))
+            self.tiles_drawn = True
+            if self.hover is not None and cursor is None:
+                canvas.over(Clip(rect), cursor_cmd(self.local_view, *self.hover, (255, 255, 255, 90)), Clip(None))
+            if cursor is not None:
+                canvas.over(Clip(rect), cursor_cmd(self.local_view, *cursor, (255, 214, 110, 230)), Clip(None))
+            camera = (0, 0, 0, 0)
+        elif game.in_local and game.local is not None:
             camera = draw_local(canvas.con, game, mx, my, mw, mh, cursor)
         else:
             if game.in_local:

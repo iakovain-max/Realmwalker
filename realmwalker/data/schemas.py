@@ -732,3 +732,43 @@ QUESTS = Obj(
 )
 
 DATA_FILES.update({"quests.json": QUESTS})
+
+# ---------------------------------------------------------------------------- pictures (graphics update)
+SPRITE_NAME = Str(max_len=60)
+SPRITE_TERRAIN = Obj(
+    {
+        "ground": Str(max_len=60, optional=True),
+        "over": Any_(optional=True),
+        "over_chance": Float(min=0, max=1, optional=True),
+        "object": Str(max_len=60, optional=True),
+        "object_vertical": Str(max_len=60, optional=True),
+        "wall": Str(max_len=60, optional=True),
+        "water": Bool(optional=True),
+        "autotile": Bool(optional=True),
+        "animate": Int(min=1, max=8, optional=True),
+        "light": List(Any_(), min_items=2, max_items=2, optional=True),
+        "cold": Str(max_len=60, optional=True),
+    }
+)
+SPRITES = Obj(
+    {
+        "terrain": Map(SPRITE_TERRAIN, min_items=1),
+        "dungeon_styles": Map(Map(Str(max_len=60))),
+        "town_walls": Map(Str(max_len=60)),
+        "traps": Map(Str(max_len=60)),
+        "creatures": Map(Any_()),
+        "races": Map(Obj({"male": Str(max_len=60), "female": Str(max_len=60), "beard": Float(min=0, max=1, optional=True),
+                          "small": Bool(optional=True)})),
+        "hair": Map(Map(Any_())),
+        "outfits": Map(Map(List(Str(max_len=60, min_len=0), min_items=1)), min_items=1),
+        "worn": Map(Map(Str(max_len=60))),
+        "classes": Map(Map(List(Str(max_len=60, min_len=0), min_items=1))),
+        "world": Obj({"biomes": Map(Obj({"color": COLOR, "deep": List(Int(min=0, max=255), min_items=3, max_items=3, optional=True),
+                                          "marks": Str(max_len=30, optional=True),
+                                          "density": Float(min=0, max=1, optional=True)})),
+                      "road": COLOR, "river": COLOR, "ink": COLOR, "shore": COLOR,
+                      "settlements": Map(Str(max_len=60)), "sites": Map(Str(max_len=60))}),
+    }
+)
+
+DATA_FILES.update({"sprites.json": SPRITES})
