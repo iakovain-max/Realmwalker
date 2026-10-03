@@ -1,0 +1,395 @@
+"""The graphics update and the new interface, headless: every game thing has a picture, screens draw with pictures
+without a window, the map painter paints, worlds can be deleted safely, and everything can be done without Shift
+or with the mouse alone."""
+
+import copy
+
+import numpy as np
+import pytest
+import tcod.console
+
+from realmwalker.paths import Paths
+from realmwalker.ui.gfx import GfxContext, dolls
+from realmwalker.ui.gfx.atlas import Atlas
+from realmwalker.ui.gfx.scene import Batch, Image
+from realmwalker.ui.input import KeyEvent, MouseEvent
+
+SIZE = (160, 50)
+
+
+@pytest.fixture(scope="module")
+def atlas():
+    a = Atlas(Paths().tiles)
+    assert a.ok, "the tile sheets (assets/tiles) are missing"
+    return a
+
+
+@pytest.fixture
+def world(make_app):
+    from realmwalker.world.generator import WorldGenerator, WorldOptions
+
+    app = make_app()
+    return WorldGenerator(WorldOptions("Pictureland", 11, "small"), app.tables).generate()
+
+
+@pytest.fixture
+def pictured(make_app, world, atlas):
+    """An app drawing with pictures (as in a window), with a game started."""
+    from realmwalker.game.state import new_game
+
+    app = make_app()
+    app.gfx = GfxContext(atlas, 10, 20)
+    game = new_game(copy.deepcopy(world), app.tables)
+    game.survival = False
+    app.start_game(game)
+    return app, game
+
+
+def render(app, size=SIZE):
+    con = tcod.console.Console(*size, order="F")
+    app.render(con)
+    app.update()
+    return app.last_canvas
+
+
+def commands(canvas, kind=None):
+    out = []
+    for layer in canvas.layers:
+        out += [c for c in layer.under + layer.over if kind is None or isinstance(c, kind)]
+    return out
+
+
+# ---------------------------------------------------------------------------- every thing has a picture
+def test_every_terrain_creature_item_and_outfit_has_a_picture(make_app, atlas):
+    app = make_app()
+    t = app.tables
+    sp = t.sprites
+    missing = []
+    for tid, spec in sp["terrain"].items():
+        assert tid in t.terrain.index, f"sprites.json names a terrain that does not exist: {tid}"
+        for key in ("ground", "object", "wall", "cold", "object_vertical"):
+            name = spec.get(key)
+            if name and not atlas.family(name) and not (spec.get("autotile") and atlas.family(f"{name}_0")):
+                missing.append(f"terrain {tid} {key}: {name}")
+        over = spec.get("over")
+        for name in ([over] if isinstance(over, str) else over or []):
+            if not atlas.family(name):
+                missing.append(f"terrain {tid} over: {name}")
+    for tid in t.terrain.ids:
+        assert tid in sp["terrain"], f"local terrain {tid} has no picture in data/sprites.json"
+    for cid in t.creatures.defs:
+        for name in dolls.creature(cid, t, "test"):
+            if not atlas.has(name):
+                missing.append(f"creature {cid}: {name}")
+    from realmwalker.ui.gfx.localview import item_sprite
+    from realmwalker.rules.items import Item
+
+    for iid in t.items.defs:
+        name = item_sprite(atlas, t, Item(0, iid))
+        if not atlas.has(name):
+            missing.append(f"item {iid}: {name}")
+    for job, outfit in sp["outfits"].items():
+        for layer, options in outfit.items():
+            for o in options:
+                if o and not atlas.has(o if "/" in o else f"doll/{layer}/{o}"):
+                    missing.append(f"outfit {job} {layer}: {o}")
+    for iid, parts in sp["worn"].items():
+        for layer, o in parts.items():
+            if not atlas.has(f"doll/{layer}/{o}"):
+                missing.append(f"worn {iid} {layer}: {o}")
+    for race, r in sp["races"].items():
+        for sex in ("male", "female"):
+            if not atlas.has(r[sex]):
+                missing.append(f"race {race} {sex}")
+    for kind, name in list(sp["world"]["settlements"].items()) + list(sp["world"]["sites"].items()):
+        if not atlas.has(name):
+            missing.append(f"map mark {kind}: {name}")
+    assert not missing, missing
+
+
+def test_townsfolk_and_the_player_are_dressed(pictured, atlas):
+    from realmwalker.game.people import npcs_in, prepare_town
+
+    app, game = pictured
+    town = game.world.settlements[0]
+    prepare_town(game, town)
+    people = npcs_in(game.world, town.id)
+    assert people
+    looks = set()
+    for npc in people:
+        names = dolls.npc(npc, game.tables)
+        assert names and all(atlas.has(n) for n in names), names
+        assert any("/base/" in n for n in names)
+        looks.add(tuple(names))
+    assert len(looks) > len(people) // 2, "townsfolk should not all look alike"
+    me = dolls.character(game.leader, game.tables)
+    assert all(atlas.has(n) for n in me) and any("/body/" in n for n in me)
+
+
+# ---------------------------------------------------------------------------- screens draw with pictures
+def test_the_main_view_draws_the_map_with_pictures(pictured):
+    app, game = pictured
+    canvas = render(app)
+    assert app.error_count == 0
+    chunks = [c for c in commands(canvas, Image) if isinstance(c.key, tuple) and c.key[0] == "chunk"]
+    assert chunks, "the overworld is painted in chunks"
+    gs = app.top
+    assert gs.tiles_drawn
+    # On foot in a town: tiles, roofs and people.
+    app.handle_event(KeyEvent("enter"))
+    assert game.in_local
+    canvas = render(app)
+    assert app.error_count == 0
+    assert sum(len(b) for b in commands(canvas, Batch)) > 200
+    # Underground.
+    from realmwalker.game import dungeon
+
+    game.player.local_key = None
+    site = min(game.world.sites, key=lambda s: abs(s.x - game.player.x) + abs(s.y - game.player.y))
+    game.player.x, game.player.y = site.x, site.y
+    game.enter_local()
+    dungeon.descend(game, 1)
+    for a in game.local.actors:
+        a.alert = False
+    render(app)
+    assert app.error_count == 0
+
+
+def test_every_screen_draws_with_pictures(pictured):
+    from realmwalker.ui.screens.camp import CampScreen
+    from realmwalker.ui.screens.game_menu import GameMenu, WorldsScreen
+    from realmwalker.ui.screens.health import HealthScreen
+    from realmwalker.ui.screens.journal import JournalScreen
+    from realmwalker.ui.screens.party import PartyScreen
+    from realmwalker.ui.screens.settings_screen import SettingsScreen
+    from realmwalker.ui.screens.sheets import CharacterScreen, EquipmentScreen, InventoryScreen
+    from realmwalker.ui.screens.title import TitleScreen
+    from realmwalker.ui.screens.world_map import WorldMapScreen
+
+    app, game = pictured
+    gs = app.top
+    screens = [CharacterScreen(app, game), InventoryScreen(app, game), EquipmentScreen(app, game),
+               HealthScreen(app, game), CampScreen(app, game), JournalScreen(app, game), PartyScreen(app, game),
+               SettingsScreen(app), GameMenu(app), WorldsScreen(app), TitleScreen(app), WorldMapScreen(app, gs)]
+    for size in ((80, 30), SIZE, (240, 67)):
+        for screen in screens:
+            app.push(screen)
+            render(app, size)
+            app.pop()
+    assert app.error_count == 0
+
+
+def test_a_conversation_shows_who_you_are_talking_to(pictured):
+    from realmwalker.game.people import npcs_in
+
+    app, game = pictured
+    app.handle_event(KeyEvent("enter"))
+    s = game.world.settlement_at(game.player.x, game.player.y)
+    npc = next(n for n in npcs_in(game.world, s.id) if n.notable)
+    game.talk_to = npc.id
+    render(app)
+    canvas = render(app)
+    assert type(app.top).__name__ == "DialogueScreen"
+    assert commands(canvas, Batch), "the portrait is drawn"
+    assert app.error_count == 0
+
+
+def test_a_fight_is_a_stage_and_its_blows_are_shown(pictured):
+    from realmwalker.game import fight
+    from realmwalker.game.encounters import make_encounter
+    from realmwalker.ui.screens.battle import BattleScreen
+
+    app, game = pictured
+    enc = make_encounter(game, "bandits", game.world.rng.child("stage"))
+    fight.start_battle(game, enc.creatures, enc.intro, title="Bandits")
+    render(app)
+    screen = app.top
+    assert isinstance(screen, BattleScreen)
+    for _ in range(60):
+        if game.battle is None or screen.battle.outcome is not None:
+            break
+        if screen.actor() is not None:
+            app.handle_event(KeyEvent("a"))
+            app.handle_event(KeyEvent("enter"))
+            app.handle_event(KeyEvent("enter"))
+        render(app)
+    kinds = {e["kind"] for e in screen.battle.events}
+    assert "attack" in kinds
+    assert screen.stage.pos, "everyone has a place on the stage"
+    assert app.error_count == 0
+
+
+# ---------------------------------------------------------------------------- the painter
+def test_the_map_painter_paints_pieces_that_meet(make_app, world):
+    from realmwalker.ui.gfx.paint import ChunkCache, WorldPainter
+
+    app = make_app()
+    painter = WorldPainter(world, app.tables)
+    a = painter.paint(0, 0, 16, 16, 12)
+    assert a.size == (192, 192)
+    cache = ChunkCache(painter)
+    im = cache.paint_now((12, 0, 0))
+    assert cache.get((12, 0, 0)) is im
+    n = painter.chunk_cells(12)
+    assert im.size[0] == min(n, world.width) * 12
+    cache.close()
+    whole = painter.overview(3)
+    assert whole.size == (world.width * 3, world.height * 3)
+
+
+# ---------------------------------------------------------------------------- saved worlds
+def test_deleting_a_world_touches_nothing_else(tmp_path, monkeypatch):
+    from realmwalker.game import save
+    from realmwalker.game.save import SaveError, delete_world
+
+    monkeypatch.setattr(save, "_to_recycle_bin", lambda path: False)
+    saves = tmp_path / "saves"
+    good = saves / "dunmark-1"
+    good.mkdir(parents=True)
+    (good / save.WORLD_FILE).write_bytes(b"x")
+    (good / save.CHARACTER_FILE).write_bytes(b"x")
+    stranger = tmp_path / "elsewhere"
+    stranger.mkdir()
+    (stranger / save.WORLD_FILE).write_bytes(b"x")
+    not_a_save = saves / "notes"
+    not_a_save.mkdir()
+    with pytest.raises(SaveError):
+        delete_world(stranger, saves)
+    with pytest.raises(SaveError):
+        delete_world(not_a_save, saves)
+    assert delete_world(good, saves) == "deleted"
+    assert not good.exists() and stranger.exists() and not_a_save.exists()
+
+
+def test_the_saved_worlds_screen_deletes_after_asking(pictured, monkeypatch):
+    from realmwalker.game import save
+    from realmwalker.ui.screens.base import ConfirmBox
+    from realmwalker.ui.screens.game_menu import WorldsScreen
+
+    monkeypatch.setattr(save, "_to_recycle_bin", lambda path: False)
+    app, game = pictured
+    app.save_game()
+    folder = app.paths.saves / game.world.meta.id
+    app.end_game()
+    screen = WorldsScreen(app)
+    app.push(screen)
+    render(app)
+    assert any(s.folder == folder for s in screen.saves)
+    screen.selected = next(i for i, s in enumerate(screen.saves) if s.folder == folder)
+    app.handle_event(KeyEvent("delete"))
+    assert isinstance(app.top, ConfirmBox)
+    app.handle_event(KeyEvent("n"))
+    assert folder.exists()
+    app.handle_event(KeyEvent("delete"))
+    app.handle_event(KeyEvent("y"))
+    assert not folder.exists()
+    assert all(s.folder != folder for s in screen.saves)
+    assert app.error_count == 0
+
+
+# ---------------------------------------------------------------------------- no Shift, and the mouse alone
+def test_keys_without_shift(make_app, world):
+    from realmwalker.game.state import new_game
+    from realmwalker.ui.screens.legend import LegendScreen
+    from realmwalker.ui.screens.log_screen import LogScreen
+    from realmwalker.ui.screens.spells import SpellsScreen
+
+    app = make_app()
+    game = new_game(copy.deepcopy(world), app.tables)
+    game.survival = False
+    app.start_game(game)
+    gs = app.top
+    for key, kind in (("o", LogScreen), ("k", LegendScreen)):
+        app.handle_event(KeyEvent(key))
+        assert isinstance(app.top, kind), key
+        app.handle_event(KeyEvent("escape"))
+    from realmwalker.rules import spells as sp
+
+    c = game.leader
+    c.cls = "wizard"
+    sp.init_spells(c, game.tables)
+    app.handle_event(KeyEvent("a"))
+    assert isinstance(app.top, SpellsScreen)
+    app.handle_event(KeyEvent("escape"))
+    washed = []
+    monkey = __import__("realmwalker.game.survival", fromlist=["wash"])
+    original = monkey.wash
+    monkey.wash = lambda g: washed.append(1) or []
+    try:
+        app.handle_event(KeyEvent("b"))
+    finally:
+        monkey.wash = original
+    assert washed
+    app.handle_event(KeyEvent("enter"))
+    assert game.in_local
+    app.handle_event(KeyEvent("x"))
+    assert not game.in_local
+    assert app.top is gs and app.error_count == 0
+
+
+def test_every_button_on_the_action_bar_works(pictured):
+    from realmwalker.ui import hud
+
+    app, game = pictured
+    gs = app.top
+    for local in (False, True):
+        if local:
+            app.handle_event(KeyEvent("enter"))
+            assert game.in_local
+        render(app)
+        for action in hud.actions(gs):
+            if action.id in ("menu", "leave", "enter"):
+                continue
+            action.run()
+            render(app)
+            while app.top is not gs:
+                app.pop()
+            gs.look = None
+            game.travel = None
+    assert app.error_count == 0
+
+
+def test_a_right_click_on_the_map_offers_what_can_be_done(make_app, world):
+    from realmwalker.game.state import new_game
+    from realmwalker.ui.screens.popup import ContextMenu
+
+    app = make_app()
+    game = new_game(copy.deepcopy(world), app.tables)
+    game.survival = False
+    app.start_game(game)
+    gs = app.top
+    render(app)
+    vx, vy, mx0, my0, ox, oy = gs.view
+    p = game.player
+    sx, sy = p.x - mx0 + vx + ox, p.y - my0 + vy + oy
+    app.handle_event(MouseEvent("click", sx + 3, sy, button="right"))
+    menu = app.top
+    assert isinstance(menu, ContextMenu)
+    labels = [e[0] for e in menu.entries]
+    assert any("Travel" in label for label in labels) and any("Look" in label for label in labels)
+    look = next(i for i, e in enumerate(menu.entries) if e[0].startswith("Look"))
+    menu.choose(look)
+    assert gs.look is not None and app.top is gs
+
+
+def test_the_pack_uses_a_thing_on_a_double_click(make_app, world):
+    from realmwalker.game.state import new_game
+    from realmwalker.ui.screens.sheets import InventoryScreen
+
+    app = make_app()
+    game = new_game(copy.deepcopy(world), app.tables)
+    game.survival = False
+    app.start_game(game)
+    c = game.leader
+    c.hunger = 60
+    inv = InventoryScreen(app, game)
+    app.push(inv)
+    render(app)
+    idx = next(i for i, it in enumerate(inv.visible_items()) if it.def_id == "rations")
+    inv._click(idx)
+    assert c.hunger == 60, "one click only chooses"
+    inv._click(idx)
+    assert c.hunger < 60, "a second click straight after uses it"
+    inv._menu(idx)
+    assert type(app.top).__name__ == "ContextMenu"
+    assert app.error_count == 0
