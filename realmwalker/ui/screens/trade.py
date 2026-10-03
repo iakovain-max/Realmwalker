@@ -142,12 +142,19 @@ class MarketScreen(Screen):
             head += f"   <good>haggled: {int(haggle * 100)}% better</>"
         canvas.markup(2, 1, head, max_width=w - 4)
         col_w = (w - 5) // 2
-        rows_h = h - 9
+        longest = max(len(self.theirs()), len(self.yours())) + 2
+        card = canvas.gfx is not None and h - 9 - longest >= 7  # room for a card about the chosen thing
+        rows_h = min(h - 9, longest) if card else h - 9
+        from realmwalker.rules.items import Item
+        from realmwalker.ui.screens.sheets import item_icon
+
         self._column(canvas, 2, 3, col_w, rows_h, 0, "Their goods", [
-            (r["name"] + (f" ×{r['qty']}" if r["qty"] > 1 and r["used"] is None else ""), money_text(r["price"]), True)
+            (r["name"] + (f" ×{r['qty']}" if r["qty"] > 1 and r["used"] is None else ""), money_text(r["price"]), True,
+             item_icon(canvas, game, Item(0, r["item_id"])))
             for r in self.theirs()])
         self._column(canvas, 3 + col_w, 3, col_w, rows_h, 1, "Your goods (what they'd pay)", [
-            (game.tables.items.name(it), money_text(price) if price is not None else "—", price is not None)
+            (game.tables.items.name(it), money_text(price) if price is not None else "—", price is not None,
+             item_icon(canvas, game, it))
             for it, price, why in self.yours()])
         # The selected thing.
         from realmwalker.ui.screens.sheets import item_details
@@ -165,9 +172,25 @@ class MarketScreen(Screen):
             if rows:
                 it, price, why = rows[min(self.sel[1], len(rows) - 1)]
                 detail = item_details(game, it) + ("" if price is not None else f"\n<warn>They won't buy it: {why}.</>")
-        canvas.hline(1, h - 6, w - 2, "─", colors.FAINT)
-        canvas.wrapped(2, h - 5, detail.split("\n")[0] + (" · " + detail.split("\n")[1] if "\n" in detail else ""), w - 4,
-                       max_lines=1)
+        if card and detail:
+            from realmwalker.ui.gfx import theme
+            from realmwalker.ui.screens.sheets import item_picture
+
+            top = 3 + rows_h + 1
+            canvas.hline(1, top - 1, w - 2, "─", colors.FAINT)
+            item = (Item(0, rows[min(self.sel[0], len(rows) - 1)]["item_id"]) if self.side == 0
+                    else rows[min(self.sel[1], len(rows) - 1)][0])
+            cw, ch = canvas.cell_w, canvas.cell_h
+            size = 4 * ch
+            canvas.clear_cells(2, top, 9, 4)
+            canvas.under(*theme.panel(2 * cw - 2, top * ch - 2, size + 4, size + 4, "glass", ornaments=False))
+            item_picture(canvas, game, item, 2 * cw, top * ch, size)
+            tx = 2 + (size + 8) // cw + 1
+            canvas.wrapped(tx, top, detail, w - tx - 2, max_lines=max(4, h - 8 - top))
+        else:
+            canvas.hline(1, h - 6, w - 2, "─", colors.FAINT)
+            canvas.wrapped(2, h - 5, detail.split("\n")[0] + (" · " + detail.split("\n")[1] if "\n" in detail else ""),
+                           w - 4, max_lines=1)
         if self.message:
             canvas.markup(2, h - 4, markup.escape(self.message) if "<" not in self.message else self.message,
                           max_width=w - 4)
@@ -191,7 +214,7 @@ class MarketScreen(Screen):
             self.offset[side] = sel
         if sel >= self.offset[side] + h - 1:
             self.offset[side] = sel - h + 2
-        for row, (label, price, ok) in enumerate(rows[self.offset[side]:self.offset[side] + h - 1]):
+        for row, (label, price, ok, icon) in enumerate(rows[self.offset[side]:self.offset[side] + h - 1]):
             i = row + self.offset[side]
             ry = y + 1 + row
             selected = active and i == sel
@@ -200,7 +223,11 @@ class MarketScreen(Screen):
             if bg:
                 canvas.fill(x, ry, w, 1, bg)
             fg = colors.SELECT_FG if selected else (colors.FG if ok else colors.FAINT)
-            canvas.text(x, ry, label[: w - 12], fg, bg)
+            tx = x
+            if icon and canvas.gfx is not None:
+                canvas.icon(x, ry, icon, rgba=(255, 255, 255, 255 if ok else 130))
+                tx = x + 3
+            canvas.text(tx, ry, label[: w - 12 - (tx - x)], fg, bg)
             canvas.text(x + w - len(price), ry, price, colors.named("loot") if ok else colors.FAINT, bg)
 
     def autoplay_keys(self) -> list[KeyEvent]:

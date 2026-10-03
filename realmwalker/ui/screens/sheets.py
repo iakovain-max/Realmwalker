@@ -326,7 +326,7 @@ def item_picture(canvas, game, it, x: float, y: float, size: float) -> None:
 
         canvas.under(Image("item_glow", _glow_image, (x - size * 0.15, y - size * 0.15, size * 1.3, size * 1.3),
                            rgba=(*rgb, 150)))
-    parts = dolls.item_parts(it, game.tables, atlas)
+    parts = dolls.item_parts(it, game.tables, atlas) if (magic.get("look") if magic else None) else None
     if parts:
         crop = dolls.bounds(atlas, parts)
         k = max(1, int(size // crop[2]))  # a whole number of screen pixels to each of its own
@@ -1047,7 +1047,7 @@ class EquipmentScreen(Screen):
             from realmwalker.ui.gfx import dolls, theme
 
             cw, ch = canvas.cell_w, canvas.cell_h
-            size = 32 * max(2, min(20 * cw // 32, 12 * ch // 32))
+            size = 32 * max(2, min(20 * cw // 32, 12 * ch // 32, max(0, w - bx - 36) * cw // 32))
             canvas.under(*theme.panel(bx * cw, by * ch, size + 16, size + 12, "glass", ornaments=False))
             cmd = dolls.draw(canvas.gfx.atlas, dolls.character(c, g.tables, atlas=canvas.gfx.atlas), bx * cw + 8,
                              by * ch + 4, size)
