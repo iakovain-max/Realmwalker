@@ -567,7 +567,8 @@ def _start_a_fight(app: App, rng: random.Random, report: AutoplayReport) -> None
     report.fights += 1
 
 
-def run_autoplay(*, turns: int = 3000, seed: int = 1, ai: str = "off", home: Path | None = None) -> AutoplayReport:
+def run_autoplay(*, turns: int = 3000, seed: int = 1, ai: str = "off", home: Path | None = None,
+                 pictures: bool = True) -> AutoplayReport:
     report = AutoplayReport(ai_mode=ai)
     own_home = home is None
     home = Path(tempfile.mkdtemp(prefix="realmwalker_autoplay_")) if home is None else home
@@ -581,6 +582,12 @@ def run_autoplay(*, turns: int = 3000, seed: int = 1, ai: str = "off", home: Pat
     def new_app() -> App:
         app = App(home=home, headless=True, config_overrides=config, settings_overrides=settings)
         app.ai.retry_interval = 0.5
+        if pictures:
+            # Draw as a window would (maps, figures, the fight's stage), recording the pictures without showing them.
+            from realmwalker.ui.gfx import GfxContext
+            from realmwalker.ui.gfx.atlas import load
+
+            app.gfx = GfxContext(load(str(app.paths.tiles)), 10, 20)
         return app
 
     app = new_app()
@@ -646,11 +653,12 @@ def main() -> int:
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--ai", choices=["off", "mock", "both"], default="both")
     parser.add_argument("--json", action="store_true", help="print a machine-readable result line")
+    parser.add_argument("--letters", action="store_true", help="draw the old way, in letters only (no pictures)")
     args = parser.parse_args()
     modes = ["off", "mock"] if args.ai == "both" else [args.ai]
     ok = True
     for mode in modes:
-        report = run_autoplay(turns=args.turns, seed=args.seed, ai=mode)
+        report = run_autoplay(turns=args.turns, seed=args.seed, ai=mode, pictures=not args.letters)
         print(report.summary())
         if args.json:
             print(json.dumps({"mode": mode, "ok": report.ok, "turns": report.turns, "errors": len(report.errors)}))
