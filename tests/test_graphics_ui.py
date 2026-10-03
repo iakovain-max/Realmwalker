@@ -405,3 +405,18 @@ def test_the_pack_uses_a_thing_on_a_double_click(make_app, world):
     inv._menu(idx)
     assert type(app.top).__name__ == "ContextMenu"
     assert app.error_count == 0
+
+
+def test_markup_is_closed_with_a_bare_tag():
+    """Colour markup closes with </>; a "</title>" shows on screen as it is (it did, on the help screen)."""
+    import re
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parent.parent
+    bad = []
+    for path in list((root / "realmwalker").rglob("*.py")) + list((root / "data").glob("*.json")) + \
+            list((root / "ai" / "prompts").glob("*.txt")):
+        for n, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            if re.search(r"</[a-z_]+>", line):
+                bad.append(f"{path.relative_to(root)}:{n}")
+    assert not bad, bad

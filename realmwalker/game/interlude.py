@@ -119,7 +119,7 @@ def summary_text(world, tables, summary: dict) -> list[str]:
     else:
         out.append("<dim>Nothing that reached the roads. The great ones kept their quarrels indoors.</>")
     if summary["news"]:
-        out += ["", "<title>What people are saying</title>"]
+        out += ["", "<title>What people are saying</>"]
         out += [f"<dim>·</> {esc(n['text'][:1].upper() + n['text'][1:])}" for n in summary["news"][:8]]
     fallen = world.politics.get("fallen", [])
     if fallen:

@@ -19,3 +19,8 @@ account.
 https://opengameart.org/content/dungeon-crawl-32x32-tiles . Toned and partly redrawn for Realmwalker.
 
 **Typefaces.** Cinzel, EB Garamond and Grenze Gotisch, under the SIL Open Font Licence (see `assets/fonts`).
+
+**Pixel art drawn for Realmwalker.** The people (bodies, clothes, armour, hair, hats, weapons, shields), the
+buildings, the map on parchment, furniture, yard clutter and the action-bar icons are drawn by code in this
+repository (`tools/figure_art.py`, `tools/figure_gear.py`, `tools/tile_art.py`, `realmwalker/ui/gfx/`) and are part
+of the game.

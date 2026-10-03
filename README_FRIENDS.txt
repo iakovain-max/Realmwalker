@@ -6,6 +6,10 @@ adventure mode and Caves of Qud, built on Dungeons & Dragons 5th Edition rules.
 You create a character in a large generated world and do whatever you like:
 travel, trade, fight, scheme, survive... and eventually die. The world goes on.
 
+Version 1.0: drawn in pixel art (people dressed in what they really wear,
+towns, dungeons, a map on parchment, fights with animation), and playable with
+the mouse alone.
+
 For adults (18+): violence, cruelty and grim themes.
 
 
@@ -23,10 +27,10 @@ WHAT YOU CAN DO
 * Hire companions, pay them, keep them loyal (or don't), and command them in a fight.
 * Take on work: bounties, lairs to clear, beasts to hunt, letters to carry,
   heirlooms to find, captives to free, debts to collect, people going missing.
-  Press J for your journal. Not every job is what you were told it was.
+  Press j for your journal. Not every job is what you were told it was.
 * Go underground: cellars, crypts, hideouts, caves and barrows, with traps,
   locked doors, secret rooms, chests, and something waiting at the bottom.
-  Take a torch. Press S to search.
+  Take a torch. Press s to search.
 * Find magic items, learn what they do (or ask a priest), and beware the cursed ones.
 * Kill a dragon, if you think you can. The world will remember who did it.
 * Die. It is permanent. The world keeps your story and goes on without you, and
@@ -39,6 +43,14 @@ HOW TO PLAY
 2. Open the Realmwalker folder and double-click Realmwalker.exe.
 3. Press F1 in the game for help and all the keys (it lists every one).
 4. It saves itself as you play. There is no reload: death is permanent.
+5. The mouse does everything: click the map to walk there, click a person to
+   talk, right-click anything to see what you can do with it, and every action
+   is a button along the bottom (its key is in the corner). The mouse wheel
+   zooms the map. No key needs Shift.
+6. Esc, then Settings: text size, Graphics (pictures, or the old letters),
+   Animations (full, calm, or off), map scales.
+7. Saved Worlds on the title screen lists your worlds; Delete moves one to the
+   Recycle Bin.
 
 You do not need to install Python or anything else.
 

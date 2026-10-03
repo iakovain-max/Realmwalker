@@ -1,7 +1,8 @@
 # Realmwalker — project guide for Claude Code
 
-A grim, text-heavy open-world party RPG on D&D 5e rules, with CP437 graphics (python-tcod) and
-AI-written flavour text from the Player2 app. **The user is not a programmer**: explain progress in
+A grim, text-heavy open-world party RPG on D&D 5e rules, drawn with pixel-art tiles and figures over a text grid
+(python-tcod + its SDL renderer; letters only as a fallback) and AI-written flavour text from the Player2 app.
+**Version 1.0** (2026-10-03): pictures and the new interface are in (`docs/PROGRESS.md`, first entry). **The user is not a programmer**: explain progress in
 gameplay terms, give Windows click-by-click steps when they must do something, never ask them to edit code.
 
 - Source of truth for the design: `docs/DESIGN.md` (verbatim copy of the user's document).
@@ -22,6 +23,7 @@ gameplay terms, give Windows click-by-click steps when they must do something, n
 | Mock Player2 server | `.venv\Scripts\python.exe tools\mock_player2.py --port 4316 --mode chaos` |
 | Friend build (tests, exe, smoke check, zip) | double-click `Build_For_Friends.bat` (runs `tools\build_friends.py`) |
 | Balance numbers (fights, cold, wounds) | `.venv\Scripts\python.exe tools\balance.py --runs 60` |
+| Rebuild the tile sheets (after changing tools/*_art.py, figure_*.py) | `.venv\Scripts\python.exe tools\build_tiles.py --pack <Dungeon Crawl Stone Soup Full folder>` (no `--pack`: downloads it) |
 
 Milestone "done" = all tests pass + the game launches (smoke test) + autoplay ran clean in both AI modes.
 Then commit, update PROGRESS.md, and stop for user feedback (unless the user said to keep going).
@@ -68,12 +70,22 @@ realmwalker/
   world/politics.py        the politics engine: succession, wars, sieges, plague, raids, cults, gangs (history + live)
   world/history.py         250 years of history at world creation; the built-in chronicle
   world/news.py            news items and how they travel along the roads
-  ui/                      window loop, fonts (tileset built at runtime), input, markup, widgets, map_render, screens/
+  ui/                      window loop, fonts (tileset built at runtime), input, markup, widgets (Canvas), map_render
+                           (the letters view), hud (side panel, log, action bar), colors, screens/
+  ui/gfx/                  the pictures: scene (picture commands, layers), gpu (draws them with SDL), atlas (the tile
+                           sheets), theme (panels, buttons, bars), typefaces, localview (close-up maps: tiles, light,
+                           people, followers), roofs (buildings: roofs, front walls, doors, lit windows), worldview +
+                           paint (the overworld as a pixel map on parchment, painted in chunks on a thread), dolls
+                           (people as stacked pixel-art layers), battlefx (the fight stage and its animation), scenes
+                           (camp, figures, busts, wound marks), weatherfx (rain, snow, fog), titleart
 data/                      ALL game data as JSON (names, fallback text, ... later races, items, creatures)
 ai/prompts/                prompt templates (plain text, @max_tokens header, {slots})
-assets/fonts/              DejaVu Sans Mono + licence
+assets/fonts/              DejaVu Sans Mono, Cinzel, EB Garamond, Grenze Gotisch + licences
+assets/tiles/              sheet_*.png + tiles.json, BUILT by tools/build_tiles.py (commit them; the game never builds)
 tests/                     pytest suite (headless; AI tests use tools/mock_player2.py, never the real app)
-tools/                     autoplay.py, mock_player2.py, build_friends.py, balance.py (the design's targets)
+tools/                     autoplay.py, mock_player2.py, build_friends.py, balance.py (the design's targets),
+                           build_tiles.py (+ tile_art.py: things drawn in code; figure_art.py: bodies; figure_gear.py:
+                           clothes, armour, hair, hats, weapons, shields)
 ```
 
 ## Rules of the codebase
@@ -168,6 +180,17 @@ tools/                     autoplay.py, mock_player2.py, build_friends.py, balan
   `_left_for_dead`). Underground counts as sheltered and dark (`survival.sheltered`, `fight.battle_env`). Water from the
   sky is `survival.sky_water`; skins top up on the move via `survival.top_up`. Measure deadliness with a scripted
   "careful player" over many lives before and after changing combat, cold, encounters or wounds.
+- Pictures (1.0): screens draw text cells as before and add picture commands with `canvas.under(...)` /
+  `canvas.over(...)` (`ui/gfx/scene.py`: Batch, Sprite, Image, Rect, Lines, Text, Clip). `canvas.gfx` is None headless
+  and in letters mode, so every picture path must have a letters path (tests run headless; `tests/test_graphics_ui.py`
+  renders with a fake GfxContext). Logic still never imports UI. Pictures live in `data/sprites.json` (validated):
+  terrain, town walls, traps, map marks, and "figures" (colours, skins, hair, what each item looks like worn, outfits
+  by trade, dressed creatures). New tiles: draw them in `tools/tile_art.py` (or a figure layer in `figure_gear.py`),
+  rebuild with build_tiles.py, commit `assets/tiles`. Figures are 32x32; draw them at whole multiples or let
+  `dolls.draw` scale them (it keeps pixels even). A rare item's look is `item.magic["look"]` {metal, cloth, emblem,
+  glow}: `magic_items.look_for` picks it, the AI may only choose from `ai/tasks.py` LOOK_* lists.
+- Animations go through `canvas.gfx.animate` (movement) and `canvas.gfx.ambient` (idle: water, smoke, weather), from
+  the Animations setting; the game's state never waits for an animation.
 - Battles: `rules/combat.Battle` is pure logic driven by `step()` / `pending_party()` / `do_*()`; the screen
   (`ui/screens/battle.py`) only paces and asks. `GameState.busy` (encounter, battle, aftermath or death pending)
   blocks moving; `GameScreen._open_event_screen()` opens the right screen. Debug console: `fight <group>`.

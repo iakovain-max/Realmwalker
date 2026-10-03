@@ -16,44 +16,93 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | M7 — Companions and progression | ✅ Done (2026-09-19) |
 | M8 — Adventure content | ✅ Done (2026-09-20) |
 | M9 — Death, legacy and release | ✅ Done (2026-09-20) |
-| After v1 | 🔨 Continuing |
+| After v1 (rough edges, fair chances, riding...) | ✅ Done |
+| **1.0 — Pictures and a new interface** | ✅ Done (2026-10-03), branch `graphics-ui` |
 
 ---
 
-## After v1 — continuing work (2026-09-20)
+## After v1 — continuing work (2026-09-20), up to version 1.0 (2026-10-03)
 
-The nine milestones are done; this is what has been added since, in the same spirit (all of it from the design's
-own v1 lists).
+The nine milestones are done; this is what has been added since, newest first. Version 1.0 is the pictures and the
+new interface (the first entry below).
 
-### Local session, 2026-10-03: graphics and interface for 1.0 (Anton's request) — branch `graphics-ui`, in progress
+### Local session, 2026-10-03: version 1.0 — pictures and a new interface (Anton's request) — branch `graphics-ui`
 
 Anton asked for the last two big updates before 1.0: graphics ("more detailed, informative, beautiful", simple
 animations that are not irritating, a better-looking world, characters and townsfolk) and a full interface overhaul
 (the inventory, fights without animation, too many walls of text), plus a button to delete a world, no Shift keys,
-and play with the mouse alone.
+and play with the mouse alone. After a first look he added four wishes: figures less goofy ("pixel-arty, like the
+new Steam Dwarf Fortress, sharp but pixelated"), a world map that is more stylised and sharper ("paper-style? more
+pixel-style?"), towns that are less samey with doors you can find, and rare things whose look is designed (by the AI,
+if it is not too hard). Then: finish, polish, playtest, and bring the handoff files to the state of 1.0.
 
-**Done (each committed on the branch, tests green, autoplay clean in both modes, smoke test run in a window):**
-- A picture engine beside the text grid (`ui/gfx`): layers of text cells and pictures drawn by the GPU. Tiles from
-  the public-domain Dungeon Crawl set (CC0), toned darker, plus furniture, fences, crops, pines, town marks and ~90
-  icons drawn in code (`tools/build_tiles.py`, `tools/tile_art.py`). Fonts: Cinzel, EB Garamond, Grenze Gotisch (OFL).
-  `data/sprites.json` says which picture shows what.
-- Close-up maps in tiles with light (day, dusk, night, torches, hearths), soft edges of sight, roofs and shop signs,
-  chimney smoke, water shimmer, people as dressed figures who glide; mouse-wheel zoom. Local maps are now laid out
-  for square tiles (round lakes and woods).
-- The overworld and the world map painted like a fantasy map (blended country, hill shading, coasts, rivers and
-  roads as curves, trees, hills, mountains, towns with names, fog, realms outlined, the route as a dotted line).
-- The interface: textured panels, title plates, buttons with key badges, soft highlights, pixel bars and gauges.
-  The main view has portraits, health bars, status icons, an action bar with every action, right-click menus.
-- The pack rebuilt (figure with worn slots, things by kind with pictures, item card with buttons and comparison).
-- Fights on a stage with animation (lunges, arrows and spells in flight, hits, rising numbers, falls).
-- Title screen with a painted night scene; Saved Worlds with Delete (Recycle Bin on Windows).
-- Conversation portrait, camp scene, creation preview figure; Settings: Graphics, Animations, map scales; Help.
-- Keys without Shift: Enter (obvious action), x leave, a spells, b wash, o log, k legend, +/- zoom; d/g/u in the pack.
+**The game now draws pictures.** Every screen still works in letters (Settings → Graphics → Letters, and the tests
+and the autoplay bot can run that way), but by default:
+- **A picture engine beside the text grid** (`ui/gfx`): each frame is layers of text cells and pictures drawn by the
+  GPU (tcod's SDL renderer). Tiles from the public-domain Dungeon Crawl set (CC0), toned darker, plus everything drawn
+  in code (`tools/build_tiles.py` builds `assets/tiles`; `tools/tile_art.py`, `tools/figure_art.py`,
+  `tools/figure_gear.py`). Fonts: Cinzel, EB Garamond, Grenze Gotisch (OFL). `data/sprites.json` says what shows what.
+- **People are pixel-art figures** (32x32, sharp pixels at any size): a body for each race and sex, dressed layer by
+  layer: shirts, tunics, robes, dresses, coats; padded, leather, studded, hide, chain, scale, splint and plate; hats,
+  hoods, helmets, crowns; cloaks; hair and beards in eight and five styles; 30-odd weapons, torches, lanterns, books;
+  shields in five shapes with sixteen devices. The player and companions wear what they really wear, in the colours
+  of those very things; townsfolk dress for their trade; bandits, guards and cultists for theirs. Skin, hair and beard
+  come from the words that describe a person ("straw-coloured hair", "a pale face"). Conversations show a head-and-
+  shoulders portrait.
+- **Rare things have their own look**: a magic item gets a metal, a cloth colour, a device and maybe a faint glow,
+  from the words in its name and story and from its powers (a fire-warding blade glows red, a raven's cloak is
+  black). When the AI names the item (task MAGIC_ITEM) it may choose the look again, only from fixed lists; a word
+  not on them is dropped, never an error. Figures wear and hold rare things in those colours, and the inventory card
+  shows a rare weapon or shield as it was made.
+- **The overworld and world map are a pixel map on parchment**: painted in "map pixels" and enlarged by whole
+  numbers, colours printed flat on the paper, hills shaded in dithered steps, an ink line along every coast with
+  ripple lines out to sea, blue rivers, dashed roads, pixel mountains, hills and trees with ink outlines, towns with
+  names, fog over what you have not seen, realms hatched in their colours with dashed borders, the route dotted.
+- **Close-up maps in tiles with light** (day, dusk, night, torches, hearths), soft edges of sight, water that
+  shimmers, people who glide from square to square, mouse-wheel zoom. Local maps are laid out for square tiles.
+- **Towns**: every building is drawn from what it is and where: thatch, shingle, tile, slate, turf or stone roofs in
+  several forms (along the house, gable end to the street, hipped, an inn's cross gable, a temple's tower and spire,
+  a keep's battlements and turrets), chimneys with smoke, dormers; plaster and timber, brick, stone or log front
+  walls with windows and shutters. A door in the front wall is drawn as a door (a striped awning over a shop's, barn
+  doors on a stable, an arch on a temple); a door on another side shows as a gap in the eaves. Windows glow at
+  night. New towns put doors in front when they can, and barrels, crates, woodpiles, haystacks, carts, troughs and
+  flower boxes against the walls (never by a door or across a way through).
+- **Weather you can see**: rain slanting with the wind, snow, fog, lightning in storms (only with animations on,
+  never underground or indoors, and only over ground you have seen).
+- **Companions** walk a step behind you on close-up maps and beside you on the road.
 
-**Still to do on this branch:** weather drawn on the maps (rain, snow), companions walking behind you, pictures in
-the trade, party and character screens, a body diagram on the Health screen, a last look at every screen at 80x30,
-the friend build (PyInstaller must include `assets/tiles`: add it to `realmwalker.spec`), then a pull request.
-Old saves load; local maps already visited keep their old shape.
+**The interface.** Textured panels, title plates, buttons with key badges, soft highlights, bars and gauges as
+pictures. The main view has a side panel with portraits, health bars and status icons, a message log, and an action
+bar along the bottom with every action as a button (click, or its key), right-click menus on the map ("what can I do
+there"), click to walk, click a person to talk. The pack is rebuilt: the figure in its worn slots, things by kind
+with pictures and tabs, an item card with buttons and a comparison with what you wear, double-click to use. Fights
+happen on a stage with animation (lunges, arrows and spells in flight, hits, rising numbers, falls) and the order of
+battle shown as figures. The character sheet shows the figure; the party list has faces and health bars; the Health
+screen shows the body with each wound marked where it is (click one to choose it); the trade lists have pictures and
+a card for the chosen thing; the Equipment screen shows the figure instead of the letter drawing. The title screen is
+a painted night scene; **Saved Worlds** (W on the title screen) has **Delete** (to the Recycle
+Bin on Windows). Settings: Graphics (pictures or letters), Animations (full, calm, off), map scales. Help covers the
+mouse and the new keys.
+
+**Keys without Shift**: Enter does the obvious thing where you stand, x leaves, a spells, b wash, o log, k legend,
++/- zoom; in the pack d drop, g give, u take off. Everything is also a button.
+
+**Smaller fixes on the way**: walking somewhere goes round townsfolk (or up to them) instead of giving up; a bandit's
+picture matches the name they go by, and no two in a band share one; prices in the pack fit their column; the help
+screen showed stray "</title>" tags.
+
+**How it was checked**: the whole test suite (new: `tests/test_graphics_ui.py` covers pictures for every terrain,
+creature, item and outfit, the figures' data, every screen drawing with pictures, the painter's seams, a
+conversation portrait, a fight on the stage, deleting a world; plus item looks in `tests/test_magic_items.py`);
+the autoplay bot in both AI modes (it draws with pictures by default: `--letters` for the old way) on several seeds;
+the smoke test in a real window; screenshots of every screen at 1920x1000 and 1024x640, looked at one by one.
+
+**Saves**: old saves load. Towns already visited keep their old layout (their buildings are drawn the new way;
+the new yards and front doors come with towns you have not been to yet). Nothing in the save format changed.
+
+**Known issues / ideas for later**: the figures face you and do not turn; animals and monsters are still the
+Dungeon Crawl pictures (only people are the new figures); buildings are rectangles (no L-shaped houses yet); the
+picture engine needs a GPU that SDL can use (if it cannot, the game falls back to letters).
 
 ### Cloud session, 2026-10-03: fair chances, and a final bug hunt (Anton's request)
 

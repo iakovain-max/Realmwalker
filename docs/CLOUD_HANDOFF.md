@@ -18,9 +18,11 @@ guessed wrong — and even then, do everything that does not depend on the answe
 
 ## The project in three lines
 
-A grim, text-heavy open-world party RPG on D&D 5e rules: CP437 graphics via python-tcod, all content in
-`data/*.json`, flavour text optionally written by the Player2 app's local AI with a built-in fallback for
-everything. Nine milestones (M0–M9) are done and the design's v1 lists are complete; work since then is polish.
+A grim, text-heavy open-world party RPG on D&D 5e rules: pixel-art tiles and figures drawn over a text grid
+(python-tcod and its SDL renderer, with an all-letters fallback), all content in `data/*.json`, flavour text
+optionally written by the Player2 app's local AI with a built-in fallback for everything. Nine milestones (M0–M9)
+are done, the design's v1 lists are complete, and **version 1.0** (2026-10-03) added the pictures and the new
+interface (mouse play, action bar, rebuilt pack, animated fights). Work since then is polish.
 
 Read in this order: `CLAUDE.md` (how the codebase works and its rules), `docs/DESIGN.md` (the design, which is
 the source of truth), `docs/PROGRESS.md` (status, decisions, and the "After v1 — continuing work" section).
@@ -38,10 +40,11 @@ and is otherwise ignored.
 
 | Check | Cloud | How |
 |---|---|---|
-| All tests | ✅ | `.venv/bin/python -m pytest -q` (≈645 tests, a few minutes) |
+| All tests | ✅ | `.venv/bin/python -m pytest -q` (≈950 tests, several minutes) |
 | Autoplay bot, both AI modes | ✅ | `.venv/bin/python tools/autoplay.py --turns 3000` |
 | Balance numbers | ✅ | `.venv/bin/python tools/balance.py --runs 60` |
 | Mock Player2 server | ✅ | `.venv/bin/python tools/mock_player2.py --port 4316 --mode chaos` (tests start it themselves) |
+| Rebuild the tile sheets | ✅ | `.venv/bin/python tools/build_tiles.py` (downloads the CC0 Dungeon Crawl pack into `build/`; pure Pillow and numpy). Commit `assets/tiles` afterwards |
 | Window smoke test | ⚠️ | Needs a display. Try `SDL_VIDEODRIVER=dummy .venv/bin/python main.py --smoke-test out.png` **once**; if it fails, do not fight it — say in the PR that the window check is owed on Windows |
 | Friend build (`.exe` + zip) | ❌ | PyInstaller would build a Linux binary. Only Anton's Windows machine makes `Realmwalker.zip` |
 | The real Player2 app | ❌ | It lives at `127.0.0.1:4315` on Anton's PC and is not reachable here. **Never** try; a stray call costs him real energy (it happened once, ~15 joules). Tests and the smoke test must always use the mock or the AI off |
@@ -69,8 +72,7 @@ Big sweeping batches are what he wants, and they are safe here because nothing r
 2. Autoplay clean in both modes (`RESULT: OK` twice).
 3. `tools/balance.py` inside its bands if you touched combat, cold, bleeding or XP.
 4. `docs/PROGRESS.md` updated in his language, under "After v1 — continuing work".
-5. Commit messages readable, each ending with:
-   `Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>`
+5. Commit messages readable, each ending with the Co-Authored-By line your session's instructions give.
 6. A pull request whose description he can read without knowing any code, in this shape:
    - **What is different when you play** — grouped by theme, in game terms.
    - **How to see it** — for each visible thing, where to look: which screen, which key, whether it needs a fresh
@@ -92,6 +94,14 @@ This is the real limit of working up here, so work with it rather than against i
   work on the branch.
 - Rendering code can still be exercised headlessly: screens can be pushed and rendered into a `tcod.console.Console`
   in a test (see `tests/test_app_ui.py`), which catches crashes and wrong text even without a window.
+- **The pictures** (since 1.0) are recorded as commands even without a window: `tests/test_graphics_ui.py` gives the
+  app a GfxContext over the real tile atlas and checks what each screen asks to draw (that a portrait, a figure, a
+  map chunk, a fight stage is there). Pixel output needs a real GPU window; if `SDL_VIDEODRIVER=dummy` cannot make a
+  renderer, say in the PR that how it *looks* is owed on Windows. Every picture path must keep a letters path
+  (`canvas.gfx is None`), because Settings → Graphics → Letters and the tests use it.
+- New art is drawn in code (`tools/tile_art.py`, `tools/figure_art.py`, `tools/figure_gear.py`) and baked into
+  `assets/tiles` by `tools/build_tiles.py`; look at it by saving the tiles to a PNG and enlarging them, and check
+  `data/sprites.json` names only tiles that exist (`dolls.problems()`, used by the tests).
 
 ## Rules it is expensive to break
 
