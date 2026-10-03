@@ -289,6 +289,17 @@ FILTERS = [
     ("Trade", {"trade"}),
 ]
 SORTS = ["category", "name", "weight", "value"]
+FILTER_ICONS = {"All": "icon/inventory", "Weapons": "item/longsword", "Armour": "item/chain_mail",
+                "Clothing": "item/wool_cloak", "Gear": "item/rope", "Food": "item/bread", "Trade": "item/_coins_1"}
+
+
+def item_icon(canvas, game, it) -> str:
+    """The picture for a thing (its own, or one for its kind)."""
+    from realmwalker.ui.gfx.localview import item_sprite
+
+    if canvas.gfx is None:
+        return ""
+    return item_sprite(canvas.gfx.atlas, game.tables, it) or ""
 
 
 class InventoryScreen(Screen):
@@ -528,62 +539,337 @@ class InventoryScreen(Screen):
     def render(self, canvas: Canvas) -> None:
         g = self.game
         c = self.char
-        t = g.tables.items
         s = Sheet(c, g.tables)
         w, h = canvas.width, canvas.height
         shared = len(pack_mates(c)) > 1
         title = f"The party's pack · {markup.escape(c.name.split()[0])} (Tab)" if shared else markup.escape(c.name)
         canvas.frame(0, 0, w, h - 1, f"Inventory — {title}", double=True)
-        x = 2
+        wide = w >= 116
+        doll_w = 34 if wide else 0
+        card_w = max(30, min(48, (w - doll_w) * 2 // 5))
+        list_x = 2 + doll_w
+        list_w = w - list_x - card_w - 3
+        if wide:
+            self._render_worn(canvas, 2, 2, doll_w - 2, h - 8)
+        self._render_tabs(canvas, list_x, 2, list_w + card_w)
+        self._render_list(canvas, list_x, 4, list_w, h - 10)
+        self._render_card(canvas, list_x + list_w + 1, 4, card_w + 1, h - 10)
+        self._render_load(canvas, 2, h - 5, w - 4, s)
+        row = [("Equipment", lambda: self.app.replace(EquipmentScreen(self.app, g, self.index)), "e")] if not wide else []
+        if len(g.party) > 1:
+            row += [("Next member", lambda: self.handle_key(KeyEvent("tab")), "Tab")]
+        canvas.button_row(2, h - 3, w - 2, row + [("Sort: " + SORTS[self.sort], self._cycle_sort, "s"),
+                                                  ("Back", self.close, "Esc")])
+
+    # ---- the left column: who wears what
+    def _render_worn(self, canvas: Canvas, x: int, y: int, w: int, h: int) -> None:
+        from realmwalker.rules.items import EQUIP_SLOTS, SLOT_NAMES
+
+        g = self.game
+        c = self.char
+        t = g.tables.items
+        canvas.frame(x, y, w, h, markup.escape(c.name.split()[0]), fg=colors.FAINT, bg=None, style="inset")
+        top = y + 1
+        if canvas.gfx is not None:
+            from realmwalker.ui.gfx import dolls
+
+            cw, ch = canvas.cell_w, canvas.cell_h
+            size = min((w - 4) * cw, 7 * ch)
+            px = x * cw + (w * cw - size) / 2
+            canvas.clear_cells(x + 1, top, w - 2, 7)
+            from realmwalker.ui.gfx import theme
+
+            canvas.under(*theme.panel(px - 6, top * ch + 2, size + 12, size + 4, "glass", ornaments=False))
+            for name in dolls.character(c, g.tables):
+                canvas.sprite(name, px, top * ch + 4, size, size)
+            top += 8
+        else:
+            top += 1
+        canvas.text(x + 2, top, "Worn and held", colors.TITLE, max_width=w - 4)
+        top += 1
+        for i, slot in enumerate(EQUIP_SLOTS):
+            ry = top + i
+            if ry >= y + h - 1:
+                break
+            it = c.equipped_item(slot)
+            over = canvas.hit(x + 1, ry, w - 2, 1, action=lambda slot=slot: self.pick_slot(slot),
+                              right_action=lambda slot=slot: self.take_off(slot),
+                              tooltip=(f"{SLOT_NAMES[slot]}: click to choose what goes here; right-click to take it off."))
+            cur = self.current()
+            if it is not None and cur is not None and it.uid == cur.uid:
+                canvas.fill(x + 1, ry, w - 2, 1, colors.HILITE_BG)
+            elif over:
+                canvas.fill(x + 1, ry, w - 2, 1, colors.HOVER_BG)
+            cx = x + 2
+            if canvas.gfx is not None:
+                if it is not None:
+                    canvas.icon(cx, ry, item_icon(canvas, g, it))
+                cx += 3
+            label_w = 13 if w - (cx - x) >= 26 else 9
+            canvas.text(cx, ry, SLOT_NAMES[slot][: label_w - 1], colors.DIM, max_width=x + w - 1 - cx)
+            name = markup.escape(t.name(it)) if it else "—"
+            canvas.text(cx + label_w, ry, name, colors.named("loot") if it else colors.FAINT,
+                        max_width=x + w - 2 - cx - label_w)
+
+    def pick_slot(self, slot: str) -> None:
+        from realmwalker.rules.items import SLOT_NAMES
+
+        options = best_slot_items(self.char, self.game.tables.items, slot)
+        if not options:
+            self.app.notify(f"You have nothing to wear or hold there ({SLOT_NAMES[slot].lower()}).", "warn")
+            return
+        self.app.push(ItemPicker(self.app, self.game, self.char, slot, options))
+
+    def take_off(self, slot: str) -> None:
+        it = unequip(self.char, slot)
+        if it is not None:
+            self.game.say(f"You take off the {self.game.tables.items.name(it, False)}.", "info")
+            self.game.dirty = True
+
+    # ---- the tabs along the top
+    def _render_tabs(self, canvas: Canvas, x: int, y: int, w: int) -> None:
+        cx = x
         for i, (name, _) in enumerate(FILTERS):
-            label = f"[{name}]" if i == self.filter else f" {name} "
-            over = canvas.hit(x, 2, len(label), 1, action=lambda i=i: self._set_filter(i))
-            x = canvas.text(x, 2, label, colors.SELECT_FG if i == self.filter else (colors.FG if over else colors.DIM)) + 1
-        canvas.text(x + 2, 2, f"sort: {SORTS[self.sort]} (s)", colors.FAINT, max_width=w - x - 4)
-        list_w = min(64, w - 40)
-        canvas.text(2, 4, f"{'':2}{'Item':<32}{'Wt':>6}{'Value':>10}  Note", colors.DIM)
+            label = f" {name} "
+            icon = FILTER_ICONS.get(name, "")
+            width = len(label) + (3 if canvas.gfx is not None and icon else 0)
+            if cx + width > x + w:
+                break
+            over = canvas.hit(cx, y, width, 1, action=lambda i=i: self._set_filter(i), tooltip=f"Show {name.lower()} "
+                              "(left and right arrows)")
+            if canvas.gfx is not None:
+                from realmwalker.ui.gfx import theme
+
+                state = "active" if i == self.filter else ("hover" if over else "normal")
+                canvas.clear_cells(cx, y, width, 1)
+                canvas.under(theme.button(cx * canvas.cell_w, y * canvas.cell_h, width * canvas.cell_w,
+                                          canvas.cell_h, state))
+                tx = cx
+                if icon:
+                    canvas.icon(cx + 1, y, icon)
+                    tx = cx + 2
+                canvas.text(tx, y, label, colors.SELECT_FG if i == self.filter else colors.FG)
+            else:
+                label = f"[{name}]" if i == self.filter else f" {name} "
+                canvas.text(cx, y, label, colors.SELECT_FG if i == self.filter else (colors.FG if over else colors.DIM))
+            cx += width + 1
+
+    # ---- the list of things
+    def _rows(self) -> list[tuple[str, object]]:
+        """What the list shows: headings between kinds of thing (when sorted by kind), then the things."""
+        t = self.game.tables.items
         items = self.visible_items()
-        rows = h - 10
-        if self.selected < self.offset:
-            self.offset = self.selected
-        if self.selected >= self.offset + rows:
-            self.offset = self.selected - rows + 1
-        for i, it in enumerate(items[self.offset:self.offset + rows]):
-            idx = i + self.offset
-            y = 5 + i
-            selected = idx == self.selected
-            over = canvas.hit(2, y, list_w, 1, action=lambda idx=idx: self._click(idx),
-                              right_action=lambda idx=idx: self._select_and(idx, self.toggle_equip))
+        if SORTS[self.sort] != "category":
+            return [("item", it) for it in items]
+        out: list[tuple[str, object]] = []
+        last = None
+        for it in items:
+            cat = t.category(it)
+            if cat != last:
+                out.append(("head", CATEGORY_NAMES.get(cat, cat.capitalize())))
+                last = cat
+            out.append(("item", it))
+        return out
+
+    def _render_list(self, canvas: Canvas, x: int, y: int, w: int, h: int) -> None:
+        g = self.game
+        c = self.char
+        t = g.tables.items
+        canvas.frame(x - 1, y - 1, w + 2, h + 2, "", fg=colors.FAINT, bg=None, style="inset")
+        icons = canvas.gfx is not None
+        name_x = x + (3 if icons else 2)
+        cols_w = 18
+        name_w = max(8, w - (name_x - x) - cols_w)
+        canvas.text(name_x, y, "Thing", colors.DIM)
+        canvas.text(x + w - cols_w, y, f"{'Wt':>5}{'Value':>9}", colors.DIM)
+        rows = self._rows()
+        items = [r[1] for r in rows if r[0] == "item"]
+        cur = self.current()
+        sel_row = next((i for i, r in enumerate(rows) if r[0] == "item" and cur is not None and r[1] is cur), 0)
+        room = max(1, h - 2)
+        if sel_row < self.offset:
+            self.offset = max(0, sel_row - 1 if sel_row > 0 and rows[sel_row - 1][0] == "head" else sel_row)
+        if sel_row >= self.offset + room:
+            self.offset = sel_row - room + 1
+        self.offset = max(0, min(self.offset, max(0, len(rows) - room)))
+
+        def wheel(dy: int) -> None:
+            self.offset = max(0, min(max(0, len(rows) - room), self.offset - dy * 3))
+
+        canvas.hit(x, y + 1, w, room, wheel=wheel)
+        for i, (kind, value) in enumerate(rows[self.offset:self.offset + room]):
+            ry = y + 1 + i
+            if kind == "head":
+                canvas.section(x, ry, w, value)
+                continue
+            it = value
+            idx = items.index(it)
+            selected = cur is not None and it is cur
+            over = canvas.hit(x, ry, w, 1, action=lambda idx=idx: self._click(idx),
+                              right_action=lambda idx=idx: self._menu(idx),
+                              tooltip=None)
             bg = colors.HILITE_BG if selected else (colors.HOVER_BG if over else None)
             if bg:
-                canvas.fill(2, y, list_w, 1, bg)
+                canvas.fill(x, ry, w, 1, bg)
             wearer, _ = worn_by(c, it.uid)
-            worn = "▪" if wearer is not None else " "
+            if icons:
+                canvas.icon(x, ry, item_icon(canvas, g, it))
+                if wearer is not None:
+                    from realmwalker.ui.gfx.scene import Rect
+
+                    canvas.over(Rect(x * canvas.cell_w + 1, ry * canvas.cell_h + 1, 4, 4, (120, 210, 100, 255)))
+            else:
+                canvas.text(x, ry, "▪ " if wearer is not None else "  ", colors.named("good") if wearer is c else colors.DIM, bg)
             name = markup.escape(t.name(it))
             if wearer is not None and wearer is not c:
-                name = f"{name[:31 - len(wearer.name.split()[0]) - 3]} ({wearer.name.split()[0]})"
-            name = name[:31]
-            canvas.text(2, y, f"{worn} ", colors.named("good") if wearer is c else colors.DIM, bg)
-            canvas.text(4, y, name, colors.SELECT_FG if selected else colors.FG, bg)
-            canvas.text(36, y, f"{t.weight(it):>6g}", colors.DIM, bg)
-            canvas.text(42, y, f"{money_text(t.value(it)):>10}"[-10:], colors.named("loot"), bg)
-            note = spoilage_text(g, it, in_list=True) or ("" if it.condition >= 90 else f"<dim>{t.condition_word(it)}</>")
-            canvas.markup(53, y, note, bg=bg, max_width=list_w - 51)
+                who = wearer.name.split()[0]
+                name = f"{name[:name_w - len(who) - 3]} ({who})"
+            elif wearer is c:
+                name = name[:name_w - 7] + " <dim>(worn)</>" if len(name) < name_w - 7 else name[:name_w]
+            color = colors.SELECT_FG if selected else (colors.named("magic") if it.magic else colors.FG)
+            canvas.markup(name_x, ry, name, fg=color, bg=bg, max_width=name_w)
+            canvas.text(x + w - cols_w, ry, f"{t.weight(it):>5g}", colors.DIM, bg)
+            canvas.text(x + w - cols_w + 5, ry, f"{money_text(t.value(it)):>9}"[-9:], colors.named("loot"), bg)
         if not items:
-            canvas.text(4, 5, "Nothing here.", colors.DIM)
-        dx = 2 + list_w + 2
-        canvas.frame(dx - 1, 4, w - dx, h - 9, "", fg=colors.FAINT, bg=None)
+            canvas.text(name_x, y + 2, "Nothing here.", colors.DIM)
+        if len(rows) > room:
+            canvas.text(x + w - 12, y + h - 1, f"{self.offset + 1}-{min(len(rows), self.offset + room)}/{len(rows)}",
+                        colors.FAINT)
+
+    # ---- the card: everything about the chosen thing, and what to do with it
+    def _render_card(self, canvas: Canvas, x: int, y: int, w: int, h: int) -> None:
+        g = self.game
+        c = self.char
+        t = g.tables.items
+        canvas.frame(x, y - 1, w, h + 2, "", fg=colors.FAINT, bg=None, style="inset")
         cur = self.current()
-        if cur is not None:
-            canvas.wrapped(dx + 1, 5, item_details(g, cur), w - dx - 3, max_lines=h - 12)
-        canvas.markup(2, h - 4, f"{load_line(s)} · <dim>Money:</> <loot>{money_text(c.money)}</>", max_width=w - 4)
-        row = [(self.action_name(cur), self.use, "Enter"), ("Drop", self.drop, "d"),
-               ("Drop one", lambda: self.drop(False), "D"),
-               ("Equipment", lambda: self.app.replace(EquipmentScreen(self.app, g, self.index)), "e")]
+        ix, iw = x + 2, w - 4
+        if cur is None:
+            canvas.text(ix, y + 1, "Choose something on the left.", colors.DIM, max_width=iw)
+            return
+        top = y + 1
+        if canvas.gfx is not None:
+            from realmwalker.ui.gfx import theme
+            from realmwalker.ui.gfx.scene import Text
+
+            cw, ch = canvas.cell_w, canvas.cell_h
+            size = 3 * ch
+            canvas.clear_cells(ix, top, 7, 3)
+            canvas.under(*theme.panel(ix * cw - 2, top * ch - 2, size + 4, size + 4, "glass", ornaments=False))
+            canvas.sprite(item_icon(canvas, g, cur), ix * cw, top * ch, size, size)
+            canvas.clear_cells(ix + 7, top, iw - 7, 1)
+            canvas.over(Text((ix + 7) * cw, top * ch + ch / 2, t.name(cur), "heading", 17,
+                             (214, 176, 108, 255) if not cur.magic else (200, 160, 250, 255), anchor="lm"))
+            canvas.markup(ix + 7, top + 1, f"<dim>{CATEGORY_NAMES.get(t.category(cur), t.category(cur))}</>",
+                          max_width=iw - 7)
+            wearer, _ = worn_by(c, cur.uid)
+            if wearer is not None:
+                canvas.markup(ix + 7, top + 2, f"<good>Worn by {markup.escape(wearer.name.split()[0])}</>",
+                              max_width=iw - 7)
+            top += 4
+        details = item_details(g, cur)
+        if canvas.gfx is not None:
+            details = details.split(chr(10), 1)[1] if chr(10) in details else ""  # the name is the heading already
+        compare = self.comparison(cur)
+        if compare:
+            details += "\n" + compare
+        buttons = self.card_actions(cur)
+        room = max(2, (y + h) - top - len(buttons) - 1)
+        used = canvas.wrapped(ix, top, details, iw, max_lines=room)
+        by = max(top + used + 1, y + h - len(buttons))
+        bw = min(iw, max(len(label) + len(key) + 3 for label, _, key in buttons))
+        for i, (label, fn, key) in enumerate(buttons):
+            if by + i >= y + h + 1:
+                break
+            pad = bw - (len(label) + len(key) + 3)
+            canvas.button(ix, by + i, label + " " * max(0, pad), fn, hotkey=key, max_width=iw)
+
+    def card_actions(self, it: Item) -> list[tuple[str, object, str]]:
+        g = self.game
+        out = [(self.action_name(it), self.use, "Enter")]
+        wearer, slot = worn_by(self.char, it.uid)
+        if wearer is not None and self.action_name(it) not in ("Remove",) and not self.action_name(it).startswith("Take it"):
+            out.append(("Take it off", lambda: self.take_off_item(it), "u"))
+        if it.qty > 1:
+            out.append((f"Drop all {it.qty}", lambda: self.drop(True), "d"))
+            out.append(("Drop one", lambda: self.drop(False), "D"))
+        else:
+            out.append(("Drop", lambda: self.drop(True), "d"))
         if len(g.party) > 1:
             other = g.party[(self.index + 1) % len(g.party)].name.split()[0]
-            row += [(f"Give to {other}", self.give, "G"), ("Next member", lambda: self.handle_key(KeyEvent("tab")), "Tab")]
-        canvas.button_row(2, h - 3, w - 2, row + [("Back", self.close, "Esc")])
+            out.append((f"Give to {other}", self.give, "g"))
+        return out
+
+    def take_off_item(self, it: Item) -> None:
+        wearer, slot = worn_by(self.char, it.uid)
+        if wearer is None or slot is None:
+            return
+        if unequip(wearer, slot) is None:
+            self.game.say(f"The {self.game.tables.items.name(it, False)} will not come off.", "warn")
+        else:
+            self.game.say(f"{'You take' if wearer is self.game.leader else wearer.name.split()[0] + ' takes'} off the "
+                          f"{self.game.tables.items.name(it, False)}.", "info")
+        self.game.dirty = True
+
+    def comparison(self, it: Item) -> str:
+        """How it measures up against what is worn in its place."""
+        t = self.game.tables.items
+        c = self.char
+        slots = t.slots_for(it)
+        if not slots or worn_by(c, it.uid)[0] is not None:
+            return ""
+        d = t.get(it.def_id)
+        now = next((c.equipped_item(sl) for sl in slots if c.equipped_item(sl) is not None), None)
+        if now is None:
+            return f"<good>Nothing is worn there now.</>" if d["category"] in ("armor", "helmet", "shield", "clothing") else ""
+        n = t.get(now.def_id)
+        if d["category"] == "weapon" and n.get("category") == "weapon":
+            return f"<dim>Instead of your</> {markup.escape(t.name(now, False))}: <dim>{n['damage']} {n['damage_type']}</>"
+        if d["category"] == "armor" and n.get("category") == "armor":
+            sign = "<good>" if d.get("ac", 0) > n.get("ac", 0) else ("<warn>" if d.get("ac", 0) < n.get("ac", 0) else "<dim>")
+            return (f"<dim>Instead of your</> {markup.escape(t.name(now, False))}: base AC {sign}{d.get('ac')}</> "
+                    f"<dim>against</> {n.get('ac')}")
+        if d["category"] == "clothing" and n.get("category") == "clothing":
+            return (f"<dim>Instead of your</> {markup.escape(t.name(now, False))}: warmth {d.get('warmth', 0)} "
+                    f"<dim>against</> {n.get('warmth', 0)}")
+        return f"<dim>Instead of your</> {markup.escape(t.name(now, False))}."
+
+    def _render_load(self, canvas: Canvas, x: int, y: int, w: int, s: Sheet) -> None:
+        light, heavy, limit = s.pack_capacity()
+        load = s.pack_load()
+        text = f"{load_line(s)} · <dim>Money:</> <loot>{money_text(self.char.money)}</>"
+        if canvas.gfx is not None:
+            from realmwalker.ui.gfx import theme
+
+            enc = s.encumbrance()
+            color = colors.named(ENCUMBRANCE_WORDS[enc][1])
+            bw = min(40, w // 3)
+            canvas.clear_cells(x, y, bw, 1)
+            canvas.under(*theme.bar(x * canvas.cell_w, y * canvas.cell_h + 4, bw * canvas.cell_w, canvas.cell_h - 8,
+                                    load / max(1.0, limit), color))
+            # Marks where burdened and heavily burdened begin.
+            from realmwalker.ui.gfx.scene import Rect
+
+            for mark in (light, heavy):
+                mx = x * canvas.cell_w + bw * canvas.cell_w * min(1.0, mark / max(1.0, limit))
+                canvas.over(Rect(mx, y * canvas.cell_h + 2, 2, canvas.cell_h - 4, (240, 220, 170, 200)))
+            canvas.markup(x + bw + 2, y, text, max_width=w - bw - 2)
+        else:
+            canvas.markup(x, y, text, max_width=w)
+
+    def _cycle_sort(self) -> None:
+        self.sort = (self.sort + 1) % len(SORTS)
+        self.offset = 0
+
+    def _menu(self, idx: int) -> None:
+        from realmwalker.ui.screens.popup import ContextMenu
+
+        self.selected = idx
+        it = self.current()
+        if it is None:
+            return
+        entries = [(label, fn, "") for label, fn, _ in self.card_actions(it)]
+        self.app.push(ContextMenu(self.app, self.app.mouse, entries, markup.escape(self.game.tables.items.name(it))))
 
     def _set_filter(self, i: int) -> None:
         self.filter = i
@@ -591,8 +877,12 @@ class InventoryScreen(Screen):
         self.offset = 0
 
     def _click(self, idx: int) -> None:
-        if idx == self.selected:
-            self.use()
+        now = self.app.clock()
+        if idx == self.selected and now - getattr(self, "_last_click", -9.0) < 0.5:
+            self.use()  # a double click uses it (wears it, eats it, reads it...)
+            self._last_click = -9.0
+            return
+        self._last_click = now
         self.selected = idx
 
     def _select_and(self, idx: int, fn) -> None:
@@ -614,18 +904,22 @@ class InventoryScreen(Screen):
         elif ev.key in ("left", "right"):
             self._set_filter((self.filter + (1 if ev.key == "right" else -1)) % len(FILTERS))
         elif ev.key == "s":
-            self.sort = (self.sort + 1) % len(SORTS)
+            self._cycle_sort()
         elif ev.key == "enter":
             self.use()
         elif ev.key == "d":
             self.drop(True)
         elif ev.key == "D":
             self.drop(False)
+        elif ev.key == "u":
+            it = self.current()
+            if it is not None:
+                self.take_off_item(it)
         elif ev.key == "e":
             self.app.replace(EquipmentScreen(self.app, self.game, self.index))
         elif ev.key == "c":
             self.app.replace(CharacterScreen(self.app, self.game, self.index))
-        elif ev.key == "G":
+        elif ev.key in ("g", "G"):
             self.give()
         elif ev.key == "tab" and len(self.game.party) > 1:
             self.index = (self.index + 1) % len(self.game.party)
@@ -635,7 +929,7 @@ class InventoryScreen(Screen):
         return True
 
     def autoplay_keys(self) -> list[KeyEvent]:
-        return [KeyEvent(k) for k in ("up", "down", "down", "left", "right", "s", "enter", "enter", "D", "escape")]
+        return [KeyEvent(k) for k in ("up", "down", "down", "left", "right", "s", "enter", "enter", "D", "u", "escape")]
 
 
 # ---------------------------------------------------------------------------- equipment
