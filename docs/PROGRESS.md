@@ -77,6 +77,24 @@ plus creeping (z) being dropped on the big map whatever way you leave the close 
 Checked by `tests/test_fair_chances.py`, new cases in `tests/test_combat.py`, `tests/test_screens_fit.py` and
 `tests/test_small_fixes.py`. Old saves still load (nothing in the save changed).
 
+**Riding** (Anton: "you can buy a horse and lead it, but it doesn't in any way speed you up"; "everyone moves as fast
+as the slowest member, so everyone needs a horse to go at horse speed"). A horse did shorten a journey a little, but
+nothing showed it: the travel plan, the map's estimate and the journey's forecast all still counted the walk, and in a
+party one horse gave nothing at all, without a word as to why. Now (`game/mounts.py`):
+- Each member rides one of the party's animals, the fastest first; whoever is left over walks, and then the whole
+  party walks with them. When everyone rides, the slowest mount ridden sets the pace (before, a spare slow horse
+  could hold back a lone rider on a fast one).
+- A riding horse covers about half as much ground again as a walker on roads and open country, half that gain in
+  woods, and nothing in marsh or mountains, where you lead it; a pony or a draft horse less; a mule only carries.
+  How much each land allows is in data/economy.json ("ride_lands").
+- The plan says "of riding" or "in the saddle" and counts it; the forecast before a journey says who rides and,
+  when the party walks, why ("Muriel walks, with nothing to ride: the party goes at a walk").
+- The side panel shows who rides what ("Osric on Bess, the riding horse · Muriel on foot (at a walk)"), and buying at
+  the stable says how the party now travels. Two animals bought are no longer both called Bess.
+- In the saddle you tire, hunger and thirst less than on foot, even at the walkers' pace, and a lame leg does not
+  slow a rider.
+Checked by `tests/test_mounts.py`. Old saves load; animals already bought are ridden at once.
+
 ### Cloud session, 2026-09-25: words that sound right
 
 (Pull request "Words that sound right". Found by holding a few thousand conversations and reading every piece of

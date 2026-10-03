@@ -35,7 +35,7 @@ def sheltered(game, activity: str) -> bool:
         return True
     if lm is not None and (lm.kind == "dungeon" or lm.building_at(p.lx, p.ly) is not None):
         return True  # under a roof, or under the ground: the rain and the wind do not come down there
-    return activity != "walk" and game.world.settlement_at(p.x, p.y) is not None
+    return activity not in ("walk", "ride") and game.world.settlement_at(p.x, p.y) is not None
 
 
 def bedding(game, char: Character) -> float:
@@ -52,9 +52,9 @@ def environment(game, char: Character, activity: str) -> Environment:
     camp = camp_here(game)
     return Environment(
         air=w.temp, wind=w.wind, wet_per_hour=w.wet_per_hour, activity=activity,
-        sheltered=sheltered(game, activity), fire=bool(camp and camp.fire and activity != "walk"),
-        tent=bool(camp and camp.tent and activity != "walk"), bedding=bedding(game, char),
-        shelter=bool(camp and camp.shelter and activity != "walk"),
+        sheltered=sheltered(game, activity), fire=bool(camp and camp.fire and activity not in ("walk", "ride")),
+        tent=bool(camp and camp.tent and activity not in ("walk", "ride")), bedding=bedding(game, char),
+        shelter=bool(camp and camp.shelter and activity not in ("walk", "ride")),
         wading=bool(getattr(game, "_wading", False)),
     )
 
@@ -65,12 +65,15 @@ def tick(game, minutes: int, activity: str) -> None:
         return
     from realmwalker.rules import health
 
+    from realmwalker.game import mounts
+
     ctx = health_context(game, activity)
     for char in list(game.party):
         if not char.alive:
             continue
         sheet = Sheet(char, game.tables)
-        env = environment(game, char, activity)
+        doing = mounts.activity_for(game, char, activity) if game.leader.animals else activity
+        env = environment(game, char, doing)
         before = {k: getattr(char, k) for k in body.TREND_KINDS}
         for text, color in body.tick(char, sheet, env, minutes):
             game.say(text, color)

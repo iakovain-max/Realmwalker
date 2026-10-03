@@ -110,6 +110,12 @@ def outlook(game, plan) -> list[str]:
 
     hours = walking_hours(game, plan)
     out: list[str] = []
+    if game.leader.animals:
+        from realmwalker.game import mounts
+
+        how = mounts.summary(game)
+        if how:
+            out.append(how)
     n = nights(game, plan)
     if n == 0:
         if hours >= 2:

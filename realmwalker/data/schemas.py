@@ -494,6 +494,7 @@ ECONOMY = Obj(
         "animals": Map(Obj({"name": Str(max_len=40), "price": Int(min=0, max=10**7), "carry": Int(min=0, max=2000),
                             "ride": Float(min=0.1, max=2), "days_without_food": Int(min=1, max=30)}), min_items=1),
         "grazing": List(Str(max_len=30)),
+        "ride_lands": Map(Float(min=0, max=1), optional=True),
         "services": Obj({"room_common": Int(min=0), "room_private": Int(min=0), "meal": Int(min=0), "bath": Int(min=0),
                          "size_factor": Map(Float(min=0.1, max=10)), "treat_per_wound": Map(Int(min=0)),
                          "surgery": Int(min=0), "herbal_cure": Int(min=0), "prayer_healing": Int(min=0),

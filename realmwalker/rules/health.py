@@ -171,10 +171,12 @@ def broken_arm(char: Character, side: str) -> bool:
     return any(w.part == part and (w.kind == "fracture" and w.severity >= 2 or w.severity >= 3) for w in char.wounds)
 
 
-def travel_multiplier(char: Character, tables) -> float:
-    m = injury_effects(char, tables)["travel"]
+def travel_multiplier(char: Character, tables, riding: bool = False) -> float:
+    """How much an injured or sick body slows the party. In the saddle, legs do not matter (a lost or broken leg, a
+    wounded thigh): sickness, blood loss and pain still do."""
+    m = 1.0 if riding else injury_effects(char, tables)["travel"]
     for w in char.wounds:
-        if w.part in ("left_leg", "right_leg"):
+        if w.part in ("left_leg", "right_leg") and not riding:
             m *= {1: 1.0, 2: 1.3, 3: 1.7}[w.severity] * (1.15 if w.kind == "fracture" and not w.splinted else 1.0)
     for e in disease_effects(char, tables):
         m *= float(e.get("travel", 1.0))

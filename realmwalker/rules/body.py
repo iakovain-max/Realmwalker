@@ -55,7 +55,7 @@ class Environment:
     air: float  # degrees C
     wind: float  # km/h
     wet_per_hour: float  # how fast rain soaks an unprotected person
-    activity: str = "rest"  # "walk", "rest", "sleep", "fight"
+    activity: str = "rest"  # "walk", "ride", "rest", "sleep", "fight"
     sheltered: bool = False  # a roof and walls (town, building)
     fire: bool = False  # warming by a fire
     tent: bool = False
@@ -123,7 +123,7 @@ def felt_temperature(char: Character, sheet: Sheet, env: Environment) -> float:
     felt = air
     felt -= wind * 0.25 * (1.0 - sheet.wind_protection()) * (1.0 if air < 20 else 0.3)
     felt -= char.wet / 100.0 * (6.0 if air < 20 else 2.0)  # wet skin loses heat fast
-    felt += {"walk": 4.0, "fight": 6.0, "sleep": -3.0}.get(env.activity, 0.0)
+    felt += {"walk": 4.0, "ride": 1.5, "fight": 6.0, "sleep": -3.0}.get(env.activity, 0.0)
     if env.activity == "sleep":
         felt += env.bedding
     if env.tent:
@@ -162,14 +162,15 @@ def tick(char: Character, sheet: Sheet, env: Environment, minutes: float) -> lis
     hours = minutes / 60.0
     before = snapshot(char)
     walking = env.activity in ("walk", "fight")
+    riding = env.activity == "ride"  # in the saddle: on the move, but the horse does the walking
     sleeping = env.activity == "sleep"
 
     # Hunger and thirst.
-    h_mult = 1.3 if walking else (0.6 if sleeping else 1.0)
+    h_mult = 1.3 if walking else (1.1 if riding else (0.6 if sleeping else 1.0))
     if char.body_heat <= -40:
         h_mult *= 1.3  # shivering burns food
     char.hunger = min(100.0, char.hunger + HUNGER_PER_HOUR * h_mult * hours)
-    t_mult = 1.4 if walking else (0.5 if sleeping else 1.0)
+    t_mult = 1.4 if walking else (1.15 if riding else (0.5 if sleeping else 1.0))
     if env.air > 25 and not env.sheltered:
         t_mult *= 1.0 + (env.air - 25) * 0.08
     if char.body_heat >= 50:
@@ -180,11 +181,11 @@ def tick(char: Character, sheet: Sheet, env: Environment, minutes: float) -> lis
     if sleeping:
         char.fatigue = max(0.0, char.fatigue - SLEEP_RECOVERY_PER_HOUR * hours)
     else:
-        f_mult = 1.5 if walking else 1.0
+        f_mult = 1.5 if walking else (1.15 if riding else 1.0)
         char.fatigue = min(100.0, char.fatigue + FATIGUE_PER_HOUR * f_mult * hours)
 
     # Dirt.
-    d_mult = 1.5 if walking else 1.0
+    d_mult = 1.5 if walking or riding else 1.0
     if any(w.bleed and not w.bandaged for w in char.wounds):
         d_mult += 1.0
     if not env.sheltered and env.wet_per_hour > 30:

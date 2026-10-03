@@ -404,9 +404,16 @@ def _buy_animal(game, npc, svc, arg):
     charge(game, npc, price)
     rng = game.world.rng.child(f"animal/{game.world.time}")
     name = rng.choice(["Bess", "Dobbin", "Nell", "Grey", "Jack", "Mouse", "Old Tom", "Clover", "Pepper", "Stubborn"])
+    taken = {a.get("name") for a in game.leader.animals}
+    if name in taken:  # two horses called Bess are one too many
+        name = next((n for n in ("Bess", "Dobbin", "Nell", "Grey", "Jack", "Mouse", "Old Tom", "Clover", "Pepper",
+                                 "Stubborn", "Ash", "Hob", "Willow", "Brindle", "Sorrel") if n not in taken), name)
     game.leader.animals.append({"kind": arg, "name": name, "unfed": 0, "bought": game.world.time})
+    from realmwalker.game import mounts
+
+    how = mounts.summary(game)
     return [f"You buy {animals[arg]['name']} called {name} for {money_text(price)}. "
-            f"<dim>It needs a bag of fodder a day, or good grazing outside winter.</>"]
+            f"<dim>It needs a bag of fodder a day, or good grazing outside winter.</>"] + ([how] if how else [])
 
 
 def _sell_animal(game, npc, svc, arg):
@@ -506,13 +513,9 @@ def animal_carry(char, tables) -> int:
 
 
 def riding_factor(game) -> float:
-    """Riding makes open ground and roads quicker (the slowest mount sets the pace; everyone must ride)."""
-    c = game.leader
-    specs = game.tables.economy["animals"]
-    mounts = [float(specs[a["kind"]]["ride"]) for a in c.animals if a["kind"] in specs and float(specs[a["kind"]]["ride"]) < 1.0]
-    if not mounts or len(mounts) < len([m for m in game.party if m.alive]):
-        return 1.0
+    """Riding makes roads and open ground quicker where the party stands (game/mounts.py has the rules: everyone
+    must ride, and the slowest mount ridden sets the pace)."""
+    from realmwalker.game import mounts
+
     p = game.player
-    if game.world.road[p.x, p.y] or game.biome_key(p.x, p.y) in ("plains", "coast", "tundra", "desert", "hills"):
-        return max(mounts)
-    return 1.0
+    return mounts.step_factor(game, p.x, p.y, p.x, p.y)
