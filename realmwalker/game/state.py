@@ -800,7 +800,7 @@ class GameState:
         if not self.in_local:
             return
         if self.local is not None and self.local.kind == "dungeon":
-            self.say("You are underground. Find the stairs up (<) first.", "system")
+            self.say("You are underground. Find the stairs up first.", "system")
             return
         here = self.world.settlement_at(self.player.x, self.player.y)
         if here is not None:

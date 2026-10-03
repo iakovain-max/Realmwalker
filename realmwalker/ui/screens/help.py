@@ -11,7 +11,7 @@ A grim, open-world party role-playing game built on the rules of Dungeons & Drag
 
 <title>Your first hour</title>
 1. <loot>New World</>, then make a character (press <loot>Enter</> through anything you don't care about).
-2. You start in a town. Press <loot>></> to walk its streets, and walk into people (<loot>☺</>) to talk to them.
+2. You start in a town. Press <loot>Enter</> (or click <loot>Enter</> on the bar at the bottom) to walk its streets, and walk into people to talk to them.
 3. Ask everyone <loot>"Is there any work?"</>. Take something small — a lair to clear, a letter to carry — and press <loot>j</> to see it in your journal. The place is lit on your map.
 4. Buy a <loot>torch</> or two, <loot>rations</>, a <loot>waterskin</> and <loot>bandages</> before you leave (talk to a shopkeeper and choose <loot>"Let me see your general goods."</>).
 5. Walk there (<loot>m</> for the map, <loot>t</> to travel). Camp at night (<loot>r</>): a fire and a tent (or a rough shelter, if you have no tent) keep you alive, and sleep lasts until morning.
@@ -26,7 +26,20 @@ Everything else — hunger, wounds, factions, dungeons, dragons, death — is be
   <loot>Ctrl 0</>          Default text size
   <loot>F11</>             Fullscreen on/off (also Alt+Enter)
   <loot>F12</>             Save a screenshot (in %APPDATA%\\Realmwalker\\screenshots)
-  <loot>Mouse</>           Hover for tooltips, click to choose, wheel to scroll
+  <loot>Mouse</>           Hover for tooltips, click to choose, wheel to scroll; right-click for what you can do
+
+<title>Playing with the mouse</title>
+Everything the keys do can be done with the mouse alone.
+  <loot>The bar along the bottom</>  Every action, with its key in the corner: enter, leave, look, search, creep, wait, map, travel, camp, water, wash, character, pack, health, spells, party, journal, news, realms, log, menu. What makes sense right here (enter a town, take what lies here, talk to who is beside you) is lit at the front.
+  <loot>Click the map</>    Next to you: step there. Further: travel there (on the overworld) or walk there (on foot); click a person to walk up and talk.
+  <loot>Right-click the map</>  A menu of what you can do there: walk or travel there, talk, pick up, search, camp, look.
+  <loot>Click a portrait</>  Their character sheet; right-click for their pack, health and spells. Click the words under it for the Health screen.
+  <loot>Mouse wheel</>     Over the map: closer or further. Over a list: scroll.
+  <loot>In the pack</>     Click a thing to choose it, double-click to use or wear it, right-click for everything you can do with it; click a slot beside the figure to choose what goes there.
+  <loot>In a fight</>      Click an enemy to attack it; the action buttons have pictures; click a figure to choose a target.
+
+<title>Pictures and animation</title>
+The maps are drawn with pictures: the overworld painted like a map (towns, forests, hills, mountains, rivers and roads; fog over country you have not seen), towns, the wild and dungeons with tiles, and everyone as a figure dressed as they are. In <loot>Settings</> you can go back to the old look drawn in letters (<loot>Graphics</>), make things move less or not at all (<loot>Animations</>), and set how big the maps are drawn. <loot>+</> and <loot>-</> (or the mouse wheel) zoom the map while you play.
 
 <title>Menus</title>
   <loot>↑ ↓</>             Choose
@@ -52,11 +65,12 @@ Choose <loot>New World</> on the title screen, pick a size and seed, and the lan
   <loot>Home PgUp</>       Walk north-west / north-east
   <loot>End PgDn</>        Walk south-west / south-east
   <loot>.</> or <loot>5</>          Wait (an hour on the overworld, a minute on foot)
-  <loot>></>               Enter the land around you: see it up close (towns, forests, rivers)
-  <loot><</>               Leave the close view and return to the overworld (or walk off its edge)
+  <loot>Enter</>           Do the obvious thing here: go into the land around you (towns, forests, rivers); on foot, take what lies here or talk to who is beside you (<loot>></> also enters)
+  <loot>x</>               Leave the close view and return to the overworld (or walk off its edge; <loot><</> also works)
+  <loot>+</> <loot>-</>             Zoom the map in and out (also the mouse wheel)
   <loot>l</>               Look around: move a cursor to examine anything. Enter travels there (on foot: walks there). On foot, <loot>Tab</> jumps between the places you have seen: the inn, the shop, the smithy, the healer, the temple, the people worth knowing, the stairs underground.
   <loot>Mouse</>           Hover over the map to examine; click next to you to step; click further to travel (on foot: to walk there, or up to whoever you clicked, to talk). Any key stops you.
-  <loot>Right-click</>     Look at a spot
+  <loot>Right-click</>     What you can do there: walk, travel, talk, pick up, search, look
 
 <title>Journeys</title>
   <loot>m</>               World map (<loot>z</> zooms out to the whole world, <loot>w</> weather, <loot>p</> realms)
@@ -67,8 +81,8 @@ Before you set out, the plan says how many nights the journey means in the open,
 <title>Your character</title>
   <loot>c</>               Character sheet: abilities, skills, features, ties, backstory (<loot>l</> level-up choices, <loot>Tab</> next member)
   <loot>p</>               The party: companions, their loyalty, pay and orders
-  <loot>S</>               Spells: what each caster knows, what it does, how many slots are left today; Enter casts one outside a fight
-  <loot>i</>               Inventory: Enter wears/wields/removes/uses, d drops, D drops one, ← → filters, s sorts, G gives to the next member, Tab next member
+  <loot>a</>               Spells: what each caster knows, what it does, how many slots are left today; Enter casts one outside a fight
+  <loot>i</>               Pack: everything you carry, grouped by kind, beside a figure of who wears what. Enter wears/wields/removes/uses, u takes off, d drops (all, or one with the button), g gives to the next member, ← → kinds of thing, s sorts, Tab next member. Click a slot beside the figure to choose what goes there.
   <loot>e</>               Equipment: what you wear in each slot, which body parts are protected, warmth
   <loot>g</> or <loot>,</>          Pick up what is lying here (on foot, in the close view)
 Carrying weight matters: worn armour counts half, and the clothes you are dressed in not at all. Above your limit you are slowed; far above it you cannot walk. Coins weigh too.
@@ -76,7 +90,7 @@ Carrying weight matters: worn armour counts half, and the clothes you are dresse
 Without a tent, <loot>t</> at camp builds a rough shelter (an hour, and a Survival check): out of the wind and most of the rain, and a fire will burn in its lee even in a storm. Begun after dark, a sleep lasts until first light. At camp, <loot>m</> makes what a traveller can make: torches and splints out of firewood, bandages out of linen, salted meat (with salt) and dried fish (over the fire) that keep, and — with a herbalism kit, a fire and three lots of healing herbs — a remedy worth carrying. A Survival or Medicine check decides how much you get out of it.
   <loot>h</>               Health: needs, warmth, blood, pain, wounds and their treatment, sickness
   <loot>w</>               Fill your waterskins (and drink) at a well, river or lake, or from the rain (snow, melted at a fire)
-  <loot>W</>               Wash (at water)
+  <loot>b</>               Wash (at water)
 
 <title>Levels and spells</title>
 Experience comes from fights, deeds and discovery. On a new level you gain hit points and features at once; the choices wait for you on the level-up screen, which opens by itself (or later: c, then l): a path at level 2 or 3 (Champion or Knight, Thief or Cutthroat, a wizard's school), ability increases at levels 4 and 8 (+2 to one or +1 to two), and a wizard's new spells and cantrips. "Choose for me" makes sensible choices.
@@ -101,7 +115,7 @@ Your body matters as much as your sword. The side panel shows anything that is w
   <loot>The road:</> travel is slower in storms, snow and heat, and when hurt or tired. Off the road in fog, storms or darkness you can lose your way. You will meet people as well as trouble: pedlars, pilgrims, patrols, refugees and more. Each day of travel is written up in the log.
 
 <title>Towns and people</title>
-Press <loot>></> on a settlement to walk its streets. People show as <loot>☺</>: walk into someone to talk. By day shops and stalls are open; at night most folk go home and only the inn, the temple and the watch are about. Everyone has a name, a trade, a personality and a memory: first impressions depend on your clothes, cleanliness, wounds, race and background, and they remember threats, bribes and kindness.
+Press <loot>Enter</> on a settlement to walk its streets. People show as <loot>☺</>: walk into someone to talk. By day shops and stalls are open; at night most folk go home and only the inn, the temple and the watch are about. Everyone has a name, a trade, a personality and a memory: first impressions depend on your clothes, cleanliness, wounds, race and background, and they remember threats, bribes and kindness.
   <loot>1-9</>             Choose what to say (the numbers shown)
   <loot>t o g</>           Threaten · offer money · goodbye (Esc also leaves)
 What you have done reaches them before you do: a name for great deeds warms people to you (and impresses the proud and the greedy more than it should), while a name for cruelty frightens them, the kind ones worst of all.
@@ -184,8 +198,8 @@ From the title screen, <loot>New Character</> begins a new life in a world you h
 Settings has <loot>Text detail</>: <loot>Brief</> keeps only what matters (fights, needs, news, what you find), <loot>Normal</> adds the world's voice — street life in towns, companions talking on the road, the weather turning, what you hear in the night — and <loot>Rich</> gives you more of it.
 
 <title>Other screens</title>
-  <loot>L</>               The full message log
-  <loot>/</>               Map legend: what every symbol means
+  <loot>o</>               The full message log (or click the messages)
+  <loot>k</>               Map legend: what every symbol means
   <loot>Esc</>             Game menu: help, settings, save and leave
 
 <title>Player2 AI</title>

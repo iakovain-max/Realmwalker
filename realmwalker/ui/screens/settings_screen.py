@@ -1,11 +1,12 @@
-"""Settings: text size, fullscreen, dice display, AI on/off, verbosity, autosave, AI debug log."""
+"""Settings: text size, fullscreen, pictures and animation, dice display, AI on/off, verbosity, autosave."""
 
 from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from realmwalker.config import AUTOSAVE_CHOICES, VERBOSITY_LEVELS, Settings
+from realmwalker.config import ANIMATION_CHOICES, AUTOSAVE_CHOICES, GRAPHICS_CHOICES, MAP_ZOOMS, VERBOSITY_LEVELS, \
+    WORLD_ZOOMS, Settings
 from realmwalker.ui import colors
 from realmwalker.ui.input import KeyEvent
 from realmwalker.ui.screens.base import ConfirmBox, Screen
@@ -32,6 +33,20 @@ class SettingsScreen(Screen):
                    "Size of the letters and map tiles. Shortcut anywhere: Ctrl + and Ctrl -. Ctrl 0 resets."),
             Option("Fullscreen", lambda: _onoff(s.fullscreen), lambda d: app.toggle_fullscreen(),
                    "Fill the whole screen. Shortcut anywhere: F11."),
+            Option("Graphics", lambda: {"tiles": "Pictures", "letters": "Letters"}[s.graphics],
+                   lambda d: self._cycle("graphics", GRAPHICS_CHOICES, d),
+                   "Pictures: the maps painted and drawn with tiles, people as figures. Letters: the old look, the "
+                   "land drawn in letters and symbols."),
+            Option("Animations", lambda: {"full": "Full", "calm": "Calm", "off": "Off"}[s.animations],
+                   lambda d: self._cycle("animations", ANIMATION_CHOICES, d),
+                   "Full: people walk smoothly, blows land in fights, and water, fire, mist and stars move. Calm: the "
+                   "same, but nothing moves on its own. Off: no movement at all."),
+            Option("Close-up map scale", lambda: f"{s.map_zoom} px", lambda d: self._cycle("map_zoom", MAP_ZOOMS, d),
+                   "How big a square of a town, the wild or a dungeon is drawn. The mouse wheel over the map, or + "
+                   "and -, change it while you play."),
+            Option("Overworld scale", lambda: f"{s.world_zoom} px", lambda d: self._cycle("world_zoom", WORLD_ZOOMS, d),
+                   "How big a square of country is drawn on the overworld. The mouse wheel over the map, or + and -, "
+                   "change it while you play."),
             Option("Show dice rolls", lambda: _onoff(s.show_dice), lambda d: self._toggle("show_dice"),
                    "Show every roll in the message log, e.g. 'Persuasion: 14 + 3 = 17 vs DC 15 — success.'"),
             Option("AI text (Player2)", lambda: _onoff(s.ai_enabled), lambda d: app.set_ai_enabled(not s.ai_enabled),
@@ -50,6 +65,13 @@ class SettingsScreen(Screen):
                    "Take meals and drinks from the pack when hungry or thirsty. Off: you must eat and drink "
                    "from the inventory yourself (Enter on food or a waterskin)."),
         ]
+
+    def _cycle(self, name: str, choices, d: int) -> None:
+        s = self.app.settings
+        cur = getattr(s, name)
+        i = choices.index(cur) if cur in choices else 0
+        setattr(s, name, choices[(i + d) % len(choices)])
+        self.app.save_settings()
 
     def _toggle(self, name: str) -> None:
         setattr(self.app.settings, name, not getattr(self.app.settings, name))
