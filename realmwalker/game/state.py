@@ -348,6 +348,7 @@ class GameState:
 
     def _move_overworld(self, dx: int, dy: int) -> bool:
         p = self.player
+        self.sneaking = False  # creeping is for the close view: on the road nobody creeps
         dx, dy = self._maybe_stray(dx, dy)
         nx, ny = p.x + dx, p.y + dy
         pace = self.pace()

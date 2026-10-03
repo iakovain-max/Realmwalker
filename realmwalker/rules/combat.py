@@ -835,7 +835,7 @@ class Battle:
                 target.stable = False
                 target.dying -= 2 if amount < target.max_hp else 99
                 if target.dying <= 0:
-                    self._kill(target, cause)
+                    self._kill(target, cause, killer=source)
             return
         new_hp = target.hp - amount
         if new_hp <= 0:
@@ -887,6 +887,12 @@ class Battle:
                 killer.char.kills[f.cdef["name"]] = killer.char.kills.get(f.cdef["name"], 0) + 1
         else:
             f.char.alive = False
+            # What the chronicle will say: who did it, or what it was they bled to death fighting.
+            if killer is not None and killer.creature is not None:
+                f.char.death_cause = f"killed by {killer.the_name}"
+            else:
+                kinds = [x.cdef["plural"] for x in self.side(FOE) if x.creature is not None]
+                f.char.death_cause = f"bled to death fighting {kinds[0]}" if kinds else "bled to death in a fight"
             self.say(f"<danger>{f.the_name} is dead.</> ({cause})", "danger")
         self._morale_losses(f.side)
         if f.creature and "leader" in f.cdef.get("traits", []):
@@ -1503,6 +1509,7 @@ class Battle:
                     remove_item(c, diamond.uid, 1)
                     target.state = "fighting"
                     target.char.alive = True
+                    target.char.death_cause = None  # (or the body would be found dead of it again as time passed)
                     target.hp = 1
                     target.conditions = {"prone": -1}
                     self.say(f"{target.the_name} draws a ragged breath.", "magic")

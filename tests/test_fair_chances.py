@@ -255,3 +255,24 @@ def test_a_fur_cloak_does_not_cook_you_in_an_inn(tables):
     for _ in range(6):
         body.tick(hot, Sheet(hot, tables), Environment(36, 5, 0, "walk"), 60)
     assert body.heat_index(hot.body_heat) >= 2, "a heat wave on the march is still dangerous"
+
+
+def test_a_death_in_battle_names_who_did_it_and_a_revived_body_stays_alive(game):
+    from realmwalker.rules.combat import FOE, PARTY
+    from realmwalker.game import survival as surv
+
+    game.encounter = make_encounter(game, "lone_wolf", RNG(4, "enc"))
+    fight.encounter_fight(game, ambush=False)
+    b = game.battle
+    me = b.side(PARTY)[0]
+    wolf = b.side(FOE)[0]
+    b._apply_hp_loss(me, me.hp, source=wolf, cause="bite")
+    for _ in range(10):  # bitten where they lie, until the dying is done
+        if me.state == "dead":
+            break
+        b._apply_hp_loss(me, 1, source=wolf, cause="bite")
+    assert me.state == "dead" and game.leader.death_cause == "killed by the wolf"
+    # Brought back (the revive spell): the body is not found dead of it again as time passes.
+    me.state, game.leader.alive, game.leader.death_cause, game.leader.hp = "fighting", True, None, 1
+    surv.check_death(game, game.leader)
+    assert game.leader.alive

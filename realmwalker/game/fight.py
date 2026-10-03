@@ -213,7 +213,8 @@ def finish_battle(game) -> Aftermath:
 
         pack.sync(game)  # what they carried stays with the party
     elif not leader_alive and game.over is None:
-        game.over = {"cause": "died of wounds after a fight", "place": battle.env.ground}
+        cause = getattr(game.party[0], "death_cause", None) if game.party else None
+        game.over = {"cause": cause or "died of wounds after a fight", "place": battle.env.ground}
         after.outcome = "death"
     if after.xp and game.over is None:
         living = [c for c in game.party if c.alive]

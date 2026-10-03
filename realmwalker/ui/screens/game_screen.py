@@ -617,6 +617,7 @@ class GameScreen(Screen):
         else:
             if game.in_local:
                 game.player.local_key = None
+                game.sneaking = False
             camera = draw_overworld(canvas.con, game, self.picture, mx, my, mw, mh, cursor)
         self.view = (mx, my, *camera)
         canvas.hit(mx, my, mw, mh, tooltip=None)

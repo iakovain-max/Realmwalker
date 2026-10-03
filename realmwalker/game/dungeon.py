@@ -314,7 +314,8 @@ def spring(game, lm, x: int, y: int, f: dict) -> None:
     dmg = dice.roll(damage, rng).total
     if save >= int(f.get("dc", 13)):
         dmg //= 2
-    c.hp = max(0, c.hp - dmg)
+    left = c.hp - dmg
+    c.hp = max(0, left)
     f["found"] = True
     f["spent"] = True
     game.say(f"<danger>You spring {name}!</> {c.name.split()[0]} takes {dmg} {dtype} damage. "
@@ -327,6 +328,15 @@ def spring(game, lm, x: int, y: int, f: dict) -> None:
         w = make_wound(part, dtype, 1 if dmg < 14 else 2, rng, now=game.world.time, note=name)
         if w is not None:
             c.wounds.append(w)
+    if c.hp <= 0 and -left < c.max_hp:
+        # Knocked senseless, as in a fight: 0 hit points is down, not dead. Only a blow that would take a whole
+        # life's worth of hit points below nothing kills outright (the 5e rule). Until 2026-10 every trap that took
+        # the last hit point killed, and a careful explorer at half strength died of a pit.
+        from realmwalker.game.fight import lie_senseless
+
+        c.hp = 1
+        game.say(f"<danger>{c.name.split()[0]} goes down and lies still.</> " + lie_senseless(game, 1), "danger")
+        return
     if c.hp <= 0 and getattr(c, "death_cause", None) is None:
         c.death_cause = f"killed by {name}"  # not "died of their hurts": the darts did it
     from realmwalker.game import survival
