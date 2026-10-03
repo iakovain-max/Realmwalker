@@ -23,6 +23,8 @@ import math
 
 from realmwalker.core import dice, textgen
 from realmwalker.core.rng import RNG
+from realmwalker.game.encounters import DEADLY_RATIO, ratio_words, threat_ratio
+from realmwalker.rules.creatures import typical_group
 from realmwalker.rules.items import Item, money_text
 from realmwalker.world import factions as fx
 
@@ -306,7 +308,10 @@ def _hunt_beast(game, npc, rng):
     beasts = [b for b in spec(game)["beasts"] if b[0] in game.tables.creatures.encounters]
     if not beasts:
         return None
-    group, name, what = rng.choice(beasts)
+    # Nobody sends a green traveller after a troll: the beast is one the party might live through (the boar and the
+    # orchard bear at first, the trolls and ogres once they have made a name).
+    fitting = [b for b in beasts if beast_ratio(game, b[0]) < DEADLY_RATIO]
+    group, name, what = rng.choice(fitting or [min(beasts, key=lambda b: beast_ratio(game, b[0]))])
     for _ in range(40):
         x = town.x + rng.randint(-12, 12)
         y = town.y + rng.randint(-12, 12)
@@ -321,6 +326,22 @@ def _hunt_beast(game, npc, rng):
         q["words"].update(beast=name, beast_what=what, where=f"{where}, {direction(town, _Spot(x, y))}")
         return q
     return None
+
+
+def beast_ratio(game, group: str) -> float:
+    """How a beast (and whatever runs with it) measures up against the party as it is now."""
+    alive = [c for c in game.party if c.alive] or game.party
+    return threat_ratio(game.tables, typical_group(game.tables, group, len(alive)), alive)
+
+
+def danger_note(game, q: dict) -> str:
+    """What a sensible person thinks on hearing what the work is: how the beast measures up (the same words the road
+    uses for a band you meet), or "" when there is nothing to judge."""
+    group = q.get("target", {}).get("group")
+    if q.get("template") != "hunt_beast" or group not in game.tables.creatures.encounters:
+        return ""
+    words = ratio_words(beast_ratio(game, group))
+    return f"<dim>Hunting {q['words'].get('beast', 'it')}:</> {words}"
 
 
 def _someone_in(game, dest, rng: RNG, jobs=None):
@@ -1449,6 +1470,9 @@ def _offer_work(conv) -> None:
     conv.npc_says(pitch(game, q))
     if q.get("pitch_ai"):
         conv.note(f"<dim>({terms(q)})</>")
+    danger = danger_note(game, q)
+    if danger:
+        conv.note(danger)
     if q.get("trial") is not None:
         conv.note(trial_note(game, q))
     conv.pending_offer = q

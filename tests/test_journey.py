@@ -162,12 +162,16 @@ def test_t_and_enter_take_up_a_stopped_journey(make_app, world, monkeypatch):
     assert app.error_count == 0
 
 
-def test_too_exhausted_to_walk_is_not_called_too_heavy(game):
+def test_at_exhaustion_five_you_can_still_stagger_to_water(game):
+    """Exhaustion 5 used to mean "cannot walk", and a traveller a few miles from a river died of thirst where they
+    sat. Now the body can still stagger, at a quarter of the pace."""
+    fresh = game.pace()
     game.leader.exhaustion = 5
-    assert game.pace() is None
-    game.move(1, 0)
-    text = last(game)
-    assert "too far gone" in text and "carrying" not in text
+    assert game.pace() is not None and game.pace() >= 4 * fresh
+    x = game.player.x
+    assert any(game.move(dx, dy) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)))
+    assert game.player.x != x or game.player.y is not None
+    assert not any("carrying" in m.text for m in game.log.messages[-4:])
 
 
 def test_the_plan_warns_of_hunger_and_of_nights_in_the_open(game):
@@ -226,13 +230,12 @@ def test_a_fire_dries_you_in_a_drizzle(tables):
         assert (c.wet < 80.0) == drier, (fire, c.wet)
 
 
-def test_too_exhausted_to_take_a_step_in_town_is_not_called_too_heavy(game):
+def test_worn_to_exhaustion_five_in_town_you_can_still_reach_the_inn(game):
     town = game.world.settlements[0]
     game.player.x, game.player.y = town.x, town.y
     game.player.local_key = None
     game.enter_local()
     game.leader.exhaustion = 5
-    for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
-        game.move(dx, dy)
-    assert any("too far gone" in m.text for m in game.log.messages[-4:])
+    moved = [game.move(dx, dy) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))]
+    assert any(moved)
     assert not any("carrying too much" in m.text for m in game.log.messages[-4:])

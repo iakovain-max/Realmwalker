@@ -257,7 +257,7 @@ def nearest_roof(game, reach: int = 2) -> str | None:
     return f"{s.name} is {_where(game, s.x, s.y)}: a roof for the night."
 
 
-def nearest_water(game, reach: int = 4) -> str | None:
+def nearest_water(game, reach: int = 8) -> str | None:
     """The nearest water you have seen: a stream, a river, a lake, a town's well."""
     w = game.world
     p = game.player

@@ -94,8 +94,9 @@ class CampScreen(Screen):
         wild = not in_town
         return [
             ("f", "Put out the fire" if fire else "Light a fire", self._fire, True, ""),
-            ("t", "Pitch the tent", lambda: camplogic.pitch_tent(g), tent and not (c and c.tent),
-             "no tent" if not tent else "already up"),
+            ("t", "Pitch the tent", lambda: camplogic.pitch_tent(g), not (c and c.tent), "already up") if tent else
+            ("t", "Build a rough shelter (1 hour)", lambda: camplogic.build_shelter(g), wild and not (c and c.shelter),
+             "already built" if wild else "there are roofs here"),
             ("e", "Eat a meal", self._eat, True, ""),
             ("c", "Cook raw food", lambda: camplogic.cook(g), fire, "needs a fire"),
             ("b", "Boil water", lambda: camplogic.boil_water(g), fire and pot, "needs a fire and a pot"),
@@ -107,7 +108,7 @@ class CampScreen(Screen):
             ("m", "Make something", self._make, True, ""),
             ("h", "See to wounds", self._health, True, ""),
             ("s", "Short rest (1 hour)", lambda: self._rest("short"), True, ""),
-            ("l", "Sleep (8 hours)", lambda: self._rest("long"), True, ""),
+            ("l", self._sleep_label(), lambda: self._rest("night"), True, ""),
         ]
 
     def run(self, fn) -> None:
@@ -142,6 +143,15 @@ class CampScreen(Screen):
 
         self.app.push(HealthScreen(self.app, self.game))
         return []
+
+    def _sleep_label(self) -> str:
+        """By day a sleep is eight hours; begun after dark it lasts until first light, so nobody wakes at three in the
+        morning and walks on into the cold."""
+        g = self.game
+        if g.light >= 0.5:
+            return "Sleep (8 hours)"
+        hours = max(8, min(14, round(g.minutes_to_dawn() / 60)))
+        return f"Sleep until morning ({hours} hours)"
 
     def _rest(self, kind: str) -> list[str]:
         g = self.game

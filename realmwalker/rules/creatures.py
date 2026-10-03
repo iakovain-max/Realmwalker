@@ -104,6 +104,21 @@ def spawn_group(tables, group_id: str, rng: RNG, first_uid: int = 1, *, now: int
     return out
 
 
+def typical_group(tables, group_id: str, party_size: int = 3) -> list[str]:
+    """The members of a group as it usually turns up (the average roll, scaled for the party as spawn_group does):
+    for judging how dangerous a kind of band is before anyone has met it."""
+    group = tables.creatures.encounters[group_id]
+    scale = min(1.3, 0.45 + 0.2 * max(1, party_size))
+    out: list[str] = []
+    for def_id, count in group["members"]:
+        n, sides, flat = dice.parse(str(count))
+        mean = max(1, int(round(n * (sides + 1) / 2 + flat)))
+        if mean > 1:
+            mean = max(1, int(round(mean * scale)))
+        out += [def_id] * mean
+    return out
+
+
 def choose_encounter(tables, biome: str, danger: int, night: bool, on_road: bool, rng: RNG) -> str | None:
     """Pick a hostile group suited to the place, the danger level and the time of day."""
     options, weights = [], []

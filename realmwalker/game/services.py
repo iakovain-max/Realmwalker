@@ -213,7 +213,7 @@ def _room(game, npc, svc, arg):
 
     charge(game, npc, svc.price)
     msgs = [f"You pay {money_text(svc.price)} and take the {'room' if svc.id == 'room_private' else 'bed'}."]
-    msgs += rest(game, "long")
+    msgs += rest(game, "night")  # a bed for the night is until morning, not until two in it
     if svc.id == "room_private":
         for c in game.party:
             if c.exhaustion > 0 and c.hunger < 55 and c.thirst < 60:

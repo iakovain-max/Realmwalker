@@ -33,8 +33,8 @@ def sheltered(game, activity: str) -> bool:
     lm = game.local
     if getattr(game, "confined", None):
         return True
-    if lm is not None and lm.building_at(p.lx, p.ly) is not None:
-        return True
+    if lm is not None and (lm.kind == "dungeon" or lm.building_at(p.lx, p.ly) is not None):
+        return True  # under a roof, or under the ground: the rain and the wind do not come down there
     return activity != "walk" and game.world.settlement_at(p.x, p.y) is not None
 
 
@@ -54,6 +54,7 @@ def environment(game, char: Character, activity: str) -> Environment:
         air=w.temp, wind=w.wind, wet_per_hour=w.wet_per_hour, activity=activity,
         sheltered=sheltered(game, activity), fire=bool(camp and camp.fire and activity != "walk"),
         tent=bool(camp and camp.tent and activity != "walk"), bedding=bedding(game, char),
+        shelter=bool(camp and camp.shelter and activity != "walk"),
         wading=bool(getattr(game, "_wading", False)),
     )
 
@@ -194,7 +195,12 @@ def water_sources(game, char: Character) -> list:
 
 
 def water_here(game) -> tuple[str, str] | None:
-    """(kind, where) of drinkable water at the player's position, if any."""
+    """(kind, where) of drinkable water at the player's position, if any: a well, a river, a lake, a pool, or failing
+    those the rain (or snow melted at a fire)."""
+    return _ground_water(game) or sky_water(game)
+
+
+def _ground_water(game) -> tuple[str, str] | None:
     p = game.player
     w = game.world
     if w.settlement_at(p.x, p.y) is not None:
@@ -225,6 +231,28 @@ def water_here(game) -> tuple[str, str] | None:
 
 
 LOCAL_WATER = {"river", "ford", "shallow_water", "deep_water", "marsh_reeds"}
+SKY_WATER = ("rainwater", "melted snow")
+
+
+def sky_water(game) -> tuple[str, str] | None:
+    """Water from the sky, out in the open: real rain can be caught in a cloak or a pot and wrung into a skin, and snow
+    melted at a fire. (A traveller once died of thirst after two days soaked to the skin.)"""
+    lm = game.local
+    p = game.player
+    if lm is not None and (lm.kind == "dungeon" or lm.building_at(p.lx, p.ly) is not None):
+        return None
+    sky = weather(game)
+    if sky.raining and sky.precip >= 0.25:
+        return "clean", "rainwater"
+    camp = getattr(game, "camp", None)
+    if sky.snowing and camp is not None and camp.fire:
+        return "clean", "melted snow"
+    return None
+
+
+def from_where(where: str) -> str:
+    """'from the stream', 'from the well', or 'rainwater' as it is (it is caught, not drawn)."""
+    return where if where in SKY_WATER else f"from {where}"
 
 
 def local_terrain_near(game, lm) -> set[str]:
@@ -246,7 +274,7 @@ def drink_from(game, char: Character, kind: str, pints: float, where: str) -> st
         rng = game.world.rng.child(f"drink/{game.world.time}/{char.name}")
         if rng.chance(EXPOSURE_CHANCE[kind]):
             char.conditions.append("exposed:marsh_fever" if kind == "marsh" else "exposed:dysentery")
-    return f"{body.first(char)} drinks from {where}."
+    return f"{body.first(char)} drinks {from_where(where)}."
 
 
 def feed(game, char: Character) -> None:
@@ -337,11 +365,37 @@ def fill_skins(game) -> list[str]:
             out.append(drink_from(game, c, kind, max(1.0, round(c.thirst / body.PINT_POINTS)), where))
     if total:
         risk = "" if kind == "clean" else " <warn>It may not be safe to drink unboiled.</>"
-        out.insert(0, f"You fill the waterskins from {where} ({total:g} pints).{risk}")
+        what = f"with {where}" if where in SKY_WATER else f"from {where}"
+        out.insert(0, f"You fill the waterskins {what} ({total:g} pints).{risk}")
     elif not out:
         out.append("The waterskins are already full.")
     game.pass_time(5 if total else 1)
     return out
+
+
+def top_up(game) -> str:
+    """Eating and drinking automatically (the setting) also means filling the skins on the way: at a town's well
+    whenever they are not full, and from a stream, a river, a lake or the rain when they are all but dry. Otherwise w
+    does it, by choice. Before, a traveller could walk past a dozen streams with an empty skin and die of thirst a day later."""
+    if not getattr(game, "auto_supplies", True) or game.over is not None:
+        return ""
+    here = water_here(game)
+    if here is None or here[0] == "marsh":
+        return ""
+    kind, where = here
+    items = game.tables.items
+    skins = [it for m in distinct_packs(game.party) for it in m.inventory if container_capacity(items, it)]
+    room = sum(container_capacity(items, it) - it.fill for it in skins)
+    from_town = kind == "clean" and where not in SKY_WATER
+    if room < 1.0 or (not from_town and sum(it.fill for it in skins) >= 1.0):
+        return ""
+    from realmwalker.rules.inventory import fill_containers
+
+    added = sum(fill_containers(m, items, kind) for m in distinct_packs(game.party))
+    if not added:
+        return ""
+    risk = "" if kind == "clean" else " <warn>Unboiled, it may make you ill.</>"
+    return f"You fill the waterskins {'with' if where in SKY_WATER else 'at'} {where} ({added:g} pints).{risk}"
 
 
 def wash(game) -> list[str]:

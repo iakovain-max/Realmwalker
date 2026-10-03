@@ -27,6 +27,7 @@ class Camp:
     since: int = 0
     fire: bool = False
     tent: bool = False
+    shelter: bool = False  # a rough shelter: a lean-to, a hollow in the lee of rocks (build_shelter)
 
 
 def camp_here(game) -> Camp | None:
@@ -101,8 +102,8 @@ def light_fire(game) -> list[str]:
     if tinder is None:
         return ["You have nothing to strike a light with (a tinderbox)."]
     w = game.weather
-    if w.kind in ("storm", "blizzard") and not camp.tent and not indoors(game):
-        return ["In this weather no fire will catch in the open. A tent might shelter one."]
+    if w.kind in ("storm", "blizzard") and not camp.tent and not camp.shelter and not indoors(game):
+        return ["In this weather no fire will catch in the open. A tent, or a rough shelter, might shelter one."]
     wood = game.tables.camping["firewood"].get(land(game), "some")
     wet = 4 if (w.raining or w.snowing) else 0
     msgs = []
@@ -127,6 +128,32 @@ def light_fire(game) -> list[str]:
         msgs.append("The wet wood smokes and spits, but it burns.")
     camp.fire = True
     return msgs
+
+
+def build_shelter(game) -> list[str]:
+    """A rough shelter for anyone without a tent: a lean-to of branches, turf and bracken, or a hollow scraped in the lee
+    of rocks or a bank. Not as good as canvas, but it keeps off the wind and most of the rain, and a fire will burn in
+    its lee even in a storm. An hour's work and a Survival check (harder where there is little to build with)."""
+    camp = make_camp(game)
+    if camp.tent or camp.shelter:
+        return ["You are already under cover."]
+    if indoors(game):
+        return ["There is a roof here already."]
+    dc = int(game.tables.camping.get("shelter", {}).get(land(game), 12))
+    w = game.weather
+    if w.kind in ("storm", "blizzard"):
+        dc += 2
+    ok, roll = check(game, "survival", dc, tag="shelter")
+    game.pass_time(60, "walk")
+    if not ok:
+        return [roll, "The wind has it down as fast as you put it up. You could try again."]
+    camp.shelter = True
+    what = {"forest": "a lean-to of boughs and bracken", "pine_forest": "a lean-to of pine boughs",
+            "hills": "a hollow behind a wall of turf and stones", "mountains": "a hollow in the lee of the rocks",
+            "high_mountains": "a scrape in the snow behind a boulder", "tundra": "a low wall of snow and turf",
+            "desert": "a hollow under a ledge, roofed with your cloak", "coast": "a lean-to of driftwood and wrack",
+            "marsh": "a platform of reeds under a roof of reeds"}.get(land(game), "a lean-to of whatever is to hand")
+    return [roll, f"You build {what}. Out of the wind, and out of most of the wet."]
 
 
 def put_out_fire(game) -> list[str]:
@@ -418,13 +445,15 @@ def camp_summary(game) -> list[str]:
     wood = game.tables.camping["firewood"].get(land(game), "some")
     out = []
     if game.world.settlement_at(game.player.x, game.player.y) is not None:
-        out.append("You are in a settlement: there is shelter here (and in M5, inns).")
+        out.append("You are in a settlement: there are roofs here, and an inn for the night.")
     if camp is None:
         out.append("You have not made camp. Doing anything here makes camp.")
     else:
         out.append("<good>A fire burns.</>" if camp.fire else "<dim>A cold camp: no fire, and hard to see.</>")
         if camp.tent:
             out.append("<good>The tent is up.</>")
+        elif camp.shelter:
+            out.append("<good>A rough shelter keeps off the wind and the worst of the wet.</>")
     out.append(f"<dim>Firewood here:</> {wood}.")
     return out
 

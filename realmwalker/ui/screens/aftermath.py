@@ -9,7 +9,8 @@ from realmwalker.ui.input import KeyEvent
 from realmwalker.ui.screens.base import ConfirmBox, Screen
 from realmwalker.ui.widgets import Canvas
 
-TITLES = {"victory": "Victory", "robbed": "Beaten and robbed", "fled": "Escape", "parley": "Words, not blood",
+TITLES = {"victory": "Victory", "robbed": "Beaten and robbed", "mauled": "Left for dead", "fled": "Escape",
+          "parley": "Words, not blood",
           "death": "Death", "defeat": "Defeat", "surrendered": "Surrender"}
 FATE_KEYS = ["spare", "rob", "interrogate", "execute", "capture"]
 
@@ -148,7 +149,7 @@ class AftermathScreen(Screen):
     def render(self, canvas: Canvas) -> None:
         after = self.after
         w, h = canvas.width, canvas.height
-        color = colors.named("danger") if after.outcome in ("death", "robbed") else colors.BORDER
+        color = colors.named("danger") if after.outcome in ("death", "robbed", "mauled") else colors.BORDER
         canvas.frame(0, 0, w, h, TITLES.get(after.outcome, "Aftermath"), double=True, fg=color)
         x, iw = 3, w - 6
         y = 2

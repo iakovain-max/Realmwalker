@@ -391,6 +391,12 @@ class GameState:
             self.say(line[:1].upper() + line[1:], "warn")
         self.reveal()
         self._arrive(prev_area)
+        if not self.busy and self.survival:
+            from realmwalker.game.survival import top_up
+
+            filled = top_up(self)
+            if filled:
+                self.say(filled, "info")
         if self.encounter is None and self.battle is None:
             from realmwalker.game.encounters import roll_encounter
 

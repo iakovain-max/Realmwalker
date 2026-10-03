@@ -375,6 +375,7 @@ NIGHT_SOUNDS = Map(word_list(1, 200), min_items=1)
 CAMPING = Obj(
     {
         "firewood": Map(Str(choices=["plenty", "some", "little", "none"])),
+        "shelter": Map(Int(min=0, max=30), optional=True),
         "forage": Map(Obj({"dc": Int(min=0, max=30), "winter_dc": Int(min=0, max=20),
                            "find": List(List(Any_(), min_items=2, max_items=2), min_items=1),
                            "extra": List(List(Any_(), min_items=3, max_items=3))})),

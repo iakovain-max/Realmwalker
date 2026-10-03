@@ -380,7 +380,8 @@ def test_defeat_by_bandits_means_robbery_not_death(game):
     assert game.leader.alive and game.leader.hp >= 1 and game.leader.money == 0
 
 
-def test_defeat_by_wolves_is_death(game):
+def test_defeat_by_wolves_is_death_for_whoever_does_not_wake(game, monkeypatch):
+    monkeypatch.setattr(fight, "MAULED_DC", 100)  # nobody makes the Constitution save
     game.encounter = make_encounter(game, "wolf_pack", RNG(7, "enc"))
     fight.encounter_fight(game, ambush=False)
     f = game.battle.side(PARTY)[0]
@@ -389,6 +390,42 @@ def test_defeat_by_wolves_is_death(game):
     after = fight.finish_battle(game)
     assert after.outcome == "death" and game.over is not None
     assert not game.leader.alive
+
+
+def test_beaten_by_beasts_you_may_be_left_for_dead(game, monkeypatch):
+    """Beasts lose interest in what has stopped moving and go for the food in the pack instead: whoever makes the
+    Constitution save wakes hours later, alone, at 1 hit point, with half the food gone."""
+    monkeypatch.setattr(fight, "MAULED_DC", -100)
+    from realmwalker.rules.inventory import add_item
+
+    add_item(game.leader, game.tables.items, "rations", 4)
+    before = sum(it.qty for it in game.leader.inventory if it.def_id == "rations")
+    game.encounter = make_encounter(game, "wolf_pack", RNG(7, "enc"))
+    fight.encounter_fight(game, ambush=False)
+    start = game.world.time
+    f = game.battle.side(PARTY)[0]
+    game.battle._apply_hp_loss(f, f.hp, source=None, cause="test")
+    game.battle._check_end()
+    after = fight.finish_battle(game)
+    assert after.outcome == "mauled" and game.over is None
+    assert game.leader.alive and game.leader.hp >= 1
+    assert sum(it.qty for it in game.leader.inventory if it.def_id == "rations") < before
+    assert game.world.time - start >= 30
+    assert any("food" in n for n in after.notes)
+
+
+def test_nobody_downed_in_a_long_fight_dies_of_it_once_the_fight_is_over(game):
+    """The fight's minutes used to pass before anyone came round: a body still at 0 hit points was found dead of its
+    hurts, so bandits who rob and leave you killed you after all, if the fight had gone on for ten rounds."""
+    game.leader.money = 500
+    game.encounter = make_encounter(game, "bandits", RNG(6, "enc"))
+    fight.encounter_fight(game, ambush=False)
+    game.battle.round = 40
+    f = game.battle.side(PARTY)[0]
+    game.battle._apply_hp_loss(f, f.hp, source=None, cause="test")
+    game.battle._check_end()
+    after = fight.finish_battle(game)
+    assert after.outcome == "robbed" and game.over is None and game.leader.alive
 
 
 def test_captive_fates(game):
