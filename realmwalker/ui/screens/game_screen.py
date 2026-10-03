@@ -38,7 +38,10 @@ class GameScreen(Screen):
         self._in_local_before = game.in_local
         from realmwalker.ui.gfx.localview import LocalView
 
+        from realmwalker.ui.gfx.worldview import WorldView
+
         self.local_view = LocalView()
+        self.world_view = WorldView()
         self.tiles_drawn = False  # the last frame drew the map with pictures
 
     @property
@@ -48,7 +51,13 @@ class GameScreen(Screen):
     @property
     def moving(self) -> bool:
         """Something glides on the map right now (the window keeps drawing smoothly)."""
-        return self.tiles_drawn and self.local_view.moving(self.app.clock())
+        if not self.tiles_drawn:
+            return False
+        now = self.app.clock()
+        return self.local_view.moving(now) if self.game.in_local else self.world_view.moving(now)
+
+    def on_exit(self) -> None:
+        self.world_view.close()
 
     @property
     def ambient(self) -> bool:
@@ -60,12 +69,15 @@ class GameScreen(Screen):
         return 0, 0, max(20, canvas.width - PANEL_W), max(10, canvas.height - 1 - LOG_H)
 
     def screen_to_map(self, sx: int, sy: int, px: float = -1.0, py: float = -1.0) -> tuple[int, int] | None:
-        if self.tiles_drawn and self.game.in_local:
+        if self.tiles_drawn:
             if px < 0:
                 px, py = (sx + 0.5) * self.app.gfx.cell_w, (sy + 0.5) * self.app.gfx.cell_h
-            cell = self.local_view.to_cell(px, py)
-            lm = self.game.local
-            return cell if cell is not None and lm is not None and lm.in_bounds(*cell) else None
+            if self.game.in_local:
+                cell = self.local_view.to_cell(px, py)
+                lm = self.game.local
+                return cell if cell is not None and lm is not None and lm.in_bounds(*cell) else None
+            cell = self.world_view.to_cell(px, py)
+            return cell if cell is not None and self.game.world.in_bounds(*cell) else None
         vx, vy, mx0, my0, ox, oy = self.view
         x, y = sx - vx - ox + mx0, sy - vy - oy + my0
         if self.game.in_local:
@@ -286,12 +298,16 @@ class GameScreen(Screen):
         return True
 
     def zoom(self, step: int) -> None:
-        """Closer or further: the close-up map's squares, in pixels."""
-        from realmwalker.config import MAP_ZOOMS
+        """Closer or further: the map's squares, in pixels (the close-up map and the overworld keep their own)."""
+        from realmwalker.config import MAP_ZOOMS, WORLD_ZOOMS
 
         s = self.app.settings
-        i = MAP_ZOOMS.index(s.map_zoom) if s.map_zoom in MAP_ZOOMS else 2
-        s.map_zoom = MAP_ZOOMS[max(0, min(len(MAP_ZOOMS) - 1, i + step))]
+        if self.game.in_local:
+            i = MAP_ZOOMS.index(s.map_zoom) if s.map_zoom in MAP_ZOOMS else 2
+            s.map_zoom = MAP_ZOOMS[max(0, min(len(MAP_ZOOMS) - 1, i + step))]
+        else:
+            i = WORLD_ZOOMS.index(s.world_zoom) if s.world_zoom in WORLD_ZOOMS else 3
+            s.world_zoom = WORLD_ZOOMS[max(0, min(len(WORLD_ZOOMS) - 1, i + step))]
         self.app.save_settings()
 
     def handle_mouse(self, ev: MouseEvent) -> bool:
@@ -664,6 +680,15 @@ class GameScreen(Screen):
             camera = (0, 0, 0, 0)
         elif game.in_local and game.local is not None:
             camera = draw_local(canvas.con, game, mx, my, mw, mh, cursor)
+        elif not game.in_local and canvas.tiles:
+            from realmwalker.ui.map_render import quest_marks
+
+            canvas.clear_cells(mx, my, mw, mh)
+            rect = tuple(int(v) for v in canvas.cell_rect(mx, my, mw, mh))
+            self.world_view.draw(canvas, game, rect, self.app.settings.world_zoom, quests=quest_marks(game),
+                                 look=cursor, hover=self.hover if cursor is None else None)
+            self.tiles_drawn = True
+            camera = (0, 0, 0, 0)
         else:
             if game.in_local:
                 game.player.local_key = None

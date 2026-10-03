@@ -916,9 +916,9 @@ def all_drawn() -> dict[str, Image.Image]:
     for m in range(16):
         out[f"feature/fence_{m}"] = fence(m)
     for kind in ("hamlet", "village", "town", "city", "hold", "elfhall"):
-        out[f"map/{kind}"] = town_mark(kind, 32)
+        out[f"map/{kind}"] = town_mark(kind, 64)
     for kind in ("ruin", "cave", "barrow", "tower", "lair"):
-        out[f"map/{kind}"] = site_mark(kind, 32)
+        out[f"map/{kind}"] = site_mark(kind, 48)
     for name in ICON_NAMES:
         out[f"icon/{name}"] = icon(name)
     return out
