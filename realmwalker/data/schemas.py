@@ -299,6 +299,11 @@ CREATURE = Obj(
         "loot": List(List(Any_(), min_items=2, max_items=2), optional=True),
         "butcher": List(List(Any_(), min_items=2, max_items=2), optional=True),
         "vulnerable": List(Str(max_len=20), optional=True), "immune": List(Str(max_len=20), optional=True),
+        # Creatures that cast: spell ids from spells.json, and their casting: ability, save DC, spell attack bonus,
+        # and slots per spell level (index 0 = level 1).
+        "spells": List(Str(max_len=40), optional=True),
+        "spellcasting": Obj({"ability": Str(choices=list(ABILITY_IDS)), "dc": Int(min=1, max=30),
+                             "attack": Int(min=-5, max=20), "slots": List(Int(min=0, max=9))}, optional=True),
         "glyph": Str(max_len=1), "color": COLOR, "descriptions": word_list(1, 300),
     }
 )

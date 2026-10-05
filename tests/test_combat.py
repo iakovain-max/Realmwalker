@@ -940,3 +940,24 @@ def test_divine_intervention(tables):
     b.do_ability(c, "divine_intervention")
     assert ally.hp == ally.max_hp and cleric.uses["divine_intervention"] == 0
     assert ("divine_intervention", False) in [(a[0], a[2]) for a in b.class_abilities(c)]
+
+
+def test_enemy_casters_use_their_spells(tables):
+    """A cult fanatic raises a spiritual weapon and holds the strongest of you; an acolyte blesses the band."""
+    party = [hero(tables, "fighter"), hero(tables, "rogue", seed=2)]
+    b = battle(tables, party, foes(tables, "cult_fanatic", "cultist", "cultist"),
+               spots={0: (3, 4), 1: (3, 5), 2: (9, 4), 3: (7, 3), 4: (7, 6)})
+    fanatic = b.side(FOE)[0]
+    from realmwalker.rules import tactics
+
+    turn_of(b, fanatic)
+    assert "hold_person" in b.creature_spells(fanatic)
+    tactics.take_turn(b, fanatic)
+    casts = [e["spell"] for e in b.events if e["kind"] == "cast" and e["by"] == fanatic.id]
+    assert "spiritual_weapon" in casts and ("hold_person" in casts or "command" in casts or "sacred_flame" in casts)
+    assert fanatic.slots[1] < 3 or fanatic.slots[0] < 4
+    b2 = battle(tables, [hero(tables)], foes(tables, "acolyte", "bandit", "bandit"))
+    acolyte = b2.side(FOE)[0]
+    turn_of(b2, acolyte)
+    tactics.take_turn(b2, acolyte)
+    assert acolyte.concentration and acolyte.concentration["spell"] == "bless"

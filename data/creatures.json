@@ -174,6 +174,8 @@
       "attacks": [{"name": "dagger", "kind": "melee", "bonus": 4, "damage": "1d4+2", "damage_type": "piercing", "item": "dagger"},
                   {"name": "withering touch", "kind": "spell_melee", "bonus": 4, "damage": "3d10", "damage_type": "necrotic"}],
       "multiattack": 2, "traits": ["dark_devotion", "leader"], "morale": "fanatic", "rank": "back", "names": "heartland",
+      "spells": ["sacred_flame", "command", "inflict_wounds", "shield_of_faith", "hold_person", "spiritual_weapon"],
+      "spellcasting": {"ability": "wis", "dc": 11, "attack": 3, "slots": [4, 3]},
       "gear": [["dagger", 1], ["vestments", 1], ["holy_symbol", 1]], "money": {"dice": "2d6", "mult": 10},
       "loot": [["incense", 3]],
       "glyph": "C", "color": [200, 60, 80],
@@ -375,6 +377,7 @@
       "ac": 10, "hp": "2d8", "speed": 30, "abilities": {"str": 10, "dex": 10, "con": 10, "int": 10, "wis": 14, "cha": 11}, "skills": {"medicine": 4, "religion": 2}, "darkvision": 0,
       "attacks": [{"name": "club", "kind": "melee", "bonus": 2, "damage": "1d4", "damage_type": "bludgeoning", "item": "club"}],
       "traits": [], "morale": "coward", "rank": "back", "names": "heartland",
+      "spells": ["sacred_flame", "bless", "cure_wounds"], "spellcasting": {"ability": "wis", "dc": 12, "attack": 4, "slots": [3]},
       "gear": [["vestments", 1]], "money": {"dice": "1d6", "mult": 10}, "loot": [], "glyph": "p", "color": [220, 210, 170],
       "descriptions": ["A priest of the temple, soft-handed, more used to prayers than blows."]
     },

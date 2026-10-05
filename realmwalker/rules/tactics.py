@@ -39,6 +39,13 @@ def _monster_turn(b: Battle, f: Fighter) -> None:
     if breath and _try_area_attack(b, f, breath[0]):
         return
     plain = [o for o in opts if not o.extra.get("area")]
+    if f.cdef.get("spells"):
+        _creature_magic(b, f)
+        if b.current is not f or b.outcome is not None or not f.active:
+            return
+        if f.action <= 0 and f.attacks_left <= 0:
+            _keep_distance(b, f)
+            return
     if not plain:
         return
     if f.has_trait("aggressive") and f.bonus > 0 and f.speed > 0 and \
@@ -261,6 +268,77 @@ def flee(b: Battle, f: Fighter) -> None:
     _walk_budget(b, f, path)
     if b.current is f and f.active and b.can_leave(f):
         b.do_leave(f)
+
+
+def _creature_magic(b: Battle, f: Fighter) -> None:
+    """An enemy caster: its bonus-action spells first (a spiritual weapon, a shield of faith, the weapon's blow),
+    then the action: heal a friend in trouble, bless the band, hold the most dangerous foe, command one to grovel,
+    a withering touch on whoever is beside it, or holy fire from afar."""
+    spells = b.creature_spells(f)
+    enemies = [e for e in b.enemies_of(f) if e.standing]
+    if not enemies:
+        return
+    tok = next((t for t in b.tokens if t.owner == f.id and t.kind == "spiritual_weapon"), None)
+    if tok is not None and f.bonus > 0:
+        near = b.spirit_targets(f)
+        if near:
+            f.bonus -= 1
+            b._spirit_strike(f, tok, min(near, key=lambda e: e.hp))
+    elif "spiritual_weapon" in spells:
+        pts = b.spell_points(f, "spiritual_weapon")
+        spots = [sq for e in enemies for sq in _ring(e, 1, 1) if sq in pts]
+        if spots:
+            b.creature_cast(f, "spiritual_weapon", point=spots[0])
+    spells = b.creature_spells(f)
+    if "shield_of_faith" in spells and f.concentration is None and any(b.gap(f, e) <= 2 for e in enemies):
+        b.creature_cast(f, "shield_of_faith", f)
+    if f.action <= 0 or b.outcome is not None:
+        return
+    spells = b.creature_spells(f)
+    friends = [x for x in b.allies_of(f) if x.standing]
+    if "cure_wounds" in spells:
+        hurt = [x for x in b.spell_targets(f, "cure_wounds") if x.hp < x.max_hp * 0.4]
+        if hurt:
+            b.creature_cast(f, "cure_wounds", min(hurt, key=lambda x: x.hp))
+            return
+    if "bless" in spells and f.concentration is None and len(friends) >= 2:
+        b.creature_cast(f, "bless")
+        return
+    if "hold_person" in spells and f.concentration is None:
+        held = [e for e in b.spell_targets(f, "hold_person") if e.kind == "humanoid" and "paralyzed" not in e.conditions]
+        if held:
+            b.creature_cast(f, "hold_person", max(held, key=lambda e: (e.ac(), e.hp)))
+            return
+    beside = [e for e in enemies if b.gap(f, e) <= 1]
+    if "inflict_wounds" in spells and beside:
+        b.creature_cast(f, "inflict_wounds", min(beside, key=lambda e: e.hp))
+        return
+    if "command" in spells and beside and b.rng.chance(0.4):
+        b.creature_cast(f, "command", beside[0])
+        return
+    if "sacred_flame" in spells and not beside:
+        targets = b.spell_targets(f, "sacred_flame")
+        if targets:
+            b.creature_cast(f, "sacred_flame", min(targets, key=lambda e: e.hp))
+
+
+def _keep_distance(b: Battle, f: Fighter) -> None:
+    """Its spell cast, a caster steps back from blades if it can do so without being cut."""
+    if f.move_left < 5 or not any(b.gap(f, e) <= 1 for e in b.enemies_of(f) if e.standing):
+        return
+    tree = b.move_tree(f, risk=30.0)
+    occ = b.occupied_by_others(f)
+    enemies = [e for e in b.enemies_of(f) if e.standing]
+    best = None
+    for sq, st in tree.items():
+        if st.provokes or not grid.can_stop(sq, f.sq, occ):
+            continue
+        d = min(grid.gap((sq[0], sq[1], f.sq), e.space) for e in enemies)
+        key = (-min(d, 4), st.cost)
+        if best is None or key < best[0]:
+            best = (key, sq)
+    if best is not None and best[1] != (f.x, f.y):
+        b.walk(f, grid.route(tree, best[1]))
 
 
 def _slip_away(b: Battle, f: Fighter) -> None:

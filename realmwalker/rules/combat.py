@@ -175,6 +175,7 @@ class Fighter:
         self.grappled_by: int | None = None
         self.auto = False  # the game plays this party member's turns
         self.recharge: dict[str, bool] = {}  # breath weapons: ready or not
+        self.slots = list((self.cdef or {}).get("spellcasting", {}).get("slots", []))  # a creature's spell slots left
         self.no_heal = False
         self.spent_round = 0  # how many rounds it has been on the field (for Revivify's minute)
         self.acted = False  # has had a turn in this fight (the Cutthroat's Assassinate)
@@ -2207,6 +2208,46 @@ class Battle:
         self._attack(f, opt, target)
 
     # ------------------------------------------------------------------ spells
+    def creature_spells(self, f: Fighter) -> list[str]:
+        """The spells a creature could cast right now (a slot left, the action or bonus action free)."""
+        if f.creature is None or not f.cdef.get("spells"):
+            return []
+        out = []
+        for sid in f.cdef["spells"]:
+            spell = self.t.spells.defs.get(sid)
+            if spell is None or spell.get("cast") == "reaction":
+                continue
+            level = spell["level"]
+            if level and not any(n > 0 for n in f.slots[level - 1:]):
+                continue
+            if self._casting_time_ok(f, spell)[0]:
+                out.append(sid)
+        return out
+
+    def creature_cast(self, f: Fighter, sid: str, target: Fighter | None = None,
+                      point: tuple[int, int] | None = None) -> bool:
+        """A creature casts one of its spells, with its own save DC and spell attack."""
+        spell = self.t.spells[sid]
+        if sid not in self.creature_spells(f):
+            return False
+        sc = f.cdef["spellcasting"]
+        level = spell["level"]
+        if level:
+            i = next(i for i in range(level - 1, len(f.slots)) if f.slots[i] > 0)
+            f.slots[i] -= 1
+            level = i + 1
+        bonus_cast = spell.get("cast") == "bonus"
+        self._spend(f, bonus_cast)
+        if bonus_cast:
+            f.cast_bonus_spell = True
+        else:
+            f.cast_action_spell = True
+        f.hidden = 0
+        self.cast(f, sid, spell, target, point, up=max(0, level - spell["level"]), mod=f.mod(sc["ability"]),
+                  dc=int(sc["dc"]), bonus=int(sc["attack"]), mult=1, level=level)
+        self._check_end()
+        return True
+
     def spell_options(self, f: Fighter) -> list[tuple[str, bool, str]]:
         """(spell id, possible, why not). Scrolls in the pack appear as "scroll:<item uid>:<spell id>"."""
         if not f.char:
