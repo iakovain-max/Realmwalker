@@ -818,3 +818,12 @@ def test_every_spell_can_be_aimed(tables):
             assert sp.get("area") or sp["kind"] in ("move", "summon", "guardian"), sid
         if sp.get("area"):
             assert sp["area"]["shape"] in ("sphere", "cylinder", "cube", "cone", "line"), sid
+
+
+def test_a_fight_nobody_can_reach_breaks_off(tables):
+    """A wall between the two sides with no way round: after a few rounds of nothing, it ends."""
+    fld = walls(tables, wall_stone=[(6, y) for y in range(8)])
+    b = battle(tables, [hero(tables)], foes(tables, "wolf"), field=fld, spots={0: (2, 4), 1: (10, 4)})
+    autoplay(b)
+    assert b.outcome == "parley" and b.round <= 6
+    assert any("breaks off" in text for text, _ in b.log)

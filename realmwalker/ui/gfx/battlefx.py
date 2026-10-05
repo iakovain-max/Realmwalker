@@ -31,8 +31,7 @@ NIGHT = np.array([0.30, 0.32, 0.48], np.float32)
 DARK = np.array([0.26, 0.25, 0.33], np.float32)  # unlit ground underground: dim, but the shape of the place still shows
 TORCH = np.array([1.0, 0.80, 0.52], np.float32)
 MAGIC_FX = {"fire": "fx/fire", "cold": "fx/cold", "poison": "fx/poison", "necrotic": "fx/drain", "radiant": "fx/glow",
-            "force": "fx/magic", "lightning": "fx/storm", "thunder": "fx/smoke", "acid": "fx/poison", "psychic": "fx/drain",
-            "bludgeoning": "fx/smoke"}
+            "force": "fx/magic", "lightning": "fx/sparkle", "thunder": "", "acid": "fx/poison", "psychic": "fx/drain"}
 COLOURS = {"fire": (255, 140, 46), "cold": (150, 205, 255), "lightning": (210, 210, 255), "thunder": (230, 224, 200),
            "necrotic": (150, 80, 170), "radiant": (255, 232, 150), "force": (190, 150, 255), "poison": (130, 210, 90),
            "acid": (170, 225, 70), "psychic": (235, 130, 210), "": (200, 180, 255)}
@@ -42,6 +41,8 @@ SPELL_COLOURS = {"sleep": (190, 150, 255), "web": (220, 220, 210), "bless": (255
 CONDITION_WORDS = {"prone": "down", "restrained": "held fast", "paralyzed": "paralysed", "stunned": "stunned",
                    "asleep": "asleep", "poisoned": "poisoned", "grappled": "grappled", "frightened": "afraid",
                    "blinded": "blind"}
+TAGS = {"paralyzed": "held", "stunned": "stunned", "restrained": "webbed", "grappled": "held", "unconscious": "asleep",
+        "frightened": "afraid"}  # the one word under a figure (the full words float up when it happens)
 
 
 def colour_for(dtype: str, spell: str = "") -> tuple[int, int, int]:
@@ -293,8 +294,8 @@ class BattleBoard:
             self.fx.append({"kind": "flash", "at": (cx, cy), "t0": start, "dur": 0.55, "color": color, "radius": radius})
             self.shake_until = max(self.shake_until, start + 0.3)
         sprite = "fx/sparkle" if ev.get("effect") in ("sleep", "heal", "buff") else MAGIC_FX.get(dtype, "fx/magic")
-        if spell == "web":
-            sprite = ""
+        if spell == "web" or dtype in ("thunder", "lightning"):
+            sprite = ""  # the bolt or the shockwave is the picture; the squares only flash
         for c in area:
             d = math.hypot(c[0] + 0.5 - cx, c[1] + 0.5 - cy)
             if sprite:
@@ -636,10 +637,10 @@ class BattleBoard:
                 name = "feature/statue_hero" if atlas.has("feature/statue_hero") else "feature/statue"
                 canvas.under(Sprite(name, px, py, T, T, (255, 240, 200, 255)))
             else:
-                canvas.under(Image("bglow", _glow_image, (px - T * 0.2, py - T * 0.2 + bob, T * 1.4, T * 1.4),
-                                   rgba=(200, 170, 255, 150)))
+                canvas.under(Image("bglow", _glow_image, (px - T * 0.15, py - T * 0.15 + bob, T * 1.3, T * 1.3),
+                                   rgba=(170, 150, 255, 110)))
                 name = "item/mace" if atlas.has("item/mace") else "fx/magic_0"
-                canvas.under(Sprite(name, px + T * 0.1, py + T * 0.05 + bob, T * 0.8, T * 0.8, (220, 200, 255, 240)))
+                canvas.under(Sprite(name, px + T * 0.02, py + bob, T * 0.96, T * 0.96, (235, 225, 255, 255), angle=-30.0))
 
     def _people(self, canvas, game, battle, now: float, ov: dict, cur) -> None:
         gfx = canvas.gfx
@@ -721,19 +722,19 @@ class BattleBoard:
             color = (150, 220, 130) if f.side == "party" else (236, 120, 100)
             canvas.over(Text(cx, fy - s - 7, f.name, "prose_bold", max(12, min(16, T // 3)), (*color, 255), anchor="mb",
                              outline=True, shadow=False))
-        tags = []
+        tag = None
         if f.state == "down":
-            tags.append(("stable" if f.stable else f"dying {f.death_saves[0]}/{f.death_saves[1]}", (255, 110, 90)))
-        for c in ("paralyzed", "stunned", "restrained", "grappled", "unconscious", "frightened"):
-            if c in f.conditions and not (c == "unconscious" and f.state == "down"):
-                tags.append(({"unconscious": "asleep"}.get(c, CONDITION_WORDS.get(c, c)), (230, 200, 150)))
-        if f.state == "surrendered":
-            tags.append(("yields", (200, 200, 190)))
-        if f.state == "fleeing":
-            tags.append(("fleeing", (230, 200, 120)))
-        if tags and T >= 24:
-            text = ", ".join(t for t, _ in tags[:2])
-            canvas.over(Text(cx, fy + 1, text, "prose_bold", max(11, min(14, T // 3)), (*tags[0][1], 255), anchor="mt",
+            tag = ("stable" if f.stable else f"dying {f.death_saves[1]}/3", (255, 110, 90))
+        elif f.state == "surrendered":
+            tag = ("yields", (200, 200, 190))
+        elif f.state == "fleeing":
+            tag = ("flees", (230, 200, 120))
+        else:
+            c = next((c for c in TAGS if c in f.conditions), None)
+            if c is not None:
+                tag = (TAGS[c], (230, 200, 150))
+        if tag is not None and T >= 24:  # one short word, small enough to sit under its own square
+            canvas.over(Text(cx, fy - 1, tag[0], "prose_bold", max(10, min(13, T // 4)), (*tag[1], 255), anchor="mb",
                              outline=True, shadow=False))
 
     def _effects(self, canvas, now: float) -> None:

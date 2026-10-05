@@ -196,3 +196,20 @@ def test_a_fight_in_a_house_is_in_the_house(game):
     assert np.isin(b.field.terrain, list(floors)).any(), "the floor of the house is in the field"
     assert b.field.kind == "settlement"
     assert b.gap(b.side(PARTY)[0], b.side(FOE)[0]) <= 4, "he was beside you"
+
+
+def test_the_enemy_can_always_reach_you(game):
+    """Even a band whose way to you runs outside the piece of the map that becomes the field comes on from a place
+    that connects."""
+    site = next(s for s in game.world.sites if game.tables.creatures.site_inhabitants.get(s.kind))
+    game.player.x, game.player.y = site.x, site.y
+    game.enter_local()
+    dungeon.descend(game, 1)
+    lm = game.local
+    band = max(lm.actors, key=lambda a: abs(a.x - game.player.lx) + abs(a.y - game.player.ly))
+    b = fight.start_battle(game, band.creatures, "Far below.", actor=band)
+    sane(b)
+    me = b.side(PARTY)[0]
+    tree = grid.paths(b.field, (me.x, me.y), 1, 10_000, blocked=set(), occupied=set())
+    for f in b.side(FOE):
+        assert any(grid.gap((x, y, 1), f.space) <= 1 for (x, y) in tree), f"{f.name} cannot be reached"

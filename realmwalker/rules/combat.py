@@ -41,6 +41,8 @@ MERCIFUL = {"bandit", "coward", "soldier"}  # these rob a beaten party and leave
 METAL = {"chain_shirt", "scale_mail", "breastplate", "half_plate", "ring_mail", "chain_mail", "splint_armor", "plate_armor"}
 DEFAULT_RANGE = {"ranged": (80, 320), "spell_ranged": (60, 120)}
 INCAPACITATED = ("unconscious", "stunned", "paralyzed")
+ACTIVITY = ("move", "attack", "damage", "cast", "push", "teleport", "heal", "dart", "token_strike")
+QUIET_ROUNDS = 3  # rounds in which nobody can get at anybody before a fight breaks off
 STATES = ("fighting", "fleeing", "down", "dead", "fled", "surrendered")
 
 
@@ -438,6 +440,7 @@ class Battle:
         self.thrown: list = []  # weapons thrown during the fight, lying on the field afterwards
         self._light_key = None
         self._light = None
+        self.active_round = 1  # the last round in which anyone moved, struck or cast
 
     # ------------------------------------------------------------------ helpers
     def say(self, text: str, category: str = "info") -> None:
@@ -445,6 +448,8 @@ class Battle:
 
     def _event(self, kind: str, **data) -> None:
         self.events.append({"kind": kind, **data})
+        if kind in ACTIVITY:
+            self.active_round = self.round
 
     def dice_say(self, text: str) -> None:
         if self.show_dice:
@@ -708,7 +713,18 @@ class Battle:
         if self.turn >= len(self.order):
             self.turn = 0
             self.round += 1
+            if self.round - self.active_round > QUIET_ROUNDS:
+                self._break_off()
         self.turn_started = False
+
+    def _break_off(self) -> None:
+        """Neither side can get at the other (a gulf, a locked door, a stand-off in the dark): it ends there."""
+        self.say("Neither side can come at the other, and in the end the fight simply breaks off.", "system")
+        for f in self.side(FOE):
+            if f.active:
+                f.state = "fled"
+                self._event("leave", who=f.id)
+        self.outcome = "parley"
 
     def _check_end(self) -> None:
         foes = [f for f in self.side(FOE) if f.active and "unconscious" not in f.conditions]

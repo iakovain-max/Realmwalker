@@ -128,6 +128,12 @@ def _local(game, lm, party, creatures, env, rng, *, actor, near, situation, numb
         mode = "surround" if situation in ("ambushed", "camp") else "line"
     else:
         mode = "cluster"
+    # The two sides must be able to come at each other on this piece of the map: if the way between them runs
+    # outside it (or behind a locked door), the enemy comes on from the nearest place that does connect.
+    ours = _reach(field, lead)
+    if foe_at not in ours:
+        far = [sq for sq in ours if max(abs(sq[0] - lead[0]), abs(sq[1] - lead[1])) >= 3] or list(ours)
+        foe_at = min(far, key=lambda sq: (sq[0] - foe_at[0]) ** 2 + (sq[1] - foe_at[1]) ** 2)
     _place_foes(game, field, creatures, foe_at, forward, lead, mode, taken, spots, len(party), rng)
     return field, spots
 
