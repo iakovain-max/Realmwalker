@@ -259,6 +259,12 @@ def long_rest(char: Character, tables, rng: RNG) -> list[str]:
     if char.subclass == "war":
         char.uses["war_priest"] = max(1, modifier(char.abilities["wis"]))
     char.uses["arcane_recovery"] = 1
+    for key in ("ward_made", "arcane_ward"):  # an abjurer's ward is made anew each day
+        char.uses.pop(key, None)
+    if "indomitable" in char.features:
+        char.uses["indomitable"] = 1
+    if "divine_intervention" in char.features:
+        char.uses["divine_intervention"] = 1
     from realmwalker.rules import magic
 
     magic.recharge(char)

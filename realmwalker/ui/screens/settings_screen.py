@@ -5,8 +5,8 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from realmwalker.config import ANIMATION_CHOICES, AUTOSAVE_CHOICES, GRAPHICS_CHOICES, MAP_ZOOMS, VERBOSITY_LEVELS, \
-    WORLD_ZOOMS, Settings
+from realmwalker.config import ANIMATION_CHOICES, AUTOSAVE_CHOICES, COMPANION_CHOICES, GRAPHICS_CHOICES, MAP_ZOOMS, \
+    VERBOSITY_LEVELS, WORLD_ZOOMS, Settings
 from realmwalker.ui import colors
 from realmwalker.ui.input import KeyEvent
 from realmwalker.ui.screens.base import ConfirmBox, Screen
@@ -64,6 +64,10 @@ class SettingsScreen(Screen):
             Option("Overworld scale", lambda: f"{s.world_zoom} px", lambda d: self._cycle("world_zoom", WORLD_ZOOMS, d),
                    "How big a square of country is drawn on the overworld. The mouse wheel over the map, or + and -, "
                    "change it while you play."),
+            Option("Companions in a fight", lambda: {"command": "You command them", "auto": "They fight by themselves"}[
+                       s.battle_companions], lambda d: self._cycle("battle_companions", COMPANION_CHOICES, d),
+                   "You command them: you play every turn of the party. They fight by themselves: you play your own "
+                   "character's turns and your companions choose their own (as z does for one turn)."),
         ]
 
     def _cycle(self, name: str, choices, d: int) -> None:

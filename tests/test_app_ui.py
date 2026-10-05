@@ -1146,3 +1146,41 @@ def test_the_journal_remembers_people(make_app, size):
     assert screen.tab == 0
     app.handle_event(KeyEvent("escape"))
     assert app.error_count == 0
+
+
+def test_companions_can_fight_by_themselves(make_app):
+    """Settings: companions in a fight fight by themselves; you still play your own character's turns."""
+    from realmwalker.core.rng import RNG
+    from realmwalker.game import fight
+    from realmwalker.game.encounters import make_encounter
+    from realmwalker.rules.creation import CharacterBuilder
+    from realmwalker.ui.screens.battle import BattleScreen
+
+    app = make_app()
+    start_small_world(app)
+    game = app.game
+    b = CharacterBuilder(game.tables, RNG(2, "c"))
+    b.set_race("human")
+    b.set_class("cleric")
+    b.set_background("acolyte")
+    friend = b.build()
+    friend.companion = {"loyalty": 50}
+    game.party.append(friend)
+    app.settings.battle_companions = "auto"
+    game.encounter = make_encounter(game, "wolf_pack", RNG(4, "k"))
+    fight.encounter_fight(game, ambush=False)
+    render(app)
+    screen = app.top
+    assert isinstance(screen, BattleScreen)
+    seen = set()
+    for _ in range(300):
+        if game.battle is None or screen.battle.outcome is not None:
+            break
+        f = screen.actor()
+        if f is not None:
+            seen.add(f.char.name)
+            app.handle_event(KeyEvent("z"))
+        app.update()
+        render(app)
+    assert friend.name not in seen, "the companion's turns were never asked of you"
+    assert app.error_count == 0

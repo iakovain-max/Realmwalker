@@ -1,5 +1,5 @@
 {
-  "_comment": "Classes, levels 1-10. Features are simplified 5e (SRD 5.1, CC-BY-4.0) adapted to rank combat. 'rule' tags are used by game systems; kits are starting equipment packages (item ids from items.json).",
+  "_comment": "Classes, levels 1-10. Features are simplified 5e (SRD 5.1, CC-BY-4.0), fought on the battle grid. 'rule' tags are used by game systems; kits are starting equipment packages (item ids from items.json).",
   "classes": {
     "fighter": {
       "name": "Fighter",
@@ -16,7 +16,7 @@
         "defense": {"name": "Defence", "text": "+1 to AC while wearing armour."},
         "dueling": {"name": "Duelling", "text": "+2 damage with a one-handed melee weapon and nothing in the other hand but a shield."},
         "great_weapon": {"name": "Great Weapon Fighting", "text": "Reroll damage dice of 1 or 2 with two-handed melee weapons (once)."},
-        "protection": {"name": "Protection", "text": "With a shield, impose disadvantage on an attack against an ally in your rank."}
+        "protection": {"name": "Protection", "text": "With a shield, use your reaction to impose disadvantage on an attack against a friend beside you."}
       },
       "features": [
         {"level": 1, "id": "fighting_style", "name": "Fighting Style", "text": "A trained way of fighting, chosen at creation.", "rule": "fighting_style"},
@@ -36,9 +36,9 @@
           {"level": 10, "id": "additional_style", "name": "Additional Fighting Style", "text": "Learn a second fighting style.", "rule": "fighting_style"}
         ]},
         "knight": {"name": "Knight", "text": "A shield for others: you hold the line and draw the enemy's blows.", "features": [
-          {"level": 3, "id": "hold_the_line", "name": "Hold the Line", "text": "Enemies in the front rank have disadvantage attacking your allies while you stand beside them.", "rule": "hold_the_line"},
+          {"level": 3, "id": "hold_the_line", "name": "Hold the Line", "text": "An enemy beside you has disadvantage attacking anyone but you.", "rule": "hold_the_line"},
           {"level": 7, "id": "commanding_presence", "name": "Commanding Presence", "text": "Add your Wisdom bonus to Persuasion and Intimidation when giving orders or demanding surrender."},
-          {"level": 10, "id": "rallying_cry", "name": "Rallying Cry", "text": "When you use Second Wind, allies in your rank regain hit points equal to your level.", "rule": "rallying_cry"}
+          {"level": 10, "id": "rallying_cry", "name": "Rallying Cry", "text": "When you use Second Wind, friends within 30 feet regain hit points equal to your level.", "rule": "rallying_cry"}
         ]}
       },
       "kits": [
@@ -61,7 +61,7 @@
         {"level": 1, "id": "expertise", "name": "Expertise", "text": "Double your proficiency bonus with two chosen skills.", "rule": "expertise"},
         {"level": 1, "id": "sneak_attack", "name": "Sneak Attack", "text": "Once per turn, deal extra damage (1d6, growing every other level) when you have advantage, or an ally is fighting your target.", "rule": "sneak_attack"},
         {"level": 1, "id": "thieves_cant", "name": "Thieves' Cant", "text": "The secret slang and signs of the criminal world."},
-        {"level": 2, "id": "cunning_action", "name": "Cunning Action", "text": "Change rank, hide or disengage and still attack in the same turn.", "rule": "cunning_action"},
+        {"level": 2, "id": "cunning_action", "name": "Cunning Action", "text": "Dash, Disengage or Hide with a bonus action, and still attack in the same turn.", "rule": "cunning_action"},
         {"level": 3, "id": "subclass", "name": "Roguish Archetype", "text": "Choose your trade: Thief or Cutthroat."},
         {"level": 4, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two."},
         {"level": 5, "id": "uncanny_dodge", "name": "Uncanny Dodge", "text": "Once per round, halve the damage of an attack you can see.", "rule": "uncanny_dodge"},

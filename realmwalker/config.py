@@ -22,6 +22,7 @@ DEFAULT_FONT_SIZE = 20
 VERBOSITY_LEVELS = ("brief", "normal", "rich")
 AUTOSAVE_CHOICES = (2, 5, 10, 15, 30)
 GRAPHICS_CHOICES = ("tiles", "letters")
+COMPANION_CHOICES = ("command", "auto")  # in a fight: you play the companions' turns, or they fight by themselves
 ANIMATION_CHOICES = ("full", "calm", "off")
 MAP_ZOOMS = (16, 24, 32, 48, 64)  # pixels per square on a close-up map
 WORLD_ZOOMS = (8, 12, 16, 24, 32, 48)  # pixels per square of country on the overworld
@@ -74,6 +75,7 @@ class Settings:
     animations: str = "full"  # full, calm (no idle movement: water, fire, weather), off
     map_zoom: int = 32
     world_zoom: int = 24
+    battle_companions: str = "command"  # COMPANION_CHOICES
 
     def normalise(self) -> None:
         if self.font_size not in FONT_SIZES:
@@ -90,6 +92,8 @@ class Settings:
             self.map_zoom = 32
         if self.world_zoom not in WORLD_ZOOMS:
             self.world_zoom = 24
+        if self.battle_companions not in COMPANION_CHOICES:
+            self.battle_companions = "command"
 
     @classmethod
     def load(cls, path: Path) -> Settings:

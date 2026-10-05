@@ -96,6 +96,9 @@ class BattleScreen(Screen):
         self.auto_once: int | None = None
         self._reach_key = None
         self._reach: dict = {}
+        if getattr(app.settings, "battle_companions", "command") == "auto":
+            for f in self.battle.side(PARTY)[1:]:
+                f.auto = True  # (Settings: companions fight by themselves)
 
     # ------------------------------------------------------------------ flow
     def update(self) -> None:
@@ -135,8 +138,9 @@ class BattleScreen(Screen):
             self.mode = "idle"
 
     def _clear_auto(self) -> None:
+        companions_alone = getattr(self.app.settings, "battle_companions", "command") == "auto"
         for f in self.battle.side(PARTY):
-            if f.id == self.auto_once:
+            if f.id == self.auto_once and not (companions_alone and f is not self.battle.side(PARTY)[0]):
                 f.auto = False
         self.auto_once = None
 
@@ -173,7 +177,8 @@ class BattleScreen(Screen):
         if action == "cast":
             return (bool(b.spell_options(f)), f"{f.name} knows no spells")
         if action == "item":
-            return (f.action > 0 and bool(b.usable_items(f)), "nothing to use" if f.action > 0 else "no action left")
+            hands = f.action > 0 or b.fast_hands(f)
+            return (hands and bool(b.usable_items(f)), "nothing to use" if hands else "no action left")
         if action == "ability":
             return (any(ok for _, _, ok, _ in b.class_abilities(f)), "nothing to call on now")
         if action in ("dash", "disengage", "dodge", "help", "shove", "parley"):
@@ -439,7 +444,9 @@ class BattleScreen(Screen):
         caught = []
         if sp.get("area") and sp["kind"] in ("save", "sleep", "condition"):
             area = self.battle.spell_area(f, value, point)
-            caught = [x.name for x in self.battle.in_area(area, sp.get("affects", "all"), f) if x.side == f.side]
+            victims = self.battle.in_area(area, sp.get("affects", "all"), f)
+            spared = self.battle.sculpted(f, value, victims)
+            caught = [x.name for x in victims if x.side == f.side and x.id not in spared]
         if caught:
             names = ", ".join(caught[:-1]) + (" and " if len(caught) > 1 else "") + caught[-1]
             self.app.push(ConfirmBox(self.app, f"{sp['name']} will catch <danger>{markup.escape(names)}</> too. Cast it "

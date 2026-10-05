@@ -177,6 +177,7 @@ class Fighter:
         self.recharge: dict[str, bool] = {}  # breath weapons: ready or not
         self.no_heal = False
         self.spent_round = 0  # how many rounds it has been on the field (for Revivify's minute)
+        self.acted = False  # has had a turn in this fight (the Cutthroat's Assassinate)
         self.glow = 0  # squares of bright light it carries (a torch, a glowing blade)
         if char is not None:
             from realmwalker.rules import magic
@@ -705,6 +706,7 @@ class Battle:
         if self.outcome is not None:
             return
         f = self.current
+        f.acted = True
         self._end_of_turn(f)
         self._check_end()
         if self.outcome is not None:
@@ -1249,6 +1251,20 @@ class Battle:
             armor = target.char.equipped_item("armor")
             if armor is not None and armor.def_id in METAL:
                 adv = True
+        if att.char is not None and att.has_trait("assassinate") and not target.acted:
+            adv = True
+            why.append("not yet moving")
+        if att.creature is not None and att.has_trait("sunlight_sensitive") and not self.field.underground \
+                and not self.field.indoors and self.field.base_light >= grid.BRIGHT:
+            dis = True
+            why.append("sunlight")
+        # A knight (Hold the Line) keeps the enemies beside them busy: they strike at others badly.
+        for k in self.enemies_of(att):
+            if k is not target and k.char is not None and k.standing and not k.incapacitated and \
+                    k.has_trait("hold_the_line") and self.gap(k, att) <= 1:
+                dis = True
+                why.append(f"{k.name} holds the line")
+                break
         return adv, dis, why
 
     def target_ac(self, att: Fighter, target: Fighter, opt: AttackOption) -> tuple[int, int]:
@@ -1273,6 +1289,12 @@ class Battle:
 
     def _attack(self, att: Fighter, opt: AttackOption, target: Fighter, *, spell_text: str = "") -> bool:
         adv, dis, why = self._adv_dis(att, target, opt)
+        guard = self._protector(att, target)
+        if guard is not None:
+            guard.reaction = False
+            dis = True
+            why.append(f"{guard.name}'s shield")
+            self.say(f"{guard.the_name} gets {guard.possessive} shield in the way.", "good" if guard.side == PARTY else "info")
         roll = dice.d20(self.rng, advantage=adv, disadvantage=dis)
         natural = roll.natural
         if natural == 1 and att.char and att.has_trait("lucky"):
@@ -1284,6 +1306,16 @@ class Battle:
         total = natural + opt.bonus + bless
         ac, cover = self.target_ac(att, target, opt)
         hit = crit or (natural != 1 and total >= ac)
+        if not hit and natural != 1 and total + 10 >= ac and opt.kind in ("melee", "ranged") and att.char is not None \
+                and att.has_trait("guided_strike") and att.char.uses.get("channel_divinity", 0) > 0 \
+                and not any(x.kind == "undead" for x in self.enemies_of(att)):
+            # Guided Strike: the war god's hand on the blow (+10), at the price of the day's Channel Divinity.
+            att.char.uses["channel_divinity"] = 0
+            total += 10
+            hit = True
+            self.say(f"<magic>{att.the_name}'s god guides the blow home.</>", "magic")
+        if hit and target.surprised and att.char is not None and att.has_trait("assassinate"):
+            crit = True  # the Cutthroat's Assassinate: a blow at someone who has not seen it coming
         # The Shield spell: a wizard who sees the blow coming turns it with a reaction, if that is enough.
         if hit and not crit and target.char and target.reaction and not target.incapacitated and total < ac + 5:
             if self._shield(target):
@@ -1357,6 +1389,19 @@ class Battle:
             target.no_heal = True
         return True
 
+    def _protector(self, att: Fighter, target: Fighter) -> Fighter | None:
+        """The Protection fighting style: a friend beside the target, shield up, spends their reaction to make the
+        blow harder."""
+        for g in self.allies_of(target):
+            if g is target or g.char is None or g.char.fighting_style != "protection" or not g.reaction:
+                continue
+            if g.incapacitated or not g.standing or self.gap(g, target) > 1 or not self.can_see(g, att):
+                continue
+            shield = g.char.equipped_item("off_hand")
+            if shield is not None and self.t.items.category(shield) == "shield":
+                return g
+        return None
+
     def _shield(self, f: Fighter) -> bool:
         """Cast Shield as a reaction (wizards who know it, with a first-level slot to spare)."""
         if not f.char or "shield" not in spellrules.known_spells(f.char, self.t):
@@ -1369,6 +1414,7 @@ class Battle:
         spellrules.spend_slot(f.char, slot)
         f.reaction = False
         f.buffs.append({"ac": 5, "rounds": 0, "source": "shield"})
+        self._ward(f, 1)
         self.say(f"<magic>{f.the_name} throws up a Shield.</> The blow glances off thin air.", "magic")
         self._event("cast", by=f.id, to=f.id, spell="shield", effect="buff", dtype="force", area=[])
         return True
@@ -1395,7 +1441,7 @@ class Battle:
             if not quiet:
                 self.dice_say(f"{f.name} {ability.upper()} save: fails (helpless)")
             return False
-        adv = ability == "con" and f.has_trait("poison_resilience")
+        adv = ability == "con" and f.has_trait("poison_resilience") or ability == "wis" and f.has_trait("dark_devotion")
         dis = ability == "dex" and "restrained" in f.conditions
         roll = dice.d20(self.rng, advantage=adv, disadvantage=dis)
         total_bonus = f.save_bonus(ability) + bonus + sum(dice.roll(d, self.rng).total for d in f.buff_value("save_die"))
@@ -1404,6 +1450,14 @@ class Battle:
         if not quiet:
             self.dice_say(f"{f.name} {ability.upper()} save: {roll.natural} {signed_mod(total_bonus)} = {total} vs DC {dc} — "
                           f"{'saved' if ok else 'failed'}")
+        if not ok and f.char is not None and f.has_trait("indomitable") and f.char.uses.get("indomitable", 1) > 0:
+            # Indomitable: a fighter refuses a failed save once a day.
+            f.char.uses["indomitable"] = 0
+            again = dice.d20(self.rng).natural + total_bonus
+            ok = again >= dc
+            self.dice_say(f"{f.name} is indomitable and tries again: {again} vs DC {dc} — {'saved' if ok else 'failed'}")
+            if ok:
+                self.say(f"{f.the_name} will not give way.", "good")
         return ok
 
     def _save_damage(self, att: Fighter, target: Fighter, ability: str, dc: int, expr: str, dtype: str, on_save: str,
@@ -1494,6 +1548,10 @@ class Battle:
             self._morale_after_hit(target)
 
     def _apply_hp_loss(self, target: Fighter, amount: int, *, source: Fighter | None, cause: str, crit: bool = False) -> None:
+        if source is not None and target.state == "fighting" and amount > 0:
+            amount = self._soak(target, amount)
+            if amount <= 0:
+                return
         if target.state == "down":
             target.stable = False
             if amount >= max(target.max_hp, WOUND_HP_FLOOR):
@@ -1547,6 +1605,40 @@ class Battle:
                 self._kill(target, cause, killer=source)
         else:
             target.hp = new_hp
+
+    def _ward(self, f: Fighter, level: int) -> None:
+        """An abjurer's Arcane Ward: made by the first abjuration of the day, strengthened by each after."""
+        c = f.char
+        if c is None or not f.has_trait("arcane_ward") or level < 1:
+            return
+        most = 2 * c.level + f.mod("int")
+        if not c.uses.get("ward_made"):
+            c.uses["ward_made"] = 1
+            c.uses["arcane_ward"] = most
+            self.say(f"<magic>A shimmering ward settles over {f.the_name}.</>", "magic")
+        else:
+            c.uses["arcane_ward"] = min(most, c.uses.get("arcane_ward", 0) + 2 * level)
+
+    def _soak(self, target: Fighter, amount: int) -> int:
+        """What an Arcane Ward takes of a blow: the wizard's own, or one thrown over a friend (Projected Ward)."""
+        wards = []
+        if target.char is not None and target.char.uses.get("arcane_ward", 0) > 0:
+            wards.append((target, False))
+        for w in self.allies_of(target):
+            if w is not target and w.char is not None and "projected_ward" in w.char.features and w.reaction \
+                    and w.char.uses.get("arcane_ward", 0) > 0 and self.feet(w, target) <= 30 and not w.incapacitated:
+                wards.append((w, True))
+        for w, projected in wards:
+            left = w.char.uses["arcane_ward"]
+            took = min(left, amount)
+            w.char.uses["arcane_ward"] = left - took
+            amount -= took
+            if projected:
+                w.reaction = False
+            self.say(f"<magic>{w.the_name}'s ward takes {took} of it{' over ' + target.the_name if projected else ''}.</>", "magic")
+            if amount <= 0:
+                break
+        return amount
 
     def _death_save(self, f: Fighter) -> None:
         roll = dice.d20(self.rng).natural
@@ -1888,15 +1980,20 @@ class Battle:
         """Who you can reach to pour a potion into or bind: yourself and anyone beside you."""
         return [x for x in self.side(f.side) if (x.active or x.state == "down") and (x is f or self.gap(f, x) <= 1)]
 
+    def fast_hands(self, f: Fighter) -> bool:
+        """A thief can use an object with a bonus action (Cunning Action)."""
+        return f.char is not None and f.has_trait("fast_hands") and f.bonus > 0
+
     def do_item(self, f: Fighter, uid: int, target: Fighter) -> None:
         it = f.char.item(uid)
-        if it is None or f.action <= 0:
+        if it is None or (f.action <= 0 and not self.fast_hands(f)):
             return
+        quick = f.action <= 0  # with the bonus action (Fast Hands)
         d = self.t.items.get(it.def_id)
         use = d.get("use", {})
         name = d["name"]
         if "heal" in use:
-            self._spend(f)
+            self._spend(f, quick)
             amount = dice.roll(use["heal"], self.rng).total
             self._heal(target, amount)
             self.say(f"{f.the_name} gets the {name} into {target.the_name}.", "good")
@@ -1906,7 +2003,7 @@ class Battle:
             if not bleeding:
                 self.say(f"There is nothing on {target.the_name} that a bandage would stop.", "system")
                 return
-            self._spend(f)
+            self._spend(f, quick)
             roll = dice.d20(self.rng).natural
             bonus = f.skill("medicine")
             self.dice_say(f"Medicine ({f.name}): {roll} {signed_mod(bonus)} = {roll + bonus} vs DC 10")
@@ -1948,6 +2045,10 @@ class Battle:
                         ("no undead within 30 feet" if not near else "no action left") if has else "used; rest to recover"))
             if c.subclass == "life":
                 out.append(("preserve_life", "Preserve Life", has and f.action > 0, "used; rest to recover" if not has else "no action left"))
+        if "divine_intervention" in c.features:
+            ready = c.uses.get("divine_intervention", 1) > 0 and self.now - c.uses.get("divine_answered", -10**9) >= 7 * 1440
+            out.append(("divine_intervention", "Divine Intervention", ready and f.action > 0,
+                        "your god has answered this week" if c.uses.get("divine_intervention", 1) > 0 else "used; rest to recover"))
         if c.subclass == "war" and c.cls == "cleric":
             out.append(("war_priest", "War Priest (bonus attack)", c.uses.get("war_priest", 0) > 0 and f.bonus > 0,
                         "used; rest to recover"))
@@ -1978,6 +2079,11 @@ class Battle:
             amount = dice.roll("1d10", self.rng).total + c.level
             self._heal(f, amount)
             self.say(f"{f.the_name} catches {f.possessive} breath and fights on.", "good")
+            if f.has_trait("rallying_cry"):
+                self.say(f"'{'To me! On your feet!'}' {f.the_name}'s shout carries.", "speech")
+                for a in self.side(f.side):
+                    if a is not f and (a.active or a.state == "down") and self.feet(f, a) <= 30:
+                        self._heal(a, c.level)
         elif ability == "action_surge":
             c.uses["action_surge"] = 0
             f.action += 1
@@ -2028,6 +2134,29 @@ class Battle:
                     self._heal(ally, give)
                     pool -= give
             self.say("Warm light spreads through the wounded.", "magic")
+        elif ability == "divine_intervention":
+            if not self._spend(f):
+                return
+            c.uses["divine_intervention"] = 0
+            roll = self.rng.randint(1, 100)
+            self.dice_say(f"Divine Intervention ({f.name}): {roll} vs {c.level} or less")
+            self.say(f"{f.the_name} cries out to {f.possessive} god.", "magic")
+            if roll <= c.level:
+                c.uses["divine_answered"] = self.now
+                self.say("<magic>And the god answers.</> Light like noon floods the place.", "magic")
+                self._event("cast", by=f.id, to=None, spell="divine_intervention", effect="burst", dtype="radiant",
+                            area=[c_ for x in self.fighters if x.active or x.state == "down" for c_ in x.cells])
+                for a in self.side(f.side):
+                    if a.state in ("fighting", "down"):
+                        self._heal(a, a.max_hp)
+                dc = spellrules.save_dc(s, self.t)
+                for e in self.enemies_of(f):
+                    if not self._save(e, "wis", dc):
+                        e.conditions["frightened"] = 10
+                        if e.morale_type not in FEARLESS or e.kind == "undead":
+                            self._break(e, "flee" if e.kind != "humanoid" else None)
+            else:
+                self.say("Nothing answers.", "system")
         elif ability == "war_priest":
             if not self._spend(f, bonus=True):
                 return
@@ -2194,6 +2323,16 @@ class Battle:
         return self.field.area(area["shape"], int(area["size"]), origin=f.space, toward=point,
                                from_self=spell["target"] == "direction")
 
+    def sculpted(self, f: Fighter, sid: str, victims: list[Fighter], level: int | None = None) -> set[int]:
+        """An evoker's Sculpt Spells: up to one plus the spell's level of their friends caught in the area are left
+        untouched."""
+        spell = self.t.spells[spell_id(sid)]
+        if f.char is None or not f.has_trait("sculpt_spells") or spell.get("school") != "evocation":
+            return set()
+        n = 1 + (level if level is not None else spell["level"])
+        friends = [x for x in victims if x.side == f.side]
+        return {x.id for x in friends[:n]}
+
     def in_area(self, cells: list[tuple[int, int]], who: str = "all", caster: Fighter | None = None) -> list[Fighter]:
         cs = set(cells)
         out = []
@@ -2300,6 +2439,11 @@ class Battle:
         if spell.get("concentration"):
             self._start_concentration(f, sid, spell)
 
+        evocation = f.char is not None and spell.get("school") == "evocation" and f.char.cls == "wizard"
+        empowered = mod if evocation and f.has_trait("empowered_evocation") and spell["kind"] in ("save", "attack") else 0
+        if spell.get("school") == "abjuration" and level >= 1:
+            self._ward(f, level)
+
         def dmg_expr(base: str) -> str:
             n, sides, flat = dice.parse(base)
             n = n * mult
@@ -2307,6 +2451,7 @@ class Battle:
                 un, us, _ = dice.parse(spell["upcast"])
                 if us == sides:
                     n += un * up
+            flat += empowered
             return f"{n}d{sides}{signed_mod(flat)}" if n else str(flat)
 
         affects = spell.get("affects", "all")
@@ -2340,8 +2485,13 @@ class Battle:
             rolled = dice.roll(dmg_expr(spell["damage"]), self.rng).total if area else None
             origin = point if spell["target"] == "point" and point is not None else (f.x, f.y)
             thrown = []
+            spared = self.sculpted(f, sid, victims, level) if area else set()
             for x in victims:
                 if spell.get("humanoid_only") and x.kind != "humanoid":
+                    continue
+                if x.id in spared:
+                    self.say(f"<magic>The fire parts around {x.the_name}.</> (Sculpt Spells)" if spell.get("damage_type") == "fire"
+                             else f"<magic>The spell passes {x.the_name} by.</> (Sculpt Spells)", "magic")
                     continue
                 cover = 0
                 if spell.get("save") == "dex" and not spell.get("ignores_cover"):

@@ -827,3 +827,116 @@ def test_a_fight_nobody_can_reach_breaks_off(tables):
     autoplay(b)
     assert b.outcome == "parley" and b.round <= 6
     assert any("breaks off" in text for text, _ in b.log)
+
+
+# ---------------------------------------------------------------------------- the paths' powers on the grid
+def hero_at(tables, cls, level, sub=None, seed=1, race="human"):
+    c = hero(tables, cls, race=race, seed=seed)
+    xp = {1: 0, 2: 300, 3: 900, 5: 6500, 6: 14000, 7: 23000, 9: 48000, 10: 64000}[level]
+    award_xp(c, xp, tables, RNG(seed, "xp"), auto=True)
+    if sub:
+        c.subclass = sub
+    c.hp = c.max_hp
+    return c
+
+
+def test_sculpt_spells_spares_friends_in_the_fire(tables):
+    wiz = hero_at(tables, "wizard", 3, "evocation")
+    friend = hero(tables, "fighter", seed=3)
+    b = battle(tables, [wiz, friend], foes(tables, "bandit"), spots={0: (3, 4), 1: (5, 4), 2: (6, 4)})
+    caster, ally = b.side(PARTY)
+    turn_of(b, caster)
+    hp = ally.hp
+    assert ally in b.in_area(b.spell_area(caster, "burning_hands", (6, 4)), "all", caster)
+    assert b.do_cast(caster, "burning_hands", point=(6, 4))
+    assert ally.hp == hp and any("Sculpt Spells" in t for t, _ in b.log)
+
+
+def test_an_abjurers_ward_takes_the_blows_first(tables):
+    wiz = hero_at(tables, "wizard", 3, "abjuration")
+    b = battle(tables, [wiz], foes(tables, "wolf"), spots={0: (3, 4), 1: (4, 4)})
+    f, wolf = b.side(PARTY)[0], b.side(FOE)[0]
+    turn_of(b, f)
+    assert b.do_cast(f, "mage_armor")
+    ward = wiz.uses.get("arcane_ward", 0)
+    assert ward == 2 * wiz.level + f.mod("int")
+    hp = f.hp
+    b._hit(wolf, f, 3, "piercing", crit=False, weapon="bite")
+    assert f.hp == hp and wiz.uses["arcane_ward"] == ward - 3
+    long_rest(wiz, tables, RNG(1))
+    assert not wiz.uses.get("arcane_ward")
+
+
+def test_protection_and_holding_the_line(tables):
+    knight = hero_at(tables, "fighter", 3, "knight")
+    knight.fighting_style = "protection"
+    add_item(knight, tables.items, "shield")
+    from realmwalker.rules.inventory import equip
+
+    shield = next(i for i in knight.inventory if i.def_id == "shield")
+    equip(knight, tables.items, shield.uid, "off_hand")
+    friend = hero(tables, "wizard", seed=5)
+    b = battle(tables, [knight, friend], foes(tables, "bandit"), spots={0: (4, 4), 1: (4, 5), 2: (5, 5)})
+    k, w = b.side(PARTY)
+    bandit = b.side(FOE)[0]
+    sword = next(o for o in b.attack_options(bandit) if o.is_melee)
+    adv, dis, why = b._adv_dis(bandit, w, sword)
+    assert dis and any("holds the line" in x for x in why)
+    b._attack(bandit, sword, w)
+    assert not k.reaction and any("shield in the way" in t for t, _ in b.log)
+
+
+def test_a_cutthroat_strikes_first_and_hard(tables):
+    rogue = hero_at(tables, "rogue", 3, "cutthroat")
+    b = battle(tables, [rogue], foes(tables, "bandit"), spots={0: (4, 4), 1: (5, 4)})
+    r, bandit = b.side(PARTY)[0], b.side(FOE)[0]
+    knife = next(o for o in b.attack_options(r) if o.is_melee)
+    adv, dis, why = b._adv_dis(r, bandit, knife)
+    assert adv and "not yet moving" in why
+    bandit.acted = True
+    adv, dis, why = b._adv_dis(r, bandit, knife)
+    assert "not yet moving" not in why
+
+
+def test_indomitable_and_guided_strike(tables):
+    fighter = hero_at(tables, "fighter", 9, "champion")
+    b = battle(tables, [fighter], foes(tables, "wolf"))
+    f = b.side(PARTY)[0]
+    assert not b._save(f, "wis", 99)  # nobody makes DC 99, but it is tried twice
+    assert fighter.uses["indomitable"] == 0 and any("indomitable" in t for t, _ in b.log)
+    priest = hero_at(tables, "cleric", 2, "war")
+    priest.uses["channel_divinity"] = 1
+    b2 = battle(tables, [priest], foes(tables, "ogre"), spots={0: (4, 4), 1: (5, 4)})
+    c, ogre = b2.side(PARTY)[0], b2.side(FOE)[0]
+    mace = next(o for o in b2.attack_options(c) if o.is_melee)
+    for seed in range(40):
+        b2.rng = RNG(seed, "guided")
+        if priest.uses["channel_divinity"] == 0:
+            break
+        b2._attack(c, mace, ogre)
+    assert priest.uses["channel_divinity"] == 0 and any("guides the blow" in t for t, _ in b2.log)
+
+
+def test_divine_intervention(tables):
+    cleric = hero_at(tables, "cleric", 10, "life")
+    friend = hero(tables, seed=4)
+    b = battle(tables, [cleric, friend], foes(tables, "bandit", "bandit"))
+    c, ally = b.side(PARTY)
+    turn_of(b, c)
+    ally.hp = 1
+    assert ("divine_intervention", True) in [(a[0], a[2]) for a in b.class_abilities(c)]
+    real = RNG(3, "god")
+
+    class Answered:
+        """The dice, except that the god answers (the percentile roll comes up 1)."""
+
+        def __getattr__(self, name):
+            return getattr(real, name)
+
+        def randint(self, a, top):
+            return 1 if top == 100 else real.randint(a, top)
+
+    b.rng = Answered()
+    b.do_ability(c, "divine_intervention")
+    assert ally.hp == ally.max_hp and cleric.uses["divine_intervention"] == 0
+    assert ("divine_intervention", False) in [(a[0], a[2]) for a in b.class_abilities(c)]

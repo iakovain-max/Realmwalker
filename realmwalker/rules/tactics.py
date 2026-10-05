@@ -41,6 +41,10 @@ def _monster_turn(b: Battle, f: Fighter) -> None:
     plain = [o for o in opts if not o.extra.get("area")]
     if not plain:
         return
+    if f.has_trait("aggressive") and f.bonus > 0 and f.speed > 0 and \
+            not any(b.gap(f, e) <= 1 for e in b.enemies_of(f) if e.standing):
+        f.bonus -= 1  # Aggressive: a bonus action to close in
+        f.move_left += f.speed
     _fight(b, f, plain, attacks=max(1, int(f.cdef.get("multiattack", 1))))
     if f.has_trait("nimble_escape") and f.bonus > 0 and b.outcome is None and b.current is f and f.active:
         _slip_away(b, f)
@@ -426,8 +430,9 @@ def _cast_something(b: Battle, f: Fighter) -> bool:
                 continue
             cells = b.spell_area(f, sid, pt)
             hit = b.in_area(cells, sp.get("affects", "all"), f)
+            spared = b.sculpted(f, sid, hit)
             foes = [x for x in hit if x.side != f.side and x.standing]
-            friends = [x for x in hit if x.side == f.side]
+            friends = [x for x in hit if x.side == f.side and x.id not in spared]
             if friends or len(foes) < 2:
                 continue
             score = sum(min(x.hp, 20) for x in foes) - sp["level"] * 3
