@@ -91,11 +91,15 @@ def start_battle(game, creatures: list[Creature], intro: str, *, surprised: str 
     game.world.politics["next_battle"] = fought + 1
     rng = game.world.rng.child(f"battle/{fought}/{game.world.time}")
     env = battle_env(game, surprised)
-    field, spots = arena.build(game, creatures, env, rng.child("arena"), actor=actor, near=near,
-                               situation=arena.situation_for(game, surprised), number=fought)
+    situation = arena.situation_for(game, surprised)
+    field, spots = arena.build(game, creatures, env, rng.child("arena"), actor=actor, near=near, situation=situation,
+                               number=fought)
     battle = Battle(game.tables, [c for c in game.party if c.alive], creatures, env, rng,
                     show_dice=getattr(game, "show_dice", True), title=title, now=game.world.time, field=field,
                     spots=spots)
+    if situation == "camp":
+        for f in battle.side(PARTY):
+            f.conditions["prone"] = -1  # caught asleep: on the ground, and getting up takes half a move
     battle.start(intro)
     game.battle = battle
     others = [c for c in game.party[1:] if c.alive]

@@ -96,6 +96,7 @@ class BattleScreen(Screen):
         self.auto_once: int | None = None
         self._reach_key = None
         self._reach: dict = {}
+        self._tree: dict = {}
         if getattr(app.settings, "battle_companions", "command") == "auto":
             for f in self.battle.side(PARTY)[1:]:
                 f.auto = True  # (Settings: companions fight by themselves)
@@ -164,10 +165,14 @@ class BattleScreen(Screen):
         return self.battle.pending_party()
 
     def reach(self, f: Fighter) -> dict:
+        """Where `f` can end a move this turn (worked out once until something changes, not every frame)."""
         key = (f.id, f.x, f.y, f.move_left, len(self.battle.events), self.battle.round)
         if key != self._reach_key:
             self._reach_key = key
-            self._reach = self.battle.reachable(f) if f.move_left >= 5 else {}
+            self._tree = self.battle.move_tree(f) if f.move_left >= 5 else {}
+            occ = self.battle.occupied_by_others(f)
+            self._reach = {sq: st for sq, st in self._tree.items()
+                           if sq != (f.x, f.y) and grid.can_stop(sq, f.sq, occ)}
         return self._reach
 
     def available(self, f: Fighter, action: str) -> tuple[bool, str]:
@@ -681,7 +686,7 @@ class BattleScreen(Screen):
             if hov is not None:
                 who = b.at(*hov)
                 if hov in reach:
-                    path = [(f.x, f.y)] + b.path_to(f, hov)
+                    path = [(f.x, f.y)] + grid.route(self._tree, hov)
                     ov["path"] = path
                     ov["cost"] = reach[hov].cost
                     ov["warn"] = self._provoking(f, path)

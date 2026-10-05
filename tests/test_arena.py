@@ -140,6 +140,7 @@ def test_caught_asleep_at_camp_they_come_from_all_sides(game):
     sides = {(f.x > px, f.y > py) for f in b.side(FOE)}
     assert len(sides) >= 2 or len(b.side(FOE)) < 2, "around you, not in a line"
     assert all(f.surprised for f in b.side(PARTY))
+    assert all("prone" in f.conditions for f in b.side(PARTY)), "caught asleep, lying down"
 
 
 def test_caught_unawares_they_are_bunched_up(game):
