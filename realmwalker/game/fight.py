@@ -70,18 +70,32 @@ def battle_env(game, surprised: str | None) -> Env:
     rain = not indoors and (w.raining or w.snowing) and w.precip > 0.2
     if not indoors and w.visibility < 0.5:
         light = min(light, 0.45)  # fog and blizzards hide the enemy almost as well as night
-    return Env(light=light, rain=rain, ground=ground, party_light=party_light, surprised=surprised)
+    carried = 0
+    if party_light:
+        from realmwalker.game.dungeon import light_radius
+
+        carried = max(4, int(light_radius(game)) * 2 // 3) if light_radius(game) else 4
+    return Env(light=light, rain=rain, ground=ground, party_light=party_light, surprised=surprised, carried_light=carried)
 
 
 def start_battle(game, creatures: list[Creature], intro: str, *, surprised: str | None = None, actor=None,
-                 title: str = "") -> Battle:
+                 title: str = "", near: tuple[int, int] | None = None) -> Battle:
+    """A fight begins: the field is made from the place (game/arena.py), everyone is set on it, and the dice roll.
+    `actor` is the band on a close-up map being fought; `near` is where on that map the enemy comes from when
+    there is no band (a townsman you were talking to, the watch)."""
+    from realmwalker.game import arena
+
     # A battle's dice come from its own numbered stream: the number of messages in the log is no business of the
     # dice, and saying one more thing before a fight should not change how it goes.
     fought = int(game.world.politics.get("next_battle", 0))
     game.world.politics["next_battle"] = fought + 1
     rng = game.world.rng.child(f"battle/{fought}/{game.world.time}")
-    battle = Battle(game.tables, [c for c in game.party if c.alive], creatures, battle_env(game, surprised), rng,
-                    show_dice=getattr(game, "show_dice", True), title=title, now=game.world.time)
+    env = battle_env(game, surprised)
+    field, spots = arena.build(game, creatures, env, rng.child("arena"), actor=actor, near=near,
+                               situation=arena.situation_for(game, surprised), number=fought)
+    battle = Battle(game.tables, [c for c in game.party if c.alive], creatures, env, rng,
+                    show_dice=getattr(game, "show_dice", True), title=title, now=game.world.time, field=field,
+                    spots=spots)
     battle.start(intro)
     game.battle = battle
     others = [c for c in game.party[1:] if c.alive]

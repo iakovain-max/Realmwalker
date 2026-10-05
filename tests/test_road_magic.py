@@ -114,6 +114,7 @@ def test_mage_armour_cast_in_a_fight_is_still_on_afterwards(world, tables):
     b = fight(tables, [wiz])
     f = b.side(PARTY)[0]
     before = f.ac()
+    f.action = 1  # their turn
     b.do_cast(f, "mage_armor", None)
     assert f.ac() == max(before, 13 + f.mod("dex"))
     assert sp.lasting(wiz, tables)["mage_armor"] == pytest.approx(8.0)
@@ -126,8 +127,10 @@ def test_shield_of_faith_never_counts_twice(world, tables):
     base = Sheet(fighter, tables).armor_class()
     b = fight(tables, [fighter, cleric])
     ally, caster = b.side(PARTY)
+    caster.bonus = 1  # a bonus action, on their turn
     b.do_cast(caster, "shield_of_faith", ally)
     assert ally.ac() == base + 2
+    caster.bonus = 1
     b.do_cast(caster, "shield_of_faith", ally)  # again: renewed, not doubled
     assert ally.ac() == base + 2
     b2 = fight(tables, [fighter, cleric], seed=2)  # the next fight, ten minutes later at most

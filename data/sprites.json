@@ -44,6 +44,7 @@
     "garden": {"ground": "floor/dirt_old", "over": "deco/garden"},
     "well": {"object": "feature/well"},
     "hearth": {"object": "feature/hearth", "animate": 3, "light": [6, [255, 170, 90]]},
+    "campfire": {"object": "feature/campfire", "animate": 3, "light": [6, [255, 160, 80]]},
     "table": {"object": "feature/table"},
     "bed": {"object": "feature/bed"},
     "altar": {"object": "feature/altar"},

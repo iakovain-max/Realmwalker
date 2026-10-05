@@ -143,6 +143,7 @@ def test_spell_charges(game):
     b = Battle(game.tables, [c], [spawn(game.tables, "wolf", RNG(1), 1)], Env(), RNG(1))
     b.start("Test")
     f = next(x for x in b.fighters if x.char is c)
+    f.action = 1  # their turn
     options = [o for o in b.spell_options(f) if o[0].startswith("charge:")]
     assert options and options[0][1]
     p = next(p for p in wand.magic["props"] if p["kind"] == "charges")

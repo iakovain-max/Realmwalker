@@ -192,10 +192,30 @@ def smoke_script():
     frame += 4
     press("f", gap=150)  # fight; give the enemy time to act if they are quicker
     shots[frame - 4] = "battle"
+
+    def point_far(app):
+        """Point at the furthest square the one whose turn it is can walk to: the path and its cost show."""
+        screen = app.top
+        f = screen.actor() if hasattr(screen, "actor") else None
+        if f is not None:
+            reach = screen.reach(f)
+            if reach:
+                screen.hover = max(reach, key=lambda s: reach[s].cost)
+
+    steps.append((frame, point_far))
+    frame += 4
+    shots[frame] = "battle_move"
+    frame += 2
     press("a")
     shots[frame - 3] = "battle_attack"
     press("enter")
     shots[frame - 3] = "battle_target"
+    press("escape")
+    press("escape")
+    press("z", gap=40)  # let the game play the turn: walking, blows
+    shots[frame - 30] = "battle_auto"
+    press("z", gap=60)
+    shots[frame - 30] = "battle_later"
     press("enter", gap=20)
     return steps, frame, shots
 

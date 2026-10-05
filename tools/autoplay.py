@@ -242,11 +242,22 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
         if b is not None:
             if b.outcome is None and not b.order:
                 fail("a battle is running without a turn order")
+            taken = {}
             for f in b.fighters:
                 if not 0 <= f.hp <= f.max_hp:
                     fail(f"{f.name} has {f.hp}/{f.max_hp} hit points in battle")
                 if f.state not in ("fighting", "fleeing", "down", "dead", "fled", "surrendered"):
                     fail(f"{f.name} is in an unknown state {f.state!r}")
+                if f.state in ("fighting", "fleeing", "down", "surrendered"):
+                    # On the grid: everyone on the field, on ground that can be stood on, nobody on anybody else.
+                    for c in f.cells:
+                        if not b.field.in_bounds(*c) or not b.field.walk[c]:
+                            fail(f"{f.name} stands in a wall or off the field at {c} in battle")
+                        if c in taken:
+                            fail(f"{f.name} and {taken[c]} share the square {c} in battle")
+                        taken[c] = f.name
+                if f.move_left < 0:
+                    fail(f"{f.name} has walked further than they could ({f.move_left} feet left)")
         _check_factions(game, fail)
         _check_law(game, fail)
         _check_quests(game, fail)

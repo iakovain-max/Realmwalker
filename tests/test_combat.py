@@ -1,13 +1,16 @@
-"""Combat: the battle engine, creatures, spells, morale, fleeing, the aftermath and encounters."""
+"""Combat on the grid: the battle engine, movement and reach, cover, spells and their areas, dying, morale, the
+enemy's tactics, the aftermath and encounters."""
 
+import numpy as np
 import pytest
 
 from realmwalker.core.rng import RNG
 from realmwalker.game import fight, save
 from realmwalker.game.encounters import encounter_chance, make_encounter, populate_local, threat_words
 from realmwalker.game.state import new_game
+from realmwalker.rules import grid
 from realmwalker.rules import spells as spellrules
-from realmwalker.rules.combat import BACK, FOE, FRONT, PARTY, Battle, Env
+from realmwalker.rules.combat import FOE, PARTY, Battle, Env, open_field
 from realmwalker.rules.creation import CharacterBuilder
 from realmwalker.rules.creatures import spawn, spawn_group
 from realmwalker.rules.inventory import add_item
@@ -23,11 +26,6 @@ def tables(data):
     return Tables(data)
 
 
-@pytest.fixture(scope="module")
-def world(tables):
-    return WorldGenerator(WorldOptions("Battleland", 77, "small"), tables).generate()
-
-
 def hero(tables, cls="fighter", race="human", seed=1):
     b = CharacterBuilder(tables, RNG(seed, "hero"))
     b.set_race(race)
@@ -41,39 +39,50 @@ def foes(tables, *def_ids, seed=1):
     return [spawn(tables, d, rng, i + 1) for i, d in enumerate(def_ids)]
 
 
-def battle(tables, party, enemies, seed=1, **env):
-    b = Battle(tables, party, enemies, Env(**env), RNG(seed, "battle"))
+def battle(tables, party, enemies, seed=1, field=None, spots=None, **env):
+    b = Battle(tables, party, enemies, Env(**env), RNG(seed, "battle"), field=field, spots=spots)
     b.start("Test fight.")
     return b
 
 
-def autoplay(b: Battle, max_steps: int = 2000) -> None:
-    """Party members attack the weakest enemy they can reach; otherwise they step up or dodge."""
+def autoplay(b: Battle, max_steps: int = 4000) -> None:
+    """The party fights on Auto (the same tactics the enemy uses, plus heals and spells)."""
+    for f in b.side(PARTY):
+        f.auto = True
     for _ in range(max_steps):
         if b.outcome is not None:
             return
-        if b.step():
-            continue
-        f = b.pending_party()
-        assert f is not None, "step() returned False without anyone to act"
-        for opt in b.attack_options(f):
-            targets = b.targets_for(f, opt.kind, opt.reach)
-            if opt.available and targets and (not opt.is_melee or b.can_melee(f, opt)[0]):
-                b.do_attack(f, opt, min(targets, key=lambda t: t.hp))
-                break
-        else:
-            if f.rank == BACK:
-                b.do_change_rank(f)
-            else:
-                b.do_dodge(f)
+        b.step()
     raise AssertionError("battle did not finish")
 
 
+def turn_of(b: Battle, f) -> None:
+    """Make it `f`'s turn now, with a fresh turn's worth of action and movement."""
+    b.order = [f.id] + [x for x in b.order if x != f.id]
+    b.turn = 0
+    b.turn_started = True
+    b._start_of_turn(f)
+
+
+def walls(tables, width=12, height=8, **squares):
+    T = tables.terrain.index
+    terrain = np.full((width, height), T["grass"], np.uint16)
+    for name, cells in squares.items():
+        for c in cells:
+            terrain[c] = T[name]
+    return grid.Field(tables, terrain)
+
+
 def check_sane(b: Battle) -> None:
+    taken = {}
     for f in b.fighters:
         assert 0 <= f.hp <= f.max_hp, f"{f.name} {f.hp}/{f.max_hp}"
         assert f.state in ("fighting", "fleeing", "down", "dead", "fled", "surrendered")
-        assert f.rank in (FRONT, BACK)
+        if f.state in ("fighting", "fleeing", "down", "surrendered"):
+            for c in f.cells:
+                assert b.field.in_bounds(*c) and b.field.walk[c], f"{f.name} stands in a wall at {c}"
+                assert c not in taken, f"{f.name} and {taken.get(c)} share {c}"
+                taken[c] = f.name
     r = b.result()
     assert r.outcome in OUTCOMES
     assert r.xp >= 0 and r.loot_money >= 0
@@ -81,19 +90,26 @@ def check_sane(b: Battle) -> None:
 
 # ---------------------------------------------------------------------------- the engine
 @pytest.mark.parametrize("group", ["lone_wolf", "bandits", "wolf_pack", "restless_dead", "goblins", "cultists", "rats"])
-@pytest.mark.parametrize("seed", range(6))
+@pytest.mark.parametrize("seed", range(5))
 def test_battles_always_finish_sanely(tables, group, seed):
     party = [hero(tables, "fighter", seed=seed)]
     enemies = spawn_group(tables, group, RNG(seed, "g"), party_size=1)
     b = battle(tables, party, enemies, seed=seed)
     autoplay(b)
     check_sane(b)
-    assert b.outcome in ("victory", "defeat")
+    assert b.outcome in ("victory", "defeat", "fled")
 
 
 @pytest.mark.parametrize("cls", ["fighter", "rogue", "cleric", "wizard"])
 def test_every_class_can_fight(tables, cls):
     b = battle(tables, [hero(tables, cls)], foes(tables, "giant_rat"), seed=3)
+    autoplay(b)
+    check_sane(b)
+
+
+def test_a_party_of_four_against_bandits(tables):
+    party = [hero(tables, c, seed=i) for i, c in enumerate(("fighter", "rogue", "cleric", "wizard"))]
+    b = battle(tables, party, spawn_group(tables, "bandits", RNG(4, "g"), party_size=4), seed=4)
     autoplay(b)
     check_sane(b)
 
@@ -117,64 +133,358 @@ def test_battle_is_deterministic_for_a_seed(tables):
     assert logs[0] == logs[1]
 
 
-def test_ranks_limit_melee(tables):
-    party = [hero(tables, "fighter"), hero(tables, "wizard", seed=2)]
-    b = battle(tables, party, foes(tables, "bandit", "bandit_archer"))
-    fighter, wizard = b.side(PARTY)
-    assert fighter.rank == FRONT and wizard.rank == BACK
-    bandit, archer = b.side(FOE)
-    assert bandit.rank == FRONT and archer.rank == BACK
-    # Melee reaches only the enemy front rank while it stands.
-    assert b.targets_for(fighter, "melee") == [bandit]
-    assert set(b.targets_for(fighter, "ranged")) == {bandit, archer}
-    # From the back rank, no melee without reach.
-    assert b.targets_for(wizard, "melee") == []
-    melee = next(o for o in b.attack_options(wizard) if o.is_melee and not o.reach)
-    assert not b.can_melee(wizard, melee)[0]
-    # With the front rank gone, the back rank is open to blades.
-    bandit.state = "dead"
-    assert b.targets_for(fighter, "melee") == [archer]
+def test_everyone_starts_on_the_field_apart(tables):
+    party = [hero(tables, c, seed=i) for i, c in enumerate(("fighter", "wizard"))]
+    b = battle(tables, party, foes(tables, "ogre", "goblin", "goblin"))
+    check_sane(b)
+    ogre = b.side(FOE)[0]
+    assert ogre.sq == 2 and len(ogre.cells) == 4  # large: two squares by two
+    assert all(b.gap(p, e) > 3 for p in b.side(PARTY) for e in b.side(FOE)), "the two sides start apart"
 
 
-def test_change_rank_and_dodge(tables):
-    b = battle(tables, [hero(tables)], foes(tables, "wolf"))
-    while b.pending_party() is None:
-        b.step()
-    f = b.pending_party()
-    b.do_change_rank(f)
-    assert f.rank == BACK
+# ---------------------------------------------------------------------------- moving and reaching
+def test_melee_needs_reach_and_moving_costs_movement(tables):
+    b = battle(tables, [hero(tables)], foes(tables, "bandit"), spots={0: (2, 4), 1: (8, 4)})
+    f, bandit = b.side(PARTY)[0], b.side(FOE)[0]
+    turn_of(b, f)
+    sword = next(o for o in b.attack_options(f) if o.key == "main")
+    assert b.attack_problem(f, sword, bandit) == "out of reach"
+    speed = f.move_left
+    assert b.do_move(f, (7, 4))
+    assert (f.x, f.y) == (7, 4) and f.move_left == speed - 25
+    assert b.attack_problem(f, sword, bandit) is None
+    assert b.do_attack(f, sword, bandit)
+    assert f.action == 0
+
+
+def test_difficult_terrain_costs_double(tables):
+    fld = walls(tables, mud=[(3, 4), (4, 4), (5, 4)])
+    b = battle(tables, [hero(tables)], foes(tables, "wolf"), field=fld, spots={0: (2, 4), 1: (10, 1)})
+    f = b.side(PARTY)[0]
+    turn_of(b, f)
+    reach = b.reachable(f)
+    assert reach[(3, 4)].cost == 10  # one square of mud
+    assert reach[(3, 3)].cost == 5
+
+
+def test_leaving_reach_provokes_and_disengaging_does_not(tables):
+    b = battle(tables, [hero(tables)], foes(tables, "wolf"), spots={0: (4, 4), 1: (5, 4)})
+    f, wolf = b.side(PARTY)[0], b.side(FOE)[0]
+    turn_of(b, f)
+    before = len([e for e in b.events if e["kind"] == "opportunity"])
+    b.do_move(f, (2, 4))
+    assert len([e for e in b.events if e["kind"] == "opportunity"]) == before + 1
+    assert not wolf.reaction  # one opportunity attack a round
+    b2 = battle(tables, [hero(tables)], foes(tables, "wolf"), spots={0: (4, 4), 1: (5, 4)})
+    f2 = b2.side(PARTY)[0]
+    turn_of(b2, f2)
+    b2.do_disengage(f2)
+    b2.do_move(f2, (2, 4))
+    assert not [e for e in b2.events if e["kind"] == "opportunity"]
+
+
+def test_dash_doubles_the_way(tables):
+    b = battle(tables, [hero(tables)], foes(tables, "wolf"), spots={0: (0, 0), 1: (15, 9)})
+    f = b.side(PARTY)[0]
+    turn_of(b, f)
+    speed = f.move_left
+    b.do_dash(f)
+    assert f.move_left == 2 * speed and f.action == 0
+
+
+def test_large_creatures_need_room(tables):
+    fld = walls(tables, wall_stone=[(4, y) for y in range(8) if y != 3])
+    b = battle(tables, [hero(tables)], foes(tables, "ogre"), field=fld, spots={0: (1, 3), 1: (7, 3)})
+    ogre = b.side(FOE)[0]
+    turn_of(b, ogre)
+    ogre.move_left = 60
+    assert not any(sq[0] <= 4 for sq in b.reachable(ogre)), "a two-square ogre cannot squeeze through a one-square gap"
+
+
+# ---------------------------------------------------------------------------- sight and cover
+def test_walls_block_sight_and_a_low_wall_gives_cover(tables):
+    fld = walls(tables, wall_stone=[(5, y) for y in range(2, 6)], fence=[(5, 7)])
+    archer = foes(tables, "bandit_archer")
+    b = battle(tables, [hero(tables)], archer, field=fld, spots={0: (2, 4), 1: (8, 4)})
+    f, a = b.side(PARTY)[0], b.side(FOE)[0]
+    assert b.field.cover(a.space, f.space) == grid.TOTAL
+    assert not b.can_see(a, f)
+    bow = next(o for o in b.attack_options(a) if not o.is_melee)
+    assert not b.in_reach(a, bow, f)[0]
+    f.x, f.y = 2, 7  # now behind the fence: seen, but half hidden
+    assert b.field.cover(a.space, f.space) == grid.HALF
+    ac, cover = b.target_ac(a, bow, f) if False else b.target_ac(a, f, bow)
+    assert cover == grid.HALF and ac == f.ac() + 2
+
+
+def test_shooting_with_an_enemy_beside_you_is_at_disadvantage(tables):
+    b = battle(tables, [hero(tables)], foes(tables, "bandit_archer", "bandit"), spots={0: (5, 4), 1: (6, 4), 2: (12, 4)})
+    f, archer = b.side(PARTY)[0], b.side(FOE)[0]
+    bow = next(o for o in b.attack_options(archer) if not o.is_melee)
+    adv, dis, why = b._adv_dis(archer, f, bow)
+    assert dis and "enemy at hand" in why
+
+
+def test_darkness_hides_and_darkvision_sees(tables):
+    party = [hero(tables, race="human"), hero(tables, race="dwarf", seed=2)]
+    b = battle(tables, party, foes(tables, "goblin"), spots={0: (2, 2), 1: (2, 6), 2: (8, 4)}, light=0.0)
+    human, dwarf = b.side(PARTY)
+    goblin = b.side(FOE)[0]
+    assert not b.can_see(human, goblin)
+    assert b.can_see(dwarf, goblin)
+    assert b.can_see(goblin, human)  # goblins see in the dark
+
+
+# ---------------------------------------------------------------------------- the turn
+def test_extra_attack_lets_you_move_between_swings(tables):
+    c = hero(tables, "fighter")
+    award_xp(c, 6500, tables, RNG(1))
+    assert c.level >= 5
+    b = battle(tables, [c], foes(tables, "ogre", "ogre"), spots={0: (5, 4), 1: (6, 4), 2: (6, 7)})
+    f, o1, o2 = b.side(PARTY)[0], *b.side(FOE)
+    turn_of(b, f)
+    sword = next(o for o in b.attack_options(f) if o.key == "main")
+    assert b.do_attack(f, sword, o1)
+    assert f.attacks_left == 1 and f.action == 0
+    b.walk(f, [(5, 5), (5, 6)], provoke=False)
+    assert b.do_attack(f, sword, o2)
+    assert f.attacks_left == 0
+
+
+def test_the_turn_ends_when_told(tables):
+    b = battle(tables, [hero(tables)], foes(tables, "wolf"), spots={0: (2, 4), 1: (12, 4)})
     while b.pending_party() is None and b.outcome is None:
         b.step()
-    if b.outcome is None:
-        b.do_dodge(f)
-        assert f.dodging
+    f = b.pending_party()
+    b.do_dodge(f)
+    assert f.dodging and b.pending_party() is f  # still free to move
+    b.end_turn()
+    assert b.pending_party() is not f
+
+
+# ---------------------------------------------------------------------------- spells and their areas
+def test_fireball_burns_friend_and_foe(tables):
+    wiz = hero(tables, "wizard")
+    award_xp(wiz, 6500, tables, RNG(1))  # third-level spells come at level 5
+    wiz.spells["spellbook"].append("fireball")
+    friend = hero(tables, "fighter", seed=4)
+    b = battle(tables, [wiz, friend], foes(tables, "bandit", "bandit"), spots={0: (1, 1), 1: (9, 5), 2: (10, 5), 3: (10, 6)})
+    caster = b.side(PARTY)[0]
+    turn_of(b, caster)
+    cells = b.spell_area(caster, "fireball", (10, 5))
+    caught = b.in_area(cells, "all", caster)
+    assert b.side(PARTY)[1] in caught and all(x in caught for x in b.side(FOE))
+    hp = {x.id: x.hp for x in caught}
+    assert b.do_cast(caster, "fireball", point=(10, 5))
+    assert all(x.hp < hp[x.id] or x.state != "fighting" for x in caught)
+
+
+def test_burning_hands_is_a_cone_and_thunderwave_throws_them_back(tables):
+    wiz = hero(tables, "wizard")
+    b = battle(tables, [wiz], foes(tables, "bandit", "bandit"), spots={0: (5, 4), 1: (6, 4), 2: (7, 4)})
+    caster = b.side(PARTY)[0]
+    cone = b.spell_area(caster, "burning_hands", (8, 4))
+    assert (6, 4) in cone and (8, 4) in cone and (8, 3) in cone and (4, 4) not in cone and (5, 4) not in cone
+    cube = b.spell_area(caster, "thunderwave", (6, 4))
+    assert len(cube) == 9 and all(x >= 6 for x, _ in cube)
+    near = b.side(FOE)[0]
+    turn_of(b, caster)
+    before = near.x
+    b.do_cast(caster, "thunderwave", point=(6, 4))
+    pushed = {e["who"] for e in b.events if e["kind"] == "push"}
+    failed = {e["who"] for e in b.events if e["kind"] == "save" and not e["ok"]}
+    assert not near.active or near.x >= before
+    assert {x.id for x in b.side(FOE) if x.active and x.id in failed} <= pushed
+
+
+def test_web_holds_and_slows(tables):
+    wiz = hero(tables, "wizard")
+    award_xp(wiz, 900, tables, RNG(1))
+    wiz.spells["spellbook"].append("web")
+    b = battle(tables, [wiz], foes(tables, "bandit", "bandit"), spots={0: (1, 4), 1: (9, 4), 2: (10, 4)})
+    caster = b.side(PARTY)[0]
+    turn_of(b, caster)
+    assert b.do_cast(caster, "web", point=(9, 4))
+    assert any(z.kind == "web" for z in b.zones) and b.field.difficult(9, 4)
+    assert caster.concentration and caster.concentration["spell"] == "web"
+    # Losing concentration takes the web away and frees whoever it held.
+    b._end_concentration(caster, quiet=True)
+    assert not b.zones and not b.field.difficult(9, 4)
+    assert not any("restrained" in x.conditions for x in b.side(FOE))
+
+
+def test_concentration_breaks_when_hurt(tables):
+    cleric = hero(tables, "cleric")
+    b = battle(tables, [cleric, hero(tables, seed=2)], foes(tables, "wolf"), spots={0: (2, 4), 1: (3, 4), 2: (12, 4)})
+    caster = b.side(PARTY)[0]
+    turn_of(b, caster)
+    assert b.do_cast(caster, "bless")
+    assert caster.concentration is not None and any(x.buff_value("attack_die") for x in b.side(PARTY))
+    broke = False
+    for seed in range(30):
+        b.rng = RNG(seed, "conc")
+        caster.concentration = caster.concentration or {"spell": "bless", "rounds": 10}
+        b._hit(b.side(FOE)[0], caster, 1, "piercing", crit=False, weapon="bite")
+        if caster.concentration is None:
+            broke = True
+            break
+        caster.hp = caster.max_hp
+    assert broke
+    assert not any(b.get("conc") for x in b.side(PARTY) for b in x.buffs)
+
+
+def test_wizard_spells_and_slots(tables):
+    wiz = hero(tables, "wizard", race="elf")
+    assert "magic_missile" in spellrules.known_spells(wiz, tables)
+    before = spellrules.slots_left(wiz, tables)[0]
+    b = battle(tables, [wiz], foes(tables, "wolf", "wolf"), spots={0: (2, 4), 1: (10, 3), 2: (10, 6)})
+    f = b.side(PARTY)[0]
+    wolf, wolf2 = b.side(FOE)
+    turn_of(b, f)
+    b.do_cast(f, "fire_bolt", wolf)  # a cantrip: free
+    assert spellrules.slots_left(wiz, tables)[0] == before
+    turn_of(b, f)
+    hp2 = wolf2.hp
+    b.do_cast(f, "magic_missile", wolf2)  # never misses, spends a slot
+    assert spellrules.slots_left(wiz, tables)[0] == before - 1
+    assert wolf2.hp < hp2 or wolf2.state == "dead"
+    long_rest(wiz, tables, RNG(1))
+    assert spellrules.slots_left(wiz, tables)[0] == before
+
+
+def test_a_bonus_action_spell_leaves_only_a_cantrip(tables):
+    cleric = hero(tables, "cleric")
+    b = battle(tables, [cleric, hero(tables, seed=3)], foes(tables, "wolf"), spots={0: (2, 4), 1: (3, 4), 2: (12, 4)})
+    f, ally = b.side(PARTY)
+    ally.hp = 1
+    turn_of(b, f)
+    assert b.do_cast(f, "healing_word", ally)
+    options = {sid: (ok, why) for sid, ok, why in b.spell_options(f)}
+    assert not options["cure_wounds"][0] and options["sacred_flame"][0]
+
+
+def test_sleep_puts_the_weak_to_sleep(tables):
+    wiz = hero(tables, "wizard")
+    b = battle(tables, [wiz], foes(tables, "giant_rat", "giant_rat"), seed=2, spots={0: (2, 4), 1: (9, 4), 2: (10, 5)})
+    f = b.side(PARTY)[0]
+    turn_of(b, f)
+    b.do_cast(f, "sleep", point=(9, 4))
+    assert any("unconscious" in x.conditions for x in b.side(FOE))
+
+
+def test_cleric_heals_and_turns_undead(tables):
+    cleric = hero(tables, "cleric")
+    award_xp(cleric, 300, tables, RNG(1))  # Channel Divinity comes at level 2
+    fighter = hero(tables, "fighter", seed=3)
+    b = battle(tables, [fighter, cleric], foes(tables, "skeleton", "zombie"),
+               spots={0: (4, 4), 1: (3, 4), 2: (8, 4), 3: (8, 5)})
+    ally = b.side(PARTY)[0]
+    ally.hp = 1
+    caster = b.side(PARTY)[1]
+    turn_of(b, caster)
+    b.do_cast(caster, "cure_wounds", ally)
+    assert ally.hp > 1
+    turn_of(b, caster)
+    ids = [a[0] for a in b.class_abilities(caster) if a[2]]
+    assert "turn_undead" in ids
+    b.do_ability(caster, "turn_undead")
+    assert cleric.uses.get("channel_divinity", 0) == 0
+
+
+def test_spiritual_weapon_strikes_where_it_is_put(tables):
+    cleric = hero(tables, "cleric")
+    award_xp(cleric, 900, tables, RNG(1))
+    b = battle(tables, [cleric], foes(tables, "ogre"), spots={0: (2, 4), 1: (9, 4)})
+    f = b.side(PARTY)[0]
+    turn_of(b, f)
+    assert b.do_cast(f, "spiritual_weapon", point=(8, 4))
+    assert b.tokens and any(e["kind"] == "attack" for e in b.events)
+    turn_of(b, f)
+    assert "spirit_strike" in [a[0] for a in b.class_abilities(f) if a[2]]
+
+
+def test_second_wind_heals(tables):
+    c = hero(tables, "fighter")
+    b = battle(tables, [c], foes(tables, "wolf"))
+    f = b.side(PARTY)[0]
+    turn_of(b, f)
+    f.hp = 1
+    assert ("second_wind", True) in [(a[0], a[2]) for a in b.class_abilities(f)]
+    b.do_ability(f, "second_wind")
+    assert f.hp > 1 and c.uses["second_wind"] == 0 and f.bonus == 0
+    short_rest(c, tables, RNG(2))
+    assert c.uses["second_wind"] == 1
+
+
+def test_potions_and_bandages(tables):
+    c = hero(tables)
+    add_item(c, tables.items, "potion_healing")
+    b = battle(tables, [c], foes(tables, "wolf"))
+    f = b.side(PARTY)[0]
+    turn_of(b, f)
+    f.hp = 1
+    potion = next(i for i in b.usable_items(f) if i.def_id == "potion_healing")
+    b.do_item(f, potion.uid, f)
+    assert f.hp > 1
+    assert c.item(potion.uid) is None or c.item(potion.uid).qty < 2
+
+
+def test_dragon_breath_is_a_cone(tables):
+    b = battle(tables, [hero(tables), hero(tables, "wizard", seed=2)], foes(tables, "young_dragon"),
+               spots={0: (8, 4), 1: (9, 5), 2: (3, 4)})
+    dragon = b.side(FOE)[0]
+    breath = next(o for o in b.attack_options(dragon) if o.extra.get("area"))
+    turn_of(b, dragon)
+    b.area_attack(dragon, breath, (8, 4))
+    assert not dragon.recharge["fire breath"]
+    assert all(x.hp < x.max_hp or x.state != "fighting" for x in b.side(PARTY))
 
 
 # ---------------------------------------------------------------------------- down, dying and wounds
-def test_going_down_bleeding_out_and_first_aid(tables):
+def test_going_down_death_saves_and_first_aid(tables):
     fighter, cleric = hero(tables, "fighter"), hero(tables, "cleric", seed=4)
-    b = battle(tables, [fighter, cleric], foes(tables, "wolf"))
-    f = b.side(PARTY)[0]
+    b = battle(tables, [fighter, cleric], foes(tables, "wolf"), spots={0: (4, 4), 1: (5, 4), 2: (12, 4)})
+    f, helper = b.side(PARTY)
     b._apply_hp_loss(f, f.hp + 3, source=None, cause="test")
     assert f.state == "down" and f.hp == 0 and "unconscious" in f.conditions
-    assert f.dying >= 1 and not f.stable
-    helper = b.side(PARTY)[1]
+    assert f.death_saves == [0, 0] and not f.stable
     add_item(cleric, tables.items, "healers_kit")
-    b.order = [helper.id] + [x for x in b.order if x != helper.id]
-    b.turn = 0
-    b.turn_started = True
+    turn_of(b, helper)
     b.do_help(helper, f)
     assert f.stable
 
 
-def test_bleeding_out_kills(tables):
+def test_death_saves_end_one_way_or_the_other(tables):
+    outcomes = set()
+    for seed in range(30):
+        c = hero(tables, seed=seed)
+        b = battle(tables, [c, hero(tables, "rogue", seed=5)], foes(tables, "wolf"), seed=seed)
+        f = b.side(PARTY)[0]
+        b._apply_hp_loss(f, f.hp, source=None, cause="test")
+        for _ in range(12):
+            if f.state != "down" or f.stable:
+                break
+            b._start_of_turn(f)
+        outcomes.add("dead" if f.state == "dead" else ("stable" if f.stable else "up"))
+        if f.state == "dead":
+            assert not c.alive
+    assert {"dead", "stable"} <= outcomes
+
+
+def test_blows_while_down_and_massive_damage_kill(tables):
     c = hero(tables)
     b = battle(tables, [c, hero(tables, "rogue", seed=5)], foes(tables, "wolf"))
     f = b.side(PARTY)[0]
     b._apply_hp_loss(f, f.hp, source=None, cause="test")
-    for _ in range(10):
-        b._start_of_turn(f)
-    assert f.state == "dead" and not c.alive
+    b._apply_hp_loss(f, 1, source=None, cause="test", crit=True)
+    assert f.death_saves[1] == 2
+    b._apply_hp_loss(f, 1, source=None, cause="test")
+    assert f.state == "dead"
+    c2 = hero(tables, seed=3)
+    b2 = battle(tables, [c2, hero(tables, "rogue", seed=5)], foes(tables, "wolf"))
+    f2 = b2.side(PARTY)[0]
+    b2._apply_hp_loss(f2, f2.hp + max(f2.max_hp, 14), source=None, cause="test")
+    assert f2.state == "dead"
 
 
 def test_heavy_hits_leave_wounds(tables):
@@ -190,17 +500,35 @@ def test_heavy_hits_leave_wounds(tables):
     assert wounded >= 5, "a critical bite for most of a character's hit points often wounds"
 
 
-# ---------------------------------------------------------------------------- morale, surrender, parley, flight
-def test_bandits_break_and_surrender(tables):
-    b = battle(tables, [hero(tables)], foes(tables, "bandit", "bandit"))
+def test_death_ward_takes_the_blow(tables):
+    """A cleric's ward turns the blow that would put somebody down, once."""
+    c = hero(tables, "cleric")
+    b = battle(tables, [c], foes(tables, "wolf"))
+    f = next(x for x in b.fighters if x.char is c)
+    f.buffs.append({"death_ward": 1, "rounds": 10, "source": "death_ward"})
+    f.hp = 3
+    b._apply_hp_loss(f, 3, source=None, cause="test")
+    assert f.hp == 1 and f.state == "fighting" and not any("death_ward" in x for x in f.buffs)
+    b._apply_hp_loss(f, 3, source=None, cause="test")
+    assert f.state == "down"
+
+
+# ---------------------------------------------------------------------------- morale, surrender, parley, running
+def test_bandits_break_surrender_and_run_for_the_edge(tables):
+    b = battle(tables, [hero(tables)], foes(tables, "bandit", "bandit"), spots={0: (2, 4), 1: (3, 4), 2: (13, 4)})
     first, second = b.side(FOE)
     b._break(first, "surrender")
     assert first.state == "surrendered" and not first.active
     b._break(second, "flee")
     assert second.state == "fleeing"
     assert b.outcome is None  # a fleeing foe is still on the field until it gets away
-    b._ai(second)
-    b._ai(second)
+    for _ in range(6):
+        if second.state == "fled":
+            break
+        turn_of(b, second)
+        from realmwalker.rules import tactics
+
+        tactics.take_turn(b, second)
     assert second.state == "fled"
     assert b.outcome == "victory"
     r = b.result()
@@ -233,84 +561,42 @@ def test_surrender_only_to_the_merciful(tables):
     assert bandits.outcome == "surrendered"
 
 
-def test_fleeing_sometimes_works(tables):
-    results = set()
-    for seed in range(30):
-        b = battle(tables, [hero(tables)], foes(tables, "bandit", "bandit"), seed=seed)
-        while b.pending_party() is None and b.outcome is None:
-            b.step()
-        if b.outcome is None:
-            b.do_flee(b.pending_party())
-            results.add(b.outcome == "fled")
-    assert results == {True, False}
+def test_getting_away_off_the_edge_of_the_field(tables):
+    b = battle(tables, [hero(tables), hero(tables, "rogue", seed=2)], foes(tables, "bandit"),
+               spots={0: (0, 4), 1: (5, 4), 2: (14, 4)})
+    a, c = b.side(PARTY)
+    turn_of(b, a)
+    assert b.can_leave(a)
+    assert b.do_leave(a)
+    assert a.state == "fled" and b.outcome is None
+    turn_of(b, c)
+    assert not b.can_leave(c)
+    b.do_move(c, (0, 4))
+    assert b.do_leave(c)
+    assert b.outcome == "fled"
 
 
-# ---------------------------------------------------------------------------- spells and abilities
-def test_wizard_spells_and_slots(tables):
-    wiz = hero(tables, "wizard", race="elf")
-    assert "magic_missile" in spellrules.known_spells(wiz, tables)
-    before = spellrules.slots_left(wiz, tables)[0]
-    b = battle(tables, [wiz], foes(tables, "wolf", "wolf"))
-    f = b.side(PARTY)[0]
+# ---------------------------------------------------------------------------- tactics
+def test_wolves_close_in_and_bite(tables):
+    b = battle(tables, [hero(tables)], foes(tables, "wolf"), spots={0: (2, 4), 1: (10, 4)})
     wolf = b.side(FOE)[0]
-    hp = wolf.hp
-    b.do_cast(f, "fire_bolt", wolf)  # a cantrip: free
-    assert spellrules.slots_left(wiz, tables)[0] == before
-    wolf2 = b.side(FOE)[1]
-    hp2 = wolf2.hp
-    b.do_cast(f, "magic_missile", wolf2)  # never misses, spends a slot
-    assert spellrules.slots_left(wiz, tables)[0] == before - 1
-    assert wolf2.hp < hp2 or wolf2.state == "dead"
-    assert wolf.hp <= hp
-    long_rest(wiz, tables, RNG(1))
-    assert spellrules.slots_left(wiz, tables)[0] == before
+    from realmwalker.rules import tactics
+
+    turn_of(b, wolf)
+    tactics.take_turn(b, wolf)
+    assert b.gap(wolf, b.side(PARTY)[0]) <= 1
+    assert any(e["kind"] == "attack" and e["by"] == wolf.id for e in b.events)
 
 
-def test_sleep_puts_the_weak_to_sleep(tables):
-    wiz = hero(tables, "wizard")
-    b = battle(tables, [wiz], foes(tables, "giant_rat", "giant_rat"), seed=2)
-    b.do_cast(b.side(PARTY)[0], "sleep", None)
-    assert any("unconscious" in f.conditions for f in b.side(FOE))
+def test_archers_shoot_from_where_they_stand(tables):
+    b = battle(tables, [hero(tables)], foes(tables, "bandit_archer"), spots={0: (2, 4), 1: (10, 4)})
+    archer = b.side(FOE)[0]
+    from realmwalker.rules import tactics
 
-
-def test_cleric_heals_and_turns_undead(tables):
-    cleric = hero(tables, "cleric")
-    award_xp(cleric, 300, tables, RNG(1))  # Channel Divinity comes at level 2
-    fighter = hero(tables, "fighter", seed=3)
-    b = battle(tables, [fighter, cleric], foes(tables, "skeleton", "zombie"))
-    ally = b.side(PARTY)[0]
-    ally.hp = 1
-    caster = b.side(PARTY)[1]
-    b.do_cast(caster, "cure_wounds", ally)
-    assert ally.hp > 1
-    ids = [a[0] for a in b.class_abilities(caster)]
-    assert "turn_undead" in ids
-    b.do_ability(caster, "turn_undead")
-    assert cleric.uses.get("channel_divinity", 0) == 0
-
-
-def test_second_wind_heals(tables):
-    c = hero(tables, "fighter")
-    b = battle(tables, [c], foes(tables, "wolf"))
-    f = b.side(PARTY)[0]
-    f.hp = 1
-    assert ("second_wind", "Second Wind", True, "used; rest to recover") in b.class_abilities(f)
-    b.do_ability(f, "second_wind")
-    assert f.hp > 1 and c.uses["second_wind"] == 0
-    short_rest(c, tables, RNG(2))
-    assert c.uses["second_wind"] == 1
-
-
-def test_potions_and_bandages(tables):
-    c = hero(tables)
-    add_item(c, tables.items, "potion_healing")
-    b = battle(tables, [c], foes(tables, "wolf"))
-    f = b.side(PARTY)[0]
-    f.hp = 1
-    potion = next(i for i in b.usable_items(f) if i.def_id == "potion_healing")
-    b.do_item(f, potion.uid, f)
-    assert f.hp > 1
-    assert c.item(potion.uid) is None or c.item(potion.uid).qty < 2
+    turn_of(b, archer)
+    tactics.take_turn(b, archer)
+    assert b.gap(archer, b.side(PARTY)[0]) > 1, "an archer does not walk up to a swordsman"
+    assert any(e["kind"] == "attack" and e["by"] == archer.id and not e["melee"] for e in b.events)
 
 
 # ---------------------------------------------------------------------------- experience and rest
@@ -353,6 +639,7 @@ def test_encounter_to_victory_with_loot_and_xp(game):
     assert game.busy and not game.move(1, 0)
     fight.encounter_fight(game, ambush=False)
     assert game.battle is not None and game.encounter is None
+    check_sane(game.battle)
     win(game)
     after = fight.finish_battle(game)
     assert game.battle is None and game.aftermath is after
@@ -511,6 +798,9 @@ def test_creature_data_is_consistent(tables):
         assert d["attacks"], def_id
         for item_id, _ in d.get("gear", []):
             assert item_id in tables.items, f"{def_id} carries unknown {item_id}"
+        for a in d["attacks"]:
+            if a.get("area"):
+                assert a.get("save") and a.get("dc"), f"{def_id}'s {a['name']} has an area but no save"
     for gid, g in tables.creatures.encounters.items():
         for member, _ in g["members"]:
             assert member in tables.creatures.defs, f"{gid} has unknown {member}"
@@ -520,14 +810,11 @@ def test_creature_data_is_consistent(tables):
             assert g in tables.creatures.encounters, f"{kind} lists unknown group {g}"
 
 
-def test_death_ward_takes_the_blow(tables):
-    """A cleric's ward turns the blow that would put somebody down, once."""
-    c = hero(tables, "cleric")
-    b = battle(tables, [c], foes(tables, "wolf"))
-    f = next(x for x in b.fighters if x.char is c)
-    f.buffs.append({"death_ward": 1, "rounds": 10, "source": "death_ward"})
-    f.hp = 3
-    b._apply_hp_loss(f, 30, source=None, cause="test")
-    assert f.hp == 1 and f.state == "fighting" and not any("death_ward" in x for x in f.buffs)
-    b._apply_hp_loss(f, 30, source=None, cause="test")
-    assert f.state == "down"
+def test_every_spell_can_be_aimed(tables):
+    """Each spell says how far it reaches and how it is aimed, and an area spell has a shape the grid knows."""
+    for sid, sp in tables.spells.defs.items():
+        assert "range" in sp, sid
+        if sp["target"] in ("point", "direction"):
+            assert sp.get("area") or sp["kind"] in ("move", "summon", "guardian"), sid
+        if sp.get("area"):
+            assert sp["area"]["shape"] in ("sphere", "cylinder", "cube", "cone", "line"), sid

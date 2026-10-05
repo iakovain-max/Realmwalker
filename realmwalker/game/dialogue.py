@@ -506,7 +506,7 @@ class Conversation:
         creature.name = npc.first_name
         creature.named = True
         game.battle_npcs[creature.uid] = npc.id
-        start_battle(game, [creature], f"{npc.first_name} goes for you.", title=npc.first_name)
+        start_battle(game, [creature], f"{npc.first_name} goes for you.", title=npc.first_name, near=(npc.x, npc.y))
         game.leader.deeds.append(f"came to blows with {npc.label()} in {self.settlement.name}")
         self.ended = True
 

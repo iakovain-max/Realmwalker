@@ -1,4 +1,5 @@
-"""The party (p): who travels with you, how they feel about it, their pay and their orders."""
+"""The party (p): who travels with you, how they feel about it, their pay and their orders, and the battle order
+(f) they stand in when a fight begins."""
 
 from __future__ import annotations
 
@@ -102,6 +103,11 @@ class PartyScreen(Screen):
 
         self.app.push(ConfirmBox(self.app, f"Send {c.name} away? They will go home.", yes, title="Dismiss"))
 
+    def battle_order(self) -> None:
+        from realmwalker.ui.screens.formation import FormationScreen
+
+        self.app.push(FormationScreen(self.app, self.game))
+
     def sheet(self, key: str) -> None:
         i = self.index_in_party()
         if i is None:
@@ -133,6 +139,8 @@ class PartyScreen(Screen):
             self.dismiss()
         elif ev.key in ("c", "i", "e", "h"):
             self.sheet(ev.key)
+        elif ev.key == "f":
+            self.battle_order()
         elif ev.key in ("pageup", "pagedown"):
             self.detail.handle_key(ev)
         return True
@@ -241,7 +249,8 @@ class PartyScreen(Screen):
             bx += 2
         bx = canvas.button(bx, h - 3, "Sheet", lambda: self.sheet("c"), hotkey="c")
         bx = canvas.button(bx + 2, h - 3, "Pack", lambda: self.sheet("i"), hotkey="i")
+        bx = canvas.button(bx + 2, h - 3, "Battle order", self.battle_order, hotkey="f")
         canvas.button(bx + 2, h - 3, "Back", self.close, hotkey="Esc")
 
     def autoplay_keys(self) -> list[KeyEvent]:
-        return [KeyEvent(k) for k in ("down", "t", "b", "o", "up", "down", "escape")]
+        return [KeyEvent(k) for k in ("down", "t", "b", "o", "up", "down", "f", "escape")]

@@ -84,6 +84,7 @@ class Character:
     addictions: dict[str, float] = field(default_factory=dict)
     effects: dict[str, float] = field(default_factory=dict)  # timed effects, hours left (poppy, herbal, hangover...)
     animals: list[dict] = field(default_factory=list)  # mules and horses: {"kind", "name", "unfed", "bought"}
+    formation: list[int] = field(default_factory=list)  # [column, row] in the battle order (game/arena.py); [] = by class
     next_uid: int = 1
     is_player: bool = True
     alive: bool = True

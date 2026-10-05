@@ -200,7 +200,7 @@ def test_the_sheets_fit_a_small_window(game, monkeypatch):
 def test_a_big_fight_shows_everyone_when_there_is_room(game, monkeypatch):
     from realmwalker.game import fight
     from realmwalker.game.encounters import make_encounter
-    from realmwalker.rules.combat import FOE, FRONT
+    from realmwalker.rules.combat import FOE
     from realmwalker.ui.screens.battle import BattleScreen
 
     app, g = game
@@ -211,12 +211,15 @@ def test_a_big_fight_shows_everyone_when_there_is_room(game, monkeypatch):
             break
     b = fight.encounter_fight(g, False)
     g.encounter = None
-    for f in b.side(FOE):
-        f.rank = FRONT  # a crowd in one rank
     if len(b.side(FOE)) < 4:
         pytest.skip("not a big enough band")
     watch = Watch(monkeypatch)
-    shown = watch.render(BattleScreen(app, g), (160, 45))
-    assert "more" not in shown.split("THE ENEMY")[1].split("─" * 10)[0], "someone is hidden behind '+n more'"
-    assert all(f.name[:10] in shown for f in b.side(FOE))
+    screen = BattleScreen(app, g)
+    shown = watch.render(screen, (160, 45))
+    assert all(f.name[:10] in shown for f in b.side(FOE)), "everyone is in the order of battle"
+    x0, y0, cw = screen.letters
+    rows = shown.splitlines()
+    for f in b.fighters:  # and on the field, where they stand
+        glyph = str(b.side("party").index(f) + 1) if f.char else f.cdef["glyph"]
+        assert rows[y0 + f.y][x0 + f.x * cw] == glyph, f.name
     assert not watch.problems, watch.problems

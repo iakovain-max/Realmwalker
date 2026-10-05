@@ -276,6 +276,12 @@ ATTACK = Obj(
         "item": Str(max_len=40, optional=True), "wound": Str(max_len=20, optional=True), "reach": Bool(optional=True),
         "trip_dc": Int(min=1, max=30, optional=True), "paralyze_dc": Int(min=1, max=30, optional=True),
         "poison": Any_(optional=True), "disease": Str(max_len=40, optional=True), "disease_chance": Float(min=0, max=1, optional=True),
+        # On the battle grid: how far a ranged attack carries (feet, normal and long), and breath weapons and the
+        # like: an area (shape and size in feet), a saving throw against it, and how it recharges (on a d6 roll).
+        "range": List(Int(min=5, max=1000), min_items=2, max_items=2, optional=True),
+        "area": Obj({"shape": Str(choices=["cone", "line", "sphere", "cube", "cylinder"]), "size": Int(min=5, max=300)}, optional=True),
+        "save": Str(choices=list(ABILITY_IDS), optional=True), "dc": Int(min=1, max=30, optional=True),
+        "recharge": Int(min=2, max=6, optional=True),
     }
 )
 CREATURE = Obj(
@@ -311,9 +317,13 @@ SPELL = Obj(
     {
         "name": Str(max_len=40), "level": Int(min=0, max=9), "school": Str(max_len=20), "classes": List(Str(max_len=20), min_items=1),
         "kind": Str(choices=["attack", "auto", "save", "heal", "buff", "condition", "sleep", "stabilize", "cure", "summon",
-                             "aura", "move", "revive", "identify"]),
-        "target": Str(choices=["enemy", "ally", "self", "downed_ally", "dead_ally", "enemy_front", "enemy_back", "all_enemies",
-                               "all_allies", "item"]),
+                             "guardian", "aura", "zone", "move", "revive", "identify"]),
+        "target": Str(choices=["enemy", "ally", "self", "downed_ally", "dead_ally", "all_allies", "point", "direction", "item"]),
+        "range": Any_(optional=True),
+        "area": Obj({"shape": Str(choices=["cone", "line", "sphere", "cube", "cylinder"]), "size": Int(min=5, max=300)}, optional=True),
+        "cast": Str(choices=["action", "bonus", "reaction"], optional=True),
+        "affects": Str(choices=["all", "enemies", "allies"], optional=True),
+        "concentration": Bool(optional=True),
         "text": Str(max_len=300),
     },
     strict=False,

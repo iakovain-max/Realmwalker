@@ -217,17 +217,53 @@ def test_a_fight_is_a_stage_and_its_blows_are_shown(pictured):
     render(app)
     screen = app.top
     assert isinstance(screen, BattleScreen)
-    for _ in range(60):
+    for _ in range(200):
         if game.battle is None or screen.battle.outcome is not None:
             break
         if screen.actor() is not None:
-            app.handle_event(KeyEvent("a"))
-            app.handle_event(KeyEvent("enter"))
-            app.handle_event(KeyEvent("enter"))
+            app.handle_event(KeyEvent("z"))  # let the game play the turn
+        app.update()
         render(app)
     kinds = {e["kind"] for e in screen.battle.events}
-    assert "attack" in kinds
-    assert screen.stage.pos, "everyone has a place on the stage"
+    assert "attack" in kinds and "move" in kinds
+    assert screen.board.cells, "everyone has a place on the field"
+    assert app.error_count == 0
+
+
+def test_the_battlefield_is_drawn_as_a_grid_with_highlights(pictured):
+    """Whose turn it is gets the squares they can walk to, a path to the square under the mouse, and the odds against
+    an enemy under it; a spell aimed at a square shows the squares it would fill."""
+    from realmwalker.game import fight
+    from realmwalker.game.encounters import make_encounter
+    from realmwalker.ui.input import MouseEvent
+    from realmwalker.ui.screens.battle import BattleScreen
+
+    app, game = pictured
+    enc = make_encounter(game, "wolf_pack", game.world.rng.child("grid"))
+    fight.start_battle(game, enc.creatures, enc.intro, title="Wolves")
+    render(app)
+    screen = app.top
+    assert isinstance(screen, BattleScreen)
+    for _ in range(100):
+        if screen.actor() is not None or screen.battle.outcome is not None:
+            break
+        app.update()
+        render(app)
+    f = screen.actor()
+    if f is None:
+        return
+    ov = screen.overlay()
+    assert ov["reach"], "where they can walk is shown"
+    target = sorted(ov["reach"])[0]
+    screen.hover = target
+    ov = screen.overlay()
+    assert ov["path"][0] == (f.x, f.y) and ov["path"][-1] == target and ov["cost"] >= 5
+    canvas = render(app)
+    assert screen.board.T >= 16 and screen.board.art is not None
+    # Walk there with a click.
+    gx, gy = screen.board.sq_px(target[0] + 0.5, target[1] + 0.5)
+    app.handle_event(MouseEvent("click", int(gx // app.gfx.cell_w), int(gy // app.gfx.cell_h), px=gx, py=gy))
+    assert (f.x, f.y) == target
     assert app.error_count == 0
 
 

@@ -36,7 +36,7 @@ Everything the keys do can be done with the mouse alone.
   <loot>Click a portrait</>  Their character sheet; right-click for their pack, health and spells. Click the words under it for the Health screen.
   <loot>Mouse wheel</>     Over the map: closer or further. Over a list: scroll.
   <loot>In the pack</>     Click a thing to choose it, double-click to use or wear it, right-click for everything you can do with it; click a slot beside the figure to choose what goes there.
-  <loot>In a fight</>      Click an enemy to attack it; the action buttons have pictures; click a figure to choose a target.
+  <loot>In a fight</>      Click a square to walk there (the blue squares are this turn's reach; the path and its cost show as you point), click an enemy to walk up and attack it; pointing at an enemy shows your odds and the squares it can strike; the action buttons have pictures.
 
 <title>Pictures and animation</>
 The maps are drawn with pictures: the overworld painted like a map (towns, forests, hills, mountains, rivers and roads; fog over country you have not seen), towns, the wild and dungeons with tiles, and everyone as a figure dressed as they are. In <loot>Settings</> you can go back to the old look drawn in letters (<loot>Graphics</>), make things move less or not at all (<loot>Animations</>), and set how big the maps are drawn. <loot>+</> and <loot>-</> (or the mouse wheel) zoom the map while you play.
@@ -80,7 +80,7 @@ Before you set out, the plan says how many nights the journey means in the open,
 
 <title>Your character</>
   <loot>c</>               Character sheet: abilities, skills, features, ties, backstory (<loot>l</> level-up choices, <loot>Tab</> next member)
-  <loot>p</>               The party: companions, their loyalty, pay and orders
+  <loot>p</>               The party: companions, their loyalty, pay and orders; <loot>f</> there sets the battle order
   <loot>a</>               Spells: what each caster knows, what it does, how many slots are left today; Enter casts one outside a fight
   <loot>i</>               Pack: everything you carry, grouped by kind, beside a figure of who wears what. Enter wears/wields/removes/uses, u takes off, d drops (all, or one with the button), g gives to the next member, ← → kinds of thing, s sorts, Tab next member. Click a slot beside the figure to choose what goes there.
   <loot>e</>               Equipment: what you wear in each slot, which body parts are protected, warmth
@@ -148,21 +148,23 @@ A disguise kit (general stores) lets you become a stranger for half a day: crime
 The wilds are not empty. The more dangerous the region (shown in the side panel), the more likely something finds you, and night is worse; roads are a little safer. When trouble comes on the road you can <loot>F</>ight, <loot>A</>mbush (if you saw them first), <loot>S</>lip away (Stealth, much easier if you saw them first), or <loot>T</>alk your way past. Robbers will take half your purse instead of a fight (<loot>P</>), and hungry beasts will take food thrown to them (<loot>B</>). Beaten by robbers, you are robbed and left; beaten by beasts, you may wake hours later, mauled, with half the food gone. Ruins, caves, barrows and towers have inhabitants; in the close view they show as letters, with a red background once they have noticed you. Walk into them to attack.
 
 <title>Battle</>
-Each side stands in two ranks. Melee blows reach only the enemy's front rank (unless it is empty, or you have a reach weapon); from the back rank you need a bow, a thrown weapon or a spell. Everyone acts in order of initiative. On your turn:
-  <loot>a</>               Attack (pick a weapon, then a target: number keys, arrows, or click)
-  <loot>c</>               Cast a spell (cantrips are free; others use a spell slot)
-  <loot>u</>               Use an item: potions, bandages, healer's kit
-  <loot>b</>               Class ability: Second Wind, Action Surge, Turn Undead...
-  <loot>d</>               Dodge: attacks against you have disadvantage until your turn
-  <loot>h</>               Help an ally (advantage), or first aid for someone bleeding out
-  <loot>s</>               Shove (knock down, push back) or grapple
-  <loot>r</>               Change rank (front / back)
-  <loot>p</>               Parley: talk them down, threaten, or calm animals
-  <loot>y</>               Surrender (only to those who take prisoners)
-  <loot>f</>               Flee (everyone standing must get away)
-  <loot>Click an enemy</>  Attack it with the first weapon that reaches
-  <loot>PgUp PgDn</>       Scroll the battle log
-Blows land on a part of the body and may leave wounds: cuts bleed until bandaged, broken bones stay broken. At 0 hit points you fall and start bleeding out; a friend can stop it (Help, a healer's kit, or a healing spell). Enemies lose heart: beasts run, bandits and soldiers may surrender, fanatics and the dead never do. Afterwards you decide the fate of prisoners and take what you want from the fallen. Death is permanent.
+Fights are fought on a grid of five-foot squares, as on a D&D battle mat, cut from the place you are in: the walls and doors of the dungeon, the street and the houses, the inn's tables, the trees and stones of the wood. Your party starts in its battle order (party screen, <loot>p</>, then <loot>f</>: a block of five by five, the front row towards the enemy); the enemy starts where it was, or as the moment says: across the field, all around you if they caught you unawares, bunched up if you caught them. Everyone acts in order of initiative. On your turn you may move up to your speed (30 feet is six squares; brush, mud, water and rubble cost double), split around one action and perhaps a bonus action:
+  <loot>Click a square</>   Walk there (or the arrow keys, a square at a time)
+  <loot>Click an enemy</>  Walk up to it and strike with the best weapon that reaches
+  <loot>a</>               Attack: a weapon, then a target (number keys, Tab and Enter, or click). Extra Attack gives more than one, with walking between them
+  <loot>c</>               Cast a spell: at someone in range and in sight, or at a square (move the mouse or the arrows: the squares it will fill light up, friends too)
+  <loot>u</>               Use an item: potions, bandages, a healer's kit (on yourself or someone beside you)
+  <loot>b</>               Abilities: Second Wind, Action Surge, Cunning Action, an off-hand strike, Turn Undead, a spiritual weapon's blow...
+  <loot>r</> <loot>w</> <loot>d</> <loot>n</>         Dash (double move), Disengage (step away without free blows), Dodge, Hide
+  <loot>h</>               Help a friend beside the same enemy (advantage), or first aid for a fallen friend beside you
+  <loot>s</>               Shove (knock down, push five feet) or grab someone beside you
+  <loot>p</> <loot>y</>             Parley; Surrender (only to those who take prisoners)
+  <loot>f</>               Flee: from a square at the edge of the field, get away. When nobody is left standing on it, the fight is over
+  <loot>z</>               Let the game play this turn for this character
+  <loot>e</> or Space      End the turn
+  <loot>+ -</> wheel       Zoom the field;  <loot>PgUp PgDn</> scroll the battle log
+Leaving an enemy's reach gives it a free blow (an opportunity attack) unless you Disengage; the path shows a red mark where it would happen. Walls and trees block sight; low walls, fences, tables, boulders and other people give cover (+2 or +5 to AC). Shooting at long range, or with an enemy beside you, is at disadvantage; so is striking what you cannot see (darkness, unless you have darkvision or a light). Fire, webs and spirits stay on the ground where they were laid. Area spells catch friend and foe alike. A caster holding a spell (Bless, Web, Hold Person, Spirit Guardians) loses it if hurt and failing a Constitution save.
+Blows land on a part of the body and may leave wounds: cuts bleed until bandaged, broken bones stay broken. At 0 hit points you fall and make death saving throws each turn (three failures and you are dead, three successes and you are stable); a friend can stop it (Help, a healer's kit, or a healing spell), and a blow that would take you a whole life's worth below nothing kills outright. Enemies lose heart: beasts run for the edge, bandits and soldiers may surrender, fanatics and the dead never do. Afterwards you decide the fate of prisoners and take what you want from the fallen. Death is permanent.
 
 <title>Underground</>
 Ruins, caves, barrows, towers and the lairs of gangs and cults have something below them. In the close view, the steps down show as <loot>></>: walk onto them. Deeper levels are worse, and the master of the place waits at the bottom.

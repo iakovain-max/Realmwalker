@@ -28,7 +28,7 @@ from realmwalker.core.rng import RNG
 from realmwalker.data.registry import DataRegistry
 from realmwalker.paths import Paths
 from realmwalker.rules.creation import CharacterBuilder
-from realmwalker.rules.combat import BACK, FOE, PARTY, Battle, Env
+from realmwalker.rules.combat import PARTY, Battle, Env
 from realmwalker.rules.creatures import spawn_group
 from realmwalker.world.tables import Tables
 
@@ -58,31 +58,20 @@ def make_hero(tables, cls: str, level: int, seed: int):
 
 
 def fight_once(tables, group: str, size: int, level: int, party_size: int, seed: int) -> dict:
-    """One fight, played by a simple 'hit the weakest thing you can reach' policy."""
+    """One fight on an open field, the party played by the game's own tactics (Auto): close in, strike what is
+    worth striking, heal the fallen, throw spells where they catch only foes."""
     party = [make_hero(tables, PARTY_CLASSES[i % len(PARTY_CLASSES)], level, seed * 10 + i) for i in range(party_size)]
     rng = RNG(seed, "balance-fight")
     foes = spawn_group(tables, group, rng, party_size=party_size)[:size] if size else \
         spawn_group(tables, group, rng, party_size=party_size)
     b = Battle(tables, party, foes, Env(), rng)
+    for f in b.side(PARTY):
+        f.auto = True
     b.start("A balance check.")
-    for _ in range(3000):
+    for _ in range(6000):
         if b.outcome is not None:
             break
-        if b.step():
-            continue
-        f = b.pending_party()
-        if f is None:
-            break
-        for opt in b.attack_options(f):
-            targets = b.targets_for(f, opt.kind, opt.reach)
-            if opt.available and targets and (not opt.is_melee or b.can_melee(f, opt)[0]):
-                b.do_attack(f, opt, min(targets, key=lambda t: t.hp))
-                break
-        else:
-            if f.rank == BACK:
-                b.do_change_rank(f)
-            else:
-                b.do_dodge(f)
+        b.step()
     result = b.result()
     ours = b.side(PARTY)
     hurt = [f for f in ours if f.hp <= f.max_hp // 3]
@@ -219,7 +208,7 @@ def main(argv=None) -> int:
     args = ap.parse_args(argv)
     tables = load_tables()
     if args.only in (None, "fights"):
-        print("Fights (the policy is simple: hit the weakest thing you can reach)")
+        print("Fights (on an open field, the party on Auto)")
         for line in fights(tables, args.runs):
             print(line)
     if args.only in (None, "cold"):

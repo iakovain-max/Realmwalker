@@ -247,6 +247,7 @@ def test_companions_fight_under_your_command(game):
             break
         seen.add(f.char.name)
         b.do_dodge(f)
+        b.end_turn()
     assert c.name in seen or b.outcome is not None
 
 

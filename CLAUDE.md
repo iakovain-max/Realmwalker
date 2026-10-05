@@ -61,7 +61,8 @@ realmwalker/
                            lore, letters), death (the obituary and what the world keeps), interlude (the weeks that
                            pass before a new life in an old world)
   rules/                   character (Character + Sheet: derived numbers), items, inventory (equip rules), creation,
-                           combat (Battle: rank combat on 5e dice), creatures, spells, wounds, progression (XP, rests),
+                           combat (Battle: D&D 5e combat on a grid), grid (the battlefield: distances, sight, cover,
+                           areas, paths), tactics (how the enemy and Auto fight), creatures, spells, wounds, progression,
                            body (needs, body heat, wetness, exhaustion), health (blood, pain, infection, healing,
                            injuries, diseases, treatment, drink, poppy)
   world/weather.py         weather as a deterministic function of seed, place and time (moving fronts)
@@ -76,7 +77,8 @@ realmwalker/
                            sheets), theme (panels, buttons, bars), typefaces, localview (close-up maps: tiles, light,
                            people, followers), roofs (buildings: roofs, front walls, doors, lit windows), worldview +
                            paint (the overworld as a pixel map on parchment, painted in chunks on a thread), dolls
-                           (people as stacked pixel-art layers), battlefx (the fight stage and its animation), scenes
+                           (people as stacked pixel-art layers), battlefx (the battle mat: field, figures, highlights,
+                           spell areas and animation), scenes
                            (camp, figures, busts, wound marks), weatherfx (rain, snow, fog), titleart
 data/                      ALL game data as JSON (names, fallback text, ... later races, items, creatures)
 ai/prompts/                prompt templates (plain text, @max_tokens header, {slots})
@@ -191,6 +193,19 @@ tools/                     autoplay.py, mock_player2.py, build_friends.py, balan
   glow}: `magic_items.look_for` picks it, the AI may only choose from `ai/tasks.py` LOOK_* lists.
 - Animations go through `canvas.gfx.animate` (movement) and `canvas.gfx.ambient` (idle: water, smoke, weather), from
   the Animations setting; the game's state never waits for an animation.
+- Battles (grid, 2026-10-06, Anton's request; replaces the design's two ranks): a grid of 5-ft squares
+  (`rules/grid.Field`, terrain indices from data/local_terrain.json; PHB distances, DMG corner cover, areas laid from
+  a point of origin, Dijkstra paths that know opportunity attacks). `game/arena.build` makes the field: cut from
+  `game.local` around the player and the band (dungeon, town, building, wild) or laid out from the biome on the road
+  (road, stream, campfire); it places the party in its battle order (`Character.formation`, 5x5, row 0 = front,
+  `arena.formation` / `set_cell`; FormationScreen from the party screen, f) and the foes by situation ("facing",
+  "unaware", "ambushed", "camp"; line, arc for packs, block for road robbers, cluster, surround). A turn has movement
+  (`move_left` feet), `action`, `bonus`, `reaction`; `do_move/do_attack/do_cast(point=)/do_dash/...` then `end_turn()`.
+  Spells say `range`, `target` (enemy, ally, point, direction, self, all_allies...), `area` {shape, size}, `cast`
+  (action/bonus/reaction), `concentration`; zones (web, fire, fog, ice, guardians) and tokens (spiritual weapon,
+  guardian) live on the battle. Party members at 0 make death saves. `rules/tactics.take_turn` plays monsters and any
+  fighter with `f.auto` (the screen's z, the balance tool and the tests use it). Every rule writes `battle.events`
+  (move, attack, cast with its area, damage...), which `ui/gfx/battlefx.BattleBoard` turns into animation.
 - Battles: `rules/combat.Battle` is pure logic driven by `step()` / `pending_party()` / `do_*()`; the screen
   (`ui/screens/battle.py`) only paces and asks. `GameState.busy` (encounter, battle, aftermath or death pending)
   blocks moving; `GameScreen._open_event_screen()` opens the right screen. Debug console: `fight <group>`.

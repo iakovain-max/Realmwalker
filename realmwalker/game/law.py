@@ -458,7 +458,8 @@ def fight_the_watch(game) -> str:
 
         game.encounter = make_encounter(game, "town_watch", rng)
         return "The watch comes for you."
-    start_battle(game, creatures, "Steel comes out. The watch means to take you, one way or another.", title="The watch")
+    start_battle(game, creatures, "Steel comes out. The watch means to take you, one way or another.", title="The watch",
+                 near=(guards[0].x, guards[0].y) if game.local is not None else None)
     return "You fight."
 
 

@@ -358,7 +358,13 @@ def test_battle_keys_attack_and_targets(make_app):
         if screen.actor() is not None:
             break
         render(app)
-    assert screen.actor() is not None
+    f = screen.actor()
+    assert f is not None
+    # A wolf right beside you: a, Enter (the weapon), 1 (the first target) strikes it.
+    wolf = next(x for x in game.battle.side("foe") if x.active)
+    free = [(f.x + dx, f.y + dy) for dx, dy in ((1, 0), (0, 1), (-1, 0), (0, -1))
+            if game.battle.field.fits(f.x + dx, f.y + dy) and game.battle.at(f.x + dx, f.y + dy) is None]
+    wolf.x, wolf.y = free[0]
     log_len = len(game.battle.log)
     app.handle_event(KeyEvent("a"))
     assert screen.mode == "choose"
@@ -366,8 +372,70 @@ def test_battle_keys_attack_and_targets(make_app):
     assert screen.mode == "target"
     app.handle_event(KeyEvent("1"))
     assert len(game.battle.log) > log_len
-    assert screen.mode in ("menu", "over")
+    assert screen.mode in ("idle", "over")
     app.handle_event(KeyEvent("?"))  # help from the battle
+    assert app.error_count == 0
+
+
+def test_the_battle_order_screen(make_app):
+    """Party screen, f: the battle order. Choose someone and move them; whoever stood there takes their place."""
+    from realmwalker.game import arena
+    from realmwalker.ui.screens.formation import FormationScreen
+
+    app = make_app()
+    start_small_world(app)
+    game = app.game
+    app.handle_event(KeyEvent("p"))
+    render(app)
+    app.handle_event(KeyEvent("f"))
+    render(app)
+    assert isinstance(app.top, FormationScreen)
+    before = arena.formation(game.party)[0]
+    app.handle_event(KeyEvent("down"))
+    render(app)
+    after = arena.formation(game.party)[0]
+    assert after == (before[0], min(4, before[1] + 1))
+    assert game.leader.formation == list(after)
+    app.handle_event(KeyEvent("r"))
+    assert game.leader.formation == []
+    app.handle_event(KeyEvent("escape"))
+    assert app.error_count == 0
+
+
+def test_battle_keys_walk_and_end_the_turn(make_app):
+    """The arrow keys walk the one whose turn it is a square at a time; e ends the turn; the field is drawn in
+    letters too."""
+    from realmwalker.core.rng import RNG
+    from realmwalker.game import fight
+    from realmwalker.game.encounters import make_encounter
+    from realmwalker.ui.screens.battle import DIRS, BattleScreen
+
+    app = make_app()
+    start_small_world(app)
+    game = app.game
+    game.encounter = make_encounter(game, "bandits", RNG(3, "k"))
+    fight.encounter_fight(game, ambush=False)
+    render(app)
+    screen = app.top
+    assert isinstance(screen, BattleScreen)
+    for _ in range(80):
+        if screen.actor() is not None or game.battle.outcome is not None:
+            break
+        render(app)
+    f = screen.actor()
+    if f is None:
+        return
+    assert screen.letters is not None, "the field is drawn in letters headless"
+    start, moved = (f.x, f.y), False
+    for key, (dx, dy) in DIRS.items():
+        dest = (f.x + dx, f.y + dy)
+        if dest in screen.reach(f):
+            app.handle_event(KeyEvent(key))
+            moved = (f.x, f.y) == dest
+            break
+    assert moved and (f.x, f.y) != start and f.move_left < f.speed
+    app.handle_event(KeyEvent("e"))
+    assert screen.actor() is not f
     assert app.error_count == 0
 
 
