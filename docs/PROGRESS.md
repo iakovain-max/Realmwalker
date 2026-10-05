@@ -75,7 +75,10 @@ terrain, range and opportunity attacks were left to us. This replaces the design
   knight's Hold the Line and Rallying Cry, the cutthroat's Assassinate, the thief's Fast Hands, Sculpt Spells and
   Empowered Evocation, the abjurer's Arcane Ward (and Projected Ward), Guided Strike, Indomitable, Divine
   Intervention. Monsters: pack tactics, Nimble Escape (goblins hit and slip away), Aggressive (orcs and gnolls close
-  in fast), the dragon's fire breath as a 30-foot cone, regeneration, paralysing claws, trips, poison.
+  in fast), the dragon's fire breath as a 30-foot cone, regeneration, paralysing claws, trips, poison. **Enemy
+  casters cast** from the same spell list as the party, with their own save DC and slots (`data/creatures.json`:
+  `spells`, `spellcasting`): cult fanatics raise a spiritual weapon, hold the strongest of you, command and wither;
+  acolytes bless their band and heal it.
 - **The enemy thinks on the grid**: it weighs every square it can reach and every way of hitting from there (the
   chance to hit, the damage, finishing someone, the free blows it would take, cover for archers), so archers keep
   their distance and shoot from cover, wolves close in together, the beaten run for the edge, and a dragon breathes
@@ -132,8 +135,8 @@ changed.
 
 **Known issues / ideas for later**: figures face you and do not turn; there is no height (cliffs, stairs as high
 ground) and no flying; Ready an action is not there; a fight in a dungeon is cut from the part of the map around you
-(a band further off comes on from the field's edge); monsters do not yet cast the party's spells (cult fanatics have
-their touch, the dragon its breath); opportunity attacks and Shield are taken automatically.
+(a band further off comes on from the field's edge); opportunity attacks and Shield are taken automatically; only
+the cult fanatic and the acolyte have spells so far (more casters are a matter of data).
 
 ### Local session, 2026-10-03: version 1.0 — pictures and a new interface (Anton's request) — branch `graphics-ui`
 
