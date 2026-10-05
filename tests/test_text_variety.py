@@ -8,7 +8,8 @@ import pytest
 
 FLOORS = {
     # combat_text.json — read more often than anything else in the game
-    "combat_text:miss": 8, "combat_text:armored_miss": 5, "combat_text:crit": 6,
+    "combat_text:miss": 8, "combat_text:armored_miss": 5,
+    "combat_text:ranged_miss": 6, "combat_text:spell_miss": 5, "combat_text:crit": 6,
     "combat_text:down": 5, "combat_text:dead": 4, "combat_text:flee": 4,
     "combat_text:surrender": 4, "combat_text:beg": 6,
     # dialogue.json — every town, every person

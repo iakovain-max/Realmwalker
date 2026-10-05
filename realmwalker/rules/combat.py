@@ -1343,10 +1343,15 @@ class Battle:
         if not hit:
             weapon = opt.name
             armor = target.armor_name("torso")
-            if armor and total >= ac - 4 and natural != 1:
-                text = self.rng.choice(self.t.combat_text["armored_miss"])
+            lines = self.t.combat_text
+            if armor and total >= ac - 4 and natural != 1 and opt.kind in ("melee", "ranged"):
+                text = self.rng.choice(lines["armored_miss"])
+            elif opt.kind == "ranged":
+                text = self.rng.choice(lines.get("ranged_miss") or lines["miss"])
+            elif opt.kind.startswith("spell"):
+                text = self.rng.choice(lines.get("spell_miss") or lines["miss"])
             else:
-                text = self.rng.choice(self.t.combat_text["miss"])
+                text = self.rng.choice(lines["miss"])
             self.say(self._fill(text, att, target, weapon=weapon, armor=armor or "armour"), "flavor")
             return False
         if target.marked:

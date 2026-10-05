@@ -334,6 +334,7 @@ COMBAT_TEXT = Obj(
     {
         "locations": Map(WEIGHTED), "part_names": Map(Map(word_list(1))), "hit": Map(word_list(1, 200)),
         "crit": word_list(1), "miss": word_list(1, 200), "armored_miss": word_list(1, 200),
+        "ranged_miss": word_list(1, 200), "spell_miss": word_list(1, 200),
         "wound": Map(Map(word_list(1, 200))), "down": word_list(1, 200), "dead": word_list(1, 200),
         "flee": word_list(1, 200), "surrender": word_list(1, 200), "beg": word_list(1, 200),
         "aftermath": Map(word_list(1, 400)),

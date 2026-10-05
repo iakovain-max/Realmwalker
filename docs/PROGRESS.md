@@ -18,13 +18,122 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | M9 — Death, legacy and release | ✅ Done (2026-09-20) |
 | After v1 (rough edges, fair chances, riding...) | ✅ Done |
 | **1.0 — Pictures and a new interface** | ✅ Done (2026-10-03), branch `graphics-ui` |
+| **1.0 — Combat on a grid (a D&D battle mat)** | ✅ Done (2026-10-06), branch `grid-combat` |
 
 ---
 
-## After v1 — continuing work (2026-09-20), up to version 1.0 (2026-10-03)
+## After v1 — continuing work (2026-09-20), up to version 1.0 (2026-10-03) and since
 
 The nine milestones are done; this is what has been added since, newest first. Version 1.0 is the pictures and the
-new interface (the first entry below).
+new interface; then combat moved onto a grid (the first entry below).
+
+### Local session, 2026-10-06: combat on a grid, as in D&D (Anton's request) — branch `grid-combat`
+
+Anton asked for a complete revamp of combat for 1.0, closer to real D&D, because the two ranks would stop making
+sense once more spells are added: a grid both sides move on, things on it that block sight, a separate battle view
+with a figure for everyone on a battlefield that looks like the place the fight started (a dungeon floor in a
+dungeon, a forest in a forest, the inside of a house in a town, a keep inside a keep), effects for attacks, spells,
+explosions and areas, enemies placed where they would really be (across the field usually, all around you when you
+are caught unawares), and the party's starting places set on the party screen. Grid size, the rules on it, areas,
+terrain, range and opportunity attacks were left to us. This replaces the design's two ranks (section 6).
+
+**How fights work now** (the Player's Handbook's rules, as far as they go):
+- **The grid.** Five-foot squares. Everyone moves up to their speed in a turn (30 feet is six squares), before,
+  after or between the other things they do. Diagonals count as five feet, as in the book. Mud, brush, shallow
+  water, deep snow, rubble and webs cost double. Large creatures (ogres, trolls, bears, dragons) take two squares by
+  two and cannot squeeze through a one-square gap. Closed doors open as you walk through.
+- **A turn**: movement, one action, one bonus action (if something gives you one), one reaction a round. Actions:
+  Attack (with Extra Attack, two swings with walking between them), Cast a Spell, Dash, Disengage, Dodge, Help,
+  Hide, Shove (knock down or push five feet), Grapple, use an item, Parley, Surrender. You leave the fight by walking
+  off the edge of the field. Bonus actions: Second Wind, Cunning Action (Dash, Disengage or Hide), an off-hand strike
+  with two light weapons, Healing Word, Misty Step, Spiritual Weapon, Shield of Faith, a thief's Fast Hands.
+- **Reach and range.** A sword reaches the squares around you, a glaive or a pike two away. Bows, crossbows,
+  slings and thrown weapons have their ranges (shooting past the near range, or with an enemy beside you, is at
+  disadvantage). Spells have their real ranges.
+- **Opportunity attacks**: walking out of an enemy's reach gives it a free blow, unless you Disengage. The path you
+  point at shows a red mark where that would happen.
+- **Sight and cover** by the Dungeon Master's Guide rule (lines from the corners of your square to the corners of
+  theirs): walls, tree trunks and closed doors block sight; low walls, fences, tables, boulders, carts and other
+  people give half cover (+2 to AC and Dexterity saves); peering round a corner gives three-quarters (+5).
+- **Light**: daylight, dusk, night, torchlight (the one carrying the party's torch lights the squares round them),
+  hearths and campfires, burning ground. Striking what you cannot see is at disadvantage, and being unseen gives
+  advantage; darkvision sees in the dark. You can Hide in brush, behind cover or in darkness.
+- **Spells with real areas**: Fireball's 20-foot sphere, Burning Hands' and Cone of Cold's cones, Lightning Bolt's
+  line, Thunderwave's cube (it throws people ten feet), Sleep, Web (a sticky zone that holds and slows), Ice Storm
+  (ice underfoot afterwards), Flame Strike's column, Spirit Guardians (a burning ring round the priest), Spiritual
+  Weapon (a floating mace that strikes each turn), Guardian of Faith (a guardian on the field). **Areas catch friend
+  and foe alike** (an evoker's Sculpt Spells spares friends). Fire sets dry grass, brush and straw burning.
+  **Concentration**: Bless, Web, Hold Person, Hold Monster, Shield of Faith and Spirit Guardians end if the caster
+  is hurt and fails a Constitution save, or casts another such spell. Shield is a reaction, cast by itself when it
+  would turn a blow. Every spell's range, area and casting time is written in `data/spells.json`, so more spells can
+  be added without changing the rules.
+- **Down and dying**: at 0 hit points a party member falls and makes death saving throws each turn (three
+  successes and they are stable, three failures and they die; a natural 20 brings them round). Blows on someone
+  down count as failures; a blow taking a whole life's worth below nothing kills outright. Help, a healer's kit or a
+  healing spell saves them.
+- **Every path's powers**, several of them never played before: Protection (a shield raised for a friend), the
+  knight's Hold the Line and Rallying Cry, the cutthroat's Assassinate, the thief's Fast Hands, Sculpt Spells and
+  Empowered Evocation, the abjurer's Arcane Ward (and Projected Ward), Guided Strike, Indomitable, Divine
+  Intervention. Monsters: pack tactics, Nimble Escape (goblins hit and slip away), Aggressive (orcs and gnolls close
+  in fast), the dragon's fire breath as a 30-foot cone, regeneration, paralysing claws, trips, poison.
+- **The enemy thinks on the grid**: it weighs every square it can reach and every way of hitting from there (the
+  chance to hit, the damage, finishing someone, the free blows it would take, cover for archers), so archers keep
+  their distance and shoot from cover, wolves close in together, the beaten run for the edge, and a dragon breathes
+  where it catches the most of you. A fight neither side can get at (a gulf, a locked door) breaks off after three
+  quiet rounds.
+
+**Where it happens.** On a close-up map the battlefield is cut out of that very map around you and the ones you
+fight: the dungeon's walls, doors and pillars, the street with its carts and barrels, the inside of the inn with
+its tables, beds and hearth (no roof, so you can see in), a keep's halls. Everyone stands where they really stood.
+On the road the field is laid out from the land: its ground, its trees, brush and stones (thick in a forest, few on
+the plains), the road itself if you are on it, a stream or a river with a ford, the campfire and bedrolls if they
+fell on your camp. **Where the enemy starts**: across the field in a line when both sides see each other (archers
+and casters behind, at a distance that depends on the land and the light), spread wide to flank you if they are a
+pack, in front and behind on the road if they are robbers, bunched up and taken by surprise if you ambushed them,
+and all round you if they caught you unawares or asleep.
+
+**The battle order** (party screen, p, then f): a block of five squares by five, the front row towards the enemy.
+Click someone and then a square (or 1-5, Tab and the arrow keys); whoever stood there takes their place. By default
+fighters are in front, priests and rogues behind them, wizards at the back. On a cut-out map the block is set with
+you where you stood, turned to face the enemy, and squeezed into whatever room there is. (Anton suggested nine by
+nine "for example"; five by five holds five people in any line, column, wedge or spread-out shape, and still fits in
+a dungeon room.)
+
+**The battle screen.** The field is drawn with the same tiles and light as the close-up maps, with a faint grid of
+squares. Everyone is a figure on their squares (two by two for the large), with a health bar; the one whose turn it
+is stands in a gold ring. **Click a square** to walk there: where you can walk this turn is outlined, and pointing at
+a square shows the path and what it costs in feet. **Click an enemy** to walk up and strike with the best weapon
+that reaches; pointing at it shows your chance to hit and why (cover, long range, advantage), and the squares it
+can strike. The right column shows the one acting (health, action, bonus action, reaction, feet of movement left,
+what spell they are holding) and the battle log; the action bar is along the bottom. Aiming an area spell lights up
+the squares it would fill, says whom it would catch, and asks first if it would catch friends. Effects: people walk
+their paths, lunge, arrows, bolts and javelins fly, rays and beams, magic missiles, a fireball's bead and its blast
+over every square, cones and lines of fire, frost and lightning, a thunderclap's ring, webs, flames on the ground,
+ice, the spirits wheeling round a priest, hits that flash and shake, the damage rising off the wounded, saves, the
+fallen. Enemies nobody can see are dark shapes. Mouse wheel or + and - zoom; a big field follows whoever is acting.
+**z** lets the game play the current character's turn; **e** or Space ends it. In letters mode the field is drawn in
+letters (two to a square) and everything works with the keys.
+
+**Settings** (at the end of the list): **Companions in a fight**: you command them (as before), or they fight by
+themselves and you play only your own character.
+
+**How it was checked**: the whole test suite, with new tests for the grid's geometry (distances, cover, sight,
+areas, paths), the turn and its actions, every spell's aiming, concentration, death saves, the new powers, the
+enemy's tactics, the battlefields (a dungeon fight fought in the dungeon you stood in, a fight in a house in the
+house, a road fight on the road, a forest fight among trees, an ambushed camp surrounded), the battle order, the
+screen's keys and mouse; the balance numbers (fights are about as dangerous as before: two wolves against a lone
+level-1 fighter now lose 25% of the time where they lost 35%, mostly because Second Wind is correctly a bonus action);
+a scripted run of 150 fights on real battlefields (no errors, no fight left hanging, turns under a third of a
+second); the autoplay bot in both AI modes; the smoke test and screenshots of fights in a dungeon, a forest and a
+town, every kind of spell effect, the battle order screen and the letters look, in a real window.
+
+**Saves**: old saves load (the battle order starts as the usual one for each class). Nothing else in the save
+changed.
+
+**Known issues / ideas for later**: figures face you and do not turn; there is no height (cliffs, stairs as high
+ground) and no flying; Ready an action is not there; a fight in a dungeon is cut from the part of the map around you
+(a band further off comes on from the field's edge); monsters do not yet cast the party's spells (cult fanatics have
+their touch, the dragon its breath); opportunity attacks and Shield are taken automatically.
 
 ### Local session, 2026-10-03: version 1.0 — pictures and a new interface (Anton's request) — branch `graphics-ui`
 
