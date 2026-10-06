@@ -961,3 +961,82 @@ def test_enemy_casters_use_their_spells(tables):
     turn_of(b2, acolyte)
     tactics.take_turn(b2, acolyte)
     assert acolyte.concentration and acolyte.concentration["spell"] == "bless"
+
+
+# ---------------------------------------------------------------------------- flanking (DMG optional rule)
+def test_flanking_geometry():
+    t = (5, 5, 1)
+    around = [(4, 4), (5, 4), (6, 4), (4, 5), (6, 5), (4, 6), (5, 6), (6, 6)]
+    pairs = {frozenset((a, c)) for a in around for c in around if a != c and grid.flanks((*a, 1), (*c, 1), t)}
+    assert pairs == {frozenset(((4, 5), (6, 5))), frozenset(((5, 4), (5, 6))), frozenset(((4, 4), (6, 6))),
+                     frozenset(((6, 4), (4, 6)))}, "only opposite sides and opposite corners"
+    assert not grid.flanks((3, 5, 1), (6, 5, 1), t), "both must be beside it"
+    assert grid.flanks((3, 4, 2), (6, 5, 1), t), "a large creature flanks if any of its squares does"
+    ogre = (5, 5, 2)
+    assert grid.flanks((4, 5, 1), (7, 6, 1), ogre) and not grid.flanks((4, 5, 1), (5, 7, 1), ogre)
+
+
+def test_flanking_gives_advantage_in_melee_only(tables):
+    b = battle(tables, [hero(tables), hero(tables, "rogue", seed=2)], foes(tables, "bandit"),
+               spots={0: (4, 5), 1: (6, 5), 2: (5, 5)})
+    f, r = b.side(PARTY)
+    bandit = b.side(FOE)[0]
+    sword = next(o for o in b.attack_options(f) if o.is_melee)
+    adv, dis, why = b._adv_dis(f, bandit, sword)
+    assert adv and "flanking" in why
+    assert b.flanker(f, bandit) is r
+    # The bandit is not flanked by two of you standing side by side.
+    r.x, r.y = 4, 4
+    adv, dis, why = b._adv_dis(f, bandit, sword)
+    assert "flanking" not in why
+    # A friend who cannot act does not flank.
+    r.x, r.y = 6, 5
+    r.conditions["stunned"] = 1
+    assert b.flanker(f, bandit) is None
+    del r.conditions["stunned"]
+    # And it is for blows, not for shooting.
+    bow = next((o for o in b.attack_options(r) if not o.is_melee), None)
+    if bow is not None:
+        assert "flanking" not in b._adv_dis(r, bandit, bow)[2]
+
+
+def test_the_enemy_walks_round_to_flank(tables):
+    """Two bandits and a lone fighter: the second bandit goes to the far side of him, not to the near one."""
+    b = battle(tables, [hero(tables)], foes(tables, "bandit", "bandit"), spots={0: (8, 5), 1: (9, 5), 2: (12, 5)})
+    me = b.side(PARTY)[0]
+    first, second = b.side(FOE)
+    from realmwalker.rules import tactics
+
+    for x in b.attack_options(second):
+        if not x.is_melee:
+            x.available = False
+    turn_of(b, second)
+    plan = tactics.best_plan(b, second, [o for o in b.attack_options(second) if o.is_melee])
+    assert plan is not None
+    end = plan[1][-1] if plan[1] else (second.x, second.y)
+    assert grid.flanks((end[0], end[1], 1), first.space, me.space), f"it should stand opposite its friend, not at {end}"
+
+
+def test_dodging_helps_against_fire_and_exhaustion_hurts_saves(tables):
+    c = hero(tables)
+    b = battle(tables, [c], foes(tables, "wolf"))
+    f = b.side(PARTY)[0]
+    f.dodging = True
+    adv_rolls = []
+    import realmwalker.core.dice as dice_mod
+
+    real = dice_mod.d20
+
+    def spy(rng, advantage=False, disadvantage=False):
+        adv_rolls.append((advantage, disadvantage))
+        return real(rng, advantage=advantage, disadvantage=disadvantage)
+
+    dice_mod.d20, saved = spy, dice_mod.d20
+    try:
+        b._save(f, "dex", 10)
+        f.dodging = False
+        c.exhaustion = 3
+        b._save(f, "wis", 10)
+    finally:
+        dice_mod.d20 = saved
+    assert adv_rolls[0] == (True, False) and adv_rolls[1] == (False, True)

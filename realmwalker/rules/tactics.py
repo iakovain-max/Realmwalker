@@ -175,6 +175,9 @@ def _value(b: Battle, f: Fighter, opt: AttackOption, t: Fighter, sq, *, cover: i
     adv = ("prone" in t.conditions and opt.is_melee) or any(c in t.conditions for c in ("restrained", "paralyzed", "stunned"))
     if f.has_trait("pack_tactics") and opt.is_melee and any(a is not f and a.standing and b.gap(a, t) <= 1 for a in b.allies_of(f)):
         adv = True
+    if opt.is_melee and any(a is not f and a.standing and not a.incapacitated and grid.flanks((sq[0], sq[1], f.sq), a.space, t.space)
+                            for a in b.allies_of(f)):
+        adv = True  # a friend on the far side: worth walking round for
     if adv and not dis:
         p = 1 - (1 - p) ** 2
     elif dis and not adv:

@@ -1200,7 +1200,7 @@ class Battle:
             adv = True
             why.append("marked")
         if "prone" in target.conditions:
-            if opt.is_melee and g <= 1:
+            if g <= 1:  # from right beside them, any attack; from further off, even a spear is at disadvantage
                 adv = True
             else:
                 dis = True
@@ -1240,6 +1240,9 @@ class Battle:
             if any(x is not att and x.standing and not x.incapacitated and self.gap(x, target) <= 1 for x in self.allies_of(att)):
                 adv = True
                 why.append("pack")
+        if opt.is_melee and self.flanker(att, target, space=a_space) is not None:
+            adv = True
+            why.append("flanking")
         if att.char and "heavy" in opt.properties and att.size == "small":
             dis = True
             why.append("too heavy")
@@ -1267,6 +1270,19 @@ class Battle:
                 why.append(f"{k.name} holds the line")
                 break
         return adv, dis, why
+
+    def flanker(self, att: Fighter, target: Fighter, *, space=None) -> Fighter | None:
+        """A friend of the attacker on the far side of the target (the DMG's flanking rule): both beside it, on
+        opposite sides or corners, both able to see it and neither of them helpless. None if there is none."""
+        a_space = space or att.space
+        if grid.gap(a_space, target.space) != 1 or att.incapacitated or not self.can_see(att, target):
+            return None
+        for x in self.allies_of(att):
+            if x is att or not x.standing or x.incapacitated or x.state != "fighting":
+                continue
+            if grid.flanks(a_space, x.space, target.space) and self.can_see(x, target):
+                return x
+        return None
 
     def target_ac(self, att: Fighter, target: Fighter, opt: AttackOption) -> tuple[int, int]:
         """The AC to beat, with the target's cover; and the cover."""
@@ -1447,8 +1463,9 @@ class Battle:
             if not quiet:
                 self.dice_say(f"{f.name} {ability.upper()} save: fails (helpless)")
             return False
-        adv = ability == "con" and f.has_trait("poison_resilience") or ability == "wis" and f.has_trait("dark_devotion")
-        dis = ability == "dex" and "restrained" in f.conditions
+        adv = ability == "con" and f.has_trait("poison_resilience") or ability == "wis" and f.has_trait("dark_devotion") \
+            or ability == "dex" and f.dodging and not f.incapacitated  # Dodge: easier to get out of the way of fire
+        dis = ability == "dex" and "restrained" in f.conditions or bool(f.char and f.char.exhaustion >= 3)
         roll = dice.d20(self.rng, advantage=adv, disadvantage=dis)
         total_bonus = f.save_bonus(ability) + bonus + sum(dice.roll(d, self.rng).total for d in f.buff_value("save_die"))
         total = roll.natural + total_bonus

@@ -694,6 +694,7 @@ class BattleScreen(Screen):
                     ov["threat"] = self._threat(who)
                     ov["targets"] = {who.id}
                     ov["target"] = who.id
+                    ov["flank"] = self._flank_squares(f, who, reach)
                     ov["named"] = {who.id}
                 ov["hover"] = hov
             if self.pending.get("show_exits"):
@@ -724,6 +725,19 @@ class BattleScreen(Screen):
             for _, sp, r in threats:
                 if grid.gap((a[0], a[1], f.sq), sp) <= r < grid.gap((c[0], c[1], f.sq), sp):
                     out.add(c)
+        return out
+
+    def _flank_squares(self, f: Fighter, e: Fighter, reach: dict) -> set:
+        """Squares `f` could reach this turn (or stands on) from which a friend on the far side would flank `e`."""
+        b = self.battle
+        friends = [a for a in b.allies_of(f) if a is not f and a.standing and not a.incapacitated and b.gap(a, e) <= 1]
+        if not friends:
+            return set()
+        out = set()
+        for sq in list(reach) + [(f.x, f.y)]:
+            space = (sq[0], sq[1], f.sq)
+            if grid.gap(space, e.space) == 1 and any(grid.flanks(space, a.space, e.space) for a in friends):
+                out.add(sq)
         return out
 
     def _threat(self, e: Fighter) -> set:
@@ -1012,7 +1026,12 @@ class BattleScreen(Screen):
             canvas.markup(x, y, f"<{'good' if who.side == PARTY else 'danger'}>{markup.escape(who.name)}</> "
                                 f"<dim>{b.feet(f, who)} ft away</>", max_width=w)
             if who.side != f.side:
-                return self._render_odds(canvas, f, who, x, y + 1, w)
+                y2 = self._render_odds(canvas, f, who, x, y + 1, w)
+                flank = self._flank_squares(f, who, self.reach(f)) if self.mode == "idle" else set()
+                if flank and (f.x, f.y) not in flank:
+                    canvas.markup(x, y2, "<good>Gold diamonds:</> <dim>stand there to flank it (advantage).</>", max_width=w)
+                    return y2 + 1
+                return y2
             word, color = health_word(who)
             canvas.markup(x, y + 1, f"<{color}>{word}</> <dim>{who.hp}/{who.max_hp}</>", max_width=w)
             return y + 2

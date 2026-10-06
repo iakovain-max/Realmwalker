@@ -50,6 +50,18 @@ terrain, range and opportunity attacks were left to us. This replaces the design
 - **Reach and range.** A sword reaches the squares around you, a glaive or a pike two away. Bows, crossbows,
   slings and thrown weapons have their ranges (shooting past the near range, or with an enemy beside you, is at
   disadvantage). Spells have their real ranges.
+- **Flanking** (the Dungeon Master's Guide's rule, added 2026-10-06 at Anton's asking): two on opposite sides of an
+  enemy (a line between the centres of their squares runs through opposite sides or corners of its space), both
+  beside it, both able to see it and neither helpless, have advantage on melee attacks against it. It works for the
+  enemy too, and the enemy walks round you to get it. Pointing at an enemy marks the squares you could flank it from
+  with gold diamonds.
+- **Advantage and disadvantage** as in the book: helped, hidden or unseen attackers, targets that are prone (close
+  in: advantage; further off: disadvantage), restrained, stunned, paralysed or asleep, dodging, marked by Guiding
+  Bolt, pack tactics, flanking; the attacker prone, frightened, poisoned, blinded, restrained, badly exhausted, in
+  armour they are not trained for, shooting at long range or with an enemy beside them, in the dark, in the rain with
+  a bow, small with a heavy weapon, a monster that hates the sun out in daylight, a knight holding the line, a friend's
+  shield (Protection). Saves: Dodge helps against fire and other Dexterity saves; being restrained hurts them;
+  heavy exhaustion hurts all saves.
 - **Opportunity attacks**: walking out of an enemy's reach gives it a free blow, unless you Disengage. The path you
   point at shows a red mark where that would happen.
 - **Sight and cover** by the Dungeon Master's Guide rule (lines from the corners of your square to the corners of
@@ -132,6 +144,14 @@ town, every kind of spell effect, the battle order screen and the letters look, 
 
 **Saves**: old saves load (the battle order starts as the usual one for each class). Nothing else in the save
 changed.
+
+**Fixed afterwards (same day)**: the pack failed to draw the card of a magic thing that glows (it borrowed a picture
+from the battle screen under a name that had changed with the new battle screen); a test now draws the pack with
+glowing things in it. Then a general check: the whole test suite, the autoplay bot on eight different worlds (six
+with the AI off, two with the stand-in AI), a sweep that draws every screen with a party of five, magic things of
+every kind, wounds and spells, at three window sizes, with every item and tab chosen, and 200 scripted fights.
+Nothing else was broken. Flanking was added (above), with Dodge helping Dexterity saves, heavy exhaustion hurting
+saves, and an attack from right beside someone lying down having advantage.
 
 **Known issues / ideas for later**: figures face you and do not turn; there is no height (cliffs, stairs as high
 ground) and no flying; Ready an action is not there; a fight in a dungeon is cut from the part of the map around you

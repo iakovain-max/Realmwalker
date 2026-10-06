@@ -63,6 +63,56 @@ def centre(x: int, y: int, s: int = 1) -> tuple[float, float]:
     return x + s / 2.0, y + s / 2.0
 
 
+def flanks(a: tuple[int, int, int], b: tuple[int, int, int], t: tuple[int, int, int]) -> bool:
+    """The Dungeon Master's Guide's flanking rule, on the grid: two creatures flank a third when both are beside it
+    and a line drawn between the centres of their spaces passes through opposite sides or opposite corners of its
+    space (straight across it, or corner to corner). A large creature flanks if any one of its squares does."""
+    for ca in cells(*a):
+        if gap((ca[0], ca[1], 1), t) != 1:
+            continue
+        for cb in cells(*b):
+            if gap((cb[0], cb[1], 1), t) == 1 and _across(centre(*ca), centre(*cb), t):
+                return True
+    return False
+
+
+def _across(p: tuple[float, float], q: tuple[float, float], t: tuple[int, int, int]) -> bool:
+    """The segment from p to q passes through opposite sides (or opposite corners) of the square block t."""
+    x0, y0 = float(t[0]), float(t[1])
+    x1, y1 = x0 + t[2], y0 + t[2]
+    dx, dy = q[0] - p[0], q[1] - p[1]
+    u0, u1 = 0.0, 1.0
+    for d, room in ((-dx, p[0] - x0), (dx, x1 - p[0]), (-dy, p[1] - y0), (dy, y1 - p[1])):  # Liang-Barsky
+        if abs(d) < 1e-12:
+            if room < 0:
+                return False
+            continue
+        r = room / d
+        if d < 0:
+            u0 = max(u0, r)
+        else:
+            u1 = min(u1, r)
+    if u0 >= u1 - 1e-9:
+        return False  # it misses the block, or only touches a corner
+
+    def sides(u: float) -> set:
+        x, y = p[0] + dx * u, p[1] + dy * u
+        out = set()
+        if abs(x - x0) < 1e-6:
+            out.add("left")
+        if abs(x - x1) < 1e-6:
+            out.add("right")
+        if abs(y - y0) < 1e-6:
+            out.add("top")
+        if abs(y - y1) < 1e-6:
+            out.add("bottom")
+        return out
+
+    s0, s1 = sides(u0), sides(u1)
+    return bool(({"left", "right"} <= s0 | s1 and ("left" in s0) != ("left" in s1))
+                or ({"top", "bottom"} <= s0 | s1 and ("top" in s0) != ("top" in s1)))
+
+
 # ---------------------------------------------------------------------------- lines across the grid
 @lru_cache(maxsize=400_000)
 def crossed(x0: float, y0: float, x1: float, y1: float) -> tuple[tuple[int, int], ...]:

@@ -560,6 +560,12 @@ class BattleBoard:
         for (x, y) in ov.get("threat", ()):
             px, py = self.sq_px(x, y)
             canvas.under(Rect(px, py, T, T, (255, 70, 50, 46)))
+        for (x, y) in ov.get("flank", ()):
+            # Where you could stand to flank the enemy pointed at: a gold diamond in the square.
+            cx, cy = self.sq_px(x + 0.5, y + 0.5)
+            r = T * 0.3
+            canvas.under(Lines([(cx, cy - r), (cx + r, cy), (cx, cy + r), (cx - r, cy), (cx, cy - r)], max(2, T // 16),
+                               (255, 214, 110, 220)))
         area = ov.get("area")
         if area:
             r, g, b = ov.get("area_color", (255, 160, 60))

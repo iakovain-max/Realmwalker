@@ -1184,3 +1184,41 @@ def test_companions_can_fight_by_themselves(make_app):
         render(app)
     assert friend.name not in seen, "the companion's turns were never asked of you"
     assert app.error_count == 0
+
+
+def test_pointing_at_an_enemy_shows_where_to_flank_it(make_app):
+    """With a friend beside an enemy, pointing at the enemy marks the square on its far side (flanking)."""
+    from realmwalker.core.rng import RNG
+    from realmwalker.game import fight
+    from realmwalker.rules.creation import CharacterBuilder
+    from realmwalker.rules.creatures import spawn
+    from realmwalker.ui.screens.battle import BattleScreen
+
+    app = make_app()
+    start_small_world(app)
+    game = app.game
+    b = CharacterBuilder(game.tables, RNG(5, "c"))
+    b.set_race("human")
+    b.set_class("rogue")
+    b.set_background("criminal")
+    friend = b.build()
+    friend.companion = {"loyalty": 50}
+    game.party.append(friend)
+    game.leave_local()
+    bt = fight.start_battle(game, [spawn(game.tables, "bandit", RNG(1, "f"), 1)], "Flank him.")
+    me, rogue = bt.side("party")
+    bandit = bt.side("foe")[0]
+    bandit.x, bandit.y = 9, 6
+    me.x, me.y = 5, 6
+    rogue.x, rogue.y = 10, 6
+    bt.order = [me.id] + [f.id for f in bt.fighters if f.id != me.id]
+    bt.turn, bt.turn_started = 0, True
+    bt._start_of_turn(me)
+    render(app)
+    screen = app.top
+    assert isinstance(screen, BattleScreen) and screen.actor() is me
+    screen.hover = (9, 6)
+    ov = screen.overlay()
+    assert (8, 6) in ov["flank"] and (8, 5) not in ov["flank"]
+    render(app)
+    assert app.error_count == 0
