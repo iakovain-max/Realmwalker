@@ -456,3 +456,34 @@ def test_markup_is_closed_with_a_bare_tag():
             if re.search(r"</[a-z_]+>", line):
                 bad.append(f"{path.relative_to(root)}:{n}")
     assert not bad, bad
+
+
+def test_the_pack_shows_magic_things_with_their_glow(pictured):
+    """A rare thing in the pack is drawn on its card with a faint light behind it (this once broke the pack: the
+    light was borrowed from the battle screen under a name that had changed)."""
+    from realmwalker.core.rng import RNG
+    from realmwalker.game import magic_items
+    from realmwalker.rules.inventory import add_existing
+    from realmwalker.ui.screens.sheets import InventoryScreen
+
+    app, game = pictured
+    made = 0
+    for i in range(80):
+        it = magic_items.make(game, RNG(i, "pack-glow"), rarity="rare")
+        if it is None:
+            continue
+        it.magic["identified"] = True
+        it.magic.setdefault("look", {})["glow"] = "gold"
+        add_existing(game.leader, game.tables.items, it)
+        made += 1
+        if made >= 6:
+            break
+    assert made
+    inv = InventoryScreen(app, game)
+    app.push(inv)
+    for i, it in enumerate(inv.visible_items()):
+        inv.selected = i
+        canvas = render(app)
+        if it.magic:
+            assert any(getattr(c, "key", None) == "item_glow" for c in commands(canvas, Image)), it.def_id
+    assert app.error_count == 0

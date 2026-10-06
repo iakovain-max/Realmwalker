@@ -322,7 +322,7 @@ def item_picture(canvas, game, it, x: float, y: float, size: float) -> None:
     if magic and (glow or magic.get("identified")):
         rgb = dolls.colour(game.tables, glow, {"uncommon": (120, 200, 120), "rare": (110, 150, 255),
                                                "very_rare": (190, 120, 255)}.get(magic.get("rarity"), (200, 200, 200)))
-        from realmwalker.ui.gfx.battlefx import _glow as _glow_image
+        from realmwalker.ui.gfx.battlefx import _glow_image
 
         canvas.under(Image("item_glow", _glow_image, (x - size * 0.15, y - size * 0.15, size * 1.3, size * 1.3),
                            rgba=(*rgb, 150)))
