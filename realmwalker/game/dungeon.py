@@ -403,13 +403,22 @@ def unlock(game, lm, x: int, y: int, dc: int) -> tuple[bool, str]:
             return True, f"{who.name.split()[0]} picks the lock. <dim>(Sleight of Hand {roll} vs {dc})</>"
         return False, f"The lock resists {who.name.split()[0]}'s picks. <dim>(Sleight of Hand {roll} vs {dc})</>"
     who = best_at(game, "athletics")
-    roll = dice.d20(rng).natural + game.sheet(who).skill_bonus("athletics")
-    alert_nearby(game, lm, x, y, 12)
+    # A crowbar: leverage (advantage on the roll, as in the Player's Handbook), and a crack instead of a crash.
+    bar = any(game.tables.items.get(it.def_id).get("pry") for c in game.party for it in c.inventory)
+    roll = dice.d20(rng, advantage=bar).natural + game.sheet(who).skill_bonus("athletics")
+    alert_nearby(game, lm, x, y, 6 if bar else 12)
+    adv = ", crowbar: advantage" if bar else ""
     if roll >= dc + 2:
+        if bar:
+            return True, (f"{who.name.split()[0]} gets the crowbar in and levers it open with a crack. "
+                          f"<dim>(Athletics {roll} vs {dc + 2}{adv})</>")
         return True, (f"{who.name.split()[0]} breaks it open with a crash that echoes a long way. "
                       f"<dim>(Athletics {roll} vs {dc + 2})</>")
+    if bar:
+        return False, (f"{who.name.split()[0]} heaves on the crowbar; it groans and holds. "
+                       f"<dim>(Athletics {roll} vs {dc + 2}{adv}; thieves' tools would be quieter)</>")
     return False, (f"{who.name.split()[0]} throws a shoulder at it; it holds, and the noise carries. "
-                   f"<dim>(Athletics {roll} vs {dc + 2}; thieves' tools would be quieter)</>")
+                   f"<dim>(Athletics {roll} vs {dc + 2}; thieves' tools would be quieter, a crowbar surer)</>")
 
 
 def alert_nearby(game, lm, x: int, y: int, radius: int) -> None:

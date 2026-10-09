@@ -279,6 +279,10 @@ class GameState:
                     from realmwalker.game import companions
 
                     companions.daily(self)
+            if self.renown.flags.get("captives"):
+                from realmwalker.game.gear import captives_slip
+
+                captives_slip(self)  # prisoners not chained may slip away in the night
             if self.quests:
                 from realmwalker.game import quests
 
@@ -487,13 +491,25 @@ class GameState:
 
             if night_unheeded(self):
                 return  # a traveller stops at dusk, before the dark (or the storm with it) can lose them (game.journey)
-        ok, roll = check(self, "survival", dc, tag="lost")
+        ok, roll = check(self, "survival", dc, self.bearings_bonus(), tag="lost")
         if not ok:
             self.lost = True
             self.travel = None
             what = "fog" if self.weather.kind == "fog" else ("storm" if self.weather.visibility < 0.6 else "dark")
             self.say(f"{roll} <warn>In the {what} you lose your way.</> You are no longer sure which way you are "
                      f"walking. Find a road, or wait for better light.", "warn")
+
+    def bearings_bonus(self) -> int:
+        """Navigator's tools in the pack: a needle that points north in the fog (more for someone taught to use them)."""
+        from realmwalker.rules.inventory import carried
+
+        best = 0
+        for it in carried(self.party):
+            d = self.tables.items.get(it.def_id)
+            if d.get("bearings"):
+                trained = any(d.get("tool") in c.tools for c in self.party if c.alive)
+                best = max(best, int(d["bearings"]) + (self.sheet().proficiency if trained else 0))
+        return best
 
     def reveal(self) -> None:
         """Mark overworld tiles around the player as explored."""
@@ -502,6 +518,12 @@ class GameState:
         radius = {"hills": 5, "mountains": 6, "high_mountains": 8, "forest": 2, "pine_forest": 2}.get(biome, 3)
         if self.light < 0.5:
             radius = max(1, radius - 1)
+        elif biome not in ("forest", "pine_forest") and self.party:
+            from realmwalker.rules.inventory import carried
+
+            # A spyglass by day, where the trees do not close in: further across the land.
+            radius += max((int(self.tables.items.get(it.def_id).get("sight", 0)) for it in carried(self.party)),
+                          default=0)
         radius = max(1, int(round(radius * self.weather.visibility)))
         x0, x1 = max(0, p.x - radius), min(self.world.width, p.x + radius + 1)
         y0, y1 = max(0, p.y - radius), min(self.world.height, p.y + radius + 1)
@@ -1202,6 +1224,7 @@ def new_game(world: World, tables: Tables, character: Character | None = None,
     player = PlayerState(name=character.name, x=start.x, y=start.y,
                          explored=np.zeros((world.width, world.height), dtype=bool), home=start.id)
     game = GameState(world, player, tables, party=[character])
+    game.renown.flags["packs_worn"] = True  # packs are worn from the start (game/save._put_on_packs is for older saves)
     # You know your own district, and have heard of the big towns within a few days' walk.
     for s in world.settlements:
         if s.kind in ("city", "town") and math.hypot(s.x - start.x, s.y - start.y) < 45:

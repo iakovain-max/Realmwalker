@@ -118,7 +118,7 @@ def restock(game, npc: NPC, shop: dict) -> dict:
     shop["stock"] = stock
     # Things the player sold them are sold on after a month.
     shop["used"] = [u for u in shop.get("used", []) if game.world.time - u.get("sold_at", 0) < 30 * DAY]
-    base = int(size["coin"] * {"inn": 0.5, "stable": 0.6, "apothecary": 0.7}.get(shop["kind"], 1.0))
+    base = int(size["coin"] * {"inn": 0.5, "stable": 0.6, "apothecary": 0.7, "temple": 0.4}.get(shop["kind"], 1.0))
     shop["coin"] = max(shop.get("coin", 0), int(base * rng.uniform(0.7, 1.3)))
     shop["restocked"] = game.world.time
     return shop

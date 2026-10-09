@@ -166,7 +166,7 @@ class Sheet:
         if self.c.equipped:
             from realmwalker.rules import magic
 
-            bonus += magic.total(self.c, "skill", skill=skill)
+            bonus += magic.total(self.c, "skill", skill=skill) + self.worn_skill_bonus(skill)
         return bonus + self.skill_condition(skill)
 
     def skill_condition(self, skill: str) -> int:
@@ -186,9 +186,20 @@ class Sheet:
         total += health.injury_effects(c, self.t)["skills"].get(skill, 0)
         return total
 
+    def worn_skill_bonus(self, skill: str) -> int:
+        """What plain things worn add to a skill (a trophy at the neck: +1 Intimidation)."""
+        total = 0
+        for uid in self.c.equipped.values():
+            it = self.c.item(uid)
+            if it is not None:
+                total += int(self.items.get(it.def_id).get("bonus", {}).get("skills", {}).get(skill, 0))
+        return total
+
     def save_bonus(self, ability: str) -> int:
         bonus = self.mod(ability) + (self.proficiency if ability in self.c.saves else 0)
         c = self.c
+        if ability == "wis" and c.effects.get("steadied", 0) > 0:
+            bonus += 1  # an hour of prayer (game/gear.py pray)
         if c.equipped:
             from realmwalker.rules import magic
 
@@ -257,7 +268,7 @@ class Sheet:
             d = self.items.get(armor.def_id)
             kind = d.get("armor_type", "light")
             base = int(d.get("ac", 10)) + int(self.items.qualities.get(armor.quality, {}).get("armor", 0))
-            if armor.condition < 30:
+            if armor.condition < int(self.items.upkeep.get("battered", 30)):
                 base -= 1
             if kind == "light":
                 ac = base + dex
@@ -356,6 +367,9 @@ class Sheet:
             value += 1 if self.items.get(feet.def_id).get("social", 0) >= 2 else 0
         if main.condition < 40:
             value -= 1
+        jewels = (self.c.equipped_item("ring"), self.c.equipped_item("neck"))
+        if any(int(self.items.get(it.def_id).get("social", 0)) > 0 for it in jewels if it is not None):
+            value += 1  # a ring or a pendant: somebody with something to lose
         return max(-3, min(3, value))
 
     # ------------------------------------------------------------------ carrying
@@ -366,13 +380,18 @@ class Sheet:
         """(encumbered above, heavily encumbered above, cannot move above), in pounds."""
         s = self.c.abilities.get("str", 10)
         carry = self.rules["carry"]
-        extra = 0
+        extra = self.pack_carry()
         if self.c.animals:
             from realmwalker.game.services import animal_carry
 
-            extra = animal_carry(self.c, self.t)
+            extra += animal_carry(self.c, self.t)
         return (s * carry["encumbered_per_strength"] + extra, s * carry["heavily_per_strength"] + extra,
                 s * carry["per_strength"] + extra)
+
+    def pack_carry(self) -> float:
+        """Pounds more before you count as laden, for what is worn on the back (a backpack, a sack)."""
+        back = self.c.equipped_item("back")
+        return float(self.items.get(back.def_id).get("carry", 0)) if back is not None else 0.0
 
     def load(self) -> float:
         """Weight that counts against strength: worn armour counts half (the body carries it), and the clothes

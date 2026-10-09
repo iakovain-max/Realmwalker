@@ -381,8 +381,12 @@ class BattleResult:
 
 
 def spell_id(value: str) -> str:
-    """The spell behind a spell-menu value (a spell id, or "scroll:<uid>:<spell id>")."""
-    return value.split(":", 2)[2] if value.startswith(("scroll:", "charge:")) else value
+    """The spell behind a spell-menu value (a spell id, or "scroll:<uid>:<spell id>"; a flask thrown from the Item menu
+    is "throw:<uid>:<spell id>")."""
+    return value.split(":", 2)[2] if value.startswith(("scroll:", "charge:", "throw:")) else value
+
+
+BATTLE_USES = {"heal", "bandage", "throw"}  # what an item's "use" can do in a fight (do_item, or thrown via do_cast)
 
 
 def open_field(tables, width: int = 16, height: int = 10, ground: str = "grass", light: float = 1.0) -> grid.Field:
@@ -1119,6 +1123,8 @@ class Battle:
         bonus = s.mod(ability) + prof + quality + s.attack_condition(ranged) + enchant + magic.total(f.char, "attack")
         if ranged and f.char.fighting_style == "archery":
             bonus += 2
+        if not it.magic and it.condition < int(self.t.items.upkeep.get("battered", 30)):
+            bonus -= 1  # battered: a bent blade, a split haft, a warped bow (game/gear.py)
         dmg = d["damage"]
         if "versatile" in props and two_handed_free and not ranged and not ("lost_left_arm" in f.char.injuries
                                                                             or "lost_right_arm" in f.char.injuries):
@@ -1127,6 +1133,8 @@ class Battle:
         if key == "off" and not thrown and f.char.fighting_style != "two_weapon":
             mod = min(0, mod)  # the off hand adds no bonus damage
         mod += enchant
+        if f.char.effects.get("honed", 0) > 0 and not ranged and d.get("damage_type") in ("slashing", "piercing"):
+            mod += int(self.t.items.upkeep.get("hone", {}).get("damage", 1))  # a whetstone's edge, until the fight ends
         if f.char.fighting_style == "dueling" and not ranged and "two_handed" not in props and key == "main":
             off = f.char.equipped_item("off_hand")
             if off is None or self.t.items.category(off) == "shield":
@@ -1993,11 +2001,16 @@ class Battle:
 
     # ------------------------------------------------------------------ items and abilities
     def usable_items(self, f: Fighter) -> list:  # (scrolls are read from the spell menu)
+        """What can be used in a fight: potions and bandages on someone beside you, flasks thrown (aimed like a spell:
+        "throw:<uid>:<spell>" through do_cast)."""
         if not f.char:
             return []
-        return [i for i in f.char.inventory if self.t.items.get(i.def_id).get("use")
-                and not self.t.items.get(i.def_id)["use"].get("scroll")
-                and not self.t.items.get(i.def_id)["use"].get("disguise")]
+        return [i for i in f.char.inventory if BATTLE_USES & set(self.t.items.get(i.def_id).get("use") or {})]
+
+    def throw_value(self, item) -> str | None:
+        """The do_cast value for throwing this flask, or None if it is not thrown."""
+        sid = (self.t.items.get(item.def_id).get("use") or {}).get("throw")
+        return f"throw:{item.uid}:{sid}" if sid in self.t.spells else None
 
     def item_targets(self, f: Fighter) -> list[Fighter]:
         """Who you can reach to pour a potion into or bind: yourself and anyone beside you."""
@@ -2412,7 +2425,12 @@ class Battle:
 
     def cast_problem(self, f: Fighter, sid: str, target: Fighter | None = None, point: tuple[int, int] | None = None) -> str | None:
         spell = self.t.spells[spell_id(sid)]
-        opts = {s: (ok, why) for s, ok, why in self.spell_options(f)}
+        if sid.startswith("throw:"):
+            if f.char is None or f.char.item(int(sid.split(":")[1])) is None:
+                return "you have none left"
+            if f.action <= 0 and f.attacks_left <= 0:
+                return "no action left this turn"
+        opts = {s: (ok, why) for s, ok, why in self.spell_options(f)} if not sid.startswith("throw:") else {}
         if sid in opts and not opts[sid][0]:
             return opts[sid][1]
         mode = spell["target"]
@@ -2449,11 +2467,27 @@ class Battle:
             scroll = f.char.item(int(uid))
             if scroll is None:
                 return False
+        flask = None
+        if sid.startswith("throw:"):
+            _, uid, sid = sid.split(":", 2)
+            flask = f.char.item(int(uid))
+            if flask is None:
+                return False
         spell = self.t.spells[sid]
         c = f.char
         s = f.sheet
         level = spell["level"]
         bonus_cast = spell.get("cast") == "bonus"
+        if flask is not None:
+            # A flask thrown: the thrower's aim makes it hard to dodge (8 + proficiency + Dexterity); no magic is spent.
+            remove_item(c, flask.uid, 1)
+            self._spend(f, False)
+            f.hidden = 0
+            dc = 8 + s.proficiency + s.mod("dex")
+            self.cast(f, sid, spell, target, point, up=0, mod=s.mod("dex"), dc=dc, bonus=s.proficiency + s.mod("dex"),
+                      mult=1, level=0)
+            self._after_action(f)
+            return True
         if scroll is not None:
             remove_item(c, scroll.uid, 1)
             if c.cls not in spell["classes"]:
@@ -2495,7 +2529,10 @@ class Battle:
         """A spell's effect, once it has been paid for (by a party caster, or a monster's own magic)."""
         kind = spell["kind"]
         area = self.spell_area(f, sid, point, target) if spell.get("area") else []
-        self.say(f"{f.the_name} casts <magic>{spell['name']}</>.", "magic")
+        if spell.get("thrown"):
+            self.say(f"{f.the_name} throws a flask: <danger>{spell['name'].lower()}</>!", "info")
+        else:
+            self.say(f"{f.the_name} casts <magic>{spell['name']}</>.", "magic")
         self._event("cast", by=f.id, to=target.id if target is not None else None, spell=sid, effect=kind,
                     dtype=spell.get("damage_type", ""), area=list(area), point=point,
                     shape=(spell.get("area") or {}).get("shape", ""))
@@ -2552,6 +2589,8 @@ class Battle:
             for x in victims:
                 if spell.get("humanoid_only") and x.kind != "humanoid":
                     continue
+                if spell.get("only_kinds") and x.kind not in spell["only_kinds"]:
+                    continue  # holy water does nothing to the living
                 if x.id in spared:
                     self.say(f"<magic>The fire parts around {x.the_name}.</> (Sculpt Spells)" if spell.get("damage_type") == "fire"
                              else f"<magic>The spell passes {x.the_name} by.</> (Sculpt Spells)", "magic")
@@ -2571,6 +2610,11 @@ class Battle:
                     self._push(src, x, int(spell["push"]) // 5)
             if spell.get("ignites"):
                 self._ignite(f, area)
+            if spell.get("burns"):  # oil or alchemist's fire keeps burning where it fell
+                burn = spell["burns"]
+                self._add_zone(Zone(self._zone_id(), "fire", set(area), owner=f.id, rounds=int(burn.get("rounds", 1)),
+                                    save="dex", dc=10, damage=str(burn.get("damage", "1d4")), damage_type="fire",
+                                    on_save="none"))
             if spell.get("leaves"):
                 self._add_zone(Zone(self._zone_id(), spell["leaves"], set(area), owner=f.id, spell=sid,
                                     rounds=int(spell.get("leaves_rounds", 1))))

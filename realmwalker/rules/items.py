@@ -10,11 +10,11 @@ from dataclasses import asdict, dataclass, field
 
 BODY_PARTS = ("head", "torso", "arms", "legs", "hands", "feet")
 EQUIP_SLOTS = ("main_hand", "off_hand", "armor", "helmet", "outer", "main", "under", "head", "hands", "feet",
-               "neck", "ring")
+               "back", "neck", "ring")
 SLOT_NAMES = {
     "main_hand": "Main hand", "off_hand": "Off hand", "armor": "Armour", "helmet": "Helmet",
     "outer": "Cloak / coat", "main": "Clothes", "under": "Underclothes", "head": "Hat / hood",
-    "hands": "Gloves", "feet": "Footwear", "neck": "Neck", "ring": "Ring",
+    "hands": "Gloves", "feet": "Footwear", "back": "Pack", "neck": "Neck", "ring": "Ring",
 }
 CATEGORY_NAMES = {
     "weapon": "Weapons", "ammo": "Ammunition", "armor": "Armour", "shield": "Shields", "helmet": "Helmets",
@@ -52,6 +52,7 @@ class ItemTable:
         self.qualities = data["qualities"]
         self.materials = data["materials"]
         self.starting_packs = data.get("starting_packs", {})
+        self.upkeep = data.get("upkeep", {})  # wear, mending, honing... (game/gear.py)
 
     def add_scrolls(self, spells) -> None:
         """A scroll for each spell above cantrips (made from data/spells.json, not listed in items.json)."""
@@ -140,7 +141,10 @@ class ItemTable:
         if cat in ("clothing", "jewellery"):
             return [d["slot"]]
         if cat in ("focus",) or d.get("light"):
-            return ["off_hand"]  # holy symbols, foci, torches and lanterns are held
+            # Foci, torches and lanterns are held; a holy symbol can also hang at the neck.
+            return ([d["slot"]] if d.get("slot") else []) + ["off_hand"]
+        if d.get("slot"):
+            return [d["slot"]]  # a pack on the back, a trophy at the neck
         return []
 
 

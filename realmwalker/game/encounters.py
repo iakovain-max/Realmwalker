@@ -119,6 +119,11 @@ def make_encounter(game, group: str, rng: RNG) -> PendingEncounter:
     our_best = max(game.sheet(c).passive_perception for c in game.party if c.alive)
     if game.light < 0.5 and not any(game.sheet(c).darkvision for c in game.party):
         our_best -= 5
+    elif game.light >= 0.5:
+        from realmwalker.rules.inventory import carried
+
+        # A spyglass: the dust on the road ahead is seen before the riders are.
+        our_best += 2 * max((int(tables.items.get(it.def_id).get("sight", 0)) for it in carried(game.party)), default=0)
     return PendingEncounter(group, creatures, rng.choice(g["intro"]), our_best >= their_roll,
                             threat_words(tables, creatures, game.party))
 

@@ -56,6 +56,7 @@ realmwalker/
                            faction choices in conversations), news (what the player hears), notices (town boards),
                            companions (hiring, wages, loyalty, orders, desertion), magic (copying spell scrolls),
                            dungeon (going under, light, traps, locks, chests, hoards), treasure (what is in them),
+                           gear (what items are for: wear, mending, honing, snares, evenings, prayer, prisoners),
                            magic_items (making, identifying, curses, AI names), quests (work from templates tied to
                            real things, the journal), dragons (lairs, tribute, killing one), books (maps, histories,
                            lore, letters), death (the obituary and what the world keeps), interlude (the weeks that
@@ -173,6 +174,13 @@ tools/                     autoplay.py, mock_player2.py, build_friends.py, balan
   when standing runs two ranks ahead (`reputation.tick`).
 - Crafting at camp is data-driven (`data/camping.json` "crafts"); `camp.crafts(game)` lists what is possible here
   and `camp.make(game, id)` does it on a skill check.
+- Items (2026-10-09, Anton: "make the items do something"): every gear, tool, focus and book item has a use, and its
+  card says it. Data fields in data/items.json: `slot` "back" + `carry` (packs), `focus` (+1 spell attack/DC,
+  `rules/spells.focus_bonus`), `impress` (`people.papers_impression`), `bonus.skills` (worn), `mends`, `pry`, `dig`,
+  `washes`, `alarm`, `bind`, `bearings`, `sight`, `how` (where it is used), `use` keys hone/mend/snare/music/game/pray/
+  scribe/throw (`game/gear.use_name`). Numbers in items.json "upkeep". Gear wears in fights (`gear.wear_from_battle`);
+  thrown flasks are pseudo-spells in spells.json (`classes: ["item"]`, `thrown`) cast as "throw:<uid>:<spell>".
+  A new item needs either a use or a `how` (tests/test_gear.py checks), and a picture (tools/build_tiles.py ITEMS).
 - Screens added after v1: `ui/screens/spells.py` (S), `ui/screens/journal.py` (j; Tab switches Work/People),
   `CraftScreen` in `ui/screens/camp.py` (m at camp), `ui/screens/interlude.py` (after a new character in an old
   world).

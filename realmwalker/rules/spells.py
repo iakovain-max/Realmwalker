@@ -164,12 +164,27 @@ def casting_ability(char: Character, tables) -> str:
     return sc["ability"] if sc else "int"
 
 
+def focus_bonus(char: Character, tables) -> int:
+    """+1 to spell attacks and spell DCs with the right focus: a priest's holy symbol worn or held, a wizard's crystal
+    held in the hand or component pouch carried (data/items.json `focus`)."""
+    sc = tables.classes[char.cls].get("spellcasting") if char.cls in tables.classes else None
+    if not sc:
+        return 0
+    kind = "arcane" if sc.get("type") == "spellbook" else "divine"
+    worn = set(char.equipped.values())
+    for it in char.inventory:
+        f = tables.items.get(it.def_id).get("focus")
+        if f and f["kind"] == kind and (it.uid in worn or f.get("carried")):
+            return 1
+    return 0
+
+
 def attack_bonus(sheet: Sheet, tables) -> int:
-    return sheet.proficiency + sheet.mod(casting_ability(sheet.c, tables))
+    return sheet.proficiency + sheet.mod(casting_ability(sheet.c, tables)) + focus_bonus(sheet.c, tables)
 
 
 def save_dc(sheet: Sheet, tables) -> int:
-    return 8 + sheet.proficiency + sheet.mod(casting_ability(sheet.c, tables))
+    return 8 + sheet.proficiency + sheet.mod(casting_ability(sheet.c, tables)) + focus_bonus(sheet.c, tables)
 
 
 def cantrip_multiplier(level: int) -> int:

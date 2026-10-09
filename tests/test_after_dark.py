@@ -140,14 +140,20 @@ def test_villages_have_no_gate_to_shut(game):
     assert not game.gate_shut()
 
 
+def option(game, start: str) -> int:
+    """The shut gate's option that begins with these words (they are not always in the same place)."""
+    return next(i for i, o in enumerate(game.tables.travel_events["shut_gate"]["options"]) if o["label"].startswith(start))
+
+
 def test_paying_the_warden_lets_you_in(game):
     walled_town(game)
     at_hour(game, 23)
     game.leader.money = 500
     ev = events.make_event(game, "shut_gate")
     labels = [label for label, *_ in events.options(game, ev)]
-    assert len(labels) == 4 and "Sleep under the walls until dawn" in labels
-    events.choose(game, ev, 0)
+    assert len(labels) == 5 and "Sleep under the walls until dawn" in labels
+    assert any("grappling hook" in label for label in labels)
+    events.choose(game, ev, option(game, "Knock at the postern"))
     assert game.leader.money == 480 and not game.gate_shut()
     assert any("> to go in" in m for m in ev.result)
 
@@ -156,7 +162,7 @@ def test_sleeping_under_the_walls_waits_for_dawn(game):
     walled_town(game)
     at_hour(game, 23)
     ev = events.make_event(game, "shut_gate")
-    events.choose(game, ev, 3)
+    events.choose(game, ev, option(game, "Sleep under the walls"))
     assert game.moment.part_of_day(game.latitude) == "dawn"
     assert not game.gate_shut()
 
@@ -174,7 +180,7 @@ def test_a_fall_from_the_wall_hurts_but_does_not_kill(game, monkeypatch):
 
     monkeypatch.setattr(dice, "d20", lambda *a, **k: Low())
     ev = events.make_event(game, "shut_gate")
-    events.choose(game, ev, 2)
+    events.choose(game, ev, option(game, "Climb the wall"))
     assert game.leader.hp == 1 and game.gate_shut()
 
 

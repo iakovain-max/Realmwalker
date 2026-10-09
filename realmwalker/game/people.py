@@ -623,9 +623,35 @@ def first_impression(game, npc: NPC) -> int:
         score += 10
     if c.race == npc.race and c.culture == npc.culture:
         score += 3
+    score += papers_impression(game, npc)
     score += faction_impression(game, npc)
     score += fame_impression(game, npc)
     return max(-80, min(80, score))
+
+
+IMPRESSED = {  # who each kind of paper, ring or insignia speaks to (data/items.json "impress")
+    "high": lambda npc: npc.social == "high",
+    "priests": lambda npc: npc.job in ("priest", "acolyte"),
+    "soldiers": lambda npc: npc.job in ("guard", "lord"),
+    "traders": lambda npc: npc.job in ("shopkeeper", "smith", "market_trader", "innkeeper", "stablemaster", "healer"),
+}
+
+
+def papers_impression(game, npc: NPC) -> int:
+    """A signet ring on your hand, a holy symbol at your neck, a guild's letter or an old soldier's insignia in your pack:
+    the people they speak to think better of you. The best one of each kind counts."""
+    from realmwalker.rules.inventory import carried
+
+    c = game.leader
+    worn = set(c.equipped.values())
+    best: dict[str, int] = {}
+    for it in carried(game.party):
+        imp = game.tables.items.get(it.def_id).get("impress")
+        if not imp or (imp.get("worn") and it.uid not in worn):
+            continue
+        if IMPRESSED.get(imp["people"], lambda n: False)(npc):
+            best[imp["people"]] = max(best.get(imp["people"], 0), int(imp["bonus"]))
+    return sum(best.values())
 
 
 def fame_impression(game, npc: NPC) -> int:

@@ -80,7 +80,17 @@
     "mass_cure_wounds": {"name": "Mass Cure Wounds", "level": 5, "school": "evocation", "classes": ["cleric"], "kind": "heal", "target": "all_allies", "range": 60, "count": 6,
                   "heal": "3d8", "add_mod": true, "upcast": "1d8", "mends_wound": true, "text": "Heals and eases a wound on every ally within 60 feet."},
     "flame_strike": {"name": "Flame Strike", "level": 5, "school": "evocation", "classes": ["cleric"], "kind": "save", "save": "dex", "on_save": "half", "target": "point", "range": 60,
-                  "area": {"shape": "cylinder", "size": 10}, "damage": "8d6", "damage_type": "fire", "upcast": "1d6", "ignites": true, "text": "A column of divine fire, 10 feet across, wherever you choose within 60 feet."}
+                  "area": {"shape": "cylinder", "size": 10}, "damage": "8d6", "damage_type": "fire", "upcast": "1d6", "ignites": true, "text": "A column of divine fire, 10 feet across, wherever you choose within 60 feet."},
+    "_thrown": "Not spells: flasks thrown in a fight (items.json use.throw), aimed and resolved like a spell on one square. The save DC is the thrower's: 8 + proficiency + Dexterity. burns: the square keeps burning for some rounds; only_kinds: it hurts nothing else.",
+    "thrown_oil": {"name": "Burning Oil", "level": 0, "school": "none", "classes": ["item"], "kind": "save", "save": "dex", "on_save": "half", "target": "point", "range": 20,
+                  "area": {"shape": "cube", "size": 5}, "damage": "2d4", "damage_type": "fire", "ignites": true, "burns": {"rounds": 1, "damage": "1d4"}, "thrown": true,
+                  "text": "A lit flask of oil bursts into flame on one square within 20 feet (Dexterity save for half), and the oil burns on there for a round."},
+    "thrown_holy_water": {"name": "Holy Water", "level": 0, "school": "none", "classes": ["item"], "kind": "save", "save": "dex", "on_save": "half", "target": "point", "range": 20,
+                  "area": {"shape": "cube", "size": 5}, "damage": "2d6", "damage_type": "radiant", "only_kinds": ["undead"], "thrown": true,
+                  "text": "Blessed water splashed over one square within 20 feet: it burns the walking dead (Dexterity save for half), and does nothing to the living."},
+    "thrown_fire": {"name": "Alchemist's Fire", "level": 0, "school": "none", "classes": ["item"], "kind": "save", "save": "dex", "on_save": "half", "target": "point", "range": 20,
+                  "area": {"shape": "cube", "size": 5}, "damage": "2d6", "damage_type": "fire", "ignites": true, "burns": {"rounds": 2, "damage": "1d6"}, "thrown": true,
+                  "text": "Liquid fire bursts over one square within 20 feet (Dexterity save for half), and keeps burning there for two rounds."}
   },
   "starting": {
     "wizard": {"cantrips": ["fire_bolt", "ray_of_frost", "shocking_grasp"], "spellbook": ["magic_missile", "burning_hands", "sleep", "shield", "thunderwave", "mage_armor"]},

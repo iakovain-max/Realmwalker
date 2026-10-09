@@ -102,6 +102,7 @@ def item_details(game: GameState, item: Item) -> str:
             lines.append(f"Holds {cap:g} pints. Empty. Fill it at a well, river or lake (w).")
     if d.get("bedding"):
         lines.append(f"Bedding: {d['bedding']} warmth while you sleep.")
+    lines += gear_lines(game, item, d)
     if d.get("light"):
         hours = d["light"]["hours"]
         lines.append(f"Gives light for about {hours:g} hour{'' if hours == 1 else 's'}.")
@@ -110,6 +111,46 @@ def item_details(game: GameState, item: Item) -> str:
     if "stolen" in item.tags:
         lines.append("<danger>Stolen.</>")
     return "\n".join(lines)
+
+
+IMPRESS_WORDS = {"high": "Lords, ladies and their people", "priests": "Priests", "soldiers": "Guards and soldiers",
+                 "traders": "Shopkeepers, smiths and traders"}
+
+
+def gear_lines(game: GameState, item: Item, d: dict) -> list[str]:
+    """What a thing does for you, in a line or two each (game/gear.py and the rules that read the item's data)."""
+    t = game.tables.items
+    out = []
+    cat = d["category"]
+    if d.get("carry"):
+        out.append(f"<good>Worn on the back: you can carry {d['carry']:g} lb more</> before you count as laden.")
+    if d.get("focus"):
+        f = d["focus"]
+        who = "a wizard" if f["kind"] == "arcane" else "a priest"
+        how = "carried" if f.get("carried") else ("worn or held" if d.get("slot") else "held in the hand")
+        out.append(f"<magic>Spell focus</> for {who}: +1 to spell attacks and the DC of their spells, {how}.")
+    if d.get("impress"):
+        imp = d["impress"]
+        how = "wears" if imp.get("worn") else "carries"
+        out.append(f"{IMPRESS_WORDS.get(imp['people'], 'Some people')} think better of whoever {how} it.")
+    for skill, n in (d.get("bonus") or {}).get("skills", {}).items():
+        name = game.tables.rules["skills"].get(skill, {}).get("name", skill)
+        out.append(f"{n:+d} to {name} while worn.")
+    if cat == "jewellery" and d.get("social") and not item.magic:
+        out.append("Worn, it makes you look better off.")
+    if d.get("mends"):
+        mats = ", ".join(t.materials.get(m, {}).get("name", m) for m in d["mends"]["materials"])
+        out.append(f"Mends things of {mats}: an hour's work (better if you are trained with it).")
+    use = d.get("use") or {}
+    if use.get("throw") and use["throw"] in game.tables.spells:
+        out.append(f"<danger>Thrown in a fight</> (Item): {game.tables.spells[use['throw']]['text']}")
+    if cat in ("weapon", "armor", "shield", "helmet") and not item.magic and \
+            item.condition < int(t.upkeep.get("battered", 30)):
+        out.append("<warn>Battered: " + ("-1 to hit with it" if cat == "weapon" else "-1 to armour class" if cat == "armor"
+                                         else "it will not last") + ". A smith, or the right tools, can mend it.</>")
+    if d.get("how") and not d.get("description", "").startswith(d["how"][:20]):
+        out.append(f"<dim>{d['how']}</>")
+    return out
 
 
 def load_line(sheet: Sheet) -> str:
@@ -292,7 +333,7 @@ FILTERS = [
     ("Weapons", {"weapon", "ammo"}),
     ("Armour", {"armor", "shield", "helmet"}),
     ("Clothing", {"clothing"}),
-    ("Gear", {"gear", "tool", "focus", "book"}),
+    ("Gear", {"gear", "tool", "focus", "book", "jewellery"}),
     ("Food", {"food", "drink"}),
     ("Trade", {"trade"}),
 ]
@@ -336,6 +377,10 @@ def item_picture(canvas, game, it, x: float, y: float, size: float) -> None:
             canvas.under(cmd)
             return
     canvas.sprite(item_icon(canvas, game, it), x, y, size, size)
+
+
+GEAR_VERBS = ("Sharpen blades", "Mend gear", "Set it for the night", "Pass the evening", "Pray", "Write a scroll",
+              "Throw (in a fight)")  # game/gear.use_name
 
 
 class InventoryScreen(Screen):
@@ -398,6 +443,11 @@ class InventoryScreen(Screen):
             return "Read it"
         if it.def_id == "sealed_letter" and any(tag.startswith("quest:") for tag in it.tags):
             return "Break the seal" if it.name.startswith("sealed") else "Read the letter"
+        from realmwalker.game import gear
+
+        verb = gear.use_name(self.game, it)
+        if verb:
+            return verb
         wearer, _ = worn_by(self.char, it.uid)
         if wearer is not None:
             return "Remove" if wearer is self.char else f"Take it off {wearer.name.split()[0]}"
@@ -457,8 +507,15 @@ class InventoryScreen(Screen):
             self.game.say(f"The scroll holds {spell['name']}: {spell['text']} It can be read aloud once in a fight "
                           f"(Cast a spell).", "magic")
         elif name == "Use":
-            self.game.say("You can't use that here. (Bandages, herbs and kits are used on the Health screen, h.)",
-                          "system")
+            from realmwalker.game import gear
+
+            self.game.say(gear.how_text(self.game, it), "system")
+        elif name in GEAR_VERBS:
+            from realmwalker.game import gear
+
+            for line in gear.use_item(self.game, self.char, it):
+                self.game.say(line, "info")
+            self.game.dirty = True
         else:
             self.toggle_equip()
 

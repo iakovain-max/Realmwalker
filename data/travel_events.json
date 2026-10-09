@@ -11,6 +11,9 @@
         {"label": "Wade it anyway", "check": {"skill": "athletics", "dc": 13,
           "success": {"text": ["You cross with the water at your chest and your heart in your mouth, and come out shaking."], "fatigue": 10, "xp": 10, "time": 40},
           "failure": {"text": ["The current takes your legs. You come out a hundred paces down, soaked, bruised and lighter than you were."], "fatigue": 25, "money": -40, "time": 60}}},
+        {"label": "Rope yourselves together and cross", "requires": {"items": [["rope", 1]]}, "check": {"skill": "athletics", "dc": 8,
+          "success": {"text": ["Roped together, each braced against the next, you cross a step at a time and come out on the far side all together."], "fatigue": 8, "xp": 10, "time": 40},
+          "failure": {"text": ["Halfway over somebody goes under, and the rope brings them up again, coughing. Wet through, but nobody is lost, and nothing much is."], "fatigue": 18, "time": 50}}},
         {"label": "Walk upstream for a crossing", "outcome": {"text": ["Three hours of wet ground and thorns, and then a fallen tree wide enough to cross on."], "fatigue": 12, "time": 180}},
         {"label": "Wait for it to drop", "outcome": {"text": ["You make a fire on the bank and watch the water go down, which it does, slowly, the way water does."], "fatigue": -10, "time": 300}}
       ]
@@ -25,6 +28,7 @@
         {"label": "Search the ruin", "check": {"skill": "investigation", "dc": 11,
           "success": {"text": ["In a pit under the hearthstone: what they hid and never came back for."], "loot": [["salt", "1d2", 0.5], ["wool_bolt", "1", 0.3], ["iron_pot", "1", 0.4]], "money": 80, "time": 40},
           "failure": {"text": ["Ash, nails, and a child's shoe. You leave it where it is."], "time": 30}}},
+        {"label": "Dig under the hearth with your shovel", "requires": {"items": [["shovel", 1]]}, "outcome": {"text": ["The hearthstone comes up, and under it a pit lined with clay: what they hid and never came back for."], "loot": [["salt", "1d2", 0.6], ["wool_bolt", "1", 0.4], ["iron_pot", "1", 0.5]], "money": 100, "fatigue": 8, "time": 50}},
         {"label": "Bury what is left of them", "outcome": {"text": ["It takes an hour, and there is no priest, but it is done, and done properly."], "deed": "buried the dead at a burnt farm", "xp": 15, "fatigue": 12, "time": 70}},
         {"label": "Walk on", "outcome": {"text": ["You keep the ruin on your left and do not look at it twice."]}}
       ]
@@ -53,6 +57,7 @@
         {"label": "Put your back into it", "check": {"skill": "athletics", "dc": 12,
           "success": {"text": ["Between you the cart comes up and the wheel goes on. They press what they can spare on you, which is little, and mean it."], "money": 120, "items": [["bread", "1"]], "deed": "helped a carter out of the mud", "xp": 15, "fatigue": 10, "time": 50},
           "failure": {"text": ["An hour of heaving and swearing, and the cart is where it was. They thank you anyway."], "xp": 5, "fatigue": 18, "time": 60}}},
+        {"label": "Lever it up with your crowbar", "requires": {"items": [["crowbar", 1]]}, "outcome": {"text": ["A stone for a fulcrum, the crowbar under the axle, and the cart comes up as if it wanted to. The wheel goes on in no time. They press what they can spare on you, which is little, and mean it."], "money": 120, "items": [["bread", "1"]], "deed": "helped a carter out of the mud", "xp": 15, "fatigue": 4, "time": 25}},
         {"label": "Take what is on the cart", "outcome": {"text": ["The old carter backs away and lets you. They will describe you to the first guard they meet."], "loot": [["wheat", "1d2", 0.6], ["wool_bolt", "1", 0.4], ["salt", "1", 0.3]], "money": 60, "deed": "robbed a carter on the road", "news": true, "time": 20}},
         {"label": "Go around", "outcome": {"text": ["The mud is deep at the edge, but it is not your cart."], "time": 10}}
       ]
@@ -278,6 +283,56 @@
         {"label": "Walk on", "outcome": {"text": ["You walk on, not looking up."]}}
       ]
     },
+    "fallen_climber": {
+      "name": "someone fallen into a ravine",
+      "where": {"biomes": ["hills", "mountains", "high_mountains", "pine_forest"], "danger": [0, 10], "time": "day", "season": "any"},
+      "weight": 2,
+      "intro": ["A voice from below the path: on a ledge thirty feet down a gully, a goatherd with a twisted leg is shouting up at the sky.",
+                "Down in a ravine, on a shelf of rock above the drop, a woman is waving both arms. Her basket of herbs is spread across the stones below her.",
+                "Somebody has come off the path: you can see the slide in the scree, and at the bottom of it, on a ledge, a man who cannot climb back."],
+      "options": [
+        {"label": "Lower a rope and haul them up", "requires": {"items": [["rope", 1]]}, "outcome": {"text": ["It takes all of you on the rope, but up they come, white-faced and grateful. They press a few coins on you and limp home."], "money": 50, "xp": 25, "deed": "pulled a stranger out of a ravine", "fatigue": 12, "time": 40}},
+        {"label": "Climb down to them", "check": {"skill": "athletics", "dc": 14,
+          "success": {"text": ["Hand over hand down the crack and back up with them on your back. You will feel it tomorrow."], "money": 50, "xp": 25, "deed": "pulled a stranger out of a ravine", "fatigue": 25, "time": 60},
+          "failure": {"text": ["The rock comes away under your hand. You fall the last ten feet, and neither of you is getting up that way."], "hurt": "1d6", "fatigue": 20, "xp": 5, "time": 60}}},
+        {"label": "Call down that you will send help", "outcome": {"text": ["You promise to tell someone at the next village. Whether anyone comes in time is not your business, you tell yourself."], "time": 5}}
+      ]
+    },
+    "rockfall": {
+      "name": "a rockfall across the way",
+      "where": {"biomes": ["hills", "mountains", "high_mountains"], "danger": [0, 10], "time": "any", "season": "any"},
+      "weight": 2,
+      "intro": ["The way ahead is gone under a slide of broken rock and earth, fresh enough that dust still hangs over it.",
+                "A boulder the size of a cottage has come down in the night and brought half the slope with it across the path.",
+                "Rubble, roots and a smashed tree block the way. Somewhere above, small stones are still trickling down."],
+      "options": [
+        {"label": "Dig a way through with your shovel", "requires": {"items": [["shovel", 1]]}, "outcome": {"text": ["An hour of digging and the loose earth gives way to a gap you can squeeze through."], "fatigue": 12, "time": 60}},
+        {"label": "Lever the stones aside with your crowbar", "requires": {"items": [["crowbar", 1]]}, "check": {"skill": "athletics", "dc": 10,
+          "success": {"text": ["The bar goes under the big stones one by one, and over they go, down the slope with a roar."], "fatigue": 10, "time": 40},
+          "failure": {"text": ["A stone rolls the wrong way and over your foot. In the end you are through, and limping."], "hurt": "1d4", "fatigue": 14, "time": 60}}},
+        {"label": "Climb over it", "check": {"skill": "athletics", "dc": 12,
+          "success": {"text": ["Over the top on hands and knees, with the whole pile shifting under you, and down the far side."], "fatigue": 10, "time": 30},
+          "failure": {"text": ["The pile moves. You come down the far side faster than you meant to, with stones after you."], "hurt": "1d6", "fatigue": 12, "time": 30}}},
+        {"label": "Go the long way round", "outcome": {"text": ["Three hours up and down the hillside to get back to where you would have been."], "fatigue": 15, "time": 180}}
+      ]
+    },
+    "old_well": {
+      "name": "an old well",
+      "where": {"road": false, "biomes": ["plains", "hills", "forest", "coast", "desert"], "danger": [0, 10], "time": "day", "season": "any"},
+      "weight": 2,
+      "intro": ["A ring of mossy stones in the grass: a well, from some farm long gone. Far down, something catches the light.",
+                "An old well-head with no bucket and no house near it. Drop a stone and you hear it hit something that is not water.",
+                "A well, dry, its stones half fallen in. At the bottom, among the leaves, there is the shape of a bundle someone threw down there."],
+      "options": [
+        {"label": "Climb down on your rope", "requires": {"items": [["rope", 1]]}, "check": {"skill": "athletics", "dc": 9,
+          "success": {"text": ["Down the rope into the cold. In the leaves at the bottom: a purse gone green, and what somebody did not want found."], "loot": [["gold_ring", "1", 0.3], ["dagger", "1", 0.4], ["silver_chalice", "1", 0.2]], "money": 150, "fatigue": 10, "time": 40},
+          "failure": {"text": ["The rope burns your hands and you come down hard. At the bottom: leaves, bones of something small, and nothing else."], "hurt": "1d4", "fatigue": 12, "time": 40}}},
+        {"label": "Fish for it with your grappling hook", "requires": {"items": [["grappling_hook", 1], ["rope", 1]]}, "check": {"skill": "sleight_of_hand", "dc": 11,
+          "success": {"text": ["Twenty casts, and the hook comes up with a rotten bundle on it: coins, and a ring."], "loot": [["gold_ring", "1", 0.4]], "money": 120, "time": 40},
+          "failure": {"text": ["An hour of casting into the dark brings up leaves, a bucket handle and a dead crow."], "time": 60}}},
+        {"label": "Leave it be", "outcome": {"text": ["Whatever is down there has waited this long."]}}
+      ]
+    },
     "shut_gate": {
       "_comment": "Not met on the road: a walled town or city after dark, when you press > at its gate (game/state.py gate_shut).",
       "name": "a shut gate",
@@ -292,6 +347,9 @@
         {"label": "Talk your way in", "check": {"skill": "persuasion", "dc": 13,
           "success": {"text": ["The warden hears you out, grumbles, and draws the bolt on the postern.", "\"Go on, then. And I never saw you.\" The postern opens."], "let_in": true, "time": 10},
           "failure": {"text": ["\"Come back at dawn like everyone else.\" The shutter slams."], "time": 10}}},
+        {"label": "Throw a grappling hook over the wall", "requires": {"items": [["grappling_hook", 1], ["rope", 1]]}, "check": {"skill": "stealth", "dc": 10,
+          "success": {"text": ["The hook bites on the third throw, muffled in a cloak. Up the rope, over the wall where the watch is not, and down into a dark lane."], "let_in": true, "fatigue": 5, "time": 20},
+          "failure": {"text": ["The hook rings on the stones like a bell. A lantern swings your way, and you are back in the ditch before it gets there."], "fatigue": 5, "time": 20}}},
         {"label": "Climb the wall where it is low", "check": {"skill": "athletics", "dc": 14,
           "success": {"text": ["Over the wall where the stones are loose and the watch is far away, and down into a stinking alley."], "let_in": true, "fatigue": 5, "time": 20},
           "failure": {"text": ["Halfway up, a stone comes away in your hand. You land hard in the ditch."], "hurt": "1d6", "fatigue": 5, "time": 20}}},

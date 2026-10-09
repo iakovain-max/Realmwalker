@@ -142,6 +142,16 @@ class SpellsScreen(Screen):
             self.game.say(text, "magic")
         self.message = " ".join(lines)
 
+    def scribe(self) -> None:
+        """Write the chosen spell out as a scroll (ink and quill, parchment, inks and a slot)."""
+        sid = self.current()
+        if sid is None:
+            return
+        lines = magic.scribe(self.game, self.char, sid)
+        for text in lines:
+            self.game.say(text, "magic")
+        self.message = " ".join(lines)
+
     def next_member(self) -> None:
         self.index = (self.index + 1) % max(1, len(self.game.party))
         self.sel = self.offset = self.target = 0
@@ -172,6 +182,8 @@ class SpellsScreen(Screen):
                 self.target = (self.target + (1 if ev.key == "right" else -1)) % len(targets)
         elif ev.key in ("enter", "kpenter"):
             self.cast()
+        elif ev.key == "w":
+            self.scribe()
         return True
 
     # ------------------------------------------------------------------ drawing
@@ -245,6 +257,13 @@ class SpellsScreen(Screen):
         if sid:
             bx = canvas.button(bx + 2, h - 2, "Cast", self.cast, hotkey="Enter",
                                enabled=magic.road_problem(game, c, sid, target) is None)
+            level = game.tables.spells[sid]["level"]
+            if level > 0:
+                problem = magic.scribe_problem(game, c, sid)
+                bx = canvas.button(bx + 2, h - 2, "Write a scroll", self.scribe, hotkey="w", enabled=problem is None,
+                                   tooltip=f"Write it out as a scroll: {problem}." if problem else
+                                   f"Write it out as a scroll ({magic.SCRIBE_HOURS_PER_LEVEL * level} hours, a sheet of "
+                                   f"parchment, {magic.money_text(magic.scribe_cost(level))} of inks and a spell slot).")
         if len(game.party) > 1:
             bx = canvas.button(bx + 2, h - 2, "Next member", self.next_member, hotkey="Tab")
         hint = "↑↓ choose" + (" · ←→ on whom" if self.targets() else "")

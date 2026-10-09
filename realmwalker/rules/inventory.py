@@ -176,6 +176,25 @@ def equip_everything_sensible(char: Character, items: ItemTable) -> None:
             if items.category(it) == "shield":
                 equip(char, items, it.uid, "off_hand")
                 break
+    # A pack on the back (the one that carries most), a priest's holy symbol at the neck, a ring, a trophy; and a
+    # wizard with a free hand holds a crystal focus.
+    free = [it for it in char.inventory if worn_by(char, it.uid)[0] is None]
+    packs = [it for it in free if "back" in items.slots_for(it)]
+    if packs and char.equipped.get("back") is None:
+        equip(char, items, max(packs, key=lambda it: float(items.get(it.def_id).get("carry", 0))).uid, "back")
+    for it in sorted(free, key=lambda it: not items.get(it.def_id).get("focus")):
+        slots = items.slots_for(it)
+        if items.get(it.def_id).get("focus") and slots[0] == "off_hand":
+            continue  # a crystal is held, below
+        for slot in ("neck", "ring"):
+            if slots and slots[0] == slot and char.equipped.get(slot) is None and not it.magic:
+                equip(char, items, it.uid, slot)
+    if char.cls == "wizard" and not two_handed and char.equipped.get("off_hand") is None:
+        crystal = next((it for it in free if (items.get(it.def_id).get("focus") or {}).get("kind") == "arcane"
+                        and not items.get(it.def_id)["focus"].get("carried") and worn_by(char, it.uid)[0] is None),
+                       None)
+        if crystal is not None:
+            equip(char, items, crystal.uid, "off_hand")
 
 
 # ---------------------------------------------------------------------------- the party's one pack

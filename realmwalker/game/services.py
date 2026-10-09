@@ -112,6 +112,8 @@ def services_for(game, npc: NPC) -> list[Service]:
                                "you've already performed here today"))
         elif sid == "gamble":
             options = [(str(b), f"Bet {money_text(b)}", b) for b in (10, 50, 100, 500)]
+            if _carried_use(game, "game", "cards") is not None:
+                options += [(f"cards:{b}", f"Cards, {money_text(b)} a hand [Insight]", b) for b in (10, 50, 100, 500)]
             out.append(Service("gamble", "Dice with the drinkers", 0, money(game) >= 10, "you have nothing to bet",
                                options=options))
         elif sid == "treat_wounds":
@@ -243,15 +245,35 @@ def _bath(game, npc, svc, arg):
     return [f"Hot water, lye soap, and the grime of the road coming off in layers ({money_text(svc.price)})."]
 
 
+def _carried_use(game, key: str, value=True):
+    """The first thing in the party's packs whose `use` has this key (and value), if any."""
+    from realmwalker.rules.inventory import carried
+
+    for it in carried(game.party):
+        if (game.tables.items.get(it.def_id).get("use") or {}).get(key) == value:
+            return it
+    return None
+
+
+def _trained_with(game, c, item) -> bool:
+    tool = game.tables.items.get(item.def_id).get("tool") if item is not None else None
+    return bool(tool) and tool in c.tools
+
+
 def _perform(game, npc, svc, arg):
     c = game.leader
     bonus = Sheet(c, game.tables).skill_bonus("performance")
+    instrument = _carried_use(game, "music")
+    if instrument is not None:
+        # An instrument makes a better show than a voice alone, and a much better one in hands taught to play it.
+        bonus += 2 + (Sheet(c, game.tables).proficiency if _trained_with(game, c, instrument) else 0)
     rng = game.world.rng.child(f"perform/{npc.id}/{game.world.time}")
     roll = dice.d20(rng).natural
     total = roll + bonus
     npc.flags["perform_day"] = game.moment.total_days
     game.pass_time(90, "rest")
-    line = f"<dice>Performance: {roll} {'+' if bonus >= 0 else '-'} {abs(bonus)} = {total}</>"
+    played = f" with the {game.tables.items.get(instrument.def_id)['name']}" if instrument is not None else ""
+    line = f"<dice>Performance{played}: {roll} {'+' if bonus >= 0 else '-'} {abs(bonus)} = {total}</>"
     if total >= 20:
         earned = rng.randint(80, 150)
         change_disposition(npc, 10)
@@ -271,14 +293,18 @@ def _perform(game, npc, svc, arg):
 
 
 def _gamble(game, npc, svc, arg):
+    if arg and str(arg).startswith("cards:"):
+        return _cards(game, npc, int(str(arg)[6:] or 10))
     bet = int(arg or 10)
     if money(game) < bet:
         return ["You can't cover that bet."]
     rng = game.world.rng.child(f"dice/{npc.id}/{game.world.time}/{bet}")
-    mine = dice.roll("2d6", rng).total
+    c = game.leader
+    own = _carried_use(game, "game", "dice")
+    knack = 1 if own is not None and _trained_with(game, c, own) else 0  # your own dice, and you know how they fall
+    mine = dice.roll("2d6", rng).total + knack
     theirs = dice.roll("2d6", rng).total
     game.pass_time(15, "rest")
-    c = game.leader
     if mine > theirs:
         c.money += bet
         return [f"You throw {mine}; they throw {theirs}. <loot>You win {money_text(bet)}.</>"]
@@ -286,6 +312,29 @@ def _gamble(game, npc, svc, arg):
         charge(game, npc, bet)
         return [f"You throw {mine}; they throw {theirs}. <warn>You lose {money_text(bet)}.</>"]
     return [f"You both throw {mine}. The bets stay on the table."]
+
+
+def _cards(game, npc, bet: int) -> list[str]:
+    """A hand of cards with your own deck: reading faces (Insight, and training with cards) against the table's."""
+    if money(game) < bet:
+        return ["You can't cover that bet."]
+    c = game.leader
+    deck = _carried_use(game, "game", "cards")
+    if deck is None:
+        return ["You have no cards."]
+    rng = game.world.rng.child(f"cards/{npc.id}/{game.world.time}/{bet}")
+    sheet = Sheet(c, game.tables)
+    bonus = sheet.skill_bonus("insight") + (sheet.proficiency if _trained_with(game, c, deck) else 0)
+    mine, theirs = dice.d20(rng).natural + bonus, dice.d20(rng).natural + 2
+    game.pass_time(20, "rest")
+    line = f"<dice>Insight: you {mine}, the table {theirs}</>"
+    if mine > theirs:
+        c.money += bet
+        return [line, f"You read the table better than it reads you. <loot>You win {money_text(bet)}.</>"]
+    if mine < theirs:
+        charge(game, npc, bet)
+        return [line, f"Somebody at the table was bluffing better. <warn>You lose {money_text(bet)}.</>"]
+    return [line, "A hand nobody wins. The pot stays on the table."]
 
 
 def _treat(game, npc, svc, arg):

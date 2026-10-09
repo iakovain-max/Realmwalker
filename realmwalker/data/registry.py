@@ -432,6 +432,15 @@ def _check_character_refs(files: dict[str, Any]) -> list[str]:
             need("item", item["ammo"], set(items), f"data/items.json: {iid} ammo")
         if "tool" in item:
             need("tool", item["tool"], tools, f"data/items.json: {iid}")
+        for s in item.get("bonus", {}).get("skills", {}):
+            need("skill", s, skills, f"data/items.json: {iid} bonus")
+        materials = set(files.get("items.json", {}).get("materials", {}))
+        for m in item.get("mends", {}).get("materials", []):
+            need("material", m, materials, f"data/items.json: {iid} mends")
+        thrown = (item.get("use") or {}).get("throw") if isinstance(item.get("use"), dict) else None
+        spells = files.get("spells.json", {}).get("spells", {})
+        if thrown and spells and thrown not in spells:
+            errors.append(f"data/items.json: {iid} is thrown as unknown spell '{thrown}'.")
     return errors
 
 

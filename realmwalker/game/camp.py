@@ -28,6 +28,7 @@ class Camp:
     fire: bool = False
     tent: bool = False
     shelter: bool = False  # a rough shelter: a lean-to, a hollow in the lee of rocks (build_shelter)
+    snares: str = ""  # the snares or trap set for the night (game/gear.py), by item id
 
 
 def camp_here(game) -> Camp | None:
@@ -75,6 +76,15 @@ def has(game, def_ids) -> tuple[Character, object] | tuple[None, None]:
     for c in game.party:
         for it in c.inventory:
             if it.def_id in def_ids:
+                return c, it
+    return None, None
+
+
+def has_flag(game, flag: str) -> tuple[Character, object] | tuple[None, None]:
+    """The first thing in the packs whose data has this flag set (a shovel digs, a crowbar pries...)."""
+    for c in game.party:
+        for it in c.inventory:
+            if game.tables.items.get(it.def_id).get(flag):
                 return c, it
     return None, None
 
@@ -143,12 +153,18 @@ def build_shelter(game) -> list[str]:
     w = game.weather
     if w.kind in ("storm", "blizzard"):
         dc += 1
-    ok, roll = check(game, "survival", dc, tag="shelter")
+    # With a shovel you dig in: a trench under the lean-to, earth banked against the wind, a snow-hole in the drifts.
+    _, spade = has_flag(game, "dig")
+    ok, roll = check(game, "survival", dc, 5 if spade is not None else 0, tag="shelter")
     if not ok:
-        game.pass_time(30, "walk")
+        game.pass_time(15 if spade is not None else 30, "walk")
         return [roll, "The wind has it down as fast as you put it up. You could try again."]
-    game.pass_time(60, "walk")
+    game.pass_time(30 if spade is not None else 60, "walk")
     camp.shelter = True
+    snowy = land(game) in ("tundra", "high_mountains") or (game.weather.snowing and game.moment.season == "winter")
+    if spade is not None and snowy:
+        return [roll, "You dig a snow-hole into the drift and roof it with your cloaks. Inside, out of the wind, it is "
+                      "almost warm."]
     what = {"forest": "a lean-to of boughs and bracken", "pine_forest": "a lean-to of pine boughs",
             "hills": "a hollow behind a wall of turf and stones", "mountains": "a hollow in the lee of the rocks",
             "high_mountains": "a scrape in the snow behind a boulder", "tundra": "a low wall of snow and turf",
@@ -468,9 +484,27 @@ def eat_meal(game, char: Character) -> list[str]:
         return [f"{body.first(char)} has nothing fit to eat."]
     if char.hunger < 10:
         return [f"{body.first(char)} is not hungry."]
+    stretch, cook = cooking(game)
     msgs = []
     while choices and char.hunger >= 12 and len(msgs) < 4:
-        msgs.append(eat_item(game, char, choices[0]))
+        msgs.append(eat_item(game, char, choices[0], stretch=stretch))
         choices = food_choices(game, char, desperate=char.hunger >= 80, fire=bool(camp and camp.fire))
+    if cook is not None:
+        char.body_heat = max(char.body_heat, min(0.0, char.body_heat + 15))
+        if char is game.party[0] or len(game.party) == 1:
+            msgs.append(f"{body.first(cook)} makes a hot stew of it, and it goes further than it would cold.")
     game.pass_time(15, "rest")
     return msgs
+
+
+def cooking(game) -> tuple[float, Character | None]:
+    """(how much further the food goes, the cook) when there is a fire and cook's utensils: a stew stretches what you
+    have, the more so if the cook was trained to it."""
+    camp = camp_here(game)
+    if camp is None or not camp.fire:
+        return 1.0, None
+    _, kit = has(game, ("cooks_utensils",))
+    if kit is None:
+        return 1.0, None
+    trained = next((c for c in game.party if c.alive and "cooks_utensils" in c.tools), None)
+    return (1.3, trained) if trained is not None else (1.15, game.leader)

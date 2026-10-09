@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from realmwalker.game import camp as camplogic
+from realmwalker.game import gear
 from realmwalker.game.fight import rest
 from realmwalker.game.survival import fill_skins, water_here
 from realmwalker.rules import body
@@ -13,10 +14,11 @@ from realmwalker.ui.widgets import Canvas
 
 
 class CraftScreen(Screen):
-    """What can be made here, out of what you are carrying."""
+    """What can be made here, out of what you are carrying, and the work on your gear: an edge on the blades, and
+    mending (game/gear.py)."""
 
     modal = True
-    title = "Make something"
+    title = "Make and mend"
 
     def __init__(self, app, game, camp_screen) -> None:
         super().__init__(app)
@@ -25,7 +27,7 @@ class CraftScreen(Screen):
         self.selected = 0
 
     def options(self) -> list:
-        return camplogic.crafts(self.game)
+        return gear_chores(self.game) + camplogic.crafts(self.game)
 
     def choose(self, i: int) -> None:
         opts = self.options()
@@ -36,7 +38,10 @@ class CraftScreen(Screen):
             self.app.notify(f"{markup.plain(label)}: {why}.", "warn")
             return
         self.close()
-        self.camp.run(lambda: camplogic.make(self.game, cid))
+        if cid in CHORES:
+            self.camp.run(lambda: CHORES[cid](self.game))
+        else:
+            self.camp.run(lambda: camplogic.make(self.game, cid))
 
     def handle_key(self, ev: KeyEvent) -> bool:
         opts = self.options()
@@ -57,7 +62,7 @@ class CraftScreen(Screen):
 
         opts = self.options()
         self.selected = max(0, min(self.selected, max(0, len(opts) - 1)))
-        x, y, w, h = modal_box(canvas, min(76, canvas.width - 4), len(opts) + 6, "Make something")
+        x, y, w, h = modal_box(canvas, min(76, canvas.width - 4), len(opts) + 6, "Make and mend")
         for i, (cid, label, ok, why) in enumerate(opts):
             row = y + 2 + i
             if i == self.selected:
@@ -71,6 +76,23 @@ class CraftScreen(Screen):
 
     def autoplay_keys(self) -> list[KeyEvent]:
         return [KeyEvent(k) for k in ("down", "1", "enter", "escape")]
+
+
+CHORES = {"hone": gear.hone, "mend": gear.mend}
+
+
+def gear_chores(game) -> list[tuple[str, str, bool, str]]:
+    """(id, label, possible, why not) for the work on gear: sharpening with a whetstone, mending with tools."""
+    stone = gear.has(game, lambda d: (d.get("use") or {}).get("hone"))[1] is not None
+    tools = gear.has_mending_tools(game)
+    plan = gear.mend_plan(game) if tools else []
+    return [
+        ("hone", "Sharpen blades <dim>(whetstone, 20 min: +1 damage until the next fight)</>", stone,
+         "needs a whetstone"),
+        ("mend", "Mend worn gear <dim>(tools, 1 hour)</>", tools and bool(plan),
+         "nothing your tools can improve" if tools else "needs smith's, carpenter's or leatherworker's tools, or a "
+                                                         "needle and thread"),
+    ]
 
 
 class CampScreen(Screen):
@@ -93,6 +115,8 @@ class CampScreen(Screen):
         tent = camplogic.has(g, ("tent",))[1] is not None
         water = water_here(g)
         wild = not in_town
+        snares = gear.snare_problem(g)
+        evening = gear.evening_problem(g)
         return [
             ("f", "Put out the fire" if fire else "Light a fire", self._fire, True, ""),
             ("t", "Pitch the tent", lambda: camplogic.pitch_tent(g), not (c and c.tent), "already up") if tent else
@@ -106,10 +130,14 @@ class CampScreen(Screen):
             ("u", "Hunt (2 hours)", lambda: camplogic.hunt(g), wild, "not in a town"),
             ("i", "Fish (2 hours)", lambda: camplogic.fish(g), water is not None and water[0] != "clean",
              "no river, lake or marsh here"),
-            ("m", "Make something", self._make, True, ""),
+            ("m", "Make and mend", self._make, True, ""),
             ("h", "See to wounds", self._health, True, ""),
             ("s", "Short rest (1 hour)", lambda: self._rest("short"), True, ""),
             ("l", self._sleep_label(), lambda: self._rest("night"), True, ""),
+            # Last, so that on a small screen it is these that go unshown (their keys still work), not sleep.
+            ("p", "Set snares for the night", lambda: gear.set_snares(g), not (c and c.snares) and snares is None,
+             "already set" if c and c.snares else (snares or "")),
+            ("v", "Pass the evening (music, cards, dice)", lambda: gear.evening(g), evening is None, evening or ""),
         ]
 
     def run(self, fn) -> None:
@@ -135,7 +163,7 @@ class CampScreen(Screen):
         return out
 
     def _make(self) -> list[str]:
-        """Torches, bandages, splints, salted meat, dried fish, a herbal remedy."""
+        """Sharpening and mending; torches, bandages, splints, salted meat, dried fish, a herbal remedy."""
         self.app.push(CraftScreen(self.app, self.game, self))
         return []
 
@@ -239,7 +267,7 @@ class CampScreen(Screen):
         canvas.button(2, h - 3, "Leave the camp screen", self.close, hotkey="Esc")
 
     def autoplay_keys(self) -> list[KeyEvent]:
-        return [KeyEvent(k) for k in ("f", "e", "c", "b", "w", "g", "u", "i", "s", "l", "t", "escape")]
+        return [KeyEvent(k) for k in ("f", "e", "c", "b", "w", "g", "u", "i", "p", "v", "s", "l", "t", "escape")]
 
 
 # Old name, kept for anything that still refers to it.

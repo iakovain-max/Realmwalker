@@ -12,7 +12,7 @@ from realmwalker.core import dice
 from realmwalker.rules import progression
 from realmwalker.rules.combat import FEARLESS, FOE, MERCIFUL, PARTY, Battle, BattleResult, Env
 from realmwalker.rules.creatures import Creature
-from realmwalker.rules.inventory import add_existing, remove_item
+from realmwalker.rules.inventory import add_existing, carried, remove_item
 from realmwalker.rules.items import Item, money_text
 
 ROUND_SECONDS = 6
@@ -214,6 +214,9 @@ def finish_battle(game) -> Aftermath:
         after.xp = result.xp
         if actor is not None and lm is not None and actor in lm.actors:
             lm.actors.remove(actor)
+    from realmwalker.game import gear
+
+    after.notes += gear.wear_from_battle(game, battle)  # blows given and taken wear blades and armour
     # The fight's minutes pass only now: anyone knocked down has come round (or been robbed and left, or mauled and
     # left) by this point. Before, a body still at 0 hit points was found dead of its hurts the moment time moved.
     game.pass_seconds(result.rounds * ROUND_SECONDS, "fight")
@@ -438,6 +441,9 @@ def encounter_evade(game) -> bool:
     return ok
 
 
+SOLDIERLY = ("guard", "noble", "deserter")  # men who were soldiers, and know a rank when they see it
+
+
 def encounter_talk_dc(game) -> tuple[int | None, str]:
     """How hard it is to talk your way past (Persuasion), or why it cannot be done."""
     enc = game.encounter
@@ -448,6 +454,10 @@ def encounter_talk_dc(game) -> tuple[int | None, str]:
         return None, "they are past words"
     party = sum(1 for c in game.party if c.alive)
     dc = 12 + 2 * (len(enc.creatures) - party) + (2 if not enc.spotted_first else 0)
+    if any(c.def_id in SOLDIERLY for c in enc.creatures) and any(
+            (game.tables.items.get(it.def_id).get("impress") or {}).get("people") == "soldiers"
+            for it in carried(game.party)):
+        dc -= 4  # an old soldier's insignia: they still straighten up for rank
     dc = max(8, min(22, dc))
     from realmwalker.game import uniques
 
@@ -627,8 +637,15 @@ def decide_captive(game, creature: Creature, fate: str) -> str:
         game.renown.flags.setdefault("captives", []).append({
             "def_id": creature.def_id, "name": name, "reward": reward, "since": game.world.time,
             "faction": faction.id if faction is not None else -1})
-        text = (f"You bind {name}'s hands and take them along. The watch in any town will pay for them "
-                f"({money_text(reward)}), if they don't slip away first.")
+        from realmwalker.game.gear import binding
+
+        how = binding(game, len(game.renown.flags["captives"]))[-1]
+        tied = {"manacles": f"You put {name} in manacles", "rope": f"You tie {name}'s hands with rope"}.get(
+            how, f"You bind {name}'s hands with a belt")
+        risk = {"manacles": "and nobody slips those", "rope": "if they don't slip away first",
+                "none": "if they don't slip away first (rope would hold better, and manacles best)"}[how]
+        text = (f"{tied} and take them along. The watch in any town will pay for them ({money_text(reward)}), "
+                f"{risk}.")
         leader.deeds.append(f"took {name} prisoner")
         after.fates[creature.uid] = fate
         game.say(text, "info")
@@ -752,9 +769,14 @@ def rest(game, kind: str) -> list[str]:
             if enc is not None:
                 from realmwalker.game.companions import watching
 
+                from realmwalker.game.camp import has_flag
+
                 if watching(game):
                     enc.asleep = False
                     notes.append("<warn>The one on watch shakes you awake: something is coming.</>")
+                elif has_flag(game, "alarm")[1] is not None:
+                    enc.asleep = False  # the bells strung round the camp
+                    notes.append("<warn>The bells on the cord round the camp jangle in the dark: something is coming.</>")
                 else:
                     enc.asleep = True
                 enc.spotted_first = False
@@ -763,6 +785,10 @@ def rest(game, kind: str) -> list[str]:
                 return notes
     if kind == "long" and lm is None and game.over is None and game.leader.animals:
         notes += _rustlers(game, fire)
+    if kind == "long" and game.over is None:
+        from realmwalker.game.gear import check_snares
+
+        notes += check_snares(game)
     if kind == "long" and lm is None and game.over is None:
         from realmwalker.game.camp import night_sound
 

@@ -170,7 +170,7 @@ def food_choices(game, char: Character, *, desperate: bool = False, fire: bool =
     return [it for _, _, it in out]
 
 
-def eat_item(game, char: Character, item, units: int = 1) -> str:
+def eat_item(game, char: Character, item, units: int = 1, stretch: float = 1.0) -> str:
     d = game.tables.items.get(item.def_id)
     food = d.get("food", {})
     risky_spoiled = spoiled(game, item)
@@ -179,7 +179,7 @@ def eat_item(game, char: Character, item, units: int = 1) -> str:
     removed = remove_item(owner, item.uid, units)
     if removed is None:
         return ""
-    body.eat(char, float(food.get("nutrition", 0.3)) * removed.qty)
+    body.eat(char, float(food.get("nutrition", 0.3)) * removed.qty * stretch)  # a cook's stew goes further
     rng = game.world.rng.child(f"eat/{game.world.time}/{item.uid}")
     if risky_spoiled and rng.chance(0.35):
         char.conditions.append("exposed:food_poisoning")
@@ -406,10 +406,26 @@ def wash(game) -> list[str]:
     if here is None:
         return ["There is nowhere to wash here."]
     w = weather(game)
+    # With soap (data/items.json "washes"), every bit of the grime comes off, and open wounds are washed clean too.
+    owner, soap = next(((m, it) for m in distinct_packs(game.party) for it in m.inventory
+                        if game.tables.items.get(it.def_id).get("washes")), (None, None))
+    cleaned = 0
     for c in game.party:
-        c.dirt = max(0.0, c.dirt - 70.0)
+        c.dirt = 0.0 if soap is not None else max(0.0, c.dirt - 70.0)
         if here[1] != "the well" and not sheltered(game, "rest"):
             c.wet = max(c.wet, 40.0)
+        if soap is not None:
+            for wd in c.wounds:
+                if wd.kind in ("cut", "bite", "puncture", "burn") and not wd.cleaned:
+                    wd.cleaned = True
+                    wd.infection = max(0.0, wd.infection - 10.0)
+                    wd.infected = wd.infection > 0
+                    cleaned += 1
+    if soap is not None:
+        remove_item(owner, soap.uid, 1)
     game.pass_time(20)
     cold = " The water is bitterly cold." if w.temp < 8 else ""
-    return [f"You wash in {here[1]}.{cold}"]
+    if soap is None:
+        return [f"You wash in {here[1]}.{cold}"]
+    return [f"You wash in {here[1]} with a bar of soap, and the grime comes off in layers.{cold}"
+            + (" Open wounds are washed clean while you are at it." if cleaned else "")]

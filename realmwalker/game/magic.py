@@ -203,3 +203,73 @@ def cast_on_road(game, caster, spell_id: str, target=None) -> list[str]:
 
         law.magic_check(game, caster)
     return msgs
+
+
+# ---------------------------------------------------------------------------- writing a scroll
+SCRIBE_COST_PER_LEVEL_SQUARED = 2500  # copper: costly inks, 25 gp for a first-level spell, 100 for a second...
+SCRIBE_HOURS_PER_LEVEL = 2
+
+
+def scribe_cost(level: int) -> int:
+    return SCRIBE_COST_PER_LEVEL_SQUARED * level * level
+
+
+def scribe_problem(game, char, sid: str) -> str | None:
+    """Why this caster can't write this spell out as a scroll now (None if they can try). It takes ink and quill, a
+    sheet of parchment, costly inks and one of the day's spell slots: the magic goes into the page."""
+    from realmwalker.rules.inventory import carried
+
+    t = game.tables
+    spell = t.spells[sid] if sid in t.spells else None
+    if spell is None or spell["level"] <= 0 or f"scroll_{sid}" not in t.items:
+        return "only a spell of the first level or higher can be written out"
+    things = carried(game.party)
+    if not any((t.items.get(it.def_id).get("use") or {}).get("scribe") for it in things):
+        return "you need ink and a quill"
+    if not any(it.def_id == "parchment" for it in things):
+        return "you need a sheet of parchment"
+    ok, why = spellrules.can_cast(char, t, sid)
+    if not ok:
+        return why
+    if game.busy:
+        return "not now"
+    cost = scribe_cost(spell["level"])
+    if sum(c.money for c in game.party) < cost:
+        return f"the inks cost {money_text(cost)}"
+    return None
+
+
+def scribe(game, char, sid: str) -> list[str]:
+    """Write a spell out as a scroll: two hours a level, the inks, a sheet of parchment and a spell slot, and an Arcana
+    check (Religion for a priest) against 10 + the spell's level. The scroll can be read once in a fight by anyone (by
+    someone of another calling, with an Arcana check)."""
+    problem = scribe_problem(game, char, sid)
+    if problem:
+        return [f"You can't write it: {problem}."]
+    from realmwalker.game.law import take_money
+    from realmwalker.rules.inventory import add_item
+
+    t = game.tables
+    spell = t.spells[sid]
+    level = spell["level"]
+    take_money(game, scribe_cost(level))
+    owner = next(c for c in game.party if any(it.def_id == "parchment" for it in c.inventory))
+    sheet_ = next(it for it in owner.inventory if it.def_id == "parchment")
+    remove_item(owner, sheet_.uid, 1)
+    slot = spellrules.lowest_free_slot(char, t, level)
+    if slot is not None:
+        spellrules.spend_slot(char, slot)
+    game.pass_time(SCRIBE_HOURS_PER_LEVEL * level * 60, "rest")
+    skill = "religion" if char.cls == "cleric" else "arcana"
+    rng = game.world.rng.child(f"scribe/{sid}/{game.world.time}")
+    roll = dice.d20(rng).natural
+    bonus = game.sheet(char).skill_bonus(skill)
+    dc = 10 + level
+    check = f"<dim>({t.rules['skills'][skill]['name']} {roll} {bonus:+d} = {roll + bonus} vs DC {dc})</>"
+    game.dirty = True
+    if roll + bonus >= dc:
+        add_item(char, t.items, f"scroll_{sid}", 1, made_at=game.world.time)
+        return [f"<good>{char.name.split()[0]} writes {spell['name']} out as a scroll</> over "
+                f"{SCRIBE_HOURS_PER_LEVEL * level} hours, and feels the spell go into the page. {check}"]
+    return [f"<warn>The writing goes wrong</>: a blot, a word misplaced, and the spell drains out of the page and is "
+            f"lost. {check}"]

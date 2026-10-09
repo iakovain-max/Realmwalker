@@ -30,6 +30,7 @@ import tcod.console  # noqa: E402
 from realmwalker.app import App  # noqa: E402
 from realmwalker.config import AUTOSAVE_CHOICES, FONT_SIZES, VERBOSITY_LEVELS, Settings  # noqa: E402
 from realmwalker.core.logs import count_error_lines  # noqa: E402
+from realmwalker.rules.character import Sheet  # noqa: E402
 from realmwalker.ui.input import KeyEvent, MouseEvent  # noqa: E402
 from tools.mock_player2 import MockPlayer2  # noqa: E402
 
@@ -156,6 +157,14 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
                 fail(f"{member.name} has two items with the same id")
             if any(it.qty <= 0 for it in member.inventory):
                 fail(f"{member.name} carries an item stack of zero or fewer")
+            if any(not 0 <= it.condition <= 100 for it in member.inventory):
+                fail(f"{member.name} carries something worn past nothing or mended past new")
+            for slot, uid in member.equipped.items():
+                it = member.item(uid)
+                if it is not None and slot not in app.tables.items.slots_for(it):
+                    fail(f"{member.name} wears the {app.tables.items.name(it)} where it does not go ({slot})")
+            if member.equipped.get("back") is not None and Sheet(member, app.tables).pack_carry() < 0:
+                fail(f"{member.name}'s pack carries less than nothing")
             for need in ("hunger", "thirst", "fatigue", "dirt", "wet", "intoxication"):
                 value = getattr(member, need)
                 if not 0 <= value <= 100:
@@ -406,6 +415,9 @@ def _check_law(game, fail) -> None:
                 fail(f"an impossible sentence step {step}")
     if game.confined is not None and game.sentence is None:
         fail("confined without a sentence")
+    for cap in r.flags.get("captives") or []:
+        if not cap.get("name") or int(cap.get("reward", 0)) <= 0:
+            fail(f"a prisoner nobody would pay for is being led along: {cap}")
     for fid, skills in r.flags.get("trained", {}).items():
         if any(sk not in game.leader.skills for sk in skills):  # what was taught stays, even if they cast you out
             fail(f"lessons from faction {fid} that did not take: {skills}")

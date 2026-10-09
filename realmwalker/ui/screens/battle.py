@@ -28,7 +28,8 @@ ACTION_HELP = {
     "attack": "Strike with a weapon: anyone within reach, or anyone in range you can see. Click an enemy to walk up "
               "and strike. With Extra Attack you get more than one, and may move between them.",
     "cast": "Cast a spell you know. Levelled spells use a slot; cantrips are free. Areas catch friend and foe alike.",
-    "item": "Drink a potion, give one to someone beside you, or bind a bleeding wound (an action).",
+    "item": "Drink a potion, give one to someone beside you, bind a bleeding wound, or throw a flask of oil, holy water "
+            "or alchemist's fire at a square (an action).",
     "ability": "Your class's tricks: Second Wind, Action Surge, Cunning Action, an off-hand strike, Turn Undead...",
     "dash": "Use your action to run: twice your speed this turn.",
     "disengage": "Use your action to back away carefully: no opportunity attacks this turn.",
@@ -248,7 +249,13 @@ class BattleScreen(Screen):
                 rows.append((f"{sp['name']} <dim>({lvl}) {sp['text']}</>", sid, ok, why))
             self._open_choices("cast", rows)
         elif action == "item":
-            self._open_choices("item", [(tables.items.name(i), i.uid, True, "") for i in b.usable_items(f)])
+            rows = []
+            for i in b.usable_items(f):
+                throw = b.throw_value(i)
+                hint = f" <dim>(throw it: {tables.spells[spell_id(throw)]['text']})</>" if throw else ""
+                ok = not throw or f.action > 0 or f.attacks_left > 0
+                rows.append((markup.escape(tables.items.name(i)) + hint, i.uid, ok, "no action left this turn"))
+            self._open_choices("item", rows)
         elif action == "ability":
             abilities = b.class_abilities(f)
             if not abilities:
@@ -378,7 +385,13 @@ class BattleScreen(Screen):
             else:
                 self._do(b.do_cast, f, value, None)
         elif kind == "item":
-            self._open_targets("item", b.item_targets(f))
+            it = f.char.item(value) if f.char is not None else None
+            throw = b.throw_value(it) if it is not None else None
+            if throw:
+                self.pending["value"] = throw  # a flask is aimed at a square, like a spell
+                self._open_aim("cast")
+            else:
+                self._open_targets("item", b.item_targets(f))
         elif kind == "ability":
             if value == "offhand":
                 opt = b.offhand_option(f)

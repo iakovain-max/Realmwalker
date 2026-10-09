@@ -363,7 +363,26 @@ def load_game(folder: Path, tables: Tables) -> GameState:
     from realmwalker.game import pack
 
     pack.sync(game)  # companions join the leader's pack again (and older saves are poured into one)
+    _put_on_packs(game)
     return game
+
+
+def _put_on_packs(game: GameState) -> None:
+    """Characters made before packs were worn (2026-10) carry their backpack in their hands, as it were: the first time
+    such a save is loaded, whoever has nothing on their back puts one on, so the bigger load counts at once. Only
+    once: after that, taking the pack off is the player's business."""
+    from realmwalker.rules.inventory import equip, worn_by
+
+    if game.renown.flags.get("packs_worn"):
+        return
+    game.renown.flags["packs_worn"] = True
+    items = game.tables.items
+    for c in game.party:
+        if c.equipped.get("back") is not None:
+            continue
+        free = [it for it in c.inventory if "back" in items.slots_for(it) and worn_by(c, it.uid)[0] is None]
+        if free:
+            equip(c, items, max(free, key=lambda it: float(items.get(it.def_id).get("carry", 0))).uid, "back")
 
 
 @dataclass

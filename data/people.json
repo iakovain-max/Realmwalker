@@ -4,7 +4,7 @@
     "innkeeper": {"name": "innkeeper", "place": "inn", "notable": true, "social": "middle", "purse": [800, 4000], "stats": "commoner", "trade": "inn", "services": ["room", "meal", "bath", "rumours", "perform", "gamble"]},
     "serving_hand": {"name": "serving hand", "place": "inn", "social": "low", "purse": [5, 60], "stats": "commoner"},
     "priest": {"name": "priest", "titles": {"hold": "rune-priest", "elfhall": "keeper of the grove"}, "place": "temple", "notable": true, "social": "middle", "purse": [200, 2000], "stats": "acolyte", "services": ["prayer_healing", "cure_disease", "blessing"]},
-    "acolyte": {"name": "acolyte", "place": "temple", "social": "low", "purse": [5, 50], "stats": "acolyte"},
+    "acolyte": {"name": "acolyte", "place": "temple", "social": "low", "purse": [5, 50], "stats": "acolyte", "trade": "temple"},
     "smith": {"name": "smith", "place": "smithy", "notable": true, "social": "middle", "purse": [600, 5000], "stats": "commoner", "trade": "smith", "services": ["repair", "labour"]},
     "shopkeeper": {"name": "shopkeeper", "place": "store", "notable": true, "social": "middle", "purse": [800, 6000], "stats": "commoner", "trade": "general"},
     "healer": {"name": "healer", "titles": {"city": "barber-surgeon", "town": "barber-surgeon"}, "place": "healer", "notable": true, "social": "middle", "purse": [300, 3000], "stats": "commoner", "trade": "apothecary", "services": ["treat_wounds", "surgery", "herbal_cure"]},

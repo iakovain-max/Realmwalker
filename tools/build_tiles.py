@@ -294,13 +294,16 @@ ITEMS = {
     "trophy": "item/misc/misc_horn.png", "manacles": "item/misc/key.png",
     "potion_healing": "item/potion/ruby_new.png", "fodder": "item/food/fruit.png",
     "firewood": "item/weapon/club_2.png", "poppy_milk": "item/potion/white_new.png",
-    "healing_herbs": "item/food/choko.png",
+    "healing_herbs": "item/food/choko.png", "snares": "item/weapon/ranged/throwing_net.png",
+    "bell_line": "item/misc/misc_disc_new.png", "spyglass": "item/wand/gem_brass_new.png",
+    "holy_water": "item/potion/cloudy.png", "alchemists_fire": "item/potion/golden.png",
     # tools
     "healers_kit": "item/misc/misc_box.png", "thieves_tools": "item/misc/key.png",
     "disguise_kit": "item/misc/mirror.png", "herbalism_kit": "item/food/choko.png",
     "smiths_tools": "item/weapon/hammer_1_old.png", "carpenters_tools": "item/weapon/hand_axe_2_new.png",
     "cooks_utensils": "item/misc/misc_quad.png", "dice_set": "item/misc/misc_stone_old.png",
     "playing_cards": "item/misc/misc_deck_new.png", "lute": "item/misc/misc_fan_new.png", "flute": "item/misc/misc_horn.png",
+    "navigators_tools": "item/misc/misc_orb.png", "leatherworkers_tools": "item/weapon/ranged/needle-c.png",
     # foci
     "holy_symbol": "item/amulet/celtic_yellow.png", "component_pouch": "item/misc/misc_bottle.png",
     "arcane_focus": "item/misc/misc_crystal_new.png",

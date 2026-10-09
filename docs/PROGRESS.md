@@ -19,13 +19,100 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | After v1 (rough edges, fair chances, riding...) | ✅ Done |
 | **1.0 — Pictures and a new interface** | ✅ Done (2026-10-03), branch `graphics-ui` |
 | **1.0 — Combat on a grid (a D&D battle mat)** | ✅ Done (2026-10-06), branch `grid-combat` |
+| **Every item does something** | ✅ Done (2026-10-09), branch `useful-items` |
 
 ---
 
 ## After v1 — continuing work (2026-09-20), up to version 1.0 (2026-10-03) and since
 
 The nine milestones are done; this is what has been added since, newest first. Version 1.0 is the pictures and the
-new interface; then combat moved onto a grid (the first entry below).
+new interface; then combat moved onto a grid, then every item was given a use (the first entries below).
+
+### Local session, 2026-10-09: every item does something (Anton's request) — branch `useful-items`
+
+Anton noticed that many things from the rulebooks (spell foci, backpacks, blankets...) did nothing, and asked for every
+item to have a logical, balanced use, a backpack to be worn for more carrying, and some more small items with uses of
+their own. A survey of all the items found about thirty that did nothing at all (backpack, sack, crowbar, rope,
+grappling hook, shovel, hunting trap, whetstone, soap, smith's and carpenter's tools, the instruments, cards and dice,
+the spell foci, the prayer book, incense, ink and quill, parchment, the signet ring, the insignia, the trophy, the
+letters and papers, manacles, plain rings and amulets), and that the design's "condition wears with use and can be
+repaired at a smithy or with tools" had never been built. Blankets and bedrolls already kept you warm in your sleep,
+torches and lanterns already lit the dark, and the healing things already worked; those were left as they were.
+
+**What each thing does now** (each item's card in the pack says it, and Enter uses it where that makes sense):
+- **Carrying.** A new **Pack** slot on the back. A backpack worn there carries 15 lb more before you count as laden (a
+  sack 5). Everyone starts with theirs on, companions too, and a character from an older save puts theirs on when
+  loaded. In the shared pack, every member's backpack counts.
+- **Wear and mending.** Every blow a weapon lands, and every blow armour, a shield or a helmet takes, may cost it a
+  point of condition (masterwork wears slowest, crude fastest; magic not at all). Below 30 ("battered") a weapon hits
+  1 worse and armour gives 1 less AC (as before). Measured: a front-line fighter's chain mail gets battered after about
+  100 fights, the sword after about 200. A smith mends anything for a fee (as before). Now **tools mend** too, in an
+  hour, the three most worn things at a time: smith's tools metal, carpenter's tools wood and bone, leatherworker's
+  tools (new) leather and cloth, a needle and thread clothes. Untrained hands get things to "worn" at best; someone
+  trained with the tool makes them as good as new. Mending looted gear also raises what it sells for.
+- **A whetstone** sharpens every blade the party carries in 20 minutes: +1 damage with swords, axes and spears until the
+  end of the next fight, and edges ground back to "worn" if they were worse.
+- **Spell foci.** A holy symbol worn at the neck (or held) by a priest, a crystal focus held by a wizard, or a component
+  pouch carried by a wizard: +1 to spell attacks and to the DC of their spells. Priests start with the symbol at the
+  neck and hedge mages with the crystal in hand.
+- **The prayer book.** Pray from it for an hour, once a day: it steadies whoever prays (+1 to Wisdom saves for 12
+  hours), and gives a priest back spent prayers as a wizard's Arcane Recovery does. With incense burning, the whole
+  party is steadied. Devout companions approve.
+- **Ink, quill and parchment.** A caster can write one of their spells out as a scroll (Spells screen, w): two hours a
+  spell level, a sheet of parchment, costly inks (25 gold crowns for a first-level spell, 100 for a second, 225 for a
+  third) and one of the day's spell slots; an Arcana check (Religion for a priest). Anyone can read the scroll once in
+  a fight. It always costs more than the scroll sells for.
+- **Things that impress.** A signet ring (now worn on the ring finger) and a scroll of pedigree: lords and the high-born
+  think better of you. A holy symbol worn: priests do. A guild letter: shopkeepers, smiths and traders do. An old
+  soldier's insignia: guards do, and a patrol of soldiers or deserters on the road is easier to talk past. A trophy at
+  the neck: +1 Intimidation. A plain ring, an amulet or a signet ring worn makes you look a little better off. The best
+  of each kind counts, not all of them.
+- **At camp.** Snares (new) or a hunting trap set before you sleep may hold something in the morning (a Survival check;
+  snares take only small game, the trap anything; hunting laws apply). An evening of music, cards or dice (v) lifts
+  every companion's loyalty, once a day (music played well more than a game), as far as content (70) but never to
+  devoted: devotion is still earned by deeds. A string of bells (new) round the camp
+  means nobody is caught asleep. A shovel digs a shelter in half the time, with less to go wrong, and makes a snow-hole
+  in the snow. Cook's utensils make food go further at a fire (a stew: 15% more, 30% with a trained cook) and warm you.
+  Soap: washing with it takes all the dirt off and washes open wounds clean (one bar a wash).
+- **Locks.** A crowbar forces locked doors and chests with advantage, and the crack is heard only close by.
+- **Prisoners.** Prisoners you lead to the watch now really can slip away in the night, as the game always said: one
+  in five each night if their hands are tied with a belt, one in twenty-five with rope, never in manacles (one pair
+  each).
+- **On the road.** Navigator's tools (new) help you keep your bearings off the road in fog, storm and dark (+4, more if
+  trained). A spyglass (new, dear) sees further across open land by day and spots trouble on the road sooner. New road
+  events and new ways through old ones: rope across a flooded ford, a crowbar under a stuck cart, a shovel under a
+  burnt farm's hearth, a grappling hook over a shut town wall at night (quieter than climbing), and three new
+  meetings: someone fallen into a ravine (lower a rope), a rockfall across a mountain path (dig through, lever it
+  aside, climb, or go round) and an old well with something at the bottom (climb down on a rope, or fish with a hook).
+- **At the inn.** Playing for coin with an instrument is better, much better if you were taught it. Dice of your own,
+  if you are trained with dice, throw 1 better; with playing cards you can play cards for money, where Insight counts
+  more than luck.
+- **Thrown in a fight** (Item menu, then aim at a square): a flask of oil (fire, 2d4, and it burns there a round), holy
+  water (new: 2d6 radiant, only to the walking dead) and alchemist's fire (new: fire, 2d6, burning two rounds). A
+  Dexterity save halves it; the DC is the thrower's (8 + proficiency + Dexterity).
+- **Smaller fixes.** Rings and amulets (magic ones too) can now be sold: no shop would buy them before. They show under
+  the Gear tab. The Item menu in a fight no longer lists things that cannot be used there (books, poppy milk, herbs).
+  A tallow candle burns four hours instead of one (small light, long-lasting). Things with no use from the pack say
+  where they are used (the tent: pitch it at camp; the tinderbox: lights the fire...).
+- **Shops.** Acolytes in town and city temples keep a stall: holy symbols, prayer books, incense, candles, holy water.
+  General stores now stock snares, bells, needles, cook's utensils, dice, cards, ink and parchment, navigator's tools, a
+  spyglass, leatherworker's and carpenter's tools and instruments; smiths sell smith's tools, crowbars, manacles,
+  grappling hooks and shovels; apothecaries alchemist's fire.
+
+**How to see it**: start a new character (or load one: the backpack goes on by itself) and open the pack (i): every
+card says what the thing does. Camp (r): m now sharpens and mends as well as makes, p sets snares, v passes the evening.
+Spells screen (S): w writes a scroll. In a fight, Item lists flasks to throw.
+
+**Saves**: nothing new is stored that an older save lacks, so old saves load as they are.
+
+**How it was checked**: the whole test suite, with a new file of tests for every use above (`tests/test_gear.py`); the
+autoplay bot in both AI modes; the balance numbers; a scripted run of 200 fights measuring how fast gear wears.
+
+**Assumptions made without asking**: the numbers (a backpack +15 lb, a sack +5, +1 from a focus, a whetstone's +1 until
+the next fight, how fast gear wears, how often prisoners slip away) are my choice of "balanced": easy to change in
+`data/items.json` ("upkeep") if they feel wrong. Spell foci give a bonus rather than being required (in the rulebook a
+caster without one cannot cast spells with material parts; that would only ever have taken spells away). The new items
+borrow existing pictures (snares look like the hunting trap, the spyglass like a wand, holy water like a potion).
 
 ### Local session, 2026-10-06: combat on a grid, as in D&D (Anton's request) — branch `grid-combat`
 
