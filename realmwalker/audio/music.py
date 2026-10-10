@@ -267,7 +267,10 @@ class MusicPlayer:
 
     def now_playing(self) -> str:
         deck = self.current
-        return deck.path.stem.replace("_", " ") if deck is not None else ""
+        if deck is None:
+            return ""
+        name = " ".join(w[:1].upper() + w[1:] for w in deck.path.stem.replace("_", " ").split())
+        return f"{name} ({self.pool})" if self.pool else name
 
     # ------------------------------------------------------------------ the thread
     def start(self) -> None:

@@ -110,8 +110,8 @@ class MusicScreen(Screen):
             canvas.text(lx + 12, ry, words, colors.named(color), max_width=list_w - 13)
         self._render_detail(canvas, lx + list_w + 2, ly + 2, x0 + width - 2 - (lx + list_w + 2), height - 7)
         by = y0 + height - 3
-        canvas.wrapped(lx, by - 1, "<dim>Put .ogg, .mp3, .flac or .wav files in a mood's folder; yours replace the "
-                       "game's own for that mood. Then press R.</>", width - 4, max_lines=1)
+        canvas.wrapped(lx, by - 1, "<dim>Put .ogg, .mp3, .flac or .wav files in a mood's folder (yours replace the "
+                       "game's), then press R.</>", width - 4, max_lines=1)
         listening = self.listening is not None and self.listening == self.current()
         bx = canvas.button(lx, by, "Stop" if listening else "Listen", self.listen, hotkey="Enter")
         bx = canvas.button(bx + 3, by, "Open the folder", self.open_folder, hotkey="O")

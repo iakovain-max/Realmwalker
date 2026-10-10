@@ -245,7 +245,9 @@ tools/                     autoplay.py, mock_player2.py, build_friends.py, balan
   and are evened to -18 LUFS on first play (music_levels.json). Volumes 0-10 in Settings (+ Ctrl M mute); the "Your
   music" page (ui/screens/music.py) lists the moods, previews them and opens the folder. Headless (tests, autoplay)
   the same calls go to a SilentBackend: never open a sound device in a test. The smoke test plays to SDL's dummy
-  driver and FAILS if the device, an effect or the title music did not work (main.sound_trouble). A new sound: add it
+  driver and FAILS if the device, an effect or the title music did not work (main.sound_trouble). To check a mix
+  without ears, record it: `SDL_AUDIO_DRIVER=disk SDL_AUDIO_DISK_OUTPUT_FILE=build/session.raw` before the smoke test
+  writes what would be heard (float32 stereo 48 kHz raw) for `audio/levels` to measure. A new sound: add it
   to tools/build_sounds.py EFFECTS (or make it there), run it, add the entry to data/sounds.json, commit
   assets/sounds; tests/test_audio.py checks every name the code asks for exists and every file is at one loudness.
 - Battles: `rules/combat.Battle` is pure logic driven by `step()` / `pending_party()` / `do_*()`; the screen

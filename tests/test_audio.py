@@ -267,7 +267,7 @@ def test_shipped_tunes_play_headless(data, tmp_path):
         clock.t += 0.1
         audio.update()
     assert audio.music.started == ["exploration.ogg"]
-    assert audio.music.now_playing() == "exploration"
+    assert audio.music.now_playing() == "Exploration (title)"
 
 
 # ---------------------------------------------------------------------------- effects

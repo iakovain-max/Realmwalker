@@ -19,6 +19,7 @@ class Option:
     value: Callable[[], str]
     change: Callable[[int], None]  # called with -1 or +1
     help: str
+    level: Callable[[], int] | None = None  # a volume (0-10): drawn as a bar before the value
 
 
 class SettingsScreen(Screen):
@@ -68,16 +69,19 @@ class SettingsScreen(Screen):
                        s.battle_companions], lambda d: self._cycle("battle_companions", COMPANION_CHOICES, d),
                    "You command them: you play every turn of the party. They fight by themselves: you play your own "
                    "character's turns and your companions choose their own (as z does for one turn)."),
-            Option("Volume", lambda: _volume(s.volume), lambda d: self._volume("volume", d, "ui_click"),
-                   "How loud the whole game is. Ctrl M, anywhere, turns all sound off and on again."),
-            Option("Music", lambda: _volume(s.music_volume), lambda d: self._volume("music_volume", d, None),
-                   "How loud the music is."),
-            Option("Sound effects", lambda: _volume(s.effects_volume),
+            Option("Volume", lambda: f"{s.volume * 10}%", lambda d: self._volume("volume", d, "ui_click"),
+                   "How loud the whole game is. Ctrl M, anywhere, turns all sound off and on again.",
+                   level=lambda: s.volume),
+            Option("Music", lambda: f"{s.music_volume * 10}%", lambda d: self._volume("music_volume", d, None),
+                   "How loud the music is.", level=lambda: s.music_volume),
+            Option("Sound effects", lambda: f"{s.effects_volume * 10}%",
                    lambda d: self._volume("effects_volume", d, "hit_blunt"),
-                   "Fights, coins, doors, traps, chests, the harp when you go up a level."),
-            Option("Interface sounds", lambda: _volume(s.interface_volume),
+                   "Fights, coins, doors, traps, chests, the harp when you go up a level.",
+                   level=lambda: s.effects_volume),
+            Option("Interface sounds", lambda: f"{s.interface_volume * 10}%",
                    lambda d: self._volume("interface_volume", d, "ui_click"),
-                   "Clicks, pages turning, screens opening and closing, the tick as you move down a list."),
+                   "Clicks, pages turning, screens opening and closing, the tick as you move down a list.",
+                   level=lambda: s.interface_volume),
             Option("Sound in the background", lambda: _onoff(s.sound_in_background),
                    lambda d: self._toggle_sound("sound_in_background"),
                    "Keep the music and sounds playing while another window is in front of the game."),
@@ -167,8 +171,14 @@ class SettingsScreen(Screen):
                 canvas.fill(x, row, width - 6, 1, bg)
             canvas.text(x, row, "► " if selected else "  ", colors.TITLE, bg)
             canvas.text(x + 2, row, opt.label, colors.SELECT_FG if selected else colors.FG, bg)
-            value = f"◄ {opt.value()} ►" if selected else f"  {opt.value()}  "
-            canvas.text(x + 30, row, value, colors.TITLE if selected else colors.DIM, bg)
+            fg = colors.TITLE if selected else colors.DIM
+            if opt.level is not None:
+                canvas.text(x + 30, row, "◄ " if selected else "  ", fg, bg)
+                canvas.bar(x + 32, row, VOLUME_STEPS, opt.level() / VOLUME_STEPS, fg)
+                canvas.text(x + 33 + VOLUME_STEPS, row, f"{opt.value()} ►" if selected else opt.value(), fg, bg)
+            else:
+                value = f"◄ {opt.value()} ►" if selected else f"  {opt.value()}  "
+                canvas.text(x + 30, row, value, fg, bg)
         self._last_mouse = canvas.mouse
         y += len(self.options) + 1
         canvas.hline(x, y, width - 6, "─", colors.FAINT)
@@ -210,6 +220,3 @@ class SettingsScreen(Screen):
 def _onoff(value: bool) -> str:
     return "On" if value else "Off"
 
-
-def _volume(value: int) -> str:
-    return "█" * value + "░" * (VOLUME_STEPS - value) + f" {value * 10}%"
