@@ -42,7 +42,7 @@ and the rest, for every people, and for it to keep working when more races are a
   whole figure in the gear you set out with. Underneath, "How others see you" is written from what you chose.
 - **The choices**: build (slight, average, heavy: the figure really is narrower or broader), skin, eyes (eleven
   colours), fourteen hair styles (cropped, short, receding, curly, shaggy, long, tied back, braids, one long plait,
-  pinned up, topknot, a crest, two tails, shaven) in eleven colours, ten beards (stubble, moustache, goatee,
+  pinned up, topknot, a crest, two tails, shaven) in eleven colours, nine kinds of beard (stubble, moustache, goatee,
   side-whiskers, short, full, long, forked, braided) with their own colour, the marks of your people (an elf's ears:
   long, swept back or short; a half-orc's tusks: small, heavy or filed down), a mark or scar (freckles, a scar down
   the cheek, through an eye or through the brow, an eyepatch, a broken nose, a gold earring, an old burn), paint or
