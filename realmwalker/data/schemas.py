@@ -274,10 +274,30 @@ ITEMS = Obj(
     }
 )
 
+LOOK_OPTION = Obj({"name": Str(max_len=40), "words": List(Str(max_len=40)),
+                   "say": Any_()})  # say: a phrase, or (builds) a list to pick from
+LOOK_RACE = Obj({
+    "builds": word_list(1, 20), "skins": word_list(1, 20), "eyes": word_list(1, 20), "hair_colours": word_list(1, 20),
+    "old_colours": word_list(1, 20),
+    "hair_styles": word_list(1, 20), "likely_hair": Map(word_list(1, 20)), "beards": Map(word_list(1, 20)),
+    "likely_beards": Map(word_list(1, 20)), "beard_chance": Map(Float(min=0, max=1)), "marks": word_list(1, 20),
+    "mark_chance": Float(min=0, max=1), "paints": word_list(1, 20), "paint_colours": word_list(1, 20),
+    "paint_chance": Float(min=0, max=1), "features": Map(word_list(1, 20)),
+}, strict=True)
+for _spec in LOOK_RACE.fields.values():
+    _spec.optional = True
+LOOKS = Obj({
+    "builds": Map(LOOK_OPTION, min_items=1), "skins": Map(LOOK_OPTION, min_items=1), "eyes": Map(LOOK_OPTION, min_items=1),
+    "hair_colours": Map(LOOK_OPTION, min_items=1), "hair_styles": Map(LOOK_OPTION, min_items=1),
+    "beards": Map(LOOK_OPTION, min_items=1), "marks": Map(LOOK_OPTION, min_items=1), "paints": Map(LOOK_OPTION, min_items=1),
+    "paint_colours": Map(LOOK_OPTION, min_items=1),
+    "features": Map(Obj({"name": Str(max_len=40), "options": Map(LOOK_OPTION, min_items=1)})),
+    "dyes": word_list(1, 30), "races": Map(LOOK_RACE, min_items=1),
+})
 APPEARANCE = Obj(
     {
         "hair": Map(word_list(1)), "eyes": word_list(1), "build": Map(word_list(1)), "mark": word_list(1, 120),
-        "backstory": Map(word_list(1, 300)), "background_lines": Map(Str(max_len=400)),
+        "backstory": Map(word_list(1, 300)), "background_lines": Map(Str(max_len=400)), "looks": LOOKS,
     }
 )
 
@@ -807,11 +827,9 @@ SPRITES = Obj(
         "figures": Obj({
             "colours": Map(COLOR, min_items=1), "metals": Map(COLOR, min_items=1), "glows": Map(COLOR, min_items=1),
             "skins": Map(Map(COLOR, min_items=1), min_items=1), "hair_colours": Map(COLOR, min_items=1),
-            "skin_words": List(List(Str(max_len=30), min_items=2, max_items=2)),
-            "hair_words": List(List(Str(max_len=30), min_items=2, max_items=2)),
-            "hair_styles": Map(List(Str(max_len=30), min_items=1)),
-            "hair_style_words": List(List(Str(max_len=30, min_len=0), min_items=2, max_items=2)),
-            "beards": Map(Float(min=0, max=1)), "beard_styles": Map(List(Str(max_len=30), min_items=1)),
+            "eye_colours": Map(COLOR, min_items=1), "paint_colours": Map(COLOR, min_items=1),
+            "bodies": Map(Map(Map(Int(min=0, max=24)), min_items=2), min_items=1),
+            "builds": Map(Map(Int(min=-6, max=6)), min_items=1), "feature_tints": Map(Str(max_len=20, min_len=0)),
             "worn": Map(Any_()), "classes": Map(Map(List(Str(max_len=60, min_len=0), min_items=1))),
             "outfits": Map(Map(List(Str(max_len=60, min_len=0), min_items=1)), min_items=1), "creatures": Map(Map(List(Str(max_len=60, min_len=0), min_items=1))),
         }),

@@ -10,6 +10,7 @@ import math
 
 from realmwalker.core import textgen
 from realmwalker.core.rng import RNG
+from realmwalker.rules import looks
 from realmwalker.rules.character import ABILITIES, Character, modifier
 from realmwalker.rules.inventory import add_item, equip_everything_sensible, fill_containers
 
@@ -39,6 +40,7 @@ class CharacterBuilder:
         self.name = ""
         self.age = 25
         self.appearance = ""
+        self.looks: dict = {}  # rules/looks.py; the appearance words are written from these
         self.backstory = ""
         self.personality = self.ideal = self.bond = self.flaw = ""
         self.backstory_source = "built-in"
@@ -189,19 +191,38 @@ class CharacterBuilder:
         return self.rng.randint(lo, hi)
 
     def random_appearance(self) -> str:
-        a = self.t.appearance
-        hair = self.rng.choice(a["hair"].get(self.race) or a["hair"]["human"])
-        build = self.rng.choice(a["build"].get(self.race) or a["build"]["human"])
-        eyes = self.rng.choice(a["eyes"])
-        mark = self.rng.choice(a["mark"])
-        return textgen.tidy(f"{build}, with {hair} hair and {eyes} eyes; {mark}.")
+        """New looks, at random for this people, sex and age; returns the words for them."""
+        self.randomize_looks()
+        return self.appearance
+
+    def randomize_looks(self) -> None:
+        self.looks = looks.random_looks(self.t, self.race, self.sex, self.age, self.rng)
+        self.appearance = looks.describe(self.t, self.looks, self.race, self.sex)
+
+    def set_look(self, slot: str, value: str) -> None:
+        """One look chosen (slot: build, skin, eyes, hair, hair_colour, beard, beard_colour, mark, paint, paint_colour,
+        dye, cloak, or feature:<name>); the words that describe the character are written again."""
+        new = dict(self.looks)
+        if slot.startswith("feature:"):
+            new["features"] = {**(new.get("features") or {}), slot[8:]: value}
+        else:
+            if slot == "hair_colour" and new.get("beard_colour") == new.get("hair_colour"):
+                new["beard_colour"] = value  # a beard follows the hair unless chosen apart
+            new[slot] = value
+        self.looks = looks.normalise(self.t, new, self.race, self.sex, self.name)
+        self.appearance = looks.describe(self.t, self.looks, self.race, self.sex)
+
+    def fit_looks(self) -> None:
+        """Keep the looks that still suit after a change of sex (a beard may go), and say them again."""
+        self.looks = looks.normalise(self.t, self.looks, self.race, self.sex, self.name)
+        self.appearance = looks.describe(self.t, self.looks, self.race, self.sex)
 
     def randomize_identity(self, keep_sex: bool = False) -> None:
         if not keep_sex:
             self.sex = self.rng.choice(list(SEXES))
         self.name = self.random_name()
         self.age = self.random_age()
-        self.appearance = self.random_appearance()
+        self.randomize_looks()
         self.backstory = ""
         self.backstory_source = "built-in"
 
@@ -284,7 +305,7 @@ class CharacterBuilder:
             skills=self.all_skills(), expertise=list(self.expertise), saves=list(cls["saves"]),
             armor_prof=list(dict.fromkeys(armor)), weapon_prof=list(dict.fromkeys(weapons)), tools=tools,
             languages=languages, features=features, fighting_style=self.fighting_style, uses=uses,
-            money=int(bg["money"]), appearance=self.appearance, backstory=self.backstory,
+            money=int(bg["money"]), appearance=self.appearance, looks=dict(self.looks), backstory=self.backstory,
             personality=self.personality, ideal=self.ideal, bond=self.bond, flaw=self.flaw,
         )
         items = t.items

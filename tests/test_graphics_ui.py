@@ -121,12 +121,15 @@ def test_figures_read_their_looks_from_words_and_wear_what_they_wear(pictured, a
 
     app, game = pictured
     t = game.tables
-    f = dolls.Figure(t, "human", "male", "x")
-    f.looks("Heavy, with straw-coloured hair, in sober dark clothes")
+    from realmwalker.rules import looks
+
+    f = dolls.Figure(t, "human", "male", "x", looks.from_text(t, "Heavy, with straw-coloured hair, in sober dark clothes",
+                                                             "human", "male", 30, "x"))
     assert f.hair == tuple(t.sprites["figures"]["hair_colours"]["blond"]), "'coloured' is not 'red'"
-    f = dolls.Figure(t, "human", "female", "y")
-    f.looks("A pale face and a shaven head")
-    assert f.hair_style == "" and f.skin == tuple(t.sprites["figures"]["skins"]["human"]["fair"])
+    assert f.look["build"] == "heavy"
+    f = dolls.Figure(t, "human", "female", "y", looks.from_text(t, "A pale face and a shaven head", "human", "female",
+                                                               30, "y"))
+    assert f.look["hair"] == "bald" and f.skin == tuple(t.sprites["figures"]["skins"]["human"]["fair"])
     me = game.leader
     blade = Item(990001, "longsword")
     blade.magic = {"rarity": "rare", "look": {"metal": "red_steel", "glow": "red"}}

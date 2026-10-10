@@ -1,24 +1,31 @@
-"""People as pixel-art figures: a body for their race and sex, coloured skin, hair and beard, then what they wear and
-hold, each a layer in the tile sheets (tools/figure_art.py, tools/figure_gear.py) coloured when drawn.
+"""People as pixel-art figures: a body for their people, sex and build, coloured skin, eyes, hair and beard, the marks
+of their people (ears, tusks, horns), scars and paint, then what they wear and hold, each a layer in the tile sheets
+(tools/figure_art.py, tools/figure_gear.py) coloured when drawn.
 
-The player and companions wear what they really wear, in the colours of those very things (a dyed cloak, a blackened
-blade, a rare item's own look); townsfolk dress for their trade and bandits, guards and cultists for theirs
-(data/sprites.json "figures"). Whatever the game does not say is picked by a stable hash of who it is, so a person
-looks the same every time. A figure is stacked once into a single picture and kept (compose()).
+How someone looks is a set of choices (rules/looks.py): the player's are made at character creation and kept with
+the character; everyone else's are read from the words that describe them. The player and companions wear what they
+really wear, in the colours of those very things (a dyed cloak, a blackened blade, a rare item's own look, or the
+colours chosen at creation); townsfolk dress for their trade and bandits, guards and cultists for theirs
+(data/sprites.json "figures"). A figure is stacked once into a single picture and kept (compose()).
+
+A people with no body of its own in the tile sheets is drawn on the human one, and a skin with no colour of its own
+in the data takes the first human one, so a new race can be played before anyone draws it.
 """
 
 from __future__ import annotations
 
-import re
 import zlib
 from collections import OrderedDict
 
 import numpy as np
 
+from realmwalker.rules import looks as looks_rules
+
 Part = tuple[str, tuple[int, int, int, int], int, int]  # tile, colour multiplied in (r, g, b, alpha), offset x, y
 WHITE = (255, 255, 255, 255)
 LAYERS = ("body", "legs", "feet", "over", "tabard", "belt", "hands")
 HIDES_HAIR = ("hood", "greathelm", "kettle", "nasal", "horned", "furhat", "wizard")
+BACK_FEATURES = ("tail",)
 
 
 def stable(key: str, n: int) -> int:
@@ -33,9 +40,20 @@ def choose(options, key: str):
     return options[stable(key, len(options))]
 
 
-def body_key(race: str, sex: str) -> str:
-    race = race if race in ("human", "elf", "dwarf", "halfling", "half_orc") else "human"
-    return f"{race}_{'female' if sex == 'female' else 'male'}"
+def body_key(race: str, sex: str, build: str = "average") -> str:
+    """The name of a body in the tile sheets (tools/figure_art.py body_key)."""
+    return f"{race}_{'female' if sex == 'female' else 'male'}" + ("" if build in ("", "average") else f"_{build}")
+
+
+def resolve_body(atlas, race: str, sex: str, build: str = "average") -> str:
+    """The body this person is drawn on: their own if it is in the sheets, else the nearest there is (their people's
+    average body, a human body of their build, a human one)."""
+    sex = "female" if sex == "female" else "male"
+    for key in (body_key(race, sex, build), body_key(race, sex), body_key("human", sex, build), body_key("human", sex),
+                "human_male"):
+        if atlas is None or atlas.has(f"fig/body/{key}"):
+            return key
+    return "human_male"
 
 
 def _fig(tables) -> dict:
@@ -53,57 +71,40 @@ def colour(tables, name: str | None, default=(200, 200, 200)) -> tuple[int, int,
     return default
 
 
+def skin_colour(tables, race: str, skin: str) -> tuple[int, int, int]:
+    skins = _fig(tables)["skins"]
+    palette = {k: v for k, v in (skins.get(race) or skins["human"]).items() if not k.startswith("_")}
+    if skin not in palette:  # a skin named for this people but not coloured: look in every palette
+        for other in skins.values():
+            if isinstance(other, dict) and skin in other and not skin.startswith("_"):
+                return tuple(other[skin])
+        return tuple(next(iter(palette.values())))
+    return tuple(palette[skin])
+
+
 class Figure:
     """Builds the list of layers for one person."""
 
-    def __init__(self, tables, race: str, sex: str, key: str) -> None:
+    def __init__(self, tables, race: str, sex: str, key: str, looks: dict | None = None) -> None:
         self.t = tables
         self.f = _fig(tables)
-        self.race = race if race in self.f["skins"] else "human"
+        self.race = race
         self.sex = sex
-        self.body = body_key(self.race, sex)
         self.key = key
+        self.look = looks_rules.normalise(tables, looks, race, sex, key)
+        f = self.f
+        self.skin = skin_colour(tables, race, self.look["skin"])
+        self.hair = tuple(f["hair_colours"].get(self.look["hair_colour"], f["hair_colours"]["brown"]))
+        self.beard_rgb = tuple(f["hair_colours"].get(self.look["beard_colour"], self.hair))
+        self.eye_rgb = tuple(f["eye_colours"].get(self.look["eyes"], f["eye_colours"]["brown"]))
+        self.paint_rgb = tuple(f["paint_colours"].get(self.look["paint_colour"], f["paint_colours"]["woad"]))
         self.slots: dict[str, tuple[str, tuple]] = {}  # slot -> (thing, colour)
         self.cloak: tuple | None = None
         self.head: tuple[str, tuple] | None = None
         self.held: tuple[str, tuple, tuple | None] | None = None  # weapon, metal colour, glow
         self.left: tuple[str, tuple] | None = None  # something small in the other hand (a torch)
         self.shield: tuple | None = None  # shape, field colour, emblem, emblem colour
-        skins = self.f["skins"][self.race]
-        self.skin = tuple(skins[choose(sorted(skins), key + "skin")])
-        self.hair_style = ""
-        self.hair = (0, 0, 0)
-        self.beard = ""
-
-    # ---- the person
-    def looks(self, text: str, age: int = 30) -> None:
-        """Skin, hair colour and style (and a beard) from the words used to describe them."""
-        f = self.f
-        # Only the words about their hair count ("straw-coloured hair", not "a red coat" or "colouRED").
-        parts = re.split(r"[,;.:!?]| and | with ", (text or "").lower())
-        skin_text = " ".join(c for c in parts if any(w in c for w in ("skin", "complexion", "face", "tanned", "weather")))
-        text = " ".join(c for c in parts if any(w in c for w in ("hair", "bald", "shaven", "braid", "locks", "head")))
-
-        def said(word: str, within: str | None = None) -> bool:
-            return re.search(r"\b" + re.escape(word), text if within is None else within) is not None
-
-        skins = f["skins"][self.race]
-        skin = next((k for word, k in f.get("skin_words", []) if k in skins and said(word, skin_text)), None)
-        if skin is not None:
-            self.skin = tuple(skins[skin])
-
-        colour_name = next((c for word, c in f["hair_words"] if said(word)), None)
-        if colour_name is None:
-            colour_name = "grey" if age >= 55 else choose(["black", "dark_brown", "brown", "auburn", "blond"], self.key + "hc")
-        self.hair = tuple(f["hair_colours"].get(colour_name, f["hair_colours"]["brown"]))
-        style = next((s for word, s in f["hair_style_words"] if said(word)), None)
-        if style is None:
-            pool = f["hair_styles"].get(self.body) or f["hair_styles"][self.sex if self.sex in ("male", "female") else "male"]
-            style = choose(pool, self.key + "hs")
-        self.hair_style = style
-        chance = f["beards"].get(self.race, 0.3)
-        if self.sex != "female" and stable(self.key + "beard", 100) < chance * 100:
-            self.beard = choose(f["beard_styles"].get(self.race, ["short"]), self.key + "bs")
+        self.bare_head = False  # leave off the hat or helmet (a portrait at character creation)
 
     # ---- what they wear
     def wear(self, slot: str, spec: str, dye: str | None = None, look: dict | None = None, hand: str = "right") -> None:
@@ -155,29 +156,50 @@ class Figure:
 
     # ---- the layers
     def parts(self, atlas) -> list[Part]:
-        b = self.body
+        b = resolve_body(atlas, self.race, self.sex, self.look["build"])
+        look = self.look
         out: list[Part] = []
 
         def add(name: str, rgb=(255, 255, 255), dx: int = 0, dy: int = 0, alpha: int = 255) -> None:
             if atlas.has(name):
                 out.append((name, (int(rgb[0]), int(rgb[1]), int(rgb[2]), alpha), dx, dy))
 
+        tints = self.f.get("feature_tints", {})
+
+        def feature(name: str, option: str) -> None:
+            tint = tints.get(name, "")
+            add(f"fig/feature/{b}/{name}_{option}", self.skin if tint == "skin" else (
+                self.hair if tint == "hair" else (255, 255, 255)))
+
+        feats = look.get("features") or {}
         if self.cloak:
             add(f"fig/cloak/{b}/back", self.cloak)
+        for name in BACK_FEATURES:
+            if feats.get(name):
+                feature(name, feats[name])
         add(f"fig/body/{b}", self.skin)
+        if look.get("paint") not in (None, "", "none"):
+            add(f"fig/paint/{b}/{look['paint']}", self.paint_rgb)
+        add(f"fig/eyes/{b}", self.eye_rgb)
+        if look.get("mark") not in (None, "", "none"):
+            add(f"fig/mark/{b}/{look['mark']}")
         for slot in LAYERS:
             if slot in self.slots:
                 thing, rgb = self.slots[slot]
                 add(f"fig/wear/{b}/{thing}", rgb)
         if self.cloak:
             add(f"fig/cloak/{b}/front", self.cloak)
-        if self.beard:
-            add(f"fig/beard/{b}/{self.beard}", self.hair)
-        hidden = self.head is not None and self.head[0] in HIDES_HAIR
-        if self.hair_style and not hidden:
-            add(f"fig/hair/{b}/{self.hair_style}", self.hair)
-        if self.head:
-            thing, rgb = self.head
+        if look.get("beard") not in (None, "", "none"):
+            add(f"fig/beard/{b}/{look['beard']}", self.beard_rgb)
+        head = None if self.bare_head else self.head
+        hidden = head is not None and head[0] in HIDES_HAIR
+        if look.get("hair") not in (None, "", "bald") and not hidden:
+            add(f"fig/hair/{b}/{look['hair']}", self.hair)
+        for name, option in feats.items():
+            if name not in BACK_FEATURES and option:
+                feature(name, option)
+        if head:
+            thing, rgb = head
             add(f"fig/head/{b}/{thing}", (255, 255, 255) if thing in ("crown", "circlet") else rgb)
         hands = atlas.figures.get("hands", {})
         ref = hands.get(atlas.figures.get("ref", "human_male"))
@@ -217,8 +239,7 @@ METAL_THINGS = {"chain_shirt", "chain_mail", "ring_mail", "scale_mail", "breastp
 # ---------------------------------------------------------------------------- who
 def npc(npc, tables, atlas=None) -> list[Part]:
     """A townsperson dressed for their trade."""
-    fig = Figure(tables, npc.race, npc.sex, f"npc{npc.id}")
-    fig.looks((npc.profile or {}).get("appearance", ""), npc.age)
+    fig = Figure(tables, npc.race, npc.sex, f"npc{npc.id}", looks_rules.of_npc(tables, npc))
     outfits = _fig(tables)["outfits"]
     fig.outfit(outfits.get(npc.job) or outfits["_"])
     return fig.parts(atlas or _atlas())
@@ -230,18 +251,27 @@ def creature(def_id: str, tables, key: str, atlas=None, sex: str = "") -> list[P
     if spec is None:
         return [(f"creature/{def_id}", WHITE, 0, 0)]
     sex = sex or ("female" if stable(key + "sex", 5) == 0 else "male")
-    fig = Figure(tables, spec.get("race", ["human"])[0] if isinstance(spec.get("race"), list) else "human", sex, key)
-    fig.looks("")
+    race = spec.get("race", ["human"])[0] if isinstance(spec.get("race"), list) else "human"
+    fig = Figure(tables, race, sex, key, looks_rules.from_text(tables, "", race, sex, 30, key))
     fig.outfit({k: v for k, v in spec.items() if k != "race"})
     return fig.parts(atlas or _atlas())
 
 
-def character(char, tables, *, lit: bool = False, atlas=None) -> list[Part]:
+def character_looks(char, tables) -> dict:
+    """How the player or a companion looks: chosen at creation, or (an older character) read from their words."""
+    if getattr(char, "looks", None):
+        return looks_rules.normalise(tables, char.looks, char.race, char.sex, f"pc{char.name}")
+    return looks_rules.from_text(tables, getattr(char, "appearance", ""), char.race, char.sex,
+                                 getattr(char, "age", 30), f"pc{char.name}")
+
+
+def character(char, tables, *, lit: bool = False, atlas=None, bare_head: bool = False) -> list[Part]:
     """The player or a companion, in what they wear and hold, in the colours of those very things."""
     f = _fig(tables)
     worn = f["worn"]
-    fig = Figure(tables, char.race, char.sex, f"pc{char.name}")
-    fig.looks(getattr(char, "appearance", ""), getattr(char, "age", 30))
+    look = character_looks(char, tables)
+    fig = Figure(tables, char.race, char.sex, f"pc{char.name}", look)
+    fig.bare_head = bare_head
     dressed = set()
     for slot in ("under", "main", "armor", "outer", "head", "helmet", "hands", "feet", "main_hand", "off_hand"):
         it = char.equipped_item(slot)
@@ -250,12 +280,14 @@ def character(char, tables, *, lit: bool = False, atlas=None) -> list[Part]:
         spec = worn.get(it.def_id)
         if not spec:
             continue
-        look = item_look(it, tables)
+        item = item_look(it, tables)
         dyes = spec.get("dyes")
-        dye = look.get("cloth") or (dyes[stable(f"item{it.uid}", len(dyes))] if dyes else None)
+        chosen = look.get("cloak") if ("cloak" in spec or spec.get("head", "").startswith("hood")) else look.get("dye")
+        dye = item.get("cloth") or (chosen if dyes and chosen else None) or (
+            dyes[stable(f"item{it.uid}", len(dyes))] if dyes else None)
         for key in ("body", "legs", "over", "feet", "hands", "head", "cloak", "held", "shield", "tabard", "belt"):
             if key in spec:
-                fig.wear(key, spec[key], dye, look, hand="left" if slot == "off_hand" else "right")
+                fig.wear(key, spec[key], dye, item, hand="left" if slot == "off_hand" else "right")
                 dressed.add(key)
     if "body" not in dressed and "over" not in dressed:
         fig.outfit({k: v for k, v in (f["classes"].get(char.cls) or f["classes"]["_"]).items() if k in ("body", "legs")})
@@ -325,14 +357,48 @@ def problems(tables, atlas) -> list[str]:
                 out.extend(f"worn {iid}: no colour {c}" for c in o if c not in named)
             else:
                 check(f"worn {iid}", slot, o)
-    for body in ("human_male", "dwarf_female"):
-        out.extend(f"hair {s}" for pool in f["hair_styles"].values() for s in pool if not atlas.has(f"fig/hair/{body}/{s}"))
-        out.extend(f"beard {s}" for pool in f["beard_styles"].values() for s in pool
-                   if not atlas.has(f"fig/beard/{body}/{s}"))
-    out.extend(f"skin word {w}: no skin {k}" for w, k in f.get("skin_words", [])
-               if not any(k in s for s in f["skins"].values()))
-    out.extend(f"hair word {w}: no colour {k}" for w, k in f["hair_words"] if k not in f["hair_colours"])
+    out += looks_problems(tables, atlas)
     return sorted(set(out))
+
+
+def looks_problems(tables, atlas) -> list[str]:
+    """Every look a people may have (data/appearance.json looks) must be drawable: a colour for each skin, hair, eye
+    and paint, and a picture for each hair style, beard, mark, paint and feature on each of that people's bodies."""
+    f = _fig(tables)
+    d = looks_rules.data(tables)
+    out: list[str] = []
+    races = [r for r in d["races"] if not r.startswith("_")] + ["_default"]
+    for race in races:
+        for sex in ("male", "female"):
+            opts = looks_rules.options(tables, race, sex)
+            real = race if race in tables.races else "human"
+            for build in opts["build"]:
+                body = resolve_body(atlas, real, sex, build)
+                for style in opts["hair"]:
+                    if style != "bald" and not atlas.has(f"fig/hair/{body}/{style}"):
+                        out.append(f"{race} {sex}: no hair {style} on {body}")
+                for beard in opts["beard"]:
+                    if beard != "none" and not atlas.has(f"fig/beard/{body}/{beard}"):
+                        out.append(f"{race} {sex}: no beard {beard} on {body}")
+                for mark in opts["mark"]:
+                    if mark != "none" and not atlas.has(f"fig/mark/{body}/{mark}"):
+                        out.append(f"{race} {sex}: no mark {mark} on {body}")
+                for paint in opts["paint"]:
+                    if paint != "none" and not atlas.has(f"fig/paint/{body}/{paint}"):
+                        out.append(f"{race} {sex}: no paint {paint} on {body}")
+                for feat, pool in opts["features"].items():
+                    for option in pool:
+                        if option != "none" and not atlas.has(f"fig/feature/{body}/{feat}_{option}"):
+                            out.append(f"{race} {sex}: no {feat} {option} on {body}")
+                if not atlas.has(f"fig/eyes/{body}"):
+                    out.append(f"{race} {sex}: no eyes on {body}")
+            skins = f["skins"].get(real) or f["skins"]["human"]
+            out.extend(f"{race}: no colour for skin {k}" for k in opts["skin"] if k not in skins)
+            out.extend(f"{race}: no colour for hair {k}" for k in opts["hair_colour"] if k not in f["hair_colours"])
+            out.extend(f"{race}: no colour for eyes {k}" for k in opts["eyes"] if k not in f["eye_colours"])
+            out.extend(f"{race}: no colour for paint {k}" for k in opts["paint_colour"] if k not in f["paint_colours"])
+    out.extend(f"dye {c}: no such colour" for c in d["dyes"] if c not in f["colours"])
+    return out
 
 
 def item_parts(item, tables, atlas) -> list[Part] | None:
@@ -428,15 +494,15 @@ def figure_key(parts: list[Part]) -> int:
     return hash(tuple(parts))
 
 
-def bust(atlas, parts: list[Part]) -> tuple[int, int, int, int]:
-    """The head and shoulders of a figure, in its own pixels (x, y, w, h): for a portrait."""
+def bust(atlas, parts: list[Part], side: int = 20) -> tuple[int, int, int, int]:
+    """The head and shoulders of a figure, in its own pixels (x, y, w, h): for a portrait. A smaller side is closer to
+    the face (16: the face and a little of the shoulders)."""
     body = next((p[0][len("fig/body/"):] for p in parts if p[0].startswith("fig/body/")), None)
     head = atlas.figures.get("heads", {}).get(body)
     if head is None:
         return 0, 0, atlas.tile, atlas.tile
     hx, hy, hw, hh = head
-    side = 20
-    top = max(0, min(atlas.tile - side, hy - 3))
+    top = max(0, min(atlas.tile - side, hy - 3 - (20 - side) // 4))
     return 16 - side // 2, top, side, side
 
 

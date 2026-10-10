@@ -30,5 +30,201 @@
     "sage": "Long years among books gave {object} learning, bad eyesight and a head full of unanswered questions.",
     "outlander": "The wild country taught {object} to track, to hunt and to go days without speaking to another soul.",
     "guild_artisan": "A guild master's beatings and a long apprenticeship made {object} good at a trade that pays badly."
+  },
+  "looks": {
+    "_comment": "How a person looks: chosen at character creation, or read from the words that describe a townsperson (rules/looks.py). Each option has a name (shown when choosing), words (found in a description, they pick it) and say (how it is put in the description written from it; {c} is the colour). races: what each people may have; a people not listed, or a list not given, uses _default, so a new race works before anyone writes its looks. likely: what a random person of that sex usually has (the rest stay choosable); old_colours: hair a young person seldom has. Everything named here must be drawable: colours in data/sprites.json figures, shapes in tools/figure_gear.py (tests/test_looks.py checks).",
+    "builds": {
+      "slight": {"name": "Slight", "words": ["slight", "slender", "lean", "wiry", "willowy", "lithe", "narrow", "thin", "gaunt", "bony", "rangy", "skinny"], "say": ["Slight", "Lean", "Wiry", "Narrow-built"]},
+      "average": {"name": "Average", "words": [], "say": ["Of middling build", "Well made", "Straight-backed", "Plainly built"]},
+      "heavy": {"name": "Heavy", "words": ["heavy", "stocky", "broad", "barrel", "hulking", "massive", "plump", "thick", "squat", "burly", "stout", "portly", "fat", "big", "powerful", "round-bellied"], "say": ["Heavy", "Broad", "Thick-set", "Burly"]}
+    },
+    "skins": {
+      "fair": {"name": "Fair", "words": ["fair", "pale", "pallid", "freckle"], "say": "fair-skinned"},
+      "pale": {"name": "Pale", "words": ["pale", "pallid", "milk"], "say": "pale"},
+      "light": {"name": "Light", "words": ["light-skinned", "rosy"], "say": "light-skinned"},
+      "ruddy": {"name": "Ruddy", "words": ["ruddy", "red-faced", "sunburn", "florid"], "say": "ruddy-faced"},
+      "tan": {"name": "Tan", "words": ["tanned", "weather", "sun-brown", "tan"], "say": "weather-browned"},
+      "olive": {"name": "Olive", "words": ["olive"], "say": "olive-skinned"},
+      "brown": {"name": "Brown", "words": ["brown-skinned", "sun-dark", "brown"], "say": "brown-skinned"},
+      "dark": {"name": "Dark", "words": ["dark-skinned", "dark", "black"], "say": "dark-skinned"},
+      "deep": {"name": "Deep", "words": ["deep brown", "ebony"], "say": "deep-brown-skinned"},
+      "ash": {"name": "Ash", "words": ["ashen", "ash", "grey-skinned"], "say": "ash-pale"},
+      "dusky": {"name": "Dusky", "words": ["dusky", "shadow"], "say": "dusky-skinned"},
+      "grey_green": {"name": "Grey-green", "words": ["grey-green", "greyish"], "say": "grey-green-skinned"},
+      "green": {"name": "Green", "words": ["green"], "say": "green-skinned"},
+      "olive_green": {"name": "Olive-green", "words": ["olive-green", "olive"], "say": "olive-green-skinned"},
+      "dark_green": {"name": "Dark green", "words": ["dark green", "deep green"], "say": "dark-green-skinned"},
+      "grey": {"name": "Grey", "words": ["grey", "gray", "slate"], "say": "grey-skinned"}
+    },
+    "eyes": {
+      "brown": {"name": "Brown", "words": ["brown"], "say": "brown"},
+      "dark": {"name": "Dark", "words": ["dark", "black"], "say": "dark"},
+      "hazel": {"name": "Hazel", "words": ["hazel"], "say": "hazel"},
+      "green": {"name": "Green", "words": ["green"], "say": "green"},
+      "blue": {"name": "Blue", "words": ["blue"], "say": "blue"},
+      "grey": {"name": "Grey", "words": ["grey", "gray", "steel"], "say": "grey"},
+      "pale": {"name": "Pale", "words": ["pale", "washed", "colourless", "watery"], "say": "pale"},
+      "amber": {"name": "Amber", "words": ["amber", "yellow", "gold"], "say": "amber"},
+      "violet": {"name": "Violet", "words": ["violet", "purple"], "say": "violet"},
+      "silver": {"name": "Silver", "words": ["silver"], "say": "silver"},
+      "red": {"name": "Red", "words": ["red", "blood"], "say": "red"}
+    },
+    "hair_colours": {
+      "black": {"name": "Black", "words": ["black", "raven", "jet"], "say": "black"},
+      "dark_brown": {"name": "Dark brown", "words": ["dark brown", "dark"], "say": "dark brown"},
+      "brown": {"name": "Brown", "words": ["brown", "mouse"], "say": "brown"},
+      "auburn": {"name": "Chestnut", "words": ["chestnut", "auburn"], "say": "chestnut"},
+      "red": {"name": "Red", "words": ["red", "ginger"], "say": "red"},
+      "copper": {"name": "Copper", "words": ["copper", "rust", "fox"], "say": "copper"},
+      "blond": {"name": "Blond", "words": ["blond", "gold", "sandy", "straw", "tawny", "yellow", "flaxen"], "say": "yellow"},
+      "fair": {"name": "Fair", "words": ["fair", "pale gold", "tow"], "say": "fair"},
+      "silver": {"name": "Silver", "words": ["silver", "silver-fair"], "say": "silver"},
+      "grey": {"name": "Grey", "words": ["grey", "gray", "ash", "iron", "greying", "white-streaked"], "say": "grey"},
+      "white": {"name": "White", "words": ["white", "snow"], "say": "white"}
+    },
+    "hair_styles": {
+      "bald": {"name": "Bald or shaven", "words": ["bald", "shaven", "shaved", "shorn", "hairless"], "say": "a shaven head"},
+      "cropped": {"name": "Cropped", "words": ["cropped", "close-cropped", "short-cut", "stubbled scalp"], "say": "close-cropped {c} hair"},
+      "short": {"name": "Short", "words": ["short"], "say": "short {c} hair"},
+      "receding": {"name": "Receding", "words": ["receding", "thinning", "balding", "high brow"], "say": "thinning {c} hair"},
+      "curly": {"name": "Curly", "words": ["curly", "curls", "curling", "frizz"], "say": "curly {c} hair"},
+      "shaggy": {"name": "Shaggy", "words": ["shaggy", "unkempt", "wild", "matted", "tangled", "lank"], "say": "shaggy {c} hair"},
+      "long": {"name": "Long", "words": ["long", "flowing", "loose"], "say": "long {c} hair"},
+      "ponytail": {"name": "Tied back", "words": ["tied back", "ponytail", "queue", "tail"], "say": "{c} hair tied back"},
+      "braids": {"name": "Braids", "words": ["braids", "braided", "plaits"], "say": "{c} hair in braids"},
+      "plait": {"name": "One long plait", "words": ["plait", "single braid"], "say": "{c} hair in one long plait"},
+      "bun": {"name": "Bun", "words": ["bun", "pinned up", "knotted up"], "say": "{c} hair pinned up"},
+      "topknot": {"name": "Topknot", "words": ["topknot", "top-knot"], "say": "a {c} topknot on a shaven head"},
+      "crest": {"name": "Crest", "words": ["crest of hair", "crest", "mohawk", "strip of hair"], "say": "a {c} crest of hair on a shaven head"},
+      "tails": {"name": "Two tails", "words": ["two tails", "pigtails", "bunches"], "say": "{c} hair in two tails"}
+    },
+    "beards": {
+      "none": {"name": "None", "words": ["clean-shaven", "beardless"], "say": ""},
+      "stubble": {"name": "Stubble", "words": ["stubble", "unshaven", "bristle", "stubbled"], "say": "{c} stubble"},
+      "moustache": {"name": "Moustache", "words": ["moustache", "mustache", "whiskers"], "say": "a {c} moustache"},
+      "goatee": {"name": "Goatee", "words": ["goatee", "pointed", "chin beard"], "say": "a {c} goatee"},
+      "chops": {"name": "Side whiskers", "words": ["chops", "side-whiskers", "side whiskers", "sideburns"], "say": "{c} side-whiskers"},
+      "short": {"name": "Short beard", "words": ["short", "trimmed", "neat"], "say": "a short {c} beard"},
+      "full": {"name": "Full beard", "words": ["full", "thick", "bushy", "great beard"], "say": "a full {c} beard"},
+      "long": {"name": "Long beard", "words": ["long", "flowing", "belt-length"], "say": "a long {c} beard"},
+      "forked": {"name": "Forked beard", "words": ["forked", "split beard", "two-pointed"], "say": "a forked {c} beard"},
+      "braided": {"name": "Braided beard", "words": ["braided", "plaited", "braids"], "say": "a braided {c} beard"}
+    },
+    "marks": {
+      "none": {"name": "None", "words": [], "say": ""},
+      "freckles": {"name": "Freckles", "words": ["freckle"], "say": "a freckled face"},
+      "scar_cheek": {"name": "Cheek scar", "words": ["scar down", "scarred cheek", "cheek scar", "slashed cheek"], "say": "a scar down one cheek"},
+      "scar_eye": {"name": "Scar through an eye", "words": ["scar through one eye", "scarred eye", "milky eye", "blind eye"], "say": "a scar through one eye"},
+      "scar_brow": {"name": "Split brow", "words": ["scar through one eyebrow", "split brow", "notched brow"], "say": "a white scar through one eyebrow"},
+      "eyepatch": {"name": "Eyepatch", "words": ["patch", "one eye", "lost eye"], "say": "a patch over one eye"},
+      "broken_nose": {"name": "Broken nose", "words": ["broken nose", "badly healed nose", "crooked nose", "flattened nose"], "say": "a badly healed nose"},
+      "earring": {"name": "Earring", "words": ["earring", "ring in one ear", "ear-ring"], "say": "a gold ring in one ear"},
+      "burn": {"name": "Burn scar", "words": ["burn", "burned", "scalded"], "say": "an old burn on one side of the face"}
+    },
+    "paints": {
+      "none": {"name": "None", "words": [], "say": ""},
+      "band": {"name": "Band across the eyes", "words": ["war paint", "painted face", "paint across"], "say": "{c} paint across the eyes"},
+      "lines": {"name": "Tattooed cheeks", "words": ["tattoo", "inked", "tattooed"], "say": "{c} lines tattooed on the cheeks"},
+      "stripes": {"name": "Chin stripes", "words": ["chin stripes", "striped chin"], "say": "{c} stripes on the chin"},
+      "sigil": {"name": "Mark on the brow", "words": ["mark on the brow", "brow mark", "sigil", "forehead"], "say": "a {c} mark on the brow"}
+    },
+    "paint_colours": {
+      "woad": {"name": "Woad blue", "words": ["woad", "blue"], "say": "blue woad"},
+      "ochre": {"name": "Red ochre", "words": ["ochre", "red"], "say": "red ochre"},
+      "ink": {"name": "Black ink", "words": ["ink", "black"], "say": "black"},
+      "chalk": {"name": "White chalk", "words": ["chalk", "white", "ash"], "say": "white chalk"},
+      "green": {"name": "Green", "words": ["green"], "say": "green"},
+      "gold": {"name": "Gold", "words": ["gold"], "say": "gold"}
+    },
+    "features": {
+      "ears": {"name": "Ears", "options": {
+        "long": {"name": "Long and pointed", "words": ["long ears", "long pointed"], "say": "long pointed ears"},
+        "swept": {"name": "Swept back", "words": ["swept", "swept-back"], "say": "ears swept back"},
+        "short": {"name": "Short points", "words": ["short ears", "short pointed"], "say": "short pointed ears"}}},
+      "tusks": {"name": "Tusks", "options": {
+        "small": {"name": "Small", "words": ["small tusks", "tusks"], "say": "small tusks"},
+        "large": {"name": "Heavy", "words": ["heavy tusks", "great tusks", "large tusks"], "say": "heavy tusks"},
+        "none": {"name": "Filed down", "words": ["filed", "no tusks"], "say": "tusks filed to the gum"}}},
+      "horns": {"name": "Horns", "options": {
+        "curled": {"name": "Curled", "words": ["curling horns", "curled horns", "ram"], "say": "curling horns"},
+        "straight": {"name": "Straight", "words": ["straight horns", "swept horns", "horns"], "say": "straight horns"},
+        "small": {"name": "Small", "words": ["small horns", "nubs", "stubs"], "say": "small horns"},
+        "none": {"name": "None", "words": ["hornless"], "say": ""}}},
+      "tail": {"name": "Tail", "options": {
+        "long": {"name": "Long", "words": ["tail"], "say": "a long tail"},
+        "none": {"name": "None", "words": ["tailless"], "say": ""}}}
+    },
+    "dyes": ["russet", "brown", "dark_brown", "tan", "undyed", "linen", "green", "forest", "moss", "teal", "blue", "navy",
+             "sky", "red", "crimson", "wine", "rose", "purple", "violet", "yellow", "ochre", "orange", "grey", "black", "white"],
+    "races": {
+      "_default": {
+        "builds": ["slight", "average", "heavy"],
+        "skins": ["fair", "light", "tan", "olive", "brown", "dark", "deep"],
+        "eyes": ["brown", "dark", "hazel", "green", "blue", "grey", "pale"],
+        "hair_colours": ["black", "dark_brown", "brown", "auburn", "red", "copper", "blond", "fair", "grey", "white"],
+        "old_colours": ["grey", "white"],
+        "hair_styles": ["bald", "cropped", "short", "receding", "curly", "shaggy", "long", "ponytail", "braids", "plait", "bun",
+                        "topknot", "crest", "tails"],
+        "likely_hair": {"male": ["short", "short", "cropped", "long", "curly", "ponytail", "shaggy", "receding"],
+                        "female": ["long", "long", "braids", "bun", "ponytail", "curly", "plait"]},
+        "beards": {"male": ["none", "stubble", "moustache", "goatee", "chops", "short", "full", "long", "forked", "braided"],
+                   "female": ["none"]},
+        "likely_beards": {"male": ["stubble", "short", "full", "long", "moustache"]},
+        "beard_chance": {"male": 0.45, "female": 0.0},
+        "marks": ["none", "freckles", "scar_cheek", "scar_eye", "scar_brow", "eyepatch", "broken_nose", "earring", "burn"],
+        "mark_chance": 0.3,
+        "paints": ["none", "band", "lines", "stripes", "sigil"],
+        "paint_colours": ["woad", "ochre", "ink", "chalk", "green", "gold"],
+        "paint_chance": 0.04,
+        "features": {}
+      },
+      "human": {},
+      "elf": {
+        "builds": ["slight", "average"],
+        "skins": ["pale", "fair", "light", "tan", "ash", "dusky"],
+        "eyes": ["green", "blue", "grey", "hazel", "amber", "violet", "silver"],
+        "hair_colours": ["black", "dark_brown", "copper", "red", "blond", "fair", "silver", "white"],
+        "old_colours": ["white"],
+        "likely_hair": {"male": ["long", "long", "plait", "ponytail", "braids", "short"],
+                        "female": ["long", "long", "braids", "plait", "bun", "ponytail"]},
+        "beards": {"male": ["none"], "female": ["none"]},
+        "beard_chance": {"male": 0.0, "female": 0.0},
+        "features": {"ears": ["long", "swept", "short"]}
+      },
+      "dwarf": {
+        "builds": ["average", "heavy"],
+        "skins": ["ruddy", "light", "tan", "brown", "dark"],
+        "eyes": ["brown", "dark", "grey", "blue", "hazel"],
+        "hair_colours": ["black", "dark_brown", "brown", "auburn", "red", "copper", "blond", "grey", "white"],
+        "likely_hair": {"male": ["short", "cropped", "long", "receding", "bald", "braids"],
+                        "female": ["braids", "braids", "bun", "plait", "long"]},
+        "beards": {"male": ["none", "stubble", "moustache", "chops", "short", "full", "long", "forked", "braided"],
+                   "female": ["none", "short", "braided", "long"]},
+        "likely_beards": {"male": ["full", "long", "braided", "braided", "forked"]},
+        "beard_chance": {"male": 1.0, "female": 0.0}
+      },
+      "halfling": {
+        "skins": ["ruddy", "light", "tan", "brown", "dark"],
+        "hair_colours": ["black", "dark_brown", "brown", "auburn", "red", "blond", "fair", "grey", "white"],
+        "likely_hair": {"male": ["curly", "curly", "short", "shaggy"], "female": ["curly", "bun", "long", "braids"]},
+        "beards": {"male": ["none", "stubble", "moustache", "chops", "short"], "female": ["none"]},
+        "likely_beards": {"male": ["stubble", "chops"]},
+        "beard_chance": {"male": 0.1, "female": 0.0}
+      },
+      "half_orc": {
+        "builds": ["average", "heavy"],
+        "skins": ["grey_green", "green", "olive_green", "dark_green", "grey"],
+        "eyes": ["brown", "dark", "amber", "grey", "red"],
+        "hair_colours": ["black", "dark_brown", "brown", "red", "grey", "white"],
+        "likely_hair": {"male": ["topknot", "crest", "cropped", "long", "bald", "braids"],
+                        "female": ["long", "braids", "topknot", "plait", "crest"]},
+        "beards": {"male": ["none", "stubble", "moustache", "goatee", "short", "braided"], "female": ["none"]},
+        "likely_beards": {"male": ["stubble", "goatee", "short"]},
+        "beard_chance": {"male": 0.3, "female": 0.0},
+        "mark_chance": 0.5,
+        "paint_chance": 0.15,
+        "features": {"tusks": ["small", "large", "none"]}
+      }
+    }
   }
 }

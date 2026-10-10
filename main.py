@@ -57,7 +57,7 @@ def smoke_script():
     frame += 110  # world generation
     press("enter", "enter", "enter")  # people, calling, background
     shots[frame + 4] = "creation"
-    press("enter", "enter", "enter", "enter", "enter")  # abilities, skills, identity, start, begin
+    press("enter", "enter", "enter", "enter", "enter", "enter")  # abilities, skills, identity, looks, start, begin
     frame += 4
 
     def peaceful(app):

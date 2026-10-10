@@ -32,7 +32,7 @@ import tile_art  # noqa: E402
 
 PACK_URL = "https://opengameart.org/sites/default/files/Dungeon%20Crawl%20Stone%20Soup%20Full.zip"
 OUT = ROOT / "assets" / "tiles"
-SHEET = 1024
+SHEET = 2048
 
 # How each family is toned: (saturation, brightness, warmth). The pack is bright and cheerful; the game is not.
 GRADES = {
@@ -499,6 +499,14 @@ def figure_tiles() -> tuple[dict[str, Image.Image], dict]:
             keep(f"fig/head/{key}/{hg}", fg.headgear(b, hg))
         keep(f"fig/cloak/{key}/back", fg.cloak(b, "back"))
         keep(f"fig/cloak/{key}/front", fg.cloak(b, "front"))
+        keep(f"fig/eyes/{key}", fg.eyes(b))
+        for mk in fg.MARKS:
+            keep(f"fig/mark/{key}/{mk}", fg.mark(b, mk))
+        for pt in fg.PAINTS:
+            keep(f"fig/paint/{key}/{pt}", fg.face_paint(b, pt))
+        for feat, options in fg.FEATURES.items():
+            for opt in options:
+                keep(f"fig/feature/{key}/{feat}_{opt}", fg.feature(b, feat, opt))
     right, left = ref.hands
     for w in fg.WEAPONS:
         metal = fg.held(w, right, "metal")

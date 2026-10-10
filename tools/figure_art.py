@@ -11,6 +11,10 @@ a green one are one picture. Weapons and shields are drawn once, held at a hand,
 
 from __future__ import annotations
 
+import json
+from functools import lru_cache
+from pathlib import Path
+
 import numpy as np
 from PIL import Image
 
@@ -20,43 +24,46 @@ GROUND = 31  # the row under the feet (its outline is the last row)
 NAMES = {HEAD: "head", NECK: "neck", TORSO: "torso", UARM: "upper arm", LARM: "forearm", HAND: "hand",
          PELVIS: "hips", ULEG: "thigh", LLEG: "shin", FOOT: "foot", EAR: "ear"}
 
-# Proportions, in pixels. sh/waist/hip are widths (even), *_h heights.
-BODIES = {
-    ("human", "male"): dict(head_w=8, head_h=8, neck=1, sh=12, waist=8, torso=7, arm=3, hip=8, pelvis=2, leg=3, gap=2,
-                            uleg=4, lleg=4, foot=2),
-    ("human", "female"): dict(head_w=8, head_h=8, neck=1, sh=10, waist=6, torso=7, arm=2, hip=8, pelvis=2, leg=3, gap=2,
-                              uleg=4, lleg=4, foot=2),
-    ("elf", "male"): dict(head_w=8, head_h=8, neck=1, sh=10, waist=6, torso=7, arm=2, hip=8, pelvis=2, leg=3, gap=2,
-                          uleg=4, lleg=4, foot=2, ears=True),
-    ("elf", "female"): dict(head_w=8, head_h=8, neck=1, sh=10, waist=6, torso=7, arm=2, hip=8, pelvis=2, leg=3, gap=2,
-                            uleg=4, lleg=4, foot=2, ears=True),
-    ("dwarf", "male"): dict(head_w=10, head_h=7, neck=0, sh=14, waist=12, torso=7, arm=3, hip=10, pelvis=2, leg=4, gap=2,
-                            uleg=2, lleg=2, foot=2),
-    ("dwarf", "female"): dict(head_w=10, head_h=7, neck=0, sh=12, waist=10, torso=7, arm=3, hip=10, pelvis=2, leg=4,
-                              gap=2, uleg=2, lleg=2, foot=2),
-    ("halfling", "male"): dict(head_w=8, head_h=7, neck=0, sh=10, waist=8, torso=6, arm=2, hip=8, pelvis=2, leg=3, gap=2,
-                               uleg=2, lleg=3, foot=2, bare_feet=True),
-    ("halfling", "female"): dict(head_w=8, head_h=7, neck=0, sh=8, waist=6, torso=6, arm=2, hip=8, pelvis=2, leg=3, gap=2,
-                                 uleg=2, lleg=3, foot=2, bare_feet=True),
-    ("half_orc", "male"): dict(head_w=10, head_h=8, neck=1, sh=14, waist=10, torso=7, arm=3, hip=10, pelvis=2, leg=4,
-                               gap=2, uleg=4, lleg=3, foot=2, tusks=True),
-    ("half_orc", "female"): dict(head_w=8, head_h=8, neck=1, sh=12, waist=8, torso=7, arm=3, hip=8, pelvis=2, leg=3, gap=2,
-                                 uleg=4, lleg=4, foot=2, tusks=True),
-}
-RACES = ("human", "elf", "dwarf", "halfling", "half_orc")
+ROOT = Path(__file__).resolve().parent.parent
+SEXES = ("male", "female")
+
+
+@lru_cache(maxsize=1)
+def _data() -> tuple[dict, dict]:
+    """The figures' data (data/sprites.json) and what each people may look like (data/appearance.json)."""
+    sprites = json.loads((ROOT / "data" / "sprites.json").read_text(encoding="utf-8"))["figures"]
+    looks = json.loads((ROOT / "data" / "appearance.json").read_text(encoding="utf-8"))["looks"]
+    return sprites, looks
+
+
+def proportions(race: str, sex: str, build: str = "average") -> dict:
+    """A body's proportions in pixels (data/sprites.json figures.bodies), changed by its build."""
+    sprites, _ = _data()
+    bodies = sprites["bodies"]
+    p = dict((bodies.get(race) or bodies["human"])[sex])
+    for k, v in sprites["builds"].get(build, {}).items():
+        p[k] = p.get(k, 0) + v
+    p["arm"] = max(2, min(4, p["arm"]))
+    p["leg"] = max(2, p["leg"])
+    p["waist"] = max(4, min(p["waist"], p["sh"] + 2))
+    p["hip"] = max(p["hip"], 2 * p["leg"] + p["gap"])
+    return p
+
 
 # Grey ramps (outline, shadow, base, light, highlight): coloured when drawn.
 NEUTRAL = np.array([[30, 28, 28], [96, 92, 90], [156, 152, 148], [204, 200, 196], [240, 238, 234]], np.float32)
-SKIN = np.array([[52, 30, 24], [168, 112, 86], [214, 160, 124], [236, 192, 156], [248, 216, 184]], np.float32)
+# Skin is drawn in light greys and coloured when drawn with the real skin colour (data/sprites.json figures.skins), so
+# any people's skin, however strange, is one colour in the data.
+SKIN = np.array([[60, 44, 42], [176, 152, 148], [228, 222, 218], [246, 242, 238], [254, 252, 250]], np.float32)
 EYE = (34, 26, 24)
 
 
 class Body:
     """A body's map of parts, and where its head, hands and feet are."""
 
-    def __init__(self, race: str, sex: str) -> None:
-        p = BODIES[(race, sex)]
-        self.race, self.sex, self.p = race, sex, p
+    def __init__(self, race: str, sex: str, build: str = "average") -> None:
+        p = proportions(race, sex, build)
+        self.race, self.sex, self.build, self.p = race, sex, build, p
         g = np.zeros((H, W), np.int8)
         c = 16
         y = GROUND
@@ -122,12 +129,6 @@ class Body:
                 inset = 2
             g[head_top + i, c - hw2 + inset:c + hw2 - inset] = HEAD
         self.head = (c - hw2, head_top, p["head_w"], hh)
-        if p.get("ears"):
-            ey = head_top + hh // 2 - 1
-            g[ey, c - hw2 - 1] = EAR
-            g[ey - 1, c - hw2 - 2] = EAR
-            g[ey, c + hw2] = EAR
-            g[ey - 1, c + hw2 + 1] = EAR
         self.grid = g
         self.c = c
 
@@ -211,12 +212,28 @@ def base(body: Body) -> Image.Image:
     a[ey - 1, c + 1:c + 3, :3] = SKIN[1]
     a[ey + 1, c - 1, :3] = SKIN[1]  # nose
     if hh >= 8:
-        a[ey + 2, c - 1:c + 1, :3] = SKIN[1]  # mouth
-    if body.p.get("tusks"):
-        a[ey + 2, c - 2, :3] = (240, 236, 220)
-        a[ey + 2, c + 1, :3] = (240, 236, 220)
+        a[ey + 2, c - 1:c + 1, :3] = (128, 120, 120)  # mouth
     return to_image(a)
 
 
+def body_key(race: str, sex: str, build: str = "average") -> str:
+    """The name of a body in the tile sheets: "dwarf_male", "elf_female_slight"."""
+    return f"{race}_{sex}" + ("" if build == "average" else f"_{build}")
+
+
 def bodies() -> dict[str, Body]:
-    return {f"{r}_{s}": Body(r, s) for (r, s) in BODIES}
+    """Every body to draw: each people with a body in data/sprites.json, each sex, and each build that people may
+    have (data/appearance.json looks), the average one always."""
+    sprites, looks = _data()
+    races = looks["races"]
+    out = {}
+    for race in sprites["bodies"]:
+        if race.startswith("_"):
+            continue
+        spec = dict(races["_default"])
+        spec.update(races.get(race) or {})
+        builds = ["average"] + [b for b in spec["builds"] if b != "average"]
+        for sex in SEXES:
+            for build in builds:
+                out[body_key(race, sex, build)] = Body(race, sex, build)
+    return out

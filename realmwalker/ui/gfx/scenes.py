@@ -115,13 +115,13 @@ def figure(canvas, char, tables, rect, most: int = 224) -> tuple[float, float, i
     return None
 
 
-def bust(canvas, parts, rect, light=(1.0, 1.0, 1.0), panel: bool = True) -> None:
+def bust(canvas, parts, rect, light=(1.0, 1.0, 1.0), panel: bool = True, side: int = 20) -> None:
     """Head and shoulders in a small frame, each pixel a whole number of screen pixels (lists of people)."""
     x, y, w, h = rect
     atlas = canvas.gfx.atlas
     if panel:
         canvas.under(*theme.panel(x, y, w, h, "inset", ornaments=False))
-    crop = dolls.bust(atlas, parts)
+    crop = dolls.bust(atlas, parts, side)
     k = max(1, int(min(w - 4, h - 4)) // crop[2])
     size = crop[2] * k
     cmd = dolls.draw(atlas, parts, int(x + (w - size) / 2), int(y + (h - size) / 2), size, light, crop=crop)

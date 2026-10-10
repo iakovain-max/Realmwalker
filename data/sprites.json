@@ -106,43 +106,58 @@
       "red": [255, 92, 72], "white": [240, 240, 255], "shadow": [120, 70, 160], "frost": [170, 230, 255]
     },
     "skins": {
-      "human": {"fair": [255, 232, 216], "light": [248, 214, 188], "tan": [232, 190, 150], "olive": [214, 176, 132],
-                "brown": [184, 150, 128], "dark": [136, 112, 100]},
-      "elf": {"pale": [255, 242, 232], "fair": [255, 232, 216], "ash": [222, 216, 212], "light": [248, 214, 188]},
-      "dwarf": {"ruddy": [252, 206, 182], "light": [248, 214, 188], "tan": [232, 190, 150]},
-      "halfling": {"ruddy": [252, 206, 182], "light": [248, 214, 188], "tan": [232, 190, 150]},
-      "half_orc": {"grey_green": [172, 192, 152], "green": [152, 182, 132], "grey": [172, 172, 162]}
+      "_comment": "Skin as it looks (the body is drawn in greys and coloured with this). Keys are the skins named in data/appearance.json looks. A people not listed here uses human.",
+      "human": {"fair": [246, 206, 180], "light": [234, 186, 150], "tan": [212, 160, 118], "olive": [198, 158, 112],
+                "brown": [164, 116, 84], "dark": [124, 86, 64], "deep": [94, 66, 52]},
+      "elf": {"pale": [250, 228, 214], "fair": [246, 206, 180], "light": [234, 186, 150], "tan": [212, 160, 118],
+              "ash": [214, 208, 206], "dusky": [160, 146, 158]},
+      "dwarf": {"ruddy": [244, 184, 152], "light": [234, 186, 150], "tan": [212, 160, 118], "brown": [164, 116, 84],
+                "dark": [124, 86, 64]},
+      "halfling": {"ruddy": [244, 184, 152], "light": [234, 186, 150], "tan": [212, 160, 118], "brown": [164, 116, 84],
+                   "dark": [124, 86, 64]},
+      "half_orc": {"grey_green": [166, 180, 138], "green": [134, 170, 112], "olive_green": [160, 166, 104],
+                   "dark_green": [100, 130, 86], "grey": [160, 160, 150]}
     },
-    "skin_words": [
-      ["pale", "pale"], ["pale", "fair"], ["pallid", "pale"], ["pallid", "fair"], ["ashen", "ash"], ["ashen", "grey"],
-      ["fair", "fair"], ["fair", "light"], ["freckle", "light"], ["ruddy", "ruddy"], ["ruddy", "light"],
-      ["red-faced", "ruddy"], ["sunburn", "ruddy"], ["tanned", "tan"], ["sun-dark", "brown"], ["sun-dark", "tan"],
-      ["weather", "tan"], ["olive", "olive"], ["olive", "tan"], ["brown", "brown"], ["brown", "tan"], ["dark", "dark"],
-      ["dark", "tan"], ["black", "dark"], ["grey", "grey"], ["green", "green"]
-    ],
     "hair_colours": {
       "black": [52, 44, 40], "dark_brown": [82, 60, 44], "brown": [118, 82, 54], "auburn": [150, 76, 46],
-      "red": [182, 82, 44], "blond": [222, 186, 110], "fair": [234, 212, 152], "grey": [166, 162, 156],
-      "white": [234, 232, 226]
+      "red": [182, 82, 44], "copper": [198, 110, 56], "blond": [222, 186, 110], "fair": [234, 212, 152],
+      "silver": [214, 218, 226], "grey": [166, 162, 156], "white": [240, 238, 232]
     },
-    "hair_words": [
-      ["white", "white"], ["silver", "white"], ["grey", "grey"], ["gray", "grey"], ["ash", "grey"], ["iron", "grey"],
-      ["rust", "red"], ["copper", "red"], ["red", "red"], ["chestnut", "auburn"], ["auburn", "auburn"],
-      ["blond", "blond"], ["gold", "blond"], ["sandy", "blond"], ["straw", "blond"], ["tawny", "blond"],
-      ["fair", "fair"], ["black", "black"], ["dark", "dark_brown"], ["mouse", "brown"], ["brown", "brown"]
-    ],
-    "hair_styles": {
-      "male": ["short", "short", "cropped", "long", "curly", "ponytail"],
-      "female": ["long", "long", "braids", "bun", "ponytail", "curly"],
-      "dwarf_male": ["short", "cropped", "long"], "dwarf_female": ["braids", "braids", "bun"],
-      "half_orc_male": ["topknot", "cropped", "long"], "halfling_male": ["curly", "curly", "short"],
-      "halfling_female": ["curly", "bun", "long"]
+    "eye_colours": {
+      "brown": [118, 74, 42], "dark": [52, 38, 30], "hazel": [140, 118, 62], "green": [86, 150, 82], "blue": [86, 128, 210],
+      "grey": [146, 156, 166], "pale": [186, 204, 220], "amber": [226, 166, 64], "violet": [156, 104, 210],
+      "silver": [216, 222, 232], "red": [210, 56, 44]
     },
-    "hair_style_words": [["curly", "curly"], ["cropped", "cropped"], ["braid", "braids"], ["lank", "long"], ["long", "long"],
-                         ["matted", "long"], ["shaven", ""], ["bald", ""]],
-    "beards": {"human": 0.45, "elf": 0.0, "dwarf": 1.0, "halfling": 0.08, "half_orc": 0.25},
-    "beard_styles": {"human": ["stubble", "short", "full", "long"], "dwarf": ["full", "long", "braided", "braided"],
-                     "halfling": ["stubble"], "half_orc": ["stubble", "short"]},
+    "paint_colours": {
+      "woad": [64, 96, 184], "ochre": [178, 64, 42], "ink": [40, 40, 52], "chalk": [234, 232, 224], "green": [62, 126, 62],
+      "gold": [224, 184, 84]
+    },
+    "bodies": {
+      "_comment": "Proportions in pixels for tools/figure_art.py (widths even): head, neck, shoulders (sh), waist, torso height, arm thickness, hips, pelvis height, leg thickness, gap between the legs, thigh, shin and foot heights. Builds change a body by these amounts. A people with no body here is drawn with the human one; add one and rebuild the tiles (tools/build_tiles.py) to give them their own.",
+      "human": {"male": {"head_w": 8, "head_h": 8, "neck": 1, "sh": 12, "waist": 8, "torso": 7, "arm": 3, "hip": 8, "pelvis": 2,
+                         "leg": 3, "gap": 2, "uleg": 4, "lleg": 4, "foot": 2},
+                "female": {"head_w": 8, "head_h": 8, "neck": 1, "sh": 10, "waist": 6, "torso": 7, "arm": 2, "hip": 8, "pelvis": 2,
+                           "leg": 3, "gap": 2, "uleg": 4, "lleg": 4, "foot": 2}},
+      "elf": {"male": {"head_w": 8, "head_h": 8, "neck": 1, "sh": 10, "waist": 6, "torso": 7, "arm": 2, "hip": 8, "pelvis": 2,
+                       "leg": 3, "gap": 2, "uleg": 4, "lleg": 4, "foot": 2},
+              "female": {"head_w": 8, "head_h": 8, "neck": 1, "sh": 10, "waist": 6, "torso": 7, "arm": 2, "hip": 8, "pelvis": 2,
+                         "leg": 3, "gap": 2, "uleg": 4, "lleg": 4, "foot": 2}},
+      "dwarf": {"male": {"head_w": 10, "head_h": 7, "neck": 0, "sh": 14, "waist": 12, "torso": 7, "arm": 3, "hip": 10, "pelvis": 2,
+                         "leg": 4, "gap": 2, "uleg": 2, "lleg": 2, "foot": 2},
+                "female": {"head_w": 10, "head_h": 7, "neck": 0, "sh": 12, "waist": 10, "torso": 7, "arm": 3, "hip": 10, "pelvis": 2,
+                           "leg": 4, "gap": 2, "uleg": 2, "lleg": 2, "foot": 2}},
+      "halfling": {"male": {"head_w": 8, "head_h": 7, "neck": 0, "sh": 10, "waist": 8, "torso": 6, "arm": 2, "hip": 8, "pelvis": 2,
+                            "leg": 3, "gap": 2, "uleg": 2, "lleg": 3, "foot": 2},
+                   "female": {"head_w": 8, "head_h": 7, "neck": 0, "sh": 8, "waist": 6, "torso": 6, "arm": 2, "hip": 8, "pelvis": 2,
+                              "leg": 3, "gap": 2, "uleg": 2, "lleg": 3, "foot": 2}},
+      "half_orc": {"male": {"head_w": 10, "head_h": 8, "neck": 1, "sh": 14, "waist": 10, "torso": 7, "arm": 3, "hip": 10,
+                            "pelvis": 2, "leg": 4, "gap": 2, "uleg": 4, "lleg": 3, "foot": 2},
+                   "female": {"head_w": 8, "head_h": 8, "neck": 1, "sh": 12, "waist": 8, "torso": 7, "arm": 3, "hip": 8, "pelvis": 2,
+                              "leg": 3, "gap": 2, "uleg": 4, "lleg": 4, "foot": 2}}
+    },
+    "builds": {"slight": {"sh": -2, "waist": -2, "arm": -1}, "average": {},
+               "heavy": {"sh": 2, "waist": 4, "hip": 2, "leg": 1, "arm": 1}},
+    "feature_tints": {"ears": "skin", "tail": "skin", "tusks": "", "horns": ""},
     "worn": {
       "padded_armor": {"over": "padded@undyed"}, "leather_armor": {"over": "leather@leather"},
       "studded_leather": {"over": "studded@dark_leather"}, "hide_armor": {"over": "hide@hide"},

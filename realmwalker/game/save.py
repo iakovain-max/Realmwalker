@@ -40,7 +40,7 @@ from realmwalker.world.tables import Tables
 
 log = logging.getLogger("realmwalker.save")
 
-FORMAT_VERSION = 9
+FORMAT_VERSION = 10
 WORLD_FILE = "world.zip"
 CHARACTER_FILE = "character.zip"
 
@@ -107,9 +107,16 @@ def _v8_to_v9(kind: str, body: dict) -> dict:
     return body
 
 
+def _v9_to_v10(kind: str, body: dict) -> dict:
+    """Format 10 added chosen looks to characters (build, hair, beard, eyes, marks...: rules/looks.py). An older
+    character has none, and is drawn from the words that describe them, as before."""
+    return body
+
+
 # format number -> function upgrading a loaded JSON body (of a given kind) to the next format.
 MIGRATIONS: dict[int, Callable[[str, dict], dict]] = {1: _v1_to_v2, 2: _v2_to_v3, 3: _v3_to_v4, 4: _v4_to_v5,
-                                                      5: _v5_to_v6, 6: _v6_to_v7, 7: _v7_to_v8, 8: _v8_to_v9}
+                                                      5: _v5_to_v6, 6: _v6_to_v7, 7: _v7_to_v8, 8: _v8_to_v9,
+                                                      9: _v9_to_v10}
 
 
 class SaveError(Exception):

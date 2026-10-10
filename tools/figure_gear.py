@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from figure_art import (EMPTY, FOOT, HAND, H, HEAD, LARM, LLEG, NEUTRAL, PELVIS, TORSO, UARM, ULEG, W, Body,
+from figure_art import (EMPTY, FOOT, HAND, H, HEAD, LARM, LLEG, NEUTRAL, PELVIS, SKIN, TORSO, UARM, ULEG, W, Body,
                         outline, paint, shades, to_image)
 
 METAL = np.array([[26, 26, 30], [110, 112, 120], [168, 172, 180], [212, 216, 222], [250, 250, 252]], np.float32)
@@ -141,8 +141,10 @@ def garment(body: Body, name: str):
 
 
 # ---------------------------------------------------------------------------- hair, beards, headgear
-HAIR = ("short", "long", "ponytail", "bun", "curly", "braids", "topknot", "cropped")
-BEARDS = ("stubble", "short", "full", "long", "braided")
+# Hair styles and beards (data/appearance.json looks names them; "bald" and "none" have no picture).
+HAIR = ("short", "long", "ponytail", "bun", "curly", "braids", "topknot", "cropped", "receding", "shaggy", "plait",
+        "crest", "tails")
+BEARDS = ("stubble", "short", "full", "long", "braided", "moustache", "goatee", "chops", "forked")
 HEADGEAR = ("hood", "cap", "kettle", "nasal", "greathelm", "crown", "wizard", "straw", "furhat", "circlet", "horned")
 
 
@@ -151,8 +153,14 @@ def _box(body: Body):
     return hx, hy, hw, hh, body.c, hy + hh // 2
 
 
+def _set(m: np.ndarray, y, x) -> None:
+    if 0 <= y < H and 0 <= x < W:
+        m[y, x] = True
+
+
 def hair(body: Body, style: str):
     hx, hy, hw, hh, c, ey = _box(body)
+    torso = body.rows["torso"]
     m = np.zeros((H, W), bool)
     m[hy - 1, hx + 1:hx + hw - 1] = True
     m[hy:hy + 2, hx:hx + hw] = True
@@ -161,30 +169,63 @@ def hair(body: Body, style: str):
     if style == "cropped":
         m[hy - 1] = False
         m[hy + 2:ey - 1] = False
+    if style == "receding":  # the hairline drawn back from the brow, thin on top
+        m[hy - 1] = False
+        m[hy - 1, hx + 2:hx + hw - 2] = True
+        m[hy + 1, c - 2:c + 2] = False
+        m[hy, c - 1:c + 1] = False
     if style in ("long", "braids"):
-        bottom = body.rows["torso"] + 3
+        bottom = torso + 3
         m[hy + 2:bottom, hx - 1:hx + 1] = True
         m[hy + 2:bottom, hx + hw - 1:hx + hw + 1] = True
         m[ey - 1:bottom, hx + 1] = False
         m[ey - 1:bottom, hx + hw - 2] = False
         if style == "braids":
-            m[body.rows["torso"]:bottom + 2, hx - 1] = True
-            m[body.rows["torso"]:bottom + 2, hx + hw] = True
+            m[torso:bottom + 2, hx - 1] = True
+            m[torso:bottom + 2, hx + hw] = True
+    if style == "shaggy":  # over the ears and the brow, ragged at the ends
+        m[hy - 1, hx:hx + hw] = True
+        for y in range(hy + 1, ey + 2):
+            _set(m, y, hx - 1)
+            _set(m, y, hx + hw)
+        m[hy + 2:ey, hx] = True
+        m[hy + 2:ey, hx + hw - 1] = True
+        _set(m, hy + 2, c - 2)
+        _set(m, hy + 2, c + 1)
+        _set(m, ey + 2, hx - 1)
+        _set(m, ey + 2, hx + hw)
+    if style == "plait":  # one long plait over the shoulder
+        m[hy + 2:ey + 1, hx + hw - 1:hx + hw + 1] = True
+        for y in range(ey + 1, torso + 5):
+            m[y, hx + hw - 1:hx + hw + 1] = True
     if style == "ponytail":
-        m[hy + 1:body.rows["torso"] + 2, hx + hw:hx + hw + 2] = True
+        m[hy + 1:torso + 2, hx + hw:hx + hw + 2] = True
+    if style == "tails":  # two tails, one each side
+        for x in (hx - 2, hx - 1, hx + hw, hx + hw + 1):
+            m[ey - 1:ey + 3, x] = True
+        m[ey + 3, hx - 2] = m[ey + 3, hx + hw + 1] = True
     if style == "bun":
         m[hy - 3:hy - 1, c - 2:c + 2] = True
-    if style == "curly":
-        m[hy - 2, hx + 1:hx + hw - 1:2] = True
+    if style == "curly":  # round curls along the top and over the ears
+        for x in range(hx + 1, hx + hw - 1):
+            if (x - hx) % 3 != 0:
+                m[hy - 2, x] = True
+        m[hy - 1, hx:hx + hw] = True
         m[hy + 2:ey + 1, hx - 1] = True
         m[hy + 2:ey + 1, hx + hw] = True
     if style == "topknot":
         m[:] = False
         m[hy - 3:hy, c - 1:c + 1] = True
         m[hy, c - 2:c + 2] = True
+    if style == "crest":  # a strip of hair from brow to nape, the rest shaven
+        m[:] = False
+        m[max(0, hy - 3):hy + 2, c - 1:c + 1] = True
+        m[hy - 2, c - 2] = m[hy - 1, c + 1] = True
     s = shades(m)
     ys, xs = np.mgrid[0:H, 0:W]
     s[m & (s == 2) & ((xs + ys) % 3 == 0)] = 3  # strands
+    if style in ("braids", "plait", "tails"):
+        s[m & (ys > ey) & (ys % 2 == 0) & (s >= 2)] = 1  # the twists of a braid
     return to_image(paint(s, NEUTRAL, line=outline(m) & (body.grid == EMPTY)))
 
 
@@ -198,9 +239,18 @@ def beard(body: Body, style: str):
         s = np.where(m & ((xs + ys) % 2 == 1), 1, -1).astype(np.int8)
         return to_image(paint(s, NEUTRAL))
     m[ey + 1, c - 2:c + 2] = True  # moustache
-    m[ey + 2:jaw] = body.grid[ey + 2:jaw] == HEAD
-    m[ey + 2, c - 1:c + 1] = False  # the mouth shows
-    if style in ("full", "long", "braided"):
+    if style == "moustache":
+        m[ey + 2, c - 2] = m[ey + 2, c + 1] = True  # the ends droop
+    elif style == "goatee":
+        m[ey + 3:jaw + 1, c - 1:c + 1] = True
+    elif style == "chops":  # side-whiskers down the cheeks, joined to the moustache
+        m[ey:jaw - 1, hx:hx + 2] = body.grid[ey:jaw - 1, hx:hx + 2] == HEAD
+        m[ey:jaw - 1, hx + hw - 2:hx + hw] = body.grid[ey:jaw - 1, hx + hw - 2:hx + hw] == HEAD
+        m[ey + 1, hx + 1:hx + hw - 1] = True
+    else:
+        m[ey + 2:jaw] = body.grid[ey + 2:jaw] == HEAD
+        m[ey + 2, c - 1:c + 1] = False  # the mouth shows
+    if style in ("full", "long", "braided", "forked"):
         m[jaw:jaw + 2, c - 3:c + 3] = True
     if style in ("long", "braided"):
         for i in range(4):
@@ -208,9 +258,144 @@ def beard(body: Body, style: str):
     if style == "braided":
         m[jaw + 6:jaw + 8, c - 2] = True
         m[jaw + 6:jaw + 8, c + 1] = True
+    if style == "forked":  # two points
+        for i in range(3):
+            m[jaw + 2 + i, c - 3 + i // 2:c - 1] = True
+            m[jaw + 2 + i, c + 1:c + 3 - i // 2] = True
     s = shades(m)
     s[m & (s == 2) & ((xs + 2 * ys) % 4 == 0)] = 3
+    if style == "braided":
+        s[m & (ys >= jaw + 2) & (ys % 2 == 0) & (s >= 2)] = 1
     return to_image(paint(s, NEUTRAL, line=outline(m) & (body.grid != HEAD) & ~m))
+
+
+# ---------------------------------------------------------------------------- the face: eyes, marks, paint
+def eyes(body: Body):
+    """The eyes, in a light grey coloured when drawn (data/sprites.json figures.eye_colours)."""
+    hx, hy, hw, hh, c, ey = _box(body)
+    a = np.zeros((H, W, 4), np.uint8)
+    for x in (c - 2, c + 1):
+        a[ey, x] = (236, 236, 236, 255)
+    return to_image(a)
+
+
+MARKS = ("freckles", "scar_cheek", "scar_eye", "scar_brow", "eyepatch", "broken_nose", "earring", "burn")
+SCAR = (236, 178, 168, 220)
+
+
+def mark(body: Body, kind: str):
+    """A mark on the face, in its own colours (drawn over the skin and the eyes): freckles, scars, a patch over one
+    eye, a broken nose, an earring, an old burn."""
+    hx, hy, hw, hh, c, ey = _box(body)
+    a = np.zeros((H, W, 4), np.uint8)
+    head = body.grid == HEAD
+
+    def put(y, x, rgba, on_head: bool = True) -> None:
+        if 0 <= y < H and 0 <= x < W and (head[y, x] or not on_head):
+            a[y, x] = rgba
+
+    if kind == "freckles":
+        for y, x in ((ey + 1, c - 3), (ey + 1, c + 2), (ey + 2, c - 3), (ey + 2, c + 2), (ey + 1, c - 4), (ey + 1, c + 3)):
+            put(y, x, (150, 86, 56, 150))
+    elif kind == "scar_cheek":
+        for y, x in ((ey, c + 3), (ey + 1, c + 2), (ey + 2, c + 2), (ey + 3, c + 1)):
+            put(y, x, SCAR)
+    elif kind == "scar_eye":
+        for y in (ey - 2, ey - 1, ey + 1, ey + 2):
+            put(y, c - 2, SCAR)
+        put(ey, c - 2, (206, 208, 214, 255))  # the eye gone milky
+    elif kind == "scar_brow":
+        put(ey - 1, c + 2, (250, 220, 210, 230))
+        put(ey - 2, c + 2, SCAR)
+    elif kind == "eyepatch":
+        for y in (ey, ey + 1):
+            for x in (c + 1, c + 2):
+                put(y, x, (30, 26, 24, 255))
+        for x in range(hx, c + 1):
+            put(ey - 1, x, (70, 50, 36, 255))
+        for x in range(c + 3, hx + hw):
+            put(ey, x, (70, 50, 36, 255))
+    elif kind == "broken_nose":
+        put(ey + 1, c - 1, (255, 255, 255, 70))
+        put(ey + 1, c, (70, 46, 40, 170))
+        put(ey, c, (70, 46, 40, 110))
+    elif kind == "earring":
+        put(ey + 1, hx - 1, (246, 206, 96, 255), on_head=False)
+        put(ey + 2, hx - 1, (170, 120, 40, 255), on_head=False)
+    elif kind == "burn":
+        for y, x, rgba in ((ey + 1, hx + 1, (176, 92, 80, 170)), (ey + 2, hx + 1, (200, 120, 108, 160)),
+                           (ey + 1, hx + 2, (200, 120, 108, 150)), (ey, hx + 1, (176, 92, 80, 140)),
+                           (ey + 2, hx + 2, (176, 92, 80, 120))):
+            put(y, x, rgba)
+    return to_image(a)
+
+
+PAINTS = ("band", "lines", "stripes", "sigil")
+
+
+def face_paint(body: Body, kind: str):
+    """War paint or tattoos on the face, in a light grey coloured when drawn (figures.paint_colours)."""
+    hx, hy, hw, hh, c, ey = _box(body)
+    m = np.zeros((H, W), bool)
+    if kind == "band":
+        m[ey - 1:ey + 1, hx + 1:hx + hw - 1] = True
+    elif kind == "lines":
+        for x in (c - 3, c + 2):
+            m[ey + 1:ey + 3, x] = True
+        m[ey + 1, c - 4] = m[ey + 1, c + 3] = True
+    elif kind == "stripes":
+        for x in (c - 2, c, c + 1):
+            m[ey + 3:hy + hh, x] = True
+        m[ey + 3:hy + hh, c] = False
+    elif kind == "sigil":
+        m[hy + 2, c - 1:c + 1] = True
+        m[hy + 3, c - 1:c + 1] = True
+    m &= body.grid == HEAD
+    a = np.zeros((H, W, 4), np.uint8)
+    a[m] = (230, 230, 230, 235)
+    return to_image(a)
+
+
+# ---------------------------------------------------------------------------- what a people has: ears, tusks, horns, a tail
+FEATURES = {"ears": ("long", "swept", "short"), "tusks": ("small", "large"), "horns": ("curled", "straight", "small"),
+            "tail": ("long",)}
+HORN = np.array([[40, 32, 28], [96, 80, 66], [140, 120, 98], [176, 156, 130], [206, 190, 166]], np.float32)
+IVORY = np.array([[60, 52, 44], [196, 188, 168], [232, 226, 208], [246, 242, 230], [252, 250, 244]], np.float32)
+
+
+def feature(body: Body, name: str, option: str):
+    """One thing a people has that others do not: ears (in skin greys, coloured with the skin), tusks (ivory), horns
+    (horn), a tail (skin, drawn behind the body). Mirrored on both sides where there are two."""
+    hx, hy, hw, hh, c, ey = _box(body)
+    m = np.zeros((H, W), bool)
+    ramp = SKIN
+    left: list[tuple[int, int]] = []  # (y, x) on the viewer's left; mirrored to the right
+    if name == "ears":
+        left = {"long": [(ey, hx - 1), (ey - 1, hx - 2), (ey - 2, hx - 3), (ey - 1, hx - 1)],
+                "swept": [(ey, hx - 1), (ey - 1, hx - 1), (ey - 1, hx - 2), (ey - 2, hx - 2), (ey - 3, hx - 3)],
+                "short": [(ey, hx - 1), (ey - 1, hx - 1), (ey - 2, hx - 2)]}.get(option, [])
+    elif name == "tusks":
+        ramp = IVORY
+        left = {"small": [(ey + 2, c - 2)], "large": [(ey + 2, c - 3), (ey + 1, c - 3)]}.get(option, [])
+    elif name == "horns":
+        ramp = HORN
+        left = {"curled": [(hy + 1, hx - 1), (hy, hx - 2), (hy - 1, hx - 2), (hy - 2, hx - 1), (hy - 2, hx), (hy - 1, hx + 1)],
+                "straight": [(hy, hx + 1), (hy - 1, hx + 1), (hy - 2, hx), (hy - 3, hx), (hy - 1, hx)],
+                "small": [(hy, hx + 2), (hy - 1, hx + 2)]}.get(option, [])
+    elif name == "tail" and option == "long":
+        r = body.rows
+        x0 = c + body.p["hip"] // 2
+        for i, y in enumerate(range(r["pelvis"] + 1, r["foot"])):
+            _set(m, y, x0 + min(3, i // 2))
+            _set(m, y, x0 + min(3, i // 2) + 1)
+        _set(m, r["foot"] - 1, x0 + 5)
+        _set(m, r["foot"] - 2, x0 + 5)
+    for y, x in left:
+        _set(m, y, x)
+        _set(m, y, 2 * c - 1 - x)
+    s = shades(m)
+    line = None if name == "tusks" else outline(m) & (body.grid == EMPTY)  # tusks stand out without a line
+    return to_image(paint(s, ramp, line=line))
 
 
 def headgear(body: Body, kind: str):

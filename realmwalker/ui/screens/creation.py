@@ -1,4 +1,4 @@
-"""Character creation: people, calling, background, abilities, skills, identity, starting place, begin.
+"""Character creation: people, calling, background, abilities, skills, identity, looks, starting place, begin.
 
 Every step starts with a sensible choice already made, so pressing Enter through all of them
 gives a playable character. Tab / Shift+Tab (or clicking a step) moves between steps.
@@ -11,6 +11,7 @@ from realmwalker.ai.tasks import BACKSTORY, backstory_variables
 from realmwalker.core.textgen import a_or_an
 from realmwalker.game.describe import cap, settlement_line
 from realmwalker.game.state import new_game
+from realmwalker.rules import looks
 from realmwalker.rules.character import ABILITIES, modifier, signed
 from realmwalker.rules.creation import SEXES, CharacterBuilder, make_ties, starting_places
 from realmwalker.rules.items import money_text
@@ -19,7 +20,10 @@ from realmwalker.ui.input import KeyEvent
 from realmwalker.ui.screens.base import ConfirmBox, Screen
 from realmwalker.ui.widgets import Canvas, TextField
 
-STEPS = ["People", "Calling", "Background", "Abilities", "Skills & training", "Who you are", "Where you start", "Begin"]
+STEPS = ["People", "Calling", "Background", "Abilities", "Skills & training", "Who you are", "Looks", "Where you start",
+         "Begin"]
+LOOKS, START, BEGIN = 6, 7, 8
+COLOUR_SLOTS = ("skin", "eyes", "hair_colour", "beard_colour", "paint_colour", "dye", "cloak")
 LEFT_W = 26
 SPINNER = "|/-\\"
 
@@ -63,9 +67,9 @@ class CreationScreen(Screen):
             self.places = starting_places(self.world, self.t, self.b.background, self.b.race,
                                           self.app.ui_rng.child(f"places{key}"))
             self._places_for = key
-            self.cursor[6] = 0
+            self.cursor[START] = 0
         if self.places:
-            self.b.start_settlement = self.places[min(self.cursor[6], len(self.places) - 1)]
+            self.b.start_settlement = self.places[min(self.cursor[START], len(self.places) - 1)]
 
     def home_name(self) -> str:
         if self.b.start_settlement is not None:
@@ -93,15 +97,53 @@ class CreationScreen(Screen):
         if self.step == 4:
             return len(self._training_rows())
         if self.step == 5:
-            return 5
-        if self.step == 6:
+            return 4
+        if self.step == LOOKS:
+            return len(self._look_rows())
+        if self.step == START:
             return max(1, len(self.places))
         return 1
+
+    def _look_rows(self) -> list[tuple[str, str, list[str]]]:
+        """Rows on the Looks step: (slot, label, options). Only what this people and sex can change is shown."""
+        b = self.b
+        opts = looks.options(self.t, b.race, b.sex)
+        rows = [(slot, label, opts[slot]) for slot, label in (
+            ("build", "Build"), ("skin", "Skin"), ("eyes", "Eyes"), ("hair", "Hair"), ("hair_colour", "Hair colour"),
+            ("beard", "Beard")) if len(opts[slot]) > 1]
+        if b.looks.get("beard", "none") != "none":
+            rows.append(("beard_colour", "Beard colour", opts["beard_colour"]))
+        for feat, pool in opts["features"].items():
+            if len(pool) > 1:
+                rows.append((f"feature:{feat}", looks.feature_name(self.t, feat), pool))
+        rows.append(("mark", "Mark or scar", opts["mark"]))
+        rows.append(("paint", "Paint or tattoo", opts["paint"]))
+        if b.looks.get("paint", "none") != "none":
+            rows.append(("paint_colour", "Paint colour", opts["paint_colour"]))
+        dyes = [""] + list(looks.data(self.t)["dyes"])
+        rows.append(("dye", "Clothes colour", dyes))
+        rows.append(("cloak", "Cloak colour", dyes))
+        return rows
+
+    def _look_value(self, slot: str) -> str:
+        if slot.startswith("feature:"):
+            return (self.b.looks.get("features") or {}).get(slot[8:], "")
+        return self.b.looks.get(slot, "")
+
+    def change_look(self, row: int, delta: int) -> None:
+        rows = self._look_rows()
+        if not rows:
+            return
+        slot, _, pool = rows[max(0, min(row, len(rows) - 1))]
+        current = self._look_value(slot)
+        i = pool.index(current) if current in pool else -1
+        self.b.set_look(slot, pool[(i + delta) % len(pool)])
+        self.cursor[LOOKS] = min(self.cursor[LOOKS], len(self._look_rows()) - 1)
 
     # ------------------------------------------------------------------ actions
     def go(self, step: int) -> None:
         self.step = max(0, min(len(STEPS) - 1, step))
-        if self.step == 6:
+        if self.step == START:
             self._refresh_places()
         self.cursor[self.step] = min(self.cursor[self.step], max(0, self._row_count() - 1))
 
@@ -113,10 +155,10 @@ class CreationScreen(Screen):
             [self.b.set_race, self.b.set_class, self.b.set_background][self.step](key)
             self.name_field.value = self.b.name
             self.go(self.step + 1)
-        elif self.step == 6:
+        elif self.step == START:
             self._refresh_places()
-            self.go(7)
-        elif self.step == 7:
+            self.go(BEGIN)
+        elif self.step == BEGIN:
             self.begin()
         else:
             self.go(self.step + 1)
@@ -158,13 +200,14 @@ class CreationScreen(Screen):
                 self.b.sex = SEXES[(SEXES.index(self.b.sex) + 1) % 2]
                 self.b.name = self.b.random_name()
                 self.name_field.value = self.b.name
+                self.b.fit_looks()  # a beard may go, a likely hair style come
             elif row == 2:
                 age = self.t.races[self.b.race]["age"]
                 self.b.age = max(age["adult"], min(age["old"], self.b.age + delta))
             elif row == 3:
-                self.b.appearance = self.b.random_appearance()
-            elif row == 4:
                 self.write_backstory(ai=delta > 0)
+        elif self.step == LOOKS:
+            self.change_look(row, delta)
 
     def reroll_name(self) -> None:
         self.b.name = self.b.random_name()
@@ -270,6 +313,8 @@ class CreationScreen(Screen):
         elif ev.key in ("r", "R") and self.step == 5:
             self.b.randomize_identity()
             self.name_field.value = self.b.name
+        elif ev.key in ("r", "R") and self.step == LOOKS:
+            self.b.randomize_looks()
         elif ev.key in ("w", "W") and self.step == 5:
             self.write_backstory(ai=True)
         else:
@@ -286,7 +331,7 @@ class CreationScreen(Screen):
             self.b.set_class(self._lists()[row])
         elif self.step == 2:
             self.b.set_background(self._lists()[row])
-        elif self.step == 6:
+        elif self.step == START:
             self._refresh_places()
 
     def update(self) -> None:
@@ -304,7 +349,7 @@ class CreationScreen(Screen):
         canvas.text(x, 2, f"{self.step + 1}. {STEPS[self.step]}", colors.TITLE)
         body_y, body_h = 4, h - 8
         [self._r_race, self._r_class, self._r_background, self._r_abilities, self._r_training, self._r_identity,
-         self._r_start, self._r_begin][self.step](canvas, x, body_y, width, body_h)
+         self._r_looks, self._r_start, self._r_begin][self.step](canvas, x, body_y, width, body_h)
         hint = "↑↓ choose · ←→ change · Enter: accept & next · Tab/Shift+Tab: steps · Esc: back"
         canvas.text(x, h - 3, hint, colors.FAINT, max_width=width)
 
@@ -345,7 +390,7 @@ class CreationScreen(Screen):
     def _preview_character(self):
         """The character as they would be now (dressed in the chosen kit), for the figure; kept until a choice changes."""
         b = self.b
-        key = (b.race, b.sex, b.cls, b.kit, b.background, b.appearance, b.subclass)
+        key = (b.race, b.sex, b.cls, b.kit, b.background, b.appearance, b.subclass, repr(sorted(b.looks.items())))
         if getattr(self, "_preview_key", None) != key:
             self._preview_key = key
             try:
@@ -500,7 +545,6 @@ class CreationScreen(Screen):
             ("Name", None),
             ("Sex", f"◄ {b.sex} ►"),
             ("Age", f"◄ {b.age} ► <dim>(adult at {age['adult']}, old at {age['old']})</>"),
-            ("Looks", markup.escape(b.appearance) + " <dim>(← → new)</>"),
             ("Backstory", "<dim>→ ask the AI to write it · ← built-in text · or press W</>"),
         ]
         for i, (label, value) in enumerate(rows):
@@ -514,7 +558,9 @@ class CreationScreen(Screen):
                 canvas.text(x + 48, ry, hint, colors.FAINT, max_width=canvas.width - (x + 48) - 2)
             else:
                 canvas.markup(x + 12, ry, value, max_width=w - 12)
-        ty = y + 11
+        canvas.markup(x, y + 8, f"<dim>Looks:</> {markup.escape(b.appearance)} <dim>(the next step changes them)</>",
+                      max_width=w)
+        ty = y + 10
         if self.ticket is not None:
             spin = SPINNER[self.frame // 3 % 4]
             canvas.markup(x, ty, f"<ai>{spin} The AI is writing your backstory…</>")
@@ -529,13 +575,90 @@ class CreationScreen(Screen):
             canvas.wrapped(x, ty, "<dim>No backstory yet. One will be written from built-in text when you begin, "
                                   "unless you ask the AI (a little Player2 energy).</>", min(w, 90))
 
+    def _r_looks(self, canvas, x, y, w, h) -> None:
+        """Every look as a row (◄ choice ►, a swatch for colours), and the character large beside them: the head and
+        shoulders bare, and the whole figure in the gear they set out with."""
+        b = self.b
+        rows = self._look_rows()
+        label_w, value_w = 18, 24
+        list_w = label_w + value_w + 5
+        sel = min(self.cursor[LOOKS], len(rows) - 1)
+        for i, (slot, label, pool) in enumerate(rows):
+            ry = y + i
+            if ry >= y + h - 4:
+                break
+            selected = i == sel
+            over = canvas.hit(x, ry, list_w, 1, action=lambda i=i: self.cursor.__setitem__(LOOKS, i),
+                              right_action=lambda i=i: self.change_look(i, -1),
+                              wheel=lambda d, i=i: self.change_look(i, d))
+            bg = colors.HILITE_BG if selected else (colors.HOVER_BG if over else None)
+            if bg:
+                canvas.fill(x, ry, list_w, 1, bg)
+            canvas.text(x, ry, ("► " if selected else "  ") + label, colors.SELECT_FG if selected else colors.FG, bg,
+                        max_width=label_w)
+            value = self._look_value(slot)
+            name = looks.name_of(self.t, slot, value)
+            vx = x + label_w
+            canvas.hit(vx, ry, 2, 1, action=lambda i=i: self.change_look(i, -1))
+            canvas.text(vx, ry, "◄", colors.TITLE if selected else colors.DIM, bg)
+            canvas.text(vx + 2, ry, name, colors.FG, bg, max_width=value_w - 6)
+            canvas.hit(vx + value_w - 3, ry, 2, 1, action=lambda i=i: self.change_look(i, 1))
+            canvas.text(vx + value_w - 3, ry, "►", colors.TITLE if selected else colors.DIM, bg)
+            rgb = self._swatch(slot, value) if slot in COLOUR_SLOTS else None
+            if rgb is not None:
+                canvas.text(vx + value_w, ry, "██", rgb, bg)
+        words = (f"<dim>How others see you:</> {markup.escape(b.appearance)}\n\n"
+                 "<dim>↑↓ choose · ←→ or click ◄ ► to change · mouse wheel over a row · R: a new random look</>")
+        canvas.wrapped(x, y + len(rows) + 1, words, min(list_w + 4, w), max_lines=max(2, h - len(rows) - 1))
+        # The character, large.
+        px = x + list_w + 4
+        pw = w - list_w - 4
+        if canvas.gfx is None or pw < 18:
+            return
+        preview = self._preview_character()
+        if preview is None:
+            return
+        from realmwalker.ui.gfx import dolls, scenes
+
+        from realmwalker.ui.gfx.scene import Text
+
+        cw, ch = canvas.cell_w, canvas.cell_h
+        canvas.clear_cells(px, y, pw, h)
+        room_w, room_h = pw * cw, h * ch - 40
+        # Each pixel of the figures a whole number of screen pixels: the face at up to 8 to one, the figure likewise.
+        k = max(2, min(10, int(room_h // 32), int((room_w - 30) // (16 + 32))))
+        bust_side, fig_side = 16 * k + 8, 32 * k
+        bx, by = int(px * cw), int(y * ch) + 22
+        parts = dolls.character(preview, self.t, atlas=canvas.gfx.atlas, bare_head=True)
+        scenes.bust(canvas, parts, (bx, by, bust_side, bust_side), side=16)
+        canvas.over(Text(bx + bust_side / 2, by - 4, "Face", "heading_light", 15, (200, 180, 140, 255), anchor="mb",
+                         shadow=False, outline=True))
+        fx = bx + bust_side + 24
+        scenes.figure(canvas, preview, self.t, (fx, by, fig_side + 40, fig_side + 20), most=fig_side)
+        canvas.over(Text(fx + (fig_side + 40) / 2, by - 4, "As you set out", "heading_light", 15, (200, 180, 140, 255),
+                         anchor="mb", shadow=False, outline=True))
+
+    def _swatch(self, slot: str, value: str):
+        """The colour of a choice, for the little square beside it."""
+        if not value:
+            return None
+        f = self.t.sprites["figures"]
+        if slot == "skin":
+            from realmwalker.ui.gfx.dolls import skin_colour
+
+            return skin_colour(self.t, self.b.race, value)
+        table = {"eyes": "eye_colours", "hair_colour": "hair_colours", "beard_colour": "hair_colours",
+                 "paint_colour": "paint_colours", "dye": "colours", "cloak": "colours"}[slot]
+        rgb = f[table].get(value)
+        return tuple(rgb) if rgb else None
+
     def _r_start(self, canvas, x, y, w, h) -> None:
         self._refresh_places()
         bg = self.t.backgrounds[self.b.background]
         canvas.wrapped(x, y, f"Places that suit {a_or_an(bg['name'].lower())}:", w)
         for i, sid in enumerate(self.places):
             s = self.world.settlements[sid]
-            selected = i == self.cursor[6]
+            selected = i == self.cursor[START]
             ry = y + 2 + i * 3
             over = canvas.hit(x, ry, w, 2, action=lambda i=i: self._click_row(i))
             bgc = colors.HILITE_BG if selected else (colors.HOVER_BG if over else None)
@@ -572,5 +695,7 @@ class CreationScreen(Screen):
         keys = [KeyEvent(k) for k in ("enter", "enter", "enter", "down", "up", "left", "right", "tab", " ")]
         if self.step == 5:
             keys += [KeyEvent("w"), KeyEvent("r")]
+        if self.step == LOOKS:
+            keys += [KeyEvent("r"), KeyEvent("right"), KeyEvent("down"), KeyEvent("right")]
         return keys
 

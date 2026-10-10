@@ -55,6 +55,7 @@ class Character:
     equipped: dict[str, int] = field(default_factory=dict)
     money: int = 0
     appearance: str = ""
+    looks: dict = field(default_factory=dict)  # build, skin, eyes, hair, beard, marks... (rules/looks.py); {} = from words
     backstory: str = ""
     personality: str = ""
     ideal: str = ""

@@ -90,7 +90,9 @@ def test_creation_speaks_of_an_acolyte(make_app):
     app.push(screen)
     screen.b.set_background("acolyte")
     seen = []
-    for step in range(8):
+    from realmwalker.ui.screens.creation import STEPS
+
+    for step in range(len(STEPS)):
         screen.step = step
         con = tcod.console.Console(160, 45, order="F")
         app.render(con)

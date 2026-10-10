@@ -197,7 +197,10 @@ def build(game, npc, cls: str, background: str, level: int, rng: RNG, story: lis
     b.sex = npc.sex if npc.sex in ("male", "female") else b.sex
     b.name = npc.name
     b.age = npc.age
-    b.appearance = npc.profile.get("appearance") or b.appearance
+    from realmwalker.rules import looks
+
+    b.looks = looks.of_npc(tables, npc)  # the face they had in town
+    b.appearance = npc.profile.get("appearance") or looks.describe(tables, b.looks, b.race, b.sex)
     b.backstory = npc.profile.get("backstory") or textgen.fill(rng.choice(list(story)), rng, {},
                                                                textgen.pronoun_values(b.sex))
     char = b.build(game.world.time)
