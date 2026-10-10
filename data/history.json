@@ -833,7 +833,7 @@
     "dragon": ["The dragon {dragon} burned {place}; {dead} died.", "{dragon} came out of the mountains and burned {place}."],
     "dragon_tribute": [
       "{dragon} came to {place}. They drove out cattle and set out silver, and were spared.",
-      "{place} pays tribute to {dragon} now: beasts, gold, and once a year something worse."
+      "From then on {place} paid {dragon} its tribute: beasts, gold, and once a year something worse."
     ],
     "dragon_sleeps": [
       "{dragon} went back to its lair and has not been seen since.",

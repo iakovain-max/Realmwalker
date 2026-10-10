@@ -158,6 +158,13 @@ what you should know about the town.
 
 **Friends' readme**: describes the lived history and the Legends book, and no longer says combat is in ranks.
 
+**Checked** (on the final version): all 1108 tests pass (1 skipped, as before); the window smoke test visits every
+screen, the Legends book included, and closes with "0 recovered errors"; the autoplay bot played about 3000 turns
+with the AI off and 3000 with the pretend AI (it made worlds, lived and died several times and opened the Legends book
+about 350 times) with no errors, and the history checks held: everything the history names exists, every lair has a
+living beast, and replaying who held what gives today's map. Making a world takes under a second (small, 100 years),
+one to two seconds (medium, 250) and about eight (large, 1000).
+
 ### Local session, 2026-10-10: sound and music (Anton's request) — branch `sound`
 
 Anton asked for "basic and satisfying sounds for button pressing, some combat sounds, sounds for menus", music or a
