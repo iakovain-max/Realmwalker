@@ -121,6 +121,9 @@ def mark_slain(game, d: dict) -> None:
     w = game.world
     d["alive"] = False
     d["slain_by"] = game.leader.name
+    from realmwalker.game import past
+
+    past.figure_slain(game, d.get("figure"), d.get("lair"))  # the dragon of the lived history is dead too
     year = year_of(w, game.tables)
     d["slain_year"] = year
     text = f"{game.leader.name} slew the dragon {d['name']}"

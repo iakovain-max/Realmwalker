@@ -165,6 +165,23 @@ class WorldsScreen(Screen):
             self.close()
             self.app.create_character_in(s.folder)
 
+    def legends(self) -> None:
+        """Read a world's history without playing it (as Dwarf Fortress's Legends mode)."""
+        from realmwalker.game.save import SaveError, load_world
+        from realmwalker.ui.screens.legends import LegendsScreen
+
+        s = self.current()
+        if s is None:
+            return
+        try:
+            world = load_world(s.folder)
+        except SaveError as exc:
+            from realmwalker.ui.screens.base import MessageBox
+
+            self.app.push(MessageBox(self.app, "Could not read the world", str(exc), color=colors.named("danger")))
+            return
+        self.app.push(LegendsScreen(self.app, world))
+
     def delete(self) -> None:
         from realmwalker.ui.screens.base import ConfirmBox
 
@@ -231,6 +248,7 @@ class WorldsScreen(Screen):
         by = y0 + height - 3
         bx = canvas.button(lx, by, ("Play" if (s and s.character) else "New character here") if s else "Play", self.play,
                            hotkey="Enter", enabled=s is not None)
+        bx = canvas.button(bx + 3, by, "Legends", self.legends, hotkey="L", enabled=s is not None)
         bx = canvas.button(bx + 3, by, "Delete world", self.delete, hotkey="Del", enabled=s is not None)
         canvas.button(bx + 3, by, "Back", self.close, hotkey="Esc")
 
@@ -258,6 +276,8 @@ class WorldsScreen(Screen):
             self.play()
         elif ev.key in ("delete", "x"):
             self.delete()
+        elif ev.key in ("l", "L"):
+            self.legends()
         else:
             return False
         return True

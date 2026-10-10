@@ -65,20 +65,23 @@ class WorldOptions:
     size: str = "medium"
     danger: int = 2  # 1 low, 2 normal, 3 high, 4 brutal
     magic: int = 2  # 1 scarce, 2 rare, 3 uncommon
+    history: int = 0  # years of history to live (0: the usual, data/politics.json "history_years")
 
 
 class WorldGenerator:
     STAGES = [
-        ("Raising the land from the sea", 0.08),
-        ("Carving rivers and filling lakes", 0.30),
-        ("Setting the winds and the seasons", 0.40),
-        ("Growing forests and fens", 0.48),
-        ("Naming the land", 0.60),
-        ("Founding towns and villages", 0.70),
-        ("Laying roads", 0.88),
-        ("Scattering old ruins", 0.96),
+        ("Raising the land from the sea", 0.04),
+        ("Carving rivers and filling lakes", 0.12),
+        ("Setting the winds and the seasons", 0.16),
+        ("Growing forests and fens", 0.19),
+        ("Naming the land", 0.24),
+        ("Finding where people could live", 0.27),
+        ("Laying roads", 0.33),
+        ("Scattering the old places of the wild", 0.36),
+        ("Living the ages", 0.38),
         ("Finishing", 1.0),
     ]
+    AGES_FROM, AGES_TO = 0.38, 0.99
 
     def __init__(self, options: WorldOptions, tables: Tables, progress: Callable[[str, float], None] | None = None) -> None:
         self.opt = options
@@ -91,6 +94,11 @@ class WorldGenerator:
         self.fraction = 0.0
         self.preview: dict[str, np.ndarray] = {}
         self.B = tables.biomes.index
+        self.doomed: list[dict] = []  # places that will stand for a while in the ages, and be ruins today
+        self.ages = None  # (year, figures, events, headline) while the history is being lived
+        self.places: tuple = ()  # (x, y, kind or "ruin") of every place founded so far in the ages
+        self.sim = None
+        self.history_years = int(options.history or tables.politics["history_years"])
 
     def _progress(self, i: int) -> None:
         self.stage, self.fraction = self.STAGES[i]
@@ -121,16 +129,31 @@ class WorldGenerator:
         self._sites()
         self._progress(8)
         world = self._assemble()
-        from realmwalker.world.factions import generate_factions
+        from realmwalker.world.ages import AgeSim
 
-        generate_factions(world, self.tables, self.rng.child("factions"))
-        from realmwalker.world.history import generate_history
-
-        generate_history(world, self.tables, self.rng.child("history"))
-        log.info("Generated world '%s' (seed %d, %s) in %.1f s: %d settlements, %d sites, %d named areas",
-                 world.meta.name, world.meta.seed, world.meta.size, time.monotonic() - started,
-                 len(world.settlements), len(world.sites), len(world.areas))
+        self.sim = AgeSim(world, self.tables, self.rng.child("ages"), years=self.history_years, spots=self.doomed,
+                          namer=self.namer, progress=self._ages_progress)
+        self.sim.run()
+        self.sim = None
+        self._progress(9)
+        log.info("Generated world '%s' (seed %d, %s) in %.1f s: %d settlements, %d sites, %d named areas, "
+                 "%d years of history (%d figures, %d events)", world.meta.name, world.meta.seed, world.meta.size,
+                 time.monotonic() - started, len(world.settlements), len(world.sites), len(world.areas),
+                 self.history_years, len(world.figures), len(world.history))
         return world
+
+    def _ages_progress(self, year: int, figures: int, events: int, headline: str) -> None:
+        start = self.tables.calendar.start_year - self.history_years
+        done = (year - start + 1) / max(1, self.history_years)
+        self.ages = (year, figures, events, headline)
+        sim = self.sim
+        if sim is not None:
+            # What stands and what has fallen, for the map shown while the ages are lived (read by the UI thread).
+            self.places = tuple((sp.x, sp.y, sp.kind_now if sp.standing else "ruin") for sp in sim.land.spots
+                                if sp.founded is not None)
+        self.fraction = self.AGES_FROM + (self.AGES_TO - self.AGES_FROM) * min(1.0, done)
+        if self.progress_cb:
+            self.progress_cb(self.stage, self.fraction)
 
     # ------------------------------------------------------------------ 1. terrain
     def _elevation(self) -> None:
@@ -367,6 +390,7 @@ class WorldGenerator:
     def _settlements(self) -> None:
         rng = self.rng.child("settlements")
         score = self._habitability()
+        base_score = score.copy()
         types = self.tables.sites["settlement_types"]
         placed: list[Settlement] = []
         taken: list[tuple[int, int, int]] = []  # x, y, spacing
@@ -377,7 +401,8 @@ class WorldGenerator:
                     return False
             return True
 
-        def place(kind: str, count: int, spacing: int, candidates: np.ndarray, culture: str | None = None) -> None:
+        def place(kind: str, count: int, spacing: int, candidates: np.ndarray, culture: str | None = None,
+                  doomed: bool = False) -> None:
             order = candidates[np.argsort(-score[candidates[:, 0], candidates[:, 1]])]
             added = 0
             for x, y in order.tolist():
@@ -387,6 +412,12 @@ class WorldGenerator:
                     continue
                 spec = types[kind]
                 cul = culture or self._culture_for(x, y, kind, rng)
+                taken.append((x, y, spacing))
+                added += 1
+                if doomed:
+                    # A place that will stand for a while in the ages, and be a ruin today.
+                    self.doomed.append({"kind": kind, "x": x, "y": y, "prior": cul, "area": int(self.area[x, y])})
+                    continue
                 lo, hi = spec["population"]
                 s = Settlement(
                     id=len(placed), name=self.namer.settlement(cul), kind=kind, x=x, y=y, culture=cul,
@@ -394,8 +425,6 @@ class WorldGenerator:
                     area=int(self.area[x, y]),
                 )
                 placed.append(s)
-                taken.append((x, y, spacing))
-                added += 1
 
         land_cells = np.argwhere(score >= 0)
         for kind in ("city", "town", "village", "hamlet"):
@@ -405,10 +434,12 @@ class WorldGenerator:
         mountain = np.isin(self.biome, [B["mountains"]])
         approachable = hydrology.dilate(np.isin(self.biome, [B["hills"], B["plains"], B["pine_forest"], B["forest"]]), 1)
         hold_cells = np.argwhere(mountain & approachable & (score > -1))
+        hold_score = None
         if len(hold_cells):
             score_backup = score.copy()
             score[mountain] = 1.0 + rng.numpy("holds").random(int(mountain.sum()))
             place("hold", SPECIAL_COUNTS["hold"][self.size_index], 20, hold_cells, "dwarven")
+            hold_score = score
             score = score_backup
         forest = self.biome == B["forest"]
         deep_forest = forest & ~hydrology.dilate(~forest, 2)
@@ -417,6 +448,21 @@ class WorldGenerator:
             score[deep_forest] = 1.0 + rng.numpy("elves").random(int(deep_forest.sum()))
             place("elfhall", SPECIAL_COUNTS["elfhall"][self.size_index], 18, elf_cells, "elven")
         self.settlements = placed
+        # The doomed: more good places, spaced like the rest, that the ages will use up.
+        elf_score = score
+        score = base_score
+        doomed = self.tables.history["spots"]["doomed"]
+        for kind in ("city", "town", "village", "hamlet"):
+            _counts, spacing = SETTLEMENT_COUNTS[kind]
+            place(kind, int(doomed[kind][self.size_index]), spacing, land_cells, doomed=True)
+        if len(hold_cells) and hold_score is not None:
+            score_backup = score
+            score = hold_score
+            place("hold", int(doomed["hold"][self.size_index]), 20, hold_cells, "dwarven", doomed=True)
+            score = score_backup
+        if len(elf_cells):
+            score = elf_score
+            place("elfhall", int(doomed["elfhall"][self.size_index]), 18, elf_cells, "elven", doomed=True)
 
     # ------------------------------------------------------------------ 6. roads
     def _roads(self) -> None:
@@ -499,6 +545,8 @@ class WorldGenerator:
         settled = np.zeros((self.w, self.h), dtype=bool)
         for s in self.settlements:
             settled[s.x, s.y] = True
+        for d in self.doomed:
+            settled[d["x"], d["y"]] = True  # a town of the ages will stand there (and its ruin after)
         near_settled = hydrology.dilate(settled, 4)
         allowed = {
             "ruin": land & ~np.isin(self.biome, [B["high_mountains"]]),
@@ -513,6 +561,9 @@ class WorldGenerator:
             if kind not in types:
                 continue
             count = int(round(SITE_COUNTS[kind][self.size_index] * danger_factor))
+            if kind == "ruin":
+                # Most ruins are the towns the ages destroy; a few were ruins before the records began.
+                count = max(2, count - len(self.doomed))
             cells = np.argwhere(allowed[kind] & ~near_settled & ~self.road & ~taken)
             if not len(cells):
                 continue

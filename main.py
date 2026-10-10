@@ -55,7 +55,8 @@ def smoke_script():
             frame += gap
 
     press("p", "escape", "s", "down", "escape", "f1", "pagedown", "escape", "n", "enter")
-    frame += 110  # world generation
+    shots[frame + 4] = "worldgen"  # the ages being lived
+    frame += 170  # world generation (the land, then its history)
     press("enter", "enter", "enter")  # people, calling, background
     shots[frame + 4] = "creation"
     press("enter", "enter", "enter", "enter", "enter", "enter")  # abilities, skills, identity, looks, start, begin
@@ -91,7 +92,11 @@ def smoke_script():
     shots[frame - 4] = "factions"
     press("escape", "n", "2")
     shots[frame - 4] = "chronicle"
-    press("escape")
+    press("b", "down", "down")
+    shots[frame - 4] = "legends"
+    press("right", "right", "down")
+    shots[frame - 4] = "legends_people"
+    press("escape", "escape")
 
     def home(app):
         game = app.game

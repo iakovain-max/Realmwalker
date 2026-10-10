@@ -73,7 +73,8 @@ def cap(text: str) -> str:
 def fill(game, q: dict, kind: str, which: str = "") -> str:
     """Built-in words for a quest ({slots} from its words, reward and days)."""
     rng = game.world.rng.child(f"quest-text/{q['id']}/{kind}/{which}")
-    text = spec(game)["text"][q["template"]]
+    texts = spec(game)["text"]
+    text = texts.get(q.get("text_key", ""), texts[q["template"]])  # a variant's own words, if it has them
     options = text["hidden"][which] if kind == "hidden" else text[kind]
     values = {k: str(v) for k, v in q.get("words", {}).items()}
     values.update(reward=money_text(q["reward"]), days=str(q["days"]))
@@ -295,10 +296,23 @@ def _clear_lair(game, npc, rng):
              and gen.style_for(w, s) in ("cellars", "crypt", "cave", "warren", "tower")]
     if not sites:
         return None
-    site = rng.choice(sites)
+    from realmwalker.game import past
+
+    # A beast of the old songs, if one lairs near enough: the town has a name for it, and its dead.
+    named = [s for s in sites if past.lair_beast(game, s) is not None and
+             past.lair_beast(game, s).kind == "beast"]
+    site = rng.choice(named) if named and rng.chance(0.7) else rng.choice(sites)
     q = base_quest(game, npc, "clear_lair", rng, hard=1 + site.danger / 6)
     q["target"] = {"site": site.id}
     q["words"].update(site=site.name, where=direction(town, site))
+    beast = past.lair_beast(game, site)
+    if beast is not None and beast.kind == "beast":
+        victims = [w.figures[k] for k in beast.kills if k in w.figures]
+        ours = [v for v in victims if v.home == f"S{town.id}"]
+        victim = (ours or victims)[0].full_name() if (ours or victims) else "more of ours than anyone can count"
+        q["text_key"] = "clear_lair_beast"
+        q["words"].update(beast=past.beast_title(beast), beast_word=past.beast_word(game, beast), victim=victim)
+        q["target"]["beast"] = beast.id
     return q
 
 

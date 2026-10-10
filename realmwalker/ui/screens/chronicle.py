@@ -117,9 +117,16 @@ class ChronicleScreen(Screen):
             self.views[2].set_text("\n".join(lines))
         self._built.add(i)
 
+    def open_legends(self) -> None:
+        from realmwalker.ui.screens.legends import LegendsScreen
+
+        self.app.push(LegendsScreen(self.app, self.game.world, self.game.tables))
+
     def handle_key(self, ev: KeyEvent) -> bool:
         if ev.key in ("escape", "n"):
             self.close()
+        elif ev.key in ("b", "B"):
+            self.open_legends()
         elif ev.key in ("tab", "right"):
             self.tab = (self.tab + 1) % len(TABS)
         elif ev.key == "left":
@@ -148,7 +155,13 @@ class ChronicleScreen(Screen):
             self.build(self.tab)
         width = min(110, w - 4)
         self.views[self.tab].render(canvas, 2, 3, width, h - 6)
-        canvas.text(2, h - 2, "Tab / 1-3 switch · ↑↓ PgUp PgDn scroll · Esc close", colors.FAINT, max_width=w - 4)
+        label = " The Legends book (b) "
+        bx = max(x + 2, w - len(label) - 3)
+        over = canvas.hit(bx, 1, len(label), 1, self.open_legends,
+                          tooltip="Every person, realm, place, war and treasure of the history, with a page each")
+        canvas.text(bx, 1, label, colors.SELECT_FG if over else colors.named("title"))
+        canvas.text(2, h - 2, "Tab / 1-3 switch · ↑↓ PgUp PgDn scroll · b the Legends book · Esc close", colors.FAINT,
+                    max_width=w - 4)
 
     def autoplay_keys(self) -> list[KeyEvent]:
-        return [KeyEvent(k) for k in ("tab", "pagedown", "tab", "down", "2", "escape")]
+        return [KeyEvent(k) for k in ("tab", "pagedown", "tab", "down", "2", "b", "escape")]

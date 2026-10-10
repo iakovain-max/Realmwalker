@@ -1,4 +1,8 @@
-"""History (M6): the world's past, made once at world creation.
+"""History: the world's past, and the chronicle that tells it.
+
+New worlds (2026-10) *live* their history year by year as they are made (world/ages, after Dwarf Fortress): today
+is what the ages left. This module keeps the chronicle (told age by age when the ages are named) and, for worlds
+made before that, the older way below, which tells a history that agrees with a map made first:
 
 1. Every faction gets its line of past rulers, ending with today's (reigns by race, causes of death, the odd
    usurper who changed a kingdom's dynasty).
@@ -311,6 +315,23 @@ class HistoryMaker:
                      factions=e.get("factions", []), places=e.get("places", []), day=day)
 
 
+def remember(world, year: int, kind: str, text: str, *, importance: int = 2, factions=(), places=(), sites=(),
+             figures=(), player: bool = False, data: dict | None = None) -> dict:
+    """Write something into the world's history while the game is played (it keeps its order: today is last)."""
+    e = {"id": int(world.politics.get("next_event", len(world.history))), "year": int(year), "kind": kind,
+         "text": text, "importance": int(max(1, min(5, importance))), "factions": [int(f) for f in factions],
+         "places": [int(p) for p in places], "figures": [int(h) for h in figures]}
+    if sites:
+        e["sites"] = [int(s) for s in sites]
+    if player:
+        e["player"] = True
+    if data:
+        e["data"] = data
+    world.politics["next_event"] = e["id"] + 1
+    world.history.append(e)
+    return e
+
+
 def generate_history(world, tables, rng: RNG) -> None:
     HistoryMaker(world, tables, rng).run()
 
@@ -348,8 +369,60 @@ def present_lines(world, tables) -> list[str]:
     return out
 
 
+def pick_events(events: list[dict], most: int = 6) -> list[dict]:
+    """The events a chronicler would choose from a stretch of years: the greatest first, few of one kind."""
+    best, per_group = [], {}
+    for e in sorted(events, key=lambda e: (-e.get("importance", 2), e["year"], e.get("id", 0))):
+        group = WAR_GROUP if e["kind"] in WAR_KINDS_TOLD else e["kind"]
+        if per_group.get(group, 0) >= (3 if group == WAR_GROUP else 1):
+            continue
+        per_group[group] = per_group.get(group, 0) + 1
+        best.append(e)
+        if len(best) >= most:
+            break
+    best.sort(key=lambda e: (e["year"], e.get("id", 0)))
+    return best
+
+
+def lower_first(text: str) -> str:
+    """'The dragon...' -> 'the dragon...' after 'In 812,' (names and people keep their capitals)."""
+    for article in ("The ", "A ", "An "):
+        if text.startswith(article):
+            return article.lower() + text[len(article):]
+    return text
+
+
+def chronicle_by_ages(world, tables) -> dict:
+    """The chronicle of a world that lived its history (world/ages): told age by age."""
+    eras = world.politics["eras"]
+    now = tables.calendar.at(world.time).year
+    events = [e for e in world.history if e.get("importance", 2) >= 3 and e.get("text")]
+    paras = []
+    myth = eras[0]
+    old = pick_events([e for e in events if e["year"] < myth["end"]], 5)
+    first = f"Of {myth['name']} little is certain. {myth.get('summary', '')}".strip()
+    if old:
+        first += " " + " ".join(e["text"] for e in old)
+    paras.append(first)
+    for era in eras[1:]:
+        span = [e for e in events if era["start"] <= e["year"] < era["end"]]
+        great = [e for e in span if e.get("importance", 2) >= 4] or span
+        chosen = pick_events(great)
+        name = era["name"][:1].upper() + era["name"][1:]
+        text = f"{name}, from {era['start']} to {era['end'] - 1}. {era.get('summary', '')}".strip()
+        if chosen:
+            text += " " + " ".join(f"In {e['year']}, {lower_first(e['text'])}" for e in chosen)
+        paras.append(text)
+    today = present_lines(world, tables)
+    if today:
+        paras.append(f"And now, in the year {now}: " + " ".join(today))
+    return {"title": f"A Chronicle of {world.meta.name}", "text": "\n\n".join(paras), "source": "fallback"}
+
+
 def chronicle_fallback(world, tables) -> dict:
     """A chronicle in built-in words: the deep past, then the centuries by era, then today."""
+    if world.politics.get("eras"):
+        return chronicle_by_ages(world, tables)
     start = int(world.politics.get("history_from", tables.calendar.start_year - 250))
     events = [e for e in world.history if e.get("importance", 2) >= 3]
     paras = []
@@ -383,6 +456,25 @@ def chronicle_fallback(world, tables) -> dict:
 def chronicle_facts(world, tables) -> dict:
     """What the AI chronicler is given (it may only retell these)."""
     start = int(world.politics.get("history_from", tables.calendar.start_year - 250))
+    eras = world.politics.get("eras")
+    if eras:
+        picked = []
+        for era in eras[1:]:
+            span = [e for e in world.history if era["start"] <= e["year"] < era["end"] and e.get("text")
+                    and e.get("importance", 2) >= 3]
+            great = [e for e in span if e.get("importance", 2) >= 4] or span
+            picked.append({"year": era["start"], "text": f"{era['name'][:1].upper() + era['name'][1:]} began "
+                                                         f"({era.get('summary', '')})"})
+            picked += pick_events(great, max(3, 34 // max(1, len(eras) - 1)))
+        old = pick_events([e for e in world.history if e["year"] < start and e.get("importance", 2) >= 3
+                           and e.get("text")], 8)
+        return {
+            "world": world.meta.name,
+            "year": str(tables.calendar.at(world.time).year),
+            "deep_past": "\n".join(f"- {e['year']}: {e['text']}" for e in old) or "- (nothing is remembered)",
+            "events": "\n".join(f"- {e['year']}: {e['text']}" for e in picked[:44]) or "- (quiet years)",
+            "today": "\n".join(f"- {line}" for line in present_lines(world, tables)) or "- (no great lords)",
+        }
     events = [e for e in world.history if e.get("importance", 2) >= 4]
     old = [e for e in world.history if e["year"] < start and e.get("importance", 2) >= 3][:8]
     step = max(1, len(events) // 30)

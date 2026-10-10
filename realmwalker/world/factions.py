@@ -47,6 +47,22 @@ class Figure:
     traits: list[str] = field(default_factory=list)
     npc: int = -1  # the townsperson this figure is, once placed in a town
     notes: list[str] = field(default_factory=list)
+    # The lived history (world/ages, 2026-10): all optional, so figures saved before it still load.
+    kind: str = "person"  # person, dragon, beast, god
+    mother: int = -1
+    father: int = -1
+    home: str = ""  # where they live(d): "S12" a settlement, "X5" a site (a lair, a tower, a barrow)
+    died_at: str = ""  # where they died (the same kind of reference)
+    buried: str = ""  # their grave, if anyone remembers it
+    job: str = ""  # knight, priest, mage, smith, bard, chronicler, merchant, outlaw, adventurer, warchief...
+    cls: str = ""  # an adventurer's calling (fighter, wizard...), with `level`
+    level: int = 0
+    kills: list[int] = field(default_factory=list)  # figures they slew
+    slayer: int = -1  # the figure who slew them
+    spheres: list[str] = field(default_factory=list)  # a god's domains
+    creature: str = ""  # a beast's kind in data/creatures.json
+    regnal: str = ""  # "III": the third of that name on a throne
+    fame: int = 0  # how much there is to tell about them
 
     @property
     def alive(self) -> bool:
@@ -64,6 +80,11 @@ class Figure:
         if self.title.startswith("the "):
             return f"{self.name}{epithet}, {self.title}"
         title = f"{self.title} " if self.title else ""
+        if self.regnal:
+            return f"{title}{self.first_name} {self.regnal}{epithet}"  # King Aldric III, not King Aldric III Draycott
+        if self.epithet and self.kind == "person" and not self.epithet.startswith(("the ", "of ")) and \
+                " " in self.name:
+            return f"{title}{self.first_name}{epithet}"  # a by-name stands for the family: Anselm Bloodaxe
         return f"{title}{self.name}{epithet}"
 
     def to_dict(self) -> dict:

@@ -284,10 +284,22 @@ class Conversation:
                          services_line=(services[:1].upper() + services[1:] + ".") if services else "")
         self.npc_says(line)
         self.holder_line()
+        self.old_days()
         today = self.game.moment.total_days
         if town.description and town.flags.get("described_day") != today:
             town.flags["described_day"] = today  # the place is described once a day, not by everyone you ask
             self.note(town.description)
+
+    def old_days(self) -> None:
+        """What they remember of the town's past (world/ages): what they lived through, or what everyone tells."""
+        if self.npc.flags.get("told_past") or self.hostile:
+            return
+        from realmwalker.game import past
+
+        line = past.remembered(self.game, self.npc, self.rng)
+        if line:
+            self.npc.flags["told_past"] = True
+            self.npc_says(line)
 
     def holder_line(self) -> None:
         """Who rules here, in their words."""

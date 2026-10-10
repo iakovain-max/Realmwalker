@@ -111,6 +111,7 @@ class Tables:
         self.factions = data["factions.json"]
         self.law = data["law.json"]
         self.politics = data["politics.json"]
+        self.history = data["history.json"]
         self.companions = data["companions.json"]
         self.uniques = data["uniques.json"]
         self.magic = data["magic.json"]

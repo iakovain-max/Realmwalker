@@ -127,12 +127,20 @@ def describe_overworld(game: GameState, x: int, y: int) -> str:
     lines = []
     if (x, y) == (p.x, p.y):
         lines.append("<name>You are here.</>")
+    from realmwalker.game import past
+
     if settlement is not None:
         lines.append(settlement_line(game, settlement))
+        history = past.place_past(game, settlement)
+        if history:
+            lines.append(f"<dim>{history}</>")
     site = w.site_at(x, y)
     if site is not None:
         spec = game.tables.sites["site_types"].get(site.kind, {})
         lines.append(f"<place>{cap(site.name)}</>. {spec.get('desc', '')}")
+        history = past.site_past(game, site)
+        if history:
+            lines.append(history)
     biome = game.biome_def(x, y)
     area = w.area_at(x, y)
     where = f"{cap(biome['name'])}" + (f", in <place>{area.name}</>" if area else "")

@@ -570,19 +570,26 @@ def populate(game, lm) -> None:
         pool = pool + extra
     walk = game.tables.terrain.walk[game.remap_for(lm)[lm.terrain]]
     groups: list[tuple[int, str]] = []
-    boss = BOSSES.get(style)
+    from realmwalker.game import past
+
+    boss, boss_name = past.boss_for(game, site, BOSSES.get(style))  # the beast or the dead king of the history
     if game.quests and site is not None:
         from realmwalker.game import quests
 
-        boss = quests.boss_for(game, site, boss)
+        quest_boss = quests.boss_for(game, site, boss)
+        if quest_boss != boss:
+            boss, boss_name = quest_boss, None
     meta["boss"] = boss
+    if boss_name:
+        meta["boss_name"] = boss_name
     # Whoever holds the place holds most of it: a bandit cellar is bandits, with rats in the corners.
     kin = [g for g in KIN.get(boss, []) if g in game.tables.creatures.encounters] or pool
     pool = kin * 3 + [g for g in pool if g in VERMIN]
     hidden = set(meta.get("hidden", []))
     open_rooms = [i for i in range(len(rooms)) if i not in hidden]
     last = open_rooms[-1] if open_rooms else len(rooms) - 1
-    if level == depth and boss in game.tables.creatures.encounters and last >= 1:
+    has_boss = level == depth and boss in game.tables.creatures.encounters and last >= 1
+    if has_boss:
         groups.append((last, boss))
     others = [i for i in open_rooms[1:] if not (groups and i == last)]
     rng.shuffle(others)
@@ -603,4 +610,7 @@ def populate(game, lm) -> None:
             if d is not None and creatures:
                 creatures[0].name = d["name"]
                 creatures[0].named = True
+        elif boss_name and has_boss and n == 0 and creatures:
+            creatures[0].name = boss_name  # the troll the old songs are about; the king who was laid here
+            creatures[0].named = True
         lm.actors.append(LocalActor(len(lm.actors) + 1, group, x, y, creatures))

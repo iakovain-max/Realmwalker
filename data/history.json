@@ -1,0 +1,931 @@
+{
+  "_comment": "The lived history (world/ages): every number and word the ages are made from. start: what the world begins with, by world size [small, medium, large]. rates: chances per year. spots: places (fated ones stand today; doomed ones become ruins): reach in tiles, population thresholds for a village/town/city, plans [first year relative to the start of the records, last: a fraction of the history (0..1) or years before today (negative)], doomed counts by size. peoples: how each people grows and chooses its rulers (male_primogeniture, primogeniture, tanistry, seniority, elective). text: the words for each kind of event ({slots} filled by code); kinds the live world also tells fall back to politics.json. names, words, beasts, artifacts, works and eras are the parts names are made from.",
+  "lengths": [100, 250, 500, 1000],
+  "start": {
+    "realms": [3, 4, 6],
+    "lordships": [1, 2, 3],
+    "tribes": [2, 3, 4],
+    "dragons": [1, 2, 2],
+    "beasts": [1, 2, 3],
+    "old_artifacts": [2, 3, 4],
+    "adventurers": [3, 5, 8]
+  },
+  "rates": {
+    "great_plague": 0.004,
+    "plague": 0.012,
+    "famine": 0.008,
+    "usurping_regent": 0.012,
+    "succession_war": 0.35,
+    "fealty": 0.03,
+    "rebellion": 0.03,
+    "charter": 0.006,
+    "proclamation": 0.02,
+    "assassination": 0.0025,
+    "beast_arrives": 0.04,
+    "dragon_arrives": 0.004,
+    "tribe_rises": 0.03,
+    "tribe_raid": 0.18,
+    "hero_goes": 0.08,
+    "hero_explores": 0.06,
+    "heresy": 0.006,
+    "cult_spread": 0.15,
+    "cult_purge": 0.08,
+    "cult_crime": 0.08,
+    "artifact": 0.01,
+    "theft": 0.08,
+    "chronicle": 0.006,
+    "mages_circle": 0.02,
+    "smiths_guild": 0.01,
+    "knightly_order": 0.008,
+    "healers_guild": 0.02,
+    "company_ends": 0.02,
+    "gang_destroyed": 0.12,
+    "gang_new": 0.05,
+    "pirates_new": 0.04,
+    "pirates_end": 0.03,
+    "merchant_guild": 0.03,
+    "thieves_guild": 0.02,
+    "grant": 0.08,
+    "hero_rises": 0.3
+  },
+  "spots": {
+    "reach": 40,
+    "thresholds": {
+      "village": 100,
+      "town": 600,
+      "city": 5000
+    },
+    "plans": {
+      "city": [-220, 0.3],
+      "town": [-160, 0.55],
+      "village": [-110, -25],
+      "hamlet": [-60, -8],
+      "doomed": [-110, 0.6]
+    },
+    "doom_after": 25,
+    "doomed": {
+      "city": [0, 1, 2],
+      "town": [1, 2, 4],
+      "village": [2, 4, 7],
+      "hamlet": [2, 3, 5],
+      "hold": [0, 1, 1],
+      "elfhall": [0, 0, 1]
+    }
+  },
+  "peoples": {
+    "heartland": {
+      "race": "human",
+      "growth": 0.032,
+      "succession": "male_primogeniture"
+    },
+    "northmarch": {
+      "race": "human",
+      "growth": 0.028,
+      "succession": "tanistry"
+    },
+    "southron": {
+      "race": "human",
+      "growth": 0.034,
+      "succession": "primogeniture"
+    },
+    "halfling": {
+      "race": "halfling",
+      "growth": 0.03,
+      "succession": "primogeniture"
+    },
+    "dwarven": {
+      "race": "dwarf",
+      "growth": 0.012,
+      "succession": "seniority"
+    },
+    "elven": {
+      "race": "elf",
+      "growth": 0.006,
+      "succession": "elective"
+    },
+    "orcish": {
+      "race": "half_orc",
+      "growth": 0.04,
+      "succession": "tanistry"
+    }
+  },
+  "folk": {
+    "adult": 16,
+    "fertile": [17, 42],
+    "child_death": 0.015,
+    "marry": 0.3,
+    "alliance_marriage": 0.55,
+    "marriage_bond": 12,
+    "birth": 0.32,
+    "birth_decay": 0.8,
+    "max_children": 7,
+    "named_after": 0.35,
+    "callings": {
+      "male": [["knight", 50], ["none", 28], ["priest", 8], ["scholar", 4], ["mage", 2], ["captain", 8]],
+      "female": [["none", 58], ["knight", 10], ["priest", 14], ["scholar", 8], ["mage", 4], ["captain", 6]]
+    }
+  },
+  "realms": {
+    "elder": {
+      "dwarven": [300, 1200],
+      "elven": [800, 3000]
+    },
+    "spread": 0.2,
+    "old_realm_age": [40, 280],
+    "lordship_age": [20, 150],
+    "church_age": [300, 900],
+    "drift": 5.0,
+    "border_friction": 1.2
+  },
+  "war": {
+    "reach": 55,
+    "base": 0.01,
+    "hostility": 0.002,
+    "defender_edge": 1.15
+  },
+  "heroes": {
+    "infamy": 3,
+    "classes": [["fighter", 6], ["rogue", 2], ["cleric", 2], ["wizard", 1]]
+  },
+  "causes": {
+    "child": ["of a childhood fever", "of the coughing sickness, in their first years", "in the cradle"],
+    "childbed": ["in childbed", "bearing a child"],
+    "beast": ["devoured by {beast}", "torn apart by {beast}", "killed by {beast}"],
+    "dragon": ["burned by {beast}", "in the fire of {beast}", "taken by {beast}"],
+    "executed": ["on the headsman's block", "on the gallows", "at the end of a rope", "beheaded for treason"],
+    "vanished": ["and was never seen again", "in a way nobody can explain", "somewhere no one followed"],
+    "heretic": ["burned as a heretic", "at the stake, for heresy", "drowned as a witch"],
+    "plague": ["of the plague"],
+    "battle": ["in battle", "of wounds taken in battle", "leading a charge"]
+  },
+  "epithets": {
+    "warrior": [
+      "the Bold", "the Red", "Ironhand", "the Unbroken", "Shieldbreaker", "the Butcher", "the Lion", "Bloodaxe",
+      "the Grim", "Oathkeeper", "the Hammer", "Halfhand"
+    ]
+  },
+  "beasts": {
+    "dragon": {
+      "creature": "young_dragon",
+      "group": "dragon",
+      "word": "dragon",
+      "weight": 0,
+      "lairs": ["cave", "ruin"],
+      "biomes": ["mountains", "high_mountains", "hills"],
+      "power": 16,
+      "life": [800, 3000],
+      "attack": 0.45,
+      "range": 20,
+      "names": [
+        "Vorthax", "Skaldrith", "Uthmerog", "Kessalyn", "Mordrake", "Ashgorath", "Velsinder", "Thrumak", "Ysolde",
+        "Crannoch", "Halvorax", "Sygreth", "Morwen", "Drauglir", "Ouroth", "Calderax", "Fyrrdis", "Nidhrath",
+        "Seravaine", "Gorthaug"
+      ],
+      "epithets": [
+        "the Burner", "the Old Wyrm", "Ash-wing", "the Widowmaker", "the Hungry", "the Unsleeping", "the Grey Death",
+        "the Gold-Sleeper", "Kingsbane", "the Black Flame", "the Mountain's Teeth", "the Patient"
+      ],
+      "slayer": ["Dragonslayer", "Wyrmbane", "the Dragon-Killer"]
+    },
+    "troll": {
+      "creature": "troll",
+      "group": "troll",
+      "word": "troll",
+      "weight": 3,
+      "lairs": ["cave", "ruin"],
+      "biomes": ["mountains", "high_mountains", "pine_forest", "marsh", "hills"],
+      "power": 9,
+      "life": [150, 400],
+      "attack": 0.3,
+      "range": 14,
+      "names": [
+        "Grubnak", "Hrothgul", "Skarr", "Ugmar", "Bolg", "Thrungar", "Mogroth", "Old Knuckles", "Gnashbone",
+        "Rattlejaw", "Hulgrim", "Skaggi"
+      ],
+      "epithets": [
+        "the Bone-Gnawer", "the Bridge-Keeper", "of the Black Fells", "the Grey", "Who Comes at Dusk",
+        "the Child-Taker", "the Unkillable"
+      ],
+      "slayer": ["Trollbane", "the Troll-Killer", "Bridgebreaker"]
+    },
+    "ogre": {
+      "creature": "ogre",
+      "group": "ogre",
+      "word": "ogre",
+      "weight": 4,
+      "lairs": ["cave", "ruin"],
+      "biomes": ["hills", "mountains", "forest", "marsh"],
+      "power": 6,
+      "life": [80, 200],
+      "attack": 0.35,
+      "range": 12,
+      "names": ["Gorm", "Dunnar", "Hulgo", "Grizzel", "Brakka", "Mother Mawg", "Ulfgar", "Thuggal", "Big Brann", "Grebbe"],
+      "epithets": ["the Glutton", "Shepherd-Eater", "the Lame", "of the Barrow Hills", "the Toll-Taker", "Bonebag"],
+      "slayer": ["Ogrebane", "the Giant-Killer"]
+    },
+    "spider": {
+      "creature": "giant_spider",
+      "group": "spiders",
+      "word": "great spider",
+      "weight": 3,
+      "lairs": ["cave", "ruin"],
+      "biomes": ["forest", "pine_forest", "marsh"],
+      "power": 5,
+      "life": [40, 120],
+      "attack": 0.3,
+      "range": 10,
+      "names": ["Ysscara", "Shelvane", "Sithra", "Nethrys", "Old Mother", "Kelleth", "Ungweth", "Szarra"],
+      "epithets": ["the Weaver", "Mother of Webs", "the Spinner in the Dark", "of the Black Wood", "the Patient Hunger"],
+      "slayer": ["Webcutter", "the Spider-Killer"]
+    },
+    "wolf": {
+      "creature": "dire_wolf",
+      "group": "dire_wolves",
+      "word": "dire wolf",
+      "weight": 3,
+      "lairs": ["cave"],
+      "biomes": ["pine_forest", "tundra", "hills", "mountains"],
+      "power": 4,
+      "life": [15, 30],
+      "attack": 0.4,
+      "range": 12,
+      "names": ["Greyfang", "Hrimtooth", "Old Ragged", "Blackmaw", "Ashpelt", "Skoll", "Whitejaw", "Hungerfell"],
+      "epithets": ["the Wolf of the Fells", "the Pack-Father", "the Night-Howler", "the Winter Wolf", "the Man-Eater"],
+      "slayer": ["Wolfsbane", "the Wolf-Killer"]
+    },
+    "bear": {
+      "creature": "brown_bear",
+      "group": "brown_bear",
+      "word": "great bear",
+      "weight": 2,
+      "lairs": ["cave"],
+      "biomes": ["pine_forest", "hills", "mountains", "tundra", "forest"],
+      "power": 3,
+      "life": [20, 40],
+      "attack": 0.35,
+      "range": 10,
+      "names": ["Old Ironhide", "Grimpaw", "Bjarnhild", "Old Brown", "Ursk", "Honeythief"],
+      "epithets": ["the Great Bear", "the Man-Eater", "of the Deep Wood", "the Mauler"],
+      "slayer": ["Bearbane", "the Bear-Killer"]
+    }
+  },
+  "barrows": {
+    "titles": [
+      ["King", "Queen"],
+      ["King", "Queen"],
+      ["Chieftain", "Chieftain"],
+      ["Warlord", "Warlady"],
+      ["Jarl", "Jarl"],
+      ["High King", "High Queen"],
+      ["Lord", "Lady"]
+    ],
+    "epithets": [
+      "the Old", "Ring-Giver", "the Unburied", "the Golden", "Spear-Shaker", "the Silent", "Wolf-Born", "the Last",
+      "of the Long Spear", "the Gift-Giver"
+    ]
+  },
+  "elder_ruins": {
+    "was": [
+      "a town", "a fortress", "a temple", "a palace", "a watchtower", "a walled city", "a monastery",
+      "a king's hall", "a hill fort"
+    ],
+    "peoples": [
+      "the old kings", "a people whose name is lost", "the first men", "the elves of the old days",
+      "a people who carved snakes on everything", "the giants, they say", "the Vanished"
+    ],
+    "causes": [
+      "fire from the sky", "a war no song remembers", "the Long Winter", "a curse", "the rising of the sea",
+      "a plague with no name", "the earth opening", "its own people, who went away and did not say why"
+    ]
+  },
+  "abandoned": {
+    "town": [
+      "a plague that left too few to work the fields", "the river's change of course",
+      "three years of blight on the fields", "a run of hard winters", "the failure of the mine",
+      "the loss of the trade road", "a flood that took the lower town", "a fire nobody could stop",
+      "a quarrel over water that left half the families dead"
+    ],
+    "hold": [
+      "the end of the deep seams", "something that woke below", "a fire in the deep halls",
+      "the bad air of the lower mines", "the rising of the waters in the deep roads"
+    ]
+  },
+  "ruin_names": {
+    "town": [
+      "the ruins of {name}", "Old {name}", "the burned walls of {name}", "the stones of {name}",
+      "the ruins of {name}", "the empty walls of {name}"
+    ],
+    "hold": ["the fallen hold of {name}", "the empty halls of {name}", "{name}, the Lost Hold"],
+    "elfhall": ["the dead halls of {name}", "the ruin of {name}"]
+  },
+  "pantheon": {
+    "radiant": {
+      "spheres": ["sun", "law", "harvest"],
+      "lesser": [
+        [
+          "Aurelle the Dawn-Maid",
+          ["dawn", "mercy", "healing"]
+        ],
+        [
+          "Brannoc of the Gate",
+          ["oaths", "justice", "war"]
+        ],
+        [
+          "Old Thessaly",
+          ["harvest", "bread", "the poor"]
+        ]
+      ]
+    },
+    "old_ways": {
+      "spheres": ["hearth", "hunt", "seasons"],
+      "sex": "female",
+      "lesser": [
+        [
+          "the Grey Hunter",
+          ["hunt", "forest", "death"]
+        ],
+        [
+          "the Old Man of the Hills",
+          ["weather", "stone", "luck"]
+        ]
+      ]
+    },
+    "stone": {
+      "spheres": ["ancestors", "craft", "oaths"],
+      "lesser": [
+        [
+          "Grundmar the Smith",
+          ["forge", "fire", "craft"]
+        ],
+        [
+          "the Keeper of the Deeps",
+          ["mountains", "secrets", "gems"]
+        ]
+      ]
+    },
+    "evergreen": {
+      "spheres": ["forest", "memory", "stars"],
+      "sex": "female",
+      "lesser": [
+        [
+          "Saelith of the Stars",
+          ["stars", "night", "song"]
+        ],
+        [
+          "the Green Hart",
+          ["forest", "renewal", "beasts"]
+        ]
+      ]
+    },
+    "drowned": {
+      "spheres": ["sea", "storms", "drowning"],
+      "lesser": [
+        [
+          "the Salt Widow",
+          ["tides", "grief"]
+        ]
+      ]
+    },
+    "red_jaw": {
+      "spheres": ["war", "hunger", "strength"],
+      "lesser": [
+        [
+          "Gorthak the Bloody-Handed",
+          ["slaughter", "fire"]
+        ]
+      ]
+    },
+    "hollow_king": {
+      "spheres": ["death", "undeath", "kings"],
+      "lesser": [
+        [
+          "the Crowned Skull",
+          ["tombs", "obedience"]
+        ]
+      ]
+    },
+    "pale_mother": {
+      "spheres": ["plague", "rot", "mercy"],
+      "sex": "female",
+      "lesser": [
+        [
+          "the Sweet Sleep",
+          ["fever", "dreams"]
+        ]
+      ]
+    },
+    "whisperer": {
+      "spheres": ["secrets", "bargains", "hunger"],
+      "lesser": [
+        [
+          "the Debt-Keeper",
+          ["oaths", "madness"]
+        ]
+      ]
+    }
+  },
+  "artifacts": {
+    "kinds": {
+      "sword": {
+        "word": "Sword",
+        "weight": 6,
+        "materials": ["steel", "star-iron", "silver-chased steel", "black iron", "dwarf-forged steel"]
+      },
+      "spear": {
+        "word": "Spear",
+        "weight": 3,
+        "materials": ["ash and steel", "black iron", "bronze"]
+      },
+      "axe": {
+        "word": "Axe",
+        "weight": 3,
+        "materials": ["steel", "dwarf-forged steel", "black iron"]
+      },
+      "bow": {
+        "word": "Bow",
+        "weight": 2,
+        "materials": ["yew", "elm and horn", "black ash"]
+      },
+      "hammer": {
+        "word": "Hammer",
+        "weight": 2,
+        "materials": ["steel", "bronze", "dwarf-forged steel"]
+      },
+      "shield": {
+        "word": "Shield",
+        "weight": 3,
+        "materials": ["oak and iron", "steel", "silvered steel"]
+      },
+      "armour": {
+        "word": "Mail",
+        "weight": 2,
+        "materials": ["steel rings", "silvered steel", "dwarf-forged steel"]
+      },
+      "crown": {
+        "word": "Crown",
+        "weight": 4,
+        "materials": ["gold", "silver", "gold and garnets", "iron and gold"]
+      },
+      "ring": {
+        "word": "Ring",
+        "weight": 3,
+        "materials": ["gold", "silver", "electrum"]
+      },
+      "amulet": {
+        "word": "Amulet",
+        "weight": 2,
+        "materials": ["gold", "silver", "amber and gold"]
+      },
+      "staff": {
+        "word": "Staff",
+        "weight": 2,
+        "materials": ["black oak", "white ash", "ironwood"]
+      },
+      "book": {
+        "word": "Book",
+        "weight": 2,
+        "materials": ["vellum", "calfskin and gold leaf"]
+      },
+      "horn": {
+        "word": "Horn",
+        "weight": 1,
+        "materials": ["aurochs horn", "silver-bound horn"]
+      },
+      "cup": {
+        "word": "Cup",
+        "weight": 1,
+        "materials": ["gold", "silver"]
+      },
+      "banner": {
+        "word": "Banner",
+        "weight": 1,
+        "materials": ["silk", "red wool and gold thread"]
+      },
+      "relic": {
+        "word": "Reliquary",
+        "weight": 0,
+        "materials": ["gold", "silver", "crystal and gold"]
+      }
+    },
+    "kennings": {
+      "sword": [
+        "Ashbrand", "Duskfang", "Kingsedge", "Mournblade", "Oathkeeper", "Widowmaker", "Dawnbringer", "Graveborn",
+        "Frostbite", "Heartseeker", "Hollowsong", "Redtongue"
+      ],
+      "spear": ["Wyrmtooth", "the Long Reach", "Stormspike", "Starfall"],
+      "axe": ["Beardcleaver", "Hearthguard", "Skullsplitter", "the Red Wife"],
+      "bow": ["Windsinger", "the Silent Wife", "Farstrike"],
+      "hammer": ["Anvilfall", "Thunderhead", "the Mountain's Fist"],
+      "shield": ["the Wall of Ashes", "Oakheart", "the Unbroken"],
+      "armour": ["the Silver Coat", "Dragonskin", "the Iron Shirt"],
+      "crown": ["the Crown of Thorns", "the Gold Circle", "the Winter Crown"],
+      "_any": ["Morrowlight", "the Heirloom", "Ember", "the Old Gift", "Sorrowmere"]
+    },
+    "of": [
+      "Dawn", "the First King", "Ash", "Winters", "the Drowned", "Sorrows", "the North", "Iron", "the Nine",
+      "Embers", "Kings", "the Deep", "Stars", "the Long Night", "the West", "Seven Oaths", "the Lost",
+      "the Mountain", "Twilight", "Mercy", "the Crows", "the Fallen"
+    ],
+    "adjectives": [
+      "Black", "Silver", "Weeping", "Red", "Broken", "Golden", "Grey", "Burning", "Sleeping", "Crowned", "Hollow",
+      "Bright"
+    ],
+    "why": [
+      "for a coronation", "to seal an oath", "as a gift for a wedding", "to mark a victory",
+      "for the glory of the house", "to be buried with them one day", "after a dream that would not leave them"
+    ],
+    "old_fates": [
+      "was buried with its last bearer in {site}", "was lost when {site} fell",
+      "was carried into {site} and never came out", "is said to lie somewhere in {site}"
+    ]
+  },
+  "works": {
+    "forms": {
+      "ballad": {
+        "word": "a ballad",
+        "author": "bard",
+        "titles": [
+          "The Ballad of {subject}", "The Lay of {subject}", "A Song of {subject}", "{subject}: a Ballad",
+          "The Ride of {subject}"
+        ]
+      },
+      "lament": {
+        "word": "a lament",
+        "author": "bard",
+        "titles": ["A Lament for {subject}", "The Weeping of {subject}", "The Last Night of {subject}"]
+      },
+      "epic": {
+        "word": "an epic",
+        "author": "bard",
+        "titles": ["The Deeds of {subject}", "{subject}, in Twelve Cantos", "The Long Song of {subject}"]
+      },
+      "chronicle": {
+        "word": "a chronicle",
+        "author": "chronicler",
+        "titles": ["A Chronicle of {subject}", "The Annals of {subject}", "The Book of {subject}", "Of the Kings of {subject}"]
+      },
+      "hymn": {
+        "word": "a hymn",
+        "author": "priest",
+        "titles": ["A Hymn for {subject}", "The Canticle of {subject}"]
+      }
+    }
+  },
+  "eras": {
+    "myth": ["the Age of Myth", "the Elder Days", "the Dawn of the World", "the Age Before Kings"],
+    "themes": {
+      "myth": {
+        "names": ["the Age of Myth"],
+        "summary": [
+          "Of the time before the records only songs and stones remain.",
+          "The elder peoples were old already, and men were few."
+        ]
+      },
+      "founding": {
+        "names": ["the Age of Founding", "the Years of the First Towns", "the Settling", "the Age of Axes"],
+        "summary": [
+          "Forests fell to the axe and new towns rose on every river.",
+          "People spread across the land, and every valley got its village."
+        ]
+      },
+      "war": {
+        "names": [
+          "the Age of Strife", "the Iron Years", "the Long War", "the Age of Swords", "the Red Years",
+          "the Years of Fire and Steel"
+        ],
+        "summary": [
+          "Crowns fought crowns, and the fields were sown with the dead.",
+          "There was hardly a year without a war, and few towns that did not change hands."
+        ]
+      },
+      "dragons": {
+        "names": ["the Age of Dragons", "the Burning Years", "the Years of Fire", "the Time of Wings"],
+        "summary": [
+          "Dragons came down from the mountains, and whole towns paid them tribute or burned.",
+          "The great wyrms were awake, and nothing that was built was safe."
+        ]
+      },
+      "beasts": {
+        "names": ["the Age of Monsters", "the Dark Years", "the Years of Fear", "the Wild Time"],
+        "summary": [
+          "The wild crept in to the edge of every field: trolls on the bridges, raiders on the roads.",
+          "Monsters and raiders ruled the roads, and the towns shut their gates at dusk."
+        ]
+      },
+      "plague": {
+        "names": ["the Plague Years", "the Grey Years", "the Age of Sorrow", "the Years of the Bell"],
+        "summary": ["Sickness walked the roads, and the bells did not stop tolling.", "Plague and hunger emptied the villages."]
+      },
+      "heroes": {
+        "names": ["the Age of Heroes", "the Age of Legends", "the Time of Champions"],
+        "summary": [
+          "Heroes went out against the monsters of the wild, and some of them came back.",
+          "It was an age of champions, of beasts slain and treasures found."
+        ]
+      },
+      "peace": {
+        "names": [
+          "the Long Peace", "the Golden Age of {realm}", "the Age of Kings", "the Quiet Years",
+          "the Years of Plenty", "the Peace of {realm}"
+        ],
+        "summary": [
+          "The roads were safe and the granaries full, and the great houses quarrelled over nothing worse than marriages.",
+          "It was a time of peace and growth, remembered fondly by those who did not live through it."
+        ]
+      }
+    },
+    "thresholds": {
+      "war": 2.2,
+      "dragons": 0.25,
+      "beasts": 1.2,
+      "plague": 250,
+      "founding": 0.5,
+      "heroes": 0.08
+    }
+  },
+  "names": {
+    "war": {
+      "default": [
+        "the War of the {war_noun}", "the {war_adj} War", "the War of {place}", "the {place} War",
+        "the War of the {war_noun2}"
+      ],
+      "border": ["the Border War", "the War of the {war_noun}", "the {place} War", "the War of the Marches"],
+      "succession": [
+        "the War of the {defender} Succession", "the War of the Two Crowns", "the Crown War",
+        "the War of the Empty Throne"
+      ],
+      "religion": ["the Holy War", "the War of the Faithful", "the {war_adj} Crusade", "the War of the Altars"],
+      "raids": ["the Raider War", "the War of the {war_noun}", "the Burning of the Marches", "the Horde War"],
+      "trade": ["the War of the Tolls", "the Salt War", "the Merchants' War", "the War of the River Road"],
+      "revenge": ["the War of Old Wrongs", "the Second {place} War", "the Revenge War", "the War of the {war_noun}"],
+      "conquest": ["the War of the {war_noun}", "the {war_adj} War", "the Conquest of {place}", "the Great War"],
+      "rebellion": ["the {house} Rebellion", "the Rising of {house}", "the {war_adj} Rising", "the Revolt of {house}"]
+    },
+    "battle": {
+      "battle": [
+        "the Battle of {place}", "the Battle of {place}", "the Fight at {place}", "the Rout at {place}",
+        "the Bloody Field of {place}"
+      ],
+      "siege": ["the Siege of {place}", "the Siege of {place}", "the Storming of {place}"]
+    },
+    "peace": ["the Peace of {place}", "the Treaty of {place}", "the Oath of {place}", "the Truce of {place}"],
+    "plague": [
+      "the Grey Death", "the Sweating Sickness", "the Red Plague of {year}", "the Great Pestilence",
+      "the Coughing Death", "the Black Spring", "the Plague of {place}", "the Bell-Years"
+    ]
+  },
+  "words": {
+    "settlers": [
+      "settlers", "families from the old lands", "woodcutters", "herders", "fishermen", "miners", "the landless",
+      "a lord's younger sons", "freed serfs", "charcoal-burners", "refugees from the wars"
+    ],
+    "war_noun": [
+      "Ravens", "Broken Crown", "Three Rivers", "Burning Fields", "Iron Oath", "Black Banners", "Salt",
+      "Stolen Bride", "Red Ford", "Seven Towers", "Long Winter", "Wolves", "Ashes"
+    ],
+    "war_noun2": ["Crows", "Hollow Hill", "White Stag", "Bridges", "Grey Banners", "Empty Graves"],
+    "war_adj": ["Bitter", "Long", "Red", "Hundred Days'", "Cruel", "Grey", "Forgotten", "Brothers'", "Iron", "Wolf"]
+  },
+  "text": {
+    "came_under": ["{place} came under {holder}.", "{place} passed to {holder}."],
+    "became_town": [
+      "{place} had grown into a town, and {ruler} granted it a charter.",
+      "{place} was a town now, with a market and a charter from {ruler}."
+    ],
+    "became_city": [
+      "{place} had become a great city, the jewel of {realm}.",
+      "{place} grew into a city, walled and crowded and rich."
+    ],
+    "settled": [
+      "{settlers} settled {place}, under {realm}.", "{place} was founded by {settlers}.",
+      "The first houses of {place} were raised by {settlers}."
+    ],
+    "founded_seat": ["{place} was raised as the seat of {faction}.", "{faction} built {place}."],
+    "founded_town": [
+      "{founder} founded {place} in the name of {ruler}, and was made its lord.",
+      "{ruler} sent {founder} to build {place}, and gave it to them to hold."
+    ],
+    "founded_lordship": [
+      "{founder} founded {place} and held it for no king: {faction} began there.",
+      "{place} was founded by {founder}, the first of {faction}."
+    ],
+    "rebuilt": ["{place} was built again where {old} had stood.", "New houses went up on the ashes of {old}: {place}."],
+    "wedding": ["{a} married {b}, of {from}.", "{a} took {b} of {from} in marriage, and the two houses were bound together."],
+    "succession": [
+      "{old} died {cause}, and {new}, {relation}, took the {seat}.",
+      "{old} died {cause}. {new}, {relation}, followed.",
+      "When {old} died {cause}, the {seat} passed to {new}, {relation}."
+    ],
+    "succession_minor": [
+      "{old} died {cause}, and {new}, {relation}, came to the {seat} as a child; {regent} ruled for them.",
+      "The {seat} passed to {new}, {relation}, still a child when {old} died {cause}. {regent} held it in their name."
+    ],
+    "came_of_age": [
+      "{ruler} came of age, and {regent} gave up the rule of {faction}.",
+      "The regency of {regent} ended: {ruler} ruled {faction} in their own right."
+    ],
+    "regent_usurps": [
+      "{regent}, who ruled {faction} for the young {ruler}, took the seat for themselves. The child was never seen again.",
+      "{regent} seized {faction}; of {ruler}, the child in whose name they had ruled, nothing more is known."
+    ],
+    "crisis": [
+      "{old} died {cause}, leaving no heir. {new} of {house} took the {seat}, and not everyone agreed.",
+      "When {old} died {cause} without an heir, {new} of {house} seized the {seat}.",
+      "The line of {faction} ended when {old} died {cause}; {new} of {house} took the {seat}."
+    ],
+    "house_ended": [
+      "{old} died {cause}, the last of {house}; their lands went back to {liege}.",
+      "{house} died out with {old}, and {liege} took back what had been given."
+    ],
+    "granted": [
+      "{liege} gave {place} to {lord}, and {faction} began.",
+      "{lord} was granted {place} by {liege}: the first of {faction}."
+    ],
+    "fealty": ["{lord} of {faction} knelt to {liege} and swore fealty.", "{faction} swore itself to {liege}."],
+    "charter": [
+      "The burghers of {place} bought their freedom from {liege}: {faction} was born.",
+      "{place} paid {liege} a king's ransom for a charter, and became {faction}."
+    ],
+    "proclaimed": [
+      "{ruler} of {old} had themselves crowned, and called their lands {faction}.",
+      "{old} was a kingdom now: {ruler} was crowned, and {faction} began."
+    ],
+    "assassination": [
+      "{victim} of {faction} was murdered, and {plotter} was behind it.",
+      "{victim}, ruler of {faction}, was found dead in their bed; it was the work of {plotter}."
+    ],
+    "elected": ["{old} died {cause}; {faction} chose {new} in their place.", "After {old} died {cause}, {new} led {faction}."],
+    "gang_ended": ["{old} was hanged, and {faction} scattered.", "{faction} broke up after {old} died {cause}."],
+    "war_named": [
+      "{attacker} went to war with {defender} over {reason}: {war} began.",
+      "{war}: {attacker} against {defender}, over {reason}."
+    ],
+    "rebellion": ["{rebel} rose against {liege}: {war}.", "{rebel} threw off their oath to {liege}, and {war} began."],
+    "joined_war": ["{ally} joined {friend} in {war}.", "{ally} came into {war} on the side of {friend}."],
+    "battle_named": [
+      "{battle}: {victor} beat {vanquished}, and {dead} fell.",
+      "At {battle}, {winner} broke the host of {loser} under {vanquished}. {dead} dead.",
+      "{victor} won {battle} for {winner}; {dead} lay dead on the field."
+    ],
+    "fell": ["{name} fell at {battle}, slain by {slayer}.", "{name} died at {battle}, at the hand of {slayer}."],
+    "captured": ["{captive} was taken prisoner by {captor} at {battle}.", "{captor} took {captive} alive at {battle}."],
+    "executed_captive": ["{captor} put their prisoner {captive} to death.", "{captive}, a prisoner of {captor}, was executed."],
+    "ransomed": [
+      "{captive} was ransomed from {captor} for {ransom} crowns.",
+      "{captor} let {captive} go home, for {ransom} crowns."
+    ],
+    "relieved": [
+      "{siege} failed: {defender} drove {attacker} from the walls of {place}.",
+      "{attacker} could not take {place}; {siege} was lifted."
+    ],
+    "razed": [
+      "{attacker} took {place} and burned it to the ground ({siege}); {dead} died, and it was never what it had been.",
+      "{siege} ended with {place} in flames: {attacker} left nothing standing."
+    ],
+    "sacked": ["{attacker} sacked {place} ({siege}); {dead} died.", "{place} was put to the sword by {attacker}."],
+    "taken": ["{attacker} took {place} from {defender} ({siege}).", "{place} fell to {attacker} after {siege}."],
+    "peace_named": [
+      "{war} ended with {treaty}{terms}. {dead} had died in it.",
+      "{a} and {b} made {treaty}, and {war} was over{terms}."
+    ],
+    "ceded": ["By {treaty}, {loser} gave {place} to {winner}.", "{place} went to {winner} under {treaty}."],
+    "freedom": ["{rebel} won their freedom from {liege} in {war}.", "{liege} could not bring {rebel} to heel, and let them go."],
+    "crushed": [
+      "{liege} crushed the rising of {rebel}, and {war} ended in blood.",
+      "{war} was over: {rebel} was beaten, and their lord went to the block."
+    ],
+    "plague": ["Plague came to {place}, and {deaths} died.", "The plague year: {place} lost {deaths} souls."],
+    "great_plague": [
+      "{name} swept the world, beginning at {place}: {deaths} died.",
+      "{name} came, and no town was spared: {deaths} died before it passed."
+    ],
+    "famine": [
+      "Famine in the lands of {faction}: the harvest failed.",
+      "A hungry year in the lands of {faction}, and bread dear everywhere."
+    ],
+    "tribe_rose": ["{tribe} came down into {place} under {chief}.", "A new power in the wild: {tribe}, led by {chief}, in {place}."],
+    "raid": ["{tribe} raided {place}; {dead} were killed or taken.", "{tribe} came down on {place} in the night."],
+    "burned": ["{tribe} burned {place}.", "{place} was burned by {tribe}."],
+    "abducted": [
+      "{tribe} carried off {child} of {family}.",
+      "{child}, a child of {family}, was taken by {tribe} and not seen again."
+    ],
+    "beast_came": ["{beast}, a {kind}, made its lair in {site}.", "A {kind} came to {site}: {beast}."],
+    "dragon_came": ["The dragon {beast} came to {site}.", "{beast}, a dragon, took {site} for its lair."],
+    "dragon": ["The dragon {dragon} burned {place}; {dead} died.", "{dragon} came out of the mountains and burned {place}."],
+    "dragon_tribute": [
+      "{dragon} came to {place}. They drove out cattle and set out silver, and were spared.",
+      "{place} pays tribute to {dragon} now: beasts, gold, and once a year something worse."
+    ],
+    "dragon_sleeps": [
+      "{dragon} went back to its lair and has not been seen since.",
+      "No one has seen {dragon} for many years. Some say it only sleeps."
+    ],
+    "dragon_wakes": ["{dragon} woke in {site}.", "Smoke over {site}: {dragon} was awake again."],
+    "beast_attack": ["{beast} came down on {place}; {dead} were killed.", "{beast} killed {dead} in {place}."],
+    "beast_slain": ["{hero}{band} went into {site} and slew {beast}.", "{beast} was killed in {site} by {hero}{band}."],
+    "dragon_slain": ["{legend}{band} slew the dragon {dragon} in {site}.", "{dragon} was killed by {legend}, at a price."],
+    "hero_fell": ["{hero}{band} went into {site} to kill {beast}, and did not come out.", "{beast} killed {hero} in {site}."],
+    "beast_died": ["{beast} died in {site}, of age alone.", "{beast} was found dead in {site}, old beyond reckoning."],
+    "beast_destroyed": [
+      "{beast} destroyed {place}; nobody went back.",
+      "{place} was emptied by {beast}: those who lived fled and did not return."
+    ],
+    "burned_down": [
+      "{by} burned {place} to the ground, and it was never rebuilt.",
+      "{place} burned in the fire of {by}; nothing was left to rebuild."
+    ],
+    "abandoned": ["{place} was abandoned after {cause}.", "The last families left {place} after {cause}."],
+    "elder_fall": ["{site} was {was} of {people}, until {cause}.", "Long ago {site} was {was}; {people} lived there until {cause}."],
+    "barrow_raised": ["{name} was laid in {site}.", "They raised {site} over {name}."],
+    "laid_to_rest": ["{name} was laid to rest in {site}.", "{name} was buried with honour in {site}."],
+    "tower_raised": ["The mage {mage} raised {site}.", "{site} was built by {mage}, a wizard."],
+    "chapter": [
+      "{faction} was founded at {place}.", "The first of the {people} of {faction} gathered at {place}.",
+      "{faction} began at {place}."
+    ],
+    "church_founded": [
+      "{prophet} preached {god} at {place}, and {faction} began.",
+      "{faction} was founded at {place} by {prophet}, who had heard {god}."
+    ],
+    "temple_raised": ["A temple of {god} was raised in {place}.", "{faction} built a temple in {place}."],
+    "heresy": [
+      "{founder} of {church} turned to {god} at {place}: {faction} was born in secret.",
+      "In {place}, {founder} began to whisper of {god}."
+    ],
+    "persecution": [
+      "{church} rooted out {cult} in {place}; {victim} was burned.",
+      "The faithful of {church} hunted {cult} in {place}, and {victim} died for it."
+    ],
+    "martyred": ["{victim} was murdered in {place} by {cult}.", "{cult} killed {victim}, a priest of {place}."],
+    "sainted": ["{saint}, who died {cause}, was named a saint of {faction}.", "{faction} declared {saint} a saint."],
+    "cult_destroyed": ["{faction} was destroyed.", "The last of {faction} was hunted down."],
+    "faction_fell": ["{faction} was no more, destroyed by {conqueror}.", "{faction} fell, and its lands were lost to {conqueror}."],
+    "company_disbanded": ["{faction} disbanded.", "{faction} sold its last contract and broke up."],
+    "pirates_ended": ["{faction} was lost at sea, or hanged; nobody is sure which.", "{faction} sailed out and did not come back."],
+    "artifact_made": [
+      "{maker} made {artifact}, of {material}, for {owner} {why}.",
+      "{artifact} was made by {maker} for {owner}, of {material}, {why}."
+    ],
+    "artifact_stolen": ["{thief} stole {artifact} from {owner} in {place}.", "{artifact} was stolen from {owner} by {thief}."],
+    "thief_caught": [
+      "{thief} was caught and hanged, and it was given back.",
+      "They caught {thief}, and it went home; {thief} went to the gallows."
+    ],
+    "artifact_found": ["{hero} found {artifact} in {site}.", "{artifact} came out of {site} in the hands of {hero}."],
+    "hero_lost": ["{hero} went into {site} and was never seen again.", "{site} swallowed {hero}."],
+    "artifact_lost_old": ["{artifact} {fate}.", "Of {artifact}: it {fate}."],
+    "work_written": ["{author} wrote {form}: {title}.", "{title}, {form} by {author}, was finished that year."],
+    "guild_founded": ["{founder} founded {faction} in {place}.", "{faction} was founded in {place} by {founder}."],
+    "guild_secret": [
+      "Some say {faction} began in {place}, with {founder}.",
+      "In the back rooms of {place}, {founder} began {faction}."
+    ],
+    "circle_founded": [
+      "The archmage {founder} founded {faction} in {place}.",
+      "{faction} was founded by {founder}, the greatest mage of the age."
+    ],
+    "healers_founded": [
+      "After {plague}, {founder} founded {faction} in {place}, so that it would never be so bad again.",
+      "{faction} was founded in {place} by {founder}, who had seen {plague}."
+    ],
+    "order_founded": [
+      "{founder} founded {faction} at {place}, sworn to {god}.",
+      "{faction} was founded by {founder}: knights sworn to {god}."
+    ],
+    "company_founded": [
+      "Veterans of {war} under {founder} founded {faction} in {place}.",
+      "{founder} gathered the soldiers left over from {war}: {faction}."
+    ],
+    "gang_new": [
+      "{gang} began to prey on the roads near {place}.",
+      "A new band of outlaws, {gang}, haunts the country near {place}."
+    ],
+    "gang_destroyed": ["{lord} hanged the last of {gang}.", "{gang} were hunted down by the men of {lord}."],
+    "pirates_new": ["{captain} put to sea out of {place}: {crew}.", "{crew} began to take ships off {place}, under {captain}."],
+    "knighted": ["{hero} was knighted by {realm} for what they had done.", "{realm} made a knight of {hero}."],
+    "died": ["{name} died {cause}.", "{name} died {cause}."],
+    "slain": ["{name} was slain by {slayer}.", "{name} died {cause}."],
+    "peace_small": ["{war} ended with {treaty}{terms}.", "{a} and {b} made {treaty}, and {war} was over{terms}."],
+    "assassination_unknown": [
+      "{victim} of {faction} was murdered, and nobody was ever named for it.",
+      "{victim}, ruler of {faction}, was found dead in their bed; whose hand it was, nobody ever learned."
+    ],
+    "outlaws_hunted": ["{hero} went into {site} after {gang}, and came back alone.", "{hero} broke {gang} in {site}."],
+    "hero_fell_outlaws": [
+      "{hero} went after {gang} in {site}, and was found in a ditch.",
+      "{gang} killed {hero}, who had come for them in {site}."
+    ]
+  },
+  "speech": {
+    "lived": [
+      "\"I remember it, {when}: {text}\"", "\"I was there, {when}. {text} You don't forget a thing like that.\"",
+      "\"{when}, that was. {text} We still talk about it.\"", "\"You'll hear it from anyone old enough: {text}\""
+    ],
+    "heard": [
+      "\"My grandmother used to tell it: {text}\"", "\"They say that in {when}, {text}\"",
+      "\"Everyone in {place} knows it: {text}\"", "\"Before my time, but they still tell it: {text}\"",
+      "\"It's in the old songs: {text}\""
+    ]
+  }
+}

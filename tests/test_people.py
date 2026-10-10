@@ -92,7 +92,8 @@ def test_shops_close_and_people_go_home_at_night(game):
     night = {n.id for n in npcs_in(game.world, s.id) if n.present}
     assert night < day
     jobs_at_night = {game.world.npcs[i].job for i in night}
-    assert jobs_at_night <= {"innkeeper", "serving_hand", "guard", "priest", "lord", "acolyte"}
+    # (the seven wayfarers of uniques.py keep to their inn at night, by design)
+    assert jobs_at_night <= {"innkeeper", "serving_hand", "guard", "priest", "lord", "acolyte", "wayfarer"}
 
 
 def test_first_impressions(game, tables):

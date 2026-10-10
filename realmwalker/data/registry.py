@@ -339,6 +339,45 @@ def _check_politics_refs(files: dict[str, Any]) -> list[str]:
     for cause in ("old", "illness", "battle", "murder", "accident", "plague"):
         if cause not in data["causes"]:
             errors.append(f"data/politics.json: causes needs '{cause}'.")
+    errors.extend(_check_history_refs(files))
+    return errors
+
+
+def _check_history_refs(files: dict[str, Any]) -> list[str]:
+    """data/history.json: words for every event the ages tell, beasts that exist, peoples for every culture."""
+    from realmwalker.data.schemas import HISTORY_TEXT
+
+    data = files.get("history.json")
+    if not data:
+        return []
+    errors: list[str] = []
+    for kind in HISTORY_TEXT:
+        if kind not in data["text"]:
+            errors.append(f"data/history.json: text needs words for '{kind}'.")
+    creatures = files.get("creatures.json", {})
+    for name, beast in data["beasts"].items():
+        if creatures and beast["creature"] not in creatures.get("creatures", {}):
+            errors.append(f"data/history.json: beast {name!r} is a {beast['creature']!r}, which is not a creature.")
+        if creatures and beast["group"] not in creatures.get("encounters", {}):
+            errors.append(f"data/history.json: beast {name!r} fights as {beast['group']!r}, which is not an "
+                          f"encounter group.")
+    if "dragon" not in data["beasts"]:
+        errors.append("data/history.json: beasts needs 'dragon'.")
+    cultures = set(files.get("names.json", {}).get("cultures", {}))
+    for culture in cultures:
+        if culture not in data["peoples"]:
+            errors.append(f"data/history.json: peoples needs an entry for the {culture!r} people.")
+    for kind in ("city", "town", "village", "hamlet", "doomed"):
+        if kind not in data["spots"]["plans"]:
+            errors.append(f"data/history.json: spots.plans needs '{kind}'.")
+    faiths = files.get("factions.json", {}).get("faiths", {})
+    for faith in faiths:
+        if faith not in data["pantheon"]:
+            errors.append(f"data/history.json: pantheon needs the gods of {faith!r}.")
+    for form in data["works"]["forms"].values():
+        for title in form["titles"]:
+            if "{subject}" not in title:
+                errors.append(f"data/history.json: the title {title!r} must name its {{subject}}.")
     return errors
 
 

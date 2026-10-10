@@ -37,6 +37,13 @@
       "done": ["{site} is quiet now. Go back to {giver}."],
       "failed": ["You were too slow. The people of {town} have given up on you."]
     },
+    "clear_lair_beast": {
+      "title": ["{beast} of {site}", "The {beast_word} in {site}"],
+      "pitch": ["\"{beast}. Every child here knows the name. It lairs in {site}, {where}, and it has been coming down to us since before my time. It killed {victim}. Kill it, and {reward} is yours, and more thanks than you will know what to do with. {days} days; after that we must find someone else, if there is anyone.\"", "\"There is a {beast_word} in {site}, {where}. They call it {beast}. It took {victim} from us, and it will take more. {reward}, if you bring us word it is dead. {days} days.\"", "\"You have the look of someone who has killed things. Good. {site}, {where}: {beast} lives there, the {beast_word} the songs are about. It killed {victim}. {reward}, and you would be the first to come back.\""],
+      "journal": ["{giver} of {town} wants {beast}, the {beast_word} of {site} ({where}), dead. It killed {victim}. It will be in the deepest part. {reward}, {days} days."],
+      "done": ["{beast} is dead. Go back to {giver} in {town}."],
+      "failed": ["You were too slow. {town} has stopped waiting for you."]
+    },
     "hunt_beast": {
       "title": ["Hunt {beast}"],
       "pitch": ["\"There's a beast about: {beast}, {beast_what}. Last seen {where}. Kill it and bring me proof. {reward}.\"", "\"{beast}. {beast_what}. It took a man last month and a child's dog this week, {where}. {reward} for its head, and don't come back and tell me it moved on.\"", "\"There is a thing out there — {beast}, they call it now, {beast_what} — {where}. We can't work the fields for watching the treeline. Kill it. {reward}.\""],

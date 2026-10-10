@@ -35,7 +35,15 @@ def settlement_variables(game, settlement, town: Town) -> dict:
         "population": settlement.population, "land": game.biome_def(settlement.x, settlement.y)["name"],
         "region": area.name if area else "the wilds", "season": game.moment.season, "inn_count": max(0, inns),
         "people": "\n".join(people) or "- (none)",
+        "history": history_facts(game, settlement),
     }
+
+
+def history_facts(game, settlement) -> str:
+    """The true past of a place in plain words, for the AI (world/ages)."""
+    from realmwalker.game import past
+
+    return past.place_past(game, settlement) or "nothing anyone outside it remembers"
 
 
 def apply_settlement(game, settlement, town: Town, data: dict) -> int:
@@ -176,8 +184,12 @@ def dialogue_variables(game, npc: NPC) -> dict:
     allowed = allowed_outcomes(game, npc)
     from realmwalker.game.dialogue import SKILLS_ALLOWED
 
+    place = f"{s.name}, a {KIND_WORDS.get(s.kind, s.kind)}"
+    history = history_facts(game, s)
+    if history != "nothing anyone outside it remembers":
+        place += f". Its past (true): {history}"
     return {
-        "npc": npc_text, "place": f"{s.name}, a {KIND_WORDS.get(s.kind, s.kind)}", "situation": situation,
+        "npc": npc_text, "place": place, "situation": situation,
         "player": player, "memory": "; ".join(npc.memory[-5:]) or "nothing; they have not met",
         "mood": npc.mood(), "offers": ", ".join(offers) or "nothing but words",
         "skills": ", ".join(sorted(SKILLS_ALLOWED)),

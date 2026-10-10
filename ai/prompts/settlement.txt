@@ -2,13 +2,14 @@
 @temperature: 0.9
 # One call per settlement, in the background as the party arrives: a description, names for its inns,
 # and full profiles for its notable people. Code has already decided who they are.
-# Slots: {name} {kind} {culture} {population} {land} {region} {season} {inn_count} {people} {schema}
+# Slots: {name} {kind} {culture} {population} {land} {region} {season} {inn_count} {people} {history} {schema}
 Describe the settlement of {name} and its notable people.
 
 Facts (use them; do not contradict them; do not invent other notable people, places or history):
 - {name} is a {kind} of about {population} people, {culture} folk, in {land} ({region}).
 - Season: {season}.
 - It has {inn_count} inn(s).
+- Its history (true; you may let it show, never contradict it): {history}
 - Its notable people (keep their names, jobs, ages and traits exactly as given):
 {people}
 

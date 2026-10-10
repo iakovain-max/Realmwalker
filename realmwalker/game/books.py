@@ -97,10 +97,29 @@ def _history(game, rng, first: bool) -> list[str]:
     """A book of histories: who held this country, and what became of them."""
     w = game.world
     lines = []
+    works = [k for k in w.politics.get("works", []) if k.get("form") in ("chronicle", "epic", "ballad", "lament")]
+    if works and rng.chance(0.6):
+        # A copy of something that was really written: the world's own chronicles and songs (world/ages).
+        work = rng.choice(works)
+        author = w.figures.get(work.get("author", -1))
+        form = game.tables.history["works"]["forms"].get(work["form"], {}).get("word", "a work")
+        by = f" by {author.full_name()}" if author is not None else ""
+        lines.append(f"<info>It is a copy of {esc(work['title'])}, {esc(form)}{esc(by)}, written in "
+                     f"{work.get('year')}.</>")
+        about = work.get("about", {})
+        told = [e for e in w.history if e.get("text") and e.get("importance", 2) >= 3 and (
+            e.get("id") == about.get("event") or ("war" in about and e.get("war") == about["war"]) or
+            ("faction" in about and about["faction"] in e.get("factions", ())) or
+            ("figure" in about and about["figure"] in e.get("figures", ())))]
+        if told:
+            e = rng.choice(told)
+            from realmwalker.game.past import lower_first
+
+            lines.append(f"<info>It tells how, in {e['year']}, {esc(lower_first(e['text']))}</>")
     events = [e for e in w.history if e.get("importance", 2) >= 3]
-    if events:
+    if events and len(lines) < 2:
         e = rng.choice(events)
-        lines.append(f"<info>In the year {e['year']}: {esc(e['text'])}.</>")
+        lines.append(f"<info>In the year {e['year']}: {esc(e['text'].rstrip('.'))}.</>")
     facs = [f for f in fx.active_factions(w) if not f.secret and f.id not in game.renown.known]
     if facs:
         f = min(facs, key=lambda f: abs(f.founded - w.meta.seed % 400))

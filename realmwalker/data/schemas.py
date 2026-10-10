@@ -681,6 +681,83 @@ POLITICS_RATES = ("war_base", "war_hostility", "war_battles_per_month", "peace_a
 
 DATA_FILES.update({"politics.json": POLITICS})
 
+# ---------------------------------------------------------------------------- the lived history (world/ages, 2026-10)
+BY_SIZE = List(Int(min=0, max=100), min_items=3, max_items=3)
+WEIGHTED_WORDS = List(List(Any_(), min_items=2, max_items=2), min_items=1)
+BEAST = Obj({"creature": Str(max_len=40), "group": Str(max_len=40), "word": Str(max_len=40),
+             "weight": Float(min=0, max=100), "lairs": word_list(1, 20), "biomes": word_list(1, 30),
+             "power": Float(min=0, max=50), "life": List(Int(min=1, max=10000), min_items=2, max_items=2),
+             "attack": Float(min=0, max=1), "range": Float(min=1, max=100), "names": word_list(3, 40),
+             "epithets": word_list(1, 60), "slayer": word_list(1, 40)})
+HISTORY = Obj(
+    {
+        "lengths": List(Int(min=10, max=2000), min_items=1),
+        "start": Map(BY_SIZE),
+        "rates": Map(Float(min=0, max=1)),
+        "spots": Obj({"reach": Float(min=5, max=200),
+                      "thresholds": Obj({"village": Int(min=1), "town": Int(min=1), "city": Int(min=1)}),
+                      "plans": Map(List(Float(min=-5000, max=5000), min_items=2, max_items=2)),
+                      "doom_after": Int(min=1, max=500), "doomed": Map(BY_SIZE)}),
+        "peoples": Map(Obj({"race": Str(max_len=20), "growth": Float(min=0, max=1),
+                            "succession": Str(choices=["male_primogeniture", "primogeniture", "tanistry",
+                                                       "seniority", "elective"])})),
+        "folk": Obj({"adult": Int(min=1, max=100), "fertile": List(Int(min=1, max=100), min_items=2, max_items=2),
+                     "child_death": Float(min=0, max=1), "marry": Float(min=0, max=1),
+                     "alliance_marriage": Float(min=0, max=1), "marriage_bond": Float(min=0, max=100),
+                     "birth": Float(min=0, max=1), "birth_decay": Float(min=0, max=1),
+                     "max_children": Int(min=0, max=30), "named_after": Float(min=0, max=1),
+                     "callings": Map(WEIGHTED_WORDS)}),
+        "realms": Obj({"elder": Map(List(Int(min=0, max=10000), min_items=2, max_items=2)),
+                       "spread": Float(min=0, max=1), "old_realm_age": List(Int(min=0), min_items=2, max_items=2),
+                       "lordship_age": List(Int(min=0), min_items=2, max_items=2),
+                       "church_age": List(Int(min=0), min_items=2, max_items=2), "drift": Float(min=0, max=50),
+                       "border_friction": Float(min=0, max=50)}),
+        "war": Obj({"reach": Float(min=1, max=500), "base": Float(min=0, max=1), "hostility": Float(min=0, max=1),
+                    "defender_edge": Float(min=0.1, max=5)}),
+        "heroes": Obj({"infamy": Int(min=0, max=100), "classes": WEIGHTED_WORDS}),
+        "causes": Map(word_list(1, 80)),
+        "epithets": Map(word_list(1, 40)),
+        "beasts": Map(BEAST),
+        "barrows": Obj({"titles": List(List(Str(max_len=30), min_items=2, max_items=2), min_items=1),
+                        "epithets": word_list(1, 40)}),
+        "elder_ruins": Obj({"was": word_list(1, 60), "peoples": word_list(1, 80), "causes": word_list(1, 120)}),
+        "abandoned": Map(word_list(1, 120)),
+        "ruin_names": Map(word_list(1, 60)),
+        "pantheon": Map(Obj({"spheres": word_list(1, 30), "sex": Str(choices=["male", "female"], optional=True),
+                             "lesser": List(List(Any_(), min_items=2, max_items=2))})),
+        "artifacts": Obj({"kinds": Map(Obj({"word": Str(max_len=30), "weight": Float(min=0, max=100),
+                                            "materials": word_list(1, 40)})),
+                          "kennings": Map(word_list(1, 40)), "of": word_list(1, 40),
+                          "adjectives": word_list(1, 30), "why": word_list(1, 80), "old_fates": word_list(1, 120)}),
+        "works": Obj({"forms": Map(Obj({"word": Str(max_len=30), "author": Str(max_len=30),
+                                        "titles": word_list(1, 80)}))}),
+        "eras": Obj({"myth": word_list(1, 60), "thresholds": Map(Float(min=0, max=10**6)),
+                     "themes": Map(Obj({"names": word_list(1, 60), "summary": word_list(1, 200)}))}),
+        "names": Obj({"war": Map(word_list(1, 80)), "battle": Map(word_list(1, 80)), "peace": word_list(1, 80),
+                      "plague": word_list(1, 80)}),
+        "words": Map(word_list(1, 80)),
+        "text": Map(word_list(1, 300)),
+        "speech": Map(word_list(1, 200), optional=True),
+    }
+)
+HISTORY_TEXT = ("came_under", "became_town", "became_city", "settled", "founded_seat", "founded_town",
+                "founded_lordship", "rebuilt", "wedding", "succession", "succession_minor", "came_of_age",
+                "regent_usurps", "crisis", "house_ended", "granted", "fealty", "charter", "proclaimed",
+                "assassination", "elected", "gang_ended", "war_named", "rebellion", "joined_war", "battle_named",
+                "fell", "captured", "executed_captive", "ransomed", "relieved", "razed", "sacked", "taken",
+                "peace_named", "ceded", "freedom", "crushed", "plague", "great_plague", "famine", "tribe_rose", "raid",
+                "burned", "abducted", "beast_came", "dragon_came", "dragon", "dragon_tribute", "dragon_sleeps",
+                "dragon_wakes", "beast_attack", "beast_slain", "dragon_slain", "hero_fell", "beast_died",
+                "beast_destroyed", "burned_down", "abandoned", "elder_fall", "barrow_raised", "laid_to_rest",
+                "tower_raised", "chapter", "church_founded", "temple_raised", "heresy", "persecution", "martyred",
+                "sainted", "cult_destroyed", "faction_fell", "company_disbanded", "pirates_ended", "artifact_made",
+                "artifact_stolen", "thief_caught", "artifact_found", "hero_lost", "artifact_lost_old", "work_written",
+                "guild_founded", "guild_secret", "circle_founded", "healers_founded", "order_founded",
+                "company_founded", "gang_new", "gang_destroyed", "pirates_new", "knighted", "died", "slain",
+                "peace_small", "assassination_unknown", "outlaws_hunted", "hero_fell_outlaws")
+
+DATA_FILES.update({"history.json": HISTORY})
+
 # ---------------------------------------------------------------------------- companions (M7)
 ARCHETYPE = Obj({"name": Str(max_len=40), "classes": word_list(1, 30), "background": Str(max_len=30),
                  "values": word_list(1, 30), "want": Str(choices=["pay", "loot", "cause", "knowledge", "revenge"]),

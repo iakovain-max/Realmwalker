@@ -21,12 +21,15 @@ log = logging.getLogger("realmwalker.ui.newworld")
 SIZES = [("small", "Small"), ("medium", "Medium"), ("large", "Large")]
 DANGER = [(1, "Low"), (2, "Normal"), (3, "High"), (4, "Brutal")]
 MAGIC = [(1, "Scarce"), (2, "Rare"), (3, "Uncommon")]
+HISTORY = [(100, "Short"), (250, "Normal"), (500, "Long"), (1000, "Epic")]
 HELP = {
     "name": "What this world is called. Several worlds can exist side by side.",
     "seed": "The same seed and settings always make the same world. Share a seed to share a world.",
     "size": "Small worlds are quick to cross; large ones take weeks of travel and hold more of everything.",
     "danger": "How wild and hostile the land is: more ruins and lairs, more dangerous roads.",
     "magic": "How rare magic is. Even at its most common, magic is rare, costly and feared.",
+    "history": "How many years the world lives before you arrive (100, 250, 500 or 1000): its kingdoms, wars, "
+               "dynasties, dragons and ruins. A longer history takes longer to make.",
     "generate": "Make the world. It takes a few seconds.",
 }
 
@@ -44,7 +47,8 @@ class NewWorldScreen(Screen):
         self.size = 1
         self.danger = 1
         self.magic = 1
-        self.rows = ["name", "seed", "size", "danger", "magic", "generate", "back"]
+        self.history = 1
+        self.rows = ["name", "seed", "size", "danger", "magic", "history", "generate", "back"]
         self.focus = 0
 
     @property
@@ -55,7 +59,7 @@ class NewWorldScreen(Screen):
         seed = int(self.seed.value) if self.seed.value.isdigit() else 1
         name = self.name.value.strip() or "Nameless"
         return WorldOptions(name=name, seed=seed, size=SIZES[self.size][0], danger=DANGER[self.danger][0],
-                            magic=MAGIC[self.magic][0])
+                            magic=MAGIC[self.magic][0], history=HISTORY[self.history][0])
 
     def generate(self) -> None:
         self.app.replace(WorldGenScreen(self.app, self.options()))
@@ -67,19 +71,22 @@ class NewWorldScreen(Screen):
             self.danger = (self.danger + d) % len(DANGER)
         elif row == "magic":
             self.magic = (self.magic + d) % len(MAGIC)
+        elif row == "history":
+            self.history = (self.history + d) % len(HISTORY)
         elif row == "seed" and d:
             self.seed.value = str(self.app.ui_rng.randint(1000, 999999))
 
     # ------------------------------------------------------------------
     def render(self, canvas: Canvas) -> None:
         w, h = canvas.width, canvas.height
-        width, height = min(76, w - 2), min(22, h - 1)
+        width, height = min(76, w - 2), min(24, h - 1)
         x0, y0 = (w - width) // 2, max(0, (h - height) // 2)
         canvas.frame(x0, y0, width, height, self.title, double=True)
         x = x0 + 3
         y = y0 + 2
-        labels = {"name": "World name", "seed": "Seed", "size": "Size", "danger": "Danger", "magic": "Magic"}
-        for i, row in enumerate(self.rows[:5]):
+        labels = {"name": "World name", "seed": "Seed", "size": "Size", "danger": "Danger", "magic": "Magic",
+                  "history": "History"}
+        for i, row in enumerate(self.rows[:6]):
             ry = y + i * 2
             focused = i == self.focus
             canvas.hit(x, ry, width - 6, 1, action=lambda i=i: self._focus(i), tooltip=HELP[row],
@@ -92,8 +99,8 @@ class NewWorldScreen(Screen):
                 self.seed.render(canvas, fx, ry, 12, focused)
                 canvas.text(fx + 14, ry, "← → new random seed" if focused else "", colors.FAINT)
             else:
-                values = {"size": SIZES, "danger": DANGER, "magic": MAGIC}[row]
-                index = {"size": self.size, "danger": self.danger, "magic": self.magic}[row]
+                values = {"size": SIZES, "danger": DANGER, "magic": MAGIC, "history": HISTORY}[row]
+                index = {"size": self.size, "danger": self.danger, "magic": self.magic, "history": self.history}[row]
                 cx = fx
                 for j, (_, label) in enumerate(values):
                     chosen = j == index
@@ -104,7 +111,9 @@ class NewWorldScreen(Screen):
                 if row == "size":
                     ww, wh = WORLD_SIZES[SIZES[self.size][0]]
                     canvas.text(cx + 1, ry, f"{ww * 3}×{wh * 3} miles", colors.FAINT)
-        by = y + 11
+                elif row == "history":
+                    canvas.text(cx + 1, ry, f"{HISTORY[self.history][0]} years", colors.FAINT)
+        by = y + 13
         gen_focus = self.rows[self.focus] == "generate"
         back_focus = self.rows[self.focus] == "back"
         bx = canvas.button(x, by, ("► " if gen_focus else "") + "Generate world", self.generate, hotkey="Enter")
@@ -161,6 +170,7 @@ class WorldGenScreen(Screen):
         self.world = None
         self.error: str | None = None
         self.finished = False
+        self.headlines: list[str] = []  # the great events of the ages, as they happen
         self.thread = threading.Thread(target=self._run, name="worldgen", daemon=True)
         self.thread.start()
 
@@ -172,6 +182,10 @@ class WorldGenScreen(Screen):
             log.error("World generation failed:\n%s", self.error)
 
     def update(self) -> None:
+        ages = self.gen.ages
+        if ages is not None and ages[3] and (not self.headlines or self.headlines[-1] != ages[3]):
+            self.headlines.append(ages[3])
+            del self.headlines[:-6]
         if self.finished:
             return
         if self.error is not None:
@@ -197,7 +211,18 @@ class WorldGenScreen(Screen):
         bar_w = min(60, w - 6)
         canvas.bar(2, 3, bar_w, self.gen.fraction, colors.named("gold"))
         canvas.text(2 + bar_w + 2, 3, f"{int(self.gen.fraction * 100)}%", colors.DIM)
-        self._preview(canvas, 2, 5, w - 4, h - 8)
+        top = 5
+        ages = self.gen.ages
+        if ages is not None:
+            year, figures, events, _ = ages
+            canvas.text(2, 4, f"The year {year}  ·  {figures:,} people of note  ·  {events:,} things remembered",
+                        colors.DIM, max_width=w - 4)
+            lines = self.headlines[-min(4, max(0, (h - 14) // 4)):] if h > 20 else []
+            for i, line in enumerate(lines):
+                fg = colors.FG if i == len(lines) - 1 else colors.FAINT
+                canvas.text(2, 5 + i, markup.escape(line), fg, max_width=w - 4)
+            top = 6 + len(lines)
+        self._preview(canvas, 2, top, w - 4, h - top - 3)
 
     def _preview(self, canvas: Canvas, x: int, y: int, aw: int, ah: int) -> None:
         pv = self.gen.preview
@@ -221,11 +246,19 @@ class WorldGenScreen(Screen):
             colours[r] = (60, 110, 200)
         if "road" in pv:
             colours[pv["road"][np.ix_(xs, ys)]] = (170, 130, 80)
+        marks = {"hamlet": (190, 150, 100), "village": (220, 180, 120), "town": (235, 230, 215), "city": (255, 235, 150),
+                 "hold": (190, 200, 225), "elfhall": (130, 230, 200), "ruin": (120, 40, 35)}
+        for px, py, kind in self.gen.places:
+            cx, cy = int(px / scale), int(py / scale)
+            if 0 <= cx < ow and 0 <= cy < oh:
+                colours[cx, cy] = marks.get(kind, (220, 180, 120))
         ox = x + (aw - ow) // 2
         oy = y + (ah - oh) // 2
         dst = (slice(ox, ox + ow), slice(oy, oy + oh))
         canvas.con.rgb["ch"][dst] = ord(" ")
         canvas.con.rgb["bg"][dst] = colours.astype(np.uint8)
+        if canvas.gfx is not None:
+            canvas.con.rgba["bg"][ox:ox + ow, oy:oy + oh, 3] = 255  # opaque, over the parchment
 
     def handle_key(self, ev: KeyEvent) -> bool:
         return True  # nothing to do but wait a moment

@@ -40,8 +40,11 @@ def test_history_is_made_with_the_world(world, tables):
     assert len(h) > 100
     assert [e["year"] for e in h] == sorted(e["year"] for e in h)
     kinds = {e["kind"] for e in h}
-    for needed in ("succession", "war", "plague", "dragon", "legend", "artifact", "ruin"):
+    for needed in ("succession", "war_named", "battle_named", "artifact_made", "settled"):
         assert needed in kinds, needed
+    assert kinds & {"plague", "great_plague", "famine"}
+    assert kinds & {"dragon_came", "dragon", "dragon_sleeps", "dragon_wakes"}
+    assert kinds & {"razed", "abandoned", "burned_down", "beast_destroyed", "burned"}  # the ruins of today
     assert all("{" not in e["text"] for e in h)
     assert world.politics["history_done"]
     assert world.politics["dragons"] and world.politics["artifacts"]
@@ -49,26 +52,33 @@ def test_history_is_made_with_the_world(world, tables):
 
 def test_every_line_of_rulers_ends_today(world, tables):
     present = tables.calendar.start_year
+    leaders = {f.leader for f in fx.active_factions(world)}
     for f in fx.active_factions(world, *DYNASTIC):
         if f.flags.get("minor"):
             continue
         rulers = [world.figures[r] for r in f.rulers]
         assert rulers[-1].id == f.leader and rulers[-1].alive
         past = rulers[:-1]
-        assert all(not r.alive and r.died <= present for r in past)
-        assert [r.died for r in past] == sorted(r.died for r in past)
+        # Dead, or gone on to a greater seat (a great lord crowned when a royal line ended).
+        assert all((not r.alive and r.died <= present) or r.id in leaders for r in past)
+        elsewhere = {r for g in world.factions.values() if g.id != f.id for r in g.rulers}
+        dead = [r.died for r in past if not r.alive and r.id not in elsewhere]  # died holding this seat
+        assert dead == sorted(dead)
     king = fx.active_factions(world, "kingdom")[0]
     assert len(king.rulers) >= 4
 
 
 def test_conquests_told_agree_with_the_map(world):
+    """The history is the ledger of who held what: replaying every change of hands gives today's map."""
+    holder = {}
     for e in world.history:
-        if e["kind"] != "taken" or not e["places"]:
-            continue
-        s = world.settlements[e["places"][0]]
-        winner = world.factions[e["factions"][0]]
-        top = fx.realm_of_settlement(world, s)
-        assert top is not None and (top.id == winner.id or fx.top_liege(world, winner) is top)
+        for sid, fid in e.get("data", {}).get("owners", []):
+            holder[sid] = fid
+    for s in world.settlements:
+        assert holder.get(s.id, -1) == s.owner, s.name
+    for e in world.history:
+        if e["kind"] == "taken" and e.get("places"):
+            assert e["factions"][0] in world.factions  # every conquest names a real conqueror
 
 
 def test_old_worlds_get_a_history(world, tables):

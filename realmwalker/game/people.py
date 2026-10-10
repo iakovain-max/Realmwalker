@@ -401,6 +401,10 @@ def refresh_travellers(game, lm, settlement) -> None:
     at_inn = [a for a, spec in arch.items() if "inn" in spec["where"]]
     lo, hi = TRAVELLERS.get(settlement.kind, (0, 1))
     count = rng.randint(lo, hi)
+    home = f"S{settlement.id}"
+    if count == 0 and any(f.alive and f.home == home and f.job in ("adventurer", "hero") and f.kind == "person"
+                          for f in world.figures.values()):
+        count = 1  # a hero of the old songs drinks here when they are at home
     company = next((f for f in fx.active_factions(world, "mercenary_company") if f.seat == settlement.id), None)
     walk = game.tables.terrain.walk[game.remap_for(lm)[lm.terrain]]
     taken = {(n.x, n.y) for n in npcs_in(world, settlement.id)}
@@ -424,7 +428,29 @@ def refresh_travellers(game, lm, settlement) -> None:
             npc.title = f"sell-sword of {company.name}"
         npc.profile["backstory"] = rng.choice(arch[a]["story"])
         add(world, town, npc)
+    heroes_at_the_inn(game, settlement, rng)
     update_positions(game, lm)
+
+
+def heroes_at_the_inn(game, settlement, rng: RNG) -> None:
+    """A hero of the lived history who calls this town home sits among the travellers at the inn: someone who
+    slew a beast or found a lost treasure, with that story to tell (and a sword for hire)."""
+    w = game.world
+    home = f"S{settlement.id}"
+    heroes = [f for f in w.figures.values() if f.alive and f.kind == "person" and f.home == home
+              and f.job in ("adventurer", "hero") and (f.npc < 0 or f.npc not in w.npcs or not w.npcs[f.npc].alive)]
+    if not heroes:
+        return
+    fig = max(heroes, key=lambda f: (f.fame, -f.id))
+    free = [n for n in npcs_in(w, settlement.id) if n.job == "adventurer" and n.alive and "figure" not in n.flags
+            and not n.flags.get("company") and not n.flags.get("companion")]
+    if not free:
+        return
+    npc = free[0]
+    title = npc.title
+    become_figure(game, npc, fig, rng.child(f"hero/{fig.id}"))
+    npc.title = title  # still what the inn calls them: a sell-sword, a wandering knight
+    npc.flags["hero"] = True
 
 
 def refresh_figures(game, lm, settlement) -> None:
@@ -455,10 +481,12 @@ def refresh_figures(game, lm, settlement) -> None:
 
 
 def become_figure(game, npc: NPC, fig, rng: RNG) -> None:
-    """A townsperson takes on the name, age and nature of a figure of history."""
+    """A townsperson takes on the name, age and nature of a figure of history (and their story, if the world lived
+    its history: world/ages)."""
     npc.name, npc.sex, npc.race, npc.culture = fig.name, fig.sex, fig.race, fig.culture
     npc.age = max(14, fig.age(game.moment.year))
-    npc.title = fig.title.lower() if not fig.title.startswith("the ") else npc.title
+    if fig.title and not fig.title.startswith("the "):
+        npc.title = fig.title.lower()
     if fig.traits:
         npc.traits = list(fig.traits)
     npc.notable = True
@@ -468,6 +496,11 @@ def become_figure(game, npc: NPC, fig, rng: RNG) -> None:
     fig.npc = npc.id
     npc.profile = fallback_profile(game, npc, rng)
     npc.profile_source = "fallback"
+    from realmwalker.game import past
+
+    story = past.figure_story(game, fig, rng)
+    if story:
+        npc.profile["backstory"] = story
 
 
 def secret_members(game, town: Town, settlement, rng: RNG) -> None:
@@ -491,7 +524,7 @@ def npc_factions(game, npc: NPC) -> list:
     w = game.world
     out = []
     fig = w.figures.get(npc.flags.get("figure", -1))
-    if fig is not None and fig.faction in w.factions:
+    if fig is not None and fig.faction in w.factions and w.factions[fig.faction].active:
         out.append(w.factions[fig.faction])
     settlement = w.settlements[npc.settlement]
     guild_for = {"priest": ("temple",), "acolyte": ("temple",), "smith": ("smiths_guild",),

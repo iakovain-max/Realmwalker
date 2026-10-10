@@ -250,6 +250,9 @@ def finish_battle(game) -> Aftermath:
             from realmwalker.game import dragons
 
             dragons.on_battle(game, result)
+        from realmwalker.game import past
+
+        past.on_battle(game, result)
         if game.quests:
             from realmwalker.game import quests
 
