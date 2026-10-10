@@ -20,13 +20,61 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **1.0 — Pictures and a new interface** | ✅ Done (2026-10-03), branch `graphics-ui` |
 | **1.0 — Combat on a grid (a D&D battle mat)** | ✅ Done (2026-10-06), branch `grid-combat` |
 | **Every item does something** | ✅ Done (2026-10-09), branch `useful-items` |
+| **Choose how you look** | ✅ Done (2026-10-10), branch `looks` |
 
 ---
 
 ## After v1 — continuing work (2026-09-20), up to version 1.0 (2026-10-03) and since
 
 The nine milestones are done; this is what has been added since, newest first. Version 1.0 is the pictures and the
-new interface; then combat moved onto a grid, then every item was given a use (the first entries below).
+new interface; then combat moved onto a grid, then every item was given a use, then looks became a choice (the
+first entries below).
+
+### Local session, 2026-10-10: choose how you look (Anton's request) — branch `looks`
+
+Anton asked for character creation to be upgraded visually, with separate choices for hair colour, hair style, beard
+and the rest, for every people, and for it to keep working when more races are added.
+
+**What is different when you play**
+- **A new step in character creation, "Looks"** (step 7, after "Who you are"). Every choice is a row: arrow keys,
+  or click the ◄ ► arrows, or the mouse wheel over a row; colours have a swatch beside them; **R** gives a whole new
+  random look. As you choose, the panel on the left shows your face large and bare-headed, and the right shows the
+  whole figure in the gear you set out with. Underneath, "How others see you" is written from what you chose.
+- **The choices**: build (slight, average, heavy: the figure really is narrower or broader), skin, eyes (eleven
+  colours), fourteen hair styles (cropped, short, receding, curly, shaggy, long, tied back, braids, one long plait,
+  pinned up, topknot, a crest, two tails, shaven) in eleven colours, ten beards (stubble, moustache, goatee,
+  side-whiskers, short, full, long, forked, braided) with their own colour, the marks of your people (an elf's ears:
+  long, swept back or short; a half-orc's tusks: small, heavy or filed down), a mark or scar (freckles, a scar down
+  the cheek, through an eye or through the brow, an eyepatch, a broken nose, a gold earring, an old burn), paint or
+  tattoos (a band across the eyes, tattooed cheeks, chin stripes, a mark on the brow) in six colours, and the colour
+  of your clothes and of your cloak and hood.
+- **Each people has its own range**: elves are slight or average, with silver and violet eyes possible and no beards;
+  dwarves average or heavy, nearly all the men bearded and the women allowed one; half-orcs with green and grey skins,
+  red or amber eyes, tusks, more often scarred and painted.
+- **The first three steps show you large too**: the whole figure on the right changes as you browse peoples, callings
+  and pasts.
+- **Everyone else uses the same looks**: townsfolk, bandits, guards and companions are read from the words that
+  describe them ("a heavy man with a braided red beard and a scar through one eye" is drawn exactly so), so towns are
+  full of different builds, beards, scars and paint. A companion keeps the face they had in town.
+
+**How to see it**: start a new character (New World or New Character on the title screen) and go to step 7. Townsfolk
+look different in any town.
+
+**For peoples to come** (Anton: "there will be more races added in the future"): a people added to data/races.json
+and nothing else can be made and drawn at once (human looks, drawn on a human body). To give it its own:
+1. data/appearance.json looks/races: what it may have (any list left out comes from `_default`), and its features.
+2. data/sprites.json figures: `skins` (real colours: any colour works now, red or blue included), and `bodies` with
+   its proportions; then rebuild the tiles (`tools/build_tiles.py`).
+3. Horns (curled, straight, small) and a tail are already drawn, waiting for a people with them (a tiefling would need
+   only data). A new kind of feature needs a few lines in tools/figure_gear.py `feature()`.
+tests/test_looks.py checks every look of every people has its picture and colour, and makes and draws a made-up
+people that exists only in races.json.
+
+**Saves**: format 10. Old characters load and are drawn from their words as before (a little more varied now).
+
+**Checked**: the whole test suite (new: `tests/test_looks.py`), the smoke test in a window (its tour now presses Enter
+once more for the new step), the autoplay bot in both AI modes, screenshots of the Looks step for every people at
+1920x1000 and 1024x640.
 
 ### Local session, 2026-10-09: every item does something (Anton's request) — branch `useful-items`
 

@@ -62,6 +62,7 @@ realmwalker/
                            lore, letters), death (the obituary and what the world keeps), interlude (the weeks that
                            pass before a new life in an old world)
   rules/                   character (Character + Sheet: derived numbers), items, inventory (equip rules), creation,
+                           looks (how people look: options per people, random, read from words, written as words),
                            combat (Battle: D&D 5e combat on a grid), grid (the battlefield: distances, sight, cover,
                            areas, paths), tactics (how the enemy and Auto fight), creatures, spells, wounds, progression,
                            body (needs, body heat, wetness, exhaustion), health (blood, pain, infection, healing,
@@ -199,6 +200,14 @@ tools/                     autoplay.py, mock_player2.py, build_friends.py, balan
   rebuild with build_tiles.py, commit `assets/tiles`. Figures are 32x32; draw them at whole multiples or let
   `dolls.draw` scale them (it keeps pixels even). A rare item's look is `item.magic["look"]` {metal, cloth, emblem,
   glow}: `magic_items.look_for` picks it, the AI may only choose from `ai/tasks.py` LOOK_* lists.
+- Looks (2026-10-10): `Character.looks` {build, skin, eyes, hair, hair_colour, beard, beard_colour, mark, paint,
+  paint_colour, features {ears/tusks/horns/tail: option}, dye, cloak}, chosen on the creation Looks step; `appearance`
+  is written from it by `rules/looks.describe`. Townsfolk and creatures have none stored: `looks.from_text` reads them
+  from their words with a stable hash for the rest (`looks.of_npc`), and `dolls` draws from either. Options per people
+  are data/appearance.json looks/races (`_default` for anything not written); body proportions, builds and colours are
+  data/sprites.json figures (skins are real colours, drawn over grey). A new people needs nothing to work (human
+  looks on a human body via `dolls.resolve_body`); its own body needs a `bodies` entry and a tile rebuild. Keep
+  `tests/test_looks.py` green: every option must have a picture and a colour.
 - Animations go through `canvas.gfx.animate` (movement) and `canvas.gfx.ambient` (idle: water, smoke, weather), from
   the Animations setting; the game's state never waits for an animation.
 - Battles (grid, 2026-10-06, Anton's request; replaces the design's two ranks): a grid of 5-ft squares

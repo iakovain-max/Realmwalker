@@ -18,8 +18,9 @@ WHAT YOU CAN DO
 * Travel a generated world of kingdoms, clans, free cities, tribes and outlaws,
   with 250 years of its own history behind it and politics that keep moving
   while you play: wars, plagues, sieges, new rulers, gangs rising and hanging.
-* Make a character (eight short steps, Enter through anything you don't care
-  about), then live: walk, camp, cook, hunt, trade, haggle, work for a day's pay.
+* Make a character (nine short steps, Enter through anything you don't care
+  about; one of them is your looks: build, hair, beard, eyes, scars, paint),
+  then live: walk, camp, cook, hunt, trade, haggle, work for a day's pay.
 * Stay alive: hunger, thirst, cold, heat, exhaustion, wounds that bleed and
   fester, sickness, and treatment that matters (bandage, clean, stitch, splint).
 * Fight in rank-based D&D 5e combat, with wounds, morale, surrender and prisoners.
