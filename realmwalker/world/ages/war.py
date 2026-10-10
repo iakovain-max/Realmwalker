@@ -12,7 +12,7 @@ from __future__ import annotations
 import math
 
 from realmwalker.world import factions as fx
-from realmwalker.world.ages.sim import S
+from realmwalker.world.ages.sim import S, gap
 
 
 LEVY = 3.0
@@ -95,7 +95,9 @@ class War:
         r = s.r
         powers = s.powers()
         anchors = {f.id: s.anchor(f) for f in powers}
+        lands = {f.id: s.lands(f) for f in powers}
         reach = float(self.data["reach"])
+        border = float(self.data.get("border_reach", 0))
         for i, a in enumerate(powers):
             for b in powers[i + 1:]:
                 if a.kind == "tribe" and b.kind == "tribe":
@@ -103,7 +105,10 @@ class War:
                 if a.culture == b.culture and a.culture in ("elven", "dwarven"):
                     continue  # the old peoples do not make war on their own kind
                 pa, pb = anchors[a.id], anchors[b.id]
-                if pa is None or pb is None or math.hypot(pa[0] - pb[0], pa[1] - pb[1]) > reach:
+                if pa is None or pb is None:
+                    continue
+                # in reach: near enough seats, or (great realms whose seats lie far apart) borders that touch
+                if math.hypot(pa[0] - pb[0], pa[1] - pb[1]) > reach and gap(lands[a.id], lands[b.id]) > border:
                     continue
                 if self.peace.get((min(a.id, b.id), max(a.id, b.id)), -10**9) > s.year:
                     continue
@@ -417,7 +422,8 @@ class War:
             s.land.ruin(sp, f"razed by {winner.name} in {war['name']}", event=e, by=winner)
             return
         elder = {"hold": "clan", "elfhall": "elven_realm"}.get(sp.destiny)
-        if winner.kind == "tribe" or (elder is not None and winner.kind != elder) or                 (sp.human and winner.kind in ("clan", "elven_realm")):
+        if winner.kind == "tribe" or (elder is not None and winner.kind != elder) or \
+                (sp.human and winner.kind in ("clan", "elven_realm")):
             # Raiders burn and plunder and go home; and no man holds a dwarven hold or an elven hall for long.
             e = s.record("sacked", values, importance=4, factions=[winner, loser], places=[sp.sid], war=war)
             self.massacre(sp, e, war, 0.2)

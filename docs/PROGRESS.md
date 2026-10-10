@@ -109,8 +109,27 @@ design are in `docs/WORLD_HISTORY.md`.
     there, in a locked chest on the deepest level. Open it and it is yours (a very rare magic item with its name and
     its story), and the world hears that you found it.
   - In the Legends book, people's pages also show their grandparents and who they fought beside and against.
+  - Heroes and other people of note grow old and die while you play, as rulers already did (not the ones walking
+    with you); when a hero people sing of dies, you hear of it.
+  - **Your own past lives are in the Legends book**, first among the People ("Anton (your life, d. 1049)"), as DF
+    keeps its adventurers: what they were, how and where they died, their titles, what the powers thought of them,
+    what they killed, who walked with them, their deeds, what was said of them, and what the world remembers.
 - **More names**: every people has two to three times as many names as before (so a thousand people of note are not
   all called Aldric).
+- **Found by reading the Legends book, and fixed**:
+  - An age called "the Long Peace" held five wars and two burning dragons. The ages are now named for what set them
+    apart from the rest of *that* world's history: a burst of battles is an age of war, a time quieter than usual a
+    peace, and the ordinary run of crowns and quarrels "the Age of Kings" or "the Age of" the realm that led it.
+  - In 1000-year worlds the wars stopped for good after about year 700: the land had grown into a few great
+    kingdoms whose capitals lay too far apart to "reach" each other. Realms whose borders touch can now go to war
+    (wars per century stay steady to the end; ordinary 250-year worlds have as many wars as before).
+  - The news of a beast's attack could say "1 were killed", and was told only three ways (the game's rule is at
+    least four); now five ways, and "one person".
+  - Long names in the Legends book's lists end in "…" (the whole name shows when you point at it).
+  - The death screen said "Killed: 3 wolfs" and "2 goblin boss"; now "3 wolves", "2 goblin bosses".
+  - Causes of death read wrongly after "died": "King Guy I died drowned crossing a river in flood", "died devoured
+    by the troll", "died burned as a heretic". They now read right both ways ("died in the jaws of the troll";
+    "Died in 907, in a river in flood").
 
 **How to see it**: double-click `Play.bat`, *New World*, set *History* (try Long), press Enter and watch the years go
 by. In the game press **n**, then **b** for the Legends book. Walk to a ruin and press **l** (look). Ask an innkeeper
@@ -130,6 +149,14 @@ what you should know about the town.
 5. **Old worlds keep their old history** (they still load and play); a new world gets the lived one. No save format
    change was needed: every new field is optional.
 6. Years before year 1 are written "B.R." (Before the Reckoning).
+7. **Ages are named against the world's own usual**, not fixed numbers (`data/history.json` "eras": `stand_out`,
+   `quiet`, `least`), because every world has its own background level of war.
+
+**Known issues / not yet**
+- Worlds made before this version keep their shorter told history; their Legends book works but has little in it.
+- The Legends book is words only: no map of where things happened yet.
+
+**Friends' readme**: describes the lived history and the Legends book, and no longer says combat is in ranks.
 
 ### Local session, 2026-10-10: sound and music (Anton's request) — branch `sound`
 

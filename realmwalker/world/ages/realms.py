@@ -17,7 +17,7 @@ from __future__ import annotations
 import math
 
 from realmwalker.world import factions as fx
-from realmwalker.world.ages.sim import DYNASTIC, S
+from realmwalker.world.ages.sim import DYNASTIC, S, gap
 from realmwalker.world.ages.words import roman
 from realmwalker.world.politics import SEAT_WORDS
 
@@ -801,7 +801,8 @@ class Realms:
                 s.land.set_owner(sid, h.id, e)
                 for other in s.land.held_by(k.id):
                     near = s.land.spots[other]
-                    if other != k.seat and near.kind_now in ("hamlet", "village") and                             math.hypot(near.x - sp.x, near.y - sp.y) <= 12:
+                    if other != k.seat and near.kind_now in ("hamlet", "village") and \
+                            math.hypot(near.x - sp.x, near.y - sp.y) <= 12:
                         s.land.set_owner(other, h.id, e)
                 break
 
@@ -816,14 +817,17 @@ class Realms:
         sigma = float(self.data["drift"])
         powers = s.powers()
         anchors = {f.id: s.anchor(f) for f in powers}
+        lands = {f.id: s.lands(f) for f in powers}
+        border = float(s.data["war"].get("border_reach", 0))
         for i, a in enumerate(powers):
             pa = anchors[a.id]
             for b in powers[i + 1:]:
                 pb = anchors[b.id]
                 rel = fx.relation(s.w, a.id, b.id)
                 change = r.gauss(0, sigma) - rel * 0.03
-                if pa is not None and pb is not None and math.hypot(pa[0] - pb[0], pa[1] - pb[1]) < 40:
-                    change -= float(self.data["border_friction"])
+                if pa is not None and pb is not None and (math.hypot(pa[0] - pb[0], pa[1] - pb[1]) < 40 or
+                                                          gap(lands[a.id], lands[b.id]) <= border):
+                    change -= float(self.data["border_friction"])  # neighbours rub
                 if a.culture == b.culture:
                     change += 0.6
                 if a.faith != b.faith and ("pious" in a.values or "pious" in b.values):

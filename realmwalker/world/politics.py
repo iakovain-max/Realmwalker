@@ -98,8 +98,12 @@ class Politics:
         w = self.w
         leaders = {f.leader: f for f in fx.active_factions(w)}
         for fig in list(w.figures.values()):
-            if not fig.alive or fig.role not in ("ruler", "heir", "spouse", "member"):
+            # the heroes, exiles and others of note of a lived history (world/ages) grow old too
+            if not fig.alive or fig.role not in ("ruler", "heir", "spouse", "member", "hero", "exile", "folk"):
                 continue
+            npc = w.npcs.get(fig.npc) if fig.npc >= 0 else None
+            if npc is not None and npc.flags.get("companion"):
+                continue  # walking with the player: their life is the party's now
             rate = self.annual_death_rate(fig)
             f = w.factions.get(fig.faction)
             if f is not None and f.seat >= 0 and w.settlements[f.seat].status.get("plague"):
@@ -132,6 +136,19 @@ class Politics:
             npc.present = False
         if led is not None and led.active:
             self.succeed(led, fig, cause)
+        elif fig.role == "hero" and (fig.fame >= 3 or fig.kills):
+            self.hero_died(fig, cause)
+
+    def hero_died(self, fig, cause: str) -> None:
+        """A hero of the lived history (world/ages) who had done something people sing of: their death is news."""
+        home = fig.home
+        if self.history or "hero_died" not in self.data["text"] or not home.startswith("S") or \
+                not home[1:].isdigit() or int(home[1:]) >= len(self.w.settlements):
+            return
+        place = self.w.settlements[int(home[1:])]
+        fig.died_at = home
+        self.say("hero_died", {"hero": fig.full_name(), "cause": cause, "place": place.name},
+                 where=(place.x, place.y), importance=3, places=[place], figures=[fig.id])
 
     def children(self, fig) -> list:
         kids = [f for f in self.w.figures.values() if f.parent == fig.id and f.alive]
@@ -627,7 +644,8 @@ class Politics:
         s.status["beast"] = {"until": self.day + 30, "since": self.day, "by": fig.name}
         fig.fame += 1
         realm = fx.realm_of_settlement(w, s)
-        self.say("beast_attack", {"beast": f"{fig.name} {fig.epithet}".strip(), "place": s.name, "dead": str(lost)},
+        dead = "one person" if lost == 1 else f"{lost} people"
+        self.say("beast_attack", {"beast": f"{fig.name} {fig.epithet}".strip(), "place": s.name, "dead": dead},
                  where=(s.x, s.y), importance=3, factions=[realm] if realm else [], places=[s], figures=[fig.id])
 
     def dragon_wakes(self, d: dict) -> None:

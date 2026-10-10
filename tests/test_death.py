@@ -191,3 +191,28 @@ def test_those_who_came_before_are_in_the_chronicle(game, tmp_path):
     screen.build(2)
     text = screen.views[2].text if hasattr(screen.views[2], "text") else ""
     assert record["name"] in text and "festered" in text and "owed money" in text
+
+
+def test_your_past_lives_are_in_the_legends_book(game):
+    """As Dwarf Fortress keeps its adventurers among the figures of its Legends: a dead character of yours has a page,
+    first among the People, with what the world kept of them."""
+    from realmwalker.world import legends
+
+    game.leader.deeds.append("burned a bandit camp")
+    game.leader.kills["wolf"] = 3
+    game.leader.kills["goblin boss"] = 2
+    game.renown.fame = 20
+    kill_the_leader(game)
+    record = death.die(game)
+    death.apply_obituary(game, record, {"obituary": "They never paid for a drink twice."})
+    w, t = game.world, game.tables
+    ref, label = legends.entries(w, t, "people")[0]
+    assert ref == "P0" and game.leader.name in label and "your life" in label
+    title, lines = legends.page(w, t, ref)
+    text = "\n".join(legends.plain(line) for line in lines)
+    assert title == game.leader.name
+    assert "One of your lives" in text and "killed by wolves" in text
+    assert "3 wolves" in text and "2 goblin bosses" in text and "burned a bandit camp" in text
+    assert "never paid for a drink" in text
+    assert "What the world remembers" in text  # their death went into the history (fame 20)
+    assert legends.entries(w, t, "people", game.leader.name.lower())[0][0] == "P0"

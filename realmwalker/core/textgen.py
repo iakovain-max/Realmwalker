@@ -83,6 +83,23 @@ def a_or_an(word: str) -> str:
     return ("an " if word[:1].lower() in "aeiou" else "a ") + word
 
 
+def count_of(n: int, noun: str) -> str:
+    """'1 wolf', '3 wolves', '2 goblin bosses', '4 ghouls': a number of things, in English."""
+    if n == 1:
+        return f"1 {noun}"
+    if noun.endswith("man") and not noun.endswith(("human", "shaman")):
+        many = noun[:-3] + "men"  # watchman, headman
+    elif noun.endswith(("lf", "rf")):
+        many = noun[:-1] + "ves"  # wolf, dwarf
+    elif noun.endswith(("s", "x", "ch", "sh")):
+        many = noun + "es"
+    elif noun.endswith("y") and noun[-2:-1] not in "aeiou":
+        many = noun[:-1] + "ies"
+    else:
+        many = noun + "s"
+    return f"{n} {many}"
+
+
 def slots(template: str) -> list[str]:
     return _SLOT_RE.findall(template)
 

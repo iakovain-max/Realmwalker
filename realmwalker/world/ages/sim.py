@@ -11,9 +11,12 @@ References between things use short strings where a field may point at more than
 from __future__ import annotations
 
 import logging
+import math
 import time
 from collections import defaultdict
 from collections.abc import Callable
+
+import numpy as np
 
 from realmwalker.core.rng import RNG
 from realmwalker.world import factions as fx
@@ -260,6 +263,22 @@ class AgeSim:
         if held:
             return held[0].x, held[0].y
         return None
+
+    def lands(self, f) -> np.ndarray:
+        """Everywhere a faction is: its anchor and all it and its vassals hold, as (x, y) rows."""
+        points = [(st.x, st.y) for st in self.holdings(f, deep=True)]
+        here = self.anchor(f)
+        if here is not None:
+            points.append(here)
+        return np.array(points, dtype=float).reshape(-1, 2)
+
+
+def gap(a: np.ndarray, b: np.ndarray) -> float:
+    """The shortest distance between two lands (Sim.lands): how far apart their borders are."""
+    if not len(a) or not len(b):
+        return math.inf
+    d = a[:, None, :] - b[None, :, :]
+    return float(np.sqrt((d * d).sum(axis=2).min()))
 
 
 def live_the_ages(world, tables, rng: RNG, *, years: int, spots: list[dict], namer,

@@ -15,15 +15,22 @@ For adults (18+): violence, cruelty and grim themes.
 
 WHAT YOU CAN DO
 ---------------
-* Travel a generated world of kingdoms, clans, free cities, tribes and outlaws,
-  with 250 years of its own history behind it and politics that keep moving
-  while you play: wars, plagues, sieges, new rulers, gangs rising and hanging.
+* Travel a generated world of kingdoms, clans, free cities, tribes and outlaws
+  whose past was really lived, year by year, for 100 to 1000 years (you
+  choose): dynasties, named wars and battles, beasts and the heroes who hunted
+  them, saints and heretics, swords and crowns passed from hand to hand. Every
+  ruin was a real town, every lord has real ancestors, and the troll in the
+  cave has killed people you can read about. Read it all in the Legends book
+  (press n, then b; or Saved Worlds on the title screen). And the world keeps
+  moving while you play: wars, plagues, sieges, new rulers, beasts coming down
+  on the farms, gangs rising and hanging.
 * Make a character (nine short steps, Enter through anything you don't care
   about; one of them is your looks: build, hair, beard, eyes, scars, paint),
   then live: walk, camp, cook, hunt, trade, haggle, work for a day's pay.
 * Stay alive: hunger, thirst, cold, heat, exhaustion, wounds that bleed and
   fester, sickness, and treatment that matters (bandage, clean, stitch, splint).
-* Fight in rank-based D&D 5e combat, with wounds, morale, surrender and prisoners.
+* Fight D&D 5e battles on a grid, like a battle mat, with wounds, morale,
+  surrender and prisoners.
 * Talk to everyone. They have names, trades, memories and opinions of you.
 * Hire companions, pay them, keep them loyal (or don't), and command them in a fight.
 * Take on work: bounties, lairs to clear, beasts to hunt, letters to carry,
@@ -33,6 +40,7 @@ WHAT YOU CAN DO
   locked doors, secret rooms, chests, and something waiting at the bottom.
   Take a torch. Press s to search.
 * Find magic items, learn what they do (or ask a priest), and beware the cursed ones.
+  The treasures the history lost lie where the Legends book says they do.
 * Kill a dragon, if you think you can. The world will remember who did it.
 * Die. It is permanent. The world keeps your story and goes on without you, and
   you can begin a new life in the same world (New Character on the title screen).

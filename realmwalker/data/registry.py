@@ -378,6 +378,12 @@ def _check_history_refs(files: dict[str, Any]) -> list[str]:
         for title in form["titles"]:
             if "{subject}" not in title:
                 errors.append(f"data/history.json: the title {title!r} must name its {{subject}}.")
+    measured = ("war", "dragons", "beasts", "plague", "founding", "heroes")  # world/ages/eras.py THEMES
+    for theme in ("myth", "peace") + measured:
+        if theme not in data["eras"]["themes"]:
+            errors.append(f"data/history.json: eras.themes needs '{theme}'.")
+        if theme in measured and theme not in data["eras"]["thresholds"]:
+            errors.append(f"data/history.json: eras.thresholds needs '{theme}'.")
     return errors
 
 

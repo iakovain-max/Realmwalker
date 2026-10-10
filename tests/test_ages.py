@@ -181,6 +181,44 @@ def test_the_ages_are_named(world, tables):
     assert all(e["name"] and e["summary"] for e in eras)
 
 
+def test_every_cause_of_death_reads_after_died(data):
+    """A cause is written both "X died {cause}" and "Died in 907, {cause}": not "died devoured by the troll",
+    "died burned as a heretic" or "died drowned crossing a river"."""
+    wrong = ("devoured", "torn", "killed", "burned", "taken", "beheaded", "drowned", "slain", "and ")
+    for source in ("history.json", "politics.json"):
+        for kind, causes in data[source]["causes"].items():
+            for cause in causes:
+                assert not cause.startswith(wrong), (source, kind, cause)
+
+
+def test_an_age_is_named_for_what_set_it_apart(tables):
+    """Measured against the world's own usual: a burst of battles is a war, the usual run of things an age of kings,
+    and only a stretch quieter than the usual is called a peace ("the Long Peace" once held five wars)."""
+    from types import SimpleNamespace
+
+    from realmwalker.world.ages.eras import Judge
+
+    stats = collections.defaultdict(lambda: collections.defaultdict(float))
+    for y in range(200):
+        stats[y]["battles"] = 5.0 if y < 50 else 2.0 if y < 150 else 0.0
+        stats[y]["founded"] = 0.3
+    judge = Judge(SimpleNamespace(data=tables.history, stats=stats, year0=0, present=200, years=200, top_realm={}))
+    assert judge.theme(0, 50) == "war"
+    assert judge.theme(50, 150) == "kings"
+    assert judge.theme(150, 200) == "peace"
+
+
+def test_great_realms_still_go_to_war_late_in_a_long_history(tables):
+    """Once the land had grown into a few great realms whose seats lay far apart, the wars stopped for good; their
+    borders touch, and that is enough to fight over."""
+    w = make(tables, 9, "medium", 1000)
+    end = tables.calendar.start_year
+    wars = [war["year"] for war in w.wars]
+    early = sum(1 for y in wars if y < end - 700)
+    late = sum(1 for y in wars if y >= end - 300)
+    assert late >= max(5, early / 4), (early, late)
+
+
 # ---------------------------------------------------------------------------- today, at every size and length
 @pytest.mark.parametrize("size,years,seed", [("small", 100, 4), ("medium", 500, 8), ("large", 250, 2),
                                              ("small", 1000, 6)])

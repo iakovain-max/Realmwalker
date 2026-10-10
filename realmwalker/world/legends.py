@@ -3,7 +3,8 @@
 Like Dwarf Fortress's Legends mode, every person, realm, place, war, beast, artifact, age, god and song of a world
 has a page built from the structured history: who they were, how they are tied to everything else, and every event
 they appear in, in order. Links are written [[REF|words]] where REF is "H12" a figure, "F3" a faction, "S5" a
-settlement, "X7" a site, "W2" a war, "A4" an artifact, "E1" an age and "K3" a work; the screen draws them in their own
+settlement, "X7" a site, "W2" a war, "A4" an artifact, "E1" an age, "K3" a work and "P0" one of the player's own lives
+(a character of theirs who died in the world, listed first among the People); the screen draws them in their own
 colour and follows them. Everything else in a line is ordinary markup (ui/markup).
 
 Worlds made before the ages were lived have less to tell, and their pages say what there is.
@@ -14,6 +15,7 @@ from __future__ import annotations
 import re
 from collections import defaultdict
 
+from realmwalker.core.textgen import a_or_an, count_of
 from realmwalker.world import factions as fx
 
 CATEGORIES = [("ages", "Ages"), ("realms", "Realms and powers"), ("people", "People"), ("places", "Places"),
@@ -247,7 +249,9 @@ def _entries(world, tables, category: str) -> list[tuple[str, str]]:
     if category == "people":
         people = [f for f in w.figures.values() if f.kind == "person"]
         people.sort(key=lambda f: (-(f.fame + 5 * (f.role in ("ruler", "legend")) + 3 * f.alive), f.id))
-        return [(f"H{f.id}", f.full_name() + ("" if f.alive else f" (d. {year_text(f.died)})")) for f in people]
+        mine = [(f"P{i}", f"{r.get('name', 'Someone')} (your life, d. {year_text(r.get('year'))})")
+                for i, r in reversed(list(enumerate(w.politics.get("fallen", []))))]
+        return mine + [(f"H{f.id}", f.full_name() + ("" if f.alive else f" (d. {year_text(f.died)})")) for f in people]
     if category == "places":
         out = [(f"S{s.id}", f"{s.name} ({KIND_WORDS.get(s.kind, s.kind)[2:].removeprefix('n ')})")
                for s in sorted(w.settlements, key=lambda s: (-s.population, s.id))]
@@ -300,6 +304,8 @@ def page(world, tables, ref: str) -> tuple[str, list[str]]:
             return era_page(world, tables, n)
         if kind == "K" and n < len(world.politics.get("works", [])):
             return work_page(world, tables, n)
+        if kind == "P" and n < len(world.politics.get("fallen", [])):
+            return life_page(world, tables, n)
     except (KeyError, IndexError, TypeError, ValueError):
         pass
     return "Nothing", ["<dim>Nothing is remembered of that.</>"]
@@ -675,6 +681,55 @@ def work_page(world, tables, i: int) -> tuple[str, list[str]]:
     if work.get("place"):
         lines.append(f"<dim>Written in:</> {place_ref_link(w, work['place'])}")
     return work["title"], lines
+
+
+def life_page(world, tables, i: int) -> tuple[str, list[str]]:
+    """One of your own lives: what the world kept of a character of yours who died in it (game/death.py writes the
+    record), as Dwarf Fortress keeps its adventurers among the figures of its Legends."""
+    w = world
+    r = w.politics["fallen"][i]
+    name = r.get("name") or "Someone"
+    race = tables.races.get(r.get("race"), {}).get("name", r.get("race") or "")
+    cls = tables.classes.get(r.get("cls"), {}).get("name", r.get("cls") or "")
+    who = " ".join(x for x in (race.lower(), cls.lower()) if x) or "traveller"
+    lines = ["<dim>One of your lives.</>",
+             f"{cap(a_or_an(clean(who)))} of the {ordinal(int(r.get('level') or 1))} rank, aged {r.get('age', '?')}."]
+    lines.append(f"Died in {year_text(r.get('year'))}" + (f" ({clean(r['date'])})" if r.get("date") else "") +
+                 (f", at {clean(r['place'])}" if r.get("place") else "") +
+                 f": {clean(r.get('cause') or 'of misfortune')}.")
+    if r.get("days_lived"):
+        lines.append(f"<dim>{int(r['days_lived']):,} days on the road.</>")
+    facts = []
+    if r.get("titles"):
+        facts.append("<dim>Known as:</> " + ", ".join(clean(t) for t in r["titles"]))
+    standings = sorted(((int(fid), v) for fid, v in r.get("standings", {}).items() if int(fid) in w.factions),
+                       key=lambda kv: (-abs(kv[1]), kv[0]))
+    if standings:
+        facts.append("<dim>What the powers thought of them:</> " + ", ".join(
+            f"{fac_link(w, fid)} ({clean(fx.standing_name(tables, v)[0]).lower()})" for fid, v in standings[:8]))
+    kills = sorted(r.get("kills", {}).items(), key=lambda kv: (-kv[1], kv[0]))
+    if kills:
+        facts.append("<dim>Killed:</> " + ", ".join(clean(count_of(n, k)) for k, n in kills[:8]))
+    if r.get("quests_done"):
+        facts.append(f"<dim>Work finished for others:</> {r['quests_done']}")
+    if r.get("companions"):
+        facts.append("<dim>Travelled with:</> " + ", ".join(clean(c) for c in r["companions"]))
+    if r.get("deeds"):
+        facts.append("<dim>Remembered for:</> " + "; ".join(clean(d) for d in r["deeds"]) + ".")
+    if facts:
+        lines += [""] + facts
+    if r.get("obituary"):
+        colour = "ai" if r.get("obituary_source") == "ai" else "fg"
+        lines += ["", section("What was said of them")]
+        lines += [f"<{colour}>{clean(p)}</>" for p in str(r["obituary"]).split("\n") if p.strip()]
+    began = r.get("day", 0) - r.get("days_lived", 0)
+    start = tables.calendar.at(max(0, int(began)) * 1440).year if "day" in r else (r.get("year") or 0) - 1
+    ids = [k for k, e in enumerate(w.history) if e.get("player") and name in e.get("text", "")
+           and start <= e.get("year", 0) <= (r.get("year") or 0)]
+    life = timeline(w, ids, f"P{i}")
+    if life:
+        lines += ["", section("What the world remembers")] + life
+    return name, lines
 
 
 # ---------------------------------------------------------------------------- reading a line

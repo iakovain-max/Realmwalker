@@ -249,12 +249,10 @@ def test_a_noble_knows_whom_their_house_is_sworn_to(game, tables):
 
 # ---------------------------------------------------------------------------- the beasts go on, and the dead walk
 def test_beasts_of_the_history_come_down_while_you_play(game, tables):
-    from realmwalker.world.politics import Politics, year_of
+    from realmwalker.world.politics import BEAST_REACH, Politics, year_of
 
     w = game.world
-    from realmwalker.world.politics import BEAST_REACH
-
-    lairs = [(int(k), w.figures[h]) for k, h in w.politics.get("lairs", {}).items() if w.figures[h].kind == "beast"]
+    lairs =[(int(k), w.figures[h]) for k, h in w.politics.get("lairs", {}).items() if w.figures[h].kind == "beast"]
     lairs = [(k, f) for k, f in lairs if any(abs(s.x - w.sites[k].x) + abs(s.y - w.sites[k].y) <= BEAST_REACH
                                              and s.kind in ("hamlet", "village", "town") for s in w.settlements)]
     if not lairs:
@@ -266,6 +264,28 @@ def test_beasts_of_the_history_come_down_while_you_play(game, tables):
     assert len(w.news) > before
     assert any(s.status.get("beast") for s in w.settlements)
     assert tables.politics["rates"]["beast_attack"] > 0
+
+
+def test_heroes_of_the_history_grow_old_while_you_play(game, tables):
+    from realmwalker.world.politics import Politics, year_of
+
+    w = game.world
+    heroes = [f for f in w.figures.values() if f.alive and f.kind == "person" and f.role == "hero"]
+    if len(heroes) < 2:
+        pytest.skip("fewer than two living heroes in this world")
+    old, friend = heroes[:2]
+    year = year_of(w, tables)
+    old.born = friend.born = year - 120  # older than anyone lives
+    old.fame, old.home = max(old.fame, 5), "S0"
+    prepare_town(game, w.settlements[0])
+    walker = next(n for n in npcs_in(w, 0) if n.alive)
+    walker.flags["companion"] = True  # this one was hired and walks with the player
+    friend.npc = walker.id
+    before = len(w.news)
+    Politics(w, tables, RNG(6, "years"), year=year).mortality(50.0)
+    assert not old.alive and old.cause
+    assert any(old.full_name() in n["text"] for n in w.news[before:])  # people had heard of this one
+    assert friend.alive
 
 
 def test_the_dead_of_the_great_battles_walk_at_night(game, monkeypatch):

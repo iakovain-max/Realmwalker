@@ -15,7 +15,7 @@ stays, in the world.
 
 from __future__ import annotations
 
-from realmwalker.core.textgen import a_or_an
+from realmwalker.core.textgen import a_or_an, count_of
 from realmwalker.core.textgen import escape_markup as esc
 from realmwalker.rules.items import money_text
 from realmwalker.world import factions as fx
@@ -94,12 +94,13 @@ def remember(game, record: dict) -> None:
     """The world hears of it: the chronicle for the famous, news for anyone people had heard of."""
     from realmwalker.world import news
 
+    from realmwalker.world import history
+
     w = game.world
     known = record["fame"] + record["infamy"]
     text = f"{record['name']} {how_they_died(record['cause'])}, at {record['place']}"
     if known >= 8 or record["level"] >= 4:
-        w.history.append({"year": record["year"], "kind": "legend", "text": text, "factions": [], "places": [],
-                          "figures": [], "importance": 3 if known >= 20 else 2, "player": True})
+        history.remember(w, record["year"], "legend", text, importance=3 if known >= 20 else 2, player=True)
     if known >= 4:
         news.add(w, text, record["x"], record["y"], kind="deed", importance=2 if known < 20 else 3, player=True)
 
@@ -133,7 +134,7 @@ def release_companions(game) -> None:
 # ---------------------------------------------------------------------------- the words
 def kill_list(game, record: dict, limit: int = 6) -> str:
     kills = sorted(record.get("kills", {}).items(), key=lambda kv: -kv[1])[:limit]
-    return ", ".join(f"{n} {k}{'s' if n > 1 and not k.endswith('s') else ''}" for k, n in kills)
+    return ", ".join(count_of(n, k) for k, n in kills)
 
 
 def standing_words(game, record: dict) -> list[str]:

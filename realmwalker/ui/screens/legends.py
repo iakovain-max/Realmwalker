@@ -243,9 +243,12 @@ class LegendsScreen(Screen):
             row = top + i
             if chosen:
                 canvas.fill(x, row, w, 1, colors.HILITE_BG)
-            hover = canvas.hit(x, row, w, 1, lambda index=index: self.choose(index))
+            label, whole = legends.cap(text), None
+            if len(label) > w > 1:  # too long for the list: it ends in "…", and the whole of it is the tooltip
+                label, whole = label[: w - 1].rstrip() + "…", label
+            hover = canvas.hit(x, row, w, 1, lambda index=index: self.choose(index), whole)
             fg = colors.SELECT_FG if chosen else colors.FG if hover or index == self.sel else colors.DIM
-            canvas.text(x, row, legends.cap(text), fg, max_width=w)
+            canvas.text(x, row, label, fg, max_width=w)
         if not items:
             canvas.markup(x, top, "<dim>Nothing by that name.</>" if self.query else "<dim>Nothing is remembered.</>",
                           max_width=w)

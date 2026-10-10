@@ -139,6 +139,7 @@
   },
   "war": {
     "reach": 55,
+    "border_reach": 12,
     "base": 0.007,
     "hostility": 0.0006,
     "defender_edge": 1.15,
@@ -152,11 +153,11 @@
   "causes": {
     "child": ["of a childhood fever", "of the coughing sickness, in their first years", "in the cradle"],
     "childbed": ["in childbed", "bearing a child"],
-    "beast": ["devoured by {beast}", "torn apart by {beast}", "killed by {beast}"],
-    "dragon": ["burned by {beast}", "in the fire of {beast}", "taken by {beast}"],
-    "executed": ["on the headsman's block", "on the gallows", "at the end of a rope", "beheaded for treason"],
-    "vanished": ["and was never seen again", "in a way nobody can explain", "somewhere no one followed"],
-    "heretic": ["burned as a heretic", "at the stake, for heresy", "drowned as a witch"],
+    "beast": ["in the jaws of {beast}", "at the claws of {beast}", "the night {beast} came"],
+    "dragon": ["in the fire of {beast}", "in the flames of {beast}", "the day {beast} came"],
+    "executed": ["on the headsman's block", "on the gallows", "at the end of a rope", "under the axe, for treason"],
+    "vanished": ["in a way nobody can explain", "somewhere no one followed", "in the dark, and no one saw how"],
+    "heretic": ["in the fire, as a heretic", "at the stake, for heresy", "in the river, as a witch"],
     "plague": ["of the plague"],
     "battle": ["in battle", "of wounds taken in battle", "leading a charge"]
   },
@@ -627,12 +628,24 @@
       },
       "peace": {
         "names": [
-          "the Long Peace", "the Golden Age of {realm}", "the Age of Kings", "the Quiet Years",
-          "the Years of Plenty", "the Peace of {realm}"
+          "the Long Peace", "the Golden Age of {realm}", "the Quiet Years", "the Years of Plenty",
+          "the Peace of {realm}"
         ],
         "summary": [
-          "The roads were safe and the granaries full, and the great houses quarrelled over nothing worse than marriages.",
-          "It was a time of peace and growth, remembered fondly by those who did not live through it."
+          "The great houses quarrelled, as great houses do, but the roads were safer and the granaries fuller than they had been for generations.",
+          "It was a time of peace and growth, remembered fondly by those who did not live through it.",
+          "Wars were fewer and shorter, the dragons slept, and people grew old in the houses they were born in."
+        ]
+      },
+      "kings": {
+        "names": [
+          "the Age of Kings", "the Age of Crowns", "the Years of the Great Houses", "the High Days of {realm}",
+          "the Age of {realm}", "the Years of {realm}"
+        ],
+        "summary": [
+          "Crowns passed from parent to child and from hand to hand, borders moved a little, and the land filled up.",
+          "The great houses rose and fell and quarrelled; most people never saw a battle, and every year there were more of them.",
+          "It was neither war nor peace but the ordinary business of kings: marriages, feuds, a war now and then, and new towns on the rivers."
         ]
       }
     },
@@ -643,7 +656,10 @@
       "plague": 250,
       "founding": 0.5,
       "heroes": 0.08
-    }
+    },
+    "stand_out": 1.5,
+    "quiet": 0.8,
+    "least": 0.3
   },
   "names": {
     "war": {

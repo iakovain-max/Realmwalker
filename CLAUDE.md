@@ -182,9 +182,14 @@ tools/                     autoplay.py, mock_player2.py, build_friends.py, balan
   place refs ("S12" settlement, "X5" site in `home`, `died_at`, `buried`), `kills`/`slayer`, `kind` (person, beast,
   dragon, god). `politics` also keeps `places`, `lairs` (site -> living beast), `tombs`, `towers`, `works`, `eras`,
   `deep_history`, `next_event`; events have ids (`history.remember` writes one in play). `game/past.py` brings it into
-  play (Look, conversations, heroes at inns, named beasts and barrow kings as bosses, the clear_lair_beast work);
+  play (Look, conversations, heroes at inns, named beasts and barrow kings as bosses, the clear_lair_beast work,
+  haunted battlefields from `politics["scars"]`, blood feuds from `politics["grudges"]` and the vendetta work, a lost
+  artifact as a locked chest on its site's deepest level via `on_arrive_dungeon`/`on_chest`); `world/ages/ties.py`
+  roots a new character's background in it; live beasts come down via `Politics.beast_comes`.
   `ui/screens/legends.py` is the Legends book (b in the News screen; Legends for a saved world). Worlds made before keep
-  their old history; every reader must cope with events without ids and figures without the new fields.
+  their old history; every reader must cope with events without ids and figures without the new fields. Ages are
+  named against the world's own usual (`ages/eras.Judge`). After changing war or era numbers, measure wars per century
+  at all four lengths: long histories once went silent after year 700.
 - Death: `game/death.die(game)` writes the character into `world.politics["fallen"]` (chronicle, news, companions
   released) and the death screen shows `fallback_obituary`, replaced by the AI's words (task OBITUARY) when they
   arrive. Nothing carries over to the next character except what the world remembers.
