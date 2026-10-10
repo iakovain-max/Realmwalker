@@ -328,3 +328,80 @@ def grudge_want(game, g: dict) -> str:
     rng = w.rng.child(f"grudge/{g['by']}")
     return rng.choice(lines).format(target=target.full_name(), relation=f"their {g['relation']}",
                                     kin=kin.full_name() if kin is not None else "", year=g.get("year", ""))
+
+
+# ---------------------------------------------------------------------------- the treasures the history lost
+ARTIFACT_KINDS = {"sword": ("weapon", "longsword"), "axe": ("weapon", "battleaxe"), "hammer": ("weapon", "warhammer"),
+                  "spear": ("weapon", "spear"), "bow": ("weapon", "longbow"), "shield": ("shield", "shield"),
+                  "armour": ("armor", "chain_mail"), "staff": ("focus", "arcane_focus"), "book": ("focus", None),
+                  "banner": ("focus", None), "relic": ("focus", "holy_symbol"), "crown": ("jewellery", None),
+                  "ring": ("jewellery", "plain_ring"), "amulet": ("jewellery", "amulet")}
+
+
+def artifact_item(game, index: int):
+    """The artifact of the history as a thing in your hands: a very rare magic item with its name and its story.
+    Marks it found."""
+    from realmwalker.game import magic_items
+    from realmwalker.rules.items import Item
+
+    w = game.world
+    a = w.politics["artifacts"][index]
+    rng = w.rng.child(f"artifact/{index}")
+    kind, base = ARTIFACT_KINDS.get(a.get("kind", ""), ("jewellery", None))
+    it = magic_items.make(game, rng, tier=6, kind=kind, rarity="very_rare") or \
+        magic_items.make(game, rng, tier=6, kind="jewellery", rarity="very_rare")
+    if it is not None:
+        if base is not None and base in game.tables.items and kind != "jewellery":
+            it.def_id = base  # the sword of the songs is a sword
+        maker = w.figures.get(a.get("maker", -1))
+        made = f", made by {maker.full_name()} in {a.get('made')}" if maker is not None else ""
+        it.magic.update(title=cap(a["name"]), identified=True, cursed=False, source="history",
+                        story=f"{cap(a['name'])}{made}. It {a.get('fate', 'was lost long ago')}. Now it is found.")
+        it.magic.pop("curse", None)
+    else:
+        it = Item(uid=0, def_id="gold_ring", qty=1, made_at=w.time, name=a["name"])
+    a["found"] = True
+    return it
+
+
+def artifacts_lying_at(game, site) -> list[int]:
+    """The history's lost treasures said to lie in a site (and not yet found)."""
+    return [i for i, a in enumerate(game.world.politics.get("artifacts", []))
+            if a.get("site") == site.id and not a.get("found")]
+
+
+def on_arrive_dungeon(game, lm, site) -> None:
+    """The deepest level of a site keeps whatever the history left there, in a chest (or a coffin, in a barrow)."""
+    from realmwalker.game import quests
+
+    if site is None or not quests.deepest(lm):
+        return
+    wanted = {q["target"].get("artifact") for q in quests.active(game) if q["template"] == "retrieve"}
+    for i in artifacts_lying_at(game, site):
+        a = game.world.politics["artifacts"][i]
+        if i in wanted or a.get("placed"):
+            continue
+        feature = {"kind": "chest", "locked": 12, "treasure": 2, "artifact": i}
+        a["placed"] = quests.place_in_room(game, lm, feature, "chest")
+
+
+def on_chest(game, feature: dict) -> list:
+    """Opening the chest that holds a treasure of the history: it is yours, and the world will hear of it."""
+    from realmwalker.game import reputation
+    from realmwalker.world.history import remember
+
+    i = feature.get("artifact")
+    arts = game.world.politics.get("artifacts", [])
+    if i is None or not 0 <= i < len(arts) or arts[i].get("found"):
+        return []
+    a = arts[i]
+    item = artifact_item(game, i)
+    site = game.world.site_at(game.player.x, game.player.y)
+    where = site.name if site is not None else "the dark"
+    text = f"{game.leader.name} found {a['name']} in {where}"
+    remember(game.world, game.moment.year, "artifact_found", text, importance=3,
+             sites=[site.id] if site is not None else [], player=True, data={"artifact": i})
+    reputation.deed(game, f"found {a['name']}", {}, fame=6, importance=3, news_text=text)
+    game.say(f"<magic>{esc(cap(a['name']))}.</> <dim>{esc(cap(a['name']))} {esc(a.get('fate', ''))}; it is in your "
+             f"hands now.</>", "loot")
+    return [item]

@@ -298,3 +298,26 @@ def test_blood_feuds_the_history_left(game):
     g = living[0]
     want = past.grudge_want(game, g)
     assert w.figures[g["against"]].full_name() in want and "{" not in want
+
+
+def test_a_treasure_of_the_history_lies_where_the_history_left_it(game):
+    w = game.world
+    arts = [(i, a) for i, a in enumerate(w.politics["artifacts"]) if a["site"] >= 0 and not a.get("found")]
+    if not arts:
+        pytest.skip("no treasure lies anywhere in this world")
+    i, a = arts[0]
+    site = w.sites[a["site"]]
+    stand_on(game, site)
+    game.enter_local()
+    dungeon.descend(game, 1)
+    while int(game.local.meta.get("level", 1)) < int(game.local.meta.get("depth", 1)):
+        dungeon.descend(game, int(game.local.meta["level"]) + 1)
+    spots = [(xy, f) for xy, f in game.local.features.items() if f.get("artifact") == i]
+    assert spots, "the treasure is not down there"
+    (x, y), feature = spots[0]
+    feature["locked"] = 0
+    game.player.lx, game.player.ly = x, y
+    dungeon.open_chest(game, game.local, x, y)
+    found = [it for pile in game.local.items.values() for it in pile if it.magic and it.magic.get("source") == "history"]
+    assert found and found[0].magic["title"].lower() == a["name"].lower()
+    assert a["found"] and any(e.get("player") and e["kind"] == "artifact_found" for e in w.history)

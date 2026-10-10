@@ -95,6 +95,20 @@ design are in `docs/WORLD_HISTORY.md`.
   - The built-in chronicle is told age by age; with the AI on, the AI's chronicle, town descriptions and conversations
     are given the true history to draw on.
   - When towns change hands while you play, the history's record of who held what keeps up.
+  - **The beasts go on**: while you play, a named beast still comes down on the farms near its lair now and then
+    (you hear the news; the town is "beset by a beast" for a while).
+  - **The land remembers**: the fields of the deadliest battles and the towns put to the sword are marked. *Look* at
+    a battlefield and it says what was fought there and how many died; camp or walk there at night and the dead of
+    that battle may come for you (with their own words).
+  - **Blood feuds**: someone whose father, wife, brother or child was killed by a person still alive wants that
+    person dead; their townsperson says so, and the assassination work they offer can be that vendetta, by name.
+  - **Your background is rooted in the history**: a soldier marched in a real war under a real lord; a folk hero
+    drove off a real beast or raiders that troubled their village; a noble's family holds its lands from a real
+    lord; an acolyte was raised by a real priest.
+  - **Lost treasures can be found**: an artifact the Legends book says lies in a ruin, a barrow or a lair is really
+    there, in a locked chest on the deepest level. Open it and it is yours (a very rare magic item with its name and
+    its story), and the world hears that you found it.
+  - In the Legends book, people's pages also show their grandparents and who they fought beside and against.
 - **More names**: every people has two to three times as many names as before (so a thousand people of note are not
   all called Aldric).
 

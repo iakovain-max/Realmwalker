@@ -1064,21 +1064,9 @@ def quest_item(game, q) -> Item:
     t = q["target"]
     w = game.world
     if "artifact" in t:
-        from realmwalker.game import magic_items
+        from realmwalker.game import past
 
-        a = w.politics["artifacts"][t["artifact"]]
-        rng = w.rng.child(f"artifact/{t['artifact']}")
-        kind = {"sword": "weapon", "spear": "weapon", "shield": "shield", "staff": "focus", "book": "focus",
-                "banner": "focus"}.get(a.get("kind", ""), "jewellery")
-        it = magic_items.make(game, rng, tier=6, kind=kind, rarity="very_rare") or \
-            magic_items.make(game, rng, tier=6, kind="jewellery", rarity="very_rare")
-        if it is not None:
-            it.magic.update(title=cap(a["name"]), identified=True, cursed=False, source="history",
-                            story=f"{cap(a['name'])} {a.get('fate', 'was lost long ago')}. Now it is found.")
-            it.magic.pop("curse", None)
-        else:
-            it = Item(uid=0, def_id="gold_ring", qty=1, made_at=w.time, name=a["name"])
-        a["found"] = True
+        it = past.artifact_item(game, t["artifact"])
     else:
         it = Item(uid=0, def_id=t.get("base", "gold_ring"), qty=1, made_at=w.time, name=t["item"])
     it.tags = list(it.tags) + [f"quest:{q['id']}"]

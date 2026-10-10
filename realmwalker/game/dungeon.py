@@ -155,6 +155,9 @@ def descend(game, level: int, *, from_below: bool = False) -> None:
         from realmwalker.game import quests
 
         quests.on_arrive_dungeon(game, lm)
+    from realmwalker.game import past
+
+    past.on_arrive_dungeon(game, lm, site)  # a treasure the history left here
     name = lm.meta.get("name", "dark")
     rng = game.world.rng.child(f"descend/{lm.key}/{game.player.steps}")
     deep = lm.meta.get("depth", 1) > 1
@@ -480,6 +483,10 @@ def open_chest(game, lm, x: int, y: int) -> None:
         from realmwalker.game import quests
 
         items = quests.on_chest(game, f) + items
+    if f.get("artifact") is not None:
+        from realmwalker.game import past
+
+        items = past.on_chest(game, f) + items
     p = game.player
     if items:
         lm.items.setdefault((p.lx, p.ly), []).extend(items)

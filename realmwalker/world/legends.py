@@ -52,7 +52,11 @@ class Index:
         self.war = defaultdict(list)
         self.art = defaultdict(list)
         for i, e in enumerate(world.history):
-            for h in e.get("figures", ()):
+            named = set(e.get("figures", ()))
+            data = e.get("data") or {}
+            named.update(data.get("host", ()))  # everyone of name who fought in a battle, not only its commanders
+            named.update(data.get("foes", ()))
+            for h in named:
                 self.fig[h].append(i)
             for f in e.get("factions", ()):
                 self.fac[f].append(i)
@@ -400,12 +404,41 @@ def figure_page(world, tables, hid: int) -> tuple[str, list[str]]:
         deeds.append("<dim>Wrote:</> " + ", ".join(link(f"K{i}", w.politics["works"][i]["title"]) for i in works))
     if fig.notes:
         deeds.append("<dim>Remembered for:</> " + "; ".join(clean(n) for n in fig.notes) + ".")
+    beside, against = comrades(w, ix, hid)
+    if beside:
+        deeds.append("<dim>Fought beside:</> " + ", ".join(fig_link(w, h) for h in beside))
+    if against:
+        deeds.append("<dim>Fought against:</> " + ", ".join(fig_link(w, h) for h in against))
     if deeds:
         lines += [""] + deeds
     life = timeline(w, ix.fig.get(hid, []), own)
     if life:
         lines += ["", section("Life")] + life
     return fig.full_name() if fig.kind == "person" else f"{fig.name} {fig.epithet}".strip(), lines
+
+
+def comrades(world, ix: Index, hid: int, most: int = 6) -> tuple[list[int], list[int]]:
+    """Who fought beside someone in their battles, and who against them, the most often first (as DF's war buddies)."""
+    beside: dict[int, int] = {}
+    against: dict[int, int] = {}
+    for i in ix.fig.get(hid, ()):
+        e = world.history[i]
+        data = e.get("data") or {}
+        if e.get("kind") != "battle_named" or "host" not in data:
+            continue
+        sides = (data.get("host", []), data.get("foes", []))
+        for mine, theirs in (sides, sides[::-1]):
+            if hid in mine:
+                for h in mine:
+                    if h != hid:
+                        beside[h] = beside.get(h, 0) + 1
+                for h in theirs:
+                    against[h] = against.get(h, 0) + 1
+
+    def top(d: dict[int, int]) -> list[int]:
+        return [h for h, _ in sorted(d.items(), key=lambda kv: (-kv[1], kv[0]))[:most] if h in world.figures]
+
+    return top(beside), top(against)
 
 
 def ordinal(n: int) -> str:
