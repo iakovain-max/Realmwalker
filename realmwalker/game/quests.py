@@ -584,8 +584,44 @@ def _escort(game, npc, rng):
     return q
 
 
+def _vendetta(game, npc, rng):
+    """A blood feud the history left (world/ages): the one who killed their kin still lives, and sits somewhere."""
+    from realmwalker.game import past
+    from realmwalker.game.people import prepare_town
+
+    w = game.world
+    fig = w.figures.get(npc.flags.get("figure", -1))
+    grudge = past.grudge_of(w, fig.id) if fig is not None else None
+    if grudge is None:
+        return None
+    target = w.figures[grudge["against"]]
+    if target.npc < 0 or target.npc not in w.npcs:
+        f = w.factions.get(target.faction)
+        if f is None or not f.active or f.leader != target.id or not 0 <= f.seat < len(w.settlements):
+            return None
+        prepare_town(game, w.settlements[f.seat])  # lords sit in their halls: placing the town seats them
+    mark = w.npcs.get(target.npc) if target.npc >= 0 else None
+    if mark is None or not mark.alive or mark.settlement == npc.settlement:
+        return None
+    town = w.settlements[npc.settlement]
+    dest = w.settlements[mark.settlement]
+    kin = w.figures.get(grudge["kin"])
+    q = base_quest(game, npc, "assassinate", rng, hard=1.5 + dist(dest, town) / 30)
+    q["hidden"] = None  # no doubt about this one: it is true
+    q["text_key"] = "assassinate_vendetta"
+    q["target"] = {"dest": dest.id, "npc": mark.id}
+    q["words"].update(target=target.full_name(), dest=dest.name, where=direction(town, dest),
+                      relation=grudge["relation"], kin=kin.full_name() if kin is not None else "my kin",
+                      cause=grudge.get("cause", ""))
+    allow_for(q, dist(dest, town) * 2)
+    return q
+
+
 def _assassinate(game, npc, rng):
     """A knife in the dark, for money. The law does not care who paid."""
+    vendetta = _vendetta(game, npc, rng)
+    if vendetta is not None and rng.chance(0.8):
+        return vendetta
     w = game.world
     town = w.settlements[npc.settlement]
     dests = [s for s in w.settlements if s.id != town.id and 4 <= dist(s, town) <= 30]

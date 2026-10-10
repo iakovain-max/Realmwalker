@@ -116,7 +116,7 @@ class War:
                 if any(v in ("expansionist", "warlike") for v in a.values + b.values):
                     p *= 1.5
                 if "tribe" in (a.kind, b.kind):
-                    p *= 0.4
+                    p *= float(self.data["tribe_factor"])  # the tribes mostly raid; open war with them is rarer
                 if r.chance(p):
                     attacker, defender = (a, b) if self.eagerness(a) >= self.eagerness(b) else (b, a)
                     self.start(attacker, defender, self.reason(attacker, defender))
@@ -199,7 +199,7 @@ class War:
         if a is None or d is None:
             self.end(war, a if a is not None else d)
             return
-        battles = 1 + (r.random() < 0.55) + (r.random() < 0.2)
+        battles = 1 + sum(1 for chance in self.data["battles"] if r.random() < float(chance))
         for _ in range(battles):
             self.battle(war, a, d)
             if not war["active"] or not a.active or not d.active:
@@ -457,7 +457,7 @@ class War:
         war["result"] = "attacker" if winner is a else "defender" if winner is d else "draw"
         key = (min(a.id, d.id), max(a.id, d.id))
         self.past[key] = war
-        self.peace[key] = s.year + s.r.randint(4, 12)
+        self.peace[key] = s.year + s.r.randint(8, 20)
         until = war["ended"] + cal.days_per_year * s.r.uniform(3, 8)
         a.flags.setdefault("peace_until", {})[str(d.id)] = until
         d.flags.setdefault("peace_until", {})[str(a.id)] = until

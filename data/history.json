@@ -17,7 +17,7 @@
     "usurping_regent": 0.012,
     "succession_war": 0.35,
     "fealty": 0.03,
-    "rebellion": 0.03,
+    "rebellion": 0.08,
     "charter": 0.006,
     "proclamation": 0.02,
     "assassination": 0.0025,
@@ -135,13 +135,15 @@
     "lordship_age": [20, 150],
     "church_age": [300, 900],
     "drift": 5.0,
-    "border_friction": 1.2
+    "border_friction": 0.6
   },
   "war": {
     "reach": 55,
-    "base": 0.01,
-    "hostility": 0.002,
-    "defender_edge": 1.15
+    "base": 0.007,
+    "hostility": 0.0006,
+    "defender_edge": 1.15,
+    "tribe_factor": 0.2,
+    "battles": [0.4, 0.1]
   },
   "heroes": {
     "infamy": 3,
@@ -926,6 +928,48 @@
       "\"My grandmother used to tell it: {text}\"", "\"They say that in {when}, {text}\"",
       "\"Everyone in {place} knows it: {text}\"", "\"Before my time, but they still tell it: {text}\"",
       "\"It's in the old songs: {text}\""
+    ]
+  },
+  "ties": {
+    "war": [
+      "You marched with them in {war}, which began in {year}.",
+      "You were with them through {war}, and you still dream of it.",
+      "You saw {war} from the front rank, and came home from it."
+    ],
+    "deed_beast": [
+      "drove {beast} back into {site} with a pitchfork and a torch when it came down on the farms",
+      "stood between {beast} and the children when it came out of {site}",
+      "followed {beast} halfway to {site} after it took the cattle, and came back with blood on your spear"
+    ],
+    "deed_raid": [
+      "held the gate when {tribe} came", "got the families into the church before {tribe} reached the houses",
+      "rode for help through the night when {tribe} fell on the village"
+    ],
+    "noble": [
+      "Your family holds its lands from {house}; {lord} knows your name, and your debts.",
+      "Your house is sworn to {house}, and you have knelt to {lord} more than once."
+    ]
+  },
+  "scars": {
+    "look_battle": [
+      "Here was fought {name}, in {year}; {dead} died on this ground. The grass grows too green.",
+      "The field of {name} ({year}). Ploughs still turn up bones and rusted iron here.",
+      "{name} was fought here in {year}. Nobody farms this field; nobody will say why."
+    ],
+    "intro_battle": [
+      "Mist rises off the field where {name} was fought, and there are shapes in it, still in the rags of their armour. The dead of {year} have not finished.",
+      "Something rattles in the grass of the old battlefield. The dead of {name} are walking.",
+      "Cold fingers of mist, and then the rattle of bones: whoever fell at {name} has not rested."
+    ],
+    "intro_massacre": [
+      "The ruins of {name} are not empty at night. The ones who died when it fell come out to meet you.",
+      "In the black ruins of {name} the dead get up, the way they did not when it burned."
+    ]
+  },
+  "grudges": {
+    "want": [
+      "to see {target} dead, for {relation} {kin}", "{target}'s head, for what was done to {relation} {kin}",
+      "to live long enough to see {target} pay for {relation} {kin}"
     ]
   }
 }

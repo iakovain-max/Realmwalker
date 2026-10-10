@@ -15,7 +15,7 @@ import math
 from realmwalker.world import factions as fx
 from realmwalker.world import news
 from realmwalker.world.ages.eras import name_eras
-from realmwalker.world.ages.sim import DYNASTIC, POWER_KINDS, S, X
+from realmwalker.world.ages.sim import DYNASTIC, S, X
 from realmwalker.world.model import Site
 
 RECENT_YEARS = 2
@@ -530,6 +530,7 @@ class Present:
                     fig.role = "folk"
             else:
                 fig.role = "past" if fig.id in rulers else "dead"
+        w.politics["grudges"] = self.grudges()
         legends = sorted((fig for fig in w.figures.values() if fig.kind == "person" and not fig.alive
                           and fig.id not in rulers and (fig.fame >= 6 or fig.kills or fig.notes)),
                          key=lambda fig: (-fig.fame, fig.id))
@@ -539,6 +540,34 @@ class Present:
         for fig in w.figures.values():
             if fig.role == "legend" and not fig.notes:
                 self.deeds(fig)
+
+    def grudges(self) -> list[dict]:
+        """Blood feuds: the living whose father, mother, husband, wife, brother, sister, son or daughter was slain by
+        someone still alive. They have not forgotten (game/people.py gives them the want; quests the work)."""
+        s = self.s
+        w = s.w
+        folk = s.folk
+        out = []
+        for fig in w.figures.values():
+            if not fig.alive or fig.kind != "person":
+                continue
+            kin = [(rel, w.figures.get(k)) for rel, k in (("father", fig.father), ("mother", fig.mother),
+                                                           ("spouse", fig.spouse))]
+            kin += [("child", k) for k in folk.children(fig, living=False)]
+            kin += [("sibling", k) for k in folk.siblings(fig, living=False)]
+            for rel, k in kin:
+                if k is None or k.alive or k.slayer < 0:
+                    continue
+                slayer = w.figures.get(k.slayer)
+                if slayer is None or not slayer.alive or slayer.kind != "person" or slayer.id == fig.id:
+                    continue
+                word = {"spouse": "husband" if k.sex == "male" else "wife",
+                        "child": "son" if k.sex == "male" else "daughter",
+                        "sibling": "brother" if k.sex == "male" else "sister"}.get(rel, rel)
+                out.append({"by": fig.id, "against": slayer.id, "kin": k.id, "relation": word, "year": k.died,
+                            "cause": k.cause})
+                break
+        return out
 
     def deeds(self, fig) -> None:
         w = self.w
@@ -574,12 +603,45 @@ class Present:
         pol["towers"] = {str(k): v for k, v in s.wild.towers.items()}
         pol["works"] = s.lore.works
         pol["eras"] = name_eras(s)
+        pol["scars"] = self.scars()
         pol["history_done"] = True
         pol["history_from"] = s.year0
         pol["history_years"] = s.years
         pol["deep_history"] = True
         pol["next_event"] = s.next_event
         pol["next_war"] = max([war["id"] for war in w.wars], default=-1) + 1
+
+    def scars(self) -> list[dict]:
+        """Where the history left its dead: the fields of the great battles, and the towns put to the sword. The
+        dead of such places do not rest easily (game/past.py)."""
+        s = self.s
+        w = s.w
+        biomes = s.t.biomes
+        out: list[dict] = []
+        taken: set[tuple[int, int]] = set()
+        battles = [e for e in w.history if e["kind"] == "battle_named" and e.get("places")
+                   and sum(e.get("data", {}).get("dead", [0])) >= 60]  # the deadliest fields (below)
+        battles.sort(key=lambda e: (-sum(e["data"]["dead"]), e["id"]))
+        for e in battles[: 10 + 5 * s.size]:
+            st = w.settlements[e["places"][0]]
+            options = [(x, y) for x in range(st.x - 2, st.x + 3) for y in range(st.y - 2, st.y + 3)
+                       if w.in_bounds(x, y) and (x, y) not in taken and w.settlement_at(x, y) is None
+                       and w.site_at(x, y) is None and biomes.passable[int(w.biome[x, y])]]
+            if not options:
+                continue
+            x, y = s.r.choice(options)
+            taken.add((x, y))
+            out.append({"x": x, "y": y, "kind": "battle", "name": e["data"]["name"], "year": e["year"],
+                        "dead": int(sum(e["data"]["dead"])), "event": e["id"]})
+        for e in w.history:
+            ruin = (e.get("data") or {}).get("ruin")
+            if e["kind"] in ("razed", "beast_destroyed", "burned") and ruin is not None and 0 <= ruin < len(w.sites):
+                site = w.sites[ruin]
+                if (site.x, site.y) not in taken:
+                    taken.add((site.x, site.y))
+                    out.append({"x": site.x, "y": site.y, "kind": "massacre", "name": site.name, "year": e["year"],
+                                "dead": 0, "event": e["id"]})
+        return out
 
     def dragons(self) -> None:
         s = self.s

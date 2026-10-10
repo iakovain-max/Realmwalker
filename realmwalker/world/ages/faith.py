@@ -67,7 +67,7 @@ class Faith:
             prophet.fame = 15
             prophet.notes.append(f"founded {faith['name']}")
             f.rulers.append(prophet.id)
-            last = s.realms.prehistory(f, until=s.year0, race=race)
+            s.realms.prehistory(f, until=s.year0, race=race)
             new = s.folk.adult_person(st.culture, age=(40, 70), faction=f, role="member", job="priest",
                                       home=S(seat.sid), race=race)
             s.realms.crown(f, new)
@@ -76,7 +76,6 @@ class Faith:
                                         "god": god.name if god is not None else faith["god"],
                                         "place": st.name}, importance=4, year=f.founded, factions=[f],
                      figures=[prophet] + ([god] if god is not None else []), places=[seat.sid])
-            del last
 
     def church_for(self, culture: str):
         faith = fx.faith_for_culture(self.s.t, culture)

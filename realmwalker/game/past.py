@@ -269,3 +269,62 @@ def beast_slain(game, fig, site_id: int) -> None:
                     news_text=text)
     game.say(f"<good>{esc(title)} is dead.</> <dim>The {esc(word)} of {esc(site.name)} will not come down to the "
              f"farms again.</>", "good")
+
+
+# ---------------------------------------------------------------------------- the marks the history left on the land
+def scar_at(world, x: int, y: int) -> dict | None:
+    """A field of a great battle, or the ruin of a town put to the sword, here (or next to here)."""
+    best = None
+    for scar in world.politics.get("scars", ()):
+        d = max(abs(scar["x"] - x), abs(scar["y"] - y))
+        if d <= 1 and (best is None or d < best[0]):
+            best = (d, scar)
+    return best[1] if best is not None else None
+
+
+def scar_words(game, scar: dict, key: str) -> str:
+    rng = game.world.rng.child(f"scar/{key}/{scar['x']},{scar['y']}/{game.world.time // 1440}")
+    lines = game.tables.history.get("scars", {}).get(f"{key}_{scar['kind']}") or \
+        game.tables.history.get("scars", {}).get(key) or []
+    if not lines:
+        return ""
+    dead = f"{scar['dead']:,}" if scar.get("dead") else "many"
+    return tidy(rng.choice(lines).format(name=esc(scar["name"]), year=scar["year"], dead=dead))
+
+
+def scar_look(game, x: int, y: int) -> str:
+    """What the Look panel says of a battlefield (only where the field itself is)."""
+    scar = scar_at(game.world, x, y)
+    if scar is None or (scar["x"], scar["y"]) != (x, y) or scar["kind"] != "battle":
+        return ""
+    return f"<dim>{scar_words(game, scar, 'look')}</>"
+
+
+def restless(game, rng) -> str | None:
+    """At night on a field of the dead: the intro of the dead that come for you, or None (not here, not now)."""
+    p = game.player
+    scar = scar_at(game.world, p.x, p.y)
+    if scar is None or game.light >= 0.5 or not rng.chance(0.6):
+        return None
+    return scar_words(game, scar, "intro") or None
+
+
+# ---------------------------------------------------------------------------- blood feuds
+def grudge_of(world, hid: int) -> dict | None:
+    """The blood feud someone of the history carries (world/ages/present.grudges), if the one they hate still lives."""
+    for g in world.politics.get("grudges", ()):
+        if g["by"] == hid:
+            target = world.figures.get(g["against"])
+            if target is not None and target.alive:
+                return g
+    return None
+
+
+def grudge_want(game, g: dict) -> str:
+    w = game.world
+    target = w.figures[g["against"]]
+    kin = w.figures.get(g["kin"])
+    lines = game.tables.history.get("grudges", {}).get("want") or ["to see {target} dead, for {relation} {kin}"]
+    rng = w.rng.child(f"grudge/{g['by']}")
+    return rng.choice(lines).format(target=target.full_name(), relation=f"their {g['relation']}",
+                                    kin=kin.full_name() if kin is not None else "", year=g.get("year", ""))

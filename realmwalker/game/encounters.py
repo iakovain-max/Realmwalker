@@ -102,8 +102,17 @@ def roll_encounter(game, minutes: float) -> PendingEncounter | None:
     night = game.light < 0.5
     on_road = bool(w.road[p.x, p.y])
     rng = w.rng.child(f"enc/{w.time}/{p.x},{p.y}")
-    if not rng.chance(encounter_chance(danger, minutes, night, on_road)):
+    from realmwalker.game import past
+
+    haunted = night and past.scar_at(w, p.x, p.y) is not None  # a field where the history left its dead
+    if not rng.chance(encounter_chance(danger, minutes, night, on_road) * (1.6 if haunted else 1.0)):
         return None
+    if haunted:
+        intro = past.restless(game, rng)
+        if intro and "restless_dead" in game.tables.creatures.encounters:
+            enc = make_encounter(game, "restless_dead", rng)
+            enc.intro = intro
+            return enc
     group = choose_encounter(game.tables, game.biome_key(p.x, p.y), danger, night, on_road, rng)
     if group is None:
         return None

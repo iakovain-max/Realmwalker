@@ -283,6 +283,7 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
         _check_law(game, fail)
         _check_quests(game, fail)
         _check_companions(game, fail)
+        _check_history(game, fail, full=turn % 50 == 0)
         if game.travel is not None and game.pace() is None:
             fail("a journey marches on though nobody can walk")
         if not isinstance(getattr(game, "heeded", set()), set):
@@ -343,6 +344,38 @@ def _check_factions(game, fail) -> None:
         fail(f"a negative bounty: {r.bounties}")
     if any(fid not in w.factions for fid in r.known):
         fail("the player knows of a faction that does not exist")
+
+
+def _check_history(game, fail, full: bool = False) -> None:
+    """The lived history (world/ages): what it names exists, lairs hold living beasts, and (now and then, it is long)
+    replaying its ledger of who held what gives today's map, however the world has moved on since."""
+    w = game.world
+    if not w.politics.get("deep_history"):
+        return
+    n_s, n_x = len(w.settlements), len(w.sites)
+    for e in w.history[-60:]:
+        if any(not 0 <= p < n_s for p in e.get("places", ())) or any(not 0 <= x < n_x for x in e.get("sites", ())):
+            fail(f"an event names a place that does not exist: {e.get('text', '')[:70]!r}")
+            break
+        if any(f not in w.factions for f in e.get("factions", ())) or \
+                any(h not in w.figures for h in e.get("figures", ())):
+            fail(f"an event names someone who does not exist: {e.get('text', '')[:70]!r}")
+            break
+    for site_id, hid in w.politics.get("lairs", {}).items():
+        fig = w.figures.get(hid)
+        if fig is None or not fig.alive or not 0 <= int(site_id) < n_x:
+            fail(f"a lair ({site_id}) is kept by someone dead or missing")
+            break
+    if not full:
+        return
+    holder: dict[int, int] = {}
+    for e in w.history:
+        for sid, fid in (e.get("data") or {}).get("owners", ()):
+            holder[sid] = fid
+    for s in w.settlements:
+        if holder.get(s.id, -1) != s.owner:
+            fail(f"the history's ledger says {s.name} is held by {holder.get(s.id, -1)}, the map by {s.owner}")
+            break
 
 
 def _check_companions(game, fail) -> None:

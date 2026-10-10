@@ -164,7 +164,6 @@ class Orders:
         fx.set_relation(s.w, g.id, church.id, 60)
 
     def healers(self, plague_event: dict | None, sp) -> None:
-        s = self.s
         sp = sp if sp is not None and sp.standing and sp.human else self.biggest(lambda x: x.kind_now == "city") or \
             self.biggest()
         if sp is None:

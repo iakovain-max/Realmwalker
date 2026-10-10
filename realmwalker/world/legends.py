@@ -359,6 +359,13 @@ def figure_page(world, tables, hid: int) -> tuple[str, list[str]]:
     if led:
         lines.append("Ruled " + ", ".join(fac_link(w, g.id) for g in led) + ".")
     family = []
+    grand = []
+    for pid in (fig.father, fig.mother):
+        parent = w.figures.get(pid) if pid >= 0 else None
+        if parent is not None:
+            grand += [g for g in (parent.father, parent.mother) if g >= 0 and g in w.figures]
+    if grand:
+        family.append("<dim>Grandparents:</> " + ", ".join(fig_link(w, g) for g in grand))
     for label, pid in (("Father", fig.father), ("Mother", fig.mother), ("Married to", fig.spouse)):
         if pid >= 0 and pid in w.figures:
             family.append(f"<dim>{label}:</> {fig_link(w, pid)}")
@@ -592,13 +599,11 @@ def artifact_page(world, tables, aid: int) -> tuple[str, list[str]]:
         lines.append(f"It is kept in {place_ref_link(w, a['place'])}.")
     if a.get("fate"):
         lines.append(f"<dim>It {clean(a['fate'])}.</>")
-    story = sorted(set(a.get("story", [])) | set(ix.art.get(aid, [])))
     by_id = {e.get("id"): i for i, e in enumerate(w.history) if "id" in e}
     ids = [by_id[s] for s in a.get("story", []) if s in by_id] + ix.art.get(aid, [])
     life = timeline(w, sorted(set(ids)), own)
     if life:
         lines += ["", section("Its story")] + life
-    del story
     return cap(a["name"]), lines
 
 

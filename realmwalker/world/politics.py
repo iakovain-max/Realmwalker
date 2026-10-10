@@ -29,6 +29,7 @@ DYNASTIC = ("kingdom", "noble_house", "clan", "highland_clan", "elven_realm")
 SEAT_WORDS = {"kingdom": "throne", "noble_house": "lordship", "clan": "high seat", "highland_clan": "chiefship",
               "elven_realm": "throne", "free_city": "mayoralty"}
 WEEK = 7.0
+BEAST_REACH = 22  # how far (in tiles, walking) a beast of the old songs ranges from its lair to the farms
 
 
 def year_of(world, tables) -> int:
@@ -58,8 +59,12 @@ class Politics:
         facs = [f.id if hasattr(f, "id") else int(f) for f in factions]
         spots = [s.id if hasattr(s, "id") else int(s) for s in places]
         if self.history or importance >= 3:
-            self.w.history.append({"year": self.year, "kind": kind, "text": text, "factions": facs, "places": spots,
-                                   "figures": list(figures), "importance": importance})
+            e = {"year": self.year, "kind": kind, "text": text, "factions": facs, "places": spots,
+                 "figures": list(figures), "importance": importance}
+            if not self.history and self.w.politics.get("deep_history"):
+                e["id"] = int(self.w.politics.get("next_event", len(self.w.history)))  # the Legends book links it
+                self.w.politics["next_event"] = e["id"] + 1
+            self.w.history.append(e)
         if not self.history:
             news.add(self.w, text, x, y, kind=kind, importance=importance, factions=facs, places=spots, day=self.day)
         return text
@@ -476,7 +481,7 @@ class Politics:
         elif old_owner is not None and old_owner.seat == target.id and old_owner is loser:
             # A realm's own seat falls: the seat moves, or the realm is no more.
             rest = [s for s in fx.holdings(w, loser) if s.id != target.id]
-            target.owner = winner.id
+            self.set_owner(target, winner.id)
             if rest:
                 loser.seat = max(rest, key=lambda s: s.population).id
             else:
@@ -484,7 +489,7 @@ class Politics:
                 for v in fx.vassals(w, loser):
                     v.liege = winner.id
         else:
-            target.owner = winner.id
+            self.set_owner(target, winner.id)
         if sacked:
             target.population = max(10, int(target.population * self.rng.uniform(0.55, 0.8)))
             target.status["sacked"] = self.day
@@ -547,11 +552,26 @@ class Politics:
         if not self.history and self.rng.chance(0.5):
             self.new_gang(near=where)
 
+    def set_owner(self, settlement, fid: int) -> None:
+        """A place changes hands: in the history's ledger of who held what too (worlds that lived their ages)."""
+        if settlement.owner == fid:
+            return
+        settlement.owner = fid
+        if self.history or not self.w.politics.get("deep_history"):
+            return
+        from realmwalker.world.history import remember
+
+        holder = self.w.factions.get(fid)
+        text = textgen.fill(self.rng.choice(self.t.history["text"]["came_under"]), self.rng, {},
+                            {"place": settlement.name, "holder": holder.name if holder is not None else "no lord"})
+        remember(self.w, self.year, "came_under", text, importance=1, places=[settlement.id],
+                 factions=[fid] if holder is not None else [], data={"owners": [[settlement.id, int(fid)]]})
+
     def fall(self, f) -> None:
         f.fallen = self.year
         for s in self.w.settlements:
             if s.owner == f.id:
-                s.owner = f.liege if f.liege >= 0 else -1
+                self.set_owner(s, f.liege if f.liege >= 0 else -1)
         for site in self.w.sites:
             if site.faction == f.id:
                 site.faction = -1
@@ -577,6 +597,11 @@ class Politics:
             for d in w.politics.get("dragons", []):
                 if d.get("alive") and self.rng.chance(float(rates["dragon"]) * share * 12):
                     self.dragon_wakes(d)
+            for key, hid in list(w.politics.get("lairs", {}).items()):
+                fig = w.figures.get(hid)
+                if fig is not None and fig.alive and fig.kind == "beast" and \
+                        self.rng.chance(float(rates.get("beast_attack", 0.0)) * share):
+                    self.beast_comes(fig, int(key))
         if not self.history:
             for gang in fx.active_factions(w, "bandit_gang"):
                 if self.rng.chance(float(rates["gang_destroyed"]) * share):
@@ -585,6 +610,25 @@ class Politics:
                 self.new_gang()
         if not self.history:
             self.expire_status()
+
+    def beast_comes(self, fig, site_id: int) -> None:
+        """A beast of the old songs (world/ages) comes down from its lair on the farms nearest it."""
+        w = self.w
+        if not 0 <= site_id < len(w.sites):
+            return
+        lair = w.sites[site_id]
+        near = [s for s in w.settlements if abs(s.x - lair.x) + abs(s.y - lair.y) <= BEAST_REACH
+                and s.kind in ("hamlet", "village", "town")]
+        if not near:
+            return
+        s = self.rng.choice(near)
+        lost = max(1, int(s.population * self.rng.uniform(0.005, 0.03)))
+        s.population = max(10, s.population - lost)
+        s.status["beast"] = {"until": self.day + 30, "since": self.day, "by": fig.name}
+        fig.fame += 1
+        realm = fx.realm_of_settlement(w, s)
+        self.say("beast_attack", {"beast": f"{fig.name} {fig.epithet}".strip(), "place": s.name, "dead": str(lost)},
+                 where=(s.x, s.y), importance=3, factions=[realm] if realm else [], places=[s], figures=[fig.id])
 
     def dragon_wakes(self, d: dict) -> None:
         """A dragon comes down from its lair: a village burns, or buys its life with cattle and silver."""
@@ -611,7 +655,7 @@ class Politics:
 
     def expire_status(self) -> None:
         for s in self.w.settlements:
-            for key in ("plague", "famine", "raided"):
+            for key in ("plague", "famine", "raided", "beast"):
                 v = s.status.get(key)
                 if isinstance(v, dict) and v.get("until", 0) < self.day:
                     del s.status[key]

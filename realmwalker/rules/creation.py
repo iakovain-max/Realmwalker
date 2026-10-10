@@ -450,5 +450,10 @@ def make_ties(world, tables, character: Character, start_id: int, rng: RNG) -> l
         guilds = fx.active_factions(world, want) if have_factions else []
         if guilds:
             refs.update(faction=guilds[0].id, standing=5)
+    from realmwalker.world.ages.ties import enrich
+
+    extra = enrich(world, tables, kind, character, start, values, refs, rng)  # the real past behind it, if any
     text = textgen.fill(tie["text"], rng, {}, values)
+    if extra:
+        text = f"{text} {extra}"
     return [{"kind": kind, "text": text, "names": {k: v for k, v in values.items() if k not in words}, "refs": refs}]

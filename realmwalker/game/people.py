@@ -501,6 +501,10 @@ def become_figure(game, npc: NPC, fig, rng: RNG) -> None:
     story = past.figure_story(game, fig, rng)
     if story:
         npc.profile["backstory"] = story
+    grudge = past.grudge_of(game.world, fig.id)
+    if grudge is not None:
+        npc.profile["want"] = past.grudge_want(game, grudge)  # a blood feud the history left them
+        npc.flags["grudge"] = grudge["against"]
 
 
 def secret_members(game, town: Town, settlement, rng: RNG) -> None:

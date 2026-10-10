@@ -37,6 +37,13 @@
       "done": ["{site} is quiet now. Go back to {giver}."],
       "failed": ["You were too slow. The people of {town} have given up on you."]
     },
+    "assassinate_vendetta": {
+      "title": ["The death of {target}", "A debt of blood"],
+      "pitch": ["\"{target} killed my {relation}, {kin}. I have waited a long time. {target} sits in {dest}, {where}, and thinks it is forgotten. It is not. {reward}. {days} days.\"", "\"You know what happened to my {relation}. {kin} died {cause}, and the one who did it, {target}, still eats and sleeps in {dest}. Make that stop. {reward}, and nobody will ever hear it from me.\""],
+      "journal": ["{giver} of {town} wants {target} dead, in {dest} ({where}), for the death of {kin}, {giver}'s {relation}. {reward}, {days} days. The law will call it murder."],
+      "done": ["{target} is dead. Go back to {giver} in {town}."],
+      "failed": ["Too slow. {giver} has found someone else, or given up waiting."]
+    },
     "clear_lair_beast": {
       "title": ["{beast} of {site}", "The {beast_word} in {site}"],
       "pitch": ["\"{beast}. Every child here knows the name. It lairs in {site}, {where}, and it has been coming down to us since before my time. It killed {victim}. Kill it, and {reward} is yours, and more thanks than you will know what to do with. {days} days; after that we must find someone else, if there is anyone.\"", "\"There is a {beast_word} in {site}, {where}. They call it {beast}. It took {victim} from us, and it will take more. {reward}, if you bring us word it is dead. {days} days.\"", "\"You have the look of someone who has killed things. Good. {site}, {where}: {beast} lives there, the {beast_word} the songs are about. It killed {victim}. {reward}, and you would be the first to come back.\""],

@@ -17,8 +17,8 @@ from __future__ import annotations
 import math
 
 from realmwalker.world import factions as fx
-from realmwalker.world.ages.sim import DYNASTIC, HUMAN_KINDS, S
-from realmwalker.world.ages.words import roman, short_name
+from realmwalker.world.ages.sim import DYNASTIC, S
+from realmwalker.world.ages.words import roman
 from realmwalker.world.politics import SEAT_WORDS
 
 HUMAN_REALMS = ("kingdom", "noble_house", "free_city", "highland_clan")
@@ -475,7 +475,6 @@ class Realms:
         return heir
 
     def relation_word(self, old, new) -> str:
-        folk = self.s.folk
         for rel, k in self.kin_of(old):
             if k is new:
                 male, female = RELATION_WORDS[rel]
@@ -835,11 +834,13 @@ class Realms:
             if liege is None:
                 continue
             rel = fx.relation(s.w, v.id, liege.id)
-            change = r.gauss(0, 4) - (rel - 30) * 0.05
+            change = r.gauss(0, 6) - (rel - 20) * 0.04
             if "cruel" in liege.values:
                 change -= 1.5
             if "honor-bound" in liege.values:
                 change += 0.8
+            if s.war.at_war(liege.id):
+                change -= 1.2  # levies, taxes and sons sent to die
             fx.set_relation(s.w, v.id, liege.id, rel + change)
 
     def claims(self) -> None:
@@ -897,7 +898,7 @@ class Realms:
             if liege is None or s.war.at_war_with(v, liege) or s.leader(v) is None:
                 continue
             rel = fx.relation(s.w, v.id, liege.id)
-            if rel > -30:
+            if rel > -20:
                 continue
             troubled = s.war.at_war(liege.id) or liege.id in self.regents or \
                 liege.flags.get("crisis", -10**6) >= s.year - 5

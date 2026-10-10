@@ -193,3 +193,108 @@ def test_history_books_quote_the_world_s_own_chronicles(game):
         said += books._history(game, RNG(i, "book"), True)
     assert any("It is a copy of" in line for line in said)
     assert not any(".." in line for line in said)
+
+
+# ---------------------------------------------------------------------------- a new character's ties to the past
+def hero_of(tables, background: str, seed: int = 1):
+    from realmwalker.rules.creation import CharacterBuilder
+
+    b = CharacterBuilder(tables, RNG(seed, "hero"))
+    b.set_race("human")
+    b.set_class("fighter")
+    b.set_background(background)
+    return b.build()
+
+
+def test_a_soldier_marched_in_a_real_war(game, tables):
+    from realmwalker.rules.creation import make_ties
+
+    w = game.world
+    for s in w.settlements:
+        tie = make_ties(w, tables, hero_of(tables, "soldier"), s.id, RNG(s.id, "ties"))[0]
+        if "war" in tie["refs"]:
+            war = next(x for x in w.wars if x["id"] == tie["refs"]["war"])
+            assert war["name"] in tie["text"] and "{" not in tie["text"]
+            return
+    pytest.skip("no lord here fought a war in living memory")
+
+
+def test_a_folk_hero_drove_off_a_real_beast_or_raiders(game, tables):
+    from realmwalker.rules.creation import make_ties
+
+    w = game.world
+    year = game.moment.year
+    struck = {p for e in w.history if e["kind"] in ("beast_attack", "dragon", "raid", "burned") and
+              year - e["year"] <= 25 for p in e.get("places", ())}
+    if not struck:
+        pytest.skip("nothing troubled any village in living memory")
+    sid = sorted(struck)[0]
+    tie = make_ties(w, tables, hero_of(tables, "folk_hero"), sid, RNG(3, "ties"))[0]
+    assert "foe" in tie["refs"] or "foe_faction" in tie["refs"]
+    foe = w.figures[tie["refs"]["foe"]].name if "foe" in tie["refs"] else w.factions[tie["refs"]["foe_faction"]].name
+    assert foe in tie["text"]
+
+
+def test_a_noble_knows_whom_their_house_is_sworn_to(game, tables):
+    from realmwalker.rules.creation import make_ties
+    from realmwalker.world import factions as fx
+
+    w = game.world
+    house = fx.active_factions(w, "noble_house")[0]
+    tie = make_ties(w, tables, hero_of(tables, "noble"), house.seat, RNG(4, "ties"))[0]
+    lord = w.factions[tie["refs"]["sworn_to"]]
+    assert lord.name in tie["text"] and fx.leader_of(w, lord).full_name() in tie["text"]
+    assert "faction" not in tie["refs"]  # their own small house is made for them (game/reputation)
+
+
+# ---------------------------------------------------------------------------- the beasts go on, and the dead walk
+def test_beasts_of_the_history_come_down_while_you_play(game, tables):
+    from realmwalker.world.politics import Politics, year_of
+
+    w = game.world
+    from realmwalker.world.politics import BEAST_REACH
+
+    lairs = [(int(k), w.figures[h]) for k, h in w.politics.get("lairs", {}).items() if w.figures[h].kind == "beast"]
+    lairs = [(k, f) for k, f in lairs if any(abs(s.x - w.sites[k].x) + abs(s.y - w.sites[k].y) <= BEAST_REACH
+                                             and s.kind in ("hamlet", "village", "town") for s in w.settlements)]
+    if not lairs:
+        pytest.skip("no named beast with anyone to trouble in this world")
+    engine = Politics(w, tables, RNG(5, "beasts"), year=year_of(w, tables))
+    before = len(w.news)
+    for site_id, fig in lairs:
+        engine.beast_comes(fig, site_id)
+    assert len(w.news) > before
+    assert any(s.status.get("beast") for s in w.settlements)
+    assert tables.politics["rates"]["beast_attack"] > 0
+
+
+def test_the_dead_of_the_great_battles_walk_at_night(game, monkeypatch):
+    from realmwalker.game import encounters
+
+    w = game.world
+    scars = [s for s in w.politics.get("scars", []) if s["kind"] == "battle"]
+    if not scars:
+        pytest.skip("no great battle left its dead")
+    scar = scars[0]
+    game.player.x, game.player.y = scar["x"], scar["y"]
+    game.player.explored[scar["x"], scar["y"]] = True
+    assert scar["name"].lower() in describe_overworld(game, scar["x"], scar["y"]).lower()
+    monkeypatch.setattr(game.__class__, "light", property(lambda self: 0.1))
+    monkeypatch.setattr(encounters, "encounter_chance", lambda *a, **k: 1.0)
+    met = [encounters.roll_encounter(game, 60) for _ in range(12)]
+    dead = [m for m in met if m is not None and m.group == "restless_dead"]
+    assert dead and any(scar["name"].lower() in m.intro.lower() for m in dead)
+
+
+def test_blood_feuds_the_history_left(game):
+    w = game.world
+    grudges = w.politics.get("grudges", [])
+    for g in grudges:
+        by, against, kin = w.figures[g["by"]], w.figures[g["against"]], w.figures[g["kin"]]
+        assert by.alive and against.alive and not kin.alive and kin.slayer == against.id
+    living = [g for g in grudges if past.grudge_of(w, g["by"]) is not None]
+    if not living:
+        pytest.skip("nobody alive has a blood feud in this world")
+    g = living[0]
+    want = past.grudge_want(game, g)
+    assert w.figures[g["against"]].full_name() in want and "{" not in want

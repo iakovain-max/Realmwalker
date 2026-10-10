@@ -72,7 +72,12 @@ realmwalker/
   world/dungeon.py         dungeon levels under a site: styles, rooms, caves, doors, secrets, traps, chests
   world/factions.py        factions and figures (model, generation, territory map, relations, laws)
   world/politics.py        the politics engine: succession, wars, sieges, plague, raids, cults, gangs (history + live)
-  world/history.py         250 years of history at world creation; the built-in chronicle
+  world/ages/              the lived history (2026-10, after Dwarf Fortress): sim (the year loop, events), land
+                           (fated/doomed places), folk (families), realms (rulers, grants, succession), war, wild
+                           (tribes, beasts, heroes, barrows, towers), faith, lore (artifacts, works), orders, eras,
+                           present (what is left becomes today), words (names, event text); design docs/WORLD_HISTORY.md
+  world/history.py         the chronicle (told by named ages); the old "told" history for worlds made before the ages
+  world/legends.py         the Legends book's pages and lists (logic): every person, realm, place, war, beast...
   world/news.py            news items and how they travel along the roads
   ui/                      window loop, fonts (tileset built at runtime), input, markup, widgets (Canvas), map_render
                            (the letters view), hud (side panel, log, action bar), colors, screens/
@@ -165,9 +170,21 @@ tools/                     autoplay.py, mock_player2.py, build_friends.py, balan
   `on_chest`/`free_captive` (from `game/dungeon.py`), and the conversation choices in `quests.QUEST_CHOICES`.
   Rewards go through `reputation.deed`; failure through `quests.daily` (from `pass_time`). The AI (task QUEST)
   may write the giver's words only; the game always shows the terms.
-- Dragons: records in `world.politics["dragons"]` (made by `world/history.py`, which always leaves one asleep).
+- Dragons: records in `world.politics["dragons"]` (made by `world/ages`, wild and present; one always sleeps).
   `world/politics.dragon_wakes` burns or taxes a village while you play; `game/dragons.py` has the warning signs,
   the descent warning and `on_battle`, which marks one slain for good (news, history, fame, tribute lifted).
+- Lived history (2026-10, Anton: "the same kind of living world with long history and unique characters as Dwarf
+  Fortress"): `world/ages` lives the years at world creation (`WorldOptions.history`, 100/250/500/1000; numbers and
+  words in data/history.json). Today's settlements are *fated* spots (placed as before); the generator also leaves
+  *doomed* spots that the ages turn into ruins (`politics["ruins"]` keeps each one's past). Every change of a
+  settlement's owner is in the history's ledger (`event["data"]["owners"]`, via `ages/land.set_owner` and, while you
+  play, `Politics.set_owner`): replaying it gives today's map (tests and autoplay check this). Figures carry family and
+  place refs ("S12" settlement, "X5" site in `home`, `died_at`, `buried`), `kills`/`slayer`, `kind` (person, beast,
+  dragon, god). `politics` also keeps `places`, `lairs` (site -> living beast), `tombs`, `towers`, `works`, `eras`,
+  `deep_history`, `next_event`; events have ids (`history.remember` writes one in play). `game/past.py` brings it into
+  play (Look, conversations, heroes at inns, named beasts and barrow kings as bosses, the clear_lair_beast work);
+  `ui/screens/legends.py` is the Legends book (b in the News screen; Legends for a saved world). Worlds made before keep
+  their old history; every reader must cope with events without ids and figures without the new fields.
 - Death: `game/death.die(game)` writes the character into `world.politics["fallen"]` (chronicle, news, companions
   released) and the death screen shows `fallback_obituary`, replaced by the AI's words (task OBITUARY) when they
   arrive. Nothing carries over to the next character except what the world remembers.
@@ -191,7 +208,8 @@ tools/                     autoplay.py, mock_player2.py, build_friends.py, balan
   scribe/throw (`game/gear.use_name`). Numbers in items.json "upkeep". Gear wears in fights (`gear.wear_from_battle`);
   thrown flasks are pseudo-spells in spells.json (`classes: ["item"]`, `thrown`) cast as "throw:<uid>:<spell>".
   A new item needs either a use or a `how` (tests/test_gear.py checks), and a picture (tools/build_tiles.py ITEMS).
-- Screens added after v1: `ui/screens/spells.py` (S), `ui/screens/journal.py` (j; Tab switches Work/People),
+- Screens added after v1: `ui/screens/legends.py` (the Legends book), `ui/screens/spells.py` (S),
+  `ui/screens/journal.py` (j; Tab switches Work/People),
   `CraftScreen` in `ui/screens/camp.py` (m at camp), `ui/screens/interlude.py` (after a new character in an old
   world).
 - Fair chances (2026-10, Anton: "too easy to randomly die"): outside a battle 0 hit points is down, not dead (traps

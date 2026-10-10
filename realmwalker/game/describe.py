@@ -46,7 +46,8 @@ def settlement_line(game: GameState, s) -> str:
         st = s.status
         words = [w for key, w in (("siege", "<danger>under siege</>"), ("plague", "<danger>plague</>"),
                                   ("sacked", "<danger>sacked</>"), ("burned", "<warn>burned</>"),
-                                  ("famine", "<warn>hungry</>"), ("raided", "<warn>raided</>")) if st.get(key) is not None]
+                                  ("famine", "<warn>hungry</>"), ("raided", "<warn>raided</>"),
+                                  ("beast", "<danger>beset by a beast</>")) if st.get(key) is not None]
         if words:
             line += " " + ", ".join(words).capitalize() + "."
     return line
@@ -145,6 +146,9 @@ def describe_overworld(game: GameState, x: int, y: int) -> str:
     area = w.area_at(x, y)
     where = f"{cap(biome['name'])}" + (f", in <place>{area.name}</>" if area else "")
     lines.append(where + ".")
+    field = past.scar_look(game, x, y)  # a battlefield of the history
+    if field:
+        lines.append(field)
     if w.factions and settlement is None:
         from realmwalker.world import factions as fx
 

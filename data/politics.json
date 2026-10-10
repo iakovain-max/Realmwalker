@@ -9,7 +9,8 @@
     "war_base": 0.012, "war_hostility": 0.003, "war_battles_per_month": 0.35, "peace_after_years": 2.0,
     "rebellion": 0.02, "plague": 0.025, "famine": 0.04, "tribe_raid": 0.5, "cult_spread": 0.25, "cult_purge": 0.06,
     "cult_incident": 0.8, "gang_destroyed": 0.12, "gang_new": 0.25, "dragon": 0.008, "assassination": 0.006,
-    "marriage": 0.04, "relation_drift": 8.0, "military_regrowth": 0.12, "treaty": 0.05
+    "marriage": 0.04, "relation_drift": 8.0, "military_regrowth": 0.12, "treaty": 0.05,
+    "beast_attack": 0.25
   },
   "war_reasons": {
     "border": "the border lands", "succession": "a claim to the throne", "religion": "the true faith",
@@ -74,6 +75,7 @@
     "marriage": ["{a} and {b} were joined by a marriage.", "A marriage bound {a} to {b}.", "{a} and {b} were married, and the lawyers were busier than the priest.", "A wedding tied {a} and {b} together, whatever either of them wanted."],
     "assassination": ["{victim} of {faction} was murdered {cause}.", "{victim}, {title} of {faction}, was killed {cause}.", "{victim} of {faction} was killed {cause}, and nobody was ever charged.", "They found {victim}, {title} of {faction}, dead {cause}."],
     "treaty": ["{a} and {b} swore a treaty of friendship.", "{a} and {b} became allies.", "{a} and {b} put their seals to an understanding.", "{a} and {b} agreed to stand together, for as long as it suits."],
+    "beast_attack": ["{beast} came down on {place} in the night; {dead} were killed.", "{beast} killed {dead} at {place} and went back to its lair.", "Word from {place}: {beast} has come down again, and {dead} are dead."],
     "chapter": ["The first {people} of {faction} met in {place}.", "{faction} was founded in {place}.", "{faction} opened its doors in {place}.", "The {people} of {faction} took a house in {place} and hung out their arms."]
   },
   "notices": ["Wanted: a strong back at the smithy. Pay by the day.", "Lost: a grey nanny goat, answers to nothing. Reward.", "Rooms to let, clean straw, no fleas (or not many). Ask at the inn.", "The ferryman will not cross after dark. Do not ask him.", "Found: one boot. Owner may have it back for a kind word.", "Masses said for the dead of the last winter, every seventh day.", "A reward to whoever finds who has been taking the chickens.", "Do not drink from the east well. The priest says it is bad.", "Carters wanted for the road south. Must bring their own axe.", "The widow of {place}'s last tanner sells his tools. Cheap."],

@@ -713,7 +713,8 @@ HISTORY = Obj(
                        "church_age": List(Int(min=0), min_items=2, max_items=2), "drift": Float(min=0, max=50),
                        "border_friction": Float(min=0, max=50)}),
         "war": Obj({"reach": Float(min=1, max=500), "base": Float(min=0, max=1), "hostility": Float(min=0, max=1),
-                    "defender_edge": Float(min=0.1, max=5)}),
+                    "defender_edge": Float(min=0.1, max=5), "tribe_factor": Float(min=0, max=1),
+                    "battles": List(Float(min=0, max=1), min_items=1, max_items=4)}),
         "heroes": Obj({"infamy": Int(min=0, max=100), "classes": WEIGHTED_WORDS}),
         "causes": Map(word_list(1, 80)),
         "epithets": Map(word_list(1, 40)),
@@ -738,6 +739,10 @@ HISTORY = Obj(
         "words": Map(word_list(1, 80)),
         "text": Map(word_list(1, 300)),
         "speech": Map(word_list(1, 200), optional=True),
+        "ties": Obj({"war": word_list(1, 200), "deed_beast": word_list(1, 200), "deed_raid": word_list(1, 200),
+                     "noble": word_list(1, 200)}, optional=True),
+        "scars": Map(word_list(1, 300), optional=True),
+        "grudges": Map(word_list(1, 200), optional=True),
     }
 )
 HISTORY_TEXT = ("came_under", "became_town", "became_city", "settled", "founded_seat", "founded_town",

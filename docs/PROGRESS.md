@@ -22,6 +22,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Every item does something** | ✅ Done (2026-10-09), branch `useful-items` |
 | **Choose how you look** | ✅ Done (2026-10-10), branch `looks` |
 | **Sound and music** | ✅ Done (2026-10-10), branch `sound` |
+| **A world that has lived (history after Dwarf Fortress)** | ✅ Done (2026-10-10), branch `world-history` |
 
 ---
 
@@ -29,7 +30,92 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 
 The nine milestones are done; this is what has been added since, newest first. Version 1.0 is the pictures and the
 new interface; then combat moved onto a grid, then every item was given a use, then looks became a choice, then the
-game got sound and music (the first entries below).
+game got sound and music, then worlds began to live their history (the first entries below).
+
+### Local session, 2026-10-10: a world that has lived (Anton's request) — branch `world-history`
+
+Anton asked: look through the code of Realmwalker and of Dwarf Fortress, work out how DF builds its worlds, and give
+Realmwalker "the same kind of living world with long history and unique characters", as detailed and expansive as
+DF's, better suited to the game if possible, without breaking anything.
+
+**What Dwarf Fortress does (what was learned).** DF's program code is closed, but its folder holds two Legends
+exports, complete histories of real worlds. A script read one of them (252 years): 54,301 people, 5,669 groups,
+1,899 places, 10,704 artifacts and 532,414 events of 108 kinds. The heart of it: DF *lives* its history year by year
+and the world you play is whatever is left; every person has a family and a life; wars hold named battles with named
+dead; artifacts pass from hand to hand; monsters have lairs, kill people and are hunted by heroes; the years are
+divided into named ages. What DF does badly for a game like ours: most of it is noise (100,000 "settled at a site"
+lines), nothing guarantees a playable world, and little of it reaches you outside Legends mode. The full notes and the
+design are in `docs/WORLD_HISTORY.md`.
+
+**What is different when you play**
+- **Making a world**: a new choice, *History*: Short (100 years), Normal (250), Long (500) or Epic (1000). While the
+  world is made you watch the years go by ("The year 873 · 2,312 people of note · 4,880 things remembered") with the
+  latest great event under it, and the towns appear on the map as they are founded (ruins show dark red). A medium
+  world with 250 years takes a second or two; a large one with 1000 years about seven.
+- **The years are really lived.** The old peoples (dwarven clans, elven realms) are older than the records. Men begin
+  with a few old kingdoms. They found villages and towns that grow; a king gives each new town to a lord, raising new
+  noble houses from knights and younger sons. Rulers marry (often into other houses, which binds them together), have
+  children, die, and are followed by the custom of their people: the eldest son in the Heartland, the eldest child in
+  the South, the most able kinsman in the North, the eldest of the clan among dwarves, the choice of the elders among
+  elves. A child on a throne needs a regent, and some regents keep the throne. When a line dies out a great lord takes
+  the crown, or the seat goes back to the king. Kings are counted (Aldric III). Vassals rebel; rich cities buy their
+  freedom; lordships crown themselves; neighbours who hate each other go to war for a reason (land, a claim, the true
+  faith, old wrongs) and every war has a name ("the War of the Broken Crown"). Battles are fought at real places by
+  named commanders; the dead are remembered, and so is who killed them ("Lord X fell at the Battle of Greyford, slain
+  by Sir Y"). Towns are besieged, taken, sacked, razed and rebuilt. Tribes raid and carry children off. Named beasts
+  (dragons, trolls, ogres, giant spiders, dire wolves, great bears) take lairs and come down on the farms; heroes go
+  after them and come back famous, or do not come back. Young adventurers set out from the towns, go into ruins, hunt
+  outlaws and grow old. Churches have prophets and saints; heretics start cults that are hunted down. Smiths make named
+  weapons and crowns that are inherited, taken from the dead, stolen, carried off by dragons and buried in barrows.
+  Bards and chroniclers write songs and chronicles about it all. The ages are named ("the Age of Dragons", "the Golden
+  Age of Ashmere"). A medium world ends with about 1,800 people of note and 2,000 remembered events.
+- **Today is what was left.** Every ruin was once a real town, with a name, a founding, a peak, a holder and an end
+  ("razed by the Red Jaw tribe in the War of the Ravens"). Every lord has real ancestors. Every barrow holds someone.
+  The troll in the cave has killed people you can read about. The guilds, the knightly order, the mages' circle and the
+  healers' guild were founded by real people for a reason (the healers after a real plague). The number of towns,
+  villages, holds and halls is the same as before, so the game's balance is unchanged.
+- **The Legends book**, like DF's Legends mode: press **n** (News and history) and then **b**, or on the title screen
+  choose *Saved Worlds*, pick a world and press *Legends* (you can read a world's history without playing it). Every
+  person, realm, place, war, beast, artifact, age, god and song has a page: who they were, their family, their deeds,
+  and every event of their life in order. Every name on a page is a link (click it); Backspace goes back and ] forward;
+  / searches; ← → choose what kind of thing to list.
+- **The past in play**:
+  - *Look* at a ruin, a barrow or a lonely tower: it says what it was and how it ended, whose tomb it is, who raised
+    it. Close to a lair you see whose lair it is. *Look* at a town: when it was founded (and what stood there before)
+    and the worst or greatest things that happened to it.
+  - Ask townsfolk *"What should I know about this place?"*: they tell what they lived through ("I was there, twelve
+    years ago: the dragon burned the lower town") or what everyone tells.
+  - Rulers, lords and heroes you meet have their real histories as their backstory.
+  - A hero of the history who calls a town home may be drinking at its inn, and can be hired like any traveller.
+  - A named beast is the boss of its lair, by name. Kill it and the world remembers you did ("Anton slew Grubnak the
+    Bone-Gnawer, the troll of the Black Cave"), with fame and thanks from the lands it troubled. The dead king in a
+    barrow is that king, by name.
+  - Towns near a named beast's lair offer work to kill it, by name, and tell you who it killed.
+  - Old history books are copies of the world's real chronicles and songs.
+  - The built-in chronicle is told age by age; with the AI on, the AI's chronicle, town descriptions and conversations
+    are given the true history to draw on.
+  - When towns change hands while you play, the history's record of who held what keeps up.
+- **More names**: every people has two to three times as many names as before (so a thousand people of note are not
+  all called Aldric).
+
+**How to see it**: double-click `Play.bat`, *New World*, set *History* (try Long), press Enter and watch the years go
+by. In the game press **n**, then **b** for the Legends book. Walk to a ruin and press **l** (look). Ask an innkeeper
+what you should know about the town.
+
+**Decisions** (and why):
+1. **Today's towns are "fated"; extra "doomed" places become the ruins.** The game's balance, quests and tests rely on
+   today's world having a known shape (DF itself throws away worlds that come out wrong, which a game cannot do). The
+   simulation still decides who founds every place, who holds it, what happens to it and how the doomed ones end;
+   every line of history really happened in it.
+2. **Only what a chronicler would remember is written down** (about 8 events a year in a medium world, not DF's
+   2,000), and only people of note are people; commoners are numbers, as in DF.
+3. **Dwarves and elves keep to their own**: no human king holds a dwarven hold for long, and the elder peoples do not
+   take human towns (they burn and loot and go home).
+4. **Monsters use creatures that already have pictures and stat blocks**; every world keeps a few named beasts alive
+   (and one dragon asleep).
+5. **Old worlds keep their old history** (they still load and play); a new world gets the lived one. No save format
+   change was needed: every new field is optional.
+6. Years before year 1 are written "B.R." (Before the Reckoning).
 
 ### Local session, 2026-10-10: sound and music (Anton's request) — branch `sound`
 

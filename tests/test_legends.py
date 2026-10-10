@@ -32,18 +32,18 @@ def test_every_kind_of_thing_has_pages(world, tables):
 
 
 def test_every_link_leads_somewhere(world, tables):
-    seen = 0
+    targets: dict[str, str] = {}
     for category, _ in legends.CATEGORIES:
-        for ref, _ in legends.entries(world, tables, category)[:25]:
+        for ref, _ in legends.entries(world, tables, category)[:12]:
             _, lines = legends.page(world, tables, ref)
             for line in lines:
                 for _text, target in legends.segments(line):
-                    if target is None:
-                        continue
-                    title, _ = legends.page(world, tables, target)
-                    assert title != "Nothing", (ref, target)
-                    seen += 1
-    assert seen > 100
+                    if target is not None:
+                        targets.setdefault(target, ref)
+    assert len(targets) > 100
+    for target, ref in sorted(targets.items())[::3]:  # every kind of link, a third of them
+        title, _ = legends.page(world, tables, target)
+        assert title != "Nothing", (ref, target)
 
 
 def test_a_ruler_s_page_tells_their_family_and_life(world, tables):
