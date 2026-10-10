@@ -348,6 +348,11 @@ class CreationScreen(Screen):
         x, width = LEFT_W + 2, w - LEFT_W - 4
         canvas.text(x, 2, f"{self.step + 1}. {STEPS[self.step]}", colors.TITLE)
         body_y, body_h = 4, h - 8
+        if self.step in (0, 1, 2) and canvas.gfx is not None and width >= 110:
+            # The character, large, on the right while choosing a people, a calling and a past.
+            show_w = min(40, width // 3)
+            width -= show_w + 2
+            self._showcase(canvas, x + width + 2, body_y, show_w, body_h)
         [self._r_race, self._r_class, self._r_background, self._r_abilities, self._r_training, self._r_identity,
          self._r_looks, self._r_start, self._r_begin][self.step](canvas, x, body_y, width, body_h)
         hint = "↑↓ choose · ←→ change · Enter: accept & next · Tab/Shift+Tab: steps · Esc: back"
@@ -362,6 +367,27 @@ class CreationScreen(Screen):
                         max_width=w)
         sy = y + len(STEPS) + 2
         b = self.b
+        if canvas.gfx is not None and self.step == LOOKS:
+            # On the Looks step this panel shows the face, as large as it will go, and who it belongs to.
+            preview = self._preview_character()
+            room = (y + h) - sy - 4
+            cw, ch = canvas.cell_w, canvas.cell_h
+            k = min(10, int((w * cw - 8) // 16), int((room * ch - 8) // 16)) if preview is not None else 0
+            if k >= 2:
+                from realmwalker.ui.gfx import dolls, scenes
+
+                side = 16 * k + 8
+                rows = -(-side // ch)
+                canvas.clear_cells(x, sy, w, rows)
+                parts = dolls.character(preview, self.t, atlas=canvas.gfx.atlas, bare_head=True)
+                scenes.bust(canvas, parts, (int(x * cw), int(sy * ch), side, side), side=16)
+                sy += rows + 1
+            race = self.t.races[b.race]["name"]
+            cls = self.t.classes[b.cls]["name"]
+            for i, line in enumerate((f"<name>{markup.escape(self.name_field.value or '?')}</>", f"{race} {cls}")):
+                if sy + i < y + h:
+                    canvas.markup(x, sy + i, line, max_width=w)
+            return
         if canvas.gfx is not None and h - (sy - y) > 20:
             preview = self._preview_character()
             if preview is not None:
@@ -609,34 +635,64 @@ class CreationScreen(Screen):
                 canvas.text(vx + value_w, ry, "██", rgb, bg)
         words = (f"<dim>How others see you:</> {markup.escape(b.appearance)}\n\n"
                  "<dim>↑↓ choose · ←→ or click ◄ ► to change · mouse wheel over a row · R: a new random look</>")
-        canvas.wrapped(x, y + len(rows) + 1, words, min(list_w + 4, w), max_lines=max(2, h - len(rows) - 1))
-        # The character, large.
-        px = x + list_w + 4
-        pw = w - list_w - 4
-        if canvas.gfx is None or pw < 18:
-            return
+        used = len(rows) + 1 + canvas.wrapped(x, y + len(rows) + 1, words, min(list_w + 4, w),
+                                               max_lines=max(2, h - len(rows) - 1))
+        if canvas.gfx is not None:
+            self._looks_pictures(canvas, x, y, w, h, list_w, used)
+
+    def _looks_pictures(self, canvas, x, y, w, h, list_w, used) -> None:
+        """The whole figure as they set out (the face, bare-headed, is in the panel on the left): beside the choices,
+        or under them when the window is narrow, wherever it can be larger. Every pixel a whole number of screen
+        pixels."""
         preview = self._preview_character()
         if preview is None:
             return
-        from realmwalker.ui.gfx import dolls, scenes
-
+        from realmwalker.ui.gfx import scenes
         from realmwalker.ui.gfx.scene import Text
 
         cw, ch = canvas.cell_w, canvas.cell_h
-        canvas.clear_cells(px, y, pw, h)
-        room_w, room_h = pw * cw, h * ch - 40
-        # Each pixel of the figures a whole number of screen pixels: the face at up to 8 to one, the figure likewise.
-        k = max(2, min(10, int(room_h // 32), int((room_w - 30) // (16 + 32))))
-        bust_side, fig_side = 16 * k + 8, 32 * k
-        bx, by = int(px * cw), int(y * ch) + 22
-        parts = dolls.character(preview, self.t, atlas=canvas.gfx.atlas, bare_head=True)
-        scenes.bust(canvas, parts, (bx, by, bust_side, bust_side), side=16)
-        canvas.over(Text(bx + bust_side / 2, by - 4, "Face", "heading_light", 15, (200, 180, 140, 255), anchor="mb",
-                         shadow=False, outline=True))
-        fx = bx + bust_side + 24
-        scenes.figure(canvas, preview, self.t, (fx, by, fig_side + 40, fig_side + 20), most=fig_side)
-        canvas.over(Text(fx + (fig_side + 40) / 2, by - 4, "As you set out", "heading_light", 15, (200, 180, 140, 255),
+
+        def scale(room_w: float, room_h: float) -> int:
+            return min(12, int((room_h - 50) // 32), int((room_w - 50) // 32))
+
+        beside = scale((w - list_w - 4) * cw, h * ch)
+        below = scale(w * cw, (h - used - 1) * ch)
+        k = max(beside, below)
+        if k < 2:
+            return
+        if beside >= below:
+            px, py, pw, ph = x + list_w + 4, y, w - list_w - 4, h
+        else:
+            px, py, pw, ph = x, y + used + 1, w, h - used - 1
+        canvas.clear_cells(px, py, pw, ph)
+        fig_side = 32 * k
+        fx, fy = int(px * cw), int(py * ch) + 22
+        scenes.figure(canvas, preview, self.t, (fx, fy, fig_side + 40, fig_side + 20), most=fig_side)
+        canvas.over(Text(fx + (fig_side + 40) / 2, fy - 4, "As you set out", "heading_light", 15, (200, 180, 140, 255),
                          anchor="mb", shadow=False, outline=True))
+
+    def _showcase(self, canvas, x: int, y: int, w: int, h: int) -> None:
+        """The character as they stand now, as large as fits, with a word on what changes them."""
+        preview = self._preview_character()
+        if preview is None:
+            return
+        from realmwalker.ui.gfx import scenes
+        from realmwalker.ui.gfx.scene import Text
+
+        cw, ch = canvas.cell_w, canvas.cell_h
+        k = min(10, int((w * cw - 40) // 32), int((h * ch - 60) // 32))
+        if k < 2:
+            return
+        canvas.clear_cells(x, y, w, h)
+        side = 32 * k
+        fx, fy = int(x * cw + (w * cw - side - 40) / 2), int(y * ch) + 22
+        scenes.figure(canvas, preview, self.t, (fx, fy, side + 40, side + 20), most=side)
+        caption = {0: self.t.races[self.b.race]["name"], 1: self.t.classes[self.b.cls]["name"],
+                   2: self.t.backgrounds[self.b.background]["name"]}.get(self.step, "")
+        canvas.over(Text(fx + (side + 40) / 2, fy - 4, caption, "heading_light", 15, (200, 180, 140, 255), anchor="mb",
+                         shadow=False, outline=True))
+        canvas.wrapped(x, y + (side + 50) // ch + 1, "<dim>Looks are chosen in step 7 (R there for a new face).</>",
+                       w, max_lines=3)
 
     def _swatch(self, slot: str, value: str):
         """The colour of a choice, for the little square beside it."""
