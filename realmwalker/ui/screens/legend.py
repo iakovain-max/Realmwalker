@@ -47,6 +47,7 @@ def legend_text(tables) -> str:
 
 class LegendScreen(Screen):
     title = "Map legend"
+    sound_open = "ui_page"
 
     def __init__(self, app) -> None:
         super().__init__(app)

@@ -17,6 +17,8 @@ SIDE_W = 36
 
 class WorldMapScreen(Screen):
     title = "World Map"
+    sound_open = "ui_map"
+    key_sounds = False  # the keys move across the map
 
     def __init__(self, app, game_screen, travel_mode: bool = False) -> None:
         super().__init__(app)

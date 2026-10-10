@@ -20,6 +20,9 @@ class Screen:
     show_status = True  # draw the AI status indicator in the corner
     captures_text = False  # true while typing into a text field (disables single-key global hotkeys)
     title = ""
+    sound_open: str | None = "ui_open"  # sounds (data/sounds.json) as the screen opens and closes
+    sound_close: str | None = "ui_close"
+    key_sounds = True  # a quiet sound when a key visibly changes the screen (off where keys walk or fight)
 
     def __init__(self, app: App) -> None:
         self.app = app
@@ -41,6 +44,11 @@ class Screen:
 
     def update(self) -> None:
         pass
+
+    def music(self) -> str | None:
+        """The music this screen wants (a mood from data/music.json, e.g. "travel/forest"), or None to keep the
+        music of the screen beneath it."""
+        return None
 
     def autoplay_keys(self) -> list[KeyEvent]:
         """Sensible keys for the headless autoplay bot to press on this screen."""

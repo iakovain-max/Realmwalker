@@ -693,6 +693,7 @@ def accept(game, q) -> list[str]:
     q["deadline"] = game.moment.total_days + int(q["days"])
     q["journal"].append(q.get("journal_ai") or fill(game, q, "journal"))
     game.quests.append(q)
+    game.cue("quest")
     t = q["target"]
     w = game.world
     notes = [f"<info>Journal: {title(game, q)}.</> <dim>({terms(q)}; j for the journal)</>"]
@@ -1250,6 +1251,7 @@ def reward(game, q, *, share: float = 1.0, text: str | None = None) -> list[str]
     game.leader.money += kept
     q["state"] = "finished"
     q["finished"] = game.moment.total_days
+    game.cue("quest_done")
     amounts: dict[int, float] = {}
     if q["faction"] in w.factions:
         amounts[q["faction"]] = float(s["standing"]) * min(1.0, share)

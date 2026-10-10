@@ -9,8 +9,10 @@ a = Analysis(
         ("ai/prompts", "ai/prompts"),
         ("assets/fonts", "assets/fonts"),
         ("assets/tiles", "assets/tiles"),
+        ("assets/sounds", "assets/sounds"),
+        ("assets/music", "assets/music"),
     ],
-    hiddenimports=[],
+    hiddenimports=["soundfile"],  # (its sound library comes with it: pyinstaller-hooks-contrib's hook-soundfile)
     excludes=["pytest", "tkinter", "matplotlib", "IPython", "PyInstaller"],
     noarchive=False,
 )

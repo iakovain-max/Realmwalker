@@ -66,6 +66,27 @@ class Paths:
         return self.resources / "assets" / "tiles"
 
     @property
+    def sounds(self) -> Path:
+        return self.resources / "assets" / "sounds"
+
+    @property
+    def music_builtin(self) -> Path:
+        """The tunes that come with the game (read-only)."""
+        return self.resources / "assets" / "music"
+
+    @property
+    def music(self) -> Path:
+        """The player's own music: a 'music' folder next to the game (the project folder, or beside Realmwalker.exe),
+        where it is easy to find; in %APPDATA%\\Realmwalker\\music when the game's folder cannot be written to, and in
+        the home folder when one is given (tests, the autoplay bot)."""
+        if self.custom_home:
+            return self.home / "music"
+        near = install_dir() / "music"
+        if near.is_dir() or os.access(install_dir(), os.W_OK):
+            return near
+        return self.home / "music"
+
+    @property
     def config_file(self) -> Path:
         """Game-level configuration (Player2 client id, debug switches)."""
         near_exe = install_dir() / "config.json"
@@ -85,6 +106,11 @@ class Paths:
     @property
     def settings_file(self) -> Path:
         return self.user / "settings.json"
+
+    @property
+    def music_levels(self) -> Path:
+        """How loud each of the player's tunes measured (so it is measured once)."""
+        return self.user / "music_levels.json"
 
     @property
     def saves(self) -> Path:

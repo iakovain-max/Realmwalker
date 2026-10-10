@@ -17,6 +17,7 @@ FATE_KEYS = ["spare", "rob", "interrogate", "execute", "capture"]
 
 class AftermathScreen(Screen):
     title = "Aftermath"
+    sound_open = None  # the victory or defeat is in the music
 
     def __init__(self, app, game, after: Aftermath) -> None:
         super().__init__(app)
@@ -26,6 +27,9 @@ class AftermathScreen(Screen):
         self.cursor = 0
         self.fate_texts: list[str] = []
         self.phase = "captives" if self._undecided() else "loot"
+
+    def music(self) -> str | None:
+        return {"victory": "victory", "defeat": "defeat"}.get(self.after.outcome)
 
     # ------------------------------------------------------------------ state
     def _undecided(self) -> list:
@@ -237,6 +241,7 @@ class DeathScreen(Screen):
     """The end of a life: the obituary, and what the world will remember (game/death.py)."""
 
     title = "Death"
+    sound_open = "death"
 
     def __init__(self, app, game) -> None:
         super().__init__(app)
@@ -250,6 +255,9 @@ class DeathScreen(Screen):
         self.offset = 0
         game.say(f"<danger>{markup.escape(game.leader.name)} is dead.</>", "danger")
         app.save_game()
+
+    def music(self) -> str | None:
+        return "death"
 
     def update(self) -> None:
         """Ask the AI for the obituary once, and put its words in when they come."""

@@ -1351,8 +1351,10 @@ class Battle:
         att.helped = False
         if att.hidden:
             att.hidden = 0
+        armor = target.armor_name("torso")
+        turned = not hit and bool(armor) and total >= ac - 4 and natural != 1 and opt.kind in ("melee", "ranged")
         self._event("attack", by=att.id, to=target.id, hit=hit, crit=crit, how=opt.kind, melee=opt.is_melee,
-                    weapon=opt.name, dtype=opt.damage_type)
+                    weapon=opt.name, dtype=opt.damage_type, armoured=turned)
         mode = " (adv)" if adv and not dis else (" (dis)" if dis and not adv else "")
         notes = list(why) + ([grid.COVER_WORDS[cover]] if cover else [])
         self.dice_say(f"{att.name} → {target.name}, {opt.name}{mode}: {natural} {signed_mod(opt.bonus + bless)} = {total} vs AC {ac}"
@@ -1367,9 +1369,8 @@ class Battle:
                 self.thrown.append(thrown)
         if not hit:
             weapon = opt.name
-            armor = target.armor_name("torso")
             lines = self.t.combat_text
-            if armor and total >= ac - 4 and natural != 1 and opt.kind in ("melee", "ranged"):
+            if turned:
                 text = self.rng.choice(lines["armored_miss"])
             elif opt.kind == "ranged":
                 text = self.rng.choice(lines.get("ranged_miss") or lines["miss"])

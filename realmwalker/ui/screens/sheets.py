@@ -385,6 +385,7 @@ GEAR_VERBS = ("Sharpen blades", "Mend gear", "Set it for the night", "Pass the e
 
 class InventoryScreen(Screen):
     title = "Inventory"
+    sound_open = "ui_pack"
 
     def __init__(self, app, game: GameState, index: int = 0) -> None:
         super().__init__(app)
@@ -1049,6 +1050,7 @@ BODY = [
 
 class EquipmentScreen(Screen):
     title = "Equipment"
+    sound_open = "ui_pack"
 
     def __init__(self, app, game: GameState, index: int = 0) -> None:
         super().__init__(app)

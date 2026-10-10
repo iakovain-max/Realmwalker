@@ -1,4 +1,4 @@
-"""Settings: text size, fullscreen, pictures and animation, dice display, AI on/off, verbosity, autosave."""
+"""Settings: text size, fullscreen, pictures and animation, dice display, AI on/off, verbosity, autosave, sound."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 
 from realmwalker.config import ANIMATION_CHOICES, AUTOSAVE_CHOICES, COMPANION_CHOICES, GRAPHICS_CHOICES, MAP_ZOOMS, \
-    VERBOSITY_LEVELS, WORLD_ZOOMS, Settings
+    VERBOSITY_LEVELS, VOLUME_STEPS, WORLD_ZOOMS, Settings
 from realmwalker.ui import colors
 from realmwalker.ui.input import KeyEvent
 from realmwalker.ui.screens.base import ConfirmBox, Screen
@@ -68,6 +68,22 @@ class SettingsScreen(Screen):
                        s.battle_companions], lambda d: self._cycle("battle_companions", COMPANION_CHOICES, d),
                    "You command them: you play every turn of the party. They fight by themselves: you play your own "
                    "character's turns and your companions choose their own (as z does for one turn)."),
+            Option("Volume", lambda: _volume(s.volume), lambda d: self._volume("volume", d, "ui_click"),
+                   "How loud the whole game is. Ctrl M, anywhere, turns all sound off and on again."),
+            Option("Music", lambda: _volume(s.music_volume), lambda d: self._volume("music_volume", d, None),
+                   "How loud the music is."),
+            Option("Sound effects", lambda: _volume(s.effects_volume),
+                   lambda d: self._volume("effects_volume", d, "hit_blunt"),
+                   "Fights, coins, doors, traps, chests, the harp when you go up a level."),
+            Option("Interface sounds", lambda: _volume(s.interface_volume),
+                   lambda d: self._volume("interface_volume", d, "ui_click"),
+                   "Clicks, pages turning, screens opening and closing, the tick as you move down a list."),
+            Option("Sound in the background", lambda: _onoff(s.sound_in_background),
+                   lambda d: self._toggle_sound("sound_in_background"),
+                   "Keep the music and sounds playing while another window is in front of the game."),
+            Option("Your music", lambda: "open ►", lambda d: self._music_page(),
+                   "Add your own music: which folder plays when (combat, travel, towns, dungeons...), how many tunes "
+                   "each has, a button to open the folder, and a way to listen to each."),
         ]
 
     def _cycle(self, name: str, choices, d: int) -> None:
@@ -80,6 +96,24 @@ class SettingsScreen(Screen):
     def _toggle(self, name: str) -> None:
         setattr(self.app.settings, name, not getattr(self.app.settings, name))
         self.app.save_settings()
+
+    def _volume(self, name: str, d: int, sample: str | None) -> None:
+        s = self.app.settings
+        setattr(s, name, max(0, min(VOLUME_STEPS, getattr(s, name) + d)))
+        if name == "volume" and s.muted and s.volume > 0:
+            s.muted = False  # turning the volume up is meant to be heard
+        self.app.sound_settings_changed()
+        if sample:
+            self.app.audio.ui(sample)  # hear the new level
+
+    def _toggle_sound(self, name: str) -> None:
+        self._toggle(name)
+        self.app.sound_settings_changed()
+
+    def _music_page(self) -> None:
+        from realmwalker.ui.screens.music import MusicScreen
+
+        self.app.push(MusicScreen(self.app))
 
     def _font(self, d: int) -> None:
         self.app.change_font_size(d)
@@ -106,7 +140,7 @@ class SettingsScreen(Screen):
                 setattr(old, name, value)
             self.app.set_ai_enabled(old.ai_enabled)
             self.app.set_ai_debug_log(old.ai_debug_log)
-            self.app.save_settings()
+            self.app.sound_settings_changed()
             self.app.notify("Settings reset to defaults", "info")
 
         self.app.push(ConfirmBox(self.app, "Reset every setting to its default value?", do_reset))
@@ -146,7 +180,11 @@ class SettingsScreen(Screen):
 
     def _click(self, i: int, d: int = 1) -> None:
         self.selected = i
-        self.options[i].change(d)
+        self._change(d)
+
+    def _change(self, d: int) -> None:
+        self.app.audio.ui("ui_toggle")
+        self.options[self.selected].change(d)
 
     def handle_key(self, ev: KeyEvent) -> bool:
         if ev.key == "up":
@@ -154,9 +192,9 @@ class SettingsScreen(Screen):
         elif ev.key == "down":
             self.selected = (self.selected + 1) % len(self.options)
         elif ev.key in ("left", "-"):
-            self.options[self.selected].change(-1)
+            self._change(-1)
         elif ev.key in ("right", "enter", " ", "+"):
-            self.options[self.selected].change(+1)
+            self._change(+1)
         elif ev.key in ("r", "R"):
             self._reset()
         elif ev.key == "escape":
@@ -171,3 +209,7 @@ class SettingsScreen(Screen):
 
 def _onoff(value: bool) -> str:
     return "On" if value else "Off"
+
+
+def _volume(value: int) -> str:
+    return "█" * value + "░" * (VOLUME_STEPS - value) + f" {value * 10}%"

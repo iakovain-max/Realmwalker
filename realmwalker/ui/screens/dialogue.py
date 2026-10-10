@@ -13,6 +13,8 @@ AI_TALK_TIMEOUT = 9.0  # seconds to wait for the AI's opening line before using 
 
 class DialogueScreen(Screen):
     title = "Talk"
+    sound_open = None  # a conversation begins quietly
+    sound_close = None
 
     def __init__(self, app, game, npc) -> None:
         super().__init__(app)

@@ -25,6 +25,7 @@ def group_summary(game, creatures) -> str:
 class EncounterScreen(Screen):
     modal = True
     title = "Trouble"
+    sound_open = "danger"
 
     def __init__(self, app, game) -> None:
         super().__init__(app)

@@ -1,0 +1,17 @@
+Music in Realmwalker
+====================
+
+The tunes that come with the game are by RandomMind (opengameart.org/users/randommind),
+in the public domain (Creative Commons CC0 1.0). Thank you!
+
+  title/exploration.ogg          Medieval: Exploration  -  https://opengameart.org/content/medieval-exploration
+  travel/harvest_season.ogg      Medieval: Harvest Season  -  https://opengameart.org/content/medieval-harvest-season
+  town/market_day.ogg            Medieval: Market Day  -  https://opengameart.org/content/medieval-market-day
+  town/rejoicing.ogg             Medieval: Rejoicing  -  https://opengameart.org/content/medieval-rejoicing
+  tavern/minstrel_dance.ogg      Medieval: Minstrel Dance  -  https://opengameart.org/content/medieval-minstrel-dance
+  combat/battle.ogg              Medieval: Battle  -  https://opengameart.org/content/medieval-battle
+  victory/victory.ogg            Medieval: Victory Theme  -  https://opengameart.org/content/medieval-victory-theme
+  defeat/defeat.ogg              Medieval: Defeat Theme  -  https://opengameart.org/content/medieval-defeat-theme
+
+Each was brought to the same loudness (-18 LUFS) by tools/build_sounds.py.
+Your own music goes in the 'music' folder next to the game, not here (see the README there).

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import sys
 import traceback
 from pathlib import Path
@@ -220,12 +221,34 @@ def smoke_script():
     return steps, frame, shots
 
 
+def sound_trouble(app) -> str:
+    """After the smoke test: did the sound device open, every effect load, and the title music play?"""
+    audio = app.audio
+    if not audio.real:
+        return "the sound device did not open"
+    if audio.bank.problems:
+        return "effects could not be read: " + "; ".join(audio.bank.problems[:3])
+    if audio.problems:
+        return "; ".join(audio.problems[:3])
+    if audio.music.broken:
+        return f"the music stopped: {audio.music.broken}"
+    if not audio.music.started:
+        return "no music was played"
+    if not audio.history:
+        return "no sound was played"
+    return ""
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog=GAME_NAME)
     parser.add_argument("--smoke-test", nargs="?", const="smoke_test.png", default=None)
     parser.add_argument("--home", default=None)
     args = parser.parse_args(argv)
 
+    if args.smoke_test:
+        # The smoke test plays its sounds to SDL's silent "dummy" device: the whole path is used, nothing is heard.
+        # (SDL_AUDIO_DRIVER=disk with SDL_DISKAUDIOFILE=<file> records what would have been heard, for checking.)
+        os.environ.setdefault("SDL_AUDIO_DRIVER", "dummy")
     try:
         from realmwalker.app import App
         from realmwalker.ui import window
@@ -245,6 +268,11 @@ def main(argv: list[str] | None = None) -> int:
             shot = Path(args.smoke_test)
             named = {f: shot.with_name(f"{shot.stem}_{name}{shot.suffix}") for f, name in shots.items()}
             window.run(app, script=script, max_frames=last + 20, screenshot_to=shot, screenshots_at=named)
+            trouble = sound_trouble(app)
+            if trouble:
+                logging.getLogger("realmwalker.smoke").error("Sound check failed: %s", trouble)
+                print(f"Sound check failed: {trouble}", file=sys.stderr)
+                return 2
         else:
             window.run(app)
     except Exception:

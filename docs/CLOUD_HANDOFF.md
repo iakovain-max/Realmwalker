@@ -45,6 +45,7 @@ and is otherwise ignored.
 | Balance numbers | ✅ | `.venv/bin/python tools/balance.py --runs 60` |
 | Mock Player2 server | ✅ | `.venv/bin/python tools/mock_player2.py --port 4316 --mode chaos` (tests start it themselves) |
 | Rebuild the tile sheets | ✅ | `.venv/bin/python tools/build_tiles.py` (downloads the CC0 Dungeon Crawl pack into `build/`; pure Pillow and numpy). Commit `assets/tiles` afterwards |
+| Rebuild the sounds and music | ✅ | `.venv/bin/python tools/build_sounds.py` (downloads the CC0 packs into `build/sound_packs`). Commit `assets/sounds` and `assets/music`. Nothing can be *heard* up here: judge new sounds by their measurements and say so in the PR |
 | Window smoke test | ⚠️ | Needs a display. Try `SDL_VIDEODRIVER=dummy .venv/bin/python main.py --smoke-test out.png` **once**; if it fails, do not fight it — say in the PR that the window check is owed on Windows |
 | Friend build (`.exe` + zip) | ❌ | PyInstaller would build a Linux binary. Only Anton's Windows machine makes `Realmwalker.zip` |
 | The real Player2 app | ❌ | It lives at `127.0.0.1:4315` on Anton's PC and is not reachable here. **Never** try; a stray call costs him real energy (it happened once, ~15 joules). Tests and the smoke test must always use the mock or the AI off |

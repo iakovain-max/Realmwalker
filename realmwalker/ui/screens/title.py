@@ -28,6 +28,8 @@ def logo_rows() -> list[str]:
 
 
 class TitleScreen(Screen):
+    sound_open = None  # the game starting is greeted by its music, not a thump
+
     def __init__(self, app) -> None:
         super().__init__(app)
         self.saves = app.saves_with_characters() if app.tables is not None else []
@@ -107,6 +109,9 @@ class TitleScreen(Screen):
     @property
     def ambient(self) -> bool:
         return True
+
+    def music(self) -> str | None:
+        return "title"  # and for every menu opened over it: new world, the character, saved worlds
 
     def render(self, canvas: Canvas) -> None:
         if canvas.gfx is not None:

@@ -14,6 +14,7 @@ COLORS = {"wanted": "danger", "proclamation": "info", "law": "warn", "local": "d
 class NoticeBoardScreen(Screen):
     modal = True
     title = "Notice board"
+    sound_open = "ui_map"
 
     def __init__(self, app, game, settlement) -> None:
         super().__init__(app)

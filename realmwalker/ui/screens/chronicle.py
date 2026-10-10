@@ -48,6 +48,7 @@ def request_chronicle(app, game) -> None:
 
 class ChronicleScreen(Screen):
     title = "News and history"
+    sound_open = "ui_page"
 
     def __init__(self, app, game, tab: int = 0) -> None:
         super().__init__(app)

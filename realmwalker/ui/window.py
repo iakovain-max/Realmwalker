@@ -87,6 +87,10 @@ def run(app: App, *, script: list[ScriptStep] | None = None, max_frames: int | N
                 log.warning("Could not start text input", exc_info=True)
             if app.settings.fullscreen:
                 window.fullscreen = True
+        try:
+            app.start_sound()
+        except Exception:
+            log.exception("Sound could not be started; playing in silence")
         translator = EventTranslator(presenter.to_frame if gpu is not None else None)
         console: tcod.console.Console | None = None
         frame = 0
@@ -136,6 +140,8 @@ def run(app: App, *, script: list[ScriptStep] | None = None, max_frames: int | N
                 if isinstance(event, tcod.event.Quit):
                     app.request_quit()
                     break
+                if isinstance(event, tcod.event.WindowEvent) and event.type in ("WindowFocusGained", "WindowFocusLost"):
+                    app.audio.set_focus(event.type == "WindowFocusGained")
                 ev = event if gpu is not None else ctx.convert_event(event)
                 for gev in translator.translate(ev):
                     app.handle_event(gev)

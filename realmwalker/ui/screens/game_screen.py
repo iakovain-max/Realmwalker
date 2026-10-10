@@ -27,6 +27,7 @@ def key_direction(ev: KeyEvent) -> tuple[int, int] | None:
 
 class GameScreen(Screen):
     title = "Realmwalker"
+    key_sounds = False  # the keys walk; what happens has its own sounds (game.cue)
 
     def __init__(self, app, game: GameState) -> None:
         super().__init__(app)
@@ -61,6 +62,23 @@ class GameScreen(Screen):
 
     def on_exit(self) -> None:
         self.world_view.close()
+
+    def music(self) -> str | None:
+        """Where you are decides the music (data/music.json): the land on the road, the size of a town, an inn,
+        the kind of place underground."""
+        game = self.game
+        p = game.player
+        lm = game.local
+        if lm is not None and lm.kind == "dungeon":
+            style = lm.meta.get("style")
+            return f"dungeon/{style}" if style else "dungeon"
+        if lm is not None and lm.kind == "settlement":
+            b = lm.building_at(p.lx, p.ly)
+            if b is not None and b.kind == "inn":
+                return "tavern"
+            s = game.world.settlement_at(p.x, p.y)
+            return f"town/{s.kind}" if s is not None else "town"
+        return f"travel/{game.world.biome_id(p.x, p.y)}"
 
     @property
     def ambient(self) -> bool:

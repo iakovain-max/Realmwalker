@@ -9,6 +9,7 @@ surrender, leave the field from its edge, let the game play the turn (z), or end
 
 from __future__ import annotations
 
+from realmwalker.audio import cues
 from realmwalker.rules import grid
 from realmwalker.rules import spells as spellrules
 from realmwalker.rules.combat import FOE, PARTY, Battle, Fighter, spell_id
@@ -70,6 +71,7 @@ class BattleScreen(Screen):
     title = "Battle"
     show_status = False
     animating = True
+    sound_open = None  # blades drawn, and the enemy's cry (on_enter)
 
     def __init__(self, app, game) -> None:
         super().__init__(app)
@@ -101,9 +103,47 @@ class BattleScreen(Screen):
         if getattr(app.settings, "battle_companions", "command") == "auto":
             for f in self.battle.side(PARTY)[1:]:
                 f.auto = True  # (Settings: companions fight by themselves)
+        self.heard = len(self.battle.events)  # the events whose sounds have been played (without the board)
+
+    @property
+    def key_sounds(self) -> bool:
+        return self.mode != "idle"  # choosing from a list ticks; walking the field does not
+
+    def on_enter(self) -> None:
+        self.app.audio.play("battle_start")
+        cry = cues.foes_cry([f.kind for f in self.battle.side(FOE)])
+        if cry:
+            self.app.audio.play(cry, delay=0.35)
+
+    def music(self) -> str | None:
+        b = self.battle
+        if b.outcome == "victory":
+            return "victory"
+        if b.outcome == "defeat":
+            return "defeat"
+        if b.outcome is not None:
+            return None  # got away, or let go: the music of the place comes back
+        actor = self.game.battle_actor
+        lm = self.game.local
+        boss = actor is not None and lm is not None and lm.kind == "dungeon" and lm.meta.get("boss") == actor.group
+        return cues.combat_mood(b.side(FOE), boss)
+
+    def _play_sounds(self) -> None:
+        """The fight's sounds: on the board's timeline when it is drawn, else one after another as they happen."""
+        now = self.app.clock()
+        if self.staged:
+            pending, self.board.sounds = self.board.sounds, []
+            self.heard = len(self.battle.events)
+        else:
+            new = self.battle.events[self.heard:]
+            self.heard = len(self.battle.events)
+            pending = cues.timeline(new, now)
+        for when, sid in pending:
+            self.app.audio.play(sid, delay=max(0.0, when - now))
 
     # ------------------------------------------------------------------ flow
     def update(self) -> None:
+        self._play_sounds()
         b = self.battle
         if b.outcome is not None:
             self.mode = "over"

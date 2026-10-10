@@ -49,7 +49,9 @@ HOW TO PLAY
    is a button along the bottom (its key is in the corner). The mouse wheel
    zooms the map. No key needs Shift.
 6. Esc, then Settings: text size, Graphics (pictures, or the old letters),
-   Animations (full, calm, or off), map scales.
+   Animations (full, calm, or off), map scales, and the sound: the volume of
+   everything, of the music, of the effects and of the clicks. Ctrl M, at any
+   moment, turns all sound off and on again.
 7. Saved Worlds on the title screen lists your worlds; Delete moves one to the
    Recycle Bin.
 
@@ -79,6 +81,22 @@ built-in text. Everything still works; the writing is just less varied.
 Windows SmartScreen may say it "protected your PC" from an unknown app,
 because this game is not from a big publisher. To run it:
   click "More info", then "Run anyway".
+
+
+YOUR OWN MUSIC
+--------------
+The game comes with medieval music, and you can add your own. Next to
+Realmwalker.exe is a folder called "music" (the game makes it the first time
+it starts). In it is a folder for each moment: title, travel, town, tavern,
+dungeon, rest, combat, boss, victory, defeat and death, and some have folders
+inside them for something more particular (travel\forest, town\city,
+combat\undead...). Put .ogg, .mp3, .flac or .wav files in them; the game
+evens out how loud each one is. Your music for a moment replaces the game's.
+In the game, Esc, Settings, Your music shows what plays when, lets you listen
+to each, and has a button that opens the folder.
+
+Sounds and music: Kenney, artisticdude, rubberduck and RandomMind, all
+public domain (CC0). Thank you!
 
 
 WHERE THINGS ARE SAVED

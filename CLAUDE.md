@@ -24,6 +24,7 @@ gameplay terms, give Windows click-by-click steps when they must do something, n
 | Friend build (tests, exe, smoke check, zip) | double-click `Build_For_Friends.bat` (runs `tools\build_friends.py`) |
 | Balance numbers (fights, cold, wounds) | `.venv\Scripts\python.exe tools\balance.py --runs 60` |
 | Rebuild the tile sheets (after changing tools/*_art.py, figure_*.py) | `.venv\Scripts\python.exe tools\build_tiles.py --pack <Dungeon Crawl Stone Soup Full folder>` (no `--pack`: downloads it) |
+| Rebuild the sounds and the shipped music (after changing tools/build_sounds.py) | `.venv\Scripts\python.exe tools\build_sounds.py` (downloads the CC0 packs into build/sound_packs; `--no-music`: effects only) |
 
 Milestone "done" = all tests pass + the game launches (smoke test) + autoplay ran clean in both AI modes.
 Then commit, update PROGRESS.md, and stop for user feedback (unless the user said to keep going).
@@ -82,14 +83,22 @@ realmwalker/
                            (people as stacked pixel-art layers), battlefx (the battle mat: field, figures, highlights,
                            spell areas and animation), scenes
                            (camp, figures, busts, wound marks), weatherfx (rain, snow, fog), titleart
+  audio/                   sound (presentation, like ui/; logic never imports it): engine (Audio: effects by name,
+                           one interface sound per frame, music by mood, volumes), bank (effects from assets/sounds),
+                           music (the mood folders, the player on its own thread, crossfades, loudness remembered),
+                           backend (SDL through tcod, or silent), cues (a fight's events -> sounds, music by foe),
+                           watch (game.cue, a level gained, money, gear), levels (BS.1770 loudness, numpy only)
 data/                      ALL game data as JSON (names, fallback text, ... later races, items, creatures)
 ai/prompts/                prompt templates (plain text, @max_tokens header, {slots})
 assets/fonts/              DejaVu Sans Mono, Cinzel, EB Garamond, Grenze Gotisch + licences
 assets/tiles/              sheet_*.png + tiles.json, BUILT by tools/build_tiles.py (commit them; the game never builds)
+assets/sounds/, music/     effects (16-bit mono WAV) and the shipped tunes (OGG, by mood folder), BUILT by
+                           tools/build_sounds.py from CC0 packs (Kenney, OpenGameArt, RandomMind) + CREDITS.txt; commit
+music/ (project root)      the PLAYER's own music, by mood folder; made by the game, ignored by git
 tests/                     pytest suite (headless; AI tests use tools/mock_player2.py, never the real app)
 tools/                     autoplay.py, mock_player2.py, build_friends.py, balance.py (the design's targets),
                            build_tiles.py (+ tile_art.py: things drawn in code; figure_art.py: bodies; figure_gear.py:
-                           clothes, armour, hair, hats, weapons, shields)
+                           clothes, armour, hair, hats, weapons, shields), build_sounds.py (effects and music)
 ```
 
 ## Rules of the codebase
@@ -223,6 +232,22 @@ tools/                     autoplay.py, mock_player2.py, build_friends.py, balan
   guardian) live on the battle. Party members at 0 make death saves. `rules/tactics.take_turn` plays monsters and any
   fighter with `f.auto` (the screen's z, the balance tool and the tests use it). Every rule writes `battle.events`
   (move, attack, cast with its area, damage...), which `ui/gfx/battlefx.BattleBoard` turns into animation.
+- Sound (2026-10-10, Anton's request: "basic and satisfying sounds... a simple way for me to add music"): `app.audio`
+  (realmwalker/audio). Logic never imports it: game code asks for a sound with `game.cue("chest")` (a name from
+  data/sounds.json; drained each frame by audio/watch.py, never saved), and the watcher also notices a level gained
+  (harp), money changing (coins) and gear changing (equip). Screens: `sound_open` / `sound_close` (class attributes,
+  None for silence), `key_sounds` (a quiet tick when a key visibly changes the screen: App._key_to_screen compares
+  `ui_state`; False where keys walk or fight), `music()` (a mood like "travel/forest", or None to keep the music of
+  the screen below), and `app.audio.play(id, delay=)` / `app.audio.ui(id)` (one interface sound per frame, the highest
+  `priority` wins). A fight's sounds come from `battle.events` through audio/cues.py, timed by the battle board. Music
+  moods and how they behave (pauses, fades, once, resume, fallbacks, the folders made for the player) are
+  data/music.json; the player's tunes in `paths.music` (music/ next to the game) replace the shipped ones for that mood
+  and are evened to -18 LUFS on first play (music_levels.json). Volumes 0-10 in Settings (+ Ctrl M mute); the "Your
+  music" page (ui/screens/music.py) lists the moods, previews them and opens the folder. Headless (tests, autoplay)
+  the same calls go to a SilentBackend: never open a sound device in a test. The smoke test plays to SDL's dummy
+  driver and FAILS if the device, an effect or the title music did not work (main.sound_trouble). A new sound: add it
+  to tools/build_sounds.py EFFECTS (or make it there), run it, add the entry to data/sounds.json, commit
+  assets/sounds; tests/test_audio.py checks every name the code asks for exists and every file is at one loudness.
 - Battles: `rules/combat.Battle` is pure logic driven by `step()` / `pending_party()` / `do_*()`; the screen
   (`ui/screens/battle.py`) only paces and asks. `GameState.busy` (encounter, battle, aftermath or death pending)
   blocks moving; `GameScreen._open_event_screen()` opens the right screen. Debug console: `fight <group>`.

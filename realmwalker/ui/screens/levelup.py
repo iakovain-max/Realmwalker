@@ -11,6 +11,7 @@ from realmwalker.ui.widgets import Canvas
 
 class LevelUpScreen(Screen):
     title = "Level up"
+    sound_open = None  # the harp has already sounded as the level came
 
     def __init__(self, app, game, index: int = 0) -> None:
         super().__init__(app)

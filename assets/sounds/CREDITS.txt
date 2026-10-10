@@ -1,0 +1,17 @@
+Sounds in Realmwalker
+=====================
+
+Every sound here is in the public domain (Creative Commons CC0 1.0,
+https://creativecommons.org/publicdomain/zero/1.0/). Thank you to their makers:
+
+  RPG Audio by Kenney (kenney.nl)  -  https://kenney.nl/assets/rpg-audio
+  Interface Sounds by Kenney (kenney.nl)  -  https://kenney.nl/assets/interface-sounds
+  Impact Sounds by Kenney (kenney.nl)  -  https://kenney.nl/assets/impact-sounds
+  RPG Sound Pack by artisticdude  -  https://opengameart.org/content/rpg-sound-pack
+  80 CC0 RPG SFX by rubberduck  -  https://opengameart.org/content/80-cc0-rpg-sfx
+  100 CC0 SFX by rubberduck  -  https://opengameart.org/content/100-cc0-sfx
+
+The bow, the level-up harp, the journal's notes, the chimes, the drum and the magic thud were made
+for Realmwalker by tools/build_sounds.py (also CC0).
+
+Each sound was trimmed, softened and brought to the same loudness by tools/build_sounds.py.

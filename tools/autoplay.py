@@ -112,6 +112,18 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
         app.error_count = 0
     if not app.screens:
         fail("screen stack is empty")
+    audio = app.audio
+    if audio.unknown:
+        fail(f"sounds asked for that data/sounds.json does not have: {sorted(audio.unknown)}")
+        audio.unknown.clear()
+    if audio.bank.problems or audio.problems or audio.music.broken:
+        fail(f"sound trouble: {audio.bank.problems[:2]} {audio.problems[:2]} {audio.music.broken}")
+        audio.bank.problems.clear()
+        audio.problems.clear()
+        audio.music.broken = ""
+    mood = app.music_mood()
+    if mood is not None and mood.split("/")[0] not in audio.library.moods:
+        fail(f"music asked for a mood data/music.json does not have: {mood}")
     s = app.settings
     if s.font_size not in FONT_SIZES or s.verbosity not in VERBOSITY_LEVELS or s.autosave_minutes not in AUTOSAVE_CHOICES:
         fail(f"settings out of range: {s}")

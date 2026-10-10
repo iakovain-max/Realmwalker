@@ -21,14 +21,88 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **1.0 — Combat on a grid (a D&D battle mat)** | ✅ Done (2026-10-06), branch `grid-combat` |
 | **Every item does something** | ✅ Done (2026-10-09), branch `useful-items` |
 | **Choose how you look** | ✅ Done (2026-10-10), branch `looks` |
+| **Sound and music** | ✅ Done (2026-10-10), branch `sound` |
 
 ---
 
 ## After v1 — continuing work (2026-09-20), up to version 1.0 (2026-10-03) and since
 
 The nine milestones are done; this is what has been added since, newest first. Version 1.0 is the pictures and the
-new interface; then combat moved onto a grid, then every item was given a use, then looks became a choice (the
-first entries below).
+new interface; then combat moved onto a grid, then every item was given a use, then looks became a choice, then the
+game got sound and music (the first entries below).
+
+### Local session, 2026-10-10: sound and music (Anton's request) — branch `sound`
+
+Anton asked for "basic and satisfying sounds for button pressing, some combat sounds, sounds for menus", music or a
+very simple way to add music (combat, travel in different lands and cities, rest, boss fights...), all of it pleasant,
+even in level and never irritating, and sound settings.
+
+**What is different when you play**
+- **Music.** The game comes with eight medieval tunes by RandomMind (public domain): one for the title screen, one
+  for the road, two for towns, one for inns, one for fights, a short one when you win a fight and one when you lose.
+  The music follows you: the road's tune fades into the town's as you walk in, an inn has its own, a fight cuts in
+  quickly and the road's tune picks up where it left off afterwards. On the road and in towns there are quiet
+  stretches between tunes, so it never drones on. Under the ground and at camp it is quiet (until you add music).
+- **Your own music, by dropping files in folders.** The first time the game starts it makes a folder called `music`
+  in the game's folder (for you: `D:\Project Dawn\music`), with a folder for each moment: `title`, `travel`, `town`,
+  `tavern`, `dungeon`, `rest`, `combat`, `boss`, `victory`, `defeat`, `death`, and folders inside some of them for
+  something more particular: `travel\forest`, `travel\desert` (every kind of land), `town\city`, `town\village`
+  (every size), `dungeon\crypt`, `dungeon\cave` (every kind of place below), `combat\undead`, `combat\beasts`,
+  `combat\people`, `combat\monsters`, `boss\dragon`. Put .ogg, .mp3, .flac or .wav files in a folder and they play
+  there; an empty folder borrows from the one above it (forest from travel), and a boss fight with no boss music
+  plays the fight music. Your music for a moment replaces the game's own. Every tune is measured the first time it
+  plays and evened out to the same loudness, so a loud MP3 and a quiet one sound alike. A README.txt in the folder
+  explains it all.
+- **Settings has sound.** Esc, Settings: *Volume* (everything), *Music*, *Sound effects*, *Interface sounds* (each 0 to
+  100%, with a bar, and you hear the new level as you change it), *Sound in the background* (keep playing while
+  another window is in front), and *Your music*: a page listing every moment, how many tunes it has (yours or the
+  game's), what plays now, **Listen** to hear any moment's music, **Open the folder** (opens it in Explorer), and
+  **Look for new music** after adding files. **Ctrl M** anywhere turns all sound off and on.
+- **Interface sounds**, soft and short: a quiet wooden tick as the choice moves down a list, a click for buttons, a
+  book opening and closing for screens, pages turning for the journal, chronicle, help and spells, leather for the
+  pack, paper unfolding for the map and notice boards, a dull thud for "that cannot be done". Only one sound answers
+  each key or click (a click that opens a screen sounds like the screen opening, not both), and walking never clicks.
+- **The world**: coins whenever money changes hands (buying, selling, pay, rewards), cloth and armour when gear goes on
+  or off, a harp when someone goes up a level, two plucked notes when work is written in your journal and a little
+  run when it is paid, footsteps on the stairs going down or up, a chest's lid, a lock giving, a trap snapping, a fire
+  catching at camp, a low drum when trouble meets you on the road, and a gong when you die.
+- **Fights**: blades drawn as a fight opens (beasts growl, the dead moan), a swing for every blow, a bow's twang, a
+  thrown knife's whistle, bites, spells, and the blow landing *when the picture shows it landing*: cuts, stabs, thuds,
+  a heavier thud on a critical, armour ringing when it turns a blow, fire, frost, thunder, acid, webs, a dull thud
+  for dark or holy magic, a chime when wounds close, and the fall of whoever goes down.
+- **Even and gentle**: every effect was trimmed so it starts the instant you press, softened where it was harsh (coins,
+  blades, paper), and brought to the same loudness (a sharp peak is limited, not clipped); each sound plays slightly
+  higher or lower each time, so nothing heard often sounds the same twice; the music is all at one quiet, even level.
+
+**How to see it**: just play; the title music starts with the game. Esc, Settings for the volumes and *Your music*.
+To add music: Settings, Your music, *Open the folder*, drop files into (say) `combat`, press *Look for new music*,
+choose Combat and *Listen*.
+
+**Sources** (all public domain, CC0): Kenney's RPG Audio, Interface Sounds and Impact Sounds; artisticdude's RPG
+Sound Pack and rubberduck's 80 and 100 CC0 sound effects (OpenGameArt); RandomMind's medieval music. The bow, the
+harp, the journal's notes, the chimes and the drum were made for the game. `tools/build_sounds.py` downloads,
+shapes and evens them all; credits are in `assets/sounds/CREDITS.txt` and `assets/music/CREDITS.txt` and the
+friends' readme.
+
+**Decisions**: the music folder sits next to the game, where it is easy to find (inside the friends' build: next to
+Realmwalker.exe), not in %APPDATA%. Interface sounds have their own volume, as some players dislike clicks. The
+dungeon, camp and boss moods ship without music: quiet underground felt right for a grim game, and they are the first
+places to put your own. Sound never stops the game: no sound card, or a broken file, and it plays on in silence
+(a bad tune is skipped and written to the log).
+
+**For later**: more moods are one entry in `data/music.json` and one line where a screen says which mood it wants
+(night on the road, a siege, a wedding...). Footsteps on the map were left out on purpose (heard thousands of times).
+
+**Checked**: the whole test suite (new: `tests/test_audio.py`: every file there, readable and at one loudness, every
+sound the code asks for exists, the loudness measure against the broadcast standard's own test tone, moods falling
+back, your tunes replacing the game's, crossfades, picking up where it left off, once-only tunes, pauses, broken
+files skipped, the Settings and Music pages, a whole fight's sounds); autoplay in both AI modes (it now also fails on
+any unknown sound or mood); the smoke test in a window, which now plays all its sound to SDL's silent "dummy" device
+and fails if the device, an effect or the title music does not work. I cannot hear, so the sounds were chosen by
+their makers' descriptions and by measuring them (length, brightness, loudness, spectrum pictures), and a whole
+smoke-test session was recorded to a file through SDL and measured: no clipping, no clicks, music about 5-8 dB under
+the blows of a fight, the music changing at the right moments. **Your ears are the real test**: if anything grates,
+tell me which (the Settings page names each kind), and its volume is one number in `data/sounds.json`.
 
 ### Local session, 2026-10-10: choose how you look (Anton's request) — branch `looks`
 

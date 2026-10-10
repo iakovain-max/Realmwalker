@@ -160,6 +160,13 @@ class GameState:
         self._recent_areas: list[int] = []
         self.heeded: set[str] = set()  # what a journey has already stopped for (game.journey)
         self.journey_to: tuple[int, int] | None = None  # where an unfinished journey was going
+        self.cues: list[str] = []  # sounds asked for by what just happened (see cue(); never saved)
+
+    def cue(self, sound: str) -> None:
+        """Something happened that has a sound (a chest opens, a trap goes off): the name of a sound in
+        data/sounds.json. The screens play it; the game neither knows nor cares whether anyone heard."""
+        self.cues.append(sound)
+        del self.cues[:-8]
 
     # ------------------------------------------------------------------ queries
     @property
@@ -1061,6 +1068,7 @@ class GameState:
         for item in pile:
             add_existing(self.leader, self.tables.items, item)
             self.say(f"You pick up the <loot>{self.tables.items.name(item)}</>.", "loot")
+        self.cue("pickup")
         self.pass_seconds(LOCAL_STEP_SECONDS)
         self.dirty = True
         return len(pile)

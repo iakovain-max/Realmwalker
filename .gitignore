@@ -19,3 +19,6 @@ Realmwalker.zip
 .idea/
 Thumbs.db
 desktop.ini
+
+# Your own music (made by the game; see music/README.txt)
+/music/

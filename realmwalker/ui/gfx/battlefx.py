@@ -15,6 +15,7 @@ import math
 
 import numpy as np
 
+from realmwalker.audio.cues import battle_sounds, timeline
 from realmwalker.ui.gfx import dolls, theme
 from realmwalker.ui.gfx.scene import Image, Lines, Rect, Sprite, Text, tile_batch
 
@@ -69,6 +70,7 @@ class BattleBoard:
         self.shake_until = 0.0
         self.cam: tuple[float, float] | None = None
         self.cam_t = 0.0
+        self.sounds: list[tuple[float, str]] = []  # (when, sound) for the screen to play, on the moments drawn
 
     # ------------------------------------------------------------------ the camera
     def layout(self, field, rect, zoom: int | None = None, focus: tuple[float, float] | None = None,
@@ -127,7 +129,12 @@ class BattleBoard:
             return
         t = max(now, self.busy_until - 0.05)
         for ev in events if animate else []:
+            t0 = t
             t = self._schedule(battle, ev, t)
+            impact = self._impact if self._impact >= t0 - 0.6 else t0
+            self.sounds += [(t0 if moment == "start" else max(t0, impact), sid) for moment, sid in battle_sounds(ev)]
+        if not animate:
+            self.sounds += timeline(events, now)
         end = max([e["t0"] + e["dur"] * (0.55 if e["kind"] == "float" else 1.0) for e in self.fx] + [t, now])
         for tracks in list(self.tracks.values()) + list(self.tok_tracks.values()):
             for t0, path, step in tracks:

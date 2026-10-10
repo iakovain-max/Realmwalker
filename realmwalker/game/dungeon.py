@@ -149,6 +149,7 @@ def descend(game, level: int, *, from_below: bool = False) -> None:
         if len(found):
             x, y = int(found[0][0]), int(found[0][1])
     p.lx, p.ly = x, y
+    game.cue("stairs")
     populate(game, lm)
     if game.quests:
         from realmwalker.game import quests
@@ -192,6 +193,7 @@ def ascend(game) -> None:
     surface = get_local_map(game.world, game.tables, game.player.x, game.player.y)
     game.player.local_key = surface.key
     game.player.lx, game.player.ly = gen.add_entrance(game.tables, surface)
+    game.cue("stairs")
     rng = game.world.rng.child(f"surface/{game.player.steps}")
     game.say(rng.choice(BACK_UP), "place")
     game.dirty = True
@@ -318,6 +320,7 @@ def spring(game, lm, x: int, y: int, f: dict) -> None:
     c.hp = max(0, left)
     f["found"] = True
     f["spent"] = True
+    game.cue("trap")
     game.say(f"<danger>You spring {name}!</> {c.name.split()[0]} takes {dmg} {dtype} damage. "
              f"<dim>(Dexterity save {save} vs {f['dc']})</>", "danger")
     if dmg >= 8:
@@ -400,6 +403,7 @@ def unlock(game, lm, x: int, y: int, dc: int) -> tuple[bool, str]:
             bonus += game.sheet(who).proficiency
         roll = dice.d20(rng).natural + bonus
         if roll >= dc:
+            game.cue("unlock")
             return True, f"{who.name.split()[0]} picks the lock. <dim>(Sleight of Hand {roll} vs {dc})</>"
         return False, f"The lock resists {who.name.split()[0]}'s picks. <dim>(Sleight of Hand {roll} vs {dc})</>"
     who = best_at(game, "athletics")
@@ -465,6 +469,7 @@ def open_chest(game, lm, x: int, y: int) -> None:
         f["locked"] = 0
     grave = bool(f.get("grave"))
     f["opened"] = True
+    game.cue("chest")
     if not grave:
         set_terrain(lm, x, y, "chest_open")
     from realmwalker.game import treasure
@@ -533,6 +538,7 @@ def take_hoard(game) -> list[str]:
     grab = rng.randint(3000, 12000)
     f["left"] -= 1
     game.leader.money += grab
+    game.cue("coins")
     from realmwalker.game import treasure
 
     items, _ = treasure.roll(game, 5, rng)

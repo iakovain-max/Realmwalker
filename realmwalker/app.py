@@ -9,6 +9,9 @@ and the game carries on.
 from __future__ import annotations
 
 import logging
+import os
+import subprocess
+import sys
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -21,6 +24,10 @@ from realmwalker.ai.client import Player2Client
 from realmwalker.ai.prompts import PromptLibrary
 from realmwalker.ai.service import SYSTEM_PROMPT, AIService, AIStatus
 from realmwalker.ai.tasks import ALL_TASKS
+from realmwalker.audio import Audio
+from realmwalker.audio.bank import SoundBank
+from realmwalker.audio.music import MusicLibrary
+from realmwalker.audio.watch import GameWatch
 from realmwalker.config import DEFAULT_FONT_SIZE, FONT_SIZES, GameConfig, Settings
 from realmwalker.core.logs import set_ai_debug, setup_logging
 from realmwalker.core.rng import RNG
@@ -31,7 +38,7 @@ from realmwalker.paths import Paths
 from realmwalker.ui import colors
 from realmwalker.ui.input import InputEvent, KeyEvent, MouseEvent
 from realmwalker.ui.screens.base import MessageBox, Screen
-from realmwalker.ui.widgets import Canvas, Region
+from realmwalker.ui.widgets import Canvas, Menu, Region
 from realmwalker.world.tables import Tables
 
 log = logging.getLogger("realmwalker.app")
@@ -39,6 +46,22 @@ log = logging.getLogger("realmwalker.app")
 MIN_COLUMNS = 80
 MIN_ROWS = 30
 RENDER_FAILURES_BEFORE_CLOSING = 3
+NAV_KEYS = {"up", "down", "left", "right", "pageup", "pagedown", "home", "end", "tab"}
+
+
+def ui_state(screen: Screen) -> tuple:
+    """What a screen is showing, in brief (its choices, pages, tabs and modes), to tell whether a key changed it."""
+    out = []
+    for key, value in vars(screen).items():
+        if key == "app":
+            continue
+        if value is None or isinstance(value, (bool, int, str)):
+            out.append((key, value))
+        elif isinstance(value, tuple) and len(value) <= 4 and all(isinstance(v, (int, str)) for v in value):
+            out.append((key, value))
+        elif isinstance(value, Menu):
+            out.append((key, value.selected))
+    return tuple(out)
 
 
 @dataclass
@@ -96,6 +119,10 @@ class App:
         )
         # Randomness for menus and demos only. Game worlds own their own seeded RNG.
         self.ui_rng = RNG(int(time.time() * 1000) % (2**31), "ui")
+        # Sound: silent until a window opens the speakers (start_sound); the same calls work either way.
+        self.audio = self._make_audio(None)
+        self._sound_failed = False
+        self._ears = GameWatch()
 
         self.screens: list[Screen] = []
         self.running = True
@@ -129,6 +156,35 @@ class App:
         People and places come first; this can be switched off to save Player2 energy for them."""
         return self.ai.usable() and self.settings.ai_extras
 
+    def _make_audio(self, backend) -> Audio:
+        bank = SoundBank(self.data.get("sounds.json") or {}, self.paths.sounds)
+        library = MusicLibrary(self.data.get("music.json") or {}, self.paths.music_builtin, self.paths.music)
+        return Audio(bank=bank, library=library, settings=self.settings, clock=self.clock,
+                     rng=self.ui_rng.child("sound"), backend=backend,
+                     levels_file=self.paths.music_levels if backend is not None else None)
+
+    def start_sound(self) -> None:
+        """Open the speakers (the window does this once it is up). Without a sound device the game stays silent."""
+        from realmwalker.audio.engine import open_speakers
+
+        backend = open_speakers()
+        if backend is None:
+            return
+        self.audio = self._make_audio(backend)
+        self.audio.library.make_folders()
+        self.audio.library.scan()
+        self.audio.bank.preload()
+        self.audio.start()
+
+    def music_mood(self) -> str | None:
+        """The music the screens want: the top screen that has an opinion decides (a pack opened on the road keeps
+        the road's music; a battle has its own)."""
+        for screen in reversed(self.screens):
+            mood = screen.music()
+            if mood is not None:
+                return mood
+        return None
+
     def _check_prompts(self) -> list[str]:
         errors = []
         for name in [SYSTEM_PROMPT] + [t.name for t in ALL_TASKS]:
@@ -143,12 +199,14 @@ class App:
 
     def push(self, screen: Screen) -> None:
         self.screens.append(screen)
+        self.audio.ui(screen.sound_open)
         self._guard("opening a screen", screen.on_enter)
 
     def pop(self) -> Screen | None:
         if not self.screens:
             return None
         screen = self.screens.pop()
+        self.audio.ui(screen.sound_close)
         self._guard("closing a screen", screen.on_exit)
         if not self.screens:
             from realmwalker.ui.screens.title import TitleScreen
@@ -191,6 +249,7 @@ class App:
             )
             box.is_error_notice = True
             self.screens.append(box)
+            self.audio.ui("ui_error")
 
     # ------------------------------------------------------------------ input
     def handle_event(self, ev: InputEvent) -> None:
@@ -198,9 +257,18 @@ class App:
             if isinstance(ev, MouseEvent):
                 self._handle_mouse(ev)
             elif not self._global_key(ev) and self.top is not None:
-                self.top.handle_key(ev)
+                self._key_to_screen(ev)
         except Exception:
             self.report_error("handling your input")
+
+    def _key_to_screen(self, ev: KeyEvent) -> None:
+        """Give the key to the top screen. If it visibly changed something there (the choice moved, a page turned, a
+        value changed), a quiet sound answers; screens with sounds of their own (the map, a battle) say so."""
+        top = self.top
+        before = ui_state(top) if top.key_sounds and not top.captures_text else None
+        top.handle_key(ev)
+        if before is not None and self.top is top and ui_state(top) != before:
+            self.audio.ui("ui_move" if ev.key in NAV_KEYS else "ui_click")
 
     def _handle_mouse(self, ev: MouseEvent) -> None:
         if ev.x >= 0:
@@ -214,6 +282,7 @@ class App:
                 if region.contains(ev.x, ev.y):
                     action = region.right_action if ev.button == "right" else region.action
                     if action:
+                        self.audio.ui("ui_click")
                         action()
                         return
                     if region.action is None and region.right_action is None and region.wheel is None:
@@ -235,6 +304,8 @@ class App:
             self.toggle_fullscreen()
         elif ev.key == "f12":
             self.window_requests.add("screenshot")
+        elif ev.ctrl and ev.key in ("m", "M"):
+            self.toggle_mute()
         elif ev.key == "f1":
             from realmwalker.ui.screens.help import HelpScreen
 
@@ -274,6 +345,33 @@ class App:
         self.window_requests.add("fullscreen")
         self.save_settings()
 
+    def toggle_mute(self) -> None:
+        self.settings.muted = not self.settings.muted
+        self.audio.apply_settings()
+        self.save_settings()
+        self.notify("Sound off (Ctrl M to turn it back on)" if self.settings.muted else "Sound on", "info", 2.0)
+
+    def open_folder(self, path: Path) -> bool:
+        """Show a folder in Explorer (or the desktop's file manager). Never from tests or the autoplay bot."""
+        if self.headless:
+            return False
+        try:
+            path.mkdir(parents=True, exist_ok=True)
+            if sys.platform == "win32":
+                os.startfile(str(path))  # noqa: S606 - the player's own folder, at their request
+            elif sys.platform == "darwin":
+                subprocess.Popen(["open", str(path)])
+            else:
+                subprocess.Popen(["xdg-open", str(path)])
+            return True
+        except Exception:
+            log.exception("Could not open the folder %s", path)
+            return False
+
+    def sound_settings_changed(self) -> None:
+        self.audio.apply_settings()
+        self.save_settings()
+
     def set_ai_enabled(self, enabled: bool) -> None:
         self.settings.ai_enabled = enabled
         self.ai.set_enabled(enabled)
@@ -298,6 +396,18 @@ class App:
             self._guard("updating the screen", self.top.update)
         now = self.clock()
         self.toasts = [t for t in self.toasts if t.expires > now]
+        self._update_sound()
+
+    def _update_sound(self) -> None:
+        """Sound never interrupts the game: a problem is written to the log once and the game plays on quietly."""
+        try:
+            self._ears.hear(self.game, self.audio)
+            self.audio.want_music(self.music_mood())
+            self.audio.update()
+        except Exception:
+            if not self._sound_failed:
+                self._sound_failed = True
+                log.exception("Sound failed; carrying on without it")
 
     def frame_timeout(self) -> float:
         """How long the window may sleep waiting for input before redrawing."""
@@ -489,5 +599,9 @@ class App:
             self.ai.stop()
         except Exception:
             log.exception("Error stopping the AI service")
+        try:
+            self.audio.close()
+        except Exception:
+            log.exception("Error closing the sound")
         self.save_settings()
         log.info("%s shut down cleanly (%d recovered errors this session)", GAME_NAME, self.error_count)

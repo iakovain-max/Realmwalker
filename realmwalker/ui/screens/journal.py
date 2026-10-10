@@ -104,6 +104,7 @@ def details(game, q) -> str:
 
 class JournalScreen(Screen):
     title = "Journal"
+    sound_open = "ui_page"
 
     def __init__(self, app, game, tab: int = 0) -> None:
         super().__init__(app)

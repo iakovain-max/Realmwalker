@@ -97,12 +97,16 @@ def gear_chores(game) -> list[tuple[str, str, bool, str]]:
 
 class CampScreen(Screen):
     title = "Camp"
+    sound_open = "ui_pack"
     ambient = True  # the fire flickers
 
     def __init__(self, app, game) -> None:
         super().__init__(app)
         self.game = game
         self.messages: list[str] = []
+
+    def music(self) -> str | None:
+        return "rest"
 
     # ------------------------------------------------------------------ actions
     def actions(self) -> list[tuple[str, str, object, bool, str]]:
@@ -153,7 +157,13 @@ class CampScreen(Screen):
 
     def _fire(self) -> list[str]:
         c = camplogic.camp_here(self.game)
-        return camplogic.put_out_fire(self.game) if c and c.fire else camplogic.light_fire(self.game)
+        if c and c.fire:
+            return camplogic.put_out_fire(self.game)
+        msgs = camplogic.light_fire(self.game)
+        c = camplogic.camp_here(self.game)
+        if c and c.fire:
+            self.app.audio.ui("fire")
+        return msgs
 
     def _eat(self) -> list[str]:
         out = []

@@ -842,3 +842,36 @@ SPRITES = Obj(
 )
 
 DATA_FILES.update({"sprites.json": SPRITES})
+
+# ---------------------------------------------------------------------------- sound and music
+SOUND = Obj(
+    {
+        "files": List(Str(max_len=80), min_items=1),
+        "group": Str(choices=["interface", "effects"]),
+        "volume": Float(min=0, max=2),
+        "pitch": Float(min=0, max=0.3, optional=True),
+        "cooldown": Float(min=0, max=10, optional=True),
+        "max": Int(min=1, max=8, optional=True),
+        "priority": Int(min=0, max=9, optional=True),
+        "about": Str(max_len=120, optional=True),
+    }
+)
+SOUNDS = Obj({"sounds": Map(SOUND, min_items=1)})
+SECONDS_RANGE = List(Float(min=0, max=3600), min_items=2, max_items=2, optional=True)
+MOOD = Obj(
+    {
+        "about": Str(max_len=200),
+        "kinds": List(Str(max_len=30), optional=True),
+        "fallback": Str(max_len=30, optional=True),
+        "gap": SECONDS_RANGE,
+        "first": SECONDS_RANGE,
+        "fade_in": Float(min=0, max=30, optional=True),
+        "fade_out": Float(min=0, max=30, optional=True),
+        "resume": Bool(optional=True),
+        "once": Bool(optional=True),
+        "volume": Float(min=0, max=2, optional=True),
+    }
+)
+MUSIC = Obj({"moods": Map(MOOD, min_items=1)})
+
+DATA_FILES.update({"sounds.json": SOUNDS, "music.json": MUSIC})

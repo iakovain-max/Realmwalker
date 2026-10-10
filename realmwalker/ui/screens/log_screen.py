@@ -11,6 +11,7 @@ from realmwalker.ui.widgets import Canvas, ScrollText
 
 class LogScreen(Screen):
     title = "Message log"
+    sound_open = "ui_page"
 
     def __init__(self, app, game: GameState) -> None:
         super().__init__(app)

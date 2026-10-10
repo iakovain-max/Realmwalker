@@ -92,6 +92,7 @@ def spell_detail(game, char, sid: str, target) -> list[str]:
 
 class SpellsScreen(Screen):
     title = "Spells"
+    sound_open = "ui_page"
 
     def __init__(self, app, game, index: int = 0) -> None:
         super().__init__(app)

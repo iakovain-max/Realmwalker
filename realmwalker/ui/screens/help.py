@@ -26,6 +26,7 @@ Everything else — hunger, wounds, factions, dungeons, dragons, death — is be
   <loot>Ctrl 0</>          Default text size
   <loot>F11</>             Fullscreen on/off (also Alt+Enter)
   <loot>F12</>             Save a screenshot (in %APPDATA%\\Realmwalker\\screenshots)
+  <loot>Ctrl M</>          All sound off/on (the volumes, and your own music, are in Settings)
   <loot>Mouse</>           Hover for tooltips, click to choose, wheel to scroll; right-click for what you can do
 
 <title>Playing with the mouse</>
@@ -219,6 +220,7 @@ The game tries never to crash: if something breaks it says so, writes the detail
 
 class HelpScreen(Screen):
     title = "Help"
+    sound_open = "ui_page"
 
     def __init__(self, app) -> None:
         super().__init__(app)
