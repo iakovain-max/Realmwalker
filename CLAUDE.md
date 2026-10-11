@@ -21,7 +21,6 @@ gameplay terms, give Windows click-by-click steps when they must do something, n
 | All tests | `.venv\Scripts\python.exe -m pytest` |
 | Autoplay bot (AI off + mocked AI) | `.venv\Scripts\python.exe tools\autoplay.py --turns 3000` |
 | Mock Player2 server | `.venv\Scripts\python.exe tools\mock_player2.py --port 4316 --mode chaos` |
-| Friend build (tests, exe, smoke check, zip) | double-click `Build_For_Friends.bat` (runs `tools\build_friends.py`) |
 | Balance numbers (fights, cold, wounds) | `.venv\Scripts\python.exe tools\balance.py --runs 60` |
 | Rebuild the tile sheets (after changing tools/*_art.py, figure_*.py) | `.venv\Scripts\python.exe tools\build_tiles.py --pack <Dungeon Crawl Stone Soup Full folder>` (no `--pack`: downloads it) |
 | Rebuild the sounds and the shipped music (after changing tools/build_sounds.py) | `.venv\Scripts\python.exe tools\build_sounds.py` (downloads the CC0 packs into build/sound_packs; `--no-music`: effects only) |
@@ -106,7 +105,7 @@ assets/sounds/, music/     effects (16-bit mono WAV) and the shipped tunes (OGG,
                            tools/build_sounds.py from CC0 packs (Kenney, OpenGameArt, RandomMind) + CREDITS.txt; commit
 music/ (project root)      the PLAYER's own music, by mood folder; made by the game, ignored by git
 tests/                     pytest suite (headless; AI tests use tools/mock_player2.py, never the real app)
-tools/                     autoplay.py, mock_player2.py, build_friends.py, balance.py (the design's targets),
+tools/                     autoplay.py, mock_player2.py, balance.py (the design's targets),
                            build_tiles.py (+ tile_art.py: things drawn in code; figure_art.py: bodies; figure_gear.py:
                            clothes, armour, hair, hats, weapons, shields), build_sounds.py (effects and music)
 ```

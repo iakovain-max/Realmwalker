@@ -1,4 +1,4 @@
-"""Hidden debug console (the ` key). Disabled in friend builds via config.json.
+"""Hidden debug console (the ` key). Switched off by config.json (debug_console).
 
 Commands grow with each milestone; type "help" for the list.
 """

@@ -1,6 +1,6 @@
-"""Where things live on disk, both when running from source and in the packaged build.
+"""Where things live on disk.
 
-Read-only game content (data/, ai/prompts/, assets/) sits in the resource root.
+Read-only game content (data/, assets/) sits in the game's folder (the project folder).
 Player files (settings, saves, logs, screenshots) live in %APPDATA%\\Realmwalker,
 unless a different "home" folder is given (tests and the autoplay bot do this).
 """
@@ -8,28 +8,18 @@ unless a different "home" folder is given (tests and the autoplay bot do this).
 from __future__ import annotations
 
 import os
-import sys
 from pathlib import Path
 
 APP_DIR_NAME = "Realmwalker"
 
 
-def is_frozen() -> bool:
-    """True when running as the packaged Realmwalker.exe."""
-    return bool(getattr(sys, "frozen", False))
-
-
 def resource_root() -> Path:
-    """Folder holding data/, ai/prompts/ and assets/."""
-    if is_frozen():
-        return Path(getattr(sys, "_MEIPASS", Path(sys.executable).parent))
+    """The game's folder: it holds data/ and assets/."""
     return Path(__file__).resolve().parent.parent
 
 
 def install_dir() -> Path:
-    """Folder the game was launched from (next to Realmwalker.exe, or the project root)."""
-    if is_frozen():
-        return Path(sys.executable).resolve().parent
+    """The folder the game is played from (the same as the resource root)."""
     return resource_root()
 
 
@@ -76,8 +66,7 @@ class Paths:
 
     @property
     def music(self) -> Path:
-        """The player's own music: a 'music' folder next to the game (the project folder, or beside Realmwalker.exe),
-        where it is easy to find; in %APPDATA%\\Realmwalker\\music when the game's folder cannot be written to, and in
+        """The player's own music: a 'music' folder in the game's folder, where it is easy to find; in %APPDATA%\\Realmwalker\\music when the game's folder cannot be written to, and in
         the home folder when one is given (tests, the autoplay bot)."""
         if self.custom_home:
             return self.home / "music"
@@ -88,11 +77,8 @@ class Paths:
 
     @property
     def config_file(self) -> Path:
-        """Game-level configuration (Player2 client id, debug switches)."""
-        near_exe = install_dir() / "config.json"
-        if near_exe.exists() or not is_frozen():
-            return near_exe
-        return self.resources / "config.json"
+        """Game-level configuration (debug switches)."""
+        return install_dir() / "config.json"
 
     # --- player files --------------------------------------------------------
     def _ensure(self, path: Path) -> Path:
@@ -123,6 +109,6 @@ class Paths:
     @property
     def logs(self) -> Path:
         # Developers find logs in the project folder; players in %APPDATA%.
-        if self.custom_home or is_frozen():
+        if self.custom_home:
             return self._ensure(self.home / "logs")
         return self._ensure(self.resources / "logs")

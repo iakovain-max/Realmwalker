@@ -8,7 +8,7 @@ and is toned to the game's grim palette. The result is a few sheet images and ti
     python tools/build_tiles.py --pack DIR      (use an unpacked copy: the folder holding dungeon/, monster/, ...)
     python tools/build_tiles.py --preview out.png  (also writes a contact sheet of everything)
 
-Not run by the game or by the friend build: the finished sheets are kept in the repository.
+Not run by the game: the finished sheets are kept in the repository.
 """
 
 from __future__ import annotations

@@ -35,9 +35,6 @@ First, set the environment up (Python 3.12):
 python3 -m venv .venv && .venv/bin/python -m pip install -r requirements.txt
 ```
 
-`requirements.txt` includes `pyinstaller`, which is only used by the Windows packaging step; it installs fine
-and is otherwise ignored.
-
 | Check | Cloud | How |
 |---|---|---|
 | All tests | ✅ | `.venv/bin/python -m pytest -q` (≈950 tests, several minutes) |
@@ -47,7 +44,6 @@ and is otherwise ignored.
 | Rebuild the tile sheets | ✅ | `.venv/bin/python tools/build_tiles.py` (downloads the CC0 Dungeon Crawl pack into `build/`; pure Pillow and numpy). Commit `assets/tiles` afterwards |
 | Rebuild the sounds and music | ✅ | `.venv/bin/python tools/build_sounds.py` (downloads the CC0 packs into `build/sound_packs`). Commit `assets/sounds` and `assets/music`. Nothing can be *heard* up here: judge new sounds by their measurements and say so in the PR |
 | Window smoke test | ⚠️ | Needs a display. Try `SDL_VIDEODRIVER=dummy .venv/bin/python main.py --smoke-test out.png` **once**; if it fails, do not fight it — say in the PR that the window check is owed on Windows |
-| Friend build (`.exe` + zip) | ❌ | PyInstaller would build a Linux binary. Only Anton's Windows machine makes `Realmwalker.zip` |
 | The real Player2 app | ❌ | It lives at `127.0.0.1:4315` on Anton's PC and is not reachable here. **Never** try; a stray call costs him real energy (it happened once, ~15 joules). Tests and the smoke test must always use the mock or the AI off |
 
 ## How to work through a long unattended stretch
@@ -78,8 +74,8 @@ Big sweeping batches are what he wants, and they are safe here because nothing r
    - **What is different when you play** — grouped by theme, in game terms.
    - **How to see it** — for each visible thing, where to look: which screen, which key, whether it needs a fresh
      world or a new character.
-   - **What I could not check here** — the window itself, how it looks, anything needing the real Player2 AI, and
-     the friend build. Say plainly that these are owed on Windows.
+   - **What I could not check here** — the window itself, how it looks, anything needing the real Player2 AI.
+     Say plainly that these are owed on Windows.
    - **Anything you assumed** because you did not stop to ask.
 
 ## Because you cannot see the game
@@ -126,7 +122,7 @@ The full set is in `CLAUDE.md`. These are the ones that bite hardest, and the on
   them out to make a test pass.
 - **Escape anything from the AI or the player** with `markup.escape()`, and use palette names from
   `ui/colors.py` for `<tags>` (`flavor` is a log colour, not a markup tag).
-- **Line endings.** The working copy is LF; `.bat` files and `README_FRIENDS.txt` are CRLF via `.gitattributes`.
+- **Line endings.** The working copy is LF; `.bat` files are CRLF via `.gitattributes`.
   Do not "fix" them.
 - Add new invariants to `tools/autoplay.py` when you add a system, and remember the bot's checks only hold when
   `game.battle is None and game.aftermath is None`.
