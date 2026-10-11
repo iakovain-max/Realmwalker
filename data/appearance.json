@@ -17,19 +17,85 @@
   },
   "mark": ["a badly healed nose", "a burn scar on one hand", "pox scars across the cheeks", "a missing front tooth", "a notched ear", "tattooed knuckles", "a white scar through one eyebrow", "calloused, ink-stained fingers", "a slight limp from an old break", "no distinguishing marks worth a watchman's time"],
   "backstory": {
-    "opening": ["{name} was born in {home}, {years} years ago, in a hard {season} that people there still remember.", "{name} grew up in {home}, the {nth} child of a family with more mouths than bread.", "{name} was raised in {home}, among {culture} folk who expected little of the world and got less."],
-    "middle": ["{background_line}", "{background_line} It left marks that have not faded."],
-    "closing": ["Now {pronoun} is on the road, with {coin} in {possessive} purse and no one to answer to.", "{pronoun_cap} left with a pack, a grudge and a reason not to look back.", "Whatever {pronoun} was, the road does not care; it only asks whether {pronoun} can keep walking."]
+    "opening": [
+      "{name} was born in {home}, {years} years ago, in a hard {season} that people there still remember.",
+      "{name} grew up in {home}, the {nth} child of a family with more mouths than bread.",
+      "{name} was raised in {home}, among {culture} folk who expected little of the world and got less.",
+      "{name} came into the world in {home} in the {season} of a bad year, and was not expected to see the next.",
+      "Ask in {home} and someone will remember {name}: the {nth} of a brood, always somewhere {pronoun} should not be.",
+      "{name} was {years} years in {home} before the road. Most of them were cold, and some were hungry.",
+      "In {home}, where {culture} folk bury their dead facing the hills, {name} was born the {nth} of many.",
+      "{name}'s first memory is of {home} in {season}: smoke, mud, and a voice calling {object} in for supper."
+    ],
+    "middle": [
+      "{background_line}",
+      "{background_line} It left marks that have not faded.",
+      "{background_line} {turn}",
+      "{turn} {background_line}"
+    ],
+    "turn": [
+      "A fever took {possessive} mother the winter {pronoun} turned twelve.",
+      "There was a debt, and then there was no house.",
+      "A brother went to the wars and did not come back; nobody would say how.",
+      "Once, a stranger at the inn told {object} the world was wider than {home}, and {pronoun} never forgot it.",
+      "There was a girl, or a boy, or a promise, and none of it came to anything.",
+      "A flood took the lower fields and half the village with them.",
+      "{pronoun_cap} saw a man hanged at the crossroads and did not sleep for a week.",
+      "Somebody {pronoun} trusted sold {object} out for a handful of silver.",
+      "Raiders came one harvest, and after that {pronoun} kept a knife under {possessive} pillow."
+    ],
+    "closing": [
+      "Now {pronoun} is on the road, with {coin} in {possessive} purse and no one to answer to.",
+      "{pronoun_cap} left with a pack, a grudge and a reason not to look back.",
+      "Whatever {pronoun} was, the road does not care; it only asks whether {pronoun} can keep walking.",
+      "One morning {pronoun} simply went, and the door of {home} has stayed shut behind {object} since.",
+      "{pronoun_cap} owes nobody anything now, and nobody owes {object}, which is a kind of freedom.",
+      "What {pronoun} is looking for, {pronoun} could not tell you. {pronoun_cap} will know it when {pronoun} sees it.",
+      "The road was the only thing that ever asked nothing of {object}, so {pronoun} took it.",
+      "{pronoun_cap} has {coin} and a name nobody knows yet. Both can change."
+    ]
   },
   "background_lines": {
-    "soldier": "Years in the ranks taught {object} to march, to dig, and to keep quiet when officers argued over the dead.",
-    "acolyte": "The temple fed and clothed {object}, and taught {object} its prayers and which of its priests to fear.",
-    "criminal": "Cold nights and quick hands taught {object} a trade the watch would hang {object} for.",
-    "folk_hero": "When trouble came to the village it was {name} who stood up, and the village has never let {object} forget it.",
-    "noble": "Born to a name and land, {name} learned manners, swordplay and the thousand small cruelties of a great house.",
-    "sage": "Long years among books gave {object} learning, bad eyesight and a head full of unanswered questions.",
-    "outlander": "The wild country taught {object} to track, to hunt and to go days without speaking to another soul.",
-    "guild_artisan": "A guild master's beatings and a long apprenticeship made {object} good at a trade that pays badly."
+    "soldier": [
+      "Years in the ranks taught {object} to march, to dig, and to keep quiet when officers argued over the dead.",
+      "{name} served a lord who paid late and fought often, and came out of it with a limp and a habit of counting exits.",
+      "Two campaigns and a siege taught {object} that glory is a word for people who were somewhere else."
+    ],
+    "acolyte": [
+      "The temple fed and clothed {object}, and taught {object} its prayers and which of its priests to fear.",
+      "{name} swept the temple floors for years before anyone let {object} near the altar, and learned more from the floors.",
+      "Raised on psalms and thin soup, {name} knows the rites by heart and has doubts {pronoun} tells nobody."
+    ],
+    "criminal": [
+      "Cold nights and quick hands taught {object} a trade the watch would hang {object} for.",
+      "{name} ran with a gang that sold anything that was not nailed down, and some things that were.",
+      "There is a town where {name}'s face is on a notice by the gate, badly drawn, which is the only luck {pronoun} has had."
+    ],
+    "folk_hero": [
+      "When trouble came to the village it was {name} who stood up, and the village has never let {object} forget it.",
+      "{name} once stood alone in a lane between the village and a band of thieves, and the thieves turned back.",
+      "The villagers still tell how {name} faced down a lord's bailiff, though the story grows every time."
+    ],
+    "noble": [
+      "Born to a name and land, {name} learned manners, swordplay and the thousand small cruelties of a great house.",
+      "{name} is the younger child of a house with more pride than silver, and was always going to have to make {possessive} own way.",
+      "A house feud, an inheritance, a cousin with a better lawyer: {name} kept the name and lost the land."
+    ],
+    "sage": [
+      "Long years among books gave {object} learning, bad eyesight and a head full of unanswered questions.",
+      "{name} copied other men's books by candlelight until {pronoun} began to disagree with them.",
+      "A scholar's apprentice, {name} learned seven dead tongues and not one useful one."
+    ],
+    "outlander": [
+      "The wild country taught {object} to track, to hunt and to go days without speaking to another soul.",
+      "{name} grew up beyond the last farms, where the wolves are bolder than the people and the winters longer than both.",
+      "Herding beasts on the high pastures, {name} learned the weather, the stars and the silence."
+    ],
+    "guild_artisan": [
+      "A guild master's beatings and a long apprenticeship made {object} good at a trade that pays badly.",
+      "{name} learned a craft from a master who drank, and finished the master's work for years without the credit.",
+      "Seven years of apprenticeship, a guild mark, and a workshop that burned down the month {pronoun} opened it."
+    ]
   },
   "looks": {
     "_comment": "How a person looks: chosen at character creation, or read from the words that describe a townsperson (rules/looks.py). Each option has a name (shown when choosing), words (found in a description, they pick it) and say (how it is put in the description written from it; {c} is the colour). races: what each people may have; a people not listed, or a list not given, uses _default, so a new race works before anyone writes its looks. likely: what a random person of that sex usually has (the rest stay choosable); old_colours: hair a young person seldom has. Everything named here must be drawable: colours in data/sprites.json figures, shapes in tools/figure_gear.py (tests/test_looks.py checks).",

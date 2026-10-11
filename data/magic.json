@@ -61,8 +61,26 @@
     "emblems": ["none", "cross", "saltire", "chevron", "pale", "bend", "sun", "moon", "star", "tree", "tower", "beast"]
   },
   "names": {
-    "patterns": ["{base} of {hero}", "{hero}'s {base}", "the {epithet} {base}", "the {base} of {place}", "the {epithet} {base} of {hero}"],
-    "epithets": ["Black", "Weeping", "Oathbound", "Grey", "Last", "Bright", "Hollow", "Red", "Sleepless", "Widow's", "Iron", "Starlit"]
+    "patterns": ["{base} of {hero}", "{hero}'s {base}", "the {epithet} {base}", "the {base} of {place}", "the {epithet} {base} of {hero}", "{hero}'s {epithet} {base}", "the {epithet} {base} of {place}"],
+    "epithets": ["Black", "Weeping", "Oathbound", "Grey", "Last", "Bright", "Hollow", "Red", "Sleepless", "Widow's", "Iron", "Starlit", "Silent", "Ashen", "Bitter", "Moonlit", "Pale", "Thrice-Sold", "Wanderer's", "Gallows", "Cold", "Hungry", "Faithless", "Crowned", "Salt", "Kinslayer's", "Mourning"]
   },
-  "stories": ["It was made for {hero}, and carried at {place} in {year}.", "Taken from the dead at {place}, in the year {year}. The dead did not give it up easily.", "{faction} kept it in a locked room for a hundred years, and then lost it.", "An old smith's masterwork; the smith was hanged, the story says, for what went into it.", "Nobody remembers who made it. Everybody remembers who died holding it."]
+  "stories": ["It was made for {hero}, and carried at {place} in {year}.", "Taken from the dead at {place}, in the year {year}. The dead did not give it up easily.", "{faction} kept it in a locked room for a hundred years, and then lost it.", "An old smith's masterwork; the smith was hanged, the story says, for what went into it.", "Nobody remembers who made it. Everybody remembers who died holding it.",
+              "{hero} carried it at {place} in {year}, and came home, which is more than the others did.",
+              "Forged in a bad winter for {faction}. They say it was quenched in snowmelt and blood.",
+              "It was buried with {hero} after {place}, and did not stay buried.",
+              "Three owners in a single year, in {year}. The third one sold it, and lived.",
+              "{faction} paid a fortune for it in {year}, and then paid more to be rid of it.",
+              "Found in the river below {place} after the floods of {year}, clean, as if it had been waiting.",
+              "It came out of the sack of {place} in {year}, and the soldier who took it never told anyone how.",
+              "Made as a wedding gift, the story says. The marriage did not last the year.",
+              "{hero} would not let it out of reach, even asleep. Nobody knows what they were afraid of.",
+              "It was pawned in {place} in {year} for the price of a winter's bread, and never redeemed.",
+              "The smith who made it put a name into the metal, and the name has worn away.",
+              "A priest at {place} cursed whoever held it, in {year}, and later blessed it again for a fee.",
+              "Given to {hero} by a stranger on the road, they said. They said a lot of things, after.",
+              "It was the price of a truce in {year}. The truce did not outlast it.",
+              "{faction} swore their oaths on it. Most of those oaths were broken.",
+              "It lay in a barrow above {place} for longer than anyone has records, until somebody dug.",
+              "Stolen back and forth between two families for three generations. Both families are gone now.",
+              "Its last owner died old, in bed, in {year}. Nobody who carried it before can say the same."]
 }

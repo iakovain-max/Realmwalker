@@ -339,7 +339,7 @@ LOOKS = Obj({
 APPEARANCE = Obj(
     {
         "hair": Map(word_list(1)), "eyes": word_list(1), "build": Map(word_list(1)), "mark": word_list(1, 120),
-        "backstory": Map(word_list(1, 300)), "background_lines": Map(Str(max_len=400)), "looks": LOOKS,
+        "backstory": Map(word_list(1, 300)), "background_lines": Map(word_list(1, 400)), "looks": LOOKS,
     }
 )
 

@@ -23,66 +23,66 @@
   "kin": ["son", "daughter", "brother", "sister", "husband", "wife", "apprentice"],
   "text": {
     "bounty": {
-      "title": ["Wanted: {target}"],
-      "pitch": ["\"{target} and {gang} have been bleeding the roads dry. Their hole is {site}, {where}. Bring the captain in, or put an end to them, and there's {reward} in it. You have {days} days before the lord sends men who'll burn half the county doing it.\"", "\"There's a price on {target}: {reward}. They hide out at {site}, {where}. Do it inside {days} days.\"", "\"{target}. Captain of {gang}. They have taken three carts and a life this season, out of {site}, {where}. {reward} to whoever ends it, and the lord will hear whose doing it was.\""],
+      "title": ["Wanted: {target}", "The price on {target}", "{gang} must answer"],
+      "pitch": ["\"{target} and {gang} have been bleeding the roads dry. Their hole is {site}, {where}. Bring the captain in, or put an end to them, and there's {reward} in it. You have {days} days before the lord sends men who'll burn half the county doing it.\"", "\"There's a price on {target}: {reward}. They hide out at {site}, {where}. Do it inside {days} days.\"", "\"{target}. Captain of {gang}. They have taken three carts and a life this season, out of {site}, {where}. {reward} to whoever ends it, and the lord will hear whose doing it was.\"", "\"You look like you can use that. {gang} have a camp at {site}, {where}, and {target} gives the orders. End them, or bring the captain back in irons: {reward}. {days} days, then the lord sends the levy.\"", "\"Every carter on this road pays {gang} twice: once in coin, once in fear. {target} is the one who counts it. {site}, {where}. {reward}, and none of us will ask how.\"", "\"{target}. You will hear the name in every inn from here to the hills. Their lot sleeps at {site}, {where}. {reward} for the captain, dead or bound. {days} days.\""],
       "journal": ["{giver} of {town} will pay {reward} for the end of {target}, captain of {gang}, who hides at {site} ({where}). {days} days."],
       "hidden": {"deserters": ["When you reach {site} you understand: the 'outlaws' are soldiers who deserted a lost war, starving and half-mad with it. You could still kill them. You could also talk them into leaving."]},
       "done": ["The captain is dead or taken. {giver} can pay you now."],
       "failed": ["Too late: the lord's men went in after {target} themselves."]
     },
     "clear_lair": {
-      "title": ["The thing in {site}"],
-      "pitch": ["\"Something has moved into {site}, {where}. We've lost stock, and a boy. Clear it out and there's {reward} for you. Soon, mind: {days} days, and then we'll have to leave.\"", "\"{site}, {where}. Whatever lives in it now comes out at night. Go in, kill what you find, and come back. {reward}.\"", "\"Nobody goes near {site} any more, {where}, and now the thing that lives in it has started coming to us. {reward}, and we will drink your health for a year.\""],
+      "title": ["The thing in {site}", "What lives in {site}", "Clear {site}"],
+      "pitch": ["\"Something has moved into {site}, {where}. We've lost stock, and a boy. Clear it out and there's {reward} for you. Soon, mind: {days} days, and then we'll have to leave.\"", "\"{site}, {where}. Whatever lives in it now comes out at night. Go in, kill what you find, and come back. {reward}.\"", "\"Nobody goes near {site} any more, {where}, and now the thing that lives in it has started coming to us. {reward}, and we will drink your health for a year.\"", "\"The shepherds won't take the flocks past {site} any more, {where}. Something lives in it, and it's hungry. {reward} to the one who makes it stop. {days} days.\"", "\"My father said {site} was empty when he was a boy. It isn't now. {where}. Go down, see what's there, and kill it. {reward}.\"", "\"We hear it at night, from {site}, {where}. Scratching, and worse. {reward} if you go in, and {days} days before we pack the carts and go.\""],
       "journal": ["{giver} of {town} wants {site} cleared ({where}). The worst of it will be in the deepest part. {reward}, {days} days."],
       "done": ["{site} is quiet now. Go back to {giver}."],
       "failed": ["You were too slow. The people of {town} have given up on you."]
     },
     "assassinate_vendetta": {
-      "title": ["The death of {target}", "A debt of blood"],
-      "pitch": ["\"{target} killed my {relation}, {kin}. I have waited a long time. {target} sits in {dest}, {where}, and thinks it is forgotten. It is not. {reward}. {days} days.\"", "\"You know what happened to my {relation}. {kin} died {cause}, and the one who did it, {target}, still eats and sleeps in {dest}. Make that stop. {reward}, and nobody will ever hear it from me.\""],
+      "title": ["The death of {target}", "A debt of blood", "What is owed for {kin}"],
+      "pitch": ["\"{target} killed my {relation}, {kin}. I have waited a long time. {target} sits in {dest}, {where}, and thinks it is forgotten. It is not. {reward}. {days} days.\"", "\"You know what happened to my {relation}. {kin} died {cause}, and the one who did it, {target}, still eats and sleeps in {dest}. Make that stop. {reward}, and nobody will ever hear it from me.\"", "\"My {relation} {kin} is in the ground, and {target} walks about {dest}, {where}, as if nothing happened. I want that walking to end. {reward}. {days} days.\"", "\"Every year on the day it happened I light a candle for {kin}. This year I want to light it knowing {target} is dead. {dest}, {where}. {reward}.\""],
       "journal": ["{giver} of {town} wants {target} dead, in {dest} ({where}), for the death of {kin}, {giver}'s {relation}. {reward}, {days} days. The law will call it murder."],
       "done": ["{target} is dead. Go back to {giver} in {town}."],
       "failed": ["Too slow. {giver} has found someone else, or given up waiting."]
     },
     "clear_lair_beast": {
-      "title": ["{beast} of {site}", "The {beast_word} in {site}"],
-      "pitch": ["\"{beast}. Every child here knows the name. It lairs in {site}, {where}, and it has been coming down to us since before my time. It killed {victim}. Kill it, and {reward} is yours, and more thanks than you will know what to do with. {days} days; after that we must find someone else, if there is anyone.\"", "\"There is a {beast_word} in {site}, {where}. They call it {beast}. It took {victim} from us, and it will take more. {reward}, if you bring us word it is dead. {days} days.\"", "\"You have the look of someone who has killed things. Good. {site}, {where}: {beast} lives there, the {beast_word} the songs are about. It killed {victim}. {reward}, and you would be the first to come back.\""],
+      "title": ["{beast} of {site}", "The {beast_word} in {site}", "The end of {beast}"],
+      "pitch": ["\"{beast}. Every child here knows the name. It lairs in {site}, {where}, and it has been coming down to us since before my time. It killed {victim}. Kill it, and {reward} is yours, and more thanks than you will know what to do with. {days} days; after that we must find someone else, if there is anyone.\"", "\"There is a {beast_word} in {site}, {where}. They call it {beast}. It took {victim} from us, and it will take more. {reward}, if you bring us word it is dead. {days} days.\"", "\"You have the look of someone who has killed things. Good. {site}, {where}: {beast} lives there, the {beast_word} the songs are about. It killed {victim}. {reward}, and you would be the first to come back.\"", "\"My grandmother frightened me with {beast} when I was small. I thought it was a story until it took {victim}. It lairs in {site}, {where}. {reward}. {days} days.\"", "\"{beast}, the {beast_word} of {site}. {where}. It killed {victim}, and it will kill again before the year is out. {reward} for the one who ends it, and a song, if you want one.\""],
       "journal": ["{giver} of {town} wants {beast}, the {beast_word} of {site} ({where}), dead. It killed {victim}. It will be in the deepest part. {reward}, {days} days."],
       "done": ["{beast} is dead. Go back to {giver} in {town}."],
       "failed": ["You were too slow. {town} has stopped waiting for you."]
     },
     "hunt_beast": {
-      "title": ["Hunt {beast}"],
-      "pitch": ["\"There's a beast about: {beast}, {beast_what}. Last seen {where}. Kill it and bring me proof. {reward}.\"", "\"{beast}. {beast_what}. It took a man last month and a child's dog this week, {where}. {reward} for its head, and don't come back and tell me it moved on.\"", "\"There is a thing out there — {beast}, they call it now, {beast_what} — {where}. We can't work the fields for watching the treeline. Kill it. {reward}.\""],
+      "title": ["Hunt {beast}", "The hunt for {beast}", "{beast} must die"],
+      "pitch": ["\"There's a beast about: {beast}, {beast_what}. Last seen {where}. Kill it and bring me proof. {reward}.\"", "\"{beast}. {beast_what}. It took a man last month and a child's dog this week, {where}. {reward} for its head, and don't come back and tell me it moved on.\"", "\"There is a thing out there — {beast}, they call it now, {beast_what} — {where}. We can't work the fields for watching the treeline. Kill it. {reward}.\"", "\"We've set snares, we've set dogs on it, we've sat up nights with the bows. {beast} laughs at all of it. {beast_what}. {where}. {reward} if you can do better. {days} days.\"", "\"{beast_what}, and it has a name now: {beast}. That's how you know it's gone too far. {where}. {reward} for the hide.\"", "\"Go and look at what's left of the Hollins' byre and tell me it's only a beast. {beast}. {where}. {reward}, and the whole valley will owe you.\""],
       "journal": ["{giver} of {town} will pay {reward} for the death of {beast}, {beast_what}, last seen {where}. {days} days."],
       "done": ["{beast} is dead. {giver} will want to hear it."],
       "failed": ["{beast} has moved on, or someone else killed it."]
     },
     "deliver": {
-      "title": ["A letter for {recipient_name}"],
-      "pitch": ["\"This goes to {recipient} in {dest}: into their own hands and no one else's. Sealed, and it stays sealed. {reward} when it's done: they'll pay you. {days} days.\"", "\"Take this to {recipient} in {dest}. Don't open it. They'll give you {reward}. {days} days.\"", "\"A letter, for {recipient}, in {dest}. Their hands, nobody else's, seal unbroken. {reward}, and they pay it, not me.\""],
+      "title": ["A letter for {recipient_name}", "To {recipient_name}, by hand", "Sealed, for {recipient_name}"],
+      "pitch": ["\"This goes to {recipient} in {dest}: into their own hands and no one else's. Sealed, and it stays sealed. {reward} when it's done: they'll pay you. {days} days.\"", "\"Take this to {recipient} in {dest}. Don't open it. They'll give you {reward}. {days} days.\"", "\"A letter, for {recipient}, in {dest}. Their hands, nobody else's, seal unbroken. {reward}, and they pay it, not me.\"", "\"Can you carry a letter without reading it? Good. {recipient}, in {dest}. They'll pay you {reward} at the door. {days} days, no more.\"", "\"I would go myself, but my knees and the roads are not friends. {recipient} in {dest} must have this. {reward} from them when it's in their hand.\"", "\"This is for {recipient}, in {dest}, and for nobody else on this earth. If the seal is broken when it gets there, don't come back. {reward}. {days} days.\""],
       "journal": ["Carry a sealed letter from {giver} of {town} to {recipient} in {dest}, who will pay {reward}. {days} days."],
       "hidden": {"incriminating": ["You broke the seal. The letter is from {giver} to {recipient}, and if the lord saw it, {giver} would hang: it names names, and prices. You could still deliver it. You could take it to the lord of {town}. Or you could ask {giver} what it's worth to them."]},
       "done": ["The letter is delivered."],
       "failed": ["The letter is too late to matter now."]
     },
     "retrieve": {
-      "title": ["{item}"],
-      "pitch": ["\"{item} lies in {site}, {where}. It was ours, once. Bring it back and there's {reward} in it.\"", "\"You've heard of {item}? It's in {site}, {where}, if the stories are true. I want it. {reward}.\"", "\"{item}. It went into {site}, {where}, with a man who did not come out. I am old and I would like to see it once more. {reward}.\""],
+      "title": ["{item}", "Bring back {item}", "What lies in {site}"],
+      "pitch": ["\"{item} lies in {site}, {where}. It was ours, once. Bring it back and there's {reward} in it.\"", "\"You've heard of {item}? It's in {site}, {where}, if the stories are true. I want it. {reward}.\"", "\"{item}. It went into {site}, {where}, with a man who did not come out. I am old and I would like to see it once more. {reward}.\"", "\"My family had {item} for six generations, until it was lost in {site}, {where}. I would see it home before I die. {reward}.\"", "\"There's a thing in {site}, {where}: {item}. Don't sell it, don't keep it. Bring it to me and there's {reward} in your hand. {days} days.\"", "\"{item}. They say it's still down there, in {site}, {where}, under whatever killed the last man who went for it. {reward}.\""],
       "journal": ["{giver} of {town} wants {item}, which lies somewhere in {site} ({where}). {reward}. {days} days."],
       "done": ["You have {item}. Take it to {giver}."],
       "failed": ["{giver} has lost patience, and hope."]
     },
     "rescue": {
-      "title": ["Bring back {captive}"],
-      "pitch": ["\"They took my {kin}, {captive}. Dragged off to {site}, {where}. I have {reward}, all of it; it's yours if you bring them home. Please. {days} days, and they'll be dead.\"", "\"{captive}. My {kin}. They came in the night and took them to {site}, {where}. I have {reward} and a mule I could sell. Bring them back. {days} days, they said, and after that I stop hoping.\"", "\"Nobody will go. I asked. {captive} is at {site}, {where}, and every hour you stand there is an hour they are still there. {reward}. Please.\""],
+      "title": ["Bring back {captive}", "{captive} must come home", "Taken to {site}"],
+      "pitch": ["\"They took my {kin}, {captive}. Dragged off to {site}, {where}. I have {reward}, all of it; it's yours if you bring them home. Please. {days} days, and they'll be dead.\"", "\"{captive}. My {kin}. They came in the night and took them to {site}, {where}. I have {reward} and a mule I could sell. Bring them back. {days} days, they said, and after that I stop hoping.\"", "\"Nobody will go. I asked. {captive} is at {site}, {where}, and every hour you stand there is an hour they are still there. {reward}. Please.\"", "\"My {kin}, {captive}. Taken, and the watch shrugs. {site}, {where}. Please. I have {reward}, and I will find more. {days} days.\"", "\"Don't tell me there's no hope. {captive} is alive in {site}, {where}, I know it. Bring my {kin} back to me. {reward}, every coin I have.\"", "\"They left a sign on the door, and by morning my {kin} was gone. {captive}. {site}, {where}. {reward}, and my prayers, for whatever they are worth.\""],
       "journal": ["{captive}, {giver}'s {kin}, is held at {site} ({where}). Bring them home to {town}. {reward}. {days} days."],
       "done": ["{captive} is free and follows you. Take them home to {town}."],
       "failed": ["It was too late for {captive}."]
     },
     "collect_debt": {
-      "title": ["{debtor_name}'s debt"],
-      "pitch": ["\"{debtor} in {dest}, owes me {debt} and has for a year. Get it out of them and a quarter is yours. I don't much care how.\"", "\"There is money owed me: {debt}, by {debtor} in {dest}. I am not a hard man, but I am not a rich one either. Go and get it, and keep a quarter.\"", "\"{debtor} in {dest} has had a year of my patience and {debt} of my money. Bring me what you can of it, and a quarter of it is yours.\""],
+      "title": ["{debtor_name}'s debt", "Money owed by {debtor_name}", "Collecting from {debtor_name}"],
+      "pitch": ["\"{debtor} in {dest}, owes me {debt} and has for a year. Get it out of them and a quarter is yours. I don't much care how.\"", "\"There is money owed me: {debt}, by {debtor} in {dest}. I am not a hard man, but I am not a rich one either. Go and get it, and keep a quarter.\"", "\"{debtor} in {dest} has had a year of my patience and {debt} of my money. Bring me what you can of it, and a quarter of it is yours.\"", "\"{debtor} in {dest} borrowed {debt} from me and smiled while doing it. Get it back. A quarter is yours, and I won't ask what you said to them.\"", "\"I lent {debtor}, in {dest}, {debt} when they were desperate. Now I am the desperate one. Bring back what you can; keep a quarter.\"", "\"A debt is a debt. {debtor}, {dest}, {debt}. They will tell you hard times. Everyone has hard times. A quarter of whatever you bring is yours.\""],
       "journal": ["{debtor} in {dest}, owes {giver} of {town} {debt}. A quarter of it is yours if you collect. {days} days."],
       "hidden": {"destitute": ["{debtor_name} has nothing. The house is bare, and there are children. You could still take what little there is."]},
       "done": ["You have the money. Take it to {giver}."],
@@ -94,67 +94,67 @@
     "feud": {"givers": ["headman", "priest", "innkeeper", "lord"], "reward": [1200, 4000], "days": [10, 25], "standing": 6, "xp": 200, "hidden": {}},
     "steal": {"givers": ["shopkeeper", "market_trader", "innkeeper", "smith"], "reward": [2000, 7000], "days": [10, 25], "standing": 4, "xp": 250, "hidden": {"framed": 0.25}},
     "smuggle": {
-      "title": ["A crate for {recipient_name}"],
-      "pitch": ["\"There is a crate. It goes to {recipient} in {dest}, and it does not go past the gate wardens, because they would take it and hang me with the rope it came tied in. Keep it out of sight, get it there, and there's {reward}. {days} days.\"", "\"{dest}. {recipient}. One crate, no questions, and it is not to be opened. {reward} when it is delivered. If the watch takes it, we never met.\""],
+      "title": ["A crate for {recipient_name}", "Past the wardens", "Delivery for {recipient_name}"],
+      "pitch": ["\"There is a crate. It goes to {recipient} in {dest}, and it does not go past the gate wardens, because they would take it and hang me with the rope it came tied in. Keep it out of sight, get it there, and there's {reward}. {days} days.\"", "\"{dest}. {recipient}. One crate, no questions, and it is not to be opened. {reward} when it is delivered. If the watch takes it, we never met.\"", "\"Don't ask what's in it, and don't let the gate wardens ask either. {recipient}, in {dest}. {reward}. {days} days.\"", "\"A crate for {recipient} in {dest}. If anyone lifts the lid, drop it and run. {reward}, paid on arrival.\"", "\"The wardens at {dest} search everything with a cart under it. Be cleverer than that. {recipient} is waiting. {reward}. {days} days.\""],
       "journal": ["Carry a sealed crate to {recipient} in {dest} ({where}) for {giver} of {town}, without the gate wardens finding it. It is heavy. {reward}. {days} days."],
       "done": ["The crate is delivered, and nobody asked what was in it."],
       "failed": ["The crate is gone, and so is the money."]
     },
     "defend": {
-      "title": ["Stand with {town} when they come"],
-      "pitch": ["\"They came last year and they will come again: {raiders}, down out of {where}. We have hayforks and one old sword. Be here when it happens — {when} — and stand with us, and the village will give you {reward}. It is everything we have.\"", "\"{raiders} are coming for {town}. Not today; {when}. If there is a sword in this place that day, we might keep our roofs. {reward}, and our thanks, which are worth less.\""],
+      "title": ["Stand with {town} when they come", "When {raiders} come", "Hold {town}"],
+      "pitch": ["\"They came last year and they will come again: {raiders}, whose camp lies {where}. We have hayforks and one old sword. Be here when it happens — {when} — and stand with us, and the village will give you {reward}. It is everything we have.\"", "\"{raiders} are coming for {town}. Not today; {when}. If there is a sword in this place that day, we might keep our roofs. {reward}, and our thanks, which are worth less.\"", "\"{raiders} will be here {when}. Last time they took the harvest and burned the mill. Stand with us. {reward}, everything we have.\"", "\"We have a wall of hurdles and a dozen men who can swing a flail. {raiders} have horses and blades, and they come {when}. {reward} if you will stand at the gate with us.\"", "\"I won't beg. {raiders}, {when}. Be here or don't. If you are, {reward}, and a bed in this town for the rest of your life.\""],
       "journal": ["{raiders} will fall on {town} {when}. Be in {town} on the day and fight them off. {giver} will pay {reward}. If you are not there, the village burns."],
       "done": ["{town} still stands, and the dead in the street are theirs, not ours."],
       "failed": ["They came to {town}, and you were somewhere else."]
     },
     "escort": {
-      "title": ["Take {traveller} to {dest}"],
-      "pitch": ["\"{traveller} has to reach {dest}, and the roads are what they are. Walk with them, keep them breathing, and they'll pay you {reward} when you get there. {days} days.\"", "\"I'll not send {traveller} out alone. Go with them as far as {dest} and there's {reward} in it at the other end.\"", "\"{traveller} goes to {dest}, and the roads are what they are this year. Walk with them. {reward} at the far end, from their own purse.\""],
+      "title": ["Take {traveller} to {dest}", "The road to {dest}", "Safe to {dest}"],
+      "pitch": ["\"{traveller} has to reach {dest}, and the roads are what they are. Walk with them, keep them breathing, and they'll pay you {reward} when you get there. {days} days.\"", "\"I'll not send {traveller} out alone. Go with them as far as {dest} and there's {reward} in it at the other end.\"", "\"{traveller} goes to {dest}, and the roads are what they are this year. Walk with them. {reward} at the far end, from their own purse.\"", "\"{traveller} needs to be in {dest}, and alive when they get there. The roads have taken two this month. {reward} from them at the far end. {days} days.\"", "\"I'd feel better with a blade beside {traveller} on the road to {dest}. Yours will do. {reward}, paid when you arrive.\"", "\"{traveller} can't fight and won't stay. {dest}, {days} days at most. Keep them breathing and they'll pay {reward}.\""],
       "journal": ["{traveller} is walking with you to {dest} ({where}). They pay {reward} on arrival. If you are beaten on the road, they will not survive it. {days} days."],
       "hidden": {"hunted": ["{traveller} tells you, somewhere past the second night, why they are really leaving: there are people behind them who would rather they never arrived."]},
       "done": ["{traveller} is safe in {dest}."],
       "failed": ["{traveller} will not be reaching {dest} now."]
     },
     "assassinate": {
-      "title": ["{target} must die"],
-      "pitch": ["\"There is a man in {dest} called {target}. I want him dead, and I want it quiet. {reward}, and we never spoke. {days} days.\"", "\"{target}, in {dest}. Do it however you like, but do it. {reward} when I hear they are in the ground.\""],
+      "title": ["{target} must die", "A quiet death in {dest}", "The end of {target}"],
+      "pitch": ["\"There is someone in {dest} called {target}. I want them dead, and I want it quiet. {reward}, and we never spoke. {days} days.\"", "\"{target}, in {dest}. Do it however you like, but do it. {reward} when I hear they are in the ground.\"", "\"Somebody in {dest} called {target} has lived too long. Make it look like bad luck, if you can. {reward}. {days} days.\"", "\"{target}. {dest}. I will not say why and you will not ask. {reward} when the bells ring for them, and not a word, ever.\"", "\"I need {target} gone. {dest} is not far. {reward}, half of it now in spirit and all of it after in coin. {days} days.\""],
       "journal": ["{giver} of {town} is paying {reward} for the death of {target}, in {dest} ({where}). {days} days. Murder is murder, and the law is the law."],
       "hidden": {"innocent": ["Face to face with {target}, the story falls apart: they are no rival and no traitor, only someone who saw or refused something. {giver} lied to you. You can still do it. You can also tell them who paid."]},
       "done": ["{target} is dead."],
       "failed": ["{target} is still breathing, and {giver} has found someone else."]
     },
     "cure": {
-      "title": ["The sickness in {town}"],
-      "pitch": ["\"It is in half the houses now, and I have nothing left to give them. Bring me {count} lots of healing herbs — the hills have them, or a healer will sell them — and I can hold this back. {reward}, everything the parish has. {days} days.\"", "\"Three houses have it and the fourth is coughing. I need herbs — {count} lots, no less — and I need them before the week is out. Take {reward}; the parish will not miss what it cannot spend on funerals.\""],
+      "title": ["The sickness in {town}", "Herbs for {town}", "The fever in {town}"],
+      "pitch": ["\"It is in half the houses now, and I have nothing left to give them. Bring me {count} lots of healing herbs — the hills have them, or a healer will sell them — and I can hold this back. {reward}, everything the parish has. {days} days.\"", "\"Three houses have it and the fourth is coughing. I need herbs — {count} lots, no less — and I need them before the week is out. Take {reward}; the parish will not miss what it cannot spend on funerals.\"", "\"The fever is in {town}, and my shelves are bare. {count} lots of healing herbs. A healer will sell them, or the hills will give them up. {reward}. {days} days, or we will be burying the young.\"", "\"I have buried four this week. Bring me {count} lots of herbs, anything that heals, and I may bury no more. {reward}.\"", "\"I am no healer, but I know what one needs: herbs, {count} lots of them, and soon. {days} days. {reward}, from the alms box and my own purse.\""],
       "journal": ["{giver} of {town} needs {count} lots of healing herbs to fight the sickness here. Forage for them, or buy them from a healer. {reward}. {days} days."],
       "done": ["You have the herbs. Take them to {giver}."],
       "failed": ["The sickness in {town} took its course without you."]
     },
     "feud": {
-      "title": ["{one} and {two}"],
-      "pitch": ["\"{one} and {two} have not spoken in two years, and the whole place is taking sides. Talk to them both. Get it settled, however you have to. {reward} for peace and quiet. {days} days.\"", "\"{one} will not sit in the same room as {two}, and between them they own half this town. It is making everybody's life a misery. Fix it, however you like, and there's {reward}.\""],
+      "title": ["{one} and {two}", "Peace in {town}", "Between {one} and {two}"],
+      "pitch": ["\"{one} and {two} have not spoken in two years, and the whole place is taking sides. Talk to them both. Get it settled, however you have to. {reward} for peace and quiet. {days} days.\"", "\"{one} will not sit in the same room as {two}, and between them they own half this town. It is making everybody's life a misery. Fix it, however you like, and there's {reward}.\"", "\"Someone has to make {one} and {two} shake hands before one of them puts a knife in the other. You're a stranger: they might listen to you. {reward}. {days} days.\"", "\"{one} says {two} moved a boundary stone. {two} says {one} poisoned a well. Neither will back down. End it. {reward}.\"", "\"Half of {town} drinks with {one}, the other half with {two}, and the inn has had its windows broken twice. Sort it out. {reward}. {days} days.\""],
       "journal": ["{one} and {two}, both of {town}, are feuding. Talk each of them round (persuasion, or money). {giver} pays {reward}. {days} days."],
       "done": ["{one} and {two} will speak to each other again. {giver} owes you {reward}."],
       "failed": ["The quarrel between {one} and {two} has gone past talking."]
     },
     "steal": {
-      "title": ["{item}, from {mark}"],
-      "pitch": ["\"{mark} carries {item}. I want it. Lift it, don't ask why, and there's {reward} in it. Get caught and I never heard of you. {days} days.\"", "\"{mark}, in {dest}, carries {item}. I want it in my hand by {days} days from now, and I want to be able to say I never asked. {reward}.\""],
+      "title": ["{item}, from {mark}", "Lift {item}", "A light touch in {dest}"],
+      "pitch": ["\"{mark} carries {item}. I want it. Lift it, don't ask why, and there's {reward} in it. Get caught and I never heard of you. {days} days.\"", "\"{mark}, in {dest}, carries {item}. I want it in my hand by {days} days from now, and I want to be able to say I never asked. {reward}.\"", "\"{mark} in {dest} has {item}, and should not. Relieve them of it. {reward}, and if the watch asks, you were never here. {days} days.\"", "\"You have quick hands; I watched you. {mark}, in {dest}, carries {item}. I'd like it. {reward}.\"", "\"{item}. {mark} keeps it close, in {dest}. Not close enough. {reward} when it's in my hand, {days} days from now at most.\""],
       "journal": ["Lift {item} from {mark} in {dest} ({where}) for {giver} of {town}: get close, and pick their pocket. {reward}. {days} days."],
       "hidden": {"framed": ["Looking at {item} properly, you understand what it is: not {giver}'s property at all. Handing it over makes you part of something; handing it to the law makes you an informer."]},
       "done": ["You have {item}. Now get it to {giver}."],
       "failed": ["{mark} knows to watch their pockets now."]
     },
     "slay_dragon": {
-      "title": ["Kill {dragon}"],
-      "pitch": ["\"You have heard of {dragon}. Everyone has. It lairs at {site}, {where}, and it comes down when it pleases: cattle, roofs, children. The treasury will pay {reward} to whoever brings me its head, and I will say the words over your graves myself if it goes badly.\"", "\"{dragon}. A {colour} wyrm, old as the hills, sleeping at {site}, {where}. We have paid it in cattle for years. I would rather pay {reward} once, to you, and be done.\""],
+      "title": ["Kill {dragon}", "The death of {dragon}", "Against {dragon}"],
+      "pitch": ["\"You have heard of {dragon}. Everyone has. It lairs at {site}, {where}, and it comes down when it pleases: cattle, roofs, children. The treasury will pay {reward} to whoever brings me its head, and I will say the words over your graves myself if it goes badly.\"", "\"{dragon}. A {colour} wyrm, old as the hills, sleeping at {site}, {where}. We have paid it in cattle for years. I would rather pay {reward} once, to you, and be done.\"", "\"Every spring we drive the fattest cattle up to {site}, {where}, and every spring {dragon} takes them and burns the barns anyway. The treasury will give {reward} to whoever ends it. {days} days.\"", "\"I will not lie to you: nobody who went up to {site} has come back. {dragon} is a {colour} wyrm and older than the kingdom. {reward}, and your name in every song for a hundred years.\""],
       "journal": ["{giver} of {town} will pay {reward} for the death of {dragon}, which lairs at {site} ({where}). Its hoard is its own. {days} days."],
       "done": ["{dragon} is dead. The world will hear of it. {giver} owes you {reward}."],
       "failed": ["{dragon} still sleeps at {site}, and {giver} has stopped speaking of it."]
     },
     "investigate": {
-      "title": ["The missing of {town}"],
-      "pitch": ["\"People are going missing. Three this season. Nobody saw anything, which means somebody saw everything. Find out where they go. {reward}.\"", "\"Four this season. A carter, two girls from the north end, and my own brother. The watch says wolves. Wolves do not take a grown man out of a locked house. Find out where they go: {reward}.\"", "\"Ask around. Quietly. People are going and not coming back, and somebody in this town knows why and is not saying. {reward} if you find out where.\""],
+      "title": ["The missing of {town}", "The vanished of {town}", "Where they go"],
+      "pitch": ["\"People are going missing. Three this season. Nobody saw anything, which means somebody saw everything. Find out where they go. {reward}.\"", "\"Four this season. A carter, two girls from the north end, and my own brother. The watch says wolves. Wolves do not take a grown man out of a locked house. Find out where they go: {reward}.\"", "\"Ask around. Quietly. People are going and not coming back, and somebody in this town knows why and is not saying. {reward} if you find out where.\"", "\"The miller's girl. The tanner's apprentice. A pedlar nobody knew. All gone, and the watch is paid not to care. Find out where they go. {reward}.\"", "\"There are fewer of us every month, and the doors were locked from inside. Someone in {town} knows. Find them. {reward}. {days} days.\"", "\"I hear singing at night, from somewhere under the town. Then someone else is gone. Find out what it is, stranger. {reward}.\""],
       "journal": ["People are disappearing from {town}. Ask around the town (the ordinary folk see most), then find where they are taken. {giver} will pay {reward}. {days} days."],
       "clue": ["\"The missing? ... They say there's lights at night out {where}, at {site}. I never said that.\""],
       "done": ["You know where the missing went: {site}, and {cult}. Tell {giver}, or finish it yourself first."],

@@ -245,8 +245,10 @@ class CharacterBuilder:
             "pronoun": he, "pronoun_cap": he.capitalize(), "object": him, "possessive": his,
             "coin": "a few coins",
         }
-        values["background_line"] = textgen.fill(a["background_lines"][self.background], self.rng, {}, values)
-        parts = [textgen.fill(self.rng.choice(a["backstory"][k]), self.rng, {}, values) for k in ("opening", "middle", "closing")]
+        lines = a["background_lines"].get(self.background) or ["{name} learned a trade, and then left it."]
+        values["background_line"] = textgen.fill(self.rng.choice(lines), self.rng, {}, values)
+        tables = a["backstory"]
+        parts = [textgen.fill(self.rng.choice(tables[k]), self.rng, tables, values) for k in ("opening", "middle", "closing")]
         return {
             "backstory": " ".join(parts),
             "personality": self.rng.choice(bg["personality"]),
