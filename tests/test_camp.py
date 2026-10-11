@@ -180,6 +180,7 @@ def test_butchering_beasts_after_a_fight(game):
 
 
 # ---------------------------------------------------------------------------- travel events
+@pytest.mark.slow
 def test_every_event_and_option_can_be_played(game):
     c = game.leader
     c.money = 100000

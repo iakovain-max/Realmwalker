@@ -18,7 +18,9 @@ gameplay terms, give Windows click-by-click steps when they must do something, n
 | Get the newest version and play | double-click `Update_And_Play.bat` (git pull, then `Play.bat`) |
 | Run from a terminal | `.venv\Scripts\python.exe main.py` |
 | Window smoke test (opens, tours screens, screenshots, exits) | `.venv\Scripts\python.exe main.py --smoke-test out.png` |
-| All tests | `.venv\Scripts\python.exe -m pytest` |
+| Developer tools (once) | `.venv\Scripts\python.exe -m pip install -r requirements-dev.txt` (pytest-xdist, pypdf, pypdfium2) |
+| All tests, in parallel | `.venv\Scripts\python.exe -m pytest -n auto` (about 2.5 minutes) |
+| Quick tests while working | `.venv\Scripts\python.exe -m pytest -n auto -m "not slow"` (mark long tests `@pytest.mark.slow`) |
 | Autoplay bot | `.venv\Scripts\python.exe tools\autoplay.py --turns 3000` |
 | Balance numbers (fights, cold, wounds) | `.venv\Scripts\python.exe tools\balance.py --runs 60` |
 | Rebuild the tile sheets (after changing tools/*_art.py, figure_*.py) | `.venv\Scripts\python.exe tools\build_tiles.py --pack <Dungeon Crawl Stone Soup Full folder>` (no `--pack`: downloads it) |

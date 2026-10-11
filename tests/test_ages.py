@@ -208,6 +208,7 @@ def test_an_age_is_named_for_what_set_it_apart(tables):
     assert judge.theme(150, 200) == "peace"
 
 
+@pytest.mark.slow
 def test_great_realms_still_go_to_war_late_in_a_long_history(tables):
     """Once the land had grown into a few great realms whose seats lay far apart, the wars stopped for good; their
     borders touch, and that is enough to fight over."""
@@ -222,6 +223,7 @@ def test_great_realms_still_go_to_war_late_in_a_long_history(tables):
 # ---------------------------------------------------------------------------- today, at every size and length
 @pytest.mark.parametrize("size,years,seed", [("small", 100, 4), ("medium", 500, 8), ("large", 250, 2),
                                              ("small", 1000, 6)])
+@pytest.mark.slow
 def test_today_has_the_shape_the_game_needs(tables, size, years, seed):
     w = make(tables, seed, size, years)
     kinds = {f.kind for f in fx.active_factions(w)}

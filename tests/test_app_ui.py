@@ -294,6 +294,7 @@ def test_battle_screens_render_at_every_size(make_app, size):
     assert app.error_count == 0
 
 
+@pytest.mark.slow
 def test_many_fights_through_the_screens(make_app):
     import random
 
@@ -487,6 +488,7 @@ def test_inventory_eats_and_drinks(make_app):
     assert app.error_count == 0
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("size", SIZES)
 def test_camp_event_and_trade_screens(make_app, size):
     import random

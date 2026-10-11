@@ -43,6 +43,7 @@ def start(tables, world, background="soldier", seed=1):
     return new_game(w, tables, char, start_settlement=home.id)
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("seed,size", [(11, "medium"), (3, "small"), (21, "large")])
 def test_every_world_has_its_powers(tables, seed, size):
     w = WorldGenerator(WorldOptions("Powers", seed, size), tables).generate()

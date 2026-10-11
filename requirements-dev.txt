@@ -1,0 +1,8 @@
+# Tools for working on the game (not needed to play it):
+#   .venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+# pytest-xdist runs the tests in parallel (pytest -n auto); pypdf and pypdfium2 read Anton's D&D books for the
+# expansion codex (tools/codex/extract.py).
+-r requirements.txt
+pytest-xdist==3.8.0
+pypdf==6.20.0
+pypdfium2==5.14.0

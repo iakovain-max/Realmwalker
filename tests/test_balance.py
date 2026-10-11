@@ -9,6 +9,8 @@ import pytest
 from realmwalker.world.tables import Tables
 from tools import balance
 
+pytestmark = pytest.mark.slow  # the balance runs fight many battles
+
 
 @pytest.fixture(scope="module")
 def tables(data):

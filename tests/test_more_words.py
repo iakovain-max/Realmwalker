@@ -33,6 +33,7 @@ def test_strangers_are_described_in_more_than_two_shapes(data):
         assert len(spec["story"]) >= 3, arch
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("dead", [1, 3])
 def test_the_dead_take_the_right_verb(data, dead):
     """"The wolf lies still", "Three wolves lie still" (it used to be "The wolf lie still")."""

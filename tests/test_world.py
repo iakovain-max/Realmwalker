@@ -32,6 +32,7 @@ def test_same_seed_same_world(tables):
     assert not np.array_equal(a.elevation, c.elevation)
 
 
+@pytest.mark.slow
 def test_large_world_is_quick(tables):
     start = time.monotonic()
     WorldGenerator(WorldOptions("Big", 5, "large"), tables).generate()

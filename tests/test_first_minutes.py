@@ -121,6 +121,7 @@ def test_a_death_reads_after_a_name(cause, reads):
     assert death.how_they_died(cause) == reads
 
 
+@pytest.mark.slow
 def test_ties_never_say_the_the_or_master_master(tables):
     from realmwalker.rules.creation import make_ties, starting_places
     from realmwalker.world.generator import WorldGenerator, WorldOptions
@@ -165,6 +166,7 @@ SLIPS = {
 }
 
 
+@pytest.mark.slow
 def test_nothing_on_screen_reads_wrong_during_a_run(tmp_path, monkeypatch):
     """The bot plays for a while; nothing drawn may carry an internal id or one of the slips fixed above."""
     import re

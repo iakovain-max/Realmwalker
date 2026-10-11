@@ -84,6 +84,7 @@ def joined(game, uid):
 
 
 # ---------------------------------------------------------------------------- the same seven, everywhere
+@pytest.mark.slow
 @pytest.mark.parametrize("seed,size", [(21, "medium"), (5, "small"), (99, "large")])
 def test_the_seven_are_in_every_world(tables, seed, size):
     w = WorldGenerator(WorldOptions("Anywhere", seed, size), tables).generate()

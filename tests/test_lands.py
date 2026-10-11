@@ -78,6 +78,7 @@ def test_the_wild_has_its_dangers_in_every_new_land(tables):
         assert met - {None}, bid
 
 
+@pytest.mark.slow
 def test_each_kind_of_world_looks_like_itself(worlds):
     for (land, climate), w in worlds.items():
         assert (w.meta.land, w.meta.climate) == (land, climate)

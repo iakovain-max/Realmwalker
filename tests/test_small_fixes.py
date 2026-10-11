@@ -37,6 +37,7 @@ def test_a_band_that_sees_you_takes_the_right_verb(tables):
     assert all(isinstance(_one(n), bool) for n in names)
 
 
+@pytest.mark.slow
 def test_every_piece_of_work_leaves_time_for_the_real_walk(game):
     checked = 0
     for s in game.world.settlements[:25]:

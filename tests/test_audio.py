@@ -80,6 +80,7 @@ def test_every_sound_the_code_asks_for_exists(data):
     assert not asked - known, sorted(asked - known)
 
 
+@pytest.mark.slow
 def test_shipped_music_is_in_mood_folders_and_evened_out(data):
     moods = data["music.json"]["moods"]
     tunes = sorted(MUSIC.rglob("*.ogg"))
