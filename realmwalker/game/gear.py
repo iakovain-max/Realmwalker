@@ -210,7 +210,7 @@ def snare_item(game):
 
 
 def snare_problem(game) -> str | None:
-    from realmwalker.game.camp import land
+    from realmwalker.game.camp import by_land
 
     if snare_item(game) is None:
         return "you have no snares or trap"
@@ -218,7 +218,7 @@ def snare_problem(game) -> str | None:
         return "not in a town"
     if game.local is not None and game.local.kind == "dungeon":
         return "not under the ground"
-    if land(game) not in game.tables.camping.get("hunt", {}):
+    if by_land(game, game.tables.camping.get("hunt", {})) is None:
         return "there is no game here"
     return None
 
@@ -242,14 +242,14 @@ def set_snares(game) -> list[str]:
 def check_snares(game) -> list[str]:
     """After a night's sleep: is there anything in them? A Survival check against the land's hunting DC; snares take
     only small game, a hunting trap anything."""
-    from realmwalker.game.camp import camp_here, check, land
+    from realmwalker.game.camp import by_land, camp_here, check
 
     camp = camp_here(game)
     if camp is None or not camp.snares:
         return []
     def_id, camp.snares = camp.snares, ""
     spec = (game.tables.items.get(def_id).get("use") or {}).get("snare", {})
-    hunt = game.tables.camping.get("hunt", {}).get(land(game))
+    hunt = by_land(game, game.tables.camping.get("hunt", {}))
     if hunt is None:
         return []
     winter = 2 if game.moment.season == "winter" else 0

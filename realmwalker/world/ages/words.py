@@ -101,14 +101,17 @@ class Words:
         return name, epithet
 
     def artifact_name(self, kind: str, culture: str, maker_name: str = "") -> str:
+        """A treasure's name, often in its makers' manner ('Leg-Biter', 'the Sword of the Seven Lamps')."""
         a = self.s.data["artifacts"]
         word = a["kinds"][kind]["word"]
-        kennings = a["kennings"].get(kind) or a["kennings"]["_any"]
+        own = a.get("cultures", {}).get(culture)
+        source = own if own is not None and self.s.r.chance(0.65) else a
+        kennings = source["kennings"].get(kind) or source["kennings"].get("_any") or a["kennings"]["_any"]
         patterns = [f"the {word} of {{of}}", "{kenning}", f"the {{adj}} {word}"]
         for _ in range(12):
             pattern = self.s.r.choice(patterns)
-            name = self.fill(pattern, of=self.s.r.choice(a["of"]), kenning=self.s.r.choice(kennings),
-                             adj=self.s.r.choice(a["adjectives"]))
+            name = self.fill(pattern, of=self.s.r.choice(source["of"]), kenning=self.s.r.choice(kennings),
+                             adj=self.s.r.choice(source["adjectives"]))
             if name not in self.used:
                 break
         self.used.add(name)

@@ -83,8 +83,11 @@ class Gpu:
             tex = self.r.upload_texture(np.ascontiguousarray(arr))
             tex.blend_mode = BlendMode.BLEND
             tex.scale_mode = ScaleMode.LINEAR if cmd.smooth else ScaleMode.NEAREST
-            entry = self._images[cmd.key] = [tex, self.frame]
+            entry = self._images[cmd.key] = [tex, self.frame, cmd.smooth]
         entry[1] = self.frame
+        if entry[2] != cmd.smooth:  # the same picture, shown sharp now (enlarged) and smooth now (shrunk)
+            entry[0].scale_mode = ScaleMode.LINEAR if cmd.smooth else ScaleMode.NEAREST
+            entry[2] = cmd.smooth
         return entry[0]
 
     def drop_image(self, key) -> None:

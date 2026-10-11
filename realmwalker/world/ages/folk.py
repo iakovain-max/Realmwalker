@@ -20,6 +20,9 @@ class Folk:
     def __init__(self, sim) -> None:
         self.s = sim
         self.cultures = sim.t.names["cultures"]
+        from realmwalker.world.names import forge
+
+        self.forge = forge(sim.w, sim.t)
         pol = sim.t.politics
         self.lifespan = pol["lifespan"]
         m = pol["mortality"]
@@ -51,21 +54,12 @@ class Folk:
 
     # ------------------------------------------------------------------ making people
     def first_name(self, culture: str, sex: str, avoid=()) -> str:
-        names = (self.cultures.get(culture) or self.cultures["heartland"])[sex]
-        first = self.s.r.choice(names)
-        for _ in range(6):
-            if first not in avoid:
-                break
-            first = self.s.r.choice(names)
-        return first
+        return self.forge.given(culture, sex, self.s.r, avoid)
 
     def family_name(self, culture: str) -> str:
         """A family name for someone new: not one of the ruling houses' (a commoner called Grimstad would be taken
         for a prince)."""
-        names = (self.cultures.get(culture) or self.cultures["heartland"])["family"]
-        houses = self.s.fm.__dict__.get("used_families", set())
-        options = [n for n in names if n not in houses] or names
-        return self.s.r.choice(options)
+        return self.forge.family_base(culture, self.s.r, avoid=self.s.fm.__dict__.get("used_families", set()))
 
     def person(self, culture: str, *, born: int, sex: str | None = None, family: str | None = None,
                race: str | None = None, faction=None, role: str = "member", job: str = "", home: str = "",
@@ -77,10 +71,14 @@ class Folk:
         first = first or self.first_name(culture, sex)
         family = family if family is not None else self.family_name(culture)
         traits = r.sample(self.traits, 2)
-        fig = fx.Figure(id=w.next_figure_id, name=f"{first} {family}".strip(), sex=sex,
-                        race=race or fx.CULTURE_RACE.get(culture, "human"), culture=culture, born=int(born),
+        dad = w.figures.get(father) if father >= 0 else None
+        noble = faction is not None and faction.kind in fx.REALM_KINDS
+        name = self.forge.person(culture, sex, r, noble=noble, first=first, family=family,
+                                 father=dad.first_name if dad is not None else None)
+        fig = fx.Figure(id=w.next_figure_id, name=name, sex=sex,
+                        race=race or fx.culture_race(s.t, culture), culture=culture, born=int(born),
                         faction=faction.id if faction is not None else -1, title=title, role=role, traits=traits,
-                        mother=mother, father=father, home=home, job=job)
+                        mother=mother, father=father, home=home, job=job, family=family)
         w.next_figure_id += 1
         w.figures[fig.id] = fig
         if faction is not None:
@@ -229,18 +227,23 @@ class Folk:
         a.spouse, b.spouse = b.id, a.id
         fa, fb = s.faction(a.faction), s.faction(b.faction)
         line_a, line_b = self.is_line(a), self.is_line(b)
-        if line_a and not line_b:
+        rules_a = any(g.leader == a.id for g in s.active())
+        rules_b = any(g.leader == b.id for g in s.active())
+        if rules_a and rules_b:  # two crowns wed: each keeps their own seat
+            mover, stayer = None, (a if a.sex == "male" else b)
+        elif rules_a or (line_a and not line_b):
             mover, stayer = b, a
-        elif line_b and not line_a:
+        elif rules_b or (line_b and not line_a):
             mover, stayer = a, b
         else:
             mover, stayer = (a, b) if a.sex == "female" else (b, a)
-        moved_from = s.faction(mover.faction)
-        if mover.faction != stayer.faction:
+        partner = mover if mover is not None else (b if stayer is a else a)
+        moved_from = s.faction(partner.faction)
+        if mover is not None and mover.faction != stayer.faction:
             self.move(mover, s.faction(stayer.faction))
         if b.role == "spouse" or a.role == "spouse":
             pass
-        elif mover.role == "member":
+        elif mover is not None and mover.role == "member":
             mover.role = "spouse"
         important = line_a or line_b
         if fa is not None and fb is not None and fa is not fb:
@@ -248,10 +251,10 @@ class Folk:
         if important:
             home = s.faction(stayer.faction)
             kingly = home is not None and home.kind in ("kingdom", "elven_realm", "clan")
-            s.record("wedding", {"a": stayer.full_name(), "b": mover.full_name(),
+            s.record("wedding", {"a": stayer.full_name(), "b": partner.full_name(),
                                  "from": moved_from.name if moved_from is not None and moved_from is not home
                                  else "a good family"},
-                     importance=2 if kingly else 1, figures=[stayer, mover],
+                     importance=2 if kingly else 1, figures=[stayer, partner],
                      factions=[f for f in (home, moved_from) if f is not None],
                      places=[int(stayer.home[1:])] if stayer.home.startswith("S") else [])
 
@@ -280,7 +283,7 @@ class Folk:
         s = self.s
         r = s.r
         sex = r.choice(["male", "female"])
-        family = line.name.split()[-1] if " " in line.name else s.realms.family_of(f)
+        family = line.family or s.realms.family_of(f) or fx.family_of(line)
         siblings = {k.first_name for k in self.children(mother)}
         first = None
         if r.chance(float(self.f["named_after"])):

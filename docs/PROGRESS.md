@@ -23,6 +23,8 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Choose how you look** | ✅ Done (2026-10-10), branch `looks` |
 | **Sound and music** | ✅ Done (2026-10-10), branch `sound` |
 | **A world that has lived (history after Dwarf Fortress)** | ✅ Done (2026-10-10), branch `world-history` |
+| **Peoples, a land of extremes and wonders, a new world map** | ✅ Done (2026-10-11), branch `world-variety` |
+| **Varied, bigger, living towns** | 🔨 In progress, branch `world-variety` |
 
 ---
 
@@ -30,7 +32,78 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 
 The nine milestones are done; this is what has been added since, newest first. Version 1.0 is the pictures and the
 new interface; then combat moved onto a grid, then every item was given a use, then looks became a choice, then the
-game got sound and music, then worlds began to live their history (the first entries below).
+game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
+wonders and a new map (the first entries below).
+
+### Local session, 2026-10-11: peoples, a land of extremes and wonders, a new world map (Anton's request) — branch `world-variety`
+
+Anton asked for worlds of extremes (huge cities, burning deserts, glacial plains, epic ranges) with wonders of the
+world; real-world-flavoured peoples with their own names, towns, dress, arms and laws, and far more names; bigger,
+more varied, livelier towns where people move on their own and walking into someone no longer starts a talk; names
+for the land's features in the language of the people nearby; clearer realm and culture views; and a world map that
+is vivid, quick and comfortable to zoom and scroll. The design is `docs/WORLD_VARIETY.md`, the plan
+`docs/superpowers/plans/2026-10-11-world-variety.md`. This session did the first three parts (peoples, the land and its
+wonders, the world map); the towns and their people come next.
+
+**What is different when you play**
+- **Peoples.** Nine human peoples, each like a people of our world: Heartlanders (English), Northmen (Norse),
+  Southrons (Italian, Iberian), Highlanders (Gaelic), Qasari (Arab, Persian), Khurgan (Mongol, Turkic), Volsk (Slavic),
+  Thalassians (Greek, Byzantine) and Itzan (Maya, Aztec), beside elves, dwarves, halflings and orcs. Each lives where its
+  kind of country is (deserts, steppe, fjords, jungle...), and each world calls them by its own name for them ("the
+  Mirellans"). Their rulers have their own titles (Sultan, Khagan, Jarl, Knyaz, Basileus, Holy Lord), their realms
+  their own names ("the Sultanate of...", "the Khaganate of...", "the Grand Principality of...", "the Basileia of...",
+  "the Sun Throne of..."), their faiths their own gods. Over centuries a town ruled by another people may come to
+  speak as they do, and the map of peoples is left where the history left it.
+- **Names.** Hundreds of names for each people, and every world grows new ones from each people's own sounds, so two
+  worlds do not share their people. Names follow their people's custom: Bjorn Haraldsson, Rashid ibn Tariq, Ivan
+  Petrovich, Lady Agafya Chelinskaya of the Boyar House of Chelinsky, Fergus mac Aodh. Guilds, orders and companies
+  ("the Pochteca of...", "the Crimson Gallowglass", "the Silk-Road Company", "the Eagle Knights of...") and relics
+  ("the Obsidian Mirror", "the Hammer of the Eternal Sky") are named in their makers' manner.
+- **The land.** Making a world has two new choices: *Land* (one continent, islands, two lands, a continent round an
+  inland sea) and *Climate* (frozen, cold, mild, warm, hot, extreme), both "Any" by default. Every world now runs from
+  a frozen north to a burning south: glaciers, tundra and taiga; farmland and forest; steppe, deserts and great sand
+  seas, salt pans where lakes dried up, savanna, and jungle. One to four great ranges cross the land, their peaks up to
+  8,850 m; tablelands end in cliffs; rivers cut red gorges through the dry uplands and fall where they meet a scarp;
+  volcanoes stand on the ranges and on islands, and the land round them is ash and black rock. Every new land has its
+  own ground, plants and pictures on foot (palms, acacias, jungle giants, cacti, termite hills, steam vents, salt
+  crust, crevasses...), its own camping, hunting and foraging, and behaves like its nearest old land everywhere else.
+- **Wonders of the world.** Every world has a dozen or more: the highest peak, volcanoes (one awake, with a lava lake),
+  great falls, the long gorge, great cliffs, a salt pan, a lake that shines at night, oases, hot springs, the enchanted
+  wood, a tree as big as a castle, stone arches, a sinkhole, a forest of stone, a wall of glacier ice and the drifting
+  stones. Each is named by the people living nearest it ("Jabal Madat", "Haabreen", "Altan Rashaan", "the Mirror of the
+  Sky"), drawn large on the map, has a close-up map of its own (the crater with its lava lake, the falls over the
+  cliff, the oasis pool among palms, the hollow inside the great tree...), and is worth finding: experience and fame
+  the first time. Some help a traveller: drink at an oasis, falls or hot springs; rest at the springs to heal faster
+  and keep warm; camp sheltered under the great tree; and beware the enchanted wood, where it is easy to lose your
+  way. The history remembers them: volcanoes erupt and bury towns, a hero first stands on the highest peak, pilgrims
+  come to holy waters. The Legends book has a new page, *Wonders* (key 5).
+- **The world map** is painted once, in the background, and then shown at any zoom: no more lag. It is brighter, with
+  the climate in its colours (green wet country, gold steppe, red badlands, white salt and ice), the sea from turquoise
+  shallows to deep blue, gorges, cliffs, palms, acacias, jungle, mesas and cinder cones drawn on it, the wonders drawn
+  large, towns drawn in their people's manner (Norse longhouses, Qasari domes and minarets, Khurgan yurts, Volsk onion
+  domes, white Thalassian towns, Itzan pyramids...), and the names of seas, ranges, deserts and forests written across
+  them. On the map screen (m): the mouse wheel zooms where the pointer is, dragging moves the map, a click chooses a place
+  and the side panel tells about it, Enter or a double click travels there (a single click no longer sets off).
+  Views: **l** Land, **p** Realms (each realm in its colour with its name across it, vassals striped in their own
+  colours, and a key listing the realms you know: who rules and how they feel about you), **c** Peoples (each people
+  in its colour and name, the key telling who they are), **w** Weather. Click a realm or people in the key to pick it out.
+
+**How to try it**: start a *New world* and choose *Land* and *Climate* (try Islands and Hot, or Extreme). Open the map
+(m), zoom with the wheel, drag, press p and c. Find a wonder: the Legends book (n, then b) lists them under *Wonders*.
+
+**Decisions made**
+- Save format 11: worlds made before this are refused with the usual friendly message (Anton said old saves need not load).
+- New lands each name the old land they behave like (biomes.json "family"); systems that ask "is this a desert?" ask
+  the family, and tables kept per land use the land's own entry first.
+- The overworld zoom steps are now 6, 12, 24, 36, 48 pixels a square (whole multiples of the painted map's grain, so
+  pixels stay even).
+
+**Checked**: full test suite green (new tests: tests/test_peoples.py, test_lands.py, test_world_map.py), smoke test
+clean (screenshots of the new map), autoplay OK in both AI modes.
+
+**Next**: the towns (sizes and great cities, each people's way of building, furniture and things in the streets,
+dwarven holds lit by braziers and lava, elven tree homes), then their people (many more of them, walking about on
+their own as time runs, bump to pass and t to talk).
 
 ### Local session, 2026-10-10: a world that has lived (Anton's request) — branch `world-history`
 

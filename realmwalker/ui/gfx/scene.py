@@ -63,12 +63,13 @@ class Lines:
 
 class Text:
     """Text in a real typeface (headings, names on the map, numbers that float up in a fight).
-    anchor: two letters as in Pillow: l/m/r then t/m/b (or s for the baseline)."""
+    anchor: two letters as in Pillow: l/m/r then t/m/b (or s for the baseline). outline: True for a dark edge round
+    the letters, or an (r, g, b, a) colour for an edge of that colour (a pale halo round the names on the map)."""
 
     __slots__ = ("x", "y", "text", "font", "size", "rgba", "anchor", "shadow", "outline")
 
     def __init__(self, x: float, y: float, text: str, font: str = "heading", size: int = 20,
-                 rgba: RGBA = (232, 196, 120, 255), anchor: str = "lt", shadow: bool = True, outline: bool = False) -> None:
+                 rgba: RGBA = (232, 196, 120, 255), anchor: str = "lt", shadow: bool = True, outline=False) -> None:
         self.x, self.y, self.text, self.font, self.size = x, y, text, font, size
         self.rgba, self.anchor, self.shadow, self.outline = rgba, anchor, shadow, outline
 

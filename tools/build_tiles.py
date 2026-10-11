@@ -28,6 +28,8 @@ from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
+import map_art  # noqa: E402
+import nature_art  # noqa: E402
 import tile_art  # noqa: E402
 
 PACK_URL = "https://opengameart.org/sites/default/files/Dungeon%20Crawl%20Stone%20Soup%20Full.zip"
@@ -83,6 +85,11 @@ pick_many("floor/marble", "dungeon/floor/marble_floor_[1-6].png", "ground")
 pick_many("floor/sandstone", "dungeon/floor/sandstone_floor_[0-9].png", "ground")
 pick_many("floor/cobble", "dungeon/floor/floor_sand_stone_[0-7].png", "ground")
 pick_many("floor/rough", "dungeon/floor/floor_sand_rock_[0-3].png", "ground")
+pick_many("floor/redrock", "dungeon/floor/rough_red_[0-3].png", "ground")
+pick_many("floor/volcanic", "dungeon/floor/volcanic_floor_[0-6].png", "ground")
+pick_many("floor/lava", "dungeon/floor/lava_[0-3].png", "fx")
+pick_many("floor/frozen", "dungeon/floor/frozen_[0-9].png", "ground")
+pick_many("floor/crystal", "dungeon/floor/crystal_floor_[0-5].png", "ground")
 # Water
 pick_many("water/shallow", "dungeon/water/shallow_water*.png", "water", 2)
 pick_many("water/shoals", "dungeon/water/shoals_shallow_water_[0-9].png", "water")
@@ -572,8 +579,10 @@ def gather(pack: Path) -> dict[str, Image.Image]:
         tiles[f"floor/rock_{i}"] = Image.fromarray(a.astype(np.uint8), "RGBA")
     figs, _ = figure_tiles()
     tiles.update(figs)
-    for name, im in tile_art.all_drawn().items():
+    for name, im in {**tile_art.all_drawn(), **nature_art.all_drawn(), **map_art.all_drawn()}.items():
         which = "none" if name.startswith(("icon/", "map/")) else ("ground" if name.startswith(("floor/", "wall/")) else "feature")
+        if any(k in name for k in ("glow", "/fey", "water/hot", "moonstone")):
+            which = "fx"  # things that shine keep their light
         tiles[name] = grade(im, which) if which != "none" else im
     return tiles
 

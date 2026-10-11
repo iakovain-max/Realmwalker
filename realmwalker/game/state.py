@@ -219,6 +219,13 @@ class GameState:
         return self.tables.biomes.defs[int(self._biome_remap[self.world.biome[x, y]])]
 
     def biome_key(self, x: int, y: int) -> str:
+        """The kind of land here as the systems know it: its family ('jungle' is 'forest', 'dunes' is 'desert').
+        For the land itself (descriptions, pictures, music) ask land_key."""
+        B = self.tables.biomes
+        return B.families[int(self._biome_remap[self.world.biome[x, y]])]
+
+    def land_key(self, x: int, y: int) -> str:
+        """The land itself: 'jungle', 'dunes', 'glacier'..."""
         return self.tables.biomes.ids[int(self._biome_remap[self.world.biome[x, y]])]
 
     def say(self, text: str, category: str = "info") -> None:
@@ -458,6 +465,10 @@ class GameState:
             return None
         vis = self.weather.visibility
         dark = self.light < 0.3
+        from realmwalker.world import wonders
+
+        if "bewilder" in wonders.boons(self.tables, w, p.x, p.y):
+            return 14 + (3 if dark else 0)  # the paths of the enchanted wood are never where you left them
         if vis >= 0.6 and not dark:
             return None
         return 10 + (6 if vis < 0.3 else (3 if vis < 0.6 else 0)) + (3 if dark else 0)
@@ -607,6 +618,10 @@ class GameState:
             p.known_settlements.add(s.id)
             self.say(self.settlement_arrival_text(s, first), "place")
             learn_place(self, s, quiet=False)
+        if self.world.wonders:
+            from realmwalker.world import wonders
+
+            wonders.arrive(self)
         site = self.world.site_at(p.x, p.y)
         if site is not None:
             spec = self.tables.sites["site_types"].get(site.kind, {})
@@ -725,7 +740,7 @@ class GameState:
                 return f"You reach <place>{s.name}</> again."
             rng = self.world.rng.child(f"return/{s.id}/{self.player.steps}")
             return rng.choice(COMING_BACK).format(place=f"<place>{s.name}</>")
-        culture = self.tables.names["cultures"].get(s.culture, {}).get("label", s.culture)
+        culture = self.tables.cultures.adjective(self.world, s.culture)
         souls = f"about {round(s.population, -1 if s.population < 1000 else -2):,} souls"
         walls = " behind its walls" if s.walled else ""
         return f"You reach <place>{s.name}</>, {textgen.a_or_an(kind)} of {souls}{walls}. <dim>{culture} folk live here.</>"

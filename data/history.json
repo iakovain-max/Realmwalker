@@ -11,6 +11,8 @@
     "adventurers": [3, 5, 8]
   },
   "rates": {
+    "eruption": 0.006, "first_ascent": 0.006, "pilgrimage": 0.004,
+    "assimilation": 0.012,
     "great_plague": 0.004,
     "plague": 0.012,
     "famine": 0.008,
@@ -48,6 +50,7 @@
     "grant": 0.08,
     "hero_rises": 0.3
   },
+  "peoples_change": {"after": 60},
   "spots": {
     "reach": 40,
     "thresholds": {
@@ -107,6 +110,36 @@
       "race": "half_orc",
       "growth": 0.04,
       "succession": "tanistry"
+    },
+    "highland": {
+      "race": "human",
+      "growth": 0.03,
+      "succession": "tanistry"
+    },
+    "qasari": {
+      "race": "human",
+      "growth": 0.033,
+      "succession": "seniority"
+    },
+    "khurgan": {
+      "race": "human",
+      "growth": 0.029,
+      "succession": "elective"
+    },
+    "volsk": {
+      "race": "human",
+      "growth": 0.031,
+      "succession": "seniority"
+    },
+    "thalassian": {
+      "race": "human",
+      "growth": 0.03,
+      "succession": "primogeniture"
+    },
+    "itzan": {
+      "race": "human",
+      "growth": 0.035,
+      "succession": "male_primogeniture"
     }
   },
   "folk": {
@@ -322,6 +355,12 @@
     "elfhall": ["the dead halls of {name}", "the ruin of {name}"]
   },
   "pantheon": {
+    "ash_tree": {"spheres": ["wisdom", "war", "the dead"], "lesser": [["Thunar the Hammer", ["thunder", "farmers", "strength"]], ["Frey of the Harvest", ["harvest", "peace", "ships"]], ["Hel the Pale", ["death", "the cold", "the forgotten"]]]},
+    "one_flame": {"spheres": ["light", "truth", "law"], "lesser": [["the Seven Lamps", ["the stars", "learning", "travellers"]], ["Azar the Hidden Fire", ["the forge", "purity", "judgement"]]]},
+    "eternal_sky": {"spheres": ["sky", "earth", "oaths"], "lesser": [["Etugen the Mother", ["earth", "the herds", "fertility"]], ["the Grey Wolf", ["the hunt", "ancestors", "war"]], ["Ulgen of the White Clouds", ["weather", "healing", "the shamans"]]]},
+    "thunder_kin": {"spheres": ["thunder", "oaks", "war"], "lesser": [["Volos of the Deep", ["herds", "riches", "the underworld"]], ["Mokosh the Spinner", ["women", "fate", "the hearth"]], ["Dazh the Giver", ["the sun", "gifts", "kings"]]]},
+    "twelve_thrones": {"spheres": ["sky", "kingship", "law"], "lesser": [["the Grey-Eyed Maiden", ["wisdom", "craft", "cities"]], ["the Earth-Shaker", ["the sea", "horses", "earthquakes"]], ["the Lady of the Foam", ["love", "beauty", "sailors"]], ["the Unseen One", ["the dead", "wealth", "oaths"]]]},
+    "feathered_serpent": {"spheres": ["wind", "the morning star", "maize"], "lesser": [["the Smoking Mirror", ["night", "kings", "sorcery"]], ["the Lady of the Jade Skirt", ["rivers", "rain", "birth"]], ["the Rain-Lord", ["storms", "crops", "the mountains"]]]},
     "radiant": {
       "spheres": ["sun", "law", "harvest"],
       "lesser": [
@@ -428,6 +467,7 @@
     }
   },
   "artifacts": {
+    "cultures": {"northmarch": {"kennings": {"sword": ["Leg-Biter", "Wound-Wand", "Battle-Fire", "Raven-Feeder", "Mail-Mauler"], "axe": ["Shield-Biter", "the Troll-Wife", "Helm-Splitter"], "spear": ["the Gungnir of the West", "Storm-Thorn"], "horn": ["the Gjall-Horn"], "_any": ["the Sea-King's Gift", "the Ring-Giver's Hoard-Piece"]}, "of": ["the All-Father", "the Ash", "the Nine Worlds", "the Fjords", "the Sea-Kings"], "adjectives": ["Grey", "Rune-Cut", "Wolf-Headed", "Gold-Bound"]}, "qasari": {"kennings": {"sword": ["the Crescent Edge", "Sand-Drinker", "the Vizier's Answer", "Morning-Blade"], "ring": ["the Seal of the Seven Lamps", "the Djinn-Ring"], "book": ["the Book of the Stars"], "_any": ["the Lamp of the Wells", "the Caliph's Gift"]}, "of": ["the Seven Lamps", "the Desert Kings", "the Morning Star", "a Thousand Nights", "the Caliphs"], "adjectives": ["Damascened", "Starlit", "Watered", "Sun-Gilt"]}, "khurgan": {"kennings": {"bow": ["the Sky-Bow", "Wind-Splitter", "the Bow of the Grey Wolf"], "sword": ["the Khan's Sabre", "Wolf-Tooth"], "banner": ["the Nine-Tailed Standard"], "_any": ["the Gift of the Eternal Sky", "the Horse-Bone Talisman"]}, "of": ["the Eternal Sky", "the Grey Wolf", "the Hundred Clans", "the Great Khan", "the Blue Steppe"], "adjectives": ["Horsehair", "Sky-Blue", "Felt-Wrapped", "Wolf-Bone"]}, "volsk": {"kennings": {"hammer": ["the Thunderer's Mace", "Bogatyr-Breaker"], "sword": ["the Self-Cutting Sword", "Kladenets"], "_any": ["the Firebird Feather", "the Gusli of the Old Prince"]}, "of": ["the Firebird", "the Thunderer", "the Old Princes", "the Steppe Wars", "the Frozen River"], "adjectives": ["Birch-Bark", "Silver-Chased", "Enamelled", "Frost-Bitten"]}, "thalassian": {"kennings": {"shield": ["the Aegis of the Strategos", "the Gorgon Shield"], "crown": ["the Purple Diadem", "the Crown of the Basileus"], "_any": ["the Golden Horn", "the Icon of the Twelve"]}, "of": ["the Twelve", "the Purple", "the Golden Horn", "the Old Empire", "the Wine-Dark Sea"], "adjectives": ["Porphyry", "Gilded", "Mosaic", "Imperial"]}, "itzan": {"kennings": {"_any": ["the Obsidian Mirror", "the Jade Mask", "the Smoking Mirror", "Sun-Eater", "the Turquoise Serpent"], "sword": ["the Obsidian Edge", "the Jaguar Club"], "crown": ["the Quetzal Crown"]}, "of": ["the Plumed Serpent", "the Fifth Sun", "the Jaguar Throne", "the Long Count", "the Morning Star"], "adjectives": ["Jade", "Feathered", "Obsidian", "Turquoise"]}, "highland": {"kennings": {"sword": ["the Sword of Light", "the Hard-Striker"], "spear": ["the Spear of the Fianna"], "_any": ["the Stone of the Kings", "the Cauldron of Plenty", "the Harp of the Dagda"]}, "of": ["the Fianna", "the Old Kings", "the Hollow Hills", "the Glens", "the Western Isles"], "adjectives": ["Knotwork", "Silver-Hilted", "Bog-Black", "Faerie"]}},
     "kinds": {
       "sword": {
         "word": "Sword",
@@ -705,6 +745,11 @@
     "war_adj": ["Bitter", "Long", "Red", "Hundred Days'", "Cruel", "Grey", "Forgotten", "Brothers'", "Iron", "Wolf"]
   },
   "text": {
+    "eruption": ["{volcano} woke in fire; ash fell on {place} for a month, and the fields were black for a year.", "{volcano} erupted. Rivers of burning rock came down its flanks, and the sky over {place} was dark at noon.", "The year {volcano} spoke: the earth shook, the mountain split, and the fire of it was seen from far off."],
+    "buried": ["{place} was buried under the ash of {volcano}.", "Burning rock from {volcano} came down on {place} in the night, and by morning there was no {place}."],
+    "first_ascent": ["{hero} climbed {peak}, the first to stand on the roof of the world, and came down changed.", "{hero} reached the top of {peak}, where no one had stood, and left a cairn there."],
+    "pilgrimage": ["Pilgrims began to come to {wonder}, and an inn was built for them at {place}.", "Word spread of {wonder}; the sick and the faithful came to it from far off, and some went home well.", "A holy man made his home by {wonder}, and after him the pilgrims came."],
+    "assimilated": ["After {years} years under {realm}, the folk of {place} came to speak as the {people} do.", "{place} had become a town of the {people}: {years} years under {realm} had done it.", "The {old} of {place} were {old} no longer; under {realm} they had become {people}."],
     "came_under": ["{place} came under {holder}.", "{place} passed to {holder}."],
     "became_town": [
       "{place} had grown into a town, and {ruler} granted it a charter.",

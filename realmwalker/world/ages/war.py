@@ -140,7 +140,7 @@ class War:
         if last is not None and last.get("end_year", -10**6) >= s.year - 80 and last.get("result") != "draw" and \
                 s.r.chance(0.6):
             return "revenge"
-        human = {"heartland", "northmarch", "southron", "halfling"}
+        human = set(self.s.t.cultures.human) | {"halfling"}
         if a.culture in human and b.culture in human and a.faith != b.faith and \
                 ("pious" in a.values or "pious" in b.values) and s.r.chance(0.35):
             return "religion"

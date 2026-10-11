@@ -146,8 +146,8 @@ def test_the_main_view_draws_the_map_with_pictures(pictured):
     app, game = pictured
     canvas = render(app)
     assert app.error_count == 0
-    chunks = [c for c in commands(canvas, Image) if isinstance(c.key, tuple) and c.key[0] == "chunk"]
-    assert chunks, "the overworld is painted in chunks"
+    chunks = [c for c in commands(canvas, Image) if isinstance(c.key, tuple) and c.key[0] in ("chunk", "map overview")]
+    assert chunks, "the overworld is painted (the small map stands in until its chunks are done)"
     gs = app.top
     assert gs.tiles_drawn
     # On foot in a town: tiles, roofs and people.
@@ -272,17 +272,16 @@ def test_the_battlefield_is_drawn_as_a_grid_with_highlights(pictured):
 
 # ---------------------------------------------------------------------------- the painter
 def test_the_map_painter_paints_pieces_that_meet(make_app, world):
-    from realmwalker.ui.gfx.paint import ChunkCache, WorldPainter
+    from realmwalker.ui.gfx.paint import CANON, ChunkCache, WorldPainter
 
     app = make_app()
     painter = WorldPainter(world, app.tables)
     a = painter.paint(0, 0, 16, 16, 12)
     assert a.size == (192, 192)
     cache = ChunkCache(painter)
-    im = cache.paint_now((12, 0, 0))
-    assert cache.get((12, 0, 0)) is im
-    n = painter.chunk_cells(12)
-    assert im.size[0] == min(n, world.width) * 12
+    im = cache.paint_now((0, 0))
+    assert cache.get((0, 0)) is im
+    assert im.size[0] == min(cache.n, world.width) * CANON
     cache.close()
     whole = painter.overview(3)
     assert whole.size == (world.width * 3, world.height * 3)

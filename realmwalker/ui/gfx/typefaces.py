@@ -64,7 +64,7 @@ def measure(text: str, role: str = "heading", size: int = 20) -> tuple[int, int]
     return int(r - min(0, l)), int(b - min(0, t))
 
 
-def render(text: str, role: str, size: int, rgba, shadow: bool = True, outline: bool = False) -> tuple[np.ndarray, int, int]:
+def render(text: str, role: str, size: int, rgba, shadow: bool = True, outline=False) -> tuple[np.ndarray, int, int]:
     """The text as an RGBA array, and the offset of its top left from the anchor's top left (for the shadow)."""
     from PIL import Image, ImageDraw, ImageFilter
 
@@ -79,9 +79,10 @@ def render(text: str, role: str, size: int, rgba, shadow: bool = True, outline: 
         sh = Image.new("RGBA", im.size, (0, 0, 0, 0))
         sd = ImageDraw.Draw(sh)
         if outline:
+            halo = tuple(outline) if isinstance(outline, (tuple, list)) else (8, 6, 4, 235)
             for dx in (-1, 0, 1):
                 for dy in (-1, 0, 1):
-                    sd.text((ox + dx, oy + dy), text, font=f, fill=(8, 6, 4, 235))
+                    sd.text((ox + dx, oy + dy), text, font=f, fill=halo)
         if shadow:
             sd.text((ox + 1, oy + 2), text, font=f, fill=(0, 0, 0, 200))
             sh = sh.filter(ImageFilter.GaussianBlur(1.0)) if not outline else sh

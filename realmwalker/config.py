@@ -26,7 +26,7 @@ COMPANION_CHOICES = ("command", "auto")  # in a fight: you play the companions' 
 ANIMATION_CHOICES = ("full", "calm", "off")
 VOLUME_STEPS = 10  # volumes are 0 (silent) to 10 (full)
 MAP_ZOOMS = (16, 24, 32, 48, 64)  # pixels per square on a close-up map
-WORLD_ZOOMS = (8, 12, 16, 24, 32, 48)  # pixels per square of country on the overworld
+WORLD_ZOOMS = (6, 12, 24, 36, 48)  # pixels per square of country (the map is painted at 12: these stay sharp)
 
 
 def _read_json(path: Path) -> dict:

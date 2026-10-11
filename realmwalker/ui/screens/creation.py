@@ -37,7 +37,7 @@ class CreationScreen(Screen):
         self.world = world
         self.t = app.tables
         self.tables = app.tables  # describe helpers look for .tables
-        self.b = CharacterBuilder(self.t, app.ui_rng.child("creation"))
+        self.b = CharacterBuilder(self.t, app.ui_rng.child("creation"), world=world)
         self.step = 0
         self.cursor = [0] * len(STEPS)  # selected row within each step
         self.name_field = TextField(self.b.name, max_len=32)
@@ -62,10 +62,10 @@ class CreationScreen(Screen):
         return []
 
     def _refresh_places(self) -> None:
-        key = (self.b.background, self.b.race)
+        key = (self.b.background, self.b.race, self.b.culture)
         if self._places_for != key:
             self.places = starting_places(self.world, self.t, self.b.background, self.b.race,
-                                          self.app.ui_rng.child(f"places{key}"))
+                                          self.app.ui_rng.child(f"places{key}"), culture=self.b.culture)
             self._places_for = key
             self.cursor[START] = 0
         if self.places:
@@ -453,8 +453,10 @@ class CreationScreen(Screen):
         r = self.t.races[self.b.race]
         bonus = ", ".join(f"{self.t.rules['abilities'][a]['short']} {signed(v)}" for a, v in r["ability_bonus"].items())
         traits = "\n".join(f"<loot>{t['name']}</>: {t['text']}" for t in r["traits"])
-        culture = self.t.names["cultures"].get(self.b.culture, {}).get("label", self.b.culture)
-        cult = f"<title>Culture:</> ◄ {culture} ►" if len(r["cultures"]) > 1 else f"<title>Culture:</> {culture}"
+        culture = self.b.culture_label()
+        like = self.t.cultures.get(self.b.culture)["like"]
+        cult = (f"<title>Culture:</> ◄ {culture} ►" if len(r["cultures"]) > 1 else f"<title>Culture:</> {culture}") + \
+            f" <dim>(like the {like})</>"
         text = (f"<name>{r['name']}</>\n{r['description']}\n\n{cult}\n<dim>Abilities:</> {bonus}\n"
                 f"<dim>Speed:</> {r['speed']} ft · <dim>Size:</> {r['size']}"
                 + (f" · <dim>Darkvision:</> {r['darkvision']} ft" if r["darkvision"] else "") + f"\n\n{traits}")

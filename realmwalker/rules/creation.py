@@ -22,9 +22,10 @@ PRONOUNS = {"male": ("he", "him", "his"), "female": ("she", "her", "her")}
 
 
 class CharacterBuilder:
-    def __init__(self, tables, rng: RNG) -> None:
+    def __init__(self, tables, rng: RNG, world=None) -> None:
         self.t = tables
         self.rng = rng
+        self.world = world  # names come from this world's forge when there is one
         self.race = "human"
         self.culture = "heartland"
         self.cls = "fighter"
@@ -181,8 +182,15 @@ class CharacterBuilder:
 
     # ------------------------------------------------------------------ identity
     def random_name(self) -> str:
+        if self.world is not None:
+            from realmwalker.world.names import forge
+
+            return forge(self.world, self.t).person(self.culture, self.sex, self.rng)
         culture = self.t.names["cultures"].get(self.culture) or next(iter(self.t.names["cultures"].values()))
         return f"{self.rng.choice(culture[self.sex])} {self.rng.choice(culture['family'])}"
+
+    def culture_label(self) -> str:
+        return self.t.cultures.adjective(self.world, self.culture)
 
     def random_age(self) -> int:
         age = self.t.races[self.race]["age"]
@@ -231,7 +239,7 @@ class CharacterBuilder:
         a = self.t.appearance
         bg = self.t.backgrounds[self.background]
         he, him, his = PRONOUNS[self.sex]
-        culture = self.t.names["cultures"].get(self.culture, {}).get("label", self.culture)
+        culture = self.culture_label()
         values = {
             "name": self.name.split()[0], "home": home_name, "years": str(self.age), "culture": culture,
             "season": self.rng.choice(["winter", "spring", "summer", "autumn"]),
@@ -325,8 +333,10 @@ class CharacterBuilder:
 
 
 # ---------------------------------------------------------------------------- places and ties
-def starting_places(world, tables, background: str, race: str, rng: RNG, count: int = 4) -> list[int]:
-    """A few settlements suited to a background, spread over the map."""
+def starting_places(world, tables, background: str, race: str, rng: RNG, count: int = 4,
+                    culture: str | None = None) -> list[int]:
+    """A few settlements suited to a background, spread over the map (among the character's own people, where
+    there are any)."""
     bg = tables.backgrounds[background]
     kinds = bg["start"]["kinds"]
     biomes = set(bg["start"].get("biomes", []))
@@ -344,6 +354,8 @@ def starting_places(world, tables, background: str, race: str, rng: RNG, count: 
             score += 2
         if preferred_culture and s.culture == preferred_culture:
             score += 2
+        if culture and s.culture == culture:
+            score += 4
         if race == "dwarf" and s.kind == "hold" or race == "elf" and s.kind == "elfhall":
             score += 3
         score += rng.random()
@@ -364,11 +376,14 @@ def make_ties(world, tables, character: Character, start_id: int, rng: RNG) -> l
     words = tables.backgrounds_data["tie_words"]
     start = world.settlements[start_id]
     culture = tables.names["cultures"].get(start.culture) or tables.names["cultures"]["heartland"]
+    from realmwalker.world.names import forge
+
+    nf = forge(world, tables)
 
     def person(title_m: str = "", title_f: str = "") -> str:
         sex = rng.choice(["male", "female"])
         title = (title_m if sex == "male" else title_f)
-        name = f"{rng.choice(culture[sex])} {rng.choice(culture['family'])}"
+        name = nf.person(start.culture, sex, rng)
         return f"{title} {name}" if title else name
 
     def nearby(kinds: tuple[str, ...], exclude: int | None = None) -> object:

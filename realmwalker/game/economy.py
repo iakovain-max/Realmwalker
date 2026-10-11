@@ -36,7 +36,7 @@ def lands_near(game, settlement, radius: int = 3) -> set[str]:
         for dy in range(-radius, radius + 1):
             x, y = settlement.x + dx, settlement.y + dy
             if w.in_bounds(x, y):
-                out.add(game.biome_key(x, y))
+                out.add(game.land_key(x, y))
     return out
 
 
@@ -46,8 +46,9 @@ def local_factor(game, settlement, item_id: str) -> float:
     d = game.tables.items.get(item_id)
     cat = d["category"]
     factor = 1.0
-    made_here = [econ["production"][b][item_id] for b in lands_near(game, settlement)
-                 if item_id in econ["production"].get(b, {})]
+    lookup = game.tables.biomes.lookup
+    made_here = [lookup(econ["production"], b, {})[item_id] for b in lands_near(game, settlement)
+                 if item_id in lookup(econ["production"], b, {})]
     if made_here:
         factor *= min(made_here)
     elif cat == "trade" and item_id != "diamond":

@@ -1,4 +1,5 @@
-"""New World: choose a name, seed, size and danger/magic levels, then watch the world form."""
+"""New World: choose a name, seed, size, the lie of the land, the climate and danger/magic levels, then watch the
+world form."""
 
 from __future__ import annotations
 
@@ -22,10 +23,18 @@ SIZES = [("small", "Small"), ("medium", "Medium"), ("large", "Large")]
 DANGER = [(1, "Low"), (2, "Normal"), (3, "High"), (4, "Brutal")]
 MAGIC = [(1, "Scarce"), (2, "Rare"), (3, "Uncommon")]
 HISTORY = [(100, "Short"), (250, "Normal"), (500, "Long"), (1000, "Epic")]
+LAND = [("random", "Any"), ("continent", "Continent"), ("islands", "Islands"), ("twin", "Two lands"),
+        ("inland_sea", "Inland sea")]
+CLIMATE = [("random", "Any"), ("frozen", "Frozen"), ("cold", "Cold"), ("temperate", "Mild"), ("warm", "Warm"),
+           ("scorched", "Hot"), ("varied", "Extreme")]
 HELP = {
     "name": "What this world is called. Several worlds can exist side by side.",
     "seed": "The same seed and settings always make the same world. Share a seed to share a world.",
     "size": "Small worlds are quick to cross; large ones take weeks of travel and hold more of everything.",
+    "land": "The lie of the land: one great continent, a scatter of islands, two lands with a sea between them, or a "
+            "continent round an inland sea. Any: the world decides.",
+    "climate": "Frozen worlds are ice and tundra with a cold green south; hot ones are deserts, sand seas and jungles. "
+               "Mild worlds have a little of everything, Extreme ones the most of both ends. Any: the world decides.",
     "danger": "How wild and hostile the land is: more ruins and lairs, more dangerous roads.",
     "magic": "How rare magic is. Even at its most common, magic is rare, costly and feared.",
     "history": "How many years the world lives before you arrive (100, 250, 500 or 1000): its kingdoms, wars, "
@@ -48,7 +57,9 @@ class NewWorldScreen(Screen):
         self.danger = 1
         self.magic = 1
         self.history = 1
-        self.rows = ["name", "seed", "size", "danger", "magic", "history", "generate", "back"]
+        self.land = 0
+        self.climate = 0
+        self.rows = ["name", "seed", "size", "land", "climate", "danger", "magic", "history", "generate", "back"]
         self.focus = 0
 
     @property
@@ -59,7 +70,8 @@ class NewWorldScreen(Screen):
         seed = int(self.seed.value) if self.seed.value.isdigit() else 1
         name = self.name.value.strip() or "Nameless"
         return WorldOptions(name=name, seed=seed, size=SIZES[self.size][0], danger=DANGER[self.danger][0],
-                            magic=MAGIC[self.magic][0], history=HISTORY[self.history][0])
+                            magic=MAGIC[self.magic][0], history=HISTORY[self.history][0], land=LAND[self.land][0],
+                            climate=CLIMATE[self.climate][0])
 
     def generate(self) -> None:
         self.app.replace(WorldGenScreen(self.app, self.options()))
@@ -73,20 +85,26 @@ class NewWorldScreen(Screen):
             self.magic = (self.magic + d) % len(MAGIC)
         elif row == "history":
             self.history = (self.history + d) % len(HISTORY)
+        elif row == "land":
+            self.land = (self.land + d) % len(LAND)
+        elif row == "climate":
+            self.climate = (self.climate + d) % len(CLIMATE)
         elif row == "seed" and d:
             self.seed.value = str(self.app.ui_rng.randint(1000, 999999))
 
     # ------------------------------------------------------------------
     def render(self, canvas: Canvas) -> None:
         w, h = canvas.width, canvas.height
-        width, height = min(76, w - 2), min(24, h - 1)
+        width, height = min(76, w - 2), min(28, h - 1)
         x0, y0 = (w - width) // 2, max(0, (h - height) // 2)
         canvas.frame(x0, y0, width, height, self.title, double=True)
         x = x0 + 3
         y = y0 + 2
         labels = {"name": "World name", "seed": "Seed", "size": "Size", "danger": "Danger", "magic": "Magic",
-                  "history": "History"}
-        for i, row in enumerate(self.rows[:6]):
+                  "history": "History", "land": "Land", "climate": "Climate"}
+        choices = {"size": SIZES, "danger": DANGER, "magic": MAGIC, "history": HISTORY, "land": LAND, "climate": CLIMATE}
+        settings = [r for r in self.rows if r not in ("generate", "back")]
+        for i, row in enumerate(settings):
             ry = y + i * 2
             focused = i == self.focus
             canvas.hit(x, ry, width - 6, 1, action=lambda i=i: self._focus(i), tooltip=HELP[row],
@@ -99,8 +117,8 @@ class NewWorldScreen(Screen):
                 self.seed.render(canvas, fx, ry, 12, focused)
                 canvas.text(fx + 14, ry, "← → new random seed" if focused else "", colors.FAINT)
             else:
-                values = {"size": SIZES, "danger": DANGER, "magic": MAGIC, "history": HISTORY}[row]
-                index = {"size": self.size, "danger": self.danger, "magic": self.magic, "history": self.history}[row]
+                values = choices[row]
+                index = getattr(self, row)
                 cx = fx
                 for j, (_, label) in enumerate(values):
                     chosen = j == index
@@ -113,7 +131,7 @@ class NewWorldScreen(Screen):
                     canvas.text(cx + 1, ry, f"{ww * 3}×{wh * 3} miles", colors.FAINT)
                 elif row == "history":
                     canvas.text(cx + 1, ry, f"{HISTORY[self.history][0]} years", colors.FAINT)
-        by = y + 13
+        by = y + len(settings) * 2 + 1
         gen_focus = self.rows[self.focus] == "generate"
         back_focus = self.rows[self.focus] == "back"
         bx = canvas.button(x, by, ("► " if gen_focus else "") + "Generate world", self.generate, hotkey="Enter")

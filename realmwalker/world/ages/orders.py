@@ -26,7 +26,7 @@ class Orders:
         s = self.s
         st = s.w.settlements[sid]
         culture = st.culture if st.culture not in ("orcish",) else "heartland"
-        name = name or s.fm.make_name(kind, seat=st.name, **(extra or {}))
+        name = name or s.fm.make_name(kind, culture, seat=st.name, **(extra or {}))
         f = s.realms.new(kind, culture, name, seat=sid, **kw)
         if values:
             f.values = values
@@ -35,6 +35,9 @@ class Orders:
         f.military = s.r.randint(*spec["military"])
         f.wealth = s.r.randint(*spec["wealth"])
         f.flags["base_military"] = f.military
+        if founder is not None and (any(g.leader == founder.id for g in s.active() if g is not f)
+                                    or founder.id in s.realms.heirs.values()):
+            founder = None  # a lord or an heir does not leave their house to head an order: a follower does
         if founder is None:
             founder = s.folk.adult_person(culture, age=(30, 60), role="member", job=job, home=S(sid))
         s.realms.crown(f, founder)
@@ -268,7 +271,7 @@ class Orders:
             return
         home = s.r.choice(coast)
         st = w.settlements[home.sid]
-        culture = st.culture if st.culture in ("heartland", "northmarch", "southron") else "southron"
+        culture = st.culture if s.t.cultures.is_human(st.culture) else "southron"
         captain = s.folk.adult_person(culture, age=(25, 50), role="member", job="pirate", home=S(home.sid))
         captain.epithet = s.r.choice(s.t.factions["words"]["epithet"])
         p = s.realms.new("pirate_crew", culture, s.fm.make_name("pirate_crew"), faith="drowned")

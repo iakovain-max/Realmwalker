@@ -50,11 +50,14 @@ def environment(game, char: Character, activity: str) -> Environment:
 
     w = weather(game)
     camp = camp_here(game)
+    still = activity not in ("walk", "ride")
+    boons = wonder_boons(game) if still else set()
     return Environment(
         air=w.temp, wind=w.wind, wet_per_hour=w.wet_per_hour, activity=activity,
-        sheltered=sheltered(game, activity), fire=bool(camp and camp.fire and activity not in ("walk", "ride")),
-        tent=bool(camp and camp.tent and activity not in ("walk", "ride")), bedding=bedding(game, char),
-        shelter=bool(camp and camp.shelter and activity not in ("walk", "ride")),
+        sheltered=sheltered(game, activity),
+        fire=bool(camp and camp.fire and still) or "warm" in boons,  # hot springs warm you like a fire
+        tent=bool(camp and camp.tent and still), bedding=bedding(game, char),
+        shelter=bool(camp and camp.shelter and still) or "shelter" in boons,
         wading=bool(getattr(game, "_wading", False)),
     )
 
@@ -93,8 +96,17 @@ def health_context(game, activity: str):
     p = game.player
     season = game.moment.season
     warm = season == "summer" or (season in ("spring", "autumn") and weather(game).temp > 16)
+    healing = 1.6 if activity in ("rest", "sleep") and "heal" in wonder_boons(game) else 1.0
     return HealthContext(activity=activity, marsh=game.biome_key(p.x, p.y) == "marsh", warm_season=warm,
-                         now=game.world.time)
+                         now=game.world.time, healing=healing)
+
+
+def wonder_boons(game) -> set[str]:
+    """What the wonder on the player's square does for a traveller (data/wonders.json "boon")."""
+    from realmwalker.world import wonders
+
+    p = game.player
+    return wonders.boons(game.tables, game.world, p.x, p.y)
 
 
 def check_death(game, char: Character) -> None:
@@ -209,6 +221,9 @@ def _ground_water(game) -> tuple[str, str] | None:
     if w.settlement_at(p.x, p.y) is not None:
         return "clean", "the well"
     lm = game.local
+    wonder = w.wonder_at(p.x, p.y)
+    if wonder is not None and "water" in wonder_boons(game) and lm is None:
+        return "clean", wonder.name  # an oasis, hot springs, falls: good water, plenty of it
     if lm is not None:
         # On foot you must stand by the water itself.
         nearby = local_terrain_near(game, lm)
@@ -233,7 +248,8 @@ def _ground_water(game) -> tuple[str, str] | None:
     return None
 
 
-LOCAL_WATER = {"river", "ford", "shallow_water", "deep_water", "marsh_reeds"}
+LOCAL_WATER = {"river", "ford", "shallow_water", "deep_water", "marsh_reeds", "hot_spring", "glow_water",
+               "glow_shallow", "plunge_pool"}
 SKY_WATER = ("rainwater", "melted snow")
 
 

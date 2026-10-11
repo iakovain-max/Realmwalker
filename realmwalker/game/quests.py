@@ -407,7 +407,9 @@ def _retrieve(game, npc, rng):
     if not sites:
         return None
     site = rng.choice(sites)
-    family = npc.name.split()[-1]
+    from realmwalker.game.people import family_of
+
+    family = family_of(npc)
     # Keyed on the family, so two houses in one town do not both want the same thing.
     thing, base = w.rng.child(f"heirloom/{family}/{npc.id}").choice(spec(game)["heirlooms"])
     name = f"the {family} {thing}"
@@ -427,12 +429,14 @@ def _rescue(game, npc, rng):
     holder = rng.choice(holders)
     site = w.sites[holder.site]
     kin = rng.choice(spec(game)["kin"])
-    cultures = game.tables.names["cultures"]
-    names = cultures.get(town.culture) or next(iter(cultures.values()))
+    from realmwalker.game.people import family_of
+    from realmwalker.world.names import forge
+
+    nf = forge(w, game.tables)
     sex = ("male" if kin in ("son", "brother", "husband") else "female" if kin in ("daughter", "sister", "wife")
            else rng.choice(["male", "female"]))
-    captive = f"{rng.choice(names[sex])} {npc.name.split()[-1]}" if kin != "apprentice" else \
-        f"{rng.choice(names[sex])} {rng.choice(names['family'])}"
+    captive = nf.person(town.culture, sex, rng, family=family_of(npc)) if kin != "apprentice" else \
+        nf.person(town.culture, sex, rng)
     q = base_quest(game, npc, "rescue", rng, hard=1.5)
     q["target"] = {"site": site.id, "captive": captive, "sex": sex, "holder": holder.id}
     q["words"].update(captive=captive, kin=kin, site=site.name, where=direction(town, site))

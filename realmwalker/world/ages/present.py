@@ -12,11 +12,13 @@ from __future__ import annotations
 
 import math
 
+import numpy as np
+
 from realmwalker.world import factions as fx
 from realmwalker.world import news
 from realmwalker.world.ages.eras import name_eras
 from realmwalker.world.ages.sim import DYNASTIC, S, X
-from realmwalker.world.model import Site
+from realmwalker.world.model import NO_CULTURE, Site
 
 RECENT_YEARS = 2
 
@@ -39,10 +41,34 @@ class Present:
         s.year = late
         self.ruins()
         self.settlements()
+        self.peoples_map()
         self.dress()
         self.figures()
         self.records()
         self.history_order()
+
+    def peoples_map(self) -> None:
+        """The map of peoples where the history left them: round every place, the people who live in it now
+        (colonies, conquests and towns that changed their speech show as islands of their people)."""
+        w = self.w
+        ids = w.culture_ids
+        for st in sorted(w.settlements, key=lambda st: st.population):
+            if st.culture not in ids:
+                ids.append(st.culture)
+            ci = ids.index(st.culture)
+            here = int(w.culture[st.x, st.y])
+            if here == ci or here == NO_CULTURE:
+                continue
+            r = int(round(fx.TERRITORY_RADIUS.get(st.kind, 6) * 0.7))
+            x0, x1 = max(0, st.x - r), min(w.width, st.x + r + 1)
+            y0, y1 = max(0, st.y - r), min(w.height, st.y + r + 1)
+            xs = np.arange(x0, x1)[:, None]
+            ys = np.arange(y0, y1)[None, :]
+            sub = w.culture[x0:x1, y0:y1]
+            sub[((xs - st.x) ** 2 + (ys - st.y) ** 2 <= r * r) & (sub == here)] = ci
+        # A bigger neighbour's lands may have been drawn over a small place: every place keeps its own square.
+        for st in w.settlements:
+            w.culture[st.x, st.y] = ids.index(st.culture)
 
     def late_year(self, back: int = 12) -> int:
         return self.s.present - self.s.r.randint(1, back)
@@ -182,11 +208,12 @@ class Present:
                      importance=4, factions=[f] + ([old] if old else []))
         ruler = s.leader(f)
         old_name = f.name
-        land_name = s.fm.land_name(f.culture if f.culture in ("heartland", "northmarch", "southron") else "heartland")
+        culture = s.t.cultures.human_or_default(f.culture)
+        land_name = s.fm.land_name(culture)
         f.kind = "kingdom"
-        f.name = s.fm.make_name("kingdom", land=land_name)
+        f.name = s.fm.make_name("kingdom", culture, land=land_name)
         f.flags["land"] = land_name
-        f.flags["dynasty"] = s.realms.family_of(f) or ruler.name.split()[-1]
+        f.flags["dynasty"] = s.realms.family_of(f) or fx.family_of(ruler)
         f.color = s.fm.next_color()
         s.touch()
         s.realms.crown(f, ruler)
@@ -516,7 +543,7 @@ class Present:
                 f = w.factions.get(fig.faction)
                 if fig.id in leaders:
                     fig.role = "ruler"
-                    fig.title = fx.figure_title(s.t, leaders[fig.id].kind, fig.sex)
+                    fig.title = fx.figure_title(s.t, leaders[fig.id].kind, fig.sex, leaders[fig.id].culture)
                 elif fig.id in heirs and f is not None and f.active:
                     fig.role = "heir"
                 elif f is not None and f.active:

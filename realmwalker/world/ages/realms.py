@@ -46,7 +46,15 @@ class Realms:
         return f.flags.get("dynasty") or f.flags.get("family") or ""
 
     def title(self, f, fig) -> str:
-        return fx.figure_title(self.s.t, f.kind, fig.sex)
+        return fx.figure_title(self.s.t, f.kind, fig.sex, f.culture)
+
+    def house_name(self, culture: str, family: str, place: str | None = None) -> str:
+        """A noble house as its people name one ('House Elwood', 'the House of al-Qasimi', 'the Qarluq Clan'),
+        with its seat after it when the name alone is taken."""
+        s = self.s
+        patterns = s.t.cultures.realm_patterns("noble_house", culture)
+        base = s.r.choice(patterns).replace("{family}", family)
+        return f"{base} of {place}" if place else base
 
     def reign_length(self, race: str) -> int:
         lo, hi = self.s.t.politics["reign"].get(race, self.s.t.politics["reign"]["human"])
@@ -58,14 +66,20 @@ class Realms:
         s = self.s
         folk = s.folk
         year = s.year if year is None else year
+        born = child = None
+        if founder is None:
+            span = folk.span(race or fx.culture_race(s.t, f.culture))
+            born, child = self.birth_after(father, year, s.r.randint(*age), span)
+            if child and not family and father.family:
+                family = father.family  # the old ruler's child carries the old ruler's name
+        elif not family and founder.family:
+            family = founder.family  # a new line goes by its founder's name
         family = family or self.family_of(f) or s.fm.seat_family(f.culture)
         if f.kind == "kingdom":
             f.flags["dynasty"] = family
         else:
             f.flags["family"] = family
         if founder is None:
-            span = folk.span(race or fx.CULTURE_RACE.get(f.culture, "human"))
-            born, child = self.birth_after(father, year, s.r.randint(*age), span)
             founder = folk.person(f.culture, born=born, family=family, race=race,
                                   faction=f, role="ruler", home=S(f.seat) if f.seat >= 0 else "",
                                   father=father.id if child and father.sex == "male" else -1,
@@ -94,8 +108,9 @@ class Realms:
         return founder
 
     def crown(self, f, fig, *, quiet: bool = False) -> None:
-        """Someone takes a seat: they lead the faction now."""
+        """Someone takes a seat: they lead the faction now (and any seat they held before passes to their heir)."""
         s = self.s
+        left = [g for g in s.active() if g is not f and g.leader == fig.id]
         old = s.w.figures.get(f.leader)
         if old is not None and old.alive and old is not fig and old.role == "ruler":
             old.role = "member"
@@ -124,6 +139,21 @@ class Realms:
         if f.id in self.regents and self.regents[f.id].get("heir") != fig.id:
             self.regents.pop(f.id, None)  # someone else sits there now: the regency is over
         self.heir_of(f)
+        for g in left:
+            self.pass_on(g, fig)
+
+    def pass_on(self, g, old) -> None:
+        """`old` has taken another seat: the one they held goes to their heir, or to a new line."""
+        s = self.s
+        heir = self.next_in_line(g, old) if g.kind in DYNASTIC else None
+        if heir is not None and heir is not old:
+            self.crown(g, heir, quiet=True)
+        elif g.kind in DYNASTIC:
+            self.found_dynasty(g, family=self.family_of(g) or None)
+        else:
+            new = s.folk.adult_person(g.culture, age=(30, 60), faction=g, role="member",
+                                      home=S(g.seat) if g.seat >= 0 else "")
+            self.crown(g, new, quiet=True)
 
     # ------------------------------------------------------------------ the old world (before the records)
     def setup(self) -> None:
@@ -225,13 +255,15 @@ class Realms:
         s = self.s
         w = s.w
         land = s.land
-        human = [sp for sp in land.spots if sp.human and sp.fated and sp.prior != "halfling"]
+        human = [sp for sp in land.spots if sp.human and sp.fated and s.t.cultures.is_human(sp.prior)]
         big = sorted([sp for sp in human if sp.destiny == "city"], key=lambda sp: -sp.cap) + \
             sorted([sp for sp in human if sp.destiny == "town"], key=lambda sp: -sp.cap)
         want = s.per_size("realms")
         spread = max(w.width, w.height) * float(self.data["spread"])
         capitals: list = []
-        for culture in ("heartland", "northmarch", "southron"):
+        peoples = [c for c in s.t.cultures.human if any(sp.prior == c for sp in big)]
+        s.r.shuffle(peoples)
+        for culture in peoples:  # every people with a city or a town of its own has an old realm first
             options = [sp for sp in big if sp.prior == culture]
             if options and len(capitals) < want:
                 capitals.append(options[0])
@@ -249,7 +281,8 @@ class Realms:
             culture = cap.prior
             founded = s.year0 - s.r.randint(*self.data["old_realm_age"])
             land_name = s.fm.land_name(culture)
-            k = self.new("kingdom", culture, s.fm.make_name("kingdom", land=land_name), seat=cap.sid, founded=founded)
+            k = self.new("kingdom", culture, s.fm.make_name("kingdom", culture, land=land_name), seat=cap.sid,
+                         founded=founded)
             k.flags["land"] = land_name
             k.flags["dynasty"] = s.fm.seat_family(culture)
             land.settle(cap, by=k, year=founded, quiet=True)
@@ -266,12 +299,14 @@ class Realms:
                 continue
             founded = s.year0 - s.r.randint(*self.data["lordship_age"])
             family = s.fm.seat_family(sp.prior)
-            h = self.new("noble_house", sp.prior, f"House {family}", seat=sp.sid, founded=founded)
+            name = self.house_name(sp.prior, family)
+            s.fm.used_names.add(name)
+            h = self.new("noble_house", sp.prior, name, seat=sp.sid, founded=founded)
             h.flags["family"] = family
             land.settle(sp, by=h, year=founded, quiet=True)
             last = self.prehistory(h, until=s.year0, race="human")
             self.found_dynasty(h, family=family, father=last, race="human")
-            s.record("founded_lordship", {"founder": f"the first of House {family}", "place": s.place_name(sp.sid),
+            s.record("founded_lordship", {"founder": f"the first of {name}", "place": s.place_name(sp.sid),
                                           "faction": h.name}, importance=2, year=founded, factions=[h],
                      places=[sp.sid])
 
@@ -362,9 +397,8 @@ class Realms:
         """A new noble house holds a town: a knight, a war hero or a younger son of the royal house."""
         s = self.s
         folk = s.folk
-        culture = realm.culture if realm is not None else sp.prior if sp.prior != "halfling" else "heartland"
-        if culture in ("dwarven", "elven", "orcish"):
-            culture = "heartland"
+        culture = realm.culture if realm is not None else sp.prior
+        culture = s.t.cultures.human_or_default(culture)
         if founder is None and realm is not None:
             cadets = [k for k in folk.children(s.leader(realm)) if folk.is_adult(k) and k.role == "member"
                       and k.sex == "male"] if s.leader(realm) is not None else []
@@ -372,18 +406,21 @@ class Realms:
                 founder = cadets[-1]
         family = s.fm.seat_family(culture)
         if founder is not None and founder.faction == (realm.id if realm is not None else -2):
-            family = founder.name.split()[-1] if " " in founder.name else family
-            name = f"House {family} of {s.place_name(sp.sid)}"
+            family = fx.family_of(founder) or family
+            name = self.house_name(culture, family, s.place_name(sp.sid))
         else:
-            name = f"House {family}"
+            name = self.house_name(culture, family)
         if name in s.fm.used_names:
-            name = f"House {family} of {s.place_name(sp.sid)}"
+            name = self.house_name(culture, family, s.place_name(sp.sid))
         s.fm.used_names.add(name)
         h = self.new("noble_house", culture, name, seat=sp.sid, liege=realm.id if realm is not None else -1,
                      founded=year)
         h.flags["family"] = family
         if founder is not None:
-            founder.name = f"{founder.first_name} {family}" if founder.name.split()[-1] != family else founder.name
+            if fx.family_of(founder) != family:
+                founder.family = family
+                founder.name = s.folk.forge.person(culture, founder.sex, s.r, noble=True, first=founder.first_name,
+                                                   family=family)
             self.found_dynasty(h, family=family, founder=founder, year=year)
         else:
             self.found_dynasty(h, family=family, age=(24, 50), year=year)
@@ -446,7 +483,7 @@ class Realms:
             family = self.family_of(f)
             members = [s.w.figures[m] for m in f.members if m in s.w.figures]
             pool = [m for m in members if m.id != ruler.id and self.eligible(f, m) and folk.is_adult(m)
-                    and (not family or m.name.endswith(" " + family))]
+                    and (not family or fx.family_of(m) == family)]
             pool += [k for _, k in kin if folk.is_adult(k) and k not in pool]
             if pool:
                 if custom == "seniority":
@@ -564,7 +601,7 @@ class Realms:
                 # The regent takes the seat first, so the child's death is no longer anyone's succession.
                 self.crown(f, regent)
                 if f.kind == "kingdom":
-                    f.flags["dynasty"] = regent.name.split()[-1] if " " in regent.name else f.flags["dynasty"]
+                    f.flags["dynasty"] = fx.family_of(regent) or f.flags["dynasty"]
                 folk.die(heir, "murder", cause=s.r.choice(s.data["causes"]["vanished"]), cause_event=e, tell=False)
 
     def crisis(self, f, old, *, war=None) -> dict | None:
@@ -583,13 +620,8 @@ class Realms:
                              importance=4, factions=[f, strongest], figures=[old, usurper], war=war,
                              places=[seat] if seat is not None else [])
                 self.crown(f, usurper)
-                f.flags["dynasty"] = self.family_of(strongest) or usurper.name.split()[-1]
-                f.flags["crisis"] = s.year
-                successor = self.next_in_line(strongest, usurper)
-                if successor is not None:
-                    self.crown(strongest, successor)
-                else:
-                    self.found_dynasty(strongest, family=self.family_of(strongest))
+                f.flags["dynasty"] = self.family_of(strongest) or fx.family_of(usurper)
+                f.flags["crisis"] = s.year  # (crowning the usurper handed their house to its own heir)
                 for v in houses:
                     if v is not strongest:
                         self.change_relation(v, f, -s.r.uniform(10, 35))
@@ -599,9 +631,10 @@ class Realms:
                 return e
             steward = folk.adult_person(f.culture, age=(30, 55), faction=f, role="member", job="steward",
                                         home=S(seat) if seat is not None else "")
-            family = steward.name.split()[-1]
+            family = fx.family_of(steward)
             e = s.record("crisis", {"old": old.full_name(), "cause": old.cause, "new": steward.full_name(),
-                                    "house": f"House {family}", "seat": "throne", "faction": f.name},
+                                    "house": self.house_name(f.culture, family), "seat": "throne",
+                                    "faction": f.name},
                          importance=4, factions=[f], figures=[old, steward], war=war,
                          places=[seat] if seat is not None else [])
             f.flags["dynasty"] = family
@@ -614,16 +647,17 @@ class Realms:
         new = folk.adult_person(f.culture, age=(28, 60), faction=f,
                                 role="member", home=S(seat) if seat is not None else "",
                                 race=old.race if old.kind == "person" else None)
-        family = new.name.split()[-1]
+        family = fx.family_of(new)
         e = s.record("crisis", {"old": old.full_name(), "cause": old.cause, "new": new.full_name(),
                                 "house": "another line", "seat": SEAT_WORDS.get(f.kind, "seat"), "faction": f.name},
                      importance=3 if f.kind in ("clan", "elven_realm") else 2, factions=[f], figures=[old, new],
                      war=war, places=[seat] if seat is not None else [])
         if f.kind == "noble_house":
             f.flags["family"] = family
-            if f.name.startswith("House "):
-                f.name = s.words.unique([f"House {family}", f"House {family} of {{place}}"],
-                                        place=s.place_name(seat) if seat is not None else "the March")
+            place = s.place_name(seat) if seat is not None else "the March"
+            name = self.house_name(f.culture, family)
+            f.name = name if name not in s.fm.used_names else self.house_name(f.culture, family, place)
+            s.fm.used_names.add(f.name)
         self.found_dynasty(f, family=family if f.kind == "noble_house" else None, founder=new)
         return e
 
@@ -922,7 +956,8 @@ class Realms:
                 if not s.chance("charter", 2.0 if "mercantile" in k.values or s.war.at_war(k.id) else 1.0):
                     continue
                 st = s.w.settlements[sid]
-                fc = self.new("free_city", st.culture, s.fm.make_name("free_city", seat=st.name), seat=sid)
+                fc = self.new("free_city", st.culture, s.fm.make_name("free_city", st.culture, seat=st.name),
+                              seat=sid)
                 e = s.record("charter", {"place": st.name, "faction": fc.name, "liege": k.name}, importance=3,
                              factions=[fc, k], places=[sid])
                 s.land.set_owner(sid, fc.id, e)
@@ -945,12 +980,12 @@ class Realms:
                 continue
             ruler = s.leader(f)
             old_name = f.name
-            land_name = s.fm.land_name(f.culture if f.culture in ("heartland", "northmarch", "southron")
-                                       else "heartland")
+            culture = s.t.cultures.human_or_default(f.culture)
+            land_name = s.fm.land_name(culture)
             f.kind = "kingdom"
-            f.name = s.fm.make_name("kingdom", land=land_name)
+            f.name = s.fm.make_name("kingdom", culture, land=land_name)
             f.flags["land"] = land_name
-            f.flags["dynasty"] = self.family_of(f) or ruler.name.split()[-1]
+            f.flags["dynasty"] = self.family_of(f) or fx.family_of(ruler)
             f.color = s.fm.next_color()
             s.touch()
             self.crown(f, ruler)

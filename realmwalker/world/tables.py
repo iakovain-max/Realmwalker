@@ -35,9 +35,27 @@ class BiomeTable:
         self.fg = np.array([d["fg"] for d in self.defs], dtype=np.uint8)
         self.bg = np.array([d["bg"] for d in self.defs], dtype=np.uint8)
         self.glyphs, self.glyph_counts = _glyph_table(self.defs)
+        # Each land's family: the older land it behaves like ("dunes" -> "desert"), itself for the old ones.
+        self.families: list[str] = [d.get("family", bid) for bid, d in zip(self.ids, self.defs)]
+        self.family_index = np.array([self.index[f] for f in self.families], dtype=np.int32)
 
     def id(self, name: str) -> int:
         return self.index[name]
+
+    def family(self, bid: str) -> str:
+        """The land this one behaves like: 'jungle' -> 'forest'; an unknown id is its own family."""
+        i = self.index.get(bid)
+        return self.families[i] if i is not None else bid
+
+    def of_family(self, *families: str) -> list[int]:
+        """The indices of every land in these families (for masks: np.isin(biome, B.of_family("forest")))."""
+        return [i for i, f in enumerate(self.families) if f in families]
+
+    def lookup(self, table: dict, bid: str, default=None):
+        """A value kept per land, for this land or else for its family."""
+        if bid in table:
+            return table[bid]
+        return table.get(self.family(bid), default)
 
     def __getitem__(self, i: int) -> dict:
         return self.defs[i]
@@ -80,6 +98,9 @@ class Tables:
         self.sites = data["sites.json"]
         self.place_names = data["place_names.json"]
         self.names = data["names.json"]
+        from realmwalker.world.cultures import Cultures
+
+        self.cultures = Cultures(data["cultures.json"], data["names.json"], data["factions.json"])
         from realmwalker.rules.items import ItemTable
         from realmwalker.world.calendar import Calendar
 
@@ -115,5 +136,6 @@ class Tables:
         self.companions = data["companions.json"]
         self.uniques = data["uniques.json"]
         self.magic = data["magic.json"]
+        self.wonders = data["wonders.json"]
         self.quests = data["quests.json"]
         self.travel_events = {k: v for k, v in data["travel_events.json"]["events"].items() if not k.startswith("_")}

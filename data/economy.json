@@ -83,8 +83,8 @@
     "riding_horse": {"name": "riding horse", "price": 7500, "carry": 100, "ride": 0.65, "days_without_food": 3}
   },
   "ride_lands": {"plains": 1.0, "coast": 1.0, "tundra": 1.0, "desert": 1.0, "hills": 1.0, "forest": 0.5,
-                 "pine_forest": 0.4, "marsh": 0.0, "mountains": 0.0, "high_mountains": 0.0},
-  "grazing": ["plains", "hills", "forest", "coast", "marsh"],
+                 "pine_forest": 0.4, "marsh": 0.0, "mountains": 0.0, "high_mountains": 0.0, "steppe": 1.0, "savanna": 1.0, "salt_flat": 1.0, "glacier": 0.0, "dunes": 0.3, "badlands": 0.5, "volcanic": 0.3, "jungle": 0.0, "fey_forest": 0.4},
+  "grazing": ["plains", "hills", "forest", "coast", "marsh", "steppe", "savanna"],
   "services": {
     "_comment": "Prices in copper. Inn rooms and meals scale with the settlement: price x size factor.",
     "room_common": 10, "room_private": 50, "meal": 30, "bath": 20,
@@ -104,7 +104,16 @@
     "coast": {"salt": 0.45, "dried_fish": 0.5, "raw_fish": 0.5},
     "marsh": {"healing_herbs": 0.6, "raw_fish": 0.7},
     "tundra": {"furs": 0.55, "hides": 0.7},
-    "desert": {"salt": 0.6, "pepper": 0.7}
+    "desert": {"salt": 0.6, "pepper": 0.7},
+    "steppe": {"wool_bolt": 0.7, "hides": 0.7, "cheese": 0.8},
+    "savanna": {"hides": 0.65, "raw_meat": 0.7},
+    "jungle": {"pepper": 0.6, "healing_herbs": 0.55},
+    "dunes": {"salt": 0.7},
+    "salt_flat": {"salt": 0.35},
+    "badlands": {"copper_ingot": 0.6, "gemstone": 0.8},
+    "volcanic": {"gemstone": 0.75, "iron_bar": 0.7},
+    "glacier": {"furs": 0.6},
+    "fey_forest": {"healing_herbs": 0.5}
   },
   "trade_goods_scarcity": 1.55,
   "kind_prices": {

@@ -90,8 +90,14 @@ def has_flag(game, flag: str) -> tuple[Character, object] | tuple[None, None]:
 
 
 def land(game) -> str:
+    """The land the party is in, itself ('jungle', 'dunes'...): tables kept per land fall back to its family."""
     p = game.player
-    return game.biome_key(p.x, p.y)
+    return game.land_key(p.x, p.y)
+
+
+def by_land(game, table: dict, default=None):
+    """This land's entry in a table kept per land, else its family's ('jungle' falls back to 'forest')."""
+    return game.tables.biomes.lookup(table, land(game), default)
 
 
 def indoors(game) -> bool:
@@ -114,7 +120,7 @@ def light_fire(game) -> list[str]:
     w = game.weather
     if w.kind in ("storm", "blizzard") and not camp.tent and not camp.shelter and not indoors(game):
         return ["In this weather no fire will catch in the open. A tent, or a rough shelter, might shelter one."]
-    wood = game.tables.camping["firewood"].get(land(game), "some")
+    wood = by_land(game, game.tables.camping["firewood"], "some")
     wet = 4 if (w.raining or w.snowing) else 0
     msgs = []
     if wood == "plenty":
@@ -149,7 +155,7 @@ def build_shelter(game) -> list[str]:
         return ["You are already under cover."]
     if indoors(game):
         return ["There is a roof here already."]
-    dc = int(game.tables.camping.get("shelter", {}).get(land(game), 12))
+    dc = int(by_land(game, game.tables.camping.get("shelter", {}), 12))
     w = game.weather
     if w.kind in ("storm", "blizzard"):
         dc += 1
@@ -161,7 +167,8 @@ def build_shelter(game) -> list[str]:
         return [roll, "The wind has it down as fast as you put it up. You could try again."]
     game.pass_time(30 if spade is not None else 60, "walk")
     camp.shelter = True
-    snowy = land(game) in ("tundra", "high_mountains") or (game.weather.snowing and game.moment.season == "winter")
+    snowy = (game.tables.biomes.family(land(game)) in ("tundra", "high_mountains")
+             or (game.weather.snowing and game.moment.season == "winter"))
     if spade is not None and snowy:
         return [roll, "You dig a snow-hole into the drift and roof it with your cloaks. Inside, out of the wind, it is "
                       "almost warm."]
@@ -169,7 +176,12 @@ def build_shelter(game) -> list[str]:
             "hills": "a hollow behind a wall of turf and stones", "mountains": "a hollow in the lee of the rocks",
             "high_mountains": "a scrape in the snow behind a boulder", "tundra": "a low wall of snow and turf",
             "desert": "a hollow under a ledge, roofed with your cloak", "coast": "a lean-to of driftwood and wrack",
-            "marsh": "a platform of reeds under a roof of reeds"}.get(land(game), "a lean-to of whatever is to hand")
+            "marsh": "a platform of reeds under a roof of reeds", "jungle": "a platform of poles under broad leaves",
+            "dunes": "a hollow scooped in the lee of a dune, roofed with your cloak",
+            "glacier": "a trench cut in the snow, roofed with blocks of it",
+            "steppe": "a low wall of turf and your packs against the wind",
+            "savanna": "a ring of thorn branches round a hollow under a thorn tree"}
+    what = what.get(land(game)) or what.get(game.tables.biomes.family(land(game)), "a lean-to of whatever is to hand")
     return [roll, f"You build {what}. Out of the wind, and out of most of the wet."]
 
 
@@ -241,7 +253,7 @@ def forage_while_resting(game, forager) -> list[str]:
     """A companion told to forage looks for food around the camp while the rest of you sleep."""
     if game.world.settlement_at(game.player.x, game.player.y) is not None:
         return []
-    spec = game.tables.camping["forage"].get(land(game))
+    spec = by_land(game, game.tables.camping["forage"])
     if spec is None:
         return []
     dc = int(spec["dc"]) + (int(spec.get("winter_dc", 0)) if game.moment.season == "winter" else 0)
@@ -261,7 +273,7 @@ def forage_while_resting(game, forager) -> list[str]:
 def forage(game) -> list[str]:
     if game.world.settlement_at(game.player.x, game.player.y) is not None:
         return ["There is nothing to forage in a town: buy food instead."]
-    spec = game.tables.camping["forage"].get(land(game))
+    spec = by_land(game, game.tables.camping["forage"])
     if spec is None:
         return ["There is nothing to forage here."]
     dc = int(spec["dc"]) + (int(spec.get("winter_dc", 0)) if game.moment.season == "winter" else 0)
@@ -288,7 +300,7 @@ def forage(game) -> list[str]:
 def hunt(game) -> list[str]:
     if game.world.settlement_at(game.player.x, game.player.y) is not None:
         return ["No hunting in a town."]
-    spec = game.tables.camping["hunt"].get(land(game))
+    spec = by_land(game, game.tables.camping["hunt"])
     if spec is None:
         return ["There is no game here worth the name."]
     bonus = 0
@@ -415,7 +427,7 @@ def night_sound(game) -> str:
     camp = camp_here(game)
     if camp is not None and camp.fire:
         pools += spec.get("fire", [])
-    pools += spec.get(game.biome_key(game.player.x, game.player.y), [])
+    pools += by_land(game, spec, [])
     if not pools:
         return ""
     rng = game.world.rng.child(f"night/{game.world.time}/{game.player.x},{game.player.y}")
@@ -459,7 +471,7 @@ def butcher(game, carcasses) -> tuple[list, list[str]]:
 def camp_summary(game) -> list[str]:
     """Lines describing the camp for the camp screen."""
     camp = camp_here(game)
-    wood = game.tables.camping["firewood"].get(land(game), "some")
+    wood = by_land(game, game.tables.camping["firewood"], "some")
     out = []
     if game.world.settlement_at(game.player.x, game.player.y) is not None:
         out.append("You are in a settlement: there are roofs here, and an inn for the night.")

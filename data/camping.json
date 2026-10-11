@@ -2,11 +2,11 @@
   "_comment": "Living off the land. firewood: how easy it is to find fuel in each land (plenty/some/little/none). shelter: Survival DC to build a rough shelter (a lean-to, a hollow in the lee of rocks) in each land. forage: Survival DC to find something to eat (winter adds winter_dc), what you find (item, dice) and extras found on a good roll (item, dice, chance). hunt: Survival DC, and the game you might take: [name, weight, meat dice, hide item or null]. fish: DC and catch. cooking: what raw food becomes over a fire (needs_pot: needs a pot or mess kit).",
   "firewood": {
     "forest": "plenty", "pine_forest": "plenty", "hills": "some", "plains": "some", "marsh": "some", "coast": "some",
-    "mountains": "little", "high_mountains": "none", "tundra": "little", "desert": "none"
+    "mountains": "little", "high_mountains": "none", "tundra": "little", "desert": "none", "glacier": "none", "steppe": "little", "savanna": "some", "jungle": "some", "dunes": "none", "badlands": "little", "salt_flat": "none", "volcanic": "none", "fey_forest": "plenty"
   },
   "shelter": {
     "forest": 8, "pine_forest": 8, "hills": 10, "plains": 11, "marsh": 12, "coast": 11,
-    "mountains": 10, "high_mountains": 15, "tundra": 14, "desert": 13
+    "mountains": 10, "high_mountains": 15, "tundra": 14, "desert": 13, "glacier": 18, "steppe": 13, "savanna": 12, "jungle": 11, "dunes": 15, "badlands": 11, "salt_flat": 16, "volcanic": 13, "fey_forest": 10
   },
   "forage": {
     "forest": {"dc": 11, "winter_dc": 5, "find": [["wild_food", "1d3"]], "extra": [["healing_herbs", "1d2", 0.35]]},
@@ -18,7 +18,16 @@
     "mountains": {"dc": 15, "winter_dc": 5, "find": [["wild_food", "1"]], "extra": [["healing_herbs", "1", 0.15]]},
     "high_mountains": {"dc": 19, "winter_dc": 5, "find": [["wild_food", "1"]], "extra": []},
     "tundra": {"dc": 16, "winter_dc": 5, "find": [["wild_food", "1"]], "extra": []},
-    "desert": {"dc": 17, "winter_dc": 0, "find": [["wild_food", "1"]], "extra": []}
+    "desert": {"dc": 17, "winter_dc": 0, "find": [["wild_food", "1"]], "extra": []},
+    "steppe": {"dc": 14, "winter_dc": 4, "find": [["wild_food", "1"]], "extra": [["healing_herbs", "1", 0.15]]},
+    "savanna": {"dc": 15, "winter_dc": 0, "find": [["wild_food", "1"]], "extra": []},
+    "jungle": {"dc": 11, "winter_dc": 0, "find": [["wild_food", "1d3"]], "extra": [["healing_herbs", "1d2", 0.4]]},
+    "dunes": {"dc": 21, "winter_dc": 0, "find": [["wild_food", "1"]], "extra": []},
+    "salt_flat": {"dc": 24, "winter_dc": 0, "find": [["wild_food", "1"]], "extra": []},
+    "badlands": {"dc": 17, "winter_dc": 2, "find": [["wild_food", "1"]], "extra": []},
+    "volcanic": {"dc": 20, "winter_dc": 0, "find": [["wild_food", "1"]], "extra": []},
+    "glacier": {"dc": 24, "winter_dc": 0, "find": [["wild_food", "1"]], "extra": []},
+    "fey_forest": {"dc": 10, "winter_dc": 2, "find": [["wild_food", "1d3"]], "extra": [["healing_herbs", "1d2", 0.5]]}
   },
   "hunt": {
     "forest": {"dc": 12, "game": [["a roe deer", 3, "3d4", "hides"], ["a brace of hares", 4, "1d3", null], ["a wild pig", 1, "2d4", "hides"], ["a wood pigeon", 3, "1", null]]},
@@ -30,7 +39,14 @@
     "mountains": {"dc": 15, "game": [["a mountain goat", 2, "2d4", "hides"], ["a marmot", 3, "1", null]]},
     "high_mountains": {"dc": 18, "game": [["a mountain goat", 1, "2d4", "hides"]]},
     "tundra": {"dc": 15, "game": [["a hare", 3, "1d2", null], ["a reindeer", 1, "4d4", "furs"], ["a ptarmigan", 3, "1", null]]},
-    "desert": {"dc": 17, "game": [["a lizard", 3, "1", null], ["a desert hare", 2, "1", null]]}
+    "desert": {"dc": 17, "game": [["a lizard", 3, "1", null], ["a desert hare", 2, "1", null]]},
+    "steppe": {"dc": 13, "game": [["a saiga", 2, "3d4", "hides"], ["a marmot", 4, "1", null], ["a bustard", 3, "1d2", null]]},
+    "savanna": {"dc": 13, "game": [["an antelope", 3, "3d4", "hides"], ["a guineafowl", 4, "1", null], ["a warthog", 2, "2d4", "hides"]]},
+    "jungle": {"dc": 14, "game": [["a peccary", 2, "2d4", "hides"], ["a monkey", 3, "1", null], ["a tapir", 1, "4d4", "hides"]]},
+    "dunes": {"dc": 19, "game": [["a sand lizard", 3, "1", null], ["a jerboa", 2, "1", null]]},
+    "badlands": {"dc": 16, "game": [["a bighorn", 1, "3d4", "hides"], ["a lizard", 3, "1", null], ["a rock hare", 3, "1", null]]},
+    "glacier": {"dc": 20, "game": [["a seal on the ice", 1, "3d4", "furs"]]},
+    "fey_forest": {"dc": 14, "game": [["a white hart", 1, "3d4", "hides"], ["a brace of hares", 4, "1d3", null]]}
   },
   "fish": {"dc": 11, "tackle_bonus": 5, "catch": ["raw_fish", "1d3"]},
   "crafts": {

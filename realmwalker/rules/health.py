@@ -45,6 +45,7 @@ class HealthContext:
     marsh: bool = False  # in marsh country
     warm_season: bool = False
     now: int = 0
+    healing: float = 1.0  # how much faster wounds mend here (the hot springs of a wonder)
 
 
 class DiseaseTable:
@@ -410,7 +411,7 @@ def _heal_hours(w: Wound) -> float:
 def _healing(char: Character, tables, ctx: HealthContext, hours: float, rng: RNG) -> list:
     events = []
     n = body.first(char)
-    rate = {"sleep": 2.0, "rest": 1.5, "walk": 1.0, "fight": 0.5}.get(ctx.activity, 1.0)
+    rate = {"sleep": 2.0, "rest": 1.5, "walk": 1.0, "fight": 0.5}.get(ctx.activity, 1.0) * ctx.healing
     if char.blood < 60:
         rate *= 0.6
     if char.hunger >= 80 or char.thirst >= 85:

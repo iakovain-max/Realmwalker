@@ -186,8 +186,9 @@ def test_items_on_the_ground_survive_saving(game, tables, tmp_path):
     assert any(i.def_id == "blanket" for pile in lm.items.values() for i in pile)
 
 
-def test_old_format_1_saves_still_load(game, tables, tmp_path):
-    """Saves from M1 (before characters) load with a default wanderer."""
+def test_saves_from_before_the_peoples_are_refused_kindly(game, tables, tmp_path):
+    """Format 11 (2026-10-11: peoples on the map, bigger towns) has no way back to older saves (Anton: old saves do
+    not matter yet). An older one is refused with a plain message, and its files are left as they were."""
     folder = save.save_game(game, tmp_path)
     path = folder / save.CHARACTER_FILE
     with zipfile.ZipFile(path) as z:
@@ -201,8 +202,10 @@ def test_old_format_1_saves_still_load(game, tables, tmp_path):
     with zipfile.ZipFile(path, "w") as z:
         for n, d in entries.items():
             z.writestr(n, d)
-    loaded = save.load_game(folder, tables)
-    assert loaded.leader.name == game.leader.name and loaded.leader.inventory
+    before = path.read_bytes()
+    with pytest.raises(save.SaveError):
+        save.load_game(folder, tables)
+    assert path.read_bytes() == before
 
 
 def test_heavy_loads_slow_travel(game, tables, monkeypatch):

@@ -190,7 +190,7 @@ class CharacterScreen(Screen):
         col1, col2 = 2, 2 + 38
         col3 = col2 + 34
         race = t.races[c.race]["name"]
-        culture = t.names["cultures"].get(c.culture, {}).get("label", c.culture)
+        culture = t.cultures.adjective(self.game.world, c.culture)
         cls = t.classes[c.cls]
         sub = f" ({cls['subclasses'][c.subclass]['name']})" if c.subclass else ""
         nxt = s.xp_for_next()

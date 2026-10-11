@@ -63,6 +63,7 @@ class Figure:
     creature: str = ""  # a beast's kind in data/creatures.json
     regnal: str = ""  # "III": the third of that name on a throne
     fame: int = 0  # how much there is to tell about them
+    family: str = ""  # the family's own name as its men bear it (world/names.py); a woman's may differ in her name
 
     @property
     def alive(self) -> bool:
@@ -263,10 +264,16 @@ def faction_title(world, tables, faction: Faction) -> str:
 
 
 def faith_for_culture(tables, culture: str) -> str:
-    for fid, faith in tables.factions["faiths"].items():
-        if culture in faith.get("cultures", []):
-            return fid
-    return "radiant"
+    from realmwalker.world.cultures import faith_for
+
+    return faith_for(tables, culture)
+
+
+def family_of(fig) -> str:
+    """A figure's family name (kept on the figure; for those made before it was, the last word of the name)."""
+    if fig is None:
+        return ""
+    return fig.family or (fig.name.split()[-1] if " " in fig.name else "")
 
 
 def church_of(world, faith: str) -> Faction | None:
@@ -276,7 +283,11 @@ def church_of(world, faith: str) -> Faction | None:
     return None
 
 
-def figure_title(tables, kind: str, sex: str) -> str:
+def figure_title(tables, kind: str, sex: str, culture: str | None = None) -> str:
+    """What the head of this kind of faction is called (by their people's custom: a Sultana, a Jarl, a Khagan)."""
+    cultures = getattr(tables, "cultures", None)
+    if cultures is not None:
+        return cultures.title(kind, sex, culture)
     titles = tables.factions["kinds"][kind]["leader"]
     return titles[0] if sex == "male" else titles[1]
 
@@ -342,22 +353,31 @@ def touch(world) -> None:
 def make_figure(world, tables, rng: RNG, culture: str, *, year: int, faction: Faction | None = None,
                 role: str = "member", title: str = "", family: str | None = None, sex: str | None = None,
                 age: tuple[int, int] = (25, 65), race: str | None = None) -> Figure:
-    """A new person of note, of a people's names."""
-    cultures = tables.names["cultures"]
-    names = cultures.get(culture) or cultures["heartland"]
+    """A new person of note, named as their people name people (world/names.py)."""
+    from realmwalker.world.names import forge
+
+    nf = forge(world, tables)
     sex = sex or rng.choice(["male", "female"])
-    family = family or rng.choice(names["family"])
+    family = family or nf.family_base(culture, rng)
+    noble = faction is not None and faction.kind in REALM_KINDS
     fig = Figure(
-        id=world.next_figure_id, name=f"{rng.choice(names[sex])} {family}", sex=sex,
-        race=race or CULTURE_RACE.get(culture, "human"), culture=culture,
+        id=world.next_figure_id, name=nf.person(culture, sex, rng, noble=noble, family=family), sex=sex,
+        race=race or culture_race(tables, culture), culture=culture,
         born=year - rng.randint(*age), faction=faction.id if faction else -1, title=title, role=role,
-        traits=rng.sample(sorted(tables.people["personality"]), 2),
+        traits=rng.sample(sorted(tables.people["personality"]), 2), family=family,
     )
     world.next_figure_id += 1
     world.figures[fig.id] = fig
     if faction is not None:
         faction.members.append(fig.id)
     return fig
+
+
+def culture_race(tables, culture: str) -> str:
+    cultures = getattr(tables, "cultures", None)
+    if cultures is not None and cultures.known(culture):
+        return cultures.race(culture)
+    return CULTURE_RACE.get(culture, "human")
 
 
 def generate_factions(world, tables, rng: RNG) -> None:
@@ -389,9 +409,11 @@ class FactionMaker:
         self.colors = [tuple(c) for c in self.data["realm_colors"]]
         rng.shuffle(self.colors)
         self.color_i = 0
+        from realmwalker.world.names import forge
         from realmwalker.world.naming import Namer
 
-        self.namer = Namer(tables.place_names, rng.child("names"))
+        self.forge = forge(world, tables)
+        self.namer = Namer(tables.place_names, rng.child("names"), forge=self.forge)
         self.namer.used = set(self.used_names)
 
     def count(self, kind: str) -> int:
@@ -434,9 +456,12 @@ class FactionMaker:
             out.append(v)
         return out
 
-    def make_name(self, kind: str, **values: str) -> str:
-        patterns = [p for p in self.data["kinds"][kind]["names"]
-                    if all(slot in values or slot in self.data["words"] for slot in textgen.slots(p))]
+    def make_name(self, kind: str, culture: str | None = None, **values: str) -> str:
+        """A faction's name, in its people's manner when they have one for this kind ('the Sultanate of X')."""
+        cultures = getattr(self.t, "cultures", None)
+        names = cultures.realm_patterns(kind, culture) if cultures is not None and culture else \
+            self.data["kinds"][kind]["names"]
+        patterns = [p for p in names if all(slot in values or slot in self.data["words"] for slot in textgen.slots(p))]
         patterns = patterns or self.data["kinds"][kind]["names"][:1]
         name = ""
         for _ in range(20):
@@ -481,13 +506,13 @@ class FactionMaker:
                     age: tuple[int, int] = (28, 68)) -> Figure:
         sex = "male" if self.rng.chance(0.62) else "female"
         leader = self.new_figure(f.culture, faction=f, role="ruler", family=family, sex=sex, age=age)
-        leader.title = figure_title(self.t, f.kind, sex)
+        leader.title = figure_title(self.t, f.kind, sex, f.culture)
         if self.rng.chance(0.2):
             leader.epithet = self.rng.choice(self.data["words"]["epithet"])
         f.leader = leader.id
         f.rulers.append(leader.id)
         if dynasty:
-            family_name = leader.name.split()[-1]
+            family_name = family_of(leader)
             if self.rng.chance(0.7):
                 other = "female" if sex == "male" else "male"
                 spouse = self.new_figure(f.culture, faction=f, role="spouse", sex=other, age=(20, 60))
@@ -503,8 +528,7 @@ class FactionMaker:
     def seat_family(self, culture: str) -> str:
         """A family name no other ruling house has."""
         used = self.__dict__.setdefault("used_families", set())
-        options = [n for n in self.names_for(culture)["family"] if n not in used]
-        family = self.rng.choice(options or self.names_for(culture)["family"])
+        family = self.forge.family_base(culture, self.rng, avoid=used)
         used.add(family)
         return family
 
@@ -653,18 +677,10 @@ class FactionMaker:
                 halls.remove(s)
 
     def land_name(self, culture: str) -> str:
-        """A country's name: a place-name root and a land ending ('Ashmark', 'Salvenza')."""
-        places = self.t.place_names["settlements"]
-        tables = places.get(culture) or places["heartland"]
-        words = self.data["words"]
-        suffixes = words.get(f"land_suffix_{culture}") or words["land_suffix_heartland"]
+        """A country's name: a stem of its people and one of their land endings ('Ashmark', 'Qadiristan')."""
         name = ""
         for _ in range(30):
-            prefix = self.rng.choice(tables["prefix"])
-            suffix = self.rng.choice(suffixes)
-            if prefix[-1:].lower() == suffix[:1].lower():
-                suffix = suffix[1:]
-            name = (prefix + suffix)[:1].upper() + (prefix + suffix)[1:].lower()
+            name = self.forge.land(culture, self.rng)
             if name not in self.used_names:
                 break
         self.used_names.add(name)

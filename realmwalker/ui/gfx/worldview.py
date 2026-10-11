@@ -1,5 +1,6 @@
-"""The overworld as a painted map (paint.py), with the towns and ruins on it, names, fog over country you have not
-seen, the work you have in hand, the road you are on, and you.
+"""The overworld as a painted map (paint.py), with the towns and ruins on it (each people's towns drawn in their own
+manner), names on the land, fog over country you have not seen, the work you have in hand, the road you are on, and
+you. The map is painted once (paint.ChunkCache) and shown at any zoom.
 """
 
 from __future__ import annotations
@@ -9,12 +10,69 @@ import math
 import numpy as np
 
 from realmwalker.ui.gfx import dolls
-from realmwalker.ui.gfx.paint import ChunkCache, WorldPainter
+from realmwalker.ui.gfx.paint import CANON, OVERVIEW, ChunkCache, WorldPainter
 from realmwalker.ui.gfx.scene import Clip, Image, Lines, Rect, Text, tile_batch
 
 STEP_SECONDS = 0.16
 NIGHT_TINT = (96, 108, 150)
 FOG_RGB = (14, 13, 16)
+TOWN_STYLES = ("northmarch", "southron", "highland", "qasari", "khurgan", "volsk", "thalassian", "itzan", "halfling",
+               "orcish")  # peoples whose towns have their own picture (tools/map_art.py); the rest look as they always did
+LAND_INK = (44, 32, 22, 255)
+WATER_INK = (34, 64, 112, 255)
+LAND_HALO = (232, 218, 182, 190)
+WATER_HALO = (206, 224, 232, 150)
+
+
+def town_mark(tables, s, default: str) -> str:
+    """The picture of a settlement on the map: its people's manner of building, by its size."""
+    if s.kind in ("hamlet", "village", "town", "city"):
+        style = tables.cultures.town_style(s.culture) if s.culture in tables.cultures.ids else s.culture
+        if style in TOWN_STYLES:
+            return f"map/town_{style}_{'big' if s.kind in ('town', 'city') else 'small'}"
+    return default
+
+
+def sharp_at(ppc: float, grain: int) -> bool:
+    """Is a picture painted at `grain` pixels a square shown at ppc a whole-number enlargement (sharp pixels)?"""
+    k = ppc / grain
+    return k >= 1 and abs(k - round(k)) < 1e-6
+
+
+def place_labels(world, explored, ppc: float, ox: float, oy: float, rect, measure, taken=None) -> list[tuple]:
+    """Names written across the land: seas and lakes in blue italic, ranges, deserts and forests in ink, the biggest
+    first, as many as fit without touching. Returns (x, y, text, font, size, rgba, halo) for each."""
+    x0, y0, vw, vh = rect
+    taken = list(taken or [])
+    out = []
+    cands = []
+    for a in world.areas:
+        if a.kind == "river" or not explored[a.x, a.y]:
+            continue
+        span = math.sqrt(a.size) * ppc
+        if span < 70:
+            continue
+        water = a.kind in ("ocean", "lake")
+        size = int(max(11, min(26, span * (0.075 if water else 0.07))))
+        cands.append((a.size, a, water, size))
+    cands.sort(key=lambda c: (-c[0], c[1].id))
+    for _, a, water, size in cands:
+        text = a.name[:1].upper() + a.name[1:]
+        font = "prose_italic" if water else "heading_light"
+        tw, th = measure(text, font, size)
+        cx, cy = ox + (a.x + 0.5) * ppc, oy + (a.y + 0.5) * ppc
+        box = (cx - tw / 2 - 4, cy - th / 2 - 2, tw + 8, th + 4)
+        if box[0] < x0 or box[1] < y0 or box[0] + box[2] > x0 + vw or box[1] + box[3] > y0 + vh:
+            continue
+        if any(_overlap(box, b) for b in taken):
+            continue
+        taken.append(box)
+        out.append((cx, cy, text, font, size, WATER_INK if water else LAND_INK, WATER_HALO if water else LAND_HALO))
+    return out
+
+
+def _overlap(a, b) -> bool:
+    return a[0] < b[0] + b[2] and b[0] < a[0] + a[2] and a[1] < b[1] + b[3] and b[1] < a[1] + a[3]
 
 
 def daylight_tint(light: float) -> tuple[int, int, int]:
@@ -56,6 +114,7 @@ class WorldView:
             self.world = game.world
             self.painter = WorldPainter(game.world, game.tables)
             self.cache = ChunkCache(self.painter)
+            self.cache.paint_overview()  # small and quick: it stands in until the map is painted in full
             self.cam = None
             self.glide = None
 
@@ -93,8 +152,10 @@ class WorldView:
         return g[0] + (g[2] - g[0]) * t, g[1] + (g[3] - g[1]) * t
 
     # ------------------------------------------------------------------ drawing
-    def draw(self, canvas, game, rect_px, ppc: int, *, quests=(), look=None, hover=None, focus=None,
-             overlays=(), route=None, figure: bool = True) -> None:
+    def draw(self, canvas, game, rect_px, ppc: float, *, quests=(), look=None, hover=None, focus=None,
+             overlays=(), route=None, figure: bool = True, camera=None, land_names: bool = False) -> None:
+        """Draw the map in rect_px at ppc screen pixels a square, centred on you (or `focus`), or on `camera`
+        (world squares, as floats) when the world map is looked about."""
         self.ready(game)
         gfx = canvas.gfx
         now = gfx.now
@@ -109,7 +170,9 @@ class WorldView:
         target = (pos[0] + 0.5, pos[1] + 0.5) if focus is None else (focus[0] + 0.5, focus[1] + 0.5)
         dt = max(0.0, now - self.last_t)
         self.last_t = now
-        if self.cam is None or not gfx.animate:
+        if camera is not None:
+            self.cam = (float(camera[0]), float(camera[1]))
+        elif self.cam is None or not gfx.animate:
             self.cam = target
         else:
             k = min(1.0, dt * 8.0)
@@ -125,29 +188,33 @@ class WorldView:
         self.origin = (ox, oy)
         tint = daylight_tint(float(game.light))
         canvas.under(Clip(rect_px), Rect(X0, Y0, VW, VH, (*FOG_RGB, 255)))
-        # The painted country, chunk by chunk.
-        n = self.painter.chunk_cells(ppc)
-        cx0 = max(0, int((X0 - ox) // (n * ppc)))
-        cy0 = max(0, int((Y0 - oy) // (n * ppc)))
-        cx1 = min((world.width - 1) // n, int((X0 + VW - ox) // (n * ppc)))
-        cy1 = min((world.height - 1) // n, int((Y0 + VH - oy) // (n * ppc)))
-        wanted, missing = [], 0
-        for gy in range(cy0 - 1, cy1 + 2):
-            for gx in range(cx0 - 1, cx1 + 2):
-                if 0 <= gx <= (world.width - 1) // n and 0 <= gy <= (world.height - 1) // n:
-                    wanted.append((ppc, gx, gy))
-        visible = [(ppc, gx, gy) for gx in range(cx0, cx1 + 1) for gy in range(cy0, cy1 + 1)]
-        for key in visible:
-            im = self.cache.get(key)
-            if im is None and missing < 2:
-                im = self.cache.paint_now(key)  # what you are looking at cannot wait
-                missing += 1
-            if im is None:
-                continue
-            _, gx, gy = key
-            canvas.under(Image(("chunk", id(world), *key), lambda im=im: im,
-                               (ox + gx * n * ppc, oy + gy * n * ppc, im.width, im.height), rgba=(*tint, 255), smooth=False))
-        self.cache.want([k for k in wanted if self.cache.get(k) is None])
+        # The painted country: far out, the small picture of the whole world; nearer, the chunks of the map painted
+        # in full (the small picture standing in for any not painted yet).
+        cache = self.cache
+        overview = cache.overview or cache.paint_overview()
+        W, H = world.width, world.height
+        if ppc <= 2 * OVERVIEW:
+            canvas.under(Image(("map overview", id(world)), lambda: overview, (ox, oy, W * ppc, H * ppc),
+                               rgba=(*tint, 255), smooth=not sharp_at(ppc, OVERVIEW)))
+        else:
+            n = cache.n
+            sharp = sharp_at(ppc, CANON)
+            gx0, gy0 = max(0, int((X0 - ox) // (n * ppc))), max(0, int((Y0 - oy) // (n * ppc)))
+            gx1 = min(cache.cols - 1, int((X0 + VW - ox) // (n * ppc)))
+            gy1 = min(cache.rows - 1, int((Y0 + VH - oy) // (n * ppc)))
+            for gx in range(gx0, gx1 + 1):
+                for gy in range(gy0, gy1 + 1):
+                    cw, ch = min(n, W - gx * n), min(n, H - gy * n)
+                    dst = (ox + gx * n * ppc, oy + gy * n * ppc, cw * ppc, ch * ppc)
+                    im = cache.get((gx, gy))
+                    if im is not None:
+                        canvas.under(Image(("chunk", id(world), gx, gy), lambda im=im: im, dst, rgba=(*tint, 255),
+                                           smooth=not sharp))
+                    else:
+                        canvas.under(Image(("map overview", id(world)), lambda: overview, dst,
+                                           src=(gx * n * OVERVIEW, gy * n * OVERVIEW, cw * OVERVIEW, ch * OVERVIEW),
+                                           rgba=(*tint, 255), smooth=True))
+            cache.look_at(cx, cy)
         # Fog over what you have not seen: a soft edge, from a picture one pixel per square.
         explored = p.explored
         for key, make, alpha, *sharp in overlays:  # realms (in map pixels, sharp), weather (a pixel a square, soft)
@@ -168,12 +235,12 @@ class WorldView:
             sx, sy = self.cell_px(s.x, s.y)
             if sx < X0 - 3 * ppc or sx > X0 + VW + 3 * ppc or sy < Y0 - 3 * ppc or sy > Y0 + VH + 3 * ppc:
                 continue
-            size = ppc * {"hamlet": 1.1, "village": 1.35, "town": 1.6, "city": 2.0}.get(s.kind, 1.5)
-            names.append(stypes.get(s.kind, "map/village"))
+            size = max(10, ppc * {"hamlet": 1.1, "village": 1.35, "town": 1.6, "city": 2.0}.get(s.kind, 1.5))
+            names.append(town_mark(game.tables, s, stypes.get(s.kind, "map/village")))
             dst.append((sx + ppc / 2 - size / 2, sy + ppc - size * 0.92, size, size))
             a = 1.0 if explored[s.x, s.y] else 0.6
             cols.append((light, light, min(1.0, light * 1.05), a))
-            if ppc >= 12:
+            if ppc >= 12 or (ppc >= 6 and s.kind in ("city", "town", "hold", "elfhall")):
                 labels.append((sx + ppc / 2, sy + ppc + 1, s.name, s.kind, a))
         for site in world.sites:
             if not explored[site.x, site.y]:
@@ -187,11 +254,19 @@ class WorldView:
             cols.append((light, light, light, 1.0))
         if names:
             canvas.under(*tile_batch(gfx.atlas, names, np.array(dst, np.float32), np.array(cols, np.float32)))
+        town_boxes = []
         for lx, ly, name, kind, a in labels:
             big = kind in ("town", "city", "hold")
             size = max(11, int(ppc * (0.62 if big else 0.5)))
             canvas.under(Text(lx, ly, name, "heading" if big else "heading_light", size,
                               (236, 222, 186, int(255 * a)), anchor="mt", shadow=False, outline=True))
+            town_boxes.append((lx - len(name) * size * 0.35, ly, len(name) * size * 0.7, size * 1.2))
+        if land_names:  # names on the land, where the towns' names leave room
+            from realmwalker.ui.gfx import typefaces
+
+            for x, y, text, font, size, rgba, halo in place_labels(world, explored, ppc, ox, oy, rect_px,
+                                                                   typefaces.measure, town_boxes):
+                canvas.under(Text(x, y, text, font, size, rgba, anchor="mm", shadow=False, outline=halo))
         # Work in hand: a slow pulse of lamplight.
         pulse = 0.5 + 0.5 * math.sin(now * 2.6) if gfx.ambient else 0.7
         for qx, qy in quests:

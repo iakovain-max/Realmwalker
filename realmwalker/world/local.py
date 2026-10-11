@@ -10,6 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 import numpy as np
+import tcod.path
 
 from realmwalker.core.rng import RNG
 from realmwalker.world.model import DIRS, Settlement, World
@@ -111,20 +112,27 @@ class LocalBuilder:
         road_cells = self._roads(river_path)
         settlement = self.world.settlement_at(self.ox, self.oy)
         site = self.world.site_at(self.ox, self.oy)
+        wonder = self.world.wonder_at(self.ox, self.oy)
         kind = "wilderness"
+        meta: dict = {}
         if settlement is not None:
             self._settlement(settlement)
             kind = "settlement"
         elif site is not None and site.kind in ("ruin", "tower"):
             self._ruin()
             kind = "ruin"
+        elif wonder is not None:
+            from realmwalker.world import wonders
+
+            wonders.shape_local(self, wonder)
+            meta["wonder"] = wonder.id
         self._ensure_passable_edges()
         variant = (self.np.integers(0, 256, size=(self.w, self.h))).astype(np.uint8)
         entry = self._entry_point(road_cells)
         return LocalMap(
             key=local_key(self.ox, self.oy), kind=kind, width=self.w, height=self.h,
             terrain_ids=list(self.tables.terrain.ids), terrain=self.t, variant=variant,
-            buildings=self.buildings, entry=entry,
+            buildings=self.buildings, entry=entry, meta=meta,
         )
 
     def _ground(self) -> None:
@@ -162,7 +170,7 @@ class LocalBuilder:
         deep = level > 0.62
         shallow = (level > 0.50) & ~deep
         beach = (level > 0.40) & ~deep & ~shallow
-        shore = "sand" if self.biome_id in ("coast", "plains", "desert") else "gravel"
+        shore = "sand" if self.tables.biomes.family(self.biome_id) in ("coast", "plains", "desert") else "gravel"
         self.t[beach] = self.tid(shore)
         self.t[shallow] = self.tid("shallow_water")
         self.t[deep] = self.tid("deep_water")
@@ -188,6 +196,9 @@ class LocalBuilder:
         if loc["water"] > 0:
             pools = fbm(self.np, self.w, self.h, cell=6, octaves=3, aspect=ASPECT)
             self.t[free & (pools > 1 - loc["water"] * 1.6)] = self.tid("shallow_water")
+        for name, chance in loc.get("scatter", []):  # cacti, termite hills, steam vents, glowing mushrooms...
+            open_ground = self.tables.terrain.walk[self.t] & ~np.isin(self.t, [self.tid("shallow_water")])
+            self.t[open_ground & (self.np.random((self.w, self.h)) < float(chance))] = self.tid(name)
 
     def _edge_point(self, d: int, offset: float) -> tuple[int, int]:
         """A point on the map edge in overworld direction d (offset 0..1 along the edge)."""
@@ -574,17 +585,28 @@ class LocalBuilder:
                 self.set(x, y, "dirt")
 
     def _entry_point(self, road_cells: list[tuple[int, int]]) -> tuple[int, int]:
-        walk = self.tables.terrain.walk
+        """Where you stand when you come in: on the road, or near the middle; always somewhere you can walk out of
+        the map from (a ledge in a sinkhole or a nook in a crater would be a trap)."""
+        walk = self.tables.terrain.walk[self.t]
+        out = np.full((self.w, self.h), 10**6, dtype=np.int32)
+        edge = np.zeros((self.w, self.h), dtype=bool)
+        edge[0, :] = edge[-1, :] = edge[:, 0] = edge[:, -1] = True
+        out[edge & walk] = 0
+        tcod.path.dijkstra2d(out, walk.astype(np.int32), 1, 1, out=out)
+        reaches = out < 10**6
         candidates = road_cells or [(self.w // 2, self.h // 2)]
         cx, cy = candidates[len(candidates) // 2] if road_cells else candidates[0]
-        for r in range(0, max(self.w, self.h)):
-            for ix in range(-r, r + 1):
-                for iy in range(-r, r + 1):
-                    if max(abs(ix), abs(iy)) != r:
-                        continue
-                    x, y = cx + ix, cy + iy
-                    if 0 <= x < self.w and 0 <= y < self.h and walk[self.t[x, y]] and not self.is_(x, y, "ford"):
-                        return (x, y)
+        for need_way_out in (True, False):
+            for r in range(0, max(self.w, self.h)):
+                for ix in range(-r, r + 1):
+                    for iy in range(-r, r + 1):
+                        if max(abs(ix), abs(iy)) != r:
+                            continue
+                        x, y = cx + ix, cy + iy
+                        if not (0 <= x < self.w and 0 <= y < self.h) or not walk[x, y] or self.is_(x, y, "ford"):
+                            continue
+                        if reaches[x, y] or not need_way_out:
+                            return (x, y)
         return (cx, cy)
 
 

@@ -1,28 +1,40 @@
-"""The overworld drawn as a map on parchment, in sharp pixels: each country's colour printed flat on the paper, hills
-shaded from the north-west in dithered steps, an ink line along every coast with ripple lines out to sea, rivers in
-blue, roads dashed, and little pixel-drawn trees, hills and mountains with ink outlines.
+"""The overworld drawn as a map on parchment, in sharp pixels: each country's colour printed on the paper (greener
+where it is wet, yellower where it is dry, paler where it is cold), hills shaded from the north-west in dithered
+steps, the sea from turquoise shallows to deep blue with an ink line along every coast, rivers in blue (in red-walled
+gorges where they have cut down), cliffs hatched, roads dashed, and little pixel-drawn trees, palms, mountains,
+mesas and dunes with ink outlines; the wonders of the world drawn large (ui/gfx/stamps.py).
 
-The map is painted in "map pixels" (about a dozen to a square of country) and enlarged by a whole number, so every
-pixel stays a sharp square at any zoom. Pure Pillow and numpy, no window: a WorldPainter paints any square piece of
-the world ("a chunk") at any number of screen pixels per square, and the whole world for the world map. Chunks are
-painted in a background thread by ChunkCache so walking never waits for them; each is painted with a margin and
-cut, and everything that could differ across a seam is worked out from absolute positions, so pieces meet.
+The map is painted once, in "map pixels" (CANON to a square of country), in chunks, in a background thread
+(ChunkCache), the pieces nearest the eye first; a small picture of the whole world (OVERVIEW map pixels a square)
+stands in until they are done. The GPU shows them at any zoom: whole-number enlargements stay sharp pixels. Pure
+Pillow and numpy, no window. Each chunk is painted with a margin and cut, and everything that could differ across a
+seam is worked out from absolute positions, so pieces meet.
 """
 
 from __future__ import annotations
 
 import threading
 import zlib
-from collections import OrderedDict
 from functools import lru_cache
 
 import numpy as np
 from PIL import Image, ImageDraw
 
-from realmwalker.world.model import DIRS
+from realmwalker.ui.gfx import stamps
+from realmwalker.world.model import CLIFF, DIRS, RAVINE
 
-MARKS = {"grass": 1, "broadleaf": 2, "pine": 3, "hills": 4, "mountains": 5, "peaks": 6, "marsh": 7, "tundra": 8, "dunes": 9}
+MARKS = {"grass": 1, "broadleaf": 2, "pine": 3, "hills": 4, "mountains": 5, "peaks": 6, "marsh": 7, "tundra": 8, "dunes": 9,
+         "steppe": 10, "acacia": 11, "jungle": 12, "fey": 13, "mesa": 14, "salt": 15, "cinder": 16, "glacier": 17}
+STAMP_OF = {10: "steppe", 11: "acacia", 12: "jungle", 13: "fey", 14: "mesa", 15: "salt", 16: "cinder", 17: "glacier"}
+CANON = 12  # map pixels to a square: the whole world is painted once at this grain
+OVERVIEW = 3  # ...and once, small, to stand in until the chunks are done
 CHUNK_PX = 768  # a chunk is about this many pixels across, whatever the scale
+SHALLOW_SEA = np.array([74, 150, 158], np.float32)
+DEEP_SEA = np.array([28, 58, 98], np.float32)
+GLOW = np.array([120, 236, 210], np.float32)
+GORGE = (150, 70, 46, 255)
+BIG_WONDERS = ("great_peak", "volcano")
+WONDER_SIZE = 1.5  # wonders are drawn half as large again as the things round them
 MARGIN = 2  # squares painted around a chunk and cut away, so coasts and stamps meet across the seams
 BAYER = (np.array([[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]], np.float32) + 0.5) / 16.0
 
@@ -53,7 +65,7 @@ class WorldPainter:
         self.paper = np.array(sp.get("paper", [222, 204, 162]), np.float32)
         self.ink = np.array(sp["ink"], np.float32)
         pal = np.array([biomes.get(k, default)["color"] for k in keys], np.float32)
-        self.pal = np.clip(_paperise(pal, self.paper, 0.42) * 1.12, 0, 255).astype(np.float32)
+        self.pal = np.clip(_paperise(pal, self.paper, 0.2) * 1.08, 0, 255).astype(np.float32)
         self.sea = _paperise(np.array(sp.get("sea", [52, 86, 108]), np.float32), self.paper, 0.3)
         marks = np.array([MARKS.get(biomes.get(k, {}).get("marks", ""), 0) for k in keys], np.int64)
         dens = np.array([biomes.get(k, {}).get("density", 0.0) for k in keys], np.float32)
@@ -63,6 +75,39 @@ class WorldPainter:
         elev = world.elevation.astype(np.float32)
         self.water = water_b[b]
         self.elev = np.where(self.water, 0, np.maximum(elev, 0)).astype(np.float32)
+        # The climate in the colour: wet country greener, dry country yellower and warmer, cold country paler.
+        wet = world.moisture.astype(np.float32)
+        cold = np.clip((2.0 - world.temperature.astype(np.float32)) / 22.0, 0, 1)
+        dry = np.clip((0.42 - wet) / 0.42, 0, 1)
+        lush = np.clip((wet - 0.55) / 0.45, 0, 1)
+        tint = np.ones((W, H, 3), np.float32)
+        tint[..., 0] += dry * 0.10 - lush * 0.06 - cold * 0.02
+        tint[..., 1] += lush * 0.07 - dry * 0.03
+        tint[..., 2] += cold * 0.08 - dry * 0.08
+        tint[self.water] = 1.0
+        self.tint = tint
+        # The sea's depth (0 at the shore, 1 in the deep), for its colour.
+        self.depth = np.where(self.water, np.clip(-elev / 700.0, 0, 1), 0).astype(np.float32)
+        relief = getattr(world, "relief", None)
+        self.cliff = (relief & CLIFF) > 0 if relief is not None else np.zeros((W, H), bool)
+        self.gorge = (relief & RAVINE) > 0 if relief is not None else np.zeros((W, H), bool)
+        # The wonders: some drawn as pictures on the map, a shining lake glows.
+        self.glow = np.zeros((W, H), bool)
+        self.wonder_cells = np.zeros((W, H), bool)
+        self.wonder_marks: list[tuple[int, int, str, int]] = []
+        for wd in getattr(world, "wonders", []):
+            if wd.kind in BIG_WONDERS:  # room round the mountain of mountains, so it stands out of its range
+                self.wonder_cells[max(0, wd.x - 1):wd.x + 2, max(0, wd.y - 1):wd.y + 1] = True
+            self.wonder_cells[wd.x, wd.y] = True
+            if wd.kind == "glowing_lake":
+                for cx, cy in wd.cells:
+                    if self.water[cx, cy]:
+                        self.glow[cx, cy] = True
+            name = stamps.WONDER_STAMP.get(wd.kind)
+            if wd.kind == "volcano" and not wd.flags.get("awake"):
+                name = "w_volcano_cold"
+            if name and wd.kind != "glowing_lake":
+                self.wonder_marks.append((wd.x, wd.y, name, wd.id))
         # Shading worked out per square from a smoothed height: light from the north-west.
         e = _blur(_blur(self.elev, 1), 1)
         gx = np.zeros_like(e)
@@ -193,9 +238,10 @@ class WorldPainter:
         wy += _world_noise(Wl, Hl, cell * 3.3, gseed + 4, X0 * k, Y0 * k) * 0.4
         U = u[:, None] + wx
         V = v[None, :] + wy
-        bi = self.biome[np.clip(np.rint(U).astype(np.int64), 0, self.W - 1),
-                        np.clip(np.rint(V).astype(np.int64), 0, self.H - 1)]
-        col = self.pal[bi].copy()
+        ci = np.clip(np.rint(U).astype(np.int64), 0, self.W - 1)
+        cj = np.clip(np.rint(V).astype(np.int64), 0, self.H - 1)
+        bi = self.biome[ci, cj]
+        col = self.pal[bi] * self.tint[ci, cj]
         land = _bilinear(self.water.astype(np.float32), U, V) < 0.5
         # Hills shaded from the north-west in three dithered tones.
         shade = _bilinear(self.shade, u[:, None] + wx * 0.3, v[None, :] + wy * 0.3)
@@ -218,10 +264,21 @@ class WorldPainter:
             dist[nb & ~grown] = d
             grown = nb
         sea = ~land
-        col[sea] = self.sea
-        col[sea & (dist <= 3)] = self.sea * 0.75 + self.paper * 0.2125
-        col[sea & ((dist == 2) | (dist == 5))] = self.sea * 0.45 + self.paper * 0.495
+        # The sea runs from turquoise over the shallows to deep blue far out (printed a little on the paper).
+        depth = np.clip(_bilinear(self.depth, U, V), 0, 1)[..., None]
+        water = SHALLOW_SEA * (1 - depth) + DEEP_SEA * depth
+        water = water * 0.82 + self.paper * 0.18 * (water.mean(axis=-1, keepdims=True) / self.paper.mean())
+        col[sea] = water[sea]
+        near = sea & (dist <= 3)
+        col[near] = col[near] * 0.75 + self.paper * 0.2125
+        rip = sea & ((dist == 2) | (dist == 5))
+        col[rip] = col[rip] * 0.5 + self.paper * 0.45
         col[sea & (dist > far) & (thr < 0.5)] *= 0.9
+        if self.glow.any():  # a lake that shines: pale green-blue light from beneath, in dithered steps
+            g = _bilinear(self.glow.astype(np.float32), U, V)
+            shine = sea & (g > 0.35)
+            col[shine] = col[shine] * 0.5 + GLOW * 0.5
+            col[shine & (thr < 0.25)] = np.minimum(255, GLOW * 1.08)
         # An ink line along every coast.
         near_sea = np.zeros_like(sea)
         near_sea[1:] |= sea[:-1]
@@ -237,6 +294,8 @@ class WorldPainter:
         rgba[..., 3] = 255
         rgba = self._draw_rivers(rgba, X0, Y0, NX, NY, k)
         self._draw_roads(rgba, X0, Y0, NX, NY, k)
+        if detail and k >= 6:
+            self._cliffs(rgba, X0, Y0, NX, NY, k)
         if detail:
             self._stamp(rgba, X0, Y0, NX, NY, k)
         im = Image.fromarray(np.ascontiguousarray(rgba[m * k:(m + ny) * k, m * k:(m + nx) * k]), "RGBA")
@@ -248,14 +307,51 @@ class WorldPainter:
         im = Image.fromarray(rgba, "RGBA")
         draw = ImageDraw.Draw(im)
         colour = self.river_rgb + (255,)
+        W, H = self.W, self.H
         for chain in self.rivers:
             pts = [((x - X0) * k, (y - Y0) * k, sz) for x, y, sz in chain]
             if all(px < -k or px > (NX + 1) * k or py < -k or py > (NY + 1) * k for px, py, _ in pts):
                 continue
+            if k >= 6:  # where the river has cut a gorge: red walls either side, a shadow at the bottom
+                for (x, y, _), (ax, ay, _), (bx, by, _) in zip(chain[:-1], pts[:-1], pts[1:]):
+                    if self.gorge[min(W - 1, int(x)), min(H - 1, int(y))]:
+                        draw.line([(ax, ay), (bx, by)], fill=GORGE, width=max(3, k // 2))
+                        draw.line([(ax, ay), (bx, by)], fill=(70, 40, 30, 255), width=max(2, k // 4))
             for (ax, ay, sz), (bx, by, _) in zip(pts[:-1], pts[1:]):
                 w = 1 if (sz <= 1 or k < 8) else (2 if sz == 2 or k < 12 else 3)
                 draw.line([(ax, ay), (bx, by)], fill=colour, width=w)
         return np.array(im)
+
+    def _cliffs(self, rgba: np.ndarray, X0, Y0, NX, NY, k) -> None:
+        """Cliffs as a hatched ink edge: short strokes down the face, on the side the land falls away."""
+        xa, ya = max(0, X0), max(0, Y0)
+        xb, yb = min(self.W, X0 + NX), min(self.H, Y0 + NY)
+        if xb <= xa or yb <= ya:
+            return
+        cells = np.argwhere(self.cliff[xa:xb, ya:yb])
+        if not len(cells):
+            return
+        H, W = rgba.shape[:2]
+        ink = tuple(int(c) for c in self.ink)
+        for i, j in cells:
+            x, y = xa + int(i), ya + int(j)
+            # The way the ground falls: toward the lowest neighbour.
+            best, fall = 0.0, (0, 1)
+            for dx, dy in ((0, 1), (1, 0), (0, -1), (-1, 0)):
+                nx_, ny_ = x + dx, y + dy
+                if 0 <= nx_ < self.W and 0 <= ny_ < self.H:
+                    drop = self.elev[x, y] - self.elev[nx_, ny_]
+                    if drop > best:
+                        best, fall = drop, (dx, dy)
+            px, py = (x - X0) * k, (y - Y0) * k
+            fx, fy = fall
+            for t in range(1, k, max(2, k // 4)):  # strokes along the edge, each running down the slope
+                sx = px + (t if fy else (k - 1 if fx > 0 else 0))
+                sy = py + (t if fx else (k - 1 if fy > 0 else 0))
+                for s in range(max(2, k // 3)):
+                    qx, qy = int(sx + fx * s), int(sy + fy * s)
+                    if 0 <= qx < W and 0 <= qy < H:
+                        rgba[qy, qx, :3] = ink
 
     def _draw_roads(self, rgba: np.ndarray, X0, Y0, NX, NY, k) -> None:
         """Roads as dashes of ink-brown; which pixels are dashes depends on where they are in the world, so a road
@@ -278,25 +374,36 @@ class WorldPainter:
                 rgba[ys[ok2] + 1, xs[ok2], :3] = road
 
     def _stamp(self, rgba: np.ndarray, X0, Y0, NX, NY, k) -> None:
-        """Trees, hills and mountains, back to front."""
+        """Trees, hills, mountains and the wonders, back to front."""
         xa, ya = max(0, X0), max(0, Y0)
         xb, yb = min(self.W, X0 + NX), min(self.H, Y0 + NY)
         if xb <= xa or yb <= ya:
             return
         marks = self.marks[xa:xb, ya:yb]
-        if not marks.any():
-            return
         dens = self.density[xa:xb, ya:yb]
         jit = self.jitter[xa:xb, ya:yb]
         road = self.world.road[xa:xb, ya:yb]
         river = self.world.river[xa:xb, ya:yb] > 0
-        settled = (self.world.settlement_grid[xa:xb, ya:yb] >= 0) | (self.world.site_grid[xa:xb, ya:yb] >= 0)
+        settled = (self.world.settlement_grid[xa:xb, ya:yb] >= 0) | (self.world.site_grid[xa:xb, ya:yb] >= 0) | \
+            self.wonder_cells[xa:xb, ya:yb]
         items: list[tuple[float, np.ndarray, int, int]] = []
 
         def put(kind: str, variant: int, tx: float, ty: float) -> None:
             st = sprite(kind, k, variant)
             items.append((ty, st, int(tx - st.shape[1] / 2), int(ty - st.shape[0])))
 
+        def put_stamp(name: str, variant: int, tx: float, ty: float, order: float | None = None,
+                      grain: int | None = None) -> None:
+            st = stamps.stamp(name, grain or k, variant)
+            if st is not None:
+                items.append((ty if order is None else order, st, int(tx - st.shape[1] / 2), int(ty - st.shape[0])))
+
+        # The wonders, drawn large over everything near them (a little lower on the map is drawn later, so their
+        # feet are not hidden by the trees behind them).
+        for wx, wy, name, wid in self.wonder_marks:
+            if X0 - 4 <= wx < X0 + NX + 4 and Y0 - 4 <= wy < Y0 + NY + 4:
+                put_stamp(name, wid, (wx - X0 + 0.5) * k, (wy - Y0 + 0.95) * k, order=(wy - Y0 + 1.6) * k,
+                          grain=int(round(k * WONDER_SIZE)))
         for (i, j) in np.argwhere(marks > 0):
             if settled[i, j]:
                 continue
@@ -306,6 +413,20 @@ class WorldPainter:
                 continue
             px, py = (xa + int(i) - X0) * k, (ya + int(j) - Y0) * k
             busy = road[i, j] or river[i, j]
+            if kind in STAMP_OF:
+                name = STAMP_OF[kind]
+                if name in ("jungle", "fey"):
+                    for q in range((3 if name == "jungle" else 2) if k >= 10 else 1):
+                        if busy and q > 0:
+                            break
+                        put_stamp(name, int(r[7] * 4 + q), px + k * (0.15 + 0.7 * r[1 + q]),
+                                  py + k * (0.35 + 0.6 * r[4 + (q % 4)]))
+                elif name in ("acacia", "mesa", "cinder"):
+                    if not busy:
+                        put_stamp(name, int(r[1] * 6), px + k * (0.2 + 0.6 * r[2]), py + k * (0.55 + 0.4 * r[3]))
+                elif k >= 8:  # grass, cracks and crusts: small things, only near enough to see
+                    put_stamp(name, int(r[1] * 3), px + k * (0.15 + 0.7 * r[2]), py + k * (0.4 + 0.5 * r[3]))
+                continue
             if kind in (2, 3):
                 n = 3 if k >= 10 else (2 if k >= 6 else 1)
                 for q in range(n):
@@ -550,71 +671,92 @@ def sprite(kind: str, k: int, variant: int) -> np.ndarray:
 
 # ---------------------------------------------------------------------------- chunk cache
 class ChunkCache:
-    """Painted chunks by (ppc, cx, cy), painted in a background thread; the newest requests first."""
+    """The world painted once: chunks of `n` squares a side at CANON map pixels a square, by (gx, gy), painted in a
+    background thread, nearest to where the eye is first, and kept; and a small picture of the whole world
+    (OVERVIEW map pixels a square) painted before them all, to stand in for what is not done yet."""
 
-    def __init__(self, painter: WorldPainter, limit: int = 96) -> None:
+    def __init__(self, painter: WorldPainter) -> None:
         self.painter = painter
-        self.limit = limit
-        self.done: OrderedDict = OrderedDict()
-        self.wanted: list = []
+        self.n = painter.chunk_cells(CANON)
+        self.cols = (painter.W + self.n - 1) // self.n
+        self.rows = (painter.H + self.n - 1) // self.n
+        self.done: dict = {}
+        self.overview: Image.Image | None = None
+        self.focus = (0, 0)
         self.lock = threading.Lock()
         self.wake = threading.Event()
         self.stop = False
         self.thread: threading.Thread | None = None
         self.version = 0
 
+    @property
+    def finished(self) -> bool:
+        return self.overview is not None and len(self.done) >= self.cols * self.rows
+
     def get(self, key):
         with self.lock:
-            im = self.done.get(key)
-            if im is not None:
-                self.done.move_to_end(key)
-            return im
+            return self.done.get(key)
 
-    def want(self, keys: list) -> None:
-        with self.lock:
-            self.wanted = [k for k in keys if k not in self.done]
-        if self.wanted:
-            if self.thread is None:
-                self.thread = threading.Thread(target=self._run, name="map painter", daemon=True)
-                self.thread.start()
-            self.wake.set()
+    def look_at(self, cx: float, cy: float) -> None:
+        """Paint what is near this square (in world squares) first; start painting if not yet started."""
+        self.focus = (int(cx) // self.n, int(cy) // self.n)
+        if self.thread is None and not self.finished:
+            self.thread = threading.Thread(target=self._run, name="map painter", daemon=True)
+            self.thread.start()
+        self.wake.set()
+
+    def paint_overview(self) -> Image.Image:
+        if self.overview is None:
+            im = self.painter.overview(OVERVIEW)
+            with self.lock:
+                self.overview = im
+                self.version += 1
+        return self.overview
 
     def paint_now(self, key) -> Image.Image:
         im = self._paint(key)
         with self.lock:
             self.done[key] = im
+            self.version += 1
         return im
 
     def _paint(self, key) -> Image.Image:
-        ppc, cx, cy = key
-        n = self.painter.chunk_cells(ppc)
-        x0, y0 = cx * n, cy * n
+        gx, gy = key
+        n = self.n
+        x0, y0 = gx * n, gy * n
         nx, ny = min(n, self.painter.W - x0), min(n, self.painter.H - y0)
-        return self.painter.paint(x0, y0, max(1, nx), max(1, ny), ppc)
+        return self.painter.paint(x0, y0, max(1, nx), max(1, ny), CANON)
+
+    def _next(self):
+        fx, fy = self.focus
+        todo = [(gx, gy) for gx in range(self.cols) for gy in range(self.rows) if (gx, gy) not in self.done]
+        if not todo:
+            return None
+        return min(todo, key=lambda c: (max(abs(c[0] - fx), abs(c[1] - fy)), c))
 
     def _run(self) -> None:
-        while not self.stop:
-            self.wake.wait(0.5)
-            self.wake.clear()
-            while not self.stop:
-                with self.lock:
-                    if not self.wanted:
-                        break
-                    key = self.wanted.pop(0)
-                    if key in self.done:
-                        continue
-                try:
-                    im = self._paint(key)
-                except Exception:
-                    import logging
+        import logging
 
-                    logging.getLogger("realmwalker.gfx").exception("Could not paint the map at %r", key)
-                    continue
+        log = logging.getLogger("realmwalker.gfx")
+        try:
+            self.paint_overview()
+        except Exception:
+            log.exception("Could not paint the small map")
+        while not self.stop:
+            with self.lock:
+                key = self._next()
+            if key is None:
+                return  # everything is painted: the thread's work is done
+            try:
+                im = self._paint(key)
+            except Exception:
+                log.exception("Could not paint the map at %r", key)
                 with self.lock:
-                    self.done[key] = im
-                    self.version += 1
-                    while len(self.done) > self.limit:
-                        self.done.popitem(last=False)
+                    self.done[key] = None  # do not try that piece again
+                continue
+            with self.lock:
+                self.done[key] = im
+                self.version += 1
 
     def close(self) -> None:
         self.stop = True

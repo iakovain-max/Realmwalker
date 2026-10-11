@@ -84,6 +84,18 @@ def check_cross_references(files: dict[str, Any]) -> list[str]:
             for t in b["local"]["tree_types"]:
                 if t not in terrain:
                     errors.append(f"data/biomes.json: {bid}.local.tree_types names unknown terrain {t!r}.")
+            for i, pair in enumerate(b["local"].get("scatter", [])):
+                if not isinstance(pair[0], str) or pair[0] not in terrain:
+                    errors.append(f"data/biomes.json: {bid}.local.scatter[{i}] names unknown terrain {pair[0]!r}.")
+                if not isinstance(pair[1], (int, float)) or not 0 < pair[1] < 1:
+                    errors.append(f"data/biomes.json: {bid}.local.scatter[{i}] needs a chance between 0 and 1.")
+            family = b.get("family")
+            if family is not None:
+                if family not in biomes:
+                    errors.append(f"data/biomes.json: {bid}.family {family!r} is not a biome.")
+                elif biomes[family].get("family", family) != family:
+                    errors.append(f"data/biomes.json: {bid}.family {family!r} must be a family of its own "
+                                  f"(it has the family {biomes[family]['family']!r}).")
     sites = files.get("sites.json", {})
     if sites:
         for kind in REQUIRED_SETTLEMENT_TYPES:
@@ -99,13 +111,96 @@ def check_cross_references(files: dict[str, Any]) -> list[str]:
     errors.extend(_check_character_refs(files))
     errors.extend(_check_combat_refs(files))
     errors.extend(_check_faction_refs(files))
+    errors.extend(_check_culture_refs(files))
+    errors.extend(_check_wonder_refs(files))
     regions = names.get("regions", {})
     for kind, patterns in regions.items():
         for pattern in patterns:
             for slot in textgen.slots(pattern):
-                if slot not in regions:
+                if slot not in regions and slot not in ("root", "person"):  # those two the namer fills itself
                     errors.append(f"data/place_names.json: regions.{kind} pattern {pattern!r} uses {{{slot}}}, "
                                   f"which is not a list in 'regions'.")
+    errors.extend(_check_geo(names))
+    return errors
+
+
+def _check_wonder_refs(files: dict[str, Any]) -> list[str]:
+    """data/wonders.json: names use only the slots the name forge fills."""
+    from realmwalker.data.schemas import GEO_SLOTS
+
+    errors: list[str] = []
+    for kind, spec in files.get("wonders.json", {}).get("kinds", {}).items():
+        for pattern in spec.get("names", []):
+            for slot in textgen.slots(pattern):
+                if slot not in GEO_SLOTS:
+                    errors.append(f"data/wonders.json: {kind} name {pattern!r} uses {{{slot}}}, which the namer "
+                                  f"does not fill (it knows {', '.join(GEO_SLOTS)}).")
+    return errors
+
+
+def _check_geo(names: dict) -> list[str]:
+    """Each people names every kind of land and water, with slots the name forge or its own lists fill."""
+    from realmwalker.data.schemas import GEO_KINDS, GEO_SLOTS
+
+    errors: list[str] = []
+    for cid, geo in names.get("geo", {}).items():
+        for kind in GEO_KINDS:
+            if kind not in geo:
+                errors.append(f"data/place_names.json: geo.{cid} needs patterns for '{kind}'.")
+        for kind, patterns in geo.items():
+            for pattern in patterns:
+                for slot in textgen.slots(pattern):
+                    if slot not in GEO_SLOTS and slot not in geo:
+                        errors.append(f"data/place_names.json: geo.{cid}.{kind} pattern {pattern!r} uses "
+                                      f"{{{slot}}}, which is neither a name part nor a list in geo.{cid}.")
+    return errors
+
+
+def _check_culture_refs(files: dict[str, Any]) -> list[str]:
+    """data/cultures.json: every people has its names, place names, laws, customs and faith in the other files, and
+    its patterns use only the slots the name forge fills."""
+    from realmwalker.data.schemas import NAME_SLOTS
+
+    data = files.get("cultures.json")
+    if not data:
+        return []
+    errors: list[str] = []
+    pools = files.get("names.json", {}).get("cultures", {})
+    places = files.get("place_names.json", {}).get("settlements", {})
+    factions = files.get("factions.json", {})
+    laws = factions.get("culture_laws", {})
+    faiths = factions.get("faiths", {})
+    kinds = factions.get("kinds", {})
+    peoples = files.get("history.json", {}).get("peoples", {})
+    biomes = files.get("biomes.json", {}).get("biomes", {})
+    for cid, c in data["cultures"].items():
+        where = f"data/cultures.json: {cid}"
+        for name, table, filename in ((pools, "names", "names.json"), (places, "place names", "place_names.json"),
+                                      (laws, "laws", "factions.json culture_laws"),
+                                      (peoples, "customs", "history.json peoples")):
+            if name and cid not in name:
+                errors.append(f"{where} has no {table} in data/{filename}.")
+        if faiths and c["faith"] not in faiths:
+            errors.append(f"{where}: faith {c['faith']!r} is not in data/factions.json faiths.")
+        for kind in list(c["realms"]) + list(c["titles"]):
+            if kinds and kind not in kinds:
+                errors.append(f"{where}: {kind!r} is not a kind of faction.")
+        for b in c["home"]["biomes"]:
+            if biomes and b not in biomes:
+                errors.append(f"{where}: home biome {b!r} is not in data/biomes.json.")
+        if c["naming"].get("byname") or any("{byname}" in str(p[0]) for p in c["naming"]["person"]):
+            if pools and not pools.get(cid, {}).get("byname"):
+                errors.append(f"{where} uses {{byname}} but data/names.json has no bynames for it.")
+        for which in ("person", "noble"):
+            for pair in c["naming"][which]:
+                if not isinstance(pair[0], str) or not isinstance(pair[1], (int, float)) or pair[1] <= 0:
+                    errors.append(f"{where}: naming.{which} needs [pattern, weight] pairs.")
+                    continue
+                for slot in textgen.slots(pair[0]):
+                    if slot not in NAME_SLOTS:
+                        errors.append(f"{where}: naming pattern {pair[0]!r} uses {{{slot}}}, which is not a name part.")
+                if "{patronymic}" in pair[0] and not c["naming"].get("patronymic"):
+                    errors.append(f"{where}: naming pattern {pair[0]!r} needs a 'patronymic' rule.")
     return errors
 
 

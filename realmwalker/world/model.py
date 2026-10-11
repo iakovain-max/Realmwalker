@@ -19,7 +19,13 @@ DIR_NAMES = ["here", "north", "northeast", "east", "southeast", "south", "southw
 
 WORLD_SIZES = {"small": (128, 80), "medium": (192, 120), "large": (256, 160)}
 
-ARRAY_NAMES = ("elevation", "temperature", "moisture", "biome", "river", "flow", "road", "area", "river_area", "danger")
+ARRAY_NAMES = ("elevation", "temperature", "moisture", "biome", "river", "flow", "road", "area", "river_area", "danger",
+               "culture", "relief")
+NO_CULTURE = 255  # water, and land no people claims
+# The shape of the land beyond its height (world.relief, bit flags per square).
+CLIFF = 1  # a scarp or sea-cliff: the land drops sheer here
+RAVINE = 2  # a river runs at the bottom of a gorge it has cut
+FALLS = 4  # a river falls over a cliff
 
 
 @dataclass
@@ -32,6 +38,8 @@ class WorldMeta:
     magic: int = 2  # 1 scarce .. 3 uncommon
     created: str = ""
     generator_version: int = 1
+    land: str = "continent"  # the lie of the land: continent, islands, twin, inland_sea
+    climate: str = "temperate"  # frozen, cold, temperate, warm, scorched, varied
 
 
 @dataclass
@@ -73,6 +81,20 @@ class Area:
 
 
 @dataclass
+class Wonder:
+    """A wonder of the world: a great peak, a volcano, falls, a glowing lake, an enchanted wood (world/wonders.py)."""
+
+    id: int
+    kind: str
+    name: str
+    x: int
+    y: int
+    cells: list = field(default_factory=list)  # [x, y] of every square it covers (with x, y)
+    culture: str = ""  # the people who named it
+    flags: dict = field(default_factory=dict)  # awake (a volcano), height (a peak), story...
+
+
+@dataclass
 class World:
     meta: WorldMeta
     width: int
@@ -88,9 +110,13 @@ class World:
     area: np.ndarray  # int16 named land/water area id or -1
     river_area: np.ndarray  # int16 named river id (an Area of kind "river") or -1
     danger: np.ndarray  # uint8 0..10 how dangerous the wilds are here
+    culture: np.ndarray | None = None  # uint8 index into culture_ids (NO_CULTURE: water or nobody's)
+    culture_ids: list[str] = field(default_factory=list)  # the peoples of this world (world/cultures.py)
+    relief: np.ndarray | None = None  # uint8 CLIFF | RAVINE | FALLS
     settlements: list[Settlement] = field(default_factory=list)
     sites: list[Site] = field(default_factory=list)
     areas: list[Area] = field(default_factory=list)
+    wonders: list[Wonder] = field(default_factory=list)
     time: int = 0  # minutes since the epoch
     local_maps: dict = field(default_factory=dict)  # key "x,y" -> LocalMap
     flavor: FlavorStore = field(default_factory=FlavorStore)
@@ -110,6 +136,10 @@ class World:
     def __post_init__(self) -> None:
         if self.rng is None:
             self.rng = RNG(self.meta.seed, "sim")
+        if self.culture is None:
+            self.culture = np.full((self.width, self.height), NO_CULTURE, dtype=np.uint8)
+        if self.relief is None:
+            self.relief = np.zeros((self.width, self.height), dtype=np.uint8)
         self.rebuild_index()
 
     # ------------------------------------------------------------------ lookups
@@ -120,6 +150,13 @@ class World:
         self.site_grid = np.full((self.width, self.height), -1, dtype=np.int32)
         for i, s in enumerate(self.sites):
             self.site_grid[s.x, s.y] = i
+        self.wonder_grid = np.full((self.width, self.height), -1, dtype=np.int32)
+        for i, wd in enumerate(self.wonders):
+            for x, y in wd.cells:
+                if self.in_bounds(x, y):
+                    self.wonder_grid[x, y] = i
+        for i, wd in enumerate(self.wonders):  # a wonder's own square is its own, whatever runs across it
+            self.wonder_grid[wd.x, wd.y] = i
 
     def in_bounds(self, x: int, y: int) -> bool:
         return 0 <= x < self.width and 0 <= y < self.height
@@ -135,9 +172,19 @@ class World:
         i = int(self.site_grid[x, y])
         return self.sites[i] if i >= 0 else None
 
+    def wonder_at(self, x: int, y: int) -> Wonder | None:
+        """The wonder covering this square, if any (its heart or any square of it)."""
+        i = int(self.wonder_grid[x, y])
+        return self.wonders[i] if i >= 0 else None
+
     def area_at(self, x: int, y: int) -> Area | None:
         i = int(self.area[x, y])
         return self.areas[i] if 0 <= i < len(self.areas) else None
+
+    def culture_at(self, x: int, y: int) -> str | None:
+        """The people whose land this is (None at sea, or where nobody lives)."""
+        i = int(self.culture[x, y])
+        return self.culture_ids[i] if i < len(self.culture_ids) else None
 
     def river_at(self, x: int, y: int) -> Area | None:
         i = int(self.river_area[x, y])
@@ -170,4 +217,5 @@ class World:
             "settlements": [asdict(s) for s in self.settlements],
             "sites": [asdict(s) for s in self.sites],
             "areas": [asdict(a) for a in self.areas],
+            "wonders": [asdict(w) for w in self.wonders],
         }

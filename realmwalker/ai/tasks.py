@@ -89,7 +89,8 @@ BACKSTORY = AITask(
 def backstory_variables(builder, tables, home_name: str, tie_text: str) -> dict:
     race = tables.races[builder.race]
     bg = tables.backgrounds[builder.background]
-    culture = tables.names["cultures"].get(builder.culture, {}).get("label", builder.culture)
+    culture = f"{tables.cultures.adjective(getattr(builder, 'world', None), builder.culture)} " \
+              f"({tables.cultures.get(builder.culture)['like']})"
     return {
         "name": builder.name, "sex": builder.sex.capitalize(), "age": builder.age, "race": race["name"],
         "culture": culture, "class_name": tables.classes[builder.cls]["name"], "background": bg["name"],

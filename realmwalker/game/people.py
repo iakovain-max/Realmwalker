@@ -163,28 +163,34 @@ def new_id(world) -> int:
     return world.next_npc_id
 
 
-def race_for(culture: str, rng: RNG) -> tuple[str, str]:
-    """(race, culture) for a townsperson: mostly the settlement's people, sometimes an outsider."""
+def race_for(culture: str, rng: RNG, world=None, tables=None) -> tuple[str, str]:
+    """(race, culture) for a townsperson: mostly the settlement's people, sometimes an outsider from this world."""
+    from realmwalker.world.factions import culture_race
+
     if rng.chance(0.1):
-        outsider = rng.choice(["heartland", "northmarch", "southron", "dwarven", "halfling", "elven"])
-        return CULTURE_RACE.get(outsider, "human"), outsider
-    return CULTURE_RACE.get(culture, "human"), culture
+        known = [c for c in (getattr(world, "culture_ids", None) or []) if c != "orcish"]
+        outsider = rng.choice(known or ["heartland", "northmarch", "southron", "dwarven", "halfling", "elven"])
+        return (culture_race(tables, outsider) if tables is not None else CULTURE_RACE.get(outsider, "human")), outsider
+    return (culture_race(tables, culture) if tables is not None else CULTURE_RACE.get(culture, "human")), culture
+
+
+def family_of(npc) -> str:
+    """A townsperson's family name (kept when they were made; for older ones, the last word of their name)."""
+    return npc.flags.get("family") or npc.name.split()[-1]
 
 
 def make_npc(game, settlement, job: str, rng: RNG, *, building: int = -1, post=(0, 0), home=(0, 0)) -> NPC:
     t = game.tables
     people = t.people
     occ = people["occupations"][job]
-    race, culture = race_for(settlement.culture, rng)
-    names = t.names["cultures"].get(culture) or next(iter(t.names["cultures"].values()))
+    from realmwalker.world.names import forge
+
+    nf = forge(game.world, t)
+    race, culture = race_for(settlement.culture, rng, game.world, t)
     sex = occ.get("sex") or rng.choice(["male", "female"])
     taken = {n.first_name for n in npcs_in(game.world, settlement.id)}
-    first = rng.choice(names[sex])
-    for _ in range(8):  # two Gydas in one village is confusing
-        if first not in taken:
-            break
-        first = rng.choice(names[sex])
-    family = rng.choice(names["family"])
+    first = nf.given(culture, sex, rng, avoid=taken)  # two Gydas in one village is confusing
+    family = nf.family_base(culture, rng)
     age_lo, age_hi = {"lord": (22, 66), "headman": (35, 70), "beggar": (18, 75), "serving_hand": (14, 30),
                       "acolyte": (16, 30), "guard": (18, 50)}.get(job, (18, 68))
     title = occ.get("titles", {}).get(settlement.kind, occ["name"])
@@ -193,12 +199,14 @@ def make_npc(game, settlement, job: str, rng: RNG, *, building: int = -1, post=(
     while frozenset(traits) in CLASHING_TRAITS:
         traits = rng.sample(sorted(people["personality"]), 2)
     npc = NPC(
-        id=new_id(game.world), name=f"{first} {family}", sex=sex, age=rng.randint(age_lo, age_hi), race=race,
+        id=new_id(game.world), name=nf.person(culture, sex, rng, first=first, family=family), sex=sex,
+        age=rng.randint(age_lo, age_hi), race=race,
         culture=culture, job=job, title=title, settlement=settlement.id, notable=bool(occ.get("notable")),
         social=occ.get("social", "low"), purse=rng.randint(int(lo), int(hi)), stats=occ.get("stats", "commoner"),
         traits=traits, speech=rng.choice(people["speech"]), building=building, post=tuple(post), home=tuple(home),
         x=post[0], y=post[1],
     )
+    npc.flags["family"] = family
     npc.profile = fallback_profile(game, npc, rng)
     npc.profile_source = "fallback"
     return npc

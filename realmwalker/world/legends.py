@@ -12,15 +12,16 @@ Worlds made before the ages were lived have less to tell, and their pages say wh
 
 from __future__ import annotations
 
+import math
 import re
 from collections import defaultdict
 
 from realmwalker.core.textgen import a_or_an, count_of
 from realmwalker.world import factions as fx
 
-CATEGORIES = [("ages", "Ages"), ("realms", "Realms and powers"), ("people", "People"), ("places", "Places"),
-              ("wars", "Wars"), ("beasts", "Beasts"), ("artifacts", "Artifacts"), ("gods", "Gods"),
-              ("works", "Songs and books")]
+CATEGORIES = [("ages", "Ages"), ("realms", "Realms"), ("people", "People"), ("places", "Places"),
+              ("wonders", "Wonders"), ("wars", "Wars"), ("beasts", "Beasts"), ("artifacts", "Artifacts"),
+              ("gods", "Gods"), ("works", "Songs and books")]
 LINK_RE = re.compile(r"\[\[([A-Z]\d+)\|([^\]]*)\]\]")
 SITE_WORDS = {"ruin": "a ruin", "cave": "a cave", "barrow": "a barrow", "tower": "a lonely tower"}
 KIND_WORDS = {"hamlet": "a hamlet", "village": "a village", "town": "a town", "city": "a city",
@@ -257,6 +258,11 @@ def _entries(world, tables, category: str) -> list[tuple[str, str]]:
                for s in sorted(w.settlements, key=lambda s: (-s.population, s.id))]
         out += [(f"X{s.id}", f"{cap(s.name)} ({s.kind})") for s in sorted(w.sites, key=lambda s: (s.kind, s.id))]
         return out
+    if category == "wonders":
+        kinds = tables.wonders["kinds"]
+        order = {k: i for i, k in enumerate(kinds)}
+        return [(f"M{wd.id}", f"{cap(wd.name)} ({kinds.get(wd.kind, {}).get('what', wd.kind)})")
+                for wd in sorted(w.wonders, key=lambda wd: (order.get(wd.kind, 99), wd.id))]
     if category == "wars":
         wars = sorted(w.wars, key=lambda war: (-(war.get("year") or 0), war.get("id", 0)))
         return [(f"W{war['id']}", f"{cap(war.get('name') or 'a war')} ({war.get('year')}"
@@ -306,6 +312,8 @@ def page(world, tables, ref: str) -> tuple[str, list[str]]:
             return work_page(world, tables, n)
         if kind == "P" and n < len(world.politics.get("fallen", [])):
             return life_page(world, tables, n)
+        if kind == "M" and n < len(world.wonders):
+            return wonder_page(world, tables, n)
     except (KeyError, IndexError, TypeError, ValueError):
         pass
     return "Nothing", ["<dim>Nothing is remembered of that.</>"]
@@ -341,7 +349,7 @@ def figure_page(world, tables, hid: int) -> tuple[str, list[str]]:
                      f"Died in {fig.died}, {clean(fig.cause)}.")
     else:
         race = tables.races.get(fig.race, {}).get("name", fig.race).lower()
-        people = tables.names["cultures"].get(fig.culture, {}).get("label", "")
+        people = tables.cultures.adjective(w, fig.culture) if fig.culture else ""
         who = {"male": "man", "female": "woman"}.get(fig.sex, "person")
         lines.append(f"A {clean(race)} {who}" + (f" of the {clean(people)} people" if people else "") +
                      f", born in {year_text(fig.born)}.")
@@ -508,7 +516,7 @@ def settlement_page(world, tables, sid: int) -> tuple[str, list[str]]:
     s = w.settlements[sid]
     own = f"S{sid}"
     ix = index(w)
-    people = tables.names["cultures"].get(s.culture, {}).get("label", s.culture)
+    people = tables.cultures.adjective(w, s.culture)
     lines = [f"{cap(KIND_WORDS.get(s.kind, s.kind))} of the {clean(people)} people, of about {s.population:,} souls."]
     place = w.politics.get("places", {}).get(str(sid))
     if place:
@@ -583,6 +591,35 @@ def site_page(world, tables, site_id: int) -> tuple[str, list[str]]:
     if life:
         lines += ["", section("What happened here")] + life
     return cap(site.name), lines
+
+
+def wonder_page(world, tables, i: int) -> tuple[str, list[str]]:
+    """A wonder of the world: what it is, where, who named it, how it looks, and what happened there."""
+    from realmwalker.world import wonders
+
+    w = world
+    wd = w.wonders[i]
+    spec = tables.wonders["kinds"].get(wd.kind, {})
+    what = spec.get("what", "a wonder")
+    if wd.kind == "volcano":
+        what = "a volcano, awake" if wd.flags.get("awake") else "a volcano, sleeping"
+    lines = [f"{cap(what)}."]
+    if wd.flags.get("height"):
+        lines.append(f"<dim>{'It falls' if wd.kind == 'great_falls' else 'It stands'} "
+                     f"{int(wd.flags['height']):,} m.</>")
+    near = min(w.settlements, key=lambda s: math.hypot(s.x - wd.x, s.y - wd.y), default=None)
+    if near is not None:
+        miles = int(round(math.hypot(near.x - wd.x, near.y - wd.y) * 3))
+        lines.append(f"<dim>About {miles} miles from</> {link(f'S{near.id}', near.name)}.")
+    if wd.culture:
+        folk = tables.cultures.people(w, wd.culture)
+        lines.append(f"<dim>Named by {'' if folk.startswith('the ') else 'the '}{clean(folk)}.</>")
+    lines += ["", wonders.look(tables, w, wd)]
+    life = [e for e in w.history if (e.get("data") or {}).get("wonder") == wd.id]
+    if life:
+        lines += ["", section("What happened here")]
+        lines += [f"<dim>{year_text(e.get('year'))}</>  {linked(w, e, f'M{i}')}" for e in life[-MAX_EVENTS:]]
+    return cap(wd.name), lines
 
 
 def war_page(world, tables, wid: int) -> tuple[str, list[str]]:

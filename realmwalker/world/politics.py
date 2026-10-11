@@ -158,7 +158,7 @@ class Politics:
     def new_leader(self, f, *, family: str | None = None, age=(30, 62), role: str = "ruler"):
         fig = fx.make_figure(self.w, self.t, self.rng, f.culture, year=self.year, faction=f, role=role,
                              family=family, age=age)
-        fig.title = fx.figure_title(self.t, f.kind, fig.sex)
+        fig.title = fx.figure_title(self.t, f.kind, fig.sex, f.culture)
         return fig
 
     def crown(self, f, fig) -> None:
@@ -167,7 +167,7 @@ class Politics:
             old.role = "member"
         fig.role = "ruler"
         fig.faction = f.id
-        fig.title = fx.figure_title(self.t, f.kind, fig.sex)
+        fig.title = fx.figure_title(self.t, f.kind, fig.sex, f.culture)
         f.leader = fig.id
         f.rulers.append(fig.id)
         if fig.id not in f.members:
@@ -203,13 +203,13 @@ class Politics:
                     strongest = max(houses, key=lambda h: h.military)
                     usurper = fx.leader_of(w, strongest)
                     self.crown(f, usurper)
-                    f.flags["dynasty"] = strongest.flags.get("family", usurper.name.split()[-1])
+                    f.flags["dynasty"] = strongest.flags.get("family", fx.family_of(usurper))
                     f.flags["crisis"] = self.day
                     successor = self.children(usurper)
                     if successor:
                         strongest.leader = successor[0].id
                         successor[0].role = "ruler"
-                        successor[0].title = fx.figure_title(self.t, "noble_house", successor[0].sex)
+                        successor[0].title = fx.figure_title(self.t, "noble_house", successor[0].sex, strongest.culture)
                         strongest.rulers.append(successor[0].id)
                     else:
                         self.crown(strongest, self.new_leader(strongest, family=strongest.flags.get("family")))
@@ -222,7 +222,7 @@ class Politics:
                                         "house": strongest.name, "seat": "throne"},
                              where=where, importance=4, factions=[f, strongest])
                     return
-            cousin = self.new_leader(f, family=old.name.split()[-1])
+            cousin = self.new_leader(f, family=fx.family_of(old))
             self.crown(f, cousin)
             self.say("succession", {"old": old.full_name(), "cause": cause, "new": cousin.full_name(),
                                     "relation": "a cousin", "seat": SEAT_WORDS.get(f.kind, "seat")},
@@ -255,7 +255,7 @@ class Politics:
             if self.rng.chance(rate * share):
                 heirs = [k for k in self.children(ruler) if k.role == "heir"]
                 child = fx.make_figure(w, self.t, self.rng, f.culture, year=self.year, faction=f,
-                                       role="member" if heirs else "heir", family=ruler.name.split()[-1], age=(0, 0))
+                                       role="member" if heirs else "heir", family=fx.family_of(ruler), age=(0, 0))
                 child.parent = ruler.id
                 child.race = ruler.race
 

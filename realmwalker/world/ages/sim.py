@@ -20,6 +20,7 @@ import numpy as np
 
 from realmwalker.core.rng import RNG
 from realmwalker.world import factions as fx
+from realmwalker.world import wonders
 
 log = logging.getLogger("realmwalker.ages")
 
@@ -67,6 +68,7 @@ class AgeSim:
         self.peak: dict[int, float] = {}  # spot id -> the most people it ever had
         self.top_realm: dict[int, str] = {}  # year -> the greatest realm then (for naming eras)
         self.stats: dict[int, dict[str, float]] = defaultdict(lambda: defaultdict(float))
+        self.wonder_firsts: dict[int, int] = {}  # wonder id -> the year it was first climbed, or found by pilgrims
         self.headline = ""
         self.started = time.monotonic()
         self.fm = fx.FactionMaker(world, tables, rng.child("dress"))  # names, laws and colours; never run()
@@ -130,6 +132,7 @@ class AgeSim:
             self.realms.year()
             self.war.year()
             self.wild.year()
+            wonders.ages_year(self)
             self.faith.year()
             self.lore.year()
             self.orders.year()

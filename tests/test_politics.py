@@ -114,16 +114,18 @@ def test_a_king_dies_and_is_succeeded(world, tables):
     engine.die(old, "of a fever", k)
     new = fx.leader_of(w, k)
     assert not old.alive and new is not old and new.alive
-    assert new.title in ("King", "Queen")
+    assert new.title == tables.cultures.title("kingdom", new.sex, k.culture)  # a King, a Sultana, a Khagan...
     assert any(n["kind"] in ("succession", "crisis") for n in w.news)
 
 
 def test_a_war_is_fought_and_a_town_changes_hands(world, tables):
     w = copy.deepcopy(world)
-    a, d = fx.active_factions(w, "kingdom")[:2]
+    kingdoms = fx.active_factions(w, "kingdom")
+    a = kingdoms[0]
+    d = max(kingdoms[1:], key=lambda k: (len(fx.holdings(w, k, deep=True)), -k.id))  # a realm with towns to lose
     engine = Politics(w, tables, RNG(2, "war"))
     war = engine.start_war(a, d, "border")
-    war["score"] = 50
+    war["score"] = 75  # nearly won: even a capital may be besieged
     d.military = 1
     engine.sieges(war, a, d, 7)
     siege = war["siege"]

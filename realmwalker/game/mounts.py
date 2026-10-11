@@ -73,7 +73,7 @@ def pace_animal(game) -> dict | None:
 def land_share(game, x: int, y: int) -> float:
     """How much of a mount's speed this land allows (1 open country, 0 marsh and mountain)."""
     lands = game.tables.economy.get("ride_lands", DEFAULT_LANDS)
-    return float(lands.get(game.biome_key(x, y), 0.0))
+    return float(game.tables.biomes.lookup(lands, game.land_key(x, y), 0.0))
 
 
 def step_factor(game, x0: int, y0: int, x1: int, y1: int) -> float:

@@ -36,7 +36,7 @@ def typical_temperature(game: GameState, x: int, y: int) -> float:
 
 def settlement_line(game: GameState, s) -> str:
     spec = game.tables.sites["settlement_types"][s.kind]
-    culture = game.tables.names["cultures"].get(s.culture, {}).get("label", s.culture)
+    culture = game.tables.cultures.adjective(game.world, s.culture)
     walls = ", walled" if s.walled else ""
     size = f"about {round(s.population, -1 if s.population < 1000 else -2):,} people"
     line = f"<place>{s.name}</>: {spec['name']}{walls}, {size}. <dim>{culture} folk.</>"
@@ -135,6 +135,11 @@ def describe_overworld(game: GameState, x: int, y: int) -> str:
         history = past.place_past(game, settlement)
         if history:
             lines.append(f"<dim>{history}</>")
+    wonder = w.wonder_at(x, y)
+    if wonder is not None:
+        from realmwalker.world import wonders
+
+        lines.append(wonders.describe_line(game, wonder))
     site = w.site_at(x, y)
     if site is not None:
         spec = game.tables.sites["site_types"].get(site.kind, {})

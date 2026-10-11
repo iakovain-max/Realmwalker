@@ -128,7 +128,7 @@ class HistoryMaker:
                 pred = fx.make_figure(w, self.t, self.rng, f.culture, year=year, faction=f, role="past",
                                       family=family if dynastic else None, age=(death_age, death_age),
                                       race=leader.race)
-                pred.title = fx.figure_title(self.t, f.kind, pred.sex)
+                pred.title = fx.figure_title(self.t, f.kind, pred.sex, f.culture)
                 pred.died = year
                 pred.cause = self.rng.choice(self.data["causes"][cause_kind])
                 if self.rng.chance(0.25):

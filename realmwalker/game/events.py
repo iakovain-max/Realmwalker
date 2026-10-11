@@ -39,7 +39,7 @@ def fits(spec: dict, game, x: int, y: int, night: bool) -> bool:
     if "road" in where and where["road"] != on_road:
         return False
     biomes = where.get("biomes", ["any"])
-    if "any" not in biomes and game.biome_key(x, y) not in biomes:
+    if "any" not in biomes and game.biome_key(x, y) not in biomes and game.land_key(x, y) not in biomes:
         return False
     lo, hi = where.get("danger", [0, 10])
     if not lo <= int(w.danger[x, y]) <= hi:

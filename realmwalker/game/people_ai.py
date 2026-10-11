@@ -18,7 +18,8 @@ KIND_WORDS = {"hamlet": "hamlet", "village": "village", "town": "market town", "
 # ---------------------------------------------------------------------------- settlements
 def settlement_variables(game, settlement, town: Town) -> dict:
     t = game.tables
-    culture = t.names["cultures"].get(settlement.culture, {}).get("label", settlement.culture)
+    cultures = t.cultures
+    culture = f"{cultures.adjective(game.world, settlement.culture)} ({cultures.get(settlement.culture)['like']})"
     area = game.world.area_at(settlement.x, settlement.y)
     people = []
     for npc in npcs_in(game.world, settlement.id):
@@ -85,7 +86,7 @@ def fallback_description(game, settlement, rng: RNG) -> str:
 def fallback_inn_name(game, rng: RNG) -> str:
     tavern = game.tables.fallback["tavern"]
     names = game.tables.names["cultures"]
-    family = rng.choice(next(iter(names.values()))["family"])
+    family = rng.choice(next(iter(names.values()))["family"])  # tavern names stay homely, whatever the town
     return textgen.fill(rng.choice(tavern["name_pattern"]), rng, tavern, {"family": family})
 
 

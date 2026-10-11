@@ -194,8 +194,8 @@ class LegendsScreen(Screen):
             self.go_back()
         elif ev.key == "]":
             self.go_ahead()
-        elif ev.key in [str(i + 1) for i in range(len(legends.CATEGORIES))]:
-            self.set_category(int(ev.key) - 1)
+        elif ev.key in [str((i + 1) % 10) for i in range(min(10, len(legends.CATEGORIES)))]:
+            self.set_category((int(ev.key) - 1) % 10)  # 1-9, and 0 for the tenth
         else:
             return False
         return True

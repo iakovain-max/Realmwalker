@@ -139,7 +139,7 @@ def choose_encounter(tables, biome: str, danger: int, night: bool, on_road: bool
         lo, hi = g["danger"]
         if not lo <= danger <= hi:
             continue
-        if "any" not in g["biomes"] and biome not in g["biomes"]:
+        if "any" not in g["biomes"] and biome not in g["biomes"] and tables.biomes.family(biome) not in g["biomes"]:
             continue
         if g["time"] == "night" and not night or g["time"] == "day" and night:
             continue

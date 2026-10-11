@@ -25,10 +25,40 @@ CULTURE = Obj(
         "male": word_list(5, 30),
         "female": word_list(5, 30),
         "family": word_list(5, 40),
+        "byname": List(Str(max_len=40), optional=True),
     }
 )
 
 NAMES = Obj({"cultures": Map(CULTURE, min_items=1)})
+
+PATRONYMICS = ["norse", "gaelic", "arabic", "slavic"]
+FAMILY_FORMS = ["slavic", "greek"]
+PEOPLE = Obj(
+    {
+        "folk": List(List(Str(max_len=40), min_items=2, max_items=2), min_items=1),
+        "race": Str(max_len=20),
+        "kind": Str(choices=["human", "elder", "small", "tribal"]),
+        "like": Str(max_len=120),
+        "ai_style": Str(max_len=160),
+        "color": COLOR,
+        "about": Str(max_len=600),
+        "home": Obj({"biomes": Map(Float(min=0, max=10)),
+                     "temperature": List(Float(min=-80, max=80), min_items=2, max_items=2),
+                     "moisture": List(Float(min=0, max=1), min_items=2, max_items=2),
+                     "coast": Float(min=-1, max=1)}),
+        "naming": Obj({"person": WEIGHTED, "noble": WEIGHTED, "patronymic": Str(choices=PATRONYMICS, optional=True),
+                       "family_forms": Str(choices=FAMILY_FORMS, optional=True),
+                       "family_prefix": Str(max_len=8, optional=True)}),
+        "realms": Map(word_list(1, 80)),
+        "titles": Map(List(Str(max_len=30), min_items=2, max_items=2)),
+        "land_suffix": word_list(1, 20),
+        "faith": Str(max_len=30),
+        "town": Str(max_len=30),
+        "dress": Str(max_len=30),
+    }
+)
+CULTURES = Obj({"cultures": Map(PEOPLE, min_items=1)})
+NAME_SLOTS = ("given", "family", "father", "patronymic", "byname")
 
 TAVERN_TABLES = (
     "name_pattern", "adjective", "noun", "part", "house", "sign_state", "building", "light", "smell",
@@ -59,8 +89,12 @@ PLACE_NAMES = Obj(
             min_items=1,
         ),
         "regions": Map(word_list(1)),
+        "geo": Map(Map(word_list(1, 80)), optional=True),
     }
 )
+GEO_SLOTS = ("root", "person", "adjective", "noun", "stem")  # filled by world/names.py, not from the 'geo' lists
+GEO_KINDS = ("mountains", "hills", "forest", "pine_forest", "marsh", "plains", "desert", "tundra", "coast", "lake",
+             "river", "ocean", "island", "bay", "peak")
 
 # ---------------------------------------------------------------------------- world
 BIOME = Obj(
@@ -71,6 +105,9 @@ BIOME = Obj(
         "bg": COLOR,
         "move_hours": Float(min=0, max=24),
         "passable": Bool(),
+        # The older land this one behaves like in every system that asks "is this a desert?" (camping, encounters,
+        # survival, riding...): a new land works everywhere at once. Absent: it is its own family.
+        "family": Str(max_len=40, optional=True),
         "local": Obj(
             {
                 "ground": WEIGHTED,
@@ -79,6 +116,8 @@ BIOME = Obj(
                 "rocks": Float(min=0, max=1),
                 "bushes": Float(min=0, max=1),
                 "water": Float(min=0, max=1),
+                # Things strewn about: [terrain, chance per square] (cacti, termite hills, steam vents...).
+                "scatter": List(List(Any_(), min_items=2, max_items=2), optional=True),
             }
         ),
         "descriptions": word_list(1, 300),
@@ -137,6 +176,7 @@ REQUIRED_SETTLEMENT_TYPES = ("hamlet", "village", "town", "city", "hold", "elfha
 
 DATA_FILES: dict[str, Spec] = {
     "names.json": NAMES,
+    "cultures.json": CULTURES,
     "fallback_text.json": FALLBACK_TEXT,
     "place_names.json": PLACE_NAMES,
     "biomes.json": BIOMES,
@@ -159,7 +199,8 @@ RULES = Obj(
         "xp_for_level": List(Int(min=0, max=10**7), min_items=10),
         "max_level": Int(min=1, max=20),
         "discovery_xp": Obj({"region": Int(min=0, max=1000), "site": Int(min=0, max=1000),
-                             "deeper": Int(min=0, max=1000)}, optional=True),
+                             "deeper": Int(min=0, max=1000), "wonder": Int(min=0, max=1000, optional=True)},
+                            optional=True),
         "carry": Obj({"per_strength": Int(min=1, max=100), "encumbered_per_strength": Int(min=1, max=100),
                       "heavily_per_strength": Int(min=1, max=100)}),
         "languages": word_list(1, 40),
@@ -694,6 +735,7 @@ HISTORY = Obj(
         "lengths": List(Int(min=10, max=2000), min_items=1),
         "start": Map(BY_SIZE),
         "rates": Map(Float(min=0, max=1)),
+        "peoples_change": Obj({"after": Int(min=1, max=1000)}, optional=True),
         "spots": Obj({"reach": Float(min=5, max=200),
                       "thresholds": Obj({"village": Int(min=1), "town": Int(min=1), "city": Int(min=1)}),
                       "plans": Map(List(Float(min=-5000, max=5000), min_items=2, max_items=2)),
@@ -730,7 +772,9 @@ HISTORY = Obj(
         "artifacts": Obj({"kinds": Map(Obj({"word": Str(max_len=30), "weight": Float(min=0, max=100),
                                             "materials": word_list(1, 40)})),
                           "kennings": Map(word_list(1, 40)), "of": word_list(1, 40),
-                          "adjectives": word_list(1, 30), "why": word_list(1, 80), "old_fates": word_list(1, 120)}),
+                          "adjectives": word_list(1, 30), "why": word_list(1, 80), "old_fates": word_list(1, 120),
+                          "cultures": Map(Obj({"kennings": Map(word_list(1, 40)), "of": word_list(1, 40),
+                                               "adjectives": word_list(1, 30)}), optional=True)}),
         "works": Obj({"forms": Map(Obj({"word": Str(max_len=30), "author": Str(max_len=30),
                                         "titles": word_list(1, 80)}))}),
         "eras": Obj({"myth": word_list(1, 60), "thresholds": Map(Float(min=0, max=10**6)),
@@ -960,3 +1004,23 @@ MOOD = Obj(
 MUSIC = Obj({"moods": Map(MOOD, min_items=1)})
 
 DATA_FILES.update({"sounds.json": SOUNDS, "music.json": MUSIC})
+
+# ---------------------------------------------------------------------------- wonders of the world (world/wonders.py)
+WONDER_BOONS = ("water", "warm", "heal", "bewilder", "shelter")
+WONDER = Obj(
+    {
+        "what": Str(max_len=60),
+        "count": List(Int(min=0, max=12), min_items=3, max_items=3),
+        "chance": Float(min=0, max=1),
+        "fame": Int(min=0, max=10),
+        "mark": Str(max_len=30),
+        "names": word_list(1, 60),
+        "geo": List(Str(max_len=30)),
+        "look": word_list(1, 400),
+        "look_awake": List(Str(max_len=400), optional=True),
+        "found": word_list(1, 400),
+        "boon": List(Str(choices=list(WONDER_BOONS)), optional=True),
+    }
+)
+WONDERS = Obj({"kinds": Map(WONDER, min_items=1)})
+DATA_FILES.update({"wonders.json": WONDERS})

@@ -6,7 +6,7 @@
       "description": "The most numerous people of the realm: farmers, soldiers, priests and kings. Short-lived, ambitious and quarrelsome, humans rule most of the land and most of its troubles.",
       "ability_bonus": {"str": 1, "dex": 1, "con": 1, "int": 1, "wis": 1, "cha": 1},
       "speed": 30, "size": "medium", "darkvision": 0,
-      "cultures": ["heartland", "northmarch", "southron"],
+      "cultures": ["heartland", "northmarch", "southron", "highland", "qasari", "khurgan", "volsk", "thalassian", "itzan"],
       "languages": ["Common"], "extra_languages": 1,
       "skills": [],
       "age": {"adult": 16, "old": 55, "max": 80},

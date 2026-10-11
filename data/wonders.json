@@ -1,0 +1,169 @@
+{
+  "_comment": "Wonders of the world (realmwalker/world/wonders.py places them after the land is made, each by its own rule). count: how many a small, medium and large world may have; chance: how often a world has any at all. names: patterns for its name, in the words of the people living nearest ({root}: a word of theirs; {person}: one of their names; {adjective}, {noun}, {stem}: from place_names.json regions); geo: that people's own word for such a place is tried first (place_names.json geo kinds). what: what it is, in a few words. look: what you see from its square (look_awake: a volcano that is awake). found: said the first time you come to it. boon: what it does for a traveller: water (clean water to drink), warm (shelter from the cold), heal (rest there heals more, and the hurt go easier), bewilder (easy to lose your way), shelter (a dry, sheltered camp). fame: what finding it adds to your name. mark: its picture on the world map.",
+  "kinds": {
+    "great_peak": {
+      "what": "the highest mountain in the world", "count": [1, 1, 1], "chance": 1.0, "fame": 3, "mark": "peak",
+      "names": ["{root}", "Mount {root}", "the {adjective} Spire", "the Roof of the World", "the {noun}'s Throne", "the Spear of {root}", "the White Throne", "the Crown of {root}"],
+      "geo": ["peak"],
+      "look": [
+        "The mountain stands over every other, its summit lost in a streamer of cloud that never clears. There is snow on it in high summer.",
+        "A great white pyramid of rock and ice, higher than the clouds; at dawn it burns pink for a moment before the rest of the world is lit.",
+        "The highest place in the world. The air up there will not hold up a bird, and the wind has not stopped since the world was made."],
+      "found": [
+        "Above the range one mountain stands higher than all the others, and the people below have a name for it that they say quietly.",
+        "You have come to the foot of the highest mountain in the world. Even from here you have to lean back to see the top of it."]
+    },
+    "volcano": {
+      "what": "a volcano", "count": [6, 6, 6], "chance": 1.0, "fame": 1, "mark": "volcano",
+      "names": ["Mount {root}", "{root} the Smoking", "the Fire Mountain of {root}", "the {adjective} Cone", "the {noun}'s Forge", "the Smoking Mountain", "the Anvil of {root}", "the Hearth of {root}"],
+      "geo": ["volcano", "peak"],
+      "look": [
+        "A cone of black rock, its crater full of snow and silence; the ground round it is still warm in places, and nothing grows on its flanks.",
+        "An old volcano, asleep. Its slopes are grey with ash and its crater holds still water, and the people round it do not trust the quiet.",
+        "A broken mountain with a hollow top, its sides ribbed with old lava. Steam rises from cracks in it on cold mornings."],
+      "look_awake": [
+        "A mountain with its top blown off, breathing smoke. At night its crater glows red against the clouds, and the ground shivers now and then.",
+        "The volcano is awake: a plume of grey smoke leaning on the wind, a red glow in the crater, and rivers of black rock down its flanks still smoking.",
+        "Fire on the mountain: a lake of lava seethes in its crater, and the air for miles round it smells of sulphur and hot iron."],
+      "found": [
+        "The mountain in front of you is not like the others: its top is a crater, and the land all round it was made by fire.",
+        "You have come to a volcano. The earth is warm through your boots."]
+    },
+    "great_falls": {
+      "what": "great falls", "count": [1, 2, 2], "chance": 1.0, "fame": 2, "mark": "falls",
+      "names": ["the Falls of {root}", "{root} Falls", "the {adjective} Falls", "the Thunder of {root}", "the {noun}'s Veil", "the Smoke That Thunders", "the Bridal Veil of {root}"],
+      "geo": ["falls"],
+      "look": [
+        "A whole river goes over the edge of the world here and falls in a white roar, and the spray hangs over it in a cloud with a rainbow in it.",
+        "The falls: a curtain of water a quarter of a mile wide, dropping into its own mist. You feel the noise in your chest more than you hear it.",
+        "Water pours off a lip of black rock and falls so far that it turns to smoke before it reaches the pool below."],
+      "found": [
+        "You hear them long before you see them: a roar like a storm that never moves. Then the ground ends, and the river goes over.",
+        "The river you have followed throws itself off a cliff here, and the mist of it soaks you a mile away."],
+      "boon": ["water"]
+    },
+    "great_canyon": {
+      "what": "a great gorge", "count": [1, 1, 1], "chance": 0.9, "fame": 2, "mark": "canyon",
+      "names": ["the {root} Gorge", "the Great Gorge of {root}", "the {adjective} Canyon", "the {noun}'s Cut", "the Throat of {root}", "the Long Gorge"],
+      "geo": ["canyon"],
+      "look": [
+        "The river has cut down through the rock for ten thousand years, and here it runs half a mile below you, a green thread at the bottom of red cliffs.",
+        "A gorge so deep that noon reaches its floor for an hour a day, its walls banded red and gold and grey like the layers of a cake.",
+        "Sheer walls, hawks circling below you, and far down the river, small and loud."],
+      "found": [
+        "The land opens at your feet into a gorge so deep that it makes you dizzy to look down.",
+        "You come to the rim of the great gorge, and stand for a while saying nothing."]
+    },
+    "great_cliffs": {
+      "what": "great cliffs", "count": [1, 1, 1], "chance": 0.9, "fame": 1, "mark": "cliffs",
+      "names": ["the Cliffs of {root}", "the {adjective} Wall", "the {root} Scarp", "the {noun}'s Edge", "the Edge of the World", "the White Cliffs of {root}"],
+      "geo": ["cliff"],
+      "look": [
+        "A wall of rock a thousand feet high, sheer as a castle, the seabirds wheeling halfway up it and the sea gnawing at its foot.",
+        "The land ends in a cliff that runs on out of sight both ways, striped grey and rust, with waterfalls of wind-blown spray down its face.",
+        "The scarp: the high country simply stops, and the low country lies spread out below like a map."],
+      "found": [
+        "The ground runs out at the edge of a cliff so high that the birds below you are specks.",
+        "You have come to the great cliffs, and the wind coming up them nearly knocks you over."]
+    },
+    "salt_pan": {
+      "what": "a great salt pan", "count": [1, 1, 1], "chance": 1.0, "fame": 1, "mark": "salt",
+      "names": ["the {adjective} Salt", "the Salt of {root}", "the White Sea of {root}", "the {noun}'s Tears", "the Great Pan of {root}", "the Mirror of the Sky"],
+      "geo": ["salt"],
+      "look": [
+        "The bed of a sea that dried before men came: white and dead level to the horizon, cracked into plates, the glare of it painful even with your eyes half shut.",
+        "Salt, white as bone and flat as a table; after rain it holds a skin of water and the sky lies on it so perfectly that you seem to walk on clouds."],
+      "found": ["The ground turns white under your feet and stays white to the edge of the world: the great salt pan."]
+    },
+    "glowing_lake": {
+      "what": "a lake that shines at night", "count": [1, 1, 1], "chance": 0.75, "fame": 2, "mark": "glow",
+      "names": ["the Shining Mere", "Lake {root}", "the {adjective} Lantern", "the Moon's Pool", "the Lamp of {root}", "the Ghostwater", "the Lake of Stars"],
+      "geo": ["lake"],
+      "look": [
+        "By day an ordinary lake. By night the water glows from beneath, a cold blue-green, and the fish in it move like lights through a window.",
+        "Still water that gives off its own pale light, enough to read by. Nothing that drinks it seems to come to harm. Nothing that lives near it sleeps well."],
+      "found": ["At dusk the lake in front of you begins to glow, softly, from far beneath, as if there were a city down there with its lamps lit."],
+      "boon": ["water"]
+    },
+    "oasis": {
+      "what": "an oasis", "count": [1, 2, 3], "chance": 1.0, "fame": 1, "mark": "oasis",
+      "names": ["the Oasis of {root}", "{root} Wells", "the {adjective} Wells", "the Palms of {root}", "the Mercy of {root}", "the Green Eye of {root}"],
+      "geo": ["oasis"],
+      "look": [
+        "Palms, green as a shout after the sand, round a pool of clear water. Camels drink at one end of it and people at the other.",
+        "A spring in the desert: date palms and fig trees, the sound of water, and shade so deep it is almost cold."],
+      "found": ["After the sand, green: palms, and the glitter of water between them. An oasis.", "You smell it before you see it: water, and green things growing."],
+      "boon": ["water", "shelter"]
+    },
+    "hot_springs": {
+      "what": "hot springs", "count": [1, 2, 2], "chance": 0.9, "fame": 1, "mark": "springs",
+      "names": ["the Hot Springs of {root}", "{root} Baths", "the {adjective} Springs", "the Steaming Pools", "the Healing Waters of {root}", "the Warm Wells of {root}"],
+      "geo": ["spring"],
+      "look": [
+        "Pools of milky blue water in terraces of white stone, steaming in the cold air. The water is as hot as a bath and smells faintly of eggs.",
+        "Steam rising among the rocks, and pools that are warm in the dead of winter. The sick come here from far off, and some of them go home well."],
+      "found": ["Steam drifts among the rocks ahead, and the snow has melted round pools of hot water: springs, warm as a bath."],
+      "boon": ["water", "warm", "heal"]
+    },
+    "enchanted_forest": {
+      "what": "an enchanted wood", "count": [1, 1, 1], "chance": 0.85, "fame": 2, "mark": "fey",
+      "names": ["the {adjective} Wildwood", "the Dreaming Wood of {root}", "the Silverwood of {root}", "the Twilight Wood", "the Wood of {root}", "the {noun}'s Glade"],
+      "geo": ["fey_forest"],
+      "look": [
+        "Silver trees whose hanging leaves glow, mossy ground soft as velvet, lights drifting between the trunks, and music that stops whenever you stand still to listen.",
+        "A wood where it is always dusk, and the paths are never where you left them. The birds here sing words, and you would rather not know what they are saying."],
+      "found": ["The trees change: their bark turns silver and their leaves shine, and the ordinary sounds of a wood stop all at once. You have walked into the enchanted wood."],
+      "boon": ["bewilder"]
+    },
+    "giant_tree": {
+      "what": "a tree as big as a castle", "count": [1, 1, 1], "chance": 0.8, "fame": 2, "mark": "giant_tree",
+      "names": ["the Great Tree of {root}", "the {adjective} Oak", "the World-Tree", "the Elder of {root}", "the {noun}'s Tree", "the Mother Tree", "the Old Man of {root}"],
+      "geo": [],
+      "look": [
+        "A tree so vast that the forest round it seems a lawn. A hundred men holding hands could not circle its trunk, and its crown has weather of its own.",
+        "The great tree: roots like the walls of a town, a trunk that goes up and up into a green roof full of birds, and hollows in it big enough to live in."],
+      "found": ["The trees ahead stop being trees and start being the roots of one: a tree as big as a castle."],
+      "boon": ["shelter"]
+    },
+    "stone_arches": {
+      "what": "arches of stone", "count": [1, 1, 1], "chance": 0.7, "fame": 1, "mark": "arch",
+      "names": ["the Arches of {root}", "the {adjective} Gates", "the Giant's Doors", "the Bridges of {root}", "the Gates of {root}"],
+      "geo": [],
+      "look": ["Arches of red stone that the wind has carved, standing out of the waste like the doors of a city nobody built.",
+               "Great bridges of rock that cross nothing, hollowed out by sand on the wind, glowing like embers at sunset."],
+      "found": ["Ahead, the rock has been worn into arches, door after door standing open on nothing."]
+    },
+    "sinkhole": {
+      "what": "a great sinkhole", "count": [1, 1, 1], "chance": 0.6, "fame": 1, "mark": "sinkhole",
+      "names": ["the Pit of {root}", "the {adjective} Mouth", "the Abyss of {root}", "the {noun}'s Well", "the Bottomless", "the Throat of the World"],
+      "geo": [],
+      "look": ["The ground simply stops: a round pit a quarter of a mile across with sheer sides, trees growing on ledges far down, and darkness at the bottom.",
+               "A hole in the world, round as a well, with mist breathing out of it and birds nesting in its walls. Stones dropped into it are not heard to land."],
+      "found": ["The ground in front of you falls away into a pit so wide and deep that it seems the earth has opened its mouth."]
+    },
+    "petrified_forest": {
+      "what": "a forest of stone", "count": [1, 1, 1], "chance": 0.6, "fame": 1, "mark": "stone_trees",
+      "names": ["the Stone Wood of {root}", "the {adjective} Forest", "the Forest of Bones", "the Petrified Wood of {root}", "the Stone Orchard"],
+      "geo": [],
+      "look": ["A forest turned to stone: trunks lying where they fell an age ago, every ring of the bark still there, striped red and amber and grey.",
+               "Stone trees standing in a dead land, some upright still, their snapped branches sharp as glass."],
+      "found": ["Logs lie across the ground ahead, but they ring under your boot like stone. They are stone: a whole forest of it."]
+    },
+    "glacier_wall": {
+      "what": "a wall of ice", "count": [1, 1, 1], "chance": 1.0, "fame": 2, "mark": "ice_wall",
+      "names": ["the {adjective} Wall", "the Ice Wall of {root}", "the Great Ice", "the {noun}'s Wall", "the Edge of the Ice", "the Frozen Rampart"],
+      "geo": ["glacier"],
+      "look": ["The glacier ends here in a cliff of blue ice two hundred feet high, cracking and groaning; now and then a piece the size of a church falls from it with a sound like the end of the world.",
+               "A wall of ancient ice, blue in its depths, running out of sight. Things are frozen in it: trees, a boat, the shapes of animals nobody has seen alive."],
+      "found": ["The ice rises ahead of you into a wall, blue and glittering and sheer, taller than any castle."]
+    },
+    "drifting_stones": {
+      "what": "the drifting stones", "count": [1, 1, 1], "chance": 0.65, "fame": 3, "mark": "drifting",
+      "names": ["the Drifting Stones", "the Floating Isles of {root}", "the Sky Stones of {root}", "the {adjective} Stones", "the Hanging Rocks", "the Stairs of Heaven"],
+      "geo": [],
+      "look": ["Great rocks hang in the air over the hills, still as clouds, trailing roots and threads of water that turn to mist before they reach the ground. Nobody knows what holds them up.",
+               "Islands of stone afloat in the sky, the largest with trees on it, turning very slowly as the days go by."],
+      "found": ["You look up, and the rocks are in the sky: great stones drifting over the hills, trailing roots, casting shadows. The drifting stones are real."]
+    }
+  }
+}

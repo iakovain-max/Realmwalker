@@ -33,7 +33,7 @@
   "xp_for_level": [0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000],
   "max_level": 10,
   "_discovery_xp": "Experience for each character, times their level, the first time they enter a region, reach a site (a ruin, a lair, a barrow...) or reach a level under the ground.",
-  "discovery_xp": {"region": 10, "site": 25, "deeper": 25},
+  "discovery_xp": {"region": 10, "site": 25, "deeper": 25, "wonder": 40},
   "carry": {"per_strength": 15, "encumbered_per_strength": 5, "heavily_per_strength": 10},
   "languages": ["Common", "Elvish", "Dwarvish", "Halfling", "Orcish", "Old Imperial", "Northern Tongue", "Southron Cant", "Thieves' Cant"],
   "tools": {

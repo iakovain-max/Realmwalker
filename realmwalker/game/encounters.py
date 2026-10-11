@@ -113,7 +113,7 @@ def roll_encounter(game, minutes: float) -> PendingEncounter | None:
             enc = make_encounter(game, "restless_dead", rng)
             enc.intro = intro
             return enc
-    group = choose_encounter(game.tables, game.biome_key(p.x, p.y), danger, night, on_road, rng)
+    group = choose_encounter(game.tables, game.land_key(p.x, p.y), danger, night, on_road, rng)
     if group is None:
         return None
     return make_encounter(game, group, rng)
@@ -156,7 +156,7 @@ def populate_local(game, lm) -> None:
             groups.append(rng.choice(valid))
     elif w.settlement_at(p.x, p.y) is None and rng.chance(min(0.6, 0.05 * danger)):
         night = game.light < 0.5
-        g = choose_encounter(game.tables, game.biome_key(p.x, p.y), danger, night, False, rng)
+        g = choose_encounter(game.tables, game.land_key(p.x, p.y), danger, night, False, rng)
         if g:
             groups.append(g)
     walk = game.tables.terrain.walk[game.remap_for(lm)[lm.terrain]]

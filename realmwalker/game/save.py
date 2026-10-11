@@ -35,12 +35,12 @@ from realmwalker.rules.character import Character
 from realmwalker.rules.items import Item
 from realmwalker.world.factions import Faction, Figure
 from realmwalker.world.local import Building, LocalMap
-from realmwalker.world.model import ARRAY_NAMES, Area, Settlement, Site, World, WorldMeta
+from realmwalker.world.model import ARRAY_NAMES, Area, Settlement, Site, Wonder, World, WorldMeta
 from realmwalker.world.tables import Tables
 
 log = logging.getLogger("realmwalker.save")
 
-FORMAT_VERSION = 10
+FORMAT_VERSION = 11  # 11: peoples on the map, a world's names, bigger towns (no migration: older saves are refused)
 WORLD_FILE = "world.zip"
 CHARACTER_FILE = "character.zip"
 
@@ -171,6 +171,7 @@ def world_entries(world: World) -> dict[str, bytes | str]:
         "width": world.width,
         "height": world.height,
         "biome_ids": world.biome_ids,
+        "culture_ids": world.culture_ids,
         "time": world.time,
         "rng": world.rng.get_state(),
         "flavor": world.flavor.to_dict(),
@@ -244,9 +245,11 @@ def load_world(folder: Path) -> World:
         width=body["width"],
         height=body["height"],
         biome_ids=body["biome_ids"],
+        culture_ids=list(body.get("culture_ids", [])),
         settlements=[Settlement(**s) for s in body["settlements"]],
         sites=[Site(**s) for s in body["sites"]],
         areas=[Area(**a) for a in body["areas"]],
+        wonders=[Wonder(**wd) for wd in body.get("wonders", [])],
         time=int(body["time"]),
         local_maps=local_maps,
         flavor=FlavorStore.from_dict(body.get("flavor", {})),

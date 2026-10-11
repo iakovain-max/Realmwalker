@@ -73,9 +73,10 @@ def test_a_journey_stops_when_night_comes_on_and_goes_on_after(game):
     # Choosing to walk on through the dark is allowed, and the dark does not stop you twice.
     x, y = game.player.x, game.player.y
     game.set_out(game.plan_travel((dest.x, dest.y)))
+    before = len(game.log.messages)
     game.travel_step()
     assert (game.player.x, game.player.y) != (x, y)
-    assert "Night is coming on" not in last(game)
+    assert not any("Night is coming on" in m.text for m in game.log.messages[before:])
 
 
 def test_setting_out_in_the_dark_is_not_stopped_for_the_dark(game):

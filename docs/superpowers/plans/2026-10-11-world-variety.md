@@ -42,16 +42,16 @@ module; a town package (`world/towns/`) with a style per people; a town clock an
 (CULTURES, cross-checks in `registry.py`), `realmwalker/world/tables.py` (`tables.cultures`).
 **Produces:** `Cultures(tables_data)` with `ids`, `human`, `get(cid)`, `label(world, cid)`, `race(cid)`,
 `realm_patterns(kind, cid)`, `title(kind, sex, cid)`, `faith(cid)`, `town_style(cid)`, `dress(cid)`, `home(cid)`.
-- [ ] Tests: data valid; every culture has names, place names, laws, peoples, faith; labels; titles fall back.
-- [ ] Commit.
+- [x] Tests: data valid; every culture has names, place names, laws, peoples, faith; labels; titles fall back.
+- [x] Commit.
 
 #### Task 1.2: Names for nine human peoples (data)
 **Files:** `data/names.json` (heartland, northmarch, southron grown; highland, qasari, khurgan, volsk, thalassian,
 itzan new: 150+ per sex and family each; bynames), `data/place_names.json` (settlement parts per culture, `geo`
 patterns and words per culture), `data/factions.json` (culture_laws, land suffixes, new faiths), `data/history.json`
 (peoples, pantheon for the new faiths, artifact words per culture).
-- [ ] Tests: pool sizes; every culture has every geography kind; no duplicate names inside a pool.
-- [ ] Commit.
+- [x] Tests: pool sizes; every culture has every geography kind; no duplicate names inside a pool.
+- [x] Commit.
 
 #### Task 1.3: The name forge
 **Files:** create `realmwalker/world/names.py`; tests `tests/test_names.py`.
@@ -59,23 +59,23 @@ patterns and words per culture), `data/factions.json` (culture_laws, land suffix
 `family(cid, sex, rng)`, `person(cid, sex, rng, *, father=None, noble=False, family=None)`, `family_for(cid, base,
 sex)`, `base_family(cid, family)`, `place(cid, rng)`, `geo(cid, kind, rng)`, `realm(kind, cid, rng, **values)`,
 `label(cid)`; Markov name growth (order 2-3) with a share of real names; a blocklist.
-- [ ] Tests: deterministic per seed; worlds differ; gendered family names; patronymics; uniqueness helpers.
-- [ ] Commit.
+- [x] Tests: deterministic per seed; worlds differ; gendered family names; patronymics; uniqueness helpers.
+- [x] Commit.
 
 #### Task 1.4: Everyone names through the forge
 **Files:** `world/factions.py` (make_figure, land_name, seat_family, titles), `world/ages/folk.py` (first_name,
 family_name, person, child), `world/ages/realms.py`, `present.py`, `lore.py`, `orders.py`, `wild.py`, `war.py`,
 `world/naming.py` (Namer uses the forge), `game/people.py` (make_npc, race_for), `rules/creation.py` (ties, start
 places by culture), `ai/tasks.py` (culture styles from data), `game/state.py` (arrival line), `game/uniques.py`.
-- [ ] Tests: whole suite green; a world's figures use each culture's patterns; dynasties stable.
-- [ ] Commit.
+- [x] Tests: whole suite green; a world's figures use each culture's patterns; dynasties stable.
+- [x] Commit.
 
 #### Task 1.5: The culture map and its history
 **Files:** `world/generator.py` (`_cultures` after `_biomes`; settlements take their ground's culture), `world/model.py`
 (`culture` array + `culture_ids`), `world/ages/land.py`/`realms.py` (colonies and conquests carry culture;
 assimilation events; `present` redraws the map), `data/races.json` (human cultures), `game/save.py` (FORMAT_VERSION).
-- [ ] Tests: cultures contiguous and suited; settlements match; history changes recorded; old-save refusal friendly.
-- [ ] Phase verification (full suite), commit, push.
+- [x] Tests: cultures contiguous and suited; settlements match; history changes recorded; old-save refusal friendly.
+- [x] Phase verification (full suite), commit, push.
 
 ### Phase 2: The land
 
@@ -85,44 +85,44 @@ fey_forest), `world/tables.py` (`family` table), code that names biomes (camp, c
 vision, arena, state, music mood, ages wild/factions tribe homes, localview cold biomes, history), `data/local_terrain.json`
 + `data/sprites.json` + tiles for new ground and plants (palm, acacia, jungle tree, cactus, ash, lava, salt crust,
 red rock, glacier ice, fey trees).
-- [ ] Tests: every biome has a family and a local recipe; systems answer for new biomes.
-- [ ] Commit.
+- [x] Tests: every biome has a family and a local recipe; systems answer for new biomes.
+- [x] Commit.
 
 #### Task 2.2: World options and extremes
 **Files:** `world/generator.py` (Land and Climate options; great ranges; plateaus and cliffs; ravines; polar ice;
 hot deserts; biome rules), `ui/screens/new_world.py` (two new rows).
-- [ ] Tests: each option makes worlds with the expected traits; highest peaks above 6000 m; glaciers in frozen worlds.
-- [ ] Commit.
+- [x] Tests: each option makes worlds with the expected traits; highest peaks above 6000 m; glaciers in frozen worlds.
+- [x] Commit.
 
 #### Task 2.3: Wonders
 **Files:** create `data/wonders.json`, `realmwalker/world/wonders.py`; modify generator (placement), model (sites of
 kind "wonder" or `world.wonders`), `world/local.py` (close-up maps of wonders), `game/describe.py`, `world/legends.py`,
 history (eruptions), discovery and boons (`game/state.py` discover, camp).
-- [ ] Tests: every wonder kind can be placed and has a map; names; boons; Legends pages.
-- [ ] Commit.
+- [x] Tests: every wonder kind can be placed and has a map; names; boons; Legends pages.
+- [x] Commit.
 
 #### Task 2.4: Geography named by its people
 **Files:** generator `_areas` (islands, bays, ranges, peaks), `world/names.py` geo, `game/describe.py`.
-- [ ] Tests: areas named in the culture of their ground; every kind has a pattern.
-- [ ] Phase verification, commit, push.
+- [x] Tests: areas named in the culture of their ground; every kind has a pattern.
+- [x] Phase verification, commit, push.
 
 ### Phase 3: The world map
 
 #### Task 3.1: Painted once, shown at any zoom
 **Files:** `ui/gfx/paint.py` (canonical k=12 tiles of the whole world, painted in the background, faster stamping),
 `ui/gfx/worldview.py` (draw any ppc from the canonical tiles), `config.py` (WORLD_ZOOMS).
-- [ ] Tests: painter tiles cover the world; any zoom draws without painting; headless timings.
-- [ ] Commit.
+- [x] Tests: painter tiles cover the world; any zoom draws without painting; headless timings.
+- [x] Commit.
 
 #### Task 3.2: Vivid colours, new marks, wonders, towns by people, names on the land
 **Files:** `paint.py`, `data/sprites.json` world section, `tools/tile_art.py` (town marks by style), tiles rebuild.
-- [ ] Tests: every biome has colour and marks; every town style has a mark; labels placed without overlap.
-- [ ] Commit.
+- [x] Tests: every biome has colour and marks; every town style has a mark; labels placed without overlap.
+- [x] Commit.
 
 #### Task 3.3: The map screen: zoom, pan, drag, select; Realms and Peoples views with legends
 **Files:** `ui/screens/world_map.py`, `ui/input.py` (drag), `ui/gfx/worldview.py` (overlays, labels).
-- [ ] Tests: wheel zoom keeps the point under the mouse; drag pans; click selects, Enter travels; views and legends.
-- [ ] Phase verification, commit, push.
+- [x] Tests: wheel zoom keeps the point under the mouse; drag pans; click selects, Enter travels; views and legends.
+- [x] Phase verification, commit, push.
 
 ### Phase 4: Towns
 

@@ -59,6 +59,7 @@ class Land:
         self.spots: list[Spot] = []
         self.by_owner: dict[int, set[int]] = defaultdict(set)
         self.reach = float(sim.data["spots"]["reach"])
+        self.under: dict[int, tuple[str, int]] = {}  # place -> (the people ruling it, since when)
         types = sim.t.sites["settlement_types"]
         self.ranges = {k: tuple(v["population"]) for k, v in types.items()}
         self.thresholds = sim.data["spots"]["thresholds"]
@@ -160,9 +161,12 @@ class Land:
     def year(self) -> None:
         s = self.s
         y = s.year
+        own_seats = {(g.seat, g.culture) for g in s.active() if g.seat >= 0}
         for sp in self.spots:
             if sp.standing:
                 self.grow(sp)
+                if sp.human:
+                    self.assimilate(sp, own_seats)
                 if not sp.fated and y >= sp.doom:
                     s.wild.doom(sp)
             elif sp.human and sp.ruined is None and sp.founded is None and sp.plan is not None and sp.plan <= y:
@@ -191,6 +195,33 @@ class Land:
                      factions=[top] if top is not None else [], figures=[ruler] if ruler else [])
             s.faith.temple_for(sp)
             s.orders.town_grew(sp)
+
+    def assimilate(self, sp: Spot, own_seats: set) -> None:
+        """A town ruled for generations by another people may come to speak as its rulers do (and dress, and build,
+        and name its children): peoples move with their realms, slowly."""
+        s = self.s
+        st = s.w.settlements[sp.sid]
+        owner = s.faction(st.owner)
+        top = s.top(owner) if owner is not None else None
+        ruler = top.culture if top is not None else None
+        cultures = s.t.cultures
+        if ruler is None or ruler == st.culture or not cultures.is_human(ruler) or not cultures.is_human(st.culture) \
+                or (sp.sid, st.culture) in own_seats:
+            self.under.pop(sp.sid, None)
+            return
+        culture, since = self.under.get(sp.sid, (ruler, s.year))
+        if culture != ruler:
+            culture, since = ruler, s.year
+        self.under[sp.sid] = (culture, since)
+        years = s.year - since
+        if years < int(s.data["peoples_change"]["after"]) or not s.chance("assimilation"):
+            return
+        old = st.culture
+        st.culture = ruler
+        self.under.pop(sp.sid, None)
+        s.record("assimilated", {"place": st.name, "people": cultures.people(s.w, ruler),
+                                 "old": cultures.people(s.w, old), "years": str(years), "realm": top.name},
+                 importance=2, places=[sp.sid], factions=[top])
 
     # ------------------------------------------------------------------ founding
     def settle(self, sp: Spot, *, rebuild: bool = False, by=None, year: int | None = None, quiet: bool = False) -> None:
