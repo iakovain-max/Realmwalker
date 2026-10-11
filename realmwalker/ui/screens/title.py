@@ -21,6 +21,7 @@ class TitleScreen(Screen):
         self.menu = Menu(self._items(), on_disabled=self._disabled)
         if not self.saves:
             self.menu.selected = 1
+        self.shelf: list = []  # (expansion id, cell box) of each icon on the shelf, from the last frame
 
     def _items(self) -> list[MenuItem]:
         return [
@@ -121,12 +122,24 @@ class TitleScreen(Screen):
                 break
             line += " · " + part
         canvas.text(1, h - 1, line, colors.DIM)
+        if self.app.tables is not None:
+            from realmwalker.ui import shelf
+
+            self.shelf = shelf.draw(canvas, self.app, self._expansions)
+
+    def _expansions(self, focus: str | None = None) -> None:
+        from realmwalker.ui.screens.expansions import ExpansionsScreen
+
+        self.app.push(ExpansionsScreen(self.app, focus))
 
     def handle_key(self, ev: KeyEvent) -> bool:
         if ev.key == "escape":
             return True
+        if ev.key in ("e", "E") and self.app.tables is not None:
+            self._expansions()
+            return True
         return self.menu.handle_key(ev)
 
     def autoplay_keys(self) -> list[KeyEvent]:
-        return [KeyEvent("up"), KeyEvent("down"), KeyEvent("enter"), KeyEvent("s"), KeyEvent("?"),
+        return [KeyEvent("up"), KeyEvent("down"), KeyEvent("enter"), KeyEvent("s"), KeyEvent("?"), KeyEvent("e"),
                 KeyEvent("n"), KeyEvent("n"), KeyEvent("c"), KeyEvent("c"), KeyEvent("c")]

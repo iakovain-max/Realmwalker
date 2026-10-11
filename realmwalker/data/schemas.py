@@ -1052,3 +1052,22 @@ TOWNS = Obj({
     "styles": Map(TOWN_STYLE, min_items=1),
 })
 DATA_FILES.update({"towns.json": TOWNS})
+
+# ---------------------------------------------------------------------------- expansion packs (data/packs.py)
+# A pack's record (data/packs/NN_id/pack.json): who it is on the main menu's shelf, and whether it is out yet.
+PACK = Obj({
+    "id": Str(max_len=40),
+    "order": Int(min=1, max=99),
+    "name": Str(max_len=60),
+    "tagline": Str(max_len=120),
+    "icon": Str(max_len=60),
+    "accent": COLOR,
+    "status": Str(choices=["planned", "released"]),
+    "version": Str(max_len=12),
+    "released_on": Str(max_len=10, min_len=0),  # "2026-11-02" once released, "" before
+    "adds": word_list(0, 300),
+    # What to count on the shelf: [data file, section, label]; "{n} {label}" for what this pack added there.
+    "counts": List(List(Str(max_len=40), min_items=3, max_items=3), optional=True),
+})
+# Kinds of data file that only packs bring: their empty shape, used when data/ has no base file of that name.
+PACK_ONLY: dict[str, dict] = {}

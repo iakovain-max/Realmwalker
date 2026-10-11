@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import asdict, dataclass, fields
+from dataclasses import asdict, dataclass, field, fields
 from pathlib import Path
 
 log = logging.getLogger("realmwalker.config")
@@ -75,6 +75,7 @@ class Settings:
     interface_volume: int = 7  # clicks, pages, menus
     sound_in_background: bool = True  # keep playing while another window is in front
     muted: bool = False  # Ctrl M
+    expansions_seen: list = field(default_factory=list)  # ids of the expansions pointed at on the shelf (no glint)
 
     def normalise(self) -> None:
         if self.font_size not in FONT_SIZES:
@@ -95,6 +96,7 @@ class Settings:
             self.time_in_towns = "flows"
         for name in ("volume", "music_volume", "effects_volume", "interface_volume"):
             setattr(self, name, max(0, min(VOLUME_STEPS, int(getattr(self, name)))))
+        self.expansions_seen = sorted({str(e) for e in self.expansions_seen if isinstance(e, str)})
 
     @classmethod
     def load(cls, path: Path) -> Settings:
