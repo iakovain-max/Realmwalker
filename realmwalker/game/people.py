@@ -157,6 +157,17 @@ def settlement_here(game):
     return game.world.settlement_at(p.x, p.y)
 
 
+def settlement_of(game, lm):
+    """The settlement whose close-up map this is (a town made ahead of your arrival is not where you are)."""
+    if lm is None or lm.kind != "settlement":
+        return None
+    try:
+        x, y = (int(v) for v in lm.key.split("/")[0].split(","))
+    except ValueError:
+        return None
+    return game.world.settlement_at(x, y)
+
+
 # ---------------------------------------------------------------------------- making people
 def new_id(world) -> int:
     world.next_npc_id += 1
@@ -192,7 +203,8 @@ def make_npc(game, settlement, job: str, rng: RNG, *, building: int = -1, post=(
     first = nf.given(culture, sex, rng, avoid=taken)  # two Gydas in one village is confusing
     family = nf.family_base(culture, rng)
     age_lo, age_hi = {"lord": (22, 66), "headman": (35, 70), "beggar": (18, 75), "serving_hand": (14, 30),
-                      "acolyte": (16, 30), "guard": (18, 50)}.get(job, (18, 68))
+                      "acolyte": (16, 30), "guard": (18, 50), "child": (6, 13), "elder": (62, 88), "soldier": (17, 40),
+                      "monk": (20, 75), "pilgrim": (20, 70), "minstrel": (16, 50)}.get(job, (18, 68))
     title = occ.get("titles", {}).get(settlement.kind, occ["name"])
     lo, hi = occ.get("purse", [0, 100])
     traits = rng.sample(sorted(people["personality"]), 2)
@@ -207,6 +219,7 @@ def make_npc(game, settlement, job: str, rng: RNG, *, building: int = -1, post=(
         x=post[0], y=post[1],
     )
     npc.flags["family"] = family
+    npc.flags["shift"] = rng.randint(-45, 45)  # minutes: nobody keeps exactly the hours of the book (townlife)
     npc.profile = fallback_profile(game, npc, rng)
     npc.profile_source = "fallback"
     return npc
@@ -274,19 +287,39 @@ def populate_town(game, lm, settlement) -> Town:
 
     def inside(b) -> tuple[int, int]:
         cells = [(int(x), int(y)) for x in range(b.x + 1, b.x + b.w - 1) for y in range(b.y + 1, b.y + b.h - 1)
-                 if walk[x, y] and (x, y) not in taken and (x, y) != tuple(b.door)]
+                 if walk[x, y] and b.contains(x, y) and (x, y) not in taken and (x, y) != tuple(b.door)]
         spot = rng.choice(cells) if cells else (int(b.x + b.w // 2), int(b.y + b.h // 2))
         taken.add(spot)
         return spot
 
     houses = [i for i, b in enumerate(lm.buildings) if b.kind == "house"]
+    T = game.tables.terrain
+    terrain = game.remap_for(lm)[lm.terrain]
+    bed = T.index.get("bed", -1)
+    room: dict[int, list[tuple[int, int]]] = {}  # each house's places to sleep: its beds, then its floor
+    for i in houses + [i for i, b in enumerate(lm.buildings) if b.kind == "inn"]:
+        b = lm.buildings[i]
+        cells = [(int(x), int(y)) for x in range(b.x + 1, b.x + b.w - 1) for y in range(b.y + 1, b.y + b.h - 1)
+                 if walk[x, y] and b.contains(x, y) and (x, y) != tuple(b.door)]
+        room[i] = sorted(cells, key=lambda c: terrain[c] != bed)
+    homes_used: dict[int, int] = {}
 
     def a_home() -> tuple[int, int]:
-        if not houses:
-            return lm.entry
-        return inside(lm.buildings[rng.choice(houses)])
+        """A place to sleep: in a house (a bed if there is one free), the emptiest first; when every house is
+        full, a corner of the inn; failing that, a doorstep in the street."""
+        for pool in (houses, [i for i, b in enumerate(lm.buildings) if b.kind == "inn"]):
+            open_ = [i for i in pool if any(c not in taken for c in room.get(i, []))]
+            if open_:
+                pick = min(rng.sample(open_, min(4, len(open_))), key=lambda i: homes_used.get(i, 0))
+                homes_used[pick] = homes_used.get(pick, 0) + 1
+                free = [c for c in room[pick] if c not in taken]
+                beds_free = [c for c in free if terrain[c] == bed]
+                spot = rng.choice(beds_free or free)
+                taken.add(spot)
+                return spot
+        return street() if street_cells else lm.entry
 
-    street_cells = outdoor_cells(game, lm, walk)
+    street_cells = outdoor_cells(game, lm, walk, settlement)
 
     def street() -> tuple[int, int]:
         free = [c for c in street_cells if c not in taken]
@@ -296,12 +329,15 @@ def populate_town(game, lm, settlement) -> Town:
 
     role_for = {"inn": ["innkeeper", "serving_hand"], "temple": ["priest"], "smithy": ["smith"], "store": ["shopkeeper"],
                 "healer": ["healer"], "stable": ["stablemaster"], "hall": ["headman"], "keep": ["lord"]}
+    # The workers of the other kinds of building (data/people.json "workers": kind -> trades), if that trade exists.
+    for kind, jobs in people.get("workers", {}).items():
+        role_for.setdefault(kind, [j for j in jobs if j in people["occupations"]])
     seen_roles: set[str] = set()
     for bi, b in enumerate(lm.buildings):
         for job in role_for.get(b.kind, []):
             if job == "serving_hand" and (settlement.kind in ("hamlet", "village") or rng.chance(0.4)):
                 continue
-            if job in ("innkeeper", "priest", "smith", "shopkeeper") or job not in seen_roles or settlement.kind == "city":
+            if job in ("innkeeper", "priest", "smith", "shopkeeper") or job not in seen_roles or                     settlement.kind == "city" or b.kind in people.get("workers", {}):
                 spot = inside(b)
                 npc = make_npc(game, settlement, job, rng.child(f"{bi}/{job}"), building=bi, post=spot,
                                home=spot if job in STAYS_AT_POST else a_home())
@@ -311,13 +347,17 @@ def populate_town(game, lm, settlement) -> Town:
             spot = inside(b)
             add(world, town, make_npc(game, settlement, "acolyte", rng.child(f"{bi}/acolyte"), building=bi, post=spot, home=spot))
     spec = people["settlement_people"].get(settlement.kind, people["settlement_people"]["village"])
+    if getattr(settlement, "great", False):
+        spec = people["settlement_people"].get("great", spec)
     for job in spec["notables"]:
         if job not in seen_roles:
             home = a_home()
             add(world, town, make_npc(game, settlement, job, rng.child(f"notable/{job}"), post=home, home=home))
     # Market traders at the stalls.
-    stalls = [(int(x), int(y)) for x, y in zip(*np.nonzero(game.remap_for(lm)[lm.terrain] == game.tables.terrain.index.get("stall", -1)))]
-    for i, (sx, sy) in enumerate(stalls[:4]):
+    stall_ids = [game.tables.terrain.index[n] for n in ("stall", "rug_stall") if n in game.tables.terrain.index]
+    stalls = [(int(x), int(y)) for x, y in zip(*np.nonzero(np.isin(game.remap_for(lm)[lm.terrain], stall_ids)))]
+    most = {"hamlet": 1, "village": 3, "town": 6, "city": 12}.get(settlement.kind, 4) * (2 if getattr(settlement, "great", False) else 1)
+    for i, (sx, sy) in enumerate(stalls[:most]):
         spot = next(((sx + dx, sy + dy) for dx, dy in ((0, 1), (0, -1), (1, 0), (-1, 0))
                      if lm.in_bounds(sx + dx, sy + dy) and walk[sx + dx, sy + dy] and (sx + dx, sy + dy) not in taken), None)
         if spot is None:
@@ -325,11 +365,20 @@ def populate_town(game, lm, settlement) -> Town:
         taken.add(spot)
         add(world, town, make_npc(game, settlement, "market_trader", rng.child(f"stall/{i}"), post=spot, home=a_home()))
     lo, hi = spec["guards"]
+    gates = _gate_posts(game, lm, walk)
     for i in range(rng.randint(lo, hi)):
-        spot = street()
-        add(world, town, make_npc(game, settlement, "guard", rng.child(f"guard/{i}"), post=spot, home=spot))
+        spot = gates.pop(0) if gates and i < 2 else street()
+        npc = make_npc(game, settlement, "guard", rng.child(f"guard/{i}"), post=spot, home=spot)
+        if i < 2 and spot not in street_cells:
+            npc.flags["stays"] = True  # a warden of the gate: they will not stand aside
+        add(world, town, npc)
     lo, hi = spec["commoners"]
-    jobs = people["commoner_jobs"]
+    jobs = list(people["commoner_jobs"])
+    if settlement.kind not in ("hamlet", "village"):  # the trades of a town
+        jobs += people.get("town_jobs", [])
+    folk = spec.get("folk")
+    if folk:  # as many as the place has room for: the rest of its people are its commoners
+        lo = hi = max(lo, rng.randint(*folk) - len(town.npcs))
     sx, sy = settlement.x, settlement.y  # (the town may be made ahead of arrival, or for a quest far away)
     around = {game.biome_key(nx, ny) for _, nx, ny in world.neighbours(sx, sy)}
     for i in range(rng.randint(lo, hi)):
@@ -341,7 +390,10 @@ def populate_town(game, lm, settlement) -> Town:
             job = "farmer"
         if near == "hills" and not around & {"hills", "mountains"}:
             job = "labourer"
-        add(world, town, make_npc(game, settlement, job, rng.child(f"common/{i}"), post=street(), home=a_home()))
+        home = a_home()
+        works_at_home = people["occupations"][job].get("place") == "home"  # a tailor at the bench, a child at play
+        add(world, town, make_npc(game, settlement, job, rng.child(f"common/{i}"), post=home if works_at_home else street(),
+                                  home=home))
     link_figures(game, town, settlement, lm, inside, rng)
     secret_members(game, town, settlement, rng)
     update_positions(game, lm)
@@ -473,7 +525,7 @@ def refresh_figures(game, lm, settlement) -> None:
 
     def inside(b) -> tuple[int, int]:
         cells = [(int(x), int(y)) for x in range(b.x + 1, b.x + b.w - 1) for y in range(b.y + 1, b.y + b.h - 1)
-                 if walk[x, y] and (x, y) not in taken and (x, y) != tuple(b.door)]
+                 if walk[x, y] and b.contains(x, y) and (x, y) not in taken and (x, y) != tuple(b.door)]
         spot = rng.choice(cells) if cells else (int(b.x + b.w // 2), int(b.y + b.h // 2))
         taken.add(spot)
         return spot
@@ -568,17 +620,60 @@ def add(world, town: Town, npc: NPC) -> None:
     town.npcs.append(npc.id)
 
 
-def outdoor_cells(game, lm, walk=None) -> list[tuple[int, int]]:
-    """Streets and open ground inside the settlement, where people walk about."""
+STREETS = ("road", "cobbles", "dirt", "flagstones", "packed_sand", "boardwalk", "causeway", "bridge")
+
+
+def _gate_posts(game, lm, walk) -> list[tuple[int, int]]:
+    """Where the wardens of the gates stand: inside each gate in the town wall (the gate of a hold)."""
+    T = game.tables.terrain
+    terrain = game.remap_for(lm)[lm.terrain]
+    gate = T.index.get("gate_open", -1)
+    out = []
+    for x, y in zip(*np.nonzero(terrain == gate)):
+        for dx, dy in ((0, -1), (0, 1), (-1, 0), (1, 0)):
+            c = (int(x + dx), int(y + dy))
+            if lm.in_bounds(*c) and walk[c] and terrain[c] != gate and lm.building_at(*c) is None:
+                if lm.under_rock(*c) or not (lm.meta or {}).get("underground"):
+                    out.append(c)
+                break
+    out.sort(key=lambda c: (c[1], c[0]))
+    picked = []
+    for c in out:  # one warden a gate (not two side by side in one gateway)
+        if all(max(abs(c[0] - p[0]), abs(c[1] - p[1])) > 3 for p in picked):
+            picked.append(c)
+    return picked
+
+
+STREETS = ("road", "cobbles", "dirt", "flagstones", "packed_sand", "boardwalk", "causeway", "bridge")
+
+
+def outdoor_cells(game, lm, walk=None, settlement=None) -> list[tuple[int, int]]:
+    """Streets and squares of the settlement (what its people pave them with: data/towns.json), among its
+    buildings, where people walk about."""
     if walk is None:
         walk = game.tables.terrain.walk[game.remap_for(lm)[lm.terrain]]
     ids = game.tables.terrain.index
-    street = {ids.get(n, -1) for n in ("road", "cobbles", "dirt")}
+    names = set(STREETS)
+    settlement = settlement if settlement is not None else settlement_here(game)
+    if settlement is not None and getattr(game.tables, "towns", None):
+        from realmwalker.world.towns.plan import style_for
+
+        style = style_for(game.tables, settlement)
+        names |= {style.get(k) for k in ("street", "lane", "plaza") if style.get(k)}
     terrain = game.remap_for(lm)[lm.terrain]
-    mask = np.isin(terrain, list(street)) & walk
-    cells = [(int(x), int(y)) for x, y in zip(*np.nonzero(mask))]
-    cx, cy = lm.width // 2, lm.height // 2
-    return [c for c in cells if abs(c[0] - cx) < 36 and abs(c[1] - cy) < 22 and lm.building_at(*c) is None]
+    mask = np.isin(terrain, [ids[n] for n in names if n in ids]) & walk
+    if lm.buildings:  # among the houses, not out along the roads to the edge of the map
+        x0 = min(b.x for b in lm.buildings) - 3
+        y0 = min(b.y for b in lm.buildings) - 3
+        x1 = max(b.x + b.w for b in lm.buildings) + 3
+        y1 = max(b.y + b.h for b in lm.buildings) + 3
+        box = np.zeros_like(mask)
+        box[max(0, x0):max(0, x1), max(0, y0):max(0, y1)] = True
+        mask &= box
+    under = (lm.meta or {}).get("open_below")
+    if under is not None:  # a hold: its people are inside the mountain
+        mask[:, int(under):] = False
+    return [(int(x), int(y)) for x, y in zip(*np.nonzero(mask)) if lm.building_at(int(x), int(y)) is None]
 
 
 # ---------------------------------------------------------------------------- days and nights
@@ -588,56 +683,24 @@ def is_day(game) -> bool:
 
 
 def update_positions(game, lm) -> None:
-    """Morning and evening: people go to work, or home. During the day some wander."""
-    s = settlement_here(game)
+    """Who is about: those travelling with you are not also here; the rest live their day (game/townlife.py), walking
+    on from where they were, or (after a long while away) wherever their day has taken them."""
+    s = settlement_of(game, lm)
     if s is None:
         return
-    day = is_day(game)
-    occupied = {(game.player.lx, game.player.ly)} | {(a.x, a.y) for a in lm.actors}
     for npc in npcs_in(game.world, s.id):
         if not npc.alive or npc.flags.get("companion") or npc.flags.get("escort") is not None:
             npc.present = False  # (those travelling with you are with you, not here as well)
             continue
-        if npc.job in STAYS_AT_POST:
-            target, present = npc.post, True
-        elif day:
-            target, present = npc.post, True
-        else:
-            target, present = npc.home, False  # at home behind a shut door
-        if npc.flags.get("fled_until", -1) > game.world.time:
-            present = False
-        was_day = npc.flags.get("day")
-        if was_day != day or not present:
-            if target not in occupied:
-                npc.x, npc.y = target
-        npc.flags["day"] = day
-        npc.present = present
-        if present:
-            occupied.add((npc.x, npc.y))
+        npc.present = npc.flags.get("fled_until", -1) <= game.world.time
+    from realmwalker.game import townlife
+
+    townlife.catch_up(game, lm)
+    townlife.place_new(game, lm)
 
 
 def wander(game, lm) -> None:
-    """Some people drift about the streets as you walk."""
-    s = settlement_here(game)
-    if s is None:
-        return
-    rng = game.world.rng.child(f"wander/{game.world.time}/{game.player.steps}")
-    walk = game.tables.terrain.walk[game.remap_for(lm)[lm.terrain]]
-    people = npcs_in(game.world, s.id)
-    occupied = {(n.x, n.y) for n in people if n.alive and n.present}
-    occupied.add((game.player.lx, game.player.ly))
-    for npc in people:
-        if not (npc.alive and npc.present and npc.job in WANDERS) or rng.random() > 0.35:
-            continue
-        dx, dy = rng.choice([(1, 0), (-1, 0), (0, 1), (0, -1)])
-        nx, ny = npc.x + dx, npc.y + dy
-        if not lm.in_bounds(nx, ny) or not walk[nx, ny] or (nx, ny) in occupied or lm.building_at(nx, ny) is not None:
-            continue
-        if abs(nx - npc.post[0]) > 7 or abs(ny - npc.post[1]) > 5:
-            continue
-        occupied.discard((npc.x, npc.y))
-        npc.x, npc.y = nx, ny
-        occupied.add((nx, ny))
+    """(Townsfolk walk their day on their own now: game/townlife.py.)"""
 
 
 # ---------------------------------------------------------------------------- first impressions

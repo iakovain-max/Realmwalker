@@ -28,12 +28,20 @@ class Building:
     y: int
     w: int
     h: int
-    kind: str  # house, inn, temple, smithy, market, hall, keep
+    kind: str  # house, inn, temple, smithy, store, healer, stable, hall, keep, library, bakery, warehouse...
     name: str = ""
     door: tuple[int, int] = (0, 0)
+    shape: str = "rect"  # rect, long, court, round, tree, mound, carved (cut in the rock), pyramid (world/towns)
+    rooms: list = field(default_factory=list)  # {"x", "y", "w", "h", "use"}: what each room is for
+    look: dict = field(default_factory=dict)  # {"roof", "walls", "shape"}: how it is drawn (ui/gfx/roofs.py)
 
     def contains(self, px: int, py: int) -> bool:
-        return self.x <= px < self.x + self.w and self.y <= py < self.y + self.h
+        if not (self.x <= px < self.x + self.w and self.y <= py < self.y + self.h):
+            return False
+        if self.shape in ("round", "tree", "mound"):  # a round house: not the corners of its square
+            cx, cy = self.x + (self.w - 1) / 2, self.y + (self.h - 1) / 2
+            return ((px - cx) / (self.w / 2)) ** 2 + ((py - cy) / (self.h / 2)) ** 2 <= 1.0
+        return True
 
 
 @dataclass
@@ -61,11 +69,31 @@ class LocalMap:
     def in_bounds(self, x: int, y: int) -> bool:
         return 0 <= x < self.width and 0 <= y < self.height
 
+    def under_rock(self, x: int, y: int) -> bool:
+        """Under the earth here, out of the sky and the sun: anywhere in a dungeon; inside a hold cut in a mountain
+        (meta "underground"; the rows from meta "open_below" down are the open mountainside before its gate)."""
+        if self.kind == "dungeon":
+            return True
+        meta = self.meta or {}
+        return bool(meta.get("underground")) and y < int(meta.get("open_below", self.height))
+
     def building_at(self, x: int, y: int) -> Building | None:
-        for b in self.buildings:
-            if b.contains(x, y):
-                return b
-        return None
+        """The building this square is part of (looked up in a grid kept for the map: a city has hundreds)."""
+        grid = getattr(self, "_building_grid", None)
+        if grid is None or getattr(self, "_building_count", -1) != len(self.buildings):
+            grid = np.full((self.width, self.height), -1, dtype=np.int32)
+            for i, b in enumerate(self.buildings):
+                x0, y0 = max(0, b.x), max(0, b.y)
+                for bx in range(x0, min(self.width, b.x + b.w)):
+                    for by in range(y0, min(self.height, b.y + b.h)):
+                        if grid[bx, by] < 0 and b.contains(bx, by):
+                            grid[bx, by] = i
+            self._building_grid = grid
+            self._building_count = len(self.buildings)
+        if not (0 <= x < self.width and 0 <= y < self.height):
+            return None
+        i = int(grid[x, y])
+        return self.buildings[i] if i >= 0 else None
 
 
 def local_key(x: int, y: int) -> str:
@@ -83,6 +111,12 @@ class LocalBuilder:
         self.rng = RNG(world.meta.seed, f"local/{x},{y}")
         self.np = self.rng.numpy("cells")
         self.w, self.h = LOCAL_W, LOCAL_H
+        town = world.settlement_at(x, y)
+        if town is not None and getattr(tables, "towns", None):
+            from realmwalker.world import towns
+
+            self.w, self.h = towns.size_of(tables, town)  # a city's map is as big as a city
+        self.meta_extra: dict = {}
         self.t = np.zeros((self.w, self.h), dtype=np.uint16)
         self.buildings: list[Building] = []
         biome_id = world.biome_id(x, y)
@@ -116,7 +150,13 @@ class LocalBuilder:
         kind = "wilderness"
         meta: dict = {}
         if settlement is not None:
-            self._settlement(settlement)
+            if getattr(self.tables, "towns", None):
+                from realmwalker.world import towns
+
+                towns.build(self, settlement)
+                meta.update(self.meta_extra)
+            else:
+                self._settlement(settlement)
             kind = "settlement"
         elif site is not None and site.kind in ("ruin", "tower"):
             self._ruin()
@@ -126,9 +166,14 @@ class LocalBuilder:
 
             wonders.shape_local(self, wonder)
             meta["wonder"] = wonder.id
-        self._ensure_passable_edges()
+        if not meta.get("underground"):
+            self._ensure_passable_edges()
         variant = (self.np.integers(0, 256, size=(self.w, self.h))).astype(np.uint8)
         entry = self._entry_point(road_cells)
+        if meta.get("entry") is not None:  # the town says where you come in (a hold: before its gate)
+            ex, ey = (int(v) for v in meta.pop("entry"))
+            if 0 <= ex < self.w and 0 <= ey < self.h and self.tables.terrain.walk[self.t[ex, ey]]:
+                entry = (ex, ey)
         return LocalMap(
             key=local_key(self.ox, self.oy), kind=kind, width=self.w, height=self.h,
             terrain_ids=list(self.tables.terrain.ids), terrain=self.t, variant=variant,

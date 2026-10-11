@@ -99,12 +99,16 @@ def step(game) -> bool:
     key, before, told = lm.key, (p.lx, p.ly), len(game.log.messages)
     nx, ny = path[0]
     other = _person_at(game, nx, ny)
-    if other is not None and other.id != talk:
-        # Somebody stands in the doorway you were making for: stop in front of them rather than accost them.
+    if other is not None and other.id == talk:  # there: speak to them
+        game.talk_to = talk
+        game.walk_to = None
+        return False
+    if other is not None and (len(path) <= 1 or other.flags.get("stays")):
+        # Somebody stands on the very spot (or will not budge): stop in front of them rather than push past.
         game.say(f"{other.label()[:1].upper() + other.label()[1:]} is in your way.", "system")
         game.walk_to = None
         return False
-    game.move(nx - p.lx, ny - p.ly)
+    game.move(nx - p.lx, ny - p.ly)  # (through a crowd: you squeeze past)
     arrived = (p.lx, p.ly) == dest
     trouble = any(m.category in ("warn", "danger") for m in game.log.messages[told:])
     alert = any(a.alert for a in lm.actors)

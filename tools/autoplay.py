@@ -147,7 +147,7 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
                 t = int(game.remap_for(lm)[lm.terrain[p.lx, p.ly]])
                 if not app.tables.terrain.walk[t]:
                     fail(f"player inside solid {app.tables.terrain.ids[t]} on a local map")
-        if any(not d.startswith(("site:", "deeper:")) for d in p.discoveries):
+        if any(not d.startswith(("site:", "deeper:", "wonder:")) for d in p.discoveries):
             fail(f"an unknown kind of discovery: {sorted(p.discoveries)[:5]}")
         key = w.meta.id
         last = _LAST_TIME.get(key)
@@ -581,7 +581,22 @@ def _start_a_fight(app: App, rng: random.Random, report: AutoplayReport) -> None
                 report.crimes += 1
             return
         if people:
-            game.talk_to = rng.choice(people).id
+            npc = rng.choice(people)
+            lm = game.local
+            spot = None
+            if lm is not None and lm.kind == "settlement" and rng.random() < 0.5:
+                # Stand beside them and press t, as a player would (walking into people only squeezes past).
+                from realmwalker.game.people import npc_at
+
+                walk = game.tables.terrain.walk[game.remap_for(lm)[lm.terrain]]
+                spot = next(((npc.x + dx, npc.y + dy) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))
+                             if lm.in_bounds(npc.x + dx, npc.y + dy) and walk[npc.x + dx, npc.y + dy]
+                             and npc_at(game, npc.x + dx, npc.y + dy) is None), None)
+            if spot is not None:
+                game.player.lx, game.player.ly = spot
+                app.handle_event(KeyEvent("t"))
+            else:
+                game.talk_to = npc.id
             report.talks += 1
         return
     if roll < 0.38 and game.quests:

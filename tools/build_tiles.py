@@ -31,6 +31,7 @@ sys.path.insert(0, str(ROOT / "tools"))
 import map_art  # noqa: E402
 import nature_art  # noqa: E402
 import tile_art  # noqa: E402
+import town_art  # noqa: E402
 
 PACK_URL = "https://opengameart.org/sites/default/files/Dungeon%20Crawl%20Stone%20Soup%20Full.zip"
 OUT = ROOT / "assets" / "tiles"
@@ -109,6 +110,8 @@ pick_many("wall/cave", "dungeon/wall/lab-rock_[0-3].png", "wall")
 pick_many("wall/stone_gray", "dungeon/wall/stone_gray_[0-3].png", "wall")
 pick_many("wall/vines", "dungeon/wall/brick_brown-vines_[1-4].png", "wall")
 pick_many("wall/relief", "dungeon/wall/relief_[0-3].png", "wall")
+pick_many("wall/sandstone", "dungeon/wall/sandstone_wall_[0-9].png", "wall")
+pick_many("wall/marble", "dungeon/wall/marble_wall_[0-9]*.png", "wall", 6)
 pick_many("wall/torch", "dungeon/wall/torches/torch_[0-4].png", "feature")
 pick("wall/banner", "dungeon/wall/banners/banner_1.png", "feature")
 # Features
@@ -579,7 +582,8 @@ def gather(pack: Path) -> dict[str, Image.Image]:
         tiles[f"floor/rock_{i}"] = Image.fromarray(a.astype(np.uint8), "RGBA")
     figs, _ = figure_tiles()
     tiles.update(figs)
-    for name, im in {**tile_art.all_drawn(), **nature_art.all_drawn(), **map_art.all_drawn()}.items():
+    for name, im in {**tile_art.all_drawn(), **nature_art.all_drawn(), **map_art.all_drawn(),
+                     **town_art.all_drawn()}.items():
         which = "none" if name.startswith(("icon/", "map/")) else ("ground" if name.startswith(("floor/", "wall/")) else "feature")
         if any(k in name for k in ("glow", "/fey", "water/hot", "moonstone")):
             which = "fx"  # things that shine keep their light

@@ -24,6 +24,7 @@ AUTOSAVE_CHOICES = (2, 5, 10, 15, 30)
 GRAPHICS_CHOICES = ("tiles", "letters")
 COMPANION_CHOICES = ("command", "auto")  # in a fight: you play the companions' turns, or they fight by themselves
 ANIMATION_CHOICES = ("full", "calm", "off")
+TOWN_TIME_CHOICES = ("flows", "waits")  # in towns the clock runs by itself, or (the old way) only when you act
 VOLUME_STEPS = 10  # volumes are 0 (silent) to 10 (full)
 MAP_ZOOMS = (16, 24, 32, 48, 64)  # pixels per square on a close-up map
 WORLD_ZOOMS = (6, 12, 24, 36, 48)  # pixels per square of country (the map is painted at 12: these stay sharp)
@@ -77,6 +78,7 @@ class Settings:
     map_zoom: int = 32
     world_zoom: int = 24
     battle_companions: str = "command"  # COMPANION_CHOICES
+    time_in_towns: str = "flows"  # TOWN_TIME_CHOICES: people walk their day while you stand and watch
     volume: int = 10  # everything (0-10)
     music_volume: int = 6
     effects_volume: int = 9
@@ -101,6 +103,8 @@ class Settings:
             self.world_zoom = 24
         if self.battle_companions not in COMPANION_CHOICES:
             self.battle_companions = "command"
+        if self.time_in_towns not in TOWN_TIME_CHOICES:
+            self.time_in_towns = "flows"
         for name in ("volume", "music_volume", "effects_volume", "interface_volume"):
             setattr(self, name, max(0, min(VOLUME_STEPS, int(getattr(self, name)))))
 

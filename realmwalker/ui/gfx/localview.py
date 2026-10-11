@@ -14,7 +14,7 @@ import math
 import numpy as np
 
 from realmwalker.ui.gfx import dolls
-from realmwalker.ui.gfx.scene import Batch, Image, Rect
+from realmwalker.ui.gfx.scene import Batch, Image, Rect, Text
 
 STEP_SECONDS = 0.13  # how long a step takes to glide
 NIGHT = np.array([0.20, 0.24, 0.42], np.float32)
@@ -22,7 +22,9 @@ DAY = np.array([1.0, 1.0, 1.0], np.float32)
 DUSK = np.array([1.0, 0.78, 0.62], np.float32)
 MEMORY = np.array([0.20, 0.21, 0.27], np.float32)
 UNDERGROUND = np.array([0.07, 0.065, 0.09], np.float32)
+HOLD = np.array([0.72, 0.64, 0.56], np.float32)  # a city under a mountain: dim, warm, the same at every hour
 TORCH = np.array([1.0, 0.80, 0.52], np.float32)
+LANTERN = np.array([0.95, 0.78, 0.48], np.float32)
 COLD_BIOMES = ("tundra", "high_mountains", "mountains")
 
 
@@ -363,20 +365,28 @@ class LocalView:
                 bx, by = self.cell_px(ax, ay)
                 people.append((ay - 0.01, second, bx - T * 0.28, by - T * 0.18, T * 0.82,
                                tuple(v * 0.85 for v in _cell_light(light, a.x - x0, a.y - y0)), False))
+        words = []
         if lm.kind == "settlement":
+            from realmwalker.game import townlife
             from realmwalker.game.people import npcs_in, settlement_here
 
             s = settlement_here(game)
+            said = townlife.said(game, lm)
             for npc in npcs_in(game.world, s.id) if s is not None else []:
                 if not (npc.alive and npc.present and 0 <= npc.x < lm.width and 0 <= npc.y < lm.height):
                     continue
                 if not fov[npc.x, npc.y] or roofed(npc.x, npc.y):
                     continue
                 nx, ny = self.pos(("npc", npc.id), npc.x, npc.y, now, animate)
-                people.append((ny, dolls.npc(npc, game.tables, atlas), *self.cell_px(nx, ny), T,
+                small = T * 0.74 if npc.age < 14 else T  # children come up to your chest
+                px_, py_ = self.cell_px(nx, ny)
+                people.append((ny, dolls.npc(npc, game.tables, atlas), px_ + (T - small) / 2, py_, small,
                                _cell_light(light, npc.x - x0, npc.y - y0), False))
+                if npc.id in said:
+                    words.append((*self.cell_px(nx, ny), said[npc.id]))
         lit = bool(game.lit and game.lit.get("hours", 0) > 0) if getattr(game, "lit", None) else False
-        me = dolls.character(game.leader, game.tables, lit=lit and (lm.kind == "dungeon" or game.light < 0.4),
+        me = dolls.character(game.leader, game.tables, lit=lit and (lm.under_rock(game.player.lx, game.player.ly)
+                                                                    or game.light < 0.4),
                              atlas=atlas)
         people.append((ppos[1] + 0.001, me, *self.cell_px(*ppos), T, (1.0, 1.0, 1.0), False))
         # Companions follow a step or two behind, where you have just been.
@@ -404,6 +414,10 @@ class LocalView:
             cmd = dolls.draw(atlas, names, px_, py_ + (T - size), size, col)
             if cmd is not None:
                 out.append(cmd)
+        size = max(11, int(T * 0.38))
+        for wx, wy, text in words:  # what people say in passing, over their heads
+            out.append(Text(wx + T / 2, wy - T * 0.08, text, "prose_bold", size, (250, 240, 214, 255), anchor="mb",
+                            shadow=False, outline=True))
         canvas.under(*out)
 
     def _follow(self, game, lm, taken: set) -> list[tuple[int, int]]:
@@ -435,6 +449,8 @@ class LocalView:
         w, h = vis.shape
         if lm.kind == "dungeon":
             base = UNDERGROUND
+        elif lm.under_rock(game.player.lx, game.player.ly):
+            base = HOLD
         else:
             day = float(game.light)
             if day >= 0.95:
@@ -463,6 +479,15 @@ class LocalView:
             for i, (lx, ly, r, c) in enumerate(art.lights):
                 if x0 - r <= lx < x0 + w + r and y0 - r <= ly < y0 + h + r:
                     add(lx, ly, r * flick(i), c, 1.0)
+            if lm.kind == "settlement":  # the watch goes its rounds with lanterns
+                from realmwalker.game.people import npcs_in, settlement_here
+
+                s = settlement_here(game)
+                for npc in npcs_in(game.world, s.id) if s is not None else []:
+                    if npc.alive and npc.present and npc.job in ("guard", "soldier") and \
+                            x0 - 4 <= npc.x < x0 + w + 4 and y0 - 4 <= npc.y < y0 + h + 4 and \
+                            lm.building_at(npc.x, npc.y) is None:
+                        add(npc.x, npc.y, 3.6 * flick(npc.id), LANTERN, 0.9)
             p = game.player
             radius = 0.0
             if lm.kind == "dungeon":
@@ -485,7 +510,7 @@ class LocalView:
         if lm.kind != "settlement" or not lm.buildings:
             return lambda x, y: False
         from realmwalker.game.people import settlement_here
-        from realmwalker.ui.gfx import roofs
+        from realmwalker.ui.gfx import houses, roofs
 
         s = settlement_here(game)
         skind = s.kind if s is not None else "village"
@@ -507,24 +532,37 @@ class LocalView:
             foot = lm.seen[b.x:b.x + b.w, b.y:b.y + b.h]
             if not foot.any():
                 continue
-            covered.append(b)
             key = f"{lm.key}/{i}"
-            style = roofs.style_for(skind, b.kind, key)
-            wall = roofs.wall_for(skind, b.kind, key)
-            form = roofs.form_for(b.kind, b.w, b.h, key)
             seed = zlib_key(key)
-            chimney = b.kind in ("house", "inn", "smithy", "healer") and seed % 10 < 7
             door = (b.door[0] - b.x, b.door[1] - b.y)
-            E = roofs.extra_top(form, r)
+            look = getattr(b, "look", None) or {}
+            special = houses.form_of(b.shape, look.get("roof", ""), b.kind) if look else None
+            if special == "none":  # a hall cut in the rock: no roof, you see it as it is
+                continue
+            covered.append(b)
             px_, py_ = self.cell_px(b.x, b.y)
-            args = (b.w, b.h, r, style, wall, form, b.kind, door, seed, chimney, lit)
+            if special is not None:  # the buildings of other peoples (houses.py)
+                E = houses.extra_top(special, r, b.kind)
+                spot = houses.smoke_spot(special, b.w, b.h, r, b.kind) if b.kind not in ("temple", "store") else None
+                chimney = spot is not None and seed % 10 < 7
+                args = (b.w, b.h, r, look["roof"], look.get("walls", "plaster"), special, b.kind, door, seed, lit)
+                draw = houses.draw
+            else:
+                style = look.get("roof") if look.get("roof") in roofs.STYLES else roofs.style_for(skind, b.kind, key)
+                wall = look.get("walls") if look.get("walls") in roofs.WALLS else roofs.wall_for(skind, b.kind, key)
+                form = roofs.form_for(b.kind, b.w, b.h, key)
+                chimney = b.kind in ("house", "inn", "smithy", "healer") and seed % 10 < 7
+                E = roofs.extra_top(form, r)
+                args = (b.w, b.h, r, style, wall, form, b.kind, door, seed, chimney, lit)
+                draw = roofs.building
             dst = (px_, py_ - E * k, b.w * T, (b.h * r + E) * k)
             # A shadow on the ground to the south-east, the light being from the north-west.
             shadow.append(Rect(px_ + b.w * T, py_ + T * 0.35, T * 0.3, b.h * T - T * 0.35, (0, 0, 0, 60)))
             shadow.append(Rect(px_ + T * 0.3, py_ + b.h * T, b.w * T, T * 0.22, (0, 0, 0, 60)))
-            out.append(Image(("bld", *args), lambda args=args: roofs.building(*args)[0], dst, rgba=(*base, 255), smooth=False))
-            if lit and roofs.building(*args)[1] is not None:
-                glows.append(Image(("bldglow", *args), lambda args=args: roofs.building(*args)[1], dst,
+            out.append(Image(("bld", *args), lambda args=args, draw=draw: draw(*args)[0], dst, rgba=(*base, 255),
+                             smooth=False))
+            if lit and draw(*args)[1] is not None:
+                glows.append(Image(("bldglow", *args), lambda args=args, draw=draw: draw(*args)[1], dst,
                                    rgba=(255, 255, 255, 235), smooth=False))
             sign = roofs.SIGNS.get(b.kind)
             if sign and canvas.gfx.atlas.has(sign):
@@ -545,7 +583,7 @@ class LocalView:
                                                                          np.float32),
                                       np.array([[base[0] / 255, base[1] / 255, base[2] / 255, 1.0]], np.float32)))
             if chimney and ambient:
-                fx, fy = roofs.chimney_spot(b.w, b.h, seed, form)
+                fx, fy = roofs.chimney_spot(b.w, b.h, seed, form) if special is None else spot
                 smoke.append((px_ + b.w * T * fx + T * 0.2, py_ + b.h * T * fy - T * 0.25, seed))
         canvas.under(*shadow)
         canvas.under(*out)

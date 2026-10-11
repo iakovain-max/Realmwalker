@@ -17,6 +17,7 @@ from realmwalker.ui.hud import BAR_H, LOG_H, PANEL_W  # noqa: E402
 KEY_DIRECTIONS = {**DIRECTIONS, "home": (-1, -1), "pageup": (1, -1), "end": (-1, 1), "pagedown": (1, 1)}
 TRAVEL_STEP_SECONDS = 0.04
 WALK_STEP_SECONDS = 0.03  # a walk across a close-up map, one step a frame or so
+TOWN_TICK_SECONDS = 0.5  # in a town, one step of its time (townlife.STEP_SECONDS) every half second you watch
 
 
 def key_direction(ev: KeyEvent) -> tuple[int, int] | None:
@@ -37,6 +38,7 @@ class GameScreen(Screen):
         self.hover: tuple[int, int] | None = None
         self.view = (0, 0, 0, 0, 0, 0)  # viewport x, y and the camera from the last draw
         self._last_travel_step = 0.0
+        self._last_town_tick = 0.0
         self._in_local_before = game.in_local
         from realmwalker.ui.gfx.localview import LocalView
 
@@ -202,22 +204,47 @@ class GameScreen(Screen):
         self.handle_key(KeyEvent(key))
 
     def npc_beside(self):
-        """A townsperson standing next to you, if there is one."""
+        """A townsperson standing next to you, if there is one (the one you know best, if several)."""
+        folk = self.npcs_beside()
+        return folk[0] if folk else None
+
+    def npcs_beside(self) -> list:
+        """Everyone standing next to you in a town: those you know first, then people of note, then the rest."""
         game = self.game
         if not game.in_local or game.local is None or game.local.kind != "settlement":
-            return None
+            return []
         from realmwalker.game.people import npc_at
 
         px, py = game.player.lx, game.player.ly
+        out = []
         for dx in (-1, 0, 1):
             for dy in (-1, 0, 1):
                 if dx or dy:
                     npc = npc_at(game, px + dx, py + dy)
                     if npc is not None:
-                        return npc
-        return None
+                        out.append(npc)
+        out.sort(key=lambda n: (not n.known, not n.notable, n.id))
+        return out
+
+    def choose_talk(self, folk: list) -> None:
+        if len(folk) == 1:
+            self.talk(folk[0])
+            return
+        from realmwalker.ui.screens.base import ChoiceBox
+
+        def label(n) -> str:
+            name = n.name if n.known else (n.title or "someone")
+            return f"{name[:1].upper() + name[1:]}" + (f", the {n.title}" if n.known and n.title else "")
+
+        self.app.push(ChoiceBox(self.app, "Talk to whom?", [(label(n), lambda n=n: self.talk(n)) for n in folk]))
 
     def talk(self, npc) -> None:
+        from realmwalker.game import townlife
+
+        if townlife.asleep(self.game, npc):
+            who = npc.label()
+            self.game.say(f"{who[:1].upper() + who[1:]} is asleep.", "system")
+            return
         self.game.talk_to = npc.id  # the conversation opens by itself
 
     def walk_to_talk(self, cell) -> None:
@@ -369,7 +396,11 @@ class GameScreen(Screen):
         elif ev.key == "m":
             self.open_world_map()
         elif ev.key == "t":
-            self.open_world_map(travel=True)
+            folk = self.npcs_beside()
+            if folk:  # in a town, t talks to whoever is beside you (a short list if there are several)
+                self.choose_talk(folk)
+            else:
+                self.open_world_map(travel=True)
         elif ev.key in ("o", "L"):
             self.open_log()
         elif ev.key in ("/", "k"):
@@ -777,7 +808,19 @@ class GameScreen(Screen):
                 was = game.player.local_key
                 if not wayfinding.step(game) and game.player.local_key != was:
                     self.app.save_game()
+        elif self.time_flows():
+            now = self.app.clock()
+            if now - self._last_town_tick >= TOWN_TICK_SECONDS:
+                self._last_town_tick = now
+                game.town_tick()
         self.app.maybe_autosave()
+
+    def time_flows(self) -> bool:
+        """In a town, with Time in towns set to flow, and nothing going on: its clock runs by itself (this screen is
+        only updated while it is on top, so the clock stops under any other screen)."""
+        game = self.game
+        return (self.app.settings.time_in_towns == "flows" and game.in_local and game.local is not None
+                and game.local.kind == "settlement" and not game.busy and game.over is None)
 
     def _weather(self, canvas: Canvas, rect) -> None:
         """Rain, snow and fog over the map, when animations are on."""
@@ -805,13 +848,16 @@ class GameScreen(Screen):
             canvas.under(Clip(rect))
             self.local_view.draw(canvas, game, rect, self.app.settings.map_zoom, fov)
             lm = game.local
-            if lm.kind != "dungeon" and lm.building_at(game.player.lx, game.player.ly) is None and fov.any():
+            p = game.player
+            if not lm.under_rock(p.lx, p.ly) and lm.building_at(p.lx, p.ly) is None and fov.any():
                 # Only over what you can see: rain over darkness looks like stars.
                 xs, ys = np.nonzero(fov)
                 ax, ay = self.local_view.cell_px(int(xs.min()), int(ys.min()))
                 bx, by = self.local_view.cell_px(int(xs.max()) + 1, int(ys.max()) + 1)
                 x0, y0 = max(rect[0], int(ax)), max(rect[1], int(ay))
                 x1, y1 = min(rect[0] + rect[2], int(bx)), min(rect[1] + rect[3], int(by))
+                if (lm.meta or {}).get("open_below") is not None:  # before a hold: none falls past its gate
+                    y0 = max(y0, int(self.local_view.cell_px(0, int(lm.meta["open_below"]))[1]))
                 if x1 > x0 and y1 > y0:
                     canvas.under(Clip((x0, y0, x1 - x0, y1 - y0)))
                     self._weather(canvas, (x0, y0, x1 - x0, y1 - y0))

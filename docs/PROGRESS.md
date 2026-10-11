@@ -24,7 +24,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Sound and music** | ✅ Done (2026-10-10), branch `sound` |
 | **A world that has lived (history after Dwarf Fortress)** | ✅ Done (2026-10-10), branch `world-history` |
 | **Peoples, a land of extremes and wonders, a new world map** | ✅ Done (2026-10-11), branch `world-variety` |
-| **Varied, bigger, living towns** | 🔨 In progress, branch `world-variety` |
+| **Varied, bigger, living towns** | ✅ Done (2026-10-11), branch `world-variety` |
 
 ---
 
@@ -33,7 +33,90 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 The nine milestones are done; this is what has been added since, newest first. Version 1.0 is the pictures and the
 new interface; then combat moved onto a grid, then every item was given a use, then looks became a choice, then the
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
-wonders and a new map (the first entries below).
+wonders and a new map, then its towns were rebuilt by each people and came alive (the first entries below).
+
+### Local session, 2026-10-11 (continued): varied, bigger, living towns (Anton's request) — branch `world-variety`
+
+The second half of Anton's request of 2026-10-11: "make town generator way more varied ... Dwarven cities now look
+like human cities inside a mountain (which is, for some reason, lighted during the day and dark during the night) made
+of stone. Elven cities are human cities made of wood with green woods ... add way, way more variety to shapes, sizes,
+and especially looks ... make towns generally bigger, more realistic ... way, way more citizens ... bumping into one no
+longer starts the dialogue automatically ... make the time move independently of the player's moves, and make the NPC
+move on their own."
+
+**What is different when you play**
+- **Every people builds its own way.** A town is laid out by its people (data/towns.json): Heartland and Highland
+  towns grow along roads from a market square; Southron and Thalassian cities are planned blocks round a piazza; a
+  Qasari city is a bazaar street from the gate to a great domed temple with a minaret, winding alleys and houses round
+  courtyards with a fountain or a palm; a Khurgan horde camps in clan circles of felt tents round their own fires,
+  joined by beaten tracks, with the khan's great white tent among its horse-tail standards in the middle and horse
+  corrals beyond; a Volsk town has a log fort on a rise with an onion-domed church (gold and blue domes over a
+  shingled roof), log houses and boardwalk streets outside; an Itzan city a stepped pyramid on a great plaza with round
+  thatched huts; Northmen long turf-roofed halls (carved beasts' heads on the gables) round a mead hall inside an earth
+  bank; halflings green grassy burrows with round doors and round windows; orcs huts in a stockade.
+- **A dwarven hold is cut into the mountain.** Great doors in the rock face between two stone kings; a gatehouse with
+  its racks of arms; the high road lined with carved ancestors up to the pillared great hall and its throne; galleries
+  on three levels, joined by cross-ways; a market hall of pillars and stalls round a fountain; the forges along a
+  channel of lava; a dark lake in a cave of its own with glowing mushrooms and mushroom farms; the mine beyond a chasm
+  crossed by bridges, with its carts and rubble; homes down side passages. No sun reaches it: inside it is lit by its
+  braziers, forges and lava, the same at noon as at midnight, and no rain falls there.
+- **An elven hall is homes in giant trees** round a glowing moonwell, the hall the greatest tree of all; some trees
+  are golden, lanterns hang in their branches.
+- **Bigger towns, and great cities.** A hamlet's map is 96x64, a village 112x72, a town 144x96, a city 192x128; each
+  world's biggest city (two in a large world) is a **great city**, three to five times the size of any other, on a map
+  of 240x160, marked large on the world map with its name in big letters.
+- **Things in towns.** Houses have rooms (hall, bedroom, kitchen; an inn's common room, guest rooms and cellar; a
+  temple's nave; a smith's forge...) furnished for what they are for: beds, tables and stools, chairs, benches,
+  shelves, bookcases, wardrobes, trunks, rugs, ovens, hearths, pews, altars, candles, thrones, banners, tapestries,
+  weapon racks, armour stands, lecterns, cauldrons, baths. In the streets: lamp posts, torches, lanterns and braziers
+  that light the night, fountains, statues, stalls and carpet stalls, standing stones, runestones, horse posts, carts,
+  sledges, beehives, peat stacks... Nothing ever shuts anyone in: every door can be reached, every room walked into.
+- **Many more people.** A hamlet has 8-14 people, a village 20-35, a town 50-110, a city 120-260, a great city 250-450,
+  a hold 60-150, an elven hall 40-90. Twenty-one new trades: bakers, butchers, brewers, tailors, cobblers, potters,
+  tanners, scribes, monks, soldiers, sailors, porters, children, elders, minstrels, preachers, pilgrims, town criers,
+  bath-keepers, moneylenders and herders, each with their own greeting and their own past. Everyone sleeps in a real
+  bed in a real house.
+- **They live their day.** Everyone keeps the day of their trade: asleep at night, the baker up at four, at work by
+  day, a meal at noon, the inn or the square of an evening, home to bed; guards walk their rounds (with lanterns at
+  night), children play near home, elders sit in the square, the crier goes about the streets. They walk there along the
+  streets, go in and out through doors, step round each other and round you, and two meeting in a doorway get past
+  each other.
+- **Time flows in towns.** On a town's map the clock runs by itself (six seconds of the world every half second) and
+  people walk while you stand and watch. It stops whenever another screen is open; in the wild and underground time
+  still waits for you. Settings, *Time in towns*: Flows, or Waits for you (the old way).
+- **Walking into someone no longer talks to them**: you squeeze past (you swap places), unless they will not budge (a
+  warden at a gate; someone asleep). To talk: stand beside them and press **t** or **Enter** (a short list if several
+  are beside you), or click them. Walking to someone (a click) still talks when you reach them; walking elsewhere
+  squeezes through a crowd.
+- **More happening.** People say things as you pass, a few words over their heads: "Fresh bread!", "Hear ye, hear ye!"
+  (the crier cries real news), "Can't catch me!", "Repent, the end is near!", "♪ Oh, the wind and the rain ♪". (Only
+  with Text detail Normal or Rich.)
+- **Each people dresses as they do.** Qasari in robes and turbans (the women veiled), their guards in lamellar with
+  spired helms and curved swords; Khurgan in coats closed at the side with fur hats, their guards with bows; Volsk in
+  kaftans and tall hats (the women in headscarves), their guards in scale with pointed helms and axes; Northmen in
+  tunics, their guards in mail with nasal helms and round shields; Thalassians in draped tunics, their guards with
+  crested bronze helms, breastplates and round shields; Itzan in white cotton, their guards in quilted armour with
+  plumes and clubs; Highlanders in kilts and plaids with bonnets; Southrons in dark doublets, their guards with
+  breastplates, morions and halberds. Children are drawn smaller.
+- **Coming into a place** is told in its people's own words ("The road climbs to the gate of Uldum, cut into the cliff
+  between two stone kings. Galleries run away into the dark, a brazier burning at every turning...").
+
+**How to try it**: start a new world (the towns are made as you first walk into them, so an older world made this
+session will do too). Walk into a big city and stand still a while: watch the streets. Press t beside someone. Find a
+dwarven hold (on the map, a gate in a mountain) and go in at night. Settings has *Time in towns*.
+
+**Decisions made**
+- Towns are made by `realmwalker/world/towns/` (plan.py: streets, plots, buildings, rooms, furniture, every door
+  reached; layouts.py: one plan per people); the old builder stays as a fallback. A town that cannot reach one of its
+  buildings lays a path to it (a footbridge over a stream if need be), or does not build it.
+- Townsfolk keep their full built-in description from the start (making one takes a tenth of a millisecond, so the
+  "described only when first looked at" idea of the plan was not needed); the AI still writes only the people of note.
+- Townsfolk positions are saved; their paths are not (they are found again). Save format unchanged since this
+  morning (11).
+
+**Checked**: full test suite green (1174 tests; new: tests/test_towns.py for every people's towns at every size, doors reached, nobody shut in, holds lit the same at noon and midnight, lamps lit at night; tests/test_townlife.py for days, walking, doorways, squeezing past, t to talk, the town clock, street calls, market days, a great city of 300 stepping in 7 ms), smoke test clean (new pictures: a city, a hold, an elven hall, the peoples view), autoplay OK in both AI modes.
+
+**Not done yet** (from the design): processions and brawls in the streets; L- and cross-shaped buildings.
 
 ### Local session, 2026-10-11: peoples, a land of extremes and wonders, a new world map (Anton's request) — branch `world-variety`
 

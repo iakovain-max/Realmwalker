@@ -46,7 +46,7 @@ def camp(canvas, game, rect, now: float) -> None:
     ambient = canvas.gfx.ambient
     light = float(game.light)
     lm = game.local
-    under = lm is not None and lm.kind == "dungeon"
+    under = lm is not None and lm.under_rock(game.player.lx, game.player.ly)
     k = 0.0 if under else max(0.0, min(1.0, (light - 0.2) / 0.7))
     sky = tuple(int(n + (d - n) * k) for n, d in zip((14, 16, 30), (90, 110, 130)))
     canvas.under(Rect(x, y, w, h * 0.45, (*tuple(int(c * 0.7) for c in sky), 255), bottom=(*sky, 255)))

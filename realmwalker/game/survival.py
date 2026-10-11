@@ -33,7 +33,7 @@ def sheltered(game, activity: str) -> bool:
     lm = game.local
     if getattr(game, "confined", None):
         return True
-    if lm is not None and (lm.kind == "dungeon" or lm.building_at(p.lx, p.ly) is not None):
+    if lm is not None and (lm.under_rock(p.lx, p.ly) or lm.building_at(p.lx, p.ly) is not None):
         return True  # under a roof, or under the ground: the rain and the wind do not come down there
     return activity not in ("walk", "ride") and game.world.settlement_at(p.x, p.y) is not None
 
@@ -258,7 +258,7 @@ def sky_water(game) -> tuple[str, str] | None:
     melted at a fire. (A traveller once died of thirst after two days soaked to the skin.)"""
     lm = game.local
     p = game.player
-    if lm is not None and (lm.kind == "dungeon" or lm.building_at(p.lx, p.ly) is not None):
+    if lm is not None and (lm.under_rock(p.lx, p.ly) or lm.building_at(p.lx, p.ly) is not None):
         return None
     sky = weather(game)
     if sky.raining and sky.precip >= 0.25:

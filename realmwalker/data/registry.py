@@ -113,6 +113,8 @@ def check_cross_references(files: dict[str, Any]) -> list[str]:
     errors.extend(_check_faction_refs(files))
     errors.extend(_check_culture_refs(files))
     errors.extend(_check_wonder_refs(files))
+    errors.extend(_check_town_refs(files))
+    errors.extend(_check_people_refs(files))
     regions = names.get("regions", {})
     for kind, patterns in regions.items():
         for pattern in patterns:
@@ -121,6 +123,81 @@ def check_cross_references(files: dict[str, Any]) -> list[str]:
                     errors.append(f"data/place_names.json: regions.{kind} pattern {pattern!r} uses {{{slot}}}, "
                                   f"which is not a list in 'regions'.")
     errors.extend(_check_geo(names))
+    return errors
+
+
+def _check_town_refs(files: dict[str, Any]) -> list[str]:
+    """data/towns.json: every people's streets, walls, floors and things are terrain; its roofs, walls and shapes
+    have pictures."""
+    from realmwalker.world.towns.plan import ROOFS, SHAPES, WALL_TERRAIN
+
+    errors: list[str] = []
+    terrain = set(files.get("local_terrain.json", {}).get("terrain", {}))
+    if not terrain:
+        return errors
+    for sid, st in files.get("towns.json", {}).get("styles", {}).items():
+        names = [st[k] for k in ("street", "lane", "plaza", "wall", "palisade", "floor", "light")]
+        names += st.get("square", []) + st.get("street_things", []) + st.get("trees", [])
+        for name in names:
+            if name not in terrain:
+                errors.append(f"data/towns.json: styles.{sid} names {name!r}, which is not in data/local_terrain.json.")
+        for kind, (roofs, walls, shapes) in st.get("look", {}).items():
+            for r in roofs:
+                if r not in ROOFS:
+                    errors.append(f"data/towns.json: styles.{sid}.look.{kind}: no picture for the roof {r!r}.")
+            for w in walls:
+                if w not in WALL_TERRAIN:
+                    errors.append(f"data/towns.json: styles.{sid}.look.{kind}: no picture for the walls {w!r}.")
+            for s in shapes:
+                if s not in SHAPES:
+                    errors.append(f"data/towns.json: styles.{sid}.look.{kind}: {s!r} is not a shape of building.")
+        settlement = files.get("fallback_text.json", {}).get("settlement", {})
+        allowed = set(settlement) | RUNTIME_SLOTS.get("settlement", set())
+        for table, entries in (st.get("words") or {}).items():
+            for i, entry in enumerate(entries):
+                for slot in textgen.slots(entry):
+                    if slot not in allowed:
+                        errors.append(f"data/towns.json: styles.{sid}.words.{table}[{i}] uses {{{slot}}}, which "
+                                      f"nothing fills.")
+    for cid, c in files.get("cultures.json", {}).get("cultures", {}).items():
+        style = c.get("town", cid)
+        if files.get("towns.json") and style not in files["towns.json"].get("styles", {}):
+            errors.append(f"data/cultures.json: {cid} builds in the manner {style!r}, which data/towns.json does not have.")
+    return errors
+
+
+ACTIVITIES = ("sleep", "home", "post", "meal", "evening", "inn", "temple", "square", "streets", "patrol", "play")
+
+
+def _check_people_refs(files: dict[str, Any]) -> list[str]:
+    """data/people.json: the trades named anywhere exist; days are hours in order with known doings; barks are for
+    trades (or anyone: _any, _night)."""
+    errors: list[str] = []
+    people = files.get("people.json")
+    if not people:
+        return errors
+    jobs = set(people["occupations"])
+    named = [("commoner_jobs", j) for j in people["commoner_jobs"]] + [("town_jobs", j) for j in people.get("town_jobs", [])]
+    for kind, workers in people.get("workers", {}).items():
+        named += [(f"workers.{kind}", j) for j in workers]
+    for where, job in named:
+        if job not in jobs:
+            errors.append(f"data/people.json: {where} names the trade {job!r}, which is not in occupations.")
+    for job, day in people.get("days", {}).items():
+        if job != "_default" and job not in jobs:
+            errors.append(f"data/people.json: days.{job} is the day of a trade that does not exist.")
+        last = -1.0
+        for i, step in enumerate(day):
+            hour, what = step
+            if not isinstance(hour, (int, float)) or not 0 <= hour < 24 or hour <= last:
+                errors.append(f"data/people.json: days.{job}[{i}]: hours go from 0 to 23, in order.")
+            if what not in ACTIVITIES:
+                errors.append(f"data/people.json: days.{job}[{i}]: {what!r} is not something a day has "
+                              f"({', '.join(ACTIVITIES)}).")
+            last = hour if isinstance(hour, (int, float)) else last
+    for job in people.get("barks", {}):
+        if job not in jobs and job not in ("_any", "_night"):
+            errors.append(f"data/people.json: barks.{job} is for a trade that does not exist.")
     return errors
 
 

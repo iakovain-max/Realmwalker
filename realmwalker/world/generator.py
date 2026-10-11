@@ -175,12 +175,27 @@ class WorldGenerator:
                           namer=self.namer, progress=self._ages_progress)
         self.sim.run()
         self.sim = None
+        self._great_cities(world)
         self._progress(9)
         log.info("Generated world '%s' (seed %d, %s) in %.1f s: %d settlements, %d sites, %d named areas, "
                  "%d years of history (%d figures, %d events)", world.meta.name, world.meta.seed, world.meta.size,
                  time.monotonic() - started, len(world.settlements), len(world.sites), len(world.areas),
                  self.history_years, len(world.figures), len(world.history))
         return world
+
+    def _great_cities(self, world: World) -> None:
+        """The world's great cities (data/towns.json "great"): its biggest cities when the ages are done, grown to many
+        times the size of any other - a capital of tens of thousands among towns of a few thousand. Their close-up
+        maps are the biggest there are (towns.size_of)."""
+        spec = (getattr(self.tables, "towns", None) or {}).get("great")
+        if not spec:
+            return
+        n = spec["count"][self.size_index]
+        rng = self.rng.child("great")
+        cities = sorted((s for s in world.settlements if s.kind == "city"), key=lambda s: (-s.population, s.id))
+        for s in cities[:n]:
+            s.great = True
+            s.population = int(s.population * rng.uniform(*spec["times"]))
 
     def _ages_progress(self, year: int, figures: int, events: int, headline: str) -> None:
         start = self.tables.calendar.start_year - self.history_years

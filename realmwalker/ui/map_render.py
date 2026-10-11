@@ -208,7 +208,7 @@ def draw_local(con, game, x: int, y: int, w: int, h: int, cursor: tuple[int, int
     t = remap[lm.terrain[sl]]
     var = lm.variant[sl].astype(np.int64)
     ch = T.glyphs[t, var % T.glyph_counts[t]]
-    fg, bg = apply_light(T.fg[t], T.bg[t], max(game.light, 0.45) if lm.kind != "dungeon" else 0.8)
+    fg, bg = apply_light(T.fg[t], T.bg[t], 0.8 if lm.under_rock(p.lx, p.ly) else max(game.light, 0.45))
     fg, bg = fg.copy(), bg.copy()
     visible = fov[sl]
     seen = lm.seen[sl]

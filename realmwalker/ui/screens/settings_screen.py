@@ -6,7 +6,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 
 from realmwalker.config import ANIMATION_CHOICES, AUTOSAVE_CHOICES, COMPANION_CHOICES, GRAPHICS_CHOICES, MAP_ZOOMS, \
-    VERBOSITY_LEVELS, VOLUME_STEPS, WORLD_ZOOMS, Settings
+    TOWN_TIME_CHOICES, VERBOSITY_LEVELS, VOLUME_STEPS, WORLD_ZOOMS, Settings
 from realmwalker.ui import colors
 from realmwalker.ui.input import KeyEvent
 from realmwalker.ui.screens.base import ConfirmBox, Screen
@@ -69,6 +69,10 @@ class SettingsScreen(Screen):
                        s.battle_companions], lambda d: self._cycle("battle_companions", COMPANION_CHOICES, d),
                    "You command them: you play every turn of the party. They fight by themselves: you play your own "
                    "character's turns and your companions choose their own (as z does for one turn)."),
+            Option("Time in towns", lambda: {"flows": "Flows", "waits": "Waits for you"}[s.time_in_towns],
+                   lambda d: self._cycle("time_in_towns", TOWN_TIME_CHOICES, d),
+                   "Flows: in a town the clock runs by itself, and its people walk about their day while you stand and "
+                   "watch. Waits for you: time moves only when you do (as in the wild and underground, always)."),
             Option("Volume", lambda: f"{s.volume * 10}%", lambda d: self._volume("volume", d, "ui_click"),
                    "How loud the whole game is. Ctrl M, anywhere, turns all sound off and on again.",
                    level=lambda: s.volume),

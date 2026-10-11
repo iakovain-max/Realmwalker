@@ -130,54 +130,54 @@ history (eruptions), discovery and boons (`game/state.py` discover, camp).
 **Files:** create `realmwalker/world/towns/{__init__,style,layout,buildings,props}.py`, `data/towns.json`; modify
 `world/local.py` (variable sizes; settlement maps from the package), `game/people.py` (no fixed map size), every user
 of the map's size; settlement population curve and great cities (generator, sites.json).
-- [ ] Tests: every kind and size builds; connected; doors reachable; entry walkable.
-- [ ] Commit.
+- [x] Tests: every kind and size builds; connected; doors reachable; entry walkable.
+- [x] Commit.
 
 #### Task 4.2: Things in towns (terrain, pictures)
 **Files:** `data/local_terrain.json`, `data/sprites.json` terrain, `tools/tile_art.py` (furniture and props),
 `tools/build_tiles.py` (picks from the pack: statues, fountains, torches, banners, walls, floors), rebuilt
 `assets/tiles`, `ui/gfx/localview.py` (lights from torches, lamp posts, braziers).
-- [ ] Tests: every terrain has a picture; lights glow at night.
-- [ ] Commit.
+- [x] Tests: every terrain has a picture; lights glow at night.
+- [x] Commit.
 
 #### Task 4.3: Styles: organic, grid, medina, camp, kremlin, terraces, plaza, longhouse, burrows
 **Files:** `world/towns/layout.py`, `buildings.py` (shapes, rooms, furniture), `ui/gfx/roofs.py` (roofs and walls
 per style: flat, dome, onion, felt, stepped, longhouse, round, courtyard).
-- [ ] Tests: each style builds for every size; buildings have rooms and furniture; looks per style.
-- [ ] Commit.
+- [x] Tests: each style builds for every size; buildings have rooms and furniture; looks per style.
+- [x] Commit.
 
 #### Task 4.4: Dwarven holds and elven groves
 **Files:** `world/towns/layout.py` (hold, grove), `ui/gfx/localview.py` (underground light for holds),
 `game/state.py` / `ui/map_render.py` (no daylight inside holds).
-- [ ] Tests: a hold is lit the same at noon and midnight; a grove has giant trees and moonwells.
-- [ ] Phase verification, commit, push.
+- [x] Tests: a hold is lit the same at noon and midnight; a grove has giant trees and moonwells.
+- [x] Phase verification, commit, push.
 
 ### Phase 5: People
 
 #### Task 5.1: Many more townsfolk, new trades
 **Files:** `data/people.json` (occupations, settlement_people by size), `data/dialogue.json` (greetings per trade),
 `game/people.py` (populate by population, lazy descriptions), `game/people_ai.py`.
-- [ ] Tests: counts by size; every trade has words; lazy descriptions appear when looked at.
-- [ ] Commit.
+- [x] Tests: counts by size; every trade has words. (Lazy descriptions dropped: making a townsperson takes 0.1 ms.)
+- [x] Commit.
 
 #### Task 5.2: Days, paths and walking
 **Files:** create `realmwalker/game/townlife.py` (schedules, goals, paths, steps, swaps); modify `game/people.py`
 (update_positions/wander replaced), `game/state.py` (`tick_town`, bump = squeeze past, `t` talks).
-- [ ] Tests: people reach their posts; nobody overlaps; doors; crowds pass; bump does not talk; t talks.
-- [ ] Commit.
+- [x] Tests: people reach their posts; nobody overlaps; doors; crowds pass; bump does not talk; t talks.
+- [x] Commit.
 
 #### Task 5.3: The town clock
 **Files:** `ui/screens/game_screen.py` (real-time ticks while on a settlement map), `config.py` + settings screen
 (Time in towns), `app.frame_timeout`, help text, action bar (Talk).
-- [ ] Tests: ticks advance time and move people; paused under other screens; setting respected.
-- [ ] Commit.
+- [x] Tests: ticks advance time and move people; paused under other screens; setting respected.
+- [x] Commit.
 
 #### Task 5.4: More happening; dress and arms by people
 **Files:** `data/people.json` (barks, street happenings), `ui/gfx/localview.py` (words over heads),
 `tools/figure_gear.py` (new garments), `data/sprites.json` figures "cultures", rebuilt tiles, `ui/gfx/dolls.py`.
-- [ ] Tests: every culture's outfit resolves to drawn garments; barks shown and paced.
-- [ ] Phase verification, commit, push.
+- [x] Tests: every culture's outfit resolves to drawn garments; barks shown and paced.
+- [x] Phase verification, commit, push.
 
 ### Phase 6: Finish
-- [ ] Autoplay learns the new things and checks new invariants; full suite; smoke test (new shots: a desert city,
+- [x] Autoplay learns the new things and checks new invariants; full suite; smoke test (new shots: a desert city,
   a hold, a grove, the map views); autoplay both modes; PROGRESS.md, CLAUDE.md, README_FRIENDS.txt, memory; push.

@@ -11,7 +11,7 @@ A grim, open-world party role-playing game built on the rules of Dungeons & Drag
 
 <title>Your first hour</>
 1. <loot>New World</>, then make a character (press <loot>Enter</> through anything you don't care about).
-2. You start in a town. Press <loot>Enter</> (or click <loot>Enter</> on the bar at the bottom) to walk its streets, and walk into people to talk to them.
+2. You start in a town. Press <loot>Enter</> (or click <loot>Enter</> on the bar at the bottom) to walk its streets. To talk to someone, stand beside them and press <loot>t</> or <loot>Enter</> (or click them); walking into people only squeezes past.
 3. Ask everyone <loot>"Is there any work?"</>. Take something small — a lair to clear, a letter to carry — and press <loot>j</> to see it in your journal. The place is lit on your map.
 4. Buy a <loot>torch</> or two, <loot>rations</>, a <loot>waterskin</> and <loot>bandages</> before you leave (talk to a shopkeeper and choose <loot>"Let me see your general goods."</>).
 5. Walk there (<loot>m</> for the map, <loot>t</> to travel). Camp at night (<loot>r</>): a fire and a tent (or a rough shelter, if you have no tent) keep you alive, and sleep lasts until morning.
@@ -120,7 +120,7 @@ Your body matters as much as your sword. The side panel shows anything that is w
   <loot>The road:</> travel is slower in storms, snow and heat, and when hurt or tired. Off the road in fog, storms or darkness you can lose your way. You will meet people as well as trouble: pedlars, pilgrims, patrols, refugees and more. Each day of travel is written up in the log.
 
 <title>Towns and people</>
-Press <loot>Enter</> on a settlement to walk its streets. People show as <loot>☺</>: walk into someone to talk. By day shops and stalls are open; at night most folk go home and only the inn, the temple and the watch are about. Everyone has a name, a trade, a personality and a memory: first impressions depend on your clothes, cleanliness, wounds, race and background, and they remember threats, bribes and kindness.
+Press <loot>Enter</> on a settlement to walk its streets. People show as <loot>☺</>: stand beside someone and press <loot>t</> or <loot>Enter</> to talk (a list, if several are near), or click them; walking into people squeezes past them (a warden at a gate will not budge). In a town time runs by itself (Settings, Time in towns): everyone keeps the day of their trade, walking to work, to the inn of an evening and home to bed, and the watch goes its rounds. By day shops and stalls are open; at night most folk are asleep at home and only the inn, the temple and the watch are about. Everyone has a name, a trade, a personality and a memory: first impressions depend on your clothes, cleanliness, wounds, race and background, and they remember threats, bribes and kindness.
   <loot>1-9</>             Choose what to say (the numbers shown)
   <loot>t o g</>           Threaten · offer money · goodbye (Esc also leaves)
 What you have done reaches them before you do: a name for great deeds warms people to you (and impresses the proud and the greedy more than it should), while a name for cruelty frightens them, the kind ones worst of all.

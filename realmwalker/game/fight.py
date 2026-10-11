@@ -55,7 +55,7 @@ def battle_env(game, surprised: str | None) -> Env:
         top = max(ground_ids, key=lambda g: g[1])[0]
         ground = game.tables.terrain[game.tables.terrain.index[top]]["name"] if top in game.tables.terrain.index else "ground"
     light = game.light
-    underground = lm is not None and lm.kind == "dungeon"
+    underground = lm is not None and lm.under_rock(game.player.lx, game.player.ly)
     indoors = underground or (lm is not None and lm.building_at(game.player.lx, game.player.ly) is not None)
     party_light = party_has_light(game)
     if underground:

@@ -541,7 +541,8 @@ DATA_FILES.update({
 OCCUPATION = Obj(
     {
         "name": Str(max_len=40), "titles": Map(Str(max_len=40), optional=True),
-        "place": Str(choices=["inn", "temple", "smithy", "store", "healer", "stable", "hall", "keep", "stall", "street"]),
+        "place": Str(choices=["inn", "temple", "smithy", "store", "healer", "stable", "hall", "keep", "stall", "street",
+                              "home", "bakery", "brewery", "library", "barracks", "warehouse", "bathhouse", "bank"]),
         "notable": Bool(optional=True), "social": Str(choices=["low", "middle", "high"]),
         "purse": List(Int(min=0, max=10**7), min_items=2, max_items=2), "stats": Str(max_len=40),
         "trade": Str(max_len=40, optional=True), "services": List(Str(max_len=40), optional=True),
@@ -552,8 +553,13 @@ PEOPLE = Obj(
     {
         "occupations": Map(OCCUPATION, min_items=1),
         "settlement_people": Map(Obj({"notables": List(Str(max_len=40)), "commoners": List(Int(min=0, max=50), min_items=2, max_items=2),
-                                      "guards": List(Int(min=0, max=20), min_items=2, max_items=2)})),
+                                      "guards": List(Int(min=0, max=20), min_items=2, max_items=2),
+                                      "folk": List(Int(min=1, max=1000), min_items=2, max_items=2, optional=True)})),
         "commoner_jobs": List(Str(max_len=40), min_items=1),
+        "town_jobs": List(Str(max_len=40), optional=True),
+        "workers": Map(List(Str(max_len=40), min_items=1), optional=True),
+        "days": Map(List(List(Any_(), min_items=2, max_items=2), min_items=1), optional=True),
+        "barks": Map(word_list(1, 80), optional=True),
         "personality": Map(Obj({"disposition": Int(min=-50, max=50), "bribe": Int(min=-50, max=50),
                                 "threat": Int(min=-10, max=10), "words": Str(max_len=60)}), min_items=2),
         "speech": word_list(1),
@@ -961,6 +967,8 @@ SPRITES = Obj(
             "builds": Map(Map(Int(min=-6, max=6)), min_items=1), "feature_tints": Map(Str(max_len=20, min_len=0)),
             "worn": Map(Any_()), "classes": Map(Map(List(Str(max_len=60, min_len=0), min_items=1))),
             "outfits": Map(Map(List(Str(max_len=60, min_len=0), min_items=1)), min_items=1), "creatures": Map(Map(List(Str(max_len=60, min_len=0), min_items=1))),
+            # Dress by people: their everyday wear ("_", "_male", "_female") and by trade, over the trade's outfit.
+            "cultures": Map(Map(Map(List(Str(max_len=60, min_len=0), min_items=1))), optional=True),
         }),
         "world": Obj({"biomes": Map(Obj({"color": COLOR, "deep": List(Int(min=0, max=255), min_items=3, max_items=3, optional=True),
                                           "marks": Str(max_len=30, optional=True),
@@ -1024,3 +1032,29 @@ WONDER = Obj(
 )
 WONDERS = Obj({"kinds": Map(WONDER, min_items=1)})
 DATA_FILES.update({"wonders.json": WONDERS})
+
+# ---------------------------------------------------------------------------- how each people builds (world/towns)
+TOWN_LAYOUTS = ("organic", "grid", "medina", "camp", "kremlin", "terraces", "plaza", "longhouse", "hold", "grove",
+                "burrows", "stockade")
+TOWN_STYLE = Obj(
+    {
+        "layout": Str(choices=list(TOWN_LAYOUTS)),
+        "city_layout": Str(choices=list(TOWN_LAYOUTS), optional=True),
+        "street": Str(max_len=40), "lane": Str(max_len=40), "plaza": Str(max_len=40),
+        "wall": Str(max_len=40), "palisade": Str(max_len=40),
+        "look": Map(List(List(Str(max_len=30), min_items=1), min_items=3, max_items=3)),
+        "floor": Str(max_len=40),
+        "square": List(Str(max_len=40)), "street_things": List(Str(max_len=40), optional=True),
+        "trees": List(Str(max_len=40)), "light": Str(max_len=40),
+        "extra": List(Str(max_len=40)),
+        # Coming into one of their places: the parts of the description (fallback_text "settlement"), their own.
+        "words": Obj({k: word_list(1, 200) for k in ("approach", "sight", "smell", "detail")}, optional=True),
+    }
+)
+TOWNS = Obj({
+    "sizes": Map(List(Int(min=32, max=400), min_items=2, max_items=2)),
+    "great": Obj({"count": List(Int(min=0, max=5), min_items=3, max_items=3),
+                  "times": List(Float(min=1, max=20), min_items=2, max_items=2)}),
+    "styles": Map(TOWN_STYLE, min_items=1),
+})
+DATA_FILES.update({"towns.json": TOWNS})

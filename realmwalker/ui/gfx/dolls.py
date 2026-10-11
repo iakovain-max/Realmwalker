@@ -24,7 +24,8 @@ from realmwalker.rules import looks as looks_rules
 Part = tuple[str, tuple[int, int, int, int], int, int]  # tile, colour multiplied in (r, g, b, alpha), offset x, y
 WHITE = (255, 255, 255, 255)
 LAYERS = ("body", "legs", "feet", "over", "tabard", "belt", "hands")
-HIDES_HAIR = ("hood", "greathelm", "kettle", "nasal", "horned", "furhat", "wizard")
+HIDES_HAIR = ("hood", "greathelm", "kettle", "nasal", "horned", "furhat", "wizard", "turban", "veil", "headscarf",
+              "tall_hat", "spired", "crested")
 BACK_FEATURES = ("tail",)
 
 
@@ -233,16 +234,40 @@ class Figure:
 
 
 METAL_THINGS = {"chain_shirt", "chain_mail", "ring_mail", "scale_mail", "breastplate", "half_plate", "splint", "plate",
-                "gauntlets", "greaves", "kettle", "nasal", "greathelm", "horned", "crown", "circlet"}
+                "gauntlets", "greaves", "kettle", "nasal", "greathelm", "horned", "crown", "circlet", "lamellar", "spired",
+                "crested"}
 
 
 # ---------------------------------------------------------------------------- who
 def npc(npc, tables, atlas=None) -> list[Part]:
-    """A townsperson dressed for their trade."""
+    """A townsperson dressed for their trade, in the manner of their people."""
     fig = Figure(tables, npc.race, npc.sex, f"npc{npc.id}", looks_rules.of_npc(tables, npc))
-    outfits = _fig(tables)["outfits"]
-    fig.outfit(outfits.get(npc.job) or outfits["_"])
+    fig.outfit(outfit_for(tables, npc.job, npc.culture, npc.sex))
     return fig.parts(atlas or _atlas())
+
+
+def outfit_for(tables, job: str, culture: str, sex: str) -> dict:
+    """What a townsperson wears (data/sprites.json figures): their trade's outfit, then their people's dress over it
+    ("cultures": the people's everyday wear "_", by sex "_male"/"_female", and by trade), slot by slot."""
+    f = _fig(tables)
+    outfits = f["outfits"]
+    spec = dict(outfits.get(job) or outfits["_"])
+    dress = f.get("cultures", {}).get(culture_style(tables, culture), {})
+    like = {"soldier": "guard"}.get(job, job)  # soldiers dress as their people's guards do
+    for key in ("_", f"_{sex}", like, job, f"{job}_{sex}"):
+        spec.update(dress.get(key, {}))
+    return spec
+
+
+def culture_style(tables, culture: str) -> str:
+    """The people whose dress a culture wears (its town style: the same peoples)."""
+    cultures = getattr(tables, "cultures", None)
+    if cultures is not None and culture in getattr(cultures, "ids", ()):
+        try:
+            return cultures.town_style(culture)
+        except Exception:  # (an old culture id)
+            return culture
+    return culture
 
 
 def creature(def_id: str, tables, key: str, atlas=None, sex: str = "") -> list[Part]:
@@ -342,6 +367,15 @@ def problems(tables, atlas) -> list[str]:
             if c and c not in named:
                 out.append(f"{where} {slot}: no colour {c}")
 
+    for people, dress in f.get("cultures", {}).items():
+        if not isinstance(dress, dict):  # (the "_comment")
+            continue
+        for who, spec in dress.items():
+            if who.startswith("_") and who not in ("_", "_male", "_female"):
+                continue
+            for slot, options in spec.items():
+                for o in ([options] if isinstance(options, str) else options):
+                    check(f"cultures {people} {who}", slot, o)
     for group in ("outfits", "classes", "creatures"):
         for who, spec in f[group].items():
             for slot, options in spec.items():

@@ -46,6 +46,17 @@ GARMENTS = {
     "greaves": dict(parts=(LLEG,), pattern="bands"),
     "tabard": dict(parts=(), tabard=True, pattern="hem"),
     "belt": dict(parts=(), belt=True),
+    # The dress of the peoples (data/sprites.json figures "cultures"): a Volsk kaftan to the ankle, a Khurgan coat
+    # closed at the side, a Thalassian draped tunic, a Highland kilt and plaid, lamellar and quilted armour.
+    "kaftan": dict(parts=(TORSO, UARM, LARM, PELVIS, ULEG, LLEG), gown=True, pattern="kaftan"),
+    "deel": dict(parts=(TORSO, UARM, LARM, PELVIS, ULEG), skirt=99, pattern="deel"),
+    "chiton": dict(parts=(TORSO, PELVIS), skirt=99, pattern="drape"),
+    "kilt": dict(parts=(PELVIS,), skirt=99, pattern="tartan"),
+    "plaid": dict(parts=(), sash=True, pattern="tartan"),
+    "lamellar": dict(parts=(TORSO, UARM, PELVIS), skirt=3, pauldrons=True, pattern="lamellar"),
+    "quilted": dict(parts=(TORSO, UARM, PELVIS), skirt=2, pattern="quilt2"),
+    "loincloth": dict(parts=(PELVIS,), skirt=4, pattern="hem"),
+    "apron": dict(parts=(), apron=True, pattern="hem"),
 }
 
 
@@ -76,6 +87,14 @@ def garment_mask(body: Body, spec: dict) -> np.ndarray:
         m[r["torso"] + 1:r["lleg"], c - 3:c + 3] = True
     if spec.get("belt"):
         m[r["pelvis"], x0:x1] = True
+    if spec.get("sash"):  # from the left shoulder across to the right hip
+        lo, hi = body.torso_rows[0]
+        top, bottom = r["torso"], r["pelvis"] + 1
+        for i, y in enumerate(range(top, bottom)):
+            x = lo + round((hi - lo - 2) * i / max(1, bottom - top - 1))
+            m[y, x:x + 3] = True
+    if spec.get("apron"):
+        m[r["torso"] + 3:r["lleg"], c - 3:c + 3] = True
     return m
 
 
@@ -128,6 +147,30 @@ def _pattern(s: np.ndarray, m: np.ndarray, kind: str, body: Body) -> None:
     elif kind == "boots":
         top = m & ~np.roll(m, 1, axis=0)
         s[top] = 3
+    elif kind == "kaftan":  # the front edge, a row of buttons, and a broad hem
+        s[m & (xs == c - 1) & (ys >= r["torso"] + 1)] = 1
+        s[inner & (xs == c - 2) & (ys >= r["torso"] + 1) & (ys < r["pelvis"]) & (ys % 2 == 0)] = 4
+        bottom = m & ~np.roll(m, -1, axis=0)
+        s[bottom | (np.roll(bottom, -1, axis=0) & m)] = 4
+    elif kind == "deel":  # closed across to the right shoulder, a sash at the waist
+        for i in range(4):
+            y = r["torso"] + 1 + i
+            if 0 <= y < H:
+                s[y, c - 1 + i] = 1 if m[y, c - 1 + i] else s[y, c - 1 + i]
+        s[m & (ys == r["pelvis"])] = 4
+        s[m & (xs == c + 2) & (ys > r["pelvis"])] = 1
+    elif kind == "drape":  # folds falling from the shoulder
+        s[inner & (xs % 2 == 0) & (ys > r["torso"] + 1)] = 3
+        s[m & (ys == r["pelvis"])] = 1
+    elif kind == "tartan":  # a check of crossing lines
+        s[inner & (xs % 3 == 0)] = 1
+        s[inner & (ys % 3 == 0)] = 1
+        s[inner & (xs % 3 == 0) & (ys % 3 == 0)] = 4
+    elif kind == "lamellar":  # small plates laced in rows
+        s[inner & (ys % 2 == 0)] = 1
+        s[inner & (ys % 2 == 1) & (xs % 2 == 0)] = 3
+    elif kind == "quilt2":  # thick cotton, stitched in squares
+        s[inner & ((xs % 3 == 0) | (ys % 3 == 0))] = 1
 
 
 def garment(body: Body, name: str):
@@ -145,7 +188,8 @@ def garment(body: Body, name: str):
 HAIR = ("short", "long", "ponytail", "bun", "curly", "braids", "topknot", "cropped", "receding", "shaggy", "plait",
         "crest", "tails")
 BEARDS = ("stubble", "short", "full", "long", "braided", "moustache", "goatee", "chops", "forked")
-HEADGEAR = ("hood", "cap", "kettle", "nasal", "greathelm", "crown", "wizard", "straw", "furhat", "circlet", "horned")
+HEADGEAR = ("hood", "cap", "kettle", "nasal", "greathelm", "crown", "wizard", "straw", "furhat", "circlet", "horned",
+            "turban", "veil", "headscarf", "tall_hat", "spired", "crested", "feathers", "tam", "headband")
 
 
 def _box(body: Body):
@@ -451,10 +495,57 @@ def headgear(body: Body, kind: str):
     elif kind == "furhat":
         m[hy - 2:hy + 2, hx - 1:hx + hw + 1] = True
         m[hy - 2, hx - 1] = m[hy - 2, hx + hw] = False
+    elif kind in ("turban", "veil"):  # cloth wound round the head; a veil across the face below the eyes
+        m[hy - 3:hy + 2, hx - 1:hx + hw + 1] = True
+        m[hy - 3, hx - 1:hx + 1] = m[hy - 3, hx + hw - 1:hx + hw + 1] = False
+        m[hy - 4, c - 2:c + 2] = True
+        if kind == "veil":
+            m[ey + 1:hy + hh + 1, hx:hx + hw] = True
+            m[hy + 2:hy + hh + 2, hx - 1] = m[hy + 2:hy + hh + 2, hx + hw] = True
+    elif kind == "headscarf":  # over the hair, knotted under the chin
+        m[hy - 1:hy + 2, hx - 1:hx + hw + 1] = True
+        m[hy + 2:hy + hh, hx - 1] = m[hy + 2:hy + hh, hx + hw] = True
+        m[hy + hh:hy + hh + 1, c - 1:c + 1] = True
+    elif kind == "tall_hat":  # a tall felt hat with a band of fur
+        m[hy - 5:hy + 2, hx:hx + hw] = True
+        m[hy - 5, hx] = m[hy - 5, hx + hw - 1] = False
+        m[hy + 1:hy + 3, hx - 1:hx + hw + 1] = True
+    elif kind == "spired":  # a pointed helm with a spike, as the steppe and the east wear them
+        ramp = METAL
+        for i, y in enumerate(range(hy - 4, hy + 2)):
+            half = min(hw // 2 + 1, 1 + i)
+            m[y, c - half:c + half] = True
+        m[hy - 6:hy - 4, c - 1:c] = True
+        m[hy + 2, hx - 1:hx + hw + 1] = True
+    elif kind == "crested":  # a bronze helm with cheek-guards and a crest of horsehair
+        ramp = METAL
+        m[hy - 2:hy + 2, hx:hx + hw] = True
+        m[hy + 2:ey + 2, hx] = m[hy + 2:ey + 2, hx + hw - 1] = True
+        m[hy - 5:hy - 2, c - 3:c + 3] = True
+        m[hy - 5, c - 3] = m[hy - 5, c + 2] = False
+    elif kind == "feathers":  # a band with tall plumes
+        m[hy + 1, hx - 1:hx + hw + 1] = True
+        for i, x in enumerate(range(hx, hx + hw, 2)):
+            tall = 4 + (2 if abs(x - c) <= 1 else 0) - abs(x - c) // 3
+            m[hy + 1 - tall:hy + 1, x] = True
+    elif kind == "tam":  # a flat bonnet with a bobble
+        m[hy - 2:hy + 1, hx - 2:hx + hw + 2] = True
+        m[hy - 2, hx - 2] = m[hy - 2, hx + hw + 1] = False
+        m[hy - 3, c - 1:c + 1] = True
+    elif kind == "headband":
+        m[hy + 1, hx:hx + hw] = True
     s = shades(m)
     ys, xs = np.mgrid[0:H, 0:W]
     if kind in ("furhat", "straw"):
         s[m & (s >= 2) & ((xs + ys) % 2 == 0)] = 3
+    if kind in ("turban", "veil"):  # the folds of the wrapping
+        s[m & (s >= 2) & ((xs - ys) % 3 == 0) & (ys < hy + 2)] = 3
+    if kind == "tall_hat":
+        s[m & (ys >= hy + 1) & ((xs + ys) % 2 == 0)] = 4
+    if kind == "feathers":
+        s[m & (ys < hy) & (ys % 2 == 0)] = 4
+    if kind == "crested":
+        s[m & (ys < hy - 2)] = 1
     a = paint(s, ramp, line=outline(m) & (body.grid != HEAD) & ~m)
     if slit is not None:
         a[slit, hx:hx + hw, :3] = (16, 14, 14)

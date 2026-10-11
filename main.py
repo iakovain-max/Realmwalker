@@ -88,6 +88,8 @@ def smoke_script():
     shots[frame - 4] = "weather"
     press("w", "p", "z")
     shots[frame - 4] = "realms"
+    press("c")
+    shots[frame - 4] = "peoples"
     press("escape", "f", "down", "down")
     shots[frame - 4] = "factions"
     press("escape", "n", "2")
@@ -177,6 +179,41 @@ def smoke_script():
     frame += 8
     shots[frame] = "dungeon"
     frame += 4
+
+    def visit(choose, deep: bool = False):
+        """Into a settlement on foot (the biggest of its kind): a city of the desert if there is one, a dwarven hold
+        (deep inside, past the gate), an elven hall."""
+        def go(app):
+            from realmwalker.ui.screens.game_screen import GameScreen
+
+            game = app.game
+            if game is None:
+                return
+            while app.screens and not isinstance(app.top, GameScreen):
+                app.pop()
+            places = [s for s in game.world.settlements if choose(s)]
+            if not places:
+                return
+            s = max(places, key=lambda s: (s.culture == "qasari", getattr(s, "great", False), s.population))
+            game.player.local_key = None
+            game.player.x, game.player.y = s.x, s.y
+            game.enter_local()
+            lm = game.local
+            if deep and lm is not None:
+                walk = game.tables.terrain.walk[game.remap_for(lm)[lm.terrain]]
+                cx, cy = lm.width // 2, lm.height // 2
+                spots = [(x, y) for x in range(lm.width) for y in range(lm.height)
+                         if walk[x, y] and lm.under_rock(x, y) and lm.building_at(x, y) is None]
+                if spots:
+                    game.player.lx, game.player.ly = min(spots, key=lambda c: (c[0] - cx) ** 2 + (c[1] - cy) ** 2)
+        return go
+
+    for name, choose, deep in (("city", lambda s: s.kind == "city", False), ("hold", lambda s: s.kind == "hold", True),
+                               ("grove", lambda s: s.kind == "elfhall", False)):
+        steps.append((frame, visit(choose, deep)))
+        frame += 10
+        shots[frame] = name
+        frame += 4
 
     def surface(app):
         if app.game is not None:

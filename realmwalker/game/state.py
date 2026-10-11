@@ -870,9 +870,14 @@ class GameState:
         from realmwalker.game.people import npc_at
 
         npc = npc_at(self, nx, ny)
-        if npc is not None:
-            self.talk_to = npc.id
-            return True
+        if npc is not None:  # you squeeze past (talking is t, Enter or a click: game/townlife.py)
+            from realmwalker.game import townlife
+
+            if not townlife.squeeze(self, npc):
+                who = npc.label()
+                why = "is asleep" if townlife.asleep(self, npc) else "does not stand aside"
+                self.say(f"{who[:1].upper() + who[1:]} {why}.", "system")
+                return False
         target = actor_at(lm, nx, ny)
         if target is not None:
             from realmwalker.game.fight import start_battle
@@ -1040,10 +1045,9 @@ class GameState:
     def _people_act(self, lm: LocalMap) -> None:
         if lm.kind != "settlement":
             return
-        from realmwalker.game.people import update_positions, wander
+        from realmwalker.game.people import update_positions
 
         update_positions(self, lm)
-        wander(self, lm)
 
     def _creatures_act(self, lm: LocalMap) -> None:
         """Creatures on this map react to the player; one that reaches the player starts a fight."""
@@ -1109,6 +1113,22 @@ class GameState:
             cached = terrain_remap(lm, self.tables)
             self._remaps[lm.key] = cached
         return cached
+
+    # ------------------------------------------------------------------ the town's clock
+    def town_tick(self) -> bool:
+        """One step of a town's own time (the game screen's town clock, while you stand and watch): the world moves
+        on a few seconds, and its people with it. False (and nothing happens) anywhere but a town's close-up map, or
+        while something is going on."""
+        lm = self.local
+        if lm is None or lm.kind != "settlement" or self.busy or self.over is not None:
+            return False
+        from realmwalker.game import townlife
+
+        self.pass_seconds(townlife.STEP_SECONDS, "rest")
+        if self.over is None and self.local is lm:
+            self._creatures_act(lm)
+            self._people_act(lm)
+        return True
 
     # ------------------------------------------------------------------ waiting
     def wait(self, minutes: int) -> None:

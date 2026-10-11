@@ -7,6 +7,7 @@ import tcod.map
 
 # In woods you see a short way in every direction rather than down long gaps between trunks.
 WOODLAND_SIGHT = {"forest": 10, "pine_forest": 12, "marsh": 16}
+HOLD_SIGHT = 14  # in a hold under a mountain, by the light of its braziers, at any hour
 
 _SIGHT_CACHE: dict[int, tuple[int, bool, np.ndarray]] = {}
 
@@ -42,6 +43,9 @@ def sight_radius(game, lm) -> tuple[int, bool]:
 
         dark_sight = game.sheet().darkvision // 5 if game.party else 0
         return max(1, light_radius(game), dark_sight), False
+    if lm.under_rock(p.lx, p.ly):  # a hold cut in a mountain: no sun, no weather, its own fires day and night
+        dark_sight = game.sheet().darkvision // 5 if game.party else 0
+        return max(HOLD_SIGHT, dark_sight), False
     woodland_radius = WOODLAND_SIGHT.get(game.biome_key(p.x, p.y)) if lm.kind != "settlement" else None
     light = game.light
     radius = 0 if light >= 0.9 else max(4, int(4 + light * 28))

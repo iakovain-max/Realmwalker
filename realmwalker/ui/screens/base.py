@@ -106,6 +106,52 @@ class MessageBox(Screen):
         return [KeyEvent("enter")]
 
 
+class ChoiceBox(Screen):
+    """A short list to choose from (who to talk to, of those beside you): a number, the arrows and Enter, or a click.
+    Escape chooses nothing."""
+
+    modal = True
+
+    def __init__(self, app: App, title: str, choices: list[tuple[str, Callable[[], None]]]) -> None:
+        super().__init__(app)
+        self.title = title
+        self.choices = choices[:9]
+        self.selected = 0
+
+    def render(self, canvas: Canvas) -> None:
+        from realmwalker.ui import markup
+
+        width = min(60, canvas.width - 4)
+        x, y, w, h = modal_box(canvas, width, len(self.choices) + 4, self.title)
+        for i, (label, _) in enumerate(self.choices):
+            row = y + 2 + i
+            mark = "►" if i == self.selected else " "
+            canvas.text(x + 2, row, mark, colors.named("gold"))
+            canvas.button(x + 4, row, markup.plain(label), lambda i=i: self._pick(i), hotkey=str(i + 1),
+                          max_width=w - 6)
+        canvas.hit(0, 0, canvas.width, canvas.height)  # swallow clicks outside the box
+
+    def _pick(self, i: int) -> None:
+        self.close()
+        self.choices[i][1]()
+
+    def handle_key(self, ev: KeyEvent) -> bool:
+        if ev.key in ("escape", "q"):
+            self.close()
+        elif ev.key.isdigit() and 1 <= int(ev.key) <= len(self.choices):
+            self._pick(int(ev.key) - 1)
+        elif ev.key in ("up", "k8", "8"):
+            self.selected = (self.selected - 1) % len(self.choices)
+        elif ev.key in ("down", "k2", "2"):
+            self.selected = (self.selected + 1) % len(self.choices)
+        elif ev.key in ("enter", " "):
+            self._pick(self.selected)
+        return True
+
+    def autoplay_keys(self) -> list[KeyEvent]:
+        return [KeyEvent("1"), KeyEvent("escape")]
+
+
 class ConfirmBox(Screen):
     """Yes/no question before anything dangerous or irreversible."""
 

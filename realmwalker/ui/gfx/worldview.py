@@ -236,12 +236,14 @@ class WorldView:
             if sx < X0 - 3 * ppc or sx > X0 + VW + 3 * ppc or sy < Y0 - 3 * ppc or sy > Y0 + VH + 3 * ppc:
                 continue
             size = max(10, ppc * {"hamlet": 1.1, "village": 1.35, "town": 1.6, "city": 2.0}.get(s.kind, 1.5))
+            if getattr(s, "great", False):  # a great city: twice the mark of any other
+                size = max(16, ppc * 3.0)
             names.append(town_mark(game.tables, s, stypes.get(s.kind, "map/village")))
             dst.append((sx + ppc / 2 - size / 2, sy + ppc - size * 0.92, size, size))
             a = 1.0 if explored[s.x, s.y] else 0.6
             cols.append((light, light, min(1.0, light * 1.05), a))
-            if ppc >= 12 or (ppc >= 6 and s.kind in ("city", "town", "hold", "elfhall")):
-                labels.append((sx + ppc / 2, sy + ppc + 1, s.name, s.kind, a))
+            if ppc >= 12 or (ppc >= 6 and s.kind in ("city", "town", "hold", "elfhall")) or getattr(s, "great", False):
+                labels.append((sx + ppc / 2, sy + ppc + 1, s.name, "great" if getattr(s, "great", False) else s.kind, a))
         for site in world.sites:
             if not explored[site.x, site.y]:
                 continue
@@ -256,8 +258,10 @@ class WorldView:
             canvas.under(*tile_batch(gfx.atlas, names, np.array(dst, np.float32), np.array(cols, np.float32)))
         town_boxes = []
         for lx, ly, name, kind, a in labels:
-            big = kind in ("town", "city", "hold")
+            big = kind in ("town", "city", "hold", "great")
             size = max(11, int(ppc * (0.62 if big else 0.5)))
+            if kind == "great":
+                size = max(15, int(ppc * 0.85))
             canvas.under(Text(lx, ly, name, "heading" if big else "heading_light", size,
                               (236, 222, 186, int(255 * a)), anchor="mt", shadow=False, outline=True))
             town_boxes.append((lx - len(name) * size * 0.35, ly, len(name) * size * 0.7, size * 1.2))

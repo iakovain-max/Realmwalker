@@ -31,7 +31,12 @@ WHAT YOU CAN DO
   fester, sickness, and treatment that matters (bandage, clean, stitch, splint).
 * Fight D&D 5e battles on a grid, like a battle mat, with wounds, morale,
   surrender and prisoners.
-* Talk to everyone. They have names, trades, memories and opinions of you.
+* Talk to everyone (stand beside them and press t). They have names, trades,
+  memories and opinions of you, and they live their day while you watch: off to
+  work at dawn, to the inn of an evening, home to bed.
+* Every people builds, dresses and names things in its own way: Norse longhalls,
+  Qasari domes and courtyards, Khurgan tent camps, Volsk onion domes, Itzan
+  pyramids, dwarven holds cut into the mountain, elven homes in giant trees.
 * Hire companions, pay them, keep them loyal (or don't), and command them in a fight.
 * Take on work: bounties, lairs to clear, beasts to hunt, letters to carry,
   heirlooms to find, captives to free, debts to collect, people going missing.

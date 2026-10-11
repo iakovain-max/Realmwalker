@@ -43,13 +43,18 @@ realmwalker/
   ai/                      client (Player2 HTTP), service (workers/queue/ping), parsing, prompts, tasks, store
   world/                   generator (terrain, rivers, climate, biomes, towns, roads), local maps, calendar,
                            tables (numpy lookups from data), model (World + save-friendly dataclasses)
+  world/towns/             a settlement's close-up map, laid out the way its people build (data/towns.json): plan
+                           (streets, plots, buildings with rooms and furniture, every door reached), layouts (one per
+                           people: organic, grid, medina, camp, kremlin, terraces, plaza, longhouse, hold, grove,
+                           burrows, stockade)
   game/                    state (player, party, actions, travel, time; street life, the weather turning,
                            landmarks), save (versioned zips), log, describe,
                            encounters (road trouble, local-map inhabitants), fight (start/finish battles, loot,
                            prisoners, rest), vision (field of view), survival (the body as time passes: weather,
                            eating, drinking, water sources, death), care (treatment, healing magic), camp (fire,
                            cooking, foraging, hunting, fishing), events (travel events, news, pedlars),
-                           people (townsfolk: making, placing, day/night, impressions, memory), dialogue
+                           people (townsfolk: making, placing, impressions, memory), townlife (their day: schedules,
+                           walking, squeezing past, words in passing, the town clock), dialogue
                            (conversations, whitelisted outcomes), people_ai (AI facts in, validated words out),
                            economy (shops, prices, trade, haggling), services (inns, healers, temples, smiths,
                            stables, animals, labour), reputation (standing, deeds and their ripples, joining,
@@ -138,9 +143,26 @@ tools/                     autoplay.py, mock_player2.py, build_friends.py, balan
   30-minute chunks (body, health, eating/drinking, death). Tests about travel alone can set `game.survival = False`
   and monkeypatch `encounters.encounter_chance`, `events.event_chance` and `GameState.lost_dc`.
 - Townsfolk live in `world.npcs` / `world.towns` (saved with the world). A town is filled by
-  `people.populate_town` on first entry (or `prepare_town` ahead of arrival). Walking into someone sets
-  `game.talk_to`; the game screen opens the conversation. AI conversation outcomes must stay in
-  `dialogue.OUTCOMES`, narrowed per person by `people_ai.allowed_outcomes`.
+  `people.populate_town` on first entry (or `prepare_town` ahead of arrival): as many as data/people.json
+  settlement_people "folk" says, a trade for each kind of building ("workers"), homes in beds. Walking into someone
+  squeezes past them (`townlife.squeeze`; a warden at a gate, `flags["stays"]`, will not budge); talking is t, Enter
+  or a click (`GameScreen.talk` sets `game.talk_to`; the game screen opens the conversation). AI conversation
+  outcomes must stay in `dialogue.OUTCOMES`, narrowed per person by `people_ai.allowed_outcomes`.
+- Towns (2026-10-11, Anton: "way more varied ... bigger ... way, way more citizens ... make the NPC move on their
+  own"): `world/towns` lays out each people's towns (data/towns.json styles: layout, street stuff, looks of roofs,
+  walls and shapes, things in the streets, their own words for arriving); `Plan.connect` lays a path to any door that
+  cannot be reached (or takes the building down); tests/test_towns.py checks every style and size (doors reached,
+  nobody shut in by furniture, the way in walkable). The biggest cities are `Settlement.great` (generator
+  `_great_cities`, data/towns.json "great"). A dwarven hold's map has `meta["underground"]` and `meta["open_below"]`:
+  `LocalMap.under_rock(x, y)` is true in its halls (no sun, no weather, the same light at every hour) as in dungeons.
+  Buildings of other peoples are drawn by `ui/gfx/houses.py` (flat, dome, onion, round, tree, mound, court, long
+  turf), the rest by `roofs.py`.
+- Townsfolk live their day (`game/townlife.py`, data/people.json "days" by trade): every STEP_SECONDS of the world
+  they take a step towards where their day has them (paths found once and kept, not saved), swap in narrow ways, and
+  call out now and then (data/people.json "barks", shown over their heads, behind Text detail). `catch_up` runs after
+  anything that passes time in a town; after a long while `settle` puts everyone where they should be. On a town's
+  map the game screen's town clock passes STEP_SECONDS every half second (`GameState.town_tick`; Settings, Time in
+  towns: flows or waits); it stops under any other screen. Dress by people: data/sprites.json figures "cultures".
 - The smoke test always runs with the AI off; tests use the mock. Never let a test reach the real Player2 app.
 - Factions live in `world.factions` / `world.figures` (saved with the world); a settlement's `owner` is the
   faction holding it, its realm is `factions.top_liege(owner)`. After changing holdings call `factions.touch(world)`

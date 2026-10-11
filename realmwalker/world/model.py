@@ -55,6 +55,7 @@ class Settlement:
     area: int = -1
     owner: int = -1  # the faction holding it (world.factions)
     status: dict = field(default_factory=dict)  # siege, sack, plague... (game.politics)
+    great: bool = False  # one of the world's great cities, far bigger than the rest (data/towns.json "great")
 
 
 @dataclass

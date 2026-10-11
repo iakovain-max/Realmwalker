@@ -137,5 +137,6 @@ class Tables:
         self.uniques = data["uniques.json"]
         self.magic = data["magic.json"]
         self.wonders = data["wonders.json"]
+        self.towns = data["towns.json"]
         self.quests = data["quests.json"]
         self.travel_events = {k: v for k, v in data["travel_events.json"]["events"].items() if not k.startswith("_")}

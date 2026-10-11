@@ -108,7 +108,7 @@ def _local(game, lm, party, creatures, env, rng, *, actor, near, situation, numb
     y0 = max(0, min(lm.height - H, y0))
     terrain = game.remap_for(lm)[lm.terrain[x0:x0 + W, y0:y0 + H]].astype(np.uint16)
     lights = _terrain_lights(game, terrain)
-    under = lm.kind == "dungeon"
+    under = lm.under_rock(*me)
     indoors = under or lm.building_at(*me) is not None
     field = grid.Field(game.tables, terrain, kind=lm.kind, style=lm.meta.get("style", ""),
                        key=f"{lm.key}/battle{number}", base_light=env.light, indoors=indoors, underground=under,

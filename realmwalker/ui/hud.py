@@ -56,7 +56,8 @@ def actions(gs) -> list[Action]:
         npc = gs.npc_beside()
         if npc is not None:
             out.append(Action("talk", "Talk", "↵", "talk", lambda npc=npc: gs.talk(npc),
-                              f"Talk to {markup.escape(npc.name if npc.known else npc.title or 'them')} (Enter).",
+                              f"Talk to {markup.escape(npc.name if npc.known else npc.title or 'them')} (Enter or t). "
+                              "Walking into people only squeezes past them.",
                               context=True))
     # Looking and moving.
     out.append(Action("look", "Look", "l", "look", lambda: press("l"), "Look around: move a cursor over the map (l). "

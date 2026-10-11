@@ -80,20 +80,26 @@ def test_people_are_made_once(game):
 
 
 def test_shops_close_and_people_go_home_at_night(game):
+    """Everyone keeps the day of their trade (game/townlife.py): by night the streets empty, the townsfolk asleep
+    at home, and only the watch about (the inn keeps its own hours)."""
+    from realmwalker.game import townlife
+
     s = visit(game, "town")
     lm = game.local
     at_noon(game)
     update_positions(game, lm)
     assert is_day(game)
-    day = {n.id for n in npcs_in(game.world, s.id) if n.present}
+    folk = [n for n in npcs_in(game.world, s.id) if n.present]
+    out_by_day = {n.id for n in folk if lm.building_at(n.x, n.y) is None}
     game.world.time += 12 * 60
     assert not is_day(game)
     update_positions(game, lm)
-    night = {n.id for n in npcs_in(game.world, s.id) if n.present}
-    assert night < day
-    jobs_at_night = {game.world.npcs[i].job for i in night}
-    # (the seven wayfarers of uniques.py keep to their inn at night, by design)
-    assert jobs_at_night <= {"innkeeper", "serving_hand", "guard", "priest", "lord", "acolyte", "wayfarer"}
+    out_at_night = {n.id for n in folk if lm.building_at(n.x, n.y) is None}
+    assert len(out_at_night) < len(out_by_day)
+    jobs_out = {game.world.npcs[i].job for i in out_at_night}
+    assert jobs_out <= {"guard", "soldier"}, jobs_out
+    sleeping = [n for n in folk if townlife.asleep(game, n)]
+    assert len(sleeping) > len(folk) // 2
 
 
 def test_first_impressions(game, tables):
@@ -108,21 +114,23 @@ def test_first_impressions(game, tables):
     assert first_impression(game, npc) < clean
 
 
-def test_walking_into_someone_starts_a_conversation(game):
+def test_walking_into_someone_squeezes_past(game):
+    """(2026-10-11, Anton: "bumping into one no longer starts the dialogue automatically".) You take each other's
+    squares; talking is t, Enter or a click."""
     at_noon(game)
     s = visit(game, "village")
     lm = game.local
-    npc = next(n for n in npcs_in(game.world, s.id) if n.present)
-    for dx, dy in ((-1, 0), (1, 0), (0, -1), (0, 1)):
-        x, y = npc.x + dx, npc.y + dy
-        if lm.in_bounds(x, y) and game.tables.terrain.walk[game.remap_for(lm)[lm.terrain[x, y]]] \
-                and npc_at(game, x, y) is None:
-            game.player.lx, game.player.ly = x, y
-            t = game.world.time
-            game.move(-dx, -dy)
-            assert game.talk_to == npc.id and (game.player.lx, game.player.ly) == (x, y)
-            return
-    pytest.skip("nowhere to stand beside them")
+    for npc in [n for n in npcs_in(game.world, s.id) if n.present and not n.flags.get("stays")]:
+        for dx, dy in ((-1, 0), (1, 0), (0, -1), (0, 1)):
+            x, y = npc.x + dx, npc.y + dy
+            if lm.in_bounds(x, y) and game.tables.terrain.walk[game.remap_for(lm)[lm.terrain[x, y]]]                     and npc_at(game, x, y) is None and lm.building_at(x, y) is None and lm.building_at(npc.x, npc.y) is None:
+                game.player.lx, game.player.ly = x, y
+                there = (npc.x, npc.y)
+                game.move(-dx, -dy)
+                assert game.talk_to is None
+                assert (game.player.lx, game.player.ly) == there and (npc.x, npc.y) == (x, y)
+                return
+    pytest.skip("nowhere to stand beside anyone in the street")
 
 
 def test_a_conversation_menu_and_its_answers(game):
