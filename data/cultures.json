@@ -1,10 +1,9 @@
 {
-  "_comment": "The peoples of the world (world/cultures.py). 'folk': what a world may call them, [people, adjective], one picked per world. 'like': the real-world peoples they are drawn from (also the AI's name style). 'home': where they settle: biome weights, comfortable yearly temperature and moisture, and how much they want the sea (coast > 0) or to be far from it (coast < 0). 'naming': name patterns ({given}, {family}, {father}, {patronymic}, {byname}), weighted; 'patronymic' and 'family_forms' name the rules in world/names.py. 'realms' and 'titles' override data/factions.json kinds for this people. Names pools are in names.json, place-name parts in place_names.json, laws in factions.json culture_laws, growth and succession in history.json peoples.",
+  "_comment": "The peoples of the world (world/cultures.py). 'folk': what a world may call them, [people, adjective], one picked per world. 'like': the real-world peoples they are drawn from. 'home': where they settle: biome weights, comfortable yearly temperature and moisture, and how much they want the sea (coast > 0) or to be far from it (coast < 0). 'naming': name patterns ({given}, {family}, {father}, {patronymic}, {byname}), weighted; 'patronymic' and 'family_forms' name the rules in world/names.py. 'realms' and 'titles' override data/factions.json kinds for this people. Names pools are in names.json, place-name parts in place_names.json, laws in factions.json culture_laws, growth and succession in history.json peoples.",
   "cultures": {
     "heartland": {
       "folk": [["Heartlanders", "Heartland"], ["Woldfolk", "Wold"], ["Valemen", "Vale"], ["Shiremen", "Shire"], ["Marchers", "March"]],
       "race": "human", "kind": "human", "like": "English and Anglo-Norman",
-      "ai_style": "lowland English-sounding medieval (Anglo-Saxon and Norman)",
       "color": [196, 160, 92],
       "about": "Farmers, wool-merchants and lords of the river valleys: timber-framed towns round a market cross, a church tower over every village, and a king's law that is stern but written down.",
       "home": {"biomes": {"plains": 3, "forest": 2, "hills": 1.5, "coast": 1.5, "marsh": 0.5, "steppe": 0.35, "savanna": 0.1}, "temperature": [6, 16], "moisture": [0.35, 0.9], "coast": 0.0},
@@ -17,7 +16,6 @@
     "northmarch": {
       "folk": [["Northmen", "Norse"], ["Hrafnings", "Hrafning"], ["Vestfolk", "Vestfold"], ["Skjaldings", "Skjalding"], ["Fjordmen", "Fjord"]],
       "race": "human", "kind": "human", "like": "Norse (Viking-age Scandinavian)",
-      "ai_style": "Norse-sounding (Old Norse, Viking-age Scandinavian)",
       "color": [92, 140, 176],
       "about": "Fishers, raiders and farmers of the cold coasts: long turf-roofed halls by the fjords, a free assembly that judges the law, blood-price for a killing, and ships drawn up on every shore.",
       "home": {"biomes": {"pine_forest": 3, "tundra": 2.5, "coast": 2.5, "hills": 1.5, "mountains": 0.6, "glacier": 0.06, "steppe": 0.15}, "temperature": [-8, 6], "moisture": [0.2, 0.95], "coast": 0.6},
@@ -30,7 +28,6 @@
     "southron": {
       "folk": [["Southrons", "Southron"], ["Mirellans", "Mirellan"], ["Castellans", "Castellan"], ["Lusani", "Lusan"], ["Valterrans", "Valterran"]],
       "race": "human", "kind": "human", "like": "Italian and Iberian",
-      "ai_style": "Italian- and Iberian-sounding (Renaissance Italy, medieval Spain and Portugal)",
       "color": [204, 112, 70],
       "about": "Merchants, vintners and sailors of the warm coasts: red-roofed towns climbing to a piazza, bell towers and painted chapels, banking houses, galleys in the harbour, and a law that can be bought.",
       "home": {"biomes": {"coast": 3, "hills": 2, "plains": 2, "forest": 1, "savanna": 0.45, "badlands": 0.3, "steppe": 0.2}, "temperature": [13, 24], "moisture": [0.25, 0.7], "coast": 0.5},
@@ -43,7 +40,6 @@
     "highland": {
       "folk": [["Highlanders", "Highland"], ["Glenfolk", "Glen"], ["Cairnmen", "Cairn"], ["Brannochs", "Brannoch"], ["Morvenmen", "Morven"]],
       "race": "human", "kind": "human", "like": "Gaelic and Brythonic (Scots, Irish, Welsh)",
-      "ai_style": "Gaelic-sounding (Scottish Gaelic, Irish, Welsh)",
       "color": [86, 150, 98],
       "about": "Herders and clansfolk of the wet hills: stone crofts under thatch, round towers and standing stones, kin before crown, cattle as wealth, feuds remembered for generations, and bards who keep the genealogies.",
       "home": {"biomes": {"hills": 3, "marsh": 1.5, "pine_forest": 1, "mountains": 1, "coast": 1.2, "steppe": 0.15}, "temperature": [2, 12], "moisture": [0.45, 1.0], "coast": 0.1},
@@ -56,7 +52,6 @@
     "qasari": {
       "folk": [["Qasari", "Qasari"], ["Zahiri", "Zahiri"], ["Rimali", "Rimali"], ["Badari", "Badari"], ["Suhaili", "Suhaili"]],
       "race": "human", "kind": "human", "like": "Arabic and Persian",
-      "ai_style": "Arabic- and Persian-sounding (medieval Arabia, Persia and the Maghreb)",
       "color": [224, 182, 82],
       "about": "Caravan-masters, poets and astronomers of the deserts: white walled cities of domes and minaret-towers round a cool courtyard, bazaars under awnings, palms by the pool, judges who know the scripture by heart, and hospitality that is a law in itself.",
       "home": {"biomes": {"desert": 3, "coast": 1.2, "plains": 0.8, "hills": 1, "dunes": 0.55, "salt_flat": 0.25, "badlands": 0.55, "savanna": 0.45, "steppe": 0.3}, "temperature": [18, 40], "moisture": [0.0, 0.35], "coast": 0.0},
@@ -69,7 +64,6 @@
     "khurgan": {
       "folk": [["Khurgan", "Khurgan"], ["Tarkhans", "Tarkhan"], ["Keregs", "Kereg"], ["Altani", "Altan"], ["Ulughs", "Ulugh"]],
       "race": "human", "kind": "human", "like": "Mongol and Turkic steppe peoples",
-      "ai_style": "Mongol- and Turkic-sounding (steppe nomads)",
       "color": [166, 120, 196],
       "about": "Horse-lords of the open steppe: round felt tents that move with the seasons and the herds, a great khan's law written for all the clans, bows from the saddle, and cities only where the caravans meet.",
       "home": {"biomes": {"plains": 3, "hills": 1, "desert": 1, "tundra": 0.8, "steppe": 1.0, "savanna": 0.4, "salt_flat": 0.15, "badlands": 0.3}, "temperature": [-2, 16], "moisture": [0.05, 0.42], "coast": -0.7},
@@ -82,7 +76,6 @@
     "volsk": {
       "folk": [["Volsk", "Volsk"], ["Zaryans", "Zaryan"], ["Belogors", "Belogor"], ["Sevrans", "Sevran"], ["Morozhi", "Morozh"]],
       "race": "human", "kind": "human", "like": "Slavic and Old Rus",
-      "ai_style": "Slavic- and Old Russian-sounding (Kievan Rus, Novgorod, the medieval Slavs)",
       "color": [176, 72, 76],
       "about": "Trappers, river-traders and boyars of the great forests: log houses with carved eaves, wooden forts on the river bluffs, onion-domed churches, steam-baths, the town assembly's bell, and long winters by the stove.",
       "home": {"biomes": {"pine_forest": 2.5, "forest": 2.5, "plains": 1.5, "marsh": 1, "steppe": 0.5}, "temperature": [-3, 10], "moisture": [0.4, 0.95], "coast": -0.5},
@@ -95,7 +88,6 @@
     "thalassian": {
       "folk": [["Thalassians", "Thalassian"], ["Pelagians", "Pelagian"], ["Kallisti", "Kallistan"], ["Hyperians", "Hyperian"], ["Myrenes", "Myrene"]],
       "race": "human", "kind": "human", "like": "Greek and Byzantine",
-      "ai_style": "Greek- and Byzantine-sounding (ancient and medieval Greek)",
       "color": [70, 132, 210],
       "about": "Sailors, philosophers and courtiers of the islands and warm coasts: white houses stepping down to the harbour, temples of columns, domed churches of gold mosaic, a court of titles and intrigue, and a law of codes and lawyers.",
       "home": {"biomes": {"coast": 3, "hills": 2.5, "plains": 1, "forest": 0.5, "savanna": 0.3, "badlands": 0.25}, "temperature": [14, 26], "moisture": [0.2, 0.6], "coast": 0.9},
@@ -108,7 +100,6 @@
     "itzan": {
       "folk": [["Itzani", "Itzan"], ["Chakani", "Chakan"], ["Tzunani", "Tzunan"], ["Ahkini", "Ahkin"], ["Balami", "Balam"]],
       "race": "human", "kind": "human", "like": "Maya and Aztec (Mesoamerican)",
-      "ai_style": "Maya- and Nahuatl-sounding (Mesoamerican)",
       "color": [58, 168, 136],
       "about": "Farmers, astronomers and priest-kings of the hot lowlands: stepped pyramids over great plazas, white causeways through the jungle, ball courts and painted temples, a sacred calendar for every deed, and rulers who speak for the gods.",
       "home": {"biomes": {"forest": 3, "marsh": 1.5, "plains": 1, "coast": 1, "jungle": 1.0, "savanna": 0.75, "badlands": 0.2}, "temperature": [20, 36], "moisture": [0.55, 1.0], "coast": 0.0},
@@ -121,7 +112,6 @@
     "elven": {
       "folk": [["Elves", "Elven"], ["the Fair Folk", "Fair"], ["the Eldar", "Eldar"]],
       "race": "elf", "kind": "elder", "like": "Tolkien-esque elves with a Welsh lilt",
-      "ai_style": "elvish (soft, flowing, Welsh- and Sindarin-like)",
       "color": [120, 196, 120],
       "about": "The old people of the deep woods: homes in and around great trees, glades lit by moonwells and glowing lanterns, songs that are histories, and a council of elders that decides slowly.",
       "home": {"biomes": {"forest": 3}, "temperature": [4, 22], "moisture": [0.45, 1.0], "coast": 0.0},
@@ -133,7 +123,6 @@
     "dwarven": {
       "folk": [["Dwarves", "Dwarven"], ["the Stonefolk", "Stone"], ["the Khazar", "Khazar"]],
       "race": "dwarf", "kind": "elder", "like": "Norse- and Germanic-tinged dwarves",
-      "ai_style": "dwarvish (hard consonants, Norse- and Germanic-tinged)",
       "color": [150, 128, 110],
       "about": "Miners and smiths under the mountains: halls cut from the living rock, forges over channels of lava, mushroom farms, tombs of the ancestors, oaths kept for a thousand years, and no sky.",
       "home": {"biomes": {"mountains": 3, "hills": 1}, "temperature": [-10, 20], "moisture": [0.0, 1.0], "coast": 0.0},
@@ -145,7 +134,6 @@
     "halfling": {
       "folk": [["Halflings", "Halfling"], ["the Little Folk", "Little"], ["Hobfolk", "Hob"]],
       "race": "halfling", "kind": "small", "like": "homely rural English",
-      "ai_style": "homely English-sounding (pastoral villages)",
       "color": [176, 196, 96],
       "about": "Gardeners and brewers of the quiet hills: round-doored homes dug into green mounds, hedged lanes, six meals a day, and a dislike of anything happening.",
       "home": {"biomes": {"plains": 2, "hills": 2}, "temperature": [6, 18], "moisture": [0.3, 0.8], "coast": 0.0},
@@ -157,7 +145,6 @@
     "orcish": {
       "folk": [["Orcs", "Orcish"], ["the Tusked", "Tusked"]],
       "race": "half_orc", "kind": "tribal", "like": "harsh invented orcish",
-      "ai_style": "harsh orcish (guttural)",
       "color": [128, 140, 70],
       "about": "Raiders of the hills and the cold wastes: hide tents and bone fences, chiefs who rule while they are strong, and gods who want blood.",
       "home": {"biomes": {"hills": 2, "mountains": 1.5, "tundra": 1.5}, "temperature": [-10, 20], "moisture": [0.0, 1.0], "coast": 0.0},

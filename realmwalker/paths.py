@@ -44,10 +44,6 @@ class Paths:
         return self.resources / "data"
 
     @property
-    def prompts(self) -> Path:
-        return self.resources / "ai" / "prompts"
-
-    @property
     def fonts(self) -> Path:
         return self.resources / "assets" / "fonts"
 

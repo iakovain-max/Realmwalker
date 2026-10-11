@@ -48,28 +48,6 @@ class DebugConsole(Screen):
             for name in sorted(self.commands):
                 self.say(f"  <loot>{name}</> <dim>— {self.commands[name][1]}</>")
 
-        @self.command("ai", "ai on|off — switch AI text on or off")
-        def _ai(args):
-            if args and args[0] in ("on", "off"):
-                app.set_ai_enabled(args[0] == "on")
-            self.say(f"AI: {app.ai.status_text()[0]}")
-
-        @self.command("offline", "offline on|off — simulate Player2 being closed")
-        def _offline(args):
-            if args and args[0] in ("on", "off"):
-                app.ai.set_simulated_offline(args[0] == "on")
-            self.say(f"Simulated offline: {app.ai.simulated_offline}")
-
-        @self.command("ping", "ping Player2 now")
-        def _ping(args):
-            app.ai.ping_now()
-            self.say("Ping requested.")
-
-        @self.command("status", "show AI status, energy and request counts")
-        def _status(args):
-            ai = app.ai
-            self.say(f"{ai.status.value} · version {ai.client_version or '?'} · energy {ai.joules} · {ai.stats}")
-
         @self.command("font", "font <size> — set text size")
         def _font(args):
             if args and args[0].isdigit():

@@ -1,4 +1,4 @@
-"""The application core: configuration, data, the AI service and the screen stack.
+"""The application core: configuration, data, sound and the screen stack.
 
 The App does not own a window. `ui/window.py` runs it in a real window; tests and the autoplay
 bot drive it headlessly by calling handle_event(), update() and render() themselves.
@@ -20,16 +20,12 @@ from pathlib import Path
 import tcod.console
 
 from realmwalker import GAME_NAME, MILESTONE, __version__
-from realmwalker.ai.client import Player2Client
-from realmwalker.ai.prompts import PromptLibrary
-from realmwalker.ai.service import SYSTEM_PROMPT, AIService, AIStatus
-from realmwalker.ai.tasks import ALL_TASKS
 from realmwalker.audio import Audio
 from realmwalker.audio.bank import SoundBank
 from realmwalker.audio.music import MusicLibrary
 from realmwalker.audio.watch import GameWatch
 from realmwalker.config import DEFAULT_FONT_SIZE, FONT_SIZES, GameConfig, Settings
-from realmwalker.core.logs import set_ai_debug, setup_logging
+from realmwalker.core.logs import setup_logging
 from realmwalker.core.rng import RNG
 from realmwalker.data.registry import DataRegistry
 from realmwalker.game.save import SaveError, list_saves, load_game, save_game
@@ -79,8 +75,6 @@ class App:
         headless: bool = False,
         config_overrides: dict | None = None,
         settings_overrides: dict | None = None,
-        client_factory: Callable[[], Player2Client] | None = None,
-        start_ai: bool = True,
         clock: Callable[[], float] = time.monotonic,
     ) -> None:
         self.paths = Paths(home)
@@ -96,11 +90,8 @@ class App:
         for key, value in (settings_overrides or {}).items():
             setattr(self.settings, key, value)
         self.settings.normalise()
-        set_ai_debug(self.settings.ai_debug_log)
 
         self.data, self.data_errors = DataRegistry.load(self.paths.data)
-        self.prompts = PromptLibrary(self.paths.prompts)
-        self.data_errors += self._check_prompts()
         self.tables: Tables | None = None
         if not self.data_errors:
             try:
@@ -111,12 +102,6 @@ class App:
         self.game: GameState | None = None
         self._last_autosave = clock()
 
-        self.ai = AIService(
-            prompts=self.prompts,
-            client_factory=client_factory or self._make_client,
-            enabled=self.settings.ai_enabled,
-            workers=self.config.ai_workers,
-        )
         # Randomness for menus and demos only. Game worlds own their own seeded RNG.
         self.ui_rng = RNG(int(time.time() * 1000) % (2**31), "ui")
         # Sound: silent until a window opens the speakers (start_sound); the same calls work either way.
@@ -144,18 +129,8 @@ class App:
             from realmwalker.ui.screens.title import TitleScreen
 
             self.push(TitleScreen(self))
-        if start_ai:
-            self.ai.start()
 
     # ------------------------------------------------------------------ setup helpers
-    def _make_client(self) -> Player2Client:
-        return Player2Client(self.config.player2_base_url or None, self.config.player2_game_client_id)
-
-    def ai_extras(self) -> bool:
-        """Is there AI (and permission) for the background flourishes: regions, dungeons, items, work?
-        People and places come first; this can be switched off to save Player2 energy for them."""
-        return self.ai.usable() and self.settings.ai_extras
-
     def _make_audio(self, backend) -> Audio:
         bank = SoundBank(self.data.get("sounds.json") or {}, self.paths.sounds)
         library = MusicLibrary(self.data.get("music.json") or {}, self.paths.music_builtin, self.paths.music)
@@ -184,13 +159,6 @@ class App:
             if mood is not None:
                 return mood
         return None
-
-    def _check_prompts(self) -> list[str]:
-        errors = []
-        for name in [SYSTEM_PROMPT] + [t.name for t in ALL_TASKS]:
-            if not self.prompts.exists(name):
-                errors.append(f"ai/prompts/{name}.txt is missing.")
-        return errors
 
     # ------------------------------------------------------------------ screen stack
     @property
@@ -372,26 +340,12 @@ class App:
         self.audio.apply_settings()
         self.save_settings()
 
-    def set_ai_enabled(self, enabled: bool) -> None:
-        self.settings.ai_enabled = enabled
-        self.ai.set_enabled(enabled)
-        self.save_settings()
-
-    def set_ai_debug_log(self, enabled: bool) -> None:
-        self.settings.ai_debug_log = enabled
-        set_ai_debug(enabled)
-        self.save_settings()
-
     # ------------------------------------------------------------------ frame
     def notify(self, text: str, color: str = "fg", seconds: float = 3.5) -> None:
         self.toasts.append(Toast(text, colors.named(color), self.clock() + seconds))
         self.toasts = self.toasts[-4:]
 
     def update(self) -> None:
-        try:
-            self.ai.poll()
-        except Exception:
-            self.report_error("receiving AI text")
         if self.top is not None:
             self._guard("updating the screen", self.top.update)
         now = self.clock()
@@ -414,7 +368,7 @@ class App:
         moving = self.gfx is not None and self.gfx.animate and getattr(self.top, "moving", False)
         if moving:
             return 1 / 60  # something on screen is in motion: keep it smooth
-        busy = self.toasts or self.ai.pending or getattr(self.top, "animating", False)
+        busy = self.toasts or getattr(self.top, "animating", False)
         if busy:
             return 0.05
         if self.gfx is not None and self.gfx.ambient and getattr(self.top, "ambient", False):
@@ -457,8 +411,6 @@ class App:
                 return
         try:
             canvas.push_layer()  # the status line, notices and tooltips sit above every picture
-            if self.top is not None and self.top.show_status:
-                self._render_status(canvas)
             self._render_toasts(canvas)
             canvas.draw_tooltip()
         except Exception:
@@ -476,32 +428,6 @@ class App:
 
                 self.screens.append(TitleScreen(self))
         self.report_error("drawing the screen")
-
-    def _render_status(self, canvas: Canvas) -> None:
-        label, color = self.ai.status_text()
-        if self.ai.pending and self.ai.status == AIStatus.ONLINE:
-            label = "AI writing…"
-        energy = ""
-        if self.ai.joules is not None and self.ai.status in (AIStatus.ONLINE, AIStatus.NO_ENERGY):
-            energy = f" · energy {self.ai.joules}"
-        text = f"● {label}{energy}"
-        x = canvas.width - len(text) - 1
-        y = canvas.height - 1
-        canvas.text(x, y, "●", colors.named(color))
-        canvas.text(x + 2, y, f"{label}{energy}", colors.DIM)
-        canvas.hit(x, y, len(text), 1, tooltip=self._status_tooltip())
-
-    def _status_tooltip(self) -> str:
-        s = self.ai.status
-        if s == AIStatus.ONLINE:
-            return "Player2 is connected. Names, descriptions and dialogue are written by the AI."
-        if s == AIStatus.DISABLED:
-            return "AI text is switched off in Settings. The game uses its built-in text."
-        if s == AIStatus.NO_ENERGY:
-            return "Player2's daily energy has run out. The game uses built-in text until it refills."
-        if s == AIStatus.NOT_LOGGED_IN:
-            return "Open the Player2 app and log in to get AI-written text."
-        return "Start the Player2 app to get AI-written text. Until then the game uses built-in text."
 
     def _render_toasts(self, canvas: Canvas) -> None:
         y = canvas.height - 3
@@ -595,10 +521,6 @@ class App:
     def shutdown(self) -> None:
         if self.game is not None:
             self.save_game()
-        try:
-            self.ai.stop()
-        except Exception:
-            log.exception("Error stopping the AI service")
         try:
             self.audio.close()
         except Exception:

@@ -13,7 +13,7 @@ TABS = ("News", "Chronicle", "Legends")
 
 
 def ensure_chronicle(app, game) -> dict:
-    """The chronicle: the AI's if it has been written, else built-in words (made now, and then kept)."""
+    """The chronicle, in built-in words (made the first time it is read, and then kept)."""
     w = game.world
     chron = w.politics.get("chronicle")
     if chron is None:
@@ -21,29 +21,6 @@ def ensure_chronicle(app, game) -> dict:
         w.politics["chronicle"] = chron
         game.dirty = True
     return chron
-
-
-def request_chronicle(app, game) -> None:
-    """Ask the AI to write the chronicle, in the background, once per world (before anyone reads it)."""
-    w = game.world
-    if w.politics.get("chronicle") is not None or w.politics.get("chronicle_asked") or not app.ai_extras():
-        return
-    if not w.history:
-        return
-    from realmwalker.ai.service import Priority
-    from realmwalker.ai.tasks import CHRONICLE
-
-    w.politics["chronicle_asked"] = True
-
-    def done(result) -> None:
-        if w.politics.get("chronicle") is not None:
-            return  # the built-in one has been read already; it stays
-        if result.ok and result.data and result.data.get("chronicle"):
-            w.politics["chronicle"] = {"title": result.data.get("title") or f"A Chronicle of {w.meta.name}",
-                                       "text": result.data["chronicle"], "source": "ai"}
-            game.dirty = True
-
-    app.ai.submit(CHRONICLE, history.chronicle_facts(w, game.tables), priority=Priority.BACKGROUND, callback=done)
 
 
 class ChronicleScreen(Screen):
@@ -75,8 +52,6 @@ class ChronicleScreen(Screen):
         elif i == 1:
             chron = ensure_chronicle(self.app, game)
             body = markup.escape(chron["text"])
-            if chron.get("source") == "ai":
-                body = "\n\n".join(f"<ai>{p}</>" for p in body.split("\n\n"))
             lines = [f"<title>{markup.escape(chron['title'])}</>", "", body, "", "<title>Timeline</>"]
             for e in w.history:
                 if e.get("importance", 2) >= 4:
@@ -107,8 +82,7 @@ class ChronicleScreen(Screen):
                                  f"{markup.escape(r['cause'])}, at {markup.escape(r['place'])}."
                                  + (f" {kills} things killed." if kills else ""))
                     if r.get("obituary"):
-                        colour = "ai" if r.get("obituary_source") == "ai" else "dim"
-                        lines.append(f"  <{colour}>{markup.escape(r['obituary'])}</>")
+                        lines.append(f"  <dim>{markup.escape(r['obituary'])}</>")
             lines += ["", "<title>Legends</>"]
             for fig in w.figures.values():
                 if fig.role == "legend":

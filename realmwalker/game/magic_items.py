@@ -1,10 +1,9 @@
-"""Magic items (M8): made by code within a budget for their rarity, named and given a history by the AI (or by
-built-in words that draw on the world's real past), hidden until identified, and now and then cursed.
+"""Magic items (M8): made by code within a budget for their rarity, named and given a history by built-in words
+that draw on the world's real past, hidden until identified, and now and then cursed.
 
 - `make(game, rng, tier)`: a new magic item for a treasure of that tier.
 - `study(game, char, item)`: an hour with the thing and an Arcana check; a priest can also tell you (services).
 - `lift_curse(item)`: what a temple's rite does.
-- `dressing_facts(game, item)` / `apply_dressing(item, data)`: what the AI is told, and what we keep.
 """
 
 from __future__ import annotations
@@ -83,14 +82,14 @@ def make(game, rng: RNG, *, tier: int = 1, kind: str | None = None, rarity: str 
     r = spec["rarities"][rarity]
     magic["value"] = int(items.get(base)["value"] * float(r["value_mult"]) + int(r["value_add"]))
     title, story = built_in_words(game, base, rng)
-    magic.update(title=title, story=story, source="fallback")
+    magic.update(title=title, story=story)
     magic["look"] = look_for(game, magic, rng.child("look"))
     return Item(uid=0, def_id=base, qty=1, quality="fine", condition=100, made_at=game.world.time, magic=magic)
 
 
 def look_for(game, magic: dict, rng: RNG) -> dict:
     """How a magic item looks, from the words in its name and story and from its powers: its metal, the colour of its
-    cloth (or a shield's field), an emblem, and maybe a faint glow. The AI may choose again when it names the thing."""
+    cloth (or a shield's field), an emblem, and maybe a faint glow."""
     spec = data(game)["looks"]
     words = set(textgen_words(f"{magic.get('title', '')} {magic.get('story', '')}"))
 
@@ -192,7 +191,7 @@ def describe(game, item) -> list[str]:
     if magic.get("cursed"):
         lines.append(f"<danger>Cursed: {esc(magic['curse']['text'])}</>")
     if magic.get("story"):
-        lines.append(("<ai>" if magic.get("source") == "ai" else "<dim>") + esc(magic["story"]) + "</>")
+        lines.append("<dim>" + esc(magic["story"]) + "</>")
     return lines
 
 
@@ -230,49 +229,3 @@ def lift_curse(item) -> None:
     item.magic.pop("curse", None)
 
 
-# ---------------------------------------------------------------------------- AI words
-def needs_dressing(item) -> bool:
-    m = item.magic
-    return bool(m) and not m.get("identified") and m.get("source") == "fallback" and not m.get("ai_asked")
-
-
-def dressing_facts(game, item) -> dict:
-    spec = data(game)
-    rng = game.world.rng.child(f"dress/{item.uid}/{item.def_id}")
-    facts = lore(game, rng)
-    props = []
-    for p in item.magic.get("props", []):
-        label = spec["properties"].get(p["kind"], {}).get("label", p["kind"])
-        props.append(label.replace("{value}", str(p.get("value", ""))).replace("{skill}", p.get("skill", ""))
-                     .replace("{type}", p.get("type", "")).replace("{ability}", p.get("ability", ""))
-                     .replace("{spell}", p.get("spell", "").replace("_", " ")))
-    return {
-        "base": game.tables.items.get(item.def_id)["name"], "rarity": item.magic.get("rarity", "uncommon").replace("_", " "),
-        "powers": "; ".join(props), "cursed": "yes" if item.magic.get("cursed") else "no",
-        "hero": facts["hero"], "place": facts["place"], "year": facts["year"], "faction": facts["faction"],
-    }
-
-
-def apply_dressing(item, result: dict) -> bool:
-    """Keep the AI's name and history, unless the player already knows the old ones; and the look it chose (each
-    word already one of a whitelist, ai/tasks.py LOOK_*), which is how the thing will be drawn."""
-    m = item.magic
-    if not m or m.get("identified"):
-        return False
-    if result.get("name"):
-        m["title"] = result["name"]
-    if result.get("history"):
-        m["story"] = result["history"]
-    look = dict(m.get("look") or {})
-    for key in ("metal", "cloth", "emblem"):
-        if result.get(key):
-            look[key] = result[key]
-    if result.get("glow"):
-        if result["glow"] == "none":
-            look.pop("glow", None)
-        else:
-            look["glow"] = result["glow"]
-    if look:
-        m["look"] = look
-    m["source"] = "ai"
-    return True

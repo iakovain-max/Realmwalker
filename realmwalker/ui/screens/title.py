@@ -49,9 +49,7 @@ class TitleScreen(Screen):
                      else "Every world you have made has a living character. Make a New World, or Continue."),
             MenuItem("Saved Worlds", self._worlds, "W", enabled=bool(self.saves or self.empty_worlds),
                      note="Every world you have made: play on, start a new character, or delete one."),
-            MenuItem("Player2 Connection Test", self._player2_test, "P",
-                     note="Check the connection to the Player2 AI app and try a sample generation."),
-            MenuItem("Settings", self._settings, "S", note="Text size, dice display, AI on/off and more."),
+            MenuItem("Settings", self._settings, "S", note="Text size, pictures, sound, dice display and more."),
             MenuItem("Help", self._help, "?", note="Keys and how to play."),
             MenuItem("Quit", self.app.request_quit, "Q", note="Leave the game."),
         ]
@@ -89,11 +87,6 @@ class TitleScreen(Screen):
         selected = self.menu.selected
         self.menu = Menu(self._items(), on_disabled=self._disabled)
         self.menu.selected = selected if self.saves or selected != 0 else 1
-
-    def _player2_test(self) -> None:
-        from realmwalker.ui.screens.player2_test import Player2TestScreen
-
-        self.app.push(Player2TestScreen(self.app))
 
     def _settings(self) -> None:
         from realmwalker.ui.screens.settings_screen import SettingsScreen

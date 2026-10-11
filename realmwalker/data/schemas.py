@@ -39,7 +39,6 @@ PEOPLE = Obj(
         "race": Str(max_len=20),
         "kind": Str(choices=["human", "elder", "small", "tribal"]),
         "like": Str(max_len=120),
-        "ai_style": Str(max_len=160),
         "color": COLOR,
         "about": Str(max_len=600),
         "home": Obj({"biomes": Map(Float(min=0, max=10)),
@@ -69,9 +68,10 @@ SKIES = ("clear", "cloudy", "overcast", "fog", "drizzle", "rain", "storm", "flur
 TRAVEL_DAY_TABLES = ("passage", "opening", "walking", "closing") + tuple(f"sky_{k}" for k in SKIES)
 
 SETTLEMENT_TABLES = ("passage", "approach", "sight", "smell", "detail")
+OBITUARY_TABLES = ("opening", "fame", "infamy", "nobody", "deeds", "no_deeds", "killer", "gentle", "closing")
 
 FALLBACK_TEXT = Obj({"tavern": table_set(*TAVERN_TABLES), "travel_day": table_set(*TRAVEL_DAY_TABLES),
-                     "settlement": table_set(*SETTLEMENT_TABLES),
+                     "settlement": table_set(*SETTLEMENT_TABLES), "obituary": table_set(*OBITUARY_TABLES),
                      "weather_change": Map(word_list(1, 200), min_items=1)})
 
 # Slots that code fills in itself (not from a table), per table set.
@@ -79,6 +79,7 @@ RUNTIME_SLOTS: dict[str, set[str]] = {
     "tavern": {"family", "keeper"},
     "travel_day": {"name", "miles", "lands", "weather", "mood", "season", "events", "road", "sky"},
     "settlement": {"name", "kind", "land", "land_in", "season"},
+    "obituary": {"first", "who", "age", "road", "place", "deed", "kills", "year"},
 }
 
 PLACE_NAMES = Obj(

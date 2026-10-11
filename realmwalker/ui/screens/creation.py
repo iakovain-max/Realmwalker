@@ -6,8 +6,6 @@ gives a playable character. Tab / Shift+Tab (or clicking a step) moves between s
 
 from __future__ import annotations
 
-from realmwalker.ai.service import AIResult, Priority, Ticket
-from realmwalker.ai.tasks import BACKSTORY, backstory_variables
 from realmwalker.core.textgen import a_or_an
 from realmwalker.game.describe import cap, settlement_line
 from realmwalker.game.state import new_game
@@ -25,7 +23,6 @@ STEPS = ["People", "Calling", "Background", "Abilities", "Skills & training", "W
 LOOKS, START, BEGIN = 6, 7, 8
 COLOUR_SLOTS = ("skin", "eyes", "hair_colour", "beard_colour", "paint_colour", "dye", "cloak")
 LEFT_W = 26
-SPINNER = "|/-\\"
 
 
 class CreationScreen(Screen):
@@ -43,8 +40,6 @@ class CreationScreen(Screen):
         self.name_field = TextField(self.b.name, max_len=32)
         self.places: list[int] = []
         self._places_for: tuple | None = None
-        self.ticket: Ticket | None = None
-        self.frame = 0
         self._refresh_places()
 
     # ------------------------------------------------------------------ helpers
@@ -205,7 +200,7 @@ class CreationScreen(Screen):
                 age = self.t.races[self.b.race]["age"]
                 self.b.age = max(age["adult"], min(age["old"], self.b.age + delta))
             elif row == 3:
-                self.write_backstory(ai=delta > 0)
+                self.write_backstory()
         elif self.step == LOOKS:
             self.change_look(row, delta)
 
@@ -213,30 +208,10 @@ class CreationScreen(Screen):
         self.b.name = self.b.random_name()
         self.name_field.value = self.b.name
 
-    def write_backstory(self, ai: bool = True) -> None:
+    def write_backstory(self) -> None:
+        """A new backstory from the built-in words (each press writes another)."""
         self._refresh_places()
-        tie = make_ties(self.world, self.t, self.b.build(self.world.time), self.b.start_settlement or 0,
-                        self.app.ui_rng.child("tiepreview"))[0]["text"] if self.world.settlements else ""
-        self._pending_tie = tie
-        if ai and self.app.ai.usable():
-            if self.ticket is not None:
-                return
-            variables = backstory_variables(self.b, self.t, self.home_name(), tie)
-            self.ticket = self.app.ai.submit(BACKSTORY, variables, priority=Priority.URGENT, callback=self._backstory_done)
-            self._ticket_started = self.app.clock()
-        else:
-            if ai:
-                self.app.notify("The AI is not available; using built-in text.", "warn")
-            self.b.apply_backstory(self.b.fallback_backstory(self.home_name()), "built-in")
-
-    def _backstory_done(self, result: AIResult) -> None:
-        self.ticket = None
-        if result.ok and result.data:
-            self.b.apply_backstory(result.data, "ai")
-            self.app.notify("The AI wrote your backstory.", "good")
-        else:
-            self.b.apply_backstory(self.b.fallback_backstory(self.home_name()), "built-in")
-            self.app.notify(f"AI backstory failed ({result.error}); used built-in text.", "warn")
+        self.b.apply_backstory(self.b.fallback_backstory(self.home_name()))
 
     def begin(self) -> None:
         self.b.name = self.name_field.value.strip() or self.b.random_name()
@@ -244,11 +219,8 @@ class CreationScreen(Screen):
         if problems:
             self.app.notify(problems[0], "warn", 5)
             return
-        if self.ticket is not None:
-            self.ticket.cancel()
-            self.ticket = None
         if not self.b.backstory:
-            self.b.apply_backstory(self.b.fallback_backstory(self.home_name()), "built-in")
+            self.b.apply_backstory(self.b.fallback_backstory(self.home_name()))
         self._refresh_places()
         start = self.b.start_settlement
         # A world that has been lived in before does not wait: weeks or months pass before the new life begins.
@@ -316,7 +288,7 @@ class CreationScreen(Screen):
         elif ev.key in ("r", "R") and self.step == LOOKS:
             self.b.randomize_looks()
         elif ev.key in ("w", "W") and self.step == 5:
-            self.write_backstory(ai=True)
+            self.write_backstory()
         else:
             return False
         return True
@@ -333,9 +305,6 @@ class CreationScreen(Screen):
             self.b.set_background(self._lists()[row])
         elif self.step == START:
             self._refresh_places()
-
-    def update(self) -> None:
-        self.frame += 1
 
     # ------------------------------------------------------------------ drawing
     def render(self, canvas: Canvas) -> None:
@@ -573,7 +542,7 @@ class CreationScreen(Screen):
             ("Name", None),
             ("Sex", f"◄ {b.sex} ►"),
             ("Age", f"◄ {b.age} ► <dim>(adult at {age['adult']}, old at {age['old']})</>"),
-            ("Backstory", "<dim>→ ask the AI to write it · ← built-in text · or press W</>"),
+            ("Backstory", "<dim>◄ ► write one (again for another) · or press W</>"),
         ]
         for i, (label, value) in enumerate(rows):
             selected = i == self.cursor[5]
@@ -589,19 +558,14 @@ class CreationScreen(Screen):
         canvas.markup(x, y + 8, f"<dim>Looks:</> {markup.escape(b.appearance)} <dim>(the next step changes them)</>",
                       max_width=w)
         ty = y + 10
-        if self.ticket is not None:
-            spin = SPINNER[self.frame // 3 % 4]
-            canvas.markup(x, ty, f"<ai>{spin} The AI is writing your backstory…</>")
-            return
         if b.backstory:
-            source = "<ai>written by the AI</>" if b.backstory_source == "ai" else "<dim>built-in text</>"
-            used = canvas.wrapped(x, ty, f"{markup.escape(b.backstory)}  ({source})", min(w, 90), max_lines=6)
+            used = canvas.wrapped(x, ty, markup.escape(b.backstory), min(w, 90), max_lines=6)
             extras = [("Personality", b.personality), ("Ideal", b.ideal), ("Bond", b.bond), ("Flaw", b.flaw)]
             for j, (label, value) in enumerate(extras):
                 canvas.markup(x, ty + used + 1 + j, f"<dim>{label}:</> {markup.escape(value)}", max_width=w)
         else:
-            canvas.wrapped(x, ty, "<dim>No backstory yet. One will be written from built-in text when you begin, "
-                                  "unless you ask the AI (a little Player2 energy).</>", min(w, 90))
+            canvas.wrapped(x, ty, "<dim>No backstory yet. One will be written when you begin, or press W to write "
+                                  "one now.</>", min(w, 90))
 
     def _r_looks(self, canvas, x, y, w, h) -> None:
         """Every look as a row (◄ choice ►, a swatch for colours), and the character large beside them: the head and

@@ -1,4 +1,4 @@
-"""Settings: text size, fullscreen, pictures and animation, dice display, AI on/off, verbosity, autosave, sound."""
+"""Settings: text size, fullscreen, pictures and animation, dice display, verbosity, autosave, sound."""
 
 from __future__ import annotations
 
@@ -36,18 +36,11 @@ class SettingsScreen(Screen):
                    "Fill the whole screen. Shortcut anywhere: F11."),
             Option("Show dice rolls", lambda: _onoff(s.show_dice), lambda d: self._toggle("show_dice"),
                    "Show every roll in the message log, e.g. 'Persuasion: 14 + 3 = 17 vs DC 15 — success.'"),
-            Option("AI text (Player2)", lambda: _onoff(s.ai_enabled), lambda d: app.set_ai_enabled(not s.ai_enabled),
-                   "Use the Player2 AI for names, descriptions and dialogue. When off, built-in text is used."),
-            Option("AI extras", lambda: _onoff(s.ai_extras), lambda d: self._toggle("ai_extras"),
-                   "Let the AI also write regions, dungeons, magic items, work and obituaries. Off: the AI is "
-                   "kept for people, places and conversation, which saves Player2 energy."),
             Option("Text detail", lambda: s.verbosity.capitalize(), self._verbosity,
                    "How much of the world's voice you hear: street life in towns, companions talking on the "
                    "road, the weather turning, sounds in the night. Brief keeps only what matters."),
             Option("Autosave every", lambda: f"{s.autosave_minutes} min", self._autosave,
                    "The game also saves on important events and when you quit. There is no manual reload."),
-            Option("AI debug log", lambda: _onoff(s.ai_debug_log), lambda d: app.set_ai_debug_log(not s.ai_debug_log),
-                   "Write every AI request and reply to logs/ai_debug.log. Useful when tuning prompts."),
             Option("Eat and drink by yourself", lambda: _onoff(s.auto_supplies), lambda d: self._toggle("auto_supplies"),
                    "Take meals and drinks from the pack when hungry or thirsty. Off: you must eat and drink "
                    "from the inventory yourself (Enter on food or a waterskin)."),
@@ -146,8 +139,6 @@ class SettingsScreen(Screen):
                 self.app.window_requests.add("fullscreen")
             for name, value in fresh.to_dict().items():
                 setattr(old, name, value)
-            self.app.set_ai_enabled(old.ai_enabled)
-            self.app.set_ai_debug_log(old.ai_debug_log)
             self.app.sound_settings_changed()
             self.app.notify("Settings reset to defaults", "info")
 

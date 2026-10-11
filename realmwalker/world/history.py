@@ -450,39 +450,4 @@ def chronicle_fallback(world, tables) -> dict:
     today = present_lines(world, tables)
     if today:
         paras.append(f"And now, in the year {now}: " + " ".join(today))
-    return {"title": f"A Chronicle of {world.meta.name}", "text": "\n\n".join(paras), "source": "fallback"}
-
-
-def chronicle_facts(world, tables) -> dict:
-    """What the AI chronicler is given (it may only retell these)."""
-    start = int(world.politics.get("history_from", tables.calendar.start_year - 250))
-    eras = world.politics.get("eras")
-    if eras:
-        picked = []
-        for era in eras[1:]:
-            span = [e for e in world.history if era["start"] <= e["year"] < era["end"] and e.get("text")
-                    and e.get("importance", 2) >= 3]
-            great = [e for e in span if e.get("importance", 2) >= 4] or span
-            picked.append({"year": era["start"], "text": f"{era['name'][:1].upper() + era['name'][1:]} began "
-                                                         f"({era.get('summary', '')})"})
-            picked += pick_events(great, max(3, 34 // max(1, len(eras) - 1)))
-        old = pick_events([e for e in world.history if e["year"] < start and e.get("importance", 2) >= 3
-                           and e.get("text")], 8)
-        return {
-            "world": world.meta.name,
-            "year": str(tables.calendar.at(world.time).year),
-            "deep_past": "\n".join(f"- {e['year']}: {e['text']}" for e in old) or "- (nothing is remembered)",
-            "events": "\n".join(f"- {e['year']}: {e['text']}" for e in picked[:44]) or "- (quiet years)",
-            "today": "\n".join(f"- {line}" for line in present_lines(world, tables)) or "- (no great lords)",
-        }
-    events = [e for e in world.history if e.get("importance", 2) >= 4]
-    old = [e for e in world.history if e["year"] < start and e.get("importance", 2) >= 3][:8]
-    step = max(1, len(events) // 30)
-    picked = events[::step][:34]
-    return {
-        "world": world.meta.name,
-        "year": str(tables.calendar.at(world.time).year),
-        "deep_past": "\n".join(f"- {e['year']}: {e['text']}" for e in old) or "- (nothing is remembered)",
-        "events": "\n".join(f"- {e['year']}: {e['text']}" for e in picked) or "- (quiet years)",
-        "today": "\n".join(f"- {line}" for line in present_lines(world, tables)) or "- (no great lords)",
-    }
+    return {"title": f"A Chronicle of {world.meta.name}", "text": "\n\n".join(paras)}

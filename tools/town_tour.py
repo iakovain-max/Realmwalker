@@ -1,5 +1,5 @@
 """A tour of towns, for looking at them: makes a world, then visits a settlement of each people (and a dwarven hold
-and an elven hall) on foot, by day and by night, saving a screenshot of each. AI off; nothing is saved.
+and an elven hall) on foot, by day and by night, saving a screenshot of each. Nothing is saved.
 
     .venv\\Scripts\\python.exe tools\\town_tour.py [--seed 21] [--size large] [--out build\\shots\\towns]
 """
@@ -34,7 +34,7 @@ def main(argv=None) -> int:
 
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
-    app = App(home=tempfile.mkdtemp(prefix="realmwalker-tour-"), settings_overrides={"ai_enabled": False})
+    app = App(home=tempfile.mkdtemp(prefix="realmwalker-tour-"))
     encounters.encounter_chance = lambda *a, **k: 0.0
     events.event_chance = lambda *a, **k: 0.0
     world = WorldGenerator(WorldOptions("Tour", args.seed, args.size, history=100, climate=args.climate),

@@ -37,51 +37,6 @@ KIN = {"bandit_gang": ["bandits", "footpads", "thugs"], "bandit_hideout": ["band
 VERMIN = ("rats", "spiders", "wild_dogs")
 
 
-def needs_words(lm) -> bool:
-    return (lm is not None and lm.kind == "dungeon" and lm.meta.get("desc_source") == "fallback"
-            and not lm.meta.get("ai_asked") and not lm.meta.get("desc_seen"))
-
-
-def dressing_facts(game, lm) -> dict:
-    """What the AI is told about a level it has never seen: only what is really down here."""
-    site = game.world.site_at(game.player.x, game.player.y)
-    meta = lm.meta
-    kinds = {f.get("kind") for f in lm.features.values()}
-    sights = []
-    if "chest" in kinds:
-        sights.append("chests or coffins")
-    if "trap" in kinds:
-        sights.append("traps")
-    if "secret" in kinds:
-        sights.append("a hidden room")
-    terrains = set(lm.terrain_ids)
-    for tid, word in (("sarcophagus", "stone coffins"), ("bones", "old bones"), ("bedroll", "bedrolls"),
-                      ("altar", "an altar"), ("hoard", "a heap of gold"), ("shallow_water", "standing water"),
-                      ("rubble", "fallen stone"), ("pillar", "pillars"), ("table", "tables")):
-        if tid in terrains:
-            sights.append(word)
-    groups = sorted({game.tables.creatures.encounters[a.group]["name"] for a in lm.actors
-                     if a.group in game.tables.creatures.encounters})
-    return {
-        "place": site.name if site is not None else "a hole in the ground",
-        "kind": site.kind if site is not None else "ruin",
-        "style": meta.get("name", "dark"),
-        "level": str(meta.get("level", 1)),
-        "depth": str(meta.get("depth", 1)),
-        "master": ", ".join(groups) or "nothing living",
-        "sights": ", ".join(sights) or "bare stone",
-    }
-
-
-def apply_description(lm, data: dict) -> bool:
-    """Keep the AI's words, unless the player has already read the built-in ones."""
-    if lm is None or lm.meta.get("desc_seen") or not data.get("description"):
-        return False
-    lm.meta["desc"] = str(data["description"]).strip()
-    lm.meta["desc_source"] = "ai"
-    return True
-
-
 def in_dungeon(game) -> bool:
     lm = game.local
     return lm is not None and lm.kind == "dungeon"
@@ -173,9 +128,7 @@ def descend(game, level: int, *, from_below: bool = False) -> None:
     light_up(game)
     if lm.meta.get("desc") and not lm.meta.get("desc_seen"):
         lm.meta["desc_seen"] = True
-        text = lm.meta["desc"]
-        ai = lm.meta.get("desc_source") == "ai"
-        game.say(f"<ai>{text}</>" if ai else text, "flavor")
+        game.say(lm.meta["desc"], "flavor")
     if game.world.politics.get("dragons"):
         from realmwalker.game import dragons
 

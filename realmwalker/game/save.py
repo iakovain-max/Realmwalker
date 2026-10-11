@@ -25,7 +25,6 @@ from pathlib import Path
 import numpy as np
 
 from realmwalker import __version__
-from realmwalker.ai.store import FlavorStore
 from realmwalker.core.rng import RNG
 from realmwalker.game.encounters import LocalActor
 from realmwalker.game.people import NPC, Town
@@ -40,7 +39,7 @@ from realmwalker.world.tables import Tables
 
 log = logging.getLogger("realmwalker.save")
 
-FORMAT_VERSION = 11  # 11: peoples on the map, a world's names, bigger towns (no migration: older saves are refused)
+FORMAT_VERSION = 12  # 12: no AI-written text kept (towns, townsfolk, the world) (no migration: older saves are refused)
 WORLD_FILE = "world.zip"
 CHARACTER_FILE = "character.zip"
 
@@ -174,7 +173,6 @@ def world_entries(world: World) -> dict[str, bytes | str]:
         "culture_ids": world.culture_ids,
         "time": world.time,
         "rng": world.rng.get_state(),
-        "flavor": world.flavor.to_dict(),
         **world.objects_dict(),
         "local_maps": sorted(world.local_maps),
         "npcs": [n.to_dict() for _, n in sorted(world.npcs.items())],
@@ -252,7 +250,6 @@ def load_world(folder: Path) -> World:
         wonders=[Wonder(**wd) for wd in body.get("wonders", [])],
         time=int(body["time"]),
         local_maps=local_maps,
-        flavor=FlavorStore.from_dict(body.get("flavor", {})),
         rng=RNG.from_state(body["rng"]),
         npcs={n["id"]: NPC.from_dict(n) for n in body.get("npcs", [])},
         towns={t["settlement"]: Town.from_dict(t) for t in body.get("towns", [])},

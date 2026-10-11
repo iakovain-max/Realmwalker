@@ -14,7 +14,6 @@ Entry = tuple[str, Callable[[], None] | None, str]  # (label, action or None for
 
 class ContextMenu(Screen):
     modal = True
-    show_status = False
 
     def __init__(self, app, at: tuple[int, int], entries: list[Entry], title: str = "") -> None:
         super().__init__(app)

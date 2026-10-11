@@ -6,8 +6,8 @@ What remains is what the world remembers — and the world keeps going.
 - `die(game)` writes the fallen character into the world (`world.politics["fallen"]`), puts their death into the
   chronicle and the news if anyone had heard of them, and releases the surviving companions to go home, where
   another traveller may hire them one day.
-- `fallback_obituary` / `obituary_facts` / `apply_obituary`: the words on the death screen, built-in or written by
-  the AI (task OBITUARY), and kept with the record so the next character can read about the one before.
+- `fallback_obituary`: the words on the death screen, kept with the record so the next character can read about
+  the one before.
 
 Nothing here carries over to a new character: their standing, money and gear all die with them. Only the story
 stays, in the world.
@@ -69,13 +69,56 @@ def die(game) -> dict:
         "titles": list(reputation.titles(game)), "standings": {str(k): v for k, v in standings.items()},
         "quests_done": sum(1 for q in game.quests if q["state"] == "finished"),
         "companions": [x.name for x in list(game.party[1:]) + list(game.waiting)],
-        "obituary": "", "obituary_source": "",
+        "obituary": "",
     }
+    record["obituary"] = write_obituary(game, record)
     fallen(w).append(record)
     remember(game, record)
     release_companions(game)
     game.dirty = True
     return record
+
+
+def road_words(days: int) -> str:
+    """How long a life was on the road, as an obituary says it."""
+    if days < 3:
+        return "only a few days"
+    if days < 14:
+        return "barely a fortnight"
+    if days < 60:
+        return f"some {max(2, round(days / 7))} weeks"
+    if days < 330:
+        return f"some {max(2, round(days / 30))} months"
+    if days < 700:
+        return "about a year"
+    return f"some {round(days / 365)} years"
+
+
+def write_obituary(game, record: dict) -> str:
+    """A few sentences about the dead, from the built-in words (data/fallback_text.json obituary), kept with the
+    record: who they were, what the world thought of them, what they did and killed, and where it ended."""
+    from realmwalker.core import textgen
+
+    tables = game.tables.fallback["obituary"]
+    rng = game.world.rng.child(f"obituary/{record['id']}/{record['day']}")
+    t = game.tables
+    first = record["name"].split()[0]
+    kills = sum(record.get("kills", {}).values())
+    values = {
+        "first": first, "age": str(record["age"]), "road": road_words(int(record.get("days_lived", 0))),
+        "who": f"{a_or_an(t.races[record['race']]['name'].lower())} {t.classes[record['cls']]['name'].lower()}",
+        "place": record["place"], "year": str(record["year"]), "kills": kill_list(game, record, 4),
+        "deed": rng.choice(record["deeds"]) if record.get("deeds") else "",
+    }
+    known = record["fame"] - record["infamy"]
+    standing = "fame" if record["fame"] >= 10 and known >= 0 else "infamy" if record["infamy"] >= 10 else "nobody"
+    parts = ["opening", standing, "deeds" if record.get("deeds") else "no_deeds"]
+    if kills >= 8:
+        parts.append("killer")
+    elif kills == 0 and rng.chance(0.6):
+        parts.append("gentle")
+    parts.append("closing")
+    return " ".join(textgen.fill(rng.choice(tables[part]), rng, tables, values) for part in parts)
 
 
 def how_they_died(cause: str) -> str:
@@ -163,8 +206,7 @@ def fallback_obituary(game, record: dict) -> list[str]:
         f"at {esc(record['place'])}.",
     ]
     if record.get("obituary"):
-        lines += ["", *[f"<ai>{esc(p)}</>" if record.get("obituary_source") == "ai" else esc(p)
-                        for p in record["obituary"].split("\n") if p.strip()]]
+        lines += ["", *[esc(p) for p in record["obituary"].split("\n") if p.strip()]]
     kills = kill_list(game, record)
     if kills:
         lines += ["", f"Killed: {esc(kills)}."]
@@ -181,36 +223,6 @@ def fallback_obituary(game, record: dict) -> list[str]:
                   f"everything else they carried.</>",
               "<dim>The world goes on. You can begin a new life in it from the title screen (New Character).</>"]
     return lines
-
-
-def obituary_facts(game, record: dict) -> dict:
-    t = game.tables
-    w = game.world
-    standings = []
-    for fid, value in record.get("standings", {}).items():
-        f = w.factions.get(int(fid))
-        if f is not None:
-            word, _ = fx.standing_name(t, value)
-            standings.append(f"{f.name}: {word}")
-    return {
-        "name": record["name"],
-        "who": f"{a_or_an(t.races[record['race']]['name'].lower())} {t.classes[record['cls']]['name'].lower()}, "
-               f"level {record['level']}, aged {record['age']}",
-        "death": f"{how_they_died(record['cause'])}, at {record['place']}, in the year {record['year']}",
-        "deeds": "; ".join(record.get("deeds", [])) or "nothing anyone wrote down",
-        "kills": kill_list(game, record) or "nothing worth counting",
-        "standing": "; ".join(standings) or "nobody of importance had an opinion",
-        "fame": f"fame {record['fame']}, infamy {record['infamy']}",
-    }
-
-
-def apply_obituary(game, record: dict, data: dict) -> bool:
-    if not data or not data.get("obituary") or record.get("obituary_source") == "ai":
-        return False
-    record["obituary"] = str(data["obituary"]).strip()
-    record["obituary_source"] = "ai"
-    game.dirty = True
-    return True
 
 
 # ---------------------------------------------------------------------------- those who came before

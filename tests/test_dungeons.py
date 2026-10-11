@@ -235,24 +235,15 @@ def test_dungeons_survive_saving(game, tmp_path):
 
 
 def test_a_level_describes_itself(game):
-    """Each level has built-in words, said once; the AI may write its own before they are read."""
+    """Each level has built-in words, said once."""
     site = game.world.sites[0]
     game.player.x, game.player.y = site.x, site.y
     game.enter_local()
     dungeon.descend(game, 1)
     lm = game.local
-    assert lm.meta["desc"] and lm.meta["desc_source"] == "fallback"
+    assert lm.meta["desc"]
     assert any(lm.meta["desc"] in m.text for m in game.log.messages)
     assert lm.meta["desc_seen"]
-    assert not dungeon.needs_words(lm)  # it has been read: the AI does not overwrite it now
-    assert not dungeon.apply_description(lm, {"description": "Something else."})
-    # A level nobody has read yet takes the AI's words.
     dungeon.descend(game, 1)  # again: not said twice
     said = sum(1 for m in game.log.messages if lm.meta["desc"] in m.text)
     assert said == 1
-    other = gen.get_dungeon(game.world, game.tables, game.world.sites[1], 1)
-    facts = dungeon.dressing_facts(game, other)
-    assert facts["place"] and facts["style"] and facts["sights"]
-    assert dungeon.needs_words(other)
-    assert dungeon.apply_description(other, {"description": "A room of wet stone, and something breathing in it."})
-    assert other.meta["desc_source"] == "ai"

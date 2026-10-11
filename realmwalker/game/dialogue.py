@@ -1,7 +1,6 @@
 """Conversations with townsfolk: a menu from code, lines in character, and a few special options
 tied to skill checks whose outcomes come from a fixed whitelist (so nobody can promise what the
-game cannot deliver). The AI may write the lines and propose the special options (M5 part 2);
-without it, built-in lines and options from data/dialogue.json are used.
+game cannot deliver). The lines and options come from data/dialogue.json.
 """
 
 from __future__ import annotations
@@ -58,7 +57,7 @@ def story_note(npc: NPC, story: str) -> str:
 
 
 class Conversation:
-    def __init__(self, game, npc: NPC, *, defer_greeting: bool = False) -> None:
+    def __init__(self, game, npc: NPC) -> None:
         self.game = game
         self.npc = npc
         self.lines: list[tuple[str, str]] = []  # (who, text): "npc", "you", "note"
@@ -67,7 +66,6 @@ class Conversation:
         self.mode = "main"
         self.pending_offer: dict | None = None  # work being offered, waiting for a yes or no (game.quests)
         self.ended = False
-        self.pending_ai = False
         self.minutes = 0
         self.rng = game.world.rng.child(f"talk/{npc.id}/{game.world.time}")
         self.settlement = game.world.settlements[npc.settlement]
@@ -77,9 +75,7 @@ class Conversation:
         self.greeted = False
         if first:
             self.note(npc.profile.get("appearance", ""))
-            npc.profile_seen = True
-        if not defer_greeting:
-            self.greet()
+        self.greet()
         self.special = [dict(o, used=False) for o in builtin_special(game, npc, self.rng)]
 
     # ------------------------------------------------------------------ helpers
@@ -245,7 +241,7 @@ class Conversation:
             self.npc_says("\"Not much to tell.\"")
         else:
             self.npc_says(self.fill(self.pick("tell_about_self")))
-            self.note(story if npc.profile_source == "ai" else story_note(npc, story))
+            self.note(story_note(npc, story))
         if mood in ("friendly", "warm") and npc.profile.get("want"):
             self.note(f"What {npc.first_name} wants: {npc.profile['want']}.")
 
@@ -544,7 +540,7 @@ LAW_CHOICES = {"pay_fines", "surrender", "prisoners", "ransom", "licence", "hush
 
 
 def builtin_special(game, npc: NPC, rng: RNG) -> list[dict]:
-    """One or two skill-check options from data, for when the AI does not propose any."""
+    """One or two skill-check options from data."""
     sp = game.tables.dialogue["special"]
     options = list(sp.get("any", []))
     if npc.job in sp:

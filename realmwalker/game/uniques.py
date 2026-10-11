@@ -251,7 +251,6 @@ def appear(game, uid: str, lm, settlement) -> bool:
     npc.traits, npc.speech, npc.stats = list(u["traits"]), u["speech"], u["stats"]
     npc.notable, npc.purse = True, 0
     npc.profile = {k: fill(game, uid, v) for k, v in u["profile"].items()}
-    npc.profile_source, npc.profile_seen = "unique", True  # hand-written: the AI does not rewrite them
     npc.flags["unique"] = uid
     add(w, town_of(w, settlement.id), npc)
     records(w)[uid]["npc"] = npc.id

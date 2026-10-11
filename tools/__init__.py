@@ -1,1 +1,1 @@
-"""Developer tools: the mock Player2 server and the headless autoplay bot."""
+"""Developer tools: the headless autoplay bot, the balance and arena runs, the tile and sound builders."""

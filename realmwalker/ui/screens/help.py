@@ -57,7 +57,7 @@ Choose <loot>New World</> on the title screen, pick a size and seed, and the lan
   <loot>Space</>           Tick or untick a skill
   <loot>Enter</>           Accept and go to the next step
   <loot>Tab</> / <loot>Shift+Tab</>  Next / previous step (or click a step)
-  <loot>W</>               Ask the AI to write your backstory (uses a little Player2 energy)
+  <loot>W</>               Write a backstory (press again for another)
   <loot>R</>               New random name and looks
 
 <title>Walking and looking</>
@@ -124,7 +124,7 @@ Press <loot>Enter</> on a settlement to walk its streets. People show as <loot>�
   <loot>1-9</>             Choose what to say (the numbers shown)
   <loot>t o g</>           Threaten · offer money · goodbye (Esc also leaves)
 What you have done reaches them before you do: a name for great deeds warms people to you (and impresses the proud and the greedy more than it should), while a name for cruelty frightens them, the kind ones worst of all.
-Ask who they are, about the place, for news (dangerous roads, places you did not know, which then appear on your map) and about the other people in town. Some choices are skill checks, shown like <loot>[Insight]</>; when the Player2 AI is running, notable people speak in their own words and suggest checks that fit the moment.
+Ask who they are, about the place, for news (dangerous roads, places you did not know, which then appear on your map) and about the other people in town. Some choices are skill checks, shown like <loot>[Insight]</>.
 <title>Trade</>
 Shopkeepers, smiths, healers, market traders, innkeepers and stablemasters trade. In the market window, <loot>Enter</> buys or sells one, <loot>Tab</> switches between their goods and yours, <loot>h</> haggles (once a day). Prices depend on the place: goods are cheap where they are made (salt on the coast, iron in the hills, furs in the cold north, grain on the plains) and dear where nobody makes them, so carrying trade goods between towns pays. Merchants have only so much coin, restock every week, and won't buy stolen goods.
 <title>Services</>
@@ -208,10 +208,6 @@ Settings has <loot>Text detail</>: <loot>Brief</> keeps only what matters (fight
   <loot>o</>               The full message log (or click the messages)
   <loot>k</>               Map legend: what every symbol means
   <loot>Esc</>             Game menu: help, settings, save and leave
-
-<title>Player2 AI</>
-The game uses the free Player2 app to write names, descriptions and dialogue. Keep Player2 running for AI text. Without it the game still works, using its own built-in text. The indicator in the bottom-right corner shows which is in use. The AI never decides what happens: dice and rules do.
-Player2 gives a limited amount of free energy a day, so the game spends it carefully: people, places and conversation first. In Settings, <loot>AI extras</> turns off the rest (regions, dungeons, magic items, the wording of work, obituaries) if you would rather keep the energy for the people.
 
 <title>If something goes wrong</>
 The game tries never to crash: if something breaks it says so, writes the details to <loot>%APPDATA%\\Realmwalker\\logs\\errors.log</> and carries on. That file is the thing to send if you report a problem. Your saves, settings and screenshots live in the same folder.

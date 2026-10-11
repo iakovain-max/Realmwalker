@@ -251,32 +251,12 @@ class DeathScreen(Screen):
         game.player.alive = False
         self.record = death.die(game)
         self.lines = death.fallback_obituary(game, self.record)
-        self.asked = False
         self.offset = 0
         game.say(f"<danger>{markup.escape(game.leader.name)} is dead.</>", "danger")
         app.save_game()
 
     def music(self) -> str | None:
         return "death"
-
-    def update(self) -> None:
-        """Ask the AI for the obituary once, and put its words in when they come."""
-        from realmwalker.game import death
-
-        if self.asked or self.record.get("obituary_source") == "ai" or not self.app.ai_extras():
-            return
-        from realmwalker.ai.service import Priority
-        from realmwalker.ai.tasks import OBITUARY
-
-        self.asked = True
-
-        def done(result) -> None:
-            if result.ok and death.apply_obituary(self.game, self.record, result.data):
-                self.lines = death.fallback_obituary(self.game, self.record)
-                self.app.save_game()
-
-        self.app.ai.submit(OBITUARY, death.obituary_facts(self.game, self.record), priority=Priority.URGENT,
-                           callback=done)
 
     def render(self, canvas: Canvas) -> None:
         w, h = canvas.width, canvas.height

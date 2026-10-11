@@ -224,28 +224,5 @@ def test_the_notice_board(game):
 # ---------------------------------------------------------------------------- the chronicle
 def test_the_built_in_chronicle(world, tables):
     chron = history.chronicle_fallback(world, tables)
-    assert chron["source"] == "fallback" and len(chron["text"]) > 400
+    assert len(chron["text"]) > 400
     assert str(tables.calendar.start_year) in chron["text"]
-    facts = history.chronicle_facts(world, tables)
-    assert facts["events"].count("\n") >= 5 and facts["today"]
-
-
-def test_the_ai_writes_the_chronicle(make_app, mock_p2, tables, world):
-    import time
-
-    from realmwalker.ui.screens.chronicle import request_chronicle
-
-    app = make_app(base_url=mock_p2.base_url, ai=True)
-    game = new_game(copy.deepcopy(world), app.tables)
-    app.start_game(game)
-    deadline = time.monotonic() + 10
-    while not app.ai.usable() and time.monotonic() < deadline:
-        app.update()
-        time.sleep(0.05)
-    request_chronicle(app, game)
-    deadline = time.monotonic() + 15
-    while game.world.politics.get("chronicle") is None and time.monotonic() < deadline:
-        app.update()
-        time.sleep(0.05)
-    chron = game.world.politics.get("chronicle")
-    assert chron is not None and chron["source"] == "ai" and chron["text"]

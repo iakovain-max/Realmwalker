@@ -395,16 +395,6 @@ def test_old_characters_have_an_empty_journal():
     assert save.MIGRATIONS[7]("character", {"name": "x"})["quests"] == []
 
 
-def test_the_ai_words_an_offer(game):
-    q, npc = offer(game, "rescue")
-    facts = quests.ai_facts(game, q)
-    assert q["words"]["captive"] in facts["task"] and facts["giver"] == npc.name
-    assert quests.needs_words(q)
-    assert quests.apply_words(q, {"title": "The Fletcher Boy", "pitch": "They took him in the night."})
-    assert quests.title(game, q) == "The Fletcher Boy" and quests.pitch(game, q).startswith('"They took')
-    assert not quests.needs_words(q)
-
-
 def test_broken_quest_data_is_reported(data):
     from realmwalker.data.registry import check_cross_references
 
@@ -414,25 +404,6 @@ def test_broken_quest_data_is_reported(data):
     files["quests.json"]["beasts"].append(["no_such_group", "x", "y"])
     errors = check_cross_references(files)
     assert any("dragon_tamer" in e for e in errors) and any("no_such_group" in e for e in errors)
-
-
-def test_the_ai_can_word_an_offer_through_the_mock(game, mock_p2):
-    """End to end with the mock Player2 server: facts in, words out, numbers still the game's own."""
-    from tests.test_ai_service import make_service, wait_for
-    from realmwalker.ai.tasks import QUEST
-
-    q, npc = offer(game, "clear_lair")
-    svc = make_service(mock_p2.base_url)
-    try:
-        results = []
-        svc.submit(QUEST, quests.ai_facts(game, q), callback=results.append)
-        assert wait_for(lambda: svc.poll() or results, 10)
-        assert results[0].ok, results[0].error
-        assert quests.apply_words(q, results[0].data)
-    finally:
-        svc.stop()
-    assert q["source"] == "ai" and quests.pitch(game, q).startswith('"')
-    assert quests.terms(q) == f"{quests.money_text(q['reward'])}, {q['days']} days"
 
 
 # ---------------------------------------------------------------------------- the rest of the work (M9+)
@@ -606,8 +577,6 @@ def test_every_kind_of_work_can_be_worded(game):
         for what in ("title", "pitch", "journal", "done", "failed"):
             text = quests.fill(game, q, what)
             assert text and "{" not in text, (kind, what, text)
-        facts = quests.ai_facts(game, q)
-        assert facts["task"] and "{" not in facts["task"] and "None" not in facts["task"], (kind, facts)
         for hidden in game.tables.quests["templates"][kind].get("hidden", {}):
             text = quests.fill(game, q, "hidden", hidden)
             assert text and "{" not in text, (kind, hidden, text)

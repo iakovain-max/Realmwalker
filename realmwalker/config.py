@@ -1,7 +1,6 @@
 """Two kinds of configuration:
 
-* GameConfig - config.json next to the game. Game-level switches: the optional Player2 client id,
-  an optional Player2 address override, and whether the debug console exists (off in friend builds).
+* GameConfig - config.json in the game's folder. Game-level switches: whether the debug console exists.
 * Settings   - the player's preferences in %APPDATA%\\Realmwalker\\settings.json, changed from the
   in-game Settings screen.
 
@@ -46,10 +45,7 @@ def _read_json(path: Path) -> dict:
 
 @dataclass
 class GameConfig:
-    player2_game_client_id: str = ""
-    player2_base_url: str = ""  # blank = find the local Player2 app automatically
     debug_console: bool = True
-    ai_workers: int = 2
 
     @classmethod
     def load(cls, path: Path) -> GameConfig:
@@ -58,7 +54,6 @@ class GameConfig:
         for f in fields(cls):
             if f.name in raw and isinstance(raw[f.name], type(getattr(cfg, f.name))):
                 setattr(cfg, f.name, raw[f.name])
-        cfg.ai_workers = max(1, min(4, cfg.ai_workers))
         return cfg
 
 
@@ -67,12 +62,9 @@ class Settings:
     font_size: int = DEFAULT_FONT_SIZE
     fullscreen: bool = False
     show_dice: bool = True
-    ai_enabled: bool = True
     verbosity: str = "normal"
     autosave_minutes: int = 5
-    ai_debug_log: bool = False
     auto_supplies: bool = True  # eat and drink from the pack when needed
-    ai_extras: bool = True  # AI words for scenery and things (off: keep the energy for people and places)
     graphics: str = "tiles"  # maps and people as pictures, or as letters (the old look)
     animations: str = "full"  # full, calm (no idle movement: water, fire, weather), off
     map_zoom: int = 32

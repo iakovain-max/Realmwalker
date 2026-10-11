@@ -19,8 +19,8 @@ guessed wrong — and even then, do everything that does not depend on the answe
 ## The project in three lines
 
 A grim, text-heavy open-world party RPG on D&D 5e rules: pixel-art tiles and figures drawn over a text grid
-(python-tcod and its SDL renderer, with an all-letters fallback), all content in `data/*.json`, flavour text
-optionally written by the Player2 app's local AI with a built-in fallback for everything. Nine milestones (M0–M9)
+(python-tcod and its SDL renderer, with an all-letters fallback), all content and all its words in `data/*.json`
+(the Player2 AI writer was removed in October 2026; the `before-ai-removal` tag keeps it). Nine milestones (M0–M9)
 are done, the design's v1 lists are complete, and **version 1.0** (2026-10-03) added the pictures and the new
 interface (mouse play, action bar, rebuilt pack, animated fights). Work since then is polish.
 
@@ -38,13 +38,11 @@ python3 -m venv .venv && .venv/bin/python -m pip install -r requirements.txt
 | Check | Cloud | How |
 |---|---|---|
 | All tests | ✅ | `.venv/bin/python -m pytest -q` (≈950 tests, several minutes) |
-| Autoplay bot, both AI modes | ✅ | `.venv/bin/python tools/autoplay.py --turns 3000` |
+| Autoplay bot | ✅ | `.venv/bin/python tools/autoplay.py --turns 3000` |
 | Balance numbers | ✅ | `.venv/bin/python tools/balance.py --runs 60` |
-| Mock Player2 server | ✅ | `.venv/bin/python tools/mock_player2.py --port 4316 --mode chaos` (tests start it themselves) |
 | Rebuild the tile sheets | ✅ | `.venv/bin/python tools/build_tiles.py` (downloads the CC0 Dungeon Crawl pack into `build/`; pure Pillow and numpy). Commit `assets/tiles` afterwards |
 | Rebuild the sounds and music | ✅ | `.venv/bin/python tools/build_sounds.py` (downloads the CC0 packs into `build/sound_packs`). Commit `assets/sounds` and `assets/music`. Nothing can be *heard* up here: judge new sounds by their measurements and say so in the PR |
 | Window smoke test | ⚠️ | Needs a display. Try `SDL_VIDEODRIVER=dummy .venv/bin/python main.py --smoke-test out.png` **once**; if it fails, do not fight it — say in the PR that the window check is owed on Windows |
-| The real Player2 app | ❌ | It lives at `127.0.0.1:4315` on Anton's PC and is not reachable here. **Never** try; a stray call costs him real energy (it happened once, ~15 joules). Tests and the smoke test must always use the mock or the AI off |
 
 ## How to work through a long unattended stretch
 
@@ -66,7 +64,7 @@ Big sweeping batches are what he wants, and they are safe here because nothing r
 **Done for each batch means:**
 
 1. `pytest` green.
-2. Autoplay clean in both modes (`RESULT: OK` twice).
+2. Autoplay clean (`RESULT: OK`).
 3. `tools/balance.py` inside its bands if you touched combat, cold, bleeding or XP.
 4. `docs/PROGRESS.md` updated in his language, under "After v1 — continuing work".
 5. Commit messages readable, each ending with the Co-Authored-By line your session's instructions give.
@@ -74,7 +72,7 @@ Big sweeping batches are what he wants, and they are safe here because nothing r
    - **What is different when you play** — grouped by theme, in game terms.
    - **How to see it** — for each visible thing, where to look: which screen, which key, whether it needs a fresh
      world or a new character.
-   - **What I could not check here** — the window itself, how it looks, anything needing the real Player2 AI.
+   - **What I could not check here** — the window itself and how it looks.
      Say plainly that these are owed on Windows.
    - **Anything you assumed** because you did not stop to ask.
 
@@ -115,12 +113,12 @@ The full set is in `CLAUDE.md`. These are the ones that bite hardest, and the on
 - **Logic never imports UI.** Simulation code must be testable without a window.
 - **`data/*.json` is hand-formatted.** Append with targeted string edits; never re-dump a whole JSON file, or the
   diff becomes a thousand lines and the formatting is lost.
-- **AI writes words, code owns numbers.** Every AI task = prompt file + schema + fallback that needs no AI.
-  All new flavour goes behind `GameState.flavour(level)` ("Text detail") and AI extras behind `App.ai_extras()`.
+- **Every word is written into the game** (data/*.json and `core/textgen` templates); "AI" means only the
+  game's tactics. All new flavour goes behind `GameState.flavour(level)` ("Text detail").
 - **The writing has floors.** `tests/test_text_variety.py` asserts minimum line counts for the text a player
   reads hundreds of times (misses, wounds, greetings, encounters, weather, news). Add to the lists; do not thin
   them out to make a test pass.
-- **Escape anything from the AI or the player** with `markup.escape()`, and use palette names from
+- **Escape anything the player typed** with `markup.escape()`, and use palette names from
   `ui/colors.py` for `<tags>` (`flavor` is a log colour, not a markup tag).
 - **Line endings.** The working copy is LF; `.bat` files are CRLF via `.gitattributes`.
   Do not "fix" them.
@@ -141,7 +139,7 @@ a new character to be visible, say so in the PR in one line.
    on the rough edges you can find yourself with the measuring scripts above, and take his list when it comes.
 2. Work through that list in themed batches, biggest nuisance first.
 3. The "Ideas parking lot" at the bottom of `docs/PROGRESS.md` (more races and classes, sailing, owning property,
-   joining sieges, full smithing, AI voices, romance, a warband, a main story) is the long list. **Do not start
+   joining sieges, full smithing, romance, a warband, a main story) is the long list. **Do not start
    any of it without asking him** — it is explicitly marked "do not build yet". Polish, fixes and more content of
    kinds that already exist need no permission.
 

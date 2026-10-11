@@ -167,24 +167,9 @@ def test_treasure_holds_magic_at_higher_tiers(game):
     assert found > 5
 
 
-def test_the_ai_names_what_you_have_not_seen(game):
-    it = item(game, "weapon")
-    facts = magic_items.dressing_facts(game, it)
-    assert facts["powers"] and facts["hero"]
-    assert magic_items.apply_dressing(it, {"name": "The Grey Widow", "history": "It was found in a ditch."})
-    assert it.magic["title"] == "The Grey Widow" and it.magic["source"] == "ai"
-    it.magic["identified"] = True
-    assert not magic_items.apply_dressing(it, {"name": "Something Else", "history": "x"})
-    assert it.magic["title"] == "The Grey Widow"
-
-
-def test_a_magic_item_has_a_look_from_its_words_and_the_ai_may_choose_another(game):
-    from realmwalker.ai.tasks import LOOK_CLOTHS, LOOK_EMBLEMS, LOOK_GLOWS, LOOK_METALS, MAGIC_ITEM
-
+def test_a_magic_item_has_a_look_from_its_words(game):
     fig = game.tables.sprites["figures"]
     named = set(fig["colours"]) | set(fig["metals"]) | set(fig["glows"])
-    for word in LOOK_METALS + LOOK_CLOTHS + tuple(g for g in LOOK_GLOWS if g != "none"):
-        assert word in named, f"the AI may choose {word}, which is not a colour in sprites.json"
     looks = game.tables.magic["looks"]
     for table in ("metal", "cloth"):
         assert all(v in named for _, v in looks[table])
@@ -194,12 +179,6 @@ def test_a_magic_item_has_a_look_from_its_words_and_the_ai_may_choose_another(ga
          "rarity": "very_rare"}
     look = magic_items.look_for(game, m, RNG(3, "look"))
     assert look["metal"] == "blackened" and look["cloth"] == "black"
-    # The AI's reply is cleaned against the whitelists: a word not on them is dropped, not an error.
-    reply = MAGIC_ITEM.schema.clean({"name": "Sunfall", "history": "Old.", "metal": "Gold", "glow": "plasma",
-                                     "emblem": "sun", "cloth": "tartan"})
-    assert reply == {"name": "Sunfall", "history": "Old.", "metal": "gold", "emblem": "sun"}
-    assert magic_items.apply_dressing(it, {**reply, "glow": "none"})
-    assert it.magic["look"]["metal"] == "gold" and it.magic["look"]["emblem"] == "sun" and "glow" not in it.magic["look"]
 
 
 def test_magic_items_survive_saving(game, tmp_path):

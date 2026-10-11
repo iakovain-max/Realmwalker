@@ -583,16 +583,10 @@ class GameState:
             first = area.id not in p.visited_areas
             p.visited_areas.add(area.id)
             if first:
-                from realmwalker.game.describe import area_text
-
-                written = area_text(self.world, area)
                 gained, notes = self.discover("region") if p.steps else ("", [])  # not where you were born
-                if written:
-                    self.say(f"You enter <place>{area.name}</>. <ai>{written}</>{gained}", "place")
-                else:
-                    biome = self.biome_def(p.x, p.y)
-                    desc = self.world.rng.child(f"areadesc{area.id}").choice(biome["descriptions"])
-                    self.say(f"You enter <place>{area.name}</>. {desc}{gained}", "place")
+                biome = self.biome_def(p.x, p.y)
+                desc = self.world.rng.child(f"areadesc{area.id}").choice(biome["descriptions"])
+                self.say(f"You enter <place>{area.name}</>. {desc}{gained}", "place")
                 for note in notes:
                     self.say(note, "good")
                 if self.party[1:]:
@@ -831,8 +825,7 @@ class GameState:
                 if not town.seen and town.description:
                     from realmwalker.core.textgen import escape_markup
 
-                    self.say(("<ai>" if town.description_source == "ai" else "") + escape_markup(town.description)
-                             + ("</>" if town.description_source == "ai" else ""), "flavor")
+                    self.say(escape_markup(town.description), "flavor")
                 town.seen = True
         else:
             biome = self.biome_def(p.x, p.y)
@@ -956,7 +949,7 @@ class GameState:
         town = self.world.towns.get(s.id) if s is not None else None
         if town is None:
             return
-        from realmwalker.game.people_ai import taproom
+        from realmwalker.game.town_words import taproom
 
         bi = lm.buildings.index(building)
         seen = town.flags.setdefault("taprooms_seen", [])
@@ -1250,7 +1243,7 @@ def default_wanderer(tables: Tables, world: World) -> Character:
 
     builder = CharacterBuilder(tables, RNG(world.meta.seed, "wanderer"))
     # A real name: "The Wanderer" reads badly in the middle of a sentence ("The is cold", "Survival (The)").
-    builder.apply_backstory(builder.fallback_backstory("the lowlands"), "built-in")
+    builder.apply_backstory(builder.fallback_backstory("the lowlands"))
     return builder.build(world.time)
 
 

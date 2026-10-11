@@ -1,6 +1,5 @@
 tcod==21.2.1
 numpy==2.5.3
-httpx==0.28.1
 pillow==12.3.0
 soundfile==0.14.0
 pytest==9.1.1

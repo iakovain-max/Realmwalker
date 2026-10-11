@@ -44,7 +44,6 @@ class CharacterBuilder:
         self.looks: dict = {}  # rules/looks.py; the appearance words are written from these
         self.backstory = ""
         self.personality = self.ideal = self.bond = self.flaw = ""
-        self.backstory_source = "built-in"
         self.start_settlement: int | None = None
         self.set_class("fighter")
         self.randomize_identity()
@@ -232,10 +231,9 @@ class CharacterBuilder:
         self.age = self.random_age()
         self.randomize_looks()
         self.backstory = ""
-        self.backstory_source = "built-in"
 
     def fallback_backstory(self, home_name: str) -> dict:
-        """A backstory from built-in text, used when the AI is off or fails."""
+        """A backstory from the built-in words (data/appearance.json backstory)."""
         a = self.t.appearance
         bg = self.t.backgrounds[self.background]
         he, him, his = PRONOUNS[self.sex]
@@ -257,13 +255,12 @@ class CharacterBuilder:
             "flaw": self.rng.choice(bg["flaw"]),
         }
 
-    def apply_backstory(self, data: dict, source: str) -> None:
+    def apply_backstory(self, data: dict) -> None:
         self.backstory = data.get("backstory", "")
         self.personality = data.get("personality", "")
         self.ideal = data.get("ideal", "")
         self.bond = data.get("bond", "")
         self.flaw = data.get("flaw", "")
-        self.backstory_source = source
 
     # ------------------------------------------------------------------ checks and build
     def problems(self) -> list[str]:

@@ -8,8 +8,7 @@ noticed where it happens (a fight won, a chest opened, chains broken, a word wit
 consequences go through reputation, news and the companions. Some work has a hidden side: the outlaws are starving
 deserters, the letter would hang its sender, the debtor has nothing.
 
-The AI may write the giver's words (in the background, before you ask); code owns targets, rewards and outcomes,
-and the terms are always shown by code.
+Code owns targets, rewards and outcomes, and the terms are always shown.
 
 A quest is a plain dict (so it saves as JSON):
   id, template, state ("offered", "active", "return", "finished", "failed", "abandoned"), giver (npc id, or -1 for
@@ -82,11 +81,11 @@ def fill(game, q: dict, kind: str, which: str = "") -> str:
 
 
 def title(game, q) -> str:
-    return q.get("title_ai") or fill(game, q, "title")
+    return fill(game, q, "title")
 
 
 def pitch(game, q) -> str:
-    return q.get("pitch_ai") or fill(game, q, "pitch")
+    return fill(game, q, "pitch")
 
 
 def terms(q) -> str:
@@ -160,7 +159,7 @@ def trial_note(game, q) -> str:
 
 
 def offers_in(game, settlement) -> list[dict]:
-    """Think of the work people here might offer (so the AI has time to word it before anyone asks)."""
+    """Think of the work people here might offer (before anyone asks)."""
     from realmwalker.game.people import npcs_in
 
     out = []
@@ -254,7 +253,7 @@ def base_quest(game, npc, template: str, rng: RNG, *, hard: float = 1.0, town=No
         "faction": facs[0].id if facs else -1, "reward": max(10, reward), "days": rng.randint(lo_d, hi_d),
         "offered_day": game.moment.total_days, "hidden": hidden, "revealed": False, "done": False,
         "target": {}, "words": {"giver": npc.first_name if npc is not None else "the watch", "town": town.name},
-        "journal": [], "source": "fallback",
+        "journal": [],
     }
 
 
@@ -745,7 +744,7 @@ def accept(game, q) -> list[str]:
     q["state"] = "active"
     q["taken"] = game.moment.total_days
     q["deadline"] = game.moment.total_days + int(q["days"])
-    q["journal"].append(q.get("journal_ai") or fill(game, q, "journal"))
+    q["journal"].append(fill(game, q, "journal"))
     game.quests.append(q)
     game.cue("quest")
     t = q["target"]
@@ -1514,8 +1513,6 @@ def _offer_work(conv) -> None:
         conv.npc_says("\"Not for you. Not today.\"")
         return
     conv.npc_says(pitch(game, q))
-    if q.get("pitch_ai"):
-        conv.note(f"<dim>({terms(q)})</>")
     danger = danger_note(game, q)
     if danger:
         conv.note(danger)
@@ -1821,57 +1818,3 @@ def read_letter(game, it) -> list[str]:
             f"money, grain and a wedding. The broken seal will show."]
 
 
-# ---------------------------------------------------------------------------- AI words
-def needs_words(q) -> bool:
-    return q.get("state") == "offered" and q.get("source") == "fallback" and not q.get("ai_asked")
-
-
-def ai_facts(game, q) -> dict:
-    w = game.world
-    town = w.settlements[q["town"]]
-    giver = w.npcs.get(q["giver"])
-    words = q["words"]
-    what = {
-        "bounty": f"kill or capture {words.get('target')}, captain of the outlaws {words.get('gang')}, who hide at "
-                  f"{words.get('site')} ({words.get('where')})",
-        "clear_lair": f"go into {words.get('site')} ({words.get('where')}) and kill whatever has made its lair there",
-        "hunt_beast": f"hunt down {words.get('beast')}, {words.get('beast_what')}, last seen {words.get('where')}",
-        "deliver": f"carry a sealed letter to {words.get('recipient')} in {words.get('dest')}, unopened",
-        "retrieve": f"bring back {words.get('item')}, which lies in {words.get('site')} ({words.get('where')})",
-        "rescue": f"rescue the giver's {words.get('kin')}, {words.get('captive')}, taken to {words.get('site')} "
-                  f"({words.get('where')})",
-        "collect_debt": f"collect a debt of {words.get('debt')} from {words.get('debtor')} in {words.get('dest')}; "
-                        f"the traveller keeps a quarter",
-        "investigate": f"find out where the people who have gone missing from {town.name} are being taken",
-        "escort": f"walk with {words.get('traveller')} as far as {words.get('dest')} and keep them alive",
-        "assassinate": f"kill {words.get('target')} in {words.get('dest')}, quietly",
-        "cure": f"bring {words.get('count')} lots of healing herbs for the sickness in {town.name}",
-        "feud": f"make peace between {words.get('one')} and {words.get('two')}, who have not spoken in two years",
-        "steal": f"pick {words.get('mark')}'s pocket in {words.get('dest')} and bring back {words.get('item')}",
-        "defend": f"be in {town.name} {words.get('when')}, when {words.get('raiders')} come, and fight them off",
-        "smuggle": f"carry a sealed crate to {words.get('recipient')} in {words.get('dest')} without the gate "
-                   f"wardens finding it",
-        "slay_dragon": f"kill the dragon {words.get('dragon')}, which lairs at {words.get('site')} "
-                       f"({words.get('where')}) and has burned and bled this country for years",
-    }[q["template"]]
-    return {
-        "giver": q["giver_name"], "job": giver.title if giver is not None else "watch captain",
-        "personality": (giver.profile.get("personality", "") if giver is not None else "") or "tired and blunt",
-        "town": town.name, "task": what,
-        "nervous": "yes: the letter is dangerous to them, and they are nervous" if q.get("hidden") == "incriminating"
-        else "no",
-    }
-
-
-def apply_words(q, data: dict) -> bool:
-    if q.get("state") != "offered" or not data:
-        return False
-    if data.get("title"):
-        q["title_ai"] = data["title"]
-    if data.get("pitch"):
-        pitch_text = data["pitch"].strip()
-        if not pitch_text.startswith(("\"", "“")):
-            pitch_text = f"\"{pitch_text}\""
-        q["pitch_ai"] = pitch_text
-    q["source"] = "ai"
-    return True

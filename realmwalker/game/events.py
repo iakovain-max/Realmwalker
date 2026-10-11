@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from realmwalker.core import dice
+from realmwalker.core import dice, textgen
 from realmwalker.core.rng import RNG
 from realmwalker.rules import body
 from realmwalker.rules.character import Sheet
@@ -331,7 +331,7 @@ def _and(words: list[str]) -> str:
 
 
 def travel_day_facts(game, day: dict) -> dict:
-    """Variables for the day's narrated passage (AI prompt or built-in text)."""
+    """Variables for the day's narrated passage."""
     c = game.leader
     moods = []
     for key in ("hunger", "thirst", "fatigue"):
@@ -350,3 +350,13 @@ def travel_day_facts(game, day: dict) -> dict:
         "season": game.moment.season, "events": "; ".join(day.get("events", [])) or "nothing much",
         "road": "mostly on the road" if day.get("road", 0) > day.get("off_road", 0) else "mostly across country",
     }
+
+
+def travel_day_passage(rng: RNG, data, variables: dict) -> str:
+    """A day on the road in a few sentences, from the built-in words (data/fallback_text.json travel_day)."""
+    tables = data.fallback["travel_day"]
+    values = {k: str(v) for k, v in variables.items()}
+    # What the sky did all day, in words of its own (the facts carry its kind as "sky").
+    skies = tables.get(f"sky_{variables.get('sky', '')}") or tables.get("sky_overcast")
+    values["sky"] = rng.choice(skies)
+    return textgen.tidy(textgen.fill(rng.choice(tables["passage"]), rng, tables, values))

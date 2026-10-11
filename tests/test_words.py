@@ -177,13 +177,13 @@ def test_speech_that_opens_a_sentence_is_capitalised():
 
 # ---------------------------------------------------------------------------- grammar
 def test_a_town_on_the_coast_does_not_sit_in_the_coast(game):
-    from realmwalker.game.people_ai import fallback_description
+    from realmwalker.game.town_words import town_description
 
     coast = [s for s in game.world.settlements if game.biome_key(s.x, s.y) == "coast"]
     if not coast:
         pytest.skip("no coastal town")
     for i in range(40):
-        text = fallback_description(game, coast[0], RNG(i, "coast"))
+        text = town_description(game, coast[0], RNG(i, "coast"))
         assert "in the coast" not in text
 
 
@@ -230,13 +230,13 @@ def test_a_knowledge_roll_comes_before_what_it_told_you(tables):
 
 
 def test_the_days_walk_remembers_the_weather_that_held_it(tables, data):
-    from realmwalker.ai.tasks import travel_day_fallback
+    from realmwalker.game.events import travel_day_passage
 
     t = data.fallback["travel_day"]
     for sky in ("rain", "fog", "clear", "snow"):
         for seed in range(6):
-            text = travel_day_fallback(RNG(seed, sky), data, {"name": "Wat", "miles": 24, "lands": "grassland and forest",
-                                                             "weather": sky, "mood": "tired", "season": "spring",
-                                                             "events": "nothing much", "road": "mostly on the road",
-                                                             "sky": sky})["passage"]
+            text = travel_day_passage(RNG(seed, sky), data, {"name": "Wat", "miles": 24, "lands": "grassland and forest",
+                                                            "weather": sky, "mood": "tired", "season": "spring",
+                                                            "events": "nothing much", "road": "mostly on the road",
+                                                            "sky": sky})
             assert any(line in text for line in t[f"sky_{sky}"]), text

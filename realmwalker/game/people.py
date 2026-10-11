@@ -49,8 +49,6 @@ class NPC:
     known: bool = False  # the player knows their name
     memory: list[str] = field(default_factory=list)
     profile: dict = field(default_factory=dict)  # appearance, personality, backstory, secret, want
-    profile_source: str = ""  # "fallback" or "ai"
-    profile_seen: bool = False
     alive: bool = True
     building: int = -1  # index of their workplace in the local map's buildings, or -1
     post: tuple[int, int] = (0, 0)  # where they work by day
@@ -102,26 +100,23 @@ class Town:
     settlement: int
     npcs: list[int] = field(default_factory=list)
     description: str = ""
-    description_source: str = ""
     names: dict = field(default_factory=dict)  # building index -> sign name (inns, shops)
     shops: dict = field(default_factory=dict)  # merchant npc id -> shop state (economy)
     visited: int = -1  # world minute of the first visit
-    seen: bool = False  # the description has been shown (so it is never replaced)
-    names_seen: list[int] = field(default_factory=list)  # buildings whose sign the player has read
+    seen: bool = False  # the description has been shown
     flags: dict = field(default_factory=dict)
 
     def to_dict(self) -> dict:
         return {"settlement": self.settlement, "npcs": list(self.npcs), "description": self.description,
-                "description_source": self.description_source, "names": {str(k): v for k, v in self.names.items()},
+                "names": {str(k): v for k, v in self.names.items()},
                 "shops": {str(k): v for k, v in self.shops.items()}, "visited": self.visited, "seen": self.seen,
-                "names_seen": list(self.names_seen), "flags": self.flags}
+                "flags": self.flags}
 
     @classmethod
     def from_dict(cls, d: dict) -> Town:
-        return cls(d["settlement"], list(d.get("npcs", [])), d.get("description", ""), d.get("description_source", ""),
+        return cls(d["settlement"], list(d.get("npcs", [])), d.get("description", ""),
                    {int(k): v for k, v in d.get("names", {}).items()}, {int(k): v for k, v in d.get("shops", {}).items()},
-                   d.get("visited", -1), bool(d.get("seen", False)), list(d.get("names_seen", [])),
-                   dict(d.get("flags", {})))
+                   d.get("visited", -1), bool(d.get("seen", False)), dict(d.get("flags", {})))
 
 
 # ---------------------------------------------------------------------------- the world's registry
@@ -221,7 +216,6 @@ def make_npc(game, settlement, job: str, rng: RNG, *, building: int = -1, post=(
     npc.flags["family"] = family
     npc.flags["shift"] = rng.randint(-45, 45)  # minutes: nobody keeps exactly the hours of the book (townlife)
     npc.profile = fallback_profile(game, npc, rng)
-    npc.profile_source = "fallback"
     return npc
 
 
@@ -273,14 +267,13 @@ def populate_town(game, lm, settlement) -> Town:
         return town
     town.visited = world.time
     rng = world.rng.child(f"people/{settlement.id}")
-    from realmwalker.game.people_ai import fallback_description, fallback_inn_name
+    from realmwalker.game.town_words import inn_name, town_description
 
     if not town.description:
-        town.description = fallback_description(game, settlement, rng.child("description"))
-        town.description_source = "fallback"
+        town.description = town_description(game, settlement, rng.child("description"))
     for bi, b in enumerate(lm.buildings):
         if b.kind == "inn" and bi not in town.names:
-            town.names[bi] = fallback_inn_name(game, rng.child(f"inn/{bi}"))
+            town.names[bi] = inn_name(game, rng.child(f"inn/{bi}"))
     people = game.tables.people
     walk = game.tables.terrain.walk[game.remap_for(lm)[lm.terrain]]
     taken: set[tuple[int, int]] = set()
@@ -557,7 +550,6 @@ def become_figure(game, npc: NPC, fig, rng: RNG) -> None:
     npc.flags["figure"] = fig.id
     fig.npc = npc.id
     npc.profile = fallback_profile(game, npc, rng)
-    npc.profile_source = "fallback"
     from realmwalker.game import past
 
     story = past.figure_story(game, fig, rng)

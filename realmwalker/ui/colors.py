@@ -30,7 +30,7 @@ NAMED: dict[str, Color] = {
     "magic": (184, 128, 234),  # spells and the uncanny
     "name": (226, 222, 164),  # people
     "place": (150, 204, 200),  # places
-    "ai": (148, 196, 164),  # AI-written text marker
+    "sage": (148, 196, 164),  # a pale green: works of lore in the Legends book
     "white": (240, 240, 232),
     "grey": (150, 150, 150),
     "red": (200, 50, 40),

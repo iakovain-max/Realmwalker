@@ -756,9 +756,8 @@ def life_page(world, tables, i: int) -> tuple[str, list[str]]:
     if facts:
         lines += [""] + facts
     if r.get("obituary"):
-        colour = "ai" if r.get("obituary_source") == "ai" else "fg"
         lines += ["", section("What was said of them")]
-        lines += [f"<{colour}>{clean(p)}</>" for p in str(r["obituary"]).split("\n") if p.strip()]
+        lines += [f"<fg>{clean(p)}</>" for p in str(r["obituary"]).split("\n") if p.strip()]
     began = r.get("day", 0) - r.get("days_lived", 0)
     start = tables.calendar.at(max(0, int(began)) * 1440).year if "day" in r else (r.get("year") or 0) - 1
     ids = [k for k, e in enumerate(w.history) if e.get("player") and name in e.get("text", "")

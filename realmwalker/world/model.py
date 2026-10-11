@@ -10,7 +10,6 @@ from dataclasses import asdict, dataclass, field
 
 import numpy as np
 
-from realmwalker.ai.store import FlavorStore
 from realmwalker.core.rng import RNG
 
 # Neighbour offsets. Index 0 means "no direction" (e.g. river mouth or sink).
@@ -120,7 +119,6 @@ class World:
     wonders: list[Wonder] = field(default_factory=list)
     time: int = 0  # minutes since the epoch
     local_maps: dict = field(default_factory=dict)  # key "x,y" -> LocalMap
-    flavor: FlavorStore = field(default_factory=FlavorStore)
     rng: RNG | None = None
     npcs: dict = field(default_factory=dict)  # id -> game.people.NPC
     towns: dict = field(default_factory=dict)  # settlement id -> game.people.Town

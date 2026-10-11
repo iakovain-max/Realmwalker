@@ -95,11 +95,20 @@ def test_the_obituary_says_what_they_were(game):
     text = "\n".join(lines)
     assert game.leader.name in text and "festered" in text and "4 bandits" in text
     assert "hanged the captain" in text
-    facts = death.obituary_facts(game, record)
-    assert facts["name"] == game.leader.name and "festered" in facts["death"]
-    assert death.apply_obituary(game, record, {"obituary": "They died as they lived: owing money."})
-    assert not death.apply_obituary(game, record, {"obituary": "Something else."})  # the AI speaks once
-    assert "owing money" in "\n".join(death.fallback_obituary(game, record))
+    first = game.leader.name.split()[0]
+    assert first in record["obituary"] and "{" not in record["obituary"]
+    assert record["obituary"] in text  # the built-in words are on the death screen
+
+
+def test_obituaries_vary(game):
+    """Many deaths, many different words: the opening and closing are not always the same."""
+    seen = set()
+    for i in range(12):
+        record = {"id": f"x/{i}", "day": i, "name": f"Wat {i}", "race": game.leader.race, "cls": game.leader.cls,
+                  "age": 20 + i, "days_lived": i * 40, "place": "Ashfell", "year": 1200, "kills": {"wolf": i},
+                  "deeds": ["burned a barn"] if i % 2 else [], "fame": i * 2, "infamy": 0}
+        seen.add(death.write_obituary(game, record).split(".")[0])
+    assert len(seen) >= 6
 
 
 def test_the_dead_are_saved_with_the_world(game, tmp_path):
@@ -148,27 +157,6 @@ def test_a_new_character_is_told_about_the_world(game):
     assert record["name"] in text  # the one who came before is remembered
 
 
-def test_the_ai_writes_the_obituary_through_the_mock(game, mock_p2):
-    """End to end with the mock Player2 server: the facts go out, the words come back and are kept."""
-    from realmwalker.ai.tasks import OBITUARY
-    from tests.test_ai_service import make_service, wait_for
-
-    game.leader.deeds.append("cleared the barrow at Ashfell")
-    kill_the_leader(game, "of a wound that festered")
-    record = death.die(game)
-    svc = make_service(mock_p2.base_url)
-    try:
-        results = []
-        svc.submit(OBITUARY, death.obituary_facts(game, record), callback=results.append)
-        assert wait_for(lambda: svc.poll() or results, 10)
-        assert results[0].ok, results[0].error
-        assert death.apply_obituary(game, record, results[0].data)
-    finally:
-        svc.stop()
-    assert record["obituary_source"] == "ai" and record["obituary"]
-    assert record["obituary"] in "\n".join(death.fallback_obituary(game, record))
-
-
 def test_those_who_came_before_are_in_the_chronicle(game, tmp_path):
     """The next character can read about the one before, in the same book as the old legends."""
     from realmwalker.ui.screens.chronicle import ChronicleScreen
@@ -176,21 +164,15 @@ def test_those_who_came_before_are_in_the_chronicle(game, tmp_path):
     game.leader.kills["wolf"] = 2
     kill_the_leader(game, "of a wound that festered")
     record = death.die(game)
-    death.apply_obituary(game, record, {"obituary": "They were owed money by half the county."})
 
     class FakeApp:
-        class ai:
-            @staticmethod
-            def usable():
-                return False
-
         def __init__(self):
             self.error_count = 0
 
     screen = ChronicleScreen(FakeApp(), game, tab=2)
     screen.build(2)
     text = screen.views[2].text if hasattr(screen.views[2], "text") else ""
-    assert record["name"] in text and "festered" in text and "owed money" in text
+    assert record["name"] in text and "festered" in text and record["obituary"][:30] in text
 
 
 def test_your_past_lives_are_in_the_legends_book(game):
@@ -204,7 +186,6 @@ def test_your_past_lives_are_in_the_legends_book(game):
     game.renown.fame = 20
     kill_the_leader(game)
     record = death.die(game)
-    death.apply_obituary(game, record, {"obituary": "They never paid for a drink twice."})
     w, t = game.world, game.tables
     ref, label = legends.entries(w, t, "people")[0]
     assert ref == "P0" and game.leader.name in label and "your life" in label
@@ -213,6 +194,6 @@ def test_your_past_lives_are_in_the_legends_book(game):
     assert title == game.leader.name
     assert "One of your lives" in text and "killed by wolves" in text
     assert "3 wolves" in text and "2 goblin bosses" in text and "burned a bandit camp" in text
-    assert "never paid for a drink" in text
+    assert record["obituary"][:40] in text
     assert "What the world remembers" in text  # their death went into the history (fame 20)
     assert legends.entries(w, t, "people", game.leader.name.lower())[0][0] == "P0"

@@ -251,7 +251,6 @@ def test_fog_off_the_road_can_lose_you_and_a_road_finds_you(game, monkeypatch):
 
 # ---------------------------------------------------------------------------- the day's passage
 def test_a_day_on_the_road_is_written_up(game, data, monkeypatch):
-    from realmwalker.ai.tasks import travel_day_fallback
 
     monkeypatch.setattr("realmwalker.game.encounters.encounter_chance", lambda *a: 0.0)
     monkeypatch.setattr("realmwalker.game.events.event_chance", lambda *a: 0.0)
@@ -265,7 +264,7 @@ def test_a_day_on_the_road_is_written_up(game, data, monkeypatch):
     assert game.moment.total_days > start_day
     assert game.narration and game.narration[0]["miles"] > 0
     facts = events.travel_day_facts(game, game.narration[0])
-    text = travel_day_fallback(RNG(2), data, facts)["passage"]
+    text = events.travel_day_passage(RNG(2), data, facts)
     assert "{" not in text and str(facts["miles"]) in text or facts["lands"] in text or len(text) > 40
 
 

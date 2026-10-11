@@ -171,16 +171,10 @@ def test_heroes_of_the_history_drink_in_their_home_inns(game):
     pytest.skip("no hero lives where there is an inn")
 
 
-def test_the_ai_is_told_the_truth_about_a_town(game):
-    from realmwalker.game.people_ai import dialogue_variables, settlement_variables
-
+def test_a_town_knows_its_true_past(game):
     w = game.world
     town = max(w.settlements, key=lambda s: len(past.great_events(game, s, 6)))
-    town_people = prepare_town(game, town)
-    facts = settlement_variables(game, town, town_people)
-    assert "Founded in" in facts["history"]
-    npc = next(n for n in npcs_in(w, town.id) if n.notable)
-    assert "past (true)" in dialogue_variables(game, npc)["place"]
+    assert "Founded in" in past.place_past(game, town)
 
 
 def test_history_books_quote_the_world_s_own_chronicles(game):

@@ -548,152 +548,14 @@ class GameScreen(Screen):
             return False
         return True
 
-    def _prefetch_town(self) -> None:
-        """Setting out for a settlement, or standing at its gate: have the AI write it up before we walk in.
-        Towns merely passed on a journey are not asked about (AI energy is scarce)."""
-        game = self.game
-        if not self.app.ai.usable():
-            return
-        p = game.player
-        targets = []
-        if game.travel is not None:
-            d = game.world.settlement_at(*game.travel.destination)
-            if d is not None:
-                targets.append(d)
-        here = game.world.settlement_at(p.x, p.y)
-        if here is not None:
-            targets.append(here)
-        elif game.travel is None:
-            # Walking step by step towards a town right next to you (passing by on a journey doesn't count).
-            targets += [s for s in game.world.settlements if abs(s.x - p.x) <= 1 and abs(s.y - p.y) <= 1]
-        asked = self.app.__dict__.setdefault("_towns_asked", set())
-        for s in targets:
-            town = game.world.towns.get(s.id)
-            if s.id in asked or (town is not None and (town.seen and all(
-                    game.world.npcs[i].profile_seen or not game.world.npcs[i].notable for i in town.npcs))):
-                continue
-            if town is not None and any(game.world.npcs[i].profile_source == "ai" for i in town.npcs if i in game.world.npcs):
-                continue
-            asked.add(s.id)
-            self._ask_town(s)
-            return
-
-    def _ask_town(self, settlement) -> None:
-        from realmwalker.ai.service import Priority
-        from realmwalker.ai.tasks import SETTLEMENT
-        from realmwalker.game.people import prepare_town
-        from realmwalker.game.people_ai import apply_settlement, settlement_variables
-
-        game = self.game
-        town = prepare_town(game, settlement)
-
-        def done(result) -> None:
-            if result.ok and result.data:
-                apply_settlement(game, settlement, town, result.data)
-                game.dirty = True
-
-        self.app.ai.submit(SETTLEMENT, settlement_variables(game, settlement, town), priority=Priority.BACKGROUND,
-                           callback=done)
-
     def _narrate(self) -> None:
-        """Write up a finished day on the road: by the AI if it is there, or from built-in text at once."""
-        from realmwalker.ai.service import Priority
-        from realmwalker.ai.tasks import TRAVEL_DAY, travel_day_fallback
-        from realmwalker.game.events import travel_day_facts
+        """Write up a finished day on the road from the built-in words."""
+        from realmwalker.game.events import travel_day_facts, travel_day_passage
 
         game = self.game
         day = game.narration.pop(0)
-        variables = travel_day_facts(game, day)
-
-        def fallback() -> None:
-            rng = game.world.rng.child(f"narrate/{game.world.time}")
-            text = travel_day_fallback(rng, self.app.data, variables)["passage"]
-            game.say(markup.escape(text), "flavor")
-
-        if not self.app.ai.usable():
-            fallback()
-            return
-
-        def done(result) -> None:
-            if result.ok and result.data and result.data.get("passage"):
-                game.say(f"<ai>{markup.escape(result.data['passage'])}</>", "flavor")
-            else:
-                fallback()
-
-        self.app.ai.submit(TRAVEL_DAY, variables, priority=Priority.BACKGROUND, callback=done)
-
-    def _dress_magic_items(self) -> None:
-        """Magic items in the packs get an AI-written name and history before they are identified."""
-        from realmwalker.game import magic_items
-
-        if not self.app.ai_extras():
-            return
-        from realmwalker.ai.service import Priority
-        from realmwalker.ai.tasks import MAGIC_ITEM
-
-        for c in self.game.party:
-            for it in c.inventory:
-                if magic_items.needs_dressing(it):
-                    it.magic["ai_asked"] = True
-
-                    def done(result, it=it) -> None:
-                        if result.ok and result.data:
-                            magic_items.apply_dressing(it, result.data)
-
-                    self.app.ai.submit(MAGIC_ITEM, magic_items.dressing_facts(self.game, it),
-                                       priority=Priority.BACKGROUND, callback=done)
-                    return  # one at a time
-
-    def _word_area(self) -> None:
-        """The country the party is walking through gets AI words, once per region."""
-        game = self.game
-        if game.in_local or game.busy or not self.app.ai_extras() or not game.flavour():
-            return
-        area = game.world.area_at(game.player.x, game.player.y)
-        if area is None or area.size < 20:
-            return  # a few tiles of scrub does not need its own paragraph
-        joules = self.app.ai.joules
-        if joules is not None and joules < self.app.ai.energy_reserve * 3:
-            return  # the country can wait: energy is better spent on the people in it
-        from realmwalker.game.describe import area_facts, area_text, keep_area_text
-
-        if area_text(game.world, area) or area.id in getattr(self, "_areas_asked", ()):
-            return
-        asked = getattr(self, "_areas_asked", None)
-        if asked is None:
-            asked = self._areas_asked = set()
-        asked.add(area.id)
-        from realmwalker.ai.service import Priority
-        from realmwalker.ai.tasks import AREA
-
-        def done(result, area=area) -> None:
-            if result.ok and keep_area_text(game.world, area, result.data):
-                game.dirty = True
-                if game.world.area_at(game.player.x, game.player.y) is area:
-                    game.say(f"<ai>{result.data['description'].strip()}</>", "place")
-
-        self.app.ai.submit(AREA, area_facts(game, area), priority=Priority.BACKGROUND, callback=done)
-
-    def _word_dungeon(self) -> None:
-        """A level the party has just reached gets AI words before they read the built-in ones."""
-        game = self.game
-        lm = game.local
-        if not self.app.ai_extras():
-            return
-        from realmwalker.game import dungeon
-
-        if not dungeon.needs_words(lm):
-            return
-        from realmwalker.ai.service import Priority
-        from realmwalker.ai.tasks import DUNGEON
-
-        lm.meta["ai_asked"] = True
-
-        def done(result, lm=lm) -> None:
-            if result.ok and result.data:
-                dungeon.apply_description(lm, result.data)
-
-        self.app.ai.submit(DUNGEON, dungeon.dressing_facts(game, lm), priority=Priority.HIGH, callback=done)
+        rng = game.world.rng.child(f"narrate/{game.world.time}")
+        game.say(markup.escape(travel_day_passage(rng, self.app.data, travel_day_facts(game, day))), "flavor")
 
     def _work_line(self, canvas: Canvas, x: int, y: int, w: int) -> int:
         """One line about the work in hand: how much, and how soon it is due."""
@@ -726,8 +588,8 @@ class GameScreen(Screen):
                    tooltip="Click (or press j) for the journal.")
         return used + 1
 
-    def _word_quests(self) -> None:
-        """Work people in this town might offer gets AI-written words before anyone asks (one at a time)."""
+    def _think_of_work(self) -> None:
+        """The work people in this town might offer, thought of before anyone asks (once a day)."""
         game = self.game
         if not game.in_local or game.busy:
             return
@@ -741,21 +603,6 @@ class GameScreen(Screen):
         if getattr(self, "_offers_stamp", None) != stamp:
             self._offers_stamp = stamp
             self._offers = quests.offers_in(game, here)
-        if not self.app.ai_extras():
-            return
-        from realmwalker.ai.service import Priority
-        from realmwalker.ai.tasks import QUEST
-
-        for q in getattr(self, "_offers", []):
-            if quests.needs_words(q):
-                q["ai_asked"] = True
-
-                def done(result, q=q) -> None:
-                    if result.ok and result.data:
-                        quests.apply_words(q, result.data)
-
-                self.app.ai.submit(QUEST, quests.ai_facts(game, q), priority=Priority.BACKGROUND, callback=done)
-                return
 
     def water(self) -> None:
         from realmwalker.game.survival import fill_skins
@@ -784,15 +631,7 @@ class GameScreen(Screen):
             return
         if game.narration:
             self._narrate()
-        self._prefetch_town()
-        if game.world.factions and not game.busy:
-            from realmwalker.ui.screens.chronicle import request_chronicle
-
-            request_chronicle(self.app, game)
-        self._dress_magic_items()
-        self._word_quests()
-        self._word_dungeon()
-        self._word_area()
+        self._think_of_work()
         if game.travel is not None:
             now = self.app.clock()
             if now - self._last_travel_step >= TRAVEL_STEP_SECONDS or self.app.headless:

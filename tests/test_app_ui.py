@@ -12,7 +12,6 @@ from realmwalker.ui.input import KeyEvent, MouseEvent
 from realmwalker.ui.screens.base import ConfirmBox, MessageBox
 from realmwalker.ui.screens.debug_console import DebugConsole
 from realmwalker.ui.screens.help import HelpScreen
-from realmwalker.ui.screens.player2_test import Player2TestScreen
 from realmwalker.ui.screens.settings_screen import SettingsScreen
 from realmwalker.ui.screens.title import TitleScreen
 
@@ -30,7 +29,7 @@ def screen_text(con) -> str:
     return "\n".join("".join(chr(c) for c in con.rgb["ch"][:, y]) for y in range(con.height))
 
 
-@pytest.mark.parametrize("screen_cls", [TitleScreen, Player2TestScreen, SettingsScreen, HelpScreen, DebugConsole])
+@pytest.mark.parametrize("screen_cls", [TitleScreen, SettingsScreen, HelpScreen, DebugConsole])
 @pytest.mark.parametrize("size", SIZES)
 def test_every_screen_renders_at_every_size(make_app, screen_cls, size):
     app = make_app()
@@ -42,9 +41,6 @@ def test_every_screen_renders_at_every_size(make_app, screen_cls, size):
 def test_title_menu_opens_screens(make_app):
     app = make_app()
     assert isinstance(app.top, TitleScreen)
-    app.handle_event(KeyEvent("p"))
-    assert isinstance(app.top, Player2TestScreen)
-    app.handle_event(KeyEvent("escape"))
     app.handle_event(KeyEvent("s"))
     assert isinstance(app.top, SettingsScreen)
     app.handle_event(KeyEvent("escape"))
@@ -74,33 +70,10 @@ def test_tooltip_on_hover(make_app):
     app = make_app()
     con = render(app)
     lines = screen_text(con).splitlines()
-    row = next(y for y, line in enumerate(lines) if "Player2 Connection Test" in line)
-    app.handle_event(MouseEvent("move", lines[row].index("Player2"), row))
+    row = next(y for y, line in enumerate(lines) if "Settings" in line)
+    app.handle_event(MouseEvent("move", lines[row].index("Settings"), row))
     con = render(app)
-    assert "Check the connection" in screen_text(con)
-
-
-def test_player2_screen_falls_back_when_offline(make_app):
-    app = make_app(ai=False)
-    screen = Player2TestScreen(app)
-    app.push(screen)
-    app.handle_event(KeyEvent("g"))
-    assert screen.result_source == "fallback" and screen.result["name"]
-    assert "Built-in text" in screen_text(render(app))
-
-
-def test_player2_screen_generates_with_mock(make_app, mock_p2):
-    app = make_app(base_url=mock_p2.base_url, ai=True)
-    deadline = time.monotonic() + 5
-    while not app.ai.usable() and time.monotonic() < deadline:
-        time.sleep(0.02)
-    screen = Player2TestScreen(app)
-    app.push(screen)
-    app.handle_event(KeyEvent("g"))
-    assert app.ai.wait_idle(5)
-    render(app)
-    assert screen.result_source == "ai"
-    assert "AI text" in screen_text(render(app))
+    assert "pictures, sound" in screen_text(con)
 
 
 def test_errors_are_caught_and_shown(make_app):
@@ -558,26 +531,13 @@ def test_camp_event_and_trade_screens(make_app, size):
     assert app.error_count == 0
 
 
-@pytest.mark.parametrize("with_ai", [False, True])
-def test_travel_days_are_written_up(make_app, mock_p2, with_ai):
-    app = make_app(base_url=mock_p2.base_url, ai=True) if with_ai else make_app()
+def test_travel_days_are_written_up(make_app):
+    app = make_app()
     start_small_world(app)
     game = app.game
-    if with_ai:
-        for _ in range(100):
-            app.update()
-            if app.ai.usable():
-                break
-            import time
-
-            time.sleep(0.05)
-        assert app.ai.usable()
     before = len(game.log.messages)
     game.narration.append({"miles": 18, "lands": ["grassland", "hills"], "weather": "rain", "road": 4, "off_road": 2})
     render(app)
-    if with_ai:
-        app.ai.wait_idle(10)
-        app.update()
     flavor = [m for m in game.log.messages[before:] if m.category == "flavor"]
     assert flavor and "{" not in flavor[-1].text
     assert not game.narration
@@ -966,27 +926,6 @@ def test_a_job_from_the_first_word_to_the_pay(make_app):
     render(app)
     assert offer["state"] == "finished" and game.leader.money > money
     assert app.error_count == 0
-
-
-def test_ai_extras_can_be_switched_off(make_app):
-    """The setting keeps Player2 energy for people and places: no background flourishes are asked for."""
-    app = make_app()
-    app.settings.ai_enabled = True
-    assert not app.ai_extras()  # the AI is not online in tests, so nothing is asked for at all
-    app.settings.ai_extras = False
-    calls = []
-    app.ai.usable = lambda: True  # pretend it is online
-    app.ai.submit = lambda *a, **k: calls.append(a)
-    assert app.ai.usable() and not app.ai_extras()
-    start_small_world(app)
-    gs = app.top
-    gs._dress_magic_items()
-    gs._word_dungeon()
-    gs._word_area()
-    gs._word_quests()
-    assert not calls
-    app.settings.ai_extras = True
-    assert app.ai_extras()
 
 
 def test_a_life_ends_and_another_begins_in_the_same_world(make_app):

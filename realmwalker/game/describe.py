@@ -1,5 +1,4 @@
-"""Look / examine text for overworld tiles and local-map cells (built-in templates; the AI adds
-richer descriptions of important places in later milestones). Returns marked-up text."""
+"""Look / examine text for overworld tiles and local-map cells, from built-in words. Returns marked-up text."""
 
 from __future__ import annotations
 
@@ -70,49 +69,6 @@ def holder_line(game: GameState, s) -> str:
     if top is not None and top is not owner:
         text += f"<dim>, sworn to {top.name}</>"
     return text + "."
-
-
-def area_text(world, area) -> str:
-    """The AI's words for a named stretch of country, if it has written any."""
-    return world.politics.get("area_text", {}).get(str(area.id), "")
-
-
-def area_facts(game, area) -> dict:
-    """What the AI is told about a region: only what is really there."""
-    import math
-
-    w = game.world
-    biome = game.tables.biomes.defs[game.tables.biomes.index[area.kind]] if area.kind in game.tables.biomes.index \
-        else {"name": area.kind}
-    near = sorted((s for s in w.settlements if math.hypot(s.x - area.x, s.y - area.y) <= 12),
-                  key=lambda s: math.hypot(s.x - area.x, s.y - area.y))[:3]
-    sites = sorted((s for s in w.sites if math.hypot(s.x - area.x, s.y - area.y) <= 10),
-                   key=lambda s: math.hypot(s.x - area.x, s.y - area.y))[:2]
-    from realmwalker.world import factions as fx
-
-    realm = fx.realm_at(w, area.x, area.y)
-    m = game.moment
-    return {
-        "name": area.name,
-        "land": biome.get("name", area.kind),
-        "size": "small" if area.size < 30 else "wide" if area.size < 120 else "vast",
-        "season": m.season,
-        "weather": game.weather.kind,
-        "danger": str(int(w.danger[area.x, area.y])),
-        "realm": realm.name if realm is not None else "no lord anyone here obeys",
-        "towns": ", ".join(s.name for s in near) or "nowhere anyone lives",
-        "sites": ", ".join(s.name for s in sites) or "nothing anyone built",
-    }
-
-
-def keep_area_text(world, area, data: dict) -> bool:
-    if not data or not data.get("description"):
-        return False
-    kept = world.politics.setdefault("area_text", {})
-    if str(area.id) in kept:
-        return False
-    kept[str(area.id)] = str(data["description"]).strip()
-    return True
 
 
 def describe_overworld(game: GameState, x: int, y: int) -> str:
@@ -208,7 +164,7 @@ def describe_local(game: GameState, x: int, y: int) -> str:
 
         npc = npc_at(game, x, y)
         if npc is not None and (x, y) != (p.lx, p.ly):
-            lines.insert(0, describe_npc(game, npc) + " <dim>(walk into them to talk)</>")
+            lines.insert(0, describe_npc(game, npc) + " <dim>(stand beside them and press t to talk)</>")
     b = lm.building_at(x, y)
     if b is not None:
         kind = {"house": "a house", "inn": "an inn", "temple": "a temple", "smithy": "a smithy", "store": "a shop",
@@ -219,7 +175,5 @@ def describe_local(game: GameState, x: int, y: int) -> str:
         if town is not None:
             bi = lm.buildings.index(b)
             name = town.names.get(bi, "")
-            if name and bi not in town.names_seen:
-                town.names_seen.append(bi)
         lines.append(f"<dim>Part of {kind}{': ' + name if name else ''}.</>")
     return "\n".join(lines)

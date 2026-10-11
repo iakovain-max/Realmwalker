@@ -15,7 +15,7 @@ from realmwalker.ui.widgets import Canvas
 from realmwalker.world import legends
 
 LINK_COLOURS = {"H": "name", "F": "info", "S": "place", "X": "place", "W": "danger", "A": "loot", "E": "title",
-                "K": "ai"}
+                "K": "sage"}
 Token = tuple[str, tuple, str | None]  # (text, colour, link)
 
 

@@ -188,7 +188,7 @@ def test_nothing_on_screen_reads_wrong_during_a_run(tmp_path, monkeypatch):
         return spans(canvas, x, y, parts, bg, max_width)
 
     monkeypatch.setattr(widgets.Canvas, "spans", watch)
-    report = run_autoplay(turns=800, seed=6, ai="off", home=tmp_path / "home")
+    report = run_autoplay(turns=800, seed=6, home=tmp_path / "home")
     assert report.ok, report.summary()
     assert not found, found
 

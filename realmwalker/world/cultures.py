@@ -109,9 +109,6 @@ class Cultures:
         """Of the people: 'Heartland folk live here', 'a Qasari caravan'."""
         return self._folk(world, cid)[1]
 
-    def ai_style(self, cid: str) -> str:
-        return self.get(cid).get("ai_style", "")
-
     def about(self, cid: str) -> str:
         return self.get(cid).get("about", "")
 

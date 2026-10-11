@@ -112,7 +112,7 @@ class DungeonBuilder:
             features=self.features,
             meta={"site": self.site.id, "level": self.level, "depth": self.depth, "style": self.style,
                   "rooms": self.rooms, "hidden": sorted(self.hidden), "name": self.spec["name"],
-                  "desc": style_description(self.tables, self.style, self.rng), "desc_source": "fallback"},
+                  "desc": style_description(self.tables, self.style, self.rng)},
         )
 
     # ------------------------------------------------------------------ rooms and corridors

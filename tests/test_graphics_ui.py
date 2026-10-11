@@ -452,8 +452,7 @@ def test_markup_is_closed_with_a_bare_tag():
 
     root = Path(__file__).resolve().parent.parent
     bad = []
-    for path in list((root / "realmwalker").rglob("*.py")) + list((root / "data").glob("*.json")) + \
-            list((root / "ai" / "prompts").glob("*.txt")):
+    for path in list((root / "realmwalker").rglob("*.py")) + list((root / "data").glob("*.json")):
         for n, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
             if re.search(r"</[a-z_]+>", line):
                 bad.append(f"{path.relative_to(root)}:{n}")

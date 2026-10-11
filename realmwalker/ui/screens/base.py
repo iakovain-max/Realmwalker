@@ -17,7 +17,6 @@ class Screen:
     """One screen in the stack. Modal screens draw on top of the screen below them."""
 
     modal = False
-    show_status = True  # draw the AI status indicator in the corner
     captures_text = False  # true while typing into a text field (disables single-key global hotkeys)
     title = ""
     sound_open: str | None = "ui_open"  # sounds (data/sounds.json) as the screen opens and closes

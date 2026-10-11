@@ -1,7 +1,7 @@
 """Realmwalker entry point. Double-click Play.bat, or run: python main.py
 
 Options (for developers):
-  --smoke-test [PATH]  open the window, visit a few screens, save a screenshot, exit (AI always off)
+  --smoke-test [PATH]  open the window, visit a few screens, save a screenshot, exit
   --home DIR           use DIR instead of %APPDATA%\\Realmwalker for settings, saves and logs
 """
 
@@ -295,9 +295,7 @@ def main(argv: list[str] | None = None) -> int:
         from realmwalker.app import App
         from realmwalker.ui import window
 
-        # The smoke test never talks to the real Player2 app: it must not spend the player's AI energy.
-        overrides = {"ai_enabled": False} if args.smoke_test else None
-        app = App(home=args.home, settings_overrides=overrides)
+        app = App(home=args.home)
     except Exception:
         text = traceback.format_exc()
         crash = write_crash_file(text)

@@ -290,5 +290,72 @@
       "Fresh graves have been dug at the edge of the churchyard.",
       "It is quiet, the kind of quiet that means people are listening."
     ]
+  },
+  "obituary": {
+    "_comment": "The words on the death screen and in the chronicle (game/death.py write_obituary): an opening, what the world thought of them, what they did, what they killed, and a closing. Code fills {first} {who} {age} {road} {place} {deed} {kills} {year}.",
+    "opening": [
+      "{first} was {who}, {age} years old, and on the road {road}.",
+      "Born {who} and dead at {age}, {first} had been walking the roads {road}.",
+      "{first}, {who}, lived {age} years, the last of them spent on the road {road}.",
+      "{first} was {who} and lived to {age}; the road had {road} of it.",
+      "{age} years: that was the whole of {first}, {who}, and the road had {road} of them.",
+      "Here lies {first}, {who}, aged {age}, who took to the road {road} before the end.",
+      "{first} was {who} who went out into the world and stayed out in it {road}."
+    ],
+    "fame": [
+      "The name was known in more inns than one, and spoken with something like respect.",
+      "People in far towns had heard of {first}, and some of them believed it.",
+      "Songs were begun about {first}. Most of them were never finished.",
+      "There were taverns where a cup was raised to {first}, and it will be raised once more.",
+      "Lords knew the name, and so did their enemies."
+    ],
+    "infamy": [
+      "Mothers used the name to frighten children, and the children were right to be frightened.",
+      "Where the name was known, doors were barred.",
+      "Few will mourn {first}. Some will drink to the news.",
+      "The watch in more than one town will sleep better tonight.",
+      "Wherever {first} had been, people counted their dead and their silver afterwards."
+    ],
+    "nobody": [
+      "Hardly anyone knew the name. Fewer will remember it.",
+      "No herald cried the name, and none will now.",
+      "Nobody of note had heard of {first}. That is the way of most lives.",
+      "The world did not notice {first} come, and will not notice the going.",
+      "A few innkeepers might remember the face. None of them will remember the name."
+    ],
+    "deeds": [
+      "Those who knew {first} will remember that {first} {deed}.",
+      "If anything is told of {first}, it will be that {first} {deed}.",
+      "It is not nothing, to be the one who {deed}.",
+      "{first} {deed}. Let that be written somewhere.",
+      "Of all of it, this stays: {first} {deed}."
+    ],
+    "no_deeds": [
+      "Nothing {first} did was written down, and nothing will be.",
+      "There is no deed to set against the name. There was not time.",
+      "What {first} meant to do went into the ground unfinished.",
+      "No great thing was done. Small things were, and nobody counted them.",
+      "The road was long enough to set out on, and not long enough to arrive."
+    ],
+    "killer": [
+      "Behind {first} lay a long trail of the dead: {kills}.",
+      "{first} sent {kills} to the grave first, which is more than most can say, and less than it sounds.",
+      "The tally ran to {kills}. The last one was {first}'s own.",
+      "{kills}: the dead went before {first}, and now {first} has gone after them."
+    ],
+    "gentle": [
+      "{first} never killed anyone, which in this world is a kind of distinction.",
+      "No blood was on {first}'s hands at the end, and little of anything else.",
+      "{first} died without ever having killed, and perhaps that was the trouble."
+    ],
+    "closing": [
+      "The end came at {place}, in the year {year}. The world goes on.",
+      "{place} keeps what is left. The year was {year}, and the road did not stop for it.",
+      "It ended at {place}. Crows came, and then the rain, and then nothing.",
+      "At {place}, in {year}, the walking stopped.",
+      "The road ends where it ends. For {first} it ended at {place}.",
+      "Somewhere near {place} there is ground that holds {first} now, unmarked.",
+      "The year was {year}. At {place} the grass has already begun to grow over it."
+    ]
   }
 }

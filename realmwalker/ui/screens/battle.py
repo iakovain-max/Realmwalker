@@ -69,7 +69,6 @@ def health_word(f: Fighter) -> tuple[str, str]:
 
 class BattleScreen(Screen):
     title = "Battle"
-    show_status = False
     animating = True
     sound_open = None  # blades drawn, and the enemy's cry (on_enter)
 
