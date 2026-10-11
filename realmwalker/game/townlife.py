@@ -19,6 +19,9 @@ everyone is simply where their day has taken them.
     squeeze(game, npc)        you push past them: they take your square (False if they will not budge)
     said(game, lm)            what people near you are calling out just now (npc id -> words), for over their heads
 
+Now and then something happens: on the holy day the clergy go in procession round the square, chanting; of an
+evening two drinkers may come to blows outside the inn until the watch breaks it up.
+
 Nothing here is saved but where people stand (NPC.x, y) and when the town last moved (Town.flags["clock"]): the paths
 and the places of a town are found again when needed.
 """
@@ -37,6 +40,10 @@ WANDERING = ("streets", "patrol", "play", "square")  # a new spot every little w
 BARK_TICKS = 6  # words over someone's head stay this many steps of time (half a minute or so of watching)
 BARK_REST = 40  # and the same person does not call out again for this many
 BARK_NEAR = 11  # only people near you call out (squares)
+HOLY_DAY = "Sunsday"  # the procession goes round the square in the morning
+CLERGY = ("priest", "acolyte", "monk")
+BRAWLERS = ("labourer", "sailor", "soldier", "porter", "carter", "tanner", "butcher", "farmer", "miner")
+BRAWL_TICKS = 25  # how long a fight lasts if nobody stops it (two and a half minutes)
 
 _towns: dict = {}  # lm.key -> _Town (paths and places), never saved
 
@@ -61,6 +68,8 @@ class _Town:
         self.barks: dict[int, tuple[str, int]] = {}  # npc id -> (words, the step of time they end)
         self.barked: dict[int, int] = {}  # npc id -> the step of time they last called out
         self.near_home: dict[int, list[tuple[int, int]]] = {}  # npc id -> the streets round their home (children)
+        self.brawl: dict | None = None  # {"spot", "a", "b", "until", "told"}: a fight in the street
+        self.route: list[tuple[int, int]] | None = None  # the procession's way round the square
         s = settlement_of(game, lm)
         streets = outdoor_cells(game, lm, settlement=s) if s is not None else []
         self.streets = [c for c in streets if self.walk[c]] or [tuple(lm.entry)]
@@ -143,7 +152,13 @@ def activity(game, npc) -> str:
     if what in ("post", "meal", "home") and 9 <= hour < 13 and npc.job in MARKET_GOERS and market_day(game) \
             and _h(npc.id, game.world.time // 1440, 11) % 3 == 0:
         return "square"  # off to the market
+    if npc.job in CLERGY and 10 <= hour < 11 and holy_day(game):
+        return "procession"
     return what
+
+
+def holy_day(game) -> bool:
+    return game.moment.weekday == HOLY_DAY
 
 
 def asleep(game, npc) -> bool:
@@ -153,8 +168,18 @@ def asleep(game, npc) -> bool:
 def goal(game, lm, npc, town: _Town | None = None) -> tuple[int, int]:
     """The square this person is making for at this hour."""
     town = town or _town(game, lm)
+    brawl = town.brawl
+    if brawl is not None:
+        if npc.id in (brawl["a"], brawl["b"]):
+            return npc.x, npc.y  # they stand and fight
+        if npc.job in ("guard", "soldier") and not npc.flags.get("stays") and _near(npc, brawl["spot"], 30):
+            return brawl["spot"]  # the watch comes running
     act = activity(game, npc)
     today = game.world.time // 1440
+    if act == "procession":
+        route = _route(town, lm)
+        step = (game.world.time % 60) // 6 + (CLERGY.index(npc.job) if npc.job in CLERGY else 0)
+        return route[step % len(route)]
     if act in ("sleep", "home"):
         return tuple(npc.home)
     if act == "post":
@@ -180,6 +205,28 @@ def goal(game, lm, npc, town: _Town | None = None) -> tuple[int, int]:
                                                   if abs(c[0] - hx) < 14 and abs(c[1] - hy) < 10] or town.square
         return cells[_h(npc.id, slot, 4) % len(cells)]
     return tuple(npc.post)
+
+
+def _near(npc, spot, d: int) -> bool:
+    return max(abs(npc.x - spot[0]), abs(npc.y - spot[1])) <= d
+
+
+def _route(town: _Town, lm) -> list[tuple[int, int]]:
+    """The procession's way: from the temple's door round the corners of the square and back."""
+    if town.route is None:
+        sq = town.square
+        temple = next((b for b in lm.buildings if b.kind == "temple"), None)
+        start = None
+        if temple is not None:
+            dx, dy = temple.door
+            start = min(sq, key=lambda c: (c[0] - dx) ** 2 + (c[1] - dy) ** 2)
+        xs = [c[0] for c in sq]
+        ys = [c[1] for c in sq]
+        corners = []
+        for tx, ty in ((min(xs), min(ys)), (max(xs), min(ys)), (max(xs), max(ys)), (min(xs), max(ys))):
+            corners.append(min(sq, key=lambda c: (c[0] - tx) ** 2 + (c[1] - ty) ** 2))
+        town.route = ([start] if start else []) + corners + ([start] if start else [])
+    return town.route
 
 
 # ---------------------------------------------------------------------------- moving
@@ -317,10 +364,12 @@ def tick(game, lm, s) -> None:
                 continue
             coming = town.paths.get(other.id)
             head_on = coming is not None and coming[1] and coming[1][0] == here
-            if head_on or other.flags.get("waited", 0) >= 2 or _waited(npc) > 2:
-                _swap(town, npc, other, occupied)  # two in a narrow way: they pass each other
-            else:
-                _side_step(town, npc, g, occupied, me)
+            idle = asleep(game, other) or (other.x, other.y) == goal(game, lm, other, town)
+            waited = _waited(npc)
+            if head_on or (idle and waited > 1):
+                _swap(town, npc, other, occupied)  # two in a narrow way pass each other; one standing lets you by
+            elif not _side_step(town, npc, g, occupied, me) and waited > 8:
+                _swap(town, npc, other, occupied)  # (a queue that will not move: push through at last)
             continue
         _move(town, npc, nxt, occupied)
         kept[1].pop(0)
@@ -328,6 +377,7 @@ def tick(game, lm, s) -> None:
     for npc in people:  # whoever passes through a door leaves it open behind them
         _door(game, lm, npc)
     if game.local is lm:
+        _brawl(game, lm, town, people)
         _call_out(game, lm, town, people)
 
 
@@ -356,8 +406,8 @@ def _swap(town: _Town, a, b, occupied) -> None:
         n.flags.pop("waited", None)
 
 
-def _side_step(town: _Town, npc, g, occupied, me) -> None:
-    """A step aside that still goes the right way, if there is one; else they wait."""
+def _side_step(town: _Town, npc, g, occupied, me) -> bool:
+    """A step aside that still goes the right way, if there is one; else they wait. True if they stepped."""
     here = (npc.x, npc.y)
     best, gain = None, 0.0
     base = (here[0] - g[0]) ** 2 + (here[1] - g[1]) ** 2
@@ -373,6 +423,8 @@ def _side_step(town: _Town, npc, g, occupied, me) -> None:
         _move(town, npc, best, occupied)
         town.paths.pop(npc.id, None)
         npc.flags.pop("waited", None)
+        return True
+    return False
 
 
 def _door(game, lm, npc) -> None:
@@ -383,6 +435,36 @@ def _door(game, lm, npc) -> None:
 
 
 # ---------------------------------------------------------------------------- words in passing
+def _brawl(game, lm, town: _Town, people) -> None:
+    """Of an evening, now and then, two who have drunk too much come to blows in the street by the inn, shouting,
+    until the watch comes and pulls them apart (or they tire of it). Only with the world's voice on."""
+    b = town.brawl
+    if b is not None:
+        guards = [n for n in people if n.job in ("guard", "soldier") and _near(n, b["spot"], 1)]
+        if guards or town.ticks >= b["until"]:
+            town.brawl = None
+            if b.get("told") and getattr(game, "flavour", None) and game.flavour():
+                game.say("The watch pulls the brawlers apart and sends them home." if guards else
+                         "The brawl runs out of breath, and so do they.", "flavor")
+        return
+    if not getattr(game, "flavour", None) or not game.flavour() or game.light >= 0.5:
+        return
+    if _h(town.ticks, game.world.time, 13) % 900:  # rare: about once an evening of watching
+        return
+    me = (game.player.lx, game.player.ly)
+    out = [n for n in people if n.job in BRAWLERS and activity(game, n) in ("evening", "inn")
+           and lm.building_at(n.x, n.y) is None and _near(n, me, BARK_NEAR)]
+    for a in out:
+        for c in out:
+            if c is not a and _near(a, (c.x, c.y), 1):
+                town.brawl = {"spot": (a.x, a.y), "a": a.id, "b": c.id, "until": town.ticks + BRAWL_TICKS, "told": True}
+                insults = game.tables.people.get("barks", {}).get("_brawl", ["Say that again!", "You cheat!"])
+                town.barks[a.id] = (insults[_h(a.id, town.ticks) % len(insults)], town.ticks + BARK_TICKS)
+                town.barks[c.id] = (insults[_h(c.id, town.ticks, 1) % len(insults)], town.ticks + BARK_TICKS)
+                game.say("A fight breaks out in the street: fists, then a bench.", "flavor")
+                return
+
+
 def _call_out(game, lm, town: _Town, people) -> None:
     """Now and then someone near you says something in passing (data/people.json "barks"): the baker cries her
     bread, the crier the news, a child dares another. Only with the world's voice on (Text detail)."""
@@ -419,6 +501,8 @@ def _words_for(game, npc, roll: int) -> str | None:
         if items:
             return "Hear ye! " + items[roll % len(items)]["text"]
     own = barks.get(npc.job, [])
+    if npc.job in CLERGY and activity(game, npc) == "procession":
+        own = barks.get("_procession", own)
     night = game.light < 0.35
     common = barks.get("_night" if night else "_any", [])
     pool = own if own and (roll % 10 < 7 or not common) else common

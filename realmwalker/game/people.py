@@ -314,7 +314,8 @@ def populate_town(game, lm, settlement) -> Town:
                 homes_used[pick] = homes_used.get(pick, 0) + 1
                 free = [c for c in room[pick] if c not in taken]
                 beds_free = [c for c in free if terrain[c] == bed]
-                spot = rng.choice(beds_free or free)
+                aside = [c for c in free if _out_of_the_way(walk, *c)]  # not across the way to the door
+                spot = rng.choice([c for c in beds_free if c in aside] or aside or beds_free or free)
                 taken.add(spot)
                 return spot
         return street() if street_cells else lm.entry
@@ -367,9 +368,10 @@ def populate_town(game, lm, settlement) -> Town:
     lo, hi = spec["guards"]
     gates = _gate_posts(game, lm, walk)
     for i in range(rng.randint(lo, hi)):
-        spot = gates.pop(0) if gates and i < 2 else street()
+        at_gate = bool(gates) and i < 2
+        spot = gates.pop(0) if at_gate else street()
         npc = make_npc(game, settlement, "guard", rng.child(f"guard/{i}"), post=spot, home=spot)
-        if i < 2 and spot not in street_cells:
+        if at_gate:
             npc.flags["stays"] = True  # a warden of the gate: they will not stand aside
         add(world, town, npc)
     lo, hi = spec["commoners"]
@@ -620,7 +622,29 @@ def add(world, town: Town, npc: NPC) -> None:
     town.npcs.append(npc.id)
 
 
-STREETS = ("road", "cobbles", "dirt", "flagstones", "packed_sand", "boardwalk", "causeway", "bridge")
+RING = ((0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1))
+
+
+def _out_of_the_way(walk, x: int, y: int) -> bool:
+    """Would someone standing here leave every way round them open (not a doorway, not a narrow passage)?"""
+    w, h = walk.shape
+    ring = [0 <= x + dx < w and 0 <= y + dy < h and bool(walk[x + dx, y + dy]) for dx, dy in RING]
+    if all(ring):
+        return True
+    side = [i for i in (0, 2, 4, 6) if ring[i]]
+    if len(side) <= 1:
+        return True
+    start = ring.index(False)
+    run, runs = -1, {}
+    for k in range(1, 9):
+        i = (start + k) % 8
+        if ring[i]:
+            if run < 0:
+                run = i
+            runs[i] = run
+        else:
+            run = -1
+    return len({runs[i] for i in side}) == 1
 
 
 def _gate_posts(game, lm, walk) -> list[tuple[int, int]]:

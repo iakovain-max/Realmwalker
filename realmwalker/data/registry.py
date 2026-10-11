@@ -196,7 +196,7 @@ def _check_people_refs(files: dict[str, Any]) -> list[str]:
                               f"({', '.join(ACTIVITIES)}).")
             last = hour if isinstance(hour, (int, float)) else last
     for job in people.get("barks", {}):
-        if job not in jobs and job not in ("_any", "_night"):
+        if job not in jobs and job not in ("_any", "_night", "_procession", "_brawl"):
             errors.append(f"data/people.json: barks.{job} is for a trade that does not exist.")
     return errors
 

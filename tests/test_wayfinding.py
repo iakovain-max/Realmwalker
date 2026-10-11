@@ -107,8 +107,14 @@ def test_underground_the_stairs_are_a_place(tables, world):
     game.enter_local()
     dungeon.descend(game, 1)
     p = game.player
-    game.local.seen[:] = True
-    game.player.lx, game.player.ly = p.lx, p.ly
+    lm = game.local
+    lm.seen[:] = True
+    walk = game.tables.terrain.walk[game.remap_for(lm)[lm.terrain]]
+    # (you arrive on the stairs, and where you stand is not a place to walk to: step off them)
+    for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, -1), (1, -1), (-1, 1)):
+        if lm.in_bounds(p.lx + dx, p.ly + dy) and walk[p.lx + dx, p.ly + dy]:
+            p.lx, p.ly = p.lx + dx, p.ly + dy
+            break
     labels = [label for _, _, label in wayfinding.places(game)]
     assert "the stairs up" in labels or "the stairs down" in labels, labels
 

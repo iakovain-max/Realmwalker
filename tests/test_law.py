@@ -248,9 +248,20 @@ def test_a_disguise_hides_you(game, monkeypatch):
 
 def test_deeds_ripple_as_news_travels(game):
     w = game.world
-    realm = fx.active_factions(w, "kingdom")[0]
-    friends = [f for f in fx.active_factions(w) if fx.relation(w, realm.id, f.id) >= 40 and f.id != realm.id]
-    enemies = [f for f in fx.active_factions(w) if fx.relation(w, realm.id, f.id) <= -40]
+    kingdoms = fx.active_factions(w, "kingdom")
+    others = [f for f in fx.active_factions(w) if f.id != kingdoms[0].id]
+
+    def ties(realm):
+        friends = [f for f in fx.active_factions(w) if fx.relation(w, realm.id, f.id) >= 40 and f.id != realm.id]
+        enemies = [f for f in fx.active_factions(w) if fx.relation(w, realm.id, f.id) <= -40]
+        return friends, enemies
+
+    realm = next((k for k in kingdoms if all(ties(k))), kingdoms[0])
+    friends, enemies = ties(realm)
+    if not (friends and enemies):  # (a peaceful world: make a friend and an enemy for the test)
+        fx.set_relation(w, realm.id, others[0].id, 60)
+        fx.set_relation(w, realm.id, others[-1].id, -60)
+        friends, enemies = ties(realm)
     assert friends and enemies
     reputation.deed(game, "saved the king's daughter", {realm.id: 30.0}, immediate=(realm.id,), fame=5,
                     news_text="someone saved the king's daughter")

@@ -197,12 +197,15 @@ def test_walking_into_someone_does_not_talk_and_t_does(make_app, world):
     assert isinstance(app.top, DialogueScreen), type(app.top)
 
 
-def test_a_warden_at_the_gate_will_not_budge(town):
-    game, s = town
+def test_a_warden_at_the_gate_will_not_budge(tables, world):
+    game = new_game(copy.deepcopy(world), tables)
+    game.survival = False
+    townlife.forget()
+    max((s for s in game.world.settlements if s.kind in ("town", "city")), key=lambda s: s.population).walled = True
+    s = go_to(game)
     lm = game.local
     wardens = [n for n in folk(game, s) if n.flags.get("stays")]
-    if not wardens:
-        pytest.skip("an unwalled town")
+    assert wardens, "a walled town has wardens at its gates"
     w = wardens[0]
     walk = game.tables.terrain.walk[game.remap_for(lm)[lm.terrain]]
     for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
@@ -399,3 +402,48 @@ def test_a_town_made_ahead_of_you_is_peopled_on_its_own_map(town):
     for n in there:
         assert lm.in_bounds(n.x, n.y) and walk[n.x, n.y]
     assert {n.id: (n.x, n.y) for n in folk(game, s)} == before
+
+
+# ---------------------------------------------------------------------------- things happening
+def test_on_the_holy_day_the_clergy_go_in_procession(town):
+    game, s = town
+    lm = game.local
+    for _ in range(8):  # to the next holy day, mid-morning
+        game.world.time = (game.world.time // 1440 + 1) * 1440 + 10 * 60 + 20
+        if townlife.holy_day(game):
+            break
+    clergy = [n for n in folk(game, s) if n.job in townlife.CLERGY]
+    if not clergy:
+        pytest.skip("no temple here")
+    town_ = townlife._town(game, lm)
+    route = townlife._route(town_, lm)
+    for n in clergy:
+        assert townlife.activity(game, n) == "procession"
+        assert townlife.goal(game, lm, n, town_) in route
+    game.world.time += 2 * 60  # and after it, back to their work
+    assert all(townlife.activity(game, n) != "procession" for n in clergy)
+
+
+def test_a_brawl_brings_the_watch(town):
+    game, s = town
+    lm = game.local
+    game.verbosity = "normal"
+    at_hour(game, 20)
+    townlife.settle(game, lm)
+    town_ = townlife._town(game, lm)
+    guards = [n for n in folk(game, s) if n.job == "guard" and not n.flags.get("stays")]
+    if not guards:
+        pytest.skip("no watch here")
+    g = guards[0]
+    spot = next(c for c in sorted(town_.streets, key=lambda c: abs(c[0] - g.x) + abs(c[1] - g.y))
+                if abs(c[0] - g.x) + abs(c[1] - g.y) >= 6)
+    others = [n for n in folk(game, s) if n.job not in ("guard", "soldier")]
+    a, b = others[0], others[1]
+    a.x, a.y = spot
+    town_.brawl = {"spot": spot, "a": a.id, "b": b.id, "until": town_.ticks + 1000, "told": True}
+    for _ in range(300):
+        townlife.tick(game, lm, s)
+        if town_.brawl is None:
+            break
+    assert town_.brawl is None, "the watch came and broke it up"
+    assert any("watch" in m.text for m in game.log.messages[-3:])

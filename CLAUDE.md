@@ -162,7 +162,7 @@ tools/                     autoplay.py, mock_player2.py, build_friends.py, balan
   call out now and then (data/people.json "barks", shown over their heads, behind Text detail). `catch_up` runs after
   anything that passes time in a town; after a long while `settle` puts everyone where they should be. On a town's
   map the game screen's town clock passes STEP_SECONDS every half second (`GameState.town_tick`; Settings, Time in
-  towns: flows or waits); it stops under any other screen. Dress by people: data/sprites.json figures "cultures".
+  towns: flows or waits); it stops under any other screen. Processions (townlife.HOLY_DAY) and evening brawls (the watch breaks them up) are townlife too. You swap only with someone coming the other way or standing still. Dress by people: data/sprites.json figures "cultures". The generator gives each people a share of the towns (`_people_shares`); a realm founding in another people's country mostly settles that people (history.json peoples_change colonists).
 - The smoke test always runs with the AI off; tests use the mock. Never let a test reach the real Player2 app.
 - Factions live in `world.factions` / `world.figures` (saved with the world); a settlement's `owner` is the
   faction holding it, its realm is `factions.top_liege(owner)`. After changing holdings call `factions.touch(world)`

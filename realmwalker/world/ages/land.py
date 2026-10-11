@@ -232,7 +232,13 @@ class Land:
         founder_realm = by if by is not None else self.founding_realm(sp)
         culture = sp.prior
         if founder_realm is not None and founder_realm.kind != "tribe":
-            culture = founder_realm.culture
+            own = founder_realm.culture
+            cultures = s.t.cultures
+            if own != sp.prior and cultures.is_human(own) and cultures.is_human(sp.prior) and \
+                    not s.r.chance(float(s.data["peoples_change"].get("colonists", 0.3))):
+                culture = sp.prior  # the people of the country settle it, under a lord of another people
+            else:
+                culture = own
             if sp.prior == "halfling" and culture == "heartland" and sp.destiny in ("hamlet", "village"):
                 culture = "halfling"  # the little folk settle under a heartland lord's protection
         if culture in ("dwarven", "elven", "orcish") and sp.human:

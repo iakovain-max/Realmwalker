@@ -741,7 +741,9 @@ HISTORY = Obj(
         "lengths": List(Int(min=10, max=2000), min_items=1),
         "start": Map(BY_SIZE),
         "rates": Map(Float(min=0, max=1)),
-        "peoples_change": Obj({"after": Int(min=1, max=1000)}, optional=True),
+        "peoples_change": Obj({"after": Int(min=1, max=1000),
+                               # how many towns a realm founds in another people's country are its own colonists
+                               "colonists": Float(min=0, max=1, optional=True)}, optional=True),
         "spots": Obj({"reach": Float(min=5, max=200),
                       "thresholds": Obj({"village": Int(min=1), "town": Int(min=1), "city": Int(min=1)}),
                       "plans": Map(List(Float(min=-5000, max=5000), min_items=2, max_items=2)),

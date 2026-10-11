@@ -95,6 +95,8 @@
   "barks": {
     "_any": ["Morning.", "Mind your step.", "Fine day for it.", "Watch the cart!", "Coming through.", "Gods keep you.", "Pardon.", "Out of the way, then."],
     "_night": ["Late to be about.", "Mind the dark.", "Off home, me.", "Who's there?"],
+    "_procession": ["Praise be!", "Blessed are the faithful...", "Kyrie, kyrie...", "♪ Glory, glory ♪", "Make way for the holy!"],
+    "_brawl": ["Say that again!", "You cheat!", "Outside, you!", "That's my ale!", "I'll have your teeth!", "Hold him back!", "Watch! Watch!"],
     "baker": ["Fresh bread!", "Loaves, still warm!", "Rolls, a copper apiece!", "Honey cakes!"],
     "butcher": ["Fresh mutton!", "Good sausages here!", "Bones for the pot, cheap!"],
     "market_trader": ["Best prices in town!", "Look, don't touch!", "Two for one, today only!", "Fine wares, fine wares!"],

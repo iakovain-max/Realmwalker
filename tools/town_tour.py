@@ -22,6 +22,8 @@ def main(argv=None) -> int:
     ap.add_argument("--size", default="large")
     ap.add_argument("--out", default=str(ROOT / "build" / "shots" / "towns"))
     ap.add_argument("--night", action="store_true", help="also a shot of each by night")
+    ap.add_argument("--climate", default="random", help="frozen, cold, temperate, warm, scorched, varied")
+    ap.add_argument("--only", nargs="*", help="only these peoples (town styles)")
     args = ap.parse_args(argv)
     os.environ.setdefault("SDL_AUDIO_DRIVER", "dummy")
     from realmwalker.app import App
@@ -35,7 +37,8 @@ def main(argv=None) -> int:
     app = App(home=tempfile.mkdtemp(prefix="realmwalker-tour-"), settings_overrides={"ai_enabled": False})
     encounters.encounter_chance = lambda *a, **k: 0.0
     events.event_chance = lambda *a, **k: 0.0
-    world = WorldGenerator(WorldOptions("Tour", args.seed, args.size, history=100), app.tables).generate()
+    world = WorldGenerator(WorldOptions("Tour", args.seed, args.size, history=100, climate=args.climate),
+                           app.tables).generate()
     game = new_game(world, app.tables)
     game.survival = False
     app.start_game(game)
@@ -44,6 +47,8 @@ def main(argv=None) -> int:
     for s in sorted(world.settlements, key=lambda s: -s.population):
         style = app.tables.cultures.town_style(s.culture) if s.culture in app.tables.cultures.ids else s.culture
         key = (style, s.kind in ("town", "city", "hold", "elfhall"))
+        if args.only and style not in args.only:
+            continue
         if key not in seen:
             seen.add(key)
             picks.append((s, style))

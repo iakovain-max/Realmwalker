@@ -680,6 +680,22 @@ class WorldGenerator:
         score[:, :2] = score[:, -2:] = -1
         return score
 
+    def _people_shares(self, score: np.ndarray, cells: np.ndarray) -> list[tuple[int, float]]:
+        """Each people's share of the towns: half for how much land it holds, half for how good that land is."""
+        if not len(cells):
+            return []
+        owner = self.culture[cells[:, 0], cells[:, 1]]
+        good = np.clip(score[cells[:, 0], cells[:, 1]], 0, None)
+        out = []
+        for ci in range(len(self.culture_ids)):
+            mine = owner == ci
+            if not mine.any():
+                continue
+            land = mine.sum() / len(cells)
+            fertile = good[mine].sum() / max(1e-6, good.sum())
+            out.append((ci, float(0.5 * land + 0.5 * fertile) * 0.85))  # (and some left over for the best spots)
+        return out
+
     def _culture_for(self, x: int, y: int, kind: str, rng: RNG) -> str:
         """The people of the ground a place stands on (and now and then, in green farming country, halflings)."""
         i = int(self.culture[x, y])
@@ -814,7 +830,9 @@ class WorldGenerator:
             return True
 
         def place(kind: str, count: int, spacing: int, candidates: np.ndarray, culture: str | None = None,
-                  doomed: bool = False) -> None:
+                  doomed: bool = False) -> int:
+            if count <= 0 or not len(candidates):
+                return 0
             order = candidates[np.argsort(-score[candidates[:, 0], candidates[:, 1]])]
             added = 0
             for x, y in order.tolist():
@@ -837,11 +855,20 @@ class WorldGenerator:
                     area=int(self.area[x, y]),
                 )
                 placed.append(s)
+            return added
 
         land_cells = np.argwhere(score >= 0)
+        # Every people has its towns: a share of each kind for its lands (how much land, and how good), the rest
+        # wherever is best. (The best land alone would leave the peoples of desert, steppe and tundra almost none.)
+        shares = self._people_shares(score, land_cells)
+        owner = self.culture[land_cells[:, 0], land_cells[:, 1]]
         for kind in ("city", "town", "village", "hamlet"):
             counts, spacing = SETTLEMENT_COUNTS[kind]
-            place(kind, counts[self.size_index], spacing, land_cells)
+            total = counts[self.size_index]
+            done = 0
+            for ci, share in shares:
+                done += place(kind, int(total * share), spacing, land_cells[owner == ci])
+            place(kind, total - done, spacing, land_cells)
         B = self.B
         F = self.tables.biomes
         mountain = np.isin(self.biome, [B["mountains"]])

@@ -184,10 +184,15 @@ def draw(w: int, h: int, r: int, roof: str, wall: str, form: str, kind: str, doo
     fy0, fy1 = E + Hb - fh, E + Hb
     if form in ("flat", "dome", "court"):
         _front(pic, 0, fy0, W, fy1, wall, r, door_x, kind, rng, glow)
+        if roof == "flat" and wall in ("mudbrick", "sandstone", "ochre"):  # a roof of the same earth as the walls
+            base, dark, light = (214, 194, 156), (180, 160, 124), (232, 216, 184)
         top = (pic.ys >= E) & (pic.ys < fy0 + 1)
         pic.mask(top, base)
+        speck = rng.random((pic.h, pic.w))
+        pic.mask(top & (speck < 0.05), _sh(base, 0.94))  # the plaster patched and weathered
         rim = top & ((pic.ys < E + 2) | (pic.xs < 2) | (pic.xs >= W - 2) | (pic.ys >= fy0 - 1))
         pic.mask(rim, light)
+        pic.mask(top & ~rim & ((pic.ys == E + 2) | (pic.xs == 2)), _sh(base, 0.82))  # the parapet's shadow
         if form == "court":  # the open court in the middle, its fountain or tree
             depth = 2 * r if min(w, h) >= 11 else int(1.6 * r)
             cx0, cy0, cx1, cy1 = depth, E + depth, W - depth, fy0 - depth // 2
@@ -205,10 +210,35 @@ def draw(w: int, h: int, r: int, roof: str, wall: str, form: str, kind: str, doo
                 else:  # a palm
                     pic.mask(pic.ellipse(mx, my, 3, 3), (70, 120, 60))
                     pic.mask(pic.ellipse(mx - 1, my - 1, 1.5, 1.5), (110, 160, 80))
-        else:  # things on a flat roof: a stair hatch, jars, a line of washing
+        else:  # things on a flat roof: a stair hatch, jars, a rug airing, a water tank, an awning, a line of washing
             hx = int(W * (0.2 + 0.5 * rng.random()))
-            pic.rect(hx, E + r // 2, hx + max(3, r // 3), E + r // 2 + max(2, r // 4), _sh(base, 0.7))
-            if kind not in ("temple", "hall", "keep", "library", "bank") and W > 3 * r and rng.random() < 0.6:
+            pic.rect(hx - 1, E + r // 2 - 1, hx + max(3, r // 3) + 1, E + r // 2 + max(2, r // 4) + 1, _sh(base, 0.8))
+            pic.rect(hx, E + r // 2, hx + max(3, r // 3), E + r // 2 + max(2, r // 4), (70, 56, 44))
+            homely = kind not in ("temple", "hall", "keep", "library", "bank")
+            for _ in range(int(rng.integers(1, 4)) if homely else 0):  # clay jars
+                jx = int(rng.integers(4, max(5, W - 6)))
+                jy = int(rng.integers(E + 4, max(E + 5, fy0 - 5)))
+                pic.mask(pic.ellipse(jx, jy, 1.6, 1.6), (176, 104, 64))
+                pic.px(jx - 1, jy - 1, (214, 150, 104))
+            if homely and W > 2 * r and rng.random() < 0.5:  # a rug airing over the parapet
+                rx0 = int(rng.integers(3, max(4, W - r)))
+                rw, rh = max(4, r // 2), max(3, r // 3)
+                ry0 = fy0 - rh - 1
+                col = ((150, 50, 44), (60, 62, 120), (170, 120, 50))[int(rng.integers(0, 3))]
+                pic.rect(rx0, ry0, rx0 + rw, ry0 + rh, col)
+                pic.rect(rx0, ry0 + 1, rx0 + rw, ry0 + 2, (224, 190, 110))
+                pic.rect(rx0, ry0 + rh - 2, rx0 + rw, ry0 + rh - 1, (224, 190, 110))
+            if rng.random() < 0.25:  # a water tank
+                tx, ty = int(W * 0.78), E + max(4, r // 2)
+                pic.mask(pic.ellipse(tx, ty, max(2, r // 4), max(2, r // 5)), (110, 122, 130))
+                pic.mask(pic.ellipse(tx - 0.5, ty - 0.5, max(1, r // 6), max(1, r // 8)), (70, 96, 120))
+            if homely and W > 3 * r and rng.random() < 0.3:  # a striped awning for the heat of the day
+                ax0, aw = int(W * 0.15), max(6, int(W * 0.3))
+                ay0 = E + max(3, int((fy0 - E) * 0.2))
+                for k in range(aw):
+                    pic.rect(ax0 + k, ay0, ax0 + k + 1, ay0 + max(3, r // 3),
+                             (200, 70, 50) if (k // 2) % 2 else (236, 226, 204))
+            if homely and W > 3 * r and rng.random() < 0.6:
                 ly = E + int((fy0 - E) * 0.55)
                 for x in range(r, W - r):
                     pic.px(x, ly + (1 if (x // 3) % 2 else 0), (120, 110, 100))

@@ -50,7 +50,7 @@
     "grant": 0.08,
     "hero_rises": 0.3
   },
-  "peoples_change": {"after": 60},
+  "peoples_change": {"after": 60, "colonists": 0.3},
   "spots": {
     "reach": 40,
     "thresholds": {

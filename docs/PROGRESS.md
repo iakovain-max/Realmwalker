@@ -116,7 +116,13 @@ dwarven hold (on the map, a gate in a mountain) and go in at night. Settings has
 
 **Checked**: full test suite green (1174 tests; new: tests/test_towns.py for every people's towns at every size, doors reached, nobody shut in, holds lit the same at noon and midnight, lamps lit at night; tests/test_townlife.py for days, walking, doorways, squeezing past, t to talk, the town clock, street calls, market days, a great city of 300 stepping in 7 ms), smoke test clean (new pictures: a city, a hold, an elven hall, the peoples view), autoplay OK in both AI modes.
 
-**Not done yet** (from the design): processions and brawls in the streets; L- and cross-shaped buildings.
+**Later the same evening**
+- **Every people has its towns.** Towns used to go to the best farmland first, so peoples of hard country (the Qasari of the deserts, the Khurgan of the steppe) were left with two or three; now each people gets a share for its lands (how much, and how good), and the rest go wherever is best. And when a realm founds a town in another people's country, it is mostly settled by the people of that country under a foreign lord (data/history.json peoples_change colonists: 0.3); before, every new town took its founder's people, and a century of history could turn most of the world Volsk.
+- **Things happen in the streets**: on the holy day (Sunsday) the priests, acolytes and monks go in procession round the square in the morning, chanting; of an evening two drinkers may come to blows in the street until the watch comes running and pulls them apart.
+- Flat roofs (Qasari, Itzan) have more on them: jars, rugs airing, water tanks, striped awnings, a warm mud-brick tone.
+- Fixed: people jammed in a crowded house when someone slept across the way to the door (now you only swap with someone coming the other way or standing still, and homes are not put across passages); wardens at the gates of walled towns now hold their posts; a town made ahead of your arrival (for a job) is peopled on its own map.
+
+**Not done yet** (from the design): L- and cross-shaped buildings.
 
 ### Local session, 2026-10-11: peoples, a land of extremes and wonders, a new world map (Anton's request) — branch `world-variety`
 
