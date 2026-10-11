@@ -7,7 +7,7 @@
     "heartland": {
       "layout": "organic", "street": "cobbles", "lane": "road", "plaza": "cobbles", "wall": "wall_stone", "palisade": "palisade",
       "look": {"temple": [["slate"], ["stone"], ["rect"]], "hall": [["slate"], ["stone", "brick"], ["rect"]],
-               "keep": [["slate"], ["stone"], ["rect"]], "_": [["thatch", "thatch", "slate", "tile", "shingle"], ["plaster", "plaster", "brick", "stone", "ochre"], ["rect", "rect", "rect", "long"]]},
+               "keep": [["slate"], ["stone"], ["rect"]], "_": [["thatch", "thatch", "slate", "tile", "shingle"], ["plaster", "plaster", "brick", "stone", "ochre"], ["rect", "rect", "rect", "long", "L", "L"]]},
       "floor": "floor_wood", "square": ["well", "notice_board", "stall", "stall", "lamp_post", "bench", "statue"],
       "street_things": ["barrels", "crates", "cart", "planter", "woodpile", "bench"], "trees": ["tree_broadleaf"], "light": "lamp_post",
       "extra": ["library", "bakery", "warehouse", "barracks"]
@@ -31,7 +31,7 @@
       },
       "layout": "organic", "street": "road", "lane": "dirt", "plaza": "road", "wall": "wall_stone", "palisade": "palisade",
       "look": {"temple": [["slate"], ["stone"], ["rect"]], "hall": [["slate"], ["stone"], ["long"]], "keep": [["slate"], ["stone"], ["rect"]],
-               "_": [["thatch", "thatch", "turf", "slate"], ["stone", "stone", "dark_stone"], ["rect", "long", "round"]]},
+               "_": [["thatch", "thatch", "turf", "slate"], ["stone", "stone", "dark_stone"], ["rect", "long", "round", "L"]]},
       "floor": "floor_earth", "square": ["well", "standing_stone", "stall", "fire_pit", "bench"],
       "street_things": ["woodpile", "haystack", "cart", "barrels", "peat_stack"], "trees": ["tree_pine", "tree_broadleaf"], "light": "torch_post",
       "extra": ["brewery", "warehouse"]
@@ -79,7 +79,7 @@
       },
       "layout": "grid", "street": "cobbles", "lane": "cobbles", "plaza": "flagstones", "wall": "wall_stone", "palisade": "wall_stone",
       "look": {"temple": [["tile"], ["stone", "marble"], ["rect"]], "hall": [["tile"], ["ochre", "marble"], ["court"]], "keep": [["tile"], ["stone"], ["rect"]],
-               "_": [["tile"], ["ochre", "rose", "plaster", "stone"], ["rect", "rect", "court"]]},
+               "_": [["tile"], ["ochre", "rose", "plaster", "stone"], ["rect", "rect", "court", "L"]]},
       "floor": "floor_tile", "square": ["fountain", "statue", "stall", "stall", "bench", "lamp_post", "planter"],
       "street_things": ["planter", "barrels", "cart", "bench", "crates"], "trees": ["tree_broadleaf", "tree_cypress"], "light": "lamp_post",
       "extra": ["library", "bank", "bathhouse", "bakery", "warehouse", "barracks"]
@@ -175,7 +175,7 @@
       },
       "layout": "kremlin", "street": "boardwalk", "lane": "mud", "plaza": "boardwalk", "wall": "palisade", "palisade": "palisade",
       "look": {"temple": [["onion"], ["whitewash"], ["rect"]], "hall": [["shingle"], ["logs"], ["long"]], "keep": [["onion"], ["logs"], ["rect"]],
-               "_": [["shingle", "thatch"], ["logs"], ["rect", "rect", "long"]]},
+               "_": [["shingle", "thatch"], ["logs"], ["rect", "rect", "long", "L"]]},
       "floor": "floor_wood", "square": ["well", "stall", "bell_post", "bench"],
       "street_things": ["woodpile", "cart", "barrels", "sledge"], "trees": ["tree_birch", "tree_pine"], "light": "lantern_post",
       "extra": ["bathhouse", "warehouse", "barracks"]

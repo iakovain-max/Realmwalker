@@ -25,7 +25,8 @@ WALL_TERRAIN = {"plaster": "wall_plaster", "ochre": "wall_plaster", "rose": "wal
 # Roofs and building shapes the pictures know (ui/gfx/roofs.py).
 ROOFS = ("thatch", "slate", "tile", "shingle", "turf", "stone", "flat", "dome", "dome_blue", "onion", "felt",
          "felt_white", "thatch_round", "leaves", "mound", "hide", "none")
-SHAPES = ("rect", "long", "round", "court", "tree", "mound", "carved", "pyramid")
+SHAPES = ("rect", "long", "round", "court", "tree", "mound", "carved", "pyramid", "L")
+PITCHED = ("thatch", "slate", "tile", "shingle", "stone", "turf")  # roofs that can turn a corner (an L-shaped house)
 FLOOR_FOR = {"temple": "floor_stone", "keep": "floor_stone", "hall": "floor_stone", "bathhouse": "floor_tile",
              "stable": "floor_earth", "warehouse": "floor_earth", "barracks": "floor_wood", "tomb": "floor_stone",
              "forge_hall": "floor_stone", "mushroom_farm": "floor_earth", "boathouse": "floor_earth"}
@@ -393,6 +394,12 @@ class Plan:
             shape = look["shape"] = "rect"
         if shape == "court" and min(w, h) < 7:
             shape = look["shape"] = "rect"
+        if shape == "L":
+            if min(w, h) < 6 or look.get("roof") not in PITCHED:
+                shape = look["shape"] = "rect"
+            else:  # a corner at the back left open: the main house along the street, a wing behind it
+                cw, ch = w - max(4, w // 2), h - max(4, (h + 1) // 2)
+                look["cut"] = [w - cw, 0, w, ch] if self.rng.random() < 0.5 else [0, 0, cw, ch]
         dx, dy = door
         if not (x <= dx < x + w and y <= dy < y + h):
             return None
@@ -402,7 +409,7 @@ class Plan:
             wall = "wall_stone"
         if floor not in self.b.T:
             floor = "floor_wood"
-        cells = self._shape_cells(shape, x, y, w, h)
+        cells = self._shape_cells(shape, x, y, w, h, look.get("cut"))
         inner = self._interior(cells)
         edge = cells & ~inner
         if (dx, dy) in zip(*np.nonzero(inner)):
@@ -417,15 +424,19 @@ class Plan:
         self.set(dx, dy, "door_closed")
         self.used[x:x + w, y:y + h] = True
         self.built[cells] = True
-        rooms = self._rooms(kind, shape, x, y, w, h, inner, door, wall, floor, uses)
+        rooms = self._rooms(kind, shape, x, y, w, h, inner, door, wall, floor, uses, look.get("cut"))
         bld = Building(x, y, w, h, kind, door=(dx, dy), shape=shape, rooms=rooms, look=look)
         for room in rooms:
             self.furnish(bld, room)
         self.b.buildings.append(bld)
         return bld
 
-    def _shape_cells(self, shape: str, x: int, y: int, w: int, h: int) -> np.ndarray:
+    def _shape_cells(self, shape: str, x: int, y: int, w: int, h: int, cut=None) -> np.ndarray:
         m = np.zeros((self.W, self.H), bool)
+        if shape == "L" and cut:
+            m[x:x + w, y:y + h] = True
+            m[x + cut[0]:x + cut[2], y + cut[1]:y + cut[3]] = False
+            return m
         if shape in ("round", "tree", "mound"):
             cx, cy = x + (w - 1) / 2, y + (h - 1) / 2
             xs = np.arange(self.W)[:, None]
@@ -459,10 +470,25 @@ class Plan:
             return None
         return min(pts, key=lambda p: (p[0] - dx) ** 2 + (p[1] - dy) ** 2)
 
-    def _rooms(self, kind, shape, x, y, w, h, inner, door, wall, floor, uses=None) -> list[dict]:
+    def _rooms(self, kind, shape, x, y, w, h, inner, door, wall, floor, uses=None, cut=None) -> list[dict]:
         """Divide the inside into the rooms this kind of building has (inner walls with a doorway between)."""
         asked = uses is not None
         uses = list(uses) if asked else list(ROOMS.get(kind, ["hall"]))
+        if shape == "L" and cut:  # the main house and its wing behind, a wall between them with a doorway
+            jy = y + cut[3]
+            joint = [xx for xx in range(x, x + w) if inner[xx, jy]]
+            if joint:
+                dx, dy = door
+                by_door = [xx for xx in joint if abs(xx - dx) + abs(jy - dy) == 1]  # (never a wall inside a door)
+                gap = by_door[0] if by_door else joint[len(joint) // 2]
+                for xx in joint:
+                    self.set(xx, jy, "doorway" if xx == gap else wall)
+                inner = inner.copy()
+                inner[joint, jy] = False
+            front = np.zeros((self.W, self.H), bool)
+            front[x:x + w, jy + 1:y + h] = True
+            return [self._room(inner & front, uses[0] if uses else "hall"),
+                    self._room(inner & ~front, uses[1] if len(uses) > 1 else "bedroom")]
         ix0, iy0, ix1, iy1 = x + 1, y + 1, x + w - 2, y + h - 2
         if shape in ("round", "tree", "mound") or ix1 < ix0 or iy1 < iy0:
             return [self._room(inner, uses[0] if uses else "hall")]

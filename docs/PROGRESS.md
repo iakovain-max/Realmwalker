@@ -122,7 +122,9 @@ dwarven hold (on the map, a gate in a mountain) and go in at night. Settings has
 - Flat roofs (Qasari, Itzan) have more on them: jars, rugs airing, water tanks, striped awnings, a warm mud-brick tone.
 - Fixed: people jammed in a crowded house when someone slept across the way to the door (now you only swap with someone coming the other way or standing still, and homes are not put across passages); wardens at the gates of walled towns now hold their posts; a town made ahead of your arrival (for a job) is peopled on its own map.
 
-**Not done yet** (from the design): L- and cross-shaped buildings.
+- **L-shaped houses** in Heartland, Highland, Southron and Volsk towns: the house along the street and a wing behind it, a corner left open, a doorway between them, the roof turning the corner.
+
+**Not done yet** (from the design): cross-shaped buildings.
 
 ### Local session, 2026-10-11: peoples, a land of extremes and wonders, a new world map (Anton's request) — branch `world-variety`
 

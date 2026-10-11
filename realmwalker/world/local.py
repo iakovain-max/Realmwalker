@@ -41,6 +41,9 @@ class Building:
         if self.shape in ("round", "tree", "mound"):  # a round house: not the corners of its square
             cx, cy = self.x + (self.w - 1) / 2, self.y + (self.h - 1) / 2
             return ((px - cx) / (self.w / 2)) ** 2 + ((py - cy) / (self.h / 2)) ** 2 <= 1.0
+        cut = self.look.get("cut") if self.shape == "L" and self.look else None
+        if cut:  # an L: not the corner left open
+            return not (cut[0] <= px - self.x < cut[2] and cut[1] <= py - self.y < cut[3])
         return True
 
 

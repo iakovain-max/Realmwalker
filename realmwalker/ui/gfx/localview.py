@@ -541,6 +541,7 @@ class LocalView:
                 continue
             covered.append(b)
             px_, py_ = self.cell_px(b.x, b.y)
+            top = py_  # where the main picture starts (an L's main house is below its wing)
             if special is not None:  # the buildings of other peoples (houses.py)
                 E = houses.extra_top(special, r, b.kind)
                 spot = houses.smoke_spot(special, b.w, b.h, r, b.kind) if b.kind not in ("temple", "store") else None
@@ -555,7 +556,25 @@ class LocalView:
                 E = roofs.extra_top(form, r)
                 args = (b.w, b.h, r, style, wall, form, b.kind, door, seed, chimney, lit)
                 draw = roofs.building
-            dst = (px_, py_ - E * k, b.w * T, (b.h * r + E) * k)
+                cut = look.get("cut") if b.shape == "L" else None
+                if cut:  # an L: the wing behind first (its front hidden under the main roof), then the main house
+                    ch = cut[3]
+                    wx0, ww = (0, cut[0]) if cut[0] > 0 else (cut[2], b.w - cut[2])
+                    wing_door = (door[0] - wx0, door[1]) if door[1] < ch and wx0 <= door[0] < wx0 + ww \
+                        else (ww // 2, ch + 1)
+                    wargs = (ww, ch + 2, r, style, wall, "gable", b.kind, wing_door, seed + 1, False, lit)
+                    wE = roofs.extra_top("gable", r)
+                    wdst = (px_ + wx0 * T, py_ - wE * k, ww * T, ((ch + 2) * r + wE) * k)
+                    out.append(Image(("bld", *wargs), lambda wargs=wargs: roofs.building(*wargs)[0], wdst,
+                                     rgba=(*base, 255), smooth=False))
+                    if lit and roofs.building(*wargs)[1] is not None:
+                        glows.append(Image(("bldglow", *wargs), lambda wargs=wargs: roofs.building(*wargs)[1], wdst,
+                                           rgba=(255, 255, 255, 235), smooth=False))
+                    main_door = (door[0], door[1] - ch) if door[1] >= ch else (b.w // 2, b.h - ch - 1)
+                    args = (b.w, b.h - ch, r, style, wall, form, b.kind, main_door, seed, chimney, lit)
+                    top = py_ + ch * T
+            rows = args[1] if draw is roofs.building else b.h
+            dst = (px_, top - E * k, b.w * T, (rows * r + E) * k)
             # A shadow on the ground to the south-east, the light being from the north-west.
             shadow.append(Rect(px_ + b.w * T, py_ + T * 0.35, T * 0.3, b.h * T - T * 0.35, (0, 0, 0, 60)))
             shadow.append(Rect(px_ + T * 0.3, py_ + b.h * T, b.w * T, T * 0.22, (0, 0, 0, 60)))
@@ -584,6 +603,14 @@ class LocalView:
                                       np.array([[base[0] / 255, base[1] / 255, base[2] / 255, 1.0]], np.float32)))
             if chimney and ambient:
                 fx, fy = roofs.chimney_spot(b.w, b.h, seed, form) if special is None else spot
+                if special is None and b.shape == "L" and look.get("cut"):  # (on the main house, below the wing)
+                    ch = look["cut"][3]
+                    fx, fy = roofs.chimney_spot(b.w, b.h - ch, seed, form)
+                    fy = (ch + fy * (b.h - ch)) / b.h
+                if special is None and b.shape == "L" and look.get("cut"):  # (on the main house, below the wing)
+                    ch = look["cut"][3]
+                    fx, fy = roofs.chimney_spot(b.w, b.h - ch, seed, form)
+                    fy = (ch + fy * (b.h - ch)) / b.h
                 smoke.append((px_ + b.w * T * fx + T * 0.2, py_ + b.h * T * fy - T * 0.25, seed))
         canvas.under(*shadow)
         canvas.under(*out)

@@ -241,3 +241,19 @@ def test_lamps_and_braziers_light_a_town_at_night(make_app, world):
     lit = {(x, y) for x, y, *_ in art.lights}
     assert lamps <= lit, "every lamp post gives light"
     assert float(np.mean(app.top.local_view.base_light)) < 0.75  # (and lights only show in the dark)
+
+
+def test_some_houses_are_l_shaped_with_a_wing_behind(world, tables):
+    lm = build_as(world, tables, "heartland", "city")
+    ells = [b for b in lm.buildings if b.shape == "L"]
+    assert ells, "a heartland city has houses with a wing"
+    T = tables.terrain
+    for b in ells:
+        cx0, cy0, cx1, cy1 = b.look["cut"]
+        assert not b.contains(b.x + cx0, b.y + cy0), "the corner left open is not the house"
+        assert lm.building_at(b.x + cx0, b.y + cy0) is not b
+        wing = [(x, y) for x in range(b.x, b.x + b.w) for y in range(b.y, b.y + cy1) if b.contains(x, y)]
+        assert wing, "and the wing is"
+        joint = [T.ids[int(lm.terrain[x, b.y + cy1])] for x in range(b.x, b.x + b.w)]
+        assert "doorway" in joint, "a doorway from the house into its wing"
+    check_works(lm, tables, "a heartland city with L-shaped houses")
