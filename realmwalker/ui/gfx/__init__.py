@@ -1,9 +1,8 @@
 """Graphics on top of the text grid: tiles, pictures, smooth movement and fine text.
 
-The game still draws every screen into a tcod console of text cells, as it always has. When it runs in a real
-window it can also record picture commands (scene.py) beside the text, in layers, and the window draws them
-with the GPU (gpu.py). Headless (tests, the autoplay bot) nothing here needs a window: commands are recorded
-and ignored, and every screen still writes its words into the cells.
+Every screen draws its words into a tcod console of text cells and records picture commands (scene.py) beside
+them, in layers; in a window the GPU draws them (gpu.py). Headless (tests, the autoplay bot) the same commands are
+recorded through `headless()` and checked instead of shown, so every screen's pictures are exercised in every run.
 """
 
 from __future__ import annotations
@@ -23,7 +22,6 @@ class GfxContext:
     cell_w: int = 10
     cell_h: int = 20
     now: float = 0.0  # seconds, for animation
-    tiles: bool = True  # draw the maps with pictures (Settings "Graphics")
     motion: str = "full"  # animations: full, calm (no idle movement), off
     ppc: dict = field(default_factory=dict)  # remembered map scales
 
@@ -35,3 +33,12 @@ class GfxContext:
     def ambient(self) -> bool:
         """Idle movement: water, torches, weather. Only at "full"."""
         return self.motion == "full"
+
+
+def headless(cell_w: int = 10, cell_h: int = 20) -> GfxContext:
+    """A picture context with no window: screens record their pictures over the real tile sheets (loaded once per
+    process), exactly as in a window, and nothing is shown."""
+    from realmwalker.paths import Paths
+    from realmwalker.ui.gfx.atlas import load
+
+    return GfxContext(load(str(Paths().tiles)), cell_w, cell_h)

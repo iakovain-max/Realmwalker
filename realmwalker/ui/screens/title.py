@@ -2,29 +2,13 @@
 
 from __future__ import annotations
 
-import math
-
 from realmwalker import MILESTONE, __version__
 from realmwalker.ui import colors
 from realmwalker.ui.input import KeyEvent
 from realmwalker.ui.screens.base import Screen
 from realmwalker.ui.widgets import Canvas, Menu, MenuItem
 
-LOGO_LETTERS = {
-    "R": ["████ ", "█   █", "████ ", "█  █ ", "█   █"],
-    "E": ["█████", "█    ", "████ ", "█    ", "█████"],
-    "A": [" ███ ", "█   █", "█████", "█   █", "█   █"],
-    "L": ["█    ", "█    ", "█    ", "█    ", "█████"],
-    "M": ["█   █", "██ ██", "█ █ █", "█   █", "█   █"],
-    "W": ["█   █", "█   █", "█ █ █", "██ ██", "█   █"],
-    "K": ["█   █", "█  █ ", "███  ", "█  █ ", "█   █"],
-}
-LOGO_WORD = "REALMWALKER"
 TAGLINE = "The realm does not care whether you live."
-
-
-def logo_rows() -> list[str]:
-    return [" ".join(LOGO_LETTERS[ch][row] for ch in LOGO_WORD) for row in range(5)]
 
 
 class TitleScreen(Screen):
@@ -107,36 +91,6 @@ class TitleScreen(Screen):
         return "title"  # and for every menu opened over it: new world, the character, saved worlds
 
     def render(self, canvas: Canvas) -> None:
-        if canvas.gfx is not None:
-            self._render_painted(canvas)
-            return
-        w, h = canvas.width, canvas.height
-        self._draw_backdrop(canvas)
-        rows = logo_rows()
-        logo_w = len(rows[0])
-        top = max(1, h // 2 - 12)
-        for i, row in enumerate(rows):
-            fg = colors.lerp(colors.TITLE, (150, 60, 40), i / 4)
-            canvas.text((w - logo_w) // 2, top + i, row, fg)
-        canvas.centered(top + 6, f"<dim>{TAGLINE}</>")
-
-        menu_w = 34
-        mx = (w - menu_w) // 2
-        my = top + 9
-        self.menu.render(canvas, mx, my, menu_w)
-        note = self.menu.items[self.menu.selected].note
-        if note:
-            canvas.wrapped(max(2, (w - 70) // 2), my + len(self.menu.items) + 1, f"<dim>{note}</>", min(70, w - 4))
-        # As much of the line as fits: a narrow window loses the key hints first, never half a word.
-        parts = [f"v{__version__}", MILESTONE, "F1 help", "Ctrl +/- text size", "F11 fullscreen"]
-        line = parts[0]
-        for part in parts[1:]:
-            if len(line) + 3 + len(part) > w - 2:
-                break
-            line += " · " + part
-        canvas.text(1, h - 1, line, colors.FAINT)
-
-    def _render_painted(self, canvas: Canvas) -> None:
         """Night over the mountains; the name in blackletter; the menu on a pane of dark glass."""
         from realmwalker.ui.gfx import theme, titleart
         from realmwalker.ui.gfx.scene import Text
@@ -168,27 +122,11 @@ class TitleScreen(Screen):
             line += " · " + part
         canvas.text(1, h - 1, line, colors.DIM)
 
-    def _draw_backdrop(self, canvas: Canvas) -> None:
-        """Faint stars and a mountain ridge along the bottom."""
-        w, h = canvas.width, canvas.height
-        for x in range(0, w, 1):
-            seed = (x * 7919) % 101
-            if seed < 4:
-                y = (x * 31) % max(1, h // 3)
-                canvas.text(x, y, "·" if seed < 3 else "*", colors.FAINT)
-        base = h - 2
-        for x in range(w):
-            ridge = 4 + 3 * math.sin(x / 9.0) + 2 * math.sin(x / 3.7 + 1.3) + 1.5 * math.sin(x / 17.0 + 0.4)
-            peak = base - max(1, int(ridge))
-            canvas.text(x, peak, "▲", (54, 50, 46))
-            for y in range(peak + 1, base + 1):
-                canvas.text(x, y, "░", (30, 28, 30))
-
     def handle_key(self, ev: KeyEvent) -> bool:
         if ev.key == "escape":
             return True
         return self.menu.handle_key(ev)
 
     def autoplay_keys(self) -> list[KeyEvent]:
-        return [KeyEvent("up"), KeyEvent("down"), KeyEvent("enter"), KeyEvent("p"), KeyEvent("s"), KeyEvent("?"),
+        return [KeyEvent("up"), KeyEvent("down"), KeyEvent("enter"), KeyEvent("s"), KeyEvent("?"),
                 KeyEvent("n"), KeyEvent("n"), KeyEvent("c"), KeyEvent("c"), KeyEvent("c")]

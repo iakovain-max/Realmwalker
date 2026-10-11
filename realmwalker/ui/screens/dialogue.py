@@ -153,8 +153,7 @@ class DialogueScreen(Screen):
 
     def _render_side(self, canvas: Canvas, x: int, y: int, w: int, h: int) -> None:
         npc = self.npc
-        if canvas.gfx is not None:
-            y = self._portrait(canvas, x, y, w)
+        y = self._portrait(canvas, x, y, w)
         canvas.section(x, y, w, "What you know")
         y += 1
         facts = [f"<dim>{npc.age}, {self.game.tables.races.get(npc.race, {}).get('name', npc.race)}</>"]

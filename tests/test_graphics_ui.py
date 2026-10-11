@@ -409,10 +409,9 @@ def test_a_right_click_on_the_map_offers_what_can_be_done(make_app, world):
     app.start_game(game)
     gs = app.top
     render(app)
-    vx, vy, mx0, my0, ox, oy = gs.view
     p = game.player
-    sx, sy = p.x - mx0 + vx + ox, p.y - my0 + vy + oy
-    app.handle_event(MouseEvent("click", sx + 3, sy, button="right"))
+    px, py = gs.world_view.cell_px(p.x + 3.5, p.y + 0.5)
+    app.handle_event(MouseEvent("click", int(px // 10), int(py // 20), button="right", px=px, py=py))
     menu = app.top
     assert isinstance(menu, ContextMenu)
     labels = [e[0] for e in menu.entries]
@@ -487,4 +486,19 @@ def test_the_pack_shows_magic_things_with_their_glow(pictured):
         canvas = render(app)
         if it.magic:
             assert any(getattr(c, "key", None) == "item_glow" for c in commands(canvas, Image)), it.def_id
+    assert app.error_count == 0
+
+
+def test_the_map_legend_shows_the_maps_own_pictures(make_app, atlas):
+    """Pictures are the only look: the legend shows, beside each name, the picture the maps draw for it."""
+    from realmwalker.ui.screens.legend import LegendScreen, legend_rows
+
+    app = make_app()
+    rows = legend_rows(app.tables, atlas)
+    missing = [label for kind, pic, label in rows if kind == "tile" and not atlas.resolve(str(pic))]
+    assert not missing, missing
+    assert sum(1 for kind, _, _ in rows if kind == "swatch") >= len(app.tables.biomes.ids)
+    app.push(LegendScreen(app))
+    canvas = render(app)
+    assert "Map legend" in canvas.words() and commands(canvas, Batch)
     assert app.error_count == 0

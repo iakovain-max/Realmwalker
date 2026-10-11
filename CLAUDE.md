@@ -1,7 +1,7 @@
 # Realmwalker — project guide for Claude Code
 
 A grim, text-heavy open-world party RPG on D&D 5e rules, drawn with pixel-art tiles and figures over a text grid
-(python-tcod + its SDL renderer; letters only as a fallback); every word the player reads is written into the game.
+(python-tcod + its SDL renderer; pictures are the only look); every word the player reads is written into the game.
 **Version 1.0** (2026-10-03): pictures and the new interface are in (`docs/PROGRESS.md`, first entry). **The user is not a programmer**: explain progress in
 gameplay terms, give Windows click-by-click steps when they must do something, never ask them to edit code.
 
@@ -83,8 +83,8 @@ realmwalker/
   world/history.py         the chronicle (told by named ages); the old "told" history for worlds made before the ages
   world/legends.py         the Legends book's pages and lists (logic): every person, realm, place, war, beast...
   world/news.py            news items and how they travel along the roads
-  ui/                      window loop, fonts (tileset built at runtime), input, markup, widgets (Canvas), map_render
-                           (the letters view), hud (side panel, log, action bar), colors, screens/
+  ui/                      window loop, fonts (tileset built at runtime), input, markup, widgets (Canvas), hud (side
+                           panel, log, action bar), colors, screens/
   ui/gfx/                  the pictures: scene (picture commands, layers), gpu (draws them with SDL), atlas (the tile
                            sheets), theme (panels, buttons, bars), typefaces, localview (close-up maps: tiles, light,
                            people, followers), roofs (buildings: roofs, front walls, doors, lit windows), worldview +
@@ -243,9 +243,12 @@ tools/                     autoplay.py, balance.py (the design's targets),
   sky is `survival.sky_water`; skins top up on the move via `survival.top_up`. Measure deadliness with a scripted
   "careful player" over many lives before and after changing combat, cold, encounters or wounds.
 - Pictures (1.0): screens draw text cells as before and add picture commands with `canvas.under(...)` /
-  `canvas.over(...)` (`ui/gfx/scene.py`: Batch, Sprite, Image, Rect, Lines, Text, Clip). `canvas.gfx` is None headless
-  and in letters mode, so every picture path must have a letters path (tests run headless; `tests/test_graphics_ui.py`
-  renders with a fake GfxContext). Logic still never imports UI. Pictures live in `data/sprites.json` (validated):
+  `canvas.over(...)` (`ui/gfx/scene.py`: Batch, Sprite, Image, Rect, Lines, Text, Clip). Pictures are the only look
+  (letters mode went in October 2026): `canvas.gfx` is always a GfxContext; headless (tests, autoplay) it is
+  `ui/gfx.headless()`, which records every picture over the real tile sheets, so every screen's pictures run in every
+  test. Box titles and headings are pictures: read what a screen says with `canvas.words()` (cells of every layer plus
+  picture text), not only the console's cells. A PC that cannot start the renderer gets a clear message
+  (`window.PicturesUnavailable`). Logic still never imports UI. Pictures live in `data/sprites.json` (validated):
   terrain, town walls, traps, map marks, and "figures" (colours, skins, hair, what each item looks like worn, outfits
   by trade, dressed creatures). New tiles: draw them in `tools/tile_art.py` (or a figure layer in `figure_gear.py`),
   rebuild with build_tiles.py, commit `assets/tiles`. Figures are 32x32; draw them at whole multiples or let

@@ -143,7 +143,7 @@ class MarketScreen(Screen):
         canvas.markup(2, 1, head, max_width=w - 4)
         col_w = (w - 5) // 2
         longest = max(len(self.theirs()), len(self.yours())) + 2
-        card = canvas.gfx is not None and h - 9 - longest >= 7  # room for a card about the chosen thing
+        card = h - 9 - longest >= 7  # room for a card about the chosen thing
         rows_h = min(h - 9, longest) if card else h - 9
         from realmwalker.rules.items import Item
         from realmwalker.ui.screens.sheets import item_icon
@@ -224,7 +224,7 @@ class MarketScreen(Screen):
                 canvas.fill(x, ry, w, 1, bg)
             fg = colors.SELECT_FG if selected else (colors.FG if ok else colors.FAINT)
             tx = x
-            if icon and canvas.gfx is not None:
+            if icon:
                 canvas.icon(x, ry, icon, rgba=(255, 255, 255, 255 if ok else 130))
                 tx = x + 3
             canvas.text(tx, ry, label[: w - 12 - (tx - x)], fg, bg)

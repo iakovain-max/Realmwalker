@@ -33,7 +33,7 @@ class Atlas:
             return
         index = folder / "tiles.json"
         if not index.exists():
-            log.warning("No tile sheets at %s: the maps will be drawn with letters.", folder)
+            log.warning("No tile sheets at %s: the game cannot draw its pictures.", folder)
             return
         try:
             meta = json.loads(index.read_text(encoding="utf-8"))

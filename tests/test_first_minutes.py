@@ -96,7 +96,7 @@ def test_creation_speaks_of_an_acolyte(make_app):
         screen.step = step
         con = tcod.console.Console(160, 45, order="F")
         app.render(con)
-        seen.append("\n".join("".join(chr(c) for c in con.rgb["ch"][:, y]) for y in range(con.height)))
+        seen.append(app.last_canvas.words())
     text = "\n".join(seen)
     assert "suit an acolyte" in text and "formerly an acolyte" in text
     import re

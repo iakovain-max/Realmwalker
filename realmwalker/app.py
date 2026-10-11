@@ -99,6 +99,12 @@ class App:
             except Exception as exc:  # data passed validation but still could not be used
                 log.exception("Could not build game tables")
                 self.data_errors.append(f"The game data could not be prepared: {exc}")
+        from realmwalker.ui.gfx import headless
+
+        # The pictures: headless they are recorded and checked, never shown; a window replaces this with its own.
+        self.gfx = headless()
+        if not self.gfx.atlas.ok:
+            self.data_errors.append("The game's pictures (assets/tiles) are missing. Download the game again.")
         self.game: GameState | None = None
         self._last_autosave = clock()
 
@@ -116,7 +122,6 @@ class App:
         self.regions: list[Region] = []
         self.mouse = (-1, -1)
         self.mouse_px = (-1.0, -1.0)
-        self.gfx = None  # a ui.gfx.GfxContext when running in a window that can draw pictures
         self.window_requests: set[str] = set()
         self._render_failures: dict[int, int] = {}
         self.last_console_size = (MIN_COLUMNS, MIN_ROWS)
@@ -365,23 +370,20 @@ class App:
 
     def frame_timeout(self) -> float:
         """How long the window may sleep waiting for input before redrawing."""
-        moving = self.gfx is not None and self.gfx.animate and getattr(self.top, "moving", False)
+        moving = self.gfx.animate and getattr(self.top, "moving", False)
         if moving:
             return 1 / 60  # something on screen is in motion: keep it smooth
         busy = self.toasts or getattr(self.top, "animating", False)
         if busy:
             return 0.05
-        if self.gfx is not None and self.gfx.ambient and getattr(self.top, "ambient", False):
+        if self.gfx.ambient and getattr(self.top, "ambient", False):
             return 1 / 30  # water, fire and weather keep moving
         return 0.25
 
     def gfx_frame(self):
-        """The picture context for this frame (None headless), brought up to date with the settings and the clock."""
+        """The picture context for this frame, brought up to date with the settings and the clock."""
         g = self.gfx
-        if g is None:
-            return None
         g.now = self.clock()
-        g.tiles = self.settings.graphics == "tiles"
         g.motion = self.settings.animations
         return g
 

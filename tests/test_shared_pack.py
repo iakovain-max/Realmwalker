@@ -243,7 +243,7 @@ def test_the_inventory_screen_is_the_partys(make_app, world):
     app.push(screen)
     con = tcod.console.Console(160, 45, order="F")
     app.render(con)
-    text = "\n".join("".join(chr(ch) for ch in con.rgb["ch"][:, y]) for y in range(con.height))
+    text = app.last_canvas.words()
     assert "The party's pack" in text and "(Mira" in text.replace(mira.name.split()[0], "Mira")
     assert "Party load" in text
     # "Give to Mira" on a sword: Mira takes it up.

@@ -50,6 +50,25 @@ def active(game) -> list[dict]:
     return [q for q in game.quests if q["state"] in LIVE]
 
 
+def map_marks(game) -> list[tuple[int, int]]:
+    """Where the work you have in hand wants you, lit on the maps: sites, towns and a patch of wild country."""
+    if not getattr(game, "quests", None):
+        return []
+    w = game.world
+    out = []
+    for q in active(game):
+        if q["done"]:
+            continue
+        t = q["target"]
+        if "site" in t and 0 <= t["site"] < len(w.sites):
+            out.append((w.sites[t["site"]].x, w.sites[t["site"]].y))
+        if "dest" in t and 0 <= t["dest"] < len(w.settlements):
+            out.append((w.settlements[t["dest"]].x, w.settlements[t["dest"]].y))
+        if q["template"] == "hunt_beast":
+            out.append((int(t["x"]), int(t["y"])))
+    return out
+
+
 def by_id(game, qid) -> dict | None:
     return next((q for q in game.quests if q["id"] == qid), None)
 

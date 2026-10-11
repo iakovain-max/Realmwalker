@@ -153,13 +153,14 @@ def test_a_click_chooses_and_a_double_click_travels(make_app, world):
     app, game = start(make_app, world)
     wm = open_map(app)
     render(app)
-    ox, oy, scale, x0, y0 = wm.view
     p = game.player
     tx, ty = min(game.world.width - 2, p.x + 3), p.y
-    cx, cy = (tx - x0) // scale + ox, (ty - y0) // scale + oy
-    app.handle_event(MouseEvent("click", cx, cy))
+    px, py = wm.painted.cell_px(tx + 0.5, ty + 0.5)
+    cx, cy = int(px // 10), int(py // 20)
+    app.handle_event(MouseEvent("click", cx, cy, px=px, py=py))
+    app.handle_event(MouseEvent("release", cx, cy, px=px, py=py))
     assert wm.cursor == (tx, ty) and app.top is wm, "one click only chooses"
-    app.handle_event(MouseEvent("click", cx, cy, clicks=2))
+    app.handle_event(MouseEvent("click", cx, cy, clicks=2, px=px, py=py))
     assert app.top is not wm, "a double click sets off"
     assert app.error_count == 0
 

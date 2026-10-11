@@ -15,12 +15,9 @@ from realmwalker.ui import colors, markup
 from realmwalker.ui.colors import Color
 from realmwalker.ui.input import KeyEvent
 
-WASHES = {colors.HILITE_BG, colors.HOVER_BG}  # highlight colours drawn as soft washes when there are pictures
+WASHES = {colors.HILITE_BG, colors.HOVER_BG}  # highlight colours drawn as soft washes
 
 WASH_MARK = (1, 2, 3)  # cells already washed by a highlight picture (see Canvas._wash)
-
-SINGLE = "┌─┐│ │└─┘"
-DOUBLE = "╔═╗║ ║╚═╝"
 
 
 @dataclass
@@ -50,7 +47,11 @@ class Canvas:
         self.interactive = interactive
         self.regions: list[Region] = []
         self.tooltip: str | None = None
-        self.gfx = gfx  # a GfxContext when pictures can be drawn (a real window), else None
+        if gfx is None:
+            from realmwalker.ui.gfx import headless
+
+            gfx = headless()
+        self.gfx = gfx  # the GfxContext: a window's, or (headless) one that records the pictures without showing them
         self.layers = [Layer(console)]
         if mouse_px is None:
             mouse_px = (mouse[0] * self.cell_w + self.cell_w / 2, mouse[1] * self.cell_h + self.cell_h / 2) \
@@ -60,20 +61,27 @@ class Canvas:
     # ------------------------------------------------------------------ pictures and layers
     @property
     def cell_w(self) -> int:
-        return self.gfx.cell_w if self.gfx is not None else 10
+        return self.gfx.cell_w
 
     @property
     def cell_h(self) -> int:
-        return self.gfx.cell_h if self.gfx is not None else 20
-
-    @property
-    def tiles(self) -> bool:
-        """Draw maps and people as pictures (a window, with Graphics set to tiles)."""
-        return self.gfx is not None and self.gfx.tiles and self.gfx.atlas.ok
+        return self.gfx.cell_h
 
     @property
     def now(self) -> float:
-        return self.gfx.now if self.gfx is not None else 0.0
+        return self.gfx.now
+
+    def words(self) -> str:
+        """Everything this frame says: the text in every layer's cells, row by row, and the words drawn as pictures
+        (box titles, headings, labels). For tests and tools that read what is on the screen."""
+        from realmwalker.ui.gfx.scene import Text
+
+        rows = []
+        for layer in self.layers:
+            con = layer.console
+            rows += ["".join(chr(c) for c in con.rgb["ch"][:, y]) for y in range(con.height)]
+            rows += [c.text for c in layer.under + layer.over if isinstance(c, Text)]
+        return "\n".join(rows)
 
     def px(self, x: float, y: float) -> tuple[float, float]:
         """The pixel position of the top left of cell (x, y)."""
@@ -83,9 +91,7 @@ class Canvas:
         return x * self.cell_w, y * self.cell_h, w * self.cell_w, h * self.cell_h
 
     def push_layer(self) -> None:
-        """Start a new layer above everything drawn so far (a dialog over the map). Headless, a no-op."""
-        if self.gfx is None:
-            return
+        """Start a new layer above everything drawn so far (a dialog over the map)."""
         from realmwalker.ui.gfx.scene import Layer
 
         con = tcod.console.Console(self.width, self.height, order="F")
@@ -96,18 +102,14 @@ class Canvas:
 
     def under(self, *cmds) -> None:
         """Pictures beneath this layer's text (a map, a panel)."""
-        if self.gfx is not None:
-            self.layers[-1].under.extend(cmds)
+        self.layers[-1].under.extend(cmds)
 
     def over(self, *cmds) -> None:
         """Pictures above this layer's text (a cursor, a floating number)."""
-        if self.gfx is not None:
-            self.layers[-1].over.extend(cmds)
+        self.layers[-1].over.extend(cmds)
 
     def clear_cells(self, x: int, y: int, w: int, h: int) -> None:
-        """Make cells see-through, so the pictures under them show (only with pictures)."""
-        if self.gfx is None:
-            return
+        """Make cells see-through, so the pictures under them show."""
         x0, y0 = max(0, x), max(0, y)
         x1, y1 = min(self.width, x + w), min(self.height, y + h)
         if x1 > x0 and y1 > y0:
@@ -116,19 +118,13 @@ class Canvas:
 
     def dim(self) -> None:
         """Darken everything drawn so far (under a dialog)."""
-        if self.gfx is None:
-            self.con.rgb["fg"] = self.con.rgb["fg"] // 2
-            self.con.rgb["bg"] = self.con.rgb["bg"] // 2
-            return
         from realmwalker.ui.gfx.scene import Rect
 
         self.over(Rect(0, 0, self.width * self.cell_w, self.height * self.cell_h, (4, 3, 6, 150)))
 
     def sprite(self, name: str, x: float, y: float, w: float, h: float, rgba=(255, 255, 255, 255), *,
                over: bool = True) -> bool:
-        """A tile at pixel rect (x, y, w, h). False when there are no pictures (the caller draws letters)."""
-        if self.gfx is None or not self.gfx.atlas.ok:
-            return False
+        """A tile at pixel rect (x, y, w, h). False when the atlas has no picture of that name."""
         from realmwalker.ui.gfx.scene import tile_batch
 
         import numpy as np
@@ -143,50 +139,35 @@ class Canvas:
 
     def bar(self, x: int, y: int, w: int, ratio: float, color: Color, *, empty: Color = colors.FAINT,
             lag: float | None = None) -> None:
-        """A bar w cells long, filled to ratio: a lit picture when there are pictures, block letters otherwise."""
-        ratio = max(0.0, min(1.0, ratio))
-        if self.gfx is not None:
-            from realmwalker.ui.gfx import theme
+        """A bar w cells long, filled to ratio, drawn lit."""
+        from realmwalker.ui.gfx import theme
 
-            self.clear_cells(x, y, w, 1)
-            cw, ch = self.cell_w, self.cell_h
-            self.under(*theme.bar(x * cw, y * ch + 4, w * cw, ch - 8, ratio, color, lag=lag))
-            return
-        filled = int(round(w * ratio))
-        self.text(x, y, "█" * filled, color)
-        self.text(x + filled, y, "░" * (w - filled), empty)
+        ratio = max(0.0, min(1.0, ratio))
+        self.clear_cells(x, y, w, 1)
+        cw, ch = self.cell_w, self.cell_h
+        self.under(*theme.bar(x * cw, y * ch + 4, w * cw, ch - 8, ratio, color, lag=lag))
 
     def gauge(self, x: int, y: int, w: int, pos: float, stops: list[tuple[float, Color]]) -> None:
         """A scale from cold to hot (or any other), coloured along its length, with a marker at pos (0..1)."""
-        pos = max(0.0, min(1.0, pos))
-        if self.gfx is not None:
-            from realmwalker.ui.gfx.scene import Rect
+        from realmwalker.ui.gfx.scene import Rect
 
-            self.clear_cells(x, y, w, 1)
-            cw, ch = self.cell_w, self.cell_h
-            px, py, pw, ph = x * cw, y * ch + 6, w * cw, ch - 12
-            self.under(Rect(px - 1, py - 1, pw + 2, ph + 2, (6, 5, 7, 255)))
-            n = len(stops)
-            for i, (at, color) in enumerate(stops):
-                nxt = stops[i + 1][0] if i + 1 < n else 1.0
-                self.under(Rect(px + pw * at, py, pw * (nxt - at) + 1, ph, (*color, 255)))
-            mx = px + pw * pos
-            self.over(Rect(mx - 3, py - 4, 6, ph + 8, (255, 236, 190, 255)), Rect(mx - 3, py - 4, 6, ph + 8, (20, 16, 12, 255),
-                                                                                    line=1))
-            return
-        mark = int(round(pos * (w - 1)))
-        for i in range(w):
-            t = i / max(1, w - 1)
-            color = stops[0][1]
-            for at, c in stops:
-                if t >= at:
-                    color = c
-            self.text(x + i, y, "█" if i == mark else "─", colors.SELECT_FG if i == mark else color)
+        pos = max(0.0, min(1.0, pos))
+        self.clear_cells(x, y, w, 1)
+        cw, ch = self.cell_w, self.cell_h
+        px, py, pw, ph = x * cw, y * ch + 6, w * cw, ch - 12
+        self.under(Rect(px - 1, py - 1, pw + 2, ph + 2, (6, 5, 7, 255)))
+        n = len(stops)
+        for i, (at, color) in enumerate(stops):
+            nxt = stops[i + 1][0] if i + 1 < n else 1.0
+            self.under(Rect(px + pw * at, py, pw * (nxt - at) + 1, ph, (*color, 255)))
+        mx = px + pw * pos
+        self.over(Rect(mx - 3, py - 4, 6, ph + 8, (255, 236, 190, 255)), Rect(mx - 3, py - 4, 6, ph + 8, (20, 16, 12, 255),
+                                                                                line=1))
 
     def icon(self, x: int, y: int, name: str, glyph: str = "", fg: Color = colors.FG, *, cells: int = 2,
              rgba=(255, 255, 255, 255)) -> int:
-        """A square picture `cells` wide and cells/2 tall at cell (x, y), or a letter in its place.
-        Returns the x after it."""
+        """A square picture `cells` wide and cells/2 tall at cell (x, y) (a letter in its place if the atlas has no such
+        picture). Returns the x after it."""
         cw, ch = self.cell_w, self.cell_h
         size = min(cells * cw, max(1, cells // 2) * ch)
         px = x * cw + (cells * cw - size) / 2
@@ -239,7 +220,7 @@ class Canvas:
             x = 0
         s = s[: max(0, self.width - x)]
         if s:
-            if self.gfx is not None and bg is not None and tuple(bg[:3]) in WASHES:
+            if bg is not None and tuple(bg[:3]) in WASHES:
                 self._wash(x, y, len(s), 1, tuple(bg[:3]), only_new=True)
                 bg = None
             if bg is not None and len(bg) > 3:
@@ -247,7 +228,7 @@ class Canvas:
             else:
                 alpha = 255
             self.con.print(x, y, s, fg=fg, bg=bg)
-            if bg is not None and self.gfx is not None:
+            if bg is not None:
                 self.con.rgba["bg"][x : x + len(s), y, 3] = alpha
         return x + len(s)
 
@@ -299,42 +280,28 @@ class Canvas:
         if x1 <= x0 or y1 <= y0:
             return
         self.con.rgb["ch"][x0:x1, y0:y1] = ord(ch)
-        if self.gfx is not None and tuple(bg[:3]) in WASHES:
+        if tuple(bg[:3]) in WASHES:
             self._wash(x0, y0, x1 - x0, y1 - y0, tuple(bg[:3]))
             if fg is not None:
                 self.con.rgb["fg"][x0:x1, y0:y1] = fg
             return
         if len(bg) > 3:
             self.con.rgb["bg"][x0:x1, y0:y1] = bg[:3]
-            if self.gfx is not None:
-                self.con.rgba["bg"][x0:x1, y0:y1, 3] = bg[3]
+            self.con.rgba["bg"][x0:x1, y0:y1, 3] = bg[3]
         else:
             self.con.rgb["bg"][x0:x1, y0:y1] = bg
-            if self.gfx is not None:
-                self.con.rgba["bg"][x0:x1, y0:y1, 3] = 255
+            self.con.rgba["bg"][x0:x1, y0:y1, 3] = 255
         if fg is not None:
             self.con.rgb["fg"][x0:x1, y0:y1] = fg
 
     def frame(self, x: int, y: int, w: int, h: int, title: str = "", *, fg: Color = colors.BORDER,
               bg: Color | None = colors.PANEL_BG, double: bool = False, title_fg: Color = colors.TITLE,
               style: str | None = None) -> None:
+        """A box: a textured panel with a bronze edge, its title on a plate (double and title_fg are kept for the
+        callers that still pass them; the style follows fg and bg)."""
         if w < 2 or h < 2:
             return
-        if self.gfx is not None:
-            self._panel(x, y, w, h, title, fg, bg, style)
-            return
-        if bg is not None:
-            self.fill(x, y, w, h, bg)
-        deco = DOUBLE if double else SINGLE
-        tl, top, tr, left, _, right, bl, bottom, br = deco
-        self.text(x, y, tl + top * (w - 2) + tr, fg)
-        for yy in range(y + 1, y + h - 1):
-            self.text(x, yy, left, fg)
-            self.text(x + w - 1, yy, right, fg)
-        self.text(x, y + h - 1, bl + bottom * (w - 2) + br, fg)
-        if title:
-            label = f" {title} "
-            self.text(x + 2, y, label[: max(0, w - 4)], title_fg)
+        self._panel(x, y, w, h, title, fg, bg, style)
 
     def _panel(self, x: int, y: int, w: int, h: int, title: str, fg: Color, bg: Color | None, style: str | None) -> None:
         """A frame as a picture: a textured panel with a bronze edge, its title on a plate."""
@@ -360,7 +327,7 @@ class Canvas:
                                 title_size=size, ornaments=style in ("panel", "danger", "magic"), row_h=ch))
 
     def hline(self, x: int, y: int, w: int, ch: str = "─", fg: Color = colors.BORDER) -> None:
-        if self.gfx is not None and ch in "─═" and w > 0:
+        if ch in "─═" and w > 0:
             from realmwalker.ui.gfx import theme
 
             self.clear_cells(x, y, w, 1)
@@ -371,16 +338,11 @@ class Canvas:
 
     def section(self, x: int, y: int, w: int, title: str, fg: Color = colors.BORDER) -> None:
         """A divider line with a heading: ── Title ─────"""
-        if self.gfx is not None:
-            from realmwalker.ui.gfx import theme
+        from realmwalker.ui.gfx import theme
 
-            self.clear_cells(x, y, w, 1)
-            cw, ch = self.cell_w, self.cell_h
-            self.over(*theme.heading(x * cw, y * ch + ch / 2, w * cw, markup.plain(title), max(12, int(ch * 0.78))))
-            return
-        label = f"── {title} "
-        self.text(x, y, label, colors.TITLE)
-        self.hline(x + len(label), y, w - len(label), "─", fg)
+        self.clear_cells(x, y, w, 1)
+        cw, ch = self.cell_w, self.cell_h
+        self.over(*theme.heading(x * cw, y * ch + ch / 2, w * cw, markup.plain(title), max(12, int(ch * 0.78))))
 
     def button(self, x: int, y: int, label: str, action: Callable[[], None], *, hotkey: str | None = None,
                tooltip: str | None = None, enabled: bool = True, max_width: int | None = None) -> int:
@@ -392,17 +354,7 @@ class Canvas:
             label = label[: room - 1].rstrip() + "…"
         text = f"[{hotkey}] {label}" if hotkey else f"[ {label} ]"
         over = self.hit(x, y, len(text), 1, action if enabled else None, tooltip)
-        if self.gfx is not None:
-            return self._button(x, y, text, label, hotkey, over, enabled)
-        bg = colors.HOVER_BG if over and enabled else None
-        if not enabled:
-            return self.text(x, y, text, colors.FAINT)
-        if hotkey:
-            self.text(x, y, "[", colors.DIM, bg)
-            self.text(x + 1, y, hotkey, colors.TITLE, bg)
-            self.text(x + 1 + len(hotkey), y, "] ", colors.DIM, bg)
-            return self.text(x + 3 + len(hotkey), y, label, colors.SELECT_FG if over else colors.FG, bg)
-        return self.text(x, y, text, colors.SELECT_FG if over else colors.FG, bg)
+        return self._button(x, y, text, label, hotkey, over, enabled)
 
     def _button(self, x: int, y: int, text: str, label: str, hotkey: str | None, over: bool, enabled: bool) -> int:
         """A button as a picture: the same cells as "[k] Label", drawn as a raised plate with the key on a badge."""
@@ -604,16 +556,10 @@ class ScrollText:
             bar_h = max(1, h * h // len(self._lines))
             max_offset = max(1, len(self._lines) - h)
             bar_y = y + (h - bar_h) * self.offset // max_offset
-            if canvas.gfx is not None:
-                from realmwalker.ui.gfx.scene import Rect
+            from realmwalker.ui.gfx.scene import Rect
 
-                cw, ch = canvas.cell_w, canvas.cell_h
-                bx = (x + w - 1) * cw + cw / 2 - 2
-                canvas.clear_cells(x + w - 1, y, 1, h)
-                canvas.under(Rect(bx, y * ch + 2, 4, h * ch - 4, (8, 7, 9, 200)),
-                             Rect(bx, bar_y * ch + 2, 4, bar_h * ch - 4, (150, 120, 76, 230)))
-                return
-            for yy in range(y, y + h):
-                canvas.text(x + w - 1, yy, "│", colors.FAINT)
-            for yy in range(bar_y, bar_y + bar_h):
-                canvas.text(x + w - 1, yy, "█", colors.DIM)
+            cw, ch = canvas.cell_w, canvas.cell_h
+            bx = (x + w - 1) * cw + cw / 2 - 2
+            canvas.clear_cells(x + w - 1, y, 1, h)
+            canvas.under(Rect(bx, y * ch + 2, 4, h * ch - 4, (8, 7, 9, 200)),
+                         Rect(bx, bar_y * ch + 2, 4, bar_h * ch - 4, (150, 120, 76, 230)))

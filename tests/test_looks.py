@@ -198,7 +198,7 @@ def test_the_looks_step_changes_the_character(make_app, atlas):
     screen.handle_key(KeyEvent("r"))
     con = tcod.console.Console(160, 45, order="F")
     app.render(con)
-    text = "\n".join("".join(chr(c) for c in con.rgb["ch"][:, y]) for y in range(con.height))
+    text = app.last_canvas.words()
     assert "How others see you" in text and "Tusks" in text
     app.gfx = GfxContext(atlas, 10, 20)  # with pictures: the face and the figure are drawn
     app.render(tcod.console.Console(160, 45, order="F"))

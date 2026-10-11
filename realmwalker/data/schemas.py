@@ -15,7 +15,6 @@ def table_set(*names: str, max_len: int = 600) -> Obj:
 
 
 COLOR = List(Int(min=0, max=255), min_items=3, max_items=3)
-GLYPHS = List(Str(max_len=1), min_items=1)
 WEIGHTED = List(List(Any_(), min_items=2, max_items=2), min_items=1)
 
 # ---------------------------------------------------------------------------- names and text
@@ -101,9 +100,6 @@ GEO_KINDS = ("mountains", "hills", "forest", "pine_forest", "marsh", "plains", "
 BIOME = Obj(
     {
         "name": Str(max_len=40),
-        "glyphs": GLYPHS,
-        "fg": COLOR,
-        "bg": COLOR,
         "move_hours": Float(min=0, max=24),
         "passable": Bool(),
         # The older land this one behaves like in every system that asks "is this a desert?" (camping, encounters,
@@ -131,9 +127,6 @@ REQUIRED_BIOMES = ("ocean", "lake", "coast", "plains", "forest", "pine_forest", 
 TERRAIN = Obj(
     {
         "name": Str(max_len=40),
-        "glyphs": GLYPHS,
-        "fg": COLOR,
-        "bg": COLOR,
         "walk": Bool(),
         "see": Bool(),
         "cost": Float(min=0.1, max=10),
@@ -160,8 +153,6 @@ CALENDAR = Obj(
 SETTLEMENT_TYPE = Obj(
     {
         "name": Str(max_len=40),
-        "glyph": Str(max_len=1),
-        "fg": COLOR,
         "population": List(Int(min=1, max=10**6), min_items=2, max_items=2),
         "buildings": List(Int(min=1, max=200), min_items=2, max_items=2),
         "walls": Str(choices=["none", "palisade", "stone"]),
@@ -169,7 +160,7 @@ SETTLEMENT_TYPE = Obj(
         "rank": Int(min=1, max=5),
     }
 )
-SITE_TYPE = Obj({"name": Str(max_len=40), "glyph": Str(max_len=1), "fg": COLOR, "desc": Str(max_len=300)})
+SITE_TYPE = Obj({"name": Str(max_len=40), "desc": Str(max_len=300)})
 SITES = Obj({"settlement_types": Map(SETTLEMENT_TYPE, min_items=1), "site_types": Map(SITE_TYPE, min_items=1),
              "dungeon_styles": Map(word_list(1, 300), min_items=1),
              "dungeon_moments": Map(word_list(1, 300), min_items=1)})
@@ -390,7 +381,7 @@ CREATURE = Obj(
         "spells": List(Str(max_len=40), optional=True),
         "spellcasting": Obj({"ability": Str(choices=list(ABILITY_IDS)), "dc": Int(min=1, max=30),
                              "attack": Int(min=-5, max=20), "slots": List(Int(min=0, max=9))}, optional=True),
-        "glyph": Str(max_len=1), "color": COLOR, "descriptions": word_list(1, 300),
+        "descriptions": word_list(1, 300),
     }
 )
 ENCOUNTER = Obj(

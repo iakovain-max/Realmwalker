@@ -4,12 +4,11 @@ from __future__ import annotations
 
 import numpy as np
 
-from realmwalker.game.describe import cap, danger_text, describe_local, describe_overworld, temperature_word, typical_temperature
+from realmwalker.game.describe import describe_local, describe_overworld
 from realmwalker.game.state import GameState
 from realmwalker.rules import progression
 from realmwalker.ui import colors, markup
 from realmwalker.ui.input import DIRECTIONS, KeyEvent, MouseEvent
-from realmwalker.ui.map_render import OverworldPicture, draw_local, draw_overworld
 from realmwalker.ui.screens.base import ConfirmBox, Screen
 from realmwalker.ui.widgets import Canvas
 
@@ -33,10 +32,8 @@ class GameScreen(Screen):
     def __init__(self, app, game: GameState) -> None:
         super().__init__(app)
         self.game = game
-        self.picture = OverworldPicture(game.world, app.tables)
         self.look: tuple[int, int] | None = None  # cursor in map cells while in look mode
         self.hover: tuple[int, int] | None = None
-        self.view = (0, 0, 0, 0, 0, 0)  # viewport x, y and the camera from the last draw
         self._last_travel_step = 0.0
         self._last_town_tick = 0.0
         self._in_local_before = game.in_local
@@ -46,7 +43,7 @@ class GameScreen(Screen):
 
         self.local_view = LocalView()
         self.world_view = WorldView()
-        self.tiles_drawn = False  # the last frame drew the map with pictures
+        self.tiles_drawn = False  # the map has been drawn (so its squares can be found under the mouse)
         self.bar_actions: dict = {}
         self._hp_seen: dict[int, tuple[float, float, float]] = {}  # member -> (shown ratio, lag ratio, time)
 
@@ -92,21 +89,16 @@ class GameScreen(Screen):
         return 0, 0, max(20, canvas.width - PANEL_W), max(8, canvas.height - LOG_H - BAR_H)
 
     def screen_to_map(self, sx: int, sy: int, px: float = -1.0, py: float = -1.0) -> tuple[int, int] | None:
-        if self.tiles_drawn:
-            if px < 0:
-                px, py = (sx + 0.5) * self.app.gfx.cell_w, (sy + 0.5) * self.app.gfx.cell_h
-            if self.game.in_local:
-                cell = self.local_view.to_cell(px, py)
-                lm = self.game.local
-                return cell if cell is not None and lm is not None and lm.in_bounds(*cell) else None
-            cell = self.world_view.to_cell(px, py)
-            return cell if cell is not None and self.game.world.in_bounds(*cell) else None
-        vx, vy, mx0, my0, ox, oy = self.view
-        x, y = sx - vx - ox + mx0, sy - vy - oy + my0
+        if not self.tiles_drawn:
+            return None
+        if px < 0:
+            px, py = (sx + 0.5) * self.app.gfx.cell_w, (sy + 0.5) * self.app.gfx.cell_h
         if self.game.in_local:
+            cell = self.local_view.to_cell(px, py)
             lm = self.game.local
-            return (x, y) if lm is not None and lm.in_bounds(x, y) else None
-        return (x, y) if self.game.world.in_bounds(x, y) else None
+            return cell if cell is not None and lm is not None and lm.in_bounds(*cell) else None
+        cell = self.world_view.to_cell(px, py)
+        return cell if cell is not None and self.game.world.in_bounds(*cell) else None
 
     def describe(self, x: int, y: int) -> str:
         if self.game.in_local:
@@ -664,7 +656,7 @@ class GameScreen(Screen):
     def _weather(self, canvas: Canvas, rect) -> None:
         """Rain, snow and fog over the map, when animations are on."""
         gfx = canvas.gfx
-        if gfx is None or not gfx.ambient:
+        if not gfx.ambient:
             return
         from realmwalker.ui.gfx import weatherfx
 
@@ -675,11 +667,11 @@ class GameScreen(Screen):
         mx, my, mw, mh = self._map_rect(canvas)
         cursor = self.look
         self.tiles_drawn = False
-        if game.in_local and game.local is not None and canvas.tiles:
+        if game.in_local and game.local is not None:
+            from realmwalker.game.vision import player_fov
             from realmwalker.ui.gfx.localview import cursor_cmd
-            from realmwalker.ui.map_render import local_visibility
 
-            fov = local_visibility(game, game.local)
+            fov = player_fov(game, game.local, remember=True)
             canvas.clear_cells(mx, my, mw, mh)
             rect = tuple(int(v) for v in canvas.cell_rect(mx, my, mw, mh))
             from realmwalker.ui.gfx.scene import Clip
@@ -724,15 +716,15 @@ class GameScreen(Screen):
                 canvas.over(Clip(rect), cursor_cmd(self.local_view, *self.hover, (255, 255, 255, 90)), Clip(None))
             if cursor is not None:
                 canvas.over(Clip(rect), cursor_cmd(self.local_view, *cursor, (255, 214, 110, 230)), Clip(None))
-            camera = (0, 0, 0, 0)
-        elif game.in_local and game.local is not None:
-            camera = draw_local(canvas.con, game, mx, my, mw, mh, cursor)
-        elif not game.in_local and canvas.tiles:
-            from realmwalker.ui.map_render import quest_marks
+        else:
+            from realmwalker.game.quests import map_marks
 
+            if game.in_local:  # a close-up map that is gone (it should not happen): back on the overworld
+                game.player.local_key = None
+                game.sneaking = False
             canvas.clear_cells(mx, my, mw, mh)
             rect = tuple(int(v) for v in canvas.cell_rect(mx, my, mw, mh))
-            self.world_view.draw(canvas, game, rect, self.app.settings.world_zoom, quests=quest_marks(game),
+            self.world_view.draw(canvas, game, rect, self.app.settings.world_zoom, quests=map_marks(game),
                                  look=cursor, hover=self.hover if cursor is None else None)
             from realmwalker.ui.gfx.scene import Clip
 
@@ -740,13 +732,6 @@ class GameScreen(Screen):
             self._weather(canvas, rect)
             canvas.under(Clip(None))
             self.tiles_drawn = True
-            camera = (0, 0, 0, 0)
-        else:
-            if game.in_local:
-                game.player.local_key = None
-                game.sneaking = False
-            camera = draw_overworld(canvas.con, game, self.picture, mx, my, mw, mh, cursor)
-        self.view = (mx, my, *camera)
         canvas.hit(mx, my, mw, mh, tooltip=None)
         from realmwalker.ui import hud
 

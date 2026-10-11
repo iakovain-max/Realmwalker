@@ -1,12 +1,12 @@
 {
   "_comment": "Settlement and site types placed during world generation. glyph/colour are how they show on the overworld map.",
   "settlement_types": {
-    "hamlet":  {"name": "hamlet",  "glyph": "⌂", "fg": [170, 130, 90],  "population": [20, 80],     "buildings": [3, 6],   "walls": "none",      "rank": 1},
-    "village": {"name": "village", "glyph": "⌂", "fg": [214, 164, 104], "population": [100, 400],   "buildings": [8, 15],  "walls": "palisade",  "wall_chance": 0.25, "rank": 2},
-    "town":    {"name": "town",    "glyph": "■", "fg": [210, 206, 196], "population": [600, 3000],  "buildings": [18, 30], "walls": "stone",     "wall_chance": 0.7, "rank": 3},
-    "city":    {"name": "city",    "glyph": "☼", "fg": [250, 226, 150], "population": [5000, 16000],"buildings": [34, 50], "walls": "stone",     "wall_chance": 1.0, "rank": 4},
-    "hold":    {"name": "dwarven hold", "glyph": "Ω", "fg": [180, 190, 210], "population": [800, 4000], "buildings": [10, 18], "walls": "stone", "wall_chance": 1.0, "rank": 3},
-    "elfhall": {"name": "elven hall",   "glyph": "Φ", "fg": [120, 220, 190], "population": [200, 1200], "buildings": [8, 14], "walls": "none", "rank": 2}
+    "hamlet":  {"name": "hamlet",  "population": [20, 80],     "buildings": [3, 6],   "walls": "none",      "rank": 1},
+    "village": {"name": "village", "population": [100, 400],   "buildings": [8, 15],  "walls": "palisade",  "wall_chance": 0.25, "rank": 2},
+    "town":    {"name": "town",    "population": [600, 3000],  "buildings": [18, 30], "walls": "stone",     "wall_chance": 0.7, "rank": 3},
+    "city":    {"name": "city",    "population": [5000, 16000],"buildings": [34, 50], "walls": "stone",     "wall_chance": 1.0, "rank": 4},
+    "hold":    {"name": "dwarven hold", "population": [800, 4000], "buildings": [10, 18], "walls": "stone", "wall_chance": 1.0, "rank": 3},
+    "elfhall": {"name": "elven hall",   "population": [200, 1200], "buildings": [8, 14], "walls": "none", "rank": 2}
   },
   "dungeon_styles": {
     "cellars": ["Cut stone, and a smell of old grain and older water. Somebody built this to keep things in.",
@@ -86,9 +86,9 @@
     "lair": ["The rock here is glazed with old heat.", "A scale the size of your palm, half trodden into the floor.", "Bones, big ones, cracked open for the marrow."]
   },
   "site_types": {
-    "ruin":   {"name": "ruin", "glyph": "π", "fg": [150, 140, 130], "desc": "Tumbled walls and empty windows: something stood here once."},
-    "cave":   {"name": "cave", "glyph": "○", "fg": [140, 120, 100], "desc": "A cave mouth, black and cold-breathed."},
-    "barrow": {"name": "barrow", "glyph": "♦", "fg": [150, 170, 140], "desc": "A long grassy mound with a stone-lined entrance: an old grave of kings or chieftains."},
-    "tower":  {"name": "old tower", "glyph": "I", "fg": [170, 160, 150], "desc": "A lonely tower, roofless, its stair open to the sky."}
+    "ruin":   {"name": "ruin", "desc": "Tumbled walls and empty windows: something stood here once."},
+    "cave":   {"name": "cave", "desc": "A cave mouth, black and cold-breathed."},
+    "barrow": {"name": "barrow", "desc": "A long grassy mound with a stone-lined entrance: an old grave of kings or chieftains."},
+    "tower":  {"name": "old tower", "desc": "A lonely tower, roofless, its stair open to the sky."}
   }
 }

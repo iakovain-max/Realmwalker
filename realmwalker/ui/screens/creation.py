@@ -317,7 +317,7 @@ class CreationScreen(Screen):
         x, width = LEFT_W + 2, w - LEFT_W - 4
         canvas.text(x, 2, f"{self.step + 1}. {STEPS[self.step]}", colors.TITLE)
         body_y, body_h = 4, h - 8
-        if self.step in (0, 1, 2) and canvas.gfx is not None and width >= 110:
+        if self.step in (0, 1, 2) and width >= 110:
             # The character, large, on the right while choosing a people, a calling and a past.
             show_w = min(40, width // 3)
             width -= show_w + 2
@@ -336,7 +336,7 @@ class CreationScreen(Screen):
                         max_width=w)
         sy = y + len(STEPS) + 2
         b = self.b
-        if canvas.gfx is not None and self.step == LOOKS:
+        if self.step == LOOKS:
             # On the Looks step this panel shows the face, as large as it will go, and who it belongs to.
             preview = self._preview_character()
             room = (y + h) - sy - 4
@@ -357,7 +357,7 @@ class CreationScreen(Screen):
                 if sy + i < y + h:
                     canvas.markup(x, sy + i, line, max_width=w)
             return
-        if canvas.gfx is not None and h - (sy - y) > 20:
+        if h - (sy - y) > 20:
             preview = self._preview_character()
             if preview is not None:
                 from realmwalker.ui.gfx import scenes
@@ -603,8 +603,7 @@ class CreationScreen(Screen):
                  "<dim>↑↓ choose · ←→ or click ◄ ► to change · mouse wheel over a row · R: a new random look</>")
         used = len(rows) + 1 + canvas.wrapped(x, y + len(rows) + 1, words, min(list_w + 4, w),
                                                max_lines=max(2, h - len(rows) - 1))
-        if canvas.gfx is not None:
-            self._looks_pictures(canvas, x, y, w, h, list_w, used)
+        self._looks_pictures(canvas, x, y, w, h, list_w, used)
 
     def _looks_pictures(self, canvas, x, y, w, h, list_w, used) -> None:
         """The whole figure as they set out (the face, bare-headed, is in the panel on the left): beside the choices,

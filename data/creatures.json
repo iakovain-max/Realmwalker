@@ -9,7 +9,6 @@
       "attacks": [{"name": "bite", "kind": "melee", "bonus": 4, "damage": "2d4+2", "damage_type": "piercing", "wound": "bite", "disease": "frothing_sickness", "disease_chance": 0.04, "trip_dc": 11}],
       "traits": ["pack_tactics", "keen_senses", "takes_food"], "morale": "beast", "rank": "front",
       "gear": [], "money": null, "butcher": [["raw_meat", 3], ["hides", 1]],
-      "glyph": "w", "color": [170, 160, 150],
       "descriptions": ["A grey wolf, ribs showing under a winter coat, eyes fixed on your throat.", "Lean, yellow-eyed and patient. Where there is one there are always more."]
     },
     "dire_wolf": {
@@ -20,7 +19,6 @@
       "attacks": [{"name": "bite", "kind": "melee", "bonus": 5, "damage": "2d6+3", "damage_type": "piercing", "wound": "bite", "disease": "frothing_sickness", "disease_chance": 0.04, "trip_dc": 13}],
       "traits": ["pack_tactics", "keen_senses", "takes_food"], "morale": "beast", "rank": "front",
       "gear": [], "money": null, "butcher": [["raw_meat", 8], ["furs", 1]],
-      "glyph": "W", "color": [130, 124, 120],
       "descriptions": ["A wolf the size of a pony, its muzzle grey with age and old blood.", "Too big to be a wolf. It moves like one anyway."]
     },
     "wild_dog": {
@@ -31,7 +29,6 @@
       "attacks": [{"name": "bite", "kind": "melee", "bonus": 3, "damage": "1d6+1", "damage_type": "piercing", "wound": "bite", "disease": "frothing_sickness", "disease_chance": 0.04}],
       "traits": ["pack_tactics", "takes_food"], "morale": "beast", "rank": "front",
       "gear": [], "money": null, "butcher": [["raw_meat", 1]],
-      "glyph": "d", "color": [170, 140, 100],
       "descriptions": ["A mangy feral dog, one of a pack gone wild since the villages emptied."]
     },
     "boar": {
@@ -42,7 +39,6 @@
       "attacks": [{"name": "tusks", "kind": "melee", "bonus": 3, "damage": "1d6+1", "damage_type": "slashing", "wound": "cut"}],
       "traits": ["relentless", "takes_food"], "morale": "beast", "rank": "front",
       "gear": [], "money": null, "butcher": [["raw_meat", 6], ["hides", 1]],
-      "glyph": "b", "color": [140, 100, 70],
       "descriptions": ["A bristling black boar with tusks like curved knives. Hunters fear them more than wolves."]
     },
     "black_bear": {
@@ -54,7 +50,6 @@
                   {"name": "claws", "kind": "melee", "bonus": 3, "damage": "2d4+2", "damage_type": "slashing", "wound": "cut"}],
       "multiattack": 2, "traits": ["keen_senses", "takes_food"], "morale": "beast", "rank": "front",
       "gear": [], "money": null, "butcher": [["raw_meat", 10], ["furs", 1]],
-      "glyph": "B", "color": [60, 50, 45],
       "descriptions": ["A black bear, lean from the winter and short-tempered with it."]
     },
     "brown_bear": {
@@ -66,7 +61,6 @@
                   {"name": "claws", "kind": "melee", "bonus": 6, "damage": "2d6+4", "damage_type": "slashing", "wound": "cut"}],
       "multiattack": 2, "traits": ["keen_senses", "takes_food"], "morale": "beast", "rank": "front",
       "gear": [], "money": null, "butcher": [["raw_meat", 16], ["furs", 2]],
-      "glyph": "B", "color": [140, 90, 50],
       "descriptions": ["A brown bear as tall as a door when it rears, with claws that could take a man's face off."]
     },
     "giant_rat": {
@@ -77,7 +71,6 @@
       "attacks": [{"name": "bite", "kind": "melee", "bonus": 4, "damage": "1d4+2", "damage_type": "piercing", "wound": "bite", "disease": "filth_fever"}],
       "traits": ["pack_tactics", "keen_senses", "takes_food"], "morale": "beast", "rank": "front",
       "gear": [], "money": null, "butcher": [],
-      "glyph": "r", "color": [150, 120, 110],
       "descriptions": ["A rat the size of a dog, bald-tailed and bold, with filth crusted on its teeth."]
     },
     "giant_spider": {
@@ -88,7 +81,6 @@
       "attacks": [{"name": "bite", "kind": "melee", "bonus": 5, "damage": "1d8+3", "damage_type": "piercing", "wound": "bite", "poison": {"dc": 11, "damage": "2d8"}}],
       "traits": ["web_walker"], "morale": "beast", "rank": "front",
       "gear": [], "money": null, "butcher": [],
-      "glyph": "S", "color": [90, 80, 90],
       "descriptions": ["A spider bigger than a sheep, its eight eyes catching the light like wet pebbles."]
     },
     "bandit": {
@@ -101,7 +93,6 @@
       "traits": [], "morale": "bandit", "rank": "front", "names": "heartland",
       "gear": [["scimitar", 1], ["leather_armor", 1], ["common_clothes", 1], ["boots", 1]], "money": {"dice": "2d6", "mult": 10},
       "loot": [["bread", 1], ["rations", 1]],
-      "glyph": "b", "color": [200, 160, 120],
       "descriptions": ["A hungry-looking man in a patched jerkin, holding his blade like someone who has used it.", "Somebody's son once. Now a knife in a ditch by the road."]
     },
     "bandit_archer": {
@@ -114,7 +105,6 @@
       "traits": [], "morale": "bandit", "rank": "back", "names": "heartland",
       "gear": [["shortbow", 1], ["arrows", 12], ["dagger", 1], ["leather_armor", 1], ["common_clothes", 1]], "money": {"dice": "1d6", "mult": 10},
       "loot": [],
-      "glyph": "b", "color": [180, 170, 120],
       "descriptions": ["A lean poacher with a bow, keeping well back from the fighting."]
     },
     "bandit_captain": {
@@ -127,7 +117,6 @@
       "multiattack": 2, "traits": ["leader"], "morale": "bandit", "rank": "front", "names": "heartland",
       "gear": [["scimitar", 1], ["dagger", 1], ["studded_leather", 1], ["fine_boots", 1], ["common_clothes", 1], ["wool_cloak", 1]], "money": {"dice": "3d6", "mult": 100},
       "loot": [["wine", 1]],
-      "glyph": "B", "color": [230, 170, 100],
       "descriptions": ["The leader: well-armed, well-fed, with rings on fingers that have never ploughed a furrow."]
     },
     "thug": {
@@ -139,7 +128,6 @@
       "multiattack": 2, "traits": ["pack_tactics"], "morale": "bandit", "rank": "front", "names": "heartland",
       "gear": [["mace", 1], ["leather_armor", 1], ["common_clothes", 1], ["boots", 1]], "money": {"dice": "2d6", "mult": 10},
       "loot": [],
-      "glyph": "t", "color": [190, 120, 100],
       "descriptions": ["A big man with a broken nose, a mace and no questions."]
     },
     "deserter": {
@@ -151,7 +139,6 @@
       "traits": [], "morale": "coward", "rank": "front", "names": "heartland",
       "gear": [["spear", 1], ["chain_shirt", 1], ["shield", 1], ["common_clothes", 1], ["boots", 1]], "money": {"dice": "1d4", "mult": 10},
       "loot": [],
-      "glyph": "s", "color": [170, 170, 190],
       "descriptions": ["A soldier without a banner: rusted mail, a spear, and the look of someone who hasn't eaten in days.", "Ran from some lord's war. Now he's more frightened of you than you are of him, and that makes him dangerous."]
     },
     "cultist": {
@@ -163,7 +150,6 @@
       "traits": ["dark_devotion"], "morale": "fanatic", "rank": "front", "names": "heartland",
       "gear": [["sickle", 1], ["dark_clothes", 1], ["hooded_cloak", 1]], "money": {"dice": "1d6", "mult": 1},
       "loot": [["candle", 2]],
-      "glyph": "c", "color": [160, 60, 70],
       "descriptions": ["A villager in a hooded robe, eyes glassy with something that is not quite faith."]
     },
     "cult_fanatic": {
@@ -178,7 +164,6 @@
       "spellcasting": {"ability": "wis", "dc": 11, "attack": 3, "slots": [4, 3]},
       "gear": [["dagger", 1], ["vestments", 1], ["holy_symbol", 1]], "money": {"dice": "2d6", "mult": 10},
       "loot": [["incense", 3]],
-      "glyph": "C", "color": [200, 60, 80],
       "descriptions": ["A preacher of something old and hungry, with a voice that carries and hands that burn."]
     },
     "skeleton": {
@@ -190,7 +175,6 @@
                   {"name": "bow", "kind": "ranged", "bonus": 4, "damage": "1d6+2", "damage_type": "piercing"}],
       "traits": ["undead"], "vulnerable": ["bludgeoning"], "immune": ["poison"], "morale": "mindless", "rank": "front",
       "gear": [], "money": {"dice": "1d6", "mult": 10}, "loot": [],
-      "glyph": "z", "color": [220, 220, 200],
       "descriptions": ["Old bones held together by nothing you can see, still wearing the rags of a grave shroud."]
     },
     "zombie": {
@@ -201,7 +185,6 @@
       "attacks": [{"name": "slam", "kind": "melee", "bonus": 3, "damage": "1d6+1", "damage_type": "bludgeoning", "disease": "grave_rot"}],
       "traits": ["undead", "undead_fortitude"], "immune": ["poison"], "morale": "mindless", "rank": "front",
       "gear": [], "money": null, "loot": [],
-      "glyph": "Z", "color": [120, 150, 110],
       "descriptions": ["A corpse that walks, bloated and grey, stinking of the grave it should still be in."]
     },
     "ghoul": {
@@ -213,7 +196,6 @@
                   {"name": "claws", "kind": "melee", "bonus": 4, "damage": "2d4+2", "damage_type": "slashing", "paralyze_dc": 10}],
       "traits": ["undead"], "immune": ["poison"], "morale": "mindless", "rank": "front",
       "gear": [], "money": {"dice": "2d6", "mult": 10}, "loot": [],
-      "glyph": "g", "color": [130, 160, 130],
       "descriptions": ["Something that was a man, grown long-limbed and grey on a diet of the dead. Its touch numbs."]
     },
     "gnoll": {"name": "gnoll", "plural": "gnolls", "kind": "humanoid", "body": "humanoid", "size": "medium", "cr": 0.5, "xp": 100,
@@ -224,7 +206,6 @@
                   {"name": "longbow", "kind": "ranged", "bonus": 3, "damage": "1d8+1", "damage_type": "piercing", "item": "longbow"}],
       "traits": ["aggressive"], "morale": "warrior", "rank": "front", "names": "orcish",
       "gear": [["spear", 1], ["hides", 1]], "money": {"dice": "2d6", "mult": 10}, "loot": [["raw_meat", 1]],
-      "glyph": "G", "color": [190, 150, 70],
       "descriptions": ["Hyena-headed, long-limbed, and laughing at nothing. They eat what they kill, and they kill more than they can eat."]},
     "hobgoblin": {"name": "hobgoblin", "plural": "hobgoblins", "kind": "humanoid", "body": "humanoid", "size": "medium", "cr": 0.5, "xp": 100,
       "ac": 18, "hp": "2d8+2", "speed": 30, "abilities": {"str": 13, "dex": 12, "con": 12, "int": 10, "wis": 10, "cha": 9},
@@ -233,7 +214,6 @@
                   {"name": "longbow", "kind": "ranged", "bonus": 3, "damage": "1d8+1", "damage_type": "piercing", "item": "longbow"}],
       "traits": ["pack_tactics"], "morale": "soldier", "rank": "front", "names": "orcish",
       "gear": [["longsword", 1], ["chain_mail", 1], ["shield", 1]], "money": {"dice": "2d6", "mult": 10}, "loot": [],
-      "glyph": "h", "color": [190, 90, 60],
       "descriptions": ["Orange-skinned, disciplined, and in proper armour that has been looked after: the worst kind of goblin-kin."]},
     "bugbear": {"name": "bugbear", "plural": "bugbears", "kind": "humanoid", "body": "humanoid", "size": "medium", "cr": 1, "xp": 200,
       "ac": 16, "hp": "5d8+5", "speed": 30, "abilities": {"str": 15, "dex": 14, "con": 13, "int": 8, "wis": 11, "cha": 9},
@@ -242,7 +222,6 @@
                   {"name": "javelin", "kind": "ranged", "bonus": 4, "damage": "1d6+2", "damage_type": "piercing", "item": "javelin"}],
       "traits": ["keen_senses"], "morale": "warrior", "rank": "front", "names": "orcish",
       "gear": [["morningstar", 1], ["hides", 1]], "money": {"dice": "2d6", "mult": 20}, "loot": [],
-      "glyph": "B", "color": [160, 130, 80],
       "descriptions": ["Huge, hairy and silent on its feet, which is the part nobody believes until it is too late."]},
     "berserker": {"name": "berserker", "plural": "berserkers", "kind": "humanoid", "body": "humanoid", "size": "medium", "cr": 2, "xp": 450,
       "ac": 13, "hp": "9d8+9", "speed": 30, "abilities": {"str": 16, "dex": 12, "con": 17, "int": 9, "wis": 11, "cha": 9},
@@ -250,14 +229,12 @@
       "attacks": [{"name": "greataxe", "kind": "melee", "bonus": 5, "damage": "1d12+3", "damage_type": "slashing", "item": "greataxe"}],
       "traits": ["relentless"], "morale": "fanatic", "rank": "front", "names": "northmarch",
       "gear": [["greataxe", 1], ["fur_cloak", 1]], "money": {"dice": "3d6", "mult": 10}, "loot": [["spirits", 1]],
-      "glyph": "B", "color": [210, 120, 90],
       "descriptions": ["Bare-armed in this weather, eyes on nothing, already moving. They do not stop when they should."]},
     "stirge": {"name": "stirge", "plural": "stirges", "kind": "beast", "body": "quadruped", "size": "tiny", "cr": 0.125, "xp": 25,
       "ac": 14, "hp": "2d4+2", "speed": 10, "abilities": {"str": 4, "dex": 16, "con": 11, "int": 2, "wis": 8, "cha": 6},
       "skills": {}, "darkvision": 60,
       "attacks": [{"name": "blood drain", "kind": "melee", "bonus": 5, "damage": "1d4+3", "damage_type": "piercing", "wound": "bite"}],
       "traits": [], "morale": "beast", "rank": "front", "gear": [], "money": {"dice": "0", "mult": 0}, "loot": [],
-      "glyph": "s", "color": [180, 60, 60],
       "descriptions": ["A fist-sized thing of wings and proboscis that drops off the ceiling and does not let go."]},
     "goblin": {
       "name": "goblin", "plural": "goblins", "kind": "humanoid", "body": "humanoid", "size": "small", "cr": 0.25, "xp": 50,
@@ -269,7 +246,6 @@
       "traits": ["nimble_escape"], "morale": "coward", "rank": "front", "names": "orcish",
       "gear": [["scimitar", 1], ["shortbow", 1], ["arrows", 6], ["leather_armor", 1], ["shield", 1]], "money": {"dice": "1d6", "mult": 10},
       "loot": [],
-      "glyph": "g", "color": [120, 170, 70],
       "descriptions": ["A goblin: small, quick, cruel and cowardly, which makes it very good at staying alive."]
     },
     "orc": {
@@ -282,7 +258,6 @@
       "traits": ["aggressive"], "morale": "warrior", "rank": "front", "names": "orcish",
       "gear": [["greataxe", 1], ["javelin", 2], ["hide_armor", 1]], "money": {"dice": "2d6", "mult": 10},
       "loot": [],
-      "glyph": "o", "color": [110, 150, 90],
       "descriptions": ["An orc raider, tusked and scarred, with an axe that has seen a great deal of use."]
     },
     "ogre": {
@@ -294,7 +269,6 @@
                   {"name": "javelin", "kind": "ranged", "bonus": 6, "damage": "2d6+4", "damage_type": "piercing", "range": [30, 120]}],
       "traits": [], "morale": "warrior", "rank": "front",
       "gear": [["hides", 2]], "money": {"dice": "4d6", "mult": 10}, "loot": [],
-      "glyph": "O", "color": [180, 150, 110],
       "descriptions": ["Ten feet of stinking muscle with a tree-trunk club and the appetite of a famine."]
     },
     "troll": {
@@ -306,7 +280,6 @@
                   {"name": "claws", "kind": "melee", "bonus": 7, "damage": "2d6+4", "damage_type": "slashing", "wound": "cut"}],
       "multiattack": 3, "traits": ["regeneration", "keen_senses"], "morale": "mindless", "rank": "front",
       "gear": [], "money": {"dice": "6d6", "mult": 10}, "loot": [],
-      "glyph": "T", "color": [90, 130, 90],
       "descriptions": ["A troll: gangling, green-grey and horribly quick, its wounds closing even as you watch."]
     },
     "wight": {
@@ -318,7 +291,6 @@
                   {"name": "longbow", "kind": "ranged", "bonus": 4, "damage": "1d8+2", "damage_type": "piercing", "range": [150, 600]}],
       "multiattack": 2, "traits": ["undead", "sunlight_sensitive"], "immune": ["poison"], "morale": "fanatic", "rank": "front",
       "gear": [["longsword", 1]], "money": {"dice": "4d6", "mult": 100}, "loot": [],
-      "glyph": "W", "color": [170, 170, 200],
       "descriptions": ["A barrow-lord still in its rotted mail, eyes like cold stars. It hates the living, and it remembers how to fight."]
     },
     "goblin_boss": {
@@ -329,7 +301,6 @@
                   {"name": "javelin", "kind": "ranged", "bonus": 2, "damage": "1d6", "damage_type": "piercing", "range": [30, 120]}],
       "multiattack": 2, "traits": ["leader"], "morale": "bandit", "rank": "front",
       "gear": [["scimitar", 1], ["chain_shirt", 1]], "money": {"dice": "3d6", "mult": 10}, "loot": [],
-      "glyph": "G", "color": [150, 190, 90],
       "descriptions": ["Bigger than the others, meaner than the others, and wearing somebody's mail shirt."]
     },
     "orc_warchief": {
@@ -340,7 +311,6 @@
                   {"name": "spear", "kind": "ranged", "bonus": 6, "damage": "1d6+4", "damage_type": "piercing", "range": [20, 60]}],
       "multiattack": 2, "traits": ["leader"], "morale": "warrior", "rank": "front",
       "gear": [["greataxe", 1], ["chain_mail", 1]], "money": {"dice": "5d6", "mult": 100}, "loot": [],
-      "glyph": "O", "color": [200, 90, 60],
       "descriptions": ["Scarred, tusked and hung with trophies. The others are afraid of it, and they are right to be."]
     },
     "young_dragon": {
@@ -352,7 +322,6 @@
                   {"name": "fire breath", "kind": "ranged", "bonus": 10, "damage": "16d6", "damage_type": "fire", "wound": "burn", "area": {"shape": "cone", "size": 30}, "save": "dex", "dc": 17, "recharge": 5}],
       "multiattack": 3, "traits": ["keen_senses"], "immune": ["fire"], "morale": "warrior", "rank": "front",
       "gear": [], "money": {"dice": "10d6", "mult": 1000}, "loot": [],
-      "glyph": "D", "color": [220, 70, 40],
       "descriptions": ["A dragon. Not the oldest or the greatest of them, but the heat of it reaches you from across the cave, and it has already seen you."]
     },
     "commoner": {
@@ -360,7 +329,7 @@
       "ac": 10, "hp": "1d8", "speed": 30, "abilities": {"str": 10, "dex": 10, "con": 10, "int": 10, "wis": 10, "cha": 10}, "skills": {}, "darkvision": 0,
       "attacks": [{"name": "club", "kind": "melee", "bonus": 2, "damage": "1d4", "damage_type": "bludgeoning", "item": "club"}],
       "traits": [], "morale": "coward", "rank": "front", "names": "heartland",
-      "gear": [["common_clothes", 1]], "money": {"dice": "1d6", "mult": 1}, "loot": [], "glyph": "p", "color": [190, 180, 160],
+      "gear": [["common_clothes", 1]], "money": {"dice": "1d6", "mult": 1}, "loot": [],
       "descriptions": ["An ordinary person, frightened and angry, holding whatever came to hand."]
     },
     "guard": {
@@ -369,7 +338,6 @@
       "attacks": [{"name": "spear", "kind": "melee", "bonus": 3, "damage": "1d6+1", "damage_type": "piercing", "item": "spear"}],
       "traits": [], "morale": "soldier", "rank": "front", "names": "heartland",
       "gear": [["spear", 1], ["chain_shirt", 1], ["shield", 1], ["common_clothes", 1], ["boots", 1]], "money": {"dice": "2d6", "mult": 10}, "loot": [],
-      "glyph": "G", "color": [150, 170, 210],
       "descriptions": ["A town guard in a dented cap and a chain shirt, holding a spear the way you hold a tool you use every day."]
     },
     "acolyte": {
@@ -378,7 +346,7 @@
       "attacks": [{"name": "club", "kind": "melee", "bonus": 2, "damage": "1d4", "damage_type": "bludgeoning", "item": "club"}],
       "traits": [], "morale": "coward", "rank": "back", "names": "heartland",
       "spells": ["sacred_flame", "bless", "cure_wounds"], "spellcasting": {"ability": "wis", "dc": 12, "attack": 4, "slots": [3]},
-      "gear": [["vestments", 1]], "money": {"dice": "1d6", "mult": 10}, "loot": [], "glyph": "p", "color": [220, 210, 170],
+      "gear": [["vestments", 1]], "money": {"dice": "1d6", "mult": 10}, "loot": [],
       "descriptions": ["A priest of the temple, soft-handed, more used to prayers than blows."]
     },
     "noble": {
@@ -387,7 +355,6 @@
       "attacks": [{"name": "rapier", "kind": "melee", "bonus": 3, "damage": "1d8+1", "damage_type": "piercing", "item": "rapier"}],
       "traits": [], "morale": "soldier", "rank": "back", "names": "heartland",
       "gear": [["rapier", 1], ["breastplate", 1], ["fine_clothes", 1], ["fine_boots", 1]], "money": {"dice": "5d6", "mult": 100}, "loot": [],
-      "glyph": "N", "color": [230, 200, 120],
       "descriptions": ["Someone used to being obeyed, and not used to this."]
     }
   },

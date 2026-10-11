@@ -192,7 +192,7 @@ class PartyScreen(Screen):
         cur = self.current()
         list_w = min(40, max(24, w // 3))
         y = 2
-        pictures = canvas.gfx is not None and h >= 4 * len(members) + 12
+        pictures = h >= 4 * len(members) + 12
         rows = 3 if pictures else 1
         for i, c in enumerate(members):
             chosen = c is cur

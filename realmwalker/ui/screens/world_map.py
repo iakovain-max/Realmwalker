@@ -1,7 +1,7 @@
 """The World Map: the whole land as far as you know it, painted and shown at any zoom, in four views: the land
 itself (its names written across it), its realms, its peoples and the weather, the last three each with a key in the
 side panel. The mouse wheel zooms where the pointer is, dragging looks about, a click picks a place to read about;
-Enter, a double click or the Travel button sets off there. Without pictures the map is drawn in letters."""
+Enter, a double click or the Travel button sets off there."""
 
 from __future__ import annotations
 
@@ -12,7 +12,6 @@ import numpy as np
 from realmwalker.game.describe import describe_overworld
 from realmwalker.ui import colors, markup
 from realmwalker.ui.input import KeyEvent, MouseEvent
-from realmwalker.ui.map_render import PLAYER_FG, UNSEEN_BG, apply_light, camera
 from realmwalker.ui.screens.base import Screen
 from realmwalker.ui.screens.game_screen import key_direction
 from realmwalker.ui.widgets import Canvas
@@ -45,7 +44,7 @@ class WorldMapScreen(Screen):
             self.cursor = going
         self.travel_mode = travel_mode
         self.view_mode = "land"
-        self.fit = False  # letters only: squeeze the whole world onto the screen
+        self.fit = False  # zoom out to the whole world as soon as the map is drawn
         self.target: float | None = None  # pictures: the zoom (pixels a square) being glided to
         self.ppc: float | None = None  # ...and the zoom shown now
         self.cam: tuple[float, float] | None = None  # the square in the middle of the view
@@ -54,8 +53,7 @@ class WorldMapScreen(Screen):
         self.hover = None
         self.highlight = None  # a realm (faction id) or a people (culture id) picked in the key
         self.legend: list[tuple] = []  # (key, label, colour, tooltip) of the key of the view shown
-        self.view = (0, 0, 1, 0, 0)  # letters: x0, y0 of map on screen, scale, first tile x, first tile y
-        self.painted = None  # a WorldView when the map is drawn as a picture
+        self.painted = None  # the WorldView that draws the map
         self.rect = None
         self._last = None
         self._weather: tuple[int, tuple] | None = None
@@ -95,81 +93,8 @@ class WorldMapScreen(Screen):
         w, h = canvas.width, canvas.height
         mw, mh = w - SIDE_W, h - 1
         self.legend = self._legend()
-        if canvas.tiles:
-            self._render_painted(canvas, mw, mh)
-            self._side(canvas, mw, 0, SIDE_W, h)
-            return
-        self.painted = None
-        self.rect = None
-        self._render_letters(canvas, mw, mh)
+        self._render_painted(canvas, mw, mh)
         self._side(canvas, mw, 0, SIDE_W, h)
-
-    def _render_letters(self, canvas: Canvas, mw: int, mh: int) -> None:
-        world = self.game.world
-        pic = self.gs.picture
-        scale = 1
-        if self.fit:
-            scale = max(1, int(np.ceil(max(world.width / mw, world.height / mh))))
-        cols, rows = int(np.ceil(world.width / scale)), int(np.ceil(world.height / scale))
-        cx, cy = self.cursor[0] // scale, self.cursor[1] // scale
-        x0, ox = camera(cx, mw, cols)
-        y0, oy = camera(cy, mh, rows)
-        vw, vh = min(mw, cols), min(mh, rows)
-        xs = np.minimum((np.arange(x0, x0 + vw) * scale + scale // 2), world.width - 1)
-        ys = np.minimum((np.arange(y0, y0 + vh) * scale + scale // 2), world.height - 1)
-        grid = np.ix_(xs, ys)
-        ch = pic.ch[grid].copy()
-        fg, bg = apply_light(pic.fg[grid], pic.bg[grid], 1.0)
-        fg, bg = fg.copy(), bg.copy()
-        p = self.game.player
-        if scale == 1:
-            explored = p.explored[grid]
-        else:
-            # A squeezed cell counts as explored if any tile inside it was seen.
-            padded = np.zeros((cols * scale, rows * scale), dtype=bool)
-            padded[: world.width, : world.height] = p.explored
-            blocks = padded.reshape(cols, scale, rows, scale).any(axis=(1, 3))
-            explored = blocks[x0:x0 + vw, y0:y0 + vh]
-        if self.show_weather:
-            self._tint_weather(grid, fg, bg, explored)
-        ch[~explored] = ord(" ")
-        bg[~explored] = UNSEEN_BG
-        if self.show_realms:
-            self._tint_realms(grid, bg, explored)
-        elif self.show_peoples:
-            self._tint_peoples(grid, bg, explored)
-        stypes = self.game.tables.sites["settlement_types"]
-        for s in world.settlements:
-            if s.id not in p.known_settlements and not p.explored[s.x, s.y]:
-                continue
-            sx, sy = s.x // scale - x0, s.y // scale - y0
-            if 0 <= sx < vw and 0 <= sy < vh:
-                ch[sx, sy] = ord(stypes[s.kind]["glyph"])
-                fg[sx, sy] = stypes[s.kind]["fg"]
-        for wd in world.wonders:
-            sx, sy = wd.x // scale - x0, wd.y // scale - y0
-            if 0 <= sx < vw and 0 <= sy < vh and p.explored[wd.x, wd.y]:
-                ch[sx, sy] = ord("*")
-                fg[sx, sy] = (250, 220, 120)
-        from realmwalker.ui.map_render import QUEST_BG, quest_marks
-
-        for qx, qy in quest_marks(self.game):
-            mx, my = qx // scale - x0, qy // scale - y0
-            if 0 <= mx < vw and 0 <= my < vh:
-                bg[mx, my] = QUEST_BG
-        px, py = p.x // scale - x0, p.y // scale - y0
-        if 0 <= px < vw and 0 <= py < vh:
-            ch[px, py] = ord("@")
-            fg[px, py] = PLAYER_FG
-        kx, ky = cx - x0, cy - y0
-        if 0 <= kx < vw and 0 <= ky < vh:
-            bg[kx, ky] = (130, 104, 40)
-        dst = (slice(ox, ox + vw), slice(oy, oy + vh))
-        canvas.con.rgb["ch"][dst] = ch
-        canvas.con.rgb["fg"][dst] = fg
-        canvas.con.rgb["bg"][dst] = bg
-        self.view = (ox, oy, scale, x0, y0)
-        canvas.hit(ox, oy, vw, vh)
 
     def levels(self, rect) -> list[float]:
         """The zooms there are: the whole world on the screen, then the sharp ones nearer in."""
@@ -179,7 +104,7 @@ class WorldMapScreen(Screen):
 
     def _render_painted(self, canvas: Canvas, mw: int, mh: int) -> None:
         from realmwalker.ui.gfx.worldview import WorldView
-        from realmwalker.ui.map_render import quest_marks
+        from realmwalker.game.quests import map_marks
 
         game = self.game
         if self.painted is None:
@@ -215,7 +140,7 @@ class WorldMapScreen(Screen):
         canvas.clear_cells(0, 0, mw, mh)
         overlay = self._overlay()
         plan = self.plan()
-        self.painted.draw(canvas, game, rect, self.ppc, quests=quest_marks(game), look=self.cursor, hover=self.hover,
+        self.painted.draw(canvas, game, rect, self.ppc, quests=map_marks(game), look=self.cursor, hover=self.hover,
                           overlays=[overlay] if overlay else (), route=plan.path if plan else None, camera=self.cam,
                           land_names=self.view_mode in ("land", "weather"))
         if self.view_mode in ("realms", "peoples"):
@@ -442,72 +367,6 @@ class WorldMapScreen(Screen):
             return out
         return []
 
-    def _tint_weather(self, grid, fg, bg, explored) -> None:
-        """Rain shows blue, snow white and heavy cloud grey, over the land you have seen."""
-        from realmwalker.world.weather import weather_grid
-
-        game = self.game
-        key = game.world.time // 30
-        if self._weather is None or self._weather[0] != key:
-            self._weather = (key, weather_grid(game.world, game.tables, game.world.time))
-        precip, temp, cloud = (a[grid] for a in self._weather[1])
-        bgf = bg.astype(np.float32)
-        rain = (precip > 0) & (temp > 0.5)
-        snow = (precip > 0) & (temp <= 0.5)
-        grey = (cloud > 0.7) & (precip <= 0)
-        for mask, color, strength in ((grey, (70, 70, 78), 0.35), (rain, (40, 70, 150), 0.45), (snow, (200, 200, 215), 0.5)):
-            if mask.any():
-                k = (strength + 0.4 * precip[mask])[:, None] if mask is not grey else strength
-                bgf[mask] = bgf[mask] * (1 - k) + np.array(color, dtype=np.float32) * k
-        bg[:] = bgf.astype(np.uint8)
-
-    def _tint_realms(self, grid, bg, explored) -> None:
-        """Each realm's lands in its own colour. Borders of realms you know of are common knowledge, so they show
-        (faintly) even where you have not been; lands of realms you do not know show grey where you have."""
-        from realmwalker.world.factions import territory
-
-        world = self.game.world
-        if not world.factions:
-            return
-        _, realm = territory(world)
-        ids = realm[grid]
-        known = self.game.renown.known
-        bgf = bg.astype(np.float32)
-        for fid in np.unique(ids):
-            if fid < 0:
-                continue
-            f = world.factions.get(int(fid))
-            if f is None:
-                continue
-            color = np.array(f.color if int(fid) in known else (90, 90, 96), dtype=np.float32)
-            if self.highlight is not None and int(fid) != self.highlight:
-                color = color * 0.4 + 40
-            seen = (ids == fid) & explored
-            bgf[seen] = bgf[seen] * 0.45 + color * 0.55
-            if int(fid) in known:
-                unseen = (ids == fid) & ~explored
-                bgf[unseen] = bgf[unseen] * 0.7 + color * 0.3
-        bg[:] = bgf.astype(np.uint8)
-
-    def _tint_peoples(self, grid, bg, explored) -> None:
-        """Each people's lands in its colour, where you have been."""
-        from realmwalker.world.model import NO_CULTURE
-
-        world = self.game.world
-        C = self.game.tables.cultures
-        ids = world.culture[grid]
-        bgf = bg.astype(np.float32)
-        for i in np.unique(ids):
-            if i == NO_CULTURE or i >= len(world.culture_ids):
-                continue
-            cid = world.culture_ids[int(i)]
-            color = np.array(C.color(cid), dtype=np.float32)
-            if self.highlight is not None and cid != self.highlight:
-                color = color * 0.4 + 40
-            seen = (ids == i) & explored
-            bgf[seen] = bgf[seen] * 0.45 + color * 0.55
-        bg[:] = bgf.astype(np.uint8)
-
     # ------------------------------------------------------------------ the side panel
     def _side(self, canvas: Canvas, x: int, y: int, w: int, h: int) -> None:
         title = "Travel: choose where" if self.travel_mode else self.title
@@ -565,7 +424,7 @@ class WorldMapScreen(Screen):
 
     # ------------------------------------------------------------------ input
     def _move_cursor(self, dx: int, dy: int, fast: bool = False) -> None:
-        step = (self.view[2] if self.fit else 1) * (8 if fast else 1)
+        step = 8 if fast else 1
         world = self.game.world
         x = max(0, min(world.width - 1, self.cursor[0] + dx * step))
         y = max(0, min(world.height - 1, self.cursor[1] + dy * step))
@@ -657,13 +516,13 @@ class WorldMapScreen(Screen):
 
     def _pixels(self, ev: MouseEvent) -> tuple[float, float]:
         px, py = ev.px, ev.py
-        if px < 0 and self.app.gfx is not None:
+        if px < 0:
             px, py = (ev.x + 0.5) * self.app.gfx.cell_w, (ev.y + 0.5) * self.app.gfx.cell_h
         return px, py
 
     def handle_mouse(self, ev: MouseEvent) -> bool:
         if self.painted is None or self.rect is None:
-            return self._mouse_letters(ev)
+            return False  # not drawn yet
         world = self.game.world
         px, py = self._pixels(ev)
         x0, y0, w, h = self.rect
@@ -712,24 +571,6 @@ class WorldMapScreen(Screen):
             return True
         return False
 
-    def _mouse_letters(self, ev: MouseEvent) -> bool:
-        ox, oy, scale, x0, y0 = self.view
-        tx, ty = (ev.x - ox + x0) * scale + scale // 2, (ev.y - oy + y0) * scale + scale // 2
-        world = self.game.world
-        if ev.x >= canvas_width_guard(self.app) - SIDE_W or not world.in_bounds(tx, ty):
-            return False
-        if ev.kind == "wheel":
-            self.fit = ev.dy < 0
-            return True
-        if ev.kind == "click":
-            self.cursor = (tx, ty)
-            if ev.button == "left" and ev.clicks >= 2:
-                self._travel()
-            return True
-        if ev.kind == "move":
-            self.hover = (tx, ty)
-        return False
-
     def autoplay_keys(self) -> list[KeyEvent]:
         return [KeyEvent(k) for k in ("up", "down", "left", "right", "z", "w", "p", "c", "l", "+", "-", "@",
                                       "escape")] + [KeyEvent("enter")]
@@ -754,7 +595,3 @@ def _middle(mask: np.ndarray):
 def _short(name: str) -> str:
     """'the Kingdom of Ashmere' as written across its lands: 'Kingdom of Ashmere'."""
     return name[4:] if name.startswith("the ") else name
-
-
-def canvas_width_guard(app) -> int:
-    return app.last_console_size[0]

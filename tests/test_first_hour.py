@@ -9,7 +9,6 @@ from realmwalker.game.dialogue import Conversation
 from realmwalker.game.people import npcs_in
 from realmwalker.game.state import new_game
 from realmwalker.rules.creation import CharacterBuilder
-from realmwalker.ui.map_render import quest_marks
 from realmwalker.world.generator import WorldGenerator, WorldOptions
 from realmwalker.world.tables import Tables
 
@@ -57,7 +56,7 @@ def test_there_is_work_in_the_first_town_and_the_map_shows_where(tables, seed):
     quests.accept(game, q)
     assert any(x["id"] == q["id"] for x in game.quests), "taking it puts it in the journal"
     assert quests.title(game, q), "and it has a name"
-    assert quest_marks(game), "and the map is lit where it wants you"
+    assert quests.map_marks(game), "and the map is lit where it wants you"
 
 
 @pytest.mark.parametrize("seed", SEEDS)
@@ -70,7 +69,7 @@ def test_you_can_walk_from_the_town_towards_the_work(tables, seed, monkeypatch):
     assert offers
     quests.accept(game, offers[0])
     game.leave_local()
-    spot = quest_marks(game)[0]
+    spot = quests.map_marks(game)[0]
     was = abs(spot[0] - game.player.x) + abs(spot[1] - game.player.y)
     for _ in range(60):
         if game.busy:

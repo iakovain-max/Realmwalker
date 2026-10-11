@@ -269,7 +269,7 @@ class HealthScreen(Screen):
         canvas.markup(x, y, f"<dim>Water carried:</> {water:g} pints", max_width=col_w)
         y += 1
         room = (h - 5) - (y + 1)
-        if canvas.gfx is not None and room >= 8:  # the body, with its wounds marked on it
+        if room >= 8:  # the body, with its wounds marked on it
             from realmwalker.ui.gfx import scenes
 
             fw = min(col_w, max(16, room * canvas.cell_h // canvas.cell_w))

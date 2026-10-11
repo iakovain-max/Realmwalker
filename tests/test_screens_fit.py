@@ -217,9 +217,7 @@ def test_a_big_fight_shows_everyone_when_there_is_room(game, monkeypatch):
     screen = BattleScreen(app, g)
     shown = watch.render(screen, (160, 45))
     assert all(f.name[:10] in shown for f in b.side(FOE)), "everyone is in the order of battle"
-    x0, y0, cw = screen.letters
-    rows = shown.splitlines()
     for f in b.fighters:  # and on the field, where they stand
-        glyph = str(b.side("party").index(f) + 1) if f.char else f.cdef["glyph"]
-        assert rows[y0 + f.y][x0 + f.x * cw] == glyph, f.name
+        if f.state != "fled":
+            assert f.id in screen.board.cells, f"{f.name} is not on the board"
     assert not watch.problems, watch.problems

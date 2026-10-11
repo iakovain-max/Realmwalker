@@ -242,7 +242,7 @@ class CharacterScreen(Screen):
             canvas.text(col2, 4 + len(t.rules["skills"]), "● trained  ♦ expert", colors.FAINT, max_width=w - col2 - 1)
             top = 6 + len(t.rules["skills"])
             room = h - 5 - top
-            if canvas.gfx is not None and room >= 7:  # the person, as they stand, in what they wear
+            if room >= 7:  # the person, as they stand, in what they wear
                 from realmwalker.ui.gfx import scenes
 
                 fw = min(col3 - col2 - 3, max(14, room * canvas.cell_h // canvas.cell_w))
@@ -346,8 +346,6 @@ def item_icon(canvas, game, it) -> str:
     """The picture for a thing (its own, or one for its kind)."""
     from realmwalker.ui.gfx.localview import item_sprite
 
-    if canvas.gfx is None:
-        return ""
     return item_sprite(canvas.gfx.atlas, game.tables, it) or ""
 
 
@@ -664,25 +662,22 @@ class InventoryScreen(Screen):
         t = g.tables.items
         canvas.frame(x, y, w, h, markup.escape(c.name.split()[0]), fg=colors.FAINT, bg=None, style="inset")
         top = y + 1
-        if canvas.gfx is not None:
-            from realmwalker.ui.gfx import dolls
+        from realmwalker.ui.gfx import dolls
 
-            cw, ch = canvas.cell_w, canvas.cell_h
-            size = min((w - 4) * cw, 7 * ch)
-            px = x * cw + (w * cw - size) / 2
-            canvas.clear_cells(x + 1, top, w - 2, 7)
-            from realmwalker.ui.gfx import theme
+        cw, ch = canvas.cell_w, canvas.cell_h
+        size = min((w - 4) * cw, 7 * ch)
+        px = x * cw + (w * cw - size) / 2
+        canvas.clear_cells(x + 1, top, w - 2, 7)
+        from realmwalker.ui.gfx import theme
 
-            canvas.under(*theme.panel(px - 6, top * ch + 2, size + 12, size + 4, "glass", ornaments=False))
-            size = max(32, int(size) // 32 * 32)
-            px = x * cw + (w * cw - size) / 2
-            cmd = dolls.draw(canvas.gfx.atlas, dolls.character(c, g.tables, atlas=canvas.gfx.atlas), px,
-                             top * ch + 4 + (7 * ch - 8 - size), size)
-            if cmd is not None:
-                canvas.over(cmd)
-            top += 8
-        else:
-            top += 1
+        canvas.under(*theme.panel(px - 6, top * ch + 2, size + 12, size + 4, "glass", ornaments=False))
+        size = max(32, int(size) // 32 * 32)
+        px = x * cw + (w * cw - size) / 2
+        cmd = dolls.draw(canvas.gfx.atlas, dolls.character(c, g.tables, atlas=canvas.gfx.atlas), px,
+                         top * ch + 4 + (7 * ch - 8 - size), size)
+        if cmd is not None:
+            canvas.over(cmd)
+        top += 8
         canvas.text(x + 2, top, "Worn and held", colors.TITLE, max_width=w - 4)
         top += 1
         for i, slot in enumerate(EQUIP_SLOTS):
@@ -699,10 +694,9 @@ class InventoryScreen(Screen):
             elif over:
                 canvas.fill(x + 1, ry, w - 2, 1, colors.HOVER_BG)
             cx = x + 2
-            if canvas.gfx is not None:
-                if it is not None:
-                    canvas.icon(cx, ry, item_icon(canvas, g, it))
-                cx += 3
+            if it is not None:
+                canvas.icon(cx, ry, item_icon(canvas, g, it))
+            cx += 3
             label_w = 13 if w - (cx - x) >= 26 else 9
             canvas.text(cx, ry, SLOT_NAMES[slot][: label_w - 1], colors.DIM, max_width=x + w - 1 - cx)
             name = markup.escape(t.name(it)) if it else "—"
@@ -730,26 +724,22 @@ class InventoryScreen(Screen):
         for i, (name, _) in enumerate(FILTERS):
             label = f" {name} "
             icon = FILTER_ICONS.get(name, "")
-            width = len(label) + (3 if canvas.gfx is not None and icon else 0)
+            width = len(label) + (3 if icon else 0)
             if cx + width > x + w:
                 break
             over = canvas.hit(cx, y, width, 1, action=lambda i=i: self._set_filter(i), tooltip=f"Show {name.lower()} "
                               "(left and right arrows)")
-            if canvas.gfx is not None:
-                from realmwalker.ui.gfx import theme
+            from realmwalker.ui.gfx import theme
 
-                state = "active" if i == self.filter else ("hover" if over else "normal")
-                canvas.clear_cells(cx, y, width, 1)
-                canvas.under(theme.button(cx * canvas.cell_w, y * canvas.cell_h, width * canvas.cell_w,
-                                          canvas.cell_h, state))
-                tx = cx
-                if icon:
-                    canvas.icon(cx + 1, y, icon)
-                    tx = cx + 2
-                canvas.text(tx, y, label, colors.SELECT_FG if i == self.filter else colors.FG)
-            else:
-                label = f"[{name}]" if i == self.filter else f" {name} "
-                canvas.text(cx, y, label, colors.SELECT_FG if i == self.filter else (colors.FG if over else colors.DIM))
+            state = "active" if i == self.filter else ("hover" if over else "normal")
+            canvas.clear_cells(cx, y, width, 1)
+            canvas.under(theme.button(cx * canvas.cell_w, y * canvas.cell_h, width * canvas.cell_w,
+                                      canvas.cell_h, state))
+            tx = cx
+            if icon:
+                canvas.icon(cx + 1, y, icon)
+                tx = cx + 2
+            canvas.text(tx, y, label, colors.SELECT_FG if i == self.filter else colors.FG)
             cx += width + 1
 
     # ---- the list of things
@@ -774,8 +764,7 @@ class InventoryScreen(Screen):
         c = self.char
         t = g.tables.items
         canvas.frame(x - 1, y - 1, w + 2, h + 2, "", fg=colors.FAINT, bg=None, style="inset")
-        icons = canvas.gfx is not None
-        name_x = x + (3 if icons else 2)
+        name_x = x + 3
         cols_w = 18
         name_w = max(8, w - (name_x - x) - cols_w)
         canvas.text(name_x, y, "Thing", colors.DIM)
@@ -810,14 +799,11 @@ class InventoryScreen(Screen):
             if bg:
                 canvas.fill(x, ry, w, 1, bg)
             wearer, _ = worn_by(c, it.uid)
-            if icons:
-                canvas.icon(x, ry, item_icon(canvas, g, it))
-                if wearer is not None:
-                    from realmwalker.ui.gfx.scene import Rect
+            canvas.icon(x, ry, item_icon(canvas, g, it))
+            if wearer is not None:
+                from realmwalker.ui.gfx.scene import Rect
 
-                    canvas.over(Rect(x * canvas.cell_w + 1, ry * canvas.cell_h + 1, 4, 4, (120, 210, 100, 255)))
-            else:
-                canvas.text(x, ry, "▪ " if wearer is not None else "  ", colors.named("good") if wearer is c else colors.DIM, bg)
+                canvas.over(Rect(x * canvas.cell_w + 1, ry * canvas.cell_h + 1, 4, 4, (120, 210, 100, 255)))
             name = markup.escape(t.name(it))
             if wearer is not None and wearer is not c:
                 who = wearer.name.split()[0]
@@ -846,28 +832,26 @@ class InventoryScreen(Screen):
             canvas.text(ix, y + 1, "Choose something on the left.", colors.DIM, max_width=iw)
             return
         top = y + 1
-        if canvas.gfx is not None:
-            from realmwalker.ui.gfx import theme
-            from realmwalker.ui.gfx.scene import Text
+        from realmwalker.ui.gfx import theme
+        from realmwalker.ui.gfx.scene import Text
 
-            cw, ch = canvas.cell_w, canvas.cell_h
-            size = 3 * ch
-            canvas.clear_cells(ix, top, 7, 3)
-            canvas.under(*theme.panel(ix * cw - 2, top * ch - 2, size + 4, size + 4, "glass", ornaments=False))
-            item_picture(canvas, g, cur, ix * cw, top * ch, size)
-            canvas.clear_cells(ix + 7, top, iw - 7, 1)
-            canvas.over(Text((ix + 7) * cw, top * ch + ch / 2, t.name(cur), "heading", 17,
-                             (214, 176, 108, 255) if not cur.magic else (200, 160, 250, 255), anchor="lm"))
-            canvas.markup(ix + 7, top + 1, f"<dim>{CATEGORY_NAMES.get(t.category(cur), t.category(cur))}</>",
+        cw, ch = canvas.cell_w, canvas.cell_h
+        size = 3 * ch
+        canvas.clear_cells(ix, top, 7, 3)
+        canvas.under(*theme.panel(ix * cw - 2, top * ch - 2, size + 4, size + 4, "glass", ornaments=False))
+        item_picture(canvas, g, cur, ix * cw, top * ch, size)
+        canvas.clear_cells(ix + 7, top, iw - 7, 1)
+        canvas.over(Text((ix + 7) * cw, top * ch + ch / 2, t.name(cur), "heading", 17,
+                         (214, 176, 108, 255) if not cur.magic else (200, 160, 250, 255), anchor="lm"))
+        canvas.markup(ix + 7, top + 1, f"<dim>{CATEGORY_NAMES.get(t.category(cur), t.category(cur))}</>",
+                      max_width=iw - 7)
+        wearer, _ = worn_by(c, cur.uid)
+        if wearer is not None:
+            canvas.markup(ix + 7, top + 2, f"<good>Worn by {markup.escape(wearer.name.split()[0])}</>",
                           max_width=iw - 7)
-            wearer, _ = worn_by(c, cur.uid)
-            if wearer is not None:
-                canvas.markup(ix + 7, top + 2, f"<good>Worn by {markup.escape(wearer.name.split()[0])}</>",
-                              max_width=iw - 7)
-            top += 4
+        top += 4
         details = item_details(g, cur)
-        if canvas.gfx is not None:
-            details = details.split(chr(10), 1)[1] if chr(10) in details else ""  # the name is the heading already
+        details = details.split(chr(10), 1)[1] if chr(10) in details else ""  # the name is the heading already
         compare = self.comparison(cur)
         if compare:
             details += "\n" + compare
@@ -936,24 +920,21 @@ class InventoryScreen(Screen):
         light, heavy, limit = s.pack_capacity()
         load = s.pack_load()
         text = f"{load_line(s)} · <dim>Money:</> <loot>{money_text(self.char.money)}</>"
-        if canvas.gfx is not None:
-            from realmwalker.ui.gfx import theme
+        from realmwalker.ui.gfx import theme
 
-            enc = s.encumbrance()
-            color = colors.named(ENCUMBRANCE_WORDS[enc][1])
-            bw = min(40, w // 3)
-            canvas.clear_cells(x, y, bw, 1)
-            canvas.under(*theme.bar(x * canvas.cell_w, y * canvas.cell_h + 4, bw * canvas.cell_w, canvas.cell_h - 8,
-                                    load / max(1.0, limit), color))
-            # Marks where burdened and heavily burdened begin.
-            from realmwalker.ui.gfx.scene import Rect
+        enc = s.encumbrance()
+        color = colors.named(ENCUMBRANCE_WORDS[enc][1])
+        bw = min(40, w // 3)
+        canvas.clear_cells(x, y, bw, 1)
+        canvas.under(*theme.bar(x * canvas.cell_w, y * canvas.cell_h + 4, bw * canvas.cell_w, canvas.cell_h - 8,
+                                load / max(1.0, limit), color))
+        # Marks where burdened and heavily burdened begin.
+        from realmwalker.ui.gfx.scene import Rect
 
-            for mark in (light, heavy):
-                mx = x * canvas.cell_w + bw * canvas.cell_w * min(1.0, mark / max(1.0, limit))
-                canvas.over(Rect(mx, y * canvas.cell_h + 2, 2, canvas.cell_h - 4, (240, 220, 170, 200)))
-            canvas.markup(x + bw + 2, y, text, max_width=w - bw - 2)
-        else:
-            canvas.markup(x, y, text, max_width=w)
+        for mark in (light, heavy):
+            mx = x * canvas.cell_w + bw * canvas.cell_w * min(1.0, mark / max(1.0, limit))
+            canvas.over(Rect(mx, y * canvas.cell_h + 2, 2, canvas.cell_h - 4, (240, 220, 170, 200)))
+        canvas.markup(x + bw + 2, y, text, max_width=w - bw - 2)
 
     def _cycle_sort(self) -> None:
         self.sort = (self.sort + 1) % len(SORTS)
@@ -1102,21 +1083,16 @@ class EquipmentScreen(Screen):
         bx, by = 66, 3
         canvas.text(bx, by - 1, "Protection", colors.TITLE)
         tx = bx + 13
-        if canvas.gfx is not None:  # the person themselves, in what they wear
-            from realmwalker.ui.gfx import dolls, theme
+        from realmwalker.ui.gfx import dolls, theme
 
-            cw, ch = canvas.cell_w, canvas.cell_h
-            size = 32 * max(2, min(20 * cw // 32, 12 * ch // 32, max(0, w - bx - 36) * cw // 32))
-            canvas.under(*theme.panel(bx * cw, by * ch, size + 16, size + 12, "glass", ornaments=False))
-            cmd = dolls.draw(canvas.gfx.atlas, dolls.character(c, g.tables, atlas=canvas.gfx.atlas), bx * cw + 8,
-                             by * ch + 4, size)
-            if cmd is not None:
-                canvas.under(cmd)
-            tx = bx + (size + 16) // cw + 2
-        else:
-            for i, (text, part) in enumerate(BODY):
-                fg = colors.named("good") if cover[part] else colors.FAINT
-                canvas.text(bx, by + i, text, fg)
+        cw, ch = canvas.cell_w, canvas.cell_h
+        size = 32 * max(2, min(20 * cw // 32, 12 * ch // 32, max(0, w - bx - 36) * cw // 32))
+        canvas.under(*theme.panel(bx * cw, by * ch, size + 16, size + 12, "glass", ornaments=False))
+        cmd = dolls.draw(canvas.gfx.atlas, dolls.character(c, g.tables, atlas=canvas.gfx.atlas), bx * cw + 8,
+                         by * ch + 4, size)
+        if cmd is not None:
+            canvas.under(cmd)
+        tx = bx + (size + 16) // cw + 2
         ly = by
         for part in ("head", "torso", "arms", "legs", "hands", "feet"):
             items = ", ".join(cover[part]) or "<dim>unprotected</>"

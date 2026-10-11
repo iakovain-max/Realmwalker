@@ -54,7 +54,7 @@ def smoke_script():
             steps.append((frame, KeyEvent(key)))
             frame += gap
 
-    press("p", "escape", "s", "down", "escape", "f1", "pagedown", "escape", "n", "enter")
+    press("s", "down", "escape", "f1", "pagedown", "escape", "n", "enter")
     shots[frame + 4] = "worldgen"  # the ages being lived
     frame += 170  # world generation (the land, then its history)
     press("enter", "enter", "enter")  # people, calling, background
@@ -315,6 +315,9 @@ def main(argv: list[str] | None = None) -> int:
                 return 2
         else:
             window.run(app)
+    except window.PicturesUnavailable as exc:
+        show_fatal_error(str(exc))
+        return 1
     except Exception:
         text = traceback.format_exc()
         logging.getLogger("realmwalker.crash").critical("Fatal error in the window loop:\n%s", text)

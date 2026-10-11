@@ -1,7 +1,7 @@
 """Fast lookup tables built from data files: biomes (overworld) and terrain (local maps).
 
-Maps store small integer indices; these tables turn them into glyphs, colours, costs and flags
-with numpy indexing, so drawing and path costs never loop over cells in Python.
+Maps store small integer indices; these tables turn them into names, costs and flags with numpy indexing, so
+path costs and the like never loop over cells in Python.
 """
 
 from __future__ import annotations
@@ -9,18 +9,6 @@ from __future__ import annotations
 import numpy as np
 
 from realmwalker.data.registry import DataRegistry
-
-
-def _glyph_table(defs: list[dict], key: str = "glyphs") -> tuple[np.ndarray, np.ndarray]:
-    width = max(len(d[key]) for d in defs)
-    table = np.zeros((len(defs), width), dtype=np.int32)
-    counts = np.zeros(len(defs), dtype=np.int32)
-    for i, d in enumerate(defs):
-        glyphs = [ord(g) for g in d[key]]
-        counts[i] = len(glyphs)
-        for j in range(width):
-            table[i, j] = glyphs[j % len(glyphs)]
-    return table, counts
 
 
 class BiomeTable:
@@ -32,9 +20,6 @@ class BiomeTable:
         self.names = [d["name"] for d in self.defs]
         self.passable = np.array([d["passable"] for d in self.defs], dtype=bool)
         self.move_hours = np.array([d["move_hours"] for d in self.defs], dtype=np.float32)
-        self.fg = np.array([d["fg"] for d in self.defs], dtype=np.uint8)
-        self.bg = np.array([d["bg"] for d in self.defs], dtype=np.uint8)
-        self.glyphs, self.glyph_counts = _glyph_table(self.defs)
         # Each land's family: the older land it behaves like ("dunes" -> "desert"), itself for the old ones.
         self.families: list[str] = [d.get("family", bid) for bid, d in zip(self.ids, self.defs)]
         self.family_index = np.array([self.index[f] for f in self.families], dtype=np.int32)
@@ -70,9 +55,6 @@ class TerrainTable:
         self.walk = np.array([d["walk"] for d in self.defs], dtype=bool)
         self.see = np.array([d["see"] for d in self.defs], dtype=bool)
         self.cost = np.array([d["cost"] for d in self.defs], dtype=np.float32)
-        self.fg = np.array([d["fg"] for d in self.defs], dtype=np.uint8)
-        self.bg = np.array([d["bg"] for d in self.defs], dtype=np.uint8)
-        self.glyphs, self.glyph_counts = _glyph_table(self.defs)
         self.tags = [set(d["tags"]) for d in self.defs]
 
     def id(self, name: str) -> int:

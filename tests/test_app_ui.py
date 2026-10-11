@@ -18,15 +18,31 @@ from realmwalker.ui.screens.title import TitleScreen
 SIZES = [(80, 30), (120, 45), (192, 54), (240, 67)]
 
 
+_DRAWN: dict[int, object] = {}  # console -> the canvas that drew it (its words include those drawn as pictures)
+
+
 def render(app, size=(120, 45)):
     con = tcod.console.Console(*size, order="F")
     app.render(con)
+    _DRAWN[id(con)] = app.last_canvas
     app.update()
     return con
 
 
 def screen_text(con) -> str:
+    """What the screen says: every layer's cells and the words drawn as pictures (titles, headings)."""
+    canvas = _DRAWN.get(id(con))
+    if canvas is not None:
+        return canvas.words()
     return "\n".join("".join(chr(c) for c in con.rgb["ch"][:, y]) for y in range(con.height))
+
+
+def map_cell_event(gs, kind, x, y, **kw):
+    """A mouse event over the middle of square (x, y) of the map the game screen drew."""
+    view = gs.local_view if gs.game.in_local else gs.world_view
+    px, py = view.cell_px(x + 0.5, y + 0.5)
+    cw, ch = gs.app.gfx.cell_w, gs.app.gfx.cell_h
+    return MouseEvent(kind, int(px // cw), int(py // ch), px=px, py=py, **kw)
 
 
 @pytest.mark.parametrize("screen_cls", [TitleScreen, SettingsScreen, HelpScreen, DebugConsole])
@@ -256,9 +272,7 @@ def test_mouse_hover_describes_the_map(make_app):
     gs = start_small_world(app)
     con = render(app)
     p = app.game.player
-    vx, vy, mx0, my0, ox, oy = gs.view
-    sx, sy = p.x - mx0 + vx + ox, p.y - my0 + vy + oy
-    app.handle_event(MouseEvent("move", sx, sy))
+    app.handle_event(map_cell_event(gs, "move", p.x, p.y))
     assert "You are here" in screen_text(render(app))
 
 
@@ -399,7 +413,7 @@ def test_battle_keys_walk_and_end_the_turn(make_app):
     f = screen.actor()
     if f is None:
         return
-    assert screen.letters is not None, "the field is drawn in letters headless"
+    assert screen.staged, "the field is drawn on the battle board headless too"
     start, moved = (f.x, f.y), False
     for key, (dx, dy) in DIRS.items():
         dest = (f.x + dx, f.y + dy)

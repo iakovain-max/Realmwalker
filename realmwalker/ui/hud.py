@@ -1,8 +1,7 @@
 """The main game view's furniture: the side panel (who you are, how you are, when and where), the message log,
 the action bar along the bottom (everything the keys do, for the mouse), and what a right click on the map offers.
 
-Everything is laid out in text cells, so it works headless and in the old letters look; with pictures the panel
-shows portraits, bars and icons as well.
+Laid out in text cells, with portraits, bars and icons drawn as pictures over them.
 """
 
 from __future__ import annotations
@@ -101,13 +100,10 @@ def render_actionbar(gs, canvas: Canvas, x: int, y: int, w: int, h: int) -> None
         shown = acts[: slots - 1]
         more = acts[slots - 1:]
     gs.bar_actions = {a.id: a for a in acts}
-    if canvas.gfx is not None:
-        from realmwalker.ui.gfx import theme
+    from realmwalker.ui.gfx import theme
 
-        canvas.clear_cells(x, y, w, h)
-        canvas.under(*theme.panel(*canvas.cell_rect(x, y, w, h), "log", ornaments=False))
-    else:
-        canvas.fill(x, y, w, h, colors.PANEL_BG)
+    canvas.clear_cells(x, y, w, h)
+    canvas.under(*theme.panel(*canvas.cell_rect(x, y, w, h), "log", ornaments=False))
     for i, a in enumerate(shown):
         _slot(canvas, x + i * SLOT_W, y, h, a)
     if more:
@@ -124,27 +120,21 @@ def render_actionbar(gs, canvas: Canvas, x: int, y: int, w: int, h: int) -> None
 def _slot(canvas: Canvas, x: int, y: int, h: int, a: Action) -> None:
     w = SLOT_W
     over = canvas.hit(x, y, w, h, action=a.run if a.enabled else None, tooltip=a.tip)
-    if canvas.gfx is not None:
-        from realmwalker.ui.gfx import theme
-        from realmwalker.ui.gfx.scene import Text
+    from realmwalker.ui.gfx import theme
+    from realmwalker.ui.gfx.scene import Text
 
-        cw, ch = canvas.cell_w, canvas.cell_h
-        px, py, pw, ph = x * cw + 2, y * ch + 3, w * cw - 4, h * ch - 6
-        state = "off" if not a.enabled else ("hover" if over else ("active" if a.context else "normal"))
-        canvas.under(theme.button(px, py, pw, ph, state))
-        label_h = 13
-        size = max(12, min(pw - 16, ph - label_h - 8))
-        canvas.sprite(f"icon/{a.icon}", px + (pw - size) / 2, py + 4, size, size,
-                      (255, 255, 255, 255 if a.enabled else 110), over=False)
-        canvas.over(Text(px + pw / 2, py + ph - 4, a.label, "prose_bold", 13,
-                         (240, 226, 190, 255) if a.enabled else (120, 116, 110, 255), anchor="ms", shadow=True))
-        if a.key and len(a.key) <= 5:
-            canvas.over(Text(px + 4, py + 3, a.key, "mono", 10, (226, 190, 116, 220), anchor="lt", shadow=True))
-        return
-    bg = colors.HOVER_BG if over else None
-    key_fg = colors.TITLE if a.enabled else colors.FAINT
-    canvas.text(x, y, f"[{a.key}]"[: w - 1] if a.key else "", key_fg, bg)
-    canvas.text(x, y + 1, a.label[: w - 1], colors.SELECT_FG if (over or a.context) else colors.FG, bg)
+    cw, ch = canvas.cell_w, canvas.cell_h
+    px, py, pw, ph = x * cw + 2, y * ch + 3, w * cw - 4, h * ch - 6
+    state = "off" if not a.enabled else ("hover" if over else ("active" if a.context else "normal"))
+    canvas.under(theme.button(px, py, pw, ph, state))
+    label_h = 13
+    size = max(12, min(pw - 16, ph - label_h - 8))
+    canvas.sprite(f"icon/{a.icon}", px + (pw - size) / 2, py + 4, size, size,
+                  (255, 255, 255, 255 if a.enabled else 110), over=False)
+    canvas.over(Text(px + pw / 2, py + ph - 4, a.label, "prose_bold", 13,
+                     (240, 226, 190, 255) if a.enabled else (120, 116, 110, 255), anchor="ms", shadow=True))
+    if a.key and len(a.key) <= 5:
+        canvas.over(Text(px + 4, py + 3, a.key, "mono", 10, (226, 190, 116, 220), anchor="lt", shadow=True))
 
 
 # ---------------------------------------------------------------------------- statuses
@@ -173,18 +163,15 @@ def render_statuses(canvas: Canvas, x: int, y: int, w: int, words: list[str], ma
         return 0
     line, cx = 0, x
     for word in words:
-        n = markup.length(word) + (4 if canvas.gfx is not None else 0)
+        n = markup.length(word) + 4
         if cx > x and cx + n > x + w:
             line += 1
             cx = x
             if line >= max_lines:
                 break
-        if canvas.gfx is not None:
-            canvas.icon(cx, y + line, f"icon/{status_icon(word)}")
-            cx += 3
-        cx = canvas.markup(cx, y + line, word, max_width=x + w - cx) + (1 if canvas.gfx is not None else 0)
-        if canvas.gfx is None:
-            cx = canvas.text(cx, y + line, " · " if word is not words[-1] else "", colors.DIM)
+        canvas.icon(cx, y + line, f"icon/{status_icon(word)}")
+        cx += 3
+        cx = canvas.markup(cx, y + line, word, max_width=x + w - cx) + 1
     return line + 1
 
 
@@ -216,26 +203,23 @@ def render_party(gs, canvas: Canvas, x: int, y: int, w: int) -> int:
     from realmwalker.ui.screens.health import status_words
     from realmwalker.ui.screens.sheets import ENCUMBRANCE_WORDS
 
+    from realmwalker.ui.gfx import dolls, theme
+
     game = gs.game
-    gfx = canvas.gfx is not None
+    cw, ch = canvas.cell_w, canvas.cell_h
     for index, member in enumerate(game.party):
         s = Sheet(member, game.tables)
         ratio = member.hp / max(1, member.max_hp)
         color = "good" if ratio > 0.6 else ("warn" if ratio > 0.3 else "danger")
         cls = game.tables.classes[member.cls]["name"]
-        tx = x
-        if gfx:
-            from realmwalker.ui.gfx import dolls, theme
-
-            cw, ch = canvas.cell_w, canvas.cell_h
-            canvas.under(*theme.panel(x * cw, y * ch + 2, 5 * cw, 3 * ch - 4, "inset", ornaments=False))
-            size = min(5 * cw - 6, 3 * ch - 8)
-            cmd = dolls.draw(canvas.gfx.atlas, dolls.character(member, game.tables, atlas=canvas.gfx.atlas),
-                             x * cw + (5 * cw - size) / 2, y * ch + (3 * ch - size) / 2, size)
-            if cmd is not None:
-                canvas.over(cmd)
-            canvas.clear_cells(x, y, 5, 3)
-            tx = x + 6
+        canvas.under(*theme.panel(x * cw, y * ch + 2, 5 * cw, 3 * ch - 4, "inset", ornaments=False))
+        size = min(5 * cw - 6, 3 * ch - 8)
+        cmd = dolls.draw(canvas.gfx.atlas, dolls.character(member, game.tables, atlas=canvas.gfx.atlas),
+                         x * cw + (5 * cw - size) / 2, y * ch + (3 * ch - size) / 2, size)
+        if cmd is not None:
+            canvas.over(cmd)
+        canvas.clear_cells(x, y, 5, 3)
+        tx = x + 6
         tw = w - (tx - x)
         mood = ""
         if member.companion:
@@ -247,18 +231,9 @@ def render_party(gs, canvas: Canvas, x: int, y: int, w: int) -> int:
                       max_width=tw)
         numbers = f"{member.hp}/{member.max_hp}"
         bar_w = max(4, tw - len(numbers) - 7)
-        if gfx:
-            from realmwalker.ui.gfx import theme
-
-            cw, ch = canvas.cell_w, canvas.cell_h
-            lag = gs.hp_lag(index, ratio)
-            canvas.clear_cells(tx, y + 1, bar_w, 1)
-            canvas.under(*theme.bar(tx * cw, (y + 1) * ch + 4, bar_w * cw, ch - 8, ratio,
-                                    colors.named(color), lag=lag))
-        else:
-            filled = int(round(bar_w * ratio))
-            canvas.text(tx, y + 1, "█" * filled, colors.named(color))
-            canvas.text(tx + filled, y + 1, "░" * (bar_w - filled), colors.FAINT)
+        lag = gs.hp_lag(index, ratio)
+        canvas.clear_cells(tx, y + 1, bar_w, 1)
+        canvas.under(*theme.bar(tx * cw, (y + 1) * ch + 4, bar_w * cw, ch - 8, ratio, colors.named(color), lag=lag))
         canvas.markup(tx + bar_w + 1, y + 1, f"<{color}>{numbers}</> <dim>AC</> {s.armor_class()}",
                       max_width=tw - bar_w - 1)
         canvas.hit(x, y, w, 2, action=lambda index=index: gs.open_sheet("c", index),
@@ -273,11 +248,8 @@ def render_party(gs, canvas: Canvas, x: int, y: int, w: int) -> int:
             purse = f"<dim>{pay_word(game, member)}</>"
         else:
             purse = f"<loot>{money_text(member.money)}</>"
-        if gfx:
-            canvas.icon(tx, y + 2, "icon/coin" if not member.companion else "icon/party")
-            canvas.markup(tx + 3, y + 2, f"{purse}{load}", max_width=tw - 3)
-        else:
-            canvas.markup(tx, y + 2, f"{purse}{load}", max_width=tw)
+        canvas.icon(tx, y + 2, "icon/coin" if not member.companion else "icon/party")
+        canvas.markup(tx + 3, y + 2, f"{purse}{load}", max_width=tw - 3)
         y += 3
         if member.animals:
             from realmwalker.game import mounts
@@ -291,7 +263,7 @@ def render_party(gs, canvas: Canvas, x: int, y: int, w: int) -> int:
             canvas.hit(x, y, w, used, action=lambda index=index: gs.open_sheet("h", index),
                        tooltip="Click (or press h) for the Health screen.")
             y += used
-        y += 1 if gfx else 0
+        y += 1
     return y
 
 
@@ -301,16 +273,14 @@ def render_panel(gs, canvas: Canvas, x: int, y: int, w: int, h: int) -> None:
 
     game = gs.game
     p = game.player
-    gfx = canvas.gfx is not None
     canvas.frame(x, y, w, h, markup.escape(game.leader.name), fg=colors.BORDER, bg=colors.PANEL_BG)
     ix, iw = x + 2, w - 4
     row = y + 2
     row = render_party(gs, canvas, ix, row, iw) + 1
     m = game.moment
     part = m.part_of_day(game.latitude)
-    tx = ix + 3 if gfx else ix
-    if gfx:
-        canvas.icon(ix, row, f"icon/{sky_icon(game)}")
+    tx = ix + 3
+    canvas.icon(ix, row, f"icon/{sky_icon(game)}")
     canvas.markup(tx, row, f"<title>{m.time_text()}</> <dim>·</> {part} <dim>· {m.season}</>", max_width=iw - (tx - ix))
     row += 1
     canvas.text(tx, row, m.date_text(), colors.FG, max_width=iw - (tx - ix))
@@ -329,12 +299,9 @@ def render_panel(gs, canvas: Canvas, x: int, y: int, w: int, h: int) -> None:
 
     def line(icon: str, text: str, lines: int = 1) -> None:
         nonlocal row
-        if gfx:
-            if icon:
-                canvas.icon(ix, row, f"icon/{icon}")
-            row += canvas.wrapped(ix + 3, row, text, iw - 3, max_lines=lines)
-        else:
-            row += canvas.wrapped(ix, row, text, iw, max_lines=lines)
+        if icon:
+            canvas.icon(ix, row, f"icon/{icon}")
+        row += canvas.wrapped(ix + 3, row, text, iw - 3, max_lines=lines)
 
     area = None
     if underground:
@@ -384,11 +351,9 @@ def render_panel(gs, canvas: Canvas, x: int, y: int, w: int, h: int) -> None:
         line("danger", "<warn>Lost: you don't know which way you're going.</>", 2)
     if game.travel is not None:
         line("travel", f"<good>Travelling</> <dim>— {len(game.travel.path) * 3} miles to go</>")
-    if gfx and game.quests:
+    if game.quests:
         canvas.icon(ix, row + 1, "icon/work")
-        row += gs._work_line(canvas, ix + 3, row, iw - 3)
-    else:
-        row += gs._work_line(canvas, ix, row, iw)
+    row += gs._work_line(canvas, ix + 3, row, iw - 3)
     row += 1
 
     target = gs.look or gs.hover
@@ -406,7 +371,7 @@ def render_panel(gs, canvas: Canvas, x: int, y: int, w: int, h: int) -> None:
 
 def render_log(gs, canvas: Canvas, x: int, y: int, w: int, h: int) -> None:
     canvas.frame(x, y, w, h, "Messages", fg=colors.FAINT, bg=colors.PANEL_BG, title_fg=colors.DIM,
-                 style="log" if canvas.gfx is not None else None)
+                 style="log")
     inner = w - 4
     lines: list = []
     for msg in gs.game.log.recent(h * 2):

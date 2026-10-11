@@ -15,7 +15,6 @@ import time
 from collections.abc import Callable
 from pathlib import Path
 
-import numpy as np
 import tcod.console
 import tcod.context
 import tcod.event
@@ -30,11 +29,13 @@ log = logging.getLogger("realmwalker.window")
 
 ScriptStep = tuple[int, "InputEvent | Callable[[App], None]"]
 
+NO_PICTURES = ("This computer could not start the game's picture renderer, so the game cannot be drawn.\n\n"
+               "Updating the graphics card's driver (from its maker's website, or Windows Update) usually fixes "
+               "this. The details are in logs\\errors.log in %APPDATA%\\Realmwalker.")
 
-def save_screenshot(tileset, console: tcod.console.Console, path: Path) -> Path:
-    pixels = tileset.render(console)
-    Image.fromarray(np.asarray(pixels)).save(path)
-    return path
+
+class PicturesUnavailable(RuntimeError):
+    """The window opened, but nothing can draw the game's pictures on this computer."""
 
 
 class Presenter:
@@ -66,20 +67,20 @@ def run(app: App, *, script: list[ScriptStep] | None = None, max_frames: int | N
                           sdl_window_flags=flags) as ctx:
         window = ctx.sdl_window
         renderer = getattr(ctx, "sdl_renderer", None)
-        gpu = None
         presenter = Presenter()
-        if renderer is not None:
-            try:
-                from realmwalker.ui.gfx.gpu import Gpu
+        if renderer is None:
+            log.error("No SDL renderer: the pictures cannot be drawn")
+            raise PicturesUnavailable(NO_PICTURES)
+        try:
+            from realmwalker.ui.gfx.gpu import Gpu
 
-                atlas = atlas_mod.load(str(app.paths.tiles))
-                gpu = Gpu(renderer, atlas)
-                gpu.set_tileset(tileset)
-                app.gfx = GfxContext(atlas, tileset.tile_width, tileset.tile_height)
-            except Exception:
-                log.exception("Pictures are not available; drawing text only")
-                gpu = None
-                app.gfx = None
+            atlas = atlas_mod.load(str(app.paths.tiles))
+            gpu = Gpu(renderer, atlas)
+            gpu.set_tileset(tileset)
+            app.gfx = GfxContext(atlas, tileset.tile_width, tileset.tile_height)
+        except Exception as exc:
+            log.exception("The picture renderer could not be started")
+            raise PicturesUnavailable(NO_PICTURES) from exc
         if window is not None:
             try:
                 window.start_text_input()
@@ -91,49 +92,39 @@ def run(app: App, *, script: list[ScriptStep] | None = None, max_frames: int | N
             app.start_sound()
         except Exception:
             log.exception("Sound could not be started; playing in silence")
-        translator = EventTranslator(presenter.to_frame if gpu is not None else None)
+        translator = EventTranslator(presenter.to_frame)
         console: tcod.console.Console | None = None
         frame = 0
         pending_script = sorted(script or [], key=lambda s: s[0])
 
         def shoot(path: Path) -> None:
-            if gpu is not None:
-                pixels = gpu.read_frame()
-                if pixels is not None:
-                    Image.fromarray(pixels[..., :3]).save(path)
-                    return
-            if console is not None:
-                save_screenshot(tileset, console, path)
+            pixels = gpu.read_frame()
+            if pixels is not None:
+                Image.fromarray(pixels[..., :3]).save(path)
 
         while app.running:
-            if gpu is not None:
-                out_w, out_h = renderer.output_size
-                tw, th = tileset.tile_width, tileset.tile_height
-                cols, rows = max(MIN_COLUMNS, out_w // tw), max(MIN_ROWS, out_h // th)
-            else:
-                cols, rows = ctx.recommended_console_size(MIN_COLUMNS, MIN_ROWS)
+            out_w, out_h = renderer.output_size
+            tw, th = tileset.tile_width, tileset.tile_height
+            cols, rows = max(MIN_COLUMNS, out_w // tw), max(MIN_ROWS, out_h // th)
             if console is None or console.width != cols or console.height != rows:
                 console = tcod.console.Console(cols, rows, order="F")
             app.render(console)
-            if gpu is not None:
-                fw, fh = cols * tw, rows * th
-                presenter.tile_w, presenter.tile_h = tw, th
-                presenter.scale = min(1.0, out_w / fw, out_h / fh)
-                presenter.ox = (out_w - fw * presenter.scale) / 2
-                presenter.oy = (out_h - fh * presenter.scale) / 2
-                if window is not None:
-                    ww, wh = window.size
-                    presenter.ratio = (out_w / max(1, ww), out_h / max(1, wh))
-                canvas = getattr(app, "last_canvas", None)
-                layers = canvas.layers if canvas is not None else []
-                if not layers:
-                    from realmwalker.ui.gfx.scene import Layer
+            fw, fh = cols * tw, rows * th
+            presenter.tile_w, presenter.tile_h = tw, th
+            presenter.scale = min(1.0, out_w / fw, out_h / fh)
+            presenter.ox = (out_w - fw * presenter.scale) / 2
+            presenter.oy = (out_h - fh * presenter.scale) / 2
+            if window is not None:
+                ww, wh = window.size
+                presenter.ratio = (out_w / max(1, ww), out_h / max(1, wh))
+            canvas = getattr(app, "last_canvas", None)
+            layers = canvas.layers if canvas is not None else []
+            if not layers:
+                from realmwalker.ui.gfx.scene import Layer
 
-                    layers = [Layer(console)]
-                tex = gpu.draw(layers, fw, fh, colors.BG)
-                gpu.present(tex, presenter.ox, presenter.oy, presenter.scale, colors.BG)
-            else:
-                ctx.present(console, keep_aspect=True, integer_scaling=True, clear_color=colors.BG)
+                layers = [Layer(console)]
+            tex = gpu.draw(layers, fw, fh, colors.BG)
+            gpu.present(tex, presenter.ox, presenter.oy, presenter.scale, colors.BG)
 
             timeout = 0.02 if pending_script else app.frame_timeout()
             for event in tcod.event.wait(timeout=timeout):
@@ -142,8 +133,7 @@ def run(app: App, *, script: list[ScriptStep] | None = None, max_frames: int | N
                     break
                 if isinstance(event, tcod.event.WindowEvent) and event.type in ("WindowFocusGained", "WindowFocusLost"):
                     app.audio.set_focus(event.type == "WindowFocusGained")
-                ev = event if gpu is not None else ctx.convert_event(event)
-                for gev in translator.translate(ev):
+                for gev in translator.translate(event):
                     app.handle_event(gev)
             while pending_script and pending_script[0][0] <= frame:
                 _, step = pending_script.pop(0)
@@ -156,9 +146,8 @@ def run(app: App, *, script: list[ScriptStep] | None = None, max_frames: int | N
             if "font" in app.window_requests:
                 tileset = fonts.build_tileset(app.settings.font_size, font_path)
                 ctx.change_tileset(tileset)
-                if gpu is not None:
-                    gpu.set_tileset(tileset)
-                    app.gfx.cell_w, app.gfx.cell_h = tileset.tile_width, tileset.tile_height
+                gpu.set_tileset(tileset)
+                app.gfx.cell_w, app.gfx.cell_h = tileset.tile_width, tileset.tile_height
             if "fullscreen" in app.window_requests and window is not None:
                 window.fullscreen = app.settings.fullscreen
             if "screenshot" in app.window_requests and console is not None:

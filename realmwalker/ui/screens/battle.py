@@ -94,7 +94,6 @@ class BattleScreen(Screen):
         self.stage = self.board  # (the old name, for tests and tools)
         self.staged = False
         self.zoom: int | None = None
-        self.letters = None  # (x0, y0, cells a square) of the field drawn in letters
         self.auto_once: int | None = None
         self._reach_key = None
         self._reach: dict = {}
@@ -705,18 +704,12 @@ class BattleScreen(Screen):
 
     def square_at(self, ev: MouseEvent) -> tuple[int, int] | None:
         fld = self.battle.field
-        if self.staged and ev.px >= 0:
-            return self.board.to_square(ev.px, ev.py, fld)
-        if self.staged:
-            gfx = self.app.gfx
-            if gfx is None:
-                return None
-            return self.board.to_square((ev.x + 0.5) * gfx.cell_w, (ev.y + 0.5) * gfx.cell_h, fld)
-        if self.letters is None:
+        if not self.staged:
             return None
-        x0, y0, cw = self.letters
-        sx, sy = (ev.x - x0) // cw, ev.y - y0
-        return (sx, sy) if fld.in_bounds(sx, sy) and ev.x >= x0 else None
+        if ev.px >= 0:
+            return self.board.to_square(ev.px, ev.py, fld)
+        gfx = self.app.gfx
+        return self.board.to_square((ev.x + 0.5) * gfx.cell_w, (ev.y + 0.5) * gfx.cell_h, fld)
 
     def _zoom(self, step: int) -> None:
         cur = self.zoom or self.board.T
@@ -819,15 +812,8 @@ class BattleScreen(Screen):
         bar_h = 3
         fx0, fy0 = 1, 3
         fw, fh = w - side_w - 2, h - fy0 - bar_h - 1
-        if canvas.tiles:
-            self._render_order_pictures(canvas, 2, 1, w - 4)
-        else:
-            self._render_order(canvas, 2, 1, w - 4)
-        if canvas.tiles:
-            self._render_field_pictures(canvas, fx0, fy0, fw, fh)
-        else:
-            self.staged = False
-            self._render_field_letters(canvas, fx0, fy0, fw, fh)
+        self._render_order_pictures(canvas, 2, 1, w - 4)
+        self._render_field_pictures(canvas, fx0, fy0, fw, fh)
         sx = w - side_w - 1
         for yy in range(1, h - 1):
             canvas.text(sx - 1, yy, "│", colors.FAINT)
@@ -858,77 +844,6 @@ class BattleScreen(Screen):
                      "surrendered": ("Surrendered", (200, 170, 140))}.get(b.outcome, (str(b.outcome), (220, 220, 220)))
             canvas.over(Text(rect[0] + rect[2] / 2, rect[1] + rect[3] * 0.2, words[0], "heading", 44, (*words[1], 255),
                              anchor="mm", outline=True, shadow=True))
-
-    def _render_field_letters(self, canvas: Canvas, x: int, y: int, w: int, h: int) -> None:
-        """The field in letters: each square a letter (two cells wide when there is room), people as their letters,
-        whose turn it is lit, where they can walk shaded."""
-        b = self.battle
-        fld = b.field
-        T = self.game.tables.terrain
-        cw = 2 if fld.width * 2 <= w else 1
-        vis_w = min(fld.width, w // cw)
-        vis_h = min(fld.height, h)
-        f = self.actor()
-        cur = b.current if b.order and b.outcome is None else None
-        x0 = x + max(0, (w - vis_w * cw) // 2)
-        y0 = y + max(0, (h - vis_h) // 2)
-        # Follow the one whose turn it is when the field is bigger than the room for it.
-        ox = 0 if fld.width <= vis_w else max(0, min(fld.width - vis_w, (cur.x if cur else 0) - vis_w // 2))
-        oy = 0 if fld.height <= vis_h else max(0, min(fld.height - vis_h, (cur.y if cur else 0) - vis_h // 2))
-        self.letters = (x0 - ox * cw, y0 - oy, cw)
-        ov = self.overlay()
-        reach = ov.get("reach", set())
-        path = set(ov.get("path", []) or [])
-        area = ov.get("area", set())
-        targets = ov.get("targets", set())
-        for sy in range(oy, oy + vis_h):
-            for sx in range(ox, ox + vis_w):
-                t = int(fld.terrain[sx, sy])
-                glyph = chr(int(T.glyphs[t][(sx * 7 + sy * 13) % max(1, int(T.glyph_counts[t]))]))
-                fg = tuple(int(v) for v in T.fg[t])
-                bg = tuple(int(v) for v in T.bg[t])
-                if (sx, sy) in area:
-                    bg = (90, 50, 20)
-                elif (sx, sy) in path:
-                    bg = (70, 66, 30)
-                elif (sx, sy) in reach:
-                    bg = (22, 34, 60)
-                if any((sx, sy) in z.cells for z in b.zones):
-                    z = next(z for z in b.zones if (sx, sy) in z.cells)
-                    glyph = {"web": "#", "fire": "^", "fog": "░", "ice": "*", "guardians": "·", "guardian": "·"}.get(z.kind, glyph)
-                    fg = {"web": (220, 220, 210), "fire": (255, 140, 40), "fog": (180, 180, 190), "ice": (200, 230, 255)}.get(z.kind, (255, 220, 130))
-                px = x0 + (sx - ox) * cw
-                canvas.text(px, y0 + sy - oy, glyph + (" " if cw == 2 else ""), fg, bg)
-        for fi in b.fighters:
-            if fi.state in ("fled",):
-                continue
-            for (cx_, cy_) in fi.cells:
-                if not (ox <= cx_ < ox + vis_w and oy <= cy_ < oy + vis_h):
-                    continue
-                px = x0 + (cx_ - ox) * cw
-                if fi.char:
-                    glyph = str(b.side(PARTY).index(fi) + 1)
-                    fg = colors.named("good")
-                else:
-                    glyph = fi.cdef["glyph"]
-                    fg = tuple(fi.cdef["color"])
-                if fi.state == "dead":
-                    glyph, fg = "%", (120, 40, 36)
-                elif fi.state == "down":
-                    glyph, fg = "_", (220, 80, 60)
-                bg = None
-                if cur is fi:
-                    bg = colors.HILITE_BG
-                elif fi.id in targets:
-                    bg = (90, 30, 24) if fi.id != ov.get("target") else (150, 50, 30)
-                canvas.text(px, y0 + cy_ - oy, glyph + (" " if cw == 2 else ""), fg, bg)
-                canvas.hit(px, y0 + cy_ - oy, cw, 1, tooltip=self._tooltip(fi))
-        if self.mode == "aim" and self.aim is not None:
-            ax, ay = self.aim
-            if ox <= ax < ox + vis_w and oy <= ay < oy + vis_h:
-                canvas.text(x0 + (ax - ox) * cw, y0 + ay - oy, "X", colors.TITLE, (90, 50, 20))
-        if b.outcome is not None:
-            canvas.markup(x + 2, y, OUTCOME_TEXT.get(b.outcome, markup.escape(str(b.outcome))), max_width=w - 4)
 
     def _render_order_pictures(self, canvas: Canvas, x: int, y: int, w: int) -> None:
         """The order of battle as a row of small figures, whoever acts now first and lit."""
@@ -965,25 +880,6 @@ class BattleScreen(Screen):
             canvas.text(cx + 3, y, label, colors.SELECT_FG if current else color)
             canvas.hit(cx, y, width, 1, tooltip=self._tooltip(f))
             cx += width + 1
-
-    def _render_order(self, canvas: Canvas, x: int, y: int, w: int) -> None:
-        b = self.battle
-        cx = canvas.text(x, y, f"Round {b.round}: ", colors.DIM)
-        for i, fid in enumerate(b.order):
-            f = b.fighter(fid)
-            if not f.active and f.state != "down":
-                continue
-            current = i == b.turn and b.outcome is None
-            color = colors.named("good") if f.side == PARTY else colors.named("danger")
-            if not f.standing:
-                color = colors.FAINT
-            mark = str(b.side(PARTY).index(f) + 1) if f.char else f.cdef["glyph"]
-            label = f"►{mark}:{f.name}" if current else f"{mark}:{f.name}"
-            if cx + len(label) > x + w - 2:
-                canvas.text(cx, y, "…", colors.DIM)
-                break
-            cx = canvas.text(cx, y, label, colors.SELECT_FG if current else color, colors.HILITE_BG if current else None)
-            cx = canvas.text(cx, y, "  ", colors.DIM)
 
     def _render_side(self, canvas: Canvas, x: int, y: int, w: int, h: int) -> int:
         """The right-hand column: who acts and what they have left; the list to choose from; the log."""
@@ -1168,8 +1064,7 @@ class BattleScreen(Screen):
             if self.mode != "over":
                 canvas.text(x, y + 1, "Mouse wheel or + and - to zoom. PgUp/PgDn scroll the log.", colors.FAINT, max_width=w)
             return
-        icons = canvas.gfx is not None
-        need = max(len(label) for _, label, _ in ACTIONS) + 5 + (2 if icons else 0)
+        need = max(len(label) for _, label, _ in ACTIONS) + 7
         rows = max(1, min(h, -(-len(ACTIONS) // max(1, w // need))))
         per = -(-len(ACTIONS) // rows)
         col_w = max(need if per * need <= w else 8, w // per)
@@ -1180,12 +1075,11 @@ class BattleScreen(Screen):
             bx = x + col * col_w
             by = y + row
             ok, why = self.available(f, action)
-            if icons:
-                canvas.icon(bx, by, f"icon/{ACTION_ICONS.get(action, 'more')}", rgba=(255, 255, 255, 255 if ok else 110))
-                bx += 2
+            canvas.icon(bx, by, f"icon/{ACTION_ICONS.get(action, 'more')}", rgba=(255, 255, 255, 255 if ok else 110))
+            bx += 2
             tip = ACTION_HELP[action] + ("" if ok else f" ({why})")
             canvas.button(bx, by, label, lambda a=action: self.pick_action(a), hotkey=key, tooltip=tip, enabled=ok,
-                          max_width=col_w - (3 if icons else 1))
+                          max_width=col_w - 3)
 
     def _tooltip(self, f: Fighter) -> str:
         b = self.battle

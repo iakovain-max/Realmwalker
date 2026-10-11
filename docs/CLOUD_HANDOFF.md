@@ -19,7 +19,7 @@ guessed wrong — and even then, do everything that does not depend on the answe
 ## The project in three lines
 
 A grim, text-heavy open-world party RPG on D&D 5e rules: pixel-art tiles and figures drawn over a text grid
-(python-tcod and its SDL renderer, with an all-letters fallback), all content and all its words in `data/*.json`
+(python-tcod and its SDL renderer; pictures are the only look), all content and all its words in `data/*.json`
 (the Player2 AI writer was removed in October 2026; the `before-ai-removal` tag keeps it). Nine milestones (M0–M9)
 are done, the design's v1 lists are complete, and **version 1.0** (2026-10-03) added the pictures and the new
 interface (mouse play, action bar, rebuilt pack, animated fights). Work since then is polish.
@@ -89,11 +89,10 @@ This is the real limit of working up here, so work with it rather than against i
   work on the branch.
 - Rendering code can still be exercised headlessly: screens can be pushed and rendered into a `tcod.console.Console`
   in a test (see `tests/test_app_ui.py`), which catches crashes and wrong text even without a window.
-- **The pictures** (since 1.0) are recorded as commands even without a window: `tests/test_graphics_ui.py` gives the
-  app a GfxContext over the real tile atlas and checks what each screen asks to draw (that a portrait, a figure, a
-  map chunk, a fight stage is there). Pixel output needs a real GPU window; if `SDL_VIDEODRIVER=dummy` cannot make a
-  renderer, say in the PR that how it *looks* is owed on Windows. Every picture path must keep a letters path
-  (`canvas.gfx is None`), because Settings → Graphics → Letters and the tests use it.
+- **The pictures** are recorded as commands even without a window: a headless app draws through
+  `ui/gfx.headless()` over the real tile atlas, and tests check what each screen asks to draw (a portrait, a figure, a
+  map chunk, a fight stage) and what it says (`canvas.words()`). Pixel output needs a real GPU window; if
+  `SDL_VIDEODRIVER=dummy` cannot make a renderer, say plainly that how it *looks* is owed on Windows.
 - New art is drawn in code (`tools/tile_art.py`, `tools/figure_art.py`, `tools/figure_gear.py`) and baked into
   `assets/tiles` by `tools/build_tiles.py`; look at it by saving the tiles to a PNG and enlarging them, and check
   `data/sprites.json` names only tiles that exist (`dolls.problems()`, used by the tests).

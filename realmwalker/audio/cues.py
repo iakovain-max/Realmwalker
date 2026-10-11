@@ -97,7 +97,7 @@ def combat_mood(foes: list, boss_band: bool) -> str:
 
 
 def timeline(events: list[dict], now: float) -> list[tuple[float, str]]:
-    """When nothing is drawn moving (letters, or animations off): each blow's sounds a moment after the last."""
+    """When nothing is drawn moving (animations off): each blow's sounds a moment after the last."""
     out = []
     t = now
     for ev in events:

@@ -20,7 +20,6 @@ FONT_SIZES = tuple(range(12, 42, 2))
 DEFAULT_FONT_SIZE = 20
 VERBOSITY_LEVELS = ("brief", "normal", "rich")
 AUTOSAVE_CHOICES = (2, 5, 10, 15, 30)
-GRAPHICS_CHOICES = ("tiles", "letters")
 COMPANION_CHOICES = ("command", "auto")  # in a fight: you play the companions' turns, or they fight by themselves
 ANIMATION_CHOICES = ("full", "calm", "off")
 TOWN_TIME_CHOICES = ("flows", "waits")  # in towns the clock runs by itself, or (the old way) only when you act
@@ -65,7 +64,6 @@ class Settings:
     verbosity: str = "normal"
     autosave_minutes: int = 5
     auto_supplies: bool = True  # eat and drink from the pack when needed
-    graphics: str = "tiles"  # maps and people as pictures, or as letters (the old look)
     animations: str = "full"  # full, calm (no idle movement: water, fire, weather), off
     map_zoom: int = 32
     world_zoom: int = 24
@@ -85,8 +83,6 @@ class Settings:
             self.verbosity = "normal"
         if self.autosave_minutes not in AUTOSAVE_CHOICES:
             self.autosave_minutes = 5
-        if self.graphics not in GRAPHICS_CHOICES:
-            self.graphics = "tiles"
         if self.animations not in ANIMATION_CHOICES:
             self.animations = "full"
         if self.map_zoom not in MAP_ZOOMS:

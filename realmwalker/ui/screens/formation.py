@@ -69,6 +69,9 @@ class FormationScreen(Screen):
         return True
 
     def render(self, canvas: Canvas) -> None:
+        from realmwalker.ui.gfx import dolls, scenes, theme
+        from realmwalker.ui.gfx.scene import Rect
+
         w, h = canvas.width, canvas.height
         canvas.frame(0, 0, w, h - 1, "Battle order", double=True)
         party = self.party()
@@ -76,37 +79,29 @@ class FormationScreen(Screen):
         self.sel = max(0, min(self.sel, len(party) - 1)) if party else 0
         list_w = min(34, max(22, w // 3))
         y = 2
-        pictures = canvas.gfx is not None
         canvas.text(2, y, "Who", colors.TITLE)
         y += 1
         for i, c in enumerate(party):
             chosen = i == self.sel
-            rows = 3 if pictures else 1
+            rows = 3
             if chosen:
                 canvas.fill(2, y, list_w, rows, colors.HILITE_BG)
             canvas.hit(2, y, list_w, rows, lambda i=i: setattr(self, "sel", i))
             col, row = cells[i]
             label = f"{i + 1}. {markup.escape(c.name)}"
             sub = f"<dim>{self.game.tables.classes[c.cls]['name'].lower()}, {ROW_WORDS[row]} row</>"
-            if pictures:
-                from realmwalker.ui.gfx import dolls, scenes
-
-                canvas.clear_cells(3, y, 6, 3)
-                scenes.bust(canvas, dolls.character(c, self.game.tables, atlas=canvas.gfx.atlas),
-                            tuple(int(v) for v in canvas.cell_rect(3, y, 6, 3)))
-                canvas.markup(10, y, label, fg=colors.SELECT_FG if chosen else colors.FG, max_width=list_w - 9)
-                canvas.markup(10, y + 1, sub, max_width=list_w - 9)
-                y += 4
-            else:
-                canvas.markup(3, y, f"{label} {sub}", fg=colors.SELECT_FG if chosen else colors.FG, max_width=list_w - 2)
-                y += 1
+            canvas.clear_cells(3, y, 6, 3)
+            scenes.bust(canvas, dolls.character(c, self.game.tables, atlas=canvas.gfx.atlas),
+                        tuple(int(v) for v in canvas.cell_rect(3, y, 6, 3)))
+            canvas.markup(10, y, label, fg=colors.SELECT_FG if chosen else colors.FG, max_width=list_w - 9)
+            canvas.markup(10, y + 1, sub, max_width=list_w - 9)
+            y += 4
         # The block itself.
         gx = list_w + 6
         room_w, room_h = w - gx - 3, h - 12
         cw = max(3, min(12, room_w // N))
-        ch = max(1, min(6, room_h // N)) if pictures else 1
-        if pictures:
-            ch = max(2, min(ch, (cw * canvas.cell_w) // max(1, canvas.cell_h)))
+        ch = max(1, min(6, room_h // N))
+        ch = max(2, min(ch, (cw * canvas.cell_w) // max(1, canvas.cell_h)))
         canvas.markup(gx, 2, "<title>Towards the enemy</> ↑", max_width=room_w)
         top = 3
         occupant = {cell: i for i, cell in enumerate(cells)}
@@ -118,27 +113,19 @@ class FormationScreen(Screen):
                 over = canvas.hit(x0, y0, cw, ch, action=lambda c=c, r=r: self.place((c, r)),
                                   tooltip=f"{ROW_WORDS[r]} row" + (f": {markup.escape(party[i].name)}" if i is not None else ""))
                 bg = colors.HILITE_BG if chosen else (colors.HOVER_BG if over else (28, 26, 30) if (c + r) % 2 else (22, 20, 24))
-                if pictures:
-                    from realmwalker.ui.gfx import dolls, theme
-                    from realmwalker.ui.gfx.scene import Rect
-
-                    px, py, pw, ph = canvas.cell_rect(x0, y0, cw, ch)
-                    canvas.clear_cells(x0, y0, cw, ch)
-                    canvas.under(Rect(px + 1, py + 1, pw - 2, ph - 2, (*bg, 255)))
-                    canvas.under(theme.lines_box(px + 1, py + 1, pw - 2, ph - 2,
-                                                 (214, 176, 108, 230) if chosen else (90, 74, 52, 200)))
-                    if i is not None:
-                        size = min(pw, ph) - 6
-                        size = max(16, (size // 16) * 16)
-                        cmd = dolls.draw(canvas.gfx.atlas, dolls.character(party[i], self.game.tables, atlas=canvas.gfx.atlas),
-                                         px + (pw - size) / 2, py + (ph - size) / 2, size)
-                        if cmd is not None:
-                            canvas.under(cmd)
-                        canvas.text(x0, y0, str(i + 1), colors.TITLE)
-                else:
-                    canvas.fill(x0, y0, cw, ch, bg)
-                    mark = f"{i + 1}{party[i].name[:cw - 2]}" if i is not None else "·"
-                    canvas.text(x0 + 1, y0, mark[:cw - 1], colors.SELECT_FG if chosen else (colors.FG if i is not None else colors.FAINT), bg)
+                px, py, pw, ph = canvas.cell_rect(x0, y0, cw, ch)
+                canvas.clear_cells(x0, y0, cw, ch)
+                canvas.under(Rect(px + 1, py + 1, pw - 2, ph - 2, (*bg, 255)))
+                canvas.under(theme.lines_box(px + 1, py + 1, pw - 2, ph - 2,
+                                             (214, 176, 108, 230) if chosen else (90, 74, 52, 200)))
+                if i is not None:
+                    size = min(pw, ph) - 6
+                    size = max(16, (size // 16) * 16)
+                    cmd = dolls.draw(canvas.gfx.atlas, dolls.character(party[i], self.game.tables, atlas=canvas.gfx.atlas),
+                                     px + (pw - size) / 2, py + (ph - size) / 2, size)
+                    if cmd is not None:
+                        canvas.under(cmd)
+                    canvas.text(x0, y0, str(i + 1), colors.TITLE)
         y = top + N * ch + 1
         text = ("Choose someone (click, 1-5 or Tab), then click a square or use the arrow keys; whoever stood there takes "
                 "their place. The front row faces the enemy when a fight begins. Spread out against fire and spells; "

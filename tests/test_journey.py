@@ -156,7 +156,7 @@ def test_t_and_enter_take_up_a_stopped_journey(make_app, world, monkeypatch):
     assert isinstance(app.top, ConfirmBox)
     con = tcod.console.Console(120, 45, order="F")
     app.render(con)
-    shown = "\n".join("".join(chr(c) for c in con.rgb["ch"][:, y]) for y in range(con.height))
+    shown = app.last_canvas.words()
     assert "in the open" in shown or "before dark" in shown
     app.handle_event(KeyEvent("y"))
     assert app.top is gs and game.travel is not None

@@ -255,7 +255,7 @@ class CampScreen(Screen):
         # Right: what happened.
         if w >= 100:
             x2, y2, w2 = col + 5, 2, w - col - 8
-            if canvas.gfx is not None and h >= 30:
+            if h >= 30:
                 from realmwalker.ui.gfx import scenes
 
                 rows = min(12, h // 3)

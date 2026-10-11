@@ -75,7 +75,7 @@ def render(screen, size):
     con = tcod.console.Console(*size, order="F")
     canvas = widgets.Canvas(con)
     screen.render(canvas)
-    return canvas, "\n".join("".join(chr(c) for c in con.rgb["ch"][:, y]) for y in range(con.height))
+    return canvas, canvas.words()
 
 
 def test_the_screen_reads_follows_and_goes_back(make_app, world):

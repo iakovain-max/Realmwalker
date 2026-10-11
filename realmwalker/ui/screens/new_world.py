@@ -252,7 +252,10 @@ class WorldGenScreen(Screen):
         xs = np.minimum((np.arange(ow) * scale).astype(int), W - 1)
         ys = np.minimum((np.arange(oh) * scale).astype(int), H - 1)
         if "biome" in pv:
-            colours = self.app.tables.biomes.fg[pv["biome"][np.ix_(xs, ys)]].astype(np.float32) * 0.8
+            t = self.app.tables
+            painted = t.sprites["world"]["biomes"]
+            pal = np.array([painted.get(bid, painted["plains"])["color"] for bid in t.biomes.ids], np.float32)
+            colours = pal[pv["biome"][np.ix_(xs, ys)]]
         else:
             e = pv["elevation"][np.ix_(xs, ys)]
             land = np.clip(e / 3000.0, 0, 1)[..., None]
@@ -275,8 +278,7 @@ class WorldGenScreen(Screen):
         dst = (slice(ox, ox + ow), slice(oy, oy + oh))
         canvas.con.rgb["ch"][dst] = ord(" ")
         canvas.con.rgb["bg"][dst] = colours.astype(np.uint8)
-        if canvas.gfx is not None:
-            canvas.con.rgba["bg"][ox:ox + ow, oy:oy + oh, 3] = 255  # opaque, over the parchment
+        canvas.con.rgba["bg"][ox:ox + ow, oy:oy + oh, 3] = 255  # opaque, over the parchment
 
     def handle_key(self, ev: KeyEvent) -> bool:
         return True  # nothing to do but wait a moment
