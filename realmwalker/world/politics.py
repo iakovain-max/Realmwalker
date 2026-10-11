@@ -6,11 +6,9 @@ besiege and take each other's towns, and make peace when one side wins or both a
 and famine come and go, tribes raid the borders, cults spread in secret and are sometimes rooted out, outlaw
 gangs rise and are hanged.
 
-The same engine runs in two modes:
-- history (world creation, a year at a step): it tells what happened, and shapes today's grudges, but the map of
-  today is already made, so conquests are only told where they agree with it;
-- live (while you play, a week at a step): everything has consequences (towns change hands, prices rise, rulers
-  die in their halls) and everything becomes news that travels (world/news.py).
+It runs while you play, a week at a step: everything has consequences (towns change hands, prices rise, rulers die
+in their halls) and everything becomes news that travels (world/news.py). The years before the game begins are lived
+by world/ages instead.
 
 Pure logic: no UI, no player. Everything random comes from the world's RNG.
 """
@@ -37,13 +35,12 @@ def year_of(world, tables) -> int:
 
 
 class Politics:
-    def __init__(self, world, tables, rng: RNG, *, history: bool = False, year: int | None = None,
+    def __init__(self, world, tables, rng: RNG, *, year: int | None = None,
                  day: float | None = None) -> None:
         self.w = world
         self.t = tables
         self.data = tables.politics
         self.rng = rng
-        self.history = history
         self.year = year if year is not None else year_of(world, tables)
         self.day = day if day is not None else news.now_days(world)
         self.changed = False  # holdings changed (territory must be redrawn)
@@ -53,20 +50,18 @@ class Politics:
             figures=()) -> str:
         words = {k: str(v) for k, v in values.items()}
         text = textgen.fill(self.rng.choice(self.data["text"][kind]), self.rng, {}, words)
-        if not self.history and any(n["text"] == text and self.day - n["day"] < 90 for n in self.w.news[-60:]):
+        if any(n["text"] == text and self.day - n["day"] < 90 for n in self.w.news[-60:]):
             return text
         x, y = where if where is not None else (self.w.width // 2, self.w.height // 2)
         facs = [f.id if hasattr(f, "id") else int(f) for f in factions]
         spots = [s.id if hasattr(s, "id") else int(s) for s in places]
-        if self.history or importance >= 3:
+        if importance >= 3:
             e = {"year": self.year, "kind": kind, "text": text, "factions": facs, "places": spots,
                  "figures": list(figures), "importance": importance}
-            if not self.history and self.w.politics.get("deep_history"):
-                e["id"] = int(self.w.politics.get("next_event", len(self.w.history)))  # the Legends book links it
-                self.w.politics["next_event"] = e["id"] + 1
+            e["id"] = int(self.w.politics.get("next_event", len(self.w.history)))  # the Legends book links it
+            self.w.politics["next_event"] = e["id"] + 1
             self.w.history.append(e)
-        if not self.history:
-            news.add(self.w, text, x, y, kind=kind, importance=importance, factions=facs, places=spots, day=self.day)
+        news.add(self.w, text, x, y, kind=kind, importance=importance, factions=facs, places=spots, day=self.day)
         return text
 
     def place_of(self, f) -> tuple[int, int] | None:
@@ -75,10 +70,9 @@ class Politics:
     # ------------------------------------------------------------------ the step
     def advance(self, days: float) -> None:
         share = days / 365.0
-        if not self.history:
-            self.mortality(share)
-            self.births(share)
-            self.regrow(share)
+        self.mortality(share)
+        self.births(share)
+        self.regrow(share)
         self.drift(share)
         self.declare_wars(share)
         self.fight_wars(days)
@@ -142,7 +136,7 @@ class Politics:
     def hero_died(self, fig, cause: str) -> None:
         """A hero of the lived history (world/ages) who had done something people sing of: their death is news."""
         home = fig.home
-        if self.history or "hero_died" not in self.data["text"] or not home.startswith("S") or \
+        if "hero_died" not in self.data["text"] or not home.startswith("S") or \
                 not home[1:].isdigit() or int(home[1:]) >= len(self.w.settlements):
             return
         place = self.w.settlements[int(home[1:])]
@@ -356,7 +350,7 @@ class Politics:
             return "raids"
         if a.faith != b.faith and ("pious" in a.values or "pious" in b.values):
             return "religion"
-        if b.flags.get("crisis", -10**9) > self.day - (365 if not self.history else 20 * 365):
+        if b.flags.get("crisis", -10**9) > self.day - 365:
             return "succession"
         if "mercantile" in a.values and "mercantile" in b.values:
             return "trade"
@@ -435,8 +429,6 @@ class Politics:
         place = self.front(war, attacking=attacker_wins)
         if place is None:
             return
-        if self.history and self.rng.chance(0.7):
-            return  # not every skirmish makes the chronicle
         big = self.rng.chance(0.3)
         self.say("battle", {"winner": winner.name, "loser": loser.name, "place": place.name},
                  where=(place.x, place.y), importance=3 if big else 2, factions=[winner, loser], places=[place])
@@ -455,10 +447,6 @@ class Politics:
             owner_top = fx.realm_of_settlement(w, target)
             if owner_top is not None and owner_top.seat == target.id and abs(war["score"]) < 70:
                 return  # the capital holds until the war is nearly lost
-            if self.history:
-                self.tell_conquest(war, besieger, a if besieger is d else d)
-                war["score"] *= 0.7
-                return
             war["siege"] = {"settlement": target.id, "by": besieger.id, "since": self.day,
                             "until": self.day + self.rng.uniform(14, 60)}
             target.status["siege"] = {"war": war["id"], "by": besieger.id, "since": self.day}
@@ -517,20 +505,6 @@ class Politics:
                  where=(target.x, target.y), importance=4, factions=[winner] + ([loser] if loser else []),
                  places=[target])
 
-    def tell_conquest(self, war: dict, winner, loser) -> None:
-        """History: a town the winner holds today was taken from the loser in this war."""
-        w = self.w
-        origin = self.place_of(loser)
-        mine = [s for s in fx.holdings(w, winner, deep=True) if s.id != winner.seat]
-        if not mine or origin is None:
-            return
-        target = min(mine, key=lambda s: (s.x - origin[0]) ** 2 + (s.y - origin[1]) ** 2)
-        if target.id in w.politics.setdefault("told_conquests", []):
-            return
-        w.politics["told_conquests"].append(target.id)
-        self.say("taken", {"attacker": winner.name, "defender": loser.name, "place": target.name},
-                 where=(target.x, target.y), importance=4, factions=[winner, loser], places=[target])
-
     def end_war(self, war: dict, winner) -> None:
         w = self.w
         war["active"] = False
@@ -552,13 +526,13 @@ class Politics:
         d.flags.setdefault("peace_until", {})[str(a.id)] = until
         where = self.place_of(d)
         if war["reason"] == "rebellion":
-            if winner is a and not self.history:
+            if winner is a:
                 a.liege = -1
                 self.changed = True
                 self.say("freedom", {"rebel": a.name, "liege": d.name}, where=where, importance=4, factions=[a, d])
             else:
                 leader = fx.leader_of(w, a)
-                if leader is not None and leader.alive and not self.history:
+                if leader is not None and leader.alive:
                     self.die(leader, "on the headsman's block", a)
                 fx.set_relation(w, a.id, d.id, 10)
                 self.say("crushed", {"rebel": a.name, "liege": d.name}, where=where, importance=3, factions=[a, d])
@@ -566,16 +540,14 @@ class Politics:
         terms = f", {winner.name} the victor" if winner is not None else ", with nothing settled"
         self.say("peace", {"a": a.name, "b": d.name, "terms": terms}, where=where, importance=4, factions=[a, d])
         # Beaten soldiers without pay take to the roads.
-        if not self.history and self.rng.chance(0.5):
+        if self.rng.chance(0.5):
             self.new_gang(near=where)
 
     def set_owner(self, settlement, fid: int) -> None:
-        """A place changes hands: in the history's ledger of who held what too (worlds that lived their ages)."""
+        """A place changes hands, in the history's ledger of who held what too."""
         if settlement.owner == fid:
             return
         settlement.owner = fid
-        if self.history or not self.w.politics.get("deep_history"):
-            return
         from realmwalker.world.history import remember
 
         holder = self.w.factions.get(fid)
@@ -610,23 +582,20 @@ class Politics:
                 self.raid(tribe)
         for cult in fx.active_factions(w, "cult"):
             self.cult_year(cult, share)
-        if not self.history:
-            for d in w.politics.get("dragons", []):
-                if d.get("alive") and self.rng.chance(float(rates["dragon"]) * share * 12):
-                    self.dragon_wakes(d)
-            for key, hid in list(w.politics.get("lairs", {}).items()):
-                fig = w.figures.get(hid)
-                if fig is not None and fig.alive and fig.kind == "beast" and \
-                        self.rng.chance(float(rates.get("beast_attack", 0.0)) * share):
-                    self.beast_comes(fig, int(key))
-        if not self.history:
-            for gang in fx.active_factions(w, "bandit_gang"):
-                if self.rng.chance(float(rates["gang_destroyed"]) * share):
-                    self.hang_gang(gang)
-            if self.rng.chance(float(rates["gang_new"]) * share):
-                self.new_gang()
-        if not self.history:
-            self.expire_status()
+        for d in w.politics.get("dragons", []):
+            if d.get("alive") and self.rng.chance(float(rates["dragon"]) * share * 12):
+                self.dragon_wakes(d)
+        for key, hid in list(w.politics.get("lairs", {}).items()):
+            fig = w.figures.get(hid)
+            if fig is not None and fig.alive and fig.kind == "beast" and \
+                    self.rng.chance(float(rates.get("beast_attack", 0.0)) * share):
+                self.beast_comes(fig, int(key))
+        for gang in fx.active_factions(w, "bandit_gang"):
+            if self.rng.chance(float(rates["gang_destroyed"]) * share):
+                self.hang_gang(gang)
+        if self.rng.chance(float(rates["gang_new"]) * share):
+            self.new_gang()
+        self.expire_status()
 
     def beast_comes(self, fig, site_id: int) -> None:
         """A beast of the old songs (world/ages) comes down from its lair on the farms nearest it."""
@@ -694,18 +663,14 @@ class Politics:
         for s in struck:
             lost = int(s.population * self.rng.uniform(0.04, 0.18))
             deaths += lost
-            if not self.history:
-                s.population = max(10, s.population - lost)
-                s.status["plague"] = {"until": self.day + self.rng.uniform(45, 120), "since": self.day}
+            s.population = max(10, s.population - lost)
+            s.status["plague"] = {"until": self.day + self.rng.uniform(45, 120), "since": self.day}
         self.say("plague", {"place": start.name, "deaths": f"{round(deaths, -1 if deaths < 1000 else -2):,}"},
                  where=(start.x, start.y), importance=4, factions=[realm], places=struck)
 
     def famine(self, realm) -> None:
-        if self.history and self.rng.chance(0.6):
-            return
-        if not self.history:
-            for s in fx.holdings(self.w, realm, deep=True):
-                s.status["famine"] = {"until": self.day + self.rng.uniform(90, 200), "since": self.day}
+        for s in fx.holdings(self.w, realm, deep=True):
+            s.status["famine"] = {"until": self.day + self.rng.uniform(90, 200), "since": self.day}
         self.say("famine", {"faction": realm.name}, where=self.place_of(realm), importance=3, factions=[realm])
 
     def raid(self, tribe) -> None:
@@ -719,16 +684,13 @@ class Politics:
             return
         s = self.rng.choice(targets)
         burned = s.kind == "hamlet" and self.rng.chance(0.3)
-        if not self.history:
-            s.population = max(10, int(s.population * (0.5 if burned else self.rng.uniform(0.85, 0.95))))
-            s.status["raided"] = {"until": self.day + 30, "since": self.day, "by": tribe.id}
-            if burned:
-                s.status["burned"] = self.day
+        s.population = max(10, int(s.population * (0.5 if burned else self.rng.uniform(0.85, 0.95))))
+        s.status["raided"] = {"until": self.day + 30, "since": self.day, "by": tribe.id}
+        if burned:
+            s.status["burned"] = self.day
         realm = fx.realm_of_settlement(w, s)
         if realm is not None:
             fx.change_relation(w, tribe.id, realm.id, -8)
-        if self.history and self.rng.chance(0.85):
-            return
         self.say("burned" if burned else "raid", {"tribe": tribe.name, "place": s.name}, where=(s.x, s.y),
                  importance=3 if burned else 2, factions=[tribe] + ([realm] if realm else []), places=[s])
 
@@ -737,8 +699,6 @@ class Politics:
         rates = self.data["rates"]
         god = self.t.factions["faiths"].get(cult.faith, {}).get("god", "a nameless god")
         towns = [w.settlements[i] for i in cult.presence if 0 <= i < len(w.settlements)]
-        if self.history:
-            return
         if self.rng.chance(float(rates["cult_spread"]) * share) and towns:
             near = [s for s in w.settlements if s.id not in cult.presence and s.kind in ("village", "town", "city")
                     and min(math.hypot(s.x - t.x, s.y - t.y) for t in towns) < 30]

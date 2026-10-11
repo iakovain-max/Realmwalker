@@ -99,19 +99,6 @@ def test_a_backpack_on_the_back_carries_more(tables):
     assert round(Sheet(c, tables).capacity()[0] - bare[0]) == 5
 
 
-def test_an_old_character_puts_the_pack_on_when_loaded_once(game, tmp_path):
-    unequip(game.leader, "back")
-    game.renown.flags.pop("packs_worn", None)  # a character from before packs were worn
-    save.save_game(game, tmp_path)
-    loaded = save.load_game(tmp_path / game.world.meta.id, game.tables)
-    worn = loaded.leader.equipped_item("back")
-    assert worn is not None and worn.def_id == "backpack"
-    unequip(loaded.leader, "back")  # and if they take it off, it stays off
-    save.save_game(loaded, tmp_path)
-    again = save.load_game(tmp_path / game.world.meta.id, game.tables)
-    assert again.leader.equipped.get("back") is None
-
-
 def test_every_companion_wears_their_own_pack_and_the_party_carries_more(game, tables):
     before = Sheet(game.leader, tables).pack_capacity()[0]
     mira = companion(tables)

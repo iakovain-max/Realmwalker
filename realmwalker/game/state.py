@@ -1238,7 +1238,7 @@ def _cap(s: str) -> str:
 
 
 def default_wanderer(tables: Tables, world: World) -> Character:
-    """A ready-made character, for quick starts, tests and saves from before character creation."""
+    """A ready-made character, for quick starts and tests."""
     from realmwalker.rules.creation import CharacterBuilder
 
     builder = CharacterBuilder(tables, RNG(world.meta.seed, "wanderer"))
@@ -1260,7 +1260,6 @@ def new_game(world: World, tables: Tables, character: Character | None = None,
     player = PlayerState(name=character.name, x=start.x, y=start.y,
                          explored=np.zeros((world.width, world.height), dtype=bool), home=start.id)
     game = GameState(world, player, tables, party=[character])
-    game.renown.flags["packs_worn"] = True  # packs are worn from the start (game/save._put_on_packs is for older saves)
     # You know your own district, and have heard of the big towns within a few days' walk.
     for s in world.settlements:
         if s.kind in ("city", "town") and math.hypot(s.x - start.x, s.y - start.y) < 45:

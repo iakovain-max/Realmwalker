@@ -181,7 +181,7 @@ def race_for(culture: str, rng: RNG, world=None, tables=None) -> tuple[str, str]
 
 
 def family_of(npc) -> str:
-    """A townsperson's family name (kept when they were made; for older ones, the last word of their name)."""
+    """A townsperson's family name (kept when they were made; else the last word of their name)."""
     return npc.flags.get("family") or npc.name.split()[-1]
 
 

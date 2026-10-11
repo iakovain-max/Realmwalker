@@ -80,7 +80,7 @@ realmwalker/
                            (fated/doomed places), folk (families), realms (rulers, grants, succession), war, wild
                            (tribes, beasts, heroes, barrows, towers), faith, lore (artifacts, works), orders, eras,
                            present (what is left becomes today), words (names, event text); design docs/WORLD_HISTORY.md
-  world/history.py         the chronicle (told by named ages); the old "told" history for worlds made before the ages
+  world/history.py         the chronicle (told by named ages) and remember() (history written while you play)
   world/legends.py         the Legends book's pages and lists (logic): every person, realm, place, war, beast...
   world/news.py            news items and how they travel along the roads
   ui/                      window loop, fonts (tileset built at runtime), input, markup, widgets (Canvas), hud (side
@@ -131,11 +131,11 @@ tools/                     autoplay.py, balance.py (the design's targets),
 - **Arrays are indexed [x, y]** (shape (width, height)) everywhere, matching tcod consoles (order="F").
 - Saves store id lists (biome_ids, terrain_ids) next to index arrays so data files can change without
   breaking saves; always go through `GameState.remap_for()` / `_biome_remap` when reading them.
-- New save fields: bump `game/save.py` FORMAT_VERSION. A MIGRATIONS entry is **optional** while the game is
-  young — the user said on 2026-09-26 that old saves do not matter yet. Without one, an older save is refused
-  with a friendly "Could not load ... The files are still there, untouched." box (a KeyError inside `_migrate`
-  becomes a `SaveError`), which is acceptable: say so in the commit or PR so he knows to start a new character.
-  What is never acceptable is a crash, or deleting his files.
+- Saves may break (Anton, 2026-09-26 and the expansion plan): there are no migrations and no code for old saves or
+  old worlds. When what a save holds changes, bump `game/save.py` FORMAT_VERSION: a save of any other format is
+  refused by `_check_format` with a friendly "Could not load ... The files are still there, untouched." box. Say so in
+  the commit and the release notes, so he knows to start a new world. Never a crash, never a deleted file. Keep the id
+  lists beside index arrays (`remap_for`, `_biome_remap`): they let an ordinary data change leave a save readable.
 - The autoplay bot checks game invariants (`tools/autoplay.py`); add checks there as systems are added.
 - Time: `GameState.pass_time(minutes, activity)` ("walk", "rest", "sleep", "fight") runs `game/survival.tick` in
   30-minute chunks (body, health, eating/drinking, death). Tests about travel alone can set `game.survival = False`
@@ -167,9 +167,9 @@ tools/                     autoplay.py, balance.py (the design's targets),
 - Deeds go through `reputation.deed()` (standing, ripples by relation, news); crimes through `law.commit()`
   (witnesses, reports, bounties, arrests). Arrests and sentences are pending states (`game.arrest`,
   `game.sentence`) opened by `GameScreen._open_event_screen()`.
-- `world/politics.Politics` runs in history mode (narrative only; never destroys today's factions or changes
-  today's holdings) and live mode (`politics.tick` from `pass_time`, a week per step, with consequences). Every
-  event becomes news via `world/news.add`; the player hears it through `game/news.hear`.
+- `world/politics.Politics` moves the world while you play (`politics.tick` from `pass_time`, a week per step, with
+  consequences); the years before play are lived by `world/ages`. Every event becomes news via `world/news.add`; the
+  player hears it through `game/news.hear`.
 - Level-ups add hit points and features at once; choices wait in `Character.pending` (`rules/progression`:
   `options`, `resolve`, `auto_resolve`). Pass `auto=True` to `award_xp` where nobody can choose.
 - Companions are ordinary `Character`s in `game.party[1:]` with a `companion` dict (loyalty, wage, values, order,
@@ -200,13 +200,12 @@ tools/                     autoplay.py, balance.py (the design's targets),
   play, `Politics.set_owner`): replaying it gives today's map (tests and autoplay check this). Figures carry family and
   place refs ("S12" settlement, "X5" site in `home`, `died_at`, `buried`), `kills`/`slayer`, `kind` (person, beast,
   dragon, god). `politics` also keeps `places`, `lairs` (site -> living beast), `tombs`, `towers`, `works`, `eras`,
-  `deep_history`, `next_event`; events have ids (`history.remember` writes one in play). `game/past.py` brings it into
+  `next_event`; events have ids (`history.remember` writes one in play). `game/past.py` brings it into
   play (Look, conversations, heroes at inns, named beasts and barrow kings as bosses, the clear_lair_beast work,
   haunted battlefields from `politics["scars"]`, blood feuds from `politics["grudges"]` and the vendetta work, a lost
   artifact as a locked chest on its site's deepest level via `on_arrive_dungeon`/`on_chest`); `world/ages/ties.py`
   roots a new character's background in it; live beasts come down via `Politics.beast_comes`.
-  `ui/screens/legends.py` is the Legends book (b in the News screen; Legends for a saved world). Worlds made before keep
-  their old history; every reader must cope with events without ids and figures without the new fields. Ages are
+  `ui/screens/legends.py` is the Legends book (b in the News screen; Legends for a saved world). Ages are
   named against the world's own usual (`ages/eras.Judge`). After changing war or era numbers, measure wars per century
   at all four lengths: long histories once went silent after year 700.
 - Death: `game/death.die(game)` writes the character into `world.politics["fallen"]` (chronicle, news, companions

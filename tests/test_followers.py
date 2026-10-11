@@ -63,16 +63,6 @@ def test_companions_carry_no_purse(game):
     assert comp.pay_word(game, c).endswith("a day")
 
 
-def test_an_older_saves_companion_coin_is_yours(game, tmp_path):
-    c, npc, s = hire_one(game)
-    c.money = 750  # as a companion from before carried it
-    before = game.leader.money
-    folder = save.save_game(game, tmp_path)
-    loaded = save.load_game(folder, game.tables)
-    assert loaded.leader.money == before + 750
-    assert all(m.money == 0 for m in loaded.party[1:])
-
-
 def test_the_party_screen_shows_no_companion_purse(make_app, world):
     import tcod.console
 

@@ -46,7 +46,7 @@ def test_history_is_made_with_the_world(world, tables):
     assert kinds & {"dragon_came", "dragon", "dragon_sleeps", "dragon_wakes"}
     assert kinds & {"razed", "abandoned", "burned_down", "beast_destroyed", "burned"}  # the ruins of today
     assert all("{" not in e["text"] for e in h)
-    assert world.politics["history_done"]
+    assert world.politics["eras"]
     assert world.politics["dragons"] and world.politics["artifacts"]
 
 
@@ -79,14 +79,6 @@ def test_conquests_told_agree_with_the_map(world):
     for e in world.history:
         if e["kind"] == "taken" and e.get("places"):
             assert e["factions"][0] in world.factions  # every conquest names a real conqueror
-
-
-def test_old_worlds_get_a_history(world, tables):
-    w = copy.deepcopy(world)
-    w.history.clear()
-    w.politics.clear()
-    assert history.ensure_history(w, tables)
-    assert w.history and not history.ensure_history(w, tables)
 
 
 # ---------------------------------------------------------------------------- the world moves on

@@ -283,7 +283,7 @@ def creature(def_id: str, tables, key: str, atlas=None, sex: str = "") -> list[P
 
 
 def character_looks(char, tables) -> dict:
-    """How the player or a companion looks: chosen at creation, or (an older character) read from their words."""
+    """How the player or a companion looks: chosen at creation, or (one taken from the townsfolk) read from their words."""
     if getattr(char, "looks", None):
         return looks_rules.normalise(tables, char.looks, char.race, char.sex, f"pc{char.name}")
     return looks_rules.from_text(tables, getattr(char, "appearance", ""), char.race, char.sex,

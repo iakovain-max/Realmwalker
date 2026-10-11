@@ -232,7 +232,7 @@ def bonds(game) -> dict:
 
 
 def bond_of(c: Character) -> str:
-    return c.companion.get("bond") or "hired"  # everyone from before bonds was hired
+    return c.companion.get("bond") or "hired"
 
 
 def enlist(game, npc, char: Character, bond: str, **facts) -> list[str]:
@@ -464,14 +464,6 @@ def share_loot(game, money: int) -> int:
             c.companion["paid"] = int(c.companion.get("paid", 0)) + cut
             left -= cut
     return max(0, left)
-
-
-def one_purse(game) -> None:
-    """Companions carry no purse of their own. An older save's companions may still have coin: it is yours."""
-    for c in list(game.party[1:]) + waiting(game):
-        if c.companion and c.money:
-            game.leader.money += c.money
-            c.money = 0
 
 
 # ---------------------------------------------------------------------------- orders

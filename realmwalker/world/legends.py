@@ -6,8 +6,6 @@ they appear in, in order. Links are written [[REF|words]] where REF is "H12" a f
 settlement, "X7" a site, "W2" a war, "A4" an artifact, "E1" an age, "K3" a work and "P0" one of the player's own lives
 (a character of theirs who died in the world, listed first among the People); the screen draws them in their own
 colour and follows them. Everything else in a line is ordinary markup (ui/markup).
-
-Worlds made before the ages were lived have less to tell, and their pages say what there is.
 """
 
 from __future__ import annotations

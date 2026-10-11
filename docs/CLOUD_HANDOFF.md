@@ -101,11 +101,10 @@ This is the real limit of working up here, so work with it rather than against i
 
 The full set is in `CLAUDE.md`. These are the ones that bite hardest, and the ones a fresh session gets wrong:
 
-- **Old saves do not matter yet** (he said so on 2026-09-26). Bump `FORMAT_VERSION` in
-  `realmwalker/game/save.py` when a save's shape changes, but a `MIGRATIONS` entry is optional: without one an old
-  save is refused with a friendly "Could not load ... The files are still there, untouched." box, which is fine.
-  Put a line in the PR saying old characters will not load, so he knows to start a new one. A crash, or deleting
-  his files, is never fine.
+- **Old saves do not matter** (he said so on 2026-09-26, and again in the expansion plan). There are no migrations:
+  bump `FORMAT_VERSION` in `realmwalker/game/save.py` when a save's shape changes, and an older save is refused with
+  a friendly "Could not load ... The files are still there, untouched." box. Say in the notes that a new world is
+  needed. A crash, or deleting his files, is never fine.
 - **One seeded RNG per world** (`core/rng.py`), `rng.child("purpose")` for streams, no `random` module in game
   logic. Key streams on **stable counters** (`player.steps`, a per-battle counter) and never on the world clock
   or the length of the log: two bugs came from exactly that.

@@ -631,10 +631,8 @@ class Present:
         pol["works"] = s.lore.works
         pol["eras"] = name_eras(s)
         pol["scars"] = self.scars()
-        pol["history_done"] = True
         pol["history_from"] = s.year0
         pol["history_years"] = s.years
-        pol["deep_history"] = True
         pol["next_event"] = s.next_event
         pol["next_war"] = max([war["id"] for war in w.wars], default=-1) + 1
 

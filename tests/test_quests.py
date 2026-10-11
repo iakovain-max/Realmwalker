@@ -391,10 +391,6 @@ def test_quests_survive_saving(game, tmp_path):
     assert quests.holds_quest_item(loaded, loaded.quests[0])
 
 
-def test_old_characters_have_an_empty_journal():
-    assert save.MIGRATIONS[7]("character", {"name": "x"})["quests"] == []
-
-
 def test_broken_quest_data_is_reported(data):
     from realmwalker.data.registry import check_cross_references
 

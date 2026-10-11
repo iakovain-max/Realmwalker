@@ -2,7 +2,7 @@
 hero drove off, the real lord a noble's house is sworn to, the real priest who raised an acolyte.
 
 Called by rules/creation.make_ties after the plain ties are made; it changes their words and references in place and
-may add a sentence. Worlds made before the ages were lived keep the plain ties.
+may add a sentence.
 """
 
 from __future__ import annotations
@@ -13,8 +13,6 @@ from realmwalker.world import factions as fx
 
 def enrich(world, tables, kind: str, character, start, values: dict, refs: dict, rng) -> str:
     """Root a background in the world's real past. Returns a sentence to add to the tie (or "")."""
-    if not world.politics.get("deep_history"):
-        return ""
     data = tables.history.get("ties", {})
     if not data:
         return ""

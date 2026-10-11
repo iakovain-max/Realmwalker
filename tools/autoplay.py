@@ -341,8 +341,6 @@ def _check_history(game, fail, full: bool = False) -> None:
     """The lived history (world/ages): what it names exists, lairs hold living beasts, and (now and then, it is long)
     replaying its ledger of who held what gives today's map, however the world has moved on since."""
     w = game.world
-    if not w.politics.get("deep_history"):
-        return
     n_s, n_x = len(w.settlements), len(w.sites)
     for e in w.history[-60:]:
         if any(not 0 <= p < n_s for p in e.get("places", ())) or any(not 0 <= x < n_x for x in e.get("sites", ())):

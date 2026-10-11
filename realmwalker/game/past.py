@@ -5,7 +5,7 @@
 - A town remembers when it was founded and by whom, and the great things that happened to it.
 - Townsfolk who were there (or whose parents were) tell of it in their own words.
 
-Only words: nothing here changes the world. Worlds made before the ages were lived have less to say, and say it.
+Only words: nothing here changes the world.
 """
 
 from __future__ import annotations

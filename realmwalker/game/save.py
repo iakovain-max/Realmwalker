@@ -5,9 +5,9 @@ Layout on disk (%APPDATA%\\Realmwalker\\saves\\<world id>\\):
   character.zip  the living character: position, knowledge, message log
 The world outlives characters: when a character dies only character.zip is removed (M9).
 
-Each zip holds manifest.json with a format number. Older formats are upgraded by MIGRATIONS
-when loaded, so game updates do not break existing saves. Arrays are stored as plain numeric
-.npy data (numpy's loader refuses anything executable by default); everything else is JSON.
+Each zip holds manifest.json with a format number. A save of another format is refused with a friendly message (its
+files are left untouched): Anton does not mind updates breaking saves, and no migrations are kept. Arrays are stored
+as plain numeric .npy data (numpy's loader refuses anything executable by default); everything else is JSON.
 """
 
 from __future__ import annotations
@@ -18,7 +18,6 @@ import json
 import logging
 import os
 import zipfile
-from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
@@ -39,84 +38,9 @@ from realmwalker.world.tables import Tables
 
 log = logging.getLogger("realmwalker.save")
 
-FORMAT_VERSION = 12  # 12: no AI-written text kept (towns, townsfolk, the world) (no migration: older saves are refused)
+FORMAT_VERSION = 13  # 13: no code for old saves or old worlds (12: no AI text; older formats are refused)
 WORLD_FILE = "world.zip"
 CHARACTER_FILE = "character.zip"
-
-def _v1_to_v2(kind: str, body: dict) -> dict:
-    """Format 2 added characters (M2). Older saves get the default wanderer when loaded."""
-    if kind == "character":
-        body = dict(body)
-        body.setdefault("party", None)
-    return body
-
-
-def _v2_to_v3(kind: str, body: dict) -> dict:
-    """Format 3 added the body over time (needs, body heat, exhaustion, blood, diseases, injuries) and
-    waterskin contents (M4). Missing fields take their defaults when characters and items load."""
-    return body
-
-
-def _v3_to_v4(kind: str, body: dict) -> dict:
-    """Format 4 added townsfolk and towns to the world (M5). Older worlds start with nobody known; settlement
-    maps made before M5 have no shops or stables, but their people are made on the next visit."""
-    if kind == "world":
-        body = dict(body)
-        body.setdefault("npcs", [])
-        body.setdefault("towns", [])
-        body.setdefault("next_npc_id", 0)
-    return body
-
-
-def _v4_to_v5(kind: str, body: dict) -> dict:
-    """Format 5 added animals (mules and horses) to characters and shop stock to towns (M5). Missing fields take
-    their defaults."""
-    return body
-
-
-def _v5_to_v6(kind: str, body: dict) -> dict:
-    """Format 6 added factions, history, wars and news to the world, and reputation to the character (M6).
-    Older worlds get their factions made when they are loaded (world.factions.ensure_factions)."""
-    if kind == "world":
-        body = dict(body)
-        for key in ("factions", "figures", "wars", "history", "news"):
-            body.setdefault(key, [])
-        body.setdefault("politics", {})
-        body.setdefault("next_figure_id", 0)
-    return body
-
-
-def _v6_to_v7(kind: str, body: dict) -> dict:
-    """Format 7 added level-up choices waiting and companion details to characters (M7). Missing fields take
-    their defaults (nothing waiting; not a companion)."""
-    return body
-
-
-def _v7_to_v8(kind: str, body: dict) -> dict:
-    """Format 8 added the journal of quests to the character (M8). An old character has no work in hand."""
-    if kind == "character":
-        body = dict(body)
-        body.setdefault("quests", [])
-    return body
-
-
-def _v8_to_v9(kind: str, body: dict) -> dict:
-    """Format 9 added the places a character has discovered (for experience; after v1). An old character starts
-    with none, so the sites and levels they already knew give experience once more."""
-    return body
-
-
-def _v9_to_v10(kind: str, body: dict) -> dict:
-    """Format 10 added chosen looks to characters (build, hair, beard, eyes, marks...: rules/looks.py). An older
-    character has none, and is drawn from the words that describe them, as before."""
-    return body
-
-
-# format number -> function upgrading a loaded JSON body (of a given kind) to the next format.
-MIGRATIONS: dict[int, Callable[[str, dict], dict]] = {1: _v1_to_v2, 2: _v2_to_v3, 3: _v3_to_v4, 4: _v4_to_v5,
-                                                      5: _v5_to_v6, 6: _v6_to_v7, 7: _v7_to_v8, 8: _v8_to_v9,
-                                                      9: _v9_to_v10}
-
 
 class SaveError(Exception):
     pass
@@ -153,13 +77,14 @@ def _manifest(kind: str) -> str:
     })
 
 
-def _migrate(manifest: dict, body: dict) -> dict:
+def _check_format(manifest: dict, body: dict) -> dict:
+    """The body of a save this version can read; a save of any other format is refused (never changed or deleted)."""
     fmt = int(manifest.get("format", 1))
     if fmt > FORMAT_VERSION:
         raise SaveError("This save was made by a newer version of the game.")
-    while fmt < FORMAT_VERSION:
-        body = MIGRATIONS[fmt](manifest.get("kind", ""), body)
-        fmt += 1
+    if fmt < FORMAT_VERSION:
+        raise SaveError("This save was made by an older version of the game, which this one cannot read. "
+                        "Start a new world.")
     return body
 
 
@@ -216,7 +141,7 @@ def load_world(folder: Path) -> World:
     try:
         with zipfile.ZipFile(path) as z:
             manifest = json.loads(z.read("manifest.json"))
-            body = _migrate(manifest, json.loads(z.read("world.json")))
+            body = _check_format(manifest, json.loads(z.read("world.json")))
             arrays = {name: _load_npy(z.read(f"arrays/{name}.npy")) for name in ARRAY_NAMES}
             local_maps = {}
             for key in body.get("local_maps", []):
@@ -302,7 +227,7 @@ def load_player(folder: Path) -> tuple[PlayerState, MessageLog, list[Character] 
     try:
         with zipfile.ZipFile(path) as z:
             manifest = json.loads(z.read("manifest.json"))
-            body = _migrate(manifest, json.loads(z.read("character.json")))
+            body = _check_format(manifest, json.loads(z.read("character.json")))
             explored = _load_npy(z.read("explored.npy"))
     except (OSError, KeyError, ValueError, zipfile.BadZipFile) as exc:
         raise SaveError(f"The character save could not be read ({exc}).") from exc
@@ -337,14 +262,9 @@ def save_game(game: GameState, saves_dir: Path) -> Path:
 
 
 def load_game(folder: Path, tables: Tables) -> GameState:
-    from realmwalker.game.reputation import Renown, starting_knowledge
-    from realmwalker.world.factions import ensure_factions
-
-    from realmwalker.world.history import ensure_history
+    from realmwalker.game.reputation import Renown
 
     world = load_world(folder)
-    ensure_factions(world, tables)
-    ensure_history(world, tables)
     player, messages, party, extra = load_player(folder)
     if player.local_key is not None and player.local_key not in world.local_maps:
         player.local_key = None
@@ -358,38 +278,12 @@ def load_game(folder: Path, tables: Tables) -> GameState:
     game.arrest = extra.get("arrest")
     game.sentence = extra.get("sentence")
     game.waiting = [c for c in extra.get("waiting", []) if c.alive]
-    if len(game.party) > 1:  # an old save may still hold a companion who died
-        game.party = [c for c in game.party if c.alive or c is game.party[0]]
-    from realmwalker.game.companions import one_purse
-
-    one_purse(game)  # companions from before carried coin of their own; it is the leader's now
     game.lit = extra.get("lit")
     game.quests = extra.get("quests", [])
-    if not game.renown.flags.get("started"):
-        starting_knowledge(game)  # a character from before M6
     from realmwalker.game import pack
 
-    pack.sync(game)  # companions join the leader's pack again (and older saves are poured into one)
-    _put_on_packs(game)
+    pack.sync(game)  # companions join the leader's pack again
     return game
-
-
-def _put_on_packs(game: GameState) -> None:
-    """Characters made before packs were worn (2026-10) carry their backpack in their hands, as it were: the first time
-    such a save is loaded, whoever has nothing on their back puts one on, so the bigger load counts at once. Only
-    once: after that, taking the pack off is the player's business."""
-    from realmwalker.rules.inventory import equip, worn_by
-
-    if game.renown.flags.get("packs_worn"):
-        return
-    game.renown.flags["packs_worn"] = True
-    items = game.tables.items
-    for c in game.party:
-        if c.equipped.get("back") is not None:
-            continue
-        free = [it for it in c.inventory if "back" in items.slots_for(it) and worn_by(c, it.uid)[0] is None]
-        if free:
-            equip(c, items, max(free, key=lambda it: float(items.get(it.def_id).get("carry", 0))).uid, "back")
 
 
 @dataclass

@@ -118,17 +118,6 @@ def test_factions_survive_saving(world, tables, tmp_path):
     assert [s.faction for s in loaded.sites] == [s.faction for s in world.sites]
 
 
-def test_worlds_from_before_factions_get_them(world, tables):
-    w = copy.deepcopy(world)
-    w.factions.clear()
-    w.figures.clear()
-    for s in w.settlements:
-        s.owner = -1
-    assert fx.ensure_factions(w, tables)
-    assert fx.active_factions(w, "kingdom")
-    assert not fx.ensure_factions(w, tables)
-
-
 def test_a_new_character_knows_their_own_lords(world, tables):
     game = start(tables, world, "folk_hero")
     home = game.world.settlements[game.player.home]

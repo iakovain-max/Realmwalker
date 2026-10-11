@@ -240,7 +240,7 @@ def standing_rank(game, fid: int) -> int:
 
 
 def confirmed_rank(game, fid: int) -> int:
-    """The rank they have actually given you. Old saves keep the rank they had."""
+    """The rank they have actually given you (set from your standing the first time it is asked)."""
     ranks = game.renown.flags.setdefault("ranks", {})
     key = str(fid)
     if key not in ranks:

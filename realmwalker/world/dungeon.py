@@ -401,7 +401,7 @@ def get_dungeon(world, tables, site, level: int) -> LocalMap:
 
 
 def add_entrance(tables, lm: LocalMap) -> tuple[int, int]:
-    """The way down on a site's surface map (added to maps made before dungeons existed)."""
+    """The way down on a site's surface map: found, or laid on open ground near the middle the first time it is needed."""
     T = tables.terrain
     found = np.argwhere(lm.terrain == lm.terrain_ids.index("stairs_down")) if "stairs_down" in lm.terrain_ids else []
     if len(found):

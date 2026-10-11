@@ -156,6 +156,15 @@ def test_broken_and_future_saves_are_refused(game, tables, tmp_path):
             z.writestr(n, d)
     with pytest.raises(save.SaveError, match="newer version"):
         save.load_game(folder, tables)
+    manifest["format"] = save.FORMAT_VERSION - 1
+    entries["manifest.json"] = json.dumps(manifest).encode()
+    with zipfile.ZipFile(path, "w") as z:
+        for n, d in entries.items():
+            z.writestr(n, d)
+    before = path.read_bytes()
+    with pytest.raises(save.SaveError, match="older version"):
+        save.load_game(folder, tables)
+    assert path.read_bytes() == before, "a refused save is left exactly as it was"
 
 
 def test_days_are_announced(game):
