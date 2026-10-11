@@ -24,6 +24,10 @@ class GfxContext:
     now: float = 0.0  # seconds, for animation
     motion: str = "full"  # animations: full, calm (no idle movement), off
     ppc: dict = field(default_factory=dict)  # remembered map scales
+    # Paint big pictures (the whole world map) on a background thread. A window does; headless runs do not: the small
+    # map stands in for the painted one, and no thread is left painting a world nobody will look at (it used to keep
+    # every core busy through a test run).
+    background: bool = True
 
     @property
     def animate(self) -> bool:
@@ -41,4 +45,4 @@ def headless(cell_w: int = 10, cell_h: int = 20) -> GfxContext:
     from realmwalker.paths import Paths
     from realmwalker.ui.gfx.atlas import load
 
-    return GfxContext(load(str(Paths().tiles)), cell_w, cell_h)
+    return GfxContext(load(str(Paths().tiles)), cell_w, cell_h, background=False)

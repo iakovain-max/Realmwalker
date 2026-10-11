@@ -13,8 +13,9 @@ import pytest
 from realmwalker.world import factions as fx
 from realmwalker.world import politics
 from realmwalker.world.ages.sim import DYNASTIC
-from realmwalker.world.generator import WorldGenerator, WorldOptions
+from realmwalker.world.generator import WorldOptions
 from realmwalker.world.tables import Tables
+from tests.worlds import cached_world  # noqa: E402
 
 SPAN = {"dwarf": 3.5, "elf": 7.0, "halfling": 1.6, "half_orc": 0.85, "human": 1.0}
 
@@ -26,11 +27,11 @@ def tables(data):
 
 @pytest.fixture(scope="module")
 def world(tables):
-    return WorldGenerator(WorldOptions("Agesland", 17, "medium"), tables).generate()
+    return cached_world(WorldOptions("Agesland", 17, "medium"), tables)
 
 
 def make(tables, seed: int, size: str = "small", years: int = 0):
-    return WorldGenerator(WorldOptions("Ages", seed, size, history=years), tables).generate()
+    return cached_world(WorldOptions("Ages", seed, size, history=years), tables)
 
 
 def ref_ok(world, ref: str) -> bool:

@@ -13,8 +13,9 @@ from realmwalker.rules.body import Environment
 from realmwalker.rules.character import Sheet
 from realmwalker.rules.creation import CharacterBuilder
 from realmwalker.rules.wounds import make_wound
-from realmwalker.world.generator import WorldGenerator, WorldOptions
+from realmwalker.world.generator import WorldOptions
 from realmwalker.world.tables import Tables
+from tests.worlds import cached_world  # noqa: E402
 
 
 @pytest.fixture(scope="module")
@@ -24,7 +25,7 @@ def tables(data):
 
 @pytest.fixture(scope="module")
 def world(tables):
-    return WorldGenerator(WorldOptions("Horseland", 5, "small"), tables).generate()
+    return cached_world(WorldOptions("Horseland", 5, "small"), tables)
 
 
 def hero(tables, seed=1):

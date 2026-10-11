@@ -7,6 +7,7 @@ from realmwalker.core import textgen
 from realmwalker.core.rng import RNG
 from realmwalker.rules.creation import CharacterBuilder
 from realmwalker.world.tables import Tables
+from tests.worlds import cached_world  # noqa: E402
 
 
 @pytest.fixture(scope="module")
@@ -62,11 +63,11 @@ def test_food_in_the_pack_says_how_long_it_keeps(make_app):
     from realmwalker.game.state import new_game
     from realmwalker.rules.inventory import add_item
     from realmwalker.ui.screens.sheets import spoilage_text
-    from realmwalker.world.generator import WorldGenerator, WorldOptions
+    from realmwalker.world.generator import WorldOptions
 
     app = make_app()
     t = app.tables
-    world = WorldGenerator(WorldOptions("Pantry", 2, "small"), t).generate()
+    world = cached_world(WorldOptions("Pantry", 2, "small"), t)
     b = CharacterBuilder(t, RNG(1, "hero"))
     game = new_game(world, t, b.build())
     food = add_item(game.leader, t.items, "rations", 1)
@@ -82,10 +83,10 @@ def test_creation_speaks_of_an_acolyte(make_app):
 
     from realmwalker.ui.input import KeyEvent
     from realmwalker.ui.screens.creation import CreationScreen
-    from realmwalker.world.generator import WorldGenerator, WorldOptions
+    from realmwalker.world.generator import WorldOptions
 
     app = make_app()
-    world = WorldGenerator(WorldOptions("Chapel", 4, "small"), app.tables).generate()
+    world = cached_world(WorldOptions("Chapel", 4, "small"), app.tables)
     screen = CreationScreen(app, world)
     app.push(screen)
     screen.b.set_background("acolyte")
@@ -124,11 +125,11 @@ def test_a_death_reads_after_a_name(cause, reads):
 @pytest.mark.slow
 def test_ties_never_say_the_the_or_master_master(tables):
     from realmwalker.rules.creation import make_ties, starting_places
-    from realmwalker.world.generator import WorldGenerator, WorldOptions
+    from realmwalker.world.generator import WorldOptions
 
     seen = []
     for seed in range(6):
-        world = WorldGenerator(WorldOptions("Kin", 40 + seed, "small"), tables).generate()
+        world = cached_world(WorldOptions("Kin", 40 + seed, "small"), tables)
         for bg in ("outlander", "sage"):
             b = CharacterBuilder(tables, RNG(seed, "hero"))
             b.set_race("dwarf")
@@ -144,10 +145,10 @@ def test_ties_never_say_the_the_or_master_master(tables):
 
 def test_travel_days_read_like_speech(make_app):
     from realmwalker.game.state import TravelPlan, new_game
-    from realmwalker.world.generator import WorldGenerator, WorldOptions
+    from realmwalker.world.generator import WorldOptions
 
     app = make_app()
-    world = WorldGenerator(WorldOptions("Miles", 8, "small"), app.tables).generate()
+    world = cached_world(WorldOptions("Miles", 8, "small"), app.tables)
     game = new_game(world, app.tables, CharacterBuilder(app.tables, RNG(1, "hero")).build())
     for minutes, words in ((13 * 60, "about a day and a half"), (9 * 60, "about a day at"), (40 * 60, "about 5 days")):
         plan = TravelPlan(path=[(0, 0)], minutes=minutes, miles=20, destination=(0, 0))

@@ -9,10 +9,11 @@ import pytest
 
 from realmwalker.core.rng import RNG
 from realmwalker.world import factions as fx
-from realmwalker.world.generator import WorldGenerator, WorldOptions
+from realmwalker.world.generator import WorldOptions
 from realmwalker.world.model import NO_CULTURE
 from realmwalker.world.names import BLOCKED, NameForge
 from realmwalker.world.tables import Tables
+from tests.worlds import cached_world  # noqa: E402
 
 HUMAN = ("heartland", "northmarch", "southron", "highland", "qasari", "khurgan", "volsk", "thalassian", "itzan")
 
@@ -24,7 +25,7 @@ def tables(data):
 
 @pytest.fixture(scope="module")
 def world(tables):
-    return WorldGenerator(WorldOptions("Peopleland", 21, "large"), tables).generate()
+    return cached_world(WorldOptions("Peopleland", 21, "large"), tables)
 
 
 # ---------------------------------------------------------------------------- the registry and its data
@@ -154,7 +155,7 @@ def test_children_carry_a_parent_s_family_name(world):
 
 
 def test_towns_change_their_people_over_a_long_history(tables):
-    w = WorldGenerator(WorldOptions("Shifting", 33, "medium", history=500), tables).generate()
+    w = cached_world(WorldOptions("Shifting", 33, "medium", history=500), tables)
     changed = [e for e in w.history if e["kind"] == "assimilated"]
     assert changed, "five hundred years and nobody changed"
     for e in changed:

@@ -9,8 +9,9 @@ from realmwalker.game.dialogue import Conversation
 from realmwalker.game.people import npcs_in
 from realmwalker.game.state import new_game
 from realmwalker.rules.creation import CharacterBuilder
-from realmwalker.world.generator import WorldGenerator, WorldOptions
+from realmwalker.world.generator import WorldOptions
 from realmwalker.world.tables import Tables
+from tests.worlds import cached_world  # noqa: E402
 
 SEEDS = (3, 42)
 
@@ -21,7 +22,7 @@ def tables(data):
 
 
 def a_life(tables, seed):
-    world = WorldGenerator(WorldOptions("Firstland", seed, "small"), tables).generate()
+    world = cached_world(WorldOptions("Firstland", seed, "small"), tables)
     b = CharacterBuilder(tables, RNG(seed, "hero"))
     b.set_race("human")
     b.set_class("fighter")

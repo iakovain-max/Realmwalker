@@ -11,8 +11,9 @@ import pytest
 from realmwalker.game import townlife
 from realmwalker.game.people import npc_at, npcs_in
 from realmwalker.game.state import new_game
-from realmwalker.world.generator import WorldGenerator, WorldOptions
+from realmwalker.world.generator import WorldOptions
 from realmwalker.world.tables import Tables
+from tests.worlds import cached_world  # noqa: E402
 
 
 @pytest.fixture(scope="module")
@@ -22,7 +23,7 @@ def tables(data):
 
 @pytest.fixture(scope="module")
 def world(tables):
-    return WorldGenerator(WorldOptions("Lifeland", 33, "small", history=40), tables).generate()
+    return cached_world(WorldOptions("Lifeland", 33, "small", history=40), tables)
 
 
 def go_to(game, kind: str = "town", great: bool = False):
@@ -344,7 +345,7 @@ def test_words_in_passing_are_drawn_over_heads(make_app, world):
     import tcod.console
 
     app = make_app()
-    app.gfx = GfxContext(Atlas(Paths().tiles), 10, 20)
+    app.gfx = GfxContext(Atlas(Paths().tiles), 10, 20, background=False)
     game = new_game(copy.deepcopy(world), app.tables)
     game.survival = False
     app.start_game(game)

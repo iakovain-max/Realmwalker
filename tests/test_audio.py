@@ -18,6 +18,7 @@ from realmwalker.config import Settings
 from realmwalker.core.rng import RNG
 from realmwalker.paths import Paths
 from realmwalker.ui.input import KeyEvent, MouseEvent
+from tests.worlds import cached_world  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 SOUNDS = ROOT / "assets" / "sounds"
@@ -403,9 +404,9 @@ def test_game_music_follows_the_place(make_app, data):
 
 def _small_game(app):
     from realmwalker.game.state import new_game
-    from realmwalker.world.generator import WorldGenerator, WorldOptions
+    from realmwalker.world.generator import WorldOptions
 
-    world = WorldGenerator(WorldOptions("Soundland", 7, "small"), app.tables).generate()
+    world = cached_world(WorldOptions("Soundland", 7, "small"), app.tables)
     return new_game(world, app.tables)
 
 

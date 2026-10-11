@@ -13,8 +13,9 @@ from realmwalker.game import dungeon, save
 from realmwalker.game.state import new_game
 from realmwalker.rules.inventory import add_item
 from realmwalker.world import dungeon as gen
-from realmwalker.world.generator import WorldGenerator, WorldOptions
+from realmwalker.world.generator import WorldOptions
 from realmwalker.world.tables import Tables
+from tests.worlds import cached_world  # noqa: E402
 
 
 @pytest.fixture(scope="module")
@@ -24,7 +25,7 @@ def tables(data):
 
 @pytest.fixture(scope="module")
 def world(tables):
-    return WorldGenerator(WorldOptions("Deepland", 31, "large"), tables).generate()
+    return cached_world(WorldOptions("Deepland", 31, "large"), tables)
 
 
 @pytest.fixture

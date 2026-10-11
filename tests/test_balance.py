@@ -8,6 +8,7 @@ import pytest
 
 from realmwalker.world.tables import Tables
 from tools import balance
+from tests.worlds import cached_world  # noqa: E402
 
 pytestmark = pytest.mark.slow  # the balance runs fight many battles
 
@@ -63,9 +64,9 @@ def test_an_untreated_critical_wound_kills_and_a_bandage_saves(tables):
     from realmwalker.core.rng import RNG
     from realmwalker.game.state import new_game
     from realmwalker.rules.wounds import make_wound
-    from realmwalker.world.generator import WorldGenerator, WorldOptions
+    from realmwalker.world.generator import WorldOptions
 
-    world = WorldGenerator(WorldOptions("Woundland", 3, "small"), tables).generate()
+    world = cached_world(WorldOptions("Woundland", 3, "small"), tables)
     runs = 12
     outcomes = {}
     for treated in (False, True):

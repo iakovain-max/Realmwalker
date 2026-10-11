@@ -2,6 +2,7 @@
 tradesman, looking at a stranger, and hearing a traveller's story. Floors, not targets."""
 
 import pytest
+from tests.worlds import cached_world  # noqa: E402
 
 
 def test_the_end_of_a_fight_is_told_many_ways(data):
@@ -44,11 +45,11 @@ def test_the_dead_take_the_right_verb(data, dead):
     from realmwalker.game.encounters import make_encounter
     from realmwalker.game.state import new_game
     from realmwalker.rules.combat import FOE
-    from realmwalker.world.generator import WorldGenerator, WorldOptions
+    from realmwalker.world.generator import WorldOptions
     from realmwalker.world.tables import Tables
 
     tables = Tables(data)
-    world = WorldGenerator(WorldOptions("Verbland", 6, "small"), tables).generate()
+    world = cached_world(WorldOptions("Verbland", 6, "small"), tables)
     seen = set()
     for seed in range(40):
         game = new_game(copy.deepcopy(world), tables)

@@ -7,8 +7,9 @@ import tcod.console
 from realmwalker.ui import widgets
 from realmwalker.ui.input import KeyEvent
 from realmwalker.world import legends
-from realmwalker.world.generator import WorldGenerator, WorldOptions
+from realmwalker.world.generator import WorldOptions
 from realmwalker.world.tables import Tables
+from tests.worlds import cached_world  # noqa: E402
 
 
 @pytest.fixture(scope="module")
@@ -18,7 +19,7 @@ def tables(data):
 
 @pytest.fixture(scope="module")
 def world(tables):
-    return WorldGenerator(WorldOptions("Lorebook", 21, "medium"), tables).generate()
+    return cached_world(WorldOptions("Lorebook", 21, "medium"), tables)
 
 
 def test_every_kind_of_thing_has_pages(world, tables):

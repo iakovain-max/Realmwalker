@@ -17,8 +17,9 @@ from realmwalker.rules.creation import CharacterBuilder
 from realmwalker.rules.creatures import spawn
 from realmwalker.rules.inventory import add_item, carried, equip, unequip
 from realmwalker.rules.wounds import make_wound
-from realmwalker.world.generator import WorldGenerator, WorldOptions
+from realmwalker.world.generator import WorldOptions
 from realmwalker.world.tables import Tables
+from tests.worlds import cached_world  # noqa: E402
 
 
 @pytest.fixture(scope="module")
@@ -28,7 +29,7 @@ def tables(data):
 
 @pytest.fixture(scope="module")
 def world(tables):
-    return WorldGenerator(WorldOptions("Toolshed", 33, "small"), tables).generate()
+    return cached_world(WorldOptions("Toolshed", 33, "small"), tables)
 
 
 def person(tables, cls="fighter", bg="soldier", seed=1, kit=0):

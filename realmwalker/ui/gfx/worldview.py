@@ -214,7 +214,8 @@ class WorldView:
                         canvas.under(Image(("map overview", id(world)), lambda: overview, dst,
                                            src=(gx * n * OVERVIEW, gy * n * OVERVIEW, cw * OVERVIEW, ch * OVERVIEW),
                                            rgba=(*tint, 255), smooth=True))
-            cache.look_at(cx, cy)
+            if canvas.gfx.background:
+                cache.look_at(cx, cy)
         # Fog over what you have not seen: a soft edge, from a picture one pixel per square.
         explored = p.explored
         for key, make, alpha, *sharp in overlays:  # realms (in map pixels, sharp), weather (a pixel a square, soft)

@@ -9,6 +9,7 @@ import tcod.console
 
 from realmwalker.core.rng import RNG
 from realmwalker.ui import widgets
+from tests.worlds import cached_world  # noqa: E402
 
 SIZES = [(80, 30), (100, 34), (120, 45), (160, 45), (192, 54)]
 SIDES = {ord("│"), ord("║")}
@@ -55,10 +56,10 @@ class Watch:
 
 @pytest.fixture
 def world(make_app):
-    from realmwalker.world.generator import WorldGenerator, WorldOptions
+    from realmwalker.world.generator import WorldOptions
 
     app = make_app()
-    return app, WorldGenerator(WorldOptions("Fitland", 3, "small"), app.tables).generate()
+    return app, cached_world(WorldOptions("Fitland", 3, "small"), app.tables)
 
 
 @pytest.fixture

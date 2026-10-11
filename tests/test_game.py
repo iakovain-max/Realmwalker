@@ -9,8 +9,9 @@ import pytest
 from realmwalker.game import save
 from realmwalker.game.describe import describe_local, describe_overworld
 from realmwalker.game.state import new_game
-from realmwalker.world.generator import WorldGenerator, WorldOptions
+from realmwalker.world.generator import WorldOptions
 from realmwalker.world.tables import Tables
+from tests.worlds import cached_world  # noqa: E402
 
 
 @pytest.fixture(scope="module")
@@ -20,7 +21,7 @@ def tables(data):
 
 @pytest.fixture
 def game(tables):
-    world = WorldGenerator(WorldOptions("Playland", 202, "small"), tables).generate()
+    world = cached_world(WorldOptions("Playland", 202, "small"), tables)
     return new_game(world, tables)
 
 

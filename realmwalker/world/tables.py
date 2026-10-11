@@ -74,6 +74,7 @@ class Tables:
     """All lookup tables for one game session."""
 
     def __init__(self, data: DataRegistry) -> None:
+        self.data = data  # the registry these tables were built from (its packs, provenance)
         self.biomes = BiomeTable(data["biomes.json"])
         self.terrain = TerrainTable(data["local_terrain.json"])
         self.calendar_data = data["calendar.json"]

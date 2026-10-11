@@ -14,6 +14,7 @@ from realmwalker.rules.creation import CharacterBuilder
 from realmwalker.ui.gfx import dolls
 from realmwalker.ui.gfx.atlas import Atlas
 from realmwalker.world.tables import Tables
+from tests.worlds import cached_world  # noqa: E402
 
 RACES = ("human", "elf", "dwarf", "halfling", "half_orc")
 
@@ -135,9 +136,9 @@ def test_a_character_is_made_with_the_looks_chosen(tables, atlas):
 def test_looks_are_saved_with_the_character(tables, tmp_path):
     from realmwalker.game import save
     from realmwalker.game.state import new_game
-    from realmwalker.world.generator import WorldGenerator, WorldOptions
+    from realmwalker.world.generator import WorldOptions
 
-    world = WorldGenerator(WorldOptions("Mirrorland", 21, "small"), tables).generate()
+    world = cached_world(WorldOptions("Mirrorland", 21, "small"), tables)
     b = CharacterBuilder(tables, RNG(2, "save"))
     b.set_race("elf")
     b.set_look("feature:ears", "swept")
@@ -180,10 +181,10 @@ def test_the_looks_step_changes_the_character(make_app, atlas):
     from realmwalker.ui.gfx import GfxContext
     from realmwalker.ui.input import KeyEvent
     from realmwalker.ui.screens.creation import LOOKS, CreationScreen
-    from realmwalker.world.generator import WorldGenerator, WorldOptions
+    from realmwalker.world.generator import WorldOptions
 
     app = make_app()
-    world = WorldGenerator(WorldOptions("Lookland", 9, "small"), app.tables).generate()
+    world = cached_world(WorldOptions("Lookland", 9, "small"), app.tables)
     screen = CreationScreen(app, world)
     app.push(screen)
     screen.b.set_race("half_orc")
@@ -200,7 +201,7 @@ def test_the_looks_step_changes_the_character(make_app, atlas):
     app.render(con)
     text = app.last_canvas.words()
     assert "How others see you" in text and "Tusks" in text
-    app.gfx = GfxContext(atlas, 10, 20)  # with pictures: the face and the figure are drawn
+    app.gfx = GfxContext(atlas, 10, 20, background=False)  # with pictures: the face and the figure are drawn
     app.render(tcod.console.Console(160, 45, order="F"))
     assert app.error_count == 0
     for _ in range(3):
@@ -213,9 +214,9 @@ def test_a_companion_keeps_the_face_they_had_in_town(tables):
     from realmwalker.game import companions
     from realmwalker.game.people import npcs_in, prepare_town
     from realmwalker.game.state import new_game
-    from realmwalker.world.generator import WorldGenerator, WorldOptions
+    from realmwalker.world.generator import WorldOptions
 
-    world = WorldGenerator(WorldOptions("Faceland", 13, "small"), tables).generate()
+    world = cached_world(WorldOptions("Faceland", 13, "small"), tables)
     game = new_game(world, tables)
     town = world.settlements[0]
     prepare_town(game, town)
