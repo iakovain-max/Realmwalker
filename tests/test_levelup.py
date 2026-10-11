@@ -14,8 +14,9 @@ from realmwalker.rules.combat import PARTY, Battle, Env
 from realmwalker.rules.creation import CharacterBuilder
 from realmwalker.rules.creatures import spawn
 from realmwalker.rules.inventory import add_item
-from realmwalker.world.generator import WorldGenerator, WorldOptions
+from realmwalker.world.generator import WorldOptions
 from realmwalker.world.tables import Tables
+from tests.worlds import cached_world  # noqa: E402
 
 
 @pytest.fixture(scope="module")
@@ -95,7 +96,7 @@ def test_choices_can_be_made_for_you(tables):
 # ---------------------------------------------------------------------------- scrolls
 @pytest.fixture
 def game(tables):
-    world = WorldGenerator(WorldOptions("Scrolland", 3, "small"), tables).generate()
+    world = cached_world(WorldOptions("Scrolland", 3, "small"), tables)
     g = new_game(world, tables, hero(tables, "wizard"))
     g.survival = False
     return g

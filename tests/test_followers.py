@@ -12,8 +12,9 @@ from realmwalker.game import save
 from realmwalker.game.people import npcs_in
 from realmwalker.game.state import new_game
 from realmwalker.rules.creation import CharacterBuilder
-from realmwalker.world.generator import WorldGenerator, WorldOptions
+from realmwalker.world.generator import WorldOptions
 from realmwalker.world.tables import Tables
+from tests.worlds import cached_world  # noqa: E402
 
 
 @pytest.fixture(scope="module")
@@ -23,7 +24,7 @@ def tables(data):
 
 @pytest.fixture(scope="module")
 def world(tables):
-    return WorldGenerator(WorldOptions("Fellowland", 21, "medium"), tables).generate()
+    return cached_world(WorldOptions("Fellowland", 21, "medium"), tables)
 
 
 @pytest.fixture

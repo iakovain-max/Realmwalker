@@ -13,8 +13,9 @@ from realmwalker.game.people import npcs_in, prepare_town
 from realmwalker.game.state import new_game
 from realmwalker.world import dungeon as gen
 from realmwalker.world import factions as fx
-from realmwalker.world.generator import WorldGenerator, WorldOptions
+from realmwalker.world.generator import WorldOptions
 from realmwalker.world.tables import Tables
+from tests.worlds import cached_world  # noqa: E402
 
 
 @pytest.fixture(scope="module")
@@ -24,7 +25,7 @@ def tables(data):
 
 @pytest.fixture(scope="module")
 def world(tables):
-    return WorldGenerator(WorldOptions("Questland", 99, "small"), tables).generate()
+    return cached_world(WorldOptions("Questland", 99, "small"), tables)
 
 
 @pytest.fixture

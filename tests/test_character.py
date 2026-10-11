@@ -7,8 +7,9 @@ from realmwalker.rules.character import Character, Sheet
 from realmwalker.rules.creation import CharacterBuilder, make_ties, starting_places
 from realmwalker.rules.inventory import add_item, equip, remove_item, unequip
 from realmwalker.rules.items import coin_weight, money_text
-from realmwalker.world.generator import WorldGenerator, WorldOptions
+from realmwalker.world.generator import WorldOptions
 from realmwalker.world.tables import Tables
+from tests.worlds import cached_world  # noqa: E402
 
 
 @pytest.fixture(scope="module")
@@ -18,7 +19,7 @@ def tables(data):
 
 @pytest.fixture(scope="module")
 def world(tables):
-    return WorldGenerator(WorldOptions("Charland", 404, "small"), tables).generate()
+    return cached_world(WorldOptions("Charland", 404, "small"), tables)
 
 
 def build(tables, race="human", cls="fighter", bg="soldier", seed=1):

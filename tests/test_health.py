@@ -14,8 +14,9 @@ from realmwalker.rules.creatures import spawn
 from realmwalker.rules.health import HealthContext
 from realmwalker.rules.inventory import add_item
 from realmwalker.rules.wounds import Wound
-from realmwalker.world.generator import WorldGenerator, WorldOptions
+from realmwalker.world.generator import WorldOptions
 from realmwalker.world.tables import Tables
+from tests.worlds import cached_world  # noqa: E402
 
 
 @pytest.fixture(scope="module")
@@ -227,7 +228,7 @@ def test_splints_and_poultices(tables):
 
 
 def test_healing_magic_outside_battle(tables):
-    world = WorldGenerator(WorldOptions("Healland", 3, "small"), tables).generate()
+    world = cached_world(WorldOptions("Healland", 3, "small"), tables)
     cleric = hero(tables, cls="cleric")
     game = new_game(world, tables, cleric)
     w = Wound("torso", "cut", 2, 1, 0)
@@ -304,7 +305,7 @@ def test_exhaustion_gives_disadvantage_in_battle(tables):
 
 # ---------------------------------------------------------------------------- saving
 def test_health_state_survives_saving(tables, tmp_path):
-    world = WorldGenerator(WorldOptions("Saveland", 5, "small"), tables).generate()
+    world = cached_world(WorldOptions("Saveland", 5, "small"), tables)
     game = new_game(world, tables, hero(tables))
     c = game.leader
     c.wounds.append(Wound("left_leg", "fracture", 2, 0, 0, splinted=True, healing=12.5, infection=3.0, internal=False))

@@ -12,8 +12,9 @@ from realmwalker.game.people import first_impression, npc_factions, npcs_in
 from realmwalker.game.state import new_game
 from realmwalker.rules.creation import CharacterBuilder, make_ties
 from realmwalker.world import factions as fx
-from realmwalker.world.generator import WorldGenerator, WorldOptions
+from realmwalker.world.generator import WorldOptions
 from realmwalker.world.tables import Tables
+from tests.worlds import cached_world  # noqa: E402
 
 
 @pytest.fixture(scope="module")
@@ -23,7 +24,7 @@ def tables(data):
 
 @pytest.fixture(scope="module")
 def world(tables):
-    return WorldGenerator(WorldOptions("Factionland", 11, "medium"), tables).generate()
+    return cached_world(WorldOptions("Factionland", 11, "medium"), tables)
 
 
 def hero(tables, background="soldier", seed=1, race="human"):
@@ -46,7 +47,7 @@ def start(tables, world, background="soldier", seed=1):
 @pytest.mark.slow
 @pytest.mark.parametrize("seed,size", [(11, "medium"), (3, "small"), (21, "large")])
 def test_every_world_has_its_powers(tables, seed, size):
-    w = WorldGenerator(WorldOptions("Powers", seed, size), tables).generate()
+    w = cached_world(WorldOptions("Powers", seed, size), tables)
     kinds = {f.kind for f in fx.active_factions(w)}
     for needed in ("kingdom", "noble_house", "temple", "merchant_guild", "cult", "bandit_gang", "healers_guild"):
         assert needed in kinds, needed

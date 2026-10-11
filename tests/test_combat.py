@@ -15,8 +15,9 @@ from realmwalker.rules.creation import CharacterBuilder
 from realmwalker.rules.creatures import spawn, spawn_group
 from realmwalker.rules.inventory import add_item
 from realmwalker.rules.progression import award_xp, long_rest, short_rest
-from realmwalker.world.generator import WorldGenerator, WorldOptions
+from realmwalker.world.generator import WorldOptions
 from realmwalker.world.tables import Tables
+from tests.worlds import cached_world  # noqa: E402
 
 OUTCOMES = {"victory", "defeat", "fled", "parley", "surrendered"}
 
@@ -620,7 +621,7 @@ def test_short_rest_spends_hit_dice(tables):
 # ---------------------------------------------------------------------------- whole-game flow
 @pytest.fixture
 def game(tables):
-    world = WorldGenerator(WorldOptions("Fightland", 303, "small"), tables).generate()
+    world = cached_world(WorldOptions("Fightland", 303, "small"), tables)
     return new_game(world, tables, hero(tables))
 
 

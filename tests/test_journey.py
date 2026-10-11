@@ -12,8 +12,9 @@ from realmwalker.game.state import GameState, new_game
 from realmwalker.rules import body
 from realmwalker.rules.body import Environment
 from realmwalker.rules.character import Sheet
-from realmwalker.world.generator import WorldGenerator, WorldOptions
+from realmwalker.world.generator import WorldOptions
 from realmwalker.world.tables import Tables
+from tests.worlds import cached_world  # noqa: E402
 
 
 @pytest.fixture(scope="module")
@@ -23,7 +24,7 @@ def tables(data):
 
 @pytest.fixture(scope="module")
 def world(tables):
-    return WorldGenerator(WorldOptions("Roadland", 5, "medium"), tables).generate()
+    return cached_world(WorldOptions("Roadland", 5, "medium"), tables)
 
 
 @pytest.fixture
@@ -193,7 +194,7 @@ def test_sleep_in_the_bitter_cold_is_broken_before_it_kills(tables):
     from tools import balance
     from realmwalker.rules.inventory import remove_item
 
-    world = WorldGenerator(WorldOptions("Coldland", 7, "small"), tables).generate()
+    world = cached_world(WorldOptions("Coldland", 7, "small"), tables)
     spot = balance.wild_spot(world, tables)
     winter = next(day for day in range(tables.calendar.days_per_year)
                   if tables.calendar.at(day * 1440).season == "winter")

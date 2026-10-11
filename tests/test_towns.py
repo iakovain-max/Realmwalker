@@ -11,9 +11,10 @@ import pytest
 import tcod.path
 
 from realmwalker.world import towns
-from realmwalker.world.generator import WorldGenerator, WorldOptions
+from realmwalker.world.generator import WorldOptions
 from realmwalker.world.local import LocalBuilder
 from realmwalker.world.tables import Tables
+from tests.worlds import cached_world  # noqa: E402
 
 PASSABLE = ("door_closed", "door_open", "doorway", "gate_open")
 
@@ -25,7 +26,7 @@ def tables(data):
 
 @pytest.fixture(scope="module")
 def world(tables):
-    return WorldGenerator(WorldOptions("Townland", 21, "small", history=40), tables).generate()
+    return cached_world(WorldOptions("Townland", 21, "small", history=40), tables)
 
 
 def build_as(world, tables, style: str, kind: str, great: bool = False, walled: bool | None = None):
@@ -184,7 +185,7 @@ def _pictured_town(make_app, world, style: str, kind: str):
     from realmwalker.ui.gfx.atlas import Atlas
 
     app = make_app()
-    app.gfx = GfxContext(Atlas(Paths().tiles), 10, 20)
+    app.gfx = GfxContext(Atlas(Paths().tiles), 10, 20, background=False)
     w = copy.deepcopy(world)
     s = max(w.settlements, key=lambda s: s.population)
     s.kind, s.culture, s.great = kind, style, False

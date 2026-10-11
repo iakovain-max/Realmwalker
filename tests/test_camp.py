@@ -10,9 +10,10 @@ from realmwalker.game import camp, events, fight
 from realmwalker.game.state import new_game
 from realmwalker.rules.creation import CharacterBuilder
 from realmwalker.rules.inventory import add_item
-from realmwalker.world.generator import WorldGenerator, WorldOptions
+from realmwalker.world.generator import WorldOptions
 from realmwalker.world.tables import Tables
 from realmwalker.world.weather import Weather
+from tests.worlds import cached_world  # noqa: E402
 
 
 @pytest.fixture(scope="module")
@@ -22,7 +23,7 @@ def tables(data):
 
 @pytest.fixture(scope="module")
 def world(tables):
-    return WorldGenerator(WorldOptions("Campland", 41, "small"), tables).generate()
+    return cached_world(WorldOptions("Campland", 41, "small"), tables)
 
 
 def hero(tables, seed=1):

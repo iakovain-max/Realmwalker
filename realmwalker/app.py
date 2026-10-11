@@ -523,6 +523,8 @@ class App:
     def shutdown(self) -> None:
         if self.game is not None:
             self.save_game()
+        for screen in reversed(self.screens):  # let go of what screens hold (the map painter's thread, a preview)
+            self._guard("closing the screen", screen.on_exit)
         try:
             self.audio.close()
         except Exception:

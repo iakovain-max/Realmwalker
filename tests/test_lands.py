@@ -15,10 +15,11 @@ from realmwalker.game.state import GameState, new_game
 from realmwalker.rules.creation import CharacterBuilder
 from realmwalker.rules.creatures import choose_encounter
 from realmwalker.world import hydrology, wonders
-from realmwalker.world.generator import WorldGenerator, WorldOptions
+from realmwalker.world.generator import WorldOptions
 from realmwalker.world.local import get_local_map, terrain_remap
 from realmwalker.world.model import CLIFF, RAVINE
 from realmwalker.world.tables import Tables
+from tests.worlds import cached_world  # noqa: E402
 
 NEW_LANDS = ("glacier", "steppe", "savanna", "jungle", "dunes", "badlands", "salt_flat", "volcanic", "fey_forest")
 KINDS_OF_WORLD = [("continent", "temperate"), ("islands", "warm"), ("twin", "cold"), ("inland_sea", "varied"),
@@ -33,8 +34,8 @@ def tables(data):
 @pytest.fixture(scope="module")
 def worlds(tables):
     """One world of each lie of the land and each climate."""
-    return {(land, climate): WorldGenerator(WorldOptions("Land", 300 + i, "medium", history=40, land=land,
-                                                         climate=climate), tables).generate()
+    return {(land, climate): cached_world(WorldOptions("Land", 300 + i, "medium", history=40, land=land,
+                                                         climate=climate), tables)
             for i, (land, climate) in enumerate(KINDS_OF_WORLD)}
 
 

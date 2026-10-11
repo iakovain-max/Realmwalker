@@ -15,8 +15,9 @@ from realmwalker.rules.creatures import spawn
 from realmwalker.rules.inventory import add_item, equip
 from realmwalker.rules.progression import award_xp
 from realmwalker.rules.wounds import make_wound
-from realmwalker.world.generator import WorldGenerator, WorldOptions
+from realmwalker.world.generator import WorldOptions
 from realmwalker.world.tables import Tables
+from tests.worlds import cached_world  # noqa: E402
 
 
 @pytest.fixture(scope="module")
@@ -26,7 +27,7 @@ def tables(data):
 
 @pytest.fixture(scope="module")
 def world(tables):
-    return WorldGenerator(WorldOptions("Spellroad", 31, "small"), tables).generate()
+    return cached_world(WorldOptions("Spellroad", 31, "small"), tables)
 
 
 def hero(tables, cls, seed=1):
@@ -194,7 +195,7 @@ def test_the_spells_screen_casts(make_app):
 
     app = make_app()
     tables = app.tables
-    world = WorldGenerator(WorldOptions("Screenland", 5, "small"), tables).generate()
+    world = cached_world(WorldOptions("Screenland", 5, "small"), tables)
     wiz = hero(tables, "wizard")
     app.start_game(ng(world, tables, wiz))
     screen = SpellsScreen(app, app.game)

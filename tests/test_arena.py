@@ -14,8 +14,9 @@ from realmwalker.rules import grid
 from realmwalker.rules.combat import FOE, PARTY
 from realmwalker.rules.creation import CharacterBuilder
 from realmwalker.rules.creatures import spawn
-from realmwalker.world.generator import WorldGenerator, WorldOptions
+from realmwalker.world.generator import WorldOptions
 from realmwalker.world.tables import Tables
+from tests.worlds import cached_world  # noqa: E402
 
 
 @pytest.fixture(scope="module")
@@ -25,7 +26,7 @@ def tables(data):
 
 @pytest.fixture(scope="module")
 def world(tables):
-    return WorldGenerator(WorldOptions("Arenaland", 31, "large"), tables).generate()
+    return cached_world(WorldOptions("Arenaland", 31, "large"), tables)
 
 
 def companion(tables, cls, seed):

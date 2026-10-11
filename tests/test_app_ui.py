@@ -14,6 +14,7 @@ from realmwalker.ui.screens.debug_console import DebugConsole
 from realmwalker.ui.screens.help import HelpScreen
 from realmwalker.ui.screens.settings_screen import SettingsScreen
 from realmwalker.ui.screens.title import TitleScreen
+from tests.worlds import cached_world  # noqa: E402
 
 SIZES = [(80, 30), (120, 45), (192, 54), (240, 67)]
 
@@ -183,9 +184,9 @@ def test_tileset_builds_with_box_and_block_glyphs(home):
 # ---------------------------------------------------------------------------- M1 screens
 def start_small_world(app, seed=5):
     from realmwalker.game.state import new_game
-    from realmwalker.world.generator import WorldGenerator, WorldOptions
+    from realmwalker.world.generator import WorldOptions
 
-    world = WorldGenerator(WorldOptions("Screenland", seed, "small"), app.tables).generate()
+    world = cached_world(WorldOptions("Screenland", seed, "small"), app.tables)
     app.start_game(new_game(world, app.tables))
     return app.top
 

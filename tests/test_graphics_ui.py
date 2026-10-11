@@ -13,6 +13,7 @@ from realmwalker.ui.gfx import GfxContext, dolls
 from realmwalker.ui.gfx.atlas import Atlas
 from realmwalker.ui.gfx.scene import Batch, Image
 from realmwalker.ui.input import KeyEvent, MouseEvent
+from tests.worlds import cached_world  # noqa: E402
 
 SIZE = (160, 50)
 
@@ -26,10 +27,10 @@ def atlas():
 
 @pytest.fixture
 def world(make_app):
-    from realmwalker.world.generator import WorldGenerator, WorldOptions
+    from realmwalker.world.generator import WorldOptions
 
     app = make_app()
-    return WorldGenerator(WorldOptions("Pictureland", 11, "small"), app.tables).generate()
+    return cached_world(WorldOptions("Pictureland", 11, "small"), app.tables)
 
 
 @pytest.fixture
@@ -38,7 +39,7 @@ def pictured(make_app, world, atlas):
     from realmwalker.game.state import new_game
 
     app = make_app()
-    app.gfx = GfxContext(atlas, 10, 20)
+    app.gfx = GfxContext(atlas, 10, 20, background=False)
     game = new_game(copy.deepcopy(world), app.tables)
     game.survival = False
     app.start_game(game)

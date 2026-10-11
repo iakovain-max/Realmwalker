@@ -15,6 +15,7 @@ from realmwalker.ui.gfx import GfxContext
 from realmwalker.ui.gfx.atlas import Atlas
 from realmwalker.ui.gfx.scene import Image, Text
 from realmwalker.ui.input import KeyEvent, MouseEvent
+from tests.worlds import cached_world  # noqa: E402
 
 SIZE = (160, 50)
 
@@ -28,10 +29,10 @@ def atlas():
 
 @pytest.fixture
 def world(make_app):
-    from realmwalker.world.generator import WorldGenerator, WorldOptions
+    from realmwalker.world.generator import WorldOptions
 
     app = make_app()
-    return WorldGenerator(WorldOptions("Mapland", 13, "small", history=60), app.tables).generate()
+    return cached_world(WorldOptions("Mapland", 13, "small", history=60), app.tables)
 
 
 def start(make_app, world, atlas=None):
@@ -39,7 +40,7 @@ def start(make_app, world, atlas=None):
 
     app = make_app()
     if atlas is not None:
-        app.gfx = GfxContext(atlas, 10, 20)
+        app.gfx = GfxContext(atlas, 10, 20, background=False)
     game = new_game(copy.deepcopy(world), app.tables)
     game.survival = False
     game.player.explored[:] = True

@@ -12,8 +12,9 @@ from realmwalker.game import save, uniques
 from realmwalker.game.dialogue import Conversation
 from realmwalker.game.people import npcs_in
 from realmwalker.game.state import new_game
-from realmwalker.world.generator import WorldGenerator, WorldOptions
+from realmwalker.world.generator import WorldOptions
 from realmwalker.world.tables import Tables
+from tests.worlds import cached_world  # noqa: E402
 
 SEVEN = ("osric", "durgin", "tobiah", "wendeline", "grusha", "aelith", "wren")
 
@@ -25,7 +26,7 @@ def tables(data):
 
 @pytest.fixture(scope="module")
 def world(tables):
-    return WorldGenerator(WorldOptions("Sevenfold", 21, "medium"), tables).generate()
+    return cached_world(WorldOptions("Sevenfold", 21, "medium"), tables)
 
 
 @pytest.fixture
@@ -87,7 +88,7 @@ def joined(game, uid):
 @pytest.mark.slow
 @pytest.mark.parametrize("seed,size", [(21, "medium"), (5, "small"), (99, "large")])
 def test_the_seven_are_in_every_world(tables, seed, size):
-    w = WorldGenerator(WorldOptions("Anywhere", seed, size), tables).generate()
+    w = cached_world(WorldOptions("Anywhere", seed, size), tables)
     game = new_game(w, tables)
     recs = uniques.ensure(game)
     assert set(recs) == set(SEVEN)
@@ -104,7 +105,7 @@ def test_the_seven_are_in_every_world(tables, seed, size):
 def test_they_are_the_same_people_in_any_world(tables):
     made = []
     for seed in (3, 8):
-        w = WorldGenerator(WorldOptions("Twin", seed, "small"), tables).generate()
+        w = cached_world(WorldOptions("Twin", seed, "small"), tables)
         game = new_game(w, tables)
         made.append({uid: uniques.make_character(game, uid) for uid in SEVEN})
     for uid in SEVEN:
