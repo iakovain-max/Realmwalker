@@ -62,7 +62,7 @@
     "deadly": 2.0,
     "most_extra": 1.0
   },
-  "_travel_pace": "Travel pace (PHB 2024 PDF page 23, DMG PDF pages 42-43): time for the same ground (4, 3 or 2 miles an hour), and what it does to noticing (a passive score, -5 or +5) and to Survival (finding the way) and Stealth (slipping away); the land's maximum pace (DMG Travel Terrain, by biome or family), one step faster on a good road.",
+  "_travel_pace": "Travel pace (PHB 2024 PDF page 23, DMG PDF pages 42-43): time for the same ground (4, 3 or 2 miles an hour), and what it does to noticing (a passive score, -5 or +5) and to Survival (finding the way) and Stealth (slipping away); the land's maximum pace (DMG Travel Terrain, by biome or family), one step faster on a good road; where the book says Slow (mountains, marsh) the game's own steps are slow already, so there it only forbids Fast.",
   "travel_pace": {
     "paces": {
       "fast": {"name": "Fast", "time": 0.75, "passive": -5, "survival": "disadvantage", "stealth": "disadvantage"},

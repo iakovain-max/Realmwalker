@@ -71,11 +71,8 @@ def of_char(char, tables) -> frozenset[str]:
 
 
 def _magic_key(char) -> tuple:
-    if not (char.equipped or char.attuned):
-        return ()
-    from realmwalker.rules import magic
-
-    return magic.fingerprint(char)
+    """Cheap: what is bound and what is worn (an item's magic changes only outside a fight)."""
+    return tuple(char.attuned), tuple(sorted(char.equipped.values()))
 
 
 def has(f, trait: str) -> bool:

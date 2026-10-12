@@ -187,7 +187,8 @@ class GameState:
         p = self.player
         land = self.land_key(p.x, p.y)
         top = encounter.max_pace(self.tables, land, self.tables.biomes.family(land) or land, bool(self.world.road[p.x, p.y]))
-        return encounter.allowed(p.pace, top)
+        # Mountains and marsh are slow going already (their steps cost more): there the land only forbids Fast.
+        return encounter.allowed(p.pace, "normal" if top == "slow" else top)
 
     def cycle_pace(self) -> str:
         """Slow, Normal, Fast (v): what each does, and whether the land allows it here."""
@@ -202,7 +203,8 @@ class GameState:
                 "normal": "a steady pace; you notice what you would, but you are no quieter than a walker",
                 "slow": "a careful pace: half as long again, but you notice more (+5), keep your bearings better "
                         "and can slip away quietly"}[p.pace]
-        held = "" if now == p.pace else f" <warn>The land here allows no more than {encounter.pace(self.tables, now)['name']}.</>"
+        held = "" if now == p.pace else (f" <warn>The land here allows no more than "
+                                         f"{encounter.pace(self.tables, now)['name']}.</>")
         return f"Travel pace: <good>{encounter.pace(self.tables, p.pace)['name']}</>, {what}.{held}"
 
     def pace(self) -> float | None:

@@ -64,10 +64,10 @@ pictures are reworked to match the game's own art; the main menu gets its shelf 
   about 20 ms (95th percentile under 60 ms, the slowest about 100 ms; budget 150 and 400).
 
 ### Part D — Treasure and encounters
-- [ ] D.1 Magic item framework (attunement, charges, activation, curses, identification, artifacts, sentient items).
-- [ ] D.2 DMG treasure: individual and hoards by CR, the four themes and rarity tables, monster treasure themes.
-- [ ] D.3 Encounter builder and the DMG XP budget; travel pace; starting attitudes and Influence.
-- [ ] D.4 Part D to `main`.
+- [x] D.1 Magic item framework (attunement, charges, activation, curses, identification, artifacts, sentient items).
+- [x] D.2 DMG treasure: individual and hoards by CR, the four themes and rarity tables, monster treasure themes.
+- [x] D.3 Encounter builder and the DMG XP budget; travel pace; starting attitudes and Influence.
+- [x] D.4 Part D to `main`.
 
 ### Part E — Tooltips, icons and pictures
 - [ ] E.1 Cards (`rules/describe.py`) and `ui/tooltips.py`; status icons; creature cards; the battle log's rolls.
@@ -105,6 +105,36 @@ used by the enemy only for spells; roles that changed little; height left out of
 square too generous; a taken-over creature that could stay with the enemy; Influence offered to the enemy; antimagic
 missing from the lists. All fixed and tested (tests/test_tactics_choices.py). The lesson is in CLAUDE.md, "How to
 work": a rule is done only when it is usable in play.
+
+## Part D: how it is built and what was adapted
+
+- **Magic items** (`rules/magic.py` reads them, `game/magic_items.py` makes them): properties are effects; the new
+  kinds are `proficiency`, `speed`, `trait` (a data/traits.json definition: the kernel's immunities, vulnerabilities
+  and hooks) and `flag` (a flaw another system checks). Attunement is `Character.attuned` (uids, three at most);
+  `magic.active(char)` is the one place that says which properties work. Charges: `regain` dice at dawn
+  (`magic_items.tick` from `GameState.pass_time`), `keep_on`, `at_will`.
+- **Artifacts**: `make_artifact` rolls data/magic.json "artifact" for the world; the history's lost treasures
+  (`past.artifact_item`) are made with it. Rolled again: quest (needs a person), avatar and imprisoned slaad (no
+  such creatures yet), spells of levels the game lacks. Flavour-only flaws (no smell, a changed face, withering
+  plants) are words on the card; jewels losing half their worth halves their price when the bearer sells them.
+- **Sentient items** (`make_sentient`, `notice`, `conflict`, `check_demands`): tags noticed where they happen
+  (`finish_battle`, `encounter_pay`, `encounter_talk`, discoveries, `books.read`, prayer, graves, `law.commit`
+  violence, rescues, `reputation.deed` with fame, selling magic); a charmed bearer fights on Auto (`fight.start`).
+- **Treasure** (`game/treasure.py`, data/treasure.json; the 20 random tables read off DMG PDF 330-335): creatures'
+  MM treasure themes are on their stat blocks; pocket money in `rules/creatures` (Individual; a hoard-keeping band
+  carries its leader's purse). A dungeon's level remembers its strength (`meta["cr"]`) and theme; the deepest level's
+  best chest is the `hoard`. Book items the game has are made by data/treasure.json `makers`; everything else is
+  rolled again, then made as a Realmwalker item of that rarity and theme. Adapted: rarity read by the hoard's CR
+  (the land, not the party); CR 11-16 hoard money x 1,000 (the book's printed average); quest coin stays the giver's,
+  great works add a strongroom gift; art objects named in the game's words.
+- **Encounters** (`rules/encounter.py`): XP budget per character; `counts_for` thins a band for a small party as
+  before and trims it to the budget (danger -> level, rolled difficulty), never past the last of a kind. Measured
+  over 400 bands per party size and danger: never more than before. Travel pace on `PlayerState.pace` (v); the
+  book's Slow maximum (mountains, marsh) only forbids Fast, since the game's terrain costs already slow those lands.
+  Attitudes: road bands by alignment (weighted Hostile), let be when not Hostile; Influence DC 15 or their best
+  Intelligence; conversations use the mood as the attitude (advantage/disadvantage instead of DC shifts).
+- **Left for Part E**: tooltip cards for magic items' new lines, an icon for "bound" and for a sentient thing's
+  demand.
 
 ## Codex entries delivered
 

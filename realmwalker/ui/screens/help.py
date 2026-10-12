@@ -187,7 +187,7 @@ An artifact is one of a kind: great powers and a flaw or two, rolled for this wo
 
 <title>Treasure and the road</>
 Creatures carry what their kind carries: a bandit a few gold pieces, a wolf nothing. A band that keeps a hoard keeps it at home: the deepest chest of a lair is its master's hoard, in the form its kind likes (gems, coin and silver bars, trade goods, or old art). Cities where mages keep a house sell a minor magic thing or two.
-  <loot>v</>               Travel pace: Fast covers ground in three quarters of the time but notices less and loses its way more easily; Slow takes half as long again but notices more, keeps its bearings and slips away quietly. Mountains and marsh allow only Slow, open country Fast; a good road allows one step faster.
+  <loot>v</>               Travel pace: Fast covers ground in three quarters of the time but notices less and loses its way more easily; Slow takes half as long again but notices more, keeps its bearings and slips away quietly. Mountains and marsh are slow going and allow no Fast pace; a good road allows one step faster.
 Not every band on the road wants a fight. Some are only wary: you can let them be and go on. Talking your way past is harder with a hostile band and easier with a friendly one; the same goes for anyone in a town, by their mood.
 
 <title>Dragons</>

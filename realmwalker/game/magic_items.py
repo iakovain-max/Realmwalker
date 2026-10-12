@@ -343,6 +343,8 @@ def notice(game, tag: str, *, creatures: list[dict] | None = None, hard: bool = 
             out += conflict(game, item, who, rng)
     for line in out:
         game.say(f"<magic>{line}</>", "magic")
+    if out:
+        game.cue("danger" if any(mind.get("demand") for mind in (i.magic["sentient"] for i, _w in things)) else "spell")
     return out
 
 
@@ -444,6 +446,8 @@ def check_demands(game) -> list[str]:
                                                                    f"{roll} vs {dc})</>")
     for line in out:
         game.say(f"<magic>{line}</>", "magic")
+    if out:
+        game.cue("danger")
     return out
 
 
@@ -474,6 +478,7 @@ def attune(game, char, item: Item) -> list[str]:
             char.attuned.remove(other.uid)
             out.append(f"The bond with the {game.tables.items.name(other, False)} snaps.")
     char.attuned.append(item.uid)
+    game.cue("buff")
     if item.magic.get("cursed") and not item.magic.get("curse_known"):
         item.magic["curse_known"] = True
         out.append("<danger>Something tightens as the bond closes. It is cursed, and it will not let go.</>")
@@ -495,6 +500,7 @@ def _on_attune(game, char, item: Item, effect: str, rng: RNG) -> list[str]:
     elif effect == "shock":
         hurt = dice.roll("8d10", rng).total
         char.hp -= hurt
+        game.cue("magic_hit")
         line = f"<danger>Pain like a struck bell: {hurt} psychic harm.</>"
         if char.hp <= 0:
             if -char.hp >= char.max_hp:
