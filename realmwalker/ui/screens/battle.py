@@ -231,17 +231,28 @@ class BattleScreen(Screen):
                            if sq != (f.x, f.y) and grid.can_stop(sq, f.sq, occ)}
         return self._reach
 
+    def options(self, f: Fighter) -> list:
+        """Everything `f` can do now (rules/engine/actions.options), worked out once for each state of the fight."""
+        from realmwalker.rules.engine import actions
+
+        key = (f.id, f.x, f.y, f.action, f.bonus, f.attacks_left, f.move_left, len(self.battle.events), self.battle.round)
+        if getattr(self, "_options_key", None) != key:
+            self._options_key = key
+            self._options = actions.options(self.battle, f)
+        return self._options
+
     def available(self, f: Fighter, action: str) -> tuple[bool, str]:
         b = self.battle
+        opts = self.options(f)
         if action == "attack":
             return (b.has_action(f), "no action left this turn")
         if action == "cast":
-            return (bool(b.spell_options(f)), f"{f.name} knows no spells")
+            return (any(o.kind == "cast" for o in opts), f"{f.name} knows no spells")
         if action == "item":
-            hands = f.action > 0 or b.fast_hands(f)
-            return (hands and bool(b.usable_items(f)), "nothing to use" if hands else "no action left")
+            items = [o for o in opts if o.kind == "item"]
+            return (any(o.available for o in items), "nothing to use" if not items else "no action left")
         if action == "ability":
-            return (any(ok for _, _, ok, _ in b.class_abilities(f)), "nothing to call on now")
+            return (any(o.available for o in opts if o.kind == "ability"), "nothing to call on now")
         if action in ("dash", "disengage", "dodge", "help", "shove", "parley", "search", "ready"):
             return (f.action > 0, "no action left this turn")
         if action == "study":

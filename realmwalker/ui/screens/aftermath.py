@@ -48,7 +48,7 @@ class AftermathScreen(Screen):
         def go() -> None:
             text = decide_captive(self.game, creature, fate)
             self.fate_texts.append(text)
-            if fate == "capture":
+            if creature.uid not in self.after.fates:  # (taking them along needs someone who pays for them)
                 self.app.notify("Nobody here pays for prisoners yet; choose something else.", "warn")
                 return
             if not self._undecided():
