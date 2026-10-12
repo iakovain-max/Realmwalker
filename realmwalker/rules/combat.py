@@ -883,7 +883,7 @@ class Battle:
                         self.say(f"{f.the_name} is no longer {cond}.", "system")
         f.move_left = max(f.speed, f.fly_speed)
         if any(z.kind == "guardians" and z.owner is not None and any(c in z.cells for c in f.cells)
-               and self.fighter(z.owner).team != f.team for z in self.zones):
+               and self.fighter(z.owner).team != f.team for z in self.zones) and not self.antimagic(f.cells):
             f.move_left //= 2  # Spirit Guardians: half speed in the emanation (2024)
         # Standing up from the ground costs half your movement.
         if "prone" in f.conditions and f.can_act() and f.state == "fighting" and f.move_left >= f.speed // 2 > 0:
@@ -2546,12 +2546,15 @@ class Battle:
     def spirit_targets(self, f: Fighter) -> list[Fighter]:
         """Who the spiritual weapon can reach this turn: it moves twenty feet and strikes someone beside it."""
         tok = next((t for t in self.tokens if t.owner == f.id and t.kind == "spiritual_weapon"), None)
-        if tok is None:
+        if tok is None or self.antimagic([(tok.x, tok.y)]):
             return []
-        return [e for e in self.enemies_of(f) if grid.gap((tok.x, tok.y, 1), e.space) <= 5]
+        return [e for e in self.enemies_of(f) if grid.gap((tok.x, tok.y, 1), e.space) <= 5 and not self.antimagic(e.cells)]
 
     def _spirit_strike(self, f: Fighter, tok: Token, target: Fighter) -> None:
         # The weapon flies to a free square beside its target (twenty feet at most), then strikes.
+        if self.antimagic(target.cells) or self.antimagic([(tok.x, tok.y)]):
+            self.say("The spiritual weapon wavers and fades where no magic works.", "system")
+            return
         best = None
         occ = {c for x in self.on_field() for c in x.cells}
         for c in target.cells:
@@ -3021,6 +3024,8 @@ class Battle:
                     continue
             if f.id in z.struck:
                 continue
+            if z.kind != "antimagic" and (z.spell or z.kind in ("guardians", "guardian")) and self.antimagic(f.cells):
+                continue  # a spell laid on the ground does nothing where magic does not work
             if z.kind == "web":
                 stopped = self._zone_catch(f, z) or stopped
             elif z.kind in ("fire", "guardians", "guardian") and z.damage:

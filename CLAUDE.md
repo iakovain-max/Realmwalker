@@ -30,6 +30,34 @@ gameplay terms, give Windows click-by-click steps when they must do something, n
 Milestone "done" = all tests pass + the game launches (smoke test) + autoplay ran clean.
 Then commit, update PROGRESS.md, and stop for user feedback (unless the user said to keep going).
 
+## How to work: fast, without losing quality (Anton, 2026-10-12)
+
+- **Done = playable.** A rule is done when it is usable in play: the rule, its entry in `actions.options`, the
+  enemy's and Auto's use of it, the battle screen, and one test in a real fight. Never tick a rule that nothing calls.
+- **Heavy checks once per part.** While building: only the tests for what you touched (`pytest tests/test_x.py -k ...`,
+  `-m "not slow"`). Before a merge, one at a time: the full suite (it runs the arena coverage test), autoplay, the
+  smoke test. Run `tools/arena.py` by hand only when tuning tactics.
+- **Helpers for bulk data** (book tables, items, monsters, spells, codex marking): two or three subagents at once on
+  a cheaper model (`model: "sonnet"`), each with a precise brief (its entries, the schema, one finished example, the
+  book pages, numbers checked on page images); the main session owns the kernel, joins the pieces and reviews.
+- **Edit with the Edit/Write tools.** Scripts only for mechanical changes across many files, written to a file with
+  Write first (shell heredocs here mangle quotes and backslashes).
+- **Read narrowly**: `grep -n` and small line ranges, guided by the code map below; do not page through big files.
+- **One part per session.** When a part is merged, update `docs/expansions/STATUS.md` and stop: a long conversation
+  makes every later step slower and dearer, and a summarised one loses detail.
+- **The fresh review stays** before each merge, as a short checklist pass against `docs/EXPANSIONS.md` §5.2.
+
+Code map of the two biggest files (by section; search for the `# ---` headers):
+`rules/combat.py`: AttackOption, Env, Zone, Token, Fighter (identity, where, numbers, state), Battle: decisions,
+helpers (gap, feet, team), placing, start (Study), Search and Ready, turn engine (start/end of turn, crowding),
+light and sight, moving (move_tree, walk, leaps, objects, flying, falling, grapples), the action economy, attack
+options, resolving attacks, morale, party actions (Help, shove, grapple, Influence, items), items and abilities,
+spells, concentration, zones, bookkeeping.
+`rules/tactics.py`: caution and roles, wits and targets (smarts, importance, focus, target_weight), take_turn,
+monsters (_monster_turn, flying up and down, _fight, best_plan, _value, _instead_of_a_blow, approach, breaking
+through, flee, creature magic, spell choice, keeping distance), party members on Auto (_party_turn, abilities by
+what they do, healing the fallen, casting).
+
 ## Folder map
 
 ```

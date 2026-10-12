@@ -70,7 +70,7 @@ def test_the_tactics_use_everything_a_creature_has_and_only_what_is_allowed(tabl
 
         def tried(self, f, *a, _real=real, _name=name, **k):
             r = _real(self, f, *a, **k)
-            if r is False and f.side == FOE and self.current is f:
+            if r is False and (f.side == FOE or f.auto) and self.current is f:  # the enemy, and the party on Auto
                 refused.append(f"round {self.round}: {f.name} {_name} {a}")
             return r
         monkeypatch.setattr(combat.Battle, name, tried)

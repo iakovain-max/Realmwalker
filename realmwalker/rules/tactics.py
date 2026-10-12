@@ -764,10 +764,12 @@ def _party_turn(b: Battle, f: Fighter) -> None:
             b.do_ability(f, opt.value)
             attacks *= 2 if f.action > 1 else 1
             break
-    if opts:
+    if opts and b.has_action(f):  # (first aid for a fallen friend may have taken the action)
         struck = _fight(b, f, opts, attacks)
         if struck and b.current is f and b.outcome is None:
             _bonus_strike(b, f)
+    elif b.current is f and b.outcome is None and f.move_left >= 5:
+        _keep_safe(b, f)
     if b.current is f and b.outcome is None and f.bonus > 0:  # Cunning Action: away when hurt, else out of sight
         moves = {a["via"]: opt for opt, a in _abilities(b, f, "move")}
         if "disengage" in moves and f.hp < f.max_hp // 2 and \

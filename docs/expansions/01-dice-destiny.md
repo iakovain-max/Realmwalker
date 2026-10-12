@@ -92,6 +92,19 @@ pictures are reworked to match the game's own art; the main menu gets its shelf 
   for a shared language yet.
 - A river is rough water (Athletics DC 15 to make headway); someone who drops senseless in deep water does not
   drown in the fight's minute.
+- A long jump is the whole way moved (clearing one square is a 10-foot leap). Squeezing through a narrow space is
+  not in yet, so a Large creature cannot pass a one-square doorway.
+- Study's DC is 10 + half the Challenge Rating, at most 25 (data/rules.json "study"); the book leaves it to the DM.
+- The enemy's estimate of a shot counts the cover of walls and things, not of creatures in the way (the battle
+  screen's hit chance counts both): looking at creatures for every square it weighs would cost too much time.
+
+## The fresh review of Part C (2026-10-12) and what was done about it
+
+It found fliers, falling and breakable things built as rules that nothing in play used; the one list of actions
+used by the enemy only for spells; roles that changed little; height left out of some distances; a long jump one
+square too generous; a taken-over creature that could stay with the enemy; Influence offered to the enemy; antimagic
+missing from the lists. All fixed and tested (tests/test_tactics_choices.py). The lesson is in CLAUDE.md, "How to
+work": a rule is done only when it is usable in play.
 
 ## Codex entries delivered
 

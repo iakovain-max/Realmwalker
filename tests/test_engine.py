@@ -642,8 +642,19 @@ def test_no_spell_works_in_an_antimagic_area(tables):
     b.order = [me.id, them.id]
     b.turn, b.turn_started = 0, True
     b._start_of_turn(me)
+    from realmwalker.rules.combat import Token
+
+    b.tokens.append(Token(99, "spiritual_weapon", x=7, y=4, owner=me.id, bonus=5, damage="1d8", damage_type="force"))
+    assert b.spirit_targets(me) == [them]
     b._add_zone(Zone(b._zone_id(), "antimagic", {(8, 4), (8, 5)}))
     assert b.cast_problem(me, "fire_bolt", them) == "magic does not work there"
+    # Nor what a spell has summoned or laid on the ground: a spiritual weapon cannot strike there, guardians hurt nobody.
+    assert b.spirit_targets(me) == []
+    hp = them.hp
+    b._add_zone(Zone(b._zone_id(), "guardians", {(8, 4), (8, 5)}, owner=me.id, spell="spirit_guardians", save="wis",
+                     dc=30, damage="3d8", damage_type="radiant"))
+    b._zones_on(them, start=True)
+    assert them.hp == hp
 
 
 def test_doors_and_barrels_can_be_broken(tables):

@@ -47,7 +47,11 @@ the expansion programme (the first entries below).
   first, a cult fanatic holds a fighter with Hold Person, bandits draw their scimitars when cornered. Beasts go for
   the nearest and weakest; clever foes gang up on one of you; the cleverest go for your casters and healers.
   Creatures say how they fight (brute, skirmisher, archer, controller, leader, support, lurker, solo): archers and
-  casters start at the back and keep their distance.
+  casters start at the back and keep their distance, brutes charge in, leaders hang back and strike where their band
+  is already at work. And they use more than blows: they **search** when you hide, a lurker **hides** and waits for
+  you, they **knock someone down** when friends beside the victim will pile on, **grab** a spellcaster who would
+  step away, **help** a stronger friend by distracting you, stand **on guard** to keep a spell going, **ready** a
+  shot rather than run in, and **break down a door** between them and you.
 - **Your companions on Auto use their whole class**: a cleric turns undead that come close, or shares out Preserve
   Life; a war cleric strikes again with the bonus action; a fighter catches a Second Wind when hurt and surges when
   it is hard going; a rogue slips away with Cunning Action. They also choose any spell they know by what it would do.
@@ -57,12 +61,18 @@ the expansion programme (the first entries below).
   rough ground can knock you down, and catching a fence stops you short); a river's current can be too strong. New
   actions: **Study** (k) to recall what a creature is and what it can do (instead of the free roll at the start),
   **Search** (o) for hidden foes, **Ready** (q) a blow or a shot for the first enemy to come near.
-- **Fliers fly**: the stirge and the young dragon go over water and low things and have a height; knocked down or
-  senseless, they fall. Doors, barrels and tables can be smashed. A charmed creature fights for whoever charmed it.
+- **Fliers fly**: the stirge and the young dragon go over water and low things; a dragon breathes, then rises just
+  out of reach of your swords (rising away from you gives you a free swing at it) and comes down to bite. The map
+  shows a flier above its shadow with its height in feet. Knocked down or senseless, a flier falls. Your companions
+  on Auto wait under it with a blow ready for when it comes down. Anyone who can fly does it with **Fly (v)**.
+- **Break (x)**: strike a door, barrel, table, cart or crate instead of a creature (one of your attacks).
+- A charmed creature fights for whoever charmed it, and comes back to its side when the charm ends. No spell works
+  in an antimagic area, nor do spiritual weapons or guardians there.
 - Someone knocked senseless in the middle of a move, in a friend's square, ends up lying there (as the rules say).
 
 **How to test**: fight in a town or a farm (tables, fences, barrels) and watch the enemy and your companions climb
-and leap; set your companions to Auto against skeletons with a cleric in the party.
+and leap; set your companions to Auto against skeletons with a cleric in the party; hide in brush and see the
+enemy search for you.
 
 **Proof, not hope**: a new tool, `tools/arena.py`, fights every creature in four set-ups and reports what it used
 and how long each enemy turn took to think; a test now fails if any creature never uses one of its attacks or
