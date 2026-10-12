@@ -130,7 +130,7 @@
                            "effects": [{"op": "restore", "conditions": ["paralyzed", "blinded", "poisoned", "deafened"], "one": true, "disease": true}],
                            "fx": "heal", "text": "A bonus action: ends a paralysis, a blindness, a poison or a deafness, and eases a disease taking hold."},
     "spirit_guardians": {"name": "Spirit Guardians", "level": 3, "school": "conjuration", "classes": ["cleric"], "target": "self", "range": "self",
-                         "area": {"shape": "sphere", "size": 15}, "affects": "enemies", "concentration": true, "rounds": 100, "components": ["V", "S", "M"],
+                         "area": {"shape": "emanation", "size": 15}, "affects": "enemies", "concentration": true, "rounds": 100, "components": ["V", "S", "M"],
                          "effects": [{"op": "aura", "radius": 15, "ability": "wis", "half": true, "damage": "3d8", "type": "radiant", "up": "1d8"}],
                          "fx": "aura", "text": "Spirits wheel around you for 15 feet: enemies who come into them or end their turn there burn, and move at half speed (concentration)."},
     "mass_healing_word": {"name": "Mass Healing Word", "level": 3, "school": "abjuration", "classes": ["cleric"], "target": "all_allies", "range": 60, "cast": "bonus",

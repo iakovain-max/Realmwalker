@@ -322,3 +322,58 @@ def test_every_ability_in_the_data_resolves(tables):
                 assert o["op"] in effects.OPS
             for r in a.get("requires", []):
                 assert r in actions.REQUIRES
+
+
+# ---------------------------------------------------------------------------- the 2024 rules glossary
+def test_damage_resistance_then_vulnerability_rounding_down(tables):
+    b, me, them = duel(tables)
+    them.buffs.append({"resist": ["fire"], "source": "test"})
+    assert query.damage_taken(them, 1, "fire") == (0, "resist")  # halved and rounded down: nothing
+    assert query.damage_taken(them, 7, "fire") == (3, "resist")
+    b, me, bones = duel(tables, foe="skeleton")
+    bones.buffs.append({"resist": ["bludgeoning"], "source": "test"})
+    assert query.damage_taken(bones, 23, "bludgeoning") == (22, "vulnerable")  # 23 -> 11 -> 22 (the PHB's example)
+
+
+def test_temporary_hit_points_go_first(tables):
+    b, me, them = duel(tables)
+    them.creature.hp = them.creature.max_hp = 20
+    them.temp_hp = 5
+    b._apply_hp_loss(them, 7, source=me, cause="test")
+    assert them.temp_hp == 0 and them.hp == 18
+
+
+def test_concentration_dc_is_capped_at_30(tables):
+    assert query.concentration_dc(4) == 10
+    assert query.concentration_dc(31) == 15
+    assert query.concentration_dc(200) == 30
+
+
+def test_the_incapacitated_lose_their_concentration(tables):
+    b, me, them = duel(tables, cls="cleric")
+    me.concentration = {"spell": "bless", "rounds": 10}
+    me.conditions["stunned"] = 1
+    b._check_end()
+    assert me.concentration is None
+
+
+def test_surprise_costs_initiative_not_a_turn(tables):
+    c = hero(tables)
+    cr = spawn(tables, "bandit", RNG(1, "foe"), 1)
+    b = Battle(tables, [c], [cr], Env(surprised="foe"), RNG(1, "battle"), spots={0: (3, 4), 1: (9, 4)})
+    b.start()
+    bandit = b.fighters[1]
+    assert query.initiative_roll(bandit).disadvantage
+    b.order = [bandit.id, b.fighters[0].id]
+    b.turn, b.turn_started = 0, False
+    start = (bandit.x, bandit.y)
+    b.step()
+    assert (bandit.x, bandit.y) != start or any(e["kind"] == "attack" for e in b.events)  # it acts
+
+
+def test_an_emanation_reaches_out_from_its_maker_and_leaves_them_out(tables):
+    b, me, them = duel(tables, gap=6)
+    cells = b.field.area("emanation", 10, origin=me.space, toward=(me.x, me.y))
+    assert (me.x, me.y) not in cells
+    assert (me.x + 2, me.y) in cells and (me.x + 3, me.y) not in cells
+    assert (me.x + 2, me.y + 2) in cells  # 5-5-5: a diagonal square counts as five feet

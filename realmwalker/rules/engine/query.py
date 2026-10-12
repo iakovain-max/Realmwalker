@@ -249,18 +249,31 @@ def resists(f, dtype: str) -> bool:
 
 
 def damage_taken(f, amount: int, dtype: str) -> tuple[int, str]:
-    """Damage after immunity, vulnerability and resistance, and which of them applied."""
+    """Damage after immunity, resistance and vulnerability, in the 2024 order (PHB chapter 1, Order of Application:
+    adjustments first, then Resistance, halving and rounding down, then Vulnerability), and which of them applied."""
     kind = defences(f, dtype)
     if kind == "immune":
         return 0, kind
+    if resists(f, dtype):
+        amount //= 2
     if kind == "vulnerable":
         amount *= 2
-        if resists(f, dtype):
-            amount = max(1, amount // 2)
-        return amount, kind
-    if kind == "resist":
-        return max(1, amount // 2), kind
-    return amount, ""
+    return amount, kind
+
+
+def concentration_dc(damage: int) -> int:
+    """The Constitution save to keep concentrating after damage: 10 or half the damage, at most 30 (2024)."""
+    return min(30, max(10, damage // 2))
+
+
+def initiative_roll(f) -> Roll:
+    """Advantage or disadvantage on initiative (2024): surprised or incapacitated, or invisible."""
+    r = Roll()
+    if f.surprised:
+        r.add("disadvantage", "surprised")
+    for cid, mode in cond.flags(f.t, f.conditions, "initiative"):
+        r.add(mode, _cond_name(f, cid))
+    return r
 
 
 def condition_immune(f, cid: str) -> bool:
@@ -270,3 +283,8 @@ def condition_immune(f, cid: str) -> bool:
     if f.creature is not None and cid in f.cdef.get("condition_immune", []):
         return True
     return cid in tr.values(f, "immune_condition", flat=True)
+
+
+def attacks_per_action(f) -> int:
+    """How many attacks the Attack action makes (Extra Attack: 2)."""
+    return max([1] + [int(v) for v in tr.values(f, "attacks")])

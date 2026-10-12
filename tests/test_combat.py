@@ -835,7 +835,7 @@ def test_every_spell_can_be_aimed(tables):
         if sp["target"] in ("point", "direction"):
             assert sp.get("area") or spellrules.has_op(sp, "teleport", "summon", "guardian"), sid
         if sp.get("area"):
-            assert sp["area"]["shape"] in ("sphere", "cylinder", "cube", "cone", "line"), sid
+            assert sp["area"]["shape"] in ("sphere", "cylinder", "cube", "cone", "line", "emanation"), sid
 
 
 def test_a_fight_nobody_can_reach_breaks_off(tables):

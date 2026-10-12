@@ -158,6 +158,7 @@ class Fighter:
         self.took_fire = False
         self.morale_checked: set[str] = set()
         self.damage_taken = 0
+        self.temp_hp = 0  # temporary hit points: lost first, and they do not add up (the higher is kept)
         self.uncanny_used_round = -1
         self.died_round = -1
         # This turn.
@@ -553,11 +554,12 @@ class Battle:
 
     # ------------------------------------------------------------------ start
     def start(self, intro: str = "") -> None:
+        """Initiative, the 2024 way: a Dexterity check, at a disadvantage for the surprised (they still act)."""
         for f in self.fighters:
-            f.initiative = dice.d20(self.rng).natural + f.mod("dex")
             if self.env.surprised == f.side:
                 f.surprised = True
-                f.reaction = False
+            r = query.initiative_roll(f)
+            f.initiative = dice.d20(self.rng, advantage=r.advantage, disadvantage=r.disadvantage).natural + f.mod("dex")
         self.order = [f.id for f in sorted(self.fighters, key=lambda f: (-f.initiative, -f.mod("dex"), self.rng.random()))]
         if intro:
             self.say(intro, "danger")
@@ -600,11 +602,7 @@ class Battle:
             if self.outcome is not None:
                 return True
         if f.surprised:
-            f.surprised = False
-            if f.active:
-                self.say(f"{f.the_name} is caught flat-footed.", "system")
-            self.end_turn()
-            return True
+            f.surprised = False  # (2024: surprise costs only initiative; the Cutthroat still strikes them hard first)
         if f.grovel and f.can_act():
             f.grovel = False
             f.conditions["prone"] = -1
@@ -748,6 +746,9 @@ class Battle:
         self.outcome = "parley"
 
     def _check_end(self) -> None:
+        for f in self.fighters:
+            if f.concentration is not None and (query.flag(f, "breaks_concentration") or not f.active):
+                self._end_concentration(f, quiet=not f.active, why="is lost")  # incapacitated (2024)
         foes = [f for f in self.side(FOE) if f.active and "unconscious" not in f.conditions]
         party = [f for f in self.side(PARTY) if f.active and "unconscious" not in f.conditions]
         if not foes:
@@ -1455,13 +1456,19 @@ class Battle:
             durations.remove(target, "unconscious")
             self.say(f"{target.the_name} wakes with a start.", "system")
         if target.concentration is not None and target.active and target.standing:
-            dc = max(10, amount // 2)
+            dc = query.concentration_dc(amount)
             if not self._save(target, "con", dc):
                 self._end_concentration(target, quiet=False, why="breaks")
         if target.active and target.side == FOE:
             self._morale_after_hit(target)
 
     def _apply_hp_loss(self, target: Fighter, amount: int, *, source: Fighter | None, cause: str, crit: bool = False) -> None:
+        if target.temp_hp > 0 and amount > 0 and cause != "blood loss":
+            took = min(target.temp_hp, amount)
+            target.temp_hp -= took
+            amount -= took  # temporary hit points go first (2024)
+            if amount <= 0:
+                return
         if source is not None and target.state == "fighting" and amount > 0:
             amount = events.emit(self, "damage_incoming", actor=source, target=target, stage="hp",
                                  amount=amount).amount  # an Arcane Ward
@@ -1620,8 +1627,7 @@ class Battle:
             return False
         if f.attacks_left <= 0:
             f.action -= 1
-            extra = f.char is not None and f.char.level >= 5 and "extra_attack" in f.char.features
-            f.attacks_left = 2 if extra else 1
+            f.attacks_left = query.attacks_per_action(f)
         f.attacks_left -= 1
         self._attack(f, opt, target)
         if f.char and opt.key == "main" and "light" in opt.properties and opt.is_melee:
@@ -2131,6 +2137,8 @@ class Battle:
             return []
         if spell["target"] == "self":
             point = (f.x, f.y)
+            if area["shape"] == "emanation":
+                return self.field.area("emanation", int(area["size"]), origin=f.space, toward=point)
             return self.field.area(area["shape"], int(area["size"]) + (f.sq - 1) * 5 // 2,
                                    origin=f.space, toward=point) + list(f.cells) if area["shape"] in ("sphere", "radius") else []
         if point is None:
