@@ -366,16 +366,23 @@ ATTACK = Obj(
         "recharge": Int(min=2, max=6, optional=True),
     }
 )
+# A creature is its 2025 stat block ("statblock", data/statblocks.json) and its flavour; the numbers below are only for
+# a creature written the old way, without a block (rules/engine/statblocks.py; registry checks one or the other).
 CREATURE = Obj(
     {
+        "statblock": Str(max_len=40, optional=True), "attack_extras": Map(Any_(), optional=True),
+        "action_swap": Map(Any_(), optional=True), "override": Map(Any_(), optional=True),
         "name": Str(max_len=40), "plural": Str(max_len=40),
-        "kind": Str(choices=["beast", "humanoid", "undead", "giant", "monstrosity", "dragon"]),
-        "body": Str(choices=["humanoid", "quadruped", "spider"]), "size": Str(choices=["tiny", "small", "medium", "large", "huge"]),
-        "cr": Float(min=0, max=30), "xp": Int(min=0, max=200000), "ac": Int(min=1, max=30), "hp": Str(max_len=12),
-        "speed": Int(min=0, max=120), "abilities": Obj({a: Int(min=1, max=30) for a in ABILITY_IDS}),
-        "skills": Map(Int(min=-5, max=20)), "darkvision": Int(min=0, max=120),
-        "attacks": List(ATTACK, min_items=1), "multiattack": Int(min=1, max=6, optional=True),
-        "traits": List(Str(max_len=40)), "morale": Str(choices=["beast", "bandit", "soldier", "coward", "warrior", "fanatic", "mindless"]),
+        "kind": Str(max_len=20, optional=True),
+        "body": Str(choices=["humanoid", "quadruped", "spider"]),
+        "size": Str(choices=["tiny", "small", "medium", "large", "huge", "gargantuan"], optional=True),
+        "cr": Float(min=0, max=30, optional=True), "xp": Int(min=0, max=200000, optional=True),
+        "ac": Int(min=1, max=30, optional=True), "hp": Str(max_len=12, optional=True),
+        "speed": Int(min=0, max=120, optional=True), "abilities": Obj({a: Int(min=1, max=30) for a in ABILITY_IDS}, optional=True),
+        "skills": Map(Int(min=-5, max=20), optional=True), "darkvision": Int(min=0, max=120, optional=True),
+        "attacks": List(ATTACK, min_items=1, optional=True), "multiattack": Int(min=1, max=6, optional=True),
+        "traits": List(Str(max_len=40), optional=True),
+        "morale": Str(choices=["beast", "bandit", "soldier", "coward", "warrior", "fanatic", "mindless"]),
         "rank": Str(choices=["front", "back"]), "names": Str(max_len=30, optional=True),
         "gear": List(List(Any_(), min_items=2, max_items=2)), "money": Any_(optional=True),
         "loot": List(List(Any_(), min_items=2, max_items=2), optional=True),

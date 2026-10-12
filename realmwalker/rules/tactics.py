@@ -52,11 +52,20 @@ def _monster_turn(b: Battle, f: Fighter) -> None:
             return
     if not plain:
         return
-    if f.has_trait("aggressive") and f.bonus > 0 and f.speed > 0 and \
+    if (f.has_trait("aggressive") or f.has_trait("charge")) and f.bonus > 0 and f.speed > 0 and \
             not any(b.gap(f, e) <= 1 for e in b.enemies_of(f) if e.standing):
-        f.bonus -= 1  # Aggressive: a bonus action to close in
-        f.move_left += f.speed
+        f.bonus -= 1  # Aggressive (a bonus action to close in), or a troll's Charge (half its speed)
+        f.move_left += f.speed if f.has_trait("aggressive") else f.speed // 2
     _fight(b, f, plain, attacks=max(1, int(f.cdef.get("multiattack", 1))))
+    if f.has_trait("rampage") and f.bonus > 0 and b.outcome is None and b.current is f and f.active \
+            and f.creature.uses.get("rampage", 1) > 0:
+        hurt = [e for e in b.enemies_of(f) if e.standing and e.hp <= e.max_hp // 2 and b.gap(f, e) <= 1]
+        rend = next((o for o in plain if o.is_melee and o.available), None)
+        if hurt and rend is not None:  # Rampage: once a day, another blow at a bloodied foe
+            f.bonus -= 1
+            f.creature.uses["rampage"] = 0
+            b._attack(f, rend, min(hurt, key=lambda e: e.hp))
+            b._check_end()
     if f.has_trait("nimble_escape") and f.bonus > 0 and b.outcome is None and b.current is f and f.active:
         _slip_away(b, f)
 

@@ -238,6 +238,8 @@ def _save(c: Cast, o: dict, victim) -> None:
 
 @op("push")
 def _push(c: Cast, o: dict, victim) -> None:
+    if o.get("max_size") and victim is not None and not statblocks.size_at_most(victim.size, o["max_size"]):
+        return
     if victim is not None and victim is not c.caster and victim.hp > 0:
         if o.get("now"):
             c.b._push(c.caster, victim, int(o["feet"]) // 5)
@@ -248,6 +250,10 @@ def _push(c: Cast, o: dict, victim) -> None:
 @op("damage")
 def _damage(c: Cast, o: dict, victim) -> None:
     """Damage without a roll to hit or a save (it has already landed)."""
+    if o.get("max_size") and victim is not None and not statblocks.size_at_most(victim.size, o["max_size"]):
+        return
+    if o.get("charge_feet") and c.caster.moved_feet < int(o["charge_feet"]):
+        return  # only after a charge (a boar's Gore)
     if victim is not None and (victim.active or victim.state == "down"):
         for dice_, dtype, up in spellrules.damage_parts(o):
             c.b._hit(c.caster, victim, dice.roll(expr(c, dice_, up), c.b.rng).total, dtype, crit=False,
@@ -286,6 +292,10 @@ def _condition(c: Cast, o: dict, victim) -> None:
         if x is None or not x.active:
             continue
         if o.get("max_size") and not statblocks.size_at_most(x.size, o["max_size"]):
+            continue
+        if x.kind in o.get("not_kinds", ()) or x.char is not None and x.char.race in o.get("not_species", ()):
+            continue  # (a ghoul's touch: not the dead, not elves)
+        if o.get("charge_feet") and f.moved_feet < int(o["charge_feet"]):
             continue
         extra = {}
         if o.get("escape"):
@@ -365,6 +375,14 @@ def _burning(c: Cast, o: dict, victim) -> None:
     if victim is not None and victim.active:
         durations.buff(victim, {"burning": True, "source": "burning"})
         c.b.say(f"{victim.the_name} is on fire!", "danger" if victim.side == c.caster.side else "good")
+
+
+@op("attach")
+def _attach(c: Cast, o: dict, victim) -> None:
+    """A stirge fastens on: it drinks at the start of each of its turns (statblock damage `when` start of turn)."""
+    if victim is not None and victim.active:
+        c.caster.attached_to = victim.id
+        c.b.say(f"{c.caster.the_name} fastens onto {victim.the_name}.", "danger" if victim.side == "party" else "info")
 
 
 @op("lose_turn")

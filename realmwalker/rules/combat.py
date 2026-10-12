@@ -155,6 +155,8 @@ class Fighter:
         self.dodging = False
         self.helped = False
         self.grovel = False  # Commanded to grovel: its next turn is spent on the ground
+        self.moved_feet = 0  # how far it has moved this turn (a boar's charge)
+        self.attached_to: int | None = None  # a stirge fastened on someone
         self.surprised = False
         self.took_fire = False
         self.morale_checked: set[str] = set()
@@ -596,7 +598,8 @@ class Battle:
 
     def _knowledge_checks(self) -> None:
         """The party sizes up each kind of foe (Nature for beasts, History for people, Religion for the dead)."""
-        skill_for = {"beast": "nature", "humanoid": "history", "undead": "religion", "giant": "nature"}
+        skill_for = {"beast": "nature", "dragon": "nature", "ooze": "nature", "plant": "nature", "humanoid": "history",
+                     "giant": "history", "undead": "religion", "fiend": "religion", "celestial": "religion"}  # (2024 Study)
         party = [f for f in self.side(PARTY) if f.char]
         for def_id in sorted({f.creature.def_id for f in self.side(FOE)}):  # sorted: a set's order changes per run
             d = self.t.creatures[def_id]
@@ -656,6 +659,7 @@ class Battle:
         f.attacks_left = 0
         f.dashed = f.disengaged = f.light_attack = False
         f.cast_bonus_spell = f.cast_action_spell = False
+        f.moved_feet = 0
         f.spent_round += 1
         for b in list(f.buffs):
             if "rounds" in b:
@@ -702,6 +706,17 @@ class Battle:
         self._zones_on(f, start=True)
         if not f.active:
             return
+        if f.attached_to is not None:  # a stirge drinking
+            prey = next((x for x in self.fighters if x.id == f.attached_to), None)
+            if prey is None or not (prey.active or prey.state == "down") or self.gap(f, prey) > 1:
+                f.attached_to = None
+            else:
+                drink = next((e for a in f.cdef.get("attacks", []) for e in a.get("on_hit", [])
+                              if e.get("op") == "damage" and e.get("when")), None)
+                if drink:
+                    self.say(f"{f.the_name} drinks from {prey.the_name}.", "danger" if prey.side == PARTY else "info")
+                    self._hit(f, prey, dice.roll(drink["damage"], self.rng).total, drink.get("type", "necrotic"),
+                              crit=False, weapon=drink.get("type", "drain"))
         if any(bf.get("burning") for bf in f.buffs):  # (the Burning hazard, 2024)
             dmg, dtype = hazards.burning_damage(self.t)
             self.say(f"{f.the_name} is burning.", "danger" if f.side == PARTY else "info")
@@ -940,6 +955,7 @@ class Battle:
             before = (f.x, f.y)
             f.x, f.y = sq
             f.move_left -= cost
+            f.moved_feet += grid.SQUARE_FT
             walked.append(sq)
             n += 1
             for x in held:  # the held come along, into the square just left
@@ -963,6 +979,8 @@ class Battle:
 
     def dragging(self, f: Fighter) -> bool:
         """Whether moving costs `f` double: it holds someone not tiny and not two sizes smaller (2024)."""
+        if any(trs.values(f, "drag_free")):
+            return False  # (a bugbear's Abduct)
         return any(x.size != "tiny" and SIZES.index(x.size) > SIZES.index(f.size) - 2 for x in self.held_by(f))
 
     def _sync_grapples(self, f: Fighter) -> None:
@@ -1148,6 +1166,8 @@ class Battle:
                     opt.reason = "not ready again yet" if not opt.available else ""
                 if a.get("uses") and self.uses_left(f, a) <= 0:
                     opt.available, opt.reason = False, "used up for the day"
+                if f.attached_to is not None and any(e.get("op") == "special" and e.get("attach") for e in a.get("on_hit", [])):
+                    opt.available, opt.reason = False, "fastened on"
                 out.append(opt)
             return out
         c = f.char
@@ -1338,6 +1358,8 @@ class Battle:
         return p
 
     def _attack(self, att: Fighter, opt: AttackOption, target: Fighter, *, spell_text: str = "") -> bool:
+        if opt.extra.get("single_save"):
+            return self._save_action(att, opt, target)
         adv, dis, why = self._adv_dis(att, target, opt)
         guard = self._protector(att, target)
         if guard is not None:
@@ -1361,6 +1383,12 @@ class Battle:
             if self._shield(target, att, opt, total, ac):
                 ac += 5
                 hit = False
+        if hit and not crit and opt.is_melee and target.creature is not None and target.reaction \
+                and target.has_trait("parry") and total < ac + 2 and not target.incapacitated:
+            target.reaction = False
+            ac += 2
+            hit = False
+            self.say(f"{target.the_name} parries.", "info" if target.side == FOE else "good")
         if hit and query.crit_within(self, att, target):
             crit = True  # a blow from right beside someone who cannot defend themselves at all
         if hit:
@@ -1409,32 +1437,38 @@ class Battle:
             amount = sum(r if r > 2 else self.rng.randint(1, sides) for r in rolled.rolls) + flat
         amount += events.emit(self, "attack_damage", actor=att, target=target, opt=opt, crit=crit,
                               advantage=adv and not dis, sides=sides, extra=0).extra  # Sneak Attack, Divine Strike...
-        if att.creature and att.cdef.get("attacks") and opt.extra.get("poison"):
-            poison = opt.extra["poison"]
-            self._save_damage(att, target, "con", poison["dc"], poison["damage"], "poison", "half", quiet=True)
         self._spend_use(att, opt)
         self._hit(att, target, max(1, amount), opt.damage_type, crit=crit, weapon=opt.name,
                   bite=opt.extra.get("wound") == "bite", claws=opt.extra.get("wound") == "cut" and att.creature is not None and opt.name == "claws")
         for e in opt.extra.get("extra", ()):  # a 2025 block's damage of another kind on the same hit (a spider's venom)
+            if e.get("if") == "advantage" and not (adv and not dis):
+                continue  # (a goblin's extra 1d4 needs the advantage)
             if target.active or target.state == "down":
                 self._hit(att, target, dice.roll(e["damage"], self.rng, double_dice=crit).total, e["type"], crit=False,
                           weapon=opt.name)
         if opt.extra.get("on_hit") and target.active:
             self._block_effects(att, target, opt, opt.extra["on_hit"])
-        if target.active and opt.extra.get("trip_dc") and "prone" not in target.conditions:
-            if not self._save(target, "str", int(opt.extra["trip_dc"])):
-                target.conditions["prone"] = -1
-                self._event("prone", who=target.id)
-                self.say(f"{target.the_name} is dragged down.", "danger")
-        if target.active and opt.extra.get("paralyze_dc"):
-            immune = target.char and target.char.race == "elf"
-            if not immune and not self._save(target, "con", int(opt.extra["paralyze_dc"])):
-                target.conditions["paralyzed"] = 2
-                self._event("condition", who=target.id, cond="paralyzed")
-                self.say(f"{target.the_name} goes rigid, paralysed by the touch.", "danger")
         if opt.extra.get("disease") and target.char and self.rng.chance(float(opt.extra.get("disease_chance", 1.0))):
             target.char.conditions.append(f"exposed:{opt.extra['disease']}")
         return True
+
+    def _save_action(self, att: Fighter, opt: AttackOption, target: Fighter) -> bool:
+        """A stat block's action that one creature saves against (no attack roll): damage, and what a failure brings."""
+        a = opt.extra
+        self._spend_use(att, opt)
+        att.hidden = 0
+        self.say(f"{att.the_name} uses {a['name'].title()} on {target.the_name}.", "danger" if target.side == PARTY else "info")
+        self._event("cast", by=att.id, to=target.id, spell=a.get("id", a["name"]), effect="save", dtype=opt.damage_type,
+                    area=list(target.cells), point=None, shape="")
+        if opt.damage and opt.damage != "0":
+            saved = self._save_damage(att, target, a["save"], int(a["dc"]), opt.damage, opt.damage_type,
+                                      "half" if a.get("half") else "none")
+        else:
+            saved = self._save(target, a["save"], int(a["dc"]))
+            self._event("save", who=target.id, ok=saved)
+        if not saved and target.active and a.get("on_fail"):
+            self._block_effects(att, target, opt, a["on_fail"])
+        return not saved
 
     def _block_effects(self, att: Fighter, target: Fighter, opt: AttackOption, block_effects: list[dict]) -> None:
         """What a stat block's hit or failed save brings (rules/engine/statblocks.ops), run by the kernel."""
@@ -1614,7 +1648,7 @@ class Battle:
         self.say(f"{text} <dim>({amount})</>", "danger" if target.side == PARTY else "info")
         self._event("damage", to=target.id, by=att.id if att else None, amount=amount, dtype=dtype, crit=crit)
         self._apply_hp_loss(target, amount, source=att, cause=f"{att.the_name if att else 'a wound'}'s {weapon}" if att else weapon,
-                            crit=crit)
+                            crit=crit, dtype=dtype)
         target.damage_taken += amount
         if target.state not in ("dead",) and hp_before > 0:
             # A wound is judged against the body, not the hit points: a level-1 wizard's seven are luck and nerve,
@@ -1642,7 +1676,8 @@ class Battle:
         if target.active and target.side == FOE:
             self._morale_after_hit(target)
 
-    def _apply_hp_loss(self, target: Fighter, amount: int, *, source: Fighter | None, cause: str, crit: bool = False) -> None:
+    def _apply_hp_loss(self, target: Fighter, amount: int, *, source: Fighter | None, cause: str, crit: bool = False,
+                       dtype: str = "") -> None:
         if target.temp_hp > 0 and amount > 0 and cause != "blood loss":
             took = min(target.temp_hp, amount)
             target.temp_hp -= took
@@ -1665,7 +1700,8 @@ class Battle:
             return
         new_hp = target.hp - amount
         if new_hp <= 0:
-            if events.emit(self, "hp_zero", actor=source, target=target, amount=amount, survived=False).survived:
+            if events.emit(self, "hp_zero", actor=source, target=target, amount=amount, survived=False, crit=crit,
+                           dtype=dtype).survived:
                 return  # Death Ward, Relentless Endurance, Undead Fortitude...
             target.hp = 0
             if target.char:
@@ -2224,7 +2260,7 @@ class Battle:
         sc = f.cdef["spellcasting"]
         level = spell["level"]
         if self._per_day(f, sid) is not None:
-            f.creature.uses[f"spell:{sid}"] -= 1
+            self._spend_per_day(f, sid)
         elif level and sid not in sc.get("at_will", []):
             i = next(i for i in range(level - 1, len(f.slots)) if f.slots[i] > 0)
             f.slots[i] -= 1
@@ -2243,11 +2279,22 @@ class Battle:
 
     def _per_day(self, f: Fighter, sid: str) -> int | None:
         """Casts left today of a spell a 2025 block lists as "N/day" (None if it is not one of those)."""
-        per_day = (f.cdef.get("spellcasting") or {}).get("per_day") or {}
-        for n, sids in per_day.items():
+        sc = f.cdef.get("spellcasting") or {}
+        for n, sids in (sc.get("per_day") or {}).items():
             if sid in sids:
                 return f.creature.uses.setdefault(f"spell:{sid}", int(n))
+        for pool, p in (sc.get("shared") or {}).items():
+            if sid in p["spells"]:
+                return f.creature.uses.setdefault(f"pool:{pool}", int(p["uses"]))
         return None
+
+    def _spend_per_day(self, f: Fighter, sid: str) -> None:
+        sc = f.cdef.get("spellcasting") or {}
+        for pool, p in (sc.get("shared") or {}).items():
+            if sid in p["spells"] and not any(sid in s for s in (sc.get("per_day") or {}).values()):
+                f.creature.uses[f"pool:{pool}"] -= 1
+                return
+        f.creature.uses[f"spell:{sid}"] -= 1
 
     def spell_options(self, f: Fighter) -> list[tuple[str, bool, str]]:
         """(spell id, possible, why not). Scrolls in the pack appear as "scroll:<item uid>:<spell id>"."""

@@ -34,6 +34,23 @@
       "name": "Regeneration", "text": "Heals 10 hit points at the start of each of its turns, unless fire or acid burned it.",
       "hooks": [{"event": "turn_start", "as": "self", "handler": "regeneration", "amount": 10}]
     },
+    "bloodied_fury": {
+      "name": "Bloodied Fury", "text": "Bloodied, it attacks at an advantage.",
+      "modifiers": [{"attack": "advantage", "when": ["owner_bloodied"], "why": "bloodied fury"}]
+    },
+    "bloodied_frenzy": {
+      "name": "Bloodied Frenzy", "text": "Bloodied, it attacks and saves at an advantage.",
+      "modifiers": [{"attack": "advantage", "when": ["owner_bloodied"], "why": "frenzy"},
+                    {"save": "advantage", "when": ["owner_bloodied"], "why": "frenzy"}]
+    },
+    "spider_climb": {"name": "Spider Climb", "text": "Climbs walls and ceilings as easily as floors.", "where": "movement"},
+    "abduct": {"name": "Abduct", "text": "Drags whoever it holds at no extra cost.", "modifiers": [{"drag_free": true}]},
+    "loathsome_limbs": {"name": "Loathsome Limbs", "text": "Cut deep enough, its severed limbs fight on (not yet in the game).", "where": "not yet"},
+    "training": {"name": "Training", "text": "Trained in one skill of its trade.", "where": "sheet"},
+    "charge": {"name": "Charge", "text": "A bonus action: half its speed straight at an enemy it can see.", "where": "tactics"},
+    "rampage": {"name": "Rampage", "text": "Once a day, after hurting a bloodied foe, it closes in and rends again.", "where": "tactics"},
+    "parry": {"name": "Parry", "text": "A reaction: +2 AC against a melee blow that would hit.", "where": "reactions"},
+    "redirect_attack": {"name": "Redirect Attack", "text": "Swaps places with a small ally to take a blow meant for it (not yet in the game).", "where": "not yet"},
     "sunlight_sensitive": {
       "name": "Sunlight Sensitivity", "text": "Fights badly under an open, bright sky.",
       "modifiers": [{"attack": "disadvantage", "when": ["in_sunlight"], "why": "sunlight"}]

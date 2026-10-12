@@ -232,8 +232,8 @@ def test_the_kernel_gives_the_old_answers_where_the_rules_did_not_change(tables)
 def test_traits_come_from_race_class_and_stat_block(tables):
     b, me, them = duel(tables, foe="wolf", race="halfling", cls="rogue")
     assert {"lucky", "sneak_attack"} <= trs.of(me)
-    assert {"pack_tactics", "keen_senses"} <= trs.of(them)
-    assert them.passive() == 10 + them.skill("perception") + 5  # Keen Senses through its modifier
+    assert {"pack_tactics", "takes_food"} <= trs.of(them)  # its 2025 block's, and the game's own
+    assert them.passive() == 15 == them.cdef["passive"]  # 10 + Perception +5 (2025: no Keen Senses)
 
 
 def test_hooks_are_asked_target_first_then_in_the_order_of_battle(tables):

@@ -121,6 +121,7 @@ WHEN: dict[str, Callable[[Ctx], bool]] = {
     "target_not_acted": lambda c: not c.target.acted,  # the target has not had a turn in this fight yet
     "in_sunlight": _in_sunlight,  # out under a bright sky
     "owner_able": lambda c: c.owner.standing and not _incap(c.owner),
+    "owner_bloodied": lambda c: c.owner.hp <= c.owner.max_hp * c.owner.t.conditions["bloodied"]["at_most"],
     "attacker_beside_owner": lambda c: c.b.gap(c.owner, c.att) <= 1,
     "melee": lambda c: c.opt is not None and c.opt.is_melee,
     "ranged": lambda c: c.opt is not None and not c.opt.is_melee,
