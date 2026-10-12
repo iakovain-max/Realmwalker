@@ -124,10 +124,10 @@ def strange_things(game, caster) -> list:
 
 
 def _needs(game, spell, target) -> bool:
-    if spell["kind"] == "cure":
+    if spellrules.has_op(spell, "restore"):
         return bool([d for d in target.diseases if d.get("phase") in ("sick", "incubating") and d["id"] != "wound_fever"]
                     or [w for w in target.wounds if w.infection > 0])
-    who = [c for c in game.party if c.alive] if spell["target"] == "all_allies" else [target]
+    who = [c for c in game.party if c.alive] if spellrules.heals_many(spell) else [target]
     return any(c.hp < c.max_hp or c.wounds for c in who)
 
 
@@ -144,10 +144,11 @@ def road_problem(game, caster, spell_id: str, target=None) -> str | None:
     if not ok:
         return why
     target = target or caster
-    if spell["kind"] == "identify" and not strange_things(game, caster):
+    use = spellrules.road_use(t, spell_id)
+    if use == "identify" and not strange_things(game, caster):
         return "nothing you carry is strange to you"
-    if spell["kind"] in ("heal", "cure") and not _needs(game, spell, target):
-        return "there is nothing for it to mend" if spell["kind"] == "cure" else "nobody needs healing"
+    if use in ("heal", "cure") and not _needs(game, spell, target):
+        return "there is nothing for it to mend" if use == "cure" else "nobody needs healing"
     on = caster if spell["target"] == "self" else target
     left = spellrules.lasting(on, t).get(spell_id, 0.0)
     if spell["target"] != "all_allies" and left > int(spell.get("rounds", 0)) / spellrules.ROUNDS_PER_HOUR / 2:
@@ -166,7 +167,8 @@ def cast_on_road(game, caster, spell_id: str, target=None) -> list[str]:
     why = road_problem(game, caster, spell_id, target)
     if why:
         return [f"{spell['name']}: {why}."]
-    if spell["kind"] in ("heal", "cure"):
+    use = spellrules.road_use(t, spell_id)
+    if use in ("heal", "cure"):
         wound = max(target.wounds, key=lambda w: (w.severity, w.bleed), default=None)
         return care.cast(game, caster, target, wound, spell_id)
     level = spell["level"]
@@ -175,7 +177,7 @@ def cast_on_road(game, caster, spell_id: str, target=None) -> list[str]:
         return ["No spell slot left for that. A long rest restores them."]
     if slot:
         spellrules.spend_slot(caster, slot)
-    if spell["kind"] == "identify":
+    if use == "identify":
         from realmwalker.game import magic_items
 
         item = strange_things(game, caster)[0]

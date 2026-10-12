@@ -364,13 +364,30 @@ def test_a_bonus_action_spell_leaves_only_a_cantrip(tables):
     assert not options["cure_wounds"][0] and options["sacred_flame"][0]
 
 
-def test_sleep_puts_the_weak_to_sleep(tables):
+def test_sleep_the_2024_way(tables):
+    """Sleep (2024): a failed Wisdom save leaves a foe able to do nothing until the end of its next turn; a second
+    failure puts it to sleep; a blow wakes it, lying down. The dead never sleep."""
+    from realmwalker.rules.engine import durations
+
     wiz = hero(tables, "wizard")
-    b = battle(tables, [wiz], foes(tables, "giant_rat", "giant_rat"), seed=2, spots={0: (2, 4), 1: (9, 4), 2: (10, 5)})
+    b = battle(tables, [wiz], foes(tables, "giant_rat", "skeleton"), seed=2, spots={0: (2, 4), 1: (9, 4), 2: (10, 5)})
     f = b.side(PARTY)[0]
+    rat, bones = b.side(FOE)
+    b._save = lambda *a, **k: False  # every save fails
     turn_of(b, f)
-    b.do_cast(f, "sleep", point=(9, 4))
-    assert any("unconscious" in x.conditions for x in b.side(FOE))
+    assert b.do_cast(f, "sleep", point=(9, 4))
+    assert "incapacitated" in rat.conditions and not rat.can_act()
+    assert not bones.conditions  # undead do not sleep
+    durations.tick(b, rat, "turn_end")  # the end of its next turn: the second save
+    assert "unconscious" in rat.conditions and "prone" in conditions_of(rat)
+    b._hit(bones, rat, 1, "piercing", crit=False, weapon="bite")
+    assert "unconscious" not in rat.conditions and "prone" in rat.conditions and rat.can_act()
+
+
+def conditions_of(f):
+    from realmwalker.rules.engine import query
+
+    return query.conditions(f)
 
 
 def test_cleric_heals_and_turns_undead(tables):
@@ -816,7 +833,7 @@ def test_every_spell_can_be_aimed(tables):
     for sid, sp in tables.spells.defs.items():
         assert "range" in sp, sid
         if sp["target"] in ("point", "direction"):
-            assert sp.get("area") or sp["kind"] in ("move", "summon", "guardian"), sid
+            assert sp.get("area") or spellrules.has_op(sp, "teleport", "summon", "guardian"), sid
         if sp.get("area"):
             assert sp["area"]["shape"] in ("sphere", "cylinder", "cube", "cone", "line"), sid
 

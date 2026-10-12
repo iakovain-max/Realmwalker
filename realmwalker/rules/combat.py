@@ -28,7 +28,7 @@ from realmwalker.core.rng import RNG
 from realmwalker.rules import grid
 from realmwalker.rules import spells as spellrules
 from realmwalker.rules.character import Character, Sheet, modifier
-from realmwalker.rules.engine import events, query
+from realmwalker.rules.engine import durations, effects, events, query
 from realmwalker.rules.engine import traits as trs
 from realmwalker.rules.creatures import Creature
 from realmwalker.rules.inventory import remove_item
@@ -147,12 +147,13 @@ class Fighter:
         self.state = "fighting"  # fighting, fleeing, down, dead, fled, surrendered
         self.conditions: dict[str, int] = {}  # the 2024 conditions (data/conditions.json): rounds left, -1 until ended
         self.sources: dict[str, int] = {}  # who caused a condition, where that matters (rules/engine/query.source)
+        self.cond_ends: dict[str, dict] = {}  # how a condition ends, when it is timed by turns (rules/engine/durations.py)
         self.buffs: list[dict] = []
         self.death_saves = [0, 0]  # successes, failures
         self.stable = False
         self.dodging = False
         self.helped = False
-        self.marked = False
+        self.grovel = False  # Commanded to grovel: its next turn is spent on the ground
         self.surprised = False
         self.took_fire = False
         self.morale_checked: set[str] = set()
@@ -177,7 +178,6 @@ class Fighter:
         self.auto = False  # the game plays this party member's turns
         self.recharge: dict[str, bool] = {}  # breath weapons: ready or not
         self.slots = list((self.cdef or {}).get("spellcasting", {}).get("slots", []))  # a creature's spell slots left
-        self.no_heal = False
         self.spent_round = 0  # how many rounds it has been on the field (for Revivify's minute)
         self.acted = False  # has had a turn in this fight (the Cutthroat's Assassinate)
         self.glow = 0  # squares of bright light it carries (a torch, a glowing blade)
@@ -260,6 +260,27 @@ class Fighter:
 
     def buff_value(self, key: str) -> list:
         return [b[key] for b in self.buffs if key in b]
+
+    @property
+    def marked(self) -> bool:
+        """The next attack roll against it has advantage (Guiding Bolt)."""
+        return any(b.get("marked") for b in self.buffs)
+
+    @marked.setter
+    def marked(self, value: bool) -> None:
+        self.buffs = [b for b in self.buffs if not b.get("marked")]
+        if value:
+            self.buffs.append({"marked": True, "source": "mark"})
+
+    @property
+    def no_heal(self) -> bool:
+        """It cannot regain hit points just now (Chill Touch)."""
+        return any(b.get("no_heal") for b in self.buffs)
+
+    @property
+    def can_opportunity(self) -> bool:
+        """Whether it could make an opportunity attack now (Shocking Grasp stops it)."""
+        return self.reaction and not any(b.get("no_opportunity") for b in self.buffs)
 
     def ac(self) -> int:
         return query.ac(self)
@@ -584,6 +605,13 @@ class Battle:
                 self.say(f"{f.the_name} is caught flat-footed.", "system")
             self.end_turn()
             return True
+        if f.grovel and f.can_act():
+            f.grovel = False
+            f.conditions["prone"] = -1
+            self._event("prone", who=f.id)
+            self.say(f"{f.the_name} throws {f.possessive if f.char else 'itself'} to the ground, as commanded.", "system")
+            self.end_turn()
+            return True
         if not f.can_act():
             if f.state == "fighting" and ("stunned" in f.conditions or "paralyzed" in f.conditions):
                 self.say(f"{f.the_name} cannot move.", "system")
@@ -599,12 +627,12 @@ class Battle:
         return True
 
     def _start_of_turn(self, f: Fighter) -> None:
+        durations.tick(self, f, "turn_start")  # what lasts "until the start of its next turn" ends
         f.dodging = False
         f.action, f.bonus, f.reaction = 1, 1, True
         f.attacks_left = 0
         f.dashed = f.disengaged = f.light_attack = False
         f.cast_bonus_spell = f.cast_action_spell = False
-        f.no_heal = False
         f.spent_round += 1
         for b in list(f.buffs):
             if "rounds" in b:
@@ -620,7 +648,7 @@ class Battle:
             z.rounds -= 1
             if z.rounds < 0:
                 self._remove_zone(z)
-        for tok in [t for t in self.tokens if t.owner == f.id]:
+        for tok in [t for t in self.tokens if t.owner == f.id and t.rounds >= 0]:
             tok.rounds -= 1
             if tok.rounds < 0:
                 self.tokens.remove(tok)
@@ -669,6 +697,9 @@ class Battle:
                     if cond in ("stunned", "restrained", "frightened", "paralyzed"):
                         self.say(f"{f.the_name} is no longer {cond}.", "system")
         f.move_left = f.speed
+        if any(z.kind == "guardians" and z.owner is not None and any(c in z.cells for c in f.cells)
+               and self.fighter(z.owner).side != f.side for z in self.zones):
+            f.move_left //= 2  # Spirit Guardians: half speed in the emanation (2024)
         # Standing up from the ground costs half your movement.
         if "prone" in f.conditions and f.can_act() and f.state == "fighting" and f.move_left >= f.speed // 2 > 0:
             del f.conditions["prone"]
@@ -688,6 +719,7 @@ class Battle:
         if f.hidden and f.active and any(self.gap(e, f) <= 1 for e in self.enemies_of(f) if e.standing):
             f.hidden = 0
             self.say(f"{f.the_name} is found.", "system")
+        durations.tick(self, f, "turn_end")  # and what lasts "until the end of its next turn"
 
     def end_turn(self) -> None:
         if self.outcome is not None:
@@ -768,7 +800,7 @@ class Battle:
         if f.disengaged:
             return out
         for e in self.enemies_of(f):
-            if not e.standing or not e.reaction or e.incapacitated or e.state != "fighting":
+            if not e.standing or not e.can_opportunity or e.incapacitated or e.state != "fighting":
                 continue
             r = self.reach_of(e)
             if r:
@@ -842,7 +874,7 @@ class Battle:
             if provoke and not free and not f.disengaged:
                 there = (sq[0], sq[1], f.sq)
                 for e in self.enemies_of(f):
-                    if (e.state == "fighting" and e.reaction and not e.incapacitated and e.standing
+                    if (e.state == "fighting" and e.can_opportunity and not e.incapacitated and e.standing
                             and self.gap(e, f) <= self.reach_of(e) and grid.gap(e.space, there) > self.reach_of(e)
                             and self.can_see(e, f)):
                         if walked:
@@ -1246,6 +1278,8 @@ class Battle:
         if hit:
             crit = events.emit(self, "attack_hit", actor=att, target=target, opt=opt, crit=crit).crit  # Assassinate...
         att.helped = False
+        if target.marked:
+            target.marked = False  # spent on this roll, hit or miss
         if att.hidden:
             att.hidden = 0
         armor = target.armor_name("torso")
@@ -1277,8 +1311,6 @@ class Battle:
                 text = self.rng.choice(lines["miss"])
             self.say(self._fill(text, att, target, weapon=weapon, armor=armor or "armour"), "flavor")
             return False
-        if target.marked:
-            target.marked = False
         dmg_expr = opt.damage
         n, sides, flat = dice.parse(dmg_expr)
         rolled = dice.roll(dmg_expr, self.rng, double_dice=crit)
@@ -1306,12 +1338,6 @@ class Battle:
                 self.say(f"{target.the_name} goes rigid, paralysed by the touch.", "danger")
         if opt.extra.get("disease") and target.char and self.rng.chance(float(opt.extra.get("disease_chance", 1.0))):
             target.char.conditions.append(f"exposed:{opt.extra['disease']}")
-        if opt.extra.get("slows") and target.active:
-            target.buffs.append({"slow": int(opt.extra["slows"]), "rounds": 0, "source": "slow"})
-        if opt.extra.get("no_reactions") and target.active:
-            target.reaction = False
-        if opt.extra.get("no_heal") and target.active:
-            target.no_heal = True
         return True
 
     def _protector(self, att: Fighter, target: Fighter) -> Fighter | None:
@@ -1365,15 +1391,20 @@ class Battle:
         """A saving throw against damage (half on a save, or none); returns whether it was saved."""
         full = dice.roll(expr, self.rng).total if rolled is None else rolled
         saved = self._save(target, ability, dc, quiet=quiet, bonus=grid.COVER_AC[cover] if ability == "dex" else 0)
+        self._event("save", who=target.id, ok=saved)
+        self._save_hit(att, target, ability, saved, full, dtype, on_save)
+        return saved
+
+    def _save_hit(self, att: Fighter | None, target: Fighter, ability: str, saved: bool, full: int, dtype: str,
+                  on_save: str) -> None:
+        """The damage of a saving throw already made: all of it, half or none (Evasion...)."""
         if dtype == "poison" and not saved and target.char and not query.condition_immune(target, "poisoned"):
             target.conditions["poisoned"] = 10
         amount = (full // 2 if on_save == "half" else 0) if saved else full
         amount = events.emit(self, "save_damage", actor=att, target=target, ability=ability, saved=saved, full=full,
                              amount=amount).amount  # Evasion...
-        self._event("save", who=target.id, ok=saved)
         if amount > 0:
             self._hit(att, target, amount, dtype, crit=False, weapon=dtype)
-        return saved
 
     def _hit(self, att: Fighter | None, target: Fighter, amount: int, dtype: str, *, crit: bool, weapon: str,
              bite: bool = False, claws: bool = False) -> None:
@@ -1419,8 +1450,9 @@ class Battle:
                     wt = self.t.combat_text["wound"].get(wound.kind, {}).get(str(wound.severity))
                     if wt:
                         self.say(self.rng.choice(wt), "danger" if target.side == PARTY else "flavor")
+        durations.on_damage(self, target)  # a magical sleep breaks
         if "unconscious" in target.conditions and target.state == "fighting" and target.hp > 0:
-            del target.conditions["unconscious"]
+            durations.remove(target, "unconscious")
             self.say(f"{target.the_name} wakes with a start.", "system")
         if target.concentration is not None and target.active and target.standing:
             dc = max(10, amount // 2)
@@ -1615,6 +1647,8 @@ class Battle:
                 continue
             if x.state == "down" and self.gap(f, x) <= 1:
                 out.append(x)
+            elif x.active and "unconscious" in x.conditions and self.gap(f, x) <= 1:
+                out.append(x)  # asleep: shaken awake
             elif x.active and foes_here:
                 out.append(x)
         return out
@@ -1637,6 +1671,10 @@ class Battle:
                 self.say(f"{target.the_name} is no longer bleeding out.", "good")
             else:
                 self.say(f"{f.the_name} fumbles at the wound; the blood keeps coming.", "danger")
+        elif "unconscious" in target.conditions or "incapacitated" in target.conditions:
+            for cid in ("unconscious", "incapacitated"):
+                durations.remove(target, cid)
+            self.say(f"{f.the_name} shakes {target.the_name} awake.", "good")
         else:
             target.helped = True
             self.say(f"{f.the_name} creates an opening for {target.the_name}.", "system")
@@ -1719,7 +1757,11 @@ class Battle:
         holder = next((x for x in self.fighters if x.id == f.grappled_by), None)
         dc = 10 + (holder.skill("athletics") if holder else 2)
         stuck = "grappled" if "grappled" in f.conditions else "restrained"
-        if dice.d20(self.rng).natural + max(f.skill("athletics"), f.skill("acrobatics")) >= dc:
+        skill = max(f.skill("athletics"), f.skill("acrobatics"))
+        web = next((z for z in self.zones if z.kind == "web" and any(c in z.cells for c in f.cells)), None)
+        if stuck == "restrained" and web is not None:
+            dc, skill = web.dc, f.skill("athletics")  # 2024: a Strength (Athletics) check against the spell's DC
+        if dice.d20(self.rng).natural + skill >= dc:
             f.conditions.pop(stuck, None)
             f.grappled_by = None
             f.move_left = f.speed
@@ -2080,11 +2122,12 @@ class Battle:
         for sid in spellrules.known_spells(f.char, self.t):
             ok, why = spellrules.can_cast(f.char, self.t, sid)
             spell = self.t.spells[sid]
-            if ok and spell["kind"] == "revive" and not any(i.def_id == "diamond" for i in f.char.inventory):
-                ok, why = False, "needs a diamond"
+            need = (spellrules.op(spell, "revive") or {}).get("consumes")
+            if ok and need and not any(i.def_id == need for i in f.char.inventory):
+                ok, why = False, f"needs a {self.t.items.get(need)['name'].lower()}"
             if ok and spell["target"] == "self" and sid in spellrules.lasting(f.char, self.t):
                 ok, why = False, "already working on you"
-            if ok and spell["kind"] == "identify":
+            if ok and spellrules.has_op(spell, "identify"):
                 ok, why = False, "not in a fight"
             if ok and spell.get("cast") == "reaction":
                 ok, why = False, "a reaction: cast by itself when a blow would land"
@@ -2093,7 +2136,7 @@ class Battle:
             out.append((sid, ok, why))
         for it in f.char.inventory:
             sid = self.t.items.get(it.def_id).get("use", {}).get("scroll")
-            if sid in self.t.spells and self.t.spells[sid]["kind"] not in ("revive", "identify") \
+            if sid in self.t.spells and not spellrules.has_op(self.t.spells[sid], "revive", "identify") \
                     and self.t.spells[sid].get("cast") != "reaction":
                 ok, why = self._casting_time_ok(f, self.t.spells[sid])
                 out.append((f"scroll:{it.uid}:{sid}", ok, why))
@@ -2121,18 +2164,20 @@ class Battle:
             return False, "after a bonus-action spell, only a cantrip"
         return True, ""
 
-    def spell_range(self, spell: dict) -> int:
+    def spell_range(self, spell: dict, f: Fighter | None = None) -> int:
         r = spell.get("range", 60)
         if r == "touch":
             return 5
         if r == "self":
             return 0
+        if spell.get("range_scaling") and f is not None and f.char is not None:
+            return int(r) * 2 ** (spellrules.cantrip_multiplier(f.char.level) - 1)  # Spare the Dying: 15, 30, 60 feet
         return int(r)
 
     def spell_targets(self, f: Fighter, sid: str) -> list[Fighter]:
         spell = self.t.spells[spell_id(sid)]
         target = spell["target"]
-        reach = self.spell_range(spell)
+        reach = self.spell_range(spell, f)
 
         def near(x: Fighter) -> bool:
             if x is f:
@@ -2162,7 +2207,8 @@ class Battle:
             return out
         reach = self.spell_range(spell)
         n = reach // grid.SQUARE_FT
-        occ = {c for x in self.on_field() for c in x.cells} if spell["kind"] in ("move", "summon", "guardian") else set()
+        occ = {c for x in self.on_field() for c in x.cells} if spellrules.has_op(spell, "teleport", "summon", "guardian") \
+            else set()
         out = set()
         for x in range(max(0, f.x - n), min(self.field.width, f.x + f.sq + n)):
             for y in range(max(0, f.y - n), min(self.field.height, f.y + f.sq + n)):
@@ -2320,254 +2366,8 @@ class Battle:
 
     def cast(self, f: Fighter, sid: str, spell: dict, target: Fighter | None, point: tuple[int, int] | None, *,
              up: int, mod: int, dc: int, bonus: int, mult: int, level: int) -> None:
-        """A spell's effect, once it has been paid for (by a party caster, or a monster's own magic)."""
-        kind = spell["kind"]
-        area = self.spell_area(f, sid, point, target) if spell.get("area") else []
-        if spell.get("thrown"):
-            self.say(f"{f.the_name} throws a flask: <danger>{spell['name'].lower()}</>!", "info")
-        else:
-            self.say(f"{f.the_name} casts <magic>{spell['name']}</>.", "magic")
-        self._event("cast", by=f.id, to=target.id if target is not None else None, spell=sid, effect=kind,
-                    dtype=spell.get("damage_type", ""), area=list(area), point=point,
-                    shape=(spell.get("area") or {}).get("shape", ""))
-        if spell.get("concentration"):
-            self._start_concentration(f, sid, spell)
-
-        evocation = f.char is not None and spell.get("school") == "evocation" and f.char.cls == "wizard"
-        empowered = mod if evocation and f.has_trait("empowered_evocation") and spell["kind"] in ("save", "attack") else 0
-        events.emit(self, "spell_cast", actor=f, spell=spell, sid=sid, level=level)  # an Arcane Ward...
-
-        def dmg_expr(base: str) -> str:
-            n, sides, flat = dice.parse(base)
-            n = n * mult
-            if spell.get("upcast") and up:
-                un, us, _ = dice.parse(spell["upcast"])
-                if us == sides:
-                    n += un * up
-            flat += empowered
-            return f"{n}d{sides}{signed_mod(flat)}" if n else str(flat)
-
-        affects = spell.get("affects", "all")
-        if kind == "attack":
-            rays = int(spell.get("rays", 1)) + int(spell.get("upcast_rays", 0)) * up
-            for _ in range(rays):
-                if target is None or not target.active:
-                    options = self.spell_targets(f, sid)
-                    if not options:
-                        break
-                    target = self.rng.choice(options)
-                opt = AttackOption("spell", spell["name"].lower(), "spell_melee" if spell["attack"] == "melee" else "spell_ranged",
-                                   bonus, dmg_expr(spell["damage"]), spell["damage_type"], extra=spell,
-                                   range=(self.spell_range(spell), self.spell_range(spell)))
-                hit = self._attack(f, opt, target)
-                if hit and spell.get("marks") and target.active:
-                    target.marked = True
-        elif kind == "auto":
-            darts = int(spell.get("darts", 1)) + int(spell.get("upcast_darts", 0)) * up
-            for _ in range(darts):
-                if target is None or not target.active:
-                    options = self.spell_targets(f, sid)
-                    if not options:
-                        break
-                    target = min(options, key=lambda x: x.hp)
-                amount = dice.roll(spell["damage"], self.rng).total
-                self._event("dart", by=f.id, to=target.id, dtype=spell["damage_type"])
-                self._hit(f, target, amount, spell["damage_type"], crit=False, weapon="dart of force")
-        elif kind == "save":
-            victims = self.in_area(area, affects, f) if area else ([target] if target is not None else [])
-            rolled = dice.roll(dmg_expr(spell["damage"]), self.rng).total if area else None
-            origin = point if spell["target"] == "point" and point is not None else (f.x, f.y)
-            thrown = []
-            spared = self.sculpted(f, sid, victims, level) if area else set()
-            for x in victims:
-                if spell.get("humanoid_only") and x.kind != "humanoid":
-                    continue
-                if spell.get("only_kinds") and x.kind not in spell["only_kinds"]:
-                    continue  # holy water does nothing to the living
-                if x.id in spared:
-                    self.say(f"<magic>The fire parts around {x.the_name}.</> (Sculpt Spells)" if spell.get("damage_type") == "fire"
-                             else f"<magic>The spell passes {x.the_name} by.</> (Sculpt Spells)", "magic")
-                    continue
-                cover = 0
-                if spell.get("save") == "dex" and not spell.get("ignores_cover"):
-                    cover = min(grid.THREE_QUARTERS, self.field.cover((origin[0], origin[1], 1), x.space))
-                    cover = 0 if cover == grid.TOTAL else cover
-                saved = self._save_damage(f, x, spell["save"], dc, dmg_expr(spell["damage"]), spell["damage_type"],
-                                          spell.get("on_save", "half"), cover=cover, rolled=rolled)
-                if spell.get("push") and x.active and x.hp > 0 and x is not f and not saved:
-                    thrown.append(x)
-            # Hurled away, the farthest first so that nobody is stopped by a friend who is about to be thrown too.
-            src = f if spell["target"] != "point" else (origin[0], origin[1])
-            for x in sorted(thrown, key=lambda x: -grid.gap((origin[0], origin[1], 1), x.space)):
-                if x.active:
-                    self._push(src, x, int(spell["push"]) // 5)
-            if spell.get("ignites"):
-                self._ignite(f, area)
-            if spell.get("burns"):  # oil or alchemist's fire keeps burning where it fell
-                burn = spell["burns"]
-                self._add_zone(Zone(self._zone_id(), "fire", set(area), owner=f.id, rounds=int(burn.get("rounds", 1)),
-                                    save="dex", dc=10, damage=str(burn.get("damage", "1d4")), damage_type="fire",
-                                    on_save="none"))
-            if spell.get("leaves"):
-                self._add_zone(Zone(self._zone_id(), spell["leaves"], set(area), owner=f.id, spell=sid,
-                                    rounds=int(spell.get("leaves_rounds", 1))))
-        elif kind == "heal":
-            if spell["target"] == "all_allies":
-                reach = self.spell_range(spell)
-                targets = [x for x in self.side(f.side) if (x.active or x.state == "down") and self.feet(f, x) <= reach]
-                targets = sorted(targets, key=lambda x: x.hp / max(1, x.max_hp))[: int(spell.get("count", 6))]
-            else:
-                targets = [target]
-            for x in targets:
-                if x is None:
-                    continue
-                if x.no_heal:
-                    self.say(f"The magic finds no hold in {x.the_name}.", "warn")
-                    continue
-                amount = dice.roll(dmg_expr(spell["heal"]), self.rng).total + (mod if spell.get("add_mod") else 0)
-                amount = events.emit(self, "heal_spell", actor=f, target=x, amount=amount, level=level).amount
-                self._heal(x, amount)
-                if spell.get("mends_wound") and x.wounds:
-                    w = max(x.wounds, key=lambda w: (w.severity, w.bleed))
-                    w.severity -= 1
-                    w.bleed = max(0, w.bleed - 1)
-                    if w.severity <= 0:
-                        x.wounds.remove(w)
-                    self.say(f"The worst of {x.the_name}'s wounds closes a little.", "magic")
-        elif kind == "buff":
-            if spell["target"] == "all_allies":
-                reach = self.spell_range(spell)
-                near = [x for x in self.side(f.side) if x.active and self.feet(f, x) <= reach]
-                near.sort(key=lambda x: (x is not f, self.feet(f, x)))
-                targets = near[: int(spell.get("count", 3)) + up]
-            elif spell["target"] == "self":
-                targets = [f]
-            else:
-                targets = [target]
-            for x in targets:
-                if x is None:
-                    continue
-                if x.char is not None and spellrules.lasts(self.t, sid):
-                    # It outlives the fight: kept on them (the sheet counts its armour), the rest carried here.
-                    spellrules.keep(x.char, self.t, sid)
-                    x.buffs = [b for b in x.buffs if b.get("lasting") != sid]
-                    part = spellrules.battle_part(self.t, sid)
-                    if part:
-                        x.buffs.append(part)
-                    if spell.get("concentration") and f.concentration is not None:
-                        f.concentration.setdefault("on", []).append(x.id)  # (lost with the caster's concentration)
-                else:
-                    x.buffs = [b for b in x.buffs if b.get("source") != sid]
-                    b = {**spell["buff"], "rounds": int(spell.get("rounds", 10)), "source": sid}
-                    if spell.get("concentration"):
-                        b["conc"] = f.id
-                    x.buffs.append(b)
-                self._event("buff", who=x.id, spell=sid)
-            self.say(spell["text"], "magic")
-        elif kind == "condition":
-            if spell.get("zone"):
-                zone = Zone(self._zone_id(), spell["zone"], set(area), owner=f.id, spell=sid,
-                            rounds=-1 if spell.get("concentration") else int(spell.get("rounds", 10)),
-                            save=spell.get("save", "dex"), dc=dc)
-                self._add_zone(zone)
-            victims = self.in_area(area, affects, f) if area else ([target] if target is not None else [])
-            for x in victims:
-                if spell.get("humanoid_only") and x.kind != "humanoid":
-                    self.say(f"{x.the_name} is not a person; the spell finds no grip.", "system")
-                    continue
-                if spell.get("no_undead") and x.kind == "undead":
-                    continue
-                if spell.get("zone"):
-                    self._zone_catch(x, zone)
-                    continue
-                if not self._save(x, spell["save"], dc):
-                    cond = spell["condition"]
-                    x.conditions[cond] = int(spell.get("rounds", 1)) if cond != "prone" else -1
-                    if spell.get("concentration"):
-                        x.conditions[cond] = -1
-                        x.save_ends.append({"cond": cond, "save": spell["save"], "dc": dc, "conc": f.id})
-                    self._event("condition", who=x.id, cond=cond)
-                    self.say(f"{x.the_name} is {cond}.", "good" if x.side != f.side else "danger")
-        elif kind == "sleep":
-            pool = dice.roll(dmg_expr(spell["pool"]), self.rng).total
-            pool_area = area or [c_ for x in self.enemies_of(f) for c_ in x.cells]
-            for x in sorted(self.in_area(pool_area, affects, f), key=lambda x: x.hp):
-                if x.kind == "undead" or x.hp > pool or "unconscious" in x.conditions or x.state != "fighting":
-                    continue
-                pool -= x.hp
-                x.conditions["unconscious"] = 10
-                x.conditions["prone"] = -1
-                self._event("condition", who=x.id, cond="asleep")
-                self.say(f"{x.the_name} slumps to the ground, asleep.", "good" if x.side != f.side else "danger")
-        elif kind == "stabilize":
-            if target is not None:
-                target.stable = True
-                self.say(f"{target.the_name} stops bleeding out.", "good")
-        elif kind == "cure":
-            if target is not None:
-                for cond in spell.get("cures", []):
-                    target.conditions.pop(cond, None)
-                    if target.char:
-                        target.char.conditions = [x for x in target.char.conditions if not x.startswith("exposed:")]
-                self.say(f"{target.the_name} looks clearer.", "good")
-        elif kind == "summon":
-            if point is not None:
-                tok = Token(self._zone_id(), spell.get("token", "spiritual_weapon"), point[0], point[1], f.id,
-                            rounds=int(spell.get("rounds", 10)), damage=dmg_expr(spell["damage"]) + signed_mod(mod),
-                            bonus=bonus, damage_type=spell.get("damage_type", "force"), spell=sid)
-                self.tokens = [t for t in self.tokens if not (t.owner == f.id and t.kind == tok.kind)]
-                self.tokens.append(tok)
-                self._event("token", id=tok.id, what=tok.kind, x=tok.x, y=tok.y, owner=f.id)
-                near = [e for e in self.enemies_of(f) if grid.gap((tok.x, tok.y, 1), e.space) <= 1]
-                if near:
-                    self._spirit_strike(f, tok, min(near, key=lambda e: e.hp))
-        elif kind == "guardian":
-            if point is not None:
-                tok = Token(self._zone_id(), "guardian", point[0], point[1], f.id, rounds=int(spell.get("rounds", 10)),
-                            spell=sid)
-                self.tokens.append(tok)
-                self._event("token", id=tok.id, what=tok.kind, x=tok.x, y=tok.y, owner=f.id)
-                r = int(spell.get("radius", 10)) // 5
-                cells_ = {(x, y) for x in range(point[0] - r, point[0] + r + 1) for y in range(point[1] - r, point[1] + r + 1)
-                          if self.field.in_bounds(x, y)}
-                z = Zone(self._zone_id(), "guardian", cells_, owner=f.id, spell=sid, rounds=int(spell.get("rounds", 10)),
-                         radius=r, centre=point, save=spell["save"], dc=dc, damage=dmg_expr(spell["damage"]),
-                         damage_type=spell["damage_type"], on_save=spell.get("on_save", "half"), friends_safe=True,
-                         budget=int(spell.get("budget", 60)))
-                z.token = tok.id  # type: ignore[attr-defined]
-                self._add_zone(z)
-        elif kind == "aura":
-            r = int(spell.get("area", {}).get("size", 15)) // 5
-            z = Zone(self._zone_id(), "guardians", set(), owner=f.id, spell=sid,
-                     rounds=-1 if spell.get("concentration") else int(spell.get("rounds", 10)), radius=r,
-                     save=spell["save"], dc=dc, damage=dmg_expr(spell["damage"]), damage_type=spell["damage_type"],
-                     on_save=spell.get("on_save", "half"), friends_safe=True)
-            self._add_zone(z)
-            self._follow_auras()
-        elif kind == "zone":
-            z = Zone(self._zone_id(), spell["zone"], set(area), owner=f.id, spell=sid,
-                     rounds=-1 if spell.get("concentration") else int(spell.get("rounds", 10)))
-            self._add_zone(z)
-        elif kind == "move":
-            if point is not None:
-                start = (f.x, f.y)
-                f.x, f.y = point
-                self._event("teleport", who=f.id, path=[start, point])
-                self._sync_grapples(f)
-                self.say(f"{f.the_name} steps through the mist and is somewhere else.", "magic")
-        elif kind == "revive":
-            if target is not None and target.state == "dead" and target.char is not None:
-                diamond = next((i for i in f.char.inventory if i.def_id == "diamond"), None) if f.char else None
-                if diamond is not None:
-                    remove_item(f.char, diamond.uid, 1)
-                    target.state = "fighting"
-                    target.char.alive = True
-                    target.char.death_cause = None  # (or the body would be found dead of it again as time passed)
-                    target.hp = 1
-                    target.conditions = {"prone": -1}
-                    target.death_saves = [0, 0]
-                    self._event("heal", to=target.id, amount=1)
-                    self.say(f"{target.the_name} draws a ragged breath.", "magic")
+        """A spell's effects, once it has been paid for (rules/engine/effects.py)."""
+        effects.cast(self, f, sid, spell, target, point, up=up, mod=mod, dc=dc, bonus=bonus, mult=mult, level=level)
 
     # ------------------------------------------------------------------ concentration
     def _start_concentration(self, f: Fighter, sid: str, spell: dict) -> None:
@@ -2588,6 +2388,10 @@ class Battle:
                 x.save_ends.remove(se)
         for z in [z for z in self.zones if z.owner == f.id and z.rounds < 0]:
             self._remove_zone(z)
+        for tok in [t for t in self.tokens if t.owner == f.id and t.rounds < 0]:
+            self.tokens.remove(tok)  # a spiritual weapon held by concentration (2024)
+            self._event("token_end", id=tok.id)
+        durations.end_concentration(self, f)
         for x in self.fighters:  # a lasting spell held by concentration (Shield of Faith) ends with it
             if x.id in conc.get("on", []) and x.char is not None:
                 spellrules.end(x.char, sid)

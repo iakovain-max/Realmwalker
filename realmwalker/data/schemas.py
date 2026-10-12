@@ -398,8 +398,10 @@ CREATURES = Obj({"creatures": Map(CREATURE, min_items=1), "encounters": Map(ENCO
 SPELL = Obj(
     {
         "name": Str(max_len=40), "level": Int(min=0, max=9), "school": Str(max_len=20), "classes": List(Str(max_len=20), min_items=1),
-        "kind": Str(choices=["attack", "auto", "save", "heal", "buff", "condition", "sleep", "stabilize", "cure", "summon",
-                             "guardian", "aura", "zone", "move", "revive", "identify"]),
+        # What it does: effect operations (rules/engine/effects.py; the kernel's start-up check knows every op).
+        "effects": List(Obj({"op": Str(max_len=30)}, strict=False), min_items=1),
+        "fx": Str(max_len=20, optional=True), "components": List(Str(choices=["V", "S", "M"]), optional=True),
+        "rounds": Int(min=0, max=100000, optional=True), "targets_up": Int(min=0, max=5, optional=True),
         "target": Str(choices=["enemy", "ally", "self", "downed_ally", "dead_ally", "all_allies", "point", "direction", "item"]),
         "range": Any_(optional=True),
         "area": Obj({"shape": Str(choices=["cone", "line", "sphere", "cube", "cylinder"]), "size": Int(min=5, max=300)}, optional=True),

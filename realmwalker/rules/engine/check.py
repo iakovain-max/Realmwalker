@@ -7,8 +7,9 @@ names, every modifier, `when` test, event and handler a trait definition names.
 
 from __future__ import annotations
 
+from realmwalker.rules import spells as spellrules
 from realmwalker.rules.engine import conditions as cond
-from realmwalker.rules.engine import events
+from realmwalker.rules.engine import effects, events
 from realmwalker.rules.engine import traits as tr
 
 MODIFIER_KEYS = {
@@ -45,6 +46,15 @@ def problems(tables) -> list[str]:
                 out.append(f"{where}: hook {i} listens for '{h['event']}', which is not an event of a fight.")
             if h["handler"] not in events.HANDLERS:
                 out.append(f"{where}: hook {i} names the handler '{h['handler']}', which the code does not have.")
+    for sid, spell in tables.spells.defs.items():
+        if not isinstance(spell, dict):
+            continue
+        for o in spellrules.ops(spell):
+            if o.get("op") not in effects.OPS:
+                out.append(f"data/spells.json: {sid} does '{o.get('op')}', which the rules cannot do.")
+            if o.get("op") == "condition" and o.get("condition") not in cond.table(tables):
+                out.append(f"data/spells.json: {sid} gives the condition '{o.get('condition')}', which data/conditions.json "
+                           "does not define.")
     for cid, c in tables.creatures.defs.items():
         for t in c.get("traits", []):
             if t not in defs:

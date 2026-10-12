@@ -125,7 +125,7 @@
     },
     "war_priest": {
       "name": "War Priest", "text": "A weapon attack as a bonus action, a few times a day.",
-      "resource": {"id": "war_priest", "max": "wis_mod", "recover": "long"}
+      "resource": {"id": "war_priest", "max": "wis_mod", "recover": "short"}
     },
     "guided_strike": {
       "name": "Guided Strike", "text": "Channel Divinity: +10 to an attack roll that would have missed.",

@@ -300,11 +300,7 @@ class CharacterBuilder:
             languages.append("Thieves' Cant")
         hp = self.max_hp()
         features = [f["id"] for f in cls["features"] if f["level"] <= 1]
-        uses = {}
-        if "second_wind" in features:
-            uses["second_wind"] = 1
-        if race and any(tr.get("rule") == "relentless_endurance" for tr in race["traits"]):
-            uses["relentless_endurance"] = 1
+        uses: dict = {}
         char = Character(
             name=self.name.strip(), sex=self.sex, age=self.age, race=self.race, culture=self.culture,
             cls=self.cls, background=self.background, base_scores=dict(self.scores), abilities=abilities,
@@ -324,10 +320,9 @@ class CharacterBuilder:
         from realmwalker.rules.spells import init_spells
 
         init_spells(char, t)
-        if "channel_divinity" in char.features or self.cls == "cleric":
-            char.uses.setdefault("channel_divinity", 0)
-        if self.subclass == "war":
-            char.uses["war_priest"] = max(1, modifier(abilities["wis"]))
+        from realmwalker.rules.engine import resources
+
+        resources.fill(char, t)  # Second Wind, a half-orc's Relentless Endurance, War Priest... start ready
         return char
 
 

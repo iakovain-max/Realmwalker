@@ -498,7 +498,7 @@ class BattleScreen(Screen):
         point = self.aim
         sp = self.game.tables.spells[spell_id(value)]
         caught = []
-        if sp.get("area") and sp["kind"] in ("save", "sleep", "condition"):
+        if sp.get("area") and spellrules.has_op(sp, "save"):
             area = self.battle.spell_area(f, value, point)
             victims = self.battle.in_area(area, sp.get("affects", "all"), f)
             spared = self.battle.sculpted(f, value, victims)
@@ -754,7 +754,7 @@ class BattleScreen(Screen):
             ov["area"] = set(area)
             from realmwalker.ui.gfx.battlefx import colour_for
 
-            ov["area_color"] = colour_for(sp.get("damage_type", ""), spell_id(sid)) if self.aim in self.pending.get("points", ()) \
+            ov["area_color"] = colour_for(spellrules.main_type(sp), spell_id(sid)) if self.aim in self.pending.get("points", ()) \
                 else (120, 120, 120)
             ov["aim"] = self.aim
         return ov

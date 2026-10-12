@@ -502,7 +502,7 @@ def _cast_something(b: Battle, f: Fighter) -> bool:
         if not ok or sid not in t.spells:
             continue
         sp = t.spells[sid]
-        if not sp.get("area") or sp["kind"] not in ("save", "sleep", "condition") or sp["level"] == 0:
+        if not sp.get("area") or not spellrules.has_op(sp, "save") or sp.get("affects") == "allies" or sp["level"] == 0:
             continue
         aims = b.spell_points(f, sid)
         candidates = {(e.x, e.y) for e in enemies} | {(e.x + dx, e.y + dy) for e in enemies for dx, dy in grid.DIRS8}

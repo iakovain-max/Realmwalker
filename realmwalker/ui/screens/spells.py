@@ -56,15 +56,7 @@ def spell_detail(game, char, sid: str, target) -> list[str]:
     spell = t.spells[sid]
     school = SCHOOLS.get(spell.get("school", ""), "").lower()
     level = "Cantrip" if spell["level"] == 0 else f"Level {spell['level']}"
-    bits = []
-    if spell.get("damage"):
-        bits.append(f"{spell['damage']} {spell.get('damage_type', '')}".strip())
-    if spell.get("heal"):
-        bits.append(f"heals {spell['heal']}")
-    if spell.get("save"):
-        bits.append(f"{spell['save'].upper()} save")
-    if spell.get("attack"):
-        bits.append(f"{spell['attack']} attack")
+    bits = sp.summary(spell)
     lines = [f"<magic>{markup.escape(spell['name'])}</> <dim>{level}{', ' + school if school else ''}"
              + (f" · {', '.join(bits)}" if bits else "") + "</>",
              markup.escape(spell.get("text", ""))]
@@ -76,10 +68,11 @@ def spell_detail(game, char, sid: str, target) -> list[str]:
         whom = ""
         if magic.road_targets(game, char, sid):
             whom = " on yourself" if target is char else f" on {markup.escape(target.name.split()[0])}"
-        if spell["kind"] == "identify":
+        use = sp.road_use(t, sid)
+        if use == "identify":
             thing = game.tables.items.name(magic.strange_things(game, char)[0], False)
             lines.append(f"<good>Enter casts it over the {markup.escape(thing)} now.</> <dim>It takes ten minutes.</>")
-        elif spell["kind"] in ("heal", "cure"):
+        elif use in ("heal", "cure"):
             lines.append(f"<good>Enter casts it{whom} now.</> <dim>It takes a minute.</>")
         else:
             hours = int(spell.get("rounds", 0)) / sp.ROUNDS_PER_HOUR

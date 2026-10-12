@@ -48,16 +48,21 @@ def of(f) -> frozenset[str]:
     cached = f.__dict__.get("_traits")
     if cached is not None and cached[0] == key:
         return cached[1]
-    if f.char is None:
-        found = frozenset(f.cdef.get("traits", []))
-    else:
-        s = f.sheet
-        names = {t["rule"] for t in s.race["traits"] if t.get("rule")}
-        names |= {feat["rule"] for feat in s.features() if feat.get("rule")}
-        names |= set(f.char.features)
-        found = frozenset(names)
+    found = frozenset(f.cdef.get("traits", [])) if f.char is None else of_char(f.char, f.t)
     f.__dict__["_traits"] = (key, found)
     return found
+
+
+def of_char(char, tables) -> frozenset[str]:
+    """A character's traits, in a fight or out of one: race traits and class features by rule tag, and the features
+    they have been given by id."""
+    from realmwalker.rules.character import Sheet
+
+    s = Sheet(char, tables)
+    names = {t["rule"] for t in s.race["traits"] if t.get("rule")}
+    names |= {feat["rule"] for feat in s.features() if feat.get("rule")}
+    names |= set(char.features)
+    return frozenset(names)
 
 
 def has(f, trait: str) -> bool:

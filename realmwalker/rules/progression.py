@@ -10,9 +10,9 @@ from __future__ import annotations
 from realmwalker.core import dice
 from realmwalker.core.rng import RNG
 from realmwalker.rules.character import Character, modifier
+from realmwalker.rules.engine import resources
+from realmwalker.rules.engine import traits as trs
 from realmwalker.rules.spells import restore_slots
-
-SHORT_REST_FEATURES = ("second_wind", "action_surge", "channel_divinity")
 
 
 def award_xp(char: Character, xp: int, tables, rng: RNG, *, auto: bool = False) -> list[str]:
@@ -46,6 +46,7 @@ def level_up(char: Character, tables, rng: RNG, *, auto: bool = False) -> list[s
 
 def _level_up(char: Character, tables, rng: RNG) -> list[str]:
     cls = tables.classes[char.cls]
+    before = trs.of_char(char, tables)
     char.level += 1
     con = modifier(char.abilities["con"])
     gain = max(1, cls["hit_die"] // 2 + 1 + con + int(tables.races[char.race].get("hp_per_level", 0)))
@@ -63,8 +64,6 @@ def _level_up(char: Character, tables, rng: RNG) -> list[str]:
         elif feat["id"] not in char.features:
             char.features.append(feat["id"])
             notes.append(f"New: {feat['name']}.")
-        if feat["id"] in ("action_surge", "channel_divinity"):
-            char.uses[feat["id"]] = 1
     if char.subclass:
         for feat in cls["subclasses"][char.subclass]["features"]:
             if feat["level"] == char.level and feat["id"] not in char.features:
@@ -77,6 +76,7 @@ def _level_up(char: Character, tables, rng: RNG) -> list[str]:
         missing = cantrips[char.level - 1] - len(char.spells.get("cantrips", []))
         if missing > 0:
             add_pending(char, {"kind": "cantrips", "count": missing, "level": char.level})
+    resources.granted(char, tables, before)  # a new Action Surge or Channel Divinity starts ready
     return notes
 
 
@@ -226,11 +226,7 @@ def short_rest(char: Character, tables, rng: RNG) -> list[str]:
         healed += amount
     if healed:
         notes.append(f"{char.name.split()[0]} recovers {healed} hit points.")
-    for f in SHORT_REST_FEATURES:
-        if f in char.features or (f == "channel_divinity" and f in char.uses):
-            char.uses[f] = 1
-    if char.subclass == "war":
-        char.uses["war_priest"] = max(1, modifier(char.abilities["wis"]))
+    resources.recover(char, tables, "short")  # Second Wind, Action Surge, Channel Divinity... (data/traits.json)
     if "arcane_recovery" in char.features and char.uses.get("arcane_recovery", 1) and char.spells:
         used = char.spells.setdefault("slots_used", [0] * 9)
         budget = max(1, (char.level + 1) // 2)
@@ -250,21 +246,10 @@ def long_rest(char: Character, tables, rng: RNG) -> list[str]:
     char.hp = char.max_hp
     char.hit_dice = min(char.level, char.hit_dice + max(1, char.level // 2))
     restore_slots(char)
-    for f in SHORT_REST_FEATURES:
-        if f in char.features or (f == "channel_divinity" and f in char.uses):
-            char.uses[f] = 1
-    if "relentless_endurance" in [t.get("rule") for t in tables.races[char.race]["traits"]] or \
-            "relentless_endurance" in char.features:  # a half-orc's toughness, or a man the rope would not take
-        char.uses["relentless_endurance"] = 1
-    if char.subclass == "war":
-        char.uses["war_priest"] = max(1, modifier(char.abilities["wis"]))
+    resources.recover(char, tables, "long")  # every pool (data/traits.json), a half-orc's toughness among them
     char.uses["arcane_recovery"] = 1
     for key in ("ward_made", "arcane_ward"):  # an abjurer's ward is made anew each day
         char.uses.pop(key, None)
-    if "indomitable" in char.features:
-        char.uses["indomitable"] = 1
-    if "divine_intervention" in char.features:
-        char.uses["divine_intervention"] = 1
     from realmwalker.rules import magic
 
     magic.recharge(char)
