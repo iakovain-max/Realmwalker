@@ -34,12 +34,13 @@ Then commit, update PROGRESS.md, and stop for user feedback (unless the user sai
 
 - **Done = playable.** A rule is done when it is usable in play: the rule, its entry in `actions.options`, the
   enemy's and Auto's use of it, the battle screen, and one test in a real fight. Never tick a rule that nothing calls.
-- **Heavy checks often, never two at once** (Anton, 2026-10-13: more load is fine while he is at work, never 100% CPU).
-  While building: the tests for what you touched (`pytest -n 10 tests/test_x.py`); the full suite (`-n 10`, it runs
-  the arena coverage test) after each finished task of a part. Before a merge, one after another: the full suite,
-  autoplay, the smoke test. Run `tools/arena.py` by hand only when tuning tactics.
-- **The working day** (docs/expansions/CHAIN.md): START and STOP buttons, builders that take turns every 20 minutes
-  until 20:00, one session at a time (a lock in build/), work saved on the branch when stopped or cut off.
+- **Heavy checks once per part, side by side** (Anton, 2026-10-13: more load is fine, never 100% CPU). While
+  building: the tests for what you touched (`pytest -n 10 tests/test_x.py`). Before a merge, all three together in
+  the background: the full suite (`-n 10`, it runs the arena coverage test), autoplay (its own temporary home) and the
+  smoke test (`--home build/smoke_home`). Run `tools/arena.py` by hand only when tuning tactics.
+- **The working day** (docs/expansions/CHAIN.md): START and STOP buttons, builders that take turns every 20 minutes;
+  no new part after 20:00, but a part cut off by a usage limit is finished when it resets; releases do not stop the
+  day; one session at a time (a lock with a heartbeat in build/).
 - **Helpers for bulk data** (book tables, items, monsters, spells, codex marking): two or three subagents at once on
   a cheaper model (`model: "sonnet"`), each with a precise brief (its entries, the schema, one finished example, the
   book pages, numbers checked on page images); the main session owns the kernel, joins the pieces and reviews.
