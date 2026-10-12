@@ -429,6 +429,61 @@ DATA_FILES.update({
     "combat_text.json": COMBAT_TEXT,
 })
 
+# ---------------------------------------------------------------------------- the rules kernel (Expansion 1)
+ADV = Str(choices=["advantage", "disadvantage"], optional=True)
+CONDITION_IDS = ("blinded", "charmed", "deafened", "frightened", "grappled", "incapacitated", "invisible", "paralyzed",
+                 "petrified", "poisoned", "prone", "restrained", "stunned", "unconscious")
+CONDITION = Obj(
+    {
+        "name": Str(max_len=30), "text": Str(max_len=300),
+        "includes": List(Str(choices=list(CONDITION_IDS)), optional=True),
+        "inactive": Bool(optional=True), "speed_zero": Bool(optional=True), "crawl": Bool(optional=True),
+        "stand_cost": Float(min=0, max=1, optional=True),
+        "attacks": ADV, "attacked": ADV, "attacked_near": ADV, "attacked_far": ADV, "checks": ADV, "initiative": ADV,
+        "crit_within": Int(min=5, max=30, optional=True),
+        "fails_saves": List(Str(choices=list(ABILITY_IDS)), optional=True),
+        "saves": Map(Str(choices=["advantage", "disadvantage"]), optional=True),
+        "blind": Bool(optional=True), "deaf": Bool(optional=True), "unseen": Bool(optional=True),
+        "unless_seen": Bool(optional=True), "drops": Bool(optional=True), "unaware": Bool(optional=True),
+        "breaks_concentration": Bool(optional=True), "speechless": Bool(optional=True),
+        "resist_all": Bool(optional=True), "immune": List(Str(choices=list(CONDITION_IDS)), optional=True),
+        "while_source_seen": Bool(optional=True), "not_against_source": Bool(optional=True),
+        "no_harm_source": Bool(optional=True), "no_approach_source": Bool(optional=True),
+        "source_social": ADV,
+    }
+)
+CONDITIONS = Obj(
+    {
+        "conditions": Map(CONDITION, min_items=len(CONDITION_IDS)),
+        "exhaustion": Obj({"name": Str(max_len=30), "text": Str(max_len=300), "levels": Int(min=1, max=10),
+                           "d20_per_level": Int(min=-5, max=0), "speed_per_level": Int(min=-10, max=0),
+                           "long_rest": Int(min=0, max=6)}),
+        "bloodied": Obj({"name": Str(max_len=30), "text": Str(max_len=300), "at_most": Float(min=0, max=1)}),
+    }
+)
+
+# Traits and features as definitions (rules/engine/traits.py). The kernel's start-up check (rules/engine/check.py)
+# makes sure every modifier, test, event and handler named here exists.
+TRAIT_DEF = Obj(
+    {
+        "name": Str(max_len=60), "text": Str(max_len=300),
+        "modifiers": List(Obj({"when": List(Str(max_len=40), optional=True), "why": Str(max_len=60, optional=True),
+                               "abilities": List(Str(choices=list(ABILITY_IDS)), optional=True)}, strict=False),
+                          optional=True),
+        "hooks": List(Obj({"event": Str(max_len=30), "as": Str(choices=["self", "attacker", "target", "ally", "any"]),
+                           "handler": Str(max_len=40), "reaction": Bool(optional=True)}, strict=False), optional=True),
+        "resource": Obj({"id": Str(max_len=40), "max": Any_(), "recover": Str(choices=["short", "long", "dawn", "turn"])},
+                        optional=True),
+        "where": Str(max_len=30, optional=True),
+    }
+)
+TRAITS = Obj({"traits": Map(TRAIT_DEF, min_items=1)})
+
+DATA_FILES.update({
+    "conditions.json": CONDITIONS,
+    "traits.json": TRAITS,
+})
+
 STAGE_EFFECTS = Obj(
     {"penalty": Int(min=0, max=10, optional=True), "thirst": Float(min=0, max=5, optional=True),
      "hunger": Float(min=0, max=5, optional=True), "fatigue": Float(min=0, max=5, optional=True),
@@ -1052,3 +1107,22 @@ TOWNS = Obj({
     "styles": Map(TOWN_STYLE, min_items=1),
 })
 DATA_FILES.update({"towns.json": TOWNS})
+
+# ---------------------------------------------------------------------------- expansion packs (data/packs.py)
+# A pack's record (data/packs/NN_id/pack.json): who it is on the main menu's shelf, and whether it is out yet.
+PACK = Obj({
+    "id": Str(max_len=40),
+    "order": Int(min=1, max=99),
+    "name": Str(max_len=60),
+    "tagline": Str(max_len=120),
+    "icon": Str(max_len=60),
+    "accent": COLOR,
+    "status": Str(choices=["planned", "released"]),
+    "version": Str(max_len=12),
+    "released_on": Str(max_len=10, min_len=0),  # "2026-11-02" once released, "" before
+    "adds": word_list(0, 300),
+    # What to count on the shelf: [data file, section, label]; "{n} {label}" for what this pack added there.
+    "counts": List(List(Str(max_len=40), min_items=3, max_items=3), optional=True),
+})
+# Kinds of data file that only packs bring: their empty shape, used when data/ has no base file of that name.
+PACK_ONLY: dict[str, dict] = {}

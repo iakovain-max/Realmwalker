@@ -1,16 +1,22 @@
 # Expansion programme – status
 
-Current: 01 Dice & Destiny · part A (foundations) · branch dlc/01-dice-destiny · step 2 (design note) of §5.1
-On GitHub (main): World Variety · Clearing the decks (§0.4)
-Codex coverage: not built yet (Expansion 1, part A)
+Current: 01 Dice & Destiny · part B (the kernel) · branch dlc/01-dice-destiny · step 4 (build) of §5.1
+On GitHub (main): World Variety · Clearing the decks (§0.4) · Dice & Destiny part A (packs, shelf, codex) and the
+  first kernel steps (B.2, most of B.1)
+Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; 0 done, 16 omitted
+  (`tools/codex/coverage.py --dlc`)
 Assumptions waiting for Anton:
 - The Player2 AI writer is removed (tagged `before-ai-removal`); its text is replaced everywhere by the game's own
   words, strengthened where they were thin.
 - Letters mode is gone; a PC that cannot draw the pictures is told so plainly.
 - Saves from before 2026-10-12 no longer load (start a new world).
+- Codex judgement calls: trick weapons and similar items placed by their world (notes in magic_items.json); the eight
+  creatures printed in both the PHB and the MM kept with Expansion 1; the Airship with Ships & Sea Monsters (22);
+  elf lineage spells marked to work from Expansion 3.
 Ideas for later:
 - (none yet)
-Next session starts at: Expansion 1, part A, task A.1 in docs/expansions/01-dice-destiny.md
+Next session starts at: Expansion 1, part B, task B.3 (the 41 spells as definitions) in
+  docs/expansions/01-dice-destiny.md
 
 ## Done
 
@@ -18,6 +24,8 @@ Next session starts at: Expansion 1, part A, task A.1 in docs/expansions/01-dice
 |---|---|---|
 | 2026-10-12 | World Variety merged into `main` and pushed | `world-variety` |
 | 2026-10-12 | §0.4 Clearing the decks: A friends' build, B the AI writer, C faster tools, D letters mode, E old saves, F leftovers | `prep/clear-the-decks` |
+| 2026-10-12 | Dice & Destiny part A: content packs and provenance, the expansion shelf and screen, the codex of all three books | `dlc/01-dice-destiny` |
+| 2026-10-12 | Dice & Destiny B.2 and most of B.1: the rules kernel (conditions as data, the numbers in one place, traits and hooks) | `dlc/01-dice-destiny` |
 
 ## Notes for the next session
 

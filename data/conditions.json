@@ -1,0 +1,77 @@
+{
+  "_comment": "The conditions of the 2024 Player's Handbook (Rules Glossary, PDF pages 363-380) as data for the rules kernel (realmwalker/rules/engine/conditions.py). Each says what it does in the kernel's own words: includes (other conditions it brings), inactive (no action, bonus action or reaction), speed_zero, attacks / attacked ('advantage' or 'disadvantage' on its own attacks / on attacks against it), attacked_near / attacked_far (within 5 feet / further off), crit_within (feet: a hit from that close is a critical hit), fails_saves, saves {ability: advantage/disadvantage}, checks, blind, deaf, unseen, crawl, drops, breaks_concentration, speechless, unaware, resist_all, immune (conditions it keeps off), initiative, source rules (while_source_seen: only while the cause is in sight; not_against_source: not against the one who caused it; no_harm_source, no_approach_source). Exhaustion has levels.",
+  "conditions": {
+    "blinded": {
+      "name": "Blinded", "blind": true, "attacks": "disadvantage", "attacked": "advantage",
+      "text": "Cannot see. Fails anything that needs sight, strikes blindly, and is easy to hit."
+    },
+    "charmed": {
+      "name": "Charmed", "no_harm_source": true, "source_social": "advantage",
+      "text": "Will not strike or harm the one who charmed them, who finds them easy to talk round."
+    },
+    "deafened": {
+      "name": "Deafened", "deaf": true,
+      "text": "Cannot hear. Fails anything that needs hearing."
+    },
+    "frightened": {
+      "name": "Frightened", "attacks": "disadvantage", "checks": "disadvantage", "while_source_seen": true,
+      "no_approach_source": true,
+      "text": "Strikes and tries things badly while the cause of the fear is in sight, and will not go nearer to it."
+    },
+    "grappled": {
+      "name": "Grappled", "speed_zero": true, "attacks": "disadvantage", "not_against_source": true,
+      "text": "Held fast: cannot move, and strikes badly at anyone but the one holding on."
+    },
+    "incapacitated": {
+      "name": "Incapacitated", "inactive": true, "breaks_concentration": true, "speechless": true,
+      "initiative": "disadvantage",
+      "text": "Can do nothing: no action, no bonus action, no reaction, no words. Any spell held is lost."
+    },
+    "invisible": {
+      "name": "Invisible", "unseen": true, "attacks": "advantage", "attacked": "disadvantage", "unless_seen": true,
+      "initiative": "advantage",
+      "text": "Cannot be seen. Strikes at an advantage and is hard to hit, except by anyone who can see it anyway."
+    },
+    "paralyzed": {
+      "name": "Paralysed", "includes": ["incapacitated"], "speed_zero": true, "fails_saves": ["str", "dex"],
+      "attacked": "advantage", "crit_within": 5,
+      "text": "Cannot move at all. Fails Strength and Dexterity saves; every blow lands easily, and from beside them it is a critical hit."
+    },
+    "petrified": {
+      "name": "Petrified", "includes": ["incapacitated"], "speed_zero": true, "fails_saves": ["str", "dex"],
+      "attacked": "advantage", "resist_all": true, "immune": ["poisoned"],
+      "text": "Turned to stone. Fails Strength and Dexterity saves, is easy to hit, and takes half damage from everything."
+    },
+    "poisoned": {
+      "name": "Poisoned", "attacks": "disadvantage", "checks": "disadvantage",
+      "text": "Sick with poison: strikes and tries things badly."
+    },
+    "prone": {
+      "name": "Prone", "crawl": true, "attacks": "disadvantage", "attacked_near": "advantage",
+      "attacked_far": "disadvantage", "stand_cost": 0.5,
+      "text": "On the ground. Crawls, or spends half a move to get up; strikes badly; easy to hit from beside, hard from further off."
+    },
+    "restrained": {
+      "name": "Restrained", "speed_zero": true, "attacks": "disadvantage", "attacked": "advantage",
+      "saves": {"dex": "disadvantage"},
+      "text": "Bound or caught: cannot move, strikes badly, is easy to hit, and dodges badly."
+    },
+    "stunned": {
+      "name": "Stunned", "includes": ["incapacitated"], "fails_saves": ["str", "dex"], "attacked": "advantage",
+      "text": "Reeling: can do nothing, fails Strength and Dexterity saves, and every blow lands easily."
+    },
+    "unconscious": {
+      "name": "Unconscious", "includes": ["incapacitated", "prone"], "speed_zero": true, "drops": true,
+      "fails_saves": ["str", "dex"], "attacked": "advantage", "crit_within": 5, "unaware": true,
+      "text": "Senseless on the ground. Fails Strength and Dexterity saves; every blow lands, and from beside them it is a critical hit."
+    }
+  },
+  "exhaustion": {
+    "name": "Exhaustion", "levels": 6, "d20_per_level": -2, "speed_per_level": -5, "long_rest": 1,
+    "text": "Worn to the bone: every roll is 2 lower and every move 5 feet shorter for each level. Six levels kill."
+  },
+  "bloodied": {
+    "name": "Bloodied", "at_most": 0.5,
+    "text": "Down to half their hit points or fewer."
+  }
+}

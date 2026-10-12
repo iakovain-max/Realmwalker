@@ -1,0 +1,21 @@
+{
+  "_comment": "Backgrounds of the Player's Handbook (2024), PDF pages 180-188. Names, pages and classification only.",
+  "entries": [
+    {"id": "background:acolyte", "name": "Acolyte", "book": "phb", "page": 181, "abilities": ["Intelligence", "Wisdom", "Charisma"], "feat": "Magic Initiate (Cleric)", "dlc": 2, "status": "todo", "game": [], "note": ""},
+    {"id": "background:artisan", "name": "Artisan", "book": "phb", "page": 181, "abilities": ["Strength", "Dexterity", "Intelligence"], "feat": "Crafter", "dlc": 2, "status": "todo", "game": [], "note": ""},
+    {"id": "background:charlatan", "name": "Charlatan", "book": "phb", "page": 182, "abilities": ["Dexterity", "Constitution", "Charisma"], "feat": "Skilled", "dlc": 2, "status": "todo", "game": [], "note": ""},
+    {"id": "background:criminal", "name": "Criminal", "book": "phb", "page": 182, "abilities": ["Dexterity", "Constitution", "Intelligence"], "feat": "Alert", "dlc": 2, "status": "todo", "game": [], "note": ""},
+    {"id": "background:entertainer", "name": "Entertainer", "book": "phb", "page": 183, "abilities": ["Strength", "Dexterity", "Charisma"], "feat": "Musician", "dlc": 2, "status": "todo", "game": [], "note": ""},
+    {"id": "background:farmer", "name": "Farmer", "book": "phb", "page": 183, "abilities": ["Strength", "Constitution", "Wisdom"], "feat": "Tough", "dlc": 2, "status": "todo", "game": [], "note": ""},
+    {"id": "background:guard", "name": "Guard", "book": "phb", "page": 184, "abilities": ["Strength", "Intelligence", "Wisdom"], "feat": "Alert", "dlc": 2, "status": "todo", "game": [], "note": ""},
+    {"id": "background:guide", "name": "Guide", "book": "phb", "page": 184, "abilities": ["Dexterity", "Constitution", "Wisdom"], "feat": "Magic Initiate (Druid)", "dlc": 2, "status": "todo", "game": [], "note": ""},
+    {"id": "background:hermit", "name": "Hermit", "book": "phb", "page": 185, "abilities": ["Constitution", "Wisdom", "Charisma"], "feat": "Healer", "dlc": 2, "status": "todo", "game": [], "note": ""},
+    {"id": "background:merchant", "name": "Merchant", "book": "phb", "page": 185, "abilities": ["Constitution", "Intelligence", "Charisma"], "feat": "Lucky", "dlc": 2, "status": "todo", "game": [], "note": ""},
+    {"id": "background:noble", "name": "Noble", "book": "phb", "page": 186, "abilities": ["Strength", "Intelligence", "Charisma"], "feat": "Skilled", "dlc": 2, "status": "todo", "game": [], "note": ""},
+    {"id": "background:sage", "name": "Sage", "book": "phb", "page": 186, "abilities": ["Constitution", "Intelligence", "Wisdom"], "feat": "Magic Initiate (Wizard)", "dlc": 2, "status": "todo", "game": [], "note": ""},
+    {"id": "background:sailor", "name": "Sailor", "book": "phb", "page": 187, "abilities": ["Strength", "Dexterity", "Wisdom"], "feat": "Tavern Brawler", "dlc": 2, "status": "todo", "game": [], "note": ""},
+    {"id": "background:scribe", "name": "Scribe", "book": "phb", "page": 187, "abilities": ["Dexterity", "Intelligence", "Wisdom"], "feat": "Skilled", "dlc": 2, "status": "todo", "game": [], "note": ""},
+    {"id": "background:soldier", "name": "Soldier", "book": "phb", "page": 188, "abilities": ["Strength", "Dexterity", "Constitution"], "feat": "Savage Attacker", "dlc": 2, "status": "todo", "game": [], "note": ""},
+    {"id": "background:wayfarer", "name": "Wayfarer", "book": "phb", "page": 188, "abilities": ["Dexterity", "Wisdom", "Charisma"], "feat": "Lucky", "dlc": 2, "status": "todo", "game": [], "note": ""}
+  ]
+}

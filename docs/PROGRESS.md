@@ -38,6 +38,41 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Local session, 2026-10-12 (later): Dice & Destiny begins — part A done, the rules kernel started — branch `dlc/01-dice-destiny`
+
+**Why the computer was working so hard, and what changed.** Since the world got its long history, a test run made
+about eighty worlds (each lives centuries of history), and from the moment letters mode went, every map drawn in a
+test started the overworld painter on a thread of its own: a few hundred painters at once, on all sixteen cores.
+Now: tests draw maps without painting the parchment behind them; the worlds tests need are made once and kept in
+`build/test_worlds` while the code that makes them is unchanged (a test in a fresh process checks that list); and
+tests run on 6 workers, not 16. The whole suite takes about a minute and a half, with about a third of the work.
+Changing the battle code no longer throws the kept worlds away.
+
+**What is different when you play**
+- **The main menu has a shelf** on the right: one icon per expansion that is out (none yet: Dice & Destiny shows
+  when its last part is done), each with a tooltip, glinting until you have looked at it. E opens the Expansions
+  screen: what each one added, and which version.
+- **Fights follow the 2024 conditions.** The conditions (Blinded, Charmed, Frightened, Grappled, Incapacitated,
+  Invisible, Paralysed, Petrified, Poisoned, Prone, Restrained, Stunned, Unconscious, and Exhaustion) are now written
+  down as game data, from the Player's Handbook glossary, and every fight reads them there. What that changes: a
+  blinded enemy is easy to hit; someone held fast strikes badly at anyone but the one holding them; fear spoils your
+  aim only while you can see what you fear; dodging does not help while you are held; a hit from right beside a
+  paralysed or senseless body is a critical whatever the weapon. Everything else about fights is as before (a test
+  asks four hundred random moments of a fight both the old way and the new way).
+
+**For the next sessions (the books, as a checklist).** `docs/expansions/codex/` now lists all 2,951 things in the
+three books (spells, monsters, magic items, classes and features, species, backgrounds, feats, gear, rules, bastions,
+planes...), each given to one of the 26 expansions; `tools/codex/coverage.py` counts what is done. An expansion is not
+released while one of its entries is still to do. Under the hood, fights now go through a small "rules kernel"
+(`realmwalker/rules/engine/`): every number (advantage, saving throws, armour, speed, damage) is worked out in one
+place, and traits like Pack Tactics, Sneak Attack or a troll's Regeneration are definitions in data/traits.json
+instead of special cases in the battle code. That is what lets 390 spells and 500 monsters come in later.
+
+**Decisions made without you (say if you disagree)**: a few items and creatures could belong to two expansions; each
+went where its part of the world comes in (notes in the codex). The Airship goes with Ships & Sea Monsters.
+
+**How to test**: nothing to do differently; play a fight or two. The shelf is empty until Dice & Destiny is released.
+
 ### Local session, 2026-10-12: clearing the decks for the expansions (Anton's plan) — branch `prep/clear-the-decks`
 
 Anton's expansion plan (`docs/EXPANSIONS.md`, saved word for word) asked for a clear-out before the expansions

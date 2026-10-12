@@ -104,6 +104,8 @@ class Tables:
         self.spells = SpellTable(data["spells.json"])
         self.items.add_scrolls(self.spells)
         self.combat_text = data["combat_text.json"]
+        self.conditions = data["conditions.json"]  # the 2024 conditions (rules/engine/conditions.py)
+        self.traits = data["traits.json"]  # traits and features as definitions (rules/engine/traits.py)
         from realmwalker.rules.health import DiseaseTable
 
         self.diseases = DiseaseTable(data["diseases.json"])

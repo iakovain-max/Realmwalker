@@ -28,6 +28,8 @@ from realmwalker.core.rng import RNG
 from realmwalker.rules import grid
 from realmwalker.rules import spells as spellrules
 from realmwalker.rules.character import Character, Sheet, modifier
+from realmwalker.rules.engine import events, query
+from realmwalker.rules.engine import traits as trs
 from realmwalker.rules.creatures import Creature
 from realmwalker.rules.inventory import remove_item
 from realmwalker.rules.wounds import ARMOR_FACTOR, PART_GROUP, make_wound, roll_location, severity_for, wound_chance
@@ -38,9 +40,7 @@ WOUND_HP_FLOOR = 14  # hit points a character's body counts as having, at least,
 MORALE_HP = {"beast": 0.4, "bandit": 0.35, "coward": 0.6, "soldier": 0.3, "warrior": 0.15}
 FEARLESS = {"fanatic", "mindless"}
 MERCIFUL = {"bandit", "coward", "soldier"}  # these rob a beaten party and leave it alive
-METAL = {"chain_shirt", "scale_mail", "breastplate", "half_plate", "ring_mail", "chain_mail", "splint_armor", "plate_armor"}
-DEFAULT_RANGE = {"ranged": (80, 320), "spell_ranged": (60, 120)}
-INCAPACITATED = ("unconscious", "stunned", "paralyzed")
+DEFAULT_RANGE = query.DEFAULT_RANGE
 ACTIVITY = ("move", "attack", "damage", "cast", "push", "teleport", "heal", "dart", "token_strike")
 QUIET_ROUNDS = 3  # rounds in which nobody can get at anybody before a fight breaks off
 STATES = ("fighting", "fleeing", "down", "dead", "fled", "surrendered")
@@ -145,7 +145,8 @@ class Fighter:
         self.sq = grid.footprint(self.size)
         self.initiative = 0
         self.state = "fighting"  # fighting, fleeing, down, dead, fled, surrendered
-        self.conditions: dict[str, int] = {}
+        self.conditions: dict[str, int] = {}  # the 2024 conditions (data/conditions.json): rounds left, -1 until ended
+        self.sources: dict[str, int] = {}  # who caused a condition, where that matters (rules/engine/query.source)
         self.buffs: list[dict] = []
         self.death_saves = [0, 0]  # successes, failures
         self.stable = False
@@ -250,7 +251,7 @@ class Fighter:
         return int(self.cdef.get("skills", {}).get(skill, self.mod(ability)))
 
     def passive(self, skill: str = "perception") -> int:
-        return 10 + self.skill(skill) + (5 if skill == "perception" and self.has_trait("keen_senses") else 0)
+        return 10 + self.skill(skill) + sum(int(p.get(skill, 0)) for p in trs.values(self, "passive"))
 
     def save_bonus(self, ability: str) -> int:
         if self.char:
@@ -261,14 +262,7 @@ class Fighter:
         return [b[key] for b in self.buffs if key in b]
 
     def ac(self) -> int:
-        if self.char:
-            s = self.sheet
-            ac = s.armor_class()
-            for base in self.buff_value("mage_armor"):
-                if self.char.equipped_item("armor") is None:
-                    ac = max(ac, base + s.mod("dex"))
-            return ac + sum(self.buff_value("ac"))
-        return int(self.cdef["ac"]) + sum(self.buff_value("ac"))
+        return query.ac(self)
 
     @property
     def size(self) -> str:
@@ -279,11 +273,7 @@ class Fighter:
     @property
     def speed(self) -> int:
         """Walking speed in feet this turn."""
-        base = self.sheet.speed() if self.char else int(self.cdef["speed"])
-        if "grappled" in self.conditions or "restrained" in self.conditions:
-            return 0
-        base -= sum(self.buff_value("slow"))
-        return max(0, base)
+        return query.speed(self)
 
     @property
     def darkvision(self) -> int:
@@ -300,9 +290,7 @@ class Fighter:
         return "humanoid" if self.char else self.cdef["kind"]
 
     def has_trait(self, trait: str) -> bool:
-        if self.char:
-            return self.sheet.has_rule(trait)
-        return trait in self.cdef.get("traits", [])
+        return trs.has(self, trait)
 
     @property
     def morale_type(self) -> str:
@@ -327,7 +315,7 @@ class Fighter:
 
     @property
     def incapacitated(self) -> bool:
-        return any(c in self.conditions for c in INCAPACITATED)
+        return query.incapacitated(self)
 
     def can_act(self) -> bool:
         return self.state in ("fighting", "fleeing") and not self.incapacitated
@@ -645,13 +633,7 @@ class Battle:
             return
         if not f.active:
             return
-        # Regeneration (trolls).
-        if f.has_trait("regeneration") and f.hp > 0 and not f.took_fire:
-            healed = min(10, f.max_hp - f.hp)
-            if healed:
-                f.hp += healed
-                self._event("heal", to=f.id, amount=healed)
-                self.say(f"{f.the_name}'s wounds knit closed before your eyes.", "danger")
+        events.emit(self, "turn_start", actor=f)  # regeneration...
         f.took_fire = False
         for name in list(f.recharge):
             if not f.recharge[name] and self.rng.randint(1, 6) >= 5:
@@ -1198,86 +1180,9 @@ class Battle:
 
     # ------------------------------------------------------------------ resolving attacks
     def _adv_dis(self, att: Fighter, target: Fighter, opt: AttackOption, *, space=None) -> tuple[bool, bool, list[str]]:
-        adv, dis, why = False, False, []
-        a_space = space or att.space
-        g = grid.gap(a_space, target.space)
-        if att.helped:
-            adv = True
-            why.append("helped")
-        if target.marked:
-            adv = True
-            why.append("marked")
-        if "prone" in target.conditions:
-            if g <= 1:  # from right beside them, any attack; from further off, even a spear is at disadvantage
-                adv = True
-            else:
-                dis = True
-            why.append("target prone")
-        if any(c in target.conditions for c in ("restrained", "stunned", "unconscious", "paralyzed")):
-            adv = True
-            why.append("target helpless")
-        if target.dodging and self.can_see(target, att):
-            dis = True
-            why.append("dodging")
-        if any(c in att.conditions for c in ("prone", "frightened", "poisoned", "blinded", "restrained")):
-            dis = True
-            why.append("hampered")
-        if att.char and att.char.exhaustion >= 3:
-            dis = True
-            why.append("exhausted")
-        if not self.can_see(att, target):
-            dis = True
-            why.append("cannot see them" if not target.hidden else "hidden")
-        elif att.hidden or not self.can_see(target, att):
-            adv = True
-            why.append("unseen")
-        if not opt.is_melee:
-            near = [e for e in self.enemies_of(att) if e.standing and not e.incapacitated
-                    and grid.gap(a_space, e.space) <= 1]
-            if near:
-                dis = True
-                why.append("enemy at hand")
-            normal = (opt.range or DEFAULT_RANGE.get(opt.kind, (60, 120)))[0]
-            if normal and g * grid.SQUARE_FT > normal:
-                dis = True
-                why.append("long range")
-        if opt.kind == "ranged" and self.env.rain and "ammunition" in opt.properties:
-            dis = True
-            why.append("rain")
-        if att.has_trait("pack_tactics"):
-            if any(x is not att and x.standing and not x.incapacitated and self.gap(x, target) <= 1 for x in self.allies_of(att)):
-                adv = True
-                why.append("pack")
-        if opt.is_melee and self.flanker(att, target, space=a_space) is not None:
-            adv = True
-            why.append("flanking")
-        if att.char and "heavy" in opt.properties and att.size == "small":
-            dis = True
-            why.append("too heavy")
-        if att.char:
-            armor = att.char.equipped_item("armor")
-            if armor is not None and not att.sheet.proficient_with_armor(armor):
-                dis = True
-                why.append("untrained in armour")
-        if opt.extra.get("metal_advantage") and target.char:
-            armor = target.char.equipped_item("armor")
-            if armor is not None and armor.def_id in METAL:
-                adv = True
-        if att.char is not None and att.has_trait("assassinate") and not target.acted:
-            adv = True
-            why.append("not yet moving")
-        if att.creature is not None and att.has_trait("sunlight_sensitive") and not self.field.underground \
-                and not self.field.indoors and self.field.base_light >= grid.BRIGHT:
-            dis = True
-            why.append("sunlight")
-        # A knight (Hold the Line) keeps the enemies beside them busy: they strike at others badly.
-        for k in self.enemies_of(att):
-            if k is not target and k.char is not None and k.standing and not k.incapacitated and \
-                    k.has_trait("hold_the_line") and self.gap(k, att) <= 1:
-                dis = True
-                why.append(f"{k.name} holds the line")
-                break
-        return adv, dis, why
+        """Advantage, disadvantage and why (rules/engine/query.attack_roll)."""
+        r = query.attack_roll(self, att, target, opt, space=space)
+        return r.advantage, r.disadvantage, r.notes
 
     def flanker(self, att: Fighter, target: Fighter, *, space=None) -> Fighter | None:
         """A friend of the attacker on the far side of the target (the DMG's flanking rule): both beside it, on
@@ -1321,33 +1226,25 @@ class Battle:
             why.append(f"{guard.name}'s shield")
             self.say(f"{guard.the_name} gets {guard.possessive} shield in the way.", "good" if guard.side == PARTY else "info")
         roll = dice.d20(self.rng, advantage=adv, disadvantage=dis)
-        natural = roll.natural
-        if natural == 1 and att.char and att.has_trait("lucky"):
-            natural = dice.d20(self.rng).natural
-            self.dice_say(f"{att.name} is lucky: rerolls the 1 and gets {natural}.")
-        crit_on = 19 if att.char and att.has_trait("crit_19") else 20
-        crit = natural >= crit_on
+        natural = events.emit(self, "d20_after", actor=att, target=target, roll="attack", natural=roll.natural).natural
+        crit = natural >= query.crit_range(att)
         bless = sum(dice.roll(d, self.rng).total for d in att.buff_value("attack_die"))
         total = natural + opt.bonus + bless
         ac, cover = self.target_ac(att, target, opt)
         hit = crit or (natural != 1 and total >= ac)
-        if not hit and natural != 1 and total + 10 >= ac and opt.kind in ("melee", "ranged") and att.char is not None \
-                and att.has_trait("guided_strike") and att.char.uses.get("channel_divinity", 0) > 0 \
-                and not any(x.kind == "undead" for x in self.enemies_of(att)):
-            # Guided Strike: the war god's hand on the blow (+10), at the price of the day's Channel Divinity.
-            att.char.uses["channel_divinity"] = 0
-            total += 10
-            hit = True
-            self.say(f"<magic>{att.the_name}'s god guides the blow home.</>", "magic")
-        if hit and target.surprised and att.char is not None and att.has_trait("assassinate"):
-            crit = True  # the Cutthroat's Assassinate: a blow at someone who has not seen it coming
+        if not hit:
+            ev = events.emit(self, "attack_missed", actor=att, target=target, opt=opt, natural=natural, total=total, ac=ac,
+                             hit=False)  # Guided Strike...
+            hit, total = ev.hit, ev.total
         # The Shield spell: a wizard who sees the blow coming turns it with a reaction, if that is enough.
         if hit and not crit and target.char and target.reaction and not target.incapacitated and total < ac + 5:
             if self._shield(target):
                 ac += 5
                 hit = False
-        if hit and opt.is_melee and self.gap(att, target) <= 1 and any(c in target.conditions for c in ("unconscious", "paralyzed")):
-            crit = True  # a blow at someone who cannot defend themselves at all
+        if hit and query.crit_within(self, att, target):
+            crit = True  # a blow from right beside someone who cannot defend themselves at all
+        if hit:
+            crit = events.emit(self, "attack_hit", actor=att, target=target, opt=opt, crit=crit).crit  # Assassinate...
         att.helped = False
         if att.hidden:
             att.hidden = 0
@@ -1389,11 +1286,8 @@ class Battle:
         # Great Weapon Fighting: reroll ones and twos once.
         if att.char and att.char.fighting_style == "great_weapon" and opt.is_melee and "two_handed" in opt.properties:
             amount = sum(r if r > 2 else self.rng.randint(1, sides) for r in rolled.rolls) + flat
-        if crit and att.char and opt.is_melee and att.has_trait("savage_attacks"):
-            amount += self.rng.randint(1, sides)
-        amount += self._sneak_attack(att, target, opt, adv and not dis, crit)
-        if att.char and opt.kind in ("melee", "ranged") and att.has_trait("divine_strike"):
-            amount += dice.roll("1d8", self.rng, double_dice=crit).total
+        amount += events.emit(self, "attack_damage", actor=att, target=target, opt=opt, crit=crit,
+                              advantage=adv and not dis, sides=sides, extra=0).extra  # Sneak Attack, Divine Strike...
         if att.creature and att.cdef.get("attacks") and opt.extra.get("poison"):
             poison = opt.extra["poison"]
             self._save_damage(att, target, "con", poison["dc"], poison["damage"], "poison", "half", quiet=True)
@@ -1445,69 +1339,37 @@ class Battle:
         spellrules.spend_slot(f.char, slot)
         f.reaction = False
         f.buffs.append({"ac": 5, "rounds": 0, "source": "shield"})
-        self._ward(f, 1)
+        events.emit(self, "spell_cast", actor=f, spell=self.t.spells["shield"], sid="shield", level=1)
         self.say(f"<magic>{f.the_name} throws up a Shield.</> The blow glances off thin air.", "magic")
         self._event("cast", by=f.id, to=f.id, spell="shield", effect="buff", dtype="force", area=[])
         return True
 
-    def _sneak_attack(self, att: Fighter, target: Fighter, opt: AttackOption, advantage: bool, crit: bool) -> int:
-        if not att.char or "sneak_attack" not in att.char.features or att.char.uses.get("sneak_round") == self.round:
-            return 0
-        if opt.kind == "melee" and "finesse" not in opt.properties:
-            return 0
-        if opt.kind not in ("melee", "ranged"):
-            return 0
-        ally_beside = any(x is not att and x.standing and not x.incapacitated and self.gap(x, target) <= 1
-                          for x in self.allies_of(att))
-        if not (advantage or ally_beside):
-            return 0
-        att.char.uses["sneak_round"] = self.round
-        n = (att.char.level + 1) // 2
-        extra = dice.roll(f"{n}d6", self.rng, double_dice=crit).total
-        self.say(f"{att.the_name} finds the gap.", "good")
-        return extra
-
     def _save(self, f: Fighter, ability: str, dc: int, *, quiet: bool = False, bonus: int = 0) -> bool:
-        if ability in ("str", "dex") and any(c in f.conditions for c in ("stunned", "paralyzed", "unconscious")):
+        sr = query.save_roll(self, f, ability, bonus=bonus)
+        if sr.auto_fail:
             if not quiet:
-                self.dice_say(f"{f.name} {ability.upper()} save: fails (helpless)")
+                self.dice_say(f"{f.name} {ability.upper()} save: fails ({sr.auto_fail})")
             return False
-        adv = ability == "con" and f.has_trait("poison_resilience") or ability == "wis" and f.has_trait("dark_devotion") \
-            or ability == "dex" and f.dodging and not f.incapacitated  # Dodge: easier to get out of the way of fire
-        dis = ability == "dex" and "restrained" in f.conditions or bool(f.char and f.char.exhaustion >= 3)
-        roll = dice.d20(self.rng, advantage=adv, disadvantage=dis)
-        total_bonus = f.save_bonus(ability) + bonus + sum(dice.roll(d, self.rng).total for d in f.buff_value("save_die"))
+        roll = dice.d20(self.rng, advantage=sr.roll.advantage, disadvantage=sr.roll.disadvantage)
+        total_bonus = sr.bonus + sum(dice.roll(d, self.rng).total for d in sr.dice)
         total = roll.natural + total_bonus
         ok = total >= dc
         if not quiet:
             self.dice_say(f"{f.name} {ability.upper()} save: {roll.natural} {signed_mod(total_bonus)} = {total} vs DC {dc} — "
                           f"{'saved' if ok else 'failed'}")
-        if not ok and f.char is not None and f.has_trait("indomitable") and f.char.uses.get("indomitable", 1) > 0:
-            # Indomitable: a fighter refuses a failed save once a day.
-            f.char.uses["indomitable"] = 0
-            again = dice.d20(self.rng).natural + total_bonus
-            ok = again >= dc
-            self.dice_say(f"{f.name} is indomitable and tries again: {again} vs DC {dc} — {'saved' if ok else 'failed'}")
-            if ok:
-                self.say(f"{f.the_name} will not give way.", "good")
-        return ok
+        return events.emit(self, "d20_after", actor=f, roll="save", ability=ability, natural=roll.natural,
+                           bonus=total_bonus, dc=dc, ok=ok).ok  # Indomitable...
 
     def _save_damage(self, att: Fighter, target: Fighter, ability: str, dc: int, expr: str, dtype: str, on_save: str,
                      *, quiet: bool = False, cover: int = 0, rolled: int | None = None) -> bool:
         """A saving throw against damage (half on a save, or none); returns whether it was saved."""
-        amount = dice.roll(expr, self.rng).total if rolled is None else rolled
+        full = dice.roll(expr, self.rng).total if rolled is None else rolled
         saved = self._save(target, ability, dc, quiet=quiet, bonus=grid.COVER_AC[cover] if ability == "dex" else 0)
-        if dtype == "poison" and not saved and target.char and not target.has_trait("poison_resilience"):
+        if dtype == "poison" and not saved and target.char and not query.condition_immune(target, "poisoned"):
             target.conditions["poisoned"] = 10
-        if saved:
-            if ability == "dex" and target.char and target.has_trait("evasion"):
-                amount = 0
-            elif on_save == "half":
-                amount //= 2
-            else:
-                amount = 0
-        elif ability == "dex" and target.char and target.has_trait("evasion"):
-            amount //= 2
+        amount = (full // 2 if on_save == "half" else 0) if saved else full
+        amount = events.emit(self, "save_damage", actor=att, target=target, ability=ability, saved=saved, full=full,
+                             amount=amount).amount  # Evasion...
         self._event("save", who=target.id, ok=saved)
         if amount > 0:
             self._hit(att, target, amount, dtype, crit=False, weapon=dtype)
@@ -1516,26 +1378,14 @@ class Battle:
     def _hit(self, att: Fighter | None, target: Fighter, amount: int, dtype: str, *, crit: bool, weapon: str,
              bite: bool = False, claws: bool = False) -> None:
         """Damage that landed: resistances, text, wounds, going down."""
-        if target.creature:
-            if dtype in target.cdef.get("immune", []):
-                self.say(f"{target.the_name} does not seem to feel it.", "flavor")
-                self._event("immune", to=target.id, by=att.id if att else None)
-                return
-            if dtype in target.cdef.get("vulnerable", []):
-                amount *= 2
-        resist = [r for b in target.buffs for r in b.get("resist", [])]
-        if target.char is not None:
-            from realmwalker.rules import magic
-
-            resist += magic.resistances(target.char)
-        if dtype in resist or (dtype == "poison" and target.has_trait("poison_resilience")):
-            amount = max(1, amount // 2)
-        if (target.char and target.has_trait("uncanny_dodge") and target.uncanny_used_round != self.round and att is not None
-                and target.reaction and target.standing and self.can_see(target, att)):
-            target.uncanny_used_round = self.round
-            target.reaction = False
-            amount = max(1, amount // 2)
-            self.say(f"{target.the_name} rolls with the blow.", "good")
+        amount, defence = query.damage_taken(target, amount, dtype)
+        if defence == "immune":
+            self.say(f"{target.the_name} does not seem to feel it.", "flavor")
+            self._event("immune", to=target.id, by=att.id if att else None)
+            return
+        if att is not None:
+            amount = events.emit(self, "damage_incoming", actor=att, target=target, stage="blow", amount=amount,
+                                 dtype=dtype).amount  # Uncanny Dodge...
         if dtype in ("fire", "acid"):
             target.took_fire = True
         part = roll_location(self.t.combat_text["locations"].get(target.body, self.t.combat_text["locations"]["humanoid"]), self.rng)
@@ -1581,7 +1431,8 @@ class Battle:
 
     def _apply_hp_loss(self, target: Fighter, amount: int, *, source: Fighter | None, cause: str, crit: bool = False) -> None:
         if source is not None and target.state == "fighting" and amount > 0:
-            amount = self._soak(target, amount)
+            amount = events.emit(self, "damage_incoming", actor=source, target=target, stage="hp",
+                                 amount=amount).amount  # an Arcane Ward
             if amount <= 0:
                 return
         if target.state == "down":
@@ -1595,29 +1446,8 @@ class Battle:
             return
         new_hp = target.hp - amount
         if new_hp <= 0:
-            if target.creature and target.creature.uses.get("relentless") and amount <= 7:
-                target.creature.uses["relentless"] = 0
-                target.hp = 1
-                self.say(f"{target.the_name} refuses to fall.", "danger")
-                return
-            if target.creature and target.has_trait("undead_fortitude") and self.rng.random() < 0.5:
-                if self._save(target, "con", 5 + amount):
-                    target.hp = 1
-                    self.say(f"{target.the_name} shudders and keeps coming.", "danger")
-                    return
-            ward = next((b for b in target.buffs if b.get("death_ward")), None)
-            if ward is not None:
-                target.buffs.remove(ward)
-                if ward.get("lasting") and target.char:
-                    spellrules.end(target.char, ward["lasting"])  # spent: it does not come into the next fight
-                target.hp = 1
-                self.say(f"<magic>The ward over {target.the_name} takes the blow instead.</>", "good")
-                return
-            if target.char and target.char.uses.get("relentless_endurance"):
-                target.char.uses["relentless_endurance"] = 0
-                target.hp = 1
-                self.say(f"{target.the_name} should be down, and is not.", "good")
-                return
+            if events.emit(self, "hp_zero", actor=source, target=target, amount=amount, survived=False).survived:
+                return  # Death Ward, Relentless Endurance, Undead Fortitude...
             target.hp = 0
             if target.char:
                 # A blow that would take a whole life's worth below nothing kills outright (massive damage).
@@ -1637,40 +1467,6 @@ class Battle:
                 self._kill(target, cause, killer=source)
         else:
             target.hp = new_hp
-
-    def _ward(self, f: Fighter, level: int) -> None:
-        """An abjurer's Arcane Ward: made by the first abjuration of the day, strengthened by each after."""
-        c = f.char
-        if c is None or not f.has_trait("arcane_ward") or level < 1:
-            return
-        most = 2 * c.level + f.mod("int")
-        if not c.uses.get("ward_made"):
-            c.uses["ward_made"] = 1
-            c.uses["arcane_ward"] = most
-            self.say(f"<magic>A shimmering ward settles over {f.the_name}.</>", "magic")
-        else:
-            c.uses["arcane_ward"] = min(most, c.uses.get("arcane_ward", 0) + 2 * level)
-
-    def _soak(self, target: Fighter, amount: int) -> int:
-        """What an Arcane Ward takes of a blow: the wizard's own, or one thrown over a friend (Projected Ward)."""
-        wards = []
-        if target.char is not None and target.char.uses.get("arcane_ward", 0) > 0:
-            wards.append((target, False))
-        for w in self.allies_of(target):
-            if w is not target and w.char is not None and "projected_ward" in w.char.features and w.reaction \
-                    and w.char.uses.get("arcane_ward", 0) > 0 and self.feet(w, target) <= 30 and not w.incapacitated:
-                wards.append((w, True))
-        for w, projected in wards:
-            left = w.char.uses["arcane_ward"]
-            took = min(left, amount)
-            w.char.uses["arcane_ward"] = left - took
-            amount -= took
-            if projected:
-                w.reaction = False
-            self.say(f"<magic>{w.the_name}'s ward takes {took} of it{' over ' + target.the_name if projected else ''}.</>", "magic")
-            if amount <= 0:
-                break
-        return amount
 
     def _death_save(self, f: Fighter) -> None:
         roll = dice.d20(self.rng).natural
@@ -1721,10 +1517,7 @@ class Battle:
                 f.char.death_cause = f"bled to death fighting {kinds[0]}" if kinds else "bled to death in a fight"
             self.say(f"<danger>{f.the_name} is dead.</> ({cause})", "danger")
         self._morale_losses(f.side)
-        if f.creature and "leader" in f.cdef.get("traits", []):
-            for other in self.side(f.side):
-                if other.active and other is not f:
-                    self._morale_check(other, "leader")
+        events.emit(self, "killed", actor=killer, target=f)  # a leader's fall...
 
     # ------------------------------------------------------------------ morale
     def _morale_after_hit(self, f: Fighter) -> None:
@@ -2542,8 +2335,7 @@ class Battle:
 
         evocation = f.char is not None and spell.get("school") == "evocation" and f.char.cls == "wizard"
         empowered = mod if evocation and f.has_trait("empowered_evocation") and spell["kind"] in ("save", "attack") else 0
-        if spell.get("school") == "abjuration" and level >= 1:
-            self._ward(f, level)
+        events.emit(self, "spell_cast", actor=f, spell=spell, sid=sid, level=level)  # an Arcane Ward...
 
         def dmg_expr(base: str) -> str:
             n, sides, flat = dice.parse(base)
@@ -2633,8 +2425,7 @@ class Battle:
                     self.say(f"The magic finds no hold in {x.the_name}.", "warn")
                     continue
                 amount = dice.roll(dmg_expr(spell["heal"]), self.rng).total + (mod if spell.get("add_mod") else 0)
-                if f.char and f.char.subclass == "life":
-                    amount += 2 + max(1, level)
+                amount = events.emit(self, "heal_spell", actor=f, target=x, amount=amount, level=level).amount
                 self._heal(x, amount)
                 if spell.get("mends_wound") and x.wounds:
                     w = max(x.wounds, key=lambda w: (w.severity, w.bleed))
@@ -2899,7 +2690,7 @@ class Battle:
         return stopped
 
     def _zone_catch(self, f: Fighter, z: Zone) -> bool:
-        if z.kind != "web" or "restrained" in f.conditions or f.has_trait("web_walker"):
+        if z.kind != "web" or "restrained" in f.conditions or "web" in trs.values(f, "ignores_zone", flat=True):
             return False
         z.struck.add(f.id)
         if self._save(f, "dex", z.dc):

@@ -14,8 +14,21 @@ log = logging.getLogger("realmwalker.data")
 
 
 class DataRegistry:
-    def __init__(self, files: dict[str, Any]) -> None:
+    def __init__(self, files: dict[str, Any], packs: list | None = None, provenance=None) -> None:
+        from realmwalker.data.packs import Provenance
+
         self._files = files
+        self.packs = list(packs or [])  # the expansion packs, in order (data/packs.Pack)
+        self.provenance = provenance if provenance is not None else Provenance()
+
+    def origin(self, kind: str, entry_id: str, section: str | None = None) -> str | None:
+        """Where an entry came from: "base", or the id of the pack that added it (None if there is no such entry).
+        kind is the data file's name without .json ("creatures"); section narrows it ("encounters")."""
+        return self.provenance.origin(f"{kind}.json", str(entry_id), section)
+
+    def added_by(self, pack_id: str) -> dict[tuple[str, str], int]:
+        """How many entries a pack added, by (file, section)."""
+        return self.provenance.added_by(pack_id)
 
     def __getitem__(self, name: str) -> Any:
         return self._files[name]
@@ -33,24 +46,39 @@ class DataRegistry:
 
     @classmethod
     def load(cls, data_dir: Path) -> tuple[DataRegistry, list[str]]:
-        files: dict[str, Any] = {}
+        """Read every base file, merge the expansion packs over them (data/packs.py), then check the result."""
+        import copy
+
+        from realmwalker.data.packs import Provenance, find_packs, merge_packs
+        from realmwalker.data.schemas import PACK_ONLY
+
+        raw: dict[str, Any] = {}
         errors: list[str] = []
-        for filename, spec in DATA_FILES.items():
+        prov = Provenance()
+        for filename in DATA_FILES:
             path = data_dir / filename
             if not path.exists():
-                errors.append(f"data/{filename} is missing.")
+                if filename in PACK_ONLY:
+                    raw[filename] = copy.deepcopy(PACK_ONLY[filename])
+                else:
+                    errors.append(f"data/{filename} is missing.")
                 continue
             try:
-                data = json.loads(path.read_text(encoding="utf-8"))
+                raw[filename] = json.loads(path.read_text(encoding="utf-8"))
             except json.JSONDecodeError as exc:
                 errors.append(f"data/{filename}: line {exc.lineno}, column {exc.colno}: {exc.msg}.")
                 continue
             except (OSError, UnicodeDecodeError) as exc:
                 errors.append(f"data/{filename}: could not be read ({exc}).")
                 continue
+            prov.note_base(filename, raw[filename])
+        packs = find_packs(data_dir, errors)
+        merge_packs(raw, packs, set(DATA_FILES), prov, errors)
+        files: dict[str, Any] = {}
+        for filename, data in raw.items():
             file_errors: list[str] = []
-            spec.check(data, "", file_errors)
-            errors.extend(f"data/{filename}: {e}" for e in file_errors)
+            DATA_FILES[filename].check(data, "", file_errors)
+            errors.extend(f"data/{filename}{' (with the packs)' if packs else ''}: {e}" for e in file_errors)
             if not file_errors:
                 files[filename] = data
         if "fallback_text.json" in files:
@@ -58,7 +86,7 @@ class DataRegistry:
         errors.extend(check_cross_references(files))
         for e in errors:
             log.error("Data problem: %s", e)
-        return cls(files), errors
+        return cls(files, packs, prov), errors
 
 
 def check_cross_references(files: dict[str, Any]) -> list[str]:
