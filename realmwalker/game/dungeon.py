@@ -440,7 +440,16 @@ def open_chest(game, lm, x: int, y: int) -> None:
     from realmwalker.game import treasure
 
     rng = rng_for(game, "chest")
-    items, money = treasure.roll(game, int(f.get("treasure", 1)), rng, grave=grave)
+    cr, theme = float(lm.meta.get("cr", max(0, int(f.get("treasure", 1)) - 1.5))), lm.meta.get("theme")
+    if f.get("hoard"):
+        items, money = treasure.hoard(game, cr, rng, theme=theme)
+        game.say("<loot>This is the hoard of whoever ruled this place.</>", "loot")
+    else:
+        items, money = treasure.roll(game, int(f.get("treasure", 1)), rng, grave=grave, cr=cr, theme=theme)
+    if any(it.magic for it in items):
+        from realmwalker.game import magic_items
+
+        magic_items.notice(game, "magic_found")
     if f.get("quest") is not None:
         from realmwalker.game import quests
 
@@ -507,15 +516,24 @@ def take_hoard(game) -> list[str]:
     if f["left"] <= 0:
         return ["There is nothing left here worth carrying that you can carry."]
     rng = rng_for(game, "hoard")
-    grab = rng.randint(3000, 12000)
+    from realmwalker.game import treasure
+
+    if "copper" not in f:
+        # DMG 2024: a dragon is fond of amassing treasure, so its hoard is the table rolled twice, for its CR.
+        cr = max((float(game.tables.creatures[c.def_id].get("cr", 0)) for a in lm.actors if a.group == "dragon"
+                  for c in a.creatures), default=10.0)
+        items, copper = treasure.hoard(game, cr, rng.child("whole"), theme=None, double=True)
+        f["copper"] = copper
+        f["items"] = [it.to_dict() for it in items]
+    grab = min(f["copper"], max(100, f["copper"] // max(1, f["left"]) * rng.randint(70, 130) // 100))
+    f["copper"] -= grab
     f["left"] -= 1
     game.leader.money += grab
     game.cue("coins")
-    from realmwalker.game import treasure
+    if f["items"] and (rng.chance(0.3) or f["left"] <= len(f["items"])):
+        from realmwalker.rules.items import Item
 
-    items, _ = treasure.roll(game, 5, rng)
-    if items:
-        lm.items.setdefault((p.lx, p.ly), []).extend(items[:1])
+        lm.items.setdefault((p.lx, p.ly), []).append(Item.from_dict(f["items"].pop(0)))
     wake_the_dragon(game, lm)
     game.pass_seconds(30)
     return [f"<loot>You stuff your pockets: {money_text(grab)}.</>"]
@@ -586,3 +604,24 @@ def populate(game, lm) -> None:
             creatures[0].name = boss_name  # the troll the old songs are about; the king who was laid here
             creatures[0].named = True
         lm.actors.append(LocalActor(len(lm.actors) + 1, group, x, y, creatures))
+    _treasure_of_the_place(game, lm, rng.child("hoard"), has_boss)
+
+
+def _treasure_of_the_place(game, lm, rng: RNG, has_boss: bool) -> None:
+    """What the chests hold is the business of who lives here (DMG 2024): the level's strength (the highest Challenge
+    Rating among its folk) and their treasure theme; on the deepest level, the last and best chest is the ruler's
+    hoard."""
+    from realmwalker.game import treasure
+
+    folk = [c.def_id for a in lm.actors for c in a.creatures]
+    meta = lm.meta
+    meta["cr"] = max((float(game.tables.creatures[d].get("cr", 0)) for d in folk), default=0.0)
+    meta["theme"] = treasure.theme_of(game, folk, rng) if folk else rng.choice(list(treasure.THEMES))
+    if not has_boss:
+        return
+    chests = [(f.get("treasure", 1), pos) for pos, f in lm.features.items()
+              if f.get("kind") == "chest" and not f.get("grave") and f.get("quest") is None
+              and f.get("artifact") is None]
+    if chests:
+        _tier, pos = max(chests)
+        lm.features[pos]["hoard"] = True

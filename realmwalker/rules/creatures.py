@@ -74,9 +74,7 @@ def spawn(tables, def_id: str, rng: RNG, uid: int, *, now: int = 0) -> Creature:
         sex = rng.choice(["male", "male", "female"])
         name = rng.choice(c[sex])
         named = True
-    money = 0
-    if d.get("money"):
-        money = dice.roll(d["money"]["dice"], rng).total * int(d["money"].get("mult", 1))
+    money = individual_treasure(tables, float(d.get("cr", 0)), rng) if "individual" in keeps(d) else 0
     creature = Creature(uid=uid, def_id=def_id, name=name, hp=hp, max_hp=hp, money=money, named=named, sex=sex)
     next_uid = 1
     for item_id, qty in d.get("gear", []) + d.get("loot", []):
@@ -87,6 +85,32 @@ def spawn(tables, def_id: str, rng: RNG, uid: int, *, now: int = 0) -> Creature:
     if "relentless" in d.get("traits", []):
         creature.uses["relentless"] = 1
     return creature
+
+
+# ---------------------------------------------------------------------------- what they carry (DMG 2024)
+def keeps(cdef: dict) -> list[str]:
+    """The creature's Monster Manual treasure, in lower case ("individual", a theme, "any", "none")."""
+    return [t.lower() for t in cdef.get("treasure", ["none"])]
+
+
+def individual_treasure(tables, cr: float, rng: RNG) -> int:
+    """Random Individual Treasure (DMG 2024, data/treasure.json): copper for one creature of this Challenge Rating."""
+    rows = tables.treasure["individual"]
+    cr = max(0.0, float(cr))
+    row = next((r for r in rows if cr <= r[1]), rows[-1])
+    _lo, _hi, expr, times, coin = row
+    return dice.roll(expr, rng).total * int(times) * int(tables.treasure["coins"][coin])
+
+
+def band_purse(tables, creatures: list[Creature], rng: RNG) -> None:
+    """A band of a kind that keeps a hoard at home (its block names a theme or Any, not Individual) carries one
+    purse on the road: its leader's. Beasts and the dead carry nothing (their blocks say None)."""
+    if any(c.money for c in creatures):
+        return
+    keepers = [c for c in creatures if keeps(tables.creatures[c.def_id]) and "none" not in keeps(tables.creatures[c.def_id])]
+    if keepers:
+        lead = max(keepers, key=lambda c: float(tables.creatures[c.def_id].get("cr", 0)))
+        lead.money = individual_treasure(tables, float(tables.creatures[lead.def_id].get("cr", 0)), rng)
 
 
 def spawn_group(tables, group_id: str, rng: RNG, first_uid: int = 1, *, now: int = 0, party_size: int = 3) -> list[Creature]:
@@ -121,6 +145,7 @@ def spawn_group(tables, group_id: str, rng: RNG, first_uid: int = 1, *, now: int
         seen[c.name] = seen.get(c.name, 0) + 1
         if seen[c.name] > 1:
             c.name = f"{ordinals[min(seen[c.name] - 1, len(ordinals) - 1)]}{c.name}"
+    band_purse(tables, out, rng)
     return out
 
 

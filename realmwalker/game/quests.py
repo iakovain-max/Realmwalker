@@ -1302,6 +1302,34 @@ def finish_personal(game, c, q) -> list[str]:
 
 
 # ---------------------------------------------------------------------------- the end of it
+GIFT_GIVERS = ("lord", "priest", "headman")  # those with a strongroom, a vestry or a chest under the bed
+
+
+def strongroom_gift(game, q, giver, share: float) -> list[str]:
+    """DMG 2024 Quest Rewards: a roll on the hoard table with the party's level for the CR. The coin a village or a
+    lord can pay is the reward in the terms; on top of it, for the great works (300 experience and more), a lord, a
+    priest or a headman adds what the hoard row says in magic items, from their own strongroom."""
+    s = spec(game)["templates"][q["template"]]
+    if share < 1.0 or int(s["xp"]) < 300 or giver is None or giver.job not in GIFT_GIVERS:
+        return []
+    from realmwalker.game import treasure
+    from realmwalker.rules.inventory import add_existing
+
+    rng = game.world.rng.child(f"quest-gift/{q['id']}")
+    level = max((c.level for c in game.party if c.alive), default=1)
+    _lo, _hi, _expr, _times, magic = next((r for r in game.tables.treasure["hoard"] if level <= r[1]),
+                                          game.tables.treasure["hoard"][-1])
+    out = []
+    for _ in range(treasure.magic_count(game, magic, rng)):
+        it = treasure.magic_item(game, rng, treasure.rarity_for(game, level, rng), None)
+        if it is None:
+            continue
+        add_existing(game.leader, game.tables.items, it)
+        out.append(f"<loot>{giver.first_name} brings out something more, wrapped in cloth: "
+                   f"{game.tables.items.name(it)}.</>")
+    return out
+
+
 def reward(game, q, *, share: float = 1.0, text: str | None = None) -> list[str]:
     from realmwalker.game import followers, reputation
     from realmwalker.game.companions import react
@@ -1361,6 +1389,7 @@ def reward(game, q, *, share: float = 1.0, text: str | None = None) -> list[str]
                                                     "reward": money_text(money)}))
     q["journal"].append(line)
     out = [f"<good>{line}</> <dim>(+{int(s['xp'] * min(1.0, share))} experience each)</>"] + notes
+    out += strongroom_gift(game, q, giver, share)
     if freed:
         from realmwalker.game.companions import grateful
 

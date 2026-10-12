@@ -177,7 +177,7 @@ def test_treasure_holds_magic_at_higher_tiers(game):
     for i in range(200):
         items, money = treasure.roll(game, 5, RNG(i, "hoard"))
         found += sum(1 for it in items if it.magic)
-        assert money > 0
+        assert money > 0 or items  # coin, or what the place's theme turned it into (gems, art, bars)
     assert found > 5
 
 
