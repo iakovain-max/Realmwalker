@@ -470,7 +470,7 @@ def _pick_cast(b: Battle, f: Fighter, cost: str, *, beat: float = 0.0, care: flo
     if care is None:
         care = 4.0 if f.char is not None else (0.3 if smarts(f) == 0 else 1.0)  # friends caught in an area
     best = None
-    for opt in actions.options(b, f):
+    for opt in actions.options(b, f, only=("cast",)):
         if opt.kind != "cast" or not opt.available or opt.cost != cost:
             continue
         sp = b.t.spells[spell_id(opt.value)]
@@ -569,12 +569,23 @@ def _party_turn(b: Battle, f: Fighter) -> None:
     _tend_the_fallen(b, f)
     if b.current is not f or b.outcome is not None:
         return
-    if "second_wind" in c.features and c.uses.get("second_wind", 0) > 0 and f.bonus > 0 and f.hp < f.max_hp // 2:
-        b.do_ability(f, "second_wind")
+    if f.hp < f.max_hp // 2:  # a breath caught with the bonus action, when it is needed (Second Wind)
+        for opt, a in _abilities(b, f, "heal"):
+            if estimates.ability_value(b, f, a).total() > 0:
+                b.do_ability(f, opt.value)
+                break
     if b.current is not f or b.outcome is not None:
+        return
+    if f.action > 0 and _use_power(b, f):
+        if b.current is f and b.outcome is None:
+            _bonus_strike(b, f)
+        if b.current is f and b.outcome is None and f.move_left >= 5:
+            _keep_safe(b, f)
         return
     if spellrules.is_caster(c, b.t) and f.action > 0:
         if _cast_something(b, f):
+            if b.current is f and b.outcome is None:
+                _bonus_strike(b, f)  # (the spiritual weapon, War Priest)
             if b.current is f and b.outcome is None and f.move_left >= 5:
                 _keep_safe(b, f)
             return
@@ -582,39 +593,84 @@ def _party_turn(b: Battle, f: Fighter) -> None:
         return
     opts = [o for o in b.attack_options(f) if o.available]
     attacks = 2 if c.level >= 5 and "extra_attack" in c.features else 1
-    if "action_surge" in c.features and c.uses.get("action_surge", 0) > 0 and f.hp < f.max_hp * 0.6 \
-            and len(b.enemies_of(f)) >= 2:
-        b.do_ability(f, "action_surge")
-        attacks *= 2 if f.action > 1 else 1
+    if opts and f.hp < f.max_hp * 0.6 and len(b.enemies_of(f)) >= 2:  # one more action when it is hard going
+        for opt, _ in _abilities(b, f, "action"):
+            b.do_ability(f, opt.value)
+            attacks *= 2 if f.action > 1 else 1
+            break
     if opts:
         struck = _fight(b, f, opts, attacks)
         if struck and b.current is f and b.outcome is None:
             _bonus_strike(b, f)
-    if b.current is f and b.outcome is None and "cunning_action" in c.features and f.bonus > 0:
-        if f.hp < f.max_hp // 2 and any(b.gap(f, e) <= 1 for e in b.enemies_of(f) if e.standing):
-            b.do_disengage(f, bonus=True)
+    if b.current is f and b.outcome is None and f.bonus > 0:  # Cunning Action: away when hurt, else out of sight
+        moves = {a["via"]: opt for opt, a in _abilities(b, f, "move")}
+        if "disengage" in moves and f.hp < f.max_hp // 2 and \
+                any(b.gap(f, e) <= 1 for e in b.enemies_of(f) if e.standing):
+            b.do_ability(f, moves["disengage"].value)
             _step_back(b, f)
-        elif not b.hide_problem(f):
-            b.do_hide(f, bonus=True)
+        elif "hide" in moves and not b.hide_problem(f):
+            b.do_ability(f, moves["hide"].value)
+
+
+def _abilities(b: Battle, f: Fighter, does: str) -> list[tuple]:
+    """(option, definition) of each ability in the one list of actions (rules/engine/actions.options) that can be
+    used now and does this (`_does`)."""
+    out = []
+    for opt in actions.options(b, f, only=("ability",)):
+        if opt.kind == "ability" and opt.available:
+            a = actions.find(f, opt.value)
+            if _does(opt, a) == does:
+                out.append((opt, a))
+    return out
+
+
+def _does(opt, a: dict | None) -> str:
+    """What an ability is for, read from what it is: a "heal" with the bonus action, one more "action", a "move" done
+    with the bonus action (Cunning Action), a bonus "attack" (an off-hand blow, a spirit's strike, War Priest), or a
+    "power" used with the action (Channel Divinity)."""
+    if a is None:
+        return "attack" if opt.value in ("offhand", "spirit_strike") else "other"
+    if a.get("via"):
+        return "move"
+    ops = [o["op"] for o in a.get("effects", ())]
+    if "gain_action" in ops:
+        return "action"
+    if a["cost"] == "bonus":
+        return "heal" if "heal" in ops else "attack"
+    return "power" if a["cost"] == "action" else "other"
+
+
+def _use_power(b: Battle, f: Fighter) -> bool:
+    """A power used with the action (Turn Undead, Preserve Life), if it is worth more than the best spell or blow."""
+    best = None
+    for opt, a in _abilities(b, f, "power"):
+        w = estimates.ability_value(b, f, a).total() - (spell_cost(b, f, 1) if a.get("uses") else 0.0)
+        if w > 0.5 and (best is None or w > best[0]):
+            best = (w, opt)
+    if best is None:
+        return False
+    rival = _best_attack_worth(b, f)
+    if spellrules.is_caster(f.char, b.t):
+        spell = _pick_cast(b, f, "action")
+        rival = max(rival, spell[0] if spell is not None else 0.0)
+    if best[0] <= rival:
+        return False
+    b.do_ability(f, best[1].value)
+    return f.action <= 0
 
 
 def _bonus_strike(b: Battle, f: Fighter) -> None:
+    """A blow with the bonus action (the off-hand, the spiritual weapon, War Priest), at the weakest in reach."""
     if f.bonus <= 0:
         return
-    for aid, _, ok, _ in b.class_abilities(f):
-        if not ok:
-            continue
-        if aid == "offhand":
-            opt = b.offhand_option(f)
-            targets = [t for t in b.enemies_of(f) if opt is not None and b.in_reach(f, opt, t)[0]]
-            if targets:
-                b.do_ability(f, "offhand", min(targets, key=lambda t: t.hp))
-                return
-        if aid == "spirit_strike":
-            targets = b.spirit_targets(f)
-            if targets:
-                b.do_ability(f, "spirit_strike", min(targets, key=lambda t: t.hp))
-                return
+    for opt, a in _abilities(b, f, "attack"):
+        targets = opt.targets
+        if not targets and a is not None:  # (War Priest strikes with the weapon in hand)
+            weapons = [x for x in b.attack_options(f) if x.available and x.item_uid is not None]
+            targets = b.targets_for(f, weapons[0]) if weapons else []
+        if targets:
+            b.do_ability(f, opt.value, min(targets, key=lambda t: t.hp))
+            return
 
 
 def _tend_the_fallen(b: Battle, f: Fighter) -> None:

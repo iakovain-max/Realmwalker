@@ -140,13 +140,16 @@ class Sheet:
         self.rules = tables.rules
 
     # ------------------------------------------------------------------ basics
-    def mod(self, ability: str) -> int:
+    def score(self, ability: str) -> int:
         score = self.c.abilities.get(ability, 10)
         if self.c.equipped:
             from realmwalker.rules import magic
 
             score = min(24, score + magic.total(self.c, "ability", ability=ability))
-        return modifier(score)
+        return score
+
+    def mod(self, ability: str) -> int:
+        return modifier(self.score(ability))
 
     @property
     def proficiency(self) -> int:

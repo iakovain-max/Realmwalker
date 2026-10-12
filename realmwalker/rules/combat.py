@@ -263,6 +263,9 @@ class Fighter:
             return self.sheet.mod(ability)
         return modifier(self.cdef["abilities"][ability])
 
+    def score(self, ability: str) -> int:
+        return self.sheet.score(ability) if self.char else int(self.cdef["abilities"][ability])
+
     def skill(self, skill: str) -> int:
         if self.char:
             return self.sheet.skill_bonus(skill)
@@ -326,6 +329,29 @@ class Fighter:
     @property
     def hovers(self) -> bool:
         return bool(self.creature and self.cdef.get("speeds", {}).get("hover"))
+
+    def _speed_of(self, kind: str) -> int:
+        if query.flag(self, "speed_zero"):
+            return 0
+        own = 0 if self.char else int(self.cdef.get("speeds", {}).get(kind, 0))
+        return max(own, max([0] + [int(v) for v in self.buff_value(kind)]))
+
+    @property
+    def climb_speed(self) -> int:
+        """Climbing speed in feet: climbing costs it no extra movement (a spider, a bear)."""
+        return self._speed_of("climb")
+
+    @property
+    def swim_speed(self) -> int:
+        """Swimming speed in feet: swimming costs it no extra movement, and a current does not trouble it."""
+        return self._speed_of("swim")
+
+    @property
+    def jump(self) -> tuple[int, int]:
+        """How far it can leap, in feet: standing, and after a run of 10 feet - half its Strength score, and all of it
+        (2024 Long Jump)."""
+        s = self.score("str")
+        return s // 2, s
 
     @property
     def darkvision(self) -> int:
@@ -1029,7 +1055,8 @@ class Battle:
             budget = f.move_left // 2 if self.dragging(f) else f.move_left
         return grid.paths(self.field, (f.x, f.y), f.sq, budget, blocked=blocked,
                           occupied=occupied, threats=self.threats(f), risk=risk, crawling="prone" in f.conditions,
-                          hazard=fire, flying=f.fly_speed > 0)
+                          hazard=fire, flying=f.fly_speed > 0, climber=f.climb_speed > 0, swimmer=f.swim_speed > 0,
+                          jump=(0, 0) if "prone" in f.conditions or self.held_by(f) or self.dragging(f) else f.jump)
 
     def occupied_by_others(self, f: Fighter) -> set:
         return {c for x in self.on_field() if x is not f for c in x.cells}
@@ -1070,12 +1097,19 @@ class Battle:
                 break
             new_cells = grid.cells(sq[0], sq[1], f.sq)
             ground = f.fly_speed <= 0
-            cost = 0 if free else (10 if "prone" in f.conditions or any(
-                (self.field.difficult(*c) if ground else self.field.zone_difficult[c]) for c in new_cells
-                if c not in f.cells) else 5)
+            leap = max(abs(sq[0] - f.x), abs(sq[1] - f.y))
+            if leap > 1:  # a long jump: each foot costs a foot, whatever it passes over
+                cost = 0 if free else leap * grid.SQUARE_FT
+            else:
+                entering = [c for c in new_cells if c not in f.cells] or new_cells
+                cost = 0 if free else grid.step_feet(self.field, entering, crawling="prone" in f.conditions,
+                                                     flying=not ground, climber=f.climb_speed > 0,
+                                                     swimmer=f.swim_speed > 0)
             if heavy and not free:
                 cost *= 2
             if cost > f.move_left and not free:
+                break
+            if not free and not self._may_go(f, sq, leap, cost):
                 break
             if provoke and not free and not f.disengaged:
                 there = (sq[0], sq[1], f.sq)
@@ -1096,7 +1130,7 @@ class Battle:
             before = (f.x, f.y)
             f.x, f.y = sq
             f.move_left -= cost
-            f.moved_feet += grid.SQUARE_FT
+            f.moved_feet += grid.SQUARE_FT * max(1, leap)
             walked.append(sq)
             n += 1
             for x in held:  # the held come along, into the square just left
@@ -1107,6 +1141,12 @@ class Battle:
             if f.hidden and not any(self.field.hiding[c] for c in f.cells):
                 if any(self.can_see(e, f) for e in self.enemies_of(f) if e.standing and self.field.cover(e.space, f.space) < grid.HALF):
                     f.hidden = 0
+            if leap > 1 and not free and any(self.field.difficult(*c) for c in f.cells) and \
+                    not self.check(f, "acrobatics", 10, "Landing on rough ground"):
+                f.conditions["prone"] = -1
+                self._event("prone", who=f.id)
+                self.say(f"{f.the_name} lands badly on the rough ground and goes sprawling.", "warn")
+                break
             if self._zones_on(f, start=False):
                 break  # caught in a web
             if any(x.readied for x in self.fighters):
@@ -1118,6 +1158,35 @@ class Battle:
         self._sync_grapples(f)
         self._follow_auras()
         return n
+
+    def _may_go(self, f: Fighter, sq: tuple[int, int], leap: int, cost: int) -> bool:
+        """The checks a way can ask for (2024): clearing a low thing in a leap (Athletics, DC 10), or swimming against
+        a current (Athletics, DC 15). A failure spends the effort and ends the move where it is."""
+        if leap > 1:
+            dx, dy = (sq[0] - f.x) // leap, (sq[1] - f.y) // leap
+            over = [(f.x + dx * i, f.y + dy * i) for i in range(1, leap)]
+            low = next((c for c in over if self.field.climb[c]), None)
+            if low is not None and not self.check(f, "athletics", 10, "Clearing it in a leap"):
+                f.move_left = max(0, f.move_left - cost)
+                self.say(f"{f.the_name} leaps for it, catches the {self.field.describe(*low)} and comes down short.",
+                         "warn")
+                return False
+            return True
+        if f.swim_speed <= 0 and f.fly_speed <= 0 and any(self.field.rough_water[c] for c in grid.cells(sq[0], sq[1], f.sq)
+                                                          if c not in f.cells):
+            if not self.check(f, "athletics", 15, "Swimming against the current"):
+                f.move_left = max(0, f.move_left - cost)
+                self.say(f"The current is too strong for {f.the_name}, who makes no headway.", "warn")
+                return False
+        return True
+
+    def check(self, f: Fighter, skill: str, dc: int, why: str = "") -> bool:
+        """An ability check in a fight: a d20 and the skill (exhaustion counted in it) against the DC, in the dice log."""
+        roll = dice.d20(self.rng).natural
+        bonus = f.skill(skill)
+        self.dice_say(f"{why or skill.title()} ({f.name}): {roll} {'+' if bonus >= 0 else '-'} {abs(bonus)} = "
+                      f"{roll + bonus} vs DC {dc}")
+        return roll + bonus >= dc
 
     def object_at(self, cell: tuple[int, int]) -> dict | None:
         """A thing on the field that can be broken: a door, a barrel, a table... with its AC and hit points (data/rules.json

@@ -117,22 +117,24 @@ class Option:
     points: set | None = None  # squares it can be aimed at
 
 
-def options(b, f) -> list[Option]:
-    """Everything `f` can do now, in a fixed order: attacks, spells, abilities, the other actions, items."""
+def options(b, f, only: tuple[str, ...] | None = None) -> list[Option]:
+    """Everything `f` can do now, in a fixed order: attacks, spells, abilities, the other actions, items (`only`
+    these kinds, if given: the rest is not worked out)."""
     out: list[Option] = []
     acting = b.has_action(f)
-    for o in b.attack_options(f):
+    for o in (b.attack_options(f) if only is None or "attack" in only else ()):
         ok = o.available and acting
         why = o.reason if not o.available else ("" if acting else "no action left this turn")
         out.append(Option(f"attack:{o.key}", "attack", o.name, "attack", ok, why, o, "creature",
                           b.targets_for(f, o) if ok else []))
-    if f.char is not None:
-        for sid, ok, why in b.spell_options(f):
-            out.append(_spell_option(b, f, sid, ok, why))
-    else:
-        for sid in b.creature_spells(f):
-            out.append(_spell_option(b, f, sid, True, ""))
-    for aid, name, ok, why in b.class_abilities(f):
+    if only is None or "cast" in only:
+        if f.char is not None:
+            for sid, ok, why in b.spell_options(f):
+                out.append(_spell_option(b, f, sid, ok, why))
+        else:
+            for sid in b.creature_spells(f):
+                out.append(_spell_option(b, f, sid, True, ""))
+    for aid, name, ok, why in (b.class_abilities(f) if only is None or "ability" in only else ()):
         a = find(f, aid)
         cost = a["cost"] if a else ("bonus" if aid in ("offhand", "spirit_strike") else "action")
         targets = []
@@ -143,6 +145,8 @@ def options(b, f) -> list[Option]:
             targets = b.spirit_targets(f)
         out.append(Option(f"ability:{aid}", "ability", name, cost, ok, why, aid, "creature" if targets else "none",
                           targets))
+    if only is not None and "action" not in only and "item" not in only:
+        return out
     free = f.action > 0
     no = "" if free else "no action left this turn"
     for key, name in (("dash", "Dash"), ("disengage", "Disengage"), ("dodge", "Dodge")):

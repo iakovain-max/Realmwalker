@@ -159,6 +159,39 @@ def _allowed(o: dict, x) -> bool:
     return not (o.get("kinds") and x.kind not in o["kinds"] or o.get("not_kinds") and x.kind in o["not_kinds"])
 
 
+def ability_value(b, f, a: dict) -> Worth:
+    """What using an ability (data/traits.json "activate") would do now, in the same numbers as a spell: hit points
+    brought back where they are missing, undead turned by their threat and the chance they fail."""
+    w = Worth()
+    for o in a.get("effects", ()):
+        if o["op"] == "heal":
+            add = o.get("add", 0)
+            amount = avg(o["dice"]) + (f.char.level if add == "level" and f.char else add if isinstance(add, int) else 0)
+            w.heal += min(amount, max(0, f.max_hp - f.hp))
+        elif o["op"] == "special" and o["handler"] in _ABILITY_WORTH:
+            _ABILITY_WORTH[o["handler"]](b, f, w)
+    return w
+
+
+def _turn_undead(b, f, w: Worth) -> None:
+    dc = _caster_dc(b, f)
+    for x in b.enemies_of(f):
+        if x.standing and x.kind == "undead" and b.feet(f, x) <= 30:
+            w.control += fail_chance(b, x, "wis", dc) * threat(x) * 3.0  # it flees: a minute of its blows spared
+
+
+def _preserve_life(b, f, w: Worth) -> None:
+    pool = 5 * f.char.level  # (as the handler shares it: the worst off first, nobody past half)
+    near = [x for x in b.team(f.team) if (x.active or x.state == "down") and b.feet(f, x) <= 30]
+    for x in sorted(near, key=lambda x: x.hp / max(1, x.max_hp)):
+        give = min(max(0, x.max_hp // 2 - x.hp), pool)
+        pool -= give
+        w.heal += give + (10.0 if give and x.state == "down" else 0.0)
+
+
+_ABILITY_WORTH = {"turn_undead": _turn_undead, "preserve_life": _preserve_life}
+
+
 def _control_rounds(ops: list[dict]) -> float:
     """Roughly how many of the victim's rounds a failed save takes away."""
     for o in ops:

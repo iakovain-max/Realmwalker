@@ -23,6 +23,7 @@ gameplay terms, give Windows click-by-click steps when they must do something, n
 | Quick tests while working | `.venv\Scripts\python.exe -m pytest -n 6 -m "not slow"` (mark long tests `@pytest.mark.slow`). Tests take worlds from `tests/worlds.cached_world` (kept in build/test_worlds while the world-making code and data are unchanged) |
 | Autoplay bot | `.venv\Scripts\python.exe tools\autoplay.py --turns 3000` |
 | Balance numbers (fights, cold, wounds) | `.venv\Scripts\python.exe tools\balance.py --runs 60` |
+| What the enemy uses, and how fast it thinks | `.venv\Scripts\python.exe tools\arena.py` (`--creature wolf --runs 10`) |
 | Rebuild the tile sheets (after changing tools/*_art.py, figure_*.py) | `.venv\Scripts\python.exe tools\build_tiles.py --pack <Dungeon Crawl Stone Soup Full folder>` (no `--pack`: downloads it) |
 | Rebuild the sounds and the shipped music (after changing tools/build_sounds.py) | `.venv\Scripts\python.exe tools\build_sounds.py` (downloads the CC0 packs into build/sound_packs; `--no-music`: effects only) |
 
@@ -107,7 +108,7 @@ assets/sounds/, music/     effects (16-bit mono WAV) and the shipped tunes (OGG,
                            tools/build_sounds.py from CC0 packs (Kenney, OpenGameArt, RandomMind) + CREDITS.txt; commit
 music/ (project root)      the PLAYER's own music, by mood folder; made by the game, ignored by git
 tests/                     pytest suite (headless)
-tools/                     autoplay.py, balance.py (the design's targets),
+tools/                     autoplay.py, balance.py (the design's targets), arena.py (every creature against a party),
                            build_tiles.py (+ tile_art.py: things drawn in code; figure_art.py: bodies; figure_gear.py:
                            clothes, armour, hair, hats, weapons, shields), build_sounds.py (effects and music)
 ```
@@ -296,6 +297,17 @@ tools/                     autoplay.py, balance.py (the design's targets),
   guardian) live on the battle. Party members at 0 make death saves. `rules/tactics.take_turn` plays monsters and any
   fighter with `f.auto` (the screen's z, the balance tool and the tests use it). Every rule writes `battle.events`
   (move, attack, cast with its area, damage...), which `ui/gfx/battlefx.BattleBoard` turns into animation.
+  Moving (2024): `grid.step_feet` is the one cost of a step (difficult terrain, crawling, climbing onto terrain
+  tagged "climb", swimming terrain tagged "swim"; a Climb or Swim Speed pays no extra); `grid.paths` also leaps
+  (`Fighter.jump`: half the Strength score standing, all of it after 10 feet of run) over water, chasms, fire and
+  low things, and a leap in a path is two squares that are not side by side; `Battle.walk` makes the checks
+  (`_may_go`: clearing a low thing, a river's current; landing on rough ground) with `Battle.check`.
+- Tactics 2.0 (`rules/tactics.py`, Expansion 1 Part C): enemies and the companions' Auto choose from
+  `rules/engine/actions.options` (pass `only=` kinds for speed) by `rules/engine/estimates` worth; a creature's
+  `ai` {role, range, opens_with} in data/creatures.json says how it fights. The Auto's class abilities are read by
+  what they do (`tactics._does`), never by name. `tests/test_tactics_coverage.py` (slow) fights every creature in
+  `tools/arena.py`'s scenarios: every option chosen, nothing refused, no broken state, an enemy turn under 150 ms
+  at the 95th percentile and never 400 ms (thread time). A new creature or spell must keep it green.
 - Sound (2026-10-10, Anton's request: "basic and satisfying sounds... a simple way for me to add music"): `app.audio`
   (realmwalker/audio). Logic never imports it: game code asks for a sound with `game.cue("chest")` (a name from
   data/sounds.json; drained each frame by audio/watch.py, never saved), and the watcher also notices a level gained

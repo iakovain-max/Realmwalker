@@ -5,10 +5,12 @@ For each creature, seeded fights in every arena scenario, in which
 - the tactics never try anything the rules refuse, and never leave the battle in a state the rules forbid
   (an action spent twice, two bodies in one square, a spell slot below nothing),
 - every fight comes to an end,
-- an enemy turn is decided in under 150 ms at the 95th percentile and never takes 400 ms (plan §3).
+- an enemy turn is decided in under 150 ms at the 95th percentile and never takes 400 ms (plan §3), counted in
+  the time the thinking takes (the thread's own time: six test workers on a warm PC must not make it fail).
 """
 
 import json
+import time
 from collections import Counter
 from pathlib import Path
 
@@ -79,7 +81,7 @@ def test_the_tactics_use_everything_a_creature_has_and_only_what_is_allowed(tabl
         for seed in range(SEEDS):
             where = f"{scenario}, seed {seed}"
             b = arena.setup(tables, creature, scenario, seed)
-            r = arena.run(b, check=lambda bb, f, where=where: broken.extend(
+            r = arena.run(b, clock=time.thread_time, check=lambda bb, f, where=where: broken.extend(
                 f"{where}, round {bb.round}, after {f.name}: {p}" for p in problems(bb)))
             assert b.outcome is not None, f"{where}: the fight did not end in {r['steps']} steps"
             used += r["used"]

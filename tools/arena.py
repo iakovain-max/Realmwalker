@@ -64,18 +64,19 @@ def setup(tables, creature: str, scenario: str, seed: int) -> Battle:
     return b
 
 
-def run(b: Battle, *, max_steps: int = 3000, check=None) -> dict:
-    """Play the fight out; what each foe used, and how long its turns took to decide. `check(battle, fighter)` is
-    called after every enemy turn (tests/test_tactics_coverage.py looks at the battle there)."""
+def run(b: Battle, *, max_steps: int = 3000, check=None, clock=time.perf_counter) -> dict:
+    """Play the fight out; what each foe used, and how long its turns took to decide (by `clock`: the tests time the
+    thinking itself, time.thread_time, so that a busy PC does not count). `check(battle, fighter)` is called after
+    every enemy turn (tests/test_tactics_coverage.py looks at the battle there)."""
     used: Counter = Counter()
     times: list[float] = []
     real = tactics.take_turn
 
     def timed(bb, f):
-        start = time.perf_counter()
+        start = clock()
         real(bb, f)
         if f.side == FOE:
-            times.append(time.perf_counter() - start)
+            times.append(clock() - start)
             if check is not None:
                 check(bb, f)
     tactics.take_turn = timed

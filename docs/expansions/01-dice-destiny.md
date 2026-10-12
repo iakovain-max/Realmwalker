@@ -49,11 +49,19 @@ pictures are reworked to match the game's own art; the main menu gets its shelf 
 - [x] B.7 Balance in band; Part B to `main`.
 
 ### Part C — Reactions and Tactics 2.0
-- [ ] C.1 Resumable resolution and reaction prompts; the *Reactions* setting.
-- [ ] C.2 Elevation, flying, jumping, climbing; senses; telepathy; changing sides; antimagic; the missing actions.
-- [ ] C.3 One list of possible actions (`engine.actions.options`) used by the screen, Auto and the enemy.
-- [ ] C.4 Tactics 2.0 over today's creatures and spells; roles and preferred range replace `rank`.
-- [ ] C.5 `tools/arena.py`, `tests/test_tactics_coverage.py`, timing budgets; Part C to `main`.
+- [x] C.1 Resumable resolution and reaction prompts; the *Reactions* setting.
+- [x] C.2 Elevation, flying, jumping, climbing; senses; telepathy; changing sides; antimagic; the missing actions.
+  (Fliers and falling; climbing onto low things and swimming at a foot extra per foot unless one has the speed;
+  long jumps over water, chasms, fires and fences, with the Athletics and Acrobatics checks; ending a turn in
+  another's space leaves you Prone; blindsight and truesight; Study, Search, Ready; changing sides by team;
+  antimagic; breakable objects.)
+- [x] C.3 One list of possible actions (`engine.actions.options`) used by the screen, Auto and the enemy.
+- [x] C.4 Tactics 2.0 over today's creatures and spells; roles and preferred range replace `rank`. The companions'
+  Auto takes its class abilities from the same list and judges each by what it does (a heal, one more action, a
+  move with the bonus action, a bonus blow, a power such as Turn Undead), not by name.
+- [x] C.5 `tools/arena.py`, `tests/test_tactics_coverage.py`, timing budgets; Part C to `main`. Every creature
+  uses every option it has in the arena's four scenarios; nothing the tactics try is refused; an enemy turn takes
+  about 20 ms (95th percentile under 60 ms, the slowest about 100 ms; budget 150 and 400).
 
 ### Part D — Treasure and encounters
 - [ ] D.1 Magic item framework (attunement, charges, activation, curses, identification, artifacts, sentient items).
@@ -72,10 +80,18 @@ pictures are reworked to match the game's own art; the main menu gets its shelf 
 - The four 2014 fighting styles a fighter picks today (archery, defence, duelling, great weapon, protection, two
   weapons) stay as small checks in `combat.py` and the sheet: they become the 2024 Fighting Style feats in Expansion 2
   (Blades & Backgrounds), where feats arrive.
-- `Fighter.prefers_range` (wizards and creatures marked "back" keep their distance) and the Auto's use of Second Wind,
-  Action Surge and Cunning Action in `tactics.py`: Tactics 2.0 (Part C) plans from the one list of actions instead.
-- The creatures' old attack extras (trip, paralysis, poison) stay readable until every creature fights with its 2025
-  stat block (B.6); then they go.
+- (Done in Part C: `Fighter.prefers_range` reads the creature's role and range; the Auto's class abilities come from
+  the one list of actions; the creatures' old attack extras are gone, every creature fighting from its 2025 block.)
+
+## Adapted in Part C (the battle mat is flat squares with heights for fliers)
+
+- Climbing is onto and over low things (fences, tables, barrels, low walls); walls and cliffs have no ledge to stand
+  on in a fight, so they stay walls. A slippery surface's DC 15 is not asked.
+- The high jump is not used: it would only reach a flier, and reach already counts a flier's height.
+- Telepathy is kept on every stat block; no creature of this expansion has it, and Influence in a fight does not ask
+  for a shared language yet.
+- A river is rough water (Athletics DC 15 to make headway); someone who drops senseless in deep water does not
+  drown in the fight's minute.
 
 ## Codex entries delivered
 
