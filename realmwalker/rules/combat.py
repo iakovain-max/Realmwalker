@@ -28,7 +28,7 @@ from realmwalker.core.rng import RNG
 from realmwalker.rules import grid
 from realmwalker.rules import spells as spellrules
 from realmwalker.rules.character import Character, Sheet, modifier
-from realmwalker.rules.engine import durations, effects, events, query
+from realmwalker.rules.engine import actions, durations, effects, events, query
 from realmwalker.rules.engine import traits as trs
 from realmwalker.rules.creatures import Creature
 from realmwalker.rules.inventory import remove_item
@@ -1892,48 +1892,37 @@ class Battle:
         self._after_action(f)
 
     def class_abilities(self, f: Fighter) -> list[tuple[str, str, bool, str]]:
-        """(id, name, available, why not)."""
+        """(id, name, available, why not): what features give (data/traits.json, rules/engine/actions.py), the off-hand
+        blow of two-weapon fighting, and a spiritual weapon's strike."""
         if not f.char:
             return []
-        c = f.char
         out = []
-        if "second_wind" in c.features:
-            ok = c.uses.get("second_wind", 0) > 0 and f.bonus > 0
-            out.append(("second_wind", "Second Wind (bonus action)", ok,
-                        "used; rest to recover" if c.uses.get("second_wind", 0) <= 0 else "no bonus action left"))
-        if "action_surge" in c.features:
-            out.append(("action_surge", "Action Surge (one more action)", c.uses.get("action_surge", 0) > 0, "used; rest to recover"))
-        if "cunning_action" in c.features:
-            for aid, name in (("cunning_dash", "Cunning Action: Dash"), ("cunning_disengage", "Cunning Action: Disengage"),
-                              ("cunning_hide", "Cunning Action: Hide")):
-                out.append((aid, name, f.bonus > 0, "no bonus action left"))
+        for a in actions.activations(f):
+            why = actions.problem(self, f, a)
+            out.append((a["id"], a["name"], why is None, why or ""))
         if self.offhand_option(f) is not None:
-            out.append(("offhand", "Off-hand attack (bonus action)", f.bonus > 0 and f.light_attack,
-                        "attack with the main hand first" if f.bonus > 0 else "no bonus action left"))
-        if "channel_divinity" in c.features:
-            has = c.uses.get("channel_divinity", 0) > 0
-            near = any(x.kind == "undead" and self.feet(f, x) <= 30 for x in self.enemies_of(f))
-            out.append(("turn_undead", "Turn Undead", has and near and f.action > 0,
-                        ("no undead within 30 feet" if not near else "no action left") if has else "used; rest to recover"))
-            if c.subclass == "life":
-                out.append(("preserve_life", "Preserve Life", has and f.action > 0, "used; rest to recover" if not has else "no action left"))
-        if "divine_intervention" in c.features:
-            ready = c.uses.get("divine_intervention", 1) > 0 and self.now - c.uses.get("divine_answered", -10**9) >= 7 * 1440
-            out.append(("divine_intervention", "Divine Intervention", ready and f.action > 0,
-                        "your god has answered this week" if c.uses.get("divine_intervention", 1) > 0 else "used; rest to recover"))
-        if c.subclass == "war" and c.cls == "cleric":
-            out.append(("war_priest", "War Priest (bonus attack)", c.uses.get("war_priest", 0) > 0 and f.bonus > 0,
-                        "used; rest to recover"))
+            ok = f.bonus > 0 and f.light_attack
+            at = max([0] + [i + 1 for i, row in enumerate(out)
+                            if row[0] in ("second_wind", "action_surge") or row[0].startswith("cunning_")])
+            out.insert(at, ("offhand", "Off-hand attack (bonus action)", ok,
+                            "" if ok else ("attack with the main hand first" if f.bonus > 0 else "no bonus action left")))
         for tok in self.tokens:
             if tok.owner == f.id and tok.kind == "spiritual_weapon":
-                out.append(("spirit_strike", "Spiritual weapon: strike (bonus action)", f.bonus > 0, "no bonus action left"))
+                out.append(("spirit_strike", "Spiritual weapon: strike (bonus action)", f.bonus > 0,
+                            "" if f.bonus > 0 else "no bonus action left"))
         return out
+
+    def _ability_cost(self, f: Fighter, aid: str) -> str:
+        if aid in ("offhand", "spirit_strike"):
+            return "bonus"
+        a = actions.find(f, aid)
+        return a["cost"] if a else "action"
 
     def bonus_options(self, f: Fighter) -> list[str]:
         """What `f` could still do with a bonus action this turn."""
         if f.bonus <= 0 or not f.can_act():
             return []
-        out = [aid for aid, _, ok, _ in self.class_abilities(f) if ok and aid not in ("action_surge", "turn_undead", "preserve_life")]
+        out = [aid for aid, _, ok, _ in self.class_abilities(f) if ok and self._ability_cost(f, aid) == "bonus"]
         if f.char:
             for sid, ok, _ in self.spell_options(f):
                 sp = self.t.spells[spell_id(sid)]
@@ -1942,109 +1931,19 @@ class Battle:
         return out
 
     def do_ability(self, f: Fighter, ability: str, target: Fighter | None = None) -> None:
-        c = f.char
-        s = f.sheet
-        if ability == "second_wind":
-            if not self._spend(f, bonus=True):
-                return
-            c.uses["second_wind"] = 0
-            amount = dice.roll("1d10", self.rng).total + c.level
-            self._heal(f, amount)
-            self.say(f"{f.the_name} catches {f.possessive} breath and fights on.", "good")
-            if f.has_trait("rallying_cry"):
-                self.say(f"'{'To me! On your feet!'}' {f.the_name}'s shout carries.", "speech")
-                for a in self.side(f.side):
-                    if a is not f and (a.active or a.state == "down") and self.feet(f, a) <= 30:
-                        self._heal(a, c.level)
-        elif ability == "action_surge":
-            c.uses["action_surge"] = 0
-            f.action += 1
-            self.say(f"{f.the_name} digs deep.", "good")
-            return  # the surge itself costs nothing
-        elif ability == "cunning_dash":
-            self.do_dash(f, bonus=True)
-            return
-        elif ability == "cunning_disengage":
-            self.do_disengage(f, bonus=True)
-            return
-        elif ability == "cunning_hide":
-            self.do_hide(f, bonus=True)
-            return
-        elif ability == "offhand":
+        """Use an ability (rules/engine/actions.use), the off-hand blow, or the spiritual weapon."""
+        if ability == "offhand":
             if target is not None:
                 self.do_offhand(f, target)
             return
-        elif ability == "turn_undead":
-            if not self._spend(f):
-                return
-            c.uses["channel_divinity"] = 0
-            dc = spellrules.save_dc(s, self.t)
-            self.say(f"{f.the_name} raises the holy symbol and speaks the words of banishing.", "magic")
-            self._event("cast", by=f.id, to=None, spell="turn_undead", effect="burst", dtype="radiant",
-                        area=[c_ for x in self.enemies_of(f) if x.kind == "undead" and self.feet(f, x) <= 30 for c_ in x.cells])
-            for x in self.enemies_of(f):
-                if x.kind != "undead" or self.feet(f, x) > 30:
-                    continue
-                if not self._save(x, "wis", dc):
-                    if "destroy_undead" in c.features and x.cdef["cr"] <= 0.5:
-                        self._kill(x, "turned to dust", killer=f)
-                    else:
-                        x.state = "fleeing"
-                        self.say(f"{x.the_name} recoils from the light and flees.", "good")
-        elif ability == "preserve_life":
-            if not self._spend(f):
-                return
-            c.uses["channel_divinity"] = 0
-            pool = 5 * c.level
-            near = [a for a in self.side(f.side) if (a.active or a.state == "down") and self.feet(f, a) <= 30]
-            for ally in sorted(near, key=lambda a: a.hp / max(1, a.max_hp)):
-                if pool <= 0:
-                    break
-                need = max(0, ally.max_hp // 2 - ally.hp)
-                give = min(need, pool)
-                if give:
-                    self._heal(ally, give)
-                    pool -= give
-            self.say("Warm light spreads through the wounded.", "magic")
-        elif ability == "divine_intervention":
-            if not self._spend(f):
-                return
-            c.uses["divine_intervention"] = 0
-            roll = self.rng.randint(1, 100)
-            self.dice_say(f"Divine Intervention ({f.name}): {roll} vs {c.level} or less")
-            self.say(f"{f.the_name} cries out to {f.possessive} god.", "magic")
-            if roll <= c.level:
-                c.uses["divine_answered"] = self.now
-                self.say("<magic>And the god answers.</> Light like noon floods the place.", "magic")
-                self._event("cast", by=f.id, to=None, spell="divine_intervention", effect="burst", dtype="radiant",
-                            area=[c_ for x in self.fighters if x.active or x.state == "down" for c_ in x.cells])
-                for a in self.side(f.side):
-                    if a.state in ("fighting", "down"):
-                        self._heal(a, a.max_hp)
-                dc = spellrules.save_dc(s, self.t)
-                for e in self.enemies_of(f):
-                    if not self._save(e, "wis", dc):
-                        e.conditions["frightened"] = 10
-                        if e.morale_type not in FEARLESS or e.kind == "undead":
-                            self._break(e, "flee" if e.kind != "humanoid" else None)
-            else:
-                self.say("Nothing answers.", "system")
-        elif ability == "war_priest":
-            if not self._spend(f, bonus=True):
-                return
-            c.uses["war_priest"] = c.uses.get("war_priest", 1) - 1
-            opts = [o for o in self.attack_options(f) if o.available and o.item_uid is not None]
-            targets = [t for o in opts[:1] for t in self.targets_for(f, o)]
-            if target is not None and target in targets:
-                targets = [target]
-            if opts and targets:
-                self._attack(f, opts[0], min(targets, key=lambda t: t.hp))
-        elif ability == "spirit_strike":
+        if ability == "spirit_strike":
             tok = next((t for t in self.tokens if t.owner == f.id and t.kind == "spiritual_weapon"), None)
             if tok is None or target is None or not self._spend(f, bonus=True):
                 return
             self._spirit_strike(f, tok, target)
-        self._after_action(f)
+            self._after_action(f)
+            return
+        actions.use(self, f, ability, target)
 
     def spirit_targets(self, f: Fighter) -> list[Fighter]:
         """Who the spiritual weapon can reach this turn: it moves twenty feet and strikes someone beside it."""

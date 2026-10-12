@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from realmwalker.core import dice
 from realmwalker.rules import spells as spellrules
+from realmwalker.rules.engine.effects import special
 from realmwalker.rules.engine.events import handler
 
 
@@ -185,3 +186,88 @@ def relentless_endurance(b, f, ev, hook, buff) -> None:
 @handler("disciple_of_life")
 def disciple_of_life(b, f, ev, hook, buff) -> None:
     ev.amount += 2 + max(1, ev.level)
+
+
+# ---------------------------------------------------------------------------- abilities used in a fight
+@handler("rallying_cry")
+def rallying_cry(b, f, ev, hook, buff) -> None:
+    """A knight's Second Wind heals the friends around them too."""
+    if ev.ability != "second_wind" or f.char is None:
+        return
+    b.say(f"'To me! On your feet!' {f.the_name}'s shout carries.", "speech")
+    for a in b.side(f.side):
+        if a is not f and (a.active or a.state == "down") and b.feet(f, a) <= 30:
+            b._heal(a, f.char.level)
+
+
+@special("turn_undead")
+def turn_undead(c, o, victim) -> None:
+    b, f = c.b, c.caster
+    dc = spellrules.save_dc(f.sheet, b.t)
+    b.say(f"{f.the_name} raises the holy symbol and speaks the words of banishing.", "magic")
+    near = [x for x in b.enemies_of(f) if x.kind == "undead" and b.feet(f, x) <= 30]
+    b._event("cast", by=f.id, to=None, spell="turn_undead", effect="burst", dtype="radiant",
+             area=[cell for x in near for cell in x.cells])
+    for x in near:
+        if not b._save(x, "wis", dc):
+            if f.has_trait("destroy_undead") and x.cdef["cr"] <= 0.5:
+                b._kill(x, "turned to dust", killer=f)
+            else:
+                x.state = "fleeing"
+                b.say(f"{x.the_name} recoils from the light and flees.", "good")
+
+
+@special("preserve_life")
+def preserve_life(c, o, victim) -> None:
+    """Five times the cleric's level in healing, shared out: nobody past half their hit points."""
+    b, f = c.b, c.caster
+    pool = 5 * f.char.level
+    near = [a for a in b.side(f.side) if (a.active or a.state == "down") and b.feet(f, a) <= 30]
+    for ally in sorted(near, key=lambda a: a.hp / max(1, a.max_hp)):
+        if pool <= 0:
+            break
+        give = min(max(0, ally.max_hp // 2 - ally.hp), pool)
+        if give:
+            b._heal(ally, give)
+            pool -= give
+    b.say("Warm light spreads through the wounded.", "magic")
+
+
+@special("divine_intervention")
+def divine_intervention(c, o, victim) -> None:
+    from realmwalker.rules.combat import FEARLESS
+
+    b, f = c.b, c.caster
+    ch = f.char
+    roll = b.rng.randint(1, 100)
+    b.dice_say(f"Divine Intervention ({f.name}): {roll} vs {ch.level} or less")
+    b.say(f"{f.the_name} cries out to {f.possessive} god.", "magic")
+    if roll > ch.level:
+        b.say("Nothing answers.", "system")
+        return
+    ch.uses["divine_answered"] = b.now
+    b.say("<magic>And the god answers.</> Light like noon floods the place.", "magic")
+    b._event("cast", by=f.id, to=None, spell="divine_intervention", effect="burst", dtype="radiant",
+             area=[cell for x in b.fighters if x.active or x.state == "down" for cell in x.cells])
+    for a in b.side(f.side):
+        if a.state in ("fighting", "down"):
+            b._heal(a, a.max_hp)
+    dc = spellrules.save_dc(f.sheet, b.t)
+    for e in b.enemies_of(f):
+        if not b._save(e, "wis", dc):
+            e.conditions["frightened"] = 10
+            e.sources["frightened"] = f.id
+            if e.morale_type not in FEARLESS or e.kind == "undead":
+                b._break(e, "flee" if e.kind != "humanoid" else None)
+
+
+@special("war_priest")
+def war_priest(c, o, victim) -> None:
+    """A weapon blow with the bonus action, at the weakest in reach (or the one chosen)."""
+    b, f = c.b, c.caster
+    opts = [x for x in b.attack_options(f) if x.available and x.item_uid is not None]
+    targets = [t for x in opts[:1] for t in b.targets_for(f, x)]
+    if c.target is not None and c.target in targets:
+        targets = [c.target]
+    if opts and targets:
+        b._attack(f, opts[0], min(targets, key=lambda t: t.hp))

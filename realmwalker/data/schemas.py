@@ -477,6 +477,7 @@ TRAIT_DEF = Obj(
         "resource": Obj({"id": Str(max_len=40), "max": Any_(), "recover": Str(choices=["short", "long", "dawn", "turn"])},
                         optional=True),
         "where": Str(max_len=30, optional=True),
+        "activate": Any_(optional=True),  # abilities it gives (rules/engine/actions.py; checked by rules/engine/check.py)
     }
 )
 TRAITS = Obj({"traits": Map(TRAIT_DEF, min_items=1)})

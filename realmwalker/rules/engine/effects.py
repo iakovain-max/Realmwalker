@@ -26,6 +26,7 @@ an op inside another (`on_hit`, `on_fail`, `then`) works on the creature the out
     no_opportunity, no_heal, mark   (until a turn ends or starts: see each)
     lose_turn  it spends its next turn grovelling on the ground (Command)
     stabilize, restore (conditions, one, disease), revive (consumes, within_rounds), identify (outside a fight)
+    gain_action (one more action this turn), say (a line: {name}, {their}), special (Python by id: SPECIAL)
 
 Unknown ops are data errors at start-up (rules/engine/check.py).
 """
@@ -42,11 +43,20 @@ from realmwalker.rules.engine import conditions, durations, events
 from realmwalker.rules.inventory import remove_item
 
 OPS: dict[str, Callable] = {}
+SPECIAL: dict[str, Callable] = {}  # what an op {"op": "special", "handler": id} calls (rules/engine/handlers/)
 
 
 def op(name: str):
     def register(fn: Callable) -> Callable:
         OPS[name] = fn
+        return fn
+    return register
+
+
+def special(name: str):
+    """Register Python for an effect the ops cannot say ({"op": "special", "handler": name})."""
+    def register(fn: Callable) -> Callable:
+        SPECIAL[name] = fn
         return fn
     return register
 
@@ -341,6 +351,8 @@ def _heal(c: Cast, o: dict, victim) -> None:
     b, f, spell = c.b, c.caster, c.spell
     if victim is not None:
         targets = [victim]
+    elif spell["target"] == "self":
+        targets = [f]
     elif spell["target"] == "all_allies":
         reach = b.spell_range(spell)
         near = [x for x in b.side(f.side) if (x.active or x.state == "down") and b.feet(f, x) <= reach]
@@ -357,7 +369,10 @@ def _heal(c: Cast, o: dict, victim) -> None:
             b.say(f"The magic finds no hold in {x.the_name}.", "warn")
             continue
         amount = dice.roll(expr(c, o["dice"], o.get("up", "")), b.rng).total + (c.mod if o.get("add_mod") else 0)
-        amount = events.emit(b, "heal_spell", actor=f, target=x, amount=amount, level=c.level).amount
+        if o.get("add") == "level" and f.char is not None:
+            amount += f.char.level  # Second Wind
+        if not spell.get("ability"):
+            amount = events.emit(b, "heal_spell", actor=f, target=x, amount=amount, level=c.level).amount
         b._heal(x, amount)
         if o.get("mends_wound") and x.wounds:
             w = max(x.wounds, key=lambda w: (w.severity, w.bleed))
@@ -454,6 +469,23 @@ def _revive(c: Cast, o: dict, victim) -> None:
 @op("identify")
 def _identify(c: Cast, o: dict, victim) -> None:
     pass  # outside a fight only (game/magic.py)
+
+
+@op("special")
+def _special(c: Cast, o: dict, victim) -> None:
+    SPECIAL[o["handler"]](c, o, victim)
+
+
+@op("gain_action")
+def _gain_action(c: Cast, o: dict, victim) -> None:
+    """One more action this turn (Action Surge)."""
+    c.caster.action += int(o.get("count", 1))
+
+
+@op("say")
+def _say(c: Cast, o: dict, victim) -> None:
+    f = victim or c.caster
+    c.b.say(o["text"].replace("{name}", f.the_name).replace("{their}", f.possessive), o.get("style", "info"))
 
 
 # ---------------------------------------------------------------------------- things left on the field

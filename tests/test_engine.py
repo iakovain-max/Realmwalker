@@ -265,3 +265,60 @@ def test_a_reaction_hook_waits_for_a_reaction(tables):
     b.round += 1
     ev = events.emit(b, "damage_incoming", actor=them, target=me, stage="blow", amount=10)
     assert ev.amount == 10  # no reaction left
+
+
+# ---------------------------------------------------------------------------- abilities and their uses
+def test_second_wind_heals_and_is_spent_until_a_rest(tables):
+    from realmwalker.rules.engine import actions
+    from realmwalker.rules.progression import short_rest
+
+    b, me, them = duel(tables, cls="fighter")
+    me.hp = 1
+    b.order = [me.id, them.id]
+    b.turn, b.turn_started = 0, True
+    b._start_of_turn(me)
+    assert me.char.uses["second_wind"] == 1
+    b.do_ability(me, "second_wind")
+    assert 1 + 1 + me.char.level <= me.hp and me.char.uses["second_wind"] == 0
+    why = actions.problem(b, me, actions.find(me, "second_wind"))
+    assert why == "used; rest to recover"
+    short_rest(me.char, tables, RNG(1))
+    assert me.char.uses["second_wind"] == 1
+
+
+def test_a_new_level_brings_its_pools_ready(tables):
+    from realmwalker.rules.progression import award_xp, long_rest
+
+    c = hero(tables, "fighter")
+    assert "action_surge" not in c.uses
+    award_xp(c, 300, tables, RNG(1), auto=True)  # level 2: Action Surge
+    assert c.uses.get("action_surge") == 1
+    c.uses["action_surge"] = 0
+    long_rest(c, tables, RNG(1))
+    assert c.uses["action_surge"] == 1
+
+
+def test_turn_undead_needs_undead_near(tables):
+    from realmwalker.rules.progression import award_xp
+
+    c = hero(tables, "cleric")
+    award_xp(c, 300, tables, RNG(1), auto=True)
+    cr = spawn(tables, "bandit", RNG(1, "foe"), 1)
+    b = Battle(tables, [c], [cr], Env(), RNG(1, "battle"), spots={0: (3, 4), 1: (5, 4)})
+    b.start()
+    me = b.fighters[0]
+    rows = {aid: (ok, why) for aid, _, ok, why in b.class_abilities(me)}
+    assert rows["turn_undead"] == (False, "no undead within 30 feet")
+
+
+def test_every_ability_in_the_data_resolves(tables):
+    from realmwalker.rules.engine import actions, effects
+
+    for tid, d in tables.traits["traits"].items():
+        acts = d.get("activate") or []
+        for a in acts if isinstance(acts, list) else [acts]:
+            assert a["cost"] in ("action", "bonus", "free"), tid
+            for o in a.get("effects", []):
+                assert o["op"] in effects.OPS
+            for r in a.get("requires", []):
+                assert r in actions.REQUIRES

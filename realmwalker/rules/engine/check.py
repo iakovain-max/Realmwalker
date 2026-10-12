@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from realmwalker.rules import spells as spellrules
 from realmwalker.rules.engine import conditions as cond
-from realmwalker.rules.engine import effects, events
+from realmwalker.rules.engine import actions, effects, events
 from realmwalker.rules.engine import traits as tr
 
 MODIFIER_KEYS = {
@@ -41,6 +41,16 @@ def problems(tables) -> list[str]:
             for w in m.get("when", []):
                 if w not in tr.WHEN:
                     out.append(f"{where}: modifier {i} names the test '{w}', which the rules do not have.")
+        acts = d.get("activate") or []
+        for a in acts if isinstance(acts, list) else [acts]:
+            for o in a.get("effects", []):
+                if o.get("op") not in effects.OPS:
+                    out.append(f"{where}: {a.get('id')} does '{o.get('op')}', which the rules cannot do.")
+                if o.get("op") == "special" and o.get("handler") not in effects.SPECIAL:
+                    out.append(f"{where}: {a.get('id')} calls '{o.get('handler')}', which the code does not have.")
+            for r in a.get("requires", []):
+                if r not in actions.REQUIRES:
+                    out.append(f"{where}: {a.get('id')} requires '{r}', which the rules cannot test.")
         for i, h in enumerate(d.get("hooks", [])):
             if h["event"] not in events.EVENTS:
                 out.append(f"{where}: hook {i} listens for '{h['event']}', which is not an event of a fight.")
@@ -52,6 +62,8 @@ def problems(tables) -> list[str]:
         for o in spellrules.ops(spell):
             if o.get("op") not in effects.OPS:
                 out.append(f"data/spells.json: {sid} does '{o.get('op')}', which the rules cannot do.")
+            if o.get("op") == "special" and o.get("handler") not in effects.SPECIAL:
+                out.append(f"data/spells.json: {sid} calls '{o.get('handler')}', which the code does not have.")
             if o.get("op") == "condition" and o.get("condition") not in cond.table(tables):
                 out.append(f"data/spells.json: {sid} gives the condition '{o.get('condition')}', which data/conditions.json "
                            "does not define.")

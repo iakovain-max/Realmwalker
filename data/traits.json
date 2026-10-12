@@ -66,11 +66,16 @@
     "fighting_style": {"name": "Fighting Style", "text": "A way of fighting, chosen once (archery, defence, duelling, great weapon, protection, two weapons).", "where": "sheet"},
     "second_wind": {
       "name": "Second Wind", "text": "A bonus action to catch one's breath: 1d10 + level hit points back.",
-      "resource": {"id": "second_wind", "max": 1, "recover": "short"}
+      "resource": {"id": "second_wind", "max": 1, "recover": "short"},
+      "activate": {"id": "second_wind", "name": "Second Wind (bonus action)", "cost": "bonus", "uses": "second_wind",
+                   "effects": [{"op": "heal", "dice": "1d10", "add": "level"},
+                               {"op": "say", "text": "{name} catches {their} breath and fights on.", "style": "good"}]}
     },
     "action_surge": {
       "name": "Action Surge", "text": "One more action, once between rests.",
-      "resource": {"id": "action_surge", "max": 1, "recover": "short"}
+      "resource": {"id": "action_surge", "max": 1, "recover": "short"},
+      "activate": {"id": "action_surge", "name": "Action Surge (one more action)", "cost": "free", "uses": "action_surge",
+                   "effects": [{"op": "gain_action"}, {"op": "say", "text": "{name} digs deep.", "style": "good"}]}
     },
     "extra_attack": {"name": "Extra Attack", "text": "Two attacks with the Attack action.", "modifiers": [{"attacks": 2}]},
     "indomitable": {
@@ -83,13 +88,21 @@
       "name": "Hold the Line", "text": "Enemies beside the knight strike badly at anyone else.",
       "modifiers": [{"enemy_attacks": "disadvantage", "when": ["owner_able", "attacker_beside_owner"], "why": "{name} holds the line"}]
     },
-    "rallying_cry": {"name": "Rallying Cry", "text": "Second Wind also heals friends within 30 feet by the knight's level.", "where": "second_wind"},
+    "rallying_cry": {
+      "name": "Rallying Cry", "text": "Second Wind also heals friends within 30 feet by the knight's level.",
+      "hooks": [{"event": "ability_used", "as": "self", "handler": "rallying_cry"}]
+    },
     "expertise": {"name": "Expertise", "text": "Twice the proficiency bonus with two skills.", "where": "sheet"},
     "sneak_attack": {
       "name": "Sneak Attack", "text": "Once a turn, extra dice of damage with a finesse or ranged weapon, given advantage or a friend beside the target.",
       "hooks": [{"event": "attack_damage", "as": "attacker", "handler": "sneak_attack"}]
     },
-    "cunning_action": {"name": "Cunning Action", "text": "Dash, Disengage or Hide as a bonus action.", "where": "abilities"},
+    "cunning_action": {
+      "name": "Cunning Action", "text": "Dash, Disengage or Hide as a bonus action.",
+      "activate": [{"id": "cunning_dash", "name": "Cunning Action: Dash", "cost": "bonus", "via": "dash"},
+                   {"id": "cunning_disengage", "name": "Cunning Action: Disengage", "cost": "bonus", "via": "disengage"},
+                   {"id": "cunning_hide", "name": "Cunning Action: Hide", "cost": "bonus", "via": "hide"}]
+    },
     "uncanny_dodge": {
       "name": "Uncanny Dodge", "text": "A reaction halves the damage of a blow seen coming.",
       "hooks": [{"event": "damage_incoming", "as": "target", "handler": "uncanny_dodge", "reaction": true}]
@@ -107,25 +120,35 @@
     "spellcasting": {"name": "Spellcasting", "text": "Casts spells.", "where": "sheet"},
     "channel_divinity": {
       "name": "Channel Divinity", "text": "Calls on the god's power once between rests (Turn Undead, or the domain's own).",
-      "resource": {"id": "channel_divinity", "max": 1, "recover": "short"}
+      "resource": {"id": "channel_divinity", "max": 1, "recover": "short"},
+      "activate": {"id": "turn_undead", "name": "Turn Undead", "cost": "action", "uses": "channel_divinity",
+                   "requires": ["undead_within_30"], "effects": [{"op": "special", "handler": "turn_undead"}]}
     },
     "destroy_undead": {"name": "Destroy Undead", "text": "Turned undead of low challenge are destroyed outright.", "where": "turn_undead"},
     "divine_intervention": {
       "name": "Divine Intervention", "text": "A prayer the god may answer (the cleric's level or less on d100), once a week if answered.",
-      "resource": {"id": "divine_intervention", "max": 1, "recover": "long"}
+      "resource": {"id": "divine_intervention", "max": 1, "recover": "long"},
+      "activate": {"id": "divine_intervention", "name": "Divine Intervention", "cost": "action", "uses": "divine_intervention",
+                   "requires": ["god_ready"], "effects": [{"op": "special", "handler": "divine_intervention"}]}
     },
     "disciple_of_life": {
       "name": "Disciple of Life", "text": "Healing spells heal 2 + the spell's level more.",
       "hooks": [{"event": "heal_spell", "as": "self", "handler": "disciple_of_life"}]
     },
-    "preserve_life": {"name": "Preserve Life", "text": "Channel Divinity: five times the cleric's level in healing, shared among the wounded.", "where": "abilities"},
+    "preserve_life": {
+      "name": "Preserve Life", "text": "Channel Divinity: five times the cleric's level in healing, shared among the wounded.",
+      "activate": {"id": "preserve_life", "name": "Preserve Life", "cost": "action", "uses": "channel_divinity",
+                   "effects": [{"op": "special", "handler": "preserve_life"}]}
+    },
     "divine_strike": {
       "name": "Divine Strike", "text": "Weapon hits deal an extra 1d8.",
       "hooks": [{"event": "attack_damage", "as": "attacker", "handler": "divine_strike"}]
     },
     "war_priest": {
       "name": "War Priest", "text": "A weapon attack as a bonus action, a few times a day.",
-      "resource": {"id": "war_priest", "max": "wis_mod", "recover": "short"}
+      "resource": {"id": "war_priest", "max": "wis_mod", "recover": "short"},
+      "activate": {"id": "war_priest", "name": "War Priest (bonus attack)", "cost": "bonus", "uses": "war_priest",
+                   "effects": [{"op": "special", "handler": "war_priest"}]}
     },
     "guided_strike": {
       "name": "Guided Strike", "text": "Channel Divinity: +10 to an attack roll that would have missed.",

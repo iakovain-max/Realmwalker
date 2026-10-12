@@ -30,7 +30,7 @@ EVENTS = (
     "d20_before", "d20_after",
     "attack_declared", "attack_hit", "attack_damage", "attack_missed", "critical",
     "damage_incoming", "damage_taken", "save_damage", "hp_zero", "killed",
-    "spell_declared", "spell_cast", "heal_spell", "saving_throw",
+    "spell_declared", "spell_cast", "heal_spell", "saving_throw", "ability_used",
     "condition_applied", "condition_ended",
     "move_step", "leave_reach", "enter_reach", "ally_attacked", "healed", "legendary_window",
     "short_rest", "long_rest", "dawn",
