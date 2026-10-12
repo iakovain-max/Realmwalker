@@ -577,3 +577,32 @@ def test_the_charmed_will_not_strike_the_charmer(tables):
     me.action = 1
     durations.give(b, me, "charmed", source=them)
     assert b.attack_problem(me, weapon(b, me), them) == "charmed: you will not harm them"
+
+
+# ---------------------------------------------------------------------------- senses and the missing actions
+def test_blindsight_and_truesight_see_what_eyes_cannot(tables):
+    b, me, drake = duel(tables, foe="young_dragon", gap=3)  # blindsight 30 ft, darkvision 120 ft
+    me.conditions["invisible"] = -1
+    assert b.can_see(drake, me)  # within its blindsight, invisible or not
+    me.conditions.pop("invisible")
+    b2, me2, bandit = duel(tables, gap=3)
+    me2.conditions["invisible"] = -1
+    assert not b2.can_see(bandit, me2)
+    assert "unseen" in query.attack_roll(b2, me2, bandit, weapon(b2, me2)).adv
+
+
+def test_study_search_and_ready(tables):
+    b, me, them = duel(tables, gap=3)
+    b.order = [me.id, them.id]
+    b.turn, b.turn_started = 0, True
+    b._start_of_turn(me)
+    them.hidden = 1
+    b.do_search(me)
+    assert them.hidden == 0
+    me.action = 1
+    b.do_ready(me, "reach")
+    assert me.readied == "reach"
+    b.end_turn()
+    them.move_left = 30
+    b.walk(them, [(5, 4), (4, 4)])  # comes within reach of the waiting sword
+    assert not me.reaction and any(e["kind"] == "attack" and e["by"] == me.id for e in b.events)

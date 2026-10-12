@@ -22,7 +22,8 @@ ENEMY_STEP_SECONDS = 0.35
 ACTIONS = [
     ("a", "Attack", "attack"), ("c", "Spells", "cast"), ("u", "Item", "item"), ("b", "Abilities", "ability"),
     ("r", "Dash", "dash"), ("w", "Disengage", "disengage"), ("d", "Dodge", "dodge"), ("n", "Hide", "hide"),
-    ("h", "Help", "help"), ("s", "Shove/Grab", "shove"), ("p", "Parley", "parley"), ("y", "Surrender", "surrender"),
+    ("h", "Help", "help"), ("s", "Shove/Grab", "shove"), ("k", "Study", "study"), ("o", "Search", "search"),
+    ("q", "Ready", "ready"), ("p", "Influence", "parley"), ("y", "Surrender", "surrender"),
     ("f", "Flee", "flee"), ("z", "Auto", "auto"), ("e", "End turn", "end"),
 ]
 ACTION_HELP = {
@@ -36,9 +37,15 @@ ACTION_HELP = {
     "disengage": "Use your action to back away carefully: no opportunity attacks this turn.",
     "dodge": "Use your action to defend: attacks against you have disadvantage until your next turn.",
     "hide": "Slip out of sight (behind cover, in brush or darkness): your next attack has advantage.",
-    "help": "Give a friend advantage against an enemy beside you, or stop a fallen friend beside you bleeding out.",
+    "help": "Distract an enemy beside you (a friend's next attack on it has advantage), stop a fallen friend beside you "
+            "bleeding out, or shake a sleeping friend awake.",
+    "study": "Call to mind what a creature is (Arcana, History, Nature or Religion): how hard it is to hit and kill, "
+             "and what it shrugs off. You know anything you have killed before.",
+    "search": "Look hard for anyone hiding (Perception against their Stealth).",
+    "ready": "Wait with a blow: strike with your reaction at the first enemy to come within reach, or into range "
+             "and sight, before your next turn.",
     "shove": "Knock someone beside you down, push them back five feet, or grab and hold them.",
-    "parley": "Talk them down, threaten them, or calm wild animals.",
+    "parley": "Influence them: talk them down, threaten them, or calm wild animals.",
     "surrender": "Give up. Robbers and soldiers may let you live; beasts and the dead will not.",
     "flee": "Leave the field from its edge (the marked squares). Whoever is left on it, fights on.",
     "auto": "Let the game play this turn for this character, the way it plays the enemy's.",
@@ -46,7 +53,8 @@ ACTION_HELP = {
 }
 ACTION_ICONS = {"attack": "attack", "cast": "cast", "item": "item", "ability": "ability", "dash": "travel",
                 "disengage": "leave", "dodge": "defend", "hide": "sneak", "help": "health", "shove": "shove",
-                "parley": "parley", "surrender": "surrender", "flee": "flee", "auto": "wait", "end": "rest"}
+                "parley": "parley", "surrender": "surrender", "flee": "flee", "auto": "wait", "end": "rest",
+                "study": "journal", "search": "search", "ready": "look"}
 HEALTH_WORDS = [(0.99, "unhurt", "good"), (0.75, "scratched", "good"), (0.5, "wounded", "warn"),
                 (0.25, "badly hurt", "danger"), (0.0, "near death", "danger")]
 LOG_COLORS = {"danger": "danger", "good": "good", "dice": "info", "flavor": "dim", "system": "dim",
@@ -234,8 +242,13 @@ class BattleScreen(Screen):
             return (hands and bool(b.usable_items(f)), "nothing to use" if hands else "no action left")
         if action == "ability":
             return (any(ok for _, _, ok, _ in b.class_abilities(f)), "nothing to call on now")
-        if action in ("dash", "disengage", "dodge", "help", "shove", "parley"):
+        if action in ("dash", "disengage", "dodge", "help", "shove", "parley", "search", "ready"):
             return (f.action > 0, "no action left this turn")
+        if action == "study":
+            if f.action <= 0:
+                return False, "no action left this turn"
+            unknown = [e for e in b.enemies_of(f) if e.creature is not None and e.creature.def_id not in b.known]
+            return (bool(unknown), "you know all of them")
         if action == "hide":
             if f.action <= 0 and not ("cunning_action" in (f.char.features if f.char else []) and f.bonus > 0):
                 return False, "no action left this turn"
@@ -321,10 +334,22 @@ class BattleScreen(Screen):
         elif action == "help":
             allies = b.help_targets(f)
             if not allies:
-                self.app.notify("Nobody to help: stand beside a fallen friend, or beside an enemy a friend is fighting.", "warn")
+                self.app.notify("Nobody to help: stand beside an enemy, a fallen friend or a sleeping one.", "warn")
                 return
             self.pending["value"] = None
             self._open_targets("help", allies)
+        elif action == "study":
+            seen = {}
+            for e in b.enemies_of(f):
+                if e.creature is not None and e.creature.def_id not in b.known:
+                    seen.setdefault(e.creature.def_id, e)
+            self.pending["value"] = None
+            self._open_targets("study", sorted(seen.values(), key=lambda e: b.gap(f, e)))
+        elif action == "search":
+            self._do(b.do_search, f)
+        elif action == "ready":
+            self._open_choices("ready", [("Strike the first enemy to come within reach", "reach", True, ""),
+                                         ("Shoot the first enemy to come into range and sight", "sight", True, "")])
         elif action == "shove":
             rows = [("Knock them down", "prone", True, ""), ("Push them back five feet", "push", True, ""),
                     ("Grab and hold them", "grapple", True, "")]
@@ -457,6 +482,8 @@ class BattleScreen(Screen):
                 self._open_targets("war_priest", b.targets_for(f, opts[0]) if opts else [])
             else:
                 self._do(b.do_ability, f, value)
+        elif kind == "ready":
+            self._do(b.do_ready, f, value)
         elif kind == "shove":
             if value == "escape":
                 self._do(b.do_escape, f)
@@ -488,6 +515,8 @@ class BattleScreen(Screen):
             self._do(b.do_item, f, value, target)
         elif kind == "help":
             self._do(b.do_help, f, target)
+        elif kind == "study":
+            self._do(b.do_study, f, target)
         elif kind == "shove":
             if value == "grapple":
                 self._do(b.do_grapple, f, target)

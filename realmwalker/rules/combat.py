@@ -155,6 +155,7 @@ class Fighter:
         self.dodging = False
         self.helped = False
         self.grovel = False  # Commanded to grovel: its next turn is spent on the ground
+        self.readied: str | None = None  # the Ready action: "reach" or "sight", until its next turn
         self.moved_feet = 0  # how far it has moved this turn (a boar's charge)
         self.attached_to: int | None = None  # a stirge fastened on someone
         self.surprised = False
@@ -318,6 +319,13 @@ class Fighter:
         if self.char:
             return self.sheet.darkvision
         return int(self.cdef.get("darkvision", 0))
+
+    @property
+    def senses(self) -> dict[str, int]:
+        """Feet of each special sense: darkvision, blindsight, truesight, tremorsense."""
+        if self.char:
+            return {"darkvision": self.darkvision}
+        return {**self.cdef.get("senses", {}), "darkvision": self.darkvision}
 
     @property
     def body(self) -> str:
@@ -610,29 +618,96 @@ class Battle:
             self.say("You have caught them unawares.", "good")
         elif self.env.surprised == PARTY:
             self.say("They are on you before you can draw.", "danger")
-        self._knowledge_checks()
+        self._known_from_before()
         order = ", ".join(self.fighter(i).name for i in self.order)
         self.say(f"Order of battle: {order}.", "system")
 
-    def _knowledge_checks(self) -> None:
-        """The party sizes up each kind of foe (Nature for beasts, History for people, Religion for the dead)."""
-        skill_for = {"beast": "nature", "dragon": "nature", "ooze": "nature", "plant": "nature", "humanoid": "history",
-                     "giant": "history", "undead": "religion", "fiend": "religion", "celestial": "religion"}  # (2024 Study)
-        party = [f for f in self.side(PARTY) if f.char]
+    STUDY_SKILL = {"beast": "nature", "dragon": "nature", "ooze": "nature", "plant": "nature", "humanoid": "history",
+                   "giant": "history", "undead": "religion", "fiend": "religion", "celestial": "religion"}  # (2024 Study)
+
+    def _known_from_before(self) -> None:
+        """What the party has killed before, it knows (the rest is learned with the Study action, 2024)."""
+        killed = {name for f in self.side(PARTY) if f.char for name in f.char.kills}
         for def_id in sorted({f.creature.def_id for f in self.side(FOE)}):  # sorted: a set's order changes per run
-            d = self.t.creatures[def_id]
-            skill = skill_for.get(d["kind"], "arcana")
-            dc = 8 + int(round(d["cr"] * 3))
-            best = max(party, key=lambda p: p.skill(skill), default=None)
-            if best is None:
-                continue
-            roll = dice.d20(self.rng).natural
-            total = roll + best.skill(skill)
-            self.dice_say(f"{self.t.rules['skills'][skill]['name']} ({best.name}): {roll} {signed_mod(best.skill(skill))} = {total} vs DC {dc}")
-            if total >= dc:
+            if self.t.creatures[def_id]["name"] in killed:
                 self.known.add(def_id)
-                danger = "a real threat" if d["cr"] >= 1 else ("dangerous in numbers" if d["cr"] >= 0.25 else "weak alone")
-                self.say(f"{best.name} knows {d['plural']}: {danger} (AC {d['ac']}).", "info")
+
+    def study_dc(self, f: Fighter) -> int:
+        return 8 + int(round(float(f.cdef["cr"]) * 3))
+
+    def do_study(self, f: Fighter, target: Fighter) -> None:
+        """The Study action (2024): an Intelligence check - Arcana, History, Nature or Religion by what it is - to call
+        to mind what a kind of creature is and what it can do."""
+        if target.creature is None or not self._spend(f):
+            return
+        d = target.cdef
+        skill = self.STUDY_SKILL.get(d["kind"], "arcana")
+        dc = self.study_dc(target)
+        roll = dice.d20(self.rng).natural
+        bonus = f.skill(skill)
+        self.dice_say(f"{self.t.rules['skills'][skill]['name']} ({f.name}): {roll} {signed_mod(bonus)} = {roll + bonus} vs DC {dc}")
+        if roll + bonus < dc:
+            self.say(f"{f.the_name} cannot place {target.the_name}.", "system")
+        else:
+            self.known.add(target.creature.def_id)
+            self.say(f"{f.the_name} knows {d['plural']}: {self.what_is_known(target)}.", "info")
+        self._after_action(f)
+
+    def what_is_known(self, f: Fighter) -> str:
+        """What studying a creature tells: how hard to hit and to kill, and what it shrugs off."""
+        d = f.cdef
+        bits = [f"AC {d['ac']}", f"about {d.get('hp_avg') or f.max_hp} hit points"]
+        for key, word in (("immune", "immune to"), ("resist", "resists"), ("vulnerable", "hurt most by")):
+            if d.get(key):
+                bits.append(f"{word} {', '.join(d[key])}")
+        if d.get("condition_immune"):
+            bits.append(f"never {', '.join(d['condition_immune'])}")
+        named = [self.t.traits["traits"][t]["name"] for t in d.get("traits", []) if t in self.t.traits["traits"]
+                 and self.t.traits["traits"][t].get("where") != "sheet"]
+        if named:
+            bits.append(", ".join(named))
+        return "; ".join(bits)
+
+    # ------------------------------------------------------------------ Search and Ready (2024)
+    def do_search(self, f: Fighter) -> None:
+        """The Search action: a Wisdom (Perception) check against everyone hiding; whoever it beats is found."""
+        if not self._spend(f):
+            return
+        roll = dice.d20(self.rng).natural
+        total = roll + f.skill("perception")
+        self.dice_say(f"Perception ({f.name}): {roll} {signed_mod(f.skill('perception'))} = {total}")
+        found = [e for e in self.enemies_of(f) if e.hidden and e.hidden <= total]
+        for e in found:
+            e.hidden = 0
+            self._event("found", who=e.id)
+        self.say(f"{f.the_name} finds {', '.join(e.the_name for e in found)}." if found
+                 else f"{f.the_name} looks hard, and finds nobody.", "good" if found else "system")
+        self._after_action(f)
+
+    def do_ready(self, f: Fighter, trigger: str) -> None:
+        """The Ready action: wait with a blow for "reach" (an enemy coming within reach) or "sight" (an enemy coming
+        into range and sight), and strike then with the reaction, until the start of the next turn."""
+        if trigger not in ("reach", "sight") or not self._spend(f):
+            return
+        f.readied = trigger
+        self.say(f"{f.the_name} waits, " + ("weapon ready for the first to come close." if trigger == "reach"
+                                             else "an arrow on the string for the first to show."), "system")
+        self._after_action(f)
+
+    def _readied(self, mover: Fighter) -> None:
+        """Whoever was waiting for this strikes now."""
+        for r in [x for x in self.fighters if x.readied and x.team != mover.team and x.reaction and x.can_act()]:
+            if not mover.active:
+                return
+            melee = r.readied == "reach"
+            opts = [o for o in self.attack_options(r) if o.available and o.is_melee == melee and self.in_reach(r, o, mover)[0]]
+            if not opts or not self.can_see(r, mover):
+                continue
+            r.readied = None
+            r.reaction = False
+            self.say(f"{r.the_name} was waiting for that.", "warn")
+            self._attack(r, max(opts, key=lambda o: _avg(o.damage) + o.bonus), mover)
+            self._check_end()
 
     # ------------------------------------------------------------------ turn engine
     def step(self) -> bool:
@@ -670,6 +745,7 @@ class Battle:
 
     def _start_of_turn(self, f: Fighter) -> None:
         durations.tick(self, f, "turn_start")  # what lasts "until the start of its next turn" ends
+        f.readied = None
         if f.creature is not None and f.cdef.get("legendary"):
             f.creature.uses["legendary_actions"] = int(f.cdef["legendary"].get("uses", 3))
         f.dodging = False
@@ -841,18 +917,28 @@ class Battle:
         return float(max(L[x, y] for x, y in f.cells if self.field.in_bounds(x, y)))
 
     def can_see(self, a: Fighter, b: Fighter) -> bool:
-        """Whether `a` can see `b`: a line of sight, light enough (or darkvision close enough), and not hidden."""
-        if "blinded" in a.conditions or a.incapacitated:
+        """Whether `a` can see `b`: a line of sight, light enough (or darkvision close enough), not hidden, not
+        invisible. Blindsight sees everything near that is not behind total cover; truesight sees the invisible and
+        through any darkness (2024)."""
+        if a.incapacitated:
             return False
+        feet = self.feet(a, b)
+        senses = a.senses
+        if senses.get("blindsight", 0) >= feet and self.field.cover(a.space, b.space) != grid.TOTAL:
+            return True
+        if "blinded" in a.conditions:
+            return False
+        if query.flag(b, "unseen") and senses.get("truesight", 0) < feet:
+            return False  # Invisible
         if b.hidden and b.hidden > a.passive() - (5 if self.dim_for(a, b) else 0) and self.gap(a, b) > 1:
             return False
         if any(self.field.zone_opaque[x, y] for x, y in b.cells) and self.gap(a, b) > 1:
             return False
         if self.field.cover(a.space, b.space) == grid.TOTAL:
             return False
-        if self.light_on(b) >= grid.DIM:
+        if self.light_on(b) >= grid.DIM or senses.get("truesight", 0) >= feet:
             return True
-        return a.darkvision > 0 and self.feet(a, b) <= a.darkvision
+        return a.darkvision > 0 and feet <= a.darkvision
 
     def dim_for(self, a: Fighter, b: Fighter) -> bool:
         """Whether `b` stands lightly obscured to `a`'s eyes: dim light, or darkness seen by darkvision (2024)."""
@@ -986,6 +1072,10 @@ class Battle:
                     f.hidden = 0
             if self._zones_on(f, start=False):
                 break  # caught in a web
+            if any(x.readied for x in self.fighters):
+                self._readied(f)
+                if not f.active or "unconscious" in f.conditions:
+                    break
         if walked:
             self._event("move", who=f.id, path=[start] + walked)
         self._sync_grapples(f)
