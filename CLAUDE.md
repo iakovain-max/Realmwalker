@@ -19,8 +19,8 @@ gameplay terms, give Windows click-by-click steps when they must do something, n
 | Run from a terminal | `.venv\Scripts\python.exe main.py` |
 | Window smoke test (opens, tours screens, screenshots, exits) | `.venv\Scripts\python.exe main.py --smoke-test out.png` |
 | Developer tools (once) | `.venv\Scripts\python.exe -m pip install -r requirements-dev.txt` (pytest-xdist, pypdf, pypdfium2) |
-| All tests, in parallel | `.venv\Scripts\python.exe -m pytest -n 6` (about 1.5 minutes; 6 workers, not all 16: Anton's PC runs hot) |
-| Quick tests while working | `.venv\Scripts\python.exe -m pytest -n 6 -m "not slow"` (mark long tests `@pytest.mark.slow`). Tests take worlds from `tests/worlds.cached_world` (kept in build/test_worlds while the world-making code and data are unchanged) |
+| All tests, in parallel | `.venv\Scripts\python.exe -m pytest -n 10` (about a minute; 10 workers, not all 16: never 100% CPU) |
+| Quick tests while working | `.venv\Scripts\python.exe -m pytest -n 10 -m "not slow"` (mark long tests `@pytest.mark.slow`). Tests take worlds from `tests/worlds.cached_world` (kept in build/test_worlds while the world-making code and data are unchanged) |
 | Autoplay bot | `.venv\Scripts\python.exe tools\autoplay.py --turns 3000` |
 | Balance numbers (fights, cold, wounds) | `.venv\Scripts\python.exe tools\balance.py --runs 60` |
 | What the enemy uses, and how fast it thinks | `.venv\Scripts\python.exe tools\arena.py` (`--creature wolf --runs 10`) |
@@ -34,9 +34,12 @@ Then commit, update PROGRESS.md, and stop for user feedback (unless the user sai
 
 - **Done = playable.** A rule is done when it is usable in play: the rule, its entry in `actions.options`, the
   enemy's and Auto's use of it, the battle screen, and one test in a real fight. Never tick a rule that nothing calls.
-- **Heavy checks once per part.** While building: only the tests for what you touched (`pytest tests/test_x.py -k ...`,
-  `-m "not slow"`). Before a merge, one at a time: the full suite (it runs the arena coverage test), autoplay, the
-  smoke test. Run `tools/arena.py` by hand only when tuning tactics.
+- **Heavy checks often, never two at once** (Anton, 2026-10-13: more load is fine while he is at work, never 100% CPU).
+  While building: the tests for what you touched (`pytest -n 10 tests/test_x.py`); the full suite (`-n 10`, it runs
+  the arena coverage test) after each finished task of a part. Before a merge, one after another: the full suite,
+  autoplay, the smoke test. Run `tools/arena.py` by hand only when tuning tactics.
+- **The working day** (docs/expansions/CHAIN.md): START and STOP buttons, builders that take turns every 20 minutes
+  until 20:00, one session at a time (a lock in build/), work saved on the branch when stopped or cut off.
 - **Helpers for bulk data** (book tables, items, monsters, spells, codex marking): two or three subagents at once on
   a cheaper model (`model: "sonnet"`), each with a precise brief (its entries, the schema, one finished example, the
   book pages, numbers checked on page images); the main session owns the kernel, joins the pieces and reviews.
