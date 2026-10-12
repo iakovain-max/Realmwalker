@@ -360,7 +360,8 @@ class Fighter:
         """Keeps its distance and shoots (bandit archers, priests, wizards)."""
         if self.char:
             return self.char.cls == "wizard"
-        return self.cdef.get("rank") == "back"
+        ai = self.cdef.get("ai") or {}
+        return ai.get("role") in ("artillery", "controller", "support") or int(ai.get("range", 0)) > 5
 
     # ------------------------------------------------------------------ state
     @property

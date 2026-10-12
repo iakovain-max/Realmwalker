@@ -384,7 +384,10 @@ CREATURE = Obj(
         "attacks": List(ATTACK, min_items=1, optional=True), "multiattack": Int(min=1, max=6, optional=True),
         "traits": List(Str(max_len=40), optional=True),
         "morale": Str(choices=["beast", "bandit", "soldier", "coward", "warrior", "fanatic", "mindless"]),
-        "rank": Str(choices=["front", "back"]), "names": Str(max_len=30, optional=True),
+        # How it fights (rules/tactics.py): its role and the distance it likes to keep (feet; 0: in their faces).
+        "ai": Obj({"role": Str(choices=["brute", "skirmisher", "artillery", "controller", "leader", "support", "lurker",
+                                        "solo"]), "range": Int(min=0, max=600, optional=True)}, optional=True),
+        "names": Str(max_len=30, optional=True),
         "gear": List(List(Any_(), min_items=2, max_items=2)), "money": Any_(optional=True),
         "loot": List(List(Any_(), min_items=2, max_items=2), optional=True),
         "butcher": List(List(Any_(), min_items=2, max_items=2), optional=True),

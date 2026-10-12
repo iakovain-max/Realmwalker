@@ -22,7 +22,7 @@ TRAIT_ALIASES = {
     "keen_hearing_and_smell": "keen_senses",
 }
 SIZE_ORDER = ("tiny", "small", "medium", "large", "huge", "gargantuan")
-FLAVOUR = ("name", "plural", "body", "morale", "rank", "names", "gear", "money", "loot", "butcher", "descriptions")
+FLAVOUR = ("name", "plural", "body", "morale", "ai", "names", "gear", "money", "loot", "butcher", "descriptions")
 
 
 def resolve(cid: str, flavour: dict, blocks: dict) -> dict:
@@ -93,7 +93,7 @@ def resolve(cid: str, flavour: dict, blocks: dict) -> dict:
     for k, v in flavour.get("override", {}).items():
         out[k] = v
     out.setdefault("morale", "warrior")
-    out.setdefault("rank", "front")
+    out.setdefault("ai", {"role": "brute"})
     out.setdefault("body", "humanoid")
     out.setdefault("gear", [])
     out.setdefault("descriptions", [f"A {out['name']}."])

@@ -397,7 +397,7 @@ def _place_foes(game, field, creatures, anchor, forward, party_at, mode, taken, 
     back = (-forward[0], -forward[1])  # from the foes' side, away from the party is the party's forward
     right = (-forward[1], forward[0])
     defs = [tables.creatures[c.def_id] for c in creatures]
-    order = sorted(range(len(creatures)), key=lambda i: (defs[i].get("rank") == "back", i))
+    order = sorted(range(len(creatures)), key=lambda i: (_stands_back(defs[i]), i))
     n = len(creatures)
     front_k = back_k = 0
     lanes = (0, 1, -1, 2, -2, 3, -3, 4, -4, 5, -5)
@@ -418,12 +418,12 @@ def _place_foes(game, field, creatures, anchor, forward, party_at, mode, taken, 
             want = (party_at[0] + round(vx * dist), party_at[1] + round(vy * dist))
         elif mode == "cluster":
             lane = lanes[k % len(lanes)]
-            want = (anchor[0] + right[0] * lane + (back[0] * -1 if d.get("rank") == "back" else 0),
-                    anchor[1] + right[1] * lane + (back[1] * -1 if d.get("rank") == "back" else 0))
+            want = (anchor[0] + right[0] * lane + (back[0] * -1 if _stands_back(d) else 0),
+                    anchor[1] + right[1] * lane + (back[1] * -1 if _stands_back(d) else 0))
         elif mode == "block" and k % 2 == 1:
             want = (party_at[0] - forward[0] * 5 + right[0] * (k // 2), party_at[1] - forward[1] * 5 + right[1] * (k // 2))
         else:  # a line, the archers and casters a few squares behind it
-            if d.get("rank") == "back":
+            if _stands_back(d):
                 lane = lanes[back_k % len(lanes)] * 2
                 back_k += 1
                 want = (anchor[0] + forward[0] * 3 + right[0] * lane, anchor[1] + forward[1] * 3 + right[1] * lane)
@@ -453,3 +453,9 @@ def situation_for(game, surprised: str | None) -> str:
     if surprised == FOE:
         return "unaware"
     return "facing"
+
+
+def _stands_back(d: dict) -> bool:
+    """Archers, casters and those who lead from behind start at the back (creatures' "ai" role and range)."""
+    ai = d.get("ai") or {}
+    return ai.get("role") in ("artillery", "controller", "support") or int(ai.get("range", 0)) > 5
