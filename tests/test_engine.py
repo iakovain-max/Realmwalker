@@ -10,7 +10,7 @@ from realmwalker.rules import grid
 from realmwalker.rules.combat import Battle, Env
 from realmwalker.rules.creation import CharacterBuilder
 from realmwalker.rules.creatures import spawn
-from realmwalker.rules.engine import check, conditions, events, query
+from realmwalker.rules.engine import check, conditions, durations, events, query
 from realmwalker.rules.engine import traits as trs
 from realmwalker.world.tables import Tables
 
@@ -232,8 +232,8 @@ def test_the_kernel_gives_the_old_answers_where_the_rules_did_not_change(tables)
 def test_traits_come_from_race_class_and_stat_block(tables):
     b, me, them = duel(tables, foe="wolf", race="halfling", cls="rogue")
     assert {"lucky", "sneak_attack"} <= trs.of(me)
-    assert {"pack_tactics", "keen_senses"} <= trs.of(them)
-    assert them.passive() == 10 + them.skill("perception") + 5  # Keen Senses through its modifier
+    assert {"pack_tactics", "takes_food"} <= trs.of(them)  # its 2025 block's, and the game's own
+    assert them.passive() == 15 == them.cdef["passive"]  # 10 + Perception +5 (2025: no Keen Senses)
 
 
 def test_hooks_are_asked_target_first_then_in_the_order_of_battle(tables):
@@ -265,3 +265,290 @@ def test_a_reaction_hook_waits_for_a_reaction(tables):
     b.round += 1
     ev = events.emit(b, "damage_incoming", actor=them, target=me, stage="blow", amount=10)
     assert ev.amount == 10  # no reaction left
+
+
+# ---------------------------------------------------------------------------- abilities and their uses
+def test_second_wind_heals_and_is_spent_until_a_rest(tables):
+    from realmwalker.rules.engine import actions
+    from realmwalker.rules.progression import short_rest
+
+    b, me, them = duel(tables, cls="fighter")
+    me.hp = 1
+    b.order = [me.id, them.id]
+    b.turn, b.turn_started = 0, True
+    b._start_of_turn(me)
+    assert me.char.uses["second_wind"] == 1
+    b.do_ability(me, "second_wind")
+    assert 1 + 1 + me.char.level <= me.hp and me.char.uses["second_wind"] == 0
+    why = actions.problem(b, me, actions.find(me, "second_wind"))
+    assert why == "used; rest to recover"
+    short_rest(me.char, tables, RNG(1))
+    assert me.char.uses["second_wind"] == 1
+
+
+def test_a_new_level_brings_its_pools_ready(tables):
+    from realmwalker.rules.progression import award_xp, long_rest
+
+    c = hero(tables, "fighter")
+    assert "action_surge" not in c.uses
+    award_xp(c, 300, tables, RNG(1), auto=True)  # level 2: Action Surge
+    assert c.uses.get("action_surge") == 1
+    c.uses["action_surge"] = 0
+    long_rest(c, tables, RNG(1))
+    assert c.uses["action_surge"] == 1
+
+
+def test_turn_undead_needs_undead_near(tables):
+    from realmwalker.rules.progression import award_xp
+
+    c = hero(tables, "cleric")
+    award_xp(c, 300, tables, RNG(1), auto=True)
+    cr = spawn(tables, "bandit", RNG(1, "foe"), 1)
+    b = Battle(tables, [c], [cr], Env(), RNG(1, "battle"), spots={0: (3, 4), 1: (5, 4)})
+    b.start()
+    me = b.fighters[0]
+    rows = {aid: (ok, why) for aid, _, ok, why in b.class_abilities(me)}
+    assert rows["turn_undead"] == (False, "no undead within 30 feet")
+
+
+def test_every_ability_in_the_data_resolves(tables):
+    from realmwalker.rules.engine import actions, effects
+
+    for tid, d in tables.traits["traits"].items():
+        acts = d.get("activate") or []
+        for a in acts if isinstance(acts, list) else [acts]:
+            assert a["cost"] in ("action", "bonus", "free"), tid
+            for o in a.get("effects", []):
+                assert o["op"] in effects.OPS
+            for r in a.get("requires", []):
+                assert r in actions.REQUIRES
+
+
+# ---------------------------------------------------------------------------- the 2024 rules glossary
+def test_damage_resistance_then_vulnerability_rounding_down(tables):
+    b, me, them = duel(tables)
+    them.buffs.append({"resist": ["fire"], "source": "test"})
+    assert query.damage_taken(them, 1, "fire") == (0, "resist")  # halved and rounded down: nothing
+    assert query.damage_taken(them, 7, "fire") == (3, "resist")
+    b, me, bones = duel(tables, foe="skeleton")
+    bones.buffs.append({"resist": ["bludgeoning"], "source": "test"})
+    assert query.damage_taken(bones, 23, "bludgeoning") == (22, "vulnerable")  # 23 -> 11 -> 22 (the PHB's example)
+
+
+def test_temporary_hit_points_go_first(tables):
+    b, me, them = duel(tables)
+    them.creature.hp = them.creature.max_hp = 20
+    them.temp_hp = 5
+    b._apply_hp_loss(them, 7, source=me, cause="test")
+    assert them.temp_hp == 0 and them.hp == 18
+
+
+def test_concentration_dc_is_capped_at_30(tables):
+    assert query.concentration_dc(4) == 10
+    assert query.concentration_dc(31) == 15
+    assert query.concentration_dc(200) == 30
+
+
+def test_the_incapacitated_lose_their_concentration(tables):
+    b, me, them = duel(tables, cls="cleric")
+    me.concentration = {"spell": "bless", "rounds": 10}
+    me.conditions["stunned"] = 1
+    b._check_end()
+    assert me.concentration is None
+
+
+def test_surprise_costs_initiative_not_a_turn(tables):
+    c = hero(tables)
+    cr = spawn(tables, "bandit", RNG(1, "foe"), 1)
+    b = Battle(tables, [c], [cr], Env(surprised="foe"), RNG(1, "battle"), spots={0: (3, 4), 1: (9, 4)})
+    b.start()
+    bandit = b.fighters[1]
+    assert query.initiative_roll(bandit).disadvantage
+    b.order = [bandit.id, b.fighters[0].id]
+    b.turn, b.turn_started = 0, False
+    start = (bandit.x, bandit.y)
+    b.step()
+    assert (bandit.x, bandit.y) != start or any(e["kind"] == "attack" for e in b.events)  # it acts
+
+
+def test_an_emanation_reaches_out_from_its_maker_and_leaves_them_out(tables):
+    b, me, them = duel(tables, gap=6)
+    cells = b.field.area("emanation", 10, origin=me.space, toward=(me.x, me.y))
+    assert (me.x, me.y) not in cells
+    assert (me.x + 2, me.y) in cells and (me.x + 3, me.y) not in cells
+    assert (me.x + 2, me.y + 2) in cells  # 5-5-5: a diagonal square counts as five feet
+
+
+def test_a_grapple_is_a_save_and_one_of_the_attack_actions_attacks(tables):
+    from realmwalker.rules.progression import award_xp
+
+    c = hero(tables, "fighter")
+    award_xp(c, 6500, tables, RNG(1), auto=True)  # level 5: Extra Attack
+    cr = spawn(tables, "bandit", RNG(1, "foe"), 1)
+    b = Battle(tables, [c], [cr], Env(), RNG(1, "battle"), spots={0: (3, 4), 1: (4, 4)})
+    b.start()
+    me, them = b.fighters
+    b.order = [me.id, them.id]
+    b.turn, b.turn_started = 0, True
+    b._start_of_turn(me)
+    b._save = lambda *a, **k: False
+    b.do_grapple(me, them)
+    assert "grappled" in them.conditions and them.grappled_by == me.id
+    assert me.action == 0 and me.attacks_left == 1  # one attack of two used: the other is still there
+    assert them.cond_ends["grappled"]["escape"] == query.unarmed_dc(me) == 8 + me.mod("str") + query.proficiency(me)
+
+
+def test_the_held_are_dragged_along_at_double_cost(tables):
+    b, me, them = duel(tables, gap=1)
+    them.conditions["grappled"] = -1
+    them.grappled_by = me.id
+    b.order = [me.id, them.id]
+    b.turn, b.turn_started = 0, True
+    b._start_of_turn(me)
+    assert b.dragging(me)
+    left = me.move_left
+    b.walk(me, [(2, 4), (1, 4)])
+    assert (me.x, me.y) == (1, 4) and (them.x, them.y) == (2, 4) and me.move_left == left - 20
+
+
+def test_help_distracts_an_enemy_for_a_friends_next_attack(tables):
+    friend = hero(tables, "rogue", seed=2)
+    c = hero(tables)
+    cr = spawn(tables, "bandit", RNG(1, "foe"), 1)
+    b = Battle(tables, [c, friend], [cr], Env(), RNG(1, "battle"), spots={0: (3, 4), 1: (3, 6), 2: (4, 4)})
+    b.start()
+    me, fr, them = b.fighters
+    b.order = [me.id, fr.id, them.id]
+    b.turn, b.turn_started = 0, True
+    b._start_of_turn(me)
+    assert them in b.help_targets(me)
+    b.do_help(me, them)
+    assert "distracted" in query.attack_roll(b, fr, them, weapon(b, fr)).adv
+    assert "distracted" not in query.attack_roll(b, them, fr, weapon(b, them)).adv  # only for the helper's side
+
+
+def test_humans_wake_with_heroic_inspiration(tables):
+    from realmwalker.rules.progression import long_rest
+
+    c = hero(tables, race="human")
+    c.uses.pop("heroic_inspiration", None)
+    long_rest(c, tables, RNG(1))
+    assert c.uses["heroic_inspiration"] == 1
+    d = hero(tables, race="dwarf", seed=3)
+    long_rest(d, tables, RNG(1))
+    assert not d.uses.get("heroic_inspiration")
+
+
+def test_heroic_inspiration_rerolls_a_failed_save_once(tables):
+    b, me, them = duel(tables)
+    me.char.uses["heroic_inspiration"] = 1
+    seen = []
+    b.dice_say = lambda text: seen.append(text)
+    for _ in range(40):
+        b._save(me, "wis", 15)
+        if me.char.uses["heroic_inspiration"] == 0:
+            break
+    assert me.char.uses["heroic_inspiration"] == 0 and any("Heroic Inspiration" in s for s in seen)
+
+
+def test_falling_burning_breath_and_objects(tables):
+    from realmwalker.rules.engine import hazards
+
+    assert hazards.falling(tables, 5) == "" and hazards.falling(tables, 20) == "2d6"
+    assert hazards.falling(tables, 500) == "20d6"
+    assert hazards.breath_rounds(tables, 10) == 10 and hazards.breath_rounds(tables, 14) == 30
+    assert hazards.breath_rounds(tables, 3) == 5  # at least thirty seconds
+    assert hazards.object_ac(tables, "wood") == 15 and hazards.object_ac(tables, "adamantine") == 23
+    assert hazards.object_hp(tables, "medium", resilient=True) == "4d8"
+    assert hazards.object_immune(tables, "psychic")
+
+
+def test_a_burning_creature_burns_each_turn_until_it_rolls_the_flames_out(tables):
+    b, me, them = duel(tables, foe="ogre", gap=4)
+    durations.buff(them, {"burning": True, "source": "burning"})
+    before = them.hp
+    b.order = [them.id, me.id]
+    b.turn, b.turn_started = 0, True
+    b._start_of_turn(them)
+    assert them.hp < before
+    b.do_extinguish(them)
+    assert not b.burning(them) and "prone" in them.conditions
+
+
+def test_dim_light_hides_better(tables):
+    b, me, them = duel(tables, gap=4)
+    them.hidden = me.passive() - 2
+    assert b.can_see(me, them)
+    b.field.base_light = grid.DIM
+    b._light_key = None
+    assert b.dim_for(me, them) and not b.can_see(me, them)
+
+
+# ---------------------------------------------------------------------------- reactions that ask first
+def _shield_fight(tables, setting="ask"):
+    w = hero(tables, "wizard")
+    cr = spawn(tables, "bandit", RNG(1, "foe"), 1)
+    b = Battle(tables, [w], [cr], Env(), RNG(1, "battle"), spots={0: (3, 4), 1: (4, 4)})
+    b.start()
+    b.human, b.reactions = True, setting
+    me, them = b.fighters
+    me.auto = False
+    sword = next(o for o in b.attack_options(them) if o.is_melee)
+    return b, me, them, sword
+
+
+def _land_a_blow(b, me, them, sword):
+    """An attack that would hit by 1: Shield would turn it."""
+    import realmwalker.core.dice as dice_mod
+
+    need = me.ac() - sword.bonus
+    real = dice_mod.d20
+    dice_mod.d20 = lambda rng, advantage=False, disadvantage=False: dice_mod.D20Roll(max(2, min(19, need)), [need])
+    try:
+        return b.run(b._attack, them, sword, me)
+    finally:
+        dice_mod.d20 = real
+
+
+def test_a_reaction_that_spends_a_slot_stops_the_fight_to_ask(tables):
+    b, me, them, sword = _shield_fight(tables)
+    _land_a_blow(b, me, them, sword)
+    d = b.pending_decision
+    assert d is not None and d.kind == "shield" and "Shield" in d.text
+    assert b.run(b.step) is None  # nothing else happens until it is answered
+    b.answer("yes")
+    assert b.pending_decision is None and any(x.get("source") == "shield" for x in me.buffs)
+
+
+def test_saying_no_lets_the_blow_land(tables):
+    b, me, them, sword = _shield_fight(tables)
+    hp = me.hp
+    _land_a_blow(b, me, them, sword)
+    b.answer("no")
+    assert not any(x.get("source") == "shield" for x in me.buffs) and me.hp < hp
+
+
+def test_decide_for_me_never_asks(tables):
+    b, me, them, sword = _shield_fight(tables, setting="auto")
+    _land_a_blow(b, me, them, sword)
+    assert b.pending_decision is None and any(x.get("source") == "shield" for x in me.buffs)
+
+
+def test_without_a_player_nothing_ever_waits(tables):
+    b, me, them, sword = _shield_fight(tables)
+    b.human = False  # tests, the balance tool, autoplay without a window
+    _land_a_blow(b, me, them, sword)
+    assert b.pending_decision is None
+
+
+def test_free_reactions_do_not_ask_unless_everything_should(tables):
+    from realmwalker.rules.engine import reactions
+    from realmwalker.rules.engine.reactions import Decision
+
+    b, me, them, sword = _shield_fight(tables)
+    asked = []
+    b.resolver.in_worker = lambda: True
+    b.resolver.ask = lambda d: asked.append(d.kind) or "no"
+    assert reactions.ask(b, Decision(me, "opportunity", "x", free=True)) == "yes"
+    b.reactions = "all"
+    assert reactions.ask(b, Decision(me, "opportunity", "x", free=True)) == "no" and asked == ["opportunity"]

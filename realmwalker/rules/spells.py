@@ -7,6 +7,9 @@ A spell that lasts ten minutes or more (Mage Armour, Shield of Faith, Stoneskin,
 was cast in, and can be cast on the road before one: it is kept on the character as a timed effect,
 `Character.effects["spell:<id>"]` = hours left, which wears off as time passes like any other (rules/health.py).
 The sheet counts its armour; a battle carries the rest of it (resistances, the ward) while it lasts.
+
+What a spell does is a list of effect operations, `spell["effects"]` (rules/engine/effects.py runs them in a fight).
+The helpers below read them for everything else: what it heals, the buff it gives, its damage type, a short summary.
 """
 
 from __future__ import annotations
@@ -92,10 +95,104 @@ def can_cast(char: Character, tables, spell_id: str) -> tuple[bool, str]:
     return False, "no spell slots of that level left (rest to recover)"
 
 
+# ---------------------------------------------------------------------------- reading a spell's effects
+NESTED = ("on_hit", "on_fail", "do")
+
+
+def ops(spell: dict) -> list[dict]:
+    """Every effect operation of a spell, the ones inside others too (an attack's on_hit, a save's on_fail)."""
+    out: list[dict] = []
+    todo = list(spell.get("effects", ()))
+    while todo:
+        o = todo.pop(0)
+        out.append(o)
+        for key in NESTED:
+            todo.extend(o.get(key, ()))
+        then = o.get("then")
+        if then:
+            todo.extend(then.get("on_fail", ()))
+    return out
+
+
+def op(spell: dict, name: str) -> dict | None:
+    return next((o for o in ops(spell) if o["op"] == name), None)
+
+
+def has_op(spell: dict, *names: str) -> bool:
+    return any(o["op"] in names for o in ops(spell))
+
+
+def damage_parts(o: dict) -> list[tuple[str, str, str]]:
+    """(dice, type, more dice per slot level above the spell's) for each kind of damage an op deals."""
+    d = o.get("damage")
+    if not d:
+        return []
+    if isinstance(d, str):
+        return [(d, o.get("type", ""), o.get("up", ""))]
+    return [(p["dice"], p["type"], p.get("up", "")) for p in d]
+
+
+def main_type(spell: dict) -> str:
+    """The spell's damage type, for its colour and sound ("" if it does no damage)."""
+    for o in ops(spell):
+        parts = damage_parts(o)
+        if parts:
+            return parts[0][1]
+    return ""
+
+
+def buff_of(spell: dict) -> dict:
+    """What a spell's modifier puts on its target ({"ac": 2}, {"resist": [...]}...), {} if it has none."""
+    m = op(spell, "modifier")
+    return dict(m["buff"]) if m else {}
+
+
+def harms(spell: dict) -> bool:
+    """Whether the spell is aimed at enemies (an attack or a saving throw)."""
+    return has_op(spell, "attack", "save", "darts")
+
+
+def heal_op(spell: dict) -> dict | None:
+    return op(spell, "heal")
+
+
+def heals_many(spell: dict) -> bool:
+    return spell["target"] == "all_allies" or bool(spell.get("area")) and spell.get("affects") == "allies"
+
+
+def road_use(tables, spell_id: str) -> str | None:
+    """What a spell is for outside a fight: "heal", "cure", "identify", "lasting" (cast before a fight), or None."""
+    spell = tables.spells[spell_id]
+    if has_op(spell, "identify"):
+        return "identify"
+    if has_op(spell, "heal"):
+        return "heal"
+    if has_op(spell, "restore"):
+        return "cure"
+    if lasts(tables, spell_id):
+        return "lasting"
+    return None
+
+
+def summary(spell: dict) -> list[str]:
+    """A few words on what it does: "8d6 fire", "DEX save", "heals 2d8"."""
+    bits: list[str] = []
+    for o in spell.get("effects", ()):
+        for dice_, dtype, _ in damage_parts(o):
+            bits.append(f"{dice_} {dtype}".strip())
+        if o["op"] == "heal":
+            bits.append(f"heals {o['dice']}")
+        if o["op"] == "save":
+            bits.append(f"{o['ability'].upper()} save")
+        if o["op"] == "attack":
+            bits.append(f"{o['attack']} attack")
+    return list(dict.fromkeys(bits))
+
+
 def lasts(tables, spell_id: str) -> bool:
     """A spell that outlives a fight: a buff of ten minutes or more."""
     spell = tables.spells[spell_id]
-    return spell.get("kind") == "buff" and int(spell.get("rounds", 0)) >= MIN_LASTING_ROUNDS
+    return bool(buff_of(spell)) and int(spell.get("rounds", 0)) >= MIN_LASTING_ROUNDS
 
 
 def lasting(char: Character, tables=None) -> dict[str, float]:
@@ -121,22 +218,22 @@ def lasting_values(char: Character, tables, key: str) -> list:
     """One part of the lasting spells on a character (their "ac" bonuses, a "mage_armor" base...)."""
     if not char.effects:
         return []
-    return [tables.spells[sid]["buff"][key] for sid in lasting(char, tables)
-            if key in tables.spells[sid].get("buff", {})]
+    return [buff_of(tables.spells[sid])[key] for sid in lasting(char, tables)
+            if key in buff_of(tables.spells[sid])]
 
 
 def battle_part(tables, spell_id: str) -> dict:
     """What a battle has to carry of a lasting spell (the sheet already counts its armour): {} for nothing."""
-    part = {k: v for k, v in tables.spells[spell_id].get("buff", {}).items() if k not in SHEET_KEYS}
+    part = {k: v for k, v in buff_of(tables.spells[spell_id]).items() if k not in SHEET_KEYS}
     return {**part, "lasting": spell_id, "source": spell_id} if part else {}
 
 
 def on_the_road(tables, spell_id: str) -> tuple[bool, str]:
     """Whether a spell is any use outside a fight, and why not."""
     spell = tables.spells[spell_id]
-    if spell["kind"] in ("heal", "cure", "identify") or lasts(tables, spell_id):
+    if road_use(tables, spell_id) is not None:
         return True, ""
-    if spell["kind"] == "buff":
+    if buff_of(spell):
         return False, "over too quickly to cast before a fight"
     return False, "only in a fight"
 

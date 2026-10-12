@@ -34,13 +34,13 @@ STAGES = {
 }
 COLD_STAGES = [(-80, "freezing", "danger"), (-60, "hypothermic", "danger"), (-40, "cold", "warn"), (-20, "chilled", "dim")]
 HEAT_STAGES = [(90, "heatstroke", "danger"), (70, "heat-exhausted", "danger"), (50, "overheated", "warn"), (30, "hot", "dim")]
-EXHAUSTION_EFFECTS = [
+EXHAUSTION_EFFECTS = [  # 2024: every d20 test 2 lower and every move 5 feet shorter, for each level; six kill
     "",
-    "disadvantage on ability checks",
-    "speed halved",
-    "disadvantage on attacks and saving throws",
-    "hit point maximum halved",
-    "can barely stagger",
+    "-2 to every roll, 5 feet slower",
+    "-4 to every roll, 10 feet slower",
+    "-6 to every roll, 15 feet slower",
+    "-8 to every roll, 20 feet slower",
+    "-10 to every roll, 25 feet slower: barely staggering",
     "death",
 ]
 STRAIN_PER_LEVEL = 24.0  # strain hours per level of exhaustion (see strain rates below)
@@ -257,14 +257,15 @@ def tick(char: Character, sheet: Sheet, env: Environment, minutes: float) -> lis
 
 
 def clamp_hp(char: Character) -> None:
-    """Exhaustion 4+ halves the hit point maximum."""
+    """Hit points can never be more than the body's most (hp_cap)."""
     cap = hp_cap(char)
     if char.hp > cap:
         char.hp = cap
 
 
 def hp_cap(char: Character) -> int:
-    return max(1, char.max_hp // 2) if char.exhaustion >= 4 else char.max_hp
+    """The most hit points the body can have now (the 2024 rules no longer halve them for exhaustion)."""
+    return char.max_hp
 
 
 def first(char: Character) -> str:
@@ -344,7 +345,7 @@ def travel_multiplier(char: Character) -> float | None:
     walk", and a traveller three miles from a river died of thirst where they sat)."""
     if char.exhaustion >= 6:
         return None  # (dead)
-    m = 4.0 if char.exhaustion >= 5 else 2.0 if char.exhaustion >= 2 else 1.0
+    m = 1.0  # (exhaustion slows the walker through their speed: rules/character.Sheet.speed)
     if char.fatigue >= 90:
         m *= 1.25
     if char.hunger >= 80:

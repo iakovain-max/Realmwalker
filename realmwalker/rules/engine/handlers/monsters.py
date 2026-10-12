@@ -17,18 +17,24 @@ def relentless(b, f, ev, hook, buff) -> None:
 
 @handler("undead_fortitude")
 def undead_fortitude(b, f, ev, hook, buff) -> None:
-    if f.creature is not None and b.rng.random() < 0.5:
-        if b._save(f, "con", 5 + ev.amount):
-            f.hp = 1
-            b.say(f"{f.the_name} shudders and keeps coming.", "danger")
-            ev.survived = ev.stop = True
+    """2025: a Constitution save, DC 5 + the damage, unless the blow was radiant or a critical hit."""
+    if f.creature is None or getattr(ev, "crit", False):
+        return
+    n = f.cdef.get("trait_numbers", {}).get("undead_fortitude", {})
+    if getattr(ev, "dtype", "") in n.get("not_types", ["radiant"]):
+        return
+    if b._save(f, "con", int(n.get("dc_plus_damage", 5)) + ev.amount):
+        f.hp = 1
+        b.say(f"{f.the_name} shudders and keeps coming.", "danger")
+        ev.survived = ev.stop = True
 
 
 @handler("regeneration")
 def regeneration(b, f, ev, hook, buff) -> None:
     """Trolls: wounds close at the start of its turn, unless fire or acid burned it since the last."""
     if f.hp > 0 and not f.took_fire:
-        healed = min(int(hook.get("amount", 10)), f.max_hp - f.hp)
+        amount = (f.cdef or {}).get("trait_numbers", {}).get("regeneration", {}).get("amount", hook.get("amount", 10))
+        healed = min(int(amount), f.max_hp - f.hp)
         if healed:
             f.hp += healed
             b._event("heal", to=f.id, amount=healed)

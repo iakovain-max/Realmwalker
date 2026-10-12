@@ -48,16 +48,21 @@ def of(f) -> frozenset[str]:
     cached = f.__dict__.get("_traits")
     if cached is not None and cached[0] == key:
         return cached[1]
-    if f.char is None:
-        found = frozenset(f.cdef.get("traits", []))
-    else:
-        s = f.sheet
-        names = {t["rule"] for t in s.race["traits"] if t.get("rule")}
-        names |= {feat["rule"] for feat in s.features() if feat.get("rule")}
-        names |= set(f.char.features)
-        found = frozenset(names)
+    found = frozenset(f.cdef.get("traits", [])) if f.char is None else of_char(f.char, f.t)
     f.__dict__["_traits"] = (key, found)
     return found
+
+
+def of_char(char, tables) -> frozenset[str]:
+    """A character's traits, in a fight or out of one: race traits and class features by rule tag, and the features
+    they have been given by id."""
+    from realmwalker.rules.character import Sheet
+
+    s = Sheet(char, tables)
+    names = {t["rule"] for t in s.race["traits"] if t.get("rule")}
+    names |= {feat["rule"] for feat in s.features() if feat.get("rule")}
+    names |= set(char.features)
+    return frozenset(names)
 
 
 def has(f, trait: str) -> bool:
@@ -116,6 +121,7 @@ WHEN: dict[str, Callable[[Ctx], bool]] = {
     "target_not_acted": lambda c: not c.target.acted,  # the target has not had a turn in this fight yet
     "in_sunlight": _in_sunlight,  # out under a bright sky
     "owner_able": lambda c: c.owner.standing and not _incap(c.owner),
+    "owner_bloodied": lambda c: c.owner.hp <= c.owner.max_hp * c.owner.t.conditions["bloodied"]["at_most"],
     "attacker_beside_owner": lambda c: c.b.gap(c.owner, c.att) <= 1,
     "melee": lambda c: c.opt is not None and c.opt.is_melee,
     "ranged": lambda c: c.opt is not None and not c.opt.is_melee,

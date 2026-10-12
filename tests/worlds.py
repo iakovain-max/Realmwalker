@@ -28,7 +28,7 @@ CACHE_DIR = ROOT / "build" / "test_worlds"
 # code (rules/combat.py, tactics, grid, engine...) is not among them, so changing it keeps the cached worlds.
 RULES_USED = ("__init__", "body", "character", "creatures", "health", "inventory", "items", "spells", "wounds")
 COVERED = ("realmwalker/world/", "realmwalker/core/", "realmwalker/data/", "realmwalker/paths.py",
-           "realmwalker/__init__.py") + tuple(f"realmwalker/rules/{m}.py" for m in RULES_USED)
+           "realmwalker/__init__.py", "realmwalker/rules/engine/__init__.py", "realmwalker/rules/engine/statblocks.py")     + tuple(f"realmwalker/rules/{m}.py" for m in RULES_USED)
 
 _memory: dict[str, bytes] = {}
 _code_hash: str | None = None

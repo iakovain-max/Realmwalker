@@ -703,8 +703,15 @@ def _check_combat_refs(files: dict[str, Any]) -> list[str]:
             for item_id, _ in d.get("gear", []) + d.get("loot", []):
                 if items and item_id not in items:
                     errors.append(f"data/creatures.json: {cid} carries unknown item '{item_id}'.")
-            if not d.get("attacks"):
-                errors.append(f"data/creatures.json: {cid} has no attacks.")
+            blocks = files.get("statblocks.json", {}).get("statblocks", {})
+            if d.get("statblock"):
+                if d["statblock"] not in blocks:
+                    errors.append(f"data/creatures.json: {cid} fights with the stat block '{d['statblock']}', which "
+                                  "data/statblocks.json does not have.")
+            else:
+                for need in ("kind", "size", "cr", "xp", "ac", "hp", "speed", "abilities", "skills", "attacks", "traits"):
+                    if need not in d:
+                        errors.append(f"data/creatures.json: {cid} has no stat block, so it needs '{need}'.")
         for gid in groups:
             g = data["encounters"][gid]
             for member in g["members"]:

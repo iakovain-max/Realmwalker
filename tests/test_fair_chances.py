@@ -235,7 +235,9 @@ def test_sleep_until_morning_wakes_you_at_first_light(game):
 def test_worn_to_exhaustion_five_you_can_still_stagger(tables):
     c = hero(tables)
     c.exhaustion = 5
-    assert body.travel_multiplier(c) == 4.0
+    assert body.travel_multiplier(c) is not None
+    assert Sheet(c, tables).speed() == 5  # 30 feet less 25: a stagger, but still moving (2024)
+    assert Sheet(c, tables).travel_multiplier() == 6.0
     c.exhaustion = 6
     assert body.travel_multiplier(c) is None
 

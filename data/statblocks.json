@@ -1,0 +1,2993 @@
+{
+  "_comment": "2025 Monster Manual stat blocks: numbers and structured mechanics only, read off the page images and checked (docs/expansions/codex/monsters.json has the pages). Read by realmwalker/rules/engine/statblocks.py; a creature in creatures.json names one with \"statblock\" and adds its flavour.",
+  "statblocks": {
+    "wolf": {
+      "name": "Wolf",
+      "page": 376,
+      "size": "medium",
+      "type": "beast",
+      "tags": [],
+      "alignment": "unaligned",
+      "ac": 12,
+      "initiative": 2,
+      "hp": "2d8+2",
+      "hp_avg": 11,
+      "speed": {
+        "walk": 40
+      },
+      "abilities": {
+        "str": 14,
+        "dex": 15,
+        "con": 12,
+        "int": 3,
+        "wis": 12,
+        "cha": 6
+      },
+      "saves": {},
+      "skills": {
+        "perception": 5,
+        "stealth": 4
+      },
+      "senses": {
+        "darkvision": 60
+      },
+      "passive": 15,
+      "languages": [],
+      "telepathy": 0,
+      "cr": 0.25,
+      "xp": 50,
+      "pb": 2,
+      "resist": [],
+      "vulnerable": [],
+      "immune": [],
+      "condition_immune": [],
+      "gear": [],
+      "traits": [
+        {
+          "id": "pack_tactics",
+          "name": "Pack Tactics"
+        }
+      ],
+      "actions": [
+        {
+          "id": "bite",
+          "name": "Bite",
+          "kind": "melee",
+          "bonus": 4,
+          "reach": 5,
+          "damage": "1d6+2",
+          "type": "piercing",
+          "on_hit": [
+            {
+              "op": "condition",
+              "condition": "prone",
+              "max_size": "medium"
+            }
+          ]
+        }
+      ],
+      "multiattack": null,
+      "bonus_actions": [],
+      "reactions": [],
+      "spellcasting": null,
+      "legendary_resistance": null,
+      "legendary": null
+    },
+    "dire_wolf": {
+      "name": "Dire Wolf",
+      "page": 355,
+      "size": "large",
+      "type": "beast",
+      "tags": [],
+      "alignment": "unaligned",
+      "ac": 14,
+      "initiative": 2,
+      "hp": "3d10+6",
+      "hp_avg": 22,
+      "speed": {
+        "walk": 50
+      },
+      "abilities": {
+        "str": 17,
+        "dex": 15,
+        "con": 15,
+        "int": 3,
+        "wis": 12,
+        "cha": 7
+      },
+      "saves": {},
+      "skills": {
+        "perception": 5,
+        "stealth": 4
+      },
+      "senses": {
+        "darkvision": 60
+      },
+      "passive": 15,
+      "languages": [],
+      "telepathy": 0,
+      "cr": 1,
+      "xp": 200,
+      "pb": 2,
+      "resist": [],
+      "vulnerable": [],
+      "immune": [],
+      "condition_immune": [],
+      "gear": [],
+      "traits": [
+        {
+          "id": "pack_tactics",
+          "name": "Pack Tactics"
+        }
+      ],
+      "actions": [
+        {
+          "id": "bite",
+          "name": "Bite",
+          "kind": "melee",
+          "bonus": 5,
+          "reach": 5,
+          "damage": "1d10+3",
+          "type": "piercing",
+          "on_hit": [
+            {
+              "op": "condition",
+              "condition": "prone",
+              "max_size": "large"
+            }
+          ]
+        }
+      ],
+      "multiattack": null,
+      "bonus_actions": [],
+      "reactions": [],
+      "spellcasting": null,
+      "legendary_resistance": null,
+      "legendary": null
+    },
+    "jackal": {
+      "name": "Jackal",
+      "page": 367,
+      "size": "small",
+      "type": "beast",
+      "tags": [],
+      "alignment": "unaligned",
+      "ac": 12,
+      "initiative": 2,
+      "hp": "1d6",
+      "hp_avg": 3,
+      "speed": {
+        "walk": 40
+      },
+      "abilities": {
+        "str": 8,
+        "dex": 15,
+        "con": 11,
+        "int": 3,
+        "wis": 12,
+        "cha": 6
+      },
+      "saves": {},
+      "skills": {
+        "perception": 5,
+        "stealth": 4
+      },
+      "senses": {
+        "darkvision": 90
+      },
+      "passive": 15,
+      "languages": [],
+      "telepathy": 0,
+      "cr": 0,
+      "xp": 10,
+      "pb": 2,
+      "resist": [],
+      "vulnerable": [],
+      "immune": [],
+      "condition_immune": [],
+      "gear": [],
+      "traits": [],
+      "actions": [
+        {
+          "id": "bite",
+          "name": "Bite",
+          "kind": "melee",
+          "bonus": 1,
+          "reach": 5,
+          "damage": "1d4-1",
+          "type": "piercing"
+        }
+      ],
+      "multiattack": null,
+      "bonus_actions": [],
+      "reactions": [],
+      "spellcasting": null,
+      "legendary_resistance": null,
+      "legendary": null
+    },
+    "boar": {
+      "name": "Boar",
+      "page": 353,
+      "size": "medium",
+      "type": "beast",
+      "tags": [],
+      "alignment": "unaligned",
+      "ac": 11,
+      "initiative": 0,
+      "hp": "2d8+4",
+      "hp_avg": 13,
+      "speed": {
+        "walk": 40
+      },
+      "abilities": {
+        "str": 13,
+        "dex": 11,
+        "con": 14,
+        "int": 2,
+        "wis": 9,
+        "cha": 5
+      },
+      "saves": {},
+      "skills": {},
+      "senses": {},
+      "passive": 9,
+      "languages": [],
+      "telepathy": 0,
+      "cr": 0.25,
+      "xp": 50,
+      "pb": 2,
+      "resist": [],
+      "vulnerable": [],
+      "immune": [],
+      "condition_immune": [],
+      "gear": [],
+      "traits": [
+        {
+          "id": "bloodied_fury",
+          "name": "Bloodied Fury",
+          "note": "Advantage on attack rolls while Bloodied."
+        }
+      ],
+      "actions": [
+        {
+          "id": "gore",
+          "name": "Gore",
+          "kind": "melee",
+          "bonus": 3,
+          "reach": 5,
+          "damage": "1d6+1",
+          "type": "piercing",
+          "on_hit": [
+            {
+              "op": "damage",
+              "damage": "1d6",
+              "type": "piercing",
+              "max_size": "medium",
+              "charge_feet": 20,
+              "note": "Only after moving 20+ feet straight at the target."
+            },
+            {
+              "op": "condition",
+              "condition": "prone",
+              "max_size": "medium",
+              "charge_feet": 20
+            }
+          ]
+        }
+      ],
+      "multiattack": null,
+      "bonus_actions": [],
+      "reactions": [],
+      "spellcasting": null,
+      "legendary_resistance": null,
+      "legendary": null
+    },
+    "black_bear": {
+      "name": "Black Bear",
+      "page": 352,
+      "size": "medium",
+      "type": "beast",
+      "tags": [],
+      "alignment": "unaligned",
+      "ac": 11,
+      "initiative": 1,
+      "hp": "3d8+6",
+      "hp_avg": 19,
+      "speed": {
+        "walk": 30,
+        "climb": 30,
+        "swim": 30
+      },
+      "abilities": {
+        "str": 15,
+        "dex": 12,
+        "con": 14,
+        "int": 2,
+        "wis": 12,
+        "cha": 7
+      },
+      "saves": {},
+      "skills": {
+        "perception": 5
+      },
+      "senses": {
+        "darkvision": 60
+      },
+      "passive": 15,
+      "languages": [],
+      "telepathy": 0,
+      "cr": 0.5,
+      "xp": 100,
+      "pb": 2,
+      "resist": [],
+      "vulnerable": [],
+      "immune": [],
+      "condition_immune": [],
+      "gear": [],
+      "traits": [],
+      "actions": [
+        {
+          "id": "rend",
+          "name": "Rend",
+          "kind": "melee",
+          "bonus": 4,
+          "reach": 5,
+          "damage": "1d6+2",
+          "type": "slashing"
+        }
+      ],
+      "multiattack": {
+        "attacks": [
+          {
+            "id": "rend",
+            "count": 2
+          }
+        ]
+      },
+      "bonus_actions": [],
+      "reactions": [],
+      "spellcasting": null,
+      "legendary_resistance": null,
+      "legendary": null
+    },
+    "brown_bear": {
+      "name": "Brown Bear",
+      "page": 353,
+      "size": "large",
+      "type": "beast",
+      "tags": [],
+      "alignment": "unaligned",
+      "ac": 11,
+      "initiative": 1,
+      "hp": "3d10+6",
+      "hp_avg": 22,
+      "speed": {
+        "walk": 40,
+        "climb": 30
+      },
+      "abilities": {
+        "str": 17,
+        "dex": 12,
+        "con": 15,
+        "int": 2,
+        "wis": 13,
+        "cha": 7
+      },
+      "saves": {},
+      "skills": {
+        "perception": 3
+      },
+      "senses": {
+        "darkvision": 60
+      },
+      "passive": 13,
+      "languages": [],
+      "telepathy": 0,
+      "cr": 1,
+      "xp": 200,
+      "pb": 2,
+      "resist": [],
+      "vulnerable": [],
+      "immune": [],
+      "condition_immune": [],
+      "gear": [],
+      "traits": [],
+      "actions": [
+        {
+          "id": "bite",
+          "name": "Bite",
+          "kind": "melee",
+          "bonus": 5,
+          "reach": 5,
+          "damage": "1d8+3",
+          "type": "piercing"
+        },
+        {
+          "id": "claw",
+          "name": "Claw",
+          "kind": "melee",
+          "bonus": 5,
+          "reach": 5,
+          "damage": "1d4+3",
+          "type": "slashing",
+          "on_hit": [
+            {
+              "op": "condition",
+              "condition": "prone",
+              "max_size": "large"
+            }
+          ]
+        }
+      ],
+      "multiattack": {
+        "attacks": [
+          {
+            "id": "bite",
+            "count": 1
+          },
+          {
+            "id": "claw",
+            "count": 1
+          }
+        ]
+      },
+      "bonus_actions": [],
+      "reactions": [],
+      "spellcasting": null,
+      "legendary_resistance": null,
+      "legendary": null
+    },
+    "giant_rat": {
+      "name": "Giant Rat",
+      "page": 361,
+      "size": "small",
+      "type": "beast",
+      "tags": [],
+      "alignment": "unaligned",
+      "ac": 13,
+      "initiative": 3,
+      "hp": "2d6",
+      "hp_avg": 7,
+      "speed": {
+        "walk": 30,
+        "climb": 30
+      },
+      "abilities": {
+        "str": 7,
+        "dex": 16,
+        "con": 11,
+        "int": 2,
+        "wis": 10,
+        "cha": 4
+      },
+      "saves": {
+        "dex": 5
+      },
+      "skills": {
+        "perception": 2
+      },
+      "senses": {
+        "darkvision": 60
+      },
+      "passive": 12,
+      "languages": [],
+      "telepathy": 0,
+      "cr": 0.125,
+      "xp": 25,
+      "pb": 2,
+      "resist": [],
+      "vulnerable": [],
+      "immune": [],
+      "condition_immune": [],
+      "gear": [],
+      "traits": [
+        {
+          "id": "pack_tactics",
+          "name": "Pack Tactics"
+        }
+      ],
+      "actions": [
+        {
+          "id": "bite",
+          "name": "Bite",
+          "kind": "melee",
+          "bonus": 5,
+          "reach": 5,
+          "damage": "1d4+3",
+          "type": "piercing"
+        }
+      ],
+      "multiattack": null,
+      "bonus_actions": [],
+      "reactions": [],
+      "spellcasting": null,
+      "legendary_resistance": null,
+      "legendary": null
+    },
+    "giant_spider": {
+      "name": "Giant Spider",
+      "page": 362,
+      "size": "large",
+      "type": "beast",
+      "tags": [],
+      "alignment": "unaligned",
+      "ac": 14,
+      "initiative": 3,
+      "hp": "4d10+4",
+      "hp_avg": 26,
+      "speed": {
+        "walk": 30,
+        "climb": 30
+      },
+      "abilities": {
+        "str": 14,
+        "dex": 16,
+        "con": 12,
+        "int": 2,
+        "wis": 11,
+        "cha": 4
+      },
+      "saves": {},
+      "skills": {
+        "perception": 4,
+        "stealth": 7
+      },
+      "senses": {
+        "darkvision": 60
+      },
+      "passive": 14,
+      "languages": [],
+      "telepathy": 0,
+      "cr": 1,
+      "xp": 200,
+      "pb": 2,
+      "resist": [],
+      "vulnerable": [],
+      "immune": [],
+      "condition_immune": [],
+      "gear": [],
+      "traits": [
+        {
+          "id": "spider_climb",
+          "name": "Spider Climb"
+        },
+        {
+          "id": "web_walker",
+          "name": "Web Walker",
+          "note": "Webs do not hinder it; senses creatures touching its web."
+        }
+      ],
+      "actions": [
+        {
+          "id": "bite",
+          "name": "Bite",
+          "kind": "melee",
+          "bonus": 5,
+          "reach": 5,
+          "damage": "1d8+3",
+          "type": "piercing",
+          "extra": [
+            {
+              "damage": "2d6",
+              "type": "poison"
+            }
+          ]
+        },
+        {
+          "id": "web",
+          "name": "Web",
+          "kind": "save",
+          "recharge": 5,
+          "save": "dex",
+          "dc": 13,
+          "targets": {
+            "range": 60,
+            "count": 1,
+            "must_see": true
+          },
+          "on_fail": [
+            {
+              "op": "condition",
+              "condition": "restrained",
+              "ends": "web_destroyed",
+              "web": {
+                "ac": 10,
+                "hp": 5,
+                "vulnerable": [
+                  "fire"
+                ],
+                "immune": [
+                  "poison",
+                  "psychic"
+                ]
+              }
+            }
+          ],
+          "range": 60
+        }
+      ],
+      "multiattack": null,
+      "bonus_actions": [],
+      "reactions": [],
+      "spellcasting": null,
+      "legendary_resistance": null,
+      "legendary": null
+    },
+    "stirge": {
+      "name": "Stirge",
+      "page": 302,
+      "size": "tiny",
+      "type": "monstrosity",
+      "tags": [],
+      "alignment": "unaligned",
+      "ac": 13,
+      "initiative": 3,
+      "hp": "2d4",
+      "hp_avg": 5,
+      "speed": {
+        "walk": 10,
+        "fly": 40
+      },
+      "abilities": {
+        "str": 4,
+        "dex": 16,
+        "con": 11,
+        "int": 2,
+        "wis": 8,
+        "cha": 6
+      },
+      "saves": {},
+      "skills": {},
+      "senses": {
+        "darkvision": 60
+      },
+      "passive": 9,
+      "languages": [],
+      "telepathy": 0,
+      "cr": 0.125,
+      "xp": 25,
+      "pb": 2,
+      "resist": [],
+      "vulnerable": [],
+      "immune": [],
+      "condition_immune": [],
+      "gear": [],
+      "traits": [],
+      "actions": [
+        {
+          "id": "proboscis",
+          "name": "Proboscis",
+          "kind": "melee",
+          "bonus": 5,
+          "reach": 5,
+          "damage": "1d6+3",
+          "type": "piercing",
+          "on_hit": [
+            {
+              "op": "special",
+              "attach": true,
+              "note": "Attaches to the target; no more Proboscis while attached."
+            },
+            {
+              "op": "damage",
+              "damage": "2d4",
+              "type": "necrotic",
+              "when": "start_of_source_turn",
+              "while": "attached"
+            }
+          ],
+          "attach": {
+            "detach_self_feet": 5,
+            "detach_by_others": "action",
+            "detach_reach": 5
+          }
+        }
+      ],
+      "multiattack": null,
+      "bonus_actions": [],
+      "reactions": [],
+      "spellcasting": null,
+      "legendary_resistance": null,
+      "legendary": null
+    },
+    "bandit": {
+      "name": "Bandit",
+      "page": 30,
+      "size": "medium",
+      "sizes": [
+        "medium",
+        "small"
+      ],
+      "type": "humanoid",
+      "tags": [],
+      "alignment": "neutral",
+      "ac": 12,
+      "initiative": 1,
+      "hp": "2d8+2",
+      "hp_avg": 11,
+      "speed": {
+        "walk": 30
+      },
+      "abilities": {
+        "str": 11,
+        "dex": 12,
+        "con": 12,
+        "int": 10,
+        "wis": 10,
+        "cha": 10
+      },
+      "saves": {},
+      "skills": {},
+      "senses": {},
+      "passive": 10,
+      "languages": [
+        "Common",
+        "Thieves' Cant"
+      ],
+      "telepathy": 0,
+      "cr": 0.125,
+      "xp": 25,
+      "pb": 2,
+      "resist": [],
+      "vulnerable": [],
+      "immune": [],
+      "condition_immune": [],
+      "gear": [
+        "leather_armor",
+        "light_crossbow",
+        "scimitar"
+      ],
+      "traits": [],
+      "actions": [
+        {
+          "id": "scimitar",
+          "name": "Scimitar",
+          "kind": "melee",
+          "bonus": 3,
+          "reach": 5,
+          "damage": "1d6+1",
+          "type": "slashing"
+        },
+        {
+          "id": "light_crossbow",
+          "name": "Light Crossbow",
+          "kind": "ranged",
+          "bonus": 3,
+          "range": [
+            80,
+            320
+          ],
+          "damage": "1d8+1",
+          "type": "piercing"
+        }
+      ],
+      "multiattack": null,
+      "bonus_actions": [],
+      "reactions": [],
+      "spellcasting": null,
+      "legendary_resistance": null,
+      "legendary": null
+    },
+    "scout": {
+      "name": "Scout",
+      "page": 273,
+      "size": "medium",
+      "sizes": [
+        "medium",
+        "small"
+      ],
+      "type": "humanoid",
+      "tags": [],
+      "alignment": "neutral",
+      "ac": 13,
+      "initiative": 2,
+      "hp": "3d8+3",
+      "hp_avg": 16,
+      "speed": {
+        "walk": 30
+      },
+      "abilities": {
+        "str": 11,
+        "dex": 14,
+        "con": 12,
+        "int": 11,
+        "wis": 13,
+        "cha": 11
+      },
+      "saves": {},
+      "skills": {
+        "nature": 4,
+        "perception": 5,
+        "stealth": 6,
+        "survival": 5
+      },
+      "senses": {},
+      "passive": 15,
+      "languages": [
+        "Common",
+        "one other language"
+      ],
+      "telepathy": 0,
+      "cr": 0.5,
+      "xp": 100,
+      "pb": 2,
+      "resist": [],
+      "vulnerable": [],
+      "immune": [],
+      "condition_immune": [],
+      "gear": [
+        "leather_armor",
+        "longbow",
+        "shortsword"
+      ],
+      "traits": [],
+      "actions": [
+        {
+          "id": "shortsword",
+          "name": "Shortsword",
+          "kind": "melee",
+          "bonus": 4,
+          "reach": 5,
+          "damage": "1d6+2",
+          "type": "piercing"
+        },
+        {
+          "id": "longbow",
+          "name": "Longbow",
+          "kind": "ranged",
+          "bonus": 4,
+          "range": [
+            150,
+            600
+          ],
+          "damage": "1d8+2",
+          "type": "piercing"
+        }
+      ],
+      "multiattack": {
+        "count": 2,
+        "of": [
+          "shortsword",
+          "longbow"
+        ],
+        "any_combination": true
+      },
+      "bonus_actions": [],
+      "reactions": [],
+      "spellcasting": null,
+      "legendary_resistance": null,
+      "legendary": null
+    },
+    "bandit_captain": {
+      "name": "Bandit Captain",
+      "page": 30,
+      "size": "medium",
+      "sizes": [
+        "medium",
+        "small"
+      ],
+      "type": "humanoid",
+      "tags": [],
+      "alignment": "neutral",
+      "ac": 15,
+      "initiative": 3,
+      "hp": "8d8+16",
+      "hp_avg": 52,
+      "speed": {
+        "walk": 30
+      },
+      "abilities": {
+        "str": 15,
+        "dex": 16,
+        "con": 14,
+        "int": 14,
+        "wis": 11,
+        "cha": 14
+      },
+      "saves": {
+        "str": 4,
+        "dex": 5,
+        "wis": 2
+      },
+      "skills": {
+        "athletics": 4,
+        "deception": 4
+      },
+      "senses": {},
+      "passive": 10,
+      "languages": [
+        "Common",
+        "Thieves' Cant"
+      ],
+      "telepathy": 0,
+      "cr": 2,
+      "xp": 450,
+      "pb": 2,
+      "resist": [],
+      "vulnerable": [],
+      "immune": [],
+      "condition_immune": [],
+      "gear": [
+        "pistol",
+        "scimitar",
+        "studded_leather_armor"
+      ],
+      "traits": [],
+      "actions": [
+        {
+          "id": "scimitar",
+          "name": "Scimitar",
+          "kind": "melee",
+          "bonus": 5,
+          "reach": 5,
+          "damage": "1d6+3",
+          "type": "slashing"
+        },
+        {
+          "id": "pistol",
+          "name": "Pistol",
+          "kind": "ranged",
+          "bonus": 5,
+          "range": [
+            30,
+            90
+          ],
+          "damage": "1d10+3",
+          "type": "piercing"
+        }
+      ],
+      "multiattack": {
+        "count": 2,
+        "of": [
+          "scimitar",
+          "pistol"
+        ],
+        "any_combination": true
+      },
+      "bonus_actions": [],
+      "reactions": [
+        {
+          "id": "parry",
+          "name": "Parry",
+          "kind": "special",
+          "trigger": "hit_by_melee_attack",
+          "requires": "holding_weapon",
+          "ac_bonus": 2,
+          "note": "Adds 2 to AC against the triggering attack."
+        }
+      ],
+      "spellcasting": null,
+      "legendary_resistance": null,
+      "legendary": null
+    },
+    "tough": {
+      "name": "Tough",
+      "page": 310,
+      "size": "medium",
+      "sizes": [
+        "medium",
+        "small"
+      ],
+      "type": "humanoid",
+      "tags": [],
+      "alignment": "neutral",
+      "ac": 12,
+      "initiative": 1,
+      "hp": "5d8+10",
+      "hp_avg": 32,
+      "speed": {
+        "walk": 30
+      },
+      "abilities": {
+        "str": 15,
+        "dex": 12,
+        "con": 14,
+        "int": 10,
+        "wis": 10,
+        "cha": 11
+      },
+      "saves": {},
+      "skills": {},
+      "senses": {},
+      "passive": 10,
+      "languages": [
+        "Common"
+      ],
+      "telepathy": 0,
+      "cr": 0.5,
+      "xp": 100,
+      "pb": 2,
+      "resist": [],
+      "vulnerable": [],
+      "immune": [],
+      "condition_immune": [],
+      "gear": [
+        "heavy_crossbow",
+        "leather_armor",
+        "mace"
+      ],
+      "traits": [
+        {
+          "id": "pack_tactics",
+          "name": "Pack Tactics"
+        }
+      ],
+      "actions": [
+        {
+          "id": "mace",
+          "name": "Mace",
+          "kind": "melee",
+          "bonus": 4,
+          "reach": 5,
+          "damage": "1d6+2",
+          "type": "bludgeoning"
+        },
+        {
+          "id": "heavy_crossbow",
+          "name": "Heavy Crossbow",
+          "kind": "ranged",
+          "bonus": 3,
+          "range": [
+            100,
+            400
+          ],
+          "damage": "1d10+1",
+          "type": "piercing"
+        }
+      ],
+      "multiattack": null,
+      "bonus_actions": [],
+      "reactions": [],
+      "spellcasting": null,
+      "legendary_resistance": null,
+      "legendary": null
+    },
+    "warrior_infantry": {
+      "name": "Warrior Infantry",
+      "page": 323,
+      "size": "medium",
+      "sizes": [
+        "medium",
+        "small"
+      ],
+      "type": "humanoid",
+      "tags": [],
+      "alignment": "neutral",
+      "ac": 13,
+      "initiative": 0,
+      "hp": "2d8",
+      "hp_avg": 9,
+      "speed": {
+        "walk": 30
+      },
+      "abilities": {
+        "str": 13,
+        "dex": 11,
+        "con": 11,
+        "int": 8,
+        "wis": 11,
+        "cha": 8
+      },
+      "saves": {},
+      "skills": {},
+      "senses": {},
+      "passive": 10,
+      "languages": [
+        "Common"
+      ],
+      "telepathy": 0,
+      "cr": 0.125,
+      "xp": 25,
+      "pb": 2,
+      "resist": [],
+      "vulnerable": [],
+      "immune": [],
+      "condition_immune": [],
+      "gear": [
+        "chain_shirt",
+        "spear"
+      ],
+      "traits": [
+        {
+          "id": "pack_tactics",
+          "name": "Pack Tactics"
+        }
+      ],
+      "actions": [
+        {
+          "id": "spear",
+          "name": "Spear",
+          "kind": "melee_or_ranged",
+          "bonus": 3,
+          "reach": 5,
+          "range": [
+            20,
+            60
+          ],
+          "damage": "1d6+1",
+          "type": "piercing"
+        }
+      ],
+      "multiattack": null,
+      "bonus_actions": [],
+      "reactions": [],
+      "spellcasting": null,
+      "legendary_resistance": null,
+      "legendary": null
+    },
+    "tough_boss": {
+      "name": "Tough Boss",
+      "page": 310,
+      "size": "medium",
+      "sizes": [
+        "medium",
+        "small"
+      ],
+      "type": "humanoid",
+      "tags": [],
+      "alignment": "neutral",
+      "ac": 16,
+      "initiative": 2,
+      "hp": "11d8+33",
+      "hp_avg": 82,
+      "speed": {
+        "walk": 30
+      },
+      "abilities": {
+        "str": 17,
+        "dex": 14,
+        "con": 16,
+        "int": 11,
+        "wis": 10,
+        "cha": 11
+      },
+      "saves": {
+        "str": 5,
+        "con": 5,
+        "cha": 2
+      },
+      "skills": {},
+      "senses": {},
+      "passive": 10,
+      "languages": [
+        "Common",
+        "one other language"
+      ],
+      "telepathy": 0,
+      "cr": 4,
+      "xp": 1100,
+      "pb": 2,
+      "resist": [],
+      "vulnerable": [],
+      "immune": [],
+      "condition_immune": [],
+      "gear": [
+        "chain_mail",
+        "heavy_crossbow",
+        "warhammer"
+      ],
+      "traits": [
+        {
+          "id": "pack_tactics",
+          "name": "Pack Tactics"
+        }
+      ],
+      "actions": [
+        {
+          "id": "warhammer",
+          "name": "Warhammer",
+          "kind": "melee",
+          "bonus": 5,
+          "reach": 5,
+          "damage": "2d8+3",
+          "type": "bludgeoning",
+          "on_hit": [
+            {
+              "op": "push",
+              "feet": 10,
+              "max_size": "large"
+            }
+          ]
+        },
+        {
+          "id": "heavy_crossbow",
+          "name": "Heavy Crossbow",
+          "kind": "ranged",
+          "bonus": 4,
+          "range": [
+            100,
+            400
+          ],
+          "damage": "2d10+2",
+          "type": "piercing"
+        }
+      ],
+      "multiattack": {
+        "count": 2,
+        "of": [
+          "warhammer",
+          "heavy_crossbow"
+        ],
+        "any_combination": true
+      },
+      "bonus_actions": [],
+      "reactions": [],
+      "spellcasting": null,
+      "legendary_resistance": null,
+      "legendary": null
+    },
+    "cultist": {
+      "name": "Cultist",
+      "page": 87,
+      "size": "medium",
+      "sizes": [
+        "medium",
+        "small"
+      ],
+      "type": "humanoid",
+      "tags": [],
+      "alignment": "neutral",
+      "ac": 12,
+      "initiative": 1,
+      "hp": "2d8",
+      "hp_avg": 9,
+      "speed": {
+        "walk": 30
+      },
+      "abilities": {
+        "str": 11,
+        "dex": 12,
+        "con": 10,
+        "int": 10,
+        "wis": 11,
+        "cha": 10
+      },
+      "saves": {
+        "wis": 2
+      },
+      "skills": {
+        "deception": 2,
+        "religion": 2
+      },
+      "senses": {},
+      "passive": 10,
+      "languages": [
+        "Common"
+      ],
+      "telepathy": 0,
+      "cr": 0.125,
+      "xp": 25,
+      "pb": 2,
+      "resist": [],
+      "vulnerable": [],
+      "immune": [],
+      "condition_immune": [],
+      "gear": [
+        "leather_armor",
+        "sickle"
+      ],
+      "traits": [],
+      "actions": [
+        {
+          "id": "ritual_sickle",
+          "name": "Ritual Sickle",
+          "kind": "melee",
+          "bonus": 3,
+          "reach": 5,
+          "damage": "1d4+1",
+          "type": "slashing",
+          "extra": [
+            {
+              "damage": "1",
+              "type": "necrotic"
+            }
+          ]
+        }
+      ],
+      "multiattack": null,
+      "bonus_actions": [],
+      "reactions": [],
+      "spellcasting": null,
+      "legendary_resistance": null,
+      "legendary": null
+    },
+    "cultist_fanatic": {
+      "name": "Cultist Fanatic",
+      "page": 88,
+      "size": "medium",
+      "sizes": [
+        "medium",
+        "small"
+      ],
+      "type": "humanoid",
+      "tags": [],
+      "alignment": "neutral",
+      "ac": 13,
+      "initiative": 2,
+      "hp": "8d8+8",
+      "hp_avg": 44,
+      "speed": {
+        "walk": 30
+      },
+      "abilities": {
+        "str": 11,
+        "dex": 14,
+        "con": 12,
+        "int": 10,
+        "wis": 14,
+        "cha": 13
+      },
+      "saves": {
+        "wis": 4
+      },
+      "skills": {
+        "deception": 3,
+        "persuasion": 3,
+        "religion": 2
+      },
+      "senses": {},
+      "passive": 12,
+      "languages": [
+        "Common"
+      ],
+      "telepathy": 0,
+      "cr": 2,
+      "xp": 450,
+      "pb": 2,
+      "resist": [],
+      "vulnerable": [],
+      "immune": [],
+      "condition_immune": [],
+      "gear": [
+        "holy_symbol",
+        "leather_armor"
+      ],
+      "traits": [],
+      "actions": [
+        {
+          "id": "pact_blade",
+          "name": "Pact Blade",
+          "kind": "melee",
+          "bonus": 4,
+          "reach": 5,
+          "damage": "1d8+2",
+          "type": "slashing",
+          "extra": [
+            {
+              "damage": "2d6",
+              "type": "necrotic"
+            }
+          ]
+        }
+      ],
+      "multiattack": null,
+      "bonus_actions": [
+        {
+          "id": "spiritual_weapon",
+          "name": "Spiritual Weapon",
+          "kind": "special",
+          "uses": "2/day",
+          "casts": "spiritual_weapon",
+          "note": "Casts the spell with its Spellcasting ability."
+        }
+      ],
+      "reactions": [],
+      "spellcasting": {
+        "ability": "wis",
+        "dc": 12,
+        "attack": 4,
+        "at_will": [
+          "light",
+          "thaumaturgy"
+        ],
+        "per_day": {
+          "2": [
+            "command"
+          ],
+          "1": [
+            "hold_person"
+          ]
+        },
+        "uses_action": true
+      },
+      "legendary_resistance": null,
+      "legendary": null
+    },
+    "skeleton": {
+      "name": "Skeleton",
+      "page": 285,
+      "size": "medium",
+      "type": "undead",
+      "tags": [],
+      "alignment": "lawful evil",
+      "ac": 14,
+      "initiative": 3,
+      "hp": "2d8+4",
+      "hp_avg": 13,
+      "speed": {
+        "walk": 30
+      },
+      "abilities": {
+        "str": 10,
+        "dex": 16,
+        "con": 15,
+        "int": 6,
+        "wis": 8,
+        "cha": 5
+      },
+      "saves": {},
+      "skills": {},
+      "senses": {
+        "darkvision": 60
+      },
+      "passive": 9,
+      "languages": [
+        "Common",
+        "one other language"
+      ],
+      "telepathy": 0,
+      "speaks": false,
+      "cr": 0.25,
+      "xp": 50,
+      "pb": 2,
+      "resist": [],
+      "vulnerable": [
+        "bludgeoning"
+      ],
+      "immune": [
+        "poison"
+      ],
+      "condition_immune": [
+        "exhaustion",
+        "poisoned"
+      ],
+      "gear": [
+        "shortbow",
+        "shortsword"
+      ],
+      "traits": [],
+      "actions": [
+        {
+          "id": "shortsword",
+          "name": "Shortsword",
+          "kind": "melee",
+          "bonus": 5,
+          "reach": 5,
+          "damage": "1d6+3",
+          "type": "piercing"
+        },
+        {
+          "id": "shortbow",
+          "name": "Shortbow",
+          "kind": "ranged",
+          "bonus": 5,
+          "range": [
+            80,
+            320
+          ],
+          "damage": "1d6+3",
+          "type": "piercing"
+        }
+      ],
+      "multiattack": null,
+      "bonus_actions": [],
+      "reactions": [],
+      "spellcasting": null,
+      "legendary_resistance": null,
+      "legendary": null
+    },
+    "zombie": {
+      "name": "Zombie",
+      "page": 349,
+      "size": "medium",
+      "type": "undead",
+      "tags": [],
+      "alignment": "neutral evil",
+      "ac": 8,
+      "initiative": -2,
+      "hp": "2d8+6",
+      "hp_avg": 15,
+      "speed": {
+        "walk": 20
+      },
+      "abilities": {
+        "str": 13,
+        "dex": 6,
+        "con": 16,
+        "int": 3,
+        "wis": 6,
+        "cha": 5
+      },
+      "saves": {
+        "wis": 0
+      },
+      "skills": {},
+      "senses": {
+        "darkvision": 60
+      },
+      "passive": 8,
+      "languages": [
+        "Common",
+        "one other language"
+      ],
+      "telepathy": 0,
+      "speaks": false,
+      "cr": 0.25,
+      "xp": 50,
+      "pb": 2,
+      "resist": [],
+      "vulnerable": [],
+      "immune": [
+        "poison"
+      ],
+      "condition_immune": [
+        "exhaustion",
+        "poisoned"
+      ],
+      "gear": [],
+      "traits": [
+        {
+          "id": "undead_fortitude",
+          "name": "Undead Fortitude",
+          "save": "con",
+          "dc_plus_damage": 5,
+          "not_types": [
+            "radiant"
+          ],
+          "not_crit": true,
+          "drops_to": 1,
+          "note": "At 0 HP, a Con save keeps it at 1 HP instead."
+        }
+      ],
+      "actions": [
+        {
+          "id": "slam",
+          "name": "Slam",
+          "kind": "melee",
+          "bonus": 3,
+          "reach": 5,
+          "damage": "1d8+1",
+          "type": "bludgeoning"
+        }
+      ],
+      "multiattack": null,
+      "bonus_actions": [],
+      "reactions": [],
+      "spellcasting": null,
+      "legendary_resistance": null,
+      "legendary": null
+    },
+    "ghoul": {
+      "name": "Ghoul",
+      "page": 135,
+      "size": "medium",
+      "type": "undead",
+      "tags": [],
+      "alignment": "chaotic evil",
+      "ac": 12,
+      "initiative": 2,
+      "hp": "5d8",
+      "hp_avg": 22,
+      "speed": {
+        "walk": 30
+      },
+      "abilities": {
+        "str": 13,
+        "dex": 15,
+        "con": 10,
+        "int": 7,
+        "wis": 10,
+        "cha": 6
+      },
+      "saves": {},
+      "skills": {},
+      "senses": {
+        "darkvision": 60
+      },
+      "passive": 10,
+      "languages": [
+        "Common"
+      ],
+      "telepathy": 0,
+      "cr": 1,
+      "xp": 200,
+      "pb": 2,
+      "resist": [],
+      "vulnerable": [],
+      "immune": [
+        "poison"
+      ],
+      "condition_immune": [
+        "charmed",
+        "exhaustion",
+        "poisoned"
+      ],
+      "gear": [],
+      "traits": [],
+      "actions": [
+        {
+          "id": "bite",
+          "name": "Bite",
+          "kind": "melee",
+          "bonus": 4,
+          "reach": 5,
+          "damage": "1d6+2",
+          "type": "piercing",
+          "extra": [
+            {
+              "damage": "1d6",
+              "type": "necrotic"
+            }
+          ]
+        },
+        {
+          "id": "claw",
+          "name": "Claw",
+          "kind": "melee",
+          "bonus": 4,
+          "reach": 5,
+          "damage": "1d4+2",
+          "type": "slashing",
+          "on_hit": [
+            {
+              "op": "condition",
+              "condition": "paralyzed",
+              "save_to_avoid": "con",
+              "dc": 10,
+              "ends": "end_of_target_next_turn",
+              "not_types": [
+                "undead"
+              ],
+              "not_species": [
+                "elf"
+              ]
+            }
+          ]
+        }
+      ],
+      "multiattack": {
+        "attacks": [
+          {
+            "id": "bite",
+            "count": 2
+          }
+        ]
+      },
+      "bonus_actions": [],
+      "reactions": [],
+      "spellcasting": null,
+      "legendary_resistance": null,
+      "legendary": null
+    },
+    "wight": {
+      "name": "Wight",
+      "page": 335,
+      "size": "medium",
+      "type": "undead",
+      "tags": [],
+      "alignment": "neutral evil",
+      "ac": 14,
+      "initiative": 4,
+      "hp": "11d8+33",
+      "hp_avg": 82,
+      "speed": {
+        "walk": 30
+      },
+      "abilities": {
+        "str": 15,
+        "dex": 14,
+        "con": 16,
+        "int": 10,
+        "wis": 13,
+        "cha": 15
+      },
+      "saves": {},
+      "skills": {
+        "perception": 3,
+        "stealth": 4
+      },
+      "senses": {
+        "darkvision": 60
+      },
+      "passive": 13,
+      "languages": [
+        "Common",
+        "one other language"
+      ],
+      "telepathy": 0,
+      "cr": 3,
+      "xp": 700,
+      "pb": 2,
+      "resist": [
+        "necrotic"
+      ],
+      "vulnerable": [],
+      "immune": [
+        "poison"
+      ],
+      "condition_immune": [
+        "exhaustion",
+        "poisoned"
+      ],
+      "gear": [
+        "studded_leather_armor"
+      ],
+      "traits": [
+        {
+          "id": "sunlight_sensitivity",
+          "name": "Sunlight Sensitivity",
+          "note": "Disadvantage on ability checks and attacks in sunlight."
+        }
+      ],
+      "actions": [
+        {
+          "id": "necrotic_sword",
+          "name": "Necrotic Sword",
+          "kind": "melee",
+          "bonus": 4,
+          "reach": 5,
+          "damage": "1d8+2",
+          "type": "slashing",
+          "extra": [
+            {
+              "damage": "1d8",
+              "type": "necrotic"
+            }
+          ]
+        },
+        {
+          "id": "necrotic_bow",
+          "name": "Necrotic Bow",
+          "kind": "ranged",
+          "bonus": 4,
+          "range": [
+            150,
+            600
+          ],
+          "damage": "1d8+2",
+          "type": "piercing",
+          "extra": [
+            {
+              "damage": "1d8",
+              "type": "necrotic"
+            }
+          ]
+        },
+        {
+          "id": "life_drain",
+          "name": "Life Drain",
+          "kind": "save",
+          "save": "con",
+          "dc": 13,
+          "targets": {
+            "range": 5,
+            "count": 1
+          },
+          "damage": "1d8+2",
+          "type": "necrotic",
+          "half": false,
+          "on_fail": [
+            {
+              "op": "max_hp_reduction"
+            },
+            {
+              "op": "special",
+              "rises_as": "zombie",
+              "after_hours": 24,
+              "only_types": [
+                "humanoid"
+              ],
+              "max_controlled": 12,
+              "note": "A humanoid it kills rises as its zombie a day later."
+            }
+          ],
+          "range": 5
+        }
+      ],
+      "multiattack": {
+        "count": 2,
+        "of": [
+          "necrotic_sword",
+          "necrotic_bow"
+        ],
+        "any_combination": true,
+        "replace": [
+          {
+            "with": "life_drain",
+            "count": 1
+          }
+        ]
+      },
+      "bonus_actions": [],
+      "reactions": [],
+      "spellcasting": null,
+      "legendary_resistance": null,
+      "legendary": null
+    },
+    "gnoll_warrior": {
+      "name": "Gnoll Warrior",
+      "page": 143,
+      "size": "medium",
+      "type": "fiend",
+      "tags": [],
+      "alignment": "chaotic evil",
+      "ac": 15,
+      "initiative": 1,
+      "hp": "6d8",
+      "hp_avg": 27,
+      "speed": {
+        "walk": 30
+      },
+      "abilities": {
+        "str": 14,
+        "dex": 12,
+        "con": 11,
+        "int": 6,
+        "wis": 10,
+        "cha": 7
+      },
+      "saves": {},
+      "skills": {},
+      "senses": {
+        "darkvision": 60
+      },
+      "passive": 10,
+      "languages": [
+        "Gnoll"
+      ],
+      "telepathy": 0,
+      "cr": 0.5,
+      "xp": 100,
+      "pb": 2,
+      "resist": [],
+      "vulnerable": [],
+      "immune": [],
+      "condition_immune": [],
+      "gear": [],
+      "traits": [],
+      "actions": [
+        {
+          "id": "rend",
+          "name": "Rend",
+          "kind": "melee",
+          "bonus": 4,
+          "reach": 5,
+          "damage": "1d6+2",
+          "type": "piercing"
+        },
+        {
+          "id": "bone_bow",
+          "name": "Bone Bow",
+          "kind": "ranged",
+          "bonus": 3,
+          "range": [
+            150,
+            600
+          ],
+          "damage": "1d10+1",
+          "type": "piercing"
+        }
+      ],
+      "multiattack": null,
+      "bonus_actions": [
+        {
+          "id": "rampage",
+          "name": "Rampage",
+          "kind": "special",
+          "uses": "1/day",
+          "trigger": "damaged_bloodied_creature",
+          "move": "half_speed",
+          "attack": "rend",
+          "note": "Right after hurting a Bloodied foe: move half speed, Rend once."
+        }
+      ],
+      "reactions": [],
+      "spellcasting": null,
+      "legendary_resistance": null,
+      "legendary": null
+    },
+    "hobgoblin_warrior": {
+      "name": "Hobgoblin Warrior",
+      "page": 173,
+      "size": "medium",
+      "type": "fey",
+      "tags": [
+        "goblinoid"
+      ],
+      "alignment": "lawful evil",
+      "ac": 18,
+      "initiative": 3,
+      "hp": "2d8+2",
+      "hp_avg": 11,
+      "speed": {
+        "walk": 30
+      },
+      "abilities": {
+        "str": 13,
+        "dex": 12,
+        "con": 12,
+        "int": 10,
+        "wis": 10,
+        "cha": 9
+      },
+      "saves": {},
+      "skills": {},
+      "senses": {
+        "darkvision": 60
+      },
+      "passive": 10,
+      "languages": [
+        "Common",
+        "Goblin"
+      ],
+      "telepathy": 0,
+      "cr": 0.5,
+      "xp": 100,
+      "pb": 2,
+      "resist": [],
+      "vulnerable": [],
+      "immune": [],
+      "condition_immune": [],
+      "gear": [
+        "half_plate_armor",
+        "longbow",
+        "longsword",
+        "shield"
+      ],
+      "traits": [
+        {
+          "id": "pack_tactics",
+          "name": "Pack Tactics"
+        }
+      ],
+      "actions": [
+        {
+          "id": "longsword",
+          "name": "Longsword",
+          "kind": "melee",
+          "bonus": 3,
+          "reach": 5,
+          "damage": "2d10+1",
+          "type": "slashing"
+        },
+        {
+          "id": "longbow",
+          "name": "Longbow",
+          "kind": "ranged",
+          "bonus": 3,
+          "range": [
+            150,
+            600
+          ],
+          "damage": "1d8+1",
+          "type": "piercing",
+          "extra": [
+            {
+              "damage": "3d4",
+              "type": "poison"
+            }
+          ]
+        }
+      ],
+      "multiattack": null,
+      "bonus_actions": [],
+      "reactions": [],
+      "spellcasting": null,
+      "legendary_resistance": null,
+      "legendary": null
+    },
+    "bugbear_warrior": {
+      "name": "Bugbear Warrior",
+      "page": 65,
+      "size": "medium",
+      "type": "fey",
+      "tags": [
+        "goblinoid"
+      ],
+      "alignment": "chaotic evil",
+      "ac": 14,
+      "initiative": 2,
+      "hp": "6d8+6",
+      "hp_avg": 33,
+      "speed": {
+        "walk": 30
+      },
+      "abilities": {
+        "str": 15,
+        "dex": 14,
+        "con": 13,
+        "int": 8,
+        "wis": 11,
+        "cha": 9
+      },
+      "saves": {},
+      "skills": {
+        "stealth": 6,
+        "survival": 2
+      },
+      "senses": {
+        "darkvision": 60
+      },
+      "passive": 10,
+      "languages": [
+        "Common",
+        "Goblin"
+      ],
+      "telepathy": 0,
+      "cr": 1,
+      "xp": 200,
+      "pb": 2,
+      "resist": [],
+      "vulnerable": [],
+      "immune": [],
+      "condition_immune": [],
+      "gear": [
+        "hide_armor",
+        "light_hammer"
+      ],
+      "gear_counts": {
+        "light_hammer": 3
+      },
+      "traits": [
+        {
+          "id": "abduct",
+          "name": "Abduct",
+          "note": "Moving a creature it grapples costs no extra movement."
+        }
+      ],
+      "actions": [
+        {
+          "id": "grab",
+          "name": "Grab",
+          "kind": "melee",
+          "bonus": 4,
+          "reach": 10,
+          "damage": "2d6+2",
+          "type": "bludgeoning",
+          "on_hit": [
+            {
+              "op": "condition",
+              "condition": "grappled",
+              "max_size": "medium",
+              "escape_dc": 12
+            }
+          ]
+        },
+        {
+          "id": "light_hammer",
+          "name": "Light Hammer",
+          "kind": "melee_or_ranged",
+          "bonus": 4,
+          "reach": 10,
+          "range": [
+            20,
+            60
+          ],
+          "damage": "3d4+2",
+          "type": "bludgeoning",
+          "advantage_if": "target_grappled_by_self"
+        }
+      ],
+      "multiattack": null,
+      "bonus_actions": [],
+      "reactions": [],
+      "spellcasting": null,
+      "legendary_resistance": null,
+      "legendary": null
+    },
+    "berserker": {
+      "name": "Berserker",
+      "page": 40,
+      "size": "medium",
+      "sizes": [
+        "medium",
+        "small"
+      ],
+      "type": "humanoid",
+      "tags": [],
+      "alignment": "neutral",
+      "ac": 13,
+      "initiative": 1,
+      "hp": "9d8+27",
+      "hp_avg": 67,
+      "speed": {
+        "walk": 30
+      },
+      "abilities": {
+        "str": 16,
+        "dex": 12,
+        "con": 17,
+        "int": 9,
+        "wis": 11,
+        "cha": 9
+      },
+      "saves": {},
+      "skills": {},
+      "senses": {},
+      "passive": 10,
+      "languages": [
+        "Common"
+      ],
+      "telepathy": 0,
+      "cr": 2,
+      "xp": 450,
+      "pb": 2,
+      "resist": [],
+      "vulnerable": [],
+      "immune": [],
+      "condition_immune": [],
+      "gear": [
+        "greataxe",
+        "hide_armor"
+      ],
+      "traits": [
+        {
+          "id": "bloodied_frenzy",
+          "name": "Bloodied Frenzy",
+          "note": "Advantage on attack rolls and saving throws while Bloodied."
+        }
+      ],
+      "actions": [
+        {
+          "id": "greataxe",
+          "name": "Greataxe",
+          "kind": "melee",
+          "bonus": 5,
+          "reach": 5,
+          "damage": "1d12+3",
+          "type": "slashing"
+        }
+      ],
+      "multiattack": null,
+      "bonus_actions": [],
+      "reactions": [],
+      "spellcasting": null,
+      "legendary_resistance": null,
+      "legendary": null
+    },
+    "goblin_warrior": {
+      "name": "Goblin Warrior",
+      "page": 145,
+      "size": "small",
+      "type": "fey",
+      "tags": [
+        "goblinoid"
+      ],
+      "alignment": "chaotic neutral",
+      "ac": 15,
+      "initiative": 2,
+      "hp": "3d6",
+      "hp_avg": 10,
+      "speed": {
+        "walk": 30
+      },
+      "abilities": {
+        "str": 8,
+        "dex": 15,
+        "con": 10,
+        "int": 10,
+        "wis": 8,
+        "cha": 8
+      },
+      "saves": {},
+      "skills": {
+        "stealth": 6
+      },
+      "senses": {
+        "darkvision": 60
+      },
+      "passive": 9,
+      "languages": [
+        "Common",
+        "Goblin"
+      ],
+      "telepathy": 0,
+      "cr": 0.25,
+      "xp": 50,
+      "pb": 2,
+      "resist": [],
+      "vulnerable": [],
+      "immune": [],
+      "condition_immune": [],
+      "gear": [
+        "leather_armor",
+        "scimitar",
+        "shield",
+        "shortbow"
+      ],
+      "traits": [],
+      "actions": [
+        {
+          "id": "scimitar",
+          "name": "Scimitar",
+          "kind": "melee",
+          "bonus": 4,
+          "reach": 5,
+          "damage": "1d6+2",
+          "type": "slashing",
+          "extra": [
+            {
+              "damage": "1d4",
+              "type": "slashing",
+              "if": "advantage"
+            }
+          ]
+        },
+        {
+          "id": "shortbow",
+          "name": "Shortbow",
+          "kind": "ranged",
+          "bonus": 4,
+          "range": [
+            80,
+            320
+          ],
+          "damage": "1d6+2",
+          "type": "piercing",
+          "extra": [
+            {
+              "damage": "1d4",
+              "type": "piercing",
+              "if": "advantage"
+            }
+          ]
+        }
+      ],
+      "multiattack": null,
+      "bonus_actions": [
+        {
+          "id": "nimble_escape",
+          "name": "Nimble Escape",
+          "kind": "special",
+          "options": [
+            "disengage",
+            "hide"
+          ],
+          "note": "Takes the Disengage or Hide action."
+        }
+      ],
+      "reactions": [],
+      "spellcasting": null,
+      "legendary_resistance": null,
+      "legendary": null
+    },
+    "goblin_boss": {
+      "name": "Goblin Boss",
+      "page": 146,
+      "size": "small",
+      "type": "fey",
+      "tags": [
+        "goblinoid"
+      ],
+      "alignment": "chaotic neutral",
+      "ac": 17,
+      "initiative": 2,
+      "hp": "6d6",
+      "hp_avg": 21,
+      "speed": {
+        "walk": 30
+      },
+      "abilities": {
+        "str": 10,
+        "dex": 15,
+        "con": 10,
+        "int": 10,
+        "wis": 8,
+        "cha": 10
+      },
+      "saves": {},
+      "skills": {
+        "stealth": 6
+      },
+      "senses": {
+        "darkvision": 60
+      },
+      "passive": 9,
+      "languages": [
+        "Common",
+        "Goblin"
+      ],
+      "telepathy": 0,
+      "cr": 1,
+      "xp": 200,
+      "pb": 2,
+      "resist": [],
+      "vulnerable": [],
+      "immune": [],
+      "condition_immune": [],
+      "gear": [
+        "chain_shirt",
+        "scimitar",
+        "shield",
+        "shortbow"
+      ],
+      "traits": [],
+      "actions": [
+        {
+          "id": "scimitar",
+          "name": "Scimitar",
+          "kind": "melee",
+          "bonus": 4,
+          "reach": 5,
+          "damage": "1d6+2",
+          "type": "slashing",
+          "extra": [
+            {
+              "damage": "1d4",
+              "type": "slashing",
+              "if": "advantage"
+            }
+          ]
+        },
+        {
+          "id": "shortbow",
+          "name": "Shortbow",
+          "kind": "ranged",
+          "bonus": 4,
+          "range": [
+            80,
+            230
+          ],
+          "damage": "1d6+2",
+          "type": "piercing",
+          "extra": [
+            {
+              "damage": "1d4",
+              "type": "piercing",
+              "if": "advantage"
+            }
+          ],
+          "note": "Long range printed as 230 feet."
+        }
+      ],
+      "multiattack": {
+        "count": 2,
+        "of": [
+          "scimitar",
+          "shortbow"
+        ],
+        "any_combination": true
+      },
+      "bonus_actions": [
+        {
+          "id": "nimble_escape",
+          "name": "Nimble Escape",
+          "kind": "special",
+          "options": [
+            "disengage",
+            "hide"
+          ],
+          "note": "Takes the Disengage or Hide action."
+        }
+      ],
+      "reactions": [
+        {
+          "id": "redirect_attack",
+          "name": "Redirect Attack",
+          "kind": "special",
+          "trigger": "attacked_by_seen_creature",
+          "ally_sizes": [
+            "small",
+            "medium"
+          ],
+          "ally_range": 5,
+          "note": "Swaps places with the ally, who becomes the target."
+        }
+      ],
+      "spellcasting": null,
+      "legendary_resistance": null,
+      "legendary": null
+    },
+    "ogre": {
+      "name": "Ogre",
+      "page": 234,
+      "size": "large",
+      "type": "giant",
+      "tags": [],
+      "alignment": "chaotic evil",
+      "ac": 11,
+      "initiative": -1,
+      "hp": "8d10+24",
+      "hp_avg": 68,
+      "speed": {
+        "walk": 40
+      },
+      "abilities": {
+        "str": 19,
+        "dex": 8,
+        "con": 16,
+        "int": 5,
+        "wis": 7,
+        "cha": 7
+      },
+      "saves": {},
+      "skills": {},
+      "senses": {
+        "darkvision": 60
+      },
+      "passive": 8,
+      "languages": [
+        "Common",
+        "Giant"
+      ],
+      "telepathy": 0,
+      "cr": 2,
+      "xp": 450,
+      "pb": 2,
+      "resist": [],
+      "vulnerable": [],
+      "immune": [],
+      "condition_immune": [],
+      "gear": [
+        "greatclub",
+        "javelin"
+      ],
+      "gear_counts": {
+        "javelin": 3
+      },
+      "traits": [],
+      "actions": [
+        {
+          "id": "greatclub",
+          "name": "Greatclub",
+          "kind": "melee",
+          "bonus": 6,
+          "reach": 5,
+          "damage": "2d8+4",
+          "type": "bludgeoning"
+        },
+        {
+          "id": "javelin",
+          "name": "Javelin",
+          "kind": "melee_or_ranged",
+          "bonus": 6,
+          "reach": 5,
+          "range": [
+            30,
+            120
+          ],
+          "damage": "2d6+4",
+          "type": "piercing"
+        }
+      ],
+      "multiattack": null,
+      "bonus_actions": [],
+      "reactions": [],
+      "spellcasting": null,
+      "legendary_resistance": null,
+      "legendary": null
+    },
+    "troll": {
+      "name": "Troll",
+      "page": 313,
+      "size": "large",
+      "type": "giant",
+      "tags": [],
+      "alignment": "chaotic evil",
+      "ac": 15,
+      "initiative": 1,
+      "hp": "9d10+45",
+      "hp_avg": 94,
+      "speed": {
+        "walk": 30
+      },
+      "abilities": {
+        "str": 18,
+        "dex": 13,
+        "con": 20,
+        "int": 7,
+        "wis": 9,
+        "cha": 7
+      },
+      "saves": {},
+      "skills": {
+        "perception": 5
+      },
+      "senses": {
+        "darkvision": 60
+      },
+      "passive": 15,
+      "languages": [
+        "Giant"
+      ],
+      "telepathy": 0,
+      "cr": 5,
+      "xp": 1800,
+      "pb": 3,
+      "resist": [],
+      "vulnerable": [],
+      "immune": [],
+      "condition_immune": [],
+      "gear": [],
+      "traits": [
+        {
+          "id": "loathsome_limbs",
+          "name": "Loathsome Limbs",
+          "uses": "4/day",
+          "trigger": "ends_turn_bloodied",
+          "slashing_threshold": 15,
+          "spawns": "troll_limb",
+          "exhaustion_per_limb": 1,
+          "note": "Heavy slashing severs a limb that fights on; regrows when healed."
+        },
+        {
+          "id": "regeneration",
+          "name": "Regeneration",
+          "amount": 15,
+          "stopped_by": [
+            "acid",
+            "fire"
+          ],
+          "dies_only_at_turn_start": true,
+          "note": "Dies only if it starts its turn at 0 HP without regenerating."
+        }
+      ],
+      "actions": [
+        {
+          "id": "rend",
+          "name": "Rend",
+          "kind": "melee",
+          "bonus": 7,
+          "reach": 10,
+          "damage": "2d6+4",
+          "type": "slashing"
+        }
+      ],
+      "multiattack": {
+        "attacks": [
+          {
+            "id": "rend",
+            "count": 3
+          }
+        ]
+      },
+      "bonus_actions": [
+        {
+          "id": "charge",
+          "name": "Charge",
+          "kind": "special",
+          "move": "half_speed",
+          "straight_toward_seen_enemy": true,
+          "note": "Moves up to half its Speed straight at a seen enemy."
+        }
+      ],
+      "reactions": [],
+      "spellcasting": null,
+      "legendary_resistance": null,
+      "legendary": null
+    },
+    "young_red_dragon": {
+      "name": "Young Red Dragon",
+      "page": 257,
+      "size": "large",
+      "type": "dragon",
+      "tags": [
+        "chromatic"
+      ],
+      "alignment": "chaotic evil",
+      "ac": 18,
+      "initiative": 4,
+      "hp": "17d10+85",
+      "hp_avg": 178,
+      "speed": {
+        "walk": 40,
+        "climb": 40,
+        "fly": 80
+      },
+      "abilities": {
+        "str": 23,
+        "dex": 10,
+        "con": 21,
+        "int": 14,
+        "wis": 11,
+        "cha": 19
+      },
+      "saves": {
+        "dex": 4,
+        "wis": 4
+      },
+      "skills": {
+        "perception": 8,
+        "stealth": 4
+      },
+      "senses": {
+        "blindsight": 30,
+        "darkvision": 120
+      },
+      "passive": 18,
+      "languages": [
+        "Common",
+        "Draconic"
+      ],
+      "telepathy": 0,
+      "cr": 10,
+      "xp": 5900,
+      "pb": 4,
+      "resist": [],
+      "vulnerable": [],
+      "immune": [
+        "fire"
+      ],
+      "condition_immune": [],
+      "gear": [],
+      "traits": [],
+      "actions": [
+        {
+          "id": "rend",
+          "name": "Rend",
+          "kind": "melee",
+          "bonus": 10,
+          "reach": 10,
+          "damage": "2d6+6",
+          "type": "slashing",
+          "extra": [
+            {
+              "damage": "1d6",
+              "type": "fire"
+            }
+          ]
+        },
+        {
+          "id": "fire_breath",
+          "name": "Fire Breath",
+          "kind": "save",
+          "recharge": 5,
+          "save": "dex",
+          "dc": 17,
+          "area": {
+            "shape": "cone",
+            "size": 30
+          },
+          "damage": "16d6",
+          "type": "fire",
+          "half": true
+        }
+      ],
+      "multiattack": {
+        "attacks": [
+          {
+            "id": "rend",
+            "count": 3
+          }
+        ]
+      },
+      "bonus_actions": [],
+      "reactions": [],
+      "spellcasting": null,
+      "legendary_resistance": null,
+      "legendary": null
+    },
+    "commoner": {
+      "name": "Commoner",
+      "page": 80,
+      "size": "medium",
+      "sizes": [
+        "medium",
+        "small"
+      ],
+      "type": "humanoid",
+      "tags": [],
+      "alignment": "neutral",
+      "ac": 10,
+      "initiative": 0,
+      "hp": "1d8",
+      "hp_avg": 4,
+      "speed": {
+        "walk": 30
+      },
+      "abilities": {
+        "str": 10,
+        "dex": 10,
+        "con": 10,
+        "int": 10,
+        "wis": 10,
+        "cha": 10
+      },
+      "saves": {},
+      "skills": {},
+      "senses": {},
+      "passive": 10,
+      "languages": [
+        "Common"
+      ],
+      "telepathy": 0,
+      "cr": 0,
+      "xp": 10,
+      "pb": 2,
+      "resist": [],
+      "vulnerable": [],
+      "immune": [],
+      "condition_immune": [],
+      "gear": [
+        "club"
+      ],
+      "traits": [
+        {
+          "id": "training",
+          "name": "Training",
+          "skills_chosen": 1,
+          "advantage_on_chosen_skill": true,
+          "note": "Proficient, with Advantage, in one skill chosen for it."
+        }
+      ],
+      "actions": [
+        {
+          "id": "club",
+          "name": "Club",
+          "kind": "melee",
+          "bonus": 2,
+          "reach": 5,
+          "damage": "1d4",
+          "type": "bludgeoning"
+        }
+      ],
+      "multiattack": null,
+      "bonus_actions": [],
+      "reactions": [],
+      "spellcasting": null,
+      "legendary_resistance": null,
+      "legendary": null
+    },
+    "guard": {
+      "name": "Guard",
+      "page": 165,
+      "size": "medium",
+      "sizes": [
+        "medium",
+        "small"
+      ],
+      "type": "humanoid",
+      "tags": [],
+      "alignment": "neutral",
+      "ac": 16,
+      "initiative": 1,
+      "hp": "2d8+2",
+      "hp_avg": 11,
+      "speed": {
+        "walk": 30
+      },
+      "abilities": {
+        "str": 13,
+        "dex": 12,
+        "con": 12,
+        "int": 10,
+        "wis": 11,
+        "cha": 10
+      },
+      "saves": {},
+      "skills": {
+        "perception": 2
+      },
+      "senses": {},
+      "passive": 12,
+      "languages": [
+        "Common"
+      ],
+      "telepathy": 0,
+      "cr": 0.125,
+      "xp": 25,
+      "pb": 2,
+      "resist": [],
+      "vulnerable": [],
+      "immune": [],
+      "condition_immune": [],
+      "gear": [
+        "chain_shirt",
+        "shield",
+        "spear"
+      ],
+      "traits": [],
+      "actions": [
+        {
+          "id": "spear",
+          "name": "Spear",
+          "kind": "melee_or_ranged",
+          "bonus": 3,
+          "reach": 5,
+          "range": [
+            20,
+            60
+          ],
+          "damage": "1d6+1",
+          "type": "piercing"
+        }
+      ],
+      "multiattack": null,
+      "bonus_actions": [],
+      "reactions": [],
+      "spellcasting": null,
+      "legendary_resistance": null,
+      "legendary": null
+    },
+    "priest_acolyte": {
+      "name": "Priest Acolyte",
+      "page": 250,
+      "size": "medium",
+      "sizes": [
+        "medium",
+        "small"
+      ],
+      "type": "humanoid",
+      "tags": [],
+      "alignment": "neutral",
+      "ac": 13,
+      "initiative": 0,
+      "hp": "2d8+2",
+      "hp_avg": 11,
+      "speed": {
+        "walk": 30
+      },
+      "abilities": {
+        "str": 14,
+        "dex": 10,
+        "con": 12,
+        "int": 10,
+        "wis": 14,
+        "cha": 11
+      },
+      "saves": {},
+      "skills": {
+        "medicine": 4,
+        "religion": 2
+      },
+      "senses": {},
+      "passive": 12,
+      "languages": [
+        "Common"
+      ],
+      "telepathy": 0,
+      "cr": 0.25,
+      "xp": 50,
+      "pb": 2,
+      "resist": [],
+      "vulnerable": [],
+      "immune": [],
+      "condition_immune": [],
+      "gear": [
+        "chain_shirt",
+        "holy_symbol",
+        "mace"
+      ],
+      "traits": [],
+      "actions": [
+        {
+          "id": "mace",
+          "name": "Mace",
+          "kind": "melee",
+          "bonus": 4,
+          "reach": 5,
+          "damage": "1d6+2",
+          "type": "bludgeoning",
+          "extra": [
+            {
+              "damage": "1d4",
+              "type": "radiant"
+            }
+          ]
+        },
+        {
+          "id": "radiant_flame",
+          "name": "Radiant Flame",
+          "kind": "ranged",
+          "bonus": 4,
+          "range": [
+            60,
+            60
+          ],
+          "damage": "2d6",
+          "type": "radiant",
+          "note": "Single range printed; no long range."
+        }
+      ],
+      "multiattack": null,
+      "bonus_actions": [
+        {
+          "id": "divine_aid",
+          "name": "Divine Aid",
+          "kind": "special",
+          "uses": "1/day",
+          "casts_one_of": [
+            "bless",
+            "healing_word",
+            "sanctuary"
+          ],
+          "note": "Casts one of these with its Spellcasting ability."
+        }
+      ],
+      "reactions": [],
+      "spellcasting": {
+        "ability": "wis",
+        "dc": null,
+        "attack": null,
+        "at_will": [
+          "light",
+          "thaumaturgy"
+        ],
+        "per_day": {},
+        "uses_action": true,
+        "note": "No save DC or attack bonus printed."
+      },
+      "legendary_resistance": null,
+      "legendary": null
+    },
+    "noble": {
+      "name": "Noble",
+      "page": 230,
+      "size": "medium",
+      "sizes": [
+        "medium",
+        "small"
+      ],
+      "type": "humanoid",
+      "tags": [],
+      "alignment": "neutral",
+      "ac": 15,
+      "initiative": 1,
+      "hp": "2d8",
+      "hp_avg": 9,
+      "speed": {
+        "walk": 30
+      },
+      "abilities": {
+        "str": 11,
+        "dex": 12,
+        "con": 11,
+        "int": 12,
+        "wis": 14,
+        "cha": 16
+      },
+      "saves": {},
+      "skills": {
+        "deception": 5,
+        "insight": 4,
+        "persuasion": 5
+      },
+      "senses": {},
+      "passive": 12,
+      "languages": [
+        "Common",
+        "two other languages"
+      ],
+      "telepathy": 0,
+      "cr": 0.125,
+      "xp": 25,
+      "pb": 2,
+      "resist": [],
+      "vulnerable": [],
+      "immune": [],
+      "condition_immune": [],
+      "gear": [
+        "breastplate",
+        "rapier"
+      ],
+      "traits": [],
+      "actions": [
+        {
+          "id": "rapier",
+          "name": "Rapier",
+          "kind": "melee",
+          "bonus": 3,
+          "reach": 5,
+          "damage": "1d8+1",
+          "type": "piercing"
+        }
+      ],
+      "multiattack": null,
+      "bonus_actions": [],
+      "reactions": [
+        {
+          "id": "parry",
+          "name": "Parry",
+          "kind": "special",
+          "trigger": "hit_by_melee_attack",
+          "requires": "holding_weapon",
+          "ac_bonus": 2,
+          "note": "Adds 2 to AC against the triggering attack."
+        }
+      ],
+      "spellcasting": null,
+      "legendary_resistance": null,
+      "legendary": null
+    }
+  }
+}

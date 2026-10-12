@@ -11,7 +11,8 @@
       "skills": [],
       "age": {"adult": 16, "old": 55, "max": 80},
       "traits": [
-        {"id": "versatile", "name": "Versatile", "text": "+1 to every ability score."}
+        {"id": "versatile", "name": "Versatile", "text": "+1 to every ability score."},
+        {"id": "resourceful", "name": "Resourceful", "text": "Wakes from every long rest with Heroic Inspiration: one failed roll tried again.", "rule": "resourceful"}
       ],
       "standing": {"elven": -5, "dwarven": 0, "orcish": -10}
     },

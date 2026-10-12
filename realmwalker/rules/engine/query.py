@@ -96,6 +96,8 @@ def attack_roll(b, att, target, opt, *, space=None) -> Roll:
     g = grid.gap(a_space, target.space)
     if att.helped:
         r.add("advantage", "helped")
+    if any(bf.get("distracted") == att.side for bf in target.buffs):
+        r.add("advantage", "distracted")
     if target.marked:
         r.add("advantage", "marked")
     defs = cond.table(att.t)
@@ -123,8 +125,6 @@ def attack_roll(b, att, target, opt, *, space=None) -> Roll:
             if who is None or not who.active or not b.can_see(att, who):
                 continue
         r.add(mode, _cond_name(att, cid))
-    if att.char and att.char.exhaustion >= 3:
-        r.add("disadvantage", "exhausted")
     if not b.can_see(att, target):
         r.add("disadvantage", "cannot see them" if not target.hidden else "hidden")
     elif att.hidden or not b.can_see(target, att):
@@ -193,8 +193,6 @@ def save_roll(b, f, ability: str, *, bonus: int = 0) -> SaveRoll:
             out.roll.add(mode, _cond_name(f, cid))
     if ability == "dex" and f.dodging and not incapacitated(f) and f.speed > 0:
         out.roll.add("advantage", "dodging")  # the Dodge action: easier to get out of the way of fire
-    if f.char and f.char.exhaustion >= 3:
-        out.roll.add("disadvantage", "exhausted")
     ctx = tr.Ctx(b, f, ability=ability)
     for mode, why in tr.modifiers(f, "save", ctx):
         out.roll.add(mode, why)
@@ -237,6 +235,8 @@ def defences(f, dtype: str) -> str:
 def resists(f, dtype: str) -> bool:
     if flag(f, "resist_all"):
         return True
+    if f.creature is not None and dtype in f.cdef.get("resist", []):
+        return True
     if any(dtype in b.get("resist", []) for b in f.buffs):
         return True
     if dtype in tr.values(f, "resist", flat=True):
@@ -249,18 +249,49 @@ def resists(f, dtype: str) -> bool:
 
 
 def damage_taken(f, amount: int, dtype: str) -> tuple[int, str]:
-    """Damage after immunity, vulnerability and resistance, and which of them applied."""
+    """Damage after immunity, resistance and vulnerability, in the 2024 order (PHB chapter 1, Order of Application:
+    adjustments first, then Resistance, halving and rounding down, then Vulnerability), and which of them applied."""
     kind = defences(f, dtype)
     if kind == "immune":
         return 0, kind
+    if resists(f, dtype):
+        amount //= 2
     if kind == "vulnerable":
         amount *= 2
-        if resists(f, dtype):
-            amount = max(1, amount // 2)
-        return amount, kind
-    if kind == "resist":
-        return max(1, amount // 2), kind
-    return amount, ""
+    return amount, kind
+
+
+def proficiency(f) -> int:
+    """The proficiency bonus: a character's by level, a creature's by challenge (2 up to CR 4, then +1 every 4)."""
+    if f.char is not None:
+        return f.sheet.proficiency
+    cr = float(f.cdef.get("cr", 0))
+    return 2 + max(0, (max(1, int(-(-cr // 1))) - 1) // 4)
+
+
+def unarmed_dc(f) -> int:
+    """The saving throw against a grapple or a shove, and the DC to escape a grapple: 8 + Strength + proficiency."""
+    return 8 + f.mod("str") + proficiency(f)
+
+
+def d20_penalty(f) -> int:
+    """What exhaustion takes off every d20 test (2024: 2 per level)."""
+    return -2 * f.char.exhaustion if f.char is not None else 0
+
+
+def concentration_dc(damage: int) -> int:
+    """The Constitution save to keep concentrating after damage: 10 or half the damage, at most 30 (2024)."""
+    return min(30, max(10, damage // 2))
+
+
+def initiative_roll(f) -> Roll:
+    """Advantage or disadvantage on initiative (2024): surprised or incapacitated, or invisible."""
+    r = Roll()
+    if f.surprised:
+        r.add("disadvantage", "surprised")
+    for cid, mode in cond.flags(f.t, f.conditions, "initiative"):
+        r.add(mode, _cond_name(f, cid))
+    return r
 
 
 def condition_immune(f, cid: str) -> bool:
@@ -270,3 +301,8 @@ def condition_immune(f, cid: str) -> bool:
     if f.creature is not None and cid in f.cdef.get("condition_immune", []):
         return True
     return cid in tr.values(f, "immune_condition", flat=True)
+
+
+def attacks_per_action(f) -> int:
+    """How many attacks the Attack action makes (Extra Attack: 2)."""
+    return max([1] + [int(v) for v in tr.values(f, "attacks")])

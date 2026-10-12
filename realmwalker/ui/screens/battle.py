@@ -101,6 +101,8 @@ class BattleScreen(Screen):
         if getattr(app.settings, "battle_companions", "command") == "auto":
             for f in self.battle.side(PARTY)[1:]:
                 f.auto = True  # (Settings: companions fight by themselves)
+        self.battle.human = True  # someone is playing: a reaction can stop the fight to ask (rules/engine/reactions.py)
+        self.battle.reactions = getattr(app.settings, "reactions", "ask")
         self.heard = len(self.battle.events)  # the events whose sounds have been played (without the board)
 
     @property
@@ -146,6 +148,9 @@ class BattleScreen(Screen):
         if b.outcome is not None:
             self.mode = "over"
             return
+        if b.pending_decision is not None:
+            self.mode = "decide"  # the fight waits for an answer
+            return
         now = self.app.clock()
         board_busy = self.staged and self.board.busy(now) and not self.app.headless
         f = b.pending_party()
@@ -153,7 +158,7 @@ class BattleScreen(Screen):
             if self.auto_once is not None and self.auto_once != f.id:
                 self._clear_auto()
             if not board_busy and self.mode == "idle" and b.turn_spent(f):
-                b.end_turn()  # nothing left to do: on to the next
+                b.run(b.end_turn)  # nothing left to do: on to the next
                 self.last_step = now
             return
         if not self.app.headless and now - self.last_step < ENEMY_STEP_SECONDS:
@@ -167,13 +172,15 @@ class BattleScreen(Screen):
         # Run automatic steps until something worth watching happens or the player must choose.
         seen = len(b.events), len(b.log)
         for _ in range(200):
-            if b.outcome is not None or b.pending_party() is not None:
+            if b.outcome is not None or b.pending_party() is not None or b.pending_decision is not None:
                 break
-            b.step()
+            b.run(b.step)
             if (len(b.events), len(b.log)) != seen:
                 break
         if b.outcome is not None:
             self.mode = "over"
+        elif b.pending_decision is not None:
+            self.mode = "decide"
         elif b.pending_party() is not None:
             self.mode = "idle"
 
@@ -194,6 +201,8 @@ class BattleScreen(Screen):
     def _acted(self) -> None:
         """After the player's choice: back to the field."""
         self.mode = "idle" if self.battle.outcome is None else "over"
+        if self.battle.pending_decision is not None:
+            self.mode = "decide"
         self.pending = {}
         self.aim = None
         self.log_scroll = 0
@@ -243,7 +252,7 @@ class BattleScreen(Screen):
         b = self.battle
         tables = self.game.tables
         if action == "end":
-            b.end_turn()
+            b.run(b.end_turn)
             self._acted()
             return
         if action == "auto":
@@ -346,7 +355,14 @@ class BattleScreen(Screen):
     def _do(self, fn, *args) -> None:
         if self.actor() is None:
             return
-        fn(*args)
+        self.battle.run(fn, *args)
+        self._acted()
+
+    def decide(self, value: str) -> None:
+        """The answer to the reaction the fight is waiting on; then it goes on."""
+        if self.battle.pending_decision is None:
+            return
+        self.battle.answer(value)
         self._acted()
 
     def _attack_label(self, f: Fighter, o) -> str:
@@ -498,7 +514,7 @@ class BattleScreen(Screen):
         point = self.aim
         sp = self.game.tables.spells[spell_id(value)]
         caught = []
-        if sp.get("area") and sp["kind"] in ("save", "sleep", "condition"):
+        if sp.get("area") and spellrules.has_op(sp, "save"):
             area = self.battle.spell_area(f, value, point)
             victims = self.battle.in_area(area, sp.get("affects", "all"), f)
             spared = self.battle.sculpted(f, value, victims)
@@ -522,8 +538,10 @@ class BattleScreen(Screen):
             self.quick_attack(other)
             return
         if dest in self.reach(f):
-            self.battle.do_move(f, dest)
+            self.battle.run(self.battle.do_move, f, dest)
             self._reach_key = None
+            if self.battle.pending_decision is not None:
+                self._acted()
         elif f.move_left < 5:
             self.app.notify(f"{f.name} has no movement left. (e ends the turn.)", "warn")
 
@@ -532,8 +550,10 @@ class BattleScreen(Screen):
         if f is None:
             return
         if sq in self.reach(f):
-            self.battle.do_move(f, sq)
+            self.battle.run(self.battle.do_move, f, sq)
             self._reach_key = None
+            if self.battle.pending_decision is not None:
+                self._acted()
         else:
             self.app.notify("Too far to walk this turn." if f.move_left >= 5 else f"{f.name} has no movement left.", "warn")
 
@@ -565,9 +585,9 @@ class BattleScreen(Screen):
             if not spots:
                 self.app.notify(f"{f.name} cannot reach {target.name} this turn.", "warn")
                 return
-            b.do_move(f, min(spots)[1])
+            b.run(b.do_move, f, min(spots)[1])
             self._reach_key = None
-            if not f.active or b.pending_party() is not f:
+            if not f.active or b.pending_party() is not f or b.pending_decision is not None:
                 self._acted()
                 return
             opt = self.best_attack(f, target)
@@ -587,6 +607,16 @@ class BattleScreen(Screen):
         if self.mode == "over":
             if ev.key in ("enter", " ", "escape"):
                 self.finish()
+            return True
+        d = self.battle.pending_decision
+        if d is not None:
+            values = [v for v, _ in d.options]
+            if ev.key in ("enter", " "):
+                self.decide(d.default)
+            elif ev.key in ("y", "n") and ("yes" if ev.key == "y" else "no") in values:
+                self.decide("yes" if ev.key == "y" else "no")
+            elif ev.is_text and ev.key.isdigit() and 0 < int(ev.key) <= len(values):
+                self.decide(values[int(ev.key) - 1])
             return True
         if self.actor() is None:
             self.last_step = 0.0  # any key hurries the enemy along
@@ -754,7 +784,7 @@ class BattleScreen(Screen):
             ov["area"] = set(area)
             from realmwalker.ui.gfx.battlefx import colour_for
 
-            ov["area_color"] = colour_for(sp.get("damage_type", ""), spell_id(sid)) if self.aim in self.pending.get("points", ()) \
+            ov["area_color"] = colour_for(spellrules.main_type(sp), spell_id(sid)) if self.aim in self.pending.get("points", ()) \
                 else (120, 120, 120)
             ov["aim"] = self.aim
         return ov
@@ -819,6 +849,24 @@ class BattleScreen(Screen):
             canvas.text(sx - 1, yy, "│", colors.FAINT)
         self._render_side(canvas, sx, 1, side_w, h - 2)
         self._render_bar(canvas, 2, h - bar_h - 1, fw - 2, bar_h)
+        if b.pending_decision is not None:
+            self._render_decision(canvas, fx0, fy0, fw, fh)
+
+    def _render_decision(self, canvas: Canvas, x: int, y: int, w: int, h: int) -> None:
+        """The reaction the fight waits on: what is happening, and the choices (keys, or a click)."""
+        d = self.battle.pending_decision
+        bw = max(30, min(w - 4, 72))
+        lines = markup.wrap(markup.escape(d.text), bw - 4)
+        bh = len(lines) + 4 + len(d.options)
+        bx, by = x + (w - bw) // 2, y + max(1, (h - bh) // 2)
+        canvas.frame(bx, by, bw, bh, "Reaction", fg=colors.named("magic"))
+        for i, line in enumerate(lines):
+            canvas.spans(bx + 2, by + 1 + i, line, None, bw - 4)
+        oy = by + 2 + len(lines)
+        for i, (value, label) in enumerate(d.options):
+            hint = "Enter" if value == d.default else ("y" if value == "yes" else ("n" if value == "no" else str(i + 1)))
+            canvas.button(bx + 2, oy + i, markup.escape(label), lambda v=value: self.decide(v), hotkey=hint,
+                          max_width=bw - 4)
 
     def _render_field_pictures(self, canvas: Canvas, x: int, y: int, w: int, h: int) -> None:
         b = self.battle
@@ -1114,6 +1162,8 @@ class BattleScreen(Screen):
     def autoplay_keys(self) -> list[KeyEvent]:
         if self.mode == "over":
             return [KeyEvent("enter")]
+        if self.battle.pending_decision is not None:
+            return [KeyEvent(k) for k in ("enter", "n", "y", "1", "2")]
         if self.actor() is None:
             return [KeyEvent(" ")]
         if self.mode == "idle":

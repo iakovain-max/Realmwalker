@@ -50,5 +50,17 @@
     "flute": "flute",
     "healers_kit": "healer's kit", "disguise_kit": "disguise kit",
     "navigators_tools": "navigator's tools"
+  },
+  "_hazards": "The 2024 Rules Glossary's hazards and objects (PHB PDF pages 365, 370, 379), read by rules/engine/hazards.py.",
+  "hazards": {
+    "falling": {"feet_per_die": 10, "die": 6, "max_dice": 20},
+    "burning": {"damage": "1d4", "type": "fire"},
+    "breath": {"minutes": 1, "least_seconds": 30}
+  },
+  "objects": {
+    "ac": {"cloth": 11, "paper": 11, "rope": 11, "crystal": 13, "glass": 13, "ice": 13, "wood": 15, "stone": 17, "iron": 19,
+           "steel": 19, "mithral": 21, "adamantine": 23},
+    "hp": {"tiny": ["1d4", "2d4"], "small": ["1d6", "3d6"], "medium": ["1d8", "4d8"], "large": ["1d10", "5d10"]},
+    "immune": ["poison", "psychic"]
   }
 }

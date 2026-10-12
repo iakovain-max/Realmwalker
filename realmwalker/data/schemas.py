@@ -197,6 +197,11 @@ RULES = Obj(
                       "heavily_per_strength": Int(min=1, max=100)}),
         "languages": word_list(1, 40),
         "tools": Map(Str(max_len=40)),
+        "hazards": Obj({"falling": Obj({"feet_per_die": Int(min=1, max=100), "die": Int(min=2, max=20), "max_dice": Int(min=1, max=100)}),
+                        "burning": Obj({"damage": Str(max_len=12), "type": Str(max_len=20)}),
+                        "breath": Obj({"minutes": Int(min=0, max=60), "least_seconds": Int(min=0, max=600)})}, optional=True),
+        "objects": Obj({"ac": Map(Int(min=1, max=30)), "hp": Map(List(Str(max_len=12), min_items=2, max_items=2)),
+                        "immune": List(Str(max_len=20))}, optional=True),
     }
 )
 
@@ -361,16 +366,23 @@ ATTACK = Obj(
         "recharge": Int(min=2, max=6, optional=True),
     }
 )
+# A creature is its 2025 stat block ("statblock", data/statblocks.json) and its flavour; the numbers below are only for
+# a creature written the old way, without a block (rules/engine/statblocks.py; registry checks one or the other).
 CREATURE = Obj(
     {
+        "statblock": Str(max_len=40, optional=True), "attack_extras": Map(Any_(), optional=True),
+        "action_swap": Map(Any_(), optional=True), "override": Map(Any_(), optional=True),
         "name": Str(max_len=40), "plural": Str(max_len=40),
-        "kind": Str(choices=["beast", "humanoid", "undead", "giant", "monstrosity", "dragon"]),
-        "body": Str(choices=["humanoid", "quadruped", "spider"]), "size": Str(choices=["tiny", "small", "medium", "large", "huge"]),
-        "cr": Float(min=0, max=30), "xp": Int(min=0, max=200000), "ac": Int(min=1, max=30), "hp": Str(max_len=12),
-        "speed": Int(min=0, max=120), "abilities": Obj({a: Int(min=1, max=30) for a in ABILITY_IDS}),
-        "skills": Map(Int(min=-5, max=20)), "darkvision": Int(min=0, max=120),
-        "attacks": List(ATTACK, min_items=1), "multiattack": Int(min=1, max=6, optional=True),
-        "traits": List(Str(max_len=40)), "morale": Str(choices=["beast", "bandit", "soldier", "coward", "warrior", "fanatic", "mindless"]),
+        "kind": Str(max_len=20, optional=True),
+        "body": Str(choices=["humanoid", "quadruped", "spider"]),
+        "size": Str(choices=["tiny", "small", "medium", "large", "huge", "gargantuan"], optional=True),
+        "cr": Float(min=0, max=30, optional=True), "xp": Int(min=0, max=200000, optional=True),
+        "ac": Int(min=1, max=30, optional=True), "hp": Str(max_len=12, optional=True),
+        "speed": Int(min=0, max=120, optional=True), "abilities": Obj({a: Int(min=1, max=30) for a in ABILITY_IDS}, optional=True),
+        "skills": Map(Int(min=-5, max=20), optional=True), "darkvision": Int(min=0, max=120, optional=True),
+        "attacks": List(ATTACK, min_items=1, optional=True), "multiattack": Int(min=1, max=6, optional=True),
+        "traits": List(Str(max_len=40), optional=True),
+        "morale": Str(choices=["beast", "bandit", "soldier", "coward", "warrior", "fanatic", "mindless"]),
         "rank": Str(choices=["front", "back"]), "names": Str(max_len=30, optional=True),
         "gear": List(List(Any_(), min_items=2, max_items=2)), "money": Any_(optional=True),
         "loot": List(List(Any_(), min_items=2, max_items=2), optional=True),
@@ -398,11 +410,14 @@ CREATURES = Obj({"creatures": Map(CREATURE, min_items=1), "encounters": Map(ENCO
 SPELL = Obj(
     {
         "name": Str(max_len=40), "level": Int(min=0, max=9), "school": Str(max_len=20), "classes": List(Str(max_len=20), min_items=1),
-        "kind": Str(choices=["attack", "auto", "save", "heal", "buff", "condition", "sleep", "stabilize", "cure", "summon",
-                             "guardian", "aura", "zone", "move", "revive", "identify"]),
+        # What it does: effect operations (rules/engine/effects.py; the kernel's start-up check knows every op).
+        "effects": List(Obj({"op": Str(max_len=30)}, strict=False), min_items=1),
+        "fx": Str(max_len=20, optional=True), "components": List(Str(choices=["V", "S", "M"]), optional=True),
+        "rounds": Int(min=0, max=100000, optional=True), "targets_up": Int(min=0, max=5, optional=True),
         "target": Str(choices=["enemy", "ally", "self", "downed_ally", "dead_ally", "all_allies", "point", "direction", "item"]),
         "range": Any_(optional=True),
-        "area": Obj({"shape": Str(choices=["cone", "line", "sphere", "cube", "cylinder"]), "size": Int(min=5, max=300)}, optional=True),
+        "area": Obj({"shape": Str(choices=["cone", "line", "sphere", "cube", "cylinder", "emanation"]), "size": Int(min=5, max=300)},
+                    optional=True),
         "cast": Str(choices=["action", "bonus", "reaction"], optional=True),
         "affects": Str(choices=["all", "enemies", "allies"], optional=True),
         "concentration": Bool(optional=True),
@@ -430,6 +445,7 @@ DATA_FILES.update({
 })
 
 # ---------------------------------------------------------------------------- the rules kernel (Expansion 1)
+SIZES_2025 = ("tiny", "small", "medium", "large", "huge", "gargantuan")
 ADV = Str(choices=["advantage", "disadvantage"], optional=True)
 CONDITION_IDS = ("blinded", "charmed", "deafened", "frightened", "grappled", "incapacitated", "invisible", "paralyzed",
                  "petrified", "poisoned", "prone", "restrained", "stunned", "unconscious")
@@ -475,13 +491,27 @@ TRAIT_DEF = Obj(
         "resource": Obj({"id": Str(max_len=40), "max": Any_(), "recover": Str(choices=["short", "long", "dawn", "turn"])},
                         optional=True),
         "where": Str(max_len=30, optional=True),
+        "activate": Any_(optional=True),  # abilities it gives (rules/engine/actions.py; checked by rules/engine/check.py)
     }
 )
 TRAITS = Obj({"traits": Map(TRAIT_DEF, min_items=1)})
 
+STATBLOCK = Obj(
+    {
+        "name": Str(max_len=60), "page": Int(min=1, max=500), "size": Str(choices=list(SIZES_2025)),
+        "type": Str(max_len=20), "ac": Int(min=1, max=30), "initiative": Int(min=-10, max=30), "hp": Str(max_len=16),
+        "speed": Map(Any_()), "abilities": Obj({a: Int(min=1, max=30) for a in ABILITY_IDS}),
+        "cr": Float(min=0, max=30), "xp": Int(min=0, max=200000), "pb": Int(min=2, max=9),
+        "actions": List(Obj({"id": Str(max_len=40), "name": Str(max_len=60), "kind": Str(max_len=20)}, strict=False)),
+    },
+    strict=False,
+)
+STATBLOCKS = Obj({"statblocks": Map(STATBLOCK)})
+
 DATA_FILES.update({
     "conditions.json": CONDITIONS,
     "traits.json": TRAITS,
+    "statblocks.json": STATBLOCKS,
 })
 
 STAGE_EFFECTS = Obj(

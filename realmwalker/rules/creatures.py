@@ -42,8 +42,15 @@ class Creature:
 
 
 class CreatureTable:
-    def __init__(self, data: dict) -> None:
-        self.defs: dict[str, dict] = {k: v for k, v in data["creatures"].items() if not k.startswith("_")}
+    def __init__(self, data: dict, statblocks: dict | None = None) -> None:
+        """Creatures from data/creatures.json; one that names a 2025 stat block (data/statblocks.json) fights with it
+        (rules/engine/statblocks.py puts the two together)."""
+        from realmwalker.rules.engine import statblocks as sb
+
+        blocks = (statblocks or {}).get("statblocks", {})
+        self.blocks: dict[str, dict] = blocks
+        self.defs: dict[str, dict] = {k: (sb.resolve(k, v, blocks) if "statblock" in v else v)
+                                      for k, v in data["creatures"].items() if not k.startswith("_")}
         self.encounters: dict[str, dict] = {k: v for k, v in data["encounters"].items() if not k.startswith("_")}
         self.site_inhabitants: dict[str, list[str]] = data.get("site_inhabitants", {})
 

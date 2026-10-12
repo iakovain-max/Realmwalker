@@ -99,7 +99,7 @@ class Tables:
         from realmwalker.rules.creatures import CreatureTable
         from realmwalker.rules.spells import SpellTable
 
-        self.creatures = CreatureTable(data["creatures.json"])
+        self.creatures = CreatureTable(data["creatures.json"], data["statblocks.json"])
         self.sprites = data["sprites.json"]  # which picture shows what (ui/gfx)
         self.spells = SpellTable(data["spells.json"])
         self.items.add_scrolls(self.spells)

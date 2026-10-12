@@ -271,12 +271,13 @@ def test_drink_dulls_pain_and_leaves_a_hangover(tables):
 def test_the_body_state_shows_in_skills_and_saves(tables):
     fresh = Sheet(hero(tables), tables)
     c = hero(tables)
-    c.exhaustion = 1
+    c.exhaustion = 1  # 2024: 2 off every d20 test for each level
     s = Sheet(c, tables)
-    assert s.skill_bonus("athletics") == fresh.skill_bonus("athletics") - 5
-    assert s.save_bonus("con") == fresh.save_bonus("con")
+    assert s.skill_bonus("athletics") == fresh.skill_bonus("athletics") - 2
+    assert s.save_bonus("con") == fresh.save_bonus("con") - 2
     c.exhaustion = 3
-    assert s.save_bonus("con") == fresh.save_bonus("con") - 5
+    assert s.save_bonus("con") == fresh.save_bonus("con") - 6
+    assert s.attack_condition() == fresh.attack_condition() - 6
     d = hero(tables)
     d.wounds.append(Wound("head", "blunt", 2, 0, 0))
     assert Sheet(d, tables).skill_bonus("insight") < fresh.skill_bonus("insight") - 4
@@ -292,7 +293,10 @@ def test_a_broken_arm_cannot_hold_a_weapon(tables):
     assert main and not main[0].available and "arm" in main[0].reason
 
 
-def test_exhaustion_gives_disadvantage_in_battle(tables):
+def test_exhaustion_lowers_every_attack_in_battle(tables):
+    """2024: no disadvantage, but 2 off the roll for each level (and 5 feet of speed)."""
+    fresh = Battle(tables, [hero(tables)], [spawn(tables, "wolf", RNG(1), 1)], Env(), RNG(1))
+    fresh.start()
     c = hero(tables)
     c.exhaustion = 3
     b = Battle(tables, [c], [spawn(tables, "wolf", RNG(1), 1)], Env(), RNG(1))
@@ -300,7 +304,9 @@ def test_exhaustion_gives_disadvantage_in_battle(tables):
     f, wolf = b.side("party")[0], b.side("foe")[0]
     opt = b.attack_options(f)[0]
     adv, dis, why = b._adv_dis(f, wolf, opt)
-    assert dis and "exhausted" in why
+    assert not dis and "exhausted" not in why
+    assert opt.bonus == fresh.attack_options(fresh.side("party")[0])[0].bonus - 6
+    assert f.speed == fresh.side("party")[0].speed - 15
 
 
 # ---------------------------------------------------------------------------- saving

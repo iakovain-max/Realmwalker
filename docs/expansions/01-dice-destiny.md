@@ -37,16 +37,16 @@ pictures are reworked to match the game's own art; the main menu gets its shelf 
 - [x] A.5 Part A to `main`.
 
 ### Part B — The kernel
-- [ ] B.1 `rules/engine/`: events, effects (ops), query (derived numbers), conditions (data), durations, resources.
+- [x] B.1 `rules/engine/`: events, effects (ops), query (derived numbers), conditions (data), durations, resources.
 - [x] B.2 Conditions and the query numbers routed through the kernel; old and new compared in tests.
-- [ ] B.3 The 41 spells as definitions (2024 versions); the old reader retired.
-- [ ] B.4 Class features, monster traits and item properties on the kernel; old branches in `combat.py` deleted.
-- [ ] B.5 2024 rules glossary: d20 tests, actions, unarmed strikes, surprise, Heroic Inspiration, concentration,
+- [x] B.3 The 41 spells as definitions (2024 versions); the old reader retired.
+- [x] B.4 Class features, monster traits and item properties on the kernel; old branches in `combat.py` deleted.
+- [x] B.5 2024 rules glossary: d20 tests, actions, unarmed strikes, surprise, Heroic Inspiration, concentration,
   temporary hit points, damage order, falling, suffocation, burning, areas incl. Emanation, cover, obscurement,
   objects; exhaustion and hunger/thirst in 2024 form on the body system; "careful player" measured again.
-- [ ] B.6 Stat blocks (2025): the 35 creatures re-made (Appendix A), with ids renamed; legendary actions and
+- [x] B.6 Stat blocks (2025): the 35 creatures re-made (Appendix A), with ids renamed; legendary actions and
   resistance, recharge, uses per day, 2025 spellcasting and multiattack proven on test creatures.
-- [ ] B.7 Balance in band; Part B to `main`.
+- [x] B.7 Balance in band; Part B to `main`.
 
 ### Part C — Reactions and Tactics 2.0
 - [ ] C.1 Resumable resolution and reaction prompts; the *Reactions* setting.
@@ -66,6 +66,16 @@ pictures are reworked to match the game's own art; the main menu gets its shelf 
 - [ ] E.2 The picture adaptation pass for borrowed monster tiles (before/after contact sheet).
 - [ ] E.3 Spell effect styles (`fx`); fliers drawn with their height.
 - [ ] E.4 The icon on the shelf; release v1.1.0 (pack status, notes, tag, `PROGRESS.md`, `STATUS.md`).
+
+## Left in the battle code on purpose (B.4)
+
+- The four 2014 fighting styles a fighter picks today (archery, defence, duelling, great weapon, protection, two
+  weapons) stay as small checks in `combat.py` and the sheet: they become the 2024 Fighting Style feats in Expansion 2
+  (Blades & Backgrounds), where feats arrive.
+- `Fighter.prefers_range` (wizards and creatures marked "back" keep their distance) and the Auto's use of Second Wind,
+  Action Surge and Cunning Action in `tactics.py`: Tactics 2.0 (Part C) plans from the one list of actions instead.
+- The creatures' old attack extras (trip, paralysis, poison) stay readable until every creature fights with its 2025
+  stat block (B.6); then they go.
 
 ## Codex entries delivered
 

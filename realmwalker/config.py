@@ -21,6 +21,7 @@ DEFAULT_FONT_SIZE = 20
 VERBOSITY_LEVELS = ("brief", "normal", "rich")
 AUTOSAVE_CHOICES = (2, 5, 10, 15, 30)
 COMPANION_CHOICES = ("command", "auto")  # in a fight: you play the companions' turns, or they fight by themselves
+REACTION_CHOICES = ("ask", "all", "auto")  # in a fight: ask before spending something on a reaction, ask always, never
 ANIMATION_CHOICES = ("full", "calm", "off")
 TOWN_TIME_CHOICES = ("flows", "waits")  # in towns the clock runs by itself, or (the old way) only when you act
 VOLUME_STEPS = 10  # volumes are 0 (silent) to 10 (full)
@@ -68,6 +69,7 @@ class Settings:
     map_zoom: int = 32
     world_zoom: int = 24
     battle_companions: str = "command"  # COMPANION_CHOICES
+    reactions: str = "ask"  # REACTION_CHOICES (rules/engine/reactions.py)
     time_in_towns: str = "flows"  # TOWN_TIME_CHOICES: people walk their day while you stand and watch
     volume: int = 10  # everything (0-10)
     music_volume: int = 6
@@ -92,6 +94,8 @@ class Settings:
             self.world_zoom = 24
         if self.battle_companions not in COMPANION_CHOICES:
             self.battle_companions = "command"
+        if self.reactions not in REACTION_CHOICES:
+            self.reactions = "ask"
         if self.time_in_towns not in TOWN_TIME_CHOICES:
             self.time_in_towns = "flows"
         for name in ("volume", "music_volume", "effects_volume", "interface_volume"):

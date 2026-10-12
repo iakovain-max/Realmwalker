@@ -340,6 +340,13 @@ class Field:
         tx, ty = toward
         out: list[tuple[int, int]] = []
         own = set(cells(ox, oy, osz))
+        if shape == "emanation":  # reaching out from every side of the one it comes from, who is not in it (2024)
+            ocx, ocy = centre(ox, oy, osz)
+            for x in range(max(0, ox - n), min(self.width, ox + osz + n)):
+                for y in range(max(0, oy - n), min(self.height, oy + osz + n)):
+                    if (x, y) not in own and gap((x, y, 1), origin) <= n and self._reaches(ocx, ocy, x, y):
+                        out.append((x, y))
+            return out
         if shape in ("sphere", "cylinder", "radius"):
             cx, cy = tx + 0.5, ty + 0.5
             for x in range(max(0, tx - n), min(self.width, tx + n + 1)):

@@ -72,6 +72,9 @@ realmwalker/
                            areas, paths), tactics (how the enemy and Auto fight), creatures, spells, wounds, progression,
                            body (needs, body heat, wetness, exhaustion), health (blood, pain, infection, healing,
                            injuries, diseases, treatment, drink, poppy)
+  rules/engine/            the rules kernel (Expansion 1): conditions (2024, data/conditions.json), query (every
+                           derived number), traits (data/traits.json definitions), events (hooks + dispatcher),
+                           handlers/ (Python by id), effects (spell ops), durations (endings by turns), check (start-up)
   world/weather.py         weather as a deterministic function of seed, place and time (moving fronts)
   world/dungeon.py         dungeon levels under a site: styles, rooms, caves, doors, secrets, traps, chests
   world/factions.py        factions and figures (model, generation, territory map, relations, laws)
@@ -263,6 +266,23 @@ tools/                     autoplay.py, balance.py (the design's targets),
   `tests/test_looks.py` green: every option must have a picture and a colour.
 - Animations go through `canvas.gfx.animate` (movement) and `canvas.gfx.ambient` (idle: water, smoke, weather), from
   the Animations setting; the game's state never waits for an animation.
+- The rules kernel (Expansion 1, docs/EXPANSIONS.md §4.3; `rules/engine/`). Numbers go through one door:
+  `query.attack_roll` (advantage/disadvantage with reasons; `Battle._adv_dis` wraps it), `query.save_roll`, `ac`,
+  `speed`, `damage_taken` (immune/vulnerable/resist), `crit_range`, `crit_within`, `condition_immune`. The 2024
+  conditions are data (data/conditions.json: includes, inactive, speed_zero, attacks/attacked, fails_saves, source
+  rules...); a fighter keeps `conditions` {name: rounds or -1}, `sources` {name: fighter id} and `cond_ends`
+  {name: ending} (`durations.give/remove/until/tick`: endings at the start or end of someone's turn, ended by damage,
+  by concentration, or followed by another save). Traits and features are definitions in data/traits.json, keyed by
+  creature trait id, race/class `rule` tag or feature id (`traits.of(f)`, `traits.of_char(char, tables)`): `modifiers`
+  (attack/attacked/enemy_attacks/save/resist/crit_range/passive/ignores_zone/immune_condition, each with named `when`
+  tests in `traits.WHEN`) and `hooks` (`events.emit(b, "attack_hit", actor=, target=, ...)`; handlers registered with
+  `@handler("id")` in `engine/handlers/`; roles self/attacker/target/ally/any; the event's target and actor are asked
+  first, then the order of battle). Spells are definitions: `spell["effects"]`, a list of ops run by
+  `engine/effects.cast` (the op list is in its docstring); `rules/spells.py` reads them elsewhere (`ops`, `op`,
+  `has_op`, `buff_of`, `heal_op`, `main_type`, `road_use`, `summary`). A new op, trait, `when` test, event or handler
+  must be added to the code too: `engine/check.problems` reports unknown ones on the data-problems screen at start-up
+  (and tests/test_engine.py runs it). Keep `battle.events` and their meaning (battlefx and audio/cues read them);
+  a spell's `fx` names its look.
 - Battles (grid, 2026-10-06, Anton's request; replaces the design's two ranks): a grid of 5-ft squares
   (`rules/grid.Field`, terrain indices from data/local_terrain.json; PHB distances, DMG corner cover, areas laid from
   a point of origin, Dijkstra paths that know opportunity attacks). `game/arena.build` makes the field: cut from

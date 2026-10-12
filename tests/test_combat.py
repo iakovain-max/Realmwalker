@@ -364,13 +364,30 @@ def test_a_bonus_action_spell_leaves_only_a_cantrip(tables):
     assert not options["cure_wounds"][0] and options["sacred_flame"][0]
 
 
-def test_sleep_puts_the_weak_to_sleep(tables):
+def test_sleep_the_2024_way(tables):
+    """Sleep (2024): a failed Wisdom save leaves a foe able to do nothing until the end of its next turn; a second
+    failure puts it to sleep; a blow wakes it, lying down. The dead never sleep."""
+    from realmwalker.rules.engine import durations
+
     wiz = hero(tables, "wizard")
-    b = battle(tables, [wiz], foes(tables, "giant_rat", "giant_rat"), seed=2, spots={0: (2, 4), 1: (9, 4), 2: (10, 5)})
+    b = battle(tables, [wiz], foes(tables, "giant_rat", "skeleton"), seed=2, spots={0: (2, 4), 1: (9, 4), 2: (10, 5)})
     f = b.side(PARTY)[0]
+    rat, bones = b.side(FOE)
+    b._save = lambda *a, **k: False  # every save fails
     turn_of(b, f)
-    b.do_cast(f, "sleep", point=(9, 4))
-    assert any("unconscious" in x.conditions for x in b.side(FOE))
+    assert b.do_cast(f, "sleep", point=(9, 4))
+    assert "incapacitated" in rat.conditions and not rat.can_act()
+    assert not bones.conditions  # undead do not sleep
+    durations.tick(b, rat, "turn_end")  # the end of its next turn: the second save
+    assert "unconscious" in rat.conditions and "prone" in conditions_of(rat)
+    b._hit(bones, rat, 1, "piercing", crit=False, weapon="bite")
+    assert "unconscious" not in rat.conditions and "prone" in rat.conditions and rat.can_act()
+
+
+def conditions_of(f):
+    from realmwalker.rules.engine import query
+
+    return query.conditions(f)
 
 
 def test_cleric_heals_and_turns_undead(tables):
@@ -816,9 +833,9 @@ def test_every_spell_can_be_aimed(tables):
     for sid, sp in tables.spells.defs.items():
         assert "range" in sp, sid
         if sp["target"] in ("point", "direction"):
-            assert sp.get("area") or sp["kind"] in ("move", "summon", "guardian"), sid
+            assert sp.get("area") or spellrules.has_op(sp, "teleport", "summon", "guardian"), sid
         if sp.get("area"):
-            assert sp["area"]["shape"] in ("sphere", "cylinder", "cube", "cone", "line"), sid
+            assert sp["area"]["shape"] in ("sphere", "cylinder", "cube", "cone", "line", "emanation"), sid
 
 
 def test_a_fight_nobody_can_reach_breaks_off(tables):
@@ -944,7 +961,8 @@ def test_divine_intervention(tables):
 
 
 def test_enemy_casters_use_their_spells(tables):
-    """A cult fanatic raises a spiritual weapon and holds the strongest of you; an acolyte blesses the band."""
+    """A cult fanatic raises a spiritual weapon (2 a day, 2025) and, holding it by concentration (2024), does not Hold
+    Person in the same breath; an acolyte blesses the band (its Divine Aid)."""
     party = [hero(tables, "fighter"), hero(tables, "rogue", seed=2)]
     b = battle(tables, party, foes(tables, "cult_fanatic", "cultist", "cultist"),
                spots={0: (3, 4), 1: (3, 5), 2: (9, 4), 3: (7, 3), 4: (7, 6)})
@@ -955,8 +973,8 @@ def test_enemy_casters_use_their_spells(tables):
     assert "hold_person" in b.creature_spells(fanatic)
     tactics.take_turn(b, fanatic)
     casts = [e["spell"] for e in b.events if e["kind"] == "cast" and e["by"] == fanatic.id]
-    assert "spiritual_weapon" in casts and ("hold_person" in casts or "command" in casts or "sacred_flame" in casts)
-    assert fanatic.slots[1] < 3 or fanatic.slots[0] < 4
+    assert "spiritual_weapon" in casts and "hold_person" not in casts
+    assert fanatic.creature.uses["spell:spiritual_weapon"] == 1 and fanatic.concentration is not None
     b2 = battle(tables, [hero(tables)], foes(tables, "acolyte", "bandit", "bandit"))
     acolyte = b2.side(FOE)[0]
     turn_of(b2, acolyte)
@@ -1019,25 +1037,16 @@ def test_the_enemy_walks_round_to_flank(tables):
 
 
 def test_dodging_helps_against_fire_and_exhaustion_hurts_saves(tables):
+    """Dodge: Dexterity saves with advantage. Exhaustion (2024): 2 off every saving throw for each level."""
+    from realmwalker.rules.engine import query
+
     c = hero(tables)
     b = battle(tables, [c], foes(tables, "wolf"))
     f = b.side(PARTY)[0]
     f.dodging = True
-    adv_rolls = []
-    import realmwalker.core.dice as dice_mod
-
-    real = dice_mod.d20
-
-    def spy(rng, advantage=False, disadvantage=False):
-        adv_rolls.append((advantage, disadvantage))
-        return real(rng, advantage=advantage, disadvantage=disadvantage)
-
-    dice_mod.d20, saved = spy, dice_mod.d20
-    try:
-        b._save(f, "dex", 10)
-        f.dodging = False
-        c.exhaustion = 3
-        b._save(f, "wis", 10)
-    finally:
-        dice_mod.d20 = saved
-    assert adv_rolls[0] == (True, False) and adv_rolls[1] == (False, True)
+    assert query.save_roll(b, f, "dex").roll.mode == "advantage"
+    f.dodging = False
+    fresh = query.save_roll(b, f, "wis").bonus
+    c.exhaustion = 3
+    r = query.save_roll(b, f, "wis")
+    assert r.roll.mode == "" and r.bonus == fresh - 6

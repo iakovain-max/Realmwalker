@@ -23,6 +23,10 @@ CAUTION = {"beast": 2.0, "mindless": 0.5, "fanatic": 1.0, "warrior": 3.0, "bandi
 
 def take_turn(b: Battle, f: Fighter) -> None:
     """Play out `f`'s whole turn."""
+    if b.burning(f) and f.action > 0 and (f.hp <= 8 or not any(b.gap(f, e) <= 1 for e in b.enemies_of(f) if e.standing)):
+        b.do_extinguish(f)  # on fire: roll it out, unless there is a fight right here worth the burns
+        if b.current is not f or b.outcome is not None:
+            return
     if f.state == "fleeing":
         flee(b, f)
         return
@@ -48,11 +52,20 @@ def _monster_turn(b: Battle, f: Fighter) -> None:
             return
     if not plain:
         return
-    if f.has_trait("aggressive") and f.bonus > 0 and f.speed > 0 and \
+    if (f.has_trait("aggressive") or f.has_trait("charge")) and f.bonus > 0 and f.speed > 0 and \
             not any(b.gap(f, e) <= 1 for e in b.enemies_of(f) if e.standing):
-        f.bonus -= 1  # Aggressive: a bonus action to close in
-        f.move_left += f.speed
+        f.bonus -= 1  # Aggressive (a bonus action to close in), or a troll's Charge (half its speed)
+        f.move_left += f.speed if f.has_trait("aggressive") else f.speed // 2
     _fight(b, f, plain, attacks=max(1, int(f.cdef.get("multiattack", 1))))
+    if f.has_trait("rampage") and f.bonus > 0 and b.outcome is None and b.current is f and f.active \
+            and f.creature.uses.get("rampage", 1) > 0:
+        hurt = [e for e in b.enemies_of(f) if e.standing and e.hp <= e.max_hp // 2 and b.gap(f, e) <= 1]
+        rend = next((o for o in plain if o.is_melee and o.available), None)
+        if hurt and rend is not None:  # Rampage: once a day, another blow at a bloodied foe
+            f.bonus -= 1
+            f.creature.uses["rampage"] = 0
+            b._attack(f, rend, min(hurt, key=lambda e: e.hp))
+            b._check_end()
     if f.has_trait("nimble_escape") and f.bonus > 0 and b.outcome is None and b.current is f and f.active:
         _slip_away(b, f)
 
@@ -71,6 +84,7 @@ def _fight(b: Battle, f: Fighter, opts: list[AttackOption], attacks: int) -> boo
         return False
     struck = False
     multi = f.creature is not None and f.cdef.get("multiattack")
+    plan = f.cdef.get("multiattack_plan") if f.creature is not None else None
     kind_melee = opt.is_melee
     for i in range(attacks):
         if b.outcome is not None or not f.can_act():
@@ -78,7 +92,11 @@ def _fight(b: Battle, f: Fighter, opts: list[AttackOption], attacks: int) -> boo
         usable = [o for o in opts if o.is_melee == kind_melee and o.available]
         if not usable:
             break
-        choice = usable[i % len(usable)] if multi else opt
+        if plan:  # "a Bite and two Claws": each attack as the stat block names it
+            want = plan[i] if i < len(plan) else plan[-1]
+            choice = next((o for o in usable if o.extra.get("id") == want), usable[i % len(usable)])
+        else:
+            choice = usable[i % len(usable)] if multi else opt
         if not target.active or not b.in_reach(f, choice, target)[0]:
             others = [t for t in b.targets_for(f, choice) if t.side != f.side and t.active]
             if not others:
@@ -502,7 +520,7 @@ def _cast_something(b: Battle, f: Fighter) -> bool:
         if not ok or sid not in t.spells:
             continue
         sp = t.spells[sid]
-        if not sp.get("area") or sp["kind"] not in ("save", "sleep", "condition") or sp["level"] == 0:
+        if not sp.get("area") or not spellrules.has_op(sp, "save") or sp.get("affects") == "allies" or sp["level"] == 0:
             continue
         aims = b.spell_points(f, sid)
         candidates = {(e.x, e.y) for e in enemies} | {(e.x + dx, e.y + dy) for e in enemies for dx, dy in grid.DIRS8}

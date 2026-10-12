@@ -7,6 +7,7 @@ from realmwalker.core import dice
 from realmwalker.rules import health
 from realmwalker.rules import spells as spellrules
 from realmwalker.rules.character import Character, Sheet
+from realmwalker.rules.engine import traits
 from realmwalker.rules.inventory import remove_item
 
 HEALING_SPELLS = ("cure_wounds", "healing_word", "lesser_restoration", "mass_cure_wounds", "mass_healing_word")
@@ -85,16 +86,18 @@ def cast(game, caster: Character, patient: Character, wound, spell_id: str) -> l
     s = Sheet(caster, t)
     rng = game.world.rng.child(f"cast/{game.world.time}/{spell_id}")
     msgs = [f"{caster.name.split()[0]} casts <magic>{spell['name']}</>."]
-    if spell["kind"] == "heal":
-        targets = [c for c in game.party if c.alive] if spell["target"] == "all_allies" else [patient]
+    use = spellrules.road_use(t, spell_id)
+    if use == "heal":
+        h = spellrules.heal_op(spell)
+        targets = [c for c in game.party if c.alive] if spellrules.heals_many(spell) else [patient]
         for c in targets:
-            amount = dice.roll(spell["heal"], rng).total + (s.mod(spellrules.casting_ability(caster, t))
-                                                           if spell.get("add_mod") else 0)
-            if caster.subclass == "life":
+            amount = dice.roll(h["dice"], rng).total + (s.mod(spellrules.casting_ability(caster, t))
+                                                       if h.get("add_mod") else 0)
+            if "disciple_of_life" in traits.of_char(caster, t):
                 amount += 2 + max(1, level)
             target_wound = wound if c is patient else max(c.wounds, key=lambda w: (w.severity, w.bleed), default=None)
-            msgs += health.magic_heal(c, target_wound if spell.get("mends_wound", True) else None, amount)
-    elif spell["kind"] == "cure":
+            msgs += health.magic_heal(c, target_wound if h.get("mends_wound", True) else None, amount)
+    elif use == "cure":
         msgs += health.magic_restore(patient, t)
     game.pass_time(1, "rest")
     game.dirty = True
