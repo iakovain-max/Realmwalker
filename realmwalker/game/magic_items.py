@@ -16,6 +16,7 @@ from __future__ import annotations
 
 from realmwalker.core import dice, textgen
 from realmwalker.core.rng import RNG
+from realmwalker.core.textgen import escape_markup as esc
 from realmwalker.rules import magic as magicrules
 from realmwalker.rules.items import Item
 
@@ -237,8 +238,9 @@ def make_sentient(game, item: Item, rng: RNG) -> None:
     mind = {"int": stat(), "wis": stat(), "cha": stat(), "alignment": _d100(s["alignment"], rng),
             "communication": _d10(s["communication"], rng), "senses": _d4(s["senses"], rng),
             "purpose": rng.choice(sorted(s["purposes"]))}
-    if mind["purpose"] == "aligned" and mind["alignment"] == "neutral":
-        mind["alignment"] = rng.choice(["lawful good", "chaotic good", "neutral evil"])  # never neutral (DMG)
+    if mind["purpose"] == "aligned" and mind["alignment"] in ("neutral", "neutral evil"):
+        # Never neutral (DMG); and an evil one needs a side against which the world's creatures stand: the lawful.
+        mind["alignment"] = rng.choice(["lawful good", "chaotic good", "lawful evil"])
     if mind["purpose"] == "bane":
         mind["creature"] = rng.choice(list(data(game)["artifact"]["hated_types"]) + ["humanoid"])
     elif mind["purpose"] == "protector":
@@ -291,8 +293,8 @@ def _voice(game, item: Item, mood: str, rng: RNG, **extra) -> str:
     s = data(game)["sentient"]
     mind = item.magic["sentient"]
     line = rng.choice(s["voices"][mind["communication"]][mood])
-    name = game.tables.items.name(item, False)
-    return line.replace("{item}", name).replace("{demand}", extra.get("demand", ""))
+    name = esc(game.tables.items.name(item, False))
+    return line.replace("{item}", name).replace("{demand}", esc(extra.get("demand", "")))
 
 
 def _meaning(item: Item, tag: str, creatures: list[dict]) -> str | None:
@@ -305,10 +307,10 @@ def _meaning(item: Item, tag: str, creatures: list[dict]) -> str | None:
             return None
         tag = {"victory": "victory_bane", "fled": "fled_bane", "parley": "parley_bane"}.get(tag, tag)
     if p == "aligned" and tag == "victory":
-        good = "good" in mind["alignment"]
-        evil = "evil" in mind["alignment"]
-        if (good and any("evil" in a for a in aligns)) or (evil and any("good" in a for a in aligns)):
-            tag = "victory_opposed"
+        mine = mind["alignment"]
+        opposed = {"good": "evil", "evil": "good", "lawful": "chaotic", "chaotic": "lawful"}
+        if any(opposed[side] in a for side in opposed if side in mine for a in aligns):
+            tag = "victory_opposed"  # good against evil, law against chaos (the DMG's "diametrically opposed")
         else:
             return None
     return tag
@@ -322,6 +324,7 @@ def notice(game, tag: str, *, creatures: list[dict] | None = None, hard: bool = 
     if not things:
         return out
     spec = data(game)["sentient"]
+    angered = False
     for item, who in things:
         mind = item.magic["sentient"]
         purpose = spec["purposes"][mind["purpose"]]
@@ -340,11 +343,12 @@ def notice(game, tag: str, *, creatures: list[dict] | None = None, hard: bool = 
                 mind["said_day"] = game.moment.total_days
                 out.append(_voice(game, item, "pleased", rng))
         elif meant in purpose["angered"]:
+            angered = True
             out += conflict(game, item, who, rng)
     for line in out:
         game.say(f"<magic>{line}</>", "magic")
     if out:
-        game.cue("danger" if any(mind.get("demand") for mind in (i.magic["sentient"] for i, _w in things)) else "spell")
+        game.cue("danger" if angered else "spell")
     return out
 
 
@@ -415,7 +419,8 @@ def check_demands(game) -> list[str]:
         rng = game.world.rng.child(f"demand/{item.uid}/{game.world.time}")
         if mind.get("seized_until") and game.world.time >= mind["seized_until"]:
             mind.pop("seized_until")
-            out.append(spec["freed"].replace("{name}", who.name.split()[0]).replace("{item}", game.tables.items.name(item, False)))
+            out.append(spec["freed"].replace("{name}", esc(who.name.split()[0])).replace(
+                "{item}", esc(game.tables.items.name(item, False))))
         if not demand:
             continue
         if demand["kind"] != "keep_close" and _met(game, item, demand):
@@ -426,7 +431,7 @@ def check_demands(game) -> list[str]:
         if demand["kind"] == "keep_close" and _met(game, item, demand):
             out += _satisfy(game, item, rng)
             continue
-        name = game.tables.items.name(item, False)
+        name = esc(game.tables.items.name(item, False))
         if demand["stage"] == 0:
             demand["stage"] = 1
             demand["until"] = game.world.time + 3 * DAY
@@ -439,7 +444,7 @@ def check_demands(game) -> list[str]:
             roll = dice.d20(rng).natural + game.sheet(who).save_bonus("cha")
             if roll < dc:
                 mind["seized_until"] = game.world.time + rng.randint(1, 12) * 60
-                out.append(spec["seized"].replace("{item}", name).replace("{name}", who.name.split()[0]) +
+                out.append(spec["seized"].replace("{item}", name).replace("{name}", esc(who.name.split()[0])) +
                            f" <dim>(Charisma {roll} vs {dc})</>")
             else:
                 out.append(_voice(game, item, "angered", rng) + f" <dim>({who.name.split()[0]} resists: Charisma "
@@ -464,15 +469,20 @@ def seized(game, char) -> bool:
 def attune(game, char, item: Item) -> list[str]:
     """A short rest spent focused on the thing: bound to it at the end, if nothing forbids it (PHB 2024). An artifact's
     spite strikes then, and a curse makes itself known."""
-    why = magicrules.can_attune(char, item, game.sheet(char))
-    name = game.tables.items.name(item, False)
-    first = char.name.split()[0]
+    why = magicrules.can_attune(char, item, game.sheet(char), list(game.party) + list(getattr(game, "waiting", [])))
+    name = esc(game.tables.items.name(item, False))
+    first = esc(char.name.split()[0])
     if why:
-        return [f"{first} cannot bind to the {name}: {why}."]
+        return [f"{first} cannot bind to the {name}: {esc(why)}."]
     game.pass_time(SHORT_REST, "rest")
     if game.over is not None or not char.alive:
         return []
     out = [f"<magic>{first} spends an hour with the {name} and feels it settle, like a hand closing.</>"]
+    if not item.magic.get("identified"):
+        # The bond teaches what the thing is (the hour spent with it is more than the PHB's study asks); what it does
+        # to its bearer when bound is learned in the same moment it strikes.
+        item.magic["identified"] = True
+        out.append(f"<magic>Bound to it, {first} knows it now: {esc(game.tables.items.name(item, False))}.</>")
     for other in list(magicrules.attuned_items(char)):
         if item.magic.get("jealous") and other.uid != item.uid:
             char.attuned.remove(other.uid)
@@ -581,6 +591,8 @@ def dawn(game) -> None:
             for effect in it.magic.get("on", []):
                 if effect in ("sours_potions", "blanks_scrolls"):
                     _spoil(game, c, effect)
+        if c.attuned and magicrules.flag(c, "spoils_holy_water"):
+            _spoil(game, c, "spoils_holy_water")
 
 
 def _spoil(game, char, effect: str) -> None:
@@ -592,13 +604,16 @@ def _spoil(game, char, effect: str) -> None:
             gone.append(it)
         elif effect == "blanks_scrolls" and d.get("use", {}).get("scroll"):
             gone.append(it)
+        elif effect == "spoils_holy_water" and it.def_id == "holy_water":
+            gone.append(it)
     if not gone:
         return
     from realmwalker.rules.inventory import remove_item
 
     for it in gone:
         remove_item(char, it.uid, it.qty)
-    what = "potions have gone flat and lifeless" if effect == "sours_potions" else "scrolls have faded blank"
+    what = {"sours_potions": "potions have gone flat and lifeless", "blanks_scrolls": "scrolls have faded blank",
+            "spoils_holy_water": "holy water is plain water now"}[effect]
     game.say(f"<warn>By morning the {what} in the pack. The artifact is to blame.</>", "warn")
 
 
@@ -612,7 +627,10 @@ def idle(game) -> None:
         last = int(mind.get("content", mind.setdefault("content", game.world.time)))
         if game.world.time - last >= 7 * DAY:
             mind["content"] = game.world.time
-            notice(game, "idle")
+            rng = game.world.rng.child(f"idle/{item.uid}/{game.world.time}")
+            for line in conflict(game, item, _who, rng):  # this one alone has waited a week
+                game.say(f"<magic>{line}</>", "magic")
+            game.cue("danger")
 
 
 # ---------------------------------------------------------------------------- the look

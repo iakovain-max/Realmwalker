@@ -187,12 +187,16 @@ def cursed_and_worn(char, item) -> bool:
                 and (char.slot_of(item.uid) is not None or is_attuned(char, item)))
 
 
-def can_attune(char, item, sheet=None) -> str:
-    """Why this character cannot attune to the item now, or ''."""
+def can_attune(char, item, sheet=None, others=()) -> str:
+    """Why this character cannot attune to the item now, or ''. `others`: everyone else who might hold the bond (an
+    item is bound to one creature at a time; the party carries one pack)."""
     if not needs_attunement(item):
         return "it needs no bond to work"
     if is_attuned(char, item):
         return "already bound to it"
+    holder = next((o for o in others if o is not char and is_attuned(o, item)), None)
+    if holder is not None:
+        return f"it is bound to {holder.name.split()[0]}"
     for other in attuned_items(char):
         if other.magic.get("jealous"):
             return f"the {other.magic.get('title') or 'artifact'} will share you with nothing else"
@@ -206,5 +210,6 @@ def can_attune(char, item, sheet=None) -> str:
     if need == "spellcaster" and sheet is not None and not sheet.is_caster():
         return "only one who casts spells of their own can bind to it"
     if isinstance(need, list) and char.cls not in need:
-        return "it will bind only to " + ", ".join(need[:-1]) + (" or " if len(need) > 1 else "") + need[-1] + "s"
+        names = [n + "s" for n in need]
+        return "it will bind only to " + (", ".join(names[:-1]) + " or " if len(names) > 1 else "") + names[-1]
     return ""

@@ -116,7 +116,8 @@ work": a rule is done only when it is usable in play.
 - **Artifacts**: `make_artifact` rolls data/magic.json "artifact" for the world; the history's lost treasures
   (`past.artifact_item`) are made with it. Rolled again: quest (needs a person), avatar and imprisoned slaad (no
   such creatures yet), spells of levels the game lacks. Flavour-only flaws (no smell, a changed face, withering
-  plants) are words on the card; jewels losing half their worth halves their price when the bearer sells them.
+  plants) are words on the card; jewels losing half their worth halves their price when the bearer sells them;
+  holy water turns plain by morning. Binding to an unknown artifact identifies it (its binding flaws strike then).
 - **Sentient items** (`make_sentient`, `notice`, `conflict`, `check_demands`): tags noticed where they happen
   (`finish_battle`, `encounter_pay`, `encounter_talk`, discoveries, `books.read`, prayer, graves, `law.commit`
   violence, rescues, `reputation.deed` with fame, selling magic); a charmed bearer fights on Auto (`fight.start`).
@@ -132,7 +133,10 @@ work": a rule is done only when it is usable in play.
   over 400 bands per party size and danger: never more than before. Travel pace on `PlayerState.pace` (v); the
   book's Slow maximum (mountains, marsh) only forbids Fast, since the game's terrain costs already slow those lands.
   Attitudes: road bands by alignment (weighted Hostile), let be when not Hostile; Influence DC 15 or their best
-  Intelligence; conversations use the mood as the attitude (advantage/disadvantage instead of DC shifts).
+  Intelligence, eased by 3 and moved by numbers and hurts as before (so an even band is as hard to talk past as
+  before; Fair Chances); conversations use the mood as the attitude (advantage/disadvantage instead of DC shifts).
+  An item is bound to one creature at a time (the party's one pack made a second bond possible; the fresh review
+  caught it).
 - **Left for Part E**: tooltip cards for magic items' new lines, an icon for "bound" and for a sentient thing's
   demand.
 

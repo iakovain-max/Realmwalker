@@ -525,7 +525,8 @@ def take_hoard(game) -> list[str]:
         items, copper = treasure.hoard(game, cr, rng.child("whole"), theme=None, double=True)
         f["copper"] = copper
         f["items"] = [it.to_dict() for it in items]
-    grab = min(f["copper"], max(100, f["copper"] // max(1, f["left"]) * rng.randint(70, 130) // 100))
+    grab = f["copper"] if f["left"] <= 1 else min(f["copper"], max(100, f["copper"] // f["left"] *
+                                                                    rng.randint(70, 130) // 100))
     f["copper"] -= grab
     f["left"] -= 1
     game.leader.money += grab

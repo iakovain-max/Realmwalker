@@ -1,8 +1,8 @@
 """Treasure by the Dungeon Master's Guide (2024), chapters 4 and 7 (Expansion 1, D.2; numbers in data/treasure.json).
 
 - What one creature carries: `individual(game, cr, rng)` (Random Individual Treasure, by Challenge Rating), for the
-  creatures whose Monster Manual treasure says "Individual" (`pocket_money`); a band whose kind keeps a hoard
-  instead carries one purse, its leader's.
+  creatures whose Monster Manual treasure says "Individual" (set when they are spawned, rules/creatures.py); a band
+  whose kind keeps a hoard instead carries one purse, its leader's (`band_purse`).
 - A hoard: `hoard(game, cr, rng, theme=)` (Random Treasure Hoard): money by CR, turned into what the theme likes
   (Arcana gems, Armaments coins and trade bars, Implements coins, bars and trade goods, Relics art objects), and
   magic items by the Magic Item Rarities table (read by the hoard's CR, since enemies scale with the land and not
@@ -19,6 +19,7 @@ from __future__ import annotations
 
 from realmwalker.core import dice
 from realmwalker.core.rng import RNG
+from realmwalker.rules.creatures import individual_treasure, keeps
 from realmwalker.rules.items import Item
 
 BOOKS = [("old_map", 4), ("found_letter", 3), ("history_book", 2), ("lore_book", 2)]
@@ -50,28 +51,7 @@ def _gp(game, coin: str) -> int:
 # ---------------------------------------------------------------------------- money
 def individual(game, cr: float, rng: RNG) -> int:
     """Random Individual Treasure: copper for one creature of this Challenge Rating."""
-    _lo, _hi, expr, times, coin = _band(spec(game)["individual"], cr)
-    return dice.roll(expr, rng).total * int(times) * _gp(game, coin)
-
-
-def keeps(cdef: dict) -> list[str]:
-    """The creature's Monster Manual treasure, in lower case ("individual", a theme, "any", "none")."""
-    return [t.lower() for t in cdef.get("treasure", ["none"])]
-
-
-def pocket_money(game, creatures: list, rng: RNG) -> None:
-    """Set what each creature of a band carries (DMG 2024): Individual treasure for those whose block says so; a band
-    of a kind that keeps a hoard carries one purse, its leader's; beasts and the dead carry nothing."""
-    defs = [game.tables.creatures[c.def_id] for c in creatures]
-    purse = None
-    for c, d in zip(creatures, defs):
-        t = keeps(d)
-        c.money = individual(game, float(d.get("cr", 0)), rng) if "individual" in t else 0
-        if "individual" not in t and "none" not in t and t and (purse is None or float(d.get("cr", 0)) >
-                                                               float(game.tables.creatures[purse.def_id].get("cr", 0))):
-            purse = c
-    if purse is not None and purse.money == 0:
-        purse.money = individual(game, float(game.tables.creatures[purse.def_id].get("cr", 0)), rng)
+    return individual_treasure(game.tables, cr, rng)
 
 
 def theme_of(game, def_ids: list[str], rng: RNG) -> str:
@@ -267,9 +247,3 @@ def roll(game, tier: int, rng: RNG, *, grave: bool = False, cr: float | None = N
     if cr is None:
         cr = max(0.0, tier - 1.5)
     return stash(game, cr, tier, rng, grave=grave, theme=theme)
-
-
-def quest_reward(game, rng: RNG) -> tuple[list[Item], int]:
-    """DMG 2024: a quest's reward is a roll on the hoard table with the characters' level as the CR."""
-    level = max((c.level for c in game.party if c.alive), default=1)
-    return hoard(game, level, rng)

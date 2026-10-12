@@ -65,6 +65,11 @@ def best(game, skill: str) -> tuple[Character, int]:
 def check(game, skill: str, dc: int, bonus: int = 0, tag: str = "", mode: str = "") -> tuple[bool, str]:
     who, b = best(game, skill)
     b += bonus
+    if who.attuned and game.tables.rules["skills"][skill]["ability"] in ("str", "con"):
+        from realmwalker.rules import magic
+
+        if "item_weak_body" in magic.traits(who):  # an artifact's flaw, out of a fight as in one
+            mode = "disadvantage" if mode != "advantage" else ""
     rng = game.world.rng.child(f"camp/{tag}/{game.world.time}")
     roll = dice.d20(rng, advantage=mode == "advantage", disadvantage=mode == "disadvantage").natural
     name = game.tables.rules["skills"][skill]["name"]

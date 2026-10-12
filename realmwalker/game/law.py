@@ -103,10 +103,13 @@ def commit(game, cid: str, *, victim=None, value: int = 0, witnesses=None, repor
     """The player breaks the law. Returns the crime record (None where no lord's law runs)."""
     from realmwalker.game.people import change_disposition
 
-    if cid in ("assault", "murder"):
+    if cid in ("assault", "murder", "heresy") or (cid == "theft" and _in_a_temple(game)):
         from realmwalker.game import magic_items
 
-        magic_items.notice(game, "violence")
+        if cid in ("assault", "murder"):
+            magic_items.notice(game, "violence")
+        if cid == "heresy" or _in_a_temple(game):
+            magic_items.notice(game, "crime_holy")  # a templar's anger
     realm, s = jurisdiction(game)
     if realm is None:
         return None
@@ -855,3 +858,12 @@ def put_on_disguise(game, char) -> str:
     game.pass_time(20)
     word = "a stranger even to yourself" if quality >= 18 else "passable" if quality >= 12 else "not very convincing"
     return f"You paint, powder and pad yourself into someone else: {word}. <dim>(Disguise {quality}; it lasts half a day.)</>"
+
+
+def _in_a_temple(game) -> bool:
+    """Whether the player stands inside a temple on a close-up map (what a templar's sacred ground is)."""
+    lm = game.local
+    if lm is None or not hasattr(lm, "building_at"):
+        return False
+    b = lm.building_at(game.player.lx, game.player.ly)
+    return b is not None and b.kind == "temple"

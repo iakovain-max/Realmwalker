@@ -115,6 +115,12 @@ def start_battle(game, creatures: list[Creature], intro: str, *, surprised: str 
     return battle
 
 
+def markup_escape(text: str) -> str:
+    from realmwalker.core.textgen import escape_markup
+
+    return escape_markup(text)
+
+
 def _magic_at_the_start(game, battle: Battle) -> None:
     """What magic items do to their bearers as a fight begins: one a sentient thing has seized fights as it wills (on
     Auto); one bound to an artifact that someone else is wearing is blind or deaf (DMG 2024 artifact flaws). The party
@@ -128,7 +134,7 @@ def _magic_at_the_start(game, battle: Battle) -> None:
             continue
         if magic_items.seized(game, c):
             f.auto = True
-            game.say(f"<magic>{c.name.split()[0]} fights as the thing bound to them wills.</>", "magic")
+            game.say(f"<magic>{markup_escape(c.name.split()[0])} fights as the thing bound to them wills.</>", "magic")
         for it in magic.attuned_items(c):
             elsewhere = any(o is not c and o.slot_of(it.uid) is not None for o in game.party)
             if not elsewhere:
@@ -496,6 +502,10 @@ def encounter_talk_dc(game) -> tuple[int | None, str]:
     defs = [game.tables.creatures[c.def_id] for c in enc.creatures]
     if any(d["kind"] == "beast" for d in defs):
         return None, "animals do not bargain"
+    from realmwalker.game.encounters import _hated
+
+    if _hated(game, enc.creatures):
+        return None, "they know what one of you carries"
     if all(d.get("morale") in FEARLESS for d in defs):
         return None, "they are past words"
     party = sum(1 for c in game.party if c.alive)

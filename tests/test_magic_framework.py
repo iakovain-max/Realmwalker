@@ -260,3 +260,34 @@ def test_saving_keeps_the_bonds(game, tmp_path):
     assert r.uid in loaded.leader.attuned
     got = loaded.leader.item(art.uid)
     assert got.magic["destroy"] == art.magic["destroy"]
+
+
+def test_one_bond_per_thing_even_with_one_pack(game):
+    from realmwalker.rules.creation import CharacterBuilder  # noqa: F401  (a second member shares the pack)
+
+    c = game.leader
+    r = ring(game)
+    magic_items.attune(game, c, r)
+    other = copy.deepcopy(c)
+    other.name = "Second Member"
+    other.attuned = []
+    other.inventory = c.inventory
+    game.party.append(other)
+    out = magic_items.attune(game, other, r)
+    assert "bound to" in out[0] and r.uid not in other.attuned
+
+
+def test_an_aligned_thing_is_pleased_by_law_against_chaos(game):
+    it = sentient_sword(game, purpose="aligned")
+    it.magic["sentient"]["alignment"] = "lawful neutral"
+    assert magic_items.notice(game, "victory", creatures=[{"type": "humanoid", "alignment": "chaotic evil"}])
+    assert not magic_items.notice(game, "victory", creatures=[{"type": "beast", "alignment": "unaligned"}])
+
+
+def test_binding_an_unknown_artifact_names_it(game):
+    c = game.leader
+    it = artifact(game, avoid=("shock", "deadly_bond", "drains"))
+    it.magic["identified"] = False
+    it = add_existing(c, game.tables.items, it)
+    magic_items.attune(game, c, it)
+    assert it.magic["identified"]

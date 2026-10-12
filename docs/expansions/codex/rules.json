@@ -270,7 +270,7 @@
     {"id": "rule:dmg_consequences", "name": "Consequences", "book": "dmg", "page": 34, "kind": "section", "dlc": 1, "status": "todo", "game": [], "note": "Success at a cost, degrees of failure and success."},
     {"id": "rule:dmg_improvising_damage", "name": "Improvising Damage", "book": "dmg", "page": 34, "kind": "section", "dlc": 1, "status": "todo", "game": [], "note": ""},
     {"id": "rule:dmg_running_social_interaction", "name": "Running Social Interaction", "book": "dmg", "page": 36, "kind": "section", "dlc": 1, "status": "todo", "game": [], "note": ""},
-    {"id": "rule:dmg_attitude", "name": "Attitude", "book": "dmg", "page": 36, "kind": "section", "dlc": 1, "status": "done", "game": ["encounter.influence_mode", "dialogue.Conversation.attitude"], "note": ""},
+    {"id": "rule:dmg_attitude", "name": "Attitude", "book": "dmg", "page": 36, "kind": "section", "dlc": 1, "status": "adapted", "game": ["encounter.influence_mode", "dialogue.Conversation.attitude"], "note": "advantage with the Friendly, disadvantage with the Hostile, as written; the Influence DC (15 or their best Intelligence) is eased by 3 and then moved by numbers, being seen first and hurts, so that talking past an even band is as hard as before Part D (Fair Chances)"},
     {"id": "rule:dmg_running_exploration", "name": "Running Exploration", "book": "dmg", "page": 37, "kind": "section", "dlc": 1, "status": "todo", "game": [], "note": ""},
     {"id": "rule:dmg_tracking_time", "name": "Tracking Time", "book": "dmg", "page": 38, "kind": "section", "dlc": 1, "status": "todo", "game": [], "note": ""},
     {"id": "rule:dmg_actions_in_exploration", "name": "Actions in Exploration", "book": "dmg", "page": 38, "kind": "section", "dlc": 1, "status": "todo", "game": [], "note": ""},
