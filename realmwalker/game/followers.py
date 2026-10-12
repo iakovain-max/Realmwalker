@@ -213,7 +213,6 @@ def dreamer_choices(conv) -> list:
 
 def tell_of_work(conv, qid, lie: bool) -> None:
     from realmwalker.game import quests
-    from realmwalker.game.dialogue import MOOD_DC
     from realmwalker.game.people import change_disposition
 
     game, npc = conv.game, conv.npc
@@ -229,7 +228,7 @@ def tell_of_work(conv, qid, lie: bool) -> None:
     else:
         conv.you_say(f"[Persuasion] You tell {npc.first_name} about {quests.title(game, q)}: {reward}, and a fair share "
                      f"of it for whoever comes along.")
-    ok, roll = conv.check("deception" if lie else "persuasion", (LIE_DC if lie else DREAM_DC) + MOOD_DC[npc.mood()])
+    ok, roll = conv.check("deception" if lie else "persuasion", LIE_DC if lie else DREAM_DC)
     conv.note(roll)
     if not ok:
         change_disposition(npc, -10 if lie else -3)
@@ -319,14 +318,13 @@ def restless_choice(conv) -> list:
 
 
 def persuade(conv) -> None:
-    from realmwalker.game.dialogue import MOOD_DC
     from realmwalker.game.people import change_disposition
 
     game, npc = conv.game, conv.npc
     rng = conv.rng
     npc.flags["restless_day"] = game.moment.total_days
     conv.you_say(f"[Persuasion] There is more to the world than {conv.settlement.name}. Come with me.")
-    ok, roll = conv.check("persuasion", RESTLESS_DC + MOOD_DC[npc.mood()])
+    ok, roll = conv.check("persuasion", RESTLESS_DC)
     conv.note(roll)
     if not ok:
         change_disposition(npc, -3)

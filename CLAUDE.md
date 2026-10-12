@@ -211,9 +211,15 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   {(x, y): trap/lock/chest/secret/captive} and `meta` {site, level, depth, style, rooms, hidden, boss, name}.
   `game/dungeon.py` drives them (descend/ascend, light from `game.lit`, search, unlock, bump, chests, the hoard).
   A level is built and populated once and then kept in the save.
-- Magic items: `Item.magic` {rarity, props, identified, cursed, curse, title, story, source, value}; effects are
-  read through `rules/magic.total(char, kind, **match)`. Code picks the properties within a budget
-  (`game/magic_items.make`); built-in words name it and tell its history from the world's past.
+- Magic items: `Item.magic` {rarity, kind, props, attune, identified, cursed, curse, title, story, source, value,
+  artifact props, sentient, suppressed}; which properties work is `rules/magic.active(char)` (attunement:
+  `Character.attuned`, three at most); effects are read through `rules/magic.total(char, kind, **match)`, `traits`
+  (kernel trait ids) and `flag`. Code picks the properties within a budget (`game/magic_items.make`, `make_artifact`,
+  `make_sentient`); built-in words name it and tell its history from the world's past. Charges come back at dawn
+  (`magic_items.tick` from `pass_time`); a sentient thing hears `magic_items.notice(game, tag)`.
+- Treasure (DMG 2024, data/treasure.json): `game/treasure` (hoards by CR and theme, the 20 random tables, stashes);
+  pocket money from the MM treasure on stat blocks (`rules/creatures.individual_treasure`). Encounters:
+  `rules/encounter` (XP budgets, `counts_for`, attitudes, travel pace; `spawn_group(budget=)`); `PlayerState.pace`.
 - Quests (`game/quests.py`) are plain dicts in `game.quests` (saved with the character) made from
   `data/quests.json` templates and tied to real things: a faction, a site, a settlement, an npc, an artifact.
   Offers live in `Town.flags["offers"]` (one per person, a new one about once a week). Progress is noticed where

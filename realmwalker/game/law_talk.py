@@ -250,14 +250,12 @@ def hush(conv, pay: bool) -> None:
     game = conv.game
     npc = conv.npc
     crimes = law.unreported_seen_by(game, npc)
-    sheet = game.sheet()
-    rng = conv.rng
     worst = max(law.crime_def(game, r["crime"])["severity"] for r in crimes)
     if pay:
         cost = hush_price(game, npc)
         conv.you_say("About what you saw. Perhaps this will help you forget.")
         dc = 8 + worst * 2 + (4 if "honest" in npc.traits else 0) - (4 if "greedy" in npc.traits else 0)
-        roll = dice.d20(rng).natural + sheet.skill_bonus("persuasion")
+        roll = conv.influence_roll("persuasion")
         if roll >= dc:
             law.take_money(game, cost)
             npc.purse += cost
@@ -270,7 +268,7 @@ def hush(conv, pay: bool) -> None:
     else:
         conv.you_say("You saw nothing. Understand?")
         dc = 10 + worst * 2 + (-3 if "nervous" in npc.traits else 0) + (4 if "brave" in npc.traits else 0)
-        roll = dice.d20(rng).natural + sheet.skill_bonus("intimidation")
+        roll = conv.influence_roll("intimidation")
         if roll >= dc:
             law.silence(npc, crimes)
             change_disposition(npc, -15)

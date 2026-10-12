@@ -1189,7 +1189,11 @@ class Battle:
 
     def check(self, f: Fighter, skill: str, dc: int, why: str = "") -> bool:
         """An ability check in a fight: a d20 and the skill (exhaustion counted in it) against the DC, in the dice log."""
-        roll = dice.d20(self.rng).natural
+        ability = self.t.rules["skills"].get(skill, {}).get("ability", skill)
+        ctx = trs.Ctx(self, f, ability=ability)
+        modes = {mode for mode, _ in trs.modifiers(f, "check", ctx)}
+        adv, dis = "advantage" in modes, "disadvantage" in modes
+        roll = dice.d20(self.rng, advantage=adv and not dis, disadvantage=dis and not adv).natural
         bonus = f.skill(skill)
         self.dice_say(f"{why or skill.title()} ({f.name}): {roll} {'+' if bonus >= 0 else '-'} {abs(bonus)} = "
                       f"{roll + bonus} vs DC {dc}")
@@ -1424,7 +1428,12 @@ class Battle:
             return
         if not self._spend(f, bonus):
             return
-        roll = dice.d20(self.rng).natural
+        stink = False
+        if f.char is not None and f.char.attuned:
+            from realmwalker.rules import magic
+
+            stink = magic.flag(f.char, "stench")  # an artifact's sour stink gives them away
+        roll = dice.d20(self.rng, disadvantage=stink).natural
         total = roll + f.skill("stealth")
         self.dice_say(f"Stealth ({f.name}): {roll} {signed_mod(f.skill('stealth'))} = {total}")
         seen = [e for e in self.enemies_of(f) if e.standing and e.passive() >= total and self.can_see(e, f)]
@@ -1586,7 +1595,7 @@ class Battle:
         quality = int(self.t.items.qualities.get(it.quality, {}).get("attack", 0))
         from realmwalker.rules import magic
 
-        enchant = magic.item_bonus(it)
+        enchant = magic.item_bonus(it, char=f.char)
         bonus = s.mod(ability) + prof + quality + s.attack_condition(ranged) + enchant + magic.total(f.char, "attack")
         if ranged and f.char.fighting_style == "archery":
             bonus += 2
@@ -1776,8 +1785,9 @@ class Battle:
         # Great Weapon Fighting: reroll ones and twos once.
         if att.char and att.char.fighting_style == "great_weapon" and opt.is_melee and "two_handed" in opt.properties:
             amount = sum(r if r > 2 else self.rng.randint(1, sides) for r in rolled.rolls) + flat
-        amount += events.emit(self, "attack_damage", actor=att, target=target, opt=opt, crit=crit,
-                              advantage=adv and not dis, sides=sides, extra=0).extra  # Sneak Attack, Divine Strike...
+        dmg_ev = events.emit(self, "attack_damage", actor=att, target=target, opt=opt, crit=crit,
+                             advantage=adv and not dis, sides=sides, extra=0, typed=[])
+        amount += dmg_ev.extra  # Sneak Attack, Divine Strike...
         self._spend_use(att, opt)
         self._hit(att, target, max(1, amount), opt.damage_type, crit=crit, weapon=opt.name,
                   bite=opt.extra.get("wound") == "bite", claws=opt.extra.get("wound") == "cut" and att.creature is not None and opt.name == "claws")
@@ -1787,6 +1797,9 @@ class Battle:
             if target.active or target.state == "down":
                 self._hit(att, target, dice.roll(e["damage"], self.rng, double_dice=crit).total, e["type"], crit=False,
                           weapon=opt.name)
+        for extra_amount, extra_type in dmg_ev.typed:  # damage of its own kind from a power (an artifact's force)
+            if target.active or target.state == "down":
+                self._hit(att, target, extra_amount, extra_type, crit=False, weapon=opt.name)
         if opt.extra.get("on_hit") and target.active:
             self._block_effects(att, target, opt, opt.extra["on_hit"])
         if opt.extra.get("disease") and target.char and self.rng.chance(float(opt.extra.get("disease_chance", 1.0))):
@@ -2351,6 +2364,16 @@ class Battle:
         foes = [f for f in self.side(FOE) if f.active]
         if not foes:
             return None
+        from realmwalker.rules import magic
+
+        for p in self.side(PARTY):
+            if p.char is None or not p.char.attuned:
+                continue
+            if approach == "calm" and magic.flag(p.char, "beasts_hate"):
+                return None  # an artifact's flaw: no beast can abide its bearer
+            hated = magic.flag_value(p.char, "hated_by")
+            if hated and any(f.kind == hated for f in foes):
+                return None
         if all(f.morale_type in FEARLESS for f in foes):
             return None
         if approach == "calm":
@@ -2361,10 +2384,21 @@ class Battle:
             return None
         party = [f for f in self.side(PARTY) if f.standing]
         hurt = sum(1 for f in foes if f.hp < f.max_hp) / len(foes)
-        dc = 12 + 2 * (len(foes) - len(party)) - int(hurt * 4)
+        from realmwalker.rules import encounter
+
+        # PHB 2024 Influence: 15 or their best Intelligence, whichever is higher; numbers and hurts move it.
+        dc = encounter.influence_dc(self.t, [f.creature.def_id for f in foes if f.creature is not None]) - 3 \
+            + 2 * (len(foes) - len(party)) - int(hurt * 4)
         if approach == "intimidate":
             dc += 2 if len(foes) > len(party) else -1
         return max(5, min(25, dc))
+
+    def foe_attitude(self) -> str:
+        """In a fight the enemy is Hostile (Influence at a disadvantage), until most of them are bloodied: then they
+        are no longer set on it (Indifferent)."""
+        foes = [f for f in self.side(FOE) if f.active]
+        bloodied = sum(1 for f in foes if f.hp * 2 <= f.max_hp)
+        return "indifferent" if foes and bloodied * 2 >= len(foes) else "hostile"
 
     def do_parley(self, f: Fighter, approach: str) -> None:
         dc = self.parley_dc(approach)
@@ -2375,9 +2409,14 @@ class Battle:
             self.say("They are past listening.", "warn")
             self._after_action(f)
             return
-        roll = dice.d20(self.rng).natural
+        from realmwalker.rules import encounter
+
+        mode = encounter.influence_mode(self.t, self.foe_attitude())
+        roll = dice.d20(self.rng, advantage=mode == "advantage", disadvantage=mode == "disadvantage").natural
         bonus = f.skill(skill)
-        self.dice_say(f"{self.t.rules['skills'][skill]['name']} ({f.name}): {roll} {signed_mod(bonus)} = {roll + bonus} vs DC {dc}")
+        how = {"advantage": " (adv)", "disadvantage": " (dis: hostile)"}.get(mode, "")
+        self.dice_say(f"{self.t.rules['skills'][skill]['name']}{how} ({f.name}): {roll} {signed_mod(bonus)} = "
+                      f"{roll + bonus} vs DC {dc}")
         lines = {"persuade": "'There's no profit in this. Walk away, and so will we.'",
                  "intimidate": "'Drop it, or I'll open you like a sack of grain.'",
                  "calm": f"{f.the_name} speaks low and steady, and makes no sudden moves."}
@@ -2677,7 +2716,7 @@ class Battle:
 
         for it, p in magic.charges(f.char):
             if p["spell"] in self.t.spells:
-                left = int(p.get("left", p.get("value", 1)))
+                left = magic.charges_left(p)
                 ok, why = self._casting_time_ok(f, self.t.spells[p["spell"]])
                 out.append((f"charge:{it.uid}:{p['spell']}", left > 0 and ok, why if left > 0 else "no charges left until dawn"))
         if self.antimagic(f.cells):
@@ -2844,11 +2883,12 @@ class Battle:
 
             charged = next((p for p in magic.props(item) if p.get("kind") == "charges" and p.get("spell") == sid),
                            None) if item is not None else None
-            if charged is None or int(charged.get("left", charged.get("value", 1))) <= 0:
+            if charged is None or magic.charges_left(charged) <= 0:
                 self.say("It has no power left until dawn.", "warn")
                 return False
-            charged["left"] = int(charged.get("left", charged.get("value", 1))) - 1
-            self.say(f"{f.the_name} calls on the power in the {self.t.items.name(item, False)}.", "magic")
+            spent = magic.spend_charge(charged, self.rng)
+            self.say(f"{f.the_name} calls on the power in the {self.t.items.name(item, False)}"
+                     f"{'' if spent or charged.get('at_will') else ', and the power stays in it'}.", "magic")
         if sid.startswith("scroll:"):
             _, uid, sid = sid.split(":", 2)
             scroll = f.char.item(int(uid))
@@ -3057,6 +3097,12 @@ class Battle:
     def _heal(self, f: Fighter, amount: int) -> None:
         if f.state == "dead":
             return
+        if f.char is not None and f.char.attuned:
+            from realmwalker.rules import magic
+
+            if magic.flag(f.char, "no_healing"):
+                self.say(f"The healing slides off {f.the_name}: the artifact will not allow it.", "warn")
+                return
         f.hp = min(f.max_hp, f.hp + amount)
         self._event("heal", to=f.id, amount=amount)
         if f.state == "down" and f.hp > 0:

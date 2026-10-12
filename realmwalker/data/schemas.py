@@ -200,6 +200,15 @@ RULES = Obj(
         "hazards": Obj({"falling": Obj({"feet_per_die": Int(min=1, max=100), "die": Int(min=2, max=20), "max_dice": Int(min=1, max=100)}),
                         "burning": Obj({"damage": Str(max_len=12), "type": Str(max_len=20)}),
                         "breath": Obj({"minutes": Int(min=0, max=60), "least_seconds": Int(min=0, max=600)})}, optional=True),
+        "encounters": Obj({"budget": List(List(Int(min=0, max=100000), min_items=3, max_items=3), min_items=20),
+                           "danger_level": List(Int(min=1, max=20), min_items=11), "odds": Map(Int(min=0, max=100)),
+                           "deadly": Float(min=1, max=10), "most_extra": Float(min=1, max=5)}, optional=True),
+        "travel_pace": Obj({"paces": Map(Obj({"name": Str(max_len=20), "time": Float(min=0.1, max=5),
+                                              "passive": Int(min=-10, max=10)}, strict=False), min_items=3),
+                            "max": Map(Str(choices=["fast", "normal", "slow"]))}, optional=True),
+        "attitudes": Obj({"influence": Map(Str(choices=["advantage", "none", "disadvantage"])),
+                          "start": Map(Map(Int(min=0, max=100))), "moods": Map(Str(max_len=20)),
+                          "default_dc": Int(min=1, max=30)}, optional=True),
         "study": Obj({"skills": Map(Str(max_len=30)),
                       "dc": Obj({"base": Int(min=1, max=30), "per_cr": Float(min=0, max=5), "max": Int(min=1, max=40)})},
                      optional=True),
@@ -392,7 +401,7 @@ CREATURE = Obj(
                                         "solo"]), "range": Int(min=0, max=600, optional=True),
                    "opens_with": Str(max_len=40, optional=True)}, optional=True),
         "names": Str(max_len=30, optional=True),
-        "gear": List(List(Any_(), min_items=2, max_items=2)), "money": Any_(optional=True),
+        "gear": List(List(Any_(), min_items=2, max_items=2)),
         "loot": List(List(Any_(), min_items=2, max_items=2), optional=True),
         "butcher": List(List(Any_(), min_items=2, max_items=2), optional=True),
         "vulnerable": List(Str(max_len=20), optional=True), "immune": List(Str(max_len=20), optional=True),
@@ -510,6 +519,8 @@ STATBLOCK = Obj(
         "type": Str(max_len=20), "ac": Int(min=1, max=30), "initiative": Int(min=-10, max=30), "hp": Str(max_len=16),
         "speed": Map(Any_()), "abilities": Obj({a: Int(min=1, max=30) for a in ABILITY_IDS}),
         "cr": Float(min=0, max=30), "xp": Int(min=0, max=200000), "pb": Int(min=2, max=9),
+        "treasure": List(Str(choices=["any", "individual", "arcana", "armaments", "implements", "relics", "none"]),
+                         optional=True),
         "actions": List(Obj({"id": Str(max_len=40), "name": Str(max_len=60), "kind": Str(max_len=20)}, strict=False)),
     },
     strict=False,
@@ -995,10 +1006,48 @@ MAGIC = Obj(
             "emblem": List(List(Any_(), min_items=2, max_items=2)), "glow_props": Map(Str(max_len=20)),
             "glow_chance": Map(Float(min=0, max=1)), "glows": word_list(1, 20), "metals": word_list(1, 20),
             "cloths": word_list(1, 20), "emblems": word_list(1, 20)}),
+        "attune_props": word_list(0, 20), "attune_from": Str(max_len=20),
+        "artifact": Obj({"count": Map(List(Int(min=0, max=4), min_items=2, max_items=2)),
+                         "minor_good": List(List(Any_(), min_items=3, max_items=3), min_items=1),
+                         "major_good": List(List(Any_(), min_items=3, max_items=3), min_items=1),
+                         "minor_bad": List(List(Any_(), min_items=3, max_items=3), min_items=1),
+                         "major_bad": List(List(Any_(), min_items=3, max_items=3), min_items=1),
+                         "properties": Map(Obj({"text": Str(max_len=200)}, strict=False), min_items=1),
+                         "hated_types": word_list(1, 20), "destroy": word_list(1, 300)}),
+        "sentient": Obj({"chance": Map(Float(min=0, max=1)), "alignment": List(List(Any_(), min_items=3, max_items=3)),
+                         "communication": List(List(Any_(), min_items=3, max_items=3)),
+                         "senses": List(List(Any_(), min_items=3, max_items=3)),
+                         "purposes": Map(Obj({"name": Str(max_len=30), "text": Str(max_len=200),
+                                              "pleased": word_list(1, 30), "angered": word_list(1, 30)})),
+                         "protects": word_list(1, 80), "demands": Map(Str(max_len=200)),
+                         "voices": Map(Map(word_list(1, 200))), "withheld": Str(max_len=200),
+                         "seized": Str(max_len=200), "freed": Str(max_len=200), "satisfied": Str(max_len=200)}),
     }
 )
 
 DATA_FILES.update({"magic.json": MAGIC})
+
+# ---------------------------------------------------------------------------- treasure (Expansion 1, DMG 2024)
+_BAND = List(Any_(), min_items=5, max_items=5)
+TREASURE = Obj(
+    {
+        "coins": Map(Int(min=1, max=10000)),
+        "individual": List(_BAND, min_items=1), "hoard": List(_BAND, min_items=1),
+        "rarity": List(List(Any_(), min_items=3, max_items=3), min_items=1),
+        "themes": Map(Obj({"money": word_list(1, 20), "kinds": word_list(1, 20)}), min_items=4),
+        "gems": Map(Obj({"item": Str(max_len=40), "names": word_list(1, 60)}), min_items=1),
+        "art": Map(Obj({"item": Str(max_len=40), "names": word_list(1, 80)}), min_items=1),
+        "bars": List(List(Any_(), min_items=2, max_items=2), min_items=1),
+        "goods": List(List(Any_(), min_items=2, max_items=2), min_items=1),
+        "makers": Map(Map(Obj({"item": Str(max_len=40, optional=True), "scroll": Bool(optional=True),
+                               "kind": Str(max_len=20, optional=True), "props": List(Map(Any_()), optional=True),
+                               "attune": Bool(optional=True)}))),
+        "reroll": Int(min=0, max=50),
+        "magic_scale": List(Float(min=0, max=5), min_items=3, max_items=3),
+        "tables": Map(List(List(Any_(), min_items=4, max_items=4), min_items=1), min_items=20),
+    }
+)
+DATA_FILES.update({"treasure.json": TREASURE})
 
 # ---------------------------------------------------------------------------- quests (M8)
 QUEST_TEMPLATES = ("bounty", "clear_lair", "hunt_beast", "deliver", "retrieve", "rescue", "collect_debt",

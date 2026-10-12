@@ -38,6 +38,78 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-10-12 (late night): Dice & Destiny part D — treasure, magic items, encounters — branch `dlc/01-dice-destiny`
+
+**Start a new world**: saves from before this part no longer load (the game says so kindly; the files stay).
+
+**What is different when you play**
+- **Magic things must be bound to someone.** Anything of real power (rare or better, or that raises an ability, a
+  save, casts spells, wards off fire...) works only for the one *attuned* to it: in the pack, **a** spends an hour
+  binding the member whose page it is (and an hour to end it). Nobody can hold more than three such bonds. A plain
+  +1 sword or shield needs none. A cursed thing shows itself when you bind to it (or put it on), and will not let go
+  until a temple lifts the curse. A focus that casts spells binds only to someone who casts spells of their own.
+- **Finding out what a thing is**: **k** in the pack spends an hour handling it and tells you what it does, every
+  time, no roll; but never whether it is cursed (a priest and Identify do not tell you that either).
+- **Charges come back at dawn**, some of them (a wand rolls its dice), no longer all of them with a long rest.
+- **Artifacts.** The lost treasures of a world's history (the chests on the deepest level of the right ruin) are
+  now true artifacts: a legendary thing's powers, plus one or two lesser gifts and a great one rolled for this world
+  (a skill, warding against poison or fear, a resistance, a spell it casts, +1 armour, +2 to an ability, wounds
+  closing every turn, a jolt of force on every hit, ten feet more speed, warding of the senses), and one or two
+  flaws (weak arms or will, double harm from poison or from everything, blind or deaf whenever someone else wears
+  it, a stink that ruins creeping, torches that go out under the ground, companions who cannot rest near you,
+  beasts that cannot be calmed, a kind of creature that will never talk to you, potions going flat, scrolls going
+  blank, no healing at all...); some bite when you bind to them (an ability lost for good, 8d10 of pain, a chance
+  of death). Each says the one way this world remembers it can be destroyed.
+- **Some things are awake.** A very rare thing may have a mind (more often a legendary one, half of all
+  artifacts): Intelligence, Wisdom, Charisma, a nature, a way of making itself felt (feelings, speech, a voice in the
+  head) and a purpose: a hatred of one kind of creature, a love of blood or of fame, a hunger for lore or for its
+  maker, a cause, a people to protect, a god to serve. It is pleased by what serves that purpose and says so; go
+  against it (run from a fight, buy your way past robbers, harm those it protects, desecrate graves...) and its
+  bearer must hold firm (Charisma) or it makes a demand: keep it on you, get rid of something it hates, hand it to
+  someone else, or serve its purpose within a week. Ignore it and it withholds its power; ignore it longer and it
+  takes hold of its bearer for hours, and in any fight then they fight as it wills (on Auto).
+- **Treasure by the Dungeon Master's Guide.** Creatures carry what their kind carries (a bandit a few gold
+  pieces, a wolf nothing; a gang that keeps a hoard at home has one purse on the road, its captain's). The best
+  chest on the deepest level of a ruin or cave is now the hoard of whoever rules it, sized by how strong they are
+  and in the form their kind likes: gems for the arcane, coin and silver bars for warriors, trade goods for
+  goblin-kind, old art for cultists and the like. There are 52 kinds of gemstone and 50 art objects to find. The
+  magic in a hoard is rolled on the book's own tables by theme and rarity; things the game does not have yet are
+  rolled again and then made as one of Realmwalker's own, so treasure grows richer as the expansions come. The
+  world's Magic setting scales how much magic there is. Ordinary chests hold smaller stashes; coffins hold art.
+- **Money is the book's now**, so there is more of it than before (prices were always the book's).
+- **Cities where mages keep a house sell a minor magic thing or two** (where the lord's law allows magic).
+- **Great works are rewarded better**: after a bounty, a rescue, a lost treasure brought back and the like, a
+  lord, priest or headman may add a magic thing from their strongroom to the coin they promised.
+- **Bands are sized by the book's experience budget** for the country they live in (they do not grow with you:
+  some fights should still be avoided). Measured against before, parties of three meet the same bands, a lone
+  traveller sometimes fewer in quiet country, never more. The "how dangerous they look" line now uses the book's
+  difficulty against your real party.
+- **Travel pace (v on the map)**: Fast covers ground in three quarters of the time but you notice less, lose your
+  way more easily and cannot slip away quietly; Slow takes half as long again but you notice more, keep your
+  bearings and slip away quietly. Mountains and marsh are slow going and allow no Fast pace; a road allows one step
+  faster. The action bar shows the pace.
+- **Moods.** Not every band on the road wants a fight: some are wary but not hostile, and you can **let them be (l)**
+  and go on; now and then one is friendly. Talking your way past is harder with a hostile band and easier with a
+  friendly one (the 2024 rule: DC 15 or their wits, with advantage or disadvantage by their mood), and in a fight
+  the enemy listens more once most of them are bloodied. In towns, a person's mood does the same for every check in
+  a conversation (instead of making it harder or easier by a number).
+
+**How to test**: start a new world; find a ruin with a lost treasure in it (books of lore name them) to see an
+artifact; in the pack try **k** and **a**; on the map press **v** a few times; travel in dangerous country and meet a
+band that is only wary.
+
+**What could not be checked**: how the new amounts of money feel over a long game; the sentient things' lines and
+how often they speak are by reasoning, not by play. Tell me if they talk too much or too little.
+
+**Anything assumed (choices made)**: the book's hoard row for CR 11-16 prints a multiplier ten times too big for
+its own average; the average was kept. Artifact properties needing a person to set a quest or a creature not in the
+game yet are rolled again. A village cannot pay a dragon's hoard for a delivered letter, so quest coin stays as
+the terms say and only the great works add a magic gift. Bands keep the old thinning for a lone traveller (a first
+version sized purely by the book was much deadlier).
+
+**Balance**: `tools/balance.py` bands hold; the encounter sizes were measured old against new over 400 bands per
+party and danger.
+
 ### Local session, 2026-10-12 (night): Dice & Destiny part C — enemies that think, and more ways to move — branch `dlc/01-dice-destiny`
 
 **What is different when you play**

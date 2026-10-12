@@ -388,6 +388,9 @@ def arrive(game) -> None:
         from realmwalker.game.reputation import deed
 
         deed(game, f"saw {wd.name}", {}, fame=fame)
+    from realmwalker.game import magic_items
+
+    magic_items.notice(game, "discovery")
     if game.party[1:]:
         from realmwalker.game.companions import react
 

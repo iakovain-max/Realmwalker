@@ -341,6 +341,7 @@ def _check_faction_refs(files: dict[str, Any]) -> list[str]:
     errors.extend(_check_companion_refs(files))
     errors.extend(_check_unique_refs(files))
     errors.extend(_check_magic_refs(files))
+    errors.extend(_check_treasure_refs(files))
     errors.extend(_check_quest_refs(files))
     return errors
 
@@ -395,6 +396,17 @@ def _check_magic_refs(files: dict[str, Any]) -> list[str]:
         if spells and sid not in spells:
             errors.append(f"data/magic.json: charge_spells names unknown spell {sid!r}.")
     return errors
+
+
+def _check_treasure_refs(files: dict[str, Any]) -> list[str]:
+    data = files.get("treasure.json")
+    items = files.get("items.json", {}).get("items", {})
+    if not data or not items:
+        return []
+    named = [g["item"] for g in data["gems"].values()] + [a["item"] for a in data["art"].values()]
+    named += [b[0] for b in data["bars"]] + [g[0] for g in data["goods"]]
+    named += [m["item"] for variants in data["makers"].values() for m in variants.values() if m.get("item")]
+    return [f"data/treasure.json names unknown item {i!r}." for i in named if i not in items]
 
 
 def _check_companion_refs(files: dict[str, Any]) -> list[str]:

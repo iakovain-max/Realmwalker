@@ -380,6 +380,8 @@ class GameScreen(Screen):
             self.app.push(PartyScreen(self.app, game))
         elif ev.key == "z":
             game.say(game.toggle_sneak(), "info")
+        elif ev.key == "v" and not game.in_local:
+            game.say(game.cycle_pace(), "info")
         elif ev.key == "s" and game.in_local:
             from realmwalker.game import dungeon
 
@@ -743,4 +745,4 @@ class GameScreen(Screen):
         moves = [KeyEvent(k) for k in ("up", "down", "left", "right", "upleft", "upright", "downleft", "downright")]
         return moves * 4 + [KeyEvent(k) for k in (">", "<", "x", "l", "enter", "escape", ".", "m", "t", "o", "k",
                                                    "c", "i", "e", "g", "r", "h", "w", "b", "f", "n", "p", "s", "j", "a",
-                                                   "z", "+", "-")]
+                                                   "z", "v", "+", "-")]

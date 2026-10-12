@@ -43,6 +43,10 @@ def read(game, char, item) -> list[str]:
     if kind not in KINDS:
         return ["There is nothing to read there."]
     first = "read" not in item.tags
+    if first:
+        from realmwalker.game import magic_items
+
+        magic_items.notice(game, "reading")
     rng = rng_for(game, item)
     game.pass_time(60, "rest")
     if game.over is not None:

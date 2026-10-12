@@ -279,6 +279,7 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
         _check_factions(game, fail)
         _check_law(game, fail)
         _check_quests(game, fail)
+        _check_magic(game, fail)
         _check_companions(game, fail)
         _check_history(game, fail, full=turn % 50 == 0)
         if game.travel is not None and game.pace() is None:
@@ -467,6 +468,42 @@ def _check_law(game, fail) -> None:
     for c in r.flags.get("captives", []):
         if c.get("def_id") not in game.tables.creatures:
             fail(f"a captive of unknown kind {c.get('def_id')}")
+
+
+def _check_magic(game, fail) -> None:
+    """Magic items, treasure and encounters (Expansion 1, part D): bonds within the rules, charges within their
+    bounds, a known travel pace, a met band with a known attitude."""
+    from realmwalker.rules import magic
+
+    pack = {it.uid: it for c in game.party for it in c.inventory}
+    for c in game.party:
+        if len(c.attuned) > magic.ATTUNE_MAX:
+            fail(f"{c.name} is bound to {len(c.attuned)} things")
+        if len(set(c.attuned)) != len(c.attuned):
+            fail(f"{c.name} is bound twice to one thing")
+        for uid in c.attuned:
+            it = pack.get(uid)
+            if it is None or not it.magic.get("attune"):
+                fail(f"{c.name} is bound to a thing that is gone or needs no bond ({uid})")
+    owners: dict[int, int] = {}
+    for c in game.party:
+        for uid in c.attuned:
+            owners[uid] = owners.get(uid, 0) + 1
+    if any(n > 1 for n in owners.values()):
+        fail("one magic thing bound to two people")
+    for it in pack.values():
+        for p in magic.props(it):
+            if p.get("kind") == "charges" and not p.get("at_will"):
+                if not 0 <= int(p.get("left", p.get("value", 1))) <= int(p.get("value", 1)):
+                    fail(f"charges out of bounds on {it.def_id}: {p}")
+        mind = it.magic.get("sentient") if it.magic else None
+        if mind and mind.get("purpose") not in game.tables.magic["sentient"]["purposes"]:
+            fail(f"a sentient thing with an unknown purpose: {mind.get('purpose')}")
+    if game.player.pace not in ("slow", "normal", "fast"):
+        fail(f"unknown travel pace {game.player.pace}")
+    enc = game.encounter
+    if enc is not None and getattr(enc, "attitude", "hostile") not in ("hostile", "indifferent", "friendly"):
+        fail(f"a band with an unknown attitude: {enc.attitude}")
 
 
 def _check_quests(game, fail) -> None:

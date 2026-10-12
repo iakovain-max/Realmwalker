@@ -74,9 +74,7 @@ def spawn(tables, def_id: str, rng: RNG, uid: int, *, now: int = 0) -> Creature:
         sex = rng.choice(["male", "male", "female"])
         name = rng.choice(c[sex])
         named = True
-    money = 0
-    if d.get("money"):
-        money = dice.roll(d["money"]["dice"], rng).total * int(d["money"].get("mult", 1))
+    money = individual_treasure(tables, float(d.get("cr", 0)), rng) if "individual" in keeps(d) else 0
     creature = Creature(uid=uid, def_id=def_id, name=name, hp=hp, max_hp=hp, money=money, named=named, sex=sex)
     next_uid = 1
     for item_id, qty in d.get("gear", []) + d.get("loot", []):
@@ -89,17 +87,43 @@ def spawn(tables, def_id: str, rng: RNG, uid: int, *, now: int = 0) -> Creature:
     return creature
 
 
-def spawn_group(tables, group_id: str, rng: RNG, first_uid: int = 1, *, now: int = 0, party_size: int = 3) -> list[Creature]:
-    """Spawn an encounter group. Groups are written for a small party; a lone traveller meets fewer
-    of the rank and file (the kind of creature still follows the danger of the region)."""
+# ---------------------------------------------------------------------------- what they carry (DMG 2024)
+def keeps(cdef: dict) -> list[str]:
+    """The creature's Monster Manual treasure, in lower case ("individual", a theme, "any", "none")."""
+    return [t.lower() for t in cdef.get("treasure", ["none"])]
+
+
+def individual_treasure(tables, cr: float, rng: RNG) -> int:
+    """Random Individual Treasure (DMG 2024, data/treasure.json): copper for one creature of this Challenge Rating."""
+    rows = tables.treasure["individual"]
+    cr = max(0.0, float(cr))
+    row = next((r for r in rows if cr <= r[1]), rows[-1])
+    _lo, _hi, expr, times, coin = row
+    return dice.roll(expr, rng).total * int(times) * int(tables.treasure["coins"][coin])
+
+
+def band_purse(tables, creatures: list[Creature], rng: RNG) -> None:
+    """A band of a kind that keeps a hoard at home (its block names a theme or Any, not Individual) carries one
+    purse on the road: its leader's. Beasts and the dead carry nothing (their blocks say None)."""
+    if any(c.money for c in creatures):
+        return
+    keepers = [c for c in creatures if keeps(tables.creatures[c.def_id]) and "none" not in keeps(tables.creatures[c.def_id])]
+    if keepers:
+        lead = max(keepers, key=lambda c: float(tables.creatures[c.def_id].get("cr", 0)))
+        lead.money = individual_treasure(tables, float(tables.creatures[lead.def_id].get("cr", 0)), rng)
+
+
+def spawn_group(tables, group_id: str, rng: RNG, first_uid: int = 1, *, now: int = 0, party_size: int = 3,
+                budget: int | None = None) -> list[Creature]:
+    """Spawn an encounter group. With an XP `budget` (DMG 2024, rules/encounter.py) the rank and file are trimmed or
+    grown to fit it, never the last of a kind; without one, a lone traveller meets fewer of the rank and file."""
+    from realmwalker.rules import encounter
+
     group = tables.creatures.encounters[group_id]
     out: list[Creature] = []
     uid = first_uid
-    scale = min(1.3, 0.45 + 0.2 * max(1, party_size))
-    for def_id, count in group["members"]:
-        n = max(1, dice.roll(str(count), rng).total)
-        if n > 1:
-            n = max(1, int(round(n * scale)))
+    counts = encounter.counts_for(tables, group["members"], rng, budget, party_size)
+    for (def_id, _count), n in zip(group["members"], counts):
         for _ in range(n):
             out.append(spawn(tables, def_id, rng, uid, now=now))
             uid += 1
@@ -121,6 +145,7 @@ def spawn_group(tables, group_id: str, rng: RNG, first_uid: int = 1, *, now: int
         seen[c.name] = seen.get(c.name, 0) + 1
         if seen[c.name] > 1:
             c.name = f"{ordinals[min(seen[c.name] - 1, len(ordinals) - 1)]}{c.name}"
+    band_purse(tables, out, rng)
     return out
 
 

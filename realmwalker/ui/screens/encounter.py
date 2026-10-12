@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from realmwalker.game.fight import (encounter_bait, encounter_bait_food, encounter_evade, encounter_fight,
-                                    encounter_pay, encounter_pay_cost, encounter_talk, encounter_talk_dc)
+from realmwalker.game.fight import (ATTITUDE_WORDS, encounter_bait, encounter_bait_food, encounter_evade,
+                                    encounter_fight, encounter_pass, encounter_pay, encounter_pay_cost, encounter_talk,
+                                    encounter_talk_dc)
 from realmwalker.rules.items import money_text
 from realmwalker.ui import colors, markup
 from realmwalker.ui.input import KeyEvent
@@ -37,12 +38,15 @@ class EncounterScreen(Screen):
         enc = self.enc
         stealth = min(self.game.sheet(c).skill_bonus("stealth") for c in self.game.party if c.alive)
         dc, why = encounter_talk_dc(self.game)
-        out = [
+        out = [("l", "Let them be, and go on your way", "pass", True, "")] if enc.attitude != "hostile" else []
+        mood = {"friendly": ", with the advantage of their goodwill", "hostile": ", at a disadvantage: they are hostile"}
+        out += [
             ("f", "Fight", "fight", True, ""),
             ("a", "Ambush them (they are caught unawares)", "ambush", enc.spotted_first, "they have already seen you"),
             ("s", f"Slip away (Stealth {stealth:+d}" + (", with the advantage of seeing them first)" if enc.spotted_first
                                                          else ")"), "evade", True, ""),
-            ("t", "Talk your way past (Persuasion" + (f", DC {dc})" if dc else ")"), "talk", dc is not None, why),
+            ("t", "Talk your way past (Persuasion" + (f", DC {dc}" if dc else "") + mood.get(enc.attitude, "") + ")",
+             "talk", dc is not None, why),
         ]
         # A sure way out, at a price: the purse to robbers, food to hungry beasts. Shown only where it could work.
         cost, why = encounter_pay_cost(self.game)
@@ -67,6 +71,8 @@ class EncounterScreen(Screen):
             encounter_evade(game)
         elif action == "talk":
             encounter_talk(game)
+        elif action == "pass":
+            encounter_pass(game)
         elif action == "pay":
             encounter_pay(game)
         elif action == "bait":
@@ -91,7 +97,7 @@ class EncounterScreen(Screen):
         iw = width - 4
         intro = markup.wrap(markup.escape(enc.intro), iw)
         options = self.options()
-        x, y, w, h = modal_box(canvas, width, len(intro) + 10 + len(options), "Trouble on the road",
+        x, y, w, h = modal_box(canvas, width, len(intro) + 11 + len(options), "Trouble on the road",
                                fg=colors.named("danger"))
         row = y + 2
         for line in intro:
@@ -101,6 +107,8 @@ class EncounterScreen(Screen):
         canvas.markup(x + 2, row, f"<dim>You see:</> {markup.escape(group_summary(self.game, enc.creatures))}", max_width=iw)
         row += 1
         canvas.markup(x + 2, row, enc.threat, max_width=iw)
+        row += 1
+        canvas.markup(x + 2, row, ATTITUDE_WORDS.get(enc.attitude, ""), max_width=iw)
         row += 1
         seen = "<good>You saw them first.</>" if enc.spotted_first else "<warn>They have seen you.</>"
         canvas.markup(x + 2, row, seen, max_width=iw)
@@ -114,4 +122,4 @@ class EncounterScreen(Screen):
         canvas.hit(0, 0, canvas.width, canvas.height)
 
     def autoplay_keys(self) -> list[KeyEvent]:
-        return [KeyEvent(k) for k in ("f", "a", "s", "t", "p", "b", "enter")]
+        return [KeyEvent(k) for k in ("l", "f", "a", "s", "t", "p", "b", "enter")]

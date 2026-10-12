@@ -114,6 +114,10 @@ def deed(game, text: str, amounts: dict[int, float], *, x: int | None = None, y:
     x = game.player.x if x is None else x
     y = game.player.y if y is None else y
     game.leader.deeds.append(text)
+    if fame >= 2:
+        from realmwalker.game import magic_items
+
+        magic_items.notice(game, "deed")  # a glory seeker hears its name spoken with yours
     if not witnessed:
         return
     r = game.renown

@@ -114,8 +114,8 @@ def test_buying_and_selling(game):
     money = c.money
     assert "sell" in economy.sell(game, npc, c, rope.uid)
     assert c.money == money + offer and c.item(rope.uid) is None
-    used = [r for r in economy.listing(game, npc) if r["used"] is not None]
-    assert used and "rope" in used[0]["name"]
+    used = [r for r in economy.listing(game, npc) if r["used"] is not None and "rope" in r["name"]]
+    assert used  # (a city shop may also have a magic thing or two among the second-hand goods)
     assert "buy" in economy.buy(game, npc, used[0]["item_id"], used[0]["used"])
 
 

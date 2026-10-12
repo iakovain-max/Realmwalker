@@ -51,6 +51,7 @@ class PlayerState:
     discoveries: set[str] = field(default_factory=set)  # "site:<id>", "deeper:<site id>/<level>" (experience given)
     seconds: int = 0  # sub-minute time carried from local-map steps
     steps: int = 0
+    pace: str = "normal"  # the travel pace chosen (fast, normal, slow; PHB 2024): the land may hold it back
 
 
 @dataclass
@@ -176,6 +177,36 @@ class GameState:
     def sheet(self, char: Character | None = None) -> Sheet:
         return Sheet(char or self.leader, self.tables)
 
+    def travel_pace(self) -> str:
+        """The pace the party travels at on the big map: the one chosen, as far as the land allows (DMG 2024 Travel
+        Terrain, one step faster on a good road). On a close-up map, always Normal."""
+        if self.in_local:
+            return "normal"
+        from realmwalker.rules import encounter
+
+        p = self.player
+        land = self.land_key(p.x, p.y)
+        top = encounter.max_pace(self.tables, land, self.tables.biomes.family(land) or land, bool(self.world.road[p.x, p.y]))
+        # Mountains and marsh are slow going already (their steps cost more): there the land only forbids Fast.
+        return encounter.allowed(p.pace, "normal" if top == "slow" else top)
+
+    def cycle_pace(self) -> str:
+        """Slow, Normal, Fast (v): what each does, and whether the land allows it here."""
+        from realmwalker.rules import encounter
+
+        order = ["normal", "fast", "slow"]
+        p = self.player
+        p.pace = order[(order.index(p.pace) + 1) % 3 if p.pace in order else 0]
+        now = self.travel_pace()
+        what = {"fast": "covering ground quickly, a quarter less time, but noticing less (-5), and easy to lose "
+                        "your way and to see",
+                "normal": "a steady pace; you notice what you would, but you are no quieter than a walker",
+                "slow": "a careful pace: half as long again, but you notice more (+5), keep your bearings better "
+                        "and can slip away quietly"}[p.pace]
+        held = "" if now == p.pace else (f" <warn>The land here allows no more than "
+                                         f"{encounter.pace(self.tables, now)['name']}.</>")
+        return f"Travel pace: <good>{encounter.pace(self.tables, p.pace)['name']}</>, {what}.{held}"
+
     def pace(self) -> float | None:
         """How much slower than an unburdened walker the party moves (None = someone cannot move)."""
         from realmwalker.rules import body, health
@@ -277,6 +308,9 @@ class GameState:
         self.bury_the_dead()
         self._weather_moment()
         after = self.moment
+        from realmwalker.game import magic_items
+
+        magic_items.tick(self, before, after)  # dawn: charges back; what sentient things want; bonds to lost things
         if self.world.factions and after.total_days * 24 + after.hour != before.total_days * 24 + before.hour:
             from realmwalker.game import law
 
@@ -393,6 +427,10 @@ class GameState:
         p.x, p.y = nx, ny
         p.steps += 1
         minutes = int(round(minutes * self.weather.travel_factor()))
+        if self.travel_pace() != "normal":
+            from realmwalker.rules import encounter
+
+            minutes = max(1, int(round(minutes * float(encounter.pace(self.tables, self.travel_pace())["time"]))))
         if self.leader.animals:
             from realmwalker.game import mounts
 
@@ -509,7 +547,10 @@ class GameState:
 
             if night_unheeded(self):
                 return  # a traveller stops at dusk, before the dark (or the storm with it) can lose them (game.journey)
-        ok, roll = check(self, "survival", dc, self.bearings_bonus(), tag="lost")
+        from realmwalker.rules import encounter
+
+        mode = encounter.pace(self.tables, self.travel_pace()).get("survival", "")  # fast: worse; slow: better
+        ok, roll = check(self, "survival", dc, self.bearings_bonus(), tag="lost", mode=mode)
         if not ok:
             self.lost = True
             self.travel = None
@@ -589,6 +630,9 @@ class GameState:
                 self.say(f"You enter <place>{area.name}</>. {desc}{gained}", "place")
                 for note in notes:
                     self.say(note, "good")
+                from realmwalker.game import magic_items
+
+                magic_items.notice(self, "discovery")
                 if self.party[1:]:
                     from realmwalker.game.companions import react
 
@@ -756,6 +800,10 @@ class GameState:
                 continue
             armor = c.equipped_item("armor")
             clanks = armor is not None and bool(self.tables.items.get(armor.def_id).get("stealth_disadvantage"))
+            if c.attuned:
+                from realmwalker.rules import magic
+
+                clanks = clanks or magic.flag(c, "stench")  # an artifact's sour stink
             roll = dice.d20(rng, disadvantage=clanks).natural + self.sheet(c).skill_bonus("stealth")
             if worst is None or roll < worst[0]:
                 worst = (roll, c, clanks)

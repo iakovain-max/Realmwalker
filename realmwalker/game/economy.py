@@ -11,6 +11,7 @@ from __future__ import annotations
 from realmwalker.core import dice
 from realmwalker.core.rng import RNG
 from realmwalker.game.people import NPC, change_disposition, town_of
+from realmwalker.rules import magic
 from realmwalker.rules.character import Sheet
 from realmwalker.rules.inventory import add_existing, add_item, remove_item, worn_by
 from realmwalker.rules.items import Item, money_text
@@ -119,10 +120,37 @@ def restock(game, npc: NPC, shop: dict) -> dict:
     shop["stock"] = stock
     # Things the player sold them are sold on after a month.
     shop["used"] = [u for u in shop.get("used", []) if game.world.time - u.get("sold_at", 0) < 30 * DAY]
+    if shop["kind"] in ("apothecary", "general"):
+        shop["used"] += [it.to_dict() | {"sold_at": game.world.time}
+                         for it in magic_for_sale(game, settlement, rng.child("magic"))]
     base = int(size["coin"] * {"inn": 0.5, "stable": 0.6, "apothecary": 0.7, "temple": 0.4}.get(shop["kind"], 1.0))
     shop["coin"] = max(shop.get("coin", 0), int(base * rng.uniform(0.7, 1.3)))
     shop["restocked"] = game.world.time
     return shop
+
+
+def magic_for_sale(game, settlement, rng: RNG) -> list[Item]:
+    """DMG 2024: common and uncommon magic items can be bought in cities (at the price of their rarity); rarer ones are
+    found, earned or made. Only where mages keep a house and the lord's law does not forbid magic, and fewer in a
+    world where magic is scarce."""
+    if settlement.kind != "city" and not getattr(settlement, "great", False):
+        return []
+    from realmwalker.game import treasure
+    from realmwalker.game.magic import scroll_stock
+    from realmwalker.world import factions as fx
+
+    if game.world.factions and fx.laws_at(game.world, settlement).get("magic") == "forbidden":
+        return []
+    if not scroll_stock(game, settlement, rng.child("mages")):
+        return []
+    out = []
+    for _ in range(treasure.magic_count(game, "1d3-1", rng)):
+        rarity = rng.weighted(["common", "uncommon"], [3, 2])
+        it = treasure.magic_item(game, rng, rarity, rng.choice(["arcana", "implements"]))
+        if it is not None and it.magic:
+            it.magic["identified"] = True  # a shop sells what it knows (and says nothing of a curse)
+            out.append(it)
+    return out
 
 
 def haggle_bonus(game, npc: NPC, shop: dict) -> float:
@@ -178,6 +206,8 @@ def sell_price(game, npc: NPC, item: Item) -> tuple[int | None, str]:
     price = items.unit_value(item) * ratio * local_factor(game, settlement, item.def_id)
     price *= MOOD_SELL[npc.mood()] * (1.0 + haggle_bonus(game, npc, shop))
     price = min(price, buy_price(game, npc, item.def_id, item) * 0.9)
+    if item.def_id.startswith(("gem_", "art_")) and any(c.attuned and magic.flag(c, "dulls_jewels") for c in game.party):
+        price /= 2  # an artifact's flaw: what its bearer handles loses its lustre
     return max(0, int(price)), ""
 
 
@@ -246,6 +276,10 @@ def sell(game, npc: NPC, char, uid: int, qty: int = 1) -> str:
     sold = remove_item(char, uid, qty)
     if sold is None:
         return "You no longer have that."
+    if sold.magic:
+        from realmwalker.game import magic_items
+
+        magic_items.notice(game, "magic_sold")
     char.money += total
     shop["coin"] -= total
     entry = sold.to_dict()
