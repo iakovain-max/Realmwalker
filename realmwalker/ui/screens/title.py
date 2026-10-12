@@ -33,7 +33,7 @@ class TitleScreen(Screen):
                      else "Every world you have made has a living character. Make a New World, or Continue."),
             MenuItem("Saved Worlds", self._worlds, "W", enabled=bool(self.saves or self.empty_worlds),
                      note="Every world you have made: play on, start a new character, or delete one."),
-            MenuItem("Settings", self._settings, "S", note="Text size, pictures, sound, dice display and more."),
+            MenuItem("Settings", self._settings, "S", note="Text size, sound, animations, dice display and more."),
             MenuItem("Help", self._help, "?", note="Keys and how to play."),
             MenuItem("Quit", self.app.request_quit, "Q", note="Leave the game."),
         ]

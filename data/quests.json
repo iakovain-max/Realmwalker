@@ -1,5 +1,5 @@
 {
-  "_comment": "Quests (M8). Code makes them from these templates and ties them to real things in the world (a real gang's captain in a real hideout, a real person to carry a letter to). templates: who may give them (occupations), reward in copper [min, max] scaled by how far and how hard, days allowed [min, max], standing gained with the giver's people, xp for each member of the party, and the chance of a hidden side. text: the built-in words ({slots} filled by code; the AI writes its own when it is there): pitch (what the giver says), title, journal (what you write down), done (when it is finished), failed.",
+  "_comment": "Quests (M8). Code makes them from these templates and ties them to real things in the world (a real gang's captain in a real hideout, a real person to carry a letter to). templates: who may give them (occupations), reward in copper [min, max] scaled by how far and how hard, days allowed [min, max], standing gained with the giver's people, xp for each member of the party, and the chance of a hidden side. text: the words ({slots} filled by code): pitch (what the giver says), title, journal (what you write down), done (when it is finished), failed.",
   "templates": {
     "bounty": {"givers": ["guard", "headman", "lord"], "reward": [3000, 9000], "days": [20, 40], "standing": 8, "xp": 300, "hidden": {"deserters": 0.25}},
     "clear_lair": {"givers": ["headman", "lord", "innkeeper", "farmer", "priest"], "reward": [2000, 7000], "days": [15, 35], "standing": 6, "xp": 250, "hidden": {}},
@@ -88,11 +88,6 @@
       "done": ["You have the money. Take it to {giver}."],
       "failed": ["{giver} has written the debt off, and you with it."]
     },
-    "escort": {"givers": ["innkeeper", "shopkeeper", "market_trader", "priest", "healer", "headman", "lord"], "reward": [1500, 5000], "days": [10, 25], "standing": 5, "xp": 200, "hidden": {"hunted": 0.3}},
-    "assassinate": {"givers": ["lord", "shopkeeper", "innkeeper"], "reward": [6000, 20000], "days": [25, 50], "standing": 6, "xp": 400, "hidden": {"innocent": 0.4}},
-    "cure": {"givers": ["healer", "priest", "headman"], "reward": [2000, 6000], "days": [8, 20], "standing": 10, "xp": 250, "hidden": {}},
-    "feud": {"givers": ["headman", "priest", "innkeeper", "lord"], "reward": [1200, 4000], "days": [10, 25], "standing": 6, "xp": 200, "hidden": {}},
-    "steal": {"givers": ["shopkeeper", "market_trader", "innkeeper", "smith"], "reward": [2000, 7000], "days": [10, 25], "standing": 4, "xp": 250, "hidden": {"framed": 0.25}},
     "smuggle": {
       "title": ["A crate for {recipient_name}", "Past the wardens", "Delivery for {recipient_name}"],
       "pitch": ["\"There is a crate. It goes to {recipient} in {dest}, and it does not go past the gate wardens, because they would take it and hang me with the rope it came tied in. Keep it out of sight, get it there, and there's {reward}. {days} days.\"", "\"{dest}. {recipient}. One crate, no questions, and it is not to be opened. {reward} when it is delivered. If the watch takes it, we never met.\"", "\"Don't ask what's in it, and don't let the gate wardens ask either. {recipient}, in {dest}. {reward}. {days} days.\"", "\"A crate for {recipient} in {dest}. If anyone lifts the lid, drop it and run. {reward}, paid on arrival.\"", "\"The wardens at {dest} search everything with a cart under it. Be cleverer than that. {recipient} is waiting. {reward}. {days} days.\""],
@@ -139,7 +134,7 @@
     },
     "steal": {
       "title": ["{item}, from {mark}", "Lift {item}", "A light touch in {dest}"],
-      "pitch": ["\"{mark} carries {item}. I want it. Lift it, don't ask why, and there's {reward} in it. Get caught and I never heard of you. {days} days.\"", "\"{mark}, in {dest}, carries {item}. I want it in my hand by {days} days from now, and I want to be able to say I never asked. {reward}.\"", "\"{mark} in {dest} has {item}, and should not. Relieve them of it. {reward}, and if the watch asks, you were never here. {days} days.\"", "\"You have quick hands; I watched you. {mark}, in {dest}, carries {item}. I'd like it. {reward}.\"", "\"{item}. {mark} keeps it close, in {dest}. Not close enough. {reward} when it's in my hand, {days} days from now at most.\""],
+      "pitch": ["\"{mark} carries {item}. I want it. Lift it, don't ask why, and there's {reward} in it. Get caught and I never heard of you. {days} days.\"", "\"{mark}, in {dest}, carries {item}. I want it in my hand within {days} days, and I want to be able to say I never asked. {reward}.\"", "\"{mark} in {dest} has {item}, and should not. Relieve them of it. {reward}, and if the watch asks, you were never here. {days} days.\"", "\"You have quick hands; I watched you. {mark}, in {dest}, carries {item}. I'd like it. {reward}.\"", "\"{item}. {mark} keeps it close, in {dest}. Not close enough. {reward} when it's in my hand, {days} days from now at most.\""],
       "journal": ["Lift {item} from {mark} in {dest} ({where}) for {giver} of {town}: get close, and pick their pocket. {reward}. {days} days."],
       "hidden": {"framed": ["Looking at {item} properly, you understand what it is: not {giver}'s property at all. Handing it over makes you part of something; handing it to the law makes you an informer."]},
       "done": ["You have {item}. Now get it to {giver}."],

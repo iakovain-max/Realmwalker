@@ -1,5 +1,5 @@
 {
-  "_comment": "Settlement and site types placed during world generation. glyph/colour are how they show on the overworld map.",
+  "_comment": "Settlement and site types placed during world generation (their marks on the map are in data/sprites.json world).",
   "settlement_types": {
     "hamlet":  {"name": "hamlet",  "population": [20, 80],     "buildings": [3, 6],   "walls": "none",      "rank": 1},
     "village": {"name": "village", "population": [100, 400],   "buildings": [8, 15],  "walls": "palisade",  "wall_chance": 0.25, "rank": 2},

@@ -88,8 +88,9 @@ Your music shows what plays when.
 
 ## Where things are saved
 
-Settings, saved worlds, screenshots and logs live in `%APPDATA%\Realmwalker` (paste that into the address bar of a
-File Explorer window). If something goes wrong, the file `logs\errors.log` in that folder helps fix it.
+Settings, saved worlds and screenshots live in `%APPDATA%\Realmwalker` (paste that into the address bar of a File
+Explorer window). If something goes wrong, the file `logs\errors.log` in the game's own folder (beside `Play.bat`)
+helps fix it: send that.
 
 ## Credits
 
