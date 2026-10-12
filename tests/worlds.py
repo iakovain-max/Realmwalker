@@ -7,8 +7,9 @@ from the cache when the world-making code and the data are unchanged, else made 
 making itself (determinism, speed) call WorldGenerator directly instead.
 
 What counts as "the code that makes worlds": every realmwalker module a world's making imports (measured: the world,
-core, data and rules packages and paths.py). If the making ever imports a module outside them, the cache notices,
-says so once, and stops being used, so it can never hand back a world made by older code.
+core and data packages, paths.py and the rules modules in RULES_USED). If the making ever imports a module outside
+them, the cache notices, says so once, and stops being used, so it can never hand back a world made by older code; and
+tests/test_world.py makes a world in a fresh interpreter to check the list.
 """
 
 from __future__ import annotations
@@ -23,8 +24,11 @@ from realmwalker.world.generator import WorldGenerator, WorldOptions
 
 ROOT = Path(__file__).resolve().parent.parent
 CACHE_DIR = ROOT / "build" / "test_worlds"
-COVERED = ("realmwalker/world/", "realmwalker/core/", "realmwalker/data/", "realmwalker/rules/", "realmwalker/paths.py",
-           "realmwalker/__init__.py")
+# The rules modules a world's making uses (measured; tests/test_world.py checks it in a fresh interpreter). The battle
+# code (rules/combat.py, tactics, grid, engine...) is not among them, so changing it keeps the cached worlds.
+RULES_USED = ("__init__", "body", "character", "creatures", "health", "inventory", "items", "spells", "wounds")
+COVERED = ("realmwalker/world/", "realmwalker/core/", "realmwalker/data/", "realmwalker/paths.py",
+           "realmwalker/__init__.py") + tuple(f"realmwalker/rules/{m}.py" for m in RULES_USED)
 
 _memory: dict[str, bytes] = {}
 _code_hash: str | None = None

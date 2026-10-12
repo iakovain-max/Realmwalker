@@ -136,3 +136,32 @@ def test_calendar(tables):
     assert cal.at(cal.minutes_for(1047, 1, 1, 0)).light() < 0.2
     assert duration_text(60 * 24 * 2 + 125) == "2 days 2 hours"
     assert duration_text(45) == "45 minutes"
+
+
+def test_world_making_imports_only_what_the_test_world_cache_watches():
+    """tests/worlds.py keeps made worlds while the code that makes them is unchanged; it must watch every module a
+    world's making uses. Measured in a fresh interpreter, where nothing else has been imported first."""
+    import subprocess
+    import sys
+
+    from tests.worlds import COVERED, ROOT
+
+    probe = (
+        "import sys\n"
+        "from realmwalker.paths import Paths\n"
+        "from realmwalker.data.registry import DataRegistry\n"
+        "from realmwalker.world.tables import Tables\n"
+        "from realmwalker.world.generator import WorldGenerator, WorldOptions\n"
+        "reg, errors = DataRegistry.load(Paths().data)\n"
+        "WorldGenerator(WorldOptions(name='probe', seed=3, size='small', history=100), Tables(reg)).generate()\n"
+        "for name, m in sorted(sys.modules.items()):\n"
+        "    if name.startswith('realmwalker') and getattr(m, '__file__', None):\n"
+        "        print(m.__file__)\n"
+    )
+    out = subprocess.run([sys.executable, "-c", probe], cwd=ROOT, capture_output=True, text=True, timeout=300)
+    assert out.returncode == 0, out.stderr[-2000:]
+    from pathlib import Path
+
+    used = {Path(line).resolve().relative_to(ROOT).as_posix() for line in out.stdout.splitlines() if line.strip()}
+    missing = sorted(u for u in used if not u.startswith(COVERED))
+    assert not missing, f"add these to tests/worlds.py COVERED (or RULES_USED): {missing}"
