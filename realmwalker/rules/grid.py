@@ -200,6 +200,7 @@ class Field:
         self.low = ~T.walk[idx] & see & ~water[idx] & ~self.openable  # low obstacles: half cover
         self.rough = T.cost[idx] >= 1.5  # difficult terrain by nature
         self.water = water[idx]
+        self.fly = (self.walk | self.water | self.low) & ~self.solid  # over water and low things, not through walls
         self.hiding = tag("cover")[idx]  # brush, tall grass, reeds: somewhere to hide
         flammable = np.array([T.ids[i] in FLAMMABLE for i in range(n)], dtype=bool)
         self.flammable = flammable[idx]
@@ -448,21 +449,22 @@ class Step:
 
 def paths(field: Field, start: tuple[int, int], size: int, budget: int, *, blocked: set, occupied: set,
           threats: list[tuple[int, tuple[int, int, int], int]] = (), risk: float = 0.5, crawling: bool = False,
-          hazard: set | None = None, hazard_risk: float = 10.0) -> dict[tuple[int, int], Step]:
+          hazard: set | None = None, hazard_risk: float = 10.0, flying: bool = False) -> dict[tuple[int, int], Step]:
     """Every square a creature could move to with `budget` feet of movement, with the cheapest way there.
 
     blocked: squares it cannot pass (enemies stand there); occupied: squares it may pass but not stop on (friends,
     the fallen). threats: (who, their space, their reach in squares) for opportunity attacks: leaving a square
     within someone's reach for one outside it provokes them. Paths that provoke, or cross a hazard (fire), are
     avoided when one as cheap exists (each costs `risk` or `hazard_risk` feet in the choosing, not in the moving).
-    Difficult terrain (and crawling) costs ten feet a square instead of five.
+    Difficult terrain (and crawling) costs ten feet a square instead of five. A flier goes over water and low things
+    and is not slowed by the ground (only by what is in the air: webs, spirits).
     """
     sx, sy = start
     best: dict[tuple[int, int], Step] = {(sx, sy): Step(0, None, frozenset(), 0.0)}
     heap = [(0.0, 0, sx, sy)]
     W, H = field.width, field.height
-    walk = field.walk
-    rough = field.rough | field.zone_difficult
+    walk = field.fly if flying else field.walk
+    rough = field.zone_difficult if flying else field.rough | field.zone_difficult
     while heap:
         key, cost, x, y = heapq.heappop(heap)
         node = best.get((x, y))

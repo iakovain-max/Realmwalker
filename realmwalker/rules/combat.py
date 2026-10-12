@@ -143,6 +143,7 @@ class Fighter:
         self.cdef = tables.creatures[creature.def_id] if creature else None
         self.x = 0
         self.y = 0
+        self.z = 0  # feet above the ground (a flier aloft)
         self.sq = grid.footprint(self.size)
         self.initiative = 0
         self.state = "fighting"  # fighting, fleeing, down, dead, fled, surrendered
@@ -313,6 +314,18 @@ class Fighter:
     def speed(self) -> int:
         """Walking speed in feet this turn."""
         return query.speed(self)
+
+    @property
+    def fly_speed(self) -> int:
+        """Flying speed in feet (0: it cannot fly); nothing that stops it moving lets it fly either."""
+        if query.flag(self, "speed_zero"):
+            return 0
+        fly = 0 if self.char else int(self.cdef.get("speeds", {}).get("fly", 0))
+        return max(fly, max([0] + [int(v) for v in self.buff_value("fly")]))
+
+    @property
+    def hovers(self) -> bool:
+        return bool(self.creature and self.cdef.get("speeds", {}).get("hover"))
 
     @property
     def darkvision(self) -> int:
@@ -555,7 +568,8 @@ class Battle:
         return None
 
     def gap(self, a: Fighter, b: Fighter) -> int:
-        return grid.gap(a.space, b.space)
+        """Squares between two creatures, height included (the 5-5-5 grid: the larger of across and up)."""
+        return max(grid.gap(a.space, b.space), abs(a.z - b.z) // grid.SQUARE_FT)
 
     def feet(self, a: Fighter, b: Fighter) -> int:
         return grid.gap(a.space, b.space) * grid.SQUARE_FT
@@ -834,7 +848,7 @@ class Battle:
                     del f.conditions[cond]
                     if cond in ("stunned", "restrained", "frightened", "paralyzed"):
                         self.say(f"{f.the_name} is no longer {cond}.", "system")
-        f.move_left = f.speed
+        f.move_left = max(f.speed, f.fly_speed)
         if any(z.kind == "guardians" and z.owner is not None and any(c in z.cells for c in f.cells)
                and self.fighter(z.owner).team != f.team for z in self.zones):
             f.move_left //= 2  # Spirit Guardians: half speed in the emanation (2024)
@@ -892,6 +906,9 @@ class Battle:
         for f in self.fighters:
             if f.concentration is not None and (query.flag(f, "breaks_concentration") or not f.active):
                 self._end_concentration(f, quiet=not f.active, why="is lost")  # incapacitated (2024)
+            if f.z > 0 and not f.hovers and ("prone" in f.conditions or f.incapacitated or f.state == "down"
+                                             or f.fly_speed <= 0):
+                self._fall(f)
         foes = [f for f in self.team(FOE) if f.active and "unconscious" not in f.conditions]
         party = [f for f in self.team(PARTY) if f.active and "unconscious" not in f.conditions]
         if not foes:
@@ -994,7 +1011,7 @@ class Battle:
             budget = f.move_left // 2 if self.dragging(f) else f.move_left
         return grid.paths(self.field, (f.x, f.y), f.sq, budget, blocked=blocked,
                           occupied=occupied, threats=self.threats(f), risk=risk, crawling="prone" in f.conditions,
-                          hazard=fire)
+                          hazard=fire, flying=f.fly_speed > 0)
 
     def occupied_by_others(self, f: Fighter) -> set:
         return {c for x in self.on_field() if x is not f for c in x.cells}
@@ -1034,8 +1051,10 @@ class Battle:
             if f.speed <= 0 and not free:
                 break
             new_cells = grid.cells(sq[0], sq[1], f.sq)
-            cost = 0 if free else (10 if "prone" in f.conditions or any(self.field.difficult(*c) for c in new_cells
-                                                                       if c not in f.cells) else 5)
+            ground = f.fly_speed <= 0
+            cost = 0 if free else (10 if "prone" in f.conditions or any(
+                (self.field.difficult(*c) if ground else self.field.zone_difficult[c]) for c in new_cells
+                if c not in f.cells) else 5)
             if heavy and not free:
                 cost *= 2
             if cost > f.move_left and not free:
@@ -1081,6 +1100,71 @@ class Battle:
         self._sync_grapples(f)
         self._follow_auras()
         return n
+
+    def object_at(self, cell: tuple[int, int]) -> dict | None:
+        """A thing on the field that can be broken: a door, a barrel, a table... with its AC and hit points (data/rules.json
+        objects "terrain"), kept while the fight lasts."""
+        if not self.field.in_bounds(*cell):
+            return None
+        tid = self.field.name(*cell)
+        spec = self.t.rules.get("objects", {}).get("terrain", {}).get(tid)
+        if spec is None:
+            return None
+        store = self.__dict__.setdefault("objects", {})
+        if cell not in store:
+            substance, size, resilient, becomes = spec
+            store[cell] = {"name": self.field.describe(*cell), "ac": hazards.object_ac(self.t, substance),
+                           "hp": dice.roll(hazards.object_hp(self.t, size, resilient), self.rng).total, "becomes": becomes}
+        return store[cell]
+
+    def attack_object(self, f: Fighter, opt: AttackOption, cell: tuple[int, int]) -> bool:
+        """Strike a thing (an attack of the Attack action): beat its AC to hurt it; at 0 hit points it is broken and
+        the square opens. Poison and psychic damage do nothing to things."""
+        obj = self.object_at(cell)
+        if obj is None or not self._use_attack(f):
+            return False
+        if grid.gap(f.space, (cell[0], cell[1], 1)) > (opt.reach_sq if opt.is_melee else opt.range[1] // grid.SQUARE_FT):
+            return False
+        roll = dice.d20(self.rng).natural
+        total = roll + opt.bonus
+        hit = roll == 20 or (roll != 1 and total >= obj["ac"])
+        self.dice_say(f"{f.name} → {obj['name']}, {opt.name}: {roll} {signed_mod(opt.bonus)} = {total} vs AC {obj['ac']}"
+                      f" — {'hit' if hit else 'miss'}")
+        self._event("attack", by=f.id, to=None, hit=hit, crit=roll == 20, how=opt.kind, melee=opt.is_melee, weapon=opt.name,
+                    dtype=opt.damage_type, armoured=False, cell=list(cell))
+        if hit and not hazards.object_immune(self.t, opt.damage_type):
+            obj["hp"] -= dice.roll(opt.damage, self.rng, double_dice=roll == 20).total
+            if obj["hp"] <= 0:
+                becomes = obj["becomes"] if obj["becomes"] != "ground" else (self.field.ground or "rubble")
+                self.field.set_terrain(*cell, becomes if becomes in self.t.terrain.index else "rubble")
+                self.__dict__["objects"].pop(cell, None)
+                self._event("broken", cell=list(cell))
+                self.say(f"{f.the_name} smashes the {obj['name'].lower()}.", "system")
+        self._after_action(f)
+        return True
+
+    def do_fly(self, f: Fighter, feet: int) -> bool:
+        """Rise (or come down, negative) by this many feet, at the cost of as much movement."""
+        feet = int(feet) // grid.SQUARE_FT * grid.SQUARE_FT
+        if f.fly_speed <= 0 or not feet or abs(feet) > f.move_left or f.z + feet < 0:
+            return False
+        f.move_left -= abs(feet)
+        start = f.z
+        f.z += feet
+        self._event("fly", who=f.id, z=f.z, before=start)
+        return True
+
+    def _fall(self, f: Fighter) -> None:
+        """A flier knocked down, senseless or held still falls (unless it can hover): 1d6 for every 10 feet, and Prone
+        if it hurt (2024)."""
+        feet, f.z = f.z, 0
+        self._event("fall", who=f.id, feet=feet)
+        expr = hazards.falling(self.t, feet)
+        self.say(f"{f.the_name} falls {feet} feet.", "danger" if f.side == PARTY else "info")
+        if expr:
+            self._hit(None, f, dice.roll(expr, self.rng).total, "bludgeoning", crit=False, weapon="fall")
+            if f.active or f.state == "down":
+                f.conditions["prone"] = -1
 
     def held_by(self, f: Fighter) -> list[Fighter]:
         return [x for x in self.fighters if x.grappled_by == f.id and x.active]
@@ -1395,7 +1479,7 @@ class Battle:
     def in_reach(self, f: Fighter, opt: AttackOption, target: Fighter, *, at: tuple[int, int] | None = None) -> tuple[bool, str]:
         """Whether an attack of this kind reaches the target from where `f` stands (or would stand)."""
         space = (at[0], at[1], f.sq) if at is not None else f.space
-        g = grid.gap(space, target.space)
+        g = max(grid.gap(space, target.space), abs(f.z - target.z) // grid.SQUARE_FT)
         if opt.is_melee:
             if g > opt.reach_sq:
                 return False, "out of reach"
@@ -2367,6 +2451,8 @@ class Battle:
         spell = self.t.spells[sid]
         if sid not in self.creature_spells(f):
             return False
+        if self.antimagic(f.cells) or (target is not None and self.antimagic(target.cells)):
+            return False
         sc = f.cdef["spellcasting"]
         level = spell["level"]
         if self._per_day(f, sid) is not None:
@@ -2557,8 +2643,16 @@ class Battle:
                 out.append(x)
         return out
 
+    def antimagic(self, cells) -> bool:
+        """Whether any of these squares lies in an antimagic area (no spell works there, 2024)."""
+        cells = set(cells)
+        return any(z.kind == "antimagic" and z.cells & cells for z in self.zones)
+
     def cast_problem(self, f: Fighter, sid: str, target: Fighter | None = None, point: tuple[int, int] | None = None) -> str | None:
         spell = self.t.spells[spell_id(sid)]
+        if self.antimagic(f.cells) or (target is not None and self.antimagic(target.cells)) or \
+                (point is not None and self.antimagic([point])):
+            return "magic does not work there"
         if sid.startswith("throw:"):
             if f.char is None or f.char.item(int(sid.split(":")[1])) is None:
                 return "you have none left"

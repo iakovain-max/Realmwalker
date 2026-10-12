@@ -61,6 +61,17 @@
     "ac": {"cloth": 11, "paper": 11, "rope": 11, "crystal": 13, "glass": 13, "ice": 13, "wood": 15, "stone": 17, "iron": 19,
            "steel": 19, "mithral": 21, "adamantine": 23},
     "hp": {"tiny": ["1d4", "2d4"], "small": ["1d6", "3d6"], "medium": ["1d8", "4d8"], "large": ["1d10", "5d10"]},
-    "immune": ["poison", "psychic"]
+    "immune": ["poison", "psychic"],
+    "_terrain": "What can be broken on a battlefield: terrain id -> [substance, size, resilient, what it becomes ('ground': the field's own ground)].",
+    "terrain": {
+      "door_closed": ["wood", "medium", true, "door_open"], "door_locked": ["wood", "medium", true, "door_open"],
+      "barrels": ["wood", "medium", false, "ground"], "crates": ["wood", "medium", false, "ground"],
+      "table": ["wood", "medium", false, "ground"], "chair": ["wood", "small", false, "ground"],
+      "stool": ["wood", "small", false, "ground"], "bench": ["wood", "medium", false, "ground"],
+      "cart": ["wood", "large", false, "ground"], "sacks": ["cloth", "medium", false, "ground"],
+      "shelf": ["wood", "medium", false, "ground"], "trunk": ["wood", "small", true, "ground"],
+      "chest": ["wood", "small", true, "chest_open"], "fence": ["wood", "medium", false, "ground"],
+      "woodpile": ["wood", "medium", false, "ground"], "haystack": ["cloth", "large", false, "ground"]
+    }
   }
 }

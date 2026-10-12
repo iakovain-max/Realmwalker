@@ -606,3 +606,60 @@ def test_study_search_and_ready(tables):
     them.move_left = 30
     b.walk(them, [(5, 4), (4, 4)])  # comes within reach of the waiting sword
     assert not me.reaction and any(e["kind"] == "attack" and e["by"] == me.id for e in b.events)
+
+
+# ---------------------------------------------------------------------------- height, falling, antimagic, objects
+def test_height_counts_in_reach_and_a_knocked_down_flier_falls(tables):
+    b, me, drake = duel(tables, foe="young_dragon", gap=1)
+    assert drake.fly_speed == 80
+    drake.move_left = 80
+    assert b.do_fly(drake, 20) and drake.z == 20
+    assert b.gap(me, drake) == 4  # 20 feet up: out of a sword's reach
+    sword = weapon(b, me)
+    assert not b.in_reach(me, sword, drake)[0]
+    hp = drake.hp
+    drake.conditions["prone"] = -1
+    b._check_end()
+    assert drake.z == 0 and drake.hp < hp and "prone" in drake.conditions
+
+
+def test_a_flier_goes_over_what_stops_walkers(tables):
+    b, me, drake = duel(tables, foe="stirge", gap=4)
+    drake.move_left = drake.fly_speed
+    tree = b.move_tree(drake)
+    b.field.rough[:, :] = True  # the whole field is mud
+    assert len(b.move_tree(drake)) == len(tree)  # (the mud does not slow it)
+
+
+def test_no_spell_works_in_an_antimagic_area(tables):
+    from realmwalker.rules.combat import Zone
+
+    w = hero(tables, "wizard")
+    cr = spawn(tables, "bandit", RNG(1, "foe"), 1)
+    b = Battle(tables, [w], [cr], Env(), RNG(1, "battle"), spots={0: (3, 4), 1: (8, 4)})
+    b.start()
+    me, them = b.fighters
+    b.order = [me.id, them.id]
+    b.turn, b.turn_started = 0, True
+    b._start_of_turn(me)
+    b._add_zone(Zone(b._zone_id(), "antimagic", {(8, 4), (8, 5)}))
+    assert b.cast_problem(me, "fire_bolt", them) == "magic does not work there"
+
+
+def test_doors_and_barrels_can_be_broken(tables):
+    b, me, them = duel(tables, gap=6)
+    T = tables.terrain.index
+    b.field.terrain[4, 4] = T["barrels"]
+    b.field._derive()
+    obj = b.object_at((4, 4))
+    assert obj is not None and obj["ac"] == 15
+    obj["hp"] = 1
+    b.order = [me.id, them.id]
+    b.turn, b.turn_started = 0, True
+    b._start_of_turn(me)
+    for _ in range(20):
+        me.action, me.attacks_left = 1, 0
+        if b.object_at((4, 4)) is None:
+            break
+        b.attack_object(me, weapon(b, me), (4, 4))
+    assert b.object_at((4, 4)) is None and b.field.passable(4, 4)
