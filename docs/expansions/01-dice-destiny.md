@@ -44,9 +44,9 @@ pictures are reworked to match the game's own art; the main menu gets its shelf 
 - [x] B.5 2024 rules glossary: d20 tests, actions, unarmed strikes, surprise, Heroic Inspiration, concentration,
   temporary hit points, damage order, falling, suffocation, burning, areas incl. Emanation, cover, obscurement,
   objects; exhaustion and hunger/thirst in 2024 form on the body system; "careful player" measured again.
-- [ ] B.6 Stat blocks (2025): the 35 creatures re-made (Appendix A), with ids renamed; legendary actions and
+- [x] B.6 Stat blocks (2025): the 35 creatures re-made (Appendix A), with ids renamed; legendary actions and
   resistance, recharge, uses per day, 2025 spellcasting and multiattack proven on test creatures.
-- [ ] B.7 Balance in band; Part B to `main`.
+- [x] B.7 Balance in band; Part B to `main`.
 
 ### Part C — Reactions and Tactics 2.0
 - [ ] C.1 Resumable resolution and reaction prompts; the *Reactions* setting.

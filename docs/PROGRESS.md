@@ -38,6 +38,39 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Local session, 2026-10-12 (evening): Dice & Destiny part B — the 2024 rules and the 2025 creatures — branch `dlc/01-dice-destiny`
+
+**What is different when you play**
+- **Every creature you already meet is its 2025 self**, number for number from the Monster Manual (checked on its
+  pages). Wolves and bears knock you down when they hit; a bugbear grabs you from ten feet away and drags you; a
+  stirge fastens on and drinks every turn; a hobgoblin's longsword hits like a hammer (2d10); goblins and bugbears are
+  fey now, gnolls fiends; a troll heals 15 a turn and charges; zombies get back up unless the blow was holy or a
+  critical; nobles and the bandit captain parry. The bandit archer is a Scout and shoots twice, so the small bandit
+  bands on the roads are plain bandits again (2025 bandits carry crossbows) and the Scouts stay with the captain's
+  gangs. The captain throws daggers rather than a pistol, until firearms come (Gnomes & Golems).
+- **Spells are their 2024 selves**: Sleep takes a foe in two steps and a blow or a shake wakes it; Cure Wounds heals
+  2d8, Healing Word 2d4; Inflict Wounds is a Constitution save; Command makes a foe grovel its turn away; Hold Person
+  holds one more with a higher slot; Spiritual Weapon needs concentration; and so on (the full list is in git).
+- **The 2024 rules**: surprise costs initiative, not a turn; exhaustion takes 2 off every roll and 5 feet of speed per
+  level (no more halved hit points); grappling and shoving are saving throws and one of your attacks; you can drag
+  someone you hold; Help distracts an enemy for a friend's next blow; Hide needs a 15; humans wake from every long
+  rest with Heroic Inspiration (one failed roll tried again); a pit is a fall (1d6 for every 10 feet); Alchemist's Fire
+  sets people burning until they roll it out.
+- **Reactions ask you first.** When the rules give you a choice out of turn and it costs something (Shield, a use of
+  Indomitable, Guided Strike, Heroic Inspiration...), the fight stops with a small "Reaction" box: Enter takes the
+  suggestion, or y / n, or click. A new setting, **Reactions** (after "Companions in a fight"): Ask me (the default),
+  Ask for everything, Decide for me.
+
+**How to test**: start a fight with a wizard in the party who knows Shield (or a fighter at level 9 with
+Indomitable): when a blow would land, the Reaction box asks. Try Settings, Reactions, to change it.
+
+**Balance**: measured before and after every step with `tools/balance.py` and the careful-player tests; every band
+holds (two wolves are a little easier than before, three bandits about the same).
+
+**For later sessions**: the battle code's numbers and features now come from data (data/conditions.json,
+data/traits.json, data/spells.json effects, data/statblocks.json); CLAUDE.md describes the kernel. What is still
+written by hand in the battle code, and why, is listed in docs/expansions/01-dice-destiny.md.
+
 ### Local session, 2026-10-12 (later): Dice & Destiny begins — part A done, the rules kernel started — branch `dlc/01-dice-destiny`
 
 **Why the computer was working so hard, and what changed.** Since the world got its long history, a test run made
