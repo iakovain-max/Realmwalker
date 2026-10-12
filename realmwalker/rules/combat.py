@@ -28,7 +28,8 @@ from realmwalker.core.rng import RNG
 from realmwalker.rules import grid
 from realmwalker.rules import spells as spellrules
 from realmwalker.rules.character import Character, Sheet, modifier
-from realmwalker.rules.engine import actions, durations, effects, events, hazards, query
+from realmwalker.rules.engine import actions, durations, effects, events, hazards, query, reactions
+from realmwalker.rules.engine.reactions import Decision
 from realmwalker.rules.engine import traits as trs
 from realmwalker.rules.creatures import Creature
 from realmwalker.rules.inventory import remove_item
@@ -457,6 +458,26 @@ class Battle:
         self._light_key = None
         self._light = None
         self.active_round = 1  # the last round in which anyone moved, struck or cast
+        # Decisions that pause the fight (rules/engine/reactions.py): a battle a person is watching runs its pieces
+        # in the resolver (run), which stops where the player is asked and goes on with answer().
+        self.resolver = reactions.Resolver()
+        self.human = False  # someone is playing (the battle screen says so); else every decision is the game's own
+        self.reactions = "ask"  # the Reactions setting: ask, all, auto
+
+    # ------------------------------------------------------------------ decisions
+    @property
+    def pending_decision(self) -> Decision | None:
+        return self.resolver.pending
+
+    def run(self, fn, *args, **kwargs):
+        """Run part of the battle (a step, a player's action) so that it can stop at a decision."""
+        if not self.human:
+            return fn(*args, **kwargs)
+        return self.resolver.run(fn, *args, **kwargs)
+
+    def answer(self, value: str):
+        """The player's answer to the decision waiting (pending_decision); the battle goes on."""
+        return self.resolver.answer(value)
 
     # ------------------------------------------------------------------ helpers
     def say(self, text: str, category: str = "info") -> None:
@@ -961,6 +982,10 @@ class Battle:
         opts = [o for o in self.attack_options(e) if o.is_melee and o.available and self.gap(e, f) <= o.reach_sq]
         if not opts:
             return
+        if not reactions.yes(self, Decision(e, "opportunity", f"{f.the_name} breaks away from {e.the_name}. "
+                                            "Strike as they go? (your reaction)",
+                                            [("yes", "Strike"), ("no", "Let them go")], free=True)):
+            return
         e.reaction = False
         opt = max(opts, key=lambda o: _avg(o.damage) + o.bonus)
         self.say(f"{e.the_name} strikes at {f.the_name} as {f.possessive if f.char else 'it'} breaks away.", "warn")
@@ -1333,7 +1358,7 @@ class Battle:
             hit, total = ev.hit, ev.total
         # The Shield spell: a wizard who sees the blow coming turns it with a reaction, if that is enough.
         if hit and not crit and target.char and target.reaction and not target.incapacitated and total < ac + 5:
-            if self._shield(target):
+            if self._shield(target, att, opt, total, ac):
                 ac += 5
                 hit = False
         if hit and query.crit_within(self, att, target):
@@ -1428,11 +1453,15 @@ class Battle:
             if g.incapacitated or not g.standing or self.gap(g, target) > 1 or not self.can_see(g, att):
                 continue
             shield = g.char.equipped_item("off_hand")
-            if shield is not None and self.t.items.category(shield) == "shield":
+            if shield is not None and self.t.items.category(shield) == "shield" and reactions.yes(
+                    self, Decision(g, "protection", f"{att.the_name} strikes at {target.the_name}, beside "
+                                   f"{g.the_name}. Put your shield in the way? (your reaction: the blow is at a "
+                                   "disadvantage)", [("yes", "Shield them"), ("no", "Keep the reaction")], free=True)):
                 return g
         return None
 
-    def _shield(self, f: Fighter) -> bool:
+    def _shield(self, f: Fighter, att: Fighter | None = None, opt: AttackOption | None = None, total: int = 0,
+                ac: int = 0) -> bool:
         """Cast Shield as a reaction (wizards who know it, with a first-level slot to spare)."""
         if not f.char or "shield" not in spellrules.known_spells(f.char, self.t):
             return False
@@ -1440,6 +1469,11 @@ class Battle:
             return False
         slot = spellrules.lowest_free_slot(f.char, self.t, 1)
         if slot is None:
+            return False
+        blow = f"{att.the_name}'s {opt.name} would hit {f.the_name} ({total} against AC {ac})" if att and opt else \
+            f"A blow would hit {f.the_name}"
+        if not reactions.yes(self, Decision(f, "shield", f"{blow}. Cast Shield? +5 AC turns it.",
+                                            [("yes", f"Shield (a level {slot} slot)"), ("no", "Let it land")])):
             return False
         spellrules.spend_slot(f.char, slot)
         f.reaction = False
@@ -1522,9 +1556,13 @@ class Battle:
                     self._check_end()
                     break
 
-    def _inspired(self, f: Fighter, need: int) -> bool:
+    def _inspired(self, f: Fighter, need: int, what: str = "a saving throw") -> bool:
         """Heroic Inspiration (2024): a party member may reroll a die once; spent on a failed save worth saving."""
         if f.char is None or f.char.uses.get("heroic_inspiration", 0) <= 0 or need > 20:
+            return False
+        if not reactions.yes(self, Decision(f, "heroic_inspiration", f"{f.the_name} fails {what}. Spend Heroic "
+                                            f"Inspiration to roll again? (needs {max(1, need)} or more)",
+                                            [("yes", "Roll again"), ("no", "Keep it for later")])):
             return False
         f.char.uses["heroic_inspiration"] = 0
         return True
@@ -1651,7 +1689,7 @@ class Battle:
 
     def _death_save(self, f: Fighter) -> None:
         roll = dice.d20(self.rng).natural
-        if 1 < roll < 10 and roll + query.d20_penalty(f) < 10 and self._inspired(f, 10):
+        if 1 < roll < 10 and roll + query.d20_penalty(f) < 10 and self._inspired(f, 10, "a death save"):
             roll = dice.d20(self.rng).natural
             self.dice_say(f"{f.name} spends Heroic Inspiration on the death save: {roll}")
         if roll not in (1, 20):

@@ -482,3 +482,73 @@ def test_dim_light_hides_better(tables):
     b.field.base_light = grid.DIM
     b._light_key = None
     assert b.dim_for(me, them) and not b.can_see(me, them)
+
+
+# ---------------------------------------------------------------------------- reactions that ask first
+def _shield_fight(tables, setting="ask"):
+    w = hero(tables, "wizard")
+    cr = spawn(tables, "bandit", RNG(1, "foe"), 1)
+    b = Battle(tables, [w], [cr], Env(), RNG(1, "battle"), spots={0: (3, 4), 1: (4, 4)})
+    b.start()
+    b.human, b.reactions = True, setting
+    me, them = b.fighters
+    me.auto = False
+    sword = next(o for o in b.attack_options(them) if o.is_melee)
+    return b, me, them, sword
+
+
+def _land_a_blow(b, me, them, sword):
+    """An attack that would hit by 1: Shield would turn it."""
+    import realmwalker.core.dice as dice_mod
+
+    need = me.ac() - sword.bonus
+    real = dice_mod.d20
+    dice_mod.d20 = lambda rng, advantage=False, disadvantage=False: dice_mod.D20Roll(max(2, min(19, need)), [need])
+    try:
+        return b.run(b._attack, them, sword, me)
+    finally:
+        dice_mod.d20 = real
+
+
+def test_a_reaction_that_spends_a_slot_stops_the_fight_to_ask(tables):
+    b, me, them, sword = _shield_fight(tables)
+    _land_a_blow(b, me, them, sword)
+    d = b.pending_decision
+    assert d is not None and d.kind == "shield" and "Shield" in d.text
+    assert b.run(b.step) is None  # nothing else happens until it is answered
+    b.answer("yes")
+    assert b.pending_decision is None and any(x.get("source") == "shield" for x in me.buffs)
+
+
+def test_saying_no_lets_the_blow_land(tables):
+    b, me, them, sword = _shield_fight(tables)
+    hp = me.hp
+    _land_a_blow(b, me, them, sword)
+    b.answer("no")
+    assert not any(x.get("source") == "shield" for x in me.buffs) and me.hp < hp
+
+
+def test_decide_for_me_never_asks(tables):
+    b, me, them, sword = _shield_fight(tables, setting="auto")
+    _land_a_blow(b, me, them, sword)
+    assert b.pending_decision is None and any(x.get("source") == "shield" for x in me.buffs)
+
+
+def test_without_a_player_nothing_ever_waits(tables):
+    b, me, them, sword = _shield_fight(tables)
+    b.human = False  # tests, the balance tool, autoplay without a window
+    _land_a_blow(b, me, them, sword)
+    assert b.pending_decision is None
+
+
+def test_free_reactions_do_not_ask_unless_everything_should(tables):
+    from realmwalker.rules.engine import reactions
+    from realmwalker.rules.engine.reactions import Decision
+
+    b, me, them, sword = _shield_fight(tables)
+    asked = []
+    b.resolver.in_worker = lambda: True
+    b.resolver.ask = lambda d: asked.append(d.kind) or "no"
+    assert reactions.ask(b, Decision(me, "opportunity", "x", free=True)) == "yes"
+    b.reactions = "all"
+    assert reactions.ask(b, Decision(me, "opportunity", "x", free=True)) == "no" and asked == ["opportunity"]

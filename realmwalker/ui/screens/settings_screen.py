@@ -6,7 +6,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 
 from realmwalker.config import ANIMATION_CHOICES, AUTOSAVE_CHOICES, COMPANION_CHOICES, MAP_ZOOMS, \
-    TOWN_TIME_CHOICES, VERBOSITY_LEVELS, VOLUME_STEPS, WORLD_ZOOMS, Settings
+    REACTION_CHOICES, TOWN_TIME_CHOICES, VERBOSITY_LEVELS, VOLUME_STEPS, WORLD_ZOOMS, Settings
 from realmwalker.ui import colors
 from realmwalker.ui.input import KeyEvent
 from realmwalker.ui.screens.base import ConfirmBox, Screen
@@ -58,6 +58,11 @@ class SettingsScreen(Screen):
                        s.battle_companions], lambda d: self._cycle("battle_companions", COMPANION_CHOICES, d),
                    "You command them: you play every turn of the party. They fight by themselves: you play your own "
                    "character's turns and your companions choose their own (as z does for one turn)."),
+            Option("Reactions", lambda: {"ask": "Ask me", "all": "Ask for everything", "auto": "Decide for me"}[
+                       s.reactions], lambda d: self._cycle("reactions", REACTION_CHOICES, d),
+                   "In a fight, when the rules give you a choice out of turn. Ask me: before a spell, a use of a "
+                   "feature or Heroic Inspiration is spent (an opportunity attack on a fleeing enemy and the like "
+                   "happen by themselves). Ask for everything: every reaction asks. Decide for me: none asks."),
             Option("Time in towns", lambda: {"flows": "Flows", "waits": "Waits for you"}[s.time_in_towns],
                    lambda d: self._cycle("time_in_towns", TOWN_TIME_CHOICES, d),
                    "Flows: in a town the clock runs by itself, and its people walk about their day while you stand and "
