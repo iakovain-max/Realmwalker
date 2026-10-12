@@ -202,7 +202,20 @@
     "gold_ring": {"name": "gold ring", "category": "trade", "weight": 0.1, "value": 2500, "material": "gold", "description": "A heavy gold ring, taken from a dead hand."},
     "silver_chalice": {"name": "silver chalice", "category": "trade", "weight": 1, "value": 1500, "material": "silver", "description": "A cup for wine or for the gods, dented."},
     "gemstone": {"name": "gemstone", "category": "trade", "weight": 0.1, "value": 5000, "material": "stone", "description": "A cut stone that takes the light."},
-    "jewelled_brooch": {"name": "jewelled brooch", "category": "trade", "weight": 0.1, "value": 4000, "material": "gold", "description": "A cloak-pin set with red stones, very old."}
+    "jewelled_brooch": {"name": "jewelled brooch", "category": "trade", "weight": 0.1, "value": 4000, "material": "gold", "description": "A cloak-pin set with red stones, very old."},
+    "gem_10": {"name": "small stone", "category": "trade", "weight": 0, "value": 1000, "material": "stone", "description": "A pretty stone, polished. A jeweller would give a little for it."},
+    "gem_50": {"name": "fair stone", "category": "trade", "weight": 0, "value": 5000, "material": "stone", "description": "A clear, well-cut stone. Worth a good horse's shoeing many times over."},
+    "gem_100": {"name": "fine stone", "category": "trade", "weight": 0, "value": 10000, "material": "stone", "description": "A stone that catches the eye from across a room."},
+    "gem_500": {"name": "precious stone", "category": "trade", "weight": 0, "value": 50000, "material": "stone", "description": "A stone a merchant would want to see in daylight before naming a price."},
+    "gem_1000": {"name": "rare stone", "category": "trade", "weight": 0, "value": 100000, "material": "stone", "description": "A stone of the kind kings set in rings. Few in any town could pay what it is worth."},
+    "gem_5000": {"name": "great stone", "category": "trade", "weight": 0, "value": 500000, "material": "stone", "description": "A stone with a name and a history, if anyone remembered them. Fortunes have changed hands for less."},
+    "art_25": {"name": "trinket", "category": "trade", "weight": 0.5, "value": 2500, "material": "silver", "description": "A small, well-made thing: somebody's treasure once."},
+    "art_250": {"name": "fine piece", "category": "trade", "weight": 1, "value": 25000, "material": "gold", "description": "Fine work, of the kind a lord keeps on a shelf to be seen."},
+    "art_750": {"name": "precious piece", "category": "trade", "weight": 1, "value": 75000, "material": "gold", "description": "A masterwork. Someone will know who made it, and want it back."},
+    "art_2500": {"name": "treasure", "category": "trade", "weight": 1, "value": 250000, "material": "gold", "description": "A thing for a palace, not a pack."},
+    "art_7500": {"name": "great treasure", "category": "trade", "weight": 4, "value": 750000, "material": "gold", "description": "A treasure of a royal house. There are not many buyers, and some of them are thieves."},
+    "silver_bar": {"name": "silver bar", "category": "trade", "weight": 5, "value": 2500, "material": "silver", "stack": true, "description": "Five pounds of silver, stamped. Merchants take it gladly instead of coin."},
+    "gold_bar": {"name": "gold bar", "category": "trade", "weight": 5, "value": 25000, "material": "gold", "stack": true, "description": "Five pounds of gold, stamped. Carrying it openly is asking for a knife."}
   },
   "starting_packs": {
     "everyone": [["underclothes", 1], ["backpack", 1], ["blanket", 1], ["waterskin", 1], ["tinderbox", 1], ["rations", 2], ["torch", 2], ["bandages", 2]]

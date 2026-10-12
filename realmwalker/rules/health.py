@@ -877,6 +877,10 @@ def take_poppy(char: Character) -> str:
 def magic_heal(char: Character, wound: Wound | None, amount: int) -> list[str]:
     """Cure Wounds and its like: hit points, and the worst of one wound mended by a step."""
     msgs = []
+    from realmwalker.rules import magic
+
+    if magic.flag(char, "no_healing"):
+        return [f"The magic slides off {body.first(char)}: the artifact will not let them heal."]
     char.hp = min(body.hp_cap(char), char.hp + amount)
     msgs.append(f"{body.first(char)} recovers {amount} hit points.")
     if wound is not None and wound in char.wounds:

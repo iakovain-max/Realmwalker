@@ -880,7 +880,34 @@ class InventoryScreen(Screen):
         if len(g.party) > 1:
             other = g.party[(self.index + 1) % len(g.party)].name.split()[0]
             out.append((f"Give to {other}", self.give, "g"))
+        if it.magic and not it.magic.get("identified") and self.action_name(it) != "Study it":
+            out.append(("Study it (an hour)", lambda: self.study(it), "k"))
+        if it.magic and it.magic.get("attune"):
+            from realmwalker.rules import magic as magicrules
+
+            if magicrules.is_attuned(self.char, it):
+                out.append(("End the bond (an hour)", lambda: self.attune(it), "a"))
+            else:
+                out.append(("Attune (an hour)", lambda: self.attune(it), "a"))
         return out
+
+    def study(self, it: Item) -> None:
+        from realmwalker.game import magic_items
+
+        for line in magic_items.study(self.game, self.char, it):
+            self.game.say(line, "magic")
+
+    def attune(self, it: Item) -> None:
+        """Bind this member to the thing through a short rest, or unpick the bond (PHB 2024 attunement)."""
+        from realmwalker.game import magic_items
+        from realmwalker.rules import magic as magicrules
+
+        if magicrules.is_attuned(self.char, it):
+            lines = magic_items.end_attunement(self.game, self.char, it)
+        else:
+            lines = magic_items.attune(self.game, self.char, it)
+        for line in lines:
+            self.game.say(line, "magic")
 
     def take_off_item(self, it: Item) -> None:
         wearer, slot = worn_by(self.char, it.uid)
@@ -1000,6 +1027,17 @@ class InventoryScreen(Screen):
             self.app.replace(CharacterScreen(self.app, self.game, self.index))
         elif ev.key in ("g", "G"):
             self.give()
+        elif ev.key in ("a", "k"):
+            it = self.current()
+            if it is not None and it.magic:
+                if ev.key == "a" and it.magic.get("attune"):
+                    self.attune(it)
+                elif ev.key == "k" and not it.magic.get("identified"):
+                    self.study(it)
+                else:
+                    return False
+            else:
+                return False
         elif ev.key == "tab" and len(self.game.party) > 1:
             self.index = (self.index + 1) % len(self.game.party)
             self.selected = 0

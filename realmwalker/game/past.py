@@ -339,8 +339,9 @@ ARTIFACT_KINDS = {"sword": ("weapon", "longsword"), "axe": ("weapon", "battleaxe
 
 
 def artifact_item(game, index: int):
-    """The artifact of the history as a thing in your hands: a very rare magic item with its name and its story.
-    Marks it found."""
+    """The artifact of the history as a thing in your hands: an artifact (DMG 2024: a legendary item's powers and
+    properties rolled for this world on the Artifact Properties tables), with its name and its story. Marks it
+    found."""
     from realmwalker.game import magic_items
     from realmwalker.rules.items import Item
 
@@ -348,8 +349,7 @@ def artifact_item(game, index: int):
     a = w.politics["artifacts"][index]
     rng = w.rng.child(f"artifact/{index}")
     kind, base = ARTIFACT_KINDS.get(a.get("kind", ""), ("jewellery", None))
-    it = magic_items.make(game, rng, tier=6, kind=kind, rarity="very_rare") or \
-        magic_items.make(game, rng, tier=6, kind="jewellery", rarity="very_rare")
+    it = magic_items.make_artifact(game, rng, kind=kind) or magic_items.make_artifact(game, rng, kind="jewellery")
     if it is not None:
         if base is not None and base in game.tables.items and kind != "jewellery":
             it.def_id = base  # the sword of the songs is a sword

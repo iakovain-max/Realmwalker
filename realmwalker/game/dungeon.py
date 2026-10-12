@@ -183,6 +183,8 @@ def light_radius(game) -> int:
 
     glow = max((magic.light(c) for c in game.party), default=0)
     lit = getattr(game, "lit", None)
+    if any(c.attuned and magic.flag(c, "douses_flames") for c in game.party):
+        return glow  # an artifact's flaw: flames gutter out around its bearer
     if lit and lit.get("hours", 0) > 0:
         return max(glow, int(game.tables.items.get(lit["def_id"]).get("light", {}).get("radius", 5)))
     return glow
@@ -331,6 +333,9 @@ def search(game) -> list[str]:
             set_terrain(lm, x, y, "door_closed")
             del lm.features[(x, y)]
             out.append(f"<good>{who.name.split()[0]} finds a hidden door in the wall!</>")
+            from realmwalker.game import magic_items
+
+            magic_items.notice(game, "discovery")
             if game.party[1:]:
                 from realmwalker.game.companions import react
 
@@ -457,6 +462,9 @@ def open_chest(game, lm, x: int, y: int) -> None:
     else:
         game.say(f"{what.capitalize()} holds nothing but dust.", "dim")
     if grave:
+        from realmwalker.game import magic_items
+
+        magic_items.notice(game, "desecration")
         if game.party[1:]:
             from realmwalker.game.companions import react
 

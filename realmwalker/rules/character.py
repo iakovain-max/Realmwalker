@@ -85,6 +85,7 @@ class Character:
     addictions: dict[str, float] = field(default_factory=dict)
     effects: dict[str, float] = field(default_factory=dict)  # timed effects, hours left (poppy, herbal, hangover...)
     animals: list[dict] = field(default_factory=list)  # mules and horses: {"kind", "name", "unfed", "bought"}
+    attuned: list[int] = field(default_factory=list)  # uids of magic items bound to them (rules/magic.py), at most 3
     formation: list[int] = field(default_factory=list)  # [column, row] in the battle order (game/arena.py); [] = by class
     next_uid: int = 1
     is_player: bool = True
@@ -163,6 +164,11 @@ class Sheet:
             bonus += 2 * self.proficiency
         elif skill in self.c.skills:
             bonus += self.proficiency
+        elif self.c.attuned:
+            from realmwalker.rules import magic
+
+            if magic.proficient(self.c, skill):  # an artifact's gift
+                bonus += self.proficiency
         if skill == "perception":
             helm = self.c.equipped_item("helmet")
             if helm is not None:
@@ -445,6 +451,11 @@ class Sheet:
         req = int(self.items.get(armor.def_id).get("str_req", 0))
         return req > 0 and self.c.abilities.get("str", 10) < req
 
+    def is_caster(self) -> bool:
+        from realmwalker.rules import spells
+
+        return spells.is_caster(self.c, self.t)
+
     def has_rule_trait(self, trait_id: str) -> bool:
         return any(t["id"] == trait_id for t in self.race["traits"])
 
@@ -457,6 +468,10 @@ class Sheet:
         if self.armor_too_heavy():
             speed -= 10
         speed -= 5 * self.c.exhaustion  # 2024: 5 feet per level of exhaustion
+        if self.c.attuned:
+            from realmwalker.rules import magic
+
+            speed += magic.total(self.c, "speed")
         enc = self.encumbrance()
         if enc == 1:
             speed -= 10

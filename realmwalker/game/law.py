@@ -103,6 +103,10 @@ def commit(game, cid: str, *, victim=None, value: int = 0, witnesses=None, repor
     """The player breaks the law. Returns the crime record (None where no lord's law runs)."""
     from realmwalker.game.people import change_disposition
 
+    if cid in ("assault", "murder"):
+        from realmwalker.game import magic_items
+
+        magic_items.notice(game, "violence")
     realm, s = jurisdiction(game)
     if realm is None:
         return None

@@ -7,7 +7,8 @@ A definition has a name and a text (for its card), and any of:
                 {"attacked": "disadvantage"}    attack rolls against it
                 {"enemy_attacks": ...}           attack rolls of an enemy standing by it ("{name}" in `why`)
                 {"save": "advantage", "abilities": ["con"]}
-                {"resist": ["poison"]}, {"crit_range": 19}, {"passive": {"perception": 5}}
+                {"resist": ["poison"]}, {"vulnerable": ["poison"] or ["all"]}, {"crit_range": 19},
+                {"passive": {"perception": 5}}, {"check": "disadvantage", "abilities": ["str"]} (ability checks)
     hooks       [{"event": ..., "as": "self"|"attacker"|"target"|"ally"|"any", "handler": id}] (rules/engine/events.py)
     resource    {"id", "max", "recover": "short"|"long"|"dawn"|"turn"} (rules/engine/resources.py)
     where       "sheet" when the character sheet or another system handles it and a fight has nothing to do
@@ -44,7 +45,7 @@ def of(f) -> frozenset[str]:
         key = ("c", id(f.cdef))
     else:
         c = f.char
-        key = (c.race, c.cls, c.subclass, c.level, len(c.features), tuple(c.features[-3:]))
+        key = (c.race, c.cls, c.subclass, c.level, len(c.features), tuple(c.features[-3:]), _magic_key(c))
     cached = f.__dict__.get("_traits")
     if cached is not None and cached[0] == key:
         return cached[1]
@@ -62,7 +63,19 @@ def of_char(char, tables) -> frozenset[str]:
     names = {t["rule"] for t in s.race["traits"] if t.get("rule")}
     names |= {feat["rule"] for feat in s.features() if feat.get("rule")}
     names |= set(char.features)
+    if char.equipped or char.attuned:
+        from realmwalker.rules import magic
+
+        names |= magic.traits(char)  # an item's powers (artifacts, sentient things), while it works for them
     return frozenset(names)
+
+
+def _magic_key(char) -> tuple:
+    if not (char.equipped or char.attuned):
+        return ()
+    from realmwalker.rules import magic
+
+    return magic.fingerprint(char)
 
 
 def has(f, trait: str) -> bool:

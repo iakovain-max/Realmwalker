@@ -14,7 +14,7 @@ from realmwalker.rules.engine import traits as tr
 
 MODIFIER_KEYS = {
     "attack", "attacked", "enemy_attacks", "save", "resist", "crit_range", "passive", "ignores_zone",
-    "immune_condition", "attacks", "drag_free",
+    "immune_condition", "attacks", "drag_free", "vulnerable", "check",
 }
 MODIFIER_EXTRAS = {"when", "why", "abilities"}
 

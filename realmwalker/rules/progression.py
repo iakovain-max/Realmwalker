@@ -219,7 +219,11 @@ def short_rest(char: Character, tables, rng: RNG) -> list[str]:
     die = tables.classes[char.cls]["hit_die"]
     con = modifier(char.abilities["con"])
     healed = 0
-    while char.hp < char.max_hp and char.hit_dice > 0:
+    from realmwalker.rules import magic
+
+    if magic.flag(char, "no_healing"):
+        notes.append(f"{char.name.split()[0]} cannot heal: the artifact will not allow it.")
+    while char.hp < char.max_hp and char.hit_dice > 0 and not magic.flag(char, "no_healing"):
         char.hit_dice -= 1
         amount = max(1, dice.roll(f"1d{die}", rng).total + con)
         char.hp = min(char.max_hp, char.hp + amount)
@@ -243,14 +247,14 @@ def long_rest(char: Character, tables, rng: RNG) -> list[str]:
     """A full night: hit points, spell slots and features restored; half the hit dice back."""
     if not char.alive:
         return []
-    char.hp = char.max_hp
+    from realmwalker.rules import magic
+
+    if not magic.flag(char, "no_healing"):
+        char.hp = char.max_hp
     char.hit_dice = min(char.level, char.hit_dice + max(1, char.level // 2))
     restore_slots(char)
     resources.recover(char, tables, "long")  # every pool (data/traits.json), a half-orc's toughness among them
     char.uses["arcane_recovery"] = 1
     for key in ("ward_made", "arcane_ward"):  # an abjurer's ward is made anew each day
         char.uses.pop(key, None)
-    from realmwalker.rules import magic
-
-    magic.recharge(char)
     return [f"{char.name.split()[0]} wakes rested."]

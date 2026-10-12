@@ -287,3 +287,28 @@ def war_priest(c, o, victim) -> None:
         targets = [c.target]
     if opts and targets:
         b._attack(f, opts[0], min(targets, key=lambda t: t.hp))
+
+
+# ---------------------------------------------------------------------------- magic items (artifacts, DMG 2024)
+@handler("item_regeneration")
+def item_regeneration(b, f, ev, hook, buff) -> None:
+    """An artifact's gift: dice of hit points back at the start of each turn, while there is at least one left."""
+    if f.hp >= 1 and f.hp < f.max_hp and not (f.char is not None and _no_healing(f.char)):
+        healed = min(f.max_hp - f.hp, dice.roll(str(hook.get("dice", "1d6")), b.rng).total)
+        if healed > 0:
+            f.hp += healed
+            b._event("heal", to=f.id, amount=healed)
+            b.say(f"Warmth runs out of the artifact into {f.the_name}: {healed} hit points.", "good")
+
+
+@handler("item_force")
+def item_force(b, f, ev, hook, buff) -> None:
+    """An artifact's gift: every hit with an attack roll does an extra die of force damage."""
+    ev.typed.append((dice.roll(str(hook.get("dice", "1d6")), b.rng, double_dice=ev.crit).total,
+                     hook.get("type", "force")))
+
+
+def _no_healing(char) -> bool:
+    from realmwalker.rules import magic
+
+    return magic.flag(char, "no_healing")

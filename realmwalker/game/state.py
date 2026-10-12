@@ -277,6 +277,9 @@ class GameState:
         self.bury_the_dead()
         self._weather_moment()
         after = self.moment
+        from realmwalker.game import magic_items
+
+        magic_items.tick(self, before, after)  # dawn: charges back; what sentient things want; bonds to lost things
         if self.world.factions and after.total_days * 24 + after.hour != before.total_days * 24 + before.hour:
             from realmwalker.game import law
 
@@ -589,6 +592,9 @@ class GameState:
                 self.say(f"You enter <place>{area.name}</>. {desc}{gained}", "place")
                 for note in notes:
                     self.say(note, "good")
+                from realmwalker.game import magic_items
+
+                magic_items.notice(self, "discovery")
                 if self.party[1:]:
                     from realmwalker.game.companions import react
 
@@ -756,6 +762,10 @@ class GameState:
                 continue
             armor = c.equipped_item("armor")
             clanks = armor is not None and bool(self.tables.items.get(armor.def_id).get("stealth_disadvantage"))
+            if c.attuned:
+                from realmwalker.rules import magic
+
+                clanks = clanks or magic.flag(c, "stench")  # an artifact's sour stink
             roll = dice.d20(rng, disadvantage=clanks).natural + self.sheet(c).skill_bonus("stealth")
             if worst is None or roll < worst[0]:
                 worst = (roll, c, clanks)

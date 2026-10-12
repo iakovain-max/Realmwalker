@@ -83,10 +83,14 @@ def test_protection_saves_and_skills(game):
     ring = item(game, "jewellery", props=["ac"])
     ring = add_existing(c, game.tables.items, ring)
     equip(c, game.tables.items, ring.uid)
+    assert ring.magic["attune"]  # a rare thing: it works only for the one bound to it
+    assert game.sheet().armor_class() == ac
+    c.attuned.append(ring.uid)
     assert game.sheet().armor_class() == ac + magic.item_bonus(ring, "ac")
     amulet = add_existing(c, game.tables.items, item(game, "jewellery", props=["save"], seed=500))
     s0 = game.sheet().save_bonus("wis")
     equip(c, game.tables.items, amulet.uid)
+    c.attuned.append(amulet.uid)
     assert game.sheet().save_bonus("wis") >= s0
 
 
@@ -115,16 +119,16 @@ def fixed_d20(monkeypatch, value):
 
 def test_studying_and_asking_a_priest(game, monkeypatch):
     c = game.leader
-    it = add_existing(c, game.tables.items, item(game, "weapon"))
+    it = item(game, "weapon")
+    it.magic["cursed"] = True
+    it.magic["curse"] = {"text": "It whispers.", "effect": "save", "value": -2}
+    it = add_existing(c, game.tables.items, it)
     assert game.tables.items.name(it).startswith("strange")
-    fixed_d20(monkeypatch, 1)
-    magic_items.study(game, c, it)
-    assert not it.magic["identified"]
-    assert "tomorrow" in magic_items.study(game, c, it)[0]
-    game.world.time += 1440
-    fixed_d20(monkeypatch, 20)
-    magic_items.study(game, c, it)
+    t0 = game.world.time
+    magic_items.study(game, c, it)  # 2024: a short rest handling it, no roll
+    assert game.world.time - t0 == 60
     assert it.magic["identified"] and not game.tables.items.name(it).startswith("strange")
+    assert not it.magic.get("curse_known")  # ...but never its curse
     # A priest can tell you too.
     other = add_existing(c, game.tables.items, item(game, "jewellery", seed=900))
     s = next(s for s in game.world.settlements if s.kind in ("town", "city"))
@@ -144,6 +148,12 @@ def test_spell_charges(game):
     b = Battle(game.tables, [c], [spawn(game.tables, "wolf", RNG(1), 1)], Env(), RNG(1))
     b.start("Test")
     f = next(x for x in b.fighters if x.char is c)
+    f.action = 1
+    assert not [o for o in b.spell_options(f) if o[0].startswith("charge:")]  # not bound to it: nothing
+    c.attuned.append(wand.uid)
+    b = Battle(game.tables, [c], [spawn(game.tables, "wolf", RNG(1), 1)], Env(), RNG(1))
+    b.start("Test")
+    f = next(x for x in b.fighters if x.char is c)
     f.action = 1  # their turn
     options = [o for o in b.spell_options(f) if o[0].startswith("charge:")]
     assert options and options[0][1]
@@ -156,7 +166,10 @@ def test_spell_charges(game):
     from realmwalker.rules.progression import long_rest
 
     long_rest(c, game.tables, RNG(2))
-    assert p["left"] == p["value"]
+    assert p["left"] == left - 1  # a rest is not a dawn
+    p["left"] = 0
+    magic_items.dawn(game)
+    assert 1 <= p["left"] <= p["value"]  # some of it back at dawn (the regain dice)
 
 
 def test_treasure_holds_magic_at_higher_tiers(game):

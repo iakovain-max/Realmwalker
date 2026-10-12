@@ -100,6 +100,7 @@ def start_battle(game, creatures: list[Creature], intro: str, *, surprised: str 
     if situation == "camp":
         for f in battle.side(PARTY):
             f.conditions["prone"] = -1  # caught asleep: on the ground, and getting up takes half a move
+    _magic_at_the_start(game, battle)
     battle.start(intro)
     game.battle = battle
     others = [c for c in game.party[1:] if c.alive]
@@ -112,6 +113,38 @@ def start_battle(game, creatures: list[Creature], intro: str, *, surprised: str 
     game.travel = None
     game.say(f"<danger>{intro}</>", "danger")
     return battle
+
+
+def _magic_at_the_start(game, battle: Battle) -> None:
+    """What magic items do to their bearers as a fight begins: one a sentient thing has seized fights as it wills (on
+    Auto); one bound to an artifact that someone else is wearing is blind or deaf (DMG 2024 artifact flaws). The party
+    carries one pack, so "someone else carrying it" means another member wearing or wielding it."""
+    from realmwalker.game import magic_items
+    from realmwalker.rules import magic
+
+    for f in battle.side(PARTY):
+        c = f.char
+        if c is None or not c.attuned:
+            continue
+        if magic_items.seized(game, c):
+            f.auto = True
+            game.say(f"<magic>{c.name.split()[0]} fights as the thing bound to them wills.</>", "magic")
+        for it in magic.attuned_items(c):
+            elsewhere = any(o is not c and o.slot_of(it.uid) is not None for o in game.party)
+            if not elsewhere:
+                continue
+            for flag, cond in (("blind_apart", "blinded"), ("deaf_apart", "deafened")):
+                if any(p.get("kind") == "flag" and p.get("flag") == flag for p in it.magic.get("props", [])):
+                    f.conditions[cond] = -1
+
+
+def _kinds(game, creatures) -> list[dict]:
+    """What a sentient thing sees in a band: each one's kind and alignment."""
+    out = []
+    for c in creatures:
+        d = game.tables.creatures[c.def_id]
+        out.append({"type": d.get("kind", ""), "alignment": d.get("alignment", "")})
+    return out
 
 
 def finish_battle(game) -> Aftermath:
@@ -135,6 +168,12 @@ def finish_battle(game) -> Aftermath:
         if result.outcome == "victory" and result.xp >= 100:
             tags += ("hard_fight",)
         react(game, *tags)
+    from realmwalker.game import magic_items
+
+    if result.outcome in ("victory", "fled", "parley"):
+        magic_items.notice(game, result.outcome, creatures=_kinds(game, [f.creature for f in battle.side(FOE)
+                                                                         if f.creature is not None]),
+                           hard=result.xp >= 100)
     if result.outcome in ("victory", "parley") and game.world.factions:
         from realmwalker.game.reputation import battle_deeds
 
@@ -484,6 +523,9 @@ def encounter_talk(game) -> bool:
     game.say(f"<dice>Persuasion: {roll} {'+' if bonus >= 0 else '-'} {abs(bonus)} = {roll + bonus} vs DC {dc}</>", "dice")
     if roll + bonus >= dc:
         game.say("Words are exchanged, hands stay near hilts, and in the end they let you pass.", "good")
+        from realmwalker.game import magic_items
+
+        magic_items.notice(game, "parley", creatures=_kinds(game, enc.creatures))
         game.pass_time(10)
         game.encounter = None
         return True
@@ -519,6 +561,9 @@ def encounter_pay(game) -> bool:
     game.say(f"You hold out your purse. They take {money_text(cost)} out of it, weigh the rest of you with their eyes, "
              f"and let you go.", "warn")
     game.leader.deeds.append("paid off robbers on the road")
+    from realmwalker.game import magic_items
+
+    magic_items.notice(game, "paid_off", creatures=_kinds(game, game.encounter.creatures))
     if game.party[1:]:
         from realmwalker.game.companions import react
 
@@ -808,7 +853,14 @@ def rest(game, kind: str) -> list[str]:
         talkers = companions.companions(game)
         if talkers and rng.chance(0.35):
             notes.append(companions.line(game, "camp", rng.choice(talkers), rng))
+    from realmwalker.rules import magic
+
+    sleepless = next((c for c in game.party if c.attuned and magic.flag(c, "no_rest_near")), None)
     for c in game.party:
+        if sleepless is not None and c is not sleepless:
+            notes.append(f"<warn>{c.name.split()[0]} lies awake beside {sleepless.name.split()[0]} and the thing "
+                         f"they are bound to, and gets no good of the rest.</>")
+            continue  # an artifact's flaw (DMG 2024): nobody near its bearer can rest
         if kind == "short":
             notes += progression.short_rest(c, game.tables, rng)
         elif c.hunger >= 80 or c.thirst >= 85:

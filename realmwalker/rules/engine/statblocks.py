@@ -33,6 +33,7 @@ def resolve(cid: str, flavour: dict, blocks: dict) -> dict:
         "name": sb["name"].lower(), "plural": sb["name"].lower() + "s",
         "kind": sb["type"], "tags": list(sb.get("tags", [])), "size": sb["size"],
         "cr": float(sb["cr"]), "xp": int(sb["xp"]), "pb": int(sb["pb"]),
+        "alignment": sb.get("alignment", "unaligned"), "treasure": list(sb.get("treasure", ["none"])),
         "ac": int(sb["ac"]), "hp": sb["hp"], "initiative": int(sb["initiative"]),
         "speed": int(sb["speed"].get("walk", 0)), "speeds": dict(sb["speed"]),
         "abilities": dict(sb["abilities"]), "saves": dict(sb.get("saves", {})), "skills": dict(sb.get("skills", {})),

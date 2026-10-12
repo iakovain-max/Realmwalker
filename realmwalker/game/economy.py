@@ -11,6 +11,7 @@ from __future__ import annotations
 from realmwalker.core import dice
 from realmwalker.core.rng import RNG
 from realmwalker.game.people import NPC, change_disposition, town_of
+from realmwalker.rules import magic
 from realmwalker.rules.character import Sheet
 from realmwalker.rules.inventory import add_existing, add_item, remove_item, worn_by
 from realmwalker.rules.items import Item, money_text
@@ -178,6 +179,8 @@ def sell_price(game, npc: NPC, item: Item) -> tuple[int | None, str]:
     price = items.unit_value(item) * ratio * local_factor(game, settlement, item.def_id)
     price *= MOOD_SELL[npc.mood()] * (1.0 + haggle_bonus(game, npc, shop))
     price = min(price, buy_price(game, npc, item.def_id, item) * 0.9)
+    if item.def_id.startswith(("gem_", "art_")) and any(c.attuned and magic.flag(c, "dulls_jewels") for c in game.party):
+        price /= 2  # an artifact's flaw: what its bearer handles loses its lustre
     return max(0, int(price)), ""
 
 
@@ -246,6 +249,10 @@ def sell(game, npc: NPC, char, uid: int, qty: int = 1) -> str:
     sold = remove_item(char, uid, qty)
     if sold is None:
         return "You no longer have that."
+    if sold.magic:
+        from realmwalker.game import magic_items
+
+        magic_items.notice(game, "magic_sold")
     char.money += total
     shop["coin"] -= total
     entry = sold.to_dict()

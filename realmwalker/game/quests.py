@@ -1112,6 +1112,10 @@ def free_captive(game, lm, x: int, y: int) -> None:
     f = lm.features.pop((x, y), {})
     q = by_id(game, f.get("quest"))
     name = f.get("name", "The captive")
+    if q is not None and q["state"] in LIVE:
+        from realmwalker.game import magic_items
+
+        magic_items.notice(game, "rescue")
     if q is None or q["state"] not in LIVE:
         set_terrain(lm, x, y, "bones")
         game.say(f"<warn>{name} is dead, still in the chains. You were too late.</>", "warn")

@@ -121,6 +121,7 @@ class Tables:
         self.companions = data["companions.json"]
         self.uniques = data["uniques.json"]
         self.magic = data["magic.json"]
+        self.treasure = data["treasure.json"]
         self.wonders = data["wonders.json"]
         self.towns = data["towns.json"]
         self.quests = data["quests.json"]

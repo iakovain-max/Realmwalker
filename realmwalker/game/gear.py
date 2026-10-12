@@ -399,6 +399,9 @@ def pray(game, char: Character) -> list[str]:
             out.append(f"<magic>The god is listening: {first(char)} has back "
                        f"{'a spent prayer' if len(back) == 1 else str(len(back)) + ' spent prayers'} "
                        f"(level {', '.join(str(b) for b in back)}).</>")
+    from realmwalker.game import magic_items
+
+    magic_items.notice(game, "prayer")
     if game.party[1:]:
         from realmwalker.game.companions import react
 

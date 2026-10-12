@@ -228,6 +228,9 @@ def defences(f, dtype: str) -> str:
         return "immune"
     if f.creature and dtype in f.cdef.get("vulnerable", []):
         return "vulnerable"
+    weak = tr.values(f, "vulnerable", flat=True)
+    if dtype in weak or ("all" in weak and dtype):
+        return "vulnerable"
     if resists(f, dtype):
         return "resist"
     return ""

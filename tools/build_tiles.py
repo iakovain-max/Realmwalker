@@ -332,6 +332,12 @@ ITEMS = {
     "copper_ingot": "item/ring/copper.png", "silver_ingot": "item/ring/silver.png", "gold_ring": "item/ring/gold.png",
     "silver_chalice": "item/misc/misc_phial.png", "gemstone": "item/amulet/stone_2_red.png",
     "jewelled_brooch": "item/amulet/cameo_blue.png",
+    "gem_10": "item/amulet/stone_1_cyan.png", "gem_50": "item/amulet/stone_1_green.png",
+    "gem_100": "item/amulet/stone_2_blue.png", "gem_500": "item/amulet/stone_3_green.png",
+    "gem_1000": "item/amulet/crystal_red.png", "gem_5000": "item/amulet/crystal_white.png",
+    "art_25": "item/amulet/cameo_orange.png", "art_250": "item/amulet/face_2.png", "art_750": "item/misc/misc_lamp_new.png",
+    "art_2500": "item/amulet/celtic_yellow.png", "art_7500": "item/amulet/face_1_gold.png",
+    "silver_bar": "item/misc/misc_stone_new.png", "gold_bar": "item/gold/gold_pile_4.png",
     # food and drink
     "rations": "item/food/bread_ration_new.png", "bread": "item/food/bread_ration_old.png", "cheese": "item/food/cheese.png",
     "salt_pork": "item/food/meat_ration_old.png", "dried_fish": "item/food/beef_jerky_new.png", "apples": "item/food/apple.png",
