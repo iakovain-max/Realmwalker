@@ -192,6 +192,19 @@ class Fighter:
 
     # ------------------------------------------------------------------ identity
     @property
+    def team(self) -> str:
+        """Who it fights for now: its own side, unless something has taken it over (a condition with "control":
+        charmed into serving, dominated, possessed). When that ends, it is back on its own side."""
+        for e in self.cond_ends.values():
+            if e.get("control") and e.get("control") != self.side:
+                return e["control"]
+        return self.side
+
+    @property
+    def controlled(self) -> bool:
+        return self.team != self.side
+
+    @property
     def name(self) -> str:
         if self.char:
             return self.char.name.split()[0]
@@ -502,13 +515,18 @@ class Battle:
         return self.fighter(self.order[self.turn])
 
     def side(self, side: str) -> list[Fighter]:
+        """Everyone who started on a side (the party, the foes)."""
         return [f for f in self.fighters if f.side == side]
 
+    def team(self, team: str) -> list[Fighter]:
+        """Everyone fighting for a side now (a dominated companion is on the foes' team)."""
+        return [f for f in self.fighters if f.team == team]
+
     def enemies_of(self, f: Fighter) -> list[Fighter]:
-        return [x for x in self.fighters if x.side != f.side and x.active]
+        return [x for x in self.fighters if x.team != f.team and x.active]
 
     def allies_of(self, f: Fighter) -> list[Fighter]:
-        return [x for x in self.fighters if x.side == f.side and x.active]
+        return [x for x in self.fighters if x.team == f.team and x.active]
 
     def on_field(self) -> list[Fighter]:
         """Everyone still taking up room: the living, the fallen and the yielded (not the dead or the fled)."""
@@ -524,7 +542,7 @@ class Battle:
         if self.outcome is not None or not self.order:
             return None
         f = self.current
-        if f.side == PARTY and self.turn_started and f.can_act() and not f.surprised and not f.auto:
+        if f.side == PARTY and not f.controlled and self.turn_started and f.can_act() and not f.surprised and not f.auto:
             return f
         return None
 
@@ -641,7 +659,7 @@ class Battle:
                 self.say(f"{f.the_name} cannot move.", "system")
             self.end_turn()
             return True
-        if f.side == PARTY and not f.auto:
+        if f.side == PARTY and not f.controlled and not f.auto:
             return False
         from realmwalker.rules import tactics
 
@@ -742,7 +760,7 @@ class Battle:
                         self.say(f"{f.the_name} is no longer {cond}.", "system")
         f.move_left = f.speed
         if any(z.kind == "guardians" and z.owner is not None and any(c in z.cells for c in f.cells)
-               and self.fighter(z.owner).side != f.side for z in self.zones):
+               and self.fighter(z.owner).team != f.team for z in self.zones):
             f.move_left //= 2  # Spirit Guardians: half speed in the emanation (2024)
         # Standing up from the ground costs half your movement.
         if "prone" in f.conditions and f.can_act() and f.state == "fighting" and f.move_left >= f.speed // 2 > 0:
@@ -794,12 +812,12 @@ class Battle:
                 self._event("leave", who=f.id)
         self.outcome = "parley"
 
-    def _check_end(self) -> None:
+    def _check_end(self) -> None:  # (by team: a companion fighting for the enemy is an enemy until freed)
         for f in self.fighters:
             if f.concentration is not None and (query.flag(f, "breaks_concentration") or not f.active):
                 self._end_concentration(f, quiet=not f.active, why="is lost")  # incapacitated (2024)
-        foes = [f for f in self.side(FOE) if f.active and "unconscious" not in f.conditions]
-        party = [f for f in self.side(PARTY) if f.active and "unconscious" not in f.conditions]
+        foes = [f for f in self.team(FOE) if f.active and "unconscious" not in f.conditions]
+        party = [f for f in self.team(PARTY) if f.active and "unconscious" not in f.conditions]
         if not foes:
             self.outcome = "victory"
         elif not party:
@@ -882,7 +900,7 @@ class Battle:
         for x in self.on_field():
             if x is f:
                 continue
-            hostile = x.side != f.side and x.state in ("fighting", "fleeing", "surrendered")
+            hostile = x.team != f.team and x.state in ("fighting", "fleeing", "surrendered")
             for c in x.cells:
                 (blocked if hostile else occupied).add(c)
         fire = {c for z in self.zones if z.kind == "fire" for c in z.cells}
@@ -1306,8 +1324,10 @@ class Battle:
             return "no action left this turn"
         if not target.active and target.state != "down":
             return "not in the fight"
-        if target.side == f.side:
+        if target.team == f.team:
             return "on your side"
+        if query.source(f, "charmed") == target.id and "charmed" in f.conditions:
+            return "charmed: you will not harm them"
         ok, why = self.in_reach(f, opt, target)
         if not ok:
             return why
@@ -1315,7 +1335,7 @@ class Battle:
 
     def targets_for(self, f: Fighter, opt: AttackOption) -> list[Fighter]:
         """Who this fighter could attack with this option right now, from where they stand."""
-        return [x for x in self.enemies_of(f) + [y for y in self.side(FOE if f.side == PARTY else PARTY) if y.state == "down"]
+        return [x for x in self.enemies_of(f) + [y for y in self.fighters if y.team != f.team and y.state == "down"]
                 if self.in_reach(f, opt, x)[0]]
 
     # ------------------------------------------------------------------ resolving attacks
@@ -1396,7 +1416,7 @@ class Battle:
         att.helped = False
         if target.marked:
             target.marked = False  # spent on this roll, hit or miss
-        target.buffs = [bf for bf in target.buffs if bf.get("distracted") != att.side]
+        target.buffs = [bf for bf in target.buffs if bf.get("distracted") != att.team]
         if att.hidden:
             att.hidden = 0
         armor = target.armor_name("torso")
@@ -1582,7 +1602,7 @@ class Battle:
             if left <= 0:
                 continue
             for opt in self.legendary_options(f):
-                targets = [t for t in self.targets_for(f, opt) if t.active and t.side != f.side]
+                targets = [t for t in self.targets_for(f, opt) if t.active and t.team != f.team]
                 if targets:
                     f.creature.uses["legendary_actions"] = left - 1
                     self.say(f"{f.the_name} strikes out of turn. <dim>(Legendary Action)</>", "danger")
@@ -1869,7 +1889,7 @@ class Battle:
         """Who the Help action can be for (2024): a friend beside you who is down (first aid) or asleep (shaken awake),
         or an enemy beside you, distracted so that a friend's next attack on it has advantage."""
         out = []
-        for x in self.side(f.side):
+        for x in self.team(f.team):
             if x is f or self.gap(f, x) > 1:
                 continue
             if x.state == "down" or x.active and ("unconscious" in x.conditions or "incapacitated" in x.conditions):
@@ -1895,15 +1915,15 @@ class Battle:
                 self.say(f"{target.the_name} is no longer bleeding out.", "good")
             else:
                 self.say(f"{f.the_name} fumbles at the wound; the blood keeps coming.", "danger")
-        elif target.side == f.side and ("unconscious" in target.conditions or "incapacitated" in target.conditions):
+        elif target.team == f.team and ("unconscious" in target.conditions or "incapacitated" in target.conditions):
             for cid in ("unconscious", "incapacitated"):
                 durations.remove(target, cid)
             self.say(f"{f.the_name} shakes {target.the_name} awake.", "good")
         else:
-            foe = target if target.side != f.side else min(
+            foe = target if target.team != f.team else min(
                 (e for e in self.enemies_of(f) if e.standing and self.gap(f, e) <= 1), key=lambda e: e.hp, default=None)
             if foe is not None:
-                durations.buff(foe, {"distracted": f.side, "source": f"help:{f.id}"}, durations.until(self, f, "turn_start"))
+                durations.buff(foe, {"distracted": f.team, "source": f"help:{f.id}"}, durations.until(self, f, "turn_start"))
                 self.say(f"{f.the_name} feints at {foe.the_name}, opening a way for a friend.", "system")
         self._after_action(f)
 
@@ -2086,7 +2106,7 @@ class Battle:
 
     def item_targets(self, f: Fighter) -> list[Fighter]:
         """Who you can reach to pour a potion into or bind: yourself and anyone beside you."""
-        return [x for x in self.side(f.side) if (x.active or x.state == "down") and (x is f or self.gap(f, x) <= 1)]
+        return [x for x in self.team(f.team) if (x.active or x.state == "down") and (x is f or self.gap(f, x) <= 1)]
 
     def fast_hands(self, f: Fighter) -> bool:
         """A thief can use an object with a bonus action (Cunning Action)."""
@@ -2369,11 +2389,11 @@ class Battle:
         if target == "enemy":
             return [x for x in self.enemies_of(f) if near(x)]
         if target == "ally":
-            return [x for x in self.side(f.side) if (x.active or x.state == "down") and near(x)]
+            return [x for x in self.team(f.team) if (x.active or x.state == "down") and near(x)]
         if target == "downed_ally":
-            return [x for x in self.side(f.side) if x.state == "down" and not x.stable and near(x)]
+            return [x for x in self.team(f.team) if x.state == "down" and not x.stable and near(x)]
         if target == "dead_ally":
-            return [x for x in self.side(f.side) if x.state == "dead" and self.round - x.died_round <= 10 and near(x)
+            return [x for x in self.team(f.team) if x.state == "dead" and self.round - x.died_round <= 10 and near(x)
                     and x.char is not None]
         return []
 
@@ -2430,7 +2450,7 @@ class Battle:
         if f.char is None or not f.has_trait("sculpt_spells") or spell.get("school") != "evocation":
             return set()
         n = 1 + (level if level is not None else spell["level"])
-        friends = [x for x in victims if x.side == f.side]
+        friends = [x for x in victims if x.team == f.team]
         return {x.id for x in friends[:n]}
 
     def in_area(self, cells: list[tuple[int, int]], who: str = "all", caster: Fighter | None = None) -> list[Fighter]:
@@ -2439,9 +2459,9 @@ class Battle:
         for x in self.fighters:
             if not (x.active or x.state == "down"):
                 continue
-            if who == "enemies" and caster is not None and x.side == caster.side:
+            if who == "enemies" and caster is not None and x.team == caster.team:
                 continue
-            if who == "allies" and caster is not None and x.side != caster.side:
+            if who == "allies" and caster is not None and x.team != caster.team:
                 continue
             if any(c in cs for c in x.cells):
                 out.append(x)
@@ -2657,7 +2677,7 @@ class Battle:
                 continue
             if z.friends_safe and z.owner is not None:
                 owner = next((x for x in self.fighters if x.id == z.owner), None)
-                if owner is not None and owner.side == f.side:
+                if owner is not None and owner.team == f.team:
                     continue
             if f.id in z.struck:
                 continue

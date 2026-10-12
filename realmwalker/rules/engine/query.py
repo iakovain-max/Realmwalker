@@ -96,7 +96,7 @@ def attack_roll(b, att, target, opt, *, space=None) -> Roll:
     g = grid.gap(a_space, target.space)
     if att.helped:
         r.add("advantage", "helped")
-    if any(bf.get("distracted") == att.side for bf in target.buffs):
+    if any(bf.get("distracted") == att.team for bf in target.buffs):
         r.add("advantage", "distracted")
     if target.marked:
         r.add("advantage", "marked")

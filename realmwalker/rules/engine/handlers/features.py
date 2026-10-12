@@ -211,7 +211,7 @@ def rallying_cry(b, f, ev, hook, buff) -> None:
     if ev.ability != "second_wind" or f.char is None:
         return
     b.say(f"'To me! On your feet!' {f.the_name}'s shout carries.", "speech")
-    for a in b.side(f.side):
+    for a in b.team(f.team):
         if a is not f and (a.active or a.state == "down") and b.feet(f, a) <= 30:
             b._heal(a, f.char.level)
 
@@ -238,7 +238,7 @@ def preserve_life(c, o, victim) -> None:
     """Five times the cleric's level in healing, shared out: nobody past half their hit points."""
     b, f = c.b, c.caster
     pool = 5 * f.char.level
-    near = [a for a in b.side(f.side) if (a.active or a.state == "down") and b.feet(f, a) <= 30]
+    near = [a for a in b.team(f.team) if (a.active or a.state == "down") and b.feet(f, a) <= 30]
     for ally in sorted(near, key=lambda a: a.hp / max(1, a.max_hp)):
         if pool <= 0:
             break
@@ -265,7 +265,7 @@ def divine_intervention(c, o, victim) -> None:
     b.say("<magic>And the god answers.</> Light like noon floods the place.", "magic")
     b._event("cast", by=f.id, to=None, spell="divine_intervention", effect="burst", dtype="radiant",
              area=[cell for x in b.fighters if x.active or x.state == "down" for cell in x.cells])
-    for a in b.side(f.side):
+    for a in b.team(f.team):
         if a.state in ("fighting", "down"):
             b._heal(a, a.max_hp)
     dc = spellrules.save_dc(f.sheet, b.t)

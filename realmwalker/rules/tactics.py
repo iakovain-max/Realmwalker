@@ -98,7 +98,7 @@ def _fight(b: Battle, f: Fighter, opts: list[AttackOption], attacks: int) -> boo
         else:
             choice = usable[i % len(usable)] if multi else opt
         if not target.active or not b.in_reach(f, choice, target)[0]:
-            others = [t for t in b.targets_for(f, choice) if t.side != f.side and t.active]
+            others = [t for t in b.targets_for(f, choice) if t.team != f.team and t.active]
             if not others:
                 break
             target = min(others, key=lambda t: t.hp)
@@ -160,11 +160,12 @@ def best_plan(b: Battle, f: Fighter, opts: list[AttackOption]):
 
 
 def _targets(b: Battle, f: Fighter) -> list[Fighter]:
-    standing = [e for e in b.enemies_of(f) if e.standing and e.state != "surrendered"]
+    standing = [e for e in b.enemies_of(f) if e.standing and e.state != "surrendered"
+                and not ("charmed" in f.conditions and f.sources.get("charmed") == e.id)]
     seen = [e for e in standing if b.can_see(f, e) or b.gap(f, e) <= 1]
     targets = seen or [e for e in standing if not e.hidden]
     if not targets and f.creature is not None and f.morale_type in ("mindless", "fanatic"):
-        targets = [e for e in b.side(PARTY if f.side == FOE else FOE) if e.state == "down"]
+        targets = [e for e in b.fighters if e.team != f.team and e.state == "down"]
     return targets
 
 
@@ -397,8 +398,8 @@ def _try_area_attack(b: Battle, f: Fighter, opt: AttackOption) -> bool:
     for t in b.enemies_of(f):
         cells = b.field.area(a["area"]["shape"], int(a["area"]["size"]), origin=f.space, toward=(t.x, t.y), from_self=True)
         hit = b.in_area(cells, "all", f)
-        enemies = sum(1 for x in hit if x.side != f.side)
-        friends = sum(1 for x in hit if x.side == f.side and x is not f)
+        enemies = sum(1 for x in hit if x.team != f.team)
+        friends = sum(1 for x in hit if x.team == f.team and x is not f)
         score = enemies - 2 * friends
         if enemies and (best is None or score > best[0]):
             best = (score, (t.x, t.y))
@@ -469,7 +470,7 @@ def _bonus_strike(b: Battle, f: Fighter) -> None:
 
 def _tend_the_fallen(b: Battle, f: Fighter) -> None:
     """A friend bleeding out comes first: a healing word from afar, a touch spell or first aid from beside them."""
-    fallen = [x for x in b.side(f.side) if x.state == "down" and not x.stable]
+    fallen = [x for x in b.team(f.team) if x.state == "down" and not x.stable]
     if not fallen:
         return
     options = {sid: ok for sid, ok, _ in b.spell_options(f)}
@@ -530,8 +531,8 @@ def _cast_something(b: Battle, f: Fighter) -> bool:
             cells = b.spell_area(f, sid, pt)
             hit = b.in_area(cells, sp.get("affects", "all"), f)
             spared = b.sculpted(f, sid, hit)
-            foes = [x for x in hit if x.side != f.side and x.standing]
-            friends = [x for x in hit if x.side == f.side and x.id not in spared]
+            foes = [x for x in hit if x.team != f.team and x.standing]
+            friends = [x for x in hit if x.team == f.team and x.id not in spared]
             if friends or len(foes) < 2:
                 continue
             score = sum(min(x.hp, 20) for x in foes) - sp["level"] * 3

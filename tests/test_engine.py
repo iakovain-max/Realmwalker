@@ -552,3 +552,28 @@ def test_free_reactions_do_not_ask_unless_everything_should(tables):
     assert reactions.ask(b, Decision(me, "opportunity", "x", free=True)) == "yes"
     b.reactions = "all"
     assert reactions.ask(b, Decision(me, "opportunity", "x", free=True)) == "no" and asked == ["opportunity"]
+
+
+# ---------------------------------------------------------------------------- changing sides
+def test_a_dominated_companion_fights_for_the_enemy_until_freed(tables):
+    a, friend = hero(tables), hero(tables, "fighter", seed=4)
+    cr = spawn(tables, "bandit", RNG(1, "foe"), 1)
+    b = Battle(tables, [a, friend], [cr], Env(), RNG(1, "battle"), spots={0: (3, 4), 1: (4, 4), 2: (9, 4)})
+    b.start()
+    me, fr, bandit = b.fighters
+    durations.give(b, fr, "charmed", source=bandit, control="foe")
+    assert fr.team == "foe" and fr in b.enemies_of(me) and fr in b.allies_of(bandit)
+    b.order = [fr.id, me.id, bandit.id]
+    b.turn, b.turn_started = 0, False
+    assert b.pending_party() is None
+    b.step()  # played by the enemy's side: it turns on its friend
+    assert any(e["kind"] == "attack" and e["by"] == fr.id and e["to"] == me.id for e in b.events)
+    durations.remove(fr, "charmed")
+    assert fr.team == "party" and fr in b.allies_of(me)
+
+
+def test_the_charmed_will_not_strike_the_charmer(tables):
+    b, me, them = duel(tables)
+    me.action = 1
+    durations.give(b, me, "charmed", source=them)
+    assert b.attack_problem(me, weapon(b, me), them) == "charmed: you will not harm them"
