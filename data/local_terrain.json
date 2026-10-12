@@ -29,7 +29,7 @@
     "bush": {"name": "bush", "walk": true, "see": true, "cost": 2.0, "tags": ["cover"], "desc": "Thorny scrub. You can push through, slowly."},
     "boulder": {"name": "boulder", "walk": false, "see": true, "cost": 1, "tags": ["climb"], "desc": "A lichen-crusted boulder."},
     "rubble": {"name": "rubble", "walk": true, "see": true, "cost": 1.5, "tags": [], "desc": "Tumbled stone and broken mortar."},
-    "ruin_wall": {"name": "ruined wall", "walk": false, "see": false, "cost": 1, "tags": ["wall", "climb"], "desc": "The broken stump of an old wall, moss in every crack."},
+    "ruin_wall": {"name": "ruined wall", "walk": false, "see": false, "cost": 1, "tags": ["wall"], "desc": "The broken stump of an old wall, moss in every crack."},
     "wall_stone": {"name": "stone wall", "walk": false, "see": false, "cost": 1, "tags": ["wall"], "desc": "A wall of rough-dressed stone."},
     "wall_wood": {"name": "timber wall", "walk": false, "see": false, "cost": 1, "tags": ["wall"], "desc": "A wall of timber and wattle, daubed with mud."},
     "palisade": {"name": "palisade", "walk": false, "see": false, "cost": 1, "tags": ["wall"], "desc": "A palisade of sharpened stakes."},

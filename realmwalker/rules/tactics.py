@@ -28,6 +28,23 @@ from realmwalker.rules.engine import actions, estimates, query
 
 CAUTION = {"beast": 2.0, "mindless": 0.5, "fanatic": 1.0, "warrior": 3.0, "bandit": 6.0, "soldier": 6.0,
            "coward": 14.0, "party": 10.0}
+# A creature's role (creatures.json "ai"): how much more (or less) than its nerve says it minds being struck on the way.
+ROLE_CAUTION = {"brute": 0.6, "skirmisher": 1.0, "artillery": 1.4, "controller": 1.3, "leader": 1.5, "support": 1.5,
+                "lurker": 1.2, "solo": 0.8}
+
+
+def caution(f: Fighter) -> float:
+    """How many feet of the way a blow on the way is worth avoiding: its nerve, and its role."""
+    if f.char is not None:
+        return CAUTION["party"]
+    return CAUTION.get(f.morale_type, 4.0) * ROLE_CAUTION.get(role(f), 1.0)
+
+
+def preferred_range(f: Fighter) -> int:
+    """The distance in feet it likes to keep (creatures.json "ai" range; 0: in their faces)."""
+    if f.char is not None:
+        return 30 if f.char.cls == "wizard" else 0
+    return int((f.cdef.get("ai") or {}).get("range", 0))
 
 
 # ---------------------------------------------------------------------------- wits, the fight, targets
@@ -73,6 +90,8 @@ def target_weight(b: Battle, f: Fighter, t: Fighter) -> float:
         fo = focus(b, f)
         if fo is t:
             w *= 1.4
+    if role(f) == "leader" and any(b.gap(a, t) <= 1 for a in b.allies_of(f) if a is not f and a.standing):
+        w *= 1.2  # a leader strikes where its band is already at work
     return w
 
 
@@ -103,8 +122,14 @@ def _monster_turn(b: Battle, f: Fighter) -> None:
     opts = [o for o in b.attack_options(f) if o.available]
     breath = [o for o in opts if o.extra.get("area")]
     if breath and _try_area_attack(b, f, breath[0]):
+        _rise(b, f)  # a dragon breathes, then takes to the air out of reach
         return
+    if not _targets(b, f) and f.action > 0 and any(e.hidden for e in b.enemies_of(f) if e.standing):
+        b.do_search(f)  # nobody in sight, but someone is hiding here
+        if b.current is not f or b.outcome is not None:
+            return
     plain = [o for o in opts if not o.extra.get("area")]
+    _come_down(b, f, plain)
     if f.cdef.get("spells"):
         _creature_magic(b, f)
         if b.current is not f or b.outcome is not None or not f.active:
@@ -112,6 +137,12 @@ def _monster_turn(b: Battle, f: Fighter) -> None:
         if f.action <= 0 and f.attacks_left <= 0:
             _keep_distance(b, f)
             return
+        if f.concentration is not None and f.action > 0 and smarts(f) >= 1 and \
+                any(b.gap(f, e) <= 1 for e in b.enemies_of(f) if e.standing) and _best_attack_worth(b, f) < 4.0:
+            _keep_distance(b, f)  # hold the spell: out of their reach, or else on guard
+            if b.current is f and any(b.gap(f, e) <= 1 for e in b.enemies_of(f) if e.standing):
+                b.do_dodge(f)
+                return
     if not plain:
         return
     if (f.has_trait("aggressive") or f.has_trait("charge")) and f.bonus > 0 and f.speed > 0 and \
@@ -130,6 +161,41 @@ def _monster_turn(b: Battle, f: Fighter) -> None:
             b._check_end()
     if f.has_trait("nimble_escape") and f.bonus > 0 and b.outcome is None and b.current is f and f.active:
         _slip_away(b, f)
+    if b.outcome is None and b.current is f and f.active:
+        _rise(b, f)
+
+
+def _come_down(b: Battle, f: Fighter, opts: list[AttackOption]) -> None:
+    """A flier aloft comes down to strike, unless it can strike from where it is."""
+    if f.z <= 0 or f.fly_speed <= 0:
+        return
+    targets = _targets(b, f)
+    if any(b.in_reach(f, o, t)[0] for o in opts if not o.is_melee for t in targets):
+        return
+    drop = min(f.z, f.move_left // grid.SQUARE_FT * grid.SQUARE_FT)
+    if drop:
+        b.do_fly(f, -drop)
+
+
+def _rise(b: Battle, f: Fighter) -> None:
+    """After its blows, a flier with the wits for it rises just out of the longest reach on the ground: where it can
+    still hurt them next turn (a breath, a shot, a spell) or when it is bloodied. Not while it holds someone, and not
+    if more than one of them would strike at it on the way up."""
+    if f.fly_speed <= 0 or f.move_left < 10 or smarts(f) < 1 or b.held_by(f) or f.grappled_by is not None:
+        return
+    enemies = [e for e in b.enemies_of(f) if e.standing]
+    if not enemies:
+        return
+    from_above = any(not o.is_melee or o.extra.get("area") for o in b.attack_options(f)) or bool(f.cdef.get("spells"))
+    if not (from_above or f.hp <= f.max_hp // 2):
+        return
+    near = [e for e in enemies if b.gap(e, f) <= b.reach_of(e) and e.can_opportunity and e.reaction]
+    if len(near) > 1 and not f.disengaged:
+        return
+    need = (max(b.reach_of(e) for e in enemies) + 1) * grid.SQUARE_FT
+    up = min(need - f.z, f.move_left // grid.SQUARE_FT * grid.SQUARE_FT)
+    if up >= grid.SQUARE_FT:
+        b.do_fly(f, up)
 
 
 def _fight(b: Battle, f: Fighter, opts: list[AttackOption], attacks: int) -> bool:
@@ -150,7 +216,13 @@ def _fight(b: Battle, f: Fighter, opts: list[AttackOption], attacks: int) -> boo
     if plan and not any(opt.extra.get("id") in slot for slot in plan):
         plan, multi, attacks = None, False, 1  # a single action instead of the Multiattack (a ghoul's paralysing claw)
     kind_melee = opt.is_melee
-    for i in range(attacks):
+    first = _instead_of_a_blow(b, f, opts, opt, target) if kind_melee else None
+    if first == "help":
+        return True
+    start = 1 if first else 0
+    if first and f.creature is not None:
+        f.attacks_left = 0  # (the action is spent; a creature's other attacks are counted here)
+    for i in range(start, attacks):
         if b.outcome is not None or not f.can_act():
             break
         usable = [o for o in opts if o.is_melee == kind_melee and o.available]
@@ -173,6 +245,8 @@ def _fight(b: Battle, f: Fighter, opts: list[AttackOption], attacks: int) -> boo
                 f.action -= 1
             b._attack(f, choice, target)
             b._check_end()
+            struck = True
+            continue
         else:
             if not b.do_attack(f, choice, target):
                 break
@@ -182,11 +256,11 @@ def _fight(b: Battle, f: Fighter, opts: list[AttackOption], attacks: int) -> boo
 
 def best_plan(b: Battle, f: Fighter, opts: list[AttackOption]):
     """(score, path, option, target) for the best square to strike from this turn, or None."""
-    caution = CAUTION.get("party" if f.char else f.morale_type, 4.0)
-    tree = b.move_tree(f, risk=caution)
+    tree = b.move_tree(f, risk=caution(f))
     occ = b.occupied_by_others(f)
     here = (f.x, f.y)
     stops = {sq: st for sq, st in tree.items() if sq == here or grid.can_stop(sq, f.sq, occ)}
+    keep = preferred_range(f)
     targets = _targets(b, f)
     if not targets:
         return None
@@ -195,6 +269,8 @@ def best_plan(b: Battle, f: Fighter, opts: list[AttackOption]):
     for opt in opts:
         if opt.is_melee:
             for t in targets:
+                if abs(f.z - t.z) // grid.SQUARE_FT > opt.reach_sq:
+                    continue  # up out of reach (or it is, from up here)
                 for sq in _ring(t, opt.reach_sq, f.sq):
                     st = stops.get(sq)
                     if st is None:
@@ -212,10 +288,13 @@ def best_plan(b: Battle, f: Fighter, opts: list[AttackOption]):
             for t in targets:
                 for sq in squares:
                     space = (sq[0], sq[1], f.sq)
-                    if grid.gap(space, t.space) * grid.SQUARE_FT > long:
+                    g = b.gap_from(f, sq, t)
+                    if g * grid.SQUARE_FT > long:
                         continue
                     st = stops[sq]
                     less = st.cost * 0.02 + st.risk * 0.1 + near_at[sq] * (0.6 if f.prefers_range else 0.25)
+                    if keep > 5 and g * grid.SQUARE_FT < keep:
+                        less += (keep - g * grid.SQUARE_FT) / 10 * 0.3  # closer than it likes to be
                     score = _value(b, f, opt, t, sq, cover=0) * many - less
                     if best is not None and score <= best[0]:
                         continue  # cover could only make it worse: no need to look for it
@@ -311,6 +390,35 @@ def _opening(b: Battle, f: Fighter, opt: AttackOption, t: Fighter) -> float:
     return 1.0 if any(c in t.conditions for c in brings) else 3.0
 
 
+ADVANTAGE_GAIN = 0.45  # how much more a blow is worth with advantage (a 55% hit becomes an 80% one)
+
+
+def _instead_of_a_blow(b: Battle, f: Fighter, opts: list[AttackOption], opt: AttackOption, t: Fighter) -> str | None:
+    """Something better than the first blow, right beside the target (2024: a shove or a grab takes one attack; Help
+    takes the action): knock it down when friends beside it will strike it next; grab a caster who would step away;
+    distract it when one's own blow is feeble and a friend's is not. None: strike as planned."""
+    if smarts(f) < 1 or b.gap(f, t) > 1 or not t.standing or not b.can_grapple(f, t)[0]:
+        return None
+    friends = [a for a in b.allies_of(f) if a is not f and a.standing and a.can_act() and b.gap(a, t) <= 1]
+    mine = _value(b, f, opt, t, (f.x, f.y))
+    pf = estimates.fail_chance(b, t, max(("str", "dex"), key=lambda ab: t.save_bonus(ab)), query.unarmed_dc(f))
+    if "prone" not in t.conditions and friends:
+        # Advantage makes a blow worth about half again as much: the friends' blows, and its own that are left.
+        gain = ADVANTAGE_GAIN * (sum(_best_attack_worth(b, a) for a in friends) + mine * (_plan_attacks(f, opt) - 1))
+        if pf * gain > mine:
+            b.do_shove(f, t, "prone")
+            return "shove"
+    if smarts(f) >= 2 and t.prefers_range and "grappled" not in t.conditions and _plan_attacks(f, opt) > 1 and pf > 0.4:
+        b.do_grapple(f, t)
+        return "grapple"
+    if f.creature is not None and friends and f.action > 0 and _plan_attacks(f, opt) == 1:
+        best_friend = max(_best_attack_worth(b, a) for a in friends)
+        if best_friend * ADVANTAGE_GAIN > mine * 1.5:
+            b.do_help(f, t)
+            return "help"
+    return None
+
+
 def _plan_attacks(f: Fighter, opt: AttackOption) -> int:
     """How many attacks a turn with this option makes: the whole Multiattack if it is part of it, else one."""
     plan = f.cdef.get("multiattack_plan") if f.creature is not None else None
@@ -327,9 +435,11 @@ def approach(b: Battle, f: Fighter, opts: list[AttackOption]) -> None:
             b.do_dodge(f)
         return
     reach = max((o.reach_sq for o in opts if o.is_melee), default=1)
-    caution = CAUTION.get("party" if f.char else f.morale_type, 4.0)
-    tree = b.move_tree(f, budget=600, risk=caution)
+    tree = b.move_tree(f, budget=600, risk=caution(f))
     occ = b.occupied_by_others(f)
+    if all(abs(t.z - f.z) // grid.SQUARE_FT > reach for t in targets) and f.fly_speed <= 0:
+        _wait_below(b, f, targets, reach, tree, occ)  # they are up out of reach: wait for them to come down
+        return
     best = None
     for t in targets:
         for sq in _ring(t, reach, f.sq):
@@ -338,6 +448,8 @@ def approach(b: Battle, f: Fighter, opts: list[AttackOption]) -> None:
                 continue
             if best is None or st.cost + st.risk < best[0]:
                 best = (st.cost + st.risk, sq)
+    if best is None and _break_through(b, f, targets, reach):
+        return
     if best is None:
         # Walled off: just get closer as the crow flies.
         t = min(targets, key=lambda t: b.gap(f, t))
@@ -350,25 +462,79 @@ def approach(b: Battle, f: Fighter, opts: list[AttackOption]) -> None:
         return
     path = grid.route(tree, best[1])
     ranged = any(not o.is_melee for o in opts)
-    if f.action > 0 and not ranged and len(path) * 5 > f.move_left:
+    cost = tree[best[1]].cost * (2 if b.dragging(f) else 1)
+    if ranged and f.action > 0 and preferred_range(f) > 5 and cost > f.move_left:
+        _walk_budget(b, f, path, tree)  # an archer does not run in: it closes a little and waits for a shot
+        if b.current is f and f.action > 0 and b.outcome is None:
+            b.do_ready(f, "sight")
+        return
+    if f.action > 0 and not ranged and cost > f.move_left:
+        if role(f) == "lurker" and b.hide_problem(f) is None:
+            b.do_hide(f)  # a lurker waits in hiding for them to come
+            return
         b.do_dash(f)
-    _walk_budget(b, f, path)
+    _walk_budget(b, f, path, tree)
 
 
-def _walk_budget(b: Battle, f: Fighter, path: list[tuple[int, int]]) -> None:
-    """Walk as far along a path as this turn's movement goes, stopping only where there is room to stand."""
+def _wait_below(b: Battle, f: Fighter, targets: list[Fighter], reach: int, tree: dict, occ: set) -> None:
+    """Every enemy is in the air out of reach: stand under the nearest (not crowding it) with a blow readied for when
+    it comes down to strike (the Ready action)."""
+    t = min(targets, key=lambda t: b.gap(f, t))
+    spots = [sq for sq in _ring(t, reach, f.sq) if sq in tree and grid.can_stop(sq, f.sq, occ)]
+    if spots and (f.x, f.y) not in spots:
+        _walk_budget(b, f, grid.route(tree, min(spots, key=lambda s: tree[s].cost + tree[s].risk)), tree)
+    if b.current is f and b.outcome is None and f.action > 0:
+        b.do_ready(f, "reach")
+
+
+def _walk_budget(b: Battle, f: Fighter, path: list[tuple[int, int]], tree: dict) -> None:
+    """Walk as far along a path as this turn's movement goes, stopping only where there is room to stand. The way's
+    own costs say how far that is (climbing, swimming, leaping and dragging included)."""
     occ = b.occupied_by_others(f)
-    spent = 0
+    heavy = 2 if b.dragging(f) else 1
     cut = 0
     for i, sq in enumerate(path):
-        step = 10 if "prone" in f.conditions or any(b.field.difficult(*c) for c in grid.cells(sq[0], sq[1], f.sq)) else 5
-        if spent + step > f.move_left:
+        if tree[sq].cost * heavy > f.move_left:
             break
-        spent += step
         if grid.can_stop(sq, f.sq, occ):
             cut = i + 1
     if cut:
         b.walk(f, path[:cut])
+
+
+def _break_through(b: Battle, f: Fighter, targets: list[Fighter], reach: int) -> bool:
+    """Walled off by a door, a barricade or a cart: those with the wits (or the brawn) for it break it down. True if
+    it struck at something (or walked up to it)."""
+    if f.char is not None or (smarts(f) < 1 and role(f) != "brute") or not b.has_action(f):
+        return False
+    spec = b.t.rules.get("objects", {}).get("terrain", {})
+    through = {(x, y) for x in range(b.field.width) for y in range(b.field.height) if b.field.name(x, y) in spec}
+    if not through:
+        return False
+    tree = b.move_tree(f, budget=600, risk=caution(f), through=through)
+    occ = b.occupied_by_others(f)
+    goal = None
+    for t in targets:
+        for sq in _ring(t, reach, f.sq):
+            st = tree.get(sq)
+            if st is not None and grid.can_stop(sq, f.sq, occ) and (goal is None or st.cost < goal[0]):
+                goal = (st.cost, sq)
+    if goal is None:
+        return False
+    path = grid.route(tree, goal[1])
+    first = next((i for i, sq in enumerate(path) if any(c in through for c in grid.cells(sq[0], sq[1], f.sq))), None)
+    if first is None:
+        return False
+    cell = next(c for c in grid.cells(path[first][0], path[first][1], f.sq) if c in through)
+    before = path[:first]
+    if before:
+        real = b.move_tree(f, risk=caution(f))
+        if before[-1] in real:
+            _walk_budget(b, f, grid.route(real, before[-1]), real)
+    opt = b.breakables(f).get(cell)
+    if opt is not None and b.outcome is None and b.current is f:
+        return b.attack_object(f, opt, cell) or True
+    return bool(before)
 
 
 def flee(b: Battle, f: Fighter) -> None:
@@ -390,9 +556,9 @@ def flee(b: Battle, f: Fighter) -> None:
         return
     goal = min(exits, key=lambda s: tree[s].cost + tree[s].risk)
     path = grid.route(tree, goal)
-    if f.action > 0 and len(path) * 5 > f.move_left:
+    if f.action > 0 and tree[goal].cost > f.move_left:
         b.do_dash(f)
-    _walk_budget(b, f, path)
+    _walk_budget(b, f, path, tree)
     if b.current is f and f.active and b.can_leave(f):
         b.do_leave(f)
 

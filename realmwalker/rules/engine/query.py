@@ -93,7 +93,7 @@ def attack_roll(b, att, target, opt, *, space=None) -> Roll:
     """Advantage and disadvantage on one attack, with the reasons (the dice log prints them)."""
     r = Roll()
     a_space = space or att.space
-    g = grid.gap(a_space, target.space)
+    g = max(grid.gap(a_space, target.space), abs(att.z - target.z) // grid.SQUARE_FT)  # (height counts: 5-5-5)
     if att.helped:
         r.add("advantage", "helped")
     if any(bf.get("distracted") == att.team for bf in target.buffs):
@@ -130,7 +130,8 @@ def attack_roll(b, att, target, opt, *, space=None) -> Roll:
     elif att.hidden or not b.can_see(target, att):
         r.add("advantage", "unseen")
     if not opt.is_melee:
-        near = [e for e in b.enemies_of(att) if e.standing and not incapacitated(e) and grid.gap(a_space, e.space) <= 1]
+        near = [e for e in b.enemies_of(att) if e.standing and not incapacitated(e) and grid.gap(a_space, e.space) <= 1
+                and abs(e.z - att.z) < grid.SQUARE_FT]
         if near:
             r.add("disadvantage", "enemy at hand")
         normal = (opt.range or DEFAULT_RANGE.get(opt.kind, (60, 120)))[0]

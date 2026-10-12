@@ -84,4 +84,19 @@ def problems(tables) -> list[str]:
             if f.get("rule") and f["rule"] not in defs:
                 out.append(f"data/classes.json: {cls_id} feature {f['id']} has the rule '{f['rule']}', "
                            "which data/traits.json does not define.")
+    objects = tables.rules.get("objects") or {}
+    for tid, spec in (objects.get("terrain") or {}).items():
+        where = f"data/rules.json: objects, {tid}"
+        substance, size, _, becomes = spec
+        if tid not in tables.terrain.index:
+            out.append(f"{where}: there is no such ground in data/local_terrain.json.")
+        if substance not in objects.get("ac", {}):
+            out.append(f"{where}: made of '{substance}', which has no armour class.")
+        if size not in objects.get("hp", {}):
+            out.append(f"{where}: of size '{size}', which has no hit points.")
+        if becomes != "ground" and becomes not in tables.terrain.index:
+            out.append(f"{where}: becomes '{becomes}', which data/local_terrain.json does not have.")
+    for skill in ((tables.rules.get("study") or {}).get("skills") or {}).values():
+        if skill not in tables.rules.get("skills", {}):
+            out.append(f"data/rules.json: study names the skill '{skill}', which the rules do not have.")
     return out

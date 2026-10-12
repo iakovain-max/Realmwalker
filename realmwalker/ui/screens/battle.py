@@ -23,7 +23,8 @@ ACTIONS = [
     ("a", "Attack", "attack"), ("c", "Spells", "cast"), ("u", "Item", "item"), ("b", "Abilities", "ability"),
     ("r", "Dash", "dash"), ("w", "Disengage", "disengage"), ("d", "Dodge", "dodge"), ("n", "Hide", "hide"),
     ("h", "Help", "help"), ("s", "Shove/Grab", "shove"), ("k", "Study", "study"), ("o", "Search", "search"),
-    ("q", "Ready", "ready"), ("p", "Influence", "parley"), ("y", "Surrender", "surrender"),
+    ("q", "Ready", "ready"), ("x", "Break", "break"), ("v", "Fly", "fly"), ("p", "Influence", "parley"),
+    ("y", "Surrender", "surrender"),
     ("f", "Flee", "flee"), ("z", "Auto", "auto"), ("e", "End turn", "end"),
 ]
 ACTION_HELP = {
@@ -45,6 +46,10 @@ ACTION_HELP = {
     "ready": "Wait with a blow: strike with your reaction at the first enemy to come within reach, or into range "
              "and sight, before your next turn.",
     "shove": "Knock someone beside you down, push them back five feet, or grab and hold them.",
+    "break": "Strike at a thing instead of a creature: smash a door, a barrel, a table or a cart that is in the way "
+             "(one of your attacks).",
+    "fly": "Rise into the air or come down (it costs as much movement). Up out of their reach, swords cannot touch "
+           "you; arrows and spells still can.",
     "parley": "Influence them: talk them down, threaten them, or calm wild animals.",
     "surrender": "Give up. Robbers and soldiers may let you live; beasts and the dead will not.",
     "flee": "Leave the field from its edge (the marked squares). Whoever is left on it, fights on.",
@@ -54,7 +59,7 @@ ACTION_HELP = {
 ACTION_ICONS = {"attack": "attack", "cast": "cast", "item": "item", "ability": "ability", "dash": "travel",
                 "disengage": "leave", "dodge": "defend", "hide": "sneak", "help": "health", "shove": "shove",
                 "parley": "parley", "surrender": "surrender", "flee": "flee", "auto": "wait", "end": "rest",
-                "study": "journal", "search": "search", "ready": "look"}
+                "study": "journal", "search": "search", "ready": "look", "break": "attack", "fly": "travel"}
 HEALTH_WORDS = [(0.99, "unhurt", "good"), (0.75, "scratched", "good"), (0.5, "wounded", "warn"),
                 (0.25, "badly hurt", "danger"), (0.0, "near death", "danger")]
 LOG_COLORS = {"danger": "danger", "good": "good", "dice": "info", "flavor": "dim", "system": "dim",
@@ -267,6 +272,14 @@ class BattleScreen(Screen):
             return (why is None, why or "")
         if action == "flee":
             return (b.can_leave(f), "reach the edge of the field first")
+        if action == "break":
+            o = next((o for o in opts if o.kind == "object"), None)
+            return (o is not None and o.available, o.why if o is not None else "nothing here can be broken")
+        if action == "fly":
+            moves = [o for o in opts if o.kind == "move"]
+            if not moves:
+                return False, f"{f.name} cannot fly"
+            return (any(o.available for o in moves), moves[0].why)
         return True, ""
 
     def pick_action(self, action: str) -> None:
@@ -358,6 +371,25 @@ class BattleScreen(Screen):
             self._open_targets("study", sorted(seen.values(), key=lambda e: b.gap(f, e)))
         elif action == "search":
             self._do(b.do_search, f)
+        elif action == "break":
+            things = next((o.value for o in self.options(f) if o.kind == "object"), {}) or {}
+            rows = []
+            for cell, o in sorted(things.items(), key=lambda kv: grid.gap(f.space, (kv[0][0], kv[0][1], 1))):
+                ft = max(1, grid.gap(f.space, (cell[0], cell[1], 1))) * grid.SQUARE_FT
+                rows.append((f"The {b.field.describe(*cell).lower()} <dim>({_way(f, cell)}, {ft} ft; {o.name})</>", cell,
+                             True, ""))
+            self._open_choices("break", rows)
+        elif action == "fly":
+            rows = []
+            for feet in (10, 20, 30):
+                if feet <= f.move_left:
+                    rows.append((f"Fly up {feet} feet <dim>(to {f.z + feet} ft)</>", feet, True, ""))
+            if f.z > 0:
+                rows.append((f"Come down to the ground <dim>({f.z} ft of movement)</>", -f.z, f.z <= f.move_left,
+                             "not enough movement left"))
+                if f.z > 10:
+                    rows.append(("Come down 10 feet", -10, f.move_left >= 10, "not enough movement left"))
+            self._open_choices("fly", rows)
         elif action == "ready":
             self._open_choices("ready", [("Strike the first enemy to come within reach", "reach", True, ""),
                                          ("Shoot the first enemy to come into range and sight", "sight", True, "")])
@@ -508,6 +540,15 @@ class BattleScreen(Screen):
             self._open_targets("shove", targets)
         elif kind == "parley":
             self._do(b.do_parley, f, value)
+        elif kind == "break":
+            opt = b.breakables(f).get(value)
+            if opt is None:
+                self.app.notify("It is out of reach now.", "warn")
+                self.mode = "idle"
+                return
+            self._do(b.attack_object, f, opt, value)
+        elif kind == "fly":
+            self._do(b.do_fly, f, value)
 
     def confirm_target(self) -> None:
         f = self.actor()
@@ -1212,3 +1253,14 @@ class BattleScreen(Screen):
         if self.mode == "aim":
             return [KeyEvent(k) for k in ("enter", "enter", "right", "left", "escape")]
         return [KeyEvent(k) for k in ("enter", "enter", "1", "down", "right", "escape")]
+
+
+def _way(f: Fighter, cell: tuple[int, int]) -> str:
+    """Which way a square lies from a fighter, in words (north is up the screen)."""
+    dx = cell[0] - (f.x + (f.sq - 1) / 2)
+    dy = cell[1] - (f.y + (f.sq - 1) / 2)
+    if abs(dx) < 0.5 and abs(dy) < 0.5:
+        return "here"
+    ns = "north" if dy < -0.5 else ("south" if dy > 0.5 else "")
+    ew = "west" if dx < -0.5 else ("east" if dx > 0.5 else "")
+    return ns + ("-" if ns and ew else "") + ew

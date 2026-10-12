@@ -197,8 +197,8 @@ class Fighter:
     def team(self) -> str:
         """Who it fights for now: its own side, unless something has taken it over (a condition with "control":
         charmed into serving, dominated, possessed). When that ends, it is back on its own side."""
-        for e in self.cond_ends.values():
-            if e.get("control") and e.get("control") != self.side:
+        for cid, e in self.cond_ends.items():
+            if e.get("control") and e.get("control") != self.side and cid in self.conditions:
                 return e["control"]
         return self.side
 
@@ -599,7 +599,11 @@ class Battle:
         return max(grid.gap(a.space, b.space), abs(a.z - b.z) // grid.SQUARE_FT)
 
     def feet(self, a: Fighter, b: Fighter) -> int:
-        return grid.gap(a.space, b.space) * grid.SQUARE_FT
+        return self.gap(a, b) * grid.SQUARE_FT
+
+    def gap_from(self, f: Fighter, sq: tuple[int, int], t: Fighter) -> int:
+        """Squares from `f` standing (or flying, at its height) on `sq` to `t`, height included."""
+        return max(grid.gap((sq[0], sq[1], f.sq), t.space), abs(f.z - t.z) // grid.SQUARE_FT)
 
     # ------------------------------------------------------------------ placing everyone
     def _place(self, spots: dict) -> None:
@@ -663,9 +667,6 @@ class Battle:
         order = ", ".join(self.fighter(i).name for i in self.order)
         self.say(f"Order of battle: {order}.", "system")
 
-    STUDY_SKILL = {"beast": "nature", "dragon": "nature", "ooze": "nature", "plant": "nature", "humanoid": "history",
-                   "giant": "history", "undead": "religion", "fiend": "religion", "celestial": "religion"}  # (2024 Study)
-
     def _known_from_before(self) -> None:
         """What the party has killed before, it knows (the rest is learned with the Study action, 2024)."""
         killed = {name for f in self.side(PARTY) if f.char for name in f.char.kills}
@@ -674,7 +675,12 @@ class Battle:
                 self.known.add(def_id)
 
     def study_dc(self, f: Fighter) -> int:
-        return 8 + int(round(float(f.cdef["cr"]) * 3))
+        """How hard a creature is to call to mind (data/rules.json "study"): harder the more dangerous it is."""
+        dc = (self.t.rules.get("study") or {}).get("dc") or {"base": 10, "per_cr": 0.5, "max": 25}
+        return min(int(dc["max"]), int(dc["base"] + float(f.cdef["cr"]) * float(dc["per_cr"])))
+
+    def study_skill(self, f: Fighter) -> str:
+        return ((self.t.rules.get("study") or {}).get("skills") or {}).get(f.cdef["kind"], "arcana")
 
     def do_study(self, f: Fighter, target: Fighter) -> None:
         """The Study action (2024): an Intelligence check - Arcana, History, Nature or Religion by what it is - to call
@@ -682,7 +688,7 @@ class Battle:
         if target.creature is None or not self._spend(f):
             return
         d = target.cdef
-        skill = self.STUDY_SKILL.get(d["kind"], "arcana")
+        skill = self.study_skill(target)
         dc = self.study_dc(target)
         roll = dice.d20(self.rng).natural
         bonus = f.skill(skill)
@@ -1042,7 +1048,7 @@ class Battle:
             cache[key] = max((o.reach_sq for o in melee), default=0)
         return cache[key]
 
-    def move_tree(self, f: Fighter, budget: int | None = None, *, risk: float = 0.5) -> dict:
+    def move_tree(self, f: Fighter, budget: int | None = None, *, risk: float = 0.5, through: set | None = None) -> dict:
         blocked, occupied = set(), set()
         for x in self.on_field():
             if x is f:
@@ -1056,7 +1062,8 @@ class Battle:
         return grid.paths(self.field, (f.x, f.y), f.sq, budget, blocked=blocked,
                           occupied=occupied, threats=self.threats(f), risk=risk, crawling="prone" in f.conditions,
                           hazard=fire, flying=f.fly_speed > 0, climber=f.climb_speed > 0, swimmer=f.swim_speed > 0,
-                          jump=(0, 0) if "prone" in f.conditions or self.held_by(f) or self.dragging(f) else f.jump)
+                          jump=(0, 0) if "prone" in f.conditions or self.held_by(f) or self.dragging(f) else f.jump,
+                          through=through)
 
     def occupied_by_others(self, f: Fighter) -> set:
         return {c for x in self.on_field() if x is not f for c in x.cells}
@@ -1208,10 +1215,10 @@ class Battle:
         """Strike a thing (an attack of the Attack action): beat its AC to hurt it; at 0 hit points it is broken and
         the square opens. Poison and psychic damage do nothing to things."""
         obj = self.object_at(cell)
-        if obj is None or not self._use_attack(f):
+        if obj is None or self.object_problem(f, opt, cell) or not self._use_attack(f):
             return False
-        if grid.gap(f.space, (cell[0], cell[1], 1)) > (opt.reach_sq if opt.is_melee else opt.range[1] // grid.SQUARE_FT):
-            return False
+        self._spend_shot(f, opt)
+        f.hidden = 0
         roll = dice.d20(self.rng).natural
         total = roll + opt.bonus
         hit = roll == 20 or (roll != 1 and total >= obj["ac"])
@@ -1230,15 +1237,74 @@ class Battle:
         self._after_action(f)
         return True
 
+    def object_problem(self, f: Fighter, opt: AttackOption, cell: tuple[int, int]) -> str | None:
+        """Why this attack cannot strike the thing on that square (None if it can)."""
+        if not opt.available:
+            return opt.reason or "not possible"
+        if not self.has_action(f):
+            return "no action left this turn"
+        g = max(grid.gap(f.space, (cell[0], cell[1], 1)), f.z // grid.SQUARE_FT)
+        if opt.is_melee:
+            return None if g <= opt.reach_sq else "out of reach"
+        if g * grid.SQUARE_FT > (opt.range or DEFAULT_RANGE.get(opt.kind, (60, 120)))[1]:
+            return "out of range"
+        if not self.field.line_clear(f.x + f.sq / 2, f.y + f.sq / 2, cell[0] + 0.5, cell[1] + 0.5, set(f.cells) | {cell},
+                                     terrain_only=True):
+            return "no clear line"
+        return None
+
+    def breakables(self, f: Fighter) -> dict:
+        """The things `f` could strike now: {square: the best attack for it} (weapons only, no spells)."""
+        weapons = [o for o in self.attack_options(f) if o.available and o.kind in ("melee", "ranged")
+                   and not o.extra.get("area") and not o.extra.get("single_save")]
+        if not weapons or not self.has_action(f):
+            return {}
+        reach = max(max(o.reach_sq for o in weapons if o.is_melee) if any(o.is_melee for o in weapons) else 0,
+                    max(((o.range or (0, 0))[1] // grid.SQUARE_FT) for o in weapons if not o.is_melee)
+                    if any(not o.is_melee for o in weapons) else 0)
+        spec = self.t.rules.get("objects", {}).get("terrain", {})
+        out = {}
+        for x in range(max(0, f.x - reach), min(self.field.width, f.x + f.sq + reach)):
+            for y in range(max(0, f.y - reach), min(self.field.height, f.y + f.sq + reach)):
+                if self.field.name(x, y) not in spec:
+                    continue
+                fits = [o for o in weapons if self.object_problem(f, o, (x, y)) is None]
+                if fits:
+                    out[(x, y)] = max(fits, key=lambda o: (o.is_melee, _avg(o.damage)))
+        return out
+
+    def _spend_shot(self, att: Fighter, opt: AttackOption) -> None:
+        """An arrow or a bolt from the quiver, a thrown weapon out of the hand (it lies on the field after)."""
+        if opt.ammo_def and att.char:
+            ammo = next((i for i in att.char.inventory if i.def_id == opt.ammo_def), None)
+            if ammo is not None:
+                remove_item(att.char, ammo.uid, 1)
+        if opt.key.startswith("throw") and att.char and opt.item_uid is not None:
+            thrown = remove_item(att.char, opt.item_uid, 1)
+            if thrown is not None:
+                self.thrown.append(thrown)
+
     def do_fly(self, f: Fighter, feet: int) -> bool:
         """Rise (or come down, negative) by this many feet, at the cost of as much movement."""
         feet = int(feet) // grid.SQUARE_FT * grid.SQUARE_FT
-        if f.fly_speed <= 0 or not feet or abs(feet) > f.move_left or f.z + feet < 0:
+        if f.fly_speed <= 0 or not feet or abs(feet) > f.move_left or f.z + feet < 0 or not f.active:
             return False
+        to = f.z + feet
+        if not f.disengaged:  # out of reach upwards is still out of reach: they strike as it goes
+            for e in self.enemies_of(f):
+                if (e.state == "fighting" and e.can_opportunity and not e.incapacitated and e.standing
+                        and self.gap(e, f) <= self.reach_of(e) and self.can_see(e, f)
+                        and max(grid.gap(e.space, f.space), abs(e.z - to) // grid.SQUARE_FT) > self.reach_of(e)):
+                    self._opportunity(e, f)
+                    if not f.active or "unconscious" in f.conditions or f.z == 0 and to > 0 and "prone" in f.conditions:
+                        return True  # brought down before it got away
         f.move_left -= abs(feet)
         start = f.z
-        f.z += feet
+        f.z = to
         self._event("fly", who=f.id, z=f.z, before=start)
+        if f.active and any(x.readied for x in self.fighters):
+            self._readied(f)  # coming down into a readied blow
+        self._check_end()
         return True
 
     def _fall(self, f: Fighter) -> None:
@@ -1609,10 +1675,11 @@ class Battle:
         """A friend of the attacker on the far side of the target (the DMG's flanking rule): both beside it, on
         opposite sides or corners, both able to see it and neither of them helpless. None if there is none."""
         a_space = space or att.space
-        if grid.gap(a_space, target.space) != 1 or att.incapacitated or not self.can_see(att, target):
+        if grid.gap(a_space, target.space) != 1 or abs(att.z - target.z) >= grid.SQUARE_FT or att.incapacitated \
+                or not self.can_see(att, target):
             return None
         for x in self.allies_of(att):
-            if x is att or not x.standing or x.incapacitated or x.state != "fighting":
+            if x is att or not x.standing or x.incapacitated or x.state != "fighting" or abs(x.z - target.z) >= grid.SQUARE_FT:
                 continue
             if grid.flanks(a_space, x.space, target.space) and self.can_see(x, target):
                 return x
@@ -1688,14 +1755,7 @@ class Battle:
         notes = list(why) + ([grid.COVER_WORDS[cover]] if cover else [])
         self.dice_say(f"{att.name} → {target.name}, {opt.name}{mode}: {natural} {signed_mod(opt.bonus + bless)} = {total} vs AC {ac}"
                       f" — {'critical!' if crit else ('hit' if hit else 'miss')}" + (f" [{', '.join(notes)}]" if notes else ""))
-        if opt.ammo_def and att.char:
-            ammo = next((i for i in att.char.inventory if i.def_id == opt.ammo_def), None)
-            if ammo is not None:
-                remove_item(att.char, ammo.uid, 1)
-        if opt.key.startswith("throw") and att.char and opt.item_uid is not None:
-            thrown = remove_item(att.char, opt.item_uid, 1)
-            if thrown is not None:
-                self.thrown.append(thrown)
+        self._spend_shot(att, opt)
         if not hit:
             weapon = opt.name
             lines = self.t.combat_text
@@ -2617,11 +2677,15 @@ class Battle:
                 left = int(p.get("left", p.get("value", 1)))
                 ok, why = self._casting_time_ok(f, self.t.spells[p["spell"]])
                 out.append((f"charge:{it.uid}:{p['spell']}", left > 0 and ok, why if left > 0 else "no charges left until dawn"))
+        if self.antimagic(f.cells):
+            out = [(sid, False, "magic does not work here") for sid, _, _ in out]
         return out
 
     def _casting_time_ok(self, f: Fighter, spell: dict) -> tuple[bool, str]:
         """The action economy of spells: a bonus-action spell needs the bonus action, an ordinary one the action;
         and after a bonus-action spell only a cantrip may be cast with the action (and the other way round)."""
+        if self.antimagic(f.cells):
+            return False, "magic does not work here"
         if spell.get("cast") == "bonus":
             if f.bonus <= 0:
                 return False, "no bonus action left"

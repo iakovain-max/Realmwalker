@@ -5,9 +5,10 @@ An activation is {"id", "name", "cost": "action" | "bonus" | "free", "uses": poo
 "requires": [tests from REQUIRES], "via": a battle action done with the bonus action instead (Cunning Action's
 "dash", "disengage", "hide"), "effects": [ops] (rules/engine/effects.py)}. A trait may give several.
 
-`options(b, f)` is the one list of everything a fighter can do now - every attack with each weapon, every spell, every
-ability, the other actions (Dash, Disengage, Dodge, Hide, Help, Study, Search, Ready, Shove, Grapple, Influence...),
-items - each with its cost, whether it can be done and why not, and what it can be aimed at. The battle screen's
+`options(b, f)` is the one list of everything a fighter can do now - every attack with each weapon, striking a thing
+(a door, a barrel), every spell, every ability, flying up or down, the other actions (Dash, Disengage, Dodge, Hide,
+Help, Study, Search, Ready, Shove, Grapple, Influence...), items - each with its cost, whether it can be done and why
+not, and what it can be aimed at. The battle screen's
 menus, the companions' Auto and the enemy all read it (rules/engine/estimates.py says what each is worth).
 """
 
@@ -105,8 +106,8 @@ REQUIRES: dict[str, Callable] = {
 @dataclass
 class Option:
     """One thing a fighter could do now: how it is paid for, whether it can be done and why not, what it is aimed at."""
-    id: str  # "attack:main", "cast:fire_bolt", "ability:second_wind", "action:dash"...
-    kind: str  # attack, cast, ability, action, item
+    id: str  # "attack:main", "cast:fire_bolt", "ability:second_wind", "action:dash", "move:up", "object"...
+    kind: str  # attack, object, cast, ability, move, action, item
     name: str
     cost: str  # action, bonus, attack (one attack of the Attack action), free, reaction
     available: bool = True
@@ -125,8 +126,16 @@ def options(b, f, only: tuple[str, ...] | None = None) -> list[Option]:
     for o in (b.attack_options(f) if only is None or "attack" in only else ()):
         ok = o.available and acting
         why = o.reason if not o.available else ("" if acting else "no action left this turn")
-        out.append(Option(f"attack:{o.key}", "attack", o.name, "attack", ok, why, o, "creature",
-                          b.targets_for(f, o) if ok else []))
+        targets = b.targets_for(f, o) if ok else []
+        if ok and not targets:
+            ok, why = False, "no one in reach"
+        out.append(Option(f"attack:{o.key}", "attack", o.name, "attack", ok, why, o, "creature", targets))
+    if only is None or "object" in only:
+        things = b.breakables(f) if acting else {}
+        if things or b.t.rules.get("objects", {}).get("terrain"):
+            out.append(Option("object", "object", "Break something", "attack", bool(things),
+                              "" if things else ("no action left this turn" if not acting else "nothing in reach to break"),
+                              things, "point", [], set(things)))
     if only is None or "cast" in only:
         if f.char is not None:
             for sid, ok, why in b.spell_options(f):
@@ -145,6 +154,12 @@ def options(b, f, only: tuple[str, ...] | None = None) -> list[Option]:
             targets = b.spirit_targets(f)
         out.append(Option(f"ability:{aid}", "ability", name, cost, ok, why, aid, "creature" if targets else "none",
                           targets))
+    if (only is None or "move" in only) and f.fly_speed > 0:
+        up = f.move_left >= 5
+        out.append(Option("move:up", "move", "Fly up", "move", up, "" if up else "no movement left", 10))
+        if f.z > 0:
+            out.append(Option("move:down", "move", "Come down", "move", up, "" if up else "no movement left",
+                              -min(f.z, f.move_left // 5 * 5)))
     if only is not None and "action" not in only and "item" not in only:
         return out
     free = f.action > 0
@@ -169,7 +184,7 @@ def options(b, f, only: tuple[str, ...] | None = None) -> list[Option]:
         out.append(Option(f"action:{mode}", "action", name, "attack", ok, why, mode, "creature", grabbable))
     if "grappled" in f.conditions or "restrained" in f.conditions:
         out.append(Option("action:escape", "action", "Break free", "action", free, no, "escape"))
-    for key in ("persuade", "intimidate", "calm"):
+    for key in ("persuade", "intimidate", "calm") if f.side == "party" and not f.controlled else ():
         dc = b.parley_dc(key)
         out.append(Option(f"action:influence:{key}", "action", f"Influence ({key})", "action", free and dc is not None,
                           no or ("" if dc is not None else "they will not listen"), key))

@@ -25,11 +25,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from realmwalker.core.rng import RNG  # noqa: E402
 from realmwalker.rules import tactics  # noqa: E402
+from realmwalker.rules import combat  # noqa: E402
 from realmwalker.rules.combat import FOE, PARTY, Battle, Env  # noqa: E402
 from realmwalker.rules.creatures import spawn  # noqa: E402
 from tools.balance import PARTY_CLASSES, load_tables, make_hero  # noqa: E402
 
 SCENARIOS = ("close", "far", "bunched", "surrounded")
+# The other actions, counted when an enemy takes them on its own turn ("action:fly", "action:shove"...).
+OTHER_ACTIONS = ("do_fly", "attack_object", "do_search", "do_hide", "do_shove", "do_grapple", "do_help", "do_dodge",
+                 "do_ready", "do_dash", "do_disengage", "do_escape", "do_extinguish")
 
 
 def party_level(cr: float) -> int:
@@ -80,6 +84,16 @@ def run(b: Battle, *, max_steps: int = 3000, check=None, clock=time.perf_counter
             if check is not None:
                 check(bb, f)
     tactics.take_turn = timed
+    originals = {name: getattr(combat.Battle, name) for name in OTHER_ACTIONS}
+
+    def counted(name):
+        def call(self, f, *a, **k):
+            if f.side == FOE and self.current is f:
+                used[f"action:{name[3:] if name.startswith('do_') else name}"] += 1
+            return originals[name](self, f, *a, **k)
+        return call
+    for name in OTHER_ACTIONS:
+        setattr(combat.Battle, name, counted(name))
     try:
         steps = 0
         while b.outcome is None and steps < max_steps:
@@ -87,6 +101,8 @@ def run(b: Battle, *, max_steps: int = 3000, check=None, clock=time.perf_counter
             steps += 1
     finally:
         tactics.take_turn = real
+        for name, fn in originals.items():
+            setattr(combat.Battle, name, fn)
     foes = {f.id: f for f in b.side(FOE)}
     for e in b.events:
         who = foes.get(e.get("by"))
