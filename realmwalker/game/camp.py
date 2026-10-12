@@ -62,14 +62,16 @@ def best(game, skill: str) -> tuple[Character, int]:
     return c, Sheet(c, game.tables).skill_bonus(skill)
 
 
-def check(game, skill: str, dc: int, bonus: int = 0, tag: str = "") -> tuple[bool, str]:
+def check(game, skill: str, dc: int, bonus: int = 0, tag: str = "", mode: str = "") -> tuple[bool, str]:
     who, b = best(game, skill)
     b += bonus
     rng = game.world.rng.child(f"camp/{tag}/{game.world.time}")
-    roll = dice.d20(rng).natural
+    roll = dice.d20(rng, advantage=mode == "advantage", disadvantage=mode == "disadvantage").natural
     name = game.tables.rules["skills"][skill]["name"]
     sign = "+" if b >= 0 else "-"
-    return roll + b >= dc, f"<dice>{name} ({who.name.split()[0]}): {roll} {sign} {abs(b)} = {roll + b} vs DC {dc}</>"
+    how = {"advantage": " (adv)", "disadvantage": " (dis)"}.get(mode, "")
+    return roll + b >= dc, (f"<dice>{name}{how} ({who.name.split()[0]}): {roll} {sign} {abs(b)} = {roll + b} "
+                            f"vs DC {dc}</>")
 
 
 def has(game, def_ids) -> tuple[Character, object] | tuple[None, None]:

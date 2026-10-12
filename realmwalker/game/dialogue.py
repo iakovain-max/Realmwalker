@@ -14,7 +14,7 @@ from realmwalker.rules.character import Sheet
 from realmwalker.rules.items import money_text
 
 DIFFICULTY_DC = {"easy": 10, "medium": 13, "hard": 16, "very hard": 19}
-MOOD_DC = {"hostile": 4, "unfriendly": 2, "neutral": 0, "friendly": -2, "warm": -3}
+
 OUTCOMES = ("reveal_info", "reveal_hook", "disposition_up", "disposition_down", "reputation_up", "reputation_down",
             "price_down", "price_up", "give_item", "agree", "refuse", "fight", "call_guards", "flee", "unlock_topic", "none")
 BRIBES = (50, 200, 1000)  # 5 silver, 2 gold, 10 gold
@@ -423,21 +423,40 @@ class Conversation:
         return any(n.job == "guard" and n.alive for n in npcs_in(self.game.world, self.npc.settlement))
 
     # ------------------------------------------------------------------ special options
+    def attitude(self) -> str:
+        """Their attitude to you (PHB 2024): Friendly, Indifferent or Hostile, from their mood."""
+        from realmwalker.rules import encounter
+
+        return encounter.attitude_of_mood(self.game.tables, self.npc.mood())
+
+    def influence_roll(self, skill: str) -> int:
+        """A d20 and the leader's skill, with advantage or disadvantage by their attitude (PHB 2024 Influence)."""
+        from realmwalker.rules import encounter
+
+        mode = encounter.influence_mode(self.game.tables, self.attitude())
+        roll = dice.d20(self.rng, advantage=mode == "advantage", disadvantage=mode == "disadvantage").natural
+        return roll + Sheet(self.game.leader, self.game.tables).skill_bonus(skill)
+
     def check(self, skill: str, dc: int) -> tuple[bool, str]:
+        """A check in a conversation: advantage with someone Friendly, disadvantage with someone Hostile."""
+        from realmwalker.rules import encounter
+
         c = self.game.leader
         bonus = Sheet(c, self.game.tables).skill_bonus(skill)
-        roll = dice.d20(self.rng).natural
+        mode = encounter.influence_mode(self.game.tables, self.attitude())
+        roll = dice.d20(self.rng, advantage=mode == "advantage", disadvantage=mode == "disadvantage").natural
         name = self.game.tables.rules["skills"][skill]["name"]
         sign = "+" if bonus >= 0 else "-"
+        how = {"advantage": " (adv: friendly)", "disadvantage": " (dis: hostile)"}.get(mode, "")
         ok = roll + bonus >= dc
-        return ok, (f"<dice>{name}: {roll} {sign} {abs(bonus)} = {roll + bonus} vs DC {dc} — "
+        return ok, (f"<dice>{name}{how}: {roll} {sign} {abs(bonus)} = {roll + bonus} vs DC {dc} — "
                     f"{'success' if ok else 'failure'}</>")
 
     def special_option(self, i: int) -> None:
         opt = self.special[i]
         opt["used"] = True
         skill = opt["skill"] if opt["skill"] in self.game.tables.rules["skills"] else "persuasion"
-        dc = DIFFICULTY_DC.get(opt.get("difficulty", "medium"), 13) + MOOD_DC[self.npc.mood()]
+        dc = DIFFICULTY_DC.get(opt.get("difficulty", "medium"), 13)  # their mood gives advantage or not (check)
         self.you_say(opt["text"])
         ok, roll = self.check(skill, dc)
         self.note(roll)

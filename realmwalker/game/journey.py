@@ -71,7 +71,10 @@ def daylight_left(game) -> float:
 
 
 def walking_hours(game, plan) -> float:
-    return plan.minutes * (game.pace() or 1.0) * game.weather.travel_factor() / 60.0
+    from realmwalker.rules import encounter
+
+    chosen = float(encounter.pace(game.tables, game.player.pace)["time"])
+    return plan.minutes * (game.pace() or 1.0) * game.weather.travel_factor() * chosen / 60.0
 
 
 def nights(game, plan) -> int:

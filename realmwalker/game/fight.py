@@ -466,11 +466,15 @@ def encounter_evade(game) -> bool:
     rng = game.world.rng.child(f"evade/{game.world.time}")
     stealth = min(game.sheet(c).skill_bonus("stealth") for c in game.party if c.alive)
     best_eyes = max(10 + int(game.tables.creatures[c.def_id].get("skills", {}).get("perception", 0)) for c in enc.creatures)
-    # Seeing them first is most of slipping away: advantage on the roll, and five more besides.
-    roll = dice.d20(rng, advantage=enc.spotted_first).natural
+    # Seeing them first is most of slipping away: advantage on the roll, and five more besides. The travel pace
+    # (PHB 2024): at a Fast or Normal pace a party is at a disadvantage to move quietly; at a Slow one it is not.
+    from realmwalker.rules import encounter
+
+    loud = encounter.pace(game.tables, game.travel_pace()).get("stealth") == "disadvantage"
+    roll = dice.d20(rng, advantage=enc.spotted_first, disadvantage=loud).natural
     bonus = 5 if enc.spotted_first else 0
     ok = roll + stealth + bonus >= best_eyes
-    adv = " (adv)" if enc.spotted_first else ""
+    adv = {(True, False): " (adv)", (False, True): " (dis)"}.get((enc.spotted_first, loud), "")
     game.say(f"<dice>Stealth{adv}: {roll} {'+' if stealth + bonus >= 0 else '-'} {abs(stealth + bonus)} = "
              f"{roll + stealth + bonus} vs {best_eyes}</>", "dice")
     if ok:
@@ -495,7 +499,11 @@ def encounter_talk_dc(game) -> tuple[int | None, str]:
     if all(d.get("morale") in FEARLESS for d in defs):
         return None, "they are past words"
     party = sum(1 for c in game.party if c.alive)
-    dc = 12 + 2 * (len(enc.creatures) - party) + (2 if not enc.spotted_first else 0)
+    from realmwalker.rules import encounter
+
+    # PHB 2024 Influence: 15 or their best Intelligence, whichever is higher; more of them is harder, fewer easier.
+    dc = encounter.influence_dc(game.tables, [c.def_id for c in enc.creatures]) + 2 * (len(enc.creatures) - party) \
+        + (2 if not enc.spotted_first else 0) - 3
     if any(c.def_id in SOLDIERLY for c in enc.creatures) and any(
             (game.tables.items.get(it.def_id).get("impress") or {}).get("people") == "soldiers"
             for it in carried(game.party)):
@@ -518,9 +526,14 @@ def encounter_talk(game) -> bool:
         return False
     rng = game.world.rng.child(f"talk/{game.world.time}")
     s = game.sheet()
-    roll = dice.d20(rng).natural
+    from realmwalker.rules import encounter
+
+    mode = encounter.influence_mode(game.tables, enc.attitude)  # Friendly: advantage; Hostile: disadvantage
+    roll = dice.d20(rng, advantage=mode == "advantage", disadvantage=mode == "disadvantage").natural
     bonus = s.skill_bonus("persuasion")
-    game.say(f"<dice>Persuasion: {roll} {'+' if bonus >= 0 else '-'} {abs(bonus)} = {roll + bonus} vs DC {dc}</>", "dice")
+    how = {"advantage": " (adv)", "disadvantage": " (dis)"}.get(mode, "")
+    game.say(f"<dice>Persuasion{how}: {roll} {'+' if bonus >= 0 else '-'} {abs(bonus)} = {roll + bonus} vs DC {dc}</>",
+             "dice")
     if roll + bonus >= dc:
         game.say("Words are exchanged, hands stay near hilts, and in the end they let you pass.", "good")
         from realmwalker.game import magic_items
@@ -532,6 +545,33 @@ def encounter_talk(game) -> bool:
     game.say("They hear you out, and laugh, and draw.", "danger")
     start_battle(game, enc.creatures, enc.intro, title=_encounter_title(game, enc.group))
     return False
+
+
+ATTITUDE_WORDS = {
+    "hostile": "<danger>They mean you harm.</>",
+    "indifferent": "<fg>They are wary, but not set on a fight: you could let them be.</>",
+    "friendly": "<good>They seem well disposed towards you.</>",
+}
+
+
+def encounter_pass(game) -> bool:
+    """Let an Indifferent or Friendly band be (DMG 2024: they do not attack unprovoked): a wide berth, and on."""
+    enc = game.encounter
+    if enc is None or enc.attitude == "hostile":
+        return False
+    rng = game.world.rng.child(f"pass/{game.world.time}")
+    if enc.attitude == "friendly":
+        game.say(rng.choice(["They raise a hand as you pass, and you raise one back.",
+                             "A nod, a word about the road ahead, and each goes their way.",
+                             "They step aside to let you by, and wish you better luck than theirs."]), "good")
+    else:
+        game.say(rng.choice(["You give them a wide berth. They watch you all the way, and let you go.",
+                             "Nobody draws. You keep walking, and so do they.",
+                             "Eyes on each other, hands away from hilts: you pass, and the road is yours again."]),
+                 "info")
+    game.pass_time(10, "walk")
+    game.encounter = None
+    return True
 
 
 def encounter_pay_cost(game) -> tuple[int | None, str]:

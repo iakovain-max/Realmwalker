@@ -38,7 +38,7 @@ from realmwalker.world.tables import Tables
 
 log = logging.getLogger("realmwalker.save")
 
-FORMAT_VERSION = 13  # 13: no code for old saves or old worlds (12: no AI text; older formats are refused)
+FORMAT_VERSION = 14  # 14: attunement, travel pace, artifacts and sentient items (13: no code for old saves; older refused)
 WORLD_FILE = "world.zip"
 CHARACTER_FILE = "character.zip"
 
@@ -198,7 +198,7 @@ def character_entries(game: GameState) -> dict[str, bytes | str]:
     p = game.player
     body = {
         "name": p.name, "x": p.x, "y": p.y, "local_key": p.local_key, "lx": p.lx, "ly": p.ly,
-        "alive": p.alive, "home": p.home, "seconds": p.seconds, "steps": p.steps,
+        "alive": p.alive, "home": p.home, "seconds": p.seconds, "steps": p.steps, "pace": p.pace,
         "known_settlements": sorted(p.known_settlements),
         "visited_settlements": sorted(p.visited_settlements),
         "visited_areas": sorted(p.visited_areas),
@@ -238,7 +238,7 @@ def load_player(folder: Path) -> tuple[PlayerState, MessageLog, list[Character] 
         visited_settlements=set(body.get("visited_settlements", [])),
         visited_areas=set(body.get("visited_areas", [])),
         discoveries=set(body.get("discoveries", [])),
-        seconds=body.get("seconds", 0), steps=body.get("steps", 0),
+        seconds=body.get("seconds", 0), steps=body.get("steps", 0), pace=body.get("pace", "normal"),
     )
     party = body.get("party")
     party_chars = [Character.from_dict(c) for c in party] if party else None

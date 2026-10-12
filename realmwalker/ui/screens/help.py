@@ -180,8 +180,15 @@ It is dark down there. Light a torch or a lantern from your pack (they burn out;
 Traps are hidden until you spot them: darts, pits, falling stone, gas, and worse. Search before you walk into a room you don't like the look of. A dragon's hoard is guarded by the dragon.
 
 <title>Magic items</>
-Magic is rare, and most of it is old. What you find looks like "a strange sword" until you know it: <loot>Enter</> on it in your pack studies it for an hour (Arcana, once a day for each thing), or a priest will tell you what it is for a donation. Known items list what they do and carry the name and history the world remembers.
-Some things are cursed: they cannot be taken off, and they work against you. A temple can lift a curse. Wands and rings with charges refill after a long rest.
+Magic is rare, and most of it is old. What you find looks like "a strange sword" until you know it: <loot>k</> in your pack handles it through an hour's rest and tells you what it does (never whether it is cursed), or a priest will tell you for a donation, or a wizard's Identify. Known items list what they do and carry the name and history the world remembers.
+Things of real power must be bound to someone before they work: <loot>a</> in your pack spends an hour attuning the one whose pack page it is (and an hour to end it). Nobody can be bound to more than three things. A plain +1 sword needs no bond.
+Some things are cursed: once worn or bound they will not let go, and they work against you. A temple can lift a curse. Wands and staves with charges get some of them back at dawn, not with rest.
+An artifact is one of a kind: great powers and a flaw or two, rolled for this world, and it cannot be broken except in one way the world remembers. Some old things are awake: they have a mind, a purpose and a voice, they like and hate what you do, and when you go against them they make demands. Refuse, and they withhold their power, or take hold of their bearer for a few hours.
+
+<title>Treasure and the road</>
+Creatures carry what their kind carries: a bandit a few gold pieces, a wolf nothing. A band that keeps a hoard keeps it at home: the deepest chest of a lair is its master's hoard, in the form its kind likes (gems, coin and silver bars, trade goods, or old art). Cities where mages keep a house sell a minor magic thing or two.
+  <loot>v</>               Travel pace: Fast covers ground in three quarters of the time but notices less and loses its way more easily; Slow takes half as long again but notices more, keeps its bearings and slips away quietly. Mountains and marsh allow only Slow, open country Fast; a good road allows one step faster.
+Not every band on the road wants a fight. Some are only wary: you can let them be and go on. Talking your way past is harder with a hostile band and easier with a friendly one; the same goes for anyone in a town, by their mood.
 
 <title>Dragons</>
 Every land has its dragon, and everyone knows its name. Most were killed by heroes long ago; one or two are only sleeping, each in a lair in the high country. A sleeping dragon still comes down now and then to burn a village or take cattle and silver as tribute, and the news travels. The country around a lair tells you: burned trees, bones in the grass, no birds singing.

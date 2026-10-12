@@ -1046,7 +1046,8 @@ class InventoryScreen(Screen):
         return True
 
     def autoplay_keys(self) -> list[KeyEvent]:
-        return [KeyEvent(k) for k in ("up", "down", "down", "left", "right", "s", "enter", "enter", "D", "u", "escape")]
+        return [KeyEvent(k) for k in ("up", "down", "down", "left", "right", "s", "enter", "enter", "k", "a", "D", "u",
+                                      "escape")]
 
 
 # ---------------------------------------------------------------------------- equipment

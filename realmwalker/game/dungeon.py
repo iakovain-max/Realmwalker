@@ -593,8 +593,14 @@ def populate(game, lm) -> None:
         if not cells:
             continue
         x, y = rng.choice(cells)
+        from realmwalker.game.encounters import land_budget
+
+        boss_band = has_boss and n == 0
+        worth = None if group == "dragon" else land_budget(game, rng.child(f"budget{n}"),
+                                                           difficulty="high" if boss_band else "moderate",
+                                                           deeper=level - 1)
         creatures = spawn_group(game.tables, group, rng.child(str(n)), now=game.world.time,
-                                party_size=len(game.party))
+                                party_size=len(game.party), budget=worth)
         if group == "dragon" and site is not None:
             d = gen.dragon_at(game.world, site)
             if d is not None and creatures:

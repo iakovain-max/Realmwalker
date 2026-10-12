@@ -2384,10 +2384,21 @@ class Battle:
             return None
         party = [f for f in self.side(PARTY) if f.standing]
         hurt = sum(1 for f in foes if f.hp < f.max_hp) / len(foes)
-        dc = 12 + 2 * (len(foes) - len(party)) - int(hurt * 4)
+        from realmwalker.rules import encounter
+
+        # PHB 2024 Influence: 15 or their best Intelligence, whichever is higher; numbers and hurts move it.
+        dc = encounter.influence_dc(self.t, [f.creature.def_id for f in foes if f.creature is not None]) - 3 \
+            + 2 * (len(foes) - len(party)) - int(hurt * 4)
         if approach == "intimidate":
             dc += 2 if len(foes) > len(party) else -1
         return max(5, min(25, dc))
+
+    def foe_attitude(self) -> str:
+        """In a fight the enemy is Hostile (Influence at a disadvantage), until most of them are bloodied: then they
+        are no longer set on it (Indifferent)."""
+        foes = [f for f in self.side(FOE) if f.active]
+        bloodied = sum(1 for f in foes if f.hp * 2 <= f.max_hp)
+        return "indifferent" if foes and bloodied * 2 >= len(foes) else "hostile"
 
     def do_parley(self, f: Fighter, approach: str) -> None:
         dc = self.parley_dc(approach)
@@ -2398,9 +2409,14 @@ class Battle:
             self.say("They are past listening.", "warn")
             self._after_action(f)
             return
-        roll = dice.d20(self.rng).natural
+        from realmwalker.rules import encounter
+
+        mode = encounter.influence_mode(self.t, self.foe_attitude())
+        roll = dice.d20(self.rng, advantage=mode == "advantage", disadvantage=mode == "disadvantage").natural
         bonus = f.skill(skill)
-        self.dice_say(f"{self.t.rules['skills'][skill]['name']} ({f.name}): {roll} {signed_mod(bonus)} = {roll + bonus} vs DC {dc}")
+        how = {"advantage": " (adv)", "disadvantage": " (dis: hostile)"}.get(mode, "")
+        self.dice_say(f"{self.t.rules['skills'][skill]['name']}{how} ({f.name}): {roll} {signed_mod(bonus)} = "
+                      f"{roll + bonus} vs DC {dc}")
         lines = {"persuade": "'There's no profit in this. Walk away, and so will we.'",
                  "intimidate": "'Drop it, or I'll open you like a sack of grain.'",
                  "calm": f"{f.the_name} speaks low and steady, and makes no sudden moves."}

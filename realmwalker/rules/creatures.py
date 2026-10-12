@@ -113,17 +113,17 @@ def band_purse(tables, creatures: list[Creature], rng: RNG) -> None:
         lead.money = individual_treasure(tables, float(tables.creatures[lead.def_id].get("cr", 0)), rng)
 
 
-def spawn_group(tables, group_id: str, rng: RNG, first_uid: int = 1, *, now: int = 0, party_size: int = 3) -> list[Creature]:
-    """Spawn an encounter group. Groups are written for a small party; a lone traveller meets fewer
-    of the rank and file (the kind of creature still follows the danger of the region)."""
+def spawn_group(tables, group_id: str, rng: RNG, first_uid: int = 1, *, now: int = 0, party_size: int = 3,
+                budget: int | None = None) -> list[Creature]:
+    """Spawn an encounter group. With an XP `budget` (DMG 2024, rules/encounter.py) the rank and file are trimmed or
+    grown to fit it, never the last of a kind; without one, a lone traveller meets fewer of the rank and file."""
+    from realmwalker.rules import encounter
+
     group = tables.creatures.encounters[group_id]
     out: list[Creature] = []
     uid = first_uid
-    scale = min(1.3, 0.45 + 0.2 * max(1, party_size))
-    for def_id, count in group["members"]:
-        n = max(1, dice.roll(str(count), rng).total)
-        if n > 1:
-            n = max(1, int(round(n * scale)))
+    counts = encounter.counts_for(tables, group["members"], rng, budget, party_size)
+    for (def_id, _count), n in zip(group["members"], counts):
         for _ in range(n):
             out.append(spawn(tables, def_id, rng, uid, now=now))
             uid += 1

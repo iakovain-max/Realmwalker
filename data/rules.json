@@ -51,6 +51,37 @@
     "healers_kit": "healer's kit", "disguise_kit": "disguise kit",
     "navigators_tools": "navigator's tools"
   },
+  "_encounters": "Combat encounters by the DMG 2024 (PDF pages 118-119): budget is the XP Budget per Character, [Low, Moderate, High] for levels 1 to 20. A band met in the land is built for the land, not the party (DESIGN.md: some fights should be avoided): danger_level is the party level a region's danger (0-10) stands for; odds how often a band is built Low, Moderate or High; the budget is per character in the party; a band never loses the last of any kind in it, and grows at most to most_extra times its largest roll. How a band looks to the player: below Low, Low, Moderate, High, and deadly above deadly times High.",
+  "encounters": {
+    "budget": [[50, 75, 100], [100, 150, 200], [150, 225, 400], [250, 375, 500], [500, 750, 1100], [600, 1000, 1400],
+               [750, 1300, 1700], [1000, 1700, 2100], [1300, 2000, 2600], [1600, 2300, 3100], [1900, 2900, 4100],
+               [2200, 3700, 4700], [2600, 4200, 5400], [2900, 4900, 6200], [3300, 5400, 7800], [3800, 6100, 9800],
+               [4500, 7200, 11700], [5000, 8700, 14200], [5500, 10700, 17200], [6400, 13200, 22000]],
+    "danger_level": [1, 1, 1, 1, 2, 2, 3, 3, 4, 5, 6],
+    "odds": {"low": 35, "moderate": 45, "high": 20},
+    "deadly": 2.0,
+    "most_extra": 1.0
+  },
+  "_travel_pace": "Travel pace (PHB 2024 PDF page 23, DMG PDF pages 42-43): time for the same ground (4, 3 or 2 miles an hour), and what it does to noticing (a passive score, -5 or +5) and to Survival (finding the way) and Stealth (slipping away); the land's maximum pace (DMG Travel Terrain, by biome or family), one step faster on a good road.",
+  "travel_pace": {
+    "paces": {
+      "fast": {"name": "Fast", "time": 0.75, "passive": -5, "survival": "disadvantage", "stealth": "disadvantage"},
+      "normal": {"name": "Normal", "time": 1.0, "passive": 0, "stealth": "disadvantage"},
+      "slow": {"name": "Slow", "time": 1.5, "passive": 5, "survival": "advantage"}
+    },
+    "max": {"tundra": "fast", "glacier": "fast", "plains": "fast", "steppe": "fast", "savanna": "fast",
+            "coast": "normal", "desert": "normal", "dunes": "normal", "salt_flat": "normal", "forest": "normal",
+            "pine_forest": "normal", "jungle": "normal", "fey_forest": "normal", "hills": "normal", "badlands": "normal",
+            "volcanic": "normal", "mountains": "slow", "high_mountains": "slow", "marsh": "slow"}
+  },
+  "_attitudes": "Attitudes (PHB 2024 Rules Glossary, DMG PDF pages 36 and 55): Friendly gives advantage on checks to influence them, Hostile disadvantage. A band met on the road starts with an attitude rolled by its leader's alignment (its stat block's), weighted towards Hostile (they are met as trouble); an Indifferent or Friendly band can be let be. A band that has been bloodied in a fight is no longer simply Hostile (Indifferent). Townsfolk's attitude is their mood: hostile or unfriendly people are Hostile, warm or friendly ones Friendly.",
+  "attitudes": {
+    "influence": {"friendly": "advantage", "indifferent": "none", "hostile": "disadvantage"},
+    "start": {"evil": {"hostile": 95, "indifferent": 5}, "neutral": {"hostile": 75, "indifferent": 25},
+              "good": {"hostile": 40, "indifferent": 50, "friendly": 10}, "unaligned": {"hostile": 80, "indifferent": 20}},
+    "moods": {"hostile": "hostile", "unfriendly": "hostile", "neutral": "indifferent", "friendly": "friendly", "warm": "friendly"},
+    "default_dc": 15
+  },
   "_study": "The Study action (2024, PHB PDF page 378): the skill by kind of creature (anything else: Arcana), and the DC: base + per_cr x Challenge Rating, at most max (the PHB's scale: easy 10, medium 15, hard 20, very hard 25).",
   "study": {
     "skills": {"beast": "nature", "dragon": "nature", "ooze": "nature", "plant": "nature", "humanoid": "history",
