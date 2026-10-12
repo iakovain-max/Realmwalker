@@ -8,6 +8,14 @@ beaten run for the edge of the field. If nothing can be reached this turn, they 
 there is to do). Party members on Auto also heal the fallen, bless, throw area spells where they catch only
 enemies, and use their class's tricks.
 
+Tactics 2.0 (docs/EXPANSIONS.md §4.7): every choice is weighed by the numbers the player sees (rules/engine/estimates.py:
+the chance to hit or to fail the save, damage after resistances, a kill, control, healing); spells are chosen from
+the one list of options (rules/engine/actions.py) by what they are worth less what they cost, and what they cost
+falls as the fight matters more (a trivial fight is won with cantrips; a losing side spends everything); a spell held
+by concentration is only given up for a better one; a creature's wits (its Intelligence) set how it picks targets
+- beasts the nearest and weakest, the clever all on one, the cleverest on casters and healers first; its role
+(data: creatures' "ai") sets where it wants to stand.
+
 Pure logic: it only calls the Battle's own actions, so everything it does is something a player could do.
 """
 
@@ -16,9 +24,63 @@ from __future__ import annotations
 from realmwalker.rules import grid
 from realmwalker.rules import spells as spellrules
 from realmwalker.rules.combat import FOE, PARTY, AttackOption, Battle, Fighter, _avg
+from realmwalker.rules.engine import actions, estimates, query
 
 CAUTION = {"beast": 2.0, "mindless": 0.5, "fanatic": 1.0, "warrior": 3.0, "bandit": 6.0, "soldier": 6.0,
            "coward": 14.0, "party": 10.0}
+
+
+# ---------------------------------------------------------------------------- wits, the fight, targets
+def smarts(f: Fighter) -> int:
+    """0: a beast or a mindless thing; 1: ordinary sense; 2: focuses its attacks (Intelligence 12+); 3: goes for the
+    casters and healers first (16+). Characters plan as players do (2)."""
+    if f.char is not None:
+        return 2
+    score = int(f.cdef.get("abilities", {}).get("int", 10))
+    return 0 if score <= 5 else (1 if score < 12 else (2 if score < 16 else 3))
+
+
+def importance(b: Battle, f: Fighter) -> float:
+    """How much this fight matters to `f`'s side (0..1): the threat it faces against the hit points it has left."""
+    foes = sum(estimates.threat(e) for e in b.enemies_of(f) if e.standing)
+    ours = sum(max(0, x.hp) for x in b.allies_of(f)) + 1
+    return max(0.0, min(1.0, foes * 2.5 / ours))
+
+
+def focus(b: Battle, f: Fighter) -> Fighter | None:
+    """The enemy `f`'s side is ganging up on this round (the most dangerous for its hit points, in sight)."""
+    key = (f.team, b.round)
+    cache = b.__dict__.setdefault("_focus", {})
+    if key not in cache:
+        seen = [e for e in b.enemies_of(f) if e.standing and e.state != "surrendered"]
+        cache.clear() if len(cache) > 50 else None
+        cache[key] = max(seen, key=lambda e: (estimates.threat(e) / max(1, e.hp), -e.id)).id if seen else None
+    fid = cache[key]
+    return next((x for x in b.fighters if x.id == fid), None)
+
+
+def target_weight(b: Battle, f: Fighter, t: Fighter) -> float:
+    """How much more a target is worth to `f` than its hit points alone say."""
+    w = 1.0
+    s = smarts(f)
+    if t.concentration is not None and s >= 1:
+        w *= 1.3  # break the spell
+    if s >= 3 and t.char is not None and spellrules.is_caster(t.char, b.t):
+        w *= 1.25
+    elif t.char is not None and t.char.cls == "wizard":
+        w *= 1.1
+    if s >= 2:
+        fo = focus(b, f)
+        if fo is t:
+            w *= 1.4
+    return w
+
+
+def role(f: Fighter) -> str:
+    """brute, skirmisher, artillery, controller, leader, support, lurker or solo (creatures' "ai" role, else a guess)."""
+    if f.char is not None:
+        return "artillery" if f.char.cls == "wizard" else "brute"
+    return (f.cdef.get("ai") or {}).get("role", "brute")
 
 
 def take_turn(b: Battle, f: Fighter) -> None:
@@ -183,35 +245,30 @@ def _ring(t: Fighter, reach: int, size: int) -> list[tuple[int, int]]:
 
 def _value(b: Battle, f: Fighter, opt: AttackOption, t: Fighter, sq, *, cover: int | None = None, near: int = 0,
            far: bool = False) -> float:
-    """How good one attack on `t` from square `sq` is: expected damage, more if it could finish them."""
+    """How good one attack on `t` from square `sq` is: expected damage (by the same rules the attack will be rolled
+    with), more if it could finish them, weighted by who they are."""
+    space = (sq[0], sq[1], f.sq)
     if cover is None:
-        cover = b.field.cover((sq[0], sq[1], f.sq), t.space)
+        cover = b.field.cover(space, t.space)
         cover = 0 if cover == grid.TOTAL else cover
-    ac = t.ac() + grid.COVER_AC[cover]
-    need = max(2, min(20, ac - opt.bonus))
-    p = (21 - need) / 20.0
-    dis = near > 0 and not opt.is_melee or far or (t.dodging and opt.is_melee)
-    adv = ("prone" in t.conditions and opt.is_melee) or any(c in t.conditions for c in ("restrained", "paralyzed", "stunned"))
-    if f.has_trait("pack_tactics") and opt.is_melee and any(a is not f and a.standing and b.gap(a, t) <= 1 for a in b.allies_of(f)):
-        adv = True
-    if opt.is_melee and any(a is not f and a.standing and not a.incapacitated and grid.flanks((sq[0], sq[1], f.sq), a.space, t.space)
-                            for a in b.allies_of(f)):
-        adv = True  # a friend on the far side: worth walking round for
-    if adv and not dis:
-        p = 1 - (1 - p) ** 2
-    elif dis and not adv:
-        p = p * p
-    dmg = _avg(opt.damage)
-    value = p * dmg
+    dmg = _avg(opt.damage) * estimates.damage_factor(t, opt.damage_type)
+    if opt.extra.get("single_save"):  # a web, a touch that drains: no attack roll, a saving throw
+        pf = estimates.fail_chance(b, t, opt.extra["save"], int(opt.extra["dc"]))
+        ev = dmg * (pf + ((1 - pf) * 0.5 if opt.extra.get("half") else 0.0))
+        if opt.extra.get("on_fail"):
+            ev += pf * estimates.threat(t) * 0.6
+    else:
+        r = query.attack_roll(b, f, t, opt, space=space)
+        p = estimates._p(t.ac() + grid.COVER_AC[cover] - opt.bonus, r.mode)
+        dmg += sum(_avg(e["damage"]) * estimates.damage_factor(t, e["type"]) for e in opt.extra.get("extra", ())
+                   if e.get("if") != "advantage" or r.mode == "advantage")
+        ev = p * dmg
+    value = ev
     if t.hp <= dmg:
         value *= 1.6  # it could finish them
     if t.state == "down":
         value *= 0.3
-    if t.concentration is not None:
-        value *= 1.3
-    if t.char is not None and t.char.cls == "wizard":
-        value *= 1.1
-    return value + 0.5
+    return value * target_weight(b, f, t) + 0.5
 
 
 def approach(b: Battle, f: Fighter, opts: list[AttackOption]) -> None:
@@ -293,12 +350,9 @@ def flee(b: Battle, f: Fighter) -> None:
 
 
 def _creature_magic(b: Battle, f: Fighter) -> None:
-    """An enemy caster: its bonus-action spells first (a spiritual weapon, a shield of faith, the weapon's blow),
-    then the action: heal a friend in trouble, bless the band, hold the most dangerous foe, command one to grovel,
-    a withering touch on whoever is beside it, or holy fire from afar."""
-    spells = b.creature_spells(f)
-    enemies = [e for e in b.enemies_of(f) if e.standing]
-    if not enemies:
+    """An enemy caster: the best of its bonus-action spells, then the best of its action spells if it is worth more than
+    its weapons; its spiritual weapon strikes on later turns."""
+    if not any(e.standing for e in b.enemies_of(f)):
         return
     tok = next((t for t in b.tokens if t.owner == f.id and t.kind == "spiritual_weapon"), None)
     if tok is not None and f.bonus > 0:
@@ -306,42 +360,75 @@ def _creature_magic(b: Battle, f: Fighter) -> None:
         if near:
             f.bonus -= 1
             b._spirit_strike(f, tok, min(near, key=lambda e: e.hp))
-    elif "spiritual_weapon" in spells:
-        pts = b.spell_points(f, "spiritual_weapon")
-        spots = [sq for e in enemies for sq in _ring(e, 1, 1) if sq in pts]
-        if spots:
-            b.creature_cast(f, "spiritual_weapon", point=spots[0])
-    spells = b.creature_spells(f)
-    if "shield_of_faith" in spells and f.concentration is None and any(b.gap(f, e) <= 2 for e in enemies):
-        b.creature_cast(f, "shield_of_faith", f)
-    if f.action <= 0 or b.outcome is not None:
-        return
-    spells = b.creature_spells(f)
-    friends = [x for x in b.allies_of(f) if x.standing]
-    if "cure_wounds" in spells:
-        hurt = [x for x in b.spell_targets(f, "cure_wounds") if x.hp < x.max_hp * 0.4]
-        if hurt:
-            b.creature_cast(f, "cure_wounds", min(hurt, key=lambda x: x.hp))
-            return
-    if "bless" in spells and f.concentration is None and len(friends) >= 2:
-        b.creature_cast(f, "bless")
-        return
-    if "hold_person" in spells and f.concentration is None:
-        held = [e for e in b.spell_targets(f, "hold_person") if e.kind == "humanoid" and "paralyzed" not in e.conditions]
-        if held:
-            b.creature_cast(f, "hold_person", max(held, key=lambda e: (e.ac(), e.hp)))
-            return
-    beside = [e for e in enemies if b.gap(f, e) <= 1]
-    if "inflict_wounds" in spells and beside:
-        b.creature_cast(f, "inflict_wounds", min(beside, key=lambda e: e.hp))
-        return
-    if "command" in spells and beside and b.rng.chance(0.4):
-        b.creature_cast(f, "command", beside[0])
-        return
-    if "sacred_flame" in spells and not beside:
-        targets = b.spell_targets(f, "sacred_flame")
-        if targets:
-            b.creature_cast(f, "sacred_flame", min(targets, key=lambda e: e.hp))
+    if f.bonus > 0:
+        _cast_best(b, f, "bonus")
+    if f.action > 0 and b.outcome is None and b.current is f:
+        _cast_best(b, f, "action", beat=_best_attack_worth(b, f))
+
+
+def _best_attack_worth(b: Battle, f: Fighter) -> float:
+    """What a turn of plain attacks from here would be worth (the bar a spell must clear)."""
+    opts = [o for o in b.attack_options(f) if o.available and not o.extra.get("area")]
+    best = 0.0
+    for o in opts:
+        for t in b.targets_for(f, o):
+            best = max(best, _value(b, f, o, t, (f.x, f.y)))
+    attacks = max(1, int(f.cdef.get("multiattack", 1))) if f.creature is not None else query.attacks_per_action(f)
+    reach = 0.6 if not any(b.targets_for(f, o) for o in opts) else 1.0  # (it would have to walk first)
+    return best * attacks * reach
+
+
+def _aims(b: Battle, f: Fighter, opt) -> list[tuple]:
+    """Where a spell could be aimed: (target, point) pairs worth weighing."""
+    if opt.aim == "creature":
+        return [(t, None) for t in opt.targets]
+    if opt.aim == "point" and opt.points:
+        enemies = [e for e in b.enemies_of(f) if e.standing]
+        friends = [x for x in b.team(f.team) if x.active or x.state == "down"]
+        near = {(e.x + dx, e.y + dy) for e in enemies + friends for dx in (-1, 0, 1) for dy in (-1, 0, 1)}
+        return [(None, p) for p in sorted(near & opt.points)][:60]
+    return [(None, None)]
+
+
+def spell_cost(b: Battle, f: Fighter, level: int) -> float:
+    """What spending a spell of this level is worth giving up, by how much the fight matters (cantrips are free)."""
+    if level <= 0:
+        return 0.0
+    keep = 3.0 if f.char is not None else 1.5  # the party has the rest of the day to think of
+    return keep * level * (1.0 - 0.85 * importance(b, f))
+
+
+def _cast_best(b: Battle, f: Fighter, cost: str, *, beat: float = 0.0, care: float | None = None) -> bool:
+    """Cast the spell (of this casting time) worth most here, if it is worth more than `beat`. True if one was cast."""
+    from realmwalker.rules.combat import spell_id
+
+    if care is None:
+        care = 4.0 if f.char is not None else (0.3 if smarts(f) == 0 else 1.0)  # friends caught in an area
+    best = None
+    for opt in actions.options(b, f):
+        if opt.kind != "cast" or not opt.available or opt.cost != cost:
+            continue
+        sp = b.t.spells[spell_id(opt.value)]
+        if sp.get("concentration") and f.concentration is not None:
+            continue  # (keep what it holds)
+        if sp.get("concentration") and sp["level"] > 0 and importance(b, f) < 0.15:
+            continue
+        price = spell_cost(b, f, sp["level"] if not str(opt.value).startswith(("scroll:", "charge:")) else 0)
+        for target, point in _aims(b, f, opt):
+            w = estimates.spell_value(b, f, opt.value, target=target, point=point)
+            if w.total(care=care) <= 0.5:
+                continue
+            score = w.total(care=care) - price
+            if f.char is not None and w.friendly > 0:
+                continue  # companions never catch friends
+            if best is None or score > best[0]:
+                best = (score, opt.value, target, point)
+    if best is None or best[0] <= beat:
+        return False
+    _, value, target, point = best
+    if f.char is not None:
+        return bool(b.do_cast(f, value, target, point=point))
+    return bool(b.creature_cast(f, value, target, point=point))
 
 
 def _keep_distance(b: Battle, f: Fighter) -> None:
@@ -495,64 +582,17 @@ def _tend_the_fallen(b: Battle, f: Fighter) -> None:
 
 
 def _cast_something(b: Battle, f: Fighter) -> bool:
-    """A caster's choice for the action: an area that catches only foes, a heal, a blessing, a sure hit, a cantrip."""
-    options = {sid: ok for sid, ok, _ in b.spell_options(f)}
-    t = b.t
-    enemies = [e for e in b.enemies_of(f) if e.standing]
-    if not enemies:
+    """A caster's choice for the action: the spell worth most here - a heal where it keeps a friend standing, an area
+    that catches only foes, a blessing when the fight matters, a sure hit, a cantrip - if it beats the weapon."""
+    if not any(e.standing for e in b.enemies_of(f)):
         return False
-    # Badly hurt friends.
-    for sid in ("cure_wounds", "healing_word"):
-        if options.get(sid):
-            hurt = [x for x in b.spell_targets(f, sid) if x.active and x.hp < x.max_hp * 0.35]
-            if hurt:
-                return b.do_cast(f, sid, min(hurt, key=lambda x: x.hp / max(1, x.max_hp)))
-    # Bless the party at the start, if there are friends to bless.
-    if options.get("bless") and f.concentration is None and b.round <= 2 and len(b.allies_of(f)) >= 2:
-        return b.do_cast(f, "bless")
-    if options.get("spiritual_weapon") and f.bonus > 0 and not any(tk.owner == f.id for tk in b.tokens):
-        pts = b.spell_points(f, "spiritual_weapon")
-        near = [sq for e in enemies for sq in _ring(e, 1, 1) if sq in pts]
-        if near:
-            b.do_cast(f, "spiritual_weapon", point=near[0])
-    # An area spell, aimed where it catches the most foes and none of us.
-    best = None
-    for sid, ok in options.items():
-        if not ok or sid not in t.spells:
-            continue
-        sp = t.spells[sid]
-        if not sp.get("area") or not spellrules.has_op(sp, "save") or sp.get("affects") == "allies" or sp["level"] == 0:
-            continue
-        aims = b.spell_points(f, sid)
-        candidates = {(e.x, e.y) for e in enemies} | {(e.x + dx, e.y + dy) for e in enemies for dx, dy in grid.DIRS8}
-        for pt in candidates:
-            if pt not in aims:
-                continue
-            cells = b.spell_area(f, sid, pt)
-            hit = b.in_area(cells, sp.get("affects", "all"), f)
-            spared = b.sculpted(f, sid, hit)
-            foes = [x for x in hit if x.team != f.team and x.standing]
-            friends = [x for x in hit if x.team == f.team and x.id not in spared]
-            if friends or len(foes) < 2:
-                continue
-            score = sum(min(x.hp, 20) for x in foes) - sp["level"] * 3
-            if best is None or score > best[0]:
-                best = (score, sid, pt)
-    if best is not None:
-        return b.do_cast(f, best[1], point=best[2])
-    # A sure strike at something nearly dead, or a cantrip.
-    if options.get("magic_missile"):
-        weak = [e for e in b.spell_targets(f, "magic_missile") if e.hp <= 8]
-        if weak and len(enemies) >= 2:
-            return b.do_cast(f, "magic_missile", min(weak, key=lambda e: e.hp))
-    for sid in ("fire_bolt", "sacred_flame", "ray_of_frost", "chill_touch"):
-        if options.get(sid):
-            targets = b.spell_targets(f, sid)
-            if f.char.cls == "cleric" and any(b.gap(f, e) <= 1 for e in enemies):
-                break  # a cleric beside the enemy uses the mace
-            if targets and not any(b.gap(f, e) <= 1 for e in enemies if e.standing) or (targets and sid == "sacred_flame"):
-                return b.do_cast(f, sid, min(targets, key=lambda e: (e.hp, b.gap(f, e))))
-    return False
+    if f.bonus > 0:
+        _cast_best(b, f, "bonus")
+        if b.current is not f or b.outcome is not None:
+            return True
+    melee = any(b.gap(f, e) <= 1 for e in b.enemies_of(f) if e.standing)
+    beat = _best_attack_worth(b, f) if (f.char.cls != "wizard" or melee) else 0.0
+    return _cast_best(b, f, "action", beat=beat)
 
 
 def _keep_safe(b: Battle, f: Fighter) -> None:

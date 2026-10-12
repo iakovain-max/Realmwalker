@@ -4,12 +4,17 @@ give (data/traits.json "activate"), whether each can be used now and why not, an
 An activation is {"id", "name", "cost": "action" | "bonus" | "free", "uses": pool id (rules/engine/resources.py),
 "requires": [tests from REQUIRES], "via": a battle action done with the bonus action instead (Cunning Action's
 "dash", "disengage", "hide"), "effects": [ops] (rules/engine/effects.py)}. A trait may give several.
-Part C turns this into the one list of everything a fighter can do (moves, attacks, spells, abilities).
+
+`options(b, f)` is the one list of everything a fighter can do now - every attack with each weapon, every spell, every
+ability, the other actions (Dash, Disengage, Dodge, Hide, Help, Study, Search, Ready, Shove, Grapple, Influence...),
+items - each with its cost, whether it can be done and why not, and what it can be aimed at. The battle screen's
+menus, the companions' Auto and the enemy all read it (rules/engine/estimates.py says what each is worth).
 """
 
 from __future__ import annotations
 
-from typing import Callable
+from dataclasses import dataclass, field
+from typing import Any, Callable
 
 from realmwalker.rules.engine import effects, events
 from realmwalker.rules.engine import resources as res
@@ -94,3 +99,102 @@ REQUIRES: dict[str, Callable] = {
     "undead_within_30": _undead_near,
     "god_ready": _god_ready,
 }
+
+
+# ---------------------------------------------------------------------------- everything a fighter can do now
+@dataclass
+class Option:
+    """One thing a fighter could do now: how it is paid for, whether it can be done and why not, what it is aimed at."""
+    id: str  # "attack:main", "cast:fire_bolt", "ability:second_wind", "action:dash"...
+    kind: str  # attack, cast, ability, action, item
+    name: str
+    cost: str  # action, bonus, attack (one attack of the Attack action), free, reaction
+    available: bool = True
+    why: str = ""
+    value: Any = None  # what the battle's do_ method takes (an AttackOption, a spell value, an ability id, an item uid)
+    aim: str = "none"  # creature, point, none
+    targets: list = field(default_factory=list)  # creatures it can be aimed at from here
+    points: set | None = None  # squares it can be aimed at
+
+
+def options(b, f) -> list[Option]:
+    """Everything `f` can do now, in a fixed order: attacks, spells, abilities, the other actions, items."""
+    out: list[Option] = []
+    acting = b.has_action(f)
+    for o in b.attack_options(f):
+        ok = o.available and acting
+        why = o.reason if not o.available else ("" if acting else "no action left this turn")
+        out.append(Option(f"attack:{o.key}", "attack", o.name, "attack", ok, why, o, "creature",
+                          b.targets_for(f, o) if ok else []))
+    if f.char is not None:
+        for sid, ok, why in b.spell_options(f):
+            out.append(_spell_option(b, f, sid, ok, why))
+    else:
+        for sid in b.creature_spells(f):
+            out.append(_spell_option(b, f, sid, True, ""))
+    for aid, name, ok, why in b.class_abilities(f):
+        a = find(f, aid)
+        cost = a["cost"] if a else ("bonus" if aid in ("offhand", "spirit_strike") else "action")
+        targets = []
+        if aid == "offhand" and ok:
+            opt = b.offhand_option(f)
+            targets = [t for t in b.enemies_of(f) if opt is not None and b.in_reach(f, opt, t)[0]]
+        elif aid == "spirit_strike" and ok:
+            targets = b.spirit_targets(f)
+        out.append(Option(f"ability:{aid}", "ability", name, cost, ok, why, aid, "creature" if targets else "none",
+                          targets))
+    free = f.action > 0
+    no = "" if free else "no action left this turn"
+    for key, name in (("dash", "Dash"), ("disengage", "Disengage"), ("dodge", "Dodge")):
+        out.append(Option(f"action:{key}", "action", name, "action", free, no, key))
+    hide = b.hide_problem(f)
+    out.append(Option("action:hide", "action", "Hide", "action", free and hide is None, no or hide or "", "hide"))
+    helped = b.help_targets(f)
+    out.append(Option("action:help", "action", "Help", "action", free and bool(helped),
+                      no or ("" if helped else "nobody to help"), "help", "creature", helped))
+    unknown = [e for e in b.enemies_of(f) if e.creature is not None and e.creature.def_id not in b.known]
+    out.append(Option("action:study", "action", "Study", "action", free and bool(unknown),
+                      no or ("" if unknown else "you know all of them"), "study", "creature", unknown))
+    out.append(Option("action:search", "action", "Search", "action", free, no, "search"))
+    for trig, name in (("reach", "Ready a blow"), ("sight", "Ready a shot")):
+        out.append(Option(f"action:ready:{trig}", "action", name, "action", free, no, trig))
+    grabbable = [t for t in b.enemies_of(f) if b.can_grapple(f, t)[0]]
+    for mode, name in (("prone", "Shove down"), ("push", "Shove back"), ("grapple", "Grapple")):
+        ok = acting and bool(grabbable)
+        why = "" if ok else ("no action left this turn" if not acting else "nobody beside you")
+        out.append(Option(f"action:{mode}", "action", name, "attack", ok, why, mode, "creature", grabbable))
+    if "grappled" in f.conditions or "restrained" in f.conditions:
+        out.append(Option("action:escape", "action", "Break free", "action", free, no, "escape"))
+    for key in ("persuade", "intimidate", "calm"):
+        dc = b.parley_dc(key)
+        out.append(Option(f"action:influence:{key}", "action", f"Influence ({key})", "action", free and dc is not None,
+                          no or ("" if dc is not None else "they will not listen"), key))
+    for it in b.usable_items(f):
+        throw = b.throw_value(it)
+        ok = acting if throw else (f.action > 0 or b.fast_hands(f))
+        out.append(Option(f"item:{it.uid}", "item", b.t.items.name(it, False), "action", ok,
+                          "" if ok else "no action left this turn", throw or it.uid, "point" if throw else "creature",
+                          [] if throw else b.item_targets(f), b.spell_points(f, throw) if throw and ok else None))
+    if b.can_leave(f):
+        out.append(Option("action:leave", "action", "Leave the field", "free", True, "", "leave"))
+    return out
+
+
+def _spell_option(b, f, sid: str, ok: bool, why: str) -> Option:
+    from realmwalker.rules.combat import spell_id
+
+    sp = b.t.spells[spell_id(sid)]
+    cost = {"bonus": "bonus", "reaction": "reaction"}.get(sp.get("cast", "action"), "action")
+    mode = sp["target"]
+    targets, points, aim = [], None, "none"
+    if ok and mode in ("enemy", "ally", "downed_ally", "dead_ally"):
+        targets, aim = b.spell_targets(f, sid), "creature"
+        if not targets:
+            ok, why = False, "no one in reach"
+    elif ok and mode in ("point", "direction"):
+        points, aim = b.spell_points(f, sid), "point"
+    return Option(f"cast:{sid}", "cast", sp["name"], cost, ok, why, sid, aim, targets, points)
+
+
+def possible(opts: list[Option], kind: str) -> bool:
+    return any(o.available for o in opts if o.kind == kind)
