@@ -99,6 +99,10 @@ class App:
             except Exception as exc:  # data passed validation but still could not be used
                 log.exception("Could not build game tables")
                 self.data_errors.append(f"The game data could not be prepared: {exc}")
+            if self.tables is not None:
+                from realmwalker.rules.engine import check
+
+                self.data_errors.extend(check.problems(self.tables))  # what the rules data names must exist in code
         from realmwalker.ui.gfx import headless
 
         # The pictures: headless they are recorded and checked, never shown; a window replaces this with its own.
