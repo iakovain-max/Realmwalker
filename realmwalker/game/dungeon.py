@@ -269,6 +269,10 @@ def spring(game, lm, x: int, y: int, f: dict) -> None:
     s = game.sheet(c)
     roll = dice.d20(rng).natural
     save = roll + s.save_bonus("dex")
+    if f.get("trap", "pit") == "pit":
+        from realmwalker.rules.engine import hazards
+
+        damage = hazards.falling(game.tables, int(f.get("depth", 20))) or damage  # a fall: 1d6 for every 10 feet
     dmg = dice.roll(damage, rng).total
     if save >= int(f.get("dc", 13)):
         dmg //= 2

@@ -10,7 +10,7 @@ from realmwalker.rules import grid
 from realmwalker.rules.combat import Battle, Env
 from realmwalker.rules.creation import CharacterBuilder
 from realmwalker.rules.creatures import spawn
-from realmwalker.rules.engine import check, conditions, events, query
+from realmwalker.rules.engine import check, conditions, durations, events, query
 from realmwalker.rules.engine import traits as trs
 from realmwalker.world.tables import Tables
 
@@ -449,3 +449,36 @@ def test_heroic_inspiration_rerolls_a_failed_save_once(tables):
         if me.char.uses["heroic_inspiration"] == 0:
             break
     assert me.char.uses["heroic_inspiration"] == 0 and any("Heroic Inspiration" in s for s in seen)
+
+
+def test_falling_burning_breath_and_objects(tables):
+    from realmwalker.rules.engine import hazards
+
+    assert hazards.falling(tables, 5) == "" and hazards.falling(tables, 20) == "2d6"
+    assert hazards.falling(tables, 500) == "20d6"
+    assert hazards.breath_rounds(tables, 10) == 10 and hazards.breath_rounds(tables, 14) == 30
+    assert hazards.breath_rounds(tables, 3) == 5  # at least thirty seconds
+    assert hazards.object_ac(tables, "wood") == 15 and hazards.object_ac(tables, "adamantine") == 23
+    assert hazards.object_hp(tables, "medium", resilient=True) == "4d8"
+    assert hazards.object_immune(tables, "psychic")
+
+
+def test_a_burning_creature_burns_each_turn_until_it_rolls_the_flames_out(tables):
+    b, me, them = duel(tables, foe="ogre", gap=4)
+    durations.buff(them, {"burning": True, "source": "burning"})
+    before = them.hp
+    b.order = [them.id, me.id]
+    b.turn, b.turn_started = 0, True
+    b._start_of_turn(them)
+    assert them.hp < before
+    b.do_extinguish(them)
+    assert not b.burning(them) and "prone" in them.conditions
+
+
+def test_dim_light_hides_better(tables):
+    b, me, them = duel(tables, gap=4)
+    them.hidden = me.passive() - 2
+    assert b.can_see(me, them)
+    b.field.base_light = grid.DIM
+    b._light_key = None
+    assert b.dim_for(me, them) and not b.can_see(me, them)

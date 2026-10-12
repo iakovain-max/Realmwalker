@@ -197,6 +197,11 @@ RULES = Obj(
                       "heavily_per_strength": Int(min=1, max=100)}),
         "languages": word_list(1, 40),
         "tools": Map(Str(max_len=40)),
+        "hazards": Obj({"falling": Obj({"feet_per_die": Int(min=1, max=100), "die": Int(min=2, max=20), "max_dice": Int(min=1, max=100)}),
+                        "burning": Obj({"damage": Str(max_len=12), "type": Str(max_len=20)}),
+                        "breath": Obj({"minutes": Int(min=0, max=60), "least_seconds": Int(min=0, max=600)})}, optional=True),
+        "objects": Obj({"ac": Map(Int(min=1, max=30)), "hp": Map(List(Str(max_len=12), min_items=2, max_items=2)),
+                        "immune": List(Str(max_len=20))}, optional=True),
     }
 )
 

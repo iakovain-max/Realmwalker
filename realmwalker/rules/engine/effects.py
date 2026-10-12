@@ -25,6 +25,7 @@ an op inside another (`on_hit`, `on_fail`, `then`) works on the creature the out
     slow       feet off its speed, until the start of the caster's next turn
     no_opportunity, no_heal, mark   (until a turn ends or starts: see each)
     lose_turn  it spends its next turn grovelling on the ground (Command)
+    burning    it catches fire (1d4 fire at the start of each of its turns, until put out with an action)
     stabilize, restore (conditions, one, disease), revive (consumes, within_rounds), identify (outside a fight)
     gain_action (one more action this turn), say (a line: {name}, {their}), special (Python by id: SPECIAL)
 
@@ -336,6 +337,14 @@ def _mark(c: Cast, o: dict, victim) -> None:
     if victim is not None:
         durations.buff(victim, {"marked": c.caster.id, "source": f"mark:{c.sid}"},
                        durations.until(c.b, c.caster, "turn_end"))
+
+
+@op("burning")
+def _burning(c: Cast, o: dict, victim) -> None:
+    """It catches fire: 1d4 fire at the start of each of its turns until put out (rules/engine/hazards.py)."""
+    if victim is not None and victim.active:
+        durations.buff(victim, {"burning": True, "source": "burning"})
+        c.b.say(f"{victim.the_name} is on fire!", "danger" if victim.side == c.caster.side else "good")
 
 
 @op("lose_turn")

@@ -28,7 +28,7 @@ from realmwalker.core.rng import RNG
 from realmwalker.rules import grid
 from realmwalker.rules import spells as spellrules
 from realmwalker.rules.character import Character, Sheet, modifier
-from realmwalker.rules.engine import actions, durations, effects, events, query
+from realmwalker.rules.engine import actions, durations, effects, events, hazards, query
 from realmwalker.rules.engine import traits as trs
 from realmwalker.rules.creatures import Creature
 from realmwalker.rules.inventory import remove_item
@@ -678,6 +678,12 @@ class Battle:
         self._zones_on(f, start=True)
         if not f.active:
             return
+        if any(bf.get("burning") for bf in f.buffs):  # (the Burning hazard, 2024)
+            dmg, dtype = hazards.burning_damage(self.t)
+            self.say(f"{f.the_name} is burning.", "danger" if f.side == PARTY else "info")
+            self._hit(None, f, dice.roll(dmg, self.rng).total, dtype, crit=False, weapon="flames")
+            if not f.active:
+                return
         # Bleeding wounds cost hit points each round.
         bleed = sum(w.bleed for w in f.wounds if not w.bandaged)
         if bleed and f.hp > 0:
@@ -778,7 +784,7 @@ class Battle:
         """Whether `a` can see `b`: a line of sight, light enough (or darkvision close enough), and not hidden."""
         if "blinded" in a.conditions or a.incapacitated:
             return False
-        if b.hidden and b.hidden > a.passive() and self.gap(a, b) > 1:
+        if b.hidden and b.hidden > a.passive() - (5 if self.dim_for(a, b) else 0) and self.gap(a, b) > 1:
             return False
         if any(self.field.zone_opaque[x, y] for x, y in b.cells) and self.gap(a, b) > 1:
             return False
@@ -786,6 +792,15 @@ class Battle:
             return False
         if self.light_on(b) >= grid.DIM:
             return True
+        return a.darkvision > 0 and self.feet(a, b) <= a.darkvision
+
+    def dim_for(self, a: Fighter, b: Fighter) -> bool:
+        """Whether `b` stands lightly obscured to `a`'s eyes: dim light, or darkness seen by darkvision (2024)."""
+        lit = self.light_on(b)
+        if lit >= grid.BRIGHT:
+            return False
+        if lit >= grid.DIM:
+            return not (a.darkvision > 0 and self.feet(a, b) <= a.darkvision)
         return a.darkvision > 0 and self.feet(a, b) <= a.darkvision
 
     def cover(self, a: Fighter, b: Fighter) -> int:
@@ -1966,11 +1981,29 @@ class Battle:
             if tok.owner == f.id and tok.kind == "spiritual_weapon":
                 out.append(("spirit_strike", "Spiritual weapon: strike (bonus action)", f.bonus > 0,
                             "" if f.bonus > 0 else "no bonus action left"))
+        if self.burning(f):
+            out.append(("put_out", "Put out the flames (roll on the ground)", f.action > 0,
+                        "" if f.action > 0 else "no action left"))
         return out
+
+    def burning(self, f: Fighter) -> bool:
+        return any(bf.get("burning") for bf in f.buffs)
+
+    def do_extinguish(self, f: Fighter) -> None:
+        """An action: down on the ground and rolling, and the fire is out (the Burning hazard)."""
+        if not self.burning(f) or not self._spend(f):
+            return
+        f.buffs = [bf for bf in f.buffs if not bf.get("burning")]
+        f.conditions["prone"] = -1
+        self._event("prone", who=f.id)
+        self.say(f"{f.the_name} throws {f.possessive if f.char else 'itself'} down and rolls the flames out.", "system")
+        self._after_action(f)
 
     def _ability_cost(self, f: Fighter, aid: str) -> str:
         if aid in ("offhand", "spirit_strike"):
             return "bonus"
+        if aid == "put_out":
+            return "action"
         a = actions.find(f, aid)
         return a["cost"] if a else "action"
 
@@ -1991,6 +2024,9 @@ class Battle:
         if ability == "offhand":
             if target is not None:
                 self.do_offhand(f, target)
+            return
+        if ability == "put_out":
+            self.do_extinguish(f)
             return
         if ability == "spirit_strike":
             tok = next((t for t in self.tokens if t.owner == f.id and t.kind == "spiritual_weapon"), None)

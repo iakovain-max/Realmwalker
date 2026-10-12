@@ -169,9 +169,9 @@
                           "fx": "save", "text": "Blessed water splashed over one square within 20 feet: it burns the walking dead (Dexterity save for half), and does nothing to the living."},
     "thrown_fire": {"name": "Alchemist's Fire", "level": 0, "school": "none", "classes": ["item"], "target": "point", "range": 20, "area": {"shape": "cube", "size": 5},
                     "thrown": true,
-                    "effects": [{"op": "save", "ability": "dex", "half": true, "damage": "2d6", "type": "fire"}, {"op": "ignite"},
-                                {"op": "burn", "rounds": 2, "damage": "1d6"}],
-                    "fx": "save", "text": "Liquid fire bursts over one square within 20 feet (Dexterity save for half), and keeps burning there for two rounds."}
+                    "effects": [{"op": "save", "ability": "dex", "half": true, "damage": "2d6", "type": "fire", "on_fail": [{"op": "burning"}]},
+                                {"op": "ignite"}, {"op": "burn", "rounds": 2, "damage": "1d6"}],
+                    "fx": "save", "text": "Liquid fire bursts over one square within 20 feet (Dexterity save for half): whoever fails catches fire, and it keeps burning there for two rounds."}
   },
   "starting": {
     "wizard": {"cantrips": ["fire_bolt", "ray_of_frost", "shocking_grasp"], "spellbook": ["magic_missile", "burning_hands", "sleep", "shield", "thunderwave", "mage_armor"]},

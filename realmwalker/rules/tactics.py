@@ -23,6 +23,10 @@ CAUTION = {"beast": 2.0, "mindless": 0.5, "fanatic": 1.0, "warrior": 3.0, "bandi
 
 def take_turn(b: Battle, f: Fighter) -> None:
     """Play out `f`'s whole turn."""
+    if b.burning(f) and f.action > 0 and (f.hp <= 8 or not any(b.gap(f, e) <= 1 for e in b.enemies_of(f) if e.standing)):
+        b.do_extinguish(f)  # on fire: roll it out, unless there is a fight right here worth the burns
+        if b.current is not f or b.outcome is not None:
+            return
     if f.state == "fleeing":
         flee(b, f)
         return
