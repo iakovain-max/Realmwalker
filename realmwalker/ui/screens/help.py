@@ -210,7 +210,7 @@ Settings has <loot>Text detail</>: <loot>Brief</> keeps only what matters (fight
   <loot>Esc</>             Game menu: help, settings, save and leave
 
 <title>If something goes wrong</>
-The game tries never to crash: if something breaks it says so, writes the details to <loot>%APPDATA%\\Realmwalker\\logs\\errors.log</> and carries on. That file is the thing to send if you report a problem. Your saves, settings and screenshots live in the same folder.
+The game tries never to crash: if something breaks it says so, writes the details to <loot>logs\\errors.log</> in the game's own folder (beside Play.bat) and carries on. That file is the thing to send if you report a problem. Your saves, settings and screenshots live in <loot>%APPDATA%\\Realmwalker</>.
 """
 
 

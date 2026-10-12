@@ -1,5 +1,5 @@
 {
-  "_comment": "Overworld biomes. move_hours = hours to cross one region tile (about 3 miles) on foot, off-road. glyphs are picked per tile for texture. 'local' controls what the local map looks like when you enter.",
+  "_comment": "Overworld biomes. move_hours = hours to cross one region tile (about 3 miles) on foot, off-road. 'local' controls what the local map looks like when you enter.",
   "biomes": {
     "ocean": {
       "name": "open sea",

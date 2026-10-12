@@ -31,7 +31,7 @@ ScriptStep = tuple[int, "InputEvent | Callable[[App], None]"]
 
 NO_PICTURES = ("This computer could not start the game's picture renderer, so the game cannot be drawn.\n\n"
                "Updating the graphics card's driver (from its maker's website, or Windows Update) usually fixes "
-               "this. The details are in logs\\errors.log in %APPDATA%\\Realmwalker.")
+               "this. The details are in logs\\errors.log in the game's folder.")
 
 
 class PicturesUnavailable(RuntimeError):
@@ -63,8 +63,13 @@ def run(app: App, *, script: list[ScriptStep] | None = None, max_frames: int | N
     tileset = fonts.build_tileset(app.settings.font_size, font_path)
     typefaces.set_folder(app.paths.fonts)
     flags = tcod.context.SDL_WINDOW_RESIZABLE | tcod.context.SDL_WINDOW_MAXIMIZED
-    with tcod.context.new(width=1600, height=900, tileset=tileset, title=GAME_NAME, vsync=True,
-                          sdl_window_flags=flags) as ctx:
+    try:
+        context = tcod.context.new(width=1600, height=900, tileset=tileset, title=GAME_NAME, vsync=True,
+                                   sdl_window_flags=flags)
+    except Exception as exc:  # no window, or no renderer for it, on this computer
+        log.exception("The window could not be opened")
+        raise PicturesUnavailable(NO_PICTURES) from exc
+    with context as ctx:
         window = ctx.sdl_window
         renderer = getattr(ctx, "sdl_renderer", None)
         presenter = Presenter()

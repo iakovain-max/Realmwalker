@@ -550,7 +550,7 @@ def test_the_village_burns_if_you_are_not_there(game):
 
 
 def test_every_kind_of_work_can_be_worded(game):
-    """Each template must have built-in words, AI facts and a title that fills in: a missing one is a crash."""
+    """Each template must have words and a title that fill in: a missing one is a crash."""
     kinds = set(game.tables.quests["templates"])
     assert kinds == set(quests.BUILDERS)
     made = {}

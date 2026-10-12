@@ -1,7 +1,6 @@
 """Townsfolk: who lives in each settlement, where they are through the day, what they think of you,
 and what they remember. Code decides everything mechanical (job, class, purse, stats, personality);
-words (appearance, backstory, secret, what they want) come from the AI when it is there, otherwise
-from data/people.json. A settlement's people are made the first time the player walks into it and
+words (appearance, backstory, secret, what they want) come from data/people.json. A settlement's people are made the first time the player walks into it and
 are then kept in the world save.
 """
 
@@ -600,7 +599,7 @@ def npc_factions(game, npc: NPC) -> list:
 
 
 def prepare_town(game, settlement) -> Town:
-    """Make a settlement's close-up map and people ahead of arrival (so the AI can dress them in time)."""
+    """Make a settlement's close-up map and people ahead of arrival (when work there must name them)."""
     from realmwalker.world.local import get_local_map
 
     lm = get_local_map(game.world, game.tables, settlement.x, settlement.y)

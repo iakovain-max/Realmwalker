@@ -104,7 +104,7 @@ class Paths:
 
     @property
     def logs(self) -> Path:
-        # Developers find logs in the project folder; players in %APPDATA%.
+        # In the game's own folder (logs\errors.log), where a player can find it to send; tests use their home.
         if self.custom_home:
             return self._ensure(self.home / "logs")
         return self._ensure(self.resources / "logs")

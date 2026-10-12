@@ -1,8 +1,7 @@
 """Factions: realms and lords, tribes, guilds, churches, cults and outlaws (M6).
 
 Made with the world, after settlements, roads and sites, and kept in the world save. Code decides everything
-here: who holds which settlement, who rules, who likes whom, and the laws. Words about them (chronicles,
-legends) come later from the AI, with built-in text when it is not there.
+here: who holds which settlement, who rules, who likes whom, and the laws.
 
 Relations between factions run from -100 to +100 and are kept symmetric. A settlement's `owner` is the
 faction that holds it directly (a noble house, the crown, a free city, a clan); its realm is the top of

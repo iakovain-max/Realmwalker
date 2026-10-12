@@ -90,7 +90,7 @@ def test_tooltip_on_hover(make_app):
     row = next(y for y, line in enumerate(lines) if "Settings" in line)
     app.handle_event(MouseEvent("move", lines[row].index("Settings"), row))
     con = render(app)
-    assert "pictures, sound" in screen_text(con)
+    assert "sound, animations" in screen_text(con)
 
 
 def test_errors_are_caught_and_shown(make_app):

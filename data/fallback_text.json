@@ -1,5 +1,5 @@
 {
-  "_comment": "Built-in text used when the Player2 AI is unavailable. {slot} words are filled from the lists of the same name. Keep it grounded and grim.",
+  "_comment": "The game's built-in words. {slot} words are filled from the lists of the same name. Keep it grounded and grim.",
   "tavern": {
     "name_pattern": [
       "The {adjective} {noun}",
