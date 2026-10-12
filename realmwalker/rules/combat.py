@@ -873,6 +873,23 @@ class Battle:
             f.hidden = 0
             self.say(f"{f.the_name} is found.", "system")
         durations.tick(self, f, "turn_end")  # and what lasts "until the end of its next turn"
+        self._crowded(f)
+
+    def _crowded(self, f: Fighter) -> None:
+        """Ending a turn in another creature's space (stopped on the way through it) leaves you Prone, unless you are
+        Tiny or the larger of the two (PHB 2024, Movement and Position). Nobody chooses to stop there."""
+        from realmwalker.rules.engine.statblocks import SIZE_ORDER
+
+        if "prone" in f.conditions or f.size == "tiny" or f.z or f.state not in ("fighting", "fleeing", "surrendered"):
+            return
+        mine = set(f.cells)
+        for x in self.on_field():
+            if x is not f and not x.z and mine & set(x.cells) and SIZE_ORDER.index(f.size) <= SIZE_ORDER.index(x.size):
+                f.conditions["prone"] = -1
+                self._event("prone", who=f.id)
+                self.say(f"{f.the_name} is left crowded into the space of {x.the_name}, and goes down in the press.",
+                         "system")
+                return
 
     def end_turn(self) -> None:
         if self.outcome is not None:
@@ -2453,6 +2470,11 @@ class Battle:
         if sid not in self.creature_spells(f):
             return False
         if self.antimagic(f.cells) or (target is not None and self.antimagic(target.cells)):
+            return False
+        mode = spell["target"]  # the same reach as anyone's spell
+        if mode in ("enemy", "ally", "downed_ally", "dead_ally") and (target is None or target not in self.spell_targets(f, sid)):
+            return False
+        if mode in ("point", "direction") and (point is None or point not in self.spell_points(f, sid)):
             return False
         sc = f.cdef["spellcasting"]
         level = spell["level"]

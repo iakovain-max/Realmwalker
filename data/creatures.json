@@ -35,7 +35,7 @@
       "descriptions": ["Old bones held together by nothing you can see, still wearing the rags of a grave shroud."]},
     "zombie": {"statblock": "zombie", "name": "zombie", "plural": "zombies", "body": "humanoid", "morale": "mindless", "ai": {"role": "brute"}, "money": null, "loot": [], "gear": [], "attack_extras": {"slam": {"disease": "grave_rot"}}, "traits": ["undead"],
       "descriptions": ["A corpse that walks, bloated and grey, stinking of the grave it should still be in."]},
-    "ghoul": {"statblock": "ghoul", "name": "ghoul", "plural": "ghouls", "body": "humanoid", "morale": "mindless", "ai": {"role": "brute"}, "money": {"dice": "2d6", "mult": 10}, "loot": [], "gear": [], "attack_extras": {"bite": {"wound": "bite", "disease": "grave_rot"}}, "traits": ["undead"],
+    "ghoul": {"statblock": "ghoul", "name": "ghoul", "plural": "ghouls", "body": "humanoid", "morale": "mindless", "ai": {"role": "brute", "opens_with": "claw"}, "money": {"dice": "2d6", "mult": 10}, "loot": [], "gear": [], "attack_extras": {"bite": {"wound": "bite", "disease": "grave_rot"}}, "traits": ["undead"],
       "descriptions": ["Something that was a man, grown long-limbed and grey on a diet of the dead. Its touch numbs."]},
     "gnoll": {"statblock": "gnoll_warrior", "name": "gnoll", "plural": "gnolls", "body": "humanoid", "morale": "warrior", "ai": {"role": "brute"}, "names": "orcish", "money": {"dice": "2d6", "mult": 10}, "loot": [["raw_meat", 1]], "gear": [["hides", 1]], "attack_extras": {"rend": {"wound": "bite"}},
       "descriptions": ["Hyena-headed, long-limbed, and laughing at nothing. They eat what they kill, and they kill more than they can eat."]},

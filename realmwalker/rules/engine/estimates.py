@@ -163,7 +163,7 @@ def _control_rounds(ops: list[dict]) -> float:
     """Roughly how many of the victim's rounds a failed save takes away."""
     for o in ops:
         if o["op"] == "condition" and o["condition"] in ("paralyzed", "stunned", "unconscious", "incapacitated"):
-            return 1.5
+            return 2.5  # its turns lost, and every blow at it with advantage (and from beside it, a critical)
         if o["op"] == "lose_turn":
             return 1.0
         if o["op"] == "condition" and o["condition"] in ("restrained", "prone", "frightened", "blinded"):

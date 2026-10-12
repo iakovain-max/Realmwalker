@@ -663,3 +663,14 @@ def test_doors_and_barrels_can_be_broken(tables):
             break
         b.attack_object(me, weapon(b, me), (4, 4))
     assert b.object_at((4, 4)) is None and b.field.passable(4, 4)
+
+
+def test_ending_a_turn_in_another_creatures_space_leaves_you_prone(tables):
+    b, me, them = duel(tables, foe="bandit", gap=1)
+    me.x, me.y = them.x, them.y  # stopped on the way through (a blow, a web)
+    b._crowded(me)
+    assert "prone" in me.conditions and "prone" not in them.conditions
+    b, me, ogre = duel(tables, foe="ogre", gap=1)
+    ogre.x, ogre.y = me.x, me.y
+    b._crowded(ogre)
+    assert "prone" not in ogre.conditions  # the larger keeps its feet

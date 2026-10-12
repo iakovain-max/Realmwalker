@@ -70,7 +70,7 @@ def test_a_block_and_its_flavour_make_the_creature(tables):
     d = tables.creatures["test_drake"]
     assert (d["name"], d["ac"], d["cr"], d["xp"], d["initiative"], d["speed"]) == ("drake", 15, 5.0, 1800, 4, 30)
     assert d["speeds"]["fly"] == 60 and d["darkvision"] == 60 and d["resist"] == ["cold"]
-    assert "takes_food" in d["traits"] and d["multiattack_plan"] == ["bite", "claw", "claw"]
+    assert "takes_food" in d["traits"] and d["multiattack_plan"] == [["bite"], ["claw"], ["claw"]]
     bite = next(a for a in d["attacks"] if a["id"] == "bite")
     assert bite["reach"] and bite["wound"] == "bite" and bite["extra"][0]["type"] == "fire"
 
