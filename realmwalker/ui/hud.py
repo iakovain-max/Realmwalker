@@ -72,8 +72,8 @@ def actions(gs) -> list[Action]:
         out.append(Action("travel", "Travel", "t", "travel", lambda: press("t"), "Choose where to travel (t), or click "
                           "a place on the map."))
         pace = game.travel_pace()
-        out.append(Action("pace", f"Pace: {pace.capitalize()}", "v", "travel", lambda: press("v"),
-                          "Travel pace (v): Fast covers ground but notices less and loses its way; Slow notices more, "
+        out.append(Action("pace", "Pace", "v", "travel", lambda: press("v"),
+                          f"Travel pace (v), now {pace.capitalize()}: Fast covers ground but notices less and loses its way; Slow notices more, "
                           "keeps its bearings and slips away quietly. Mountains and marsh allow no Fast pace; a good road "
                           "allows one step faster."))
     out.append(Action("camp", "Camp", "r", "camp", lambda: press("r"), "Make camp: rest, sleep, a fire, food (r)."))
