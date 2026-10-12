@@ -27,18 +27,18 @@ pictures are reworked to match the game's own art; the main menu gets its shelf 
 ## Parts and tasks
 
 ### Part A — Foundations
-- [ ] A.1 Content packs: `data/packs/`, registry merge + `_replace`, provenance (`registry.origin`), schemas for
+- [x] A.1 Content packs: `data/packs/`, registry merge + `_replace`, provenance (`registry.origin`), schemas for
   `pack.json`; tests (merge, duplicate key error, `_replace`, provenance, pack record validity, unique ids/orders).
-- [ ] A.2 `realmwalker/expansions.py`: released expansions in order, names, taglines, icons, accents, adds, live counts.
-- [ ] A.3 The shelf on the title screen (icons on the right, tooltips, glint until seen, kept in Settings) and the
+- [x] A.2 `realmwalker/expansions.py`: released expansions in order, names, taglines, icons, accents, adds, live counts.
+- [x] A.3 The shelf on the title screen (icons on the right, tooltips, glint until seen, kept in Settings) and the
   Expansions screen (E); autoplay and smoke tour visit them; tests at three window sizes.
-- [ ] A.4 The codex for all three books (classes, species, backgrounds, feats, equipment, spells, rules, monsters,
+- [x] A.4 The codex for all three books (classes, species, backgrounds, feats, equipment, spells, rules, monsters,
   magic items, world), every entry assigned to an expansion; `tools/codex/coverage.py`; `tests/test_codex.py`.
-- [ ] A.5 Part A to `main`.
+- [x] A.5 Part A to `main`.
 
 ### Part B — The kernel
 - [ ] B.1 `rules/engine/`: events, effects (ops), query (derived numbers), conditions (data), durations, resources.
-- [ ] B.2 Conditions and the query numbers routed through the kernel; old and new compared in tests.
+- [x] B.2 Conditions and the query numbers routed through the kernel; old and new compared in tests.
 - [ ] B.3 The 41 spells as definitions (2024 versions); the old reader retired.
 - [ ] B.4 Class features, monster traits and item properties on the kernel; old branches in `combat.py` deleted.
 - [ ] B.5 2024 rules glossary: d20 tests, actions, unarmed strikes, surprise, Heroic Inspiration, concentration,
