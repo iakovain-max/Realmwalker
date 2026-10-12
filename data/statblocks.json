@@ -1,0 +1,4 @@
+{
+  "_comment": "2025 Monster Manual stat blocks (numbers and structured mechanics only, from the page images), read by realmwalker/rules/engine/statblocks.py. A creature in creatures.json names one with \"statblock\" and adds its flavour.",
+  "statblocks": {}
+}

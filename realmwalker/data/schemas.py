@@ -438,6 +438,7 @@ DATA_FILES.update({
 })
 
 # ---------------------------------------------------------------------------- the rules kernel (Expansion 1)
+SIZES_2025 = ("tiny", "small", "medium", "large", "huge", "gargantuan")
 ADV = Str(choices=["advantage", "disadvantage"], optional=True)
 CONDITION_IDS = ("blinded", "charmed", "deafened", "frightened", "grappled", "incapacitated", "invisible", "paralyzed",
                  "petrified", "poisoned", "prone", "restrained", "stunned", "unconscious")
@@ -488,9 +489,22 @@ TRAIT_DEF = Obj(
 )
 TRAITS = Obj({"traits": Map(TRAIT_DEF, min_items=1)})
 
+STATBLOCK = Obj(
+    {
+        "name": Str(max_len=60), "page": Int(min=1, max=500), "size": Str(choices=list(SIZES_2025)),
+        "type": Str(max_len=20), "ac": Int(min=1, max=30), "initiative": Int(min=-10, max=30), "hp": Str(max_len=16),
+        "speed": Map(Any_()), "abilities": Obj({a: Int(min=1, max=30) for a in ABILITY_IDS}),
+        "cr": Float(min=0, max=30), "xp": Int(min=0, max=200000), "pb": Int(min=2, max=9),
+        "actions": List(Obj({"id": Str(max_len=40), "name": Str(max_len=60), "kind": Str(max_len=20)}, strict=False)),
+    },
+    strict=False,
+)
+STATBLOCKS = Obj({"statblocks": Map(STATBLOCK)})
+
 DATA_FILES.update({
     "conditions.json": CONDITIONS,
     "traits.json": TRAITS,
+    "statblocks.json": STATBLOCKS,
 })
 
 STAGE_EFFECTS = Obj(

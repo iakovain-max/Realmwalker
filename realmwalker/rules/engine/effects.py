@@ -26,6 +26,7 @@ an op inside another (`on_hit`, `on_fail`, `then`) works on the creature the out
     no_opportunity, no_heal, mark   (until a turn ends or starts: see each)
     lose_turn  it spends its next turn grovelling on the ground (Command)
     burning    it catches fire (1d4 fire at the start of each of its turns, until put out with an action)
+    damage     damage that has already landed (a stat block's extra harm): damage + type
     stabilize, restore (conditions, one, disease), revive (consumes, within_rounds), identify (outside a fight)
     gain_action (one more action this turn), say (a line: {name}, {their}), special (Python by id: SPECIAL)
 
@@ -40,7 +41,7 @@ from typing import Any, Callable
 from realmwalker.core import dice
 from realmwalker.rules import grid
 from realmwalker.rules import spells as spellrules
-from realmwalker.rules.engine import conditions, durations, events
+from realmwalker.rules.engine import conditions, durations, events, statblocks
 from realmwalker.rules.inventory import remove_item
 
 OPS: dict[str, Callable] = {}
@@ -202,6 +203,7 @@ def _save(c: Cast, o: dict, victim) -> None:
     spared = b.sculpted(f, c.sid, victims, c.level) if c.area else set()
     on_save = "half" if o.get("half") else "none"
     ability = o["ability"]
+    dc = int(o.get("dc", c.dc))
     for x in victims:
         if not _allowed(o, x):
             if x is c.target:
@@ -219,7 +221,7 @@ def _save(c: Cast, o: dict, victim) -> None:
             saved = True
             b.dice_say(f"{x.name} {ability.upper()} save: not affected")
         else:
-            saved = b._save(x, ability, c.dc, bonus=grid.COVER_AC[cover] if ability == "dex" else 0)
+            saved = b._save(x, ability, dc, bonus=grid.COVER_AC[cover] if ability == "dex" else 0)
         b._event("save", who=x.id, ok=saved)
         for i, (e, dtype) in enumerate(parts):
             full = rolled[i] if i in rolled else dice.roll(e, b.rng).total
@@ -237,7 +239,19 @@ def _save(c: Cast, o: dict, victim) -> None:
 @op("push")
 def _push(c: Cast, o: dict, victim) -> None:
     if victim is not None and victim is not c.caster and victim.hp > 0:
-        c.pushed.append((victim, int(o["feet"])))
+        if o.get("now"):
+            c.b._push(c.caster, victim, int(o["feet"]) // 5)
+        else:
+            c.pushed.append((victim, int(o["feet"])))
+
+
+@op("damage")
+def _damage(c: Cast, o: dict, victim) -> None:
+    """Damage without a roll to hit or a save (it has already landed)."""
+    if victim is not None and (victim.active or victim.state == "down"):
+        for dice_, dtype, up in spellrules.damage_parts(o):
+            c.b._hit(c.caster, victim, dice.roll(expr(c, dice_, up), c.b.rng).total, dtype, crit=False,
+                     weapon=c.spell.get("name", dtype))
 
 
 @op("ignite")
@@ -271,7 +285,11 @@ def _condition(c: Cast, o: dict, victim) -> None:
     for x in victims:
         if x is None or not x.active:
             continue
+        if o.get("max_size") and not statblocks.size_at_most(x.size, o["max_size"]):
+            continue
         extra = {}
+        if o.get("escape"):
+            extra["escape"] = int(o["escape"])
         if spell.get("concentration"):
             extra["conc"] = f.id
         if o.get("on_damage"):
@@ -286,8 +304,10 @@ def _condition(c: Cast, o: dict, victim) -> None:
         if not durations.give(b, x, cid, ends=ends, rounds=rounds, source=f, **extra):
             b.say(f"{x.the_name} shrugs it off.", "system")
             continue
+        if cid == "grappled":
+            x.grappled_by = f.id
         if o.get("repeat_save"):
-            x.save_ends.append({"cond": cid, "save": o.get("save", spell_save(spell)), "dc": c.dc,
+            x.save_ends.append({"cond": cid, "save": o.get("save", spell_save(spell)), "dc": int(o.get("save_dc") or c.dc),
                                 "conc": f.id if spell.get("concentration") else None})
         b._event("condition", who=x.id, cond=cid)
         b.say(f"{x.the_name} is {conditions.name(b.t, cid).lower()}.", "good" if x.side != f.side else "danger")

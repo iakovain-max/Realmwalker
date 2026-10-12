@@ -75,6 +75,7 @@ def _fight(b: Battle, f: Fighter, opts: list[AttackOption], attacks: int) -> boo
         return False
     struck = False
     multi = f.creature is not None and f.cdef.get("multiattack")
+    plan = f.cdef.get("multiattack_plan") if f.creature is not None else None
     kind_melee = opt.is_melee
     for i in range(attacks):
         if b.outcome is not None or not f.can_act():
@@ -82,7 +83,11 @@ def _fight(b: Battle, f: Fighter, opts: list[AttackOption], attacks: int) -> boo
         usable = [o for o in opts if o.is_melee == kind_melee and o.available]
         if not usable:
             break
-        choice = usable[i % len(usable)] if multi else opt
+        if plan:  # "a Bite and two Claws": each attack as the stat block names it
+            want = plan[i] if i < len(plan) else plan[-1]
+            choice = next((o for o in usable if o.extra.get("id") == want), usable[i % len(usable)])
+        else:
+            choice = usable[i % len(usable)] if multi else opt
         if not target.active or not b.in_reach(f, choice, target)[0]:
             others = [t for t in b.targets_for(f, choice) if t.side != f.side and t.active]
             if not others:

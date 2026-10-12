@@ -235,6 +235,8 @@ def defences(f, dtype: str) -> str:
 def resists(f, dtype: str) -> bool:
     if flag(f, "resist_all"):
         return True
+    if f.creature is not None and dtype in f.cdef.get("resist", []):
+        return True
     if any(dtype in b.get("resist", []) for b in f.buffs):
         return True
     if dtype in tr.values(f, "resist", flat=True):

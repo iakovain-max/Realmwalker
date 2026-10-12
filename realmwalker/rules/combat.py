@@ -257,7 +257,7 @@ class Fighter:
     def save_bonus(self, ability: str) -> int:
         if self.char:
             return self.sheet.save_bonus(ability)
-        return self.mod(ability)
+        return int(self.cdef.get("saves", {}).get(ability, self.mod(ability)))  # a 2025 block's proficient saves
 
     def buff_value(self, key: str) -> list:
         return [b[key] for b in self.buffs if key in b]
@@ -559,7 +559,8 @@ class Battle:
             if self.env.surprised == f.side:
                 f.surprised = True
             r = query.initiative_roll(f)
-            f.initiative = (dice.d20(self.rng, advantage=r.advantage, disadvantage=r.disadvantage).natural + f.mod("dex")
+            bonus = int(f.cdef["initiative"]) if f.cdef and "initiative" in f.cdef else f.mod("dex")
+            f.initiative = (dice.d20(self.rng, advantage=r.advantage, disadvantage=r.disadvantage).natural + bonus
                             + query.d20_penalty(f))
         self.order = [f.id for f in sorted(self.fighters, key=lambda f: (-f.initiative, -f.mod("dex"), self.rng.random()))]
         if intro:
@@ -627,6 +628,8 @@ class Battle:
 
     def _start_of_turn(self, f: Fighter) -> None:
         durations.tick(self, f, "turn_start")  # what lasts "until the start of its next turn" ends
+        if f.creature is not None and f.cdef.get("legendary"):
+            f.creature.uses["legendary_actions"] = int(f.cdef["legendary"].get("uses", 3))
         f.dodging = False
         f.action, f.bonus, f.reaction = 1, 1, True
         f.attacks_left = 0
@@ -733,6 +736,9 @@ class Battle:
         f.acted = True
         self._end_of_turn(f)
         self._check_end()
+        if self.outcome is not None:
+            return
+        self._legendary_window(f)
         if self.outcome is not None:
             return
         self.turn += 1
@@ -968,6 +974,7 @@ class Battle:
         shape = a["area"]["shape"]
         cells = self.field.area(shape, int(a["area"]["size"]), origin=f.space, toward=point, from_self=True)
         f.recharge[a["name"]] = False
+        self._spend_use(f, opt)
         if f.action > 0:
             f.action -= 1
         self.say(f"{f.the_name} unleashes {f.possessive} {opt.name}!", "danger")
@@ -977,8 +984,10 @@ class Battle:
         for x in self.in_area(cells, "all", f):
             if x is f:
                 continue
-            self._save_damage(f, x, a.get("save", "dex"), int(a.get("dc", 13)), opt.damage, opt.damage_type, "half",
-                              rolled=rolled)
+            saved = self._save_damage(f, x, a.get("save", "dex"), int(a.get("dc", 13)), opt.damage, opt.damage_type,
+                                      "half" if a.get("half", True) else "none", rolled=rolled)
+            if not saved and a.get("on_fail") and x.active:
+                self._block_effects(f, x, opt, a["on_fail"])
         if opt.damage_type == "fire":
             self._ignite(f, cells)
         self._check_end()
@@ -1109,9 +1118,11 @@ class Battle:
                                                     else None) or DEFAULT_RANGE[kind])
                 opt = AttackOption(f"c{i}", a["name"], kind, int(a["bonus"]), a["damage"], a["damage_type"],
                                    reach=bool(a.get("reach")), extra=a, range=(int(rng_[0]), int(rng_[1])))
-                if a.get("area"):
+                if a.get("area") or a.get("recharge"):
                     opt.available = f.recharge.get(a["name"], True)
                     opt.reason = "not ready again yet" if not opt.available else ""
+                if a.get("uses") and self.uses_left(f, a) <= 0:
+                    opt.available, opt.reason = False, "used up for the day"
                 out.append(opt)
             return out
         c = f.char
@@ -1144,6 +1155,20 @@ class Battle:
             fists.available, fists.reason = False, "both arms are broken"
         out.append(fists)
         return out
+
+    def uses_left(self, f: Fighter, a: dict) -> int:
+        """Uses left of a creature's "1/day" action."""
+        key = f"action:{a.get('id', a['name'])}"
+        if key not in f.creature.uses:
+            f.creature.uses[key] = int(str(a["uses"]).split("/")[0])
+        return f.creature.uses[key]
+
+    def _spend_use(self, f: Fighter, opt: AttackOption) -> None:
+        a = opt.extra
+        if f.creature is not None and a.get("uses"):
+            f.creature.uses[f"action:{a.get('id', a['name'])}"] = self.uses_left(f, a) - 1
+        if f.creature is not None and a.get("recharge") and not a.get("area"):
+            f.recharge[a["name"]] = False
 
     def offhand_option(self, f: Fighter) -> AttackOption | None:
         """Two-weapon fighting: a light weapon in each hand, and the main one already used this turn."""
@@ -1362,8 +1387,15 @@ class Battle:
         if att.creature and att.cdef.get("attacks") and opt.extra.get("poison"):
             poison = opt.extra["poison"]
             self._save_damage(att, target, "con", poison["dc"], poison["damage"], "poison", "half", quiet=True)
+        self._spend_use(att, opt)
         self._hit(att, target, max(1, amount), opt.damage_type, crit=crit, weapon=opt.name,
                   bite=opt.extra.get("wound") == "bite", claws=opt.extra.get("wound") == "cut" and att.creature is not None and opt.name == "claws")
+        for e in opt.extra.get("extra", ()):  # a 2025 block's damage of another kind on the same hit (a spider's venom)
+            if target.active or target.state == "down":
+                self._hit(att, target, dice.roll(e["damage"], self.rng, double_dice=crit).total, e["type"], crit=False,
+                          weapon=opt.name)
+        if opt.extra.get("on_hit") and target.active:
+            self._block_effects(att, target, opt, opt.extra["on_hit"])
         if target.active and opt.extra.get("trip_dc") and "prone" not in target.conditions:
             if not self._save(target, "str", int(opt.extra["trip_dc"])):
                 target.conditions["prone"] = -1
@@ -1378,6 +1410,14 @@ class Battle:
         if opt.extra.get("disease") and target.char and self.rng.chance(float(opt.extra.get("disease_chance", 1.0))):
             target.char.conditions.append(f"exposed:{opt.extra['disease']}")
         return True
+
+    def _block_effects(self, att: Fighter, target: Fighter, opt: AttackOption, block_effects: list[dict]) -> None:
+        """What a stat block's hit or failed save brings (rules/engine/statblocks.ops), run by the kernel."""
+        from realmwalker.rules.engine import statblocks
+
+        c = effects.Cast(self, att, opt.name, {"target": "enemy", "name": opt.name, "ability": True}, target, None,
+                         dc=int(opt.extra.get("dc", 10)))
+        effects.run(c, statblocks.ops(block_effects), target)
 
     def _protector(self, att: Fighter, target: Fighter) -> Fighter | None:
         """The Protection fighting style: a friend beside the target, shield up, spends their reaction to make the
@@ -1424,12 +1464,63 @@ class Battle:
                           f"{'saved' if ok else 'failed'}")
         ok = events.emit(self, "d20_after", actor=f, roll="save", ability=ability, natural=roll.natural,
                          bonus=total_bonus, dc=dc, ok=ok).ok  # Indomitable...
+        if not ok and self._legendary_resistance(f):
+            ok = True
         if not ok and self._inspired(f, dc - total_bonus):
             again = dice.d20(self.rng).natural + total_bonus
             ok = again >= dc
             self.dice_say(f"{f.name} spends Heroic Inspiration and rolls again: {again} vs DC {dc} — "
                           f"{'saved' if ok else 'failed'}")
         return ok
+
+    def _legendary_resistance(self, f: Fighter) -> bool:
+        """A legendary creature chooses to succeed on a save it failed, a few times a day."""
+        lr = f.cdef.get("legendary_resistance") if f.creature is not None else None
+        if not lr:
+            return False
+        left = f.creature.uses.setdefault("legendary_resistance", int(lr.get("per_day", 3)))
+        if left <= 0:
+            return False
+        f.creature.uses["legendary_resistance"] = left - 1
+        self.say(f"{f.the_name} will not be moved. <dim>(Legendary Resistance, {left - 1} left)</>", "danger")
+        return True
+
+    def legendary_options(self, f: Fighter) -> list[AttackOption]:
+        """The attacks a legendary creature can make out of turn."""
+        leg = f.cdef.get("legendary") if f.creature is not None else None
+        if not leg:
+            return []
+        from realmwalker.rules.engine import statblocks
+
+        opts = []
+        mine = {o.extra.get("id"): o for o in self.attack_options(f)}
+        for i, a in enumerate(statblocks.attacks(leg.get("actions", []), {})):
+            if a["kind"] in ("melee", "ranged") and not a.get("area"):
+                opts.append(AttackOption(f"L{i}", a["name"], a["kind"], int(a["bonus"]), a["damage"], a["damage_type"],
+                                         reach=bool(a.get("reach")), extra=a, range=tuple(a.get("range") or (0, 0))))
+        for a in leg.get("actions", []):
+            if a.get("use") in mine:
+                opts.append(mine[a["use"]])
+        return [o for o in opts if o.available]
+
+    def _legendary_window(self, after: Fighter) -> None:
+        """Right after another creature's turn, each legendary creature may spend a use to strike (2025: no lair
+        actions on initiative 20; Legendary Action Uses come back at the start of its own turn)."""
+        for f in list(self.fighters):
+            leg = f.cdef.get("legendary") if f.creature is not None else None
+            if not leg or f is after or not f.can_act() or self.outcome is not None:
+                continue
+            left = f.creature.uses.setdefault("legendary_actions", int(leg.get("uses", 3)))
+            if left <= 0:
+                continue
+            for opt in self.legendary_options(f):
+                targets = [t for t in self.targets_for(f, opt) if t.active and t.side != f.side]
+                if targets:
+                    f.creature.uses["legendary_actions"] = left - 1
+                    self.say(f"{f.the_name} strikes out of turn. <dim>(Legendary Action)</>", "danger")
+                    self._attack(f, opt, min(targets, key=lambda t: t.hp))
+                    self._check_end()
+                    break
 
     def _inspired(self, f: Fighter, need: int) -> bool:
         """Heroic Inspiration (2024): a party member may reroll a die once; spent on a failed save worth saving."""
@@ -2070,12 +2161,17 @@ class Battle:
         if f.creature is None or not f.cdef.get("spells"):
             return []
         out = []
+        sc = f.cdef.get("spellcasting", {})
         for sid in f.cdef["spells"]:
             spell = self.t.spells.defs.get(sid)
             if spell is None or spell.get("cast") == "reaction":
                 continue
             level = spell["level"]
-            if level and not any(n > 0 for n in f.slots[level - 1:]):
+            per_day = self._per_day(f, sid)
+            if per_day is not None:
+                if per_day <= 0:
+                    continue  # the 2025 way: so many times a day, no slots
+            elif sid not in sc.get("at_will", []) and level and not any(n > 0 for n in f.slots[level - 1:]):
                 continue
             if self._casting_time_ok(f, spell)[0]:
                 out.append(sid)
@@ -2089,7 +2185,9 @@ class Battle:
             return False
         sc = f.cdef["spellcasting"]
         level = spell["level"]
-        if level:
+        if self._per_day(f, sid) is not None:
+            f.creature.uses[f"spell:{sid}"] -= 1
+        elif level and sid not in sc.get("at_will", []):
             i = next(i for i in range(level - 1, len(f.slots)) if f.slots[i] > 0)
             f.slots[i] -= 1
             level = i + 1
@@ -2104,6 +2202,14 @@ class Battle:
                   dc=int(sc["dc"]), bonus=int(sc["attack"]), mult=1, level=level)
         self._check_end()
         return True
+
+    def _per_day(self, f: Fighter, sid: str) -> int | None:
+        """Casts left today of a spell a 2025 block lists as "N/day" (None if it is not one of those)."""
+        per_day = (f.cdef.get("spellcasting") or {}).get("per_day") or {}
+        for n, sids in per_day.items():
+            if sid in sids:
+                return f.creature.uses.setdefault(f"spell:{sid}", int(n))
+        return None
 
     def spell_options(self, f: Fighter) -> list[tuple[str, bool, str]]:
         """(spell id, possible, why not). Scrolls in the pack appear as "scroll:<item uid>:<spell id>"."""
