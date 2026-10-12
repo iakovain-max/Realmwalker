@@ -1036,25 +1036,16 @@ def test_the_enemy_walks_round_to_flank(tables):
 
 
 def test_dodging_helps_against_fire_and_exhaustion_hurts_saves(tables):
+    """Dodge: Dexterity saves with advantage. Exhaustion (2024): 2 off every saving throw for each level."""
+    from realmwalker.rules.engine import query
+
     c = hero(tables)
     b = battle(tables, [c], foes(tables, "wolf"))
     f = b.side(PARTY)[0]
     f.dodging = True
-    adv_rolls = []
-    import realmwalker.core.dice as dice_mod
-
-    real = dice_mod.d20
-
-    def spy(rng, advantage=False, disadvantage=False):
-        adv_rolls.append((advantage, disadvantage))
-        return real(rng, advantage=advantage, disadvantage=disadvantage)
-
-    dice_mod.d20, saved = spy, dice_mod.d20
-    try:
-        b._save(f, "dex", 10)
-        f.dodging = False
-        c.exhaustion = 3
-        b._save(f, "wis", 10)
-    finally:
-        dice_mod.d20 = saved
-    assert adv_rolls[0] == (True, False) and adv_rolls[1] == (False, True)
+    assert query.save_roll(b, f, "dex").roll.mode == "advantage"
+    f.dodging = False
+    fresh = query.save_roll(b, f, "wis").bonus
+    c.exhaustion = 3
+    r = query.save_roll(b, f, "wis")
+    assert r.roll.mode == "" and r.bonus == fresh - 6

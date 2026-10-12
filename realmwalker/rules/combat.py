@@ -559,7 +559,8 @@ class Battle:
             if self.env.surprised == f.side:
                 f.surprised = True
             r = query.initiative_roll(f)
-            f.initiative = dice.d20(self.rng, advantage=r.advantage, disadvantage=r.disadvantage).natural + f.mod("dex")
+            f.initiative = (dice.d20(self.rng, advantage=r.advantage, disadvantage=r.disadvantage).natural + f.mod("dex")
+                            + query.d20_penalty(f))
         self.order = [f.id for f in sorted(self.fighters, key=lambda f: (-f.initiative, -f.mod("dex"), self.rng.random()))]
         if intro:
             self.say(intro, "danger")
@@ -828,7 +829,9 @@ class Battle:
             for c in x.cells:
                 (blocked if hostile else occupied).add(c)
         fire = {c for z in self.zones if z.kind == "fire" for c in z.cells}
-        return grid.paths(self.field, (f.x, f.y), f.sq, f.move_left if budget is None else budget, blocked=blocked,
+        if budget is None:
+            budget = f.move_left // 2 if self.dragging(f) else f.move_left
+        return grid.paths(self.field, (f.x, f.y), f.sq, budget, blocked=blocked,
                           occupied=occupied, threats=self.threats(f), risk=risk, crawling="prone" in f.conditions,
                           hazard=fire)
 
@@ -862,6 +865,8 @@ class Battle:
         walked: list[tuple[int, int]] = []
         start = (f.x, f.y)
         n = 0
+        held = self.held_by(f)
+        heavy = self.dragging(f)
         for sq in path:
             if not f.active or "unconscious" in f.conditions:
                 break
@@ -870,6 +875,8 @@ class Battle:
             new_cells = grid.cells(sq[0], sq[1], f.sq)
             cost = 0 if free else (10 if "prone" in f.conditions or any(self.field.difficult(*c) for c in new_cells
                                                                        if c not in f.cells) else 5)
+            if heavy and not free:
+                cost *= 2
             if cost > f.move_left and not free:
                 break
             if provoke and not free and not f.disengaged:
@@ -888,10 +895,16 @@ class Battle:
                     break
             for c in new_cells:
                 self.field.open_door(*c)
+            before = (f.x, f.y)
             f.x, f.y = sq
             f.move_left -= cost
             walked.append(sq)
             n += 1
+            for x in held:  # the held come along, into the square just left
+                if x.active and self.gap(x, f) > 1 and self.field.fits(before[0], before[1], x.sq) and not any(
+                        c in self.occupied_by_others(x) for c in grid.cells(before[0], before[1], x.sq)):
+                    self._event("push", who=x.id, path=[(x.x, x.y), before])
+                    x.x, x.y = before
             if f.hidden and not any(self.field.hiding[c] for c in f.cells):
                 if any(self.can_see(e, f) for e in self.enemies_of(f) if e.standing and self.field.cover(e.space, f.space) < grid.HALF):
                     f.hidden = 0
@@ -902,6 +915,13 @@ class Battle:
         self._sync_grapples(f)
         self._follow_auras()
         return n
+
+    def held_by(self, f: Fighter) -> list[Fighter]:
+        return [x for x in self.fighters if x.grappled_by == f.id and x.active]
+
+    def dragging(self, f: Fighter) -> bool:
+        """Whether moving costs `f` double: it holds someone not tiny and not two sizes smaller (2024)."""
+        return any(x.size != "tiny" and SIZES.index(x.size) > SIZES.index(f.size) - 2 for x in self.held_by(f))
 
     def _sync_grapples(self, f: Fighter) -> None:
         """A hold breaks when the one holding moves out of reach."""
@@ -996,7 +1016,9 @@ class Battle:
         total = roll + f.skill("stealth")
         self.dice_say(f"Stealth ({f.name}): {roll} {signed_mod(f.skill('stealth'))} = {total}")
         seen = [e for e in self.enemies_of(f) if e.standing and e.passive() >= total and self.can_see(e, f)]
-        if seen:
+        if total < 15:  # the 2024 Hide: a DC 15 Dexterity (Stealth) check
+            self.say(f"{f.the_name} tries to keep out of sight, and fails.", "warn")
+        elif seen:
             self.say(f"{f.the_name} tries to keep out of sight, but {seen[0].the_name} is watching.", "warn")
         else:
             f.hidden = total
@@ -1281,6 +1303,7 @@ class Battle:
         att.helped = False
         if target.marked:
             target.marked = False  # spent on this roll, hit or miss
+        target.buffs = [bf for bf in target.buffs if bf.get("distracted") != att.side]
         if att.hidden:
             att.hidden = 0
         armor = target.armor_name("torso")
@@ -1384,8 +1407,21 @@ class Battle:
         if not quiet:
             self.dice_say(f"{f.name} {ability.upper()} save: {roll.natural} {signed_mod(total_bonus)} = {total} vs DC {dc} — "
                           f"{'saved' if ok else 'failed'}")
-        return events.emit(self, "d20_after", actor=f, roll="save", ability=ability, natural=roll.natural,
-                           bonus=total_bonus, dc=dc, ok=ok).ok  # Indomitable...
+        ok = events.emit(self, "d20_after", actor=f, roll="save", ability=ability, natural=roll.natural,
+                         bonus=total_bonus, dc=dc, ok=ok).ok  # Indomitable...
+        if not ok and self._inspired(f, dc - total_bonus):
+            again = dice.d20(self.rng).natural + total_bonus
+            ok = again >= dc
+            self.dice_say(f"{f.name} spends Heroic Inspiration and rolls again: {again} vs DC {dc} — "
+                          f"{'saved' if ok else 'failed'}")
+        return ok
+
+    def _inspired(self, f: Fighter, need: int) -> bool:
+        """Heroic Inspiration (2024): a party member may reroll a die once; spent on a failed save worth saving."""
+        if f.char is None or f.char.uses.get("heroic_inspiration", 0) <= 0 or need > 20:
+            return False
+        f.char.uses["heroic_inspiration"] = 0
+        return True
 
     def _save_damage(self, att: Fighter, target: Fighter, ability: str, dc: int, expr: str, dtype: str, on_save: str,
                      *, quiet: bool = False, cover: int = 0, rolled: int | None = None) -> bool:
@@ -1509,6 +1545,11 @@ class Battle:
 
     def _death_save(self, f: Fighter) -> None:
         roll = dice.d20(self.rng).natural
+        if 1 < roll < 10 and roll + query.d20_penalty(f) < 10 and self._inspired(f, 10):
+            roll = dice.d20(self.rng).natural
+            self.dice_say(f"{f.name} spends Heroic Inspiration on the death save: {roll}")
+        if roll not in (1, 20):
+            roll = max(2, min(19, roll + query.d20_penalty(f)))  # exhaustion counts against it too
         if roll == 20:
             f.hp = 1
             f.state = "fighting"
@@ -1645,18 +1686,15 @@ class Battle:
         return True
 
     def help_targets(self, f: Fighter) -> list[Fighter]:
-        """Friends you can help: one beside you who is down (first aid), or anyone fighting an enemy beside you."""
+        """Who the Help action can be for (2024): a friend beside you who is down (first aid) or asleep (shaken awake),
+        or an enemy beside you, distracted so that a friend's next attack on it has advantage."""
         out = []
-        foes_here = [e for e in self.enemies_of(f) if e.standing and self.gap(f, e) <= 1]
         for x in self.side(f.side):
-            if x is f:
+            if x is f or self.gap(f, x) > 1:
                 continue
-            if x.state == "down" and self.gap(f, x) <= 1:
+            if x.state == "down" or x.active and ("unconscious" in x.conditions or "incapacitated" in x.conditions):
                 out.append(x)
-            elif x.active and "unconscious" in x.conditions and self.gap(f, x) <= 1:
-                out.append(x)  # asleep: shaken awake
-            elif x.active and foes_here:
-                out.append(x)
+        out += [e for e in self.enemies_of(f) if e.standing and self.gap(f, e) <= 1]
         return out
 
     def do_help(self, f: Fighter, target: Fighter) -> None:
@@ -1677,21 +1715,33 @@ class Battle:
                 self.say(f"{target.the_name} is no longer bleeding out.", "good")
             else:
                 self.say(f"{f.the_name} fumbles at the wound; the blood keeps coming.", "danger")
-        elif "unconscious" in target.conditions or "incapacitated" in target.conditions:
+        elif target.side == f.side and ("unconscious" in target.conditions or "incapacitated" in target.conditions):
             for cid in ("unconscious", "incapacitated"):
                 durations.remove(target, cid)
             self.say(f"{f.the_name} shakes {target.the_name} awake.", "good")
         else:
-            target.helped = True
-            self.say(f"{f.the_name} creates an opening for {target.the_name}.", "system")
+            foe = target if target.side != f.side else min(
+                (e for e in self.enemies_of(f) if e.standing and self.gap(f, e) <= 1), key=lambda e: e.hp, default=None)
+            if foe is not None:
+                durations.buff(foe, {"distracted": f.side, "source": f"help:{f.id}"}, durations.until(self, f, "turn_start"))
+                self.say(f"{f.the_name} feints at {foe.the_name}, opening a way for a friend.", "system")
         self._after_action(f)
 
-    def contest(self, att: Fighter, target: Fighter) -> bool:
-        a = dice.d20(self.rng).natural + att.skill("athletics")
-        best = max(target.skill("athletics"), target.skill("acrobatics"))
-        d = dice.d20(self.rng).natural + best
-        self.dice_say(f"{att.name} Athletics {a} vs {target.name} {d}")
-        return a >= d
+    def _unarmed_save(self, att: Fighter, target: Fighter) -> bool:
+        """A grapple or a shove (2024): the target makes a Strength or Dexterity save, whichever suits it, against
+        8 + the attacker's Strength and proficiency."""
+        ability = max(("str", "dex"), key=lambda ab: target.save_bonus(ab))
+        return self._save(target, ability, query.unarmed_dc(att))
+
+    def _use_attack(self, f: Fighter) -> bool:
+        """One attack of the Attack action (a grapple or a shove replaces one, 2024)."""
+        if f.attacks_left <= 0:
+            if f.action <= 0:
+                return False
+            f.action -= 1
+            f.attacks_left = query.attacks_per_action(f)
+        f.attacks_left -= 1
+        return True
 
     def can_grapple(self, att: Fighter, target: Fighter) -> tuple[bool, str]:
         if SIZES.index(target.size) > SIZES.index(att.size) + 1:
@@ -1703,9 +1753,9 @@ class Battle:
         return True, ""
 
     def do_shove(self, f: Fighter, target: Fighter, mode: str) -> None:
-        if not self.can_grapple(f, target)[0] or not self._spend(f):
+        if not self.can_grapple(f, target)[0] or not self._use_attack(f):
             return
-        if self.contest(f, target):
+        if not self._unarmed_save(f, target):
             if mode == "prone":
                 target.conditions["prone"] = -1
                 self._event("prone", who=target.id)
@@ -1746,10 +1796,10 @@ class Battle:
         return True
 
     def do_grapple(self, f: Fighter, target: Fighter) -> None:
-        if not self.can_grapple(f, target)[0] or not self._spend(f):
+        if not self.can_grapple(f, target)[0] or not self._use_attack(f):
             return
-        if self.contest(f, target):
-            target.conditions["grappled"] = -1
+        if not self._unarmed_save(f, target) and durations.give(self, target, "grappled", source=f,
+                                                                escape=query.unarmed_dc(f)):
             target.grappled_by = f.id
             target.move_left = 0
             self.say(f"{f.the_name} gets a grip on {target.the_name} and holds on.", "good")
@@ -1761,14 +1811,14 @@ class Battle:
         if not self._spend(f):
             return
         holder = next((x for x in self.fighters if x.id == f.grappled_by), None)
-        dc = 10 + (holder.skill("athletics") if holder else 2)
+        dc = int(f.cond_ends.get("grappled", {}).get("escape") or (query.unarmed_dc(holder) if holder else 10))
         stuck = "grappled" if "grappled" in f.conditions else "restrained"
         skill = max(f.skill("athletics"), f.skill("acrobatics"))
         web = next((z for z in self.zones if z.kind == "web" and any(c in z.cells for c in f.cells)), None)
         if stuck == "restrained" and web is not None:
             dc, skill = web.dc, f.skill("athletics")  # 2024: a Strength (Athletics) check against the spell's DC
         if dice.d20(self.rng).natural + skill >= dc:
-            f.conditions.pop(stuck, None)
+            durations.remove(f, stuck)
             f.grappled_by = None
             f.move_left = f.speed
             self.say(f"{f.the_name} breaks free.", "good")

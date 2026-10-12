@@ -377,3 +377,75 @@ def test_an_emanation_reaches_out_from_its_maker_and_leaves_them_out(tables):
     assert (me.x, me.y) not in cells
     assert (me.x + 2, me.y) in cells and (me.x + 3, me.y) not in cells
     assert (me.x + 2, me.y + 2) in cells  # 5-5-5: a diagonal square counts as five feet
+
+
+def test_a_grapple_is_a_save_and_one_of_the_attack_actions_attacks(tables):
+    from realmwalker.rules.progression import award_xp
+
+    c = hero(tables, "fighter")
+    award_xp(c, 6500, tables, RNG(1), auto=True)  # level 5: Extra Attack
+    cr = spawn(tables, "bandit", RNG(1, "foe"), 1)
+    b = Battle(tables, [c], [cr], Env(), RNG(1, "battle"), spots={0: (3, 4), 1: (4, 4)})
+    b.start()
+    me, them = b.fighters
+    b.order = [me.id, them.id]
+    b.turn, b.turn_started = 0, True
+    b._start_of_turn(me)
+    b._save = lambda *a, **k: False
+    b.do_grapple(me, them)
+    assert "grappled" in them.conditions and them.grappled_by == me.id
+    assert me.action == 0 and me.attacks_left == 1  # one attack of two used: the other is still there
+    assert them.cond_ends["grappled"]["escape"] == query.unarmed_dc(me) == 8 + me.mod("str") + query.proficiency(me)
+
+
+def test_the_held_are_dragged_along_at_double_cost(tables):
+    b, me, them = duel(tables, gap=1)
+    them.conditions["grappled"] = -1
+    them.grappled_by = me.id
+    b.order = [me.id, them.id]
+    b.turn, b.turn_started = 0, True
+    b._start_of_turn(me)
+    assert b.dragging(me)
+    left = me.move_left
+    b.walk(me, [(2, 4), (1, 4)])
+    assert (me.x, me.y) == (1, 4) and (them.x, them.y) == (2, 4) and me.move_left == left - 20
+
+
+def test_help_distracts_an_enemy_for_a_friends_next_attack(tables):
+    friend = hero(tables, "rogue", seed=2)
+    c = hero(tables)
+    cr = spawn(tables, "bandit", RNG(1, "foe"), 1)
+    b = Battle(tables, [c, friend], [cr], Env(), RNG(1, "battle"), spots={0: (3, 4), 1: (3, 6), 2: (4, 4)})
+    b.start()
+    me, fr, them = b.fighters
+    b.order = [me.id, fr.id, them.id]
+    b.turn, b.turn_started = 0, True
+    b._start_of_turn(me)
+    assert them in b.help_targets(me)
+    b.do_help(me, them)
+    assert "distracted" in query.attack_roll(b, fr, them, weapon(b, fr)).adv
+    assert "distracted" not in query.attack_roll(b, them, fr, weapon(b, them)).adv  # only for the helper's side
+
+
+def test_humans_wake_with_heroic_inspiration(tables):
+    from realmwalker.rules.progression import long_rest
+
+    c = hero(tables, race="human")
+    c.uses.pop("heroic_inspiration", None)
+    long_rest(c, tables, RNG(1))
+    assert c.uses["heroic_inspiration"] == 1
+    d = hero(tables, race="dwarf", seed=3)
+    long_rest(d, tables, RNG(1))
+    assert not d.uses.get("heroic_inspiration")
+
+
+def test_heroic_inspiration_rerolls_a_failed_save_once(tables):
+    b, me, them = duel(tables)
+    me.char.uses["heroic_inspiration"] = 1
+    seen = []
+    b.dice_say = lambda text: seen.append(text)
+    for _ in range(40):
+        b._save(me, "wis", 15)
+        if me.char.uses["heroic_inspiration"] == 0:
+            break
+    assert me.char.uses["heroic_inspiration"] == 0 and any("Heroic Inspiration" in s for s in seen)

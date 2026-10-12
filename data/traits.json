@@ -58,6 +58,10 @@
       "hooks": [{"event": "hp_zero", "as": "target", "handler": "relentless_endurance"}],
       "resource": {"id": "relentless_endurance", "max": 1, "recover": "long"}
     },
+    "resourceful": {
+      "name": "Resourceful", "text": "Heroic Inspiration after every long rest (2024 humans): one failed roll tried again.",
+      "resource": {"id": "heroic_inspiration", "max": 1, "recover": "long"}
+    },
     "savage_attacks": {
       "name": "Savage Attacks", "text": "A critical hit in melee rolls one more weapon die.",
       "hooks": [{"event": "attack_damage", "as": "attacker", "handler": "savage_attacks"}]

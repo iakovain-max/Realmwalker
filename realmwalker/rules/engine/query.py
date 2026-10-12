@@ -96,6 +96,8 @@ def attack_roll(b, att, target, opt, *, space=None) -> Roll:
     g = grid.gap(a_space, target.space)
     if att.helped:
         r.add("advantage", "helped")
+    if any(bf.get("distracted") == att.side for bf in target.buffs):
+        r.add("advantage", "distracted")
     if target.marked:
         r.add("advantage", "marked")
     defs = cond.table(att.t)
@@ -123,8 +125,6 @@ def attack_roll(b, att, target, opt, *, space=None) -> Roll:
             if who is None or not who.active or not b.can_see(att, who):
                 continue
         r.add(mode, _cond_name(att, cid))
-    if att.char and att.char.exhaustion >= 3:
-        r.add("disadvantage", "exhausted")
     if not b.can_see(att, target):
         r.add("disadvantage", "cannot see them" if not target.hidden else "hidden")
     elif att.hidden or not b.can_see(target, att):
@@ -193,8 +193,6 @@ def save_roll(b, f, ability: str, *, bonus: int = 0) -> SaveRoll:
             out.roll.add(mode, _cond_name(f, cid))
     if ability == "dex" and f.dodging and not incapacitated(f) and f.speed > 0:
         out.roll.add("advantage", "dodging")  # the Dodge action: easier to get out of the way of fire
-    if f.char and f.char.exhaustion >= 3:
-        out.roll.add("disadvantage", "exhausted")
     ctx = tr.Ctx(b, f, ability=ability)
     for mode, why in tr.modifiers(f, "save", ctx):
         out.roll.add(mode, why)
@@ -259,6 +257,24 @@ def damage_taken(f, amount: int, dtype: str) -> tuple[int, str]:
     if kind == "vulnerable":
         amount *= 2
     return amount, kind
+
+
+def proficiency(f) -> int:
+    """The proficiency bonus: a character's by level, a creature's by challenge (2 up to CR 4, then +1 every 4)."""
+    if f.char is not None:
+        return f.sheet.proficiency
+    cr = float(f.cdef.get("cr", 0))
+    return 2 + max(0, (max(1, int(-(-cr // 1))) - 1) // 4)
+
+
+def unarmed_dc(f) -> int:
+    """The saving throw against a grapple or a shove, and the DC to escape a grapple: 8 + Strength + proficiency."""
+    return 8 + f.mod("str") + proficiency(f)
+
+
+def d20_penalty(f) -> int:
+    """What exhaustion takes off every d20 test (2024: 2 per level)."""
+    return -2 * f.char.exhaustion if f.char is not None else 0
 
 
 def concentration_dc(damage: int) -> int:

@@ -116,7 +116,7 @@ def test_starving_and_thirst_build_exhaustion_and_kill(tables):
     live(c, tables, Environment(15, 5, 0, "rest"), 80)
     assert c.exhaustion == 6
     assert body.travel_multiplier(c) is None
-    assert body.hp_cap(c) == max(1, c.max_hp // 2)
+    assert body.hp_cap(c) == c.max_hp  # (2024: exhaustion no longer halves the hit points)
 
 
 def test_condition_penalties(tables):
