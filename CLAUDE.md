@@ -23,11 +23,40 @@ gameplay terms, give Windows click-by-click steps when they must do something, n
 | Quick tests while working | `.venv\Scripts\python.exe -m pytest -n 6 -m "not slow"` (mark long tests `@pytest.mark.slow`). Tests take worlds from `tests/worlds.cached_world` (kept in build/test_worlds while the world-making code and data are unchanged) |
 | Autoplay bot | `.venv\Scripts\python.exe tools\autoplay.py --turns 3000` |
 | Balance numbers (fights, cold, wounds) | `.venv\Scripts\python.exe tools\balance.py --runs 60` |
+| What the enemy uses, and how fast it thinks | `.venv\Scripts\python.exe tools\arena.py` (`--creature wolf --runs 10`) |
 | Rebuild the tile sheets (after changing tools/*_art.py, figure_*.py) | `.venv\Scripts\python.exe tools\build_tiles.py --pack <Dungeon Crawl Stone Soup Full folder>` (no `--pack`: downloads it) |
 | Rebuild the sounds and the shipped music (after changing tools/build_sounds.py) | `.venv\Scripts\python.exe tools\build_sounds.py` (downloads the CC0 packs into build/sound_packs; `--no-music`: effects only) |
 
 Milestone "done" = all tests pass + the game launches (smoke test) + autoplay ran clean.
 Then commit, update PROGRESS.md, and stop for user feedback (unless the user said to keep going).
+
+## How to work: fast, without losing quality (Anton, 2026-10-12)
+
+- **Done = playable.** A rule is done when it is usable in play: the rule, its entry in `actions.options`, the
+  enemy's and Auto's use of it, the battle screen, and one test in a real fight. Never tick a rule that nothing calls.
+- **Heavy checks once per part.** While building: only the tests for what you touched (`pytest tests/test_x.py -k ...`,
+  `-m "not slow"`). Before a merge, one at a time: the full suite (it runs the arena coverage test), autoplay, the
+  smoke test. Run `tools/arena.py` by hand only when tuning tactics.
+- **Helpers for bulk data** (book tables, items, monsters, spells, codex marking): two or three subagents at once on
+  a cheaper model (`model: "sonnet"`), each with a precise brief (its entries, the schema, one finished example, the
+  book pages, numbers checked on page images); the main session owns the kernel, joins the pieces and reviews.
+- **Edit with the Edit/Write tools.** Scripts only for mechanical changes across many files, written to a file with
+  Write first (shell heredocs here mangle quotes and backslashes).
+- **Read narrowly**: `grep -n` and small line ranges, guided by the code map below; do not page through big files.
+- **One part per session.** When a part is merged, update `docs/expansions/STATUS.md` and stop: a long conversation
+  makes every later step slower and dearer, and a summarised one loses detail.
+- **The fresh review stays** before each merge, as a short checklist pass against `docs/EXPANSIONS.md` §5.2.
+
+Code map of the two biggest files (by section; search for the `# ---` headers):
+`rules/combat.py`: AttackOption, Env, Zone, Token, Fighter (identity, where, numbers, state), Battle: decisions,
+helpers (gap, feet, team), placing, start (Study), Search and Ready, turn engine (start/end of turn, crowding),
+light and sight, moving (move_tree, walk, leaps, objects, flying, falling, grapples), the action economy, attack
+options, resolving attacks, morale, party actions (Help, shove, grapple, Influence, items), items and abilities,
+spells, concentration, zones, bookkeeping.
+`rules/tactics.py`: caution and roles, wits and targets (smarts, importance, focus, target_weight), take_turn,
+monsters (_monster_turn, flying up and down, _fight, best_plan, _value, _instead_of_a_blow, approach, breaking
+through, flee, creature magic, spell choice, keeping distance), party members on Auto (_party_turn, abilities by
+what they do, healing the fallen, casting).
 
 ## Folder map
 
@@ -107,7 +136,7 @@ assets/sounds/, music/     effects (16-bit mono WAV) and the shipped tunes (OGG,
                            tools/build_sounds.py from CC0 packs (Kenney, OpenGameArt, RandomMind) + CREDITS.txt; commit
 music/ (project root)      the PLAYER's own music, by mood folder; made by the game, ignored by git
 tests/                     pytest suite (headless)
-tools/                     autoplay.py, balance.py (the design's targets),
+tools/                     autoplay.py, balance.py (the design's targets), arena.py (every creature against a party),
                            build_tiles.py (+ tile_art.py: things drawn in code; figure_art.py: bodies; figure_gear.py:
                            clothes, armour, hair, hats, weapons, shields), build_sounds.py (effects and music)
 ```
@@ -296,6 +325,17 @@ tools/                     autoplay.py, balance.py (the design's targets),
   guardian) live on the battle. Party members at 0 make death saves. `rules/tactics.take_turn` plays monsters and any
   fighter with `f.auto` (the screen's z, the balance tool and the tests use it). Every rule writes `battle.events`
   (move, attack, cast with its area, damage...), which `ui/gfx/battlefx.BattleBoard` turns into animation.
+  Moving (2024): `grid.step_feet` is the one cost of a step (difficult terrain, crawling, climbing onto terrain
+  tagged "climb", swimming terrain tagged "swim"; a Climb or Swim Speed pays no extra); `grid.paths` also leaps
+  (`Fighter.jump`: half the Strength score standing, all of it after 10 feet of run) over water, chasms, fire and
+  low things, and a leap in a path is two squares that are not side by side; `Battle.walk` makes the checks
+  (`_may_go`: clearing a low thing, a river's current; landing on rough ground) with `Battle.check`.
+- Tactics 2.0 (`rules/tactics.py`, Expansion 1 Part C): enemies and the companions' Auto choose from
+  `rules/engine/actions.options` (pass `only=` kinds for speed) by `rules/engine/estimates` worth; a creature's
+  `ai` {role, range, opens_with} in data/creatures.json says how it fights. The Auto's class abilities are read by
+  what they do (`tactics._does`), never by name. `tests/test_tactics_coverage.py` (slow) fights every creature in
+  `tools/arena.py`'s scenarios: every option chosen, nothing refused, no broken state, an enemy turn under 150 ms
+  at the 95th percentile and never 400 ms (thread time). A new creature or spell must keep it green.
 - Sound (2026-10-10, Anton's request: "basic and satisfying sounds... a simple way for me to add music"): `app.audio`
   (realmwalker/audio). Logic never imports it: game code asks for a sound with `game.cue("chest")` (a name from
   data/sounds.json; drained each frame by audio/watch.py, never saved), and the watcher also notices a level gained

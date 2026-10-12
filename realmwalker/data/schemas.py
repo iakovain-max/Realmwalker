@@ -200,8 +200,12 @@ RULES = Obj(
         "hazards": Obj({"falling": Obj({"feet_per_die": Int(min=1, max=100), "die": Int(min=2, max=20), "max_dice": Int(min=1, max=100)}),
                         "burning": Obj({"damage": Str(max_len=12), "type": Str(max_len=20)}),
                         "breath": Obj({"minutes": Int(min=0, max=60), "least_seconds": Int(min=0, max=600)})}, optional=True),
+        "study": Obj({"skills": Map(Str(max_len=30)),
+                      "dc": Obj({"base": Int(min=1, max=30), "per_cr": Float(min=0, max=5), "max": Int(min=1, max=40)})},
+                     optional=True),
         "objects": Obj({"ac": Map(Int(min=1, max=30)), "hp": Map(List(Str(max_len=12), min_items=2, max_items=2)),
-                        "immune": List(Str(max_len=20))}, optional=True),
+                        "immune": List(Str(max_len=20)), "terrain": Map(List(Any_(), min_items=4, max_items=4), optional=True)},
+                       optional=True),
     }
 )
 
@@ -383,7 +387,11 @@ CREATURE = Obj(
         "attacks": List(ATTACK, min_items=1, optional=True), "multiattack": Int(min=1, max=6, optional=True),
         "traits": List(Str(max_len=40), optional=True),
         "morale": Str(choices=["beast", "bandit", "soldier", "coward", "warrior", "fanatic", "mindless"]),
-        "rank": Str(choices=["front", "back"]), "names": Str(max_len=30, optional=True),
+        # How it fights (rules/tactics.py): its role and the distance it likes to keep (feet; 0: in their faces).
+        "ai": Obj({"role": Str(choices=["brute", "skirmisher", "artillery", "controller", "leader", "support", "lurker",
+                                        "solo"]), "range": Int(min=0, max=600, optional=True),
+                   "opens_with": Str(max_len=40, optional=True)}, optional=True),
+        "names": Str(max_len=30, optional=True),
         "gear": List(List(Any_(), min_items=2, max_items=2)), "money": Any_(optional=True),
         "loot": List(List(Any_(), min_items=2, max_items=2), optional=True),
         "butcher": List(List(Any_(), min_items=2, max_items=2), optional=True),

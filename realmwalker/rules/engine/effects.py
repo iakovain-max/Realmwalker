@@ -402,7 +402,7 @@ def _heal(c: Cast, o: dict, victim) -> None:
         targets = [f]
     elif spell["target"] == "all_allies":
         reach = b.spell_range(spell)
-        near = [x for x in b.side(f.side) if (x.active or x.state == "down") and b.feet(f, x) <= reach]
+        near = [x for x in b.team(f.team) if (x.active or x.state == "down") and b.feet(f, x) <= reach]
         targets = sorted(near, key=lambda x: x.hp / max(1, x.max_hp))[: int(o.get("count", 6)) + int(o.get("count_up", 0)) * c.up]
     elif c.area:
         near = [x for x in b.in_area(c.area, "allies", f)]
@@ -437,7 +437,7 @@ def _modifier(c: Cast, o: dict, victim) -> None:
         targets = [victim]
     elif spell["target"] == "all_allies":
         reach = b.spell_range(spell)
-        near = [x for x in b.side(f.side) if x.active and b.feet(f, x) <= reach]
+        near = [x for x in b.team(f.team) if x.active and b.feet(f, x) <= reach]
         near.sort(key=lambda x: (x is not f, b.feet(f, x)))
         targets = near[: int(o.get("count", 3)) + int(o.get("count_up", 0)) * c.up]
     elif spell["target"] == "self":

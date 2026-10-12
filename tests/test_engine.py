@@ -552,3 +552,136 @@ def test_free_reactions_do_not_ask_unless_everything_should(tables):
     assert reactions.ask(b, Decision(me, "opportunity", "x", free=True)) == "yes"
     b.reactions = "all"
     assert reactions.ask(b, Decision(me, "opportunity", "x", free=True)) == "no" and asked == ["opportunity"]
+
+
+# ---------------------------------------------------------------------------- changing sides
+def test_a_dominated_companion_fights_for_the_enemy_until_freed(tables):
+    a, friend = hero(tables), hero(tables, "fighter", seed=4)
+    cr = spawn(tables, "bandit", RNG(1, "foe"), 1)
+    b = Battle(tables, [a, friend], [cr], Env(), RNG(1, "battle"), spots={0: (3, 4), 1: (4, 4), 2: (9, 4)})
+    b.start()
+    me, fr, bandit = b.fighters
+    durations.give(b, fr, "charmed", source=bandit, control="foe")
+    assert fr.team == "foe" and fr in b.enemies_of(me) and fr in b.allies_of(bandit)
+    b.order = [fr.id, me.id, bandit.id]
+    b.turn, b.turn_started = 0, False
+    assert b.pending_party() is None
+    b.step()  # played by the enemy's side: it turns on its friend
+    assert any(e["kind"] == "attack" and e["by"] == fr.id and e["to"] == me.id for e in b.events)
+    durations.remove(fr, "charmed")
+    assert fr.team == "party" and fr in b.allies_of(me)
+
+
+def test_the_charmed_will_not_strike_the_charmer(tables):
+    b, me, them = duel(tables)
+    me.action = 1
+    durations.give(b, me, "charmed", source=them)
+    assert b.attack_problem(me, weapon(b, me), them) == "charmed: you will not harm them"
+
+
+# ---------------------------------------------------------------------------- senses and the missing actions
+def test_blindsight_and_truesight_see_what_eyes_cannot(tables):
+    b, me, drake = duel(tables, foe="young_dragon", gap=3)  # blindsight 30 ft, darkvision 120 ft
+    me.conditions["invisible"] = -1
+    assert b.can_see(drake, me)  # within its blindsight, invisible or not
+    me.conditions.pop("invisible")
+    b2, me2, bandit = duel(tables, gap=3)
+    me2.conditions["invisible"] = -1
+    assert not b2.can_see(bandit, me2)
+    assert "unseen" in query.attack_roll(b2, me2, bandit, weapon(b2, me2)).adv
+
+
+def test_study_search_and_ready(tables):
+    b, me, them = duel(tables, gap=3)
+    b.order = [me.id, them.id]
+    b.turn, b.turn_started = 0, True
+    b._start_of_turn(me)
+    them.hidden = 1
+    b.do_search(me)
+    assert them.hidden == 0
+    me.action = 1
+    b.do_ready(me, "reach")
+    assert me.readied == "reach"
+    b.end_turn()
+    them.move_left = 30
+    b.walk(them, [(5, 4), (4, 4)])  # comes within reach of the waiting sword
+    assert not me.reaction and any(e["kind"] == "attack" and e["by"] == me.id for e in b.events)
+
+
+# ---------------------------------------------------------------------------- height, falling, antimagic, objects
+def test_height_counts_in_reach_and_a_knocked_down_flier_falls(tables):
+    b, me, drake = duel(tables, foe="young_dragon", gap=1)
+    assert drake.fly_speed == 80
+    drake.move_left = 80
+    assert b.do_fly(drake, 20) and drake.z == 20
+    assert b.gap(me, drake) == 4  # 20 feet up: out of a sword's reach
+    sword = weapon(b, me)
+    assert not b.in_reach(me, sword, drake)[0]
+    hp = drake.hp
+    drake.conditions["prone"] = -1
+    b._check_end()
+    assert drake.z == 0 and drake.hp < hp and "prone" in drake.conditions
+
+
+def test_a_flier_goes_over_what_stops_walkers(tables):
+    b, me, drake = duel(tables, foe="stirge", gap=4)
+    drake.move_left = drake.fly_speed
+    tree = b.move_tree(drake)
+    b.field.rough[:, :] = True  # the whole field is mud
+    assert len(b.move_tree(drake)) == len(tree)  # (the mud does not slow it)
+
+
+def test_no_spell_works_in_an_antimagic_area(tables):
+    from realmwalker.rules.combat import Zone
+
+    w = hero(tables, "wizard")
+    cr = spawn(tables, "bandit", RNG(1, "foe"), 1)
+    b = Battle(tables, [w], [cr], Env(), RNG(1, "battle"), spots={0: (3, 4), 1: (8, 4)})
+    b.start()
+    me, them = b.fighters
+    b.order = [me.id, them.id]
+    b.turn, b.turn_started = 0, True
+    b._start_of_turn(me)
+    from realmwalker.rules.combat import Token
+
+    b.tokens.append(Token(99, "spiritual_weapon", x=7, y=4, owner=me.id, bonus=5, damage="1d8", damage_type="force"))
+    assert b.spirit_targets(me) == [them]
+    b._add_zone(Zone(b._zone_id(), "antimagic", {(8, 4), (8, 5)}))
+    assert b.cast_problem(me, "fire_bolt", them) == "magic does not work there"
+    # Nor what a spell has summoned or laid on the ground: a spiritual weapon cannot strike there, guardians hurt nobody.
+    assert b.spirit_targets(me) == []
+    hp = them.hp
+    b._add_zone(Zone(b._zone_id(), "guardians", {(8, 4), (8, 5)}, owner=me.id, spell="spirit_guardians", save="wis",
+                     dc=30, damage="3d8", damage_type="radiant"))
+    b._zones_on(them, start=True)
+    assert them.hp == hp
+
+
+def test_doors_and_barrels_can_be_broken(tables):
+    b, me, them = duel(tables, gap=6)
+    T = tables.terrain.index
+    b.field.terrain[4, 4] = T["barrels"]
+    b.field._derive()
+    obj = b.object_at((4, 4))
+    assert obj is not None and obj["ac"] == 15
+    obj["hp"] = 1
+    b.order = [me.id, them.id]
+    b.turn, b.turn_started = 0, True
+    b._start_of_turn(me)
+    for _ in range(20):
+        me.action, me.attacks_left = 1, 0
+        if b.object_at((4, 4)) is None:
+            break
+        b.attack_object(me, weapon(b, me), (4, 4))
+    assert b.object_at((4, 4)) is None and b.field.passable(4, 4)
+
+
+def test_ending_a_turn_in_another_creatures_space_leaves_you_prone(tables):
+    b, me, them = duel(tables, foe="bandit", gap=1)
+    me.x, me.y = them.x, them.y  # stopped on the way through (a blow, a web)
+    b._crowded(me)
+    assert "prone" in me.conditions and "prone" not in them.conditions
+    b, me, ogre = duel(tables, foe="ogre", gap=1)
+    ogre.x, ogre.y = me.x, me.y
+    b._crowded(ogre)
+    assert "prone" not in ogre.conditions  # the larger keeps its feet

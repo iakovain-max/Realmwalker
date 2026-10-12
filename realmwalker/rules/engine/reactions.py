@@ -103,7 +103,7 @@ class Resolver:
 
 def needs_player(b, d: Decision) -> bool:
     who = d.who
-    if not b.resolver.in_worker() or getattr(who, "auto", True) or who.side != "party" or not b.human:
+    if not b.resolver.in_worker() or getattr(who, "auto", True) or who.side != "party" or who.team != "party" or not b.human:
         return False
     setting = getattr(b, "reactions", "ask")
     if setting == "auto":

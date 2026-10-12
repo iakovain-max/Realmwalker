@@ -22,7 +22,7 @@ TRAIT_ALIASES = {
     "keen_hearing_and_smell": "keen_senses",
 }
 SIZE_ORDER = ("tiny", "small", "medium", "large", "huge", "gargantuan")
-FLAVOUR = ("name", "plural", "body", "morale", "rank", "names", "gear", "money", "loot", "butcher", "descriptions")
+FLAVOUR = ("name", "plural", "body", "morale", "ai", "names", "gear", "money", "loot", "butcher", "descriptions")
 
 
 def resolve(cid: str, flavour: dict, blocks: dict) -> dict:
@@ -93,7 +93,7 @@ def resolve(cid: str, flavour: dict, blocks: dict) -> dict:
     for k, v in flavour.get("override", {}).items():
         out[k] = v
     out.setdefault("morale", "warrior")
-    out.setdefault("rank", "front")
+    out.setdefault("ai", {"role": "brute"})
     out.setdefault("body", "humanoid")
     out.setdefault("gear", [])
     out.setdefault("descriptions", [f"A {out['name']}."])
@@ -127,22 +127,25 @@ def attacks(actions: list[dict], extras: dict) -> list[dict]:
     return out
 
 
-def multiattack_plan(m: dict | None, atks: list[dict]) -> list[str]:
-    """The attacks a Multiattack makes, by action id, in order ("two Rend attacks"; "a Bite and two Claws"; with a
-    replacement, the last one is the replacing action: a wight's Life Drain)."""
+def multiattack_plan(m: dict | None, atks: list[dict]) -> list[list[str]]:
+    """The attacks a Multiattack makes, in order, each a list of the actions that may make it: "two Rend attacks"
+    [[rend], [rend]]; "a Bite and two Claws"; "two attacks, Sword or Bow in any combination" [[sword, bow], [sword,
+    bow]]; "it can replace one attack with Life Drain" adds the replacement to the last."""
     if not m:
         return []
     if m.get("attacks"):
-        plan = [x["id"] for x in m["attacks"] for _ in range(int(x.get("count", 1)))]
+        plan = [[x["id"]] for x in m["attacks"] for _ in range(int(x.get("count", 1)))]
     else:
         of = list(m.get("of", []))
         count = int(m.get("count", len(of) or 1))
         if not of:
             of = [a["id"] for a in atks if a["kind"] == "melee"][:1]
-        plan = [of[0]] * count if m.get("any_combination") else [of[i % len(of)] for i in range(count)]
+        plan = [list(of) for _ in range(count)] if m.get("any_combination") else [[of[i % len(of)]] for i in range(count)]
+    known = {a["id"] for a in atks}
     for r in m.get("replace", []):
-        if r.get("with") in {a["id"] for a in atks}:
-            plan[-int(r.get("count", 1)):] = [r["with"]] * int(r.get("count", 1))
+        if r.get("with") in known:
+            for slot in plan[-int(r.get("count", 1)):]:
+                slot.append(r["with"])
     return plan
 
 

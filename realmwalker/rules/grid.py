@@ -162,7 +162,10 @@ class Field:
     squares that cannot be seen past (walls, tree trunks, closed doors) block sight. A closed (unlocked) door opens
     as somebody walks through it. Terrain that costs half again as much to cross or more (mud, deep snow, brush,
     shallow water, rubble) is difficult terrain: every square of it costs ten feet of movement instead of five.
-    Squares at the edge of the field that can be walked on lead away from the fight.
+    Squares at the edge of the field that can be walked on lead away from the fight. Low things tagged "climb" (a
+    fence, a table, barrels) can be clambered onto and over, and deep water tagged "swim" swum, each foot costing a
+    foot more (2024 Climbing, Swimming); water tagged "flowing" is rough water. What is not solid can be leapt over
+    (`leap`: the ground, water, chasms, fire and the low things one could climb).
     """
 
     def __init__(self, tables, terrain: np.ndarray, *, kind: str = "wilderness", style: str = "", key: str = "battle",
@@ -200,6 +203,11 @@ class Field:
         self.low = ~T.walk[idx] & see & ~water[idx] & ~self.openable  # low obstacles: half cover
         self.rough = T.cost[idx] >= 1.5  # difficult terrain by nature
         self.water = water[idx]
+        self.fly = (self.walk | self.water | self.low) & ~self.solid  # over water and low things, not through walls
+        self.climb = (tag("climb") & ~T.walk & T.see)[idx]  # clambered onto and over (a fence, a table, barrels)
+        self.swim = (tag("swim") & ~T.walk)[idx]  # deep water, swum
+        self.rough_water = self.swim & tag("flowing")[idx]  # a river's current
+        self.leap = (self.walk | self.water | self.climb | (tag("chasm") | tag("fire") | tag("hot"))[idx]) & ~self.solid
         self.hiding = tag("cover")[idx]  # brush, tall grass, reeds: somewhere to hide
         flammable = np.array([T.ids[i] in FLAMMABLE for i in range(n)], dtype=bool)
         self.flammable = flammable[idx]
@@ -446,23 +454,52 @@ class Step:
         self.risk = risk
 
 
+def step_feet(field: Field, entering, *, crawling: bool = False, flying: bool = False, climber: bool = False,
+              swimmer: bool = False) -> int:
+    """What stepping into these squares costs, in feet (2024): 5; 10 in difficult terrain or crawling; climbing onto a
+    low thing or swimming costs a foot more for every foot (two more in difficult terrain), unless one has a Climb or
+    Swim Speed. A flier is slowed only by what is in the air (webs, spirits)."""
+    rough = any(field.zone_difficult[c] if flying else (field.rough[c] or field.zone_difficult[c]) for c in entering)
+    feet = 10 if crawling or rough else 5
+    if not flying and any((field.climb[c] and not climber) or (field.swim[c] and not swimmer) for c in entering):
+        feet += 5  # (in difficult terrain that makes three feet for every foot, as the book says)
+    return feet
+
+
 def paths(field: Field, start: tuple[int, int], size: int, budget: int, *, blocked: set, occupied: set,
           threats: list[tuple[int, tuple[int, int, int], int]] = (), risk: float = 0.5, crawling: bool = False,
-          hazard: set | None = None, hazard_risk: float = 10.0) -> dict[tuple[int, int], Step]:
+          hazard: set | None = None, hazard_risk: float = 10.0, flying: bool = False, climber: bool = False,
+          swimmer: bool = False, jump: tuple[int, int] = (0, 0), through: set | None = None) -> dict[tuple[int, int], Step]:
     """Every square a creature could move to with `budget` feet of movement, with the cheapest way there.
 
     blocked: squares it cannot pass (enemies stand there); occupied: squares it may pass but not stop on (friends,
     the fallen). threats: (who, their space, their reach in squares) for opportunity attacks: leaving a square
     within someone's reach for one outside it provokes them. Paths that provoke, or cross a hazard (fire), are
     avoided when one as cheap exists (each costs `risk` or `hazard_risk` feet in the choosing, not in the moving).
-    Difficult terrain (and crawling) costs ten feet a square instead of five.
+    Difficult terrain (and crawling) costs ten feet a square instead of five; climbing and swimming cost more
+    (`step_feet`). A flier goes over water and low things and is not slowed by the ground (only by what is in the
+    air: webs, spirits). On foot, `jump` (feet: standing, after a run of 10 feet) lets it leap over what it cannot
+    or would rather not walk - water, a chasm, a fire, a fence - landing on the ground beyond (2024 Long Jump: each
+    foot costs a foot; clearing a low thing takes an Athletics check, landing on difficult ground an Acrobatics one,
+    so those leaps are chosen warily). The way found to a square has the leap's landing after its take-off.
+    `through`: squares to plan as if they were open (a door or a barricade to be broken down on the way).
     """
     sx, sy = start
     best: dict[tuple[int, int], Step] = {(sx, sy): Step(0, None, frozenset(), 0.0)}
     heap = [(0.0, 0, sx, sy)]
     W, H = field.width, field.height
-    walk = field.walk
-    rough = field.rough | field.zone_difficult
+    walk = field.fly if flying else (field.walk | field.climb | field.swim)
+    if through:
+        walk = walk.copy()
+        for c in through:
+            walk[c] = True
+    rough = field.zone_difficult if flying else field.rough | field.zone_difficult
+    hard_going = [] if flying else [m for m, easy in ((field.climb, climber), (field.swim, swimmer)) if not easy]
+    labour = np.logical_or.reduce(hard_going) if hard_going else None  # climbing, swimming without the speed for it
+    if labour is not None and not labour.any():
+        labour = None
+    rapids = None if flying or swimmer or not field.rough_water.any() else field.rough_water
+    leaping = not flying and jump[0] >= SQUARE_FT and size == 1
     while heap:
         key, cost, x, y = heapq.heappop(heap)
         node = best.get((x, y))
@@ -482,7 +519,10 @@ def paths(field: Field, start: tuple[int, int], size: int, budget: int, *, block
             if any(c in blocked for c in new):
                 continue
             entering = [c for c in new if not (x <= c[0] < x + size and y <= c[1] < y + size)] or new
-            step = 10 if crawling or any(rough[c] for c in entering) else 5
+            hard = any(rough[c] for c in entering)
+            step = 10 if crawling or hard else 5
+            if labour is not None and any(labour[c] for c in entering):
+                step += 5  # climbing, swimming (step_feet)
             ncost = cost + step
             if ncost > budget:
                 continue
@@ -494,12 +534,61 @@ def paths(field: Field, start: tuple[int, int], size: int, budget: int, *, block
             nrisk = node.risk + risk * len(left)
             if hazard and any(c in hazard for c in entering):
                 nrisk += hazard_risk
+            if rapids is not None and any(rapids[c] for c in entering):
+                nrisk += LEAP_RISK  # an Athletics check against the current
             old = best.get((nx, ny))
             if old is not None and old.cost + old.risk <= ncost + nrisk:
                 continue
             best[(nx, ny)] = Step(ncost, (x, y), provokes, nrisk)
             heapq.heappush(heap, (ncost + nrisk, ncost, nx, ny))
+        if leaping:
+            _leaps(field, x, y, node, cost, jump, budget, blocked, reach_now, risk, hazard, best, heap)
     return best
+
+
+LEAP_RISK = 8.0  # what a check that could fail is worth avoiding, in feet, in the choosing (not in the moving): a
+# sure climb over a fence is chosen before a leap that could fall short
+
+
+def _leaps(field: Field, x: int, y: int, node: Step, cost: int, jump: tuple[int, int], budget: int, blocked: set,
+           reach_now: list, risk: float, hazard: set | None, best: dict, heap: list) -> None:
+    """Leaps from (x, y): over one square or more that cannot (or should not) be walked, onto the ground beyond. A run
+    of 10 feet on this move before it gives the full Strength score in feet, else half (2024 Long Jump). The leap is
+    the whole way from here to where it lands, each foot costing a foot: clearing one square takes a 10-foot leap."""
+    walk, leap, rough, low = field.walk, field.leap, field.rough, field.climb
+    feet = jump[1] if cost >= 10 else jump[0]
+    longest = feet // SQUARE_FT
+    W, H = field.width, field.height
+    for dx, dy in DIRS8:
+        first = (x + dx, y + dy)
+        if not (0 <= first[0] < W and 0 <= first[1] < H) or not leap[first] or first in blocked:
+            continue
+        if walk[first] and not rough[first] and not field.zone_difficult[first] and not (hazard and first in hazard):
+            continue  # plain ground: a step there and a leap from it is never worse
+        over_low = False
+        for k in range(1, longest):  # k squares cleared, k + 1 squares moved
+            sq = (x + dx * k, y + dy * k)
+            if not (0 <= sq[0] < W and 0 <= sq[1] < H) or not leap[sq] or sq in blocked:
+                break
+            over_low = over_low or bool(low[sq])
+            land = (x + dx * (k + 1), y + dy * (k + 1))
+            if not (0 <= land[0] < W and 0 <= land[1] < H) or not walk[land] or land in blocked:
+                continue
+            if hazard and land in hazard:
+                continue
+            ncost = cost + (k + 1) * SQUARE_FT
+            if ncost > budget:
+                break
+            there = (land[0], land[1], 1)
+            left = [fid for fid, sp, r in reach_now if gap(there, sp) > r and fid not in node.provokes]
+            provokes = node.provokes | frozenset(left) if left else node.provokes
+            nrisk = node.risk + risk * len(left) + (LEAP_RISK if over_low else 0.0) \
+                + (LEAP_RISK if rough[land] or field.zone_difficult[land] else 0.0) + 0.5  # (a step is surer)
+            old = best.get(land)
+            if old is not None and old.cost + old.risk <= ncost + nrisk:
+                continue
+            best[land] = Step(ncost, (x, y), provokes, nrisk)
+            heapq.heappush(heap, (ncost + nrisk, ncost, land[0], land[1]))
 
 
 def route(tree: dict[tuple[int, int], Step], goal: tuple[int, int]) -> list[tuple[int, int]]:

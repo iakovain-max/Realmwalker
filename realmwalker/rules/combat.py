@@ -143,6 +143,7 @@ class Fighter:
         self.cdef = tables.creatures[creature.def_id] if creature else None
         self.x = 0
         self.y = 0
+        self.z = 0  # feet above the ground (a flier aloft)
         self.sq = grid.footprint(self.size)
         self.initiative = 0
         self.state = "fighting"  # fighting, fleeing, down, dead, fled, surrendered
@@ -155,6 +156,7 @@ class Fighter:
         self.dodging = False
         self.helped = False
         self.grovel = False  # Commanded to grovel: its next turn is spent on the ground
+        self.readied: str | None = None  # the Ready action: "reach" or "sight", until its next turn
         self.moved_feet = 0  # how far it has moved this turn (a boar's charge)
         self.attached_to: int | None = None  # a stirge fastened on someone
         self.surprised = False
@@ -191,6 +193,19 @@ class Fighter:
             self.glow = int(magic.light(char) or 0)
 
     # ------------------------------------------------------------------ identity
+    @property
+    def team(self) -> str:
+        """Who it fights for now: its own side, unless something has taken it over (a condition with "control":
+        charmed into serving, dominated, possessed). When that ends, it is back on its own side."""
+        for cid, e in self.cond_ends.items():
+            if e.get("control") and e.get("control") != self.side and cid in self.conditions:
+                return e["control"]
+        return self.side
+
+    @property
+    def controlled(self) -> bool:
+        return self.team != self.side
+
     @property
     def name(self) -> str:
         if self.char:
@@ -248,6 +263,9 @@ class Fighter:
             return self.sheet.mod(ability)
         return modifier(self.cdef["abilities"][ability])
 
+    def score(self, ability: str) -> int:
+        return self.sheet.score(ability) if self.char else int(self.cdef["abilities"][ability])
+
     def skill(self, skill: str) -> int:
         if self.char:
             return self.sheet.skill_bonus(skill)
@@ -301,10 +319,52 @@ class Fighter:
         return query.speed(self)
 
     @property
+    def fly_speed(self) -> int:
+        """Flying speed in feet (0: it cannot fly); nothing that stops it moving lets it fly either."""
+        if query.flag(self, "speed_zero"):
+            return 0
+        fly = 0 if self.char else int(self.cdef.get("speeds", {}).get("fly", 0))
+        return max(fly, max([0] + [int(v) for v in self.buff_value("fly")]))
+
+    @property
+    def hovers(self) -> bool:
+        return bool(self.creature and self.cdef.get("speeds", {}).get("hover"))
+
+    def _speed_of(self, kind: str) -> int:
+        if query.flag(self, "speed_zero"):
+            return 0
+        own = 0 if self.char else int(self.cdef.get("speeds", {}).get(kind, 0))
+        return max(own, max([0] + [int(v) for v in self.buff_value(kind)]))
+
+    @property
+    def climb_speed(self) -> int:
+        """Climbing speed in feet: climbing costs it no extra movement (a spider, a bear)."""
+        return self._speed_of("climb")
+
+    @property
+    def swim_speed(self) -> int:
+        """Swimming speed in feet: swimming costs it no extra movement, and a current does not trouble it."""
+        return self._speed_of("swim")
+
+    @property
+    def jump(self) -> tuple[int, int]:
+        """How far it can leap, in feet: standing, and after a run of 10 feet - half its Strength score, and all of it
+        (2024 Long Jump)."""
+        s = self.score("str")
+        return s // 2, s
+
+    @property
     def darkvision(self) -> int:
         if self.char:
             return self.sheet.darkvision
         return int(self.cdef.get("darkvision", 0))
+
+    @property
+    def senses(self) -> dict[str, int]:
+        """Feet of each special sense: darkvision, blindsight, truesight, tremorsense."""
+        if self.char:
+            return {"darkvision": self.darkvision}
+        return {**self.cdef.get("senses", {}), "darkvision": self.darkvision}
 
     @property
     def body(self) -> str:
@@ -326,7 +386,8 @@ class Fighter:
         """Keeps its distance and shoots (bandit archers, priests, wizards)."""
         if self.char:
             return self.char.cls == "wizard"
-        return self.cdef.get("rank") == "back"
+        ai = self.cdef.get("ai") or {}
+        return ai.get("role") in ("artillery", "controller", "support") or int(ai.get("range", 0)) > 5
 
     # ------------------------------------------------------------------ state
     @property
@@ -502,13 +563,18 @@ class Battle:
         return self.fighter(self.order[self.turn])
 
     def side(self, side: str) -> list[Fighter]:
+        """Everyone who started on a side (the party, the foes)."""
         return [f for f in self.fighters if f.side == side]
 
+    def team(self, team: str) -> list[Fighter]:
+        """Everyone fighting for a side now (a dominated companion is on the foes' team)."""
+        return [f for f in self.fighters if f.team == team]
+
     def enemies_of(self, f: Fighter) -> list[Fighter]:
-        return [x for x in self.fighters if x.side != f.side and x.active]
+        return [x for x in self.fighters if x.team != f.team and x.active]
 
     def allies_of(self, f: Fighter) -> list[Fighter]:
-        return [x for x in self.fighters if x.side == f.side and x.active]
+        return [x for x in self.fighters if x.team == f.team and x.active]
 
     def on_field(self) -> list[Fighter]:
         """Everyone still taking up room: the living, the fallen and the yielded (not the dead or the fled)."""
@@ -524,15 +590,20 @@ class Battle:
         if self.outcome is not None or not self.order:
             return None
         f = self.current
-        if f.side == PARTY and self.turn_started and f.can_act() and not f.surprised and not f.auto:
+        if f.side == PARTY and not f.controlled and self.turn_started and f.can_act() and not f.surprised and not f.auto:
             return f
         return None
 
     def gap(self, a: Fighter, b: Fighter) -> int:
-        return grid.gap(a.space, b.space)
+        """Squares between two creatures, height included (the 5-5-5 grid: the larger of across and up)."""
+        return max(grid.gap(a.space, b.space), abs(a.z - b.z) // grid.SQUARE_FT)
 
     def feet(self, a: Fighter, b: Fighter) -> int:
-        return grid.gap(a.space, b.space) * grid.SQUARE_FT
+        return self.gap(a, b) * grid.SQUARE_FT
+
+    def gap_from(self, f: Fighter, sq: tuple[int, int], t: Fighter) -> int:
+        """Squares from `f` standing (or flying, at its height) on `sq` to `t`, height included."""
+        return max(grid.gap((sq[0], sq[1], f.sq), t.space), abs(f.z - t.z) // grid.SQUARE_FT)
 
     # ------------------------------------------------------------------ placing everyone
     def _place(self, spots: dict) -> None:
@@ -592,29 +663,98 @@ class Battle:
             self.say("You have caught them unawares.", "good")
         elif self.env.surprised == PARTY:
             self.say("They are on you before you can draw.", "danger")
-        self._knowledge_checks()
+        self._known_from_before()
         order = ", ".join(self.fighter(i).name for i in self.order)
         self.say(f"Order of battle: {order}.", "system")
 
-    def _knowledge_checks(self) -> None:
-        """The party sizes up each kind of foe (Nature for beasts, History for people, Religion for the dead)."""
-        skill_for = {"beast": "nature", "dragon": "nature", "ooze": "nature", "plant": "nature", "humanoid": "history",
-                     "giant": "history", "undead": "religion", "fiend": "religion", "celestial": "religion"}  # (2024 Study)
-        party = [f for f in self.side(PARTY) if f.char]
+    def _known_from_before(self) -> None:
+        """What the party has killed before, it knows (the rest is learned with the Study action, 2024)."""
+        killed = {name for f in self.side(PARTY) if f.char for name in f.char.kills}
         for def_id in sorted({f.creature.def_id for f in self.side(FOE)}):  # sorted: a set's order changes per run
-            d = self.t.creatures[def_id]
-            skill = skill_for.get(d["kind"], "arcana")
-            dc = 8 + int(round(d["cr"] * 3))
-            best = max(party, key=lambda p: p.skill(skill), default=None)
-            if best is None:
-                continue
-            roll = dice.d20(self.rng).natural
-            total = roll + best.skill(skill)
-            self.dice_say(f"{self.t.rules['skills'][skill]['name']} ({best.name}): {roll} {signed_mod(best.skill(skill))} = {total} vs DC {dc}")
-            if total >= dc:
+            if self.t.creatures[def_id]["name"] in killed:
                 self.known.add(def_id)
-                danger = "a real threat" if d["cr"] >= 1 else ("dangerous in numbers" if d["cr"] >= 0.25 else "weak alone")
-                self.say(f"{best.name} knows {d['plural']}: {danger} (AC {d['ac']}).", "info")
+
+    def study_dc(self, f: Fighter) -> int:
+        """How hard a creature is to call to mind (data/rules.json "study"): harder the more dangerous it is."""
+        dc = (self.t.rules.get("study") or {}).get("dc") or {"base": 10, "per_cr": 0.5, "max": 25}
+        return min(int(dc["max"]), int(dc["base"] + float(f.cdef["cr"]) * float(dc["per_cr"])))
+
+    def study_skill(self, f: Fighter) -> str:
+        return ((self.t.rules.get("study") or {}).get("skills") or {}).get(f.cdef["kind"], "arcana")
+
+    def do_study(self, f: Fighter, target: Fighter) -> None:
+        """The Study action (2024): an Intelligence check - Arcana, History, Nature or Religion by what it is - to call
+        to mind what a kind of creature is and what it can do."""
+        if target.creature is None or not self._spend(f):
+            return
+        d = target.cdef
+        skill = self.study_skill(target)
+        dc = self.study_dc(target)
+        roll = dice.d20(self.rng).natural
+        bonus = f.skill(skill)
+        self.dice_say(f"{self.t.rules['skills'][skill]['name']} ({f.name}): {roll} {signed_mod(bonus)} = {roll + bonus} vs DC {dc}")
+        if roll + bonus < dc:
+            self.say(f"{f.the_name} cannot place {target.the_name}.", "system")
+        else:
+            self.known.add(target.creature.def_id)
+            self.say(f"{f.the_name} knows {d['plural']}: {self.what_is_known(target)}.", "info")
+        self._after_action(f)
+
+    def what_is_known(self, f: Fighter) -> str:
+        """What studying a creature tells: how hard to hit and to kill, and what it shrugs off."""
+        d = f.cdef
+        bits = [f"AC {d['ac']}", f"about {d.get('hp_avg') or f.max_hp} hit points"]
+        for key, word in (("immune", "immune to"), ("resist", "resists"), ("vulnerable", "hurt most by")):
+            if d.get(key):
+                bits.append(f"{word} {', '.join(d[key])}")
+        if d.get("condition_immune"):
+            bits.append(f"never {', '.join(d['condition_immune'])}")
+        named = [self.t.traits["traits"][t]["name"] for t in d.get("traits", []) if t in self.t.traits["traits"]
+                 and self.t.traits["traits"][t].get("where") != "sheet"]
+        if named:
+            bits.append(", ".join(named))
+        return "; ".join(bits)
+
+    # ------------------------------------------------------------------ Search and Ready (2024)
+    def do_search(self, f: Fighter) -> None:
+        """The Search action: a Wisdom (Perception) check against everyone hiding; whoever it beats is found."""
+        if not self._spend(f):
+            return
+        roll = dice.d20(self.rng).natural
+        total = roll + f.skill("perception")
+        self.dice_say(f"Perception ({f.name}): {roll} {signed_mod(f.skill('perception'))} = {total}")
+        found = [e for e in self.enemies_of(f) if e.hidden and e.hidden <= total]
+        for e in found:
+            e.hidden = 0
+            self._event("found", who=e.id)
+        self.say(f"{f.the_name} finds {', '.join(e.the_name for e in found)}." if found
+                 else f"{f.the_name} looks hard, and finds nobody.", "good" if found else "system")
+        self._after_action(f)
+
+    def do_ready(self, f: Fighter, trigger: str) -> None:
+        """The Ready action: wait with a blow for "reach" (an enemy coming within reach) or "sight" (an enemy coming
+        into range and sight), and strike then with the reaction, until the start of the next turn."""
+        if trigger not in ("reach", "sight") or not self._spend(f):
+            return
+        f.readied = trigger
+        self.say(f"{f.the_name} waits, " + ("weapon ready for the first to come close." if trigger == "reach"
+                                             else "an arrow on the string for the first to show."), "system")
+        self._after_action(f)
+
+    def _readied(self, mover: Fighter) -> None:
+        """Whoever was waiting for this strikes now."""
+        for r in [x for x in self.fighters if x.readied and x.team != mover.team and x.reaction and x.can_act()]:
+            if not mover.active:
+                return
+            melee = r.readied == "reach"
+            opts = [o for o in self.attack_options(r) if o.available and o.is_melee == melee and self.in_reach(r, o, mover)[0]]
+            if not opts or not self.can_see(r, mover):
+                continue
+            r.readied = None
+            r.reaction = False
+            self.say(f"{r.the_name} was waiting for that.", "warn")
+            self._attack(r, max(opts, key=lambda o: _avg(o.damage) + o.bonus), mover)
+            self._check_end()
 
     # ------------------------------------------------------------------ turn engine
     def step(self) -> bool:
@@ -641,7 +781,7 @@ class Battle:
                 self.say(f"{f.the_name} cannot move.", "system")
             self.end_turn()
             return True
-        if f.side == PARTY and not f.auto:
+        if f.side == PARTY and not f.controlled and not f.auto:
             return False
         from realmwalker.rules import tactics
 
@@ -652,6 +792,7 @@ class Battle:
 
     def _start_of_turn(self, f: Fighter) -> None:
         durations.tick(self, f, "turn_start")  # what lasts "until the start of its next turn" ends
+        f.readied = None
         if f.creature is not None and f.cdef.get("legendary"):
             f.creature.uses["legendary_actions"] = int(f.cdef["legendary"].get("uses", 3))
         f.dodging = False
@@ -740,9 +881,9 @@ class Battle:
                     del f.conditions[cond]
                     if cond in ("stunned", "restrained", "frightened", "paralyzed"):
                         self.say(f"{f.the_name} is no longer {cond}.", "system")
-        f.move_left = f.speed
+        f.move_left = max(f.speed, f.fly_speed)
         if any(z.kind == "guardians" and z.owner is not None and any(c in z.cells for c in f.cells)
-               and self.fighter(z.owner).side != f.side for z in self.zones):
+               and self.fighter(z.owner).team != f.team for z in self.zones) and not self.antimagic(f.cells):
             f.move_left //= 2  # Spirit Guardians: half speed in the emanation (2024)
         # Standing up from the ground costs half your movement.
         if "prone" in f.conditions and f.can_act() and f.state == "fighting" and f.move_left >= f.speed // 2 > 0:
@@ -764,6 +905,23 @@ class Battle:
             f.hidden = 0
             self.say(f"{f.the_name} is found.", "system")
         durations.tick(self, f, "turn_end")  # and what lasts "until the end of its next turn"
+        self._crowded(f)
+
+    def _crowded(self, f: Fighter) -> None:
+        """Ending a turn in another creature's space (stopped on the way through it) leaves you Prone, unless you are
+        Tiny or the larger of the two (PHB 2024, Movement and Position). Nobody chooses to stop there."""
+        from realmwalker.rules.engine.statblocks import SIZE_ORDER
+
+        if "prone" in f.conditions or f.size == "tiny" or f.z or f.state not in ("fighting", "fleeing", "surrendered"):
+            return
+        mine = set(f.cells)
+        for x in self.on_field():
+            if x is not f and not x.z and mine & set(x.cells) and SIZE_ORDER.index(f.size) <= SIZE_ORDER.index(x.size):
+                f.conditions["prone"] = -1
+                self._event("prone", who=f.id)
+                self.say(f"{f.the_name} is left crowded into the space of {x.the_name}, and goes down in the press.",
+                         "system")
+                return
 
     def end_turn(self) -> None:
         if self.outcome is not None:
@@ -794,12 +952,15 @@ class Battle:
                 self._event("leave", who=f.id)
         self.outcome = "parley"
 
-    def _check_end(self) -> None:
+    def _check_end(self) -> None:  # (by team: a companion fighting for the enemy is an enemy until freed)
         for f in self.fighters:
             if f.concentration is not None and (query.flag(f, "breaks_concentration") or not f.active):
                 self._end_concentration(f, quiet=not f.active, why="is lost")  # incapacitated (2024)
-        foes = [f for f in self.side(FOE) if f.active and "unconscious" not in f.conditions]
-        party = [f for f in self.side(PARTY) if f.active and "unconscious" not in f.conditions]
+            if f.z > 0 and not f.hovers and ("prone" in f.conditions or f.incapacitated or f.state == "down"
+                                             or f.fly_speed <= 0):
+                self._fall(f)
+        foes = [f for f in self.team(FOE) if f.active and "unconscious" not in f.conditions]
+        party = [f for f in self.team(PARTY) if f.active and "unconscious" not in f.conditions]
         if not foes:
             self.outcome = "victory"
         elif not party:
@@ -823,18 +984,28 @@ class Battle:
         return float(max(L[x, y] for x, y in f.cells if self.field.in_bounds(x, y)))
 
     def can_see(self, a: Fighter, b: Fighter) -> bool:
-        """Whether `a` can see `b`: a line of sight, light enough (or darkvision close enough), and not hidden."""
-        if "blinded" in a.conditions or a.incapacitated:
+        """Whether `a` can see `b`: a line of sight, light enough (or darkvision close enough), not hidden, not
+        invisible. Blindsight sees everything near that is not behind total cover; truesight sees the invisible and
+        through any darkness (2024)."""
+        if a.incapacitated:
             return False
+        feet = self.feet(a, b)
+        senses = a.senses
+        if senses.get("blindsight", 0) >= feet and self.field.cover(a.space, b.space) != grid.TOTAL:
+            return True
+        if "blinded" in a.conditions:
+            return False
+        if query.flag(b, "unseen") and senses.get("truesight", 0) < feet:
+            return False  # Invisible
         if b.hidden and b.hidden > a.passive() - (5 if self.dim_for(a, b) else 0) and self.gap(a, b) > 1:
             return False
         if any(self.field.zone_opaque[x, y] for x, y in b.cells) and self.gap(a, b) > 1:
             return False
         if self.field.cover(a.space, b.space) == grid.TOTAL:
             return False
-        if self.light_on(b) >= grid.DIM:
+        if self.light_on(b) >= grid.DIM or senses.get("truesight", 0) >= feet:
             return True
-        return a.darkvision > 0 and self.feet(a, b) <= a.darkvision
+        return a.darkvision > 0 and feet <= a.darkvision
 
     def dim_for(self, a: Fighter, b: Fighter) -> bool:
         """Whether `b` stands lightly obscured to `a`'s eyes: dim light, or darkness seen by darkvision (2024)."""
@@ -877,12 +1048,12 @@ class Battle:
             cache[key] = max((o.reach_sq for o in melee), default=0)
         return cache[key]
 
-    def move_tree(self, f: Fighter, budget: int | None = None, *, risk: float = 0.5) -> dict:
+    def move_tree(self, f: Fighter, budget: int | None = None, *, risk: float = 0.5, through: set | None = None) -> dict:
         blocked, occupied = set(), set()
         for x in self.on_field():
             if x is f:
                 continue
-            hostile = x.side != f.side and x.state in ("fighting", "fleeing", "surrendered")
+            hostile = x.team != f.team and x.state in ("fighting", "fleeing", "surrendered")
             for c in x.cells:
                 (blocked if hostile else occupied).add(c)
         fire = {c for z in self.zones if z.kind == "fire" for c in z.cells}
@@ -890,7 +1061,9 @@ class Battle:
             budget = f.move_left // 2 if self.dragging(f) else f.move_left
         return grid.paths(self.field, (f.x, f.y), f.sq, budget, blocked=blocked,
                           occupied=occupied, threats=self.threats(f), risk=risk, crawling="prone" in f.conditions,
-                          hazard=fire)
+                          hazard=fire, flying=f.fly_speed > 0, climber=f.climb_speed > 0, swimmer=f.swim_speed > 0,
+                          jump=(0, 0) if "prone" in f.conditions or self.held_by(f) or self.dragging(f) else f.jump,
+                          through=through)
 
     def occupied_by_others(self, f: Fighter) -> set:
         return {c for x in self.on_field() if x is not f for c in x.cells}
@@ -930,11 +1103,20 @@ class Battle:
             if f.speed <= 0 and not free:
                 break
             new_cells = grid.cells(sq[0], sq[1], f.sq)
-            cost = 0 if free else (10 if "prone" in f.conditions or any(self.field.difficult(*c) for c in new_cells
-                                                                       if c not in f.cells) else 5)
+            ground = f.fly_speed <= 0
+            leap = max(abs(sq[0] - f.x), abs(sq[1] - f.y))
+            if leap > 1:  # a long jump: each foot costs a foot, whatever it passes over
+                cost = 0 if free else leap * grid.SQUARE_FT
+            else:
+                entering = [c for c in new_cells if c not in f.cells] or new_cells
+                cost = 0 if free else grid.step_feet(self.field, entering, crawling="prone" in f.conditions,
+                                                     flying=not ground, climber=f.climb_speed > 0,
+                                                     swimmer=f.swim_speed > 0)
             if heavy and not free:
                 cost *= 2
             if cost > f.move_left and not free:
+                break
+            if not free and not self._may_go(f, sq, leap, cost):
                 break
             if provoke and not free and not f.disengaged:
                 there = (sq[0], sq[1], f.sq)
@@ -955,7 +1137,7 @@ class Battle:
             before = (f.x, f.y)
             f.x, f.y = sq
             f.move_left -= cost
-            f.moved_feet += grid.SQUARE_FT
+            f.moved_feet += grid.SQUARE_FT * max(1, leap)
             walked.append(sq)
             n += 1
             for x in held:  # the held come along, into the square just left
@@ -966,13 +1148,176 @@ class Battle:
             if f.hidden and not any(self.field.hiding[c] for c in f.cells):
                 if any(self.can_see(e, f) for e in self.enemies_of(f) if e.standing and self.field.cover(e.space, f.space) < grid.HALF):
                     f.hidden = 0
+            if leap > 1 and not free and any(self.field.difficult(*c) for c in f.cells) and \
+                    not self.check(f, "acrobatics", 10, "Landing on rough ground"):
+                f.conditions["prone"] = -1
+                self._event("prone", who=f.id)
+                self.say(f"{f.the_name} lands badly on the rough ground and goes sprawling.", "warn")
+                break
             if self._zones_on(f, start=False):
                 break  # caught in a web
+            if any(x.readied for x in self.fighters):
+                self._readied(f)
+                if not f.active or "unconscious" in f.conditions:
+                    break
         if walked:
             self._event("move", who=f.id, path=[start] + walked)
         self._sync_grapples(f)
         self._follow_auras()
         return n
+
+    def _may_go(self, f: Fighter, sq: tuple[int, int], leap: int, cost: int) -> bool:
+        """The checks a way can ask for (2024): clearing a low thing in a leap (Athletics, DC 10), or swimming against
+        a current (Athletics, DC 15). A failure spends the effort and ends the move where it is."""
+        if leap > 1:
+            dx, dy = (sq[0] - f.x) // leap, (sq[1] - f.y) // leap
+            over = [(f.x + dx * i, f.y + dy * i) for i in range(1, leap)]
+            low = next((c for c in over if self.field.climb[c]), None)
+            if low is not None and not self.check(f, "athletics", 10, "Clearing it in a leap"):
+                f.move_left = max(0, f.move_left - cost)
+                self.say(f"{f.the_name} leaps for it, catches the {self.field.describe(*low)} and comes down short.",
+                         "warn")
+                return False
+            return True
+        if f.swim_speed <= 0 and f.fly_speed <= 0 and any(self.field.rough_water[c] for c in grid.cells(sq[0], sq[1], f.sq)
+                                                          if c not in f.cells):
+            if not self.check(f, "athletics", 15, "Swimming against the current"):
+                f.move_left = max(0, f.move_left - cost)
+                self.say(f"The current is too strong for {f.the_name}, who makes no headway.", "warn")
+                return False
+        return True
+
+    def check(self, f: Fighter, skill: str, dc: int, why: str = "") -> bool:
+        """An ability check in a fight: a d20 and the skill (exhaustion counted in it) against the DC, in the dice log."""
+        roll = dice.d20(self.rng).natural
+        bonus = f.skill(skill)
+        self.dice_say(f"{why or skill.title()} ({f.name}): {roll} {'+' if bonus >= 0 else '-'} {abs(bonus)} = "
+                      f"{roll + bonus} vs DC {dc}")
+        return roll + bonus >= dc
+
+    def object_at(self, cell: tuple[int, int]) -> dict | None:
+        """A thing on the field that can be broken: a door, a barrel, a table... with its AC and hit points (data/rules.json
+        objects "terrain"), kept while the fight lasts."""
+        if not self.field.in_bounds(*cell):
+            return None
+        tid = self.field.name(*cell)
+        spec = self.t.rules.get("objects", {}).get("terrain", {}).get(tid)
+        if spec is None:
+            return None
+        store = self.__dict__.setdefault("objects", {})
+        if cell not in store:
+            substance, size, resilient, becomes = spec
+            store[cell] = {"name": self.field.describe(*cell), "ac": hazards.object_ac(self.t, substance),
+                           "hp": dice.roll(hazards.object_hp(self.t, size, resilient), self.rng).total, "becomes": becomes}
+        return store[cell]
+
+    def attack_object(self, f: Fighter, opt: AttackOption, cell: tuple[int, int]) -> bool:
+        """Strike a thing (an attack of the Attack action): beat its AC to hurt it; at 0 hit points it is broken and
+        the square opens. Poison and psychic damage do nothing to things."""
+        obj = self.object_at(cell)
+        if obj is None or self.object_problem(f, opt, cell) or not self._use_attack(f):
+            return False
+        self._spend_shot(f, opt)
+        f.hidden = 0
+        roll = dice.d20(self.rng).natural
+        total = roll + opt.bonus
+        hit = roll == 20 or (roll != 1 and total >= obj["ac"])
+        self.dice_say(f"{f.name} → {obj['name']}, {opt.name}: {roll} {signed_mod(opt.bonus)} = {total} vs AC {obj['ac']}"
+                      f" — {'hit' if hit else 'miss'}")
+        self._event("attack", by=f.id, to=None, hit=hit, crit=roll == 20, how=opt.kind, melee=opt.is_melee, weapon=opt.name,
+                    dtype=opt.damage_type, armoured=False, cell=list(cell))
+        if hit and not hazards.object_immune(self.t, opt.damage_type):
+            obj["hp"] -= dice.roll(opt.damage, self.rng, double_dice=roll == 20).total
+            if obj["hp"] <= 0:
+                becomes = obj["becomes"] if obj["becomes"] != "ground" else (self.field.ground or "rubble")
+                self.field.set_terrain(*cell, becomes if becomes in self.t.terrain.index else "rubble")
+                self.__dict__["objects"].pop(cell, None)
+                self._event("broken", cell=list(cell))
+                self.say(f"{f.the_name} smashes the {obj['name'].lower()}.", "system")
+        self._after_action(f)
+        return True
+
+    def object_problem(self, f: Fighter, opt: AttackOption, cell: tuple[int, int]) -> str | None:
+        """Why this attack cannot strike the thing on that square (None if it can)."""
+        if not opt.available:
+            return opt.reason or "not possible"
+        if not self.has_action(f):
+            return "no action left this turn"
+        g = max(grid.gap(f.space, (cell[0], cell[1], 1)), f.z // grid.SQUARE_FT)
+        if opt.is_melee:
+            return None if g <= opt.reach_sq else "out of reach"
+        if g * grid.SQUARE_FT > (opt.range or DEFAULT_RANGE.get(opt.kind, (60, 120)))[1]:
+            return "out of range"
+        if not self.field.line_clear(f.x + f.sq / 2, f.y + f.sq / 2, cell[0] + 0.5, cell[1] + 0.5, set(f.cells) | {cell},
+                                     terrain_only=True):
+            return "no clear line"
+        return None
+
+    def breakables(self, f: Fighter) -> dict:
+        """The things `f` could strike now: {square: the best attack for it} (weapons only, no spells)."""
+        weapons = [o for o in self.attack_options(f) if o.available and o.kind in ("melee", "ranged")
+                   and not o.extra.get("area") and not o.extra.get("single_save")]
+        if not weapons or not self.has_action(f):
+            return {}
+        reach = max(max(o.reach_sq for o in weapons if o.is_melee) if any(o.is_melee for o in weapons) else 0,
+                    max(((o.range or (0, 0))[1] // grid.SQUARE_FT) for o in weapons if not o.is_melee)
+                    if any(not o.is_melee for o in weapons) else 0)
+        spec = self.t.rules.get("objects", {}).get("terrain", {})
+        out = {}
+        for x in range(max(0, f.x - reach), min(self.field.width, f.x + f.sq + reach)):
+            for y in range(max(0, f.y - reach), min(self.field.height, f.y + f.sq + reach)):
+                if self.field.name(x, y) not in spec:
+                    continue
+                fits = [o for o in weapons if self.object_problem(f, o, (x, y)) is None]
+                if fits:
+                    out[(x, y)] = max(fits, key=lambda o: (o.is_melee, _avg(o.damage)))
+        return out
+
+    def _spend_shot(self, att: Fighter, opt: AttackOption) -> None:
+        """An arrow or a bolt from the quiver, a thrown weapon out of the hand (it lies on the field after)."""
+        if opt.ammo_def and att.char:
+            ammo = next((i for i in att.char.inventory if i.def_id == opt.ammo_def), None)
+            if ammo is not None:
+                remove_item(att.char, ammo.uid, 1)
+        if opt.key.startswith("throw") and att.char and opt.item_uid is not None:
+            thrown = remove_item(att.char, opt.item_uid, 1)
+            if thrown is not None:
+                self.thrown.append(thrown)
+
+    def do_fly(self, f: Fighter, feet: int) -> bool:
+        """Rise (or come down, negative) by this many feet, at the cost of as much movement."""
+        feet = int(feet) // grid.SQUARE_FT * grid.SQUARE_FT
+        if f.fly_speed <= 0 or not feet or abs(feet) > f.move_left or f.z + feet < 0 or not f.active:
+            return False
+        to = f.z + feet
+        if not f.disengaged:  # out of reach upwards is still out of reach: they strike as it goes
+            for e in self.enemies_of(f):
+                if (e.state == "fighting" and e.can_opportunity and not e.incapacitated and e.standing
+                        and self.gap(e, f) <= self.reach_of(e) and self.can_see(e, f)
+                        and max(grid.gap(e.space, f.space), abs(e.z - to) // grid.SQUARE_FT) > self.reach_of(e)):
+                    self._opportunity(e, f)
+                    if not f.active or "unconscious" in f.conditions or f.z == 0 and to > 0 and "prone" in f.conditions:
+                        return True  # brought down before it got away
+        f.move_left -= abs(feet)
+        start = f.z
+        f.z = to
+        self._event("fly", who=f.id, z=f.z, before=start)
+        if f.active and any(x.readied for x in self.fighters):
+            self._readied(f)  # coming down into a readied blow
+        self._check_end()
+        return True
+
+    def _fall(self, f: Fighter) -> None:
+        """A flier knocked down, senseless or held still falls (unless it can hover): 1d6 for every 10 feet, and Prone
+        if it hurt (2024)."""
+        feet, f.z = f.z, 0
+        self._event("fall", who=f.id, feet=feet)
+        expr = hazards.falling(self.t, feet)
+        self.say(f"{f.the_name} falls {feet} feet.", "danger" if f.side == PARTY else "info")
+        if expr:
+            self._hit(None, f, dice.roll(expr, self.rng).total, "bludgeoning", crit=False, weapon="fall")
+            if f.active or f.state == "down":
+                f.conditions["prone"] = -1
 
     def held_by(self, f: Fighter) -> list[Fighter]:
         return [x for x in self.fighters if x.grappled_by == f.id and x.active]
@@ -1287,7 +1632,7 @@ class Battle:
     def in_reach(self, f: Fighter, opt: AttackOption, target: Fighter, *, at: tuple[int, int] | None = None) -> tuple[bool, str]:
         """Whether an attack of this kind reaches the target from where `f` stands (or would stand)."""
         space = (at[0], at[1], f.sq) if at is not None else f.space
-        g = grid.gap(space, target.space)
+        g = max(grid.gap(space, target.space), abs(f.z - target.z) // grid.SQUARE_FT)
         if opt.is_melee:
             if g > opt.reach_sq:
                 return False, "out of reach"
@@ -1306,8 +1651,10 @@ class Battle:
             return "no action left this turn"
         if not target.active and target.state != "down":
             return "not in the fight"
-        if target.side == f.side:
+        if target.team == f.team:
             return "on your side"
+        if query.source(f, "charmed") == target.id and "charmed" in f.conditions:
+            return "charmed: you will not harm them"
         ok, why = self.in_reach(f, opt, target)
         if not ok:
             return why
@@ -1315,7 +1662,7 @@ class Battle:
 
     def targets_for(self, f: Fighter, opt: AttackOption) -> list[Fighter]:
         """Who this fighter could attack with this option right now, from where they stand."""
-        return [x for x in self.enemies_of(f) + [y for y in self.side(FOE if f.side == PARTY else PARTY) if y.state == "down"]
+        return [x for x in self.enemies_of(f) + [y for y in self.fighters if y.team != f.team and y.state == "down"]
                 if self.in_reach(f, opt, x)[0]]
 
     # ------------------------------------------------------------------ resolving attacks
@@ -1328,10 +1675,11 @@ class Battle:
         """A friend of the attacker on the far side of the target (the DMG's flanking rule): both beside it, on
         opposite sides or corners, both able to see it and neither of them helpless. None if there is none."""
         a_space = space or att.space
-        if grid.gap(a_space, target.space) != 1 or att.incapacitated or not self.can_see(att, target):
+        if grid.gap(a_space, target.space) != 1 or abs(att.z - target.z) >= grid.SQUARE_FT or att.incapacitated \
+                or not self.can_see(att, target):
             return None
         for x in self.allies_of(att):
-            if x is att or not x.standing or x.incapacitated or x.state != "fighting":
+            if x is att or not x.standing or x.incapacitated or x.state != "fighting" or abs(x.z - target.z) >= grid.SQUARE_FT:
                 continue
             if grid.flanks(a_space, x.space, target.space) and self.can_see(x, target):
                 return x
@@ -1396,7 +1744,7 @@ class Battle:
         att.helped = False
         if target.marked:
             target.marked = False  # spent on this roll, hit or miss
-        target.buffs = [bf for bf in target.buffs if bf.get("distracted") != att.side]
+        target.buffs = [bf for bf in target.buffs if bf.get("distracted") != att.team]
         if att.hidden:
             att.hidden = 0
         armor = target.armor_name("torso")
@@ -1407,14 +1755,7 @@ class Battle:
         notes = list(why) + ([grid.COVER_WORDS[cover]] if cover else [])
         self.dice_say(f"{att.name} → {target.name}, {opt.name}{mode}: {natural} {signed_mod(opt.bonus + bless)} = {total} vs AC {ac}"
                       f" — {'critical!' if crit else ('hit' if hit else 'miss')}" + (f" [{', '.join(notes)}]" if notes else ""))
-        if opt.ammo_def and att.char:
-            ammo = next((i for i in att.char.inventory if i.def_id == opt.ammo_def), None)
-            if ammo is not None:
-                remove_item(att.char, ammo.uid, 1)
-        if opt.key.startswith("throw") and att.char and opt.item_uid is not None:
-            thrown = remove_item(att.char, opt.item_uid, 1)
-            if thrown is not None:
-                self.thrown.append(thrown)
+        self._spend_shot(att, opt)
         if not hit:
             weapon = opt.name
             lines = self.t.combat_text
@@ -1582,7 +1923,7 @@ class Battle:
             if left <= 0:
                 continue
             for opt in self.legendary_options(f):
-                targets = [t for t in self.targets_for(f, opt) if t.active and t.side != f.side]
+                targets = [t for t in self.targets_for(f, opt) if t.active and t.team != f.team]
                 if targets:
                     f.creature.uses["legendary_actions"] = left - 1
                     self.say(f"{f.the_name} strikes out of turn. <dim>(Legendary Action)</>", "danger")
@@ -1869,7 +2210,7 @@ class Battle:
         """Who the Help action can be for (2024): a friend beside you who is down (first aid) or asleep (shaken awake),
         or an enemy beside you, distracted so that a friend's next attack on it has advantage."""
         out = []
-        for x in self.side(f.side):
+        for x in self.team(f.team):
             if x is f or self.gap(f, x) > 1:
                 continue
             if x.state == "down" or x.active and ("unconscious" in x.conditions or "incapacitated" in x.conditions):
@@ -1895,15 +2236,15 @@ class Battle:
                 self.say(f"{target.the_name} is no longer bleeding out.", "good")
             else:
                 self.say(f"{f.the_name} fumbles at the wound; the blood keeps coming.", "danger")
-        elif target.side == f.side and ("unconscious" in target.conditions or "incapacitated" in target.conditions):
+        elif target.team == f.team and ("unconscious" in target.conditions or "incapacitated" in target.conditions):
             for cid in ("unconscious", "incapacitated"):
                 durations.remove(target, cid)
             self.say(f"{f.the_name} shakes {target.the_name} awake.", "good")
         else:
-            foe = target if target.side != f.side else min(
+            foe = target if target.team != f.team else min(
                 (e for e in self.enemies_of(f) if e.standing and self.gap(f, e) <= 1), key=lambda e: e.hp, default=None)
             if foe is not None:
-                durations.buff(foe, {"distracted": f.side, "source": f"help:{f.id}"}, durations.until(self, f, "turn_start"))
+                durations.buff(foe, {"distracted": f.team, "source": f"help:{f.id}"}, durations.until(self, f, "turn_start"))
                 self.say(f"{f.the_name} feints at {foe.the_name}, opening a way for a friend.", "system")
         self._after_action(f)
 
@@ -2086,7 +2427,7 @@ class Battle:
 
     def item_targets(self, f: Fighter) -> list[Fighter]:
         """Who you can reach to pour a potion into or bind: yourself and anyone beside you."""
-        return [x for x in self.side(f.side) if (x.active or x.state == "down") and (x is f or self.gap(f, x) <= 1)]
+        return [x for x in self.team(f.team) if (x.active or x.state == "down") and (x is f or self.gap(f, x) <= 1)]
 
     def fast_hands(self, f: Fighter) -> bool:
         """A thief can use an object with a bonus action (Cunning Action)."""
@@ -2205,12 +2546,15 @@ class Battle:
     def spirit_targets(self, f: Fighter) -> list[Fighter]:
         """Who the spiritual weapon can reach this turn: it moves twenty feet and strikes someone beside it."""
         tok = next((t for t in self.tokens if t.owner == f.id and t.kind == "spiritual_weapon"), None)
-        if tok is None:
+        if tok is None or self.antimagic([(tok.x, tok.y)]):
             return []
-        return [e for e in self.enemies_of(f) if grid.gap((tok.x, tok.y, 1), e.space) <= 5]
+        return [e for e in self.enemies_of(f) if grid.gap((tok.x, tok.y, 1), e.space) <= 5 and not self.antimagic(e.cells)]
 
     def _spirit_strike(self, f: Fighter, tok: Token, target: Fighter) -> None:
         # The weapon flies to a free square beside its target (twenty feet at most), then strikes.
+        if self.antimagic(target.cells) or self.antimagic([(tok.x, tok.y)]):
+            self.say("The spiritual weapon wavers and fades where no magic works.", "system")
+            return
         best = None
         occ = {c for x in self.on_field() for c in x.cells}
         for c in target.cells:
@@ -2256,6 +2600,13 @@ class Battle:
         """A creature casts one of its spells, with its own save DC and spell attack."""
         spell = self.t.spells[sid]
         if sid not in self.creature_spells(f):
+            return False
+        if self.antimagic(f.cells) or (target is not None and self.antimagic(target.cells)):
+            return False
+        mode = spell["target"]  # the same reach as anyone's spell
+        if mode in ("enemy", "ally", "downed_ally", "dead_ally") and (target is None or target not in self.spell_targets(f, sid)):
+            return False
+        if mode in ("point", "direction") and (point is None or point not in self.spell_points(f, sid)):
             return False
         sc = f.cdef["spellcasting"]
         level = spell["level"]
@@ -2329,11 +2680,15 @@ class Battle:
                 left = int(p.get("left", p.get("value", 1)))
                 ok, why = self._casting_time_ok(f, self.t.spells[p["spell"]])
                 out.append((f"charge:{it.uid}:{p['spell']}", left > 0 and ok, why if left > 0 else "no charges left until dawn"))
+        if self.antimagic(f.cells):
+            out = [(sid, False, "magic does not work here") for sid, _, _ in out]
         return out
 
     def _casting_time_ok(self, f: Fighter, spell: dict) -> tuple[bool, str]:
         """The action economy of spells: a bonus-action spell needs the bonus action, an ordinary one the action;
         and after a bonus-action spell only a cantrip may be cast with the action (and the other way round)."""
+        if self.antimagic(f.cells):
+            return False, "magic does not work here"
         if spell.get("cast") == "bonus":
             if f.bonus <= 0:
                 return False, "no bonus action left"
@@ -2369,11 +2724,11 @@ class Battle:
         if target == "enemy":
             return [x for x in self.enemies_of(f) if near(x)]
         if target == "ally":
-            return [x for x in self.side(f.side) if (x.active or x.state == "down") and near(x)]
+            return [x for x in self.team(f.team) if (x.active or x.state == "down") and near(x)]
         if target == "downed_ally":
-            return [x for x in self.side(f.side) if x.state == "down" and not x.stable and near(x)]
+            return [x for x in self.team(f.team) if x.state == "down" and not x.stable and near(x)]
         if target == "dead_ally":
-            return [x for x in self.side(f.side) if x.state == "dead" and self.round - x.died_round <= 10 and near(x)
+            return [x for x in self.team(f.team) if x.state == "dead" and self.round - x.died_round <= 10 and near(x)
                     and x.char is not None]
         return []
 
@@ -2430,7 +2785,7 @@ class Battle:
         if f.char is None or not f.has_trait("sculpt_spells") or spell.get("school") != "evocation":
             return set()
         n = 1 + (level if level is not None else spell["level"])
-        friends = [x for x in victims if x.side == f.side]
+        friends = [x for x in victims if x.team == f.team]
         return {x.id for x in friends[:n]}
 
     def in_area(self, cells: list[tuple[int, int]], who: str = "all", caster: Fighter | None = None) -> list[Fighter]:
@@ -2439,16 +2794,24 @@ class Battle:
         for x in self.fighters:
             if not (x.active or x.state == "down"):
                 continue
-            if who == "enemies" and caster is not None and x.side == caster.side:
+            if who == "enemies" and caster is not None and x.team == caster.team:
                 continue
-            if who == "allies" and caster is not None and x.side != caster.side:
+            if who == "allies" and caster is not None and x.team != caster.team:
                 continue
             if any(c in cs for c in x.cells):
                 out.append(x)
         return out
 
+    def antimagic(self, cells) -> bool:
+        """Whether any of these squares lies in an antimagic area (no spell works there, 2024)."""
+        cells = set(cells)
+        return any(z.kind == "antimagic" and z.cells & cells for z in self.zones)
+
     def cast_problem(self, f: Fighter, sid: str, target: Fighter | None = None, point: tuple[int, int] | None = None) -> str | None:
         spell = self.t.spells[spell_id(sid)]
+        if self.antimagic(f.cells) or (target is not None and self.antimagic(target.cells)) or \
+                (point is not None and self.antimagic([point])):
+            return "magic does not work there"
         if sid.startswith("throw:"):
             if f.char is None or f.char.item(int(sid.split(":")[1])) is None:
                 return "you have none left"
@@ -2657,10 +3020,12 @@ class Battle:
                 continue
             if z.friends_safe and z.owner is not None:
                 owner = next((x for x in self.fighters if x.id == z.owner), None)
-                if owner is not None and owner.side == f.side:
+                if owner is not None and owner.team == f.team:
                     continue
             if f.id in z.struck:
                 continue
+            if z.kind != "antimagic" and (z.spell or z.kind in ("guardians", "guardian")) and self.antimagic(f.cells):
+                continue  # a spell laid on the ground does nothing where magic does not work
             if z.kind == "web":
                 stopped = self._zone_catch(f, z) or stopped
             elif z.kind in ("fire", "guardians", "guardian") and z.damage:

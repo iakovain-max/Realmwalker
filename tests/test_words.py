@@ -219,15 +219,21 @@ def test_a_knowledge_roll_comes_before_what_it_told_you(tables):
     b.set_class("wizard")
     b.set_background("sage")
     hero = b.build()
-    for seed in range(20):
+    for seed in range(20):  # (the Study action, 2024)
         battle = Battle(tables, [hero], spawn_group(tables, "bandits", RNG(seed, "f")), Env(), RNG(seed, "b"))
         battle.start("A test.")
+        me = battle.fighters[0]
+        battle.order = [me.id] + [x for x in battle.order if x != me.id]
+        battle.turn, battle.turn_started = 0, True
+        battle._start_of_turn(me)
+        battle.do_study(me, battle.fighters[1])
         texts = [m[0] if isinstance(m, tuple) else getattr(m, "text", str(m)) for m in battle.log]
         for i, t in enumerate(texts):
             if " knows " in t:
                 assert i > 0 and "vs DC" in texts[i - 1], texts[max(0, i - 2): i + 1]
+                assert "AC" in t
                 return
-    pytest.skip("nobody knew anything in twenty fights")
+    raise AssertionError("nobody knew anything in twenty fights")
 
 
 def test_the_days_walk_remembers_the_weather_that_held_it(tables, data):

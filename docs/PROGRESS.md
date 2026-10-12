@@ -38,6 +38,49 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Local session, 2026-10-12 (night): Dice & Destiny part C — enemies that think, and more ways to move — branch `dlc/01-dice-destiny`
+
+**What is different when you play**
+- **Enemies fight with everything they have, and choose.** Every creature now knows all its attacks and spells and
+  weighs each by the same numbers you see (the chance to hit or to fail the save, the damage after resistances, a
+  knock-down or a paralysis that would take): a ghoul opens with its paralysing claw, a giant spider throws its web
+  first, a cult fanatic holds a fighter with Hold Person, bandits draw their scimitars when cornered. Beasts go for
+  the nearest and weakest; clever foes gang up on one of you; the cleverest go for your casters and healers.
+  Creatures say how they fight (brute, skirmisher, archer, controller, leader, support, lurker, solo): archers and
+  casters start at the back and keep their distance, brutes charge in, leaders hang back and strike where their band
+  is already at work. And they use more than blows: they **search** when you hide, a lurker **hides** and waits for
+  you, they **knock someone down** when friends beside the victim will pile on, **grab** a spellcaster who would
+  step away, **help** a stronger friend by distracting you, stand **on guard** to keep a spell going, **ready** a
+  shot rather than run in, and **break down a door** between them and you.
+- **Your companions on Auto use their whole class**: a cleric turns undead that come close, or shares out Preserve
+  Life; a war cleric strikes again with the bonus action; a fighter catches a Second Wind when hurt and surges when
+  it is hard going; a rogue slips away with Cunning Action. They also choose any spell they know by what it would do.
+- **New moves on the battle map** (2024 rules): climb onto a table, a fence, barrels or a low wall, or swim deep
+  water (each costs double, unless the creature climbs or swims by nature, like the giant spider); leap a stream, a
+  chasm, a campfire or a fence (as far as your Strength score in feet after a 10-foot run, half standing; landing on
+  rough ground can knock you down, and catching a fence stops you short); a river's current can be too strong. New
+  actions: **Study** (k) to recall what a creature is and what it can do (instead of the free roll at the start),
+  **Search** (o) for hidden foes, **Ready** (q) a blow or a shot for the first enemy to come near.
+- **Fliers fly**: the stirge and the young dragon go over water and low things; a dragon breathes, then rises just
+  out of reach of your swords (rising away from you gives you a free swing at it) and comes down to bite. The map
+  shows a flier above its shadow with its height in feet. Knocked down or senseless, a flier falls. Your companions
+  on Auto wait under it with a blow ready for when it comes down. Anyone who can fly does it with **Fly (v)**.
+- **Break (x)**: strike a door, barrel, table, cart or crate instead of a creature (one of your attacks).
+- A charmed creature fights for whoever charmed it, and comes back to its side when the charm ends. No spell works
+  in an antimagic area, nor do spiritual weapons or guardians there.
+- Someone knocked senseless in the middle of a move, in a friend's square, ends up lying there (as the rules say).
+
+**How to test**: fight in a town or a farm (tables, fences, barrels) and watch the enemy and your companions climb
+and leap; set your companions to Auto against skeletons with a cleric in the party; hide in brush and see the
+enemy search for you.
+
+**Proof, not hope**: a new tool, `tools/arena.py`, fights every creature in four set-ups and reports what it used
+and how long each enemy turn took to think; a test now fails if any creature never uses one of its attacks or
+spells, if the tactics ever try something the rules forbid, or if a turn takes too long (an enemy turn takes about
+a fiftieth of a second; the slowest about a tenth).
+
+**Balance**: the bands of `tools/balance.py` hold.
+
 ### Local session, 2026-10-12 (evening): Dice & Destiny part B — the 2024 rules and the 2025 creatures — branch `dlc/01-dice-destiny`
 
 **What is different when you play**

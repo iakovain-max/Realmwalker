@@ -1178,3 +1178,24 @@ def test_pointing_at_an_enemy_shows_where_to_flank_it(make_app):
     assert (8, 6) in ov["flank"] and (8, 5) not in ov["flank"]
     render(app)
     assert app.error_count == 0
+
+
+def test_taking_a_prisoner_along_moves_on_to_the_loot(make_app):
+    """Once every prisoner's fate is settled (taken along to the watch, say), the aftermath goes on to the loot; it
+    once stayed on the prisoners for ever after one was taken along."""
+    from realmwalker.game.fight import Aftermath
+    from realmwalker.rules.creatures import spawn
+    from realmwalker.core.rng import RNG
+    from realmwalker.ui.screens.aftermath import AftermathScreen
+
+    app = make_app()
+    start_small_world(app)
+    thug = spawn(app.tables, "thug", RNG(1, "t"), 1)
+    after = Aftermath(outcome="victory", text="x", xp=0, notes=[], loot=[], money=0, captives=[thug])
+    app.game.aftermath = after
+    screen = AftermathScreen(app, app.game, after)
+    screen.choose_fate("capture")
+    if thug.uid in after.fates:
+        assert screen.phase == "loot"
+    else:
+        assert screen.phase == "captives"

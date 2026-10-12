@@ -22,7 +22,9 @@ ENEMY_STEP_SECONDS = 0.35
 ACTIONS = [
     ("a", "Attack", "attack"), ("c", "Spells", "cast"), ("u", "Item", "item"), ("b", "Abilities", "ability"),
     ("r", "Dash", "dash"), ("w", "Disengage", "disengage"), ("d", "Dodge", "dodge"), ("n", "Hide", "hide"),
-    ("h", "Help", "help"), ("s", "Shove/Grab", "shove"), ("p", "Parley", "parley"), ("y", "Surrender", "surrender"),
+    ("h", "Help", "help"), ("s", "Shove/Grab", "shove"), ("k", "Study", "study"), ("o", "Search", "search"),
+    ("q", "Ready", "ready"), ("x", "Break", "break"), ("v", "Fly", "fly"), ("p", "Influence", "parley"),
+    ("y", "Surrender", "surrender"),
     ("f", "Flee", "flee"), ("z", "Auto", "auto"), ("e", "End turn", "end"),
 ]
 ACTION_HELP = {
@@ -36,9 +38,19 @@ ACTION_HELP = {
     "disengage": "Use your action to back away carefully: no opportunity attacks this turn.",
     "dodge": "Use your action to defend: attacks against you have disadvantage until your next turn.",
     "hide": "Slip out of sight (behind cover, in brush or darkness): your next attack has advantage.",
-    "help": "Give a friend advantage against an enemy beside you, or stop a fallen friend beside you bleeding out.",
+    "help": "Distract an enemy beside you (a friend's next attack on it has advantage), stop a fallen friend beside you "
+            "bleeding out, or shake a sleeping friend awake.",
+    "study": "Call to mind what a creature is (Arcana, History, Nature or Religion): how hard it is to hit and kill, "
+             "and what it shrugs off. You know anything you have killed before.",
+    "search": "Look hard for anyone hiding (Perception against their Stealth).",
+    "ready": "Wait with a blow: strike with your reaction at the first enemy to come within reach, or into range "
+             "and sight, before your next turn.",
     "shove": "Knock someone beside you down, push them back five feet, or grab and hold them.",
-    "parley": "Talk them down, threaten them, or calm wild animals.",
+    "break": "Strike at a thing instead of a creature: smash a door, a barrel, a table or a cart that is in the way "
+             "(one of your attacks).",
+    "fly": "Rise into the air or come down (it costs as much movement). Up out of their reach, swords cannot touch "
+           "you; arrows and spells still can.",
+    "parley": "Influence them: talk them down, threaten them, or calm wild animals.",
     "surrender": "Give up. Robbers and soldiers may let you live; beasts and the dead will not.",
     "flee": "Leave the field from its edge (the marked squares). Whoever is left on it, fights on.",
     "auto": "Let the game play this turn for this character, the way it plays the enemy's.",
@@ -46,7 +58,8 @@ ACTION_HELP = {
 }
 ACTION_ICONS = {"attack": "attack", "cast": "cast", "item": "item", "ability": "ability", "dash": "travel",
                 "disengage": "leave", "dodge": "defend", "hide": "sneak", "help": "health", "shove": "shove",
-                "parley": "parley", "surrender": "surrender", "flee": "flee", "auto": "wait", "end": "rest"}
+                "parley": "parley", "surrender": "surrender", "flee": "flee", "auto": "wait", "end": "rest",
+                "study": "journal", "search": "search", "ready": "look", "break": "attack", "fly": "travel"}
 HEALTH_WORDS = [(0.99, "unhurt", "good"), (0.75, "scratched", "good"), (0.5, "wounded", "warn"),
                 (0.25, "badly hurt", "danger"), (0.0, "near death", "danger")]
 LOG_COLORS = {"danger": "danger", "good": "good", "dice": "info", "flavor": "dim", "system": "dim",
@@ -223,19 +236,35 @@ class BattleScreen(Screen):
                            if sq != (f.x, f.y) and grid.can_stop(sq, f.sq, occ)}
         return self._reach
 
+    def options(self, f: Fighter) -> list:
+        """Everything `f` can do now (rules/engine/actions.options), worked out once for each state of the fight."""
+        from realmwalker.rules.engine import actions
+
+        key = (f.id, f.x, f.y, f.action, f.bonus, f.attacks_left, f.move_left, len(self.battle.events), self.battle.round)
+        if getattr(self, "_options_key", None) != key:
+            self._options_key = key
+            self._options = actions.options(self.battle, f)
+        return self._options
+
     def available(self, f: Fighter, action: str) -> tuple[bool, str]:
         b = self.battle
+        opts = self.options(f)
         if action == "attack":
             return (b.has_action(f), "no action left this turn")
         if action == "cast":
-            return (bool(b.spell_options(f)), f"{f.name} knows no spells")
+            return (any(o.kind == "cast" for o in opts), f"{f.name} knows no spells")
         if action == "item":
-            hands = f.action > 0 or b.fast_hands(f)
-            return (hands and bool(b.usable_items(f)), "nothing to use" if hands else "no action left")
+            items = [o for o in opts if o.kind == "item"]
+            return (any(o.available for o in items), "nothing to use" if not items else "no action left")
         if action == "ability":
-            return (any(ok for _, _, ok, _ in b.class_abilities(f)), "nothing to call on now")
-        if action in ("dash", "disengage", "dodge", "help", "shove", "parley"):
+            return (any(o.available for o in opts if o.kind == "ability"), "nothing to call on now")
+        if action in ("dash", "disengage", "dodge", "help", "shove", "parley", "search", "ready"):
             return (f.action > 0, "no action left this turn")
+        if action == "study":
+            if f.action <= 0:
+                return False, "no action left this turn"
+            unknown = [e for e in b.enemies_of(f) if e.creature is not None and e.creature.def_id not in b.known]
+            return (bool(unknown), "you know all of them")
         if action == "hide":
             if f.action <= 0 and not ("cunning_action" in (f.char.features if f.char else []) and f.bonus > 0):
                 return False, "no action left this turn"
@@ -243,6 +272,14 @@ class BattleScreen(Screen):
             return (why is None, why or "")
         if action == "flee":
             return (b.can_leave(f), "reach the edge of the field first")
+        if action == "break":
+            o = next((o for o in opts if o.kind == "object"), None)
+            return (o is not None and o.available, o.why if o is not None else "nothing here can be broken")
+        if action == "fly":
+            moves = [o for o in opts if o.kind == "move"]
+            if not moves:
+                return False, f"{f.name} cannot fly"
+            return (any(o.available for o in moves), moves[0].why)
         return True, ""
 
     def pick_action(self, action: str) -> None:
@@ -321,10 +358,41 @@ class BattleScreen(Screen):
         elif action == "help":
             allies = b.help_targets(f)
             if not allies:
-                self.app.notify("Nobody to help: stand beside a fallen friend, or beside an enemy a friend is fighting.", "warn")
+                self.app.notify("Nobody to help: stand beside an enemy, a fallen friend or a sleeping one.", "warn")
                 return
             self.pending["value"] = None
             self._open_targets("help", allies)
+        elif action == "study":
+            seen = {}
+            for e in b.enemies_of(f):
+                if e.creature is not None and e.creature.def_id not in b.known:
+                    seen.setdefault(e.creature.def_id, e)
+            self.pending["value"] = None
+            self._open_targets("study", sorted(seen.values(), key=lambda e: b.gap(f, e)))
+        elif action == "search":
+            self._do(b.do_search, f)
+        elif action == "break":
+            things = next((o.value for o in self.options(f) if o.kind == "object"), {}) or {}
+            rows = []
+            for cell, o in sorted(things.items(), key=lambda kv: grid.gap(f.space, (kv[0][0], kv[0][1], 1))):
+                ft = max(1, grid.gap(f.space, (cell[0], cell[1], 1))) * grid.SQUARE_FT
+                rows.append((f"The {b.field.describe(*cell).lower()} <dim>({_way(f, cell)}, {ft} ft; {o.name})</>", cell,
+                             True, ""))
+            self._open_choices("break", rows)
+        elif action == "fly":
+            rows = []
+            for feet in (10, 20, 30):
+                if feet <= f.move_left:
+                    rows.append((f"Fly up {feet} feet <dim>(to {f.z + feet} ft)</>", feet, True, ""))
+            if f.z > 0:
+                rows.append((f"Come down to the ground <dim>({f.z} ft of movement)</>", -f.z, f.z <= f.move_left,
+                             "not enough movement left"))
+                if f.z > 10:
+                    rows.append(("Come down 10 feet", -10, f.move_left >= 10, "not enough movement left"))
+            self._open_choices("fly", rows)
+        elif action == "ready":
+            self._open_choices("ready", [("Strike the first enemy to come within reach", "reach", True, ""),
+                                         ("Shoot the first enemy to come into range and sight", "sight", True, "")])
         elif action == "shove":
             rows = [("Knock them down", "prone", True, ""), ("Push them back five feet", "push", True, ""),
                     ("Grab and hold them", "grapple", True, "")]
@@ -457,6 +525,8 @@ class BattleScreen(Screen):
                 self._open_targets("war_priest", b.targets_for(f, opts[0]) if opts else [])
             else:
                 self._do(b.do_ability, f, value)
+        elif kind == "ready":
+            self._do(b.do_ready, f, value)
         elif kind == "shove":
             if value == "escape":
                 self._do(b.do_escape, f)
@@ -470,6 +540,15 @@ class BattleScreen(Screen):
             self._open_targets("shove", targets)
         elif kind == "parley":
             self._do(b.do_parley, f, value)
+        elif kind == "break":
+            opt = b.breakables(f).get(value)
+            if opt is None:
+                self.app.notify("It is out of reach now.", "warn")
+                self.mode = "idle"
+                return
+            self._do(b.attack_object, f, opt, value)
+        elif kind == "fly":
+            self._do(b.do_fly, f, value)
 
     def confirm_target(self) -> None:
         f = self.actor()
@@ -488,6 +567,8 @@ class BattleScreen(Screen):
             self._do(b.do_item, f, value, target)
         elif kind == "help":
             self._do(b.do_help, f, target)
+        elif kind == "study":
+            self._do(b.do_study, f, target)
         elif kind == "shove":
             if value == "grapple":
                 self._do(b.do_grapple, f, target)
@@ -1172,3 +1253,14 @@ class BattleScreen(Screen):
         if self.mode == "aim":
             return [KeyEvent(k) for k in ("enter", "enter", "right", "left", "escape")]
         return [KeyEvent(k) for k in ("enter", "enter", "1", "down", "right", "escape")]
+
+
+def _way(f: Fighter, cell: tuple[int, int]) -> str:
+    """Which way a square lies from a fighter, in words (north is up the screen)."""
+    dx = cell[0] - (f.x + (f.sq - 1) / 2)
+    dy = cell[1] - (f.y + (f.sq - 1) / 2)
+    if abs(dx) < 0.5 and abs(dy) < 0.5:
+        return "here"
+    ns = "north" if dy < -0.5 else ("south" if dy > 0.5 else "")
+    ew = "west" if dx < -0.5 else ("east" if dx > 0.5 else "")
+    return ns + ("-" if ns and ew else "") + ew

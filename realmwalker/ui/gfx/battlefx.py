@@ -57,6 +57,7 @@ class BattleBoard:
         self.tracks: dict[int, list] = {}  # fighter -> [(start time, path, seconds a square)]
         self.tok_tracks: dict[int, list] = {}
         self.fell: dict[int, float] = {}
+        self.lifts: dict[int, tuple[float, float, float, float]] = {}  # fighter -> (start, from z, to z, seconds)
         self.prev: dict[int, str] = {}
         self.busy_until = 0.0
         self.art = None
@@ -135,6 +136,9 @@ class BattleBoard:
             self.sounds += [(t0 if moment == "start" else max(t0, impact), sid) for moment, sid in battle_sounds(ev)]
         if not animate:
             self.sounds += timeline(events, now)
+            for ev in events:
+                if ev["kind"] in ("fly", "fall"):
+                    self.lifts.pop(ev["who"], None)  # (drawn at its height as it is)
         end = max([e["t0"] + e["dur"] * (0.55 if e["kind"] == "float" else 1.0) for e in self.fx] + [t, now])
         for tracks in list(self.tracks.values()) + list(self.tok_tracks.values()):
             for t0, path, step in tracks:
@@ -167,6 +171,13 @@ class BattleBoard:
             step = STEP if k == "move" else PUSH_STEP
             self.tracks.setdefault(who, []).append((t, path, step))
             return t + step * (len(path) - 1)
+        if k in ("fly", "fall"):  # rising or coming down, or falling out of the sky
+            who = ev["who"]
+            start = self.height(battle.fighter(who), t) if who in self.lifts else float(ev.get("before", ev.get("feet", 0)))
+            end = float(ev.get("z", 0)) if k == "fly" else 0.0
+            dur = 0.3 if k == "fly" else 0.22
+            self.lifts[who] = (t, start, end, dur)
+            return t + dur
         if k == "leave":
             self.fx.append({"kind": "float", "who": ev["who"], "text": "gone", "color": (210, 200, 180), "t0": t,
                             "dur": FLOAT, "size": 16})
@@ -352,6 +363,21 @@ class BattleBoard:
                     return (path[0][0] + (path[-1][0] - path[0][0]) * p, path[0][1] + (path[-1][1] - path[0][1]) * p)
             self.tok_tracks[tok.id] = []
         return float(tok.x), float(tok.y)
+
+    def height(self, f, now: float) -> float:
+        """A fighter's height above the ground in feet as drawn now (rising and falling are animated)."""
+        lift = self.lifts.get(f.id)
+        if lift is None:
+            return float(f.z)
+        t0, a, b, dur = lift
+        if now <= t0:
+            return a
+        return b if now >= t0 + dur else a + (b - a) * (now - t0) / dur
+
+    def lift_px(self, f, now: float) -> float:
+        """How far above its shadow a flier is drawn: a little for every five feet, so that height reads at a glance
+        without hiding the squares above it."""
+        return min(self.height(f, now), 60.0) / 5.0 * self.T * 0.13
 
     def place(self, f, now: float) -> tuple[float, float, float]:
         """Pixel centre-bottom (feet) and size of a fighter now, moved by any lunge, shake or dodge."""
@@ -703,8 +729,13 @@ class BattleBoard:
                     tint = tuple(v * (1 - 0.35 * p) for v in tint)
             elif "prone" in f.conditions and f.state == "fighting":
                 angle = 70.0 if f.side == "party" else -70.0
+            up = self.lift_px(f, now) if f.state in ("fighting", "fleeing") else 0.0
             canvas.under(Image("bshadow", _shadow_image, (cx - s * 0.36, fy - s * 0.14, s * 0.72, s * 0.22),
-                               rgba=(255, 255, 255, 150)))
+                               rgba=(255, 255, 255, 150 if not up else 95)))
+            if up:  # aloft: the shadow stays on the ground, the figure above it, and how high beside it
+                canvas.over(Text(cx + s * 0.42, fy - 1, f"{int(round(self.height(f, now) / 5.0)) * 5} ft", "prose_bold",
+                                 max(10, min(13, T // 4)), (190, 220, 255, 255), anchor="mb", outline=True, shadow=False))
+                fy -= up
             if f.state == "dead" and f.id in self.fell:
                 canvas.under(Image("bblood", _blood_image, (cx - s * 0.4, fy - s * 0.16, s * 0.8, s * 0.24),
                                    rgba=(140, 20, 16, 170)))

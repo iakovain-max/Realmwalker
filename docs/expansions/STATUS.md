@@ -1,10 +1,10 @@
 # Expansion programme – status
 
-Current: 01 Dice & Destiny · part C (reactions and Tactics 2.0) · branch dlc/01-dice-destiny · step 4 (build) of §5.1
-On GitHub (main): World Variety · Clearing the decks (§0.4) · Dice & Destiny parts A and B (the rules kernel, the 2024
-  rules, the 2025 creatures) and C.1 (reactions that ask)
-Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; 62 done, 20 adapted,
-  16 omitted (`tools/codex/coverage.py --dlc`); Expansion 1's 242 rules entries are marked at the end of Part E
+Current: 01 Dice & Destiny · part D (treasure and encounters) · branch dlc/01-dice-destiny · step 4 (build) of §5.1
+On GitHub (main): World Variety · Clearing the decks (§0.4) · Dice & Destiny parts A, B and C (the rules kernel, the
+  2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0 and its proof in the arena)
+Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; 68 done, 22 adapted,
+  16 omitted (`tools/codex/coverage.py --dlc`); Expansion 1's other rules entries are marked at the end of Part E
 Assumptions waiting for Anton:
 - The Player2 AI writer is removed (tagged `before-ai-removal`); its text is replaced everywhere by the game's own
   words, strengthened where they were thin.
@@ -15,8 +15,8 @@ Assumptions waiting for Anton:
   elf lineage spells marked to work from Expansion 3.
 Ideas for later:
 - (none yet)
-Next session starts at: Expansion 1, part C, task C.2 (elevation, flying, senses, changing sides, antimagic, the
-  missing actions) in docs/expansions/01-dice-destiny.md
+Next session starts at: Expansion 1, part D, task D.1 (the magic item framework: attunement, charges, activation,
+  curses, identification, artifacts, sentient items) in docs/expansions/01-dice-destiny.md
 
 ## Done
 
@@ -27,6 +27,7 @@ Next session starts at: Expansion 1, part C, task C.2 (elevation, flying, senses
 | 2026-10-12 | Dice & Destiny part A: content packs and provenance, the expansion shelf and screen, the codex of all three books | `dlc/01-dice-destiny` |
 | 2026-10-12 | Dice & Destiny B.2 and most of B.1: the rules kernel (conditions as data, the numbers in one place, traits and hooks) | `dlc/01-dice-destiny` |
 | 2026-10-12 | Dice & Destiny part B: spells and abilities as definitions (2024), the 2024 rules glossary, the 35 creatures from their 2025 stat blocks; C.1 reactions that ask | `dlc/01-dice-destiny` |
+| 2026-10-12 | Dice & Destiny part C: changing sides, senses, Study/Search/Ready, fliers and falling, antimagic, breakable things, climbing, swimming and leaping; one list of actions; Tactics 2.0; the arena and its proof | `dlc/01-dice-destiny` |
 
 ## Notes for the next session
 
@@ -35,3 +36,6 @@ Next session starts at: Expansion 1, part C, task C.2 (elevation, flying, senses
 - `docs/expansions/codex/README.md` fixes the codex's shape (one entry per line, `<kind>:<slug>` ids, PDF pages).
 - Edit scripts on this PC: heredocs into the Windows Python halve backslashes, and Python's text mode writes CRLF;
   write scripts to files and keep line endings (see the memory note on Windows editing).
+- `tools/arena.py` (every creature, four scenarios) shows what the tactics use and how long a turn takes; after
+  adding creatures or spells, run it and keep `tests/test_tactics_coverage.py` green (every option chosen, nothing
+  refused, the time budget; a reasoned exception goes in its NOT_CHOSEN).

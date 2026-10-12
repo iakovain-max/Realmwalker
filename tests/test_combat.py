@@ -1050,3 +1050,109 @@ def test_dodging_helps_against_fire_and_exhaustion_hurts_saves(tables):
     c.exhaustion = 3
     r = query.save_roll(b, f, "wis")
     assert r.roll.mode == "" and r.bonus == fresh - 6
+
+
+def test_the_auto_judges_abilities_by_what_they_do(tables):
+    """A companion on Auto takes its class abilities from the one list of actions and uses each for what it does:
+    Second Wind when hurt, Turn Undead when the dead come close, Cunning Action to get away, War Priest's blow."""
+    from realmwalker.rules import tactics
+    from realmwalker.rules.engine import resources
+
+    c = hero(tables, "fighter")
+    b = battle(tables, [c], foes(tables, "wolf"), spots={0: (3, 4), 1: (4, 4)})
+    f = b.side(PARTY)[0]
+    f.auto = True
+    turn_of(b, f)
+    f.hp = 2
+    tactics.take_turn(b, f)
+    assert c.uses["second_wind"] == 0 and f.hp > 2
+
+    cleric = hero_at(tables, "cleric", 2)
+    b = battle(tables, [cleric], foes(tables, "skeleton", "skeleton", "zombie"),
+               spots={0: (3, 4), 1: (5, 4), 2: (5, 5), 3: (6, 3)})
+    f = b.side(PARTY)[0]
+    f.auto = True
+    turn_of(b, f)
+    tactics.take_turn(b, f)
+    assert cleric.uses.get("channel_divinity", 1) == 0  # turned them
+
+    rogue = hero_at(tables, "rogue", 2, seed=4)
+    b = battle(tables, [rogue], foes(tables, "ogre"), spots={0: (3, 4), 1: (4, 4)})
+    f, ogre = b.fighters
+    f.auto = True
+    turn_of(b, f)
+    f.hp = max(1, f.max_hp // 3)
+    tactics.take_turn(b, f)
+    assert b.gap(f, ogre) > 1 and f.disengaged and not any(e["kind"] == "opportunity" for e in b.events)
+
+    war = hero_at(tables, "cleric", 1, "war", seed=5)
+    resources.fill(war, tables)  # (the domain was set after the character was made)
+    war.spells["slots_used"] = [9] * 9  # no spell to put first
+    b = battle(tables, [war], foes(tables, "ogre"), spots={0: (3, 4), 1: (4, 4)})
+    f = b.side(PARTY)[0]
+    f.auto = True
+    turn_of(b, f)
+    before = war.uses.get("war_priest")
+    tactics.take_turn(b, f)
+    assert before and war.uses["war_priest"] == before - 1
+
+
+def test_climbing_onto_a_table_and_swimming_cost_double_unless_one_has_the_speed(tables):
+    from realmwalker.rules.engine import durations
+
+    fld = walls(tables, table=[(3, 4)], deep_water=[(3, 6)])
+    b = battle(tables, [hero(tables)], foes(tables, "wolf"), field=fld, spots={0: (2, 4), 1: (10, 1)})
+    f = b.side(PARTY)[0]
+    turn_of(b, f)
+    reach = b.reachable(f)
+    assert reach[(3, 4)].cost == 10  # up onto the table (2024 Climbing)
+    assert reach[(3, 6)].cost == 15  # a step, then a square of swimming
+    durations.buff(f, {"climb": 30, "swim": 30, "source": "test"})
+    reach = b.reachable(f)
+    assert reach[(3, 4)].cost == 5 and reach[(3, 6)].cost == 10
+
+
+def test_a_long_jump_clears_a_stream_after_a_run_and_half_as_far_standing(tables):
+    fld = walls(tables, river=[(5, y) for y in range(8)] + [(6, y) for y in range(8)])
+    c = hero(tables)
+    c.abilities["str"] = 16  # a running leap of 16 feet, 8 standing
+    b = battle(tables, [c], foes(tables, "wolf"), field=fld, spots={0: (2, 4), 1: (10, 1)})
+    f = b.side(PARTY)[0]
+    turn_of(b, f)
+    assert f.jump == (8, 16)
+    tree = b.move_tree(f)
+    assert tree[(7, 4)].cost == 25 and grid.route(tree, (7, 4))[-2:] == [(4, 4), (7, 4)]  # ten feet run, then over
+    speed = f.move_left
+    assert b.do_move(f, (7, 4))
+    assert (f.x, f.y) == (7, 4) and f.move_left == speed - 25
+    b2 = battle(tables, [c], foes(tables, "wolf"), field=fld, spots={0: (4, 4), 1: (10, 1)})
+    f2 = b2.side(PARTY)[0]
+    turn_of(b2, f2)
+    assert grid.route(b2.move_tree(f2), (7, 4))[:1] != [(7, 4)]  # no run-up: eight feet will not clear ten
+
+
+def test_a_leap_can_fall_short_or_land_badly_and_a_current_can_be_too_strong(tables):
+    fld = walls(tables, fence=[(4, y) for y in range(8)], mud=[(6, 4), (7, 4)], river=[(8, y) for y in range(8)])
+    c = hero(tables)
+    c.abilities["str"] = 16
+    b = battle(tables, [c], foes(tables, "wolf"), field=fld, spots={0: (2, 4), 1: (11, 1)})
+    f = b.side(PARTY)[0]
+    turn_of(b, f)
+    b.check = lambda *a, **k: False  # every check fails
+    path = [(3, 4), (5, 4)]  # a run, then a leap over the fence
+    left = f.move_left
+    b.walk(f, path)
+    assert (f.x, f.y) == (3, 4) and f.move_left == left - 5 - 10  # caught the fence: the leap's effort spent
+    b.check = lambda *a, **k: True
+    f.move_left = 30
+    b.walk(f, [(5, 4)])
+    assert (f.x, f.y) == (5, 4)
+    b.check = lambda *a, **k: False
+    f.move_left = 30
+    b.walk(f, [(7, 4)])  # over the mud, onto mud: a bad landing
+    assert (f.x, f.y) == (7, 4) and "prone" in f.conditions
+    f.x, f.y = 7, 4
+    f.conditions.pop("prone", None)
+    f.move_left = 30
+    b.walk(f, [(8, 4)])  # into the river, against the current
+    assert (f.x, f.y) == (7, 4)

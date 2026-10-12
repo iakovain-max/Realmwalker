@@ -89,7 +89,7 @@ def _listens(role: str, owner, ev) -> bool:
         return owner is ev.target
     if role == "ally":
         t = ev.target
-        return t is not None and owner is not t and owner.side == t.side and owner.active
+        return t is not None and owner is not t and owner.team == t.team and owner.active
     return True
 
 

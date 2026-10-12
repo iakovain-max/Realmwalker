@@ -44,6 +44,6 @@ def regeneration(b, f, ev, hook, buff) -> None:
 @handler("leader_falls")
 def leader_falls(b, f, ev, hook, buff) -> None:
     """The others take it hard when the leader goes down."""
-    for other in b.side(f.side):
+    for other in b.team(f.team):
         if other.active and other is not f:
             b._morale_check(other, "leader")

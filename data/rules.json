@@ -51,6 +51,12 @@
     "healers_kit": "healer's kit", "disguise_kit": "disguise kit",
     "navigators_tools": "navigator's tools"
   },
+  "_study": "The Study action (2024, PHB PDF page 378): the skill by kind of creature (anything else: Arcana), and the DC: base + per_cr x Challenge Rating, at most max (the PHB's scale: easy 10, medium 15, hard 20, very hard 25).",
+  "study": {
+    "skills": {"beast": "nature", "dragon": "nature", "ooze": "nature", "plant": "nature", "humanoid": "history",
+               "giant": "history", "undead": "religion", "fiend": "religion", "celestial": "religion"},
+    "dc": {"base": 10, "per_cr": 0.5, "max": 25}
+  },
   "_hazards": "The 2024 Rules Glossary's hazards and objects (PHB PDF pages 365, 370, 379), read by rules/engine/hazards.py.",
   "hazards": {
     "falling": {"feet_per_die": 10, "die": 6, "max_dice": 20},
@@ -61,6 +67,17 @@
     "ac": {"cloth": 11, "paper": 11, "rope": 11, "crystal": 13, "glass": 13, "ice": 13, "wood": 15, "stone": 17, "iron": 19,
            "steel": 19, "mithral": 21, "adamantine": 23},
     "hp": {"tiny": ["1d4", "2d4"], "small": ["1d6", "3d6"], "medium": ["1d8", "4d8"], "large": ["1d10", "5d10"]},
-    "immune": ["poison", "psychic"]
+    "immune": ["poison", "psychic"],
+    "_terrain": "What can be broken on a battlefield: terrain id -> [substance, size, resilient, what it becomes ('ground': the field's own ground)].",
+    "terrain": {
+      "door_closed": ["wood", "medium", true, "door_open"], "door_locked": ["wood", "medium", true, "door_open"],
+      "barrels": ["wood", "medium", false, "ground"], "crates": ["wood", "medium", false, "ground"],
+      "table": ["wood", "medium", false, "ground"], "chair": ["wood", "small", false, "ground"],
+      "stool": ["wood", "small", false, "ground"], "bench": ["wood", "medium", false, "ground"],
+      "cart": ["wood", "large", false, "ground"], "sacks": ["cloth", "medium", false, "ground"],
+      "shelf": ["wood", "medium", false, "ground"], "trunk": ["wood", "small", true, "ground"],
+      "chest": ["wood", "small", true, "chest_open"], "fence": ["wood", "medium", false, "ground"],
+      "woodpile": ["wood", "medium", false, "ground"], "haystack": ["cloth", "large", false, "ground"]
+    }
   }
 }

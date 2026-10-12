@@ -261,13 +261,19 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
                 if f.state not in ("fighting", "fleeing", "down", "dead", "fled", "surrendered"):
                     fail(f"{f.name} is in an unknown state {f.state!r}")
                 if f.state in ("fighting", "fleeing", "down", "surrendered"):
-                    # On the grid: everyone on the field, on ground that can be stood on, nobody on anybody else.
+                    # On the grid: everyone on the field, on ground that can be stood on (or climbed onto, or swum;
+                    # a flier aloft over water and low things), nobody on anybody else unless the rules allow it
+                    # (stopped on the way through: Prone; one above the other).
+                    fld = b.field
                     for c in f.cells:
-                        if not b.field.in_bounds(*c) or not b.field.walk[c]:
+                        if not fld.in_bounds(*c) or not (fld.walk[c] or fld.climb[c] or fld.swim[c]
+                                                         or (f.z > 0 and fld.fly[c])):
                             fail(f"{f.name} stands in a wall or off the field at {c} in battle")
-                        if c in taken:
-                            fail(f"{f.name} and {taken[c]} share the square {c} in battle")
-                        taken[c] = f.name
+                        other = taken.get(c)
+                        if other is not None and not f.z and not other.z and "prone" not in f.conditions \
+                                and "prone" not in other.conditions:
+                            fail(f"{f.name} and {other.name} share the square {c} in battle")
+                        taken.setdefault(c, f)
                 if f.move_left < 0:
                     fail(f"{f.name} has walked further than they could ({f.move_left} feet left)")
         _check_factions(game, fail)
