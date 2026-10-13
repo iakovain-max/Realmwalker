@@ -297,7 +297,7 @@ class CharacterScreen(Screen):
         if s.lineage:
             notes.append(f"<loot>{s.lineage['name']}</> <dim>(lineage)</>: {s.lineage['text']}")
         for f in s.features():
-            if f["id"] in ("subclass", "asi") or (f.get("rule") == "fighting_style" and c.feats):
+            if f["id"] in ("subclass", "asi", "epic_boon") or (f.get("rule") == "fighting_style" and c.feats):
                 continue
             if f["id"] == "weapon_mastery" and c.masteries:
                 names = ", ".join(f"{t.items.get(w)['name']} ({t.items.get(w)['mastery'].title()})"

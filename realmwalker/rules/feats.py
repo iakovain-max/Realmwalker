@@ -205,7 +205,7 @@ def options(tables, char: Character, fid: str, key: str, choices: dict) -> list[
     if kind in ("spell_list", "ability"):
         return list(spec["from"])
     if kind == "increase":
-        out = [a for a in spec["from"] if char.abilities.get(a, 10) < 20]
+        out = [a for a in spec["from"] if char.abilities.get(a, 10) < int(spec.get("max", 20))]
         if spec.get("untrained_save"):
             out = [a for a in out if a not in char.saves]
         return out
@@ -289,7 +289,7 @@ def grant(char: Character, tables, fid: str, choices: dict | None = None) -> dic
         kind = spec["kind"]
         for x in vals:
             if kind == "increase":
-                raise_ability(char, x)
+                raise_ability(char, x, top=int(spec.get("max", 20)))
             elif kind in ("skill", "skill_or_tool", "tool", "skill_or_expertise", "expertise"):
                 if x in tables.rules["skills"]:
                     if kind == "expertise" or kind == "skill_or_expertise" and x in char.skills:
@@ -326,12 +326,13 @@ def grant(char: Character, tables, fid: str, choices: dict | None = None) -> dic
     return picked
 
 
-def raise_ability(char: Character, ability: str, amount: int = 1) -> None:
-    """An ability raised by a feat (at most 20); a hardier body has more hit points at every level."""
+def raise_ability(char: Character, ability: str, amount: int = 1, top: int = 20) -> None:
+    """An ability raised by a feat (at most 20, or 30 by an epic boon); a hardier body has more hit points at every
+    level."""
     from realmwalker.rules.character import modifier
 
     before = modifier(char.abilities[ability])
-    char.abilities[ability] = min(20, char.abilities[ability] + amount)
+    char.abilities[ability] = min(max(top, char.abilities[ability]), char.abilities[ability] + amount)
     if ability == "con":
         gain = (modifier(char.abilities[ability]) - before) * char.level
         char.max_hp += gain

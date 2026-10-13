@@ -22,7 +22,11 @@
         {"level": 5, "id": "extra_attack", "name": "Extra Attack", "text": "Attack twice when you take the Attack action.", "rule": "extra_attack"},
         {"level": 6, "id": "asi", "name": "Ability Score Improvement", "text": "Fighters train harder than anyone: +2 to one ability, or +1 to two."},
         {"level": 8, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two."},
-        {"level": 9, "id": "indomitable", "name": "Indomitable", "text": "Once per long rest, reroll a failed saving throw.", "rule": "indomitable"}
+        {"level": 9, "id": "indomitable", "name": "Indomitable", "text": "Once per long rest, reroll a failed saving throw.", "rule": "indomitable"},
+        {"level": 12, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two, or a feat."},
+        {"level": 14, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two, or a feat."},
+        {"level": 16, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two, or a feat."},
+        {"level": 19, "id": "epic_boon", "name": "Epic Boon", "text": "A gift of legend: an epic boon (or another feat), each raising one ability as high as 30."}
       ],
       "subclasses": {
         "champion": {"name": "Champion", "text": "Raw skill and endurance.", "features": [
@@ -65,7 +69,10 @@
         {"level": 6, "id": "expertise_2", "name": "Expertise", "text": "Two more skills gain double proficiency.", "rule": "expertise"},
         {"level": 7, "id": "evasion", "name": "Evasion", "text": "Take no damage from area effects you save against, and half if you fail.", "rule": "evasion"},
         {"level": 8, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two."},
-        {"level": 10, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two."}
+        {"level": 10, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two."},
+        {"level": 12, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two, or a feat."},
+        {"level": 16, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two, or a feat."},
+        {"level": 19, "id": "epic_boon", "name": "Epic Boon", "text": "A gift of legend: an epic boon (or another feat), each raising one ability as high as 30."}
       ],
       "subclasses": {
         "thief": {"name": "Thief", "text": "Burglar, climber, pickpocket.", "features": [
@@ -95,8 +102,11 @@
       "suggested": {"str": 14, "dex": 8, "con": 13, "int": 10, "wis": 15, "cha": 12},
       "choices_at_1": ["subclass"],
       "spellcasting": {"ability": "wis", "type": "prepared",
-        "cantrips": [3, 3, 3, 4, 4, 4, 4, 4, 4, 5],
-        "slots": [[2], [3], [4, 2], [4, 3], [4, 3, 2], [4, 3, 3], [4, 3, 3, 1], [4, 3, 3, 2], [4, 3, 3, 3, 1], [4, 3, 3, 3, 2]]},
+        "cantrips": [3, 3, 3, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+        "slots": [[2], [3], [4, 2], [4, 3], [4, 3, 2], [4, 3, 3], [4, 3, 3, 1], [4, 3, 3, 2], [4, 3, 3, 3, 1], [4, 3, 3, 3, 2],
+                  [4, 3, 3, 3, 2, 1], [4, 3, 3, 3, 2, 1], [4, 3, 3, 3, 2, 1, 1], [4, 3, 3, 3, 2, 1, 1],
+                  [4, 3, 3, 3, 2, 1, 1, 1], [4, 3, 3, 3, 2, 1, 1, 1], [4, 3, 3, 3, 2, 1, 1, 1, 1],
+                  [4, 3, 3, 3, 3, 1, 1, 1, 1], [4, 3, 3, 3, 3, 2, 1, 1, 1], [4, 3, 3, 3, 3, 2, 2, 1, 1]]},
       "features": [
         {"level": 1, "id": "spellcasting", "name": "Spellcasting", "text": "Pray each morning for the prayers your god will grant today.", "rule": "spellcasting"},
         {"level": 1, "id": "subclass", "name": "Divine Domain", "text": "Your god's aspect: Life or War."},
@@ -104,7 +114,10 @@
         {"level": 4, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two."},
         {"level": 5, "id": "destroy_undead", "name": "Destroy Undead", "text": "Weak undead that you turn are destroyed outright.", "rule": "destroy_undead"},
         {"level": 8, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two."},
-        {"level": 10, "id": "divine_intervention", "name": "Divine Intervention", "text": "Beg your god to act. It rarely listens.", "rule": "divine_intervention"}
+        {"level": 10, "id": "divine_intervention", "name": "Divine Intervention", "text": "Beg your god to act. It rarely listens.", "rule": "divine_intervention"},
+        {"level": 12, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two, or a feat."},
+        {"level": 16, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two, or a feat."},
+        {"level": 19, "id": "epic_boon", "name": "Epic Boon", "text": "A gift of legend: an epic boon (or another feat), each raising one ability as high as 30."}
       ],
       "subclasses": {
         "life": {"name": "Life Domain", "text": "Healers and midwives of the faith.", "armor": ["heavy"], "features": [
@@ -136,14 +149,20 @@
       "suggested": {"str": 8, "dex": 14, "con": 13, "int": 15, "wis": 12, "cha": 10},
       "choices_at_1": [],
       "spellcasting": {"ability": "int", "type": "spellbook",
-        "cantrips": [3, 3, 3, 4, 4, 4, 4, 4, 4, 5],
-        "slots": [[2], [3], [4, 2], [4, 3], [4, 3, 2], [4, 3, 3], [4, 3, 3, 1], [4, 3, 3, 2], [4, 3, 3, 3, 1], [4, 3, 3, 3, 2]]},
+        "cantrips": [3, 3, 3, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+        "slots": [[2], [3], [4, 2], [4, 3], [4, 3, 2], [4, 3, 3], [4, 3, 3, 1], [4, 3, 3, 2], [4, 3, 3, 3, 1], [4, 3, 3, 3, 2],
+                  [4, 3, 3, 3, 2, 1], [4, 3, 3, 3, 2, 1], [4, 3, 3, 3, 2, 1, 1], [4, 3, 3, 3, 2, 1, 1],
+                  [4, 3, 3, 3, 2, 1, 1, 1], [4, 3, 3, 3, 2, 1, 1, 1], [4, 3, 3, 3, 2, 1, 1, 1, 1],
+                  [4, 3, 3, 3, 3, 1, 1, 1, 1], [4, 3, 3, 3, 3, 2, 1, 1, 1], [4, 3, 3, 3, 3, 2, 2, 1, 1]]},
       "features": [
         {"level": 1, "id": "spellcasting", "name": "Spellcasting", "text": "Cast spells from your spellbook; copy new ones from scrolls and books.", "rule": "spellcasting"},
         {"level": 1, "id": "arcane_recovery", "name": "Arcane Recovery", "text": "Once a day, after a short rest, recover spent spell slots (total levels up to half your level).", "rule": "arcane_recovery"},
         {"level": 2, "id": "subclass", "name": "Arcane Tradition", "text": "Choose your school: Evocation or Abjuration."},
         {"level": 4, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two."},
-        {"level": 8, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two."}
+        {"level": 8, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two."},
+        {"level": 12, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two, or a feat."},
+        {"level": 16, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two, or a feat."},
+        {"level": 19, "id": "epic_boon", "name": "Epic Boon", "text": "A gift of legend: an epic boon (or another feat), each raising one ability as high as 30."}
       ],
       "subclasses": {
         "evocation": {"name": "School of Evocation", "text": "Fire, frost and lightning.", "features": [

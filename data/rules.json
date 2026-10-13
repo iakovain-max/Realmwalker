@@ -29,9 +29,10 @@
     "survival": {"name": "Survival", "ability": "wis"}
   },
   "point_buy": {"budget": 27, "min": 8, "max": 15, "costs": {"8": 0, "9": 1, "10": 2, "11": 3, "12": 4, "13": 5, "14": 7, "15": 9}},
-  "proficiency_bonus": [2, 2, 2, 2, 3, 3, 3, 3, 4, 4],
-  "xp_for_level": [0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000],
-  "max_level": 10,
+  "proficiency_bonus": [2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6],
+  "xp_for_level": [0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000, 85000, 100000, 120000, 140000, 165000,
+                   195000, 225000, 265000, 305000, 355000],
+  "max_level": 20,
   "_discovery_xp": "Experience for each character, times their level, the first time they enter a region, reach a site (a ruin, a lair, a barrow...) or reach a level under the ground.",
   "discovery_xp": {"region": 10, "site": 25, "deeper": 25, "wonder": 40},
   "carry": {"per_strength": 15, "encumbered_per_strength": 5, "heavily_per_strength": 10},

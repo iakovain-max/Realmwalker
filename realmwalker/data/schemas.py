@@ -544,7 +544,8 @@ FEAT_CHOICE = Obj({"kind": Str(choices=["skill", "skill_or_tool", "tool", "spell
                                          "increase", "damage_type", "skill_or_expertise", "expertise"]),
                    "from": Any_(optional=True), "count": Int(min=1, max=6, optional=True),
                    "level": Int(min=0, max=9, optional=True), "schools": List(Str(max_len=20), optional=True),
-                   "ritual": Bool(optional=True), "untrained_save": Bool(optional=True)})
+                   "ritual": Bool(optional=True), "untrained_save": Bool(optional=True),
+                   "max": Int(min=20, max=30, optional=True)})
 FEATS = Obj({"feats": Map(Obj({"name": Str(max_len=40), "category": Str(choices=["origin", "general", "fighting_style",
                                                                                    "epic"]),
                                "text": Str(max_len=500), "trait": Str(max_len=40, optional=True),
@@ -556,7 +557,8 @@ FEATS = Obj({"feats": Map(Obj({"name": Str(max_len=40), "category": Str(choices=
                                              "tools": List(Str(max_len=40), optional=True),
                                              "save": Str(max_len=20, optional=True)}, optional=True),
                                "spells": List(Str(max_len=40), optional=True)}), min_items=1),
-             "suggest": Map(List(Str(max_len=40)), optional=True)})
+             "suggest": Map(List(Str(max_len=40)), optional=True),
+             "suggest_boon": Map(List(Str(max_len=40)), optional=True)})
 
 STATBLOCK = Obj(
     {
