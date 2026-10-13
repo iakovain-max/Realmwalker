@@ -1,5 +1,6 @@
-"""Character creation in the 2024 order: calling, background, people, the origin's choices (lineage, feats,
-languages, the background's increases, equipment), abilities, skills, identity, looks, starting place, begin.
+"""Character creation in the 2024 order: calling, background, people, the choices they leave (lineage, feats,
+spells, the background's increases, the calling's style and kit, languages, equipment), abilities, every skill and
+tool pick on one checklist, identity, looks, starting place, begin.
 
 Every step starts with a sensible choice already made, so pressing Enter through all of them
 gives a playable character. Tab / Shift+Tab (or clicking a step) moves between steps.
@@ -19,7 +20,7 @@ from realmwalker.ui.input import KeyEvent
 from realmwalker.ui.screens.base import ConfirmBox, Screen
 from realmwalker.ui.widgets import Canvas, TextField
 
-STEPS = ["Calling", "Background", "People", "Origin", "Abilities", "Skills & training", "Who you are", "Looks",
+STEPS = ["Calling", "Background", "People", "Choices", "Abilities", "Skills & tools", "Who you are", "Looks",
          "Where you start", "Begin"]
 CALLING, BACKGROUND, PEOPLE, ORIGIN, ABILITIES_STEP, TRAINING, IDENTITY, LOOKS, START, BEGIN = range(10)
 LISTS = (CALLING, BACKGROUND, PEOPLE)
@@ -60,22 +61,6 @@ class CreationScreen(Screen):
             return list(self.t.backgrounds)
         return []
 
-    def _origin_rows(self) -> list[tuple]:
-        """Rows on the Origin step: the lineage, the species' choices, the origin feats' picks, the background's
-        increases, the two languages, and the equipment or the coin."""
-        b = self.b
-        rows: list[tuple] = []
-        for key, spec in b.species_choices().items():
-            rows.append(("choice", key))
-        for slot in b.feat_slots():
-            rows.append(("feat",) + slot[:4])
-        rows.append(("bonus_mode",))
-        if b.bonus_mode == "2/1":
-            rows += [("bonus", 0), ("bonus", 1)]
-        rows += [("language", 0), ("language", 1)]
-        rows.append(("gear",))
-        return rows
-
     def _refresh_places(self) -> None:
         key = (self.b.background, self.b.race, self.b.culture)
         if self._places_for != key:
@@ -91,28 +76,15 @@ class CreationScreen(Screen):
             return self.world.settlements[self.b.start_settlement].name
         return "a small place nobody has heard of"
 
-    def _training_rows(self) -> list[tuple[str, str]]:
-        """Rows on the Skills & training step: (kind, value)."""
-        rows = [("skill", s) for s in self.b.skill_options()]
-        if self.b.needs_expertise():
-            rows += [("expertise", s) for s in self.b.all_skills()]
-        cls = self.t.classes[self.b.cls]
-        if "fighting_style" in cls["choices_at_1"]:
-            rows.append(("style", ""))
-        if "subclass" in cls["choices_at_1"]:
-            rows.append(("subclass", ""))
-        rows.append(("kit", ""))
-        return rows
-
     def _row_count(self) -> int:
         if self.step in LISTS:
             return len(self._lists())
         if self.step == ORIGIN:
-            return len(self._origin_rows())
+            return max(1, len(self._choice_rows()))
         if self.step == ABILITIES_STEP:
             return 7
         if self.step == TRAINING:
-            return len(self._training_rows())
+            return max(1, len(self._skill_rows()))
         if self.step == IDENTITY:
             return 4
         if self.step == LOOKS:
@@ -180,12 +152,6 @@ class CreationScreen(Screen):
         else:
             self.go(self.step + 1)
 
-    def _toggle(self, kind: str, skill: str) -> None:
-        ok = self.b.toggle_skill(skill) if kind == "skill" else self.b.toggle_expertise(skill)
-        if not ok:
-            limit = self.b.skill_count() if kind == "skill" else self.b.needs_expertise()
-            self.app.notify(f"You can only choose {limit}. Untick one first.", "warn")
-
     def adjust(self, delta: int) -> None:
         """Left/right on the current row."""
         row = self.cursor[self.step]
@@ -197,7 +163,7 @@ class CreationScreen(Screen):
                 self.b.set_culture(cultures[i])
                 self.name_field.value = self.b.name
         elif self.step == ORIGIN:
-            self.adjust_origin(row, delta)
+            self.cycle_choice(row, delta)
         elif self.step == ABILITIES_STEP:
             if row == 0:
                 methods = list(METHODS)
@@ -211,17 +177,7 @@ class CreationScreen(Screen):
             elif not self.b.change(ab, delta):
                 self.app.notify("Scores run from 8 to 15, and you have 27 points to spend.", "warn")
         elif self.step == TRAINING:
-            kind, _ = self._training_rows()[row]
-            cls = self.t.classes[self.b.cls]
-            if kind == "style":
-                styles = self.b.styles()
-                self.b.fighting_style = styles[(styles.index(self.b.fighting_style) + delta) % len(styles)]
-                self.b.style_chosen = True
-            elif kind == "subclass":
-                subs = list(cls["subclasses"])
-                self.b.subclass = subs[(subs.index(self.b.subclass) + delta) % len(subs)]
-            elif kind == "kit":
-                self.b.set_kit((self.b.kit + delta) % len(cls["kits"]))
+            self.cursor[TRAINING] = self._skill_column_jump(row, delta)
         elif self.step == IDENTITY:
             if row == 1:
                 self.b.sex = SEXES[(SEXES.index(self.b.sex) + 1) % 2]
@@ -235,44 +191,6 @@ class CreationScreen(Screen):
                 self.write_backstory()
         elif self.step == LOOKS:
             self.change_look(row, delta)
-
-    def adjust_origin(self, row: int, delta: int) -> None:
-        b = self.b
-        rows = self._origin_rows()
-        if not rows:
-            return
-        r = rows[max(0, min(row, len(rows) - 1))]
-
-        def cycle(opts, current):
-            if not opts:
-                return current
-            i = opts.index(current) if current in opts else -1
-            return opts[(i + delta) % len(opts)]
-
-        if r[0] == "choice":
-            key = r[1]
-            current = b.lineage if key == "lineage" else b.versatile if key == "versatile" else b.choices.get(key)
-            b.set_choice(key, cycle(b.choice_options(key), current))
-        elif r[0] == "feat":
-            _, source, fid, key, index = r
-            slot = next(x for x in b.feat_slots() if x[0] == source and x[2] == key and x[3] == index)
-            have = b.feat_choices[source].get(key)
-            current = have[index] if index >= 0 and isinstance(have, list) and index < len(have) else have
-            b.set_feat_slot(source, key, index, cycle(slot[4], current))
-        elif r[0] == "bonus_mode":
-            b.set_bonus("1/1/1" if b.bonus_mode == "2/1" else "2/1")
-        elif r[0] == "bonus":
-            pick = list(b.bonus_pick)
-            pick[r[1]] = cycle(b.bg_abilities(), pick[r[1]])
-            if pick[0] == pick[1]:
-                pick[1 - r[1]] = next(a for a in b.bg_abilities() if a != pick[r[1]])
-            b.set_bonus("2/1", pick)
-        elif r[0] == "language":
-            opts = [x for x in b.language_options() if x not in b.languages or b.languages.index(x) == r[1]]
-            b.set_language(r[1], cycle(opts, b.languages[r[1]] if r[1] < len(b.languages) else ""))
-        elif r[0] == "gear":
-            b.take_gold = not b.take_gold
-        self.cursor[ORIGIN] = min(self.cursor[ORIGIN], len(self._origin_rows()) - 1)
 
     def reroll_name(self) -> None:
         self.b.name = self.b.random_name()
@@ -347,9 +265,9 @@ class CreationScreen(Screen):
         elif ev.key == "enter":
             self.choose()
         elif ev.key == " " and self.step == TRAINING:
-            kind, value = self._training_rows()[self.cursor[TRAINING]]
-            if kind in ("skill", "expertise"):
-                self._toggle(kind, value)
+            self.tick(self.cursor[TRAINING])
+        elif ev.key in ("e", "E") and self.step == TRAINING and self.b.needs_expertise():
+            self.tick_expertise(self.cursor[TRAINING])
         elif ev.key in ("s", "S") and self.step == ABILITIES_STEP:
             self.b.set_method(self.b.score_method if self.b.score_method != "roll" else "array")
             if self.b.score_method == "point_buy":
@@ -544,91 +462,6 @@ class CreationScreen(Screen):
                 f"<loot>{bg['feature']['name']}</>: {bg['feature']['text']}\n\n<dim>Ties:</> {tie}.")
         self._detail(canvas, x + 22, y, w - 22, h, text)
 
-    def _r_origin(self, canvas, x, y, w, h) -> None:
-        """The origin's choices, one a row: ◄ value ►, with what the chosen one does."""
-        from realmwalker.rules import feats
-
-        b = self.b
-        t = self.t
-        rows = self._origin_rows()
-        sel = min(self.cursor[ORIGIN], len(rows) - 1)
-        label_w = 26
-        detail = ""
-        for i, r in enumerate(rows):
-            ry = y + i
-            if ry >= y + h - 4:
-                break
-            label, value, about = self._origin_row(r)
-            selected = i == sel
-            if selected:
-                detail = about
-            over = canvas.hit(x, ry, w, 1, action=lambda i=i: self._click_origin(i),
-                              right_action=lambda i=i: self.adjust_origin(i, -1),
-                              wheel=lambda d, i=i: self.adjust_origin(i, d))
-            bg = colors.HILITE_BG if selected else (colors.HOVER_BG if over else None)
-            if bg:
-                canvas.fill(x, ry, w, 1, bg)
-            canvas.text(x, ry, ("► " if selected else "  ") + label, colors.SELECT_FG if selected else colors.FG, bg,
-                        max_width=label_w)
-            canvas.markup(x + label_w, ry, f"◄ {value} ►", bg=bg, max_width=w - label_w)
-        names = ", ".join(feats.name(t, {"id": fid, "choices": fixed}) for _, fid, fixed in b.origin_feats())
-        info = (f"<dim>Your origin gives:</> <loot>{names}</>\n\n{detail}\n\n"
-                "<dim>↑↓ choose · ←→ or click to change · Enter: next step</>")
-        canvas.wrapped(x, y + len(rows) + 1, info, min(w, 90), max_lines=max(2, h - len(rows) - 1))
-
-    def _click_origin(self, i: int) -> None:
-        if self.cursor[ORIGIN] == i:
-            self.adjust_origin(i, 1)
-        self.cursor[ORIGIN] = i
-
-    def _origin_row(self, r: tuple) -> tuple[str, str, str]:
-        """(label, value, words on it) for a row of the Origin step."""
-        from realmwalker.rules import feats
-
-        b, t = self.b, self.t
-        abil = t.rules["abilities"]
-        if r[0] == "choice":
-            key = r[1]
-            if key == "lineage":
-                lin = (t.races[b.race].get("lineages") or {}).get(b.lineage or "", {})
-                return "Lineage", lin.get("name", "—"), lin.get("text", "")
-            if key == "versatile":
-                d = feats.defs(t)[b.versatile]
-                return "Versatile: origin feat", d["name"], d["text"]
-            v = b.choices.get(key, "")
-            trait = next((x for x in t.races[b.race]["traits"] if x["id"] == key), {})
-            return f"{trait.get('name', key)}: skill", t.rules["skills"].get(v, {}).get("name", v), trait.get("text", "")
-        if r[0] == "feat":
-            _, source, fid, key, index = r
-            ch = b.feat_choices.get(source, {})
-            v = ch.get(key)
-            v = v[index] if index >= 0 and isinstance(v, list) and index < len(v) else v
-            fname = feats.defs(t)[fid]["name"]
-            kind = feats.defs(t)[fid]["choices"][key]["kind"]
-            if kind in ("cantrip", "spell"):
-                sp = t.spells[v] if v in t.spells else {}
-                return f"{fname}: {'cantrip' if kind == 'cantrip' else 'spell'}", sp.get("name", "—"), sp.get("text", "")
-            if kind == "spell_list":
-                return f"{fname}: list", str(v).title(), "Whose spells: the cleric's, the druid's or the wizard's."
-            if kind == "ability":
-                return f"{fname}: casting with", abil.get(v, {}).get("name", str(v)), "The ability its spells are cast with."
-            name = t.rules["skills"][v]["name"] if v in t.rules["skills"] else feats.tool_name(t, str(v))
-            return f"{fname}: {'skill or tool' if kind == 'skill_or_tool' else 'tool' if kind == 'tool' else 'skill'}", \
-                name, feats.defs(t)[fid]["text"]
-        if r[0] == "bonus_mode":
-            return "Background increases", "+2 and +1" if b.bonus_mode == "2/1" else "+1 to each of three", \
-                "Your background raises " + ", ".join(abil[a]["name"] for a in b.bg_abilities()) + "."
-        if r[0] == "bonus":
-            a = b.bonus_pick[r[1]] if len(b.bonus_pick) > r[1] else ""
-            return ("+2 to" if r[1] == 0 else "+1 to"), abil.get(a, {}).get("name", a), ""
-        if r[0] == "language":
-            v = b.languages[r[1]] if r[1] < len(b.languages) else "—"
-            return f"Language {r[1] + 1}", v, "Everyone speaks Common, and two more tongues."
-        bg = t.backgrounds[b.background]
-        if b.take_gold:
-            return "Equipment", f"{money_text(bg['gold'])} instead", "Set out with coin and buy your own."
-        return "Equipment", "the background's gear", f"Its gear and {money_text(bg['money'])}."
-
     def _r_abilities(self, canvas, x, y, w, h) -> None:
         b = self.b
         race_bonus = b.bonus()
@@ -663,56 +496,387 @@ class CreationScreen(Screen):
             canvas.text(x + 36, row, signed(modifier(final[a])), colors.DIM, bg)
         help_text = ("Point buy: scores start at 8 and cost more the higher they go (15 costs 9 points). * marks what a "
                      f"{self.t.classes[b.cls]['name']} most relies on. Your background adds its increases on top "
-                     "(chosen in the Origin step).\n\n"
+                     "(chosen in the Choices step).\n\n"
                      f"Hit points at first level: <good>{b.max_hp()}</>.")
         canvas.wrapped(x, y + 11, help_text, min(w, 70), max_lines=h - 11)
 
-    def _r_training(self, canvas, x, y, w, h) -> None:
-        b = self.b
-        rules = self.t.rules
-        fixed = ", ".join(rules["skills"][s]["name"] for s in b.fixed_skills()) or "none"
-        canvas.markup(x, y, f"<dim>Already known (people and background):</> {fixed}", max_width=w)
-        canvas.markup(x, y + 1, f"Choose <title>{b.skill_count()}</> class skills (Space or click ticks; Enter moves on)"
-                                + (f", then <title>{b.needs_expertise()}</> for Expertise" if b.needs_expertise() else "") + ":",
-                      max_width=w)
-        rows = self._training_rows()
-        cls = self.t.classes[b.cls]
-        ry = y + 3
-        for i, (kind, value) in enumerate(rows):
-            if kind == "expertise" and i == len(b.skill_options()):
-                ry += 1  # a gap before the Expertise picks
-            selected = i == self.cursor[TRAINING]
-            over = canvas.hit(x, ry, w, 1, action=lambda i=i: self._click_training(i))
-            bg = colors.HILITE_BG if selected else (colors.HOVER_BG if over else None)
-            mark = "► " if selected else "  "
-            if kind == "skill":
-                on = value in b.class_skills
-                text = f"{mark}[{'x' if on else ' '}] {rules['skills'][value]['name']} <dim>({rules['skills'][value]['ability'].upper()})</>"
-            elif kind == "expertise":
-                on = value in b.expertise
-                text = f"{mark}[{'♦' if on else ' '}] Expertise: {rules['skills'][value]['name']}"
-            elif kind == "style":
-                st = self.t.feats["feats"][b.fighting_style]
-                text = f"{mark}<title>Fighting style:</> ◄ {st['name']} ► <dim>{st['text']}</>"
-            elif kind == "subclass":
-                sub = cls["subclasses"][b.subclass]
-                text = f"{mark}<title>{'Divine domain' if b.cls == 'cleric' else 'Path'}:</> ◄ {sub['name']} ► <dim>{sub['text']}</>"
-            else:
-                kit = cls["kits"][b.kit]
-                items = ", ".join(self.t.items.get(i)["name"] + (f" ×{q}" if q > 1 else "") for i, q in kit["items"])
-                text = f"{mark}<title>Equipment:</> ◄ {kit['name']} ► <dim>{items}</>"
-            if bg:
-                canvas.fill(x, ry, w, 1, bg)
-            canvas.markup(x, ry, text, bg=bg, max_width=w)
-            ry += 1
+    # ------------------------------------------------------------------ step 4: the choices, each with its list
+    def _choice_rows(self) -> list[dict]:
+        """Rows of the Choices step, under their headings: {group, label, value, options [(key, name, words)],
+        taken {key: why it cannot be had here}, set(key)}. Skill and tool picks are on the Skills & tools step."""
+        from realmwalker.rules import feats
 
-    def _click_training(self, i: int) -> None:
-        self.cursor[TRAINING] = i
-        kind, value = self._training_rows()[i]
-        if kind in ("skill", "expertise"):
-            self._toggle(kind, value)
+        b, t = self.b, self.t
+        abil = t.rules["abilities"]
+        rows: list[dict] = []
+
+        def row(group, label, value, options, put, taken=None):
+            rows.append({"group": group, "label": label, "value": value, "options": options, "set": put,
+                         "taken": taken or {}})
+
+        def feat_words(fid):
+            d = feats.defs(t)[fid]
+            picks = [c["kind"] for c in d.get("choices", {}).values()]
+            more = " <dim>(Its picks are made in step 6, Skills & tools.)</>" if any(
+                k in b.SKILL_KINDS for k in picks) else ""
+            return d["text"] + more
+
+        def spell_words(sid):
+            sp = t.spells[sid] if sid in t.spells else None
+            if not sp:
+                return ""
+            level = "Cantrip" if sp["level"] == 0 else f"Level {sp['level']} spell"
+            return f"<dim>{level}, {sp.get('school', '')}.</> {sp.get('text', '')}"
+
+        def feat_rows(group, source, fid):
+            slots = [x for x in b.feat_slots() if x[0] == source]
+            spec = feats.defs(t)[fid].get("choices", {})
+            for _, _, key, index, opts in slots:
+                kind = spec[key]["kind"]
+                if kind in b.SKILL_KINDS:
+                    continue
+                have = b.feat_choices.get(source, {}).get(key)
+                if index >= 0:
+                    have = list(have or [])
+                    value = have[index] if index < len(have) else ""
+                    taken = {v: f"{kind} {j + 1}" for j, v in enumerate(have) if j != index and v}
+                    label = f"{'Cantrip' if kind == 'cantrip' else 'Spell'} {index + 1}"
+                    if kind == "spell" and int(spec[key].get("count", 1)) == 1:
+                        label = "Level 1 spell"
+                else:
+                    value, taken = have, {}
+                    label = {"spell_list": "Spell list", "ability": "Casting ability"}.get(kind, key.title())
+                if kind in ("cantrip", "spell"):
+                    options = [(o, t.spells[o]["name"], spell_words(o)) for o in opts]
+                elif kind == "ability":
+                    options = [(o, abil[o]["name"], "The ability its spells are cast with.") for o in opts]
+                else:
+                    options = [(o, feats.choice_word(t, o), "Whose spells you learn: the cleric's, the druid's or "
+                                                           "the wizard's.") for o in opts]
+                row(group, label, value, options,
+                    lambda v, source=source, key=key, index=index: b.set_feat_slot(source, key, index, v), taken)
+
+        # your people
+        race = t.races[b.race]
+        people = f"Your people: {race['name']}"
+        for key, spec in b.species_choices().items():
+            if spec.get("kind") == "lineage":
+                lins = race.get("lineages") or {}
+                row(people, "Lineage", b.lineage, [(k, v["name"], v["text"]) for k, v in lins.items()],
+                    lambda v: b.set_choice("lineage", v))
+            elif spec.get("kind") == "origin_feat":
+                row(people, "Versatile: a feat", b.versatile,
+                    [(f, feats.defs(t)[f]["name"], feat_words(f)) for f in b.choice_options("versatile")],
+                    lambda v: b.set_choice("versatile", v))
+                feat_rows(people, "versatile", b.versatile)
+        # your background
+        bg = t.backgrounds[b.background]
+        past = f"Your background: {bg['name']}"
+        bg_feat = bg["feat"]["id"]
+        row(past, "Its feat", bg_feat, [(bg_feat, feats.name(t, {"id": bg_feat, "choices": bg["feat"].get("choices") or {}}),
+                                         feat_words(bg_feat))], lambda v: None)
+        feat_rows(past, "background", bg_feat)
+        names = [abil[a]["name"] for a in b.bg_abilities()]
+        row(past, "Ability increases", b.bonus_mode,
+            [("2/1", "+2 to one, +1 to another", f"Of {', '.join(names)}: one rises by 2 and another by 1."),
+             ("1/1/1", "+1 to each of three", f"{', '.join(names)} each rise by 1.")], lambda v: b.set_bonus(v))
+        if b.bonus_mode == "2/1":
+            final = b.final_scores()
+            for i, plus in ((0, 2), (1, 1)):
+                other = b.bonus_pick[1 - i] if len(b.bonus_pick) > 1 else ""
+
+                def put(v, i=i):
+                    pick = list(b.bonus_pick)
+                    pick[i] = v
+                    b.set_bonus("2/1", pick)
+
+                row(past, f"+{plus} to", b.bonus_pick[i] if len(b.bonus_pick) > i else "",
+                    [(a, abil[a]["name"], f"{abil[a]['name']} rises by {plus}: now {final[a]} "
+                                          f"({signed(modifier(final[a]))}).") for a in b.bg_abilities()],
+                    put, {other: f"+{3 - plus}"} if other else {})
+        items = ", ".join(t.items.get(i)["name"] + (f" ×{q}" if q > 1 else "") for i, q in bg["items"])
+        row(past, "Its gear", "gold" if b.take_gold else "gear",
+            [("gear", "the background's gear", f"{items}, and {money_text(bg['money'])}."),
+             ("gold", f"{money_text(bg['gold'])} instead", "Set out with coin and buy your own.")],
+            lambda v: setattr(b, "take_gold", v == "gold"))
+        # your calling
+        cls = t.classes[b.cls]
+        calling = f"Your calling: {cls['name']}"
+        if "fighting_style" in cls["choices_at_1"]:
+            def style(v):
+                b.fighting_style = v
+                b.style_chosen = True
+
+            row(calling, "Fighting style", b.fighting_style,
+                [(k, t.feats["feats"][k]["name"], t.feats["feats"][k]["text"]) for k in b.styles()], style)
+        if "subclass" in cls["choices_at_1"]:
+            row(calling, "Divine domain" if b.cls == "cleric" else "Path", b.subclass,
+                [(k, v["name"], v["text"]) for k, v in cls["subclasses"].items()],
+                lambda v: setattr(b, "subclass", v))
+        kits = []
+        for i, kit in enumerate(cls["kits"]):
+            things = ", ".join(t.items.get(d)["name"] + (f" ×{q}" if q > 1 else "") for d, q in kit["items"])
+            kits.append((i, kit["name"], things + "."))
+        row(calling, "Kit", b.kit, kits, lambda v: b.set_kit(int(v)))
+        # languages
+        lists = t.rules["language_lists"]
+        liked = set(lists["by_species"].get(b.race, []) + lists["by_culture"].get(b.culture, []))
+        for i in range(2):
+            other = b.languages[1 - i] if len(b.languages) > 1 - i else ""
+            row("Languages (everyone speaks Common)", f"Language {i + 1}", b.languages[i] if i < len(b.languages) else "",
+                [(x, x, "Often spoken by your people." if x in liked else "") for x in b.language_options()],
+                lambda v, i=i: b.set_language(i, v), {other: f"language {2 - i}"} if other else {})
+        return rows
+
+    def cycle_choice(self, i: int, delta: int) -> None:
+        """←→ on a row: the next option that is free (one already taken by the row beside it is passed over)."""
+        rows = self._choice_rows()
+        if not rows:
+            return
+        r = rows[max(0, min(i, len(rows) - 1))]
+        keys = [k for k, _, _ in r["options"] if k not in r["taken"] or k == r["value"]]
+        if len(keys) < 2:
+            return
+        at = keys.index(r["value"]) if r["value"] in keys else -1
+        r["set"](keys[(at + delta) % len(keys)])
+        self.cursor[ORIGIN] = min(self.cursor[ORIGIN], len(self._choice_rows()) - 1)
+
+    def set_choice_value(self, i: int, key) -> None:
+        rows = self._choice_rows()
+        r = rows[max(0, min(i, len(rows) - 1))]
+        if key in r["taken"] and key != r["value"]:
+            self.app.notify(f"Already chosen as {r['taken'][key]}.", "warn")
+            return
+        r["set"](key)
+        self.cursor[ORIGIN] = min(i, len(self._choice_rows()) - 1)
+
+    def _r_origin(self, canvas, x, y, w, h) -> None:
+        """The choices on the left under their headings; on the right, every option of the selected one, the chosen
+        one marked, with what it does."""
+        rows = self._choice_rows()
+        sel = min(self.cursor[ORIGIN], len(rows) - 1)
+        wide = w >= 84
+        lw = min(54, w // 2 + 4) if wide else w
+        label_w = 22
+        # where each row goes (headings between groups); scrolled so the selected row shows
+        lines: list[tuple[str, int]] = []  # ("head", row index of its first) or ("row", index)
+        group = None
+        for i, r in enumerate(rows):
+            if r["group"] != group:
+                group = r["group"]
+                lines.append(("head", i))
+            lines.append(("row", i))
+        room = h - (1 if wide else 6)
+        at = next(j for j, ln in enumerate(lines) if ln == ("row", sel))
+        top = max(0, min(at - room // 2, len(lines) - room)) if len(lines) > room else 0
+        for j, (kind, i) in enumerate(lines[top:top + room]):
+            ry = y + j
+            r = rows[i]
+            if kind == "head":
+                canvas.text(x, ry, r["group"], colors.TITLE, max_width=lw)
+                continue
+            selected = i == sel
+            over = canvas.hit(x, ry, lw, 1, action=lambda i=i: self.cursor.__setitem__(ORIGIN, i),
+                              right_action=lambda i=i: self.cycle_choice(i, -1),
+                              wheel=lambda d, i=i: self.cycle_choice(i, d))
+            bg = colors.HILITE_BG if selected else (colors.HOVER_BG if over else None)
+            if bg:
+                canvas.fill(x, ry, lw, 1, bg)
+            canvas.text(x, ry, ("► " if selected else "  ") + r["label"], colors.SELECT_FG if selected else colors.FG,
+                        bg, max_width=label_w)
+            name = next((n for k, n, _ in r["options"] if k == r["value"]), "—")
+            many = len(r["options"]) > 1
+            canvas.markup(x + label_w, ry, (f"◄ {name} ►" if many and selected else name), fg=colors.FG, bg=bg,
+                          max_width=lw - label_w)
+        r = rows[sel]
+        words = next((d for k, _, d in r["options"] if k == r["value"]), "")
+        if not wide:
+            canvas.wrapped(x, y + room + 1, words or "", w, max_lines=h - room - 2)
+            return
+        # the options of the selected choice
+        px, pw = x + lw + 3, w - lw - 3
+        for yy in range(y, y + h):
+            canvas.text(px - 2, yy, "│", colors.FAINT)
+        opts = r["options"]
+        canvas.markup(px, y, f"<title>{markup.escape(r['label'])}</>" +
+                      (f" <dim>— {len(opts)} to choose from</>" if len(opts) > 1 else ""), max_width=pw)
+        about_lines = markup.wrap(words, pw)[:8] if words else []
+        list_room = max(3, h - 3 - len(about_lines))
+        cur = next((j for j, (k, _, _) in enumerate(opts) if k == r["value"]), 0)
+        top = max(0, min(cur - list_room // 2, len(opts) - list_room)) if len(opts) > list_room else 0
+        for j, (k, name, d) in enumerate(opts[top:top + list_room]):
+            ry = y + 2 + j
+            chosen = k == r["value"]
+            taken = r["taken"].get(k) if not chosen else None
+            over = canvas.hit(px, ry, pw, 1, action=lambda i=sel, k=k: self.set_choice_value(i, k),
+                              tooltip=d or None)
+            bg = colors.HILITE_BG if chosen else (colors.HOVER_BG if over and not taken else None)
+            if bg:
+                canvas.fill(px, ry, pw, 1, bg)
+            if taken:
+                canvas.text(px, ry, f"  {name}  (chosen as {taken})", colors.FAINT, bg, max_width=pw)
+            else:
+                canvas.text(px, ry, ("● " if chosen else "  ") + name, colors.SELECT_FG if chosen else colors.FG, bg,
+                            max_width=pw)
+        if top > 0:
+            canvas.text(px + pw - 2, y + 2, "▲", colors.DIM)
+        if top + list_room < len(opts):
+            canvas.text(px + pw - 2, y + 1 + list_room, "▼", colors.DIM)
+        canvas.wrapped(px, y + 3 + min(list_room, len(opts)), words, pw, max_lines=8)
+
+    # ------------------------------------------------------------------ step 6: every skill and tool on one checklist
+    def _skill_rows(self) -> list[str]:
+        """Every skill, then the tools any pick may take (or that come with the origin)."""
+        b = self.b
+        skills = list(self.t.rules["skills"])
+        pools = b.skill_pools()
+        tools = [x for p in pools for x in p["allowed"] if x not in self.t.rules["skills"]]
+        tools += [x for x in b.known_tools() if x not in tools]
+        return skills + list(dict.fromkeys(tools))
+
+    def _skill_column_jump(self, row: int, delta: int) -> int:
+        """←→ hop between the skills and the tools."""
+        n_skills = len(self.t.rules["skills"])
+        rows = self._skill_rows()
+        if len(rows) == n_skills:
+            return row
+        if row < n_skills and delta > 0:
+            return min(len(rows) - 1, n_skills + row)
+        if row >= n_skills and delta < 0:
+            return min(n_skills - 1, row - n_skills)
+        return row
+
+    def tick(self, i: int) -> None:
+        rows = self._skill_rows()
+        x = rows[max(0, min(i, len(rows) - 1))]
+        self.cursor[TRAINING] = rows.index(x)
+        b = self.b
+        mine = any(x in p["picked"] for p in b.skill_pools())
+        why = b.unpick(x) if mine or x in b.granted() else b.pick(x)
+        if why:
+            self.app.notify(why, "warn", 5)
+
+    def tick_expertise(self, i: int) -> None:
+        rows = self._skill_rows()
+        x = rows[max(0, min(i, len(rows) - 1))]
+        b = self.b
+        if x not in self.t.rules["skills"]:
+            return
+        if x not in b.known_skills():
+            self.app.notify("Expertise doubles a skill you have: tick the skill first.", "warn")
+        elif not b.toggle_expertise(x):
+            self.app.notify(f"You can only choose {b.needs_expertise()} for Expertise. Take one off first.", "warn")
+
+    def _skill_state(self, x: str) -> tuple[str, str, str]:
+        """(box, where from (short), where from (in words)) for a skill or tool."""
+        b = self.b
+        for p in b.skill_pools():
+            if x in p["picked"]:
+                return "x", p["name"], f"Chosen for <title>{markup.escape(p['name'])}</> ({p['from']})."
+        where = b.granted().get(x)
+        if where:
+            return "■", where.split(" (")[0].replace("your ", ""), f"You have it from {where}."
+        if x in b.known_skills() or x in b.known_tools():
+            return "■", "", "You have it already."
+        return " ", "", ""
+
+    def _skill_words(self, x: str) -> str:
+        b, t = self.b, self.t
+        _, _, have = self._skill_state(x)
+        takes = [p["name"] for p in b.skill_pools() if x in p["allowed"]]
+        if not have:
+            have = (f"Can be chosen for: {', '.join(takes)}." if takes else
+                    "<dim>None of your picks can take it (other callings and feats can).</>")
+        if x in t.rules["skills"]:
+            sk = t.rules["skills"][x]
+            ab = t.rules["abilities"][sk["ability"]]["name"]
+            return f"<name>{sk['name']}</> <dim>({ab})</>: {sk.get('text', '')}\n{have}"
+        name = t.rules["tools"].get(x, x)
+        about = ""
+        try:
+            it = t.items.get(x)
+        except (KeyError, TypeError):
+            it = None
+        if it:
+            use = it.get("utilize") or {}
+            uses = "; ".join(f"{u['text']} (DC {u['dc']})" for u in use.get("uses", []))
+            about = it.get("how") or (f"Used to: {uses}." if uses else "")
+            if use.get("crafts"):
+                about += f" Makes: {', '.join(str(c).replace('_', ' ') for c in use['crafts'][:6])}."
+        return f"<name>{cap(name)}</>: {about}\n{have}"
+
+    def _r_training(self, canvas, x, y, w, h) -> None:
+        """Every skill and tool as a tick box: what you have and from where, how good you are at it, and the picks
+        still to make."""
+        b, t = self.b, self.t
+        pools = b.skill_pools()
+        parts = []
+        for p in pools:
+            n, k = len(p["picked"]), p["count"]
+            what = {"skill": "", "tool": " tools", "skill_or_tool": " skills or tools"}[p["kind"]]
+            parts.append(f"<{'good' if n >= k else 'warn'}>{markup.escape(p['name'])} {n}/{k}</>{'' if n >= k else what}")
+        if b.needs_expertise():
+            n = len(b.expertise)
+            parts.append(f"<{'good' if n >= b.needs_expertise() else 'warn'}>Expertise ♦ {n}/{b.needs_expertise()}</>")
+        head = "<dim>Picks:</> " + " · ".join(parts)
+        used = canvas.wrapped(x, y, head, w, max_lines=3)
+        rows = self._skill_rows()
+        n_skills = len(t.rules["skills"])
+        sel = min(self.cursor[TRAINING], len(rows) - 1)
+        words_h = 4
+        top_y = y + used + 1
+        room = h - used - 1 - words_h - 1
+        two = len(rows) > n_skills and w >= 100
+        final = b.final_scores()
+        prof = t.rules["proficiency_bonus"][0]
+
+        def draw(i, rx, ry, cw):
+            x_ = rows[i]
+            box, src, _ = self._skill_state(x_)
+            choosable = box != " " or any(x_ in p["allowed"] for p in pools)
+            selected = i == sel
+            over = canvas.hit(rx, ry, cw, 1, action=lambda i=i: self.tick(i),
+                              right_action=(lambda i=i: self.tick_expertise(i)) if b.needs_expertise() else None)
+            bg = colors.HILITE_BG if selected else (colors.HOVER_BG if over else None)
+            if bg:
+                canvas.fill(rx, ry, cw, 1, bg)
+            fg = colors.SELECT_FG if selected else (colors.FG if choosable else colors.FAINT)
+            exp = "♦" if x_ in b.expertise else " "
+            if x_ in t.rules["skills"]:
+                sk = t.rules["skills"][x_]
+                bonus = modifier(final[sk["ability"]]) + (prof if box != " " else 0) * (2 if x_ in b.expertise else 1)
+                canvas.text(rx, ry, f"{'►' if selected else ' '}[{box}]{exp}{sk['name']}", fg, bg, max_width=21)
+                canvas.text(rx + 21, ry, t.rules["abilities"][sk["ability"]]["short"], colors.DIM, bg)
+                canvas.text(rx + 25, ry, f"{signed(bonus):>3}", colors.named("good") if box != " " else colors.DIM, bg)
+                canvas.text(rx + 30, ry, src, colors.DIM, bg, max_width=max(0, cw - 30))
+            else:
+                canvas.text(rx, ry, f"{'►' if selected else ' '}[{box}] {cap(t.rules['tools'].get(x_, x_))}", fg, bg,
+                            max_width=min(cw, 30))
+                if cw > 32:
+                    canvas.text(rx + 31, ry, src, colors.DIM, bg, max_width=cw - 31)
+
+        def column(idx, cx, cw, title):
+            canvas.text(cx, top_y, title, colors.TITLE, max_width=cw)
+            r = room - 1
+            at = idx.index(sel) if sel in idx else 0
+            top = max(0, min(at - r // 2, len(idx) - r)) if len(idx) > r else 0
+            for j, i in enumerate(idx[top:top + r]):
+                draw(i, cx, top_y + 1 + j, cw)
+            if top > 0:
+                canvas.text(cx + cw - 1, top_y + 1, "▲", colors.DIM)
+            if top + r < len(idx):
+                canvas.text(cx + cw - 1, top_y + r, "▼", colors.DIM)
+
+        if two:
+            cw = min(48, (w - 3) // 2 + 4)
+            column(list(range(n_skills)), x, cw, "Skills")
+            column(list(range(n_skills, len(rows))), x + cw + 3, w - cw - 3, "Tools")
         else:
-            self.adjust(1)
+            column(list(range(len(rows))), x, w, "Skills" + (" and tools" if len(rows) > n_skills else ""))
+        hint = ("Space or click: tick or untick" + (" · E or right-click: Expertise ♦" if b.needs_expertise() else "")
+                + " · ■ comes with your origin")
+        canvas.wrapped(x, y + h - words_h - 1, self._skill_words(rows[sel]), w, max_lines=words_h - 1)
+        canvas.text(x, y + h - 1, hint, colors.FAINT, max_width=w)
 
     def _r_identity(self, canvas, x, y, w, h) -> None:
         b = self.b
@@ -880,7 +1044,8 @@ class CreationScreen(Screen):
             f"{t.classes[b.cls]['name']}, formerly {a_or_an(t.backgrounds[b.background]['name'].lower())}.",
             f"<dim>Starts in</> <place>{home}</>.",
             "",
-            f"<dim>Skills:</> {', '.join(t.rules['skills'][s]['name'] + (' ♦' if s in b.expertise else '') for s in b.all_skills())}",
+            f"<dim>Skills:</> {', '.join(t.rules['skills'][s]['name'] + (' ♦' if s in b.expertise else '') for s in b.known_skills())}",
+            f"<dim>Tools:</> {', '.join(t.rules['tools'].get(x, x) for x in b.known_tools()) or 'none'}",
             f"<dim>Hit points:</> {b.max_hp()} · <dim>Money:</> "
             f"{money_text(t.backgrounds[b.background]['gold' if b.take_gold else 'money'])}",
             "",

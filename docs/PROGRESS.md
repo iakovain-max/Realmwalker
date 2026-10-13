@@ -40,6 +40,26 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-10-13 (late): character creation's choices remade — branch `dlc/03-demigods-magics`
+
+Anton: the Origin step's skill picks were "horribly, terribly unusable": skills cycled with arrows, jumped when
+picked twice, were chosen in two places, and said nothing about what they do. Now:
+- **Step 4, Choices** (was Origin): every choice under its heading (your people, your background, your calling,
+  languages), and on the right the **whole list** of what the selected one can be, the chosen one marked, with what it
+  does. Click an option or use ←→ (an option the row beside it already holds is greyed and skipped: nothing jumps).
+  The background's feat, the fighter's style, a cleric's domain and the class kit are here too.
+- **Step 6, Skills & tools** (was Skills & training): **one checklist of all 18 skills and every tool**. Each row
+  shows the box (■ comes with the origin, x picked), the ability, the bonus it will give, and where it comes from.
+  The line on top counts every pick still to make (the calling's, Skillful, Keen Senses, Skilled, Crafter, Musician,
+  Expertise). Ticking puts the skill into the first pick that can take it (the narrowest first, moving another
+  across when that makes room); unticking leaves that pick empty until you choose again. Below the list: what the
+  skill does in this game (new words in data/rules.json skills `text`) or the tool's uses.
+- Begin lists every skill and tool; it refuses to start while a pick is empty, and says which and where.
+- Code: `CharacterBuilder.skill_pools/pick/unpick/known_skills/known_tools/granted`, `open_pools` (picks emptied by
+  hand are not refilled); the screen's `_choice_rows/cycle_choice/set_choice_value`, `_skill_rows/tick/
+  tick_expertise`. Tests: test_origins `test_every_skill_pick_is_one_tick_in_one_list`, test_screens_fit. The smoke
+  test now also saves `_skills`.
+
 ### Session, 2026-10-13 (evening, continued): Demigods & Magics B.1 — the 2024 fighter — branch `dlc/03-demigods-magics` (not yet in `main`)
 
 The fighter is the 2024 book's from level 1 to 20 (it reaches `main` with the rest of Part B):

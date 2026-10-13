@@ -255,10 +255,18 @@ def test_every_step_of_creation_fits_and_every_origin_choice_turns(world, monkey
     for race, bg in (("human", "acolyte"), ("elf", "sage"), ("dwarf", "entertainer")):
         screen.b.set_background(bg)
         screen.b.set_race(race)
-        rows = screen._origin_rows()
+        rows = screen._choice_rows()
         for i in range(len(rows)):
-            screen.adjust_origin(i, 1)
-            screen.adjust_origin(min(i, len(screen._origin_rows()) - 1), -1)
+            screen.cycle_choice(i, 1)
+            screen.cycle_choice(min(i, len(screen._choice_rows()) - 1), -1)
+            r = screen._choice_rows()[min(i, len(screen._choice_rows()) - 1)]
+            free = [k for k, _, _ in r["options"] if k not in r["taken"]]
+            screen.set_choice_value(min(i, len(screen._choice_rows()) - 1), free[-1])
+        assert screen.b.problems() == []
+        screen.go(cr.TRAINING)  # every skill and tool ticked off and on again: back where it was, nothing lost
+        for i in range(len(screen._skill_rows())):
+            screen.tick(i)
+            screen.tick(i)
         assert screen.b.problems() == []
         assert screen.b.build().feats
     for method in ("array", "roll", "point_buy"):

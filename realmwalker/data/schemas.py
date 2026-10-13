@@ -184,7 +184,8 @@ ABILITY_MAP = Obj({a: Int(min=-5, max=5, optional=True) for a in ABILITY_IDS})
 RULES = Obj(
     {
         "abilities": Map(Obj({"name": Str(max_len=20), "short": Str(max_len=4)}), min_items=6),
-        "skills": Map(Obj({"name": Str(max_len=30), "ability": Str(choices=list(ABILITY_IDS))}), min_items=18),
+        "skills": Map(Obj({"name": Str(max_len=30), "ability": Str(choices=list(ABILITY_IDS)),
+                           "text": Str(max_len=200, optional=True)}), min_items=18),
         "point_buy": Obj({"budget": Int(min=0, max=100), "min": Int(min=1, max=20), "max": Int(min=1, max=20),
                           "costs": Map(Int(min=0, max=50))}),
         "proficiency_bonus": List(Int(min=1, max=10), min_items=10),
