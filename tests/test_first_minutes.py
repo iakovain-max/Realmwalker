@@ -130,7 +130,7 @@ def test_ties_never_say_the_the_or_master_master(tables):
     seen = []
     for seed in range(6):
         world = cached_world(WorldOptions("Kin", 40 + seed, "small"), tables)
-        for bg in ("outlander", "sage"):
+        for bg in ("guide", "sage"):
             b = CharacterBuilder(tables, RNG(seed, "hero"))
             b.set_race("dwarf")
             b.set_background(bg)

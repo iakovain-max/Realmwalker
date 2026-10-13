@@ -286,7 +286,12 @@ class Sheet:
 
     @property
     def darkvision(self) -> int:
-        return int(self.race.get("darkvision", 0))
+        return int(self.lineage.get("darkvision", self.race.get("darkvision", 0)))
+
+    @property
+    def lineage(self) -> dict:
+        """The character's lineage (an elf's drow, high or wood), or {}."""
+        return (self.race.get("lineages") or {}).get(self.c.lineage or "", {})
 
     # ------------------------------------------------------------------ armour
     def armor_class(self) -> int:
@@ -493,7 +498,7 @@ class Sheet:
         return any(t["id"] == trait_id for t in self.race["traits"])
 
     def speed(self) -> int:
-        speed = int(self.race["speed"])
+        speed = int(self.lineage.get("speed", self.race["speed"]))
         if self.c.injuries:
             from realmwalker.rules import health
 

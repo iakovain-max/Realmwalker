@@ -16,7 +16,7 @@ from realmwalker.ui.gfx.atlas import Atlas
 from realmwalker.world.tables import Tables
 from tests.worlds import cached_world  # noqa: E402
 
-RACES = ("human", "elf", "dwarf", "halfling", "half_orc")
+RACES = ("human", "elf", "dwarf", "halfling", "orc")
 
 
 @pytest.fixture(scope="module")
@@ -75,7 +75,7 @@ def test_words_say_how_someone_looks(tables):
     assert (L["build"], L["skin"], L["beard"], L["beard_colour"], L["hair"], L["eyes"]) == (
         "heavy", "ruddy", "braided", "red", "bald", "grey")
     assert (L["mark"], L["paint"], L["paint_colour"]) == ("scar_eye", "band", "woad")
-    orc = looks.from_text(tables, "Hulking, with heavy tusks and coarse black hair in a topknot.", "half_orc", "male")
+    orc = looks.from_text(tables, "Hulking, with heavy tusks and coarse black hair in a topknot.", "orc", "male")
     assert orc["features"]["tusks"] == "large" and orc["hair"] == "topknot" and orc["hair_colour"] == "black"
     # What the words do not say is the same every time for the same person, and old people go grey.
     assert looks.from_text(tables, "", "human", "female", 30, "npc7") == looks.from_text(tables, "", "human", "female",
@@ -187,7 +187,7 @@ def test_the_looks_step_changes_the_character(make_app, atlas):
     world = cached_world(WorldOptions("Lookland", 9, "small"), app.tables)
     screen = CreationScreen(app, world)
     app.push(screen)
-    screen.b.set_race("half_orc")
+    screen.b.set_race("orc")
     screen.go(LOOKS)
     rows = screen._look_rows()
     slots = [r[0] for r in rows]

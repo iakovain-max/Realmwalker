@@ -922,4 +922,25 @@ def rest(game, kind: str) -> list[str]:
         if kind == "long":
             notes += body.sleep_recovery(c)
         body.clamp_hp(c)
+    notes += _encouraging_song(game, sleepless)
     return notes
+
+
+def _encouraging_song(game, sleepless) -> list[str]:
+    """Musician (2024): after a rest, a song with an instrument the musician plays gives Heroic Inspiration to as many
+    companions as their proficiency bonus."""
+    from realmwalker.rules import feats
+
+    for c in game.party:
+        if not feats.has(c, "musician") or c is sleepless and len(game.party) > 1:
+            continue
+        mine = next((f for f in c.feats if f["id"] == "musician"), {})
+        plays = set(mine.get("choices", {}).get("tools", []))
+        if not any(it.def_id in plays for it in c.inventory):
+            continue
+        given = [x for x in game.party if x is not c and x.alive][: 2 + (c.level - 1) // 4]
+        for x in given:
+            x.uses["heroic_inspiration"] = 1
+        if given:
+            return [f"{c.name.split()[0]} plays for the others, and they rise heartened (Heroic Inspiration)."]
+    return []

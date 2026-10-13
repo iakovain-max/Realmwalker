@@ -103,7 +103,7 @@ class Wild:
         t.flags["people"] = people
         t.military = s.r.randint(*s.t.factions["kinds"]["tribe"]["military"])
         t.flags["base_military"] = t.military
-        race = {"orcs": "half_orc", "goblins": "half_orc", "nomads": "human"}[people]
+        race = {"orcs": "orc", "goblins": "orc", "nomads": "human"}[people]
         chief = s.folk.adult_person(culture, age=(22, 45), faction=t, role="member", job="warchief", race=race)
         s.realms.crown(t, chief)
         if s.r.chance(0.6):

@@ -30,7 +30,7 @@ def hero(tables):
     b = CharacterBuilder(tables, RNG(1, "hero"))
     b.set_race("human")
     b.set_class("fighter")
-    b.set_background("guild_artisan")
+    b.set_background("artisan")
     return b.build()
 
 

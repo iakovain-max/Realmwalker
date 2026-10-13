@@ -144,7 +144,7 @@
     },
     "orcish": {
       "folk": [["Orcs", "Orcish"], ["the Tusked", "Tusked"]],
-      "race": "half_orc", "kind": "tribal", "like": "harsh invented orcish",
+      "race": "orc", "kind": "tribal", "like": "harsh invented orcish",
       "color": [128, 140, 70],
       "about": "Raiders of the hills and the cold wastes: hide tents and bone fences, chiefs who rule while they are strong, and gods who want blood.",
       "home": {"biomes": {"hills": 2, "mountains": 1.5, "tundra": 1.5}, "temperature": [-10, 20], "moisture": [0.0, 1.0], "coast": 0.0},

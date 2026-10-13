@@ -30,7 +30,7 @@ def hero(tables, seed=1):
     b = CharacterBuilder(tables, RNG(seed, "hero"))
     b.set_race("human")
     b.set_class("fighter")
-    b.set_background("outlander")
+    b.set_background("guide")
     return b.build()
 
 
@@ -126,7 +126,7 @@ def test_a_fire_keeps_a_winter_night_at_bay(game):
     results = {}
     for fire in (False, True):
         g = copy.deepcopy(game)
-        set_weather(g, "clear", -8, 1.0, 15)
+        set_weather(g, "clear", -14, 1.0, 15)
         c = camp.make_camp(g)
         c.fire = fire
         g.encounter = None

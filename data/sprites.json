@@ -236,7 +236,7 @@
                 "dark": [124, 86, 64]},
       "halfling": {"ruddy": [244, 184, 152], "light": [234, 186, 150], "tan": [212, 160, 118], "brown": [164, 116, 84],
                    "dark": [124, 86, 64]},
-      "half_orc": {"grey_green": [166, 180, 138], "green": [134, 170, 112], "olive_green": [160, 166, 104],
+      "orc": {"grey_green": [166, 180, 138], "green": [134, 170, 112], "olive_green": [160, 166, 104],
                    "dark_green": [100, 130, 86], "grey": [160, 160, 150]}
     },
     "hair_colours": {
@@ -271,7 +271,7 @@
                             "leg": 3, "gap": 2, "uleg": 2, "lleg": 3, "foot": 2},
                    "female": {"head_w": 8, "head_h": 7, "neck": 0, "sh": 8, "waist": 6, "torso": 6, "arm": 2, "hip": 8, "pelvis": 2,
                               "leg": 3, "gap": 2, "uleg": 2, "lleg": 3, "foot": 2}},
-      "half_orc": {"male": {"head_w": 10, "head_h": 8, "neck": 1, "sh": 14, "waist": 10, "torso": 7, "arm": 3, "hip": 10,
+      "orc": {"male": {"head_w": 10, "head_h": 8, "neck": 1, "sh": 14, "waist": 10, "torso": 7, "arm": 3, "hip": 10,
                             "pelvis": 2, "leg": 4, "gap": 2, "uleg": 4, "lleg": 3, "foot": 2},
                    "female": {"head_w": 8, "head_h": 8, "neck": 1, "sh": 12, "waist": 8, "torso": 7, "arm": 3, "hip": 8, "pelvis": 2,
                               "leg": 3, "gap": 2, "uleg": 4, "lleg": 4, "foot": 2}}

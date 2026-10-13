@@ -187,6 +187,7 @@ def test_diseases_can_be_recovered_from(tables):
 # ---------------------------------------------------------------------------- treatment
 def test_treatments_use_supplies_and_skill(tables):
     c = hero(tables)
+    c.inventory = [i for i in c.inventory if i.def_id != "healers_kit"]  # (a soldier's kit would be used first)
     w = Wound("left_arm", "cut", 2, 2, 0)
     c.wounds.append(w)
     opts = {a: (ok, why) for a, _, ok, why in health.treatment_options(c, c, w, tables, fire=False, wooded=False)}

@@ -26,6 +26,8 @@ def maximum(char, r: dict) -> int:
     m = r["max"]
     if m == "wis_mod":
         return max(1, modifier(char.abilities["wis"]))
+    if m == "pb":  # as many as the proficiency bonus
+        return 2 + (char.level - 1) // 4
     return int(m)
 
 

@@ -34,7 +34,7 @@ def test_nine_human_peoples_and_their_elders(tables):
     assert set(HUMAN) <= set(c.human)
     assert {"elven", "dwarven"} <= set(c.elder)
     for cid in c.ids:
-        assert c.race(cid) in tables.races or c.race(cid) == "half_orc"
+        assert c.race(cid) in tables.races or c.race(cid) == "orc"
         assert c.faith(cid) in tables.factions["faiths"]
         assert c.about(cid) and c.get(cid)["like"]
 

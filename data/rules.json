@@ -49,7 +49,16 @@
     "lute": "lute",
     "flute": "flute",
     "healers_kit": "healer's kit", "disguise_kit": "disguise kit",
-    "navigators_tools": "navigator's tools"
+    "navigators_tools": "navigator's tools",
+    "brewers_supplies": "brewer's supplies", "masons_tools": "mason's tools", "weavers_tools": "weaver's tools",
+    "woodcarvers_tools": "woodcarver's tools", "potters_tools": "potter's tools", "tinkers_tools": "tinker's tools",
+    "jewelers_tools": "jeweller's tools", "glassblowers_tools": "glassblower's tools",
+    "painters_supplies": "painter's supplies", "cobblers_tools": "cobbler's tools",
+    "alchemists_supplies": "alchemist's supplies", "cartographers_tools": "cartographer's tools",
+    "forgery_kit": "forgery kit", "poisoners_kit": "poisoner's kit",
+    "drum": "drum", "bagpipes": "bagpipes", "horn": "horn", "lyre": "lyre", "viol": "viol", "shawm": "shawm",
+    "pan_flute": "pan flute", "dulcimer": "dulcimer", "dragonchess_set": "dragonchess set",
+    "three_dragon_ante_set": "Three-Dragon Ante set"
   },
   "_encounters": "Combat encounters by the DMG 2024 (PDF pages 118-119): budget is the XP Budget per Character, [Low, Moderate, High] for levels 1 to 20. A band met in the land is built for the land, not the party (DESIGN.md: some fights should be avoided): danger_level is the party level a region's danger (0-10) stands for; odds how often a band is built Low, Moderate or High; the budget is per character in the party; a band never loses the last of any kind in it, and grows at most to most_extra times its largest roll. How a band looks to the player: below Low, Low, Moderate, High, and deadly above deadly times High.",
   "encounters": {

@@ -13,8 +13,8 @@ from realmwalker.rules.engine.reactions import Decision
 # ---------------------------------------------------------------------------- rolls
 @handler("lucky")
 def lucky(b, f, ev, hook, buff) -> None:
-    """Halflings: a natural 1 on an attack roll is rolled again."""
-    if ev.roll == "attack" and ev.natural == 1 and f.char is not None:
+    """Halflings' Luck: a natural 1 on an attack roll or a saving throw is rolled again."""
+    if ev.roll in ("attack", "save") and ev.natural == 1 and f.char is not None:
         ev.natural = dice.d20(b.rng).natural
         b.dice_say(f"{f.name} is lucky: rerolls the 1 and gets {ev.natural}.")
 
@@ -214,6 +214,25 @@ def rallying_cry(b, f, ev, hook, buff) -> None:
     for a in b.team(f.team):
         if a is not f and (a.active or a.state == "down") and b.feet(f, a) <= 30:
             b._heal(a, f.char.level)
+
+
+@special("stonecunning")
+def stonecunning(c, o, victim) -> None:
+    """Dwarves: the stone underfoot tells of every step within 60 feet, for ten minutes."""
+    f = c.caster
+    f.buffs = [bf for bf in f.buffs if bf.get("source") != "stonecunning"]
+    f.buffs.append({"tremorsense": 60, "rounds": 100, "source": "stonecunning"})
+    c.b.say(f"{f.the_name} lays a hand on the stone and listens.", "system")
+
+
+@special("adrenaline_rush")
+def adrenaline_rush(c, o, victim) -> None:
+    """Orcs: a rush of blood, a Dash, and temporary hit points equal to the proficiency bonus."""
+    from realmwalker.rules.engine import query
+
+    b, f = c.b, c.caster
+    f.temp_hp = max(f.temp_hp, query.proficiency(f))  # (the Dash is the bonus action it was taken with)
+    b.say(f"{f.the_name} roars and runs, the blood up.", "good" if f.side == "party" else "danger")
 
 
 @special("turn_undead")

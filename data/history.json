@@ -107,7 +107,7 @@
       "succession": "elective"
     },
     "orcish": {
-      "race": "half_orc",
+      "race": "orc",
       "growth": 0.04,
       "succession": "tanistry"
     },

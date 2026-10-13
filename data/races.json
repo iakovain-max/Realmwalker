@@ -1,91 +1,340 @@
 {
-  "_comment": "Playable races (simplified 5e traits that matter in play). Traits with a 'rule' tag are used by the game's systems; text is for the player. standing: how some peoples tend to regard this race (used from M5/M6).",
+  "_comment": "Playable species (2024 Player's Handbook; the file keeps its old name). Traits with a 'rule' tag are kernel traits (data/traits.json); 'choices' are made at creation (Character.choices); 'lineages' give their own darkvision, speed and spells (those the game has yet). Ability increases come from the background. standing: how some peoples tend to regard this species.",
   "races": {
     "human": {
       "name": "Human",
       "description": "The most numerous people of the realm: farmers, soldiers, priests and kings. Short-lived, ambitious and quarrelsome, humans rule most of the land and most of its troubles.",
-      "ability_bonus": {"str": 1, "dex": 1, "con": 1, "int": 1, "wis": 1, "cha": 1},
-      "speed": 30, "size": "medium", "darkvision": 0,
-      "cultures": ["heartland", "northmarch", "southron", "highland", "qasari", "khurgan", "volsk", "thalassian", "itzan"],
-      "languages": ["Common"], "extra_languages": 1,
-      "skills": [],
-      "age": {"adult": 16, "old": 55, "max": 80},
-      "traits": [
-        {"id": "versatile", "name": "Versatile", "text": "+1 to every ability score."},
-        {"id": "resourceful", "name": "Resourceful", "text": "Wakes from every long rest with Heroic Inspiration: one failed roll tried again.", "rule": "resourceful"}
+      "ability_bonus": {},
+      "speed": 30,
+      "size": "medium",
+      "darkvision": 0,
+      "cultures": [
+        "heartland",
+        "northmarch",
+        "southron",
+        "highland",
+        "qasari",
+        "khurgan",
+        "volsk",
+        "thalassian",
+        "itzan"
       ],
-      "standing": {"elven": -5, "dwarven": 0, "orcish": -10}
+      "languages": [
+        "Common"
+      ],
+      "extra_languages": 0,
+      "skills": [],
+      "age": {
+        "adult": 16,
+        "old": 55,
+        "max": 80
+      },
+      "traits": [
+        {
+          "id": "resourceful",
+          "name": "Resourceful",
+          "text": "You wake from every long rest with Heroic Inspiration: one failed roll tried again.",
+          "rule": "resourceful"
+        },
+        {
+          "id": "skillful",
+          "name": "Skillful",
+          "text": "You are proficient in one skill of your choice."
+        },
+        {
+          "id": "versatile",
+          "name": "Versatile",
+          "text": "You gain an origin feat of your choice."
+        }
+      ],
+      "standing": {
+        "elven": -5,
+        "dwarven": 0,
+        "orcish": -10
+      },
+      "choices": {
+        "skillful": {
+          "kind": "skill"
+        },
+        "versatile": {
+          "kind": "origin_feat"
+        }
+      }
     },
     "elf": {
       "name": "Elf",
       "description": "Long-lived and few, keeping to deep forests and old halls. Many humans think them proud and uncanny; many elves think humans are a plague that learned to build.",
-      "ability_bonus": {"dex": 2, "int": 1},
-      "speed": 30, "size": "medium", "darkvision": 60,
-      "cultures": ["elven"],
-      "languages": ["Common", "Elvish"], "extra_languages": 1,
-      "skills": ["perception"],
-      "age": {"adult": 100, "old": 500, "max": 750},
-      "traits": [
-        {"id": "darkvision", "name": "Darkvision", "text": "You see in dim light as if it were bright, and in darkness as if it were dim, out to 60 feet.", "rule": "darkvision"},
-        {"id": "keen_senses", "name": "Keen Senses", "text": "You are proficient in Perception."},
-        {"id": "fey_ancestry", "name": "Fey Ancestry", "text": "Advantage on saves against being charmed; magic cannot put you to sleep.", "rule": "fey_ancestry"},
-        {"id": "trance", "name": "Trance", "text": "You rest in a waking trance: four hours count as a full night's sleep.", "rule": "trance"}
+      "ability_bonus": {},
+      "speed": 30,
+      "size": "medium",
+      "darkvision": 60,
+      "cultures": [
+        "elven"
       ],
-      "standing": {"heartland": -10, "northmarch": -15, "southron": -5, "dwarven": -10}
+      "languages": [
+        "Common",
+        "Elvish"
+      ],
+      "extra_languages": 0,
+      "skills": [],
+      "age": {
+        "adult": 100,
+        "old": 500,
+        "max": 750
+      },
+      "traits": [
+        {
+          "id": "darkvision",
+          "name": "Darkvision",
+          "text": "You see in dim light as if it were bright, and in darkness as if it were dim, out to 60 feet.",
+          "rule": "darkvision"
+        },
+        {
+          "id": "elven_lineage",
+          "name": "Elven Lineage",
+          "text": "Drow, high elf or wood elf: the blood of your lineage gives you its gifts (and, as you grow, its magic)."
+        },
+        {
+          "id": "fey_ancestry",
+          "name": "Fey Ancestry",
+          "text": "Advantage on saving throws to avoid or end being charmed.",
+          "rule": "fey_ancestry"
+        },
+        {
+          "id": "keen_senses",
+          "name": "Keen Senses",
+          "text": "You are proficient in Insight, Perception or Survival (your choice)."
+        },
+        {
+          "id": "trance",
+          "name": "Trance",
+          "text": "You do not need to sleep, and magic cannot put you to sleep: four hours of trance rest you like a night.",
+          "rule": "trance"
+        }
+      ],
+      "standing": {
+        "heartland": -10,
+        "northmarch": -15,
+        "southron": -5,
+        "dwarven": -10
+      },
+      "choices": {
+        "keen_senses": {
+          "kind": "skill",
+          "from": [
+            "insight",
+            "perception",
+            "survival"
+          ]
+        },
+        "lineage": {
+          "kind": "lineage"
+        }
+      },
+      "lineages": {
+        "high_elf": {
+          "name": "High Elf",
+          "text": "Of the old courts and their libraries: a cantrip of the arcane, Detect Magic at level 3 and Misty Step at level 5.",
+          "spells": {
+            "0": [
+              "prestidigitation"
+            ],
+            "3": [
+              "detect_magic"
+            ],
+            "5": [
+              "misty_step"
+            ]
+          }
+        },
+        "wood_elf": {
+          "name": "Wood Elf",
+          "text": "Of the deep forests: swift on your feet (speed 35), with Druidcraft, Longstrider at level 3 and Pass without Trace at level 5.",
+          "speed": 35,
+          "spells": {
+            "0": [
+              "druidcraft"
+            ],
+            "3": [
+              "longstrider"
+            ],
+            "5": [
+              "pass_without_trace"
+            ]
+          }
+        },
+        "drow": {
+          "name": "Drow",
+          "text": "Of the halls under the earth: darkvision to 120 feet, Dancing Lights, Faerie Fire at level 3 and Darkness at level 5.",
+          "darkvision": 120,
+          "spells": {
+            "0": [
+              "dancing_lights"
+            ],
+            "3": [
+              "faerie_fire"
+            ],
+            "5": [
+              "darkness"
+            ]
+          }
+        }
+      }
     },
     "dwarf": {
       "name": "Dwarf",
       "description": "Stubborn, long-memoried folk of the mountain holds. They trade iron and grudges with equal care, and outlive three generations of the humans who cheat them.",
-      "ability_bonus": {"con": 2, "wis": 1},
-      "speed": 25, "size": "medium", "darkvision": 60,
-      "cultures": ["dwarven"],
-      "languages": ["Common", "Dwarvish"], "extra_languages": 0,
+      "ability_bonus": {},
+      "speed": 30,
+      "size": "medium",
+      "darkvision": 120,
+      "cultures": [
+        "dwarven"
+      ],
+      "languages": [
+        "Common",
+        "Dwarvish"
+      ],
+      "extra_languages": 0,
       "skills": [],
-      "tools_choice": ["smiths_tools", "carpenters_tools"],
-      "age": {"adult": 50, "old": 250, "max": 350},
+      "age": {
+        "adult": 50,
+        "old": 250,
+        "max": 350
+      },
       "hp_per_level": 1,
       "traits": [
-        {"id": "darkvision", "name": "Darkvision", "text": "You see in dim light as if it were bright, and in darkness as if it were dim, out to 60 feet.", "rule": "darkvision"},
-        {"id": "dwarven_resilience", "name": "Dwarven Resilience", "text": "Advantage on saves against poison and resistance to poison damage. Your gut shrugs off some of the rot that kills others.", "rule": "poison_resilience"},
-        {"id": "dwarven_toughness", "name": "Dwarven Toughness", "text": "+1 hit point for every level.", "rule": "hp_per_level"},
-        {"id": "stonecunning", "name": "Stonecunning", "text": "You read stonework like a book: double proficiency when judging masonry and underground ways."},
-        {"id": "sturdy", "name": "Sturdy", "text": "Heavy armour does not slow you."}
+        {
+          "id": "darkvision",
+          "name": "Darkvision",
+          "text": "You see in dim light as if it were bright, and in darkness as if it were dim, out to 120 feet.",
+          "rule": "darkvision"
+        },
+        {
+          "id": "dwarven_resilience",
+          "name": "Dwarven Resilience",
+          "text": "Resistance to poison damage, and advantage on saving throws to avoid or end being poisoned.",
+          "rule": "poison_resilience"
+        },
+        {
+          "id": "dwarven_toughness",
+          "name": "Dwarven Toughness",
+          "text": "One more hit point at every level.",
+          "rule": "hp_per_level"
+        },
+        {
+          "id": "stonecunning",
+          "name": "Stonecunning",
+          "text": "A bonus action on stone ground: tremorsense to 60 feet for ten minutes, as many times a long rest as your proficiency bonus.",
+          "rule": "stonecunning"
+        }
       ],
-      "standing": {"elven": -10, "orcish": -20, "heartland": 0}
+      "standing": {
+        "elven": -10,
+        "orcish": -20,
+        "heartland": 0
+      }
     },
     "halfling": {
       "name": "Halfling",
       "description": "Small, quick and practical people of the farm country, easily overlooked and glad of it. They survive what kills bigger folk by being somewhere else when it arrives.",
-      "ability_bonus": {"dex": 2, "cha": 1},
-      "speed": 25, "size": "small", "darkvision": 0,
-      "cultures": ["halfling", "heartland"],
-      "languages": ["Common", "Halfling"], "extra_languages": 0,
+      "ability_bonus": {},
+      "speed": 30,
+      "size": "small",
+      "darkvision": 0,
+      "cultures": [
+        "halfling",
+        "heartland"
+      ],
+      "languages": [
+        "Common",
+        "Halfling"
+      ],
+      "extra_languages": 0,
       "skills": [],
-      "age": {"adult": 20, "old": 100, "max": 150},
+      "age": {
+        "adult": 20,
+        "old": 100,
+        "max": 150
+      },
       "traits": [
-        {"id": "lucky", "name": "Lucky", "text": "When you roll a natural 1 on an attack, check or save, you may roll again.", "rule": "lucky"},
-        {"id": "brave", "name": "Brave", "text": "Advantage on saves against being frightened.", "rule": "brave"},
-        {"id": "nimble", "name": "Halfling Nimbleness", "text": "You can slip past anyone larger than you."},
-        {"id": "stealthy", "name": "Naturally Stealthy", "text": "You can hide behind someone bigger than you.", "rule": "naturally_stealthy"}
+        {
+          "id": "brave",
+          "name": "Brave",
+          "text": "Advantage on saving throws to avoid or end being frightened.",
+          "rule": "brave"
+        },
+        {
+          "id": "halfling_nimbleness",
+          "name": "Halfling Nimbleness",
+          "text": "You can move through the space of any creature a size larger than you (though not stop there).",
+          "rule": "halfling_nimbleness"
+        },
+        {
+          "id": "luck",
+          "name": "Luck",
+          "text": "A natural 1 on any d20 roll of yours (an attack, a check, a save) is rolled again.",
+          "rule": "lucky"
+        },
+        {
+          "id": "naturally_stealthy",
+          "name": "Naturally Stealthy",
+          "text": "You can hide when only a creature larger than you stands between you and the one looking.",
+          "rule": "naturally_stealthy"
+        }
       ],
       "standing": {}
     },
-    "half_orc": {
-      "name": "Half-Orc",
-      "description": "Born between two peoples and trusted by neither. Strong and hard to kill, half-orcs find work as soldiers, labourers and enforcers, and are blamed first when things go missing.",
-      "ability_bonus": {"str": 2, "con": 1},
-      "speed": 30, "size": "medium", "darkvision": 60,
-      "cultures": ["heartland", "northmarch", "orcish"],
-      "languages": ["Common", "Orcish"], "extra_languages": 0,
-      "skills": ["intimidation"],
-      "age": {"adult": 14, "old": 45, "max": 75},
-      "traits": [
-        {"id": "darkvision", "name": "Darkvision", "text": "You see in dim light as if it were bright, and in darkness as if it were dim, out to 60 feet.", "rule": "darkvision"},
-        {"id": "menacing", "name": "Menacing", "text": "You are proficient in Intimidation."},
-        {"id": "relentless_endurance", "name": "Relentless Endurance", "text": "Once per long rest, when you would fall to 0 hit points, you drop to 1 instead.", "rule": "relentless_endurance"},
-        {"id": "savage_attacks", "name": "Savage Attacks", "text": "When you score a critical hit with a melee weapon, roll one extra weapon die.", "rule": "savage_attacks"}
+    "orc": {
+      "name": "Orc",
+      "description": "Big, hard and long-suffering, the orcs of the tribes and of the towns' rough quarters are trusted by few and blamed by many. They find work as soldiers, labourers and enforcers, and they are very hard to kill.",
+      "ability_bonus": {},
+      "speed": 30,
+      "size": "medium",
+      "darkvision": 120,
+      "cultures": [
+        "heartland",
+        "northmarch",
+        "orcish"
       ],
-      "standing": {"heartland": -15, "northmarch": -10, "southron": -15, "elven": -20, "dwarven": -20}
+      "languages": [
+        "Common",
+        "Orcish"
+      ],
+      "extra_languages": 0,
+      "skills": [],
+      "age": {
+        "adult": 14,
+        "old": 45,
+        "max": 75
+      },
+      "traits": [
+        {
+          "id": "darkvision",
+          "name": "Darkvision",
+          "text": "You see in dim light as if it were bright, and in darkness as if it were dim, out to 120 feet.",
+          "rule": "darkvision"
+        },
+        {
+          "id": "adrenaline_rush",
+          "name": "Adrenaline Rush",
+          "text": "A bonus action: Dash, and gain temporary hit points equal to your proficiency bonus; as many times a short rest as your proficiency bonus.",
+          "rule": "adrenaline_rush"
+        },
+        {
+          "id": "relentless_endurance",
+          "name": "Relentless Endurance",
+          "text": "Once per long rest, when you would fall to 0 hit points, you drop to 1 instead.",
+          "rule": "relentless_endurance"
+        }
+      ],
+      "standing": {
+        "heartland": -15,
+        "northmarch": -10,
+        "southron": -15,
+        "elven": -20,
+        "dwarven": -20
+      }
     }
   }
 }

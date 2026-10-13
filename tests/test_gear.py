@@ -143,7 +143,7 @@ def test_a_wizard_holds_a_crystal_or_carries_a_pouch(tables):
 
 
 def test_a_trophy_at_the_neck_is_frightening(tables):
-    c = person(tables, bg="outlander")
+    c = person(tables, bg="guide")
     assert c.equipped_item("neck") is not None and c.equipped_item("neck").def_id == "trophy"
     s = Sheet(c, tables)
     worn = s.skill_bonus("intimidation")

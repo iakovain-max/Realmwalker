@@ -30,7 +30,7 @@ def build(tables, race="human", cls="fighter", bg="soldier", seed=1):
     return b
 
 
-@pytest.mark.parametrize("race", ["human", "elf", "dwarf", "halfling", "half_orc"])
+@pytest.mark.parametrize("race", ["human", "elf", "dwarf", "halfling", "orc"])
 @pytest.mark.parametrize("cls", ["fighter", "rogue", "cleric", "wizard"])
 def test_every_combination_builds_with_defaults(tables, race, cls):
     b = build(tables, race, cls)
@@ -45,8 +45,8 @@ def test_every_combination_builds_with_defaults(tables, race, cls):
     assert c.equipped.get("main_hand") is not None
 
 
-@pytest.mark.parametrize("bg", ["soldier", "acolyte", "criminal", "folk_hero", "noble", "sage", "outlander", "guild_artisan"])
-@pytest.mark.parametrize("race", ["human", "elf", "dwarf", "halfling", "half_orc"])
+@pytest.mark.parametrize("bg", ["soldier", "acolyte", "criminal", "farmer", "noble", "sage", "guide", "artisan"])
+@pytest.mark.parametrize("race", ["human", "elf", "dwarf", "halfling", "orc"])
 def test_nobody_starts_slowed_by_their_pack_or_dressed_for_summer(tables, race, bg):
     """Half of all new characters used to start encumbered, and acolytes and sages set out in sandals."""
     for cls in ("fighter", "rogue", "cleric", "wizard"):
@@ -57,7 +57,7 @@ def test_nobody_starts_slowed_by_their_pack_or_dressed_for_summer(tables, race, 
         assert c.equipped.get("outer") is not None and c.equipped.get("feet") is not None
 
 
-@pytest.mark.parametrize("bg", ["soldier", "acolyte", "criminal", "folk_hero", "noble", "sage", "outlander", "guild_artisan"])
+@pytest.mark.parametrize("bg", ["soldier", "acolyte", "criminal", "farmer", "noble", "sage", "guide", "artisan"])
 def test_backgrounds_give_ties_and_places(tables, world, bg):
     b = build(tables, bg=bg)
     places = starting_places(world, tables, bg, b.race, RNG(1))
@@ -82,14 +82,20 @@ def test_point_buy_limits(tables):
     assert b.points_left() == 18
 
 
-def test_racial_bonuses_and_traits(tables):
-    dwarf = build(tables, race="dwarf").build()
-    human = build(tables, race="human").build()
-    assert dwarf.abilities["con"] == dwarf.base_scores["con"] + 2
-    assert all(human.abilities[a] == human.base_scores[a] + 1 for a in human.abilities)
+def test_background_increases_and_species_traits(tables):
+    """2024: the background raises its three abilities (+2/+1 or +1/+1/+1); the species gives traits only."""
+    b = build(tables, race="dwarf")  # a soldier: Strength, Dexterity, Constitution
+    dwarf = b.build()
+    assert dwarf.abilities["str"] == dwarf.base_scores["str"] + 2 and dwarf.abilities["dex"] == dwarf.base_scores["dex"] + 1
+    b.set_bonus("1/1/1")
+    even = b.build()
+    assert all(even.abilities[a] == even.base_scores[a] + 1 for a in ("str", "dex", "con"))
+    assert even.abilities["wis"] == even.base_scores["wis"]
     s = Sheet(dwarf, tables)
-    assert s.darkvision == 60 and s.has_rule("poison_resilience")
-    assert dwarf.max_hp == tables.classes["fighter"]["hit_die"] + (dwarf.abilities["con"] - 10) // 2 + 1
+    assert s.darkvision == 120 and s.has_rule("poison_resilience") and s.speed() == 30
+    feat_hp = 2 if any(f["id"] == "tough" for f in dwarf.feats) else 0
+    assert dwarf.max_hp == tables.classes["fighter"]["hit_die"] + (dwarf.abilities["con"] - 10) // 2 + 1 + feat_hp
+    assert [f["id"] for f in dwarf.feats] == ["savage_attacker"]
 
 
 def test_skill_choices_and_expertise(tables):
@@ -144,9 +150,9 @@ def test_stacking_removing_and_weights(tables):
 def test_encumbrance_slows_and_stops(tables):
     c = build(tables, race="halfling", cls="wizard").build()
     s = Sheet(c, tables)
-    assert s.travel_multiplier() == pytest.approx(30 / 25)
+    assert s.travel_multiplier() == pytest.approx(1.0)  # (2024: a halfling walks 30 feet)
     add_item(c, tables.items, "iron_bar", 3)  # 30 lb of iron
-    assert s.encumbrance() >= 1 and s.speed() < 25
+    assert s.encumbrance() >= 1 and s.speed() < 30
     add_item(c, tables.items, "iron_bar", 20)
     assert s.encumbrance() == 3 and s.travel_multiplier() is None
 

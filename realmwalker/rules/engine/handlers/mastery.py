@@ -130,7 +130,7 @@ def mastery_done(b, f, ev, hook, buff) -> None:
         dc = 8 + ability_mod(f, opt) + query.proficiency(f)
         if not choose(b, f, "topple", target, f"Knock {target.the_name} down? (a Constitution save, DC {dc})"):
             return
-        if not b._save(target, "con", dc) and durations.give(b, target, "prone", source=f):
+        if not b._save(target, "con", dc, against=("prone",)) and durations.give(b, target, "prone", source=f):
             b._event("prone", who=target.id)
             b._event("mastery", who=target.id, by=f.id, trick="topple")
             b.say(_line(b, words, "topple", f, target, opt), "good" if f.side == "party" else "danger")

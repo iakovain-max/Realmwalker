@@ -1,4 +1,4 @@
-"""How a person looks: build, skin, eyes, hair, beard, the marks of their people (an elf's ears, a half-orc's tusks),
+"""How a person looks: build, skin, eyes, hair, beard, the marks of their people (an elf's ears, an orc's tusks),
 scars and paint, and the colours they wear. Pure data logic; the pictures are drawn from it by ui/gfx/dolls.py.
 
 A player chooses their looks when they make a character (`Character.looks`). Everyone else's are read from the words

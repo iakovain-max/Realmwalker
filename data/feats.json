@@ -1,0 +1,31 @@
+{
+  "_comment": "Feats (Player's Handbook 2024, chapter 5). category: origin (from a background, or a human's Versatile), general, fighting_style, epic. trait: the data/traits.json definition that does what it does in a fight (kernel hooks and modifiers). choices: picked when the feat is taken (rules/feats.py; a background may fix some, as Magic Initiate (Cleric) fixes the list): kind skill, skill_or_tool, tool (from a group in rules/feats.py TOOL_GROUPS), spell_list, cantrip, spell (level), ability. upgrade_in: the expansion that brings the rest of it.",
+  "feats": {
+    "alert": {"name": "Alert", "category": "origin", "trait": "feat_alert",
+              "text": "Always ready: your proficiency bonus is added to your initiative."},
+    "crafter": {"name": "Crafter", "category": "origin", "trait": "feat_crafter", "upgrade_in": 23,
+                "text": "Proficiency with three kinds of artisan's tools, and a fifth off the price of anything plain you buy in a shop.",
+                "choices": {"tools": {"kind": "tool", "from": "artisan", "count": 3}}},
+    "healer": {"name": "Healer", "category": "origin", "trait": "feat_healer",
+               "text": "Battle Medic: with a healer's kit and an action, a friend beside you spends a Hit Die and heals it and your proficiency bonus. Healing dice that come up 1 are rolled again."},
+    "lucky": {"name": "Lucky", "category": "origin", "trait": "feat_lucky",
+              "text": "Luck points equal to your proficiency bonus, back after a long rest: a missed attack or a failed saving throw is rolled again (the better kept)."},
+    "magic_initiate": {"name": "Magic Initiate", "category": "origin", "trait": "feat_magic_initiate", "repeatable": true,
+                       "text": "Two cantrips and one level 1 spell of the cleric's, the druid's or the wizard's lists; the spell is cast once a long rest without a slot.",
+                       "choices": {"list": {"kind": "spell_list", "from": ["cleric", "druid", "wizard"]},
+                                   "ability": {"kind": "ability", "from": ["int", "wis", "cha"]},
+                                   "cantrips": {"kind": "cantrip", "count": 2}, "spell": {"kind": "spell", "level": 1, "count": 1}}},
+    "musician": {"name": "Musician", "category": "origin", "trait": "feat_musician",
+                 "text": "Proficiency with three musical instruments; after a rest, a song gives Heroic Inspiration to as many companions as your proficiency bonus.",
+                 "choices": {"tools": {"kind": "tool", "from": "instrument", "count": 3}}},
+    "savage_attacker": {"name": "Savage Attacker", "category": "origin", "trait": "feat_savage_attacker",
+                        "text": "Once a turn, when you hit with a weapon, its damage dice are rolled twice and the higher kept."},
+    "skilled": {"name": "Skilled", "category": "origin", "trait": "feat_skilled", "repeatable": true,
+                "text": "Proficiency in three skills or tools of your choice.",
+                "choices": {"skills": {"kind": "skill_or_tool", "count": 3}}},
+    "tavern_brawler": {"name": "Tavern Brawler", "category": "origin", "trait": "feat_tavern_brawler",
+                       "text": "Your fists hit for 1d4 + Strength, and a 1 on their damage is rolled again; you are proficient with improvised weapons; once a turn a punch can shove the one you hit 5 feet away."},
+    "tough": {"name": "Tough", "category": "origin", "trait": "feat_tough",
+              "text": "Two more hit points at every level."}
+  }
+}

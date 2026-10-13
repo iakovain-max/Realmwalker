@@ -189,7 +189,21 @@ def _preserve_life(b, f, w: Worth) -> None:
         w.heal += give + (10.0 if give and x.state == "down" else 0.0)
 
 
-_ABILITY_WORTH = {"turn_undead": _turn_undead, "preserve_life": _preserve_life}
+def _battle_medic(b, f, w: Worth) -> None:
+    near = [x for x in b.team(f.team) if x is not f and (x.active or x.state == "down") and b.gap(f, x) <= 1]
+    if near:
+        x = min(near, key=lambda x: x.hp / max(1, x.max_hp))
+        die = (b.t.classes[x.char.cls]["hit_die"] if x.char is not None else 8) / 2 + 0.5
+        w.heal += min(die + proficiency_of(f), max(0, x.max_hp - x.hp)) + (10.0 if x.state == "down" else 0.0)
+
+
+def proficiency_of(f) -> int:
+    from realmwalker.rules.engine import query
+
+    return query.proficiency(f)
+
+
+_ABILITY_WORTH = {"turn_undead": _turn_undead, "preserve_life": _preserve_life, "battle_medic": _battle_medic}
 
 
 def _control_rounds(ops: list[dict]) -> float:
