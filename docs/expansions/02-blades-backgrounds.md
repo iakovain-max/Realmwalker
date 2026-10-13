@@ -64,14 +64,14 @@ Horses look like horses; mounts, carts and wagons can be bought; inns, meals and
   Musician, Savage Attacker, Skilled, Tavern Brawler, Tough).
 
 ### Part C — Feats
-- [ ] C.1 Feat framework: prerequisites, choices, repeatable feats; ASI-or-feat on level-up with Suggest; Auto picks
+- [x] C.1 Feat framework: prerequisites, choices, repeatable feats; ASI-or-feat on level-up with Suggest; Auto picks
   by archetype; the Feats tab on the character sheet.
-- [ ] C.2 The general and fighting style feats (helpers in batches: data + handlers + one test each); the old four
+- [x] C.2 The general and fighting style feats (helpers in batches: data + handlers + one test each); the old four
   fighting styles retired.
-- [ ] C.3 Combat feats in Auto's and NPCs' hands (Great Weapon Master, Sharpshooter, Polearm Master, Sentinel, Shield
+- [x] C.3 Combat feats in Auto's and NPCs' hands (Great Weapon Master, Sharpshooter, Polearm Master, Sentinel, Shield
   Master, Charger, Crusher, Piercer, Slasher, Mage Slayer, Defensive Duelist, Dual Wielder, Grappler...); arena green.
   Done-when test: a level 4 fighter takes Great Weapon Master and it works in battle, in the enemy's and Auto's hands.
-- [ ] C.4 Part C to `main`.
+- [x] C.4 Part C to `main` (Mounted Combatant written, offered with Expansion 9).
 
 ### Part D — Gear, tools, mounts and the world; release
 - [ ] D.1 Adventuring gear 2024 (Utilize uses; Potion of Healing and Spell Scroll left to Expansion 3), the packs;

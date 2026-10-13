@@ -27,7 +27,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Varied, bigger, living towns** | ✅ Done (2026-10-11), branch `world-variety` |
 | **Clearing the decks for the expansions** | ✅ Done (2026-10-12), branch `prep/clear-the-decks` |
 | **Expansion 1, *Dice & Destiny*** (version 1.1.0) | ✅ Released (2026-10-13), branch `dlc/01-dice-destiny` |
-| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | ⏳ Expansion 2, *Blades & Backgrounds*: parts A (arms and armour) and B (origins) in `main` (2026-10-13), part C (feats) next |
+| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | ⏳ Expansion 2, *Blades & Backgrounds*: parts A (arms and armour), B (origins) and C (feats) in `main` (2026-10-13), part D (gear, tools, mounts; release) next |
 
 ---
 
@@ -38,6 +38,39 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-13: Blades & Backgrounds part C — feats — branch `dlc/02-blades-backgrounds`
+
+The third part of Expansion 2. **A new world is needed**: saves from before this part are refused kindly ("Could
+not load ... The files are still there, untouched."), because fighting styles are now feats.
+
+**What is different when you play**
+- **At levels 4, 8, 12...** the ability increase now offers a **feat** instead: the 42 general feats of the 2024
+  book (Great Weapon Master, Sharpshooter, Sentinel, Polearm Master, Shield Master, War Caster, Resilient, Tough,
+  Elemental Adept, Crusher, Piercer, Slasher, Charger, Mage Slayer, Inspiring Leader, Chef, Ritual Caster, Actor...),
+  and the origin feats you do not have yet. **Suggest** picks one that suits how the character fights. A feat's own
+  choices (which ability it raises, which element, which skills) are asked one at a time.
+- **The fighter's fighting style is one of ten Fighting Style feats** (Archery, Defense, Dueling, Great Weapon
+  Fighting, Two-Weapon Fighting, Protection, Interception, Blind Fighting, Thrown Weapon Fighting, Unarmed
+  Fighting); a Champion learns another at level 7.
+- **Feats work in a fight**: the heavy blow and Hew of Great Weapon Master, the shield's bash, the polearm's butt
+  end, Sentinel stopping a foe in its tracks, Crusher's shove, Piercer's re-rolled die, Slasher's hamstring,
+  Mage Slayer breaking a caster's spell, a Dual Wielder's off-hand longsword, and more. **Your companions on Auto
+  and the enemy use them too**: berserkers swing with Great Weapon Master, town guards hold the line with Sentinel,
+  an orc warchief crushes.
+- **Away from fights**: an Inspiring Leader's words and the Chef's meal give hit points after a rest; a Ritual
+  Caster has rituals; an Actor can pass for someone else.
+- The character sheet has a **Feats** tab; the battle shows the new marks (reeling, unsteady, slowed) with cards.
+
+**How to see it**: start a new world, make a fighter, and play to level 4 (or, with the debug console switched on, type `xp 3000`);
+the level-up screen lists the feats, and Suggest picks one.
+
+**Anything assumed**: Mounted Combatant is written but not offered until mounted combat comes (Expansion 9); a
+duellist keeps a versatile blade in one hand (d8 + 2 is better than d10); Spell Sniper's longer reach is for spells
+with an attack roll only, as the 2024 book says; Sentinel answers a hit on anyone but the sentinel; Skulker hides
+with advantage (the book's Fog of War). The part was finished by a second session after the first was cut off by a
+usage limit; a fresh review found nine things, all fixed (Dual Wielder could not hold a longsword in the off hand,
+Crusher and the shield asked again after their trick was spent, raw words like "dex" on the sheet).
 
 ### Session, 2026-10-13: Blades & Backgrounds part B — origins — branch `dlc/02-blades-backgrounds`
 
