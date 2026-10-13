@@ -40,6 +40,60 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-10-13 (evening): Demigods & Magics part A — twenty levels and the epic boons — branch `dlc/03-demigods-magics`
+
+The first part of Expansion 3 (begun in the afternoon, cut off by a usage limit, finished after it reset). Saves of
+format 16 still load: nothing a save holds changed.
+
+**What is different when you play**
+- **Twenty levels.** Characters and companions now climb past level 10 to 20, by the Player's Handbook's experience
+  table (355,000 XP for level 20) and proficiency bonus (+6 from level 17). Clerics and wizards get their cantrips and
+  spell slots to level 20 (a ninth-level slot at 17). Every class improves an ability (or takes a feat) at 12 and 16,
+  the fighter at 14 as well. The class features above level 10 (a fighter's third attack, a wizard's Spell Mastery...)
+  come with the next part, *the four classes*.
+- **An epic boon at level 19**: the level-up asks for one of twelve (or another feat), each raising an ability up
+  to 30:
+  - *Combat Prowess*: a missed attack hits instead, once a turn;
+  - *Dimensional Travel*: straight after an attack or a spell, vanish and step out up to 30 feet away, clear of the
+    foes around you (the Abilities menu, free);
+  - *Energy Resistance*: resist two kinds of harm you choose; when one strikes you, your reaction hurls it at a foe;
+  - *Fate*: once a fight, 2d4 to turn a friend's failed save or near miss, or a foe's save;
+  - *Fortitude*: forty more hit points, and more from every healing;
+  - *Irresistible Offense*: your blades and blows ignore resistance; a natural 20 adds your Strength or Dexterity
+    score to the damage;
+  - *Recovery*: once a day, a blow that would drop you leaves you standing at half your hit points; ten d10s to heal
+    with, a bonus action;
+  - *Skill*: every skill, and expertise in one more;
+  - *Speed*: thirty feet faster, and a bonus-action Disengage that slips any hold;
+  - *Spell Recall*: a spell of level 1-4 sometimes keeps its slot;
+  - *the Night Spirit*: in dim light or darkness, vanish with a bonus action, and resist all harm but psychic and
+    radiant;
+  - *Truesight*: see the invisible within 60 feet.
+  Companions on Auto use theirs (they heal with Recover Vitality, blink away when pressed, melt into shadow).
+- **The worst lands for heroes.** Danger 0-7 is as it was (a level 15 party walks through farmland in peace). The
+  worst (danger 8, 9 and 10; under one tile in a hundred) now send bands built for levels 6, 11 and 20, and where the
+  budget is one for heroes a band grows into a host (two or three trolls where one came). The deepest sites go down
+  four and five levels. A named beast of the history, a barrow king or a dragon at the bottom of a site has grown with
+  its legend: half again its hit points against a party led by a hero of level 5-10, two and a half times at 11-16,
+  four times at 17-20 (fixed when its level is first entered).
+
+**How to see it**: play a long life (or companions who level with you): the level-up screen at 19 lists the epic
+boons first. The boons' moves are in the battle's Abilities menu.
+
+**Decisions** (Anton is away; chosen sensibly): Blink Steps chooses the place itself (the best spot away from the
+foes); Energy Redirection turns on whoever struck you, or else the weakest foe in range; Improve Fate is used on
+saves and on a friend's near miss, not on ability checks; Recover Vitality spends as many dice as the hurt needs;
+the DMG's "training to gain levels" is left out (a level comes at once, as always).
+
+**Balance**: `tools/balance.py` now also measures heroes: parties of three at level 11 and 17 against High bands of
+danger 9 and 10 won every fight, keeping 80-98% of their hit points. The creatures that can truly test heroes of
+legend come with the bestiary expansions; until then the high tiers are strong. The level 1 and 3 fights are as
+before.
+
+**Checked**: the full test suite, the autoplay bot (RESULT: OK) and the window smoke test; the boons' numbers on the
+book's page (PHB p. 211 of print). **Not checked by eye**: the level-up screen at 19 in a real window (the sheet at
+level 20 is checked to fit every window size in the tests).
+
 ### Session, 2026-10-13: Blades & Backgrounds part D — gear, inns, mounts; **released as 1.2.0** — branch `dlc/02-blades-backgrounds`
 
 The last part of Expansion 2. **Expansion 2, *Blades & Backgrounds*, is released as version 1.2.0**: its icon (a

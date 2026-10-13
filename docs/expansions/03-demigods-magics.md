@@ -60,13 +60,13 @@ spellcasting and scrolls at the book's prices.
 ## Parts and tasks
 
 ### Part A — Twenty levels
-- [ ] A.1 XP, proficiency and the class tables to 20 (rules.json, classes.json slots/cantrips to 20); `max_level`
+- [x] A.1 XP, proficiency and the class tables to 20 (rules.json, classes.json slots/cantrips to 20); `max_level`
   20; level-up screens and the character sheet fit levels 11–20; companions level with the party.
-- [ ] A.2 Epic boons (12) as feats with kernel traits and handlers; the 19th-level choice; Suggest and Auto picks;
+- [x] A.2 Epic boons (12) as feats with kernel traits and handlers; the 19th-level choice; Suggest and Auto picks;
   one test each in a real fight or check.
-- [ ] A.3 Danger tiers: `danger_level` to 20; deeper dungeons for the worst sites; lairs and named beasts scaled;
+- [x] A.3 Danger tiers: `danger_level` to 20; deeper dungeons for the worst sites; lairs and named beasts scaled;
   `tools/balance.py` measures a level 11 and a level 17 fight; the bands set.
-- [ ] A.4 Codex: rules level_advancement, gaining_a_level, tiers_of_play, dmg_variant_training_to_gain_levels; the
+- [x] A.4 Codex: rules level_advancement, gaining_a_level, tiers_of_play, dmg_variant_training_to_gain_levels; the
   12 boons; Part A to `main`.
 
 ### Part B — The four classes, 1–20
