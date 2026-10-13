@@ -196,6 +196,8 @@ RULES = Obj(
         "carry": Obj({"per_strength": Int(min=1, max=100), "encumbered_per_strength": Int(min=1, max=100),
                       "heavily_per_strength": Int(min=1, max=100)}),
         "languages": word_list(1, 40),
+        "language_lists": Obj({"standard": word_list(1, 40), "rare": word_list(1, 40), "by_species": Map(word_list(1, 40)),
+                               "by_culture": Map(word_list(1, 40))}),
         "tools": Map(Str(max_len=40)),
         "hazards": Obj({"falling": Obj({"feet_per_die": Int(min=1, max=100), "die": Int(min=2, max=20), "max_dice": Int(min=1, max=100)}),
                         "burning": Obj({"damage": Str(max_len=12), "type": Str(max_len=20)}),

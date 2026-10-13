@@ -53,6 +53,7 @@ class CharacterBuilder:
         self.bonus_pick: list[str] = []  # for "2/1": [the +2, the +1]
         self.take_gold = False  # the background's option B (50 gp) instead of its equipment
         self.score_method = "point_buy"  # point_buy, array (15, 14, 13, 12, 10, 8) or roll (4d6, lowest dropped)
+        self.languages: list[str] = []  # the two standard languages chosen (Common is everyone's)
         self.set_class("fighter")
         self.set_race("human")
         self.randomize_identity()
@@ -67,6 +68,8 @@ class CharacterBuilder:
         self.lineage = lineages[0] if lineages else None
         self.choices = {}
         self._fix_species_choices()
+        self.languages = []
+        self._fix_languages()
         self.randomize_identity(keep_sex=True)
         self._fix_skills()
 
@@ -131,7 +134,102 @@ class CharacterBuilder:
             self.bonus_pick = list(pick)
         self._fix_bonus()
 
+    # ------------------------------------------------------------------ languages (2024: Common and two more)
+    def language_options(self) -> list[str]:
+        return list(self.t.rules["language_lists"]["standard"])
+
+    def _fix_languages(self) -> None:
+        lists = self.t.rules["language_lists"]
+        opts = self.language_options()
+        keep = [x for x in self.languages if x in opts][:2]
+        liked = lists["by_species"].get(self.race, []) + lists["by_culture"].get(self.culture, []) + opts
+        for x in liked:
+            if len(keep) >= 2:
+                break
+            if x not in keep and x in opts:
+                keep.append(x)
+        self.languages = keep
+
+    def set_language(self, slot: int, value: str) -> None:
+        if value in self.language_options() and value not in self.languages:
+            self._fix_languages()
+            self.languages[slot] = value
+
     # ------------------------------------------------------------------ feats from the origin
+    def _proto(self):
+        """What a feat's choices look at, before the character is made: their skills, tools, class, scores."""
+        from types import SimpleNamespace
+
+        bg = self.t.backgrounds[self.background]
+        return SimpleNamespace(skills=self.all_skills(), tools=list(self.t.classes[self.cls]["tools"]) + list(bg["tools"]),
+                               cls=self.cls, abilities=self.final_scores(), species=self.race, lineage=self.lineage,
+                               choices=self.choices, feats=[], level=1)
+
+    def _fix_feats(self) -> None:
+        """Every origin feat's choices made (the defaults for what is missing or no longer possible)."""
+        from realmwalker.rules import feats
+
+        proto = self._proto()
+        fixed_now = {}
+        for source, fid, fixed in self.origin_feats():
+            have = dict(self.feat_choices.get(source) or {})
+            if have.get("_feat") != fid:
+                have = {}
+            spec = feats.defs(self.t)[fid].get("choices", {})
+            clean = dict(fixed)
+            for key, c in spec.items():
+                if key in fixed or key not in have:
+                    continue
+                opts = feats.options(self.t, proto, fid, key, {**clean, **have})
+                v = have[key]
+                if isinstance(v, list):
+                    v = [x for x in v if x in opts][: int(c.get("count", 1))]
+                    if len(v) == int(c.get("count", 1)):
+                        clean[key] = v
+                elif v in opts:
+                    clean[key] = v
+            fixed_now[source] = {**feats.default_choices(self.t, proto, fid, clean), "_feat": fid}
+        self.feat_choices = fixed_now
+
+    def feat_slots(self) -> list[tuple[str, str, str, int, list[str]]]:
+        """(source, feat id, choice key, index, options) for each pick an origin feat leaves to the player."""
+        from realmwalker.rules import feats
+
+        self._fix_feats()
+        proto = self._proto()
+        out = []
+        for source, fid, fixed in self.origin_feats():
+            ch = self.feat_choices[source]
+            for key, c in feats.defs(self.t)[fid].get("choices", {}).items():
+                if key in fixed:
+                    continue
+                opts = feats.options(self.t, proto, fid, key, ch)
+                n = int(c.get("count", 1))
+                if c["kind"] in ("cantrip", "spell", "skill_or_tool", "tool"):
+                    for i in range(n):
+                        out.append((source, fid, key, i, opts))
+                else:
+                    out.append((source, fid, key, -1, opts))
+        return out
+
+    def set_feat_slot(self, source: str, key: str, index: int, value: str) -> None:
+        self._fix_feats()
+        ch = self.feat_choices[source]
+        if index < 0:
+            ch[key] = value
+            for k in [k for k in list(ch) if k not in (key, "_feat") and isinstance(ch[k], list)]:
+                if key == "list":
+                    del ch[k]  # (another list: other spells)
+        else:
+            picks = list(ch.get(key) or [])
+            if value in picks:
+                picks[picks.index(value)] = picks[index]  # swapped with the slot that had it
+            while len(picks) <= index:
+                picks.append(value)
+            picks[index] = value
+            ch[key] = picks
+        self._fix_feats()
+
     def origin_feats(self) -> list[tuple[str, str, dict]]:
         """(source, feat id, fixed choices) of the feats this origin gives: the background's, a human's Versatile."""
         bg = self.t.backgrounds[self.background]["feat"]
@@ -415,14 +513,8 @@ class CharacterBuilder:
             armor += sub.get("armor", [])
             weapons += sub.get("weapons", [])
         tools = list(dict.fromkeys(cls["tools"] + bg["tools"]))
-        extra_langs = race["extra_languages"] + bg["languages"]
-        languages = list(race["languages"])
-        for lang in t.rules["languages"]:
-            if extra_langs <= 0:
-                break
-            if lang not in languages and lang != "Thieves' Cant":
-                languages.append(lang)
-                extra_langs -= 1
+        self._fix_languages()
+        languages = ["Common"] + list(self.languages)
         if self.cls == "rogue":
             languages.append("Thieves' Cant")
         hp = self.max_hp()
@@ -442,8 +534,10 @@ class CharacterBuilder:
         char.max_hp = char.hp = hp - (2 if any(fid == "tough" for _, fid, _ in self.origin_feats()) else 0)
         from realmwalker.rules import feats
 
+        self._fix_feats()
         for source, fid, fixed in self.origin_feats():  # the background's feat, a human's Versatile
-            feats.grant(char, t, fid, {**fixed, **self.feat_choices.get(source, {})})
+            picked = {k: v for k, v in self.feat_choices.get(source, {}).items() if k != "_feat"}
+            feats.grant(char, t, fid, {**fixed, **picked})
         items = t.items
         kit = cls["kits"][max(0, min(self.kit, len(cls["kits"]) - 1))]
         for def_id, qty in t.items.starting_packs.get("everyone", []) + kit["items"] + ([] if self.take_gold else bg["items"]):

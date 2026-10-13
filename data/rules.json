@@ -35,7 +35,16 @@
   "_discovery_xp": "Experience for each character, times their level, the first time they enter a region, reach a site (a ruin, a lair, a barrow...) or reach a level under the ground.",
   "discovery_xp": {"region": 10, "site": 25, "deeper": 25, "wonder": 40},
   "carry": {"per_strength": 15, "encumbered_per_strength": 5, "heavily_per_strength": 10},
-  "languages": ["Common", "Elvish", "Dwarvish", "Halfling", "Orcish", "Old Imperial", "Northern Tongue", "Southron Cant", "Thieves' Cant"],
+  "languages": ["Common", "Elvish", "Dwarvish", "Halfling", "Orc", "Old Imperial", "Northern Tongue", "Southron Cant", "Thieves' Cant"],
+  "_language_lists": "Languages (2024 Player's Handbook): everyone speaks Common and two standard languages of their choice; the rare ones come with features. The realm's own tongues (Old Imperial, the Northern Tongue, Southron Cant) count as standard here.",
+  "language_lists": {
+    "standard": ["Common Sign Language", "Draconic", "Dwarvish", "Elvish", "Giant", "Gnomish", "Goblin", "Halfling", "Orc",
+                 "Old Imperial", "Northern Tongue", "Southron Cant"],
+    "rare": ["Abyssal", "Celestial", "Deep Speech", "Druidic", "Infernal", "Primordial", "Sylvan", "Thieves' Cant",
+             "Undercommon"],
+    "by_species": {"elf": ["Elvish"], "dwarf": ["Dwarvish"], "halfling": ["Halfling"], "orc": ["Orc"]},
+    "by_culture": {"northmarch": ["Northern Tongue"], "southron": ["Southron Cant"], "heartland": ["Old Imperial"]}
+  },
   "tools": {
     "thieves_tools": "thieves' tools",
     "herbalism_kit": "herbalism kit",

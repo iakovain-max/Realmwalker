@@ -264,6 +264,11 @@ class CharacterScreen(Screen):
         notes = []
         for trait in s.race["traits"]:
             notes.append(f"<loot>{trait['name']}</> <dim>({race})</>: {trait['text']}")
+        if s.lineage:
+            notes.append(f"<loot>{s.lineage['name']}</> <dim>(lineage)</>: {s.lineage['text']}")
+        from realmwalker.rules import feats as featrules
+
+        notes += featrules.sheet_lines(c, t)
         for f in s.features():
             if f["id"] in ("subclass", "asi") or (f["id"] == "fighting_style" and c.fighting_style):
                 continue

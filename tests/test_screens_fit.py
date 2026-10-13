@@ -222,3 +222,31 @@ def test_a_big_fight_shows_everyone_when_there_is_room(game, monkeypatch):
         if f.state != "fled":
             assert f.id in screen.board.cells, f"{f.name} is not on the board"
     assert not watch.problems, watch.problems
+
+
+def test_every_step_of_creation_fits_and_every_origin_choice_turns(world, monkeypatch):
+    """The 2024 order (calling, background, people, origin...) at every size; every row of the Origin step changes
+    both ways without trouble, for a human (Versatile, Skillful) acolyte (Magic Initiate) and an elf (a lineage)."""
+    from realmwalker.ui.screens import creation as cr
+
+    app, w = world
+    watch = Watch(monkeypatch)
+    screen = cr.CreationScreen(app, w)
+    for race, bg in (("human", "acolyte"), ("elf", "sage"), ("dwarf", "entertainer")):
+        screen.b.set_background(bg)
+        screen.b.set_race(race)
+        rows = screen._origin_rows()
+        for i in range(len(rows)):
+            screen.adjust_origin(i, 1)
+            screen.adjust_origin(min(i, len(screen._origin_rows()) - 1), -1)
+        assert screen.b.problems() == []
+        assert screen.b.build().feats
+    for method in ("array", "roll", "point_buy"):
+        screen.b.set_method(method)
+    for size in SIZES:
+        for step in range(len(cr.STEPS)):
+            screen.go(step)
+            text = watch.render(screen, size)
+            if step == cr.ORIGIN:
+                assert "Language" in text or "Equipment" in text
+    assert not watch.problems, watch.problems[:5]

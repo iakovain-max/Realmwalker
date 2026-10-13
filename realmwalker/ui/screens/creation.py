@@ -1,4 +1,5 @@
-"""Character creation: people, calling, background, abilities, skills, identity, looks, starting place, begin.
+"""Character creation in the 2024 order: calling, background, people, the origin's choices (lineage, feats,
+languages, the background's increases, equipment), abilities, skills, identity, looks, starting place, begin.
 
 Every step starts with a sensible choice already made, so pressing Enter through all of them
 gives a playable character. Tab / Shift+Tab (or clicking a step) moves between steps.
@@ -18,9 +19,12 @@ from realmwalker.ui.input import KeyEvent
 from realmwalker.ui.screens.base import ConfirmBox, Screen
 from realmwalker.ui.widgets import Canvas, TextField
 
-STEPS = ["People", "Calling", "Background", "Abilities", "Skills & training", "Who you are", "Looks", "Where you start",
-         "Begin"]
-LOOKS, START, BEGIN = 6, 7, 8
+STEPS = ["Calling", "Background", "People", "Origin", "Abilities", "Skills & training", "Who you are", "Looks",
+         "Where you start", "Begin"]
+CALLING, BACKGROUND, PEOPLE, ORIGIN, ABILITIES_STEP, TRAINING, IDENTITY, LOOKS, START, BEGIN = range(10)
+LISTS = (CALLING, BACKGROUND, PEOPLE)
+METHODS = {"point_buy": "Point buy (27 points)", "array": "Standard array (15 14 13 12 10 8)",
+           "roll": "Roll 4d6, keep three (R: roll again)"}
 COLOUR_SLOTS = ("skin", "eyes", "hair_colour", "beard_colour", "paint_colour", "dye", "cloak")
 LEFT_W = 26
 
@@ -45,16 +49,32 @@ class CreationScreen(Screen):
     # ------------------------------------------------------------------ helpers
     @property
     def captures_text(self) -> bool:  # type: ignore[override]
-        return self.step == 5 and self.cursor[5] == 0
+        return self.step == IDENTITY and self.cursor[IDENTITY] == 0
 
     def _lists(self) -> list[str]:
-        if self.step == 0:
+        if self.step == PEOPLE:
             return list(self.t.races)
-        if self.step == 1:
+        if self.step == CALLING:
             return list(self.t.classes)
-        if self.step == 2:
+        if self.step == BACKGROUND:
             return list(self.t.backgrounds)
         return []
+
+    def _origin_rows(self) -> list[tuple]:
+        """Rows on the Origin step: the lineage, the species' choices, the origin feats' picks, the background's
+        increases, the two languages, and the equipment or the coin."""
+        b = self.b
+        rows: list[tuple] = []
+        for key, spec in b.species_choices().items():
+            rows.append(("choice", key))
+        for slot in b.feat_slots():
+            rows.append(("feat",) + slot[:4])
+        rows.append(("bonus_mode",))
+        if b.bonus_mode == "2/1":
+            rows += [("bonus", 0), ("bonus", 1)]
+        rows += [("language", 0), ("language", 1)]
+        rows.append(("gear",))
+        return rows
 
     def _refresh_places(self) -> None:
         key = (self.b.background, self.b.race, self.b.culture)
@@ -85,13 +105,15 @@ class CreationScreen(Screen):
         return rows
 
     def _row_count(self) -> int:
-        if self.step in (0, 1, 2):
+        if self.step in LISTS:
             return len(self._lists())
-        if self.step == 3:
-            return 6
-        if self.step == 4:
+        if self.step == ORIGIN:
+            return len(self._origin_rows())
+        if self.step == ABILITIES_STEP:
+            return 7
+        if self.step == TRAINING:
             return len(self._training_rows())
-        if self.step == 5:
+        if self.step == IDENTITY:
             return 4
         if self.step == LOOKS:
             return len(self._look_rows())
@@ -145,9 +167,9 @@ class CreationScreen(Screen):
     def choose(self) -> None:
         """Enter on the current row."""
         row = self.cursor[self.step]
-        if self.step in (0, 1, 2):
+        if self.step in LISTS:
             key = self._lists()[row]
-            [self.b.set_race, self.b.set_class, self.b.set_background][self.step](key)
+            {PEOPLE: self.b.set_race, CALLING: self.b.set_class, BACKGROUND: self.b.set_background}[self.step](key)
             self.name_field.value = self.b.name
             self.go(self.step + 1)
         elif self.step == START:
@@ -167,18 +189,28 @@ class CreationScreen(Screen):
     def adjust(self, delta: int) -> None:
         """Left/right on the current row."""
         row = self.cursor[self.step]
-        if self.step == 0:
+        if self.step == PEOPLE:
             race = self.t.races[self.b.race]
             cultures = race["cultures"]
             if self._lists()[row] == self.b.race and len(cultures) > 1:
                 i = (cultures.index(self.b.culture) + delta) % len(cultures)
                 self.b.set_culture(cultures[i])
                 self.name_field.value = self.b.name
-        elif self.step == 3:
-            ab = ABILITIES[row]
-            if not self.b.change(ab, delta):
+        elif self.step == ORIGIN:
+            self.adjust_origin(row, delta)
+        elif self.step == ABILITIES_STEP:
+            if row == 0:
+                methods = list(METHODS)
+                self.b.set_method(methods[(methods.index(self.b.score_method) + delta) % len(methods)])
+                return
+            ab = ABILITIES[row - 1]
+            if self.b.score_method != "point_buy":
+                other = ABILITIES[(row - 1 + delta) % len(ABILITIES)]
+                self.b.swap_scores(ab, other)  # (array and rolled scores are moved about, not bought)
+                self.cursor[ABILITIES_STEP] = ABILITIES.index(other) + 1
+            elif not self.b.change(ab, delta):
                 self.app.notify("Scores run from 8 to 15, and you have 27 points to spend.", "warn")
-        elif self.step == 4:
+        elif self.step == TRAINING:
             kind, _ = self._training_rows()[row]
             cls = self.t.classes[self.b.cls]
             if kind == "style":
@@ -190,7 +222,7 @@ class CreationScreen(Screen):
                 self.b.subclass = subs[(subs.index(self.b.subclass) + delta) % len(subs)]
             elif kind == "kit":
                 self.b.set_kit((self.b.kit + delta) % len(cls["kits"]))
-        elif self.step == 5:
+        elif self.step == IDENTITY:
             if row == 1:
                 self.b.sex = SEXES[(SEXES.index(self.b.sex) + 1) % 2]
                 self.b.name = self.b.random_name()
@@ -203,6 +235,44 @@ class CreationScreen(Screen):
                 self.write_backstory()
         elif self.step == LOOKS:
             self.change_look(row, delta)
+
+    def adjust_origin(self, row: int, delta: int) -> None:
+        b = self.b
+        rows = self._origin_rows()
+        if not rows:
+            return
+        r = rows[max(0, min(row, len(rows) - 1))]
+
+        def cycle(opts, current):
+            if not opts:
+                return current
+            i = opts.index(current) if current in opts else -1
+            return opts[(i + delta) % len(opts)]
+
+        if r[0] == "choice":
+            key = r[1]
+            current = b.lineage if key == "lineage" else b.versatile if key == "versatile" else b.choices.get(key)
+            b.set_choice(key, cycle(b.choice_options(key), current))
+        elif r[0] == "feat":
+            _, source, fid, key, index = r
+            slot = next(x for x in b.feat_slots() if x[0] == source and x[2] == key and x[3] == index)
+            have = b.feat_choices[source].get(key)
+            current = have[index] if index >= 0 and isinstance(have, list) and index < len(have) else have
+            b.set_feat_slot(source, key, index, cycle(slot[4], current))
+        elif r[0] == "bonus_mode":
+            b.set_bonus("1/1/1" if b.bonus_mode == "2/1" else "2/1")
+        elif r[0] == "bonus":
+            pick = list(b.bonus_pick)
+            pick[r[1]] = cycle(b.bg_abilities(), pick[r[1]])
+            if pick[0] == pick[1]:
+                pick[1 - r[1]] = next(a for a in b.bg_abilities() if a != pick[r[1]])
+            b.set_bonus("2/1", pick)
+        elif r[0] == "language":
+            opts = [x for x in b.language_options() if x not in b.languages or b.languages.index(x) == r[1]]
+            b.set_language(r[1], cycle(opts, b.languages[r[1]] if r[1] < len(b.languages) else ""))
+        elif r[0] == "gear":
+            b.take_gold = not b.take_gold
+        self.cursor[ORIGIN] = min(self.cursor[ORIGIN], len(self._origin_rows()) - 1)
 
     def reroll_name(self) -> None:
         self.b.name = self.b.random_name()
@@ -276,18 +346,22 @@ class CreationScreen(Screen):
             self.adjust(-1 if ev.key == "left" else 1)
         elif ev.key == "enter":
             self.choose()
-        elif ev.key == " " and self.step == 4:
-            kind, value = self._training_rows()[self.cursor[4]]
+        elif ev.key == " " and self.step == TRAINING:
+            kind, value = self._training_rows()[self.cursor[TRAINING]]
             if kind in ("skill", "expertise"):
                 self._toggle(kind, value)
-        elif ev.key in ("s", "S") and self.step == 3:
-            self.b.scores = dict(self.t.classes[self.b.cls]["suggested"])
-        elif ev.key in ("r", "R") and self.step == 5:
+        elif ev.key in ("s", "S") and self.step == ABILITIES_STEP:
+            self.b.set_method(self.b.score_method if self.b.score_method != "roll" else "array")
+            if self.b.score_method == "point_buy":
+                self.b.scores = dict(self.t.classes[self.b.cls]["suggested"])
+        elif ev.key in ("r", "R") and self.step == ABILITIES_STEP and self.b.score_method == "roll":
+            self.b.reroll()
+        elif ev.key in ("r", "R") and self.step == IDENTITY:
             self.b.randomize_identity()
             self.name_field.value = self.b.name
         elif ev.key in ("r", "R") and self.step == LOOKS:
             self.b.randomize_looks()
-        elif ev.key in ("w", "W") and self.step == 5:
+        elif ev.key in ("w", "W") and self.step == IDENTITY:
             self.write_backstory()
         else:
             return False
@@ -296,12 +370,12 @@ class CreationScreen(Screen):
     def _after_move(self) -> None:
         # Moving through the lists previews the choice straight away.
         row = self.cursor[self.step]
-        if self.step == 0:
+        if self.step == PEOPLE:
             self.b.set_race(self._lists()[row])
             self.name_field.value = self.b.name
-        elif self.step == 1:
+        elif self.step == CALLING:
             self.b.set_class(self._lists()[row])
-        elif self.step == 2:
+        elif self.step == BACKGROUND:
             self.b.set_background(self._lists()[row])
         elif self.step == START:
             self._refresh_places()
@@ -317,13 +391,13 @@ class CreationScreen(Screen):
         x, width = LEFT_W + 2, w - LEFT_W - 4
         canvas.text(x, 2, f"{self.step + 1}. {STEPS[self.step]}", colors.TITLE)
         body_y, body_h = 4, h - 8
-        if self.step in (0, 1, 2) and width >= 110:
+        if self.step in LISTS and width >= 110:
             # The character, large, on the right while choosing a people, a calling and a past.
             show_w = min(40, width // 3)
             width -= show_w + 2
             self._showcase(canvas, x + width + 2, body_y, show_w, body_h)
-        [self._r_race, self._r_class, self._r_background, self._r_abilities, self._r_training, self._r_identity,
-         self._r_looks, self._r_start, self._r_begin][self.step](canvas, x, body_y, width, body_h)
+        [self._r_class, self._r_background, self._r_race, self._r_origin, self._r_abilities, self._r_training,
+         self._r_identity, self._r_looks, self._r_start, self._r_begin][self.step](canvas, x, body_y, width, body_h)
         hint = "↑↓ choose · ←→ change · Enter: accept & next · Tab/Shift+Tab: steps · Esc: back"
         canvas.text(x, h - 3, hint, colors.FAINT, max_width=width)
 
@@ -385,7 +459,8 @@ class CreationScreen(Screen):
     def _preview_character(self):
         """The character as they would be now (dressed in the chosen kit), for the figure; kept until a choice changes."""
         b = self.b
-        key = (b.race, b.sex, b.cls, b.kit, b.background, b.appearance, b.subclass, repr(sorted(b.looks.items())))
+        key = (b.race, b.sex, b.cls, b.kit, b.background, b.appearance, b.subclass, repr(sorted(b.looks.items())),
+               b.take_gold, b.lineage)
         if getattr(self, "_preview_key", None) != key:
             self._preview_key = key
             try:
@@ -420,13 +495,15 @@ class CreationScreen(Screen):
         keys = list(self.t.races)
         self._list(canvas, x, y, keys, [self.t.races[k]["name"] for k in keys], 18)
         r = self.t.races[self.b.race]
-        bonus = ", ".join(f"{self.t.rules['abilities'][a]['short']} {signed(v)}" for a, v in r["ability_bonus"].items())
         traits = "\n".join(f"<loot>{t['name']}</>: {t['text']}" for t in r["traits"])
+        lineages = r.get("lineages") or {}
+        if lineages:
+            traits += "\n\n" + "\n".join(f"<title>{v['name']}</>: {v['text']}" for v in lineages.values())
         culture = self.b.culture_label()
         like = self.t.cultures.get(self.b.culture)["like"]
         cult = (f"<title>Culture:</> ◄ {culture} ►" if len(r["cultures"]) > 1 else f"<title>Culture:</> {culture}") + \
             f" <dim>(like the {like})</>"
-        text = (f"<name>{r['name']}</>\n{r['description']}\n\n{cult}\n<dim>Abilities:</> {bonus}\n"
+        text = (f"<name>{r['name']}</>\n{r['description']}\n\n{cult}\n"
                 f"<dim>Speed:</> {r['speed']} ft · <dim>Size:</> {r['size']}"
                 + (f" · <dim>Darkvision:</> {r['darkvision']} ft" if r["darkvision"] else "") + f"\n\n{traits}")
         self._detail(canvas, x + 22, y, w - 22, h, text)
@@ -455,23 +532,124 @@ class CreationScreen(Screen):
                "criminal": "a fence who knows you, and a bounty on your head", "home_village": "a village that loves you",
                "noble_house": "a real noble house", "scholar": "an old master and a library",
                "clan": "a clan of the wild country", "guild": "a guild and its master"}.get(bg["tie"]["kind"], "")
-        text = (f"<name>{bg['name']}</>\n{bg['description']}\n\n<dim>Skills:</> {skills}\n<dim>Tools:</> {tools}\n"
-                f"<dim>Gear:</> {items}\n<dim>Money:</> <loot>{money_text(bg['money'])}</>\n\n"
+        from realmwalker.rules import feats
+
+        abil = ", ".join(self.t.rules["abilities"][a]["name"] for a in bg["abilities"])
+        feat = feats.defs(self.t)[bg["feat"]["id"]]
+        feat_name = feats.name(self.t, {"id": bg["feat"]["id"], "choices": bg["feat"].get("choices") or {}})
+        text = (f"<name>{bg['name']}</>\n{bg['description']}\n\n<dim>Raises:</> {abil} <dim>(+2 and +1, or +1 each)</>\n"
+                f"<dim>Feat:</> <loot>{feat_name}</>: {feat['text']}\n"
+                f"<dim>Skills:</> {skills}\n<dim>Tools:</> {tools}\n"
+                f"<dim>Gear:</> {items}, <loot>{money_text(bg['money'])}</> <dim>(or {money_text(bg['gold'])} instead)</>\n\n"
                 f"<loot>{bg['feature']['name']}</>: {bg['feature']['text']}\n\n<dim>Ties:</> {tie}.")
         self._detail(canvas, x + 22, y, w - 22, h, text)
 
+    def _r_origin(self, canvas, x, y, w, h) -> None:
+        """The origin's choices, one a row: ◄ value ►, with what the chosen one does."""
+        from realmwalker.rules import feats
+
+        b = self.b
+        t = self.t
+        rows = self._origin_rows()
+        sel = min(self.cursor[ORIGIN], len(rows) - 1)
+        label_w = 26
+        detail = ""
+        for i, r in enumerate(rows):
+            ry = y + i
+            if ry >= y + h - 4:
+                break
+            label, value, about = self._origin_row(r)
+            selected = i == sel
+            if selected:
+                detail = about
+            over = canvas.hit(x, ry, w, 1, action=lambda i=i: self._click_origin(i),
+                              right_action=lambda i=i: self.adjust_origin(i, -1),
+                              wheel=lambda d, i=i: self.adjust_origin(i, d))
+            bg = colors.HILITE_BG if selected else (colors.HOVER_BG if over else None)
+            if bg:
+                canvas.fill(x, ry, w, 1, bg)
+            canvas.text(x, ry, ("► " if selected else "  ") + label, colors.SELECT_FG if selected else colors.FG, bg,
+                        max_width=label_w)
+            canvas.markup(x + label_w, ry, f"◄ {value} ►", bg=bg, max_width=w - label_w)
+        names = ", ".join(feats.name(t, {"id": fid, "choices": fixed}) for _, fid, fixed in b.origin_feats())
+        info = (f"<dim>Your origin gives:</> <loot>{names}</>\n\n{detail}\n\n"
+                "<dim>↑↓ choose · ←→ or click to change · Enter: next step</>")
+        canvas.wrapped(x, y + len(rows) + 1, info, min(w, 90), max_lines=max(2, h - len(rows) - 1))
+
+    def _click_origin(self, i: int) -> None:
+        if self.cursor[ORIGIN] == i:
+            self.adjust_origin(i, 1)
+        self.cursor[ORIGIN] = i
+
+    def _origin_row(self, r: tuple) -> tuple[str, str, str]:
+        """(label, value, words on it) for a row of the Origin step."""
+        from realmwalker.rules import feats
+
+        b, t = self.b, self.t
+        abil = t.rules["abilities"]
+        if r[0] == "choice":
+            key = r[1]
+            if key == "lineage":
+                lin = (t.races[b.race].get("lineages") or {}).get(b.lineage or "", {})
+                return "Lineage", lin.get("name", "—"), lin.get("text", "")
+            if key == "versatile":
+                d = feats.defs(t)[b.versatile]
+                return "Versatile: origin feat", d["name"], d["text"]
+            v = b.choices.get(key, "")
+            trait = next((x for x in t.races[b.race]["traits"] if x["id"] == key), {})
+            return f"{trait.get('name', key)}: skill", t.rules["skills"].get(v, {}).get("name", v), trait.get("text", "")
+        if r[0] == "feat":
+            _, source, fid, key, index = r
+            ch = b.feat_choices.get(source, {})
+            v = ch.get(key)
+            v = v[index] if index >= 0 and isinstance(v, list) and index < len(v) else v
+            fname = feats.defs(t)[fid]["name"]
+            kind = feats.defs(t)[fid]["choices"][key]["kind"]
+            if kind in ("cantrip", "spell"):
+                sp = t.spells[v] if v in t.spells else {}
+                return f"{fname}: {'cantrip' if kind == 'cantrip' else 'spell'}", sp.get("name", "—"), sp.get("text", "")
+            if kind == "spell_list":
+                return f"{fname}: list", str(v).title(), "Whose spells: the cleric's, the druid's or the wizard's."
+            if kind == "ability":
+                return f"{fname}: casting with", abil.get(v, {}).get("name", str(v)), "The ability its spells are cast with."
+            name = t.rules["skills"][v]["name"] if v in t.rules["skills"] else feats.tool_name(t, str(v))
+            return f"{fname}: {'skill or tool' if kind == 'skill_or_tool' else 'tool' if kind == 'tool' else 'skill'}", \
+                name, feats.defs(t)[fid]["text"]
+        if r[0] == "bonus_mode":
+            return "Background increases", "+2 and +1" if b.bonus_mode == "2/1" else "+1 to each of three", \
+                "Your background raises " + ", ".join(abil[a]["name"] for a in b.bg_abilities()) + "."
+        if r[0] == "bonus":
+            a = b.bonus_pick[r[1]] if len(b.bonus_pick) > r[1] else ""
+            return ("+2 to" if r[1] == 0 else "+1 to"), abil.get(a, {}).get("name", a), ""
+        if r[0] == "language":
+            v = b.languages[r[1]] if r[1] < len(b.languages) else "—"
+            return f"Language {r[1] + 1}", v, "Everyone speaks Common, and two more tongues."
+        bg = t.backgrounds[b.background]
+        if b.take_gold:
+            return "Equipment", f"{money_text(bg['gold'])} instead", "Set out with coin and buy your own."
+        return "Equipment", "the background's gear", f"Its gear and {money_text(bg['money'])}."
+
     def _r_abilities(self, canvas, x, y, w, h) -> None:
         b = self.b
-        race_bonus = self.t.races[b.race]["ability_bonus"]
-        canvas.markup(x, y, f"Points left: <{'good' if b.points_left() == 0 else 'warn'}>{b.points_left()}</> of "
-                            f"{b.point_buy['budget']}   <dim>(S: suggested for a {self.t.classes[b.cls]['name']})</>")
-        canvas.text(x, y + 2, "Ability          Score  Race  Final  Mod", colors.DIM)
+        race_bonus = b.bonus()
+        msel = self.cursor[ABILITIES_STEP] == 0
+        canvas.hit(x, y, 60, 1, action=lambda: self.adjust(1) if self.cursor[ABILITIES_STEP] == 0 else
+                   self.cursor.__setitem__(ABILITIES_STEP, 0))
+        canvas.markup(x, y, ("►" if msel else " ") + f"<title>Method:</> ◄ {METHODS[b.score_method]} ►", max_width=w,
+                      bg=colors.HILITE_BG if msel else None)
+        if b.score_method == "point_buy":
+            canvas.markup(x, y + 1, f" Points left: <{'good' if b.points_left() == 0 else 'warn'}>{b.points_left()}</> of "
+                                    f"{b.point_buy['budget']}   <dim>(S: suggested for a {self.t.classes[b.cls]['name']})</>",
+                          max_width=w)
+        else:
+            canvas.markup(x, y + 1, " <dim>←→ on a score swaps it with its neighbour.</>", max_width=w)
+        canvas.text(x, y + 2, "Ability          Score  Bkgd  Final  Mod", colors.DIM)
         final = b.final_scores()
         primary = self.t.classes[b.cls]["primary"]
         for i, a in enumerate(ABILITIES):
             row = y + 3 + i
-            selected = i == self.cursor[3]
-            over = canvas.hit(x, row, 44, 1, action=lambda i=i: self.cursor.__setitem__(3, i),
+            selected = i + 1 == self.cursor[ABILITIES_STEP]
+            over = canvas.hit(x, row, 44, 1, action=lambda i=i: self.cursor.__setitem__(ABILITIES_STEP, i + 1),
                               right_action=lambda a=a: b.change(a, -1))
             bg = colors.HILITE_BG if selected else (colors.HOVER_BG if over else None)
             if bg:
@@ -483,8 +661,9 @@ class CreationScreen(Screen):
             canvas.text(x + 24, row, f"{signed(bonus) if bonus else '':>3}", colors.named("good"), bg)
             canvas.text(x + 30, row, f"{final[a]:>2}", colors.FG, bg)
             canvas.text(x + 36, row, signed(modifier(final[a])), colors.DIM, bg)
-        help_text = ("Scores start at 8 and cost more the higher they go (15 costs 9 points). * marks what a "
-                     f"{self.t.classes[b.cls]['name']} most relies on. Your people add their bonuses on top.\n\n"
+        help_text = ("Point buy: scores start at 8 and cost more the higher they go (15 costs 9 points). * marks what a "
+                     f"{self.t.classes[b.cls]['name']} most relies on. Your background adds its increases on top "
+                     "(chosen in the Origin step).\n\n"
                      f"Hit points at first level: <good>{b.max_hp()}</>.")
         canvas.wrapped(x, y + 11, help_text, min(w, 70), max_lines=h - 11)
 
@@ -502,7 +681,7 @@ class CreationScreen(Screen):
         for i, (kind, value) in enumerate(rows):
             if kind == "expertise" and i == len(b.skill_options()):
                 ry += 1  # a gap before the Expertise picks
-            selected = i == self.cursor[4]
+            selected = i == self.cursor[TRAINING]
             over = canvas.hit(x, ry, w, 1, action=lambda i=i: self._click_training(i))
             bg = colors.HILITE_BG if selected else (colors.HOVER_BG if over else None)
             mark = "► " if selected else "  "
@@ -528,7 +707,7 @@ class CreationScreen(Screen):
             ry += 1
 
     def _click_training(self, i: int) -> None:
-        self.cursor[4] = i
+        self.cursor[TRAINING] = i
         kind, value = self._training_rows()[i]
         if kind in ("skill", "expertise"):
             self._toggle(kind, value)
@@ -545,9 +724,9 @@ class CreationScreen(Screen):
             ("Backstory", "<dim>◄ ► write one (again for another) · or press W</>"),
         ]
         for i, (label, value) in enumerate(rows):
-            selected = i == self.cursor[5]
+            selected = i == self.cursor[IDENTITY]
             ry = y + i * 2
-            canvas.hit(x, ry, w, 1, action=lambda i=i: self.cursor.__setitem__(5, i))
+            canvas.hit(x, ry, w, 1, action=lambda i=i: self.cursor.__setitem__(IDENTITY, i))
             canvas.text(x, ry, ("► " if selected else "  ") + label, colors.TITLE if selected else colors.FG)
             if label == "Name":
                 self.name_field.render(canvas, x + 12, ry, 34, selected)
@@ -652,11 +831,11 @@ class CreationScreen(Screen):
         side = 32 * k
         fx, fy = int(x * cw + (w * cw - side - 40) / 2), int(y * ch) + 22
         scenes.figure(canvas, preview, self.t, (fx, fy, side + 40, side + 20), most=side)
-        caption = {0: self.t.races[self.b.race]["name"], 1: self.t.classes[self.b.cls]["name"],
-                   2: self.t.backgrounds[self.b.background]["name"]}.get(self.step, "")
+        caption = {PEOPLE: self.t.races[self.b.race]["name"], CALLING: self.t.classes[self.b.cls]["name"],
+                   BACKGROUND: self.t.backgrounds[self.b.background]["name"]}.get(self.step, "")
         canvas.over(Text(fx + (side + 40) / 2, fy - 4, caption, "heading_light", 15, (200, 180, 140, 255), anchor="mb",
                          shadow=False, outline=True))
-        canvas.wrapped(x, y + (side + 50) // ch + 1, "<dim>Looks are chosen in step 7 (R there for a new face).</>",
+        canvas.wrapped(x, y + (side + 50) // ch + 1, f"<dim>Looks are chosen in step {LOOKS + 1} (R there for a new face).</>",
                        w, max_lines=3)
 
     def _swatch(self, slot: str, value: str):
@@ -702,7 +881,8 @@ class CreationScreen(Screen):
             f"<dim>Starts in</> <place>{home}</>.",
             "",
             f"<dim>Skills:</> {', '.join(t.rules['skills'][s]['name'] + (' ♦' if s in b.expertise else '') for s in b.all_skills())}",
-            f"<dim>Hit points:</> {b.max_hp()} · <dim>Money:</> {money_text(t.backgrounds[b.background]['money'])}",
+            f"<dim>Hit points:</> {b.max_hp()} · <dim>Money:</> "
+            f"{money_text(t.backgrounds[b.background]['gold' if b.take_gold else 'money'])}",
             "",
         ]
         if problems:
@@ -714,8 +894,10 @@ class CreationScreen(Screen):
 
     def autoplay_keys(self) -> list[KeyEvent]:
         keys = [KeyEvent(k) for k in ("enter", "enter", "enter", "down", "up", "left", "right", "tab", " ")]
-        if self.step == 5:
+        if self.step == IDENTITY:
             keys += [KeyEvent("w"), KeyEvent("r")]
+        if self.step == ABILITIES_STEP:
+            keys += [KeyEvent("up"), KeyEvent("right"), KeyEvent("r")]
         if self.step == LOOKS:
             keys += [KeyEvent("r"), KeyEvent("right"), KeyEvent("down"), KeyEvent("right")]
         return keys
