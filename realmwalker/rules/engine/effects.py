@@ -83,6 +83,19 @@ class Cast:
     pushed: list = field(default_factory=list)  # (fighter, feet) to throw back once everyone has saved
 
 
+MECHANICS = (("attack", "attack"), ("darts", "darts"), ("save", "save"), ("heal", "heal"), ("stabilize", "heal"),
+             ("restore", "heal"), ("revive", "heal"), ("modifier", "buff"), ("teleport", "teleport"), ("zone", "zone"),
+             ("summon", "summon"), ("guardian", "summon"), ("aura", "aura"))
+
+
+def mechanic(spell: dict) -> str:
+    """What a cast does, in one word, for the board and the sounds (its look is `fx`): attack, save, heal..."""
+    if spell.get("fx") == "sleep":
+        return "sleep"
+    ops = {o["op"] for o in spell.get("effects", ())}
+    return next((word for op, word in MECHANICS if op in ops), "")
+
+
 def cast(b, f, sid: str, spell: dict, target, point, *, up: int, mod: int, dc: int, bonus: int, mult: int,
          level: int) -> None:
     """A spell's effects, once it has been paid for (by a party caster, or a monster's own magic)."""
@@ -91,8 +104,8 @@ def cast(b, f, sid: str, spell: dict, target, point, *, up: int, mod: int, dc: i
         b.say(f"{f.the_name} throws a flask: <danger>{spell['name'].lower()}</>!", "info")
     else:
         b.say(f"{f.the_name} casts <magic>{spell['name']}</>.", "magic")
-    b._event("cast", by=f.id, to=target.id if target is not None else None, spell=sid, effect=spell.get("fx", ""),
-             dtype=spellrules.main_type(spell), area=list(area), point=point,
+    b._event("cast", by=f.id, to=target.id if target is not None else None, spell=sid, effect=mechanic(spell),
+             look=spell.get("fx", ""), dtype=spellrules.main_type(spell), area=list(area), point=point,
              shape=(spell.get("area") or {}).get("shape", ""))
     if spell.get("concentration"):
         b._start_concentration(f, sid, spell)

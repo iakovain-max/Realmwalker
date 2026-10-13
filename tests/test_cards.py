@@ -212,3 +212,41 @@ def test_a_bound_thing_and_a_sentient_demand_carry_their_marks(game):
     g.leader.thirst = 90
     card = body_card(g.leader, g.tables)
     assert any("Drink" in x for x in card.lines)
+
+
+def test_every_spell_look_is_drawn_on_the_board(game):
+    """Each spell's look (data/spells.json fx) makes its own picture on the battle board (E.3)."""
+    from realmwalker.game import fight
+    from realmwalker.game.encounters import make_encounter
+    from realmwalker.rules import spells as sprules
+    from realmwalker.rules.combat import FOE
+    from realmwalker.rules.engine import effects
+    from realmwalker.ui.gfx import battlefx
+    from realmwalker.ui.screens.battle import BattleScreen
+
+    app, g = game
+    g.encounter = make_encounter(g, "goblins", RNG(3, "cards"))
+    b = fight.encounter_fight(g, False)
+    g.encounter = None
+    screen = BattleScreen(app, g)
+    con = tcod.console.Console(160, 45, order="F")
+    screen.render(widgets.Canvas(con))
+    board = screen.board
+    me, foe = b.fighters[0], b.side(FOE)[0]
+    for i, sid in enumerate(sorted(g.tables.spells.defs)):
+        sp = g.tables.spells[sid]
+        assert sp.get("fx") in battlefx.LOOKS, sid
+        point = (foe.x, foe.y)
+        area = b.spell_area(me, sid, point, foe) if sp.get("area") else []
+        board.fx = []
+        b._event("cast", by=me.id, to=foe.id, spell=sid, effect=effects.mechanic(sp), look=sp["fx"],
+                 dtype=sprules.main_type(sp), area=list(area), point=point, shape=(sp.get("area") or {}).get("shape", ""))
+        t = 100.0 * (i + 1)
+        board.feed(b, t, True)
+        kinds = {e["kind"] for e in board.fx}
+        assert "glow" in kinds, sid
+        if area or sp["fx"] in ("curse", "touch", "strike", "aura", "summon"):
+            assert kinds - {"glow"}, f"{sid} ({sp['fx']}) draws nothing of its own"
+        for dt in (0.1, 0.4, 0.8):
+            canvas = widgets.Canvas(tcod.console.Console(160, 45, order="F"))
+            board.draw(canvas, g, b, (0, 0, 1200, 800), t + dt)
