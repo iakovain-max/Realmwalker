@@ -515,6 +515,8 @@ class Battle:
         self.turn_started = False
         self.outcome: str | None = None
         self.known: set[str] = set()
+        self.rolls: dict[int, list[str]] = {}  # log line -> the rolls behind it (the log's tooltips)
+        self._rolls_waiting: list[str] = []
         self.initial_foes = len(foes)
         self.robbed_money = 0
         self.thrown: list = []  # weapons thrown during the fight, lying on the field afterwards
@@ -544,6 +546,9 @@ class Battle:
 
     # ------------------------------------------------------------------ helpers
     def say(self, text: str, category: str = "info") -> None:
+        if self._rolls_waiting:  # the rolls just made explain this line
+            self.rolls[len(self.log)] = self._rolls_waiting[-6:]
+            self._rolls_waiting = []
         self.log.append((text[:1].upper() + text[1:], category))
 
     def _event(self, kind: str, **data) -> None:
@@ -552,8 +557,15 @@ class Battle:
             self.active_round = self.round
 
     def dice_say(self, text: str) -> None:
+        """A roll: kept for the next line of the log (its tooltip), and shown as a line itself if dice are shown."""
         if self.show_dice:
+            self.rolls[len(self.log)] = [text]
             self.log.append((text, "dice"))
+        self.note_roll(text)
+
+    def note_roll(self, text: str) -> None:
+        """A roll told only in the tooltip of the line that follows (damage and what changed it)."""
+        self._rolls_waiting.append(text)
 
     def fighter(self, fid: int) -> Fighter:
         return next(f for f in self.fighters if f.id == fid)
@@ -1978,7 +1990,11 @@ class Battle:
     def _hit(self, att: Fighter | None, target: Fighter, amount: int, dtype: str, *, crit: bool, weapon: str,
              bite: bool = False, claws: bool = False) -> None:
         """Damage that landed: resistances, text, wounds, going down."""
+        rolled_amount = amount
         amount, defence = query.damage_taken(target, amount, dtype)
+        changed = {"immune": "immune: none", "vulnerable": "vulnerable: doubled"}.get(defence)             or ("resisted: halved" if amount < rolled_amount and query.resists(target, dtype) else "")
+        self.note_roll(f"{rolled_amount} {dtype} damage{' (critical: dice doubled)' if crit else ''}"
+                       + (f", {changed} = {amount}" if changed else ""))
         if defence == "immune":
             self.say(f"{target.the_name} does not seem to feel it.", "flavor")
             self._event("immune", to=target.id, by=att.id if att else None)

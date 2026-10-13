@@ -27,7 +27,7 @@ class Region:
     w: int
     h: int
     action: Callable[[], None] | None = None
-    tooltip: str | None = None
+    tooltip: object = None  # words, a Card, or a function making one (built only when shown)
     wheel: Callable[[int], None] | None = None
     right_action: Callable[[], None] | None = None
 
@@ -46,7 +46,9 @@ class Canvas:
         self.mouse = mouse
         self.interactive = interactive
         self.regions: list[Region] = []
-        self.tooltip: str | None = None
+        self.tooltip: object = None  # words, a rules/describe.Card, or a function returning either
+        self.tip_rect: tuple[int, int, int, int] | None = None  # what the tooltip is about (a card never covers it)
+        self.tip_ready = True  # a card waits for a short hover (the App sets this; headless it shows at once)
         if gfx is None:
             from realmwalker.ui.gfx import headless
 
@@ -190,7 +192,7 @@ class Canvas:
         w: int,
         h: int,
         action: Callable[[], None] | None = None,
-        tooltip: str | None = None,
+        tooltip: object = None,
         *,
         wheel: Callable[[int], None] | None = None,
         right_action: Callable[[], None] | None = None,
@@ -203,6 +205,7 @@ class Canvas:
         over = self.hovered(x, y, w, h)
         if over and tooltip:
             self.tooltip = tooltip
+            self.tip_rect = (x, y, w, h)
         return over
 
     # ------------------------------------------------------------------ drawing
@@ -384,9 +387,26 @@ class Canvas:
             x = self.button(x, y, label, action, hotkey=key) + 3
         return x
 
+    @property
+    def tip_is_card(self) -> bool:
+        return self.tooltip is not None and not isinstance(self.tooltip, str)
+
     def draw_tooltip(self) -> None:
         if not self.tooltip or self.mouse[0] < 0:
             return
+        tip = self.tooltip
+        if not isinstance(tip, str):
+            if not self.tip_ready:
+                return
+            tip = tip() if callable(tip) else tip
+            if not tip:
+                return
+            if not isinstance(tip, str):
+                from realmwalker.ui import tooltips
+
+                tooltips.draw_card(self, tip, self.tip_rect)
+                return
+            self.tooltip = tip
         width = min(48, max(12, markup.length(self.tooltip) + 2))
         lines = markup.wrap(self.tooltip, width - 2)
         h = len(lines) + 2

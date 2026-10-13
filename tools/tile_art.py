@@ -1235,4 +1235,8 @@ def all_drawn() -> dict[str, Image.Image]:
         out[f"map/{kind}"] = site_mark(kind, 48)
     for name in ICON_NAMES:
         out[f"icon/{name}"] = icon(name)
+    from status_art import STATUS_NAMES, status_icon  # the battle's status pictograms (10x10, drawn doubled)
+
+    for name in STATUS_NAMES:
+        out[f"status/{name}"] = status_icon(name)
     return out

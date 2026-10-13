@@ -42,6 +42,7 @@ SPELL_COLOURS = {"sleep": (190, 150, 255), "web": (220, 220, 210), "bless": (255
 CONDITION_WORDS = {"prone": "down", "restrained": "held fast", "paralyzed": "paralysed", "stunned": "stunned",
                    "asleep": "asleep", "poisoned": "poisoned", "grappled": "grappled", "frightened": "afraid",
                    "blinded": "blind"}
+STATUS_ROW = 4  # status icons shown over a figure before "+N"
 TAGS = {"paralyzed": "held", "stunned": "stunned", "restrained": "webbed", "grappled": "held", "unconscious": "asleep",
         "frightened": "afraid"}  # the one word under a figure (the full words float up when it happens)
 
@@ -695,6 +696,7 @@ class BattleBoard:
             order.append((y + f.sq, f, x, y))
         order.sort(key=lambda t: t[0])
         self.cells = {}
+        self.status_px = {}
         cw, ch = canvas.cell_w, canvas.cell_h
         for _, f, x, y in order:
             cx, fy, s = self.place(f, now)
@@ -761,6 +763,8 @@ class BattleBoard:
         bar_color = colors.named("good" if ratio > 0.6 else ("warn" if ratio > 0.3 else "danger"))
         bw = s * 0.8
         canvas.over(*theme.bar(cx - bw / 2, fy - s - 5, bw, max(3, T // 10), ratio, bar_color))
+        if T >= 24:
+            self._statuses(canvas, battle, f, cx, fy - s - 7)
         show_name = f.id in (ov.get("named") or ()) or f.id == ov.get("current") or f.id == ov.get("target")
         if show_name and T >= 24:
             color = (150, 220, 130) if f.side == "party" else (236, 120, 100)
@@ -780,6 +784,30 @@ class BattleBoard:
         if tag is not None and T >= 24:  # one short word, small enough to sit under its own square
             canvas.over(Text(cx, fy - 1, tag[0], "prose_bold", max(10, min(13, T // 4)), (*tag[1], 255), anchor="mb",
                              outline=True, shadow=False))
+
+    def _statuses(self, canvas, battle, f, cx: float, bottom: float) -> None:
+        """A row of status icons above the health bar: up to four, then "+N" (rules/describe.statuses)."""
+        from realmwalker.rules import describe
+
+        sts = describe.statuses(f, battle)
+        if not sts:
+            return
+        k = 2 if self.T >= 40 else 1  # whole multiples of the 10-pixel pictograms
+        size = 10 * k
+        shown = sts[:STATUS_ROW]
+        extra = len(sts) - len(shown)
+        width = len(shown) * (size + 1) + (size if extra else 0)
+        x0 = cx - width / 2
+        top = bottom - size
+        rects = []
+        for i, st in enumerate(shown):
+            px = round(x0 + i * (size + 1))
+            canvas.over(Sprite(st.icon, px, round(top), size, size))
+            rects.append(((px, top, size, size), st))
+        if extra:
+            canvas.over(Text(x0 + len(shown) * (size + 1) + 1, bottom, f"+{extra}", "prose_bold", max(10, size - 2),
+                             (230, 220, 200, 255), anchor="lb", outline=True, shadow=False))
+        self.status_px[f.id] = rects
 
     def _effects(self, canvas, now: float) -> None:
         atlas = canvas.gfx.atlas

@@ -10,7 +10,7 @@ surrender, leave the field from its edge, let the game play the turn (z), or end
 from __future__ import annotations
 
 from realmwalker.audio import cues
-from realmwalker.rules import grid
+from realmwalker.rules import describe, grid
 from realmwalker.rules import spells as spellrules
 from realmwalker.rules.combat import FOE, PARTY, Battle, Fighter, spell_id
 from realmwalker.ui import colors, markup
@@ -967,6 +967,10 @@ class BattleScreen(Screen):
             if f.state in ("fled",):
                 continue
             canvas.hit(cx, cy, cw, ch, tooltip=self._tooltip(f))
+        pw, ph = canvas.cell_w, canvas.cell_h
+        for fid, rects in getattr(self.board, "status_px", {}).items():
+            for (px, py, s, _), st in rects:  # each icon over a figure: its own card (after the figure: it wins)
+                canvas.hit(int(px // pw), int(py // ph), max(1, round(s / pw)), max(1, round(s / ph)), tooltip=st.card)
         if b.outcome is not None:
             words = {"victory": ("Victory", (236, 200, 120)), "defeat": ("Fallen", (220, 70, 56)),
                      "fled": ("Escaped", (220, 180, 110)), "parley": ("They let you go", (180, 220, 160)),
@@ -1171,7 +1175,7 @@ class BattleScreen(Screen):
             ry = y + 1 + row
             selected = i == self.choice_index
             over = canvas.hit(x, ry, w, 1, action=lambda i=i: self._click_choice(i),
-                              tooltip=(markup.escape(why) if not enabled else label))
+                              tooltip=self._choice_tip(label, value, enabled, why))
             bg = colors.HILITE_BG if selected else (colors.HOVER_BG if over else None)
             if bg:
                 canvas.fill(x, ry, w, 1, bg)
@@ -1181,6 +1185,15 @@ class BattleScreen(Screen):
             else:
                 canvas.text(x, ry, f"{i + 1}. {markup.plain(label)}: {why}", colors.FAINT, bg, max_width=w)
         return y + 1 + min(room, len(self.choices))
+
+    def _choice_tip(self, label, value, enabled, why):
+        f = self.actor()
+        if f is None:
+            return markup.escape(why) if not enabled else label
+        b = self.battle
+        foes = [e for e in b.enemies_of(f) if e.active]
+        target = min(foes, key=lambda e: b.gap(f, e)) if foes else None  # the chance against the nearest foe
+        return lambda: describe.choice(self.battle, f, self.choice_kind, value, label, enabled, why, target)
 
     def _click_choice(self, i: int) -> None:
         self.choice_index = i
@@ -1210,7 +1223,17 @@ class BattleScreen(Screen):
             canvas.button(bx, by, label, lambda a=action: self.pick_action(a), hotkey=key, tooltip=tip, enabled=ok,
                           max_width=col_w - 3)
 
-    def _tooltip(self, f: Fighter) -> str:
+    def _tooltip(self, f: Fighter):
+        """The creature card, built only when it is shown."""
+        return lambda: describe.creature(self.battle, f, full=self.full_details(f))
+
+    def full_details(self, f: Fighter) -> bool:
+        """Whether a creature's card shows its whole stat block (Settings, Creature details)."""
+        if f.char is not None or self.app.settings.creature_details != "known":
+            return True
+        return f.creature.def_id in self.battle.known
+
+    def _words_tip(self, f: Fighter) -> str:
         b = self.battle
         if f.char:
             wounds = "; ".join(w.label for w in f.char.wounds) or "no wounds"
@@ -1225,13 +1248,22 @@ class BattleScreen(Screen):
         if h <= 0 or w <= 4:
             return
         lines: list = []
-        for text, cat in self.battle.log[-80:]:
-            lines.extend(markup.wrap(text, w, colors.named(LOG_COLORS.get(cat, "fg"))))
+        whose: list[int] = []  # the log line each wrapped row belongs to (its rolls are its tooltip)
+        log = self.battle.log
+        first = max(0, len(log) - 80)
+        for n, (text, cat) in enumerate(log[first:], first):
+            rows = markup.wrap(text, w, colors.named(LOG_COLORS.get(cat, "fg")))
+            lines.extend(rows)
+            whose.extend([n] * len(rows))
         self.log_scroll = min(self.log_scroll, max(0, len(lines) - h))
         end = len(lines) - self.log_scroll
         start = max(0, end - h)
+        rolls = getattr(self.battle, "rolls", {})
         for i, line in enumerate(lines[start:end]):
             canvas.spans(x, y + i, line, max_width=w)
+            n = whose[start + i]
+            if n in rolls:
+                canvas.hit(x, y + i, w, 1, tooltip=lambda n=n: describe.log_line(self.battle, n))
         if self.log_scroll:
             canvas.text(x + w - 14, y + h - 1, "(PgDn: newer)", colors.FAINT)
 
