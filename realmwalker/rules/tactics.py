@@ -395,7 +395,7 @@ def _mastery_worth(b: Battle, f: Fighter, opt: AttackOption, t: Fighter) -> floa
     if kind == "topple":
         if "prone" in t.conditions or not t.standing or query.condition_immune(t, "prone"):
             return 0.0
-        dc = 8 + int(opt.extra.get("ability_mod", 0)) + query.proficiency(f)
+        dc = 8 + mastery.ability_mod(f, opt) + query.proficiency(f)
         melee_friends = sum(1 for a in b.allies_of(f) if a.standing and b.gap(a, t) <= 1)
         return estimates.fail_chance(b, t, "con", dc) * CONTROL["prone"] * threat * (1 + 0.5 * melee_friends)
     if kind == "sap":
@@ -407,7 +407,7 @@ def _mastery_worth(b: Battle, f: Fighter, opt: AttackOption, t: Fighter) -> floa
     if kind == "cleave" and opt.is_melee:
         near = [x for x in b.enemies_of(f) if x is not t and x.active and b.gap(x, t) <= 1 and b.in_reach(f, opt, x)[0]]
         if near:
-            return 0.5 * max(0.0, _avg(opt.damage) - max(0, int(opt.extra.get("ability_mod", 0))))
+            return 0.5 * max(0.0, _avg(opt.damage) - max(0, mastery.ability_mod(f, opt)))
     if kind == "push" and _push_lands_in_harm(b, f, t):
         return 0.6 * threat
     return 0.0
@@ -415,7 +415,7 @@ def _mastery_worth(b: Battle, f: Fighter, opt: AttackOption, t: Fighter) -> floa
 
 def _miss_worth(f: Fighter, opt: AttackOption) -> float:
     """Graze: a miss still deals the attack's ability bonus."""
-    return float(max(0, int(opt.extra.get("ability_mod", 0)))) if mastery.of(f, opt) == "graze" else 0.0
+    return float(max(0, mastery.ability_mod(f, opt))) if mastery.of(f, opt) == "graze" else 0.0
 
 
 def _push_lands_in_harm(b: Battle, f: Fighter, t: Fighter) -> bool:

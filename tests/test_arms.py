@@ -366,3 +366,111 @@ def test_the_auto_uses_its_masteries_in_a_real_fight(tables):
         assert b.outcome is not None
         used += [e["trick"] for e in b.events if e["kind"] == "mastery"]
     assert "topple" in used
+
+
+# ---------------------------------------------------------------------------- A.4 armaments (DMG 2024)
+import copy  # noqa: E402
+
+from realmwalker.game import treasure  # noqa: E402
+from realmwalker.game.state import new_game  # noqa: E402
+from realmwalker.rules import magic as magicrules  # noqa: E402
+from realmwalker.rules.inventory import add_existing  # noqa: E402
+from realmwalker.world.generator import WorldOptions  # noqa: E402
+from tests.worlds import cached_world  # noqa: E402
+
+
+@pytest.fixture
+def game(tables):
+    g = new_game(copy.deepcopy(cached_world(WorldOptions("Armoury", 7, "small"), tables)), tables)
+    g.survival = False
+    return g
+
+
+def listed(game, slug, variant="*", rarity="uncommon", seed=1):
+    it = treasure.make_listed(game, slug, variant, rarity, RNG(seed, slug))
+    assert it is not None, slug
+    return it
+
+
+def test_the_armaments_of_the_treasure_tables_are_made(game, tables):
+    for n in (1, 2, 3):
+        w = listed(game, "weapon_1_2_or_3", f"+{n}")
+        assert magicrules.item_bonus(w) == n and tables.items.get(w.def_id)["category"] == "weapon"
+        a = listed(game, "ammunition_1_2_or_3", f"+{n}")
+        assert tables.items.get(a.def_id)["category"] == "ammo" and 10 <= a.qty <= 20
+    plate = [listed(game, "adamantine_armor", seed=s) for s in range(12)]
+    assert all(tables.items.get(p.def_id).get("armor_type") in ("medium", "heavy") and p.def_id != "hide_armor"
+               for p in plate)
+    assert all(magicrules.item_flag(p, "adamantine_armor") for p in plate)
+    assert magicrules.item_flag(listed(game, "mithral_armor"), "mithral")
+    assert magicrules.item_flag(listed(game, "silvered_weapon", rarity="common"), "silvered")
+    axe = listed(game, "adamantine_weapon")
+    assert "ranged" not in tables.items.get(axe.def_id).get("properties", [])
+
+
+def test_magic_arrows_are_a_choice_of_their_own_and_lose_their_magic(game, tables):
+    c = hero(tables)
+    for slot in ("main_hand", "off_hand"):
+        unequip(c, slot)
+    wield(tables, c, "longbow")
+    add_item(c, tables.items, "arrows", 5)
+    plus = listed(game, "ammunition_1_2_or_3", "+2", rarity="rare")
+    plus.def_id = "arrows"
+    plus = add_existing(c, tables.items, plus)
+    b = fight(tables, c, "bandit", at=(9, 4))
+    me = b.fighters[0]
+    opts = b.attack_options(me)
+    plain = next(o for o in opts if o.key == "main")
+    magic = next(o for o in opts if o.key.startswith("ammo"))
+    assert magic.bonus == plain.bonus + 2 and magic.available
+    n = plus.qty
+    b._spend_shot(me, magic)
+    assert c.item(plus.uid).qty == n - 1
+    b._spend_shot(me, plain)
+    assert sum(i.qty for i in c.inventory if i.def_id == "arrows" and not i.magic) == 4
+    b.outcome = "victory"
+    found = [i for i in b.result().loot_items if i.def_id == "arrows"]
+    assert all(not i.magic for i in found)  # magic ammunition is spent once it has flown
+
+
+def test_adamantine_armour_turns_a_critical_hit_and_mithral_needs_no_strength(game, tables):
+    c = hero(tables)
+    for slot in ("armor",):
+        unequip(c, slot)
+    plate = listed(game, "adamantine_armor")
+    plate = add_existing(c, tables.items, plate)
+    ok, why = equip(c, tables.items, plate.uid)
+    assert ok, why
+    b = fight(tables, c, "bandit")
+    me, foe = b.fighters[0], b.fighters[1]
+    blow = b.attack_options(foe)[0]
+    crits = 0
+    for seed in range(200):
+        b.rng = RNG(seed, "crit")
+        start = len(b.events)
+        me.char.hp = me.char.max_hp
+        b._attack(foe, blow, me)
+        crits += sum(1 for e in b.events[start:] if e["kind"] == "attack" and e.get("crit"))
+    assert crits == 0
+    m = listed(game, "mithral_armor", seed=3)
+    c2 = hero(tables, seed=4)
+    c2.abilities["str"] = 8
+    unequip(c2, "armor")
+    m = add_existing(c2, tables.items, m)
+    equip(c2, tables.items, m.uid)
+    assert not Sheet(c2, tables).armor_too_heavy()
+
+
+def test_the_watch_strikes_with_its_spears_trick(tables):
+    c = hero(tables)
+    b = fight(tables, c, "guard")
+    me, guard = b.fighters[0], b.fighters[1]
+    spear = next(o for o in b.attack_options(guard) if o.is_melee)
+    assert mastery.of(guard, spear) == "sap"
+    me.char.max_hp = me.char.hp = 300
+    for _ in range(60):
+        start = len(b.events)
+        b._attack(guard, spear, me)
+        if "sap" in tricks(b.events[start:]):
+            break
+    assert any(bf.get("sapped") for bf in me.buffs)

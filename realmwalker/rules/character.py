@@ -449,6 +449,10 @@ class Sheet:
         armor = self.c.equipped_item("armor")
         if armor is None or self.has_rule_trait("sturdy"):
             return False
+        from realmwalker.rules import magic
+
+        if magic.item_flag(armor, "mithral"):
+            return False  # light and supple: no Strength needed
         req = int(self.items.get(armor.def_id).get("str_req", 0))
         return req > 0 and self.c.abilities.get("str", 10) < req
 

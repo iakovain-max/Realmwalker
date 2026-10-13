@@ -44,11 +44,11 @@ Horses look like horses; mounts, carts and wagons can be bought; inns, meals and
 ### Part A — Arms and armour
 - [x] A.1 Weapon table and armour to 2024 (items.json: properties, `mastery`, Lance, Trident, Whip, Blowgun, Musket,
   Pistol; armour and Shield numbers; improvised weapons); codex `weapon:*`, `armor:*`, the property sections.
-- [ ] A.2 The eight masteries as kernel handlers; `Character.masteries`, picks for fighter and rogue (creation,
+- [x] A.2 The eight masteries as kernel handlers; `Character.masteries`, picks for fighter and rogue (creation,
   level-up, long rest); `actions.options` shows the mastery; battle log and cards say it; tests in a real fight each.
-- [ ] A.3 Tactics: topple then strike the prone, push into hazards or out of reach, sap the biggest hitter, slow to
+- [x] A.3 Tactics: topple then strike the prone, push into hazards or out of reach, sap the biggest hitter, slow to
   kite, vex to chain, cleave into clusters, nick for the extra blow; Auto and enemy; arena coverage green.
-- [ ] A.4 Armaments basics: +1/+2/+3 weapons, armour, shields, ammunition; adamantine, mithral, silvered (treasure
+- [x] A.4 Armaments basics: +1/+2/+3 weapons, armour, shields, ammunition; adamantine, mithral, silvered (treasure
   and the DMG tables); townsfolk, soldiers and watch carry mastery weapons.
 - [ ] A.5 Pictures (new weapons in `figure_gear.py` and items sheet; mastery marks: knock-down, push, slowed,
   sapped, vexed), sounds; status icons and cards; Part A to `main`.

@@ -799,7 +799,8 @@ class GameState:
             if not c.alive:
                 continue
             armor = c.equipped_item("armor")
-            clanks = armor is not None and bool(self.tables.items.get(armor.def_id).get("stealth_disadvantage"))
+            clanks = armor is not None and bool(self.tables.items.get(armor.def_id).get("stealth_disadvantage")) \
+                and not any(x.get("flag") == "mithral" for x in (armor.magic or {}).get("props", []))
             if c.attuned:
                 from realmwalker.rules import magic
 

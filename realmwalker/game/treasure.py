@@ -158,8 +158,9 @@ def make_listed(game, slug: str, variant: str, rarity: str, rng: RNG) -> Item | 
     if how.get("kind"):
         from realmwalker.game import magic_items
 
+        lo, hi = how.get("qty") or (1, 1)
         it = magic_items.make(game, rng.child(slug), kind=how["kind"], rarity=rarity, props=how.get("props"),
-                              sentient=False)
+                              sentient=False, bases=how.get("bases"), qty=rng.randint(int(lo), int(hi)))
         if it is not None:
             it.magic["book"] = f"{slug}{variant}"
             it.magic["source"] = "book"

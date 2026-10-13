@@ -1049,7 +1049,9 @@ TREASURE = Obj(
         "goods": List(List(Any_(), min_items=2, max_items=2), min_items=1),
         "makers": Map(Map(Obj({"item": Str(max_len=40, optional=True), "scroll": Bool(optional=True),
                                "kind": Str(max_len=20, optional=True), "props": List(Map(Any_()), optional=True),
-                               "attune": Bool(optional=True)}))),
+                               "attune": Bool(optional=True),
+                               "bases": List(Str(max_len=40), optional=True),  # what it may be made on
+                               "qty": List(Int(min=1, max=100), min_items=2, max_items=2, optional=True)}))),
         "reroll": Int(min=0, max=50),
         "magic_scale": List(Float(min=0, max=5), min_items=3, max_items=3),
         "tables": Map(List(List(Any_(), min_items=4, max_items=4), min_items=1), min_items=20),

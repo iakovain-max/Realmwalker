@@ -52,6 +52,13 @@ def item_mastery(f, item) -> str | None:
     return f.t.items.get(item.def_id).get("mastery")
 
 
+def ability_mod(f, opt) -> int:
+    """The ability modifier the attack was made with (a stat block's: its bonus less its proficiency)."""
+    if "ability_mod" in opt.extra:
+        return int(opt.extra["ability_mod"])
+    return int(opt.bonus) - query.proficiency(f) if f.char is None else 0
+
+
 def _turn_key(b) -> tuple:
     cur = b.current if b.order else None
     return b.round, cur.id if cur is not None else None
@@ -95,7 +102,7 @@ def mastery_done(b, f, ev, hook, buff) -> None:
     words = b.t.combat_text.get("mastery", {})
     if not ev.hit:
         if kind == "graze":
-            mod = int(opt.extra.get("ability_mod", 0))
+            mod = ability_mod(f, opt)
             if mod > 0 and (target.active or target.state == "down"):
                 b.say(_line(b, words, "graze", f, target, opt), "good" if f.side == "party" else "info")
                 b._hit(f, target, mod, opt.damage_type, crit=False, weapon=opt.name)
@@ -119,7 +126,7 @@ def mastery_done(b, f, ev, hook, buff) -> None:
     elif kind == "topple" and target.standing:
         if "prone" in target.conditions:
             return
-        dc = 8 + int(opt.extra.get("ability_mod", 0)) + query.proficiency(f)
+        dc = 8 + ability_mod(f, opt) + query.proficiency(f)
         if not choose(b, f, "topple", target, f"Knock {target.the_name} down? (a Constitution save, DC {dc})"):
             return
         if not b._save(target, "con", dc):
@@ -154,7 +161,7 @@ def _cleave(b, f, opt, first, words) -> None:
     if second is None or not once_a_turn(b, f, "cleave"):
         return
     n, sides, flat = dice.parse(opt.damage)
-    mod = int(opt.extra.get("ability_mod", 0))
+    mod = ability_mod(f, opt)
     flat -= max(0, mod)
     damage = (f"{n}d{sides}" if n else "") + (f"{flat:+d}" if flat and n else (str(max(1, flat)) if not n else ""))
     blow = replace(opt, key=f"{opt.key}:cleave", damage=damage or "1", extra=dict(opt.extra, cleave_blow=True))

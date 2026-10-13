@@ -35,6 +35,7 @@ from realmwalker.rules.engine import traits as trs
 from realmwalker.rules.creatures import Creature
 from realmwalker.rules.inventory import remove_item
 from realmwalker.rules.items import Item
+from realmwalker.rules.magic import item_flag as magic_flag
 from realmwalker.rules.wounds import ARMOR_FACTOR, PART_GROUP, make_wound, roll_location, severity_for, wound_chance
 
 PARTY, FOE = "party", "foe"
@@ -1255,7 +1256,9 @@ class Battle:
         self._event("attack", by=f.id, to=None, hit=hit, crit=roll == 20, how=opt.kind, melee=opt.is_melee, weapon=opt.name,
                     dtype=opt.damage_type, armoured=False, cell=list(cell))
         if hit and not hazards.object_immune(self.t, opt.damage_type):
-            obj["hp"] -= dice.roll(opt.damage, self.rng, double_dice=roll == 20).total
+            hard = f.char is not None and opt.item_uid is not None and magic_flag(f.char.item(opt.item_uid),
+                                                                                    "adamantine_weapon")
+            obj["hp"] -= dice.roll(opt.damage, self.rng, double_dice=roll == 20 or hard).total
             if obj["hp"] <= 0:
                 becomes = obj["becomes"] if obj["becomes"] != "ground" else (self.field.ground or "rubble")
                 self.field.set_terrain(*cell, becomes if becomes in self.t.terrain.index else "rubble")
@@ -1304,7 +1307,9 @@ class Battle:
     def _spend_shot(self, att: Fighter, opt: AttackOption) -> None:
         """An arrow or a bolt from the quiver, a thrown weapon out of the hand (it lies on the field after)."""
         if opt.ammo_def and att.char:
-            ammo = next((i for i in att.char.inventory if i.def_id == opt.ammo_def), None)
+            uid = opt.extra.get("ammo_uid")
+            ammo = att.char.item(uid) if uid is not None else \
+                next((i for i in att.char.inventory if i.def_id == opt.ammo_def and not i.magic), None)
             if ammo is not None:
                 remove_item(att.char, ammo.uid, 1)
                 if att.side == PARTY and not ammo.magic:
@@ -1561,7 +1566,10 @@ class Battle:
                 continue
             if key == "off":
                 continue  # the off hand strikes as a bonus action after attacking (two-weapon fighting)
-            out.append(self._weapon_option(f, s, it, key, two_handed_free=(key == "main" and off is None)))
+            opt = self._weapon_option(f, s, it, key, two_handed_free=(key == "main" and off is None))
+            out.append(opt)
+            if opt.ammo_def:
+                out += self._magic_ammo_options(f, opt)
         for it in c.inventory:
             d = items.get(it.def_id)
             if d["category"] == "weapon" and "thrown" in d.get("properties", []) and it.uid not in (c.equipped.values()):
@@ -1676,10 +1684,30 @@ class Battle:
         if "ammunition" in props:
             ammo = d.get("ammo")
             opt.ammo_def = ammo
-            if not any(i.def_id == ammo for i in f.char.inventory):
+            if not any(i.def_id == ammo and not i.magic for i in f.char.inventory):
                 opt.available = False
                 opt.reason = f"no {self.t.items.get(ammo)['name']}s left"
         return opt
+
+    def _magic_ammo_options(self, f: Fighter, base: AttackOption) -> list[AttackOption]:
+        """A shot with each stack of magic ammunition (DMG 2024, +1 to +3 to hit and damage): the archer chooses."""
+        from dataclasses import replace
+
+        from realmwalker.rules import magic
+
+        out = []
+        for it in f.char.inventory:
+            if it.def_id != base.ammo_def or not it.magic:
+                continue
+            plus = magic.item_bonus(it)
+            n, sides, flat = dice.parse(base.damage)
+            damage = f"{n}d{sides}{signed_mod(flat + plus)}" if n else str(max(1, flat + plus))
+            name = f"{base.name}, {self.t.items.name(it, False)}"
+            out.append(replace(base, key=f"ammo{it.uid}", name=name, bonus=base.bonus + plus, damage=damage,
+                               available=base.reason in ("", f"no {self.t.items.get(it.def_id)['name']}s left")
+                               and (base.available or base.reason.startswith("no ")),
+                               reason="", extra=dict(base.extra, ammo_uid=it.uid)))
+        return out
 
     def in_reach(self, f: Fighter, opt: AttackOption, target: Fighter, *, at: tuple[int, int] | None = None) -> tuple[bool, str]:
         """Whether an attack of this kind reaches the target from where `f` stands (or would stand)."""
@@ -1796,6 +1824,9 @@ class Battle:
             crit = True  # a blow from right beside someone who cannot defend themselves at all
         if hit:
             crit = events.emit(self, "attack_hit", actor=att, target=target, opt=opt, crit=crit).crit  # Assassinate...
+        if crit and target.char is not None and magic_flag(target.char.equipped_item("armor"), "adamantine_armor"):
+            crit = False
+            why.append("adamantine")  # (the blow lands, but the armour will not let it bite deep)
         att.helped = False
         if target.marked:
             target.marked = False  # spent on this roll, hit or miss
@@ -1829,6 +1860,9 @@ class Battle:
         n, sides, flat = dice.parse(dmg_expr)
         rolled = dice.roll(dmg_expr, self.rng, double_dice=crit)
         amount = rolled.total
+        if crit and n and att.char is not None and opt.item_uid is not None and target.has_trait("shapechanger") \
+                and magic_flag(att.char.item(opt.item_uid), "silvered"):
+            amount += self.rng.randint(1, sides)  # silver bites a shapechanger deep
         # Great Weapon Fighting: reroll ones and twos once.
         if att.char and att.char.fighting_style == "great_weapon" and opt.is_melee and "two_handed" in opt.properties:
             amount = sum(r if r > 2 else self.rng.randint(1, sides) for r in rolled.rolls) + flat
