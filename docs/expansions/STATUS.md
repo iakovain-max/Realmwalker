@@ -51,9 +51,12 @@ Assumptions waiting for Anton:
   spends the dice the hurt needs; training to gain levels is omitted; danger 8-10 stand for levels 6, 11 and 20 (0-7
   unchanged) and bands grow to hosts where the budget is for heroes; named beasts grow with the party's tier (hit
   points x2.5/4 from level 11). High-tier fights are easy until the bestiary expansions bring creatures for them.
+- Expansion 3 B.1: Tactical Shift and Remarkable Athlete's step add half the speed to the turn and the turn's steps
+  draw no opportunity attacks; the Knight (ours) gains Unyielding at 15 (once a day, standing at hit points equal to
+  the level) and Warden of the Line at 18 (Hold the Line reaches ten feet); Commanding Presence stays words only.
 Ideas for later:
 - (none yet)
-Next session starts at: task B.1 in docs/expansions/03-demigods-magics.md (Part B, the four classes: Fighter and Champion 2024, the Knight to 18).
+Next session starts at: task B.2 in docs/expansions/03-demigods-magics.md (Part B: the Rogue, the Thief and the Assassin, Cunning Strike). B.1 (the fighter) is done on the branch; Part B goes to `main` with B.4.
 
 ## Done
 

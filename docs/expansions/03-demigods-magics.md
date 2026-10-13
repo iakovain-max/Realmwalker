@@ -70,7 +70,7 @@ spellcasting and scrolls at the book's prices.
   12 boons; Part A to `main`.
 
 ### Part B — The four classes, 1–20
-- [ ] B.1 Fighter and Champion 2024; the Knight to 18 (original).
+- [x] B.1 Fighter and Champion 2024; the Knight to 18 (original).
 - [ ] B.2 Rogue, Thief and the Assassin (the Cutthroat's characters become assassins); Cunning Strike and its effects
   as options in `actions.options`, in the Auto's and enemy's hands.
 - [ ] B.3 Cleric (Divine Order, Channel Divinity effects, Blessed Strikes, Divine Intervention), Life and War

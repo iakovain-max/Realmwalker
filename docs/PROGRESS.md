@@ -40,6 +40,25 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-10-13 (evening, continued): Demigods & Magics B.1 — the 2024 fighter — branch `dlc/03-demigods-magics` (not yet in `main`)
+
+The fighter is the 2024 book's from level 1 to 20 (it reaches `main` with the rest of Part B):
+- **Second Wind** twice a day from level 1 (three times from 4, four from 10); a short rest brings one back.
+  **Tactical Mind** (2): a failed check (climbing, forcing a door, a road event...) may spend a Second Wind for 1d10
+  more, and keeps it if that is not enough. **Tactical Shift** (5): Second Wind lets you slip half your speed away.
+- **Indomitable** (9) adds your level to the second try, once a day (twice from 13, three times from 17).
+  **Tactical Master** (9): a blow may push, sap or slow instead of the weapon's own trick. **Studied Attacks** (13):
+  a miss gives advantage on the next swing at that foe. **Three attacks** at 11, **four** at 20; **Action Surge**
+  twice between rests from 17 (never twice in one turn).
+- **The Champion**: Improved Critical and Remarkable Athlete at 3 (advantage on initiative and Athletics; a critical
+  hit lets you step away), a second fighting style at 7, **Heroic Warrior** at 10 (Heroic Inspiration every turn in a
+  fight), **Superior Critical** at 15 (18-20), **Survivor** at 18 (death saves with advantage, 18-20 brings you
+  back; bloodied, you heal 5 + Constitution at the start of each turn).
+- **The Knight** (our own) to 18: **Unyielding** at 15 (once a day a blow that would drop you leaves you standing) and
+  **Warden of the Line** at 18 (Hold the Line reaches ten feet).
+Checked: the fast tests (all green) and a test for each feature in a real fight; the book's fighter and Champion
+pages. The full checks run when Part B is merged.
+
 ### Session, 2026-10-13 (evening): Demigods & Magics part A — twenty levels and the epic boons — branch `dlc/03-demigods-magics`
 
 The first part of Expansion 3 (begun in the afternoon, cut off by a usage limit, finished after it reset). Saves of
