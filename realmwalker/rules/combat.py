@@ -1243,7 +1243,7 @@ class Battle:
     def check(self, f: Fighter, skill: str, dc: int, why: str = "") -> bool:
         """An ability check in a fight: a d20 and the skill (exhaustion counted in it) against the DC, in the dice log."""
         ability = self.t.rules["skills"].get(skill, {}).get("ability", skill)
-        ctx = trs.Ctx(self, f, ability=ability)
+        ctx = trs.Ctx(self, f, ability=ability, skill=skill)
         modes = {mode for mode, _ in trs.modifiers(f, "check", ctx)}
         if ability in ("str", "dex") and query.untrained_armour(f):
             modes.add("disadvantage")
@@ -1252,7 +1252,14 @@ class Battle:
         bonus = f.skill(skill)
         self.dice_say(f"{why or skill.title()} ({f.name}): {roll} {'+' if bonus >= 0 else '-'} {abs(bonus)} = "
                       f"{roll + bonus} vs DC {dc}")
-        return roll + bonus >= dc
+        total = roll + bonus
+        if total < dc and f.char is not None:
+            from realmwalker.rules.engine.handlers import fighter
+
+            total, line = fighter.tactical_mind(f.char, self.t, total, dc, self.rng)
+            if line:
+                self.dice_say(f"{f.name} ({line})")
+        return total >= dc
 
     def object_at(self, cell: tuple[int, int]) -> dict | None:
         """A thing on the field that can be broken: a door, a barrel, a table... with its AC and hit points (data/rules.json
@@ -2387,7 +2394,10 @@ class Battle:
         return True
 
     def _death_save(self, f: Fighter) -> None:
-        roll = dice.d20(self.rng, advantage=f.char is not None and feats.has(f.char, "durable")).natural
+        survivor = f.has_trait("survivor")  # (the Champion's Defy Death)
+        roll = dice.d20(self.rng, advantage=f.char is not None and feats.has(f.char, "durable") or survivor).natural
+        if survivor and roll >= 18:
+            roll = 20
         if 1 < roll < 10 and roll + query.d20_penalty(f) < 10 and self._inspired(f, 10, "a death save"):
             roll = dice.d20(self.rng).natural
             self.dice_say(f"{f.name} spends Heroic Inspiration on the death save: {roll}")

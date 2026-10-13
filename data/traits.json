@@ -89,25 +89,41 @@
 
     "fighting_style": {"name": "Fighting Style", "text": "A way of fighting, chosen once (archery, defence, duelling, great weapon, protection, two weapons).", "where": "sheet"},
     "second_wind": {
-      "name": "Second Wind", "text": "A bonus action to catch one's breath: 1d10 + level hit points back.",
-      "resource": {"id": "second_wind", "max": 1, "recover": "short"},
+      "name": "Second Wind", "text": "A bonus action to catch one's breath: 1d10 + level hit points back (two uses, three from level 4, four from 10; a short rest brings one back).",
+      "resource": {"id": "second_wind", "max": {"by_level": [[1, 2], [4, 3], [10, 4]]}, "recover": "short_one"},
       "activate": {"id": "second_wind", "name": "Second Wind (bonus action)", "cost": "bonus", "uses": "second_wind",
                    "effects": [{"op": "heal", "dice": "1d10", "add": "level"},
                                {"op": "say", "text": "{name} catches {their} breath and fights on.", "style": "good"}]}
     },
     "action_surge": {
-      "name": "Action Surge", "text": "One more action, once between rests.",
-      "resource": {"id": "action_surge", "max": 1, "recover": "short"},
-      "activate": {"id": "action_surge", "name": "Action Surge (one more action)", "cost": "free", "uses": "action_surge",
+      "name": "Action Surge", "text": "One more action, once between rests (twice from level 17, never twice in a turn).",
+      "resource": {"id": "action_surge", "max": {"by_level": [[2, 1], [17, 2]]}, "recover": "short"},
+      "hooks": [{"event": "ability_used", "as": "self", "handler": "surge_used"}],
+      "activate": {"id": "action_surge", "name": "Action Surge (one more action)", "cost": "free", "uses": "action_surge", "requires": ["surge_ready"],
                    "effects": [{"op": "gain_action"}, {"op": "say", "text": "{name} digs deep.", "style": "good"}]}
     },
     "extra_attack": {"name": "Extra Attack", "text": "Two attacks with the Attack action.", "modifiers": [{"attacks": 2}]},
     "indomitable": {
-      "name": "Indomitable", "text": "Once a day, a failed saving throw is rolled again.",
+      "name": "Indomitable", "text": "A failed saving throw rolled again, adding the fighter's level (once between long rests, twice from 13, three times from 17).",
       "hooks": [{"event": "d20_after", "as": "self", "handler": "indomitable"}],
-      "resource": {"id": "indomitable", "max": 1, "recover": "long"}
+      "resource": {"id": "indomitable", "max": {"by_level": [[9, 1], [13, 2], [17, 3]]}, "recover": "long"}
     },
     "crit_19": {"name": "Improved Critical", "text": "A critical hit on a 19 or 20.", "modifiers": [{"crit_range": 19}]},
+    "crit_18": {"name": "Superior Critical", "text": "A critical hit on an 18, 19 or 20.", "modifiers": [{"crit_range": 18}]},
+    "extra_attack_2": {"name": "Two Extra Attacks", "text": "Three attacks with the Attack action.", "modifiers": [{"attacks": 3}]},
+    "extra_attack_3": {"name": "Three Extra Attacks", "text": "Four attacks with the Attack action.", "modifiers": [{"attacks": 4}]},
+    "tactical_mind": {"name": "Tactical Mind", "text": "A failed ability check: a use of Second Wind adds 1d10 (not spent if it still fails).", "where": "camp.check"},
+    "tactical_shift": {"name": "Tactical Shift", "text": "Second Wind also lets the fighter move half their speed, slipping away from the foes around them.", "hooks": [{"event": "ability_used", "as": "self", "handler": "tactical_shift"}]},
+    "tactical_master": {"name": "Tactical Master", "text": "A mastered weapon's blow may push, sap or slow instead of its own trick.", "where": "mastery_done"},
+    "studied_attacks": {"name": "Studied Attacks", "text": "A miss: advantage on the next attack at that foe before the end of the fighter's next turn.", "hooks": [{"event": "attack_missed", "as": "attacker", "handler": "studied_attacks"}]},
+    "remarkable_athlete": {"name": "Remarkable Athlete", "text": "Advantage on initiative and Strength (Athletics) checks; after a critical hit, half the speed in a step that draws no blows.", "modifiers": [{"initiative": "advantage"}, {"check": "advantage", "skills": ["athletics"]}], "hooks": [{"event": "attack_done", "as": "attacker", "handler": "athlete_crit"}]},
+    "heroic_warrior": {"name": "Heroic Warrior", "text": "In a fight, Heroic Inspiration at the start of each turn without it.", "hooks": [{"event": "turn_start", "as": "self", "handler": "heroic_warrior"}]},
+    "survivor": {"name": "Survivor", "text": "Advantage on death saves (18-20 counts as a 20); bloodied but standing, 5 + Constitution modifier hit points back at the start of each turn.", "where": "Battle._death_save", "hooks": [{"event": "turn_start", "as": "self", "handler": "heroic_rally"}]},
+    "knight_unyielding": {"name": "Unyielding", "text": "Once between long rests, a blow that would drop the knight leaves them standing with hit points equal to their level.", "resource": {"id": "unyielding", "max": 1, "recover": "long"}, "hooks": [{"event": "hp_zero", "as": "target", "handler": "knight_unyielding"}]},
+    "warden_of_the_line": {
+      "name": "Warden of the Line", "text": "Hold the Line reaches ten feet.",
+      "modifiers": [{"enemy_attacks": "disadvantage", "when": ["owner_able", "attacker_within_10_of_owner"], "why": "{name} holds the line"}]
+    },
     "hold_the_line": {
       "name": "Hold the Line", "text": "Enemies beside the knight strike badly at anyone else.",
       "modifiers": [{"enemy_attacks": "disadvantage", "when": ["owner_able", "attacker_beside_owner"], "why": "{name} holds the line"}]

@@ -16,7 +16,7 @@ MODIFIER_KEYS = {
     "attack", "attacked", "enemy_attacks", "save", "resist", "crit_range", "passive", "ignores_zone",
     "immune_condition", "attacks", "drag_free", "vulnerable", "check", "initiative",
 }
-MODIFIER_EXTRAS = {"when", "why", "abilities", "against"}
+MODIFIER_EXTRAS = {"when", "why", "abilities", "against", "skills"}
 
 
 def problems(tables) -> list[str]:

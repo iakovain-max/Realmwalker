@@ -535,10 +535,10 @@ TRAIT_DEF = Obj(
                           optional=True),
         "hooks": List(Obj({"event": Str(max_len=30), "as": Str(choices=["self", "attacker", "target", "ally", "any"]),
                            "handler": Str(max_len=40), "reaction": Bool(optional=True)}, strict=False), optional=True),
-        "resource": Obj({"id": Str(max_len=40), "max": Any_(), "recover": Str(choices=["short", "long", "dawn", "turn"])},
-                        optional=True),
+        "resource": Obj({"id": Str(max_len=40), "max": Any_(),
+                         "recover": Str(choices=["short", "short_one", "long", "dawn", "turn"])}, optional=True),
         "resources": List(Obj({"id": Str(max_len=40), "max": Any_(),
-                               "recover": Str(choices=["short", "long", "dawn", "turn"])}), optional=True),
+                               "recover": Str(choices=["short", "short_one", "long", "dawn", "turn"])}), optional=True),
         "where": Str(max_len=30, optional=True),
         "activate": Any_(optional=True),  # abilities it gives (rules/engine/actions.py; checked by rules/engine/check.py)
     }

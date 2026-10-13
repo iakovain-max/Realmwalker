@@ -89,13 +89,19 @@ def check(game, skill: str, dc: int, bonus: int = 0, tag: str = "", mode: str = 
 
         if "item_weak_body" in magic.traits(who):  # an artifact's flaw, out of a fight as in one
             mode = "disadvantage" if mode != "advantage" else ""
+    from realmwalker.rules.engine import traits as tr
+    from realmwalker.rules.engine.handlers import fighter
+
+    if skill == "athletics" and "remarkable_athlete" in tr.of_char(who, game.tables):
+        mode = "advantage" if mode != "disadvantage" else ""  # (the Champion's Remarkable Athlete)
     rng = game.world.rng.child(f"camp/{tag}/{game.world.time}")
     roll = dice.d20(rng, advantage=mode == "advantage", disadvantage=mode == "disadvantage").natural
     name = game.tables.rules["skills"][skill]["name"]
     sign = "+" if b >= 0 else "-"
     how = {"advantage": " (adv)", "disadvantage": " (dis)"}.get(mode, "")
-    return roll + b >= dc, (f"<dice>{name}{how} ({who.name.split()[0]}): {roll} {sign} {abs(b)} = {roll + b} "
-                            f"vs DC {dc}</>")
+    total, more = fighter.tactical_mind(who, game.tables, roll + b, dc, rng.child("tactical_mind"))
+    return total >= dc, (f"<dice>{name}{how} ({who.name.split()[0]}): {roll} {sign} {abs(b)} = {roll + b} "
+                         f"vs DC {dc}{'; ' + more if more else ''}</>")
 
 
 def has(game, def_ids) -> tuple[Character, object] | tuple[None, None]:

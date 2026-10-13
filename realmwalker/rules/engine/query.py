@@ -331,6 +331,8 @@ def initiative_bonus(f) -> int:
     """What traits add to initiative (Alert: the proficiency bonus)."""
     out = 0
     for v in tr.values(f, "initiative"):
+        if v in ("advantage", "disadvantage"):
+            continue  # (a mode, read by initiative_roll)
         out += proficiency(f) if v == "pb" else int(v)
     return out
 
@@ -342,6 +344,9 @@ def initiative_roll(f) -> Roll:
         r.add("disadvantage", "surprised")
     for cid, mode in cond.flags(f.t, f.conditions, "initiative"):
         r.add(mode, _cond_name(f, cid))
+    for v in tr.values(f, "initiative"):
+        if v in ("advantage", "disadvantage"):
+            r.add(v, "Remarkable Athlete")
     return r
 
 

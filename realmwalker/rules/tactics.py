@@ -865,6 +865,18 @@ def _party_turn(b: Battle, f: Fighter) -> None:
             b.do_ability(f, moves["hide"].value)
 
 
+def tactical_mastery(b: Battle, f: Fighter, kind: str, target: Fighter) -> str:
+    """Tactical Master: drive a foe into harm, sap the blow of a dangerous one still standing, or keep the weapon's
+    own trick when it is the better (topple, vex, cleave...)."""
+    from realmwalker.rules.engine.handlers.mastery import PUSHABLE
+
+    if target.size in PUSHABLE and target.active and _push_lands_in_harm(b, f, target):
+        return "push"
+    if kind in ("graze", "nick", "slow", "push") and target.active:
+        return "sap"
+    return kind
+
+
 def _epic_moves(b: Battle, f: Fighter) -> None:
     """The epic boons' moves at the end of a turn: Blink Steps away from the foes around a hurt or far-reaching
     fighter, then Merge with Shadows with the bonus action left (unseen until they next act)."""

@@ -166,7 +166,14 @@ def _in_shadow(b, f) -> str | None:
     return boons.in_shadow(b, f)
 
 
+def _surge_ready(b, f) -> str | None:
+    from realmwalker.rules.engine.handlers import fighter
+
+    return fighter.surge_ready(b, f)
+
+
 REQUIRES: dict[str, Callable] = {
+    "surge_ready": _surge_ready,
     "blink_ready": _blink_ready,
     "vitality_left": _vitality_left,
     "in_shadow": _in_shadow,

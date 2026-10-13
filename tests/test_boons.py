@@ -137,8 +137,8 @@ def test_fortitude_forty_hit_points_and_more_from_healing(tables):
     assert c.max_hp >= hp + 40
     b = fight(tables, c, "bandit")
     me = b.fighters[0]
-    me.hp = 10
     on_turn(b, me)
+    me.hp = 10
     b._heal(me, 5)
     assert me.hp == 15 + max(0, con)
     b._heal(me, 5)

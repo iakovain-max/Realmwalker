@@ -23,14 +23,18 @@ def lucky(b, f, ev, hook, buff) -> None:
 
 @handler("indomitable")
 def indomitable(b, f, ev, hook, buff) -> None:
-    """A fighter refuses a failed saving throw, once a day."""
-    if ev.roll != "save" or ev.ok or f.char is None or f.char.uses.get("indomitable", 1) <= 0:
+    """A fighter refuses a failed saving throw: rolled again with their level added (2024), so many times a day."""
+    if ev.roll != "save" or ev.ok or f.char is None or f.char.uses.get("indomitable", 0) <= 0:
         return
+    if ev.bonus + f.char.level + 20 < ev.dc:
+        return  # (not even a 20 would do)
+    left = f.char.uses["indomitable"]
     if not reactions.yes(b, Decision(f, "indomitable", f"{f.the_name} fails a {ev.ability.upper()} save. Use "
-                                     "Indomitable to roll it again? (once a day)", [("yes", "Roll again"), ("no", "Accept it")])):
+                                     f"Indomitable to roll it again, +{f.char.level}? ({left} left today)",
+                                     [("yes", "Roll again"), ("no", "Accept it")])):
         return
-    f.char.uses["indomitable"] = 0
-    again = dice.d20(b.rng).natural + ev.bonus
+    f.char.uses["indomitable"] = left - 1
+    again = dice.d20(b.rng).natural + ev.bonus + f.char.level
     ev.ok = again >= ev.dc
     b.dice_say(f"{f.name} is indomitable and tries again: {again} vs DC {ev.dc} — {'saved' if ev.ok else 'failed'}")
     if ev.ok:

@@ -32,6 +32,7 @@ class Ctx:
     opt: Any = None
     space: tuple | None = None
     ability: str | None = None
+    skill: str | None = None  # the skill of an ability check (Remarkable Athlete's Athletics)
     against: tuple = ()  # the conditions a saving throw is made against (Brave, Fey Ancestry)
 
 
@@ -95,6 +96,8 @@ def modifiers(f, kind: str, ctx: Ctx):
                 continue
             if "abilities" in m and ctx.ability not in m["abilities"]:
                 continue
+            if "skills" in m and ctx.skill not in m["skills"]:
+                continue
             if "against" in m and not set(m["against"]) & set(ctx.against):
                 continue
             if all(WHEN[w](ctx) for w in m.get("when", ())):
@@ -139,6 +142,7 @@ WHEN: dict[str, Callable[[Ctx], bool]] = {
     "owner_able": lambda c: c.owner.standing and not _incap(c.owner),
     "owner_bloodied": lambda c: c.owner.hp <= c.owner.max_hp * c.owner.t.conditions["bloodied"]["at_most"],
     "attacker_beside_owner": lambda c: c.b.gap(c.owner, c.att) <= 1,
+    "attacker_within_10_of_owner": lambda c: c.b.gap(c.owner, c.att) <= 2,
     "melee": lambda c: c.opt is not None and c.opt.is_melee,
     "ranged": lambda c: c.opt is not None and not c.opt.is_melee,
     "weapon": lambda c: c.opt is not None and c.opt.kind in ("melee", "ranged"),

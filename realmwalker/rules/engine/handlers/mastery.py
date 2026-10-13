@@ -116,6 +116,8 @@ def mastery_done(b, f, ev, hook, buff) -> None:
     kind = of(f, opt)
     if kind is None or target is None or opt.extra.get("cleave_blow"):
         return
+    if ev.hit and tr.has(f, "tactical_master") and (target.active or target.state == "down"):
+        kind = tactical_master(b, f, kind, target)  # (push, sap or slow in place of the weapon's own trick)
     words = b.t.combat_text.get("mastery", {})
     if not ev.hit:
         if kind == "graze":
@@ -161,6 +163,20 @@ def mastery_done(b, f, ev, hook, buff) -> None:
             b.say(_line(b, words, "push", f, target, opt), "system")
     elif kind == "cleave":
         _cleave(b, f, opt, target, words)
+
+
+def tactical_master(b, f, kind: str, target) -> str:
+    """The fighter's Tactical Master: the battle's judgement of push, sap or slow against the weapon's own trick
+    (the player is asked under the Reactions setting "all")."""
+    from realmwalker.rules import tactics
+
+    best = tactics.tactical_mastery(b, f, kind, target)
+    if best == kind:
+        return kind
+    names = {"push": "drive it back", "sap": "sap its next blow", "slow": "slow it"}
+    got = yes(b, Decision(f, "tactical_master", f"Tactical Master: {names[best]} instead of the weapon's {kind}?",
+                          [("yes", names[best].capitalize()), ("no", f"Keep {kind}")], default="yes", free=True))
+    return best if got else kind
 
 
 def _cleave(b, f, opt, first, words) -> None:

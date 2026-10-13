@@ -14,30 +14,43 @@
       "mastery": [[1, 3], [4, 4], [10, 5], [16, 6]],
       "features": [
         {"level": 1, "id": "fighting_style", "name": "Fighting Style", "text": "A trained way of fighting, chosen at creation: a Fighting Style feat.", "rule": "fighting_style"},
-        {"level": 1, "id": "weapon_mastery", "name": "Weapon Mastery", "text": "The tricks of three kinds of weapon, four from level 4 and five from level 10: a mace that knocks a man down, a rapier that leaves an opening. Change them after a long rest.", "rule": "weapon_mastery"},
-        {"level": 1, "id": "second_wind", "name": "Second Wind", "text": "Once per rest, catch your breath in battle: regain 1d10 + level hit points.", "rule": "second_wind"},
-        {"level": 2, "id": "action_surge", "name": "Action Surge", "text": "Once per rest, push past exhaustion and take a second action on your turn.", "rule": "action_surge"},
+        {"level": 1, "id": "weapon_mastery", "name": "Weapon Mastery", "text": "The tricks of three kinds of weapon, four from level 4, five from level 10 and six from 16: a mace that knocks a man down, a rapier that leaves an opening. Change them after a long rest.", "rule": "weapon_mastery"},
+        {"level": 1, "id": "second_wind", "name": "Second Wind", "text": "A bonus action to catch your breath in battle: 1d10 + your level in hit points. Twice between long rests (three times from level 4, four from 10); a short rest brings back one.", "rule": "second_wind"},
+        {"level": 2, "id": "action_surge", "name": "Action Surge", "text": "Once per rest, push past exhaustion and take one more action on your turn (twice per rest from level 17, never twice in a turn).", "rule": "action_surge"},
+        {"level": 2, "id": "tactical_mind", "name": "Tactical Mind", "text": "When an ability check fails, a use of Second Wind adds 1d10 to it; if it still fails, the use is not spent.", "rule": "tactical_mind"},
         {"level": 3, "id": "subclass", "name": "Martial Archetype", "text": "Choose how you fight: Champion or Knight."},
         {"level": 4, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two."},
         {"level": 5, "id": "extra_attack", "name": "Extra Attack", "text": "Attack twice when you take the Attack action.", "rule": "extra_attack"},
+        {"level": 5, "id": "tactical_shift", "name": "Tactical Shift", "text": "Second Wind also lets you move up to half your speed, slipping away from the foes around you.", "rule": "tactical_shift"},
         {"level": 6, "id": "asi", "name": "Ability Score Improvement", "text": "Fighters train harder than anyone: +2 to one ability, or +1 to two."},
         {"level": 8, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two."},
-        {"level": 9, "id": "indomitable", "name": "Indomitable", "text": "Once per long rest, reroll a failed saving throw.", "rule": "indomitable"},
+        {"level": 9, "id": "indomitable", "name": "Indomitable", "text": "A failed saving throw rolled again, adding your level. Once between long rests (twice from level 13, three times from 17).", "rule": "indomitable"},
+        {"level": 9, "id": "tactical_master", "name": "Tactical Master", "text": "With a weapon whose mastery you know, a blow may push, sap or slow instead of its own trick.", "rule": "tactical_master"},
+        {"level": 11, "id": "two_extra_attacks", "name": "Two Extra Attacks", "text": "Attack three times when you take the Attack action.", "rule": "extra_attack_2"},
         {"level": 12, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two, or a feat."},
+        {"level": 13, "id": "studied_attacks", "name": "Studied Attacks", "text": "A missed attack teaches you: your next attack on that foe before the end of your next turn has advantage.", "rule": "studied_attacks"},
+        {"level": 13, "id": "indomitable_twice", "name": "Indomitable (two uses)", "text": "Indomitable twice between long rests."},
         {"level": 14, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two, or a feat."},
         {"level": 16, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two, or a feat."},
-        {"level": 19, "id": "epic_boon", "name": "Epic Boon", "text": "A gift of legend: an epic boon (or another feat), each raising one ability as high as 30."}
+        {"level": 17, "id": "action_surge_twice", "name": "Action Surge (two uses)", "text": "Action Surge twice between rests, once in a turn; Indomitable three times between long rests."},
+        {"level": 19, "id": "epic_boon", "name": "Epic Boon", "text": "A gift of legend: an epic boon (or another feat), each raising one ability as high as 30."},
+        {"level": 20, "id": "three_extra_attacks", "name": "Three Extra Attacks", "text": "Attack four times when you take the Attack action.", "rule": "extra_attack_3"}
       ],
       "subclasses": {
-        "champion": {"name": "Champion", "text": "Raw skill and endurance.", "features": [
-          {"level": 3, "id": "improved_critical", "name": "Improved Critical", "text": "Your weapon attacks score a critical hit on a roll of 19 or 20.", "rule": "crit_19"},
-          {"level": 7, "id": "remarkable_athlete", "name": "Remarkable Athlete", "text": "Add half your proficiency bonus to Strength, Dexterity and Constitution checks you are not proficient in."},
-          {"level": 10, "id": "additional_style", "name": "Additional Fighting Style", "text": "Learn a second fighting style.", "rule": "fighting_style"}
+        "champion": {"name": "Champion", "text": "Raw skill and endurance: the blow that ends it, and the will to stand after.", "features": [
+          {"level": 3, "id": "improved_critical", "name": "Improved Critical", "text": "Your weapon attacks and unarmed strikes score a critical hit on a roll of 19 or 20.", "rule": "crit_19"},
+          {"level": 3, "id": "remarkable_athlete", "name": "Remarkable Athlete", "text": "Advantage on initiative and on Strength (Athletics) checks; after a critical hit you may move up to half your speed, slipping away from the foes around you.", "rule": "remarkable_athlete"},
+          {"level": 7, "id": "additional_style", "name": "Additional Fighting Style", "text": "Learn a second fighting style.", "rule": "fighting_style"},
+          {"level": 10, "id": "heroic_warrior", "name": "Heroic Warrior", "text": "In a fight, you start each of your turns with Heroic Inspiration if you have none.", "rule": "heroic_warrior"},
+          {"level": 15, "id": "superior_critical", "name": "Superior Critical", "text": "Your weapon attacks and unarmed strikes score a critical hit on a roll of 18 to 20.", "rule": "crit_18"},
+          {"level": 18, "id": "survivor", "name": "Survivor", "text": "Advantage on death saves, and an 18 or 19 counts as a 20. At the start of each of your turns, while you are bloodied and still standing, you regain 5 + your Constitution modifier in hit points.", "rule": "survivor"}
         ]},
         "knight": {"name": "Knight", "text": "A shield for others: you hold the line and draw the enemy's blows.", "features": [
           {"level": 3, "id": "hold_the_line", "name": "Hold the Line", "text": "An enemy beside you has disadvantage attacking anyone but you.", "rule": "hold_the_line"},
           {"level": 7, "id": "commanding_presence", "name": "Commanding Presence", "text": "Add your Wisdom bonus to Persuasion and Intimidation when giving orders or demanding surrender."},
-          {"level": 10, "id": "rallying_cry", "name": "Rallying Cry", "text": "When you use Second Wind, friends within 30 feet regain hit points equal to your level.", "rule": "rallying_cry"}
+          {"level": 10, "id": "rallying_cry", "name": "Rallying Cry", "text": "When you use Second Wind, friends within 30 feet regain hit points equal to your level.", "rule": "rallying_cry"},
+          {"level": 15, "id": "unyielding", "name": "Unyielding", "text": "Once between long rests, a blow that would drop you leaves you standing with hit points equal to your level.", "rule": "knight_unyielding"},
+          {"level": 18, "id": "warden_of_the_line", "name": "Warden of the Line", "text": "Hold the Line reaches ten feet: an enemy within two strides of you strikes badly at anyone but you.", "rule": "warden_of_the_line"}
         ]}
       },
       "kits": [

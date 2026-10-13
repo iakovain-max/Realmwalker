@@ -429,9 +429,9 @@ def test_second_wind_heals(tables):
     f.hp = 1
     assert ("second_wind", True) in [(a[0], a[2]) for a in b.class_abilities(f)]
     b.do_ability(f, "second_wind")
-    assert f.hp > 1 and c.uses["second_wind"] == 0 and f.bonus == 0
+    assert f.hp > 1 and c.uses["second_wind"] == 1 and f.bonus == 0  # (2024: two uses at level 1)
     short_rest(c, tables, RNG(2))
-    assert c.uses["second_wind"] == 1
+    assert c.uses["second_wind"] == 2
 
 
 def test_potions_and_bandages(tables):
@@ -920,7 +920,7 @@ def test_indomitable_and_guided_strike(tables):
     fighter = hero_at(tables, "fighter", 9, "champion")
     b = battle(tables, [fighter], foes(tables, "wolf"))
     f = b.side(PARTY)[0]
-    assert not b._save(f, "wis", 99)  # nobody makes DC 99, but it is tried twice
+    b._save(f, "wis", 26)  # out of reach of the first roll; the second adds the fighter's level (2024)
     assert fighter.uses["indomitable"] == 0 and any("indomitable" in t for t, _ in b.log)
     priest = hero_at(tables, "cleric", 2, "war")
     priest.uses["channel_divinity"] = 1
@@ -1065,7 +1065,7 @@ def test_the_auto_judges_abilities_by_what_they_do(tables):
     turn_of(b, f)
     f.hp = 2
     tactics.take_turn(b, f)
-    assert c.uses["second_wind"] == 0 and f.hp > 2
+    assert c.uses["second_wind"] == 1 and f.hp > 2
 
     cleric = hero_at(tables, "cleric", 2)
     b = battle(tables, [cleric], foes(tables, "skeleton", "skeleton", "zombie"),
