@@ -1,4 +1,5 @@
-"""Level-up choices: a path, ability increases, spells and cantrips, for each member of the party."""
+"""Level-up choices: a path, ability increases or a feat (and the feat's own picks), spells and cantrips, weapon
+masteries and fighting styles, for each member of the party. Suggest (s) points at what the Auto would choose."""
 
 from __future__ import annotations
 
@@ -60,6 +61,17 @@ class LevelUpScreen(Screen):
         if not self.char.pending and not self.next_member():
             self.close()
 
+    def suggest(self) -> None:
+        """Point at the choice the Auto would make (it is marked "suggested" in the list)."""
+        choice = self.choice()
+        if choice is None:
+            return
+        opts = progression.options(self.char, self.game.tables, choice)
+        want = progression.suggest(self.char, self.game.tables, choice, opts)
+        ids = [o[0] for o in opts]
+        if want in ids:
+            self.sel = ids.index(want)
+
     def auto(self) -> None:
         for c in self.game.party:
             for line in progression.auto_resolve(c, self.game.tables):
@@ -84,6 +96,8 @@ class LevelUpScreen(Screen):
             self.pick()
         elif ev.key in ("a", "A"):
             self.auto()
+        elif ev.key in ("s", "S"):
+            self.suggest()
         elif ev.key == "tab":
             self.next_member()
         return True
@@ -109,6 +123,7 @@ class LevelUpScreen(Screen):
         canvas.markup(2, 3, f"<dim>{waiting} choice{'s' if waiting != 1 else ''} waiting in the party</>",
                       max_width=w - 4)
         opts = progression.options(c, t, choice)
+        hint = progression.suggest(c, t, choice, opts) if opts else ""
         list_w = min(48, max(26, w // 2 - 2))
         top, bottom = 5, h - 5
         rows = bottom - top
@@ -124,6 +139,8 @@ class LevelUpScreen(Screen):
             if chosen:
                 canvas.fill(2, y, list_w, 1, colors.HILITE_BG)
             canvas.hit(2, y, list_w, 1, lambda idx=idx: self.choose_row(idx))
+            if oid == hint:
+                label = f"{label} (suggested)"
             canvas.text(3, y, label[: list_w - 2], colors.SELECT_FG if chosen else colors.FG)
         if opts:
             detail = opts[self.sel][2]
@@ -133,10 +150,11 @@ class LevelUpScreen(Screen):
             canvas.markup(2, y, f"<good>{markup.escape(line)}</>", max_width=w - 4)
             y += 1
         bx = canvas.button(2, h - 2, "Choose", self.pick, hotkey="Enter")
+        bx = canvas.button(bx + 3, h - 2, "Suggest", self.suggest, hotkey="s")
         bx = canvas.button(bx + 3, h - 2, "Choose for me", self.auto, hotkey="a")
         if len(self.game.party) > 1:
             bx = canvas.button(bx + 3, h - 2, "Next member", self.next_member, hotkey="Tab")
         canvas.button(bx + 3, h - 2, "Later", self.close, hotkey="Esc")
 
     def autoplay_keys(self) -> list[KeyEvent]:
-        return [KeyEvent(k) for k in ("down", "down", "enter", "enter", "a", "escape")]
+        return [KeyEvent(k) for k in ("down", "s", "down", "enter", "enter", "a", "escape")]

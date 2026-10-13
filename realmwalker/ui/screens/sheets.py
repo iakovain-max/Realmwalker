@@ -184,6 +184,7 @@ class CharacterScreen(Screen):
         self.index = index
         self.notes = ScrollText("")
         self.show_skills = True  # in a narrow window the notes take the skills' place (s switches)
+        self.feats_view = False  # the notes column shows the feats instead (f switches: the Feats tab)
 
     @property
     def char(self):
@@ -295,12 +296,16 @@ class CharacterScreen(Screen):
                 notes.append(f"<title>{label}:</> {markup.escape(value)}")
         if c.backstory:
             notes += ["", markup.escape(c.backstory)]
+        if self.feats_view:
+            notes = self.feat_notes(c, t)
         text = "\n".join(notes)
         if self.notes.text != text:
             self.notes.set_text(text)
         if not narrow or not self.show_skills:
             self.notes.render(canvas, col3, 2, w - col3 - 2, h - 6)
         bx = canvas.button(2, h - 3, "Inventory", lambda: self._switch(InventoryScreen), hotkey="i")
+        if not narrow:  # (narrow: the f key; the notes end with the feats anyway)
+            bx = canvas.button(bx + 3, h - 3, "Notes" if self.feats_view else "Feats", self.toggle_feats, hotkey="f")
         if narrow:
             bx = canvas.button(bx + 3, h - 3, "Notes" if self.show_skills else "Skills", self.toggle_skills, hotkey="s")
         bx = canvas.button(bx + 3, h - 3, "Equipment", lambda: self._switch(EquipmentScreen), hotkey="e")
@@ -314,6 +319,31 @@ class CharacterScreen(Screen):
 
     def toggle_skills(self) -> None:
         self.show_skills = not self.show_skills
+
+    def toggle_feats(self) -> None:
+        self.feats_view = not self.feats_view
+        if self.feats_view:
+            self.show_skills = False  # (in a narrow window the feats take the skills' place)
+
+    def feat_notes(self, c, t) -> list[str]:
+        """The Feats tab: each feat they have, what it does and what they chose; then what a coming level offers."""
+        from realmwalker.rules import feats as featrules
+
+        out = ["<title>Feats</>", ""]
+        words = {"origin": "origin feat", "general": "general feat", "fighting_style": "fighting style",
+                 "epic": "epic boon"}
+        known = [x for x in c.feats if x["id"] in featrules.defs(t)]
+        for line, f in zip(featrules.sheet_lines(c, t), known):
+            cat = words.get(featrules.defs(t)[f["id"]]["category"], "feat")
+            out += [line.replace("<dim>(feat)</>", f"<dim>({cat})</>", 1), ""]
+        if not known:
+            out += ["<dim>None yet.</>", ""]
+        open_now = featrules.choosable(c, t)
+        if open_now:
+            out.append("<dim>At an ability increase (levels 4 and 8) a feat may be taken instead: "
+                       f"{len(open_now)} are open to you now, among them "
+                       + ", ".join(featrules.defs(t)[fid]["name"] for fid in open_now[:6]) + ".</>")
+        return out
 
     def change_masteries(self) -> None:
         """Choose the weapons mastered again (once after each long rest, and before the first)."""
@@ -346,6 +376,8 @@ class CharacterScreen(Screen):
             self.change_masteries()
         elif ev.key == "tab" and len(self.game.party) > 1:
             self.next_member()
+        elif ev.key == "f":
+            self.toggle_feats()
         elif ev.key == "s" and self.narrow(self.app.last_console_size[0]):
             self.toggle_skills()
         else:
@@ -353,7 +385,7 @@ class CharacterScreen(Screen):
         return True
 
     def autoplay_keys(self) -> list[KeyEvent]:
-        return [KeyEvent(k) for k in ("down", "pagedown", "tab", "l", "i", "e", "s", "escape")]
+        return [KeyEvent(k) for k in ("down", "pagedown", "f", "f", "tab", "l", "i", "e", "s", "escape")]
 
 
 # ---------------------------------------------------------------------------- inventory

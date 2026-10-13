@@ -42,7 +42,8 @@ SPELL_COLOURS = {"sleep": (190, 150, 255), "web": (220, 220, 210), "bless": (255
 # A weapon mastery as it lands (rules/engine/handlers/mastery.py): its word and colour. Topple shows as the fall.
 MASTERY_MARKS = {"push": ("driven back", (236, 214, 170)), "sap": ("sapped", (214, 190, 120)),
                  "slow": ("slowed", (150, 190, 230)), "vex": ("an opening", (240, 150, 120)),
-                 "cleave": ("cleave", (255, 200, 120)), "graze": ("grazed", (230, 170, 150)), "topple": ("", (0, 0, 0))}
+                 "cleave": ("cleave", (255, 200, 120)), "graze": ("grazed", (230, 170, 150)), "topple": ("", (0, 0, 0)),
+                 "reeling": ("reeling", (240, 170, 110)), "unsteady": ("unsteady", (214, 190, 120))}
 CONDITION_WORDS = {"prone": "down", "restrained": "held fast", "paralyzed": "paralysed", "stunned": "stunned",
                    "asleep": "asleep", "poisoned": "poisoned", "grappled": "grappled", "frightened": "afraid",
                    "blinded": "blind"}
