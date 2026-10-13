@@ -474,3 +474,37 @@ def test_the_watch_strikes_with_its_spears_trick(tables):
         if "sap" in tricks(b.events[start:]):
             break
     assert any(bf.get("sapped") for bf in me.buffs)
+
+
+def test_review_fixes_broken_arm_untrained_shield_and_armour_outside_a_fight(game, tables):
+    from realmwalker.rules import health  # noqa: F401
+
+    # a broken arm stops magic arrows as well as plain ones
+    c = hero(tables)
+    for slot in ("main_hand", "off_hand"):
+        unequip(c, slot)
+    wield(tables, c, "longbow")
+    plus = add_existing(c, tables.items, listed(game, "ammunition_1_2_or_3", "+1"))
+    plus.def_id = "arrows"
+    b = fight(tables, c, "bandit", at=(9, 4))
+    me = b.fighters[0]
+    assert next(o for o in b.attack_options(me) if o.key.startswith("ammo")).available
+    b.attack_options(me)
+    import realmwalker.rules.health as h
+    real = h.broken_arm
+    try:
+        h.broken_arm = lambda ch, side: side == "right"
+        magic = next(o for o in b.attack_options(me) if o.key.startswith("ammo"))
+        assert not magic.available and magic.reason
+    finally:
+        h.broken_arm = real
+    # an untrained wizard gets nothing from a +2 shield
+    w = hero(tables, "wizard")
+    before = Sheet(w, tables).armor_class()
+    s2 = add_existing(w, tables.items, listed(game, "shield_1_2_or_3", "+2", rarity="rare"))
+    s2.magic["identified"] = True
+    equip(w, tables.items, s2.uid, "off_hand")
+    assert Sheet(w, tables).armor_class() == before
+    # untrained armour hampers Strength and Dexterity rolls out of a fight too
+    wield(tables, w, "chain_mail")
+    assert Sheet(w, tables).armour_disadvantage("dex") and not Sheet(w, tables).armour_disadvantage("int")

@@ -269,7 +269,7 @@ def spring(game, lm, x: int, y: int, f: dict) -> None:
     rng = rng_for(game, "trap")
     c = game.leader
     s = game.sheet(c)
-    roll = dice.d20(rng).natural
+    roll = dice.d20(rng, disadvantage=s.armour_disadvantage("dex")).natural
     save = roll + s.save_bonus("dex")
     if f.get("trap", "pit") == "pit":
         from realmwalker.rules.engine import hazards
@@ -366,7 +366,7 @@ def unlock(game, lm, x: int, y: int, dc: int) -> tuple[bool, str]:
         bonus = game.sheet(who).skill_bonus("sleight_of_hand")
         if "thieves_tools" in who.tools:
             bonus += game.sheet(who).proficiency
-        roll = dice.d20(rng).natural + bonus
+        roll = dice.d20(rng, disadvantage=game.sheet(who).armour_disadvantage("dex")).natural + bonus
         if roll >= dc:
             game.cue("unlock")
             return True, f"{who.name.split()[0]} picks the lock. <dim>(Sleight of Hand {roll} vs {dc})</>"
@@ -374,7 +374,9 @@ def unlock(game, lm, x: int, y: int, dc: int) -> tuple[bool, str]:
     who = best_at(game, "athletics")
     # A crowbar: leverage (advantage on the roll, as in the Player's Handbook), and a crack instead of a crash.
     bar = any(game.tables.items.get(it.def_id).get("pry") for c in game.party for it in c.inventory)
-    roll = dice.d20(rng, advantage=bar).natural + game.sheet(who).skill_bonus("athletics")
+    hampered = game.sheet(who).armour_disadvantage("str")
+    roll = dice.d20(rng, advantage=bar and not hampered, disadvantage=hampered and not bar).natural + \
+        game.sheet(who).skill_bonus("athletics")
     alert_nearby(game, lm, x, y, 6 if bar else 12)
     adv = ", crowbar: advantage" if bar else ""
     if roll >= dc + 2:

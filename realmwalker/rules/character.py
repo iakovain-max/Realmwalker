@@ -296,6 +296,8 @@ class Sheet:
             from realmwalker.rules import magic
 
             ac += magic.total(self.c, "ac")
+            if shield is not None and self.items.category(shield) == "shield" and not self.proficient_with_armor(shield):
+                ac -= magic.item_bonus(shield, "ac", char=self.c)  # (without training a shield gives nothing)
         if self.c.effects:
             from realmwalker.rules import spells
 
@@ -444,6 +446,11 @@ class Sheet:
             return self.capacity()
         caps = [Sheet(m, self.t).capacity() for m in mates]
         return tuple(sum(c[i] for c in caps) for i in range(3))  # type: ignore[return-value]
+
+    def armour_disadvantage(self, ability: str) -> bool:
+        """Armour worn without training (2024): Disadvantage on every Strength or Dexterity D20 Test."""
+        armor = self.c.equipped_item("armor")
+        return ability in ("str", "dex") and armor is not None and not self.proficient_with_armor(armor)
 
     def armor_too_heavy(self) -> bool:
         armor = self.c.equipped_item("armor")

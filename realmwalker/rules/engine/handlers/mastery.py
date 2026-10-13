@@ -125,13 +125,12 @@ def mastery_done(b, f, ev, hook, buff) -> None:
         b._event("mastery", who=target.id, by=f.id, trick="vex")
         b.say(_line(b, words, "vex", f, target, opt), "system")
     elif kind == "topple" and target.standing:
-        if "prone" in target.conditions:
+        if "prone" in target.conditions or query.condition_immune(target, "prone"):
             return
         dc = 8 + ability_mod(f, opt) + query.proficiency(f)
         if not choose(b, f, "topple", target, f"Knock {target.the_name} down? (a Constitution save, DC {dc})"):
             return
-        if not b._save(target, "con", dc):
-            target.conditions["prone"] = -1
+        if not b._save(target, "con", dc) and durations.give(b, target, "prone", source=f):
             b._event("prone", who=target.id)
             b._event("mastery", who=target.id, by=f.id, trick="topple")
             b.say(_line(b, words, "topple", f, target, opt), "good" if f.side == "party" else "danger")

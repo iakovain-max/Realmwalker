@@ -62,20 +62,30 @@ def item_details(game: GameState, item: Item) -> str:
         rng = f" · range {d['range'][0]}/{d['range'][1]} ft" if d.get("range") else ""
         lines.append(f"Damage {d['damage']}{extra} {d['damage_type']}{rng}")
         lines.append(f"<dim>{d.get('group', '').capitalize()} weapon · {props}</>")
+        if d.get("mastery"):
+            trick = game.tables.traits["traits"].get(f"mastery_{d['mastery']}", {})
+            known = item.def_id in getattr(sheet.c, "masteries", ())
+            lines.append(f"{'<good>' if known else '<dim>'}Mastery: {d['mastery'].title()}</> "
+                         f"<dim>{trick.get('text', '')}{'' if known else ' (not mastered)'}</>")
         if not sheet.proficient_with_weapon(item):
             lines.append("<warn>You are not trained with this weapon.</>")
     elif cat == "armor":
         dex = {"light": "+ Dex", "medium": "+ Dex (max 2)", "heavy": ""}[d["armor_type"]]
         lines.append(f"{d['armor_type'].capitalize()} armour · AC {d['ac']} {dex}")
         lines.append(f"<dim>Covers: {', '.join(d.get('covers', []))}</>")
-        if d.get("str_req"):
+        from realmwalker.rules import magic as magicrules
+
+        light = magicrules.item_flag(item, "mithral")
+        if d.get("str_req") and not light:
             lines.append(f"<dim>Needs Strength {d['str_req']} to move freely.</>")
-        if d.get("stealth_disadvantage"):
+        if d.get("stealth_disadvantage") and not light:
             lines.append("<dim>Noisy: disadvantage on Stealth.</>")
         if not sheet.proficient_with_armor(item):
             lines.append("<warn>You are not trained to fight in this.</>")
     elif cat == "shield":
         lines.append(f"+{d.get('ac_bonus', 2)} AC · held in the off hand")
+        if not sheet.proficient_with_armor(item):
+            lines.append("<warn>Untrained with shields: it gives you no protection.</>")
     elif cat == "helmet":
         lines.append("Protects the head from wounds.")
     elif cat == "clothing":

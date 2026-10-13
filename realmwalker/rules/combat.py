@@ -1684,7 +1684,7 @@ class Battle:
         if "ammunition" in props:
             ammo = d.get("ammo")
             opt.ammo_def = ammo
-            if not any(i.def_id == ammo and not i.magic for i in f.char.inventory):
+            if opt.available and not any(i.def_id == ammo and not i.magic for i in f.char.inventory):
                 opt.available = False
                 opt.reason = f"no {self.t.items.get(ammo)['name']}s left"
         return opt
@@ -1703,10 +1703,10 @@ class Battle:
             n, sides, flat = dice.parse(base.damage)
             damage = f"{n}d{sides}{signed_mod(flat + plus)}" if n else str(max(1, flat + plus))
             name = f"{base.name}, {self.t.items.name(it, False)}"
+            ok = base.available or base.reason == f"no {self.t.items.get(it.def_id)['name']}s left"
             out.append(replace(base, key=f"ammo{it.uid}", name=name, bonus=base.bonus + plus, damage=damage,
-                               available=base.reason in ("", f"no {self.t.items.get(it.def_id)['name']}s left")
-                               and (base.available or base.reason.startswith("no ")),
-                               reason="", extra=dict(base.extra, ammo_uid=it.uid)))
+                               available=ok, reason="" if ok else base.reason,
+                               extra=dict(base.extra, ammo_uid=it.uid)))
         return out
 
     def in_reach(self, f: Fighter, opt: AttackOption, target: Fighter, *, at: tuple[int, int] | None = None) -> tuple[bool, str]:

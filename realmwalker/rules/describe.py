@@ -435,6 +435,12 @@ def attack(b, f, opt, target=None, *, known: bool = True) -> Card:
     card = Card(esc(opt.name), opt.kind.replace("_", " "), "icon/attack", [attack_line(opt)])
     if opt.properties:
         card.lines.append(f"<dim>{', '.join(p.replace('_', '-') for p in opt.properties)}</>")
+    from realmwalker.rules.engine.handlers import mastery
+
+    trick = mastery.of(f, opt) if f is not None else None
+    if trick:
+        text = f.t.traits["traits"].get(f"mastery_{trick}", {}).get("text", "")
+        card.lines.append(f"<good>Mastery: {trick.title()}</> <dim>{esc(text)}</>")
     if not opt.available and opt.reason:
         card.lines.append(f"<warn>{esc(opt.reason)}</>")
     if b is not None and target is not None and target.side != f.side and target.active:
