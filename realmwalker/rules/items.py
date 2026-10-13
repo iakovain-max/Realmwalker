@@ -181,3 +181,16 @@ def coin_weight(cp: int) -> float:
     gp, rem = divmod(max(0, cp), 100)
     sp, cp = divmod(rem, 10)
     return (gp + sp + cp) / 50.0
+
+
+# ---------------------------------------------------------------------------- trinkets (Expansion 2 part D)
+def make_trinket(tables, rng, uid: int = 0, now: int = 0) -> Item:
+    """One keepsake from data/trinkets.json: the "trinket" item, named and remembered by its tag."""
+    t = rng.choice(sorted(tables.trinkets.values(), key=lambda x: x["id"]))
+    return Item(uid, "trinket", 1, name=t["name"], made_at=now, tags=[f"trinket:{t['id']}"])
+
+
+def trinket_words(tables, item: Item) -> str:
+    """What a trinket is, in its own words ("" for anything else)."""
+    tid = next((tag.split(":", 1)[1] for tag in item.tags if tag.startswith("trinket:")), "")
+    return tables.trinkets.get(tid, {}).get("text", "")

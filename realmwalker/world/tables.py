@@ -125,5 +125,7 @@ class Tables:
         self.treasure = data["treasure.json"]
         self.wonders = data["wonders.json"]
         self.towns = data["towns.json"]
+        self.trinkets = {t["id"]: t for t in data["trinkets.json"]["trinkets"]}  # keepsakes (rules/items.make_trinket)
+        self.trinket_chance = data["trinkets.json"]["chance"]  # in a pocket, in a chest
         self.quests = data["quests.json"]
         self.travel_events = {k: v for k, v in data["travel_events.json"]["events"].items() if not k.startswith("_")}

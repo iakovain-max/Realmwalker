@@ -301,7 +301,8 @@
     "arcane_staff": {"name": "arcane staff", "category": "focus", "weight": 4, "value": 500, "material": "wood", "focus": {"kind": "arcane"}, "description": "A tall staff, carved with sigils and capped with a stone. A caster's focus, and a fair quarterstaff."},
     "arcane_wand": {"name": "arcane wand", "category": "focus", "weight": 1, "value": 1000, "material": "wood", "focus": {"kind": "arcane"}, "description": "A slim wand of bone-white wood, bound with wire. A caster's focus."},
     "holy_emblem": {"name": "holy emblem", "category": "focus", "weight": 0, "value": 500, "material": "cloth", "focus": {"kind": "divine"}, "description": "A faith's sign stitched on a tabard or painted on a shield. A priest's focus."},
-    "reliquary": {"name": "reliquary", "category": "focus", "weight": 2, "value": 500, "material": "silver", "focus": {"kind": "divine"}, "description": "A little casket holding a saint's bone or a scrap of cloth. A priest's focus, held in the hand."}
+    "reliquary": {"name": "reliquary", "category": "focus", "weight": 2, "value": 500, "material": "silver", "focus": {"kind": "divine"}, "description": "A little casket holding a saint's bone or a scrap of cloth. A priest's focus, held in the hand."},
+    "trinket": {"name": "trinket", "category": "gear", "trinket": true, "weight": 0.1, "value": 10, "material": "bone", "how": "A keepsake: something to turn over in the hand by the fire, and worth a silver penny to a pedlar who collects such things.", "description": "A small curious thing of no use to anyone."}
   },
   "starting_packs": {
     "everyone": [["underclothes", 1], ["backpack", 1], ["blanket", 1], ["waterskin", 1], ["tinderbox", 1], ["rations", 2], ["torch", 2], ["bandages", 2]]

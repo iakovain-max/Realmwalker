@@ -1260,3 +1260,10 @@ PACK = Obj({
 })
 # Kinds of data file that only packs bring: their empty shape, used when data/ has no base file of that name.
 PACK_ONLY: dict[str, dict] = {}
+
+# Trinkets (Expansion 2 part D): keepsakes found in pockets and chests and given to every new character (one item,
+# "trinket" in items.json; its name and words come from here, kept on the item: rules/items.make_trinket).
+TRINKETS = Obj({"chance": Obj({"pocket": Float(min=0, max=1), "chest": Float(min=0, max=1)}),
+                "trinkets": List(Obj({"id": Str(max_len=40), "name": Str(max_len=40), "text": Str(max_len=160)}),
+                                 min_items=20)})
+DATA_FILES.update({"trinkets.json": TRINKETS})

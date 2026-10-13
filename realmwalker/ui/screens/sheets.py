@@ -49,7 +49,11 @@ def item_details(game: GameState, item: Item) -> str:
     d = t.get(item.def_id)
     sheet = game.sheet()
     lines = [f"<loot>{markup.escape(t.name(item))}</>"]
-    if d.get("description"):
+    if d.get("trinket"):
+        from realmwalker.rules.items import trinket_words
+
+        lines.append(trinket_words(game.tables, item) or d["description"])
+    elif d.get("description"):
         lines.append(d["description"])
     if item.magic:
         from realmwalker.game.magic_items import describe
@@ -135,10 +139,11 @@ def gear_lines(game: GameState, item: Item, d: dict) -> list[str]:
     out = []
     cat = d["category"]
     if d.get("carry"):
-        out.append(f"<good>Worn on the back: you can carry {d['carry']:g} lb more</> before you count as laden.")
+        where = "Worn on the back" if d.get("slot") == "back" else "Carried"
+        out.append(f"<good>{where}: you can carry {d['carry']:g} lb more</> before you count as laden.")
     if d.get("focus"):
         f = d["focus"]
-        who = "a wizard" if f["kind"] == "arcane" else "a priest"
+        who = {"arcane": "a wizard", "druidic": "a druid (who comes with a later expansion)"}.get(f["kind"], "a priest")
         how = "carried" if f.get("carried") else ("worn or held" if d.get("slot") else "held in the hand")
         out.append(f"<magic>Spell focus</> for {who}: +1 to spell attacks and the DC of their spells, {how}.")
     if d.get("impress"):
@@ -155,7 +160,29 @@ def gear_lines(game: GameState, item: Item, d: dict) -> list[str]:
         out.append(f"Mends things of {mats}: an hour's work (better if you are trained with it).")
     use = d.get("use") or {}
     if use.get("throw") and use["throw"] in game.tables.spells:
-        out.append(f"<danger>Thrown in a fight</> (Item): {game.tables.spells[use['throw']]['text']}")
+        out.append(f"<danger>In a fight</> (Item): {game.tables.spells[use['throw']]['text']}")
+    if use.get("coat") and "coat_poison" in game.tables.spells:
+        out.append(f"<danger>In a fight</> (Item): {game.tables.spells['coat_poison']['text']}")
+    if use.get("drink") == "antitoxin":
+        out.append("Drink it (Enter): for an hour, advantage on saving throws against being poisoned.")
+    if d.get("pack"):
+        inside = ", ".join(f"{t.get(i)['name']}" + (f" ×{int(n)}" if int(n) > 1 else "") for i, n in d["pack"])
+        out.append(f"Open it (Enter) and it becomes: {inside}.")
+    helps = d.get("helps") or {}
+    if helps.get("traps"):
+        out.append(f"Carried underground: +{helps['traps']} to the party's eye for traps.")
+    if helps.get("search"):
+        out.append("Carried: advantage when you search for traps and hidden doors.")
+    if helps.get("force"):
+        out.append(f"Carried: +{helps['force']} to force a locked door or lid.")
+    if helps.get("disguise"):
+        out.append("Worn: advantage when you put on a disguise.")
+    util = d.get("utilize")
+    if util:
+        ability = game.tables.rules["abilities"][util["ability"]]["name"]
+        uses = "; ".join(f"{u['text']} (DC {u['dc']})" for u in util["uses"])
+        out.append(f"<dim>Utilize ({ability}): {uses}. Trained with it, you add your proficiency bonus; trained in "
+                   f"the skill as well, you have advantage.</>")
     if cat in ("weapon", "armor", "shield", "helmet") and not item.magic and \
             item.condition < int(t.upkeep.get("battered", 30)):
         out.append("<warn>Battered: " + ("-1 to hit with it" if cat == "weapon" else "-1 to armour class" if cat == "armor"
