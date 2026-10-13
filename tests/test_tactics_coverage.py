@@ -26,6 +26,7 @@ pytestmark = pytest.mark.slow  # some three hundred fights
 ROOT = Path(__file__).resolve().parents[1]
 CREATURES = sorted(json.loads((ROOT / "data" / "creatures.json").read_text(encoding="utf-8"))["creatures"])
 SEEDS = 2
+MORE_SEEDS = 5  # tried while an option has not been chosen yet
 
 # "creature/option": why the arena's scenarios do not bring it out. Empty: everything is used.
 NOT_CHOSEN: dict[str, str] = {}
@@ -77,8 +78,13 @@ def test_the_tactics_use_everything_a_creature_has_and_only_what_is_allowed(tabl
     used: Counter = Counter()
     times: list[float] = []
     broken: list[str] = []
-    for scenario in arena.SCENARIOS:
-        for seed in range(SEEDS):
+    def unused_now():
+        return [o for o in arena.options_of(tables, creature) if not used.get(o) and f"{creature}/{o}" not in NOT_CHOSEN]
+
+    for seed in range(MORE_SEEDS):
+        if seed >= SEEDS and not unused_now():
+            break  # (more seeds only while something has not come up: a heal the fight never needed)
+        for scenario in arena.SCENARIOS:
             where = f"{scenario}, seed {seed}"
             b = arena.setup(tables, creature, scenario, seed)
             r = arena.run(b, clock=time.thread_time, check=lambda bb, f, where=where: broken.extend(
@@ -88,7 +94,7 @@ def test_the_tactics_use_everything_a_creature_has_and_only_what_is_allowed(tabl
             times += r["times"]
     assert not refused, refused[:5]
     assert not broken, broken[:5]
-    unused = [o for o in arena.options_of(tables, creature) if not used.get(o) and f"{creature}/{o}" not in NOT_CHOSEN]
+    unused = unused_now()
     assert not unused, f"{creature} never chose {unused} (used {dict(used)})"
     ms = sorted(x * 1000 for x in times)
     assert ms, f"{creature} never took a turn"
