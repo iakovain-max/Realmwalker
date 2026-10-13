@@ -14,6 +14,7 @@ STATUS_NAMES: list[str] = [
     "readied", "marked", "temp_hp", "heroic", "slowed", "burning", "grappling", "blessed", "baned",
     "shielded", "warded", "resisting", "guided", "no_heal", "no_opportunity", "surprised",
     "attached", "bleeding", "festering", "pain", "drunk", "wounded", "spell", "bound", "demand",
+    "sapped", "vexing",
 ]
 
 PALETTE: dict[str, tuple[int, int, int, int]] = {
@@ -590,6 +591,30 @@ ART: dict[str, list[str]] = {
         ".kyyyyyyk.",
         "..kkkkkk..",
         "..........",
+    ],
+    "sapped": [  # a ringing head with stars over it (the Sap mastery)
+        ".y..y...y.",
+        "yyy.....yy",
+        ".y..kkkk..",
+        "...kbbbbk.",
+        "..kbkbbkbk",
+        "..kbbbbbbk",
+        "..kbbkkbbk",
+        "..kbbbbbbk",
+        "...kbbbbk.",
+        "....kkkk..",
+    ],
+    "vexing": [  # an eye on the gap in a guard (the Vex mastery)
+        "..........",
+        "...kkkk...",
+        ".kkwwwwkk.",
+        "kwwkRRkwwk",
+        "kwkRrrRkwk",
+        "kwwkRRkwwk",
+        ".kkwwwwkk.",
+        "...kkkk...",
+        "....R.....",
+        "...RRR....",
     ],
     "demand": [
         "kkkkkkkkkk",

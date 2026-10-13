@@ -49,6 +49,7 @@ class Character:
     languages: list[str] = field(default_factory=list)
     features: list[str] = field(default_factory=list)
     fighting_style: str | None = None
+    masteries: list[str] = field(default_factory=list)  # kinds of weapon (item ids) whose mastery they use (2024)
     uses: dict[str, int] = field(default_factory=dict)
     spells: dict = field(default_factory=dict)
     inventory: list[Item] = field(default_factory=list)

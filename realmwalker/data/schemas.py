@@ -245,6 +245,8 @@ CLASS = Obj(
         "suggested": Obj({a: Int(min=8, max=15) for a in ABILITY_IDS}),
         "choices_at_1": List(Str(max_len=30)),
         "fighting_styles": Map(Obj({"name": Str(max_len=40), "text": Str(max_len=300)}), optional=True),
+        # Weapon Mastery (2024): [[from level, how many kinds of weapon], ...]
+        "mastery": List(List(Int(min=0, max=20), min_items=2, max_items=2), optional=True),
         "spellcasting": Obj({"ability": Str(choices=list(ABILITY_IDS)), "type": Str(choices=["prepared", "spellbook", "known"]),
                              "cantrips": List(Int(min=0, max=10), min_items=10),
                              "slots": List(List(Int(min=0, max=10)), min_items=10)}, optional=True),
@@ -457,6 +459,7 @@ COMBAT_TEXT = Obj(
         "wound": Map(Map(word_list(1, 200))), "down": word_list(1, 200), "dead": word_list(1, 200),
         "flee": word_list(1, 200), "surrender": word_list(1, 200), "beg": word_list(1, 200),
         "aftermath": Map(word_list(1, 400)),
+        "mastery": Map(word_list(1, 200), optional=True),  # a weapon's trick as it lands (rules/engine/handlers/mastery)
     }
 )
 

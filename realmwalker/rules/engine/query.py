@@ -98,6 +98,10 @@ def attack_roll(b, att, target, opt, *, space=None) -> Roll:
         r.add("advantage", "helped")
     if any(bf.get("distracted") == att.team for bf in target.buffs):
         r.add("advantage", "distracted")
+    if any(bf.get("sapped") for bf in att.buffs):
+        r.add("disadvantage", "sapped")  # the Sap mastery: the next attack roll after the blow
+    if any(bf.get("vex") == target.id for bf in att.buffs):
+        r.add("advantage", "vexed")  # the Vex mastery: the next attack roll against that one
     if target.marked:
         r.add("advantage", "marked")
     defs = cond.table(att.t)

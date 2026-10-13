@@ -18,6 +18,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable
 
 from realmwalker.rules.engine import effects, events
+from realmwalker.rules.engine.handlers import mastery
 from realmwalker.rules.engine import resources as res
 from realmwalker.rules.engine import traits as tr
 
@@ -129,7 +130,9 @@ def options(b, f, only: tuple[str, ...] | None = None) -> list[Option]:
         targets = b.targets_for(f, o) if ok else []
         if ok and not targets:
             ok, why = False, "no one in reach"
-        out.append(Option(f"attack:{o.key}", "attack", o.name, "attack", ok, why, o, "creature", targets))
+        trick = mastery.of(f, o)
+        name = f"{o.name} ({trick.title()})" if trick else o.name
+        out.append(Option(f"attack:{o.key}", "attack", name, "attack", ok, why, o, "creature", targets))
     if only is None or "object" in only:
         things = b.breakables(f) if acting else {}
         if things or b.t.rules.get("objects", {}).get("terrain"):

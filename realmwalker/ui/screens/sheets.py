@@ -5,7 +5,7 @@ from __future__ import annotations
 from realmwalker.game import gear
 from realmwalker.game.magic import lasting_text
 from realmwalker.game.state import GameState
-from realmwalker.rules import describe
+from realmwalker.rules import describe, progression
 from realmwalker.rules import spells as spellrules
 from realmwalker.rules.character import ABILITIES, Sheet, signed
 from realmwalker.rules.inventory import best_slot_items, equip, pack_mates, unequip, worn_by
@@ -257,6 +257,12 @@ class CharacterScreen(Screen):
         for f in s.features():
             if f["id"] in ("subclass", "asi") or (f["id"] == "fighting_style" and c.fighting_style):
                 continue
+            if f["id"] == "weapon_mastery" and c.masteries:
+                names = ", ".join(f"{t.items.get(w)['name']} ({t.items.get(w)['mastery'].title()})"
+                                  for w in c.masteries if w in t.items)
+                change = " <dim>(m: choose again)</>" if c.uses.get("mastery_change", 0) > 0 else ""
+                notes.append(f"<loot>{f['name']}</>: {names}.{change}")
+                continue
             notes.append(f"<loot>{f['name']}</>: {f['text']}")
         if c.fighting_style:
             st = cls["fighting_styles"][c.fighting_style]
@@ -289,12 +295,20 @@ class CharacterScreen(Screen):
         bx = canvas.button(bx + 3, h - 3, "Equipment", lambda: self._switch(EquipmentScreen), hotkey="e")
         if c.pending:
             bx = canvas.button(bx + 3, h - 3, f"Level-up choices ({len(c.pending)})", self.level_up, hotkey="l")
+        if c.masteries and c.uses.get("mastery_change", 0) > 0 and not narrow:  # (narrow: the m key, as the notes say)
+            bx = canvas.button(bx + 3, h - 3, "Masteries", self.change_masteries, hotkey="m")
         if len(g.party) > 1:
             bx = canvas.button(bx + 3, h - 3, "Next member", self.next_member, hotkey="Tab")
         canvas.button(bx + 3, h - 3, "Back", self.close, hotkey="Esc")
 
     def toggle_skills(self) -> None:
         self.show_skills = not self.show_skills
+
+    def change_masteries(self) -> None:
+        """Choose the weapons mastered again (once after each long rest, and before the first)."""
+        if progression.relearn_masteries(self.char, self.game.tables):
+            self.game.dirty = True
+            self.level_up()
 
     def level_up(self) -> None:
         from realmwalker.ui.screens.levelup import LevelUpScreen
@@ -317,6 +331,8 @@ class CharacterScreen(Screen):
             self._switch(EquipmentScreen)
         elif ev.key == "l" and self.char.pending:
             self.level_up()
+        elif ev.key == "m" and self.char.masteries and self.char.uses.get("mastery_change", 0) > 0:
+            self.change_masteries()
         elif ev.key == "tab" and len(self.game.party) > 1:
             self.next_member()
         elif ev.key == "s" and self.narrow(self.app.last_console_size[0]):

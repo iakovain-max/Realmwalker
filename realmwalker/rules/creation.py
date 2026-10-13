@@ -323,6 +323,11 @@ class CharacterBuilder:
         from realmwalker.rules.engine import resources
 
         resources.fill(char, t)  # Second Wind, a half-orc's Relentless Endurance, War Priest... start ready
+        from realmwalker.rules import progression
+
+        if progression.mastery_count(char, t):  # the kit's weapons first; changed on the character sheet before long
+            char.masteries = progression.mastery_options(char, t)[:progression.mastery_count(char, t)]
+            char.uses["mastery_change"] = 1
         return char
 
 

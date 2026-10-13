@@ -125,8 +125,8 @@ def test_pointing_at_a_line_of_the_log_shows_its_roll(tables):
             break
     lines = [i for i in b.rolls if b.log[i][1] != "dice"]
     assert lines, "the attack's lines carry their rolls"
-    card = describe.log_line(b, lines[-1])
-    assert card is not None and any("vs AC" in x or "damage" in x for x in card.lines)
+    cards = [describe.log_line(b, i) for i in lines]  # (the attack's, among a morale roll or a mastery's save)
+    assert any(card is not None and any("vs AC" in x or "damage" in x for x in card.lines) for card in cards)
 
 
 def test_damage_rolls_say_what_changed_them(tables):

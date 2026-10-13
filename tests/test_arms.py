@@ -179,3 +179,190 @@ def test_armour_takes_minutes_to_put_on(tables):
     assert gear.don_minutes(game, Item(0, "chain_shirt"), True) == 5
     assert gear.don_minutes(game, Item(0, "leather_armor"), False) == 1
     assert gear.don_minutes(game, Item(0, "shield"), True) == 0
+
+
+# ---------------------------------------------------------------------------- A.2 the weapon masteries
+from realmwalker.rules import describe, progression  # noqa: E402
+from realmwalker.rules.engine import actions  # noqa: E402
+from realmwalker.rules.engine.handlers import mastery  # noqa: E402
+
+
+def soft(f, ac=1, hp=300):
+    """A foe that is easy to hit and hard to kill (so a test can watch the trick land)."""
+    f.cdef = dict(f.cdef, ac=ac)
+    f.creature.max_hp = f.creature.hp = hp
+
+
+def strike(b, me, foe, opt, *, want_hit=True, tries=60):
+    """Swing until a blow lands (or misses), and return the events it made."""
+    for _ in range(tries):
+        start = len(b.events)
+        b._attack(me, opt, foe)
+        evs = b.events[start:]
+        hit = any(e["kind"] == "attack" and e.get("to") == foe.id and e["hit"] for e in evs)
+        if hit == want_hit:
+            return evs
+    raise AssertionError("never landed")
+
+
+def main_opt(b, me):
+    return next(o for o in b.attack_options(me) if o.key == "main")
+
+
+def tricks(evs):
+    return [e["trick"] for e in evs if e["kind"] == "mastery"]
+
+
+def armed(tables, weapon, *, cls="fighter", seed=1, also=()):
+    c = hero(tables, cls, seed=seed)
+    for slot in ("main_hand", "off_hand"):
+        unequip(c, slot)
+    wield(tables, c, weapon)
+    c.masteries = [weapon, *also]
+    return c
+
+
+def test_fighters_and_rogues_master_their_kit_weapons_and_change_them_after_a_long_rest(tables):
+    f = hero(tables, "fighter")
+    assert len(f.masteries) == 3 and "weapon_mastery" in f.features
+    assert len(hero(tables, "rogue").masteries) == 2
+    w = hero(tables, "wizard")
+    assert w.masteries == [] and progression.mastery_count(w, tables) == 0
+    assert progression.relearn_masteries(f, tables)
+    choice = f.pending[-1]
+    assert f.masteries == [] and choice["kind"] == "mastery" and choice["count"] == 3
+    assert all(":" in label for _, label, _ in progression.options(f, tables, choice))
+    for _ in range(3):
+        progression.resolve(f, tables, choice, progression.options(f, tables, choice)[0][0])
+    assert len(f.masteries) == 3 and not any(c["kind"] == "mastery" for c in f.pending)
+    assert not progression.relearn_masteries(f, tables)  # once, until the next long rest
+    progression.long_rest(f, tables, RNG(1, "rest"))
+    assert f.uses["mastery_change"] == 1
+
+
+def test_a_fourth_mastery_comes_at_level_four(tables):
+    f = hero(tables, "fighter")
+    for _ in range(3):
+        progression.level_up(f, tables, RNG(2, "lv"))
+    assert any(c["kind"] == "mastery" and c["count"] == 1 for c in f.pending)
+    progression.auto_resolve(f, tables)
+    assert len(f.masteries) == 4
+
+
+def test_topple_knocks_down_and_the_prone_are_struck_with_advantage(tables):
+    b = fight(tables, armed(tables, "maul"), "bandit")
+    me, foe = b.fighters[0], b.fighters[1]
+    soft(foe)
+    opt = main_opt(b, me)
+    assert any(o.id == "attack:main" and "(Topple)" in o.name for o in actions.options(b, me))
+    seen = []
+    for _ in range(40):
+        seen += tricks(strike(b, me, foe, opt))
+        if "prone" in foe.conditions:
+            break
+    assert "prone" in foe.conditions and "topple" in seen
+    assert query.attack_roll(b, me, foe, opt).mode == "advantage"
+
+
+def test_push_drives_the_foe_ten_feet_back(tables):
+    b = fight(tables, armed(tables, "warhammer"), "bandit")
+    me, foe = b.fighters[0], b.fighters[1]
+    soft(foe)
+    evs = strike(b, me, foe, main_opt(b, me))
+    assert "push" in tricks(evs) and (foe.x, foe.y) == (6, 4)
+
+
+def test_sap_spoils_the_next_blow(tables):
+    b = fight(tables, armed(tables, "mace"), "bandit")
+    me, foe = b.fighters[0], b.fighters[1]
+    soft(foe)
+    strike(b, me, foe, main_opt(b, me))
+    blow = b.attack_options(foe)[0]
+    assert "sapped" in query.attack_roll(b, foe, me, blow).notes
+    assert "sapped" in [s.id for s in describe.statuses(foe, b)]
+    b._attack(foe, blow, me)
+    assert "sapped" not in query.attack_roll(b, foe, me, blow).notes  # spent on that roll
+
+
+def test_vex_gives_the_next_blow_advantage(tables):
+    b = fight(tables, armed(tables, "rapier"), "bandit")
+    me, foe = b.fighters[0], b.fighters[1]
+    soft(foe)
+    opt = main_opt(b, me)
+    assert "vex" in tricks(strike(b, me, foe, opt))
+    assert "vexed" in query.attack_roll(b, me, foe, opt).notes
+    assert "vexing" in [s.id for s in describe.statuses(me, b)]
+
+
+def test_slow_takes_ten_feet_once_however_often_it_lands(tables):
+    b = fight(tables, armed(tables, "club"), "bandit")
+    me, foe = b.fighters[0], b.fighters[1]
+    soft(foe)
+    base = query.speed(foe)
+    strike(b, me, foe, main_opt(b, me))
+    strike(b, me, foe, main_opt(b, me))
+    assert query.speed(foe) == base - 10
+
+
+def test_graze_still_cuts_on_a_miss(tables):
+    c = armed(tables, "greatsword")
+    c.abilities["str"] = 16
+    b = fight(tables, c, "bandit")
+    me, foe = b.fighters[0], b.fighters[1]
+    soft(foe, ac=30)
+    before = foe.hp
+    strike(b, me, foe, main_opt(b, me), want_hit=False)
+    assert before - foe.hp == 3
+
+
+def test_cleave_carries_into_the_next_foe_once_a_turn(tables):
+    b = fight(tables, armed(tables, "greataxe"), "bandit", "bandit")  # both beside the fighter
+    me, a, other = b.fighters
+    soft(a)
+    soft(other)
+    evs = strike(b, me, a, main_opt(b, me))
+    assert "cleave" in tricks(evs)
+    assert any(e["kind"] == "attack" and e.get("to") == other.id for e in evs)
+    assert "cleave" not in tricks(strike(b, me, a, main_opt(b, me)))
+
+
+def test_nick_makes_the_off_hand_blow_part_of_the_attack(tables):
+    c = armed(tables, "scimitar", also=("dagger",))
+    wield(tables, c, "dagger", "off_hand")
+    b = fight(tables, c, "bandit")
+    me, foe = b.fighters[0], b.fighters[1]
+    soft(foe)
+    b.order = [me.id] + [x for x in b.order if x != me.id]
+    b.turn, b.turn_started = 0, True
+    b._start_of_turn(me)
+    assert b.do_attack(me, main_opt(b, me), foe)
+    row = next(r for r in b.class_abilities(me) if r[0] == "offhand")
+    assert row[2] and "Nick" in row[1]
+    bonus = me.bonus
+    assert b.do_offhand(me, foe)
+    assert me.bonus == bonus  # the bonus action is kept
+    assert not b.do_offhand(me, foe)  # one extra blow a turn
+
+
+def test_a_monster_without_training_uses_no_mastery(tables):
+    b = fight(tables, hero(tables), "bandit")
+    foe = b.fighters[1]
+    assert all(mastery.of(foe, o) is None for o in b.attack_options(foe))
+
+
+def test_the_auto_uses_its_masteries_in_a_real_fight(tables):
+    used = []
+    for seed in (1, 2, 3, 4):
+        c = armed(tables, "maul", seed=seed)
+        c.max_hp = c.hp = 80  # (long enough a fight to see the trick)
+        b = fight(tables, c, "bandit", "bandit", at=(8, 3), seed=seed)
+        for f in b.fighters:
+            if f.side == "party":
+                f.auto = True
+        for _ in range(3000):
+            if b.outcome is not None:
+                break
+            b.step()
+        assert b.outcome is not None
+        used += [e["trick"] for e in b.events if e["kind"] == "mastery"]
+    assert "topple" in used

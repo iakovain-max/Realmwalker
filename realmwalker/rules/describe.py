@@ -63,16 +63,16 @@ CONDITIONS = ("blinded", "charmed", "deafened", "frightened", "grappled", "incap
 STATES = CONDITIONS + ("exhaustion", "bloodied", "dying", "stable", "concentrating", "hidden", "flying", "dodging",
                        "readied", "marked", "temp_hp", "heroic", "slowed", "burning", "grappling", "blessed", "baned",
                        "shielded", "warded", "resisting", "guided", "no_heal", "no_opportunity", "surprised",
-                       "attached", "bleeding", "festering", "pain", "drunk", "wounded", "spell")
+                       "attached", "bleeding", "festering", "pain", "drunk", "wounded", "spell", "sapped", "vexing")
 ITEM_MARKS = ("bound", "demand")  # on an item's card and its row in the pack
 
 # The worst first: what can kill or stop someone, then what hampers, then what helps.
 _ORDER = {s: i for i, s in enumerate((
     "dying", "stable", "unconscious", "petrified", "paralyzed", "stunned", "incapacitated", "restrained", "grappled",
     "charmed", "frightened", "blinded", "poisoned", "burning", "bleeding", "prone", "attached", "deafened",
-    "exhaustion", "slowed", "baned", "no_heal", "no_opportunity", "marked", "surprised", "bloodied", "festering",
+    "exhaustion", "slowed", "sapped", "baned", "no_heal", "no_opportunity", "marked", "surprised", "bloodied", "festering",
     "pain", "drunk", "wounded", "grappling", "concentrating", "flying", "hidden", "invisible", "dodging", "readied",
-    "shielded", "warded", "resisting", "blessed", "guided", "temp_hp", "heroic", "spell"))}
+    "shielded", "warded", "resisting", "blessed", "guided", "vexing", "temp_hp", "heroic", "spell"))}
 
 # Words for the states that are not conditions (the conditions' own words are data/conditions.json).
 _WORDS = {
@@ -97,6 +97,10 @@ _WORDS = {
     "temp_hp": ("Temporary hit points", "Lost first, before their own; they do not add up and fade after a rest."),
     "heroic": ("Heroic Inspiration", "Once, a failed saving throw or death save may be rolled again."),
     "slowed": ("Slowed", "Their speed is lowered."),
+    "sapped": ("Sapped", "Reeling from a blow: their next attack roll has disadvantage (before the one who struck "
+                         "them takes another turn)."),
+    "vexing": ("Vexing", "Has seen the gap in a foe's guard: their next attack roll against that foe has advantage "
+                         "(before the end of their next turn)."),
     "burning": ("Burning", "On fire: 1d4 fire damage at the start of each of their turns. An action puts it out."),
     "grappling": ("Grappling", "Holding someone: they move at half speed, and the one held cannot move away."),
     "blessed": ("Blessed", "Adds a die to attack rolls and saving throws."),
@@ -209,6 +213,10 @@ def _buff_status(b, f, bf: dict, tables) -> Status | None:
         kind = "resisting"
     elif bf.get("fly"):
         kind = "flying"
+    elif bf.get("sapped"):
+        kind = "sapped"
+    elif bf.get("vex") is not None:
+        kind = "vexing"
     elif bf.get("distracted"):
         return None  # (shown as the mark it leaves, not as its own state)
     else:
@@ -217,6 +225,10 @@ def _buff_status(b, f, bf: dict, tables) -> Status | None:
     lines = [text]
     if kind == "slowed":
         lines = [f"{int(bf['slow'])} feet off their speed."]
+    elif kind == "vexing":
+        lines = [f"Their next attack roll against {esc(_name_of(b, bf['vex']))} has advantage."]
+    elif kind == "sapped":
+        lines = [_WORDS["sapped"][1]]
     elif kind in ("blessed", "baned"):
         die = str(bf.get("attack_die") or bf.get("save_die")).lstrip("-")
         lines = [f"{'Adds' if kind == 'blessed' else 'Takes'} {die} {'to' if kind == 'blessed' else 'off'} attack "

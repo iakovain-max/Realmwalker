@@ -29,6 +29,7 @@ from realmwalker.rules import grid
 from realmwalker.rules import spells as spellrules
 from realmwalker.rules.character import Character, Sheet, modifier
 from realmwalker.rules.engine import actions, durations, effects, events, hazards, query, reactions
+from realmwalker.rules.engine.handlers import mastery
 from realmwalker.rules.engine.reactions import Decision
 from realmwalker.rules.engine import traits as trs
 from realmwalker.rules.creatures import Creature
@@ -177,6 +178,7 @@ class Fighter:
         self.disengaged = False
         self.light_attack = False  # attacked with a light weapon this turn (two-weapon fighting)
         self.loaded_fired = False  # a Loading weapon fired in this Attack action (one shot an action, 2024)
+        self.offhand_done = False  # the Light property's one extra blow this turn
         self.cast_bonus_spell = False
         self.cast_action_spell = False
         self.hidden = 0  # Stealth total while hidden (0: not hidden)
@@ -816,7 +818,7 @@ class Battle:
         f.dodging = False
         f.action, f.bonus, f.reaction = 1, 1, True
         f.attacks_left = 0
-        f.dashed = f.disengaged = f.light_attack = False
+        f.dashed = f.disengaged = f.light_attack = f.offhand_done = False
         f.cast_bonus_spell = f.cast_action_spell = False
         f.moved_feet = 0
         f.spent_round += 1
@@ -1660,7 +1662,7 @@ class Battle:
         rng_ = tuple(d.get("range") or ((20, 60) if thrown else (0, 0)))
         opt = AttackOption(key, d["name"], "ranged" if ranged else "melee", bonus, damage, d["damage_type"],
                            reach="reach" in props and not thrown, properties=list(props), item_uid=it.uid,
-                           range=(int(rng_[0]), int(rng_[1])))
+                           range=(int(rng_[0]), int(rng_[1])), extra={"ability_mod": s.mod(ability)})
         # A broken arm cannot hold a weapon; two-handed weapons need both.
         from realmwalker.rules import health
 
@@ -1768,6 +1770,7 @@ class Battle:
             why.append(f"{guard.name}'s shield")
             self.say(f"{guard.the_name} gets {guard.possessive} shield in the way.", "good" if guard.side == PARTY else "info")
         roll = dice.d20(self.rng, advantage=adv, disadvantage=dis)
+        att.buffs = [bf for bf in att.buffs if not bf.get("sapped") and bf.get("vex") != target.id]  # spent on this roll
         natural = events.emit(self, "d20_after", actor=att, target=target, roll="attack", natural=roll.natural).natural
         crit = natural >= query.crit_range(att)
         bless = sum(dice.roll(d, self.rng).total for d in att.buff_value("attack_die"))
@@ -1820,6 +1823,7 @@ class Battle:
             else:
                 text = self.rng.choice(lines["miss"])
             self.say(self._fill(text, att, target, weapon=weapon, armor=armor or "armour"), "flavor")
+            events.emit(self, "attack_done", actor=att, target=target, opt=opt, hit=False, dealt=0)  # Graze
             return False
         dmg_expr = opt.damage
         n, sides, flat = dice.parse(dmg_expr)
@@ -1832,6 +1836,7 @@ class Battle:
                              advantage=adv and not dis, sides=sides, extra=0, typed=[])
         amount += dmg_ev.extra  # Sneak Attack, Divine Strike...
         self._spend_use(att, opt)
+        before = target.hp + target.temp_hp
         self._melee_blow = opt.is_melee
         try:
             self._hit(att, target, max(1, amount), opt.damage_type, crit=crit, weapon=opt.name,
@@ -1852,6 +1857,8 @@ class Battle:
             self._block_effects(att, target, opt, opt.extra["on_hit"])
         if opt.extra.get("disease") and target.char and self.rng.chance(float(opt.extra.get("disease_chance", 1.0))):
             target.char.conditions.append(f"exposed:{opt.extra['disease']}")
+        events.emit(self, "attack_done", actor=att, target=target, opt=opt, hit=True,
+                    dealt=max(0, before - target.hp - target.temp_hp))  # the weapon masteries
         return True
 
     def _save_action(self, att: Fighter, opt: AttackOption, target: Fighter) -> bool:
@@ -2295,9 +2302,15 @@ class Battle:
 
     def do_offhand(self, f: Fighter, target: Fighter) -> bool:
         opt = self.offhand_option(f)
-        if opt is None or not f.light_attack or f.bonus <= 0 or not self.in_reach(f, opt, target)[0]:
+        nick = mastery.nick_ready(self, f)
+        if opt is None or not f.light_attack or f.offhand_done or (f.bonus <= 0 and not nick) \
+                or not self.in_reach(f, opt, target)[0]:
             return False
-        f.bonus -= 1
+        f.offhand_done = True
+        if nick:
+            mastery.once_a_turn(self, f, "nick")  # Nick: part of the Attack action; the bonus action is kept
+        else:
+            f.bonus -= 1
         self._attack(f, opt, target)
         self._after_action(f)
         return True
@@ -2601,11 +2614,14 @@ class Battle:
             why = actions.problem(self, f, a)
             out.append((a["id"], a["name"], why is None, why or ""))
         if self.offhand_option(f) is not None:
-            ok = f.bonus > 0 and f.light_attack
+            nick = mastery.nick_ready(self, f)
+            ok = (f.bonus > 0 or nick) and f.light_attack and not f.offhand_done
             at = max([0] + [i + 1 for i, row in enumerate(out)
                             if row[0] in ("second_wind", "action_surge") or row[0].startswith("cunning_")])
-            out.insert(at, ("offhand", "Off-hand attack (bonus action)", ok,
-                            "" if ok else ("attack with the main hand first" if f.bonus > 0 else "no bonus action left")))
+            out.insert(at, ("offhand", "Off-hand attack (Nick: part of the Attack)" if nick else
+                            "Off-hand attack (bonus action)", ok,
+                            "" if ok else ("attack with the main hand first" if f.bonus > 0 or nick
+                                           else "no bonus action left")))
         for tok in self.tokens:
             if tok.owner == f.id and tok.kind == "spiritual_weapon":
                 out.append(("spirit_strike", "Spiritual weapon: strike (bonus action)", f.bonus > 0,
@@ -2629,6 +2645,8 @@ class Battle:
         self._after_action(f)
 
     def _ability_cost(self, f: Fighter, aid: str) -> str:
+        if aid == "offhand" and mastery.nick_ready(self, f):
+            return "free"
         if aid in ("offhand", "spirit_strike"):
             return "bonus"
         if aid == "put_out":

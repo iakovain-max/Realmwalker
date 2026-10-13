@@ -194,6 +194,15 @@
     "projected_ward": {
       "name": "Projected Ward", "text": "The ward can take a blow meant for a friend within 30 feet.",
       "hooks": [{"event": "damage_incoming", "as": "ally", "handler": "projected_ward", "reaction": true}]
-    }
+    },
+    "weapon_mastery": {"name": "Weapon Mastery", "text": "Uses the mastery property of the weapons it has mastered.", "hooks": [{"event": "attack_done", "as": "attacker", "handler": "mastery_done"}]},
+    "mastery_cleave": {"name": "Cleave", "text": "A melee hit carries on into a second foe beside the first, once a turn: the weapon's damage without the ability bonus.", "where": "card"},
+    "mastery_graze": {"name": "Graze", "text": "A miss still cuts: damage equal to the ability bonus of the attack.", "where": "card"},
+    "mastery_nick": {"name": "Nick", "text": "The Light weapon's extra blow is part of the Attack action instead of a bonus action, once a turn.", "where": "card"},
+    "mastery_push": {"name": "Push", "text": "A hit drives a Large or smaller creature 10 feet straight back.", "where": "card"},
+    "mastery_sap": {"name": "Sap", "text": "A hit leaves the creature at a disadvantage on its next attack before your next turn.", "where": "card"},
+    "mastery_slow": {"name": "Slow", "text": "A hit that wounds takes 10 feet off its speed until your next turn (not more, however many hit it).", "where": "card"},
+    "mastery_topple": {"name": "Topple", "text": "A hit forces a Constitution save (DC 8 + the attack's ability bonus + proficiency) or it falls prone.", "where": "card"},
+    "mastery_vex": {"name": "Vex", "text": "A hit that wounds gives advantage on your next attack against that creature before the end of your next turn.", "where": "card"}
   }
 }

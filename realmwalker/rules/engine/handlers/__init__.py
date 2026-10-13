@@ -2,6 +2,7 @@
 
     features.py   race traits and class features
     monsters.py   creature traits
+    mastery.py    the weapon masteries (PHB 2024)
 """
 
-from realmwalker.rules.engine.handlers import features, monsters  # noqa: F401  (registering is importing)
+from realmwalker.rules.engine.handlers import features, mastery, monsters  # noqa: F401  (registering is importing)
