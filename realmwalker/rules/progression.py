@@ -231,7 +231,7 @@ def _pick_label(tables, kind: str, value: str) -> tuple[str, str]:
         return sp["name"], sp.get("text", sp.get("description", ""))
     if value in rules["skills"]:
         return rules["skills"][value]["name"], f"({rules['skills'][value]['ability'].upper()})"
-    return feats.tool_name(tables, value), ""
+    return feats.choice_word(tables, value), ""
 
 
 def add_pending(char: Character, choice: dict) -> None:

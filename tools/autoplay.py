@@ -164,7 +164,7 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
                 fail(f"{member.name} carries something worn past nothing or mended past new")
             for slot, uid in member.equipped.items():
                 it = member.item(uid)
-                if it is not None and slot not in app.tables.items.slots_for(it):
+                if it is not None and slot not in app.tables.items.slots_for(it, member):
                     fail(f"{member.name} wears the {app.tables.items.name(it)} where it does not go ({slot})")
             if member.equipped.get("back") is not None and Sheet(member, app.tables).pack_carry() < 0:
                 fail(f"{member.name}'s pack carries less than nothing")

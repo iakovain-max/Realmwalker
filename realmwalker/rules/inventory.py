@@ -99,7 +99,7 @@ def equip(char: Character, items: ItemTable, uid: int, slot: str | None = None) 
     if wearer is not None and wearer is not char:
         return False, f"{wearer.name.split()[0]} has the {items.name(it, False)}. Take it off them first."
     d = items.get(it.def_id)
-    slots = items.slots_for(it)
+    slots = items.slots_for(it, char)
     if not slots:
         return False, f"You can't wear or wield the {items.name(it, False)}."
     if slot is None:
@@ -147,7 +147,7 @@ def equip(char: Character, items: ItemTable, uid: int, slot: str | None = None) 
 
 def best_slot_items(char: Character, items: ItemTable, slot: str) -> list[Item]:
     """Everything in the pack that could go in this slot (and nobody else in the party has on)."""
-    return [it for it in char.inventory if slot in items.slots_for(it) and worn_by(char, it.uid)[0] in (None, char)]
+    return [it for it in char.inventory if slot in items.slots_for(it, char) and worn_by(char, it.uid)[0] in (None, char)]
 
 
 def equip_everything_sensible(char: Character, items: ItemTable) -> None:

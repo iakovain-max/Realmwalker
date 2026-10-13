@@ -50,7 +50,10 @@ class LevelUpScreen(Screen):
             return
         opts = progression.options(self.char, self.game.tables, choice)
         if not opts:
-            self.char.pending.remove(choice)
+            if choice.get("kind") == "feat":  # nothing left to pick: the feat itself is still theirs
+                self.log += progression._finish_feat(self.char, self.game.tables, choice)
+            elif choice in self.char.pending:
+                self.char.pending.remove(choice)
             return
         oid = opts[min(self.sel, len(opts) - 1)][0]
         self.log += progression.resolve(self.char, self.game.tables, choice, oid)

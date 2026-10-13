@@ -539,7 +539,7 @@ FEAT_CHOICE = Obj({"kind": Str(choices=["skill", "skill_or_tool", "tool", "spell
 FEATS = Obj({"feats": Map(Obj({"name": Str(max_len=40), "category": Str(choices=["origin", "general", "fighting_style",
                                                                                    "epic"]),
                                "text": Str(max_len=500), "trait": Str(max_len=40, optional=True),
-                               "repeatable": Bool(optional=True), "prerequisite": Any_(optional=True),
+                               "repeatable": Bool(optional=True), "prerequisite": Any_(optional=True), "offered": Bool(optional=True),
                                "upgrade_in": Int(min=2, max=26, optional=True),
                                "choices": Map(FEAT_CHOICE, optional=True),
                                "gives": Obj({"armor": List(Str(max_len=20), optional=True),

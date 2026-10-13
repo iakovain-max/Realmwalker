@@ -15,7 +15,7 @@ from realmwalker.rules import feats as featrules
 from realmwalker.rules.engine import durations, query
 from realmwalker.rules.engine.effects import special
 from realmwalker.rules.engine.events import handler
-from realmwalker.rules.engine.handlers.mastery import PUSHABLE, choose, once_a_turn
+from realmwalker.rules.engine.handlers.mastery import PUSHABLE, choose, once_a_turn, used_this_turn
 from realmwalker.rules.engine.reactions import Decision, yes
 
 
@@ -114,7 +114,7 @@ def crusher(b, f, ev, hook, buff) -> None:
         b._event("mastery", who=t.id, by=f.id, trick="reeling")
         b.say(f"{t.the_name} reels from the crushing blow: everyone has an opening.", "system")
     if t.active and t.size in PUSHABLE and not _bigger_by_more_than_one(f, t) \
-            and choose(b, f, "push", t, f"Shove {t.the_name} five feet (Crusher)?") and once_a_turn(b, f, "crusher") \
+            and not used_this_turn(b, f, "crusher") and choose(b, f, "push", t, f"Shove {t.the_name} five feet (Crusher)?") and once_a_turn(b, f, "crusher") \
             and b._push(f, t, 1):
         b._event("mastery", who=t.id, by=f.id, trick="push")
         b.say(f"The blow knocks {t.the_name} back a step.", "system")
@@ -163,7 +163,7 @@ def grappler_grab(b, f, ev, hook, buff) -> None:
     t = ev.target
     if not ev.hit or ev.opt.key != "unarmed" or t is None or not t.active or "grappled" in t.conditions:
         return
-    if not b.can_grapple(f, t)[0] or not choose(b, f, "grab", t, f"Grab {t.the_name} as well?") \
+    if used_this_turn(b, f, "grappler") or not b.can_grapple(f, t)[0] or not choose(b, f, "grab", t, f"Grab {t.the_name} as well?") \
             or not once_a_turn(b, f, "grappler"):
         return
     b.grapple(f, t, free=True)
@@ -178,7 +178,7 @@ def shield_bash(b, f, ev, hook, buff) -> None:
         return
     shield = f.char.equipped_item("off_hand")
     if shield is None or b.t.items.category(shield) != "shield" or t.size not in PUSHABLE \
-            or _bigger_by_more_than_one(f, t):
+            or _bigger_by_more_than_one(f, t) or used_this_turn(b, f, "shield_bash"):
         return
     prone = t.standing and not query.condition_immune(t, "prone") and choose(
         b, f, "topple", t, f"Bash {t.the_name} to the ground with your shield? (No: drive them 5 feet back.)")
@@ -254,9 +254,7 @@ def sentinel_guard(b, f, ev, hook, buff) -> None:
         return
     if not att.active or not f.active or not f.standing or query.incapacitated(f) or b.gap(f, att) > 1:
         return
-    if t.team != f.team:
-        return
-    b.opportunity(f, att, why="sentinel")
+    b.opportunity(f, att, why="sentinel")  # 2024: a hit on anyone but you
 
 
 # ---------------------------------------------------------------------------- Polearm Master

@@ -35,6 +35,20 @@ def tool_name(tables, tid: str) -> str:
     return tables.rules["tools"].get(tid, tid.replace("_", " "))
 
 
+def choice_word(tables, value: str) -> str:
+    """A feat choice in words: 'Dexterity', 'Fire Bolt', 'Stealth', 'Cleric', "smith's tools"."""
+    rules = tables.rules
+    if value in rules["abilities"]:
+        return rules["abilities"][value]["name"]
+    if value in tables.spells:
+        return tables.spells[value]["name"]
+    if value in rules["skills"]:
+        return rules["skills"][value]["name"]
+    if value in rules["tools"]:
+        return rules["tools"][value]
+    return value.replace("_", " ").title()  # a spell list, a damage type
+
+
 def has(char: Character, fid: str) -> bool:
     return any(f["id"] == fid for f in char.feats)
 
@@ -162,7 +176,8 @@ def suited_style(char: Character, tables, ids: list[str]) -> str:
 
 def choosable(char: Character, tables, categories=("general", "origin")) -> list[str]:
     """The feats they could take now, of these categories (a level's ability increase: general and origin feats)."""
-    return [fid for fid, d in defs(tables).items() if d["category"] in categories and problem(char, tables, fid) is None]
+    return [fid for fid, d in defs(tables).items() if d["category"] in categories and d.get("offered", True)
+            and problem(char, tables, fid) is None]
 
 
 def name(tables, feat: dict | str) -> str:
@@ -421,9 +436,8 @@ def sheet_lines(char: Character, tables) -> list[str]:
             if key in ("list", "ability"):
                 continue
             vals = v if isinstance(v, list) else [v]
-            words = [tables.spells[x]["name"] if x in tables.spells else
-                     tables.rules["skills"][x]["name"] if x in tables.rules["skills"] else tool_name(tables, x) for x in vals]
-            extra.append(", ".join(words))
+            words = [choice_word(tables, x) for x in vals]
+            extra.append(("+1 " if key == "increase" else "") + ", ".join(words))
         tail = f" <dim>({'; '.join(extra)})</>" if extra else ""
         out.append(f"<loot>{name(tables, f)}</> <dim>(feat)</>: {d['text']}{tail}")
     return out

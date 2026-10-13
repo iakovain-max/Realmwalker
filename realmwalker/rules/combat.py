@@ -1771,9 +1771,11 @@ class Battle:
         if not it.magic and it.condition < int(self.t.items.upkeep.get("battered", 30)):
             bonus -= 1  # battered: a bent blade, a split haft, a warped bow (game/gear.py)
         dmg = d["damage"]
-        if "versatile" in props and two_handed_free and not ranged and not ("lost_left_arm" in f.char.injuries
-                                                                            or "lost_right_arm" in f.char.injuries):
+        both_hands = False  # a duellist keeps a versatile blade in one hand (d8 + 2 beats d10)
+        if "versatile" in props and two_handed_free and not ranged and not feats.has(f.char, "dueling") \
+                and not ("lost_left_arm" in f.char.injuries or "lost_right_arm" in f.char.injuries):
             dmg = d.get("versatile", dmg)
+            both_hands = True
         mod = s.mod(ability)
         if key == "off" and not thrown and not feats.has(f.char, "two_weapon_fighting") and not (
                 feats.has(f.char, "crossbow_expert") and "ranged" in props):
@@ -1781,7 +1783,8 @@ class Battle:
         mod += enchant
         if f.char.effects.get("honed", 0) > 0 and not ranged and d.get("damage_type") in ("slashing", "piercing"):
             mod += int(self.t.items.upkeep.get("hone", {}).get("damage", 1))  # a whetstone's edge, until the fight ends
-        if feats.has(f.char, "dueling") and not ranged and "two_handed" not in props and key == "main":
+        if feats.has(f.char, "dueling") and not ranged and "two_handed" not in props and key == "main" \
+                and not both_hands:  # Dueling is for a weapon in one hand
             off = f.char.equipped_item("off_hand")
             if off is None or self.t.items.category(off) != "weapon":
                 mod += 2
@@ -1792,7 +1795,7 @@ class Battle:
         opt = AttackOption(key, d["name"], "ranged" if ranged else "melee", bonus, damage, d["damage_type"],
                            reach="reach" in props and not thrown, properties=list(props), item_uid=it.uid,
                            range=(int(rng_[0]), int(rng_[1])), extra={"ability_mod": s.mod(ability)},
-                           two_hands=not ranged and ("two_handed" in props or "versatile" in props and two_handed_free))
+                           two_hands=not ranged and ("two_handed" in props or both_hands))
         # A broken arm cannot hold a weapon; two-handed weapons need both.
         from realmwalker.rules import health
 
@@ -3103,8 +3106,9 @@ class Battle:
             return 0
         if spell.get("range_scaling") and f is not None and f.char is not None:
             return int(r) * 2 ** (spellrules.cantrip_multiplier(f.char.level) - 1)  # Spare the Dying: 15, 30, 60 feet
-        if f is not None and f.char is not None and int(r) >= 10 and feats.has(f.char, "spell_sniper"):
-            return int(r) + 60  # (Spell Sniper)
+        if f is not None and f.char is not None and int(r) >= 10 and feats.has(f.char, "spell_sniper") \
+                and spellrules.has_op(spell, "attack"):
+            return int(r) + 60  # (Spell Sniper: spells with an attack roll)
         return int(r)
 
     def spell_targets(self, f: Fighter, sid: str) -> list[Fighter]:

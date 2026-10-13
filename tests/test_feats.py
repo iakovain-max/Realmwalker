@@ -522,3 +522,82 @@ def test_the_inspiring_leader_the_cooks_meal_and_the_ritual_caster(tables):
     f = hero(tables, level=4)
     give(tables, f, "ritual_caster")
     assert feats.ritual_spells(f, tables) == ["identify"]
+
+
+# ---------------------------------------------------------------------------- the fresh review's fixes
+def test_a_duellist_keeps_a_versatile_blade_in_one_hand(tables):
+    c = armed(tables, "longsword")
+    b = fight(tables, c, "bandit")
+    assert main_opt(b, b.fighters[0]).damage.startswith("1d10")  # both hands on the hilt
+    give(tables, c, "dueling")
+    b = fight(tables, c, "bandit")
+    opt = main_opt(b, b.fighters[0])
+    assert opt.damage.startswith("1d8") and opt.damage.endswith(f"+{Sheet(c, tables).mod('str') + 2}")
+    assert not opt.two_hands
+
+
+def test_spell_sniper_reaches_further_only_with_spell_attacks(tables):
+    c = hero(tables, "wizard", level=4)
+    give(tables, c, "spell_sniper", increase="int")
+    b = fight(tables, c, "bandit")
+    me = b.fighters[0]
+    assert b.spell_range(tables.spells["fire_bolt"], me) == 180
+    assert b.spell_range(tables.spells["sacred_flame"], me) == 60
+
+
+def test_mounted_combatant_waits_for_mounts(tables):
+    c = hero(tables, level=4)
+    offered = feats.choosable(c, tables)
+    assert "sentinel" in offered and "mounted_combatant" not in offered
+
+
+def test_feat_picks_and_the_sheet_speak_in_words(tables):
+    assert feats.choice_word(tables, "dex") == "Dexterity"
+    assert feats.choice_word(tables, "fire_bolt") == "Fire Bolt"
+    assert feats.choice_word(tables, "cleric") == "Cleric"
+    c = hero(tables, level=4)
+    give(tables, c, "athlete", increase="dex")
+    line = next(x for x in feats.sheet_lines(c, tables) if "Athlete" in x)
+    assert "Dexterity" in line and "(dex)" not in line
+
+
+def test_a_spent_once_a_turn_trick_asks_nothing(tables, monkeypatch):
+    c = armed(tables, "warhammer")
+    give(tables, c, "crusher")
+    b = fight(tables, c, "bandit")
+    me, foe = b.fighters
+    soft(foe)
+    asked = []
+    real = general_feats.choose
+    monkeypatch.setattr(general_feats, "choose", lambda *a: asked.append(a[2]) or real(*a))
+    on_turn(b, me)
+    landed = 0
+    for _ in range(200):
+        foe.x, foe.y = me.x + 1, me.y
+        if b._attack(me, main_opt(b, me), foe):
+            landed += 1
+            if landed == 3:
+                break
+    assert landed == 3 and asked.count("push") == 1
+
+
+def test_medium_armor_master_dual_wielder_and_feats_kept_in_the_save(tables):
+    from realmwalker.rules.character import Character
+
+    c = hero(tables, level=4)
+    for slot in ("main_hand", "off_hand", "body"):
+        unequip(c, slot)
+    wield(tables, c, "breastplate")
+    c.abilities["dex"] = 16
+    plain = Sheet(c, tables).armor_class()
+    give(tables, c, "medium_armor_master", increase="str")
+    assert Sheet(c, tables).armor_class() == plain + 1
+    w = armed(tables, "shortsword")
+    long = add_item(w, tables.items, "longsword")
+    assert not equip(w, tables.items, long.uid, "off_hand")[0]  # a longsword is not light
+    give(tables, w, "dual_wielder", increase="dex")
+    assert equip(w, tables.items, long.uid)[0] and w.equipped.get("off_hand") == long.uid
+    b = fight(tables, w, "bandit")
+    assert b.offhand_option(b.fighters[0]) is not None
+    again = Character.from_dict(w.to_dict())
+    assert again.feats == w.feats

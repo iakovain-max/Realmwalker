@@ -69,6 +69,11 @@ def _turn_key(b) -> tuple:
     return b.round, cur.id if cur is not None else None
 
 
+def used_this_turn(b, f, name: str) -> bool:
+    """True when a once-a-turn trick is already spent this turn (asks nothing, marks nothing)."""
+    return f.__dict__.get("mastery_used", {}).get(name) == _turn_key(b)
+
+
 def once_a_turn(b, f, name: str) -> bool:
     """True the first time in a turn (then marks it used)."""
     used = f.__dict__.setdefault("mastery_used", {})

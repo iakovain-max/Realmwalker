@@ -127,11 +127,18 @@ class ItemTable:
             return "falling apart"
         return "ruined"
 
-    def slots_for(self, item: Item) -> list[str]:
+    def slots_for(self, item: Item, char=None) -> list[str]:
+        """Where it goes (`char`: the wielder, whose feats may free the off hand)."""
         d = self.get(item.def_id)
         cat = d["category"]
         if cat == "weapon":
-            return ["main_hand", "off_hand"] if "light" in d.get("properties", []) else ["main_hand"]
+            props = d.get("properties", [])
+            if "light" in props:
+                return ["main_hand", "off_hand"]
+            if char is not None and any(f["id"] == "dual_wielder" for f in char.feats) \
+                    and "two_handed" not in props and "ranged" not in props:
+                return ["main_hand", "off_hand"]  # (Dual Wielder: any one-handed melee weapon in the off hand)
+            return ["main_hand"]
         if cat == "shield":
             return ["off_hand"]
         if cat == "armor":

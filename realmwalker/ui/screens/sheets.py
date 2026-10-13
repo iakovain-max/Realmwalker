@@ -998,7 +998,7 @@ class InventoryScreen(Screen):
         """How it measures up against what is worn in its place."""
         t = self.game.tables.items
         c = self.char
-        slots = t.slots_for(it)
+        slots = t.slots_for(it, c)
         if not slots or worn_by(c, it.uid)[0] is not None:
             return ""
         d = t.get(it.def_id)

@@ -249,7 +249,7 @@
     "feat_skulker": {"name": "Skulker", "text": "Blindsight 10 feet; hiding with advantage; a missed attack does not give away where you hide.", "where": "Battle.do_hide"},
     "feat_slasher": {"name": "Slasher", "text": "Once a turn a slashing hit takes 10 feet off the foe's speed; a slashing critical hit gives it disadvantage on its attacks until your next turn.", "hooks": [{"event": "attack_done", "as": "attacker", "handler": "slasher"}]},
     "feat_speedy": {"name": "Speedy", "text": "10 feet faster; a Dash ignores rough ground; blows struck as you break away have disadvantage.", "where": "Sheet.speed"},
-    "feat_spell_sniper": {"name": "Spell Sniper", "text": "Spell attacks ignore half and three-quarters cover and a foe at hand; spells reach 60 feet further.", "where": "Battle.spell_range"},
+    "feat_spell_sniper": {"name": "Spell Sniper", "text": "Spell attacks ignore half and three-quarters cover and a foe at hand; spells with an attack roll reach 60 feet further.", "where": "Battle.spell_range"},
     "feat_telekinetic": {"name": "Telekinetic", "text": "A bonus action shoves a creature within 30 feet 5 feet (Strength save).", "activate": {"id": "telekinetic_shove", "name": "Telekinetic shove (bonus action)", "cost": "bonus", "does": "shove", "aim": "enemy", "range": 30, "effects": [{"op": "special", "handler": "telekinetic_shove"}]}},
     "feat_telepathic": {"name": "Telepathic", "text": "Speech mind to mind; Detect Thoughts once a long rest.", "where": "rules/feats.innate_spells"},
     "feat_war_caster": {"name": "War Caster", "text": "Advantage on saves to keep a spell going; a harmful cantrip may answer a foe breaking away.", "modifiers": [{"save": "advantage", "against": ["concentration"], "why": "war caster"}]},
