@@ -363,6 +363,14 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   (a feat's or a lineage's, cast as "innate:<source>:<spell>" with no slot). Saves against a condition pass
   `against=` (Brave, Fey Ancestry). Creation runs calling, background, people, Origin, abilities (point buy, array,
   4d6)...; the smoke tour presses Enter through all ten steps.
+- Feats (Expansion 2 part C): data/feats.json (categories origin, general, fighting_style; `prerequisite`, `choices`,
+  `gives`, `offered: false` keeps one out of `feats.choosable` until its expansion). A level's "asi" choice lists
+  feats too; a feat's picks wait as a "feat" choice (`progression.options/resolve`, Suggest by `feats.archetype`
+  and feats.json "suggest"). Combat feats are kernel traits with handlers in `engine/handlers/general_feats.py`
+  (once a turn: `mastery.once_a_turn`; check `used_this_turn` before asking); numbers where they are made
+  (`Battle._weapon_option`, `spell_range`, `Sheet.armor_class`). `items.slots_for(item, char)` knows Dual Wielder.
+  The fighter's style is a Fighting Style feat (no style field). A creature has a feat by its "feat_<id>" trait
+  (data/creatures.json traits: the berserker, the guard, the orc warchief).
 - Arms and masteries (Expansion 2 part A): weapons carry their 2024 `mastery` (data/items.json); a character uses it
   with the `weapon_mastery` feature and the weapon kind in `Character.masteries` (`progression.mastery_count`,
   `offer_masteries`, `relearn_masteries` after a long rest; the sheet's m), a creature when its stat block attack

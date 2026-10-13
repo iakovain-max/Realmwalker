@@ -1,11 +1,13 @@
 # Expansion programme – status
 
-Current: 02 Blades & Backgrounds · part C (feats) · branch dlc/02-blades-backgrounds · step 4 of §5.1
+Current: 02 Blades & Backgrounds · part D (gear, tools, mounts; release) · branch dlc/02-blades-backgrounds · step 4 of §5.1
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 part A (arms and
   armour: the 2024 weapons and armour, the eight weapon masteries, the Armaments basics) · 02 part B (origins:
-  species, the sixteen backgrounds, origin feats, creation in the 2024 order; saves format 15)
+  species, the sixteen backgrounds, origin feats, creation in the 2024 order; saves format 15) · 02 part C (feats:
+  the framework, the 42 general and 10 fighting style feats in play and in the Auto's and enemy's hands; saves
+  format 16)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`)
 Assumptions waiting for Anton:
@@ -33,11 +35,13 @@ Assumptions waiting for Anton:
   the realm's tongues are standard languages; two wolves at level 1: 85% won, 15% down (band widened).
 - A window smoke test from part B's first run hung (the creation tour lacked a step; fixed) and its process may
   still be open on this PC (main.py --smoke-test ... --home build/smoke_home): it can be closed from Task Manager.
+- Expansion 2 part C: Mounted Combatant is written but not offered until mounted combat (Expansion 9); a duellist
+  keeps a versatile blade in one hand; Spell Sniper's reach is for attack-roll spells only; Sentinel answers a hit
+  on anyone but the sentinel.
 Ideas for later:
 - (none yet)
-Next session starts at: Expansion 2 Part C, task C.1 in docs/expansions/02-blades-backgrounds.md (branch
-  `dlc/02-blades-backgrounds`; parts A and B are merged into main; rules/feats.py and data/feats.json hold the
-  origin feats already)
+Next session starts at: Expansion 2 Part D, task D.1 in docs/expansions/02-blades-backgrounds.md (branch
+  `dlc/02-blades-backgrounds`; parts A, B and C are merged into main; D.4 ends with the release v1.2.0)
 
 ## Done
 
@@ -54,9 +58,12 @@ Next session starts at: Expansion 2 Part C, task C.1 in docs/expansions/02-blade
 | 2026-10-13 | Blades & Backgrounds begun: the branch, the design note and its four parts (arms and armour, origins, feats, gear and mounts) | `dlc/02-blades-backgrounds` |
 | 2026-10-13 | Blades & Backgrounds part A: the 2024 weapons and armour, the eight weapon masteries (rules, picks, tactics, pictures), armour training, the Armaments basics; merged into `main` | `dlc/02-blades-backgrounds` |
 | 2026-10-13 | Blades & Backgrounds part B: species (orcs for half-orcs), sixteen backgrounds, origin feats, languages, creation in the 2024 order with array and rolling; merged into `main` | `dlc/02-blades-backgrounds` |
+| 2026-10-13 | Blades & Backgrounds part C: feats (the framework, Suggest, the Feats tab; 42 general and 10 fighting style feats in play, on Auto and in the enemy's hands); finished by a second session after a usage limit; merged into `main` | `dlc/02-blades-backgrounds` |
 
 ## Notes for the next session
 
+- A window smoke test hung in part B still holds `build/smoke_home` open on this PC; part C's smoke test used
+  `build/smoke_home_c`. Use a fresh folder if the old one cannot be removed.
 - The three books' text is extracted to `build/codex/<phb|dmg|mm>/p###.txt` (`tools/codex/extract.py`); render page
   images with `tools/codex/extract.py --render mm 120 121` (to `build/codex/pages/`) to check numbers.
 - `docs/expansions/codex/README.md` fixes the codex's shape (one entry per line, `<kind>:<slug>` ids, PDF pages).

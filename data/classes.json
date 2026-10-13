@@ -12,15 +12,8 @@
       "suggested": {"str": 15, "dex": 13, "con": 14, "int": 8, "wis": 12, "cha": 10},
       "choices_at_1": ["fighting_style"],
       "mastery": [[1, 3], [4, 4], [10, 5], [16, 6]],
-      "fighting_styles": {
-        "archery": {"name": "Archery", "text": "+2 to hit with ranged weapons."},
-        "defense": {"name": "Defence", "text": "+1 to AC while wearing armour."},
-        "dueling": {"name": "Duelling", "text": "+2 damage with a one-handed melee weapon and nothing in the other hand but a shield."},
-        "great_weapon": {"name": "Great Weapon Fighting", "text": "Reroll damage dice of 1 or 2 with two-handed melee weapons (once)."},
-        "protection": {"name": "Protection", "text": "With a shield, use your reaction to impose disadvantage on an attack against a friend beside you."}
-      },
       "features": [
-        {"level": 1, "id": "fighting_style", "name": "Fighting Style", "text": "A trained way of fighting, chosen at creation.", "rule": "fighting_style"},
+        {"level": 1, "id": "fighting_style", "name": "Fighting Style", "text": "A trained way of fighting, chosen at creation: a Fighting Style feat.", "rule": "fighting_style"},
         {"level": 1, "id": "weapon_mastery", "name": "Weapon Mastery", "text": "The tricks of three kinds of weapon, four from level 4 and five from level 10: a mace that knocks a man down, a rapier that leaves an opening. Change them after a long rest.", "rule": "weapon_mastery"},
         {"level": 1, "id": "second_wind", "name": "Second Wind", "text": "Once per rest, catch your breath in battle: regain 1d10 + level hit points.", "rule": "second_wind"},
         {"level": 2, "id": "action_surge", "name": "Action Surge", "text": "Once per rest, push past exhaustion and take a second action on your turn.", "rule": "action_surge"},
@@ -46,7 +39,7 @@
       "kits": [
         {"name": "Man-at-arms", "style": "defense", "items": [["chain_mail", 1], ["longsword", 1], ["shield", 1], ["light_crossbow", 1], ["bolts", 20], ["iron_helm", 1]]},
         {"name": "Skirmisher", "style": "archery", "items": [["leather_armor", 1], ["longbow", 1], ["arrows", 20], ["handaxe", 2], ["leather_cap", 1]]},
-        {"name": "Heavy hitter", "style": "great_weapon", "items": [["scale_mail", 1], ["greataxe", 1], ["javelin", 3], ["iron_helm", 1]]}
+        {"name": "Heavy hitter", "style": "great_weapon_fighting", "items": [["scale_mail", 1], ["greataxe", 1], ["javelin", 3], ["iron_helm", 1]]}
       ]
     },
     "rogue": {

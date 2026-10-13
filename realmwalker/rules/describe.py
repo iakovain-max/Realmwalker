@@ -213,8 +213,12 @@ def _buff_status(b, f, bf: dict, tables) -> Status | None:
         kind = "resisting"
     elif bf.get("fly"):
         kind = "flying"
-    elif bf.get("sapped"):
+    elif bf.get("sapped") or bf.get("unsteady"):
         kind = "sapped"
+    elif bf.get("reeling"):
+        kind = "marked"
+    elif bf.get("protected") is not None or bf.get("parry_ac"):
+        kind = "shielded"
     elif bf.get("vex") is not None:
         kind = "vexing"
     elif bf.get("distracted"):
@@ -227,8 +231,19 @@ def _buff_status(b, f, bf: dict, tables) -> Status | None:
         lines = [f"{int(bf['slow'])} feet off their speed."]
     elif kind == "vexing":
         lines = [f"Their next attack roll against {esc(_name_of(b, bf['vex']))} has advantage."]
+    elif kind == "sapped" and bf.get("unsteady"):
+        title, lines = "Unsteady (Slasher)", ["Cut and off balance: their attack rolls have disadvantage until "
+                                              f"{esc(_name_of(b, bf['unsteady']))}'s next turn."]
     elif kind == "sapped":
         lines = [_WORDS["sapped"][1]]
+    elif kind == "marked" and bf.get("reeling"):
+        title, lines = "Reeling (Crusher)", ["Every attack against them has advantage until "
+                                             f"{esc(_name_of(b, bf['reeling']))}'s next turn."]
+    elif kind == "shielded" and bf.get("protected") is not None:
+        title, lines = "Shielded (Protection)", [f"{esc(_name_of(b, bf['protected']))}'s shield is in the way: "
+                                                 "attacks against them have disadvantage."]
+    elif kind == "shielded" and bf.get("parry_ac"):
+        title, lines = "Parrying (Defensive Duelist)", [f"+{int(bf['parry_ac'])} AC against melee blows."]
     elif kind in ("blessed", "baned"):
         die = str(bf.get("attack_die") or bf.get("save_die")).lstrip("-")
         lines = [f"{'Adds' if kind == 'blessed' else 'Takes'} {die} {'to' if kind == 'blessed' else 'off'} attack "

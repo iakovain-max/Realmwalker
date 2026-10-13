@@ -214,7 +214,7 @@ class CreationScreen(Screen):
             kind, _ = self._training_rows()[row]
             cls = self.t.classes[self.b.cls]
             if kind == "style":
-                styles = list(cls["fighting_styles"])
+                styles = self.b.styles()
                 self.b.fighting_style = styles[(styles.index(self.b.fighting_style) + delta) % len(styles)]
                 self.b.style_chosen = True
             elif kind == "subclass":
@@ -692,7 +692,7 @@ class CreationScreen(Screen):
                 on = value in b.expertise
                 text = f"{mark}[{'♦' if on else ' '}] Expertise: {rules['skills'][value]['name']}"
             elif kind == "style":
-                st = cls["fighting_styles"][b.fighting_style]
+                st = self.t.feats["feats"][b.fighting_style]
                 text = f"{mark}<title>Fighting style:</> ◄ {st['name']} ► <dim>{st['text']}</>"
             elif kind == "subclass":
                 sub = cls["subclasses"][b.subclass]

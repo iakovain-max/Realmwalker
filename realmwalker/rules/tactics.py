@@ -151,6 +151,7 @@ def _monster_turn(b: Battle, f: Fighter) -> None:
         f.bonus -= 1  # Aggressive (a bonus action to close in), or a troll's Charge (half its speed)
         f.move_left += f.speed if f.has_trait("aggressive") else f.speed // 2
     _fight(b, f, plain, attacks=max(1, int(f.cdef.get("multiattack", 1))))
+    _hew(b, f)
     if f.has_trait("rampage") and f.bonus > 0 and b.outcome is None and b.current is f and f.active \
             and f.creature.uses.get("rampage", 1) > 0:
         hurt = [e for e in b.enemies_of(f) if e.standing and e.hp <= e.max_hp // 2 and b.gap(f, e) <= 1]
@@ -847,6 +848,10 @@ def _party_turn(b: Battle, f: Fighter) -> None:
         struck = _fight(b, f, opts, attacks)
         if struck and b.current is f and b.outcome is None:
             _bonus_strike(b, f)
+    if b.current is f and b.outcome is None and f.bonus > 0:
+        _mind_shove(b, f)
+    if b.current is f and b.outcome is None and f.bonus > 0:
+        _quick_sense(b, f)
     elif b.current is f and b.outcome is None and f.move_left >= 5:
         _keep_safe(b, f)
     if b.current is f and b.outcome is None and f.bonus > 0:  # Cunning Action: away when hurt, else out of sight
@@ -876,7 +881,7 @@ def _does(opt, a: dict | None) -> str:
     with the bonus action (Cunning Action), a bonus "attack" (an off-hand blow, a spirit's strike, War Priest), or a
     "power" used with the action (Channel Divinity)."""
     if a is None:
-        return "attack" if opt.value in ("offhand", "spirit_strike") else "other"
+        return "attack" if opt.value in ("offhand", "spirit_strike", "hew", "pole_strike") else "other"
     if a.get("does"):
         return a["does"]  # (said in the data: Stonecunning "sense")
     if a.get("via"):
@@ -906,6 +911,45 @@ def _use_power(b: Battle, f: Fighter) -> bool:
         return False
     b.do_ability(f, best[1].value)
     return f.action <= 0
+
+
+def _hew(b: Battle, f: Fighter) -> None:
+    """Great Weapon Master's Hew in a creature's hands: the bonus-action blow after a critical hit or a kill."""
+    from realmwalker.rules.engine.handlers import general_feats
+
+    if b.outcome is not None or b.current is not f or not f.active or f.bonus <= 0 or not general_feats.hew_ready(b, f):
+        return
+    opt = b.feat_blow_option(f, "hew")
+    near = [e for e in b.enemies_of(f) if e.active and opt is not None and b.in_reach(f, opt, e)[0]]
+    if near:
+        b.do_feat_blow(f, "hew", min(near, key=lambda e: (e.hp, e.id)))
+
+
+def _mind_shove(b: Battle, f: Fighter) -> None:
+    """Telekinetic: shove a foe into harm, or off a friend who is hurt or casting."""
+    for opt, a in _abilities(b, f, "shove"):
+        def worth(t):
+            if _push_lands_in_harm(b, f, t):
+                return 3.0
+            pressed = [x for x in b.allies_of(f) if x is not f and x.active and b.gap(x, t) <= 1
+                       and (x.hp < x.max_hp // 2 or x.prefers_range or x.concentration is not None)]
+            own_blow = b.gap(f, t) <= 1 and not f.prefers_range
+            return 1.0 if pressed and not own_blow else 0.0
+        best = max(opt.targets, key=lambda t: (worth(t), -t.id), default=None)
+        if best is not None and worth(best) > 0:
+            b.do_ability(f, opt.value, best)
+        return
+
+
+def _quick_sense(b: Battle, f: Fighter) -> None:
+    """Keen Mind's and Observant's bonus actions: Study a foe not yet known, Search for one hiding."""
+    if f.bonus <= 0:
+        return
+    moves = {a["via"]: (opt, a) for opt, a in _abilities(b, f, "move")}
+    if "search" in moves and any(e.hidden and e.standing for e in b.enemies_of(f)):
+        b.do_ability(f, moves["search"][0].value)
+    elif "study" in moves and moves["study"][0].targets:
+        b.do_ability(f, moves["study"][0].value, max(moves["study"][0].targets, key=lambda t: (estimates.threat(t), -t.id)))
 
 
 def _bonus_strike(b: Battle, f: Fighter) -> None:

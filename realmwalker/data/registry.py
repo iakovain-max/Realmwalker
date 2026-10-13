@@ -491,7 +491,8 @@ def _check_unique_refs(files: dict[str, Any]) -> list[str]:
         elif cls is not None:
             if u.get("subclass") and u["subclass"] not in cls.get("subclasses", {}):
                 bad(uid, f"names unknown subclass {u['subclass']!r}")
-            if u.get("style") and u["style"] not in cls.get("fighting_styles", {}):
+            feat_defs = files.get("feats.json", {}).get("feats", {})
+            if u.get("style") and feat_defs.get(u["style"], {}).get("category") != "fighting_style":
                 bad(uid, f"names unknown fighting style {u['style']!r}")
         if backgrounds and u["background"] not in backgrounds:
             bad(uid, f"names unknown background {u['background']!r}")

@@ -114,7 +114,12 @@ def cast(b, f, sid: str, spell: dict, target, point, *, up: int, mod: int, dc: i
     if f.char is not None and spell.get("school") == "evocation" and f.char.cls == "wizard" \
             and f.has_trait("empowered_evocation"):
         c.empowered = mod
-    run(c, spell.get("effects", ()))
+    before = b.__dict__.get("_casting")
+    b._casting = f if not spell.get("ability") and "item" not in spell.get("classes", ()) else None
+    try:
+        run(c, spell.get("effects", ()))
+    finally:
+        b._casting = before
 
 
 def run(c: Cast, ops, victim=None) -> None:
@@ -211,7 +216,7 @@ def _save(c: Cast, o: dict, victim) -> None:
         victims = _targets(c)
     parts = [(expr(c, d, up, scaling=o.get("scaling") == "cantrip", empower=True), t)
              for d, t, up in spellrules.damage_parts(o)]
-    rolled = {i: dice.roll(e, b.rng).total for i, (e, _) in enumerate(parts)} if c.area else {}
+    rolled = {i: _roll(c, e, t) for i, (e, t) in enumerate(parts)} if c.area else {}
     origin = c.point if spell["target"] == "point" and c.point is not None else (f.x, f.y)
     spared = b.sculpted(f, c.sid, victims, c.level) if c.area else set()
     on_save = "half" if o.get("half") else "none"
@@ -238,7 +243,7 @@ def _save(c: Cast, o: dict, victim) -> None:
                             against=_conditions_in(o.get("on_fail", ())))
         b._event("save", who=x.id, ok=saved)
         for i, (e, dtype) in enumerate(parts):
-            full = rolled[i] if i in rolled else dice.roll(e, b.rng).total
+            full = rolled[i] if i in rolled else _roll(c, e, dtype)
             b._save_hit(f, x, ability, saved, full, dtype, on_save)
         if not saved and x.active:
             run(c, o.get("on_fail", ()), x)
@@ -261,6 +266,16 @@ def _push(c: Cast, o: dict, victim) -> None:
             c.pushed.append((victim, int(o["feet"])))
 
 
+def _roll(c: Cast, e: str, dtype: str) -> int:
+    """A spell's damage roll (Elemental Adept: a 1 on a die of the chosen element counts as a 2)."""
+    rolled = dice.roll(e, c.b.rng)
+    if c.caster.char is not None and c.b.__dict__.get("_casting") is c.caster:
+        from realmwalker.rules import feats
+
+        return rolled.total + feats.adept_ones(c.caster.char, dtype, rolled.rolls)
+    return rolled.total
+
+
 @op("damage")
 def _damage(c: Cast, o: dict, victim) -> None:
     """Damage without a roll to hit or a save (it has already landed)."""
@@ -270,7 +285,7 @@ def _damage(c: Cast, o: dict, victim) -> None:
         return  # only after a charge (a boar's Gore)
     if victim is not None and (victim.active or victim.state == "down"):
         for dice_, dtype, up in spellrules.damage_parts(o):
-            c.b._hit(c.caster, victim, dice.roll(expr(c, dice_, up), c.b.rng).total, dtype, crit=False,
+            c.b._hit(c.caster, victim, _roll(c, expr(c, dice_, up), dtype), dtype, crit=False,
                      weapon=c.spell.get("name", dtype))
 
 

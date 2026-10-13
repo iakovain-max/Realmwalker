@@ -266,8 +266,14 @@ class CharacterBuilder:
         c = self.t.classes[self.cls]
         self.kit = max(0, min(kit, len(c["kits"]) - 1))
         style = c["kits"][self.kit].get("style")
-        if self.fighting_style is not None and not self.style_chosen and style in c.get("fighting_styles", {}):
+        if self.fighting_style is not None and not self.style_chosen and style in self.styles():
             self.fighting_style = style
+
+    def styles(self) -> list[str]:
+        """The Fighting Style feats a fighter may start with."""
+        from realmwalker.rules import feats
+
+        return feats.styles(self.t)
 
     def set_class(self, cls: str) -> None:
         self.cls = cls
@@ -277,7 +283,7 @@ class CharacterBuilder:
         if kept:
             self._place(kept)  # (the array or the rolled scores, moved to what the new calling needs)
         self.kit = 0
-        self.fighting_style = next(iter(c.get("fighting_styles", {})), None) if "fighting_style" in c["choices_at_1"] else None
+        self.fighting_style = self.styles()[0] if "fighting_style" in c["choices_at_1"] else None
         self.style_chosen = False
         self.set_kit(0)
         subs = list(c.get("subclasses", {}))
@@ -546,7 +552,7 @@ class CharacterBuilder:
             level=1, xp=0, subclass=self.subclass, max_hp=hp, hp=hp, hit_dice=1,
             skills=self.all_skills(), expertise=list(self.expertise), saves=list(cls["saves"]),
             armor_prof=list(dict.fromkeys(armor)), weapon_prof=list(dict.fromkeys(weapons)), tools=tools,
-            languages=languages, features=features, fighting_style=self.fighting_style, uses=uses,
+            languages=languages, features=features, uses=uses,
             money=int(bg["gold"] if self.take_gold else bg["money"]), appearance=self.appearance, looks=dict(self.looks),
             backstory=self.backstory, personality=self.personality, ideal=self.ideal, bond=self.bond, flaw=self.flaw,
             lineage=self.lineage, choices={k: v for k, v in self.choices.items()},
@@ -558,6 +564,8 @@ class CharacterBuilder:
         for source, fid, fixed in self.origin_feats():  # the background's feat, a human's Versatile
             picked = {k: v for k, v in self.feat_choices.get(source, {}).items() if k != "_feat"}
             feats.grant(char, t, fid, {**fixed, **picked})
+        if self.fighting_style:
+            feats.grant(char, t, self.fighting_style)  # the fighter's trained way of fighting (a feat, 2024)
         items = t.items
         kit = cls["kits"][max(0, min(self.kit, len(cls["kits"]) - 1))]
         for def_id, qty in t.items.starting_packs.get("everyone", []) + kit["items"] + ([] if self.take_gold else bg["items"]):

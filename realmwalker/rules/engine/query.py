@@ -102,6 +102,19 @@ def attack_roll(b, att, target, opt, *, space=None) -> Roll:
         r.add("disadvantage", "sapped")  # the Sap mastery: the next attack roll after the blow
     if any(bf.get("vex") == target.id for bf in att.buffs):
         r.add("advantage", "vexed")  # the Vex mastery: the next attack roll against that one
+    if any(bf.get("reeling") for bf in target.buffs):
+        r.add("advantage", "reeling")  # Crusher: a crushing critical hit opens them to everyone
+    if any(bf.get("unsteady") for bf in att.buffs):
+        r.add("disadvantage", "unsteady")  # Slasher: a slashing critical hit
+    if any(bf.get("protected") for bf in target.buffs):
+        r.add("disadvantage", "shielded")  # the Protection style: a shield in the way until the guard's next turn
+    feat_of = att.char.feats if att.char is not None else ()
+    has_feat = {x["id"] for x in feat_of}
+    if "grappler" in has_feat and "grappled" in target.conditions and source(target, "grappled") == att.id:
+        r.add("advantage", "held")  # Grappler: easy to hit one you are holding
+    if target.char is not None and b.__dict__.get("_oa_target") is target \
+            and any(x["id"] == "speedy" for x in target.char.feats):
+        r.add("disadvantage", "quick on their feet")  # Speedy: blows struck as they break away
     if target.marked:
         r.add("advantage", "marked")
     defs = cond.table(att.t)
@@ -136,10 +149,13 @@ def attack_roll(b, att, target, opt, *, space=None) -> Roll:
     if not opt.is_melee:
         near = [e for e in b.enemies_of(att) if e.standing and not incapacitated(e) and grid.gap(a_space, e.space) <= 1
                 and abs(e.z - att.z) < grid.SQUARE_FT]
-        if near:
+        steady = opt.kind == "ranged" and "sharpshooter" in has_feat \
+            or opt.kind.startswith("spell") and "spell_sniper" in has_feat \
+            or opt.kind == "ranged" and "crossbow_expert" in has_feat and "crossbow" in opt.name
+        if near and not steady:
             r.add("disadvantage", "enemy at hand")
         normal = (opt.range or DEFAULT_RANGE.get(opt.kind, (60, 120)))[0]
-        if normal and g * grid.SQUARE_FT > normal:
+        if normal and g * grid.SQUARE_FT > normal and not (opt.kind == "ranged" and "sharpshooter" in has_feat):
             r.add("disadvantage", "long range")
     if opt.kind == "ranged" and b.env.rain and "ammunition" in opt.properties:
         r.add("disadvantage", "rain")
@@ -268,16 +284,17 @@ def resists(f, dtype: str) -> bool:
     return False
 
 
-def damage_taken(f, amount: int, dtype: str) -> tuple[int, str]:
+def damage_taken(f, amount: int, dtype: str, *, ignore_resist: bool = False) -> tuple[int, str]:
     """Damage after immunity, resistance and vulnerability, in the 2024 order (PHB chapter 1, Order of Application:
-    adjustments first, then Resistance, halving and rounding down, then Vulnerability), and which of them applied."""
+    adjustments first, then Resistance, halving and rounding down, then Vulnerability), and which of them applied.
+    `ignore_resist`: the attacker cuts through resistance to it (Poisoner, Elemental Adept)."""
     kind = defences(f, dtype)
     if kind == "immune":
         return 0, kind
     threshold = int(f.cdef.get("damage_threshold") or 0) if f.creature is not None else 0
     if threshold and amount < threshold:
         return 0, "threshold"  # Damage Threshold (2024): less than it does nothing; as much or more, all of it
-    if resists(f, dtype):
+    if resists(f, dtype) and not ignore_resist:
         amount //= 2
     if kind == "vulnerable":
         amount *= 2

@@ -203,7 +203,22 @@ def proficiency_of(f) -> int:
     return query.proficiency(f)
 
 
-_ABILITY_WORTH = {"turn_undead": _turn_undead, "preserve_life": _preserve_life, "battle_medic": _battle_medic}
+def _speedy_recovery(b, f, w: Worth) -> None:
+    die = (b.t.classes[f.char.cls]["hit_die"] if f.char is not None else 8) / 2 + 0.5
+    w.heal += min(die, max(0, f.max_hp - f.hp))
+
+
+def _chef_treat(b, f, w: Worth) -> None:
+    w.heal += max(0, proficiency_of(f) - f.temp_hp) * (1.0 if f.hp < f.max_hp else 0.3)
+
+
+def _telekinetic_shove(b, f, w: Worth) -> None:
+    w.control += 1.0  # (where to shove is the tactics' judgement: rules/tactics._mind_shove)
+
+
+_ABILITY_WORTH = {"turn_undead": _turn_undead, "preserve_life": _preserve_life, "battle_medic": _battle_medic,
+                  "speedy_recovery": _speedy_recovery, "chef_treat": _chef_treat,
+                  "telekinetic_shove": _telekinetic_shove}
 
 
 def _control_rounds(ops: list[dict]) -> float:

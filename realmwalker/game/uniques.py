@@ -310,7 +310,7 @@ def make_character(game, uid: str) -> Character:
     b.set_background(u["background"])
     b.scores = dict(u["scores"])
     if u.get("style"):
-        b.fighting_style = u["style"]
+        b.fighting_style, b.style_chosen = u["style"], True  # (a Fighting Style feat)
     if u.get("subclass") and "subclass" in t.classes[u["class"]]["choices_at_1"]:
         b.subclass = u["subclass"]
     b.sex, b.name, b.age = u["sex"], u["name"], u["age"]

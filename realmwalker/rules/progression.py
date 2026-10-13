@@ -1,8 +1,10 @@
 """Experience, levelling and resting.
 
-A level-up adds hit points and class features at once. The choices (a subclass, ability increases, new spells
-and cantrips) wait in `char.pending` until the player makes them on the level-up screen, or asks for sensible
-choices to be made (`auto_resolve`). Rest recovers hit points, hit dice, spell slots and once-per-rest features.
+A level-up adds hit points and class features at once. The choices (a subclass, ability increases or a feat, new
+spells and cantrips, weapon masteries, a second fighting style) wait in `char.pending` until the player makes them on
+the level-up screen, or asks for sensible choices to be made (`auto_resolve`; `suggest` is the one it would make).
+A feat taken at an ability increase may leave picks of its own (which ability it raises, which element): they wait
+as a "feat" choice, one pick at a time, and the feat is taken when the last is made. Rest recovers hit points, hit dice, spell slots and once-per-rest features.
 """
 
 from __future__ import annotations
@@ -72,6 +74,7 @@ def _level_up(char: Character, tables, rng: RNG) -> list[str]:
             if feat["level"] == char.level and feat["id"] not in char.features:
                 char.features.append(feat["id"])
                 notes.append(f"New: {feat['name']}.")
+                _offer_style(char, feat)
     if char.cls == "wizard" and char.spells:
         add_pending(char, {"kind": "spells", "count": 2, "level": char.level})
     offer_masteries(char, tables)  # a fourth kind of weapon at level 4, a fifth at 10 (fighters)
@@ -90,9 +93,12 @@ def _level_up(char: Character, tables, rng: RNG) -> list[str]:
 # ---------------------------------------------------------------------------- level-up choices
 # ---------------------------------------------------------------------------- weapon masteries (PHB 2024)
 def mastery_count(char: Character, tables) -> int:
-    """How many kinds of weapon the class lets them master at this level (0 without Weapon Mastery)."""
+    """How many kinds of weapon the class lets them master at this level (0 without Weapon Mastery), and one more for
+    each Weapon Master feat."""
     table = tables.classes[char.cls].get("mastery") or []
-    return max([0] + [n for lvl, n in table if char.level >= lvl])
+    from realmwalker.rules import feats
+
+    return max([0] + [n for lvl, n in table if char.level >= lvl]) + len(feats.taken(char, "weapon_master"))
 
 
 def mastery_options(char: Character, tables) -> list[str]:
@@ -157,6 +163,77 @@ def relearn_masteries(char: Character, tables) -> bool:
     return True
 
 
+def _offer_style(char: Character, feature: dict) -> None:
+    """A feature that teaches another fighting style (the Champion's at level 10) waits as a choice of style feat."""
+    if feature.get("rule") == "fighting_style" and feature["id"] != "fighting_style":
+        add_pending(char, {"kind": "style", "level": char.level})
+
+
+def take_feat(char: Character, tables, fid: str, *, front: bool = True) -> list[str]:
+    """Begin taking a feat at a level: at once if it leaves nothing to pick, or a "feat" choice that waits for its
+    picks (put first, so the level-up screen asks them next)."""
+    from realmwalker.rules import feats
+
+    choice = {"kind": "feat", "feat": fid, "made": {}, "level": char.level, "new": True}
+    if _feat_step(char, tables, choice) is None:
+        return _finish_feat(char, tables, choice)
+    if front:
+        char.pending.insert(0, choice)
+    else:
+        char.pending.append(choice)
+    return [f"{char.name.split()[0]} begins to learn {feats.name(tables, fid)}."]
+
+
+def _feat_step(char: Character, tables, choice: dict):
+    """(key, spec, options) of the next pick a feat being taken needs, or None when all are made. A pick with only one
+    possible answer is made at once."""
+    from realmwalker.rules import feats
+
+    fid, made = choice["feat"], choice["made"]
+    for key, spec in feats.defs(tables)[fid].get("choices", {}).items():
+        n = int(spec.get("count", 1))
+        have = made.get(key)
+        if n == 1 and have is not None or n > 1 and len(have or []) >= n:
+            continue
+        opts = [o for o in feats.options(tables, char, fid, key, made) if o not in (have or [])]
+        if n == 1 and len(opts) == 1:
+            made[key] = opts[0]
+            continue
+        if not opts:
+            made.setdefault(key, [] if n > 1 else "")
+            continue
+        return key, spec, opts
+    return None
+
+
+def _finish_feat(char: Character, tables, choice: dict) -> list[str]:
+    from realmwalker.rules import feats
+
+    fid = choice["feat"]
+    picked = {k: v for k, v in choice["made"].items() if v not in ("", [])}
+    feats.grant(char, tables, fid, picked)
+    if choice in char.pending:
+        char.pending.remove(choice)
+    return [f"{char.name.split()[0]} takes the feat {feats.name(tables, char.feats[-1])}."]
+
+
+def _pick_label(tables, kind: str, value: str) -> tuple[str, str]:
+    """Words for one pick of a feat: (label, details)."""
+    from realmwalker.rules import feats
+
+    rules = tables.rules
+    if kind == "increase":
+        return f"+1 {rules['abilities'][value]['name']}", ""
+    if kind == "damage_type":
+        return value.title(), f"Your spells of {value} ignore resistance to it; a 1 on their damage dice counts as 2."
+    if kind in ("cantrip", "spell") and value in tables.spells:
+        sp = tables.spells[value]
+        return sp["name"], sp.get("text", sp.get("description", ""))
+    if value in rules["skills"]:
+        return rules["skills"][value]["name"], f"({rules['skills'][value]['ability'].upper()})"
+    return feats.choice_word(tables, value), ""
+
+
 def add_pending(char: Character, choice: dict) -> None:
     choice = dict(choice, new=True)
     char.pending.append(choice)
@@ -178,6 +255,21 @@ def options(char: Character, tables, choice: dict) -> list[tuple[str, str, str]]
         return [(sid, s["name"], s.get("text", "") + " " + "; ".join(
             f"level {f['level']}: {f['name']}" for f in s.get("features", [])))
             for sid, s in cls["subclasses"].items()]
+    if kind == "feat":
+        step = _feat_step(char, tables, choice)
+        if step is None:
+            return []
+        key, spec, opts = step
+        out = []
+        for v in opts:
+            label, details = _pick_label(tables, spec["kind"], v)
+            out.append((v, label, details))
+        return out
+    if kind == "style":
+        from realmwalker.rules import feats
+
+        return [(fid, feats.name(tables, fid), feats.defs(tables)[fid]["text"]) for fid in feats.styles(tables)
+                if not feats.has(char, fid)]
     if kind == "asi":
         out = []
         for a in tables.rules["abilities"]:
@@ -192,6 +284,12 @@ def options(char: Character, tables, choice: dict) -> list[tuple[str, str, str]]
                                 f"{names[b]} {char.abilities[b]} → {char.abilities[b] + 1}"))
         primary = cls["primary"]
         out.sort(key=lambda o: (not any(p in o[0] for p in primary), 0 if "+2" in o[0] else 1))
+        from realmwalker.rules import feats
+
+        for fid in feats.choosable(char, tables):  # or a feat (2024): general feats, and origin feats not yet had
+            d = feats.defs(tables)[fid]
+            pre = feats.prerequisite_words(tables, fid)
+            out.append((f"feat:{fid}", f"Feat: {d['name']}", d["text"] + (f" (Needs {pre}.)" if pre else "")))
         return out
     if kind == "spells":
         top = spell_top_level(char, tables)
@@ -217,7 +315,18 @@ def choice_title(char: Character, tables, choice: dict) -> str:
     if kind == "subclass":
         return f"Choose a path for {char.name.split()[0]}"
     if kind == "asi":
-        return "Improve your abilities: +2 to one, or +1 to two"
+        return "Improve your abilities (+2 to one, or +1 to two), or take a feat"
+    if kind == "feat":
+        from realmwalker.rules import feats
+
+        step = _feat_step(char, tables, choice)
+        what = {"increase": "which ability does it raise?", "damage_type": "which element?",
+                "spell": "which spell?", "cantrip": "which cantrip?", "expertise": "expertise in which skill?",
+                "skill_or_expertise": "which skill?", "skill": "which skill?", "tool": "which tool?",
+                "skill_or_tool": "which skill or tool?"}.get(step[1]["kind"], "choose") if step else "done"
+        return f"{feats.name(tables, choice['feat'])}: {what}"
+    if kind == "style":
+        return "Learn another fighting style"
     if kind == "spells":
         n = choice.get("count", 1)
         return f"Copy {n} new spell{'s' if n > 1 else ''} into your spellbook"
@@ -243,6 +352,26 @@ def resolve(char: Character, tables, choice: dict, option_id: str) -> list[str]:
             if feat["level"] <= char.level and feat["id"] not in char.features:
                 char.features.append(feat["id"])
                 notes.append(f"New: {feat['name']}.")
+                _offer_style(char, feat)
+        char.pending.remove(choice)
+    elif kind == "asi" and option_id.startswith("feat:"):
+        char.pending.remove(choice)
+        notes += take_feat(char, tables, option_id[5:])
+    elif kind == "feat":
+        step = _feat_step(char, tables, choice)
+        if step is not None:
+            key, spec, _opts = step
+            if int(spec.get("count", 1)) > 1:
+                choice["made"].setdefault(key, []).append(option_id)
+            else:
+                choice["made"][key] = option_id
+        if _feat_step(char, tables, choice) is None:
+            notes += _finish_feat(char, tables, choice)
+    elif kind == "style":
+        from realmwalker.rules import feats
+
+        feats.grant(char, tables, option_id)
+        notes.append(f"{char.name.split()[0]} learns the {feats.name(tables, option_id)} fighting style.")
         char.pending.remove(choice)
     elif kind == "asi":
         for part in option_id.split(","):
@@ -284,15 +413,45 @@ def auto_resolve(char: Character, tables) -> list[str]:
         if not opts:
             char.pending.remove(choice)
             continue
-        if choice["kind"] == "asi":
-            best = max(cls["primary"], key=lambda a: (char.abilities[a] <= 18, -cls["primary"].index(a)))
-            pick = f"{best}+2" if char.abilities[best] <= 18 else opts[0][0]
-            if pick not in {o[0] for o in opts}:
-                pick = opts[0][0]
-        else:
-            pick = opts[0][0]
-        notes += resolve(char, tables, choice, pick)
+        notes += resolve(char, tables, choice, suggest(char, tables, choice, opts))
     return notes
+
+
+def suggest(char: Character, tables, choice: dict, opts: list | None = None) -> str:
+    """The choice the Auto makes and Suggest points at: at an ability increase, +2 to the main ability while it is
+    even and below 18; otherwise the feat that suits how they fight (data/feats.json "suggest", rules/feats.archetype);
+    a feat's own picks and a style as the feats would choose them; the first option for the rest."""
+    from realmwalker.rules import feats
+
+    opts = options(char, tables, choice) if opts is None else opts
+    ids = [o[0] for o in opts]
+    if not ids:
+        return ""
+    kind = choice["kind"]
+    cls = tables.classes[char.cls]
+    if kind == "asi":
+        best = max(cls["primary"], key=lambda a: (char.abilities[a] <= 18, -cls["primary"].index(a)))
+        plus_two = f"{best}+2"
+        score = char.abilities[best]
+        if score <= 16 and score % 2 == 0 and plus_two in ids:
+            return plus_two
+        for fid in tables.feats.get("suggest", {}).get(feats.archetype(char, tables), []):
+            if f"feat:{fid}" in ids:
+                return f"feat:{fid}"
+        return plus_two if plus_two in ids else ids[0]
+    if kind == "feat":
+        step = _feat_step(char, tables, choice)
+        if step is not None:
+            key, spec, step_opts = step
+            if spec["kind"] == "increase":
+                pick = feats.best_ability(char, tables, step_opts)
+                return pick if pick in ids else ids[0]
+            want = feats.default_choices(tables, char, choice["feat"], dict(choice["made"])).get(key)
+            want = want[0] if isinstance(want, list) and want else want
+            return want if want in ids else ids[0]
+    if kind == "style":
+        return feats.suited_style(char, tables, ids)
+    return ids[0]
 
 
 def has_new_choices(char: Character) -> bool:
@@ -304,8 +463,9 @@ def seen_choices(char: Character) -> None:
         c["new"] = False
 
 
-def short_rest(char: Character, tables, rng: RNG) -> list[str]:
-    """An hour's rest: spend hit dice to heal, recover short-rest features."""
+def short_rest(char: Character, tables, rng: RNG, *, meal: bool = False) -> list[str]:
+    """An hour's rest: spend hit dice to heal, recover short-rest features. `meal`: a Chef cooked (2024: whoever
+    spends Hit Dice regains 1d8 more)."""
     notes = []
     die = tables.classes[char.cls]["hit_die"]
     con = modifier(char.abilities["con"])
@@ -319,6 +479,10 @@ def short_rest(char: Character, tables, rng: RNG) -> list[str]:
         amount = max(1, dice.roll(f"1d{die}", rng).total + con)
         char.hp = min(char.max_hp, char.hp + amount)
         healed += amount
+    if healed and meal:
+        extra = rng.randint(1, 8)
+        char.hp = min(char.max_hp, char.hp + extra)
+        healed += extra
     if healed:
         notes.append(f"{char.name.split()[0]} recovers {healed} hit points.")
     resources.recover(char, tables, "short")  # Second Wind, Action Surge, Channel Divinity... (data/traits.json)

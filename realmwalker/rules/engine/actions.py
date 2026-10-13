@@ -3,7 +3,9 @@ give (data/traits.json "activate"), whether each can be used now and why not, an
 
 An activation is {"id", "name", "cost": "action" | "bonus" | "free", "uses": pool id (rules/engine/resources.py),
 "requires": [tests from REQUIRES], "via": a battle action done with the bonus action instead (Cunning Action's
-"dash", "disengage", "hide"), "effects": [ops] (rules/engine/effects.py)}. A trait may give several.
+"dash", "disengage", "hide"; Keen Mind's "study", aimed at a creature), "aim": what it is aimed at ("enemy" within
+"range" feet, "unknown": a creature not yet studied), "effects": [ops] (rules/engine/effects.py)}. A trait may give
+several.
 
 `options(b, f)` is the one list of everything a fighter can do now - every attack with each weapon, striking a thing
 (a door, a barrel), every spell, every ability, flying up or down, the other actions (Dash, Disengage, Dodge, Hide,
@@ -53,6 +55,8 @@ def problem(b, f, a: dict) -> str | None:
         why = REQUIRES[r](b, f)
         if why:
             return why
+    if a.get("aim") and not aim_targets(b, f, a):
+        return "nobody to aim it at"
     if a["cost"] == "action" and f.action <= 0:
         return "no action left"
     if a["cost"] == "bonus" and f.bonus <= 0:
@@ -70,7 +74,12 @@ def use(b, f, aid: str, target=None) -> bool:
     if a is None or problem(b, f, a):
         return False
     if a.get("via"):
-        getattr(b, f"do_{a['via']}")(f, bonus=True)  # the battle action pays for itself, with the bonus action
+        if a.get("aim"):
+            if target is None:
+                return False
+            getattr(b, f"do_{a['via']}")(f, target, bonus=True)
+        else:
+            getattr(b, f"do_{a['via']}")(f, bonus=True)  # the battle action pays for itself, with the bonus action
         if a.get("uses"):
             res.spend(f.char, a["uses"])
         if a.get("effects"):
@@ -117,6 +126,23 @@ def _on_stone(b, f) -> str | None:
     return "no stone underfoot"
 
 
+def _hurt_with_hit_die(b, f) -> str | None:
+    if f.char is None or f.char.hit_dice <= 0:
+        return "no Hit Dice left"
+    return None if f.hp < f.max_hp else "not hurt"
+
+
+def aim_targets(b, f, a: dict) -> list:
+    """Whom an ability can be aimed at now ("aim": "enemy" within its range, seen; "unknown": a creature not yet
+    studied)."""
+    aim = a.get("aim")
+    if aim == "enemy":
+        return [e for e in b.enemies_of(f) if e.active and b.feet(f, e) <= int(a.get("range", 5)) and b.can_see(f, e)]
+    if aim == "unknown":
+        return [e for e in b.enemies_of(f) if e.creature is not None and e.creature.def_id not in b.known]
+    return []
+
+
 def _not_sensing(b, f) -> str | None:
     return "already feeling the stone" if any(bf.get("tremorsense") for bf in f.buffs) else None
 
@@ -127,6 +153,7 @@ REQUIRES: dict[str, Callable] = {
     "god_ready": _god_ready,
     "on_stone": _on_stone,
     "medic_ready": _medic_ready,
+    "hurt_with_hit_die": _hurt_with_hit_die,
 }
 
 
@@ -175,13 +202,18 @@ def options(b, f, only: tuple[str, ...] | None = None) -> list[Option]:
                 out.append(_spell_option(b, f, sid, True, ""))
     for aid, name, ok, why in (b.class_abilities(f) if only is None or "ability" in only else ()):
         a = find(f, aid)
-        cost = a["cost"] if a else ("bonus" if aid in ("offhand", "spirit_strike") else "action")
+        cost = a["cost"] if a else ("bonus" if aid in ("offhand", "spirit_strike", "hew", "pole_strike") else "action")
         targets = []
         if aid == "offhand" and ok:
             opt = b.offhand_option(f)
             targets = [t for t in b.enemies_of(f) if opt is not None and b.in_reach(f, opt, t)[0]]
         elif aid == "spirit_strike" and ok:
             targets = b.spirit_targets(f)
+        elif aid in ("hew", "pole_strike") and ok:
+            opt = b.feat_blow_option(f, aid)
+            targets = [t for t in b.enemies_of(f) if opt is not None and b.in_reach(f, opt, t)[0]]
+        elif a is not None and a.get("aim") and ok:
+            targets = aim_targets(b, f, a)
         out.append(Option(f"ability:{aid}", "ability", name, cost, ok, why, aid, "creature" if targets else "none",
                           targets))
     if (only is None or "move" in only) and f.fly_speed > 0:

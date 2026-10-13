@@ -38,7 +38,7 @@ from realmwalker.world.tables import Tables
 
 log = logging.getLogger("realmwalker.save")
 
-FORMAT_VERSION = 15  # 15: species, lineage, feats, choices, masteries (Expansion 2); 14: attunement, travel pace,
+FORMAT_VERSION = 16  # 16: fighting styles are feats, general feats; 15: species, lineage, feats, choices, masteries (Expansion 2); 14: attunement, travel pace,
 # artifacts and sentient items (13: no code for old saves; older refused)
 WORLD_FILE = "world.zip"
 CHARACTER_FILE = "character.zip"
