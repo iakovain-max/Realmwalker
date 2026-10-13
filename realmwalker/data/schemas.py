@@ -299,7 +299,7 @@ ITEM = Obj(
         "ac_bonus": Int(min=0, max=5, optional=True), "perception_penalty": Int(min=0, max=10, optional=True),
         "slot": Str(choices=["under", "main", "outer", "head", "hands", "feet", "ring", "neck", "back"], optional=True),
         "carry": Float(min=0, max=100, optional=True),  # worn on the back: pounds more before you count as laden
-        "focus": Obj({"kind": Str(choices=["arcane", "divine"]), "carried": Bool(optional=True)}, optional=True),
+        "focus": Obj({"kind": Str(choices=["arcane", "divine", "druidic"]), "carried": Bool(optional=True)}, optional=True),
         "impress": Obj({"people": Str(choices=["high", "priests", "soldiers", "traders"]), "bonus": Int(min=0, max=20),
                         "worn": Bool(optional=True)}, optional=True),
         "bonus": Obj({"skills": Map(Int(min=-5, max=5))}, optional=True),  # while worn
@@ -314,6 +314,14 @@ ITEM = Obj(
         "tool": Str(max_len=40, optional=True), "light": Any_(optional=True), "container": Any_(optional=True),
         "food": Any_(optional=True), "drink": Any_(optional=True), "use": Any_(optional=True),
         "bedding": Float(min=0, max=15, optional=True),
+        # Expansion 2 part D: a pack opens into its contents; gear that helps a check; a tool's 2024 Utilize uses
+        "pack": List(List(Any_(), min_items=2, max_items=2), min_items=1, optional=True),
+        "helps": Obj({"search": Bool(optional=True), "traps": Int(min=1, max=10, optional=True),
+                      "force": Int(min=1, max=10, optional=True), "disguise": Bool(optional=True)}, optional=True),
+        "utilize": Obj({"ability": Str(choices=["str", "dex", "con", "int", "wis", "cha"]),
+                        "uses": List(Obj({"text": Str(max_len=120), "dc": Int(min=5, max=30)}), min_items=1),
+                        "crafts": List(Str(max_len=40), optional=True)}, optional=True),
+        "trinket": Bool(optional=True),  # its name and words come from data/trinkets.json
     }
 )
 ITEMS = Obj(

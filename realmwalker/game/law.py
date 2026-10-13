@@ -855,7 +855,9 @@ def put_on_disguise(game, char) -> str:
     quality = dice.d20(rng).natural + bonus
     from realmwalker.rules import feats
 
-    if feats.has(char, "actor"):  # (Actor: advantage in playing the part)
+    costume = any((game.tables.items.get(it.def_id).get("helps") or {}).get("disguise")
+                  for it in char.inventory if it.uid in char.equipped.values())
+    if feats.has(char, "actor") or costume:  # (Actor, or a costume worn: advantage in playing the part)
         quality = max(quality, dice.d20(rng).natural + bonus)
     game.renown.flags["disguise_dc"] = quality
     char.effects["disguised"] = 12.0

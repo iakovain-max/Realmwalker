@@ -478,7 +478,7 @@ def spell_id(value: str) -> str:
     return value.split(":", 2)[2] if value.startswith(("scroll:", "charge:", "throw:", "innate:")) else value
 
 
-BATTLE_USES = {"heal", "bandage", "throw"}  # what an item's "use" can do in a fight (do_item, or thrown via do_cast)
+BATTLE_USES = {"heal", "bandage", "throw", "coat"}  # what an item's "use" can do in a fight (do_item, or via do_cast)
 
 
 def open_field(tables, width: int = 16, height: int = 10, ground: str = "grass", light: float = 1.0) -> grid.Field:
@@ -2022,6 +2022,11 @@ class Battle:
             if target.active or target.state == "down":
                 self._hit(att, target, dice.roll(e["damage"], self.rng, double_dice=crit).total, e["type"], crit=False,
                           weapon=opt.name)
+        if att.buff_value("poisoned_blade") and opt.damage_type in ("piercing", "slashing") \
+                and not opt.kind.startswith("spell") and (target.active or target.state == "down"):
+            att.buffs = [bf for bf in att.buffs if "poisoned_blade" not in bf]  # (basic poison: spent on the first cut)
+            self._hit(att, target, dice.roll("1d4", self.rng, double_dice=crit).total, "poison", crit=False,
+                      weapon=opt.name)
         for extra_amount, extra_type in dmg_ev.typed:  # damage of its own kind from a power (an artifact's force)
             if target.active or target.state == "down":
                 self._hit(att, target, extra_amount, extra_type, crit=False, weapon=opt.name)
@@ -2792,7 +2797,8 @@ class Battle:
 
     def throw_value(self, item) -> str | None:
         """The do_cast value for throwing this flask, or None if it is not thrown."""
-        sid = (self.t.items.get(item.def_id).get("use") or {}).get("throw")
+        use = self.t.items.get(item.def_id).get("use") or {}
+        sid = use.get("throw") or ("coat_poison" if use.get("coat") else None)  # (basic poison: smeared on a blade)
         return f"throw:{item.uid}:{sid}" if sid in self.t.spells else None
 
     def item_targets(self, f: Fighter) -> list[Fighter]:
@@ -3215,7 +3221,10 @@ class Battle:
         if sid.startswith("throw:"):
             if f.char is None or f.char.item(int(sid.split(":")[1])) is None:
                 return "you have none left"
-            if f.action <= 0 and f.attacks_left <= 0:
+            if spell.get("cast") == "bonus":
+                if f.bonus <= 0:
+                    return "no bonus action left this turn"
+            elif f.action <= 0 and f.attacks_left <= 0:
                 return "no action left this turn"
         opts = {s: (ok, why) for s, ok, why in self.spell_options(f)} if not sid.startswith("throw:") else {}
         if sid in opts and not opts[sid][0]:
@@ -3278,7 +3287,7 @@ class Battle:
         if flask is not None:
             # A flask thrown: the thrower's aim makes it hard to dodge (8 + proficiency + Dexterity); no magic is spent.
             remove_item(c, flask.uid, 1)
-            self._spend(f, False)
+            self._spend(f, bonus_cast)
             f.hidden = 0
             dc = 8 + s.proficiency + s.mod("dex")
             self.cast(f, sid, spell, target, point, up=0, mod=s.mod("dex"), dc=dc, bonus=s.proficiency + s.mod("dex"),
@@ -3442,6 +3451,8 @@ class Battle:
                 continue  # a spell laid on the ground does nothing where magic does not work
             if z.kind == "web":
                 stopped = self._zone_catch(f, z) or stopped
+            elif z.kind in ("caltrops", "bearings") and not start and f.standing and f.z == 0:
+                stopped = self._zone_underfoot(f, z) or stopped
             elif z.kind in ("fire", "guardians", "guardian") and z.damage:
                 z.struck.add(f.id)
                 owner = next((x for x in self.fighters if x.id == z.owner), None)
@@ -3455,6 +3466,23 @@ class Battle:
                         self.say("The guardian fades, its strength spent.", "magic")
                         self._remove_zone(z)
         return stopped
+
+    def _zone_underfoot(self, f: Fighter, z: Zone) -> bool:
+        """Caltrops (PHB 2024): Dexterity save or 1 piercing damage and no more moving this turn. Ball bearings: a
+        Dexterity save or down on the ground. Once a turn for each. True if it stops the move."""
+        z.struck.add(f.id)
+        if self._save(f, "dex", z.dc):
+            return False
+        if z.kind == "caltrops":
+            self.say(f"{f.the_name} treads on a caltrop.", "good" if f.side == FOE else "danger")
+            self._hit(f, f, 1, "piercing", crit=False, weapon="caltrops")
+            f.move_left = 0
+            return True
+        if durations.give(self, f, "prone"):
+            self._event("prone", who=f.id)
+            self.say(f"{f.the_name} skids on the ball bearings and goes down.", "good" if f.side == FOE else "danger")
+            return True
+        return False
 
     def _zone_catch(self, f: Fighter, z: Zone) -> bool:
         if z.kind != "web" or "restrained" in f.conditions or "web" in trs.values(f, "ignores_zone", flat=True):

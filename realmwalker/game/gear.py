@@ -479,7 +479,35 @@ def use_name(game, item) -> str | None:
         return "Write a scroll"
     if use.get("throw"):
         return "Throw (in a fight)"
+    if use.get("coat"):
+        return "Coat a blade (in a fight)"
+    if use.get("drink") == "antitoxin":
+        return "Drink the antitoxin"
+    if game.tables.items.get(item.def_id).get("pack"):
+        return "Open the pack"
     return None
+
+
+def open_pack(game, char: Character, item) -> list[str]:
+    """A bought pack (PHB 2024: the explorer's, the priest's...) becomes what is in it."""
+    items = game.tables.items
+    contents = items.get(item.def_id).get("pack") or []
+    if remove_item(char, item.uid, 1) is None:
+        return ["It will not come open."]
+    got = []
+    for def_id, qty in contents:
+        add_item(char, items, def_id, int(qty), made_at=item.made_at)
+        got.append(f"{items.get(def_id)['name']}" + (f" ×{int(qty)}" if int(qty) > 1 else ""))
+    return [f"You unpack the {items.get(item.def_id)['name']}: {', '.join(got)}."]
+
+
+def drink_antitoxin(game, char: Character, item) -> list[str]:
+    """PHB 2024: for an hour, advantage on saving throws against being poisoned."""
+    if remove_item(char, item.uid, 1) is None:
+        return ["There is none left."]
+    char.effects["antitoxin"] = 1.0
+    return [f"{first(char)} drinks the antitoxin: it tastes of chalk and bitter root. For an hour, poison takes "
+            f"less hold of them (advantage on saves against being poisoned)."]
 
 
 def use_item(game, char: Character, item) -> list[str]:
@@ -498,9 +526,14 @@ def use_item(game, char: Character, item) -> list[str]:
     if name == "Write a scroll":
         return ["Choose the spell to write on the Spells screen (S), then w. It needs a sheet of parchment, costly inks "
                 "and one of the day's spells."]
-    if name == "Throw (in a fight)":
-        spell = game.tables.spells[(game.tables.items.get(item.def_id).get("use") or {})["throw"]]
-        return [f"In a fight, Cast a spell lists it: {spell['text']}"]
+    if name in ("Throw (in a fight)", "Coat a blade (in a fight)"):
+        use = game.tables.items.get(item.def_id).get("use") or {}
+        spell = game.tables.spells[use.get("throw") or "coat_poison"]
+        return [f"In a fight, the Item menu (u) lists it: {spell['text']}"]
+    if name == "Open the pack":
+        return open_pack(game, char, item)
+    if name == "Drink the antitoxin":
+        return drink_antitoxin(game, char, item)
     return [how_text(game, item)]
 
 

@@ -15,7 +15,8 @@ an op inside another (`on_hit`, `on_fail`, `then`) works on the creature the out
                {save, on_fail}; while the spell needs concentration, the condition ends with it
     heal       dice, add_mod, up, mends_wound; count / count_up for several
     modifier   buff {...} for `rounds` (a lasting spell outlives the fight: rules/spells.py)
-    zone       zone (web, ice, fire, fog), rounds; a web catches (Dexterity save, Restrained)
+    zone       zone (web, ice, fire, fog, caltrops, bearings), rounds, dc (a fixed DC); a web catches (Dexterity save,
+               Restrained); caltrops and ball bearings catch whoever walks in (Battle._zone_underfoot)
     aura       an emanation that moves with the caster and hurts enemies in it (Spirit Guardians)
     guardian   a token at a point that hurts enemies who come near, until its strength is spent
     summon     a spiritual weapon at a point: it strikes now and on later turns with a bonus action
@@ -580,7 +581,7 @@ def _zone(c: Cast, o: dict, victim) -> None:
     b, f, spell = c.b, c.caster, c.spell
     rounds = -1 if spell.get("concentration") else int(o.get("rounds", spell.get("rounds", 10)))
     z = Zone(b._zone_id(), o["zone"], set(c.area), owner=f.id, spell=c.sid, rounds=rounds, save=o.get("save", "dex"),
-             dc=c.dc)
+             dc=int(o.get("dc", c.dc)))  # (caltrops and ball bearings have the book's own DC)
     b._add_zone(z)
     if o.get("catch"):
         for x in b.in_area(c.area, spell.get("affects", "all"), f):

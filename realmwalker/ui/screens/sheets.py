@@ -439,7 +439,7 @@ def item_picture(canvas, game, it, x: float, y: float, size: float) -> None:
 
 
 GEAR_VERBS = ("Sharpen blades", "Mend gear", "Set it for the night", "Pass the evening", "Pray", "Write a scroll",
-              "Throw (in a fight)")  # game/gear.use_name
+              "Throw (in a fight)", "Coat a blade (in a fight)", "Drink the antitoxin", "Open the pack")  # game/gear.use_name
 
 
 class InventoryScreen(Screen):
