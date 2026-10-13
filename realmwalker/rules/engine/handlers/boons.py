@@ -259,6 +259,17 @@ def recover_vitality(c, o, victim) -> None:
     b._heal(f, amount)
 
 
+# ---------------------------------------------------------------------------- Speed
+@special("escape_artist")
+def escape_artist(c, o, victim) -> None:
+    """Disengaging with the bonus action also slips any grip on them."""
+    b, f = c.b, c.caster
+    if "grappled" in f.conditions:
+        durations.remove(f, "grappled")
+        f.grappled_by = None
+        b.say(f"{f.the_name} twists out of the hold.", _word(f))
+
+
 # ---------------------------------------------------------------------------- Spell Recall
 @handler("free_casting")
 def free_casting(b, f, ev, hook, buff) -> None:
