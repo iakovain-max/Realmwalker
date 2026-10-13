@@ -60,7 +60,7 @@ Horses look like horses; mounts, carts and wagons can be bought; inns, meals and
 - [x] B.3 The 16 backgrounds: increases, origin feat, skills, tool, equipment or gold, ties and starting places.
 - [x] B.4 Languages (standard and rare) merged with the world's tongues; creation in the 2024 order with point buy,
   standard array and 4d6; screens fit at three sizes; companions and townsfolk made the same way.
-- [ ] B.5 Part B to `main` (the origin feats work from here: Alert, Crafter, Healer, Lucky, Magic Initiate,
+- [x] B.5 Part B to `main` (the origin feats work from here: Alert, Crafter, Healer, Lucky, Magic Initiate,
   Musician, Savage Attacker, Skilled, Tavern Brawler, Tough).
 
 ### Part C — Feats
