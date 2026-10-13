@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from realmwalker.game import gear
 from realmwalker.game.magic import lasting_text
 from realmwalker.game.state import GameState
 from realmwalker.rules import describe
@@ -608,9 +609,12 @@ class InventoryScreen(Screen):
             else:
                 who = "You take" if wearer is self.game.leader else f"{wearer.name.split()[0]} takes"
                 self.game.say(f"{who} off the {t.name(it, False)}.", "info")
+                gear.dressed(self.game, it, False)
         else:
             ok, msg = equip(c, t, it.uid)
             self.game.say(msg, "info" if ok else "warn")
+            if ok:
+                gear.dressed(self.game, it, True)
         self.game.dirty = True
 
     def drop(self, all_of_it: bool = True) -> None:
@@ -1221,6 +1225,8 @@ class ItemPicker(Screen):
         it = self.options[i]
         ok, msg = equip(self.char, self.game.tables.items, it.uid, self.slot)
         self.game.say(msg, "info" if ok else "warn")
+        if ok:
+            gear.dressed(self.game, it, True)
         self.game.dirty = True
         self.close()
 

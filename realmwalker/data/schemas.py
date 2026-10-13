@@ -279,6 +279,8 @@ ITEM = Obj(
         "group": Str(choices=["simple", "martial"], optional=True), "properties": List(Str(max_len=20), optional=True),
         "versatile": Str(max_len=10, optional=True), "range": List(Int(min=0, max=2000), min_items=2, max_items=2, optional=True),
         "ammo": Str(max_len=30, optional=True),
+        "mastery": Str(choices=["cleave", "graze", "nick", "push", "sap", "slow", "topple", "vex"], optional=True),
+        "rare": Bool(optional=True),  # gnomish work (firearms): never in ordinary shops, kits or common loot
         "armor_type": Str(choices=["light", "medium", "heavy"], optional=True), "ac": Int(min=0, max=30, optional=True),
         "str_req": Int(min=0, max=30, optional=True), "stealth_disadvantage": Bool(optional=True),
         "covers": List(Str(choices=["head", "torso", "arms", "legs", "hands", "feet"]), optional=True),
@@ -319,6 +321,8 @@ ITEMS = Obj(
             "evening": Obj({"dc": Int(min=1, max=30), "music": Float(min=0, max=20), "game": Float(min=0, max=20),
                             "cap": Float(min=0, max=100), "minutes": Int(min=1, max=600)}),
             "prayer": Float(min=1, max=72),
+            # minutes to put armour on and to take it off, by its kind (PHB 2024 Armor table)
+            "don": Map(List(Int(min=0, max=60), min_items=2, max_items=2), optional=True),
         }, optional=True),
         "items": Map(ITEM, min_items=1),
         "starting_packs": Map(WEIGHTED),

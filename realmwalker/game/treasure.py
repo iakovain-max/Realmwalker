@@ -224,7 +224,7 @@ def stash(game, cr: float, tier: int, rng: RNG, *, grave: bool = False, theme: s
             if scrolls:
                 items.append(new_item(game, rng.choice(sorted(scrolls)), rng))
         elif kind == "arms":
-            arms = sorted(d for d, s in items_table.defs.items() if s["category"] in ("weapon", "armor", "shield")
+            arms = sorted(d for d, s in items_table.defs.items() if s["category"] in ("weapon", "armor", "shield") and not s.get("rare")
                           and s.get("value", 0) >= 500)
             if arms:
                 quality = rng.weighted(["common", "fine", "masterwork"], [5, 3, 1 + tier // 2])

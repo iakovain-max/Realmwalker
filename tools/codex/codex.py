@@ -38,6 +38,7 @@ GAME_HOME = {
     "species": ("races.json", "races"),
     "backgrounds": ("backgrounds.json", "backgrounds"),
     "items": ("items.json", "items"),
+    "equipment": ("items.json", "items"),
 }
 
 

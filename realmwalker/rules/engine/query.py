@@ -141,12 +141,13 @@ def attack_roll(b, att, target, opt, *, space=None) -> Roll:
         r.add("disadvantage", "rain")
     if opt.is_melee and b.flanker(att, target, space=a_space) is not None:
         r.add("advantage", "flanking")
-    if att.char and "heavy" in opt.properties and att.size == "small":
-        r.add("disadvantage", "too heavy")
-    if att.char:
-        armor = att.char.equipped_item("armor")
-        if armor is not None and not att.sheet.proficient_with_armor(armor):
-            r.add("disadvantage", "untrained in armour")
+    if att.char and "heavy" in opt.properties and opt.kind in ("melee", "ranged"):
+        # 2024: a Heavy melee weapon wants Strength 15, a Heavy ranged one Dexterity 13
+        ability, need = ("str", 15) if opt.is_melee else ("dex", 13)
+        if att.sheet.score(ability) < need:
+            r.add("disadvantage", "too heavy")
+    if opt.kind in ("melee", "ranged") and untrained_armour(att):
+        r.add("disadvantage", "untrained in armour")
     if opt.extra.get("metal_advantage") and target.char:
         armor = target.char.equipped_item("armor")
         if armor is not None and armor.def_id in METAL:
@@ -192,6 +193,8 @@ def save_roll(b, f, ability: str, *, bonus: int = 0) -> SaveRoll:
         mode = modes.get(ability)
         if mode:
             out.roll.add(mode, _cond_name(f, cid))
+    if ability in ("str", "dex") and untrained_armour(f):
+        out.roll.add("disadvantage", "untrained in armour")
     if ability == "dex" and f.dodging and not incapacitated(f) and f.speed > 0:
         out.roll.add("advantage", "dodging")  # the Dodge action: easier to get out of the way of fire
     ctx = tr.Ctx(b, f, ability=ability)
@@ -201,6 +204,15 @@ def save_roll(b, f, ability: str, *, bonus: int = 0) -> SaveRoll:
 
 
 # ---------------------------------------------------------------------------- armour and movement
+def untrained_armour(f) -> bool:
+    """Armour without the training for it (2024): Disadvantage on every D20 Test of Strength or Dexterity, and no
+    spells. A shield without training only gives no Armor Class."""
+    if not f.char:
+        return False
+    armor = f.char.equipped_item("armor")
+    return armor is not None and not f.sheet.proficient_with_armor(armor)
+
+
 def ac(f) -> int:
     if f.char:
         s = f.sheet

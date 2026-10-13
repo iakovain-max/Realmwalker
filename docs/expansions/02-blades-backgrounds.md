@@ -42,7 +42,7 @@ Horses look like horses; mounts, carts and wagons can be bought; inns, meals and
 ## Parts and tasks
 
 ### Part A — Arms and armour
-- [ ] A.1 Weapon table and armour to 2024 (items.json: properties, `mastery`, Lance, Trident, Whip, Blowgun, Musket,
+- [x] A.1 Weapon table and armour to 2024 (items.json: properties, `mastery`, Lance, Trident, Whip, Blowgun, Musket,
   Pistol; armour and Shield numbers; improvised weapons); codex `weapon:*`, `armor:*`, the property sections.
 - [ ] A.2 The eight masteries as kernel handlers; `Character.masteries`, picks for fighter and rogue (creation,
   level-up, long rest); `actions.options` shows the mastery; battle log and cards say it; tests in a real fight each.

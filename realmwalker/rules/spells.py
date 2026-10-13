@@ -85,8 +85,18 @@ def known_spells(char: Character, tables) -> list[str]:
     return list(dict.fromkeys(out))
 
 
+def armour_problem(char: Character, tables) -> str:
+    """Armour worn without training stops all spellcasting (2024)."""
+    armor = char.equipped_item("armor")
+    if armor is not None and not Sheet(char, tables).proficient_with_armor(armor):
+        return "no spells in armour you are not trained to wear"
+    return ""
+
+
 def can_cast(char: Character, tables, spell_id: str) -> tuple[bool, str]:
     spell = tables.spells[spell_id]
+    if "item" not in spell.get("classes", ()) and armour_problem(char, tables):
+        return False, armour_problem(char, tables)
     if spell["level"] == 0:
         return True, ""
     left = slots_left(char, tables)

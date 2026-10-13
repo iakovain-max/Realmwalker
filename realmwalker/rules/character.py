@@ -289,7 +289,7 @@ class Sheet:
 
             ac = max([10] + [int(b) for b in spells.lasting_values(self.c, self.t, "mage_armor")]) + dex
         shield = self.c.equipped_item("off_hand")
-        if shield is not None and self.items.category(shield) == "shield":
+        if shield is not None and self.items.category(shield) == "shield" and self.proficient_with_armor(shield):
             ac += int(self.items.get(shield.def_id).get("ac_bonus", 2))
         if self.c.equipped:
             from realmwalker.rules import magic
