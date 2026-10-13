@@ -104,7 +104,8 @@ realmwalker/
                            combat (Battle: D&D 5e combat on a grid), grid (the battlefield: distances, sight, cover,
                            areas, paths), tactics (how the enemy and Auto fight), creatures, spells, wounds, progression,
                            body (needs, body heat, wetness, exhaustion), health (blood, pain, infection, healing,
-                           injuries, diseases, treatment, drink, poppy)
+                           injuries, diseases, treatment, drink, poppy), describe (cards: statuses, creatures, options,
+                           items, the log's rolls)
   rules/engine/            the rules kernel (Expansion 1): conditions (2024, data/conditions.json), query (every
                            derived number), traits (data/traits.json definitions), events (hooks + dispatcher),
                            handlers/ (Python by id), effects (spell ops), durations (endings by turns), check (start-up)
@@ -120,7 +121,7 @@ realmwalker/
   world/legends.py         the Legends book's pages and lists (logic): every person, realm, place, war, beast...
   world/news.py            news items and how they travel along the roads
   ui/                      window loop, fonts (tileset built at runtime), input, markup, widgets (Canvas), hud (side
-                           panel, log, action bar), colors, screens/
+                           panel, log, action bar), tooltips (cards drawn beside what is pointed at), colors, screens/
   ui/gfx/                  the pictures: scene (picture commands, layers), gpu (draws them with SDL), atlas (the tile
                            sheets), theme (panels, buttons, bars), typefaces, localview (close-up maps: tiles, light,
                            people, followers), roofs (buildings: roofs, front walls, doors, lit windows), worldview +
@@ -303,6 +304,14 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   data/sprites.json figures (skins are real colours, drawn over grey). A new people needs nothing to work (human
   looks on a human body via `dolls.resolve_body`); its own body needs a `bodies` entry and a tile rebuild. Keep
   `tests/test_looks.py` green: every option must have a picture and a colour.
+- Cards (Expansion 1 part E, docs/EXPANSIONS.md §4.15): `rules/describe.py` builds a `Card` (title, subtitle, icon,
+  lines, footer) for anything pointed at; `canvas.hit(tooltip=)` takes words, a Card or a function making one (built
+  only when shown, after 0.3 s); `ui/tooltips.py` draws it beside the thing. Every state a fight can produce is a
+  `describe.Status` with an icon `status/<id>` (10x10, `tools/status_art.py`; `tests/test_cards.py` checks each has a
+  picture and card words); a new status needs both. Rolls reach the log's tooltips through `Battle.dice_say` /
+  `note_roll` (kept in `Battle.rolls` by line). Borrowed creature tiles pass `tools/adapt_art.py` in build_tiles.py
+  (`--adapt-sheet` shows before and after); a spell's `fx` is its look (bolt, ray, cone, burst... the schema lists them),
+  the cast event's `effect` what it does. Expansion icons: `tile_art.dlc_icons`.
 - Animations go through `canvas.gfx.animate` (movement) and `canvas.gfx.ambient` (idle: water, smoke, weather), from
   the Animations setting; the game's state never waits for an animation.
 - The rules kernel (Expansion 1, docs/EXPANSIONS.md §4.3; `rules/engine/`). Numbers go through one door:
