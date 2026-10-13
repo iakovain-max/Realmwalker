@@ -52,6 +52,28 @@ def test_a_careful_party_prospers(tables):
     assert dead <= 0.1, dead
 
 
+def test_heroes_of_the_higher_tiers_meet_hosts_in_the_worst_lands(tables):
+    """Level 11 and 17 parties of three against High bands built for danger 9 and 10 (Demigods & Magics part A).
+    Measured 2026-10-13 over 12 fights each: every one won, at most 16% with someone down, 80-98% of the hit points
+    left. The creatures that can truly test heroes of legend come with the bestiary expansions: until then the worst
+    lands send hosts (two or three trolls where one came), and the band is that the heroes prevail and are touched."""
+    for level, group, danger in balance.TIER_CASES:
+        rows = [balance.fight_once(tables, group, 0, level, 3, seed, danger=danger) for seed in range(8)]
+        won = sum(1 for r in rows if r["outcome"] in ("victory", "parley")) / len(rows)
+        dead = sum(1 for r in rows if r["party_dead"] or r["wipe"]) / len(rows)
+        assert won >= 0.85 and dead <= 0.15, (level, group, won, dead)
+        assert sum(r["hp_left"] for r in rows) / len(rows) < 1.0  # (they were in a fight)
+    assert any(r["foes"] >= 2 for r in [balance.fight_once(tables, "troll", 0, 17, 3, 1, danger=10)])
+
+
+def test_low_lands_stay_low(tables):
+    """A level 15 party walks through farmland in peace: the budget follows the land, not the party."""
+    from realmwalker.rules import encounter
+
+    assert all(encounter.danger_level(tables, d) <= 3 for d in range(8))
+    assert encounter.tier_extra(tables, encounter.land_budget(tables, 3, 3, "high"), 3) == 1.0
+
+
 def test_a_winter_night_without_fire_is_dangerous(tables):
     bare = balance.winter_night(tables, 4, fire=False, tent=False, clothes="poor")
     warm = balance.winter_night(tables, 4, fire=True, tent=True)

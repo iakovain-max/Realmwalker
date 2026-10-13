@@ -62,7 +62,7 @@ def depth_for(world, site) -> int:
     if style == "lair":
         return 1
     danger = int(getattr(site, "danger", 2))
-    depth = 1 + (danger >= 4) + (danger >= 7)
+    depth = 1 + (danger >= 4) + (danger >= 7) + (danger >= 8) + (danger >= 9)  # (five levels under the worst)
     return min(depth, 2) if style in ("hideout", "warren") else depth
 
 

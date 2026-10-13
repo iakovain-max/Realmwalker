@@ -257,3 +257,28 @@ def test_the_auto_uses_its_boons_in_a_fight(tables):
     on_turn(b, me)
     tactics.take_turn(b, me)
     assert me.hp > me.max_hp // 3 or "invisible" in me.conditions
+
+
+def test_the_worst_sites_go_five_levels_down(tables):
+    from types import SimpleNamespace
+
+    from realmwalker.world import dungeon
+
+    site = SimpleNamespace(kind="ruin", danger=9, faction=-1, id=1, x=0, y=0)
+    world = SimpleNamespace(factions={}, politics={})
+    assert dungeon.depth_for(world, site) == 5
+    site.danger = 3
+    assert dungeon.depth_for(world, site) == 1
+
+
+def test_a_named_beast_grows_with_its_legend(tables):
+    from realmwalker.rules import encounter
+    from realmwalker.rules.creatures import spawn
+
+    assert [encounter.tier_of(lv) for lv in (1, 4, 5, 10, 11, 16, 17, 20)] == [1, 1, 2, 2, 3, 3, 4, 4]
+    c = spawn(tables, "troll", RNG(1, "t"), 1)
+    hp = c.max_hp
+    encounter.legend_grows(tables, c, 3)
+    assert c.max_hp == hp
+    encounter.legend_grows(tables, c, 17)
+    assert c.max_hp == hp * 4 and c.hp == c.max_hp

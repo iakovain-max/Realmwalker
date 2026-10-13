@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from realmwalker.core import dice
 from realmwalker.core.rng import RNG
-from realmwalker.rules import body
+from realmwalker.rules import body, encounter
 from realmwalker.rules.inventory import remove_item
 from realmwalker.rules.items import money_text
 from realmwalker.world import dungeon as gen
@@ -630,9 +630,11 @@ def populate(game, lm) -> None:
             if d is not None and creatures:
                 creatures[0].name = d["name"]
                 creatures[0].named = True
+                encounter.legend_grows(game.tables, creatures[0], game.leader.level)
         elif boss_name and has_boss and n == 0 and creatures:
             creatures[0].name = boss_name  # the troll the old songs are about; the king who was laid here
             creatures[0].named = True
+            encounter.legend_grows(game.tables, creatures[0], game.leader.level)
         lm.actors.append(LocalActor(len(lm.actors) + 1, group, x, y, creatures))
     _treasure_of_the_place(game, lm, rng.child("hoard"), has_boss)
 
