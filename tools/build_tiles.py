@@ -600,7 +600,7 @@ def gather(pack: Path) -> dict[str, Image.Image]:
     tiles.update(figs)
     for name, im in {**tile_art.all_drawn(), **nature_art.all_drawn(), **map_art.all_drawn(),
                      **town_art.all_drawn()}.items():
-        which = "none" if name.startswith(("icon/", "map/", "status/")) else ("ground" if name.startswith(("floor/", "wall/")) else "feature")
+        which = "none" if name.startswith(("icon/", "map/", "status/", "dlc/")) else ("ground" if name.startswith(("floor/", "wall/")) else "feature")
         if any(k in name for k in ("glow", "/fey", "water/hot", "moonstone")):
             which = "fx"  # things that shine keep their light
         tiles[name] = grade(im, which) if which != "none" else im
