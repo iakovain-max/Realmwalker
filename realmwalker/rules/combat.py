@@ -1569,7 +1569,8 @@ class Battle:
             from realmwalker.rules import magic
 
             stink = magic.flag(f.char, "stench")  # an artifact's sour stink gives them away
-        roll = dice.d20(self.rng, disadvantage=stink).natural
+        skulker = f.char is not None and feats.has(f.char, "skulker")  # (Skulker: the fog of war)
+        roll = dice.d20(self.rng, advantage=skulker, disadvantage=stink).natural
         total = roll + f.skill("stealth")
         self.dice_say(f"Stealth ({f.name}): {roll} {signed_mod(f.skill('stealth'))} = {total}")
         seen = [e for e in self.enemies_of(f) if e.standing and e.passive() >= total and self.can_see(e, f)]

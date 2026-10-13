@@ -210,6 +210,7 @@
     "feat_savage_attacker": {"name": "Savage Attacker", "text": "Once a turn, a weapon's damage dice rolled twice, the higher kept.", "hooks": [{"event": "attack_damage", "as": "attacker", "handler": "savage_attacker"}]},
     "feat_skilled": {"name": "Skilled", "text": "Three more skills or tools.", "where": "sheet"},
     "feat_tavern_brawler": {"name": "Tavern Brawler", "text": "Fists 1d4 + Strength, 1s rolled again; improvised weapons with proficiency; a punch shoves 5 feet once a turn.", "hooks": [{"event": "attack_damage", "as": "attacker", "handler": "tavern_brawler"}, {"event": "attack_done", "as": "attacker", "handler": "tavern_shove"}]},
+    "ability_score_improvement": {"name": "Ability Score Improvement", "text": "+2 to one ability or +1 to two (at most 20), or a feat instead: the choice at levels 4 and 8.", "where": "rules/progression.options"},
     "feat_tough": {"name": "Tough", "text": "Two more hit points at every level.", "where": "sheet"},
     "feat_actor": {"name": "Actor", "text": "+1 Charisma; a disguise played well; voices mimicked.", "where": "game/law.disguise"},
     "feat_athlete": {"name": "Athlete", "text": "A Climb Speed equal to the Speed; up from the ground with 5 feet of movement.", "where": "Fighter.climb_speed"},
