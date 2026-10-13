@@ -311,6 +311,11 @@ class GameState:
         from realmwalker.game import magic_items
 
         magic_items.tick(self, before, after)  # dawn: charges back; what sentient things want; bonds to lost things
+        if any((c.companion or {}).get("coming") for c in self.waiting):  # sent for by messenger (game/passage.py)
+            from realmwalker.game.companions import rejoin
+
+            for text in rejoin(self):
+                self.say(text, "good")
         if self.world.factions and after.total_days * 24 + after.hour != before.total_days * 24 + before.hour:
             from realmwalker.game import law
 
@@ -853,6 +858,13 @@ class GameState:
             from realmwalker.game.people import populate_town, update_positions
 
             self.say(f"You walk into <place>{where.name}</>.", "place")
+            if lm.kind == "settlement" and where.walled and where.kind in ("town", "city"):
+                toll = int(self.tables.economy["services"].get("toll", 0)) * len([c for c in self.party if c.alive])
+                if toll and self.leader.money >= toll:  # (PHB 2024: a road or gate toll, 1 cp a head)
+                    self.leader.money -= toll
+                    from realmwalker.rules.items import money_text
+
+                    self.say(f"The gate warden takes the toll: {money_text(toll)}.", "dim")
             if lm.kind == "settlement" and self.world.factions:
                 from realmwalker.game import law
 

@@ -74,7 +74,7 @@
     "inn": {
       "name": "food and drink",
       "buys": ["food", "drink"],
-      "stock": [["bread", 2, 6], ["cheese", 1, 3], ["cooked_meat", 1, 4], ["ale", 3, 10], ["wine", 1, 3], ["spirits", 1, 3],
+      "stock": [["bread", 2, 6], ["cheese", 1, 3], ["fine_wine", 0, 2, "town"], ["cooked_meat", 1, 4], ["ale", 3, 10], ["wine", 1, 3], ["spirits", 1, 3],
                 ["rations", 1, 4]],
       "markup": 1.25
     },
@@ -114,13 +114,13 @@
   "grazing": ["plains", "hills", "forest", "coast", "marsh", "steppe", "savanna"],
   "culture_stock": {"dwarven": [["masons_tools", 1, 2], ["smiths_tools", 0, 1], ["jewelers_tools", 0, 1], ["iron_spikes", 2, 4], ["lamp", 1, 3], ["horn", 0, 1], ["drum", 0, 1]], "elven": [["lyre", 0, 2], ["yew_wand", 0, 1], ["mistletoe_sprig", 0, 1], ["druid_staff", 0, 1], ["painters_supplies", 0, 1], ["calligraphers_supplies", 0, 1], ["perfume", 0, 1]], "halfling": [["cooks_utensils", 1, 2], ["brewers_supplies", 0, 1], ["pan_flute", 0, 1], ["three_dragon_ante_set", 0, 1], ["basket", 1, 3]], "orcish": [["drum", 1, 2], ["horn", 0, 1], ["chain", 0, 2], ["net", 0, 2], ["caltrops", 0, 2]], "highland": [["bagpipes", 0, 2], ["climbers_kit", 0, 1]], "northmarch": [["horn", 0, 2], ["climbers_kit", 0, 1], ["net", 0, 1]], "thalassian": [["navigators_tools", 0, 1], ["net", 1, 2], ["glassblowers_tools", 0, 1], ["dulcimer", 0, 1]], "qasari": [["perfume", 1, 2], ["glassblowers_tools", 0, 1], ["shawm", 0, 1], ["jewelers_tools", 0, 1]], "southron": [["shawm", 0, 1], ["perfume", 0, 1], ["dragonchess_set", 0, 1]], "khurgan": [["drum", 0, 1], ["horn", 0, 1], ["leatherworkers_tools", 0, 1]], "volsk": [["viol", 0, 1], ["woodcarvers_tools", 0, 1], ["climbers_kit", 0, 1]], "itzan": [["pan_flute", 0, 1], ["drum", 0, 1], ["painters_supplies", 0, 1], ["potters_tools", 0, 1]], "heartland": [["lute", 0, 1], ["dice_set", 0, 1], ["brewers_supplies", 0, 1]]},
   "services": {
-    "_comment": "Prices in copper. Inn rooms and meals scale with the settlement: price x size factor.",
-    "room_common": 10, "room_private": 50, "meal": 30, "bath": 20,
+    "_comment": "Prices in copper. A bath scales with the settlement: price x size factor; inn stays, meals and lifestyles are the book's (inn).",
+    "bath": 20,
     "size_factor": {"hamlet": 0.6, "village": 0.8, "town": 1.0, "city": 1.4, "hold": 1.2, "elfhall": 1.0},
     "treat_per_wound": {"1": 50, "2": 200, "3": 500}, "surgery": 1000, "herbal_cure": 400,
     "prayer_healing": 1000, "cure_disease": 2500,
     "repair_share": 0.3,
-    "labour_pay": [10, 20],
+    "labour_pay": [15, 25],
     "inn": {"_comment": "PHB 2024 (PDF p. 234): an inn stay and a meal by lifestyle, in copper; which grades a settlement offers by its size. theft: the chance something goes missing in the night (squalid: opportunistic criminals); rest: exhaustion eased by a real bed; seen: standing with the town's high folk for a few days.", "stay": {"squalid": 7, "poor": 10, "modest": 50, "comfortable": 80, "wealthy": 200, "aristocratic": 400}, "meal": {"squalid": 1, "poor": 2, "modest": 10, "comfortable": 20, "wealthy": 30, "aristocratic": 60}, "lifestyle": {"wretched": 0, "squalid": 10, "poor": 20, "modest": 100, "comfortable": 200, "wealthy": 400, "aristocratic": 1000}, "grades": {"hamlet": ["squalid", "poor"], "village": ["squalid", "poor", "modest"], "town": ["squalid", "poor", "modest", "comfortable"], "city": ["squalid", "poor", "modest", "comfortable", "wealthy", "aristocratic"], "hold": ["poor", "modest", "comfortable", "wealthy"], "elfhall": ["poor", "modest", "comfortable", "wealthy"]}, "theft": {"squalid": 0.15, "poor": 0.04}, "rest": {"modest": 1, "comfortable": 1, "wealthy": 2, "aristocratic": 2}, "seen": {"wealthy": 2, "aristocratic": 4}, "fill": {"squalid": [35, 25], "poor": [50, 35], "modest": [60, 45], "comfortable": [70, 55], "wealthy": [80, 60], "aristocratic": [90, 70]}, "sick": {"squalid": 0.06}},
     "toll": 1,
     "coach": {"per_mile": 3, "mph": 4, "hours_a_day": 10, "max_miles": 160},

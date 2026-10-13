@@ -504,9 +504,12 @@ def rejoin(game) -> list[str]:
         if not c.companion:
             continue
         if c.companion.get("wait_at") == [game.player.x, game.player.y]:
+            if game.world.time < int(c.companion.get("coming", 0)):
+                continue  # sent for, and still on the road (game/passage.send_for)
             game.waiting.remove(c)
             c.companion["order"] = "follow"
             c.companion.pop("wait_at", None)
+            c.companion.pop("coming", None)
             game.party.append(c)
             from realmwalker.game import pack
 

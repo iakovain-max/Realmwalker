@@ -24,8 +24,9 @@ class ServicesScreen(Screen):
 
     def entries(self) -> list:
         if self.sub is not None:
-            return [(arg, f"{label}" + (f" <loot>{money_text(price)}</>" if price else ""), True, "")
-                    for arg, label, price in self.sub.options]
+            purse = services.money(self.game)
+            return [(arg, f"{label}" + (f" <loot>{money_text(price)}</>" if price else ""), purse >= price,
+                     f"you need {money_text(price)}") for arg, label, price in self.sub.options]
         return [(s.id, s.label + (f" <loot>{money_text(s.price)}</>" if s.price else ""), s.enabled, s.why)
                 for s in services.services_for(self.game, self.npc)]
 
@@ -42,8 +43,10 @@ class ServicesScreen(Screen):
             if svc.options:
                 self.sub = svc
                 return
+            where = (self.game.player.x, self.game.player.y)
             msgs = services.perform(self.game, self.npc, key)
         else:
+            where = (self.game.player.x, self.game.player.y)
             msgs = services.perform(self.game, self.npc, self.sub.id, key)
             self.sub = None
         for m in msgs:
@@ -52,7 +55,7 @@ class ServicesScreen(Screen):
                 self.conv.note(m)
         self.messages = (self.messages + msgs)[-5:]
         self.app.save_game()
-        if self.game.busy:
+        if self.game.busy or where != (self.game.player.x, self.game.player.y):  # (a fight; or the coach left)
             while self.app.top is not None and type(self.app.top).__name__ != "GameScreen":
                 self.app.pop()
 

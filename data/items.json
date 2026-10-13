@@ -194,7 +194,8 @@
     "spirits": {"name": "flask of spirits", "category": "drink", "weight": 1, "value": 30, "material": "glass", "stack": true, "drink": {"water": 0.1, "alcohol": 6}, "description": "Clear, fierce stuff. Warms the belly, dulls the pain, and cleans a wound better than water."},
     "poppy_milk": {"name": "vial of poppy milk", "category": "gear", "weight": 0.1, "value": 150, "material": "glass", "stack": true, "use": {"painkiller": true}, "description": "Bitter white syrup. It takes pain away for a night, and some people never stop wanting it."},
     "healing_herbs": {"name": "bundle of healing herbs", "category": "gear", "weight": 0.2, "value": 5, "material": "herb", "stack": true, "use": {"poultice": true}, "description": "Yarrow, comfrey and woundwort, for poultices against festering."},
-    "wine": {"name": "bottle of wine", "category": "drink", "weight": 2, "value": 100, "material": "glass", "stack": true, "drink": {"water": 0.3, "alcohol": 4}},
+    "wine": {"name": "bottle of wine", "category": "drink", "weight": 2, "value": 20, "material": "glass", "stack": true, "drink": {"water": 0.3, "alcohol": 4}},
+    "fine_wine": {"name": "bottle of fine wine", "category": "drink", "weight": 2, "value": 1000, "material": "glass", "stack": true, "drink": {"water": 0.3, "alcohol": 4}, "impress": {"people": "high", "bonus": 1}, "description": "A vintage from a good year, sealed with wax. Lords and their stewards notice who carries such a thing."},
 
     "wheat": {"name": "sack of wheat", "category": "trade", "weight": 50, "value": 100, "material": "food", "stack": true},
     "salt": {"name": "block of salt", "category": "trade", "weight": 10, "value": 50, "material": "stone", "stack": true},

@@ -348,7 +348,7 @@ ITEMS = {
     "oats": "item/food/sultana.png", "cooked_meat": "item/food/meat_ration_new.png", "raw_fish": "item/food/chunk.png",
     "cooked_fish": "item/food/sausage.png", "porridge": "item/food/honeycomb_old.png", "wild_food": "item/food/pear.png",
     "raw_meat": "item/food/chunk.png",
-    "ale": "item/potion/brown_old.png", "spirits": "item/potion/golden.png", "wine": "item/potion/purple_red.png",
+    "ale": "item/potion/brown_old.png", "spirits": "item/potion/golden.png", "wine": "item/potion/purple_red.png", "fine_wine": "item/potion/ruby_new.png",
     # jewellery
     "plain_ring": "item/ring/iron.png", "amulet": "item/amulet/stone_1_green.png",
     # stand-ins for kinds of thing, when an item has no picture of its own
