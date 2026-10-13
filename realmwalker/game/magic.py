@@ -140,7 +140,11 @@ def road_problem(game, caster, spell_id: str, target=None) -> str | None:
         return why
     if game.battle is not None:
         return "you are in a fight"
-    ok, why = (True, "") if spell.get("ritual") else spellrules.can_cast(caster, t, spell_id)  # a ritual needs no slot
+    if spell.get("ritual"):  # a ritual needs no slot, but armour without training still stops it
+        why = spellrules.armour_problem(caster, t)
+        ok = not why
+    else:
+        ok, why = spellrules.can_cast(caster, t, spell_id)
     if not ok:
         return why
     target = target or caster

@@ -28,7 +28,7 @@ from realmwalker.rules.engine import traits as tr
 EVENTS = (
     "battle_start", "round_start", "turn_start", "turn_end", "round_end", "initiative",
     "d20_before", "d20_after",
-    "attack_declared", "attack_hit", "attack_damage", "attack_missed", "critical",
+    "attack_declared", "attack_hit", "attack_damage", "attack_missed", "attack_done", "critical",
     "damage_incoming", "damage_taken", "save_damage", "hp_zero", "killed",
     "spell_declared", "spell_cast", "heal_spell", "saving_throw", "ability_used",
     "condition_applied", "condition_ended",

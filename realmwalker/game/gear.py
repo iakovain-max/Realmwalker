@@ -49,6 +49,26 @@ def first(c: Character) -> str:
     return c.name.split()[0]
 
 
+# ---------------------------------------------------------------------------- armour on and off
+def don_minutes(game, item, on: bool) -> int:
+    """Minutes to put this armour on (or take it off), PHB 2024: light 1/1, medium 5/1, heavy 10/5."""
+    d = game.tables.items.get(item.def_id)
+    if d["category"] != "armor":
+        return 0
+    pair = upkeep(game).get("don", {}).get(d.get("armor_type", "light"), [0, 0])
+    return int(pair[0 if on else 1])
+
+
+def dressed(game, item, on: bool) -> None:
+    """Armour was put on or taken off outside a fight: the minutes pass (buckles, laces, a squire's help)."""
+    minutes = don_minutes(game, item, on)
+    if minutes and game.battle is None:
+        name = game.tables.items.name(item, False)
+        game.say(f"{'Buckling on' if on else 'Getting out of'} the {name} takes "
+                 f"{minutes} minute{'s' if minutes != 1 else ''}.", "system")
+        game.pass_time(minutes, "rest")
+
+
 # ---------------------------------------------------------------------------- wear
 def battered(game, item) -> bool:
     return item is not None and item.condition < int(upkeep(game).get("battered", 30))

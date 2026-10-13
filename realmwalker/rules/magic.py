@@ -125,6 +125,11 @@ def traits(char) -> frozenset[str]:
     return frozenset(p["trait"] for _it, p in active(char) if p.get("kind") == "trait" and p.get("trait"))
 
 
+def item_flag(item, name: str) -> bool:
+    """A flag on the item itself, working whoever holds it (a material: adamantine, mithral, silver)."""
+    return item is not None and any(p.get("kind") == "flag" and p.get("flag") == name for p in props(item))
+
+
 def flag(char, name: str) -> bool:
     return any(p.get("kind") == "flag" and p.get("flag") == name for _it, p in active(char))
 

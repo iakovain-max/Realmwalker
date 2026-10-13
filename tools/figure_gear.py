@@ -633,6 +633,10 @@ WEAPONS = {
     "scythe": ["mmmm", "   mw", "    w", "    w", "    w", "    h", "    w", "    w"],
     "trident": ["m m m", "mmmmm", "  m", "  w", "  w", "  w", "  w", "  w", "  w", "  h", "  w"],
     "whip": ["l", " l", "  l", "  l", " l", "l", "h", "l"],
+    "lance": [" M", " m", " w", " w", " w", " w", " w", " w", " w", " w", " w", " w", " w", "www", "ggg", " h", " w"],
+    "blowgun": ["w", "w", "w", "w", "w", "w", "w", "w", "w", "h", "w"],
+    "musket": ["b", "b", "b", "b", "b", "b", "b", "b", "bg", "w", "h", "ww", "ww"],
+    "pistol": ["b", "b", "bg", "wh", "w"],
     "holy_symbol": [" g ", "ggg", " g ", " h"],
 }
 COLOURS = {

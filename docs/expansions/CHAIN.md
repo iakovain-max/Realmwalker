@@ -102,6 +102,11 @@ At each safe point (before the big checks, before merging into main, after each 
   version, icon, notes, tag, GitHub release), and set STATUS.md's "Next session starts at" to the next expansion's
   step 1 (its branch and design note). The day does not stop for a release: the next turn begins the next expansion.
   Only when the whole programme is finished: switch both builders off and delete `build/run_window.json`.
+- **A short turn goes on** (Anton, 2026-10-13): if less than an hour has passed since the lock's `taken` time, it is
+  still before 20:00, `build/STOP` is not there and STATUS.md has no "Blocked:" line, do not stop. Rewrite the lock's
+  `part` (and `heartbeat`; keep `taken`) and go back to C.3 with the new "Next session starts at": the next part, or
+  the next expansion's first step. Keep doing so until a part ends an hour or more after `taken`; then end as below.
+  (A design note, a small part or a quick fix is never a whole turn.)
 - Delete `build/chain.lock`.
 - Stop: the next firing of a builder (within twenty minutes) takes the next part.
 - Finish with a short summary in plain gameplay terms: what is new, what was checked, what comes next.

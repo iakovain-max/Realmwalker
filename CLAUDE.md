@@ -47,8 +47,9 @@ Then commit, update PROGRESS.md, and stop for user feedback (unless the user sai
 - **Edit with the Edit/Write tools.** Scripts only for mechanical changes across many files, written to a file with
   Write first (shell heredocs here mangle quotes and backslashes).
 - **Read narrowly**: `grep -n` and small line ranges, guided by the code map below; do not page through big files.
-- **One part per session.** When a part is merged, update `docs/expansions/STATUS.md` and stop: a long conversation
-  makes every later step slower and dearer, and a summarised one loses detail.
+- **One part per session, at least an hour of work.** When a part is merged, update `docs/expansions/STATUS.md` and
+  stop: a long conversation makes every later step slower and dearer, and a summarised one loses detail. But a turn
+  that finishes within an hour of starting goes straight on with the next part (docs/expansions/CHAIN.md C.5).
 - **The fresh review stays** before each merge, as a short checklist pass against `docs/EXPANSIONS.md` §5.2.
 
 Code map of the two biggest files (by section; search for the `# ---` headers):
@@ -355,6 +356,15 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   what they do (`tactics._does`), never by name. `tests/test_tactics_coverage.py` (slow) fights every creature in
   `tools/arena.py`'s scenarios: every option chosen, nothing refused, no broken state, an enemy turn under 150 ms
   at the 95th percentile and never 400 ms (thread time). A new creature or spell must keep it green.
+- Arms and masteries (Expansion 2 part A): weapons carry their 2024 `mastery` (data/items.json); a character uses it
+  with the `weapon_mastery` feature and the weapon kind in `Character.masteries` (`progression.mastery_count`,
+  `offer_masteries`, `relearn_masteries` after a long rest; the sheet's m), a creature when its stat block attack
+  names one (creatures.json attack_extras "mastery", trait `weapon_mastery`). The tricks are `rules/engine/handlers/
+  mastery.py` on the `attack_done` event (Nick in `Battle.offhand_option`); free choices go through
+  `tactics.mastery_choice`. Armour training (`query.untrained_armour`, `spells.armour_problem`), Heavy/Loading,
+  ammunition found after a fight (`Battle.shot`), improvised bow blows, magic ammunition as its own attack option;
+  materials are item flags (`magic.item_flag`: adamantine_armor/_weapon, mithral, silvered). Items marked `rare`
+  (firearms) stay out of shops, kits and plain loot.
 - Sound (2026-10-10, Anton's request: "basic and satisfying sounds... a simple way for me to add music"): `app.audio`
   (realmwalker/audio). Logic never imports it: game code asks for a sound with `game.cue("chest")` (a name from
   data/sounds.json; drained each frame by audio/watch.py, never saved), and the watcher also notices a level gained

@@ -25,6 +25,7 @@ from realmwalker.rules import grid
 from realmwalker.rules import spells as spellrules
 from realmwalker.rules.combat import FOE, PARTY, AttackOption, Battle, Fighter, _avg
 from realmwalker.rules.engine import actions, estimates, query
+from realmwalker.rules.engine.handlers import mastery
 
 CAUTION = {"beast": 2.0, "mindless": 0.5, "fanatic": 1.0, "warrior": 3.0, "bandit": 6.0, "soldier": 6.0,
            "coward": 14.0, "party": 10.0}
@@ -351,7 +352,7 @@ def _value(b: Battle, f: Fighter, opt: AttackOption, t: Fighter, sq, *, cover: i
         p = estimates._p(t.ac() + grid.COVER_AC[cover] - opt.bonus, r.mode)
         dmg += sum(_avg(e["damage"]) * estimates.damage_factor(t, e["type"]) for e in opt.extra.get("extra", ())
                    if e.get("if") != "advantage" or r.mode == "advantage")
-        ev = p * dmg + p * _hit_effects_worth(b, f, opt, t)
+        ev = p * dmg + p * _hit_effects_worth(b, f, opt, t) + (1 - p) * _miss_worth(f, opt)
     value = ev * _opening(b, f, opt, t)
     if t.hp <= dmg:
         value *= 1.6  # it could finish them
@@ -368,7 +369,7 @@ def _hit_effects_worth(b: Battle, f: Fighter, opt: AttackOption, t: Fighter) -> 
     """What a hit's effects are worth on top of its damage (a knock-down, a grab, a paralysis), if they would take."""
     from realmwalker.rules.engine import statblocks
 
-    w = 0.0
+    w = _mastery_worth(b, f, opt, t)
     for e in opt.extra.get("on_hit", ()):
         cid = e.get("condition")
         if e.get("op") != "condition" or cid in t.conditions or query.condition_immune(t, cid):
@@ -380,6 +381,75 @@ def _hit_effects_worth(b: Battle, f: Fighter, opt: AttackOption, t: Fighter) -> 
         chance = estimates.fail_chance(b, t, e["save_to_avoid"], int(e["dc"])) if e.get("save_to_avoid") else 1.0
         w += chance * CONTROL.get(cid, 0.2) * estimates.threat(t)
     return w
+
+
+# ---------------------------------------------------------------------------- weapon masteries used on purpose
+def _mastery_worth(b: Battle, f: Fighter, opt: AttackOption, t: Fighter) -> float:
+    """What the weapon's trick adds to a hit (rules/engine/handlers/mastery.py): topple where friends will strike the
+    prone, sap the biggest hitter, slow the one to be kept away, vex to chain hits, cleave into a crowd, push into a
+    hazard or out of reach."""
+    kind = mastery.of(f, opt)
+    if kind is None:
+        return 0.0
+    threat = estimates.threat(t)
+    if kind == "topple":
+        if "prone" in t.conditions or not t.standing or query.condition_immune(t, "prone"):
+            return 0.0
+        dc = 8 + mastery.ability_mod(f, opt) + query.proficiency(f)
+        melee_friends = sum(1 for a in b.allies_of(f) if a.standing and b.gap(a, t) <= 1)
+        return estimates.fail_chance(b, t, "con", dc) * CONTROL["prone"] * threat * (1 + 0.5 * melee_friends)
+    if kind == "sap":
+        return 0.25 * threat  # the bigger its blows, the more an off blow is worth
+    if kind == "slow":
+        return (0.2 if f.prefers_range or preferred_range(f) > 5 else 0.05) * threat
+    if kind == "vex":
+        return ADVANTAGE_GAIN * 0.5 * _avg(opt.damage)  # the next blow at it comes with advantage
+    if kind == "cleave" and opt.is_melee:
+        near = [x for x in b.enemies_of(f) if x is not t and x.active and b.gap(x, t) <= 1 and b.in_reach(f, opt, x)[0]]
+        if near:
+            return 0.5 * max(0.0, _avg(opt.damage) - max(0, mastery.ability_mod(f, opt)))
+    if kind == "push" and _push_lands_in_harm(b, f, t):
+        return 0.6 * threat
+    return 0.0
+
+
+def _miss_worth(f: Fighter, opt: AttackOption) -> float:
+    """Graze: a miss still deals the attack's ability bonus."""
+    return float(max(0, mastery.ability_mod(f, opt))) if mastery.of(f, opt) == "graze" else 0.0
+
+
+def _push_lands_in_harm(b: Battle, f: Fighter, t: Fighter) -> bool:
+    """Ten feet straight back from `f` would put `t` in a burning, freezing or otherwise harmful zone."""
+    sx, sy = grid.centre(*f.space)
+    tx, ty = grid.centre(*t.space)
+    dx = 0 if abs(tx - sx) < 0.5 else (1 if tx > sx else -1)
+    dy = 0 if abs(ty - sy) < 0.5 else (1 if ty > sy else -1)
+    if dx == 0 and dy == 0:
+        return False
+    cells = {(t.x + dx * k, t.y + dy * k) for k in (1, 2)}
+    return any((z.kind == "web" or z.damage) and cells & set(z.cells) for z in b.zones)
+
+
+def mastery_choice(b: Battle, f: Fighter, kind: str, t: Fighter) -> bool:
+    """The battle's judgement on a free mastery choice (the enemy, the Auto, and the default for the player)."""
+    if kind == "topple":  # prone helps those beside it and hinders those shooting at it
+        if "prone" in t.conditions:
+            return False
+        melee = sum(1 for a in b.allies_of(f) if a.standing and b.gap(a, t) <= 1)
+        shooters = sum(1 for a in b.allies_of(f) if a is not f and a.active and a.prefers_range)
+        return melee >= shooters
+    if kind == "push":
+        if _push_lands_in_harm(b, f, t):
+            return True
+        if f.attacks_left > 0 and not f.prefers_range:
+            return False  # out of reach of the next blow
+        return not t.prefers_range  # it must spend its feet to come back; an archer would only thank you
+    return True
+
+
+def cleave_target(b: Battle, f: Fighter, near: list[Fighter]) -> Fighter | None:
+    """Whom to carry the blow into: the one it could finish, else the one most worth hurting."""
+    return max(near, key=lambda x: (x.hp <= 6, target_weight(b, f, x), -x.hp))
 
 
 def _opening(b: Battle, f: Fighter, opt: AttackOption, t: Fighter) -> float:
@@ -828,8 +898,9 @@ def _use_power(b: Battle, f: Fighter) -> bool:
 
 
 def _bonus_strike(b: Battle, f: Fighter) -> None:
-    """A blow with the bonus action (the off-hand, the spiritual weapon, War Priest), at the weakest in reach."""
-    if f.bonus <= 0:
+    """A blow with the bonus action (the off-hand, the spiritual weapon, War Priest), at the weakest in reach; with a
+    Nick weapon the off-hand blow is part of the Attack and costs no bonus action."""
+    if f.bonus <= 0 and not mastery.nick_ready(b, f):
         return
     for opt, a in _abilities(b, f, "attack"):
         targets = opt.targets

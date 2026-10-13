@@ -71,6 +71,7 @@ def _level_up(char: Character, tables, rng: RNG) -> list[str]:
                 notes.append(f"New: {feat['name']}.")
     if char.cls == "wizard" and char.spells:
         add_pending(char, {"kind": "spells", "count": 2, "level": char.level})
+    offer_masteries(char, tables)  # a fourth kind of weapon at level 4, a fifth at 10 (fighters)
     cantrips = cls.get("spellcasting", {}).get("cantrips")
     if cantrips and char.spells:
         missing = cantrips[char.level - 1] - len(char.spells.get("cantrips", []))
@@ -81,6 +82,75 @@ def _level_up(char: Character, tables, rng: RNG) -> list[str]:
 
 
 # ---------------------------------------------------------------------------- level-up choices
+# ---------------------------------------------------------------------------- weapon masteries (PHB 2024)
+def mastery_count(char: Character, tables) -> int:
+    """How many kinds of weapon the class lets them master at this level (0 without Weapon Mastery)."""
+    table = tables.classes[char.cls].get("mastery") or []
+    return max([0] + [n for lvl, n in table if char.level >= lvl])
+
+
+def mastery_options(char: Character, tables) -> list[str]:
+    """The weapons they could master: those they are proficient with that have a mastery, the ones in the pack first,
+    then by the weapon's worth to their class (finesse and ranged for a rogue)."""
+    from realmwalker.rules.character import Sheet
+
+    items = tables.items
+    s = Sheet(char, tables)
+    carried = {it.def_id for it in char.inventory}
+    out = []
+    for wid, d in items.defs.items():
+        if d.get("category") != "weapon" or not d.get("mastery") or d.get("rare") or wid in char.masteries:
+            continue
+        from realmwalker.rules.items import Item
+
+        if not s.proficient_with_weapon(Item(0, wid)):
+            continue
+        out.append(wid)
+    best = max(("str", "dex"), key=lambda a: char.abilities.get(a, 10))
+
+    def rank(wid):
+        d = items.get(wid)
+        props = d.get("properties", [])
+        suits = ("finesse" in props or "ranged" in props) if best == "dex" else ("ranged" not in props)
+        return (wid not in carried, not suits, -_avg_damage(d.get("damage", "1")), d["name"])
+
+    return sorted(out, key=rank)
+
+
+def _avg_damage(expr: str) -> float:
+    from realmwalker.core import dice
+
+    try:
+        n, sides, flat = dice.parse(expr)
+    except dice.DiceError:
+        return 0.0
+    return n * (sides + 1) / 2 + flat
+
+
+def masteries_due(char: Character, tables) -> int:
+    """How many more masteries they may choose now (already waiting in a choice counts)."""
+    waiting = sum(c.get("count", 1) for c in char.pending if c["kind"] == "mastery")
+    return max(0, mastery_count(char, tables) - len(char.masteries) - waiting)
+
+
+def offer_masteries(char: Character, tables) -> None:
+    """Add a waiting choice for the masteries they have room for (creation, a level, a long rest's change)."""
+    n = masteries_due(char, tables)
+    if n > 0 and mastery_options(char, tables):
+        add_pending(char, {"kind": "mastery", "count": n, "level": char.level})
+
+
+def relearn_masteries(char: Character, tables) -> bool:
+    """After a long rest (2024): put the masteries aside to choose them again. False if they cannot now."""
+    if not mastery_count(char, tables) or char.uses.get("mastery_change", 0) <= 0:
+        return False
+    char.uses["mastery_change"] = 0
+    char.masteries = []
+    char.pending = [c for c in char.pending if c["kind"] != "mastery"]
+    offer_masteries(char, tables)
+    return True
+
+
 def add_pending(char: Character, choice: dict) -> None:
     choice = dict(choice, new=True)
     char.pending.append(choice)
@@ -124,6 +194,11 @@ def options(char: Character, tables, choice: dict) -> list[tuple[str, str, str]]
         spells.sort(key=lambda s: (-tables.spells[s]["level"], tables.spells[s]["name"]))
         return [(s, f"{tables.spells[s]['name']} (level {tables.spells[s]['level']})",
                  tables.spells[s].get("text", tables.spells[s].get("description", ""))) for s in spells]
+    if kind == "mastery":
+        items = tables.items
+        return [(w, f"{items.get(w)['name'].title()}: {items.get(w)['mastery'].title()}",
+                 tables.traits["traits"].get(f"mastery_{items.get(w)['mastery']}", {}).get("text", ""))
+                for w in mastery_options(char, tables)]
     if kind == "cantrips":
         known = char.spells.get("cantrips", [])
         return [(s, tables.spells[s]["name"], tables.spells[s].get("text", tables.spells[s].get("description", "")))
@@ -143,6 +218,9 @@ def choice_title(char: Character, tables, choice: dict) -> str:
     if kind == "cantrips":
         n = choice.get("count", 1)
         return f"Learn {n} new cantrip{'s' if n > 1 else ''}"
+    if kind == "mastery":
+        n = choice.get("count", 1)
+        return f"Master {n} more kind{'s' if n > 1 else ''} of weapon (its trick in battle)"
     return "Choose"
 
 
@@ -171,6 +249,13 @@ def resolve(char: Character, tables, choice: dict, option_id: str) -> list[str]:
                 char.max_hp += gain
                 char.hp += gain
         char.pending.remove(choice)
+    elif kind == "mastery":
+        char.masteries.append(option_id)
+        d = tables.items.get(option_id)
+        notes.append(f"{char.name.split()[0]} masters the {d['name']}: {d['mastery'].title()}.")
+        choice["count"] = choice.get("count", 1) - 1
+        if choice["count"] <= 0 or not options(char, tables, choice):
+            char.pending.remove(choice)
     elif kind in ("spells", "cantrips"):
         key = "spellbook" if kind == "spells" else "cantrips"
         char.spells.setdefault(key, []).append(option_id)
@@ -257,4 +342,7 @@ def long_rest(char: Character, tables, rng: RNG) -> list[str]:
     char.uses["arcane_recovery"] = 1
     for key in ("ward_made", "arcane_ward"):  # an abjurer's ward is made anew each day
         char.uses.pop(key, None)
+    if mastery_count(char, tables):
+        char.uses["mastery_change"] = 1  # the weapons mastered may be changed (the character sheet)
+        offer_masteries(char, tables)
     return [f"{char.name.split()[0]} wakes rested."]

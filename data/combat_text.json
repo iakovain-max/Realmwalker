@@ -99,5 +99,14 @@
       "Lying still saved you, or luck did. When the world comes back the animals have gone, and so has most of your food.",
       "You open your eyes on a different sky. The ground around you is torn up, and the tracks lead away. They did not come back."
     ]
+  },
+  "mastery": {
+    "cleave": ["{A}'s {weapon} goes on through and into {T}.", "The swing does not stop: {A}'s {weapon} carries on into {T}.", "{A} wrenches the {weapon} free and brings it round on {T}.", "One blow, two foes: the {weapon} bites into {T} as well.", "{A} follows the stroke through to {T}."],
+    "graze": ["The {weapon} misses clean, but its edge still opens {T}'s skin.", "{A}'s {weapon} glances off, and leaves a red line on {T} all the same.", "Even the miss costs {T} blood: the {weapon} scrapes along {their} side.", "{T} turns the {weapon}, not quite far enough.", "The blow is turned, but the weight of the {weapon} still tells on {T}."],
+    "push": ["The {weapon} drives {T} back across the ground.", "{A} heaves, and {T} is sent stumbling back.", "{T} is hammered backwards by the {weapon}.", "{A} leans into the {weapon}, and {T} gives ground.", "The blow shoves {T} two strides back."],
+    "sap": ["{T} reels from the {weapon}; {their} next blow will be a poor one.", "The {weapon} rings off {T}'s skull; {T} shakes {their} head, dazed.", "{T} staggers, arms gone heavy from the {weapon}'s blow.", "The blow takes the strength out of {T}'s guard.", "{T} is left blinking and slow to strike back."],
+    "slow": ["The {weapon} catches {T} low, and {T} limps.", "{T} drags a leg after the {weapon}'s blow.", "The {weapon} bites at {T}'s legs; {T} will not run far.", "{T} stumbles, hobbled by the wound.", "A blow to the knee: {T} slows."],
+    "topple": ["The {weapon} sweeps {T} off {their} feet.", "{T} goes down hard under the {weapon}.", "{A} hooks {T}'s legs away with the {weapon}.", "{T} crashes to the ground.", "The blow knocks {T} flat."],
+    "vex": ["The {weapon} draws blood and shows {A} the gap in {T}'s guard.", "{A} has the measure of {T} now.", "{T} flinches from the {weapon}, and {A} sees the opening.", "The cut leaves {T} open; {A} will not miss the chance.", "{A} feints, cuts, and learns where {T} is slow."]
   }
 }

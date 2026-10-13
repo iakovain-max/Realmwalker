@@ -27,7 +27,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Varied, bigger, living towns** | ✅ Done (2026-10-11), branch `world-variety` |
 | **Clearing the decks for the expansions** | ✅ Done (2026-10-12), branch `prep/clear-the-decks` |
 | **Expansion 1, *Dice & Destiny*** (version 1.1.0) | ✅ Released (2026-10-13), branch `dlc/01-dice-destiny` |
-| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | ⏳ Expansion 2, *Blades & Backgrounds*, next |
+| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | ⏳ Expansion 2, *Blades & Backgrounds*: part A (arms and armour) in `main` (2026-10-13), part B next |
 
 ---
 
@@ -38,6 +38,61 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-13: Blades & Backgrounds part A — arms and armour — branch `dlc/02-blades-backgrounds`
+
+The first part of Expansion 2, *Blades & Backgrounds*. Its icon and version 1.2.0 come with the last part (D). No
+new world is needed; a character made before this part simply has no weapon masteries until the next long rest
+(then the character sheet offers them, m).
+
+**What is different when you play**
+- **Every weapon has its own trick (weapon mastery, 2024).** Fighters master three kinds of weapon (four from level
+  4, five from level 10), rogues two. The kit's weapons are chosen for you; on the character sheet (c, then m) you
+  can choose again before your first long rest and once after every long rest after that. The battle's action list
+  names the trick next to the weapon ("maul (Topple)"), and the log and the battle board show it as it lands:
+  - *Topple* (maul, quarterstaff, battleaxe, lance, trident): a Constitution save or the foe falls prone, and the
+    friends beside it strike it with advantage.
+  - *Push* (warhammer, greatclub, pike, heavy crossbow): the foe is driven ten feet straight back, into the fire if
+    there is fire behind it.
+  - *Sap* (mace, spear, longsword, flail, morningstar, war pick): the foe's next attack is at a disadvantage.
+  - *Slow* (club, javelin, sling, light crossbow, longbow, whip, musket): ten feet off its speed (never more).
+  - *Vex* (rapier, shortsword, handaxe, shortbow, dart, hand crossbow, blowgun, pistol): your next attack on it has
+    advantage.
+  - *Graze* (greatsword, glaive): even a miss cuts, for your Strength bonus.
+  - *Cleave* (greataxe, halberd): a hit carries on into a second foe beside the first, once a turn.
+  - *Nick* (dagger, light hammer, sickle, scimitar): the second weapon's blow is part of the Attack and keeps your
+    bonus action free.
+- **Your companions on Auto and your enemies use the tricks on purpose**: topple where friends will strike the
+  fallen, sap the hardest hitter, slow the one to be kept away, push into a burning patch, cleave into a crowd.
+  Ordinary monsters have no masteries (as in the 2025 Monster Manual); the watch's guards and deserters, trained
+  soldiers, do (the spear's Sap).
+- **The weapon and armour tables are the 2024 book's**: new weapons (lance, trident, whip, blowgun with needles),
+  and the musket and pistol as rare gnomish work that no ordinary shop sells; the warhammer weighs 5 lb and the war
+  pick can be swung two-handed. A heavy weapon wants Strength 15 (or Dexterity 13 for a heavy bow or crossbow);
+  a crossbow fires once a turn even for a fighter who strikes twice; after a won fight you find half the arrows and
+  bolts you loosed; a bow swung at close quarters is a club (1d4).
+- **Armour needs training**: worn without it, every Strength and Dexterity roll is at a disadvantage and no spell
+  can be cast (rituals neither); a shield without training gives nothing. Putting armour on outside a fight takes a
+  minute (light), five (medium) or ten (heavy).
+- **Treasure has the book's armaments**: +1/+2/+3 weapons, armour and shields of any kind, +1/+2/+3 arrows and bolts
+  (a choice of their own on the action bar; the plain shot never wastes them), adamantine armour (no critical hit
+  gets through), adamantine weapons (break things), mithral armour (no Strength needed, no clatter when sneaking),
+  silvered weapons.
+- **Pictures and sounds**: the new weapons in the pack and in hand; two new state icons (Sapped, Vexing) with their
+  cards; a fall thuds, a push shoves.
+
+**How to see it**: start a fighter or a rogue (New Character), open the character sheet (c) to see the weapons
+mastered (m to choose again), and fight: the attack menu names each trick.
+
+**What could not be checked**: the look of the new weapons and of the trick words on the battle board was checked on
+the tile sheet and in the window smoke test, not in a long game; the balance of masteries for the enemy is measured
+only by the arena and balance runs.
+
+**Anything assumed** (written in STATUS.md too): the lance is always two-handed until mounted combat (Expansion 9);
+magic ammunition is spent once loosed, hit or miss; a bow is the only thing swung as an improvised weapon (throwing a
+blade without the Thrown property is left out: the Auto would throw away its only weapon); a silvered weapon's extra
+die waits for shapechangers (none in the world yet); push and topple are the battle's judgement for the Auto and the
+enemy, and for you unless the Reactions setting is "all".
 
 ### Session, 2026-10-13: Dice & Destiny part E — cards, icons and pictures; **version 1.1.0 released** — branch `dlc/01-dice-destiny`
 

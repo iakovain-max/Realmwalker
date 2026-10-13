@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from realmwalker.game import gear
 from realmwalker.game.magic import lasting_text
 from realmwalker.game.state import GameState
-from realmwalker.rules import describe
+from realmwalker.rules import describe, progression
 from realmwalker.rules import spells as spellrules
 from realmwalker.rules.character import ABILITIES, Sheet, signed
 from realmwalker.rules.inventory import best_slot_items, equip, pack_mates, unequip, worn_by
@@ -61,20 +62,30 @@ def item_details(game: GameState, item: Item) -> str:
         rng = f" · range {d['range'][0]}/{d['range'][1]} ft" if d.get("range") else ""
         lines.append(f"Damage {d['damage']}{extra} {d['damage_type']}{rng}")
         lines.append(f"<dim>{d.get('group', '').capitalize()} weapon · {props}</>")
+        if d.get("mastery"):
+            trick = game.tables.traits["traits"].get(f"mastery_{d['mastery']}", {})
+            known = item.def_id in getattr(sheet.c, "masteries", ())
+            lines.append(f"{'<good>' if known else '<dim>'}Mastery: {d['mastery'].title()}</> "
+                         f"<dim>{trick.get('text', '')}{'' if known else ' (not mastered)'}</>")
         if not sheet.proficient_with_weapon(item):
             lines.append("<warn>You are not trained with this weapon.</>")
     elif cat == "armor":
         dex = {"light": "+ Dex", "medium": "+ Dex (max 2)", "heavy": ""}[d["armor_type"]]
         lines.append(f"{d['armor_type'].capitalize()} armour · AC {d['ac']} {dex}")
         lines.append(f"<dim>Covers: {', '.join(d.get('covers', []))}</>")
-        if d.get("str_req"):
+        from realmwalker.rules import magic as magicrules
+
+        light = magicrules.item_flag(item, "mithral")
+        if d.get("str_req") and not light:
             lines.append(f"<dim>Needs Strength {d['str_req']} to move freely.</>")
-        if d.get("stealth_disadvantage"):
+        if d.get("stealth_disadvantage") and not light:
             lines.append("<dim>Noisy: disadvantage on Stealth.</>")
         if not sheet.proficient_with_armor(item):
             lines.append("<warn>You are not trained to fight in this.</>")
     elif cat == "shield":
         lines.append(f"+{d.get('ac_bonus', 2)} AC · held in the off hand")
+        if not sheet.proficient_with_armor(item):
+            lines.append("<warn>Untrained with shields: it gives you no protection.</>")
     elif cat == "helmet":
         lines.append("Protects the head from wounds.")
     elif cat == "clothing":
@@ -256,6 +267,12 @@ class CharacterScreen(Screen):
         for f in s.features():
             if f["id"] in ("subclass", "asi") or (f["id"] == "fighting_style" and c.fighting_style):
                 continue
+            if f["id"] == "weapon_mastery" and c.masteries:
+                names = ", ".join(f"{t.items.get(w)['name']} ({t.items.get(w)['mastery'].title()})"
+                                  for w in c.masteries if w in t.items)
+                change = " <dim>(m: choose again)</>" if c.uses.get("mastery_change", 0) > 0 else ""
+                notes.append(f"<loot>{f['name']}</>: {names}.{change}")
+                continue
             notes.append(f"<loot>{f['name']}</>: {f['text']}")
         if c.fighting_style:
             st = cls["fighting_styles"][c.fighting_style]
@@ -288,12 +305,20 @@ class CharacterScreen(Screen):
         bx = canvas.button(bx + 3, h - 3, "Equipment", lambda: self._switch(EquipmentScreen), hotkey="e")
         if c.pending:
             bx = canvas.button(bx + 3, h - 3, f"Level-up choices ({len(c.pending)})", self.level_up, hotkey="l")
+        if c.masteries and c.uses.get("mastery_change", 0) > 0 and not narrow:  # (narrow: the m key, as the notes say)
+            bx = canvas.button(bx + 3, h - 3, "Masteries", self.change_masteries, hotkey="m")
         if len(g.party) > 1:
             bx = canvas.button(bx + 3, h - 3, "Next member", self.next_member, hotkey="Tab")
         canvas.button(bx + 3, h - 3, "Back", self.close, hotkey="Esc")
 
     def toggle_skills(self) -> None:
         self.show_skills = not self.show_skills
+
+    def change_masteries(self) -> None:
+        """Choose the weapons mastered again (once after each long rest, and before the first)."""
+        if progression.relearn_masteries(self.char, self.game.tables):
+            self.game.dirty = True
+            self.level_up()
 
     def level_up(self) -> None:
         from realmwalker.ui.screens.levelup import LevelUpScreen
@@ -316,6 +341,8 @@ class CharacterScreen(Screen):
             self._switch(EquipmentScreen)
         elif ev.key == "l" and self.char.pending:
             self.level_up()
+        elif ev.key == "m" and self.char.masteries and self.char.uses.get("mastery_change", 0) > 0:
+            self.change_masteries()
         elif ev.key == "tab" and len(self.game.party) > 1:
             self.next_member()
         elif ev.key == "s" and self.narrow(self.app.last_console_size[0]):
@@ -608,9 +635,12 @@ class InventoryScreen(Screen):
             else:
                 who = "You take" if wearer is self.game.leader else f"{wearer.name.split()[0]} takes"
                 self.game.say(f"{who} off the {t.name(it, False)}.", "info")
+                gear.dressed(self.game, it, False)
         else:
             ok, msg = equip(c, t, it.uid)
             self.game.say(msg, "info" if ok else "warn")
+            if ok:
+                gear.dressed(self.game, it, True)
         self.game.dirty = True
 
     def drop(self, all_of_it: bool = True) -> None:
@@ -1221,6 +1251,8 @@ class ItemPicker(Screen):
         it = self.options[i]
         ok, msg = equip(self.char, self.game.tables.items, it.uid, self.slot)
         self.game.say(msg, "info" if ok else "warn")
+        if ok:
+            gear.dressed(self.game, it, True)
         self.game.dirty = True
         self.close()
 

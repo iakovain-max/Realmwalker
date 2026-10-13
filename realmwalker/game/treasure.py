@@ -158,8 +158,9 @@ def make_listed(game, slug: str, variant: str, rarity: str, rng: RNG) -> Item | 
     if how.get("kind"):
         from realmwalker.game import magic_items
 
+        lo, hi = how.get("qty") or (1, 1)
         it = magic_items.make(game, rng.child(slug), kind=how["kind"], rarity=rarity, props=how.get("props"),
-                              sentient=False)
+                              sentient=False, bases=how.get("bases"), qty=rng.randint(int(lo), int(hi)))
         if it is not None:
             it.magic["book"] = f"{slug}{variant}"
             it.magic["source"] = "book"
@@ -224,7 +225,7 @@ def stash(game, cr: float, tier: int, rng: RNG, *, grave: bool = False, theme: s
             if scrolls:
                 items.append(new_item(game, rng.choice(sorted(scrolls)), rng))
         elif kind == "arms":
-            arms = sorted(d for d, s in items_table.defs.items() if s["category"] in ("weapon", "armor", "shield")
+            arms = sorted(d for d, s in items_table.defs.items() if s["category"] in ("weapon", "armor", "shield") and not s.get("rare")
                           and s.get("value", 0) >= 500)
             if arms:
                 quality = rng.weighted(["common", "fine", "masterwork"], [5, 3, 1 + tier // 2])

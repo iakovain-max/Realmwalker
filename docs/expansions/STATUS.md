@@ -1,9 +1,10 @@
 # Expansion programme – status
 
-Current: 02 Blades & Backgrounds · not begun · branch dlc/02-blades-backgrounds (to make) · step 1 of §5.1
+Current: 02 Blades & Backgrounds · part B (origins) · branch dlc/02-blades-backgrounds · step 4 of §5.1
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
-  budget, cards and status icons, adapted monster pictures, spell looks, the shelf)
+  budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 part A (arms and
+  armour: the 2024 weapons and armour, the eight weapon masteries, the Armaments basics)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`)
 Assumptions waiting for Anton:
@@ -20,11 +21,16 @@ Assumptions waiting for Anton:
 - Part E: the chance on an attack or spell card while choosing is against the nearest foe; a party member's
   melee blow that would kill a beaten humanoid asks to knock them out (the Auto and the enemy kill, as before);
   rituals cast outside a fight spend no slot; small beasts' heights on their squares were chosen by eye.
+- Expansion 2 part A: the lance is always two-handed until mounted combat (Expansion 9); magic ammunition is spent
+  once loosed, hit or miss; only a bow or crossbow is swung as an improvised weapon (throwing a blade without the
+  Thrown property is left out); the silvered weapon's extra die waits for shapechangers; push and topple are the
+  battle's judgement (asked only under the Reactions setting "all"); a Nick weapon in either hand frees the off-hand
+  blow; the watch's guards and deserters, as trained soldiers, use the spear's Sap; firearms are rare gnomish work
+  (the 2025 bandit captain's pistol stays in its stat block).
 Ideas for later:
 - (none yet)
-Next session starts at: Expansion 2, Blades & Backgrounds, step 1 of docs/EXPANSIONS.md §5.1: make the branch
-  `dlc/02-blades-backgrounds` from main, then step 2, the design note `docs/expansions/02-blades-backgrounds.md` with
-  its parts and task list, from §6.2 (and Appendices A, B, E for its codex entries: `tools/codex/coverage.py --dlc`)
+Next session starts at: Expansion 2 Part B, task B.1 in docs/expansions/02-blades-backgrounds.md (branch
+  `dlc/02-blades-backgrounds`; part A is merged into main)
 
 ## Done
 
@@ -38,6 +44,8 @@ Next session starts at: Expansion 2, Blades & Backgrounds, step 1 of docs/EXPANS
 | 2026-10-12 | Dice & Destiny part C: changing sides, senses, Study/Search/Ready, fliers and falling, antimagic, breakable things, climbing, swimming and leaping; one list of actions; Tactics 2.0; the arena and its proof | `dlc/01-dice-destiny` |
 | 2026-10-12 | Dice & Destiny part D: magic item framework (attunement, charges at dawn, identifying, artifacts, sentient items), DMG treasure and hoards, encounters by the XP budget, travel pace, attitudes | `dlc/01-dice-destiny` |
 | 2026-10-13 | Dice & Destiny part E: cards and tooltips, 47 status icons, the battle log's rolls, Creature details; the adaptation pass for borrowed monster tiles; spell looks; the last glossary rules; the codex settled; the shelf icon; **released as 1.1.0** and merged into `main` | `dlc/01-dice-destiny` |
+| 2026-10-13 | Blades & Backgrounds begun: the branch, the design note and its four parts (arms and armour, origins, feats, gear and mounts) | `dlc/02-blades-backgrounds` |
+| 2026-10-13 | Blades & Backgrounds part A: the 2024 weapons and armour, the eight weapon masteries (rules, picks, tactics, pictures), armour training, the Armaments basics; merged into `main` | `dlc/02-blades-backgrounds` |
 
 ## Notes for the next session
 

@@ -1174,6 +1174,44 @@ def sacks(seed: int) -> Image.Image:
 
 
 # ---------------------------------------------------------------------------- the expansions' icons (the shelf)
+def firearm(long: bool) -> Image.Image:
+    """Gnomish work (a musket or a pistol): a dark iron barrel bound to a walnut stock, a brass wheel-lock."""
+    im = blank()
+    d = ImageDraw.Draw(im)
+    wood, wood_dark = (122, 78, 44, 255), (84, 52, 30, 255)
+    iron, iron_hi = (70, 72, 80, 255), (128, 132, 142, 255)
+    brass = (196, 158, 70, 255)
+    if long:  # corner to corner: the butt low left, the muzzle high right
+        d.polygon([(3, 27), (8, 30), (13, 24), (10, 21)], fill=wood)
+        d.line([(9, 23), (20, 12)], fill=wood, width=3)
+        d.line([(10, 25), (21, 14)], fill=wood_dark, width=1)
+        d.line([(13, 19), (29, 3)], fill=iron, width=2)
+        d.line([(13, 18), (28, 3)], fill=iron_hi, width=1)
+        d.rectangle([12, 19, 15, 22], fill=brass)
+        d.line([(13, 23), (15, 26)], fill=iron, width=1)
+    else:  # a short barrel and a curved grip
+        d.polygon([(6, 24), (11, 27), (15, 19), (11, 17)], fill=wood)
+        d.line([(8, 25), (12, 18)], fill=wood_dark, width=1)
+        d.line([(12, 17), (27, 9)], fill=iron, width=3)
+        d.line([(12, 16), (27, 8)], fill=iron_hi, width=1)
+        d.rectangle([12, 15, 15, 18], fill=brass)
+        d.line([(15, 19), (17, 22)], fill=iron, width=1)
+    return shadow(outline(im))
+
+
+def blowgun() -> Image.Image:
+    """A hollow cane as long as an arm, its joints bound with cord."""
+    im = blank()
+    d = ImageDraw.Draw(im)
+    cane, cane_hi, cord = (176, 150, 92, 255), (214, 190, 128, 255), (96, 64, 40, 255)
+    d.line([(4, 28), (28, 4)], fill=cane, width=3)
+    d.line([(5, 26), (27, 4)], fill=cane_hi, width=1)
+    for k in (8, 15, 22):
+        d.line([(k - 1, 33 - k - 2), (k + 2, 33 - k + 1)], fill=cord, width=1)
+    d.ellipse([26, 2, 29, 5], fill=(40, 30, 22, 255))
+    return shadow(outline(im))
+
+
 def dlc_icons() -> dict[str, Image.Image]:
     """Each expansion's emblem: 32x32, one centred figure, the accent colour leading, a dark outline (EXPANSIONS.md 4.13)."""
     out = {}
@@ -1267,4 +1305,7 @@ def all_drawn() -> dict[str, Image.Image]:
     for name in STATUS_NAMES:
         out[f"status/{name}"] = status_icon(name)
     out.update(dlc_icons())
+    out["item/musket"] = firearm(True)
+    out["item/pistol"] = firearm(False)
+    out["item/blowgun"] = blowgun()
     return out

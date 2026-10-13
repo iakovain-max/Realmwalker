@@ -49,6 +49,7 @@ class Character:
     languages: list[str] = field(default_factory=list)
     features: list[str] = field(default_factory=list)
     fighting_style: str | None = None
+    masteries: list[str] = field(default_factory=list)  # kinds of weapon (item ids) whose mastery they use (2024)
     uses: dict[str, int] = field(default_factory=dict)
     spells: dict = field(default_factory=dict)
     inventory: list[Item] = field(default_factory=list)
@@ -289,12 +290,14 @@ class Sheet:
 
             ac = max([10] + [int(b) for b in spells.lasting_values(self.c, self.t, "mage_armor")]) + dex
         shield = self.c.equipped_item("off_hand")
-        if shield is not None and self.items.category(shield) == "shield":
+        if shield is not None and self.items.category(shield) == "shield" and self.proficient_with_armor(shield):
             ac += int(self.items.get(shield.def_id).get("ac_bonus", 2))
         if self.c.equipped:
             from realmwalker.rules import magic
 
             ac += magic.total(self.c, "ac")
+            if shield is not None and self.items.category(shield) == "shield" and not self.proficient_with_armor(shield):
+                ac -= magic.item_bonus(shield, "ac", char=self.c)  # (without training a shield gives nothing)
         if self.c.effects:
             from realmwalker.rules import spells
 
@@ -444,10 +447,19 @@ class Sheet:
         caps = [Sheet(m, self.t).capacity() for m in mates]
         return tuple(sum(c[i] for c in caps) for i in range(3))  # type: ignore[return-value]
 
+    def armour_disadvantage(self, ability: str) -> bool:
+        """Armour worn without training (2024): Disadvantage on every Strength or Dexterity D20 Test."""
+        armor = self.c.equipped_item("armor")
+        return ability in ("str", "dex") and armor is not None and not self.proficient_with_armor(armor)
+
     def armor_too_heavy(self) -> bool:
         armor = self.c.equipped_item("armor")
         if armor is None or self.has_rule_trait("sturdy"):
             return False
+        from realmwalker.rules import magic
+
+        if magic.item_flag(armor, "mithral"):
+            return False  # light and supple: no Strength needed
         req = int(self.items.get(armor.def_id).get("str_req", 0))
         return req > 0 and self.c.abilities.get("str", 10) < req
 

@@ -44,13 +44,14 @@ def at_least(rarity: str, floor: str) -> bool:
 
 
 def make(game, rng: RNG, *, tier: int = 1, kind: str | None = None, rarity: str | None = None,
-         props: list[dict] | None = None, sentient: bool | None = None) -> Item | None:
+         props: list[dict] | None = None, sentient: bool | None = None, bases: list[str] | None = None,
+         qty: int = 1) -> Item | None:
     """A magic item of a kind and rarity: its properties chosen within the rarity's budget (or the `props` given),
     named, storied and given a look; maybe cursed, maybe awake."""
     spec = data(game)
     items = game.tables.items
     kind = kind or rng.weighted(list(KIND_WEIGHTS), list(KIND_WEIGHTS.values()))
-    bases = [b for b in spec["bases"].get(kind, []) if b in items]
+    bases = [b for b in (bases or spec["bases"].get(kind, [])) if b in items]
     if not bases:
         return None
     base = rng.choice(bases)
@@ -64,11 +65,15 @@ def make(game, rng: RNG, *, tier: int = 1, kind: str | None = None, rarity: str 
         magic["curse"] = dict(rng.choice(spec["curses"]))
     r = spec["rarities"][rarity]
     magic["value"] = int(items.get(base)["value"] * float(r["value_mult"]) + int(r["value_add"]))
+    if kind == "ammo":
+        magic["value"] //= 10  # ten pieces are worth a potion of the same rarity (DMG 2024)
     title, story = built_in_words(game, base, rng)
     magic.update(title=title, story=story)
     magic["look"] = look_for(game, magic, rng.child("look"))
-    item = Item(uid=0, def_id=base, qty=1, quality="fine", condition=100, made_at=game.world.time, magic=magic)
-    awake = sentient if sentient is not None else rng.chance(float(spec["sentient"]["chance"].get(rarity, 0.0)))
+    item = Item(uid=0, def_id=base, qty=max(1, qty), quality="fine", condition=100, made_at=game.world.time,
+                magic=magic)
+    awake = (sentient if sentient is not None else rng.chance(float(spec["sentient"]["chance"].get(rarity, 0.0)))) \
+        and kind != "ammo"
     if awake:
         make_sentient(game, item, rng.child("mind"))
     set_attunement(game, item)
