@@ -27,7 +27,7 @@ class Character:
     name: str
     sex: str
     age: int
-    race: str
+    species: str  # (2024; "race" in the old rules, still readable as .race)
     culture: str
     cls: str
     background: str
@@ -50,6 +50,9 @@ class Character:
     features: list[str] = field(default_factory=list)
     fighting_style: str | None = None
     masteries: list[str] = field(default_factory=list)  # kinds of weapon (item ids) whose mastery they use (2024)
+    lineage: str | None = None  # a species' lineage (an elf's drow, high or wood), data/races.json "lineages"
+    feats: list[dict] = field(default_factory=list)  # [{"id": feat id, "choices": {...}}] (data/feats.json)
+    choices: dict = field(default_factory=dict)  # option picks by feature or trait id (Skillful's skill, Keen Senses)
     uses: dict[str, int] = field(default_factory=dict)
     spells: dict = field(default_factory=dict)
     inventory: list[Item] = field(default_factory=list)
@@ -92,9 +95,27 @@ class Character:
     is_player: bool = True
     alive: bool = True
 
+    @property
+    def race(self) -> str:
+        """The species, by its old name (the 2014 rules' "race")."""
+        return self.species
+
+    @race.setter
+    def race(self, value: str) -> None:
+        self.species = value
+
+    @property
+    def classes(self) -> list[dict]:
+        """Classes as a list (2024; one entry until multiclassing, Expansion 14): {class, subclass, level}."""
+        return [{"class": self.cls, "subclass": self.subclass, "level": self.level}]
+
+    def feat_ids(self) -> list[str]:
+        return [f["id"] for f in self.feats]
+
     # ------------------------------------------------------------------ saving
     def to_dict(self) -> dict:
         d = asdict(self)
+        d["classes"] = self.classes
         d["inventory"] = [i.to_dict() for i in self.inventory]
         d["wounds"] = [w.to_dict() for w in self.wounds]
         return d

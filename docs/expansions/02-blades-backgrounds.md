@@ -54,7 +54,7 @@ Horses look like horses; mounts, carts and wagons can be bought; inns, meals and
   sapped, vexed), sounds; status icons and cards; Part A to `main`.
 
 ### Part B — Origins
-- [ ] B.1 Character fields (`species`, `lineage`, `feats`, `choices`, `classes` list); FORMAT_VERSION bump.
+- [x] B.1 Character fields (`species`, `lineage`, `feats`, `choices`, `classes` list); FORMAT_VERSION bump.
 - [ ] B.2 Species 2024: Human, Elf (Drow, High Elf, Wood Elf; lineage spells), Dwarf, Halfling, Orc; traits as kernel
   definitions; the half-orcs of the world become orcs; looks and bodies still drawn (`tests/test_looks.py`).
 - [ ] B.3 The 16 backgrounds: increases, origin feat, skills, tool, equipment or gold, ties and starting places.

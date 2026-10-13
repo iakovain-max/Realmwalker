@@ -302,7 +302,7 @@ class CharacterBuilder:
         features = [f["id"] for f in cls["features"] if f["level"] <= 1]
         uses: dict = {}
         char = Character(
-            name=self.name.strip(), sex=self.sex, age=self.age, race=self.race, culture=self.culture,
+            name=self.name.strip(), sex=self.sex, age=self.age, species=self.race, culture=self.culture,
             cls=self.cls, background=self.background, base_scores=dict(self.scores), abilities=abilities,
             level=1, xp=0, subclass=self.subclass, max_hp=hp, hp=hp, hit_dice=1,
             skills=self.all_skills(), expertise=list(self.expertise), saves=list(cls["saves"]),
