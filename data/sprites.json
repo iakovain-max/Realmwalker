@@ -312,7 +312,9 @@
       "pike": {"held": "pike@steel"}, "rapier": {"held": "rapier@steel"}, "scimitar": {"held": "scimitar@steel"},
       "shortsword": {"held": "shortsword@steel"}, "warhammer": {"held": "warhammer@steel"}, "war_pick": {"held": "pickaxe@iron"},
       "hand_crossbow": {"held": "hand_crossbow@iron"}, "heavy_crossbow": {"held": "crossbow@steel"},
-      "longbow": {"held": "longbow"}, "arcane_focus": {"held": "staff"}, "holy_symbol": {"held": "holy_symbol"},
+      "longbow": {"held": "longbow"}, "lance": {"held": "lance@steel"}, "trident": {"held": "trident@iron"},
+      "whip": {"held": "whip"}, "blowgun": {"held": "blowgun"}, "musket": {"held": "musket"}, "pistol": {"held": "pistol"},
+      "arcane_focus": {"held": "staff"}, "holy_symbol": {"held": "holy_symbol"},
       "torch": {"held": "torch"}, "lantern": {"held": "lantern"}, "spellbook": {"held": "book"}
     },
     "classes": {

@@ -50,7 +50,7 @@ Horses look like horses; mounts, carts and wagons can be bought; inns, meals and
   kite, vex to chain, cleave into clusters, nick for the extra blow; Auto and enemy; arena coverage green.
 - [x] A.4 Armaments basics: +1/+2/+3 weapons, armour, shields, ammunition; adamantine, mithral, silvered (treasure
   and the DMG tables); townsfolk, soldiers and watch carry mastery weapons.
-- [ ] A.5 Pictures (new weapons in `figure_gear.py` and items sheet; mastery marks: knock-down, push, slowed,
+- [x] A.5 Pictures (new weapons in `figure_gear.py` and items sheet; mastery marks: knock-down, push, slowed,
   sapped, vexed), sounds; status icons and cards; Part A to `main`.
 
 ### Part B — Origins

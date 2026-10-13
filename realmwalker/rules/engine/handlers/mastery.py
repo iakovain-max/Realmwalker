@@ -105,6 +105,7 @@ def mastery_done(b, f, ev, hook, buff) -> None:
             mod = ability_mod(f, opt)
             if mod > 0 and (target.active or target.state == "down"):
                 b.say(_line(b, words, "graze", f, target, opt), "good" if f.side == "party" else "info")
+                b._event("mastery", who=target.id, by=f.id, trick="graze")
                 b._hit(f, target, mod, opt.damage_type, crit=False, weapon=opt.name)
         return
     if not (target.active or target.state == "down"):

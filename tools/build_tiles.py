@@ -263,9 +263,11 @@ ITEMS = {
     "warhammer": "item/weapon/hammer_2_new.png", "war_pick": "item/weapon/morningstar_3.png",
     "hand_crossbow": "item/weapon/ranged/hand_crossbow.png", "heavy_crossbow": "item/weapon/ranged/arbalest_1.png",
     "longbow": "item/weapon/ranged/longbow_1.png",
+    "lance": "item/weapon/spear_6.png", "trident": "item/weapon/trident_1.png", "whip": "item/weapon/bullwhip_new.png",
     # ammunition
     "arrows": "item/weapon/ranged/elven_arrow.png", "bolts": "item/weapon/ranged/orcish_arrow.png",
     "sling_bullets": "item/weapon/ranged/sling_bullet_1_new.png",
+    "needles": "item/weapon/ranged/needle-c.png", "firearm_bullets": "item/weapon/ranged/sling_bullet_2_new.png",
     # armour
     "padded_armor": "item/armor/torso/animal_skin_1_new.png", "leather_armor": "item/armor/torso/leather_armor_1.png",
     "studded_leather": "item/armor/torso/studded_leather_armor.png", "hide_armor": "item/armor/torso/troll_hide.png",

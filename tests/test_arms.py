@@ -312,7 +312,7 @@ def test_graze_still_cuts_on_a_miss(tables):
     soft(foe, ac=30)
     before = foe.hp
     strike(b, me, foe, main_opt(b, me), want_hit=False)
-    assert before - foe.hp == 3
+    assert before - foe.hp == 3 and "graze" in tricks(b.events)
 
 
 def test_cleave_carries_into_the_next_foe_once_a_turn(tables):

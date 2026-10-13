@@ -39,6 +39,10 @@ COLOURS = {"fire": (255, 140, 46), "cold": (150, 205, 255), "lightning": (210, 2
 SPELL_COLOURS = {"sleep": (190, 150, 255), "web": (220, 220, 210), "bless": (255, 220, 120), "healing_word": (140, 230, 120),
                  "cure_wounds": (140, 230, 120), "mass_healing_word": (140, 230, 120), "mass_cure_wounds": (140, 230, 120),
                  "spirit_guardians": (255, 220, 130), "guardian_of_faith": (255, 220, 130), "misty_step": (200, 220, 255)}
+# A weapon mastery as it lands (rules/engine/handlers/mastery.py): its word and colour. Topple shows as the fall.
+MASTERY_MARKS = {"push": ("driven back", (236, 214, 170)), "sap": ("sapped", (214, 190, 120)),
+                 "slow": ("slowed", (150, 190, 230)), "vex": ("an opening", (240, 150, 120)),
+                 "cleave": ("cleave", (255, 200, 120)), "graze": ("grazed", (230, 170, 150)), "topple": ("", (0, 0, 0))}
 CONDITION_WORDS = {"prone": "down", "restrained": "held fast", "paralyzed": "paralysed", "stunned": "stunned",
                    "asleep": "asleep", "poisoned": "poisoned", "grappled": "grappled", "frightened": "afraid",
                    "blinded": "blind"}
@@ -265,6 +269,17 @@ class BattleBoard:
             if word:
                 self.fx.append({"kind": "float", "who": ev["who"], "text": word, "color": (230, 200, 150),
                                 "t0": max(t, self._impact) + 0.1, "dur": FLOAT, "size": 15, "low": True})
+            return t
+        if k == "mastery":  # a weapon's trick: a word and a mark over the one it caught
+            word, color = MASTERY_MARKS.get(ev.get("trick", ""), ("", (230, 200, 150)))
+            at = max(t, self._impact) + 0.12
+            if word:
+                self.fx.append({"kind": "float", "who": ev["who"], "text": word, "color": color, "t0": at, "dur": FLOAT,
+                                "size": 15, "low": True})
+            if ev.get("trick") in ("sap", "slow", "vex"):
+                self.fx.append({"kind": "ring", "who": ev["who"], "t0": at, "dur": 0.5, "color": color})
+            if ev.get("trick") == "push":
+                self.shake_until = max(self.shake_until, at + 0.12)
             return t
         if k == "concentration_end":
             self.fx.append({"kind": "float", "who": ev["who"], "text": "concentration broken", "color": (200, 170, 255),
