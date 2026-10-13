@@ -88,7 +88,8 @@ class CharacterBuilder:
         if kind == "origin_feat":
             from realmwalker.rules import feats
 
-            return feats.origin_feats(self.t)
+            bg = self.t.backgrounds[self.background]["feat"]["id"]
+            return [f for f in feats.origin_feats(self.t) if f != bg or feats.defs(self.t)[f].get("repeatable")]
         if kind == "lineage":
             return list(self.t.races[self.race].get("lineages") or {})
         return []
@@ -169,9 +170,18 @@ class CharacterBuilder:
         """Every origin feat's choices made (the defaults for what is missing or no longer possible)."""
         from realmwalker.rules import feats
 
+        if "versatile" in self.species_choices() and self.versatile not in self.choice_options("versatile"):
+            self.versatile = next(iter(self.choice_options("versatile")), "skilled")
         proto = self._proto()
         fixed_now = {}
+        lists_used: list[str] = []
         for source, fid, fixed in self.origin_feats():
+            fixed = dict(fixed)
+            if fid == "magic_initiate" and lists_used and "list" not in fixed:
+                # (taken again: another list; the first copy's spells are not offered twice)
+                have_list = (self.feat_choices.get(source) or {}).get("list")
+                if have_list in lists_used or have_list is None:
+                    fixed["list"] = next(x for x in ("cleric", "druid", "wizard") if x not in lists_used)
             have = dict(self.feat_choices.get(source) or {})
             if have.get("_feat") != fid:
                 have = {}
@@ -189,6 +199,11 @@ class CharacterBuilder:
                 elif v in opts:
                     clean[key] = v
             fixed_now[source] = {**feats.default_choices(self.t, proto, fid, clean), "_feat": fid}
+            picked = fixed_now[source]
+            if picked.get("list"):
+                lists_used.append(picked["list"])
+            for x in picked.get("skills", []) + picked.get("tools", []):  # (a second Skilled picks others)
+                (proto.skills if x in self.t.rules["skills"] else proto.tools).append(x)
         self.feat_choices = fixed_now
 
     def feat_slots(self) -> list[tuple[str, str, str, int, list[str]]]:
@@ -200,6 +215,8 @@ class CharacterBuilder:
         out = []
         for source, fid, fixed in self.origin_feats():
             ch = self.feat_choices[source]
+            if fid == "magic_initiate" and source != "background":
+                fixed = {**fixed, "list": ch.get("list")}  # (its list differs from the background's: fixed here)
             for key, c in feats.defs(self.t)[fid].get("choices", {}).items():
                 if key in fixed:
                     continue
@@ -255,7 +272,10 @@ class CharacterBuilder:
     def set_class(self, cls: str) -> None:
         self.cls = cls
         c = self.t.classes[cls]
+        kept = list(self.scores.values()) if getattr(self, "score_method", "point_buy") != "point_buy" else None
         self.scores = dict(c["suggested"])
+        if kept:
+            self._place(kept)  # (the array or the rolled scores, moved to what the new calling needs)
         self.kit = 0
         self.fighting_style = next(iter(c.get("fighting_styles", {})), None) if "fighting_style" in c["choices_at_1"] else None
         self.style_chosen = False

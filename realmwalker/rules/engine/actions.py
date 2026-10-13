@@ -103,7 +103,7 @@ def _god_ready(b, f) -> str | None:
 
 
 def _medic_ready(b, f) -> str | None:
-    if f.char is None or not any(i.def_id == "healers_kit" for i in f.char.inventory):
+    if f.char is None or not any(i.def_id == "healers_kit" and i.condition > 0 for i in f.char.inventory):
         return "no healer's kit"
     if not any(x is not f and (x.active or x.state == "down") and x.hp < x.max_hp and b.gap(f, x) <= 1
                and (x.char is None or x.char.hit_dice > 0) for x in b.team(f.team)):
@@ -117,7 +117,12 @@ def _on_stone(b, f) -> str | None:
     return "no stone underfoot"
 
 
+def _not_sensing(b, f) -> str | None:
+    return "already feeling the stone" if any(bf.get("tremorsense") for bf in f.buffs) else None
+
+
 REQUIRES: dict[str, Callable] = {
+    "not_sensing": _not_sensing,
     "undead_within_30": _undead_near,
     "god_ready": _god_ready,
     "on_stone": _on_stone,

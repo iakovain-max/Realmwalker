@@ -244,3 +244,79 @@ def test_spells_need_no_class_for_innate_casting(tables):
     assert ("lineage", "misty_step", c.choices.get("lineage_ability") or "int") in feats.innate_spells(c, tables) or \
         any(sid == "misty_step" for _, sid, _ in feats.innate_spells(c, tables))
     assert not spellrules.is_caster(c, tables)
+
+
+# ---------------------------------------------------------------------------- the fresh review's points
+def test_versatile_never_repeats_the_backgrounds_feat_and_a_second_copy_picks_others(tables):
+    b = builder(tables, "human", "fighter", "farmer")  # Tough
+    assert "tough" not in b.choice_options("versatile")
+    b = builder(tables, "human", "fighter", "charlatan")  # Skilled
+    b.set_choice("versatile", "skilled")
+    c = b.build()
+    picks = [x for f in c.feats if f["id"] == "skilled" for x in f["choices"]["skills"]]
+    assert len(picks) == 6 and len(set(picks)) == 6
+    b = builder(tables, "human", "fighter", "acolyte")  # Magic Initiate (Cleric)
+    b.set_choice("versatile", "magic_initiate")
+    lists = [f["choices"]["list"] for f in b.build().feats if f["id"] == "magic_initiate"]
+    assert len(lists) == 2 and lists[0] != lists[1]
+
+
+def test_halfling_luck_saves_a_save_that_rolled_a_one(tables):
+    hal = builder(tables, "halfling").build()
+    b = fight(tables, [hal], "bandit")
+    me = b.fighters[0]
+    fails = sum(not b._save(me, "dex", 2, quiet=True) for _ in range(400))
+    assert fails <= 4  # only two 1s in a row fail (1 in 400)
+
+
+def test_savage_attacker_and_tavern_brawler_fire_in_a_fight(tables):
+    sol = builder(tables, "human", "fighter", "soldier").build()
+    b = fight(tables, [sol], "bandit")
+    me, foe = b.fighters
+    foe.creature.max_hp = foe.creature.hp = 300
+    foe.cdef = dict(foe.cdef, ac=1)
+    opt = next(o for o in b.attack_options(me) if o.key == "main")
+    turn_of(b, me)
+    b._attack(me, opt, foe)
+    assert any("Savage Attacker" in r for rolls in b.rolls.values() for r in rolls) or \
+        me.__dict__.get("mastery_used", {}).get("savage_attacker")
+    sailor = builder(tables, "human", "fighter", "sailor").build()
+    b = fight(tables, [sailor], "bandit", spots={0: (3, 4), 1: (4, 4)})
+    me, foe = b.fighters
+    foe.creature.max_hp = foe.creature.hp = 300
+    foe.cdef = dict(foe.cdef, ac=1)
+    fists = next(o for o in b.attack_options(me) if o.key == "unarmed")
+    turn_of(b, me)
+    for _ in range(20):
+        b._attack(me, fists, foe)
+        if (foe.x, foe.y) != (4, 4):
+            break
+    assert (foe.x, foe.y) == (5, 4)
+
+
+def test_a_musicians_song_after_a_rest_inspires_the_others(tables):
+    import copy
+
+    from realmwalker.game import fight as fightmod
+    from realmwalker.game.state import new_game
+    from realmwalker.world.generator import WorldOptions
+    from tests.worlds import cached_world
+
+    bard = builder(tables, "human", "fighter", "entertainer").build()
+    game = new_game(copy.deepcopy(cached_world(WorldOptions("Songland", 5, "small"), tables)), tables, bard)
+    game.survival = False
+    friend = builder(tables, "human", "fighter", "soldier", seed=8).build()
+    friend.is_player = False
+    game.party.append(friend)
+    friend.uses.pop("heroic_inspiration", None)
+    notes = fightmod._encouraging_song(game, None)
+    assert notes and friend.uses.get("heroic_inspiration") == 1
+
+
+def test_a_level_brings_luck_and_a_lineage_spell_at_once(tables):
+    c = builder(tables, "elf", "fighter", "merchant").build()  # Lucky
+    c.lineage = "high_elf"
+    for _ in range(4):
+        progression.level_up(c, tables, RNG(1, "lv"), auto=True)
+    assert c.uses["luck"] == 3
+    assert c.uses.get(feats.innate_key("lineage", "misty_step")) == 1

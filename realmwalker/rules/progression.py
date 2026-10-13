@@ -81,6 +81,9 @@ def _level_up(char: Character, tables, rng: RNG) -> list[str]:
         if missing > 0:
             add_pending(char, {"kind": "cantrips", "count": missing, "level": char.level})
     resources.granted(char, tables, before)  # a new Action Surge or Channel Divinity starts ready
+    from realmwalker.rules import feats
+
+    feats.level_up(char, tables)  # more luck points; a lineage's spell of this level ready to cast
     return notes
 
 

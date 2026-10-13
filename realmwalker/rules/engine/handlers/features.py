@@ -16,6 +16,8 @@ def lucky(b, f, ev, hook, buff) -> None:
     """Halflings' Luck: a natural 1 on an attack roll or a saving throw is rolled again."""
     if ev.roll in ("attack", "save") and ev.natural == 1 and f.char is not None:
         ev.natural = dice.d20(b.rng).natural
+        if ev.roll == "save":
+            ev.ok = ev.natural + ev.bonus >= ev.dc
         b.dice_say(f"{f.name} is lucky: rerolls the 1 and gets {ev.natural}.")
 
 

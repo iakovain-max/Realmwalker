@@ -7,6 +7,7 @@ from realmwalker.rules.engine import query
 from realmwalker.rules.engine.effects import special
 from realmwalker.rules.engine.events import handler
 from realmwalker.rules.engine.handlers.mastery import choose, once_a_turn
+from realmwalker.rules.engine.reactions import Decision, yes
 
 
 # ---------------------------------------------------------------------------- Lucky
@@ -14,10 +15,13 @@ from realmwalker.rules.engine.handlers.mastery import choose, once_a_turn
 def lucky_attack(b, f, ev, hook, buff) -> None:
     """A missed attack rolled again with a luck point (the better roll kept)."""
     c = f.char
-    if c is None or c.uses.get("luck", 0) <= 0 or ev.natural == 1 and False:
+    if c is None or c.uses.get("luck", 0) <= 0:
         return
     if ev.total + 20 - ev.natural < ev.ac:
         return  # (not even a 20 would do)
+    if not yes(b, Decision(f, "lucky", f"{f.the_name}'s blow misses ({ev.total} against AC {ev.ac}). Spend a luck "
+                           f"point to roll again? ({c.uses['luck']} left)", [("yes", "Roll again"), ("no", "Keep it")])):
+        return
     c.uses["luck"] -= 1
     again = dice.d20(b.rng).natural
     total = ev.total - ev.natural + again
@@ -32,6 +36,9 @@ def lucky_save(b, f, ev, hook, buff) -> None:
     if ev.roll != "save" or ev.ok or c is None or c.uses.get("luck", 0) <= 0:
         return
     if ev.bonus + 20 < ev.dc:
+        return
+    if not yes(b, Decision(f, "lucky", f"{f.the_name} fails a {ev.ability.upper()} save. Spend a luck point to roll "
+                           f"again? ({c.uses['luck']} left)", [("yes", "Roll again"), ("no", "Accept it")])):
         return
     c.uses["luck"] -= 1
     again = dice.d20(b.rng).natural
@@ -89,7 +96,14 @@ def battle_medic(c, o, victim) -> None:
             and b.gap(f, x) <= 1 and (x.char is None or x.char.hit_dice > 0)]
     if not near:
         return
-    x = min(near, key=lambda x: (x.state != "down", x.hp / max(1, x.max_hp)))
+    x = victim if victim in near else min(near, key=lambda x: (x.state != "down", x.hp / max(1, x.max_hp)))
+    if f.char is not None:
+        from realmwalker.rules import health
+
+        kit = health._kit(f.char)
+        if kit is None:
+            return
+        health._use_kit(f.char, kit)  # (one of its ten uses)
     die = b.t.classes[x.char.cls]["hit_die"] if x.char is not None else 8
     if x.char is not None:
         x.char.hit_dice -= 1

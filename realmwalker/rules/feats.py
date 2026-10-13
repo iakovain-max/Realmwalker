@@ -138,6 +138,14 @@ def grant(char: Character, tables, fid: str, choices: dict | None = None) -> dic
     return picked
 
 
+def level_up(char: Character, tables) -> None:
+    if has(char, "lucky"):
+        char.uses["luck"] = max(char.uses.get("luck", 0), luck_points(char))
+    for src, sid, _ability in innate_spells(char, tables):
+        if tables.spells[sid]["level"] > 0:
+            char.uses.setdefault(innate_key(src, sid), 1)
+
+
 def luck_points(char: Character) -> int:
     return 2 + (char.level - 1) // 4
 

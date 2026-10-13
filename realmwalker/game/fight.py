@@ -934,8 +934,7 @@ def _encouraging_song(game, sleepless) -> list[str]:
     for c in game.party:
         if not feats.has(c, "musician") or c is sleepless and len(game.party) > 1:
             continue
-        mine = next((f for f in c.feats if f["id"] == "musician"), {})
-        plays = set(mine.get("choices", {}).get("tools", []))
+        plays = set(c.tools)  # (any instrument they are proficient with)
         if not any(it.def_id in plays for it in c.inventory):
             continue
         given = [x for x in game.party if x is not c and x.alive][: 2 + (c.level - 1) // 4]
