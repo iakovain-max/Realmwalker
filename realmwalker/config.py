@@ -23,6 +23,7 @@ AUTOSAVE_CHOICES = (2, 5, 10, 15, 30)
 COMPANION_CHOICES = ("command", "auto")  # in a fight: you play the companions' turns, or they fight by themselves
 REACTION_CHOICES = ("ask", "all", "auto")  # in a fight: ask before spending something on a reaction, ask always, never
 ANIMATION_CHOICES = ("full", "calm", "off")
+CREATURE_DETAIL_CHOICES = ("full", "known")  # a creature's card: its whole stat block, or what the character knows
 TOWN_TIME_CHOICES = ("flows", "waits")  # in towns the clock runs by itself, or (the old way) only when you act
 VOLUME_STEPS = 10  # volumes are 0 (silent) to 10 (full)
 MAP_ZOOMS = (16, 24, 32, 48, 64)  # pixels per square on a close-up map
@@ -70,6 +71,7 @@ class Settings:
     world_zoom: int = 24
     battle_companions: str = "command"  # COMPANION_CHOICES
     reactions: str = "ask"  # REACTION_CHOICES (rules/engine/reactions.py)
+    creature_details: str = "full"  # CREATURE_DETAIL_CHOICES
     time_in_towns: str = "flows"  # TOWN_TIME_CHOICES: people walk their day while you stand and watch
     volume: int = 10  # everything (0-10)
     music_volume: int = 6
@@ -96,6 +98,8 @@ class Settings:
             self.battle_companions = "command"
         if self.reactions not in REACTION_CHOICES:
             self.reactions = "ask"
+        if self.creature_details not in CREATURE_DETAIL_CHOICES:
+            self.creature_details = "full"
         if self.time_in_towns not in TOWN_TIME_CHOICES:
             self.time_in_towns = "flows"
         for name in ("volume", "music_volume", "effects_volume", "interface_volume"):

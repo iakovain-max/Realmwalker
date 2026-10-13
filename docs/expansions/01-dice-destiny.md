@@ -70,10 +70,10 @@ pictures are reworked to match the game's own art; the main menu gets its shelf 
 - [x] D.4 Part D to `main`.
 
 ### Part E — Tooltips, icons and pictures
-- [ ] E.1 Cards (`rules/describe.py`) and `ui/tooltips.py`; status icons; creature cards; the battle log's rolls.
-- [ ] E.2 The picture adaptation pass for borrowed monster tiles (before/after contact sheet).
-- [ ] E.3 Spell effect styles (`fx`); fliers drawn with their height.
-- [ ] E.4 The icon on the shelf; release v1.1.0 (pack status, notes, tag, `PROGRESS.md`, `STATUS.md`).
+- [x] E.1 Cards (`rules/describe.py`) and `ui/tooltips.py`; status icons; creature cards; the battle log's rolls.
+- [x] E.2 The picture adaptation pass for borrowed monster tiles (before/after contact sheet).
+- [x] E.3 Spell effect styles (`fx`); fliers drawn with their height.
+- [x] E.4 The icon on the shelf; release v1.1.0 (pack status, notes, tag, `PROGRESS.md`, `STATUS.md`).
 
 ## Left in the battle code on purpose (B.4)
 
@@ -139,6 +139,30 @@ work": a rule is done only when it is usable in play.
   caught it).
 - **Left for Part E**: tooltip cards for magic items' new lines, an icon for "bound" and for a sentient thing's
   demand.
+
+## Part E: how it is built and what was adapted
+
+- **Cards** are logic (`rules/describe.py`: a title, a subtitle, an icon, a few lines, a footer); `ui/tooltips.py`
+  draws them beside what is pointed at, never over it, inside the window (narrowed to fit beside it when needed),
+  after 0.3 s of hovering (`App._time_card`). `canvas.hit(tooltip=)` takes words, a Card or a function making one.
+- **Statuses** (`describe.statuses`): the 14 conditions, exhaustion, Bloodied, dying (with the death-save pips) and
+  stable, and every mark and aura the battle has (concentrating, hidden, flying with its height, dodging, readied,
+  marked, temporary hit points, Heroic Inspiration, slowed, burning, grappling, a stirge feeding, blessed or baned,
+  shielded, warded, resisting, guided, cannot heal, cannot strike out, surprised) and the body's own (bleeding,
+  festering, pain, drunk, wounded). Icons are 10x10 pixel art (`tools/status_art.py`) drawn doubled on big boards:
+  four over each figure's health bar, then "+N"; each with its card; the same row beside the one acting and the
+  one targeted (for the keyboard). Out of a fight the party panel's troubles have one card with what to do.
+- **The battle log**: every roll (`Battle.dice_say`, and damage with what changed it: a critical, resisted,
+  vulnerable, immune) is kept with the line it explains (`Battle.rolls`), whether or not dice are shown.
+- **Creature cards**, and the *Creature details* setting (Full, or What my character knows: the stat block once
+  studied or killed before). Adapted: the PHB's raging, Hunter's Mark, Hex and the masteries' icons wait for the
+  expansions that bring those features; squares and the path are told in the side panel as before, not as cards.
+- **Borrowed pictures** (`tools/adapt_art.py`, run by `build_tiles.py`; `--adapt-sheet` writes the before/after
+  sheet): clean alpha, a height by kind with feet on the dolls' line, colour ramps, one dark outline, light from the
+  top left; the ghost and the wraith opt out of what would erase them, fire and gold keep their colours.
+- **Spell looks** (data/spells.json `fx`, checked by the schema): bolt, ray, darts, touch, cone, burst, shock, line,
+  rain, strike, zone, aura, summon, teleport, heal, buff, curse, sleep, thrown; the cast event keeps what the spell
+  does (`effects.mechanic`) beside its look; a creature's breath takes its look from its shape.
 
 ## Codex entries delivered
 

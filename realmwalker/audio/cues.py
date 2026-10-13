@@ -50,7 +50,7 @@ def battle_sounds(ev: dict) -> list[tuple[str, str]]:
     if k == "dart":
         return [("start", "spell_bolt")]
     if k == "cast":
-        out = [("start", "spell")]
+        out = [("start", "spell_bolt" if ev.get("look") in ("bolt", "ray", "line") else "spell")]
         if ev.get("area") and ev.get("effect") in ("save", "breath"):
             burst = HIT_BY_TYPE.get(ev.get("dtype", ""))
             if burst and burst not in ("hit_slash", "hit_pierce", "hit_blunt"):

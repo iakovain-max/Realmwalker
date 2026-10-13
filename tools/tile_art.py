@@ -1173,6 +1173,33 @@ def sacks(seed: int) -> Image.Image:
     return shadow(outline(im))
 
 
+# ---------------------------------------------------------------------------- the expansions' icons (the shelf)
+def dlc_icons() -> dict[str, Image.Image]:
+    """Each expansion's emblem: 32x32, one centred figure, the accent colour leading, a dark outline (EXPANSIONS.md 4.13)."""
+    out = {}
+    # Dice & Destiny: a gold twenty-sided die seen face on, its top face lit, a garnet in the middle face.
+    im = Image.new("RGBA", (32, 32), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    k, dark, mid, light, deep, gem = (22, 17, 16, 255), (120, 88, 40, 255), (214, 176, 92, 255), (246, 222, 150, 255),         (82, 58, 30, 255), (150, 32, 40, 255)
+    hexa = [(16, 2), (28, 9), (28, 23), (16, 30), (4, 23), (4, 9)]
+    d.polygon(hexa, fill=mid, outline=k)
+    tri = [(16, 8), (24, 21), (8, 21)]
+    d.polygon([(16, 2), (28, 9), (16, 8), (4, 9)], fill=light)  # the top faces catch the light
+    d.polygon([(28, 9), (28, 23), (24, 21), (16, 8)], fill=mid)
+    d.polygon([(4, 9), (16, 8), (8, 21), (4, 23)], fill=light)
+    d.polygon([(4, 23), (8, 21), (24, 21), (28, 23), (16, 30)], fill=dark)  # the lower faces in shade
+    d.polygon([(28, 23), (24, 21), (16, 30)], fill=deep)
+    d.polygon(tri, fill=mid, outline=deep)
+    for a_, b_ in ((hexa[0], tri[0]), (hexa[1], tri[0]), (hexa[5], tri[0]), (hexa[1], tri[1]), (hexa[2], tri[1]),
+                   (hexa[3], tri[1]), (hexa[3], tri[2]), (hexa[4], tri[2]), (hexa[5], tri[2])):
+        d.line([a_, b_], fill=deep)
+    d.polygon(hexa, outline=k)
+    d.polygon([(16, 12), (19, 17), (16, 19), (13, 17)], fill=gem, outline=k)  # a garnet set in the twenty
+    d.point((15, 14), fill=(236, 150, 140, 255))
+    out["dlc/dice_destiny"] = im
+    return out
+
+
 def all_drawn() -> dict[str, Image.Image]:
     """Every tile this module draws, by its name in the atlas."""
     out: dict[str, Image.Image] = {}
@@ -1235,4 +1262,9 @@ def all_drawn() -> dict[str, Image.Image]:
         out[f"map/{kind}"] = site_mark(kind, 48)
     for name in ICON_NAMES:
         out[f"icon/{name}"] = icon(name)
+    from status_art import STATUS_NAMES, status_icon  # the battle's status pictograms (10x10, drawn doubled)
+
+    for name in STATUS_NAMES:
+        out[f"status/{name}"] = status_icon(name)
+    out.update(dlc_icons())
     return out

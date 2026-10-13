@@ -28,6 +28,7 @@ from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
+import adapt_art  # noqa: E402
 import map_art  # noqa: E402
 import nature_art  # noqa: E402
 import tile_art  # noqa: E402
@@ -547,6 +548,9 @@ def figure_tiles() -> tuple[dict[str, Image.Image], dict]:
     return out, meta
 
 
+ADAPTED: list[tuple[str, Image.Image, Image.Image]] = []  # (creature, as borrowed, as adapted), for the sheet
+
+
 def gather(pack: Path) -> dict[str, Image.Image]:
     tiles: dict[str, Image.Image] = {}
     missing = []
@@ -571,6 +575,12 @@ def gather(pack: Path) -> dict[str, Image.Image]:
         tiles[name] = grade(im, which)
     if missing:
         raise SystemExit("Missing from the pack:\n  " + "\n  ".join(missing))
+    # Borrowed creatures pass through the adaptation step, so they look like the game's own figures.
+    ADAPTED.clear()
+    for name in sorted(k for k in tiles if k.startswith("creature/")):
+        before = tiles[name]
+        tiles[name] = adapt_art.adapt(before, name.split("/", 1)[1])
+        ADAPTED.append((name.split("/", 1)[1], before, tiles[name]))
     # Autumn trees, turned green for most of the year.
     autumn = sorted(k for k in tiles if k.startswith("tree/autumn_"))
     for i, k in enumerate(autumn):
@@ -590,7 +600,7 @@ def gather(pack: Path) -> dict[str, Image.Image]:
     tiles.update(figs)
     for name, im in {**tile_art.all_drawn(), **nature_art.all_drawn(), **map_art.all_drawn(),
                      **town_art.all_drawn()}.items():
-        which = "none" if name.startswith(("icon/", "map/")) else ("ground" if name.startswith(("floor/", "wall/")) else "feature")
+        which = "none" if name.startswith(("icon/", "map/", "status/", "dlc/")) else ("ground" if name.startswith(("floor/", "wall/")) else "feature")
         if any(k in name for k in ("glow", "/fey", "water/hot", "moonstone")):
             which = "fx"  # things that shine keep their light
         tiles[name] = grade(im, which) if which != "none" else im
@@ -641,6 +651,7 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--pack", default=None)
     ap.add_argument("--preview", default=None)
+    ap.add_argument("--adapt-sheet", default=None, help="write the borrowed creatures before and after, side by side")
     args = ap.parse_args(argv)
     pack = Path(args.pack) if args.pack else fetch_pack()
     tiles = gather(pack)
@@ -660,6 +671,8 @@ def main(argv=None) -> int:
     print(f"{len(tiles)} tiles in {len(sheets)} sheets -> {OUT}")
     if args.preview:
         preview(tiles, Path(args.preview))
+    if args.adapt_sheet:
+        adapt_art.before_after(ADAPTED, Path(args.adapt_sheet))
     return 0
 
 

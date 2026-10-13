@@ -21,7 +21,9 @@ painted on parchment, and fights on a battle mat with animation. Playable with t
   in giant trees. Townsfolk live their day while you watch.
 - **Stay alive**: hunger, thirst, cold, heat, exhaustion, wounds that bleed and fester, sickness, and treatment that
   matters (bandage, clean, stitch, splint).
-- **Fight on a grid**, like a battle mat, with wounds, morale, surrender and prisoners.
+- **Fight on a grid**, like a battle mat, with wounds, morale, surrender and prisoners, by the 2024 rules
+  (*Dice & Destiny*, version 1.1): enemies that think, reactions that ask you first, the 2025 monsters, treasure and
+  magic items by the book, an icon for every state and a card for anything you point at.
 - **Talk to everyone.** They have names, trades, memories and opinions of you.
 - **Hire companions**, pay them, keep them loyal (or don't), and command them in a fight.
 - **Take on work**: bounties, lairs to clear, beasts to hunt, letters to carry, captives to free. Not every job is

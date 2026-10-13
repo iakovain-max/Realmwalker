@@ -202,6 +202,17 @@ def sky_icon(game) -> str:
     return "sun"
 
 
+def body_card(member, tables):
+    """One card for everything that is not fine with a party member, and what to do about each."""
+    from realmwalker.rules import describe
+
+    card = describe.Card(markup.escape(member.name), "how they fare", "icon/health")
+    for _, c in describe.char_statuses(member, tables):
+        card.lines.append(f"<title>{c.title}</>: {c.lines[0] if c.lines else ''}")
+    card.footer = "Click (or press h) for the Health screen."
+    return card.fit()
+
+
 def render_party(gs, canvas: Canvas, x: int, y: int, w: int) -> int:
     from realmwalker.rules.character import Sheet
     from realmwalker.rules.items import money_text
@@ -266,7 +277,7 @@ def render_party(gs, canvas: Canvas, x: int, y: int, w: int) -> int:
         if words:
             used = render_statuses(canvas, x, y, w, words, max_lines=2)
             canvas.hit(x, y, w, used, action=lambda index=index: gs.open_sheet("h", index),
-                       tooltip="Click (or press h) for the Health screen.")
+                       tooltip=lambda member=member: body_card(member, game.tables))
             y += used
         y += 1
     return y

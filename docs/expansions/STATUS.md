@@ -1,12 +1,11 @@
 # Expansion programme – status
 
-Current: 01 Dice & Destiny · part E (tooltips, icons and pictures) · branch dlc/01-dice-destiny · step 4 of §5.1
-On GitHub (main): World Variety · Clearing the decks (§0.4) · Dice & Destiny parts A, B, C and D (the rules kernel,
-  the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0 and its proof in the arena; magic items with
-  attunement, artifacts and sentient things, DMG treasure, encounters by the XP budget, travel pace, attitudes)
-Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: 81 done,
-  33 adapted, 14 omitted of 333 (`tools/codex/coverage.py --dlc`); its other rules entries (the PHB glossary and
-  chapter sections) are marked at the end of Part E
+Current: 02 Blades & Backgrounds · not begun · branch dlc/02-blades-backgrounds (to make) · step 1 of §5.1
+On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
+  the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
+  budget, cards and status icons, adapted monster pictures, spell looks, the shelf)
+Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
+  (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`)
 Assumptions waiting for Anton:
 - The Player2 AI writer is removed (tagged `before-ai-removal`); its text is replaced everywhere by the game's own
   words, strengthened where they were thin.
@@ -18,11 +17,14 @@ Assumptions waiting for Anton:
 - Part D: money follows the DMG (more of it than before); the DMG hoard row CR 11-16 uses its printed average
   (x 1,000); quest coin stays the giver's, great works add a magic gift; bands keep the old thinning for a lone
   traveller (Fair Chances); in mountains and marsh the travel pace only forbids Fast.
+- Part E: the chance on an attack or spell card while choosing is against the nearest foe; a party member's
+  melee blow that would kill a beaten humanoid asks to knock them out (the Auto and the enemy kill, as before);
+  rituals cast outside a fight spend no slot; small beasts' heights on their squares were chosen by eye.
 Ideas for later:
 - (none yet)
-Next session starts at: Expansion 1, part E, task E.1 (cards in `rules/describe.py` and `ui/tooltips.py`, status
-  icons, creature cards, the battle log's rolls; include Part D's new lines: bonds, charges, artifact properties, a
-  sentient thing's demand) in docs/expansions/01-dice-destiny.md
+Next session starts at: Expansion 2, Blades & Backgrounds, step 1 of docs/EXPANSIONS.md §5.1: make the branch
+  `dlc/02-blades-backgrounds` from main, then step 2, the design note `docs/expansions/02-blades-backgrounds.md` with
+  its parts and task list, from §6.2 (and Appendices A, B, E for its codex entries: `tools/codex/coverage.py --dlc`)
 
 ## Done
 
@@ -35,6 +37,7 @@ Next session starts at: Expansion 1, part E, task E.1 (cards in `rules/describe.
 | 2026-10-12 | Dice & Destiny part B: spells and abilities as definitions (2024), the 2024 rules glossary, the 35 creatures from their 2025 stat blocks; C.1 reactions that ask | `dlc/01-dice-destiny` |
 | 2026-10-12 | Dice & Destiny part C: changing sides, senses, Study/Search/Ready, fliers and falling, antimagic, breakable things, climbing, swimming and leaping; one list of actions; Tactics 2.0; the arena and its proof | `dlc/01-dice-destiny` |
 | 2026-10-12 | Dice & Destiny part D: magic item framework (attunement, charges at dawn, identifying, artifacts, sentient items), DMG treasure and hoards, encounters by the XP budget, travel pace, attitudes | `dlc/01-dice-destiny` |
+| 2026-10-13 | Dice & Destiny part E: cards and tooltips, 47 status icons, the battle log's rolls, Creature details; the adaptation pass for borrowed monster tiles; spell looks; the last glossary rules; the codex settled; the shelf icon; **released as 1.1.0** and merged into `main` | `dlc/01-dice-destiny` |
 
 ## Notes for the next session
 

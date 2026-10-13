@@ -26,7 +26,8 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Peoples, a land of extremes and wonders, a new world map** | ✅ Done (2026-10-11), branch `world-variety` |
 | **Varied, bigger, living towns** | ✅ Done (2026-10-11), branch `world-variety` |
 | **Clearing the decks for the expansions** | ✅ Done (2026-10-12), branch `prep/clear-the-decks` |
-| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | ⏳ Expansion 1, *Dice & Destiny*, begun |
+| **Expansion 1, *Dice & Destiny*** (version 1.1.0) | ✅ Released (2026-10-13), branch `dlc/01-dice-destiny` |
+| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | ⏳ Expansion 2, *Blades & Backgrounds*, next |
 
 ---
 
@@ -37,6 +38,78 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-13: Dice & Destiny part E — cards, icons and pictures; **version 1.1.0 released** — branch `dlc/01-dice-destiny`
+
+**Expansion 1, *Dice & Destiny*, is finished and out (version 1.1.0).** Its icon, a gold twenty-sided die, is now on
+the title screen's shelf. No new world is needed for this part (part D's note still stands: saves from before
+2026-10-12 do not load).
+
+**What is different when you play**
+- **Point at anything in a fight and a card tells you what it is.** Rest the mouse on someone for a moment: their
+  name and what they are, how hurt they look, the states they are in, and for a creature a short stat block (armour,
+  speeds, senses, what it resists or shrugs off, each of its traits and attacks, its breath ready or recharging,
+  Legendary Resistance left, its Challenge). The same card is on the turn-order bar and on the target's name in the
+  side panel.
+- **Small icons for every state**, in a row over each figure's health bar (up to four, then "+3"): the fifteen
+  conditions of the 2024 rules (prone, grappled, frightened, poisoned, asleep...), exhaustion, Bloodied, dying (with
+  the death saves made and failed) and stable, and everything a spell or a feature leaves on someone: concentrating,
+  hidden, flying, dodging, a blow readied, marked by Guiding Bolt, temporary hit points, Heroic Inspiration, slowed,
+  on fire, holding someone, a stirge feeding, blessed, shielded, warded, resisting, guided, unable to heal, unable to
+  strike out, surprised; and your own body's troubles (bleeding, a festering wound, pain, drink, wounds). Point at
+  an icon for its card: what it does, who caused it, how long it lasts and how it ends. The one whose turn it is,
+  and the one you are aiming at, have the same row of icons in the side panel, for those who play with the keys.
+- **The battle log shows its dice.** Point at a line ("The goblin's blade opens your arm") and its roll appears:
+  "d20 15 + 4 = 19 vs AC 16 — hit [flanking]", the damage, and whether it was a critical, resisted or doubled. This
+  works whether or not the dice lines are shown in the log.
+- **The action list explains itself.** Point at an attack, a spell or an ability in the list: what it costs, its
+  range and area, its damage and save, concentration, how long it lasts, and the chance against the nearest foe.
+- **Spells look like what they are**: Fire Bolt flies, Ray of Frost and Scorching Ray are beams, Lightning Bolt is a
+  crackling line, Fireball is a bead that bursts, Burning Hands and Cone of Cold sweep out from the hands,
+  Thunderwave is a shockwave, Ice Storm falls unevenly, Sacred Flame and Flame Strike come down from above as a
+  column of light or fire, Hold Person and Command leave a dark ring, Spirit Guardians spreads around the priest.
+  Bolts, rays and lines have the sharper bolt sound.
+- **The beasts and monsters look more like the game's own figures**: a wolf, a dog, a rat or a snake now stands
+  lower than a man instead of filling his square; every borrowed picture has the same dark outline and light from
+  the top left, and no soft glows round it. The ghost and the wraith keep their faint, dotted look.
+- **Magic things in the pack carry marks**: a gold ring for a thing bound to someone, a speech mark for a thing
+  that is awake and wants something; point at them for what they mean.
+- **Out of a fight**, pointing at the troubles under a party member's name in the side panel (hungry, cold,
+  bleeding...) shows one card with each trouble and what to do about it.
+- **A new setting, Creature details** (Settings): Full (as above), or What my character knows: until someone has
+  studied a kind of creature (the Study action) or killed one before, its card shows only how hurt it looks and
+  what states it is in.
+
+**How to see it**: start or load a game and get into a fight (or use the debug console, `fight goblins`); rest the
+mouse on a figure, an icon over a head, a line of the log, a choice in the list. The shelf icon is on the title
+screen; pointing at it shows everything the expansion adds. **Settings → Creature details** changes the cards.
+
+**What could not be checked**: how the cards and icons look at Anton's window size, and whether the half-second wait
+before a card feels right; the adapted monster pictures were judged on a contact sheet (`build/adapt_sheet.png`
+after `tools/build_tiles.py --adapt-sheet build/adapt_sheet.png`), not in his game.
+
+**Anything assumed**
+- The chance on an attack or spell card while choosing from the list is against the nearest foe.
+- Icons for raging, Hunter's Mark, Hex and the weapon masteries come with the expansions that bring those features.
+- Squares and the path keep their words in the side panel (what is under the mouse) rather than a floating card.
+- Small beasts' heights (a wolf about three quarters of a man, a rat half) were chosen by eye.
+
+**Codex coverage**:
+
+| Book | Done | Adapted | Left out | Of |
+|---|---|---|---|---|
+| Player's Handbook | 194 | 36 | 7 | 1,797 |
+| Dungeon Master's Guide | 24 | 22 | 20 | 651 |
+| Monster Manual | 26 | 8 | 0 | 503 |
+
+Expansion 1's own entries: all 327 settled (237 done, 65 adapted, 25 left out with a reason). Six glossary words
+whose subject comes later were handed to the expansions that bring it: illusions (5), shape-shifting (11),
+possession (18), burrowing (19), suffocation (22), improvised weapons (2).
+
+**Also in this part (rules)**: a party member whose melee blow would kill a beaten person may knock them out instead
+(the game asks; they are taken alive, a prisoner after the fight); Identify, and any ritual, cast outside a fight
+spends no spell slot and ten minutes more; a creature with a damage threshold shrugs off smaller blows; a creature
+with tremorsense feels anyone standing on the same ground.
 
 ### Session, 2026-10-12 (late night): Dice & Destiny part D — treasure, magic items, encounters — branch `dlc/01-dice-destiny`
 

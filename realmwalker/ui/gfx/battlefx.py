@@ -42,6 +42,14 @@ SPELL_COLOURS = {"sleep": (190, 150, 255), "web": (220, 220, 210), "bless": (255
 CONDITION_WORDS = {"prone": "down", "restrained": "held fast", "paralyzed": "paralysed", "stunned": "stunned",
                    "asleep": "asleep", "poisoned": "poisoned", "grappled": "grappled", "frightened": "afraid",
                    "blinded": "blind"}
+# The looks a spell can have (data/spells.json "fx"), and the look of a cast that names only what it does.
+LOOKS = ("bolt", "ray", "darts", "touch", "cone", "burst", "shock", "line", "rain", "strike", "zone", "aura", "summon",
+         "teleport", "heal", "buff", "curse", "sleep", "thrown")
+LOOKS_BY_EFFECT = {"save": "burst", "breath": "cone", "heal": "heal", "buff": "buff", "sleep": "sleep",
+                   "condition": "curse", "attack": "bolt", "darts": "darts", "zone": "zone", "aura": "aura",
+                   "summon": "summon", "teleport": "teleport"}
+SHAPE_LOOKS = {"line": "line", "cone": "cone", "cube": "shock", "sphere": "burst", "cylinder": "burst"}  # a breath, a blast
+STATUS_ROW = 4  # status icons shown over a figure before "+N"
 TAGS = {"paralyzed": "held", "stunned": "stunned", "restrained": "webbed", "grappled": "held", "unconscious": "asleep",
         "frightened": "afraid"}  # the one word under a figure (the full words float up when it happens)
 
@@ -54,6 +62,7 @@ class BattleBoard:
     def __init__(self) -> None:
         self.seen = 0
         self.fx: list[dict] = []
+        self.looks: dict[int, str] = {}  # caster -> the look of the spell just cast
         self.tracks: dict[int, list] = {}  # fighter -> [(start time, path, seconds a square)]
         self.tok_tracks: dict[int, list] = {}
         self.fell: dict[int, float] = {}
@@ -189,8 +198,7 @@ class BattleBoard:
                 impact = t + LUNGE * 0.5
             else:
                 how = ev.get("how", "")
-                if how.startswith("spell") and ev.get("dtype") in ("cold", "fire", "necrotic", "radiant") and \
-                        any(w in ev.get("weapon", "") for w in ("ray", "touch", "bolt")) and "fire bolt" not in ev.get("weapon", ""):
+                if how.startswith("spell") and self.looks.get(a) == "ray":
                     self.fx.append({"kind": "beam", "from": a, "to": b, "t0": t, "dur": 0.32, "color": colour_for(ev.get("dtype", ""))})
                     impact = t + 0.12
                 else:
@@ -275,51 +283,77 @@ class BattleBoard:
         return t
 
     def _cast(self, battle, ev: dict, t: float) -> float:
+        """A spell drawn by its look (data/spells.json "fx": the event's `look`), coloured by its damage type."""
         spell = ev.get("spell", "")
         dtype = ev.get("dtype", "")
+        look = ev.get("look") or SHAPE_LOOKS.get(ev.get("shape", "")) or LOOKS_BY_EFFECT.get(ev.get("effect", ""), "")
         color = colour_for(dtype, spell)
+        if look in ("curse",):
+            color = (150, 90, 200) if not dtype else color
         self.fx.append({"kind": "glow", "who": ev["by"], "t0": t, "dur": 0.5, "color": color})
+        self.looks[ev["by"]] = look  # the spell attack that follows is drawn as this look (a ray is a beam)
         area = [tuple(c) for c in ev.get("area") or []]
-        if not area:
-            return t + 0.2
-        shape = ev.get("shape", "")
         point = tuple(ev["point"]) if ev.get("point") else None
         start = t + 0.25
         try:
             caster = battle.fighter(ev["by"])
             ox, oy = caster.x + caster.sq / 2, caster.y + caster.sq / 2
         except StopIteration:
-            ox, oy = area[0][0] + 0.5, area[0][1] + 0.5
-        if shape in ("sphere", "cylinder") and point is not None and ev.get("effect") in ("save",) and spell != "sleep":
-            # A bead flies to the spot, and bursts.
-            self.fx.append({"kind": "bead", "from": (ox, oy), "to": (point[0] + 0.5, point[1] + 0.5), "t0": start,
-                            "dur": 0.32, "color": color, "sprite": MAGIC_FX.get(dtype, "fx/magic")})
+            ox, oy = (area[0][0] + 0.5, area[0][1] + 0.5) if area else (0.0, 0.0)
+        target = ev.get("to")
+        if not area:
+            if look == "curse" and target is not None:
+                self.fx.append({"kind": "ring", "who": target, "t0": start, "dur": 0.7, "color": color})
+            elif look == "touch" and target is not None:
+                self.fx.append({"kind": "burst", "who": target, "sprite": MAGIC_FX.get(dtype, "fx/magic"), "t0": start,
+                                "dur": 0.4})
+            elif look == "strike" and target is not None:
+                try:
+                    f = battle.fighter(target)
+                    self.fx.append({"kind": "column", "at": (f.x + f.sq / 2, f.y + f.sq / 2), "t0": start, "dur": 0.5,
+                                    "color": color})
+                except StopIteration:
+                    pass
+                self._impact = start + 0.2
+                return start + 0.3
+            elif look in ("summon",) and point is not None:
+                self.fx.append({"kind": "puff", "at": point, "t0": start, "dur": 0.5, "color": color})
+            elif look == "aura":
+                self.fx.append({"kind": "ring", "who": ev["by"], "t0": start, "dur": 0.9, "color": color, "wide": True})
+            return t + 0.2
+        cx, cy = ox, oy  # where the spell spreads from: the caster (cone, line, aura) or the point (burst, rain)
+        if look in ("burst", "thrown", "sleep", "rain", "strike", "zone", "heal") and point is not None:
+            cx, cy = point[0] + 0.5, point[1] + 0.5
+        if look in ("burst", "thrown") and point is not None:  # a bead (or a flask) flies to the spot, and bursts
+            self.fx.append({"kind": "bead", "from": (ox, oy), "to": (cx, cy), "t0": start, "dur": 0.32, "color": color,
+                            "sprite": MAGIC_FX.get(dtype, "fx/magic")})
             start += 0.32
-            cx, cy = point[0] + 0.5, point[1] + 0.5
-        elif point is not None and shape in ("sphere", "cylinder", "cube") and ev.get("effect") not in ("breath",):
-            cx, cy = point[0] + 0.5, point[1] + 0.5
-        else:
-            cx, cy = ox, oy
-        if shape == "line" and point is not None:
+        radius = max((max(abs(c[0] + 0.5 - cx), abs(c[1] + 0.5 - cy)) for c in area), default=1.5) + 0.5
+        if look == "line" and point is not None:
             far = max(area, key=lambda c: (c[0] + 0.5 - ox) ** 2 + (c[1] + 0.5 - oy) ** 2)
             self.fx.append({"kind": "bolt", "from": (ox, oy), "to": (far[0] + 0.5, far[1] + 0.5), "t0": start, "dur": 0.45,
                             "color": color, "seed": len(self.fx)})
-        if shape == "cube" and ev.get("effect") == "save":
-            self.fx.append({"kind": "shock", "at": (cx, cy), "t0": start, "dur": 0.45, "color": color,
-                            "radius": max(1.5, math.sqrt(len(area)) * 0.8)})
-        if shape in ("sphere", "cylinder") and ev.get("effect") == "save":
-            radius = max(abs(c[0] + 0.5 - cx) for c in area) + 0.5 if area else 2
+        elif look in ("burst", "thrown"):
             self.fx.append({"kind": "flash", "at": (cx, cy), "t0": start, "dur": 0.55, "color": color, "radius": radius})
             self.shake_until = max(self.shake_until, start + 0.3)
-        sprite = "fx/sparkle" if ev.get("effect") in ("sleep", "heal", "buff") else MAGIC_FX.get(dtype, "fx/magic")
-        if spell == "web" or dtype in ("thunder", "lightning"):
+        elif look == "shock":
+            self.fx.append({"kind": "shock", "at": (cx, cy), "t0": start, "dur": 0.45, "color": color,
+                            "radius": max(1.5, math.sqrt(len(area)) * 0.8)})
+        elif look == "strike":
+            self.fx.append({"kind": "column", "at": (cx, cy), "t0": start, "dur": 0.55, "color": color,
+                            "radius": radius})
+        elif look == "aura":
+            self.fx.append({"kind": "shock", "at": (cx, cy), "t0": start, "dur": 0.8, "color": color, "radius": radius})
+        sprite = "fx/sparkle" if look in ("sleep", "heal", "buff", "aura") else MAGIC_FX.get(dtype, "fx/magic")
+        if look in ("line", "shock") or spell == "web":
             sprite = ""  # the bolt or the shockwave is the picture; the squares only flash
-        for c in area:
+        delay = 0.035 if look != "rain" else 0.0
+        for i, c in enumerate(area):
             d = math.hypot(c[0] + 0.5 - cx, c[1] + 0.5 - cy)
-            if sprite:
-                self.fx.append({"kind": "cell", "at": c, "t0": start + d * 0.035, "dur": 0.5, "sprite": sprite, "color": color})
+            wait = d * delay if look != "rain" else ((c[0] * 7 + c[1] * 13 + i) % 9) * 0.05  # rain falls unevenly
+            self.fx.append({"kind": "cell", "at": c, "t0": start + wait, "dur": 0.5, "sprite": sprite, "color": color})
         reach = max((math.hypot(c[0] + 0.5 - cx, c[1] + 0.5 - cy) for c in area), default=0)
-        self._impact = start + reach * 0.035 + 0.1
+        self._impact = start + (reach * delay if look != "rain" else 0.4) + 0.1
         return self._impact + 0.15
 
     def busy(self, now: float) -> bool:
@@ -695,6 +729,7 @@ class BattleBoard:
             order.append((y + f.sq, f, x, y))
         order.sort(key=lambda t: t[0])
         self.cells = {}
+        self.status_px = {}
         cw, ch = canvas.cell_w, canvas.cell_h
         for _, f, x, y in order:
             cx, fy, s = self.place(f, now)
@@ -761,6 +796,8 @@ class BattleBoard:
         bar_color = colors.named("good" if ratio > 0.6 else ("warn" if ratio > 0.3 else "danger"))
         bw = s * 0.8
         canvas.over(*theme.bar(cx - bw / 2, fy - s - 5, bw, max(3, T // 10), ratio, bar_color))
+        if T >= 24:
+            self._statuses(canvas, battle, f, cx, fy - s - 7)
         show_name = f.id in (ov.get("named") or ()) or f.id == ov.get("current") or f.id == ov.get("target")
         if show_name and T >= 24:
             color = (150, 220, 130) if f.side == "party" else (236, 120, 100)
@@ -780,6 +817,30 @@ class BattleBoard:
         if tag is not None and T >= 24:  # one short word, small enough to sit under its own square
             canvas.over(Text(cx, fy - 1, tag[0], "prose_bold", max(10, min(13, T // 4)), (*tag[1], 255), anchor="mb",
                              outline=True, shadow=False))
+
+    def _statuses(self, canvas, battle, f, cx: float, bottom: float) -> None:
+        """A row of status icons above the health bar: up to four, then "+N" (rules/describe.statuses)."""
+        from realmwalker.rules import describe
+
+        sts = describe.statuses(f, battle)
+        if not sts:
+            return
+        k = 2 if self.T >= 40 else 1  # whole multiples of the 10-pixel pictograms
+        size = 10 * k
+        shown = sts[:STATUS_ROW]
+        extra = len(sts) - len(shown)
+        width = len(shown) * (size + 1) + (size if extra else 0)
+        x0 = cx - width / 2
+        top = bottom - size
+        rects = []
+        for i, st in enumerate(shown):
+            px = round(x0 + i * (size + 1))
+            canvas.over(Sprite(st.icon, px, round(top), size, size))
+            rects.append(((px, top, size, size), st))
+        if extra:
+            canvas.over(Text(x0 + len(shown) * (size + 1) + 1, bottom, f"+{extra}", "prose_bold", max(10, size - 2),
+                             (230, 220, 200, 255), anchor="lb", outline=True, shadow=False))
+        self.status_px[f.id] = rects
 
     def _effects(self, canvas, now: float) -> None:
         atlas = canvas.gfx.atlas
@@ -843,6 +904,14 @@ class BattleBoard:
                 pts.append((bx, by))
                 canvas.over(Lines(pts, max(8, T * 0.4), (r, g, bl, fade // 3)))
                 canvas.over(Lines(pts, max(2, T * 0.1), (255, 255, 255, fade)))
+            elif k == "column":  # light or fire falling from above onto the spot
+                cx, cy = self.sq_px(*e["at"])
+                r, g, bl = e["color"]
+                fade = int(255 * (1 - p) ** 0.7)
+                width = max(8, T * 0.5) * e.get("radius", 1.0) ** 0.5
+                top = cy - T * 6 * (1 - min(1.0, p * 3))
+                canvas.over(Lines([(cx, top - T * 4), (cx, cy)], width, (r, g, bl, fade // 3)))
+                canvas.over(Lines([(cx, top - T * 4), (cx, cy)], max(2, width * 0.3), (255, 250, 230, fade)))
             elif k == "flash":
                 cx, cy = self.sq_px(*e["at"])
                 rad = e["radius"] * T * (0.4 + 0.8 * min(1.0, p * 2))

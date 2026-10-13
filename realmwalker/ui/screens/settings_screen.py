@@ -6,7 +6,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 
 from realmwalker.config import ANIMATION_CHOICES, AUTOSAVE_CHOICES, COMPANION_CHOICES, MAP_ZOOMS, \
-    REACTION_CHOICES, TOWN_TIME_CHOICES, VERBOSITY_LEVELS, VOLUME_STEPS, WORLD_ZOOMS, Settings
+    REACTION_CHOICES, TOWN_TIME_CHOICES, CREATURE_DETAIL_CHOICES, VERBOSITY_LEVELS, VOLUME_STEPS, WORLD_ZOOMS, Settings
 from realmwalker.ui import colors
 from realmwalker.ui.input import KeyEvent
 from realmwalker.ui.screens.base import ConfirmBox, Screen
@@ -63,6 +63,11 @@ class SettingsScreen(Screen):
                    "In a fight, when the rules give you a choice out of turn. Ask me: before a spell, a use of a "
                    "feature or Heroic Inspiration is spent (an opportunity attack on a fleeing enemy and the like "
                    "happen by themselves). Ask for everything: every reaction asks. Decide for me: none asks."),
+            Option("Creature details", lambda: {"full": "Full", "known": "What my character knows"}[
+                       s.creature_details], lambda d: self._cycle("creature_details", CREATURE_DETAIL_CHOICES, d),
+                   "What a creature's card shows when you point at it in a fight. Full: its whole stat block. What my "
+                   "character knows: its health in words and its states, and the rest once someone has studied it "
+                   "(the Study action) or killed one before."),
             Option("Time in towns", lambda: {"flows": "Flows", "waits": "Waits for you"}[s.time_in_towns],
                    lambda d: self._cycle("time_in_towns", TOWN_TIME_CHOICES, d),
                    "Flows: in a town the clock runs by itself, and its people walk about their day while you stand and "

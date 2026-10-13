@@ -229,8 +229,10 @@ def test_identify_tells_a_wizard_what_a_strange_thing_is(world, tables):
     t0 = game.world.time
     said = magic.cast_on_road(game, wiz, "identify")
     assert "Identify" in said[0] and ring.magic["identified"]
-    assert sp.slots_left(wiz, tables)[0] == slots - 1 and game.world.time - t0 == 10
+    # A ritual (2024): no slot spent, ten minutes longer than the casting's ten.
+    assert sp.slots_left(wiz, tables)[0] == slots and game.world.time - t0 == 20 and "ritual" in said[0]
     # Never in a fight, and never from a scroll read aloud in one.
     b = fight(tables, [wiz])
     menu = {sid: (ok, why) for sid, ok, why in b.spell_options(b.side(PARTY)[0])}
     assert menu["identify"] == (False, "not in a fight")
+

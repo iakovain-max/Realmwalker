@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from realmwalker.game.magic import lasting_text
 from realmwalker.game.state import GameState
+from realmwalker.rules import describe
 from realmwalker.rules import spells as spellrules
 from realmwalker.rules.character import ABILITIES, Sheet, signed
 from realmwalker.rules.inventory import best_slot_items, equip, pack_mates, unequip, worn_by
@@ -811,7 +812,12 @@ class InventoryScreen(Screen):
             elif wearer is c:
                 name = name[:name_w - 7] + " <dim>(worn)</>" if len(name) < name_w - 7 else name[:name_w]
             color = colors.SELECT_FG if selected else (colors.named("magic") if it.magic else colors.FG)
-            canvas.markup(name_x, ry, name, fg=color, bg=bg, max_width=name_w)
+            marks = describe.item_marks(g, it) if it.magic else []
+            canvas.markup(name_x, ry, name, fg=color, bg=bg, max_width=name_w - 2 * len(marks))
+            for k, mark in enumerate(marks):  # bound to someone; a sentient thing wanting something
+                mx = name_x + name_w - 2 * (len(marks) - k)
+                canvas.icon(mx, ry, f"status/{mark}")
+                canvas.hit(mx, ry, 2, 1, tooltip=lambda it=it, mark=mark: describe.item_mark_card(g, it, mark))
             canvas.text(x + w - cols_w, ry, f"{t.weight(it):>5g}", colors.DIM, bg)
             canvas.text(x + w - cols_w + 5, ry, f"{money_short(t.value(it)):>9}"[-9:], colors.named("loot"), bg)
         if not items:
@@ -846,9 +852,14 @@ class InventoryScreen(Screen):
         canvas.markup(ix + 7, top + 1, f"<dim>{CATEGORY_NAMES.get(t.category(cur), t.category(cur))}</>",
                       max_width=iw - 7)
         wearer, _ = worn_by(c, cur.uid)
+        mx = ix + 7
+        for mark in describe.item_marks(g, cur) if cur.magic else []:
+            canvas.icon(mx, top + 2, f"status/{mark}")
+            canvas.hit(mx, top + 2, 2, 1, tooltip=lambda mark=mark: describe.item_mark_card(g, cur, mark))
+            mx += 3
         if wearer is not None:
-            canvas.markup(ix + 7, top + 2, f"<good>Worn by {markup.escape(wearer.name.split()[0])}</>",
-                          max_width=iw - 7)
+            canvas.markup(mx, top + 2, f"<good>Worn by {markup.escape(wearer.name.split()[0])}</>",
+                          max_width=ix + iw - mx)
         top += 4
         details = item_details(g, cur)
         details = details.split(chr(10), 1)[1] if chr(10) in details else ""  # the name is the heading already

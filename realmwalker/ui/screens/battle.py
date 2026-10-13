@@ -10,7 +10,7 @@ surrender, leave the field from its edge, let the game play the turn (z), or end
 from __future__ import annotations
 
 from realmwalker.audio import cues
-from realmwalker.rules import grid
+from realmwalker.rules import describe, grid
 from realmwalker.rules import spells as spellrules
 from realmwalker.rules.combat import FOE, PARTY, Battle, Fighter, spell_id
 from realmwalker.ui import colors, markup
@@ -967,6 +967,10 @@ class BattleScreen(Screen):
             if f.state in ("fled",):
                 continue
             canvas.hit(cx, cy, cw, ch, tooltip=self._tooltip(f))
+        pw, ph = canvas.cell_w, canvas.cell_h
+        for fid, rects in getattr(self.board, "status_px", {}).items():
+            for (px, py, s, _), st in rects:  # each icon over a figure: its own card (after the figure: it wins)
+                canvas.hit(int(px // pw), int(py // ph), max(1, round(s / pw)), max(1, round(s / ph)), tooltip=st.card)
         if b.outcome is not None:
             words = {"victory": ("Victory", (236, 200, 120)), "defeat": ("Fallen", (220, 70, 56)),
                      "fled": ("Escaped", (220, 180, 110)), "parley": ("They let you go", (180, 220, 160)),
@@ -1034,6 +1038,9 @@ class BattleScreen(Screen):
                 canvas.text(x, cy + 1, "Choose: click, Tab or arrows, Enter. Esc back", colors.DIM, max_width=w)
                 if t is not None:
                     canvas.markup(x, cy + 2, f"<title>► {markup.escape(t.name)}</>", max_width=w)
+                    canvas.hit(x, cy + 2, min(w, len(t.name) + 2), 1, tooltip=self._tooltip(t))
+                    if self._status_row(canvas, t, x + 2, cy + 3, w - 2):
+                        cy += 1
                     cy = self._render_odds(canvas, f, t, x, cy + 3, w)
                 cy += 1
             elif self.mode == "aim":
@@ -1072,23 +1079,29 @@ class BattleScreen(Screen):
         canvas.markup(x, y + 2, " · ".join(pips), max_width=w)
         move = f"Move {f.move_left} ft" + (f" of {f.speed}" if not f.dashed else " (running)")
         canvas.markup(x, y + 3, f"<info>{move}</> <dim>AC {f.ac()}</>", max_width=w)
-        bits = []
-        if f.concentration:
-            sp = self.game.tables.spells.defs.get(f.concentration["spell"], {})
-            bits.append(f"<magic>holding {markup.escape(sp.get('name', 'a spell'))}</>")
-        bits += [c for c in f.conditions if c not in ("unconscious",)]
-        if f.hidden:
-            bits.append("<good>hidden</>")
-        if f.disengaged:
-            bits.append("disengaging")
-        if f.dodging:
-            bits.append("dodging")
-        if f.buff_value("attack_die"):
-            bits.append("blessed")
-        if bits:
-            canvas.markup(x, y + 4, " · ".join(bits), fg=colors.DIM, max_width=w)
+        if self._status_row(canvas, f, x, y + 4, w, extra=["disengaging"] if f.disengaged else []):
             return y + 5
         return y + 4
+
+    def _status_row(self, canvas: Canvas, f: Fighter, x: int, y: int, w: int, extra=()) -> bool:
+        """Someone's states as icons with a word each, every one with its card (for the keyboard: what the board shows
+        over their head)."""
+        sts = describe.statuses(f, self.battle)
+        if not sts and not extra:
+            return False
+        cx = x
+        for st in sts:
+            word = markup.plain(st.card.title).split(" (")[0].lower()
+            if cx + 3 + len(word) > x + w:
+                canvas.text(cx, y, "…", colors.DIM)
+                break
+            canvas.icon(cx, y, st.icon)
+            canvas.hit(cx, y, 3 + len(word), 1, tooltip=st.card)
+            cx = canvas.markup(cx + 2, y, word, fg=colors.DIM, max_width=x + w - cx - 2) + 1
+        for word in extra:
+            if cx + len(word) <= x + w:
+                cx = canvas.markup(cx, y, word, fg=colors.DIM) + 1
+        return True
 
     def _render_hover(self, canvas: Canvas, f: Fighter, x: int, y: int, w: int) -> int:
         """What is under the mouse: a square (what it is, how far) or someone (how hurt, the odds of hitting them)."""
@@ -1171,7 +1184,7 @@ class BattleScreen(Screen):
             ry = y + 1 + row
             selected = i == self.choice_index
             over = canvas.hit(x, ry, w, 1, action=lambda i=i: self._click_choice(i),
-                              tooltip=(markup.escape(why) if not enabled else label))
+                              tooltip=self._choice_tip(label, value, enabled, why))
             bg = colors.HILITE_BG if selected else (colors.HOVER_BG if over else None)
             if bg:
                 canvas.fill(x, ry, w, 1, bg)
@@ -1181,6 +1194,16 @@ class BattleScreen(Screen):
             else:
                 canvas.text(x, ry, f"{i + 1}. {markup.plain(label)}: {why}", colors.FAINT, bg, max_width=w)
         return y + 1 + min(room, len(self.choices))
+
+    def _choice_tip(self, label, value, enabled, why):
+        f = self.actor()
+        if f is None:
+            return markup.escape(why) if not enabled else label
+        b = self.battle
+        foes = [e for e in b.enemies_of(f) if e.active]
+        target = min(foes, key=lambda e: b.gap(f, e)) if foes else None  # the chance against the nearest foe
+        known = target is None or self.full_details(target)
+        return lambda: describe.choice(self.battle, f, self.choice_kind, value, label, enabled, why, target, known=known)
 
     def _click_choice(self, i: int) -> None:
         self.choice_index = i
@@ -1210,7 +1233,17 @@ class BattleScreen(Screen):
             canvas.button(bx, by, label, lambda a=action: self.pick_action(a), hotkey=key, tooltip=tip, enabled=ok,
                           max_width=col_w - 3)
 
-    def _tooltip(self, f: Fighter) -> str:
+    def _tooltip(self, f: Fighter):
+        """The creature card, built only when it is shown."""
+        return lambda: describe.creature(self.battle, f, full=self.full_details(f))
+
+    def full_details(self, f: Fighter) -> bool:
+        """Whether a creature's card shows its whole stat block (Settings, Creature details)."""
+        if f.char is not None or self.app.settings.creature_details != "known":
+            return True
+        return f.creature.def_id in self.battle.known
+
+    def _words_tip(self, f: Fighter) -> str:
         b = self.battle
         if f.char:
             wounds = "; ".join(w.label for w in f.char.wounds) or "no wounds"
@@ -1225,13 +1258,22 @@ class BattleScreen(Screen):
         if h <= 0 or w <= 4:
             return
         lines: list = []
-        for text, cat in self.battle.log[-80:]:
-            lines.extend(markup.wrap(text, w, colors.named(LOG_COLORS.get(cat, "fg"))))
+        whose: list[int] = []  # the log line each wrapped row belongs to (its rolls are its tooltip)
+        log = self.battle.log
+        first = max(0, len(log) - 80)
+        for n, (text, cat) in enumerate(log[first:], first):
+            rows = markup.wrap(text, w, colors.named(LOG_COLORS.get(cat, "fg")))
+            lines.extend(rows)
+            whose.extend([n] * len(rows))
         self.log_scroll = min(self.log_scroll, max(0, len(lines) - h))
         end = len(lines) - self.log_scroll
         start = max(0, end - h)
+        rolls = getattr(self.battle, "rolls", {})
         for i, line in enumerate(lines[start:end]):
             canvas.spans(x, y + i, line, max_width=w)
+            n = whose[start + i]
+            if n in rolls:
+                canvas.hit(x, y + i, w, 1, tooltip=lambda n=n: describe.log_line(self.battle, n))
         if self.log_scroll:
             canvas.text(x + w - 14, y + h - 1, "(PgDn: newer)", colors.FAINT)
 

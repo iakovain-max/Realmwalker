@@ -258,6 +258,9 @@ def damage_taken(f, amount: int, dtype: str) -> tuple[int, str]:
     kind = defences(f, dtype)
     if kind == "immune":
         return 0, kind
+    threshold = int(f.cdef.get("damage_threshold") or 0) if f.creature is not None else 0
+    if threshold and amount < threshold:
+        return 0, "threshold"  # Damage Threshold (2024): less than it does nothing; as much or more, all of it
     if resists(f, dtype):
         amount //= 2
     if kind == "vulnerable":

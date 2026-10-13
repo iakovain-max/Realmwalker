@@ -42,6 +42,7 @@ log = logging.getLogger("realmwalker.app")
 MIN_COLUMNS = 80
 MIN_ROWS = 30
 RENDER_FAILURES_BEFORE_CLOSING = 3
+CARD_DELAY = 0.3  # seconds of hovering before a tooltip card shows (docs/EXPANSIONS.md §4.15)
 NAV_KEYS = {"up", "down", "left", "right", "pageup", "pagedown", "home", "end", "tab"}
 
 
@@ -372,8 +373,19 @@ class App:
                 self._sound_failed = True
                 log.exception("Sound failed; carrying on without it")
 
+    def _time_card(self, canvas: Canvas) -> None:
+        """A card appears after a short hover over the same thing (words show at once)."""
+        rect = canvas.tip_rect if canvas.tip_is_card else None
+        now = self.clock()
+        if rect != getattr(self, "_tip_rect", None):
+            self._tip_rect, self._tip_since = rect, now
+        canvas.tip_ready = rect is not None and now - self._tip_since >= CARD_DELAY
+        self._tip_waiting = rect is not None and not canvas.tip_ready
+
     def frame_timeout(self) -> float:
         """How long the window may sleep waiting for input before redrawing."""
+        if getattr(self, "_tip_waiting", False):
+            return 0.05  # a card is about to appear
         moving = self.gfx.animate and getattr(self.top, "moving", False)
         if moving:
             return 1 / 60  # something on screen is in motion: keep it smooth
@@ -418,6 +430,7 @@ class App:
         try:
             canvas.push_layer()  # the status line, notices and tooltips sit above every picture
             self._render_toasts(canvas)
+            self._time_card(canvas)
             canvas.draw_tooltip()
         except Exception:
             self.report_error("drawing the screen")
