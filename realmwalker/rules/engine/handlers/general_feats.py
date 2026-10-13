@@ -49,7 +49,8 @@ def gwm_heavy(b, f, ev, hook, buff) -> None:
 def gwm_hew(b, f, ev, hook, buff) -> None:
     """Hew: a melee weapon's critical hit, or a blow that drops a foe, earns a bonus-action blow with it this turn."""
     opt, t = ev.opt, ev.target
-    if not ev.hit or opt.kind != "melee" or opt.item_uid is None or not _own_turn(b, f) or f.bonus <= 0:
+    weapon = opt.item_uid is not None or f.char is None and opt.extra.get("item")
+    if not ev.hit or opt.kind != "melee" or not weapon or not _own_turn(b, f) or f.bonus <= 0:
         return
     if ev.crit or t is None or not t.active or t.hp <= 0:
         f.__dict__["hew"] = (b.round, opt.key)

@@ -50,6 +50,11 @@ QUIET_ROUNDS = 3  # rounds in which nobody can get at anybody before a fight bre
 STATES = ("fighting", "fleeing", "down", "dead", "fled", "surrendered")
 
 
+# The weapon properties a stat block's attack keeps from its item (its numbers are the block's own; Heavy is what
+# Great Weapon Master reads).
+CREATURE_PROPS = ("heavy", "two_handed", "finesse", "light", "thrown")
+
+
 @dataclass
 class AttackOption:
     key: str
@@ -1159,8 +1164,7 @@ class Battle:
             if provoke and not free:
                 there = (sq[0], sq[1], f.sq)
                 for e in self.enemies_of(f):
-                    if f.disengaged and not (e.char is not None and feats.has(e.char, "sentinel")
-                                             and self.gap(e, f) <= 1):
+                    if f.disengaged and not (e.has_trait("feat_sentinel") and self.gap(e, f) <= 1):
                         continue  # (Sentinel: a foe beside them gets a blow even at one who disengages)
                     if (e.state == "fighting" and e.can_opportunity and not e.incapacitated and e.standing
                             and self.gap(e, f) <= self.reach_of(e) and grid.gap(e.space, there) > self.reach_of(e)
@@ -1438,7 +1442,7 @@ class Battle:
             hit = self._attack(e, opt, f)
         finally:
             self._oa_target = None
-        if hit and e.char is not None and feats.has(e.char, "sentinel") and f.active and f.move_left > 0:
+        if hit and e.has_trait("feat_sentinel") and f.active and f.move_left > 0:
             f.move_left = 0  # (Sentinel: Halt)
             self.say(f"{e.the_name} stops {f.the_name} where {'they stand' if f.char else 'it stands'}.", "system")
         self._check_end()
@@ -1643,8 +1647,10 @@ class Battle:
                 if kind in ("ranged", "spell_ranged"):
                     rng_ = tuple(a.get("range") or (self.t.items.get(a["item"]).get("range") if a.get("item") in self.t.items
                                                     else None) or DEFAULT_RANGE[kind])
+                props = [p for p in self.t.items.get(a["item"]).get("properties", []) if p in CREATURE_PROPS]                     if a.get("item") in self.t.items else []
                 opt = AttackOption(f"c{i}", a["name"], kind, int(a["bonus"]), a["damage"], a["damage_type"],
-                                   reach=bool(a.get("reach")), extra=a, range=(int(rng_[0]), int(rng_[1])))
+                                   reach=bool(a.get("reach")), extra=a, range=(int(rng_[0]), int(rng_[1])),
+                                   properties=props)  # (the weapon's: Heavy for Great Weapon Master)
                 if a.get("area") or a.get("recharge"):
                     opt.available = f.recharge.get(a["name"], True)
                     opt.reason = "not ready again yet" if not opt.available else ""
@@ -1978,7 +1984,7 @@ class Battle:
             else:
                 text = self.rng.choice(lines["miss"])
             self.say(self._fill(text, att, target, weapon=weapon, armor=armor or "armour"), "flavor")
-            events.emit(self, "attack_done", actor=att, target=target, opt=opt, hit=False, dealt=0)  # Graze
+            events.emit(self, "attack_done", actor=att, target=target, opt=opt, hit=False, dealt=0, crit=False)  # Graze
             return False
         dmg_expr = opt.damage
         n, sides, flat = dice.parse(dmg_expr)
@@ -2017,7 +2023,7 @@ class Battle:
             self._block_effects(att, target, opt, opt.extra["on_hit"])
         if opt.extra.get("disease") and target.char and self.rng.chance(float(opt.extra.get("disease_chance", 1.0))):
             target.char.conditions.append(f"exposed:{opt.extra['disease']}")
-        events.emit(self, "attack_done", actor=att, target=target, opt=opt, hit=True,
+        events.emit(self, "attack_done", actor=att, target=target, opt=opt, hit=True, crit=crit,
                     dealt=max(0, before - target.hp - target.temp_hp))  # the weapon masteries
         return True
 
