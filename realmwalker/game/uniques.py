@@ -329,6 +329,7 @@ def make_character(game, uid: str) -> Character:
     level = min(int(t.rules["max_level"]), len(table_xp), max(int(u["level"]), game.leader.level + 1))
     if level > 1:
         progression.award_xp(char, table_xp[level - 1], t, rng, auto=True)
+    progression.auto_resolve(char, t)  # (a level-1 choice too: a cleric's Divine Order)
     items = t.items
     char.inventory, char.equipped, char.next_uid = [], {}, 1
     for def_id, qty in items.starting_packs.get("everyone", []) + [list(p) for p in u["kit"]]:

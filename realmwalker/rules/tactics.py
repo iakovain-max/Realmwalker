@@ -814,6 +814,9 @@ def _party_turn(b: Battle, f: Fighter) -> None:
                 break
     if b.current is not f or b.outcome is not None:
         return
+    _divine_help(b, f)
+    if b.current is not f or b.outcome is not None:
+        return
     if f.action > 0 and _use_power(b, f):
         if b.current is f and b.outcome is None:
             _bonus_strike(b, f)
@@ -900,6 +903,25 @@ def tactical_mastery(b: Battle, f: Fighter, kind: str, target: Fighter) -> str:
     if kind in ("graze", "nick", "slow", "push") and target.active:
         return "sap"
     return kind
+
+
+def _divine_help(b: Battle, f: Fighter) -> None:
+    """A cleric's Channel Divinity for friends: Divine Spark on a friend in a bad way, and War God's Blessing (Shield
+    of Faith on the hard-pressed, a Spiritual Weapon when foes are near) for the bonus action."""
+    for opt, a in _abilities(b, f, "heal_other"):
+        low = [x for x in opt.targets if x.state == "down" or x.hp < x.max_hp // 3]
+        if low and f.action > 0:
+            b.do_ability(f, opt.value, min(low, key=lambda x: (x.state != "down", x.hp, x.id)))
+            break
+    if b.current is not f or b.outcome is not None or f.bonus <= 0:
+        return
+    for opt, a in _abilities(b, f, "bless"):
+        if opt.value == "blessing_weapon" and not any(t.owner == f.id for t in b.tokens):
+            b.do_ability(f, opt.value)
+            return
+        if opt.value == "blessing_shield" and f.hp < f.max_hp // 2 and f.concentration is None:
+            b.do_ability(f, opt.value)
+            return
 
 
 def _steady_aim(b: Battle, f: Fighter, opts: list) -> None:

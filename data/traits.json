@@ -173,18 +173,38 @@
     },
     "spellcasting": {"name": "Spellcasting", "text": "Casts spells.", "where": "sheet"},
     "channel_divinity": {
-      "name": "Channel Divinity", "text": "Calls on the god's power once between rests (Turn Undead, or the domain's own).",
-      "resource": {"id": "channel_divinity", "max": 1, "recover": "short"},
-      "activate": {"id": "turn_undead", "name": "Turn Undead", "cost": "action", "uses": "channel_divinity",
-                   "requires": ["undead_within_30"], "effects": [{"op": "special", "handler": "turn_undead"}]}
+      "name": "Channel Divinity", "text": "The god's power called on directly: Divine Spark or Turn Undead (two uses, three from level 6, four from 18; a short rest brings back one).",
+      "resource": {"id": "channel_divinity", "max": {"by_level": [[2, 2], [6, 3], [18, 4]]}, "recover": "short_one"},
+      "activate": [{"id": "turn_undead", "name": "Turn Undead", "cost": "action", "uses": "channel_divinity",
+                    "requires": ["undead_within_30"], "effects": [{"op": "special", "handler": "turn_undead"}]},
+                   {"id": "divine_spark", "name": "Divine Spark: heal a friend", "cost": "action", "uses": "channel_divinity", "does": "heal_other",
+                    "aim": "ally", "range": 60, "effects": [{"op": "special", "handler": "divine_spark"}]},
+                   {"id": "divine_spark_harm", "name": "Divine Spark: smite a foe", "cost": "action", "uses": "channel_divinity",
+                    "aim": "enemy", "range": 60, "effects": [{"op": "special", "handler": "divine_spark_harm"}]}]
     },
     "destroy_undead": {"name": "Destroy Undead", "text": "Turned undead of low challenge are destroyed outright.", "where": "turn_undead"},
     "divine_intervention": {
-      "name": "Divine Intervention", "text": "A prayer the god may answer (the cleric's level or less on d100), once a week if answered.",
+      "name": "Divine Intervention", "text": "Once between long rests the god answers: a cleric spell of level 5 or lower cast without a slot.",
       "resource": {"id": "divine_intervention", "max": 1, "recover": "long"},
-      "activate": {"id": "divine_intervention", "name": "Divine Intervention", "cost": "action", "uses": "divine_intervention",
-                   "requires": ["god_ready"], "effects": [{"op": "special", "handler": "divine_intervention"}]}
+      "activate": {"id": "divine_intervention", "name": "Divine Intervention (a spell without a slot)", "cost": "free", "uses": "divine_intervention",
+                   "does": "power", "requires": ["action_left"], "effects": [{"op": "special", "handler": "divine_intervention"}]}
     },
+    "sear_undead": {"name": "Sear Undead", "text": "Undead that fail against Turn Undead take a d8 of radiant damage per point of Wisdom.", "where": "turn_undead"},
+    "order_protector": {"name": "Protector", "text": "Martial weapons and heavy armour.", "where": "sheet"},
+    "order_thaumaturge": {"name": "Thaumaturge", "text": "One more cantrip; Wisdom added to Arcana and Religion.", "where": "Sheet.skill_bonus"},
+    "blessed_divine_strike": {"name": "Divine Strike", "text": "Once a turn, a weapon hit deals 1d8 radiant more (2d8 from level 14).", "hooks": [{"event": "attack_damage", "as": "attacker", "handler": "blessed_divine_strike"}]},
+    "blessed_potent_spellcasting": {"name": "Potent Spellcasting", "text": "Wisdom added to cleric cantrips' damage; from 14, temporary hit points for a friend.", "where": "effects.cast", "hooks": [{"event": "spell_cast", "as": "self", "handler": "potent_vitality"}]},
+    "improved_blessed_strikes": {"name": "Improved Blessed Strikes", "text": "Divine Strike 2d8; Potent Spellcasting's vitality.", "where": "blessed_strikes"},
+    "blessed_healer": {"name": "Blessed Healer", "text": "Healing another with a spell heals the cleric 2 + its level.", "hooks": [{"event": "heal_spell", "as": "self", "handler": "blessed_healer"}]},
+    "supreme_healing": {"name": "Supreme Healing", "text": "Healing dice count as their highest.", "hooks": [{"event": "heal_spell", "as": "self", "handler": "supreme_healing"}]},
+    "war_gods_blessing": {
+      "name": "War God's Blessing", "text": "Channel Divinity casts Shield of Faith or Spiritual Weapon without a slot.",
+      "activate": [{"id": "blessing_shield", "name": "War God's Blessing: Shield of Faith", "cost": "free", "uses": "channel_divinity", "does": "bless",
+                    "requires": ["bonus_left"], "effects": [{"op": "special", "handler": "war_gods_blessing", "spell": "shield_of_faith"}]},
+                   {"id": "blessing_weapon", "name": "War God's Blessing: Spiritual Weapon", "cost": "free", "uses": "channel_divinity", "does": "bless",
+                    "requires": ["bonus_left", "foe_in_sight"], "effects": [{"op": "special", "handler": "war_gods_blessing", "spell": "spiritual_weapon"}]}]
+    },
+    "avatar_of_battle": {"name": "Avatar of Battle", "text": "Resistance to bludgeoning, piercing and slashing damage.", "modifiers": [{"resist": ["bludgeoning", "piercing", "slashing"]}]},
     "disciple_of_life": {
       "name": "Disciple of Life", "text": "Healing spells heal 2 + the spell's level more.",
       "hooks": [{"event": "heal_spell", "as": "self", "handler": "disciple_of_life"}]
@@ -205,8 +225,8 @@
                    "effects": [{"op": "special", "handler": "war_priest"}]}
     },
     "guided_strike": {
-      "name": "Guided Strike", "text": "Channel Divinity: +10 to an attack roll that would have missed.",
-      "hooks": [{"event": "attack_missed", "as": "attacker", "handler": "guided_strike"}]
+      "name": "Guided Strike", "text": "Channel Divinity: +10 to an attack roll that would have missed, the cleric's own or a friend's within 30 feet.",
+      "hooks": [{"event": "attack_missed", "as": "any", "handler": "guided_strike"}]
     },
     "arcane_recovery": {"name": "Arcane Recovery", "text": "Some spell slots back on a short rest, once a day.", "where": "rest"},
     "sculpt_spells": {"name": "Sculpt Spells", "text": "Friends can be left out of the wizard's evocations.", "where": "spells"},

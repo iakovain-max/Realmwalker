@@ -56,6 +56,14 @@ def feature_gives(char: Character, tables, feat: dict) -> None:
     for t in gives.get("tools", ()):
         if t not in char.tools:
             char.tools.append(t)
+    for t in gives.get("armor", ()):
+        if t not in char.armor_prof:
+            char.armor_prof.append(t)
+    for t in gives.get("weapons", ()):
+        if t not in char.weapon_prof:
+            char.weapon_prof.append(t)
+    if feat.get("choose"):
+        add_pending(char, {"kind": "option", "feature": feat["id"], "level": char.level})
     from realmwalker.rules.inventory import add_item
 
     for i in gives.get("items", ()):
@@ -277,6 +285,10 @@ def options(char: Character, tables, choice: dict) -> list[tuple[str, str, str]]
     cls = tables.classes[char.cls]
     kind = choice["kind"]
     names = {a: tables.rules["abilities"][a]["name"] for a in tables.rules["abilities"]}
+    if kind == "option":
+        feat = next((f for f in cls["features"] if f["id"] == choice["feature"]), {})
+        return [(o, cls["options"][o]["name"], cls["options"][o]["text"]) for o in feat.get("choose", ())
+                if o not in char.features]
     if kind == "subclass":
         return [(sid, s["name"], s.get("text", "") + " " + "; ".join(
             f"level {f['level']}: {f['name']}" for f in s.get("features", [])))
@@ -348,6 +360,9 @@ def options(char: Character, tables, choice: dict) -> list[tuple[str, str, str]]
 
 def choice_title(char: Character, tables, choice: dict) -> str:
     kind = choice["kind"]
+    if kind == "option":
+        feat = next((f for f in tables.classes[char.cls]["features"] if f["id"] == choice["feature"]), {})
+        return f"{feat.get('name', 'A choice')}: choose one"
     if kind == "subclass":
         return f"Choose a path for {char.name.split()[0]}"
     if kind == "asi":
@@ -382,6 +397,14 @@ def resolve(char: Character, tables, choice: dict, option_id: str) -> list[str]:
     cls = tables.classes[char.cls]
     kind = choice["kind"]
     notes = []
+    if kind == "option":
+        opt = cls["options"][option_id]
+        char.features.append(option_id)
+        feature_gives(char, tables, opt)
+        if opt.get("cantrips") and char.spells is not None:
+            add_pending(char, {"kind": "cantrips", "count": int(opt["cantrips"]), "level": char.level})
+        notes.append(f"{char.name.split()[0]}: {opt['name']}.")
+        char.pending.remove(choice)
     if kind == "subclass":
         char.subclass = option_id
         sub = cls["subclasses"][option_id]
@@ -468,6 +491,13 @@ def suggest(char: Character, tables, choice: dict, opts: list | None = None) -> 
         return ""
     kind = choice["kind"]
     cls = tables.classes[char.cls]
+    if kind == "option":  # (a fighting priest guards and smites; a priest of the book prays and blasts)
+        fighting = feats.archetype(char, tables) not in ("caster", "healer")
+        for pick in (("order_protector", "blessed_divine_strike") if fighting else
+                     ("order_thaumaturge", "blessed_potent_spellcasting")):
+            if pick in ids:
+                return pick
+        return ids[0]
     if kind == "asi":
         best = max(cls["primary"], key=lambda a: (char.abilities[a] <= 18, -cls["primary"].index(a)))
         plus_two = f"{best}+2"

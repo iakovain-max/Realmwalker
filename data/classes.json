@@ -125,7 +125,7 @@
       "skill_count": 2,
       "skill_choices": ["history", "insight", "medicine", "persuasion", "religion"],
       "suggested": {"str": 14, "dex": 8, "con": 13, "int": 10, "wis": 15, "cha": 12},
-      "choices_at_1": ["subclass"],
+      "choices_at_1": [],
       "spellcasting": {"ability": "wis", "type": "prepared",
         "cantrips": [3, 3, 3, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
         "slots": [[2], [3], [4, 2], [4, 3], [4, 3, 2], [4, 3, 3], [4, 3, 3, 1], [4, 3, 3, 2], [4, 3, 3, 3, 1], [4, 3, 3, 3, 2],
@@ -134,28 +134,38 @@
                   [4, 3, 3, 3, 3, 1, 1, 1, 1], [4, 3, 3, 3, 3, 2, 1, 1, 1], [4, 3, 3, 3, 3, 2, 2, 1, 1]]},
       "features": [
         {"level": 1, "id": "spellcasting", "name": "Spellcasting", "text": "Pray each morning for the prayers your god will grant today.", "rule": "spellcasting"},
-        {"level": 1, "id": "subclass", "name": "Divine Domain", "text": "Your god's aspect: Life or War."},
-        {"level": 2, "id": "channel_divinity", "name": "Channel Divinity", "text": "Once per rest, call on your god directly: Turn Undead, or your domain's power.", "rule": "channel_divinity"},
+        {"level": 1, "id": "divine_order", "name": "Divine Order", "text": "Your sacred role: Protector (martial weapons and heavy armour) or Thaumaturge (one more cantrip, and your Wisdom added to Arcana and Religion).", "choose": ["order_protector", "order_thaumaturge"]},
+        {"level": 2, "id": "channel_divinity", "name": "Channel Divinity", "text": "Call on your god directly: Divine Spark (heal or harm, 1d8 + Wisdom, more dice at 7, 13 and 18) or Turn Undead. Twice between long rests (three times from 6, four from 18); a short rest brings back one.", "rule": "channel_divinity"},
+        {"level": 3, "id": "subclass", "name": "Divine Domain", "text": "Your god's aspect: Life or War."},
         {"level": 4, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two."},
-        {"level": 5, "id": "destroy_undead", "name": "Destroy Undead", "text": "Weak undead that you turn are destroyed outright.", "rule": "destroy_undead"},
+        {"level": 5, "id": "sear_undead", "name": "Sear Undead", "text": "Undead that fail against your Turn Undead also burn: a d8 of radiant damage for each point of your Wisdom modifier.", "rule": "sear_undead"},
+        {"level": 7, "id": "blessed_strikes", "name": "Blessed Strikes", "text": "Divine Strike (once a turn, a weapon hit deals 1d8 radiant more) or Potent Spellcasting (your Wisdom added to a cleric cantrip's damage).", "choose": ["blessed_divine_strike", "blessed_potent_spellcasting"]},
         {"level": 8, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two."},
-        {"level": 10, "id": "divine_intervention", "name": "Divine Intervention", "text": "Beg your god to act. It rarely listens.", "rule": "divine_intervention"},
+        {"level": 10, "id": "divine_intervention", "name": "Divine Intervention", "text": "Once between long rests, your god answers: a cleric spell of level 5 or lower cast without a slot, as one action.", "rule": "divine_intervention"},
         {"level": 12, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two, or a feat."},
+        {"level": 14, "id": "improved_blessed_strikes", "name": "Improved Blessed Strikes", "text": "Divine Strike deals 2d8; Potent Spellcasting's cantrips also give twice your Wisdom in temporary hit points to you or a friend.", "rule": "improved_blessed_strikes"},
         {"level": 16, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two, or a feat."},
-        {"level": 19, "id": "epic_boon", "name": "Epic Boon", "text": "A gift of legend: an epic boon (or another feat), each raising one ability as high as 30."}
+        {"level": 19, "id": "epic_boon", "name": "Epic Boon", "text": "A gift of legend: an epic boon (or another feat), each raising one ability as high as 30."},
+        {"level": 20, "id": "greater_divine_intervention", "name": "Greater Divine Intervention", "text": "Divine Intervention may ask for a Wish (when Wish comes into the world), and then not again for 2d4 long rests."}
       ],
+      "options": {
+        "order_protector": {"name": "Protector", "text": "Trained for battle: martial weapons and heavy armour.", "gives": {"armor": ["heavy"], "weapons": ["martial"]}},
+        "order_thaumaturge": {"name": "Thaumaturge", "text": "One more cantrip, and your Wisdom modifier (at least +1) added to Arcana and Religion checks.", "cantrips": 1},
+        "blessed_divine_strike": {"name": "Divine Strike", "text": "Once on each of your turns, a weapon hit deals 1d8 radiant damage more (2d8 from level 14)."},
+        "blessed_potent_spellcasting": {"name": "Potent Spellcasting", "text": "Your Wisdom modifier added to the damage of your cleric cantrips (and from level 14, temporary hit points for you or a friend)."}
+      },
       "subclasses": {
-        "life": {"name": "Life Domain", "text": "Healers and midwives of the faith.", "armor": ["heavy"], "features": [
-          {"level": 1, "id": "disciple_of_life", "name": "Disciple of Life", "text": "Your healing spells restore 2 + the spell's level extra hit points.", "rule": "disciple_of_life"},
-          {"level": 2, "id": "preserve_life", "name": "Channel Divinity: Preserve Life", "text": "Share out healing equal to five times your level among the wounded.", "rule": "preserve_life"},
-          {"level": 6, "id": "blessed_healer", "name": "Blessed Healer", "text": "Healing others heals you a little too."},
-          {"level": 8, "id": "divine_strike", "name": "Divine Strike", "text": "Once per turn your weapon deals an extra 1d8 radiant damage.", "rule": "divine_strike"}
+        "life": {"name": "Life Domain", "text": "Healers and midwives of the faith.", "features": [
+          {"level": 3, "id": "disciple_of_life", "name": "Disciple of Life", "text": "Your healing spells restore 2 + the spell's level extra hit points.", "rule": "disciple_of_life"},
+          {"level": 3, "id": "preserve_life", "name": "Channel Divinity: Preserve Life", "text": "Share out healing equal to five times your level among the wounded within 30 feet (none past half their hit points).", "rule": "preserve_life"},
+          {"level": 6, "id": "blessed_healer", "name": "Blessed Healer", "text": "Healing someone else with a spell heals you too: 2 + the spell's level.", "rule": "blessed_healer"},
+          {"level": 17, "id": "supreme_healing", "name": "Supreme Healing", "text": "Your healing spells and Divine Spark heal their most: every die counts as its highest.", "rule": "supreme_healing"}
         ]},
-        "war": {"name": "War Domain", "text": "Chaplains of armies and the gods of battle.", "armor": ["heavy"], "weapons": ["martial"], "features": [
-          {"level": 1, "id": "war_priest", "name": "War Priest", "text": "A few times per rest, make an extra weapon attack.", "rule": "war_priest"},
-          {"level": 2, "id": "guided_strike", "name": "Channel Divinity: Guided Strike", "text": "Add +10 to one attack roll.", "rule": "guided_strike"},
-          {"level": 6, "id": "war_gods_blessing", "name": "War God's Blessing", "text": "Grant an ally +10 on an attack."},
-          {"level": 8, "id": "divine_strike", "name": "Divine Strike", "text": "Once per turn your weapon deals an extra 1d8 damage.", "rule": "divine_strike"}
+        "war": {"name": "War Domain", "text": "Chaplains of armies and the gods of battle.", "features": [
+          {"level": 3, "id": "war_priest", "name": "War Priest", "text": "A weapon attack with a bonus action, as many times as your Wisdom modifier (at least once) between short rests.", "rule": "war_priest"},
+          {"level": 3, "id": "guided_strike", "name": "Channel Divinity: Guided Strike", "text": "Add +10 to an attack roll that would miss: your own, or a friend's within 30 feet.", "rule": "guided_strike"},
+          {"level": 6, "id": "war_gods_blessing", "name": "War God's Blessing", "text": "A use of Channel Divinity casts Shield of Faith or Spiritual Weapon without a slot, and it lasts its minute without your concentration.", "rule": "war_gods_blessing"},
+          {"level": 17, "id": "avatar_of_battle", "name": "Avatar of Battle", "text": "Resistance to bludgeoning, piercing and slashing damage.", "rule": "avatar_of_battle"}
         ]}
       },
       "kits": [

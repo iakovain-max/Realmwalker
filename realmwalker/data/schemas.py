@@ -247,7 +247,10 @@ FEATURE = Obj({"level": Int(min=1, max=20), "id": Str(max_len=40), "name": Str(m
                "rule": Str(max_len=40, optional=True),
                "gives": Obj({"saves": List(Str(choices=list(ABILITY_IDS)), optional=True),
                              "tools": List(Str(max_len=40), optional=True),
-                             "items": List(Str(max_len=40), optional=True)}, optional=True)})
+                             "items": List(Str(max_len=40), optional=True),
+                             "armor": List(Str(max_len=20), optional=True),
+                             "weapons": List(Str(max_len=30), optional=True)}, optional=True),
+               "choose": List(Str(max_len=40), optional=True)})
 KIT = Obj({"name": Str(max_len=40), "items": WEIGHTED,
            "style": Str(max_len=30, optional=True)})  # the fighting style that suits it (the default)
 CLASS = Obj(
@@ -264,6 +267,9 @@ CLASS = Obj(
                              "cantrips": List(Int(min=0, max=10), min_items=10),
                              "slots": List(List(Int(min=0, max=10)), min_items=10)}, optional=True),
         "features": List(FEATURE, min_items=1),
+        # A feature's choice (data "choose"): the options, each a feature of its own kept in Character.features.
+        "options": Map(Obj({"name": Str(max_len=40), "text": Str(max_len=300), "gives": Any_(optional=True),
+                            "cantrips": Int(min=1, max=3, optional=True)}), optional=True),
         "subclasses": Map(Obj({"name": Str(max_len=40), "text": Str(max_len=300), "features": List(FEATURE),
                                "armor": List(Str(max_len=20), optional=True), "weapons": List(Str(max_len=30), optional=True)}),
                           min_items=1),

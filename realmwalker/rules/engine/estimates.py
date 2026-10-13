@@ -222,7 +222,14 @@ def _recover_vitality(b, f, w: Worth) -> None:
     w.heal += min(want, 5.5 * min(left, -(-want * 2 // 11)))
 
 
-_ABILITY_WORTH = {"turn_undead": _turn_undead, "preserve_life": _preserve_life, "battle_medic": _battle_medic,
+def _divine_spark_harm(b, f, w: Worth) -> None:
+    from realmwalker.rules.engine.handlers import cleric
+
+    n, sides, _ = dice.parse(cleric.spark_dice(f))
+    w.damage += 0.75 * (n * (sides + 1) / 2 + f.mod("wis"))  # (a Constitution save halves it)
+
+
+_ABILITY_WORTH = {"divine_spark_harm": _divine_spark_harm, "turn_undead": _turn_undead, "preserve_life": _preserve_life, "battle_medic": _battle_medic,
                   "speedy_recovery": _speedy_recovery, "chef_treat": _chef_treat,
                   "telekinetic_shove": _telekinetic_shove, "recover_vitality": _recover_vitality}
 

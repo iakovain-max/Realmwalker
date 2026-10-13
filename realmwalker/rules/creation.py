@@ -545,6 +545,7 @@ class CharacterBuilder:
             languages.append("Thieves' Cant")
         hp = self.max_hp()
         features = [f["id"] for f in cls["features"] if f["level"] <= 1]
+        choose_at_1 = [f for f in cls["features"] if f["level"] <= 1 and f.get("choose")]  # (Divine Order)
         uses: dict = {}
         char = Character(
             name=self.name.strip(), sex=self.sex, age=self.age, species=self.race, culture=self.culture,
@@ -588,6 +589,8 @@ class CharacterBuilder:
         if progression.mastery_count(char, t):  # the kit's weapons first; changed on the character sheet before long
             char.masteries = progression.mastery_options(char, t)[:progression.mastery_count(char, t)]
             char.uses["mastery_change"] = 1
+        for f in choose_at_1:  # (a cleric's Divine Order waits on the sheet: c, then l)
+            progression.add_pending(char, {"kind": "option", "feature": f["id"], "level": 1})
         return char
 
 

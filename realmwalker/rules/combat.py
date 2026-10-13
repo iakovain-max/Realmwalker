@@ -3342,6 +3342,8 @@ class Battle:
             level = 0  # the scroll's own magic: no spell slot
         if charged is not None or innate is not None:
             level = 0  # the item's own magic, or a gift of blood or training (no slot)
+        if level > 0 and f.__dict__.get("free_slot", 0) >= level:
+            level = 0  # (the god casts it: Divine Intervention, War God's Blessing)
         if level > 0:
             slot_level = slot_level or spellrules.lowest_free_slot(c, self.t, level)
             if slot_level is None:

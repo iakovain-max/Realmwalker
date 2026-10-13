@@ -207,6 +207,7 @@ def build(game, npc, cls: str, background: str, level: int, rng: RNG, story: lis
     if level > 1:
         xp = tables.rules["xp_for_level"][min(level, len(tables.rules["xp_for_level"])) - 1]
         progression.award_xp(char, xp, tables, rng, auto=True)
+    progression.auto_resolve(char, tables)  # (a level-1 choice too: a cleric's Divine Order)
     return char
 
 

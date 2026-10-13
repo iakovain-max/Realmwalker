@@ -115,6 +115,9 @@ def cast(b, f, sid: str, spell: dict, target, point, *, up: int, mod: int, dc: i
     if f.char is not None and spell.get("school") == "evocation" and f.char.cls == "wizard" \
             and f.has_trait("empowered_evocation"):
         c.empowered = mod
+    if f.char is not None and spell.get("level") == 0 and "cleric" in spell.get("classes", ()) \
+            and f.has_trait("blessed_potent_spellcasting"):
+        c.empowered = max(c.empowered, f.mod("wis"))  # (a cleric's Potent Spellcasting)
     before = b.__dict__.get("_casting")
     b._casting = f if not spell.get("ability") and "item" not in spell.get("classes", ()) else None
     try:
@@ -457,7 +460,9 @@ def _heal(c: Cast, o: dict, victim) -> None:
         if o.get("add") == "level" and f.char is not None:
             amount += f.char.level  # Second Wind
         if not spell.get("ability"):
-            amount = events.emit(b, "heal_spell", actor=f, target=x, amount=amount, level=c.level).amount
+            n_, s_, flat_ = dice.parse(expr(c, o["dice"], o.get("up", "")))
+            amount = events.emit(b, "heal_spell", actor=f, target=x, amount=amount, level=c.level,
+                                 rolled=rolled.total, most=n_ * s_ + flat_).amount
         b._heal(x, amount)
         if o.get("mends_wound") and x.wounds:
             w = max(x.wounds, key=lambda w: (w.severity, w.bleed))

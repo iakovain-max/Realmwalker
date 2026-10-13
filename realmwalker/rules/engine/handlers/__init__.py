@@ -8,6 +8,8 @@
     boons.py      the epic boons (level 19)
     fighter.py    the 2024 fighter, the Champion and the Knight
     rogue.py      the 2024 rogue (Sneak Attack, Cunning Strike), the Thief and the Assassin
+    cleric.py     the 2024 cleric (Divine Spark, Blessed Strikes, Divine Intervention), the Life and War Domains
 """
 
-from realmwalker.rules.engine.handlers import boons, feats, features, fighter, general_feats, mastery, monsters, rogue  # noqa: F401  (registering is importing)
+from realmwalker.rules.engine.handlers import (boons, cleric, feats, features, fighter, general_feats,  # noqa: F401
+                                               mastery, monsters, rogue)  # noqa: F401  (registering is importing)

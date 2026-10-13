@@ -44,16 +44,23 @@ def indomitable(b, f, ev, hook, buff) -> None:
 # ---------------------------------------------------------------------------- attacks
 @handler("guided_strike")
 def guided_strike(b, f, ev, hook, buff) -> None:
-    """The war god's hand on a blow that would have missed (+10), at the price of the Channel Divinity."""
+    """The war god's hand on a blow that would have missed (+10), at the price of the Channel Divinity: the cleric's
+    own, or a friend's within 30 feet (2024)."""
     c = f.char
-    if c is None or ev.natural == 1 or ev.total + 10 < ev.ac or ev.opt.kind not in ("melee", "ranged"):
+    att = ev.actor
+    if c is None or att is None or ev.natural == 1 or ev.total + 10 < ev.ac or ev.opt.kind not in ("melee", "ranged"):
+        return
+    if att is not f and (att.team != f.team or b.feet(f, att) > 30 or not f.active or f.incapacitated
+                         or not f.reaction):
         return
     if c.uses.get("channel_divinity", 0) <= 0 or any(x.kind == "undead" for x in b.enemies_of(f)):
         return
     if not reactions.yes(b, Decision(f, "guided_strike", f"{f.the_name}'s blow misses ({ev.total} against AC {ev.ac}). "
                                      "Guided Strike: +10, for the Channel Divinity?", [("yes", "Guide it"), ("no", "Let it miss")])):
         return
-    c.uses["channel_divinity"] = 0
+    c.uses["channel_divinity"] = c.uses["channel_divinity"] - 1
+    if att is not f:
+        f.reaction = False  # (for a friend's blow it takes the cleric's reaction)
     ev.total += 10
     ev.hit = True
     b.say(f"<magic>{f.the_name}'s god guides the blow home.</>", "magic")
@@ -229,13 +236,19 @@ def turn_undead(c, o, victim) -> None:
     near = [x for x in b.enemies_of(f) if x.kind == "undead" and b.feet(f, x) <= 30]
     b._event("cast", by=f.id, to=None, spell="turn_undead", effect="burst", dtype="radiant",
              area=[cell for x in near for cell in x.cells])
+    failed = []
     for x in near:
         if not b._save(x, "wis", dc):
+            failed.append(x)
             if f.has_trait("destroy_undead") and x.cdef["cr"] <= 0.5:
                 b._kill(x, "turned to dust", killer=f)
             else:
                 x.state = "fleeing"
                 b.say(f"{x.the_name} recoils from the light and flees.", "good")
+    if failed and f.has_trait("sear_undead"):
+        from realmwalker.rules.engine.handlers import cleric
+
+        cleric.sear(b, f, failed)
 
 
 @special("preserve_life")

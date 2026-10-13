@@ -406,7 +406,7 @@ def test_cleric_heals_and_turns_undead(tables):
     ids = [a[0] for a in b.class_abilities(caster) if a[2]]
     assert "turn_undead" in ids
     b.do_ability(caster, "turn_undead")
-    assert cleric.uses.get("channel_divinity", 0) == 0
+    assert cleric.uses.get("channel_divinity", 0) == 1  # (2024: two uses from level 2)
 
 
 def test_spiritual_weapon_strikes_where_it_is_put(tables):
@@ -922,7 +922,7 @@ def test_indomitable_and_guided_strike(tables):
     f = b.side(PARTY)[0]
     b._save(f, "wis", 26)  # out of reach of the first roll; the second adds the fighter's level (2024)
     assert fighter.uses["indomitable"] == 0 and any("indomitable" in t for t, _ in b.log)
-    priest = hero_at(tables, "cleric", 2, "war")
+    priest = hero_at(tables, "cleric", 3, "war")
     priest.uses["channel_divinity"] = 1
     b2 = battle(tables, [priest], foes(tables, "ogre"), spots={0: (4, 4), 1: (5, 4)})
     c, ogre = b2.side(PARTY)[0], b2.side(FOE)[0]
@@ -932,7 +932,7 @@ def test_indomitable_and_guided_strike(tables):
         if priest.uses["channel_divinity"] == 0:
             break
         b2._attack(c, mace, ogre)
-    assert priest.uses["channel_divinity"] == 0 and any("guides the blow" in t for t, _ in b2.log)
+    assert priest.uses["channel_divinity"] == 0 and any("guides the blow" in t for t, _ in b2.log)  # (both spent)
 
 
 def test_divine_intervention(tables):
@@ -1074,7 +1074,7 @@ def test_the_auto_judges_abilities_by_what_they_do(tables):
     f.auto = True
     turn_of(b, f)
     tactics.take_turn(b, f)
-    assert cleric.uses.get("channel_divinity", 1) == 0  # turned them
+    assert cleric.uses.get("channel_divinity", 2) == 1  # turned them
 
     rogue = hero_at(tables, "rogue", 2, seed=4)
     b = battle(tables, [rogue], foes(tables, "ogre"), spots={0: (3, 4), 1: (4, 4)})
@@ -1085,7 +1085,7 @@ def test_the_auto_judges_abilities_by_what_they_do(tables):
     tactics.take_turn(b, f)
     assert b.gap(f, ogre) > 1 and f.disengaged and not any(e["kind"] == "opportunity" for e in b.events)
 
-    war = hero_at(tables, "cleric", 1, "war", seed=5)
+    war = hero_at(tables, "cleric", 3, "war", seed=5)  # (War Priest comes with the domain at 3, 2024)
     resources.fill(war, tables)  # (the domain was set after the character was made)
     war.spells["slots_used"] = [9] * 9  # no spell to put first
     b = battle(tables, [war], foes(tables, "ogre"), spots={0: (3, 4), 1: (4, 4)})
