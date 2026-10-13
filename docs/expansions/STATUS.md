@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 03 Demigods & Magics · step 1 (branch and design note) of §5.1 · branch dlc/03-demigods-magics
+Current: 03 Demigods & Magics · Part A (twenty levels) · branch dlc/03-demigods-magics
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -48,9 +48,7 @@ Assumptions waiting for Anton:
   basic form now); the cart's load counts the fastest animals as ridden (a mastiff may be counted wrongly).
 Ideas for later:
 - (none yet)
-Next session starts at: Expansion 3 (Demigods & Magics), §5.1 step 1: make the branch `dlc/03-demigods-magics`
-  from `main` and write the design note `docs/expansions/03-demigods-magics.md` (EXPANSIONS.md §6.3: its
-  parts, the codex entries it delivers, the task list). Expansion 2 is released (v1.2.0) and merged.
+Next session starts at: task A.1 in docs/expansions/03-demigods-magics.md (Part A, twenty levels).
 
 ## Done
 
@@ -69,6 +67,7 @@ Next session starts at: Expansion 3 (Demigods & Magics), §5.1 step 1: make the 
 | 2026-10-13 | Blades & Backgrounds part B: species (orcs for half-orcs), sixteen backgrounds, origin feats, languages, creation in the 2024 order with array and rolling; merged into `main` | `dlc/02-blades-backgrounds` |
 | 2026-10-13 | Blades & Backgrounds part D: the 2024 tools and gear, trinkets, shops by size and people, inns by grade, lifestyles, tolls, coaches, ships, messengers, mounts, saddles, stabling, vehicles; **released as 1.2.0** and merged into `main` | `dlc/02-blades-backgrounds` |
 | 2026-10-13 | Blades & Backgrounds part C: feats (the framework, Suggest, the Feats tab; 42 general and 10 fighting style feats in play, on Auto and in the enemy's hands); finished by a second session after a usage limit; merged into `main` | `dlc/02-blades-backgrounds` |
+| 2026-10-13 | Demigods & Magics begun: the branch, the design note and its seven parts (twenty levels, the four classes, spellcasting, the catalogue, spells outside battle, familiars and summons, enemy casters) | `dlc/03-demigods-magics` |
 
 ## Notes for the next session
 
