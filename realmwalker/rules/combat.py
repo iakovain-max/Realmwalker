@@ -380,8 +380,9 @@ class Fighter:
         if self.char:
             tremor = max([0] + [int(v) for v in self.buff_value("tremorsense")])  # (Stonecunning)
             blind = 10 if feats.has(self.char, "blind_fighting") or feats.has(self.char, "skulker") else 0
+            true = 60 if feats.has(self.char, "boon_of_truesight") else 0
             return {"darkvision": self.darkvision, **({"tremorsense": tremor} if tremor else {}),
-                    **({"blindsight": blind} if blind else {})}
+                    **({"blindsight": blind} if blind else {}), **({"truesight": true} if true else {})}
         return {**self.cdef.get("senses", {}), "darkvision": self.darkvision}
 
     @property
@@ -691,6 +692,7 @@ class Battle:
             f.initiative = (dice.d20(self.rng, advantage=r.advantage, disadvantage=r.disadvantage).natural + bonus
                             + query.d20_penalty(f))
         self.order = [f.id for f in sorted(self.fighters, key=lambda f: (-f.initiative, -f.mod("dex"), self.rng.random()))]
+        events.emit(self, "battle_start")  # (Improve Fate comes back with the initiative)
         if intro:
             self.say(intro, "danger")
         if self.env.surprised == FOE:
@@ -2004,7 +2006,7 @@ class Battle:
             amount = sum(max(3, r) for r in rolled.rolls) + flat
         if att.char is not None and opt.kind.startswith("spell") and self.__dict__.get("_casting") is att:
             amount += feats.adept_ones(att.char, opt.damage_type, rolled.rolls)  # (Elemental Adept: 1s count as 2s)
-        dmg_ev = events.emit(self, "attack_damage", actor=att, target=target, opt=opt, crit=crit,
+        dmg_ev = events.emit(self, "attack_damage", actor=att, target=target, opt=opt, crit=crit, natural=natural,
                              advantage=adv and not dis, sides=sides, extra=0, typed=[], rolls=list(rolled.rolls))
         amount += dmg_ev.extra  # Sneak Attack, Divine Strike...
         self._spend_use(att, opt)
@@ -2230,11 +2232,18 @@ class Battle:
         if amount > 0:
             self._hit(att, target, amount, dtype, crit=False, weapon=dtype)
 
+    def _night_spirit(self, f: Fighter, dtype: str) -> bool:
+        """Boon of the Night Spirit: in dim light or darkness, resistance to all harm but psychic and radiant."""
+        return (f.char is not None and dtype not in ("psychic", "radiant")
+                and feats.has(f.char, "boon_of_the_night_spirit") and self.light_on(f) < grid.BRIGHT)
+
     def _ignores_resist(self, att: Fighter | None, dtype: str) -> bool:
         """Poisoner (poison from anything they do) and Elemental Adept (their spells' element) cut through
         resistance."""
         if att is None or att.char is None:
             return False
+        if dtype in ("bludgeoning", "piercing", "slashing") and feats.has(att.char, "boon_of_irresistible_offense"):
+            return True  # (Boon of Irresistible Offense)
         if dtype == "poison" and feats.has(att.char, "poisoner"):
             return True
         return self.__dict__.get("_casting") is att and dtype in feats.adept_types(att.char)
@@ -2243,10 +2252,12 @@ class Battle:
              bite: bool = False, claws: bool = False) -> None:
         """Damage that landed: resistances, text, wounds, going down."""
         rolled_amount = amount
-        amount, defence = query.damage_taken(target, amount, dtype, ignore_resist=self._ignores_resist(att, dtype))
+        shadow = self._night_spirit(target, dtype)
+        amount, defence = query.damage_taken(target, amount, dtype, ignore_resist=self._ignores_resist(att, dtype),
+                                             resist=shadow)
         changed = {"immune": "immune: none", "vulnerable": "vulnerable: doubled",
                    "threshold": "below its damage threshold: none"}.get(defence) \
-            or ("resisted: halved" if amount < rolled_amount and query.resists(target, dtype) else "")
+            or ("resisted: halved" if amount < rolled_amount and (shadow or query.resists(target, dtype)) else "")
         self.note_roll(f"{rolled_amount} {dtype} damage{' (critical: dice doubled)' if crit else ''}"
                        + (f", {changed} = {amount}" if changed else ""))
         if defence == "threshold":
@@ -2278,6 +2289,7 @@ class Battle:
         self._apply_hp_loss(target, amount, source=att, cause=f"{att.the_name if att else 'a wound'}'s {weapon}" if att else weapon,
                             crit=crit, dtype=dtype)
         target.damage_taken += amount
+        events.emit(self, "damage_taken", actor=att, target=target, amount=amount, dtype=dtype)  # Energy Redirection
         if target.state not in ("dead",) and hp_before > 0:
             # A wound is judged against the body, not the hit points: a level-1 wizard's seven are luck and nerve,
             # and a 5-point scratch on them is not a gushing wound. Below WOUND_HP_FLOOR the floor is used.
@@ -3505,6 +3517,7 @@ class Battle:
             if magic.flag(f.char, "no_healing"):
                 self.say(f"The healing slides off {f.the_name}: the artifact will not allow it.", "warn")
                 return
+        amount = events.emit(self, "healed", target=f, amount=amount).amount  # Boon of Fortitude
         f.hp = min(f.max_hp, f.hp + amount)
         self._event("heal", to=f.id, amount=amount)
         if f.state == "down" and f.hp > 0:

@@ -534,6 +534,8 @@ TRAIT_DEF = Obj(
                            "handler": Str(max_len=40), "reaction": Bool(optional=True)}, strict=False), optional=True),
         "resource": Obj({"id": Str(max_len=40), "max": Any_(), "recover": Str(choices=["short", "long", "dawn", "turn"])},
                         optional=True),
+        "resources": List(Obj({"id": Str(max_len=40), "max": Any_(),
+                               "recover": Str(choices=["short", "long", "dawn", "turn"])}), optional=True),
         "where": Str(max_len=30, optional=True),
         "activate": Any_(optional=True),  # abilities it gives (rules/engine/actions.py; checked by rules/engine/check.py)
     }
@@ -545,7 +547,7 @@ FEAT_CHOICE = Obj({"kind": Str(choices=["skill", "skill_or_tool", "tool", "spell
                    "from": Any_(optional=True), "count": Int(min=1, max=6, optional=True),
                    "level": Int(min=0, max=9, optional=True), "schools": List(Str(max_len=20), optional=True),
                    "ritual": Bool(optional=True), "untrained_save": Bool(optional=True),
-                   "max": Int(min=20, max=30, optional=True)})
+                   "max": Int(min=20, max=30, optional=True), "any": Bool(optional=True)})
 FEATS = Obj({"feats": Map(Obj({"name": Str(max_len=40), "category": Str(choices=["origin", "general", "fighting_style",
                                                                                    "epic"]),
                                "text": Str(max_len=500), "trait": Str(max_len=40, optional=True),

@@ -216,6 +216,8 @@ def options(tables, char: Character, fid: str, key: str, choices: dict) -> list[
         return [x for x in spec["from"] if x not in char.expertise]
     if kind == "expertise":
         mine = list(char.skills) + [x for x in choices.get("skill", []) if x not in char.skills]
+        if spec.get("any"):
+            mine = list(SKILL_ORDER)  # (Boon of Skill: every skill is theirs as the boon is taken)
         return [x for x in SKILL_ORDER if x in mine and x not in char.expertise]
     if kind in ("cantrip", "spell"):
         level = 0 if kind == "cantrip" else int(spec.get("level", 1))
@@ -244,7 +246,7 @@ def default_choices(tables, char: Character, fid: str, fixed: dict | None = None
         if c["kind"] in ("ability", "increase"):
             out[key] = best_ability(char, tables, opts) if opts else ""
         elif c["kind"] in ("damage_type", "skill_or_expertise"):
-            out[key] = opts[0] if opts else ""
+            out[key] = (opts[:n] if n > 1 else opts[0]) if opts else ""
         elif c["kind"] == "spell_list":
             out[key] = next((x for x in opts if x == char.cls), opts[0] if opts else "")
         elif n == 1 and c["kind"] not in ("cantrip", "spell", "skill_or_tool", "tool"):
@@ -318,6 +320,15 @@ def grant(char: Character, tables, fid: str, choices: dict | None = None) -> dic
     if fid == "tough":
         char.max_hp += 2 * char.level
         char.hp += 2 * char.level
+    if fid == "boon_of_fortitude":
+        char.max_hp += 40
+        char.hp += 40
+    if fid == "boon_of_skill":
+        for x in tables.rules["skills"]:
+            if x not in char.skills:
+                char.skills.append(x)
+    if fid == "boon_of_recovery":
+        char.uses["vitality_dice"] = 10
     if fid == "lucky":
         char.uses["luck"] = luck_points(char)
     for src, sid, _ability in innate_spells(char, tables):
@@ -407,6 +418,15 @@ def rest(char: Character, tables, kind: str) -> None:
     for src, sid, _ability in innate_spells(char, tables):
         if tables.spells[sid]["level"] > 0:
             char.uses[innate_key(src, sid)] = 1
+
+
+def boon_resists(char: Character) -> set[str]:
+    """The two kinds of harm the Boon of Energy Resistance turns."""
+    out: set[str] = set()
+    for f in taken(char, "boon_of_energy_resistance"):
+        got = (f.get("choices") or {}).get("resist") or []
+        out |= set(got if isinstance(got, list) else [got])
+    return out - {""}
 
 
 def adept_types(char: Character) -> set[str]:

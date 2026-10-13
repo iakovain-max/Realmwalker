@@ -509,6 +509,8 @@ class Sheet:
         speed = int(self.lineage.get("speed", self.race["speed"]))
         if any(f["id"] == "speedy" for f in self.c.feats):
             speed += 10  # (Speedy)
+        if any(f["id"] == "boon_of_speed" for f in self.c.feats):
+            speed += 30  # (Boon of Speed)
         if self.c.injuries:
             from realmwalker.rules import health
 

@@ -280,23 +280,24 @@ def resists(f, dtype: str) -> bool:
     if dtype in tr.values(f, "resist", flat=True):
         return True
     if f.char is not None:
-        from realmwalker.rules import magic
+        from realmwalker.rules import feats, magic
 
-        return dtype in magic.resistances(f.char)
+        return dtype in magic.resistances(f.char) or dtype in feats.boon_resists(f.char)
     return False
 
 
-def damage_taken(f, amount: int, dtype: str, *, ignore_resist: bool = False) -> tuple[int, str]:
+def damage_taken(f, amount: int, dtype: str, *, ignore_resist: bool = False, resist: bool = False) -> tuple[int, str]:
     """Damage after immunity, resistance and vulnerability, in the 2024 order (PHB chapter 1, Order of Application:
     adjustments first, then Resistance, halving and rounding down, then Vulnerability), and which of them applied.
-    `ignore_resist`: the attacker cuts through resistance to it (Poisoner, Elemental Adept)."""
+    `ignore_resist`: the attacker cuts through resistance to it (Poisoner, Elemental Adept); `resist`: a resistance
+    the battle knows of here (the Night Spirit's, in the dark)."""
     kind = defences(f, dtype)
     if kind == "immune":
         return 0, kind
     threshold = int(f.cdef.get("damage_threshold") or 0) if f.creature is not None else 0
     if threshold and amount < threshold:
         return 0, "threshold"  # Damage Threshold (2024): less than it does nothing; as much or more, all of it
-    if resists(f, dtype) and not ignore_resist:
+    if (resist or resists(f, dtype)) and not ignore_resist:
         amount //= 2
     if kind == "vulnerable":
         amount *= 2

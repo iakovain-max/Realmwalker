@@ -216,9 +216,15 @@ def _telekinetic_shove(b, f, w: Worth) -> None:
     w.control += 1.0  # (where to shove is the tactics' judgement: rules/tactics._mind_shove)
 
 
+def _recover_vitality(b, f, w: Worth) -> None:
+    left = f.char.uses.get("vitality_dice", 0) if f.char is not None else 0
+    want = max(0, f.max_hp - f.hp)
+    w.heal += min(want, 5.5 * min(left, -(-want * 2 // 11)))
+
+
 _ABILITY_WORTH = {"turn_undead": _turn_undead, "preserve_life": _preserve_life, "battle_medic": _battle_medic,
                   "speedy_recovery": _speedy_recovery, "chef_treat": _chef_treat,
-                  "telekinetic_shove": _telekinetic_shove}
+                  "telekinetic_shove": _telekinetic_shove, "recover_vitality": _recover_vitality}
 
 
 def _control_rounds(ops: list[dict]) -> float:
