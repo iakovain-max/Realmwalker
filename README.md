@@ -24,6 +24,9 @@ painted on parchment, and fights on a battle mat with animation. Playable with t
 - **Fight on a grid**, like a battle mat, with wounds, morale, surrender and prisoners, by the 2024 rules
   (*Dice & Destiny*, version 1.1): enemies that think, reactions that ask you first, the 2025 monsters, treasure and
   magic items by the book, an icon for every state and a card for anything you point at.
+- **Come from somewhere, and carry what you need** (*Blades & Backgrounds*, version 1.2): sixteen backgrounds and
+  the peoples in their 2024 form, feats, a trick for every weapon, the 2024 tools and gear (every piece does
+  something), inns and coaches and ships by the book, horses, carts and a hundred trinkets.
 - **Talk to everyone.** They have names, trades, memories and opinions of you.
 - **Hire companions**, pay them, keep them loyal (or don't), and command them in a fight.
 - **Take on work**: bounties, lairs to clear, beasts to hunt, letters to carry, captives to free. Not every job is

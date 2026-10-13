@@ -62,8 +62,27 @@ def best(game, skill: str) -> tuple[Character, int]:
     return c, Sheet(c, game.tables).skill_bonus(skill)
 
 
-def check(game, skill: str, dc: int, bonus: int = 0, tag: str = "", mode: str = "") -> tuple[bool, str]:
-    who, b = best(game, skill)
+def tool_bonus(game, c: Character, skill: str, tool: str) -> tuple[int, bool]:
+    """PHB 2024 tools: proficiency with the tool adds the proficiency bonus to a check made with it; proficiency in
+    the skill as well gives advantage. (bonus, advantage)"""
+    if not tool or tool not in c.tools:
+        return 0, False
+    return Sheet(c, game.tables).proficiency, skill in c.skills or skill in c.expertise
+
+
+def check(game, skill: str, dc: int, bonus: int = 0, tag: str = "", mode: str = "", tool: str = "") -> tuple[bool, str]:
+    if tool:  # whoever does it best with the tool in hand
+        able = [c for c in game.party if c.alive and c.hp > 0] or game.party
+        who = max(able, key=lambda c: (Sheet(c, game.tables).skill_bonus(skill) + tool_bonus(game, c, skill, tool)[0],
+                                       tool_bonus(game, c, skill, tool)[1]))
+        extra, adv = tool_bonus(game, who, skill, tool)
+        b = Sheet(who, game.tables).skill_bonus(skill) + extra
+        if adv and mode != "disadvantage":
+            mode = "advantage"
+        elif adv:
+            mode = ""
+    else:
+        who, b = best(game, skill)
     b += bonus
     if who.attuned and game.tables.rules["skills"][skill]["ability"] in ("str", "con"):
         from realmwalker.rules import magic
@@ -412,16 +431,21 @@ def make(game, cid: str) -> list[str]:
         return [f"You can't: {why}."]
     for item, qty in spec["needs"]:
         take_from_party(game, item, int(qty))
-    good, roll = check(game, spec["skill"], int(spec["dc"]), tag=cid)
+    prof = game.tables.items.get(spec["tool"]).get("tool", spec["tool"]) if spec.get("tool") else ""
+    good, roll = check(game, spec["skill"], int(spec["dc"]), tag=cid, tool=prof)
     game.pass_time(int(spec["minutes"]), "rest")
     made = []
     who = game.leader
     for item, qty in spec["gives"]:
-        n = int(qty) if good else max(1, int(qty) // 2)
+        n = int(qty) if good else int(qty) // 2  # (a failed brew of one makes nothing)
+        if n <= 0:
+            continue
         it = add_item(who, game.tables.items, item, n, made_at=game.world.time)
         if it is not None:
             made.append(f"{game.tables.items.get(item)['name']}" + (f" ×{n}" if n > 1 else ""))
     text = spec["text"] if good else "It takes longer than it should, and you spoil some of it."
+    if not made:
+        return [roll, "It goes wrong, and the materials are wasted."]
     return [roll, f"{text} <loot>You have {', '.join(made)}.</>"]
 
 

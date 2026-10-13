@@ -170,7 +170,29 @@
           "tool": "herbalism_kit",
           "fire": true,
           "text": "You boil the herbs down to something bitter, dark and worth carrying."
-      }
+      },
+      "acid_alchemy": {"name": "acid", "needs": [["salt", 2], ["glass_bottle", 1]], "gives": [["acid", 1]], "minutes": 60, "skill": "arcana", "dc": 12, "tool": "alchemists_supplies", "text": "Salts and spirits boiled down into a corrosive that eats through metal and skin."},
+      "perfume_alchemy": {"name": "perfume", "needs": [["healing_herbs", 2], ["glass_bottle", 1]], "gives": [["perfume", 1]], "minutes": 60, "skill": "arcana", "dc": 10, "tool": "alchemists_supplies", "text": "Crushed herbs steeped and distilled into a scent that hides a week on the road."},
+      "antitoxin_brewing": {"name": "antitoxin", "needs": [["healing_herbs", 3], ["vial", 1]], "gives": [["antitoxin", 1]], "minutes": 120, "skill": "nature", "dc": 13, "tool": "brewers_supplies", "text": "A bitter brew from fermented herbs that helps the body throw off a poison."},
+      "ladder_carpentry": {"name": "ladder", "needs": [["firewood", 4]], "gives": [["ladder", 1]], "minutes": 90, "skill": "athletics", "dc": 10, "tool": "carpenters_tools", "text": "Rails and rungs pegged together into a ladder."},
+      "pole_carpentry": {"name": "pole", "needs": [["firewood", 1]], "gives": [["pole", 1]], "minutes": 30, "skill": "athletics", "dc": 8, "tool": "carpenters_tools", "text": "A straight length of wood trimmed smooth for prodding at floors."},
+      "map_cartography": {"name": "map", "needs": [["hides", 1]], "gives": [["map", 1]], "minutes": 120, "skill": "nature", "dc": 12, "tool": "cartographers_tools", "text": "What you know of the land inked onto a scraped skin for someone else to follow."},
+      "arcane_focus_jewelling": {"name": "arcane focus", "needs": [["silver_ingot", 1]], "gives": [["arcane_focus", 1]], "minutes": 120, "skill": "arcana", "dc": 13, "tool": "jewelers_tools", "text": "A silver setting cut and polished to focus a caster's will."},
+      "holy_symbol_jewelling": {"name": "holy symbol", "needs": [["silver_ingot", 1]], "gives": [["holy_symbol", 1]], "minutes": 120, "skill": "religion", "dc": 12, "tool": "jewelers_tools", "text": "Silver worked into a sign a believer can hold in a bad hour."},
+      "pouch_leatherwork": {"name": "pouches", "needs": [["hides", 1]], "gives": [["pouch", 2]], "minutes": 60, "skill": "sleight_of_hand", "dc": 9, "tool": "leatherworkers_tools", "text": "Hide cut, stitched and drawn with a thong into belt pouches."},
+      "quiver_leatherwork": {"name": "quiver and bolt case", "needs": [["hides", 1]], "gives": [["quiver", 1], ["bolt_case", 1]], "minutes": 90, "skill": "sleight_of_hand", "dc": 10, "tool": "leatherworkers_tools", "text": "A stiff leather quiver and a flat case for crossbow bolts."},
+      "caltrops_smithing": {"name": "caltrops", "needs": [["iron_bar", 1]], "gives": [["caltrops", 2]], "minutes": 60, "skill": "athletics", "dc": 10, "tool": "smiths_tools", "text": "Four-pointed iron cut and bent so that one point always stands up.", "fire": true},
+      "spikes_smithing": {"name": "iron spikes", "needs": [["iron_bar", 1]], "gives": [["iron_spikes", 10]], "minutes": 60, "skill": "athletics", "dc": 9, "tool": "smiths_tools", "text": "A bar drawn out and cut into spikes for wedging doors and pinning ropes.", "fire": true},
+      "chain_smithing": {"name": "chain", "needs": [["iron_bar", 2]], "gives": [["chain", 1]], "minutes": 120, "skill": "athletics", "dc": 12, "tool": "smiths_tools", "text": "Links forged one by one and closed into a length of chain.", "fire": true},
+      "flask_tinkering": {"name": "flasks", "needs": [["copper_ingot", 1]], "gives": [["flask", 2]], "minutes": 60, "skill": "investigation", "dc": 10, "tool": "tinkers_tools", "text": "Beaten and soldered copper into small flasks with a tight stopper."},
+      "robe_weaving": {"name": "robe", "needs": [["wool_bolt", 2]], "gives": [["robe", 1]], "minutes": 120, "skill": "sleight_of_hand", "dc": 9, "tool": "weavers_tools", "text": "Wool cloth cut and stitched into a long robe."},
+      "string_weaving": {"name": "string", "needs": [["linen_bolt", 1]], "gives": [["string", 10]], "minutes": 30, "skill": "sleight_of_hand", "dc": 8, "tool": "weavers_tools", "text": "Linen unpicked and twisted into lengths of fine string."},
+      "net_weaving": {"name": "net", "needs": [["rope", 2]], "gives": [["net", 1]], "minutes": 120, "skill": "sleight_of_hand", "dc": 11, "tool": "weavers_tools", "text": "Rope unlaid and knotted into a throwing net."},
+      "arrows_carving": {"name": "arrows", "needs": [["firewood", 1]], "gives": [["arrows", 10]], "minutes": 60, "skill": "survival", "dc": 10, "tool": "woodcarvers_tools", "text": "Straight shafts whittled, notched and fletched."},
+      "bolts_carving": {"name": "bolts", "needs": [["firewood", 1]], "gives": [["bolts", 10]], "minutes": 60, "skill": "survival", "dc": 10, "tool": "woodcarvers_tools", "text": "Short heavy bolts cut for a crossbow."},
+      "poison_poisoners": {"name": "basic poison", "needs": [["healing_herbs", 2], ["vial", 1]], "gives": [["basic_poison", 1]], "minutes": 90, "skill": "nature", "dc": 13, "tool": "poisoners_kit", "text": "Pressed herbs boiled down to a sticky poison for a blade."},
+      "antitoxin_herbalism": {"name": "antitoxin", "needs": [["healing_herbs", 3], ["vial", 1]], "gives": [["antitoxin", 1]], "minutes": 90, "skill": "medicine", "dc": 12, "tool": "herbalism_kit", "text": "Herbs steeped to a bitter draught against poison."},
+      "healers_kit_herbalism": {"name": "healer's kit", "needs": [["healing_herbs", 2], ["linen_bolt", 1]], "gives": [["healers_kit", 1]], "minutes": 60, "skill": "medicine", "dc": 12, "tool": "herbalism_kit", "text": "Herbs, dressings and a needle packed together for treating wounds."}
   },
   "night": {
       "any": [

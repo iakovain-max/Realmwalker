@@ -1235,6 +1235,35 @@ def dlc_icons() -> dict[str, Image.Image]:
     d.polygon([(16, 12), (19, 17), (16, 19), (13, 17)], fill=gem, outline=k)  # a garnet set in the twenty
     d.point((15, 14), fill=(236, 150, 140, 255))
     out["dlc/dice_destiny"] = im
+    # Blades & Backgrounds: a steel sword laid corner to corner across a rolled parchment tied with a red cord.
+    im = Image.new("RGBA", (32, 32), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    parch, parch_d, parch_l = (214, 192, 146, 255), (160, 132, 88, 255), (238, 222, 184, 255)
+    cord, cord_d = (168, 44, 40, 255), (110, 26, 24, 255)
+    steel, steel_l, steel_d = (176, 184, 196, 255), (232, 236, 242, 255), (96, 102, 114, 255)
+    brass, leather = (200, 160, 72, 255), (92, 58, 34, 255)
+    # the scroll, lying across from left to right, its two rolled ends seen as discs
+    d.rectangle([5, 13, 26, 21], fill=parch, outline=k)
+    d.line([(6, 14), (25, 14)], fill=parch_l)
+    d.line([(6, 20), (25, 20)], fill=parch_d)
+    for cx in (5, 26):
+        d.ellipse([cx - 3, 12, cx + 3, 22], fill=parch_d, outline=k)
+        d.ellipse([cx - 1, 15, cx + 1, 19], fill=parch, outline=leather)
+    d.rectangle([15, 12, 17, 22], fill=cord, outline=k)  # the cord round its middle, and its loose ends
+    d.line([(16, 13), (16, 21)], fill=cord_d)
+    d.line([(15, 23), (13, 27)], fill=cord, width=1)
+    d.line([(17, 23), (19, 27)], fill=cord, width=1)
+    # the sword, point to the upper right, hilt to the lower left, over the scroll
+    d.line([(9, 24), (28, 5)], fill=k, width=4)
+    d.line([(9, 24), (28, 5)], fill=steel, width=2)
+    d.line([(10, 22), (27, 5)], fill=steel_l, width=1)
+    d.line([(11, 25), (28, 7)], fill=steel_d, width=1)
+    d.line([(5, 23), (11, 29)], fill=k, width=4)  # the cross-guard
+    d.line([(5, 23), (11, 29)], fill=brass, width=2)
+    d.line([(4, 29), (8, 25)], fill=k, width=4)  # the grip and the pommel
+    d.line([(4, 29), (8, 25)], fill=leather, width=2)
+    d.ellipse([1, 28, 4, 31], fill=brass, outline=k)
+    out["dlc/blades_backgrounds"] = im
     return out
 
 

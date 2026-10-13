@@ -217,6 +217,8 @@ def save_roll(b, f, ability: str, *, bonus: int = 0, against: tuple = ()) -> Sav
         out.roll.add("disadvantage", "untrained in armour")
     if ability == "dex" and f.dodging and not incapacitated(f) and f.speed > 0:
         out.roll.add("advantage", "dodging")  # the Dodge action: easier to get out of the way of fire
+    if "poisoned" in against and f.char is not None and f.char.effects.get("antitoxin", 0) > 0:
+        out.roll.add("advantage", "antitoxin")  # (PHB 2024: for an hour after drinking it)
     ctx = tr.Ctx(b, f, ability=ability, against=tuple(against))
     for mode, why in tr.modifiers(f, "save", ctx):
         out.roll.add(mode, why)

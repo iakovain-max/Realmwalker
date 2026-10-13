@@ -252,10 +252,23 @@ def options(b, f, only: tuple[str, ...] | None = None) -> list[Option]:
                           no or ("" if dc is not None else "they will not listen"), key))
     for it in b.usable_items(f):
         throw = b.throw_value(it)
-        ok = acting if throw else (f.action > 0 or b.fast_hands(f))
-        out.append(Option(f"item:{it.uid}", "item", b.t.items.name(it, False), "action", ok,
-                          "" if ok else "no action left this turn", throw or it.uid, "point" if throw else "creature",
-                          [] if throw else b.item_targets(f), b.spell_points(f, throw) if throw and ok else None))
+        name = b.t.items.name(it, False)
+        if not throw:
+            ok = f.action > 0 or b.fast_hands(f)
+            out.append(Option(f"item:{it.uid}", "item", name, "action", ok, "" if ok else "no action left this turn",
+                              it.uid, "creature", b.item_targets(f), None))
+            continue
+        sp = b.t.spells[throw.split(":", 2)[2]]  # a flask, acid, a net, caltrops, a coating: aimed as its spell says
+        cost = "bonus" if sp.get("cast") == "bonus" else "action"
+        ok = f.bonus > 0 if cost == "bonus" else acting
+        why = "" if ok else f"no {'bonus ' if cost == 'bonus' else ''}action left this turn"
+        mode = sp["target"]
+        targets = b.spell_targets(f, throw) if ok and mode in ("enemy", "ally") else []
+        if ok and mode in ("enemy", "ally") and not targets:
+            ok, why = False, "no one in reach"
+        aim = "creature" if mode in ("enemy", "ally") else ("point" if mode in ("point", "direction") else "none")
+        out.append(Option(f"item:{it.uid}", "item", name, cost, ok, why, throw, aim, targets,
+                          b.spell_points(f, throw) if ok and aim == "point" else None))
     if b.can_leave(f):
         out.append(Option("action:leave", "action", "Leave the field", "free", True, "", "leave"))
     return out

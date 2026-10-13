@@ -376,6 +376,10 @@ def _rob_party(game, rng) -> str:
     if leader.animals:
         taken.append(", ".join(a["name"] for a in leader.animals) + " (your animals)")
         leader.animals = []
+    if leader.vehicles:
+        specs = game.tables.economy.get("vehicles", {})
+        taken.append(", ".join("the " + specs.get(v["kind"], {}).get("name", "cart") for v in leader.vehicles))
+        leader.vehicles = []
     return ", ".join(taken) if taken else "nothing, having found nothing worth taking"
 
 
@@ -816,6 +820,10 @@ def _rustlers(game, fire: bool) -> list[str]:
     if watching(game):
         return ["<warn>In the small hours the one on watch shouts: someone was at the animals.</> Whoever it was runs "
                 "off into the dark with nothing."]
+    dog = next((a for a in game.leader.animals if a.get("kind") == "mastiff"), None)
+    if dog is not None:  # a guard dog among the animals is as good as a watch
+        return [f"<warn>In the small hours {dog['name']} goes for someone at the tethers,</> snarling, and whoever it "
+                f"was runs off into the dark with nothing but bites."]
     animal = rng.choice(game.leader.animals)
     game.leader.animals.remove(animal)
     game.dirty = True

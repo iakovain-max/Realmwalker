@@ -82,6 +82,12 @@ def spawn(tables, def_id: str, rng: RNG, uid: int, *, now: int = 0) -> Creature:
             condition = rng.randint(35, 95)
             creature.inventory.append(Item(next_uid, item_id, int(qty), condition=condition, made_at=now))
             next_uid += 1
+    pocket = rng.child(f"trinket/{uid}")  # (its own stream: the fight's dice are as they were)
+    if "individual" in keeps(d) and "trinket" in tables.items and \
+            pocket.chance(float(tables.trinket_chance["pocket"])):
+        from realmwalker.rules.items import make_trinket
+
+        creature.inventory.append(make_trinket(tables, pocket, next_uid, now))
     if "relentless" in d.get("traits", []):
         creature.uses["relentless"] = 1
     return creature

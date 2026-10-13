@@ -774,6 +774,9 @@ def papers_impression(game, npc: NPC) -> int:
             continue
         if IMPRESSED.get(imp["people"], lambda n: False)(npc):
             best[imp["people"]] = max(best.get(imp["people"], 0), int(imp["bonus"]))
+    seen = game.renown.flags.get("seen_living_well")  # the best rooms in town (game/services.py, a wealthy stay)
+    if seen and seen[0] == npc.settlement and game.world.time < seen[1] and IMPRESSED["high"](npc):
+        best["high"] = best.get("high", 0) + int(seen[2])
     return sum(best.values())
 
 

@@ -32,6 +32,8 @@ import adapt_art  # noqa: E402
 import map_art  # noqa: E402
 import nature_art  # noqa: E402
 import tile_art  # noqa: E402
+import gear_art  # noqa: E402
+import beast_art  # noqa: E402
 import town_art  # noqa: E402
 
 PACK_URL = "https://opengameart.org/sites/default/files/Dungeon%20Crawl%20Stone%20Soup%20Full.zip"
@@ -158,6 +160,8 @@ pick("plant/mushroom", "monster/fungi_plants/deathcap.png", "tree")
 
 # Creatures (those drawn from the pack; people are dressed dolls, see data/sprites.json)
 CREATURES = {
+    "elephant": "monster/animals/elephant_new.png",
+    "mastiff": "monster/animals/war_dog.png",
     "wolf": "monster/animals/wolf.png",
     "dire_wolf": "monster/animals/warg.png",
     "wild_dog": "monster/animals/jackal_new.png",
@@ -243,8 +247,6 @@ for cid, path in CREATURES.items():
 pick("creature/boar", "monster/animals/hog_new.png", "creature", hue=14, sat=0.55, val=0.48)
 # A bugbear: a hobgoblin made bigger and furrier in tone.
 pick("creature/bugbear", "monster/boggart_new.png", "creature", hue=18, sat=0.6, val=0.7)
-# Riding animals (the pack has no horse that is not a monster): a hippogriff is wrong; the yak stands in for a pony.
-pick("creature/horse", "monster/animals/yak_new.png", "creature", hue=16, sat=0.6, val=0.6)
 
 # Items. Every item in data/items.json gets item/<id>; several share a picture.
 ITEMS = {
@@ -347,11 +349,23 @@ ITEMS = {
     "oats": "item/food/sultana.png", "cooked_meat": "item/food/meat_ration_new.png", "raw_fish": "item/food/chunk.png",
     "cooked_fish": "item/food/sausage.png", "porridge": "item/food/honeycomb_old.png", "wild_food": "item/food/pear.png",
     "raw_meat": "item/food/chunk.png",
-    "ale": "item/potion/brown_old.png", "spirits": "item/potion/golden.png", "wine": "item/potion/purple_red.png",
+    "ale": "item/potion/brown_old.png", "spirits": "item/potion/golden.png", "wine": "item/potion/purple_red.png", "fine_wine": "item/potion/ruby_new.png",
     # jewellery
     "plain_ring": "item/ring/iron.png", "amulet": "item/amulet/stone_1_green.png",
     # stand-ins for kinds of thing, when an item has no picture of its own
     "_weapon": "item/weapon/long_sword_1_old.png", "_armor": "item/armor/torso/leather_armor_3.png",
+    # Blades & Backgrounds part D gear (the rest is drawn in tools/gear_art.py)
+    "acid": "item/potion/bubbly.png", "antitoxin": "item/potion/cyan_new.png", "basic_poison": "item/potion/murky.png",
+    "glass_bottle": "item/potion/clear.png", "flask": "item/potion/cloudy.png", "vial": "item/potion/sky_blue.png",
+    "perfume": "item/potion/pink.png", "horn": "item/misc/misc_horn.png", "mirror": "item/misc/mirror.png",
+    "lamp": "item/misc/misc_lamp_old.png", "bullseye_lantern": "item/misc/misc_lamp_new.png",
+    "map": "item/scroll/scroll_old.png", "robe": "item/armor/torso/robe_1_new.png",
+    "costume": "item/armor/torso/robe_3.png", "druid_staff": "item/staff/staff_2.png",
+    "arcane_staff": "item/staff/staff_1.png", "yew_wand": "item/wand/gem_wood_new.png",
+    "arcane_wand": "item/wand/gem_ivory_new.png", "arcane_rod": "item/rod/rod_5_new.png",
+    "arcane_orb": "item/misc/misc_orb.png", "holy_emblem": "item/amulet/celtic_yellow.png",
+    "trinket": "item/amulet/bone_gray.png",
+    "chest": "dungeon/chest_2_closed.png",
     "_food": "item/food/bread_ration_new.png", "_drink": "item/potion/brown_new.png",
     "_book": "item/book/tan_new.png", "_trade": "item/misc/misc_box.png", "_gear": "item/misc/misc_box.png",
     "_jewellery": "item/ring/gold_blue.png", "_magic": "item/misc/misc_orb_2.png", "_gold": "item/gold/gold_pile_7.png",
@@ -600,7 +614,7 @@ def gather(pack: Path) -> dict[str, Image.Image]:
         tiles[f"floor/rock_{i}"] = Image.fromarray(a.astype(np.uint8), "RGBA")
     figs, _ = figure_tiles()
     tiles.update(figs)
-    for name, im in {**tile_art.all_drawn(), **nature_art.all_drawn(), **map_art.all_drawn(),
+    for name, im in {**tile_art.all_drawn(), **nature_art.all_drawn(), **map_art.all_drawn(), **gear_art.all_drawn(), **beast_art.all_drawn(),
                      **town_art.all_drawn()}.items():
         which = "none" if name.startswith(("icon/", "map/", "status/", "dlc/")) else ("ground" if name.startswith(("floor/", "wall/")) else "feature")
         if any(k in name for k in ("glow", "/fey", "water/hot", "moonstone")):

@@ -1,0 +1,17 @@
+{
+  "_comment": "Expansion 2 (docs/expansions/02-blades-backgrounds.md). Its rules and data went into the base files as it was built (realmwalker/data/packs.py merges any fragments placed beside this record).",
+  "id": "blades_backgrounds", "order": 2,
+  "name": "Blades & Backgrounds",
+  "tagline": "Where you come from. What you carry.",
+  "icon": "dlc/blades_backgrounds", "accent": [176, 184, 196],
+  "status": "released", "version": "1.2.0", "released_on": "2026-10-13",
+  "adds": [
+    "Every weapon with its own trick (the 2024 weapon masteries), and the 2024 weapons and armour",
+    "A character made in the 2024 order: sixteen backgrounds, origin feats, and the peoples in their 2024 form, with orcs",
+    "Feats at levels 4 and 8: the 2024 general and fighting style feats, used by your companions and your enemies too",
+    "The 2024 tools and adventuring gear, every piece of it doing something: packs, acid, nets, caltrops, antitoxin, ladders",
+    "Inns, meals and lifestyles by the book, coaches between towns, ships between harbours, messengers and tolls",
+    "Horses that look like horses, camels, elephants and mastiffs, saddles, stabling, and carts and wagons to carry more",
+    "A keepsake in every pocket: a hundred trinkets, each with its own small story"
+  ]
+}

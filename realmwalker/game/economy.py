@@ -19,6 +19,7 @@ from realmwalker.rules.items import Item, money_text
 MOOD_BUY = {"hostile": 1.3, "unfriendly": 1.12, "neutral": 1.0, "friendly": 0.95, "warm": 0.9}
 MOOD_SELL = {"hostile": 0.7, "unfriendly": 0.88, "neutral": 1.0, "friendly": 1.04, "warm": 1.08}
 DAY = 24 * 60
+SIZE_RANK = {"hamlet": 0, "village": 1, "town": 2, "hold": 2, "elfhall": 2, "city": 3}  # which places stock what
 
 
 def shop_kind(game, npc: NPC) -> str | None:
@@ -106,9 +107,14 @@ def restock(game, npc: NPC, shop: dict) -> dict:
     size = econ["size"].get(settlement.kind, econ["size"]["village"])
     rng = game.world.rng.child(f"restock/{npc.id}/{game.world.time // DAY}")
     stock = {}
-    for item_id, lo, hi in game.tables.economy["shops"][shop["kind"]]["stock"]:
-        if item_id not in game.tables.items:
-            continue
+    lines = list(game.tables.economy["shops"][shop["kind"]]["stock"])
+    if shop["kind"] == "general":  # a people's own wares (Expansion 2 part D)
+        lines += econ.get("culture_stock", {}).get(settlement.culture, [])
+    rank = SIZE_RANK.get(settlement.kind, 1)
+    for line in lines:
+        item_id, lo, hi = line[:3]
+        if item_id not in game.tables.items or (len(line) > 3 and rank < SIZE_RANK.get(line[3], 0)):
+            continue  # (not sold here: a thing only towns or cities stock)
         qty = int(round(rng.randint(int(lo), int(hi)) * float(size["stock"])))
         if qty > 0:
             stock[item_id] = qty

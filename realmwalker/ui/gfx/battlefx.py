@@ -591,6 +591,11 @@ class BattleBoard:
                 for (x, y) in z.cells:
                     px, py = self.sq_px(x, y)
                     canvas.under(Image("bice", _ice_image, (px, py, T, T), rgba=(220, 240, 255, 200), smooth=False))
+            elif z.kind in ("caltrops", "bearings"):
+                make = _caltrops_image if z.kind == "caltrops" else _bearings_image
+                for (x, y) in z.cells:
+                    px, py = self.sq_px(x, y)
+                    canvas.under(Image(f"b{z.kind}", make, (px, py, T, T), rgba=(255, 255, 255, 230), smooth=False))
             elif z.kind in ("guardians", "guardian"):
                 pulse = 0.5 + 0.5 * math.sin(now * 3) if ambient else 0.6
                 for (x, y) in z.cells:
@@ -1100,6 +1105,37 @@ def _web_image():
     for ring in (0.3, 0.55, 0.85):
         ring_pts = [(c + (p[0] - c) * ring, c + (p[1] - c) * ring) for p in pts]
         d.line(ring_pts + [ring_pts[0]], fill=(255, 255, 255, 170), width=1)
+    return im
+
+
+def _caltrops_image():
+    """Iron caltrops strewn on the ground: little dark four-pointed stars."""
+    from PIL import Image as PImage, ImageDraw
+
+    s = 32
+    im = PImage.new("RGBA", (s, s), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    rng = np.random.default_rng(11)
+    for _ in range(7):
+        x, y = (int(v) for v in rng.integers(3, s - 4, 2))
+        d.line([(x - 2, y), (x + 2, y)], fill=(58, 56, 54, 255), width=1)
+        d.line([(x, y - 2), (x, y + 2)], fill=(58, 56, 54, 255), width=1)
+        d.point((x, y - 2), fill=(150, 146, 138, 255))
+    return im
+
+
+def _bearings_image():
+    """Ball bearings spilled over the floor: small bright beads with a dark side."""
+    from PIL import Image as PImage, ImageDraw
+
+    s = 32
+    im = PImage.new("RGBA", (s, s), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    rng = np.random.default_rng(17)
+    for _ in range(14):
+        x, y = (int(v) for v in rng.integers(1, s - 3, 2))
+        d.rectangle([x, y, x + 1, y + 1], fill=(120, 118, 112, 255))
+        d.point((x, y), fill=(230, 226, 214, 255))
     return im
 
 

@@ -74,11 +74,11 @@ Horses look like horses; mounts, carts and wagons can be bought; inns, meals and
 - [x] C.4 Part C to `main` (Mounted Combatant written, offered with Expansion 9).
 
 ### Part D — Gear, tools, mounts and the world; release
-- [ ] D.1 Adventuring gear 2024 (Utilize uses; Potion of Healing and Spell Scroll left to Expansion 3), the packs;
+- [x] D.1 Adventuring gear 2024 (Utilize uses; Potion of Healing and Spell Scroll left to Expansion 3), the packs;
   tools with checks and uses (camp crafts); trinkets in pockets, chests and starting kits.
-- [ ] D.2 Services and lifestyle (inns, meals, tolls, coaches, ship's passage, hirelings, messengers) in
+- [x] D.2 Services and lifestyle (inns, meals, tolls, coaches, ship's passage, hirelings, messengers) in
   `game/services.py` and prices in economy.json; shops stock the new gear by settlement size and people.
-- [ ] D.3 Mounts and vehicles (riding/draft horse, warhorse, pony, mule, camel, elephant, mastiff; saddles, barding,
+- [x] D.3 Mounts and vehicles (riding/draft horse, warhorse, pony, mule, camel, elephant, mastiff; saddles, barding,
   feed, stabling; cart, wagon, carriage, chariot, sled) with their 2025 stat blocks; travel speed and load; a real
   horse picture and the other mounts.
-- [ ] D.4 Every Expansion 2 codex entry settled; balance and the careful player measured; the icon; release v1.2.0.
+- [x] D.4 Every Expansion 2 codex entry settled; balance and the careful player measured; the icon; release v1.2.0.

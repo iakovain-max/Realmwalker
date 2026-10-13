@@ -570,6 +570,11 @@ class CharacterBuilder:
         kit = cls["kits"][max(0, min(self.kit, len(cls["kits"]) - 1))]
         for def_id, qty in t.items.starting_packs.get("everyone", []) + kit["items"] + ([] if self.take_gold else bg["items"]):
             add_item(char, items, def_id, int(qty), made_at=world_time)
+        if "trinket" in items:  # everyone sets out with one keepsake (PHB 2024 Trinkets)
+            from realmwalker.rules.items import make_trinket
+
+            keep = make_trinket(t, self.rng.child("trinket"), now=world_time)
+            add_item(char, items, "trinket", name=keep.name, tags=keep.tags, made_at=world_time)
         equip_everything_sensible(char, items)
         fill_containers(char, items, "clean")
         from realmwalker.rules.spells import init_spells

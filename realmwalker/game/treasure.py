@@ -239,6 +239,11 @@ def stash(game, cr: float, tier: int, rng: RNG, *, grave: bool = False, theme: s
             it = magic_item(game, rng, rarity_for(game, cr, rng), theme)
             if it is not None:
                 items.append(it)
+    keepsake = rng.child("trinket")  # (its own stream: the rest of the chest is as it was)
+    if "trinket" in items_table and keepsake.chance(float(game.tables.trinket_chance["chest"])):
+        from realmwalker.rules.items import make_trinket
+
+        items.append(make_trinket(game.tables, keepsake, now=game.world.time))
     return items, copper
 
 

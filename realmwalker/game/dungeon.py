@@ -245,6 +245,19 @@ def burn(game, minutes: float) -> None:
 
 
 # ---------------------------------------------------------------------------- traps and searching
+def helps(game, key: str):
+    """The best that anything the party carries does for `key` (data/items.json "helps": a pole probing for traps, a
+    magnifying glass searching, a portable ram forcing a door): (value, item name), or (0, "")."""
+    items = game.tables.items
+    best, name = 0, ""
+    for c in game.party:
+        for it in c.inventory:
+            v = (items.get(it.def_id).get("helps") or {}).get(key)
+            if v and int(v) > best:
+                best, name = int(v), items.get(it.def_id)["name"]
+    return best, name
+
+
 def passive(game, skill: str) -> tuple[int, object]:
     best, who = -99, game.leader
     for c in game.party:
@@ -261,10 +274,12 @@ def spring(game, lm, x: int, y: int, f: dict) -> None:
         return
     if not f.get("found"):
         eyes, who = passive(game, "perception")
-        if eyes >= int(f.get("dc", 13)):
+        probe, tool = helps(game, "traps")
+        if eyes + probe >= int(f.get("dc", 13)):
             f["found"] = True
+            how = f", +{probe} {tool}" if probe else ""
             game.say(f"<good>{who.name.split()[0]} spots {name} and stops you just in time.</> "
-                     f"<dim>(passive Perception {eyes} vs {f['dc']})</>", "good")
+                     f"<dim>(passive Perception {eyes + probe}{how} vs {f['dc']})</>", "good")
             return
     rng = rng_for(game, "trap")
     c = game.leader
@@ -320,7 +335,8 @@ def search(game) -> list[str]:
         max(game.sheet(c).skill_bonus("perception") for c in game.party) else "perception"
     best, who = passive(game, skill)
     rng = rng_for(game, "search")
-    roll = dice.d20(rng).natural + best - 10
+    glass, tool = helps(game, "search")
+    roll = dice.d20(rng, advantage=bool(glass)).natural + best - 10
     out = []
     for (x, y), f in list(lm.features.items()):
         if max(abs(x - p.lx), abs(y - p.ly)) > SEARCH_RADIUS:
@@ -340,7 +356,7 @@ def search(game) -> list[str]:
                 from realmwalker.game.companions import react
 
                 react(game, "discovery", quiet=True)
-    label = game.tables.rules["skills"][skill]["name"]
+    label = game.tables.rules["skills"][skill]["name"] + (f", {tool}: advantage" if glass else "")
     if not out:
         out.append(f"You search carefully and find nothing. <dim>({label} {roll})</>")
     else:
@@ -364,9 +380,13 @@ def unlock(game, lm, x: int, y: int, dc: int) -> tuple[bool, str]:
     if has_tools(game):
         who = best_at(game, "sleight_of_hand")
         bonus = game.sheet(who).skill_bonus("sleight_of_hand")
-        if "thieves_tools" in who.tools:
+        trained = "thieves_tools" in who.tools
+        if trained:
             bonus += game.sheet(who).proficiency
-        roll = dice.d20(rng, disadvantage=game.sheet(who).armour_disadvantage("dex")).natural + bonus
+        # PHB 2024: trained with the tools and in Sleight of Hand as well, the check has advantage
+        adv = trained and ("sleight_of_hand" in who.skills or "sleight_of_hand" in who.expertise)
+        hampered = game.sheet(who).armour_disadvantage("dex")
+        roll = dice.d20(rng, advantage=adv and not hampered, disadvantage=hampered and not adv).natural + bonus
         if roll >= dc:
             game.cue("unlock")
             return True, f"{who.name.split()[0]} picks the lock. <dim>(Sleight of Hand {roll} vs {dc})</>"
@@ -375,21 +395,22 @@ def unlock(game, lm, x: int, y: int, dc: int) -> tuple[bool, str]:
     # A crowbar: leverage (advantage on the roll, as in the Player's Handbook), and a crack instead of a crash.
     bar = any(game.tables.items.get(it.def_id).get("pry") for c in game.party for it in c.inventory)
     hampered = game.sheet(who).armour_disadvantage("str")
+    ram, ram_name = helps(game, "force")  # (a portable ram: +4, PHB 2024)
     roll = dice.d20(rng, advantage=bar and not hampered, disadvantage=hampered and not bar).natural + \
-        game.sheet(who).skill_bonus("athletics")
+        game.sheet(who).skill_bonus("athletics") + ram
     alert_nearby(game, lm, x, y, 6 if bar else 12)
-    adv = ", crowbar: advantage" if bar else ""
+    adv = (", crowbar: advantage" if bar else "") + (f", {ram_name} +{ram}" if ram else "")
     if roll >= dc + 2:
         if bar:
             return True, (f"{who.name.split()[0]} gets the crowbar in and levers it open with a crack. "
                           f"<dim>(Athletics {roll} vs {dc + 2}{adv})</>")
         return True, (f"{who.name.split()[0]} breaks it open with a crash that echoes a long way. "
-                      f"<dim>(Athletics {roll} vs {dc + 2})</>")
+                      f"<dim>(Athletics {roll} vs {dc + 2}{adv})</>")
     if bar:
         return False, (f"{who.name.split()[0]} heaves on the crowbar; it groans and holds. "
                        f"<dim>(Athletics {roll} vs {dc + 2}{adv}; thieves' tools would be quieter)</>")
     return False, (f"{who.name.split()[0]} throws a shoulder at it; it holds, and the noise carries. "
-                   f"<dim>(Athletics {roll} vs {dc + 2}; thieves' tools would be quieter, a crowbar surer)</>")
+                   f"<dim>(Athletics {roll} vs {dc + 2}{adv}; thieves' tools would be quieter, a crowbar surer)</>")
 
 
 def alert_nearby(game, lm, x: int, y: int, radius: int) -> None:

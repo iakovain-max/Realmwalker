@@ -164,6 +164,7 @@ def test_every_road_event_fits_and_names_its_skill_once(game, monkeypatch):
 
 def test_an_inn_names_each_price_once(game, monkeypatch):
     from realmwalker.game.people import npcs_in
+    from realmwalker.game import services
     from realmwalker.ui.screens.services import ServicesScreen
 
     app, g = game
@@ -174,9 +175,13 @@ def test_an_inn_names_each_price_once(game, monkeypatch):
     if keeper is None:
         pytest.skip("no inn")
     watch = Watch(monkeypatch)
-    shown = watch.render(ServicesScreen(app, g, keeper), (160, 45))
-    bed = next(line for line in shown.splitlines() if "for the night" in line)
-    assert len(re.findall(r"\d+ (?:gp|sp|cp)(?: \d+ (?:sp|cp))*", bed)) == 1, bed
+    screen = ServicesScreen(app, g, keeper)
+    screen.sub = next(s for s in services.services_for(g, keeper) if s.id == "room")  # the beds, by grade
+    shown = watch.render(screen, (160, 45))
+    beds = [line for line in shown.splitlines() if "Poor:" in line or "Modest:" in line]
+    assert beds
+    for bed in beds:
+        assert len(re.findall(r"\d+ (?:gp|sp|cp)(?: \d+ (?:sp|cp))*", bed)) == 1, bed
     assert not watch.problems, watch.problems
 
 

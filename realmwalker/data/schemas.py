@@ -299,7 +299,7 @@ ITEM = Obj(
         "ac_bonus": Int(min=0, max=5, optional=True), "perception_penalty": Int(min=0, max=10, optional=True),
         "slot": Str(choices=["under", "main", "outer", "head", "hands", "feet", "ring", "neck", "back"], optional=True),
         "carry": Float(min=0, max=100, optional=True),  # worn on the back: pounds more before you count as laden
-        "focus": Obj({"kind": Str(choices=["arcane", "divine"]), "carried": Bool(optional=True)}, optional=True),
+        "focus": Obj({"kind": Str(choices=["arcane", "divine", "druidic"]), "carried": Bool(optional=True)}, optional=True),
         "impress": Obj({"people": Str(choices=["high", "priests", "soldiers", "traders"]), "bonus": Int(min=0, max=20),
                         "worn": Bool(optional=True)}, optional=True),
         "bonus": Obj({"skills": Map(Int(min=-5, max=5))}, optional=True),  # while worn
@@ -314,6 +314,15 @@ ITEM = Obj(
         "tool": Str(max_len=40, optional=True), "light": Any_(optional=True), "container": Any_(optional=True),
         "food": Any_(optional=True), "drink": Any_(optional=True), "use": Any_(optional=True),
         "bedding": Float(min=0, max=15, optional=True),
+        # Expansion 2 part D: a pack opens into its contents; gear that helps a check; a tool's 2024 Utilize uses
+        "pack": List(List(Any_(), min_items=2, max_items=2), min_items=1, optional=True),
+        "helps": Obj({"search": Bool(optional=True), "traps": Int(min=1, max=10, optional=True),
+                      "force": Int(min=1, max=10, optional=True), "disguise": Bool(optional=True)}, optional=True),
+        "utilize": Obj({"ability": Str(choices=["str", "dex", "con", "int", "wis", "cha"]),
+                        "uses": List(Obj({"text": Str(max_len=120), "dc": Int(min=5, max=30)}), min_items=1),
+                        "crafts": List(Str(max_len=40), optional=True)}, optional=True),
+        "trinket": Bool(optional=True),  # its name and words come from data/trinkets.json
+        "tack": Str(choices=["riding", "exotic"], optional=True),  # a saddle (game/mounts.saddled)
     }
 )
 ITEMS = Obj(
@@ -719,7 +728,15 @@ DATA_FILES.update({
 })
 
 SHOP = Obj({"name": Str(max_len=40), "buys": List(Str(max_len=20), min_items=1),
-            "stock": List(List(Any_(), min_items=3, max_items=3), min_items=1), "markup": Float(min=0.1, max=5)})
+            # [item, fewest, most] or [item, fewest, most, the smallest settlement kind that stocks it]
+            "stock": List(List(Any_(), min_items=3, max_items=4), min_items=1), "markup": Float(min=0.1, max=5)})
+GRADES = ["wretched", "squalid", "poor", "modest", "comfortable", "wealthy", "aristocratic"]  # PHB 2024 lifestyles
+INN = Obj({"stay": Map(Int(min=0)), "meal": Map(Int(min=0)), "lifestyle": Map(Int(min=0)),
+           "grades": Map(List(Str(choices=GRADES), min_items=1)), "theft": Map(Float(min=0, max=1)),
+           "rest": Map(Int(min=0, max=3)), "seen": Map(Int(min=0, max=10)),
+           "fill": Map(List(Int(min=0, max=100), min_items=2, max_items=2)), "sick": Map(Float(min=0, max=1))})
+PASSAGE = Obj({"per_mile": Int(min=0), "mph": Float(min=0.5, max=20), "hours_a_day": Int(min=1, max=24),
+               "max_miles": Int(min=1, max=5000)})
 ECONOMY = Obj(
     {
         "shops": Map(SHOP, min_items=1),
@@ -732,14 +749,27 @@ ECONOMY = Obj(
         "restock_days": Int(min=1, max=365),
         "haggle": Obj({"dc": Int(min=0, max=40), "per_point": Float(min=0, max=1), "max": Float(min=0, max=1)}),
         "animals": Map(Obj({"name": Str(max_len=40), "price": Int(min=0, max=10**7), "carry": Int(min=0, max=2000),
-                            "ride": Float(min=0.1, max=2), "days_without_food": Int(min=1, max=30)}), min_items=1),
+                            "ride": Float(min=0.1, max=2), "days_without_food": Int(min=1, max=30),
+                            # Expansion 2 part D: only Small riders (a mastiff); a land where it goes better or worse
+                            # than ride_lands says (a camel in the dunes); the saddle it needs; what it eats
+                            "small_only": Bool(optional=True), "lands": Map(Float(min=0, max=1), optional=True),
+                            "saddle": Str(max_len=40, optional=True), "eats": Str(choices=["fodder", "meat"], optional=True)}),
+                       min_items=1),
+        "vehicles": Map(Obj({"name": Str(max_len=40), "price": Int(min=0, max=10**7), "weight": Int(min=0, max=5000),
+                             "rough": Float(min=1, max=5), "ride": Float(min=0.1, max=2), "seats": Int(min=0, max=8),
+                             "snow": List(Str(max_len=30), optional=True)}), optional=True),
         "grazing": List(Str(max_len=30)),
         "ride_lands": Map(Float(min=0, max=1), optional=True),
-        "services": Obj({"room_common": Int(min=0), "room_private": Int(min=0), "meal": Int(min=0), "bath": Int(min=0),
+        "services": Obj({"bath": Int(min=0),
                          "size_factor": Map(Float(min=0.1, max=10)), "treat_per_wound": Map(Int(min=0)),
                          "surgery": Int(min=0), "herbal_cure": Int(min=0), "prayer_healing": Int(min=0),
                          "cure_disease": Int(min=0), "repair_share": Float(min=0, max=2),
-                         "labour_pay": List(Int(min=0), min_items=2, max_items=2)}),
+                         "labour_pay": List(Int(min=0), min_items=2, max_items=2),
+                         # Expansion 2 part D (PHB 2024 p. 234): lifestyles, tolls, coaches, ships, messengers
+                         "inn": INN, "toll": Int(min=0), "coach": PASSAGE, "ship": PASSAGE,
+                         "messenger": Obj({"per_mile": Int(min=0), "miles_a_day": Int(min=1, max=200)}),
+                         "stabling": Int(min=0), "feed": Int(min=0)}),
+        "culture_stock": Map(List(List(Any_(), min_items=3, max_items=4)), optional=True),
     }
 )
 
@@ -1252,3 +1282,10 @@ PACK = Obj({
 })
 # Kinds of data file that only packs bring: their empty shape, used when data/ has no base file of that name.
 PACK_ONLY: dict[str, dict] = {}
+
+# Trinkets (Expansion 2 part D): keepsakes found in pockets and chests and given to every new character (one item,
+# "trinket" in items.json; its name and words come from here, kept on the item: rules/items.make_trinket).
+TRINKETS = Obj({"chance": Obj({"pocket": Float(min=0, max=1), "chest": Float(min=0, max=1)}),
+                "trinkets": List(Obj({"id": Str(max_len=40), "name": Str(max_len=40), "text": Str(max_len=160)}),
+                                 min_items=20)})
+DATA_FILES.update({"trinkets.json": TRINKETS})

@@ -227,7 +227,9 @@ def _buff_status(b, f, bf: dict, tables) -> Status | None:
         kind = "spell"
     title, text = _WORDS[kind]
     lines = [text]
-    if kind == "slowed":
+    if bf.get("poisoned_blade"):
+        title, lines = "Poisoned blade", ["Their next hit that cuts or pierces deals 1d4 poison damage more."]
+    elif kind == "slowed":
         lines = [f"{int(bf['slow'])} feet off their speed."]
     elif kind == "vexing":
         lines = [f"Their next attack roll against {esc(_name_of(b, bf['vex']))} has advantage."]

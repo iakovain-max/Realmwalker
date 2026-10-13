@@ -88,6 +88,7 @@ class Character:
     addictions: dict[str, float] = field(default_factory=dict)
     effects: dict[str, float] = field(default_factory=dict)  # timed effects, hours left (poppy, herbal, hangover...)
     animals: list[dict] = field(default_factory=list)  # mules and horses: {"kind", "name", "unfed", "bought"}
+    vehicles: list[dict] = field(default_factory=list)  # a cart, a wagon...: {"kind", "bought"} (game/mounts.py)
     attuned: list[int] = field(default_factory=list)  # uids of magic items bound to them (rules/magic.py), at most 3
     formation: list[int] = field(default_factory=list)  # [column, row] in the battle order (game/arena.py); [] = by class
     next_uid: int = 1
@@ -423,9 +424,17 @@ class Sheet:
                 s * carry["per_strength"] + extra)
 
     def pack_carry(self) -> float:
-        """Pounds more before you count as laden, for what is worn on the back (a backpack, a sack)."""
+        """Pounds more before you count as laden, for what is worn on the back (a backpack, a sack), and for the
+        small containers carried besides (a basket, a pouch, a quiver: each kind counts once)."""
         back = self.c.equipped_item("back")
-        return float(self.items.get(back.def_id).get("carry", 0)) if back is not None else 0.0
+        total = float(self.items.get(back.def_id).get("carry", 0)) if back is not None else 0.0
+        kinds = set()
+        for it in self.c.inventory:
+            d = self.items.get(it.def_id)
+            if d.get("carry") and d.get("slot") != "back" and it.def_id not in kinds:
+                kinds.add(it.def_id)
+                total += float(d["carry"])
+        return total
 
     def load(self) -> float:
         """Weight that counts against strength: worn armour counts half (the body carries it), and the clothes
