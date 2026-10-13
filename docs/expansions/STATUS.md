@@ -58,9 +58,14 @@ Assumptions waiting for Anton:
   speed to the turn; Thief's Reflexes folds the second turn into the first (a second action, bonus action and move);
   Stroke of Luck works on attack rolls and saves; Use Magic Device's scrolls wait for Part C; the player is asked
   which Cunning Strike to use only under the Reactions setting "all" (otherwise the battle's judgement).
+- Expansion 3 B.3: the domains keep their ids `life` and `war` (the design note said `life_domain`, `war_domain`:
+  only a name, and other code knows them); Divine Order is chosen at level 1 on the sheet (c, then l), the Auto takes
+  Protector for a fighting priest and Thaumaturge for a praying one, and Blessed Strikes the same way; Divine
+  Intervention's spell is the battle's judgement; War God's Blessing's spell still asks for concentration; Divine
+  Strike is radiant; the domain spells come with Part C.
 Ideas for later:
 - (none yet)
-Next session starts at: task B.3 in docs/expansions/03-demigods-magics.md (Part B: the Cleric, Life and War Domains). B.1 (the fighter) and B.2 (the rogue) are done on the branch; Part B goes to `main` with B.4 (FORMAT_VERSION bump there: the Cutthroat is now the Assassin).
+Next session starts at: task B.4 in docs/expansions/03-demigods-magics.md (Part B: the Wizard, Evoker and Abjurer; FORMAT_VERSION bump; companion archetypes to 20; then the three big checks, the fresh review and Part B to `main`). B.1-B.3 (fighter, rogue, cleric) are done on the branch; the Cutthroat is now the Assassin and the cleric's domain comes at level 3, so saves must change with B.4.
 
 ## Done
 

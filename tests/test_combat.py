@@ -943,20 +943,10 @@ def test_divine_intervention(tables):
     turn_of(b, c)
     ally.hp = 1
     assert ("divine_intervention", True) in [(a[0], a[2]) for a in b.class_abilities(c)]
-    real = RNG(3, "god")
-
-    class Answered:
-        """The dice, except that the god answers (the percentile roll comes up 1)."""
-
-        def __getattr__(self, name):
-            return getattr(real, name)
-
-        def randint(self, a, top):
-            return 1 if top == 100 else real.randint(a, top)
-
-    b.rng = Answered()
-    b.do_ability(c, "divine_intervention")
-    assert ally.hp == ally.max_hp and cleric.uses["divine_intervention"] == 0
+    used = list(cleric.spells.get("slots_used", [0] * 9))
+    b.do_ability(c, "divine_intervention")  # (2024: the god always answers - a cleric spell without a slot)
+    assert cleric.uses["divine_intervention"] == 0 and cleric.spells.get("slots_used", [0] * 9) == used
+    assert any(e["kind"] == "cast" for e in b.events)
     assert ("divine_intervention", False) in [(a[0], a[2]) for a in b.class_abilities(c)]
 
 

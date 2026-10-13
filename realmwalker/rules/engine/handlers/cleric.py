@@ -107,6 +107,8 @@ def divine_intervention(c, o, victim) -> None:
         _, sid, target, point, _sp = best
         if not b.do_cast(f, sid, target, point=point):
             f.char.uses["divine_intervention"] = f.char.uses.get("divine_intervention", 0) + 1
+        elif f.action > 0:
+            f.action -= 1  # (it is the cleric's action, whatever the spell's own casting time)
     finally:
         f.__dict__.pop("free_slot", None)
 

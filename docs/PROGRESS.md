@@ -73,6 +73,20 @@ pages. The full checks run when Part B is merged.
   standing still (9); poison that burns through resistance (13); Death Strike, a first-round blow doubled (17).
   Characters who were Cutthroats need a new character when Part B is released (saves change then).
 
+**B.3 — the 2024 cleric** (same evening, same branch):
+- **Divine Order** at level 1 (on the sheet: c, then l): **Protector** (martial weapons, heavy armour) or
+  **Thaumaturge** (a cantrip more, Wisdom added to Arcana and Religion). The domain now comes at **level 3**.
+- **Channel Divinity** twice between long rests (three times from 6, four from 18; a short rest brings one back):
+  **Divine Spark** (heal a friend or smite a foe within 60 feet, 1d8 + Wisdom, up to 4d8) and Turn Undead, which
+  from level 5 also **sears** the undead it turns. **Blessed Strikes** at 7: Divine Strike (a radiant 1d8 once a
+  turn, 2d8 from 14) or Potent Spellcasting (Wisdom on cantrip damage; from 14, temporary hit points for a friend).
+  **Divine Intervention** at 10: the god always answers now - a cleric spell cast without a slot.
+- **Life Domain**: Disciple of Life and Preserve Life at 3, **Blessed Healer** at 6 (healing others heals you),
+  **Supreme Healing** at 17 (healing dice at their highest). **War Domain**: War Priest and **Guided Strike** (now
+  for a friend's blow too) at 3, **War God's Blessing** at 6 (Shield of Faith or a Spiritual Weapon without a slot),
+  **Avatar of Battle** at 17 (resistance to weapons).
+- Companions on Auto spark a friend in trouble and call down the War God's Blessing.
+
 ### Session, 2026-10-13 (evening): Demigods & Magics part A — twenty levels and the epic boons — branch `dlc/03-demigods-magics`
 
 The first part of Expansion 3 (begun in the afternoon, cut off by a usage limit, finished after it reset). Saves of

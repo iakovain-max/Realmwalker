@@ -267,34 +267,6 @@ def preserve_life(c, o, victim) -> None:
     b.say("Warm light spreads through the wounded.", "magic")
 
 
-@special("divine_intervention")
-def divine_intervention(c, o, victim) -> None:
-    from realmwalker.rules.combat import FEARLESS
-
-    b, f = c.b, c.caster
-    ch = f.char
-    roll = b.rng.randint(1, 100)
-    b.dice_say(f"Divine Intervention ({f.name}): {roll} vs {ch.level} or less")
-    b.say(f"{f.the_name} cries out to {f.possessive} god.", "magic")
-    if roll > ch.level:
-        b.say("Nothing answers.", "system")
-        return
-    ch.uses["divine_answered"] = b.now
-    b.say("<magic>And the god answers.</> Light like noon floods the place.", "magic")
-    b._event("cast", by=f.id, to=None, spell="divine_intervention", effect="burst", dtype="radiant",
-             area=[cell for x in b.fighters if x.active or x.state == "down" for cell in x.cells])
-    for a in b.team(f.team):
-        if a.state in ("fighting", "down"):
-            b._heal(a, a.max_hp)
-    dc = spellrules.save_dc(f.sheet, b.t)
-    for e in b.enemies_of(f):
-        if not b._save(e, "wis", dc):
-            e.conditions["frightened"] = 10
-            e.sources["frightened"] = f.id
-            if e.morale_type not in FEARLESS or e.kind == "undead":
-                b._break(e, "flee" if e.kind != "humanoid" else None)
-
-
 @special("war_priest")
 def war_priest(c, o, victim) -> None:
     """A weapon blow with the bonus action, at the weakest in reach (or the one chosen)."""

@@ -73,7 +73,7 @@ spellcasting and scrolls at the book's prices.
 - [x] B.1 Fighter and Champion 2024; the Knight to 18 (original).
 - [x] B.2 Rogue, Thief and the Assassin (the Cutthroat's characters become assassins); Cunning Strike and its effects
   as options in `actions.options`, in the Auto's and enemy's hands.
-- [ ] B.3 Cleric (Divine Order, Channel Divinity effects, Blessed Strikes, Divine Intervention), Life and War
+- [x] B.3 Cleric (Divine Order, Channel Divinity effects, Blessed Strikes, Divine Intervention), Life and War
   Domains.
 - [ ] B.4 Wizard (Ritual Adept, Scholar, Memorize Spell, Spell Mastery, Signature Spells), Evoker and Abjurer;
   FORMAT_VERSION bump; companion archetypes to 20; Part B to `main`.
