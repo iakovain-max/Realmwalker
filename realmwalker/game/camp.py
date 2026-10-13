@@ -437,11 +437,15 @@ def make(game, cid: str) -> list[str]:
     made = []
     who = game.leader
     for item, qty in spec["gives"]:
-        n = int(qty) if good else max(1, int(qty) // 2)
+        n = int(qty) if good else int(qty) // 2  # (a failed brew of one makes nothing)
+        if n <= 0:
+            continue
         it = add_item(who, game.tables.items, item, n, made_at=game.world.time)
         if it is not None:
             made.append(f"{game.tables.items.get(item)['name']}" + (f" ×{n}" if n > 1 else ""))
     text = spec["text"] if good else "It takes longer than it should, and you spoil some of it."
+    if not made:
+        return [roll, "It goes wrong, and the materials are wasted."]
     return [roll, f"{text} <loot>You have {', '.join(made)}.</>"]
 
 

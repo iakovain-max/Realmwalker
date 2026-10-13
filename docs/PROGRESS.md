@@ -27,7 +27,8 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Varied, bigger, living towns** | ✅ Done (2026-10-11), branch `world-variety` |
 | **Clearing the decks for the expansions** | ✅ Done (2026-10-12), branch `prep/clear-the-decks` |
 | **Expansion 1, *Dice & Destiny*** (version 1.1.0) | ✅ Released (2026-10-13), branch `dlc/01-dice-destiny` |
-| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | ⏳ Expansion 2, *Blades & Backgrounds*: parts A (arms and armour), B (origins) and C (feats) in `main` (2026-10-13), part D (gear, tools, mounts; release) next |
+| **Expansion 2, *Blades & Backgrounds*** (version 1.2.0) | ✅ Released (2026-10-13), branch `dlc/02-blades-backgrounds` |
+| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | ✅ Expansion 2, *Blades & Backgrounds* released (version 1.2.0, 2026-10-13); Expansion 3 next |
 
 ---
 
@@ -38,6 +39,67 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-13: Blades & Backgrounds part D — gear, inns, mounts; **released as 1.2.0** — branch `dlc/02-blades-backgrounds`
+
+The last part of Expansion 2. **Expansion 2, *Blades & Backgrounds*, is released as version 1.2.0**: its icon (a
+sword across a rolled scroll) is on the main menu's shelf. Saves from part C (format 16) still load; saves from
+before part C do not (start a new world).
+
+**What is different when you play**
+- **The 2024 tools**: 25 new ones (every artisan's tool, the forgery and poisoner's kits, ten instruments,
+  dragonchess and Three-Dragon Ante). Each has its Utilize uses on its card. Trained with a tool you add your
+  proficiency to checks made with it, and trained in the skill as well you have advantage (camp crafts, picking a
+  lock with thieves' tools). 22 new things to make at camp (m) with them: antitoxin and poison, arrows and bolts,
+  ladders and poles, chains and spikes, a map, perfume, glass bottles...
+- **The 2024 adventuring gear**, every piece of it doing something:
+  - in a fight (the Item menu, u): **acid** dashed at someone, a **net** that restrains, **caltrops** and
+    **ball bearings** strewn on the ground (whoever walks in is hurt and stopped, or falls), **basic poison** smeared
+    on a blade with a bonus action (the next cut deals 1d4 poison more);
+  - **antitoxin**: drink it for advantage against being poisoned for an hour;
+  - **the seven packs** (explorer's, dungeoneer's, burglar's, priest's, scholar's, entertainer's, diplomat's): open
+    one in the pack (Enter) and it becomes its contents;
+  - **underground**: a pole finds traps, a magnifying glass searches with advantage, a portable ram forces doors;
+  - **on the road**: ladders, climber's kits, iron spikes, block and tackle, chains, a signal whistle, string and a
+    bell are choices in 18 of the road's events (over the walls of a shut town, a stuck cart, a fallen climber...);
+  - bottles, jugs, flasks, buckets and barrels hold water; baskets, pouches, quivers, cases and chests carry; a lock
+    holds a prisoner; a costume helps a disguise; a lamp and a bullseye lantern give light; a mirror, perfume and fine
+    wine please the gentry; the arcane, druidic and holy foci.
+- **A trinket in every pocket**: a hundred keepsakes written for the game, one in every new character's kit, and
+  sometimes one in the pocket of someone who carried coin, or in a chest. Each has its own small story on its card.
+- **Shops** stock all of it, the rarer things only in towns or cities, and each people's general stores have their
+  own wares (dwarven lamps and mason's tools, elven lyres and yew wands, halfling cookware, Highland bagpipes...).
+- **Inns by the book** (PHB 2024): a bed and a meal of each grade the town has, from a squalid loft (cheap, and your
+  purse may be lighter in the morning, and the food may disagree with you) to an aristocratic suite (the town's high
+  folk think better of you for three days), priced for each of you. **Stay a while**: three or seven days living at a
+  chosen lifestyle, fed and rested.
+- **Travel by the book**: a **toll** of 1 cp a head at a walled town's gate; **coaches** from towns to towns along
+  the roads (3 cp a mile each; the days pass on the way); **ships** between harbours (1 sp a mile); a **messenger**
+  (2 cp a mile) to fetch a companion who waits in another town.
+- **Mounts**: **horses that look like horses** (and ponies, mules, draft horses, warhorses, camels, elephants and
+  mastiffs). A camel keeps its pace in the desert; an elephant needs an exotic saddle; a mastiff carries only the
+  small folk, eats meat, and guards the animals at night as well as a watch. **A rider needs a saddle**: bareback, you tire as if you walked. In towns the stable feeds
+  your animals for 5 sp a head a day.
+- **Vehicles**: carts, wagons, carriages, chariots and sleds at the stable. The animals nobody rides pull it, and
+  pull five times what they could carry; off the roads it is slow going (a sled on snow is not); a carriage seats
+  four, who ride instead of walking.
+
+**How to see it**: start a new world (or keep a world made after part C). The shops, inns and stables of any town;
+the Item menu (u) in a fight; your pack (i) for the trinket and to open a pack; the shelf on the main menu.
+
+**What could not be checked**: the new pictures (55 gear icons, the horses, camel, saddles and carts, the icon) were
+looked at on contact sheets and in the window smoke test, not in play by eye.
+
+**Anything assumed**: coaches run up to 160 miles, four miles an hour for ten hours a day; ships sail two miles an
+hour day and night, up to 600 miles; a messenger rides 30 miles a day there and back; hired companions keep their
+own wages (below the book's 2 gp a day: they share the loot too); the horses' stat blocks wait for mounted combat
+(Expansion 9), and so does barding; the military saddle is a plain saddle until then; a carried basket, pouch,
+quiver or chest adds to what you can carry (each kind once); the inn charges each of the party; a mirror and perfume
+please the gentry a little (+2, +3); the druidic foci work when the druid comes (Expansion 3); Mounted Combatant is
+written but not offered until mounted combat comes.
+
+**Codex** (`tools/codex/coverage.py`): Expansion 2: all 384 entries settled (310 done, 74 adapted). Player's
+Handbook 34% · Dungeon Master's Guide 11% · Monster Manual 8%.
 
 ### Session, 2026-10-13: Blades & Backgrounds part C — feats — branch `dlc/02-blades-backgrounds`
 

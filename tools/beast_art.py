@@ -352,10 +352,23 @@ def sled() -> Image.Image:
     return shadow(outline(im))
 
 
+def hard_edges(im: Image.Image) -> Image.Image:
+    """A creature on the field has no soft pixels (tests/test_adapted_art.py): the drop shadow goes, the rest is
+    solid."""
+    r, g, b, a = im.split()
+    im = Image.merge("RGBA", (r, g, b, a.point(lambda v: 255 if v >= 200 else 0)))
+    box = im.getbbox()
+    if box is not None and box[3] < 32:  # stand on the tile's last row, as the dolls do (adapt_art.FOOT)
+        out = Image.new("RGBA", im.size, (0, 0, 0, 0))
+        out.paste(im, (0, 32 - box[3]))
+        im = out
+    return im
+
+
 def all_drawn() -> dict[str, Image.Image]:
     horse = riding_horse()
     flip = Image.FLIP_LEFT_RIGHT   # the Crawl animals face left
-    return {k: (v.transpose(flip) if k.startswith("creature/") else v) for k, v in {
+    return {k: (hard_edges(v.transpose(flip)) if k.startswith("creature/") else v) for k, v in {
         "creature/riding_horse": horse,
         "creature/horse": horse.copy(),
         "creature/pony": pony(),

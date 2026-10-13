@@ -286,14 +286,14 @@ def _bad_food(game, grade: str, rng) -> list[str]:
     return out
 
 
-def _night(game, npc: NPC, grade: str, rng) -> list[str]:
+def _night(game, npc: NPC, grade: str, rng, theft: bool = True) -> list[str]:
     """What a night of this kind does, besides the sleep: thieves in a squalid loft, a real bed's deep rest, being
     seen in the best rooms in town."""
     from realmwalker.rules import body
 
     spec = inn_spec(game)
     out = []
-    if rng.chance(float(spec["theft"].get(grade, 0.0))):
+    if theft and rng.chance(float(spec["theft"].get(grade, 0.0))):
         c = game.leader
         taken = c.money // rng.randint(5, 10)
         if taken > 0:
@@ -358,7 +358,7 @@ def _stay(game, npc, svc, arg):
         if left > 0:
             game.pass_time(left, "rest")  # (a whole day, whatever hour the sleep ended)
         msgs += [m for m in _night(game, npc, grade, rng) if "<danger>" in m]
-    _night(game, npc, grade, rng)  # (a last good night's rest, and being seen)
+    _night(game, npc, grade, rng, theft=False)  # (a last good night's rest, and being seen; no second thief)
     msgs.append(f"{days} days pass{' quietly' if grade in ('modest', 'comfortable') else ''}.")
     return msgs
 
@@ -751,8 +751,10 @@ def feed_animals(game) -> list[str]:
 
             remove_item(c, fodder.uid, 1)
             a["unfed"] = 0
-        elif in_town and c.money >= stabling:  # PHB 2024: stabling, 5 sp a day, feed included
-            c.money -= stabling
+        elif in_town and money(game) >= stabling:  # PHB 2024: stabling, 5 sp a day, feed included
+            from realmwalker.game.events import pay
+
+            pay(game, stabling)
             paid += stabling
             a["unfed"] = 0
         elif grazing and not meat:

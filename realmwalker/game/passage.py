@@ -31,6 +31,9 @@ def _from_here(game, cost: np.ndarray, x: int, y: int) -> np.ndarray:
     return dist
 
 
+_KEPT: dict = {}  # (world, kind, settlement) -> routes: the roads and the coasts do not move while you play
+
+
 def _routes(game, here, cost: np.ndarray, kinds: tuple, spec: dict) -> list[tuple[object, int, int]]:
     """(settlement, miles, minutes) for every place of these kinds that `cost` reaches from `here`, nearest first."""
     dist = _from_here(game, cost, here.x, here.y)
@@ -57,6 +60,13 @@ def coach_routes(game, here) -> list[tuple[object, int, int]]:
     """Towns the coaches run to from here, along the roads."""
     if here is None or here.kind not in COACH_KINDS:
         return []
+    key = (game.world.meta.id, "coach", here.id)
+    if key not in _KEPT:
+        _KEPT[key] = _coach_routes(game, here)
+    return _KEPT[key]
+
+
+def _coach_routes(game, here) -> list[tuple[object, int, int]]:
     w = game.world
     cost = np.where(w.road, 1, 0).astype(np.int32)
     for s in w.settlements:
@@ -70,21 +80,31 @@ def _sea(game) -> np.ndarray:
     return w.biome == ocean
 
 
-def harbour(game, s) -> bool:
+def harbour(game, s, sea: np.ndarray | None = None) -> bool:
     """A place on the sea shore."""
     if s is None or s.kind not in HARBOUR_KINDS:
         return False
-    sea = _sea(game)
+    sea = _sea(game) if sea is None else sea
     W, H = sea.shape
     return any(sea[x, y] for x in range(max(0, s.x - 1), min(W, s.x + 2)) for y in range(max(0, s.y - 1), min(H, s.y + 2)))
 
 
 def ship_routes(game, here) -> list[tuple[object, int, int]]:
     """Harbours a ship sails to from here, over the open sea."""
-    if not harbour(game, here):
+    if here is None or here.kind not in HARBOUR_KINDS:
         return []
-    cost = np.where(_sea(game), 1, 0).astype(np.int32)
-    ports = [s for s in game.world.settlements if harbour(game, s)]
+    key = (game.world.meta.id, "ship", here.id)
+    if key not in _KEPT:
+        _KEPT[key] = _ship_routes(game, here)
+    return _KEPT[key]
+
+
+def _ship_routes(game, here) -> list[tuple[object, int, int]]:
+    sea = _sea(game)
+    if not harbour(game, here, sea):
+        return []
+    cost = np.where(sea, 1, 0).astype(np.int32)
+    ports = [s for s in game.world.settlements if harbour(game, s, sea)]
     for s in ports:
         cost[s.x, s.y] = 1
     return _routes(game, here, cost, HARBOUR_KINDS, _spec(game, "ship"))
@@ -120,7 +140,7 @@ def messenger_jobs(game, here) -> list[tuple[object, int, int]]:
     out = []
     for c in getattr(game, "waiting", []):
         at = (c.companion or {}).get("wait_at")
-        if not c.alive or not at or at == [here.x, here.y] or (c.companion or {}).get("coming"):
+        if not c.alive or not at or at == [here.x, here.y]:
             continue
         miles = max(1, int(round(math.hypot(at[0] - here.x, at[1] - here.y) * _miles_per_tile())))
         out.append((c, miles, max(1, int(_spec(game, "messenger")["per_mile"]) * miles)))

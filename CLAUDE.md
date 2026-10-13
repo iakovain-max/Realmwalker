@@ -371,6 +371,23 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   (`Battle._weapon_option`, `spell_range`, `Sheet.armor_class`). `items.slots_for(item, char)` knows Dual Wielder.
   The fighter's style is a Fighting Style feat (no style field). A creature has a feat by its "feat_<id>" trait
   (data/creatures.json traits: the berserker, the guard, the orc warchief).
+- Gear and tools 2024 (Expansion 2 part D): items.json `pack` (opens into its contents, gear.open_pack), `helps`
+  {search, traps, force, disguise} (dungeon.helps, law.put_on_disguise), `utilize` (a tool's 2024 uses, on its card),
+  `carry` also on carried containers (each kind once, Sheet.pack_carry), `trinket` (data/trinkets.json; the name and
+  a `trinket:<id>` tag on the Item, rules/items.make_trinket); thrown or coated things are item spells (acid, net,
+  caltrops and ball bearings as zones "caltrops"/"bearings" with a fixed `dc`, `coat_poison` and the `poisoned_blade`
+  buff); antitoxin is `effects["antitoxin"]` (query.save_roll). The tool rule: `camp.check(..., tool=)` and
+  `camp.tool_bonus` (proficiency; with the skill too, advantage). Shop stock lines may name a smallest settlement
+  kind; economy.json `culture_stock` adds a people's wares to its general stores.
+- Inns and passage (part D): economy.json services `inn` (stay, meal and lifestyle prices by grade, the grades by
+  settlement kind, theft/rest/seen/fill/sick), `toll`, `coach`, `ship`, `messenger`, `stabling`; services `room`,
+  `meal`, `stay` (by grade), `coach`/`ship` (game/passage.py: routes over roads or sea by Dijkstra, the fare per
+  head per mile, `travel` moves the party and passes the days), `messenger` (a waiting companion's `coming` time:
+  companions.rejoin waits for it; pass_time calls rejoin while anyone is coming).
+- Mounts and vehicles (part D): economy.json animals may say `small_only`, `lands`, `saddle`, `eats`; saddles are
+  items with `tack` (mounts.saddled: bareback riders tire as walkers); `Character.vehicles` [{kind}] from economy.json
+  `vehicles` (mounts.drawn/pullers: the animals nobody rides pull it, services.animal_carry five times their carry;
+  step_factor slows it off the roads; seated walkers ride in a carriage). A mastiff in the herd guards it at night.
 - Arms and masteries (Expansion 2 part A): weapons carry their 2024 `mastery` (data/items.json); a character uses it
   with the `weapon_mastery` feature and the weapon kind in `Character.masteries` (`progression.mastery_count`,
   `offer_masteries`, `relearn_masteries` after a long rest; the sheet's m), a creature when its stat block attack

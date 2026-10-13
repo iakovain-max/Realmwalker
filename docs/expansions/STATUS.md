@@ -1,15 +1,15 @@
 # Expansion programme – status
 
-Current: 02 Blades & Backgrounds · part D (gear, tools, mounts; release) · branch dlc/02-blades-backgrounds · step 4 of §5.1
+Current: 03 Demigods & Magics · step 1 (branch and design note) of §5.1 · branch dlc/03-demigods-magics
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
-  budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 part A (arms and
-  armour: the 2024 weapons and armour, the eight weapon masteries, the Armaments basics) · 02 part B (origins:
-  species, the sixteen backgrounds, origin feats, creation in the 2024 order; saves format 15) · 02 part C (feats:
-  the framework, the 42 general and 10 fighting style feats in play and in the Auto's and enemy's hands; saves
-  format 16)
+  budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
+  (v1.2.0, 2026-10-13: the 2024 weapons, armour and masteries; species, sixteen backgrounds and origin feats; the
+  general and fighting style feats; the 2024 tools and gear, trinkets, inns and lifestyles, coaches, ships and
+  messengers, mounts, saddles, stabling and vehicles; saves format 16)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
-  (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`)
+  (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
+  adapted). PHB 34% · DMG 11% · MM 8%
 Assumptions waiting for Anton:
 - The Player2 AI writer is removed (tagged `before-ai-removal`); its text is replaced everywhere by the game's own
   words, strengthened where they were thin.
@@ -38,10 +38,19 @@ Assumptions waiting for Anton:
 - Expansion 2 part C: Mounted Combatant is written but not offered until mounted combat (Expansion 9); a duellist
   keeps a versatile blade in one hand; Spell Sniper's reach is for attack-roll spells only; Sentinel answers a hit
   on anyone but the sentinel.
+- Expansion 2 part D: coaches run up to 160 miles at 4 mph for 10 hours a day; ships 2 mph day and night up to 600
+  miles; a messenger rides 30 miles a day there and back; hired companions keep their own wages (below the book's
+  2 gp a day, as they share the loot); the inn charges each of the party; a mirror and perfume please the gentry a
+  little (+2, +3); a carried basket, pouch, quiver or chest adds to what you can carry; a thrown net is shaken off
+  with a Strength save at the end of each turn (the book: an action and a DC 10 Strength check), and catches a Huge
+  thing too; barding and the horses' stat blocks wait for mounted combat (Expansion 9: there is nothing for a mount
+  to be armoured against before then), and so does Mounted Combatant (written, not offered; the plan's §6.2 wanted a
+  basic form now); the cart's load counts the fastest animals as ridden (a mastiff may be counted wrongly).
 Ideas for later:
 - (none yet)
-Next session starts at: Expansion 2 Part D, task D.1 in docs/expansions/02-blades-backgrounds.md (branch
-  `dlc/02-blades-backgrounds`; parts A, B and C are merged into main; D.4 ends with the release v1.2.0)
+Next session starts at: Expansion 3 (Demigods & Magics), §5.1 step 1: make the branch `dlc/03-demigods-magics`
+  from `main` and write the design note `docs/expansions/03-demigods-magics.md` (EXPANSIONS.md §6.3: its
+  parts, the codex entries it delivers, the task list). Expansion 2 is released (v1.2.0) and merged.
 
 ## Done
 
@@ -58,6 +67,7 @@ Next session starts at: Expansion 2 Part D, task D.1 in docs/expansions/02-blade
 | 2026-10-13 | Blades & Backgrounds begun: the branch, the design note and its four parts (arms and armour, origins, feats, gear and mounts) | `dlc/02-blades-backgrounds` |
 | 2026-10-13 | Blades & Backgrounds part A: the 2024 weapons and armour, the eight weapon masteries (rules, picks, tactics, pictures), armour training, the Armaments basics; merged into `main` | `dlc/02-blades-backgrounds` |
 | 2026-10-13 | Blades & Backgrounds part B: species (orcs for half-orcs), sixteen backgrounds, origin feats, languages, creation in the 2024 order with array and rolling; merged into `main` | `dlc/02-blades-backgrounds` |
+| 2026-10-13 | Blades & Backgrounds part D: the 2024 tools and gear, trinkets, shops by size and people, inns by grade, lifestyles, tolls, coaches, ships, messengers, mounts, saddles, stabling, vehicles; **released as 1.2.0** and merged into `main` | `dlc/02-blades-backgrounds` |
 | 2026-10-13 | Blades & Backgrounds part C: feats (the framework, Suggest, the Feats tab; 42 general and 10 fighting style feats in play, on Auto and in the enemy's hands); finished by a second session after a usage limit; merged into `main` | `dlc/02-blades-backgrounds` |
 
 ## Notes for the next session

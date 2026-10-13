@@ -273,3 +273,14 @@ def test_the_mounts_have_their_2025_stat_blocks(tables):
     for cid in ("camel", "draft_horse", "mastiff", "mule", "pony", "riding_horse", "warhorse"):
         assert cid in tables.creatures
     assert "guard_dogs" in tables.creatures.encounters
+
+
+def test_a_mastiff_guards_the_herd_at_night(game, monkeypatch):
+    from realmwalker.core.rng import RNG as R
+    from realmwalker.game import fight
+
+    monkeypatch.setattr(R, "chance", lambda self, p: True)
+    horse(game)
+    horse(game, "mastiff", "Grip")
+    msgs = fight._rustlers(game, False)
+    assert len(game.leader.animals) == 2 and any("Grip" in m for m in msgs)

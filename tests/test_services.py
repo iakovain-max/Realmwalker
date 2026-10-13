@@ -296,3 +296,20 @@ def test_shops_stock_the_new_gear_by_size_and_people(game):
             if economy.shop_kind(game, n) == "general":
                 assert not city_only & set(economy.shop_state(game, n)["stock"])
                 return
+
+
+def test_a_stay_rolls_for_thieves_once_a_night_and_a_messenger_can_be_sent_again(game, monkeypatch):
+    from realmwalker.game import passage
+
+    inn = person(game, "innkeeper")
+    rolls = []
+    real = services._night
+    monkeypatch.setattr(services, "_night", lambda *a, **k: rolls.append(k.get("theft", True)) or real(*a, **k))
+    services.perform(game, inn, "stay", "squalid:3")
+    assert rolls.count(True) == 3
+    here = game.world.settlements[inn.settlement]
+    friend = hero(game.tables)
+    friend.is_player = False
+    friend.companion = {"npc": -1, "order": "wait", "wait_at": [here.x + 9, here.y], "coming": game.world.time + 10}
+    game.waiting.append(friend)
+    assert passage.messenger_jobs(game, here)  # sent for before, gone elsewhere: may be sent for again

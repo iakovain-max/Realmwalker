@@ -187,8 +187,10 @@ def test_every_event_and_option_can_be_played(game):
     c.money = 100000
     for item in ("rations", "bandages", "healing_herbs"):
         add_item(c, game.tables.items, item, 10)
-    for item in ("rope", "crowbar", "shovel", "grappling_hook"):  # some ways through need a tool
-        add_item(c, game.tables.items, item)
+    asked = {i for spec in game.tables.travel_events.values() for opt in spec["options"]
+             for i, _ in (opt.get("requires") or {}).get("items", [])}
+    for item in sorted(asked | {"rope", "crowbar", "shovel", "grappling_hook"}):  # some ways through need a tool
+        add_item(c, game.tables.items, item, 3)
     for eid, spec in game.tables.travel_events.items():
         for i, opt in enumerate(spec["options"]):
             g = copy.deepcopy(game)

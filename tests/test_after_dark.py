@@ -152,7 +152,7 @@ def test_paying_the_warden_lets_you_in(game):
     game.leader.money = 500
     ev = events.make_event(game, "shut_gate")
     labels = [label for label, *_ in events.options(game, ev)]
-    assert len(labels) == 5 and "Sleep under the walls until dawn" in labels
+    assert len(labels) >= 5 and "Sleep under the walls until dawn" in labels  # (ladders, spikes... in part D)
     assert any("grappling hook" in label for label in labels)
     events.choose(game, ev, option(game, "Knock at the postern"))
     assert game.leader.money == 480 and not game.gate_shut()
