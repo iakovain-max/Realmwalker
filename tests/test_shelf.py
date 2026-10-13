@@ -96,3 +96,15 @@ def test_the_seen_expansions_are_kept_in_the_settings(shelved, tmp_path):
     path = tmp_path / "settings.json"
     app.settings.save(path)
     assert Settings.load(path).expansions_seen == ["x0", "x1"]
+
+
+def test_every_real_expansion_has_its_icon_in_the_atlas(make_app):
+    from realmwalker import expansions
+    from realmwalker.ui.gfx import headless
+
+    app = make_app()
+    atlas = headless().atlas
+    for e in expansions.all_expansions(app.data):
+        if e.released:
+            assert atlas.has(e.icon), f"{e.name} has no icon: draw it in tools/tile_art.py dlc_icons and rebuild"
+    assert atlas.has("dlc/dice_destiny")
