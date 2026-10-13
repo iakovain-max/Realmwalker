@@ -1,10 +1,11 @@
 # Expansion programme – status
 
-Current: 02 Blades & Backgrounds · part B (origins) · branch dlc/02-blades-backgrounds · step 4 of §5.1
+Current: 02 Blades & Backgrounds · part C (feats) · branch dlc/02-blades-backgrounds · step 4 of §5.1
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 part A (arms and
-  armour: the 2024 weapons and armour, the eight weapon masteries, the Armaments basics)
+  armour: the 2024 weapons and armour, the eight weapon masteries, the Armaments basics) · 02 part B (origins:
+  species, the sixteen backgrounds, origin feats, creation in the 2024 order; saves format 15)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`)
 Assumptions waiting for Anton:
@@ -27,10 +28,16 @@ Assumptions waiting for Anton:
   battle's judgement (asked only under the Reactions setting "all"); a Nick weapon in either hand frees the off-hand
   blow; the watch's guards and deserters, as trained soldiers, use the spear's Sap; firearms are rare gnomish work
   (the 2025 bandit captain's pistol stays in its stat block).
+- Expansion 2 part B: gear the game lacks is paid in coin until part D; lineage spells work as they arrive
+  (Expansion 3); Magic Initiate's spells are cast in a fight only; Lucky is for one's own rolls; no Initiative Swap;
+  the realm's tongues are standard languages; two wolves at level 1: 85% won, 15% down (band widened).
+- A window smoke test from part B's first run hung (the creation tour lacked a step; fixed) and its process may
+  still be open on this PC (main.py --smoke-test ... --home build/smoke_home): it can be closed from Task Manager.
 Ideas for later:
 - (none yet)
-Next session starts at: Expansion 2 Part B, task B.1 in docs/expansions/02-blades-backgrounds.md (branch
-  `dlc/02-blades-backgrounds`; part A is merged into main)
+Next session starts at: Expansion 2 Part C, task C.1 in docs/expansions/02-blades-backgrounds.md (branch
+  `dlc/02-blades-backgrounds`; parts A and B are merged into main; rules/feats.py and data/feats.json hold the
+  origin feats already)
 
 ## Done
 
@@ -46,6 +53,7 @@ Next session starts at: Expansion 2 Part B, task B.1 in docs/expansions/02-blade
 | 2026-10-13 | Dice & Destiny part E: cards and tooltips, 47 status icons, the battle log's rolls, Creature details; the adaptation pass for borrowed monster tiles; spell looks; the last glossary rules; the codex settled; the shelf icon; **released as 1.1.0** and merged into `main` | `dlc/01-dice-destiny` |
 | 2026-10-13 | Blades & Backgrounds begun: the branch, the design note and its four parts (arms and armour, origins, feats, gear and mounts) | `dlc/02-blades-backgrounds` |
 | 2026-10-13 | Blades & Backgrounds part A: the 2024 weapons and armour, the eight weapon masteries (rules, picks, tactics, pictures), armour training, the Armaments basics; merged into `main` | `dlc/02-blades-backgrounds` |
+| 2026-10-13 | Blades & Backgrounds part B: species (orcs for half-orcs), sixteen backgrounds, origin feats, languages, creation in the 2024 order with array and rolling; merged into `main` | `dlc/02-blades-backgrounds` |
 
 ## Notes for the next session
 

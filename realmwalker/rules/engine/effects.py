@@ -234,7 +234,8 @@ def _save(c: Cast, o: dict, victim) -> None:
             saved = True
             b.dice_say(f"{x.name} {ability.upper()} save: not affected")
         else:
-            saved = b._save(x, ability, dc, bonus=grid.COVER_AC[cover] if ability == "dex" else 0)
+            saved = b._save(x, ability, dc, bonus=grid.COVER_AC[cover] if ability == "dex" else 0,
+                            against=_conditions_in(o.get("on_fail", ())))
         b._event("save", who=x.id, ok=saved)
         for i, (e, dtype) in enumerate(parts):
             full = rolled[i] if i in rolled else dice.roll(e, b.rng).total
@@ -336,6 +337,11 @@ def _condition(c: Cast, o: dict, victim) -> None:
         b.say(f"{x.the_name} is {conditions.name(b.t, cid).lower()}.", "good" if x.side != f.side else "danger")
 
 
+def _conditions_in(ops_: list) -> tuple:
+    """The conditions a failed save would bring (Brave and Fey Ancestry read them)."""
+    return tuple(o.get("condition") for o in ops_ if o.get("op") == "condition" and o.get("condition"))
+
+
 def spell_save(spell: dict) -> str:
     s = spellrules.op(spell, "save")
     return s["ability"] if s else "con"
@@ -346,7 +352,7 @@ def then_save(b, x, then: dict) -> None:
     caster = next((f for f in b.fighters if f.id == then.get("caster")), None)
     if then.get("conc") is not None and (caster is None or caster.concentration is None):
         return  # the spell is over
-    if b._save(x, then["save"], int(then["dc"])):
+    if b._save(x, then["save"], int(then["dc"]), against=_conditions_in(then.get("on_fail", ()))):
         return
     spell = b.t.spells[then["spell"]] if then.get("spell") in b.t.spells else {}
     c = Cast(b, caster or x, then.get("spell", ""), spell, x, None, dc=int(then["dc"]))
@@ -428,7 +434,10 @@ def _heal(c: Cast, o: dict, victim) -> None:
         if x.no_heal:
             b.say(f"The magic finds no hold in {x.the_name}.", "warn")
             continue
-        amount = dice.roll(expr(c, o["dice"], o.get("up", "")), b.rng).total + (c.mod if o.get("add_mod") else 0)
+        rolled = dice.roll(expr(c, o["dice"], o.get("up", "")), b.rng)
+        amount = rolled.total + (c.mod if o.get("add_mod") else 0)
+        if f.has_trait("feat_healer") and not spell.get("ability"):  # Healer: healing dice of 1 rolled again
+            amount += sum(b.rng.randint(1, max(1, dice.parse(o["dice"])[1])) - 1 for r in rolled.rolls if r == 1)
         if o.get("add") == "level" and f.char is not None:
             amount += f.char.level  # Second Wind
         if not spell.get("ability"):

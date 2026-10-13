@@ -17,7 +17,7 @@ from realmwalker.world.generator import WorldOptions
 from realmwalker.world.tables import Tables
 from tests.worlds import cached_world  # noqa: E402
 
-SPAN = {"dwarf": 3.5, "elf": 7.0, "halfling": 1.6, "half_orc": 0.85, "human": 1.0}
+SPAN = {"dwarf": 3.5, "elf": 7.0, "halfling": 1.6, "orc": 0.85, "human": 1.0}
 
 
 @pytest.fixture(scope="module")

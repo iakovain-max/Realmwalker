@@ -38,9 +38,9 @@ RUIN_REACH = 20  # tiles: how far the homeless walk to the next inn
 TRAIT_VALUES = {"brave": "brave", "kind": "compassionate", "generous": "compassionate", "pious": "devout",
                 "honest": "honourable", "proud": "honourable", "greedy": "greedy", "cruel": "cruel", "bitter": "rebel",
                 "sly": "rebel", "nervous": "cautious", "suspicious": "cautious"}
-JOB_CLASS = {"guard": ("fighter", "soldier"), "acolyte": ("cleric", "acolyte"), "fisher": ("rogue", "folk_hero"),
-             "serving_hand": ("rogue", "folk_hero"), "carter": ("rogue", "folk_hero"), "beggar": ("rogue", "criminal"),
-             "weaver": ("rogue", "guild_artisan")}
+JOB_CLASS = {"guard": ("fighter", "soldier"), "acolyte": ("cleric", "acolyte"), "fisher": ("rogue", "farmer"),
+             "serving_hand": ("rogue", "farmer"), "carter": ("rogue", "farmer"), "beggar": ("rogue", "criminal"),
+             "weaver": ("rogue", "artisan")}
 
 
 def spec(game, bond: str) -> dict:
@@ -235,7 +235,7 @@ def tell_of_work(conv, qid, lie: bool) -> None:
         conv.npc_says(voice(game, "dreamer", "seen_through" if lie else "refused", npc, rng))
         return
     s = spec(game, "dreamer")
-    cls, background = JOB_CLASS.get(npc.job, (rng.choice(s.get("classes", ["fighter"])), s.get("background", "folk_hero")))
+    cls, background = JOB_CLASS.get(npc.job, (rng.choice(s.get("classes", ["fighter"])), s.get("background", "farmer")))
     cls = cls if cls in s.get("classes", [cls]) else "fighter"
     char = comp.build(game, npc, cls, background, 1, rng.child("build"), s.get("story", [""]))
     for a in char.abilities:  # no soldier: softer hands, a slower eye, and (sometimes) a thick head
@@ -331,7 +331,7 @@ def persuade(conv) -> None:
         conv.npc_says(voice(game, "restless", "refused", npc, rng))
         return
     s = spec(game, "restless")
-    cls, background = JOB_CLASS.get(npc.job, ("fighter", "folk_hero"))
+    cls, background = JOB_CLASS.get(npc.job, ("fighter", "farmer"))
     char = comp.build(game, npc, cls, background, max(1, game.leader.level - 1), rng.child("build"))
     values = list(dict.fromkeys(TRAIT_VALUES[t] for t in npc.traits if t in TRAIT_VALUES))[:2] or s.get("values", ["brave"])
     conv.npc_says(voice(game, "restless", "persuaded", npc, rng))
@@ -424,7 +424,7 @@ def take_in(conv, kind: str) -> None:
     rng = conv.rng
     conv.you_say("Would you travel with me?")
     s = spec(game, kind)
-    char = comp.build(game, npc, rng.choice(s.get("classes", ["fighter"])), s.get("background", "folk_hero"),
+    char = comp.build(game, npc, rng.choice(s.get("classes", ["fighter"])), s.get("background", "farmer"),
                       max(1, game.leader.level - 1), rng.child("build"), s.get("story", [""]))
     conv.npc_says(voice(game, kind, "joined", npc, rng))
     facts = {}

@@ -196,6 +196,8 @@ RULES = Obj(
         "carry": Obj({"per_strength": Int(min=1, max=100), "encumbered_per_strength": Int(min=1, max=100),
                       "heavily_per_strength": Int(min=1, max=100)}),
         "languages": word_list(1, 40),
+        "language_lists": Obj({"standard": word_list(1, 40), "rare": word_list(1, 40), "by_species": Map(word_list(1, 40)),
+                               "by_culture": Map(word_list(1, 40))}),
         "tools": Map(Str(max_len=40)),
         "hazards": Obj({"falling": Obj({"feet_per_die": Int(min=1, max=100), "die": Int(min=2, max=20), "max_dice": Int(min=1, max=100)}),
                         "burning": Obj({"damage": Str(max_len=12), "type": Str(max_len=20)}),
@@ -228,6 +230,12 @@ RACE = Obj(
         "age": Obj({"adult": Int(min=1, max=1000), "old": Int(min=1, max=1000), "max": Int(min=1, max=2000)}),
         "hp_per_level": Int(min=0, max=5, optional=True),
         "traits": List(TRAIT), "standing": Map(Int(min=-100, max=100)),
+        # choices made at creation (2024): {id: {"kind": "skill" | "origin_feat" | "lineage", "from": [...]}}
+        "choices": Map(Obj({"kind": Str(choices=["skill", "origin_feat", "lineage"]),
+                            "from": List(Str(max_len=30), optional=True)}), optional=True),
+        "lineages": Map(Obj({"name": Str(max_len=40), "text": Str(max_len=300), "speed": Int(min=5, max=60, optional=True),
+                             "darkvision": Int(min=0, max=300, optional=True),
+                             "spells": Map(List(Str(max_len=40)), optional=True)}), optional=True),
     }
 )
 RACES = Obj({"races": Map(RACE, min_items=1)})
@@ -263,6 +271,9 @@ BACKGROUND = Obj(
     {
         "name": Str(max_len=30), "description": Str(max_len=600), "skills": List(Str(max_len=30), min_items=2, max_items=2),
         "tools": List(Str(max_len=40)), "languages": Int(min=0, max=3), "items": WEIGHTED, "money": Int(min=0, max=10**6),
+        "abilities": List(Str(choices=list(ABILITY_IDS)), min_items=3, max_items=3),  # raised +2/+1 or +1/+1/+1
+        "feat": Obj({"id": Str(max_len=40), "choices": Map(Any_(), optional=True)}),  # its origin feat
+        "gold": Int(min=0, max=10**6),  # equipment option B: coin instead
         "feature": Obj({"name": Str(max_len=60), "text": Str(max_len=400)}),
         "tie": Obj({"kind": Str(max_len=30), "text": Str(max_len=400)}),
         "start": Obj({"kinds": List(Str(max_len=20), min_items=1), "biomes": List(Str(max_len=30), optional=True)}),
@@ -521,6 +532,16 @@ TRAIT_DEF = Obj(
 )
 TRAITS = Obj({"traits": Map(TRAIT_DEF, min_items=1)})
 
+FEAT_CHOICE = Obj({"kind": Str(choices=["skill", "skill_or_tool", "tool", "spell_list", "cantrip", "spell", "ability"]),
+                   "from": Any_(optional=True), "count": Int(min=1, max=6, optional=True),
+                   "level": Int(min=0, max=9, optional=True)})
+FEATS = Obj({"feats": Map(Obj({"name": Str(max_len=40), "category": Str(choices=["origin", "general", "fighting_style",
+                                                                                   "epic"]),
+                               "text": Str(max_len=500), "trait": Str(max_len=40, optional=True),
+                               "repeatable": Bool(optional=True), "prerequisite": Any_(optional=True),
+                               "upgrade_in": Int(min=2, max=26, optional=True),
+                               "choices": Map(FEAT_CHOICE, optional=True)}), min_items=1)})
+
 STATBLOCK = Obj(
     {
         "name": Str(max_len=60), "page": Int(min=1, max=500), "size": Str(choices=list(SIZES_2025)),
@@ -538,6 +559,7 @@ STATBLOCKS = Obj({"statblocks": Map(STATBLOCK)})
 DATA_FILES.update({
     "conditions.json": CONDITIONS,
     "traits.json": TRAITS,
+    "feats.json": FEATS,
     "statblocks.json": STATBLOCKS,
 })
 

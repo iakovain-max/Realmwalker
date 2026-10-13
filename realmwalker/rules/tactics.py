@@ -21,7 +21,7 @@ Pure logic: it only calls the Battle's own actions, so everything it does is som
 
 from __future__ import annotations
 
-from realmwalker.rules import grid
+from realmwalker.rules import feats, grid
 from realmwalker.rules import spells as spellrules
 from realmwalker.rules.combat import FOE, PARTY, AttackOption, Battle, Fighter, _avg
 from realmwalker.rules.engine import actions, estimates, query
@@ -818,7 +818,7 @@ def _party_turn(b: Battle, f: Fighter) -> None:
         if b.current is f and b.outcome is None and f.move_left >= 5:
             _keep_safe(b, f)
         return
-    if spellrules.is_caster(c, b.t) and f.action > 0:
+    if (spellrules.is_caster(c, b.t) or feats.innate_spells(c, b.t)) and f.action > 0:
         if _cast_something(b, f):
             if b.current is f and b.outcome is None:
                 _bonus_strike(b, f)  # (the spiritual weapon, War Priest)
@@ -834,6 +834,15 @@ def _party_turn(b: Battle, f: Fighter) -> None:
             b.do_ability(f, opt.value)
             attacks *= 2 if f.action > 1 else 1
             break
+    if f.bonus > 0 and any(e.standing and not b.can_see(f, e) for e in b.enemies_of(f)):
+        for opt, _ in _abilities(b, f, "sense"):  # a foe it cannot see: feel for it through the stone
+            b.do_ability(f, opt.value)
+            break
+    if opts and b.has_action(f) and f.bonus > 0 and best_plan(b, f, opts) is None:
+        # Nothing in reach this turn: run with the bonus action (Adrenaline Rush, Cunning Action) to close the gap.
+        dash = next((opt for opt, a in _abilities(b, f, "move") if a.get("via") == "dash"), None)
+        if dash is not None:
+            b.do_ability(f, dash.value)
     if opts and b.has_action(f):  # (first aid for a fallen friend may have taken the action)
         struck = _fight(b, f, opts, attacks)
         if struck and b.current is f and b.outcome is None:
@@ -868,6 +877,8 @@ def _does(opt, a: dict | None) -> str:
     "power" used with the action (Channel Divinity)."""
     if a is None:
         return "attack" if opt.value in ("offhand", "spirit_strike") else "other"
+    if a.get("does"):
+        return a["does"]  # (said in the data: Stonecunning "sense")
     if a.get("via"):
         return "move"
     ops = [o["op"] for o in a.get("effects", ())]

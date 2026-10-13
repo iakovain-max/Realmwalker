@@ -167,6 +167,10 @@ def buy_price(game, npc: NPC, item_id: str, item: Item | None = None) -> int:
     price = value * local_factor(game, settlement, item_id) * float(spec.get("markup", 1.0))
     price *= MOOD_BUY[npc.mood()] * (1.0 + float(npc.flags.get("price_mod", 0.0))) * (1.0 - haggle_bonus(game, npc, shop))
     price *= standing_factor(game, npc)
+    if item is None or not item.magic:
+        from realmwalker.rules import feats
+
+        price *= 1.0 - feats.crafter_discount(game.party, game.tables)  # (Crafter: a fifth off plain goods)
     return max(1, int(round(price)))
 
 

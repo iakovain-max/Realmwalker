@@ -224,7 +224,7 @@ def test_a_folk_hero_drove_off_a_real_beast_or_raiders(game, tables):
     if not struck:
         pytest.skip("nothing troubled any village in living memory")
     sid = sorted(struck)[0]
-    tie = make_ties(w, tables, hero_of(tables, "folk_hero"), sid, RNG(3, "ties"))[0]
+    tie = make_ties(w, tables, hero_of(tables, "farmer"), sid, RNG(3, "ties"))[0]
     assert "foe" in tie["refs"] or "foe_faction" in tie["refs"]
     foe = w.figures[tie["refs"]["foe"]].name if "foe" in tie["refs"] else w.factions[tie["refs"]["foe_faction"]].name
     assert foe in tie["text"]

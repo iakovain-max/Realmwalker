@@ -32,7 +32,7 @@ def game(tables, world):
     b = CharacterBuilder(tables, RNG(3, "hero"))
     b.set_race("human")
     b.set_class("fighter")
-    b.set_background("folk_hero")
+    b.set_background("farmer")
     g = new_game(copy.deepcopy(world), tables, b.build())
     g.survival = False
     return g

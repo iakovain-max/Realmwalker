@@ -356,6 +356,13 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   what they do (`tactics._does`), never by name. `tests/test_tactics_coverage.py` (slow) fights every creature in
   `tools/arena.py`'s scenarios: every option chosen, nothing refused, no broken state, an enemy turn under 150 ms
   at the 95th percentile and never 400 ms (thread time). A new creature or spell must keep it green.
+- Origins (Expansion 2 part B): `Character.species` (readable as `.race`; data/races.json keeps its name), `lineage`,
+  `feats` [{id, choices}], `choices`; ability increases come from the background (`CharacterBuilder.bonus`), feats
+  from the background and a human's Versatile (`origin_feats`, `feat_slots`). Feats are data/feats.json with a kernel
+  trait each ("feat_<id>", handlers/feats.py); `rules/feats.py` grants them, picks defaults, and lists innate spells
+  (a feat's or a lineage's, cast as "innate:<source>:<spell>" with no slot). Saves against a condition pass
+  `against=` (Brave, Fey Ancestry). Creation runs calling, background, people, Origin, abilities (point buy, array,
+  4d6)...; the smoke tour presses Enter through all ten steps.
 - Arms and masteries (Expansion 2 part A): weapons carry their 2024 `mastery` (data/items.json); a character uses it
   with the `weapon_mastery` feature and the weapon kind in `Character.masteries` (`progression.mastery_count`,
   `offer_masteries`, `relearn_masteries` after a long rest; the sheet's m), a creature when its stat block attack

@@ -261,9 +261,13 @@ class CharacterScreen(Screen):
                 canvas.clear_cells(col2, top, fw, room)
                 scenes.figure(canvas, c, t, tuple(int(v) for v in canvas.cell_rect(col2, top, fw, room)))
 
-        notes = []
+        # Who they are to the world first: ties and looks; then what they can do.
+        notes = [f"<title>Tie:</> {markup.escape(tie['text'])}" for tie in c.ties]
+        notes += [f"<title>Looks:</> {markup.escape(c.appearance)}", ""]
         for trait in s.race["traits"]:
             notes.append(f"<loot>{trait['name']}</> <dim>({race})</>: {trait['text']}")
+        if s.lineage:
+            notes.append(f"<loot>{s.lineage['name']}</> <dim>(lineage)</>: {s.lineage['text']}")
         for f in s.features():
             if f["id"] in ("subclass", "asi") or (f["id"] == "fighting_style" and c.fighting_style):
                 continue
@@ -280,15 +284,15 @@ class CharacterScreen(Screen):
         feature = t.backgrounds[c.background]["feature"]
         notes.append(f"<loot>{feature['name']}</> <dim>(background)</>: {feature['text']}")
         notes.append("")
-        for tie in c.ties:
-            notes.append(f"<title>Tie:</> {markup.escape(tie['text'])}")
+        from realmwalker.rules import feats as featrules
+
+        notes += featrules.sheet_lines(c, t)
         if c is g.leader and (c.deeds or g.renown.fame or g.renown.infamy):
             r = g.renown
             notes.append(f"<title>Known for</> <dim>(fame {r.fame}, infamy {r.infamy})</>")
             for deed in c.deeds[-6:][::-1]:
                 notes.append(f"  · {markup.escape(deed)}")
             notes.append("")
-        notes.append(f"<title>Looks:</> {markup.escape(c.appearance)}")
         for label, value in (("Personality", c.personality), ("Ideal", c.ideal), ("Bond", c.bond), ("Flaw", c.flaw)):
             if value:
                 notes.append(f"<title>{label}:</> {markup.escape(value)}")

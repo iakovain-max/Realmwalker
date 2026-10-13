@@ -45,7 +45,17 @@ class CharacterBuilder:
         self.backstory = ""
         self.personality = self.ideal = self.bond = self.flaw = ""
         self.start_settlement: int | None = None
+        self.lineage: str | None = None  # an elf's drow, high or wood
+        self.choices: dict = {}  # species choices: Skillful's skill, Keen Senses' skill
+        self.versatile: str = "skilled"  # a human's origin feat
+        self.feat_choices: dict[str, dict] = {}  # by source ("background", "versatile"): the feat's own picks
+        self.bonus_mode = "2/1"  # the background's increases: "2/1" (+2 and +1) or "1/1/1"
+        self.bonus_pick: list[str] = []  # for "2/1": [the +2, the +1]
+        self.take_gold = False  # the background's option B (50 gp) instead of its equipment
+        self.score_method = "point_buy"  # point_buy, array (15, 14, 13, 12, 10, 8) or roll (4d6, lowest dropped)
+        self.languages: list[str] = []  # the two standard languages chosen (Common is everyone's)
         self.set_class("fighter")
+        self.set_race("human")
         self.randomize_identity()
 
     # ------------------------------------------------------------------ choices
@@ -54,8 +64,196 @@ class CharacterBuilder:
         cultures = self.t.races[race]["cultures"]
         if self.culture not in cultures:
             self.culture = cultures[0]
+        lineages = list(self.t.races[race].get("lineages") or {})
+        self.lineage = lineages[0] if lineages else None
+        self.choices = {}
+        self._fix_species_choices()
+        self.languages = []
+        self._fix_languages()
         self.randomize_identity(keep_sex=True)
         self._fix_skills()
+
+    # ------------------------------------------------------------------ species choices (2024)
+    def species_choices(self) -> dict:
+        return dict(self.t.races[self.race].get("choices") or {})
+
+    def choice_options(self, key: str) -> list[str]:
+        """What one species choice may be: a skill (not already had), an origin feat, a lineage."""
+        spec = self.species_choices().get(key, {})
+        kind = spec.get("kind")
+        if kind == "skill":
+            have = set(self.t.backgrounds[self.background]["skills"]) | set(self.class_skills)
+            pool = spec.get("from") or list(self.t.rules["skills"])
+            return [s for s in pool if s not in have or s == self.choices.get(key)]
+        if kind == "origin_feat":
+            from realmwalker.rules import feats
+
+            bg = self.t.backgrounds[self.background]["feat"]["id"]
+            return [f for f in feats.origin_feats(self.t) if f != bg or feats.defs(self.t)[f].get("repeatable")]
+        if kind == "lineage":
+            return list(self.t.races[self.race].get("lineages") or {})
+        return []
+
+    def set_choice(self, key: str, value: str) -> None:
+        if key == "lineage":
+            self.lineage = value
+        elif key == "versatile":
+            self.versatile = value
+        else:
+            self.choices[key] = value
+        self._fix_skills()
+
+    def _fix_species_choices(self) -> None:
+        for key, spec in self.species_choices().items():
+            opts = self.choice_options(key)
+            if spec["kind"] == "skill" and self.choices.get(key) not in opts:
+                self.choices[key] = next((s for s in SKILL_PREFERENCE if s in opts), opts[0] if opts else "")
+        for key in [k for k in self.choices if k not in self.species_choices()]:
+            del self.choices[key]
+
+    # ------------------------------------------------------------------ the background's increases (2024)
+    def bg_abilities(self) -> list[str]:
+        return list(self.t.backgrounds[self.background]["abilities"])
+
+    def _fix_bonus(self) -> None:
+        abil = self.bg_abilities()
+        primary = self.t.classes[self.cls]["primary"]
+        ranked = sorted(abil, key=lambda a: (primary.index(a) if a in primary else 9, -self.scores.get(a, 10)))
+        if len(self.bonus_pick) != 2 or any(a not in abil for a in self.bonus_pick) or self.bonus_pick[0] == self.bonus_pick[1]:
+            self.bonus_pick = ranked[:2]
+
+    def bonus(self) -> dict[str, int]:
+        """What the background adds to each ability."""
+        if self.bonus_mode == "1/1/1":
+            return {a: 1 for a in self.bg_abilities()}
+        self._fix_bonus()
+        return {self.bonus_pick[0]: 2, self.bonus_pick[1]: 1}
+
+    def set_bonus(self, mode: str, pick: list[str] | None = None) -> None:
+        self.bonus_mode = mode if mode in ("2/1", "1/1/1") else "2/1"
+        if pick is not None:
+            self.bonus_pick = list(pick)
+        self._fix_bonus()
+
+    # ------------------------------------------------------------------ languages (2024: Common and two more)
+    def language_options(self) -> list[str]:
+        return list(self.t.rules["language_lists"]["standard"])
+
+    def _fix_languages(self) -> None:
+        lists = self.t.rules["language_lists"]
+        opts = self.language_options()
+        keep = [x for x in self.languages if x in opts][:2]
+        liked = lists["by_species"].get(self.race, []) + lists["by_culture"].get(self.culture, []) + opts
+        for x in liked:
+            if len(keep) >= 2:
+                break
+            if x not in keep and x in opts:
+                keep.append(x)
+        self.languages = keep
+
+    def set_language(self, slot: int, value: str) -> None:
+        if value in self.language_options() and value not in self.languages:
+            self._fix_languages()
+            self.languages[slot] = value
+
+    # ------------------------------------------------------------------ feats from the origin
+    def _proto(self):
+        """What a feat's choices look at, before the character is made: their skills, tools, class, scores."""
+        from types import SimpleNamespace
+
+        bg = self.t.backgrounds[self.background]
+        return SimpleNamespace(skills=self.all_skills(), tools=list(self.t.classes[self.cls]["tools"]) + list(bg["tools"]),
+                               cls=self.cls, abilities=self.final_scores(), species=self.race, lineage=self.lineage,
+                               choices=self.choices, feats=[], level=1)
+
+    def _fix_feats(self) -> None:
+        """Every origin feat's choices made (the defaults for what is missing or no longer possible)."""
+        from realmwalker.rules import feats
+
+        if "versatile" in self.species_choices() and self.versatile not in self.choice_options("versatile"):
+            self.versatile = next(iter(self.choice_options("versatile")), "skilled")
+        proto = self._proto()
+        fixed_now = {}
+        lists_used: list[str] = []
+        for source, fid, fixed in self.origin_feats():
+            fixed = dict(fixed)
+            if fid == "magic_initiate" and lists_used and "list" not in fixed:
+                # (taken again: another list; the first copy's spells are not offered twice)
+                have_list = (self.feat_choices.get(source) or {}).get("list")
+                if have_list in lists_used or have_list is None:
+                    fixed["list"] = next(x for x in ("cleric", "druid", "wizard") if x not in lists_used)
+            have = dict(self.feat_choices.get(source) or {})
+            if have.get("_feat") != fid:
+                have = {}
+            spec = feats.defs(self.t)[fid].get("choices", {})
+            clean = dict(fixed)
+            for key, c in spec.items():
+                if key in fixed or key not in have:
+                    continue
+                opts = feats.options(self.t, proto, fid, key, {**clean, **have})
+                v = have[key]
+                if isinstance(v, list):
+                    v = [x for x in v if x in opts][: int(c.get("count", 1))]
+                    if len(v) == int(c.get("count", 1)):
+                        clean[key] = v
+                elif v in opts:
+                    clean[key] = v
+            fixed_now[source] = {**feats.default_choices(self.t, proto, fid, clean), "_feat": fid}
+            picked = fixed_now[source]
+            if picked.get("list"):
+                lists_used.append(picked["list"])
+            for x in picked.get("skills", []) + picked.get("tools", []):  # (a second Skilled picks others)
+                (proto.skills if x in self.t.rules["skills"] else proto.tools).append(x)
+        self.feat_choices = fixed_now
+
+    def feat_slots(self) -> list[tuple[str, str, str, int, list[str]]]:
+        """(source, feat id, choice key, index, options) for each pick an origin feat leaves to the player."""
+        from realmwalker.rules import feats
+
+        self._fix_feats()
+        proto = self._proto()
+        out = []
+        for source, fid, fixed in self.origin_feats():
+            ch = self.feat_choices[source]
+            if fid == "magic_initiate" and source != "background":
+                fixed = {**fixed, "list": ch.get("list")}  # (its list differs from the background's: fixed here)
+            for key, c in feats.defs(self.t)[fid].get("choices", {}).items():
+                if key in fixed:
+                    continue
+                opts = feats.options(self.t, proto, fid, key, ch)
+                n = int(c.get("count", 1))
+                if c["kind"] in ("cantrip", "spell", "skill_or_tool", "tool"):
+                    for i in range(n):
+                        out.append((source, fid, key, i, opts))
+                else:
+                    out.append((source, fid, key, -1, opts))
+        return out
+
+    def set_feat_slot(self, source: str, key: str, index: int, value: str) -> None:
+        self._fix_feats()
+        ch = self.feat_choices[source]
+        if index < 0:
+            ch[key] = value
+            for k in [k for k in list(ch) if k not in (key, "_feat") and isinstance(ch[k], list)]:
+                if key == "list":
+                    del ch[k]  # (another list: other spells)
+        else:
+            picks = list(ch.get(key) or [])
+            if value in picks:
+                picks[picks.index(value)] = picks[index]  # swapped with the slot that had it
+            while len(picks) <= index:
+                picks.append(value)
+            picks[index] = value
+            ch[key] = picks
+        self._fix_feats()
+
+    def origin_feats(self) -> list[tuple[str, str, dict]]:
+        """(source, feat id, fixed choices) of the feats this origin gives: the background's, a human's Versatile."""
+        bg = self.t.backgrounds[self.background]["feat"]
+        out = [("background", bg["id"], dict(bg.get("choices") or {}))]
+        if "versatile" in self.species_choices():
+            out.append(("versatile", self.versatile, {}))
+        return out
 
     def set_culture(self, culture: str) -> None:
         if culture in self.t.races[self.race]["cultures"]:
@@ -74,7 +272,10 @@ class CharacterBuilder:
     def set_class(self, cls: str) -> None:
         self.cls = cls
         c = self.t.classes[cls]
+        kept = list(self.scores.values()) if getattr(self, "score_method", "point_buy") != "point_buy" else None
         self.scores = dict(c["suggested"])
+        if kept:
+            self._place(kept)  # (the array or the rolled scores, moved to what the new calling needs)
         self.kit = 0
         self.fighting_style = next(iter(c.get("fighting_styles", {})), None) if "fighting_style" in c["choices_at_1"] else None
         self.style_chosen = False
@@ -88,11 +289,15 @@ class CharacterBuilder:
     def set_background(self, bg: str) -> None:
         self.background = bg
         self.start_settlement = None
+        self.feat_choices.pop("background", None)
+        self._fix_bonus()
         self._fix_skills()
 
     def fixed_skills(self) -> list[str]:
-        """Skills granted by race and background (not chosen)."""
-        return list(dict.fromkeys(self.t.races[self.race]["skills"] + self.t.backgrounds[self.background]["skills"]))
+        """Skills granted by species and background (not chosen as class skills)."""
+        species = [v for k, v in self.choices.items() if v in self.t.rules["skills"]]
+        return list(dict.fromkeys(self.t.races[self.race]["skills"] + self.t.backgrounds[self.background]["skills"]
+                                  + species))
 
     def skill_options(self) -> list[str]:
         fixed = set(self.fixed_skills())
@@ -129,6 +334,8 @@ class CharacterBuilder:
 
     def _fix_skills(self) -> None:
         """Keep chosen skills valid and fill any missing picks with sensible defaults."""
+        if hasattr(self, "choices"):
+            self._fix_species_choices()
         options = self.skill_options()
         self.class_skills = [s for s in self.class_skills if s in options][: self.skill_count()]
         for s in [p for p in SKILL_PREFERENCE if p in options] + options:
@@ -172,12 +379,50 @@ class CharacterBuilder:
         return False
 
     def final_scores(self) -> dict[str, int]:
-        bonus = self.t.races[self.race]["ability_bonus"]
-        return {a: self.scores[a] + int(bonus.get(a, 0)) for a in ABILITIES}
+        bonus = self.bonus()
+        return {a: min(20, self.scores[a] + int(bonus.get(a, 0))) for a in ABILITIES}
 
     def max_hp(self) -> int:
         con = modifier(self.final_scores()["con"])
-        return max(1, self.t.classes[self.cls]["hit_die"] + con + int(self.t.races[self.race].get("hp_per_level", 0)))
+        tough = 2 if any(fid == "tough" for _, fid, _ in self.origin_feats()) else 0
+        return max(1, self.t.classes[self.cls]["hit_die"] + con + int(self.t.races[self.race].get("hp_per_level", 0))) \
+            + tough
+
+    # ------------------------------------------------------------------ the ways of making ability scores (2024)
+    STANDARD_ARRAY = (15, 14, 13, 12, 10, 8)
+
+    def set_method(self, method: str) -> None:
+        """Point buy (27 points), the standard array (15, 14, 13, 12, 10, 8, placed by the class's needs), or rolling
+        4d6 and keeping the three highest, six times (placed the same way)."""
+        self.score_method = method if method in ("point_buy", "array", "roll") else "point_buy"
+        if self.score_method == "point_buy":
+            self.scores = dict(self.t.classes[self.cls]["suggested"])
+        elif self.score_method == "array":
+            self._place(list(self.STANDARD_ARRAY))
+        else:
+            self.reroll()
+        self._fix_bonus()
+
+    def reroll(self) -> list[int]:
+        """Roll 4d6 six times, keep the three highest of each."""
+        rolls = []
+        for _ in range(6):
+            dice4 = sorted(self.rng.randint(1, 6) for _ in range(4))
+            rolls.append(sum(dice4[1:]))
+        self.score_method = "roll"
+        self._place(sorted(rolls, reverse=True))
+        return rolls
+
+    def _place(self, values: list[int]) -> None:
+        """Highest first into what the class needs most (its suggested scores' order)."""
+        sug = self.t.classes[self.cls]["suggested"]
+        order = sorted(ABILITIES, key=lambda a: -sug[a])
+        values = sorted(values, reverse=True)
+        self.scores = {a: values[i] for i, a in enumerate(order)}
+
+    def swap_scores(self, a: str, b: str) -> None:
+        """Array and rolled scores are moved by swapping two of them."""
+        self.scores[a], self.scores[b] = self.scores[b], self.scores[a]
 
     # ------------------------------------------------------------------ identity
     def random_name(self) -> str:
@@ -267,7 +512,7 @@ class CharacterBuilder:
     # ------------------------------------------------------------------ checks and build
     def problems(self) -> list[str]:
         out = []
-        if self.points_left() < 0:
+        if self.score_method == "point_buy" and self.points_left() < 0:
             out.append("You have spent more ability points than you have.")
         if len(self.class_skills) != self.skill_count():
             out.append(f"Choose {self.skill_count()} class skills.")
@@ -287,33 +532,35 @@ class CharacterBuilder:
             sub = cls["subclasses"][self.subclass]
             armor += sub.get("armor", [])
             weapons += sub.get("weapons", [])
-        tools = list(dict.fromkeys(cls["tools"] + bg["tools"] + race.get("tools_choice", [])[:1]))
-        extra_langs = race["extra_languages"] + bg["languages"]
-        languages = list(race["languages"])
-        for lang in t.rules["languages"]:
-            if extra_langs <= 0:
-                break
-            if lang not in languages and lang != "Thieves' Cant":
-                languages.append(lang)
-                extra_langs -= 1
+        tools = list(dict.fromkeys(cls["tools"] + bg["tools"]))
+        self._fix_languages()
+        languages = ["Common"] + list(self.languages)
         if self.cls == "rogue":
             languages.append("Thieves' Cant")
         hp = self.max_hp()
         features = [f["id"] for f in cls["features"] if f["level"] <= 1]
         uses: dict = {}
         char = Character(
-            name=self.name.strip(), sex=self.sex, age=self.age, race=self.race, culture=self.culture,
+            name=self.name.strip(), sex=self.sex, age=self.age, species=self.race, culture=self.culture,
             cls=self.cls, background=self.background, base_scores=dict(self.scores), abilities=abilities,
             level=1, xp=0, subclass=self.subclass, max_hp=hp, hp=hp, hit_dice=1,
             skills=self.all_skills(), expertise=list(self.expertise), saves=list(cls["saves"]),
             armor_prof=list(dict.fromkeys(armor)), weapon_prof=list(dict.fromkeys(weapons)), tools=tools,
             languages=languages, features=features, fighting_style=self.fighting_style, uses=uses,
-            money=int(bg["money"]), appearance=self.appearance, looks=dict(self.looks), backstory=self.backstory,
-            personality=self.personality, ideal=self.ideal, bond=self.bond, flaw=self.flaw,
+            money=int(bg["gold"] if self.take_gold else bg["money"]), appearance=self.appearance, looks=dict(self.looks),
+            backstory=self.backstory, personality=self.personality, ideal=self.ideal, bond=self.bond, flaw=self.flaw,
+            lineage=self.lineage, choices={k: v for k, v in self.choices.items()},
         )
+        char.max_hp = char.hp = hp - (2 if any(fid == "tough" for _, fid, _ in self.origin_feats()) else 0)
+        from realmwalker.rules import feats
+
+        self._fix_feats()
+        for source, fid, fixed in self.origin_feats():  # the background's feat, a human's Versatile
+            picked = {k: v for k, v in self.feat_choices.get(source, {}).items() if k != "_feat"}
+            feats.grant(char, t, fid, {**fixed, **picked})
         items = t.items
         kit = cls["kits"][max(0, min(self.kit, len(cls["kits"]) - 1))]
-        for def_id, qty in t.items.starting_packs.get("everyone", []) + kit["items"] + bg["items"]:
+        for def_id, qty in t.items.starting_packs.get("everyone", []) + kit["items"] + ([] if self.take_gold else bg["items"]):
             add_item(char, items, def_id, int(qty), made_at=world_time)
         equip_everything_sensible(char, items)
         fill_containers(char, items, "clean")
@@ -322,7 +569,7 @@ class CharacterBuilder:
         init_spells(char, t)
         from realmwalker.rules.engine import resources
 
-        resources.fill(char, t)  # Second Wind, a half-orc's Relentless Endurance, War Priest... start ready
+        resources.fill(char, t)  # Second Wind, an orc's Relentless Endurance, War Priest... start ready
         from realmwalker.rules import progression
 
         if progression.mastery_count(char, t):  # the kit's weapons first; changed on the character sheet before long

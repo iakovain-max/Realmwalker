@@ -1,9 +1,9 @@
 {
   "_comment": "The politics engine (M6): history at world creation and the world moving on while you play. rates are chances per year (scaled to the time step). lifespan multiplies ages by race (a dwarf of 140 is like a human of 40). reign: years a ruler usually lasts [min, max] by race. text: the words for each kind of event, used in the chronicle and in news ({slots} filled by code). dragons, artifacts and legends furnish the deep past.",
   "history_years": 250,
-  "lifespan": {"human": 1.0, "half_orc": 0.85, "halfling": 1.6, "dwarf": 3.5, "elf": 7.0},
+  "lifespan": {"human": 1.0, "orc": 0.85, "halfling": 1.6, "dwarf": 3.5, "elf": 7.0},
   "mortality": {"base": 0.003, "from_age": 30, "doubling_years": 7.5},
-  "reign": {"human": [4, 32], "half_orc": [2, 20], "halfling": [6, 40], "dwarf": [20, 110], "elf": [60, 300]},
+  "reign": {"human": [4, 32], "orc": [2, 20], "halfling": [6, 40], "dwarf": [20, 110], "elf": [60, 300]},
   "birth_rate": 0.16,
   "rates": {
     "war_base": 0.012, "war_hostility": 0.003, "war_battles_per_month": 0.35, "peace_after_years": 2.0,

@@ -27,7 +27,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Varied, bigger, living towns** | ✅ Done (2026-10-11), branch `world-variety` |
 | **Clearing the decks for the expansions** | ✅ Done (2026-10-12), branch `prep/clear-the-decks` |
 | **Expansion 1, *Dice & Destiny*** (version 1.1.0) | ✅ Released (2026-10-13), branch `dlc/01-dice-destiny` |
-| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | ⏳ Expansion 2, *Blades & Backgrounds*: part A (arms and armour) in `main` (2026-10-13), part B next |
+| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | ⏳ Expansion 2, *Blades & Backgrounds*: parts A (arms and armour) and B (origins) in `main` (2026-10-13), part C (feats) next |
 
 ---
 
@@ -38,6 +38,51 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-13: Blades & Backgrounds part B — origins — branch `dlc/02-blades-backgrounds`
+
+The second part of Expansion 2. **A new world is needed**: saves from before this part are refused kindly ("Could
+not load ... The files are still there, untouched."), because a character now carries a species, a lineage, feats
+and their choices.
+
+**What is different when you play**
+- **A character is made in the 2024 order**: calling first, then one of **sixteen backgrounds**, then the people,
+  then a new **Origin** page, then abilities, skills, who you are, looks and where you start.
+- **The background shapes you most.** It raises three abilities (+2 and +1, or +1 to each), gives an **origin
+  feat**, two skills, a tool, and its gear (or 50 gold pieces instead, to buy your own). Folk heroes, outlanders and
+  guild artisans are now farmers, guides and artisans; new are the charlatan, entertainer, guard, hermit, merchant,
+  sailor, scribe and wayfarer, each with their own ties to real people and places and their own way of telling
+  your past.
+- **Ten origin feats work in play**: Alert (quicker to act), Crafter (three trades, a fifth off plain goods),
+  Healer (with a healer's kit, patch a friend up mid-fight), Lucky (luck points: roll a missed blow or a failed save
+  again), Magic Initiate (two cantrips and a spell from the cleric's, druid's or wizard's lists, cast without being a
+  caster), Musician (after a rest your playing heartens the others), Savage Attacker, Skilled, Tavern Brawler (fists
+  that hurt, and a shove), Tough.
+- **The peoples in their 2024 form**: humans (an extra skill and a second origin feat), elves (choose drow, high or
+  wood elf: darkvision to 120 feet for a drow, speed 35 for a wood elf; hard to charm, never put to sleep), dwarves
+  (darkvision 120 feet, tough, resist poison, and on stone they can feel every footstep within 60 feet), halflings
+  (brave, lucky on attacks and saves, slip past bigger folk, hide behind them) and **orcs**, who replace the
+  half-orcs everywhere in the world (an Adrenaline Rush to close the distance, and very hard to kill). Everyone
+  walks 30 feet now (the wood elf 35).
+- **Ability scores**: point buy as before, the standard array (15, 14, 13, 12, 10, 8), or **rolling 4d6** (R rolls
+  again); array and rolled scores are swapped into place with the arrow keys.
+- **Languages**: everyone speaks Common and chooses two more (the realm's own tongues among them).
+- **Your companions and the people you meet** are made the same way; on Auto they cast their feat's spells, run in
+  with Adrenaline Rush when nothing is in reach, and feel through the stone for a foe they cannot see.
+- The character sheet now opens with your ties and looks, then your traits, features and feats.
+
+**How to see it**: start a new world (title screen, New World), and make a character: the Origin page is step 4.
+
+**What could not be checked**: how the Origin page reads to a player, and the new orc bodies, were seen only in
+the window smoke test and tests at five window sizes.
+
+**Anything assumed**: gear the game does not have yet (pouches, costumes, a mirror, perfume, a quiver, a forgery
+kit, a cartographer's tools, a tent for the guide) is paid in coin at its price until part D; the lineages' spells
+work as their spells arrive (Expansion 3; a high elf's Misty Step at level 5 works now); Magic Initiate's spells are
+cast in a fight, not yet on the road; Lucky works on your own rolls, not yet on a blow aimed at you; Alert has no
+Initiative Swap; the realm's own tongues count as standard languages. Balance: a level 1 hero now beats two wolves
+85 times in 100 (it was at most 80) and is knocked down 15 times in 100 (it was at least 20); the band was widened
+and the change is the 2024 origins at work.
 
 ### Session, 2026-10-13: Blades & Backgrounds part A — arms and armour — branch `dlc/02-blades-backgrounds`
 

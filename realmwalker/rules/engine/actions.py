@@ -71,6 +71,11 @@ def use(b, f, aid: str, target=None) -> bool:
         return False
     if a.get("via"):
         getattr(b, f"do_{a['via']}")(f, bonus=True)  # the battle action pays for itself, with the bonus action
+        if a.get("uses"):
+            res.spend(f.char, a["uses"])
+        if a.get("effects"):
+            c = effects.Cast(b, f, aid, {"target": "self", "name": a["name"], "ability": True}, None, None)
+            effects.run(c, a["effects"])
         return True
     if a["cost"] != "free" and not b._spend(f, bonus=a["cost"] == "bonus"):
         return False
@@ -97,9 +102,31 @@ def _god_ready(b, f) -> str | None:
     return "your god has answered this week"
 
 
+def _medic_ready(b, f) -> str | None:
+    if f.char is None or not any(i.def_id == "healers_kit" and i.condition > 0 for i in f.char.inventory):
+        return "no healer's kit"
+    if not any(x is not f and (x.active or x.state == "down") and x.hp < x.max_hp and b.gap(f, x) <= 1
+               and (x.char is None or x.char.hit_dice > 0) for x in b.team(f.team)):
+        return "no hurt friend beside you with a Hit Die to spend"
+    return None
+
+
+def _on_stone(b, f) -> str | None:
+    if b.field.underground or "stone" in b.field.name(f.x, f.y) or "rock" in b.field.name(f.x, f.y):
+        return None
+    return "no stone underfoot"
+
+
+def _not_sensing(b, f) -> str | None:
+    return "already feeling the stone" if any(bf.get("tremorsense") for bf in f.buffs) else None
+
+
 REQUIRES: dict[str, Callable] = {
+    "not_sensing": _not_sensing,
     "undead_within_30": _undead_near,
     "god_ready": _god_ready,
+    "on_stone": _on_stone,
+    "medic_ready": _medic_ready,
 }
 
 

@@ -5,7 +5,7 @@
     "elf": ["silver-fair", "black", "pale gold", "copper", "ash-grey"],
     "dwarf": ["iron-grey", "black", "rust-red", "brown", "white-streaked"],
     "halfling": ["curly brown", "sandy", "black", "chestnut", "tawny"],
-    "half_orc": ["coarse black", "dark brown", "shaven", "grey-black", "matted"]
+    "orc": ["coarse black", "dark brown", "shaven", "grey-black", "matted"]
   },
   "eyes": ["brown", "grey", "blue", "green", "dark", "hazel", "pale"],
   "build": {
@@ -13,7 +13,7 @@
     "elf": ["slender", "tall and narrow", "lithe", "willowy"],
     "dwarf": ["barrel-chested", "squat and powerful", "thick-armed", "broad"],
     "halfling": ["round-cheeked", "quick and slight", "plump", "wiry"],
-    "half_orc": ["hulking", "heavy-browed and broad", "long-armed", "scarred and massive"]
+    "orc": ["hulking", "heavy-browed and broad", "long-armed", "scarred and massive"]
   },
   "mark": ["a badly healed nose", "a burn scar on one hand", "pox scars across the cheeks", "a missing front tooth", "a notched ear", "tattooed knuckles", "a white scar through one eyebrow", "calloused, ink-stained fingers", "a slight limp from an old break", "no distinguishing marks worth a watchman's time"],
   "backstory": {
@@ -56,6 +56,14 @@
     ]
   },
   "background_lines": {
+    "charlatan": ["{name} learned young that people will pay well to be told what they already hope, and has been selling hope in {home} ever since.", "A borrowed name, a good coat and a bottle of coloured water paid for {possessive} first {season}. The second was harder.", "Nobody in {home} ever caught {name}, which is not the same as nobody knowing."],
+    "entertainer": ["{name} grew up on the back of a cart, learning to juggle, sing and watch a crowd for the first sign of trouble.", "A fiddle, a thin purse and a talent for the right song at the wrong moment have carried {name} out of {home} and into most of its neighbours.", "{name} once played for a lord who wept at the music and then had the troupe whipped for the noise."],
+    "guard": ["{name} spent years on a wall in the {season} wind, watching for an enemy who mostly never came.", "Standing at a gate in {home} taught {name} to read a face from fifty yards and a purse from five.", "{name} was a good guard until the night {pronoun} was told to look the other way, and found that {pronoun} could not."],
+    "hermit": ["{name} lived apart for years, with a goat, a spring and a conscience, and came back to {home} with more questions than answers.", "After a {season} that took everyone {pronoun} loved, {name} went into the hills and did not speak for a year.", "The shepherds around {home} left bread at {possessive} door and never once saw {object} eat it."],
+    "merchant": ["{name} kept a stall in {home} until a bad {season} and a worse partner emptied it.", "Five years of hauling salt and cloth along bad roads taught {object} to haggle, to count twice and to sleep lightly.", "{name} knows what every town in the region pays for wool and what it will not say aloud about its lord."],
+    "sailor": ["{name} grew up with the smell of tar and fish, and learned to read a sky before learning to read anything else.", "A bad {season} on the water and a worse captain left {name} on the quay in {home} with a bag of wet clothes.", "{name} has hauled nets, lugged cargo and once, briefly, fired on another ship; none of it is spoken of at home."],
+    "scribe": ["{name} spent a hard {season} in a cold scriptorium, copying other men's prayers and learning the ones nobody was meant to read.", "{name} can write a good hand, read three languages and tell when a seal has been lifted and replaced.", "In {home} {name} was a clerk to a man who stole, and a clerk who writes down what he sees is a clerk in danger."],
+    "wayfarer": ["{name} was never taught a trade, only how to find a warm corner, a half-eaten loaf and the way out of town.", "Raised by whoever would feed {object}, {name} learned to read a mood before learning to read a page.", "A {season} in {home} with nothing taught {name} more than any school could, and cost more."],
     "soldier": [
       "Years in the ranks taught {object} to march, to dig, and to keep quiet when officers argued over the dead.",
       "{name} served a lord who paid late and fought often, and came out of it with a limp and a habit of counting exits.",
@@ -71,7 +79,7 @@
       "{name} ran with a gang that sold anything that was not nailed down, and some things that were.",
       "There is a town where {name}'s face is on a notice by the gate, badly drawn, which is the only luck {pronoun} has had."
     ],
-    "folk_hero": [
+    "farmer": [
       "When trouble came to the village it was {name} who stood up, and the village has never let {object} forget it.",
       "{name} once stood alone in a lane between the village and a band of thieves, and the thieves turned back.",
       "The villagers still tell how {name} faced down a lord's bailiff, though the story grows every time."
@@ -86,12 +94,12 @@
       "{name} copied other men's books by candlelight until {pronoun} began to disagree with them.",
       "A scholar's apprentice, {name} learned seven dead tongues and not one useful one."
     ],
-    "outlander": [
+    "guide": [
       "The wild country taught {object} to track, to hunt and to go days without speaking to another soul.",
       "{name} grew up beyond the last farms, where the wolves are bolder than the people and the winters longer than both.",
       "Herding beasts on the high pastures, {name} learned the weather, the stars and the silence."
     ],
-    "guild_artisan": [
+    "artisan": [
       "A guild master's beatings and a long apprenticeship made {object} good at a trade that pays badly.",
       "{name} learned a craft from a master who drank, and finished the master's work for years without the credit.",
       "Seven years of apprenticeship, a guild mark, and a workshop that burned down the month {pronoun} opened it."
@@ -277,7 +285,7 @@
         "likely_beards": {"male": ["stubble", "chops"]},
         "beard_chance": {"male": 0.1, "female": 0.0}
       },
-      "half_orc": {
+      "orc": {
         "builds": ["average", "heavy"],
         "skins": ["grey_green", "green", "olive_green", "dark_green", "grey"],
         "eyes": ["brown", "dark", "amber", "grey", "red"],

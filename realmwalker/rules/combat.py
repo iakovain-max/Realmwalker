@@ -25,7 +25,7 @@ import numpy as np
 
 from realmwalker.core import dice
 from realmwalker.core.rng import RNG
-from realmwalker.rules import grid
+from realmwalker.rules import feats, grid
 from realmwalker.rules import spells as spellrules
 from realmwalker.rules.character import Character, Sheet, modifier
 from realmwalker.rules.engine import actions, durations, effects, events, hazards, query, reactions
@@ -368,7 +368,8 @@ class Fighter:
     def senses(self) -> dict[str, int]:
         """Feet of each special sense: darkvision, blindsight, truesight, tremorsense."""
         if self.char:
-            return {"darkvision": self.darkvision}
+            tremor = max([0] + [int(v) for v in self.buff_value("tremorsense")])  # (Stonecunning)
+            return {"darkvision": self.darkvision, **({"tremorsense": tremor} if tremor else {})}
         return {**self.cdef.get("senses", {}), "darkvision": self.darkvision}
 
     @property
@@ -462,7 +463,7 @@ class BattleResult:
 def spell_id(value: str) -> str:
     """The spell behind a spell-menu value (a spell id, or "scroll:<uid>:<spell id>"; a flask thrown from the Item menu
     is "throw:<uid>:<spell id>")."""
-    return value.split(":", 2)[2] if value.startswith(("scroll:", "charge:", "throw:")) else value
+    return value.split(":", 2)[2] if value.startswith(("scroll:", "charge:", "throw:", "innate:")) else value
 
 
 BATTLE_USES = {"heal", "bandage", "throw"}  # what an item's "use" can do in a fight (do_item, or thrown via do_cast)
@@ -674,6 +675,7 @@ class Battle:
                 f.surprised = True
             r = query.initiative_roll(f)
             bonus = int(f.cdef["initiative"]) if f.cdef and "initiative" in f.cdef else f.mod("dex")
+            bonus += query.initiative_bonus(f)  # (Alert)
             f.initiative = (dice.d20(self.rng, advantage=r.advantage, disadvantage=r.disadvantage).natural + bonus
                             + query.d20_penalty(f))
         self.order = [f.id for f in sorted(self.fighters, key=lambda f: (-f.initiative, -f.mod("dex"), self.rng.random()))]
@@ -918,7 +920,7 @@ class Battle:
             if se["cond"] not in f.conditions:
                 f.save_ends.remove(se)
                 continue
-            if self._save(f, se["save"], se["dc"]):
+            if self._save(f, se["save"], se["dc"], against=(se["cond"],)):
                 f.conditions.pop(se["cond"], None)
                 f.save_ends.remove(se)
                 self.say(f"{f.the_name} shakes off the spell.", "system")
@@ -1077,6 +1079,10 @@ class Battle:
             if x is f:
                 continue
             hostile = x.team != f.team and x.state in ("fighting", "fleeing", "surrendered")
+            if hostile and x.size in SIZES and f.size in SIZES:
+                apart = SIZES.index(x.size) - SIZES.index(f.size)
+                if abs(apart) >= 2 or apart >= 1 and f.has_trait("halfling_nimbleness"):
+                    hostile = False  # slipped past (through, never stopping there)
             for c in x.cells:
                 (blocked if hostile else occupied).add(c)
         fire = {c for z in self.zones if z.kind == "fire" for c in z.cells}
@@ -1449,6 +1455,11 @@ class Battle:
                 continue
             if any(self.field.hiding[c] for c in f.cells) and self.gap(e, f) > 2:
                 continue
+            if f.has_trait("naturally_stealthy") and any(
+                    x is not f and x.standing and x.size in SIZES and f.size in SIZES
+                    and SIZES.index(x.size) > SIZES.index(f.size) and self.gap(x, f) <= 1 and self.gap(x, e) < self.gap(f, e)
+                    for x in self.on_field()):
+                continue  # (a halfling behind someone bigger)
             return f"{e.the_name} can see you plainly"
         return None
 
@@ -1584,7 +1595,9 @@ class Battle:
             # An improvised weapon (2024): a bow or a crossbow swung like a club, without proficiency, for 1d4.
             out.append(self._improvised_option(f, s, main, "bash"))
         unarmed_bonus = s.proficiency + s.mod("str") + s.attack_condition()
-        fists = AttackOption("unarmed", "fists", "melee", unarmed_bonus, str(max(1, 1 + s.mod("str"))), "bludgeoning")
+        brawler = feats.has(c, "tavern_brawler")
+        fists = AttackOption("unarmed", "fists", "melee", unarmed_bonus,
+                             f"1d4{signed_mod(s.mod('str'))}" if brawler else str(max(1, 1 + s.mod("str"))), "bludgeoning")
         from realmwalker.rules import health
 
         if health.broken_arm(c, "right") and health.broken_arm(c, "left"):
@@ -1626,6 +1639,8 @@ class Battle:
         from realmwalker.rules import magic
 
         bonus = mod + s.attack_condition() + magic.total(f.char, "attack")
+        if feats.has(f.char, "tavern_brawler"):
+            bonus += s.proficiency  # (proficient with improvised weapons)
         opt = AttackOption(key, f"strike with the {self.t.items.get(it.def_id)['name']}", "melee", bonus,
                            f"1d4{signed_mod(mod)}", "bludgeoning", properties=["improvised"], item_uid=it.uid)
         from realmwalker.rules import health
@@ -1867,7 +1882,7 @@ class Battle:
         if att.char and att.char.fighting_style == "great_weapon" and opt.is_melee and "two_handed" in opt.properties:
             amount = sum(r if r > 2 else self.rng.randint(1, sides) for r in rolled.rolls) + flat
         dmg_ev = events.emit(self, "attack_damage", actor=att, target=target, opt=opt, crit=crit,
-                             advantage=adv and not dis, sides=sides, extra=0, typed=[])
+                             advantage=adv and not dis, sides=sides, extra=0, typed=[], rolls=list(rolled.rolls))
         amount += dmg_ev.extra  # Sneak Attack, Divine Strike...
         self._spend_use(att, opt)
         before = target.hp + target.temp_hp
@@ -1960,8 +1975,9 @@ class Battle:
         self._event("cast", by=f.id, to=f.id, spell="shield", effect="buff", dtype="force", area=[])
         return True
 
-    def _save(self, f: Fighter, ability: str, dc: int, *, quiet: bool = False, bonus: int = 0) -> bool:
-        sr = query.save_roll(self, f, ability, bonus=bonus)
+    def _save(self, f: Fighter, ability: str, dc: int, *, quiet: bool = False, bonus: int = 0,
+              against: tuple = ()) -> bool:
+        sr = query.save_roll(self, f, ability, bonus=bonus, against=against)
         if sr.auto_fail:
             if not quiet:
                 self.dice_say(f"{f.name} {ability.upper()} save: fails ({sr.auto_fail})")
@@ -2848,6 +2864,17 @@ class Battle:
                     and self.t.spells[sid].get("cast") != "reaction":
                 ok, why = self._casting_time_ok(f, self.t.spells[sid])
                 out.append((f"scroll:{it.uid}:{sid}", ok, why))
+        for src, sid, _ability in feats.innate_spells(f.char, self.t):  # a feat's or a lineage's spells
+            sp = self.t.spells[sid]
+            if sp.get("cast") == "reaction" or spellrules.has_op(sp, "revive", "identify"):
+                continue
+            ok, why = self._casting_time_ok(f, sp)
+            left = sp["level"] == 0 or f.char.uses.get(feats.innate_key(src, sid), 0) > 0
+            if ok and not left:
+                ok, why = False, "once a long rest: used"
+            if ok and spellrules.armour_problem(f.char, self.t):
+                ok, why = False, spellrules.armour_problem(f.char, self.t)
+            out.append((f"innate:{src}:{sid}", ok, why))
         from realmwalker.rules import magic
 
         for it, p in magic.charges(f.char):
@@ -3012,6 +3039,15 @@ class Battle:
             return False
         scroll = None
         charged = None
+        innate = None
+        if sid.startswith("innate:"):
+            _, src, sid = sid.split(":", 2)
+            innate = next((a for s_, x, a in feats.innate_spells(f.char, self.t) if s_ == src and x == sid), None)
+            if innate is None:
+                return False
+            if self.t.spells[sid]["level"] > 0:
+                key = feats.innate_key(src, sid)
+                f.char.uses[key] = max(0, f.char.uses.get(key, 0) - 1)
         if sid.startswith("charge:"):
             _, uid, sid = sid.split(":", 2)
             item = f.char.item(int(uid))
@@ -3064,8 +3100,8 @@ class Battle:
                     return True
             self.say(f"{f.the_name} reads from a scroll.", "magic")
             level = 0  # the scroll's own magic: no spell slot
-        if charged is not None:
-            level = 0  # the item's own magic
+        if charged is not None or innate is not None:
+            level = 0  # the item's own magic, or a gift of blood or training (no slot)
         if level > 0:
             slot_level = slot_level or spellrules.lowest_free_slot(c, self.t, level)
             if slot_level is None:
@@ -3082,6 +3118,10 @@ class Battle:
         mod = s.mod(spellrules.casting_ability(c, self.t))
         dc = spellrules.save_dc(s, self.t)
         bonus = spellrules.attack_bonus(s, self.t) + s.attack_condition()
+        if innate is not None:  # cast with the ability the feat or the lineage names
+            mod = s.mod(innate)
+            dc = 8 + s.proficiency + mod
+            bonus = s.proficiency + mod + s.attack_condition()
         mult = spellrules.cantrip_multiplier(c.level) if spell.get("cantrip_scaling") else 1
         self.cast(f, sid, spell, target, point, up=up, mod=mod, dc=dc, bonus=bonus, mult=mult, level=slot_level or level)
         self._after_action(f)

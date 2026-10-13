@@ -138,9 +138,10 @@ def test_half_the_arrows_are_found_after_a_won_fight(tables):
     b = fight(tables, c, "bandit", at=(9, 4))
     me, foe = b.fighters[0], b.fighters[1]
     opt = next(o for o in b.attack_options(me) if o.key == "main")
+    before = sum(i.qty for i in c.inventory if i.def_id == "arrows")
     for _ in range(5):
         b._spend_shot(me, opt)
-    assert sum(i.qty for i in c.inventory if i.def_id == "arrows") == 15
+    assert sum(i.qty for i in c.inventory if i.def_id == "arrows") == before - 5
     b.outcome = "victory"
     found = [i for i in b.result().loot_items if i.def_id == "arrows"]
     assert sum(i.qty for i in found) == 2
@@ -413,6 +414,7 @@ def test_magic_arrows_are_a_choice_of_their_own_and_lose_their_magic(game, table
     for slot in ("main_hand", "off_hand"):
         unequip(c, slot)
     wield(tables, c, "longbow")
+    c.inventory = [i for i in c.inventory if i.def_id != "arrows"]
     add_item(c, tables.items, "arrows", 5)
     plus = listed(game, "ammunition_1_2_or_3", "+2", rarity="rare")
     plus.def_id = "arrows"

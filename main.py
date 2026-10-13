@@ -57,9 +57,10 @@ def smoke_script():
     press("s", "down", "escape", "f1", "pagedown", "escape", "n", "enter")
     shots[frame + 4] = "worldgen"  # the ages being lived
     frame += 170  # world generation (the land, then its history)
-    press("enter", "enter", "enter")  # people, calling, background
-    shots[frame + 4] = "creation"
-    press("enter", "enter", "enter", "enter", "enter", "enter")  # abilities, skills, identity, looks, start, begin
+    press("enter", "enter", "enter")  # calling, background, people
+    shots[frame + 4] = "creation"  # (the Origin step: lineage, feats, increases, languages, gear)
+    press("enter", "enter", "enter", "enter", "enter", "enter", "enter")  # origin, abilities, skills, identity, looks,
+    # start, begin
     frame += 4
 
     def peaceful(app):

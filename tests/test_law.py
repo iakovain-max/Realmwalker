@@ -38,7 +38,7 @@ def hero(tables, cls="rogue", background="criminal"):
 
 @pytest.fixture
 def game(tables, world):
-    g = new_game(copy.deepcopy(world), tables, hero(tables, background="folk_hero"))
+    g = new_game(copy.deepcopy(world), tables, hero(tables, background="farmer"))
     g.survival = False
     return g
 

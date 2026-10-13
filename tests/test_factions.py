@@ -120,7 +120,7 @@ def test_factions_survive_saving(world, tables, tmp_path):
 
 
 def test_a_new_character_knows_their_own_lords(world, tables):
-    game = start(tables, world, "folk_hero")
+    game = start(tables, world, "farmer")
     home = game.world.settlements[game.player.home]
     owner = fx.owner_of(game.world, home)
     assert owner is not None and owner.id in game.renown.known
@@ -176,7 +176,7 @@ def test_renown_survives_saving(world, tables, tmp_path):
 
 
 def test_rulers_live_in_their_seats(world, tables):
-    game = start(tables, world, "folk_hero")
+    game = start(tables, world, "farmer")
     w = game.world
     k = fx.active_factions(w, "kingdom")[0]
     capital = w.settlements[k.seat]
@@ -196,7 +196,7 @@ def test_rulers_live_in_their_seats(world, tables):
 
 
 def test_standing_colours_first_impressions(world, tables):
-    game = start(tables, world, "folk_hero")
+    game = start(tables, world, "farmer")
     w = game.world
     s = next(s for s in w.settlements if s.kind == "town")
     game.player.local_key = None
@@ -215,7 +215,7 @@ def test_standing_colours_first_impressions(world, tables):
 
 
 def test_crossing_a_border_is_announced(world, tables):
-    game = start(tables, world, "folk_hero")
+    game = start(tables, world, "farmer")
     w = game.world
     _, realm = fx.territory(w)
     here = int(realm[game.player.x, game.player.y])

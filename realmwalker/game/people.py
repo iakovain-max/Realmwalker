@@ -736,7 +736,7 @@ def first_impression(game, npc: NPC) -> int:
     if any(w.bleed and not w.bandaged for w in c.wounds):
         score += 5 if "kind" in npc.traits else -5
     if c.race != npc.race:
-        if c.race == "half_orc":
+        if c.race == "orc":
             score -= 5 if "kind" in npc.traits else 12
         else:
             score -= 3

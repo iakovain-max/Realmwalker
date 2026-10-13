@@ -186,7 +186,7 @@ def crit_within(b, att, target) -> bool:
 
 
 # ---------------------------------------------------------------------------- saving throws
-def save_roll(b, f, ability: str, *, bonus: int = 0) -> SaveRoll:
+def save_roll(b, f, ability: str, *, bonus: int = 0, against: tuple = ()) -> SaveRoll:
     """Advantage, disadvantage and the bonus on a saving throw; or why it fails without a roll."""
     out = SaveRoll(Roll(), bonus=f.save_bonus(ability) + bonus, dice=list(f.buff_value("save_die")))
     for cid, abilities in cond.flags(f.t, f.conditions, "fails_saves"):
@@ -201,7 +201,7 @@ def save_roll(b, f, ability: str, *, bonus: int = 0) -> SaveRoll:
         out.roll.add("disadvantage", "untrained in armour")
     if ability == "dex" and f.dodging and not incapacitated(f) and f.speed > 0:
         out.roll.add("advantage", "dodging")  # the Dodge action: easier to get out of the way of fire
-    ctx = tr.Ctx(b, f, ability=ability)
+    ctx = tr.Ctx(b, f, ability=ability, against=tuple(against))
     for mode, why in tr.modifiers(f, "save", ctx):
         out.roll.add(mode, why)
     return out
@@ -305,6 +305,14 @@ def d20_penalty(f) -> int:
 def concentration_dc(damage: int) -> int:
     """The Constitution save to keep concentrating after damage: 10 or half the damage, at most 30 (2024)."""
     return min(30, max(10, damage // 2))
+
+
+def initiative_bonus(f) -> int:
+    """What traits add to initiative (Alert: the proficiency bonus)."""
+    out = 0
+    for v in tr.values(f, "initiative"):
+        out += proficiency(f) if v == "pb" else int(v)
+    return out
 
 
 def initiative_roll(f) -> Roll:

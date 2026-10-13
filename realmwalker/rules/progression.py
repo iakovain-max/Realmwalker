@@ -49,7 +49,10 @@ def _level_up(char: Character, tables, rng: RNG) -> list[str]:
     before = trs.of_char(char, tables)
     char.level += 1
     con = modifier(char.abilities["con"])
-    gain = max(1, cls["hit_die"] // 2 + 1 + con + int(tables.races[char.race].get("hp_per_level", 0)))
+    from realmwalker.rules import feats
+
+    gain = max(1, cls["hit_die"] // 2 + 1 + con + int(tables.races[char.race].get("hp_per_level", 0))) \
+        + feats.hp_per_level(char)
     char.max_hp += gain
     char.hp += gain
     char.hit_dice += 1
@@ -78,6 +81,9 @@ def _level_up(char: Character, tables, rng: RNG) -> list[str]:
         if missing > 0:
             add_pending(char, {"kind": "cantrips", "count": missing, "level": char.level})
     resources.granted(char, tables, before)  # a new Action Surge or Channel Divinity starts ready
+    from realmwalker.rules import feats
+
+    feats.level_up(char, tables)  # more luck points; a lineage's spell of this level ready to cast
     return notes
 
 
@@ -338,10 +344,13 @@ def long_rest(char: Character, tables, rng: RNG) -> list[str]:
         char.hp = char.max_hp
     char.hit_dice = min(char.level, char.hit_dice + max(1, char.level // 2))
     restore_slots(char)
-    resources.recover(char, tables, "long")  # every pool (data/traits.json), a half-orc's toughness among them
+    resources.recover(char, tables, "long")  # every pool (data/traits.json), an orc's toughness among them
     char.uses["arcane_recovery"] = 1
     for key in ("ward_made", "arcane_ward"):  # an abjurer's ward is made anew each day
         char.uses.pop(key, None)
+    from realmwalker.rules import feats
+
+    feats.rest(char, tables, "long")  # luck points, the once-a-day spells of a feat or a lineage
     if mastery_count(char, tables):
         char.uses["mastery_change"] = 1  # the weapons mastered may be changed (the character sheet)
         offer_masteries(char, tables)

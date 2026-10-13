@@ -254,7 +254,7 @@ class War:
                 out.append(pool.pop(0))
             else:
                 job = "warchief" if top.kind == "tribe" else "captain"
-                race = "half_orc" if top.kind == "tribe" and top.culture == "orcish" else None
+                race = "orc" if top.kind == "tribe" and top.culture == "orcish" else None
                 out.append(folk.adult_person(top.culture, age=(25, 45), faction=top, role="member", job=job,
                                              race=race, home=S(top.seat) if top.seat >= 0 else ""))
         pool = [p for p in pool if p not in out]

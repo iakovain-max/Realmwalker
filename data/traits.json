@@ -66,18 +66,12 @@
     },
 
     "darkvision": {"name": "Darkvision", "text": "Sees in the dark, in shades of grey.", "where": "sheet"},
-    "fey_ancestry": {"name": "Fey Ancestry", "text": "Hard to charm; magic cannot put an elf to sleep.", "where": "sheet"},
+    "fey_ancestry": {"name": "Fey Ancestry", "text": "Advantage on saving throws to avoid or end being charmed.", "modifiers": [{"save": "advantage", "against": ["charmed"], "why": "fey ancestry"}]},
     "trance": {"name": "Trance", "text": "Four hours of trance rest an elf like a night's sleep.", "where": "sheet"},
-    "poison_resilience": {
-      "name": "Dwarven Resilience", "text": "Shrugs off poison: saves against it easily and takes half damage from it.",
-      "modifiers": [{"save": "advantage", "abilities": ["con"], "why": "resilience"}, {"resist": ["poison"]}, {"immune_condition": ["poisoned"]}]
-    },
+    "poison_resilience": {"name": "Dwarven Resilience", "text": "Resistance to poison damage, and advantage on saving throws to avoid or end being poisoned.", "modifiers": [{"save": "advantage", "against": ["poisoned"], "why": "resilience"}, {"resist": ["poison"]}]},
     "hp_per_level": {"name": "Dwarven Toughness", "text": "One more hit point at every level.", "where": "sheet"},
-    "lucky": {
-      "name": "Lucky", "text": "A natural 1 on an attack roll is rolled again.",
-      "hooks": [{"event": "d20_after", "as": "self", "handler": "lucky"}]
-    },
-    "brave": {"name": "Brave", "text": "Hard to frighten.", "where": "sheet"},
+    "lucky": {"name": "Luck", "text": "A natural 1 on an attack roll or a saving throw is rolled again.", "hooks": [{"event": "d20_after", "as": "self", "handler": "lucky"}]},
+    "brave": {"name": "Brave", "text": "Advantage on saving throws to avoid or end being frightened.", "modifiers": [{"save": "advantage", "against": ["frightened"], "why": "brave"}]},
     "naturally_stealthy": {"name": "Naturally Stealthy", "text": "Can hide behind someone bigger.", "where": "sheet"},
     "relentless_endurance": {
       "name": "Relentless Endurance", "text": "Once a day, a blow that would fell them leaves them standing at 1 hit point.",
@@ -203,6 +197,19 @@
     "mastery_sap": {"name": "Sap", "text": "A hit leaves the creature at a disadvantage on its next attack before your next turn.", "where": "card"},
     "mastery_slow": {"name": "Slow", "text": "A hit that wounds takes 10 feet off its speed until your next turn (not more, however many hit it).", "where": "card"},
     "mastery_topple": {"name": "Topple", "text": "A hit forces a Constitution save (DC 8 + the attack's ability bonus + proficiency) or it falls prone.", "where": "card"},
-    "mastery_vex": {"name": "Vex", "text": "A hit that wounds gives advantage on your next attack against that creature before the end of your next turn.", "where": "card"}
+    "mastery_vex": {"name": "Vex", "text": "A hit that wounds gives advantage on your next attack against that creature before the end of your next turn.", "where": "card"},
+    "halfling_nimbleness": {"name": "Halfling Nimbleness", "text": "Moves through the space of any creature a size larger.", "where": "Battle.move_tree"},
+    "stonecunning": {"name": "Stonecunning", "text": "A bonus action on stone: tremorsense to 60 feet for ten minutes, as many times a long rest as the proficiency bonus.", "resource": {"id": "stonecunning", "max": "pb", "recover": "long"}, "activate": {"id": "stonecunning", "name": "Stonecunning (bonus action)", "cost": "bonus", "uses": "stonecunning", "requires": ["on_stone", "not_sensing"], "does": "sense", "effects": [{"op": "special", "handler": "stonecunning"}]}},
+    "adrenaline_rush": {"name": "Adrenaline Rush", "text": "A bonus action: Dash, and temporary hit points equal to the proficiency bonus; as many times a short rest as the proficiency bonus.", "resource": {"id": "adrenaline_rush", "max": "pb", "recover": "short"}, "activate": {"id": "adrenaline_rush", "name": "Adrenaline Rush (bonus action)", "cost": "bonus", "uses": "adrenaline_rush", "via": "dash", "effects": [{"op": "special", "handler": "adrenaline_rush"}]}},
+    "feat_alert": {"name": "Alert", "text": "The proficiency bonus is added to initiative.", "modifiers": [{"initiative": "pb"}]},
+    "feat_crafter": {"name": "Crafter", "text": "A fifth off plain goods in shops; three kinds of artisan's tools.", "where": "economy.buy_price"},
+    "feat_healer": {"name": "Healer", "text": "Battle Medic with a healer's kit; healing dice of 1 rolled again.", "activate": {"id": "battle_medic", "name": "Battle Medic (healer's kit)", "cost": "action", "requires": ["medic_ready"], "effects": [{"op": "special", "handler": "battle_medic"}]}},
+    "feat_lucky": {"name": "Lucky", "text": "Luck points (the proficiency bonus, back after a long rest): a missed attack or a failed save rolled again.", "hooks": [{"event": "attack_missed", "as": "attacker", "handler": "lucky_attack"}, {"event": "d20_after", "as": "self", "handler": "lucky_save"}]},
+    "feat_magic_initiate": {"name": "Magic Initiate", "text": "Two cantrips and a level 1 spell, cast once a long rest without a slot.", "where": "rules/feats.innate_spells"},
+    "feat_musician": {"name": "Musician", "text": "After a rest, Heroic Inspiration for companions.", "where": "game/fight.rest"},
+    "feat_savage_attacker": {"name": "Savage Attacker", "text": "Once a turn, a weapon's damage dice rolled twice, the higher kept.", "hooks": [{"event": "attack_damage", "as": "attacker", "handler": "savage_attacker"}]},
+    "feat_skilled": {"name": "Skilled", "text": "Three more skills or tools.", "where": "sheet"},
+    "feat_tavern_brawler": {"name": "Tavern Brawler", "text": "Fists 1d4 + Strength, 1s rolled again; improvised weapons with proficiency; a punch shoves 5 feet once a turn.", "hooks": [{"event": "attack_damage", "as": "attacker", "handler": "tavern_brawler"}, {"event": "attack_done", "as": "attacker", "handler": "tavern_shove"}]},
+    "feat_tough": {"name": "Tough", "text": "Two more hit points at every level.", "where": "sheet"}
   }
 }

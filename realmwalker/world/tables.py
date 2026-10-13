@@ -106,6 +106,7 @@ class Tables:
         self.combat_text = data["combat_text.json"]
         self.conditions = data["conditions.json"]  # the 2024 conditions (rules/engine/conditions.py)
         self.traits = data["traits.json"]  # traits and features as definitions (rules/engine/traits.py)
+        self.feats = data["feats.json"]  # feats (rules/feats.py); what they do in a fight is their trait
         from realmwalker.rules.health import DiseaseTable
 
         self.diseases = DiseaseTable(data["diseases.json"])

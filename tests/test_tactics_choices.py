@@ -48,7 +48,9 @@ def test_a_dragon_breathes_then_rises_out_of_reach(tables):
 
 
 def test_a_flier_comes_down_to_strike_and_a_readied_blow_meets_it(tables):
-    b = battle(tables, [hero_at(tables, "fighter", 5)], foes(tables, "young_dragon"), spots={0: (4, 4), 1: (5, 4)})
+    hero_ = hero_at(tables, "fighter", 5)
+    hero_.inventory = [i for i in hero_.inventory if i.def_id not in ("spear", "shortbow", "arrows", "javelin")]
+    b = battle(tables, [hero_], foes(tables, "young_dragon"), spots={0: (4, 4), 1: (5, 4)})
     me, drake = b.fighters
     drake.z = 20
     me.auto = True
@@ -86,7 +88,9 @@ def test_a_brute_breaks_down_a_locked_door_to_reach_them(tables):
 
 def test_striking_a_thing_out_of_reach_spends_nothing(tables):
     fld = walls(tables, barrels=[(8, 4)])
-    b = battle(tables, [hero(tables)], foes(tables, "wolf"), field=fld, spots={0: (2, 4), 1: (11, 1)})
+    h = hero(tables)
+    h.inventory = [i for i in h.inventory if i.def_id not in ("spear", "shortbow", "arrows", "javelin")]  # (no throwing)
+    b = battle(tables, [h], foes(tables, "wolf"), field=fld, spots={0: (2, 4), 1: (11, 1)})
     me = b.fighters[0]
     turn_of(b, me)
     sword = next(o for o in b.attack_options(me) if o.is_melee and o.available)

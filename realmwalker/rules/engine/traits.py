@@ -6,7 +6,7 @@ A definition has a name and a text (for its card), and any of:
                 {"attack": "advantage"}         its own attack rolls
                 {"attacked": "disadvantage"}    attack rolls against it
                 {"enemy_attacks": ...}           attack rolls of an enemy standing by it ("{name}" in `why`)
-                {"save": "advantage", "abilities": ["con"]}
+                {"save": "advantage", "abilities": ["con"]}, {"save": "advantage", "against": ["charmed"]}
                 {"resist": ["poison"]}, {"vulnerable": ["poison"] or ["all"]}, {"crit_range": 19},
                 {"passive": {"perception": 5}}, {"check": "disadvantage", "abilities": ["str"]} (ability checks)
     hooks       [{"event": ..., "as": "self"|"attacker"|"target"|"ally"|"any", "handler": id}] (rules/engine/events.py)
@@ -32,6 +32,7 @@ class Ctx:
     opt: Any = None
     space: tuple | None = None
     ability: str | None = None
+    against: tuple = ()  # the conditions a saving throw is made against (Brave, Fey Ancestry)
 
 
 def table(tables) -> dict[str, dict]:
@@ -45,7 +46,8 @@ def of(f) -> frozenset[str]:
         key = ("c", id(f.cdef))
     else:
         c = f.char
-        key = (c.race, c.cls, c.subclass, c.level, len(c.features), tuple(c.features[-3:]), _magic_key(c))
+        key = (c.race, c.cls, c.subclass, c.level, len(c.features), tuple(c.features[-3:]), len(c.feats),
+               _magic_key(c))
     cached = f.__dict__.get("_traits")
     if cached is not None and cached[0] == key:
         return cached[1]
@@ -63,6 +65,8 @@ def of_char(char, tables) -> frozenset[str]:
     names = {t["rule"] for t in s.race["traits"] if t.get("rule")}
     names |= {feat["rule"] for feat in s.features() if feat.get("rule")}
     names |= set(char.features)
+    feat_defs = tables.feats["feats"] if hasattr(tables, "feats") else {}
+    names |= {feat_defs[f["id"]]["trait"] for f in char.feats if feat_defs.get(f["id"], {}).get("trait")}
     if char.equipped or char.attuned:
         from realmwalker.rules import magic
 
@@ -90,6 +94,8 @@ def modifiers(f, kind: str, ctx: Ctx):
             if kind not in m:
                 continue
             if "abilities" in m and ctx.ability not in m["abilities"]:
+                continue
+            if "against" in m and not set(m["against"]) & set(ctx.against):
                 continue
             if all(WHEN[w](ctx) for w in m.get("when", ())):
                 yield m[kind], m.get("why", d["name"].lower())

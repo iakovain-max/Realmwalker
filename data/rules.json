@@ -35,7 +35,16 @@
   "_discovery_xp": "Experience for each character, times their level, the first time they enter a region, reach a site (a ruin, a lair, a barrow...) or reach a level under the ground.",
   "discovery_xp": {"region": 10, "site": 25, "deeper": 25, "wonder": 40},
   "carry": {"per_strength": 15, "encumbered_per_strength": 5, "heavily_per_strength": 10},
-  "languages": ["Common", "Elvish", "Dwarvish", "Halfling", "Orcish", "Old Imperial", "Northern Tongue", "Southron Cant", "Thieves' Cant"],
+  "languages": ["Common", "Elvish", "Dwarvish", "Halfling", "Orc", "Old Imperial", "Northern Tongue", "Southron Cant", "Thieves' Cant"],
+  "_language_lists": "Languages (2024 Player's Handbook): everyone speaks Common and two standard languages of their choice; the rare ones come with features. The realm's own tongues (Old Imperial, the Northern Tongue, Southron Cant) count as standard here.",
+  "language_lists": {
+    "standard": ["Common Sign Language", "Draconic", "Dwarvish", "Elvish", "Giant", "Gnomish", "Goblin", "Halfling", "Orc",
+                 "Old Imperial", "Northern Tongue", "Southron Cant"],
+    "rare": ["Abyssal", "Celestial", "Deep Speech", "Druidic", "Infernal", "Primordial", "Sylvan", "Thieves' Cant",
+             "Undercommon"],
+    "by_species": {"elf": ["Elvish"], "dwarf": ["Dwarvish"], "halfling": ["Halfling"], "orc": ["Orc"]},
+    "by_culture": {"northmarch": ["Northern Tongue"], "southron": ["Southron Cant"], "heartland": ["Old Imperial"]}
+  },
   "tools": {
     "thieves_tools": "thieves' tools",
     "herbalism_kit": "herbalism kit",
@@ -49,7 +58,16 @@
     "lute": "lute",
     "flute": "flute",
     "healers_kit": "healer's kit", "disguise_kit": "disguise kit",
-    "navigators_tools": "navigator's tools"
+    "navigators_tools": "navigator's tools",
+    "brewers_supplies": "brewer's supplies", "masons_tools": "mason's tools", "weavers_tools": "weaver's tools",
+    "woodcarvers_tools": "woodcarver's tools", "potters_tools": "potter's tools", "tinkers_tools": "tinker's tools",
+    "jewelers_tools": "jeweller's tools", "glassblowers_tools": "glassblower's tools",
+    "painters_supplies": "painter's supplies", "cobblers_tools": "cobbler's tools",
+    "alchemists_supplies": "alchemist's supplies", "cartographers_tools": "cartographer's tools",
+    "forgery_kit": "forgery kit", "poisoners_kit": "poisoner's kit",
+    "drum": "drum", "bagpipes": "bagpipes", "horn": "horn", "lyre": "lyre", "viol": "viol", "shawm": "shawm",
+    "pan_flute": "pan flute", "dulcimer": "dulcimer", "dragonchess_set": "dragonchess set",
+    "three_dragon_ante_set": "Three-Dragon Ante set"
   },
   "_encounters": "Combat encounters by the DMG 2024 (PDF pages 118-119): budget is the XP Budget per Character, [Low, Moderate, High] for levels 1 to 20. A band met in the land is built for the land, not the party (DESIGN.md: some fights should be avoided): danger_level is the party level a region's danger (0-10) stands for; odds how often a band is built Low, Moderate or High; the budget is per character in the party; a band never loses the last of any kind in it, and grows at most to most_extra times its largest roll. How a band looks to the player: below Low, Low, Moderate, High, and deadly above deadly times High.",
   "encounters": {

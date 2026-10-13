@@ -14,9 +14,9 @@ from realmwalker.rules.engine import traits as tr
 
 MODIFIER_KEYS = {
     "attack", "attacked", "enemy_attacks", "save", "resist", "crit_range", "passive", "ignores_zone",
-    "immune_condition", "attacks", "drag_free", "vulnerable", "check",
+    "immune_condition", "attacks", "drag_free", "vulnerable", "check", "initiative",
 }
-MODIFIER_EXTRAS = {"when", "why", "abilities"}
+MODIFIER_EXTRAS = {"when", "why", "abilities", "against"}
 
 
 def problems(tables) -> list[str]:
@@ -84,6 +84,9 @@ def problems(tables) -> list[str]:
             if f.get("rule") and f["rule"] not in defs:
                 out.append(f"data/classes.json: {cls_id} feature {f['id']} has the rule '{f['rule']}', "
                            "which data/traits.json does not define.")
+    for fid, feat in (tables.feats.get("feats") or {}).items():
+        if feat.get("trait") and feat["trait"] not in defs:
+            out.append(f"data/feats.json: {fid} names the trait '{feat['trait']}', which data/traits.json does not define.")
     objects = tables.rules.get("objects") or {}
     for tid, spec in (objects.get("terrain") or {}).items():
         where = f"data/rules.json: objects, {tid}"

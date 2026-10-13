@@ -18,7 +18,7 @@ import numpy as np
 from realmwalker.core import textgen
 from realmwalker.core.rng import RNG
 
-CULTURE_RACE = {"elven": "elf", "dwarven": "dwarf", "halfling": "halfling", "orcish": "half_orc"}
+CULTURE_RACE = {"elven": "elf", "dwarven": "dwarf", "halfling": "halfling", "orcish": "orc"}
 REALM_KINDS = ("kingdom", "noble_house", "free_city", "clan", "highland_clan", "elven_realm")
 TERRITORY_RADIUS = {"city": 13, "town": 9, "village": 6, "hamlet": 4, "hold": 10, "elfhall": 10}
 HUMAN_SETTLEMENTS = ("hamlet", "village", "town", "city")
