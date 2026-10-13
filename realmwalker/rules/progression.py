@@ -463,8 +463,9 @@ def seen_choices(char: Character) -> None:
         c["new"] = False
 
 
-def short_rest(char: Character, tables, rng: RNG) -> list[str]:
-    """An hour's rest: spend hit dice to heal, recover short-rest features."""
+def short_rest(char: Character, tables, rng: RNG, *, meal: bool = False) -> list[str]:
+    """An hour's rest: spend hit dice to heal, recover short-rest features. `meal`: a Chef cooked (2024: whoever
+    spends Hit Dice regains 1d8 more)."""
     notes = []
     die = tables.classes[char.cls]["hit_die"]
     con = modifier(char.abilities["con"])
@@ -478,6 +479,10 @@ def short_rest(char: Character, tables, rng: RNG) -> list[str]:
         amount = max(1, dice.roll(f"1d{die}", rng).total + con)
         char.hp = min(char.max_hp, char.hp + amount)
         healed += amount
+    if healed and meal:
+        extra = rng.randint(1, 8)
+        char.hp = min(char.max_hp, char.hp + extra)
+        healed += extra
     if healed:
         notes.append(f"{char.name.split()[0]} recovers {healed} hit points.")
     resources.recover(char, tables, "short")  # Second Wind, Action Surge, Channel Divinity... (data/traits.json)

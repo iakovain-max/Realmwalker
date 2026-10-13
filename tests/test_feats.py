@@ -497,3 +497,28 @@ def test_speedy_charger_and_athlete(tables):
     left = me.move_left
     b.do_dash(me)
     assert me.move_left == left + me.speed + 10
+
+
+def test_the_inspiring_leader_the_cooks_meal_and_the_ritual_caster(tables):
+    from types import SimpleNamespace
+
+    from realmwalker.game import fight as fightmod
+
+    lead = hero(tables, level=4)
+    lead.abilities["cha"] = 14
+    give(tables, lead, "inspiring_leader", increase="cha")
+    other = hero(tables, "wizard", seed=2, level=4)
+    words = fightmod._rousing_words(SimpleNamespace(party=[lead, other]), None)
+    assert words and other.temp_hp == lead.level + 2 == lead.temp_hp
+    b = fight(tables, [lead, other], "bandit")
+    assert b.fighters[1].temp_hp == 6 and other.temp_hp == 0  # (carried into the fight)
+    c = hero(tables, level=4)
+    c.hp = 1
+    plain = progression.short_rest(c, tables, RNG(9, "rest"))
+    c2 = hero(tables, level=4)
+    c2.hp = 1
+    fed = progression.short_rest(c2, tables, RNG(9, "rest"), meal=True)
+    assert c2.hp > c.hp or c2.hp == c2.max_hp, (plain, fed)
+    f = hero(tables, level=4)
+    give(tables, f, "ritual_caster")
+    assert feats.ritual_spells(f, tables) == ["identify"]

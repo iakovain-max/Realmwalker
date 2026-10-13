@@ -906,13 +906,19 @@ def rest(game, kind: str) -> list[str]:
     from realmwalker.rules import magic
 
     sleepless = next((c for c in game.party if c.attuned and magic.flag(c, "no_rest_near")), None)
+    from realmwalker.rules import feats
+
+    chef = next((c for c in game.party if feats.has(c, "chef") and c is not sleepless and c.alive
+                 and "cooks_utensils" in {it.def_id for it in c.inventory}), None)
+    if kind == "short" and chef is not None:
+        notes.append(f"{chef.name.split()[0]} cooks something hearty while the others rest.")
     for c in game.party:
         if sleepless is not None and c is not sleepless:
             notes.append(f"<warn>{c.name.split()[0]} lies awake beside {sleepless.name.split()[0]} and the thing "
                          f"they are bound to, and gets no good of the rest.</>")
             continue  # an artifact's flaw (DMG 2024): nobody near its bearer can rest
         if kind == "short":
-            notes += progression.short_rest(c, game.tables, rng)
+            notes += progression.short_rest(c, game.tables, rng, meal=chef is not None)
         elif c.hunger >= 80 or c.thirst >= 85:
             notes.append(f"<warn>{c.name.split()[0]} is too {'hungry' if c.hunger >= 80 else 'thirsty'} to rest "
                          f"properly.</> Only a short rest's worth of good came of it.")
@@ -923,7 +929,26 @@ def rest(game, kind: str) -> list[str]:
             notes += body.sleep_recovery(c)
         body.clamp_hp(c)
     notes += _encouraging_song(game, sleepless)
+    notes += _rousing_words(game, sleepless)
     return notes
+
+
+def _rousing_words(game, sleepless) -> list[str]:
+    """Inspiring Leader (2024): after a rest, up to six companions gain temporary hit points equal to the leader's
+    level plus the modifier of the ability the feat raised (they carry into the next fight)."""
+    from realmwalker.rules import feats
+    from realmwalker.rules.character import modifier
+
+    for c in game.party:
+        if not feats.has(c, "inspiring_leader") or c is sleepless and len(game.party) > 1 or not c.alive:
+            continue
+        ability = next(((f.get("choices") or {}).get("increase") for f in feats.taken(c, "inspiring_leader")), "cha")
+        amount = max(1, c.level + modifier(c.abilities.get(ability or "cha", 10)))
+        for x in [x for x in game.party if x.alive][:6]:
+            x.temp_hp = max(x.temp_hp, amount)
+        return [f"{c.name.split()[0]} speaks a few plain words before they set off, and spirits lift "
+                f"({amount} temporary hit points each)."]
+    return []
 
 
 def _encouraging_song(game, sleepless) -> list[str]:

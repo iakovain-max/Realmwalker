@@ -103,7 +103,9 @@ class SpellsScreen(Screen):
 
     def spells(self) -> list[str]:
         t = self.game.tables
-        known = sp.known_spells(self.char, t)
+        from realmwalker.rules import feats
+
+        known = list(dict.fromkeys(sp.known_spells(self.char, t) + feats.ritual_spells(self.char, t)))
         return sorted(known, key=lambda s: (t.spells[s]["level"], t.spells[s]["name"]))
 
     def current(self) -> str | None:

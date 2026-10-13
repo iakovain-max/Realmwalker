@@ -173,6 +173,8 @@ class Fighter:
         self.morale_checked: set[str] = set()
         self.damage_taken = 0
         self.temp_hp = 0  # temporary hit points: lost first, and they do not add up (the higher is kept)
+        if char is not None and char.temp_hp:
+            self.temp_hp, char.temp_hp = char.temp_hp, 0  # (an Inspiring Leader's words, brought into the fight)
         self.uncanny_used_round = -1
         self.died_round = -1
         # This turn.

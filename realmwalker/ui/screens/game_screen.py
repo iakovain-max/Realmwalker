@@ -25,6 +25,13 @@ def key_direction(ev: KeyEvent) -> tuple[int, int] | None:
     return KEY_DIRECTIONS.get(ev.key)
 
 
+def _rituals(game, c) -> bool:
+    """They know rituals of their own without being casters (Ritual Caster)."""
+    from realmwalker.rules import feats
+
+    return bool(feats.ritual_spells(c, game.tables))
+
+
 class GameScreen(Screen):
     title = "Realmwalker"
     key_sounds = False  # the keys walk; what happens has its own sounds (game.cue)
@@ -270,7 +277,8 @@ class GameScreen(Screen):
             ("Character sheet", lambda: self.open_sheet("c", index), "character"),
             ("Pack and gear", lambda: self.open_sheet("i", index), "inventory"),
             ("Health", lambda: self.open_sheet("h", index), "health"),
-        ] + ([("Spells", lambda: self._spells(index), "spells")] if c.spells else []), markup.escape(c.name)))
+        ] + ([("Spells", lambda: self._spells(index), "spells")] if c.spells or _rituals(self.game, c) else []),
+            markup.escape(c.name)))
 
     def _spells(self, index: int) -> None:
         from realmwalker.ui.screens.spells import SpellsScreen
@@ -364,7 +372,7 @@ class GameScreen(Screen):
         elif ev.key in ("a", "S"):
             from realmwalker.ui.screens.spells import SpellsScreen
 
-            caster = next((i for i, c in enumerate(game.party) if c.spells), 0)
+            caster = next((i for i, c in enumerate(game.party) if c.spells or _rituals(game, c)), 0)
             self.app.push(SpellsScreen(self.app, game, caster))
         elif ev.key == "j":
             from realmwalker.ui.screens.journal import JournalScreen
