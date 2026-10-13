@@ -1038,6 +1038,9 @@ class BattleScreen(Screen):
                 canvas.text(x, cy + 1, "Choose: click, Tab or arrows, Enter. Esc back", colors.DIM, max_width=w)
                 if t is not None:
                     canvas.markup(x, cy + 2, f"<title>► {markup.escape(t.name)}</>", max_width=w)
+                    canvas.hit(x, cy + 2, min(w, len(t.name) + 2), 1, tooltip=self._tooltip(t))
+                    if self._status_row(canvas, t, x + 2, cy + 3, w - 2):
+                        cy += 1
                     cy = self._render_odds(canvas, f, t, x, cy + 3, w)
                 cy += 1
             elif self.mode == "aim":
@@ -1076,23 +1079,29 @@ class BattleScreen(Screen):
         canvas.markup(x, y + 2, " · ".join(pips), max_width=w)
         move = f"Move {f.move_left} ft" + (f" of {f.speed}" if not f.dashed else " (running)")
         canvas.markup(x, y + 3, f"<info>{move}</> <dim>AC {f.ac()}</>", max_width=w)
-        bits = []
-        if f.concentration:
-            sp = self.game.tables.spells.defs.get(f.concentration["spell"], {})
-            bits.append(f"<magic>holding {markup.escape(sp.get('name', 'a spell'))}</>")
-        bits += [c for c in f.conditions if c not in ("unconscious",)]
-        if f.hidden:
-            bits.append("<good>hidden</>")
-        if f.disengaged:
-            bits.append("disengaging")
-        if f.dodging:
-            bits.append("dodging")
-        if f.buff_value("attack_die"):
-            bits.append("blessed")
-        if bits:
-            canvas.markup(x, y + 4, " · ".join(bits), fg=colors.DIM, max_width=w)
+        if self._status_row(canvas, f, x, y + 4, w, extra=["disengaging"] if f.disengaged else []):
             return y + 5
         return y + 4
+
+    def _status_row(self, canvas: Canvas, f: Fighter, x: int, y: int, w: int, extra=()) -> bool:
+        """Someone's states as icons with a word each, every one with its card (for the keyboard: what the board shows
+        over their head)."""
+        sts = describe.statuses(f, self.battle)
+        if not sts and not extra:
+            return False
+        cx = x
+        for st in sts:
+            word = markup.plain(st.card.title).split(" (")[0].lower()
+            if cx + 3 + len(word) > x + w:
+                canvas.text(cx, y, "…", colors.DIM)
+                break
+            canvas.icon(cx, y, st.icon)
+            canvas.hit(cx, y, 3 + len(word), 1, tooltip=st.card)
+            cx = canvas.markup(cx + 2, y, word, fg=colors.DIM, max_width=x + w - cx - 2) + 1
+        for word in extra:
+            if cx + len(word) <= x + w:
+                cx = canvas.markup(cx, y, word, fg=colors.DIM) + 1
+        return True
 
     def _render_hover(self, canvas: Canvas, f: Fighter, x: int, y: int, w: int) -> int:
         """What is under the mouse: a square (what it is, how far) or someone (how hurt, the odds of hitting them)."""

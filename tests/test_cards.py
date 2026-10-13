@@ -195,3 +195,20 @@ def test_creature_details_setting_hides_what_is_not_known(game):
     assert not screen.full_details(gob)
     b.known.add(gob.creature.def_id)
     assert screen.full_details(gob)
+
+
+def test_a_bound_thing_and_a_sentient_demand_carry_their_marks(game):
+    from realmwalker.game import magic_items
+    from realmwalker.ui.hud import body_card
+
+    app, g = game
+    it = g.leader.inventory[0]
+    kind = next(iter(magic_items.data(g)["sentient"]["demands"]))
+    it.magic = {"attune": True, "identified": True, "props": [], "sentient": {"demand": {"kind": kind}}}
+    g.leader.attuned = [it.uid]
+    assert describe.item_marks(g, it) == ["bound", "demand"]
+    assert "Bound to" in describe.item_mark_card(g, it, "bound").text()
+    assert describe.item_mark_card(g, it, "demand").lines[0]
+    g.leader.thirst = 90
+    card = body_card(g.leader, g.tables)
+    assert any("Drink" in x for x in card.lines)
