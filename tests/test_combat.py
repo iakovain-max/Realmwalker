@@ -904,8 +904,8 @@ def test_protection_and_holding_the_line(tables):
     assert not k.reaction and any("shield in the way" in t for t, _ in b.log)
 
 
-def test_a_cutthroat_strikes_first_and_hard(tables):
-    rogue = hero_at(tables, "rogue", 3, "cutthroat")
+def test_an_assassin_strikes_first_and_hard(tables):
+    rogue = hero_at(tables, "rogue", 3, "assassin")
     b = battle(tables, [rogue], foes(tables, "bandit"), spots={0: (4, 4), 1: (5, 4)})
     r, bandit = b.side(PARTY)[0], b.side(FOE)[0]
     knife = next(o for o in b.attack_options(r) if o.is_melee)

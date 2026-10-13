@@ -845,6 +845,8 @@ def _party_turn(b: Battle, f: Fighter) -> None:
         dash = next((opt for opt, a in _abilities(b, f, "move") if a.get("via") == "dash"), None)
         if dash is not None:
             b.do_ability(f, dash.value)
+    if opts and b.has_action(f) and f.bonus > 0 and f.moved_feet == 0:
+        _steady_aim(b, f, opts)
     if opts and b.has_action(f):  # (first aid for a fallen friend may have taken the action)
         struck = _fight(b, f, opts, attacks)
         if struck and b.current is f and b.outcome is None:
@@ -865,6 +867,29 @@ def _party_turn(b: Battle, f: Fighter) -> None:
             b.do_ability(f, moves["hide"].value)
 
 
+def cunning_strike(b: Battle, f: Fighter, target: Fighter, opts: list[str], dice_left: int) -> str | None:
+    """A rogue's Cunning Strike, by what the fight needs: away when hurt and pressed; a strong foe knocked out,
+    dazed or blinded; a foe tripped where friends can fall on it; poison where it takes; the dice kept otherwise."""
+    pressed = sum(1 for e in b.enemies_of(f) if e.standing and b.gap(f, e) <= 1)
+    if "withdraw" in opts and pressed and (f.hp < f.max_hp // 2 or f.prefers_range):
+        return "withdraw"
+    if "stealth" in opts:
+        return "stealth"
+    strong = target.hp > 15 + 4 * dice_left
+    if strong and "knock_out" in opts and dice_left >= 8:
+        return "knock_out"
+    if strong and "daze" in opts:
+        return "daze"
+    if "trip" in opts and target.standing and \
+            any(x is not f and x.active and b.gap(x, target) <= 1 for x in b.allies_of(f)):
+        return "trip"
+    if "poison" in opts and "poisoned" not in target.conditions and not query.condition_immune(target, "poisoned"):
+        return "poison"
+    if strong and "obscure" in opts:
+        return "obscure"
+    return None
+
+
 def tactical_mastery(b: Battle, f: Fighter, kind: str, target: Fighter) -> str:
     """Tactical Master: drive a foe into harm, sap the blow of a dangerous one still standing, or keep the weapon's
     own trick when it is the better (topple, vex, cleave...)."""
@@ -875,6 +900,15 @@ def tactical_mastery(b: Battle, f: Fighter, kind: str, target: Fighter) -> str:
     if kind in ("graze", "nick", "slow", "push") and target.active:
         return "sap"
     return kind
+
+
+def _steady_aim(b: Battle, f: Fighter, opts: list) -> None:
+    """A rogue who can strike from where they stand, with a bow or a thrown blade, aims first (Steady Aim)."""
+    for opt, _ in _abilities(b, f, "aim"):
+        ranged = [o for o in opts if o.kind == "ranged"]
+        if any(b.in_reach(f, o, e)[0] for o in ranged for e in b.enemies_of(f) if e.standing):
+            b.do_ability(f, opt.value)
+        return
 
 
 def _epic_moves(b: Battle, f: Fighter) -> None:

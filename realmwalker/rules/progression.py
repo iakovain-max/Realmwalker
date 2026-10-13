@@ -46,6 +46,23 @@ def level_up(char: Character, tables, rng: RNG, *, auto: bool = False) -> list[s
     return notes
 
 
+def feature_gives(char: Character, tables, feat: dict) -> None:
+    """What a class feature gives at once (data "gives"): saving throws (Slippery Mind), tools and the kit for them
+    (Assassin's Tools)."""
+    gives = feat.get("gives") or {}
+    for a in gives.get("saves", ()):
+        if a not in char.saves:
+            char.saves.append(a)
+    for t in gives.get("tools", ()):
+        if t not in char.tools:
+            char.tools.append(t)
+    from realmwalker.rules.inventory import add_item
+
+    for i in gives.get("items", ()):
+        if not any(x.def_id == i for x in char.inventory):
+            add_item(char, tables.items, i)
+
+
 def _level_up(char: Character, tables, rng: RNG) -> list[str]:
     cls = tables.classes[char.cls]
     before = trs.of_char(char, tables)
@@ -71,11 +88,13 @@ def _level_up(char: Character, tables, rng: RNG) -> list[str]:
         elif feat["id"] not in char.features:
             char.features.append(feat["id"])
             notes.append(f"New: {feat['name']}.")
+            feature_gives(char, tables, feat)
     if char.subclass:
         for feat in cls["subclasses"][char.subclass]["features"]:
             if feat["level"] == char.level and feat["id"] not in char.features:
                 char.features.append(feat["id"])
                 notes.append(f"New: {feat['name']}.")
+                feature_gives(char, tables, feat)
                 _offer_style(char, feat)
     if char.cls == "wizard" and char.spells:
         add_pending(char, {"kind": "spells", "count": 2, "level": char.level})
@@ -371,6 +390,7 @@ def resolve(char: Character, tables, choice: dict, option_id: str) -> list[str]:
             if feat["level"] <= char.level and feat["id"] not in char.features:
                 char.features.append(feat["id"])
                 notes.append(f"New: {feat['name']}.")
+                feature_gives(char, tables, feat)
                 _offer_style(char, feat)
         char.pending.remove(choice)
     elif kind in ("asi", "boon") and option_id.startswith("feat:"):

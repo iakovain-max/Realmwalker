@@ -138,6 +138,7 @@ def _in_sunlight(c: Ctx) -> bool:
 WHEN: dict[str, Callable[[Ctx], bool]] = {
     "ally_beside_target": _ally_beside_target,  # a friend of the owner stands beside its target
     "target_not_acted": lambda c: not c.target.acted,  # the target has not had a turn in this fight yet
+    "first_round": lambda c: c.b.round <= 1,
     "in_sunlight": _in_sunlight,  # out under a bright sky
     "owner_able": lambda c: c.owner.standing and not _incap(c.owner),
     "owner_bloodied": lambda c: c.owner.hp <= c.owner.max_hp * c.owner.t.conditions["bloodied"]["at_most"],

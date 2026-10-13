@@ -244,7 +244,10 @@ RACE = Obj(
 RACES = Obj({"races": Map(RACE, min_items=1)})
 
 FEATURE = Obj({"level": Int(min=1, max=20), "id": Str(max_len=40), "name": Str(max_len=60), "text": Str(max_len=400),
-               "rule": Str(max_len=40, optional=True)})
+               "rule": Str(max_len=40, optional=True),
+               "gives": Obj({"saves": List(Str(choices=list(ABILITY_IDS)), optional=True),
+                             "tools": List(Str(max_len=40), optional=True),
+                             "items": List(Str(max_len=40), optional=True)}, optional=True)})
 KIT = Obj({"name": Str(max_len=40), "items": WEIGHTED,
            "style": Str(max_len=30, optional=True)})  # the fighting style that suits it (the default)
 CLASS = Obj(

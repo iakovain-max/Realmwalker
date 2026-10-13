@@ -99,6 +99,8 @@ def check(game, skill: str, dc: int, bonus: int = 0, tag: str = "", mode: str = 
     name = game.tables.rules["skills"][skill]["name"]
     sign = "+" if b >= 0 else "-"
     how = {"advantage": " (adv)", "disadvantage": " (dis)"}.get(mode, "")
+    if roll < 10 and skill in who.skills and "reliable_talent" in tr.of_char(who, game.tables):
+        roll = 10  # (a rogue's Reliable Talent)
     total, more = fighter.tactical_mind(who, game.tables, roll + b, dc, rng.child("tactical_mind"))
     return total >= dc, (f"<dice>{name}{how} ({who.name.split()[0]}): {roll} {sign} {abs(b)} = {roll + b} "
                          f"vs DC {dc}{'; ' + more if more else ''}</>")

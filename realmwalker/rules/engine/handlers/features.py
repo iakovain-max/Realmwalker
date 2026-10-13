@@ -72,26 +72,6 @@ def savage_attacks(b, f, ev, hook, buff) -> None:
         ev.extra += b.rng.randint(1, ev.sides)
 
 
-@handler("sneak_attack")
-def sneak_attack(b, f, ev, hook, buff) -> None:
-    """Once a turn: a finesse or ranged weapon, and advantage or a friend beside the target."""
-    c, target, opt = f.char, ev.target, ev.opt
-    if c is None or c.uses.get("sneak_round") == b.round:
-        return
-    if opt.kind not in ("melee", "ranged") or opt.kind == "melee" and "finesse" not in opt.properties:
-        return
-    from realmwalker.rules.engine import query
-
-    ally_beside = any(x is not f and x.standing and not query.incapacitated(x) and b.gap(x, target) <= 1
-                      for x in b.allies_of(f))
-    if not (ev.advantage or ally_beside):
-        return
-    c.uses["sneak_round"] = b.round
-    n = (c.level + 1) // 2
-    ev.extra += dice.roll(f"{n}d6", b.rng, double_dice=ev.crit).total
-    b.say(f"{f.the_name} finds the gap.", "good")
-
-
 @handler("divine_strike")
 def divine_strike(b, f, ev, hook, buff) -> None:
     if f.char is not None and ev.opt.kind in ("melee", "ranged"):

@@ -194,7 +194,7 @@ def _buff_status(b, f, bf: dict, tables) -> Status | None:
         kind = "marked"
     elif bf.get("burning"):
         kind = "burning"
-    elif bf.get("slow"):
+    elif bf.get("slow") or bf.get("dazed") is not None:
         kind = "slowed"
     elif bf.get("no_heal"):
         kind = "no_heal"
@@ -203,7 +203,7 @@ def _buff_status(b, f, bf: dict, tables) -> Status | None:
     elif bf.get("attack_die") or bf.get("save_die"):
         die = str(bf.get("attack_die") or bf.get("save_die"))
         kind = "baned" if die.startswith("-") else "blessed"
-    elif bf.get("check_die"):
+    elif bf.get("check_die") or bf.get("aimed"):
         kind = "guided"
     elif bf.get("ac") or bf.get("mage_armor"):
         kind = "shielded"
@@ -229,8 +229,12 @@ def _buff_status(b, f, bf: dict, tables) -> Status | None:
     lines = [text]
     if bf.get("poisoned_blade"):
         title, lines = "Poisoned blade", ["Their next hit that cuts or pierces deals 1d4 poison damage more."]
+    elif kind == "slowed" and bf.get("dazed") is not None:
+        title, lines = "Dazed (Cunning Strike)", ["On their next turn they may only act: no moving, no bonus action."]
     elif kind == "slowed":
         lines = [f"{int(bf['slow'])} feet off their speed."]
+    elif kind == "guided" and bf.get("aimed"):
+        title, lines = "Steady Aim", ["Their next attack roll this turn has advantage."]
     elif kind == "vexing":
         lines = [f"Their next attack roll against {esc(_name_of(b, bf['vex']))} has advantage."]
     elif kind == "sapped" and bf.get("unsteady"):

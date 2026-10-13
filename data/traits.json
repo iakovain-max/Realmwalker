@@ -135,8 +135,22 @@
     "expertise": {"name": "Expertise", "text": "Twice the proficiency bonus with two skills.", "where": "sheet"},
     "sneak_attack": {
       "name": "Sneak Attack", "text": "Once a turn, extra dice of damage with a finesse or ranged weapon, given advantage or a friend beside the target.",
-      "hooks": [{"event": "attack_damage", "as": "attacker", "handler": "sneak_attack"}]
+      "hooks": [{"event": "attack_damage", "as": "attacker", "handler": "sneak_attack"}, {"event": "attack_done", "as": "attacker", "handler": "cunning_after"}]
     },
+    "steady_aim": {"name": "Steady Aim", "text": "A bonus action before moving: advantage on the next attack this turn, and no more moving.", "activate": {"id": "steady_aim", "name": "Steady Aim (bonus action)", "cost": "bonus", "does": "aim", "requires": ["not_moved"], "effects": [{"op": "special", "handler": "steady_aim"}]}},
+    "roving_aim": {"name": "Roving Aim", "text": "Steady Aim does not root the assassin to the spot.", "where": "steady_aim"},
+    "cunning_strike": {"name": "Cunning Strike", "text": "Sneak Attack dice given up for a trick: poison, trip or withdraw.", "where": "sneak_attack"},
+    "improved_cunning_strike": {"name": "Improved Cunning Strike", "text": "Two Cunning Strike tricks on one blow.", "where": "sneak_attack"},
+    "devious_strikes": {"name": "Devious Strikes", "text": "Daze, obscure and knock out as Cunning Strike tricks.", "where": "sneak_attack"},
+    "supreme_sneak": {"name": "Supreme Sneak", "text": "Stealth Attack: a blow from hiding that does not give the thief away.", "where": "sneak_attack"},
+    "envenom_weapons": {"name": "Envenom Weapons", "text": "A Cunning Strike's poison also deals 2d6 poison damage through any resistance.", "where": "sneak_attack"},
+    "death_strike": {"name": "Death Strike", "text": "A Sneak Attack in the first round: a Constitution save, or the damage is doubled.", "where": "sneak_attack"},
+    "reliable_talent": {"name": "Reliable Talent", "text": "A trained check never rolls lower than 10.", "where": "camp.check"},
+    "elusive": {"name": "Elusive", "text": "No attack roll against them has advantage unless they are incapacitated.", "where": "query.attack_roll"},
+    "stroke_of_luck": {"name": "Stroke of Luck", "text": "Once between rests, a failed attack roll or saving throw becomes a 20.", "resource": {"id": "stroke_of_luck", "max": 1, "recover": "short"}, "hooks": [{"event": "attack_missed", "as": "attacker", "handler": "stroke_attack"}, {"event": "d20_after", "as": "self", "handler": "stroke_save"}]},
+    "second_story_work": {"name": "Second-Story Work", "text": "A climbing speed equal to the walking one; leaps by Dexterity.", "where": "Fighter._speed_of"},
+    "use_magic_device": {"name": "Use Magic Device", "text": "Four magic things bound instead of three; charges kept on a 6.", "where": "magic"},
+    "thiefs_reflexes": {"name": "Thief's Reflexes", "text": "In the first round, a second action, bonus action and move.", "hooks": [{"event": "turn_start", "as": "self", "handler": "thiefs_reflexes"}]},
     "cunning_action": {
       "name": "Cunning Action", "text": "Dash, Disengage or Hide as a bonus action.",
       "activate": [{"id": "cunning_dash", "name": "Cunning Action: Dash", "cost": "bonus", "via": "dash"},
@@ -153,8 +167,8 @@
     },
     "fast_hands": {"name": "Fast Hands", "text": "Uses an object with a bonus action.", "where": "abilities"},
     "assassinate": {
-      "name": "Assassinate", "text": "At an advantage against anyone who has not yet acted; a hit on the surprised is a critical hit.",
-      "modifiers": [{"attack": "advantage", "when": ["target_not_acted"], "why": "not yet moving"}],
+      "name": "Assassinate", "text": "Advantage on initiative; in the first round, advantage against anyone who has not yet acted, and a Sneak Attack adds the rogue's level; a hit on the surprised is a critical hit.",
+      "modifiers": [{"attack": "advantage", "when": ["target_not_acted", "first_round"], "why": "not yet moving"}, {"initiative": "advantage"}],
       "hooks": [{"event": "attack_hit", "as": "attacker", "handler": "assassinate"}]
     },
     "spellcasting": {"name": "Spellcasting", "text": "Casts spells.", "where": "sheet"},

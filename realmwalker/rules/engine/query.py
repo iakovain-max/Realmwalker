@@ -179,6 +179,8 @@ def attack_roll(b, att, target, opt, *, space=None) -> Roll:
     ctx = tr.Ctx(b, target, att=att, target=target, opt=opt, space=a_space)
     for mode, why in tr.modifiers(target, "attacked", ctx):
         r.add(mode, why)
+    if att.buffs and any(bf.get("aimed") for bf in att.buffs):
+        r.add("advantage", "steady aim")
     for k in b.enemies_of(att):  # (only the first: a knight holding the line keeps the attacker busy enough)
         if k is target:
             continue
@@ -187,6 +189,9 @@ def attack_roll(b, att, target, opt, *, space=None) -> Roll:
         if found is not None:
             r.add(found[0], found[1].format(name=k.name))
             break
+    if r.adv and tr.has(target, "elusive") and not incapacitated(target):
+        r.adv.clear()  # (a rogue's Elusive: no attack roll against them has advantage)
+        r.notes.append("elusive")
     return r
 
 

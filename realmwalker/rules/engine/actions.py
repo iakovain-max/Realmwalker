@@ -172,7 +172,14 @@ def _surge_ready(b, f) -> str | None:
     return fighter.surge_ready(b, f)
 
 
+def _not_moved(b, f) -> str | None:
+    from realmwalker.rules.engine.handlers import rogue
+
+    return rogue.not_moved(b, f)
+
+
 REQUIRES: dict[str, Callable] = {
+    "not_moved": _not_moved,
     "surge_ready": _surge_ready,
     "blink_ready": _blink_ready,
     "vitality_left": _vitality_left,

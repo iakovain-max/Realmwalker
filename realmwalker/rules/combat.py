@@ -347,8 +347,9 @@ class Fighter:
         if query.flag(self, "speed_zero"):
             return 0
         own = 0 if self.char else int(self.cdef.get("speeds", {}).get(kind, 0))
-        if kind == "climb" and self.char is not None and feats.has(self.char, "athlete"):
-            own = self.speed  # (Athlete: a Climb Speed equal to the Speed)
+        if kind == "climb" and self.char is not None and (feats.has(self.char, "athlete")
+                                                          or self.has_trait("second_story_work")):
+            own = self.speed  # (Athlete, a thief's Second-Story Work: a Climb Speed equal to the Speed)
         return max(own, max([0] + [int(v) for v in self.buff_value(kind)]))
 
     @property
@@ -366,6 +367,8 @@ class Fighter:
         """How far it can leap, in feet: standing, and after a run of 10 feet - half its Strength score, and all of it
         (2024 Long Jump)."""
         s = self.score("str")
+        if self.char is not None and self.has_trait("second_story_work"):
+            s = max(s, self.score("dex"))  # (a thief leaps by Dexterity)
         return s // 2, s
 
     @property
@@ -1253,6 +1256,8 @@ class Battle:
         self.dice_say(f"{why or skill.title()} ({f.name}): {roll} {'+' if bonus >= 0 else '-'} {abs(bonus)} = "
                       f"{roll + bonus} vs DC {dc}")
         total = roll + bonus
+        if roll < 10 and f.char is not None and f.has_trait("reliable_talent") and skill in f.char.skills:
+            total = 10 + bonus  # (Reliable Talent)
         if total < dc and f.char is not None:
             from realmwalker.rules.engine.handlers import fighter
 
@@ -1940,7 +1945,8 @@ class Battle:
             why.append(f"{guard.name}'s shield")
             self.say(f"{guard.the_name} gets {guard.possessive} shield in the way.", "good" if guard.side == PARTY else "info")
         roll = dice.d20(self.rng, advantage=adv, disadvantage=dis)
-        att.buffs = [bf for bf in att.buffs if not bf.get("sapped") and bf.get("vex") != target.id]  # spent on this roll
+        att.buffs = [bf for bf in att.buffs if not bf.get("sapped") and bf.get("vex") != target.id
+                     and not bf.get("aimed")]  # spent on this roll
         natural = events.emit(self, "d20_after", actor=att, target=target, roll="attack", natural=roll.natural).natural
         crit = natural >= query.crit_range(att)
         bless = sum(dice.roll(d, self.rng).total for d in att.buff_value("attack_die"))
@@ -1977,6 +1983,7 @@ class Battle:
             target.marked = False  # spent on this roll, hit or miss
         target.buffs = [bf for bf in target.buffs if bf.get("distracted") != att.team]
         if att.hidden and (hit or not (att.char is not None and feats.has(att.char, "skulker"))):
+            att.__dict__["was_hidden"] = att.hidden  # (a thief's Stealth Attack may keep it)
             att.hidden = 0  # (Skulker: a miss does not give away where they hide)
         armor = target.armor_name("torso")
         turned = not hit and bool(armor) and total >= ac - 4 and natural != 1 and opt.kind in ("melee", "ranged")
@@ -2014,8 +2021,11 @@ class Battle:
         if att.char is not None and opt.kind.startswith("spell") and self.__dict__.get("_casting") is att:
             amount += feats.adept_ones(att.char, opt.damage_type, rolled.rolls)  # (Elemental Adept: 1s count as 2s)
         dmg_ev = events.emit(self, "attack_damage", actor=att, target=target, opt=opt, crit=crit, natural=natural,
-                             advantage=adv and not dis, sides=sides, extra=0, typed=[], rolls=list(rolled.rolls))
+                             advantage=adv and not dis, sides=sides, extra=0, typed=[], rolls=list(rolled.rolls),
+                             double=False)
         amount += dmg_ev.extra  # Sneak Attack, Divine Strike...
+        if dmg_ev.double:
+            amount *= 2  # (an assassin's Death Strike)
         self._spend_use(att, opt)
         before = target.hp + target.temp_hp
         self._melee_blow = opt.is_melee
@@ -2251,8 +2261,8 @@ class Battle:
             return False
         if dtype in ("bludgeoning", "piercing", "slashing") and feats.has(att.char, "boon_of_irresistible_offense"):
             return True  # (Boon of Irresistible Offense)
-        if dtype == "poison" and feats.has(att.char, "poisoner"):
-            return True
+        if dtype == "poison" and (feats.has(att.char, "poisoner") or self.__dict__.get("_envenom") is att):
+            return True  # (Poisoner; an assassin's Envenom Weapons)
         return self.__dict__.get("_casting") is att and dtype in feats.adept_types(att.char)
 
     def _hit(self, att: Fighter | None, target: Fighter, amount: int, dtype: str, *, crit: bool, weapon: str,
@@ -3287,7 +3297,8 @@ class Battle:
             if charged is None or magic.charges_left(charged) <= 0:
                 self.say("It has no power left until dawn.", "warn")
                 return False
-            spent = magic.spend_charge(charged, self.rng)
+            spent = False if f.has_trait("use_magic_device") and self.rng.randint(1, 6) == 6 \
+                else magic.spend_charge(charged, self.rng)  # (a thief's Use Magic Device: a 6 keeps the charge)
             self.say(f"{f.the_name} calls on the power in the {self.t.items.name(item, False)}"
                      f"{'' if spent or charged.get('at_will') else ', and the power stays in it'}.", "magic")
         if sid.startswith("scroll:"):
