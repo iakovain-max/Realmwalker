@@ -89,6 +89,7 @@ def hits(b, att, target, opt, n=20):
 def on_turn(b, f):
     """Make it `f`'s turn (fresh action, bonus action and reaction)."""
     b.turn = b.order.index(f.id)
+    b.round += 1  # (a new turn: what is once a turn is ready again)
     b._start_of_turn(f)
     b.turn_started = True
 
