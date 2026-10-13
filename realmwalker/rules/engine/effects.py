@@ -266,7 +266,6 @@ def _push(c: Cast, o: dict, victim) -> None:
             c.pushed.append((victim, int(o["feet"])))
 
 
-@op("damage")
 def _roll(c: Cast, e: str, dtype: str) -> int:
     """A spell's damage roll (Elemental Adept: a 1 on a die of the chosen element counts as a 2)."""
     rolled = dice.roll(e, c.b.rng)
@@ -277,6 +276,7 @@ def _roll(c: Cast, e: str, dtype: str) -> int:
     return rolled.total
 
 
+@op("damage")
 def _damage(c: Cast, o: dict, victim) -> None:
     """Damage without a roll to hit or a save (it has already landed)."""
     if o.get("max_size") and victim is not None and not statblocks.size_at_most(victim.size, o["max_size"]):

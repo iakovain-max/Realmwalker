@@ -1155,7 +1155,7 @@ class Battle:
                 cost = 0 if free else grid.step_feet(self.field, entering, crawling="prone" in f.conditions,
                                                      flying=not ground, climber=f.climb_speed > 0,
                                                      swimmer=f.swim_speed > 0)
-            if heavy and not free and not feats.has(f.char, "grappler"):
+            if heavy and not free and not (f.char is not None and feats.has(f.char, "grappler")):
                 cost *= 2  # (Grappler: Fast Wrestler drags at no extra cost)
             if not free and leap <= 1 and f.__dict__.get("easy_dash") == self.round:
                 cost = min(cost, grid.SQUARE_FT)  # (Speedy: a Dash takes no notice of rough ground)
@@ -1177,8 +1177,8 @@ class Battle:
                         self.opportunity(e, f, why="sentinel" if f.disengaged else "")
                         if not f.active or "unconscious" in f.conditions:
                             break
-                if not f.active or "unconscious" in f.conditions:
-                    break
+                if not f.active or "unconscious" in f.conditions or cost > f.move_left:
+                    break  # (struck down, or stopped where they stand: Sentinel)
             for c in new_cells:
                 self.field.open_door(*c)
             before = (f.x, f.y)
@@ -1361,7 +1361,7 @@ class Battle:
                     self._opportunity(e, f)
                     if not f.active or "unconscious" in f.conditions or f.z == 0 and to > 0 and "prone" in f.conditions:
                         return True  # brought down before it got away
-        f.move_left -= abs(feet)
+        f.move_left = max(0, f.move_left - abs(feet))
         start = f.z
         f.z = to
         self._event("fly", who=f.id, z=f.z, before=start)
@@ -1444,7 +1444,7 @@ class Battle:
             hit = self._attack(e, opt, f)
         finally:
             self._oa_target = None
-        if hit and e.has_trait("feat_sentinel") and f.active and f.move_left > 0:
+        if hit and e.has_trait("feat_sentinel") and f.active and f.move_left > 0 and f.z == 0                 and grid.can_stop((f.x, f.y), f.sq, self.occupied_by_others(f)):
             f.move_left = 0  # (Sentinel: Halt)
             self.say(f"{e.the_name} stops {f.the_name} where {'they stand' if f.char else 'it stands'}.", "system")
         self._check_end()
