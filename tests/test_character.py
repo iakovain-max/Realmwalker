@@ -95,7 +95,7 @@ def test_background_increases_and_species_traits(tables):
     assert s.darkvision == 120 and s.has_rule("poison_resilience") and s.speed() == 30
     feat_hp = 2 if any(f["id"] == "tough" for f in dwarf.feats) else 0
     assert dwarf.max_hp == tables.classes["fighter"]["hit_die"] + (dwarf.abilities["con"] - 10) // 2 + 1 + feat_hp
-    assert [f["id"] for f in dwarf.feats] == ["savage_attacker"]
+    assert [f["id"] for f in dwarf.feats] == ["savage_attacker", "defense"]  # (and the fighter's style, a feat)
 
 
 def test_skill_choices_and_expertise(tables):
@@ -118,7 +118,7 @@ def test_armor_class_rules(tables):
     b.kit = 0  # chain mail and shield
     c = b.build()
     s = Sheet(c, tables)
-    assert s.armor_class() == 16 + 2 + (1 if c.fighting_style == "defense" else 0)
+    assert s.armor_class() == 16 + 2 + (1 if any(f["id"] == "defense" for f in c.feats) else 0)
     unequip(c, "armor")
     assert s.armor_class() == 10 + s.mod("dex") + 2
 

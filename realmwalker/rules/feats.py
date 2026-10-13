@@ -47,6 +47,124 @@ def origin_feats(tables) -> list[str]:
     return [fid for fid, d in defs(tables).items() if d["category"] == "origin"]
 
 
+def styles(tables) -> list[str]:
+    """The Fighting Style feats, in the book's order."""
+    return [fid for fid, d in defs(tables).items() if d["category"] == "fighting_style"]
+
+
+def style_of(char: Character, tables) -> str | None:
+    """The first Fighting Style feat they have (None without one)."""
+    return next((f["id"] for f in char.feats if defs(tables).get(f["id"], {}).get("category") == "fighting_style"), None)
+
+
+# ---------------------------------------------------------------------------- who may take a feat
+ABILITY_WORDS = {"str": "Strength", "dex": "Dexterity", "con": "Constitution", "int": "Intelligence",
+                 "wis": "Wisdom", "cha": "Charisma"}
+TRAINING_WORDS = {"light": "light armour", "medium": "medium armour", "heavy": "heavy armour", "shield": "shields"}
+
+
+def problem(char: Character, tables, fid: str) -> str | None:
+    """Why they cannot take this feat now (None when they can): its prerequisite, or having it already."""
+    d = defs(tables).get(fid)
+    if d is None:
+        return "no such feat"
+    if has(char, fid) and not d.get("repeatable"):
+        return "already taken"
+    pre = d.get("prerequisite") or {}
+    if char.level < int(pre.get("level", 1)):
+        return f"level {pre['level']} or higher"
+    need = pre.get("abilities") or {}
+    if need and not any(char.abilities.get(a, 10) >= int(v) for a, v in need.items()):
+        return " or ".join(f"{ABILITY_WORDS[a]} {v}" for a, v in need.items()) + " or more"
+    if pre.get("training") and pre["training"] not in char.armor_prof:
+        return f"training with {TRAINING_WORDS.get(pre['training'], pre['training'])}"
+    if pre.get("spellcasting"):
+        from realmwalker.rules import spells as sr
+
+        if not sr.is_caster(char, tables):
+            return "the power to cast spells"
+    if pre.get("style") and not any(f.get("rule") == "fighting_style" for f in _class_features(char, tables)):
+        return "the Fighting Style feature"
+    for key, spec in d.get("choices", {}).items():
+        if spec["kind"] in ("damage_type", "increase") and not options(tables, char, fid, key, {}):
+            return "nothing left to choose" if spec["kind"] == "damage_type" else "no ability it raises is below 20"
+    return None
+
+
+def _class_features(char: Character, tables) -> list[dict]:
+    cls = tables.classes[char.cls]
+    out = [f for f in cls["features"] if f["level"] <= char.level]
+    if char.subclass:
+        out += [f for f in cls["subclasses"][char.subclass]["features"] if f["level"] <= char.level]
+    return out
+
+
+def prerequisite_words(tables, fid: str) -> str:
+    """'level 4+, Strength 13+' for a card ('' when it has none)."""
+    pre = defs(tables)[fid].get("prerequisite") or {}
+    out = []
+    if pre.get("level"):
+        out.append(f"level {pre['level']}+")
+    if pre.get("abilities"):
+        out.append(" or ".join(f"{ABILITY_WORDS[a]} {v}+" for a, v in pre["abilities"].items()))
+    if pre.get("training"):
+        out.append(f"training with {TRAINING_WORDS.get(pre['training'], pre['training'])}")
+    if pre.get("spellcasting"):
+        out.append("spellcasting")
+    if pre.get("style"):
+        out.append("the Fighting Style feature")
+    return ", ".join(out)
+
+
+POLEARMS = ("quarterstaff", "spear", "glaive", "halberd", "pike")  # Polearm Master's weapons
+
+
+def archetype(char: Character, tables) -> str:
+    """How they fight, read from their calling and what they hold: the key of data/feats.json "suggest"."""
+    items = tables.items
+    main, off = char.equipped_item("main_hand"), char.equipped_item("off_hand")
+    md = items.get(main.def_id) if main is not None and items.category(main) == "weapon" else None
+    props = md.get("properties", []) if md else []
+    if char.cls == "wizard":
+        return "caster"
+    if char.cls == "cleric" and (md is None or "heavy" not in props):
+        return "healer"
+    if md is None:
+        return "brawler"
+    if "ranged" in props:
+        return "skulker" if char.cls == "rogue" else "archer"
+    if main.def_id in POLEARMS and (off is None or "heavy" in props):
+        return "polearm"
+    if "two_handed" in props or "heavy" in props:
+        return "great_weapon"
+    if off is not None and items.category(off) == "shield":
+        return "shield"
+    if off is not None and items.category(off) == "weapon":
+        return "two_weapon"
+    return "duelist"
+
+
+STYLE_FOR = {"great_weapon": ["great_weapon_fighting", "interception", "defense"],
+             "polearm": ["great_weapon_fighting", "interception", "defense"],
+             "archer": ["archery", "defense", "blind_fighting"], "skulker": ["archery", "blind_fighting"],
+             "shield": ["defense", "protection", "interception", "dueling"],
+             "two_weapon": ["two_weapon_fighting", "defense"], "duelist": ["dueling", "defense"],
+             "brawler": ["unarmed_fighting", "defense"]}
+
+
+def suited_style(char: Character, tables, ids: list[str]) -> str:
+    """Of these fighting styles, the one that suits how they fight."""
+    for fid in STYLE_FOR.get(archetype(char, tables), ["defense"]):
+        if fid in ids:
+            return fid
+    return ids[0] if ids else ""
+
+
+def choosable(char: Character, tables, categories=("general", "origin")) -> list[str]:
+    """The feats they could take now, of these categories (a level's ability increase: general and origin feats)."""
+    return [fid for fid, d in defs(tables).items() if d["category"] in categories and problem(char, tables, fid) is None]
+
+
 def name(tables, feat: dict | str) -> str:
     """'Magic Initiate (Cleric)', 'Alert'."""
     fid = feat if isinstance(feat, str) else feat["id"]
@@ -71,11 +189,31 @@ def options(tables, char: Character, fid: str, key: str, choices: dict) -> list[
         return [t for t in TOOL_GROUPS[spec["from"]] if t not in char.tools]
     if kind in ("spell_list", "ability"):
         return list(spec["from"])
+    if kind == "increase":
+        out = [a for a in spec["from"] if char.abilities.get(a, 10) < 20]
+        if spec.get("untrained_save"):
+            out = [a for a in out if a not in char.saves]
+        return out
+    if kind == "damage_type":
+        done = {(f.get("choices") or {}).get(key) for f in taken(char, fid)}
+        return [x for x in spec["from"] if x not in done]
+    if kind == "skill_or_expertise":
+        return [x for x in spec["from"] if x not in char.expertise]
+    if kind == "expertise":
+        mine = list(char.skills) + [x for x in choices.get("skill", []) if x not in char.skills]
+        return [x for x in SKILL_ORDER if x in mine and x not in char.expertise]
     if kind in ("cantrip", "spell"):
-        lst = choices.get("list", "wizard")
         level = 0 if kind == "cantrip" else int(spec.get("level", 1))
-        return sorted(sid for sid, sp in tables.spells.defs.items()
-                      if isinstance(sp, dict) and sp["level"] == level and lst in sp.get("classes", ()))
+
+        def fits(sp) -> bool:
+            if not isinstance(sp, dict) or sp["level"] != level or "item" in sp.get("classes", ()):
+                return False
+            if spec.get("schools"):
+                return sp.get("school") in spec["schools"]
+            if spec.get("ritual"):
+                return bool(sp.get("ritual"))
+            return choices.get("list", "wizard") in sp.get("classes", ())
+        return sorted(sid for sid, sp in tables.spells.defs.items() if fits(sp))
     return []
 
 
@@ -88,10 +226,10 @@ def default_choices(tables, char: Character, fid: str, fixed: dict | None = None
             continue
         opts = options(tables, char, fid, key, out)
         n = int(c.get("count", 1))
-        if c["kind"] == "ability":
-            sc = tables.classes[char.cls].get("spellcasting")
-            best = max(opts, key=lambda a: (sc is not None and sc["ability"] == a, char.abilities.get(a, 10)))
-            out[key] = best
+        if c["kind"] in ("ability", "increase"):
+            out[key] = best_ability(char, tables, opts) if opts else ""
+        elif c["kind"] in ("damage_type", "skill_or_expertise"):
+            out[key] = opts[0] if opts else ""
         elif c["kind"] == "spell_list":
             out[key] = next((x for x in opts if x == char.cls), opts[0] if opts else "")
         elif n == 1 and c["kind"] not in ("cantrip", "spell", "skill_or_tool", "tool"):
@@ -99,6 +237,19 @@ def default_choices(tables, char: Character, fid: str, fixed: dict | None = None
         else:
             out[key] = _best(tables, c["kind"], opts)[:n]
     return out
+
+
+def best_ability(char: Character, tables, opts: list[str]) -> str:
+    """Of these abilities, the one that serves them best: their casting ability, then their class's main ones, an odd
+    score first (+1 rounds it up), then the highest."""
+    cls = tables.classes[char.cls]
+    sc = cls.get("spellcasting")
+    primary = list(cls.get("primary", []))
+
+    def worth(a):
+        score = char.abilities.get(a, 10)
+        return (sc is not None and sc["ability"] == a, a in primary, score % 2 == 1 and score < 20, score)
+    return max(opts, key=worth)
 
 
 def _best(tables, kind: str, opts: list[str]) -> list[str]:
@@ -114,19 +265,41 @@ def _best(tables, kind: str, opts: list[str]) -> list[str]:
 
 def grant(char: Character, tables, fid: str, choices: dict | None = None) -> dict:
     """Take a feat: its choices (defaults for what is not given), and what it gives at once."""
+    d = defs(tables)[fid]
     picked = default_choices(tables, char, fid, choices)
     char.feats.append({"id": fid, "choices": picked})
-    if fid == "skilled":
-        for x in picked.get("skills", []):
-            if x in tables.rules["skills"]:
-                if x not in char.skills:
-                    char.skills.append(x)
-            elif x not in char.tools:
-                char.tools.append(x)
-    for key in ("tools",):
-        for x in picked.get(key, []) if fid in ("crafter", "musician") else []:
-            if x not in char.tools:
-                char.tools.append(x)
+    for key, spec in d.get("choices", {}).items():
+        vals = picked.get(key)
+        vals = vals if isinstance(vals, list) else [vals] if vals else []
+        kind = spec["kind"]
+        for x in vals:
+            if kind == "increase":
+                raise_ability(char, x)
+            elif kind in ("skill", "skill_or_tool", "tool", "skill_or_expertise", "expertise"):
+                if x in tables.rules["skills"]:
+                    if kind == "expertise" or kind == "skill_or_expertise" and x in char.skills:
+                        if x not in char.expertise:
+                            char.expertise.append(x)
+                    elif x not in char.skills:
+                        char.skills.append(x)
+                elif x not in char.tools:
+                    char.tools.append(x)
+    gives = d.get("gives") or {}
+    for x in gives.get("armor", []):
+        if x not in char.armor_prof:
+            char.armor_prof.append(x)
+    for x in gives.get("weapons", []):
+        if x not in char.weapon_prof:
+            char.weapon_prof.append(x)
+    for x in gives.get("tools", []):
+        if x not in char.tools:
+            char.tools.append(x)
+    if gives.get("save") and picked.get(gives["save"]) and picked[gives["save"]] not in char.saves:
+        char.saves.append(picked[gives["save"]])
+    if fid == "weapon_master":
+        from realmwalker.rules import progression
+
+        progression.offer_masteries(char, tables)
     if fid == "tough":
         char.max_hp += 2 * char.level
         char.hp += 2 * char.level
@@ -136,6 +309,18 @@ def grant(char: Character, tables, fid: str, choices: dict | None = None) -> dic
         if tables.spells[sid]["level"] > 0:
             char.uses.setdefault(innate_key(src, sid), 1)
     return picked
+
+
+def raise_ability(char: Character, ability: str, amount: int = 1) -> None:
+    """An ability raised by a feat (at most 20); a hardier body has more hit points at every level."""
+    from realmwalker.rules.character import modifier
+
+    before = modifier(char.abilities[ability])
+    char.abilities[ability] = min(20, char.abilities[ability] + amount)
+    if ability == "con":
+        gain = (modifier(char.abilities[ability]) - before) * char.level
+        char.max_hp += gain
+        char.hp += gain
 
 
 def level_up(char: Character, tables) -> None:
@@ -165,10 +350,15 @@ def innate_spells(char: Character, tables) -> list[tuple[str, str, str]]:
     character's level allows (a lineage's level 3 and 5 spells)."""
     out = []
     for i, f in enumerate(char.feats):
+        ch = f.get("choices") or {}
         if f["id"] == "magic_initiate":
-            ch = f.get("choices") or {}
             ability = ch.get("ability", "int")
             for sid in list(ch.get("cantrips", [])) + list(ch.get("spell", [])):
+                if sid in tables.spells:
+                    out.append((f"feat{i}", sid, ability))
+        elif defs(tables).get(f["id"], {}).get("spells"):  # Fey Touched, Shadow Touched, Telepathic
+            ability = ch.get("increase") or _best_ability(char)
+            for sid in list(defs(tables)[f["id"]]["spells"]) + list(ch.get("spell", [])):
                 if sid in tables.spells:
                     out.append((f"feat{i}", sid, ability))
     lineage = (tables.races.get(char.species, {}).get("lineages") or {}).get(char.lineage or "")
@@ -178,6 +368,14 @@ def innate_spells(char: Character, tables) -> list[tuple[str, str, str]]:
             if char.level >= int(lvl):
                 out += [("lineage", sid, ability) for sid in sids if sid in tables.spells]
     return out
+
+
+def ritual_spells(char: Character, tables) -> list[str]:
+    """The rituals Ritual Caster taught them (cast outside a fight, without a slot)."""
+    out = []
+    for f in taken(char, "ritual_caster"):
+        out += [sid for sid in (f.get("choices") or {}).get("rituals", []) if sid in tables.spells]
+    return list(dict.fromkeys(out))
 
 
 def _best_ability(char: Character) -> str:
@@ -193,6 +391,16 @@ def rest(char: Character, tables, kind: str) -> None:
     for src, sid, _ability in innate_spells(char, tables):
         if tables.spells[sid]["level"] > 0:
             char.uses[innate_key(src, sid)] = 1
+
+
+def adept_types(char: Character) -> set[str]:
+    """The elements Elemental Adept has mastered."""
+    return {(f.get("choices") or {}).get("element") for f in taken(char, "elemental_adept")} - {None, ""}
+
+
+def adept_ones(char: Character, dtype: str, rolls) -> int:
+    """How much Elemental Adept adds to a roll of its element: one for every die that came up 1."""
+    return sum(1 for r in rolls if r == 1) if dtype in adept_types(char) else 0
 
 
 def crafter_discount(char_list, tables) -> float:

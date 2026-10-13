@@ -269,7 +269,7 @@ class CharacterScreen(Screen):
         if s.lineage:
             notes.append(f"<loot>{s.lineage['name']}</> <dim>(lineage)</>: {s.lineage['text']}")
         for f in s.features():
-            if f["id"] in ("subclass", "asi") or (f["id"] == "fighting_style" and c.fighting_style):
+            if f["id"] in ("subclass", "asi") or (f.get("rule") == "fighting_style" and c.feats):
                 continue
             if f["id"] == "weapon_mastery" and c.masteries:
                 names = ", ".join(f"{t.items.get(w)['name']} ({t.items.get(w)['mastery'].title()})"
@@ -278,9 +278,6 @@ class CharacterScreen(Screen):
                 notes.append(f"<loot>{f['name']}</>: {names}.{change}")
                 continue
             notes.append(f"<loot>{f['name']}</>: {f['text']}")
-        if c.fighting_style:
-            st = cls["fighting_styles"][c.fighting_style]
-            notes.append(f"<loot>Fighting Style: {st['name']}</>: {st['text']}")
         feature = t.backgrounds[c.background]["feature"]
         notes.append(f"<loot>{feature['name']}</> <dim>(background)</>: {feature['text']}")
         notes.append("")

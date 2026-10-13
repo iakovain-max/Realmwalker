@@ -65,7 +65,7 @@ def test_a_human_takes_a_second_origin_feat_and_a_skill(tables):
     b = builder(tables, "human", bg="farmer")
     b.set_choice("versatile", "alert")
     c = b.build()
-    assert [f["id"] for f in c.feats] == ["tough", "alert"]
+    assert [f["id"] for f in c.feats] == ["tough", "alert", "defense"]  # (and the fighter's style, a feat)
     assert c.choices["skillful"] in c.skills
     assert c.max_hp == tables.classes["fighter"]["hit_die"] + (c.abilities["con"] - 10) // 2 + 2
 

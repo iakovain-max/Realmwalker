@@ -3,7 +3,8 @@
     features.py   race traits and class features
     monsters.py   creature traits
     mastery.py    the weapon masteries (PHB 2024)
-    feats.py      feats (PHB 2024 chapter 5)
+    feats.py      the origin feats (PHB 2024 chapter 5)
+    general_feats.py   the general and fighting style feats
 """
 
-from realmwalker.rules.engine.handlers import feats, features, mastery, monsters  # noqa: F401  (registering is importing)
+from realmwalker.rules.engine.handlers import feats, features, general_feats, mastery, monsters  # noqa: F401  (registering is importing)

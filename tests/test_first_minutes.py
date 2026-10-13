@@ -51,7 +51,7 @@ def test_the_fighting_style_suits_the_kit_until_you_choose_one(tables):
     b.set_kit(1)
     assert b.fighting_style == kits[1] == "archery"  # the longbow
     b.set_kit(2)
-    assert b.fighting_style == "great_weapon"  # the greataxe
+    assert b.fighting_style == "great_weapon_fighting"  # the greataxe
     b.fighting_style, b.style_chosen = "dueling", True
     b.set_kit(0)
     assert b.fighting_style == "dueling"  # a choice made by hand is kept

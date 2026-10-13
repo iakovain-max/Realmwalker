@@ -24,6 +24,11 @@ MASTERIES = ("cleave", "graze", "nick", "push", "sap", "slow", "topple", "vex")
 PUSHABLE = ("tiny", "small", "medium", "large")
 
 
+def trained(f) -> bool:
+    """They can use masteries: the Weapon Mastery feature (or a stat block's trait), or the Weapon Master feat."""
+    return tr.has(f, "weapon_mastery") or tr.has(f, "feat_weapon_master")
+
+
 def weapon_of(f, opt):
     """The item behind an attack option, or None."""
     if f.char is None or opt.item_uid is None:
@@ -35,7 +40,7 @@ def of(f, opt) -> str | None:
     """The mastery this attack can use, or None."""
     if opt is None or opt.kind not in ("melee", "ranged") or "improvised" in opt.properties:
         return None
-    if not tr.has(f, "weapon_mastery"):
+    if not trained(f):
         return None
     if f.char is None:
         return opt.extra.get("mastery")
@@ -47,7 +52,7 @@ def of(f, opt) -> str | None:
 
 def item_mastery(f, item) -> str | None:
     """The mastery a character can use with this item (for Nick, read before any attack is made)."""
-    if item is None or f.char is None or not tr.has(f, "weapon_mastery") or item.def_id not in f.char.masteries:
+    if item is None or f.char is None or not trained(f) or item.def_id not in f.char.masteries:
         return None
     return f.t.items.get(item.def_id).get("mastery")
 
@@ -93,6 +98,13 @@ def choose(b, f, kind: str, target, text: str) -> bool:
 
 
 # ---------------------------------------------------------------------------- after a blow
+@handler("mastery_done_feat")
+def mastery_done_feat(b, f, ev, hook, buff) -> None:
+    """Weapon Master's tricks, for those without the Weapon Mastery feature (with it, its own hook does them)."""
+    if not tr.has(f, "weapon_mastery"):
+        mastery_done(b, f, ev, hook, buff)
+
+
 @handler("mastery_done")
 def mastery_done(b, f, ev, hook, buff) -> None:
     opt, target = ev.opt, ev.target

@@ -887,7 +887,7 @@ def test_an_abjurers_ward_takes_the_blows_first(tables):
 
 def test_protection_and_holding_the_line(tables):
     knight = hero_at(tables, "fighter", 3, "knight")
-    knight.fighting_style = "protection"
+    knight.feats = [f for f in knight.feats if f["id"] != "defense"] + [{"id": "protection", "choices": {}}]
     add_item(knight, tables.items, "shield")
     from realmwalker.rules.inventory import equip
 

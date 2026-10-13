@@ -252,7 +252,6 @@ CLASS = Obj(
         "skill_count": Int(min=0, max=6), "skill_choices": List(Str(max_len=30), min_items=1),
         "suggested": Obj({a: Int(min=8, max=15) for a in ABILITY_IDS}),
         "choices_at_1": List(Str(max_len=30)),
-        "fighting_styles": Map(Obj({"name": Str(max_len=40), "text": Str(max_len=300)}), optional=True),
         # Weapon Mastery (2024): [[from level, how many kinds of weapon], ...]
         "mastery": List(List(Int(min=0, max=20), min_items=2, max_items=2), optional=True),
         "spellcasting": Obj({"ability": Str(choices=list(ABILITY_IDS)), "type": Str(choices=["prepared", "spellbook", "known"]),
@@ -532,15 +531,23 @@ TRAIT_DEF = Obj(
 )
 TRAITS = Obj({"traits": Map(TRAIT_DEF, min_items=1)})
 
-FEAT_CHOICE = Obj({"kind": Str(choices=["skill", "skill_or_tool", "tool", "spell_list", "cantrip", "spell", "ability"]),
+FEAT_CHOICE = Obj({"kind": Str(choices=["skill", "skill_or_tool", "tool", "spell_list", "cantrip", "spell", "ability",
+                                         "increase", "damage_type", "skill_or_expertise", "expertise"]),
                    "from": Any_(optional=True), "count": Int(min=1, max=6, optional=True),
-                   "level": Int(min=0, max=9, optional=True)})
+                   "level": Int(min=0, max=9, optional=True), "schools": List(Str(max_len=20), optional=True),
+                   "ritual": Bool(optional=True), "untrained_save": Bool(optional=True)})
 FEATS = Obj({"feats": Map(Obj({"name": Str(max_len=40), "category": Str(choices=["origin", "general", "fighting_style",
                                                                                    "epic"]),
                                "text": Str(max_len=500), "trait": Str(max_len=40, optional=True),
                                "repeatable": Bool(optional=True), "prerequisite": Any_(optional=True),
                                "upgrade_in": Int(min=2, max=26, optional=True),
-                               "choices": Map(FEAT_CHOICE, optional=True)}), min_items=1)})
+                               "choices": Map(FEAT_CHOICE, optional=True),
+                               "gives": Obj({"armor": List(Str(max_len=20), optional=True),
+                                             "weapons": List(Str(max_len=20), optional=True),
+                                             "tools": List(Str(max_len=40), optional=True),
+                                             "save": Str(max_len=20, optional=True)}, optional=True),
+                               "spells": List(Str(max_len=40), optional=True)}), min_items=1),
+             "suggest": Map(List(Str(max_len=40)), optional=True)})
 
 STATBLOCK = Obj(
     {

@@ -48,7 +48,6 @@ class Character:
     tools: list[str] = field(default_factory=list)
     languages: list[str] = field(default_factory=list)
     features: list[str] = field(default_factory=list)
-    fighting_style: str | None = None
     masteries: list[str] = field(default_factory=list)  # kinds of weapon (item ids) whose mastery they use (2024)
     lineage: str | None = None  # a species' lineage (an elf's drow, high or wood), data/races.json "lineages"
     feats: list[dict] = field(default_factory=list)  # [{"id": feat id, "choices": {...}}] (data/feats.json)
@@ -306,11 +305,11 @@ class Sheet:
             if kind == "light":
                 ac = base + dex
             elif kind == "medium":
-                ac = base + min(dex, 2)
+                ac = base + min(dex, 3 if any(f["id"] == "medium_armor_master" for f in self.c.feats) else 2)
             else:
                 ac = base
-            if self.c.fighting_style == "defense":
-                ac += 1
+            if any(f["id"] == "defense" for f in self.c.feats):
+                ac += 1  # the Defense fighting style
         else:
             from realmwalker.rules import spells
 
@@ -499,6 +498,8 @@ class Sheet:
 
     def speed(self) -> int:
         speed = int(self.lineage.get("speed", self.race["speed"]))
+        if any(f["id"] == "speedy" for f in self.c.feats):
+            speed += 10  # (Speedy)
         if self.c.injuries:
             from realmwalker.rules import health
 
