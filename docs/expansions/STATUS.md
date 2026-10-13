@@ -57,6 +57,7 @@ Next session starts at: Expansion 2 Part C, task C.1 in docs/expansions/02-blade
 
 ## Notes for the next session
 
+- Part C cut off by a usage limit at 13:19 (2026-10-13) just before merging: all of C.1-C.3 is built and committed; autoplay OK, smoke OK, the full suite was green apart from four arena-coverage failures that are fixed in 016e10e (rerun the full suite). Still to do: the fresh review (§5.2), then PROGRESS/STATUS/CLAUDE.md (a drafted script was in the old session's scratchpad: write the entry anew), merge into main and push.
 - The three books' text is extracted to `build/codex/<phb|dmg|mm>/p###.txt` (`tools/codex/extract.py`); render page
   images with `tools/codex/extract.py --render mm 120 121` (to `build/codex/pages/`) to check numbers.
 - `docs/expansions/codex/README.md` fixes the codex's shape (one entry per line, `<kind>:<slug>` ids, PDF pages).
