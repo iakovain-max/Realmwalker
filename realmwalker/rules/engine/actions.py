@@ -85,6 +85,7 @@ def use(b, f, aid: str, target=None) -> bool:
         if a.get("effects"):
             c = effects.Cast(b, f, aid, {"target": "self", "name": a["name"], "ability": True}, None, None)
             effects.run(c, a["effects"])
+        events.emit(b, "ability_used", actor=f, ability=aid)
         return True
     if a["cost"] != "free" and not b._spend(f, bonus=a["cost"] == "bonus"):
         return False
@@ -147,7 +148,28 @@ def _not_sensing(b, f) -> str | None:
     return "already feeling the stone" if any(bf.get("tremorsense") for bf in f.buffs) else None
 
 
+def _blink_ready(b, f) -> str | None:
+    from realmwalker.rules.engine.handlers import boons
+
+    return boons.blink_ok(b, f)
+
+
+def _vitality_left(b, f) -> str | None:
+    from realmwalker.rules.engine.handlers import boons
+
+    return boons.vitality_ok(b, f)
+
+
+def _in_shadow(b, f) -> str | None:
+    from realmwalker.rules.engine.handlers import boons
+
+    return boons.in_shadow(b, f)
+
+
 REQUIRES: dict[str, Callable] = {
+    "blink_ready": _blink_ready,
+    "vitality_left": _vitality_left,
+    "in_shadow": _in_shadow,
     "not_sensing": _not_sensing,
     "undead_within_30": _undead_near,
     "god_ready": _god_ready,

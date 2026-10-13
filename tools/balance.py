@@ -34,6 +34,9 @@ from realmwalker.world.tables import Tables
 
 PARTY_CLASSES = ("fighter", "rogue", "cleric", "wizard")
 FIGHT_CASES = [("wolf_pack", 2), ("bandits", 3), ("goblins", 3), ("wolf_pack", 1), ("bandits", 1)]
+# Heroes (Demigods & Magics part A): a party of three at level 11 and 17 against what the worst lands send, built for
+# the land's danger by the XP budget (rules/encounter.py), a High band.
+TIER_CASES = [(11, "troll", 9), (11, "berserkers", 9), (17, "troll", 10), (17, "ogre", 10)]
 
 
 def load_tables() -> Tables:
@@ -57,13 +60,17 @@ def make_hero(tables, cls: str, level: int, seed: int):
     return c
 
 
-def fight_once(tables, group: str, size: int, level: int, party_size: int, seed: int) -> dict:
+def fight_once(tables, group: str, size: int, level: int, party_size: int, seed: int, danger: int | None = None) -> dict:
     """One fight on an open field, the party played by the game's own tactics (Auto): close in, strike what is
-    worth striking, heal the fallen, throw spells where they catch only foes."""
+    worth striking, heal the fallen, throw spells where they catch only foes. With a `danger`, the band is built by the
+    budget of a land that dangerous (High)."""
+    from realmwalker.rules import encounter
+
     party = [make_hero(tables, PARTY_CLASSES[i % len(PARTY_CLASSES)], level, seed * 10 + i) for i in range(party_size)]
     rng = RNG(seed, "balance-fight")
-    foes = spawn_group(tables, group, rng, party_size=party_size)[:size] if size else \
-        spawn_group(tables, group, rng, party_size=party_size)
+    worth = encounter.land_budget(tables, danger, party_size, "high") if danger is not None else None
+    foes = spawn_group(tables, group, rng, party_size=party_size, budget=worth)
+    foes = foes[:size] if size else foes
     b = Battle(tables, party, foes, Env(), rng)
     for f in b.side(PARTY):
         f.auto = True
@@ -76,6 +83,7 @@ def fight_once(tables, group: str, size: int, level: int, party_size: int, seed:
     ours = b.side(PARTY)
     hurt = [f for f in ours if f.hp <= f.max_hp // 3]
     return {
+        "foes": len(foes),
         "outcome": result.outcome,
         "party_dead": len(result.party_dead),
         "wipe": all(not c.alive for c in party),
@@ -98,6 +106,21 @@ def fights(tables, runs: int) -> list[str]:
                 out.append(f"  {group} x{size or '?'} vs {party_size} at level {level}: "
                            f"won {100 * won // len(rows)}%, someone down {100 * downed // len(rows)}%, "
                            f"someone dead {100 * died // len(rows)}%, hit points left {hp:.0%}")
+    return out
+
+
+def tier_fights(tables, runs: int) -> list[str]:
+    out = []
+    for level, group, danger in TIER_CASES:
+        rows = [fight_once(tables, group, 0, level, 3, seed, danger=danger) for seed in range(runs)]
+        won = sum(1 for r in rows if r["outcome"] in ("victory", "parley"))
+        died = sum(1 for r in rows if r["party_dead"] or r["wipe"])
+        downed = sum(1 for r in rows if r["down"])
+        hp = sum(r["hp_left"] for r in rows) / len(rows)
+        foes = sum(r["foes"] for r in rows) / len(rows)
+        out.append(f"  {group} (danger {danger}, {foes:.1f} of them) vs 3 at level {level}: won {100 * won // len(rows)}%, "
+                   f"someone down {100 * downed // len(rows)}%, someone dead {100 * died // len(rows)}%, "
+                   f"hit points left {hp:.0%}")
     return out
 
 
@@ -210,6 +233,9 @@ def main(argv=None) -> int:
     if args.only in (None, "fights"):
         print("Fights (on an open field, the party on Auto)")
         for line in fights(tables, args.runs):
+            print(line)
+        print("Heroes against the worst lands (a High band for the land's danger, the party on Auto)")
+        for line in tier_fights(tables, max(10, args.runs // 4)):
             print(line)
     if args.only in (None, "cold"):
         print("A winter night in the open, asleep, 8 hours")

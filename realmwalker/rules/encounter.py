@@ -35,6 +35,16 @@ def danger_level(tables, danger: int) -> int:
     return int(rows[max(0, min(len(rows) - 1, int(danger)))])
 
 
+def land_level(tables, base: int, deeper: int = 0) -> int:
+    """The party level a band stands for, `deeper` levels under a land of danger `base`. Under an ordinary land
+    (danger 7 or less) the deep levels keep their old meaning (`deeper_level`): only the worst lands breed heroes'
+    foes."""
+    if base <= 7 and base + deeper > 7:
+        rows = spec(tables).get("deeper_level") or [4, 5, 6]
+        return int(rows[min(len(rows), base + deeper - 7) - 1])
+    return danger_level(tables, base + deeper)
+
+
 def roll_difficulty(tables, rng: RNG) -> str:
     odds = spec(tables)["odds"]
     return rng.weighted(list(DIFFICULTIES), [float(odds.get(d, 0)) for d in DIFFICULTIES])
@@ -82,8 +92,10 @@ def counts_for(tables, members: list, rng: RNG, worth: int | None, party_size: i
     if worth is None:
         return counts
     xp = [int(tables.creatures[d]["xp"]) for d, _n in members]
-    # A band grows past its roll only by `most_extra` (1.0: never; the roll is the band the land sends).
-    most = [max(c, int(c * float(spec(tables)["most_extra"]))) for c in counts]
+    # A band grows past its roll only by `most_extra` (1.0: never; the roll is the band the land sends), or by its tier
+    # where the budget is one for heroes (the deep places of the worst lands).
+    extra = tier_extra(tables, worth, party_size)
+    most = [max(c, int(c * extra)) for c in counts]
     variable = [i for i, (_d, n) in enumerate(members) if str(n) != "1"]
     total = sum(x * c for x, c in zip(xp, counts))
     while total > worth:
@@ -93,16 +105,43 @@ def counts_for(tables, members: list, rng: RNG, worth: int | None, party_size: i
         i = max(cut, key=lambda j: (counts[j], -xp[j]))
         counts[i] -= 1
         total -= xp[i]
+    # (A lone beast of the worst lands may come with its kin, where the budget is one for heroes.)
+    growable = variable or (list(range(len(members))) if extra > float(spec(tables)["most_extra"]) else [])
     grown = True
     while grown:
         grown = False
-        for i in sorted(variable, key=lambda j: xp[j]):
+        for i in sorted(growable, key=lambda j: xp[j]):
             if counts[i] < most[i] and total + xp[i] <= worth:
                 counts[i] += 1
                 total += xp[i]
                 grown = True
                 break
     return counts
+
+
+def tier_of(level: int) -> int:
+    """The PHB's tiers of play: 1 (levels 1-4), 2 (5-10), 3 (11-16), 4 (17-20)."""
+    return 1 if level <= 4 else 2 if level <= 10 else 3 if level <= 16 else 4
+
+
+def legend_grows(tables, creature, level: int) -> None:
+    """A named thing of the history at the bottom of a site has grown with its legend: more hit points by the tier
+    of the party that comes for it."""
+    rows = spec(tables).get("legend_hp") or [1.0]
+    times = float(rows[min(len(rows), tier_of(level)) - 1])
+    if times > 1:
+        creature.max_hp = creature.hp = int(round(creature.max_hp * times))
+
+
+def tier_extra(tables, worth: int, party_size: int) -> float:
+    """How many times its roll a band may grow for this budget: `most_extra`, or a tier's where the budget per
+    character reaches that level's Low."""
+    extra = float(spec(tables)["most_extra"])
+    each = worth / max(1, party_size)
+    for level, most in spec(tables).get("tiers", ()):
+        if each >= per_character(tables, int(level))[0]:
+            extra = max(extra, float(most))
+    return extra
 
 
 # ---------------------------------------------------------------------------- attitudes

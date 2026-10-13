@@ -114,6 +114,7 @@ def take_turn(b: Battle, f: Fighter) -> None:
         return
     if f.char is not None:
         _party_turn(b, f)
+        _epic_moves(b, f)
     else:
         _monster_turn(b, f)
 
@@ -862,6 +863,22 @@ def _party_turn(b: Battle, f: Fighter) -> None:
             _step_back(b, f)
         elif "hide" in moves and not b.hide_problem(f):
             b.do_ability(f, moves["hide"].value)
+
+
+def _epic_moves(b: Battle, f: Fighter) -> None:
+    """The epic boons' moves at the end of a turn: Blink Steps away from the foes around a hurt or far-reaching
+    fighter, then Merge with Shadows with the bonus action left (unseen until they next act)."""
+    if b.current is not f or b.outcome is not None:
+        return
+    for opt, _ in _abilities(b, f, "escape"):
+        beside = any(b.gap(f, e) <= 1 for e in b.enemies_of(f) if e.standing)
+        if beside and (f.prefers_range or f.hp < f.max_hp // 2):
+            b.do_ability(f, opt.value)
+        break
+    if b.current is f and b.outcome is None and f.bonus > 0:
+        for opt, _ in _abilities(b, f, "hide"):
+            b.do_ability(f, opt.value)
+            break
 
 
 def _abilities(b: Battle, f: Fighter, does: str) -> list[tuple]:

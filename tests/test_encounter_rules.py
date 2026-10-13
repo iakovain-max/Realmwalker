@@ -54,8 +54,10 @@ def test_a_band_is_built_to_its_budget(tables):
         assert all(c >= 1 for c in counts)  # never the last of a kind
         total = sum(xp[d] * c for (d, _), c in zip(members, counts))
         assert total <= 500 or counts[1:] == [1, 1]
-    big = encounter.counts_for(tables, [["wolf", "1d2+1"]], RNG(1), 10000, 3)
+    big = encounter.counts_for(tables, [["wolf", "1d2+1"]], RNG(1), 3000, 3)
     assert big[0] <= int(3 * 1.3)  # grows only so far
+    host = encounter.counts_for(tables, [["wolf", "1d2+1"]], RNG(1), 3 * 6400, 3)
+    assert big[0] < host[0] <= 3 * int(3 * 1.3)  # (a budget for heroes of the fourth tier: a host, Demigods & Magics)
     troll = spawn_group(tables, "troll", RNG(2), budget=50)
     assert len(troll) == 1  # a troll is a troll, budget or not: some fights should be avoided
 

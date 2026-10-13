@@ -136,9 +136,10 @@ def land_budget(game, rng: RNG, *, difficulty: str | None = None, deeper: int = 
     from realmwalker.rules import encounter
 
     p = game.player
-    danger = int(game.world.danger[p.x, p.y]) + deeper
+    base = int(game.world.danger[p.x, p.y])
     difficulty = difficulty or encounter.roll_difficulty(game.tables, rng)
-    return encounter.land_budget(game.tables, danger, len([c for c in game.party if c.alive]) or 1, difficulty)
+    size = len([c for c in game.party if c.alive]) or 1
+    return encounter.budget(game.tables, [encounter.land_level(game.tables, base, deeper)] * size, difficulty)
 
 
 def make_encounter(game, group: str, rng: RNG) -> PendingEncounter:

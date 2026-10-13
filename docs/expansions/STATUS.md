@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 03 Demigods & Magics · step 1 (branch and design note) of §5.1 · branch dlc/03-demigods-magics
+Current: 03 Demigods & Magics · Part B (the four classes, 1-20) · branch dlc/03-demigods-magics
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -46,11 +46,14 @@ Assumptions waiting for Anton:
   thing too; barding and the horses' stat blocks wait for mounted combat (Expansion 9: there is nothing for a mount
   to be armoured against before then), and so does Mounted Combatant (written, not offered; the plan's §6.2 wanted a
   basic form now); the cart's load counts the fastest animals as ridden (a mastiff may be counted wrongly).
+- Expansion 3 part A: Blink Steps picks the place itself; Energy Redirection turns on whoever struck, else the
+  weakest foe in range; Improve Fate works on saves and a friend's near miss, not on ability checks; Recover Vitality
+  spends the dice the hurt needs; training to gain levels is omitted; danger 8-10 stand for levels 6, 11 and 20 (0-7
+  unchanged) and bands grow to hosts where the budget is for heroes; named beasts grow with the party's tier (hit
+  points x2.5/4 from level 11). High-tier fights are easy until the bestiary expansions bring creatures for them.
 Ideas for later:
 - (none yet)
-Next session starts at: Expansion 3 (Demigods & Magics), §5.1 step 1: make the branch `dlc/03-demigods-magics`
-  from `main` and write the design note `docs/expansions/03-demigods-magics.md` (EXPANSIONS.md §6.3: its
-  parts, the codex entries it delivers, the task list). Expansion 2 is released (v1.2.0) and merged.
+Next session starts at: task B.1 in docs/expansions/03-demigods-magics.md (Part B, the four classes: Fighter and Champion 2024, the Knight to 18).
 
 ## Done
 
@@ -69,6 +72,8 @@ Next session starts at: Expansion 3 (Demigods & Magics), §5.1 step 1: make the 
 | 2026-10-13 | Blades & Backgrounds part B: species (orcs for half-orcs), sixteen backgrounds, origin feats, languages, creation in the 2024 order with array and rolling; merged into `main` | `dlc/02-blades-backgrounds` |
 | 2026-10-13 | Blades & Backgrounds part D: the 2024 tools and gear, trinkets, shops by size and people, inns by grade, lifestyles, tolls, coaches, ships, messengers, mounts, saddles, stabling, vehicles; **released as 1.2.0** and merged into `main` | `dlc/02-blades-backgrounds` |
 | 2026-10-13 | Blades & Backgrounds part C: feats (the framework, Suggest, the Feats tab; 42 general and 10 fighting style feats in play, on Auto and in the enemy's hands); finished by a second session after a usage limit; merged into `main` | `dlc/02-blades-backgrounds` |
+| 2026-10-13 | Demigods & Magics begun: the branch, the design note and its seven parts (twenty levels, the four classes, spellcasting, the catalogue, spells outside battle, familiars and summons, enemy casters) | `dlc/03-demigods-magics` |
+| 2026-10-13 | Demigods & Magics part A: twenty levels, the twelve epic boons (in play, on Auto), danger tiers for the worst lands, legends that grow, five-level dungeons; finished after a usage limit; merged into `main` | `dlc/03-demigods-magics` |
 
 ## Notes for the next session
 

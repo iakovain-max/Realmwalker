@@ -1,6 +1,7 @@
 """Pools of uses and their recovery (docs/EXPANSIONS.md §4.3.1): Second Wind, Action Surge, Channel Divinity...
 
-A trait or feature with a `resource` in data/traits.json has a pool: `{"id", "max", "recover"}`. The uses left are kept
+A trait or feature with a `resource` in data/traits.json has a pool: `{"id", "max", "recover"}` (`resources`: a list
+of more). The uses left are kept
 on the character as before (`Character.uses[id]`). `max` is a number or a name: "wis_mod" (the Wisdom modifier, at
 least 1). `recover` is "short" (a short or a long rest brings it back), "long" (a long rest), or "dawn".
 """
@@ -16,10 +17,13 @@ def pools(char, tables) -> dict[str, dict]:
     defs = tr.table(tables)
     out = {}
     for t in sorted(tr.of_char(char, tables)):
-        r = (defs.get(t) or {}).get("resource")
-        if r:
+        for r in _of(defs.get(t) or {}):
             out[r["id"]] = r
     return out
+
+
+def _of(d: dict) -> list[dict]:
+    return ([d["resource"]] if d.get("resource") else []) + list(d.get("resources", ()))
 
 
 def maximum(char, r: dict) -> int:
@@ -59,6 +63,5 @@ def granted(char, tables, before: frozenset[str]) -> None:
     """Pools that came with features just gained start full (a fighter's new Action Surge)."""
     defs = tr.table(tables)
     for t in sorted(tr.of_char(char, tables) - before):
-        r = (defs.get(t) or {}).get("resource")
-        if r:
+        for r in _of(defs.get(t) or {}):
             char.uses[r["id"]] = maximum(char, r)

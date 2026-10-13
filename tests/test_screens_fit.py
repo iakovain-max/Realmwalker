@@ -203,6 +203,21 @@ def test_the_sheets_fit_a_small_window(game, monkeypatch):
     assert not watch.problems, watch.problems
 
 
+def test_a_level_twenty_sheet_fits(game, monkeypatch):
+    """Twenty levels (Demigods & Magics part A): the sheet of a hero of legend, an epic boon among the feats, fits."""
+    from realmwalker.rules import progression
+    from realmwalker.ui.screens.sheets import CharacterScreen
+
+    app, g = game
+    c = g.leader
+    progression.award_xp(c, g.tables.rules["xp_for_level"][-1], g.tables, RNG(1, "xp"), auto=True)
+    assert c.level == 20 and any(f["id"].startswith("boon_of_") for f in c.feats)
+    watch = Watch(monkeypatch)
+    for size in SIZES:
+        assert "20" in watch.render(CharacterScreen(app, g), size)
+    assert not watch.problems, watch.problems
+
+
 def test_a_big_fight_shows_everyone_when_there_is_room(game, monkeypatch):
     from realmwalker.game import fight
     from realmwalker.game.encounters import make_encounter

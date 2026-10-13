@@ -204,7 +204,10 @@ RULES = Obj(
                         "breath": Obj({"minutes": Int(min=0, max=60), "least_seconds": Int(min=0, max=600)})}, optional=True),
         "encounters": Obj({"budget": List(List(Int(min=0, max=100000), min_items=3, max_items=3), min_items=20),
                            "danger_level": List(Int(min=1, max=20), min_items=11), "odds": Map(Int(min=0, max=100)),
-                           "deadly": Float(min=1, max=10), "most_extra": Float(min=1, max=5)}, optional=True),
+                           "deadly": Float(min=1, max=10), "most_extra": Float(min=1, max=5),
+                           "tiers": List(List(Float(min=1, max=20), min_items=2), optional=True),
+                           "legend_hp": List(Float(min=1, max=10), min_items=4, optional=True),
+                           "deeper_level": List(Int(min=1, max=20), min_items=1, optional=True)}, optional=True),
         "travel_pace": Obj({"paces": Map(Obj({"name": Str(max_len=20), "time": Float(min=0.1, max=5),
                                               "passive": Int(min=-10, max=10)}, strict=False), min_items=3),
                             "max": Map(Str(choices=["fast", "normal", "slow"]))}, optional=True),
@@ -534,6 +537,8 @@ TRAIT_DEF = Obj(
                            "handler": Str(max_len=40), "reaction": Bool(optional=True)}, strict=False), optional=True),
         "resource": Obj({"id": Str(max_len=40), "max": Any_(), "recover": Str(choices=["short", "long", "dawn", "turn"])},
                         optional=True),
+        "resources": List(Obj({"id": Str(max_len=40), "max": Any_(),
+                               "recover": Str(choices=["short", "long", "dawn", "turn"])}), optional=True),
         "where": Str(max_len=30, optional=True),
         "activate": Any_(optional=True),  # abilities it gives (rules/engine/actions.py; checked by rules/engine/check.py)
     }
@@ -544,7 +549,8 @@ FEAT_CHOICE = Obj({"kind": Str(choices=["skill", "skill_or_tool", "tool", "spell
                                          "increase", "damage_type", "skill_or_expertise", "expertise"]),
                    "from": Any_(optional=True), "count": Int(min=1, max=6, optional=True),
                    "level": Int(min=0, max=9, optional=True), "schools": List(Str(max_len=20), optional=True),
-                   "ritual": Bool(optional=True), "untrained_save": Bool(optional=True)})
+                   "ritual": Bool(optional=True), "untrained_save": Bool(optional=True),
+                   "max": Int(min=20, max=30, optional=True), "any": Bool(optional=True)})
 FEATS = Obj({"feats": Map(Obj({"name": Str(max_len=40), "category": Str(choices=["origin", "general", "fighting_style",
                                                                                    "epic"]),
                                "text": Str(max_len=500), "trait": Str(max_len=40, optional=True),
@@ -556,7 +562,8 @@ FEATS = Obj({"feats": Map(Obj({"name": Str(max_len=40), "category": Str(choices=
                                              "tools": List(Str(max_len=40), optional=True),
                                              "save": Str(max_len=20, optional=True)}, optional=True),
                                "spells": List(Str(max_len=40), optional=True)}), min_items=1),
-             "suggest": Map(List(Str(max_len=40)), optional=True)})
+             "suggest": Map(List(Str(max_len=40)), optional=True),
+             "suggest_boon": Map(List(Str(max_len=40)), optional=True)})
 
 STATBLOCK = Obj(
     {
