@@ -4,7 +4,7 @@
   "name": "Dice & Destiny",
   "tagline": "The rules of the realm, made whole.",
   "icon": "dlc/dice_destiny", "accent": [214, 176, 92],
-  "status": "planned", "version": "1.1.0", "released_on": "",
+  "status": "released", "version": "1.1.0", "released_on": "2026-10-13",
   "adds": [
     "Fights, checks and conditions by the 2024 Player's Handbook: advantage, the fifteen conditions, exhaustion, surprise, grappling and shoving, Heroic Inspiration",
     "The creatures already in the world, re-made from the 2025 Monster Manual",

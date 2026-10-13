@@ -250,3 +250,69 @@ def test_every_spell_look_is_drawn_on_the_board(game):
         for dt in (0.1, 0.4, 0.8):
             canvas = widgets.Canvas(tcod.console.Console(160, 45, order="F"))
             board.draw(canvas, g, b, (0, 0, 1200, 800), t + dt)
+
+
+def test_tremorsense_feels_whatever_stands_on_the_ground(tables):
+    b = battle(tables, [hero(tables)], foes(tables, "goblin"), spots={0: (2, 2), 1: (5, 2)})
+    me, gob = b.fighters
+    durations.give(b, gob, "blinded")
+    assert not b.can_see(gob, me)
+    gob.cdef = dict(gob.cdef, senses={"tremorsense": 30})
+    gob.__dict__.pop("_senses", None)
+    if not gob.senses.get("tremorsense"):
+        pytest.skip("senses are cached on this fighter")
+    assert b.can_see(gob, me)
+    me.z = 10
+    assert not b.can_see(gob, me)  # off the ground: nothing to feel
+
+
+def test_a_damage_threshold_turns_small_blows(tables):
+    b = battle(tables, [hero_at(tables, "fighter", 3)], foes(tables, "ogre"))
+    me, ogre = b.fighters
+    ogre.cdef = dict(ogre.cdef, damage_threshold=10)
+    hp = ogre.hp
+    b._hit(me, ogre, 6, "slashing", crit=False, weapon="sword")
+    assert ogre.hp == hp and "threshold" in " ".join(b.rolls[max(b.rolls)])
+    b._hit(me, ogre, 12, "slashing", crit=False, weapon="sword")
+    assert ogre.hp == hp - 12
+
+
+def test_a_beaten_bandit_can_be_knocked_out_and_taken_alive(tables, monkeypatch):
+    from realmwalker.rules.engine import reactions
+
+    b = battle(tables, [hero_at(tables, "fighter", 3)], foes(tables, "bandit"), spots={0: (2, 2), 1: (3, 2)})
+    me, bandit = b.fighters
+    asked = []
+    monkeypatch.setattr(reactions, "ask", lambda b_, d: asked.append(d.kind) or ("yes" if d.kind == "knock_out" else d.default))
+    bandit.hp = 1
+    b._melee_blow = True
+    b._hit(me, bandit, 5, "bludgeoning", crit=False, weapon="mace")
+    assert "knock_out" in asked
+    assert bandit.state == "surrendered" and "unconscious" in bandit.conditions
+    assert any("senseless" in text for text, _ in b.log)
+
+
+def test_a_blow_from_afar_or_by_the_enemy_still_kills(tables, monkeypatch):
+    from realmwalker.rules.engine import reactions
+
+    monkeypatch.setattr(reactions, "ask", lambda b_, d: "yes")
+    b = battle(tables, [hero_at(tables, "fighter", 3)], foes(tables, "bandit"))
+    me, bandit = b.fighters
+    bandit.hp = 1
+    b._melee_blow = False  # an arrow
+    b._hit(me, bandit, 5, "piercing", crit=False, weapon="bow")
+    assert bandit.state == "dead"
+
+
+def test_every_spell_and_ability_card_says_something(tables):
+    b = battle(tables, [hero_at(tables, "rogue", 3)], foes(tables, "goblin"))
+    me, gob = b.fighters
+    for sid in sorted(tables.spells.defs):
+        text = describe.spell(tables, sid, b=b, f=me, target=gob).text()
+        assert " ft ft" not in text and "self ft" not in text and "touch ft" not in text, sid
+    for cls in ("rogue", "fighter", "cleric"):
+        b = battle(tables, [hero_at(tables, cls, 5)], foes(tables, "goblin"))
+        me = b.fighters[0]
+        for aid, name, ok, why in b.class_abilities(me):
+            card = describe.choice(b, me, "ability", aid, name, ok, why)
+            assert card.lines and card.lines[0], (cls, aid)

@@ -1202,7 +1202,8 @@ class BattleScreen(Screen):
         b = self.battle
         foes = [e for e in b.enemies_of(f) if e.active]
         target = min(foes, key=lambda e: b.gap(f, e)) if foes else None  # the chance against the nearest foe
-        return lambda: describe.choice(self.battle, f, self.choice_kind, value, label, enabled, why, target)
+        known = target is None or self.full_details(target)
+        return lambda: describe.choice(self.battle, f, self.choice_kind, value, label, enabled, why, target, known=known)
 
     def _click_choice(self, i: int) -> None:
         self.choice_index = i

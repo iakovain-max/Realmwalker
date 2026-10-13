@@ -516,6 +516,7 @@ class Battle:
         self.outcome: str | None = None
         self.known: set[str] = set()
         self.rolls: dict[int, list[str]] = {}  # log line -> the rolls behind it (the log's tooltips)
+        self._melee_blow = False  # the damage being dealt comes from a melee attack (knocking out)
         self._rolls_waiting: list[str] = []
         self.initial_foes = len(foes)
         self.robbed_money = 0
@@ -559,8 +560,9 @@ class Battle:
     def dice_say(self, text: str) -> None:
         """A roll: kept for the next line of the log (its tooltip), and shown as a line itself if dice are shown."""
         if self.show_dice:
-            self.rolls[len(self.log)] = [text]
+            self._rolls_waiting = []  # (shown as a line of its own: the next line need not repeat it)
             self.log.append((text, "dice"))
+            return
         self.note_roll(text)
 
     def note_roll(self, text: str) -> None:
@@ -803,6 +805,7 @@ class Battle:
         return True
 
     def _start_of_turn(self, f: Fighter) -> None:
+        self._rolls_waiting = []  # a roll that explained nothing (a check with no line after it) is not carried over
         durations.tick(self, f, "turn_start")  # what lasts "until the start of its next turn" ends
         f.readied = None
         if f.creature is not None and f.cdef.get("legendary"):
@@ -1005,6 +1008,8 @@ class Battle:
         senses = a.senses
         if senses.get("blindsight", 0) >= feet and self.field.cover(a.space, b.space) != grid.TOTAL:
             return True
+        if senses.get("tremorsense", 0) >= feet and a.z == 0 and b.z == 0:
+            return True  # Tremorsense: anything touching the same ground, through darkness and walls alike (2024)
         if "blinded" in a.conditions:
             return False
         if query.flag(b, "unseen") and senses.get("truesight", 0) < feet:
@@ -1801,8 +1806,13 @@ class Battle:
                              advantage=adv and not dis, sides=sides, extra=0, typed=[])
         amount += dmg_ev.extra  # Sneak Attack, Divine Strike...
         self._spend_use(att, opt)
-        self._hit(att, target, max(1, amount), opt.damage_type, crit=crit, weapon=opt.name,
-                  bite=opt.extra.get("wound") == "bite", claws=opt.extra.get("wound") == "cut" and att.creature is not None and opt.name == "claws")
+        self._melee_blow = opt.is_melee
+        try:
+            self._hit(att, target, max(1, amount), opt.damage_type, crit=crit, weapon=opt.name,
+                      bite=opt.extra.get("wound") == "bite",
+                      claws=opt.extra.get("wound") == "cut" and att.creature is not None and opt.name == "claws")
+        finally:
+            self._melee_blow = False
         for e in opt.extra.get("extra", ()):  # a 2025 block's damage of another kind on the same hit (a spider's venom)
             if e.get("if") == "advantage" and not (adv and not dis):
                 continue  # (a goblin's extra 1d4 needs the advantage)
@@ -1992,9 +2002,15 @@ class Battle:
         """Damage that landed: resistances, text, wounds, going down."""
         rolled_amount = amount
         amount, defence = query.damage_taken(target, amount, dtype)
-        changed = {"immune": "immune: none", "vulnerable": "vulnerable: doubled"}.get(defence)             or ("resisted: halved" if amount < rolled_amount and query.resists(target, dtype) else "")
+        changed = {"immune": "immune: none", "vulnerable": "vulnerable: doubled",
+                   "threshold": "below its damage threshold: none"}.get(defence) \
+            or ("resisted: halved" if amount < rolled_amount and query.resists(target, dtype) else "")
         self.note_roll(f"{rolled_amount} {dtype} damage{' (critical: dice doubled)' if crit else ''}"
                        + (f", {changed} = {amount}" if changed else ""))
+        if defence == "threshold":
+            self.say(f"The blow does not get through {target.the_name}'s hide.", "flavor")
+            self._event("immune", to=target.id, by=att.id if att else None)
+            return
         if defence == "immune":
             self.say(f"{target.the_name} does not seem to feel it.", "flavor")
             self._event("immune", to=target.id, by=att.id if att else None)
@@ -2088,10 +2104,32 @@ class Battle:
                 self._event("down", who=target.id)
                 self.say(self._fill(self.rng.choice(self.t.combat_text["down"]), source, target), "danger")
                 self._morale_losses(target.side)
+            elif self._knock_out(source, target):
+                return
             else:
                 self._kill(target, cause, killer=source)
         else:
             target.hp = new_hp
+
+    def _knock_out(self, source: Fighter | None, target: Fighter) -> bool:
+        """Knocking a creature out (PHB 2024): a melee blow that would drop it to 0 may leave it senseless instead.
+        A party member's blow on someone who can be taken alive asks (the Auto, and the enemy, kill)."""
+        if source is None or source.side != PARTY or not self._melee_blow or target.creature is None \
+                or target.kind != "humanoid" or not target.active:
+            return False
+        if not reactions.yes(self, Decision(source, "knock_out", f"{target.the_name} is beaten. Knock them out "
+                                            f"instead of killing? (taken alive, a prisoner)", [("yes", "Knock out"), ("no", "Kill")],
+                                            default="no")):
+            return False
+        target.hp = 0
+        target.state = "surrendered"  # taken alive: a prisoner when the fight is over
+        target.conditions = {"unconscious": -1, "prone": -1}
+        target.hidden = 0
+        self._release(target)
+        self._event("down", who=target.id)
+        self.say(f"{source.the_name} knocks {target.the_name} senseless.", "good")
+        self._morale_losses(target.side)
+        return True
 
     def _death_save(self, f: Fighter) -> None:
         roll = dice.d20(self.rng).natural

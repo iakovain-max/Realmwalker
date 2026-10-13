@@ -140,7 +140,7 @@ def road_problem(game, caster, spell_id: str, target=None) -> str | None:
         return why
     if game.battle is not None:
         return "you are in a fight"
-    ok, why = spellrules.can_cast(caster, t, spell_id)
+    ok, why = (True, "") if spell.get("ritual") else spellrules.can_cast(caster, t, spell_id)  # a ritual needs no slot
     if not ok:
         return why
     target = target or caster
@@ -172,18 +172,22 @@ def cast_on_road(game, caster, spell_id: str, target=None) -> list[str]:
         wound = max(target.wounds, key=lambda w: (w.severity, w.bleed), default=None)
         return care.cast(game, caster, target, wound, spell_id)
     level = spell["level"]
-    slot = spellrules.lowest_free_slot(caster, t, level) if level else None
-    if level and slot is None:
+    ritual = bool(spell.get("ritual"))  # a Ritual (2024): ten minutes longer, and no slot spent
+    slot = spellrules.lowest_free_slot(caster, t, level) if level and not ritual else None
+    if level and not ritual and slot is None:
         return ["No spell slot left for that. A long rest restores them."]
     if slot:
         spellrules.spend_slot(caster, slot)
+    if ritual:
+        game.pass_time(10, "rest")
     if use == "identify":
         from realmwalker.game import magic_items
 
         item = strange_things(game, caster)[0]
         name = game.tables.items.name(item, False)
         game.pass_time(10, "rest")
-        msgs = [f"{caster.name.split()[0]} casts <magic>{spell['name']}</> over the {name}."]
+        msgs = [f"{caster.name.split()[0]} casts <magic>{spell['name']}</> over the {name}"
+                + (" as a ritual: ten minutes more, and no spell slot." if ritual else ".")]
         msgs += magic_items.identify(game, item)
         if game.world.factions:
             from realmwalker.game import law

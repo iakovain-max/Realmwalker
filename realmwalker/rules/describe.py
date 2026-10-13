@@ -77,12 +77,14 @@ _ORDER = {s: i for i, s in enumerate((
 # Words for the states that are not conditions (the conditions' own words are data/conditions.json).
 _WORDS = {
     "bloodied": ("Bloodied", "Down to half their hit points or fewer."),
-    "dying": ("Dying", "At 0 hit points: a death save each turn. Three successes and they are stable, three failures "
-                       "and they die. Healing of any kind brings them back."),
+    "dying": ("Dying", "At 0 hit points: a death save each turn (10 or more succeeds). Three successes and they are "
+                       "stable, three failures and they die; a 20 brings them back with 1 hit point, a 1 counts twice, "
+                       "and a blow while down is a failure. Healing of any kind brings them back."),
     "stable": ("Stable", "Senseless but no longer dying. They wake with 1 hit point after a while, or at once if "
                          "healed."),
     "concentrating": ("Concentrating", "Holding a spell. Damage calls for a Constitution save (DC 10, or half the "
-                                       "damage if more); failing it, or casting another such spell, ends it."),
+                                       "damage if more); failing it, being incapacitated, or casting another such "
+                                       "spell ends it."),
     "hidden": ("Hidden", "Out of sight: their next attack has advantage, and a foe must find them first. Attacking, "
                          "or an enemy coming beside them, gives them away."),
     "flying": ("Flying", "Aloft: out of reach of blows from the ground unless the weapon reaches. Knocked prone or "
@@ -241,9 +243,10 @@ def statuses(f, b=None) -> list[Status]:
     tables = f.t
     out: dict[str, Status] = {}
 
-    def add(s: Status | None) -> None:
-        if s is not None and s.id not in out:
-            out[s.id] = s
+    def add(s: Status | None, key: str = "") -> None:
+        key = key or (s.id if s is not None else "")
+        if s is not None and key not in out:
+            out[key] = s
 
     for cid in f.conditions:
         if cid in CONDITIONS:
@@ -293,7 +296,9 @@ def statuses(f, b=None) -> list[Status]:
         if held:
             add(_plain("grappling", "Grappling", f"Holding {esc(held[0].name)}. " + _WORDS["grappling"][1].split(": ", 1)[1]))
     for bf in f.buffs:
-        add(_buff_status(b, f, bf, tables))
+        st = _buff_status(b, f, bf, tables)
+        if st is not None:
+            add(st, f"{st.id}:{bf.get('source', '')}")  # two spells of one kind show as two
     wounds = list(f.wounds or ())
     if any((getattr(w, "bleed", 0) and not getattr(w, "bandaged", False)) or getattr(w, "internal", False) for w in wounds):
         add(_plain("bleeding", *_WORDS["bleeding"]))
@@ -413,7 +418,7 @@ def attack_line(o) -> str:
     return f"<title>{esc(o.name)}</> {sign}{o.bonus}, {o.damage} {o.damage_type}, {where}"
 
 
-def attack(b, f, opt, target=None) -> Card:
+def attack(b, f, opt, target=None, *, known: bool = True) -> Card:
     """An attack on the action bar: to hit, damage, reach; and the chance against the one pointed at."""
     card = Card(esc(opt.name), opt.kind.replace("_", " "), "icon/attack", [attack_line(opt)])
     if opt.properties:
@@ -421,7 +426,10 @@ def attack(b, f, opt, target=None) -> Card:
     if not opt.available and opt.reason:
         card.lines.append(f"<warn>{esc(opt.reason)}</>")
     if b is not None and target is not None and target.side != f.side and target.active:
-        card.lines += chance_lines(b, f, opt, target)
+        if known:
+            card.lines += chance_lines(b, f, opt, target)
+        else:
+            card.lines.append(f"<dim>Against {esc(target.name)}: how hard it is to hit is not known yet (Study it).</>")
     return card.fit()
 
 
@@ -456,7 +464,10 @@ def spell(tables, sid: str, *, b=None, f=None, target=None) -> Card:
     cast = {"action": "an action", "bonus": "a bonus action", "reaction": "a reaction"}.get(sp.get("cast", "action"),
                                                                                              "an action")
     rng = sp.get("range", 0)
-    where = "self" if sp.get("target") == "self" else ("touch" if rng in (0, 5) else f"{rng} ft")
+    if isinstance(rng, str):
+        where = rng  # "self" or "touch"
+    else:
+        where = "self" if sp.get("target") == "self" else ("touch" if rng in (0, 5) else f"{rng} ft")
     bits = [f"Costs {cast}", f"range {where}"]
     area = sp.get("area")
     if area:
@@ -465,7 +476,8 @@ def spell(tables, sid: str, *, b=None, f=None, target=None) -> Card:
     what = sprules.summary(sp)
     if what:
         card.lines.append(", ".join(what))
-    if f is not None and f.char is not None and any(o.get("op") == "save" for o in sp.get("effects", ())):
+    if f is not None and f.char is not None and not sp.get("thrown") \
+            and any(o.get("op") == "save" for o in sp.get("effects", ())):
         card.lines.append(f"Save DC {sprules.save_dc(f.sheet, tables)}.")
     if b is not None and f is not None and target is not None and target.creature is not None             and target.creature.def_id in b.known:
         from realmwalker.rules.engine import query
@@ -484,20 +496,42 @@ def spell(tables, sid: str, *, b=None, f=None, target=None) -> Card:
 
 def ability(b, f, aid: str, name: str, ok: bool, why: str) -> Card:
     card = Card(esc(name), "ability", "icon/ability")
-    text = (f.t.traits.get("traits", {}).get(aid) or {}).get("text") or ""
+    traits = f.t.traits.get("traits", {})
+    act, owner = None, None
+    for tid, t in traits.items():
+        acts = t.get("activate") or []
+        for a in acts if isinstance(acts, list) else [acts]:
+            if a.get("id") == aid:
+                act, owner = a, t
+                break
+        if act is not None:
+            break
+    text = (owner or traits.get(aid) or {}).get("text") or _ABILITY_WORDS.get(aid, "")
     if text:
         card.lines.append(esc(text))
-    if f.char is not None and aid in f.char.uses:
-        card.lines.append(f"<dim>Uses left: {f.char.uses[aid]}</>")
+    cost = (act or {}).get("cost")
+    if cost:
+        card.lines.append(f"<dim>Costs {'a bonus action' if cost == 'bonus' else 'an ' + cost}.</>")
+    uses = (act or {}).get("uses") or (aid if f.char is not None and aid in f.char.uses else None)
+    if f.char is not None and uses:
+        card.lines.append(f"<dim>Uses left: {int(f.char.uses.get(uses, 0))}</>")
     if not ok and why:
         card.lines.append(f"<warn>{esc(why)}</>")
     return card.fit()
 
 
-def choice(b, f, kind: str, value, label: str, ok: bool, why: str, target=None) -> Card:
+_ABILITY_WORDS = {
+    "offhand": "A blow with the light weapon in the other hand, as a bonus action, after attacking with the first. "
+               "Its damage does not add the ability modifier unless it is negative.",
+    "spirit_strike": "The spiritual weapon strikes a foe beside it (a melee spell attack), and may first move 20 feet.",
+    "put_out": "Drop and roll: the flames go out (an action).",
+}
+
+
+def choice(b, f, kind: str, value, label: str, ok: bool, why: str, target=None, *, known: bool = True) -> Card:
     """The card for a row of the battle's choice list."""
     if kind == "attack" and value is not None and hasattr(value, "damage"):
-        return attack(b, f, value, target)
+        return attack(b, f, value, target, known=known)
     if kind == "cast" and isinstance(value, str) and value in f.t.spells:
         card = spell(f.t, value, b=b, f=f, target=target)
         if not ok and why:
@@ -527,13 +561,14 @@ def item_mark_card(game, item, mark: str) -> Card:
 
     if mark == "bound":
         who = magic_items.bearer(game, item)
+        first = (who.name.split() or ["its bearer"])[0] if who is not None else "its bearer"
         return Card("Bound", "attuned", "status/bound",
-                    [f"Bound to {esc(who.name.split()[0]) if who else 'its bearer'}: its powers answer them alone.",
+                    [f"Bound to {esc(first)}: its powers answer them alone.",
                      "<dim>Three such bonds at most. Ending one takes a short rest (a).</>"])
     mind = item.magic["sentient"]
     demand = mind["demand"]
-    want = magic_items.data(game)["sentient"]["demands"][demand["kind"]].replace("{thing}",
-                                                                              demand.get("thing_name", "thing"))
+    want = magic_items.data(game)["sentient"]["demands"].get(demand.get("kind"), "something of you") \
+        .replace("{thing}", demand.get("thing_name", "thing"))
     return Card("It wants something", "a sentient thing's demand", "status/demand",
                 [esc(want), "<dim>Until it is met, it may withhold its power or turn on its bearer.</>"])
 

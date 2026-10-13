@@ -398,7 +398,14 @@ class Canvas:
         if not isinstance(tip, str):
             if not self.tip_ready:
                 return
-            tip = tip() if callable(tip) else tip
+            try:
+                tip = tip() if callable(tip) else tip
+            except Exception:  # a card that cannot be made is not worth the screen: logged once, then no card
+                import logging
+
+                logging.getLogger(__name__).exception("A tooltip card could not be made")
+                self.tooltip = None
+                return
             if not tip:
                 return
             if not isinstance(tip, str):
