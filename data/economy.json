@@ -14,7 +14,27 @@
                 ["ale", 1, 4], ["spirits", 0, 2], ["salt", 1, 3], ["wool_bolt", 0, 2], ["snares", 1, 3], ["bell_line", 0, 2],
                 ["needle_thread", 0, 2], ["cooks_utensils", 0, 1], ["dice_set", 0, 2], ["playing_cards", 0, 2],
                 ["ink_and_quill", 0, 1], ["parchment", 1, 6], ["navigators_tools", 0, 1], ["spyglass", 0, 1],
-                ["leatherworkers_tools", 0, 1], ["carpenters_tools", 0, 1], ["flute", 0, 1], ["lute", 0, 1]],
+                ["leatherworkers_tools", 0, 1], ["carpenters_tools", 0, 1], ["flute", 0, 1], ["lute", 0, 1],
+                ["basket", 1, 3], ["bucket", 0, 2], ["jug", 1, 3], ["flask", 1, 3], ["glass_bottle", 0, 2],
+                ["pouch", 1, 3], ["quiver", 0, 2], ["bolt_case", 0, 1], ["scroll_case", 0, 1], ["string", 1, 3],
+                ["bell", 0, 2], ["pole", 0, 2], ["ladder", 0, 1], ["iron_spikes", 0, 2], ["chain", 0, 1],
+                ["lock", 0, 1, "village"], ["signal_whistle", 0, 2], ["climbers_kit", 0, 1, "town"],
+                ["block_and_tackle", 0, 1, "town"], ["lamp", 0, 2], ["bullseye_lantern", 0, 1, "town"],
+                ["map", 0, 1, "town"], ["mirror", 0, 1, "town"], ["magnifying_glass", 0, 1, "city"], ["robe", 0, 2],
+                ["costume", 0, 1, "town"], ["net", 0, 1], ["caltrops", 0, 2, "village"],
+                ["ball_bearings", 0, 1, "town"], ["explorers_pack", 0, 2], ["dungeoneers_pack", 0, 1, "village"],
+                ["burglars_pack", 0, 1, "town"], ["priests_pack", 0, 1, "town"], ["scholars_pack", 0, 1, "town"],
+                ["entertainers_pack", 0, 1, "town"], ["diplomats_pack", 0, 1, "city"], ["drum", 0, 1],
+                ["horn", 0, 1], ["pan_flute", 0, 1], ["lyre", 0, 1, "town"], ["shawm", 0, 1, "town"],
+                ["bagpipes", 0, 1, "town"], ["viol", 0, 1, "city"], ["dulcimer", 0, 1, "city"],
+                ["dragonchess_set", 0, 1, "town"], ["three_dragon_ante_set", 0, 1, "town"],
+                ["brewers_supplies", 0, 1, "village"], ["weavers_tools", 0, 1], ["woodcarvers_tools", 0, 1],
+                ["cobblers_tools", 0, 1, "village"], ["potters_tools", 0, 1, "village"],
+                ["masons_tools", 0, 1, "town"], ["painters_supplies", 0, 1, "town"],
+                ["calligraphers_supplies", 0, 1, "town"], ["cartographers_tools", 0, 1, "town"],
+                ["glassblowers_tools", 0, 1, "city"], ["jewelers_tools", 0, 1, "city"],
+                ["tinkers_tools", 0, 1, "town"], ["forgery_kit", 0, 1, "city"], ["arcane_orb", 0, 1, "city"],
+                ["arcane_rod", 0, 1, "city"], ["arcane_wand", 0, 1, "town"], ["arcane_staff", 0, 1, "town"]],
       "markup": 1.0
     },
     "smith": {
@@ -26,7 +46,9 @@
                 ["light_crossbow", 0, 1], ["leather_armor", 0, 1], ["hide_armor", 0, 1], ["chain_shirt", 0, 1], ["scale_mail", 0, 1],
                 ["ring_mail", 0, 1], ["chain_mail", 0, 1], ["shield", 1, 2], ["leather_cap", 0, 2], ["iron_helm", 0, 1],
                 ["iron_bar", 1, 4], ["whetstone", 1, 3], ["smiths_tools", 0, 1], ["crowbar", 0, 2], ["manacles", 0, 2],
-                ["grappling_hook", 0, 1], ["shovel", 0, 1]],
+                ["grappling_hook", 0, 1], ["shovel", 0, 1],
+                ["chain", 0, 2], ["iron_spikes", 1, 3], ["lock", 0, 2], ["caltrops", 0, 2], ["ball_bearings", 0, 1],
+                ["portable_ram", 0, 1, "town"], ["tinkers_tools", 0, 1, "town"], ["masons_tools", 0, 1]],
       "markup": 1.1
     },
     "apothecary": {
@@ -34,7 +56,10 @@
       "buys": ["gear", "tool", "trade"],
       "stock": [["bandages", 5, 15], ["splint", 1, 4], ["needle_thread", 1, 3], ["healers_kit", 0, 2], ["healing_herbs", 3, 10],
                 ["poppy_milk", 1, 4], ["spirits", 1, 4], ["herbalism_kit", 0, 1], ["soap", 2, 6], ["potion_healing", 0, 1],
-                ["alchemists_fire", 0, 2]],
+                ["alchemists_fire", 0, 2],
+                ["antitoxin", 1, 3], ["acid", 0, 2, "village"], ["basic_poison", 0, 1, "town"], ["vial", 2, 6],
+                ["glass_bottle", 1, 3], ["perfume", 0, 2, "town"], ["alchemists_supplies", 0, 1, "town"],
+                ["poisoners_kit", 0, 1, "city"]],
       "markup": 1.2
     },
     "market": {
@@ -57,13 +82,15 @@
       "name": "the temple's offerings",
       "buys": ["focus", "book"],
       "stock": [["holy_symbol", 1, 3], ["prayer_book", 0, 2], ["incense", 4, 12], ["candle", 4, 12], ["holy_water", 1, 4],
-                ["bandages", 2, 6], ["vestments", 0, 1]],
+                ["bandages", 2, 6], ["vestments", 0, 1],
+                ["holy_emblem", 0, 2], ["reliquary", 0, 1, "town"], ["priests_pack", 0, 1]],
       "markup": 1.0
     },
     "stable": {
       "name": "tack and fodder",
       "buys": ["gear", "trade"],
-      "stock": [["fodder", 5, 15], ["sack", 1, 4], ["rope", 1, 2], ["blanket", 1, 2]],
+      "stock": [["fodder", 5, 15], ["sack", 1, 4], ["rope", 1, 2], ["blanket", 1, 2],
+                ["pole", 0, 1], ["chain", 0, 1]],
       "markup": 1.1
     }
   },
@@ -85,6 +112,7 @@
   "ride_lands": {"plains": 1.0, "coast": 1.0, "tundra": 1.0, "desert": 1.0, "hills": 1.0, "forest": 0.5,
                  "pine_forest": 0.4, "marsh": 0.0, "mountains": 0.0, "high_mountains": 0.0, "steppe": 1.0, "savanna": 1.0, "salt_flat": 1.0, "glacier": 0.0, "dunes": 0.3, "badlands": 0.5, "volcanic": 0.3, "jungle": 0.0, "fey_forest": 0.4},
   "grazing": ["plains", "hills", "forest", "coast", "marsh", "steppe", "savanna"],
+  "culture_stock": {"dwarven": [["masons_tools", 1, 2], ["smiths_tools", 0, 1], ["jewelers_tools", 0, 1], ["iron_spikes", 2, 4], ["lamp", 1, 3], ["horn", 0, 1], ["drum", 0, 1]], "elven": [["lyre", 0, 2], ["yew_wand", 0, 1], ["mistletoe_sprig", 0, 1], ["druid_staff", 0, 1], ["painters_supplies", 0, 1], ["calligraphers_supplies", 0, 1], ["perfume", 0, 1]], "halfling": [["cooks_utensils", 1, 2], ["brewers_supplies", 0, 1], ["pan_flute", 0, 1], ["three_dragon_ante_set", 0, 1], ["basket", 1, 3]], "orcish": [["drum", 1, 2], ["horn", 0, 1], ["chain", 0, 2], ["net", 0, 2], ["caltrops", 0, 2]], "highland": [["bagpipes", 0, 2], ["climbers_kit", 0, 1]], "northmarch": [["horn", 0, 2], ["climbers_kit", 0, 1], ["net", 0, 1]], "thalassian": [["navigators_tools", 0, 1], ["net", 1, 2], ["glassblowers_tools", 0, 1], ["dulcimer", 0, 1]], "qasari": [["perfume", 1, 2], ["glassblowers_tools", 0, 1], ["shawm", 0, 1], ["jewelers_tools", 0, 1]], "southron": [["shawm", 0, 1], ["perfume", 0, 1], ["dragonchess_set", 0, 1]], "khurgan": [["drum", 0, 1], ["horn", 0, 1], ["leatherworkers_tools", 0, 1]], "volsk": [["viol", 0, 1], ["woodcarvers_tools", 0, 1], ["climbers_kit", 0, 1]], "itzan": [["pan_flute", 0, 1], ["drum", 0, 1], ["painters_supplies", 0, 1], ["potters_tools", 0, 1]], "heartland": [["lute", 0, 1], ["dice_set", 0, 1], ["brewers_supplies", 0, 1]]},
   "services": {
     "_comment": "Prices in copper. Inn rooms and meals scale with the settlement: price x size factor.",
     "room_common": 10, "room_private": 50, "meal": 30, "bath": 20,
@@ -92,7 +120,12 @@
     "treat_per_wound": {"1": 50, "2": 200, "3": 500}, "surgery": 1000, "herbal_cure": 400,
     "prayer_healing": 1000, "cure_disease": 2500,
     "repair_share": 0.3,
-    "labour_pay": [10, 20]
+    "labour_pay": [10, 20],
+    "inn": {"_comment": "PHB 2024 (PDF p. 234): an inn stay and a meal by lifestyle, in copper; which grades a settlement offers by its size. theft: the chance something goes missing in the night (squalid: opportunistic criminals); rest: exhaustion eased by a real bed; seen: standing with the town's high folk for a few days.", "stay": {"squalid": 7, "poor": 10, "modest": 50, "comfortable": 80, "wealthy": 200, "aristocratic": 400}, "meal": {"squalid": 1, "poor": 2, "modest": 10, "comfortable": 20, "wealthy": 30, "aristocratic": 60}, "lifestyle": {"wretched": 0, "squalid": 10, "poor": 20, "modest": 100, "comfortable": 200, "wealthy": 400, "aristocratic": 1000}, "grades": {"hamlet": ["squalid", "poor"], "village": ["squalid", "poor", "modest"], "town": ["squalid", "poor", "modest", "comfortable"], "city": ["squalid", "poor", "modest", "comfortable", "wealthy", "aristocratic"], "hold": ["poor", "modest", "comfortable", "wealthy"], "elfhall": ["poor", "modest", "comfortable", "wealthy"]}, "theft": {"squalid": 0.15, "poor": 0.04}, "rest": {"modest": 1, "comfortable": 1, "wealthy": 2, "aristocratic": 2}, "seen": {"wealthy": 2, "aristocratic": 4}, "fill": {"squalid": [35, 25], "poor": [50, 35], "modest": [60, 45], "comfortable": [70, 55], "wealthy": [80, 60], "aristocratic": [90, 70]}, "sick": {"squalid": 0.06}},
+    "toll": 1,
+    "coach": {"per_mile": 3, "mph": 4, "hours_a_day": 10, "max_miles": 160},
+    "ship": {"per_mile": 10, "mph": 3, "hours_a_day": 24, "max_miles": 600},
+    "messenger": {"per_mile": 2, "miles_a_day": 30}
   },
   "production": {
     "plains": {"wheat": 0.55, "bread": 0.75, "oats": 0.6, "rations": 0.85, "wool_bolt": 0.8, "apples": 0.6, "cheese": 0.8},

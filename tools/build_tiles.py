@@ -32,6 +32,7 @@ import adapt_art  # noqa: E402
 import map_art  # noqa: E402
 import nature_art  # noqa: E402
 import tile_art  # noqa: E402
+import gear_art  # noqa: E402
 import town_art  # noqa: E402
 
 PACK_URL = "https://opengameart.org/sites/default/files/Dungeon%20Crawl%20Stone%20Soup%20Full.zip"
@@ -352,6 +353,17 @@ ITEMS = {
     "plain_ring": "item/ring/iron.png", "amulet": "item/amulet/stone_1_green.png",
     # stand-ins for kinds of thing, when an item has no picture of its own
     "_weapon": "item/weapon/long_sword_1_old.png", "_armor": "item/armor/torso/leather_armor_3.png",
+    # Blades & Backgrounds part D gear (the rest is drawn in tools/gear_art.py)
+    "acid": "item/potion/bubbly.png", "antitoxin": "item/potion/cyan_new.png", "basic_poison": "item/potion/murky.png",
+    "glass_bottle": "item/potion/clear.png", "flask": "item/potion/cloudy.png", "vial": "item/potion/sky_blue.png",
+    "perfume": "item/potion/pink.png", "horn": "item/misc/misc_horn.png", "mirror": "item/misc/mirror.png",
+    "lamp": "item/misc/misc_lamp_old.png", "bullseye_lantern": "item/misc/misc_lamp_new.png",
+    "map": "item/scroll/scroll_old.png", "robe": "item/armor/torso/robe_1_new.png",
+    "costume": "item/armor/torso/robe_3.png", "druid_staff": "item/staff/staff_2.png",
+    "arcane_staff": "item/staff/staff_1.png", "yew_wand": "item/wand/gem_wood_new.png",
+    "arcane_wand": "item/wand/gem_ivory_new.png", "arcane_rod": "item/rod/rod_5_new.png",
+    "arcane_orb": "item/misc/misc_orb.png", "holy_emblem": "item/amulet/celtic_yellow.png",
+    "trinket": "item/amulet/bone_gray.png",
     "_food": "item/food/bread_ration_new.png", "_drink": "item/potion/brown_new.png",
     "_book": "item/book/tan_new.png", "_trade": "item/misc/misc_box.png", "_gear": "item/misc/misc_box.png",
     "_jewellery": "item/ring/gold_blue.png", "_magic": "item/misc/misc_orb_2.png", "_gold": "item/gold/gold_pile_7.png",
@@ -600,7 +612,7 @@ def gather(pack: Path) -> dict[str, Image.Image]:
         tiles[f"floor/rock_{i}"] = Image.fromarray(a.astype(np.uint8), "RGBA")
     figs, _ = figure_tiles()
     tiles.update(figs)
-    for name, im in {**tile_art.all_drawn(), **nature_art.all_drawn(), **map_art.all_drawn(),
+    for name, im in {**tile_art.all_drawn(), **nature_art.all_drawn(), **map_art.all_drawn(), **gear_art.all_drawn(),
                      **town_art.all_drawn()}.items():
         which = "none" if name.startswith(("icon/", "map/", "status/", "dlc/")) else ("ground" if name.startswith(("floor/", "wall/")) else "feature")
         if any(k in name for k in ("glow", "/fey", "water/hot", "moonstone")):

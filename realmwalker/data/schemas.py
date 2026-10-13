@@ -727,7 +727,15 @@ DATA_FILES.update({
 })
 
 SHOP = Obj({"name": Str(max_len=40), "buys": List(Str(max_len=20), min_items=1),
-            "stock": List(List(Any_(), min_items=3, max_items=3), min_items=1), "markup": Float(min=0.1, max=5)})
+            # [item, fewest, most] or [item, fewest, most, the smallest settlement kind that stocks it]
+            "stock": List(List(Any_(), min_items=3, max_items=4), min_items=1), "markup": Float(min=0.1, max=5)})
+GRADES = ["wretched", "squalid", "poor", "modest", "comfortable", "wealthy", "aristocratic"]  # PHB 2024 lifestyles
+INN = Obj({"stay": Map(Int(min=0)), "meal": Map(Int(min=0)), "lifestyle": Map(Int(min=0)),
+           "grades": Map(List(Str(choices=GRADES), min_items=1)), "theft": Map(Float(min=0, max=1)),
+           "rest": Map(Int(min=0, max=3)), "seen": Map(Int(min=0, max=10)),
+           "fill": Map(List(Int(min=0, max=100), min_items=2, max_items=2)), "sick": Map(Float(min=0, max=1))})
+PASSAGE = Obj({"per_mile": Int(min=0), "mph": Float(min=0.5, max=20), "hours_a_day": Int(min=1, max=24),
+               "max_miles": Int(min=1, max=5000)})
 ECONOMY = Obj(
     {
         "shops": Map(SHOP, min_items=1),
@@ -747,7 +755,11 @@ ECONOMY = Obj(
                          "size_factor": Map(Float(min=0.1, max=10)), "treat_per_wound": Map(Int(min=0)),
                          "surgery": Int(min=0), "herbal_cure": Int(min=0), "prayer_healing": Int(min=0),
                          "cure_disease": Int(min=0), "repair_share": Float(min=0, max=2),
-                         "labour_pay": List(Int(min=0), min_items=2, max_items=2)}),
+                         "labour_pay": List(Int(min=0), min_items=2, max_items=2),
+                         # Expansion 2 part D (PHB 2024 p. 234): lifestyles, tolls, coaches, ships, messengers
+                         "inn": INN, "toll": Int(min=0), "coach": PASSAGE, "ship": PASSAGE,
+                         "messenger": Obj({"per_mile": Int(min=0), "miles_a_day": Int(min=1, max=200)})}),
+        "culture_stock": Map(List(List(Any_(), min_items=3, max_items=4)), optional=True),
     }
 )
 
