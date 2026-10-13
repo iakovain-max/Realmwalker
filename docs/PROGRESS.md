@@ -59,6 +59,20 @@ The fighter is the 2024 book's from level 1 to 20 (it reaches `main` with the re
 Checked: the fast tests (all green) and a test for each feature in a real fight; the book's fighter and Champion
 pages. The full checks run when Part B is merged.
 
+**B.2 — the 2024 rogue** (same evening, same branch):
+- **Sneak Attack** to 10d6 at 19. **Steady Aim** (3): a bonus action before moving for advantage on the next attack
+  (companions on Auto aim before they shoot). **Cunning Strike** (5): Sneak Attack dice traded for a trick -
+  **poison** (with a poisoner's kit), **trip**, **withdraw**; **daze**, **obscure** (blind) and **knock out** from
+  14; two tricks on one blow from 11. **Reliable Talent** (7): a trained check never rolls under 10. **Slippery
+  Mind** (15): Wisdom and Charisma saves. **Elusive** (18): nothing attacks you with advantage. **Stroke of Luck**
+  (20): a miss or a failed save becomes a 20, once between rests.
+- **The Thief**: climbs as fast as they walk and leaps by Dexterity; Stealth Attack keeps them hidden (9); four magic
+  things bound and charges sometimes kept (13); acts twice over in the first round of a fight (17).
+- **The Cutthroat is now the Assassin** (the 2024 book's): advantage on initiative and on the first round's blows,
+  a Sneak Attack then adds your level; a disguise kit and a poisoner's kit with the training; Steady Aim without
+  standing still (9); poison that burns through resistance (13); Death Strike, a first-round blow doubled (17).
+  Characters who were Cutthroats need a new character when Part B is released (saves change then).
+
 ### Session, 2026-10-13 (evening): Demigods & Magics part A — twenty levels and the epic boons — branch `dlc/03-demigods-magics`
 
 The first part of Expansion 3 (begun in the afternoon, cut off by a usage limit, finished after it reset). Saves of

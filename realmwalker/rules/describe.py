@@ -190,11 +190,13 @@ def _buff_status(b, f, bf: dict, tables) -> Status | None:
     sid = src.split(":", 1)[-1]
     spell = tables.spells[sid] if sid in tables.spells else {}
     name = spell.get("name") or sid.replace("_", " ").capitalize()
+    if src == "dazed_still":
+        return None  # (shown as the daze itself)
     if bf.get("marked"):
         kind = "marked"
     elif bf.get("burning"):
         kind = "burning"
-    elif bf.get("slow") or bf.get("dazed") is not None:
+    elif bf.get("slow") or bf.get("dazed"):
         kind = "slowed"
     elif bf.get("no_heal"):
         kind = "no_heal"
@@ -229,7 +231,7 @@ def _buff_status(b, f, bf: dict, tables) -> Status | None:
     lines = [text]
     if bf.get("poisoned_blade"):
         title, lines = "Poisoned blade", ["Their next hit that cuts or pierces deals 1d4 poison damage more."]
-    elif kind == "slowed" and bf.get("dazed") is not None:
+    elif kind == "slowed" and bf.get("dazed"):
         title, lines = "Dazed (Cunning Strike)", ["On their next turn they may only act: no moving, no bonus action."]
     elif kind == "slowed":
         lines = [f"{int(bf['slow'])} feet off their speed."]

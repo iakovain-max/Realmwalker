@@ -54,9 +54,13 @@ Assumptions waiting for Anton:
 - Expansion 3 B.1: Tactical Shift and Remarkable Athlete's step add half the speed to the turn and the turn's steps
   draw no opportunity attacks; the Knight (ours) gains Unyielding at 15 (once a day, standing at hit points equal to
   the level) and Warden of the Line at 18 (Hold the Line reaches ten feet); Commanding Presence stays words only.
+- Expansion 3 B.2: a dazed creature keeps its action and loses its move and bonus action; Withdraw adds half the
+  speed to the turn; Thief's Reflexes folds the second turn into the first (a second action, bonus action and move);
+  Stroke of Luck works on attack rolls and saves; Use Magic Device's scrolls wait for Part C; the player is asked
+  which Cunning Strike to use only under the Reactions setting "all" (otherwise the battle's judgement).
 Ideas for later:
 - (none yet)
-Next session starts at: task B.2 in docs/expansions/03-demigods-magics.md (Part B: the Rogue, the Thief and the Assassin, Cunning Strike). B.1 (the fighter) is done on the branch; Part B goes to `main` with B.4.
+Next session starts at: task B.3 in docs/expansions/03-demigods-magics.md (Part B: the Cleric, Life and War Domains). B.1 (the fighter) and B.2 (the rogue) are done on the branch; Part B goes to `main` with B.4 (FORMAT_VERSION bump there: the Cutthroat is now the Assassin).
 
 ## Done
 

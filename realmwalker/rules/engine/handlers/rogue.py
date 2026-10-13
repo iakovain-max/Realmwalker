@@ -141,7 +141,7 @@ def cunning_after(b, f, ev, hook, buff) -> None:
                 b.say(f"{t.the_name} goes down.", _word(f))
         elif trick == "daze":
             if not b._save(t, "con", dc):
-                durations.buff(t, {"dazed": f.id, "source": f"daze:{f.id}"}, durations.until(b, t, "turn_end"))
+                durations.buff(t, {"dazed": True, "by": f.id, "source": f"daze:{f.id}"}, durations.until(b, t, "turn_end"))
                 b.say(f"{t.the_name} reels, dazed.", _word(f))
         elif trick == "obscure":
             if not b._save(t, "dex", dc, against=("blinded",)) and durations.give(
@@ -159,6 +159,7 @@ def cunning_after(b, f, ev, hook, buff) -> None:
 @handler("dazed")
 def dazed(b, f, ev, hook, buff) -> None:
     """Dazed by a Cunning Strike: this turn they may only act (no moving, no bonus action)."""
+    durations.buff(f, {"slow": 1000, "source": "dazed_still"}, durations.until(b, f, "turn_end"))  # (no moving)
     f.move_left = 0
     f.bonus = 0
     b.say(f"{f.the_name} is dazed: only one thing this turn.", "system")
