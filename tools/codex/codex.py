@@ -39,6 +39,7 @@ GAME_HOME = {
     "backgrounds": ("backgrounds.json", "backgrounds"),
     "items": ("items.json", "items"),
     "equipment": ("items.json", "items"),
+    "feats": ("feats.json", "feats"),
 }
 
 

@@ -55,10 +55,10 @@ Horses look like horses; mounts, carts and wagons can be bought; inns, meals and
 
 ### Part B — Origins
 - [x] B.1 Character fields (`species`, `lineage`, `feats`, `choices`, `classes` list); FORMAT_VERSION bump.
-- [ ] B.2 Species 2024: Human, Elf (Drow, High Elf, Wood Elf; lineage spells), Dwarf, Halfling, Orc; traits as kernel
+- [x] B.2 Species 2024: Human, Elf (Drow, High Elf, Wood Elf; lineage spells), Dwarf, Halfling, Orc; traits as kernel
   definitions; the half-orcs of the world become orcs; looks and bodies still drawn (`tests/test_looks.py`).
-- [ ] B.3 The 16 backgrounds: increases, origin feat, skills, tool, equipment or gold, ties and starting places.
-- [ ] B.4 Languages (standard and rare) merged with the world's tongues; creation in the 2024 order with point buy,
+- [x] B.3 The 16 backgrounds: increases, origin feat, skills, tool, equipment or gold, ties and starting places.
+- [x] B.4 Languages (standard and rare) merged with the world's tongues; creation in the 2024 order with point buy,
   standard array and 4d6; screens fit at three sizes; companions and townsfolk made the same way.
 - [ ] B.5 Part B to `main` (the origin feats work from here: Alert, Crafter, Healer, Lucky, Magic Initiate,
   Musician, Savage Attacker, Skilled, Tavern Brawler, Tough).
