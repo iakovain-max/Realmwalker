@@ -47,8 +47,9 @@ Then commit, update PROGRESS.md, and stop for user feedback (unless the user sai
 - **Edit with the Edit/Write tools.** Scripts only for mechanical changes across many files, written to a file with
   Write first (shell heredocs here mangle quotes and backslashes).
 - **Read narrowly**: `grep -n` and small line ranges, guided by the code map below; do not page through big files.
-- **One part per session.** When a part is merged, update `docs/expansions/STATUS.md` and stop: a long conversation
-  makes every later step slower and dearer, and a summarised one loses detail.
+- **One part per session, at least an hour of work.** When a part is merged, update `docs/expansions/STATUS.md` and
+  stop: a long conversation makes every later step slower and dearer, and a summarised one loses detail. But a turn
+  that finishes within an hour of starting goes straight on with the next part (docs/expansions/CHAIN.md C.5).
 - **The fresh review stays** before each merge, as a short checklist pass against `docs/EXPANSIONS.md` §5.2.
 
 Code map of the two biggest files (by section; search for the `# ---` headers):
