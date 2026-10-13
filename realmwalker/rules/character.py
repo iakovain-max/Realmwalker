@@ -88,6 +88,7 @@ class Character:
     addictions: dict[str, float] = field(default_factory=dict)
     effects: dict[str, float] = field(default_factory=dict)  # timed effects, hours left (poppy, herbal, hangover...)
     animals: list[dict] = field(default_factory=list)  # mules and horses: {"kind", "name", "unfed", "bought"}
+    vehicles: list[dict] = field(default_factory=list)  # a cart, a wagon...: {"kind", "bought"} (game/mounts.py)
     attuned: list[int] = field(default_factory=list)  # uids of magic items bound to them (rules/magic.py), at most 3
     formation: list[int] = field(default_factory=list)  # [column, row] in the battle order (game/arena.py); [] = by class
     next_uid: int = 1

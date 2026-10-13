@@ -153,6 +153,10 @@ def test_riding_tires_less_than_walking(tables):
 def test_a_mounted_member_rides_even_at_the_walkers_pace(game):
     companion(game)
     horse(game)
+    assert mounts.activity_for(game, game.leader, "walk") == "walk", "bareback, a rider tires like a walker"
+    from realmwalker.rules.inventory import add_item
+
+    add_item(game.leader, game.tables.items, "riding_saddle")
     assert mounts.activity_for(game, game.leader, "walk") == "ride"
     assert mounts.activity_for(game, game.party[1], "walk") == "walk"
     assert mounts.activity_for(game, game.leader, "rest") == "rest"
@@ -192,3 +196,80 @@ def test_two_animals_bought_are_not_both_called_bess(game, monkeypatch):
         services.perform(game, stable, "buy_animal", "pony")
     names = [a["name"] for a in game.leader.animals]
     assert len(names) == len(set(names)) == 4
+
+
+# ---------------------------------------------------------------------------- Expansion 2 part D: mounts, tack, vehicles
+def test_a_mastiff_carries_only_the_small_and_an_elephant_needs_its_seat(game):
+    horse(game, "mastiff", "Grip")
+    assert mounts.mount_of(game, game.leader) is None  # a man is too big for a dog
+    game.leader.race = "halfling"
+    assert mounts.mount_of(game, game.leader) is not None
+    game.leader.race = "human"
+    game.leader.animals = []
+    horse(game, "elephant", "Tusk")
+    assert mounts.mount_of(game, game.leader) is None
+    from realmwalker.rules.inventory import add_item
+
+    add_item(game.leader, game.tables.items, "exotic_saddle")
+    assert mounts.mount_of(game, game.leader) is not None
+    assert id(game.leader) in mounts.saddled(game)
+
+
+def test_a_camel_keeps_its_pace_in_the_dunes(game):
+    horse(game, "camel", "Hump")
+    w = game.world
+    if "dunes" not in w.biome_ids:
+        pytest.skip("no dunes")
+    idx = w.biome_ids.index("dunes")
+    spots = [(x, y) for x in range(w.width) for y in range(w.height) if w.biome[x, y] == idx and not w.road[x, y]]
+    if not spots:
+        pytest.skip("no dunes")
+    x, y = spots[0]
+    assert mounts.land_share(game, x, y, game.leader.animals[0]) == 1.0
+    assert mounts.land_share(game, x, y) < 1.0
+
+
+def test_a_cart_drawn_by_a_spare_mule_carries_much_more_and_goes_slowly_off_the_road(game):
+    from realmwalker.game.services import animal_carry
+
+    horse(game, "riding_horse", "Bess")
+    horse(game, "mule", "Jack")
+    before = Sheet(game.leader, game.tables).capacity()[0]
+    game.leader.vehicles.append({"kind": "cart", "bought": 0})
+    assert mounts.drawn(game) is not None and [a["name"] for a in mounts.pullers(game)] == ["Jack"]
+    assert Sheet(game.leader, game.tables).capacity()[0] > before + 500
+    assert animal_carry(game.leader, game.tables) > 600
+    w = game.world
+    off = [(x, y) for x in range(1, w.width - 1) for y in range(w.height) if not w.road[x, y] and not w.road[x + 1, y]]
+    x, y = off[0]
+    assert mounts.step_factor(game, x, y, x + 1, y) >= 1.5
+    game.leader.animals = [a for a in game.leader.animals if a["name"] == "Bess"]
+    assert mounts.drawn(game) is None  # nothing left to pull it
+
+
+def test_a_carriage_seats_those_without_a_mount(game):
+    c = companion(game)
+    horse(game, "riding_horse", "Bess")
+    horse(game, "draft_horse", "Dobbin")
+    game.leader.vehicles.append({"kind": "carriage", "bought": 0})
+    # Bess carries the leader, Dobbin goes to the companion... unless the carriage takes one of them
+    ridden, walkers = mounts.assign(game)
+    assert not walkers or id(walkers[0]) in mounts.seated(game)
+    assert mounts.activity_for(game, c, "walk") in ("ride", "walk")
+
+
+def test_stabling_in_town_feeds_the_animals_for_five_silver(game):
+    s = next(s for s in game.world.settlements if s.kind in ("town", "city"))
+    game.player.x, game.player.y = s.x, s.y
+    horse(game)
+    game.leader.inventory = [it for it in game.leader.inventory if it.def_id != "fodder"]
+    money = game.leader.money = 1000
+    services.feed_animals(game)
+    assert money - game.leader.money == game.tables.economy["services"]["stabling"] == 50
+    assert game.leader.animals[0]["unfed"] == 0
+
+
+def test_the_mounts_have_their_2025_stat_blocks(tables):
+    for cid in ("camel", "draft_horse", "mastiff", "mule", "pony", "riding_horse", "warhorse"):
+        assert cid in tables.creatures
+    assert "guard_dogs" in tables.creatures.encounters

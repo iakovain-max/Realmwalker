@@ -432,6 +432,19 @@ def bucket():
     return _fin(im)
 
 
+def barrel():
+    """A cooper's barrel on its side-less stand: bellied staves, three iron hoops, a bung."""
+    im, d = _new()
+    d.polygon([(9, 3), (22, 3), (26, 10), (26, 21), (22, 28), (9, 28), (5, 21), (5, 10)], fill=WOOD)
+    for x in (9, 13, 17, 21):
+        _line(d, [(x, 4), (x + (1 if x > 15 else -1), 15), (x, 27)], WOOD_D)
+    for y in (6, 15, 25):
+        d.rectangle([5 if y == 15 else 7, y, 26 if y == 15 else 24, y + 1], fill=IRON)
+    d.ellipse([9, 2, 22, 5], fill=WOOD_L)
+    d.rectangle([15, 18, 16, 19], fill=C(60, 40, 28))
+    return _fin(im)
+
+
 def basket():
     im, d = _new()
     d.arc([6, 2, 25, 22], 180, 360, fill=WOOD_D, width=2)
@@ -798,7 +811,7 @@ def all_drawn() -> dict[str, Image.Image]:
         "dragonchess_set": dragonchess(), "three_dragon_ante_set": three_dragon_ante(),
         "bagpipes": bagpipes(), "drum": drum(), "dulcimer": dulcimer(), "lyre": lyre(), "pan_flute": pan_flute(),
         "shawm": shawm(), "viol": viol(),
-        "ball_bearings": ball_bearings(), "caltrops": caltrops(), "net": net(), "bucket": bucket(),
+        "ball_bearings": ball_bearings(), "caltrops": caltrops(), "net": net(), "bucket": bucket(), "barrel": barrel(),
         "basket": basket(), "jug": jug(), "pouch": pouch(), "quiver": quiver(), "bolt_case": bolt_case(),
         "scroll_case": scroll_case(), "bell": bell(), "chain": chain(), "pole": pole(),
         "magnifying_glass": magnifying_glass(), "portable_ram": portable_ram(), "ladder": ladder(),

@@ -38,19 +38,101 @@ def speed_of(tables, animal: dict) -> float:
     return float(specs(tables).get(animal.get("kind"), {}).get("ride", 1.0))
 
 
+def small(game, c: Character) -> bool:
+    return game.tables.races.get(c.race, {}).get("size") == "small"
+
+
+def tack(game) -> list[str]:
+    """The party's saddles, by kind ("riding", "exotic"), carried in the packs."""
+    from realmwalker.rules.inventory import carried
+
+    out = []
+    for it in carried(game.party):
+        kind = game.tables.items.get(it.def_id).get("tack")
+        if kind:
+            out += [kind] * it.qty
+    return out
+
+
+def rideable(game, animal: dict, c: Character, saddles: list[str]) -> bool:
+    """A mastiff carries only the Small; an elephant only with an exotic saddle on its back (PHB 2024)."""
+    spec = specs(game.tables).get(animal.get("kind"), {})
+    if spec.get("small_only") and not small(game, c):
+        return False
+    need = spec.get("saddle")
+    return not need or game.tables.items.get(need).get("tack", "exotic") in saddles
+
+
 def assign(game) -> tuple[dict[int, dict], list[Character]]:
     """Who rides what: the fastest animals go to the members in party order (id(member) -> animal), and the list of
-    those left on foot."""
+    those left on foot. An animal the rider cannot ride (a mastiff under a man) is passed over."""
     mounts = sorted((a for a in herd(game) if a.get("kind") in specs(game.tables)),
                     key=lambda a: speed_of(game.tables, a))
+    saddles = tack(game)
     out: dict[int, dict] = {}
     walkers = []
     for c in riders(game):
-        if mounts:
-            out[id(c)] = mounts.pop(0)
+        pick = next((a for a in mounts if rideable(game, a, c, saddles)), None)
+        if pick is not None:
+            mounts.remove(pick)
+            out[id(c)] = pick
         else:
             walkers.append(c)
     return out, walkers
+
+
+def saddled(game) -> set[int]:
+    """The riders who sit a saddle (id(member)): bareback, a rider tires as a walker does."""
+    ridden, _ = assign(game)
+    saddles = tack(game)
+    out = set()
+    for c in riders(game):
+        a = ridden.get(id(c))
+        if a is None or not saddles:
+            continue
+        need = specs(game.tables).get(a.get("kind"), {}).get("saddle")
+        if need:  # an elephant: its own kind of saddle
+            want = [game.tables.items.get(need).get("tack", "exotic")]
+        else:  # anything else: a riding saddle, or an exotic one if that is all there is
+            want = ["riding", "exotic"]
+        take = next((k for k in want if k in saddles), None)
+        if take is not None:
+            saddles.remove(take)
+            out.add(id(c))
+    return out
+
+
+# ---------------------------------------------------------------------------- vehicles (PHB 2024 p. 230)
+def vehicle_specs(tables) -> dict:
+    return {k: v for k, v in tables.economy.get("vehicles", {}).items() if not k.startswith("_")}
+
+
+def vehicle(game) -> dict | None:
+    """The party's cart, wagon, carriage, chariot or sled (the first, if it has several)."""
+    vs = [v for v in (game.leader.vehicles if game.party else []) if v.get("kind") in vehicle_specs(game.tables)]
+    return vs[0] if vs else None
+
+
+def pullers(game) -> list[dict]:
+    """The animals nobody rides: they are put to the vehicle."""
+    ridden, _ = assign(game)
+    taken = {id(a) for a in ridden.values()}
+    return [a for a in herd(game) if id(a) not in taken and a.get("kind") in specs(game.tables)]
+
+
+def drawn(game) -> dict | None:
+    """The vehicle's spec, if it has animals to pull it."""
+    v = vehicle(game)
+    return vehicle_specs(game.tables)[v["kind"]] if v is not None and pullers(game) else None
+
+
+def seated(game) -> set[int]:
+    """Walkers who sit in the vehicle instead (a carriage seats four)."""
+    spec = drawn(game)
+    if spec is None:
+        return set()
+    _, walkers = assign(game)
+    return {id(c) for c in walkers[:int(spec.get("seats", 0))]}
 
 
 def mount_of(game, char: Character) -> dict | None:
@@ -63,38 +145,55 @@ def all_mounted(game) -> bool:
 
 
 def pace_animal(game) -> dict | None:
-    """The slowest animal being ridden, which sets the party's pace when everyone rides (None if anyone walks)."""
+    """The slowest animal being ridden, which sets the party's pace when everyone rides or sits in the vehicle (None
+    if anyone walks)."""
     ridden, walkers = assign(game)
-    if walkers or not ridden:
+    sitting = seated(game)
+    if any(id(c) not in sitting for c in walkers) or not ridden:
         return None
     return max(ridden.values(), key=lambda a: speed_of(game.tables, a))
 
 
-def land_share(game, x: int, y: int) -> float:
-    """How much of a mount's speed this land allows (1 open country, 0 marsh and mountain)."""
+def land_share(game, x: int, y: int, animal: dict | None = None) -> float:
+    """How much of a mount's speed this land allows (1 open country, 0 marsh and mountain); a camel in the dunes
+    keeps its pace (the animal's own "lands")."""
+    own = specs(game.tables).get((animal or {}).get("kind"), {}).get("lands") or {}
+    key = game.land_key(x, y)
+    if key in own:
+        return float(own[key])
     lands = game.tables.economy.get("ride_lands", DEFAULT_LANDS)
-    return float(game.tables.biomes.lookup(lands, game.land_key(x, y), 0.0))
+    return float(game.tables.biomes.lookup(lands, key, 0.0))
 
 
 def step_factor(game, x0: int, y0: int, x1: int, y1: int) -> float:
     """Travel time multiplier for one overworld step when the whole party rides (1.0 if anyone walks). Roads are
     good riding everywhere, as step_minutes counts a road: both ends on it."""
+    w = game.world
+    road = bool(w.road[x0, y0] and w.road[x1, y1])
+    cart = drawn(game)
+    rough = 1.0
+    if cart is not None and not road:  # a cart off the road: slow going (a sled on snow is not)
+        snow = game.land_key(x1, y1) in (cart.get("snow") or ())
+        rough = 1.0 if snow else float(cart["rough"])
     slowest = pace_animal(game)
     if slowest is None:
-        return 1.0
+        return rough
     ride = speed_of(game.tables, slowest)
+    if cart is not None:
+        ride = max(ride, float(cart.get("ride", 1.0)))  # the vehicle's own pace
     if ride >= 1.0:
-        return 1.0
-    w = game.world
-    share = 1.0 if (w.road[x0, y0] and w.road[x1, y1]) else min(land_share(game, x0, y0), land_share(game, x1, y1))
-    return 1.0 - (1.0 - ride) * max(0.0, min(1.0, share))
+        return rough
+    share = 1.0 if road else min(land_share(game, x0, y0, slowest), land_share(game, x1, y1, slowest))
+    return (1.0 - (1.0 - ride) * max(0.0, min(1.0, share))) * rough
 
 
 def activity_for(game, char: Character, activity: str) -> str:
     """Walking on the big map, a member with a mount rides it (even at the walkers' pace): it tires less."""
     if activity != "walk" or game.in_local or not game.party:
         return activity
-    return "ride" if mount_of(game, char) is not None else activity
+    if id(char) in seated(game):
+        return "ride"  # sitting in the carriage or on the cart's bench
+    return "ride" if mount_of(game, char) is not None and id(char) in saddled(game) else activity
 
 
 def kind_name(game, animal: dict) -> str:
@@ -116,6 +215,12 @@ def summary(game) -> str:
     if not animals:
         return ""
     ridden, walkers = assign(game)
+    sitting = seated(game)
+    walkers = [c for c in walkers if id(c) not in sitting]
+    cart = drawn(game)
+    if cart is not None and not walkers:
+        return (f"The {cart['name']} goes with you, drawn by {_and([a['name'] for a in pullers(game)])}: it carries "
+                f"much more, but goes slowly off the roads.")
     if walkers:
         on_foot = _and([first(c) for c in walkers]) if len(people) > 1 else "You"
         verb = "walks" if len(walkers) == 1 and len(people) > 1 else "walk"

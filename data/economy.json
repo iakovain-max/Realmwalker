@@ -89,7 +89,7 @@
     "stable": {
       "name": "tack and fodder",
       "buys": ["gear", "trade"],
-      "stock": [["fodder", 5, 15], ["sack", 1, 4], ["rope", 1, 2], ["blanket", 1, 2],
+      "stock": [["fodder", 5, 15], ["sack", 1, 4], ["rope", 1, 2], ["blanket", 1, 2], ["riding_saddle", 1, 3], ["military_saddle", 0, 1, "town"], ["exotic_saddle", 0, 1, "city"],
                 ["pole", 0, 1], ["chain", 0, 1]],
       "markup": 1.1
     }
@@ -107,8 +107,13 @@
     "mule": {"name": "mule", "price": 800, "carry": 200, "ride": 1.0, "days_without_food": 4},
     "pony": {"name": "pony", "price": 3000, "carry": 120, "ride": 0.85, "days_without_food": 3},
     "draft_horse": {"name": "draft horse", "price": 5000, "carry": 250, "ride": 0.9, "days_without_food": 3},
-    "riding_horse": {"name": "riding horse", "price": 7500, "carry": 100, "ride": 0.65, "days_without_food": 3}
+    "riding_horse": {"name": "riding horse", "price": 7500, "carry": 100, "ride": 0.65, "days_without_food": 3},
+    "camel": {"name": "camel", "price": 5000, "carry": 200, "ride": 0.75, "days_without_food": 7, "lands": {"desert": 1.0, "dunes": 1.0, "salt_flat": 1.0, "badlands": 0.8}},
+    "warhorse": {"name": "warhorse", "price": 40000, "carry": 120, "ride": 0.65, "days_without_food": 3},
+    "elephant": {"name": "elephant", "price": 20000, "carry": 600, "ride": 0.9, "days_without_food": 4, "saddle": "exotic_saddle", "lands": {"jungle": 0.6, "savanna": 1.0}},
+    "mastiff": {"name": "mastiff", "price": 2500, "carry": 40, "ride": 0.9, "days_without_food": 4, "small_only": true, "eats": "meat"}
   },
+  "vehicles": {"_comment": "PHB 2024 p. 230 (Tack, Harness, and Drawn Vehicles): price in copper, weight in pounds. The party's animals that nobody rides pull it, and pull five times what they could carry (the vehicle's weight included). rough: travel time off the roads (snow: on snow and ice); ride: the pace on roads when everyone rides or sits in it (1 = a walk); seats: who may sit in it instead of walking.", "cart": {"name": "cart", "price": 1500, "weight": 200, "rough": 1.5, "ride": 1.0, "seats": 1}, "wagon": {"name": "wagon", "price": 3500, "weight": 400, "rough": 1.75, "ride": 1.0, "seats": 2}, "carriage": {"name": "carriage", "price": 10000, "weight": 600, "rough": 2.0, "ride": 0.9, "seats": 4}, "chariot": {"name": "chariot", "price": 25000, "weight": 100, "rough": 2.0, "ride": 0.75, "seats": 2}, "sled": {"name": "sled", "price": 2000, "weight": 300, "rough": 2.5, "ride": 0.9, "seats": 1, "snow": ["tundra", "glacier", "taiga"]}},
   "ride_lands": {"plains": 1.0, "coast": 1.0, "tundra": 1.0, "desert": 1.0, "hills": 1.0, "forest": 0.5,
                  "pine_forest": 0.4, "marsh": 0.0, "mountains": 0.0, "high_mountains": 0.0, "steppe": 1.0, "savanna": 1.0, "salt_flat": 1.0, "glacier": 0.0, "dunes": 0.3, "badlands": 0.5, "volcanic": 0.3, "jungle": 0.0, "fey_forest": 0.4},
   "grazing": ["plains", "hills", "forest", "coast", "marsh", "steppe", "savanna"],
@@ -124,8 +129,9 @@
     "inn": {"_comment": "PHB 2024 (PDF p. 234): an inn stay and a meal by lifestyle, in copper; which grades a settlement offers by its size. theft: the chance something goes missing in the night (squalid: opportunistic criminals); rest: exhaustion eased by a real bed; seen: standing with the town's high folk for a few days.", "stay": {"squalid": 7, "poor": 10, "modest": 50, "comfortable": 80, "wealthy": 200, "aristocratic": 400}, "meal": {"squalid": 1, "poor": 2, "modest": 10, "comfortable": 20, "wealthy": 30, "aristocratic": 60}, "lifestyle": {"wretched": 0, "squalid": 10, "poor": 20, "modest": 100, "comfortable": 200, "wealthy": 400, "aristocratic": 1000}, "grades": {"hamlet": ["squalid", "poor"], "village": ["squalid", "poor", "modest"], "town": ["squalid", "poor", "modest", "comfortable"], "city": ["squalid", "poor", "modest", "comfortable", "wealthy", "aristocratic"], "hold": ["poor", "modest", "comfortable", "wealthy"], "elfhall": ["poor", "modest", "comfortable", "wealthy"]}, "theft": {"squalid": 0.15, "poor": 0.04}, "rest": {"modest": 1, "comfortable": 1, "wealthy": 2, "aristocratic": 2}, "seen": {"wealthy": 2, "aristocratic": 4}, "fill": {"squalid": [35, 25], "poor": [50, 35], "modest": [60, 45], "comfortable": [70, 55], "wealthy": [80, 60], "aristocratic": [90, 70]}, "sick": {"squalid": 0.06}},
     "toll": 1,
     "coach": {"per_mile": 3, "mph": 4, "hours_a_day": 10, "max_miles": 160},
-    "ship": {"per_mile": 10, "mph": 3, "hours_a_day": 24, "max_miles": 600},
-    "messenger": {"per_mile": 2, "miles_a_day": 30}
+    "ship": {"per_mile": 10, "mph": 2, "hours_a_day": 24, "max_miles": 600},
+    "messenger": {"per_mile": 2, "miles_a_day": 30},
+    "stabling": 50, "feed": 5
   },
   "production": {
     "plains": {"wheat": 0.55, "bread": 0.75, "oats": 0.6, "rations": 0.85, "wool_bolt": 0.8, "apples": 0.6, "cheese": 0.8},

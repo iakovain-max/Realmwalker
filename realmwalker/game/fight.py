@@ -376,6 +376,10 @@ def _rob_party(game, rng) -> str:
     if leader.animals:
         taken.append(", ".join(a["name"] for a in leader.animals) + " (your animals)")
         leader.animals = []
+    if leader.vehicles:
+        specs = game.tables.economy.get("vehicles", {})
+        taken.append(", ".join("the " + specs.get(v["kind"], {}).get("name", "cart") for v in leader.vehicles))
+        leader.vehicles = []
     return ", ".join(taken) if taken else "nothing, having found nothing worth taking"
 
 

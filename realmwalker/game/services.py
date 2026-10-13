@@ -183,6 +183,18 @@ def services_for(game, npc: NPC) -> list[Service]:
                 if a["kind"] in animals]
         if mine:
             out.append(Service("sell_animal", "Sell one of your animals", 0, True, "", options=mine))
+        from realmwalker.game.mounts import vehicle_specs
+
+        carts = vehicle_specs(game.tables)
+        town = game.world.settlements[npc.settlement]
+        options = [(vid, f"{v['name']} ({v['weight']} lb; seats {v['seats']})", fee(game, npc, int(v["price"])))
+                   for vid, v in carts.items() if vid != "carriage" or town.kind in ("town", "city")]
+        if options:
+            out.append(Service("buy_vehicle", "Buy a cart, a wagon or something finer", 0, True, "", options=options))
+        mine = [(str(i), carts[v["kind"]]["name"], int(carts[v["kind"]]["price"]) // 2) for i, v in enumerate(c.vehicles)
+                if v.get("kind") in carts]
+        if mine:
+            out.append(Service("sell_vehicle", "Sell your vehicle", 0, True, "", options=mine))
     return out
 
 
@@ -622,7 +634,8 @@ def _buy_animal(game, npc, svc, arg):
 
     how = mounts.summary(game)
     return [f"You buy {animals[arg]['name']} called {name} for {money_text(price)}. "
-            f"<dim>It needs a bag of fodder a day, or good grazing outside winter.</>"] + ([how] if how else [])
+            f"<dim>It needs a bag of fodder a day, or good grazing outside winter"
+            f"{'' if mounts.tack(game) else '; and whoever rides it needs a saddle (the stable sells them)'}.</>"] + ([how] if how else [])
 
 
 def _sell_animal(game, npc, svc, arg):
@@ -634,6 +647,35 @@ def _sell_animal(game, npc, svc, arg):
     price = int(game.tables.economy["animals"][a["kind"]]["price"]) // 2
     c.money += price
     return [f"You sell {a['name']} for {money_text(price)}."]
+
+
+def _buy_vehicle(game, npc, svc, arg):
+    from realmwalker.game import mounts
+
+    carts = mounts.vehicle_specs(game.tables)
+    if arg not in carts:
+        return ["They have nothing like that."]
+    price = fee(game, npc, int(carts[arg]["price"]))
+    charge(game, npc, price)
+    game.leader.vehicles.append({"kind": arg, "bought": game.world.time})
+    if not mounts.pullers(game):
+        note = " <warn>Nothing will pull it yet: it needs an animal that nobody rides.</>"
+    else:
+        note = " " + mounts.summary(game)
+    return [f"You buy a {carts[arg]['name']} for {money_text(price)}.{note}"]
+
+
+def _sell_vehicle(game, npc, svc, arg):
+    from realmwalker.game import mounts
+
+    c = game.leader
+    i = int(arg or -1)
+    if not 0 <= i < len(c.vehicles):
+        return ["You have nothing like that to sell."]
+    v = c.vehicles.pop(i)
+    spec = mounts.vehicle_specs(game.tables)[v["kind"]]
+    c.money += int(spec["price"]) // 2
+    return [f"You sell the {spec['name']} for {money_text(int(spec['price']) // 2)}."]
 
 
 def _pick_item(game, arg: str | None):
@@ -682,6 +724,7 @@ HANDLERS = {
     "bath": _bath, "perform": _perform, "gamble": _gamble,
     "treat_wounds": _treat, "surgery": _surgery, "herbal_cure": _herbal, "prayer_healing": _prayer,
     "cure_disease": _cure, "repair": _repair, "labour": _labour, "buy_animal": _buy_animal, "sell_animal": _sell_animal,
+    "buy_vehicle": _buy_vehicle, "sell_vehicle": _sell_vehicle,
     "identify": _identify, "remove_curse": _remove_curse,
 }
 
@@ -697,14 +740,22 @@ def feed_animals(game) -> list[str]:
     p = game.player
     grazing = game.biome_key(p.x, p.y) in game.tables.economy["grazing"] and game.moment.season != "winter"
     in_town = game.world.settlement_at(p.x, p.y) is not None
+    stabling = int(game.tables.economy["services"].get("stabling", 0))
+    paid = 0
     for a in list(c.animals):
-        fodder = next((it for it in c.inventory if it.def_id == "fodder"), None)
+        meat = specs.get(a["kind"], {}).get("eats") == "meat"  # a mastiff: meat, not fodder or grass
+        food_ids = ("raw_meat", "cooked_meat", "salt_pork", "dried_fish", "raw_fish") if meat else ("fodder",)
+        fodder = next((it for it in c.inventory if it.def_id in food_ids), None)
         if fodder is not None:
             from realmwalker.rules.inventory import remove_item
 
             remove_item(c, fodder.uid, 1)
             a["unfed"] = 0
-        elif grazing or in_town:
+        elif in_town and c.money >= stabling:  # PHB 2024: stabling, 5 sp a day, feed included
+            c.money -= stabling
+            paid += stabling
+            a["unfed"] = 0
+        elif grazing and not meat:
             a["unfed"] = 0
         else:
             a["unfed"] = a.get("unfed", 0) + 1
@@ -714,12 +765,24 @@ def feed_animals(game) -> list[str]:
                 msgs.append(f"<danger>{a['name']} the {specs.get(a['kind'], {}).get('name', 'animal')} has starved.</>")
             else:
                 msgs.append(f"<warn>{a['name']} has nothing to eat.</> Buy fodder, or find grazing.")
+    if paid:
+        msgs.append(f"<dim>Stabling for the animals: {money_text(paid)}.</>")
     return msgs
 
 
 def animal_carry(char, tables) -> int:
     specs = tables.economy["animals"]
-    return sum(int(specs.get(a["kind"], {}).get("carry", 0)) for a in char.animals)
+    total = sum(int(specs.get(a["kind"], {}).get("carry", 0)) for a in char.animals)
+    vs = [v for v in char.vehicles if v.get("kind") in tables.economy.get("vehicles", {})]
+    if vs:  # the animals nobody rides pull it: five times what they carry, less its weight (game/mounts.py)
+        from realmwalker.rules.inventory import pack_mates
+
+        people = len([m for m in pack_mates(char) if m.alive]) or 1
+        herd = sorted((a for a in char.animals if a.get("kind") in specs), key=lambda a: float(specs[a["kind"]]["ride"]))
+        pull = sum(int(specs[a["kind"]].get("carry", 0)) for a in herd[people:])
+        if pull:
+            total += max(0, pull * 4 - int(tables.economy["vehicles"][vs[0]["kind"]]["weight"]))
+    return total
 
 
 def riding_factor(game) -> float:

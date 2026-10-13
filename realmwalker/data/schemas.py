@@ -322,6 +322,7 @@ ITEM = Obj(
                         "uses": List(Obj({"text": Str(max_len=120), "dc": Int(min=5, max=30)}), min_items=1),
                         "crafts": List(Str(max_len=40), optional=True)}, optional=True),
         "trinket": Bool(optional=True),  # its name and words come from data/trinkets.json
+        "tack": Str(choices=["riding", "exotic"], optional=True),  # a saddle (game/mounts.saddled)
     }
 )
 ITEMS = Obj(
@@ -748,7 +749,15 @@ ECONOMY = Obj(
         "restock_days": Int(min=1, max=365),
         "haggle": Obj({"dc": Int(min=0, max=40), "per_point": Float(min=0, max=1), "max": Float(min=0, max=1)}),
         "animals": Map(Obj({"name": Str(max_len=40), "price": Int(min=0, max=10**7), "carry": Int(min=0, max=2000),
-                            "ride": Float(min=0.1, max=2), "days_without_food": Int(min=1, max=30)}), min_items=1),
+                            "ride": Float(min=0.1, max=2), "days_without_food": Int(min=1, max=30),
+                            # Expansion 2 part D: only Small riders (a mastiff); a land where it goes better or worse
+                            # than ride_lands says (a camel in the dunes); the saddle it needs; what it eats
+                            "small_only": Bool(optional=True), "lands": Map(Float(min=0, max=1), optional=True),
+                            "saddle": Str(max_len=40, optional=True), "eats": Str(choices=["fodder", "meat"], optional=True)}),
+                       min_items=1),
+        "vehicles": Map(Obj({"name": Str(max_len=40), "price": Int(min=0, max=10**7), "weight": Int(min=0, max=5000),
+                             "rough": Float(min=1, max=5), "ride": Float(min=0.1, max=2), "seats": Int(min=0, max=8),
+                             "snow": List(Str(max_len=30), optional=True)}), optional=True),
         "grazing": List(Str(max_len=30)),
         "ride_lands": Map(Float(min=0, max=1), optional=True),
         "services": Obj({"bath": Int(min=0),
@@ -758,7 +767,8 @@ ECONOMY = Obj(
                          "labour_pay": List(Int(min=0), min_items=2, max_items=2),
                          # Expansion 2 part D (PHB 2024 p. 234): lifestyles, tolls, coaches, ships, messengers
                          "inn": INN, "toll": Int(min=0), "coach": PASSAGE, "ship": PASSAGE,
-                         "messenger": Obj({"per_mile": Int(min=0), "miles_a_day": Int(min=1, max=200)})}),
+                         "messenger": Obj({"per_mile": Int(min=0), "miles_a_day": Int(min=1, max=200)}),
+                         "stabling": Int(min=0), "feed": Int(min=0)}),
         "culture_stock": Map(List(List(Any_(), min_items=3, max_items=4)), optional=True),
     }
 )
