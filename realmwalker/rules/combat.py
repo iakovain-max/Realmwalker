@@ -2120,7 +2120,7 @@ class Battle:
         spellrules.spend_slot(f.char, slot)
         f.reaction = False
         f.buffs.append({"ac": 5, "rounds": 0, "source": "shield"})
-        events.emit(self, "spell_cast", actor=f, spell=self.t.spells["shield"], sid="shield", level=1)
+        events.emit(self, "spell_cast", actor=f, spell=self.t.spells["shield"], sid="shield", level=slot)
         self.say(f"<magic>{f.the_name} throws up a Shield.</> The blow glances off thin air.", "magic")
         self._event("cast", by=f.id, to=f.id, spell="shield", effect="buff", dtype="force", area=[])
         return True

@@ -329,6 +329,7 @@ def grant(char: Character, tables, fid: str, choices: dict | None = None) -> dic
                 char.skills.append(x)
     if fid == "boon_of_recovery":
         char.uses["vitality_dice"] = 10
+        char.uses["last_stand"] = 1
     if fid == "lucky":
         char.uses["luck"] = luck_points(char)
     for src, sid, _ability in innate_spells(char, tables):

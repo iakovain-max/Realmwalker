@@ -85,6 +85,7 @@ def use(b, f, aid: str, target=None) -> bool:
         if a.get("effects"):
             c = effects.Cast(b, f, aid, {"target": "self", "name": a["name"], "ability": True}, None, None)
             effects.run(c, a["effects"])
+        events.emit(b, "ability_used", actor=f, ability=aid)
         return True
     if a["cost"] != "free" and not b._spend(f, bonus=a["cost"] == "bonus"):
         return False

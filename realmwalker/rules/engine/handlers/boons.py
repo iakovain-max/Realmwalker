@@ -64,13 +64,18 @@ def peerless_ready(b, f, ev, hook, buff) -> None:
 @handler("blink_ready")
 def blink_ready(b, f, ev, hook, buff) -> None:
     """An attack or a spell on their own turn: Blink Steps may follow."""
-    if _own_turn(b, f) and f.active:
-        f.__dict__["blink"] = (b.round, b.order.index(f.id) if f.id in b.order else -1)
+    if _own_turn(b, f) and f.active and not (ev.kind == "attack_done" and f.attacks_left > 0) \
+            and f.__dict__.get("blinked") != _turn(b, f):
+        f.__dict__["blink"] = _turn(b, f)
+
+
+def _turn(b, f) -> tuple:
+    return b.round, b.order.index(f.id) if f.id in b.order else -1
 
 
 def blink_ok(b, f) -> str | None:
-    if f.char is None or f.__dict__.get("blink") != (b.round, b.order.index(f.id) if f.id in b.order else -1):
-        return "only straight after an attack or a spell"
+    if f.char is None or f.__dict__.get("blink") != _turn(b, f):
+        return "only straight after the Attack action or a spell"
     if not _own_turn(b, f):
         return "only on your turn"
     if not blink_squares(b, f):
@@ -108,6 +113,7 @@ def blink_steps(c, o, victim) -> None:
     b, f = c.b, c.caster
     places = blink_squares(b, f)
     f.__dict__.pop("blink", None)
+    f.__dict__["blinked"] = _turn(b, f)  # (once a turn)
     if not places:
         return
     start = (f.x, f.y)
@@ -305,7 +311,7 @@ def merge_with_shadows(c, o, victim) -> None:
 @handler("shadow_left")
 def shadow_left(b, f, ev, hook, buff) -> None:
     """The shadows let them go when they next act."""
-    if getattr(ev, "ability", None) == "merge_with_shadows":
+    if getattr(ev, "ability", None) in ("merge_with_shadows", "blink_steps"):
         return
     if (f.cond_ends.get("invisible") or {}).get("night"):
         durations.remove(f, "invisible")

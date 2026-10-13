@@ -211,9 +211,14 @@ def _feat_step(char: Character, tables, choice: dict):
 def _finish_feat(char: Character, tables, choice: dict) -> list[str]:
     from realmwalker.rules import feats
 
+    from realmwalker.rules.engine import resources
+    from realmwalker.rules.engine import traits as tr
+
     fid = choice["feat"]
     picked = {k: v for k, v in choice["made"].items() if v not in ("", [])}
+    before = tr.of_char(char, tables)
     feats.grant(char, tables, fid, picked)
+    resources.granted(char, tables, before)  # (its pools start full: Last Stand, the ten dice)
     if choice in char.pending:
         char.pending.remove(choice)
     return [f"{char.name.split()[0]} takes the feat {feats.name(tables, char.feats[-1])}."]
@@ -302,7 +307,7 @@ def options(char: Character, tables, choice: dict) -> list[tuple[str, str, str]]
             word = "Epic boon" if d["category"] == "epic" else "Feat"
             out.append((f"feat:{fid}", f"{word}: {d['name']}", d["text"]))
         out.sort(key=lambda o: not o[1].startswith("Epic"))
-        return out
+        return out + [o for o in options(char, tables, {"kind": "asi"}) if not o[0].startswith("feat:")]
     if kind == "spells":
         top = spell_top_level(char, tables)
         book = char.spells.get("spellbook", [])
@@ -387,7 +392,7 @@ def resolve(char: Character, tables, choice: dict, option_id: str) -> list[str]:
         feats.grant(char, tables, option_id)
         notes.append(f"{char.name.split()[0]} learns the {feats.name(tables, option_id)} fighting style.")
         char.pending.remove(choice)
-    elif kind == "asi":
+    elif kind in ("asi", "boon"):
         for part in option_id.split(","):
             ability, amount = part.split("+")
             before = modifier(char.abilities[ability])

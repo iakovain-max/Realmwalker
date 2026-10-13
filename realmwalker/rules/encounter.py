@@ -35,6 +35,16 @@ def danger_level(tables, danger: int) -> int:
     return int(rows[max(0, min(len(rows) - 1, int(danger)))])
 
 
+def land_level(tables, base: int, deeper: int = 0) -> int:
+    """The party level a band stands for, `deeper` levels under a land of danger `base`. Under an ordinary land
+    (danger 7 or less) the deep levels keep their old meaning (`deeper_level`): only the worst lands breed heroes'
+    foes."""
+    if base <= 7 and base + deeper > 7:
+        rows = spec(tables).get("deeper_level") or [4, 5, 6]
+        return int(rows[min(len(rows), base + deeper - 7) - 1])
+    return danger_level(tables, base + deeper)
+
+
 def roll_difficulty(tables, rng: RNG) -> str:
     odds = spec(tables)["odds"]
     return rng.weighted(list(DIFFICULTIES), [float(odds.get(d, 0)) for d in DIFFICULTIES])

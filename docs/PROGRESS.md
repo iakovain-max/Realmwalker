@@ -74,8 +74,9 @@ format 16 still load: nothing a save holds changed.
   worst (danger 8, 9 and 10; under one tile in a hundred) now send bands built for levels 6, 11 and 20, and where the
   budget is one for heroes a band grows into a host (two or three trolls where one came). The deepest sites go down
   four and five levels. A named beast of the history, a barrow king or a dragon at the bottom of a site has grown with
-  its legend: half again its hit points against a party led by a hero of level 5-10, two and a half times at 11-16,
-  four times at 17-20 (fixed when its level is first entered).
+  its legend: two and a half times its hit points against a party led by a hero of level 11-16, four times at 17-20
+  (fixed when its level is first entered; below level 11 nothing changes). Under an ordinary land (danger 7 or less)
+  a dungeon's deeper levels are as dangerous as before; the level-19 choice also offers the plain +2 (or +1 and +1).
 
 **How to see it**: play a long life (or companions who level with you): the level-up screen at 19 lists the epic
 boons first. The boons' moves are in the battle's Abilities menu.

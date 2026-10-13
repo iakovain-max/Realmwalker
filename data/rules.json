@@ -81,8 +81,10 @@
     "deadly": 2.0,
     "most_extra": 1.0,
     "tiers": [[9, 1.5], [13, 2.0], [17, 3.0]],
-    "_legend_hp": "A named beast of the history, a barrow king or a dragon at the bottom of a site has grown with its legend: its hit points times this, by the tier of play of the party's leader when the level is first entered (levels 1-4, 5-10, 11-16, 17-20).",
-    "legend_hp": [1.0, 1.5, 2.5, 4.0]
+    "_deeper_level": "The party level a dungeon's deeper levels stand for when they reach past danger 7 under an ordinary land (danger 7 or less): one, two, three steps past it.",
+    "deeper_level": [4, 5, 6],
+    "_legend_hp": "A named beast of the history, a barrow king or a dragon at the bottom of a site has grown with its legend: its hit points times this (from the third tier: the game before twenty levels is untouched), by the tier of play of the party's leader when the level is first entered (levels 1-4, 5-10, 11-16, 17-20).",
+    "legend_hp": [1.0, 1.0, 2.5, 4.0]
   },
   "_travel_pace": "Travel pace (PHB 2024 PDF page 23, DMG PDF pages 42-43): time for the same ground (4, 3 or 2 miles an hour), and what it does to noticing (a passive score, -5 or +5) and to Survival (finding the way) and Stealth (slipping away); the land's maximum pace (DMG Travel Terrain, by biome or family), one step faster on a good road; where the book says Slow (mountains, marsh) the game's own steps are slow already, so there it only forbids Fast.",
   "travel_pace": {

@@ -42,6 +42,10 @@ def test_the_boon_choice_offers_epic_boons_first(tables):
     assert "spell_recall" not in " ".join(o[0] for o in opts)  # (a fighter casts no spells)
     pick = progression.suggest(c, tables, choice, opts)
     assert pick.startswith("feat:boon_of_")
+    plain = next(o[0] for o in opts if not o[0].startswith("feat:"))  # (the plain increase is there too)
+    str_before = c.abilities[plain.split("+")[0]]
+    progression.resolve(c, tables, choice, plain)
+    assert c.abilities[plain.split("+")[0]] > str_before
 
 
 def test_an_ability_may_rise_to_thirty(tables):
@@ -72,9 +76,14 @@ def test_blink_steps_after_an_attack(tables):
     me, foe, foe2 = b.fighters
     soft(foe)
     on_turn(b, me)
-    assert actions.problem(b, me, actions.find(me, "blink_steps"))
-    b.do_attack(me, next(o for o in b.attack_options(me) if o.key == "main"), foe)
     a = actions.find(me, "blink_steps")
+    assert actions.problem(b, me, a)
+    opt = next(o for o in b.attack_options(me) if o.key == "main")
+    b.do_attack(me, opt, foe)
+    if me.attacks_left > 0:
+        assert actions.problem(b, me, a)  # (not between the swings of one Attack action)
+    while me.attacks_left > 0:
+        b.do_attack(me, opt, foe)
     assert actions.problem(b, me, a) is None
     before = (me.x, me.y)
     assert b.do_ability(me, "blink_steps") is not False
@@ -157,8 +166,10 @@ def test_irresistible_offense_cuts_through_and_strikes_with_the_score(tables):
 
 def test_recovery_last_stand_and_the_ten_dice(tables):
     c = hero(tables, "fighter", level=19)
-    give(tables, c, "boon_of_recovery", **ANY)
-    res.fill(c, tables)
+    c.pending = []
+    progression.take_feat(c, tables, "boon_of_recovery")
+    while c.pending:
+        progression.auto_resolve(c, tables)
     assert c.uses["last_stand"] == 1 and c.uses["vitality_dice"] == 10
     b = fight(tables, c, "bandit")
     me, foe = b.fighters
@@ -282,3 +293,14 @@ def test_a_named_beast_grows_with_its_legend(tables):
     assert c.max_hp == hp
     encounter.legend_grows(tables, c, 17)
     assert c.max_hp == hp * 4 and c.hp == c.max_hp
+    c2 = spawn(tables, "troll", RNG(1, "t"), 1)
+    encounter.legend_grows(tables, c2, 8)
+    assert c2.max_hp == hp  # (the game before twenty levels is untouched)
+
+
+def test_dungeons_under_ordinary_lands_keep_their_old_depths(tables):
+    from realmwalker.rules import encounter
+
+    assert [encounter.land_level(tables, 7, d) for d in range(4)] == [3, 4, 5, 6]
+    assert encounter.land_level(tables, 5, 4) == 5
+    assert encounter.land_level(tables, 8, 2) == 20 and encounter.land_level(tables, 9, 0) == 11

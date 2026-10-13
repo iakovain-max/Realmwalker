@@ -50,7 +50,7 @@ Assumptions waiting for Anton:
   weakest foe in range; Improve Fate works on saves and a friend's near miss, not on ability checks; Recover Vitality
   spends the dice the hurt needs; training to gain levels is omitted; danger 8-10 stand for levels 6, 11 and 20 (0-7
   unchanged) and bands grow to hosts where the budget is for heroes; named beasts grow with the party's tier (hit
-  points x1.5/2.5/4). High-tier fights are easy until the bestiary expansions bring creatures for them.
+  points x2.5/4 from level 11). High-tier fights are easy until the bestiary expansions bring creatures for them.
 Ideas for later:
 - (none yet)
 Next session starts at: task B.1 in docs/expansions/03-demigods-magics.md (Part B, the four classes: Fighter and Champion 2024, the Knight to 18).
