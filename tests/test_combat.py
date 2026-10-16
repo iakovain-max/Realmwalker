@@ -859,7 +859,7 @@ def hero_at(tables, cls, level, sub=None, seed=1, race="human"):
 
 
 def test_sculpt_spells_spares_friends_in_the_fire(tables):
-    wiz = hero_at(tables, "wizard", 3, "evocation")
+    wiz = hero_at(tables, "wizard", 6, "evocation")
     friend = hero(tables, "fighter", seed=3)
     b = battle(tables, [wiz, friend], foes(tables, "bandit"), spots={0: (3, 4), 1: (5, 4), 2: (6, 4)})
     caster, ally = b.side(PARTY)

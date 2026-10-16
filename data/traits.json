@@ -228,13 +228,24 @@
       "name": "Guided Strike", "text": "Channel Divinity: +10 to an attack roll that would have missed, the cleric's own or a friend's within 30 feet.",
       "hooks": [{"event": "attack_missed", "as": "any", "handler": "guided_strike"}]
     },
-    "arcane_recovery": {"name": "Arcane Recovery", "text": "Some spell slots back on a short rest, once a day.", "where": "rest"},
+    "arcane_recovery": {"name": "Arcane Recovery", "text": "Spell slots back on a short rest, once between long rests: half the level in slot levels, none above 5.", "where": "rest"},
+    "ritual_adept": {"name": "Ritual Adept", "text": "Rituals cast from the spellbook, ready or not.", "where": "game/magic.py"},
+    "memorize_spell": {"name": "Memorize Spell", "text": "A prepared spell swapped after a short rest.", "where": "spells"},
+    "spell_mastery": {"name": "Spell Mastery", "text": "A level 1 and a level 2 spell cast at will.", "where": "spells.free_cast"},
+    "signature_spells": {"name": "Signature Spells", "text": "Two level 3 spells cast once each without a slot, back with a short rest.", "where": "spells.free_cast"},
+    "potent_cantrip": {"name": "Potent Cantrip", "text": "A cantrip that misses or is saved against still does half its damage.", "where": "effects"},
     "sculpt_spells": {"name": "Sculpt Spells", "text": "Friends can be left out of the wizard's evocations.", "where": "spells"},
-    "empowered_evocation": {"name": "Empowered Evocation", "text": "Evocations add the wizard's Intelligence modifier to their damage.", "where": "spells"},
+    "empowered_evocation": {"name": "Empowered Evocation", "text": "Evocations add the wizard's Intelligence modifier to one damage roll.", "where": "spells"},
+    "overchannel": {"name": "Overchannel", "text": "A spell of level 1 to 5 at its greatest damage; after the first time, at a price in necrotic.", "where": "effects.cast"},
     "arcane_ward": {
-      "name": "Arcane Ward", "text": "The first abjuration of the day weaves a ward that takes blows; each one after strengthens it.",
-      "hooks": [{"event": "spell_cast", "as": "self", "handler": "arcane_ward"}, {"event": "damage_incoming", "as": "target", "handler": "ward_soak"}]
+      "name": "Arcane Ward", "text": "The first abjuration cast with a slot after a long rest weaves a ward that takes blows; each one after mends it, and a slot can be poured into it.",
+      "hooks": [{"event": "spell_cast", "as": "self", "handler": "arcane_ward"}, {"event": "damage_incoming", "as": "target", "handler": "ward_soak"}],
+      "activate": {"id": "ward_mend", "name": "Arcane Ward: mend it with a spell slot (bonus action)", "cost": "bonus", "does": "ward",
+                   "requires": ["ward_mendable"], "effects": [{"op": "special", "handler": "ward_mend"}]}
     },
+    "spell_breaker": {"name": "Spell Breaker", "text": "Counterspell always ready; its slot kept when the spell holds.", "where": "Battle._countered"},
+    "spell_resistance": {"name": "Spell Resistance", "text": "Advantage on saves against spells; their damage halved.",
+                         "modifiers": [{"save": "advantage", "when": ["against_spell"], "why": "spell resistance"}]},
     "projected_ward": {
       "name": "Projected Ward", "text": "The ward can take a blow meant for a friend within 30 feet.",
       "hooks": [{"event": "damage_incoming", "as": "ally", "handler": "projected_ward", "reaction": true}]

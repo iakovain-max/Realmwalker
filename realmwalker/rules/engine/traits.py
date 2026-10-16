@@ -147,4 +147,5 @@ WHEN: dict[str, Callable[[Ctx], bool]] = {
     "melee": lambda c: c.opt is not None and c.opt.is_melee,
     "ranged": lambda c: c.opt is not None and not c.opt.is_melee,
     "weapon": lambda c: c.opt is not None and c.opt.kind in ("melee", "ranged"),
+    "against_spell": lambda c: c.b is not None and c.b.__dict__.get("_casting") is not None,  # a spell being cast
 }

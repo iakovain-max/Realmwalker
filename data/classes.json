@@ -81,7 +81,7 @@
         {"level": 4, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two."},
         {"level": 5, "id": "cunning_strike", "name": "Cunning Strike", "text": "Give up Sneak Attack dice for a trick: poison (1d6, with a poisoner's kit), trip (1d6) or withdraw (1d6).", "rule": "cunning_strike"},
         {"level": 5, "id": "uncanny_dodge", "name": "Uncanny Dodge", "text": "Once per round, halve the damage of an attack you can see.", "rule": "uncanny_dodge"},
-        {"level": 6, "id": "expertise_2", "name": "Expertise", "text": "Two more skills gain double proficiency.", "rule": "expertise"},
+        {"level": 6, "id": "expertise_2", "name": "Expertise", "text": "Two more skills gain double proficiency.", "rule": "expertise", "expertise": {"count": 2}},
         {"level": 7, "id": "evasion", "name": "Evasion", "text": "Take no damage from area effects you save against, and half if you fail.", "rule": "evasion"},
         {"level": 7, "id": "reliable_talent", "name": "Reliable Talent", "text": "A check with a skill or tool you are trained in never rolls lower than 10.", "rule": "reliable_talent"},
         {"level": 8, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two."},
@@ -178,9 +178,9 @@
       "description": "A scholar of forbidden power. Wizards learn magic from books, at ruinous cost in years and coin; some kingdoms license them, others burn them.",
       "hit_die": 6, "primary": ["int", "con", "dex"],
       "saves": ["int", "wis"],
-      "armor": [], "weapons": ["dagger", "dart", "sling", "quarterstaff", "light_crossbow"], "tools": [],
+      "armor": [], "weapons": ["simple"], "tools": [],
       "skill_count": 2,
-      "skill_choices": ["arcana", "history", "insight", "investigation", "medicine", "religion"],
+      "skill_choices": ["arcana", "history", "insight", "investigation", "medicine", "nature", "religion"],
       "suggested": {"str": 8, "dex": 14, "con": 13, "int": 15, "wis": 12, "cha": 10},
       "choices_at_1": [],
       "spellcasting": {"ability": "int", "type": "spellbook",
@@ -190,25 +190,34 @@
                   [4, 3, 3, 3, 2, 1, 1, 1], [4, 3, 3, 3, 2, 1, 1, 1], [4, 3, 3, 3, 2, 1, 1, 1, 1],
                   [4, 3, 3, 3, 3, 1, 1, 1, 1], [4, 3, 3, 3, 3, 2, 1, 1, 1], [4, 3, 3, 3, 3, 2, 2, 1, 1]]},
       "features": [
-        {"level": 1, "id": "spellcasting", "name": "Spellcasting", "text": "Cast spells from your spellbook; copy new ones from scrolls and books.", "rule": "spellcasting"},
-        {"level": 1, "id": "arcane_recovery", "name": "Arcane Recovery", "text": "Once a day, after a short rest, recover spent spell slots (total levels up to half your level).", "rule": "arcane_recovery"},
-        {"level": 2, "id": "subclass", "name": "Arcane Tradition", "text": "Choose your school: Evocation or Abjuration."},
-        {"level": 4, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two."},
-        {"level": 8, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two."},
+        {"level": 1, "id": "spellcasting", "name": "Spellcasting", "text": "Cast spells from your spellbook; copy new ones from scrolls and books (two hours and 50 coins a level), and two more come with every level.", "rule": "spellcasting"},
+        {"level": 1, "id": "ritual_adept", "name": "Ritual Adept", "text": "Any ritual in your spellbook can be cast as a ritual, read from the book: ten minutes longer, and no spell slot.", "rule": "ritual_adept"},
+        {"level": 1, "id": "arcane_recovery", "name": "Arcane Recovery", "text": "Once between long rests, a short rest with your spellbook brings back spent spell slots: levels adding up to half your level (rounded up), none of level 6 or higher.", "rule": "arcane_recovery"},
+        {"level": 2, "id": "scholar", "name": "Scholar", "text": "A field of study besides magic: Expertise in one of Arcana, History, Investigation, Medicine, Nature or Religion that you know.", "expertise": {"count": 1, "skills": ["arcana", "history", "investigation", "medicine", "nature", "religion"]}},
+        {"level": 3, "id": "subclass", "name": "Wizard Subclass", "text": "Your school: the Evoker or the Abjurer."},
+        {"level": 4, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two, or a feat."},
+        {"level": 5, "id": "memorize_spell", "name": "Memorize Spell", "text": "After a short rest, one spell you have prepared may be swapped for another from your spellbook.", "rule": "memorize_spell"},
+        {"level": 8, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two, or a feat."},
         {"level": 12, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two, or a feat."},
         {"level": 16, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two, or a feat."},
-        {"level": 19, "id": "epic_boon", "name": "Epic Boon", "text": "A gift of legend: an epic boon (or another feat), each raising one ability as high as 30."}
+        {"level": 18, "id": "spell_mastery", "name": "Spell Mastery", "text": "A level 1 and a level 2 spell from your spellbook, each cast with an action, are yours at will: cast at their own level without a slot.", "rule": "spell_mastery", "picks": [{"key": "mastery", "spell_level": 1, "count": 1, "cast": "action"}, {"key": "mastery", "spell_level": 2, "count": 1, "cast": "action"}]},
+        {"level": 19, "id": "epic_boon", "name": "Epic Boon", "text": "A gift of legend: an epic boon (or another feat), each raising one ability as high as 30. Boon of Spell Recall suits a wizard."},
+        {"level": 20, "id": "signature_spells", "name": "Signature Spells", "text": "Two level 3 spells from your spellbook become your signature: each can be cast once at level 3 without a slot, and comes back with a short or long rest.", "rule": "signature_spells", "picks": [{"key": "signature", "spell_level": 3, "count": 2}]}
       ],
       "subclasses": {
-        "evocation": {"name": "School of Evocation", "text": "Fire, frost and lightning.", "features": [
-          {"level": 2, "id": "sculpt_spells", "name": "Sculpt Spells", "text": "Your area spells spare allies you choose.", "rule": "sculpt_spells"},
-          {"level": 6, "id": "potent_cantrip", "name": "Potent Cantrip", "text": "Targets who save against your cantrips still take half damage."},
-          {"level": 10, "id": "empowered_evocation", "name": "Empowered Evocation", "text": "Add your Intelligence bonus to evocation damage.", "rule": "empowered_evocation"}
+        "evocation": {"name": "Evoker", "text": "Fire, frost, thunder and lightning, aimed like artillery.", "features": [
+          {"level": 3, "id": "evocation_savant", "name": "Evocation Savant", "text": "Two evocation spells of level 1 or 2 copied into your spellbook for nothing, and one more each time a new level of spell slots opens.", "savant": "evocation"},
+          {"level": 3, "id": "potent_cantrip", "name": "Potent Cantrip", "text": "A damaging cantrip that misses, or that its target saves against, still does half its damage (and nothing else).", "rule": "potent_cantrip"},
+          {"level": 6, "id": "sculpt_spells", "name": "Sculpt Spells", "text": "Your evocations leave out friends you can see: as many as one plus the spell's level are untouched.", "rule": "sculpt_spells"},
+          {"level": 10, "id": "empowered_evocation", "name": "Empowered Evocation", "text": "Your Intelligence modifier added to one damage roll of each wizard evocation.", "rule": "empowered_evocation"},
+          {"level": 14, "id": "overchannel", "name": "Overchannel", "text": "A damaging wizard spell of level 1 to 5 cast with a slot does its greatest damage. Free the first time between long rests; after that it costs 2d12 necrotic for each slot level, a d12 more each time.", "rule": "overchannel"}
         ]},
-        "abjuration": {"name": "School of Abjuration", "text": "Wards, seals and banishings.", "features": [
-          {"level": 2, "id": "arcane_ward", "name": "Arcane Ward", "text": "Casting abjurations raises a ward that soaks up damage.", "rule": "arcane_ward"},
-          {"level": 6, "id": "projected_ward", "name": "Projected Ward", "text": "Your ward can protect an ally."},
-          {"level": 10, "id": "improved_abjuration", "name": "Improved Abjuration", "text": "Add your proficiency bonus when you try to end a spell or effect."}
+        "abjuration": {"name": "Abjurer", "text": "Wards, seals and banishings; the shield of companions.", "features": [
+          {"level": 3, "id": "abjuration_savant", "name": "Abjuration Savant", "text": "Two abjuration spells of level 1 or 2 copied into your spellbook for nothing, and one more each time a new level of spell slots opens.", "savant": "abjuration"},
+          {"level": 3, "id": "arcane_ward", "name": "Arcane Ward", "text": "Your first abjuration cast with a slot after a long rest weaves a ward (twice your level + Intelligence) that takes damage meant for you; each abjuration after mends it by twice the slot's level, and a bonus action can spend a slot to do the same.", "rule": "arcane_ward"},
+          {"level": 6, "id": "projected_ward", "name": "Projected Ward", "text": "With your reaction, the ward takes the damage of a creature you can see within 30 feet.", "rule": "projected_ward"},
+          {"level": 10, "id": "spell_breaker", "name": "Spell Breaker", "text": "Counterspell and Dispel Magic are always ready for you; Dispel Magic takes only a bonus action and adds your proficiency to its check; a slot spent on either is kept if the spell does not stop a spell.", "rule": "spell_breaker"},
+          {"level": 14, "id": "spell_resistance", "name": "Spell Resistance", "text": "Advantage on saving throws against spells, and resistance to the damage of spells.", "rule": "spell_resistance"}
         ]}
       },
       "kits": [

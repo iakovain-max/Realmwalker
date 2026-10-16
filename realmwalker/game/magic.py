@@ -177,9 +177,12 @@ def cast_on_road(game, caster, spell_id: str, target=None) -> list[str]:
         return care.cast(game, caster, target, wound, spell_id)
     level = spell["level"]
     ritual = bool(spell.get("ritual"))  # a Ritual (2024): ten minutes longer, and no slot spent
-    slot = spellrules.lowest_free_slot(caster, t, level) if level and not ritual else None
-    if level and not ritual and slot is None:
+    free = spellrules.free_cast(caster, t, spell_id) if level and not ritual else None  # (Spell Mastery...)
+    slot = spellrules.lowest_free_slot(caster, t, level) if level and not ritual and not free else None
+    if level and not ritual and not free and slot is None:
         return ["No spell slot left for that. A long rest restores them."]
+    if free:
+        spellrules.spend_free(caster, spell_id, free)
     if slot:
         spellrules.spend_slot(caster, slot)
     if ritual:

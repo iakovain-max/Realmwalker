@@ -157,6 +157,12 @@ def _blink_ready(b, f) -> str | None:
     return boons.blink_ok(b, f)
 
 
+def _ward_mendable(b, f) -> str | None:
+    from realmwalker.rules.engine.handlers import wizard
+
+    return wizard.mend_problem(b, f)
+
+
 def _vitality_left(b, f) -> str | None:
     from realmwalker.rules.engine.handlers import boons
 
@@ -188,6 +194,7 @@ REQUIRES: dict[str, Callable] = {
     "not_moved": _not_moved,
     "surge_ready": _surge_ready,
     "blink_ready": _blink_ready,
+    "ward_mendable": _ward_mendable,
     "vitality_left": _vitality_left,
     "in_shadow": _in_shadow,
     "not_sensing": _not_sensing,

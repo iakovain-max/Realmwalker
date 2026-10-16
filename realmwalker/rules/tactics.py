@@ -717,6 +717,9 @@ def _pick_cast(b: Battle, f: Fighter, cost: str, *, beat: float = 0.0, care: flo
         if sp.get("concentration") and sp["level"] > 0 and importance(b, f) < 0.15:
             continue
         price = spell_cost(b, f, sp["level"] if not str(opt.value).startswith(("scroll:", "charge:")) else 0)
+        free = spellrules.free_cast(f.char, b.t, opt.value) if f.char is not None else None
+        if free:  # (Spell Mastery costs nothing; a signature spell comes back with a short rest)
+            price = 0.0 if free == "mastery" else price * 0.3
         for target, point in _aims(b, f, opt):
             w = estimates.spell_value(b, f, opt.value, target=target, point=point)
             if w.total(care=care) <= 0.5:
@@ -827,6 +830,8 @@ def _party_turn(b: Battle, f: Fighter) -> None:
         if _cast_something(b, f):
             if b.current is f and b.outcome is None:
                 _bonus_strike(b, f)  # (the spiritual weapon, War Priest)
+            if b.current is f and b.outcome is None:
+                _mend_ward(b, f)
             if b.current is f and b.outcome is None and f.move_left >= 5:
                 _keep_safe(b, f)
             return
@@ -854,6 +859,8 @@ def _party_turn(b: Battle, f: Fighter) -> None:
         struck = _fight(b, f, opts, attacks)
         if struck and b.current is f and b.outcome is None:
             _bonus_strike(b, f)
+    if b.current is f and b.outcome is None:
+        _mend_ward(b, f)
     if b.current is f and b.outcome is None and f.bonus > 0:
         _mind_shove(b, f)
     if b.current is f and b.outcome is None and f.bonus > 0:
@@ -903,6 +910,18 @@ def tactical_mastery(b: Battle, f: Fighter, kind: str, target: Fighter) -> str:
     if kind in ("graze", "nick", "slow", "push") and target.active:
         return "sap"
     return kind
+
+
+def _mend_ward(b: Battle, f: Fighter) -> None:
+    """An abjurer with the bonus action to spare pours a low slot into a ward that is half gone, while foes are near."""
+    if f.bonus <= 0 or not any(e.standing and b.feet(f, e) <= 60 for e in b.enemies_of(f)):
+        return
+    from realmwalker.rules.engine.handlers import wizard
+
+    for opt, a in _abilities(b, f, "ward"):
+        if f.char.uses.get("arcane_ward", 0) <= wizard.ward_most(f) // 2:
+            b.do_ability(f, opt.value)
+            return
 
 
 def _divine_help(b: Battle, f: Fighter) -> None:

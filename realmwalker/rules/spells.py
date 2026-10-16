@@ -80,9 +80,32 @@ def known_spells(char: Character, tables) -> list[str]:
     top = max_spell_level(char, tables)
     if char.cls == "wizard":
         out += [s for s in char.spells.get("spellbook", []) if s in tables.spells and tables.spells[s]["level"] <= top]
+        if "spell_breaker" in char.features:  # (an abjurer's Spell Breaker: always ready, in the book or not)
+            out += [s for s in SPELL_BREAKER if s in tables.spells and tables.spells[s]["level"] <= top]
     else:
         out += [s for s in tables.spells.for_class(char.cls, top) if tables.spells[s]["level"] > 0]
     return list(dict.fromkeys(out))
+
+
+SPELL_BREAKER = ("counterspell", "dispel_magic")  # (Dispel Magic comes with the catalogue, Part D)
+
+
+def free_cast(char: Character, tables, spell_id: str, slot_level: int | None = None) -> str | None:
+    """How a spell can be cast at its own level without a slot, or None: a wizard's Spell Mastery ("mastery", at
+    will) or Signature Spells ("signature", once until a short or long rest)."""
+    sp = tables.spells.defs.get(spell_id)
+    if sp is None or sp["level"] == 0 or not char.spells or (slot_level and slot_level != sp["level"]):
+        return None
+    if spell_id in char.spells.get("mastery", ()) and "spell_mastery" in char.features:
+        return "mastery"
+    if spell_id in char.spells.get("signature", ()) and "signature_spells" in char.features             and char.uses.get(f"signature:{spell_id}", 0) > 0:
+        return "signature"
+    return None
+
+
+def spend_free(char: Character, spell_id: str, how: str | None) -> None:
+    if how == "signature":
+        char.uses[f"signature:{spell_id}"] = 0
 
 
 def armour_problem(char: Character, tables) -> str:
@@ -97,7 +120,7 @@ def can_cast(char: Character, tables, spell_id: str) -> tuple[bool, str]:
     spell = tables.spells[spell_id]
     if "item" not in spell.get("classes", ()) and armour_problem(char, tables):
         return False, armour_problem(char, tables)
-    if spell["level"] == 0:
+    if spell["level"] == 0 or free_cast(char, tables, spell_id):
         return True, ""
     left = slots_left(char, tables)
     if any(left[i] > 0 for i in range(spell["level"] - 1, len(left))):
@@ -259,6 +282,12 @@ def lowest_free_slot(char: Character, tables, level: int) -> int | None:
 def spend_slot(char: Character, slot_level: int) -> None:
     used = char.spells.setdefault("slots_used", [0] * 9)
     used[slot_level - 1] += 1
+
+
+def unspend_slot(char: Character, slot_level: int) -> None:
+    """A slot given back (a spell that was countered, a Spell Breaker's Counterspell that stopped nothing)."""
+    used = char.spells.setdefault("slots_used", [0] * 9)
+    used[slot_level - 1] = max(0, used[slot_level - 1] - 1)
 
 
 def restore_slots(char: Character) -> None:

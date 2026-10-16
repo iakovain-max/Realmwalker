@@ -2254,6 +2254,11 @@ class Battle:
         return (f.char is not None and dtype not in ("psychic", "radiant")
                 and feats.has(f.char, "boon_of_the_night_spirit") and self.light_on(f) < grid.BRIGHT)
 
+    def _spell_resisted(self, f: Fighter, att: Fighter | None) -> bool:
+        """An abjurer's Spell Resistance: the damage of a spell (as it is cast) is halved."""
+        return att is not None and self.__dict__.get("_casting") is att and f.char is not None \
+            and f.has_trait("spell_resistance")
+
     def _ignores_resist(self, att: Fighter | None, dtype: str) -> bool:
         """Poisoner (poison from anything they do) and Elemental Adept (their spells' element) cut through
         resistance."""
@@ -2266,12 +2271,16 @@ class Battle:
         return self.__dict__.get("_casting") is att and dtype in feats.adept_types(att.char)
 
     def _hit(self, att: Fighter | None, target: Fighter, amount: int, dtype: str, *, crit: bool, weapon: str,
-             bite: bool = False, claws: bool = False) -> None:
-        """Damage that landed: resistances, text, wounds, going down."""
+             bite: bool = False, claws: bool = False, raw: bool = False) -> None:
+        """Damage that landed: resistances, text, wounds, going down. `raw`: nothing resists it (an evoker's
+        Overchannel)."""
         rolled_amount = amount
-        shadow = self._night_spirit(target, dtype)
-        amount, defence = query.damage_taken(target, amount, dtype, ignore_resist=self._ignores_resist(att, dtype),
-                                             resist=shadow)
+        shadow = self._night_spirit(target, dtype) or self._spell_resisted(target, att)
+        if raw:
+            defence = ""
+        else:
+            amount, defence = query.damage_taken(target, amount, dtype, ignore_resist=self._ignores_resist(att, dtype),
+                                                 resist=shadow)
         changed = {"immune": "immune: none", "vulnerable": "vulnerable: doubled",
                    "threshold": "below its damage threshold: none"}.get(defence) \
             or ("resisted: halved" if amount < rolled_amount and (shadow or query.resists(target, dtype)) else "")
@@ -3034,10 +3043,11 @@ class Battle:
             return False
         sc = f.cdef["spellcasting"]
         level = spell["level"]
+        slot_i = None
         if self._per_day(f, sid) is not None:
             self._spend_per_day(f, sid)
         elif level and sid not in sc.get("at_will", []):
-            i = next(i for i in range(level - 1, len(f.slots)) if f.slots[i] > 0)
+            slot_i = i = next(i for i in range(level - 1, len(f.slots)) if f.slots[i] > 0)
             f.slots[i] -= 1
             level = i + 1
         bonus_cast = spell.get("cast") == "bonus"
@@ -3047,8 +3057,10 @@ class Battle:
         else:
             f.cast_action_spell = True
         f.hidden = 0
-        self.cast(f, sid, spell, target, point, up=max(0, level - spell["level"]), mod=f.mod(sc["ability"]),
-                  dc=int(sc["dc"]), bonus=int(sc["attack"]), mult=1, level=level)
+        if not self.cast(f, sid, spell, target, point, up=max(0, level - spell["level"]), mod=f.mod(sc["ability"]),
+                         dc=int(sc["dc"]), bonus=int(sc["attack"]), mult=1, level=level, slotted=slot_i is not None):
+            if slot_i is not None:
+                f.slots[slot_i] += 1  # (countered: the slot is not spent, 2024)
         self._check_end()
         return True
 
@@ -3344,12 +3356,19 @@ class Battle:
             level = 0  # the item's own magic, or a gift of blood or training (no slot)
         if level > 0 and f.__dict__.get("free_slot", 0) >= level:
             level = 0  # (the god casts it: Divine Intervention, War God's Blessing)
+        at_will = spellrules.free_cast(c, self.t, sid, slot_level) if level > 0 else None
+        if at_will:  # (a wizard's Spell Mastery or Signature Spells: at the spell's own level, no slot)
+            spellrules.spend_free(c, sid, at_will)
+            slot_level = level
+            level = 0
+        slotted = False
         if level > 0:
             slot_level = slot_level or spellrules.lowest_free_slot(c, self.t, level)
             if slot_level is None:
                 self.say("No spell slot left for that.", "warn")
                 return False
             spellrules.spend_slot(c, slot_level)
+            slotted = True
         self._spend(f, bonus_cast)
         if bonus_cast:
             f.cast_bonus_spell = True
@@ -3365,14 +3384,68 @@ class Battle:
             dc = 8 + s.proficiency + mod
             bonus = s.proficiency + mod + s.attack_condition()
         mult = spellrules.cantrip_multiplier(c.level) if spell.get("cantrip_scaling") else 1
-        self.cast(f, sid, spell, target, point, up=up, mod=mod, dc=dc, bonus=bonus, mult=mult, level=slot_level or level)
+        if not self.cast(f, sid, spell, target, point, up=up, mod=mod, dc=dc, bonus=bonus, mult=mult,
+                         level=slot_level or level, slotted=slotted) and slotted:
+            spellrules.unspend_slot(c, slot_level)  # (countered: the slot is not spent, 2024)
         self._after_action(f)
         return True
 
     def cast(self, f: Fighter, sid: str, spell: dict, target: Fighter | None, point: tuple[int, int] | None, *,
-             up: int, mod: int, dc: int, bonus: int, mult: int, level: int) -> None:
-        """A spell's effects, once it has been paid for (rules/engine/effects.py)."""
-        effects.cast(self, f, sid, spell, target, point, up=up, mod=mod, dc=dc, bonus=bonus, mult=mult, level=level)
+             up: int, mod: int, dc: int, bonus: int, mult: int, level: int, slotted: bool = True) -> bool:
+        """A spell's effects, once it has been paid for (rules/engine/effects.py); False if a foe's Counterspell
+        stopped it (the action spent, the effects lost)."""
+        if self._countered(f, sid, spell):
+            return False
+        effects.cast(self, f, sid, spell, target, point, up=up, mod=mod, dc=dc, bonus=bonus, mult=mult, level=level,
+                     slotted=slotted)
+        return True
+
+    def _countered(self, caster: Fighter, sid: str, spell: dict) -> bool:
+        """Counterspell (2024): a foe within 60 feet who sees the casting may answer with its reaction and a level 3
+        slot; the caster makes a Constitution save, and on a failure the spell comes to nothing. A Spell Breaker's
+        slot is kept when the spell holds."""
+        from realmwalker.rules.engine.handlers import wizard
+
+        if spell.get("ability") or spell.get("thrown") or "item" in spell.get("classes", ()) or sid == "counterspell":
+            return False
+        for x in self.enemies_of(caster):
+            if not x.reaction or query.incapacitated(x) or self.feet(x, caster) > 60 or not self.can_see(x, caster) \
+                    or self.antimagic(x.cells):
+                continue
+            slot = wizard.counter_slot(self, x)
+            if slot is None:
+                continue
+            if not reactions.yes(self, Decision(
+                    x, "counterspell", f"{caster.the_name} begins to cast {spell['name']}. Counterspell? They make a "
+                    "Constitution save; if they fail, the spell comes to nothing.",
+                    [("yes", f"Counterspell (a level {slot} slot)"), ("no", "Let it be cast")],
+                    default="yes" if spell["level"] >= 1 else "no")):
+                continue
+            wizard.pay_counter(self, x, slot)
+            x.reaction = False
+            if x.char is not None:  # (an abjuration: an abjurer's ward)
+                events.emit(self, "spell_cast", actor=x, spell=self.t.spells["counterspell"], sid="counterspell",
+                            level=slot)
+            self.say(f"<magic>{x.the_name} cuts across the spell with a Counterspell.</>", "magic")
+            self._event("cast", by=x.id, to=caster.id, spell="counterspell", effect="condition", look="curse",
+                        dtype="force", area=[])
+            before = self.__dict__.get("_casting")
+            self._casting = x  # (a save against a spell: Spell Resistance)
+            try:
+                held = self._save(caster, "con", wizard.counter_dc(self, x))
+            finally:
+                self._casting = before
+            if held:
+                self.say(f"{caster.the_name} holds the spell together.", "info")
+                if x.char is not None and x.has_trait("spell_breaker"):
+                    spellrules.unspend_slot(x.char, slot)
+                    self.say("<magic>The slot is not lost.</> (Spell Breaker)", "magic")
+                continue
+            self.say(f"{caster.the_name}'s {spell['name']} unravels into nothing.",
+                     "good" if x.side == PARTY else "danger")
+            self._event("countered", who=caster.id, by=x.id, spell=sid)
+            return True
+        return False
 
     # ------------------------------------------------------------------ concentration
     def _start_concentration(self, f: Fighter, sid: str, spell: dict) -> None:

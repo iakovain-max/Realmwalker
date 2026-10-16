@@ -126,7 +126,7 @@ def _traits(f):
 
 @handler("arcane_ward")
 def arcane_ward(b, f, ev, hook, buff) -> None:
-    if ev.spell.get("school") == "abjuration":
+    if ev.spell.get("school") == "abjuration" and getattr(ev, "slotted", True):  # (cast with a slot, 2024)
         make_ward(b, f, ev.level)
 
 

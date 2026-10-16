@@ -80,7 +80,9 @@ class Cast:
     bonus: int = 0  # spell attack bonus
     mult: int = 1  # cantrip dice multiplier
     level: int = 0  # the level it was cast at
-    empowered: int = 0  # damage added to each damage roll (Empowered Evocation)
+    empowered: int = 0  # damage added to one damage roll (Empowered Evocation, Potent Spellcasting)
+    maximize: bool = False  # every damage die at its highest (an evoker's Overchannel)
+    slotted: bool = True  # cast with a spell slot (not a scroll, a free cast, an item's or a creature's own magic)
     pushed: list = field(default_factory=list)  # (fighter, feet) to throw back once everyone has saved
 
 
@@ -98,7 +100,7 @@ def mechanic(spell: dict) -> str:
 
 
 def cast(b, f, sid: str, spell: dict, target, point, *, up: int, mod: int, dc: int, bonus: int, mult: int,
-         level: int) -> None:
+         level: int, slotted: bool = True) -> None:
     """A spell's effects, once it has been paid for (by a party caster, or a monster's own magic)."""
     area = b.spell_area(f, sid, point, target) if spell.get("area") else []
     if spell.get("thrown"):
@@ -110,18 +112,27 @@ def cast(b, f, sid: str, spell: dict, target, point, *, up: int, mod: int, dc: i
              shape=(spell.get("area") or {}).get("shape", ""))
     if spell.get("concentration"):
         b._start_concentration(f, sid, spell)
-    events.emit(b, "spell_cast", actor=f, spell=spell, sid=sid, level=level)  # an Arcane Ward...
-    c = Cast(b, f, sid, spell, target, point, list(area), up, mod, dc, bonus, mult, level)
+    events.emit(b, "spell_cast", actor=f, spell=spell, sid=sid, level=level, slotted=slotted)  # an Arcane Ward...
+    c = Cast(b, f, sid, spell, target, point, list(area), up, mod, dc, bonus, mult, level, slotted=slotted)
     if f.char is not None and spell.get("school") == "evocation" and f.char.cls == "wizard" \
             and f.has_trait("empowered_evocation"):
         c.empowered = mod
     if f.char is not None and spell.get("level") == 0 and "cleric" in spell.get("classes", ()) \
             and f.has_trait("blessed_potent_spellcasting"):
         c.empowered = max(c.empowered, f.mod("wis"))  # (a cleric's Potent Spellcasting)
+    if slotted and 1 <= level <= 5 and f.char is not None and "wizard" in spell.get("classes", ()) \
+            and f.has_trait("overchannel") and spellrules.harms(spell):
+        from realmwalker.rules.engine.handlers import wizard
+
+        c.maximize = wizard.overchannel(b, f, spell, level)
     before = b.__dict__.get("_casting")
     b._casting = f if not spell.get("ability") and "item" not in spell.get("classes", ()) else None
     try:
         run(c, spell.get("effects", ()))
+        if c.maximize:
+            from realmwalker.rules.engine.handlers import wizard
+
+            wizard.overchannel_price(b, f)
     finally:
         b._casting = before
 
@@ -142,9 +153,17 @@ def expr(c: Cast, base: str, up: str = "", *, scaling: bool = False, empower: bo
             n += un * c.up
     if empower:
         flat += c.empowered
+    if c.maximize:
+        return str(n * sides + flat)  # (Overchannel: the greatest the dice can do)
     if not n:
         return str(flat)
     return f"{n}d{sides}{'+' + str(flat) if flat > 0 else (str(flat) if flat < 0 else '')}"
+
+
+def potent(c: Cast) -> bool:
+    """An evoker's Potent Cantrip: a cantrip that misses, or that is saved against, still does half its damage."""
+    return c.spell.get("level") == 0 and c.caster.char is not None and c.caster.has_trait("potent_cantrip") \
+        and not c.spell.get("ability") and "item" not in c.spell.get("classes", ())
 
 
 def _allowed(o: dict, x) -> bool:
@@ -188,8 +207,15 @@ def _attack(c: Cast, o: dict, victim) -> None:
             opt = AttackOption("spell", spell["name"].lower(), "spell_melee" if o["attack"] == "melee" else "spell_ranged",
                                c.bonus, expr(c, dice_, up, scaling=o.get("scaling") == "cantrip", empower=True), dtype,
                                range=(reach, reach))
-            if b._attack(f, opt, target) and target.active:
-                run(c, o.get("on_hit", ()), target)
+            c.empowered = 0  # (one damage roll of the spell: the first ray)
+            if b._attack(f, opt, target):
+                if target.active:
+                    run(c, o.get("on_hit", ()), target)
+            elif potent(c) and (target.active or target.state == "down"):
+                half = _roll(c, opt.damage, dtype) // 2
+                if half > 0:
+                    b.say(f"<magic>The cantrip still bites.</> (Potent Cantrip)", "magic")
+                    b._hit(f, target, half, dtype, crit=False, weapon=spell["name"].lower())
 
 
 @op("darts")
@@ -204,7 +230,7 @@ def _darts(c: Cast, o: dict, victim) -> None:
                 break
             target = min(options, key=lambda x: x.hp)
         dice_, dtype, _ = spellrules.damage_parts(o)[0]
-        amount = dice.roll(dice_, b.rng).total
+        amount = dice.roll(expr(c, dice_), b.rng).total
         b._event("dart", by=f.id, to=target.id, dtype=dtype)
         b._hit(f, target, amount, dtype, crit=False, weapon="dart of force")
 
@@ -223,7 +249,7 @@ def _save(c: Cast, o: dict, victim) -> None:
     rolled = {i: _roll(c, e, t) for i, (e, t) in enumerate(parts)} if c.area else {}
     origin = c.point if spell["target"] == "point" and c.point is not None else (f.x, f.y)
     spared = b.sculpted(f, c.sid, victims, c.level) if c.area else set()
-    on_save = "half" if o.get("half") else "none"
+    on_save = "half" if o.get("half") or (parts and potent(c)) else "none"
     ability = o["ability"]
     dc = int(o.get("dc", c.dc))
     for x in victims:
