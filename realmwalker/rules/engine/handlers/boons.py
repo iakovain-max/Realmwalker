@@ -281,14 +281,15 @@ def escape_artist(c, o, victim) -> None:
 def free_casting(b, f, ev, hook, buff) -> None:
     """A spell cast with a slot of level 1 to 4: a d4 that shows the slot's level keeps it."""
     level = int(getattr(ev, "level", 0) or 0)
-    if f.char is None or not 1 <= level <= 4 or not f.char.spells:
-        return
+    if f.char is None or not 1 <= level <= 4 or not f.char.spells or not getattr(ev, "slotted", True):
+        return  # (a cast without a slot - Spell Mastery, a signature spell - keeps none)
     used = f.char.spells.get("slots_used") or []
     if len(used) < level or used[level - 1] <= 0:
         return
     roll = b.rng.randint(1, 4)
     if roll == level:
         used[level - 1] -= 1
+        ev.kept = True  # (a Spell Breaker's Counterspell then has nothing more to give back)
         b.dice_say(f"{f.name} (Free Casting): d4 = {roll}, the level {level} slot is kept")
         b.say(f"The spell leaves {f.the_name}'s power whole.", "magic")
 

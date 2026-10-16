@@ -406,7 +406,7 @@ def test_cleric_heals_and_turns_undead(tables):
     ids = [a[0] for a in b.class_abilities(caster) if a[2]]
     assert "turn_undead" in ids
     b.do_ability(caster, "turn_undead")
-    assert cleric.uses.get("channel_divinity", 0) == 0
+    assert cleric.uses.get("channel_divinity", 0) == 1  # (2024: two uses from level 2)
 
 
 def test_spiritual_weapon_strikes_where_it_is_put(tables):
@@ -429,9 +429,9 @@ def test_second_wind_heals(tables):
     f.hp = 1
     assert ("second_wind", True) in [(a[0], a[2]) for a in b.class_abilities(f)]
     b.do_ability(f, "second_wind")
-    assert f.hp > 1 and c.uses["second_wind"] == 0 and f.bonus == 0
+    assert f.hp > 1 and c.uses["second_wind"] == 1 and f.bonus == 0  # (2024: two uses at level 1)
     short_rest(c, tables, RNG(2))
-    assert c.uses["second_wind"] == 1
+    assert c.uses["second_wind"] == 2
 
 
 def test_potions_and_bandages(tables):
@@ -859,7 +859,7 @@ def hero_at(tables, cls, level, sub=None, seed=1, race="human"):
 
 
 def test_sculpt_spells_spares_friends_in_the_fire(tables):
-    wiz = hero_at(tables, "wizard", 3, "evocation")
+    wiz = hero_at(tables, "wizard", 6, "evocation")
     friend = hero(tables, "fighter", seed=3)
     b = battle(tables, [wiz, friend], foes(tables, "bandit"), spots={0: (3, 4), 1: (5, 4), 2: (6, 4)})
     caster, ally = b.side(PARTY)
@@ -904,8 +904,8 @@ def test_protection_and_holding_the_line(tables):
     assert not k.reaction and any("shield in the way" in t for t, _ in b.log)
 
 
-def test_a_cutthroat_strikes_first_and_hard(tables):
-    rogue = hero_at(tables, "rogue", 3, "cutthroat")
+def test_an_assassin_strikes_first_and_hard(tables):
+    rogue = hero_at(tables, "rogue", 3, "assassin")
     b = battle(tables, [rogue], foes(tables, "bandit"), spots={0: (4, 4), 1: (5, 4)})
     r, bandit = b.side(PARTY)[0], b.side(FOE)[0]
     knife = next(o for o in b.attack_options(r) if o.is_melee)
@@ -920,9 +920,9 @@ def test_indomitable_and_guided_strike(tables):
     fighter = hero_at(tables, "fighter", 9, "champion")
     b = battle(tables, [fighter], foes(tables, "wolf"))
     f = b.side(PARTY)[0]
-    assert not b._save(f, "wis", 99)  # nobody makes DC 99, but it is tried twice
+    b._save(f, "wis", 26)  # out of reach of the first roll; the second adds the fighter's level (2024)
     assert fighter.uses["indomitable"] == 0 and any("indomitable" in t for t, _ in b.log)
-    priest = hero_at(tables, "cleric", 2, "war")
+    priest = hero_at(tables, "cleric", 3, "war")
     priest.uses["channel_divinity"] = 1
     b2 = battle(tables, [priest], foes(tables, "ogre"), spots={0: (4, 4), 1: (5, 4)})
     c, ogre = b2.side(PARTY)[0], b2.side(FOE)[0]
@@ -932,7 +932,7 @@ def test_indomitable_and_guided_strike(tables):
         if priest.uses["channel_divinity"] == 0:
             break
         b2._attack(c, mace, ogre)
-    assert priest.uses["channel_divinity"] == 0 and any("guides the blow" in t for t, _ in b2.log)
+    assert priest.uses["channel_divinity"] == 0 and any("guides the blow" in t for t, _ in b2.log)  # (both spent)
 
 
 def test_divine_intervention(tables):
@@ -943,20 +943,10 @@ def test_divine_intervention(tables):
     turn_of(b, c)
     ally.hp = 1
     assert ("divine_intervention", True) in [(a[0], a[2]) for a in b.class_abilities(c)]
-    real = RNG(3, "god")
-
-    class Answered:
-        """The dice, except that the god answers (the percentile roll comes up 1)."""
-
-        def __getattr__(self, name):
-            return getattr(real, name)
-
-        def randint(self, a, top):
-            return 1 if top == 100 else real.randint(a, top)
-
-    b.rng = Answered()
-    b.do_ability(c, "divine_intervention")
-    assert ally.hp == ally.max_hp and cleric.uses["divine_intervention"] == 0
+    used = list(cleric.spells.get("slots_used", [0] * 9))
+    b.do_ability(c, "divine_intervention")  # (2024: the god always answers - a cleric spell without a slot)
+    assert cleric.uses["divine_intervention"] == 0 and cleric.spells.get("slots_used", [0] * 9) == used
+    assert any(e["kind"] == "cast" for e in b.events)
     assert ("divine_intervention", False) in [(a[0], a[2]) for a in b.class_abilities(c)]
 
 
@@ -1065,7 +1055,7 @@ def test_the_auto_judges_abilities_by_what_they_do(tables):
     turn_of(b, f)
     f.hp = 2
     tactics.take_turn(b, f)
-    assert c.uses["second_wind"] == 0 and f.hp > 2
+    assert c.uses["second_wind"] == 1 and f.hp > 2
 
     cleric = hero_at(tables, "cleric", 2)
     b = battle(tables, [cleric], foes(tables, "skeleton", "skeleton", "zombie"),
@@ -1074,7 +1064,7 @@ def test_the_auto_judges_abilities_by_what_they_do(tables):
     f.auto = True
     turn_of(b, f)
     tactics.take_turn(b, f)
-    assert cleric.uses.get("channel_divinity", 1) == 0  # turned them
+    assert cleric.uses.get("channel_divinity", 2) == 1  # turned them
 
     rogue = hero_at(tables, "rogue", 2, seed=4)
     b = battle(tables, [rogue], foes(tables, "ogre"), spots={0: (3, 4), 1: (4, 4)})
@@ -1085,7 +1075,7 @@ def test_the_auto_judges_abilities_by_what_they_do(tables):
     tactics.take_turn(b, f)
     assert b.gap(f, ogre) > 1 and f.disengaged and not any(e["kind"] == "opportunity" for e in b.events)
 
-    war = hero_at(tables, "cleric", 1, "war", seed=5)
+    war = hero_at(tables, "cleric", 3, "war", seed=5)  # (War Priest comes with the domain at 3, 2024)
     resources.fill(war, tables)  # (the domain was set after the character was made)
     war.spells["slots_used"] = [9] * 9  # no spell to put first
     b = battle(tables, [war], foes(tables, "ogre"), spots={0: (3, 4), 1: (4, 4)})

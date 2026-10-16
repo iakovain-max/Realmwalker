@@ -182,6 +182,8 @@ class Sheet:
     def skill_bonus(self, skill: str) -> int:
         ability = self.rules["skills"][skill]["ability"]
         bonus = self.mod(ability)
+        if skill in ("arcana", "religion") and "order_thaumaturge" in self.c.features:
+            bonus += max(1, self.mod("wis"))  # (a cleric's Divine Order: Thaumaturge)
         if skill in self.c.expertise:
             bonus += 2 * self.proficiency
         elif skill in self.c.skills:

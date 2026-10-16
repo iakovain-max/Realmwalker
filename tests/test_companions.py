@@ -328,3 +328,25 @@ def test_companions_talk_on_the_road(game):
     assert 2 <= len(said) <= 12, len(said)
     assert all("{" not in line for line in said)
     assert any(comp.first(c) in line for line in said)
+
+
+def test_every_archetype_grows_to_twenty_and_fights(game):
+    """Demigods & Magics B.4: a companion of each sort, of each of its classes, made at level 20 - every choice of the
+    2024 class made (the subclass at 3, Divine Order, Blessed Strikes, Scholar, Spell Mastery...) - fights on Auto."""
+    from realmwalker.rules import tactics
+    from tests.test_feats import fight, on_turn
+
+    s = to_town(game, "city")
+    npc = next(n for n in npcs_in(game.world, s.id) if n.alive)
+    for aid, arch in game.tables.companions["archetypes"].items():
+        for cls in arch["classes"]:
+            c = comp.build(game, npc, cls, arch["background"], 20, RNG(7, f"{aid}:{cls}"), list(arch["story"]))
+            assert c.level == 20 and c.subclass and not c.pending, (aid, cls, c.pending)
+            top = [f["id"] for f in game.tables.classes[cls]["features"] if f["level"] == 20]
+            assert all(t in c.features for t in top if t not in ("asi", "epic_boon", "subclass")), (aid, cls)
+            b = fight(game.tables, c, "bandit", "bandit")
+            me = b.side("party")[0]
+            me.auto = True
+            on_turn(b, me)
+            tactics.take_turn(b, me)
+            assert any(e.get("by") == me.id for e in b.events), (aid, cls)

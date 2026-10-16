@@ -277,13 +277,16 @@ def test_second_wind_heals_and_is_spent_until_a_rest(tables):
     b.order = [me.id, them.id]
     b.turn, b.turn_started = 0, True
     b._start_of_turn(me)
-    assert me.char.uses["second_wind"] == 1
+    assert me.char.uses["second_wind"] == 2  # (2024: twice, from level 1)
     b.do_ability(me, "second_wind")
-    assert 1 + 1 + me.char.level <= me.hp and me.char.uses["second_wind"] == 0
+    assert 1 + 1 + me.char.level <= me.hp and me.char.uses["second_wind"] == 1
+    me.char.uses["second_wind"] = 0
     why = actions.problem(b, me, actions.find(me, "second_wind"))
     assert why == "used; rest to recover"
     short_rest(me.char, tables, RNG(1))
-    assert me.char.uses["second_wind"] == 1
+    assert me.char.uses["second_wind"] == 1  # (a short rest brings back one)
+    short_rest(me.char, tables, RNG(2))
+    assert me.char.uses["second_wind"] == 2
 
 
 def test_a_new_level_brings_its_pools_ready(tables):

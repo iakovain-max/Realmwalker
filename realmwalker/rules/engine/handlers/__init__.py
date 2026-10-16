@@ -6,6 +6,11 @@
     feats.py      the origin feats (PHB 2024 chapter 5)
     general_feats.py   the general and fighting style feats
     boons.py      the epic boons (level 19)
+    fighter.py    the 2024 fighter, the Champion and the Knight
+    rogue.py      the 2024 rogue (Sneak Attack, Cunning Strike), the Thief and the Assassin
+    cleric.py     the 2024 cleric (Divine Spark, Blessed Strikes, Divine Intervention), the Life and War Domains
+    wizard.py     the 2024 wizard (Overchannel, the ward's mending, Counterspell)
 """
 
-from realmwalker.rules.engine.handlers import boons, feats, features, general_feats, mastery, monsters  # noqa: F401  (registering is importing)
+from realmwalker.rules.engine.handlers import (boons, cleric, feats, features, fighter, general_feats,  # noqa: F401
+                                               mastery, monsters, rogue, wizard)  # noqa: F401  (registering is importing)

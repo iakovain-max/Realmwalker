@@ -717,6 +717,9 @@ def _pick_cast(b: Battle, f: Fighter, cost: str, *, beat: float = 0.0, care: flo
         if sp.get("concentration") and sp["level"] > 0 and importance(b, f) < 0.15:
             continue
         price = spell_cost(b, f, sp["level"] if not str(opt.value).startswith(("scroll:", "charge:")) else 0)
+        free = spellrules.free_cast(f.char, b.t, opt.value) if f.char is not None else None
+        if free:  # (Spell Mastery costs nothing; a signature spell comes back with a short rest)
+            price = 0.0 if free == "mastery" else price * 0.3
         for target, point in _aims(b, f, opt):
             w = estimates.spell_value(b, f, opt.value, target=target, point=point)
             if w.total(care=care) <= 0.5:
@@ -814,6 +817,9 @@ def _party_turn(b: Battle, f: Fighter) -> None:
                 break
     if b.current is not f or b.outcome is not None:
         return
+    _divine_help(b, f)
+    if b.current is not f or b.outcome is not None:
+        return
     if f.action > 0 and _use_power(b, f):
         if b.current is f and b.outcome is None:
             _bonus_strike(b, f)
@@ -824,6 +830,8 @@ def _party_turn(b: Battle, f: Fighter) -> None:
         if _cast_something(b, f):
             if b.current is f and b.outcome is None:
                 _bonus_strike(b, f)  # (the spiritual weapon, War Priest)
+            if b.current is f and b.outcome is None:
+                _mend_ward(b, f)
             if b.current is f and b.outcome is None and f.move_left >= 5:
                 _keep_safe(b, f)
             return
@@ -845,10 +853,14 @@ def _party_turn(b: Battle, f: Fighter) -> None:
         dash = next((opt for opt, a in _abilities(b, f, "move") if a.get("via") == "dash"), None)
         if dash is not None:
             b.do_ability(f, dash.value)
+    if opts and b.has_action(f) and f.bonus > 0 and f.moved_feet == 0:
+        _steady_aim(b, f, opts)
     if opts and b.has_action(f):  # (first aid for a fallen friend may have taken the action)
         struck = _fight(b, f, opts, attacks)
         if struck and b.current is f and b.outcome is None:
             _bonus_strike(b, f)
+    if b.current is f and b.outcome is None:
+        _mend_ward(b, f)
     if b.current is f and b.outcome is None and f.bonus > 0:
         _mind_shove(b, f)
     if b.current is f and b.outcome is None and f.bonus > 0:
@@ -863,6 +875,81 @@ def _party_turn(b: Battle, f: Fighter) -> None:
             _step_back(b, f)
         elif "hide" in moves and not b.hide_problem(f):
             b.do_ability(f, moves["hide"].value)
+
+
+def cunning_strike(b: Battle, f: Fighter, target: Fighter, opts: list[str], dice_left: int) -> str | None:
+    """A rogue's Cunning Strike, by what the fight needs: away when hurt and pressed; a strong foe knocked out,
+    dazed or blinded; a foe tripped where friends can fall on it; poison where it takes; the dice kept otherwise."""
+    pressed = sum(1 for e in b.enemies_of(f) if e.standing and b.gap(f, e) <= 1)
+    if "withdraw" in opts and pressed and (f.hp < f.max_hp // 2 or f.prefers_range):
+        return "withdraw"
+    if "stealth" in opts:
+        return "stealth"
+    strong = target.hp > 15 + 4 * dice_left
+    if strong and "knock_out" in opts and dice_left >= 8:
+        return "knock_out"
+    if strong and "daze" in opts:
+        return "daze"
+    if "trip" in opts and target.standing and \
+            any(x is not f and x.active and b.gap(x, target) <= 1 for x in b.allies_of(f)):
+        return "trip"
+    if "poison" in opts and "poisoned" not in target.conditions and not query.condition_immune(target, "poisoned"):
+        return "poison"
+    if strong and "obscure" in opts:
+        return "obscure"
+    return None
+
+
+def tactical_mastery(b: Battle, f: Fighter, kind: str, target: Fighter) -> str:
+    """Tactical Master: drive a foe into harm, sap the blow of a dangerous one still standing, or keep the weapon's
+    own trick when it is the better (topple, vex, cleave...)."""
+    from realmwalker.rules.engine.handlers.mastery import PUSHABLE
+
+    if target.size in PUSHABLE and target.active and _push_lands_in_harm(b, f, target):
+        return "push"
+    if kind in ("graze", "nick", "slow", "push") and target.active:
+        return "sap"
+    return kind
+
+
+def _mend_ward(b: Battle, f: Fighter) -> None:
+    """An abjurer with the bonus action to spare pours a low slot into a ward that is half gone, while foes are near."""
+    if f.bonus <= 0 or not any(e.standing and b.feet(f, e) <= 60 for e in b.enemies_of(f)):
+        return
+    from realmwalker.rules.engine.handlers import wizard
+
+    for opt, a in _abilities(b, f, "ward"):
+        if f.char.uses.get("arcane_ward", 0) <= wizard.ward_most(f) // 2:
+            b.do_ability(f, opt.value)
+            return
+
+
+def _divine_help(b: Battle, f: Fighter) -> None:
+    """A cleric's Channel Divinity for friends: Divine Spark on a friend in a bad way, and War God's Blessing (Shield
+    of Faith on the hard-pressed, a Spiritual Weapon when foes are near) for the bonus action."""
+    for opt, a in _abilities(b, f, "heal_other"):
+        low = [x for x in opt.targets if x.state == "down" or x.hp < x.max_hp // 3]
+        if low and f.action > 0:
+            b.do_ability(f, opt.value, min(low, key=lambda x: (x.state != "down", x.hp, x.id)))
+            break
+    if b.current is not f or b.outcome is not None or f.bonus <= 0:
+        return
+    for opt, a in _abilities(b, f, "bless"):
+        if opt.value == "blessing_weapon" and not any(t.owner == f.id for t in b.tokens):
+            b.do_ability(f, opt.value)
+            return
+        if opt.value == "blessing_shield" and f.hp < f.max_hp // 2 and f.concentration is None:
+            b.do_ability(f, opt.value)
+            return
+
+
+def _steady_aim(b: Battle, f: Fighter, opts: list) -> None:
+    """A rogue who can strike from where they stand, with a bow or a thrown blade, aims first (Steady Aim)."""
+    for opt, _ in _abilities(b, f, "aim"):
+        ranged = [o for o in opts if o.kind == "ranged"]
+        if any(b.in_reach(f, o, e)[0] for o in ranged for e in b.enemies_of(f) if e.standing):
+            b.do_ability(f, opt.value)
+        return
 
 
 def _epic_moves(b: Battle, f: Fighter) -> None:

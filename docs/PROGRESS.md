@@ -28,7 +28,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Clearing the decks for the expansions** | ✅ Done (2026-10-12), branch `prep/clear-the-decks` |
 | **Expansion 1, *Dice & Destiny*** (version 1.1.0) | ✅ Released (2026-10-13), branch `dlc/01-dice-destiny` |
 | **Expansion 2, *Blades & Backgrounds*** (version 1.2.0) | ✅ Released (2026-10-13), branch `dlc/02-blades-backgrounds` |
-| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | ✅ Expansion 2, *Blades & Backgrounds* released (version 1.2.0, 2026-10-13); Expansion 3 next |
+| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels) and B (the four classes, 2026-10-17) in `main`; Part C next |
 
 ---
 
@@ -39,6 +39,129 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-17 (night): Demigods & Magics B.4 — the 2024 wizard — and Part B into `main`
+
+The first part built by a relay builder (realmwalker-b). The wizard is now the 2024 book's from level 1 to 20, and
+with it Part B (the four classes: fighter, rogue, cleric, wizard) goes to `main`. **Saves change (format 17): start a
+new character and a new world.** Old saves are refused kindly, never deleted.
+- **The wizard at every level.** **Ritual Adept** (rituals read from the spellbook), **Arcane Recovery** (now the
+  highest spent slots come back first), **Scholar** at 2 (Expertise in Arcana, History, Investigation, Medicine,
+  Nature or Religion: a choice on the sheet, c then l), the **school at level 3** (was 2), **Memorize Spell** at 5 (on
+  the sheet; it starts to matter when preparing spells arrives in Part C), **Spell Mastery** at 18 (a level 1 and a
+  level 2 spell cast at will, no slot), the epic boon at 19, **Signature Spells** at 20 (two level 3 spells, each
+  once without a slot, back after a short rest).
+- **The Evoker**: **Evocation Savant** (two evocations copied for nothing at 3, one more each time a new level of
+  slots opens), **Potent Cantrip** at 3 (a bolt that misses still burns for half), **Sculpt Spells** at 6 (was 2),
+  **Empowered Evocation** at 10 (Intelligence on one damage roll), **Overchannel** at 14 (a spell's greatest damage:
+  free once between long rests, then it tears at you, 2d12 necrotic a slot level and more each time).
+- **The Abjurer**: **Abjuration Savant**, **Arcane Ward** at 3 (now only from a spell cast with a slot; and a bonus
+  action can pour a slot into it: the ability list, b), **Projected Ward** at 6, **Spell Breaker** at 10
+  (Counterspell always ready, and its slot kept if the spell holds), **Spell Resistance** at 14 (advantage on saves
+  against spells, their damage halved).
+- **Counterspell** is in the game: a reaction when a foe within 60 feet casts. The foe makes a Constitution save; if
+  it fails, the spell comes to nothing (the foe keeps its slot, loses its action). Asked of you under the Reactions
+  setting; companions on Auto and enemies who know it use it on any spell of level 1 or more, never on a cantrip.
+- The Spells page (S) and the spell cards say when a spell costs no slot.
+- The Auto mends its ward when it is half gone, counts at-will spells as free, and makes every new choice (a
+  companion of each sort, made at level 20, fights on Auto: tested).
+- Fixed on the way: the rogue's second Expertise (level 6) is now actually chosen; Boon of Spell Recall no longer
+  "keeps" a slot on a spell that spent none.
+- **Waiting for later parts**: Dispel Magic (the other half of Spell Breaker) comes with the spell catalogue (Part
+  D.2); swapping a prepared spell after a short rest comes with preparing (C.1); changing Spell Mastery's spells after
+  a long rest is left out. The Savants give two spells when the catalogue has two left to give (today the game has
+  few evocations and abjurations of level 1-2; Part D brings the rest).
+
+### Session, 2026-10-17 (night): the relay — the expansions build themselves, session after session
+
+Nothing changed in the game. What changed is how the expansion programme gets built while Anton is away
+(`docs/expansions/RELAY.md`, `tools/relay.py`, `Stop.bat`; the old twenty-minute chain and its `CHAIN.md` are gone).
+
+- **One builder at a time, no clock.** A builder session takes the baton (`build/relay.json`), builds exactly the next
+  part as before (commit after each step, the three big checks and a fresh review before merging, releases on the way),
+  and at the end of the part sends one message to the **relay session**, an ordinary session kept open in the app. The
+  relay session starts the other builder task within seconds and sets it to Opus 5.5 at high effort. A fresh session at
+  the start of a part is cheaper than a long one going on: it re-reads only the notes.
+- **Why a relay session.** Measured tonight: a scheduled run (nobody looking at it) may not start a task or a session
+  nor change any task's schedule, permission rule or not; it may send a message to an ordinary session; and an
+  ordinary session in Auto mode may start a task and set its model. So the builders are scheduled tasks
+  (`realmwalker-a`, `realmwalker-b`, started by turns), and the relay session is the switchboard.
+- **Limits and crashes.** A builder beats after every commit; when the 5-hour window passes 60% it tells the relay
+  session when the window resets, and the relay session wakes three minutes after the reset to restart the work if the
+  builder was cut off. A safety net task (`realmwalker-net`, every two hours while the work is on) only sends the relay
+  session a "check"; it restarts the work if the baton lies dropped, otherwise nothing happens.
+- **Buttons.** "Realmwalker: START" and "Realmwalker: STOP" in the app's Scheduled list (Run now), or "start" and
+  "stop" typed in the relay session, or `Stop.bat` in the project folder.
+- **Rehearsed** tonight with `build/REHEARSAL`: START, three hand-overs A → B → A (each started within a minute, each on
+  Opus 5.5 high), and STOP (the net switched off). Not yet seen: a real part built by a relay builder, and a real usage
+  limit cut and recovery; the first weekend run will show them.
+
+### Session, 2026-10-13 (late): character creation's choices remade — branch `dlc/03-demigods-magics`
+
+Anton: the Origin step's skill picks were "horribly, terribly unusable": skills cycled with arrows, jumped when
+picked twice, were chosen in two places, and said nothing about what they do. Now:
+- **Step 4, Choices** (was Origin): every choice under its heading (your people, your background, your calling,
+  languages), and on the right the **whole list** of what the selected one can be, the chosen one marked, with what it
+  does. Click an option or use ←→ (an option the row beside it already holds is greyed and skipped: nothing jumps).
+  The background's feat, the fighter's style, a cleric's domain and the class kit are here too.
+- **Step 6, Skills & tools** (was Skills & training): **one checklist of all 18 skills and every tool**. Each row
+  shows the box (■ comes with the origin, x picked), the ability, the bonus it will give, and where it comes from.
+  The line on top counts every pick still to make (the calling's, Skillful, Keen Senses, Skilled, Crafter, Musician,
+  Expertise). Ticking puts the skill into the first pick that can take it (the narrowest first, moving another
+  across when that makes room); unticking leaves that pick empty until you choose again. Below the list: what the
+  skill does in this game (new words in data/rules.json skills `text`) or the tool's uses.
+- Begin lists every skill and tool; it refuses to start while a pick is empty, and says which and where.
+- Code: `CharacterBuilder.skill_pools/pick/unpick/known_skills/known_tools/granted`, `open_pools` (picks emptied by
+  hand are not refilled); the screen's `_choice_rows/cycle_choice/set_choice_value`, `_skill_rows/tick/
+  tick_expertise`. Tests: test_origins `test_every_skill_pick_is_one_tick_in_one_list`, test_screens_fit. The smoke
+  test now also saves `_skills`.
+
+### Session, 2026-10-13 (evening, continued): Demigods & Magics B.1 — the 2024 fighter — branch `dlc/03-demigods-magics` (not yet in `main`)
+
+The fighter is the 2024 book's from level 1 to 20 (it reaches `main` with the rest of Part B):
+- **Second Wind** twice a day from level 1 (three times from 4, four from 10); a short rest brings one back.
+  **Tactical Mind** (2): a failed check (climbing, forcing a door, a road event...) may spend a Second Wind for 1d10
+  more, and keeps it if that is not enough. **Tactical Shift** (5): Second Wind lets you slip half your speed away.
+- **Indomitable** (9) adds your level to the second try, once a day (twice from 13, three times from 17).
+  **Tactical Master** (9): a blow may push, sap or slow instead of the weapon's own trick. **Studied Attacks** (13):
+  a miss gives advantage on the next swing at that foe. **Three attacks** at 11, **four** at 20; **Action Surge**
+  twice between rests from 17 (never twice in one turn).
+- **The Champion**: Improved Critical and Remarkable Athlete at 3 (advantage on initiative and Athletics; a critical
+  hit lets you step away), a second fighting style at 7, **Heroic Warrior** at 10 (Heroic Inspiration every turn in a
+  fight), **Superior Critical** at 15 (18-20), **Survivor** at 18 (death saves with advantage, 18-20 brings you
+  back; bloodied, you heal 5 + Constitution at the start of each turn).
+- **The Knight** (our own) to 18: **Unyielding** at 15 (once a day a blow that would drop you leaves you standing) and
+  **Warden of the Line** at 18 (Hold the Line reaches ten feet).
+Checked: the fast tests (all green) and a test for each feature in a real fight; the book's fighter and Champion
+pages. The full checks run when Part B is merged.
+
+**B.2 — the 2024 rogue** (same evening, same branch):
+- **Sneak Attack** to 10d6 at 19. **Steady Aim** (3): a bonus action before moving for advantage on the next attack
+  (companions on Auto aim before they shoot). **Cunning Strike** (5): Sneak Attack dice traded for a trick -
+  **poison** (with a poisoner's kit), **trip**, **withdraw**; **daze**, **obscure** (blind) and **knock out** from
+  14; two tricks on one blow from 11. **Reliable Talent** (7): a trained check never rolls under 10. **Slippery
+  Mind** (15): Wisdom and Charisma saves. **Elusive** (18): nothing attacks you with advantage. **Stroke of Luck**
+  (20): a miss or a failed save becomes a 20, once between rests.
+- **The Thief**: climbs as fast as they walk and leaps by Dexterity; Stealth Attack keeps them hidden (9); four magic
+  things bound and charges sometimes kept (13); acts twice over in the first round of a fight (17).
+- **The Cutthroat is now the Assassin** (the 2024 book's): advantage on initiative and on the first round's blows,
+  a Sneak Attack then adds your level; a disguise kit and a poisoner's kit with the training; Steady Aim without
+  standing still (9); poison that burns through resistance (13); Death Strike, a first-round blow doubled (17).
+  Characters who were Cutthroats need a new character when Part B is released (saves change then).
+
+**B.3 — the 2024 cleric** (same evening, same branch):
+- **Divine Order** at level 1 (on the sheet: c, then l): **Protector** (martial weapons, heavy armour) or
+  **Thaumaturge** (a cantrip more, Wisdom added to Arcana and Religion). The domain now comes at **level 3**.
+- **Channel Divinity** twice between long rests (three times from 6, four from 18; a short rest brings one back):
+  **Divine Spark** (heal a friend or smite a foe within 60 feet, 1d8 + Wisdom, up to 4d8) and Turn Undead, which
+  from level 5 also **sears** the undead it turns. **Blessed Strikes** at 7: Divine Strike (a radiant 1d8 once a
+  turn, 2d8 from 14) or Potent Spellcasting (Wisdom on cantrip damage; from 14, temporary hit points for a friend).
+  **Divine Intervention** at 10: the god always answers now - a cleric spell cast without a slot.
+- **Life Domain**: Disciple of Life and Preserve Life at 3, **Blessed Healer** at 6 (healing others heals you),
+  **Supreme Healing** at 17 (healing dice at their highest). **War Domain**: War Priest and **Guided Strike** (now
+  for a friend's blow too) at 3, **War God's Blessing** at 6 (Shield of Faith or a Spiritual Weapon without a slot),
+  **Avatar of Battle** at 17 (resistance to weapons).
+- Companions on Auto spark a friend in trouble and call down the War God's Blessing.
 
 ### Session, 2026-10-13 (evening): Demigods & Magics part A — twenty levels and the epic boons — branch `dlc/03-demigods-magics`
 

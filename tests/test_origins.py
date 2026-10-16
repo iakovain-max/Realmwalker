@@ -114,6 +114,45 @@ def test_magic_initiate_and_its_spells(tables):
     assert c.uses[feats.innate_key("feat0", spell)] == 1
 
 
+def test_every_skill_pick_is_one_tick_in_one_list(tables):
+    """The Skills & tools step: a human (Skillful, Versatile Skilled) noble (Skilled) fighter ticks and unticks
+    skills and tools; each goes to a pick that may take it, an emptied pick stays empty, nothing jumps."""
+    b = builder(tables, "human", "fighter", "noble")
+    b.set_choice("versatile", "skilled")
+    pools = {p["id"]: p for p in b.skill_pools()}
+    assert {"class", "species:skillful", "feat:background:skills", "feat:versatile:skills"} <= set(pools)
+    assert b.picks_left() == 0 and b.problems() == []
+    known = b.known_skills()
+    assert len(known) == len(set(known))  # nothing twice
+    # untick everything that was picked: every pick empty, and it stays so
+    for p in b.skill_pools():
+        for x in list(p["picked"]):
+            assert b.unpick(x) == ""
+    assert all(not p["picked"] for p in b.skill_pools())
+    b._fix_skills()
+    assert all(not p["picked"] for p in b.skill_pools()), "an emptied pick is not filled again behind the player"
+    assert any("Skills & tools" in x for x in b.problems())
+    # a granted skill cannot be unticked
+    granted = tables.backgrounds["noble"]["skills"][0]
+    assert b.unpick(granted) != "" and granted in b.known_skills()
+    # tick: a fighter's skill goes to the calling first, others to Skillful, then to the feats; tools only to feats
+    fighter = [s for s in tables.classes["fighter"]["skill_choices"] if s not in b.known_skills()]
+    assert b.pick(fighter[0]) == "" and fighter[0] in b.class_skills
+    assert b.pick("arcana") == "" and b.choices["skillful"] == "arcana"
+    assert b.pick("lute") == "" and "lute" in b.known_tools()
+    assert b.pick("arcana") != ""  # already had
+    # fill the calling, then one more of its skills: one already chosen moves to a free pick to make room
+    while len(b.class_skills) < b.skill_count():
+        assert b.pick(next(s for s in tables.classes["fighter"]["skill_choices"] if s not in b.known_skills())) == ""
+    extra = next(s for s in tables.classes["fighter"]["skill_choices"] if s not in b.known_skills())
+    assert b.pick(extra) == "" and extra in b.known_skills()
+    while b.picks_left():
+        assert b.pick(next(s for s in tables.rules["skills"] if s not in b.known_skills())) == ""
+    assert b.problems() == []
+    c = b.build()
+    assert set(b.known_skills()) <= set(c.skills) and "lute" in c.tools
+
+
 def test_a_feat_can_be_chosen_on_the_origin_step(tables):
     b = builder(tables, "human", "fighter", "sage")
     slots = b.feat_slots()

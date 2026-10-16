@@ -184,7 +184,8 @@ ABILITY_MAP = Obj({a: Int(min=-5, max=5, optional=True) for a in ABILITY_IDS})
 RULES = Obj(
     {
         "abilities": Map(Obj({"name": Str(max_len=20), "short": Str(max_len=4)}), min_items=6),
-        "skills": Map(Obj({"name": Str(max_len=30), "ability": Str(choices=list(ABILITY_IDS))}), min_items=18),
+        "skills": Map(Obj({"name": Str(max_len=30), "ability": Str(choices=list(ABILITY_IDS)),
+                           "text": Str(max_len=200, optional=True)}), min_items=18),
         "point_buy": Obj({"budget": Int(min=0, max=100), "min": Int(min=1, max=20), "max": Int(min=1, max=20),
                           "costs": Map(Int(min=0, max=50))}),
         "proficiency_bonus": List(Int(min=1, max=10), min_items=10),
@@ -244,8 +245,23 @@ RACE = Obj(
 RACES = Obj({"races": Map(RACE, min_items=1)})
 
 FEATURE = Obj({"level": Int(min=1, max=20), "id": Str(max_len=40), "name": Str(max_len=60), "text": Str(max_len=400),
-               "rule": Str(max_len=40, optional=True)})
-KIT = Obj({"name": Str(max_len=40), "items": WEIGHTED,
+               "rule": Str(max_len=40, optional=True),
+               "gives": Obj({"saves": List(Str(choices=list(ABILITY_IDS)), optional=True),
+                             "tools": List(Str(max_len=40), optional=True),
+                             "items": List(Str(max_len=40), optional=True),
+                             "armor": List(Str(max_len=20), optional=True),
+                             "weapons": List(Str(max_len=30), optional=True)}, optional=True),
+               "choose": List(Str(max_len=40), optional=True),
+               # Expertise to choose (a wizard's Scholar: one of these skills they know; no list: any skill they know).
+               "expertise": Obj({"count": Int(min=1, max=4), "skills": List(Str(max_len=30), optional=True)},
+                                optional=True),
+               # A wizard school's Savant: two spells of the school (level 1-2) at once, one more with each new slot level.
+               "savant": Str(max_len=20, optional=True),
+               # Spells picked from the spellbook for a feature (Spell Mastery, Signature Spells), kept in spells[key].
+               "picks": List(Obj({"key": Str(choices=["mastery", "signature"]), "spell_level": Int(min=1, max=9),
+                                  "count": Int(min=1, max=3), "cast": Str(choices=["action"], optional=True)}),
+                             optional=True)})
+KIT =Obj({"name": Str(max_len=40), "items": WEIGHTED,
            "style": Str(max_len=30, optional=True)})  # the fighting style that suits it (the default)
 CLASS = Obj(
     {
@@ -261,6 +277,9 @@ CLASS = Obj(
                              "cantrips": List(Int(min=0, max=10), min_items=10),
                              "slots": List(List(Int(min=0, max=10)), min_items=10)}, optional=True),
         "features": List(FEATURE, min_items=1),
+        # A feature's choice (data "choose"): the options, each a feature of its own kept in Character.features.
+        "options": Map(Obj({"name": Str(max_len=40), "text": Str(max_len=300), "gives": Any_(optional=True),
+                            "cantrips": Int(min=1, max=3, optional=True)}), optional=True),
         "subclasses": Map(Obj({"name": Str(max_len=40), "text": Str(max_len=300), "features": List(FEATURE),
                                "armor": List(Str(max_len=20), optional=True), "weapons": List(Str(max_len=30), optional=True)}),
                           min_items=1),
@@ -535,10 +554,10 @@ TRAIT_DEF = Obj(
                           optional=True),
         "hooks": List(Obj({"event": Str(max_len=30), "as": Str(choices=["self", "attacker", "target", "ally", "any"]),
                            "handler": Str(max_len=40), "reaction": Bool(optional=True)}, strict=False), optional=True),
-        "resource": Obj({"id": Str(max_len=40), "max": Any_(), "recover": Str(choices=["short", "long", "dawn", "turn"])},
-                        optional=True),
+        "resource": Obj({"id": Str(max_len=40), "max": Any_(),
+                         "recover": Str(choices=["short", "short_one", "long", "dawn", "turn"])}, optional=True),
         "resources": List(Obj({"id": Str(max_len=40), "max": Any_(),
-                               "recover": Str(choices=["short", "long", "dawn", "turn"])}), optional=True),
+                               "recover": Str(choices=["short", "short_one", "long", "dawn", "turn"])}), optional=True),
         "where": Str(max_len=30, optional=True),
         "activate": Any_(optional=True),  # abilities it gives (rules/engine/actions.py; checked by rules/engine/check.py)
     }

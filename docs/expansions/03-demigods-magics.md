@@ -70,17 +70,18 @@ spellcasting and scrolls at the book's prices.
   12 boons; Part A to `main`.
 
 ### Part B — The four classes, 1–20
-- [ ] B.1 Fighter and Champion 2024; the Knight to 18 (original).
-- [ ] B.2 Rogue, Thief and the Assassin (the Cutthroat's characters become assassins); Cunning Strike and its effects
+- [x] B.1 Fighter and Champion 2024; the Knight to 18 (original).
+- [x] B.2 Rogue, Thief and the Assassin (the Cutthroat's characters become assassins); Cunning Strike and its effects
   as options in `actions.options`, in the Auto's and enemy's hands.
-- [ ] B.3 Cleric (Divine Order, Channel Divinity effects, Blessed Strikes, Divine Intervention), Life and War
+- [x] B.3 Cleric (Divine Order, Channel Divinity effects, Blessed Strikes, Divine Intervention), Life and War
   Domains.
-- [ ] B.4 Wizard (Ritual Adept, Scholar, Memorize Spell, Spell Mastery, Signature Spells), Evoker and Abjurer;
+- [x] B.4 Wizard (Ritual Adept, Scholar, Memorize Spell, Spell Mastery, Signature Spells), Evoker and Abjurer;
   FORMAT_VERSION bump; companion archetypes to 20; Part B to `main`.
 
 ### Part C — Spellcasting complete
 - [ ] C.1 Preparing spells (counts by table; the Spells screen prepares; Auto prepares by archetype); always-prepared
-  spells; rituals; one slotted spell per turn.
+  spells; rituals; one slotted spell per turn; the wizard's Memorize Spell (one prepared spell swapped after a short
+  rest) and Ritual Adept (rituals from the book, prepared or not).
 - [ ] C.2 Components: focus and pouch, costly components as items (shops), consumed ones spent; upcasting for every
   spell with a `higher` op; the spell's card shows the level chosen.
 - [ ] C.3 Spell scrolls 2024 (any level; Arcana check above your level; copying into a spellbook); potions of
@@ -88,7 +89,8 @@ spellcasting and scrolls at the book's prices.
 
 ### Part D — The spell catalogue (four waves, helpers on the sonnet model)
 - [ ] D.1 Cantrips to 2nd level (134 spells): new ops first, then batches; fx for each; arena coverage green.
-- [ ] D.2 3rd to 5th level (128).
+- [ ] D.2 3rd to 5th level (128; Counterspell is in already, B.4). Dispel Magic with the Abjurer's Spell Breaker: a
+  bonus action for them, their proficiency added to its check, the slot kept when it ends nothing.
 - [ ] D.3 6th and 7th level (55).
 - [ ] D.4 8th and 9th level (34), Wish (its safe uses and its stress) and Meteor Swarm; Part D to `main`.
 

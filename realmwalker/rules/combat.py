@@ -347,8 +347,9 @@ class Fighter:
         if query.flag(self, "speed_zero"):
             return 0
         own = 0 if self.char else int(self.cdef.get("speeds", {}).get(kind, 0))
-        if kind == "climb" and self.char is not None and feats.has(self.char, "athlete"):
-            own = self.speed  # (Athlete: a Climb Speed equal to the Speed)
+        if kind == "climb" and self.char is not None and (feats.has(self.char, "athlete")
+                                                          or self.has_trait("second_story_work")):
+            own = self.speed  # (Athlete, a thief's Second-Story Work: a Climb Speed equal to the Speed)
         return max(own, max([0] + [int(v) for v in self.buff_value(kind)]))
 
     @property
@@ -366,6 +367,8 @@ class Fighter:
         """How far it can leap, in feet: standing, and after a run of 10 feet - half its Strength score, and all of it
         (2024 Long Jump)."""
         s = self.score("str")
+        if self.char is not None and self.has_trait("second_story_work"):
+            s = max(s, self.score("dex"))  # (a thief leaps by Dexterity)
         return s // 2, s
 
     @property
@@ -1243,7 +1246,7 @@ class Battle:
     def check(self, f: Fighter, skill: str, dc: int, why: str = "") -> bool:
         """An ability check in a fight: a d20 and the skill (exhaustion counted in it) against the DC, in the dice log."""
         ability = self.t.rules["skills"].get(skill, {}).get("ability", skill)
-        ctx = trs.Ctx(self, f, ability=ability)
+        ctx = trs.Ctx(self, f, ability=ability, skill=skill)
         modes = {mode for mode, _ in trs.modifiers(f, "check", ctx)}
         if ability in ("str", "dex") and query.untrained_armour(f):
             modes.add("disadvantage")
@@ -1252,7 +1255,16 @@ class Battle:
         bonus = f.skill(skill)
         self.dice_say(f"{why or skill.title()} ({f.name}): {roll} {'+' if bonus >= 0 else '-'} {abs(bonus)} = "
                       f"{roll + bonus} vs DC {dc}")
-        return roll + bonus >= dc
+        total = roll + bonus
+        if roll < 10 and f.char is not None and f.has_trait("reliable_talent") and skill in f.char.skills:
+            total = 10 + bonus  # (Reliable Talent)
+        if total < dc and f.char is not None:
+            from realmwalker.rules.engine.handlers import fighter
+
+            total, line = fighter.tactical_mind(f.char, self.t, total, dc, self.rng)
+            if line:
+                self.dice_say(f"{f.name} ({line})")
+        return total >= dc
 
     def object_at(self, cell: tuple[int, int]) -> dict | None:
         """A thing on the field that can be broken: a door, a barrel, a table... with its AC and hit points (data/rules.json
@@ -1933,7 +1945,8 @@ class Battle:
             why.append(f"{guard.name}'s shield")
             self.say(f"{guard.the_name} gets {guard.possessive} shield in the way.", "good" if guard.side == PARTY else "info")
         roll = dice.d20(self.rng, advantage=adv, disadvantage=dis)
-        att.buffs = [bf for bf in att.buffs if not bf.get("sapped") and bf.get("vex") != target.id]  # spent on this roll
+        att.buffs = [bf for bf in att.buffs if not bf.get("sapped") and bf.get("vex") != target.id
+                     and not bf.get("aimed")]  # spent on this roll
         natural = events.emit(self, "d20_after", actor=att, target=target, roll="attack", natural=roll.natural).natural
         crit = natural >= query.crit_range(att)
         bless = sum(dice.roll(d, self.rng).total for d in att.buff_value("attack_die"))
@@ -1970,6 +1983,7 @@ class Battle:
             target.marked = False  # spent on this roll, hit or miss
         target.buffs = [bf for bf in target.buffs if bf.get("distracted") != att.team]
         if att.hidden and (hit or not (att.char is not None and feats.has(att.char, "skulker"))):
+            att.__dict__["was_hidden"] = att.hidden  # (a thief's Stealth Attack may keep it)
             att.hidden = 0  # (Skulker: a miss does not give away where they hide)
         armor = target.armor_name("torso")
         turned = not hit and bool(armor) and total >= ac - 4 and natural != 1 and opt.kind in ("melee", "ranged")
@@ -2007,8 +2021,12 @@ class Battle:
         if att.char is not None and opt.kind.startswith("spell") and self.__dict__.get("_casting") is att:
             amount += feats.adept_ones(att.char, opt.damage_type, rolled.rolls)  # (Elemental Adept: 1s count as 2s)
         dmg_ev = events.emit(self, "attack_damage", actor=att, target=target, opt=opt, crit=crit, natural=natural,
-                             advantage=adv and not dis, sides=sides, extra=0, typed=[], rolls=list(rolled.rolls))
+                             advantage=adv and not dis, disadvantage=dis and not adv, sides=sides, extra=0, typed=[],
+                             rolls=list(rolled.rolls),
+                             double=False)
         amount += dmg_ev.extra  # Sneak Attack, Divine Strike...
+        if dmg_ev.double:
+            amount *= 2  # (an assassin's Death Strike)
         self._spend_use(att, opt)
         before = target.hp + target.temp_hp
         self._melee_blow = opt.is_melee
@@ -2237,6 +2255,11 @@ class Battle:
         return (f.char is not None and dtype not in ("psychic", "radiant")
                 and feats.has(f.char, "boon_of_the_night_spirit") and self.light_on(f) < grid.BRIGHT)
 
+    def _spell_resisted(self, f: Fighter, att: Fighter | None) -> bool:
+        """An abjurer's Spell Resistance: the damage of a spell (as it is cast) is halved."""
+        return att is not None and self.__dict__.get("_casting") is att and f.char is not None \
+            and f.has_trait("spell_resistance")
+
     def _ignores_resist(self, att: Fighter | None, dtype: str) -> bool:
         """Poisoner (poison from anything they do) and Elemental Adept (their spells' element) cut through
         resistance."""
@@ -2244,17 +2267,21 @@ class Battle:
             return False
         if dtype in ("bludgeoning", "piercing", "slashing") and feats.has(att.char, "boon_of_irresistible_offense"):
             return True  # (Boon of Irresistible Offense)
-        if dtype == "poison" and feats.has(att.char, "poisoner"):
-            return True
+        if dtype == "poison" and (feats.has(att.char, "poisoner") or self.__dict__.get("_envenom") is att):
+            return True  # (Poisoner; an assassin's Envenom Weapons)
         return self.__dict__.get("_casting") is att and dtype in feats.adept_types(att.char)
 
     def _hit(self, att: Fighter | None, target: Fighter, amount: int, dtype: str, *, crit: bool, weapon: str,
-             bite: bool = False, claws: bool = False) -> None:
-        """Damage that landed: resistances, text, wounds, going down."""
+             bite: bool = False, claws: bool = False, raw: bool = False) -> None:
+        """Damage that landed: resistances, text, wounds, going down. `raw`: nothing resists it (an evoker's
+        Overchannel)."""
         rolled_amount = amount
-        shadow = self._night_spirit(target, dtype)
-        amount, defence = query.damage_taken(target, amount, dtype, ignore_resist=self._ignores_resist(att, dtype),
-                                             resist=shadow)
+        shadow = self._night_spirit(target, dtype) or self._spell_resisted(target, att)
+        if raw:
+            defence = ""
+        else:
+            amount, defence = query.damage_taken(target, amount, dtype, ignore_resist=self._ignores_resist(att, dtype),
+                                                 resist=shadow)
         changed = {"immune": "immune: none", "vulnerable": "vulnerable: doubled",
                    "threshold": "below its damage threshold: none"}.get(defence) \
             or ("resisted: halved" if amount < rolled_amount and (shadow or query.resists(target, dtype)) else "")
@@ -2312,7 +2339,13 @@ class Battle:
         if target.concentration is not None and target.active and target.standing:
             dc = query.concentration_dc(amount)
             slayer = att is not None and att.char is not None and feats.has(att.char, "mage_slayer")
-            if not self._save(target, "con", dc, against=("concentration",), disadvantage=slayer):
+            casting = self.__dict__.get("_casting")
+            self._casting = None  # (holding on is not a save against the spell that hurt them: Spell Resistance)
+            try:
+                held = self._save(target, "con", dc, against=("concentration",), disadvantage=slayer)
+            finally:
+                self._casting = casting
+            if not held:
                 self._end_concentration(target, quiet=False, why="breaks")
         if target.active and target.side == FOE:
             self._morale_after_hit(target)
@@ -2387,7 +2420,10 @@ class Battle:
         return True
 
     def _death_save(self, f: Fighter) -> None:
-        roll = dice.d20(self.rng, advantage=f.char is not None and feats.has(f.char, "durable")).natural
+        survivor = f.has_trait("survivor")  # (the Champion's Defy Death)
+        roll = dice.d20(self.rng, advantage=f.char is not None and feats.has(f.char, "durable") or survivor).natural
+        if survivor and roll >= 18:
+            roll = 20
         if 1 < roll < 10 and roll + query.d20_penalty(f) < 10 and self._inspired(f, 10, "a death save"):
             roll = dice.d20(self.rng).natural
             self.dice_say(f"{f.name} spends Heroic Inspiration on the death save: {roll}")
@@ -3014,10 +3050,11 @@ class Battle:
             return False
         sc = f.cdef["spellcasting"]
         level = spell["level"]
+        slot_i = None
         if self._per_day(f, sid) is not None:
             self._spend_per_day(f, sid)
         elif level and sid not in sc.get("at_will", []):
-            i = next(i for i in range(level - 1, len(f.slots)) if f.slots[i] > 0)
+            slot_i = i = next(i for i in range(level - 1, len(f.slots)) if f.slots[i] > 0)
             f.slots[i] -= 1
             level = i + 1
         bonus_cast = spell.get("cast") == "bonus"
@@ -3027,8 +3064,10 @@ class Battle:
         else:
             f.cast_action_spell = True
         f.hidden = 0
-        self.cast(f, sid, spell, target, point, up=max(0, level - spell["level"]), mod=f.mod(sc["ability"]),
-                  dc=int(sc["dc"]), bonus=int(sc["attack"]), mult=1, level=level)
+        if not self.cast(f, sid, spell, target, point, up=max(0, level - spell["level"]), mod=f.mod(sc["ability"]),
+                         dc=int(sc["dc"]), bonus=int(sc["attack"]), mult=1, level=level, slotted=slot_i is not None):
+            if slot_i is not None:
+                f.slots[slot_i] += 1  # (countered: the slot is not spent, 2024)
         self._check_end()
         return True
 
@@ -3067,7 +3106,8 @@ class Battle:
             if ok and spellrules.has_op(spell, "identify"):
                 ok, why = False, "not in a fight"
             if ok and spell.get("cast") == "reaction":
-                ok, why = False, "a reaction: cast by itself when a blow would land"
+                ok, why = False, ("a reaction: cast by itself when a foe nearby casts a spell" if sid == "counterspell"
+                                  else "a reaction: cast by itself when a blow would land")
             if ok:
                 ok, why = self._casting_time_ok(f, spell)
             out.append((sid, ok, why))
@@ -3277,7 +3317,8 @@ class Battle:
             if charged is None or magic.charges_left(charged) <= 0:
                 self.say("It has no power left until dawn.", "warn")
                 return False
-            spent = magic.spend_charge(charged, self.rng)
+            spent = False if f.has_trait("use_magic_device") and self.rng.randint(1, 6) == 6 \
+                else magic.spend_charge(charged, self.rng)  # (a thief's Use Magic Device: a 6 keeps the charge)
             self.say(f"{f.the_name} calls on the power in the {self.t.items.name(item, False)}"
                      f"{'' if spent or charged.get('at_will') else ', and the power stays in it'}.", "magic")
         if sid.startswith("scroll:"):
@@ -3321,19 +3362,28 @@ class Battle:
             level = 0  # the scroll's own magic: no spell slot
         if charged is not None or innate is not None:
             level = 0  # the item's own magic, or a gift of blood or training (no slot)
+        if level > 0 and f.__dict__.get("free_slot", 0) >= level:
+            level = 0  # (the god casts it: Divine Intervention, War God's Blessing)
+        at_will = spellrules.free_cast(c, self.t, sid, slot_level) if level > 0 else None
+        if at_will:  # (a wizard's Spell Mastery or Signature Spells: at the spell's own level, no slot)
+            spellrules.spend_free(c, sid, at_will)
+            slot_level = level
+            level = 0
+        slotted = False
         if level > 0:
             slot_level = slot_level or spellrules.lowest_free_slot(c, self.t, level)
             if slot_level is None:
                 self.say("No spell slot left for that.", "warn")
                 return False
             spellrules.spend_slot(c, slot_level)
+            slotted = True
         self._spend(f, bonus_cast)
         if bonus_cast:
             f.cast_bonus_spell = True
         else:
             f.cast_action_spell = True
         f.hidden = 0
-        up = max(0, (slot_level or level) - level)
+        up = max(0, (slot_level or level) - spell["level"])  # (0 for a free cast at its own level)
         mod = s.mod(spellrules.casting_ability(c, self.t))
         dc = spellrules.save_dc(s, self.t)
         bonus = spellrules.attack_bonus(s, self.t) + s.attack_condition()
@@ -3342,14 +3392,69 @@ class Battle:
             dc = 8 + s.proficiency + mod
             bonus = s.proficiency + mod + s.attack_condition()
         mult = spellrules.cantrip_multiplier(c.level) if spell.get("cantrip_scaling") else 1
-        self.cast(f, sid, spell, target, point, up=up, mod=mod, dc=dc, bonus=bonus, mult=mult, level=slot_level or level)
+        if not self.cast(f, sid, spell, target, point, up=up, mod=mod, dc=dc, bonus=bonus, mult=mult,
+                         level=slot_level or level, slotted=slotted) and slotted:
+            spellrules.unspend_slot(c, slot_level)  # (countered: the slot is not spent, 2024)
         self._after_action(f)
         return True
 
     def cast(self, f: Fighter, sid: str, spell: dict, target: Fighter | None, point: tuple[int, int] | None, *,
-             up: int, mod: int, dc: int, bonus: int, mult: int, level: int) -> None:
-        """A spell's effects, once it has been paid for (rules/engine/effects.py)."""
-        effects.cast(self, f, sid, spell, target, point, up=up, mod=mod, dc=dc, bonus=bonus, mult=mult, level=level)
+             up: int, mod: int, dc: int, bonus: int, mult: int, level: int, slotted: bool = True) -> bool:
+        """A spell's effects, once it has been paid for (rules/engine/effects.py); False if a foe's Counterspell
+        stopped it (the action spent, the effects lost)."""
+        if self._countered(f, sid, spell):
+            return False
+        effects.cast(self, f, sid, spell, target, point, up=up, mod=mod, dc=dc, bonus=bonus, mult=mult, level=level,
+                     slotted=slotted)
+        return True
+
+    def _countered(self, caster: Fighter, sid: str, spell: dict) -> bool:
+        """Counterspell (2024): a foe within 60 feet who sees the casting may answer with its reaction and a level 3
+        slot; the caster makes a Constitution save, and on a failure the spell comes to nothing. A Spell Breaker's
+        slot is kept when the spell holds."""
+        from realmwalker.rules.engine.handlers import wizard
+
+        if spell.get("ability") or spell.get("thrown") or "item" in spell.get("classes", ()) or sid == "counterspell":
+            return False
+        for x in self.enemies_of(caster):
+            if not x.reaction or query.incapacitated(x) or self.feet(x, caster) > 60 or not self.can_see(x, caster) \
+                    or self.antimagic(x.cells):
+                continue
+            slot = wizard.counter_slot(self, x)
+            if slot is None:
+                continue
+            if not reactions.yes(self, Decision(
+                    x, "counterspell", f"{caster.the_name} begins to cast {spell['name']}. Counterspell? They make a "
+                    "Constitution save; if they fail, the spell comes to nothing.",
+                    [("yes", f"Counterspell (a level {slot} slot)"), ("no", "Let it be cast")],
+                    default="yes" if spell["level"] >= 1 else "no")):
+                continue
+            wizard.pay_counter(self, x, slot)
+            x.reaction = False
+            kept = False
+            if x.char is not None:  # (an abjuration: an abjurer's ward; Free Casting may keep the slot)
+                kept = bool(getattr(events.emit(self, "spell_cast", actor=x, spell=self.t.spells["counterspell"],
+                                                sid="counterspell", level=slot), "kept", False))
+            self.say(f"<magic>{x.the_name} cuts across the spell with a Counterspell.</>", "magic")
+            self._event("cast", by=x.id, to=caster.id, spell="counterspell", effect="condition", look="curse",
+                        dtype="force", area=[])
+            before = self.__dict__.get("_casting")
+            self._casting = x  # (a save against a spell: Spell Resistance)
+            try:
+                held = self._save(caster, "con", wizard.counter_dc(self, x))
+            finally:
+                self._casting = before
+            if held:
+                self.say(f"{caster.the_name} holds the spell together.", "info")
+                if x.char is not None and x.has_trait("spell_breaker") and not kept:
+                    spellrules.unspend_slot(x.char, slot)
+                    self.say("<magic>The slot is not lost.</> (Spell Breaker)", "magic")
+                continue
+            self.say(f"{caster.the_name}'s {spell['name']} unravels into nothing.",
+                     "good" if x.side == PARTY else "danger")
+            self._event("countered", who=caster.id, by=x.id, spell=sid)
+            return True
+        return False
 
     # ------------------------------------------------------------------ concentration
     def _start_concentration(self, f: Fighter, sid: str, spell: dict) -> None:

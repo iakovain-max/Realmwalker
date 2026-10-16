@@ -89,25 +89,41 @@
 
     "fighting_style": {"name": "Fighting Style", "text": "A way of fighting, chosen once (archery, defence, duelling, great weapon, protection, two weapons).", "where": "sheet"},
     "second_wind": {
-      "name": "Second Wind", "text": "A bonus action to catch one's breath: 1d10 + level hit points back.",
-      "resource": {"id": "second_wind", "max": 1, "recover": "short"},
+      "name": "Second Wind", "text": "A bonus action to catch one's breath: 1d10 + level hit points back (two uses, three from level 4, four from 10; a short rest brings one back).",
+      "resource": {"id": "second_wind", "max": {"by_level": [[1, 2], [4, 3], [10, 4]]}, "recover": "short_one"},
       "activate": {"id": "second_wind", "name": "Second Wind (bonus action)", "cost": "bonus", "uses": "second_wind",
                    "effects": [{"op": "heal", "dice": "1d10", "add": "level"},
                                {"op": "say", "text": "{name} catches {their} breath and fights on.", "style": "good"}]}
     },
     "action_surge": {
-      "name": "Action Surge", "text": "One more action, once between rests.",
-      "resource": {"id": "action_surge", "max": 1, "recover": "short"},
-      "activate": {"id": "action_surge", "name": "Action Surge (one more action)", "cost": "free", "uses": "action_surge",
+      "name": "Action Surge", "text": "One more action, once between rests (twice from level 17, never twice in a turn).",
+      "resource": {"id": "action_surge", "max": {"by_level": [[2, 1], [17, 2]]}, "recover": "short"},
+      "hooks": [{"event": "ability_used", "as": "self", "handler": "surge_used"}],
+      "activate": {"id": "action_surge", "name": "Action Surge (one more action)", "cost": "free", "uses": "action_surge", "requires": ["surge_ready"],
                    "effects": [{"op": "gain_action"}, {"op": "say", "text": "{name} digs deep.", "style": "good"}]}
     },
     "extra_attack": {"name": "Extra Attack", "text": "Two attacks with the Attack action.", "modifiers": [{"attacks": 2}]},
     "indomitable": {
-      "name": "Indomitable", "text": "Once a day, a failed saving throw is rolled again.",
+      "name": "Indomitable", "text": "A failed saving throw rolled again, adding the fighter's level (once between long rests, twice from 13, three times from 17).",
       "hooks": [{"event": "d20_after", "as": "self", "handler": "indomitable"}],
-      "resource": {"id": "indomitable", "max": 1, "recover": "long"}
+      "resource": {"id": "indomitable", "max": {"by_level": [[9, 1], [13, 2], [17, 3]]}, "recover": "long"}
     },
     "crit_19": {"name": "Improved Critical", "text": "A critical hit on a 19 or 20.", "modifiers": [{"crit_range": 19}]},
+    "crit_18": {"name": "Superior Critical", "text": "A critical hit on an 18, 19 or 20.", "modifiers": [{"crit_range": 18}]},
+    "extra_attack_2": {"name": "Two Extra Attacks", "text": "Three attacks with the Attack action.", "modifiers": [{"attacks": 3}]},
+    "extra_attack_3": {"name": "Three Extra Attacks", "text": "Four attacks with the Attack action.", "modifiers": [{"attacks": 4}]},
+    "tactical_mind": {"name": "Tactical Mind", "text": "A failed ability check: a use of Second Wind adds 1d10 (not spent if it still fails).", "where": "camp.check"},
+    "tactical_shift": {"name": "Tactical Shift", "text": "Second Wind also lets the fighter move half their speed, slipping away from the foes around them.", "hooks": [{"event": "ability_used", "as": "self", "handler": "tactical_shift"}]},
+    "tactical_master": {"name": "Tactical Master", "text": "A mastered weapon's blow may push, sap or slow instead of its own trick.", "where": "mastery_done"},
+    "studied_attacks": {"name": "Studied Attacks", "text": "A miss: advantage on the next attack at that foe before the end of the fighter's next turn.", "hooks": [{"event": "attack_missed", "as": "attacker", "handler": "studied_attacks"}]},
+    "remarkable_athlete": {"name": "Remarkable Athlete", "text": "Advantage on initiative and Strength (Athletics) checks; after a critical hit, half the speed in a step that draws no blows.", "modifiers": [{"initiative": "advantage"}, {"check": "advantage", "skills": ["athletics"]}], "hooks": [{"event": "attack_done", "as": "attacker", "handler": "athlete_crit"}]},
+    "heroic_warrior": {"name": "Heroic Warrior", "text": "In a fight, Heroic Inspiration at the start of each turn without it.", "hooks": [{"event": "turn_start", "as": "self", "handler": "heroic_warrior"}]},
+    "survivor": {"name": "Survivor", "text": "Advantage on death saves (18-20 counts as a 20); bloodied but standing, 5 + Constitution modifier hit points back at the start of each turn.", "where": "Battle._death_save", "hooks": [{"event": "turn_start", "as": "self", "handler": "heroic_rally"}]},
+    "knight_unyielding": {"name": "Unyielding", "text": "Once between long rests, a blow that would drop the knight leaves them standing with hit points equal to their level.", "resource": {"id": "unyielding", "max": 1, "recover": "long"}, "hooks": [{"event": "hp_zero", "as": "target", "handler": "knight_unyielding"}]},
+    "warden_of_the_line": {
+      "name": "Warden of the Line", "text": "Hold the Line reaches ten feet.",
+      "modifiers": [{"enemy_attacks": "disadvantage", "when": ["owner_able", "attacker_within_10_of_owner"], "why": "{name} holds the line"}]
+    },
     "hold_the_line": {
       "name": "Hold the Line", "text": "Enemies beside the knight strike badly at anyone else.",
       "modifiers": [{"enemy_attacks": "disadvantage", "when": ["owner_able", "attacker_beside_owner"], "why": "{name} holds the line"}]
@@ -119,8 +135,22 @@
     "expertise": {"name": "Expertise", "text": "Twice the proficiency bonus with two skills.", "where": "sheet"},
     "sneak_attack": {
       "name": "Sneak Attack", "text": "Once a turn, extra dice of damage with a finesse or ranged weapon, given advantage or a friend beside the target.",
-      "hooks": [{"event": "attack_damage", "as": "attacker", "handler": "sneak_attack"}]
+      "hooks": [{"event": "attack_damage", "as": "attacker", "handler": "sneak_attack"}, {"event": "attack_done", "as": "attacker", "handler": "cunning_after"}]
     },
+    "steady_aim": {"name": "Steady Aim", "text": "A bonus action before moving: advantage on the next attack this turn, and no more moving.", "activate": {"id": "steady_aim", "name": "Steady Aim (bonus action)", "cost": "bonus", "does": "aim", "requires": ["not_moved"], "effects": [{"op": "special", "handler": "steady_aim"}]}},
+    "roving_aim": {"name": "Roving Aim", "text": "Steady Aim does not root the assassin to the spot.", "where": "steady_aim"},
+    "cunning_strike": {"name": "Cunning Strike", "text": "Sneak Attack dice given up for a trick: poison, trip or withdraw.", "where": "sneak_attack"},
+    "improved_cunning_strike": {"name": "Improved Cunning Strike", "text": "Two Cunning Strike tricks on one blow.", "where": "sneak_attack"},
+    "devious_strikes": {"name": "Devious Strikes", "text": "Daze, obscure and knock out as Cunning Strike tricks.", "where": "sneak_attack"},
+    "supreme_sneak": {"name": "Supreme Sneak", "text": "Stealth Attack: a blow from hiding that does not give the thief away.", "where": "sneak_attack"},
+    "envenom_weapons": {"name": "Envenom Weapons", "text": "A Cunning Strike's poison also deals 2d6 poison damage through any resistance.", "where": "sneak_attack"},
+    "death_strike": {"name": "Death Strike", "text": "A Sneak Attack in the first round: a Constitution save, or the damage is doubled.", "where": "sneak_attack"},
+    "reliable_talent": {"name": "Reliable Talent", "text": "A trained check never rolls lower than 10.", "where": "camp.check"},
+    "elusive": {"name": "Elusive", "text": "No attack roll against them has advantage unless they are incapacitated.", "where": "query.attack_roll"},
+    "stroke_of_luck": {"name": "Stroke of Luck", "text": "Once between rests, a failed attack roll or saving throw becomes a 20.", "resource": {"id": "stroke_of_luck", "max": 1, "recover": "short"}, "hooks": [{"event": "attack_missed", "as": "attacker", "handler": "stroke_attack"}, {"event": "d20_after", "as": "self", "handler": "stroke_save"}]},
+    "second_story_work": {"name": "Second-Story Work", "text": "A climbing speed equal to the walking one; leaps by Dexterity.", "where": "Fighter._speed_of"},
+    "use_magic_device": {"name": "Use Magic Device", "text": "Four magic things bound instead of three; charges kept on a 6.", "where": "magic"},
+    "thiefs_reflexes": {"name": "Thief's Reflexes", "text": "In the first round, a second action, bonus action and move.", "hooks": [{"event": "turn_start", "as": "self", "handler": "thiefs_reflexes"}]},
     "cunning_action": {
       "name": "Cunning Action", "text": "Dash, Disengage or Hide as a bonus action.",
       "activate": [{"id": "cunning_dash", "name": "Cunning Action: Dash", "cost": "bonus", "via": "dash"},
@@ -137,24 +167,43 @@
     },
     "fast_hands": {"name": "Fast Hands", "text": "Uses an object with a bonus action.", "where": "abilities"},
     "assassinate": {
-      "name": "Assassinate", "text": "At an advantage against anyone who has not yet acted; a hit on the surprised is a critical hit.",
-      "modifiers": [{"attack": "advantage", "when": ["target_not_acted"], "why": "not yet moving"}],
-      "hooks": [{"event": "attack_hit", "as": "attacker", "handler": "assassinate"}]
+      "name": "Assassinate", "text": "Advantage on initiative; in the first round, advantage against anyone who has not yet acted, and a Sneak Attack adds the rogue's level.",
+      "modifiers": [{"attack": "advantage", "when": ["target_not_acted", "first_round"], "why": "not yet moving"}, {"initiative": "advantage"}]
     },
     "spellcasting": {"name": "Spellcasting", "text": "Casts spells.", "where": "sheet"},
     "channel_divinity": {
-      "name": "Channel Divinity", "text": "Calls on the god's power once between rests (Turn Undead, or the domain's own).",
-      "resource": {"id": "channel_divinity", "max": 1, "recover": "short"},
-      "activate": {"id": "turn_undead", "name": "Turn Undead", "cost": "action", "uses": "channel_divinity",
-                   "requires": ["undead_within_30"], "effects": [{"op": "special", "handler": "turn_undead"}]}
+      "name": "Channel Divinity", "text": "The god's power called on directly: Divine Spark or Turn Undead (two uses, three from level 6, four from 18; a short rest brings back one).",
+      "resource": {"id": "channel_divinity", "max": {"by_level": [[2, 2], [6, 3], [18, 4]]}, "recover": "short_one"},
+      "activate": [{"id": "turn_undead", "name": "Turn Undead", "cost": "action", "uses": "channel_divinity",
+                    "requires": ["undead_within_30"], "effects": [{"op": "special", "handler": "turn_undead"}]},
+                   {"id": "divine_spark", "name": "Divine Spark: heal a friend", "cost": "action", "uses": "channel_divinity", "does": "heal_other",
+                    "aim": "ally", "range": 60, "effects": [{"op": "special", "handler": "divine_spark"}]},
+                   {"id": "divine_spark_harm", "name": "Divine Spark: smite a foe", "cost": "action", "uses": "channel_divinity",
+                    "aim": "enemy", "range": 60, "effects": [{"op": "special", "handler": "divine_spark_harm"}]}]
     },
     "destroy_undead": {"name": "Destroy Undead", "text": "Turned undead of low challenge are destroyed outright.", "where": "turn_undead"},
     "divine_intervention": {
-      "name": "Divine Intervention", "text": "A prayer the god may answer (the cleric's level or less on d100), once a week if answered.",
+      "name": "Divine Intervention", "text": "Once between long rests the god answers: a cleric spell of level 5 or lower cast without a slot.",
       "resource": {"id": "divine_intervention", "max": 1, "recover": "long"},
-      "activate": {"id": "divine_intervention", "name": "Divine Intervention", "cost": "action", "uses": "divine_intervention",
-                   "requires": ["god_ready"], "effects": [{"op": "special", "handler": "divine_intervention"}]}
+      "activate": {"id": "divine_intervention", "name": "Divine Intervention (a spell without a slot)", "cost": "free", "uses": "divine_intervention",
+                   "does": "power", "requires": ["action_left"], "effects": [{"op": "special", "handler": "divine_intervention"}]}
     },
+    "sear_undead": {"name": "Sear Undead", "text": "Undead that fail against Turn Undead take a d8 of radiant damage per point of Wisdom.", "where": "turn_undead"},
+    "order_protector": {"name": "Protector", "text": "Martial weapons and heavy armour.", "where": "sheet"},
+    "order_thaumaturge": {"name": "Thaumaturge", "text": "One more cantrip; Wisdom added to Arcana and Religion.", "where": "Sheet.skill_bonus"},
+    "blessed_divine_strike": {"name": "Divine Strike", "text": "Once a turn, a weapon hit deals 1d8 radiant more (2d8 from level 14).", "hooks": [{"event": "attack_damage", "as": "attacker", "handler": "blessed_divine_strike"}]},
+    "blessed_potent_spellcasting": {"name": "Potent Spellcasting", "text": "Wisdom added to cleric cantrips' damage; from 14, temporary hit points for a friend.", "where": "effects.cast", "hooks": [{"event": "spell_cast", "as": "self", "handler": "potent_vitality"}]},
+    "improved_blessed_strikes": {"name": "Improved Blessed Strikes", "text": "Divine Strike 2d8; Potent Spellcasting's vitality.", "where": "blessed_strikes"},
+    "blessed_healer": {"name": "Blessed Healer", "text": "Healing another with a spell heals the cleric 2 + its level.", "hooks": [{"event": "heal_spell", "as": "self", "handler": "blessed_healer"}]},
+    "supreme_healing": {"name": "Supreme Healing", "text": "Healing dice count as their highest.", "hooks": [{"event": "heal_spell", "as": "self", "handler": "supreme_healing"}]},
+    "war_gods_blessing": {
+      "name": "War God's Blessing", "text": "Channel Divinity casts Shield of Faith or Spiritual Weapon without a slot.",
+      "activate": [{"id": "blessing_shield", "name": "War God's Blessing: Shield of Faith", "cost": "free", "uses": "channel_divinity", "does": "bless",
+                    "requires": ["bonus_left"], "effects": [{"op": "special", "handler": "war_gods_blessing", "spell": "shield_of_faith"}]},
+                   {"id": "blessing_weapon", "name": "War God's Blessing: Spiritual Weapon", "cost": "free", "uses": "channel_divinity", "does": "bless",
+                    "requires": ["bonus_left", "foe_in_sight"], "effects": [{"op": "special", "handler": "war_gods_blessing", "spell": "spiritual_weapon"}]}]
+    },
+    "avatar_of_battle": {"name": "Avatar of Battle", "text": "Resistance to bludgeoning, piercing and slashing damage.", "modifiers": [{"resist": ["bludgeoning", "piercing", "slashing"]}]},
     "disciple_of_life": {
       "name": "Disciple of Life", "text": "Healing spells heal 2 + the spell's level more.",
       "hooks": [{"event": "heal_spell", "as": "self", "handler": "disciple_of_life"}]
@@ -175,16 +224,27 @@
                    "effects": [{"op": "special", "handler": "war_priest"}]}
     },
     "guided_strike": {
-      "name": "Guided Strike", "text": "Channel Divinity: +10 to an attack roll that would have missed.",
-      "hooks": [{"event": "attack_missed", "as": "attacker", "handler": "guided_strike"}]
+      "name": "Guided Strike", "text": "Channel Divinity: +10 to an attack roll that would have missed, the cleric's own or a friend's within 30 feet.",
+      "hooks": [{"event": "attack_missed", "as": "any", "handler": "guided_strike"}]
     },
-    "arcane_recovery": {"name": "Arcane Recovery", "text": "Some spell slots back on a short rest, once a day.", "where": "rest"},
+    "arcane_recovery": {"name": "Arcane Recovery", "text": "Spell slots back on a short rest, once between long rests: half the level in slot levels, none above 5.", "where": "rest"},
+    "ritual_adept": {"name": "Ritual Adept", "text": "Rituals cast from the spellbook, ready or not.", "where": "game/magic.py"},
+    "memorize_spell": {"name": "Memorize Spell", "text": "A prepared spell swapped after a short rest.", "where": "spells"},
+    "spell_mastery": {"name": "Spell Mastery", "text": "A level 1 and a level 2 spell cast at will.", "where": "spells.free_cast"},
+    "signature_spells": {"name": "Signature Spells", "text": "Two level 3 spells cast once each without a slot, back with a short rest.", "where": "spells.free_cast"},
+    "potent_cantrip": {"name": "Potent Cantrip", "text": "A cantrip that misses or is saved against still does half its damage.", "where": "effects"},
     "sculpt_spells": {"name": "Sculpt Spells", "text": "Friends can be left out of the wizard's evocations.", "where": "spells"},
-    "empowered_evocation": {"name": "Empowered Evocation", "text": "Evocations add the wizard's Intelligence modifier to their damage.", "where": "spells"},
+    "empowered_evocation": {"name": "Empowered Evocation", "text": "Evocations add the wizard's Intelligence modifier to one damage roll.", "where": "spells"},
+    "overchannel": {"name": "Overchannel", "text": "A spell of level 1 to 5 at its greatest damage; after the first time, at a price in necrotic.", "where": "effects.cast"},
     "arcane_ward": {
-      "name": "Arcane Ward", "text": "The first abjuration of the day weaves a ward that takes blows; each one after strengthens it.",
-      "hooks": [{"event": "spell_cast", "as": "self", "handler": "arcane_ward"}, {"event": "damage_incoming", "as": "target", "handler": "ward_soak"}]
+      "name": "Arcane Ward", "text": "The first abjuration cast with a slot after a long rest weaves a ward that takes blows; each one after mends it, and a slot can be poured into it.",
+      "hooks": [{"event": "spell_cast", "as": "self", "handler": "arcane_ward"}, {"event": "damage_incoming", "as": "target", "handler": "ward_soak"}],
+      "activate": {"id": "ward_mend", "name": "Arcane Ward: mend it with a spell slot (bonus action)", "cost": "bonus", "does": "ward",
+                   "requires": ["ward_mendable"], "effects": [{"op": "special", "handler": "ward_mend"}]}
     },
+    "spell_breaker": {"name": "Spell Breaker", "text": "Counterspell always ready; its slot kept when the spell holds.", "where": "Battle._countered"},
+    "spell_resistance": {"name": "Spell Resistance", "text": "Advantage on saves against spells; their damage halved.",
+                         "modifiers": [{"save": "advantage", "when": ["against_spell"], "why": "spell resistance"}]},
     "projected_ward": {
       "name": "Projected Ward", "text": "The ward can take a blow meant for a friend within 30 feet.",
       "hooks": [{"event": "damage_incoming", "as": "ally", "handler": "projected_ward", "reaction": true}]

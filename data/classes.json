@@ -14,30 +14,43 @@
       "mastery": [[1, 3], [4, 4], [10, 5], [16, 6]],
       "features": [
         {"level": 1, "id": "fighting_style", "name": "Fighting Style", "text": "A trained way of fighting, chosen at creation: a Fighting Style feat.", "rule": "fighting_style"},
-        {"level": 1, "id": "weapon_mastery", "name": "Weapon Mastery", "text": "The tricks of three kinds of weapon, four from level 4 and five from level 10: a mace that knocks a man down, a rapier that leaves an opening. Change them after a long rest.", "rule": "weapon_mastery"},
-        {"level": 1, "id": "second_wind", "name": "Second Wind", "text": "Once per rest, catch your breath in battle: regain 1d10 + level hit points.", "rule": "second_wind"},
-        {"level": 2, "id": "action_surge", "name": "Action Surge", "text": "Once per rest, push past exhaustion and take a second action on your turn.", "rule": "action_surge"},
+        {"level": 1, "id": "weapon_mastery", "name": "Weapon Mastery", "text": "The tricks of three kinds of weapon, four from level 4, five from level 10 and six from 16: a mace that knocks a man down, a rapier that leaves an opening. Change them after a long rest.", "rule": "weapon_mastery"},
+        {"level": 1, "id": "second_wind", "name": "Second Wind", "text": "A bonus action to catch your breath in battle: 1d10 + your level in hit points. Twice between long rests (three times from level 4, four from 10); a short rest brings back one.", "rule": "second_wind"},
+        {"level": 2, "id": "action_surge", "name": "Action Surge", "text": "Once per rest, push past exhaustion and take one more action on your turn (twice per rest from level 17, never twice in a turn).", "rule": "action_surge"},
+        {"level": 2, "id": "tactical_mind", "name": "Tactical Mind", "text": "When an ability check fails, a use of Second Wind adds 1d10 to it; if it still fails, the use is not spent.", "rule": "tactical_mind"},
         {"level": 3, "id": "subclass", "name": "Martial Archetype", "text": "Choose how you fight: Champion or Knight."},
         {"level": 4, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two."},
         {"level": 5, "id": "extra_attack", "name": "Extra Attack", "text": "Attack twice when you take the Attack action.", "rule": "extra_attack"},
+        {"level": 5, "id": "tactical_shift", "name": "Tactical Shift", "text": "Second Wind also lets you move up to half your speed, slipping away from the foes around you.", "rule": "tactical_shift"},
         {"level": 6, "id": "asi", "name": "Ability Score Improvement", "text": "Fighters train harder than anyone: +2 to one ability, or +1 to two."},
         {"level": 8, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two."},
-        {"level": 9, "id": "indomitable", "name": "Indomitable", "text": "Once per long rest, reroll a failed saving throw.", "rule": "indomitable"},
+        {"level": 9, "id": "indomitable", "name": "Indomitable", "text": "A failed saving throw rolled again, adding your level. Once between long rests (twice from level 13, three times from 17).", "rule": "indomitable"},
+        {"level": 9, "id": "tactical_master", "name": "Tactical Master", "text": "With a weapon whose mastery you know, a blow may push, sap or slow instead of its own trick.", "rule": "tactical_master"},
+        {"level": 11, "id": "two_extra_attacks", "name": "Two Extra Attacks", "text": "Attack three times when you take the Attack action.", "rule": "extra_attack_2"},
         {"level": 12, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two, or a feat."},
+        {"level": 13, "id": "studied_attacks", "name": "Studied Attacks", "text": "A missed attack teaches you: your next attack on that foe before the end of your next turn has advantage.", "rule": "studied_attacks"},
+        {"level": 13, "id": "indomitable_twice", "name": "Indomitable (two uses)", "text": "Indomitable twice between long rests."},
         {"level": 14, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two, or a feat."},
         {"level": 16, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two, or a feat."},
-        {"level": 19, "id": "epic_boon", "name": "Epic Boon", "text": "A gift of legend: an epic boon (or another feat), each raising one ability as high as 30."}
+        {"level": 17, "id": "action_surge_twice", "name": "Action Surge (two uses)", "text": "Action Surge twice between rests, once in a turn; Indomitable three times between long rests."},
+        {"level": 19, "id": "epic_boon", "name": "Epic Boon", "text": "A gift of legend: an epic boon (or another feat), each raising one ability as high as 30."},
+        {"level": 20, "id": "three_extra_attacks", "name": "Three Extra Attacks", "text": "Attack four times when you take the Attack action.", "rule": "extra_attack_3"}
       ],
       "subclasses": {
-        "champion": {"name": "Champion", "text": "Raw skill and endurance.", "features": [
-          {"level": 3, "id": "improved_critical", "name": "Improved Critical", "text": "Your weapon attacks score a critical hit on a roll of 19 or 20.", "rule": "crit_19"},
-          {"level": 7, "id": "remarkable_athlete", "name": "Remarkable Athlete", "text": "Add half your proficiency bonus to Strength, Dexterity and Constitution checks you are not proficient in."},
-          {"level": 10, "id": "additional_style", "name": "Additional Fighting Style", "text": "Learn a second fighting style.", "rule": "fighting_style"}
+        "champion": {"name": "Champion", "text": "Raw skill and endurance: the blow that ends it, and the will to stand after.", "features": [
+          {"level": 3, "id": "improved_critical", "name": "Improved Critical", "text": "Your weapon attacks and unarmed strikes score a critical hit on a roll of 19 or 20.", "rule": "crit_19"},
+          {"level": 3, "id": "remarkable_athlete", "name": "Remarkable Athlete", "text": "Advantage on initiative and on Strength (Athletics) checks; after a critical hit you may move up to half your speed, slipping away from the foes around you.", "rule": "remarkable_athlete"},
+          {"level": 7, "id": "additional_style", "name": "Additional Fighting Style", "text": "Learn a second fighting style.", "rule": "fighting_style"},
+          {"level": 10, "id": "heroic_warrior", "name": "Heroic Warrior", "text": "In a fight, you start each of your turns with Heroic Inspiration if you have none.", "rule": "heroic_warrior"},
+          {"level": 15, "id": "superior_critical", "name": "Superior Critical", "text": "Your weapon attacks and unarmed strikes score a critical hit on a roll of 18 to 20.", "rule": "crit_18"},
+          {"level": 18, "id": "survivor", "name": "Survivor", "text": "Advantage on death saves, and an 18 or 19 counts as a 20. At the start of each of your turns, while you are bloodied and still standing, you regain 5 + your Constitution modifier in hit points.", "rule": "survivor"}
         ]},
         "knight": {"name": "Knight", "text": "A shield for others: you hold the line and draw the enemy's blows.", "features": [
           {"level": 3, "id": "hold_the_line", "name": "Hold the Line", "text": "An enemy beside you has disadvantage attacking anyone but you.", "rule": "hold_the_line"},
           {"level": 7, "id": "commanding_presence", "name": "Commanding Presence", "text": "Add your Wisdom bonus to Persuasion and Intimidation when giving orders or demanding surrender."},
-          {"level": 10, "id": "rallying_cry", "name": "Rallying Cry", "text": "When you use Second Wind, friends within 30 feet regain hit points equal to your level.", "rule": "rallying_cry"}
+          {"level": 10, "id": "rallying_cry", "name": "Rallying Cry", "text": "When you use Second Wind, friends within 30 feet regain hit points equal to your level.", "rule": "rallying_cry"},
+          {"level": 15, "id": "unyielding", "name": "Unyielding", "text": "Once between long rests, a blow that would drop you leaves you standing with hit points equal to your level.", "rule": "knight_unyielding"},
+          {"level": 18, "id": "warden_of_the_line", "name": "Warden of the Line", "text": "Hold the Line reaches ten feet: an enemy within two strides of you strikes badly at anyone but you.", "rule": "warden_of_the_line"}
         ]}
       },
       "kits": [
@@ -59,31 +72,43 @@
       "mastery": [[1, 2]],
       "features": [
         {"level": 1, "id": "expertise", "name": "Expertise", "text": "Double your proficiency bonus with two chosen skills.", "rule": "expertise"},
-        {"level": 1, "id": "sneak_attack", "name": "Sneak Attack", "text": "Once per turn, deal extra damage (1d6, growing every other level) when you have advantage, or an ally is fighting your target.", "rule": "sneak_attack"},
+        {"level": 1, "id": "sneak_attack", "name": "Sneak Attack", "text": "Once per turn, deal extra damage (1d6, growing every other level to 10d6) when you have advantage, or an ally is fighting your target.", "rule": "sneak_attack"},
         {"level": 1, "id": "weapon_mastery", "name": "Weapon Mastery", "text": "The tricks of two kinds of weapon (a rapier that leaves an opening, a dagger quick enough for a second stab). Change them after a long rest.", "rule": "weapon_mastery"},
         {"level": 1, "id": "thieves_cant", "name": "Thieves' Cant", "text": "The secret slang and signs of the criminal world."},
         {"level": 2, "id": "cunning_action", "name": "Cunning Action", "text": "Dash, Disengage or Hide with a bonus action, and still attack in the same turn.", "rule": "cunning_action"},
-        {"level": 3, "id": "subclass", "name": "Roguish Archetype", "text": "Choose your trade: Thief or Cutthroat."},
+        {"level": 3, "id": "subclass", "name": "Roguish Archetype", "text": "Choose your trade: Thief or Assassin."},
+        {"level": 3, "id": "steady_aim", "name": "Steady Aim", "text": "A bonus action, before you have moved: advantage on your next attack this turn, and you stand still for the rest of it.", "rule": "steady_aim"},
         {"level": 4, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two."},
+        {"level": 5, "id": "cunning_strike", "name": "Cunning Strike", "text": "Give up Sneak Attack dice for a trick: poison (1d6, with a poisoner's kit), trip (1d6) or withdraw (1d6).", "rule": "cunning_strike"},
         {"level": 5, "id": "uncanny_dodge", "name": "Uncanny Dodge", "text": "Once per round, halve the damage of an attack you can see.", "rule": "uncanny_dodge"},
-        {"level": 6, "id": "expertise_2", "name": "Expertise", "text": "Two more skills gain double proficiency.", "rule": "expertise"},
+        {"level": 6, "id": "expertise_2", "name": "Expertise", "text": "Two more skills gain double proficiency.", "rule": "expertise", "expertise": {"count": 2}},
         {"level": 7, "id": "evasion", "name": "Evasion", "text": "Take no damage from area effects you save against, and half if you fail.", "rule": "evasion"},
+        {"level": 7, "id": "reliable_talent", "name": "Reliable Talent", "text": "A check with a skill or tool you are trained in never rolls lower than 10.", "rule": "reliable_talent"},
         {"level": 8, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two."},
         {"level": 10, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two."},
+        {"level": 11, "id": "improved_cunning_strike", "name": "Improved Cunning Strike", "text": "Two Cunning Strike tricks on one blow, paying for each.", "rule": "improved_cunning_strike"},
         {"level": 12, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two, or a feat."},
+        {"level": 14, "id": "devious_strikes", "name": "Devious Strikes", "text": "New Cunning Strike tricks: daze (2d6), obscure (3d6) and knock out (6d6).", "rule": "devious_strikes"},
+        {"level": 15, "id": "slippery_mind", "name": "Slippery Mind", "text": "Proficiency in Wisdom and Charisma saving throws.", "gives": {"saves": ["wis", "cha"]}},
         {"level": 16, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two, or a feat."},
-        {"level": 19, "id": "epic_boon", "name": "Epic Boon", "text": "A gift of legend: an epic boon (or another feat), each raising one ability as high as 30."}
+        {"level": 18, "id": "elusive", "name": "Elusive", "text": "No attack roll against you has advantage, unless you are incapacitated.", "rule": "elusive"},
+        {"level": 19, "id": "epic_boon", "name": "Epic Boon", "text": "A gift of legend: an epic boon (or another feat), each raising one ability as high as 30."},
+        {"level": 20, "id": "stroke_of_luck", "name": "Stroke of Luck", "text": "Once between rests, a failed attack roll or saving throw becomes a 20.", "rule": "stroke_of_luck"}
       ],
       "subclasses": {
-        "thief": {"name": "Thief", "text": "Burglar, climber, pickpocket.", "features": [
-          {"level": 3, "id": "fast_hands", "name": "Fast Hands", "text": "Use an item or pick a pocket as part of a Cunning Action.", "rule": "fast_hands"},
-          {"level": 3, "id": "second_story_work", "name": "Second-Story Work", "text": "Climb as fast as you walk."},
-          {"level": 9, "id": "supreme_sneak", "name": "Supreme Sneak", "text": "Advantage on Stealth if you move no faster than half speed."}
+        "thief": {"name": "Thief", "text": "Burglar, climber, treasure hunter: the adventurer of the old tales.", "features": [
+          {"level": 3, "id": "fast_hands", "name": "Fast Hands", "text": "Use an item, pick a lock or a pocket with a bonus action.", "rule": "fast_hands"},
+          {"level": 3, "id": "second_story_work", "name": "Second-Story Work", "text": "Climb as fast as you walk, and leap by your Dexterity.", "rule": "second_story_work"},
+          {"level": 9, "id": "supreme_sneak", "name": "Supreme Sneak", "text": "A new Cunning Strike trick: Stealth Attack (1d6), and the blow does not give away where you hide.", "rule": "supreme_sneak"},
+          {"level": 13, "id": "use_magic_device", "name": "Use Magic Device", "text": "Bound to four magic things instead of three; a power that spends charges keeps them on a 6.", "rule": "use_magic_device"},
+          {"level": 17, "id": "thiefs_reflexes", "name": "Thief's Reflexes", "text": "In the first round of a fight you act twice over: a second action, bonus action and move.", "rule": "thiefs_reflexes"}
         ]},
-        "cutthroat": {"name": "Cutthroat", "text": "Killer for hire: the first blow is the last.", "features": [
-          {"level": 3, "id": "assassinate", "name": "Assassinate", "text": "Advantage against anyone who has not acted yet in a fight; hits on surprised foes are critical.", "rule": "assassinate"},
-          {"level": 3, "id": "poisoners_kit", "name": "Poisoner", "text": "Proficiency with the poisoner's kit."},
-          {"level": 9, "id": "infiltration", "name": "Infiltration Expertise", "text": "You can maintain a false identity for weeks."}
+        "assassin": {"name": "Assassin", "text": "Killer for hire, spy and bounty hunter: the first blow is the last.", "features": [
+          {"level": 3, "id": "assassinate", "name": "Assassinate", "text": "Advantage on initiative; in the first round, advantage against anyone who has not yet acted, and a Sneak Attack then adds your level in damage.", "rule": "assassinate"},
+          {"level": 3, "id": "assassins_tools", "name": "Assassin's Tools", "text": "A disguise kit and a poisoner's kit, and the training to use them.", "gives": {"tools": ["disguise_kit", "poisoners_kit"], "items": ["disguise_kit", "poisoners_kit"]}},
+          {"level": 9, "id": "infiltration", "name": "Infiltration Expertise", "text": "You mimic speech and hand perfectly, and Steady Aim no longer roots you to the spot.", "rule": "roving_aim"},
+          {"level": 13, "id": "envenom_weapons", "name": "Envenom Weapons", "text": "The poison of a Cunning Strike also deals 2d6 poison damage on a failed save, through any resistance.", "rule": "envenom_weapons"},
+          {"level": 17, "id": "death_strike", "name": "Death Strike", "text": "A Sneak Attack in the first round of a fight: a Constitution save, or the blow's damage is doubled.", "rule": "death_strike"}
         ]}
       },
       "kits": [
@@ -100,7 +125,7 @@
       "skill_count": 2,
       "skill_choices": ["history", "insight", "medicine", "persuasion", "religion"],
       "suggested": {"str": 14, "dex": 8, "con": 13, "int": 10, "wis": 15, "cha": 12},
-      "choices_at_1": ["subclass"],
+      "choices_at_1": [],
       "spellcasting": {"ability": "wis", "type": "prepared",
         "cantrips": [3, 3, 3, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
         "slots": [[2], [3], [4, 2], [4, 3], [4, 3, 2], [4, 3, 3], [4, 3, 3, 1], [4, 3, 3, 2], [4, 3, 3, 3, 1], [4, 3, 3, 3, 2],
@@ -109,28 +134,38 @@
                   [4, 3, 3, 3, 3, 1, 1, 1, 1], [4, 3, 3, 3, 3, 2, 1, 1, 1], [4, 3, 3, 3, 3, 2, 2, 1, 1]]},
       "features": [
         {"level": 1, "id": "spellcasting", "name": "Spellcasting", "text": "Pray each morning for the prayers your god will grant today.", "rule": "spellcasting"},
-        {"level": 1, "id": "subclass", "name": "Divine Domain", "text": "Your god's aspect: Life or War."},
-        {"level": 2, "id": "channel_divinity", "name": "Channel Divinity", "text": "Once per rest, call on your god directly: Turn Undead, or your domain's power.", "rule": "channel_divinity"},
+        {"level": 1, "id": "divine_order", "name": "Divine Order", "text": "Your sacred role: Protector (martial weapons and heavy armour) or Thaumaturge (one more cantrip, and your Wisdom added to Arcana and Religion).", "choose": ["order_protector", "order_thaumaturge"]},
+        {"level": 2, "id": "channel_divinity", "name": "Channel Divinity", "text": "Call on your god directly: Divine Spark (heal or harm, 1d8 + Wisdom, more dice at 7, 13 and 18) or Turn Undead. Twice between long rests (three times from 6, four from 18); a short rest brings back one.", "rule": "channel_divinity"},
+        {"level": 3, "id": "subclass", "name": "Divine Domain", "text": "Your god's aspect: Life or War."},
         {"level": 4, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two."},
-        {"level": 5, "id": "destroy_undead", "name": "Destroy Undead", "text": "Weak undead that you turn are destroyed outright.", "rule": "destroy_undead"},
+        {"level": 5, "id": "sear_undead", "name": "Sear Undead", "text": "Undead that fail against your Turn Undead also burn: a d8 of radiant damage for each point of your Wisdom modifier.", "rule": "sear_undead"},
+        {"level": 7, "id": "blessed_strikes", "name": "Blessed Strikes", "text": "Divine Strike (once a turn, a weapon hit deals 1d8 radiant more) or Potent Spellcasting (your Wisdom added to a cleric cantrip's damage).", "choose": ["blessed_divine_strike", "blessed_potent_spellcasting"]},
         {"level": 8, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two."},
-        {"level": 10, "id": "divine_intervention", "name": "Divine Intervention", "text": "Beg your god to act. It rarely listens.", "rule": "divine_intervention"},
+        {"level": 10, "id": "divine_intervention", "name": "Divine Intervention", "text": "Once between long rests, your god answers: a cleric spell of level 5 or lower cast without a slot, as one action.", "rule": "divine_intervention"},
         {"level": 12, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two, or a feat."},
+        {"level": 14, "id": "improved_blessed_strikes", "name": "Improved Blessed Strikes", "text": "Divine Strike deals 2d8; Potent Spellcasting's cantrips also give twice your Wisdom in temporary hit points to you or a friend.", "rule": "improved_blessed_strikes"},
         {"level": 16, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two, or a feat."},
-        {"level": 19, "id": "epic_boon", "name": "Epic Boon", "text": "A gift of legend: an epic boon (or another feat), each raising one ability as high as 30."}
+        {"level": 19, "id": "epic_boon", "name": "Epic Boon", "text": "A gift of legend: an epic boon (or another feat), each raising one ability as high as 30."},
+        {"level": 20, "id": "greater_divine_intervention", "name": "Greater Divine Intervention", "text": "Divine Intervention may ask for a Wish (when Wish comes into the world), and then not again for 2d4 long rests."}
       ],
+      "options": {
+        "order_protector": {"name": "Protector", "text": "Trained for battle: martial weapons and heavy armour.", "gives": {"armor": ["heavy"], "weapons": ["martial"]}},
+        "order_thaumaturge": {"name": "Thaumaturge", "text": "One more cantrip, and your Wisdom modifier (at least +1) added to Arcana and Religion checks.", "cantrips": 1},
+        "blessed_divine_strike": {"name": "Divine Strike", "text": "Once on each of your turns, a weapon hit deals 1d8 radiant damage more (2d8 from level 14)."},
+        "blessed_potent_spellcasting": {"name": "Potent Spellcasting", "text": "Your Wisdom modifier added to the damage of your cleric cantrips (and from level 14, temporary hit points for you or a friend)."}
+      },
       "subclasses": {
-        "life": {"name": "Life Domain", "text": "Healers and midwives of the faith.", "armor": ["heavy"], "features": [
-          {"level": 1, "id": "disciple_of_life", "name": "Disciple of Life", "text": "Your healing spells restore 2 + the spell's level extra hit points.", "rule": "disciple_of_life"},
-          {"level": 2, "id": "preserve_life", "name": "Channel Divinity: Preserve Life", "text": "Share out healing equal to five times your level among the wounded.", "rule": "preserve_life"},
-          {"level": 6, "id": "blessed_healer", "name": "Blessed Healer", "text": "Healing others heals you a little too."},
-          {"level": 8, "id": "divine_strike", "name": "Divine Strike", "text": "Once per turn your weapon deals an extra 1d8 radiant damage.", "rule": "divine_strike"}
+        "life": {"name": "Life Domain", "text": "Healers and midwives of the faith.", "features": [
+          {"level": 3, "id": "disciple_of_life", "name": "Disciple of Life", "text": "Your healing spells restore 2 + the spell's level extra hit points.", "rule": "disciple_of_life"},
+          {"level": 3, "id": "preserve_life", "name": "Channel Divinity: Preserve Life", "text": "Share out healing equal to five times your level among the wounded within 30 feet (none past half their hit points).", "rule": "preserve_life"},
+          {"level": 6, "id": "blessed_healer", "name": "Blessed Healer", "text": "Healing someone else with a spell heals you too: 2 + the spell's level.", "rule": "blessed_healer"},
+          {"level": 17, "id": "supreme_healing", "name": "Supreme Healing", "text": "Your healing spells and Divine Spark heal their most: every die counts as its highest.", "rule": "supreme_healing"}
         ]},
-        "war": {"name": "War Domain", "text": "Chaplains of armies and the gods of battle.", "armor": ["heavy"], "weapons": ["martial"], "features": [
-          {"level": 1, "id": "war_priest", "name": "War Priest", "text": "A few times per rest, make an extra weapon attack.", "rule": "war_priest"},
-          {"level": 2, "id": "guided_strike", "name": "Channel Divinity: Guided Strike", "text": "Add +10 to one attack roll.", "rule": "guided_strike"},
-          {"level": 6, "id": "war_gods_blessing", "name": "War God's Blessing", "text": "Grant an ally +10 on an attack."},
-          {"level": 8, "id": "divine_strike", "name": "Divine Strike", "text": "Once per turn your weapon deals an extra 1d8 damage.", "rule": "divine_strike"}
+        "war": {"name": "War Domain", "text": "Chaplains of armies and the gods of battle.", "features": [
+          {"level": 3, "id": "war_priest", "name": "War Priest", "text": "A weapon attack with a bonus action, as many times as your Wisdom modifier (at least once) between short rests.", "rule": "war_priest"},
+          {"level": 3, "id": "guided_strike", "name": "Channel Divinity: Guided Strike", "text": "Add +10 to an attack roll that would miss: your own, or a friend's within 30 feet.", "rule": "guided_strike"},
+          {"level": 6, "id": "war_gods_blessing", "name": "War God's Blessing", "text": "A use of Channel Divinity casts Shield of Faith or Spiritual Weapon without a slot, and it lasts its minute without your concentration.", "rule": "war_gods_blessing"},
+          {"level": 17, "id": "avatar_of_battle", "name": "Avatar of Battle", "text": "Resistance to bludgeoning, piercing and slashing damage.", "rule": "avatar_of_battle"}
         ]}
       },
       "kits": [
@@ -143,9 +178,9 @@
       "description": "A scholar of forbidden power. Wizards learn magic from books, at ruinous cost in years and coin; some kingdoms license them, others burn them.",
       "hit_die": 6, "primary": ["int", "con", "dex"],
       "saves": ["int", "wis"],
-      "armor": [], "weapons": ["dagger", "dart", "sling", "quarterstaff", "light_crossbow"], "tools": [],
+      "armor": [], "weapons": ["simple"], "tools": [],
       "skill_count": 2,
-      "skill_choices": ["arcana", "history", "insight", "investigation", "medicine", "religion"],
+      "skill_choices": ["arcana", "history", "insight", "investigation", "medicine", "nature", "religion"],
       "suggested": {"str": 8, "dex": 14, "con": 13, "int": 15, "wis": 12, "cha": 10},
       "choices_at_1": [],
       "spellcasting": {"ability": "int", "type": "spellbook",
@@ -155,25 +190,34 @@
                   [4, 3, 3, 3, 2, 1, 1, 1], [4, 3, 3, 3, 2, 1, 1, 1], [4, 3, 3, 3, 2, 1, 1, 1, 1],
                   [4, 3, 3, 3, 3, 1, 1, 1, 1], [4, 3, 3, 3, 3, 2, 1, 1, 1], [4, 3, 3, 3, 3, 2, 2, 1, 1]]},
       "features": [
-        {"level": 1, "id": "spellcasting", "name": "Spellcasting", "text": "Cast spells from your spellbook; copy new ones from scrolls and books.", "rule": "spellcasting"},
-        {"level": 1, "id": "arcane_recovery", "name": "Arcane Recovery", "text": "Once a day, after a short rest, recover spent spell slots (total levels up to half your level).", "rule": "arcane_recovery"},
-        {"level": 2, "id": "subclass", "name": "Arcane Tradition", "text": "Choose your school: Evocation or Abjuration."},
-        {"level": 4, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two."},
-        {"level": 8, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two."},
+        {"level": 1, "id": "spellcasting", "name": "Spellcasting", "text": "Cast spells from your spellbook; copy new ones from scrolls and books (two hours and 50 coins a level), and two more come with every level.", "rule": "spellcasting"},
+        {"level": 1, "id": "ritual_adept", "name": "Ritual Adept", "text": "Any ritual in your spellbook can be cast as a ritual, read from the book: ten minutes longer, and no spell slot.", "rule": "ritual_adept"},
+        {"level": 1, "id": "arcane_recovery", "name": "Arcane Recovery", "text": "Once between long rests, a short rest with your spellbook brings back spent spell slots: levels adding up to half your level (rounded up), none of level 6 or higher.", "rule": "arcane_recovery"},
+        {"level": 2, "id": "scholar", "name": "Scholar", "text": "A field of study besides magic: Expertise in one of Arcana, History, Investigation, Medicine, Nature or Religion that you know.", "expertise": {"count": 1, "skills": ["arcana", "history", "investigation", "medicine", "nature", "religion"]}},
+        {"level": 3, "id": "subclass", "name": "Wizard Subclass", "text": "Your school: the Evoker or the Abjurer."},
+        {"level": 4, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two, or a feat."},
+        {"level": 5, "id": "memorize_spell", "name": "Memorize Spell", "text": "After a short rest, one spell you have prepared may be swapped for another from your spellbook.", "rule": "memorize_spell"},
+        {"level": 8, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two, or a feat."},
         {"level": 12, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two, or a feat."},
         {"level": 16, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two, or a feat."},
-        {"level": 19, "id": "epic_boon", "name": "Epic Boon", "text": "A gift of legend: an epic boon (or another feat), each raising one ability as high as 30."}
+        {"level": 18, "id": "spell_mastery", "name": "Spell Mastery", "text": "A level 1 and a level 2 spell from your spellbook, each cast with an action, are yours at will: cast at their own level without a slot.", "rule": "spell_mastery", "picks": [{"key": "mastery", "spell_level": 1, "count": 1, "cast": "action"}, {"key": "mastery", "spell_level": 2, "count": 1, "cast": "action"}]},
+        {"level": 19, "id": "epic_boon", "name": "Epic Boon", "text": "A gift of legend: an epic boon (or another feat), each raising one ability as high as 30. Boon of Spell Recall suits a wizard."},
+        {"level": 20, "id": "signature_spells", "name": "Signature Spells", "text": "Two level 3 spells from your spellbook become your signature: each can be cast once at level 3 without a slot, and comes back with a short or long rest.", "rule": "signature_spells", "picks": [{"key": "signature", "spell_level": 3, "count": 2}]}
       ],
       "subclasses": {
-        "evocation": {"name": "School of Evocation", "text": "Fire, frost and lightning.", "features": [
-          {"level": 2, "id": "sculpt_spells", "name": "Sculpt Spells", "text": "Your area spells spare allies you choose.", "rule": "sculpt_spells"},
-          {"level": 6, "id": "potent_cantrip", "name": "Potent Cantrip", "text": "Targets who save against your cantrips still take half damage."},
-          {"level": 10, "id": "empowered_evocation", "name": "Empowered Evocation", "text": "Add your Intelligence bonus to evocation damage.", "rule": "empowered_evocation"}
+        "evocation": {"name": "Evoker", "text": "Fire, frost, thunder and lightning, aimed like artillery.", "features": [
+          {"level": 3, "id": "evocation_savant", "name": "Evocation Savant", "text": "Two evocation spells of level 1 or 2 copied into your spellbook for nothing, and one more each time a new level of spell slots opens.", "savant": "evocation"},
+          {"level": 3, "id": "potent_cantrip", "name": "Potent Cantrip", "text": "A damaging cantrip that misses, or that its target saves against, still does half its damage (and nothing else).", "rule": "potent_cantrip"},
+          {"level": 6, "id": "sculpt_spells", "name": "Sculpt Spells", "text": "Your evocations leave out friends you can see: as many as one plus the spell's level are untouched.", "rule": "sculpt_spells"},
+          {"level": 10, "id": "empowered_evocation", "name": "Empowered Evocation", "text": "Your Intelligence modifier added to one damage roll of each wizard evocation.", "rule": "empowered_evocation"},
+          {"level": 14, "id": "overchannel", "name": "Overchannel", "text": "A damaging wizard spell of level 1 to 5 cast with a slot does its greatest damage. Free the first time between long rests; after that it costs 2d12 necrotic for each slot level, a d12 more each time.", "rule": "overchannel"}
         ]},
-        "abjuration": {"name": "School of Abjuration", "text": "Wards, seals and banishings.", "features": [
-          {"level": 2, "id": "arcane_ward", "name": "Arcane Ward", "text": "Casting abjurations raises a ward that soaks up damage.", "rule": "arcane_ward"},
-          {"level": 6, "id": "projected_ward", "name": "Projected Ward", "text": "Your ward can protect an ally."},
-          {"level": 10, "id": "improved_abjuration", "name": "Improved Abjuration", "text": "Add your proficiency bonus when you try to end a spell or effect."}
+        "abjuration": {"name": "Abjurer", "text": "Wards, seals and banishings; the shield of companions.", "features": [
+          {"level": 3, "id": "abjuration_savant", "name": "Abjuration Savant", "text": "Two abjuration spells of level 1 or 2 copied into your spellbook for nothing, and one more each time a new level of spell slots opens.", "savant": "abjuration"},
+          {"level": 3, "id": "arcane_ward", "name": "Arcane Ward", "text": "Your first abjuration cast with a slot after a long rest weaves a ward (twice your level + Intelligence) that takes damage meant for you; each abjuration after mends it by twice the slot's level, and a bonus action can spend a slot to do the same.", "rule": "arcane_ward"},
+          {"level": 6, "id": "projected_ward", "name": "Projected Ward", "text": "With your reaction, the ward takes the damage of a creature you can see within 30 feet.", "rule": "projected_ward"},
+          {"level": 10, "id": "spell_breaker", "name": "Spell Breaker", "text": "Counterspell and Dispel Magic are always ready for you; Dispel Magic takes only a bonus action and adds your proficiency to its check; a slot spent on either is kept if the spell does not stop a spell.", "rule": "spell_breaker"},
+          {"level": 14, "id": "spell_resistance", "name": "Spell Resistance", "text": "Advantage on saving throws against spells, and resistance to the damage of spells.", "rule": "spell_resistance"}
         ]}
       },
       "kits": [

@@ -141,6 +141,9 @@ def aim_targets(b, f, a: dict) -> list:
         return [e for e in b.enemies_of(f) if e.active and b.feet(f, e) <= int(a.get("range", 5)) and b.can_see(f, e)]
     if aim == "unknown":
         return [e for e in b.enemies_of(f) if e.creature is not None and e.creature.def_id not in b.known]
+    if aim == "ally":  # (another creature on their side, hurt, seen within range: Divine Spark)
+        return [x for x in b.team(f.team) if x is not f and (x.active or x.state == "down") and x.hp < x.max_hp
+                and b.feet(f, x) <= int(a.get("range", 5)) and b.can_see(f, x)]
     return []
 
 
@@ -152,6 +155,12 @@ def _blink_ready(b, f) -> str | None:
     from realmwalker.rules.engine.handlers import boons
 
     return boons.blink_ok(b, f)
+
+
+def _ward_mendable(b, f) -> str | None:
+    from realmwalker.rules.engine.handlers import wizard
+
+    return wizard.mend_problem(b, f)
 
 
 def _vitality_left(b, f) -> str | None:
@@ -166,8 +175,26 @@ def _in_shadow(b, f) -> str | None:
     return boons.in_shadow(b, f)
 
 
+def _surge_ready(b, f) -> str | None:
+    from realmwalker.rules.engine.handlers import fighter
+
+    return fighter.surge_ready(b, f)
+
+
+def _not_moved(b, f) -> str | None:
+    from realmwalker.rules.engine.handlers import rogue
+
+    return rogue.not_moved(b, f)
+
+
 REQUIRES: dict[str, Callable] = {
+    "action_left": lambda b, f: None if f.action > 0 else "no action left",
+    "bonus_left": lambda b, f: None if f.bonus > 0 else "no bonus action left",
+    "foe_in_sight": lambda b, f: None if any(e.active and b.can_see(f, e) for e in b.enemies_of(f)) else "no foe in sight",
+    "not_moved": _not_moved,
+    "surge_ready": _surge_ready,
     "blink_ready": _blink_ready,
+    "ward_mendable": _ward_mendable,
     "vitality_left": _vitality_left,
     "in_shadow": _in_shadow,
     "not_sensing": _not_sensing,

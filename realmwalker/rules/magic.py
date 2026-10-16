@@ -205,7 +205,7 @@ def can_attune(char, item, sheet=None, others=()) -> str:
     for other in attuned_items(char):
         if other.magic.get("jealous"):
             return f"the {other.magic.get('title') or 'artifact'} will share you with nothing else"
-    if len(attuned_items(char)) >= ATTUNE_MAX:
+    if len(attuned_items(char)) >= ATTUNE_MAX + (1 if "use_magic_device" in char.features else 0):
         return f"already bound to {ATTUNE_MAX} things: end one bond first"
     same = item.magic.get("title")
     if item.magic.get("source") == "book" and any(o.magic.get("book") == item.magic.get("book")

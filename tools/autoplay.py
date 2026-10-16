@@ -204,8 +204,15 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
             for it in member.inventory:
                 if it.fill < 0 or it.fill > container_capacity(app.tables.items, it) + 1e-6:
                     fail(f"{member.name}'s {it.def_id} holds {it.fill} pints")
-            if any(p.get("kind") not in ("subclass", "asi", "spells", "cantrips") for p in member.pending):
-                fail(f"{member.name} has an impossible level-up choice waiting: {member.pending}")
+            from realmwalker.rules import progression
+
+            kinds = ("subclass", "asi", "boon", "feat", "style", "spells", "cantrips", "mastery", "option",
+                     "expertise", "pick")
+            stuck = [p for p in member.pending if p.get("kind") not in kinds
+                     or (p.get("kind") not in ("spells", "cantrips", "pick", "expertise", "feat")
+                         and not progression.options(member, app.tables, p))]
+            if stuck:  # (a spell to copy or pick, a cantrip, a skill may have nothing left: dropped when looked at)
+                fail(f"{member.name} has an impossible level-up choice waiting: {stuck}")
             if any(not 1 <= v <= 20 for v in member.abilities.values()):
                 fail(f"{member.name} has an ability out of range: {member.abilities}")
             table = app.tables.rules["xp_for_level"]

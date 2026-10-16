@@ -46,9 +46,47 @@ def level_up(char: Character, tables, rng: RNG, *, auto: bool = False) -> list[s
     return notes
 
 
+def feature_gives(char: Character, tables, feat: dict) -> None:
+    """What a class feature gives at once (data "gives"): saving throws (Slippery Mind), tools and the kit for them
+    (Assassin's Tools)."""
+    gives = feat.get("gives") or {}
+    for a in gives.get("saves", ()):
+        if a not in char.saves:
+            char.saves.append(a)
+    for t in gives.get("tools", ()):
+        if t not in char.tools:
+            char.tools.append(t)
+    for t in gives.get("armor", ()):
+        if t not in char.armor_prof:
+            char.armor_prof.append(t)
+    for t in gives.get("weapons", ()):
+        if t not in char.weapon_prof:
+            char.weapon_prof.append(t)
+    if feat.get("choose"):
+        add_pending(char, {"kind": "option", "feature": feat["id"], "level": char.level})
+    if feat.get("expertise"):  # (a wizard's Scholar, a rogue's second Expertise)
+        ex = feat["expertise"]
+        add_pending(char, {"kind": "expertise", "count": int(ex["count"]), "skills": list(ex.get("skills") or []),
+                           "feature": feat["id"], "level": char.level})
+    if feat.get("savant") and char.spells is not None:  # two of the school's spells, level 1 or 2, for nothing
+        add_pending(char, {"kind": "spells", "count": 2, "school": feat["savant"], "top": 2, "feature": feat["id"],
+                           "level": char.level})
+    for pick in feat.get("picks", ()):  # (Spell Mastery, Signature Spells)
+        if char.spells is not None:
+            add_pending(char, {"kind": "pick", "feature": feat["id"], **pick, "level": char.level})
+    from realmwalker.rules.inventory import add_item
+
+    for i in gives.get("items", ()):
+        if not any(x.def_id == i for x in char.inventory):
+            add_item(char, tables.items, i)
+
+
 def _level_up(char: Character, tables, rng: RNG) -> list[str]:
     cls = tables.classes[char.cls]
     before = trs.of_char(char, tables)
+    top_before = spell_top_level(char, tables)
+    savants = [f.get("savant") for f in cls["subclasses"].get(char.subclass or "", {}).get("features", [])
+               if f.get("savant") and f["id"] in char.features]
     char.level += 1
     con = modifier(char.abilities["con"])
     from realmwalker.rules import feats
@@ -71,14 +109,19 @@ def _level_up(char: Character, tables, rng: RNG) -> list[str]:
         elif feat["id"] not in char.features:
             char.features.append(feat["id"])
             notes.append(f"New: {feat['name']}.")
+            feature_gives(char, tables, feat)
     if char.subclass:
         for feat in cls["subclasses"][char.subclass]["features"]:
             if feat["level"] == char.level and feat["id"] not in char.features:
                 char.features.append(feat["id"])
                 notes.append(f"New: {feat['name']}.")
+                feature_gives(char, tables, feat)
                 _offer_style(char, feat)
     if char.cls == "wizard" and char.spells:
         add_pending(char, {"kind": "spells", "count": 2, "level": char.level})
+        if spell_top_level(char, tables) > top_before:  # a new level of slots: one more of a Savant's school
+            for school in savants:
+                add_pending(char, {"kind": "spells", "count": 1, "school": school, "level": char.level})
     offer_masteries(char, tables)  # a fourth kind of weapon at level 4, a fifth at 10 (fighters)
     cantrips = cls.get("spellcasting", {}).get("cantrips")
     if cantrips and char.spells:
@@ -258,6 +301,10 @@ def options(char: Character, tables, choice: dict) -> list[tuple[str, str, str]]
     cls = tables.classes[char.cls]
     kind = choice["kind"]
     names = {a: tables.rules["abilities"][a]["name"] for a in tables.rules["abilities"]}
+    if kind == "option":
+        feat = next((f for f in cls["features"] if f["id"] == choice["feature"]), {})
+        return [(o, cls["options"][o]["name"], cls["options"][o]["text"]) for o in feat.get("choose", ())
+                if o not in char.features]
     if kind == "subclass":
         return [(sid, s["name"], s.get("text", "") + " " + "; ".join(
             f"level {f['level']}: {f['name']}" for f in s.get("features", [])))
@@ -309,9 +356,10 @@ def options(char: Character, tables, choice: dict) -> list[tuple[str, str, str]]
         out.sort(key=lambda o: not o[1].startswith("Epic"))
         return out + [o for o in options(char, tables, {"kind": "asi"}) if not o[0].startswith("feat:")]
     if kind == "spells":
-        top = spell_top_level(char, tables)
+        top = min(spell_top_level(char, tables), int(choice.get("top", 9)))
         book = char.spells.get("spellbook", [])
-        spells = [s for s in tables.spells.for_class(char.cls, top) if tables.spells[s]["level"] > 0 and s not in book]
+        spells = [s for s in tables.spells.for_class(char.cls, top) if tables.spells[s]["level"] > 0 and s not in book
+                  and (not choice.get("school") or tables.spells[s].get("school") == choice["school"])]
         spells.sort(key=lambda s: (-tables.spells[s]["level"], tables.spells[s]["name"]))
         return [(s, f"{tables.spells[s]['name']} (level {tables.spells[s]['level']})",
                  tables.spells[s].get("text", tables.spells[s].get("description", ""))) for s in spells]
@@ -324,11 +372,36 @@ def options(char: Character, tables, choice: dict) -> list[tuple[str, str, str]]
         known = char.spells.get("cantrips", [])
         return [(s, tables.spells[s]["name"], tables.spells[s].get("text", tables.spells[s].get("description", "")))
                 for s in tables.spells.for_class(char.cls, 0) if tables.spells[s]["level"] == 0 and s not in known]
+    if kind == "expertise":
+        rules = tables.rules["skills"]
+        return [(sk, rules[sk]["name"], f"Twice your proficiency bonus on {rules[sk]['name']} checks.")
+                for sk in sorted(char.skills) if sk in rules and sk not in char.expertise
+                and (not choice.get("skills") or sk in choice["skills"])]
+    if kind == "pick":
+        return [(s, tables.spells[s]["name"], tables.spells[s].get("text", "")) for s in pick_options(char, tables, choice)]
     return []
+
+
+def pick_options(char: Character, tables, choice: dict) -> list[str]:
+    """The spellbook's spells a Spell Mastery or Signature Spells pick can take: of its level (and cast with an action,
+    for Spell Mastery), not picked already."""
+    have = (char.spells or {}).get(choice["key"], [])
+    out = []
+    for sid in (char.spells or {}).get("spellbook", []):
+        sp = tables.spells.defs.get(sid)
+        if sp is None or sp["level"] != int(choice["spell_level"]) or sid in have:
+            continue
+        if choice.get("cast") == "action" and sp.get("cast", "action") != "action":
+            continue
+        out.append(sid)
+    return out
 
 
 def choice_title(char: Character, tables, choice: dict) -> str:
     kind = choice["kind"]
+    if kind == "option":
+        feat = next((f for f in tables.classes[char.cls]["features"] if f["id"] == choice["feature"]), {})
+        return f"{feat.get('name', 'A choice')}: choose one"
     if kind == "subclass":
         return f"Choose a path for {char.name.split()[0]}"
     if kind == "asi":
@@ -348,7 +421,17 @@ def choice_title(char: Character, tables, choice: dict) -> str:
         return "Learn another fighting style"
     if kind == "spells":
         n = choice.get("count", 1)
+        if choice.get("school"):
+            return f"{choice['school'].title()} Savant: copy {n} {choice['school']} spell{'s' if n > 1 else ''} for nothing"
         return f"Copy {n} new spell{'s' if n > 1 else ''} into your spellbook"
+    if kind == "expertise":
+        n = choice.get("count", 1)
+        return f"Expertise: choose {n} skill{'s' if n > 1 else ''} you know"
+    if kind == "pick":
+        level = choice["spell_level"]
+        if choice["key"] == "mastery":
+            return f"Spell Mastery: a level {level} spell to cast at will"
+        return f"Signature Spells: {choice.get('count', 1)} level {level} spell{'s' if choice.get('count', 1) > 1 else ''}"
     if kind == "cantrips":
         n = choice.get("count", 1)
         return f"Learn {n} new cantrip{'s' if n > 1 else ''}"
@@ -363,6 +446,14 @@ def resolve(char: Character, tables, choice: dict, option_id: str) -> list[str]:
     cls = tables.classes[char.cls]
     kind = choice["kind"]
     notes = []
+    if kind == "option":
+        opt = cls["options"][option_id]
+        char.features.append(option_id)
+        feature_gives(char, tables, opt)
+        if opt.get("cantrips") and char.spells is not None:
+            add_pending(char, {"kind": "cantrips", "count": int(opt["cantrips"]), "level": char.level})
+        notes.append(f"{char.name.split()[0]}: {opt['name']}.")
+        char.pending.remove(choice)
     if kind == "subclass":
         char.subclass = option_id
         sub = cls["subclasses"][option_id]
@@ -371,6 +462,7 @@ def resolve(char: Character, tables, choice: dict, option_id: str) -> list[str]:
             if feat["level"] <= char.level and feat["id"] not in char.features:
                 char.features.append(feat["id"])
                 notes.append(f"New: {feat['name']}.")
+                feature_gives(char, tables, feat)
                 _offer_style(char, feat)
         char.pending.remove(choice)
     elif kind in ("asi", "boon") and option_id.startswith("feat:"):
@@ -410,6 +502,21 @@ def resolve(char: Character, tables, choice: dict, option_id: str) -> list[str]:
         choice["count"] = choice.get("count", 1) - 1
         if choice["count"] <= 0 or not options(char, tables, choice):
             char.pending.remove(choice)
+    elif kind == "expertise":
+        char.expertise.append(option_id)
+        notes.append(f"{char.name.split()[0]} becomes expert in {tables.rules['skills'][option_id]['name']}.")
+        choice["count"] = choice.get("count", 1) - 1
+        if choice["count"] <= 0 or not options(char, tables, choice):
+            char.pending.remove(choice)
+    elif kind == "pick":
+        char.spells.setdefault(choice["key"], []).append(option_id)
+        if choice["key"] == "signature":
+            char.uses[f"signature:{option_id}"] = 1
+        notes.append(f"{tables.spells[option_id]['name']}: "
+                     f"{'at will' if choice['key'] == 'mastery' else 'a signature spell'}.")
+        choice["count"] = choice.get("count", 1) - 1
+        if choice["count"] <= 0 or not options(char, tables, choice):
+            char.pending.remove(choice)
     elif kind in ("spells", "cantrips"):
         key = "spellbook" if kind == "spells" else "cantrips"
         char.spells.setdefault(key, []).append(option_id)
@@ -424,7 +531,7 @@ def auto_resolve(char: Character, tables) -> list[str]:
     """Sensible choices for everything waiting: the first path, the main ability, the strongest spells."""
     notes = []
     cls = tables.classes[char.cls]
-    for _ in range(40):
+    for _ in range(400):  # (each pick is a step: a wizard of 20 made at once has a hundred)
         if not char.pending:
             break
         choice = char.pending[0]
@@ -448,6 +555,26 @@ def suggest(char: Character, tables, choice: dict, opts: list | None = None) -> 
         return ""
     kind = choice["kind"]
     cls = tables.classes[char.cls]
+    if kind == "option":  # (a fighting priest guards and smites; a priest of the book prays and blasts)
+        fighting = feats.archetype(char, tables) not in ("caster", "healer")
+        for pick in (("order_protector", "blessed_divine_strike") if fighting else
+                     ("order_thaumaturge", "blessed_potent_spellcasting")):
+            if pick in ids:
+                return pick
+        return ids[0]
+    if kind == "expertise":  # (a wizard's own field first; a rogue's sneaking and noticing)
+        for sk in ("arcana", "stealth", "perception", "investigation"):
+            if sk in ids:
+                return sk
+        return ids[0]
+    if kind == "pick":  # what harms the most foes (a fireball for a signature), then what harms at all
+        from realmwalker.rules import spells as spellrules
+
+        def worth(sid: str) -> tuple:
+            sp = tables.spells[sid]
+            return (spellrules.harms(sp), bool(sp.get("area")), not sp.get("concentration"), sp["name"])
+
+        return max(ids, key=worth)
     if kind == "asi":
         best = max(cls["primary"], key=lambda a: (char.abilities[a] <= 18, -cls["primary"].index(a)))
         plus_two = f"{best}+2"
@@ -510,16 +637,29 @@ def short_rest(char: Character, tables, rng: RNG, *, meal: bool = False) -> list
     if healed:
         notes.append(f"{char.name.split()[0]} recovers {healed} hit points.")
     resources.recover(char, tables, "short")  # Second Wind, Action Surge, Channel Divinity... (data/traits.json)
-    if "arcane_recovery" in char.features and char.uses.get("arcane_recovery", 1) and char.spells:
+    if "arcane_recovery" in char.features and char.uses.get("arcane_recovery", 1) and char.spells \
+            and any(char.spells.get("slots_used", [])[:5]):
+        # (2024: slot levels adding up to half the wizard's level, rounded up, none of level 6 or higher; the
+        # highest first, as a wizard would choose)
         used = char.spells.setdefault("slots_used", [0] * 9)
         budget = max(1, (char.level + 1) // 2)
-        for i in range(min(5, len(used))):
+        back = []
+        for i in reversed(range(min(5, len(used)))):
             while used[i] and budget >= i + 1:
                 used[i] -= 1
                 budget -= i + 1
-        char.uses["arcane_recovery"] = 0
-        notes.append("Arcane Recovery restores some spell slots.")
+                back.append(i + 1)
+        if back:
+            char.uses["arcane_recovery"] = 0
+            notes.append(f"Arcane Recovery restores spell slots (level {', '.join(str(n) for n in back)}).")
+    signature_back(char)
     return notes
+
+
+def signature_back(char: Character) -> None:
+    """A wizard's Signature Spells: each once again after a short or long rest."""
+    for sid in (char.spells or {}).get("signature", []):
+        char.uses[f"signature:{sid}"] = 1
 
 
 def long_rest(char: Character, tables, rng: RNG) -> list[str]:
@@ -534,6 +674,8 @@ def long_rest(char: Character, tables, rng: RNG) -> list[str]:
     restore_slots(char)
     resources.recover(char, tables, "long")  # every pool (data/traits.json), an orc's toughness among them
     char.uses["arcane_recovery"] = 1
+    signature_back(char)
+    char.uses.pop("overchannel", None)  # (an evoker's Overchannel is safe once more)
     for key in ("ward_made", "arcane_ward"):  # an abjurer's ward is made anew each day
         char.uses.pop(key, None)
     from realmwalker.rules import feats

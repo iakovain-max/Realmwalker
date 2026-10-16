@@ -190,11 +190,13 @@ def _buff_status(b, f, bf: dict, tables) -> Status | None:
     sid = src.split(":", 1)[-1]
     spell = tables.spells[sid] if sid in tables.spells else {}
     name = spell.get("name") or sid.replace("_", " ").capitalize()
+    if src == "dazed_still":
+        return None  # (shown as the daze itself)
     if bf.get("marked"):
         kind = "marked"
     elif bf.get("burning"):
         kind = "burning"
-    elif bf.get("slow"):
+    elif bf.get("slow") or bf.get("dazed"):
         kind = "slowed"
     elif bf.get("no_heal"):
         kind = "no_heal"
@@ -203,7 +205,7 @@ def _buff_status(b, f, bf: dict, tables) -> Status | None:
     elif bf.get("attack_die") or bf.get("save_die"):
         die = str(bf.get("attack_die") or bf.get("save_die"))
         kind = "baned" if die.startswith("-") else "blessed"
-    elif bf.get("check_die"):
+    elif bf.get("check_die") or bf.get("aimed"):
         kind = "guided"
     elif bf.get("ac") or bf.get("mage_armor"):
         kind = "shielded"
@@ -229,8 +231,12 @@ def _buff_status(b, f, bf: dict, tables) -> Status | None:
     lines = [text]
     if bf.get("poisoned_blade"):
         title, lines = "Poisoned blade", ["Their next hit that cuts or pierces deals 1d4 poison damage more."]
+    elif kind == "slowed" and bf.get("dazed"):
+        title, lines = "Dazed (Cunning Strike)", ["On their next turn they may only act: no moving, no bonus action."]
     elif kind == "slowed":
         lines = [f"{int(bf['slow'])} feet off their speed."]
+    elif kind == "guided" and bf.get("aimed"):
+        title, lines = "Steady Aim", ["Their next attack roll this turn has advantage."]
     elif kind == "vexing":
         lines = [f"Their next attack roll against {esc(_name_of(b, bf['vex']))} has advantage."]
     elif kind == "sapped" and bf.get("unsteady"):
@@ -514,7 +520,12 @@ def spell(tables, sid: str, *, b=None, f=None, target=None) -> Card:
     if f is not None and f.char is not None and not sp.get("thrown") \
             and any(o.get("op") == "save" for o in sp.get("effects", ())):
         card.lines.append(f"Save DC {sprules.save_dc(f.sheet, tables)}.")
-    if b is not None and f is not None and target is not None and target.creature is not None             and target.creature.def_id in b.known:
+    free = sprules.free_cast(f.char, tables, sid) if f is not None and f.char is not None else None
+    if free:  # (a wizard's Spell Mastery or Signature Spells)
+        card.lines.append("<good>No slot: Spell Mastery.</>" if free == "mastery" else
+                          "<good>No slot this time: a signature spell.</>")
+    if b is not None and f is not None and target is not None and target.creature is not None \
+            and target.creature.def_id in b.known:
         from realmwalker.rules.engine import query
 
         kind = query.defences(target, sprules.main_type(sp) or "")

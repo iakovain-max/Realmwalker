@@ -54,6 +54,7 @@ class CharacterBuilder:
         self.take_gold = False  # the background's option B (50 gp) instead of its equipment
         self.score_method = "point_buy"  # point_buy, array (15, 14, 13, 12, 10, 8) or roll (4d6, lowest dropped)
         self.languages: list[str] = []  # the two standard languages chosen (Common is everyone's)
+        self.open_pools: set[str] = set()  # skill picks the player emptied by hand: left empty, not filled again
         self.set_class("fighter")
         self.set_race("human")
         self.randomize_identity()
@@ -67,6 +68,7 @@ class CharacterBuilder:
         lineages = list(self.t.races[race].get("lineages") or {})
         self.lineage = lineages[0] if lineages else None
         self.choices = {}
+        self.open_pools.clear()
         self._fix_species_choices()
         self.languages = []
         self._fix_languages()
@@ -82,7 +84,7 @@ class CharacterBuilder:
         spec = self.species_choices().get(key, {})
         kind = spec.get("kind")
         if kind == "skill":
-            have = set(self.t.backgrounds[self.background]["skills"]) | set(self.class_skills)
+            have = set(self.t.backgrounds[self.background]["skills"]) | set(self.class_skills) | set(self._feat_picks())
             pool = spec.get("from") or list(self.t.rules["skills"])
             return [s for s in pool if s not in have or s == self.choices.get(key)]
         if kind == "origin_feat":
@@ -99,6 +101,7 @@ class CharacterBuilder:
             self.lineage = value
         elif key == "versatile":
             self.versatile = value
+            self.open_pools = {p for p in self.open_pools if not p.startswith("feat:versatile:")}
         else:
             self.choices[key] = value
         self._fix_skills()
@@ -107,7 +110,10 @@ class CharacterBuilder:
         for key, spec in self.species_choices().items():
             opts = self.choice_options(key)
             if spec["kind"] == "skill" and self.choices.get(key) not in opts:
-                self.choices[key] = next((s for s in SKILL_PREFERENCE if s in opts), opts[0] if opts else "")
+                if f"species:{key}" in self.open_pools:
+                    self.choices[key] = ""  # (emptied by hand: the player picks it on the Skills step)
+                else:
+                    self.choices[key] = next((s for s in SKILL_PREFERENCE if s in opts), opts[0] if opts else "")
         for key in [k for k in self.choices if k not in self.species_choices()]:
             del self.choices[key]
 
@@ -187,19 +193,26 @@ class CharacterBuilder:
                 have = {}
             spec = feats.defs(self.t)[fid].get("choices", {})
             clean = dict(fixed)
+            partial: dict[str, list] = {}  # picks still good, topped up with defaults below
             for key, c in spec.items():
                 if key in fixed or key not in have:
                     continue
                 opts = feats.options(self.t, proto, fid, key, {**clean, **have})
                 v = have[key]
+                n = int(c.get("count", 1))
                 if isinstance(v, list):
-                    v = [x for x in v if x in opts][: int(c.get("count", 1))]
-                    if len(v) == int(c.get("count", 1)):
-                        clean[key] = v
+                    v = [x for x in v if x in opts][:n]
+                    if len(v) == n or f"feat:{source}:{key}" in self.open_pools:
+                        clean[key] = v  # (one the player emptied by hand stays short until they pick again)
+                    elif v:
+                        partial[key] = v
                 elif v in opts:
                     clean[key] = v
             fixed_now[source] = {**feats.default_choices(self.t, proto, fid, clean), "_feat": fid}
             picked = fixed_now[source]
+            for key, kept in partial.items():
+                n = int(spec[key].get("count", 1))
+                picked[key] = (kept + [x for x in picked.get(key) or [] if x not in kept])[:n]
             if picked.get("list"):
                 lists_used.append(picked["list"])
             for x in picked.get("skills", []) + picked.get("tools", []):  # (a second Skilled picks others)
@@ -290,12 +303,14 @@ class CharacterBuilder:
         self.subclass = subs[0] if "subclass" in c["choices_at_1"] and subs else None
         self.class_skills = []
         self.expertise = []
+        self.open_pools.clear()
         self._fix_skills()
 
     def set_background(self, bg: str) -> None:
         self.background = bg
         self.start_settlement = None
         self.feat_choices.pop("background", None)
+        self.open_pools.clear()
         self._fix_bonus()
         self._fix_skills()
 
@@ -306,8 +321,151 @@ class CharacterBuilder:
                                   + species))
 
     def skill_options(self) -> list[str]:
-        fixed = set(self.fixed_skills())
+        fixed = set(self.fixed_skills()) | set(self._feat_picks())
         return [s for s in self.t.classes[self.cls]["skill_choices"] if s not in fixed]
+
+    # ------------------------------------------------------------------ every skill and tool pick in one place
+    SKILL_KINDS = ("skill", "skill_or_tool", "tool")
+
+    def _feat_picks(self) -> list[str]:
+        """The skills and tools the origin feats' picks hold now (Skilled, Crafter, Musician), as they stand."""
+        from realmwalker.rules import feats
+
+        out = []
+        for source, ch in self.feat_choices.items():
+            spec = feats.defs(self.t).get(ch.get("_feat", ""), {}).get("choices", {})
+            for key, c in spec.items():
+                if c["kind"] in self.SKILL_KINDS:
+                    v = ch.get(key) or []
+                    out += v if isinstance(v, list) else [v]
+        return [x for x in out if x]
+
+    def known_skills(self) -> list[str]:
+        """Every skill they will have: people, background, calling and the origin feats' picks."""
+        return list(dict.fromkeys(self.all_skills() + [x for x in self._feat_picks() if x in self.t.rules["skills"]]))
+
+    def known_tools(self) -> list[str]:
+        bg = self.t.backgrounds[self.background]
+        return list(dict.fromkeys(list(self.t.classes[self.cls]["tools"]) + list(bg["tools"])
+                                  + [x for x in self._feat_picks() if x not in self.t.rules["skills"]]))
+
+    def skill_pools(self) -> list[dict]:
+        """Every pick of a skill or tool at first level, in one list: {id, name, count, picked, allowed, kind}. The
+        calling's skills, the people's (Skillful, Keen Senses) and the origin feats' (Skilled, Crafter, Musician)."""
+        from realmwalker.rules import feats
+
+        self._fix_feats()
+        t = self.t
+        skills = list(t.rules["skills"])
+        pools = [{"id": "class", "name": f"{t.classes[self.cls]['name']} skills", "count": self.skill_count(),
+                  "picked": list(self.class_skills), "allowed": list(t.classes[self.cls]["skill_choices"]),
+                  "kind": "skill", "from": "your calling"}]
+        for key, spec in self.species_choices().items():
+            if spec.get("kind") != "skill":
+                continue
+            trait = next((x for x in t.races[self.race]["traits"] if x["id"] == key), {})
+            v = self.choices.get(key)
+            pools.append({"id": f"species:{key}", "name": trait.get("name", key), "count": 1,
+                          "picked": [v] if v else [], "allowed": list(spec.get("from") or skills), "kind": "skill",
+                          "from": f"your people ({t.races[self.race]['name']})"})
+        named = [fid for _, fid, _ in self.origin_feats()]
+        for source, fid, fixed in self.origin_feats():
+            d = feats.defs(t)[fid]
+            for key, c in d.get("choices", {}).items():
+                if key in fixed or c["kind"] not in self.SKILL_KINDS:
+                    continue
+                if c["kind"] == "tool":
+                    allowed = list(feats.TOOL_GROUPS[c["from"]])
+                elif c["kind"] == "skill":
+                    allowed = skills
+                else:
+                    allowed = skills + [x for g in ("artisan", "instrument", "other") for x in feats.TOOL_GROUPS[g]]
+                v = self.feat_choices.get(source, {}).get(key) or []
+                where = "your background" if source == "background" else "Versatile, a human's"
+                pools.append({"id": f"feat:{source}:{key}",
+                              "name": d["name"] + (f" ({'background' if source == 'background' else 'Versatile'})"
+                                                   if named.count(fid) > 1 else ""),
+                              "count": int(c.get("count", 1)), "picked": list(v if isinstance(v, list) else [v]),
+                              "allowed": allowed, "kind": c["kind"], "from": f"the {d['name']} feat ({where})"})
+        return pools
+
+    def granted(self) -> dict[str, str]:
+        """Skills and tools that come with the origin and calling and are not picked: {id: where from}."""
+        t = self.t
+        out = {s: f"your people ({t.races[self.race]['name']})" for s in t.races[self.race]["skills"]}
+        bg = t.backgrounds[self.background]
+        for s in list(bg["skills"]) + list(bg["tools"]):
+            out[s] = f"your background ({bg['name']})"
+        for s in t.classes[self.cls]["tools"]:
+            out.setdefault(s, f"your calling ({t.classes[self.cls]['name']})")
+        return out
+
+    def _put(self, pool: dict, x: str) -> None:
+        pid = pool["id"]
+        if pid == "class":
+            self.class_skills.append(x)
+        elif pid.startswith("species:"):
+            self.choices[pid[8:]] = x
+        else:
+            _, source, key = pid.split(":")
+            ch = self.feat_choices[source]
+            ch[key] = [v for v in (ch.get(key) or []) if v] + [x]
+        pool["picked"].append(x)
+        if len(pool["picked"]) >= pool["count"]:
+            self.open_pools.discard(pid)
+
+    def _take(self, pool: dict, x: str) -> None:
+        pid = pool["id"]
+        if pid == "class":
+            self.class_skills.remove(x)
+        elif pid.startswith("species:"):
+            self.choices[pid[8:]] = ""
+        else:
+            _, source, key = pid.split(":")
+            ch = self.feat_choices[source]
+            ch[key] = [v for v in (ch.get(key) or []) if v != x]
+        pool["picked"].remove(x)
+        self.open_pools.add(pid)
+        if x in self.expertise:
+            self.expertise.remove(x)
+            self.open_pools.add("expertise")
+
+    def pick(self, x: str) -> str:
+        """Tick a skill or tool: it goes to the first pick with room that may take it (the narrowest first), moving
+        one already chosen to another pick when that makes room. Returns '' or why it could not be done."""
+        name = self.t.rules["skills"][x]["name"] if x in self.t.rules["skills"] else self.t.rules["tools"].get(x, x)
+        if x in self.known_skills() or x in self.known_tools():
+            return f"You already have {name}."
+        pools = self.skill_pools()
+        takes = sorted((p for p in pools if x in p["allowed"]), key=lambda p: len(p["allowed"]))
+        if not takes:
+            return f"None of your picks can be {name}."
+        for p in takes:
+            if len(p["picked"]) < p["count"]:
+                self._put(p, x)
+                return ""
+        for p in takes:  # make room: something already chosen moves to a pick that still has room
+            for y in list(p["picked"]):
+                q = next((q for q in pools if q is not p and len(q["picked"]) < q["count"] and y in q["allowed"]), None)
+                if q is not None:
+                    self._take(p, y)
+                    self._put(q, y)
+                    self._put(p, x)
+                    return ""
+        return (f"{name} could be one of: {', '.join(p['name'] for p in takes)}, and they are all chosen. "
+                "Untick one first.")
+
+    def unpick(self, x: str) -> str:
+        """Untick a skill or tool. Returns '' or why it cannot be (it comes with the origin)."""
+        for p in self.skill_pools():
+            if x in p["picked"]:
+                self._take(p, x)
+                return ""
+        where = self.granted().get(x)
+        return f"That comes from {where}; it cannot be unticked." if where else ""
+
+    def picks_left(self) -> int:
+        return sum(max(0, p["count"] - len(p["picked"])) for p in self.skill_pools())
 
     def skill_count(self) -> int:
         return self.t.classes[self.cls]["skill_count"]
@@ -315,8 +473,10 @@ class CharacterBuilder:
     def toggle_skill(self, skill: str) -> bool:
         if skill in self.class_skills:
             self.class_skills.remove(skill)
+            self.open_pools.add("class")
             if skill in self.expertise:
                 self.expertise.remove(skill)
+                self.open_pools.add("expertise")
             return True
         if skill in self.skill_options() and len(self.class_skills) < self.skill_count():
             self.class_skills.append(skill)
@@ -332,9 +492,12 @@ class CharacterBuilder:
     def toggle_expertise(self, skill: str) -> bool:
         if skill in self.expertise:
             self.expertise.remove(skill)
+            self.open_pools.add("expertise")
             return True
-        if skill in self.all_skills() and len(self.expertise) < self.needs_expertise():
+        if skill in self.known_skills() and len(self.expertise) < self.needs_expertise():
             self.expertise.append(skill)
+            if len(self.expertise) >= self.needs_expertise():
+                self.open_pools.discard("expertise")
             return True
         return False
 
@@ -345,16 +508,29 @@ class CharacterBuilder:
         options = self.skill_options()
         self.class_skills = [s for s in self.class_skills if s in options][: self.skill_count()]
         for s in [p for p in SKILL_PREFERENCE if p in options] + options:
-            if len(self.class_skills) >= self.skill_count():
+            if len(self.class_skills) >= self.skill_count() or "class" in self.open_pools:
                 break
             if s not in self.class_skills:
                 self.class_skills.append(s)
-        self.expertise = [s for s in self.expertise if s in self.all_skills()][: self.needs_expertise()]
+        for key, spec in self.species_choices().items():  # (Keen Senses had all its skills taken by the calling:
+            allowed = spec.get("from") or []               # it takes one, and the calling picks another)
+            if spec.get("kind") == "skill" and not self.choices.get(key) and f"species:{key}" not in self.open_pools \
+                    and "class" not in self.open_pools:
+                s = next((s for s in self.class_skills if s in allowed), None)
+                if s is not None:
+                    self.class_skills.remove(s)
+                    self.choices[key] = s
+                    options = self.skill_options()
+                    more = dict.fromkeys([p for p in SKILL_PREFERENCE if p in options] + options)
+                    self.class_skills += [x for x in more if x not in self.class_skills][
+                        : self.skill_count() - len(self.class_skills)]
+        known = self.known_skills()
+        self.expertise =[s for s in self.expertise if s in known][: self.needs_expertise()]
         preferred = ["stealth", "perception", "sleight_of_hand", "deception", "acrobatics", "investigation"]
-        for s in preferred + self.all_skills():
-            if len(self.expertise) >= self.needs_expertise():
+        for s in preferred + known:
+            if len(self.expertise) >= self.needs_expertise() or "expertise" in self.open_pools:
                 break
-            if s in self.all_skills() and s not in self.expertise:
+            if s in known and s not in self.expertise:
                 self.expertise.append(s)
 
     # ------------------------------------------------------------------ ability scores
@@ -520,10 +696,13 @@ class CharacterBuilder:
         out = []
         if self.score_method == "point_buy" and self.points_left() < 0:
             out.append("You have spent more ability points than you have.")
-        if len(self.class_skills) != self.skill_count():
-            out.append(f"Choose {self.skill_count()} class skills.")
+        for p in self.skill_pools():
+            if len(p["picked"]) < p["count"]:
+                n = p["count"] - len(p["picked"])
+                what = {"skill": "skill", "tool": "tool", "skill_or_tool": "skill or tool"}[p["kind"]]
+                out.append(f"Choose {n} more {what}{'s' if n > 1 else ''} for {p['name']} (step 6, Skills & tools).")
         if len(self.expertise) != self.needs_expertise():
-            out.append(f"Choose {self.needs_expertise()} skills for Expertise.")
+            out.append(f"Choose {self.needs_expertise()} skills for Expertise (step 6, Skills & tools).")
         if not self.name.strip():
             out.append("Your character needs a name.")
         return out
@@ -545,6 +724,7 @@ class CharacterBuilder:
             languages.append("Thieves' Cant")
         hp = self.max_hp()
         features = [f["id"] for f in cls["features"] if f["level"] <= 1]
+        choose_at_1 = [f for f in cls["features"] if f["level"] <= 1 and f.get("choose")]  # (Divine Order)
         uses: dict = {}
         char = Character(
             name=self.name.strip(), sex=self.sex, age=self.age, species=self.race, culture=self.culture,
@@ -588,6 +768,8 @@ class CharacterBuilder:
         if progression.mastery_count(char, t):  # the kit's weapons first; changed on the character sheet before long
             char.masteries = progression.mastery_options(char, t)[:progression.mastery_count(char, t)]
             char.uses["mastery_change"] = 1
+        for f in choose_at_1:  # (a cleric's Divine Order waits on the sheet: c, then l)
+            progression.add_pending(char, {"kind": "option", "feature": f["id"], "level": 1})
         return char
 
 
