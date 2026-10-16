@@ -524,7 +524,8 @@ def spell(tables, sid: str, *, b=None, f=None, target=None) -> Card:
     if free:  # (a wizard's Spell Mastery or Signature Spells)
         card.lines.append("<good>No slot: Spell Mastery.</>" if free == "mastery" else
                           "<good>No slot this time: a signature spell.</>")
-    if b is not None and f is not None and target is not None and target.creature is not None             and target.creature.def_id in b.known:
+    if b is not None and f is not None and target is not None and target.creature is not None \
+            and target.creature.def_id in b.known:
         from realmwalker.rules.engine import query
 
         kind = query.defences(target, sprules.main_type(sp) or "")

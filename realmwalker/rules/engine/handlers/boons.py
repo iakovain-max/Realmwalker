@@ -289,6 +289,7 @@ def free_casting(b, f, ev, hook, buff) -> None:
     roll = b.rng.randint(1, 4)
     if roll == level:
         used[level - 1] -= 1
+        ev.kept = True  # (a Spell Breaker's Counterspell then has nothing more to give back)
         b.dice_say(f"{f.name} (Free Casting): d4 = {roll}, the level {level} slot is kept")
         b.say(f"The spell leaves {f.the_name}'s power whole.", "magic")
 

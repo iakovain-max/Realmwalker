@@ -2021,7 +2021,8 @@ class Battle:
         if att.char is not None and opt.kind.startswith("spell") and self.__dict__.get("_casting") is att:
             amount += feats.adept_ones(att.char, opt.damage_type, rolled.rolls)  # (Elemental Adept: 1s count as 2s)
         dmg_ev = events.emit(self, "attack_damage", actor=att, target=target, opt=opt, crit=crit, natural=natural,
-                             advantage=adv and not dis, sides=sides, extra=0, typed=[], rolls=list(rolled.rolls),
+                             advantage=adv and not dis, disadvantage=dis and not adv, sides=sides, extra=0, typed=[],
+                             rolls=list(rolled.rolls),
                              double=False)
         amount += dmg_ev.extra  # Sneak Attack, Divine Strike...
         if dmg_ev.double:
@@ -2338,7 +2339,13 @@ class Battle:
         if target.concentration is not None and target.active and target.standing:
             dc = query.concentration_dc(amount)
             slayer = att is not None and att.char is not None and feats.has(att.char, "mage_slayer")
-            if not self._save(target, "con", dc, against=("concentration",), disadvantage=slayer):
+            casting = self.__dict__.get("_casting")
+            self._casting = None  # (holding on is not a save against the spell that hurt them: Spell Resistance)
+            try:
+                held = self._save(target, "con", dc, against=("concentration",), disadvantage=slayer)
+            finally:
+                self._casting = casting
+            if not held:
                 self._end_concentration(target, quiet=False, why="breaks")
         if target.active and target.side == FOE:
             self._morale_after_hit(target)
@@ -3099,7 +3106,8 @@ class Battle:
             if ok and spellrules.has_op(spell, "identify"):
                 ok, why = False, "not in a fight"
             if ok and spell.get("cast") == "reaction":
-                ok, why = False, "a reaction: cast by itself when a blow would land"
+                ok, why = False, ("a reaction: cast by itself when a foe nearby casts a spell" if sid == "counterspell"
+                                  else "a reaction: cast by itself when a blow would land")
             if ok:
                 ok, why = self._casting_time_ok(f, spell)
             out.append((sid, ok, why))
@@ -3375,7 +3383,7 @@ class Battle:
         else:
             f.cast_action_spell = True
         f.hidden = 0
-        up = max(0, (slot_level or level) - level)
+        up = max(0, (slot_level or level) - spell["level"])  # (0 for a free cast at its own level)
         mod = s.mod(spellrules.casting_ability(c, self.t))
         dc = spellrules.save_dc(s, self.t)
         bonus = spellrules.attack_bonus(s, self.t) + s.attack_condition()
@@ -3423,9 +3431,10 @@ class Battle:
                 continue
             wizard.pay_counter(self, x, slot)
             x.reaction = False
-            if x.char is not None:  # (an abjuration: an abjurer's ward)
-                events.emit(self, "spell_cast", actor=x, spell=self.t.spells["counterspell"], sid="counterspell",
-                            level=slot)
+            kept = False
+            if x.char is not None:  # (an abjuration: an abjurer's ward; Free Casting may keep the slot)
+                kept = bool(getattr(events.emit(self, "spell_cast", actor=x, spell=self.t.spells["counterspell"],
+                                                sid="counterspell", level=slot), "kept", False))
             self.say(f"<magic>{x.the_name} cuts across the spell with a Counterspell.</>", "magic")
             self._event("cast", by=x.id, to=caster.id, spell="counterspell", effect="condition", look="curse",
                         dtype="force", area=[])
@@ -3437,7 +3446,7 @@ class Battle:
                 self._casting = before
             if held:
                 self.say(f"{caster.the_name} holds the spell together.", "info")
-                if x.char is not None and x.has_trait("spell_breaker"):
+                if x.char is not None and x.has_trait("spell_breaker") and not kept:
                     spellrules.unspend_slot(x.char, slot)
                     self.say("<magic>The slot is not lost.</> (Spell Breaker)", "magic")
                 continue

@@ -637,7 +637,8 @@ def short_rest(char: Character, tables, rng: RNG, *, meal: bool = False) -> list
     if healed:
         notes.append(f"{char.name.split()[0]} recovers {healed} hit points.")
     resources.recover(char, tables, "short")  # Second Wind, Action Surge, Channel Divinity... (data/traits.json)
-    if "arcane_recovery" in char.features and char.uses.get("arcane_recovery", 1) and char.spells             and any(char.spells.get("slots_used", [])[:5]):
+    if "arcane_recovery" in char.features and char.uses.get("arcane_recovery", 1) and char.spells \
+            and any(char.spells.get("slots_used", [])[:5]):
         # (2024: slot levels adding up to half the wizard's level, rounded up, none of level 6 or higher; the
         # highest first, as a wizard would choose)
         used = char.spells.setdefault("slots_used", [0] * 9)

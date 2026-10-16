@@ -66,13 +66,6 @@ def guided_strike(b, f, ev, hook, buff) -> None:
     b.say(f"<magic>{f.the_name}'s god guides the blow home.</>", "magic")
 
 
-@handler("assassinate")
-def assassinate(b, f, ev, hook, buff) -> None:
-    """The Cutthroat: a blow at someone who has not seen it coming is a critical hit."""
-    if ev.target.surprised and f.char is not None:
-        ev.crit = True
-
-
 @handler("savage_attacks")
 def savage_attacks(b, f, ev, hook, buff) -> None:
     if ev.crit and f.char is not None and ev.opt.is_melee:

@@ -121,7 +121,7 @@ def cast(b, f, sid: str, spell: dict, target, point, *, up: int, mod: int, dc: i
             and f.has_trait("blessed_potent_spellcasting"):
         c.empowered = max(c.empowered, f.mod("wis"))  # (a cleric's Potent Spellcasting)
     if slotted and 1 <= level <= 5 and f.char is not None and "wizard" in spell.get("classes", ()) \
-            and f.has_trait("overchannel") and spellrules.harms(spell):
+            and f.has_trait("overchannel") and any(spellrules.damage_parts(o) for o in spellrules.ops(spell)):
         from realmwalker.rules.engine.handlers import wizard
 
         c.maximize = wizard.overchannel(b, f, spell, level)
@@ -230,7 +230,8 @@ def _darts(c: Cast, o: dict, victim) -> None:
                 break
             target = min(options, key=lambda x: x.hp)
         dice_, dtype, _ = spellrules.damage_parts(o)[0]
-        amount = dice.roll(expr(c, dice_), b.rng).total
+        amount = dice.roll(expr(c, dice_, empower=True), b.rng).total
+        c.empowered = 0  # (Empowered Evocation: the first dart)
         b._event("dart", by=f.id, to=target.id, dtype=dtype)
         b._hit(f, target, amount, dtype, crit=False, weapon="dart of force")
 
@@ -244,8 +245,9 @@ def _save(c: Cast, o: dict, victim) -> None:
         victims = b.in_area(c.area, spell.get("affects", "all"), f)
     else:
         victims = _targets(c)
-    parts = [(expr(c, d, up, scaling=o.get("scaling") == "cantrip", empower=True), t)
-             for d, t, up in spellrules.damage_parts(o)]
+    parts = [(expr(c, d, up, scaling=o.get("scaling") == "cantrip", empower=i == 0), t)
+             for i, (d, t, up) in enumerate(spellrules.damage_parts(o))]
+    c.empowered = 0 if parts else c.empowered  # (one damage roll of the spell)
     rolled = {i: _roll(c, e, t) for i, (e, t) in enumerate(parts)} if c.area else {}
     origin = c.point if spell["target"] == "point" and c.point is not None else (f.x, f.y)
     spared = b.sculpted(f, c.sid, victims, c.level) if c.area else set()

@@ -73,6 +73,9 @@ Assumptions waiting for Anton:
   it is free and asked of the player under the Reactions setting; Arcane Recovery brings back the highest slots
   first; the ward is mended with a level 1 slot, or a level 2 one when it is far gone; Spell Resistance halves the
   damage of a spell as it is cast (burning ground or an aura left by a spell later is not counted).
+  No creature knows Counterspell yet: enemies use it when their stat blocks name it (Part G puts the catalogue in
+  the casters' hands). From the fresh review: the 2024 Assassinate has no critical hit on the surprised (the 2014
+  rule is gone).
 Ideas for later:
 - (none yet)
 Next session starts at: task C.1 in docs/expansions/03-demigods-magics.md (Part C: preparing spells by the class

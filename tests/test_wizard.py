@@ -140,7 +140,7 @@ def test_overchannel_is_free_once_and_then_burns(tables):
     on_turn(b, me)
     hp, mine = foe.hp, me.hp
     assert b.do_cast(me, "magic_missile", foe, slot_level=1)
-    assert hp - foe.hp == 3 * 5 and me.hp == mine  # three darts of 1d4+1 at their greatest, free the first time
+    assert hp - foe.hp == 3 * 5 + me.mod("int") and me.hp == mine  # three darts at their greatest (+ Empowered), free
     assert c.uses["overchannel"] == 1
     # The second time the battle does not choose it (it would cost 2d12 necrotic for a level 1 slot).
     on_turn(b, me)
@@ -271,3 +271,55 @@ def test_an_enemy_counters_the_party_wizard(tables, monkeypatch):
     on_turn(b, me)
     b.do_cast(me, "fire_bolt", foe)
     assert foe.slots == [0, 0, 1]
+
+
+# ---------------------------------------------------------------------------- after the fresh review
+def test_a_free_cast_is_at_its_own_level(tables):
+    c = wizard(tables, 18)
+    c.spells["mastery"] = ["magic_missile", "scorching_ray"]
+    spend_all_slots(c, tables)
+    b = fight(tables, c, "bandit")
+    me, foe = b.side("party")[0], b.side("foe")[0]
+    soft(foe, hp=500)
+    on_turn(b, me)
+    assert b.do_cast(me, "magic_missile", foe)
+    assert sum(1 for e in b.events if e["kind"] == "dart") == 3  # (not four: no slot level above its own)
+
+
+def test_overchannel_waits_for_a_spell_that_does_damage(tables):
+    c = wizard(tables, 14, book=("hold_person",))
+    b = fight(tables, c, "bandit")
+    me, foe = b.side("party")[0], b.side("foe")[0]
+    on_turn(b, me)
+    b.do_cast(me, "hold_person", foe)
+    assert not c.uses.get("overchannel")
+
+
+def test_empowered_evocation_on_the_first_dart(tables):
+    c = wizard(tables, 10)
+    b = fight(tables, c, "bandit")
+    me, foe = b.side("party")[0], b.side("foe")[0]
+    soft(foe, hp=500)
+    on_turn(b, me)
+    b.do_cast(me, "magic_missile", foe, slot_level=1)
+    mod = me.mod("int")
+    assert 3 * 2 + mod <= 500 - foe.hp <= 3 * 5 + mod
+
+
+def test_no_sneak_attack_with_disadvantage_even_beside_a_friend(tables):
+    from tests.test_rogue import rogue
+    from tests.test_feats import wield
+
+    r = rogue(tables, 5)
+    from realmwalker.rules.inventory import unequip
+
+    unequip(r, "main_hand")
+    wield(tables, r, "shortbow")
+    friend = hero(tables, "fighter", seed=4)
+    b = fight(tables, [r, friend], "bandit", spots={0: (3, 4), 1: (5, 4), 2: (4, 4)})
+    me, foe = b.side("party")[0], b.side("foe")[0]
+    soft(foe, ac=1, hp=500)
+    on_turn(b, me)
+    opt = next(o for o in b.attack_options(me) if o.kind == "ranged")
+    b._attack(me, opt, foe)  # (a bow shot with a foe beside: disadvantage, though the friend is beside it too)
+    assert r.uses.get("sneak_round") != b.round

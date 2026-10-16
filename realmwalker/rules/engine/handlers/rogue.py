@@ -59,7 +59,7 @@ def sneak_attack(b, f, ev, hook, buff) -> None:
         return
     ally_beside = any(x is not f and x.standing and not query.incapacitated(x) and b.gap(x, target) <= 1
                       for x in b.allies_of(f))
-    if not (ev.advantage or ally_beside):
+    if not (ev.advantage or ally_beside and not getattr(ev, "disadvantage", False)):
         return
     c.uses["sneak_round"] = b.round
     n = (c.level + 1) // 2

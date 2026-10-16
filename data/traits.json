@@ -167,9 +167,8 @@
     },
     "fast_hands": {"name": "Fast Hands", "text": "Uses an object with a bonus action.", "where": "abilities"},
     "assassinate": {
-      "name": "Assassinate", "text": "Advantage on initiative; in the first round, advantage against anyone who has not yet acted, and a Sneak Attack adds the rogue's level; a hit on the surprised is a critical hit.",
-      "modifiers": [{"attack": "advantage", "when": ["target_not_acted", "first_round"], "why": "not yet moving"}, {"initiative": "advantage"}],
-      "hooks": [{"event": "attack_hit", "as": "attacker", "handler": "assassinate"}]
+      "name": "Assassinate", "text": "Advantage on initiative; in the first round, advantage against anyone who has not yet acted, and a Sneak Attack adds the rogue's level.",
+      "modifiers": [{"attack": "advantage", "when": ["target_not_acted", "first_round"], "why": "not yet moving"}, {"initiative": "advantage"}]
     },
     "spellcasting": {"name": "Spellcasting", "text": "Casts spells.", "where": "sheet"},
     "channel_divinity": {

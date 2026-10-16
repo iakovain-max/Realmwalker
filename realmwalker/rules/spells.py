@@ -98,7 +98,8 @@ def free_cast(char: Character, tables, spell_id: str, slot_level: int | None = N
         return None
     if spell_id in char.spells.get("mastery", ()) and "spell_mastery" in char.features:
         return "mastery"
-    if spell_id in char.spells.get("signature", ()) and "signature_spells" in char.features             and char.uses.get(f"signature:{spell_id}", 0) > 0:
+    if spell_id in char.spells.get("signature", ()) and "signature_spells" in char.features \
+            and char.uses.get(f"signature:{spell_id}", 0) > 0:
         return "signature"
     return None
 

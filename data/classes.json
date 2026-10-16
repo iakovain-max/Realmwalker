@@ -104,7 +104,7 @@
           {"level": 17, "id": "thiefs_reflexes", "name": "Thief's Reflexes", "text": "In the first round of a fight you act twice over: a second action, bonus action and move.", "rule": "thiefs_reflexes"}
         ]},
         "assassin": {"name": "Assassin", "text": "Killer for hire, spy and bounty hunter: the first blow is the last.", "features": [
-          {"level": 3, "id": "assassinate", "name": "Assassinate", "text": "Advantage on initiative; in the first round, advantage against anyone who has not yet acted, and a Sneak Attack then adds your level in damage. A hit on the surprised is a critical hit.", "rule": "assassinate"},
+          {"level": 3, "id": "assassinate", "name": "Assassinate", "text": "Advantage on initiative; in the first round, advantage against anyone who has not yet acted, and a Sneak Attack then adds your level in damage.", "rule": "assassinate"},
           {"level": 3, "id": "assassins_tools", "name": "Assassin's Tools", "text": "A disguise kit and a poisoner's kit, and the training to use them.", "gives": {"tools": ["disguise_kit", "poisoners_kit"], "items": ["disguise_kit", "poisoners_kit"]}},
           {"level": 9, "id": "infiltration", "name": "Infiltration Expertise", "text": "You mimic speech and hand perfectly, and Steady Aim no longer roots you to the spot.", "rule": "roving_aim"},
           {"level": 13, "id": "envenom_weapons", "name": "Envenom Weapons", "text": "The poison of a Cunning Strike also deals 2d6 poison damage on a failed save, through any resistance.", "rule": "envenom_weapons"},
