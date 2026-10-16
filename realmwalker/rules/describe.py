@@ -520,6 +520,10 @@ def spell(tables, sid: str, *, b=None, f=None, target=None) -> Card:
     if f is not None and f.char is not None and not sp.get("thrown") \
             and any(o.get("op") == "save" for o in sp.get("effects", ())):
         card.lines.append(f"Save DC {sprules.save_dc(f.sheet, tables)}.")
+    free = sprules.free_cast(f.char, tables, sid) if f is not None and f.char is not None else None
+    if free:  # (a wizard's Spell Mastery or Signature Spells)
+        card.lines.append("<good>No slot: Spell Mastery.</>" if free == "mastery" else
+                          "<good>No slot this time: a signature spell.</>")
     if b is not None and f is not None and target is not None and target.creature is not None             and target.creature.def_id in b.known:
         from realmwalker.rules.engine import query
 

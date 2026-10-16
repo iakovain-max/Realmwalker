@@ -60,6 +60,14 @@ def spell_detail(game, char, sid: str, target) -> list[str]:
     lines = [f"<magic>{markup.escape(spell['name'])}</> <dim>{level}{', ' + school if school else ''}"
              + (f" · {', '.join(bits)}" if bits else "") + "</>",
              markup.escape(spell.get("text", ""))]
+    if sid in (char.spells or {}).get("mastery", ()) and "spell_mastery" in char.features:
+        lines.append("<good>Spell Mastery:</> <dim>cast at its own level without a slot, as often as you like.</>")
+    elif sid in (char.spells or {}).get("signature", ()) and "signature_spells" in char.features:
+        ready = sp.free_cast(char, t, sid)
+        lines.append("<good>Signature spell:</> <dim>once without a slot, back with a short or long rest"
+                     + (" (ready)." if ready else " (used).") + "</>")
+    elif sid in sp.SPELL_BREAKER and "spell_breaker" in char.features:
+        lines.append("<good>Spell Breaker:</> <dim>always ready; a reaction when a foe casts nearby.</>")
     ok, why = sp.can_cast(char, t, sid)
     if not ok:
         lines.append(f"<warn>{markup.escape(why[:1].upper() + why[1:])}.</>")

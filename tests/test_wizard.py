@@ -98,6 +98,9 @@ def test_spell_mastery_and_signature_spells_cast_without_slots(tables):
     sp = tables.spells[one]
     target = b.side("foe")[0] if sp["target"] == "enemy" else None
     point = (8, 4) if sp["target"] in ("point", "direction") else None
+    from realmwalker.rules import describe
+
+    assert any("Spell Mastery" in line for line in describe.spell(tables, one, f=me).lines)
     assert b.do_cast(me, one, target, point=point), b.log[-3:]
     assert c.spells["slots_used"] == list(spellrules.slots_total(c, tables)) + [0] * 0  # (no slot spent)
     on_turn(b, me)
