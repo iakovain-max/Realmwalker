@@ -372,6 +372,11 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   (`Battle._weapon_option`, `spell_range`, `Sheet.armor_class`). `items.slots_for(item, char)` knows Dual Wielder.
   The fighter's style is a Fighting Style feat (no style field). A creature has a feat by its "feat_<id>" trait
   (data/creatures.json traits: the berserker, the guard, the orc warchief).
+- The 2024 classes (Expansion 3 part B): class handlers in `engine/handlers/` (fighter, rogue, cleric, wizard); a
+  feature's data may carry `choose` (an option kept as a feature: Divine Order), `expertise`, `savant` (a school's
+  free spells) and `picks` (spells kept in `char.spells["mastery"|"signature"]`, cast without a slot through
+  `spells.free_cast`); every cast goes through `Battle.cast`, which returns False when a foe's Counterspell stopped it
+  (`Battle._countered`; the caller gives the slot back); `effects.cast(slotted=)` says whether a slot was spent.
 - Gear and tools 2024 (Expansion 2 part D): items.json `pack` (opens into its contents, gear.open_pack), `helps`
   {search, traps, force, disguise} (dungeon.helps, law.put_on_disguise), `utilize` (a tool's 2024 uses, on its card),
   `carry` also on carried containers (each kind once, Sheet.pack_carry), `trinket` (data/trinkets.json; the name and
