@@ -40,6 +40,30 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-10-17 (night): the relay — the expansions build themselves, session after session
+
+Nothing changed in the game. What changed is how the expansion programme gets built while Anton is away
+(`docs/expansions/RELAY.md`, `tools/relay.py`, `Stop.bat`; the old twenty-minute chain and its `CHAIN.md` are gone).
+
+- **One builder at a time, no clock.** A builder session takes the baton (`build/relay.json`), builds exactly the next
+  part as before (commit after each step, the three big checks and a fresh review before merging, releases on the way),
+  and at the end of the part sends one message to the **relay session**, an ordinary session kept open in the app. The
+  relay session starts the other builder task within seconds and sets it to Opus 5.5 at high effort. A fresh session at
+  the start of a part is cheaper than a long one going on: it re-reads only the notes.
+- **Why a relay session.** Measured tonight: a scheduled run (nobody looking at it) may not start a task or a session
+  nor change any task's schedule, permission rule or not; it may send a message to an ordinary session; and an
+  ordinary session in Auto mode may start a task and set its model. So the builders are scheduled tasks
+  (`realmwalker-a`, `realmwalker-b`, started by turns), and the relay session is the switchboard.
+- **Limits and crashes.** A builder beats after every commit; when the 5-hour window passes 60% it tells the relay
+  session when the window resets, and the relay session wakes three minutes after the reset to restart the work if the
+  builder was cut off. A safety net task (`realmwalker-net`, every two hours while the work is on) only sends the relay
+  session a "check"; it restarts the work if the baton lies dropped, otherwise nothing happens.
+- **Buttons.** "Realmwalker: START" and "Realmwalker: STOP" in the app's Scheduled list (Run now), or "start" and
+  "stop" typed in the relay session, or `Stop.bat` in the project folder.
+- **Rehearsed** tonight with `build/REHEARSAL`: START, three hand-overs A → B → A (each started within a minute, each on
+  Opus 5.5 high), and STOP (the net switched off). Not yet seen: a real part built by a relay builder, and a real usage
+  limit cut and recovery; the first weekend run will show them.
+
 ### Session, 2026-10-13 (late): character creation's choices remade — branch `dlc/03-demigods-magics`
 
 Anton: the Origin step's skill picks were "horribly, terribly unusable": skills cycled with arrows, jumped when

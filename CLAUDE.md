@@ -38,18 +38,19 @@ Then commit, update PROGRESS.md, and stop for user feedback (unless the user sai
   building: the tests for what you touched (`pytest -n 10 tests/test_x.py`). Before a merge, all three together in
   the background: the full suite (`-n 10`, it runs the arena coverage test), autoplay (its own temporary home) and the
   smoke test (`--home build/smoke_home`). Run `tools/arena.py` by hand only when tuning tactics.
-- **The working day** (docs/expansions/CHAIN.md): START and STOP buttons, builders that take turns every 20 minutes;
-  no new part after 20:00, but a part cut off by a usage limit is finished when it resets; releases do not stop the
-  day; one session at a time (a lock with a heartbeat in build/).
+- **The relay** (docs/expansions/RELAY.md, 2026-10-17): START and STOP buttons; one builder session at a time holds
+  the baton (`tools/relay.py`, build/relay.json), beats after every commit, and at the end of its part arms the other
+  builder task to fire a minute later; a part cut off by a usage limit resumes right after the reset; releases do not
+  stop the work; a safety net fires every three hours only to re-arm a dropped baton.
 - **Helpers for bulk data** (book tables, items, monsters, spells, codex marking): two or three subagents at once on
   a cheaper model (`model: "sonnet"`), each with a precise brief (its entries, the schema, one finished example, the
   book pages, numbers checked on page images); the main session owns the kernel, joins the pieces and reviews.
 - **Edit with the Edit/Write tools.** Scripts only for mechanical changes across many files, written to a file with
   Write first (shell heredocs here mangle quotes and backslashes).
 - **Read narrowly**: `grep -n` and small line ranges, guided by the code map below; do not page through big files.
-- **One part per session, at least an hour of work.** When a part is merged, update `docs/expansions/STATUS.md` and
-  stop: a long conversation makes every later step slower and dearer, and a summarised one loses detail. But a turn
-  that finishes within an hour of starting goes straight on with the next part (docs/expansions/CHAIN.md C.5).
+- **One part per session.** When a part is merged, update `docs/expansions/STATUS.md` and hand over: a fresh session
+  re-reads only the notes, while a long one re-reads everything it has seen at every step, and a summarised one loses
+  detail. A part that took under 30 minutes goes straight on with the next (docs/expansions/RELAY.md D.5).
 - **The fresh review stays** before each merge, as a short checklist pass against `docs/EXPANSIONS.md` §5.2.
 
 Code map of the two biggest files (by section; search for the `# ---` headers):
