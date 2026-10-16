@@ -1,15 +1,17 @@
 # Expansion programme – status
 
-Current: 03 Demigods & Magics · Part B (the four classes, 1-20) · branch dlc/03-demigods-magics
+Current: 03 Demigods & Magics · Part C (spellcasting complete) · branch dlc/03-demigods-magics
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
   (v1.2.0, 2026-10-13: the 2024 weapons, armour and masteries; species, sixteen backgrounds and origin feats; the
   general and fighting style feats; the 2024 tools and gear, trinkets, inns and lifestyles, coaches, ships and
-  messengers, mounts, saddles, stabling and vehicles; saves format 16)
+  messengers, mounts, saddles, stabling and vehicles; saves format 16) · 03 Demigods & Magics parts A and B (twenty
+  levels and the epic boons; the fighter, rogue, cleric and wizard of 2024 to level 20 with the Champion, Knight,
+  Thief, Assassin, Life and War Domains, Evoker and Abjurer; Counterspell; saves format 17)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
-  adapted). PHB 34% · DMG 11% · MM 8%
+  adapted); Expansion 3: 98 done, 34 adapted, 1 omitted of 558 (parts A and B settled). PHB 41% · DMG 12% · MM 8%
 Assumptions waiting for Anton:
 - The Player2 AI writer is removed (tagged `before-ai-removal`); its text is replaced everywhere by the game's own
   words, strengthened where they were thin.
@@ -63,9 +65,19 @@ Assumptions waiting for Anton:
   Protector for a fighting priest and Thaumaturge for a praying one, and Blessed Strikes the same way; Divine
   Intervention's spell is the battle's judgement; War God's Blessing's spell still asks for concentration; Divine
   Strike is radiant; the domain spells come with Part C.
+- Expansion 3 B.4: the wizard's schools keep their ids `evocation` and `abjuration` (shown as the Evoker and the
+  Abjurer), as the cleric kept `life` and `war`; Counterspell came early (Part D's catalogue skips it) so that Spell
+  Breaker works now, Dispel Magic waits for D.2; the Auto and the enemy counter any spell of level 1 or more, never a
+  cantrip; Memorize Spell waits for preparing (C.1), every spellbook spell is ready until then; Spell Mastery's spells
+  are chosen at 18 and kept (changing them after a long rest is left out); Overchannel is the battle's judgement when
+  it is free and asked of the player under the Reactions setting; Arcane Recovery brings back the highest slots
+  first; the ward is mended with a level 1 slot, or a level 2 one when it is far gone; Spell Resistance halves the
+  damage of a spell as it is cast (burning ground or an aura left by a spell later is not counted).
 Ideas for later:
 - (none yet)
-Next session starts at: task B.4 in docs/expansions/03-demigods-magics.md (Part B: the Wizard, Evoker and Abjurer; FORMAT_VERSION bump; companion archetypes to 20; then the three big checks, the fresh review and Part B to `main`). B.1-B.3 (fighter, rogue, cleric) are done on the branch; the Cutthroat is now the Assassin and the cleric's domain comes at level 3, so saves must change with B.4.
+Next session starts at: task C.1 in docs/expansions/03-demigods-magics.md (Part C: preparing spells by the class
+tables, the Spells screen prepares, the Auto prepares by archetype; always-prepared spells; rituals; one slotted spell
+per turn; the wizard's Memorize Spell and Ritual Adept). Part B is in `main` (saves format 17).
 
 ## Done
 
@@ -86,6 +98,7 @@ Next session starts at: task B.4 in docs/expansions/03-demigods-magics.md (Part 
 | 2026-10-13 | Blades & Backgrounds part C: feats (the framework, Suggest, the Feats tab; 42 general and 10 fighting style feats in play, on Auto and in the enemy's hands); finished by a second session after a usage limit; merged into `main` | `dlc/02-blades-backgrounds` |
 | 2026-10-13 | Demigods & Magics begun: the branch, the design note and its seven parts (twenty levels, the four classes, spellcasting, the catalogue, spells outside battle, familiars and summons, enemy casters) | `dlc/03-demigods-magics` |
 | 2026-10-13 | Demigods & Magics part A: twenty levels, the twelve epic boons (in play, on Auto), danger tiers for the worst lands, legends that grow, five-level dungeons; finished after a usage limit; merged into `main` | `dlc/03-demigods-magics` |
+| 2026-10-17 | Demigods & Magics part B: the 2024 fighter, rogue, cleric and wizard to 20 (Champion, Knight, Thief, Assassin, Life, War, Evoker, Abjurer), Counterspell, companions to 20; saves format 17; the first part built by the relay; merged into `main` | `dlc/03-demigods-magics` |
 
 ## Notes for the next session
 

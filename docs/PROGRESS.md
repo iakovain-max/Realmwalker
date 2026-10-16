@@ -28,7 +28,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Clearing the decks for the expansions** | ✅ Done (2026-10-12), branch `prep/clear-the-decks` |
 | **Expansion 1, *Dice & Destiny*** (version 1.1.0) | ✅ Released (2026-10-13), branch `dlc/01-dice-destiny` |
 | **Expansion 2, *Blades & Backgrounds*** (version 1.2.0) | ✅ Released (2026-10-13), branch `dlc/02-blades-backgrounds` |
-| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | ✅ Expansion 2, *Blades & Backgrounds* released (version 1.2.0, 2026-10-13); Expansion 3 next |
+| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels) and B (the four classes, 2026-10-17) in `main`; Part C next |
 
 ---
 
@@ -39,6 +39,38 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-17 (night): Demigods & Magics B.4 — the 2024 wizard — and Part B into `main`
+
+The first part built by a relay builder (realmwalker-b). The wizard is now the 2024 book's from level 1 to 20, and
+with it Part B (the four classes: fighter, rogue, cleric, wizard) goes to `main`. **Saves change (format 17): start a
+new character and a new world.** Old saves are refused kindly, never deleted.
+- **The wizard at every level.** **Ritual Adept** (rituals read from the spellbook), **Arcane Recovery** (now the
+  highest spent slots come back first), **Scholar** at 2 (Expertise in Arcana, History, Investigation, Medicine,
+  Nature or Religion: a choice on the sheet, c then l), the **school at level 3** (was 2), **Memorize Spell** at 5 (on
+  the sheet; it starts to matter when preparing spells arrives in Part C), **Spell Mastery** at 18 (a level 1 and a
+  level 2 spell cast at will, no slot), the epic boon at 19, **Signature Spells** at 20 (two level 3 spells, each
+  once without a slot, back after a short rest).
+- **The Evoker**: **Evocation Savant** (two evocations copied for nothing at 3, one more each time a new level of
+  slots opens), **Potent Cantrip** at 3 (a bolt that misses still burns for half), **Sculpt Spells** at 6 (was 2),
+  **Empowered Evocation** at 10 (Intelligence on one damage roll), **Overchannel** at 14 (a spell's greatest damage:
+  free once between long rests, then it tears at you, 2d12 necrotic a slot level and more each time).
+- **The Abjurer**: **Abjuration Savant**, **Arcane Ward** at 3 (now only from a spell cast with a slot; and a bonus
+  action can pour a slot into it: the ability list, b), **Projected Ward** at 6, **Spell Breaker** at 10
+  (Counterspell always ready, and its slot kept if the spell holds), **Spell Resistance** at 14 (advantage on saves
+  against spells, their damage halved).
+- **Counterspell** is in the game: a reaction when a foe within 60 feet casts. The foe makes a Constitution save; if
+  it fails, the spell comes to nothing (the foe keeps its slot, loses its action). Asked of you under the Reactions
+  setting; companions on Auto and enemies who know it use it on any spell of level 1 or more, never on a cantrip.
+- The Spells page (S) and the spell cards say when a spell costs no slot.
+- The Auto mends its ward when it is half gone, counts at-will spells as free, and makes every new choice (a
+  companion of each sort, made at level 20, fights on Auto: tested).
+- Fixed on the way: the rogue's second Expertise (level 6) is now actually chosen; Boon of Spell Recall no longer
+  "keeps" a slot on a spell that spent none.
+- **Waiting for later parts**: Dispel Magic (the other half of Spell Breaker) comes with the spell catalogue (Part
+  D.2); swapping a prepared spell after a short rest comes with preparing (C.1); changing Spell Mastery's spells after
+  a long rest is left out. The Savants give two spells when the catalogue has two left to give (today the game has
+  few evocations and abjurations of level 1-2; Part D brings the rest).
 
 ### Session, 2026-10-17 (night): the relay — the expansions build themselves, session after session
 
