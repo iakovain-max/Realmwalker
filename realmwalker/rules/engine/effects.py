@@ -31,6 +31,19 @@ an op inside another (`on_hit`, `on_fail`, `then`) works on the creature the out
     stabilize, restore (conditions, one, disease), revive (consumes, within_rounds), identify (outside a fight)
     gain_action (one more action this turn), say (a line: {name}, {their}), special (Python by id: SPECIAL)
 
+The second wave (D.2):
+    attack     drain: the caster heals that share of the damage dealt (Vampiric Touch: 0.5)
+    condition  control: the one it holds fights for the caster's side (Dominate); damage_save: each time it takes
+               damage it saves again, and a success ends it
+    zone       fail (a condition a failed save brings: "restrained" holds, "prone", "retching"), rough (difficult
+               terrain), dark (heavily obscured); "stone" and "force" raise a wall on the area's free squares (the
+               ground comes back when the spell ends); "wind" turns ordinary missiles aside
+    banish     how ("banished" | "sphere"), below_hp (only if it has no more hit points left: Banishing Smite): off
+               the field while the caster concentrates (Battle.send_away)
+    dispel     ends every spell on the creature at the point and on the ground there: of the slot's level or lower
+               at once, higher ones on a check (10 + the spell's level); Spell Breaker adds proficiency and keeps
+               the slot when nothing ends
+
 Unknown ops are data errors at start-up (rules/engine/check.py).
 """
 
@@ -228,7 +241,12 @@ def _attack(c: Cast, o: dict, victim) -> None:
                                + (f"{c.mod:+d}" if o.get("add_mod") and c.mod else ""), dtype,  # (Flame Blade)
                                range=(reach, reach))
             c.empowered = 0  # (one damage roll of the spell: the first ray)
+            before = target.hp
             if b._attack(f, opt, target):
+                if o.get("drain") and f.active and before > target.hp:
+                    gain = int((before - max(0, target.hp)) * float(o["drain"]))
+                    if gain > 0:
+                        b._heal(f, gain)  # (Vampiric Touch)
                 if target.active:
                     run(c, o.get("on_hit", ()), target)
             elif o.get("miss_half") and (target.active or target.state == "down"):
@@ -423,6 +441,10 @@ def _condition(c: Cast, o: dict, victim) -> None:
             extra["conc"] = f.id
         if o.get("on_damage"):
             extra["on_damage"] = True
+        if o.get("control"):
+            extra["control"] = f.team  # (Dominate: it fights for the caster's side while it lasts)
+        if o.get("damage_save"):
+            extra["damage_save"] = {"save": o.get("save", spell_save(spell)), "dc": int(o.get("save_dc") or c.dc)}
         if o.get("then"):
             t = o["then"]
             extra["then"] = {"save": t["save"], "dc": c.dc, "caster": f.id, "spell": c.sid,
@@ -540,6 +562,9 @@ def _heal(c: Cast, o: dict, victim) -> None:
             b.say(f"The magic finds no hold in {x.the_name}.", "warn")
             continue
         rolled = dice.roll(expr(c, o["dice"], o.get("up", "")), b.rng)
+        if x.buff_value("heal_max"):  # (Beacon of Hope: the most the dice can give)
+            n_, s_, flat_ = dice.parse(expr(c, o["dice"], o.get("up", "")))
+            rolled = dice.roll(str(n_ * s_ + flat_), b.rng)
         amount = rolled.total + (c.mod if o.get("add_mod") else 0)
         if f.has_trait("feat_healer") and not spell.get("ability"):  # Healer: healing dice of 1 rolled again
             amount += sum(b.rng.randint(1, max(1, dice.parse(o["dice"])[1])) - 1 for r in rolled.rolls if r == 1)
@@ -595,6 +620,8 @@ def _modifier(c: Cast, o: dict, victim) -> None:
             else:
                 x.buffs.append({**bf, "rounds": int(o.get("rounds", spell.get("rounds", 10)))})
         b._event("buff", who=x.id, spell=sid)
+    if o.get("buff", {}).get("aura"):
+        b._follow_auras()  # (an aura's friends have its gift at once)
     if victim is None:
         b.say(spell["text"], "magic")
 
@@ -804,14 +831,129 @@ def _zone(c: Cast, o: dict, victim) -> None:
              save=o.get("save", "dex") if o.get("save", "dex") != "none" else "",
              dc=int(o.get("dc", c.dc)),  # (caltrops and ball bearings have the book's own DC)
              damage=expr(c, dmg[0][0], dmg[0][2]) if dmg else "", damage_type=dmg[0][1] if dmg else "",
-             on_save="half" if o.get("half") else "none", centre=c.point)
+             on_save="half" if o.get("half") else "none", centre=c.point,
+             fail=o.get("fail", ""), rough=bool(o.get("rough")), dark=bool(o.get("dark")))
+    if z.kind in ("stone", "force"):  # a wall: it rises on the free squares of the area
+        taken = {sq for x in b.on_field() for sq in x.cells}
+        name = "wall_stone" if z.kind == "stone" else "ice_wall"
+        for sq in sorted(z.cells):
+            if sq in taken or not b.field.passable(*sq):
+                continue
+            z.was[sq] = b.field.name(*sq)
+            b.field.terrain[sq] = b.t.terrain.index[name]
+        z.cells = set(z.was)
+        b.field._derive()
+        if not z.cells:
+            return
     b._add_zone(z)
     if o.get("catch"):  # (whoever stands there as it appears: caught, or hurt)
         for x in b.in_area(c.area, spell.get("affects", "all"), f):
-            if z.holds or z.kind == "grease":
+            if z.fail or z.kind in ("tentacles", "cloud", "stench", "hunger", "insects", "sleet", "radiance",
+                                    "spirits", "elemental"):
+                b._ground(x, z, start=False)
+            elif z.holds or z.kind == "grease":
                 b._zone_catch(x, z)
             elif x is not f or not z.damage:
                 b._zones_on(x, start=False)
+
+
+@op("banish")
+def _banish(c: Cast, o: dict, victim) -> None:
+    """Banishment, Otiluke's Resilient Sphere, Banishing Smite: off the field while the caster concentrates."""
+    b, f = c.b, c.caster
+    for x in ([victim] if victim is not None else _targets(c)):
+        if x is None or not x.active or x is f:
+            continue
+        if o.get("below_hp") and x.hp > int(o["below_hp"]):
+            continue
+        if f.concentration is None:
+            continue  # (a spell that holds nothing cannot keep anyone away)
+        b.send_away(x, o.get("how", "banished"), by=f, spell=c.sid)
+
+
+@op("dispel")
+def _dispel(c: Cast, o: dict, victim) -> None:
+    """Dispel Magic (2024): every spell on the creature at the point, and on the ground there, of the slot's level or
+    lower ends; a higher one ends on a check with the spellcasting ability against 10 + its level (an abjurer's
+    Spell Breaker adds proficiency, and keeps the slot when nothing ends)."""
+    b, f = c.b, c.caster
+    target = victim or c.target or (b.at(*c.point) if c.point is not None else None)
+    breaker = f.has_trait("spell_breaker")
+    ended = 0
+
+    def beats(level: int, name: str) -> bool:
+        if level <= c.level:
+            return True
+        bonus = c.mod + (query_prof(f) if breaker else 0)
+        roll = b.rng.randint(1, 20)
+        b.dice_say(f"{f.name}'s check against {name}: {roll}{bonus:+d} vs {10 + level}")
+        return roll + bonus >= 10 + level
+
+    if target is not None and target.state in ("fighting", "fleeing", "down", "away"):
+        for (level, name, end) in held_spells(b, target):
+            if beats(level, name):
+                end()
+                ended += 1
+                b.say(f"{name} on {target.the_name} unravels.", "magic")
+    if c.point is not None:
+        for z in [z for z in b.zones if c.point in z.cells and z.spell in b.t.spells]:
+            sp = b.t.spells[z.spell]
+            if beats(sp["level"], sp["name"]):
+                owner = next((x for x in b.fighters if x.id == z.owner), None)
+                if owner is not None and owner.concentration is not None and owner.concentration["spell"] == z.spell:
+                    b._end_concentration(owner, quiet=False, why="is dispelled")
+                else:
+                    b._remove_zone(z)
+                ended += 1
+    if not ended:
+        b.say("The spell finds nothing to undo.", "system")
+        if breaker and c.slotted and c.level > 0 and f.char is not None:
+            spellrules.unspend_slot(f.char, c.level)
+            b.say("<magic>The slot is not lost.</> (Spell Breaker)", "magic")
+
+
+def query_prof(f) -> int:
+    from realmwalker.rules.engine import query
+
+    return query.proficiency(f)
+
+
+def held_spells(b, x) -> list:
+    """The spells working on a creature now, as (level, name, end it): its marks and blessings, the conditions a
+    caster's concentration holds on it, and being sent away."""
+    out = []
+    seen = set()
+    for bf in list(x.buffs):
+        sid = bf.get("source") if bf.get("source") in b.t.spells else bf.get("lasting")
+        if sid not in b.t.spells or bf.get("aura_of") is not None or (sid, bf.get("conc")) in seen:
+            continue
+        seen.add((sid, bf.get("conc")))
+        sp = b.t.spells[sid]
+
+        def end(x=x, sid=sid):
+            x.buffs = [g for g in x.buffs if g.get("source") != sid and g.get("lasting") != sid]
+            if x.char is not None:
+                spellrules.end(x.char, sid)
+        out.append((max(int(sp["level"]), int(bf.get("level") or 0)), sp["name"], end))
+    for caster in b.fighters:
+        conc = caster.concentration
+        if conc is None or conc["spell"] not in b.t.spells:
+            continue
+        held = [cid for cid, e in x.cond_ends.items() if e.get("conc") == caster.id] + \
+            [se["cond"] for se in x.save_ends if se.get("conc") == caster.id]
+        away = x.state == "away" and x.away and x.away.get("by") == caster.id
+        if not held and not away:
+            continue
+        sp = b.t.spells[conc["spell"]]
+
+        def end(x=x, caster=caster, held=tuple(held), away=away):
+            for cid in held:
+                durations.remove(x, cid)
+                x.save_ends = [se for se in x.save_ends if se.get("cond") != cid]
+            if away:
+                b.bring_back(x)
+        out.append((int(sp["level"]) + int(conc.get("up", 0)), sp["name"], end))
+    return out
 
 
 @op("aura")

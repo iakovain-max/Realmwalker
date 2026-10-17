@@ -225,6 +225,15 @@ def save_roll(b, f, ability: str, *, bonus: int = 0, against: tuple = ()) -> Sav
         out.roll.add("disadvantage", "untrained in armour")
     if ability == "str" and f.buff_value("weak"):
         out.roll.add("disadvantage", "enfeebled")  # (Ray of Enfeeblement)
+    if f.buffs:
+        if any(ability in (v or ()) for v in f.buff_value("save_adv")):
+            out.roll.add("advantage", "blessed")  # (Beacon of Hope, Haste)
+        if against and any(set(against) & set(v or ()) for v in f.buff_value("save_adv_against")):
+            out.roll.add("advantage", "warded")  # (Aura of Purity)
+        if f.buff_value("save_adv_spells") and b is not None and b.__dict__.get("_casting") is not None:
+            out.roll.add("advantage", "against a spell")  # (Circle of Power)
+        if ability == "dex" and f.buff_value("sluggish"):
+            out.bonus -= 2  # (Slow)
     if ability == "dex" and f.dodging and not incapacitated(f) and f.speed > 0:
         out.roll.add("advantage", "dodging")  # the Dodge action: easier to get out of the way of fire
     if "poisoned" in against and f.char is not None and f.char.effects.get("antitoxin", 0) > 0:
@@ -262,6 +271,10 @@ def speed(f) -> int:
     if flag(f, "speed_zero"):
         return 0
     base -= sum(f.buff_value("slow"))
+    if f.buff_value("haste"):
+        base *= 2
+    if f.buff_value("sluggish"):
+        base //= 2
     return max(0, base)
 
 
@@ -373,4 +386,6 @@ def condition_immune(f, cid: str) -> bool:
 
 def attacks_per_action(f) -> int:
     """How many attacks the Attack action makes (Extra Attack: 2)."""
-    return max([1] + [int(v) for v in tr.values(f, "attacks")])
+    if f.buff_value("sluggish"):
+        return 1  # (Slow: one attack an action)
+    return max([1] + [int(v) for v in tr.values(f, "attacks")]) + (1 if f.buff_value("haste") else 0)

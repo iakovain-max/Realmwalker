@@ -47,7 +47,7 @@ MERCIFUL = {"bandit", "coward", "soldier"}  # these rob a beaten party and leave
 DEFAULT_RANGE = query.DEFAULT_RANGE
 ACTIVITY = ("move", "attack", "damage", "cast", "push", "teleport", "heal", "dart", "token_strike")
 QUIET_ROUNDS = 3  # rounds in which nobody can get at anybody before a fight breaks off
-STATES = ("fighting", "fleeing", "down", "dead", "fled", "surrendered")
+STATES = ("fighting", "fleeing", "down", "dead", "fled", "surrendered", "away")  # away: banished, blinked, sealed
 
 
 # The weapon properties a stat block's attack keeps from its item (its numbers are the block's own; Heavy is what
@@ -114,19 +114,24 @@ class Zone:
     friends_safe: bool = False  # it spares the side of the one who made it
     budget: int = 0  # damage it can still deal before it is spent (Guardian of Faith)
     struck: set = field(default_factory=set)  # who it has already caught this turn
+    # The catalogue's ground (Expansion 3 D.2), said by the spell's zone op:
+    fail: str = ""  # a condition a failed save brings ("restrained" holds while it stays, "prone", "retching"...)
+    rough: bool = False  # difficult terrain (Evard's tentacles, insects, sleet)
+    dark: bool = False  # heavily obscured (Cloudkill, Stinking Cloud, Hunger of Hadar, Sleet Storm)
+    was: dict = field(default_factory=dict)  # a wall's squares and the ground they were before it rose
 
     @property
     def difficult(self) -> bool:
-        return self.kind in ("web", "ice", "guardians", "plants", "grease", "spikes")
+        return self.rough or self.kind in ("web", "ice", "guardians", "plants", "grease", "spikes")
 
     @property
     def holds(self) -> bool:
-        """It holds whoever it catches Restrained until it ends (a web, Entangle's plants)."""
-        return self.kind in ("web", "plants")
+        """It holds whoever it catches Restrained until it ends (a web, Entangle's plants, Evard's tentacles)."""
+        return self.kind in ("web", "plants") or self.fail == "restrained"
 
     @property
     def opaque(self) -> bool:
-        return self.kind in ("fog", "darkness")
+        return self.dark or self.kind in ("fog", "darkness")
 
     @property
     def light(self) -> int:
@@ -146,6 +151,21 @@ class Token:
     bonus: int = 0
     damage_type: str = "force"
     spell: str = ""
+
+
+EXTRAPLANAR = ("aberration", "celestial", "elemental", "fey", "fiend")  # (Banishment sends them home)
+GROUND_WORDS = {  # what the catalogue's ground does to whoever is caught in it (Battle._ground)
+    "tentacles": "Black tentacles writhe up around {T}.",
+    "cloud": "The poison fog burns {T}'s lungs.",
+    "stench": "The stinking cloud rolls over {T}.",
+    "hunger": "Something unseen in the black gnaws at {T}.",
+    "insects": "Biting locusts swarm over {T}.",
+    "sleet": "Freezing sleet lashes {T}.",
+    "radiance": "Searing light and thunder fall on {T}.",
+    "spirits": "Spectral beasts rake at {T}.",
+    "elemental": "The elemental spirit engulfs {T}.",
+    "fire": "{T} is in the flames.",
+}
 
 
 class Fighter:
@@ -172,6 +192,7 @@ class Fighter:
         self.dodging = False
         self.helped = False
         self.grovel = False  # Commanded to grovel: its next turn is spent on the ground
+        self.away: dict | None = None  # sent off the field for a while (state "away"): Banishment, Blink, a sphere
         self.readied: str | None = None  # the Ready action: "reach" or "sight", until its next turn
         self.moved_feet = 0  # how far it has moved this turn (a boar's charge)
         self.attached_to: int | None = None  # a stirge fastened on someone
@@ -632,8 +653,10 @@ class Battle:
         return [x for x in self.fighters if x.team == f.team and x.active]
 
     def on_field(self) -> list[Fighter]:
-        """Everyone still taking up room: the living, the fallen and the yielded (not the dead or the fled)."""
-        return [f for f in self.fighters if f.state in ("fighting", "fleeing", "down", "surrendered")]
+        """Everyone still taking up room: the living, the fallen and the yielded (not the dead or the fled), and one
+        sealed in a sphere where it stands."""
+        return [f for f in self.fighters if f.state in ("fighting", "fleeing", "down", "surrendered")
+                or f.state == "away" and f.away and f.away.get("stays")]
 
     def at(self, x: int, y: int) -> Fighter | None:
         for f in self.on_field():
@@ -838,6 +861,10 @@ class Battle:
                 self.say(f"{f.the_name} cannot move.", "system")
             self.end_turn()
             return True
+        if marks.confused_turn(self, f):  # (Confusion: the d10 says what it does with its turn)
+            if self.outcome is None and self.turn_started and self.current is f:
+                self.end_turn()
+            return True
         if f.side == PARTY and not f.controlled and not f.auto:
             return False
         from realmwalker.rules import tactics
@@ -868,6 +895,7 @@ class Battle:
                 if b["rounds"] < 0:
                     f.buffs.remove(b)
         f.move_left = f.speed
+        marks.after_turn_start(self, f)  # (Slow: no bonus action)
         if f.concentration is not None and f.concentration.get("rounds", -1) >= 0:
             f.concentration["rounds"] -= 1
             if f.concentration["rounds"] < 0:
@@ -883,6 +911,9 @@ class Battle:
                 self._event("token_end", id=tok.id)
         for z in self.zones:
             z.struck.discard(f.id)
+        if f.state == "away" and (f.away or {}).get("why") == "blink":
+            self.bring_back(f)  # (Blink: back from the Ethereal Plane at the start of its turn)
+        self._follow_auras()
         if f.state == "down":
             if not f.stable:
                 self._death_save(f)
@@ -1020,13 +1051,14 @@ class Battle:
 
     def _check_end(self) -> None:  # (by team: a companion fighting for the enemy is an enemy until freed)
         for f in self.fighters:
-            if f.concentration is not None and (query.flag(f, "breaks_concentration") or not f.active):
+            blinked = f.state == "away" and (f.away or {}).get("why") == "blink"  # (on the Ethereal Plane, still free)
+            if f.concentration is not None and (query.flag(f, "breaks_concentration") or not f.active) and not blinked:
                 self._end_concentration(f, quiet=not f.active, why="is lost")  # incapacitated (2024)
             if f.z > 0 and not f.hovers and ("prone" in f.conditions or f.incapacitated or f.state == "down"
                                              or f.fly_speed <= 0):
                 self._fall(f)
-        foes = [f for f in self.team(FOE) if f.active and "unconscious" not in f.conditions]
-        party = [f for f in self.team(PARTY) if f.active and "unconscious" not in f.conditions]
+        foes = [f for f in self.team(FOE) if f.active and "unconscious" not in f.conditions or f.state == "away"]
+        party = [f for f in self.team(PARTY) if f.active and "unconscious" not in f.conditions or f.state == "away"]
         if not foes:
             self.outcome = "victory"
         elif not party:
@@ -1968,6 +2000,10 @@ class Battle:
         marks.acted(self, att)
         if marks.sanctuary_stops(self, att, target):
             return False
+        if opt.kind == "ranged" and self.wind_between(att, target):
+            self.say(f"The wall of wind tears {att.the_name}'s missile aside.", "magic")
+            self._event("attack", by=att.id, to=target.id, hit=False, kind=opt.kind, weapon=opt.name)
+            return False
         if opt.extra.get("single_save"):
             return self._save_action(att, opt, target)
         adv, dis, why = self._adv_dis(att, target, opt)
@@ -2330,6 +2366,8 @@ class Battle:
         if dtype == "poison" and not saved and target.char and not query.condition_immune(target, "poisoned"):
             target.conditions["poisoned"] = 10
         amount = (full // 2 if on_save == "half" else 0) if saved else full
+        if saved and self.__dict__.get("_casting") is not None and target.buff_value("evade_spells"):
+            amount = 0  # (Circle of Power: a save against a spell's damage takes none of it)
         amount = events.emit(self, "save_damage", actor=att, target=target, ability=ability, saved=saved, full=full,
                              amount=amount).amount  # Evasion...
         if amount > 0:
@@ -2510,7 +2548,9 @@ class Battle:
 
     def _death_save(self, f: Fighter) -> None:
         survivor = f.has_trait("survivor")  # (the Champion's Defy Death)
-        roll = dice.d20(self.rng, advantage=f.char is not None and feats.has(f.char, "durable") or survivor).natural
+        hope = any("death" in (v or ()) for v in f.buff_value("save_adv"))  # (Beacon of Hope)
+        roll = dice.d20(self.rng, advantage=f.char is not None and feats.has(f.char, "durable") or survivor
+                        or hope).natural
         if survivor and roll >= 18:
             roll = 20
         if 1 < roll < 10 and roll + query.d20_penalty(f) < 10 and self._inspired(f, 10, "a death save"):
@@ -3085,7 +3125,7 @@ class Battle:
         if f.char:
             for sid, ok, _ in self.spell_options(f):
                 sp = self.t.spells[spell_id(sid)]
-                if ok and sp.get("cast") == "bonus":
+                if ok and cast_kind(f, sp) == "bonus":
                     out.append(sid)
             hurt = any(x.hp < x.max_hp for x in self.item_targets(f))
             for it in self.usable_items(f) if hurt else ():  # (a potion, with the bonus action: only worth it when
@@ -3294,7 +3334,7 @@ class Battle:
             return False, "magic does not work here"
         if "V" in spell.get("components", ()) and self.silenced(f):
             return False, "no sound can be made here (Silence)"
-        if spell.get("cast") == "bonus":
+        if cast_kind(f, spell) == "bonus":
             if f.bonus <= 0:
                 return False, "no bonus action left"
         elif f.action <= 0 and f.attacks_left <= 0:
@@ -3498,7 +3538,7 @@ class Battle:
         c = f.char
         s = f.sheet
         level = spell["level"]
-        bonus_cast = spell.get("cast") == "bonus"
+        bonus_cast = cast_kind(f, spell) == "bonus"
         if spell.get("again_of"):
             if again_spell(f, self.t) != sid:
                 return False
@@ -3673,7 +3713,19 @@ class Battle:
         f.concentration = None
         sid = conc["spell"]
         for x in self.fighters:
+            if any(b.get("haste") and b.get("conc") == f.id for b in x.buffs) and x.active:
+                durations.give(self, x, "incapacitated", ends=durations.until(self, x, "turn_end"))
+                x.buffs.append({"slow": 999, "source": "lethargy", "rounds": 1})
+                self.say(f"A wave of lethargy sweeps over {x.the_name} as the haste leaves them.", "system")
             x.buffs = [b for b in x.buffs if b.get("conc") != f.id]
+            if x.state == "away" and x.away and x.away.get("by") == f.id and x.away.get("why") != "blink":
+                if why == "runs its course" and x.away.get("why") == "banished" and x.kind in EXTRAPLANAR:
+                    x.state = "fled"  # (banished for the whole minute to the plane it came from: it stays there)
+                    x.away = None
+                    self._event("leave", who=x.id)
+                    self.say(f"{x.the_name} does not come back.", "good" if x.team != f.team else "danger")
+                else:
+                    self.bring_back(x)
             for se in [se for se in x.save_ends if se.get("conc") == f.id]:
                 x.conditions.pop(se["cond"], None)
                 x.save_ends.remove(se)
@@ -3691,6 +3743,46 @@ class Battle:
             name = self.t.spells[sid]["name"] if sid in self.t.spells else "the spell"
             self.say(f"{f.the_name}'s {name} {why or 'ends'}.", "magic")
         self._event("concentration_end", who=f.id, spell=sid)
+
+    # ------------------------------------------------------------------ sent away
+    def send_away(self, f: Fighter, why: str, *, by: Fighter | None = None, spell: str = "") -> None:
+        """Off the field for a while: banished to a harmless pocket (Banishment), blinked into the Ethereal Plane
+        (Blink), or sealed in a sphere where it stands (Otiluke's Resilient Sphere). Nobody can reach it, and it can
+        do nothing, until it comes back (`bring_back`)."""
+        if f.state not in ("fighting", "fleeing"):
+            return
+        f.away = {"why": why, "by": by.id if by is not None else None, "spell": spell, "state": f.state,
+                  "stays": why == "sphere"}
+        f.state = "away"
+        if f.grappled_by is not None:
+            f.grappled_by = None
+            f.conditions.pop("grappled", None)
+        for x in self.fighters:
+            if x.grappled_by == f.id:
+                x.grappled_by = None
+                x.conditions.pop("grappled", None)
+        f.readied = None
+        self._event("vanish", who=f.id, why=why)
+        self.say({"banished": f"{f.the_name} vanishes from the field.",
+                  "blink": f"{f.the_name} blinks out of sight.",
+                  "sphere": f"A shimmering sphere closes around {f.the_name}."}.get(why, f"{f.the_name} is gone."),
+                 "magic")
+
+    def bring_back(self, f: Fighter) -> None:
+        """Back from wherever it was sent: where it left, or the nearest free place."""
+        if f.state != "away" or f.away is None:
+            return
+        state = f.away.get("state", "fighting")
+        why = f.away.get("why")
+        f.away = None
+        f.state = state if state in ("fighting", "fleeing") else "fighting"
+        if why != "sphere":
+            taken = {c for x in self.on_field() if x is not f for c in x.cells}
+            if not self.field.fits(f.x, f.y, f.sq) or any(c in taken for c in f.cells):
+                f.x, f.y = self._free_near((f.x, f.y), f.sq, taken)
+        self._event("appear", who=f.id)
+        self.say(f"The sphere around {f.the_name} winks out." if why == "sphere" else
+                 f"{f.the_name} is back.", "magic")
 
     # ------------------------------------------------------------------ zones
     def _zone_id(self) -> int:
@@ -3711,8 +3803,21 @@ class Battle:
                         x.conditions.pop("restrained", None)
             if z.kind == "guardian":
                 self.tokens = [t for t in self.tokens if t.id != getattr(z, "token", -1)]
+            if z.was:  # (a wall of stone or force: the ground it stood on comes back)
+                for (x, y), name in z.was.items():
+                    self.field.terrain[x, y] = self.t.terrain.index[name]
+                self.field._derive()
             self._sync_zones()
             self._event("zone_end", id=z.id)
+
+    def wind_between(self, att: Fighter, target: Fighter) -> bool:
+        """A Wind Wall stands between them: arrows, bolts and other ordinary missiles cannot cross it."""
+        walls = [z for z in self.zones if z.kind == "wind"]
+        if not walls:
+            return False
+        line = set(grid.crossed(att.x + att.sq / 2, att.y + att.sq / 2, target.x + target.sq / 2,
+                                target.y + target.sq / 2))
+        return any(line & z.cells for z in walls)
 
     def _sync_zones(self) -> None:
         W, H = self.field.width, self.field.height
@@ -3728,7 +3833,9 @@ class Battle:
         self.field.set_zones(opaque, difficult)
 
     def _follow_auras(self) -> None:
-        """An aura (Spirit Guardians) moves with whoever carries it."""
+        """An aura (Spirit Guardians) moves with whoever carries it; an aura that helps friends (Crusader's Mantle,
+        Aura of Life, Circle of Power) is shared with those now within it (marks.share_auras)."""
+        marks.share_auras(self)
         for z in self.zones:
             if z.kind != "guardians" or z.owner is None:
                 continue
@@ -3780,7 +3887,8 @@ class Battle:
                 owner = next((x for x in self.fighters if x.id == z.owner), None)
                 self._hit(owner, f, dice.roll(z.damage or "2d4", self.rng).total, z.damage_type or "piercing",
                           crit=False, weapon="thorns")
-            elif z.kind in ("fire", "guardians", "guardian", "daggers", "moonbeam", "sphere") and z.damage:
+            elif z.kind in ("fire", "guardians", "guardian", "daggers", "moonbeam", "sphere") and z.damage \
+                    and not z.fail:
                 z.struck.add(f.id)
                 owner = next((x for x in self.fighters if x.id == z.owner), None)
                 before = f.hp
@@ -3800,7 +3908,60 @@ class Battle:
                     if z.budget <= 0:
                         self.say("The guardian fades, its strength spent.", "magic")
                         self._remove_zone(z)
+            elif z.damage or z.fail:
+                stopped = self._ground(f, z, start=start) or stopped
         return stopped
+
+    def _ground(self, f: Fighter, z: Zone, *, start: bool) -> bool:
+        """The catalogue's ground (Expansion 3 D.2): a save against its damage, and what a failure brings (held
+        down, knocked over, retching). Once a turn for each. True if it stops a move."""
+        if f.z > 0 and z.fail in ("restrained", "prone"):
+            return False  # (tentacles and ice catch only those on the ground)
+        owner = next((x for x in self.fighters if x.id == z.owner), None)
+        if z.fail == "restrained" and "restrained" in f.conditions:
+            if z.damage and start:  # (held by the tentacles: hurt again at the start of each turn)
+                z.struck.add(f.id)
+                self._hit(owner, f, dice.roll(z.damage, self.rng).total, z.damage_type, crit=False,
+                          weapon=z.damage_type)
+            return False
+        z.struck.add(f.id)
+        self.say(GROUND_WORDS.get(z.kind, "The spell catches {T}.").replace("{T}", f.the_name),
+                 "danger" if f.side == PARTY else "info")
+        if not z.save:
+            if z.damage:
+                self._hit(owner, f, dice.roll(z.damage, self.rng).total, z.damage_type, crit=False,
+                          weapon=z.damage_type)
+            return False
+        against = ("poisoned",) if z.fail == "retching" else ((z.fail,) if z.fail else ())
+        if z.damage:
+            saved = self._save_damage(owner or f, f, z.save, z.dc, z.damage, z.damage_type, z.on_save)
+        else:
+            saved = self._save(f, z.save, z.dc, against=against)
+            self._event("save", who=f.id, ok=saved)
+        if saved or not f.active or not z.fail:
+            return False
+        if z.fail == "restrained":
+            if query.condition_immune(f, "restrained") or z.kind in trs.values(f, "ignores_zone", flat=True):
+                return False
+            f.conditions["restrained"] = -1
+            f.move_left = 0
+            self._event("condition", who=f.id, cond="restrained")
+            return True
+        if z.fail == "prone":
+            if durations.give(self, f, "prone"):
+                self._event("prone", who=f.id)
+                return True
+            return False
+        if z.fail == "retching":  # (Stinking Cloud: Poisoned, and no action or bonus action, this turn)
+            if durations.give(self, f, "poisoned", ends=durations.until(self, f, "turn_end")):
+                self._event("condition", who=f.id, cond="poisoned")
+                if start:
+                    f.action = f.bonus = 0
+                self.say(f"{f.the_name} retches, helpless.", "good" if f.side == FOE else "danger")
+            return False
+        if durations.give(self, f, z.fail, ends=durations.until(self, f, "turn_end")):
+            self._event("condition", who=f.id, cond=z.fail)
+        return False
 
     def _zone_underfoot(self, f: Fighter, z: Zone) -> bool:
         """Caltrops (PHB 2024): Dexterity save or 1 piercing damage and no more moving this turn. Ball bearings: a
@@ -3879,7 +4040,7 @@ class Battle:
         foes = self.side(FOE)
         dead = [f.creature for f in foes if f.state == "dead"]
         captives = [f.creature for f in foes if f.state == "surrendered" or ("unconscious" in f.conditions and f.state == "fighting")]
-        fled = [f.creature for f in foes if f.state in ("fled", "fleeing")]
+        fled = [f.creature for f in foes if f.state in ("fled", "fleeing", "away")]
         xp = 0
         if self.outcome in ("victory", "parley"):
             for f in foes:
@@ -3897,6 +4058,14 @@ class Battle:
         party_dead = [f.char for f in self.side(PARTY) if f.state == "dead"]
         return BattleResult(self.outcome or "victory", xp, dead, captives, fled, money, items, party_dead, self.round,
                             self.robbed_money)
+
+
+def cast_kind(f: Fighter, spell: dict) -> str:
+    """How long a casting takes for this caster: "bonus", "reaction" or "action". An abjurer's Spell Breaker casts
+    Dispel Magic with a bonus action (the spell's `breaker_bonus`)."""
+    if spell.get("breaker_bonus") and f.has_trait("spell_breaker"):
+        return "bonus"
+    return spell.get("cast", "action")
 
 
 def signed_mod(n: int) -> str:
