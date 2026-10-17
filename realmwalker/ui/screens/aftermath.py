@@ -108,8 +108,15 @@ class AftermathScreen(Screen):
         leave_loot(self.game)
         self.game.aftermath = None
         if self.game.over is not None:
-            self.app.replace(DeathScreen(self.app, self.game))
-            return
+            from realmwalker.game import greatmagic
+
+            back = greatmagic.cheat_death(self.game)  # (Clone: the soul wakes in a grown clone)
+            if back:
+                for text in back:
+                    self.game.say(text, "good")
+            else:
+                self.app.replace(DeathScreen(self.app, self.game))
+                return
         self.app.save_game()
         self.close()
 

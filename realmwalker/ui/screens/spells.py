@@ -310,7 +310,21 @@ class SpellsScreen(Screen):
             targets = self.targets()
             if targets:
                 self.chosen_target()
-                self.target = (self.target + (1 if ev.key == "right" else -1)) % len(targets)
+                step = 1 if ev.key == "right" else -1
+                group = lambda i: getattr(targets[i % len(targets)], "data", {}).get("group")  # noqa: E731
+                if ev.shift and group(self.target) is not None:  # (Shift: the first of the next kind: Wish's uses)
+                    i, here = self.target, group(self.target)
+                    for _ in range(len(targets)):
+                        i += step
+                        if group(i) != here:
+                            break
+                    if step < 0:  # (back to the first of that kind)
+                        there = group(i)
+                        while group(i - 1) == there and (i - 1) % len(targets) != self.target % len(targets):
+                            i -= 1
+                    self.target = i % len(targets)
+                else:
+                    self.target = (self.target + step) % len(targets)
         elif ev.key in ("enter", "kpenter"):
             self.cast()
         elif ev.key == "w":

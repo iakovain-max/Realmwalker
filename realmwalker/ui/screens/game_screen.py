@@ -498,8 +498,15 @@ class GameScreen(Screen):
         """Death, the aftermath of a fight, a fight, or trouble on the road take over the screen."""
         game = self.game
         if game.over is not None:
+            from realmwalker.game import greatmagic
             from realmwalker.ui.screens.aftermath import DeathScreen
 
+            back = greatmagic.cheat_death(game)  # (Clone: the soul wakes in a grown clone)
+            if back:
+                for text in back:
+                    game.say(text, "good")
+                self.app.save_game()
+                return True
             self.app.push(DeathScreen(self.app, game))
         elif game.aftermath is not None:
             from realmwalker.ui.screens.aftermath import AftermathScreen

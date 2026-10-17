@@ -255,6 +255,7 @@ class Fighter:
         self.spent_round = 0  # how many rounds it has been on the field (for Revivify's minute)
         self.acted = False  # has had a turn in this fight (the Cutthroat's Assassinate)
         self.glow = 0  # squares of bright light it carries (a torch, a glowing blade)
+        self.jar: dict | None = None  # (Magic Jar: a body whose soul is in its gem: {host, dc, tried})
         if char is not None:
             from realmwalker.rules import magic
 
@@ -494,6 +495,8 @@ class Fighter:
         return query.incapacitated(self)
 
     def can_act(self) -> bool:
+        if self.jar is not None and self.jar.get("host") is None and self.state in ("fighting", "fleeing"):
+            return True  # (Magic Jar: the body lies still, but the soul in its gem may act)
         return self.state in ("fighting", "fleeing") and not self.incapacitated
 
     def armor_factor(self, part: str) -> float:
@@ -598,6 +601,9 @@ class Battle:
                 if part:
                     f.buffs.append(part)
             if c.uses.get("addled"):  # (Contact Other Plane's failure: Incapacitated until a long rest)
+                f.conditions["incapacitated"] = -1
+            if (c.spells or {}).get("jar"):  # (Magic Jar: the body lies still; the soul in the gem may act)
+                f.jar = {"host": None, "dc": int(c.spells["jar"].get("dc", 13)), "tried": []}
                 f.conditions["incapacitated"] = -1
             self.fighters.append(f)
             fid += 1
@@ -726,6 +732,8 @@ class Battle:
         f = self.current
         if f.side == PARTY and not f.controlled and self.turn_started and f.can_act() and not f.surprised and not f.auto:
             return f
+        if self.ridden(f) and self.turn_started and f.can_act() and not f.surprised:
+            return f  # (Magic Jar: the player's soul in a foe's body)
         return None
 
     def gap(self, a: Fighter, b: Fighter) -> int:
@@ -803,6 +811,8 @@ class Battle:
         self._known_from_before()
         order = ", ".join(self.fighter(i).name for i in self.order)
         self.say(f"Order of battle: {order}.", "system")
+        for f in self.side(PARTY):
+            self._contingency(f, "start")  # (a spell that waited for the fight)
         self._check_end()  # (a band drowned to the last before it began: Tsunami)
 
     def _known_from_before(self) -> None:
@@ -931,7 +941,7 @@ class Battle:
             if self.outcome is None and self.turn_started and self.current is f:
                 self.end_turn()
             return True
-        if f.side == PARTY and not f.controlled and not f.auto:
+        if f.side == PARTY and not f.controlled and not f.auto or self.ridden(f):
             return False
         from realmwalker.rules import tactics
 
@@ -962,7 +972,7 @@ class Battle:
                 b["rounds"] -= 1
                 if b["rounds"] < 0:
                     f.buffs.remove(b)
-        f.move_left = f.speed
+        f.move_left = f.speed if f.jar is None else 0  # (Magic Jar: the body lies still)
         marks.after_turn_start(self, f)  # (Slow: no bonus action)
         if extra:  # (Time Stop: a fresh turn, but nothing wears down, nothing burns, nothing bleeds)
             self._follow_auras()
@@ -1179,6 +1189,8 @@ class Battle:
         elif not party:
             gone = any(f.state == "fled" for f in self.side(PARTY))
             self.outcome = "fled" if gone else "defeat"
+        if self.outcome is not None:
+            self._jar_release()
 
     # ------------------------------------------------------------------ light and sight
     def light(self) -> np.ndarray:
@@ -2223,7 +2235,8 @@ class Battle:
         armor = target.armor_name("torso")
         turned = not hit and bool(armor) and total >= ac - 4 and natural != 1 and opt.kind in ("melee", "ranged")
         self._event("attack", by=att.id, to=target.id, hit=hit, crit=crit, how=opt.kind, melee=opt.is_melee,
-                    weapon=opt.name, dtype=opt.damage_type, armoured=turned)
+                    weapon=opt.name, dtype=opt.damage_type, armoured=turned, bonus=opt.bonus + bless, ac=ac,
+                    round=self.round)
         mode = " (adv)" if adv and not dis else (" (dis)" if dis and not adv else "")
         notes = list(why) + ([grid.COVER_WORDS[cover]] if cover else [])
         self.dice_say(f"{att.name} → {target.name}, {opt.name}{mode}: {natural} {signed_mod(opt.bonus + bless)} = {total} vs AC {ac}"
@@ -2603,6 +2616,11 @@ class Battle:
         self._event("damage", to=target.id, by=att.id if att else None, amount=amount, dtype=dtype, crit=crit)
         self._apply_hp_loss(target, amount, source=att, cause=f"{att.the_name if att else 'a wound'}'s {weapon}" if att else weapon,
                             crit=crit, dtype=dtype)
+        if target.char is not None and (target.char.spells or {}).get("contingency"):
+            if target.state == "down" and hp_before > 0:
+                self._contingency(target, "down")
+            elif target.state == "fighting" and target.hp <= target.max_hp // 2 < hp_before:
+                self._contingency(target, "bloodied")
         target.damage_taken += amount
         events.emit(self, "damage_taken", actor=att, target=target, amount=amount, dtype=dtype)  # Energy Redirection
         marks.shared(self, target, amount)  # (Warding Bond)
@@ -2748,6 +2766,10 @@ class Battle:
             self.say(f"{f.the_name} is bleeding out.", "danger")
 
     def _kill(self, f: Fighter, cause: str, killer: Fighter | None = None) -> None:
+        if "possessed" in f.conditions:
+            self._host_dies(f)
+        if f.jar is not None:
+            self._body_dies(f)
         f.state = "dead"
         f.hp = 0
         f.died_round = self.round
@@ -2792,7 +2814,7 @@ class Battle:
                 self._morale_check(f, "losses")
 
     def _morale_check(self, f: Fighter, reason: str) -> None:
-        if f.morale_type in FEARLESS or f.state != "fighting":
+        if f.morale_type in FEARLESS or f.state != "fighting" or "possessed" in f.conditions:
             return
         dc = 10 + (2 if reason == "leader" else 0)
         roll = dice.d20(self.rng).natural + f.mod("wis")
@@ -2835,6 +2857,8 @@ class Battle:
     def do_attack(self, f: Fighter, opt: AttackOption, target: Fighter) -> bool:
         """One attack. The first one takes the action (and with Extra Attack leaves more to make this turn, with
         movement between them if you like)."""
+        if self.jar_still(f):
+            return False
         why = self.attack_problem(f, opt, target)
         if why:
             return False
@@ -3227,6 +3251,9 @@ class Battle:
     def class_abilities(self, f: Fighter) -> list[tuple[str, str, bool, str]]:
         """(id, name, available, why not): what features give (data/traits.json, rules/engine/actions.py), the off-hand
         blow of two-weapon fighting, and a spiritual weapon's strike."""
+        jar = self._jar_abilities(f)
+        if jar is not None:
+            return jar
         if not f.char:
             return []
         out = []
@@ -3305,6 +3332,16 @@ class Battle:
             return
         if ability == "put_out":
             self.do_extinguish(f)
+            return
+        if ability == "jar_possess":
+            if target is not None:
+                self.do_possess(f, target)
+            return
+        if ability == "jar_return":
+            self.do_jar_return(f)
+            return
+        if ability == "jar_leave":
+            self.do_jar_leave(f)
             return
         if ability in ("hew", "pole_strike"):
             if target is not None:
@@ -3710,6 +3747,10 @@ class Battle:
 
     def do_cast(self, f: Fighter, sid: str, target: Fighter | None = None, slot_level: int | None = None,
                 point: tuple[int, int] | None = None) -> bool:
+        if sid.startswith("wish:redo:"):  # (Wish's Roll Redo: no spell, no aim)
+            return self.do_redo(f, int(sid.split(":")[2]))
+        if self.jar_still(f):
+            return False
         why = self.cast_problem(f, sid, target, point)
         if why:
             self.say(f"Not possible: {why}.", "warn")
@@ -3872,6 +3913,223 @@ class Battle:
         if amount > 0 and f.active:
             self.say(f"Casting tears at {f.the_name}: the strain of the wish.", "danger")
             self._hit(None, f, amount, "necrotic", crit=False, weapon="the strain of a wish", raw=True)
+
+    # ------------------------------------------------------------------ great magic (Expansion 3 E.7)
+    def _contingency(self, f: Fighter, trigger: str) -> None:
+        """Contingency: the spell that waited on `f` takes effect on them alone, now, without an action, when its
+        moment comes (as the fight begins, below half the hit points, falling). It needs the statuette at hand."""
+        c = f.char
+        rec = (c.spells or {}).get("contingency") if c is not None else None
+        if not rec or rec.get("trigger") != trigger or rec.get("spell") not in self.t.spells:
+            return
+        c.spells.pop("contingency", None)
+        if not any(it.def_id == "contingency_statuette" for x in self.side(PARTY) if x.char is not None
+                   for it in x.char.inventory):
+            self.say(f"The Contingency on {f.the_name} is gone: the statuette is not with them.", "warn")
+            return
+        sid = rec["spell"]
+        spell = self.t.spells[sid]
+        level = int(rec.get("slot", spell["level"]))
+        s = f.sheet
+        self.say(f"<magic>Contingency:</> the {spell['name']} waiting on {f.the_name} springs into being.", "magic")
+        effects.cast(self, f, sid, spell, f, (f.x, f.y), up=max(0, level - int(spell["level"])),
+                     mod=s.mod(spellrules.casting_ability(c, self.t)), dc=spellrules.save_dc(s, self.t),
+                     bonus=spellrules.attack_bonus(s, self.t) + s.attack_condition(), mult=1, level=level,
+                     slotted=True)
+
+    def jar_still(self, f: Fighter) -> bool:
+        """A body whose soul is in its gem (Magic Jar): it strikes, casts and moves no more."""
+        return f.jar is not None
+
+    def ridden(self, f: Fighter) -> bool:
+        """A foe's body that the player's soul has taken (Magic Jar), played by the player."""
+        e = f.cond_ends.get("possessed") if "possessed" in f.conditions else None
+        body = self.fighter(e["jar"]) if e and e.get("jar") is not None else None
+        return body is not None and body.side == PARTY and not body.auto
+
+    def _body_of(self, host: Fighter) -> Fighter | None:
+        e = host.cond_ends.get("possessed") if "possessed" in host.conditions else None
+        return self.fighter(e["jar"]) if e and e.get("jar") is not None else None
+
+    def jar_targets(self, f: Fighter) -> list[Fighter]:
+        """Who a soul in its gem could take: a humanoid foe within 100 feet that it sees, not one that threw it off
+        (for a day), and not one warded against fiends and the dead."""
+        if f.jar is None or f.jar.get("host") is not None:
+            return []
+        n = 100 // grid.SQUARE_FT
+        return [e for e in self.enemies_of(f) if e.active and e.creature is not None and e.kind == "humanoid"
+                and e.id not in f.jar["tried"] and self.gap(f, e) <= n and self.can_see(f, e)
+                and "possessed" not in e.conditions]
+
+    def _jar_abilities(self, f: Fighter) -> list[tuple[str, str, bool, str]] | None:
+        """What a soul in a gem may do (Possess, Return), and a taken body's way back (Leave); None for anyone else."""
+        if f.jar is not None and f.jar.get("host") is None:
+            free = f.action > 0
+            near = self.jar_targets(f)
+            return [("jar_possess", "Possess a humanoid foe (Magic Jar: a Charisma save)", free and bool(near),
+                     "" if free and near else ("no action left" if not free else "no humanoid foe within 100 feet in sight")),
+                    ("jar_return", "Return to the body (Magic Jar ends; the gem shatters)", free,
+                     "" if free else "no action left")]
+        if "possessed" in f.conditions:
+            free = f.action > 0
+            return [("jar_leave", "Leave this body (back into the gem)", free, "" if free else "no action left")]
+        return None
+
+    def do_possess(self, f: Fighter, target: Fighter) -> None:
+        """Magic Jar: the soul leaps from its gem into a humanoid foe, which makes a Charisma save."""
+        if target not in self.jar_targets(f) or not self._spend(f):
+            return
+        self._event("cast", by=f.id, to=target.id, spell="magic_jar", effect="charm", look="ray", dtype="",
+                    area=[], point=None, shape="")
+        if self._save(target, "cha", int(f.jar["dc"])):
+            f.jar["tried"].append(target.id)
+            self.say(f"{target.the_name} throws off the soul that reached for it.", "info")
+        else:
+            durations.give(self, target, "possessed", source=f, control=PARTY, jar=f.id)
+            f.jar["host"] = target.id
+            target.dodging = False
+            self.say(f"<magic>{f.the_name}'s soul pours into {target.the_name}:</> its body is theirs now, and its own "
+                     "soul cries out from the gem.", "magic")
+        self._after_action(f)
+
+    def do_jar_leave(self, host: Fighter) -> None:
+        """Magic Jar: the soul goes back into its gem; the host's own soul returns to its body."""
+        body = self._body_of(host)
+        if body is None or not self._spend(host):
+            return
+        durations.remove(host, "possessed")
+        body.jar["host"] = None
+        self.say(f"{body.the_name}'s soul leaves {host.the_name}, which staggers, itself again.", "magic")
+        self._after_action(host)
+
+    def do_jar_return(self, f: Fighter) -> None:
+        """Magic Jar: the soul goes home to its body, and the spell ends; the gem shatters."""
+        if f.jar is None or f.jar.get("host") is not None or not self._spend(f):
+            return
+        f.jar = None
+        if not (f.char is not None and f.char.uses.get("addled")):
+            durations.remove(f, "incapacitated")
+        if f.char is not None:
+            f.char.spells.pop("jar", None)
+        self.say(f"<magic>{f.the_name} draws a breath:</> the soul is home, and the gem cracks to pieces.", "magic")
+        self._after_action(f)
+
+    def _host_dies(self, host: Fighter) -> None:
+        """The body the soul had taken dies: a Charisma save against the caster's own DC sends it back to the gem;
+        a failure is death."""
+        body = self._body_of(host)
+        durations.remove(host, "possessed")
+        if body is None or body.jar is None:
+            return
+        body.jar["host"] = None
+        if self._save(body, "cha", int(body.jar["dc"])):
+            self.say(f"{body.the_name}'s soul tears free of the dying body and flees back into the gem.", "magic")
+        else:
+            self._kill(body, "the soul went down with the body it had taken")
+
+    def _body_dies(self, f: Fighter) -> None:
+        """A body whose soul was away dies: the soul dies with it (Magic Jar), and a host goes free."""
+        host = self.fighter(f.jar["host"]) if f.jar and f.jar.get("host") is not None else None
+        if host is not None:
+            durations.remove(host, "possessed")
+        f.jar = None
+        if f.char is not None:
+            f.char.spells.pop("jar", None)
+
+    def _jar_release(self) -> None:
+        """At the end of a fight, a soul in a taken body goes back to its gem; the body, itself again, runs."""
+        for host in [x for x in self.fighters if "possessed" in x.conditions]:
+            body = self._body_of(host)
+            durations.remove(host, "possessed")
+            if body is not None and body.jar is not None:
+                body.jar["host"] = None
+            if host.active and host.side == FOE:
+                host.state = "fled"
+                self._event("leave", who=host.id)
+                self.say(f"{host.the_name}, its soul its own again, stumbles away and runs.", "info")
+
+    def redo_options(self, f: Fighter) -> list[tuple[int, str, bool, str]]:
+        """Roll Redo: the foes' hits on friends since this caster's last turn, (event index, words, possible, why)."""
+        ok, why = self._wish_ok(f)
+        out = []
+        for i, ev in enumerate(self.events):
+            if ev.get("kind") != "attack" or not ev.get("hit") or ev.get("redone") or "bonus" not in ev:
+                continue
+            if int(ev.get("round", 0)) < self.round - 1:
+                continue
+            att, x = self.fighter(ev["by"]), self.fighter(ev["to"])
+            if att is None or x is None or att.team == f.team or x.team != f.team or x.state == "dead":
+                continue
+            dealt = self._blow_damage(i)
+            if dealt <= 0:
+                continue
+            out.append((i, f"{att.the_name}'s {'critical ' if ev.get('crit') else ''}hit on {x.the_name} with "
+                           f"{ev.get('weapon', 'a blow')} ({dealt} damage)", ok, why))
+        return out
+
+    def _blow_damage(self, i: int) -> int:
+        """The damage the attack of event `i` did to its target (until the next attack)."""
+        ev = self.events[i]
+        total = 0
+        for e in self.events[i + 1:]:
+            if e.get("kind") == "attack":
+                break
+            if e.get("kind") == "damage" and e.get("to") == ev["to"] and e.get("by") == ev["by"]:
+                total += int(e.get("amount", 0))
+        return total
+
+    def do_redo(self, f: Fighter, i: int) -> bool:
+        """Wish's Roll Redo (PHB 2024): a foe's hit on a friend in the last round is rolled again with Disadvantage.
+        A miss undoes it (its damage given back); a critical that is not one again gives back half. The stress."""
+        if not any(j == i and ok for j, _w, ok, _why in self.redo_options(f)):
+            return False
+        c = f.char
+        wish = self.t.spells["wish"]
+        slot = spellrules.lowest_free_slot(c, self.t, 9)
+        if slot is None:
+            return False
+        spellrules.spend_slot(c, slot)
+        self.note_slot(f)
+        self._spend(f, False)
+        f.cast_action_spell = True
+        f.hidden = 0
+        strained = spellrules.strain(c, 9, self.rng)
+        if self._countered(f, "wish", wish):
+            spellrules.unspend_slot(c, slot)
+            self._after_action(f)
+            return True
+        ev = self.events[i]
+        ev["redone"] = True
+        att, x = self.fighter(ev["by"]), self.fighter(ev["to"])
+        dealt = self._blow_damage(i)
+        self.say(f"{f.the_name} speaks a <magic>Wish</>, and the last moments run back.", "magic")
+        roll = dice.d20(self.rng, disadvantage=True).natural
+        total = roll + int(ev["bonus"])
+        hit = roll == 20 or (roll != 1 and total >= int(ev["ac"]))
+        self.dice_say(f"{att.name} → {x.name}, again (dis): {roll} {signed_mod(int(ev['bonus']))} = {total} vs AC "
+                      f"{ev['ac']} — {'critical!' if roll == 20 else ('hit' if hit else 'miss')}")
+        back = dealt if not hit else (dealt // 2 if ev.get("crit") and roll != 20 else 0)
+        if back > 0:
+            self._undo_damage(x, back)
+            self.say(f"<good>{'The blow never landed' if not hit else 'It was no critical after all'}:</> "
+                     f"{x.the_name} {'has back' if not hit else 'gets back'} {back} hit points.", "good")
+        else:
+            self.say(f"Reality bends and settles: {att.the_name}'s blow lands all the same.", "warn")
+        self._strain(f, strained)
+        for line in spellrules.wish_stress(c, self.rng):
+            self.say(line, "danger")
+        self._after_action(f)
+        return True
+
+    def _undo_damage(self, x: Fighter, amount: int) -> None:
+        """Hit points given back by an undone blow (not healing: nothing can refuse it)."""
+        x.hp = min(x.max_hp, x.hp + amount)
+        self._event("heal", to=x.id, amount=amount)
+        if x.state == "down" and x.hp > 0:
+            x.state = "fighting"
+            x.conditions.pop("unconscious", None)
+            x.stable = False
+            x.death_saves = [0, 0]
 
     def _cast_wished(self, f: Fighter, sid: str, target, point) -> bool:
         """Wish's basic use (PHB 2024): any other spell of level 8 or lower simply takes effect, with no components

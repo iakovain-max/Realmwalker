@@ -338,6 +338,53 @@ def grant(char: Character, tables, fid: str, choices: dict | None = None) -> dic
     return picked
 
 
+def revoke(char: Character, tables, fid: str) -> None:
+    """A feat is unlearned (Wish's Sudden Learning): every benefit it gave goes. What the class or the background
+    also gives (an armour training, a skill) stays."""
+    d = defs(tables).get(fid) or {}
+    rec = next((f for f in char.feats if f["id"] == fid), None)
+    if rec is None:
+        return
+    char.feats.remove(rec)
+    picked = rec.get("choices") or {}
+    cls = tables.classes.get(char.cls) or {}
+    bg = tables.backgrounds.get(char.background) or {} if getattr(char, "background", None) else {}
+    keep_skills = set(bg.get("skills", ()))
+    keep_tools = set(cls.get("tools", ())) | set(bg.get("tools", ()) if isinstance(bg.get("tools"), list) else ())
+    for key, spec in d.get("choices", {}).items():
+        vals = picked.get(key)
+        vals = vals if isinstance(vals, list) else [vals] if vals else []
+        for x in vals:
+            if spec["kind"] == "increase" and x in char.abilities:
+                char.abilities[x] = max(1, char.abilities[x] - 1)
+            elif x in char.expertise and spec["kind"] in ("expertise", "skill_or_expertise"):
+                char.expertise.remove(x)
+            elif x in char.skills and x not in keep_skills:
+                char.skills.remove(x)
+            elif x in char.tools and x not in keep_tools:
+                char.tools.remove(x)
+    gives = d.get("gives") or {}
+    for x in gives.get("armor", []):
+        if x in char.armor_prof and x not in cls.get("armor", ()):
+            char.armor_prof.remove(x)
+    for x in gives.get("weapons", []):
+        if x in char.weapon_prof and x not in cls.get("weapons", ()):
+            char.weapon_prof.remove(x)
+    if gives.get("save") and picked.get(gives["save"]) in char.saves and picked[gives["save"]] not in cls.get("saves", ()):
+        char.saves.remove(picked[gives["save"]])
+    if fid == "tough":
+        char.max_hp -= 2 * char.level
+        char.hp = min(char.hp, char.max_hp)
+    if fid == "boon_of_fortitude":
+        char.max_hp -= 40
+        char.hp = min(char.hp, char.max_hp)
+    if fid == "lucky":
+        char.uses.pop("luck", None)
+    if fid == "boon_of_recovery":
+        char.uses.pop("vitality_dice", None)
+        char.uses.pop("last_stand", None)
+
+
 def raise_ability(char: Character, ability: str, amount: int = 1, top: int = 20) -> None:
     """An ability raised by a feat (at most 20, or 30 by an epic boon); a hardier body has more hit points at every
     level."""

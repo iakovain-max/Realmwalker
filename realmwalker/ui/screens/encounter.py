@@ -63,6 +63,15 @@ class EncounterScreen(Screen):
             c, sid = waves[0]
             out.append(("w", f"{c.name.split()[0]} calls up a great wave ({self.game.tables.spells[sid]['name']}: "
                              "6d10, then the fight)", "wave", enc.spotted_first, "they have already seen you"))
+        from realmwalker.game import greatmagic
+
+        binders = greatmagic.prison_casters(self.game)
+        held = greatmagic.prisoner(self.game, enc) if binders else None
+        if binders and held is not None:
+            c, sid = binders[0]
+            who = held.name if held.named else f"the {held.name}"
+            out.append(("i", f"{c.name.split()[0]} binds {who} for good ({self.game.tables.spells[sid]['name']}: a "
+                             "Wisdom save, then the fight)", "imprison", enc.spotted_first, "they have already seen you"))
         return out
 
     def act(self, action: str) -> None:
@@ -90,6 +99,13 @@ class EncounterScreen(Screen):
             for line in stonework.wave(game):
                 game.say(line, "info")
             encounter_fight(game, ambush=False)  # (the drowned lie on the field: a fight already won is ended at once)
+        elif action == "imprison":
+            from realmwalker.game import greatmagic
+
+            for line in greatmagic.imprison(game):
+                game.say(line, "info")
+            if game.encounter is not None:
+                encounter_fight(game, ambush=False)
         self.close()  # the game screen opens the battle, if there is one
 
     def handle_key(self, ev: KeyEvent) -> bool:

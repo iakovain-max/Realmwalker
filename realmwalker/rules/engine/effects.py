@@ -177,7 +177,7 @@ def cast(b, f, sid: str, spell: dict, target, point, *, up: int, mod: int, dc: i
          level: int, slotted: bool = True) -> None:
     """A spell's effects, once it has been paid for (by a party caster, or a monster's own magic)."""
     area = b.spell_area(f, sid, point, target) if spell.get("area") else []
-    shut = [x for x in b.fighters if x.buffs and warded(b, f, x, level)]
+    shut = [x for x in b.fighters if (x.buffs or x.char is not None) and warded(b, f, x, level, sid)]
     if shut and area:  # (Globe of Invulnerability: its barrier is left out of the spell's area)
         area = [sq for sq in area if not any(sq in x.cells for x in shut)]
     if spell.get("thrown"):
@@ -214,7 +214,10 @@ def cast(b, f, sid: str, spell: dict, target, point, *, up: int, mod: int, dc: i
 
         c.maximize = wizard.overchannel(b, f, spell, level)
     if target is not None and target in shut:
-        b.say(f"The spell breaks against the shimmering barrier around {target.the_name}.", "magic")
+        if target.char is not None and target.char.effects.get(f"immune_spell:{sid}", 0) > 0:
+            b.say(f"{spell['name']} does not touch {target.the_name}: a wish keeps it off.", "magic")
+        else:
+            b.say(f"The spell breaks against the shimmering barrier around {target.the_name}.", "magic")
         return
     before = b.__dict__.get("_casting")
     b._casting = f if not spell.get("ability") and "item" not in spell.get("classes", ()) else None
@@ -1369,9 +1372,11 @@ def after_strike(b, f, tok, target) -> None:
         run(c, o["on_hit"], target)
 
 
-def warded(b, f, x, level: int) -> bool:
+def warded(b, f, x, level: int, sid: str | None = None) -> bool:
     """A Globe of Invulnerability keeps this spell off `x`: a ward above the spell's level, and the caster outside
-    the same barrier."""
+    the same barrier. A Wish's Spell Immunity keeps that one spell off (`sid`)."""
+    if sid is not None and f is not x and x.char is not None and x.char.effects.get(f"immune_spell:{sid}", 0) > 0:
+        return True
     wards = [bf for bf in x.buffs if bf.get("spell_ward") is not None and int(bf["spell_ward"]) > int(level)]
     if not wards or f is x:
         return False

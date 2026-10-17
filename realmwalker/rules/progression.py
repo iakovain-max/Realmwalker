@@ -333,6 +333,11 @@ def options(char: Character, tables, choice: dict) -> list[tuple[str, str, str]]
 
         return [(fid, feats.name(tables, fid), feats.defs(tables)[fid]["text"]) for fid in feats.styles(tables)
                 if not feats.has(char, fid)]
+    if kind == "relearn":  # (Wish's Sudden Learning: a feat in place of one given up)
+        from realmwalker.rules import feats
+
+        return [(f"feat:{fid}", feats.name(tables, fid), feats.defs(tables)[fid].get("text", ""))
+                for fid in relearn_options(char, tables, choice)]
     if kind == "asi":
         out = []
         for a in tables.rules["abilities"]:
@@ -391,6 +396,20 @@ def options(char: Character, tables, choice: dict) -> list[tuple[str, str, str]]
     return []
 
 
+def relearn_options(char: Character, tables, choice: dict) -> list[str]:
+    """The feats a Sudden Learning may take in place of the one given up: a fighting style for a style, an epic boon
+    or any feat for a boon, else a general or origin feat they are eligible for (never the one given up)."""
+    from realmwalker.rules import feats
+
+    old = choice.get("old", "")
+    cat = (feats.defs(tables).get(old) or {}).get("category", "general")
+    if cat == "fighting_style":
+        cats = ("fighting_style",)
+    else:
+        cats = ("epic", "general", "origin") if cat == "epic" else ("general", "origin")
+    return [fid for fid in feats.choosable(char, tables, cats) if fid != old]
+
+
 def pick_options(char: Character, tables, choice: dict) -> list[str]:
     """The spellbook's spells a Spell Mastery or Signature Spells pick can take: of its level (and cast with an action,
     for Spell Mastery), not picked already."""
@@ -428,6 +447,10 @@ def choice_title(char: Character, tables, choice: dict) -> str:
         return f"{feats.name(tables, choice['feat'])}: {what}"
     if kind == "style":
         return "Learn another fighting style"
+    if kind == "relearn":
+        from realmwalker.rules import feats
+
+        return f"A wish: learn a feat in place of {feats.name(tables, choice.get('old', ''))}"
     if kind == "spells":
         n = choice.get("count", 1)
         if choice.get("school"):
@@ -487,6 +510,9 @@ def resolve(char: Character, tables, choice: dict, option_id: str) -> list[str]:
                 choice["made"][key] = option_id
         if _feat_step(char, tables, choice) is None:
             notes += _finish_feat(char, tables, choice)
+    elif kind == "relearn":
+        char.pending.remove(choice)
+        notes += take_feat(char, tables, option_id[5:] if option_id.startswith("feat:") else option_id)
     elif kind == "style":
         from realmwalker.rules import feats
 
@@ -613,6 +639,13 @@ def suggest(char: Character, tables, choice: dict, opts: list | None = None) -> 
             return want if want in ids else ids[0]
     if kind == "style":
         return feats.suited_style(char, tables, ids)
+    if kind == "relearn":
+        style = [i[5:] for i in ids if i[5:] in feats.styles(tables)]
+        if style and len(style) == len(ids):
+            return "feat:" + feats.suited_style(char, tables, style)
+        for fid in tables.feats.get("suggest", {}).get(feats.archetype(char, tables), []):
+            if f"feat:{fid}" in ids:
+                return f"feat:{fid}"
     return ids[0]
 
 

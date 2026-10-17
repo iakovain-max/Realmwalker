@@ -317,7 +317,8 @@ def resists(f, dtype: str) -> bool:
     if f.char is not None:
         from realmwalker.rules import feats, magic
 
-        return dtype in magic.resistances(f.char) or dtype in feats.boon_resists(f.char)
+        wished = (f.char.spells or {}).get("wished_resist", ())  # (a Wish's Resistance, for good)
+        return dtype in magic.resistances(f.char) or dtype in feats.boon_resists(f.char) or dtype in wished
     return False
 
 
