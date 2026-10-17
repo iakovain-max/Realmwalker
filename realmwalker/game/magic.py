@@ -134,7 +134,21 @@ def read_scroll(game, item, target=None) -> list[str]:
     if not readers:
         return ["The writing means nothing to any of you: the spell is on none of your lists."]
     reader = readers[0][0]
-    return cast_on_road(game, reader, sid, target, scroll=item)
+    return cast_on_road(game, reader, sid, target or scroll_target(game, sid, reader), scroll=item)
+
+
+def scroll_target(game, spell_id: str, reader):
+    """Who a scroll read outside a fight is for: the most hurt of the party for a healing spell (the worst wound,
+    then the fewest hit points), the sick or infected for a cure, else the reader."""
+    t = game.tables
+    use = spellrules.road_use(t, spell_id)
+    spell = t.spells[spell_id]
+    if use not in ("heal", "cure") or spell["target"] == "self":
+        return reader
+    hurt = [c for c in game.party if c.alive and _needs(game, spell, c)]
+    if not hurt:
+        return reader
+    return max(hurt, key=lambda c: (max((w.severity for w in c.wounds), default=0), c.max_hp - c.hp))
 
 
 def _owner(game, item):

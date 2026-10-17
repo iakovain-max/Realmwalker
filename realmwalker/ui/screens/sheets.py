@@ -609,7 +609,8 @@ class InventoryScreen(Screen):
 
             sid = self.game.tables.items.get(it.def_id)["use"]["scroll"]
             readers = magic.scroll_readers(self.game, it)
-            if readers and magic.road_problem(self.game, readers[0][0], sid, scroll=it) is None:
+            whom = magic.scroll_target(self.game, sid, readers[0][0]) if readers else None
+            if readers and magic.road_problem(self.game, readers[0][0], sid, whom, scroll=it) is None:
                 for line in magic.read_scroll(self.game, it):
                     self.game.say(line, "magic")
             else:
@@ -619,7 +620,7 @@ class InventoryScreen(Screen):
                 for line in lines[:1] + lines[2:]:
                     self.game.say(line, "magic")
                 if readers and spellrules.on_the_road(self.game.tables, sid)[0]:
-                    self.game.say(f"Not now: {magic.road_problem(self.game, readers[0][0], sid, scroll=it)}.",
+                    self.game.say(f"Not now: {magic.road_problem(self.game, readers[0][0], sid, whom, scroll=it)}.",
                                   "system")
         elif name == "Use":
             from realmwalker.game import gear

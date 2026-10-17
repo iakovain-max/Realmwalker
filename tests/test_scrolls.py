@@ -169,6 +169,16 @@ def test_a_scroll_of_cure_wounds_heals_on_the_road(world, tables):
     assert priest.item(it.uid) is None and sp.slots_left(priest, tables) == slots
 
 
+def test_a_healing_scroll_is_read_over_the_most_hurt(world, tables):
+    priest, friend = hero(tables, "cleric"), hero(tables, "fighter", seed=2)
+    game = game_with(world, tables, priest, friend)
+    friend.hp = max(1, friend.max_hp - 7)
+    it = add_item(priest, tables.items, "scroll_cure_wounds")
+    said = magic.read_scroll(game, it)
+    assert "scroll" in said[0] and friend.hp > friend.max_hp - 7
+    assert not any(i.def_id == "scroll_cure_wounds" for c in game.party for i in c.inventory)
+
+
 def test_scroll_lines_and_copying(world, tables):
     wiz = hero(tables, "wizard")
     game = game_with(world, tables, wiz)
