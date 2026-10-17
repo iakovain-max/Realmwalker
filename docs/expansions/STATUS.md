@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 03 Demigods & Magics · Part D (the spell catalogue), D.4 next · branch dlc/03-demigods-magics
+Current: 03 Demigods & Magics · Part E (spells outside battle), E.1 next · branch dlc/03-demigods-magics
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -10,10 +10,10 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   levels and the epic boons; the fighter, rogue, cleric and wizard of 2024 to level 20 with the Champion, Knight,
   Thief, Assassin, Life and War Domains, Evoker and Abjurer; Counterspell; saves format 17) and C (preparing spells,
   rituals, one slot a turn, higher slots, components, spell scrolls of every level, the four potions of healing) and
-  D.1 to D.3 (the catalogue's first three waves: 172 battle spells, cantrips to level 7)
+  D (the catalogue: 191 battle spells, cantrips to level 9, and Wish)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
-  adapted); Expansion 3: 185 done, 151 adapted, 1 omitted of 558 (parts A, B, C and D.1 to D.3 settled). PHB 53% · DMG 12% · MM 8%
+  adapted); Expansion 3: 192 done, 164 adapted, 1 omitted of 558 (parts A, B, C and D settled). PHB 53% · DMG 12% · MM 8%
 Assumptions waiting for Anton:
 - The Player2 AI writer is removed (tagged `before-ai-removal`); its text is replaced everywhere by the game's own
   words, strengthened where they were thin.
@@ -131,15 +131,29 @@ Assumptions waiting for Anton:
   roof or below ground), not those who walk in later; Regenerate takes a minute to cast and so waits for Part E;
   Prismatic Spray's violet ray sends its victim away for good. The new costly components are sold at markets:
   mushroom powder in towns; a black pearl, ruby dust, a miniature platinum sword and a forked metal rod in cities.
+- Expansion 3 D.4: Earthquake and Storm of Vengeance spare the caster's side, as if cast from afar (on our fields
+  their 100- and 300-foot reach would take in everyone); the Earthquake's save comes as foes enter or start a turn
+  in it (the book: when cast and at the end of the caster's turns); the Incendiary Cloud does not drift; the
+  Prismatic Wall is a 30-foot block that stops friends too (its seven layers are never crossed), and its glare
+  blinds foes within 20 feet for a minute; Meteor Swarm's other three spheres are laid by the battle where they
+  catch the most foes and the fewest friends; Befuddlement lasts a day (the book: until a save every 30 days);
+  Weird's fear and its nightmare are shaken off by separate saves; Power Word Heal's prone creature stands without
+  its reaction; Mass Heal heals the worst hurt first; Time Stop's turns end as soon as anything the caster does
+  reaches another creature (an event touching it), and foes cannot take reactions in a stopped time only because
+  none come (the caster moving away could still draw one: left as it is); Tsunami waits for Part E (cast in a
+  minute, as Regenerate and Imprisonment). Wish in a fight: copies of any battle spell of level 8 or lower (its
+  action and level 9 slot; no components; no stress) or Instant Health (with the stress); the Strength lost to the
+  stress comes back after its days whatever you do (resting does not shorten it); the Auto weighs only copies of
+  levels 7 and 8 (the player sees them all). Wish's other uses (Object Creation, Resistance, Spell Immunity, Sudden
+  Learning, Roll Redo, Reshape Reality) wait for Part E. No druid yet: Storm of Vengeance is a druid spell, so no
+  one can learn it until the druid comes (a scroll can be read by... nobody yet).
 Ideas for later:
 - (none yet)
-Next session starts at: task D.4 in docs/expansions/03-demigods-magics.md (Part D, the spell catalogue, fourth and
-last wave: levels 8 and 9 (34), the battle spells only as before; Wish (its safe uses and its stress) and Meteor
-Swarm; then Part D to `main`). Kernel ops first (Power Word Kill can use the `slay` op's `max_hp`, Power Word Stun
-a `by_hp`-like test), then sonnet helpers into data/packs/03_demigods_magics/spells.level8.json and
-spells.level9.json. The D.3 brief, docs/expansions/catalogue_brief.md, is a ready model (it plans each spell; the
-ops and marks docstrings in rules/engine/effects.py and marks.py list everything; tests/test_catalogue.py,
-tests/test_wave3.py). Parts A, B, C and D.1 to D.3 are in `main`.
+Next session starts at: task E.1 in docs/expansions/03-demigods-magics.md (Part E, spells outside battle: healing,
+return from death, food and the body, shelter and watch). First list which of the spells waiting for E (the D.1 to D.4
+lists in the design note) belong to E.1, E.2 and E.3, then build E.1's systems and their spells (data in
+data/packs/03_demigods_magics/, a new file per kind is fine; road casting is game/magic.cast_on_road and
+game/care.py; `spells.road_use`). Parts A, B, C and D are in `main`.
 
 ## Done
 
@@ -164,6 +178,7 @@ tests/test_wave3.py). Parts A, B, C and D.1 to D.3 are in `main`.
 | 2026-10-17 | Demigods & Magics part C: preparing spells, rituals, one slot a turn, higher slots, components (focus, pouch, costly ones), spell scrolls of every level (2024), the four potions of healing; the spellcasting rules settled in the codex; merged into `main` | `dlc/03-demigods-magics` |
 | 2026-10-17 | Demigods & Magics D.1: the catalogue's first wave, 79 battle spells (cantrips to level 2) with new ground, marks and cards; outside-a-fight spells to Part E, summons to F; merged into `main` | `dlc/03-demigods-magics` |
 | 2026-10-17 | Demigods & Magics D.2: the second wave, 66 battle spells of levels 3 to 5 (creatures sent away, Dispel Magic and Spell Breaker, auras for friends, Haste, Slow, Confusion, Dominate, new ground and walls); merged into `main` | `dlc/03-demigods-magics` |
+| 2026-10-17 | Demigods & Magics D.4: the fourth wave, 19 battle spells of levels 8 and 9 and Wish (copies, Instant Health and its stress), Meteor Swarm, Time Stop, Storm of Vengeance, the Prismatic Wall, Earthquake, Maze, the words of power; Part D merged into `main` | `dlc/03-demigods-magics` |
 | 2026-10-17 | Demigods & Magics D.3: the third wave, 27 battle spells of levels 6 and 7 (Chain Lightning, Disintegrate, Heal, Harm, Flesh to Stone, the Globe, Otto's dance, walls of ice, thorns and blades, Divine Word, Prismatic Spray, Reverse Gravity, the Forcecage...); merged into `main` | `dlc/03-demigods-magics` |
 
 ## Notes for the next session

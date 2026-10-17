@@ -404,6 +404,15 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   `heal`), walls of ice, the forcecage (`send_away` "cage") and banishing for good (`Battle.send_off`), `by_hp`,
   `slay`, `lift` (Reverse Gravity: `Env.place` "underground"/"indoors" gives a ceiling), `one_of` (a die per
   creature), a summon's `on_hit`, `no_dispel`; marks dancing, aloft, spell_ward, truesight; tests/test_wave3.py.
+  The fourth wave (D.4, levels 8-9; the effects docstring's "fourth wave"): Meteor Swarm's `spheres`
+  (`Battle._more_spheres`), heal `full`/`pool`/`restore`, zones that `follow` their caster (Antimagic Field), `breaks`
+  concentration (Earthquake), a prismatic wall with its `near` glare, a storm's `stages` (`Battle._storm_turn`), banish
+  `escape` (Maze: `_maze_turn`), `time_stop` (`Battle._more_time`; `combat.TOUCHES` events end it); marks befuddled,
+  foresight, holy, immune_damage. Wish: picking it opens a list (`BattleScreen._open_wish`): copies are cast ids
+  "wish:copy:<spell>" (`Battle.wish_options`, `_cast_wished`: its level 9 slot, no components, no stress); the
+  "wish" spell itself is Instant Health with `stress` (`spells.wish_stress`: effects wish_stress until a long rest,
+  wish_strength hours of Strength 3, spells["wish_lost"]; `spells.strain` hurts every later casting, in a fight and
+  on the road); tests/test_wave4.py.
 - Gear and tools 2024 (Expansion 2 part D): items.json `pack` (opens into its contents, gear.open_pack), `helps`
   {search, traps, force, disguise} (dungeon.helps, law.put_on_disguise), `utilize` (a tool's 2024 uses, on its card),
   `carry` also on carried containers (each kind once, Sheet.pack_carry), `trinket` (data/trinkets.json; the name and

@@ -811,6 +811,29 @@ def reliquary():
     return _fin(im)
 
 
+def gilded_reliquary():
+    """Holy Aura's reliquary (1,000 GP): a gold casket on little feet, set with gems, a saint's bone behind crystal."""
+    gold, gold_d, gold_l = C(222, 176, 52), C(140, 98, 26), C(255, 230, 140)
+    im, d = _new()
+    d.polygon([(2, 11), (16, 2), (30, 11), (30, 13), (2, 13)], fill=gold)
+    d.polygon([(2, 11), (16, 2), (16, 13), (2, 13)], fill=gold_l)
+    d.rectangle([15, 0, 17, 4], fill=gold_l)  # (a little cross on the roof)
+    d.rectangle([13, 1, 19, 2], fill=gold_l)
+    d.rectangle([3, 13, 28, 26], fill=gold)
+    d.rectangle([3, 13, 6, 26], fill=gold_l)
+    d.rectangle([3, 24, 28, 26], fill=gold_d)
+    d.rectangle([9, 16, 22, 23], fill=C(40, 50, 70))  # crystal window with a bone inside
+    _line(d, [(11, 21), (20, 18)], C(236, 230, 210), 2)
+    _px(d, [(10, 17), (11, 17)], C(200, 220, 255))
+    for x, y, col in ((5, 15, RED), (26, 15, C(60, 110, 200)), (5, 22, C(60, 150, 80)), (26, 22, RED)):
+        d.rectangle([x - 1, y - 1, x, y], fill=col)
+    d.ellipse([14, 6, 18, 10], fill=C(60, 110, 200))
+    _px(d, [(15, 7)], C(170, 200, 255))
+    for x in (4, 26):
+        d.rectangle([x, 27, x + 2, 29], fill=gold_d)  # little feet
+    return _fin(im)
+
+
 # --------------------------------------------------------------------------- the lot
 
 def all_drawn() -> dict[str, Image.Image]:
@@ -834,5 +857,6 @@ def all_drawn() -> dict[str, Image.Image]:
         "entertainers_pack": pack("entertainers"), "explorers_pack": pack("explorers"),
         "priests_pack": pack("priests"), "scholars_pack": pack("scholars"),
         "mistletoe_sprig": mistletoe(), "reliquary": reliquary(), "pearl": pearl(),
+        "gilded_reliquary": gilded_reliquary(),
     }
     return {f"item/{k}": v for k, v in out.items()}

@@ -156,6 +156,19 @@ def spell_value(b, f, sid: str, *, target=None, point=None, dc: int | None = Non
             w.kills += int(ev >= target.hp)
         elif kind == "save":
             _save_part(b, f, o, caught, target, dc, up, mult, w)
+        elif kind == "heal" and (o.get("full") or o.get("pool")):
+            pool = float(o["pool"]) if o.get("pool") else None
+            whom = caught
+            if pool is not None and spell["target"] == "all_allies":
+                reach = b.spell_range(spell, f)
+                whom = [x for x in b.team(f.team) if (x.active or x.state == "down") and b.feet(f, x) <= reach]
+            for x in sorted(whom, key=lambda x: x.hp / max(1, x.max_hp)):
+                missing = max(0, x.max_hp - x.hp)
+                got = missing if pool is None else min(missing, pool)
+                if pool is not None:
+                    pool -= got
+                w.heal += got + (10.0 if x.state == "down" and got > 0 else 0.0)
+                w.heal += 2.0 * sum(1 for cid in o.get("restore", ()) if cid in x.conditions and cid != "prone")
         elif kind == "heal":
             many = max(1, int(o.get("count", 1)) + int(o.get("count_up", 0)) * up)
             for x in sorted(caught, key=lambda x: x.hp / max(1, x.max_hp))[:many]:
@@ -203,8 +216,39 @@ def spell_value(b, f, sid: str, *, target=None, point=None, dc: int | None = Non
             w.help += avg(spellrules.scaled(d, more, up)) * 0.55 * 3
             if o.get("on_hit"):
                 w.help += 2.0  # (Conjure Fey's fear)
-        elif kind == "zone" and o.get("zone") in ("wind", "stone", "force", "icewall") and point is not None:
+        elif kind == "by_hp" and target is not None and target.team != f.team:  # (Power Word Stun, Power Word Kill)
+            fail = _resolve([o], target)
+            if not _already(b, f, target, fail):
+                w.control += threat(target) * _control_rounds(fail)
+                w.damage += _marks_worth(b, f, target, fail, up)
+            if any(i["op"] == "slay" for i in fail):
+                w.kills += 1
+        elif kind == "banish" and target is not None and not spell.get("area") and target.team != f.team:
+            esc = o.get("escape") or {}
+            if esc:  # (Maze: away until it finds the way out, a check each turn)
+                bonus = target.skill(esc.get("skill", "investigation")) if hasattr(target, "skill") else 0
+                p_out = max(0.05, min(1.0, (21 - (int(esc.get("dc", 20)) - bonus)) / 20.0))
+                w.control += threat(target) * min(4.0, 1.0 / p_out)
+            else:
+                w.control += 3.0 * threat(target)
+        elif kind == "time_stop":  # (Time Stop: turns of one's own, to heal, ward and set the field)
+            hurt = f.hp < f.max_hp * 0.6
+            near = any(b.gap(f, e) <= 2 for e in b.enemies_of(f) if e.standing)
+            w.help += avg(str(o.get("dice", "1d4+1"))) * (3.0 if hurt or near else 1.5)
+        elif kind == "zone" and o.get("follow") and o.get("zone") == "antimagic":
+            w.control += _antimagic_worth(b, f, spell)
+        elif kind == "zone" and o.get("stages") and caught:  # (Storm of Vengeance: the turns of the storm to come)
+            _zone_worth(b, f, o, caught, dc, up, w)
+            w.damage += _stages_worth(b, f, o, caught, dc)
+        elif kind == "zone" and o.get("zone") in ("wind", "stone", "force", "icewall", "prismatic") and point is not None:
             w.control += _wall_worth(b, f, o, point)
+            if o.get("near"):  # (Prismatic Wall: the glare beside it)
+                cells = b.spell_area(f, sid, point, target)
+                r = int(o["near"]) // 5
+                for e in b.enemies_of(f):
+                    if e.active and any(grid.gap((cx, cy, 1), e.space) <= r for cx, cy in cells):
+                        pf = fail_chance(b, e, o.get("near_save", "con"), dc)
+                        w.control += pf * threat(e) * 1.2
             if o.get("catch") and spellrules.damage_parts(o):  # (Wall of Ice: those it rises beside)
                 _save_part(b, f, {**o, "ability": o.get("save", "dex")}, caught, target, dc, up, mult, w)
         elif kind == "banish" and spell.get("area"):  # (Forcecage: everyone in the box sealed away, no save)
@@ -521,6 +565,8 @@ def _zone_worth(b, f, o: dict, caught: list, dc: int, up: int, w: Worth) -> None
             w.damage += ev * 1.8  # (now, and as it stays)
             w.control += pf * threat(x) * {"restrained": 1.2, "retching": 0.8, "prone": 0.4}.get(o.get("fail", ""),
                                                                                                  0.3 if o.get("fail") else 0.0)
+            if o.get("breaks") and x.concentration is not None:
+                w.control += pf * threat(x) * 1.5  # (Earthquake: the spell it holds is lost)
             if o.get("dark"):
                 w.control += 0.2 * threat(x)
         elif kind in ("fog", "darkness"):
@@ -623,6 +669,14 @@ def _buff_worth(buff: dict, count: int, b=None, f=None, on=None, spell: dict | N
         casters = sum(1 for e in b.enemies_of(f) if e.cdef is not None and e.cdef.get("spells")
                       or e.char is not None and e.char.spells)
         w += 3.0 * casters if casters else 0.3
+    # The fourth wave (D.4)
+    if buff.get("foresight"):
+        w += 6.0 if near else 2.0
+    if buff.get("holy"):
+        w += 2.5 if near else 0.8
+    if buff.get("immune_damage") and b is not None and f is not None:
+        w += 0.5 + 3.0 * sum(1 for e in b.enemies_of(f) if any(
+            a.get("type") in buff["immune_damage"] for a in (e.cdef or {}).get("attacks", ())))
     if buff.get("aura") and b is not None and f is not None:
         aura = buff["aura"]
         bearer = on if on is not None else f
@@ -682,6 +736,9 @@ def _marks_worth(b, f, x, ops: list, up: int) -> float:
                 w += 1.0 * threat(x)
             if buff.get("dancing"):
                 w += 1.2 * threat(x)  # (no moving, its blows and its dodging weak, blows at it strong)
+            if buff.get("befuddled") and (x.cdef is not None and x.cdef.get("spells")
+                                          or x.char is not None and x.char.spells):
+                w += 2.0 * threat(x)  # (Befuddlement: a caster with no spells)
             if buff.get("quarry"):
                 w += avg(str(buff["quarry"])) * 2.0
         elif o["op"] in ("pull", "flee", "push"):
@@ -695,6 +752,40 @@ def _marks_worth(b, f, x, ops: list, up: int) -> float:
         elif o["op"] == "damage":
             w += sum(avg(d) * damage_factor(x, t) for d, t, _ in spellrules.damage_parts(o))
     return w
+
+
+def _antimagic_worth(b, f, spell: dict) -> float:
+    """Antimagic Field: foes who cast spells, or stand in magic, close round the caster lose it; the caster and the
+    friends beside them lose theirs too."""
+    r = int((spell.get("area") or {}).get("size", 10)) // 5 + 1  # (and those who would step into it)
+    out = 0.0
+    for x in b.fighters:
+        if not x.active or grid.gap(f.space, x.space) > r:
+            continue
+        caster = x.cdef is not None and x.cdef.get("spells") or x.char is not None and x.char.spells
+        magic = sum(1 for bf in x.buffs if bf.get("source") in b.t.spells)
+        if x.team != f.team:
+            out += threat(x) * (2.0 if caster else 0.0) + 1.5 * magic
+        else:
+            out -= (threat(x) * 1.5 if caster else 0.0) + 1.0 * magic
+    return out
+
+
+def _stages_worth(b, f, o: dict, caught: list, dc: int) -> float:
+    """Storm of Vengeance: what its next turns would deal to the foes under it (held by concentration: weighed down)."""
+    foes = [x for x in caught if x.team != f.team and x.active]
+    out = 0.0
+    for st in o.get("stages", ())[:4]:
+        share = min(1.0, int(st["count"]) / max(1, len(foes))) if st.get("count") else 1.0
+        for x in foes:
+            for inner in st.get("ops", ()):
+                for d, t, more in spellrules.damage_parts(inner):
+                    ev = avg(d) * damage_factor(x, t)
+                    if inner["op"] == "save":
+                        pf = fail_chance(b, x, inner.get("ability", "dex"), dc)
+                        ev *= pf + (1 - pf) * (0.5 if inner.get("half") else 0.0)
+                    out += ev * share
+    return out * 0.6
 
 
 def _typed(o: dict, xs: list, f) -> dict:

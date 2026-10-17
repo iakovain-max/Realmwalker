@@ -1238,6 +1238,60 @@ def _thorns_image(frame: int = 0):
     return im
 
 
+def _quake_image(frame: int = 0):
+    """Earthquake: the ground split by dark cracks, a little dust thrown up along them (two frames)."""
+    from PIL import Image as PImage, ImageDraw
+
+    s = 32
+    im = PImage.new("RGBA", (s, s), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    rng = np.random.default_rng(97)
+    for _ in range(3):
+        x, y = (int(v) for v in rng.integers(2, s - 2, 2))
+        pts = [(x, y)]
+        for _ in range(4):
+            x = int(min(s - 1, max(0, x + rng.integers(-6, 7))))
+            y = int(min(s - 1, max(0, y + rng.integers(-6, 7))))
+            pts.append((x, y))
+        d.line(pts, fill=(28, 20, 14, 235), width=1)
+        for px_, py_ in pts[1:]:
+            d.point((px_ + frame, py_ - 1 - frame), fill=(190, 170, 130, 200))
+    return im
+
+
+def _embers_image(frame: int = 0):
+    """Incendiary Cloud: glowing embers drifting in the smoke (two frames)."""
+    from PIL import Image as PImage, ImageDraw
+
+    s = 32
+    im = PImage.new("RGBA", (s, s), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    rng = np.random.default_rng(101)
+    for _ in range(7):
+        x, y = (int(v) for v in rng.integers(2, s - 2, 2))
+        y = (y - 3 * frame) % s
+        d.point((x, y), fill=(255, 190, 70, 255))
+        d.point((x, (y + 1) % s), fill=(220, 90, 30, 230))
+    return im
+
+
+def _prismatic_image(frame: int = 0):
+    """Prismatic Wall: seven bands of colour, shimmering (two frames)."""
+    from PIL import Image as PImage, ImageDraw
+
+    s = 32
+    im = PImage.new("RGBA", (s, s), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    bands = [(230, 50, 50), (240, 140, 40), (240, 220, 60), (70, 190, 80), (70, 120, 230), (90, 60, 170),
+             (170, 80, 210)]
+    h = s / len(bands)
+    for i, col in enumerate(bands[frame:] + bands[:frame]):
+        d.rectangle([0, int(i * h), s - 1, int((i + 1) * h)], fill=(*col, 215))
+    for x in range(0, s, 6):
+        d.point((x + frame * 3 % 6, (x * 7) % s), fill=(255, 255, 255, 255))
+    return im
+
+
 GROUND_LOOKS = {  # how the second wave's ground looks on the battle mat (BattleBoard._spell_ground)
     "tentacles": {"colour": (40, 26, 52), "alpha": 70, "image": _tentacles_image, "frames": True},
     "cloud": {"colour": (176, 200, 84), "fog": True, "alpha": 190},
@@ -1256,6 +1310,13 @@ GROUND_LOOKS = {  # how the second wave's ground looks on the battle mat (Battle
     "thorns": {"colour": (40, 58, 26), "alpha": 140, "image": _thorns_image},
     "celestial": {"colour": (255, 246, 205), "alpha": 70, "edge": True},
     "icewall": {"colour": (200, 232, 255), "alpha": 120},
+    # the fourth wave's (D.4)
+    "antimagic": {"colour": (120, 120, 130), "alpha": 45, "edge": True},
+    "quake": {"colour": (120, 96, 66), "alpha": 50, "image": _quake_image, "frames": True},
+    "embers": {"colour": (120, 70, 50), "fog": True, "alpha": 200, "image": _embers_image, "frames": True},
+    "prismatic": {"colour": (230, 230, 255), "alpha": 60, "image": _prismatic_image, "frames": True},
+    "glare": {"colour": (255, 250, 230), "alpha": 40, "edge": True},
+    "storm": {"colour": (70, 76, 92), "fog": True, "alpha": 150, "image": _sleet_image, "frames": True},
 }
 
 

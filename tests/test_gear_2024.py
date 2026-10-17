@@ -231,6 +231,6 @@ def test_the_new_gear_has_pictures_of_its_own(tables):
 
     tiles = json.loads((Path(__file__).parent.parent / "assets" / "tiles" / "tiles.json").read_text(encoding="utf-8"))
     tiles = tiles.get("tiles", tiles)
-    for iid in ("lyre", "caltrops", "explorers_pack", "ladder", "antitoxin", "yew_wand", "reliquary", "trinket",
+    for iid in ("lyre", "caltrops", "explorers_pack", "ladder", "antitoxin", "yew_wand", "reliquary", "gilded_reliquary", "trinket",
                 "alchemists_supplies", "portable_ram", "lock", "net"):
         assert f"item/{iid}" in tiles, iid

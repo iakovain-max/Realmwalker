@@ -115,18 +115,36 @@ def cast(game, caster: Character, patient: Character, wound, spell_id: str, slot
     rng = game.world.rng.child(f"cast/{game.world.time}/{spell_id}")
     msgs = [] if free else [f"{caster.name.split()[0]} casts <magic>{spell['name']}</>."]
     use = spellrules.road_use(t, spell_id)
+    strained = spellrules.strain(caster, slot or level, rng) if not free else 0
     if use == "heal":
         h = spellrules.heal_op(spell)
         targets = [c for c in game.party if c.alive] if spellrules.heals_many(spell) else [patient]
-        for c in targets:
+        pool = int(h["pool"]) if h.get("pool") else None
+        for c in sorted(targets, key=lambda c: c.hp / max(1, c.max_hp)) if pool is not None else targets:
+            if h.get("full") or pool is not None:  # (Power Word Heal, Wish: all it lacks; Mass Heal: from 700)
+                amount = max(0, c.max_hp - c.hp) if pool is None else min(max(0, c.max_hp - c.hp), pool)
+                if pool is not None:
+                    pool -= amount
+                if amount <= 0:
+                    continue
+                target_wound = wound if c is patient else max(c.wounds, key=lambda w: (w.severity, w.bleed), default=None)
+                msgs += health.magic_heal(c, target_wound, amount)
+                continue
             amount = dice.roll(spellrules.scaled(h["dice"], h.get("up", ""), (slot or level) - level), rng).total \
-                + (s.mod(spellrules.casting_ability(caster, t)) if h.get("add_mod") else 0)
+                + (s.mod(spellrules.casting_ability(caster, t)) if h.get("add_mod") else 0) \
+                + int(h.get("per_up", 0)) * max(0, (slot or level) - level)
             if "disciple_of_life" in traits.of_char(caster, t) and not free:  # (2024: with a spell slot)
                 amount += 2 + max(1, slot or level)  # (2024: 2 + the slot's level)
             target_wound = wound if c is patient else max(c.wounds, key=lambda w: (w.severity, w.bleed), default=None)
             msgs += health.magic_heal(c, target_wound if h.get("mends_wound", True) else None, amount)
     elif use == "cure":
         msgs += health.magic_restore(patient, t)
+    if strained:  # (an earlier Wish's stress: the spell tears at its caster)
+        from realmwalker.game.magic import strain_on_road
+
+        msgs += strain_on_road(game, caster, strained)
+    if spell.get("stress") and not free:  # (Wish's Instant Health)
+        msgs += spellrules.wish_stress(caster, rng)
     game.pass_time(1, "rest")
     game.dirty = True
     if game.world.factions:

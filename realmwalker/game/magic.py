@@ -249,6 +249,22 @@ def road_problem(game, caster, spell_id: str, target=None, scroll=None) -> str |
     return None
 
 
+def strain_on_road(game, caster, amount: int) -> list[str]:
+    """An earlier Wish's stress tears at a caster outside a fight: necrotic damage nothing reduces; at 0 hit points
+    they go down and lie senseless a while (down, not dead, as after a trap)."""
+    if amount <= 0:
+        return []
+    first = escape_markup(caster.name.split()[0])
+    caster.hp -= amount
+    out = [f"<danger>Casting tears at {first}: {amount} necrotic, the strain of the wish.</>"]
+    if caster.hp <= 0:
+        from realmwalker.game.fight import lie_senseless
+
+        caster.hp = 1
+        out.append(f"<danger>{first} goes down and lies still.</> " + lie_senseless(game, 1))
+    return out
+
+
 def cast_on_road(game, caster, spell_id: str, target=None, slot_level: int | None = None, scroll=None) -> list[str]:
     """Cast a spell outside battle. Healing goes through game/care.py (the worst wound first); a lasting spell is
     kept on whoever it was cast on. `slot_level`: a higher slot, for a spell that does more with one; `scroll`: read
@@ -298,6 +314,8 @@ def cast_on_road(game, caster, spell_id: str, target=None, slot_level: int | Non
         spellrules.spend_free(caster, spell_id, free)
     if slot:
         spellrules.spend_slot(caster, slot)
+        strained = spellrules.strain(caster, slot, game.world.rng.child(f"strain/{game.world.time}"))
+        pre += strain_on_road(game, caster, strained)
     used = spellrules.spend_material(caster, t, spell_id) if scroll is None else None
     if ritual:
         game.pass_time(10, "rest")

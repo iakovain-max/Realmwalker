@@ -164,6 +164,8 @@ class Sheet:
 
     # ------------------------------------------------------------------ basics
     def score(self, ability: str) -> int:
+        if ability == "str" and self.c.effects.get("wish_strength", 0) > 0:
+            return 3  # (the stress of a Wish, PHB 2024)
         score = self.c.abilities.get(ability, 10)
         if self.c.equipped:
             from realmwalker.rules import magic

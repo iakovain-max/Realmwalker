@@ -49,6 +49,13 @@ On the one marked (the buff is on the creature):
     spell_ward      a level: spells below it cast from outside the same barrier do nothing to its bearer and leave
                     its squares out of their areas (Globe of Invulnerability, as an aura's grant: "$level")
     truesight       feet of truesight: it sees the invisible and through any darkness (True Seeing)
+    befuddled       it cannot cast spells (Befuddlement)
+    foresight       Advantage on its attack rolls, saves and checks, Disadvantage on attacks against it (Foresight)
+    holy            DC: attacks against it have Disadvantage, and a fiend or undead that hits it in melee makes a
+                    Constitution save or is blinded until the end of its next turn (Holy Aura, as an aura's grant:
+                    "$dc"; with save_adv for every ability)
+    immune_damage   [damage types] it takes none of (Mind Blank: psychic)
+    time_stop       turns left in a row (Time Stop: given by the `time_stop` op)
 On the one who gains (the caster, or a friend):
     hit_extra       dice (with hit_type, hit_with "weapon" | "melee" | "any"): extra damage on its hits (Divine Favor)
     weapon_plus     added to its weapon attack and damage rolls (Magic Weapon)
@@ -78,6 +85,8 @@ BUFF_KEYS = frozenset({
     "save_adv_spells", "evade_spells", "heal_max", "rise", "aura", "grant", "radius", "aura_of", "save_first",
     # the third wave's (D.3)
     "dancing", "truesight", "aloft", "spell_ward",
+    # the fourth wave's (D.4)
+    "befuddled", "foresight", "holy", "immune_damage", "time_stop",
 })
 ZONES = frozenset({"web", "fire", "fog", "ice", "caltrops", "bearings", "darkness", "antimagic", "plants", "grease",
                    "spikes", "daggers", "moonbeam", "sphere", "silence",
@@ -85,7 +94,9 @@ ZONES = frozenset({"web", "fire", "fog", "ice", "caltrops", "bearings", "darknes
                    "tentacles", "cloud", "stench", "hunger", "insects", "sleet", "radiance", "spirits", "elemental",
                    "wind", "stone", "force",
                    # the third wave's (D.3): walls of blades and thorns, a pillar of light, a wall of ice
-                   "blades", "thorns", "celestial", "icewall"})
+                   "blades", "thorns", "celestial", "icewall",
+                   # the fourth wave's (D.4): an earthquake, a burning cloud, the prismatic wall and its glare, a storm
+                   "quake", "embers", "prismatic", "glare", "storm"})
 
 
 def _weapon(opt) -> bool:
@@ -116,6 +127,12 @@ def attack_mods(b, att, target, opt, r) -> None:
         r.add("disadvantage", "dancing")  # (Otto's Irresistible Dance)
     if any(bf.get("dancing") for bf in target.buffs):
         r.add("advantage", "dancing")
+    if att.buff_value("foresight"):
+        r.add("advantage", "foresight")
+    if target.buff_value("foresight"):
+        r.add("disadvantage", "foresight")
+    if target.buff_value("holy") and att.team != target.team:
+        r.add("disadvantage", "holy aura")
 
 
 def roll_adjust(b, att, target, opt) -> int:
@@ -240,6 +257,14 @@ def after_hit(b, att, target, opt, guarded: bool = True) -> None:
     blow), is answered in cold; the spell ends with the last of them. Fire Shield answers every melee hit."""
     if not opt.is_melee or not att.active:
         return
+    holy = target.buff_value("holy")
+    if holy and att.kind in ("fiend", "undead") and att.team != target.team and "blinded" not in att.conditions:
+        from realmwalker.rules.engine import durations
+
+        if not b._save(att, "con", int(holy[0])):  # (Holy Aura: the light sears the eyes of fiends and the dead)
+            if durations.give(b, att, "blinded", ends=durations.until(b, att, "turn_end")):
+                b._event("condition", who=att.id, cond="blinded")
+                b.say(f"Holy light blinds {att.the_name}.", "good" if att.side == "foe" else "danger")
     for bf in list(target.buffs):
         if bf.get("thorns") and att.team != target.team:
             dtype = bf.get("thorns_type", "fire")

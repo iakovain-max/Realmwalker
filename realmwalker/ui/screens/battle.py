@@ -514,6 +514,10 @@ class BattleScreen(Screen):
         self.pending["value"] = value
         if kind == "attack":
             self._open_targets("attack", b.targets_for(f, value))
+        elif kind == "cast" and value == "wish" and f.char is not None:
+            self._open_wish(f)  # (Wish: what to wish for)
+        elif kind == "wish":
+            self._aim_spell(f, value)
         elif kind == "cast":
             if not self._ask_slot(f, value):
                 self._aim_spell(f, value)
@@ -566,6 +570,23 @@ class BattleScreen(Screen):
             self._do(b.attack_object, f, opt, value)
         elif kind == "fly":
             self._do(b.do_fly, f, value)
+
+    def _open_wish(self, f: Fighter) -> None:
+        """Wish (PHB 2024): Instant Health (the stress), or any battle spell of level 8 or lower, copied with no
+        components and no stress."""
+        b = self.battle
+        tables = self.game.tables
+        ok, why = b._wish_ok(f)
+        rows = [("Instant Health <dim>(you and twenty friends whole again; <warn>the stress: Strength 3 for days, "
+                 "every spell hurts until a long rest, and Wish may be lost</>)</>", "wish", ok, why)]
+        for value, ok_, why_ in b.wish_options(f):
+            sp = tables.spells[spell_id(value)]
+            fine = ok_
+            if fine and sp["target"] in ("enemy", "ally", "downed_ally", "dead_ally") and not b.spell_targets(f, value):
+                fine, why_ = False, "no one in reach"
+            rows.append((f"{sp['name']} <dim>(level {sp['level']}, copied: no components) {sp['text']}</>", value,
+                         fine, why_))
+        self._open_choices("wish", rows)
 
     def _aim_spell(self, f: Fighter, value) -> None:
         """After the spell (and its slot): at whom, where, or cast at once."""
@@ -1225,7 +1246,7 @@ class BattleScreen(Screen):
 
     def _render_choices(self, canvas: Canvas, x: int, y: int, w: int, h: int) -> int:
         canvas.text(x, y, "↑↓ or 1-9, Enter; Esc back", colors.DIM, max_width=w)
-        if self.choice_kind in ("cast", "slot") and self.slots_line and len(self.slots_line) < w:
+        if self.choice_kind in ("cast", "slot", "wish") and self.slots_line and len(self.slots_line) < w:
             canvas.text(x, y + 1, self.slots_line, colors.named("magic"))
             y += 1
         room = max(1, h - 2)

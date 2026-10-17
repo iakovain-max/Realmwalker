@@ -86,7 +86,8 @@
       "buys": ["focus", "book"],
       "stock": [["holy_symbol", 1, 3], ["prayer_book", 0, 2], ["incense", 4, 12], ["candle", 4, 12], ["holy_water", 1, 4],
                 ["bandages", 2, 6], ["vestments", 0, 1],
-                ["holy_emblem", 0, 2], ["reliquary", 0, 1, "town"], ["priests_pack", 0, 1], ["diamond", 0, 2, "town"]],
+                ["holy_emblem", 0, 2], ["reliquary", 0, 1, "town"], ["priests_pack", 0, 1], ["diamond", 0, 2, "town"],
+                ["gilded_reliquary", 0, 1, "city"]],
       "markup": 1.0
     },
     "stable": {

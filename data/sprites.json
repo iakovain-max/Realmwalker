@@ -108,6 +108,8 @@
     "ledge": {"ground": "floor/rock"},
     "chasm": {"ground": "floor/chasm"},
     "ice_wall": {"wall": "wall/ice"},
+    "wall_force": {"wall": "wall/ice"},
+    "wall_prismatic": {"wall": "wall/ice"},
     "crater_rim": {"wall": "wall/rock"},
     "cairn": {"ground": "floor/rock", "object": "feature/cairn"},
     "drifting_stone": {"object": "feature/drifting"},
