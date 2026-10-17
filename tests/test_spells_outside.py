@@ -385,3 +385,35 @@ def test_a_companion_conjures_food_when_there_is_none(world, tables):
     survival.feed(game, lead)
     assert lead.hunger < 70.0
     assert any(it.def_id == "conjured_food" for it in lead.inventory)
+
+
+# ---------------------------------------------------------------------------- the Spells page
+def test_the_spells_page_shows_the_fallen_and_the_wards_and_raises_with_enter(make_app):
+    import tcod.console
+
+    from realmwalker.ui.input import KeyEvent
+    from realmwalker.ui.screens.spells import SpellsScreen
+
+    app = make_app()
+    t = app.tables
+    world = cached_world(WorldOptions("Screenland", 5, "small"), t)
+    cleric = hero(t, "cleric", 64000)
+    friend = companion(t)
+    game = new_game(copy.deepcopy(world), t, cleric)
+    game.party.append(friend)
+    app.start_game(game)
+    prepare(cleric, t, "raise_dead")
+    add_item(cleric, t.items, "fine_diamond")
+    kill(game, friend)
+    make_camp(game).wards["hut"] = {"until": game.world.time + 300, "dc": 15, "by": cleric.name}
+    screen = SpellsScreen(app, app.game)
+    app.push(screen)
+    screen.sel = screen.spells().index("raise_dead")
+    app.render(tcod.console.Console(120, 40, order="F"))
+    shown = app.last_canvas.words()
+    assert "lies dead" in shown and "Tiny Hut" in shown and "It takes an hour" in shown, shown
+    app.handle_event(KeyEvent("enter"))
+    assert friend.alive and friend in game.party
+    for size in ((80, 30), (160, 45)):
+        app.render(tcod.console.Console(*size, order="F"))
+    assert app.error_count == 0

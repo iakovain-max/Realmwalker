@@ -397,6 +397,11 @@ def _check_companions(game, fail) -> None:
         fail("two people in the party wear the same thing")
     if any(c.inventory is game.party[0].inventory for c in getattr(game, "waiting", [])):
         fail("a companion left waiting still carries from the party's pack")
+    for b in getattr(game, "fallen", []) or []:  # (Expansion 3 E.1: the bodies the party carries for raising)
+        if b["char"].alive or any(b["char"] is c for c in game.party):
+            fail(f"{b['char'].name} is carried as a body but is alive or walks with the party")
+        if settled and b["char"].inventory is game.party[0].inventory:
+            fail(f"{b['char'].name}'s body still carries from the party's pack")
     if len(game.party) > 1 + int(game.tables.companions["max_companions"]):
         fail(f"the party is too big ({len(game.party)})")
     if game.party and game.party[0].companion:

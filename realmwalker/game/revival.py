@@ -122,8 +122,10 @@ def could_raise(game, minutes_dead: float, *, leader_too: bool = True) -> bool:
 def fall(game, c: Character, *, died_at: float | None = None, left: bool = False) -> bool:
     """A companion is dead. If the party can carry them and someone could still raise them, the body is kept
     (returns True); otherwise they are dead for good (companions.died)."""
+    from realmwalker.game import pack
     from realmwalker.game.companions import died
 
+    pack.sync(game)  # (the dead leave what they carried to the rest)
     if left or not c.companion:
         if c.companion:
             died(game, c)
