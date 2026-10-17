@@ -869,6 +869,11 @@ def _try_area_attack(b: Battle, f: Fighter, opt: AttackOption) -> bool:
 # ---------------------------------------------------------------------------- party members on Auto
 def _party_turn(b: Battle, f: Fighter) -> None:
     c = f.char
+    if f.jar is not None:  # (Magic Jar: the soul takes the strongest humanoid foe it can reach, else it waits)
+        near = b.jar_targets(f)
+        if near:
+            b.do_possess(f, max(near, key=lambda e: (float(e.cdef.get("cr", 0)), e.hp)))
+        return
     if "grappled" in f.conditions or "restrained" in f.conditions:
         enemies_near = [e for e in b.enemies_of(f) if b.gap(f, e) <= 1]
         if not enemies_near:

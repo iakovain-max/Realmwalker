@@ -103,6 +103,22 @@ def working_now(game) -> list[str]:
         if home is not None:
             out.append(f"<magic>Sanctuary</> of {markup.escape(c.name.split()[0])}: the temple of "
                        f"{markup.escape(home.name)} <dim>(Word of Recall)</>")
+    from realmwalker.game import greatmagic
+
+    for c in game.party:  # (Part E.7: a spell waiting on someone, a soul in its gem)
+        words = greatmagic.contingency_words(game, c)
+        if words:
+            out.append(f"<magic>Contingency:</> {words}")
+        if greatmagic.in_jar(c):
+            out.append(f"<magic>{markup.escape(c.name.split()[0])}'s soul</> is in the gem of a Magic Jar "
+                       "<dim>(Magic Jar again: go home)</>")
+    for rec in greatmagic.clones(game):
+        s = game.world.settlements[rec["settlement"]] if 0 <= int(rec.get("settlement", -1)) < len(
+            game.world.settlements) else None
+        days = (float(rec["ready"]) - game.world.time) / (24 * 60)
+        out.append(f"<magic>A clone of {markup.escape(rec['who'].split()[0])}</> in the crypt of "
+                   f"{markup.escape(s.name) if s else 'a temple'} "
+                   + (f"<dim>(grown in {max(1, round(days))} days)</>" if days > 0 else "<good>(grown)</>"))
     for b in revival.bodies(game):
         out.append(f"<danger>{markup.escape(b['char'].name.split()[0])}</> lies dead "
                    f"<dim>({revival.when_text(revival.dead_for(game, b))}"
@@ -310,7 +326,21 @@ class SpellsScreen(Screen):
             targets = self.targets()
             if targets:
                 self.chosen_target()
-                self.target = (self.target + (1 if ev.key == "right" else -1)) % len(targets)
+                step = 1 if ev.key == "right" else -1
+                group = lambda i: getattr(targets[i % len(targets)], "data", {}).get("group")  # noqa: E731
+                if ev.shift and group(self.target) is not None:  # (Shift: the first of the next kind: Wish's uses)
+                    i, here = self.target, group(self.target)
+                    for _ in range(len(targets)):
+                        i += step
+                        if group(i) != here:
+                            break
+                    if step < 0:  # (back to the first of that kind)
+                        there = group(i)
+                        while group(i - 1) == there and (i - 1) % len(targets) != self.target % len(targets):
+                            i -= 1
+                    self.target = i % len(targets)
+                else:
+                    self.target = (self.target + step) % len(targets)
         elif ev.key in ("enter", "kpenter"):
             self.cast()
         elif ev.key == "w":

@@ -460,6 +460,13 @@ def statuses(f, b=None) -> list[Status]:
                                       "A long rest takes one level away.")))
     if f.state in ("fighting", "fleeing") and 0 < f.hp <= f.max_hp // 2:
         add(_plain("bloodied", *_WORDS["bloodied"], f"{f.hp} of {f.max_hp} hit points."))
+    if "possessed" in f.conditions:  # (Magic Jar: a party soul in a foe's body)
+        add(Status("charmed", Card("Possessed", "", "status/charmed", [
+            "A soul from a Magic Jar has taken this body: it fights for the party, its own soul trapped in the gem."],
+            "Ends when the soul leaves, or the body dies (a Charisma save sends the soul back to its gem).")))
+    if getattr(f, "jar", None) is not None:
+        add(_plain("spell", "Soul in the jar", "The body lies still; the soul is in a gem (Magic Jar). It may take a "
+                   "humanoid foe within 100 feet (a Charisma save) or go home to the body."))
     if f.concentration is not None:
         sid = f.concentration.get("spell", "")
         sp = tables.spells[sid] if sid in tables.spells else {}

@@ -48,8 +48,8 @@
                              "save_first": true, "dc": "$dc", "by": "$caster", "dot_name": "the phantasms"}}]}],
    "fx": "curse", "text": "Illusory terrors fill the minds of your foes in a 30-foot sphere within 120 feet (concentration). Wisdom save or take 10d10 psychic and be frightened; half on a save. A frightened foe takes 5d10 at the end of each turn until it saves."},
   "wish": {"name": "Wish", "level": 9, "school": "conjuration", "classes": ["sorcerer", "wizard"],
-   "target": "all_allies", "range": 120, "components": ["V"], "stress": true, "battle_only": true,
+   "target": "all_allies", "range": 120, "components": ["V"], "stress": true, "battle_only": true, "road_too": "wish",
    "effects": [{"op": "heal", "dice": "0", "full": true, "count": 21, "restore": ["charmed", "petrified", "blinded", "deafened", "poisoned", "paralyzed", "stunned"]}],
-   "fx": "heal", "text": "The mightiest spell. In a fight, copy any battle spell of level 8 or lower with no components (safe), or wish for Instant Health: you and twenty friends whole again. That brings the stress: Strength 3 for days, every spell hurts until a long rest, and Wish may be lost."}
+   "fx": "heal", "text": "The mightiest spell. In a fight, copy any battle spell of level 8 or lower with no components (safe), or wish for Instant Health: you and twenty friends whole again. That brings the stress: Strength 5 for days, every spell hurts until a long rest, and Wish may be lost."}
  }
 }

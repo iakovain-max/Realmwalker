@@ -135,7 +135,7 @@ spellcasting and scrolls at the book's prices.
   heal, power word kill, prismatic wall (a wall foes cannot pass, blinding glare beside it), storm of vengeance (a
   storm by its turns), time stop (turns in a row until you touch another), weird, and Wish: in a fight it copies
   any battle spell of level 8 or lower without its components (safe), or gives Instant Health to up to twenty
-  friends (the stress: 1d10 necrotic a spell level for every spell until a long rest, Strength 3 for 2d4 days, a
+  friends (the stress: 1d10 necrotic a spell level for every spell until a long rest, Strength 5 for 2d4 days, a
   third of the time never Wish again). Waiting for E: antipathy/sympathy, clone, control weather, demiplane,
   glibness, telepathy, tsunami (cast in a minute); astral projection, gate, imprisonment (cast in a minute), true
   resurrection, and Wish's other uses outside a fight. Waiting for F: animal shapes, shapechange, true polymorph.
@@ -395,9 +395,60 @@ system is built once and every spell that uses it comes with it.
     last ones vanish; no merchant buys them. Cast before a fight, not in one (drawing a potion is a bonus action,
     as drinking one is).
   - Companions: one who knows Forbiddance casts it as a ritual before a long rest in the wild (radiant).
-- [ ] E.7 Great magic and Wish's other uses; Part E to `main`: contingency, magic jar, clone, imprisonment, and
+- [x] E.7 Great magic and Wish's other uses; Part E to `main`: contingency, magic jar, clone, imprisonment, and
   Wish's other uses outside a fight (Object Creation, Resistance, Spell Immunity, Sudden Learning, Roll Redo,
   Reshape Reality).
+  How (the design, at the start of E.7; numbers from the 2024 PHB):
+  - The new module is `game/greatmagic.py`: road ops `does` "contingency", "jar", "clone", "imprison" and "wish" (in
+    `spells.E7_KINDS` / ROAD_USES, checked at start-up), through game/spellwork's door (subjects, problem, cast). What
+    the fight needs is in rules/combat (the contingent spell's trigger, the jar's actions, Roll Redo) and the kernel
+    (`query.resists` reads a wished resistance, `effects.warded` a wished immunity to one spell).
+  - Contingency (ten minutes; a 1,500 GP statuette of the caster, kept and carried; ten days): Subjects pair a spell
+    of level 5 or lower that the caster could cast now, cast with an action, that can be aimed at the caster (target
+    self or ally) and works in a fight, with one of three triggers: "as a fight begins", "when I am brought below half
+    my hit points", "when I fall". Both slots are spent as it is cast (the contingent spell's lowest that will do).
+    Kept as `char.spells["contingency"]` {spell, slot, trigger, until}; in a fight `Battle._contingency(f, trigger)`
+    casts it on the caster alone at once, with no action, and Contingency ends. Casting it again ends the old one; it
+    ends if the statuette is not in the party's packs when it would act.
+  - Magic Jar (a minute; a 500 GP gem, kept until the spell ends, then shattered): the caster's soul goes into the gem
+    until they return (`char.spells["jar"]`); meanwhile they cast nothing and their body is carried along (outside a
+    fight nothing else changes). In a fight the body is Incapacitated where it stands, and its turns have two actions:
+    Possess, at a humanoid foe within 100 feet that it can see (Charisma save; a success makes it immune for a day,
+    kept in the fight), and Return (back to the body: the spell ends). A possessed foe fights for the party, under the
+    player (the caster's mind: its own hit points, attacks and speed; the caster's spells are left out), with a third
+    action, Leave (back into the gem; the foe's soul returns to it). If the host dies, a Charisma save against the
+    caster's own DC brings the soul back to the gem; a failure is death. If the body dies while the soul is away, the
+    soul dies when the spell ends. At the end of a fight the soul goes back to the gem, and a host left standing runs
+    (it is no longer a foe). The Auto on Magic Jar possesses the strongest humanoid foe in reach.
+  - Clone (an hour; a 1,000 GP diamond, consumed, and a 2,000 GP vessel, which stays with the clone): cast in a town
+    or city on someone of the party (Subjects); the vessel is sealed in its temple's crypt (`renown.flags["clones"]`
+    {who, settlement, ready}), and the clone is grown in 120 days. When that someone dies after it is grown, their
+    soul goes to the clone: the leader wakes there whole, with nothing of what they carried (their companions take it
+    up and come to that town, 24 miles a day, as when sent for); a companion wakes there and waits there. The clone is
+    then spent. The age chosen is left out (it changes nothing in the game).
+  - Imprisonment (a minute; a 5,000 GP statuette, consumed): cast from the meeting screen (i) when a band is seen
+    first, as Tsunami is: the strongest of it makes a Wisdom save (a Legendary Resistance is spent on it); a failure
+    binds it for good, in the form its kind suits (a dragon is buried, the undead chained, fiends, celestials and fey
+    hedged in a prison of their own, humanoids shut in a gem, anything else asleep): it is gone from the band, its XP
+    is the party's, and a named beast or dragon of the world is bound in the world's record (its lair empty, its
+    tribute lifted, a deed of the land as slaying it is). A success makes it immune for a day. The minute passes; then
+    the fight begins with whoever is left knowing you. The ending trigger is left out (nothing is likely to end it).
+  - Wish outside a fight (`road_too: "wish"`; the battle's Wish is as D.4 made it): Subjects in groups (Shift ←→ jumps
+    to the next group on the Spells page): Object Creation (any thing that is not magic, worth 100 to 25,000 GP, into
+    the pack), Instant Health (the party whole, the Greater Restoration effects ended),
+    Resistance (the party, for good, to one damage type: `char.spells["wished_resist"]`), Spell Immunity (the party
+    for 8 hours to one spell a foe of this world casts: `char.effects["immune_spell:<id>"]`), Sudden Learning (give
+    up a feat that nothing else needs; a new one they are eligible for is chosen as a waiting choice, on the sheet),
+    Reshape Reality (four wishes the game understands: a lost artifact, which carries the party to the place where it
+    lies; that a named beast or a dragon were dead, which comes true by the beast's might (a beast half the time, a
+    dragon a quarter), and otherwise it learns your name and comes for you; that the realm forget your crimes, which
+    clears your bounties and crimes in the realm you stand in; and that a fallen friend the party carries were alive,
+    who rises whole at the death toll). Every one of them brings the stress (spells.wish_stress). Copying a spell
+    outside a fight is left out (the copies are the battle's).
+  - Roll Redo is in the fight's Wish list: one of the foes' hits on a friend since the caster's last turn is rolled
+    again with Disadvantage; a miss gives back all its damage (a friend down stands again), and a hit that was a
+    critical and is not one now gives back half. Redoing a save is left out (what a failed save brought cannot be
+    taken back cleanly). It brings the stress; the Auto never uses it.
 
 ### Part F — Appendix B: familiars, steeds and summons
 - [ ] F.1 The 36 stat blocks (beasts, imp, quasit, pseudodragon, sprite, sphinx of wonder, slaad tadpole) with

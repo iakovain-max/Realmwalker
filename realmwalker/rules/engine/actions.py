@@ -226,6 +226,8 @@ def options(b, f, only: tuple[str, ...] | None = None) -> list[Option]:
     """Everything `f` can do now, in a fixed order: attacks, spells, abilities, the other actions, items (`only`
     these kinds, if given: the rest is not worked out)."""
     out: list[Option] = []
+    if getattr(f, "jar", None) is not None and f.jar.get("host") is None:
+        only = ("ability",)  # (Magic Jar: a soul in its gem can only take a body or go home)
     acting = b.has_action(f)
     for o in (b.attack_options(f) if only is None or "attack" in only else ()):
         ok = o.available and acting
@@ -263,6 +265,8 @@ def options(b, f, only: tuple[str, ...] | None = None) -> list[Option]:
         elif aid in ("hew", "pole_strike") and ok:
             opt = b.feat_blow_option(f, aid)
             targets = [t for t in b.enemies_of(f) if opt is not None and b.in_reach(f, opt, t)[0]]
+        elif aid == "jar_possess" and ok:
+            targets = b.jar_targets(f)
         elif a is not None and a.get("aim") and ok:
             targets = aim_targets(b, f, a)
         out.append(Option(f"ability:{aid}", "ability", name, cost, ok, why, aid, "creature" if targets else "none",

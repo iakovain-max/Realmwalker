@@ -576,8 +576,11 @@ def talk_choose(conv, choice) -> None:
 
 
 def died(game, c: Character) -> None:
-    """A companion is dead: the town they came from will hear of it."""
-    from realmwalker.game import followers
+    """A companion is dead: the town they came from will hear of it (unless a clone of theirs takes the soul)."""
+    from realmwalker.game import followers, greatmagic
+
+    if greatmagic.clone_wakes(game, c):  # (Clone: they wake in its vessel and wait there)
+        return
 
     followers.died(game, c)  # a realm that lent you its sword, the world that loses someone like no one else
     npc = game.world.npcs.get(c.companion.get("npc", -1)) if c.companion else None

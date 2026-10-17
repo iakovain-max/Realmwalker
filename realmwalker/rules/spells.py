@@ -505,6 +505,10 @@ def can_cast(char: Character, tables, spell_id: str) -> tuple[bool, str]:
         return False, "the strain of an old wish: Wish will never come again"
     if char.uses.get("addled"):
         return False, "the mind is still reeling from what it touched (a long rest)"
+    if (char.spells or {}).get("jar"):  # (Magic Jar: the soul is in its gem; it can only go home)
+        if road_use(tables, spell_id) == "jar":
+            return True, ""
+        return False, "the soul is in the gem of a Magic Jar: go back to the body first"
     if "item" not in spell.get("classes", ()) and armour_problem(char, tables):
         return False, armour_problem(char, tables)
     if "item" not in spell.get("classes", ()) and component_problem(char, tables, spell_id):
@@ -550,7 +554,7 @@ def wish_stress(char: Character, rng) -> list[str]:
     char.effects["wish_stress"] = 1.0e6  # (until a long rest: progression.long_rest)
     char.effects["wish_strength"] = 24.0 * days
     first = char.name.split()[0]
-    out = [f"<danger>The wish takes its toll.</> {first}'s strength drains away (Strength 3 for {days} days), and "
+    out = [f"<danger>The wish takes its toll.</> {first}'s strength drains away (Strength 5 for {days} days), and "
            "every spell until a long rest will tear at them."]
     if rng.chance(0.33):
         char.spells["wish_lost"] = True
@@ -728,7 +732,9 @@ ROAD_USES = ("feed", "water", "purify", "goodberry", "feast", "ward", "repose", 
              # Part E.5: locks and stone, weather and land (game/stonework.py)
              "lock", "mend", "hand", "make", "stone", "chest", "weather", "plants", "wave",
              # Part E.6: lasting protections and the caster's keeping (game/warding.py)
-             "protect", "hallow", "demiplane", "cauldron")
+             "protect", "hallow", "demiplane", "cauldron",
+             # Part E.7: great magic (game/greatmagic.py; Wish's other uses are its road_too "wish")
+             "contingency", "jar", "clone", "imprison", "wish")
 # What each of Part E.3's road uses is about (an op's `what`, `how` or `with`; the start-up check knows them).
 E3_KINDS = {"sense": ("what", ("magic", "evil", "poison", "traps")),
             "locate": ("what", ("object", "creature", "nature")),

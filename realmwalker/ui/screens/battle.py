@@ -516,6 +516,8 @@ class BattleScreen(Screen):
             self._open_targets("attack", b.targets_for(f, value))
         elif kind == "cast" and value == "wish" and f.char is not None:
             self._open_wish(f)  # (Wish: what to wish for)
+        elif kind == "wish" and str(value).startswith("wish:redo:"):
+            self._do(b.do_cast, f, value, None)  # (Roll Redo: nothing to aim)
         elif kind == "wish":
             self._aim_spell(f, value)
         elif kind == "cast":
@@ -541,6 +543,8 @@ class BattleScreen(Screen):
                 self._open_targets("offhand", [t for t in b.enemies_of(f) if opt is not None and b.in_reach(f, opt, t)[0]])
             elif value == "spirit_strike":
                 self._open_targets("spirit", b.spirit_targets(f))
+            elif value == "jar_possess":
+                self._open_targets("jar", b.jar_targets(f))
             elif value == "war_priest":
                 opts = [o for o in b.attack_options(f) if o.available and o.item_uid is not None]
                 self._open_targets("war_priest", b.targets_for(f, opts[0]) if opts else [])
@@ -577,7 +581,7 @@ class BattleScreen(Screen):
         b = self.battle
         tables = self.game.tables
         ok, why = b._wish_ok(f)
-        rows = [("Instant Health <dim>(you and twenty friends whole again; <warn>the stress: Strength 3 for days, "
+        rows = [("Instant Health <dim>(you and twenty friends whole again; <warn>the stress: Strength 5 for days, "
                  "every spell hurts until a long rest, and Wish may be lost</>)</>", "wish", ok, why)]
         for value, ok_, why_ in b.wish_options(f):
             sp = tables.spells[spell_id(value)]
@@ -586,6 +590,9 @@ class BattleScreen(Screen):
                 fine, why_ = False, "no one in reach"
             rows.append((f"{sp['name']} <dim>(level {sp['level']}, copied: no components) {sp['text']}</>", value,
                          fine, why_))
+        for i, words, ok_, why_ in b.redo_options(f):  # (Roll Redo: a foe's hit in the last round rolled again)
+            rows.insert(1, (f"Roll Redo: {markup.escape(words)} <dim>(rolled again with Disadvantage; <warn>the "
+                            "stress</>)</>", f"wish:redo:{i}", ok_, why_))
         self._open_choices("wish", rows)
 
     def _aim_spell(self, f: Fighter, value) -> None:
@@ -648,6 +655,8 @@ class BattleScreen(Screen):
             self._do(lambda x: b.do_ability(x, "offhand", target), f)
         elif kind == "spirit":
             self._do(lambda x: b.do_ability(x, "spirit_strike", target), f)
+        elif kind == "jar":
+            self._do(lambda x: b.do_ability(x, "jar_possess", target), f)
         elif kind == "war_priest":
             self._do(lambda x: b.do_ability(x, "war_priest", target), f)
         else:

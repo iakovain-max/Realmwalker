@@ -188,9 +188,9 @@ def road_targets(game, caster, spell_id: str) -> list:
     from realmwalker.game import spellwork
 
     if use in spellwork.DIVINING or use in spellwork.SPEECH or use in spellwork.GLAMOUR \
-            or use in spellwork.STONEWORK or use in spellwork.WARDING:  # (E.3 to E.6: a thing to seek, a lock,
-        # a wall, a craft, a glyph's rune or spell, a blessing, a potion,
-        # a question, a companion; a person near, a kind of creature, an animal, a far town, a thing carried)
+            or use in spellwork.STONEWORK or use in spellwork.WARDING or use in spellwork.GREAT:  # (E.3 to E.7:
+        # a thing to seek, a lock, a wall, a craft, a glyph's rune or spell, a blessing, a potion, a question, a
+        # companion; a person near, a kind of creature, an animal, a far town, a thing carried; a spell to hold, a wish)
         return spellwork.subjects(game, caster, spell_id)
     if target == "place":
         from realmwalker.game import waymagic
@@ -330,6 +330,10 @@ def cast_on_road(game, caster, spell_id: str, target=None, slot_level: int | Non
     why = road_problem(game, caster, spell_id, target, scroll=scroll)
     if why:
         return [f"{spell['name']}: {why}."]
+    if spellrules.road_use(t, spell_id) == "jar" and caster.spells.get("jar"):
+        from realmwalker.game import greatmagic
+
+        return greatmagic.return_to_body(game, caster)  # (going home needs no slot)
     pre = []
     if scroll is not None:
         owner = _owner(game, scroll) or caster
