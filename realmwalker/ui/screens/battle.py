@@ -333,7 +333,7 @@ class BattleScreen(Screen):
                     lvl = "from a magic item"
                 if cast_kind(f, sp) == "bonus":
                     lvl += ", bonus action"
-                if ok and sp["target"] in ("enemy", "ally", "downed_ally", "dead_ally", "bound") and not b.spell_targets(f, sid):
+                if ok and sp["target"] in ("enemy", "ally", "creature", "downed_ally", "dead_ally", "bound") and not b.spell_targets(f, sid):
                     ok, why = False, "no one in reach"
                 rows.append((f"{sp['name']} <dim>({lvl}) {sp['text']}</>", sid, ok, why))
             self._open_choices("cast", rows)
@@ -586,7 +586,7 @@ class BattleScreen(Screen):
         for value, ok_, why_ in b.wish_options(f):
             sp = tables.spells[spell_id(value)]
             fine = ok_
-            if fine and sp["target"] in ("enemy", "ally", "downed_ally", "dead_ally") and not b.spell_targets(f, value):
+            if fine and sp["target"] in ("enemy", "ally", "creature", "downed_ally", "dead_ally") and not b.spell_targets(f, value):
                 fine, why_ = False, "no one in reach"
             rows.append((f"{sp['name']} <dim>(level {sp['level']}, copied: no components) {sp['text']}</>", value,
                          fine, why_))
@@ -599,7 +599,7 @@ class BattleScreen(Screen):
         """After the spell (and its slot): at whom, where, or cast at once."""
         b = self.battle
         sp = self.game.tables.spells[spell_id(value)]
-        if sp["target"] in ("enemy", "ally", "downed_ally", "dead_ally", "bound"):
+        if sp["target"] in ("enemy", "ally", "creature", "downed_ally", "dead_ally", "bound"):
             self._open_targets("cast", b.spell_targets(f, value))
         elif sp["target"] in ("point", "direction"):
             self._open_aim("cast")
@@ -1323,8 +1323,9 @@ class BattleScreen(Screen):
 
     def full_details(self, f: Fighter) -> bool:
         """Whether a creature's card shows its whole stat block (Settings, Creature details)."""
-        if f.char is not None or f.bond is not None or self.app.settings.creature_details != "known":
-            return True  # (one's own familiar or steed is known)
+        if f.char is not None or f.bond is not None or self.app.settings.creature_details != "known" \
+                or (f.shape is not None and f.side == PARTY):
+            return True  # (one's own familiar or steed is known, and a friend in a borrowed shape)
         return f.creature.def_id in self.battle.known
 
     def _words_tip(self, f: Fighter) -> str:

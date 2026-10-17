@@ -85,8 +85,8 @@ def aim(b, f, sid):
     sp = b.t.spells[sid]
     mode = sp["target"]
     foes = sorted(b.enemies_of(f), key=lambda e: b.gap(f, e))
-    if mode in ("enemy", "bound"):
-        ts = b.spell_targets(f, sid)
+    if mode in ("enemy", "bound", "creature"):  # (a spell for friend or foe: at the nearest foe)
+        ts = [x for x in b.spell_targets(f, sid) if x in b.enemies_of(f)]
         return (min(ts, key=lambda e: b.gap(f, e)) if ts else None), None
     if mode in ("ally", "downed_ally", "dead_ally"):
         ts = b.spell_targets(f, sid)
@@ -125,7 +125,7 @@ def test_each_spell_is_cast_in_a_real_fight(tables, sid):
     my_turn(b, f)
     sp = tables.spells[sid]
     target, point = aim(b, f, sid)
-    if sp["target"] in ("enemy", "ally", "downed_ally", "bound") and target is None:
+    if sp["target"] in ("enemy", "ally", "creature", "downed_ally", "bound") and target is None:
         pytest.skip(f"{sid}: nobody to aim it at in this scene")
     level = max(1, sp["level"])
     b.cast(f, sid, sp, target, point, up=0, mod=3, dc=14, bonus=6, mult=2, level=level if sp["level"] else 0)
@@ -205,7 +205,7 @@ def test_the_auto_sees_the_worth_of_each_spell(tables, sid):
     if sp["target"] == "bound":
         pytest.skip("a follow-up")
     best = 0.0
-    if sp["target"] in ("enemy", "ally", "downed_ally", "dead_ally"):
+    if sp["target"] in ("enemy", "ally", "creature", "downed_ally", "dead_ally"):
         for t in b.spell_targets(f, sid):
             best = max(best, estimates.spell_value(b, f, sid, target=t).total(care=4.0))
     elif sp["target"] in ("point", "direction"):

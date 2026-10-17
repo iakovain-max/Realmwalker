@@ -102,6 +102,12 @@ Servants (F.4):
                the start of its caster's next turn as `as`, on the caster's side (Finger of Death's zombie:
                Battle.mark_rising, _rise_as_zombies; kept after the fight by rules/servants.after)
 
+Shapes (F.6):
+    shape      forms (creature kinds, or "any"): while the caster concentrates, the target is another creature
+               (Battle.shape: the form's numbers, its own hit points kept, temporary hit points the form's; ends with
+               them, the concentration or the fight); a friend is willing and takes the strongest form, a foe saves
+               (Wisdom) or takes the weakest (rules/shapes.py)
+
 Outside a fight (Part E):
     max_up     amount (dice), per_up, count: the hit point maximum and hit points go up while the spell lasts (Aid;
                rules/spells.raise_max); in a fight too, on up to `count` friends in range
@@ -1272,18 +1278,21 @@ def held_spells(b, x) -> list:
         held = [cid for cid, e in x.cond_ends.items() if e.get("conc") == caster.id] + \
             [se["cond"] for se in x.save_ends if se.get("conc") == caster.id]
         away = x.state == "away" and x.away and x.away.get("by") == caster.id
-        if not held and not away:
+        shaped = x.shape is not None and x.shape.get("by") == caster.id  # (Polymorph: Expansion 3 F.6)
+        if not held and not away and not shaped:
             continue
         sp = b.t.spells[conc["spell"]]
         if sp.get("no_dispel"):
             continue  # (Forcecage: Dispel Magic cannot end it)
 
-        def end(x=x, caster=caster, held=tuple(held), away=away):
+        def end(x=x, caster=caster, held=tuple(held), away=away, shaped=shaped):
             for cid in held:
                 durations.remove(x, cid)
                 x.save_ends = [se for se in x.save_ends if se.get("cond") != cid]
             if away:
                 b.bring_back(x)
+            if shaped:
+                b.unshape(x)
         out.append((int(sp["level"]) + int(conc.get("up", 0)), sp["name"], end, caster.id))
     return out
 
@@ -1448,6 +1457,38 @@ def _ally(c: Cast, o: dict, victim) -> None:
         allies.animate_objects(c.b, c.caster, level, c.point, sid=c.sid)
         return
     allies.summon(c.b, c.caster, o.get("kind", "steed"), level)
+
+
+@op("shape")
+def _shape(c: Cast, o: dict, victim) -> None:
+    """Polymorph, True Polymorph (Expansion 3 F.6): the creature becomes another for as long as the caster
+    concentrates (`forms`: the creature types it may become, or "any"). A friend is willing (no save) and takes the
+    strongest form it may; a foe makes a Wisdom save or takes the weakest (rules/shapes.py chooses)."""
+    from realmwalker.rules import shapes
+
+    b, f = c.b, c.caster
+    x = victim if victim is not None else c.target
+    if x is None or f.concentration is None:
+        return
+    if not shapes.shapeable(x):
+        b.say(f"The spell finds no grip on {x.the_name}.", "system")
+        return
+    kinds = o.get("forms", ["beast"])
+    friend = x.team == f.team
+    if not friend and b._save(x, "wis", c.dc):
+        return
+    cid = shapes.best(b.t, x, kinds) if friend else shapes.worst(b.t, x, kinds)
+    if cid is None:
+        b.say(f"There is no shape {x.the_name} could take.", "system")
+        return
+    was = x.the_name
+    if b.shape(x, cid, by=f, spell=c.sid):
+        b.say(f"<magic>{was[:1].upper() + was[1:]} twists and shrinks and swells into "
+              f"{a_or_an(b.t.creatures[cid]['name'])}.</>", "magic")
+
+
+def a_or_an(words: str) -> str:
+    return ("an " if words[:1].lower() in "aeiou" else "a ") + words
 
 
 @op("rise")

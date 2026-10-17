@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 03 Demigods & Magics · Part F (familiars, steeds and summons), F.6 next · branch dlc/03-demigods-magics
+Current: 03 Demigods & Magics · Part F (familiars, steeds and summons), F.7 next · branch dlc/03-demigods-magics
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -27,10 +27,10 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   (summoned spirits of levels 2-4: Summon Beast, Fey, Undead, Aberration, Construct, Elemental, Giant Insect) and F.3
   (the spirits of levels 5-6 and Animate Objects: Summon Celestial, Summon Dragon, Summon Fiend, Animate Objects) and
   F.4 (the raised dead: Animate Dead, Create Undead, Finger of Death's zombie, the ghast and the mummy) and F.5 (the
-  bound: Planar Ally, Planar Binding, Magic Circle turned inward)
+  bound: Planar Ally, Planar Binding, Magic Circle turned inward) and F.6 (Polymorph and True Polymorph in a fight)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
-  adapted); Expansion 3: 203 done, 320 adapted, 1 omitted of 560 (parts A to E and F.1 to F.5 settled). PHB 61% · DMG 12% · MM 8%
+  adapted); Expansion 3: 203 done, 322 adapted, 1 omitted of 560 (parts A to E and F.1 to F.6 settled). PHB 61% · DMG 12% · MM 8%
 Assumptions waiting for Anton:
 - The Player2 AI writer is removed (tagged `before-ai-removal`); its text is replaced everywhere by the game's own
   words, strengthened where they were thin.
@@ -386,15 +386,32 @@ Ideas for later:
   inward, or one already bound); its orders are only to fight (a Hostile creature's twisting of them left out); a
   bound captive is no longer a captive (no bounty) and runs off when the binding ends. Spirits and the bound heal at
   a long rest (the dead still do not), wait outside towns as the dead do, and never turn on the party.
-Next session starts at: task F.6 in docs/expansions/03-demigods-magics.md (Part F: shapes - Polymorph, True
-Polymorph, Animal Shapes, Shapechange, with the rest of Appendix B as the forms: ape, constrictor snake, crocodile,
-elephant, elk, giant badger, crab, goat, seahorse and weasel, badger, goat, lion, panther, reef shark, tiger, venomous
-snake; imp, quasit, pseudodragon, sprite, sphinx of wonder, slaad tadpole; and the cult fanatic's imp or quasit; Part
-F complete). Write F.6's "How" first; split it at its start if it is too big for one part (the stat blocks and
-pictures through helpers on the sonnet model, numbers checked on the MM page images). Polymorph in a fight changes a
-Fighter's numbers for a while (a form's stat block with temporary hit points in the 2024 text): see how Magic Jar's
-host (`Fighter.jar`) and F.1's `Fighter.cdef` already swap a fighter's numbers.
-Part E and F.1 to F.5 are in `main`.
+- Expansion 3 F.6: Part F split again at its start (F.6 Polymorph and True Polymorph; F.7 the rest of Appendix B's
+  creatures; F.8 Animal Shapes and Shapechange). The game picks the form (the strongest for a friend, the weakest for
+  a foe); the party's own are always willing; a shape ends with the fight (the book: an hour); True Polymorph's
+  lasting form and its objects are left out; a shaped character can still use the Influence actions (anatomy is not
+  checked for speech); while shaped, what the game keeps on a character alone (exhaustion's penalties, Heroic
+  Inspiration, drink and pain) is set aside with it until the shape ends.
+Next session starts at: task F.7 in docs/expansions/03-demigods-magics.md (Part F: the rest of Appendix B - ape,
+badger, constrictor snake, crocodile, elephant, elk, giant badger, giant crab, giant goat, giant seahorse, giant
+weasel, goat, lion, octopus, panther, reef shark, tiger, venomous snake; imp, quasit, pseudodragon, sprite, sphinx of
+wonder, slaad tadpole: stat blocks from the PHB 2024 Appendix B (pages 349-361; numbers checked on the page images:
+`tools/codex/extract.py --render phb 349 361`) and the 2025 MM where it has them, pictures (the Crawl pack through
+tools/build_tiles.py, else drawn in tools/beast_art.py), each a Polymorph or True Polymorph form (rules/shapes.forms
+reads every creature, so they are forms as soon as they exist) and met in the land where it lives (the beasts in
+their biomes' encounter bands, data/creatures.json encounters), and the cult fanatic's imp or quasit. Write F.7's
+"How" first; the stat blocks through two or three helpers on the sonnet model. Keep tests/test_tactics_coverage.py
+green with the new creatures (arena).
+Part E and F.1 to F.6 are in `main`.
+The way of Part F (F.6): a shape is `Battle.shape(f, cid, by=, spell=)`: `Fighter.shape` keeps {char, creature,
+cdef, sq, slots, recharge, by, spell, temp} and the fighter becomes a `Creature` of the form (uid 94000 + id, named
+"X, as a rat") with its own hit points and the form's as temporary ones; `f.char` is None while shaped, so every
+`if f.char` branch reads the form. `Battle.unshape` (from `_apply_hp_loss` when the temporary hit points are gone,
+`_end_concentration` for the caster's shapes, `_kill`, the outcome in `_check_end` and `result()`) writes the hit
+points back. rules/shapes.py: `forms` (any creature but NOT_FORMS, summoned or unique ones), `best`/`worst` by
+`strength`, `challenge` (a character's level). The effects op "shape" {"forms": [...] | "any"}; the spell target
+kind "creature" (friend or foe: `Battle.spell_targets`); `estimates._shape_worth`; battlefx's "shape"/"unshape"
+events redraw the figure. Tests: tests/test_shapes.py.
 The way of Part F (F.5): the bound are F.4's servant records with `form`, `level`, `picture`, `heals` (whole at a
 long rest: `rules/servants.rest` from progression.long_rest) and `bound`; `rules/servants.spirit_def` gives a spirit
 its numbers in each fight (`allies.summon_def` with its master's spell attack and DC) and `is_undead` tells the dead

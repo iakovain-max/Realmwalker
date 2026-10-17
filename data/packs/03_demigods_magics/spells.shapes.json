@@ -1,0 +1,13 @@
+{
+  "_comment": "Expansion 3 part F.6: Polymorph and True Polymorph (the effects op 'shape': Battle.shape, rules/shapes.py). The forms are the creatures the game has; the game picks the strongest for a friend, the weakest for a foe.",
+  "spells": {
+    "polymorph": {"name": "Polymorph", "level": 4, "school": "transmutation", "classes": ["bard", "druid", "sorcerer", "wizard"],
+     "target": "creature", "range": 60, "components": ["V", "S", "M"], "concentration": true, "rounds": 600,
+     "effects": [{"op": "shape", "forms": ["beast"]}],
+     "fx": "curse", "text": "A creature within 60 feet becomes a beast no stronger than itself while you concentrate: a friend the strongest it may be, a foe (on a failed Wisdom save) the weakest. Its hit points stay; the beast's come as temporary ones, and the shape ends when they are gone. No spells in it."},
+    "true_polymorph": {"name": "True Polymorph", "level": 9, "school": "transmutation", "classes": ["bard", "warlock", "wizard"],
+     "target": "creature", "range": 30, "components": ["V", "S", "M"], "concentration": true, "rounds": 600,
+     "effects": [{"op": "shape", "forms": "any"}],
+     "fx": "curse", "text": "A creature within 30 feet becomes any creature no stronger than itself while you concentrate: a friend the strongest it may be, a foe (on a failed Wisdom save) the weakest. Its hit points stay; the form's come as temporary ones, and the shape ends when they are gone. No spells in it."}
+  }
+}

@@ -248,6 +248,8 @@ def spell_value(b, f, sid: str, *, target=None, point=None, dc: int | None = Non
                 w.control += threat(target) * min(4.0, 1.0 / p_out)
             else:
                 w.control += 3.0 * threat(target)
+        elif kind == "shape" and target is not None:  # (Polymorph: Expansion 3 F.6)
+            w.control += _shape_worth(b, f, o, target, dc)
         elif kind == "time_stop":  # (Time Stop: turns of one's own, to heal, ward and set the field)
             hurt = f.hp < f.max_hp * 0.6
             near = any(b.gap(f, e) <= 2 for e in b.enemies_of(f) if e.standing)
@@ -313,6 +315,34 @@ def spell_value(b, f, sid: str, *, target=None, point=None, dc: int | None = Non
             w.damage, w.control, w.kills = (w.damage * (1 + 0.8 * extra), w.control * (1 + 0.8 * extra),
                                             w.kills * (1 + extra))
     return w
+
+
+def _shape_worth(b, f, o: dict, target, dc: int) -> float:
+    """Polymorph's worth: a foe's threat taken away for as long as its form lasts (times the chance it fails its
+    save); a friend made stronger than it is (the form's blows and temporary hit points over its own)."""
+    from realmwalker.rules import shapes
+
+    if not shapes.shapeable(target):
+        return 0.0
+    kinds = o.get("forms", ["beast"])
+    if target.team != f.team:
+        cid = shapes.worst(b.t, target, kinds)
+        if cid is None:
+            return 0.0
+        left = threat(target) * max(0.0, 1.0 - shapes.strength(b.t, cid) / max(1.0, 3.0 * threat(target) + 40.0))
+        return 3.0 * left * fail_chance(b, target, "wis", dc)
+    if target.char is None:
+        return 0.0
+    cid = shapes.best(b.t, target, kinds)
+    if cid is None:
+        return 0.0
+    form = b.t.creatures[cid]
+    gain = shapes.form_hp(b.t, cid) / 10.0 + max(0.0, shapes.strength(b.t, cid) - 3.0 * threat(target) - 40) / 20.0
+    casts = spellrules.is_caster(target.char, b.t)  # (a caster loses its spells while in the form)
+    if casts and target is f:
+        return 0.0  # (a caster would give up every spell it has to be a bear: the Auto never does)
+    near = any(b.gap(target, e) <= 2 for e in b.enemies_of(f) if e.standing)
+    return gain * (1.5 if near else 1.0) * (0.3 if casts else 1.0) + (0.5 if form.get("speeds", {}).get("fly") else 0)
 
 
 def _save_part(b, f, o: dict, caught: list, target, dc: int, up: int, mult: int, w: Worth) -> None:
