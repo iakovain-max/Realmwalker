@@ -526,7 +526,7 @@ def rod_button(c, o, victim) -> None:
         it.magic["form"] = form
     else:
         it.magic.pop("form", None)
-    b._event("rearm", who=f.id)
+    b._event("arms_form", who=f.id, what={"flame": "flaming blade", "axe": "axe", "spear": "spear"}.get(form, "mace"))
     b.say(f"{ROD_WORDS[form]} <dim>({f.name})</>", "magic")
 
 
@@ -582,7 +582,7 @@ def cane_turn(c, o, victim) -> None:
     if it is None:
         return
     it.magic["form"] = o.get("form", "sword")
-    b._event("rearm", who=f.id)
+    b._event("arms_form", who=f.id, what="sword" if it.magic["form"] == "sword" else "cane")
     b.say(f"{f.the_name} gives the cane a twist: it is a longsword." if it.magic["form"] == "sword" else
           f"{f.the_name} gives the sword a twist: it is a walking cane again.", "magic")
 

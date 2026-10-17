@@ -318,6 +318,15 @@ class BattleBoard:
                             "t0": max(t, self._impact) + 0.05, "dur": FLOAT, "size": 14, "low": False})
             self.fx.append({"kind": "ring", "who": ev["who"], "t0": t, "dur": 0.35, "color": (170, 200, 236)})
             return t
+        if k == "arms_form":  # (the Rod of Lordly Might's buttons, the Veteran's Cane's twist: what it is now)
+            self.fx.append({"kind": "float", "who": ev["who"], "text": str(ev.get("what", "")), "color": (236, 200, 120),
+                            "t0": max(t, self._impact) + 0.05, "dur": FLOAT, "size": 14, "low": False})
+            return t
+        if k == "behead":  # (a Vorpal Sword's stroke)
+            self.fx.append({"kind": "float", "who": ev["who"], "text": "beheaded", "color": (236, 90, 80),
+                            "t0": max(t, self._impact) + 0.15, "dur": FLOAT, "size": 16, "low": False})
+            self.shake_until = max(self.shake_until, max(t, self._impact) + 0.2)
+            return t
         if k == "concentration_end":
             self.fx.append({"kind": "float", "who": ev["who"], "text": "concentration broken", "color": (200, 170, 255),
                             "t0": max(t, self._impact) + 0.15, "dur": FLOAT, "size": 13, "low": True})
