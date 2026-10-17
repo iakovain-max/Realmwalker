@@ -29,7 +29,12 @@ SEEDS = 2
 MORE_SEEDS = 5  # tried while an option has not been chosen yet
 
 # "creature/option": why the arena's scenarios do not bring it out. Empty: everything is used.
-NOT_CHOSEN: dict[str, str] = {}
+NOT_CHOSEN: dict[str, str] = {
+    # (Light is worth casting only where the side cannot see its foes; every arena field is lit. It is cast in the
+    # dark in tests/test_spells_road2.py.)
+    "acolyte/cast:light": "every arena field is lit",
+    "cult_fanatic/cast:light": "every arena field is lit",
+}
 
 # What the tactics do through these must never be refused (a False back means they tried what the rules forbid).
 TRIED = ("do_attack", "do_offhand", "do_move", "do_fly", "do_leave", "attack_object", "creature_cast")

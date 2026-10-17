@@ -289,9 +289,14 @@ def _hurt(game, rng) -> list[str]:
 
 
 def _arrive(game, x: int, y: int) -> None:
-    """Set the party down at (x, y) on the big map, as the coaches do."""
+    """Set the party down at (x, y) on the big map, as the coaches do (out of a dungeon too: magic needs no stairs)."""
     if game.in_local:
-        game.leave_local()
+        if game.local is not None and game.local.kind == "dungeon":
+            game.player.local_key = None  # (leave_local would send you to the stairs first)
+            game.sneaking = False
+            game.dirty = True
+        else:
+            game.leave_local()
     p = game.player
     prev = game.world.area_at(p.x, p.y)
     p.x, p.y = x, y

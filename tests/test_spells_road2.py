@@ -461,6 +461,19 @@ def test_teleport_by_the_table_of_familiarity(world, tables):
     assert 3 <= hp - wiz.hp <= 30 or not wiz.alive or wiz.hp == 1
 
 
+def test_teleport_from_deep_under_the_ground(world, tables):
+    wiz = hero(tables)
+    game = game_with(world, tables, wiz)
+    into_dungeon(game)
+    assert game.in_local and game.local.kind == "dungeon"
+    far = _visited(game)[0]
+    game.player.known_settlements.add(far.id)
+    pl = next(p for p in magic.road_targets(game, wiz, "teleport") if p.sid == far.id)
+    cast(game, wiz, "teleport", pl)
+    assert not game.in_local and game.local is None, "out of the dungeon and onto the big map"
+    assert math.hypot(game.player.x - far.x, game.player.y - far.y) <= 9 or not wiz.alive or game.over is not None
+
+
 def test_teleportation_circle_and_word_of_recall(world, tables, monkeypatch):
     wiz = hero(tables)
     game = game_with(world, tables, wiz)
