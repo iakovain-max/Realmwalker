@@ -3349,8 +3349,8 @@ class Battle:
         sc = f.cdef.get("spellcasting", {})
         for sid in f.cdef["spells"]:
             spell = self.t.spells.defs.get(sid)
-            if spell is None or spell.get("cast") == "reaction":
-                continue
+            if spell is None or spell.get("cast") == "reaction" or spellrules.out_of_battle(spell):
+                continue  # (Thaumaturgy and the like on a stat block: their use is outside a fight)
             level = spell["level"]
             per_day = self._per_day(f, sid)
             if per_day is not None:

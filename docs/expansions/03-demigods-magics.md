@@ -239,7 +239,7 @@ system is built once and every spell that uses it comes with it.
     next fight hurt). Rary's Telepathic Bond: while it lasts no one in the party is surprised unless all are. Detect
     Thoughts in a fight senses thinking creatures within 30 feet (the invisible and the hidden found); outside one it
     reads a person near you (Wisdom save): what they feel about you, and a work's hidden side if they gave it.
-- [ ] E.4 Minds and the law, disguise and illusion, the small arts (27 spells). The old E.4 was split in two at its
+- [x] E.4 Minds and the law, disguise and illusion, the small arts (27 spells). The old E.4 was split in two at its
   start (2026-10-17): 54 spells and Wish in seven groups were too many for one part; the spells of townsfolk and the
   law (minds, disguise and illusion, the small arts) are E.4, locks and stone, weather and land, lasting protections
   and great magic became E.5. Minds and the law: friends, enthrall, zone of truth, geas, modify memory, glibness,
@@ -263,8 +263,8 @@ system is built once and every spell that uses it comes with it.
     honest one is known honest. Geas (a person, Wisdom save; 30 days, a year from level 7, until ended at 9): they
     obey: they keep silent about every crime of yours they saw, tell what they want and what they hide, and stay
     Friendly; a guard under it never lays hands on you; when it ends they know (-40). Modify Memory (a person,
-    Wisdom save): they forget the last day: the crimes of yours they saw (unreported ones are silenced; their word
-    is withdrawn from a report not yet acted on) and any grudge from it (their mood back to indifferent at worst).
+    Wisdom save): they forget the last day: the crimes of yours they saw and not yet reported (silenced; a report
+    already made stands), the casting itself, and any grudge from it (their mood back to indifferent at worst).
     Glibness (an hour): every Charisma check's die is at least 15 (conversations, bribes, disguise, haggling).
     Antipathy/Sympathy (an hour to cast, 10 days, on the caster): a kind of creature (an encounter group) is chosen;
     a band of that kind met on the road makes Wisdom saves: Antipathy sends it fleeing if most fail, Sympathy brings
