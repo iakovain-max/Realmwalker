@@ -76,11 +76,11 @@ ball.
   test in a real fight each; Part A to `main`.
 
 ### Part B — The Light and the Trickery Domains; the gods
-- [ ] B.1 Data: both domains, their spells, traits and Channel Divinity uses.
-- [ ] B.2 Warding Flare and its improvement, Radiance of the Dawn, Corona of Light.
-- [ ] B.3 Blessing of the Trickster, Invoke Duplicity (the double as a Token), Transposition, Improved Duplicity.
-- [ ] B.4 The faiths' domains and divine intervention for the devout (DMG 78–79).
-- [ ] B.5 Tactics, pictures (the flare, the dawn, the corona, the double), cards, icons; 13 codex entries + 2 DMG
+- [x] B.1 Data: both domains, their spells, traits and Channel Divinity uses.
+- [x] B.2 Warding Flare and its improvement, Radiance of the Dawn, Corona of Light.
+- [x] B.3 Blessing of the Trickster, Invoke Duplicity (the double as a Token), Transposition, Improved Duplicity.
+- [x] B.4 The faiths' domains and divine intervention for the devout (DMG 78–79).
+- [x] B.5 Tactics, pictures (the flare, the dawn, the corona, the double), cards, icons; 13 codex entries + 2 DMG
   rules; Part B to `main`.
 
 ### Part C — Mages and priests of the world

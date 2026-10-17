@@ -595,6 +595,14 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   (`grid.Field.without`); seen through by `do_search` (Investigation vs the DC) or by walking in; never over a
   creature. A spell may keep a road op beside battle ops (Minor Illusion, Silent Image, Major Image). `cast_kind`
   is the caster's casting time (the options read it). tests/test_schools.py.
+- The Light and Trickery Domains, the gods (Expansion 5 Part B): `rules/engine/handlers/domains.py`. Warding Flare
+  from `Battle._attack` (judged; asked under Reactions "all"); Radiance of the Dawn a "power"; the corona a buff read
+  by `query.save_roll` (`domains.corona_against`, `Battle._dawn`, `Battle._casting_spell`). The Trickster's blessing is
+  the mark `kept:trickster_blessing` (`domains.blessed` on every Stealth roll; `bless_after_rest` from `fight.rest`).
+  The double is a Token kind "duplicity": `Battle.spell_targets`/`spell_points` add what it reaches, `do_cast` wraps
+  `_do_cast` in `domains.standing_in`; `domains.distracted` in `query.attack_roll`. Faiths name their `domains`
+  (data/factions.json; `progression.faith_domain`); the dying devout may be answered: `game/gods.py` fills
+  `Battle.prayers`, `rules/miracles.answer` from `Battle._kill`, `gods.after_battle` remembers it. tests/test_domains.py.
 - Gear and tools 2024 (Expansion 2 part D): items.json `pack` (opens into its contents, gear.open_pack), `helps`
   {search, traps, force, disguise} (dungeon.helps, law.put_on_disguise), `utilize` (a tool's 2024 uses, on its card),
   `carry` also on carried containers (each kind once, Sheet.pack_carry), `trinket` (data/trinkets.json; the name and
