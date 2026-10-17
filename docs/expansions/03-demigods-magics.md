@@ -464,12 +464,75 @@ stat block now comes with the spell that brings it into play (never a block that
   Elemental and Giant Insect, with their stat blocks, pictures and the costly components.
 - [x] F.3 Summoned spirits, levels 5-6: Summon Celestial, Summon Dragon (Shared Resistances, Breath Weapon), Summon
   Fiend (Death Throes) and Animate Objects (several creatures at once, commanded with the caster's Bonus Action).
-- [ ] F.4 The dead and the bound: Animate Dead, Create Undead, Finger of Death's zombie, Planar Ally, Planar Binding
-  (and Magic Circle reversed): servants that outlast a fight and must be held again.
-- [ ] F.5 Shapes: Polymorph, True Polymorph, Animal Shapes, Shapechange, with the rest of Appendix B (ape,
+- [ ] F.4 The dead (split at its start, 2026-10-17: the bound go to F.5): servants that outlast a fight - Animate
+  Dead (skeletons and zombies), Create Undead (ghouls, ghasts, wights, mummies) and Finger of Death's zombie; the
+  ghast and the mummy with their stat blocks and pictures; commanded with the Bonus Action, held again each day or
+  they go free.
+- [ ] F.5 The bound: Planar Ally (a spirit of the cleric's god for a price by the hour or day), Planar Binding (a
+  captive celestial, elemental, fey or fiend, or a Planar Ally's spirit, bound for a day to a year) and Magic Circle
+  turned inward (a spirit that will not stay to be bound is held in it), on F.4's servants.
+- [ ] F.6 Shapes: Polymorph, True Polymorph, Animal Shapes, Shapechange, with the rest of Appendix B (ape,
   constrictor snake, crocodile, elephant, elk, giant badger, crab, goat, seahorse and weasel, badger, goat, lion,
   panther, reef shark, tiger, venomous snake; imp, quasit, pseudodragon, sprite, sphinx of wonder, slaad tadpole) as
   the forms, and the cult fanatic's imp or quasit; Part F complete.
+
+#### F.4 — How
+- **A servant** is a creature that serves a party member beyond one fight. Its record lives on its master, in
+  `char.spells["servants"]` (saved with the character): a list of {id, cid (its creature), name, hp, max_hp, spell,
+  word (it acts only when commanded), reach (feet the command carries: 60, or 120 for Create Undead's), until (the
+  world minute its control ends; none: for ever), made, uses}. `rules/servants.py` (pure rules) adds and finds them,
+  brings them into a fight beside their master (`bring_in`, from fight.start_battle with the familiar and the steed;
+  bond kind "servant"), writes back what became of them (`after`: hit points kept, the destroyed struck off) and
+  holds at most twelve to a master (the wight's own number; the book has no cap, the battle needs one). They earn no
+  XP, their kills are their master's, they never run, and they do not keep a lost fight going (F.1's rules for
+  allies). The undead do not eat, sleep or heal: what a fight takes from them stays taken.
+- **Commanding**: F.3's Bonus Action becomes "Command your servants" (`Battle.command_objects`, ability id
+  "command_objects"; called "Command the dead" when only undead answer, as before for the objects alone): every
+  animated object and every servant with `word` within its reach of its master acts on its next turn; the others take
+  the Dodge action as their turn begins (`Battle._waits_for_word`). The Auto commands whenever a foe stands.
+- **Animate Dead** (level 3, a minute, outside a fight: road op "raise", how "dead"): a corpse becomes a zombie and a
+  pile of bones a skeleton. Corpses are the Medium or Small humanoids among the fresh dead of the last fight, where it
+  was fought (`game.fresh_dead`, kept for Speak with Dead; each body is used once); bones are the skeletons destroyed
+  in that fight, or the old bones of a crypt's level underground (six piles on each such level, `lm.meta["bones"]`).
+  One creature, two more for each slot above 3 (as many as there are bodies); or the same casting holds again up to
+  four of the caster's Animate Dead servants (two more a slot above 3) for another 24 hours. Each choice is a Subject
+  on the Spells page ("raise the dead here: three zombies", "hold your dead for another day: four"). A command
+  carries 60 feet.
+- **Create Undead** (level 6, a minute, only at night: how "ghouls"): up to three corpses become ghouls (four at slot
+  7; five ghouls, or two ghasts or wights, at 8; six ghouls, three ghasts or wights, or two mummies at 9), each corpse
+  needing a black onyx stone of 150 GP (kept, not used up; a new item sold in cities). Or the casting holds again as
+  many of the caster's Create Undead servants for another 24 hours. A command carries 120 feet.
+- **Going free**: when a servant's 24 hours pass unheld (`game/servants.tick`, from pass_time), it stops obeying.
+  Out in the land, with nothing else under way, the freed dead turn on their maker: a fight begins with them (an
+  encounter "the dead you raised", hostile, seen coming). Anywhere else (a town, a fight, an encounter already
+  waiting) they shamble off into the dark and are gone. The game warns two hours before ("The dead grow restless:
+  their hold on them ends in two hours").
+- **Finger of Death** (in the catalogue since D.3): a humanoid killed by it rises at the start of its caster's next
+  turn as a zombie on the caster's side (`Battle._rise_as_zombies`, from the turn's start; the effects op "rise"
+  {"as": "zombie", "types": ["humanoid"]} marks the body). It follows its maker's spoken orders: no Bonus Action is
+  needed (bond `word` False; the player plays it, z: the Auto). After the fight a party caster keeps it as a servant
+  for ever (until none); a foe's zombie goes with the fight.
+- **The dead and other people**: servants follow the party in the wild and underground (drawn behind it, as the
+  familiar is: localview), but never come into a settlement's close-up map: they wait outside its walls, are in none
+  of its fights, and fall in behind again when the party leaves (`servants.here`). Raising the dead is "desecration"
+  to companions (the devout hate it: `companions.react`); casting where people see falls under the realm's magic law
+  as every spell does.
+- **The ghast** (MM 2025 p. 130: AC 13, 36 hit points, Stench DC 10, Bite 1d8 + 3 and 2d8 necrotic, Claw 2d6 + 3
+  with a DC 10 Constitution save or Paralyzed) and **the mummy** (p. 219: AC 11, 58 hit points, Speed 20, vulnerable to
+  fire, Multiattack two Rotting Fists (1d10 + 3 and 3d6 necrotic, cursed) and the Dreadful Glare (DC 11 Wisdom or
+  Frightened)): stat blocks in the pack (`statblocks.allies.json`), traits "stench" (a turn-start emanation, a
+  creature that saves is spared it for the fight) and "mummy_rot" (Rotting Fist's curse: in a fight the target cannot
+  regain hit points, and a creature brought to 0 by the fist dies and turns to dust; on a party member afterwards the
+  curse stays, `char.effects["mummy_rot"]`: no healing and the hit point maximum 3d6 lower each day until Remove
+  Curse or Greater Restoration lifts it; read by survival's day and by `spells.lower_max`). The Glare's 24-hour
+  immunity is kept for the fight. Pictures: the Crawl pack's necrophage (the ghast) and its mummy.
+- **Tests** (tests/test_servants.py): Animate Dead on the fresh dead and on a crypt's bones, the numbers by slot,
+  holding again, going free (the fight, and gone in a town); Create Undead at night only, by slot, the onyx stones;
+  servants brought into a fight, waiting without a word, commanded by the player and the Auto, the reach; Finger of
+  Death's zombie rising, fighting, kept afterwards; the ghast's Stench and Claw, the mummy's Glare and curse (the dust,
+  the lasting curse lifted by Remove Curse); the dead waiting outside a town. The arena fights the ghast and the
+  mummy; the autoplay bot checks every servant record (a living creature id, hit points within the maximum, at most
+  twelve).
 
 #### F.3 — How
 - **The three spirits** are F.2's summoning ({"op": "ally", "kind": "summon"}, `allies.summon_spirit`, numbers by
