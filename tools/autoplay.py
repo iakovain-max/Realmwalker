@@ -662,6 +662,20 @@ def _check_magic(game, fail) -> None:
             fail(f"{c.name} has {len(war_bond.bonds(c))} bonded weapons")
         if c.spells and len(spellrules.prepared(c, game.tables)) > spellrules.prepared_count(c, game.tables):
             fail(f"{c.name} has more spells prepared than the table allows")
+    # Steel & Shadows Part C: a duel is a fight in progress, a masked potion is a potion of healing, a poison's DC
+    # is a number (rules/poisons.py, game/shadows.py)
+    if game.renown.flags.get("duel") is not None and game.battle is None and game.aftermath is None:
+        fail("a duel of honour outlived its fight")
+    from realmwalker.rules import poisons
+
+    for it in pack.values():
+        real = poisons.masked(it)
+        if real is not None and (real not in game.tables.items or it.def_id != "potion_healing"):
+            fail(f"a masked thing that is not a healing draught ({it.def_id} hiding {real})")
+        if it.def_id in game.tables.items and game.tables.items.get(it.def_id).get("poison"):
+            rec = poisons.of_item(game.tables, it)
+            if rec is None or not isinstance(rec.get("dc"), int):
+                fail(f"a poison without a proper save ({it.def_id})")
     owners: dict[int, int] = {}
     for c in game.party:
         for uid in c.attuned:
