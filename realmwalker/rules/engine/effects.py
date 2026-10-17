@@ -109,6 +109,10 @@ def cast(b, f, sid: str, spell: dict, target, point, *, up: int, mod: int, dc: i
         b.say(f"{f.the_name}: <magic>{spell['name']}</>.", "magic")
     else:
         b.say(f"{f.the_name} casts <magic>{spell['name']}</>.", "magic")
+    if not spell.get("ability"):
+        from realmwalker.rules.engine import marks
+
+        marks.acted(b, f)  # (Invisibility ends with a casting)
     if spellrules.harms(spell) or spell.get("smite_with"):
         from realmwalker.rules.engine import marks
 
@@ -360,8 +364,11 @@ def _roll(c: Cast, e: str, dtype: str) -> int:
 @op("damage")
 def _damage(c: Cast, o: dict, victim) -> None:
     """Damage without a roll to hit or a save (it has already landed)."""
+    victim = victim or c.target  # (at the top of a spell: its target; Witch Bolt's later bolts)
     if o.get("max_size") and victim is not None and not statblocks.size_at_most(victim.size, o["max_size"]):
         return
+    if victim is not None and not _allowed(o, victim):
+        return  # (Divine Smite's more against fiends and undead)
     if o.get("charge_feet") and c.caster.moved_feet < int(o["charge_feet"]):
         return  # only after a charge (a boar's Gore)
     if victim is not None and (victim.active or victim.state == "down"):
@@ -605,6 +612,12 @@ def filled(c: Cast, buff: dict) -> dict:
             v = c.sid
         elif v == "$mult":
             v = c.mult
+        elif v == "$foe_type":  # (Resistance: the kind of harm the foes here deal most)
+            from collections import Counter
+
+            seen = Counter(o.damage_type for e in c.b.enemies_of(c.caster) for o in c.b.attack_options(e)
+                           if o.damage_type)
+            v = seen.most_common(1)[0][0] if seen else "slashing"
         elif v == "$up":
             v = c.up
         elif v == "$level":
@@ -619,7 +632,8 @@ def _temp_hp(c: Cast, o: dict, victim) -> None:
     x = victim or (c.caster if c.spell["target"] == "self" else c.target)
     if x is None or not x.active:
         return
-    amount = dice.roll(expr(c, str(o["amount"]), str(o.get("up", ""))), c.b.rng).total         + (max(0, c.mod) if o.get("add_mod") else 0)
+    amount = dice.roll(expr(c, str(o["amount"]), str(o.get("up", ""))), c.b.rng).total \
+        + (max(0, c.mod) if o.get("add_mod") else 0)
     if o.get("per_up"):
         amount += int(o["per_up"]) * c.up
     if amount > x.temp_hp:
@@ -790,9 +804,12 @@ def _zone(c: Cast, o: dict, victim) -> None:
              damage=expr(c, dmg[0][0], dmg[0][2]) if dmg else "", damage_type=dmg[0][1] if dmg else "",
              on_save="half" if o.get("half") else "none", centre=c.point)
     b._add_zone(z)
-    if o.get("catch"):
+    if o.get("catch"):  # (whoever stands there as it appears: caught, or hurt)
         for x in b.in_area(c.area, spell.get("affects", "all"), f):
-            b._zone_catch(x, z)
+            if z.holds or z.kind == "grease":
+                b._zone_catch(x, z)
+            elif x is not f or not z.damage:
+                b._zones_on(x, start=False)
 
 
 @op("aura")

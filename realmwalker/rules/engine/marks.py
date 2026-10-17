@@ -9,6 +9,8 @@ On the one marked (the buff is on the creature):
     sanctuary       DC: an enemy attacking it makes a Wisdom save first or loses the attack (Sanctuary); ends when the
                     warded one attacks or casts at an enemy
     images          duplicates left: a hit lands on one of them on a d6 of 3 or more (Mirror Image)
+    until_act       a condition ("invisible") that ends, with the mark, when it attacks or casts (Invisibility)
+    soak            dice (with soak_type): taken off damage of that type, once a turn (Resistance)
     ac_floor        its Armor Class is at least this (Barkskin)
     retaliate       damage (with retaliate_type) to whoever hits it in melee while it has temporary hit points
                     (Armor of Agathys)
@@ -47,7 +49,7 @@ BUFF_KEYS = frozenset({
     "retaliate_type", "bond", "quarry", "quarry_type", "by", "dot", "dot_type", "dot_at", "dot_once", "dot_save",
     "dot_name", "dc", "repeat", "heroism", "immune", "save_bonus", "weak", "damage_die", "duel", "maddened",
     "hit_extra", "hit_type", "hit_with", "weapon_plus", "smite", "smite_with", "up", "mod", "level", "once", "traits",
-    "shillelagh", "tier",
+    "shillelagh", "tier", "until_act", "soak", "soak_type", "soak_turn",
 })
 ZONES = frozenset({"web", "fire", "fog", "ice", "caltrops", "bearings", "darkness", "antimagic", "plants", "grease",
                    "spikes", "daggers", "moonbeam", "sphere", "silence"})
@@ -104,6 +106,18 @@ def sanctuary_stops(b, att, target) -> bool:
 
 def end_sanctuary(f) -> None:
     f.buffs = [bf for bf in f.buffs if not bf.get("sanctuary")]
+
+
+def acted(b, f) -> None:
+    """Invisibility (2024): it ends on the one it hides when they attack, deal damage or cast a spell."""
+    gone = [bf for bf in f.buffs if bf.get("until_act")]
+    if not gone:
+        return
+    f.buffs = [bf for bf in f.buffs if not bf.get("until_act")]
+    for bf in gone:
+        if bf["until_act"] in f.conditions:
+            f.conditions.pop(bf["until_act"], None)
+            b.say(f"{f.the_name} flickers back into sight.", "system")
 
 
 def image_takes_it(b, att, target) -> bool:
@@ -194,6 +208,17 @@ def after_hit(b, att, target, opt) -> None:
             b._hit(target, att, int(bf["retaliate"]), bf.get("retaliate_type", "cold"), crit=False,
                    weapon="armour of frost")
             return
+
+
+def soaked(b, target, amount: int, dtype: str) -> int:
+    """Resistance (2024): damage of the chosen type is cut by a die, once a turn."""
+    for bf in target.buffs:
+        if bf.get("soak") and bf.get("soak_type") == dtype and bf.get("soak_turn") != (b.round, b.turn) and amount > 0:
+            bf["soak_turn"] = (b.round, b.turn)
+            cut = dice.roll(str(bf["soak"]), b.rng).total
+            b.note_roll(f"Resistance: {cut} off")
+            return max(0, amount - cut)
+    return amount
 
 
 def shared(b, target, amount: int) -> None:

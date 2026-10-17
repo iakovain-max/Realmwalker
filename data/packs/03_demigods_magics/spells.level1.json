@@ -1,0 +1,141 @@
+{
+ "_comment": "Expansion 3 part D.1: level 1 spells of the 2024 Player's Handbook (docs/expansions/03-demigods-magics.md).",
+ "spells": {
+  "ice_knife": {
+   "name": "Ice Knife",
+   "level": 1,
+   "school": "conjuration",
+   "classes": [
+    "druid",
+    "sorcerer",
+    "wizard"
+   ],
+   "target": "enemy",
+   "range": 60,
+   "components": [
+    "S",
+    "M"
+   ],
+   "effects": [
+    {
+     "op": "attack",
+     "attack": "ranged",
+     "damage": "1d10",
+     "type": "piercing",
+     "after": [
+      {
+       "op": "save",
+       "ability": "dex",
+       "around": 5,
+       "damage": "2d6",
+       "type": "cold",
+       "up": "1d6"
+      }
+     ]
+    }
+   ],
+   "fx": "bolt",
+   "text": "A shard of ice flung at a foe up to 60 feet away; hit or miss it bursts, and everyone within five feet of it must dodge the cold. Each higher slot adds 1d6 cold."
+  },
+  "witch_bolt": {
+   "name": "Witch Bolt",
+   "level": 1,
+   "school": "evocation",
+   "classes": [
+    "sorcerer",
+    "warlock",
+    "wizard"
+   ],
+   "target": "enemy",
+   "range": 60,
+   "components": [
+    "V",
+    "S",
+    "M"
+   ],
+   "concentration": true,
+   "rounds": 10,
+   "effects": [
+    {
+     "op": "attack",
+     "attack": "ranged",
+     "damage": "2d12",
+     "type": "lightning",
+     "up": "1d12"
+    }
+   ],
+   "again": {
+    "name": "Witch Bolt: the arc again",
+    "cast": "bonus",
+    "target": "bound",
+    "range": 60,
+    "effects": [
+     {
+      "op": "damage",
+      "damage": "1d12",
+      "type": "lightning"
+     }
+    ],
+    "text": "While the spell holds, a bonus action sends the lightning into the same creature again: 1d12, no roll."
+   },
+   "fx": "ray",
+   "text": "A crackling beam binds you to one creature up to 60 feet away (concentration). Each later turn a bonus action burns it again for 1d12, even if the first beam missed. Each higher slot adds 1d12 to the first."
+  },
+  "searing_smite": {
+   "name": "Searing Smite",
+   "level": 1,
+   "school": "evocation",
+   "classes": [
+    "paladin"
+   ],
+   "target": "self",
+   "range": "self",
+   "cast": "bonus",
+   "components": [
+    "V"
+   ],
+   "rounds": 10,
+   "battle_only": true,
+   "effects": [
+    {
+     "op": "modifier",
+     "rounds": 10,
+     "buff": {
+      "smite": "$spell",
+      "up": "$up",
+      "dc": "$dc",
+      "mod": "$mod",
+      "level": "$level",
+      "smite_with": "melee"
+     }
+    }
+   ],
+   "on_hit": [
+    {
+     "op": "damage",
+     "damage": "1d6",
+     "type": "fire",
+     "up": "1d6"
+    },
+    {
+     "op": "modifier",
+     "rounds": 10,
+     "per_up": {
+      "dot": "1d6"
+     },
+     "buff": {
+      "dot": "1d6",
+      "dot_type": "fire",
+      "dot_at": "start",
+      "dot_save": "con",
+      "dc": "$dc",
+      "by": "$caster",
+      "dot_name": "searing flames"
+     }
+    }
+   ],
+   "fx": "buff",
+   "text": "Readied on the blade: the next melee hit flares with 1d6 more fire, and the foe burns for 1d6 at the start of each of its turns until it makes a Constitution save. Each higher slot adds 1d6 to both."
+  }
+ }
+}

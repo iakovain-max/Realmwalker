@@ -1965,6 +1965,7 @@ class Battle:
         return p
 
     def _attack(self, att: Fighter, opt: AttackOption, target: Fighter, *, spell_text: str = "") -> bool:
+        marks.acted(self, att)
         if marks.sanctuary_stops(self, att, target):
             return False
         if opt.extra.get("single_save"):
@@ -2377,6 +2378,7 @@ class Battle:
             self.say(f"{target.the_name} does not seem to feel it.", "flavor")
             self._event("immune", to=target.id, by=att.id if att else None)
             return
+        amount = marks.soaked(self, target, amount, dtype)  # (the Resistance cantrip)
         if att is not None:
             amount = events.emit(self, "damage_incoming", actor=att, target=target, stage="blow", amount=amount,
                                  dtype=dtype).amount  # Uncanny Dodge...
@@ -2807,7 +2809,8 @@ class Battle:
             dx = 0 if abs(tx - sx) < 0.5 else (-1 if tx > sx else 1)
             dy = 0 if abs(ty - sy) < 0.5 else (-1 if ty > sy else 1)
             nx, ny = x + dx, y + dy
-            if (dx, dy) == (0, 0) or not self.field.fits(nx, ny, target.sq)                     or any(c in occ for c in grid.cells(nx, ny, target.sq)):
+            if (dx, dy) == (0, 0) or not self.field.fits(nx, ny, target.sq) \
+                    or any(c in occ for c in grid.cells(nx, ny, target.sq)):
                 break
             path.append((nx, ny))
             x, y = nx, ny
@@ -3233,8 +3236,9 @@ class Battle:
             spell = self.t.spells[sid]
             if ok and spell["target"] == "self" and sid in spellrules.lasting(f.char, self.t):
                 ok, why = False, "already working on you"
-            if ok and spellrules.has_op(spell, "identify"):
-                ok, why = False, "not in a fight"
+            if ok and (spellrules.has_op(spell, "identify") or spell.get("minutes")):
+                ok, why = False, "not in a fight" if not spell.get("minutes") else \
+                    f"it takes {spell['minutes']} minutes to cast: not in a fight"
             if ok and spell.get("cast") == "reaction":
                 ok, why = False, ("a reaction: cast by itself when a foe nearby casts a spell" if sid == "counterspell"
                                   else "a reaction: cast by itself when a blow would land")
@@ -3248,6 +3252,7 @@ class Battle:
         for it in f.char.inventory:  # (a scroll: on the reader's spell list, or a thief's Use Magic Device)
             sid = self.t.items.get(it.def_id).get("use", {}).get("scroll")
             if sid in self.t.spells and not spellrules.has_op(self.t.spells[sid], "revive", "identify") \
+                    and not self.t.spells[sid].get("minutes") \
                     and self.t.spells[sid].get("cast") != "reaction":
                 why = spellrules.scroll_problem(f.char, self.t, sid)
                 ok = not why

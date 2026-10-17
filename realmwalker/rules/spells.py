@@ -606,7 +606,10 @@ def buff_at(m: dict, level: int | None, spell: dict) -> dict:
     out = dict(m["buff"])
     up = max(0, int(level or spell["level"]) - int(spell["level"]))
     for k, more in (m.get("per_up") or {}).items():
-        out[k] = int(out.get(k, 0)) + int(more) * up
+        if isinstance(more, str):  # dice: "1d6" more for each level above (Searing Smite's burning)
+            out[k] = scaled(str(out.get(k, "0")), more, up)
+        else:
+            out[k] = int(out.get(k, 0)) + int(more) * up
     for k, steps in (m.get("by_level") or {}).items():
         reached = [int(lv) for lv in steps if int(lv) <= int(level or spell["level"])]
         if reached:
