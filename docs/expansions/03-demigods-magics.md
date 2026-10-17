@@ -848,7 +848,27 @@ stat block now comes with the spell that brings it into play (never a block that
   the arena's coverage test with the new creatures; the autoplay bot checks every follower's record.
 
 ### Part G — Enemy casters, services, release
-- [ ] G.1 Every caster stat block on the catalogue; arena: every battle spell cast by the AI in a scenario; a test
+- [x] G.1 Every caster stat block on the catalogue; arena: every battle spell cast by the AI in a scenario; a test
   caster of each spell level 1–9 casts without hangs.
 - [ ] G.2 Spellcasting services and scrolls in temples, mages' guilds and shops; the law of magic.
 - [ ] G.3 Every Expansion 3 codex entry settled; balance; the icon; release v1.3.0.
+
+#### G.1 — How
+- **The casters there are.** Today's stat blocks that cast (the acolyte, the cult fanatic; the imp, quasit and sprite's
+  Invisibility; the summoned spirits' and the steed's gifts) name only catalogue spells, and the 2025 Monster Manual
+  gives the sphinx of wonder none. The book's great casters (the Mage, Priest, Archmage, Lich, Druid...) are assigned
+  by the codex to the expansions of their classes and peoples (5, 11, 18...): they come there, on this. A start-up
+  check (`engine/check.problems`) refuses a stat block naming a spell that no spell file defines.
+- **The test caster** (`tools/arena.py`: `caster_def`, `caster_setup`, `battle_spells`): a war mage (CR 9; a 17th-level
+  caster's slots, DC 17, +9 to hit, Intelligence 18) that knows only the spells it is given, cantrips at will, put in
+  the arena's four scenarios against a party of fitting level. `arena.py --spells` (`--spell x`, `--shard k/n`) gives
+  it each battle spell in turn (every spell cast on one's own turn in a fight: not a reaction, not one used outside a
+  fight, not a creature's gift, an item's or a follow-up) and reports how often the tactics cast it and what broke.
+- **The rule**: every battle spell is cast by the enemy in some scenario, through the same `estimates` the Auto uses
+  (no spell is chosen by name), or has a reason in the test's NOT_CAST (as the catalogue test's NO_USE: the field is
+  lit, nobody here is invisible). Where a spell's rules were written for a party caster only, they become anyone's.
+- **Levels 1-9**: a test caster with every battle spell of one level (and the cantrips) fights each scenario to its
+  end: no hang, nothing the rules refuse, nothing broken, the turn budget (150 ms at the 95th percentile, never 400
+  ms, in the thread's own time).
+- **Tests** (tests/test_enemy_casters.py, slow): every stat block's spells are the catalogue's and usable in a fight
+  (or their use is outside one); each battle spell cast by the enemy; the nine levels without hangs.

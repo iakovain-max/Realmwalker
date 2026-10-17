@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 03 Demigods & Magics · Part G (enemy casters, services, release), G.1 next · branch dlc/03-demigods-magics
+Current: 03 Demigods & Magics · Part G (enemy casters, services, release), G.2 next · branch dlc/03-demigods-magics
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -29,7 +29,8 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   F.4 (the raised dead: Animate Dead, Create Undead, Finger of Death's zombie, the ghast and the mummy) and F.5 (the
   bound: Planar Ally, Planar Binding, Magic Circle turned inward) and F.6 (Polymorph and True Polymorph in a fight)
   and F.7 (the rest of Appendix B: 24 creatures of the 2025 MM with pictures, shapes and met in the land) and F.8
-  (Animal Shapes and Shapechange, in a fight and on the road: Part F complete)
+  (Animal Shapes and Shapechange, in a fight and on the road: Part F complete) and G.1 (enemy casters: every battle
+  spell cast by the enemy's tactics)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
   adapted); Expansion 3: 217 done, 334 adapted, 1 omitted of 560 (parts A to F settled). PHB 65% · DMG 12% · MM 16%
@@ -418,14 +419,29 @@ Ideas for later:
   (panther, tiger) is used when hurt or crowded. The quasit opens with its
   Scare and the pseudodragon with its Sting. The goat's Strength save is +2 as printed. Pictures: the Crawl pack's
   where it has the animal (some recoloured), the rest drawn.
-Next session starts at: task G.1 in docs/expansions/03-demigods-magics.md (Part G: enemy casters - every caster
-stat block on the catalogue, the arena casting every battle spell by the AI in a scenario, a test caster of each spell
-level 1-9 casting without hangs; split it at its start if it is too big, as Parts E and F were). Write G.1's "How"
-first. The spells waiting for the enemy's casters are noted in the How of D, E and F ("the enemy's casters get it
-when G.1 gives them the spells": Polymorph, Animal Shapes, Shapechange...). Then G.2 (services and scrolls in
-temples, guilds and shops; the law of magic) and G.3 (the codex's last eight entries: the spellcasting services and
+- Expansion 3 G.1: a creature's Shapechange takes forms up to its Challenge Rating (the book: "your level"); Aid on a
+  creature raises its own record's maximum (kept in `creature.uses["spell_hp:aid"]`, never twice by one spell); Mage
+  Armor works on a creature whose stat block's gear has no armour; True Strike and smites use a creature's blows with
+  a weapon its stat block names (`attack["item"]`), never claws; Revivify brings back a creature friend (not a
+  summoned one, which vanished). The arena's test caster is a war mage (CR 9, DC 17, +9, Intelligence 18, AC 12, a
+  dagger, a 17th-level caster's slots). The plan's turn budget (150 ms at the 95th percentile) is held for casters
+  with a stat block's list (16-24 spells); a caster holding every spell of a level (35-72 spells) is held to "never
+  400 ms" (its 95th percentile is about 100-200 ms).
+Next session starts at: task G.2 in docs/expansions/03-demigods-magics.md (spellcasting services and scrolls in
+temples, mages' guilds and shops, PHB p. 235; the law of magic in towns, `game/law.py`). Write G.2's "How" first; split
+it at its start if it is too big. Then G.3 (the codex's last eight entries: the spellcasting services and
 Simulacrum; balance; the icon; the release v1.3.0).
-Parts E and F are in `main`.
+The way of Part G (G.1): `tools/arena.py` `battle_spells` (every spell cast on one's own turn in a fight), `caster_def`
+/ `caster_setup(..., second=)` (the war mage, an escort beside it), `--spells`, `--spell x`, `--shard k/n`; the arena
+plays a creature the party called in mid-fight on Auto. tests/test_enemy_casters.py: NOT_CAST (a reason each; "a
+scene" ones are cast in SCENES), the per-level casters and the stat-block-sized ones. Kernel: `estimates.casts_spells`
+(a party caster counts), `weapon_blows`/`blow_mod` (True Strike, smites), `RESTORED` (the restore op's worth), the
+revive op's worth; `estimates.thinking()` (a memo of save chances, damage factors, summons and spell areas while one
+choice is weighed: `tactics._pick_cast`); `tactics._touch_heal` walks to heal, restore or revive; `_creature_magic`
+reuses the action's spell when no bonus spell was cast; `Battle._form_spells_of` (a creature's Shapechange keeps its
+spells; `unshape` writes the slots back); `shapes.mind_kept(block=)`; `query.wears_armour`; `engine/check` refuses a
+stat block naming an unknown spell.
+Parts E and F and G.1 are in `main`.
 The way of Part F (F.8): Animal Shapes and Shapechange are the effects op "shape" with `cr`, `size`, `not`, `keeps`
 ("mind", "proficiencies", "spells"), `leave`, `shift` ("self"/"caster") and `hours`; `rules/shapes.forms(..., size=,
 never=)`, `best(tables, f, kinds, o, other=)`, `cap`, `limits`, `mind_kept`; `challenge` reads what a shaped fighter is

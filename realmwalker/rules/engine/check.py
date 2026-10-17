@@ -103,6 +103,9 @@ def problems(tables) -> list[str]:
         for t in c.get("traits", []):
             if t not in defs:
                 out.append(f"data/creatures.json: {cid} has the trait '{t}', which data/traits.json does not define.")
+        for s in c.get("spells", []):  # (a caster's spells are the catalogue's: Expansion 3 G.1)
+            if s not in tables.spells.defs:
+                out.append(f"data/statblocks.json: {cid} casts the spell '{s}', which no spell file defines.")
         for a in c.get("attacks", []):
             if a.get("advantage_if") and a["advantage_if"] not in query.ADVANTAGE_IF:
                 out.append(f"data/statblocks.json: {cid}'s {a['name']} has Advantage if '{a['advantage_if']}', "

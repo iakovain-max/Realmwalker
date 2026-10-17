@@ -28,7 +28,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Clearing the decks for the expansions** | ✅ Done (2026-10-12), branch `prep/clear-the-decks` |
 | **Expansion 1, *Dice & Destiny*** (version 1.1.0) | ✅ Released (2026-10-13), branch `dlc/01-dice-destiny` |
 | **Expansion 2, *Blades & Backgrounds*** (version 1.2.0) | ✅ Released (2026-10-13), branch `dlc/02-blades-backgrounds` |
-| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete), D (the spell catalogue: 191 battle spells, cantrips to level 9, and Wish) E.1 (spells outside battle: healing, return from death, food, shelter and watch), E.2 (light, the body on the move, travel by magic), E.3 (finding and seeing, asking the powers, talking), E.4 (minds and the law, disguise and illusion, the small arts), E.5 (locks and stone, weather and land), E.6 (lasting protections and the caster's keeping) and E.7 (great magic and Wish's other uses, 2026-10-17: Part E complete) and F.1 (a familiar and a steed fight beside you), F.2 (summoned spirits of levels 2 to 4) and F.3 (the level 5 and 6 spirits and Animate Objects) and F.4 (the raised dead: Animate Dead, Create Undead, Finger of Death's zombie, the ghast and the mummy) and F.5 (the bound: Planar Ally, Planar Binding, Magic Circle turned inward) and F.6 (Polymorph and True Polymorph in a fight) and F.7 (lions, tigers, elephants, imps, sprites and the rest of the book's beasts, met in the land) and F.8 (Animal Shapes and Shapechange, in a fight and on the road: Part F complete) in `main`; Part G (enemy casters, services, the release) next |
+| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete), D (the spell catalogue: 191 battle spells, cantrips to level 9, and Wish) E.1 (spells outside battle: healing, return from death, food, shelter and watch), E.2 (light, the body on the move, travel by magic), E.3 (finding and seeing, asking the powers, talking), E.4 (minds and the law, disguise and illusion, the small arts), E.5 (locks and stone, weather and land), E.6 (lasting protections and the caster's keeping) and E.7 (great magic and Wish's other uses, 2026-10-17: Part E complete) and F.1 (a familiar and a steed fight beside you), F.2 (summoned spirits of levels 2 to 4) and F.3 (the level 5 and 6 spirits and Animate Objects) and F.4 (the raised dead: Animate Dead, Create Undead, Finger of Death's zombie, the ghast and the mummy) and F.5 (the bound: Planar Ally, Planar Binding, Magic Circle turned inward) and F.6 (Polymorph and True Polymorph in a fight) and F.7 (lions, tigers, elephants, imps, sprites and the rest of the book's beasts, met in the land) and F.8 (Animal Shapes and Shapechange, in a fight and on the road: Part F complete) and G.1 (enemy casters use the whole spell book) in `main`; G.2 (spellcasting for hire, scrolls in shops, the law of magic) and G.3 (the release) next |
 
 ---
 
@@ -39,6 +39,43 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-17 (evening): Demigods & Magics G.1 — enemy casters use the whole spell book
+
+Built by the relay builder realmwalker-a. Saves do not change. Every spell you can cast in a fight can now be cast
+against you, and the enemy chooses it by the same reckoning your companions' Auto uses (what it would do here), never
+by name. Today's enemy casters are the acolyte, the cult fanatic and the imp, quasit and sprite. The book's great
+casters (the mage, the priest, the archmage, the lich) come with their own expansions, and they will find every
+spell ready for them.
+- **What the enemy learned.** An enemy caster now uses spells that only the party could use before:
+  - **Shapechange** keeps its mind and its spells, so a war mage can become a troll that still throws Fireball.
+  - **Animal Shapes** turns its fighting friends into beasts.
+  - **Aid** gives its friends more hit points.
+  - **True Strike** and the smites ride on its own blade.
+  - **Mage Armor** hardens its skin if it wears no armour.
+  - **Lesser and Greater Restoration**: it walks over to cure a poisoned or charmed friend.
+  - **Revivify**: it walks to a friend who died within the minute and brings it back.
+- **It knows your casters too.** Silence, Circle of Power and the other "against spellcasters" spells now count your
+  wizard and your cleric as casters. Before, they counted only monsters, so the enemy never saw a reason to cast them
+  at your party.
+- **Your companions gained too.** The Auto now sees what Lesser and Greater Restoration, Revivify and Mage Armor are
+  worth in a fight. Before, it never cast them there.
+- **Thinking faster.** A caster with a long spell list decides its turn about three times faster than before.
+- Choices made while Anton was away:
+  - A creature's Shapechange may take forms up to its Challenge Rating (the book says "your level").
+  - Aid on a creature raises its maximum for as long as that creature lives (it has no hours to count).
+  - Mage Armor works for a creature whose stat block carries no armour.
+  - True Strike uses a creature's blows with a weapon its stat block names; a claw is not a weapon.
+- Checked: a new test gives a war mage each of the 265 battle spells in turn, in four kinds of fight. The enemy
+  casts 236 of them there. Five more are cast in a scene of their own: Animal Shapes beside an orc, Revivify on a
+  fallen friend, the Restorations on a poisoned or charmed friend, Divine Word on a badly hurt party. The other 24
+  need a field the arena does not have (darkness, water, trees, an invisible foe), and each has its reason written
+  down. A war mage holding every spell of a level fights each kind of fight to its end. None of these fights hangs
+  or breaks a rule. A caster with a stat block's spells decides inside the turn budget, and one with every spell of a
+  level never takes 400 ms. The arena itself had a fault: a creature your party summoned mid-fight waited for you to
+  play it. It now plays on Auto. The fresh review's fixes: Revivify never raises someone who was dead before the
+  fight began, Mage Armor no longer hardens a body borrowed by a shape, the test caster has a true 17th-level
+  caster's slots, and the enemy's quicker way of weighing a higher slot leaves your companions' Auto as it was.
 
 ### Session, 2026-10-17 (evening): Demigods & Magics F.8 — the party as a pack of beasts, a wizard as a dragon
 

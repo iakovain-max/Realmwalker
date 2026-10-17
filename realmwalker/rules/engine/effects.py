@@ -931,13 +931,12 @@ def _weapon_attack(c: Cast, o: dict, victim) -> None:
     target = victim or c.target
     if target is None or not target.active:
         return
-    opts = [x for x in b.attack_options(f) if x.available and x.item_uid is not None and x.kind in ("melee", "ranged")
-            and b.in_reach(f, x, target)[0]]
+    opts = estimates.weapon_blows(b, f, target)  # (a creature's blade too: Expansion 3 G.1)
     if not opts:
         b.say(f"{f.the_name} has no weapon that reaches {target.the_name}.", "warn")
         return
     opt = opts[0]
-    am = int(opt.extra.get("ability_mod", 0))
+    am = estimates.blow_mod(b, f, opt)
     n, sides, flat = dice.parse(opt.damage)
     flat += c.mod - am
     dmg = f"{n}d{sides}{'+' + str(flat) if flat > 0 else (str(flat) if flat < 0 else '')}" if n else str(max(1, flat))
@@ -1031,14 +1030,20 @@ def _restore(c: Cast, o: dict, victim) -> None:
 def _revive(c: Cast, o: dict, victim) -> None:
     b, f = c.b, c.caster
     x = victim or c.target
-    if x is None or x.state != "dead" or x.char is None:
-        return
+    if x is None or x.state != "dead" or x.char is None and (x.creature is None or x.bond is not None):
+        return  # (a summoned thing that vanished has no body to call back)
     if x.__dict__.get("dust"):
         b.say(f"Nothing of {x.the_name} is left to call back.", "warn")
         return
     x.state = "fighting"  # (the diamond is the spell's costly component: spent as it is cast, rules/spells.py)
-    x.char.alive = True
-    x.char.death_cause = None  # (or the body would be found dead of it again as time passed)
+    if x.char is not None:
+        x.char.alive = True
+        x.char.death_cause = None  # (or the body would be found dead of it again as time passed)
+    else:
+        x.creature.alive = True  # (an enemy caster's fallen friend: Expansion 3 G.1)
+    taken = {cell for y in b.on_field() if y is not x for cell in y.cells}
+    if any(cell in taken for cell in x.cells):  # (someone stands where it fell: the nearest free ground)
+        x.x, x.y = b._free_near((x.x, x.y), x.sq, taken)
     x.hp = int(o.get("hp", 1))
     x.conditions = {"prone": -1}
     x.cond_ends = {}
@@ -1075,9 +1080,18 @@ def _max_up(c: Cast, o: dict, victim) -> None:
         targets = [c.target]
     amount = spellrules.max_up_amount(spell, c.level or int(spell["level"]), b.rng)
     for x in targets:
-        if x is None or x.char is None:
-            continue  # (a creature has no lasting self for it to stay on)
-        if x.state == "dead":
+        if x is None or x.state == "dead":
+            continue
+        if x.char is None:  # (a creature: its maximum raised on its own record, never twice by one spell: G.1)
+            if x.creature is None:
+                continue
+            key = spellrules.MAX_UP + sid
+            gained = max(0, amount - int(x.creature.uses.get(key, 0)))
+            if gained:
+                x.creature.uses[key] = amount
+                x.creature.max_hp += gained
+                b.say(f"{x.the_name}'s strength grows: {gained} more hit points while {spell['name']} lasts.", "good")
+                b._heal(x, gained)
             continue
         gained = spellrules.raise_max(x.char, sid, amount)
         if spellrules.lasts(b.t, sid):
@@ -1514,8 +1528,8 @@ def willing(b, f, spell: dict) -> list:
     for x in b.team(f.team):
         if x is f or not x.active or not shapes.shapeable(x) or b.feet(f, x) > reach:
             continue
-        if x.char is None or spellrules.is_caster(x.char, b.t):
-            continue  # (a creature has no shape of its own to keep; a caster would lose its spells)
+        if x.char is not None and spellrules.is_caster(x.char, b.t) or x.char is None and (x.cdef or {}).get("spells"):
+            continue  # (a caster would lose its spells; a creature's shape lasts the fight: Expansion 3 G.1)
         out.append(x)
     return out
 
