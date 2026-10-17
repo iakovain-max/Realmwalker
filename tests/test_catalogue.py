@@ -130,7 +130,9 @@ def test_each_spell_is_cast_in_a_real_fight(tables, sid):
     b.cast(f, sid, sp, target, point, up=0, mod=3, dc=14, bonus=6, mult=2, level=level if sp["level"] else 0)
     assert not problems(b), problems(b)
     again = again_spell(f, tables)
-    if again is not None and again.startswith(sid):
+    if again is not None and again.startswith(sid) and not (tables.spells[again]["target"] == "point"
+                                                          and not b.spell_points(f, again)):
+        # (a follow-up with nowhere to aim it here is not offered: Tree Stride on a field without trees)
         f.action = f.bonus = 1
         assert again in [s for s, ok, _ in b.spell_options(f) if ok], f"{sid}'s follow-up is not offered"
         t2, p2 = aim(b, f, again)
@@ -167,6 +169,24 @@ NO_USE: dict[str, str] = {
     "antimagic_field": "no foe here casts spells, and the caster's own magic would be lost",
     "sunburst": "its 60-foot sphere takes in the caster and a friend wherever it falls on this small field",
     "meteor_swarm": "its 40-foot spheres take in the caster and a friend wherever they fall on this small field",
+    # Part E.2: the body's spells, worth casting only where the field asks for them (tests/test_spells_outside.py
+    # puts each one where it is: the dark, the invisible, water, a fall, trees)
+    "light": "the field is lit",
+    "dancing_lights": "the field is lit",
+    "daylight": "the field is lit, and no foe has laid magical darkness",
+    "darkvision": "the field is lit",
+    "see_invisibility": "no foe here is invisible",
+    "jump": "nothing here to leap over",
+    "longstrider": "everyone is within a walk of the fight",
+    "feather_fall": "cast by itself as someone falls",
+    "spider_climb": "nothing here to climb",
+    "water_walk": "no deep water here",
+    "alter_self": "no deep water here (on the road it is a disguise)",
+    "enhance_ability": "nobody here grapples or shoves",
+    "pass_without_trace": "nobody here is hiding",
+    "tree_stride": "no trees here",
+    "gaseous_form": "nobody here is about to fall (as mist a fighter cannot strike)",
+    "feign_death": "nobody here is about to fall (feigning, a fighter is out of the fight)",
 }
 
 

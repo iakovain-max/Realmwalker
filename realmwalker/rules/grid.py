@@ -209,6 +209,7 @@ class Field:
         self.rough_water = self.swim & tag("flowing")[idx]  # a river's current
         self.leap = (self.walk | self.water | self.climb | (tag("chasm") | tag("fire") | tag("hot"))[idx]) & ~self.solid
         self.hiding = tag("cover")[idx]  # brush, tall grass, reeds: somewhere to hide
+        self.tree = tag("tree")[idx]  # a living tree or a dead one (Tree Stride steps from one to another)
         flammable = np.array([T.ids[i] in FLAMMABLE for i in range(n)], dtype=bool)
         self.flammable = flammable[idx]
         edge = np.zeros_like(self.walk)

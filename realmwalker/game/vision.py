@@ -52,6 +52,10 @@ def sight_radius(game, lm) -> tuple[int, bool]:
     dark_sight = game.sheet().darkvision // 5 if game.party else 0
     if light < 0.9 and dark_sight:
         radius = max(radius, dark_sight)
+    if light < 0.9 and game.party:
+        from realmwalker.game.waymagic import spell_light
+
+        radius = max(radius, spell_light(game))  # (Light, Daylight, an everburning torch: the night pushed back)
     if woodland_radius:
         radius = min(radius, woodland_radius) if radius else woodland_radius
     visibility = game.weather.visibility if game.party else 1.0

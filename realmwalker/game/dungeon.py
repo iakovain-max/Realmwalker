@@ -12,6 +12,7 @@ from __future__ import annotations
 from realmwalker.core import dice
 from realmwalker.core.rng import RNG
 from realmwalker.rules import body, encounter
+from realmwalker.rules import spells
 from realmwalker.rules.inventory import remove_item
 from realmwalker.rules.items import money_text
 from realmwalker.world import dungeon as gen
@@ -181,8 +182,10 @@ def on_step(game, x: int, y: int) -> None:
 def light_radius(game) -> int:
     from realmwalker.rules import magic
 
-    glow = max((magic.light(c) for c in game.party), default=0)
-    lit = getattr(game, "lit", None)
+    from realmwalker.game import waymagic
+
+    glow = max([waymagic.spell_light(game)] + [magic.light(c) for c in game.party])  # (Light, Daylight, Continual
+    lit = getattr(game, "lit", None)  # Flame's everburning torch)
     if any(c.attuned and magic.flag(c, "douses_flames") for c in game.party):
         return glow  # an artifact's flaw: flames gutter out around its bearer
     if lit and lit.get("hours", 0) > 0:
@@ -197,7 +200,9 @@ def light_up(game) -> str | None:
         return None
     from realmwalker.rules import magic
 
-    if any(magic.light(c) for c in game.party):
+    from realmwalker.game import waymagic
+
+    if any(magic.light(c) for c in game.party) or waymagic.spell_light(game):
         return None  # something magic already sheds light
     items = game.tables.items
     best = None
@@ -272,6 +277,10 @@ def spring(game, lm, x: int, y: int, f: dict) -> None:
     if f.get("found"):
         game.say(f"You step carefully around {name}.", "dim")
         return
+    from realmwalker.game import waymagic
+
+    if waymagic.ethereal_here(game):
+        return  # (on the Border Ethereal nothing of this side touches you)
     if not f.get("found"):
         eyes, who = passive(game, "perception")
         probe, tool = helps(game, "traps")
@@ -290,6 +299,12 @@ def spring(game, lm, x: int, y: int, f: dict) -> None:
         from realmwalker.rules.engine import hazards
 
         damage = hazards.falling(game.tables, int(f.get("depth", 20))) or damage  # a fall: 1d6 for every 10 feet
+        caught = feather_fall(game, c)
+        if caught:
+            f["found"] = True
+            f["spent"] = True
+            game.say(caught, "magic")
+            return
     dmg = dice.roll(damage, rng).total
     if save >= int(f.get("dc", 13)):
         dmg //= 2
@@ -322,6 +337,24 @@ def spring(game, lm, x: int, y: int, f: dict) -> None:
     from realmwalker.game import survival
 
     survival.check_death(game, c)
+
+
+def feather_fall(game, faller) -> str:
+    """Someone drops into a pit: whoever in the party has Feather Fall ready casts it with the reaction (a level 1
+    slot), and the fall does no harm. Returns what to say ("" when nobody can)."""
+    t = game.tables
+    for c in sorted((m for m in game.party if m.alive and m.hp > 0 and m.spells), key=lambda m: m is not faller):
+        if "feather_fall" not in spells.known_spells(c, t):
+            continue
+        ok, _why = spells.can_cast(c, t, "feather_fall")
+        slot = spells.lowest_free_slot(c, t, 1)
+        if not ok or slot is None:
+            continue
+        spells.spend_slot(c, slot)
+        who = "" if c is faller else f"{body.first(c)} speaks a word as {body.first(faller)} drops: "
+        return (f"<magic>{who}{body.first(faller)} drifts down into the pit like a feather</> and lands unharmed, and "
+                f"climbs out again. (Feather Fall)")
+    return ""
 
 
 def search(game) -> list[str]:

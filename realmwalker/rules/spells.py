@@ -21,7 +21,10 @@ LASTING = "spell:"  # the key prefix in Character.effects
 CAST_AT = "spell_at:"  # ...and the slot level a lasting spell was cast with, when higher than its own
 MIN_LASTING_ROUNDS = 100  # ten minutes (a round is six seconds): long enough to be worth casting before a fight
 ROUNDS_PER_HOUR = 600
-SHEET_KEYS = ("ac", "mage_armor")  # the parts of a lasting spell the character sheet already counts
+# The parts of a lasting spell the character sheet already counts (so a fight does not count them twice), and the parts
+# only the world outside a fight reads (Part E.2: a phantom horse, the servant, walking on water, flying as a cloud...).
+SHEET_KEYS = ("ac", "mage_armor", "darkvision", "speed", "skills", "check_adv", "carry",
+              "steed", "servant", "water_walk", "water_breathing", "wind", "ethereal", "pathfinding")
 
 
 class SpellTable:
@@ -707,8 +710,13 @@ def heals_many(spell: dict) -> bool:
 
 # What the spells of Part E do outside a fight: a spell's {"op": "road", "does": ...} names one of these (game/spellwork
 # does it; the start-up check knows them), its "ward" one of WARDS (kept on the camp: game/spellwork.ward).
-ROAD_USES = ("feed", "water", "purify", "goodberry", "feast", "ward", "repose", "uncurse", "regenerate")
-WARDS = ("alarm", "hut", "hound", "rope", "mansion")
+ROAD_USES = ("feed", "water", "purify", "goodberry", "feast", "ward", "repose", "uncurse", "regenerate",
+             "flame", "travel")  # (Part E.2: an everburning torch; travel by magic, game/waymagic.py)
+WARDS = ("alarm", "hut", "hound", "rope", "mansion", "meld")
+# How a "travel" spell goes (game/waymagic.py), and what a lasting spell does as it is cast outside a fight (its
+# "outside": game/waymagic.after_lasting).
+TRAVELS = ("teleport", "circle", "recall", "plants", "shift", "astral", "gate_far", "gate")
+OUTSIDE = ("disguise", "path")
 
 
 def road_use(tables, spell_id: str) -> str | None:
@@ -845,6 +853,23 @@ def lasting_values(char: Character, tables, key: str) -> list:
         if key in buff:
             out.append(buff[key])
     return out
+
+
+def lasting_flag(char: Character, tables, key: str) -> bool:
+    """Whether a lasting spell on this character gives it `key` (Water Walk's "water_walk", Wind Walk's "wind"...)."""
+    return bool(char.effects) and any(lasting_values(char, tables, key))
+
+
+def lasting_number(char: Character, tables, key: str) -> int:
+    """The largest number a lasting spell on this character gives for `key` (0 for none): Light's squares."""
+    return max([0] + [int(v) for v in lasting_values(char, tables, key) if v is not True]) if char.effects else 0
+
+
+def best_ability(char: Character) -> str:
+    """The ability Enhance Ability sharpens on someone: their strongest (Strength first in a tie; never
+    Constitution, which the 2024 spell does not offer)."""
+    order = ("str", "dex", "int", "wis", "cha")
+    return max(order, key=lambda a: (int(char.abilities.get(a, 10)), -order.index(a)))
 
 
 def battle_part(tables, spell_id: str, char: Character | None = None) -> dict:

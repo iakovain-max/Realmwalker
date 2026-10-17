@@ -109,6 +109,10 @@ def roll_encounter(game, minutes: float) -> PendingEncounter | None:
     p = game.player
     if w.settlement_at(p.x, p.y) is not None or game.over is not None or not any(c.alive for c in game.party):
         return None
+    from realmwalker.game import waymagic
+
+    if waymagic.everyone(game, "wind") or waymagic.everyone(game, "ethereal"):
+        return None  # (clouds high on the wind, or walkers on the grey border of the world: nothing meets them)
     danger = int(w.danger[p.x, p.y])
     night = game.light < 0.5
     on_road = bool(w.road[p.x, p.y])

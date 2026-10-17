@@ -32,6 +32,15 @@ class Camp:
     wards: dict = field(default_factory=dict)  # spells guarding it: ward -> world minute it ends (game/spellwork.py)
 
 
+def chore(game, minutes: int, activity: str) -> None:
+    """The time a piece of camp work takes: half with an Unseen Servant fetching, carrying and lighting (E.2)."""
+    from realmwalker.game import waymagic
+
+    if waymagic.anyone(game, "servant"):
+        minutes = max(1, minutes // 2)
+    game.pass_time(minutes, activity)
+
+
 def camp_here(game) -> Camp | None:
     """The camp, if the party is still where it was made (otherwise it is gone)."""
     camp = game.camp
@@ -159,14 +168,14 @@ def light_fire(game) -> list[str]:
     wet = 4 if (w.raining or w.snowing) else 0
     msgs = []
     if wood == "plenty":
-        game.pass_time(15, "walk")
+        chore(game, 15, "walk")
         msgs.append("You gather deadwood and get a fire going.")
     else:
         ok, roll = (False, "")
         if FIRE_DC[wood] < 99:
             ok, roll = check(game, "survival", FIRE_DC[wood] + wet, tag="wood")
             msgs.append(roll)
-            game.pass_time(30, "walk")
+            chore(game, 30, "walk")
         if ok:
             msgs.append("You scrape together enough fuel for a fire.")
         else:
@@ -198,9 +207,9 @@ def build_shelter(game) -> list[str]:
     _, spade = has_flag(game, "dig")
     ok, roll = check(game, "survival", dc, 5 if spade is not None else 0, tag="shelter")
     if not ok:
-        game.pass_time(15 if spade is not None else 30, "walk")
+        chore(game, 15 if spade is not None else 30, "walk")
         return [roll, "The wind has it down as fast as you put it up. You could try again."]
-    game.pass_time(30 if spade is not None else 60, "walk")
+    chore(game, 30 if spade is not None else 60, "walk")
     camp.shelter = True
     snowy = (game.tables.biomes.family(land(game)) in ("tundra", "high_mountains")
              or (game.weather.snowing and game.moment.season == "winter"))
@@ -236,7 +245,7 @@ def pitch_tent(game) -> list[str]:
     if tent is None:
         return ["You have no tent."]
     camp.tent = True
-    game.pass_time(20, "walk")
+    chore(game, 20, "walk")
     return ["You pitch the tent. Out of the wind and the wet, at least."]
 
 
@@ -260,7 +269,7 @@ def cook(game) -> list[str]:
     if not done:
         missing = " (oats need a pot)" if pot is None and has(game, ("oats",))[1] is not None else ""
         return [f"There is nothing raw to cook{missing}."]
-    game.pass_time(30, "rest")
+    chore(game, 30, "rest")
     return [f"You cook over the fire: {', '.join(done)}."]
 
 
@@ -279,7 +288,7 @@ def boil_water(game) -> list[str]:
                 it.fill_kind = "boiled"
     if not pints:
         return ["All the water you carry is already safe."]
-    game.pass_time(20, "rest")
+    chore(game, 20, "rest")
     return [f"You boil {pints:g} pints of water. It tastes of smoke, and it won't make you sick."]
 
 
@@ -494,7 +503,7 @@ def butcher(game, carcasses) -> tuple[list, list[str]]:
     if not carcasses:
         return [], []
     ok, roll = check(game, "survival", 10, tag="butcher")
-    game.pass_time(30, "rest")
+    chore(game, 30, "rest")
     got: dict[str, int] = {}
     for cr in carcasses:
         for item_id, qty in game.tables.creatures[cr.def_id].get("butcher", []):
