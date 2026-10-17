@@ -335,7 +335,7 @@ system is built once and every spell that uses it comes with it.
     (`renown.flags["enriched"]`), and cast in a village it is a deed for its folk. Tsunami (a minute): when a band
     on the road is seen first, a great wave strikes it before the fight (6d10 bludgeoning, Strength save for half)
     and the fight begins with the band reeling (the wave rolls on; its later blows are left out).
-- [ ] E.6 Lasting protections and the caster's keeping (9 spells). The old E.6 was split in two at its start
+- [x] E.6 Lasting protections and the caster's keeping (9 spells). The old E.6 was split in two at its start
   (2026-10-17): 13 spells and Wish's six other uses, four of them systems as big as a part (a soul in a jar, a body
   grown in a vessel, a spell waiting for its moment, a prison for good), were too many for one part; great magic and
   Wish became E.7. Lasting protections: glyph of warding, symbol, guards and wards, forbiddance, hallow, magic circle,
