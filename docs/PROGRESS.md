@@ -99,10 +99,21 @@ Built by the relay builder realmwalker-a. Saves do not change, and characters yo
   - Neither the corona nor the double can be dismissed early.
   - The gods step in only in fights. Their other answers in the DMG (blessings, emissaries, omens) wait for later
     expansions.
-- Checked: 25 new tests cover Warding Flare and its improvement, the Dawn on foes and darkness, the Corona's glare,
+- The fresh review's fixes:
+  - A god never gives back fewer hit points than the dying one had. A word of power can strike down someone unhurt.
+  - The gods answer once a fight for the whole party, not once for each of them.
+  - Someone turned to dust, or withered by a mummy's rot, is no longer marked as dust when their god saved them.
+  - Warding Flare is not spent on a blow whose advantage and disadvantage already cancel out.
+  - A long rest ends the Trickster's blessing even when the priest is not with the party. If two people end up
+    blessed (one blessed in a fight while the other waited elsewhere), only the newest blessing holds.
+  - The double lasts exactly a minute, ten rounds.
+- Checked: 29 new tests cover Warding Flare and its improvement, the Dawn on foes and darkness, the Corona's glare,
   the blessing at a rest, in a fight and on a Stealth roll, and the double: made, distracting, cast through, moved,
   swapped, healing as it fades, and ending when its maker is stunned. They also cover each faith's domains, the
   devout and the rest, each god's miracle, the year's quiet after, the Auto's choices, the cards and the battle mat.
+  The full suite, the autoplay bot and the window smoke test pass. In the first full run, five timing tests missed
+  their time limit while autoplay and the smoke test ran beside them, and one missed again in the last full run;
+  they all passed when run alone, as before.
 
 ### Session, 2026-10-18 (night): Schools & Domains begun; Part A — the Diviner and the Illusionist — branch `dlc/05-schools-domains`
 
