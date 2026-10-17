@@ -114,6 +114,8 @@ def start_battle(game, creatures: list[Creature], intro: str, *, surprised: str 
         servant_rules.bring_in(battle, [f for f in battle.side(PARTY) if f.char is not None and f.bond is None])
     if situation == "camp":
         for f in battle.side(PARTY):
+            if f.bond is not None and f.bond.get("kind") == "servant":
+                continue  # (the raised dead never sleep: they stand where they were left)
             f.conditions["prone"] = -1  # caught asleep: on the ground, and getting up takes half a move
     _magic_at_the_start(game, battle)
     from realmwalker.game import warding
