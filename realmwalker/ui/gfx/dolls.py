@@ -544,6 +544,18 @@ def bust(atlas, parts: list[Part], side: int = 20) -> tuple[int, int, int, int]:
     return 16 - side // 2, top, side, side
 
 
+FROST = (206, 226, 255)  # (a Simulacrum: snow in a likeness, Expansion 3 G.3)
+
+
+def frost(parts: list[Part], share: float = 0.6) -> list[Part]:
+    """A figure made of snow: every layer's colour drawn most of the way to a cold white, a little see-through."""
+    out = []
+    for tile, (r, g, b, a), dx, dy in parts:
+        out.append((tile, (int(r + (FROST[0] - r) * share), int(g + (FROST[1] - g) * share),
+                           int(b + (FROST[2] - b) * share), int(a * 0.9)), dx, dy))
+    return out
+
+
 def draw(atlas, parts: list[Part], x: float, y: float, size: float, light=(1.0, 1.0, 1.0), alpha: float = 1.0,
          angle: float = 0.0, crop: tuple[int, int, int, int] | None = None):
     """A picture command for a figure (or the `crop` of it, in its own pixels, filling the square). At whole multiples

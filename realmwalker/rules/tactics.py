@@ -796,7 +796,7 @@ def _touch_heal(b: Battle, f: Fighter) -> bool:
                     > spell_cost(b, f, sp["level"])]
         else:
             need = [x for x in b.team(f.team) if (x.state == "down" or x.active and x.hp < x.max_hp / 3)
-                    and not (sp.get("others") and x is f)]
+                    and not (sp.get("others") and x is f) and estimates.mends(x)]
         if not need:
             continue
         x = min(need, key=lambda y: (y.state != "down", y.hp / max(1, y.max_hp), b.gap(f, y)))
@@ -1178,7 +1178,7 @@ def _divine_help(b: Battle, f: Fighter) -> None:
     """A cleric's Channel Divinity for friends: Divine Spark on a friend in a bad way, and War God's Blessing (Shield
     of Faith on the hard-pressed, a Spiritual Weapon when foes are near) for the bonus action."""
     for opt, a in _abilities(b, f, "heal_other"):
-        low = [x for x in opt.targets if x.state == "down" or x.hp < x.max_hp // 3]
+        low = [x for x in opt.targets if (x.state == "down" or x.hp < x.max_hp // 3) and estimates.mends(x)]
         if low and f.action > 0:
             b.do_ability(f, opt.value, min(low, key=lambda x: (x.state != "down", x.hp, x.id)))
             break
@@ -1367,6 +1367,8 @@ def _drink(b: Battle, f: Fighter, x: Fighter) -> bool:
     potions = [it for it in f.char.inventory if "heal" in (b.t.items.get(it.def_id).get("use") or {})]
     if not potions:
         return False
+    if not estimates.mends(x):
+        return False  # (a Simulacrum: nothing heals snow)
     need = x.max_hp - max(0, x.hp)
     avg = {it.uid: _avg(b.t.items.get(it.def_id)["use"]["heal"]) for it in potions}
     if x.state == "down":

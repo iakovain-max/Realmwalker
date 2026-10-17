@@ -2,7 +2,7 @@
 
 A grim, text-heavy open-world party RPG on D&D 5e rules, drawn with pixel-art tiles and figures over a text grid
 (python-tcod + its SDL renderer; pictures are the only look); every word the player reads is written into the game.
-**Version 1.0** (2026-10-03): pictures and the new interface are in (`docs/PROGRESS.md`, first entry). **The user is not a programmer**: explain progress in
+**Version 1.3.0** (2026-10-17, Demigods & Magics; 1.0 brought the pictures and the new interface, `docs/PROGRESS.md`). **The user is not a programmer**: explain progress in
 gameplay terms, give Windows click-by-click steps when they must do something, never ask them to edit code.
 
 - Source of truth for the design: `docs/DESIGN.md` (verbatim copy of the user's document).
@@ -564,6 +564,12 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   `magic.cast_on_road(hired=True)` (no slot, material, strain or law: `law.magic_check` ignores casters outside the
   party). A new road use must be added to `spellhire.FOR_HIRE` to be sold. Scrolls by rarity: `magic.scroll_stock(
   tradition=, top=)` (temple: cleric; shop "mage": wizard); none on open sale where `magic.magic_forbidden`.
+- Simulacrum (Expansion 3 G.3; road op `does: "simulacrum"` in `game/greatmagic.py`): a person's copy is
+  `char.spells["simulacrum"]` {of, char (a Character record), made} (`rules/simulacrum.py`: make, keep, destroy, repair
+  at `progression.long_rest`, bring_in/after around a fight); in a fight a character Fighter with a bond (kind
+  "simulacrum", type construct: `Battle.add_ally(char=)`), never healed, melting at 0, never among the party's dead
+  (fight.py's party loops skip `f.bond is not None`). A creature's copy is a servant record with spell "simulacrum"
+  (it goes into towns). `simulacrum.snow(f)` asks; pictures through `dolls.frost`.
 - Gear and tools 2024 (Expansion 2 part D): items.json `pack` (opens into its contents, gear.open_pack), `helps`
   {search, traps, force, disguise} (dungeon.helps, law.put_on_disguise), `utilize` (a tool's 2024 uses, on its card),
   `carry` also on carried containers (each kind once, Sheet.pack_carry), `trinket` (data/trinkets.json; the name and

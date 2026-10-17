@@ -1030,8 +1030,9 @@ def _restore(c: Cast, o: dict, victim) -> None:
 def _revive(c: Cast, o: dict, victim) -> None:
     b, f = c.b, c.caster
     x = victim or c.target
-    if x is None or x.state != "dead" or x.char is None and (x.creature is None or x.bond is not None):
-        return  # (a summoned thing that vanished has no body to call back)
+    if x is None or x.state != "dead" or x.char is None and (x.creature is None or x.bond is not None) \
+            or (x.bond or {}).get("kind") == "simulacrum":
+        return  # (a summoned thing that vanished has no body to call back; nor has melted snow: G.3)
     if x.__dict__.get("dust"):
         b.say(f"Nothing of {x.the_name} is left to call back.", "warn")
         return

@@ -586,6 +586,11 @@ def creature(b, f, *, full: bool = True) -> Card:
             card.lines.append(f"<dim>{esc(d['descriptions'][0])}</>")
     if states:
         card.lines.append("States: " + ", ".join(esc(s.card.title) for s in states[:6]))
+    from realmwalker.rules import simulacrum
+
+    if simulacrum.snow(f):
+        card.lines.append("<magic>A Simulacrum: snow in a likeness.</> <dim>Nothing heals it; at 0 hit points it "
+                          "melts. Its maker mends it at a long rest, 100 GP a hit point.</>")
     if f.char is None:
         if full:
             card.lines += _stat_lines(b, f)

@@ -108,17 +108,20 @@ def start_battle(game, creatures: list[Creature], intro: str, *, surprised: str 
     ally_rules.bring_in(battle, [f for f in battle.side(PARTY) if f.char is not None])  # (familiars, steeds)
     from realmwalker.game import servants
 
-    if servants.here(game):  # (the raised dead: never in a settlement's fights; Expansion 3 F.4)
-        from realmwalker.rules import servants as servant_rules
+    from realmwalker.rules import servants as servant_rules, simulacrum
 
-        servant_rules.bring_in(battle, [f for f in battle.side(PARTY) if f.char is not None and f.bond is None])
+    masters = [f for f in battle.side(PARTY) if f.char is not None and f.bond is None]
+    # (the raised dead: never in a settlement's fights, Expansion 3 F.4; a Simulacrum's copy of a creature goes
+    # everywhere its maker goes, G.3)
+    servant_rules.bring_in(battle, masters, only=None if servants.here(game) else simulacrum.SPELL)
     for f in battle.bring_shapes():  # (Animal Shapes, Shapechange worn on the road: Expansion 3 F.8)
         game.say(f"<magic>{markup_escape(f.name.split(',')[0])} goes into the fight as "
                  f"{markup_escape(f.creature.name.split(', as ')[-1])}.</>", "magic")
+    simulacrum.bring_in(battle, masters)  # (a Simulacrum's copy of a person, beside its maker: G.3)
     if situation == "camp":
         for f in battle.side(PARTY):
-            if f.bond is not None and f.bond.get("kind") == "servant":
-                continue  # (the raised dead never sleep: they stand where they were left)
+            if f.bond is not None and f.bond.get("kind") in ("servant", "simulacrum"):
+                continue  # (the raised dead never sleep, nor does snow: they stand where they were left)
             f.conditions["prone"] = -1  # caught asleep: on the ground, and getting up takes half a move
     _magic_at_the_start(game, battle)
     from realmwalker.game import warding
@@ -224,10 +227,14 @@ def finish_battle(game) -> Aftermath:
     from realmwalker.game import servants
 
     servants.after_battle(game, battle)  # (the raised dead: hit points kept, the fallen struck off, new zombies)
+    from realmwalker.rules import simulacrum
+
+    for line in simulacrum.after(battle):  # (a Simulacrum's copy: what is left of it, or the snow it was)
+        game.say(line, "magic")
     for f in battle.side(PARTY):
         c = f.char
-        if c is None:
-            continue  # (a familiar, a steed)
+        if c is None or f.bond is not None:
+            continue  # (a familiar, a steed; a Simulacrum's copy, written back above)
         health.carry_battle_state(c, f.conditions)
         if f.state != "down":
             continue
@@ -457,10 +464,11 @@ def _feigned(game, battle: Battle, rng, after: Aftermath) -> None:
     from realmwalker.core.textgen import escape_markup
     from realmwalker.rules.character import Sheet
 
-    feigners = [f.char for f in battle.side(PARTY) if f.char is not None and f.char.alive and f.buff_value("feigning")]
+    feigners = [f.char for f in battle.side(PARTY) if f.char is not None and f.char.alive and f.buff_value("feigning")
+                and f.bond is None]
     for f in battle.side(PARTY):
         c = f.char
-        if c is None or not c.alive or c in feigners:
+        if c is None or f.bond is not None or not c.alive or c in feigners:
             continue
         roll = dice.d20(rng).natural
         sheet = Sheet(c, game.tables)
@@ -496,7 +504,7 @@ def _left_for_dead(game, battle: Battle, rng, after: Aftermath, beasts: int) -> 
     woke = []
     for f in battle.side(PARTY):
         c = f.char
-        if c is None or not c.alive:
+        if c is None or f.bond is not None or not c.alive:
             continue
         roll = dice.d20(rng).natural
         sheet = Sheet(c, game.tables)  # the body's own toughness: pain and blood loss are what it is surviving

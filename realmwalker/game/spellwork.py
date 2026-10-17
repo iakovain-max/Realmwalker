@@ -455,7 +455,7 @@ STONEWORK = ("lock", "mend", "hand", "make", "stone", "chest", "weather", "plant
 # Part E.6's: lasting protections and the caster's keeping (game/warding.py)
 WARDING = ("protect", "hallow", "demiplane", "cauldron")
 # Part E.7's: great magic, and Wish's other uses outside a fight (game/greatmagic.py)
-GREAT = ("contingency", "jar", "clone", "imprison", "wish")
+GREAT = ("contingency", "jar", "clone", "imprison", "wish", "simulacrum")
 # Part F.1's: a familiar and a steed (game/allies.py)
 ALLIES = ("familiar", "steed")
 # Part F.4's: the raised dead; F.5's: the bound, Planar Ally and Planar Binding (game/servants.py)

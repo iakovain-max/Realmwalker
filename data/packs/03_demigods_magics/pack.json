@@ -4,6 +4,14 @@
   "name": "Demigods & Magics",
   "tagline": "Twenty levels of power. Every spell under the sky.",
   "icon": "dlc/demigods_magics", "accent": [222, 196, 120],
-  "status": "planned", "version": "1.3.0", "released_on": "",
-  "adds": []
+  "status": "released", "version": "1.3.0", "released_on": "2026-10-17",
+  "adds": [
+    "Twenty levels through the four tiers, and an epic boon at 19 (Combat Prowess, Fate, Truesight, the Night Spirit...)",
+    "The fighter, rogue, cleric and wizard of 2024 from level 1 to 20, with the Champion, Knight, Thief, Assassin, Life and War Domains, Evoker and Abjurer",
+    "Every spell of the Player's Handbook, cantrips to Wish: prepared each morning, cast from higher slots, with their costly components and scrolls of every level",
+    "Spells that work outside a fight: Goodberry feeds, Tiny Hut keeps the night, Revivify brings back the fallen, Teleport crosses the land, Augury answers from the world's own history",
+    "Familiars, a summoned steed, summoned spirits, the raised dead, bound fiends and Polymorph's shapes fighting at your side; and a Simulacrum of snow",
+    "Enemies that cast the whole catalogue, chosen by what each spell would do",
+    "Priests and mages who cast for pay at the book's prices, scrolls in temples and mages' shops, and the law of magic in every realm"
+  ]
 }

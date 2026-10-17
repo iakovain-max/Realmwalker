@@ -851,7 +851,7 @@ stat block now comes with the spell that brings it into play (never a block that
 - [x] G.1 Every caster stat block on the catalogue; arena: every battle spell cast by the AI in a scenario; a test
   caster of each spell level 1–9 casts without hangs.
 - [x] G.2 Spellcasting services and scrolls in temples, mages' guilds and shops; the law of magic.
-- [ ] G.3 Every Expansion 3 codex entry settled; balance; the icon; release v1.3.0.
+- [x] G.3 Every Expansion 3 codex entry settled; balance; the icon; release v1.3.0.
 
 #### G.1 — How
 - **The casters there are.** Today's stat blocks that cast (the acolyte, the cult fanatic; the imp, quasit and sprite's
@@ -910,3 +910,33 @@ stat block now comes with the spell that brings it into play (never a block that
   level 9 offer is cast for pay in a real town without error and does its work (a body raised, a wound healed, a
   thing identified, a buff kept); nothing offered that would do nothing; a mage in a forbidden realm refuses with
   witnesses near; the hired caster breaks no law; scrolls and the mage's wares by place and law.
+
+#### G.3 — How
+- **Simulacrum** (PHB 2024 p. 320: level 7 illusion, wizard, 12 hours, powdered ruby worth 1,500+ GP consumed: the
+  city markets' vial of ruby dust): a road op `does: "simulacrum"` in `game/greatmagic.py`. Its subjects are those
+  within ten feet for the twelve hours: anyone of the party (the caster too), a beast of the herd that has a stat
+  block (the mule, the horses, the camel, the elephant, the mastiff), and a prisoner who is a beast or a humanoid.
+  Casting it again destroys the simulacrum made before.
+- **A copy of a party member** is a character made from the original at the time of casting (`rules/simulacrum.py`:
+  the original's record copied, its hit point maximum halved and the hit points full; what they wear and hold
+  copied in snow, nothing in the pack, no money; no familiar, steed, servants, shape, Contingency or Simulacrum of
+  its own; it never levels, rests or eats). It is kept on its maker, `char.spells["simulacrum"]` {of, char (the copy's
+  record), made}, and walks behind the party (drawn as the original, pale as frost). In a fight it is a party-side
+  fighter with the character's classes, spells and the slots it had (they never come back), bond kind "simulacrum"
+  and type construct, placed beside its maker and acting right after them (played as a party member: z for Auto);
+  healing does nothing to it, at 0 hit points it melts (no death saves), and it earns nothing, is never counted
+  among the party's dead and does not keep a lost fight going. After the fight its record is written back.
+- **A copy of a creature** is a servant record (`rules/servants.py`, spell "simulacrum", type construct, half the
+  stat block's hit points, never healing by itself); it follows into towns too (the raised dead do not).
+- **Repair**: at a long rest with its maker, the maker spends 100 GP per hit point restored, up to what is missing,
+  but never more than half of the coin they carry (the game's choice: a rest never empties the purse); the log says
+  what was spent.
+- **Balance**: `tools/balance.py --runs 60` across the expansion's numbers; the bands stay as they are or the change
+  is explained in the notes.
+- **The icon** (`tools/tile_art.dlc_icons`, "dlc/demigods_magics"): a crowned silhouette rising out of an open book
+  that spills light; pack.json released, version 1.3.0; README, CLAUDE.md, PROGRESS (release notes §5.3), tag and
+  the GitHub release.
+- **Tests** (tests/test_simulacrum.py): the copy is made with half the maximum and only what is worn; a second
+  casting destroys the first; it fights in a real battle beside its maker (party side, construct, no healing, melts
+  at 0, not among the dead, no XP); its slots stay spent across fights; the repair at a long rest and its cap; a
+  beast's and a prisoner's copy as servants; the save keeps it.

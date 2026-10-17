@@ -1,41 +1,25 @@
 # Expansion programme – status
 
-Current: 03 Demigods & Magics · Part G (enemy casters, services, release), G.3 next · branch dlc/03-demigods-magics
+Current: 04 Steel & Shadows · step 1 (branch and design note) next · branch dlc/04-steel-shadows (to be made from main)
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
   (v1.2.0, 2026-10-13: the 2024 weapons, armour and masteries; species, sixteen backgrounds and origin feats; the
   general and fighting style feats; the 2024 tools and gear, trinkets, inns and lifestyles, coaches, ships and
-  messengers, mounts, saddles, stabling and vehicles; saves format 16) · 03 Demigods & Magics parts A and B (twenty
-  levels and the epic boons; the fighter, rogue, cleric and wizard of 2024 to level 20 with the Champion, Knight,
-  Thief, Assassin, Life and War Domains, Evoker and Abjurer; Counterspell; saves format 17) and C (preparing spells,
-  rituals, one slot a turn, higher slots, components, spell scrolls of every level, the four potions of healing) and
-  D (the catalogue: 191 battle spells, cantrips to level 9, and Wish) and E.1 (spells outside battle: return from
-  death, Aid, food and water, wards on the camp; saves format 18) and E.2 (light, the body on the move, travel by
-  magic: Teleport, circles, Word of Recall, Wind Walk, Etherealness...) and E.3 (finding and seeing, asking the
-  powers, talking: Detect Magic, Find Traps, Locate Object, Arcane Eye, Scrying, Augury, Divination, Commune, Legend
-  Lore, Tongues, Speak with Dead, Sending, Dream, Detect Thoughts...) and E.4 (minds and the law, disguise and
-  illusion, the small arts: Friends, Enthrall, Zone of Truth, Geas, Modify Memory, Glibness, Antipathy/Sympathy,
-  Awaken, Disguise Self, Seeming, the images, Mislead, Project Image, Illusory Script, Sequester, the camp's
-  illusions, Druidcraft, Thaumaturgy...) and E.5 (locks and stone, weather and land: Knock, Arcane Lock, Mending, Mage
-  Hand, Fabricate, Creation, Stone Shape, Passwall, Move Earth, Leomund's Secret Chest, Control Water, Control
-  Weather, Plant Growth, Tsunami) and E.6 (lasting protections and the caster's keeping: Glyph of Warding, Symbol,
-  Magic Circle, Forbiddance, Guards and Wards, Private Sanctum, Hallow, Demiplane, Tasha's Bubbling Cauldron) and E.7
-  (great magic and Wish's other uses: Contingency, Magic Jar, Clone, Imprisonment; Wish's Object Creation, Resistance,
-  Spell Immunity, Sudden Learning, Reshape Reality, and Roll Redo in a fight: Part E complete) and F.1 (allies on
-  the field: Find Familiar's twelve forms and Find Steed's Otherworldly Steed fight beside their owner) and F.2
-  (summoned spirits of levels 2-4: Summon Beast, Fey, Undead, Aberration, Construct, Elemental, Giant Insect) and F.3
-  (the spirits of levels 5-6 and Animate Objects: Summon Celestial, Summon Dragon, Summon Fiend, Animate Objects) and
-  F.4 (the raised dead: Animate Dead, Create Undead, Finger of Death's zombie, the ghast and the mummy) and F.5 (the
-  bound: Planar Ally, Planar Binding, Magic Circle turned inward) and F.6 (Polymorph and True Polymorph in a fight)
-  and F.7 (the rest of Appendix B: 24 creatures of the 2025 MM with pictures, shapes and met in the land) and F.8
-  (Animal Shapes and Shapechange, in a fight and on the road: Part F complete) and G.1 (enemy casters: every battle
-  spell cast by the enemy's tactics) and G.2 (spellcasting for pay by priests and mages, scrolls by rarity in
-  temples and mages' shops, the law of magic)
+  messengers, mounts, saddles, stabling and vehicles; saves format 16) · 03 Demigods & Magics (v1.3.0, 2026-10-17:
+  twenty levels and the epic boons; the fighter, rogue, cleric and wizard of 2024 to level 20 with eight subclasses;
+  spellcasting by the 2024 rules; the catalogue of 191 battle spells and Wish; spells outside battle in every system;
+  familiars, steeds, summoned spirits, the raised dead, the bound, Polymorph and Shapechange, the 24 creatures of
+  Appendix B; enemy casters; spells for pay and the law of magic; Simulacrum; saves format 18)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
-  adapted); Expansion 3: 223 done, 335 adapted, 1 omitted of 560 (all but Simulacrum, G.3). PHB 65% · DMG 12% · MM 16%
+  adapted); Expansion 3: all 560 settled (223 done, 336 adapted, 1 omitted). PHB 65% · DMG 12% · MM 16%
 Assumptions waiting for Anton:
+- Expansion 3 G.3 (Simulacrum): the copy's gear is snow in the likeness of what was worn and held, without its
+  magic; no spell heals it; a long rest's repair spends at most half of the maker's coin; a beast's or a prisoner's
+  copy follows the party into towns (the raised dead do not); commands are the battle's (played as a party member);
+  no snow on the ground is needed; it acts right after its maker; its once-a-rest uses are those of the casting and
+  never come back; the repair is paid from the maker's own coin.
 - The Player2 AI writer is removed (tagged `before-ai-removal`); its text is replaced everywhere by the game's own
   words, strengthened where they were thin.
 - Letters mode is gone; a PC that cannot draw the pictures is told so plainly.
@@ -443,8 +427,19 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: task G.3 in docs/expansions/03-demigods-magics.md (the codex's last entry, Simulacrum; balance
-across the expansion; the icon; the release v1.3.0 as docs/EXPANSIONS.md §5.1 step 12 says). Write G.3's "How" first.
+Next session starts at: Expansion 4, Steel & Shadows (docs/EXPANSIONS.md §6.4), step 1 of §5.1: make the branch
+`dlc/04-steel-shadows` from `main`, write its design note `docs/expansions/04-steel-shadows.md` (what Anton will see,
+the decisions, its parts and the codex entries it delivers: `tools/codex/coverage.py --dlc`, Expansion 4: 66 entries),
+then build its first part. Expansion 3 is released (v1.3.0, tag v1.3.0).
+The way of G.3 (Simulacrum): `rules/simulacrum.py` (the person's copy: `make`, `keep`, `destroy`, `repair` from
+`progression.long_rest`, `bring_in` from `fight.start_battle` after the shapes, `after` from `finish_battle`, `snow(f)`,
+`likeness` for the map); a creature's copy is a servant record with spell "simulacrum" and `type` "construct"
+(`servants.bring_in(only=)` lets it into settlement fights, `servants.following` onto settlement maps).
+`Battle.add_ally(char=)` makes a character fighter with a bond (party side, `kind` from the bond's type); `_heal`
+refuses snow, `_apply_hp_loss` melts it at 0 (no death saves), `_kill` has its words, `result().party_dead` leaves out
+bonded fighters; fight.py's party loops skip `f.bond is not None`. Road op `does: "simulacrum"` in
+`game/greatmagic.py` (`simulacrum_subjects`, `_simulacrum`). Pictures: `dolls.frost(parts)` (battlefx `_figure`,
+localview followers).
 The way of Part G (G.2): `game/spellhire.py` (TRADITION priest->cleric, mage->wizard; `reach` by economy.json
 services "spellcasting" `reach`/`own`, figures at the cap; `caster` builds the townsperson with `companions.build` at
 `caster_level`, cached per session; `price` = table + `component_value`, x`secret_markup` where forbidden; `offers` /

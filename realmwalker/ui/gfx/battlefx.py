@@ -1089,6 +1089,14 @@ class BattleBoard:
 
 
 def _figure(f, game, atlas) -> list:
+    from realmwalker.rules import simulacrum
+
+    if simulacrum.snow(f):  # (a Simulacrum: the likeness in snow)
+        return dolls.frost(_likeness(f, game, atlas))
+    return _likeness(f, game, atlas)
+
+
+def _likeness(f, game, atlas) -> list:
     if f.char is not None:
         return dolls.character(f.char, game.tables, atlas=atlas)
     bond = getattr(f, "bond", None) or {}
