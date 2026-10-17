@@ -579,31 +579,33 @@ def before_rest(game) -> list[str]:
         if warded(game, _road(t.spells[sid])["ward"]) is not None:
             continue
         c = _ritual_caster(game, sid)
-        if c is not None and magic.road_problem(game, c, sid) is None:
+        if c is not None:
             out = magic.cast_on_road(game, c, sid)
             break
     # (E.6: Forbiddance, a ritual too, burns what comes in the night; white fire)
     for sid in (s for s, sp in t.spells.defs.items() if isinstance(sp, dict) and sp.get("ritual")
                 and _road(sp).get("how") == "forbiddance"):
-        c = _ritual_caster(game, sid)
-        if c is None or warded(game, "forbiddance") is not None:
+        if warded(game, "forbiddance") is not None:
             continue
         from realmwalker.game import warding
 
-        radiant = next((s for s in warding.subjects(game, c, sid) if s.ref == "radiant"), None)
-        if magic.road_problem(game, c, sid, radiant) is None:
+        radiant = next((s for s in warding.subjects(game, game.leader, sid) if s.ref == "radiant"), None)
+        c = _ritual_caster(game, sid, radiant)
+        if c is not None:
             out += magic.cast_on_road(game, c, sid, radiant)
     return out
 
 
-def _ritual_caster(game, sid: str) -> Character | None:
-    """A companion who can cast this spell as a ritual."""
+def _ritual_caster(game, sid: str, target=None) -> Character | None:
+    """The first companion who can cast this spell as a ritual here and now (nothing in the way)."""
+    from realmwalker.game import magic
     from realmwalker.rules import feats
 
     t = game.tables
     for c in _companion_casters(game):
         if sid in spellrules.known_spells(c, t) or sid in spellrules.ritual_spells(c, t) + feats.ritual_spells(c, t):
-            return c
+            if magic.road_problem(game, c, sid, target) is None:
+                return c
     return None
 
 

@@ -558,3 +558,12 @@ def test_the_spells_page_shows_what_stands(world, tables):
     cast(game, cleric, "magic_circle")
     said = text(working_now(game))
     assert "Glyph of Warding" in said and "waiting" in said and "Magic Circle" in said and "Hallowed ground" in said
+
+
+def test_no_glyph_where_the_night_never_comes(world, tables):
+    wiz = hero(tables)
+    game = game_with(world, tables, wiz)
+    in_the_wild(game)
+    game.enter_local()
+    assert game.local is not None and game.local.kind not in ("dungeon", "settlement")
+    assert "open country" in magic.road_problem(game, wiz, "symbol", subject(game, wiz, "symbol", "symbol", "Death"))

@@ -11,7 +11,7 @@ good (`world.politics["hallowed"]`). What they do is read by the rest of the gam
     at_the_start(game, b)   a fight at the camp or on hallowed ground (from fight.start_battle)
     unseen_camp(game)       Private Sanctum: the camp is dark fog and silence from outside (fight.rest)
     room_thief(game, rng)   a glyph in your room at the inn meets the night's thief (services._night)
-    laid_to_rest(scar)      a haunted field hallowed with Peaceful Rest (game/past.restless, encounters)
+    scar["laid"]            a haunted field hallowed with Peaceful Rest (read by game/past.restless, encounters)
     brewed(item)            a potion from Tasha's cauldron: no merchant buys it (economy.sell_price)
 """
 from __future__ import annotations
@@ -176,10 +176,6 @@ def guards_the_animals(game) -> str:
     return ""
 
 
-def laid_to_rest(scar: dict | None) -> bool:
-    return bool(scar and scar.get("laid"))
-
-
 def brewed(item) -> bool:
     """A potion from Tasha's Bubbling Cauldron: it is magic's own, and no merchant buys it."""
     return any(t.startswith("cauldron:") for t in (getattr(item, "tags", None) or []))
@@ -296,8 +292,8 @@ def _set_off(game, enc, key: str, rec: dict, rng) -> list[str]:
             dmg = dice.roll(rec.get("dice", "10d10"), rng).total
             if _save(game, cr, ability, dc, rng):
                 dmg //= 2
-            _hurt(game, cr, dmg, "necrotic")
-            took += 1
+            if _hurt(game, cr, dmg, "necrotic") > 0:
+                took += 1
             continue
         state = "frightened" if effect == "fear" else SYMBOL_STATE[effect]
         if (state != "discord" and _immune_to(game, cr, state)) or _save(game, cr, ability, dc, rng):
@@ -335,6 +331,9 @@ def at_the_start(game, battle) -> list[str]:
         del game.camp.wards["glyph"]
         caster = next((f for f in party if f.char.name == rec.get("by")), None)
         sid = rec.get("spell")
+        if caster is None and foes:
+            out.append("<dim>The glyph flares and gutters out: the one who drew it is not here to give its spell "
+                       "form.</>")
         if caster is not None and foes and sid in game.tables.spells:
             from realmwalker.rules.engine import effects
 
@@ -353,7 +352,7 @@ def at_the_start(game, battle) -> list[str]:
         for f in foes:
             if f.kind in FORBIDDEN_KINDS:
                 f.buffs.append({"dot": rec.get("dice", "5d10"), "dot_type": rec.get("type", "radiant"),
-                                "dot_at": "end", "by": by.id, "source": "forbiddance"})
+                                "dot_at": "end", "by": by.id, "source": "forbiddance", "dot_name": "Forbiddance"})
     if ward(game, "circle") is not None:
         for f in party:
             durations.buff(f, {"warded_kinds": list(CIRCLE_KINDS), "source": "magic_circle"})
@@ -490,8 +489,8 @@ def problem(game, caster, sid: str, target) -> str | None:
             if town:
                 if _flags(game).get("glyph_room", {}).get("settlement") == _town_id(game):
                     return "a glyph already guards your room here"
-            elif _underground(game):
-                return "only on the way into a camp in the open, or your room at an inn"
+            elif game.local is not None:  # (the night comes to a camp on the wide map; nothing comes underground)
+                return "only on the way into a camp in the open country (off the close-up map), or your room at an inn"
             elif ward(game, how) is not None and not ward(game, how).get("fired"):
                 return f"a {how} already waits on the way into the camp"
             if how == "glyph" and aimed and target.kind == "spell" and target.ref not in glyph_spells(game, caster):
@@ -544,15 +543,20 @@ def _protect(game, caster, sid: str, spell: dict, o: dict, target, level: int) -
         else:
             rec["effect"] = target.ref
         _flags(game)["glyph_room"] = rec
-        return [f"{first} draws a {'glyph' if how == 'glyph' else 'symbol'} on the door of your room at the inn, and "
-                "it fades from sight. Whoever comes in the night without you will meet it."]
+        return [f"{first} draws a {'glyph' if how == 'glyph' else 'symbol'} on a door-sized slate and it fades from "
+                "sight: hung on the door of whatever room you take at the inn here, it will meet whoever comes in the "
+                "night. <dim>(It waits while you stay in this town.)</>"]
     if how == "glyph":
         if target.kind == "spell":
             stored = target.ref
             sp = t.spells[stored]
             slot = spellrules.lowest_free_slot(caster, t, int(sp["level"]))
-            if slot is None:
-                return ["The glyph takes shape, but there is no spell slot left for the spell it would hold: it fades."]
+            if slot is None:  # (a higher slot spent on the glyph took the one it would have used: nothing is lost)
+                spellrules.unspend_slot(caster, level)
+                for m in (spell.get("material") or {}).get("items", ())[:1]:
+                    add_item(caster, t.items, m)
+                return ["The glyph begins to take shape, but no spell slot is left for the spell it would hold: "
+                        f"{first} stops, and keeps the dust and the slot."]
             spellrules.spend_slot(caster, slot)
             spellrules.spend_material(caster, t, stored)
             s = game.sheet(caster)
