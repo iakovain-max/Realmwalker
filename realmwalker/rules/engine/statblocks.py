@@ -22,7 +22,8 @@ TRAIT_ALIASES = {
     "keen_hearing_and_smell": "keen_senses",
 }
 SIZE_ORDER = ("tiny", "small", "medium", "large", "huge", "gargantuan")
-FLAVOUR = ("name", "plural", "body", "morale", "ai", "names", "gear", "money", "loot", "butcher", "descriptions")
+FLAVOUR = ("name", "plural", "body", "morale", "ai", "names", "gear", "money", "loot", "butcher", "descriptions",
+           "summon")  # (summon: a summoned creature's numbers by the slot, rules/allies.summon_def)
 
 
 def resolve(cid: str, flavour: dict, blocks: dict) -> dict:
@@ -108,7 +109,7 @@ def attacks(actions: list[dict], extras: dict) -> list[dict]:
         kind = a.get("kind")
         base = {"id": a["id"], "name": a["name"].lower(), "bonus": int(a.get("bonus", 0)), "damage": a.get("damage", "0"),
                 "damage_type": a.get("type", "bludgeoning")}
-        for k in ("extra", "on_hit", "recharge", "uses"):
+        for k in ("extra", "on_hit", "recharge", "uses", "plus_level"):
             if a.get(k):
                 base[k] = a[k]
         base.update(extras.get(a["id"], {}))
@@ -190,6 +191,8 @@ def ops(block_effects: list[dict]) -> list[dict]:
                         **{k: e[k] for k in ("max_size",) if e.get(k)}})
         elif kind == "special" and e.get("attach"):
             out.append({"op": "attach"})
+        elif kind == "kernel":  # (the kernel's own ops, written out: a summoned spirit's blows, Expansion 3 F.2)
+            out.extend(e["ops"])
     return out
 
 

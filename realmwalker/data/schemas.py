@@ -445,6 +445,7 @@ ATTACK = Obj(
 CREATURE = Obj(
     {
         "statblock": Str(max_len=40, optional=True), "attack_extras": Map(Any_(), optional=True),
+        "summon": Map(Any_(), optional=True),  # (a summoned creature: its numbers by the slot, rules/allies.py)
         "action_swap": Map(Any_(), optional=True), "override": Map(Any_(), optional=True),
         "name": Str(max_len=40), "plural": Str(max_len=40),
         "kind": Str(max_len=20, optional=True),

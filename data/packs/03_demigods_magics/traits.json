@@ -14,6 +14,21 @@
     "jumper": {"name": "Jumper", "text": "Leaps far for its size, running start or not.", "where": "not yet"},
     "mimicry": {"name": "Mimicry", "text": "Mimics the voices and sounds it has heard.", "where": "not yet"},
     "life_bond": {"name": "Life Bond", "text": "Healed by a spell of level 1 or more within 5 feet of it, its rider heals it as much.",
-                  "where": "effects.heal"}
+                  "where": "effects.heal"},
+    "spirit_regeneration": {"name": "Regeneration", "text": "A slaad spirit: 5 hit points back at the start of each of its turns, while it has at least 1.",
+                            "hooks": [{"event": "turn_start", "as": "self", "handler": "spirit_regeneration", "amount": 5}]},
+    "whispering_aura": {"name": "Whispering Aura", "text": "At the start of its turns, every creature within 5 feet but its caster makes a Wisdom save against the caster's spell save DC or takes 2d6 psychic damage.",
+                        "hooks": [{"event": "turn_start", "as": "self", "handler": "whispering_aura"}]},
+    "festering_aura": {"name": "Festering Aura", "text": "Any creature but its caster that starts its turn within 5 feet makes a Constitution save or is Poisoned until the start of its next turn.",
+                       "hooks": [{"event": "turn_start", "as": "any", "handler": "festering_aura"}]},
+    "heated_body": {"name": "Heated Body", "text": "A creature that hits it with a melee attack takes 1d10 fire damage.",
+                    "hooks": [{"event": "attack_done", "as": "target", "handler": "heated_body"}]},
+    "stony_lethargy": {"name": "Stony Lethargy", "text": "A foe that starts its turn within 10 feet of it, where it can see, makes a Wisdom save or cannot make Opportunity Attacks and has half its Speed until the start of its next turn.",
+                       "hooks": [{"event": "turn_start", "as": "any", "handler": "stony_lethargy"}]},
+    "berserk_lashing": {"name": "Berserk Lashing", "text": "Its reaction, when a creature hurts it: a Slam at that creature if it can reach it.",
+                        "hooks": [{"event": "damage_taken", "as": "target", "handler": "berserk_lashing", "reaction": true}]},
+    "water_breathing": {"name": "Water Breathing", "text": "Breathes only underwater.", "where": "not yet"},
+    "amorphous_form": {"name": "Amorphous Form", "text": "Moves through a space as narrow as an inch without squeezing.", "where": "not yet"},
+    "incorporeal_passage": {"name": "Incorporeal Passage", "text": "Moves through creatures and things as if they were difficult terrain.", "where": "not yet"}
   }
 }

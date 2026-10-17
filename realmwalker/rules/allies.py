@@ -174,3 +174,126 @@ def rest(char, long: bool) -> None:
             continue
         rec["uses"] = {}
         rec["hp"] = steed_max_hp(rec.get("level", 2)) if kind == "steed" else int(rec.get("max_hp", rec.get("hp", 1)))
+
+
+# ---------------------------------------------------------------------------- summoned spirits (Expansion 3 F.2)
+SUMMON_UID = 91000  # (spirits made for a fight: out of the way of any band's numbers and of familiars and steeds)
+
+
+def summon_def(tables, cid: str, level: int, form: str, attack: int, dc: int) -> dict:
+    """A summoned creature's numbers for its slot, form and caster (PHB 2024: "use the spell slot's level for the
+    spell's level in the stat block"): its `summon` record in the creature data says the spell's own level, AC and
+    hit points (and per level above), and what each form changes; attacks marked `plus_level` add the slot level
+    to their damage and use the caster's spell attack; the Multiattack is half the slot level (round down) of the
+    form's attacks; its own magic uses the caster's spell save DC."""
+    from realmwalker.core import dice
+
+    d = copy.deepcopy(tables.creatures[cid])
+    s = d["summon"]
+    base = int(s["level"])
+    level = max(base, int(level))
+    fm = s.get("forms", {}).get(form) or {}
+    d["form"] = form
+    d["name"] = fm.get("name", d["name"])
+    d["ac"] = int(s["ac"]) + level + int(fm.get("ac", 0))
+    d["hp"] = str(int(fm.get("hp", s["hp"])) + int(s.get("hp_up", 0)) * (level - base))
+    d["speeds"] = {**d.get("speeds", {}), **fm.get("speeds", {})}
+    d["speed"] = int(d["speeds"].get("walk", d.get("speed", 0)))
+    keep = fm.get("attacks")
+    out = []
+    for a in d["attacks"]:
+        if keep is not None and a["id"] not in keep:
+            continue
+        a = dict(a)
+        a["bonus"] = int(attack)
+        if a.get("plus_level"):
+            n, sides, flat = dice.parse(str(a["damage"]))
+            a["damage"] = f"{n}d{sides}+{flat + level}" if n else str(flat + level)
+        if fm.get("damage_type"):
+            a["damage_type"] = fm["damage_type"]  # (an elemental's Slam: cold, lightning, fire or bludgeoning)
+        out.append(a)
+    d["attacks"] = out
+    ids = list(dict.fromkeys(a["id"] for a in out))
+    n = level // 2 if s.get("multiattack", True) else 1
+    d.pop("multiattack", None)
+    d.pop("multiattack_plan", None)
+    if n > 1 and ids:
+        d["multiattack"] = n
+        d["multiattack_plan"] = [list(ids) for _ in range(n)]
+    d["traits"] = list(dict.fromkeys(list(d.get("traits", [])) + list(fm.get("traits", []))))
+    for key in ("resist", "immune", "condition_immune"):
+        d[key] = list(dict.fromkeys(list(d.get(key, [])) + list(fm.get(key, []))))
+    own = list(fm.get("spells", []))
+    d["spellcasting"] = {"ability": "int", "dc": int(dc), "attack": int(attack), "at_will": own, "per_day": {},
+                         "slots": []}
+    d["spells"] = own
+    return d
+
+
+def _foes_of(b, owner) -> list:
+    return [e for e in b.enemies_of(owner) if e.active]
+
+
+def form_scores(b, owner, cid: str) -> dict[str, float]:
+    """How well each form suits this fight (`best_form` takes the best): a flier when foes are aloft or fly, a
+    ranged form when they stand far off, the element whose blow hurts them most, a water form only where there is
+    deep water."""
+    from realmwalker.rules.engine import query
+
+    s = b.t.creatures[cid]["summon"]
+    foes = _foes_of(b, owner)
+    aloft = any(e.z > 0 or e.fly_speed > 0 for e in foes)
+    near = min((b.gap(owner, e) for e in foes), default=0)
+    wet = float(b.field.swim.mean()) if hasattr(b.field, "swim") else 0.0
+    out = {}
+    for form, fm in s["forms"].items():
+        score = float(fm.get("weight", 1.0))
+        likes = fm.get("likes", [])
+        if "aloft" in likes and aloft:
+            score += 3.0
+        if "far" in likes and near > 6:
+            score += 2.0
+        if "many" in likes and len(foes) >= 3:
+            score += 1.5
+        if "water" in likes:
+            score += 3.0 if wet > 0.3 else -10.0
+        if fm.get("damage_type") and foes:
+            hurt = sum(query.damage_taken(e, 10, fm["damage_type"])[0] for e in foes) / (10.0 * len(foes))
+            score += 2.0 * hurt
+        out[form] = score
+    return out
+
+
+def best_form(b, owner, cid: str) -> str:
+    scores = form_scores(b, owner, cid)
+    return max(scores, key=lambda k: scores[k])  # (ties: the first written)
+
+
+def summon_spirit(b, owner, cid: str, level: int, point=None, sid: str = "", form: str = ""):
+    """A summoning spell cast in a fight (Summon Beast... Giant Insect): the creature appears at the point (the
+    nearest free squares to it), in the form that suits the fight, its numbers for the slot; it fights on its
+    caster's side right after the caster's turn and goes when the spell ends (Battle._end_concentration) or at 0
+    hit points. Returns the fighter."""
+    form = form or best_form(b, owner, cid)
+    if owner.char is not None:
+        attack, dc = caster_numbers(owner.char, b.t)
+    else:
+        sc = owner.cdef.get("spellcasting") or {}
+        attack, dc = int(sc.get("attack", 5)), int(sc.get("dc", 13))
+    cdef = summon_def(b.t, cid, level, form, attack, dc)
+    hp = int(cdef["hp"])  # (a summoned creature's hit points are a number, not dice)
+    uid = SUMMON_UID + owner.id * 20 + sum(1 for x in b.fighters if x.bond is not None)
+    cr = Creature(uid=uid, def_id=cid, name=cdef["name"], hp=hp, max_hp=hp, named=False)
+    f = b.add_ally(cr, owner, "summon", spell=sid, level=max(int(cdef["summon"]["level"]), int(level)),
+                   type_=cdef.get("kind", ""), cdef=cdef, point=point)
+    f.bond["conc"] = True
+    f.bond["form"] = form
+    pic = cdef["summon"]["forms"].get(form, {}).get("picture")
+    if pic:
+        f.bond["picture"] = pic
+    b.say(f"{a_or_an(cdef['name']).capitalize()} answers the call.", "magic")
+    return f
+
+
+def a_or_an(words: str) -> str:
+    return ("an " if words[:1].lower() in "aeiou" else "a ") + words
