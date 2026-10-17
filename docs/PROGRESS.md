@@ -95,6 +95,7 @@ last piece of Part E: every spell of Expansion 3 that works outside a fight is n
   a town or city and the age is not chosen; Imprisonment is cast from the meeting screen only and the form of the
   prison is the game's choice by kind; Wish copying a spell outside a fight is left out, Reshape Reality is four
   wishes the game understands, and Roll Redo undoes only blows, not saves.
+- **Fixed**: the stress of a Wish now leaves Strength at 5 for its days, as the book says (it was 3).
 
 ### Session, 2026-10-17 (midday): Demigods & Magics E.6 — spells outside battle: lasting protections and the caster's keeping
 

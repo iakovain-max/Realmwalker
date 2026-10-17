@@ -325,7 +325,8 @@ Assumptions waiting for Anton:
   the songs or a dragon dead: half or a quarter of the time, else a beast comes down on the farms or the dragon wakes;
   the realm forgets your crimes; a fallen friend the party carries lives, at the death toll); copying a spell outside
   a fight is left out. Roll Redo undoes a foe's hit on a friend since the last round (rerolled with Disadvantage; a
-  miss gives back its damage, a lost critical half); redoing a save is left out; the Auto never wishes but to copy.
+  miss gives back its damage, a lost critical half); redoing a save is left out; the Auto never wishes but to copy. From the fresh review: Wish's stress makes Strength 5, as the book says
+  (D.4 had 3); a body under Protection from Evil and Good cannot be taken; leaving a body needs the gem within 100 feet.
 Ideas for later:
 - (none yet)
 Next session starts at: task F.1 in docs/expansions/03-demigods-magics.md (Part F, Appendix B: familiars, steeds
