@@ -782,12 +782,13 @@ def _touch_heal(b: Battle, f: Fighter) -> bool:
         sp = b.t.spells[sid]
         bonus = sp.get("cast") == "bonus"
         revive = sp["target"] == "dead_ally" and spellrules.has_op(sp, "revive") and not bonus
-        ends = [c for o in spellrules.ops(sp) if o["op"] == "restore" for c in o.get("conditions", ())]             if sp["target"] == "ally" else []
+        ends = ([c for o in spellrules.ops(sp) if o["op"] == "restore" for c in o.get("conditions", ())]
+                if sp["target"] == "ally" else [])
         heal = sp["target"] == "ally" and spellrules.heal_op(sp) and not bonus
         if not (revive or ends or heal) or (f.bonus <= 0 if bonus else f.action <= 0):
             continue
         if revive:
-            need = [x for x in b.team(f.team) if x.state == "dead" and b.round - x.died_round <= 10
+            need = [x for x in b.team(f.team) if x.state == "dead" and 0 <= x.died_round and b.round - x.died_round <= 10
                     and x.bond is None and not x.__dict__.get("dust")]
         elif ends:
             need = [x for x in b.team(f.team) if x.active and any(c in x.conditions for c in ends)
@@ -930,7 +931,8 @@ def _pick_cast_now(b: Battle, f: Fighter, cost: str, *, beat: float, care: float
         levels = _slot_levels(b, f, opt.value, sp) if not free else [sp["level"]]
         aims = _aims(b, f, opt)
         tops = None
-        if len(levels) > 1 and len(aims) > 4:  # (many aims: the higher slot only where the lowest does best: G.1)
+        if f.char is None and len(levels) > 1 and len(aims) > 4:  # (an enemy with many aims: the higher slot
+            # only where the lowest does best, G.1)
             first = []
             for target, point in aims:
                 w = estimates.spell_value(b, f, opt.value, target=target, point=point,

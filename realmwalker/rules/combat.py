@@ -879,7 +879,8 @@ class Battle:
             cdef = shapes.mind_kept(cdef, char, self.t, proficient="proficiencies" in keeps, block=f.cdef)
         new_slots: list[int] = []
         if "spells" in keeps:
-            cdef, new_slots = self._form_spells(cdef, char) if char is not None else                 self._form_spells_of(cdef, f.cdef, f.slots)
+            cdef, new_slots = (self._form_spells(cdef, char) if char is not None
+                               else self._form_spells_of(cdef, f.cdef, f.slots))
             f.shape["cast_slots"] = list(new_slots)
         cr = Creature(uid=94000 + f.id, def_id=cid, name=f"{who}, as {a_or_an(cdef['name'])}", hp=f.hp, max_hp=top,
                       named=True)
@@ -938,7 +939,8 @@ class Battle:
         out = []
         for sid in block.get("spells", ()):
             sp = self.t.spells.defs.get(sid)
-            if sp is None or sp.get("concentration") or sp.get("cast") == "reaction"                     or spellrules.out_of_battle(sp) or spellrules.has_op(sp, "revive", "identify", "shape"):
+            if (sp is None or sp.get("concentration") or sp.get("cast") == "reaction"
+                    or spellrules.out_of_battle(sp) or spellrules.has_op(sp, "revive", "identify", "shape")):
                 continue
             out.append(sid)
         cdef = dict(cdef)
@@ -3985,7 +3987,8 @@ class Battle:
         sc = f.cdef.get("spellcasting", {})
         for sid in f.cdef["spells"]:
             spell = self.t.spells.defs.get(sid)
-            if spell is None or spell.get("cast") == "reaction" or spellrules.out_of_battle(spell)                     or spellrules.has_op(spell, "identify"):
+            if (spell is None or spell.get("cast") == "reaction" or spellrules.out_of_battle(spell)
+                    or spellrules.has_op(spell, "identify")):
                 continue  # (Thaumaturgy and the like on a stat block: their use is outside a fight)
             level = spell["level"]
             per_day = self._per_day(f, sid)
@@ -4212,7 +4215,8 @@ class Battle:
             held = (f.concentration or {}).get("target")
             return [x for x in self.fighters if x.id == held and x.active and x is not f and near(x)]
         if target == "dead_ally":
-            return [x for x in self.team(f.team) if x.state == "dead" and self.round - x.died_round <= 10 and near(x)
+            return [x for x in self.team(f.team) if x.state == "dead" and 0 <= x.died_round and self.round - x.died_round <= 10
+                    and near(x)
                     and (x.char is not None or x.creature is not None and x.bond is None)]  # (a foe's own: G.1)
         return []
 

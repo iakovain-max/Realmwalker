@@ -277,7 +277,7 @@ def ac(f) -> int:
         return max([value + sum(f.buff_value("ac"))] + [int(v) for v in f.buff_value("ac_floor")])
     value = int(f.cdef["ac"])
     for base in f.buff_value("mage_armor"):  # (a creature that wears no armour: Expansion 3 G.1)
-        if not wears_armour(f):
+        if not wears_armour(f) and getattr(f, "shape", None) is None:  # (not through a borrowed body)
             value = max(value, int(base) + f.mod("dex"))
     return max([value + sum(f.buff_value("ac"))] + [int(v) for v in f.buff_value("ac_floor")])
 

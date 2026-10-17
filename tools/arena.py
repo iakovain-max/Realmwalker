@@ -181,7 +181,7 @@ def options_of(tables, creature: str) -> list[str]:
 
 # ---------------------------------------------------------------- enemy casters (Expansion 3 G.1)
 CASTER = "arena_caster"
-CASTER_SLOTS = [4, 3, 3, 3, 3, 2, 2, 1, 1]  # (a 17th-level caster's slots, PHB)
+CASTER_SLOTS = [4, 3, 3, 3, 2, 1, 1, 1, 1]  # (a 17th-level caster's slots, PHB)
 
 
 def battle_spells(tables) -> list[str]:
@@ -191,7 +191,8 @@ def battle_spells(tables) -> list[str]:
 
     out = []
     for sid, sp in tables.spells.defs.items():
-        if sid.startswith("_") or sp.get("cast") == "reaction" or spellrules.out_of_battle(sp)                 or spellrules.has_op(sp, "identify"):
+        if (sid.startswith("_") or sp.get("cast") == "reaction" or spellrules.out_of_battle(sp)
+                or spellrules.has_op(sp, "identify")):
             continue  # (Identify is offered to nobody in a fight)
         if set(sp.get("classes", [])) & {"creature", "item", "again"} or sp.get("again_of"):
             continue
