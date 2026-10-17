@@ -342,3 +342,29 @@ def test_the_battle_screen_opens_wishes_and_casts_a_copy(make_app):
     assert spellrules.slots_left(wiz, t)[8] == nine - 1
     app.render(tcod.console.Console(160, 45, order="F"))
     assert app.error_count == 0
+
+
+def test_nobody_reacts_while_time_stands_still_and_the_spells_do_not_wear_down(tables):
+    b = fight(tables, [hero(tables, "wizard", xp=355000)], ["bandit"], {0: (4, 4), 1: (5, 4)})
+    me, foe = b.fighters
+    my_turn(b, me)
+    cast(b, me, "time_stop")
+    me.concentration = {"spell": "bless", "rounds": 3, "on": []}
+    b.end_turn()
+    b.step()  # (the extra turn begins)
+    assert b.current is me and me.concentration["rounds"] == 3, "no time passes"
+    assert not b.threats(me), "the foe is held in the moment"
+    hp = me.hp
+    b.do_move(me, (1, 4))
+    assert me.hp == hp and foe.reaction, "no blow as the caster walks away"
+
+
+def test_a_countered_wish_brings_no_stress(tables, monkeypatch):
+    c = wisher(tables)
+    b = fight(tables, [c], ["bandit"], {0: (1, 4), 1: (9, 4)})
+    me, _ = b.fighters
+    my_turn(b, me)
+    monkeypatch.setattr(Battle, "_countered", lambda self, f, sid, spell: True)
+    nine = spellrules.slots_left(c, tables)[8]
+    b.do_cast(me, "wish")
+    assert not c.effects.get("wish_stress") and spellrules.slots_left(c, tables)[8] == nine

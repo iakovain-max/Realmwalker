@@ -912,8 +912,10 @@ class Battle:
 
     def _start_of_turn(self, f: Fighter) -> None:
         self._rolls_waiting = []  # a roll that explained nothing (a check with no line after it) is not carried over
-        durations.tick(self, f, "turn_start")  # what lasts "until the start of its next turn" ends
-        marks.turn_start(self, f)  # (Heroism; harm at the start of a turn)
+        extra = f.__dict__.pop("extra_turn", False)  # (a turn in a stopped time: no time passes)
+        if not extra:
+            durations.tick(self, f, "turn_start")  # what lasts "until the start of its next turn" ends
+            marks.turn_start(self, f)  # (Heroism; harm at the start of a turn)
         f.readied = None
         if f.creature is not None and f.cdef.get("legendary"):
             f.creature.uses["legendary_actions"] = int(f.cdef["legendary"].get("uses", 3))
@@ -925,13 +927,19 @@ class Battle:
         f.moved_feet = 0
         f.__dict__["turn_start_at"] = (f.x, f.y)  # (Charger: how far they ran at a foe)
         f.spent_round += 1
-        for b in list(f.buffs):
+        for b in list(f.buffs) if not extra else ():
             if "rounds" in b:
                 b["rounds"] -= 1
                 if b["rounds"] < 0:
                     f.buffs.remove(b)
         f.move_left = f.speed
         marks.after_turn_start(self, f)  # (Slow: no bonus action)
+        if extra:  # (Time Stop: a fresh turn, but nothing wears down, nothing burns, nothing bleeds)
+            self._follow_auras()
+            if f.active:
+                f.move_left = max(f.speed, f.fly_speed)
+                self._stand_up(f)
+            return
         if f.concentration is not None and f.concentration.get("rounds", -1) >= 0:
             f.concentration["rounds"] -= 1
             if f.concentration["rounds"] < 0:
@@ -1018,7 +1026,10 @@ class Battle:
         if any(z.kind == "guardians" and z.owner is not None and any(c in z.cells for c in f.cells)
                and self.fighter(z.owner).team != f.team for z in self.zones) and not self.antimagic(f.cells):
             f.move_left //= 2  # Spirit Guardians: half speed in the emanation (2024)
-        # Standing up from the ground costs half your movement.
+        self._stand_up(f)
+
+    def _stand_up(self, f: Fighter) -> None:
+        """Standing up from the ground costs half your movement."""
         rise = 5 if f.char is not None and feats.has(f.char, "athlete") else f.speed // 2  # (Athlete: Hop Up)
         if "prone" in f.conditions and f.can_act() and f.state == "fighting" and f.move_left >= rise > 0:
             del f.conditions["prone"]
@@ -1202,7 +1213,7 @@ class Battle:
         if f.disengaged:
             return out
         for e in self.enemies_of(f):
-            if not e.standing or not e.can_opportunity or e.incapacitated or e.state != "fighting":
+            if not e.standing or not e.can_opportunity or e.incapacitated or e.state != "fighting" or self.frozen(e):
                 continue
             r = self.reach_of(e)
             if r:
@@ -1555,7 +1566,7 @@ class Battle:
         """A blow with the reaction at someone breaking away (why ""), stepping into a polearm's reach ("polearm") or
         striking a friend beside a sentinel ("sentinel"). War Caster may answer with a harmful cantrip instead. Returns
         whether it was made."""
-        if not e.reaction or not e.active or e.incapacitated:
+        if not e.reaction or not e.active or e.incapacitated or self.frozen(e):
             return False
         opts = [o for o in self.attack_options(e) if o.is_melee and o.available and self.gap(e, f) <= o.reach_sq]
         cantrip = self._war_cantrip(e, f, opts)
@@ -3739,9 +3750,12 @@ class Battle:
             dc, bonus = spellrules.scroll_numbers(self.t, spell["level"])
             bonus += s.attack_condition()
         mult = spellrules.cantrip_multiplier(c.level) if spell["level"] == 0 else 1  # (Cantrip Upgrade: 5, 11, 17)
-        strained = spellrules.strain(c, spell["level"], self.rng) if scroll is None and charged is None else 0
-        if not self.cast(f, sid, spell, target, point, up=up, mod=mod, dc=dc, bonus=bonus, mult=mult,
-                         level=slot_level or level, slotted=slotted):
+        strained = spellrules.strain(c, slot_level or spell["level"], self.rng) \
+            if scroll is None and charged is None else 0
+        held = self.cast(f, sid, spell, target, point, up=up, mod=mod, dc=dc, bonus=bonus, mult=mult,
+                         level=slot_level or level, slotted=slotted)
+        if not held:
+            strained = 0  # (countered: no spell was cast)
             if slotted:
                 spellrules.unspend_slot(c, slot_level)  # (countered: the slot is not spent, 2024)
             if scroll is not None:
@@ -3755,7 +3769,7 @@ class Battle:
             if used:
                 self.say(f"The {used} is gone into the spell.", "magic")
         self._strain(f, strained)
-        if spell.get("stress"):  # (Wish used for anything but a copy)
+        if spell.get("stress") and held:  # (Wish used for anything but a copy)
             for line in spellrules.wish_stress(c, self.rng):
                 self.say(line, "danger")
         self._after_action(f)
@@ -3818,7 +3832,7 @@ class Battle:
             return False  # (a follow-up of a spell already cast is not a casting)
         for x in self.enemies_of(caster):
             if not x.reaction or query.incapacitated(x) or self.feet(x, caster) > 60 or not self.can_see(x, caster) \
-                    or self.antimagic(x.cells) or x.buff_value("befuddled"):
+                    or self.antimagic(x.cells) or x.buff_value("befuddled") or self.frozen(x):
                 continue
             slot = wizard.counter_slot(self, x)
             if slot is None:
@@ -3992,6 +4006,11 @@ class Battle:
             self.bring_back(f)
         f.lost_turn = True  # (the turn went on finding the way: Battle.step ends it)
 
+    def frozen(self, x: Fighter) -> bool:
+        """Time Stop: everyone but the one who stopped time is held in the moment (no reactions)."""
+        stopper = self.__dict__.get("_time_stop")
+        return stopper is not None and x.id != stopper
+
     def _more_time(self, f: Fighter) -> bool:
         """Time Stop (2024): 1d4 + 1 turns in a row for the caster; it ends when an action or an effect of theirs
         reaches another creature (Battle._event), or when they fall. True when they take another turn now."""
@@ -4008,6 +4027,7 @@ class Battle:
             return False
         bf["time_stop"] = int(bf["time_stop"]) - 1
         self._time_stop = f.id
+        f.extra_turn = True  # (no time passes: _start_of_turn wears nothing down)
         self.say(f"Time stands still: {f.the_name} moves alone.", "magic")
         return True
 

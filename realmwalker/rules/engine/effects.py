@@ -1047,7 +1047,7 @@ def _zone(c: Cast, o: dict, victim) -> None:
         return
     if z.kind in WALLS:  # a wall: it rises on the free squares of the area
         taken = {sq for x in b.on_field() for sq in x.cells}
-        name = "wall_stone" if z.kind == "stone" else "ice_wall"  # (force and the prismatic wall: drawn over)
+        name = {"stone": "wall_stone", "force": "wall_force", "prismatic": "wall_prismatic"}.get(z.kind, "ice_wall")
         for sq in sorted(z.cells):
             if sq in taken or not b.field.passable(*sq):
                 continue

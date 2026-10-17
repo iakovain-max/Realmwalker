@@ -115,7 +115,7 @@ def cast(game, caster: Character, patient: Character, wound, spell_id: str, slot
     rng = game.world.rng.child(f"cast/{game.world.time}/{spell_id}")
     msgs = [] if free else [f"{caster.name.split()[0]} casts <magic>{spell['name']}</>."]
     use = spellrules.road_use(t, spell_id)
-    strained = spellrules.strain(caster, level, rng) if not free else 0
+    strained = spellrules.strain(caster, slot or level, rng) if not free else 0
     if use == "heal":
         h = spellrules.heal_op(spell)
         targets = [c for c in game.party if c.alive] if spellrules.heals_many(spell) else [patient]
@@ -140,9 +140,9 @@ def cast(game, caster: Character, patient: Character, wound, spell_id: str, slot
     elif use == "cure":
         msgs += health.magic_restore(patient, t)
     if strained:  # (an earlier Wish's stress: the spell tears at its caster)
-        caster.hp = max(0, caster.hp - strained)
-        msgs.append(f"<danger>Casting tears at {caster.name.split()[0]}: {strained} necrotic, the strain of the "
-                    "wish.</>")
+        from realmwalker.game.magic import strain_on_road
+
+        msgs += strain_on_road(game, caster, strained)
     if spell.get("stress") and not free:  # (Wish's Instant Health)
         msgs += spellrules.wish_stress(caster, rng)
     game.pass_time(1, "rest")

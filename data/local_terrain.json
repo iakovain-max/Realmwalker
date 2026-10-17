@@ -111,6 +111,8 @@
     "stone_arch": {"name": "stone arch", "walk": false, "see": true, "cost": 1, "tags": [], "desc": "An arch of red stone carved by the wind, standing over nothing."},
     "ledge": {"name": "ledge", "walk": true, "see": true, "cost": 1.4, "tags": [], "desc": "A ledge of rock on the edge of the pit. Do not look down. You will look down."},
     "chasm": {"name": "the pit", "walk": false, "see": true, "cost": 1, "tags": ["chasm"], "desc": "Nothing: a drop into darkness, and mist breathing up out of it."},
+    "wall_force": {"name": "wall of force", "walk": false, "see": false, "cost": 1, "tags": ["wall"], "desc": "A sheet of unseen force, faintly shimmering where the light catches it; nothing passes it."},
+    "wall_prismatic": {"name": "prismatic wall", "walk": false, "see": false, "cost": 1, "tags": ["wall"], "desc": "Seven sheets of blazing colour, one behind another: red, orange, yellow, green, blue, indigo and violet."},
     "ice_wall": {"name": "wall of ice", "walk": false, "see": false, "cost": 1, "tags": ["wall", "cold"], "desc": "Old blue glacier ice, sheer and groaning, with shapes frozen deep inside it."},
     "crater_rim": {"name": "crater rim", "walk": false, "see": false, "cost": 1, "tags": ["wall"], "desc": "The broken lip of the crater, black rock and loose cinders."},
     "cairn": {"name": "summit cairn", "walk": false, "see": true, "cost": 1, "tags": ["climb"], "desc": "A cairn of stones on the top of the world, each one carried up by someone who made it."},

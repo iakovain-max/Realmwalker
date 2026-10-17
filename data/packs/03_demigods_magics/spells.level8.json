@@ -9,7 +9,7 @@
    "target": "enemy", "range": 150, "components": ["V", "S", "M"],
    "effects": [{"op": "save", "ability": "int", "damage": "10d12", "type": "psychic", "half": true,
                 "on_fail": [{"op": "modifier", "rounds": 14400, "buff": {"befuddled": true}}]}],
-   "fx": "curse", "text": "You blast the mind of a foe within 150 feet: an Intelligence save or 10d12 psychic damage (half on a save). On a failure it also cannot cast spells or use magic actions for the rest of the fight, and the day."},
+   "fx": "curse", "text": "You blast the mind of a foe within 150 feet: an Intelligence save or 10d12 psychic damage (half on a save). On a failure it also cannot cast spells or use magic actions for the rest of the fight."},
   "dominate_monster": {"name": "Dominate Monster", "level": 8, "school": "enchantment", "classes": ["bard", "sorcerer", "warlock", "wizard"],
    "target": "enemy", "range": 60, "components": ["V", "S"], "concentration": true, "rounds": 600,
    "effects": [{"op": "save", "ability": "wis", "advantage": true,
