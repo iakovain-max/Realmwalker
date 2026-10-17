@@ -270,19 +270,34 @@ def finish_battle(game) -> Aftermath:
     # The fight's minutes pass only now: anyone knocked down has come round (or been robbed and left, or mauled and
     # left) by this point. Before, a body still at 0 hit points was found dead of its hurts the moment time moved.
     game.pass_seconds(result.rounds * ROUND_SECONDS, "fight")
+    from realmwalker.game import revival
+
+    fell = {id(f.char): f for f in battle.side(PARTY) if f.char is not None}
+    if game.party and not game.party[0].alive and game.over is None and result.outcome != "fled":
+        # The leader fell: a companion still standing may call them back at once (a spell of return).
+        f0 = fell.get(id(game.party[0]))
+        since = (battle.round - f0.died_round) * ROUND_SECONDS / 60 if f0 is not None and f0.died_round >= 0 else 0.0
+        back = revival.save_leader(game, since)
+        if back:
+            after.notes += back
+            if after.outcome == "death":
+                after.outcome = result.outcome
     dead_party = [c for c in game.party if not c.alive]  # (left for dead, not everyone wakes)
     leader_alive = game.party and game.party[0].alive
     if dead_party and leader_alive:
-        from realmwalker.game.companions import died
-
-        for c in dead_party:
-            after.notes.append(f"<danger>{c.name} is dead.</>")
-            died(game, c)
         game.party = [c for c in game.party if c.alive]
         game.waiting = [c for c in game.waiting if c.alive]
         from realmwalker.game import pack
 
         pack.sync(game)  # what they carried stays with the party
+        for c in dead_party:
+            after.notes.append(f"<danger>{c.name} is dead.</>")
+            f = fell.get(id(c))
+            when = game.world.time - (battle.round - f.died_round) * ROUND_SECONDS / 60 \
+                if f is not None and f.died_round >= 0 else None
+            revival.fall(game, c, died_at=when, left=result.outcome == "fled")
+        after.notes += revival.auto_revive(game)  # (a companion with Revivify ready, in the minute left)
+        after.notes += revival.leader_note(game)
     elif not leader_alive and game.over is None:
         cause = getattr(game.party[0], "death_cause", None) if game.party else None
         game.over = {"cause": cause or "died of wounds after a fight", "place": battle.env.ground}
@@ -822,6 +837,11 @@ def _rustlers(game, fire: bool) -> list[str]:
     chance = (RUSTLING_CHANCE + 0.01 * int(game.world.danger[p.x, p.y])) * (1.3 if fire else 1.0)
     if not rng.chance(chance):
         return []
+    from realmwalker.game import spellwork
+
+    guarded = spellwork.guards_the_animals(game)  # (an alarm, a hound, a dome, a door out of the world)
+    if guarded:
+        return [guarded]
     if watching(game):
         return ["<warn>In the small hours the one on watch shouts: someone was at the animals.</> Whoever it was runs "
                 "off into the dark with nothing."]
@@ -843,8 +863,10 @@ def rest(game, kind: str) -> list[str]:
     A long rest in the wilds may be interrupted."""
     from realmwalker.game.encounters import roll_encounter
 
+    from realmwalker.game import spellwork
+
     lm = game.local
-    if lm is not None and any(a.alert for a in lm.actors):
+    if lm is not None and any(a.alert for a in lm.actors) and not spellwork.hidden(game, kind):
         return ["You can't rest with enemies hunting you."]
     from realmwalker.rules import body
 
@@ -858,6 +880,8 @@ def rest(game, kind: str) -> list[str]:
 
     from realmwalker.game import journey
 
+    if kind == "long" and lm is None:
+        notes += spellwork.before_rest(game)  # (a companion who knows a ward as a ritual casts it)
     camp = camp_here(game)
     fire = bool(camp and camp.fire)
     lay_down = set(journey.dangers(game))
@@ -878,11 +902,16 @@ def rest(game, kind: str) -> list[str]:
                     notes.append("Eyes glint beyond the firelight in the night, but they do not come closer.")
                     enc = None
             if enc is not None:
+                enc, said = spellwork.night_visitors(game, enc)  # (the camp's wards: Alarm, the Hound, the Hut...)
+                notes += said
+            if enc is not None:
                 from realmwalker.game.companions import watching
 
                 from realmwalker.game.camp import has_flag
 
-                if watching(game):
+                if spellwork.warded(game, "hound", "alarm") is not None:
+                    pass  # (woken by the ward: the camp is up)
+                elif watching(game):
                     enc.asleep = False
                     notes.append("<warn>The one on watch shakes you awake: something is coming.</>")
                 elif has_flag(game, "alarm")[1] is not None:

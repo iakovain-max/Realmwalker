@@ -6,7 +6,7 @@ cooks and boils, but is seen from afar; a cold camp stays hidden. Numbers are in
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from realmwalker.core import dice
 from realmwalker.rules import body
@@ -29,6 +29,7 @@ class Camp:
     tent: bool = False
     shelter: bool = False  # a rough shelter: a lean-to, a hollow in the lee of rocks (build_shelter)
     snares: str = ""  # the snares or trap set for the night (game/gear.py), by item id
+    wards: dict = field(default_factory=dict)  # spells guarding it: ward -> world minute it ends (game/spellwork.py)
 
 
 def camp_here(game) -> Camp | None:

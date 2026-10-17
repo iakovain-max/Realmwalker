@@ -3370,9 +3370,9 @@ class Battle:
             spell = self.t.spells[sid]
             if ok and spell["target"] == "self" and sid in spellrules.lasting(f.char, self.t):
                 ok, why = False, "already working on you"
-            if ok and (spellrules.has_op(spell, "identify") or spell.get("minutes")):
+            if ok and (spellrules.has_op(spell, "identify") or spellrules.out_of_battle(spell)):
                 ok, why = False, "not in a fight" if not spell.get("minutes") else \
-                    f"it takes {spell['minutes']} minutes to cast: not in a fight"
+                    f"it takes {spell['minutes']} minute{'s' if spell['minutes'] != 1 else ''} to cast: not in a fight"
             if ok and spell.get("cast") == "reaction":
                 ok, why = False, ("a reaction: cast by itself when a foe nearby casts a spell" if sid == "counterspell"
                                   else "a reaction: cast by itself when a blow would land")
@@ -3386,7 +3386,7 @@ class Battle:
         for it in f.char.inventory:  # (a scroll: on the reader's spell list, or a thief's Use Magic Device)
             sid = self.t.items.get(it.def_id).get("use", {}).get("scroll")
             if sid in self.t.spells and not spellrules.has_op(self.t.spells[sid], "revive", "identify") \
-                    and not self.t.spells[sid].get("minutes") \
+                    and not spellrules.out_of_battle(self.t.spells[sid]) \
                     and self.t.spells[sid].get("cast") != "reaction":
                 why = spellrules.scroll_problem(f.char, self.t, sid)
                 ok = not why

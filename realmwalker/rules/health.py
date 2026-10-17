@@ -127,9 +127,18 @@ def injury_effects(char: Character, tables) -> dict:
     return merged
 
 
+DEATH_TOLL = "death_toll"  # Character.effects: the penalty to d20 tests after coming back from death (Raise Dead)
+
+
+def death_toll(char: Character) -> int:
+    """Coming back from the dead is an ordeal (PHB 2024 Raise Dead, Resurrection): this much off every d20 test, one
+    less after each long rest."""
+    return int(char.effects.get(DEATH_TOLL, 0))
+
+
 def penalty(char: Character, tables) -> int:
     """Everything that makes rolls worse right now, as one number (0 .. -10). Exhaustion is separate."""
-    p = -body.condition_penalty(char)
+    p = -body.condition_penalty(char) + death_toll(char)
     p += {"hurting": 1, "in pain": 2, "in agony": 4, "in shock": 6}.get((pain_stage(char, tables) or ("", ""))[0], 0)
     p += {"pale": 1, "faint": 2, "collapsing": 3, "bleeding to death": 4}.get((blood_stage(char) or ("", ""))[0], 0)
     p += {"drunk": 2, "very drunk": 4}.get((intox_stage(char) or ("", ""))[0], 0)
@@ -270,13 +279,18 @@ def _timed_effects(char: Character, hours: float, tables=None) -> list[tuple[str
         if key.endswith("_clean"):
             char.effects[key] += hours  # counters since the last dose
             continue
-        if key.startswith("spell_at:"):
-            continue  # (the slot a lasting spell was cast with: it goes with the spell)
+        if key.startswith(("spell_at:", "spell_hp:")) or key == DEATH_TOLL:
+            continue  # (the slot a lasting spell was cast with, the maximum it raised: they go with the spell; the
+            # toll of coming back from death: a long rest takes it down, not the hours)
         char.effects[key] -= hours
         if char.effects[key] <= 0:
             del char.effects[key]
             if key.startswith("spell:"):
                 char.effects.pop("spell_at:" + key[len("spell:"):], None)
+                from realmwalker.rules import spells as spellrules
+
+                if spellrules.lower_max(char, key[len("spell:"):]):
+                    events.append((f"{n} feels the strength the spell gave ebb away.", "dim"))
             if key == "poppy":
                 events.append((f"{n}'s poppy dream fades, and the pain comes back.", "warn"))
             elif key == "hangover":

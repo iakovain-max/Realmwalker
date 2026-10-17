@@ -149,6 +149,8 @@ class GameState:
         self.sneak_roll = 0  # the party's Stealth roll when they began to creep (the worst of them)
         self.let_in: tuple[int, int] | None = None  # (settlement id, day): let through a shut gate tonight
         self.waiting: list[Character] = []  # companions told to wait somewhere (game.companions)
+        self.fallen: list[dict] = []  # the bodies of companions the party carries, while a spell could still raise
+        # them (game/revival.py)
         self.lit: dict | None = None  # the torch or lantern burning underground (game.dungeon)
         self.quests: list[dict] = []  # work taken on: the journal (game.quests)
         self._last_moment = -10**6  # the step count when street life was last remarked on
@@ -274,12 +276,16 @@ class GameState:
         gone = [c for c in list(self.party[1:]) + list(self.waiting) if not c.alive]
         if not gone:
             return
+        from realmwalker.game import revival
         from realmwalker.game.companions import died
 
+        in_party = [c for c in self.party[1:] if not c.alive]
         self.party = [c for c in self.party if c.alive or c is self.party[0]]
         self.waiting = [c for c in self.waiting if c.alive]
         for c in gone:
-            if c.companion:
+            if any(c is x for x in in_party):
+                revival.fall(self, c)  # (the body is carried while someone could still raise them)
+            elif c.companion:
                 died(self, c)
 
     def pass_time(self, minutes: float, activity: str = "rest") -> None:
@@ -306,6 +312,13 @@ class GameState:
                 self.world.time += remaining
                 break
         self.bury_the_dead()
+        if self.fallen:
+            from realmwalker.game import revival
+
+            revival.tick(self)
+        from realmwalker.game import spellwork
+
+        spellwork.tick(self)  # (magic berries are gone when their day is out)
         self._weather_moment()
         after = self.moment
         from realmwalker.game import magic_items

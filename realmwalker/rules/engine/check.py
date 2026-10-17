@@ -73,6 +73,12 @@ def problems(tables) -> list[str]:
                 out.append(f"data/spells.json: {sid} does '{o.get('op')}', which the rules cannot do.")
             if o.get("op") == "special" and o.get("handler") not in effects.SPECIAL:
                 out.append(f"data/spells.json: {sid} calls '{o.get('handler')}', which the code does not have.")
+            if o.get("op") == "road" and (o.get("does") not in spellrules.ROAD_USES
+                                          or o.get("does") == "ward" and o.get("ward") not in spellrules.WARDS):
+                out.append(f"data/spells.json: {sid} is for '{o.get('does')}' {o.get('ward') or ''} outside a fight, "
+                           "which the game does not know.")
+            if o.get("op") == "road" and not spellrules.out_of_battle(spell):
+                out.append(f"data/spells.json: {sid} works only outside a fight: it needs \"road_only\" or \"minutes\".")
             if o.get("op") == "condition" and o.get("condition") not in cond.table(tables):
                 out.append(f"data/spells.json: {sid} gives the condition '{o.get('condition')}', which data/conditions.json "
                            "does not define.")

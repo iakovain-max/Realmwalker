@@ -28,8 +28,10 @@ def _ids(data_dir="data"):
     from realmwalker.data.registry import DataRegistry
 
     d, _ = DataRegistry.load(Path(data_dir))
-    return sorted(sid for sid in d.get("spells.json")["spells"] if not sid.startswith("_")
-                  and d.origin("spells", sid, "spells") == PACK)
+    spells = d.get("spells.json")["spells"]
+    return sorted(sid for sid in spells if not sid.startswith("_") and d.origin("spells", sid, "spells") == PACK
+                  and not spells[sid].get("minutes") and not spells[sid].get("road_only"))  # (Part E's are cast
+    # outside a fight: tests/test_spells_outside.py)
 
 
 try:

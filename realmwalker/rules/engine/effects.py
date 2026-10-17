@@ -90,6 +90,15 @@ The fourth wave (D.4):
     time_stop  dice ("1d4+1"): the caster takes that many more turns in a row; it ends when an action or an
                effect of theirs reaches another creature (Battle._more_time, combat.TOUCHES)
 
+Outside a fight (Part E):
+    max_up     amount (dice), per_up, count: the hit point maximum and hit points go up while the spell lasts (Aid;
+               rules/spells.raise_max); in a fight too, on up to `count` friends in range
+    revive     within_days (instead of within_rounds), hp ("all" for every hit point), toll (the penalty to d20
+               tests that a long rest takes down by one), closes (mortal wounds, poison), regrow (lost parts),
+               cures (diseases and curses), species ("new": Reincarnate) - for the fallen (game/revival.py)
+    road       does: one of rules/spells.ROAD_USES (food, water, wards on the camp...: game/spellwork.py); never
+               cast in a fight (the spell has "road_only" or "minutes")
+
 Unknown ops are data errors at start-up (rules/engine/check.py).
 """
 
@@ -999,6 +1008,42 @@ def _revive(c: Cast, o: dict, victim) -> None:
 @op("identify")
 def _identify(c: Cast, o: dict, victim) -> None:
     pass  # outside a fight only (game/magic.py)
+
+
+@op("road")
+def _road(c: Cast, o: dict, victim) -> None:
+    pass  # outside a fight only (game/spellwork.py): such a spell is never offered in one
+
+
+@op("max_up")
+def _max_up(c: Cast, o: dict, victim) -> None:
+    """Aid: up to `count` friends in range (the caster first, then the worst hurt), their maximum and hit points
+    raised while the spell lasts; it outlives the fight, kept on the character (rules/spells.raise_max)."""
+    b, f, spell, sid = c.b, c.caster, c.spell, c.sid
+    if victim is not None:
+        targets = [victim]
+    elif spell["target"] == "all_allies":
+        reach = b.spell_range(spell)
+        near = [x for x in b.team(f.team) if (x.active or x.state == "down") and b.feet(f, x) <= reach]
+        near.sort(key=lambda x: (x is not f, x.hp / max(1, x.max_hp)))
+        targets = near[: int(o.get("count", 3)) + int(o.get("count_up", 0)) * c.up]
+    elif spell["target"] == "self":
+        targets = [f]
+    else:
+        targets = [c.target]
+    amount = spellrules.max_up_amount(spell, c.level or int(spell["level"]), b.rng)
+    for x in targets:
+        if x is None or x.char is None:
+            continue  # (a creature has no lasting self for it to stay on)
+        if x.state == "dead":
+            continue
+        gained = spellrules.raise_max(x.char, sid, amount)
+        if spellrules.lasts(b.t, sid):
+            spellrules.keep(x.char, b.t, sid, c.level)
+        if gained:
+            b.say(f"{x.the_name}'s strength grows: {gained} more hit points while {spell['name']} lasts.", "good")
+            x.char.hp -= gained  # (the hit points come through the battle's healing, which stands up the fallen)
+            b._heal(x, gained)
 
 
 @op("special")

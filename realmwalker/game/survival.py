@@ -46,6 +46,7 @@ def bedding(game, char: Character) -> float:
 
 
 def environment(game, char: Character, activity: str) -> Environment:
+    from realmwalker.game import spellwork
     from realmwalker.game.camp import camp_here
 
     w = weather(game)
@@ -54,8 +55,9 @@ def environment(game, char: Character, activity: str) -> Environment:
     boons = wonder_boons(game) if still else set()
     return Environment(
         air=w.temp, wind=w.wind, wet_per_hour=w.wet_per_hour, activity=activity,
-        sheltered=sheltered(game, activity),
-        fire=bool(camp and camp.fire and still) or "warm" in boons,  # hot springs warm you like a fire
+        sheltered=sheltered(game, activity) or (still and spellwork.sheltering(game)),  # (a Tiny Hut, a Mansion)
+        fire=bool(camp and camp.fire and still) or "warm" in boons  # hot springs warm you like a fire
+        or (still and spellwork.sheltering(game)),
         tent=bool(camp and camp.tent and still), bedding=bedding(game, char),
         shelter=bool(camp and camp.shelter and still) or "shelter" in boons,
         wading=bool(getattr(game, "_wading", False)),
@@ -122,10 +124,18 @@ def check_death(game, char: Character) -> None:
     char.alive = False
     char.hp = 0
     game.say(f"<danger>{char.name} is dead: {cause}.</>", "danger")
+    from realmwalker.game import revival
+
     if char is game.leader:
+        back = revival.save_leader(game) if getattr(game, "party", None) else None
+        if back:  # (a companion standing by calls them back at once: Revivify, or something greater)
+            for text in back:
+                game.say(text, "good")
+            return
         game.over = {"cause": cause, "place": ""}
         game.travel = None
     else:
+        was_with_us = any(c is char for c in game.party)
         game.party = [c for c in game.party if c.alive or c is game.party[0]]  # never the leader: they lead, dead or not
         game.waiting = [c for c in getattr(game, "waiting", []) if c.alive]
         from realmwalker.game import pack
@@ -133,7 +143,10 @@ def check_death(game, char: Character) -> None:
         pack.sync(game)  # what they carried stays with the party
         from realmwalker.game.companions import died
 
-        died(game, char)
+        if was_with_us:
+            revival.fall(game, char)  # (the body is carried while someone could still raise them)
+        else:
+            died(game, char)
 
 
 def death_cause(char: Character, exhausted: bool) -> str:
@@ -192,6 +205,8 @@ def eat_item(game, char: Character, item, units: int = 1, stretch: float = 1.0) 
     if removed is None:
         return ""
     body.eat(char, float(food.get("nutrition", 0.3)) * removed.qty * stretch)  # a cook's stew goes further
+    if food.get("heals") and char.hp > 0:  # (a goodberry: a hit point each)
+        char.hp = min(char.max_hp, char.hp + int(food["heals"]) * removed.qty)
     rng = game.world.rng.child(f"eat/{game.world.time}/{item.uid}")
     if risky_spoiled and rng.chance(0.35):
         char.conditions.append("exposed:food_poisoning")
@@ -319,6 +334,16 @@ def feed(game, char: Character) -> None:
                 eaten.append(text)
         for text in eaten[:2]:
             game.say(text, "dim")
+        if not eaten and char.hunger >= 55 and getattr(game, "auto_supplies", True) and getattr(game, "party", None):
+            from realmwalker.game import spellwork
+
+            conjured = spellwork.conjure(game, "food")  # (a companion's Goodberry or Create Food and Water)
+            for text in conjured:
+                game.say(text, "magic")
+            choices = food_choices(game, char, fire=fire) if conjured else []
+            if choices:
+                eaten.append(eat_item(game, char, choices[0]))
+                game.say(eaten[-1], "dim")
         if not eaten and char.hunger >= 55 and not getattr(game, "_warned_food", False):
             game.say(f"<warn>{body.first(char)} has nothing fit to eat.</> Forage, hunt or buy food.", "warn")
             game._warned_food = True
@@ -354,7 +379,16 @@ def feed(game, char: Character) -> None:
             game.say(drink_from(game, char, here[0], pints, here[1]), "dim")
         elif char.thirst >= 60 and not getattr(game, "_warned_water", False):
             drinks = [it for it in char.inventory if game.tables.items.get(it.def_id).get("drink")]
-            if drinks:
+            conjured = []
+            if not drinks and getattr(game, "auto_supplies", True):
+                from realmwalker.game import spellwork
+
+                conjured = spellwork.conjure(game, "water")  # (a companion's Create or Destroy Water)
+            for text in conjured:
+                game.say(text, "magic")
+            if conjured:
+                pass  # (the conjured water was drunk by the thirsty as it came)
+            elif drinks:
                 it = drinks[0]
                 d = game.tables.items.get(it.def_id)["drink"]
                 remove_item(char, it.uid, 1)

@@ -173,14 +173,17 @@ PREPARE_WEIGHTS = {
 
 
 def prepare_kind(spell: dict) -> str:
-    """What a spell is for, as the Auto prepares: heal, guard (a reaction), harm, buff or other."""
+    """What a spell is for, as the Auto prepares: heal, guard (a reaction), harm, buff, road (for outside a fight)
+    or other."""
+    if out_of_battle(spell) or has_op(spell, "road"):
+        return "road"
     if heal_op(spell) or has_op(spell, "revive", "restore"):
         return "heal"
     if spell.get("cast") == "reaction":
         return "guard"
     if harms(spell):
         return "harm"
-    if buff_of(spell) or has_op(spell, "summon", "zone"):
+    if buff_of(spell) or has_op(spell, "summon", "zone", "max_up"):
         return "buff"
     return "other"
 
@@ -200,7 +203,10 @@ def auto_prepare_order(char: Character, tables, pool: list[str], have: list[str]
 
     def worth(sid: str) -> float:
         sp = tables.spells[sid]
-        w = weights[prepare_kind(sp)] + 1.5 * sp["level"] - 2.0 * kinds.get(prepare_kind(sp), 0)
+        kind = prepare_kind(sp)
+        if kind == "road":  # (outside a fight: chosen by the player for a need, never ahead of the fight's spells)
+            return 0.5 - 2.0 * kinds.get(kind, 0) - (20 if adept and sp.get("ritual") else 0)
+        w = weights[kind] + 1.5 * sp["level"] - 2.0 * kinds.get(kind, 0)
         return w - 20 if adept and sp.get("ritual") else w
 
     left = sorted(pool, key=lambda sid: tables.spells[sid]["name"])
@@ -330,6 +336,7 @@ def spend_free(char: Character, spell_id: str, how: str | None) -> None:
 # more dart, one more creature blessed or healed), `rays_up` (one more ray) and the spell's `targets_up` (one more
 # creature of the same kind). A spell without any of them gains nothing from a higher slot.
 UP_KEYS = ("up", "count_up", "rays_up")
+UP_OPS = ("max_up", "road")  # ops whose `per_up` makes a higher slot worth it (Aid, Create or Destroy Water)
 
 
 def upcasts(spell: dict) -> bool:
@@ -337,6 +344,7 @@ def upcasts(spell: dict) -> bool:
     if spell.get("level", 0) <= 0:
         return False
     return bool(spell.get("targets_up")) or any(o.get(k) for o in ops(spell) for k in UP_KEYS) \
+        or any(o.get("per_up") for o in ops(spell) if o["op"] in UP_OPS) \
         or any(more for o in ops(spell) for _, _, more in damage_parts(o))
 
 
@@ -380,6 +388,10 @@ def up_gain(spell: dict, up: int) -> list[str]:
             out.append(f"heals +{more_dice(o['heal_up'], up)}")
         if o["op"] == "temp_hp" and o.get("per_up"):
             out.append(f"+{int(o['per_up']) * up} temporary hit points")
+        if o["op"] == "max_up" and o.get("per_up"):
+            out.append(f"+{int(o['per_up']) * up} hit points")
+        if o["op"] == "road" and o.get("per_up") and o.get("pints"):
+            out.append(f"+{int(o['per_up']) * up // 8} gallons")
         what = {"darts": "dart", "heal": "creature healed", "modifier": "creature"}.get(o["op"], "more")
         if o.get("count_up"):
             n = int(o["count_up"]) * up
@@ -510,7 +522,7 @@ def wish_copies(tables) -> list[str]:
             continue
         cls = set(sp.get("classes", ()))
         if not cls or cls <= {"item", "again", "wish"} or "item" in cls or sp.get("again_of") or sp.get("ability") \
-                or sp.get("thrown") or sp.get("minutes") or sp.get("cast") == "reaction" or sp.get("target") == "item" \
+                or sp.get("thrown") or out_of_battle(sp) or sp.get("cast") == "reaction" or sp.get("target") == "item" \
                 or has_op(sp, "identify", "revive"):
             continue
         out.append(sid)
@@ -692,11 +704,23 @@ def heals_many(spell: dict) -> bool:
     return spell["target"] == "all_allies" or bool(spell.get("area")) and spell.get("affects") == "allies"
 
 
+# What the spells of Part E do outside a fight: a spell's {"op": "road", "does": ...} names one of these (game/spellwork
+# does it; the start-up check knows them), its "ward" one of WARDS (kept on the camp: game/spellwork.ward).
+ROAD_USES = ("feed", "water", "purify", "goodberry", "feast", "ward", "repose", "uncurse", "regenerate")
+WARDS = ("alarm", "hut", "hound", "rope", "mansion")
+
+
 def road_use(tables, spell_id: str) -> str | None:
-    """What a spell is for outside a fight: "heal", "cure", "identify", "lasting" (cast before a fight), or None."""
+    """What a spell is for outside a fight: "heal", "cure", "identify", "revive" (a fallen companion: game/revival),
+    "lasting" (cast before a fight), one of ROAD_USES, or None."""
     spell = tables.spells[spell_id]
     if has_op(spell, "identify"):
         return "identify"
+    if has_op(spell, "revive"):
+        return "revive"
+    road = op(spell, "road")
+    if road is not None:
+        return road["does"]
     if has_op(spell, "heal"):
         return "heal"
     if has_op(spell, "restore"):
@@ -724,7 +748,8 @@ def summary(spell: dict) -> list[str]:
 def lasts(tables, spell_id: str) -> bool:
     """A spell that outlives a fight: a buff of ten minutes or more."""
     spell = tables.spells[spell_id]
-    return bool(buff_of(spell)) and int(spell.get("rounds", 0)) >= MIN_LASTING_ROUNDS and not spell.get("battle_only")
+    return (bool(buff_of(spell)) or has_op(spell, "max_up")) and int(spell.get("rounds", 0)) >= MIN_LASTING_ROUNDS \
+        and not spell.get("battle_only")
 
 
 def lasting(char: Character, tables=None) -> dict[str, float]:
@@ -755,6 +780,58 @@ def cast_at(char: Character, tables, spell_id: str) -> int:
 def end(char: Character, spell_id: str) -> None:
     char.effects.pop(LASTING + spell_id, None)
     char.effects.pop(CAST_AT + spell_id, None)
+    lower_max(char, spell_id)
+
+
+# ---------------------------------------------------------------------------- a raised maximum (Aid, Heroes' Feast)
+# A spell that raises the hit point maximum (an op {"op": "max_up", "amount": dice, "per_up", "count"}) does it to the
+# character itself while the spell lasts: `max_hp` and `hp` go up by the amount, kept in `effects["spell_hp:<id>"]`
+# (which does not wear down: it goes with the spell), and come down again when the spell ends (rules/health.py).
+MAX_UP = "spell_hp:"
+
+
+def raise_max(char: Character, spell_id: str, amount: int) -> int:
+    """Raise a character's maximum (and hit points) by a spell; the same spell never stacks: the larger stays.
+    Returns what was gained."""
+    key = MAX_UP + spell_id
+    old = int(char.effects.get(key, 0))
+    if amount <= old:
+        return 0
+    char.max_hp += amount - old
+    char.hp += amount - old
+    char.effects[key] = float(amount)
+    return amount - old
+
+
+def lower_max(char: Character, spell_id: str) -> int:
+    """The spell that raised the maximum has ended: it comes down again (and hit points with it, if above)."""
+    amount = int(char.effects.pop(MAX_UP + spell_id, 0))
+    if amount:
+        char.max_hp = max(1, char.max_hp - amount)
+        char.hp = min(char.hp, char.max_hp)
+    return amount
+
+
+def max_up_amount(spell: dict, level: int, rng=None) -> int:
+    """How much a max_up op raises the maximum, cast with a slot of `level` (its dice rolled with `rng`, or the
+    average without one)."""
+    from realmwalker.core import dice
+
+    o = op(spell, "max_up")
+    if o is None:
+        return 0
+    extra = int(o.get("per_up", 0)) * max(0, level - int(spell["level"]))
+    text = str(o["amount"])
+    if rng is None:
+        count, sides, mod = dice.parse(text)
+        return int(count * (sides + 1) / 2) + mod + extra
+    return dice.roll(text, rng).total + extra
+
+
+def out_of_battle(spell: dict) -> bool:
+    """A spell that is never cast in a fight: it takes a minute or more ("minutes"), or its use is only outside one
+    ("road_only": food, water, wards, bodies)."""
+    return bool(spell.get("minutes") or spell.get("road_only"))
 
 
 def lasting_values(char: Character, tables, key: str) -> list:
