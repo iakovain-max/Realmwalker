@@ -123,22 +123,26 @@ def swims(tables, cid: str) -> bool:
     return int((tables.creatures[cid].get("speeds") or {}).get("swim", 0) or 0) > 0
 
 
-def mind_kept(cdef: dict, char, tables, *, proficient: bool) -> dict:
+def mind_kept(cdef: dict, char, tables, *, proficient: bool, block: dict | None = None) -> dict:
     """A form's stat block with its wearer's Intelligence, Wisdom and Charisma (Animal Shapes, Shapechange); with
-    `proficient` (Shapechange keeps the proficiencies) their saves are the wearer's own where those are better."""
+    `proficient` (Shapechange keeps the proficiencies) their saves are the wearer's own where those are better. A
+    creature wearing it (`char` None) gives its own stat block's (`block`: Expansion 3 G.1)."""
     from realmwalker.rules.character import Sheet
 
     out = dict(cdef)
     abilities = dict(cdef.get("abilities") or {})
     saves = dict(cdef.get("saves") or {})
-    sheet = Sheet(char, tables) if proficient else None
+    sheet = Sheet(char, tables) if proficient and char is not None else None
+    mine = (block or {}).get("abilities") or {}
     for a in MIND:
-        score = int(char.abilities.get(a, 10))
+        score = int(char.abilities.get(a, 10)) if char is not None else int(mine.get(a, 10))
         abilities[a] = score
         mod = (score - 10) // 2
         own = int(saves[a]) - ((int(cdef.get("abilities", {}).get(a, 10)) - 10) // 2) + mod if a in saves else mod
         if sheet is not None:
             own = max(own, int(sheet.save_bonus(a)))
+        elif proficient and block is not None and a in (block.get("saves") or {}):
+            own = max(own, int(block["saves"][a]))
         saves[a] = own
     out["abilities"], out["saves"] = abilities, saves
     return out

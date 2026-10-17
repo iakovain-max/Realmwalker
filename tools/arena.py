@@ -175,12 +175,98 @@ def options_of(tables, creature: str) -> list[str]:
     return list(dict.fromkeys(out))
 
 
+# ---------------------------------------------------------------- enemy casters (Expansion 3 G.1)
+CASTER = "arena_caster"
+CASTER_SLOTS = [4, 3, 3, 3, 3, 2, 2, 1, 1]  # (a 17th-level caster's slots, PHB)
+
+
+def battle_spells(tables) -> list[str]:
+    """Every spell an enemy caster could cast on its own turn in a fight: not a reaction, not one whose use is outside
+    a fight, not a creature's own gift, an item's, a follow-up or Wish's copies."""
+    from realmwalker.rules import spells as spellrules
+
+    out = []
+    for sid, sp in tables.spells.defs.items():
+        if sid.startswith("_") or sp.get("cast") == "reaction" or spellrules.out_of_battle(sp):
+            continue
+        if set(sp.get("classes", [])) & {"creature", "item", "again"} or sp.get("again_of"):
+            continue
+        out.append(sid)
+    return sorted(out)
+
+
+def caster_def(tables, spells: list[str], *, level: int = 17) -> dict:
+    """A test caster: a war mage's numbers (a 17th-level caster's slots, DC 17, +9 to hit) knowing only these spells
+    (cantrips at will). Registered under CASTER for spawn()."""
+    import copy
+
+    d = copy.deepcopy(tables.creatures.defs["cult_fanatic"])
+    cantrips = [s for s in spells if tables.spells[s]["level"] == 0]
+    d.update(name="war mage", plural="war mages", cr=9.0, xp=5000, hp="15d8+45", ac=12,
+             abilities={"str": 10, "dex": 14, "con": 16, "int": 18, "wis": 18, "cha": 18}, morale="fanatic",
+             ai={"role": "controller", "range": 30}, traits=[], gear=[], spells=list(spells),
+             attacks=[{"id": "dagger", "name": "dagger", "item": "dagger", "bonus": 6, "damage": "1d4+2", "damage_type": "piercing",
+                       "kind": "melee", "reach": False}])  # (a plain blade: its magic is its weapon)
+    for k in ("multiattack", "multiattack_plan"):
+        d.pop(k, None)
+    d["spellcasting"] = {"ability": "int", "dc": 17, "attack": 9, "at_will": cantrips, "per_day": {},
+                         "slots": CASTER_SLOTS[:max(1, (level + 1) // 2)], "self_only": False}
+    tables.creatures.defs[CASTER] = d
+    return d
+
+
+def caster_setup(tables, spells: list[str], scenario: str, seed: int) -> Battle:
+    caster_def(tables, spells)
+    return setup(tables, CASTER, scenario, seed)
+
+
+def spells_report(tables, spells: list[str], runs: int) -> int:
+    """Each battle spell in a test caster's hands, in every scenario: how often the tactics cast it, and anything that
+    broke."""
+    import traceback
+
+    never, broke = [], []
+    all_times: list[float] = []
+    for sid in spells:
+        n = 0
+        outcomes: Counter = Counter()
+        for scenario in SCENARIOS:
+            for seed in range(runs):
+                try:
+                    r = run(caster_setup(tables, [sid], scenario, seed))
+                except Exception:  # (the report goes on; the trouble is listed)
+                    broke.append((sid, scenario, seed, traceback.format_exc(limit=-3)))
+                    continue
+                n += r["used"].get(f"cast:{sid}", 0)
+                outcomes[r["outcome"]] += 1
+                all_times += r["times"]
+        print(f"{sid} (level {tables.spells[sid]['level']}): cast {n}; {dict(outcomes)}")
+        if not n:
+            never.append(sid)
+    print(f"\nnever cast ({len(never)}): {never}")
+    for sid, scenario, seed, tb in broke:
+        print(f"\nBROKE {sid} {scenario} seed {seed}:\n{tb}")
+    if all_times:
+        ms = sorted(x * 1000 for x in all_times)
+        print(f"enemy turns: {len(ms)}, 95th percentile {ms[int(len(ms) * 0.95) - 1]:.1f} ms, slowest {ms[-1]:.1f} ms")
+    return 1 if broke else 0
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--creature", action="append")
     ap.add_argument("--runs", type=int, default=4)
+    ap.add_argument("--spells", action="store_true", help="every battle spell in a test caster's hands")
+    ap.add_argument("--spell", action="append", help="these spells only (with --spells)")
+    ap.add_argument("--shard", help="k/n: every n-th spell from the k-th (to run several side by side)")
     args = ap.parse_args(argv)
     t = load_tables()
+    if args.spells or args.spell:
+        spells = args.spell or battle_spells(t)
+        if args.shard:
+            k, n = (int(x) for x in args.shard.split("/"))
+            spells = spells[k::n]
+        return spells_report(t, spells, args.runs)
     creatures = args.creature or sorted(t.creatures.defs)
     all_times: list[float] = []
     for cid in creatures:

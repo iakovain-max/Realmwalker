@@ -875,14 +875,16 @@ class Battle:
                    "recharge": dict(f.recharge), "by": by.id, "spell": spell, "temp": f.temp_hp, "how": how,
                    "conc": bool(sp.get("concentration")) if sp else True, "leave": bool(how.get("leave")),
                    "shift": how.get("shift"), "hours": float(how.get("hours", 0) or 0)}
-        if char is not None and "mind" in keeps:
-            cdef = shapes.mind_kept(cdef, char, self.t, proficient="proficiencies" in keeps)
+        if "mind" in keeps:  # (a creature keeps its own stat block's mind: Expansion 3 G.1)
+            cdef = shapes.mind_kept(cdef, char, self.t, proficient="proficiencies" in keeps, block=f.cdef)
         new_slots: list[int] = []
-        if char is not None and "spells" in keeps:
-            cdef, new_slots = self._form_spells(cdef, char)
+        if "spells" in keeps:
+            cdef, new_slots = self._form_spells(cdef, char) if char is not None else                 self._form_spells_of(cdef, f.cdef, f.slots)
             f.shape["cast_slots"] = list(new_slots)
         cr = Creature(uid=94000 + f.id, def_id=cid, name=f"{who}, as {a_or_an(cdef['name'])}", hp=f.hp, max_hp=top,
                       named=True)
+        if char is None and "spells" in keeps:
+            cr.uses = f.creature.uses  # (its spells of so many a day are counted on what it is underneath)
         f.char, f.creature, f.cdef = None, cr, cdef
         f.slots = new_slots
         f.recharge = {a["name"]: True for a in cdef["attacks"] if a.get("recharge")}
@@ -928,6 +930,24 @@ class Battle:
                                 "mult": spellrules.cantrip_multiplier(char.level)}
         return cdef, list(spellrules.slots_left(char, self.t))
 
+    def _form_spells_of(self, cdef: dict, block: dict, slots: list[int]) -> tuple[dict, list[int]]:
+        """A creature's Shapechange keeps its Spellcasting (Expansion 3 G.1): its own stat block's battle spells (not
+        one held by concentration, nor another shape), its numbers and the slots it has left (written back by
+        `unshape`)."""
+        own = block.get("spellcasting") or {}
+        out = []
+        for sid in block.get("spells", ()):
+            sp = self.t.spells.defs.get(sid)
+            if sp is None or sp.get("concentration") or sp.get("cast") == "reaction"                     or spellrules.out_of_battle(sp) or spellrules.has_op(sp, "revive", "identify", "shape"):
+                continue
+            out.append(sid)
+        cdef = dict(cdef)
+        cdef["spells"] = out
+        cdef["spellcasting"] = {**own, "at_will": [s for s in own.get("at_will", ()) if s in out],
+                                "per_day": {n: [s for s in ss if s in out] for n, ss in (own.get("per_day") or {}).items()},
+                                "slots": list(slots)}
+        return cdef, list(slots)
+
     def unshape(self, f: Fighter, quiet: bool = False, *, keep: bool = False, falls: bool = True) -> None:
         """A shape ends: the fighter is what it was, with the hit points it has now. `keep` (the fight is over): a shape
         that outlasts the fight keeps its record with the borrowed hit points left (Expansion 3 F.8); otherwise the
@@ -943,6 +963,8 @@ class Battle:
         f.shape = None
         f.char, f.creature, f.cdef = was["char"], was["creature"], was["cdef"]
         f.slots, f.recharge, f.sq = was["slots"], was["recharge"], was["sq"]
+        if f.char is None and spent:  # (a creature's slots spent in the form are its own: G.1)
+            f.slots = [max(0, n - (spent[i] if i < len(spent) else 0)) for i, n in enumerate(f.slots)]
         # (temporary hit points it had before - Heroism's, a leader's words - come back, no more than are left)
         f.temp_hp = max(0, min(int(f.temp_hp), int(was.get("temp", 0))))
         f.hp = hp

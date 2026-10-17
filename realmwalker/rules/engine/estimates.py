@@ -73,6 +73,42 @@ def threat(x) -> float:
     return best * max(1, int(x.cdef.get("multiattack", 1)))
 
 
+def casts_spells(b, x) -> bool:
+    """A fighter that casts spells: a creature with spells on its stat block, or a character of a casting class (the
+    party's casters count for the enemy's Silence and Circle of Power as the enemy's do for the Auto: Expansion 3
+    G.1)."""
+    if x.char is not None:
+        return bool(b is not None and spellrules.is_caster(x.char, b.t) and x.char.spells)
+    return bool(x.cdef is not None and x.cdef.get("spells"))
+
+
+def weapon_blows(b, f, target=None) -> list:
+    """The blows a fighter strikes with a weapon (True Strike, a smite): a character's weapons in hand, a creature's
+    attacks with a weapon its stat block names (Expansion 3 G.1); in reach of `target` if one is given."""
+    out = []
+    for x in b.attack_options(f):
+        if not x.available or x.kind not in ("melee", "ranged"):
+            continue
+        if x.item_uid is None and not (f.char is None and str(x.extra.get("item", "")) in b.t.items):
+            continue
+        if target is not None and not b.in_reach(f, x, target)[0]:
+            continue
+        out.append(x)
+    return out
+
+
+def blow_mod(b, f, opt) -> int:
+    """The ability modifier already in a blow (a character's is kept on the option; a creature's is its Dexterity
+    for a ranged or finesse weapon if that is better, else its Strength)."""
+    if "ability_mod" in opt.extra:
+        return int(opt.extra["ability_mod"])
+    props = b.t.items.get(str(opt.extra.get("item", ""))).get("properties", []) \
+        if str(opt.extra.get("item", "")) in b.t.items else []
+    if opt.kind == "ranged":
+        return f.mod("dex")
+    return max(f.mod("str"), f.mod("dex")) if "finesse" in props else f.mod("str")
+
+
 @dataclass
 class Worth:
     damage: float = 0.0  # expected damage to enemies
@@ -190,11 +226,10 @@ def spell_value(b, f, sid: str, *, target=None, point=None, dc: int | None = Non
                 w.control += _mark_on_foe(b, f, on, o.get("buff", {}))  # (Hex, Faerie Fire on a foe)
             else:
                 w.help += _buff_worth(spellrules.buff_at(o, spell["level"] + up, spell), n, b, f, on, spell)
-        elif kind == "weapon_attack" and target is not None and f.char is not None:
-            opts = [x for x in b.attack_options(f) if x.available and x.item_uid is not None
-                    and x.kind in ("melee", "ranged") and b.in_reach(f, x, target)[0]]
+        elif kind == "weapon_attack" and target is not None:
+            opts = weapon_blows(b, f, target)
             if opts:
-                am = int(opts[0].extra.get("ability_mod", 0))
+                am = blow_mod(b, f, opts[0])
                 spell_mod = _caster_mod(b, f)
                 ev = attack_value(b, f, opts[0], target) * (1.0 + 0.1 * max(0, spell_mod - am))
                 ev += hit_chance(b, f, opts[0], target) * (spell_mod - am + 3.5 * max(0, mult - 1))
@@ -210,9 +245,10 @@ def spell_value(b, f, sid: str, *, target=None, point=None, dc: int | None = Non
             n = int(o.get("count", 3)) + int(o.get("count_up", 0)) * up
             whom = sorted(caught if caught else [f], key=lambda x: (x is not f, x.hp / max(1, x.max_hp)))[:n]
             for x in whom:
-                if x.char is None:
+                if x.char is None and x.creature is None:
                     continue
-                gain = max(0, amount - int(x.char.effects.get(spellrules.MAX_UP + spell_id(sid), 0)))
+                had = x.char.effects if x.char is not None else x.creature.uses  # (a creature's: G.1)
+                gain = max(0, amount - int(had.get(spellrules.MAX_UP + spell_id(sid), 0)))
                 near = any(b.gap(x, e) <= 6 for e in b.enemies_of(f))
                 w.help += gain * (0.6 if near else 0.3) + (10.0 if x.state == "down" and gain else 0.0)
         elif kind == "temp_hp" and (caught or spell["target"] == "self"):
@@ -334,8 +370,6 @@ def _shape_worth(b, f, o: dict, target, dc: int) -> float:
             return 0.0
         left = threat(target) * max(0.0, 1.0 - shapes.strength(b.t, cid) / max(1.0, 3.0 * threat(target) + 40.0))
         return 3.0 * left * fail_chance(b, target, "wis", dc)
-    if target.char is None:
-        return 0.0
     cid = shapes.best(b.t, target, kinds, o)
     if cid is None:
         return 0.0
@@ -344,7 +378,7 @@ def _shape_worth(b, f, o: dict, target, dc: int) -> float:
     strength = shapes.strength(b.t, cid)
     gain = shapes.form_hp(b.t, cid) / 10.0 + max(0.0, strength - own) / 20.0 - max(0.0, own - strength) / 20.0
     keeps = "spells" in (o.get("keeps") or ())
-    casts = spellrules.is_caster(target.char, b.t) and not keeps  # (a caster loses its spells while in the form)
+    casts = casts_spells(b, target) and not keeps  # (a caster loses its spells while in the form)
     if casts and target is f:
         return 0.0  # (a caster would give up every spell it has to be a bear: the Auto never does)
     if gain <= 0:
@@ -635,7 +669,7 @@ def _zone_worth(b, f, o: dict, caught: list, dc: int, up: int, w: Worth) -> None
             w.control += 0.3 * threat(x)
         elif kind == "lights" and x in _unseen_foes(b, f):
             w.control += 0.5 * threat(x)  # (Dancing Lights: a foe in the dark is lit, and can be seen and struck)
-        elif kind == "silence" and x.cdef is not None and x.cdef.get("spells"):
+        elif kind == "silence" and casts_spells(b, x):
             w.control += threat(x) * 1.5
     if o.get("heal"):
         heal = avg(spellrules.scaled(o["heal"], o.get("heal_up", ""), up)) + (_caster_mod(b, f) if o.get("add_mod") else 0)
@@ -647,6 +681,8 @@ def _zone_worth(b, f, o: dict, caught: list, dc: int, up: int, w: Worth) -> None
             w.friendly += dmg * 0.8
         elif kind in ("web", "plants", "grease"):
             w.friendly += 0.6 * threat(x)
+        elif kind == "silence" and casts_spells(b, x):
+            w.friendly += threat(x) * 1.5  # (our own casters silenced too)
 
 
 def _buff_worth(buff: dict, count: int, b=None, f=None, on=None, spell: dict | None = None) -> float:
@@ -654,6 +690,8 @@ def _buff_worth(buff: dict, count: int, b=None, f=None, on=None, spell: dict | N
     w = 0.0
     if buff.get("ac"):
         w += 1.2 * int(buff["ac"])
+    if buff.get("mage_armor") and on is not None and not query.wears_armour(on):
+        w += 1.2 * max(0, int(buff["mage_armor"]) + on.mod("dex") - query.ac(on))  # (G.1)
     if buff.get("attack_die") and not str(buff["attack_die"]).startswith("-"):
         w += 2.5 * count
     if buff.get("resist"):
@@ -679,7 +717,10 @@ def _buff_worth(buff: dict, count: int, b=None, f=None, on=None, spell: dict | N
         w += 3.0 if near else 1.0
     if buff.get("hit_extra") or buff.get("weapon_plus") or buff.get("smite"):
         striker = on if on is not None else f
-        weapon = striker is not None and striker.char is not None and striker.char.equipped_item("main_hand") is not None
+        if striker is not None and striker.char is not None:
+            weapon = striker.char.equipped_item("main_hand") is not None
+        else:  # (a creature's blade or bow: Expansion 3 G.1)
+            weapon = striker is not None and b is not None and bool(weapon_blows(b, striker))
         wants = 1.0 if weapon and any(b.gap(striker, e) <= 2 for e in b.enemies_of(f)) else 0.2
         if buff.get("hit_extra"):
             w += avg(str(buff["hit_extra"])) * 2.5 * wants
@@ -714,7 +755,7 @@ def _buff_worth(buff: dict, count: int, b=None, f=None, on=None, spell: dict | N
     if buff.get("save_adv_against"):
         w += 0.8 * count
     if buff.get("save_adv_spells"):
-        w += 1.0 * count * (2.0 if b is not None and any(e.cdef is not None and e.cdef.get("spells")
+        w += 1.0 * count * (2.0 if b is not None and any(casts_spells(b, e)
                                                          for e in b.enemies_of(f)) else 0.5)
     if buff.get("heal_max") and b is not None:
         w += 1.0 * sum(1 for x in b.team(f.team) if x.hp < x.max_hp)
@@ -730,8 +771,7 @@ def _buff_worth(buff: dict, count: int, b=None, f=None, on=None, spell: dict | N
         dark = any(z.opaque and z.owner is not None and z.owner not in {x.id for x in b.team(f.team)} for z in b.zones)
         w += 3.0 * hidden + (2.0 if dark else 0.0) + 0.2
     if buff.get("spell_ward") and b is not None and f is not None:
-        casters = sum(1 for e in b.enemies_of(f) if e.cdef is not None and e.cdef.get("spells")
-                      or e.char is not None and e.char.spells)
+        casters = sum(1 for e in b.enemies_of(f) if casts_spells(b, e))
         w += 3.0 * casters if casters else 0.3
     # The fourth wave (D.4)
     if buff.get("foresight"):
@@ -875,8 +915,7 @@ def _marks_worth(b, f, x, ops: list, up: int) -> float:
                 w += 1.0 * threat(x)
             if buff.get("dancing"):
                 w += 1.2 * threat(x)  # (no moving, its blows and its dodging weak, blows at it strong)
-            if buff.get("befuddled") and (x.cdef is not None and x.cdef.get("spells")
-                                          or x.char is not None and x.char.spells):
+            if buff.get("befuddled") and casts_spells(b, x):
                 w += 2.0 * threat(x)  # (Befuddlement: a caster with no spells)
             if buff.get("quarry"):
                 w += avg(str(buff["quarry"])) * 2.0
@@ -901,7 +940,7 @@ def _antimagic_worth(b, f, spell: dict) -> float:
     for x in b.fighters:
         if not x.active or grid.gap(f.space, x.space) > r:
             continue
-        caster = x.cdef is not None and x.cdef.get("spells") or x.char is not None and x.char.spells
+        caster = casts_spells(b, x)
         magic = sum(1 for bf in x.buffs if bf.get("source") in b.t.spells)
         if x.team != f.team:
             out += threat(x) * (2.0 if caster else 0.0) + 1.5 * magic

@@ -275,7 +275,18 @@ def ac(f) -> int:
             if f.char.equipped_item("armor") is None:
                 value = max(value, base + s.mod("dex"))
         return max([value + sum(f.buff_value("ac"))] + [int(v) for v in f.buff_value("ac_floor")])
-    return max([int(f.cdef["ac"]) + sum(f.buff_value("ac"))] + [int(v) for v in f.buff_value("ac_floor")])
+    value = int(f.cdef["ac"])
+    for base in f.buff_value("mage_armor"):  # (a creature that wears no armour: Expansion 3 G.1)
+        if not wears_armour(f):
+            value = max(value, int(base) + f.mod("dex"))
+    return max([value + sum(f.buff_value("ac"))] + [int(v) for v in f.buff_value("ac_floor")])
+
+
+def wears_armour(f) -> bool:
+    """Armour on: a character's in its armour slot, a creature's among the gear its stat block carries."""
+    if f.char:
+        return f.char.equipped_item("armor") is not None
+    return any(f.t.items.get(str(g[0])).get("category") == "armor" for g in (f.cdef or {}).get("gear", ()))
 
 
 def speed(f) -> int:
