@@ -544,6 +544,13 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   `advantage_if` (`query.ADVANTAGE_IF`), a condition `while: "grappled"` (op `with`: it ends with that condition in
   `durations.remove`; release grapples only through it), `ends: "damage"`, `fail_by` {by, on_fail}, trait numbers
   `running_leap` {feet}, `spellcasting.self_only`. Tests: tests/test_beasts.py.
+- Shapes that outlast a fight (Expansion 3 F.8: Animal Shapes, Shapechange): the shape op's `cr`, `size`, `not`,
+  `keeps` (mind, proficiencies, spells: `Battle._form_spells` casts through the creature's door, slots written back),
+  `leave`, `shift`, `hours`; `Battle.shape_abilities` (leave_shape, shift_shape, reshape). A lasting shape is the
+  record `char.spells["shape"]` (`rules/shapes.record/on_road`): kept by `unshape_all` at a fight's end, dropped by any
+  other `unshape`, brought in by `Battle.bring_shapes`. On the road `game/shapeshift.py` (spellwork door SHAPES; the
+  pace, `magic_crossing` "fly"/"swim", no spells or gear, `dolls.character` draws the form). Tests:
+  tests/test_shapes_lasting.py.
 - Gear and tools 2024 (Expansion 2 part D): items.json `pack` (opens into its contents, gear.open_pack), `helps`
   {search, traps, force, disguise} (dungeon.helps, law.put_on_disguise), `utilize` (a tool's 2024 uses, on its card),
   `carry` also on carried containers (each kind once, Sheet.pack_carry), `trinket` (data/trinkets.json; the name and

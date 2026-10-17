@@ -1,5 +1,5 @@
 {
-  "_comment": "Expansion 3 part F.6: Polymorph and True Polymorph (the effects op 'shape': Battle.shape, rules/shapes.py). The forms are the creatures the game has; the game picks the strongest for a friend, the weakest for a foe.",
+  "_comment": "Expansion 3 part F.6 (and F.8: Animal Shapes, Shapechange): Polymorph and True Polymorph (the effects op 'shape': Battle.shape, rules/shapes.py). The forms are the creatures the game has; the game picks the strongest for a friend, the weakest for a foe.",
   "spells": {
     "polymorph": {"name": "Polymorph", "level": 4, "school": "transmutation", "classes": ["bard", "druid", "sorcerer", "wizard"],
      "target": "creature", "range": 60, "components": ["V", "S", "M"], "concentration": true, "rounds": 600,
@@ -8,6 +8,15 @@
     "true_polymorph": {"name": "True Polymorph", "level": 9, "school": "transmutation", "classes": ["bard", "warlock", "wizard"],
      "target": "creature", "range": 30, "components": ["V", "S", "M"], "concentration": true, "rounds": 600,
      "effects": [{"op": "shape", "forms": "any"}],
-     "fx": "curse", "text": "A creature within 30 feet becomes any creature no stronger than itself while you concentrate: a friend the strongest it may be, a foe (on a failed Wisdom save) the weakest. Its hit points stay; the form's come as temporary ones, and the shape ends when they are gone. No spells in it."}
+     "fx": "curse", "text": "A creature within 30 feet becomes any creature no stronger than itself while you concentrate: a friend the strongest it may be, a foe (on a failed Wisdom save) the weakest. Its hit points stay; the form's come as temporary ones, and the shape ends when they are gone. No spells in it."},
+    "animal_shapes": {"name": "Animal Shapes", "level": 8, "school": "transmutation", "classes": ["druid"],
+     "target": "all_allies", "range": 30, "components": ["V", "S"], "rounds": 14400, "road_too": "shape",
+     "effects": [{"op": "shape", "forms": ["beast"], "cr": 4, "size": "large", "keeps": ["mind"], "leave": true, "shift": "caster", "hours": 24}],
+     "fx": "aura", "text": "For a day, each friend within 30 feet who casts no spells becomes the strongest Large or smaller beast of CR 4 or less, the beast's hit points as temporary ones. A Bonus Action leaves it; your Magic action changes them again. On the road: the whole party, as the beast you choose."},
+    "shapechange": {"name": "Shapechange", "level": 9, "school": "transmutation", "classes": ["druid", "wizard"],
+     "target": "self", "range": "self", "components": ["V", "S", "M"], "material": {"items": ["jade_circlet"], "consumed": false, "text": "a jade circlet worth 1,500+ GP"},
+     "concentration": true, "rounds": 600, "road_too": "shape",
+     "effects": [{"op": "shape", "forms": "any", "not": ["construct", "undead"], "keeps": ["mind", "proficiencies", "spells"], "shift": "self", "hours": 1}],
+     "fx": "aura", "text": "For up to an hour you become a creature of CR no higher than your level (never a construct or undead), keeping your mind and your spells; its hit points come as temporary ones. A Magic action shifts you into another shape with fresh ones."}
   }
 }

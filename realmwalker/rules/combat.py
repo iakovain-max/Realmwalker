@@ -849,45 +849,113 @@ class Battle:
             self.say(f"{x.the_name[:1].upper() + x.the_name[1:]} fades away.", "magic")
 
     # ------------------------------------------------------------------ shapes (Expansion 3 F.6)
-    def shape(self, f: Fighter, cid: str, *, by: Fighter, spell: str = "") -> bool:
+    def shape(self, f: Fighter, cid: str, *, by: Fighter, spell: str = "", how: dict | None = None,
+              temp: int | None = None, until: float | None = None) -> bool:
         """Polymorph, True Polymorph: `f`'s numbers become the creature `cid`'s for the fight (the 2024 text: its game
         statistics replaced, its hit points kept, Temporary Hit Points equal to the form's). A character is set aside
-        while shaped (`f.char` is None: no spells, no features, no gear); `Fighter.shape` keeps what it was."""
+        while shaped (`f.char` is None: no spells, no features, no gear); `Fighter.shape` keeps what it was.
+        `how` (Expansion 3 F.8: the effects op): `keeps` "mind" (its Intelligence, Wisdom and Charisma), "proficiencies"
+        (their saves) and "spells" (its Spellcasting, cast through the creature's door with its own slots), `leave` (a
+        Bonus Action out of it), `shift` ("self" or "caster": a Magic action to another form), `hours` (it outlasts the
+        fight: a record on the character, `rules/shapes.record`). `temp`: the borrowed hit points it comes in with (a
+        shape brought into the fight); `until`: the world minute a lasting shape ends."""
         from realmwalker.rules import shapes
         from realmwalker.rules.allies import a_or_an
 
         if not shapes.shapeable(f) or cid not in self.t.creatures:
             return False
+        how = how or {}
+        keeps = tuple(how.get("keeps", ()))
         cdef = self.t.creatures[cid]
+        char = f.char
         top = f.char.max_hp if f.char is not None else f.creature.max_hp
         who = f.name if f.char is not None or f.creature.named else f"the {f.creature.name}"
+        sp = self.t.spells.defs.get(spell) or {}
         f.shape = {"char": f.char, "creature": f.creature, "cdef": f.cdef, "sq": f.sq, "slots": list(f.slots),
-                   "recharge": dict(f.recharge), "by": by.id, "spell": spell, "temp": f.temp_hp}
+                   "recharge": dict(f.recharge), "by": by.id, "spell": spell, "temp": f.temp_hp, "how": how,
+                   "conc": bool(sp.get("concentration")) if sp else True, "leave": bool(how.get("leave")),
+                   "shift": how.get("shift"), "hours": float(how.get("hours", 0) or 0)}
+        if char is not None and "mind" in keeps:
+            cdef = shapes.mind_kept(cdef, char, self.t, proficient="proficiencies" in keeps)
+        new_slots: list[int] = []
+        if char is not None and "spells" in keeps:
+            cdef, new_slots = self._form_spells(cdef, char)
+            f.shape["cast_slots"] = list(new_slots)
         cr = Creature(uid=94000 + f.id, def_id=cid, name=f"{who}, as {a_or_an(cdef['name'])}", hp=f.hp, max_hp=top,
                       named=True)
         f.char, f.creature, f.cdef = None, cr, cdef
-        f.slots = []
+        f.slots = new_slots
         f.recharge = {a["name"]: True for a in cdef["attacks"] if a.get("recharge")}
-        f.temp_hp = max(f.temp_hp, shapes.form_hp(self.t, cid))
+        f.temp_hp = max(f.temp_hp, shapes.form_hp(self.t, cid) if temp is None else int(temp))
         f.sq = grid.footprint(f.size)
         if f.sq != f.shape["sq"]:  # (a bigger body needs room: the nearest place it fits)
             taken = {c for x in self.on_field() if x is not f for c in x.cells}
             f.x, f.y = self._free_near((f.x, f.y), f.sq, taken)
+        if char is not None and f.shape["hours"] > 0:  # (Animal Shapes, Shapechange: it outlasts the fight)
+            caster = self.person_of(by)
+            old = shapes.record(char)
+            name = caster.name if caster is not None and caster is not char else \
+                (old or {}).get("caster") or (caster or char).name  # (its caster away: the record keeps its name)
+            shapes.keep(char, {"form": cid, "spell": spell, "temp": int(f.temp_hp), "conc": f.shape["conc"],
+                               "until": float(until) if until is not None else self.now + f.shape["hours"] * 60,
+                               "caster": name})
         self._event("shape", who=f.id, form=cid, by=by.id, spell=spell)
         return True
 
-    def unshape(self, f: Fighter, quiet: bool = False) -> None:
-        """A shape ends: the fighter is what it was, with the hit points it has now."""
+    def person_of(self, f: Fighter):
+        """The character a fighter is, shaped or not (None for a creature)."""
+        if f.char is not None:
+            return f.char
+        return f.shape.get("char") if f.shape is not None else None
+
+    def _form_spells(self, cdef: dict, char) -> tuple[dict, list[int]]:
+        """Shapechange keeps the Spellcasting (Expansion 3 F.8): the form's block gets the character's spells for a
+        fight (not one held by concentration, which would end the shape), its spell attack and save DC; the slots it
+        has left go with it, and what it spends is written back when the shape ends (`unshape`)."""
+        sheet = Sheet(char, self.t)
+        out = []
+        for sid in spellrules.known_spells(char, self.t):
+            sp = self.t.spells.defs.get(sid)
+            if sp is None or sp.get("concentration") or sp.get("cast") == "reaction" \
+                    or spellrules.out_of_battle(sp) or spellrules.has_op(sp, "revive", "identify", "shape"):
+                continue
+            out.append(sid)
+        cdef = dict(cdef)
+        cdef["spells"] = out
+        cdef["spellcasting"] = {"ability": spellrules.casting_ability(char, self.t),
+                                "dc": spellrules.save_dc(sheet, self.t), "attack": spellrules.attack_bonus(sheet, self.t),
+                                "at_will": [s for s in out if self.t.spells[s]["level"] == 0],
+                                "mult": spellrules.cantrip_multiplier(char.level)}
+        return cdef, list(spellrules.slots_left(char, self.t))
+
+    def unshape(self, f: Fighter, quiet: bool = False, *, keep: bool = False, falls: bool = True) -> None:
+        """A shape ends: the fighter is what it was, with the hit points it has now. `keep` (the fight is over): a shape
+        that outlasts the fight keeps its record with the borrowed hit points left (Expansion 3 F.8); otherwise the
+        record goes with the shape. `falls`: False for a shift (the next form takes its place at once)."""
+        from realmwalker.rules import shapes
+
         was = f.shape
         if was is None:
             return
         hp = max(0, f.hp)
+        left, form = int(f.temp_hp), f.creature.def_id if f.creature is not None else None
+        spent = [max(0, a - b) for a, b in zip(was.get("cast_slots", ()), f.slots)]
         f.shape = None
         f.char, f.creature, f.cdef = was["char"], was["creature"], was["cdef"]
         f.slots, f.recharge, f.sq = was["slots"], was["recharge"], was["sq"]
         # (temporary hit points it had before - Heroism's, a leader's words - come back, no more than are left)
         f.temp_hp = max(0, min(int(f.temp_hp), int(was.get("temp", 0))))
         f.hp = hp
+        if f.char is not None:
+            for i, n in enumerate(spent):  # (Shapechange: the slots spent in the form are the character's)
+                for _ in range(n):
+                    spellrules.spend_slot(f.char, i + 1)
+            rec = shapes.record(f.char)
+            if rec is not None and rec.get("spell") == was.get("spell"):
+                if keep and left > 0:
+                    rec["temp"], rec["form"] = left, form or rec["form"]
+                else:
+                    shapes.drop(f.char)
         taken = {c for x in self.on_field() if x is not f for c in x.cells}
         if any(c in taken for c in f.cells):
             f.x, f.y = self._free_near((f.x, f.y), f.sq, taken)
@@ -895,13 +963,116 @@ class Battle:
         if not quiet:
             self.say(f"{f.the_name[:1].upper() + f.the_name[1:]} is {'themselves' if f.char else 'itself'} again.",
                      "magic")
-        if f.z > 0 and not f.hovers and f.fly_speed <= 0 and not f.buff_value("aloft") and self.outcome is None:
+        if falls and f.z > 0 and not f.hovers and f.fly_speed <= 0 and not f.buff_value("aloft") \
+                and self.outcome is None:
             self._fall(f)  # (the wings were the form's)
 
     def unshape_all(self) -> None:
+        """The fight is over: everyone is themselves again; a shape that outlasts it keeps its record (F.8)."""
         for f in self.fighters:
             if f.shape is not None:
-                self.unshape(f, quiet=True)
+                self.unshape(f, quiet=True, keep=True)
+
+    def shift(self, f: Fighter, cid: str) -> bool:
+        """A shaped fighter takes another form (Shapechange's or Animal Shapes' Magic action: Expansion 3 F.8) with
+        fresh borrowed hit points; it stays what it was underneath, and its lasting shape keeps its hour."""
+        from realmwalker.rules import shapes
+
+        was = f.shape
+        if was is None or cid not in self.t.creatures:
+            return False
+        by = next((x for x in self.fighters if x.id == was["by"]), f)
+        rec = shapes.record(was["char"]) if was.get("char") is not None else None
+        until = float(rec["until"]) if rec is not None and rec.get("spell") == was.get("spell") else None
+        conc = f.concentration
+        self.unshape(f, quiet=True, keep=True, falls=False)
+        f.concentration = conc  # (Shapechange's own concentration goes on through the shift)
+        ok = self.shape(f, cid, by=by, spell=was["spell"], how=was.get("how"), until=until)
+        if ok:
+            self.say(f"<magic>{f.name.split(',')[0]} flows into the shape of {shapes_name(self.t, cid)}.</>", "magic")
+        return ok
+
+    def shape_abilities(self, f: Fighter) -> list[tuple[str, str, bool, str]]:
+        """Animal Shapes and Shapechange in a fight (Expansion 3 F.8): leaving a beast's form (a Bonus Action), a
+        Shapechanger's shift into another form and the druid's change of its beasts (a Magic action)."""
+        from realmwalker.rules import shapes
+
+        out = []
+        free = f.action > 0
+        if f.shape is not None and f.shape.get("leave"):
+            ok = f.bonus > 0
+            out.append(("leave_shape", "Leave the beast's shape (bonus action)", ok, "" if ok else "no bonus action left"))
+        if f.shape is not None and f.shape.get("shift") == "self" and f.shape.get("by") == f.id:
+            how = f.shape.get("how") or {}
+            other = shapes.best(self.t, f, how.get("forms", "any"), how, other=f.creature.def_id)
+            ok = free and other is not None
+            out.append(("shift_shape", "Shift into another shape (a Magic action: fresh borrowed hit points)", ok,
+                        "" if ok else ("no action left this turn" if not free else "no other shape to take")))
+        if self.shaped_by(f):
+            out.append(("reshape", "Change your beasts' shapes again (a Magic action: fresh borrowed hit points)",
+                        free, "" if free else "no action left this turn"))
+        return out
+
+    def shaped_by(self, f: Fighter) -> list[Fighter]:
+        """The fighters whose shapes `f` may change again (Animal Shapes' targets on the field)."""
+        return [x for x in self.fighters if x.shape is not None and x.shape.get("shift") == "caster"
+                and x.shape.get("by") == f.id and x.active]
+
+    def do_leave_shape(self, f: Fighter) -> bool:
+        if f.shape is None or not f.shape.get("leave") or not self._spend(f, bonus=True):
+            return False
+        self.say(f"{f.name.split(',')[0]} lets the beast's shape go.", "magic")
+        self.unshape(f)
+        return True
+
+    def do_shift_shape(self, f: Fighter) -> bool:
+        from realmwalker.rules import shapes
+
+        if f.shape is None or f.shape.get("shift") != "self":
+            return False
+        how = f.shape.get("how") or {}
+        cid = shapes.best(self.t, f, how.get("forms", "any"), how, other=f.creature.def_id)
+        if cid is None or not self._spend(f):
+            return False
+        return self.shift(f, cid)
+
+    def do_reshape(self, f: Fighter) -> bool:
+        from realmwalker.rules import shapes
+
+        mine = self.shaped_by(f)
+        if not mine or not self._spend(f):
+            return False
+        for x in mine:
+            how = x.shape.get("how") or {}
+            cid = shapes.best(self.t, x, how.get("forms", ["beast"]), how)
+            if cid is not None:
+                self.shift(x, cid)
+        return True
+
+    def bring_shapes(self) -> list[Fighter]:
+        """A fight begins: the party's lasting shapes come into it (Animal Shapes, Shapechange: Expansion 3 F.8), each
+        in its form with the borrowed hit points it has left, the Shapechanger concentrating on its spell. Returns
+        those shaped."""
+        from realmwalker.rules import shapes
+
+        out = []
+        party = [x for x in self.side(PARTY) if x.char is not None]
+        for f in party:
+            rec = shapes.on_road(f.char, self.now)
+            if rec is None:
+                continue
+            spell = self.t.spells.defs.get(rec.get("spell")) or {}
+            how = spellrules.op(spell, "shape") or {}
+            by = next((x for x in party if (self.person_of(x) or f.char).name == rec.get("caster")), None)
+            if by is None:  # (its caster is not in this fight: nobody here can change the shapes again)
+                by, how = f, {**how, "shift": None if how.get("shift") == "caster" else how.get("shift")}
+            if self.shape(f, rec["form"], by=by, spell=rec["spell"], how=how, temp=int(rec.get("temp", 0)),
+                          until=float(rec["until"])):
+                if rec.get("conc"):
+                    left = int((float(rec["until"]) - self.now) * 10)  # (ten rounds a minute)
+                    f.concentration = {"spell": rec["spell"], "rounds": max(1, left)}
+                out.append(f)
+        return out
 
     def _bond_order(self) -> None:
         """A steed's turn comes right after its owner's, whatever it rolled (it shares the owner's count)."""
@@ -3510,9 +3681,10 @@ class Battle:
         jar = self._jar_abilities(f)
         if jar is not None:
             return jar
+        shaped = self.shape_abilities(f)  # (Animal Shapes, Shapechange: Expansion 3 F.8)
         if not f.char:
-            return []
-        out = []
+            return shaped
+        out = list(shaped)
         for a in actions.activations(f):
             why = actions.problem(self, f, a)
             out.append((a["id"], a["name"], why is None, why or ""))
@@ -3678,8 +3850,10 @@ class Battle:
     def _ability_cost(self, f: Fighter, aid: str) -> str:
         if aid == "offhand" and mastery.nick_ready(self, f):
             return "free"
-        if aid in ("offhand", "spirit_strike", "hew", "pole_strike", "command_objects"):
+        if aid in ("offhand", "spirit_strike", "hew", "pole_strike", "command_objects", "leave_shape"):
             return "bonus"
+        if aid in ("shift_shape", "reshape"):
+            return "action"
         if aid == "put_out":
             return "action"
         a = actions.find(f, aid)
@@ -3689,7 +3863,8 @@ class Battle:
         """What `f` could still do with a bonus action this turn."""
         if f.bonus <= 0 or not f.can_act():
             return []
-        out = [aid for aid, _, ok, _ in self.class_abilities(f) if ok and self._ability_cost(f, aid) == "bonus"]
+        out = [aid for aid, _, ok, _ in self.class_abilities(f) if ok and self._ability_cost(f, aid) == "bonus"
+               and aid != "leave_shape"]  # (leaving a beast's shape is never a reason to hold the turn open: F.8)
         if f.char:
             for sid, ok, _ in self.spell_options(f):
                 sp = self.t.spells[spell_id(sid)]
@@ -3719,6 +3894,15 @@ class Battle:
             return
         if ability == "jar_return":
             self.do_jar_return(f)
+            return
+        if ability == "leave_shape":
+            self.do_leave_shape(f)
+            return
+        if ability == "shift_shape":
+            self.do_shift_shape(f)
+            return
+        if ability == "reshape":
+            self.do_reshape(f)
             return
         if ability == "jar_leave":
             self.do_jar_leave(f)
@@ -3828,7 +4012,8 @@ class Battle:
             f.cast_action_spell = True
         f.hidden = 0
         if not self.cast(f, sid, spell, target, point, up=max(0, level - spell["level"]), mod=f.mod(sc["ability"]),
-                         dc=int(sc["dc"]), bonus=int(sc["attack"]), mult=1, level=level, slotted=slot_i is not None):
+                         dc=int(sc["dc"]), bonus=int(sc["attack"]), mult=int(sc.get("mult", 1)), level=level,
+                         slotted=slot_i is not None):
             if slot_i is not None:
                 f.slots[slot_i] += 1  # (countered: the slot is not spent, 2024)
         self._check_end()
@@ -4654,7 +4839,8 @@ class Battle:
             self.tokens.remove(tok)  # a spiritual weapon held by concentration (2024)
             self._event("token_end", id=tok.id)
         for x in self.fighters:  # a shape held by the spell ends with it (Polymorph: Expansion 3 F.6)
-            if x.shape is not None and x.shape.get("by") == f.id:  # (one concentration at a time: this one)
+            if x.shape is not None and x.shape.get("by") == f.id and x.shape.get("conc", True):  # (one at a time:
+                # this one; Animal Shapes is held by no concentration: Expansion 3 F.8)
                 self.unshape(x)
         for x in self.allies_of_owner(f):  # a summoned spirit goes when the spell does (Expansion 3 F.2)
             if x.bond.get("conc") and x.state not in ("dead", "fled"):
@@ -5157,3 +5343,9 @@ def _avg(expr: str) -> float:
     except dice.DiceError:
         return 0.0
     return n * (sides + 1) / 2 + flat
+
+
+def shapes_name(tables, cid: str) -> str:
+    from realmwalker.rules.allies import a_or_an
+
+    return a_or_an(tables.creatures[cid]["name"])

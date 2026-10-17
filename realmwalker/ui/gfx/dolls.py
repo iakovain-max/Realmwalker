@@ -291,7 +291,11 @@ def character_looks(char, tables) -> dict:
 
 
 def character(char, tables, *, lit: bool = False, atlas=None, bare_head: bool = False) -> list[Part]:
-    """The player or a companion, in what they wear and hold, in the colours of those very things."""
+    """The player or a companion, in what they wear and hold, in the colours of those very things; in a beast's or
+    another creature's shape (Animal Shapes, Shapechange: Expansion 3 F.8), that creature."""
+    shape = (getattr(char, "spells", None) or {}).get("shape")
+    if isinstance(shape, dict) and shape.get("form") in tables.creatures:
+        return creature(shape["form"], tables, f"pc{char.name}", atlas, getattr(char, "sex", ""))
     f = _fig(tables)
     worn = f["worn"]
     look = character_looks(char, tables)

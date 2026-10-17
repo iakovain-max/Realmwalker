@@ -76,10 +76,15 @@ def working_now(game) -> list[str]:
     from realmwalker.game import revival, spellwork
 
     out = []
+    from realmwalker.game import shapeshift
+
     for c in game.party:
         for sid, hours in sp.lasting(c, game.tables).items():
             out.append(f"<magic>{markup.escape(game.tables.spells[sid]['name'])}</> on {markup.escape(c.name.split()[0])}"
                        f" <dim>({magic.lasting_text(hours)} left)</>")
+        shaped = shapeshift.words(game, c)  # (Animal Shapes, Shapechange: Expansion 3 F.8)
+        if shaped:
+            out.append(f"{markup.escape(c.name.split()[0])} as {shaped}")
     for ward, rec in spellwork.wards_here(game).items():
         left = max(0.0, (float(rec["until"]) - game.world.time) / 60)
         when = "waiting" if ward in WAITING else f"{magic.lasting_text(left)} left"
@@ -162,7 +167,7 @@ def spell_detail(game, char, sid: str, target, slot: int | None = None) -> list[
     elif sid in sp.SPELL_BREAKER and "spell_breaker" in char.features:
         lines.append("<good>Spell Breaker:</> <dim>a reaction when a foe casts nearby.</>")
     ok, why = sp.can_cast(char, t, sid)
-    if not ok:
+    if not ok and not (getattr(target, "data", None) or {}).get("free"):  # (a free choice is no casting: F.8)
         lines.append(f"<warn>{markup.escape(why[:1].upper() + why[1:])}.</>")
     problem = magic.road_problem(game, char, sid, target)
     if problem is None:

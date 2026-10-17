@@ -479,7 +479,55 @@ stat block now comes with the spell that brings it into play (never a block that
   quasit, pseudodragon, sprite, sphinx of wonder, slaad tadpole, with pictures; each as Polymorph's or True
   Polymorph's form and met in the land where it lives (the beasts in their biomes' bands, the fiends and fey where
   such things are met), and the cult fanatic's imp or quasit.
-- [ ] F.8 Animal Shapes and Shapechange (on F.6's swap), outside a fight too; Part F complete.
+- [x] F.8 Animal Shapes and Shapechange (on F.6's swap), outside a fight too; Part F complete.
+
+#### F.8 — How
+- **The spells** (2024 PHB pages 243 and 318, read off the page images). **Animal Shapes** (level 8, druid; an
+  action, 30 feet, V S, 24 hours, no concentration): any number of willing creatures within range each become a
+  Large or smaller Beast of Challenge Rating 4 or lower; a target keeps its hit points, Intelligence, Wisdom and
+  Charisma, cannot cast spells and cannot use its gear (it melds into the form), and gains Temporary Hit Points equal
+  to the form's hit points. It ends for a target when those are gone, when it leaves the form as a Bonus Action, or
+  after 24 hours; on later turns the caster may change the targets again with a Magic action. **Shapechange** (level
+  9, druid and wizard; an action, self, V S M: a jade circlet worth 1,500 GP, not consumed; concentration up to an
+  hour): the caster becomes a creature of Challenge Rating no higher than its level, never a Construct or an
+  Undead, keeping its Intelligence, Wisdom and Charisma, its proficiencies and its Spellcasting, with Temporary Hit
+  Points equal to the form's hit points; it ends when those are gone, and a Magic action shifts it into another form.
+- **On F.6's swap**: the effects op "shape" learns `cr` (a fixed cap: Animal Shapes' 4), `size` (the largest form:
+  "large"), `not` (kinds never taken: construct, undead), `keeps` ("mind": the three mental scores and their saves;
+  "spells": the Spellcasting), `leave` (a Bonus Action to leave the form), `shift` ("self": the shaped one shifts
+  with a Magic action; "caster": the caster changes its targets) and `hours` (it outlasts the fight). A spell aimed at
+  `all_allies` takes the willing within range: every friend that casts no spells (it would lose them for a day),
+  never the caster. `Fighter.shape` keeps these (`conc`: only a concentration shape ends with its caster's
+  concentration, so a druid's other spell no longer undoes Animal Shapes). A shape that keeps its Spellcasting casts
+  through the creature's door (`creature_cast`): the form's block gets the character's battle spells (no
+  concentration spell: it would end the shape), its spell attack and DC, and its slots, which are written back to the
+  character when the shape ends. The game chooses the form as F.6 does (the strongest a friend may take, never one
+  that breathes only water); a shift takes the strongest other form (Shapechange) or the strongest again (Animal
+  Shapes), with fresh Temporary Hit Points.
+- **Outside a fight**: a shape that outlasts the fight is a record on the character, `char.spells["shape"]` {form,
+  spell, until, temp, caster, conc}, written when it is taken (in a fight or on the road) and kept at the fight's end
+  with the Temporary Hit Points left; a shape that ended in the fight takes its record with it. When a fight starts
+  the shaped come into it in their forms (`Battle.bring_shapes`, from `fight.start_battle`), the Shapechanger
+  concentrating on it. On the Spells page (game/shapeshift.py through spellwork's door, road op `does: "shape"`) both
+  spells list their forms as Subjects (the fliers first, then the swiftest, then the strongest); Animal Shapes takes
+  the whole party (the caster too: it can leave whenever it likes) and, while it holds, its forms and "everyone back to
+  their own shape" are chosen with no slot (the Magic action). Shapechange lasts an hour on the road. While shaped:
+  the party's pace is the form's (a party of elk outpaces walkers; F.6's travel rule for those borne by magic), a
+  party that all flies crosses water and mountains as on the wind (`magic_crossing` "fly"), one that all swims crosses
+  rivers and lakes; no spells (Animal Shapes) and no gear used (tools, potions); drawn as the form everywhere
+  (`dolls.character`). It ends at its hour (`shapeshift.tick` from spellwork's tick). Harm outside a fight falls on
+  the body itself (the borrowed hit points are the fight's: adapted). "You must have seen the sort of creature" is the
+  game's creatures (adapted); the equipment's falling to the ground is left out (it always melds in).
+- **The Auto** casts Animal Shapes by the worth of the willing (a friend weaker than the beast gains, one stronger
+  loses by the difference: F.6's worth with that loss added) and Shapechange by its form's worth (it keeps its spells,
+  so a caster now gains), shifts again when the borrowed hit points run low, and never leaves a form on its own. The
+  enemy's casters get them when G.1 gives them spells.
+- **Tests** (tests/test_shapes_lasting.py): Animal Shapes on the willing (never a spellcaster, never the caster),
+  Large or smaller and CR 4 at most; the Bonus Action to leave; the caster's Magic action changes them again; the shape
+  outlasts the fight with the hit points left and comes into the next one, and ends at its hour; Shapechange keeps the
+  mind and casts a spell in the form (its slot spent on the character), shifts, ends with the concentration; the road:
+  the Subjects, the pace, flying over water, no casting, drawn as the form; the Auto casts both; the catalogue test
+  casts both.
 
 #### F.7 — How
 - **The stat blocks** are the 2025 Monster Manual's (the PHB's Appendix B prints the same creatures; the MM is the

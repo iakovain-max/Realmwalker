@@ -260,6 +260,11 @@ class CharacterScreen(Screen):
         if on:
             lines.append("<dim>Spells on you:</> " + ", ".join(
                 f"<magic>{t.spells[sid]['name']}</> <dim>({lasting_text(hours)})</>" for sid, hours in on.items()))
+        from realmwalker.game import shapeshift
+
+        shaped = shapeshift.words(g, c)  # (Animal Shapes, Shapechange: Expansion 3 F.8)
+        if shaped:
+            lines.append("<dim>In the shape of:</> " + shaped)
         lines += [
             "",
             "<title>Ability      Score  Mod  Save</>",
