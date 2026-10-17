@@ -193,3 +193,58 @@ def test_the_steed_is_ridden_by_its_owner_never_sold_and_watch_at_night(tables, 
     road.died(game, me)
     assert not any(a.get("summoned") for a in me.animals)
 
+
+
+def test_the_familiar_is_drawn_following_on_the_close_up_map(make_app):
+    from tests.test_app_ui import render, start_small_world
+
+    app = make_app()
+    gs = start_small_world(app)
+    me = gs.game.leader
+    with_familiar(me, "cat", tables=gs.game.tables)
+    gs.enter()
+    for _ in range(3):
+        render(app)
+    assert app.error_count == 0
+
+
+def test_the_battle_screen_plays_a_familiar_and_a_steed(make_app, world):
+    import tcod
+
+    from realmwalker.game import fight
+    from realmwalker.game.encounters import PendingEncounter
+    from realmwalker.game.state import new_game
+    from realmwalker.ui import widgets
+    from realmwalker.ui.input import KeyEvent
+    from realmwalker.ui.screens.battle import BattleScreen
+
+    app = make_app()
+    me = with_familiar(hero(app.tables, "cleric", xp=6500), "raven", "fiend", tables=app.tables)
+    me.spells["steed"] = {"look": "dire_wolf", "type": "fiend", "level": 2, "name": "Ember", "hp": 25, "gone": False,
+                          "uses": {}}
+    game = new_game(copy.deepcopy(world), app.tables, me)
+    app.start_game(game)
+    game.survival = False
+    rng = RNG(5, "band")
+    game.encounter = PendingEncounter("test", [spawn(app.tables, "bandit", rng, i + 1) for i in range(2)],
+                                      "They come.", False, "")
+    b = fight.encounter_fight(game, False)
+    game.encounter = None
+    raven = next(f for f in b.fighters if f.bond is not None and f.bond["kind"] == "familiar")
+    steed = next(f for f in b.fighters if f.bond is not None and f.bond["kind"] == "steed")
+    assert steed.bond["picture"] == "dire_wolf" and steed.kind == "fiend"
+    screen = BattleScreen(app, game)
+    app.push(screen)
+    for who in (raven, steed):
+        b.order = [who.id] + [i for i in b.order if i != who.id]
+        b.turn, b.turn_started = 0, True
+        b._start_of_turn(who)
+        assert b.pending_party() is who, "the player commands an ally like a member of the party"
+        for key in ("tab", "escape", "a", "escape"):
+            app.handle_event(KeyEvent(key))
+        for size in ((80, 30), (160, 45)):
+            screen.render(widgets.Canvas(tcod.console.Console(*size, order="F")))
+    assert app.error_count == 0
+    b.outcome = "victory"
+    fight.finish_battle(game)
+    assert me.spells["familiar"]["gone"] is False and me.spells["steed"]["hp"] > 0
