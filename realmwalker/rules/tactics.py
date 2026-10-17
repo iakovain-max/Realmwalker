@@ -201,17 +201,6 @@ def _monster_turn(b: Battle, f: Fighter) -> None:
     _fight(b, f, plain, attacks=max(1, int(f.cdef.get("multiattack", 1))))
     _breath_with_blows(b, f)
     _hew(b, f)
-
-
-def _breath_with_blows(b: Battle, f: Fighter) -> None:
-    """A breath made with the Multiattack (a draconic spirit's): after its blows, at whoever it catches without a
-    friend in the cone (or in place of them, if nothing could be reached)."""
-    if b.current is not f or b.outcome is not None or not f.active or not f.can_act():
-        return
-    for o in b.attack_options(f):
-        if o.available and o.extra.get("with_multiattack") and o.extra.get("area"):
-            _try_area_attack(b, f, o, need=1, friends_ok=False)
-            return
     if f.has_trait("rampage") and f.bonus > 0 and b.outcome is None and b.current is f and f.active \
             and f.creature.uses.get("rampage", 1) > 0:
         hurt = [e for e in b.enemies_of(f) if e.standing and e.hp <= e.max_hp // 2 and b.gap(f, e) <= 1]
@@ -225,6 +214,17 @@ def _breath_with_blows(b: Battle, f: Fighter) -> None:
         _slip_away(b, f)
     if b.outcome is None and b.current is f and f.active:
         _rise(b, f)
+
+
+def _breath_with_blows(b: Battle, f: Fighter) -> None:
+    """A breath made with the Multiattack (a draconic spirit's): after its blows, at whoever it catches without a
+    friend in the cone (or in place of them, if nothing could be reached)."""
+    if b.current is not f or b.outcome is not None or not f.active or not f.can_act():
+        return
+    for o in b.attack_options(f):
+        if o.available and o.extra.get("with_multiattack") and o.extra.get("area"):
+            _try_area_attack(b, f, o, need=1, friends_ok=False)
+            return
 
 
 def _come_down(b: Battle, f: Fighter, opts: list[AttackOption]) -> None:
