@@ -165,9 +165,10 @@ def road_problem(game, caster, spell_id: str, target=None) -> str | None:
     return None
 
 
-def cast_on_road(game, caster, spell_id: str, target=None) -> list[str]:
+def cast_on_road(game, caster, spell_id: str, target=None, slot_level: int | None = None) -> list[str]:
     """Cast a spell outside battle. Healing goes through game/care.py (the worst wound first); a lasting spell is
-    kept on whoever it was cast on. Returns what to say."""
+    kept on whoever it was cast on. `slot_level`: a higher slot, for a spell that does more with one. Returns what
+    to say."""
     from realmwalker.game import care
 
     t = game.tables
@@ -179,11 +180,13 @@ def cast_on_road(game, caster, spell_id: str, target=None) -> list[str]:
     use = spellrules.road_use(t, spell_id)
     if use in ("heal", "cure"):
         wound = max(target.wounds, key=lambda w: (w.severity, w.bleed), default=None)
-        return care.cast(game, caster, target, wound, spell_id)
+        return care.cast(game, caster, target, wound, spell_id, slot_level)
     level = spell["level"]
     ritual = bool(spell.get("ritual"))  # a Ritual (2024): ten minutes longer, and no slot spent
     free = spellrules.free_cast(caster, t, spell_id) if level and not ritual else None  # (Spell Mastery...)
     slot = spellrules.lowest_free_slot(caster, t, level) if level and not ritual and not free else None
+    if slot and slot_level in spellrules.slot_choices(caster, t, spell_id) and spellrules.upcasts(spell):
+        slot = slot_level
     if level and not ritual and not free and slot is None:
         return ["No spell slot left for that. A long rest restores them."]
     if free:

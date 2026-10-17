@@ -80,8 +80,8 @@ def working_now(game) -> list[str]:
     return out
 
 
-def spell_detail(game, char, sid: str, target) -> list[str]:
-    """What the chosen spell is, and whether it can be cast here and now."""
+def spell_detail(game, char, sid: str, target, slot: int | None = None) -> list[str]:
+    """What the chosen spell is, and whether it can be cast here and now (`slot`: a higher slot chosen with l)."""
     t = game.tables
     spell = t.spells[sid]
     school = SCHOOLS.get(spell.get("school", ""), "").lower()
@@ -93,6 +93,12 @@ def spell_detail(game, char, sid: str, target) -> list[str]:
     prep = prepared_words(game, char, sid)
     if prep:
         lines.append(prep)
+    levels = sp.slot_choices(char, t, sid)
+    if sp.upcasts(spell) and len(levels) > 1 and not sp.free_cast(char, t, sid):
+        level_now = slot if slot in levels else levels[0]
+        gain = sp.up_gain(spell, level_now - spell["level"])
+        lines.append(f"<magic>Slot:</> level {level_now}" + (f" <good>{', '.join(gain)}</>" if gain else "")
+                     + " <dim>(l: another level)</>")
     if sid in (char.spells or {}).get("mastery", ()) and "spell_mastery" in char.features:
         lines.append("<good>Spell Mastery:</> <dim>cast at its own level without a slot, as often as you like.</>")
     elif sid in (char.spells or {}).get("signature", ()) and "signature_spells" in char.features:
@@ -135,6 +141,7 @@ class SpellsScreen(Screen):
         self.sel = 0
         self.offset = 0
         self.target = 0
+        self.slot: int | None = None  # a higher slot chosen with l (None: the lowest)
         self.message = ""
 
     @property
@@ -176,10 +183,24 @@ class SpellsScreen(Screen):
         sid = self.current()
         if sid is None:
             return
-        lines = magic.cast_on_road(self.game, self.char, sid, self.chosen_target())
+        lines = magic.cast_on_road(self.game, self.char, sid, self.chosen_target(), self.slot)
         for text in lines:
             self.game.say(text, "magic")
         self.message = " ".join(lines)
+
+    def next_slot(self) -> None:
+        """l: the next slot level the chosen spell could be cast with (a higher one does more)."""
+        sid = self.current()
+        t = self.game.tables
+        if sid is None:
+            return
+        levels = sp.slot_choices(self.char, t, sid)
+        if not sp.upcasts(t.spells[sid]) or len(levels) < 2:
+            self.message = f"{t.spells[sid]['name']} gains nothing from a higher slot." if levels else ""
+            self.slot = None
+            return
+        now = self.slot if self.slot in levels else levels[0]
+        self.slot = levels[(levels.index(now) + 1) % len(levels)]
 
     def prepare(self) -> None:
         """Prepare the chosen spell, or put it aside."""
@@ -216,8 +237,10 @@ class SpellsScreen(Screen):
             self.next_member()
         elif ev.key == "up":
             self.sel = max(0, self.sel - 1)
+            self.slot = None
         elif ev.key == "down":
             self.sel = min(max(0, n - 1), self.sel + 1)
+            self.slot = None
         elif ev.key == "pageup":
             self.sel = max(0, self.sel - 10)
         elif ev.key == "pagedown":
@@ -237,6 +260,8 @@ class SpellsScreen(Screen):
             self.scribe()
         elif ev.key == "p":
             self.prepare()
+        elif ev.key == "l":
+            self.next_slot()
         return True
 
     # ------------------------------------------------------------------ drawing
@@ -303,7 +328,7 @@ class SpellsScreen(Screen):
         if now:
             lines += ["<title>Working now</>"] + now + [""]
         if sid:
-            lines += spell_detail(game, c, sid, target)
+            lines += spell_detail(game, c, sid, target, self.slot)
         y = 2
         for line in lines:
             if y >= bottom - 2:

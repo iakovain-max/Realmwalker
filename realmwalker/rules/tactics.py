@@ -695,10 +695,40 @@ def _cast_best(b: Battle, f: Fighter, cost: str, *, beat: float = 0.0, care: flo
 
 
 def _do_cast(b: Battle, f: Fighter, best) -> bool:
-    _, value, target, point, _ = best
+    _, value, target, point, _ = best[:5]
+    slot = best[5] if len(best) > 5 else None
     if f.char is not None:
-        return bool(b.do_cast(f, value, target, point=point))
-    return bool(b.creature_cast(f, value, target, point=point))
+        return bool(b.do_cast(f, value, target, slot_level=slot, point=point))
+    return bool(b.creature_cast(f, value, target, slot_level=slot, point=point))
+
+
+def _slot_levels(b: Battle, f: Fighter, value: str, sp: dict) -> list[int]:
+    """The slot levels worth weighing for this casting: its own (or the lowest left), and a higher one the Auto or the
+    enemy would spend on it (a spare slot: no spell of that level ready)."""
+    if sp["level"] <= 0 or str(value).startswith(("scroll:", "charge:", "innate:", "throw:")):
+        return [sp["level"]]
+    if f.char is not None:
+        low = spellrules.lowest_free_slot(f.char, b.t, sp["level"]) or sp["level"]
+        high = spellrules.auto_slot(f.char, b.t, value)
+    else:
+        sc = f.cdef.get("spellcasting") or {}
+        if value in sc.get("at_will", []) or b._per_day(f, value) is not None:
+            return [sp["level"]]
+        free = [i + 1 for i in range(sp["level"] - 1, len(f.slots)) if f.slots[i] > 0]
+        if not free:
+            return [sp["level"]]
+        low = free[0]
+        own = {b.t.spells[s]["level"] for s in f.cdef.get("spells", ()) if s in b.t.spells}
+        spare = [lvl for lvl in free if lvl > low and lvl not in own]
+        high = max(spare) if spare and spellrules.upcasts(sp) else low
+    return sorted({low, high or low})
+
+
+def _slot_price(b: Battle, f: Fighter, level: int) -> float:
+    """How dear a slot of this level is, in spell levels: a spare one (no spell of its own level ready) costs half."""
+    if f.char is not None and level in spellrules.idle_levels(f.char, b.t):
+        return level * 0.5
+    return float(level)
 
 
 def _pick_cast(b: Battle, f: Fighter, cost: str, *, beat: float = 0.0, care: float | None = None):
@@ -720,15 +750,18 @@ def _pick_cast(b: Battle, f: Fighter, cost: str, *, beat: float = 0.0, care: flo
         free = spellrules.free_cast(f.char, b.t, opt.value) if f.char is not None else None
         if free:  # (Spell Mastery costs nothing; a signature spell comes back with a short rest)
             price = 0.0 if free == "mastery" else price * 0.3
+        levels = _slot_levels(b, f, opt.value, sp) if not free else [sp["level"]]
         for target, point in _aims(b, f, opt):
-            w = estimates.spell_value(b, f, opt.value, target=target, point=point)
-            if w.total(care=care) <= 0.5:
-                continue
-            score = w.total(care=care) - price
-            if f.char is not None and w.friendly > 0:
-                continue  # companions never catch friends
-            if best is None or score > best[0]:
-                best = (score, opt.value, target, point, sp)
+            for lvl in levels:  # (the lowest slot, and a spare higher one when the spell does more with it)
+                w = estimates.spell_value(b, f, opt.value, target=target, point=point, up=max(0, lvl - sp["level"]))
+                if w.total(care=care) <= 0.5:
+                    continue
+                score = w.total(care=care) - (price if lvl <= sp["level"] or price == 0 else
+                                              price * _slot_price(b, f, lvl) / max(1, sp["level"]))
+                if f.char is not None and w.friendly > 0:
+                    continue  # companions never catch friends
+                if best is None or score > best[0]:
+                    best = (score, opt.value, target, point, sp, lvl if lvl > sp["level"] else None)
     if best is None or best[0] <= beat:
         return None
     return best

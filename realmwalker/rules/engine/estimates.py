@@ -87,8 +87,8 @@ class Worth:
 
 
 def spell_value(b, f, sid: str, *, target=None, point=None, dc: int | None = None, bonus: int | None = None,
-                level: int | None = None) -> Worth:
-    """What casting this spell here would do, in expected numbers."""
+                level: int | None = None, up: int = 0) -> Worth:
+    """What casting this spell here would do, in expected numbers (`up`: cast that many slot levels higher)."""
     from realmwalker.rules.combat import AttackOption, spell_id
 
     spell = b.t.spells[spell_id(sid)]
@@ -107,16 +107,17 @@ def spell_value(b, f, sid: str, *, target=None, point=None, dc: int | None = Non
     for o in spell.get("effects", ()):
         kind = o["op"]
         if kind == "attack" and target is not None:
-            for d, t, _ in spellrules.damage_parts(o)[:1]:
-                expr = _scaled(d, mult if o.get("scaling") == "cantrip" else 1)
+            for d, t, more in spellrules.damage_parts(o)[:1]:
+                expr = spellrules.scaled(_scaled(d, mult if o.get("scaling") == "cantrip" else 1), more, up)
                 opt = AttackOption("spell", spell["name"], "spell_ranged" if o["attack"] != "melee" else "spell_melee",
                                    bonus, expr, t)
-                ev = attack_value(b, f, opt, target) * int(o.get("rays", 1))
+                ev = attack_value(b, f, opt, target) * (int(o.get("rays", 1)) + int(o.get("rays_up", 0)) * up)
                 w.damage += ev
                 w.kills += int(ev >= target.hp)
         elif kind == "darts" and target is not None:
-            d, t, _ = spellrules.damage_parts(o)[0]
-            ev = avg(d) * int(o.get("count", 1)) * damage_factor(target, t)
+            d, t, more = spellrules.damage_parts(o)[0]
+            ev = avg(spellrules.scaled(d, more, up)) * (int(o.get("count", 1)) + int(o.get("count_up", 0)) * up) \
+                * damage_factor(target, t)
             w.damage += ev
             w.kills += int(ev >= target.hp)
         elif kind == "save":
@@ -124,8 +125,8 @@ def spell_value(b, f, sid: str, *, target=None, point=None, dc: int | None = Non
                 if not _allowed(o, x):
                     continue
                 pf = fail_chance(b, x, o["ability"], int(o.get("dc", dc)))
-                dmg = sum(avg(_scaled(d, mult if o.get("scaling") == "cantrip" else 1)) * damage_factor(x, t)
-                          for d, t, _ in spellrules.damage_parts(o))
+                dmg = sum(avg(spellrules.scaled(_scaled(d, mult if o.get("scaling") == "cantrip" else 1), more, up))
+                          * damage_factor(x, t) for d, t, more in spellrules.damage_parts(o))
                 ev = dmg * (pf + (1 - pf) * (0.5 if o.get("half") else 0.0))
                 if x.team == f.team:
                     w.friendly += ev
@@ -135,17 +136,26 @@ def spell_value(b, f, sid: str, *, target=None, point=None, dc: int | None = Non
                     if o.get("on_fail"):
                         w.control += pf * threat(x) * _control_rounds(o["on_fail"])
         elif kind == "heal":
-            for x in sorted(caught, key=lambda x: x.hp / max(1, x.max_hp))[:max(1, int(o.get("count", 1)))]:
+            many = max(1, int(o.get("count", 1)) + int(o.get("count_up", 0)) * up)
+            for x in sorted(caught, key=lambda x: x.hp / max(1, x.max_hp))[:many]:
                 missing = x.max_hp - x.hp
                 if missing > 0:
-                    w.heal += min(missing, avg(o["dice"]) + (_caster_mod(b, f) if o.get("add_mod") else 0))
+                    w.heal += min(missing, avg(spellrules.scaled(o["dice"], o.get("up", ""), up))
+                                  + (_caster_mod(b, f) if o.get("add_mod") else 0))
                     if x.state == "down":
                         w.heal += 10.0  # up again
         elif kind == "modifier":
-            w.help += _buff_worth(o.get("buff", {}), int(o.get("count", 1)))
+            w.help += _buff_worth(o.get("buff", {}), int(o.get("count", 1)) + int(o.get("count_up", 0)) * up)
         elif kind in ("summon", "aura", "guardian"):
-            d, t, _ = spellrules.damage_parts(o)[0] if spellrules.damage_parts(o) else ("0", "", "")
-            w.help += avg(d) * 0.55 * 3
+            d, t, more = spellrules.damage_parts(o)[0] if spellrules.damage_parts(o) else ("0", "", "")
+            w.help += avg(spellrules.scaled(d, more, up)) * 0.55 * 3
+    if up and spell.get("targets_up") and target is not None:  # (more creatures of the same kind nearby)
+        others = [x for x in (b.enemies_of(f) if target.team != f.team else b.team(f.team))
+                  if x is not target and x.active and b.feet(f, x) <= max(5, b.spell_range(spell, f))]
+        extra = min(len(others), int(spell["targets_up"]) * up)
+        if extra:
+            w.damage, w.control, w.kills = (w.damage * (1 + 0.8 * extra), w.control * (1 + 0.8 * extra),
+                                            w.kills * (1 + extra))
     return w
 
 

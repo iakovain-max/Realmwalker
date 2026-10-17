@@ -70,8 +70,9 @@ def healing_magic(game, caster: Character) -> list[tuple[str, str, bool, str]]:
     return out
 
 
-def cast(game, caster: Character, patient: Character, wound, spell_id: str) -> list[str]:
-    """Cast a healing spell outside battle: it uses a slot like any other casting."""
+def cast(game, caster: Character, patient: Character, wound, spell_id: str, slot_level: int | None = None) -> list[str]:
+    """Cast a healing spell outside battle: it uses a slot like any other casting (`slot_level`: a higher one heals
+    more)."""
     t = game.tables
     spell = t.spells[spell_id]
     ok, why = spellrules.can_cast(caster, t, spell_id)
@@ -79,6 +80,8 @@ def cast(game, caster: Character, patient: Character, wound, spell_id: str) -> l
         return [f"{spell['name']}: {why}."]
     level = spell["level"]
     slot = spellrules.lowest_free_slot(caster, t, level) if level else None
+    if level and slot_level in spellrules.slot_choices(caster, t, spell_id):
+        slot = slot_level
     if level and slot is None:
         return ["No spell slot left for that. A long rest restores them."]
     if slot:
@@ -91,10 +94,10 @@ def cast(game, caster: Character, patient: Character, wound, spell_id: str) -> l
         h = spellrules.heal_op(spell)
         targets = [c for c in game.party if c.alive] if spellrules.heals_many(spell) else [patient]
         for c in targets:
-            amount = dice.roll(h["dice"], rng).total + (s.mod(spellrules.casting_ability(caster, t))
-                                                       if h.get("add_mod") else 0)
+            amount = dice.roll(spellrules.scaled(h["dice"], h.get("up", ""), (slot or level) - level), rng).total \
+                + (s.mod(spellrules.casting_ability(caster, t)) if h.get("add_mod") else 0)
             if "disciple_of_life" in traits.of_char(caster, t):
-                amount += 2 + max(1, level)
+                amount += 2 + max(1, slot or level)  # (2024: 2 + the slot's level)
             target_wound = wound if c is patient else max(c.wounds, key=lambda w: (w.severity, w.bleed), default=None)
             msgs += health.magic_heal(c, target_wound if h.get("mends_wound", True) else None, amount)
     elif use == "cure":

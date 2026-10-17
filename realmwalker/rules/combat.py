@@ -3038,7 +3038,7 @@ class Battle:
                 out.append(sid)
         return out
 
-    def creature_cast(self, f: Fighter, sid: str, target: Fighter | None = None,
+    def creature_cast(self, f: Fighter, sid: str, target: Fighter | None = None, slot_level: int | None = None,
                       point: tuple[int, int] | None = None) -> bool:
         """A creature casts one of its spells, with its own save DC and spell attack."""
         spell = self.t.spells[sid]
@@ -3060,6 +3060,8 @@ class Battle:
             if self.slot_used_now(f):
                 return False
             slot_i = i = next(i for i in range(level - 1, len(f.slots)) if f.slots[i] > 0)
+            if slot_level and slot_level - 1 >= i and slot_level <= len(f.slots) and f.slots[slot_level - 1] > 0:
+                slot_i = i = slot_level - 1  # (a higher slot for more)
             f.slots[i] -= 1
             self.note_slot(f)
             level = i + 1
@@ -3385,6 +3387,9 @@ class Battle:
             level = 0
         slotted = False
         if level > 0:
+            if slot_level and slot_level not in spellrules.slot_choices(c, self.t, sid):
+                self.say(f"No level {slot_level} spell slot left for that.", "warn")
+                return False
             slot_level = slot_level or spellrules.lowest_free_slot(c, self.t, level)
             if slot_level is None:
                 self.say("No spell slot left for that.", "warn")

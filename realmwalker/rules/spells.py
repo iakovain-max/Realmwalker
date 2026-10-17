@@ -303,6 +303,97 @@ def spend_free(char: Character, spell_id: str, how: str | None) -> None:
         char.uses[f"signature:{spell_id}"] = 0
 
 
+# ---------------------------------------------------------------------------- casting with a higher slot (2024)
+# What a higher slot adds is in the spell's ops: `up` (dice more per slot level above the spell's), `count_up` (one
+# more dart, one more creature blessed or healed), `rays_up` (one more ray) and the spell's `targets_up` (one more
+# creature of the same kind). A spell without any of them gains nothing from a higher slot.
+UP_KEYS = ("up", "count_up", "rays_up")
+
+
+def upcasts(spell: dict) -> bool:
+    """Whether a higher slot does more with this spell."""
+    if spell.get("level", 0) <= 0:
+        return False
+    return bool(spell.get("targets_up")) or any(o.get(k) for o in ops(spell) for k in UP_KEYS) \
+        or any(more for o in ops(spell) for _, _, more in damage_parts(o))
+
+
+def more_dice(more: str, up: int) -> str:
+    """`more` taken `up` times ("1d6", 2 -> "2d6")."""
+    from realmwalker.core import dice
+
+    n, sides, flat = dice.parse(more)
+    return (f"{n * up}d{sides}" if n else "") + (f"{flat * up:+d}" if flat else "")
+
+
+def scaled(base: str, more: str, up: int) -> str:
+    """Dice with `more` added `up` times ("8d6", "1d6", 2 -> "10d6"); a different die is added as its own term."""
+    if not more or up <= 0:
+        return base
+    from realmwalker.core import dice
+
+    bn, bs, bf = dice.parse(base)
+    mn, ms, mf = dice.parse(more)
+    if ms == bs or bn == 0:
+        n, sides = bn + mn * up, ms if bn == 0 else bs
+        flat = bf + mf * up
+        return f"{n}d{sides}" + (f"{flat:+d}" if flat else "")
+    return f"{base}+{mn * up}d{ms}" + (f"{mf * up:+d}" if mf else "")
+
+
+def up_gain(spell: dict, up: int) -> list[str]:
+    """What `up` slot levels above the spell's own add, in a few words ("+2d6 fire", "+1 dart")."""
+    if up <= 0:
+        return []
+    out: list[str] = []
+    for o in spell.get("effects", ()):
+        for _, dtype, more in damage_parts(o):
+            if more:
+                out.append(f"+{more_dice(more, up)} {dtype}".strip())
+        if o["op"] == "heal" and o.get("up"):
+            out.append(f"heals +{more_dice(o['up'], up)}")
+        what = {"darts": "dart", "heal": "creature healed", "modifier": "creature"}.get(o["op"], "more")
+        if o.get("count_up"):
+            n = int(o["count_up"]) * up
+            out.append(f"+{n} {what}{'s' if n > 1 and not what.endswith('more') else ''}")
+        if o.get("rays_up"):
+            n = int(o["rays_up"]) * up
+            out.append(f"+{n} ray{'s' if n > 1 else ''}")
+    if spell.get("targets_up"):
+        n = int(spell["targets_up"]) * up
+        out.append(f"+{n} target{'s' if n > 1 else ''}")
+    return list(dict.fromkeys(out))
+
+
+def slot_choices(char: Character, tables, spell_id: str) -> list[int]:
+    """The slot levels with a slot left that could cast this spell (its own level and up)."""
+    sp = tables.spells.defs.get(spell_id)
+    if sp is None or sp["level"] <= 0 or not char.spells:
+        return []
+    left = slots_left(char, tables)
+    return [i + 1 for i in range(sp["level"] - 1, len(left)) if left[i] > 0]
+
+
+def idle_levels(char: Character, tables) -> set[int]:
+    """Slot levels for which they have no spell of that very level ready: such a slot is only good for casting a
+    lower spell higher."""
+    have = {tables.spells[s]["level"] for s in known_spells(char, tables)}
+    return {lvl for lvl in range(1, max_spell_level(char, tables) + 1) if lvl not in have}
+
+
+def auto_slot(char: Character, tables, spell_id: str) -> int | None:
+    """The slot the Auto would cast this spell with: a spare higher slot (one with no spell of its own level ready)
+    when the spell does more with it, else the lowest that will do."""
+    levels = slot_choices(char, tables, spell_id)
+    if not levels:
+        return None
+    if upcasts(tables.spells[spell_id]):
+        idle = [lvl for lvl in levels if lvl > levels[0] and lvl in idle_levels(char, tables)]
+        if idle:
+            return max(idle)
+    return levels[0]
+
+
 def armour_problem(char: Character, tables) -> str:
     """Armour worn without training stops all spellcasting (2024)."""
     armor = char.equipped_item("armor")

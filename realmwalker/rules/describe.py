@@ -494,13 +494,16 @@ def chance_lines(b, f, opt, target) -> list[str]:
     return out
 
 
-def spell(tables, sid: str, *, b=None, f=None, target=None) -> Card:
-    """A spell: level, cost, range, area, concentration, what it does; the save DC or attack of the caster."""
+def spell(tables, sid: str, *, b=None, f=None, target=None, level: int | None = None) -> Card:
+    """A spell: level, cost, range, area, concentration, what it does; the save DC or attack of the caster. `level`:
+    the slot it would be cast with (what a higher slot adds)."""
     from realmwalker.rules import spells as sprules
 
     sp = tables.spells[sid]
     lvl = int(sp.get("level", 0))
     sub = ("cantrip" if lvl == 0 else f"level {lvl}") + (f" {sp['school']}" if sp.get("school") else "")
+    if level and lvl and level > lvl:
+        sub += f", cast at level {level}"
     card = Card(esc(sp["name"]), sub, "icon/cast", [esc(sp.get("text", ""))])
     cast = {"action": "an action", "bonus": "a bonus action", "reaction": "a reaction"}.get(sp.get("cast", "action"),
                                                                                              "an action")
@@ -517,6 +520,11 @@ def spell(tables, sid: str, *, b=None, f=None, target=None) -> Card:
     what = sprules.summary(sp)
     if what:
         card.lines.append(", ".join(what))
+    if level and lvl and level > lvl:
+        gain = sprules.up_gain(sp, level - lvl)
+        card.lines.append(f"<good>With a level {level} slot:</> {', '.join(gain) if gain else 'nothing more'}.")
+    elif lvl and sprules.upcasts(sp) and level is None:
+        card.lines.append(f"<dim>A higher slot: {', '.join(sprules.up_gain(sp, 1))} a level.</>")
     if f is not None and f.char is not None and not sp.get("thrown") \
             and any(o.get("op") == "save" for o in sp.get("effects", ())):
         card.lines.append(f"Save DC {sprules.save_dc(f.sheet, tables)}.")
