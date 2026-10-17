@@ -404,6 +404,18 @@ def _check_companions(game, fail) -> None:
         home = (c.spells or {}).get("sanctuary")
         if home is not None and not 0 <= int(home) < len(game.world.settlements):
             fail(f"{c.name}'s sanctuary is no town")
+    names = None  # (Expansion 3 E.3: a nightmare waits only for a figure of this world; a bound sapphire's thing is
+    for c in game.party:  # remembered by whoever bound it, as it was when taken)
+        for uid, rec in ((c.spells or {}).get("summons") or {}).items():
+            if not rec.get("name") or rec.get("taken") and not rec.get("item"):
+                fail(f"{c.name}'s summons record for {uid} is broken: {rec}")
+    for name in (game.renown.flags.get("nightmares") or {}) if getattr(game, "renown", None) else ():
+        names = names or {f.name for f in game.world.figures.values()}
+        if name not in names:
+            fail(f"a nightmare waits for {name}, who is nobody in this world")
+    for m in getattr(game, "sensed", []) or []:
+        if game.local is not None and m["map"] == game.local.key and not game.local.in_bounds(m["x"], m["y"]):
+            fail(f"something sensed is marked off the map: {m}")
     for b in getattr(game, "fallen", []) or []:  # (Expansion 3 E.1: the bodies the party carries for raising)
         if b["char"].alive or any(b["char"] is c for c in game.party):
             fail(f"{b['char'].name} is carried as a body but is alive or walks with the party")
