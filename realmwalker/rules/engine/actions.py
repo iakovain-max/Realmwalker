@@ -239,7 +239,7 @@ def options(b, f, only: tuple[str, ...] | None = None) -> list[Option]:
         name = f"{o.name} ({trick.title()})" if trick else o.name
         out.append(Option(f"attack:{o.key}", "attack", name, "attack", ok, why, o, "creature", targets))
     if only is None or "object" in only:
-        things = b.breakables(f) if acting else {}
+        things = b.breakables(f) if acting and f.blows else {}  # (a familiar cannot attack, nor break things)
         if things or b.t.rules.get("objects", {}).get("terrain"):
             out.append(Option("object", "object", "Break something", "attack", bool(things),
                               "" if things else ("no action left this turn" if not acting else "nothing in reach to break"),
@@ -294,14 +294,14 @@ def options(b, f, only: tuple[str, ...] | None = None) -> list[Option]:
     out.append(Option("action:search", "action", "Search", "action", free, no, "search"))
     for trig, name in (("reach", "Ready a blow"), ("sight", "Ready a shot")):
         out.append(Option(f"action:ready:{trig}", "action", name, "action", free, no, trig))
-    grabbable = [t for t in b.enemies_of(f) if b.can_grapple(f, t)[0]]
-    for mode, name in (("prone", "Shove down"), ("push", "Shove back"), ("grapple", "Grapple")):
+    grabbable = [t for t in b.enemies_of(f) if b.can_grapple(f, t)[0]] if f.blows else []
+    for mode, name in (("prone", "Shove down"), ("push", "Shove back"), ("grapple", "Grapple")) if f.blows else ():
         ok = acting and bool(grabbable)
         why = "" if ok else ("no action left this turn" if not acting else "nobody beside you")
         out.append(Option(f"action:{mode}", "action", name, "attack", ok, why, mode, "creature", grabbable))
     if "grappled" in f.conditions or "restrained" in f.conditions:
         out.append(Option("action:escape", "action", "Break free", "action", free, no, "escape"))
-    for key in ("persuade", "intimidate", "calm") if f.side == "party" and not f.controlled else ():
+    for key in ("persuade", "intimidate", "calm") if f.side == "party" and not f.controlled and f.bond is None else ():
         dc = b.parley_dc(key)
         out.append(Option(f"action:influence:{key}", "action", f"Influence ({key})", "action", free and dc is not None,
                           no or ("" if dc is not None else "they will not listen"), key))

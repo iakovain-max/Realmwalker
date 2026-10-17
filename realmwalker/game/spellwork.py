@@ -167,6 +167,13 @@ def _awake_watch(game, enc, notes: list[str]) -> tuple[object, list[str]]:
     if a is not None and not enc.warned:
         enc.asleep, enc.warned = False, True
         notes = notes + [f"<warn>{escape_markup(a['name'])} wakes you with a word: \"Up. Something comes.\"</>"]
+    from realmwalker.game import allies
+
+    fam = allies.watcher(game)  # (Find Familiar: a familiar keeps watch as an awakened animal does)
+    if fam is not None and not enc.warned:
+        enc.asleep, enc.warned = False, True
+        notes = notes + [f"<warn>{escape_markup(fam['name'])} the {fam['form']} rouses you in the dark: "
+                         f"something is coming.</>"]
     return enc, notes
 
 
@@ -441,6 +448,8 @@ STONEWORK = ("lock", "mend", "hand", "make", "stone", "chest", "weather", "plant
 WARDING = ("protect", "hallow", "demiplane", "cauldron")
 # Part E.7's: great magic, and Wish's other uses outside a fight (game/greatmagic.py)
 GREAT = ("contingency", "jar", "clone", "imprison", "wish")
+# Part F.1's: a familiar and a steed (game/allies.py)
+ALLIES = ("familiar", "steed")
 
 
 def _does(spell: dict) -> str | None:
@@ -474,6 +483,10 @@ def subjects(game, caster: Character, sid: str) -> list:
         from realmwalker.game import greatmagic
 
         return greatmagic.subjects(game, caster, sid)
+    if does in ALLIES:
+        from realmwalker.game import allies
+
+        return allies.subjects(game, caster, sid)
     return []
 
 
@@ -505,6 +518,10 @@ def problem(game, caster: Character, sid: str, target) -> str | None:
         from realmwalker.game import greatmagic
 
         return greatmagic.problem(game, caster, sid, target)
+    if does in ALLIES:
+        from realmwalker.game import allies
+
+        return allies.problem(game, caster, sid, target)
     if does == "ward":
         ward = _road(spell)["ward"]
         rec = wards_here(game).get(ward)
@@ -542,12 +559,13 @@ def cast(game, caster: Character, sid: str, target: Character | None, level: int
     spell's casting time (`minutes`)."""
     spell = game.tables.spells[sid]
     does = _does(spell)
-    if does in DIVINING or does in SPEECH or does in GLAMOUR or does in STONEWORK or does in WARDING or does in GREAT:
-        from realmwalker.game import divining, glamour, greatmagic, speech, stonework, warding
+    if does in DIVINING or does in SPEECH or does in GLAMOUR or does in STONEWORK or does in WARDING or does in GREAT \
+            or does in ALLIES:
+        from realmwalker.game import allies, divining, glamour, greatmagic, speech, stonework, warding
 
         out = (divining if does in DIVINING else speech if does in SPEECH else glamour if does in GLAMOUR
                else stonework if does in STONEWORK else warding if does in WARDING
-               else greatmagic).cast(game, caster, sid, target, level)
+               else allies if does in ALLIES else greatmagic).cast(game, caster, sid, target, level)
         game.cue("spell")
         game.dirty = True
         return out

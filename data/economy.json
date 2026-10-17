@@ -125,6 +125,7 @@
     "riding_horse": {"name": "riding horse", "price": 7500, "carry": 100, "ride": 0.65, "days_without_food": 3},
     "camel": {"name": "camel", "price": 5000, "carry": 200, "ride": 0.75, "days_without_food": 7, "lands": {"desert": 1.0, "dunes": 1.0, "salt_flat": 1.0, "badlands": 0.8}},
     "warhorse": {"name": "warhorse", "price": 40000, "carry": 120, "ride": 0.65, "days_without_food": 3},
+    "otherworldly_steed": {"name": "steed of another world", "price": 0, "carry": 120, "ride": 0.65, "days_without_food": 30, "summoned": true},
     "elephant": {"name": "elephant", "price": 20000, "carry": 600, "ride": 0.9, "days_without_food": 4, "saddle": "exotic_saddle", "lands": {"jungle": 0.6, "savanna": 1.0}},
     "mastiff": {"name": "mastiff", "price": 2500, "carry": 40, "ride": 0.9, "days_without_food": 4, "small_only": true, "eats": "meat"}
   },

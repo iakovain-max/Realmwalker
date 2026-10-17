@@ -711,8 +711,9 @@ def long_rest(char: Character, tables, rng: RNG) -> list[str]:
     """A full night: hit points, spell slots and features restored; half the hit dice back."""
     if not char.alive:
         return []
-    from realmwalker.rules import magic
+    from realmwalker.rules import allies, magic
 
+    allies.rest(char, True)  # (a familiar and a steed are whole again; the steed's gift comes back)
     if not magic.flag(char, "no_healing"):
         char.hp = char.max_hp
     char.hit_dice = min(char.level, char.hit_dice + max(1, char.level // 2))

@@ -270,7 +270,7 @@ def awake_animal(game) -> dict | None:
 
 
 def _asleep_animals(game) -> list[dict]:
-    return [a for a in game.leader.animals if not a.get("awake")]
+    return [a for a in game.leader.animals if not a.get("awake") and not a.get("summoned")]
 
 
 # ---------------------------------------------------------------------------- the people near you
