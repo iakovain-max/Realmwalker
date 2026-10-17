@@ -34,7 +34,7 @@
   "longstrider": {"name": "Longstrider", "level": 1, "school": "transmutation", "classes": ["bard", "druid", "ranger", "wizard"],
    "target": "ally", "range": "touch", "components": ["V", "S", "M"], "rounds": 600, "targets_up": 1,
    "effects": [{"op": "modifier", "buff": {"speed": 10}}], "fx": "buff",
-   "text": "A creature's speed rises by 10 feet for an hour, in a fight and on the road (one more creature for each slot level above 1)."},
+   "text": "A creature's speed rises by 10 feet for an hour: in a fight, and on the road it makes up for a heavy load or a lame leg (one more creature for each slot level above 1)."},
   "feather_fall": {"name": "Feather Fall", "level": 1, "school": "transmutation", "classes": ["bard", "sorcerer", "wizard"],
    "target": "all_allies", "range": 60, "cast": "reaction", "components": ["V", "M"], "rounds": 10,
    "effects": [{"op": "say", "text": "{name} drifts down like a feather."}], "fx": "buff",

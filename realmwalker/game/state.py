@@ -215,16 +215,24 @@ class GameState:
 
         from realmwalker.game import mounts
 
+        from realmwalker.rules import spells as spellrules
+
         ridden = mounts.assign(self)[0] if not self.in_local and self.leader.animals else {}
-        worst = 1.0
+        worst = 0.0
+        borne = not self.in_local  # (everyone carried by magic on the big map: quicker than a walker)
         for member in self.party:
             m = Sheet(member, self.tables).travel_multiplier()
             b = body.travel_multiplier(member)
             if m is None or b is None:
                 return None
+            if borne and not (spellrules.lasting_flag(member, self.tables, "wind")
+                              or spellrules.lasting_flag(member, self.tables, "steed")):
+                borne = False
             # A rider's lame leg does not slow the party (on the big map, with a mount under them).
             worst = max(worst, m * b * health.travel_multiplier(member, self.tables, riding=id(member) in ridden))
-        return worst
+        # A walker's pace at best: the 2024 travel pace does not grow with speed. Only a party borne by magic (Phantom
+        # Steeds for everyone, Wind Walk) goes quicker.
+        return worst if borne and 0 < worst < 1.0 else max(1.0, worst)
 
     @property
     def moment(self) -> Moment:
