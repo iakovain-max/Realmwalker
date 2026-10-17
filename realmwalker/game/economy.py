@@ -121,18 +121,26 @@ def restock(game, npc: NPC, shop: dict) -> dict:
         qty = int(round(rng.randint(int(lo), int(hi)) * float(size["stock"])))
         if qty > 0:
             stock[item_id] = qty
-    if shop["kind"] in ("apothecary", "general"):
-        from realmwalker.game.magic import scroll_stock
+    from realmwalker.game.magic import scroll_stock
 
-        for item_id, qty in scroll_stock(game, settlement, rng.child("scrolls")).items():
-            stock[item_id] = stock.get(item_id, 0) + qty
+    scrolls = {}  # (Expansion 3 G.2: scrolls by rarity; a temple's prayers, a mage's own list)
+    if shop["kind"] in ("apothecary", "general"):
+        scrolls = scroll_stock(game, settlement, rng.child("scrolls"))
+    elif shop["kind"] == "temple":
+        scrolls = scroll_stock(game, settlement, rng.child("scrolls"), tradition="cleric",
+                               top=3 if rank >= SIZE_RANK["town"] else 1, lo=0, hi=2)
+    elif shop["kind"] == "mage":
+        scrolls = scroll_stock(game, settlement, rng.child("scrolls"), tradition="wizard",
+                               top=5 if rank >= SIZE_RANK["city"] else 3, lo=2, hi=5)
+    for item_id, qty in scrolls.items():
+        stock[item_id] = stock.get(item_id, 0) + qty
     shop["stock"] = stock
     # Things the player sold them are sold on after a month.
     shop["used"] = [u for u in shop.get("used", []) if game.world.time - u.get("sold_at", 0) < 30 * DAY]
-    if shop["kind"] in ("apothecary", "general"):
+    if shop["kind"] == "mage":  # (the common and uncommon magic things of a city: the mages sell them)
         shop["used"] += [it.to_dict() | {"sold_at": game.world.time}
                          for it in magic_for_sale(game, settlement, rng.child("magic"))]
-    base = int(size["coin"] * {"inn": 0.5, "stable": 0.6, "apothecary": 0.7, "temple": 0.4}.get(shop["kind"], 1.0))
+    base = int(size["coin"] * {"inn": 0.5, "stable": 0.6, "apothecary": 0.7, "temple": 0.4, "mage": 0.8}.get(shop["kind"], 1.0))
     shop["coin"] = max(shop.get("coin", 0), int(base * rng.uniform(0.7, 1.3)))
     shop["restocked"] = game.world.time
     return shop

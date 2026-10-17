@@ -153,12 +153,14 @@ def services_for(game, npc: NPC) -> list[Service]:
         elif sid == "blessing":
             packs = distinct_packs(game.party)  # the party shares one: list each thing once
             unknown = [it for m in packs for it in m.inventory if it.magic and not it.magic.get("identified")]
-            price = fee(game, npc, 2000)
+            from realmwalker.game import spellhire  # (G.2: the book's price for an Identify and a Remove Curse)
+
+            price = spellhire.price(game, npc, "identify")
             options = [(f"{game.party.index(m)}:{it.uid}", game.tables.items.name(it), price)
                        for m in packs for it in m.inventory if it.magic and not it.magic.get("identified")]
             out.append(Service("identify", "Ask what a strange thing is (a donation)", 0, bool(unknown),
                                "you carry nothing strange", options=options))
-            cursed = [(f"{game.party.index(m)}:{it.uid}", game.tables.items.name(it), fee(game, npc, 6000))
+            cursed = [(f"{game.party.index(m)}:{it.uid}", game.tables.items.name(it), spellhire.price(game, npc, "remove_curse"))
                       for m in packs for it in m.inventory if it.magic and it.magic.get("cursed")
                       and it.magic.get("curse_known")]
             if cursed:
@@ -172,6 +174,12 @@ def services_for(game, npc: NPC) -> list[Service]:
                     options.append((str(it.uid), f"{game.tables.items.name(it)} ({game.tables.items.condition_word(it)})", price))
             out.append(Service("repair", "Mend weapons and armour", 0, bool(options), "nothing of yours needs mending",
                                options=options))
+        elif sid == "spellcasting":  # (Expansion 3 G.2, PHB 2024 p. 232: game/spellhire.py)
+            from realmwalker.game import spellhire
+
+            options = spellhire.options(game, npc)
+            out.append(Service("spellcasting", "Cast a spell for you, for a price", 0, bool(options),
+                               spellhire.why_none(game, npc), options=options))
         elif sid == "labour":
             done = npc.flags.get("labour_day") == today
             out.append(Service("labour", "Ask for a day's work (8 hours)", 0, not done, "no more work for you today"))
@@ -697,6 +705,12 @@ def _pick_item(game, arg: str | None):
     return m, m.item(int(uid))
 
 
+def _spellcasting(game, npc: NPC, svc, arg) -> list[str]:
+    from realmwalker.game import spellhire
+
+    return spellhire.cast(game, npc, arg)
+
+
 def _identify(game, npc: NPC, svc, arg) -> list[str]:
     from realmwalker.game import magic_items
 
@@ -733,7 +747,7 @@ HANDLERS = {
     "treat_wounds": _treat, "surgery": _surgery, "herbal_cure": _herbal, "prayer_healing": _prayer,
     "cure_disease": _cure, "repair": _repair, "labour": _labour, "buy_animal": _buy_animal, "sell_animal": _sell_animal,
     "buy_vehicle": _buy_vehicle, "sell_vehicle": _sell_vehicle,
-    "identify": _identify, "remove_curse": _remove_curse,
+    "identify": _identify, "remove_curse": _remove_curse, "spellcasting": _spellcasting,
 }
 
 

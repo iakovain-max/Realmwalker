@@ -15,6 +15,7 @@
     "cobbler": ["They glance at your boots before your face.", "\"Those soles won't last the month.\"", "\"Boots or gossip? I've both.\""],
     "potter": ["\"Careful of the pots.\"", "They wipe clay on their apron. \"Mm?\"", "Their hands stay on the wheel. \"Talk while I work.\""],
     "tanner": ["\"I know, I know. The smell. What do you want?\"", "They wipe their hands, and it doesn't help. \"Aye?\"", "\"Downwind of me, if you please.\""],
+    "mage": ["Ink on the fingers, chalk on the sleeve. \"Careful where you step.\"", "\"A spell? A scroll? Or only curious?\"", "\"Magic costs. Not only coin, but coin first.\""],
     "scribe": ["They do not look up from the page. \"One moment.\"", "\"A letter? A copy? A reading?\"", "\"Words cost by the line. What will it be?\""],
     "monk": ["They bow, and wait for you to speak.", "\"Peace be on you, traveller.\"", "\"Speak softly here, friend.\""],
     "soldier": ["\"Keep it short, I'm on duty.\"", "They size you up like a sergeant would.", "\"Papers? No? Then mind your step.\""],

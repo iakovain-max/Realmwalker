@@ -813,6 +813,8 @@ def poaching_check(game) -> None:
 
 def magic_check(game, caster) -> None:
     """Working magic where the law forbids it or wants a licence (and heresy, for priests of other gods)."""
+    if not any(c is caster for c in game.party):
+        return  # (a townsperson you paid to cast has their licence, or their own reasons: game/spellhire.py)
     realm, s = jurisdiction(game)
     if realm is None or s is None or game.local is None:
         return
@@ -828,6 +830,14 @@ def magic_check(game, caster) -> None:
         commit(game, "forbidden_magic", witnesses=witnesses)
     elif not divine and laws.get("magic") == "licensed" and realm.id not in game.renown.flags.get("licences", []):
         commit(game, "unlicensed_magic", witnesses=witnesses)
+
+
+def party_casts(game) -> bool:
+    """Whether anyone in the party works magic (a calling, a feat, a people's gift; or reads scrolls as a caster)."""
+    from realmwalker.rules import spells as spellrules
+
+    return any(c.alive and (spellrules.is_caster(c, game.tables) or spellrules.known_spells(c, game.tables))
+               for c in game.party)
 
 
 def buy_licence(game, realm_id: int) -> str:

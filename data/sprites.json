@@ -404,6 +404,7 @@
       "cobbler": {"body": ["shirt_long@undyed"], "over": ["apron@leather"], "legs": ["pants@brown"], "feet": ["boots@leather"]},
       "potter": {"body": ["shirt@undyed", "tunic@tan"], "over": ["apron@tan"], "legs": ["pants@brown"], "feet": ["shoes@leather"]},
       "tanner": {"body": ["shirt@undyed", "rags@brown"], "over": ["apron@leather"], "legs": ["pants@dark_brown"], "feet": ["boots@dark_leather"]},
+      "mage": {"body": ["robe@purple", "robe@navy", "robe@wine", "robe@black"], "feet": ["shoes@dark_leather"], "head": ["wizard@purple", ""], "held": ["staff", "book"]},
       "scribe": {"body": ["robe@navy", "robe@black", "coat@brown"], "feet": ["shoes@dark_leather"], "head": ["cap@black", ""], "held": ["book"]},
       "sailor": {"body": ["shirt@white", "shirt@linen", "tunic@navy"], "legs": ["pants@navy", "shorts@undyed"], "feet": ["", "boots@leather"], "head": ["cap@red", "cap@navy", ""], "held": ["knife@steel", ""]},
       "porter": {"body": ["shirt@undyed", "rags@brown"], "legs": ["pants@brown", "shorts@brown"], "feet": ["shoes@leather", ""]},

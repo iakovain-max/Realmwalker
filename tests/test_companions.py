@@ -211,7 +211,14 @@ def test_a_companion_can_die(game):
     c.hp = 0
     c.death_cause = "a fall"
     survival.check_death(game, c)
-    assert c not in game.party and not npc.alive and game.over is None
+    assert c not in game.party and game.over is None
+    from realmwalker.game import revival
+
+    # A priest in a city could raise them for pay (Expansion 3 G.2): the body is carried until it is buried.
+    assert revival.body_of(game, c) is not None
+    game.survival = False
+    game.pass_time(11 * 24 * 60, "rest")
+    assert revival.body_of(game, c) is None and not npc.alive
 
 
 def test_companions_survive_saving(game, tmp_path):

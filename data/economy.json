@@ -94,6 +94,15 @@
                 ["rations", 1, 4]],
       "markup": 1.25
     },
+    "mage": {
+      "name": "the mage's wares",
+      "buys": ["focus", "book", "trade"],
+      "stock": [["spellbook", 0, 2], ["component_pouch", 1, 2], ["arcane_focus", 0, 2], ["arcane_wand", 0, 1], ["arcane_staff", 0, 1],
+                ["arcane_rod", 0, 1, "town"], ["arcane_orb", 0, 1, "city"], ["ink_and_quill", 1, 3], ["parchment", 4, 12],
+                ["scroll_case", 0, 2], ["candle", 2, 6], ["burning_incense", 0, 2], ["seers_incense", 0, 2], ["pearl", 0, 2],
+                ["diamond_dust_pinch", 0, 2], ["ruby_dust_pinch", 0, 1, "town"], ["rare_incense", 0, 1, "city"], ["black_pearl", 0, 1, "city"]],
+      "markup": 1.1
+    },
     "temple": {
       "name": "the temple's offerings",
       "buys": ["focus", "book"],
@@ -145,6 +154,11 @@
     "prayer_healing": 1000, "cure_disease": 2500,
     "repair_share": 0.3,
     "labour_pay": [15, 25],
+    "_spellcasting": "PHB 2024 p. 232: the price of a spell cast for you, by spell level 0-9 in copper (a costly component's value is added); how high a spell can be found by the kind of place (reach), and the range one caster there reaches (own; a figure of the world reaches the place's limit); half as much again where magic is forbidden and the mage casts in secret; a lasting spell is for hire if it lasts this many hours.",
+    "spellcasting": {"price": [3000, 5000, 20000, 30000, 200000, 200000, 2000000, 2000000, 2000000, 10000000],
+                     "reach": {"hamlet": 2, "village": 2, "town": 5, "hold": 5, "elfhall": 5, "city": 9},
+                     "own": {"hamlet": [1, 2], "village": [1, 2], "town": [3, 5], "hold": [3, 5], "elfhall": [3, 5], "city": [5, 9]},
+                     "secret_markup": 1.5, "min_hours": 1},
     "inn": {"_comment": "PHB 2024 (PDF p. 234): an inn stay and a meal by lifestyle, in copper; which grades a settlement offers by its size. theft: the chance something goes missing in the night (squalid: opportunistic criminals); rest: exhaustion eased by a real bed; seen: standing with the town's high folk for a few days.", "stay": {"squalid": 7, "poor": 10, "modest": 50, "comfortable": 80, "wealthy": 200, "aristocratic": 400}, "meal": {"squalid": 1, "poor": 2, "modest": 10, "comfortable": 20, "wealthy": 30, "aristocratic": 60}, "lifestyle": {"wretched": 0, "squalid": 10, "poor": 20, "modest": 100, "comfortable": 200, "wealthy": 400, "aristocratic": 1000}, "grades": {"hamlet": ["squalid", "poor"], "village": ["squalid", "poor", "modest"], "town": ["squalid", "poor", "modest", "comfortable"], "city": ["squalid", "poor", "modest", "comfortable", "wealthy", "aristocratic"], "hold": ["poor", "modest", "comfortable", "wealthy"], "elfhall": ["poor", "modest", "comfortable", "wealthy"]}, "theft": {"squalid": 0.15, "poor": 0.04}, "rest": {"modest": 1, "comfortable": 1, "wealthy": 2, "aristocratic": 2}, "seen": {"wealthy": 2, "aristocratic": 4}, "fill": {"squalid": [35, 25], "poor": [50, 35], "modest": [60, 45], "comfortable": [70, 55], "wealthy": [80, 60], "aristocratic": [90, 70]}, "sick": {"squalid": 0.06}},
     "toll": 1,
     "coach": {"per_mile": 3, "mph": 4, "hours_a_day": 10, "max_miles": 160},

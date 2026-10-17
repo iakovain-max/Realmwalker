@@ -115,7 +115,9 @@ def could_raise(game, minutes_dead: float, *, leader_too: bool = True) -> bool:
         if reach(t.spells[sid]) >= minutes_dead and any(c.alive and spellrules.scroll_reader(c, t, sid)
                                                         for c in game.party):
             return True
-    return False
+    from realmwalker.game import spellhire
+
+    return spellhire.could_raise(game, minutes_dead)  # (or a priest, for pay: Expansion 3 G.2)
 
 
 # ---------------------------------------------------------------------------- a companion falls

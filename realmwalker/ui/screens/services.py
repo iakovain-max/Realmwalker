@@ -21,6 +21,31 @@ class ServicesScreen(Screen):
         self.conv = conv
         self.sub = None  # the service whose options are being chosen
         self.messages: list[str] = []
+        self.cur = 0  # the row under the cursor (arrows, Enter), and the first row shown (a long list scrolls)
+        self.top = 0
+        self.shown = 9
+
+    def _open(self, sub) -> None:
+        self.sub = sub
+        self.cur = self.top = 0
+
+    def scroll(self, delta: int) -> None:
+        n = len(self.entries())
+        self.cur = max(0, min(n - 1, self.cur + delta)) if n else 0
+        self.top = max(0, min(self.top, self.cur, max(0, n - self.shown)))
+        if self.cur >= self.top + self.shown:
+            self.top = self.cur - self.shown + 1
+
+    def tip(self, key: str):
+        """A spell's card for a line of the spellcasting list (a spell id before the "|")."""
+        if self.sub is None or self.sub.id != "spellcasting":
+            return None
+        sid = key.split("|")[0]
+        if sid not in self.game.tables.spells:
+            return None
+        from realmwalker.rules import describe
+
+        return lambda: describe.spell(self.game.tables, sid)
 
     def entries(self) -> list:
         if self.sub is not None:
@@ -41,14 +66,14 @@ class ServicesScreen(Screen):
         if self.sub is None:
             svc = next(s for s in services.services_for(self.game, self.npc) if s.id == key)
             if svc.options:
-                self.sub = svc
+                self._open(svc)
                 return
             where = (self.game.player.x, self.game.player.y)
             msgs = services.perform(self.game, self.npc, key)
         else:
             where = (self.game.player.x, self.game.player.y)
             msgs = services.perform(self.game, self.npc, self.sub.id, key)
-            self.sub = None
+            self._open(None)
         for m in msgs:
             self.game.say(m, "info")
             if self.conv is not None:
@@ -62,11 +87,17 @@ class ServicesScreen(Screen):
     def handle_key(self, ev: KeyEvent) -> bool:
         if ev.key == "escape":
             if self.sub is not None:
-                self.sub = None
+                self._open(None)
             else:
                 self.close()
+        elif ev.key in ("up", "down", "pageup", "pagedown", "home", "end"):
+            step = {"up": -1, "down": 1, "pageup": -self.shown, "pagedown": self.shown, "home": -10 ** 6,
+                    "end": 10 ** 6}[ev.key]
+            self.scroll(step)
+        elif ev.key in ("enter", "kp_enter"):
+            self.pick(self.cur)
         elif ev.is_text and ev.key.isdigit() and ev.key != "0":
-            self.pick(int(ev.key) - 1)
+            self.pick(self.top + int(ev.key) - 1)
         return True
 
     def render(self, canvas: Canvas) -> None:
@@ -77,7 +108,11 @@ class ServicesScreen(Screen):
         for m in self.messages[-3:]:
             msg_lines += markup.wrap(m, iw)
         title = self.sub.label if self.sub is not None else f"What {self.npc.first_name} can do for you"
-        x, y, w, h = modal_box(canvas, width, len(rows) + len(msg_lines) + 8, markup.escape(title))
+        self.shown = max(3, min(len(rows), canvas.height - len(msg_lines) - 12))
+        self.scroll(0)
+        more = len(rows) > self.shown
+        x, y, w, h = modal_box(canvas, width, min(len(rows), self.shown) + len(msg_lines) + 8 + (2 if more else 0),
+                               markup.escape(title))
         from realmwalker.game.events import party_money
 
         canvas.markup(x + 2, y + 2, f"<dim>Your money:</> <loot>{money_text(party_money(self.game))}</>", max_width=iw)
@@ -85,8 +120,16 @@ class ServicesScreen(Screen):
         if not rows:
             canvas.text(x + 2, row, "Nothing, just now.", colors.DIM)
             row += 1
+        if more:
+            canvas.text(x + 2, row, "▲ more above" if self.top > 0 else "", colors.FAINT)
+            row += 1
+        canvas.hit(x, row, w, self.shown, wheel=lambda dy: self.scroll(-dy * 3))
         for i, (key, label, ok, why) in enumerate(rows):
-            hk = str(i + 1) if i < 9 else " "
+            if not self.top <= i < self.top + self.shown:
+                continue
+            hk = str(i - self.top + 1) if i - self.top < 9 else " "
+            if i == self.cur:
+                canvas.text(x + 1, row, "›", colors.TITLE)
             if ok:
                 price_tag = label.split("<loot>")[-1].split("</>")[0] if "<loot>" in label else ""
                 # The price goes in its own column, once, not also at the end of the words.
@@ -97,12 +140,18 @@ class ServicesScreen(Screen):
                     canvas.text(x + w - 3 - len(price_tag), row, price_tag, colors.named("loot"))
             else:
                 canvas.markup(x + 2, row, f"<faint>[{hk}] {markup.escape(markup.plain(label))}: {why}</>", max_width=iw)
+            card = self.tip(key)
+            if card is not None:
+                canvas.hit(x + 2, row, iw, 1, None, card)
+            row += 1
+        if more:
+            canvas.text(x + 2, row, "▼ more below" if self.top + self.shown < len(rows) else "", colors.FAINT)
             row += 1
         row += 1
         for line in msg_lines:
             canvas.spans(x + 2, row, line, max_width=iw)
             row += 1
-        canvas.text(x + 2, y + h - 2, "1-9 choose · Esc back", colors.FAINT)
+        canvas.text(x + 2, y + h - 2, "1-9 or ↑↓ Enter choose · Esc back", colors.FAINT)
         canvas.hit(0, 0, canvas.width, canvas.height)
 
     def autoplay_keys(self) -> list[KeyEvent]:
