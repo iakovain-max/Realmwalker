@@ -66,14 +66,15 @@ def words(game, char) -> str | None:
 
 # ---------------------------------------------------------------------------- the Spells page
 def road_forms(game, caster, sid: str) -> list[str]:
-    """The forms a spell offers on the road: the fliers first, then the swiftest, then the strongest; never one that
-    breathes only water (the land is dry)."""
+    """The forms a spell offers on the road: the fliers first (the strongest of them first), then the swiftest, then
+    the strongest; never one that breathes only water (the land is dry)."""
     t = game.tables
     o = _op(game, sid)
     top = float(o["cr"]) if o.get("cr") is not None else float(caster.level)
     out = [c for c in shapes.forms(t, o.get("forms", ["beast"]), top, **shapes.limits(o))
            if not shapes.breathes_only_water(t, c)]
-    return sorted(out, key=lambda c: (not shapes.flies(t, c), -shapes.speed(t, c), -shapes.strength(t, c), c))
+    return sorted(out, key=lambda c: (not shapes.flies(t, c), -shapes.strength(t, c) if shapes.flies(t, c)
+                                      else -shapes.speed(t, c), -shapes.strength(t, c), c))
 
 
 def _group(tables, cid: str) -> str:
@@ -197,10 +198,10 @@ def cast(game, caster, sid: str, target, level: int) -> list[str]:
 def tick(game) -> None:
     """A shape whose hour has come ends (spellwork's tick, as time passes)."""
     now = game.world.time
-    for c in game.party:
+    for c in list(game.party) + list(getattr(game, "waiting", None) or []):
         rec = shapes.record(c)
         if rec is not None and float(rec.get("until", 0)) <= now:
             shapes.drop(c)
             game.dirty = True
-            if c.alive:
+            if c.alive and c in game.party:
                 game.say(f"<magic>The shape slips from {_first(c)}</>: {_first(c)} is themselves again.", "magic")

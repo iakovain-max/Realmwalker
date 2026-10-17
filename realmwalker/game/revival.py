@@ -235,6 +235,7 @@ def raise_body(game, caster: Character, sid: str, body: dict, rng=None) -> list[
     spell = t.spells[sid]
     o = spellrules.op(spell, "revive") or {}
     c = body["char"]
+    (c.spells or {}).pop("shape", None)  # (whatever shape the body wore died with it: Expansion 3 F.8)
     first = escape_markup(c.name.split()[0])
     rng = rng or game.world.rng.child(f"revive/{sid}/{game.world.time}/{c.name}")
     if body in getattr(game, "fallen", []):

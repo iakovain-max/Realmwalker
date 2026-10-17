@@ -402,6 +402,8 @@ Ideas for later:
   Shapes; a Shapechanger is offered no concentration spell in its form (it would end the shape); a shift takes the
   strongest other form, the druid's change the strongest again. The druid is not a class yet: Animal Shapes comes from
   a scroll or Wish until then.
+  Only a thing used from the pack is refused in a shape: the party's tools in a dungeon (a pole, a ram) and at camp
+  still serve a shaped party, someone being taken to hold them (adapted). A lame leg does not slow a beast.
 - Expansion 3 F.7: the stat blocks are the 2025 Monster Manual's (the PHB's Appendix B prints the same creatures).
   The octopus, giant seahorse and reef shark breathe only water: a foe's Polymorph shape but never a friend's, and
   not met until fights go under water (Expansion 22); the crocodile's Hold Breath waits with them. Where they are

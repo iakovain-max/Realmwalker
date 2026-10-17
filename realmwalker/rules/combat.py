@@ -893,9 +893,12 @@ class Battle:
             f.x, f.y = self._free_near((f.x, f.y), f.sq, taken)
         if char is not None and f.shape["hours"] > 0:  # (Animal Shapes, Shapechange: it outlasts the fight)
             caster = self.person_of(by)
+            old = shapes.record(char)
+            name = caster.name if caster is not None and caster is not char else \
+                (old or {}).get("caster") or (caster or char).name  # (its caster away: the record keeps its name)
             shapes.keep(char, {"form": cid, "spell": spell, "temp": int(f.temp_hp), "conc": f.shape["conc"],
                                "until": float(until) if until is not None else self.now + f.shape["hours"] * 60,
-                               "caster": caster.name if caster is not None else char.name})
+                               "caster": name})
         self._event("shape", who=f.id, form=cid, by=by.id, spell=spell)
         return True
 
@@ -1060,7 +1063,9 @@ class Battle:
                 continue
             spell = self.t.spells.defs.get(rec.get("spell")) or {}
             how = spellrules.op(spell, "shape") or {}
-            by = next((x for x in party if x.char.name == rec.get("caster")), f)
+            by = next((x for x in party if (self.person_of(x) or f.char).name == rec.get("caster")), None)
+            if by is None:  # (its caster is not in this fight: nobody here can change the shapes again)
+                by, how = f, {**how, "shift": None if how.get("shift") == "caster" else how.get("shift")}
             if self.shape(f, rec["form"], by=by, spell=rec["spell"], how=how, temp=int(rec.get("temp", 0)),
                           until=float(rec["until"])):
                 if rec.get("conc"):
@@ -3858,7 +3863,8 @@ class Battle:
         """What `f` could still do with a bonus action this turn."""
         if f.bonus <= 0 or not f.can_act():
             return []
-        out = [aid for aid, _, ok, _ in self.class_abilities(f) if ok and self._ability_cost(f, aid) == "bonus"]
+        out = [aid for aid, _, ok, _ in self.class_abilities(f) if ok and self._ability_cost(f, aid) == "bonus"
+               and aid != "leave_shape"]  # (leaving a beast's shape is never a reason to hold the turn open: F.8)
         if f.char:
             for sid, ok, _ in self.spell_options(f):
                 sp = self.t.spells[spell_id(sid)]

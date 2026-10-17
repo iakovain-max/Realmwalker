@@ -184,6 +184,25 @@ def condition_card(tables, cid: str, f=None, b=None) -> Card:
     return card
 
 
+def shape_words(shape: dict, by: str) -> str:
+    """What a shape's card says: Polymorph's (F.6), Animal Shapes' or Shapechange's (F.8), from what the shape keeps."""
+    keeps = (shape.get("how") or {}).get("keeps") or ()
+    if not shape.get("hours"):
+        return f"{_WORDS['shaped'][1]} (Held by {by}.)"
+    bits = ["A borrowed body: its blows, armour and speed, its hit points as temporary ones on top of their own."]
+    bits.append("Their own mind, and their spells." if "spells" in keeps else
+                "Their own mind; no spells, no gear." if "mind" in keeps else "No spells, no gear.")
+    if shape.get("leave"):
+        bits.append("A Bonus Action lets the shape go.")
+    if shape.get("shift") == "self":
+        bits.append("A Magic action shifts it into another shape, with fresh borrowed hit points.")
+    elif shape.get("shift") == "caster":
+        bits.append(f"{by} can give them a fresh shape with a Magic action.")
+    bits.append(f"It ends when the borrowed hit points are gone{' or the concentration ends' if shape.get('conc') else ''},"
+                f" and it outlasts the fight. (Cast by {by}.)")
+    return " ".join(bits)
+
+
 def _plain(sid: str, title: str, text: str, footer: str = "") -> Status:
     return Status(sid, Card(title, "", f"status/{sid}", [text], footer))
 
@@ -486,9 +505,9 @@ def statuses(f, b=None) -> list[Status]:
     if f.readied:
         add(_plain("readied", "Ready", _WORDS["readied"][1].replace("(or into sight)", "" if f.readied == "reach"
                                                                      else "(or into sight)")))
-    if getattr(f, "shape", None) is not None:  # (Polymorph: Expansion 3 F.6)
+    if getattr(f, "shape", None) is not None:  # (Polymorph: Expansion 3 F.6; Animal Shapes, Shapechange: F.8)
         by = esc(_name_of(b, f.shape["by"])) if b is not None else "a caster"
-        add(_plain("shaped", _WORDS["shaped"][0], f"{_WORDS['shaped'][1]} (Held by {by}.)"))
+        add(_plain("shaped", _WORDS["shaped"][0], shape_words(f.shape, by)))
     if f.temp_hp > 0:
         add(_plain("temp_hp", f"{f.temp_hp} temporary hit points", _WORDS["temp_hp"][1]))
     if char is not None and char.uses.get("heroic_inspiration", 0) > 0:

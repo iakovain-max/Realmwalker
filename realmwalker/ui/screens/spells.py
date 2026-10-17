@@ -167,7 +167,7 @@ def spell_detail(game, char, sid: str, target, slot: int | None = None) -> list[
     elif sid in sp.SPELL_BREAKER and "spell_breaker" in char.features:
         lines.append("<good>Spell Breaker:</> <dim>a reaction when a foe casts nearby.</>")
     ok, why = sp.can_cast(char, t, sid)
-    if not ok:
+    if not ok and not (getattr(target, "data", None) or {}).get("free"):  # (a free choice is no casting: F.8)
         lines.append(f"<warn>{markup.escape(why[:1].upper() + why[1:])}.</>")
     problem = magic.road_problem(game, char, sid, target)
     if problem is None:

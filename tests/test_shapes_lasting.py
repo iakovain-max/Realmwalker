@@ -278,3 +278,28 @@ def test_the_shape_ends_at_its_hour_and_comes_into_a_fight(world, tables):
     assert shapes.record(me)["form"] == form.data["form"]  # (still worn after the fight)
     game.pass_time(61, "rest")
     assert shapes.record(me) is None and shapeshift.form_of(game, me) is None
+
+
+def test_a_whole_shaped_party_goes_into_a_fight_and_its_card_says_so(world, tables):
+    me, friend = hero(tables), hero(tables, "fighter", xp=0, seed=2)
+    game = game_with(world, tables, me, friend)
+    wild(game)
+    beast = next(s for s in magic.road_targets(game, me, "animal_shapes") if not shapes.flies(tables, s.data["form"]))
+    magic.cast_on_road(game, me, "animal_shapes", beast)
+    from realmwalker.core.rng import RNG
+    from realmwalker.rules import describe
+    from realmwalker.rules.creatures import spawn
+
+    b = game_fight.start_battle(game, [spawn(tables, "bandit", RNG(1, "f"), 1)], "Test fight.")
+    shaped = [x for x in b.side(PARTY) if x.shape is not None]
+    assert len(shaped) == 2 and all(x.creature.def_id == beast.data["form"] for x in shaped)
+    f_me = next(x for x in shaped if b.person_of(x) is me)
+    assert {x.id for x in b.shaped_by(f_me)} == {x.id for x in shaped}  # (the druid may change them all again)
+    words = describe.shape_words(f_me.shape, "Me")
+    assert "Bonus Action" in words and "no spells" in words and "concentration" not in words
+    f_me.action, f_me.bonus = 0, 1
+    assert "leave_shape" not in b.bonus_options(f_me)  # (leaving is never a reason to hold the turn open)
+    b.result()
+    game.battle = None
+    assert shapes.record(me) and shapes.record(friend)
+    assert shapes.record(friend)["caster"] == me.name
