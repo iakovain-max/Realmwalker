@@ -435,6 +435,22 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   `waymagic.after_lasting` as it is cast. Feather Fall is cast by itself (`Battle._feather_fall`, `dungeon.
   feather_fall`); `lift` has `gentle` (Levitate); `undark` ends low darkness (Daylight); zone "lights" (Dancing Lights);
   a teleport op's `near: "tree"` (Tree Stride); `camp.chore` is a chore's time. Tests: tests/test_spells_road2.py.
+- Finding and seeing, asking the powers, talking (Expansion 3 E.3): road ops `does` sense/locate/scout/summons/ask
+  (`game/divining.py`) and speak/send/read (`game/speech.py`), each with its `what`/`how`/`with` in
+  `spells.E3_KINDS` (checked at start-up); `spellwork.DIVINING`/`SPEECH` send them there. A spell aimed at something
+  chosen lists `divining.Subject`s on the Spells page (`spellwork.subjects` via `magic.road_targets`). A battle spell
+  with a use outside a fight says `road_too` (Detect Thoughts: "read"). What is sensed on a close-up map is
+  `game.sensed` (`divining.mark`/`marks_here`, not saved; drawn by localview as `mark/sensed_<kind>`); a chest's
+  contents are settled by `dungeon.fix_contents` (kept in its feature until opened). The answers come from the world
+  as it is (`divining.omen`, `questions`, `_work_truth`: a work's hidden side through `quests.reveal`). Repeats before a
+  long rest: `char.uses["omen:<spell>"]`; Contact Other Plane's failure `char.uses["addled"]` (no casting,
+  incapacitated in a fight; cleared by `progression.long_rest`). The language rule on the road is
+  `speech.talk_problem` (from `fight.encounter_talk_dc`: stat block languages against Common and the party's; buffs
+  tongues, comprehend, beast_speech). Drawmij's bound sapphire has the tag "summons:<uid>" (`gear.use_item` crushes it;
+  `divining.taken` from robbery and confiscation). `speech.remember_the_dead` (finish_battle) keeps `game.fresh_dead`
+  for Speak with Dead; Dream's nightmares wait in `renown.flags["nightmares"]` (`speech.nightmares_at_the_start` in
+  start_battle). Buffs: linked (no surprise while two are linked), sense_thoughts (feet: `Battle.thinks`, `can_see`);
+  `effects` forewarned (a band is seen first), forage_tip, hunting_tip. Tests: tests/test_spells_road3.py.
 - Gear and tools 2024 (Expansion 2 part D): items.json `pack` (opens into its contents, gear.open_pack), `helps`
   {search, traps, force, disguise} (dungeon.helps, law.put_on_disguise), `utilize` (a tool's 2024 uses, on its card),
   `carry` also on carried containers (each kind once, Sheet.pack_carry), `trinket` (data/trinkets.json; the name and

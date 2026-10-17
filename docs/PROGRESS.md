@@ -28,7 +28,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Clearing the decks for the expansions** | ✅ Done (2026-10-12), branch `prep/clear-the-decks` |
 | **Expansion 1, *Dice & Destiny*** (version 1.1.0) | ✅ Released (2026-10-13), branch `dlc/01-dice-destiny` |
 | **Expansion 2, *Blades & Backgrounds*** (version 1.2.0) | ✅ Released (2026-10-13), branch `dlc/02-blades-backgrounds` |
-| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete), D (the spell catalogue: 191 battle spells, cantrips to level 9, and Wish) E.1 (spells outside battle: healing, return from death, food, shelter and watch) and E.2 (light, the body on the move, travel by magic, 2026-10-17) in `main`; E.3 (finding and seeing, asking the powers, talking) next |
+| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete), D (the spell catalogue: 191 battle spells, cantrips to level 9, and Wish) E.1 (spells outside battle: healing, return from death, food, shelter and watch), E.2 (light, the body on the move, travel by magic) and E.3 (finding and seeing, asking the powers, talking, 2026-10-17) in `main`; E.4 (minds and the law, disguise, locks and stone, weather, lasting protections, great magic) next |
 
 ---
 
@@ -39,6 +39,63 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-17 (morning): Demigods & Magics E.3 — spells outside battle: finding and seeing, asking the powers, talking
+
+Built by the relay builder realmwalker-a. Saves do not change: an old world of format 18 still loads.
+- **Finding and seeing.** **Detect Magic**: the strange things in your packs show the school of their magic, and a
+  chest within 30 feet that holds something magic glows on the map (what is in it is settled from then on). **Detect
+  Evil and Good**: undead, fiends, fey and their kin within 30 feet are marked, unless stone lies between, and you
+  are told when the ground is a haunted battlefield or a barrow. **Detect Poison and Disease**: a fever one of you
+  carries before it shows, food gone bad, foul water, poisoned darts in the floor, a venomous band near. **Find
+  Traps**: every trap within 120 feet in sight, by its kind but not its place; you search for it and save against it
+  with Advantage. **Locate Object** (in a dungeon): the way to the nearest chest, the hoard, or the thing your work
+  sends you to find, marked on the map. **Locate Creature**: a captive, the named master of a dungeon, someone you met
+  in this town or the one your work is about, marked for an hour and followed as they move. **Locate Animals or
+  Plants**: +5 to the next hunt or forage, and the country of a beast your work hunts. **Clairvoyance** (a glass eye,
+  100 gold) shows the two nearest rooms you have not seen and who waits in them; **Arcane Eye** maps the whole level
+  (never past a secret door) and marks its bands. **Scrying** (a scrying mirror, 1,000 gold): someone of the world (a
+  ruler here, someone you met, a dragon, the beast of your work) makes a Wisdom save, easier for one you only heard of;
+  on a failure you see where they are, and the place goes on your map. **Beast Sense**: through one of your animals
+  for an hour, you see a band on the road before it sees you. **Drawmij's Instant Summons** (a sapphire, 1,000 gold):
+  bind something you carry to the sapphire; if robbers take it or the watch locks it away, crush the sapphire (Enter
+  on it in the pack) and it is back in your hand. What you sold or gave away does not come.
+- **Asking the powers.** **Augury**: weal, woe, both or neither for going further down, the road ahead or a work you
+  have taken on, read from what truly waits (how strong the level below is, whether the hoard is there, whether the
+  work hides something). **Divination** (seer's incense, 25 gold, burnt): the truth of a work (is it what you were
+  told?) and where its place, person or beast is. **Commune**: your god answers three yes-or-no questions made from
+  the world (is this work as told, does this artifact lie there, does this dragon live, does this beast still haunt
+  its lair, is a companion well); **Contact Other Plane** answers five, but on a failed DC 15 Intelligence save it
+  burns the mind (6d6) and leaves the caster senseless until a long rest: no spells, and useless in a fight. Asked
+  again before a long rest, each of these is likelier to bring no answer. **Commune with Nature**: the towns and
+  ruins within three miles go on the map, with the water, the game and the herbs (+5 to hunt and forage) and the worst
+  creature near; in a cave, the passages within 300 feet. **Legend Lore** (rare incense, 250 gold, burnt, and four
+  ivory strips): a storied or unknown thing you carry is known through and through, curse and all; or a lost
+  artifact's resting place, a beast of the songs' lair and what harms it, a ruin's depth and its master.
+- **Talking.** Bands met on the road now speak their own tongues: gnolls and trolls share none with you, so they
+  cannot be talked past unless someone has **Tongues** (or, harder, **Comprehend Languages**). **Speak with Animals**
+  lets hungry beasts be talked past. **Speak with Dead**: a foe slain in the fight just won tells where its band keeps
+  its lair (it goes on the map), who sent it, and what a work hides. **Speak with Plants**: the grass tells of the band
+  that roams near (you see it first for a few hours) and where food grows. **Message** calls a companion waiting in
+  the same town; **Sending**, **Telepathy**, **Dream** and **Animal Messenger** (within 50 miles) send a companion
+  waiting far away on their way to you. **Dream** can instead send a nightmare to a dragon or beast of the songs: if
+  it fails its save, it meets you hurt within a day. **Rary's Telepathic Bond**: for an hour the party's minds are
+  linked, and none of you is surprised. **Detect Thoughts**: in a fight, every thinking foe within 30 feet is found,
+  the invisible and the hidden too (the Auto casts it when that matters); in a town it reads someone near you: how
+  they feel about you, what they want, what they hide, and whether the work they gave you is a lie.
+- **New things in the shops**: seer's incense, ivory strips and a glass eye at town markets; rare incense, a scrying
+  mirror and a sapphire in cities, each with a picture. What a spell senses is marked on the close-up map by a ring
+  of light (purple for magic, green for the unholy, yellow-green for poison, orange for traps, gold for things, red
+  for creatures).
+- **The codex**: 30 spells settled (1 exactly as the book, 29 adapted, each with its note).
+- **How to try it**: a wizard of level 7 in a dungeon opens the Spells page (S), chooses Arcane Eye, and presses
+  Enter: the level appears on the map. A cleric of level 7 with a work in hand casts Divination (choose the work with
+  ← →).
+- **Choices made while Anton was away** (in STATUS.md): the powers answer from what is truly in the world, as plain
+  yes-or-no or weal-or-woe; Commune asks the question chosen and the two weightiest; what robbers and the watch take
+  comes back to Instant Summons (it is in a sack or a strongbox, not in a hand); Find Traps gives Advantage to finding
+  and escaping the trap; a language rule now stands on the road (only gnolls and trolls today); Animal Messenger is
+  always cast as a ritual on the road, so a higher slot adds nothing.
 
 ### Session, 2026-10-17 (morning): Demigods & Magics E.2 — spells outside battle: light, the body on the move, travel by magic
 

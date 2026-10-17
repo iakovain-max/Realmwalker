@@ -165,6 +165,7 @@ NO_USE: dict[str, str] = {
     "circle_of_death": "its 60-foot sphere takes in the caster and a friend wherever it falls on this small field",
     "otilukes_freezing_sphere": "its 60-foot sphere takes in the caster and a friend wherever it falls on this small field",
     "true_seeing": "no foe here is invisible, hidden or in magical darkness",
+    "detect_thoughts": "no foe here is invisible or hidden (tests/test_spells_road3.py weighs it against an invisible one)",
     "reverse_gravity": "its 50-foot cylinder lifts the caster and a friend too wherever it falls on this small field",
     "antimagic_field": "no foe here casts spells, and the caster's own magic would be lost",
     "sunburst": "its 60-foot sphere takes in the caster and a friend wherever it falls on this small field",

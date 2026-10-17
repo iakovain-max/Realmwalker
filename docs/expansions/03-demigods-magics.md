@@ -189,7 +189,7 @@ system is built once and every spell that uses it comes with it.
     circle, or near another known place; Astral Projection and Gate to any known place, on target), Arcane Gate (in a
     dungeon, a gate to the stairs up or down within 500 feet). Etherealness and Wind Walk are lasting buffs (above);
     Meld into Stone is a ward on the camp ("meld": a lone caster rests hidden from hunters).
-- [ ] E.3 Finding and seeing, asking the powers (answered from the world's history), talking (30 spells).
+- [x] E.3 Finding and seeing, asking the powers (answered from the world's history), talking (30 spells).
   Finding and seeing: detect magic, detect evil and good, detect poison and disease, find traps, locate object, locate
   creature, locate animals or plants, clairvoyance, arcane eye, scrying, beast sense, Drawmij's instant summons.
   Asking the powers: augury, divination, commune, commune with nature, contact other plane, legend lore. Talking:

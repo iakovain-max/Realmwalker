@@ -521,7 +521,9 @@ def test_the_inspiring_leader_the_cooks_meal_and_the_ritual_caster(tables):
     assert c2.hp > c.hp or c2.hp == c2.max_hp, (plain, fed)
     f = hero(tables, level=4)
     give(tables, f, "ritual_caster")
-    assert feats.ritual_spells(f, tables) == ["alarm", "identify"]  # (Alarm, a ritual of level 1, came with E.1)
+    got = feats.ritual_spells(f, tables)  # (two rituals of level 1: more came with E.1 and E.3, Alarm and Comprehend
+    assert len(got) == 2 and "alarm" in got  # Languages among them)
+    assert all(tables.spells[s].get("ritual") and tables.spells[s]["level"] == 1 for s in got)
 
 
 # ---------------------------------------------------------------------------- the fresh review's fixes

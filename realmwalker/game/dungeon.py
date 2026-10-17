@@ -374,7 +374,9 @@ def search(game) -> list[str]:
     rng = rng_for(game, "search")
     glass, tool = helps(game, "search")
     roll = dice.d20(rng, advantage=bool(glass)).natural + best - 10
-    sensed = dice.d20(rng.child("sensed"), advantage=True).natural + best - 10  # (Find Traps: Advantage)
+    near = [f for (x, y), f in lm.features.items() if f.get("sensed") and not f.get("found")
+            and max(abs(x - p.lx), abs(y - p.ly)) <= SEARCH_RADIUS]
+    sensed = dice.d20(rng.child("sensed"), advantage=True).natural + best - 10 if near else roll  # (Find Traps)
     out = []
     for (x, y), f in list(lm.features.items()):
         if max(abs(x - p.lx), abs(y - p.ly)) > SEARCH_RADIUS:
