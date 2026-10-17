@@ -26,9 +26,10 @@ Assumptions waiting for Anton:
   images in sight (Investigation against the caster's DC; the Study action is aimed at creatures); the caster's whole
   side knows an image for what it is; an image is never laid over a creature; the phantom summon is taken whenever
   Summon Beast or Fey is cast at its own level with the free use ready (a higher slot gives the full creature; the
-  costly material is still needed); Illusory Self comes before Shield and spends a slot only when Shield could not
-  turn the blow; what Illusory Reality makes real is the image's crates or stones (a bridge over water or a chasm),
-  ending with the spell even inside its minute. Casting options now take the caster's casting time (an abjurer's
+  costly material is still needed; the battle screen offers the phantom beside the slots, the Auto takes the
+  phantom); Illusory Self comes before Shield and spends a slot only when Shield could not turn the blow; what
+  Illusory Reality makes real is a wall of stones (a bridge over water or a chasm), ending with the spell even inside
+  its minute; Portent is not laid on Initiative, nor on the dungeon's own checks (search, locks, traps). Casting options now take the caster's casting time (an abjurer's
   bonus-action Dispel Magic is listed as one); a Thaumaturge's extra cantrip is no longer swallowed at the next level.
 - Expansion 4 Part D (the fighter's and rogue's magic items): the Defender's guard is chosen as each turn begins by the
   battle's judgement (all three to Armor Class when hurt and pressed, two against two foes, one against one, none

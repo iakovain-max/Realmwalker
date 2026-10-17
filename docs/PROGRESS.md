@@ -62,7 +62,7 @@ of the world and their towers; wands, staffs and rods; and robes, hats and the r
   reach 60 feet farther. It knows Minor Illusion beyond its count and casts it as a bonus action. From level 6
   Summon Beast and Summon Fey are always ready, and each can be cast once a day without a slot as a pale phantom
   with half the hit points. From level 10, when a blow hits, a double takes it instead: the blow misses. From level
-  14 a bonus action makes an image real for a minute: its crates block the way, or it becomes a bridge over water.
+  14 a bonus action makes an image real for a minute: a wall of stones that blocks the way, or a bridge over water.
 - **Images on the battle mat.** Minor Illusion, Silent Image and Major Image now work in fights too, besides their
   old use in towns. The image of a crate, a wall of stones or a wagon hides whatever is behind it from the enemy.
   Your own side knows it for what it is, so it shimmers for you. A foe sees through it only by studying it with the
@@ -80,15 +80,24 @@ of the world and their towers; wands, staffs and rods; and robes, hats and the r
   - The Search action also studies the images in sight. Aiming the Study action at a patch of ground would need new
     screen work, and the check is the book's: Investigation against the caster's DC.
   - The caster's whole side knows an image for what it is, not only the caster.
-  - The phantom summon is taken whenever Summon Beast or Summon Fey is cast at its own level and the free use is
-    ready. Choose a higher slot to get the full creature. The phantom still needs its gilded acorn or flower.
+  - When the free phantom is ready, the battle screen offers it beside the slots; a slot gives the whole creature.
+    Companions on Auto take the phantom and keep their slots. The phantom still needs its gilded acorn or flower.
   - Illusory Self is used before Shield, since it costs no slot. A slot is spent on it only when Shield could not
     turn the blow.
-  - What Illusory Reality makes real is the image's crates or stones, or a bridge over water or a chasm. It ends
+  - What Illusory Reality makes real is a wall of the image's stones, or a bridge over water or a chasm. It ends
     with the spell, even inside the minute.
+  - Portent is laid on attacks, saves, death saves and the checks of a fight (escaping a grapple, Study, Search).
+    It is not laid on Initiative, which is rolled before anyone's turn. Outside a fight it is laid on checks at camp
+    and in conversations.
 - Fixed on the way: a Thaumaturge cleric's extra cantrip was swallowed by the next level's count, and now stays. A
   spell cast with a bonus action by one caster only (an abjurer's Dispel Magic) is now listed as a bonus action.
-- Checked: 20 new tests cover Portent in fights and out of them, the dice at a rest, Expert Divination, the Third
+- The fresh review's fixes:
+  - Those who know an image now shoot, cast and aim through it. Before, it still blocked their arrows and spells.
+  - A blast or a holy aura is not stopped by a picture: an image gives no cover against them.
+  - The thing made real now truly stops feet; crates could be climbed over.
+  - Spell cards give this caster's casting time and reach (an illusionist's Minor Illusion is a bonus action).
+  - A phantom summon has a card saying it has half its hit points.
+- Checked: 23 new tests cover Portent in fights and out of them, the dice at a rest, Expert Divination, the Third
   Eye, Illusory Self, the phantoms, images hiding and being seen through, Illusory Reality, the Auto and the enemy
   with images, and the cards. Whole fights on Auto with a diviner and an illusionist against bandit archers were won
   twelve times in twelve. The full suite, the autoplay bot and the window smoke test pass.
