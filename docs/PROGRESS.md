@@ -28,7 +28,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Clearing the decks for the expansions** | ✅ Done (2026-10-12), branch `prep/clear-the-decks` |
 | **Expansion 1, *Dice & Destiny*** (version 1.1.0) | ✅ Released (2026-10-13), branch `dlc/01-dice-destiny` |
 | **Expansion 2, *Blades & Backgrounds*** (version 1.2.0) | ✅ Released (2026-10-13), branch `dlc/02-blades-backgrounds` |
-| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete), D (the spell catalogue: 191 battle spells, cantrips to level 9, and Wish) E.1 (spells outside battle: healing, return from death, food, shelter and watch), E.2 (light, the body on the move, travel by magic), E.3 (finding and seeing, asking the powers, talking), E.4 (minds and the law, disguise and illusion, the small arts), E.5 (locks and stone, weather and land), E.6 (lasting protections and the caster's keeping) and E.7 (great magic and Wish's other uses, 2026-10-17: Part E complete) and F.1 (a familiar and a steed fight beside you), F.2 (summoned spirits of levels 2 to 4) and F.3 (the level 5 and 6 spirits and Animate Objects) and F.4 (the raised dead: Animate Dead, Create Undead, Finger of Death's zombie, the ghast and the mummy) and F.5 (the bound: Planar Ally, Planar Binding, Magic Circle turned inward) and F.6 (Polymorph and True Polymorph in a fight) and F.7 (lions, tigers, elephants, imps, sprites and the rest of the book's beasts, met in the land) in `main`; F.8 (Animal Shapes and Shapechange) next |
+| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete), D (the spell catalogue: 191 battle spells, cantrips to level 9, and Wish) E.1 (spells outside battle: healing, return from death, food, shelter and watch), E.2 (light, the body on the move, travel by magic), E.3 (finding and seeing, asking the powers, talking), E.4 (minds and the law, disguise and illusion, the small arts), E.5 (locks and stone, weather and land), E.6 (lasting protections and the caster's keeping) and E.7 (great magic and Wish's other uses, 2026-10-17: Part E complete) and F.1 (a familiar and a steed fight beside you), F.2 (summoned spirits of levels 2 to 4) and F.3 (the level 5 and 6 spirits and Animate Objects) and F.4 (the raised dead: Animate Dead, Create Undead, Finger of Death's zombie, the ghast and the mummy) and F.5 (the bound: Planar Ally, Planar Binding, Magic Circle turned inward) and F.6 (Polymorph and True Polymorph in a fight) and F.7 (lions, tigers, elephants, imps, sprites and the rest of the book's beasts, met in the land) and F.8 (Animal Shapes and Shapechange, in a fight and on the road: Part F complete) in `main`; Part G (enemy casters, services, the release) next |
 
 ---
 
@@ -39,6 +39,41 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-17 (evening): Demigods & Magics F.8 — the party as a pack of beasts, a wizard as a dragon
+
+Built by the relay builder realmwalker-b. Saves do not change. The last two shape-changing spells are in, and they
+work outside a fight too: **Part F is complete**.
+- **Animal Shapes** (a druid's 8th-level spell; until the druid comes, read it from a scroll or copy it with Wish).
+  On the road, choose a beast on the Spells page (the fliers first, then the swiftest, then the strongest) and the
+  **whole party becomes that beast for a day**. As **hawks, owls or ravens** the party flies over lakes, the sea and
+  the mountains; as **warhorses, elk or dire wolves** it travels faster than any walker; as **swimmers** it crosses
+  rivers and lakes (and climbs out soaked). In a beast's shape nobody casts spells or uses their gear (it melds into
+  the body), and everyone is drawn as the beast on the map. The caster can change everyone into another beast, or
+  bring them all (or just one) back to themselves, at any moment and with no spell slot.
+- **The beasts fight.** A fight that finds the party in their shapes starts with everyone as the beast, with the
+  beast's hit points as a cushion on top of their own; when the cushion is gone they are themselves again, and what
+  is left of it is kept for the next fight. Cast in a fight, Animal Shapes turns every friend within 30 feet who casts
+  no spells into the strongest beast they can be (an ape, a lion, a brown bear); a beast can drop its shape with a
+  bonus action, and the druid can give them all fresh shapes (and fresh cushions) with an action.
+- **Shapechange** (the wizard's 9th-level spell, with a jade circlet worth 1,500 gp, sold in cities). For up to an
+  hour the wizard becomes the strongest creature of their level or below (a troll, an ogre, a young dragon at the
+  top), **keeping their own mind and their spells**: a dragon that still casts Magic Missile and Fireball, its slots
+  spent as the wizard's own. When the cushion runs low an action shifts into another shape with a fresh one. On the
+  road it lasts the hour and carries into a fight that starts within it.
+- **The Auto** casts both when they are worth it (Animal Shapes only on friends a beast would make stronger, never on
+  a seasoned fighter who would be weaker as a lion), shifts shape when its cushion runs low, and never drops a shape
+  on its own.
+- Choices made while Anton was away: in a fight the game picks the strongest form (as for Polymorph), on the road the
+  player picks; in a fight Animal Shapes takes every friend who casts no spells (casters would lose their spells for a
+  day), on the road the whole party; harm outside a fight (a trap, a fall) falls on the body, not the beast's
+  cushion; "a creature you have seen" is any creature of the game; the gear always melds in; Dispel Magic does not end
+  Animal Shapes; a Shapechanger is not offered spells that need concentration (they would end the shape).
+- Checked: tests for both spells in real fights (who takes the shape, leaving it, the druid's fresh shapes, the
+  shape kept from one fight to the next and lost with its cushion, the wizard casting in a dragon's body with the slot
+  spent, the shift, the Auto), on the road (the forms, flying over a lake, the pace, no spells, no gear, the picture,
+  back to themselves with no slot, the end at its hour, a Shapechanger going into a fight in its shape). The whole
+  test suite, the autoplay bot (it now checks the shapes worn on the road) and the window smoke test.
 
 ### Session, 2026-10-17 (afternoon): Demigods & Magics F.7 — lions, tigers, elephants, imps and sprites
 

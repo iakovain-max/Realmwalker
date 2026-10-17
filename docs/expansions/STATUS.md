@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 03 Demigods & Magics · Part F (familiars, steeds and summons), F.8 next · branch dlc/03-demigods-magics
+Current: 03 Demigods & Magics · Part G (enemy casters, services, release), G.1 next · branch dlc/03-demigods-magics
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -28,10 +28,11 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   (the spirits of levels 5-6 and Animate Objects: Summon Celestial, Summon Dragon, Summon Fiend, Animate Objects) and
   F.4 (the raised dead: Animate Dead, Create Undead, Finger of Death's zombie, the ghast and the mummy) and F.5 (the
   bound: Planar Ally, Planar Binding, Magic Circle turned inward) and F.6 (Polymorph and True Polymorph in a fight)
-  and F.7 (the rest of Appendix B: 24 creatures of the 2025 MM with pictures, shapes and met in the land)
+  and F.7 (the rest of Appendix B: 24 creatures of the 2025 MM with pictures, shapes and met in the land) and F.8
+  (Animal Shapes and Shapechange, in a fight and on the road: Part F complete)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
-  adapted); Expansion 3: 217 done, 332 adapted, 1 omitted of 560 (parts A to E and F.1 to F.7 settled). PHB 64% · DMG 12% · MM 16%
+  adapted); Expansion 3: 217 done, 334 adapted, 1 omitted of 560 (parts A to F settled). PHB 65% · DMG 12% · MM 16%
 Assumptions waiting for Anton:
 - The Player2 AI writer is removed (tagged `before-ai-removal`); its text is replaced everywhere by the game's own
   words, strengthened where they were thin.
@@ -393,6 +394,14 @@ Ideas for later:
   lasting form and its objects are left out; a shaped character can still use the Influence actions (anatomy is not
   checked for speech); while shaped, what the game keeps on a character alone (exhaustion's penalties, Heroic
   Inspiration, drink and pain) is set aside with it until the shape ends.
+- Expansion 3 F.8: in a fight the game picks the strongest form (as F.6), on the road the player picks (the fliers
+  first, then the swiftest, then the strongest); in a fight Animal Shapes takes every friend within 30 feet who casts
+  no spells, never the caster (the game's "any number of willing creatures"), on the road the whole party (a caster
+  can leave at once, no slot); harm outside a fight falls on the body itself, not the borrowed hit points; "a creature
+  you have seen" is any creature of the game; the gear always melds in (none drops); Dispel Magic does not end Animal
+  Shapes; a Shapechanger is offered no concentration spell in its form (it would end the shape); a shift takes the
+  strongest other form, the druid's change the strongest again. The druid is not a class yet: Animal Shapes comes from
+  a scroll or Wish until then.
 - Expansion 3 F.7: the stat blocks are the 2025 Monster Manual's (the PHB's Appendix B prints the same creatures).
   The octopus, giant seahorse and reef shark breathe only water: a foe's Polymorph shape but never a friend's, and
   not met until fights go under water (Expansion 22); the crocodile's Hold Breath waits with them. Where they are
@@ -407,12 +416,33 @@ Ideas for later:
   (panther, tiger) is used when hurt or crowded. The quasit opens with its
   Scare and the pseudodragon with its Sting. The goat's Strength save is +2 as printed. Pictures: the Crawl pack's
   where it has the animal (some recoloured), the rest drawn.
-Next session starts at: task F.8 in docs/expansions/03-demigods-magics.md (Part F: Animal Shapes and Shapechange
-on F.6's swap - Battle.shape/unshape and rules/shapes.py, now with all of Appendix B's creatures to choose from;
-the spells' numbers, durations and what each keeps from the 2024 PHB page images, `tools/codex/extract.py
---render phb <pages>`), in a fight and outside one too. Write F.8's "How" first. Part F is then complete: update
-the codex (`tools/codex/coverage.py --dlc`) and name the next part from the design note.
-Part E and F.1 to F.7 are in `main`.
+Next session starts at: task G.1 in docs/expansions/03-demigods-magics.md (Part G: enemy casters - every caster
+stat block on the catalogue, the arena casting every battle spell by the AI in a scenario, a test caster of each spell
+level 1-9 casting without hangs; split it at its start if it is too big, as Parts E and F were). Write G.1's "How"
+first. The spells waiting for the enemy's casters are noted in the How of D, E and F ("the enemy's casters get it
+when G.1 gives them the spells": Polymorph, Animal Shapes, Shapechange...). Then G.2 (services and scrolls in
+temples, guilds and shops; the law of magic) and G.3 (the codex's last eight entries: the spellcasting services and
+Simulacrum; balance; the icon; the release v1.3.0).
+Parts E and F are in `main`.
+The way of Part F (F.8): Animal Shapes and Shapechange are the effects op "shape" with `cr`, `size`, `not`, `keeps`
+("mind", "proficiencies", "spells"), `leave`, `shift` ("self"/"caster") and `hours`; `rules/shapes.forms(..., size=,
+never=)`, `best(tables, f, kinds, o, other=)`, `cap`, `limits`, `mind_kept`; `challenge` reads what a shaped fighter is
+underneath. `Battle.shape(f, cid, by=, spell=, how=, temp=, until=)` stores `conc` (only a concentration shape ends
+with `_end_concentration`), `leave`, `shift`, `hours`, `how`; a shape keeping "spells" gets `_form_spells` (the
+character's battle spells without concentration ones, its DC, attack and cantrip multiplier in the form's
+`spellcasting`, its slots as `f.slots`; `unshape` spends what was used on the character). `shape_abilities`
+(leave_shape: bonus; shift_shape, reshape: action) come before `class_abilities`' character check; `shift` re-shapes
+keeping the concentration and the record's hour. A lasting shape is `char.spells["shape"]` {form, spell, until,
+temp, caster, conc} (`shapes.record/on_road/keep/drop`): written by `Battle.shape`, kept by `unshape_all` (the fight's
+end) with the temporary hit points left, dropped by any other `unshape`; `Battle.bring_shapes` (from
+`fight.start_battle`, after the servants) shapes the party at a fight's start. The willing for Animal Shapes in a fight
+is `effects.willing` (friends that cast no spells, never the caster). On the road: game/shapeshift.py through
+spellwork's door SHAPES (`subjects`, `problem`, `cast`, `free_use` from `magic.cast_on_road`; `road_problem` lets the
+free Subjects past the slot and the preparing), `tick` from spellwork.tick, `form_of`/`party_forms`/`all_shaped`
+(`GameState.pace` uses the form's speed; `magic_crossing` "fly" over everything, "swim" over rivers and lakes),
+`no_hands` (gear.use_item), `words` (the sheet, the Spells page); `spells.can_cast` refuses while in a shape that
+does not keep the spells; `dolls.character` draws a shaped character as its creature. Tactics: `_shift_shapes` at the
+start of `take_turn`. The jade circlet is items.json `jade_circlet` (city shops). Tests: tests/test_shapes_lasting.py.
 The way of Part F (F.7): the 24 creatures are pack fragments, `statblocks.beasts.json` and `creatures.beasts.json`
 (flavour, encounters and the towers' inhabitants: a pack may now `{"_append": [...]}` to a list entry of a
 section). The kernel learned: a stat block's bonus action that is a blow or a save (`bonus_action` attacks from
@@ -522,6 +552,7 @@ casting time. A spell aimed at something chosen lists Subjects (game/divining.Su
 | 2026-10-17 | Demigods & Magics F.2: summoned spirits of levels 2-4 - Summon Beast, Fey, Undead, Aberration, Construct, Elemental and Giant Insect (numbers by the slot, held by concentration, the form picked for the fight, every trait and blow, the costly components); F.2 split, F.3 next; merged into `main` | `dlc/03-demigods-magics` |
 | 2026-10-17 | Demigods & Magics F.3: the spirits of levels 5-6 (Summon Celestial: Avenger or Defender, Healing Touch; Summon Dragon: the breath with the Rends, its resistance shared; Summon Fiend: Death Throes, Devil's Sight, the yugoloth's step, Magic Resistance) and Animate Objects (things by the caster's modifier, commanded with the Bonus Action); F.4 next; merged into `main` | `dlc/03-demigods-magics` |
 | 2026-10-17 | Demigods & Magics F.7: the rest of Appendix B - 24 creatures of the 2025 MM with pictures, each a Polymorph shape and met in its biome (the water-breathers wait for Expansion 22), the cult's imp and quasit, the towers' tadpoles; Trample, holds that restrain, the Sting's sleep, Burst of Ingenuity, Running Leap; merged into `main` | `dlc/03-demigods-magics` |
+| 2026-10-17 | Demigods & Magics F.8: Animal Shapes and Shapechange - the party as beasts for a day (on the road: the beast chosen, its pace, wings over water and mountains, no spells or gear; in a fight: the willing, a Bonus Action to leave, the druid's fresh shapes), a wizard keeping mind and spells in a dragon's body for an hour, shapes kept from fight to fight; Part F complete; merged into `main` | `dlc/03-demigods-magics` |
 
 ## Notes for the next session
 
