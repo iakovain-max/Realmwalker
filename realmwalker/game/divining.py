@@ -269,6 +269,15 @@ def _sense_poison(game, caster, spell) -> list[str]:
                 d["sensed"] = True
                 out.append(f"<warn>{_first(c)} carries {esc(name)}</>" + (", not yet showing." if hidden else "."))
                 found += 1
+    from realmwalker.rules import poisons
+
+    for c in game.party:
+        for it in c.inventory:
+            if c.alive and poisons.masked(it):
+                was = game.tables.items.name(it, False)
+                out.append(f"<warn>The {esc(was)} in {_first(c)}'s pack is {esc(poisons.unmask(game.tables, it))}."
+                           f"</>")
+                found += 1
     food, water = spoiled_things(game)
     for it in food:
         out.append(f"<warn>The {esc(game.tables.items.name(it, False))} has gone bad.</>")

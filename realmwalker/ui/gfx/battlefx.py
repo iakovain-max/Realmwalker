@@ -309,6 +309,10 @@ class BattleBoard:
             self.fx.append({"kind": "float", "who": ev["who"], "text": "disarmed", "color": (236, 214, 170),
                             "t0": max(t, self._impact) + 0.12, "dur": FLOAT, "size": 15, "low": True})
             return t
+        if k == "poison":  # (the poison on the blade goes into the wound: rules/poisons.on_hit)
+            self.fx.append({"kind": "float", "who": ev["who"], "text": "envenomed", "color": (150, 214, 110),
+                            "t0": max(t, self._impact) + 0.1, "dur": FLOAT, "size": 14, "low": True})
+            return t
         if k == "rearm":  # (War Bond: a bonded weapon flies back to the hand)
             self.fx.append({"kind": "float", "who": ev["who"], "text": "to hand", "color": (170, 200, 236),
                             "t0": max(t, self._impact) + 0.05, "dur": FLOAT, "size": 14, "low": False})

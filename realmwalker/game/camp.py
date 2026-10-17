@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 from realmwalker.core import dice
 from realmwalker.rules import body
 from realmwalker.rules.character import Character, Sheet
+from realmwalker.rules.items import money_text
 from realmwalker.rules.inventory import WATER_RISK, add_item, carried, container_capacity, distinct_packs, remove_item
 
 POTS = ("iron_pot", "mess_kit", "cooks_utensils")
@@ -435,10 +436,15 @@ def crafts(game) -> list[tuple[str, str, bool, str]]:
     fire = bool(camp and camp.fire)
     items = game.tables.items
     for cid, spec in game.tables.camping.get("crafts", {}).items():
-        needs = ", ".join(f"{qty} × {items.get(item)['name']}" for item, qty in spec["needs"])
+        if spec.get("feat") and maker(game, spec) is None:
+            continue  # (the Poisoner's brew: only for one who has the feat)
+        needs = ", ".join([f"{qty} × {items.get(item)['name']}" for item, qty in spec["needs"]]
+                          + ([money_text(int(spec["coin"])) + " of materials"] if spec.get("coin") else []))
         label = f"{spec['name']} <dim>({needs}, {spec['minutes']} min)</>"
         why = ""
-        if spec.get("fire") and not fire:
+        if spec.get("coin") and game.leader.money < int(spec["coin"]):
+            why = "not enough money for the materials"
+        elif spec.get("fire") and not fire:
             why = "needs a fire"
         elif spec.get("tool") and has(game, (spec["tool"],))[1] is None:
             why = f"needs {items.get(spec['tool'])['name']}"
@@ -461,22 +467,50 @@ def make(game, cid: str) -> list[str]:
         return [f"You can't: {why}."]
     for item, qty in spec["needs"]:
         take_from_party(game, item, int(qty))
+    if spec.get("coin"):
+        game.leader.money -= int(spec["coin"])
     prof = game.tables.items.get(spec["tool"]).get("tool", spec["tool"]) if spec.get("tool") else ""
-    good, roll = check(game, spec["skill"], int(spec["dc"]), tag=cid, tool=prof)
+    if int(spec["dc"]) <= 0:
+        good, roll = True, ""  # (no check: the Poisoner's brew always comes out)
+    else:
+        good, roll = check(game, spec["skill"], int(spec["dc"]), tag=cid, tool=prof)
     game.pass_time(int(spec["minutes"]), "rest")
     made = []
     who = game.leader
+    brewer = maker(game, spec) if spec.get("feat") else None
     for item, qty in spec["gives"]:
+        if spec.get("by_proficiency") and brewer is not None:
+            qty = Sheet(brewer, game.tables).proficiency
         n = int(qty) if good else int(qty) // 2  # (a failed brew of one makes nothing)
         if n <= 0:
             continue
-        it = add_item(who, game.tables.items, item, n, made_at=game.world.time)
+        tags = [f"dc:{brew_dc(game, brewer)}"] if brewer is not None and game.tables.items.get(item).get("poison") \
+            else None  # (a poisoner's dose keeps its brewer's DC)
+        it = add_item(who, game.tables.items, item, n, made_at=game.world.time, tags=tags)
         if it is not None:
             made.append(f"{game.tables.items.get(item)['name']}" + (f" ×{n}" if n > 1 else ""))
     text = spec["text"] if good else "It takes longer than it should, and you spoil some of it."
     if not made:
-        return [roll, "It goes wrong, and the materials are wasted."]
-    return [roll, f"{text} <loot>You have {', '.join(made)}.</>"]
+        return [x for x in (roll, "It goes wrong, and the materials are wasted.") if x]
+    return [x for x in (roll, f"{text} <loot>You have {', '.join(made)}.</>") if x]
+
+
+def maker(game, spec: dict):
+    """Who in the party can make this (a craft for one with a feat: the Poisoner's brew), or None."""
+    from realmwalker.rules import feats
+
+    able = [c for c in game.party if c.alive and c.hp > 0 and feats.has(c, spec["feat"])]
+    return able[0] if able else None
+
+
+def brew_dc(game, brewer) -> int:
+    """A poisoner's dose: DC 8 + the modifier of the ability the Poisoner feat raised + the proficiency bonus."""
+    from realmwalker.rules import feats
+
+    s = Sheet(brewer, game.tables)
+    picked = next(((f.get("choices") or {}).get("increase") for f in feats.taken(brewer, "poisoner")), None)
+    ability = picked if picked in ("dex", "int") else ("int" if s.mod("int") > s.mod("dex") else "dex")
+    return 8 + s.mod(ability) + s.proficiency
 
 
 def night_sound(game) -> str:

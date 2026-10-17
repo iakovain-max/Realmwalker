@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 04 Steel & Shadows · Part C (poisons and the people of the shadows) · branch dlc/04-steel-shadows · design note docs/expansions/04-steel-shadows.md
+Current: 04 Steel & Shadows · Part D (arms of steel and shadow; release 1.4.0) · branch dlc/04-steel-shadows · design note docs/expansions/04-steel-shadows.md
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -11,12 +11,22 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   spellcasting by the 2024 rules; the catalogue of 191 battle spells and Wish; spells outside battle in every system;
   familiars, steeds, summoned spirits, the raised dead, the bound, Polymorph and Shapechange, the 24 creatures of
   Appendix B; enemy casters; spells for pay and the law of magic; Simulacrum; saves format 18) · 04 Steel & Shadows
-  Parts A and B (2026-10-17: the Battle Master and its twenty maneuvers; the Eldritch Knight and the Arcane
-  Trickster)
+  Parts A, B and C (2026-10-17: the Battle Master and its twenty maneuvers; the Eldritch Knight and the Arcane
+  Trickster; the DMG poisons, the Assassin, Spy and Spy Master, the black market, poisoned cups, duels, spies at court)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
   adapted); Expansion 3: all 560 settled (223 done, 336 adapted, 1 omitted). PHB 65% · DMG 12% · MM 16%
 Assumptions waiting for Anton:
+- Expansion 4 Part C (poisons and the people of the shadows): the assassins' trade is the thieves' guilds' (no
+  separate assassins' faction: the world's history is unchanged); inhaled poisons are thrown up to 20 feet like a
+  flask (the book: blown beside you); contact poisons on a weapon work on any hit, nothing else is smeared and
+  nothing is washed off; a poison's companion condition (asleep, paralyzed, blinded) ends with the fight, the
+  Poisoned condition lasts the poison's hours; a lethal cup kills an ordinary person before morning (no days of
+  sickness for townsfolk); venom only from the dead; truth serum works in the conversation it was given in; the
+  black market (towns and cities, members only, x1.5); poison allowed among the orcs, Khurgan, Itzan and
+  Thalassians, duels among the southerners, highlanders, northmarchers and Volsk (by the feel of each culture); a
+  duel is to the first fall and a death in it is no murder; Identify names only magic things, so it does not reveal
+  a Potion of Poison (Detect Poison and Disease does).
 - Expansion 4 Part B (Eldritch Knight, Arcane Trickster): a new level opens the whole prepared list (the book: one
   spell a level), no cantrip swap on a level; a component pouch comes with the path; War Bond's ritual is done at a
   rest over the weapon in hand and one of another reach (no third bond), robbers cannot keep a bonded weapon;
@@ -446,9 +456,24 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 4, Steel & Shadows, Part C (poisons and the people of the shadows: the DMG
-poisons, the Assassin, Spy and Spy Master, guilds, black markets, spies at court, duels of honour) in
-`docs/expansions/04-steel-shadows.md` (branch `dlc/04-steel-shadows`; Parts A and B merged into `main`).
+Next session starts at: Expansion 4, Steel & Shadows, Part D (arms of steel and shadow: the fighter's and rogue's
+magic items of Appendix B, D.1; then D.2 every Expansion 4 codex entry settled, balance, the icon and the release
+v1.4.0) in `docs/expansions/04-steel-shadows.md` (branch `dlc/04-steel-shadows`; Parts A, B and C merged into `main`).
+The way of Part C (poisons and the people of the shadows): a poison is an item with a `poison` record (schema POISON:
+kind, dc, damage/half/sure, hours/hours_dice/ends, with/wakes/fail_by, repeat, fumes, slow, midnight, daily, truth,
+from); `rules/poisons.py` (`record`, `of_item` with tags "dc:<n>" and "venom:<creature>", `battle_ops` the kernel's
+ops, `coat` after "coat_poison", `blade`/`on_hit` from `Battle._attack` (buff `poisoned_blade` = item id, `poison_dc`,
+`venom`; BLADES: the Dagger of Venom's own), `turn_start` (buff `fumes`, the effects op "fumes"), `suffer` outside a
+fight, masked potions: tag "secretly:<id>" (`mask`/`masked`/`unmask`, care.drink_potion, Battle.do_item,
+divining._sense_poison, treasure maker `secretly`); the save op's `against` and `fail_by`; trait modifier `immune`
+(damage immunity: query.defences). Inhaled vials are spells "poison_<id>" in spells.json (= battle_ops of the record,
+tested). `game/poisoning.py` harvests venom (Aftermath.venomous, V). `game/shadows.py`: poison law (law.json
+`shadows`, `law.contraband_for`, `shop_sells` in economy.restock), the black market (shop kind "black_market" via
+npc.flags), `guild_work` (quests.make_offer), cups (`slip`, `tell_truth`, `die_of_poison`), duels (`challenge` from a
+failed threat, `accept`/`refuse`, `duel_settled` from fight._settle_townsfolk, renown.flags["duel"]); politics
+`spy_caught` (rates/text in politics.json). Creature Cunning Action: `tactics._cunning_first` and `_slip_away`; a
+creature's area action with `range` and a sphere bursts at a point (`Battle.area_cells`). Camp crafts may say `feat`,
+`coin`, `by_proficiency` (the Poisoner's brew; `camp.maker`, `brew_dc`).
 The way of Part B (the Eldritch Knight, the Arcane Trickster): a subclass may carry its own `spellcasting` (schema
 SPELLCASTING: `list` "wizard", `focus`, `changes` "level", `given` cantrips); `spells.casting(char)` is the one door
 (also `spell_list`, `focus_kind`); `progression.start_casting` (when the path is chosen) and `cantrips_due`. War

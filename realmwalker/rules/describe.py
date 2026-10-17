@@ -203,6 +203,34 @@ def shape_words(shape: dict, by: str) -> str:
     return " ".join(bits)
 
 
+def _blade_card(b, f, bf: dict, tables) -> Card:
+    """The poison smeared on a fighter's weapon: whose, and what it will do on the next fitting hit."""
+    from realmwalker.rules import poisons
+
+    pid = bf["poisoned_blade"]
+    rec = dict(poisons.BLADES[pid]) if pid in poisons.BLADES else \
+        (poisons.record(tables, pid) if isinstance(pid, str) and pid in tables.items else None) or \
+        {"kind": "injury", "dc": 0, "damage": "1d4"}
+    if bf.get("venom"):
+        rec.update(poisons.venom_of(tables, bf["venom"]))
+    if bf.get("poison_dc"):
+        rec["dc"] = int(bf["poison_dc"])
+    name = rec.get("name") or (tables.items.get(pid)["name"] if isinstance(pid, str) and pid in tables.items
+                               else "basic poison")
+    which = "any hit" if rec["kind"] == "contact" or pid == "poisoners_dose" else "the next hit that cuts or pierces"
+    bits = []
+    if rec.get("damage"):
+        bits.append(f"{esc(rec['damage'])} poison damage" + (" (half on a save)" if rec.get("half") else ""))
+    if rec.get("with"):
+        bits.append(f"Poisoned and {esc(rec['with'])}")
+    elif rec.get("hours") or rec.get("ends"):
+        bits.append("Poisoned")
+    what = " and ".join(bits) or "its venom"
+    save = f", unless a Constitution save (DC {int(rec['dc'])}) is made" if rec.get("dc") else ""
+    return Card(f"Poisoned blade ({esc(name)})", "", "status/poisoned",
+                [f"On {which} within a minute: {what}{save}. Spent on that hit."], "")
+
+
 def _plain(sid: str, title: str, text: str, footer: str = "") -> Status:
     return Status(sid, Card(title, "", f"status/{sid}", [text], footer))
 
@@ -222,6 +250,14 @@ def _buff_status(b, f, bf: dict, tables) -> Status | None:
             lines.append(f"<dim>Held by {esc(_name_of(b, bf['conc']))}'s concentration.</>")
         footer = _ending(b, bf.get("ends"), int(bf["rounds"]) if bf.get("rounds") else None)
         return Status(kind, Card(title, "", f"status/{kind}", lines, footer))
+    if bf.get("fumes"):  # (Burnt Othur Fumes in the lungs: rules/poisons.turn_start)
+        left = int(bf.get("fumes_successes", 3)) - int(bf.get("fumes_saved", 0))
+        return Status("poisoned", Card("Choking on fumes", "", "status/poisoned", [
+            f"A Constitution save (DC {int(bf['fumes'])}) at the start of each of their turns: "
+            f"{esc(str(bf.get('fumes_dice', '1d6')))} poison damage on a failure. {left} more "
+            f"save{'s' if left != 1 else ''} and the smoke is out."], ""))
+    if bf.get("poisoned_blade"):
+        return Status("poisoned", _blade_card(b, f, bf, tables))
     if bf.get("until_act"):
         return None  # (Invisibility: the condition shows itself)
     if bf.get("marked"):
@@ -269,9 +305,7 @@ def _buff_status(b, f, bf: dict, tables) -> Status | None:
         kind = "spell"
     title, text = _WORDS[kind]
     lines = [text]
-    if bf.get("poisoned_blade"):
-        title, lines = "Poisoned blade", ["Their next hit that cuts or pierces deals 1d4 poison damage more."]
-    elif kind == "slowed" and bf.get("dazed"):
+    if kind == "slowed" and bf.get("dazed"):
         title, lines = "Dazed (Cunning Strike)", ["On their next turn they may only act: no moving, no bonus action."]
     elif kind == "slowed":
         lines = [f"{int(bf['slow'])} feet off their speed."]

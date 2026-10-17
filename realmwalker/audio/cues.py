@@ -77,6 +77,8 @@ def battle_sounds(ev: dict) -> list[tuple[str, str]]:
         return [("start", "spell")]
     if k == "rearm":  # (War Bond: the bonded weapon slaps into the knight's hand)
         return [("start", "equip")]
+    if k == "poison":  # (the poison on a blade goes into the wound: a hiss and a bubble)
+        return [("impact", "acid")]
     if k == "zone":
         sid = ZONE_SOUNDS.get(ev.get("zone", ""))
         return [("start", sid)] if sid else []

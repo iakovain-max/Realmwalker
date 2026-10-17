@@ -447,6 +447,16 @@ ITEMS = {
     "_weapon": "item/weapon/long_sword_1_old.png", "_armor": "item/armor/torso/leather_armor_3.png",
     # Blades & Backgrounds part D gear (the rest is drawn in tools/gear_art.py)
     "acid": "item/potion/bubbly.png", "antitoxin": "item/potion/cyan_new.png", "basic_poison": "item/potion/murky.png",
+    # Steel & Shadows part C: the DMG's poisons, each its own colour of vial
+    "assassins_blood": "item/potion/ruby_old.png", "burnt_othur_fumes": "item/potion/black_new.png",
+    "carrion_crawler_mucus": "item/potion/effervescent.png", "essence_of_ether": "item/potion/white_new.png",
+    "lolths_sting": "item/potion/purple_red.png", "malice": "item/potion/silver.png",
+    "midnight_tears": "item/potion/clear.png", "oil_of_taggit": "item/potion/yellow_new.png",
+    "pale_tincture": "item/potion/white_old.png", "purple_worm_poison": "item/potion/magenta_new.png",
+    "serpent_venom": "item/potion/yellow_old.png", "torpor": "item/potion/brown_new.png",
+    "truth_serum": "item/potion/fizzy.png", "wyvern_poison": "item/potion/orange_new.png",
+    "harvested_venom": "item/potion/emerald.png", "poisoners_dose": "item/potion/dark.png",
+    "potion_of_poison": "item/potion/puce.png",
     "glass_bottle": "item/potion/clear.png", "flask": "item/potion/cloudy.png", "vial": "item/potion/sky_blue.png",
     "perfume": "item/potion/pink.png", "horn": "item/misc/misc_horn.png", "mirror": "item/misc/mirror.png",
     "lamp": "item/misc/misc_lamp_old.png", "bullseye_lantern": "item/misc/misc_lamp_new.png",

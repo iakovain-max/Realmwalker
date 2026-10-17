@@ -463,9 +463,11 @@ def _save(c: Cast, o: dict, victim) -> None:
             b.dice_say(f"{x.name} {ability.upper()} save: not affected")
         else:
             saved = b._save(x, ability, dc, bonus=grid.COVER_AC[cover] if ability == "dex" else 0,
-                            against=_conditions_in(o.get("on_fail", ())),
+                            against=_conditions_in(o.get("on_fail", ())) + tuple(
+                                [o["against"]] if o.get("against") else ()),
                             advantage="advantage" if o.get("advantage") else "")  # (Charm Person in a fight)
         b._event("save", who=x.id, ok=saved)
+        short = b.__dict__.get("failed_by", 0)  # (by how much it failed: a poison's "fails by 5 or more")
         before = x.hp
         for i, (e, dtype) in enumerate(parts):
             if i == 0 and o.get("hurt_damage") and x.hp < x.max_hp:  # (Toll the Dead: a bigger die for the hurt)
@@ -479,6 +481,9 @@ def _save(c: Cast, o: dict, victim) -> None:
             continue
         if not saved and x.active:
             run(c, o.get("on_fail", ()), x)
+            worse = o.get("fail_by")
+            if worse and short >= int(worse["by"]) and x.active:
+                run(c, worse.get("on_fail", ()), x)  # (Lolth's Sting: senseless on a failure by 5 or more)
         elif saved and x.active:
             run(c, o.get("on_save", ()), x)  # (Ray of Enfeeblement: even a save leaves its mark)
     # Hurled away, the farthest first so that nobody is stopped by a friend who is about to be thrown too.
@@ -663,6 +668,17 @@ def _no_heal(c: Cast, o: dict, victim) -> None:
     if victim is not None:  # (until the end of the caster's next turn; `until` "turn_start": its start, a slaad's Claw)
         durations.buff(victim, {"no_heal": True, "source": f"chill:{c.sid}"},
                        durations.until(c.b, c.caster, o.get("until", "turn_end")))
+
+
+@op("fumes")
+def _fumes(c: Cast, o: dict, victim) -> None:
+    """Burnt Othur Fumes: the smoke stays in the lungs; a save at the start of each of its turns, damage on each
+    failure, until enough are made (rules/poisons.turn_start)."""
+    if victim is not None and victim.active:
+        victim.buffs = [bf for bf in victim.buffs if not bf.get("fumes")]
+        victim.buffs.append({"fumes": int(o.get("dc", c.dc)), "fumes_dice": o.get("damage", "1d6"),
+                             "fumes_successes": int(o.get("successes", 3)), "source": f"fumes:{c.sid}"})
+        c.b.say(f"{victim.the_name} breathes the smoke in.", "danger" if victim.side == "party" else "good")
 
 
 @op("if_condition")

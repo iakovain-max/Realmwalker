@@ -104,6 +104,8 @@ BUFF_KEYS = frozenset({
     "goaded", "exposed", "disarmed", "maneuver_die", "against", "melee",
     # the Eldritch Knight's and Arcane Trickster's (Expansion 4 Part B): a ward undercut, the unseen hand's mark
     "eldritch_struck",
+    # poisons (Expansion 4 Part C, rules/poisons.py): what is on the blade, Burnt Othur's smoke in the lungs
+    "poison_dc", "venom", "fumes", "fumes_dice", "fumes_successes", "fumes_saved",
     # this module's
     "outlined", "blurred", "warded_kinds", "ward_die", "sanctuary", "images", "ac_floor", "retaliate",
     "retaliate_type", "bond", "quarry", "quarry_type", "by", "dot", "dot_type", "dot_at", "dot_once", "dot_save",

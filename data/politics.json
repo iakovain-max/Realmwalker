@@ -8,7 +8,7 @@
   "rates": {
     "war_base": 0.012, "war_hostility": 0.003, "war_battles_per_month": 0.35, "peace_after_years": 2.0,
     "rebellion": 0.02, "plague": 0.025, "famine": 0.04, "tribe_raid": 0.5, "cult_spread": 0.25, "cult_purge": 0.06,
-    "cult_incident": 0.8, "gang_destroyed": 0.12, "gang_new": 0.25, "dragon": 0.008, "assassination": 0.006,
+    "cult_incident": 0.8, "gang_destroyed": 0.12, "gang_new": 0.25, "dragon": 0.008, "assassination": 0.006, "spy_caught": 0.12,
     "marriage": 0.04, "relation_drift": 8.0, "military_regrowth": 0.12, "treaty": 0.05,
     "beast_attack": 0.25
   },
@@ -21,6 +21,7 @@
     "old": ["of old age", "in their sleep, full of years", "of a failing heart"],
     "illness": ["of a winter fever", "of the flux", "of a wasting sickness", "of a lung fever", "of a sudden fever"],
     "battle": ["in battle", "of wounds taken in battle", "leading a charge"],
+    "spy_fate": ["hanged at the gate", "sent home without a tongue", "walled up alive", "exchanged for one of their own", "turned, and sent back with lies"],
     "murder": ["of poison", "under an assassin's knife", "at the hands of their own guards", "strangled in their bed"],
     "accident": ["in a fall from a horse", "in a river in flood", "in a hunting accident", "when a tower stair gave way"],
     "plague": ["of the plague"]
@@ -73,6 +74,7 @@
     "legend": ["{legend} {deed}.", "In those years {legend} {deed}.", "It is told that {legend} {deed}.", "{legend} {deed}, and the songs have not let it go."],
     "artifact": ["{artifact} {fate}.", "Of {artifact}: it {fate}.", "They say {artifact} {fate}.", "As for {artifact}: it {fate}, if the tellers are honest."],
     "marriage": ["{a} and {b} were joined by a marriage.", "A marriage bound {a} to {b}.", "{a} and {b} were married, and the lawyers were busier than the priest.", "A wedding tied {a} and {b} together, whatever either of them wanted."],
+    "spy_caught": ["A spy of {spy_of} was caught at the court of {court}, and {fate}.", "{court} has unmasked an agent of {spy_of} in its own council chamber; the spy was {fate}.", "Letters in a false bottom: a servant at the court of {court} was spying for {spy_of}, and was {fate}.", "{court} says {spy_of} sent a spy among its scribes. The spy was {fate}, and the envoys of {spy_of} have been sent home."],
     "assassination": ["{victim} of {faction} was murdered {cause}.", "{victim}, {title} of {faction}, was killed {cause}.", "{victim} of {faction} was killed {cause}, and nobody was ever charged.", "They found {victim}, {title} of {faction}, dead {cause}."],
     "treaty": ["{a} and {b} swore a treaty of friendship.", "{a} and {b} became allies.", "{a} and {b} put their seals to an understanding.", "{a} and {b} agreed to stand together, for as long as it suits."],
     "beast_attack": ["{beast} came down on {place} in the night and killed {dead}.", "{beast} killed {dead} at {place} and went back to its lair.", "Word from {place}: {beast} has come down again and killed {dead}.", "{place} is burying {dead} after {beast} came down from its lair.", "{beast} is hunting again: {dead} dead at {place}, and the doors barred at dusk."],

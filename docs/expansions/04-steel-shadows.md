@@ -69,12 +69,12 @@ last: the Vorpal Sword, the Luck Blade, the Defender, the Dancing Sword...
 - [x] B.4 Tactics, the hand's picture, cards and icons; 13 codex entries; Part B to `main`.
 
 ### Part C — Poisons and the people of the shadows
-- [ ] C.1 The DMG poisons as items (buy, harvest, brew, apply; Potion of Poison, Dagger of Venom); the Poisoner feat
+- [x] C.1 The DMG poisons as items (buy, harvest, brew, apply; Potion of Poison, Dagger of Venom); the Poisoner feat
   in full; antitoxin and Periapt-like wards read through `query`.
-- [ ] C.2 Assassin, Spy and Spy Master stat blocks with pictures, encounters and tactics (hide, strike first).
-- [ ] C.3 The world: thieves' and assassins' guilds (work, poisons), black markets in cities, spies in realms'
+- [x] C.2 Assassin, Spy and Spy Master stat blocks with pictures, encounters and tactics (hide, strike first).
+- [x] C.3 The world: thieves' and assassins' guilds (work, poisons), black markets in cities, spies in realms'
   service (politics: a spy discovered at court; news), duels of honour where a people's culture has them.
-- [ ] C.4 Cards, words, sounds; 4 codex entries (+ the two poison items); Part C to `main`.
+- [x] C.4 Cards, words, sounds; 4 codex entries (+ the two poison items); Part C to `main`.
 
 ### Part D — Arms of steel and shadow; release
 - [ ] D.1 The fighter's and rogue's magic items of Appendix B (Vorpal Sword, Luck Blade, Defender, Dancing Sword,

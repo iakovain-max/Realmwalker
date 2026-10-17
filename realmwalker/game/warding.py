@@ -458,7 +458,7 @@ def potions(game) -> list[str]:
     out = []
     for iid, d in items.defs.items():
         if isinstance(d, dict) and iid.startswith("potion") and d.get("rarity") in ("common", "uncommon") \
-                and not d.get("rare"):
+                and not d.get("rare") and not d.get("poison"):  # (a draught to drink, not a Potion of Poison)
             out.append(iid)
     return sorted(out, key=lambda i: (int(items.get(i).get("value", 0)), i))
 

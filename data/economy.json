@@ -58,6 +58,8 @@
                 ["poppy_milk", 1, 4], ["spirits", 1, 4], ["herbalism_kit", 0, 1], ["soap", 2, 6], ["potion_healing", 0, 1],
                 ["alchemists_fire", 0, 2],
                 ["antitoxin", 1, 3], ["acid", 0, 2, "village"], ["basic_poison", 0, 1, "town"], ["vial", 2, 6],
+                ["serpent_venom", 0, 1, "city"], ["assassins_blood", 0, 1, "city"], ["truth_serum", 0, 1, "city"],
+                ["oil_of_taggit", 0, 1, "city"],
                 ["glass_bottle", 1, 3], ["perfume", 0, 2, "town"], ["alchemists_supplies", 0, 1, "town"],
                 ["poisoners_kit", 0, 1, "city"]],
       "markup": 1.2
@@ -113,6 +115,7 @@
                 ["diamond_hoard", 0, 1, "city"], ["silvered_salt", 0, 2, "town"], ["hallowing_incense", 0, 1, "city"]],
       "markup": 1.0
     },
+    "black_market": {"name": "wares under the counter", "buys": ["gear", "tool", "jewellery", "trade", "weapon"], "stock": [["basic_poison", 1, 3], ["serpent_venom", 0, 2], ["assassins_blood", 0, 2], ["truth_serum", 0, 1], ["torpor", 0, 1], ["malice", 0, 1], ["essence_of_ether", 0, 1], ["oil_of_taggit", 0, 1], ["lolths_sting", 0, 1], ["carrion_crawler_mucus", 0, 1], ["pale_tincture", 0, 1], ["burnt_othur_fumes", 0, 1, "city"], ["wyvern_poison", 0, 1, "city"], ["midnight_tears", 0, 1, "city"], ["purple_worm_poison", 0, 1, "city"], ["poisoners_kit", 0, 1], ["thieves_tools", 1, 2], ["disguise_kit", 0, 1], ["forgery_kit", 0, 1], ["antitoxin", 0, 2], ["dagger", 1, 3]], "markup": 1.5},
     "stable": {
       "name": "tack and fodder",
       "buys": ["gear", "trade"],

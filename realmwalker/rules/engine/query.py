@@ -324,6 +324,8 @@ def defences(f, dtype: str) -> str:
         return "immune"
     if f.buffs and any(dtype in (bf.get("immune_damage") or ()) for bf in f.buffs):
         return "immune"  # (Mind Blank)
+    if dtype in tr.values(f, "immune", flat=True):
+        return "immune"  # (a Periapt of Proof against Poison)
     if f.creature and dtype in f.cdef.get("vulnerable", []):
         return "vulnerable"
     if f.buffs and any(dtype in (bf.get("vulnerable") or ()) for bf in f.buffs):

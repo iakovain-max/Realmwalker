@@ -197,6 +197,10 @@ def _monster_turn(b: Battle, f: Fighter) -> None:
         b.do_search(f)  # nobody in sight, but someone is hiding here
         if b.current is not f or b.outcome is not None:
             return
+    if f.has_trait("cunning_action") and f.creature is not None:
+        _cunning_first(b, f, opts)  # (an assassin or a spy: out of sight before the blow, or a run to close in)
+        if b.current is not f or b.outcome is not None:
+            return
     plain = [o for o in opts if not o.extra.get("area") and not o.extra.get("bonus_action")]
     _come_down(b, f, plain)
     if f.cdef.get("spells") and _touch_heal(b, f):
@@ -233,7 +237,8 @@ def _monster_turn(b: Battle, f: Fighter) -> None:
             f.creature.uses["rampage"] = 0
             b._attack(f, rend, min(hurt, key=lambda e: e.hp))
             b._check_end()
-    if f.has_trait("nimble_escape") and f.bonus > 0 and b.outcome is None and b.current is f and f.active:
+    if (f.has_trait("nimble_escape") or f.has_trait("cunning_action")) and f.bonus > 0 and b.outcome is None \
+            and b.current is f and f.active:
         _slip_away(b, f)
     if b.outcome is None and b.current is f and f.active:
         _rise(b, f)
@@ -983,6 +988,22 @@ def _keep_distance(b: Battle, f: Fighter) -> None:
         b.walk(f, grid.route(tree, best[1]))
 
 
+def _cunning_first(b: Battle, f: Fighter, opts) -> None:
+    """A creature's Cunning Action before it strikes (the 2025 Assassin, Spy and Spy Master): hidden first when it
+    can be (its blows then come with advantage), else a Dash with the bonus action when no foe is in reach this turn."""
+    if f.bonus <= 0 or f.action <= 0:
+        return
+    if not f.hidden and b.hide_problem(f) is None:
+        b.do_hide(f, bonus=True)
+        return
+    plain = [o for o in opts if o.available and not o.extra.get("area")]
+    if not plain or any(not o.is_melee for o in plain):
+        return  # (a crossbow reaches them from here)
+    foes = [e for e in b.enemies_of(f) if e.standing]
+    if foes and min(b.gap(f, e) for e in foes) * grid.SQUARE_FT > f.move_left + 5:
+        b.do_dash(f, bonus=True)  # (too far to reach this turn: run)
+
+
 def _slip_away(b: Battle, f: Fighter) -> None:
     """Goblins: strike and then step back out of reach without being cut down (Nimble Escape). A beast that only
     bites and claws (a panther, a tiger) breaks away so when it is hurt or more than one foe stands over it, to come
@@ -1020,8 +1041,11 @@ def _try_area_attack(b: Battle, f: Fighter, opt: AttackOption, need: int | None 
     nothing more (made with the Multiattack) is worth it catching `need` and no friend."""
     a = opt.extra
     best = None
+    far = int((a.get("range") or (0, 0))[0]) // grid.SQUARE_FT if a["area"]["shape"] == "sphere" else 0
     for t in b.enemies_of(f):
-        cells = b.field.area(a["area"]["shape"], int(a["area"]["size"]), origin=f.space, toward=(t.x, t.y), from_self=True)
+        if far and (b.gap(f, t) > far or not b.can_see(f, t)):
+            continue  # (a bomb thrown at a point it can see within its range)
+        cells = b.area_cells(f, a, (t.x, t.y))
         hit = b.in_area(cells, "all", f)
         enemies = sum(1 for x in hit if x.team != f.team)
         friends = sum(1 for x in hit if x.team == f.team and x is not f)
@@ -1102,6 +1126,8 @@ def _party_turn(b: Battle, f: Fighter) -> None:
             break
     if b.has_action(f) and f.bonus > 0 and _arcane_bonus(b, f):
         opts = [o for o in b.attack_options(f) if o.available]  # (a weapon called to hand: its blows now)
+    if opts and b.has_action(f) and f.bonus > 0:
+        _coat_blade(b, f, opts)  # (poison on the blade with the bonus action, before the blow)
     if opts and b.has_action(f):
         _maneuvers_first(b, f, opts)  # (a Battle Master's Commander's Strike, Bait and Switch, feint or lunge)
     if opts and b.has_action(f) and f.bonus > 0 and best_plan(b, f, opts) is None:
@@ -1232,6 +1258,35 @@ def _maneuvers_first(b: Battle, f: Fighter, opts: list) -> None:
         for opt, a in _abilities(b, f, "lunge"):
             b.do_ability(f, opt.value)
             return
+
+
+def _coat_blade(b: Battle, f: Fighter, opts) -> bool:
+    """Poison smeared on the weapon with the bonus action (Expansion 4 Part C), when a blow can land this turn on a
+    foe worth it: the Dagger of Venom's own venom first (it comes back at dawn), else the cheapest coating carried
+    that the weapon can deliver (a contact poison on any blow; an injury poison on one that cuts or pierces)."""
+    from realmwalker.rules import magic, poisons
+
+    if f.char is None or f.bonus <= 0 or f.buff_value("poisoned_blade") or b.current is not f:
+        return False
+    # (no second plan of the blow: a foe worth it within this turn's reach of the weapon in hand will do)
+    blow = max(opts, key=lambda o: o.is_melee)
+    reach = (f.move_left + 5) if blow.is_melee else int(blow.range[1] or blow.range[0] or 30)
+    foes = [e for e in b.enemies_of(f) if e.standing and e.hp >= 8 and b.gap(f, e) * grid.SQUARE_FT <= reach]
+    if not foes:
+        return False
+    for it, p in magic.charges(f.char):
+        if p.get("spell") == "dagger_venom" and magic.charges_left(p) > 0 and it.uid in f.char.equipped.values():
+            value = f"charge:{it.uid}:dagger_venom"
+            if b.do_cast(f, value, None):
+                return True
+    if blow.kind.startswith("spell"):
+        return False
+    usable = [it for it in poisons.coatings(b, f)
+              if poisons.delivers(poisons.of_item(b.t, it), blow.damage_type, poisoners=it.def_id == "poisoners_dose")]
+    if not usable:
+        return False
+    it = min(usable, key=lambda i: (b.t.items.unit_value(i), -poisons.worth(b, i)))
+    return bool(b.do_cast(f, b.throw_value(it), None))
 
 
 def _arcane_bonus(b: Battle, f: Fighter) -> bool:
