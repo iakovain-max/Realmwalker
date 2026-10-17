@@ -332,12 +332,13 @@ def share_auras(b) -> None:
                 x.buffs.append(grant)
 
 
-def dancing_turn(b, f) -> None:
-    """Otto's Irresistible Dance: at the start of its turn the dancer spends its action collecting itself, a Wisdom
-    save against the mark's DC; a success ends the dance and the charm with it."""
+def dancing_turn(b, f) -> bool:
+    """Otto's Irresistible Dance: at the start of its turn the dancer spends its turn collecting itself, a Wisdom
+    save against the mark's DC; a success ends the dance and the caster's charm with it. True when the turn went on
+    it."""
     bf = next((bf for bf in f.buffs if bf.get("dancing")), None)
     if bf is None or f.action <= 0 or f.incapacitated:
-        return
+        return False
     f.action -= 1
     if b._save(f, "wis", int(bf.get("dc", 10))):
         src = bf.get("source")
@@ -349,6 +350,7 @@ def dancing_turn(b, f) -> None:
         b.say(f"{f.the_name} stumbles out of the dance.", "system")
     else:
         b.say(f"{f.the_name} dances on, helplessly.", "good" if f.side == "foe" else "danger")
+    return True
 
 
 def confused_turn(b, f) -> bool:

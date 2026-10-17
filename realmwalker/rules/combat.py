@@ -873,7 +873,11 @@ class Battle:
                 self.say(f"{f.the_name} cannot move.", "system")
             self.end_turn()
             return True
-        marks.dancing_turn(self, f)  # (Otto's Irresistible Dance: the action spent collecting itself)
+        self._unseal_the_last(f)  # (only foes it has sealed away are left: it lets them go)
+        if marks.dancing_turn(self, f):  # (Otto's Irresistible Dance: its turn spent collecting itself)
+            if self.outcome is None and self.turn_started and self.current is f:
+                self.end_turn()
+            return True
         if marks.confused_turn(self, f):  # (Confusion: the d10 says what it does with its turn)
             if self.outcome is None and self.turn_started and self.current is f:
                 self.end_turn()
@@ -3819,6 +3823,17 @@ class Battle:
                   "sphere": f"A shimmering sphere closes around {f.the_name}.",
                   "cage": f"Walls of force snap shut around {f.the_name}."}.get(why, f"{f.the_name} is gone."),
                  "magic")
+
+    def _unseal_the_last(self, f: Fighter) -> None:
+        """At the start of its turn, a caster whose only foes left are sealed in its own sphere or forcecage lets the
+        spell go, and the fight goes on (rather than waiting out the hour)."""
+        if f.concentration is None:
+            return
+        foes = [x for x in self.fighters if x.team != f.team and (x.active and "unconscious" not in x.conditions
+                                                                  or x.state == "away")]
+        if foes and all(x.state == "away" and (x.away or {}).get("why") in ("sphere", "cage")
+                        and (x.away or {}).get("by") == f.id for x in foes):
+            self._end_concentration(f, quiet=False, why="is let go")
 
     def send_off(self, f: Fighter, *, by: Fighter | None = None) -> None:
         """Sent from this plane for good (Plane Shift, Divine Word): gone from the fight, and beaten."""

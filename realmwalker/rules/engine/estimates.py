@@ -133,6 +133,18 @@ def spell_value(b, f, sid: str, *, target=None, point=None, dc: int | None = Non
                 ev += p * rays * _marks_worth(b, f, target, o.get("on_hit", ()), up)
                 w.damage += ev
                 w.kills += int(ev >= target.hp)
+            if not spellrules.damage_parts(o):  # (a touch that only carries the spell: Plane Shift)
+                opt = AttackOption("spell", spell["name"], "spell_ranged" if o["attack"] != "melee" else "spell_melee",
+                                   bonus, "0", "force")
+                p = hit_chance(b, f, opt, target)
+                for inner in o.get("on_hit", ()):
+                    if inner["op"] == "save":
+                        part = Worth()
+                        _save_part(b, f, inner, [target], target, dc, up, mult, part)
+                        w.damage += p * part.damage
+                        w.control += p * part.control
+                        w.friendly += p * part.friendly
+                        w.kills += int(p * part.kills >= 0.5)
             for a in o.get("after", ()):
                 if a["op"] == "save":
                     _save_part(b, f, a, [target], target, dc, up, mult, w)
@@ -262,6 +274,8 @@ def _save_part(b, f, o: dict, caught: list, target, dc: int, up: int, mult: int,
         ev = dmg * (pf + (1 - pf) * (0.5 if o.get("half") else 0.0))
         if x.team == f.team:
             w.friendly += ev
+            if o.get("on_fail"):  # (a friend held, lifted, charmed or sent away by it)
+                w.friendly += pf * threat(x) * _control_rounds(_resolve(o["on_fail"], x)) * 0.5
         else:
             w.damage += ev
             w.kills += int(ev >= x.hp)
