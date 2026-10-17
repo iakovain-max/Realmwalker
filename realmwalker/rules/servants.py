@@ -3,10 +3,14 @@ Create Undead, and the zombie Finger of Death leaves.
 
 Their records live on their master, in `char.spells["servants"]` (saved with the character): a list of {id, cid (the
 creature), name, hp, max_hp, spell, word (it acts only when commanded), reach (feet the command carries), until (the
-world minute its control ends; None: for ever), made, warned}. A fight makes a Creature of each (`bring_in`, from
+world minute its control ends; None: for ever), made, warned}; the bound of F.5 (a Planar Ally's spirit, a creature
+held by Planar Binding) may also carry form and level (a spirit's numbers for its slot, `allies.summon_def`), picture,
+heals (whole again at a long rest: `rest`), bound (Planar Binding holds it) and uses (its own magic once a day). A
+fight makes a Creature of each (`bring_in`, from
 game/fight.start_battle beside the familiar and the steed), puts it beside its master (`Battle.add_ally`, bond kind
 "servant"), and writes back what became of it afterwards (`after`). The undead neither eat, sleep nor heal: what a
-fight takes from them stays taken. Pure rules: no UI, no game state beyond the characters."""
+fight takes from them stays taken (the bound heal at a long rest). Pure rules: no UI, no game state beyond the
+characters."""
 from __future__ import annotations
 
 from realmwalker.rules.creatures import Creature
@@ -14,6 +18,7 @@ from realmwalker.rules.creatures import Creature
 MAX = 12  # (servants to a master: the wight's own number; the book has no cap, the battle needs one)
 UID = 92000  # (servants made for a fight: out of the way of bands, familiars, steeds and spirits)
 REACH = {"animate_dead": 60, "create_undead": 120}
+UNDEAD = ("animate_dead", "create_undead", "finger_of_death")  # (the spells whose servants are the risen dead)
 DAY = 24 * 60
 WARN = 120  # (minutes before control ends that the game warns)
 # Marks kept on a character until lifted (rules/health leaves "kept:" effects alone): the mummy's rot (the minute it
@@ -52,16 +57,17 @@ def avg_hp(tables, cid: str) -> int:
 
 
 def add(char, tables, cid: str, spell: str, *, until: float | None, now: float, word: bool = True,
-        name: str = "", hp: int | None = None) -> dict | None:
-    """A new servant for `char` (None when twelve already serve)."""
-    rows = records(char, make=True)
-    if len(rows) >= MAX:
+        name: str = "", hp: int | None = None, max_hp: int | None = None, **more) -> dict | None:
+    """A new servant for `char` (None when twelve already serve). `more`: a bound creature's form, level, picture,
+    heals, bound."""
+    if len(records(char)) >= MAX:
         return None
-    top = avg_hp(tables, cid)
+    rows = records(char, make=True)
+    top = int(max_hp) if max_hp else avg_hp(tables, cid)
     rec = {"id": max([0] + [int(r.get("id", 0)) for r in rows]) + 1, "cid": cid,
            "name": name or tables.creatures[cid]["name"], "hp": top if hp is None else max(1, min(int(hp), top)),
            "max_hp": top, "spell": spell, "word": bool(word), "reach": int(REACH.get(spell, 60)),
-           "until": None if until is None else float(until), "made": float(now), "warned": False}
+           "until": None if until is None else float(until), "made": float(now), "warned": False, **more}
     rows.append(rec)
     return rec
 
@@ -96,10 +102,43 @@ def drop(char, rec: dict) -> None:
         del char.spells["servants"]  # (none left: no empty key behind)
 
 
+def is_undead(rec: dict) -> bool:
+    return rec.get("spell") in UNDEAD
+
+
 def creature_of(rec: dict, uid: int) -> Creature:
     hp = max(1, min(int(rec.get("hp", 1)), int(rec.get("max_hp", 1))))
-    return Creature(uid=uid, def_id=rec["cid"], name=rec.get("name") or rec["cid"], hp=hp, max_hp=int(rec["max_hp"]),
-                    named=False)
+    c = Creature(uid=uid, def_id=rec["cid"], name=rec.get("name") or rec["cid"], hp=hp, max_hp=int(rec["max_hp"]),
+                 named=False)
+    c.uses = dict(rec.get("uses") or {})
+    return c
+
+
+def spirit_def(tables, rec: dict, owner_char) -> dict | None:
+    """A spirit's numbers for its slot and its master (Planar Ally: F.3's spirits), or None for a creature that is
+    its own stat block."""
+    if not rec.get("form") or "summon" not in tables.creatures[rec["cid"]]:
+        return None
+    from realmwalker.rules import allies
+
+    attack, dc = allies.caster_numbers(owner_char, tables)
+    cdef = allies.summon_def(tables, rec["cid"], int(rec.get("level", 0)), rec["form"], attack, dc)
+    cdef["name"] = rec.get("name") or cdef["name"]
+    return cdef
+
+
+def spirit_max_hp(tables, cid: str, form: str, level: int) -> int:
+    from realmwalker.rules import allies
+
+    return int(allies.summon_def(tables, cid, level, form, 0, 10)["hp"])
+
+
+def rest(char) -> None:
+    """A long rest: the bound that heal are whole again, and their own magic comes back (the dead never heal)."""
+    for rec in records(char):
+        if rec.get("heals"):
+            rec["hp"] = int(rec.get("max_hp", rec.get("hp", 1)))
+            rec["uses"] = {}
 
 
 def bring_in(b, owners: list) -> list:
@@ -112,7 +151,11 @@ def bring_in(b, owners: list) -> list:
             if int(rec.get("hp", 0)) <= 0 or rec.get("cid") not in b.t.creatures:
                 continue
             cr = creature_of(rec, UID + owner.id * 100 + int(rec["id"]))
-            f = b.add_ally(cr, owner, "servant", spell=rec.get("spell", ""), type_=b.t.creatures[rec["cid"]]["kind"])
+            cdef = spirit_def(b.t, rec, owner.char)
+            f = b.add_ally(cr, owner, "servant", spell=rec.get("spell", ""), level=int(rec.get("level", 0)),
+                           type_=b.t.creatures[rec["cid"]]["kind"], cdef=cdef)
+            if rec.get("picture"):
+                f.bond["picture"] = rec["picture"]
             f.bond["word"] = bool(rec.get("word"))
             f.bond["reach"] = int(rec.get("reach", 60))
             f.bond["rid"] = int(rec["id"])
@@ -138,6 +181,8 @@ def after(b, now: float) -> list[str]:
                 drop(owner.char, rec)
             else:
                 rec["hp"] = int(f.hp)
+                if f.creature.uses:
+                    rec["uses"] = dict(f.creature.uses)
             continue
         if lost or not f.bond.get("keep") or not owner.char.alive:
             continue

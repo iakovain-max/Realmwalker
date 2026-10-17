@@ -737,8 +737,8 @@ ROAD_USES = ("feed", "water", "purify", "goodberry", "feast", "ward", "repose", 
              "contingency", "jar", "clone", "imprison", "wish",
              # Part F.1: a familiar and a steed (game/allies.py)
              "familiar", "steed",
-             # Part F.4: the raised dead (game/servants.py)
-             "raise")
+             # Part F.4: the raised dead; F.5: the bound (game/servants.py)
+             "raise", "bind")
 # What each of Part E.3's road uses is about (an op's `what`, `how` or `with`; the start-up check knows them).
 E3_KINDS = {"sense": ("what", ("magic", "evil", "poison", "traps")),
             "locate": ("what", ("object", "creature", "nature")),
@@ -753,7 +753,8 @@ E5_KINDS = {"lock": ("how", ("knock", "arcane")),
             "make": ("how", ("fabricate", "creation")),
             "stone": ("how", ("shape", "passwall"))}
 E6_KINDS = {"protect": ("how", ("glyph", "symbol", "guards", "forbiddance", "circle", "sanctum"))}
-F4_KINDS = {"raise": ("how", ("dead", "ghouls"))}  # (Animate Dead, Create Undead)
+F4_KINDS = {"raise": ("how", ("dead", "ghouls")),  # (Animate Dead, Create Undead)
+            "bind": ("how", ("ally", "binding"))}  # (F.5: Planar Ally, Planar Binding)
 WARDS = ("alarm", "hut", "hound", "rope", "mansion", "meld",
          "decoy", "mouth", "veil",  # (Part E.4: Programmed Illusion, Magic Mouth, Hallucinatory Terrain/Mirage Arcane)
          "earthworks")  # (Part E.5: Move Earth's ditch and bank)

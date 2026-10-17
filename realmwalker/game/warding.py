@@ -124,6 +124,20 @@ def ward(game, key: str) -> dict | None:
     return spellwork.wards_here(game).get(key)
 
 
+def _here(game) -> dict:
+    p = game.player
+    return {"x": p.x, "y": p.y, "map": game.local.key if game.local is not None else None}
+
+
+def inward_circle(game) -> dict | None:
+    """A Magic Circle turned inward standing here (F.5: it holds a spirit for Planar Binding), or None."""
+    rec = _flags(game).get("inward_circle")
+    if not rec or float(rec["until"]) <= game.world.time:
+        return None
+    here = _here(game)
+    return rec if all(rec.get(k) == here[k] for k in ("x", "y", "map")) else None
+
+
 def hallowed_at(game) -> dict | None:
     """The hallowed ground the party stands on: in the open the map tile (any close-up map of it but the underground),
     underground within 60 feet of where it was hallowed."""
@@ -193,6 +207,9 @@ def tick(game) -> None:
         s = game.world.settlement_at(game.player.x, game.player.y)
         if s is None or s.id != room.get("settlement"):
             del _flags(game)["glyph_room"]
+    held = _flags(game).get("inward_circle")
+    if held is not None and float(held["until"]) <= game.world.time:
+        del _flags(game)["inward_circle"]  # (an inward circle's hour is over)
 
 
 def room_thief(game, rng) -> str | None:
@@ -459,6 +476,11 @@ def subjects(game, caster, sid: str) -> list[Subject]:
         return out
     if does == "protect" and how == "symbol":
         return [Subject(words, "symbol", key) for key, (_, words) in SYMBOLS.items()]
+    if does == "protect" and how == "circle":
+        return [Subject("outward: celestials, elementals, fey, fiends and undead cannot come into the camp", "circle",
+                        "outward"),
+                Subject("inward: it holds such a creature inside it (to be bound by Planar Binding)", "circle",
+                        "inward")]
     if does == "protect" and how == "forbiddance":
         return [Subject("radiant: white fire", "damage", "radiant"), Subject("necrotic: black frost", "damage",
                                                                              "necrotic")]
@@ -495,6 +517,10 @@ def problem(game, caster, sid: str, target) -> str | None:
                 return f"a {how} already waits on the way into the camp"
             if how == "glyph" and aimed and target.kind == "spell" and target.ref not in glyph_spells(game, caster):
                 return "no spell slot left for the spell it would hold"
+        elif how == "circle" and aimed and target.ref == "inward":
+            held = inward_circle(game)
+            if held is not None and float(held["until"]) - game.world.time > 60:
+                return "an inward circle already stands here"
         else:
             if town:
                 return "not in the middle of a town"
@@ -587,6 +613,12 @@ def _protect(game, caster, sid: str, spell: dict, o: dict, target, level: int) -
         return [f"{first} scatters ruby dust round the camp and prays for ten minutes: for a day, aberrations, "
                 f"celestials, elementals, fey, fiends and undead that come here will burn "
                 f"<dim>({o.get('dice', '5d10')} {esc(target.ref)})</>."]
+    if how == "circle" and target is not None and target.ref == "inward":
+        _flags(game)["inward_circle"] = {"until": game.world.time + hours * 60 + int(spell.get("minutes", 1)),
+                                         "by": caster.name, **_here(game)}
+        return [f"{first} pours a ring of silvered salt and turns the runes inward as they glow: for {lasts}, a "
+                "celestial, elemental, fey or fiend inside it cannot leave. <dim>Long enough for Planar Binding's "
+                "hour.</>"]
     if how == "circle":
         _camp_ward(game, caster, "circle", hours * 60, spell)
         return [f"{first} pours a ring of silvered salt round the camp, and runes glow where it falls: for {lasts}, "

@@ -458,8 +458,8 @@ WARDING = ("protect", "hallow", "demiplane", "cauldron")
 GREAT = ("contingency", "jar", "clone", "imprison", "wish")
 # Part F.1's: a familiar and a steed (game/allies.py)
 ALLIES = ("familiar", "steed")
-# Part F.4's: the raised dead (game/servants.py)
-SERVANTS = ("raise",)
+# Part F.4's: the raised dead; F.5's: the bound, Planar Ally and Planar Binding (game/servants.py)
+SERVANTS = ("raise", "bind")
 
 
 def _does(spell: dict) -> str | None:

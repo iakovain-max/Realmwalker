@@ -833,6 +833,8 @@ FAITH = Obj(
         "name": Str(max_len=60), "god": Str(max_len=60), "short": Str(max_len=40), "about": Str(max_len=120),
         "cultures": List(Str(max_len=30)), "church": Bool(optional=True), "cult": Bool(optional=True),
         "values": List(Str(choices=VALUE_IDS)),
+        # (Planar Ally, Expansion 3 F.5: the spirit this god sends, a summoned creature and its form)
+        "ally": Obj({"creature": Str(max_len=40), "form": Str(max_len=30)}, optional=True),
     }
 )
 FACTION_KIND = Obj(
