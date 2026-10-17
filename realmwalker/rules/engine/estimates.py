@@ -43,17 +43,49 @@ def hit_chance(b, att, opt, target) -> float:
     return _p(ac - opt.bonus, r.mode)
 
 
+_MEMO: dict | None = None  # (while a choice is weighed: see `thinking`)
+
+
+class thinking:
+    """While one choice of spell is weighed nothing on the field changes, so a save's chance and a resistance are
+    worked out once for each creature (an enemy caster with a long list of spells: Expansion 3 G.1)."""
+
+    def __enter__(self):
+        global _MEMO
+        self.outer = _MEMO
+        if _MEMO is None:
+            _MEMO = {}
+        return self
+
+    def __exit__(self, *exc):
+        global _MEMO
+        _MEMO = self.outer
+        return False
+
+
 def fail_chance(b, x, ability: str, dc: int) -> float:
+    key = ("fail", id(x), ability, dc)
+    if _MEMO is not None and key in _MEMO:
+        return _MEMO[key]
     sr = query.save_roll(b, x, ability)
     if sr.auto_fail:
-        return 1.0
-    bonus = sr.bonus + sum(avg(d) for d in sr.dice)
-    return 1.0 - _p(int(round(dc - bonus)), sr.roll.mode)
+        out = 1.0
+    else:
+        bonus = sr.bonus + sum(avg(d) for d in sr.dice)
+        out = 1.0 - _p(int(round(dc - bonus)), sr.roll.mode)
+    if _MEMO is not None:
+        _MEMO[key] = out
+    return out
 
 
 def damage_factor(x, dtype: str) -> float:
     """What resistance, vulnerability or immunity leaves of damage of this kind."""
+    key = ("damage", id(x), dtype)
+    if _MEMO is not None and key in _MEMO:
+        return _MEMO[key]
     amount, _ = query.damage_taken(x, 100, dtype)
+    if _MEMO is not None:
+        _MEMO[key] = amount / 100.0
     return amount / 100.0
 
 
@@ -71,6 +103,11 @@ def threat(x) -> float:
         return 4.0 + 1.5 * x.char.level
     best = max((avg(a.get("damage", "0")) for a in x.cdef.get("attacks", [])), default=2.0)
     return best * max(1, int(x.cdef.get("multiattack", 1)))
+
+
+# What freeing a friend of a condition is worth, in rounds of its threat (Lesser and Greater Restoration: G.1).
+RESTORED = {"paralyzed": 2.5, "petrified": 3.0, "stunned": 2.0, "charmed": 1.5, "blinded": 1.0, "poisoned": 0.6,
+            "deafened": 0.2}
 
 
 def casts_spells(b, x) -> bool:
@@ -152,6 +189,17 @@ def spell_value(b, f, sid: str, *, target=None, point=None, dc: int | None = Non
         caught = [target] if target is not None else ([f] if spell["target"] == "self" else [])
     for o in spell.get("effects", ()):
         kind = o["op"]
+        if kind == "revive" and target is not None and target.state == "dead" and target.team == f.team \
+                and not target.__dict__.get("dust"):
+            w.heal += 8.0 + 3.0 * threat(target)  # (a friend back on its feet: Revivify in a fight, G.1)
+            continue
+        if kind == "restore" and target is not None and target.team == f.team and target.active:
+            for cid in o.get("conditions", ()):  # (a friend freed of what holds it, the worst first: G.1)
+                if cid in target.conditions:
+                    w.heal += threat(target) * RESTORED.get(cid, 0.5)
+                    if o.get("one"):
+                        break
+            continue
         if kind == "attack" and target is not None:
             o = _typed(o, [target], f)
             for d, t, more in spellrules.damage_parts(o)[:1]:
@@ -855,7 +903,12 @@ def _summon_worth(b, f, cid: str, level: int, bonus: int, dc: int, point) -> flo
 
     if any(x.bond.get("conc") and x.active for x in b.allies_of_owner(f)):
         return 0.0
-    d = allies.summon_def(b.t, cid, level, allies.best_form(b, f, cid), bonus, dc)
+    key = ("summon", id(f), cid, level, bonus, dc)
+    d = _MEMO.get(key) if _MEMO is not None else None
+    if d is None:
+        d = allies.summon_def(b.t, cid, level, allies.best_form(b, f, cid), bonus, dc)
+        if _MEMO is not None:
+            _MEMO[key] = d
     blow = max((avg(str(a["damage"])) + sum(avg(str(e.get("damage", "0"))) for e in a.get("extra", ()))
                 for a in d["attacks"] if not a.get("area")), default=0.0)
     worth = blow * max(1, int(d.get("multiattack", 1))) * 0.6 * 3 + int(d["hp"]) * 0.3

@@ -754,27 +754,48 @@ def _creature_magic(b: Battle, f: Fighter) -> None:
         if near:
             f.bonus -= 1
             b._spirit_strike(f, tok, min(near, key=lambda e: e.hp))
+    slow, fresh = None, False
     if f.bonus > 0:
         quick = _pick_cast(b, f, "bonus")
         slow = _pick_cast(b, f, "action", beat=_best_attack_worth(b, f)) if f.action > 0 else None
+        fresh = True
         if quick is not None and not (slow is not None and quick[4].get("concentration") and slow[4].get("concentration")
                                       and slow[0] > quick[0]):
             _do_cast(b, f, quick)  # (unless the action's spell, held the same way, is worth more)
+            fresh = False  # (the field has changed: weigh the action's spell again)
     if f.action > 0 and b.outcome is None and b.current is f:
-        _cast_best(b, f, "action", beat=_best_attack_worth(b, f))
+        if fresh:  # (nothing cast since it was weighed: G.1)
+            if slow is not None:
+                _do_cast(b, f, slow)
+        else:
+            _cast_best(b, f, "action", beat=_best_attack_worth(b, f))
 
 
 def _touch_heal(b: Battle, f: Fighter) -> bool:
     """A creature's healing touch (a celestial spirit's, once): to a friend who is down or below a third of its hit
-    points, walking to its side first if it must. True if it was given."""
-    if f.action <= 0:
-        return False
+    points, walking to its side first if it must; an enemy caster's restoring touch to a friend held by what it ends
+    (Lesser and Greater Restoration), and its Revivify to a friend dead within the minute (Expansion 3 G.1). True if
+    it was given."""
+    from realmwalker.rules.engine import estimates
+
     for sid in b.creature_spells(f):
         sp = b.t.spells[sid]
-        if sp["target"] != "ally" or not spellrules.heal_op(sp) or sp.get("cast") == "bonus":
+        bonus = sp.get("cast") == "bonus"
+        revive = sp["target"] == "dead_ally" and spellrules.has_op(sp, "revive") and not bonus
+        ends = [c for o in spellrules.ops(sp) if o["op"] == "restore" for c in o.get("conditions", ())]             if sp["target"] == "ally" else []
+        heal = sp["target"] == "ally" and spellrules.heal_op(sp) and not bonus
+        if not (revive or ends or heal) or (f.bonus <= 0 if bonus else f.action <= 0):
             continue
-        need = [x for x in b.team(f.team) if (x.state == "down" or x.active and x.hp < x.max_hp / 3)
-                and not (sp.get("others") and x is f)]
+        if revive:
+            need = [x for x in b.team(f.team) if x.state == "dead" and b.round - x.died_round <= 10
+                    and x.bond is None and not x.__dict__.get("dust")]
+        elif ends:
+            need = [x for x in b.team(f.team) if x.active and any(c in x.conditions for c in ends)
+                    and estimates.threat(x) * max(estimates.RESTORED.get(c, 0.5) for c in ends if c in x.conditions)
+                    > spell_cost(b, f, sp["level"])]
+        else:
+            need = [x for x in b.team(f.team) if (x.state == "down" or x.active and x.hp < x.max_hp / 3)
+                    and not (sp.get("others") and x is f)]
         if not need:
             continue
         x = min(need, key=lambda y: (y.state != "down", y.hp / max(1, y.max_hp), b.gap(f, y)))
@@ -788,7 +809,7 @@ def _touch_heal(b: Battle, f: Fighter) -> bool:
         if b.current is not f or b.outcome is not None or not f.active or not f.can_act():
             return True
         if x in b.spell_targets(f, sid) and b.creature_cast(f, sid, target=x):
-            return True
+            return not bonus  # (a bonus action's touch leaves the action for the fight)
     return False
 
 
@@ -870,6 +891,11 @@ def _slot_price(b: Battle, f: Fighter, level: int) -> float:
 
 def _pick_cast(b: Battle, f: Fighter, cost: str, *, beat: float = 0.0, care: float | None = None):
     """(score, value, target, point, spell) of the spell of this casting time worth most here, or None."""
+    with estimates.thinking():
+        return _pick_cast_now(b, f, cost, beat=beat, care=care)
+
+
+def _pick_cast_now(b: Battle, f: Fighter, cost: str, *, beat: float, care: float | None):
     from realmwalker.rules.combat import spell_id
 
     if care is None:
@@ -902,8 +928,20 @@ def _pick_cast(b: Battle, f: Fighter, cost: str, *, beat: float = 0.0, care: flo
         if sp.get("again_of"):
             price = 0.0  # (the follow-up of a spell already paid for)
         levels = _slot_levels(b, f, opt.value, sp) if not free else [sp["level"]]
-        for target, point in _aims(b, f, opt):
+        aims = _aims(b, f, opt)
+        tops = None
+        if len(levels) > 1 and len(aims) > 4:  # (many aims: the higher slot only where the lowest does best: G.1)
+            first = []
+            for target, point in aims:
+                w = estimates.spell_value(b, f, opt.value, target=target, point=point,
+                                          up=max(0, levels[0] - sp["level"]))
+                first.append((w.total(care=care), target, point))
+            first.sort(key=lambda x: -x[0])
+            tops = {(id(t), p) for _, t, p in first[:4]}
+        for target, point in aims:
             for lvl in levels:  # (the lowest slot, and a spare higher one when the spell does more with it)
+                if tops is not None and lvl != levels[0] and (id(target), point) not in tops:
+                    continue
                 w = estimates.spell_value(b, f, opt.value, target=target, point=point, up=max(0, lvl - sp["level"]))
                 if w.total(care=care) <= 0.5:
                     continue

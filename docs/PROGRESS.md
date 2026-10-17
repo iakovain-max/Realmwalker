@@ -40,6 +40,41 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-10-17 (evening): Demigods & Magics G.1 — enemy casters use the whole spell book
+
+Built by the relay builder realmwalker-a. Saves do not change. Every spell you can cast in a fight can now be cast
+against you, and the enemy chooses it by the same reckoning your companions' Auto uses (what it would do here), never
+by name. Today's enemy casters are the acolyte, the cult fanatic and the imp, quasit and sprite. The book's great
+casters (the mage, the priest, the archmage, the lich) come with their own expansions, and they will find every
+spell ready for them.
+- **What the enemy learned.** An enemy caster now uses spells that only the party could use before:
+  - **Shapechange** keeps its mind and its spells, so a war mage can become a troll that still throws Fireball.
+  - **Animal Shapes** turns its fighting friends into beasts.
+  - **Aid** gives its friends more hit points.
+  - **True Strike** and the smites ride on its own blade.
+  - **Mage Armor** hardens its skin if it wears no armour.
+  - **Lesser and Greater Restoration**: it walks over to cure a poisoned or charmed friend.
+  - **Revivify**: it walks to a friend who died within the minute and brings it back.
+- **It knows your casters too.** Silence, Circle of Power and the other "against spellcasters" spells now count your
+  wizard and your cleric as casters. Before, they counted only monsters, so the enemy never saw a reason to cast them
+  at your party.
+- **Your companions gained too.** The Auto now sees what Lesser and Greater Restoration, Revivify and Mage Armor are
+  worth in a fight. Before, it never cast them there.
+- **Thinking faster.** A caster with a long spell list decides its turn about three times faster than before.
+- Choices made while Anton was away:
+  - A creature's Shapechange may take forms up to its Challenge Rating (the book says "your level").
+  - Aid on a creature raises its maximum for as long as that creature lives (it has no hours to count).
+  - Mage Armor works for a creature whose stat block carries no armour.
+  - True Strike uses a creature's blows with a weapon its stat block names; a claw is not a weapon.
+- Checked: a new test gives a war mage each of the 265 battle spells in turn, in four kinds of fight. The enemy
+  casts 236 of them there. Five more are cast in a scene of their own: Animal Shapes beside an orc, Revivify on a
+  fallen friend, the Restorations on a poisoned or charmed friend, Divine Word on a badly hurt party. The other 24
+  need a field the arena does not have (darkness, water, trees, an invisible foe), and each has its reason written
+  down. A war mage holding every spell of a level fights each kind of fight to its end. None of these fights hangs
+  or breaks a rule. A caster with a stat block's spells decides inside the turn budget, and one with every spell of a
+  level never takes 400 ms. The arena itself had a fault: a creature your party summoned mid-fight waited for you to
+  play it. It now plays on Auto.
+
 ### Session, 2026-10-17 (evening): Demigods & Magics F.8 — the party as a pack of beasts, a wizard as a dragon
 
 Built by the relay builder realmwalker-b. Saves do not change. The last two shape-changing spells are in, and they

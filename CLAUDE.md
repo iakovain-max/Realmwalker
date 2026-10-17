@@ -551,6 +551,13 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   other `unshape`, brought in by `Battle.bring_shapes`. On the road `game/shapeshift.py` (spellwork door SHAPES; the
   pace, `magic_crossing` "fly"/"swim", no spells or gear, `dolls.character` draws the form). Tests:
   tests/test_shapes_lasting.py.
+- Enemy casters (Expansion 3 G.1): a creature casts from `cdef["spells"]` (`Battle.creature_spells`/`creature_cast`),
+  chosen by `tactics._pick_cast` on `estimates.spell_value` as the Auto is (never by name; `estimates.thinking()`
+  remembers save chances, damage factors and spell areas while one choice is weighed). What a spell does must work for
+  a creature caster and on a creature (`estimates.casts_spells`, `weapon_blows`, `Battle._form_spells_of`;
+  `tactics._touch_heal` walks to heal, restore or revive). `tools/arena.py --spells` gives each battle spell to a test
+  war mage (`caster_def`); tests/test_enemy_casters.py (slow) must stay green for a new spell, or give its NOT_CAST
+  reason.
 - Gear and tools 2024 (Expansion 2 part D): items.json `pack` (opens into its contents, gear.open_pack), `helps`
   {search, traps, force, disguise} (dungeon.helps, law.put_on_disguise), `utilize` (a tool's 2024 uses, on its card),
   `carry` also on carried containers (each kind once, Sheet.pack_carry), `trinket` (data/trinkets.json; the name and

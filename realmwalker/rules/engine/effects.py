@@ -1030,14 +1030,20 @@ def _restore(c: Cast, o: dict, victim) -> None:
 def _revive(c: Cast, o: dict, victim) -> None:
     b, f = c.b, c.caster
     x = victim or c.target
-    if x is None or x.state != "dead" or x.char is None:
-        return
+    if x is None or x.state != "dead" or x.char is None and (x.creature is None or x.bond is not None):
+        return  # (a summoned thing that vanished has no body to call back)
     if x.__dict__.get("dust"):
         b.say(f"Nothing of {x.the_name} is left to call back.", "warn")
         return
     x.state = "fighting"  # (the diamond is the spell's costly component: spent as it is cast, rules/spells.py)
-    x.char.alive = True
-    x.char.death_cause = None  # (or the body would be found dead of it again as time passed)
+    if x.char is not None:
+        x.char.alive = True
+        x.char.death_cause = None  # (or the body would be found dead of it again as time passed)
+    else:
+        x.creature.alive = True  # (an enemy caster's fallen friend: Expansion 3 G.1)
+    taken = {cell for y in b.on_field() if y is not x for cell in y.cells}
+    if any(cell in taken for cell in x.cells):  # (someone stands where it fell: the nearest free ground)
+        x.x, x.y = b._free_near((x.x, x.y), x.sq, taken)
     x.hp = int(o.get("hp", 1))
     x.conditions = {"prone": -1}
     x.cond_ends = {}

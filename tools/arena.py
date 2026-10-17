@@ -41,12 +41,13 @@ def party_level(cr: float) -> int:
     return max(1, min(10, int(round(cr * 1.3)) or 1))
 
 
-def setup(tables, creature: str, scenario: str, seed: int) -> Battle:
+def setup(tables, creature: str, scenario: str, seed: int, *, second: str | None = None) -> Battle:
+    """`second`: the other foe is this creature instead (an enemy caster's escort: Expansion 3 G.1)."""
     d = tables.creatures[creature]
     level = party_level(float(d["cr"]))
     party = [make_hero(tables, PARTY_CLASSES[i % len(PARTY_CLASSES)], level, seed * 10 + i) for i in range(4)]
     rng = RNG(seed, f"arena/{creature}/{scenario}")
-    foes = [spawn(tables, creature, rng, 1), spawn(tables, creature, rng, 2)]
+    foes = [spawn(tables, creature, rng, 1), spawn(tables, second or creature, rng, 2)]
     size = foes[0] and (3 if d["size"] in ("huge", "gargantuan") else (2 if d["size"] == "large" else 1))
     fx = 14 - size
     if scenario == "close":
@@ -100,6 +101,9 @@ def run(b: Battle, *, max_steps: int = 3000, check=None, clock=time.perf_counter
     try:
         steps = 0
         while b.outcome is None and steps < max_steps:
+            if b.pending_party() is not None:  # (a creature the party called in mid-fight plays on Auto too)
+                for x in b.side(PARTY):
+                    x.auto = True
             b.step()
             steps += 1
     finally:
@@ -187,8 +191,8 @@ def battle_spells(tables) -> list[str]:
 
     out = []
     for sid, sp in tables.spells.defs.items():
-        if sid.startswith("_") or sp.get("cast") == "reaction" or spellrules.out_of_battle(sp):
-            continue
+        if sid.startswith("_") or sp.get("cast") == "reaction" or spellrules.out_of_battle(sp)                 or spellrules.has_op(sp, "identify"):
+            continue  # (Identify is offered to nobody in a fight)
         if set(sp.get("classes", [])) & {"creature", "item", "again"} or sp.get("again_of"):
             continue
         out.append(sid)
@@ -215,9 +219,9 @@ def caster_def(tables, spells: list[str], *, level: int = 17) -> dict:
     return d
 
 
-def caster_setup(tables, spells: list[str], scenario: str, seed: int) -> Battle:
+def caster_setup(tables, spells: list[str], scenario: str, seed: int, *, second: str | None = None) -> Battle:
     caster_def(tables, spells)
-    return setup(tables, CASTER, scenario, seed)
+    return setup(tables, CASTER, scenario, seed, second=second)
 
 
 def spells_report(tables, spells: list[str], runs: int) -> int:

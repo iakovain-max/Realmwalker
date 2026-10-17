@@ -3985,7 +3985,7 @@ class Battle:
         sc = f.cdef.get("spellcasting", {})
         for sid in f.cdef["spells"]:
             spell = self.t.spells.defs.get(sid)
-            if spell is None or spell.get("cast") == "reaction" or spellrules.out_of_battle(spell):
+            if spell is None or spell.get("cast") == "reaction" or spellrules.out_of_battle(spell)                     or spellrules.has_op(spell, "identify"):
                 continue  # (Thaumaturgy and the like on a stat block: their use is outside a fight)
             level = spell["level"]
             per_day = self._per_day(f, sid)
@@ -4213,7 +4213,7 @@ class Battle:
             return [x for x in self.fighters if x.id == held and x.active and x is not f and near(x)]
         if target == "dead_ally":
             return [x for x in self.team(f.team) if x.state == "dead" and self.round - x.died_round <= 10 and near(x)
-                    and x.char is not None]
+                    and (x.char is not None or x.creature is not None and x.bond is None)]  # (a foe's own: G.1)
         return []
 
     def spell_points(self, f: Fighter, sid: str) -> set[tuple[int, int]]:
@@ -4256,6 +4256,20 @@ class Battle:
                    if self.field.in_bounds(x + dx, y + dy))
 
     def spell_area(self, f: Fighter, sid: str, point: tuple[int, int] | None, target: Fighter | None = None) -> list[tuple[int, int]]:
+        from realmwalker.rules.engine import estimates
+
+        memo = estimates._MEMO  # (while a choice is weighed the field stands still: each area laid once, G.1)
+        if memo is None:
+            return self._spell_area(f, sid, point, target)
+        spell = self.t.spells[spell_id(sid)]
+        area = spell.get("area")
+        key = ("area", id(f), (f.x, f.y, f.sq), area and area.get("shape"), area and area.get("size"), spell["target"],
+               spell.get("spheres"), point, id(target) if not area else None)
+        if key not in memo:
+            memo[key] = self._spell_area(f, sid, point, target)
+        return list(memo[key])
+
+    def _spell_area(self, f: Fighter, sid: str, point: tuple[int, int] | None, target: Fighter | None = None) -> list[tuple[int, int]]:
         spell = self.t.spells[spell_id(sid)]
         area = spell.get("area")
         if not area:
