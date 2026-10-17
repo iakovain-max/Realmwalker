@@ -12,7 +12,7 @@ from __future__ import annotations
 from realmwalker.audio import cues
 from realmwalker.rules import describe, grid
 from realmwalker.rules import spells as spellrules
-from realmwalker.rules.combat import FOE, PARTY, Battle, Fighter, spell_id
+from realmwalker.rules.combat import FOE, PARTY, Battle, Fighter, cast_kind, spell_id
 from realmwalker.ui import colors, markup
 from realmwalker.ui.input import KeyEvent, MouseEvent
 from realmwalker.ui.screens.base import ConfirmBox, Screen
@@ -331,7 +331,7 @@ class BattleScreen(Screen):
                         lvl += ", <warn>risky</>"
                 elif sid.startswith("charge:"):
                     lvl = "from a magic item"
-                if sp.get("cast") == "bonus":
+                if cast_kind(f, sp) == "bonus":
                     lvl += ", bonus action"
                 if ok and sp["target"] in ("enemy", "ally", "downed_ally", "dead_ally", "bound") and not b.spell_targets(f, sid):
                     ok, why = False, "no one in reach"

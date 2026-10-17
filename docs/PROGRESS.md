@@ -28,7 +28,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Clearing the decks for the expansions** | ✅ Done (2026-10-12), branch `prep/clear-the-decks` |
 | **Expansion 1, *Dice & Destiny*** (version 1.1.0) | ✅ Released (2026-10-13), branch `dlc/01-dice-destiny` |
 | **Expansion 2, *Blades & Backgrounds*** (version 1.2.0) | ✅ Released (2026-10-13), branch `dlc/02-blades-backgrounds` |
-| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete) and D.1 (the first 79 spells of the catalogue, 2026-10-17) in `main`; D.2 (levels 3 to 5) next |
+| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete) D.1 and D.2 (the first 145 spells of the catalogue, cantrips to level 5, 2026-10-17) in `main`; D.3 (levels 6 and 7) next |
 
 ---
 
@@ -39,6 +39,37 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-17 (night): Demigods & Magics D.2 — the spell catalogue, second wave; in `main`
+
+Built by the relay builder realmwalker-b, with three helpers writing the spells from the book pages.
+- **66 new spells of levels 3 to 5 that work in a fight**: Haste, Slow, Fear, Fly, Blink, Hypnotic Pattern, Stinking
+  Cloud, Hunger of Hadar, Sleet Storm, Vampiric Touch, Call Lightning, Wind Wall, Beacon of Hope, Crusader's Mantle,
+  Dispel Magic, Bestow Curse and the smites; Banishment, Confusion, Dimension Door, Evard's Black Tentacles, Fire
+  Shield, Greater Invisibility, Otiluke's Resilient Sphere, Phantasmal Killer, Vitriolic Sphere, Wall of Fire, the
+  auras of Life and Purity; Cloudkill, Insect Plague, Dominate Person, Bigby's Hand, Steel Wind Strike, Swift Quiver,
+  Synaptic Static, Telekinesis, the walls of Force and Stone, Circle of Power, Destructive Wave and more. The 2024
+  Conjure spells summon no creatures: they lay spirits on the ground or around you, and they are in now.
+- **Creatures sent away**: Banishment sends a foe out of the fight while you keep it up (a fiend, fey, celestial,
+  elemental or aberration kept away for the whole minute never comes back); a Resilient Sphere seals one where it
+  stands; Blink flickers you in and out of the world between turns.
+- **New things on the battle mat**: black tentacles that hold and crush, a yellow poison cloud, a stinking cloud that
+  leaves foes retching and helpless, the black hunger of Hadar, locust swarms, driving sleet, a storm of light, packs
+  of spirit beasts, a wall of wind that turns arrows aside, walls of stone and of force that nobody can pass.
+- **Spells that change a fight's rules**: Haste (double speed, an extra blow, and a turn of lethargy when it ends),
+  Slow, Confusion (a d10 each turn), Dominate (the foe fights for you until a hurt shakes it free), Dispel Magic (an
+  Abjurer at level 10 casts it as a bonus action, adds proficiency and keeps the slot if nothing ends), auras that
+  help every friend standing in them, Fire Shield burning whoever strikes you, Beacon of Hope making healing the most
+  it can be.
+- **The companions and the enemy use them** by what they are worth: Auto dispels a hold on a friend, banishes or
+  dominates the most dangerous foe, hastes the fighter, raises a wind wall against archers, and steps away with
+  Dimension Door when hurt and pressed.
+- **Waiting for later parts** (in the design note): 48 spells that do their work outside a fight (Daylight, Remove
+  Curse, Tongues, Raise Dead, Teleportation Circle, Scrying and the rest) come with Part E; Animate Dead, Polymorph and
+  the Summon spells come with Part F.
+- **The codex**: 66 spells settled (20 exactly as the book, 46 adapted, each with its note).
+- **How to try it**: a cleric or wizard of level 5 or more prepares them (S); scrolls of the rest turn up in shops and
+  hoards. Point at a creature in a fight to see what a spell has left on it.
 
 ### Session, 2026-10-17 (night): Demigods & Magics D.1 — the spell catalogue, first wave; in `main`
 

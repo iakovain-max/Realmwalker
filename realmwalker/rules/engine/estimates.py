@@ -115,6 +115,9 @@ def spell_value(b, f, sid: str, *, target=None, point=None, dc: int | None = Non
                 opt = AttackOption("spell", spell["name"], "spell_ranged" if o["attack"] != "melee" else "spell_melee",
                                    bonus, expr, t)
                 rays = int(o.get("rays", 1)) * (mult if o.get("rays_scaling") else 1) + int(o.get("rays_up", 0)) * up
+                if o.get("spread"):  # (one blow for each foe in reach)
+                    rays = min(rays, max(1, len([e for e in b.enemies_of(f)
+                                                 if b.feet(f, e) <= b.spell_range(spell, f)])))
                 p = hit_chance(b, f, opt, target)
                 ev = attack_value(b, f, opt, target) * rays
                 if o.get("miss_half"):
@@ -173,8 +176,19 @@ def spell_value(b, f, sid: str, *, target=None, point=None, dc: int | None = Non
         elif kind in ("summon", "aura", "guardian"):
             d, t, more = spellrules.damage_parts(o)[0] if spellrules.damage_parts(o) else ("0", "", "")
             w.help += avg(spellrules.scaled(d, more, up)) * 0.55 * 3
+        elif kind == "zone" and o.get("zone") in ("wind", "stone", "force") and point is not None:
+            w.control += _wall_worth(b, f, o, point)
         elif kind == "zone" and caught:
             _zone_worth(b, f, o, caught, dc, up, w)
+        elif kind == "dispel":
+            w.control += _dispel_worth(b, f, target, point)
+        elif kind == "condition" and o.get("condition") == "invisible" and spell["target"] in ("ally", "self"):
+            on = target if target is not None else f
+            if on is not None and "invisible" not in on.conditions:  # (Greater Invisibility: unseen, striking freely)
+                near = any(b.gap(on, e) <= 6 for e in b.enemies_of(f))
+                w.help += 5.0 if near else 1.5
+        elif kind == "teleport" and point is not None:
+            w.help += _escape_worth(b, f, point)
     if spell.get("again"):
         w.help += _again_worth(b, f, spell, up)
     if up and spell.get("targets_up") and target is not None:  # (more creatures of the same kind nearby)
@@ -308,6 +322,10 @@ _ABILITY_WORTH = {"divine_spark_harm": _divine_spark_harm, "turn_undead": _turn_
 def _control_rounds(ops: list[dict]) -> float:
     """Roughly how many of the victim's rounds a failed save takes away."""
     for o in ops:
+        if o["op"] == "banish":
+            return 3.0  # (out of the fight while the spell holds, and perhaps for good)
+        if o["op"] == "condition" and o.get("control"):
+            return 3.5  # (its turns lost to its friends, and spent against them)
         if o["op"] == "condition" and o["condition"] in ("paralyzed", "stunned", "unconscious", "incapacitated"):
             return 2.5  # its turns lost, and every blow at it with advantage (and from beside it, a critical)
         if o["op"] == "lose_turn":
@@ -317,6 +335,64 @@ def _control_rounds(ops: list[dict]) -> float:
         if o["op"] == "condition" and o["condition"] == "charmed":
             return 0.3  # (it will not strike the one who charmed it)
     return 0.0
+
+
+def _wall_worth(b, f, o: dict, point) -> float:
+    """A wall raised near the foes (Wind Wall against archers; stone and force against everyone who must go round)."""
+    out = 0.0
+    friends = [x for x in b.team(f.team) if x.active]
+    for e in b.enemies_of(f):
+        if max(abs(e.x - point[0]), abs(e.y - point[1])) > 6:
+            continue
+        if any(b.gap(x, e) <= 1 for x in friends):
+            out -= 0.3 * threat(e)  # (already at blows with us: a wall would only part friends from them)
+            continue
+        ex, ey = e.x - f.x, e.y - f.y
+        px, py = point[0] - f.x, point[1] - f.y
+        between = ex * px + ey * py > 0 and px * px + py * py < ex * ex + ey * ey
+        if not between:
+            continue
+        if o.get("zone") == "wind":
+            if any(op.kind == "ranged" for op in b.attack_options(e)):
+                out += 0.8 * threat(e)
+        else:
+            out += 0.35 * threat(e)
+    return max(0.0, out)
+
+
+def _escape_worth(b, f, point) -> float:
+    """A step through space (Misty Step, Dimension Door) away from foes pressing a hurt caster: the blows it escapes,
+    less those waiting where it lands."""
+    if f.hp >= f.max_hp * 0.75:
+        return 0.0
+    now = sum(threat(e) for e in b.enemies_of(f) if b.gap(f, e) <= 1)
+    there = sum(threat(e) for e in b.enemies_of(f) if grid.gap((point[0], point[1], f.sq), e.space) <= 1)
+    return max(0.0, (now - there) * 0.5 * (1.5 - f.hp / max(1, f.max_hp)))
+
+
+def _dispel_worth(b, f, target, point) -> float:
+    """Dispel Magic: the spells it would end - a foe's blessings, a friend's hold, ground laid against us."""
+    from realmwalker.rules.engine.effects import held_spells
+
+    x = target if target is not None else (b.at(*point) if point is not None else None)
+    out = 0.0
+    if x is not None:
+        for level, _, _, by in held_spells(b, x):
+            caster = next((y for y in b.fighters if y.id == by), None) if by is not None else None
+            team = caster.team if caster is not None else x.team  # (a blessing of unknown hand: the bearer's own)
+            if x.team != f.team and team == x.team:
+                out += (0.6 + 0.2 * level) * threat(x)  # (a foe's blessing undone)
+            elif x.team == f.team and team != f.team:
+                out += 2.0 + level  # (a friend freed of a foe's spell)
+            elif team == f.team:
+                out -= 2.0 + level  # (our own magic undone: never wanted)
+    if point is not None:
+        for z in b.zones:
+            if point in z.cells and z.spell and z.owner is not None and z.kind != "force":
+                owner = next((y for y in b.fighters if y.id == z.owner), None)
+                if owner is not None and owner.team != f.team:
+                    out += 3.0
+    return out
 
 
 def _zone_worth(b, f, o: dict, caught: list, dc: int, up: int, w: Worth) -> None:
@@ -336,9 +412,13 @@ def _zone_worth(b, f, o: dict, caught: list, dc: int, up: int, w: Worth) -> None
             w.control += pf * threat(x) * 0.5
         elif kind == "spikes":
             w.damage += dmg * 2.0  # (every square walked: a foe that comes at you through it)
-        elif dmg:
+        elif dmg or o.get("fail"):
             ev = dmg * (pf + (1 - pf) * (0.5 if o.get("half") else 0.0))
             w.damage += ev * 1.8  # (now, and as it stays)
+            w.control += pf * threat(x) * {"restrained": 1.2, "retching": 0.8, "prone": 0.4}.get(o.get("fail", ""),
+                                                                                                 0.3 if o.get("fail") else 0.0)
+            if o.get("dark"):
+                w.control += 0.2 * threat(x)
         elif kind in ("fog", "darkness"):
             w.control += 0.3 * threat(x)
         elif kind == "silence" and x.cdef is not None and x.cdef.get("spells"):
@@ -403,6 +483,34 @@ def _buff_worth(buff: dict, count: int, b=None, f=None, on=None, spell: dict | N
             w += 3.0 if any(b.gap(on, e) <= 2 for e in b.enemies_of(f)) else 1.0
     if buff.get("soak"):
         w += 2.5 if near else 0.8
+    # The second wave (D.2)
+    if buff.get("haste"):
+        w += 7.0 if near else 3.0
+    if buff.get("blink"):
+        w += 3.5 if near else 1.0
+    if buff.get("thorns"):
+        w += avg(str(buff["thorns"])) * (1.0 if near else 0.3)
+    if buff.get("save_adv"):
+        w += 0.8 * count
+    if buff.get("save_adv_against"):
+        w += 0.8 * count
+    if buff.get("save_adv_spells"):
+        w += 1.0 * count * (2.0 if b is not None and any(e.cdef is not None and e.cdef.get("spells")
+                                                         for e in b.enemies_of(f)) else 0.5)
+    if buff.get("heal_max") and b is not None:
+        w += 1.0 * sum(1 for x in b.team(f.team) if x.hp < x.max_hp)
+    if buff.get("rise"):
+        w += 1.0
+    if buff.get("immune") and not buff.get("heroism"):
+        w += 0.5 * len(buff["immune"])
+    if buff.get("fly"):
+        w += 1.0 if near else 0.6  # (out of reach of those on the ground)
+    if buff.get("aura") and b is not None and f is not None:
+        aura = buff["aura"]
+        bearer = on if on is not None else f
+        r = int(aura.get("radius", 30)) // 5
+        friends = [x for x in b.team(f.team) if x.active and grid.gap(bearer.space, x.space) <= r]
+        w += sum(_buff_worth(aura.get("grant", {}), 1, b, f, x, spell) for x in friends)
     return w
 
 
@@ -412,9 +520,14 @@ def _again_worth(b, f, spell: dict, up: int) -> float:
     if not any(b.feet(f, e) <= 30 for e in b.enemies_of(f) if e.standing):
         return 0.0
     dmg = 0.0
+    hurt = sum(min(x.max_hp - x.hp, 10) for x in b.team(f.team) if x.active or x.state == "down")
     for o in spellrules.ops({"effects": spell["again"].get("effects", ())}):
         for d, t, more in spellrules.damage_parts(o):
             dmg += avg(spellrules.scaled(d, more, up)) * (0.6 if o["op"] in ("attack", "save") else 1.0)
+        if o["op"] == "heal" and hurt:  # (Aura of Vitality: the healing to come)
+            dmg += min(hurt, avg(spellrules.scaled(o["dice"], o.get("up", ""), up))) * 0.8
+        if o["op"] == "weapon_attack":  # (Swift Quiver: shots to come)
+            dmg += 4.5
     return dmg * 1.5
 
 
@@ -445,6 +558,12 @@ def _marks_worth(b, f, x, ops: list, up: int) -> float:
                 w += 0.25 * threat(x)
             if buff.get("maddened") is not None:
                 w += 1.2 * threat(x)
+            if buff.get("confused"):
+                w += 1.5 * threat(x)
+            if buff.get("sluggish"):
+                w += 1.0 * threat(x)
+            if buff.get("quarry"):
+                w += avg(str(buff["quarry"])) * 2.0
         elif o["op"] in ("pull", "flee", "push"):
             w += 1.0
         elif o["op"] == "no_reaction":

@@ -17,7 +17,8 @@ On the one marked (the buff is on the creature):
     bond            the caster's id: the caster takes the same damage it takes (Warding Bond)
     quarry          dice (with quarry_type, by): extra damage when `by` hits it with an attack (Hex, Hunter's Mark)
     dot             dice (with dot_type, by, dot_at "start" | "end", dot_once): damage at its turn (Melf's Acid Arrow,
-                    Searing Smite, Ensnaring Strike, Phantasmal Force)
+                    Searing Smite, Ensnaring Strike, Phantasmal Force); with dot_save and save_first, the save comes
+                    first and only a failure hurts (Phantasmal Killer)
     repeat          an ability: a save at the end of each of its turns ends the mark (against the mark's `dc`)
     heroism         temporary hit points at the start of each of its turns (Heroism)
     immune          [conditions] that cannot take hold of it (Heroism: frightened)
@@ -26,6 +27,19 @@ On the one marked (the buff is on the creature):
     damage_die      "-1d8": added to the damage it deals (Ray of Enfeeblement)
     duel            the caster's id: Disadvantage on attacks against anyone else (Compelled Duel)
     maddened        the caster's id: its turn goes on a blow at one of its own friends (Crown of Madness)
+    confused        a d10 at the start of each of its turns says what it does (Confusion: `confused_turn`)
+    sluggish        half speed, -2 AC and Dexterity saves, no bonus action, one attack an action (Slow)
+    haste           double speed, one more attack an action, Advantage on Dexterity saves (with ac 2); when the
+                    spell ends, a turn of lethargy (Battle._end_concentration)
+    blink           at the end of each of its turns, on a d20 of 11 or more it vanishes until its next (Blink)
+    thorns          dice (with thorns_type): damage to whoever hits it with a melee attack (Fire Shield)
+    save_adv        [abilities] ("death" for death saves): Advantage on those saves (Beacon of Hope, Haste)
+    save_adv_against [conditions]: Advantage on saves against them (Aura of Purity)
+    save_adv_spells Advantage on saves against spells (Circle of Power), with evade_spells: no damage on a save
+    heal_max        healing it receives is the most the dice can give (Beacon of Hope)
+    rise            at the start of its turn at 0 hit points it regains 1 (Aura of Life)
+    aura            {"radius": feet, "grant": {buff}}: friends within the radius (and the bearer) have the grant
+                    while they stay there (Crusader's Mantle, Aura of Life, Aura of Purity, Circle of Power)
 On the one who gains (the caster, or a friend):
     hit_extra       dice (with hit_type, hit_with "weapon" | "melee" | "any"): extra damage on its hits (Divine Favor)
     weapon_plus     added to its weapon attack and damage rolls (Magic Weapon)
@@ -50,9 +64,15 @@ BUFF_KEYS = frozenset({
     "dot_name", "dc", "repeat", "heroism", "immune", "save_bonus", "weak", "damage_die", "duel", "maddened",
     "hit_extra", "hit_type", "hit_with", "weapon_plus", "smite", "smite_with", "up", "mod", "level", "once", "traits",
     "shillelagh", "tier", "until_act", "soak", "soak_type", "soak_turn",
+    # the second wave's (D.2)
+    "confused", "sluggish", "haste", "blink", "thorns", "thorns_type", "save_adv", "save_adv_against",
+    "save_adv_spells", "evade_spells", "heal_max", "rise", "aura", "grant", "radius", "aura_of", "save_first",
 })
 ZONES = frozenset({"web", "fire", "fog", "ice", "caltrops", "bearings", "darkness", "antimagic", "plants", "grease",
-                   "spikes", "daggers", "moonbeam", "sphere", "silence"})
+                   "spikes", "daggers", "moonbeam", "sphere", "silence",
+                   # the second wave's (D.2): ground with a save and what a failure brings (Battle._ground)
+                   "tentacles", "cloud", "stench", "hunger", "insects", "sleet", "radiance", "spirits", "elemental",
+                   "wind", "stone", "force"})
 
 
 def _weapon(opt) -> bool:
@@ -200,9 +220,16 @@ def _main(spell: dict) -> str:
 
 def after_hit(b, att, target, opt, guarded: bool = True) -> None:
     """Armor of Agathys: a melee blow on the warded one, while its temporary hit points held (`guarded`: before the
-    blow), is answered in cold; the spell ends with the last of them."""
+    blow), is answered in cold; the spell ends with the last of them. Fire Shield answers every melee hit."""
     if not opt.is_melee or not att.active:
         return
+    for bf in list(target.buffs):
+        if bf.get("thorns") and att.team != target.team:
+            dtype = bf.get("thorns_type", "fire")
+            b.say(f"{'Flames' if dtype == 'fire' else 'Bitter cold'} lash back at {att.the_name}.", "magic")
+            b._hit(target, att, dice.roll(str(bf["thorns"]), b.rng).total, dtype, crit=False, weapon="the shield")
+            if not att.active:
+                return
     for bf in list(target.buffs):
         if bf.get("retaliate") and guarded:
             if target.temp_hp <= 0:
@@ -245,16 +272,91 @@ def shared(b, target, amount: int) -> None:
 
 
 def turn_start(b, f) -> None:
-    """Heroism's courage; harm that comes at the start of a turn."""
+    """Heroism's courage; harm that comes at the start of a turn; Aura of Life lifting the fallen."""
     for v in f.buff_value("heroism"):
         if int(v) > f.temp_hp:
             f.temp_hp = int(v)
+    if f.state == "down" and f.hp <= 0 and f.buff_value("rise"):
+        b.say(f"The aura of life stirs {f.the_name}.", "magic")
+        b._heal(f, 1)
     _dots(b, f, "start")
 
 
+def after_turn_start(b, f) -> None:
+    """What a mark takes from a turn as it begins (Slow: no bonus action)."""
+    if f.buff_value("sluggish"):
+        f.bonus = 0
+
+
+def share_auras(b) -> None:
+    """Auras that help friends (an `aura` buff on its bearer): those within the radius have its grant, held by the
+    bearer's concentration. Run whenever anyone moves and at the start of every turn."""
+    for x in b.fighters:
+        if any(bf.get("aura_of") is not None for bf in x.buffs):
+            x.buffs = [bf for bf in x.buffs if bf.get("aura_of") is None]
+    from realmwalker.rules import grid
+
+    for bearer in b.fighters:
+        if bearer.state not in ("fighting", "fleeing"):
+            continue
+        for bf in bearer.buffs:
+            aura = bf.get("aura")
+            if not aura:
+                continue
+            r = int(aura.get("radius", 30)) // grid.SQUARE_FT
+            for x in b.fighters:
+                if x.team != bearer.team or not (x.active or x.state == "down"):
+                    continue
+                if x is not bearer and grid.gap(bearer.space, x.space) > r:
+                    continue
+                grant = {**aura.get("grant", {}), "aura_of": bearer.id, "source": bf.get("source", "aura")}
+                if bf.get("conc") is not None:
+                    grant["conc"] = bf["conc"]
+                x.buffs.append(grant)
+
+
+def confused_turn(b, f) -> bool:
+    """Confusion (2024): at the start of its turn a d10 says what it does. 1: it wanders off in a random direction
+    and does nothing else; 2-6: it does nothing at all; 7-8: it strikes at a random creature within reach (or does
+    nothing); 9-10: it acts as it chooses. True when the turn was taken from it."""
+    if not f.buff_value("confused") or not f.can_act():
+        return False
+    roll = b.rng.randint(1, 6 + 4)
+    b.dice_say(f"{f.name}, confused: d10 = {roll}")
+    if roll >= 9:
+        return False
+    if roll == 1:
+        steps = []
+        x, y = f.x, f.y
+        dx, dy = b.rng.choice([(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, -1), (1, -1), (-1, 1)])
+        for _ in range(max(0, f.move_left // 5)):
+            if not b.field.fits(x + dx, y + dy, f.sq) or (x + dx, y + dy) in b.occupied_by_others(f):
+                break
+            x, y = x + dx, y + dy
+            steps.append((x, y))
+        b.say(f"{f.the_name} stumbles off, lost in a daze.", "system")
+        if steps:
+            b.do_move(f, steps[-1])
+    elif roll <= 6:
+        b.say(f"{f.the_name} stands bewildered and does nothing.", "system")
+    else:
+        near = [x for x in b.fighters if x is not f and x.active and b.gap(f, x) <= 1]
+        opts = [o for o in b.attack_options(f) if o.available and o.is_melee]
+        if near and opts:
+            victim = b.rng.choice(near)
+            b.say(f"{f.the_name} lashes out wildly at {victim.the_name}.", "system")
+            b._attack(f, max(opts, key=lambda o: o.bonus), victim)
+            b._check_end()
+        else:
+            b.say(f"{f.the_name} swings at nothing.", "system")
+    return True
+
+
 def turn_end(b, f) -> None:
-    """Harm that comes at the end of a turn; and marks shaken off with a save."""
+    """Harm that comes at the end of a turn; and marks shaken off with a save; Blink's roll."""
     _dots(b, f, "end")
+    if f.active and f.buff_value("blink") and b.rng.randint(1, 20) >= 11:
+        b.send_away(f, "blink", by=f)
     for bf in list(f.buffs):
         if bf.get("repeat") and bf in f.buffs and f.active:
             if b._save(f, bf["repeat"], int(bf.get("dc", 10))):
@@ -267,6 +369,14 @@ def _dots(b, f, at: str) -> None:
         if not bf.get("dot") or bf.get("dot_at", "start") != at or not (f.active or f.state == "down"):
             continue
         by = next((x for x in b.fighters if x.id == bf.get("by")), None)
+        if bf.get("save_first") and bf.get("dot_save"):  # (Phantasmal Killer: the save comes first)
+            if b._save(f, bf["dot_save"], int(bf.get("dc", 10))):
+                f.buffs.remove(bf)
+                b.say(f"{f.the_name} is free of it.", "system")
+                continue
+            b._hit(by, f, dice.roll(str(bf["dot"]), b.rng).total, bf.get("dot_type", "fire"), crit=False,
+                   weapon=bf.get("dot_name", "the spell"))
+            continue
         amount = dice.roll(str(bf["dot"]), b.rng).total
         b._hit(by, f, amount, bf.get("dot_type", "fire"), crit=False, weapon=bf.get("dot_name", "the spell"))
         if bf.get("dot_once") and bf in f.buffs:

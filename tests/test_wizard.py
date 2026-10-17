@@ -18,7 +18,11 @@ def tables(data):
 
 
 def wizard(tables, level, sub="evocation", seed=1, book=()):
-    c = hero(tables, "wizard", level=level, seed=seed)
+    c = hero(tables, "wizard", level=1, seed=seed)
+    for _ in range(level - 1):  # (choosing at each level, as a player does: the spellbook grows level by level)
+        progression.level_up(c, tables, RNG(seed, "lv"))
+        c.pending = [p for p in c.pending if p["kind"] not in ("asi", "boon")]  # (no free casting from a boon)
+        progression.auto_resolve(c, tables)
     if level >= 3 and c.subclass != sub:
         c.subclass = sub
         c.features = [f for f in c.features if f not in ("evocation_savant", "potent_cantrip", "sculpt_spells",
@@ -29,6 +33,8 @@ def wizard(tables, level, sub="evocation", seed=1, book=()):
     for sid in book:
         if sid not in c.spells["spellbook"]:
             c.spells["spellbook"].append(sid)
+        if tables.spells[sid]["level"] and sid not in c.spells.get("prepared", []):
+            c.spells["prepared"] = c.spells["prepared"][:-1] + [sid]  # (and ready, in place of the last chosen)
     return c
 
 
@@ -87,6 +93,7 @@ def test_spell_mastery_and_signature_spells_cast_without_slots(tables):
     assert {tables.spells[s]["level"] for s in c.spells["mastery"]} == {1, 2}
     assert all(tables.spells[s].get("cast", "action") == "action" for s in c.spells["mastery"])
     c.spells["signature"] = ["fireball", "lightning_bolt"]
+    c.spells["prepared"] = [s for s in c.spells["prepared"] if s != "fireball"][:-1] + ["fireball"]  # (ready too)
     c.uses["signature:fireball"] = c.uses["signature:lightning_bolt"] = 1
     spend_all_slots(c, tables)
     one = next(s for s in c.spells["mastery"] if tables.spells[s]["level"] == 1)

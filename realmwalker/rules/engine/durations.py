@@ -7,6 +7,8 @@ turn starts (or ends) `left` goes down by one, and at nothing the thing is over.
 or on a condition (`Fighter.cond_ends[condition]`). A condition's ending may also say:
     conc        the caster whose concentration holds it (it ends with that concentration)
     on_damage   it ends when the creature takes damage (Sleep)
+    damage_save {save, dc}: each time the creature takes damage it saves again, and a success ends it (Dominate)
+    control     the side it fights for while it lasts (Dominate: Fighter.team)
     then        a saving throw to make when it runs out, and what a failure brings (Sleep's second save):
                 {"save": "wis", "dc": 13, "caster": id, "spell": id, "on_fail": [effect ops]}
 
@@ -97,6 +99,11 @@ def on_damage(b, f) -> None:
             remove(f, cid)
             if cid in ("unconscious", "incapacitated") and f.state == "fighting":
                 b.say(f"{f.the_name} wakes with a start.", "system")
+        elif e.get("damage_save") and f.active and cid in f.conditions:  # (Dominate: hurt, it fights the hold)
+            ds = e["damage_save"]
+            if b._save(f, ds["save"], int(ds["dc"]), against=(cid,)):
+                remove(f, cid)
+                b.say(f"{f.the_name} throws off the hold on {'their' if f.char else 'its'} mind.", "system")
 
 
 def end_concentration(b, caster) -> None:

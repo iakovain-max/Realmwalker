@@ -108,10 +108,9 @@ def problems(b) -> list[str]:
 
 
 def test_the_catalogue_is_in_the_game(tables):
-    assert len(SPELLS) >= 70, "the first wave (cantrips to level 2) brings the battle spells"
+    assert len(SPELLS) >= 130, "the first two waves (cantrips to level 5) bring the battle spells"
     for sid in SPELLS:
         sp = tables.spells[sid]
-        assert sp["level"] <= 2 or sid in tables.spells, sid
         assert sp.get("fx"), f"{sid} has no look"
         assert sp["text"] and len(sp["text"]) <= 300, sid
 
@@ -155,6 +154,10 @@ NO_USE: dict[str, str] = {
     "expeditious_retreat": "nobody here is hurt badly enough to want to run",
     "protection_from_evil_and_good": "no aberration, celestial, elemental, fey, fiend or undead here",
     "silence": "no foe here casts spells",
+    "dimension_door": "the caster is barely hurt, and every square near a foe is beside another foe",
+    "dispel_magic": "no spell is on anyone here",
+    "dispel_evil_and_good": "no celestial, elemental, fey, fiend or undead here",
+    "greater_restoration": "nobody here is charmed, petrified or cursed",
 }
 
 

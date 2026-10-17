@@ -100,8 +100,20 @@ spellcasting and scrolls at the book's prices.
   darkvision, detect thoughts, enhance ability, enthrall, find traps, gentle repose, knock, levitate, locate
   animals or plants, locate object, magic mouth, Nystul's magic aura, pass without trace, rope trick, see
   invisibility, spider climb, zone of truth. Waiting for F: find familiar, find steed, summon beast.
-- [ ] D.2 3rd to 5th level (128; Counterspell is in already, B.4). Dispel Magic with the Abjurer's Spell Breaker: a
+- [x] D.2 3rd to 5th level (128; Counterspell is in already, B.4). Dispel Magic with the Abjurer's Spell Breaker: a
   bonus action for them, their proficiency added to its check, the slot kept when it ends nothing.
+  Built: 66 battle spells (23 of level 3, 22 of level 4, 21 of level 5) on new kernel pieces (sent away and back,
+  dispelling, auras shared with friends, Confusion, Haste, Slow, Blink, ground that holds or sickens, walls). The
+  2024 Conjure spells are not creatures: they are ground or auras and came now. Waiting for E: clairvoyance,
+  create food and water, daylight, feign death, gaseous form, glyph of warding, Leomund's tiny hut, magic circle,
+  major image, meld into stone, nondetection, phantom steed, plant growth, remove curse, sending, speak with dead,
+  speak with plants, tongues, water breathing, water walk; arcane eye, control water, divination, fabricate,
+  hallucinatory terrain, Leomund's secret chest, locate creature, Mordenkainen's faithful hound, Mordenkainen's
+  private sanctum, stone shape; awaken, commune, commune with nature, contact other plane, creation, dream, geas,
+  hallow, legend lore, mislead, modify memory, passwall, Rary's telepathic bond, raise dead, reincarnate, scrying,
+  seeming, teleportation circle, tree stride. Waiting for F: animate dead, summon fey, summon undead; giant
+  insect, polymorph (the beasts it turns into come with F's stat blocks), summon aberration, summon construct,
+  summon elemental; animate objects, planar binding, summon celestial, summon dragon.
 - [ ] D.3 6th and 7th level (55).
 - [ ] D.4 8th and 9th level (34), Wish (its safe uses and its stress) and Meteor Swarm; Part D to `main`.
 
