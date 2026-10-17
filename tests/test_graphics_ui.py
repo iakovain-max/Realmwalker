@@ -271,6 +271,33 @@ def test_the_battlefield_is_drawn_as_a_grid_with_highlights(pictured):
     assert app.error_count == 0
 
 
+def test_the_domains_on_the_battle_mat(pictured):
+    """A Trickery cleric's double (its maker's pale likeness), a Light cleric's corona, a warding flare and a god's
+    answer are drawn without trouble (Expansion 5 Part B)."""
+    from realmwalker.game import fight
+    from realmwalker.game.encounters import make_encounter
+    from realmwalker.rules.combat import Token
+    from realmwalker.rules.engine.handlers import domains
+
+    app, game = pictured
+    enc = make_encounter(game, "wolf_pack", game.world.rng.child("domains"))
+    battle = fight.start_battle(game, enc.creatures, enc.intro, title="Wolves")
+    render(app)
+    me = battle.side("party")[0]
+    foe = battle.side("foe")[0]
+    tok = Token(battle._zone_id(), domains.DOUBLE, foe.x - 1, foe.y, me.id, rounds=10)
+    battle.tokens.append(tok)
+    battle._event("token", id=tok.id, what=tok.kind, x=tok.x, y=tok.y, owner=me.id)
+    me.buffs.append({"corona": True, "light": 12, "rounds": 10, "source": "corona_of_light"})
+    battle._event("flare", by=me.id, at=foe.id, to=me.id)
+    battle._event("miracle", who=me.id, domain="light")
+    battle._event("double_cast", id=tok.id, by=me.id)
+    for _ in range(6):
+        app.update()
+        render(app)
+    assert app.error_count == 0
+
+
 # ---------------------------------------------------------------------------- the painter
 def test_the_map_painter_paints_pieces_that_meet(make_app, world):
     from realmwalker.ui.gfx.paint import CANON, ChunkCache, WorldPainter

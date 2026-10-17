@@ -306,6 +306,25 @@ class BattleBoard:
                             "color": (240, 214, 130), "t0": at, "dur": FLOAT, "size": 15, "low": False})
             self.fx.append({"kind": "ring", "who": ev["who"], "t0": at, "dur": 0.5, "color": (240, 214, 130)})
             return t
+        if k == "flare":  # (Warding Flare: light flares from the cleric into the attacker's eyes)
+            at = max(t, self._impact)
+            self.fx.append({"kind": "ring", "who": ev["by"], "t0": at, "dur": 0.4, "color": (255, 236, 160)})
+            self.fx.append({"kind": "burst", "who": ev["at"], "sprite": "fx/sparkle", "t0": at + 0.05, "dur": 0.45})
+            self.fx.append({"kind": "float", "who": ev["at"], "text": "dazzled", "color": (255, 236, 160),
+                            "t0": at + 0.05, "dur": FLOAT * 0.8, "size": 14, "low": False})
+            return t + 0.15
+        if k == "miracle":  # (a god answers the dying: a column of the god's light and a word over them)
+            at = max(t, self._impact) + 0.1
+            color = {"life": (190, 240, 170), "light": (255, 240, 170), "trickery": (200, 180, 255),
+                     "war": (255, 170, 120)}.get(ev.get("domain", ""), (255, 240, 170))
+            self.fx.append({"kind": "ring", "who": ev["who"], "t0": at, "dur": 1.0, "color": color})
+            self.fx.append({"kind": "burst", "who": ev["who"], "sprite": "fx/sparkle", "t0": at, "dur": 0.9})
+            self.fx.append({"kind": "float", "who": ev["who"], "text": "the god answers", "color": color,
+                            "t0": at + 0.1, "dur": FLOAT * 1.4, "size": 18, "low": False})
+            return t + 0.6
+        if k == "double_cast":  # (Invoke Duplicity: the spell leaves from the double's square)
+            self.fx.append({"kind": "tok_glow", "id": ev["id"], "t0": t, "dur": 0.5})
+            return t + 0.1
         if k == "illusion" and ev.get("what") == "double":  # (Illusory Self: the struck figure bursts into mist)
             at = max(t, self._impact)
             self.fx.append({"kind": "ring", "who": ev["who"], "t0": at, "dur": 0.45, "color": (190, 170, 255)})
@@ -873,6 +892,21 @@ class BattleBoard:
                         k = math.sin(math.pi * (now - e["t0"]) / e["dur"]) * 0.45
                         px += (tx - T / 2 - px) * k
                         py += (ty - T - py) * k
+            if tok.kind == "duplicity":  # (a Trickery cleric's double: its maker's likeness, pale and shimmering)
+                parts = self.figures.get(tok.owner)
+                glow = any(e["kind"] == "tok_glow" and e["id"] == tok.id and e["t0"] <= now <= e["t0"] + e["dur"]
+                           for e in self.fx)
+                canvas.under(Image("bshadow", _shadow_image, (px + T * 0.14, py + T * 0.86, T * 0.72, T * 0.22),
+                                   rgba=(255, 255, 255, 80)))
+                if glow:
+                    canvas.under(Image("bglow", _glow_image, (px - T * 0.2, py - T * 0.2, T * 1.4, T * 1.4),
+                                       rgba=(200, 180, 255, 150)))
+                if parts:
+                    flick = 0.08 * math.sin(now * 3.1 + tok.id) if canvas.gfx.ambient else 0.0
+                    cmd = dolls.draw(atlas, parts, px, py, T, (0.82, 0.8, 1.0), 0.58 + flick, 0.0)
+                    if cmd is not None:
+                        canvas.under(cmd)
+                continue
             if tok.kind == "mage_hand":  # (an Arcane Trickster's unseen hand: only its own side sees it, faintly)
                 owner = next((f for f in battle.fighters if f.id == tok.owner), None)
                 if owner is None or owner.side != "party":
@@ -976,6 +1010,10 @@ class BattleBoard:
                 canvas.under(cmd)
             if f.concentration is not None and gfx.ambient:
                 canvas.under(Image("bglow", _glow_image, (cx - s * 0.5, fy - s * 1.1, s, s), rgba=(190, 150, 255, 46)))
+            if f.buffs and any(bf.get("corona") for bf in f.buffs):  # (Corona of Light: a sun about them)
+                pulse = 0.5 + 0.5 * math.sin(now * 2.2) if gfx.ambient else 0.6
+                canvas.under(Image("bglow", _glow_image, (cx - s * 0.95, fy - s * 1.55, s * 1.9, s * 1.9),
+                                   rgba=(255, 226, 140, int(70 + 50 * pulse))))
             if not unseen:
                 self._label(canvas, battle, f, cx, fy, s, ov)
             px, py = self.sq_px(x, y)

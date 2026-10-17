@@ -74,7 +74,7 @@ _ORDER = {s: i for i, s in enumerate((
     "exhaustion", "slowed", "sapped", "baned", "no_heal", "no_opportunity", "marked", "surprised", "bloodied", "festering",
     "pain", "drunk", "wounded", "shaped", "grappling", "concentrating", "flying", "hidden", "invisible", "dodging", "readied",
     "shielded", "warded", "resisting", "blessed", "guided", "vexing", "temp_hp", "heroic", "portent", "third_eye",
-    "spell"))}
+    "corona", "double", "tricksters_blessing", "spell"))}
 
 # Words for the states that are not conditions (the conditions' own words are data/conditions.json).
 _WORDS = {
@@ -104,6 +104,14 @@ _WORDS = {
     "portent": ("Foretold", "Rolls seen in dreams: before any D20 Test the diviner sees - their own, a friend's, a "
                 "foe's - one may take the roll's place, once a turn, each once. Lost at the next long rest."),
     "third_eye": ("The third eye", "Open until the next rest: darkness or the invisible hide nothing from it."),
+    "corona": ("Corona of Light", "Shining like the sun: bright light 60 feet round. Foes in it make their saves against "
+               "this cleric's Radiance of the Dawn and fire and radiant spells at a disadvantage."),
+    "double": ("A double", "A perfect likeness stands beside a foe: spells may be cast from its square, a foe beside both "
+               "is open to their blows (advantage), and a Bonus Action sends it up to 50 feet. It ends if its maker is "
+               "Incapacitated."),
+    "tricksters_blessing": ("The Trickster's blessing", "Soft feet and a shadow that keeps close: advantage on Stealth "
+                            "(hiding in a fight, creeping in towns, slipping past a band) until the cleric's next long "
+                            "rest."),
     "shaped": ("In another shape", "Polymorph holds them in a borrowed body: its blows, armour and speed, its hit "
                                    "points as temporary ones on top of their own. No spells, no gear. It ends when "
                                    "those are gone or the caster's concentration does."),
@@ -247,6 +255,13 @@ def _buff_status(b, f, bf: dict, tables) -> Status | None:
     name = spell.get("name") or sid.replace("_", " ").capitalize()
     if src == "dazed_still":
         return None  # (shown as the daze itself)
+    if bf.get("corona"):  # (a Light cleric's Corona of Light: Expansion 5 Part B)
+        return Status("corona", Card(_WORDS["corona"][0], "", "status/corona", [_WORDS["corona"][1]],
+                                     _ending(b, None, int(bf["rounds"]) if bf.get("rounds") else None)))
+    if src == "god_war":  # (a god of war answered the dying: rules/miracles.py)
+        return Status("blessed", Card("The god's own fire", "", "status/blessed", [
+            "Their god answered as they lay dying: a d4 added to attack rolls and saving throws."],
+            _ending(b, None, int(bf["rounds"]) if bf.get("rounds") else None)))
     marked = _catalogue_mark(b, bf, spell)
     if marked is not None:
         kind, title, lines = marked
@@ -596,6 +611,12 @@ def statuses(f, b=None) -> list[Status]:
     if char is not None and char.spells and char.spells.get("third_eye"):
         gift = {"dark": "Darkvision to 120 feet.", "unseen": "The invisible are seen."}.get(char.spells["third_eye"], "")
         add(_plain("third_eye", _WORDS["third_eye"][0], f"{_WORDS['third_eye'][1]} {gift}".strip()))
+    if b is not None and b.tokens:  # (Invoke Duplicity: the maker's double on the field)
+        tok = next((t for t in b.tokens if t.owner == f.id and t.kind == "duplicity"), None)
+        if tok is not None:
+            add(_plain("double", *_WORDS["double"], _rounds(int(tok.rounds) + 1) + "."))
+    if char is not None and (char.effects or {}).get("kept:trickster_blessing"):
+        add(_plain("tricksters_blessing", *_WORDS["tricksters_blessing"]))
     if f.surprised:
         add(_plain("surprised", *_WORDS["surprised"]))
     if f.attached_to is not None:

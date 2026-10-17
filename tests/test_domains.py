@@ -367,3 +367,73 @@ def test_after_the_fight_the_world_remembers_and_the_god_is_quiet(game, tables):
     assert notes and "answered" in notes[0]
     assert len(game.world.history) == before + 1 and game.world.history[-1]["kind"] == "miracle"
     assert gods.chance(game, c) == 0.0
+
+
+# ---------------------------------------------------------------------------- the Auto, the cards
+def test_the_auto_trickster_makes_a_double_and_sends_it_on(tables):
+    c, b, me, foes = duplicity(tables, level=3, seed=30, foes=("bandit", "bandit"))
+    me.auto = True
+    tactics.take_turn(b, me) if b.current is me else tactics._domain_bonus(b, me)
+    assert domains.double_of(b, me) is not None
+    tok = domains.double_of(b, me)
+    for e in foes:  # (its foe falls: the double goes on to another)
+        if grid_gap(tok, e) <= 1:
+            e.hp = 0
+            e.state = "dead"
+    on_turn(b, me)
+    if any(e.active for e in foes):
+        tactics._domain_bonus(b, me)
+        tok = domains.double_of(b, me)
+        assert any(e.active and grid_gap(tok, e) <= 1 for e in foes)
+
+
+def grid_gap(tok, e):
+    from realmwalker.rules import grid
+
+    return grid.gap((tok.x, tok.y, 1), e.space)
+
+
+def test_the_auto_light_cleric_burns_a_crowd_with_the_dawn(tables):
+    from realmwalker.rules.engine import estimates
+
+    c = priest(tables, 3, "light", seed=31)
+    b = fight(tables, c, "bandit", "bandit", "bandit", seed=31)
+    me, foes = me_and(b)
+    for i, e in enumerate(foes):
+        e.x, e.y = me.x + 1, me.y - 1 + i
+    on_turn(b, me)
+    a = actions.find(me, "radiance_of_the_dawn")
+    assert estimates.ability_value(b, me, a).total() > 10
+    c.spells["slots_used"] = [9] * 9  # (no slots left: the god's own light is the best it has)
+    before = c.uses["channel_divinity"]
+    me.auto = True
+    tactics._party_turn(b, me)
+    assert c.uses["channel_divinity"] == before - 1
+    assert any(e["kind"] == "cast" and e.get("spell") == "radiance_of_the_dawn" for e in b.events)
+    assert all(e.hp < e.max_hp for e in foes)
+
+
+def test_the_auto_corona_early_against_a_crowd(tables):
+    c = priest(tables, 17, "light", seed=32)
+    b = fight(tables, c, "bandit", "bandit", seed=32)
+    me, foes = me_and(b)
+    on_turn(b, me)
+    b.round = 1
+    tactics._corona(b, me)
+    assert domains.corona_of(me) is not None and c.uses["corona_of_light"] == res.maximum(
+        c, res.pools(c, tables)["corona_of_light"]) - 1
+
+
+def test_the_new_statuses_have_cards_and_pictures(tables):
+    from realmwalker.rules import describe
+    from realmwalker.ui.gfx import headless
+
+    atlas = headless().atlas
+    c, b, me, (foe,) = duplicity(tables, level=17, seed=33)
+    b.do_ability(me, "invoke_duplicity", foe)
+    domains.bless([c], c)
+    me.buffs.append({"corona": True, "light": 12, "rounds": 10, "source": "corona_of_light"})
+    ids = {s.id for s in describe.statuses(me, b)}
+    assert {"double", "tricksters_blessing", "corona"} <= ids
+    for s in describe.statuses(me, b):
+        assert atlas.has(s.card.icon), s.card.icon
