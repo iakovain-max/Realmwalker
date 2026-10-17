@@ -30,7 +30,8 @@ from realmwalker.core import dice
 from realmwalker.core.textgen import escape_markup
 from realmwalker.rules import spells as spellrules
 
-SANCTUARY = "recall_sanctuary"  # in the caster's effects: the settlement id + 1 of Word of Recall's sanctuary
+SANCTUARY = "sanctuary"  # in the caster's spells: the settlement id of Word of Recall's sanctuary (not in the effects,
+# which wear away by the hour)
 CARRIES = {"teleport": 9, "recall": 6, "shift": 9, "astral": 9}  # the caster and up to eight (five) more
 GATE_REACH = 100  # squares: Arcane Gate's 500 feet
 # The 2024 Teleportation Outcome table: the highest d100 roll of each outcome, by familiarity (PHB p. 334).
@@ -115,7 +116,7 @@ def _towns(game, keep) -> list[Place]:
             continue
         out.append(Place(s.name, "town", s.id, known, s.x, s.y))
     px, py = game.player.x, game.player.y
-    return sorted(out, key=lambda pl: math.hypot(pl.x - px, pl.y - py))[:40]
+    return sorted(out, key=lambda pl: math.hypot(pl.x - px, pl.y - py))
 
 
 def woodland(game, x: int, y: int) -> bool:
@@ -164,10 +165,10 @@ def places(game, caster, sid: str) -> list[Place]:
 
 
 def sanctuary(game, caster):
-    v = caster.effects.get(SANCTUARY)
-    if not v:
+    v = (caster.spells or {}).get(SANCTUARY)
+    if v is None:
         return None
-    sid = int(v) - 1
+    sid = int(v)
     return game.world.settlements[sid] if 0 <= sid < len(game.world.settlements) else None
 
 
@@ -200,7 +201,8 @@ def problem(game, caster, sid: str, target) -> str | None:
         if game.local is None or game.local.kind != "dungeon":
             return "only under the ground, to stairs within 500 feet"
         return None if _stairs(game) else "no stairs within 500 feet"
-    if how == "plants" and not woodland(game, game.player.x, game.player.y):
+    if how == "plants" and (game.local is not None and game.local.kind == "dungeon"
+                            or not woodland(game, game.player.x, game.player.y)):
         return "there is no great tree here to step into"
     if how == "astral":
         need = len(travellers)
@@ -259,16 +261,17 @@ def _off(game, x: int, y: int, rng) -> tuple[int, int, int]:
     dx, dy = [(1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)][rng.randint(0, 7)]
     n = max(1, round(miles / MILES_PER_TILE))
     w = game.world
-    for step in range(n, -1, -1):  # (the nearest dry land on the way back, if it would be water)
+    for step in range(n, 0, -1):  # (the nearest dry land on the way back, if it would be water)
         tx, ty = x + dx * step, y + dy * step
         if w.in_bounds(tx, ty) and game.biome_def(tx, ty)["passable"]:
-            return tx, ty, miles
+            return tx, ty, max(1, round(miles * step / n))
     return x, y, 0
 
 
 def _hurt(game, rng) -> list[str]:
     """A mishap: 3d10 force to each traveller (down, not dead, at 0: as after a trap)."""
     out = []
+    downed = False
     for c in game.party:
         if not c.alive:
             continue
@@ -284,9 +287,11 @@ def _hurt(game, rng) -> list[str]:
                 survival.check_death(game, c)
             else:
                 c.hp = 1
-                from realmwalker.game.fight import lie_senseless
+                downed = True
+    if downed:
+        from realmwalker.game.fight import lie_senseless
 
-                out.append(lie_senseless(game, 1))
+        out.append(lie_senseless(game, 1))  # (once for the mishap, however many went down)
     return out
 
 
@@ -316,13 +321,13 @@ def travel(game, caster, sid: str, target, level: int) -> list[str]:
     first = _first(caster)
     if how == "recall" and in_a_temple(game):
         here = game.world.settlement_at(game.player.x, game.player.y)
-        caster.effects[SANCTUARY] = float(here.id + 1)
+        caster.spells[SANCTUARY] = int(here.id)
         return [f"{first} kneels before the altar and speaks the word: this temple of {escape_markup(here.name)} is "
                 f"now {first}'s sanctuary. <dim>Cast again anywhere, Word of Recall brings you back here.</>"]
     if how == "recall":
         home = sanctuary(game, caster)
         _arrive(game, home.x, home.y)
-        return [f"{first} speaks a single word, and the world folds: you stand in the temple of "
+        return [f"{first} speaks a single word, and the world folds: you stand before the temple of "
                 f"{escape_markup(home.name)}, the sanctuary."]
     if how == "gate":
         place = target if isinstance(target, Place) else _stairs(game)[0]
@@ -370,7 +375,8 @@ def travel(game, caster, sid: str, target, level: int) -> list[str]:
         if result == "off":
             x, y, miles = _off(game, aim.x, aim.y, rng)
             _arrive(game, x, y)
-            out.append(f"<warn>You come out in open country, {miles} miles from {escape_markup(aim.name)}.</>")
+            out.append(f"<warn>You come out in open country, {miles} miles from {escape_markup(aim.name)}.</>" if miles
+                       else f"<good>You stand at {escape_markup(aim.name)}.</>")
             return out
         _arrive(game, aim.x, aim.y)
         out.append(f"<good>You stand at {escape_markup(aim.name)}.</>")
@@ -379,7 +385,8 @@ def travel(game, caster, sid: str, target, level: int) -> list[str]:
         x, y, miles = _off(game, aim.x, aim.y, rng)
         _arrive(game, x, y)
         out.append(f"<warn>You come down in open country, {miles} miles from {escape_markup(aim.name)}: without a "
-                   f"circle's sigils the way back in is never sure.</>")
+                   f"circle's sigils the way back in is never sure.</>" if miles
+                   else f"<good>You stand at {escape_markup(aim.name)}.</>")
         return out
     _arrive(game, aim.x, aim.y)
     if how != "circle":
@@ -440,7 +447,7 @@ def ashore(game) -> str:
         return ""
     w = game.world
     best = None
-    for r in range(1, 12):
+    for r in range(1, max(w.width, w.height)):
         for dx in range(-r, r + 1):
             for dy in range(-r, r + 1):
                 x, y = p.x + dx, p.y + dy
@@ -453,13 +460,17 @@ def ashore(game) -> str:
             break
     if best is None:
         return ""
+    prev = w.area_at(p.x, p.y)
     p.x, p.y = best
+    game.travel = None
+    game.camp = None
     game._wading = True
     for c in game.party:
         if c.alive:
             c.fatigue = min(100.0, c.fatigue + 25.0)
     game.pass_time(60, "walk")
     game.reveal()
+    game._arrive(prev)
     return ("<danger>The spell gives out beneath you, and you are in the water.</> You swim for the nearest shore and "
             "drag yourselves out, soaked and spent.")
 

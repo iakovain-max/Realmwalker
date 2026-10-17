@@ -327,6 +327,13 @@ class GameState:
         from realmwalker.game import spellwork
 
         spellwork.tick(self)  # (magic berries are gone when their day is out)
+        p = self.player
+        if not self.in_local and self.party and self.over is None and not self.biome_def(p.x, p.y)["passable"]:
+            from realmwalker.game import waymagic
+
+            said = waymagic.ashore(self)  # (a spell that held the party over the water ran out while time passed)
+            if said:
+                self.say(said, "warn")
         self._weather_moment()
         after = self.moment
         from realmwalker.game import magic_items

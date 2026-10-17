@@ -414,6 +414,7 @@ def _feigned(game, battle: Battle, rng, after: Aftermath) -> None:
     """A lost fight with a friend lying as if dead (Feign Death): the foes take everyone for dead and go. The
     feigner gets up when they are gone; the fallen beside them make the Constitution save of those left for dead
     (as after beasts), and the feigner binds them if they wake."""
+    from realmwalker.core.textgen import escape_markup
     from realmwalker.rules.character import Sheet
 
     feigners = [f.char for f in battle.side(PARTY) if f.char is not None and f.char.alive and f.buff_value("feigning")]
@@ -424,20 +425,18 @@ def _feigned(game, battle: Battle, rng, after: Aftermath) -> None:
         roll = dice.d20(rng).natural
         sheet = Sheet(c, game.tables)
         bonus = sheet.mod("con") + (sheet.proficiency if "con" in c.saves else 0)
-        game.say(f"<dice>{c.name.split()[0]} (Constitution save): {roll} {'+' if bonus >= 0 else '-'} {abs(bonus)} = "
-                 f"{roll + bonus} vs DC {MAULED_DC}</>", "dice")
+        game.say(f"<dice>{escape_markup(c.name.split()[0])} (Constitution save): {roll} {'+' if bonus >= 0 else '-'} "
+                 f"{abs(bonus)} = {roll + bonus} vs DC {MAULED_DC}</>", "dice")
         if roll + bonus >= MAULED_DC:
             c.hp = max(1, c.hp)
         else:
             c.alive = False
             c.hp = 0
             if c is not game.party[0]:
-                after.notes.append(f"<danger>{c.name.split()[0]} never wakes.</>")
+                after.notes.append(f"<danger>{escape_markup(c.name.split()[0])} never wakes.</>")
     for c in feigners:
         c.hp = max(1, c.hp)
     after.outcome = "mauled"
-    from realmwalker.core.textgen import escape_markup
-
     names = ", ".join(escape_markup(c.name.split()[0]) for c in feigners)
     after.text = (f"They prod the bodies, take {names} for one more of the dead, and go. When the last sound of them "
                   f"is gone, {names} gets up.")

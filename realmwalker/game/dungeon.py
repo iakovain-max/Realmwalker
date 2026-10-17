@@ -351,9 +351,12 @@ def feather_fall(game, faller) -> str:
         if not ok or slot is None:
             continue
         spells.spend_slot(c, slot)
-        who = "" if c is faller else f"{body.first(c)} speaks a word as {body.first(faller)} drops: "
-        return (f"<magic>{who}{body.first(faller)} drifts down into the pit like a feather</> and lands unharmed, and "
-                f"climbs out again. (Feather Fall)")
+        from realmwalker.core.textgen import escape_markup
+
+        me, them = escape_markup(body.first(c)), escape_markup(body.first(faller))
+        who = "" if c is faller else f"{me} speaks a word as {them} drops: "
+        return (f"<magic>{who}{them} drifts down into the pit like a feather</> and lands unharmed, and climbs out "
+                f"again. (Feather Fall)")
     return ""
 
 

@@ -849,10 +849,17 @@ def lasting_values(char: Character, tables, key: str) -> list:
         return []
     out = []
     for sid in lasting(char, tables):
-        buff = buff_of(tables.spells[sid], cast_at(char, tables, sid))
-        if key in buff:
-            out.append(buff[key])
+        spell = tables.spells[sid]
+        level = cast_at(char, tables, sid)
+        made = _BUFFS.get((id(spell), level))
+        if made is None or made[0] is not spell:
+            made = _BUFFS[(id(spell), level)] = (spell, buff_of(spell, level))
+        if key in made[1]:
+            out.append(made[1][key])
     return out
+
+
+_BUFFS: dict = {}  # (id of a spell's definition, slot level) -> (the definition, its buff): read at every look
 
 
 def lasting_flag(char: Character, tables, key: str) -> bool:

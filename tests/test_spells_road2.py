@@ -631,3 +631,35 @@ def test_the_spells_page_lists_where_teleport_goes_and_takes_you(make_app):
     for size in ((80, 30), (160, 45)):
         app.render(tcod.console.Console(*size, order="F"))
     assert app.error_count == 0
+
+
+# ---------------------------------------------------------------------------- the fresh review's fixes
+def test_the_sanctuary_does_not_wear_away(world, tables, monkeypatch):
+    cleric = hero(tables, "cleric")
+    game = game_with(world, tables, cleric)
+    home = game.world.settlement_at(game.player.x, game.player.y)
+    monkeypatch.setattr(waymagic, "in_a_temple", lambda g: True)
+    cast(game, cleric, "word_of_recall")
+    game.pass_time(60 * 24 * 3)
+    assert waymagic.sanctuary(game, cleric).id == home.id, "three days on, the sanctuary is the same"
+
+
+def test_far_out_on_the_sea_or_resting_on_a_lake_the_party_still_reaches_land(world, tables):
+    cleric = hero(tables, "cleric")
+    game = game_with(world, tables, cleric)
+    w = game.world
+    sea = max(((x, y) for x in range(w.width) for y in range(w.height) if game.biome_key(x, y) == "ocean"),
+              key=lambda xy: min((abs(xy[0] - s.x) + abs(xy[1] - s.y) for s in w.settlements), default=0))
+    game.player.x, game.player.y = sea
+    assert "swim" in waymagic.ashore(game) and game.biome_def(game.player.x, game.player.y)["passable"]
+    lake = next((x, y) for x in range(w.width) for y in range(w.height) if game.biome_key(x, y) == "lake")
+    game.player.x, game.player.y = lake
+    game.pass_time(30)  # (resting out there when the spell gives out)
+    assert game.biome_def(game.player.x, game.player.y)["passable"]
+
+
+def test_no_tree_to_step_into_under_the_ground(world, tables):
+    cleric = hero(tables, "cleric")
+    game = game_with(world, tables, cleric)
+    into_dungeon(game)
+    assert "no great tree" in (magic.road_problem(game, cleric, "transport_via_plants") or "")

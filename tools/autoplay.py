@@ -401,7 +401,8 @@ def _check_companions(game, fail) -> None:
     if on_water and game.magic_crossing(game.player.x, game.player.y) is None:  # (Expansion 3 E.2: water walked on,
         fail("the party stands on open water with no spell to carry it")  # a lake walked under, the wind)
     for c in game.party:  # (E.2: a lasting spell's flags are kept only while it lasts)
-        if c.effects.get("recall_sanctuary") and not 0 < int(c.effects["recall_sanctuary"]) <= len(game.world.settlements):
+        home = (c.spells or {}).get("sanctuary")
+        if home is not None and not 0 <= int(home) < len(game.world.settlements):
             fail(f"{c.name}'s sanctuary is no town")
     for b in getattr(game, "fallen", []) or []:  # (Expansion 3 E.1: the bodies the party carries for raising)
         if b["char"].alive or any(b["char"] is c for c in game.party):

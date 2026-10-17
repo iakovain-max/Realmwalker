@@ -373,11 +373,15 @@ def cast_on_road(game, caster, spell_id: str, target=None, slot_level: int | Non
     if use in spellrules.ROAD_USES:
         from realmwalker.game import spellwork
 
+        if use == "travel":  # (the casting's minutes and its witnesses are where it is cast, not where it goes)
+            game.pass_time(spellwork.minutes(spell), "rest")
+            _magic_seen(game, caster)
         msgs = pre + spellwork.cast(game, caster, spell_id, target, slot or int(spell["level"]))
         if used:
             msgs.append(f"<dim>The {used} is used up.</>")
-        game.pass_time(spellwork.minutes(spell), "rest")
-        _magic_seen(game, caster)
+        if use != "travel":
+            game.pass_time(spellwork.minutes(spell), "rest")
+            _magic_seen(game, caster)
         return msgs
     if use == "identify":
         from realmwalker.game import magic_items
