@@ -112,7 +112,7 @@ def berserk_lashing(b, f, ev, hook, buff) -> None:
 def fey_mood(c, o, victim) -> None:
     """What a fey spirit's Fey Step brings, by its mood: Fuming, Advantage on its next attack this turn; Mirthful, a
     foe it sees within 10 feet saves (Wisdom) or is Charmed for a minute, until it takes damage; Tricksy, magical
-    Darkness on a 10-foot cube beside it until its next turn."""
+    Darkness on a 10-foot cube beside it until its next turn is over (it lifts as the turn after begins)."""
     b, f = c.b, c.caster
     mood = o.get("mood", "fuming")
     if mood == "fuming":
@@ -135,6 +135,6 @@ def fey_mood(c, o, victim) -> None:
                  if b.field.in_bounds(x, y)}
         if not cells:
             return
-        z = Zone(b._zone_id(), "darkness", cells, owner=f.id, spell=c.sid, rounds=0, centre=here, dark=True)
+        z = Zone(b._zone_id(), "darkness", cells, owner=f.id, spell=c.sid, rounds=1, centre=here, dark=True)
         b._add_zone(z)
         b.say(f"{f.the_name} giggles, and darkness pools beside it.", "magic")

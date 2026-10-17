@@ -1087,7 +1087,7 @@ def _figure(f, game, atlas) -> list:
         return dolls.character(f.char, game.tables, atlas=atlas)
     bond = getattr(f, "bond", None) or {}
     if bond.get("picture"):  # (a steed: the animal it looks like, in its kind's colours; a spirit: its form's)
-        tint = STEED_TINT.get(bond.get("type", ""), (1.0, 1.0, 1.0)) if bond.get("kind") == "steed" else (1.0, 1.0, 1.0)
+        tint = STEED_TINT.get(bond.get("type", ""), dolls.WHITE) if bond.get("kind") == "steed" else dolls.WHITE
         return [(f"creature/{bond['picture']}", tint, 0, 0)]
     return dolls.creature(f.creature.def_id, game.tables, f"foe{f.id}", atlas, sex=getattr(f.creature, "sex", ""))
 

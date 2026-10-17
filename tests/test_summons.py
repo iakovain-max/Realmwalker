@@ -361,3 +361,45 @@ def test_the_battle_screen_plays_a_summoned_spirit(make_app):
         for size in ((80, 30), (160, 45)):
             screen.render(widgets.Canvas(tcod.console.Console(*size, order="F")))
     assert app.error_count == 0
+
+
+def test_every_spirit_form_is_drawn_and_what_it_leaves_goes_with_it(tables):
+    """Each form's picture is stacked as the window draws it (dolls.compose with the real tile sheets), and a fey
+    spirit's darkness goes when the spirit does."""
+    from realmwalker.paths import Paths
+    from realmwalker.ui.gfx import battlefx, dolls
+    from realmwalker.ui.gfx.atlas import Atlas
+
+    atlas = Atlas(Paths().tiles)
+    assert atlas.ok
+    for sid in SPELLS:
+        cid = tables.spells[sid]["effects"][0]["creature"]
+        assert atlas.has(f"creature/{cid}")
+        for form in tables.creatures[cid]["summon"]["forms"]:
+            b, me = scene(tables)
+            my_turn(b, me)
+            s = summon(b, me, sid, form=form)
+            parts = battlefx._figure(s, None, atlas)
+            assert atlas.has(parts[0][0]), parts
+            assert dolls.compose(atlas, parts) is not None
+    b, me = scene(tables)
+    my_turn(b, me)
+    fey = summon(b, me, "summon_fey", form="tricksy")
+    fey.bonus = 1
+    assert b.creature_cast(fey, "fey_step_tricksy", point=(6, 5))
+    assert any(z.owner == fey.id for z in b.zones)
+    b._end_concentration(me, quiet=True)
+    assert not any(z.owner == fey.id for z in b.zones), "its darkness goes with it"
+
+
+def test_an_enemy_spirit_is_no_slain_foe(tables):
+    b, me = scene(tables, foes=("bandit", "bandit"))
+    foe = b.fighters[1]
+    s = allies.summon_spirit(b, foe, "bestial_spirit", 2, (8, 6), sid="summon_beast")
+    b.dismiss(s)
+    for x in b.side(FOE):
+        if x.bond is None:
+            x.state = "dead"
+    b._check_end()
+    r = b.result()
+    assert s.creature not in r.dead and len(r.dead) == 2

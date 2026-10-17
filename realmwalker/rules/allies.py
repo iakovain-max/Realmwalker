@@ -282,7 +282,7 @@ def summon_spirit(b, owner, cid: str, level: int, point=None, sid: str = "", for
         attack, dc = int(sc.get("attack", 5)), int(sc.get("dc", 13))
     cdef = summon_def(b.t, cid, level, form, attack, dc)
     hp = int(cdef["hp"])  # (a summoned creature's hit points are a number, not dice)
-    uid = SUMMON_UID + owner.id * 20 + sum(1 for x in b.fighters if x.bond is not None)
+    uid = max([SUMMON_UID] + [x.creature.uid + 1 for x in b.fighters if x.creature is not None])
     cr = Creature(uid=uid, def_id=cid, name=cdef["name"], hp=hp, max_hp=hp, named=False)
     f = b.add_ally(cr, owner, "summon", spell=sid, level=max(int(cdef["summon"]["level"]), int(level)),
                    type_=cdef.get("kind", ""), cdef=cdef, point=point)
