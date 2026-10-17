@@ -1278,18 +1278,21 @@ def held_spells(b, x) -> list:
         held = [cid for cid, e in x.cond_ends.items() if e.get("conc") == caster.id] + \
             [se["cond"] for se in x.save_ends if se.get("conc") == caster.id]
         away = x.state == "away" and x.away and x.away.get("by") == caster.id
-        if not held and not away:
+        shaped = x.shape is not None and x.shape.get("by") == caster.id  # (Polymorph: Expansion 3 F.6)
+        if not held and not away and not shaped:
             continue
         sp = b.t.spells[conc["spell"]]
         if sp.get("no_dispel"):
             continue  # (Forcecage: Dispel Magic cannot end it)
 
-        def end(x=x, caster=caster, held=tuple(held), away=away):
+        def end(x=x, caster=caster, held=tuple(held), away=away, shaped=shaped):
             for cid in held:
                 durations.remove(x, cid)
                 x.save_ends = [se for se in x.save_ends if se.get("cond") != cid]
             if away:
                 b.bring_back(x)
+            if shaped:
+                b.unshape(x)
         out.append((int(sp["level"]) + int(conc.get("up", 0)), sp["name"], end, caster.id))
     return out
 

@@ -14,7 +14,7 @@ STATUS_NAMES: list[str] = [
     "readied", "marked", "temp_hp", "heroic", "slowed", "burning", "grappling", "blessed", "baned",
     "shielded", "warded", "resisting", "guided", "no_heal", "no_opportunity", "surprised",
     "attached", "bleeding", "festering", "pain", "drunk", "wounded", "spell", "bound", "demand",
-    "sapped", "vexing",
+    "sapped", "vexing", "shaped",
 ]
 
 PALETTE: dict[str, tuple[int, int, int, int]] = {
@@ -603,6 +603,18 @@ ART: dict[str, list[str]] = {
         "..kbbbbbbk",
         "...kbbbbk.",
         "....kkkk..",
+    ],
+    "shaped": [  # two arrows turning one into the other (Polymorph)
+        "..kkkkk...",
+        ".kvvvvvk..",
+        "kvk...kvk.",
+        "kk.....vkk",
+        "........vk",
+        "kv........",
+        "kkv.....kk",
+        ".kvk...kvk",
+        "..kvvvvvk.",
+        "...kkkkk..",
     ],
     "vexing": [  # an eye on the gap in a guard (the Vex mastery)
         "..........",

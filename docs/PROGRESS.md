@@ -67,7 +67,12 @@ come next (F.7), then Animal Shapes and Shapechange (F.8).
 - Checked: tests for the forms by Challenge Rating, a foe turned and coming back with the rest of the blow, a foe
   who saves, a friend as the strongest beast played by the player without spells and back when the concentration
   ends, True Polymorph past the beasts, the fight's end and a death undoing it, the Auto choosing it against an ogre,
-  and the battle screen drawing and playing a shaped hero; the spell catalogue test casts both in a real fight.
+  and the battle screen drawing and playing a shaped hero; the spell catalogue test casts both in a real fight. The
+  whole test suite, the autoplay bot and the window smoke test. The fresh review's fixes: wounds stay on the body
+  under the shape (they bleed on, and those taken in it are kept); **Dispel Magic ends a shape**; temporary hit points
+  a hero had before (Heroism's) come back when the shape ends; a shaped caster's raised dead and animated objects
+  still wait for the word; a creature that loses its wings with its shape falls; a new status, **In another shape**,
+  with its own violet icon and card says who holds it; the Auto never turns its own spellcaster into a beast.
 
 ### Session, 2026-10-17 (afternoon): Demigods & Magics F.5 — the bound: a god's spirit for hire, and binding
 

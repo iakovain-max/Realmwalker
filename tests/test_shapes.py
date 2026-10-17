@@ -162,3 +162,32 @@ def test_the_battle_screen_draws_and_plays_a_shaped_hero_and_the_fight_ends_clea
     b.outcome = "victory"
     fight.finish_battle(game)
     assert f.shape is None and f.char is me and me.alive and app.error_count == 0
+
+
+def test_the_fresh_reviews_fixes_wounds_dispel_temporary_hit_points_and_the_card(tables):
+    from realmwalker.rules import describe
+    from realmwalker.rules.wounds import make_wound
+
+    wiz, friend = hero(tables), hero(tables, "fighter", seed=2)
+    b = battle(tables, [wiz, friend], ["ogre"], {0: (2, 4), 1: (3, 6), 2: (8, 4)})
+    me, ally, ogre = b.fighters[0], b.fighters[1], b.fighters[2]
+    ally.temp_hp = 6  # (Heroism's, say)
+    wound = make_wound("torso", "slashing", 1, b.rng, now=0)
+    if wound is not None:
+        friend.wounds.append(wound)
+    my_turn(b, me)
+    cast(b, me, "polymorph", ally, dc=40)
+    assert ally.wounds is friend.wounds  # (the body's wounds stay the body's)
+    card = [s for s in describe.statuses(ally, b) if s.id == "shaped"]
+    assert card and "Polymorph" in str(card[0].card)
+    assert estimates.spell_value(b, me, "polymorph", target=me).total(care=4.0) == 0  # (no wizard turns into a bear)
+    b._end_concentration(me, quiet=True)
+    assert ally.shape is None and ally.temp_hp == 6
+    cast(b, me, "polymorph", ogre, dc=40)
+    assert ogre.shape is not None
+    from realmwalker.rules.engine import effects
+
+    held = [h for h in effects.held_spells(b, ogre) if h[1] == "Polymorph"]
+    assert held
+    held[0][2]()  # (Dispel Magic ends it)
+    assert ogre.shape is None and ogre.cdef["name"] == "ogre"

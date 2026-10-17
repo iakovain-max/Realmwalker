@@ -330,6 +330,9 @@ class Fighter:
 
     @property
     def wounds(self) -> list:
+        was = getattr(self, "shape", None)
+        if was is not None:  # (Polymorph: the wounds are the body's under the form, and stay with it)
+            return (was["char"] or was["creature"]).wounds
         return self.char.wounds if self.char else self.creature.wounds
 
     def mod(self, ability: str) -> int:
@@ -879,7 +882,8 @@ class Battle:
         f.shape = None
         f.char, f.creature, f.cdef = was["char"], was["creature"], was["cdef"]
         f.slots, f.recharge, f.sq = was["slots"], was["recharge"], was["sq"]
-        f.temp_hp = 0
+        # (temporary hit points it had before - Heroism's, a leader's words - come back, no more than are left)
+        f.temp_hp = max(0, min(int(f.temp_hp), int(was.get("temp", 0))))
         f.hp = hp
         taken = {c for x in self.on_field() if x is not f for c in x.cells}
         if any(c in taken for c in f.cells):
@@ -888,6 +892,8 @@ class Battle:
         if not quiet:
             self.say(f"{f.the_name[:1].upper() + f.the_name[1:]} is {'themselves' if f.char else 'itself'} again.",
                      "magic")
+        if f.z > 0 and not f.hovers and f.fly_speed <= 0 and not f.buff_value("aloft") and self.outcome is None:
+            self._fall(f)  # (the wings were the form's)
 
     def unshape_all(self) -> None:
         for f in self.fighters:
@@ -3600,8 +3606,8 @@ class Battle:
         if not self._needs_word(f) or not f.can_act():
             return False
         owner = self.fighter(f.bond["owner"])
-        if owner is None or owner.char is None:
-            return False
+        if owner is None or owner.char is None and owner.shape is None:
+            return False  # (a creature that casts commands them as part of its turn; a shaped master still must)
         if f.bond.get("told") == self.round:  # (its master commanded it on this round's turn)
             return False
         f.dodging = True

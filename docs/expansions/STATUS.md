@@ -390,7 +390,8 @@ Ideas for later:
   creatures; F.8 Animal Shapes and Shapechange). The game picks the form (the strongest for a friend, the weakest for
   a foe); the party's own are always willing; a shape ends with the fight (the book: an hour); True Polymorph's
   lasting form and its objects are left out; a shaped character can still use the Influence actions (anatomy is not
-  checked for speech).
+  checked for speech); while shaped, what the game keeps on a character alone (exhaustion's penalties, Heroic
+  Inspiration, drink and pain) is set aside with it until the shape ends.
 Next session starts at: task F.7 in docs/expansions/03-demigods-magics.md (Part F: the rest of Appendix B - ape,
 badger, constrictor snake, crocodile, elephant, elk, giant badger, giant crab, giant goat, giant seahorse, giant
 weasel, goat, lion, octopus, panther, reef shark, tiger, venomous snake; imp, quasit, pseudodragon, sprite, sphinx of

@@ -63,7 +63,8 @@ CONDITIONS = ("blinded", "charmed", "deafened", "frightened", "grappled", "incap
 STATES = CONDITIONS + ("exhaustion", "bloodied", "dying", "stable", "concentrating", "hidden", "flying", "dodging",
                        "readied", "marked", "temp_hp", "heroic", "slowed", "burning", "grappling", "blessed", "baned",
                        "shielded", "warded", "resisting", "guided", "no_heal", "no_opportunity", "surprised",
-                       "attached", "bleeding", "festering", "pain", "drunk", "wounded", "spell", "sapped", "vexing")
+                       "attached", "bleeding", "festering", "pain", "drunk", "wounded", "spell", "sapped", "vexing",
+                       "shaped")
 ITEM_MARKS = ("bound", "demand")  # on an item's card and its row in the pack
 
 # The worst first: what can kill or stop someone, then what hampers, then what helps.
@@ -71,7 +72,7 @@ _ORDER = {s: i for i, s in enumerate((
     "dying", "stable", "unconscious", "petrified", "paralyzed", "stunned", "incapacitated", "restrained", "grappled",
     "charmed", "frightened", "blinded", "poisoned", "burning", "bleeding", "prone", "attached", "deafened",
     "exhaustion", "slowed", "sapped", "baned", "no_heal", "no_opportunity", "marked", "surprised", "bloodied", "festering",
-    "pain", "drunk", "wounded", "grappling", "concentrating", "flying", "hidden", "invisible", "dodging", "readied",
+    "pain", "drunk", "wounded", "shaped", "grappling", "concentrating", "flying", "hidden", "invisible", "dodging", "readied",
     "shielded", "warded", "resisting", "blessed", "guided", "vexing", "temp_hp", "heroic", "spell"))}
 
 # Words for the states that are not conditions (the conditions' own words are data/conditions.json).
@@ -99,6 +100,9 @@ _WORDS = {
     "slowed": ("Slowed", "Their speed is lowered."),
     "sapped": ("Sapped", "Reeling from a blow: their next attack roll has disadvantage (before the one who struck "
                          "them takes another turn)."),
+    "shaped": ("In another shape", "Polymorph holds them in a borrowed body: its blows, armour and speed, its hit "
+                                   "points as temporary ones on top of their own. No spells, no gear. It ends when "
+                                   "those are gone or the caster's concentration does."),
     "vexing": ("Vexing", "Has seen the gap in a foe's guard: their next attack roll against that foe has advantage "
                          "(before the end of their next turn)."),
     "burning": ("Burning", "On fire: 1d4 fire damage at the start of each of their turns. An action puts it out."),
@@ -482,6 +486,9 @@ def statuses(f, b=None) -> list[Status]:
     if f.readied:
         add(_plain("readied", "Ready", _WORDS["readied"][1].replace("(or into sight)", "" if f.readied == "reach"
                                                                      else "(or into sight)")))
+    if getattr(f, "shape", None) is not None:  # (Polymorph: Expansion 3 F.6)
+        by = esc(_name_of(b, f.shape["by"])) if b is not None else "a caster"
+        add(_plain("shaped", _WORDS["shaped"][0], f"{_WORDS['shaped'][1]} (Held by {by}.)"))
     if f.temp_hp > 0:
         add(_plain("temp_hp", f"{f.temp_hp} temporary hit points", _WORDS["temp_hp"][1]))
     if char is not None and char.uses.get("heroic_inspiration", 0) > 0:

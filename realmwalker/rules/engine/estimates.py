@@ -339,6 +339,8 @@ def _shape_worth(b, f, o: dict, target, dc: int) -> float:
     form = b.t.creatures[cid]
     gain = shapes.form_hp(b.t, cid) / 10.0 + max(0.0, shapes.strength(b.t, cid) - 3.0 * threat(target) - 40) / 20.0
     casts = spellrules.is_caster(target.char, b.t)  # (a caster loses its spells while in the form)
+    if casts and target is f:
+        return 0.0  # (a caster would give up every spell it has to be a bear: the Auto never does)
     near = any(b.gap(target, e) <= 2 for e in b.enemies_of(f) if e.standing)
     return gain * (1.5 if near else 1.0) * (0.3 if casts else 1.0) + (0.5 if form.get("speeds", {}).get("fly") else 0)
 

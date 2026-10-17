@@ -484,7 +484,8 @@ stat block now comes with the spell that brings it into play (never a block that
 #### F.6 — How
 - **A shape** is a fighter's numbers swapped for a creature's for the rest of the fight (the 2024 text: "the
   target's game statistics are replaced by the stat block of the chosen Beast"). `Battle.shape(f, cid, by=caster,
-  spell=)` keeps what it was in `Fighter.shape` {char, creature, cdef, sq, by, spell, name} and gives the fighter a
+  spell=)` keeps what it was in `Fighter.shape` {char, creature, cdef, sq, slots,
+  recharge, by, spell, temp} and gives the fighter a
   new `Creature` of the form (named for who it is: "Aldric, as a brown bear"), with the hit points it had (hit points
   are kept) and Temporary Hit Points equal to the form's own hit points (the higher of those and any it had). A party
   member keeps playing as itself (control follows the side, as for allies): the form's attacks, speeds, senses, size
