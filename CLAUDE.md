@@ -2,7 +2,7 @@
 
 A grim, text-heavy open-world party RPG on D&D 5e rules, drawn with pixel-art tiles and figures over a text grid
 (python-tcod + its SDL renderer; pictures are the only look); every word the player reads is written into the game.
-**Version 1.3.0** (2026-10-17, Demigods & Magics; 1.0 brought the pictures and the new interface, `docs/PROGRESS.md`). **The user is not a programmer**: explain progress in
+**Version 1.4.0** (2026-10-17, Steel & Shadows; 1.0 brought the pictures and the new interface, `docs/PROGRESS.md`). **The user is not a programmer**: explain progress in
 gameplay terms, give Windows click-by-click steps when they must do something, never ask them to edit code.
 
 - Source of truth for the design: `docs/DESIGN.md` (verbatim copy of the user's document).
@@ -576,6 +576,17 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   a feat such as Student of War). A blow's maneuver on `attack_damage`/`attack_done` (`tactics.maneuver`), Precision,
   Parry and Riposte on their events with the reaction, the rest are abilities; a die promised to a later hit is the
   buff `maneuver_die`; `check_die` from camp.check, Battle.check and dialogue.check. Tests: tests/test_battle_master.py.
+- The magic arms (Expansion 4 Part D): the DMG's fighter's and rogue's items are book makers (data/treasure.json
+  "makers": `title`, `bases`, `props`, `attune`, and `form`, `curse`, a prop's `dice`) with kernel traits handled in
+  `rules/engine/handlers/arms.py` (its docstring lists them): a weapon's power works on blows struck with it
+  (`arms.blade`), "while held" means in a hand (`arms.held`), a once-a-day power is a prop with `daily` (`today`,
+  cleared by `magic.dawn`; charges may say `no_regain`). A shifting weapon is `item.magic["form"]` (`arms.FORMS`: its
+  base item in `Battle._weapon_option`). Abilities with `"pick": true` ask for a target on the battle screen (aims
+  "speed", "dance_toss", "dance" in `actions.aim_targets`). The Dancing Sword is a Token with `item_uid` and `blows`;
+  the Mace of Terror's fright is a condition with `terror` in `cond_ends` (`tactics._terror_turn`). Magic props
+  `helps` and `bearings` (dungeon.helps, GameState.bearings_bonus); flags `imperceptible` (glamour.hidden_thing),
+  `false_tracks` (encounters), `nondetection` (`arms.hidden_from_divination`: foes' divination spells and Detect
+  Thoughts). Tests: tests/test_magic_arms.py.
 - Gear and tools 2024 (Expansion 2 part D): items.json `pack` (opens into its contents, gear.open_pack), `helps`
   {search, traps, force, disguise} (dungeon.helps, law.put_on_disguise), `utilize` (a tool's 2024 uses, on its card),
   `carry` also on carried containers (each kind once, Sheet.pack_carry), `trinket` (data/trinkets.json; the name and
