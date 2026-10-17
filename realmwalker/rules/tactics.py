@@ -196,8 +196,9 @@ def _monster_turn(b: Battle, f: Fighter) -> None:
     if breath and _try_area_attack(b, f, breath[0]):
         _rise(b, f)  # a dragon breathes, then takes to the air out of reach
         return
-    if not _targets(b, f) and f.action > 0 and any(e.hidden for e in b.enemies_of(f) if e.standing):
-        b.do_search(f)  # nobody in sight, but someone is hiding here
+    if (not _targets(b, f) and f.action > 0 and any(e.hidden for e in b.enemies_of(f) if e.standing)) or (
+            f.action > 0 and f.mod("int") >= -1 and b.illusions_hiding(f) and _none_in_sight(b, f)):
+        b.do_search(f)  # nobody in sight, but someone is hiding here (or an image may be hiding them)
         if b.current is not f or b.outcome is not None:
             return
     if f.has_trait("cunning_action") and f.creature is not None:
@@ -423,6 +424,12 @@ def best_plan(b: Battle, f: Fighter, opts: list[AttackOption]):
         return None
     score, sq, opt, t = best
     return score, grid.route(tree, sq) if sq != here else [], opt, t
+
+
+def _none_in_sight(b: Battle, f: Fighter) -> bool:
+    """Foes stand, and none of them can be seen or reached from here."""
+    standing = [e for e in b.enemies_of(f) if e.standing]
+    return bool(standing) and not any(b.can_see(f, e) or b.gap(f, e) <= 1 for e in standing)
 
 
 def _targets(b: Battle, f: Fighter) -> list[Fighter]:
@@ -1155,8 +1162,13 @@ def _party_turn(b: Battle, f: Fighter) -> None:
         return
     _command_objects(b, f)
     _divine_help(b, f)
+    _school_bonus(b, f)
     if b.current is not f or b.outcome is not None:
         return
+    if f.action > 0 and b.illusions_hiding(f) and _none_in_sight(b, f):
+        b.do_search(f)  # (nobody to strike in sight, and an image that may be hiding them: study it)
+        if b.current is not f or b.outcome is not None:
+            return
     if f.action > 0 and _use_power(b, f):
         if b.current is f and b.outcome is None:
             _bonus_strike(b, f)
@@ -1445,6 +1457,28 @@ def _reads_scrolls(b: Battle, f: Fighter) -> bool:
         if sid in b.t.spells and spellrules.scroll_reader(f.char, b.t, sid) is not None:
             return True
     return False
+
+
+def _school_bonus(b: Battle, f: Fighter) -> None:
+    """A diviner opens the third eye on a foe hidden in the dark or unseen; an illusionist makes an image real when a
+    foe is about to walk through it (Expansion 5 Part A), each with the bonus action."""
+    if f.bonus <= 0 or f.char is None:
+        return
+    foes = [e for e in b.enemies_of(f) if e.standing]
+    for opt, a in _abilities(b, f, "eye"):
+        unseen = [e for e in foes if not b.can_see(f, e) and b.feet(f, e) <= 120]
+        if not unseen:
+            return
+        if a["id"] == "third_eye_unseen" or all(b.light_on(e) < grid.DIM for e in unseen):
+            b.do_ability(f, opt.value)
+            return
+    for opt, a in _abilities(b, f, "reality"):
+        from realmwalker.rules.engine.handlers import schools
+
+        cells = {c for z in schools.realisable(b, f) for c in z.cells}
+        if any(e.creature is not None and any(grid.gap((x, y, 1), e.space) <= 1 for x, y in cells) for e in foes):
+            b.do_ability(f, opt.value)
+            return
 
 
 def _mend_ward(b: Battle, f: Fighter) -> None:

@@ -73,7 +73,8 @@ _ORDER = {s: i for i, s in enumerate((
     "charmed", "frightened", "blinded", "poisoned", "burning", "bleeding", "prone", "attached", "deafened",
     "exhaustion", "slowed", "sapped", "baned", "no_heal", "no_opportunity", "marked", "surprised", "bloodied", "festering",
     "pain", "drunk", "wounded", "shaped", "grappling", "concentrating", "flying", "hidden", "invisible", "dodging", "readied",
-    "shielded", "warded", "resisting", "blessed", "guided", "vexing", "temp_hp", "heroic", "spell"))}
+    "shielded", "warded", "resisting", "blessed", "guided", "vexing", "temp_hp", "heroic", "portent", "third_eye",
+    "spell"))}
 
 # Words for the states that are not conditions (the conditions' own words are data/conditions.json).
 _WORDS = {
@@ -100,6 +101,9 @@ _WORDS = {
     "slowed": ("Slowed", "Their speed is lowered."),
     "sapped": ("Sapped", "Reeling from a blow: their next attack roll has disadvantage (before the one who struck "
                          "them takes another turn)."),
+    "portent": ("Foretold", "Rolls seen in dreams: before any D20 Test the diviner sees - their own, a friend's, a "
+                "foe's - one may take the roll's place, once a turn, each once. Lost at the next long rest."),
+    "third_eye": ("The third eye", "Open until the next rest: darkness or the invisible hide nothing from it."),
     "shaped": ("In another shape", "Polymorph holds them in a borrowed body: its blows, armour and speed, its hit "
                                    "points as temporary ones on top of their own. No spells, no gear. It ends when "
                                    "those are gone or the caster's concentration does."),
@@ -583,6 +587,12 @@ def statuses(f, b=None) -> list[Status]:
         add(_plain("temp_hp", f"{f.temp_hp} temporary hit points", _WORDS["temp_hp"][1]))
     if char is not None and char.uses.get("heroic_inspiration", 0) > 0:
         add(_plain("heroic", *_WORDS["heroic"]))
+    if char is not None and char.spells and char.spells.get("portent"):  # (a diviner's: Expansion 5 Part A)
+        seen = ", ".join(str(d) for d in char.spells["portent"])
+        add(_plain("portent", f"Foretold: {seen}", _WORDS["portent"][1]))
+    if char is not None and char.spells and char.spells.get("third_eye"):
+        gift = {"dark": "Darkvision to 120 feet.", "unseen": "The invisible are seen."}.get(char.spells["third_eye"], "")
+        add(_plain("third_eye", _WORDS["third_eye"][0], f"{_WORDS['third_eye'][1]} {gift}".strip()))
     if f.surprised:
         add(_plain("surprised", *_WORDS["surprised"]))
     if f.attached_to is not None:

@@ -399,10 +399,11 @@ def options(b, f, only: tuple[str, ...] | None = None) -> list[Option]:
 
 
 def _spell_option(b, f, sid: str, ok: bool, why: str) -> Option:
-    from realmwalker.rules.combat import spell_id
+    from realmwalker.rules.combat import cast_kind, spell_id
 
     sp = b.t.spells[spell_id(sid)]
-    cost = {"bonus": "bonus", "reaction": "reaction"}.get(sp.get("cast", "action"), "action")
+    kind = cast_kind(f, sp) if ":" not in str(sid) else sp.get("cast", "action")  # (Improved Illusions, Spell Breaker)
+    cost = {"bonus": "bonus", "reaction": "reaction"}.get(kind, "action")
     if str(sid).startswith("wish:"):
         cost = "action"  # (Wish is spoken with an action, whatever it copies)
     mode = sp["target"]

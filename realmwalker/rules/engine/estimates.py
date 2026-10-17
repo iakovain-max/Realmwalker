@@ -715,8 +715,13 @@ def image_worth(b, f, cells) -> float:
         if not seen:
             continue
         hidden = [x for x in seen if hypo.cover(e.space, x.space) == grid.TOTAL]
-        if hidden:
-            out += threat(e) * (0.4 + 0.6 * len(hidden) / len(seen)) * (1.3 if f in hidden else 1.0)
+        if hidden:  # (out of its sight; a Search may undo it, so a little over half of what it seems)
+            out += 0.6 * threat(e) * (0.4 + 0.6 * len(hidden) / len(seen)) * (1.3 if f in hidden else 1.0)
+            continue
+        shielded = [x for x in seen if hypo.cover(e.space, x.space) == grid.THREE_QUARTERS
+                    and b.field.cover(e.space, x.space) < grid.THREE_QUARTERS]
+        if shielded:  # (seen past its edge only: +5 to their AC against it)
+            out += 0.25 * threat(e) * len(shielded) / len(seen) * (1.3 if f in shielded else 1.0)
     return out
 
 

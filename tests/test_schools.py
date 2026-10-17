@@ -261,3 +261,40 @@ def test_illusory_reality_makes_the_image_real_for_a_minute(tables):
     for _ in range(10):
         on_turn(b, me)
     assert z.real == 0 and not z.was
+
+
+# ---------------------------------------------------------------------------- the Auto, the enemy, the cards
+def test_the_card_shows_the_foretold_rolls_and_the_open_eye(tables):
+    from realmwalker.rules import describe
+
+    d = school(tables, 10)
+    d.spells["portent"] = [17, 3]
+    schools.open_eye(d, "dark")
+    b = fight(tables, d, "bandit")
+    ids = {s.id: s for s in describe.statuses(b.side("party")[0], b)}
+    assert "Foretold: 17, 3" == ids["portent"].card.title and "third_eye" in ids
+    assert ids["portent"].card.icon == "status/portent"
+
+
+def test_the_auto_illusionist_lays_an_image_between_itself_and_the_archers(tables):
+    from realmwalker.rules import tactics
+
+    w, b, me, foe = image_fight(tables, level=5)
+    me.auto = True
+    on_turn(b, me)
+    tactics.take_turn(b, me)
+    assert any(z.kind == "illusion" for z in b.zones)
+
+
+def test_a_foe_who_sees_nobody_studies_the_image(tables):
+    from realmwalker.rules import tactics
+
+    w, b, me, foe = image_fight(tables)
+    on_turn(b, me)
+    b.do_cast(me, "minor_illusion", point=(4, 4))
+    z = next(z for z in b.zones if z.kind == "illusion")
+    assert not b.can_see(foe, me)
+    z.dc = 1
+    on_turn(b, foe)
+    tactics.take_turn(b, foe)
+    assert foe.id in z.seen

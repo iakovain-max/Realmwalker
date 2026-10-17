@@ -691,6 +691,13 @@ def _check_magic(game, fail) -> None:
                 fail(f"a once-a-day power in an odd state on {it.def_id}: {p}")
             if p.get("no_regain") and int(p.get("left", 0)) > int(p.get("value", 0)):
                 fail(f"charges that came back on {it.def_id}")
+    # Schools & Domains Part A: a diviner's foretold rolls are d20s, three at most; the third eye is one of its gifts
+    for c in game.party:
+        dice_ = (c.spells or {}).get("portent") or []
+        if len(dice_) > 3 or any(not isinstance(d, int) or not 1 <= d <= 20 for d in dice_):
+            fail(f"odd foretold rolls on {c.name}: {dice_}")
+        if (c.spells or {}).get("third_eye") not in (None, "dark", "unseen"):
+            fail(f"a third eye open on something it cannot see: {c.spells['third_eye']}")
     owners: dict[int, int] = {}
     for c in game.party:
         for uid in c.attuned:

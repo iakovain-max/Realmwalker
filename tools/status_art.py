@@ -14,7 +14,7 @@ STATUS_NAMES: list[str] = [
     "readied", "marked", "temp_hp", "heroic", "slowed", "burning", "grappling", "blessed", "baned",
     "shielded", "warded", "resisting", "guided", "no_heal", "no_opportunity", "surprised",
     "attached", "bleeding", "festering", "pain", "drunk", "wounded", "spell", "bound", "demand",
-    "sapped", "vexing", "shaped",
+    "sapped", "vexing", "shaped", "portent", "third_eye",
 ]
 
 PALETTE: dict[str, tuple[int, int, int, int]] = {
@@ -627,6 +627,30 @@ ART: dict[str, list[str]] = {
         "...kkkk...",
         "....R.....",
         "...RRR....",
+    ],
+    "portent": [  # a gold die with a pip, a star of foresight over it (a diviner's foretold rolls)
+        "....w.....",
+        "...wyw....",
+        "....w.kk..",
+        "...kkkyyk.",
+        "..kyyyyyYk",
+        ".kyykkyyYk",
+        ".kyykkyYYk",
+        ".kyyyyYYk.",
+        "..kYYYYk..",
+        "...kkkk...",
+    ],
+    "third_eye": [  # an eye opening on a brow (The Third Eye)
+        "..........",
+        "...kkkk...",
+        "..kvvvvk..",
+        ".kvwwwwvk.",
+        "kvwkVVkwvk",
+        "kvwkVVkwvk",
+        ".kvwwwwvk.",
+        "..kvvvvk..",
+        "...kkkk...",
+        "..........",
     ],
     "demand": [
         "kkkkkkkkkk",
