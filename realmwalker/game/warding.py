@@ -520,13 +520,14 @@ def problem(game, caster, sid: str, target) -> str | None:
 
 
 # ---------------------------------------------------------------------------- the castings
-def _camp_ward(game, caster, key: str, minutes: int, spell: dict, **more) -> dict:
+def _camp_ward(game, caster, key: str, minutes: int, sdef: dict, /, **more) -> dict:
+    """A protection on the camp here (made if there is none): its record, kept in `Camp.wards`."""
     from realmwalker.game.camp import make_camp
 
     camp = make_camp(game)
     dc = spellrules.save_dc(game.sheet(caster), game.tables)
     # (from the end of the casting: its minutes are still to pass)
-    rec = {"until": game.world.time + minutes + int(spell.get("minutes", 1)), "dc": int(dc), "by": caster.name,
+    rec = {"until": game.world.time + minutes + int(sdef.get("minutes", 1)), "dc": int(dc), "by": caster.name,
            **more}
     camp.wards[key] = rec
     return rec
