@@ -25,7 +25,8 @@ def harvestable(game, dead) -> list:
     """The bodies a poisoner's kit could take a dose from (none without a kit in the party)."""
     if not has_kit(game):
         return []
-    return [cr for cr in dead if poisons.venomous(game.tables, cr.def_id) is not None]
+    return [cr for cr in dead if poisons.venomous(game.tables, cr.def_id) is not None
+            and game.tables.creatures[cr.def_id].get("kind") != "humanoid"]  # (an assassin's venom is in a vial)
 
 
 def poison_for(game, cid: str) -> str | None:

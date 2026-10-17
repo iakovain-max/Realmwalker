@@ -77,7 +77,7 @@ def drink_potion(game, patient: Character, item) -> list[str]:
         game.dirty = True
         rec = poisons.record(game.tables, real) or {}
         return [f"{escape_markup(patient.name.split()[0])} drinks the {d['name']}, and it burns all the way down: "
-                f"<danger>it was {game.tables.items.get(real)['name']}.</>"] + poisons.suffer(
+                f"<danger>it was a {game.tables.items.get(real)['name']}.</>"] + poisons.suffer(
                     game, patient, rec, game.tables.items.get(real)["name"])
     remove_item(owner, item.uid, 1)
     rng = game.world.rng.child(f"potion/{game.world.time}/{patient.name}")

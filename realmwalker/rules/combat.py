@@ -4503,12 +4503,15 @@ class Battle:
                 self._spend_attacks(f, 1)  # (2024: a vial thrown in place of one of the Attack action's attacks)
             else:
                 self._spend(f, bonus_cast)
-            f.hidden = 0
+            if sid != "coat_poison":
+                f.hidden = 0  # (smearing a blade gives no one away)
             dc = 8 + s.proficiency + s.mod("dex")
             self.cast(f, sid, spell, target, point, up=0, mod=s.mod("dex"), dc=dc, bonus=s.proficiency + s.mod("dex"),
                       mult=1, level=0)
             if sid == "coat_poison":
                 poisons.coat(self, f, flask)  # (which poison is on the blade now)
+            elif sid.startswith("poison_"):
+                poisons.lingers(self, flask)  # (a thrown vial's sickness lasts its hours after the fight)
             self._after_action(f)
             return True
         scroll_how = None

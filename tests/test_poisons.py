@@ -267,3 +267,20 @@ def test_the_poison_on_a_blade_has_its_card(tables, monkeypatch):
     assert "serpent venom" in card.title and "3d6" in card.lines[0] and "DC 11" in card.lines[0]
     them.buffs.append({"fumes": 13, "fumes_dice": "1d6", "fumes_successes": 3, "source": "fumes:x"})
     assert any(s.card.title == "Choking on fumes" for s in describe.statuses(them, b))
+
+
+def test_from_the_review_people_give_no_venom_and_vials_linger(game, tables, monkeypatch):
+    add_item(game.leader, tables.items, "poisoners_kit")
+    killer = spawn(tables, "assassin", RNG(6, "a"), 1)
+    assert poisoning.harvestable(game, [killer]) == []  # (an assassin's venom is in a vial, not in glands)
+    c, b, me, them = setup(tables, "essence_of_ether")
+    me.hidden = 0
+    fail_saves(b, monkeypatch)
+    friend_hit = me
+    them.x, them.y = me.x + 1, me.y
+    assert b.do_cast(me, b.throw_value(first(c, "essence_of_ether")), None, point=(me.x, me.y))
+    assert "poisoned" in friend_hit.conditions and friend_hit.__dict__.get("poison_hours") == 8.0
+    c2, b2, me2, them2 = setup(tables, "serpent_venom")
+    me2.hidden = 14
+    assert b2.do_cast(me2, b2.throw_value(first(c2, "serpent_venom")), None)
+    assert me2.hidden == 14  # (smearing a blade gives no one away)

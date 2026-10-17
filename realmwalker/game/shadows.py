@@ -4,7 +4,7 @@
   whose realms let poison be sold openly (apothecaries in cities stock the book's poisons); everywhere else every poison
   is contraband (`law.contraband_for`: found at the gate, taken), the honest shops will not sell it, and it is bought
   under the counter from a thieves' guild member who knows you as one of their own: the black market
-  (`black_market_choice`; a shop of kind "black_market", data/economy.json, at `shadows.black_market_markup`).
+  (`black_market_choice`; a shop of kind "black_market", data/economy.json, at its markup).
 - **The guilds' work**: a guild member gives its own members the killing and thieving work (`quests.make_offer` reads
   `guild_work`): the assassins' trade is the thieves' guilds' darker side; there is no separate assassins' faction.
 - **A poisoned cup**: in a conversation where drink is poured (a town), an ingested poison carried by the party can be
@@ -57,8 +57,9 @@ def black_market_choice(conv) -> list:
     from realmwalker.game.dialogue import Choice
 
     game, npc = conv.game, conv.npc
-    if not law.is_fence(game, npc) or game.tables.people["occupations"].get(npc.job, {}).get("trade"):
-        return []
+    if not law.is_fence(game, npc) or game.tables.people["occupations"].get(npc.job, {}).get("trade") or \
+            npc.flags.get("black_market"):
+        return []  # (once shown, the wares are offered as any shop's are)
     if game.world.settlements[npc.settlement].kind not in ("town", "city"):
         return []
     return [Choice("black_market", "What do you have that the shops don't sell?")]
@@ -84,9 +85,6 @@ def choices(conv) -> list:
     if not conv.game.world.factions and not cup_poisons(conv.game):
         return duel_choices(conv)
     return duel_choices(conv) + black_market_choice(conv) + cup_choices(conv)
-
-
-CHOICES = {"black_market", "slip_poison", "duel_accept", "duel_refuse"}
 
 
 def choose(conv, choice) -> str | None:
@@ -184,14 +182,14 @@ def slip(conv, uid: int) -> None:
     ok, save = npc_save(game, npc, int(rec.get("dc", 10)), rng)
     first = escape(npc.first_name)
     if rec.get("truth") and not ok:
-        npc.flags["truthful_until"] = game.world.time + 60
         conv.note(f"<magic>{first} drinks. A moment later their eyes lose their guard.</> <dim>({name}: "
                   f"Constitution {save} vs {rec['dc']})</>")
         tell_truth(conv)
         return
     if item.def_id in LETHAL or (rec.get("damage") and not ok):
-        dmg = 0 if ok and not rec.get("half") else dice.roll(rec.get("damage", "1d6"), rng).total
-        if ok and rec.get("half"):
+        dmg = 0 if ok and not rec.get("half") and not rec.get("sure") else \
+            dice.roll(rec.get("damage", "1d6"), rng).total
+        if ok and rec.get("half") and not rec.get("sure"):
             dmg //= 2
         if item.def_id == "pale_tincture" and not ok:
             dmg = npc_hp(game, npc)  # (a wasting that no healer of theirs can stop)
@@ -229,10 +227,6 @@ def die_of_poison(game, npc) -> None:
     if game.quests:
         quests.on_npc_death(game, npc)
     game.cue("acid")
-
-
-def truthful(game, npc) -> bool:
-    return game.world.time < int(npc.flags.get("truthful_until", -1))
 
 
 def tell_truth(conv) -> None:
@@ -324,12 +318,14 @@ def refuse(conv) -> None:
     conv.you_say("I will not fight you.")
     conv.npc_says("\"Then you are what I thought you were.\" They turn their back on you.")
     settlement = game.world.settlements[npc.settlement]
-    game.leader.deeds.append(f"refused a duel of honour in {settlement.name}")
     owner = settlement.owner if game.world.factions else None
+    words = f"refused a duel of honour in {settlement.name}"
     if owner is not None and owner >= 0:
         from realmwalker.game import reputation
 
-        reputation.deed(game, f"refused a duel of honour in {settlement.name}", {owner: -3})
+        reputation.deed(game, words, {owner: -3})  # (it writes the deed down too)
+    else:
+        game.leader.deeds.append(words)
 
 
 def duel_settled(game, npc, f, outcome: str) -> bool:
@@ -345,19 +341,23 @@ def duel_settled(game, npc, f, outcome: str) -> bool:
     if f.state == "dead":
         npc.alive = False
         npc.present = False
-        game.leader.deeds.append(f"killed {npc.name} in a duel of honour in {settlement.name}")
         game.say(f"<warn>{escape(npc.first_name)} is dead. A duel is a duel: the law looks the other way.</>", "warn")
+        words = f"killed {npc.name} in a duel of honour in {settlement.name}"
         if owner is not None and owner >= 0:
-            reputation.deed(game, f"killed {npc.name} in a duel of honour", {owner: 2})
+            reputation.deed(game, words, {owner: 2})
+        else:
+            game.leader.deeds.append(words)
     elif outcome == "victory":
         npc.disposition = max(npc.disposition, 10)
         npc.remember("was bested by the traveller in a fair duel")
         npc.flags["fled_until"] = game.world.time + 6 * 60
         npc.present = False
-        game.leader.deeds.append(f"won a duel of honour against {npc.name} in {settlement.name}")
         game.say(f"<good>{escape(npc.first_name)} yields, and gives you the salute. Honour is satisfied.</>", "good")
+        words = f"won a duel of honour against {npc.name} in {settlement.name}"
         if owner is not None and owner >= 0:
-            reputation.deed(game, f"won a duel of honour against {npc.name}", {owner: 4})
+            reputation.deed(game, words, {owner: 4})
+        else:
+            game.leader.deeds.append(words)
     else:
         npc.remember("bested the traveller in a duel")
         game.leader.deeds.append(f"lost a duel of honour to {npc.name} in {settlement.name}")

@@ -11,7 +11,7 @@ In a fight an injury or contact poison is smeared on a weapon with the bonus act
 buff `poisoned_blade` keeps the item's id, and `poison_dc` a brewed dose's DC): the next hit that cuts or pierces (any
 hit, for a contact poison) within a minute delivers it (`on_hit`). Inhaled poisons are thrown vials (their spells
 "poison_<id>" in data/spells.json, built from the same record: `battle_ops`). Ingested ones are slipped into a cup in
-a conversation (game/shadows.py) or drunk by mistake (the Potion of Poison: `drink`).
+a conversation (game/shadows.py) or drunk by mistake (a Potion of Poison passing for healing: `masked`).
 
 Everything here is logic: it reads the tables and changes fighters and characters; screens only show it.
 """
@@ -187,6 +187,15 @@ def on_hit(b, att, target, opt, crit: bool) -> None:
         target.__dict__["poison_hours"] = max(float(target.__dict__.get("poison_hours", 0.0)), hours)
 
 
+def lingers(b, item) -> None:
+    """After a thrown vial: those it poisoned stay sick after the fight for as long as the poison says."""
+    rec = record(b.t, item.def_id) or {}
+    hours = float(rec.get("hours") or 0) or 1.0
+    for x in b.fighters:
+        if x.char is not None and "poisoned" in x.conditions:
+            x.__dict__["poison_hours"] = max(float(x.__dict__.get("poison_hours", 0.0)), hours)
+
+
 def turn_start(b, f) -> None:
     """Burnt Othur Fumes: the smoke in the lungs, saved against at the start of each of its turns."""
     bf = next((x for x in f.buffs if x.get("fumes")), None)
@@ -200,11 +209,6 @@ def turn_start(b, f) -> None:
         return
     b.say(f"{f.the_name} chokes on the fumes.", "danger" if f.side == "party" else "info")
     b._hit(None, f, dice.roll(bf.get("fumes_dice", "1d6"), b.rng).total, "poison", crit=False, weapon="fumes")
-
-
-def carried_hours(tables, f) -> float:
-    """How long a character stays Poisoned after a fight, by the longest poison that took (`Fighter.poison_hours`)."""
-    return float(f.__dict__.get("poison_hours", 0.0))
 
 
 # ---------------------------------------------------------------------------------------------------- the Auto
@@ -266,12 +270,6 @@ def battle_drink(b, f, target, item) -> None:
 
 
 # ---------------------------------------------------------------------------------------------------- outside a fight
-def drink(game, char, item) -> list[str]:
-    """Someone drinks a poison (a Potion of Poison taken for a healing draught, or a poisoned cup)."""
-    rec = of_item(game.tables, item) or {}
-    return suffer(game, char, rec, game.tables.items.get(item.def_id)["name"])
-
-
 def immune(game, char) -> bool:
     from realmwalker.rules import magic
 
