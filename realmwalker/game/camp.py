@@ -321,7 +321,8 @@ def forage(game) -> list[str]:
     if spec is None:
         return ["There is nothing to forage here."]
     dc = int(spec["dc"]) + (int(spec.get("winter_dc", 0)) if game.moment.season == "winter" else 0)
-    ok, roll = check(game, "survival", dc, tag="forage")
+    tip = 5 if any(c.effects.get("forage_tip", 0) > 0 for c in game.party) else 0  # (the plants showed the way)
+    ok, roll = check(game, "survival", dc, tip, tag="forage")
     game.pass_time(60, "walk")
     msgs = [roll] + _risk(game, 60)
     if not ok:

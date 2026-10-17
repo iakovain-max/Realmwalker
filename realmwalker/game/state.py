@@ -147,6 +147,11 @@ class GameState:
         self.read_board = False  # walked into a notice board (the screen shows it)
         self.sneaking = False  # creeping on a close-up map (z): slower, and seen only by those who beat sneak_roll
         self.sneak_roll = 0  # the party's Stealth roll when they began to creep (the worst of them)
+        # Part E.3 (not saved, like a campfire): what divination magic shows on a close-up map (game/divining.mark),
+        # the foes slain in the last fight (game/speech: Speak with Dead), and the band being fought.
+        self.sensed: list[dict] = []
+        self.fresh_dead: dict | None = None
+        self.battle_group: str | None = None
         self.let_in: tuple[int, int] | None = None  # (settlement id, day): let through a shut gate tonight
         self.waiting: list[Character] = []  # companions told to wait somewhere (game.companions)
         self.fallen: list[dict] = []  # the bodies of companions the party carries, while a spell could still raise

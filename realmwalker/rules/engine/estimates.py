@@ -720,6 +720,9 @@ def _body_worth(b, f, on, buff: dict, count: int) -> float:
         w += 0.0 if sighted else 1.5 * len(dark)
     if buff.get("see_invisible"):
         w += 3.0 * sum(1 for e in b.enemies_of(f) if "invisible" in e.conditions)
+    if buff.get("sense_thoughts"):  # (Detect Thoughts: the unseen minds within 30 feet are found)
+        w += 3.0 * sum(1 for e in b.enemies_of(f) if ("invisible" in e.conditions or e.hidden) and b.thinks(e)
+                       and b.feet(on, e) <= int(buff["sense_thoughts"]))
     if buff.get("mist") or buff.get("feigning"):
         near = any(b.gap(on, e) <= 2 for e in b.enemies_of(f))
         dying = on.hp <= on.max_hp // 4 and near

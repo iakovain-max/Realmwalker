@@ -692,6 +692,9 @@ def long_rest(char: Character, tables, rng: RNG) -> list[str]:
     signature_back(char)
     char.uses.pop("overchannel", None)  # (an evoker's Overchannel is safe once more)
     char.effects.pop("wish_stress", None)  # (a Wish's strain on every spell ends with a long rest)
+    for key in [k for k in char.uses if k.startswith("omen:")]:  # (divinations asked again: clear answers again)
+        del char.uses[key]
+    char.uses.pop("addled", None)  # (Contact Other Plane's failure: senseless until a long rest)
     from realmwalker.rules.health import DEATH_TOLL
 
     if char.effects.get(DEATH_TOLL, 0) > 0:  # (back from death: the ordeal lessens by one a long rest)

@@ -595,6 +595,8 @@ class Battle:
                 part = spellrules.battle_part(tables, sid, c)
                 if part:
                     f.buffs.append(part)
+            if c.uses.get("addled"):  # (Contact Other Plane's failure: Incapacitated until a long rest)
+                f.conditions["incapacitated"] = -1
             self.fighters.append(f)
             fid += 1
         if env.carried_light > 0 and self.fighters:
@@ -769,9 +771,10 @@ class Battle:
     # ------------------------------------------------------------------ start
     def start(self, intro: str = "") -> None:
         """Initiative, the 2024 way: a Dexterity check, at a disadvantage for the surprised (they still act)."""
+        linked = {s: sum(1 for f in self.fighters if f.side == s and f.buff_value("linked")) for s in (PARTY, FOE)}
         for f in self.fighters:
-            if self.env.surprised == f.side:
-                f.surprised = True
+            if self.env.surprised == f.side and not (f.buff_value("linked") and linked[f.side] >= 2):
+                f.surprised = True  # (minds linked by Rary's Telepathic Bond: one warning reaches them all)
             r = query.initiative_roll(f)
             bonus = int(f.cdef["initiative"]) if f.cdef and "initiative" in f.cdef else f.mod("dex")
             bonus += query.initiative_bonus(f)  # (Alert)
@@ -1194,6 +1197,9 @@ class Battle:
             return True  # Tremorsense: anything touching the same ground, through darkness and walls alike (2024)
         if "blinded" in a.conditions:
             return False
+        if max(a.buff_value("sense_thoughts"), default=0) >= feet and self.thinks(b) \
+                and self.field.cover(a.space, b.space) != grid.TOTAL:
+            return True  # (Detect Thoughts: a thinking mind near is known where it is, invisible or hidden)
         if query.flag(b, "unseen") and senses.get("truesight", 0) < feet and not a.buff_value("see_invisible"):
             return False  # Invisible (See Invisibility sees it as if it were not)
         if b.hidden and b.hidden > a.passive() - (5 if self.dim_for(a, b) else 0) and self.gap(a, b) > 1:
@@ -1205,6 +1211,10 @@ class Battle:
         if self.light_on(b) >= grid.DIM or senses.get("truesight", 0) >= feet:
             return True
         return a.darkvision > 0 and feet <= a.darkvision
+
+    def thinks(self, f: Fighter) -> bool:
+        """A mind Detect Thoughts can sense: a person, or a creature that knows a language."""
+        return f.char is not None or bool((f.cdef or {}).get("languages"))
 
     def dim_for(self, a: Fighter, b: Fighter) -> bool:
         """Whether `b` stands lightly obscured to `a`'s eyes: dim light, or darkness seen by darkvision (2024)."""

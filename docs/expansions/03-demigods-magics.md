@@ -189,12 +189,56 @@ system is built once and every spell that uses it comes with it.
     circle, or near another known place; Astral Projection and Gate to any known place, on target), Arcane Gate (in a
     dungeon, a gate to the stairs up or down within 500 feet). Etherealness and Wind Walk are lasting buffs (above);
     Meld into Stone is a ward on the camp ("meld": a lone caster rests hidden from hunters).
-- [ ] E.3 Finding and seeing, asking the powers (answered from the world's history), talking (30 spells).
+- [x] E.3 Finding and seeing, asking the powers (answered from the world's history), talking (30 spells).
   Finding and seeing: detect magic, detect evil and good, detect poison and disease, find traps, locate object, locate
   creature, locate animals or plants, clairvoyance, arcane eye, scrying, beast sense, Drawmij's instant summons.
   Asking the powers: augury, divination, commune, commune with nature, contact other plane, legend lore. Talking:
   comprehend languages, tongues, speak with animals, speak with dead, speak with plants, message, sending, animal
   messenger, dream, telepathy, Rary's telepathic bond, detect thoughts.
+  How (the design, at the start of E.3; numbers from the 2024 PHB, build/e3_facts.json while building):
+  - Finding and seeing and asking the powers are `game/divining.py`, talking `game/speech.py`; road ops `does`
+    "sense" (`what`: magic, evil, poison, traps), "locate" (object, creature, nature), "scout" (room, level, scry,
+    beast), "summons", "ask" (`how`: augury, divination, commune, nature, other_plane, lore), "speak" (dead, plants),
+    "send" (message, sending, animal, dream, telepathy). A spell aimed at something chosen has target "subject": the
+    Spells page lists Subjects (a question, a person, a thing to seek, a corpse, a companion far away) as it lists
+    places. What is sensed on a close-up map is marked there for the spell's time (`game.sensed`, not saved).
+  - Sensing: Detect Magic names the unknown magic in the packs by its aura and marks the chests within 30 feet that
+    hold magic; Detect Evil and Good the aberrations, celestials, elementals, fey, fiends and undead within 30 feet not
+    behind stone (and says when the ground is a haunted battlefield or a tomb); Detect Poison and Disease the sickness
+    still hidden in the party, the foul food and water carried, poison traps and venomous bands within 30 feet; Find
+    Traps every trap within 120 feet in sight, by its nature (the book: not where): the party finds them with
+    Advantage on a search and saves against them with Advantage.
+  - Locating (on a close-up map, 1,000 feet): Locate Object a chest, the hoard or the work's lost thing on the level;
+    Locate Creature the work's person, captive or quarry, or anyone met in this town; Locate Animals or Plants the
+    nearest game or herbs within 5 miles (the next hunt or forage +5) and a hunted beast's patch.
+  - Seeing from afar: Clairvoyance the nearest rooms not yet seen and who is in them; Arcane Eye the whole level but
+    behind secret doors, and its bands; Scrying a figure of the world (the book's save: Wisdom against the DC, +5 for
+    one only heard of, +0 met, -5 known well; a possession -4, a body part -10): where they are now, added to the map;
+    Beast Sense a party animal ranging ahead for an hour (the band met is seen first).
+  - Drawmij's Instant Summons binds a carried thing to its sapphire; what robbers, a thief at an inn or the watch take
+    comes back when the sapphire is crushed (they keep it in a sack or a strongbox, not in hand: adapted); what was
+    sold or given away does not.
+  - Asking: Augury reads weal or woe from what truly waits (the level below, the road ahead, a work in hand and its
+    hidden side); Divination answers one question about a work truly (its hidden side, where its thing or person is);
+    Commune asks three yes-or-no questions made from the world (does someone live, does an artifact lie somewhere, does
+    a dragon sleep, is a work as told); Contact Other Plane five, after a DC 15 Intelligence save (6d6 psychic and
+    senseless until a long rest on a failure), sometimes "unclear"; Commune with Nature tells the land within 3 miles
+    (one map tile: sites, water, lairs, game and herbs) or 300 feet under the ground (the level's map and its folk);
+    Legend Lore the legend of a person, place or thing: a carried storied thing is known through and through, a lost
+    artifact's resting place, a named beast's lair and what harms it, a site's depth and its master. Repeated before a
+    long rest, each casting after the first has a growing 25% chance of a muddled answer (augury, divination,
+    commune, contact).
+  - Talking: a language rule for words on the road: a band whose tongues nobody in the party speaks cannot be talked
+    past (only gnolls and trolls today), unless someone has Tongues; Comprehend Languages makes it harder (+5) rather
+    than impossible. Speak with Animals lets beasts be talked past (lasting, ten minutes). Speak with Dead asks a foe
+    slain in the last fight where their band keeps its lair and who sent them (the lair goes on the map; a work's
+    hidden truth may come out). Speak with Plants tells what passed in the last day (the next band is seen first) and
+    where food grows. Message calls a companion waiting in the same town; Sending, Telepathy and Animal Messenger (25
+    miles a day, 50 for a bird; its reach by its duration) send a waiting companion on their way to you; Dream does
+    the same at night, or sends a nightmare to a named beast or dragon of a work (3d6 psychic, no rest: it starts the
+    next fight hurt). Rary's Telepathic Bond: while it lasts no one in the party is surprised unless all are. Detect
+    Thoughts in a fight senses thinking creatures within 30 feet (the invisible and the hidden found); outside one it
+    reads a person near you (Wisdom save): what they feel about you, and a work's hidden side if they gave it.
 - [ ] E.4 Moving minds and the law, disguise, locks and stone, weather and land, lasting protections, great magic;
   Part E to `main`. Minds and the law: friends, enthrall, zone of truth, geas, modify memory, glibness,
   antipathy/sympathy, awaken. Disguise and illusion: disguise self, seeming, minor illusion, silent image, major

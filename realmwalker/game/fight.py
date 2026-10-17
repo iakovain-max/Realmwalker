@@ -95,6 +95,11 @@ def start_battle(game, creatures: list[Creature], intro: str, *, surprised: str 
     situation = arena.situation_for(game, surprised)
     field, spots = arena.build(game, creatures, env, rng.child("arena"), actor=actor, near=near, situation=situation,
                                number=fought)
+    from realmwalker.game import speech
+
+    for line in speech.nightmares_at_the_start(game, creatures):  # (Dream: a named beast meets you hurt)
+        game.say(line, "magic")
+    game.battle_group = game.encounter.group if game.encounter is not None else (actor.group if actor else None)
     battle = Battle(game.tables, [c for c in game.party if c.alive], creatures, env, rng,
                     show_dice=getattr(game, "show_dice", True), title=title, now=game.world.time, field=field,
                     spots=spots)
@@ -171,6 +176,9 @@ def finish_battle(game) -> Aftermath:
         if not actor.creatures and lm is not None and actor in lm.actors:
             lm.actors.remove(actor)
     after = Aftermath(result.outcome, "")
+    from realmwalker.game import speech
+
+    speech.remember_the_dead(game, battle, getattr(game, "battle_group", None))  # (for Speak with Dead)
     _settle_townsfolk(game, battle, result)
     if game.party[1:]:
         from realmwalker.game.companions import react
@@ -397,6 +405,9 @@ def _rob_party(game, rng) -> str:
     for it in valuables[: rng.randint(1, 2)]:
         remove_item(leader, it.uid)
         taken.append(game.tables.items.name(it))
+        from realmwalker.game import divining
+
+        divining.taken(game, [it], "robbers")  # (Drawmij's Instant Summons can call it back)
     if leader.animals:
         taken.append(", ".join(a["name"] for a in leader.animals) + " (your animals)")
         leader.animals = []
@@ -563,8 +574,11 @@ def encounter_talk_dc(game) -> tuple[int | None, str]:
     """How hard it is to talk your way past (Persuasion), or why it cannot be done."""
     enc = game.encounter
     defs = [game.tables.creatures[c.def_id] for c in enc.creatures]
-    if any(d["kind"] == "beast" for d in defs):
-        return None, "animals do not bargain"
+    from realmwalker.game import speech
+
+    tongue, why = speech.talk_problem(game, enc.creatures)  # (no shared tongue; beasts but by Speak with Animals)
+    if why:
+        return None, why
     from realmwalker.game.encounters import _hated
 
     if _hated(game, enc.creatures):
@@ -581,7 +595,7 @@ def encounter_talk_dc(game) -> tuple[int | None, str]:
             (game.tables.items.get(it.def_id).get("impress") or {}).get("people") == "soldiers"
             for it in carried(game.party)):
         dc -= 4  # an old soldier's insignia: they still straighten up for rank
-    dc = max(8, min(22, dc))
+    dc = max(8, min(22, dc + tongue))
     from realmwalker.game import uniques
 
     if uniques.talked_past(game, enc.creatures):

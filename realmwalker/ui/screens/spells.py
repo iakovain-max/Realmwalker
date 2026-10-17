@@ -141,7 +141,12 @@ def spell_detail(game, char, sid: str, target, slot: int | None = None) -> list[
             if target.kind == "town" and sp.op(spell, "road").get("how") == "teleport":
                 lines.append(f"<dim>{markup.escape(target.name)}: {waymagic.FAMILIARITY[target.known]} (←→ another place).</>")
         elif magic.road_targets(game, char, sid):
-            whom = " on yourself" if target is char else f" on {markup.escape(target.name.split()[0])}"
+            from realmwalker.game.divining import Subject
+
+            if isinstance(target, Subject):  # (Part E.3: what is sought, asked about or reached)
+                whom = f" ({markup.escape(target.name)}; ←→ another)"
+            else:
+                whom = " on yourself" if target is char else f" on {markup.escape(target.name.split()[0])}"
         use = sp.road_use(t, sid)
         if use == "identify":
             thing = game.tables.items.name(magic.strange_things(game, char)[0], False)

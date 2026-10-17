@@ -166,6 +166,8 @@ def make_encounter(game, group: str, rng: RNG) -> PendingEncounter:
         our_best += 2 * max((int(tables.items.get(it.def_id).get("sight", 0)) for it in carried(game.party)), default=0)
     if game.travel_pace() != "normal":
         our_best += int(encounter.pace(tables, game.travel_pace()).get("passive", 0))  # fast -5, slow +5
+    if any(c.alive and c.effects.get("forewarned", 0) > 0 for c in game.party):
+        our_best = 99  # (Beast Sense, Speak with Plants: an animal ranging ahead, the grass that saw them pass)
     attitude = "hostile" if special else encounter.start_attitude(tables, [c.def_id for c in creatures], rng.child("mood"))
     if attitude != "hostile" and _hated(game, creatures):
         attitude = "hostile"  # an artifact's flaw: they know its bearer on sight

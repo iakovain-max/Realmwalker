@@ -483,6 +483,8 @@ def use_name(game, item) -> str | None:
         return "Coat a blade (in a fight)"
     if use.get("drink") == "antitoxin":
         return "Drink the antitoxin"
+    if any(t.startswith("summons:") for t in item.tags):
+        return "Crush the sapphire"
     if game.tables.items.get(item.def_id).get("pack"):
         return "Open the pack"
     return None
@@ -534,6 +536,10 @@ def use_item(game, char: Character, item) -> list[str]:
         return open_pack(game, char, item)
     if name == "Drink the antitoxin":
         return drink_antitoxin(game, char, item)
+    if name == "Crush the sapphire":
+        from realmwalker.game import divining
+
+        return divining.crush(game, char, item)
     return [how_text(game, item)]
 
 

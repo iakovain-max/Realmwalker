@@ -583,6 +583,27 @@ def captive_chains() -> Image.Image:
     return im
 
 
+# What divination magic shows on a close-up map (Expansion 3 E.3, game/divining.py): a faint ring with a sign in it,
+# coloured by what was sensed.
+SENSED = {"magic": (176, 120, 255), "evil": (150, 220, 120), "poison": (196, 226, 70), "trap": (255, 156, 60),
+          "thing": (255, 214, 96), "creature": (240, 92, 80)}
+
+
+def sensed_mark(kind: str) -> Image.Image:
+    """A ring of light with a small diamond at its heart, as a sensed thing is seen through walls."""
+    color = SENSED[kind]
+
+    def draw(d, k):
+        c = 16 * k
+        for r, a in ((13, 70), (11, 150)):
+            d.ellipse([c - r * k, c - r * k, c + r * k, c + r * k], outline=(*color, a), width=max(1, k))
+        r = 4 * k
+        d.polygon([(c, c - r), (c + r, c), (c, c + r), (c - r, c)], fill=(*color, 220))
+        d.polygon([(c, c - r // 2), (c + r // 2, c), (c, c + r // 2), (c - r // 2, c)], fill=(255, 255, 240, 230))
+
+    return supersample(draw)
+
+
 # ---------------------------------------------------------------------------- the overworld's marks
 INK = (40, 30, 22, 255)
 
@@ -1308,6 +1329,8 @@ def all_drawn() -> dict[str, Image.Image]:
         out[f"feature/rock_{i}"] = boulder(685 + i)
     out["feature/well"] = well(690)
     out["feature/chains"] = chains(700)
+    for kind in SENSED:
+        out[f"mark/sensed_{kind}"] = sensed_mark(kind)
     for i in range(2):
         out[f"feature/barrels_{i}"] = barrels(730 + i)
         out[f"feature/crates_{i}"] = crates(740 + i)
