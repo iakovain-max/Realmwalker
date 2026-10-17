@@ -199,6 +199,11 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
             used = member.spells.get("slots_used", []) if member.spells else []
             if any(u > n for u, n in zip(used, spellrules.slots_total(member, app.tables))):
                 fail(f"{member.name} has spent more spell slots than they have: {used}")
+            if member.spells and spellrules.prepared_count(member, app.tables):
+                ready = spellrules.prepared(member, app.tables)
+                if len(ready) > spellrules.prepared_count(member, app.tables) \
+                        or set(ready) - set(spellrules.preparable(member, app.tables)):
+                    fail(f"{member.name} has an impossible list of prepared spells: {ready}")
             from realmwalker.rules.inventory import container_capacity
 
             for it in member.inventory:

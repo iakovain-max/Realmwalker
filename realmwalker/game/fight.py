@@ -101,6 +101,10 @@ def start_battle(game, creatures: list[Creature], intro: str, *, surprised: str 
         for f in battle.side(PARTY):
             f.conditions["prone"] = -1  # caught asleep: on the ground, and getting up takes half a move
     _magic_at_the_start(game, battle)
+    from realmwalker.rules import spells as spellrules
+
+    for c in game.party:
+        spellrules.close_preparing(c)  # (the prepared spells stay as they are until the next rest)
     battle.start(intro)
     game.battle = battle
     others = [c for c in game.party[1:] if c.alive]

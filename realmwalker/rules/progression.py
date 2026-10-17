@@ -14,6 +14,7 @@ from realmwalker.core.rng import RNG
 from realmwalker.rules.character import Character, modifier
 from realmwalker.rules.engine import resources
 from realmwalker.rules.engine import traits as trs
+from realmwalker.rules import spells as spellrules
 from realmwalker.rules.spells import restore_slots
 
 
@@ -132,6 +133,14 @@ def _level_up(char: Character, tables, rng: RNG) -> list[str]:
     from realmwalker.rules import feats
 
     feats.level_up(char, tables)  # more luck points; a lineage's spell of this level ready to cast
+    if char.spells and spellrules.prepared_count(char, tables):
+        before_list = set(spellrules.known_spells(char, tables))
+        spellrules.fill_prepared(char, tables)
+        spellrules.open_preparing(char, "prepare")
+        new = [s for s in spellrules.known_spells(char, tables) if s not in before_list and tables.spells[s]["level"]]
+        if new:
+            notes.append(f"Prepared: {', '.join(tables.spells[s]['name'] for s in new)} "
+                         f"<dim>(the Spells page, S, then p, changes them until the next fight)</>.")
     return notes
 
 
@@ -524,6 +533,8 @@ def resolve(char: Character, tables, choice: dict, option_id: str) -> list[str]:
         choice["count"] = choice.get("count", 1) - 1
         if choice["count"] <= 0 or not options(char, tables, choice):
             char.pending.remove(choice)
+    if char.spells and "prepared" in char.spells:
+        spellrules.fill_prepared(char, tables)  # (a place freed by a domain's spells, or a spell newly copied)
     return notes
 
 
@@ -653,6 +664,7 @@ def short_rest(char: Character, tables, rng: RNG, *, meal: bool = False) -> list
             char.uses["arcane_recovery"] = 0
             notes.append(f"Arcane Recovery restores spell slots (level {', '.join(str(n) for n in back)}).")
     signature_back(char)
+    spellrules.open_preparing(char, "memorize")  # a wizard's Memorize Spell: one prepared spell may be swapped
     return notes
 
 
@@ -672,6 +684,9 @@ def long_rest(char: Character, tables, rng: RNG) -> list[str]:
         char.hp = char.max_hp
     char.hit_dice = min(char.level, char.hit_dice + max(1, char.level // 2))
     restore_slots(char)
+    if char.spells:
+        spellrules.fill_prepared(char, tables)
+        spellrules.open_preparing(char, "prepare")  # (2024: the prepared list may change after a long rest)
     resources.recover(char, tables, "long")  # every pool (data/traits.json), an orc's toughness among them
     char.uses["arcane_recovery"] = 1
     signature_back(char)

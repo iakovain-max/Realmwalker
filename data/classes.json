@@ -131,7 +131,8 @@
         "slots": [[2], [3], [4, 2], [4, 3], [4, 3, 2], [4, 3, 3], [4, 3, 3, 1], [4, 3, 3, 2], [4, 3, 3, 3, 1], [4, 3, 3, 3, 2],
                   [4, 3, 3, 3, 2, 1], [4, 3, 3, 3, 2, 1], [4, 3, 3, 3, 2, 1, 1], [4, 3, 3, 3, 2, 1, 1],
                   [4, 3, 3, 3, 2, 1, 1, 1], [4, 3, 3, 3, 2, 1, 1, 1], [4, 3, 3, 3, 2, 1, 1, 1, 1],
-                  [4, 3, 3, 3, 3, 1, 1, 1, 1], [4, 3, 3, 3, 3, 2, 1, 1, 1], [4, 3, 3, 3, 3, 2, 2, 1, 1]]},
+                  [4, 3, 3, 3, 3, 1, 1, 1, 1], [4, 3, 3, 3, 3, 2, 1, 1, 1], [4, 3, 3, 3, 3, 2, 2, 1, 1]],
+        "prepared": [4, 5, 6, 7, 9, 10, 11, 12, 14, 15, 16, 16, 17, 17, 18, 18, 19, 20, 21, 22]},
       "features": [
         {"level": 1, "id": "spellcasting", "name": "Spellcasting", "text": "Pray each morning for the prayers your god will grant today.", "rule": "spellcasting"},
         {"level": 1, "id": "divine_order", "name": "Divine Order", "text": "Your sacred role: Protector (martial weapons and heavy armour) or Thaumaturge (one more cantrip, and your Wisdom added to Arcana and Religion).", "choose": ["order_protector", "order_thaumaturge"]},
@@ -155,13 +156,22 @@
         "blessed_potent_spellcasting": {"name": "Potent Spellcasting", "text": "Your Wisdom modifier added to the damage of your cleric cantrips (and from level 14, temporary hit points for you or a friend)."}
       },
       "subclasses": {
-        "life": {"name": "Life Domain", "text": "Healers and midwives of the faith.", "features": [
+        "life": {"name": "Life Domain", "text": "Healers and midwives of the faith.",
+          "spells": {"3": ["aid", "bless", "cure_wounds", "lesser_restoration"], "5": ["mass_healing_word", "revivify"],
+                     "7": ["aura_of_life", "death_ward"], "9": ["greater_restoration", "mass_cure_wounds"]},
+          "features": [
+          {"level": 3, "id": "life_domain_spells", "name": "Life Domain Spells", "text": "Always prepared, beyond your count: Aid, Bless, Cure Wounds and Lesser Restoration; Mass Healing Word and Revivify from 5; Aura of Life and Death Ward from 7; Greater Restoration and Mass Cure Wounds from 9."},
           {"level": 3, "id": "disciple_of_life", "name": "Disciple of Life", "text": "Your healing spells restore 2 + the spell's level extra hit points.", "rule": "disciple_of_life"},
           {"level": 3, "id": "preserve_life", "name": "Channel Divinity: Preserve Life", "text": "Share out healing equal to five times your level among the wounded within 30 feet (none past half their hit points).", "rule": "preserve_life"},
           {"level": 6, "id": "blessed_healer", "name": "Blessed Healer", "text": "Healing someone else with a spell heals you too: 2 + the spell's level.", "rule": "blessed_healer"},
           {"level": 17, "id": "supreme_healing", "name": "Supreme Healing", "text": "Your healing spells and Divine Spark heal their most: every die counts as its highest.", "rule": "supreme_healing"}
         ]},
-        "war": {"name": "War Domain", "text": "Chaplains of armies and the gods of battle.", "features": [
+        "war": {"name": "War Domain", "text": "Chaplains of armies and the gods of battle.",
+          "spells": {"3": ["guiding_bolt", "magic_weapon", "shield_of_faith", "spiritual_weapon"],
+                     "5": ["crusaders_mantle", "spirit_guardians"], "7": ["fire_shield", "freedom_of_movement"],
+                     "9": ["hold_monster", "steel_wind_strike"]},
+          "features": [
+          {"level": 3, "id": "war_domain_spells", "name": "War Domain Spells", "text": "Always prepared, beyond your count: Guiding Bolt, Magic Weapon, Shield of Faith and Spiritual Weapon; Crusader's Mantle and Spirit Guardians from 5; Fire Shield and Freedom of Movement from 7; Hold Monster and Steel Wind Strike from 9."},
           {"level": 3, "id": "war_priest", "name": "War Priest", "text": "A weapon attack with a bonus action, as many times as your Wisdom modifier (at least once) between short rests.", "rule": "war_priest"},
           {"level": 3, "id": "guided_strike", "name": "Channel Divinity: Guided Strike", "text": "Add +10 to an attack roll that would miss: your own, or a friend's within 30 feet.", "rule": "guided_strike"},
           {"level": 6, "id": "war_gods_blessing", "name": "War God's Blessing", "text": "A use of Channel Divinity casts Shield of Faith or Spiritual Weapon without a slot, and it lasts its minute without your concentration.", "rule": "war_gods_blessing"},
@@ -188,7 +198,8 @@
         "slots": [[2], [3], [4, 2], [4, 3], [4, 3, 2], [4, 3, 3], [4, 3, 3, 1], [4, 3, 3, 2], [4, 3, 3, 3, 1], [4, 3, 3, 3, 2],
                   [4, 3, 3, 3, 2, 1], [4, 3, 3, 3, 2, 1], [4, 3, 3, 3, 2, 1, 1], [4, 3, 3, 3, 2, 1, 1],
                   [4, 3, 3, 3, 2, 1, 1, 1], [4, 3, 3, 3, 2, 1, 1, 1], [4, 3, 3, 3, 2, 1, 1, 1, 1],
-                  [4, 3, 3, 3, 3, 1, 1, 1, 1], [4, 3, 3, 3, 3, 2, 1, 1, 1], [4, 3, 3, 3, 3, 2, 2, 1, 1]]},
+                  [4, 3, 3, 3, 3, 1, 1, 1, 1], [4, 3, 3, 3, 3, 2, 1, 1, 1], [4, 3, 3, 3, 3, 2, 2, 1, 1]],
+        "prepared": [4, 5, 6, 7, 9, 10, 11, 12, 14, 15, 16, 16, 17, 18, 19, 21, 22, 23, 24, 25]},
       "features": [
         {"level": 1, "id": "spellcasting", "name": "Spellcasting", "text": "Cast spells from your spellbook; copy new ones from scrolls and books (two hours and 50 coins a level), and two more come with every level.", "rule": "spellcasting"},
         {"level": 1, "id": "ritual_adept", "name": "Ritual Adept", "text": "Any ritual in your spellbook can be cast as a ritual, read from the book: ten minutes longer, and no spell slot.", "rule": "ritual_adept"},

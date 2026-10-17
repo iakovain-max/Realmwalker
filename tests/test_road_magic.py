@@ -179,6 +179,7 @@ def test_stoneskin_resists_weapons_in_the_next_fight(world, tables):
     wiz = hero(tables, "wizard")
     award_xp(wiz, 23000, tables, RNG(3), auto=True)
     wiz.spells["spellbook"].append("stoneskin")
+    wiz.spells["prepared"] = ["stoneskin"]  # (2024: a spell is cast only when prepared)
     game = game_with(world, tables, wiz)
     said = magic.cast_on_road(game, wiz, "stoneskin")
     assert "an hour" in said[0]
@@ -231,7 +232,9 @@ def test_identify_tells_a_wizard_what_a_strange_thing_is(world, tables):
     assert "Identify" in said[0] and ring.magic["identified"]
     # A ritual (2024): no slot spent, ten minutes longer than the casting's ten.
     assert sp.slots_left(wiz, tables)[0] == slots and game.world.time - t0 == 20 and "ritual" in said[0]
-    # Never in a fight, and never from a scroll read aloud in one.
+    # Never in a fight, and never from a scroll read aloud in one. (A ritual read from the book needs no preparing;
+    # to be in a fight's list at all it must be prepared.)
+    wiz.spells["prepared"] = ["identify"]
     b = fight(tables, [wiz])
     menu = {sid: (ok, why) for sid, ok, why in b.spell_options(b.side(PARTY)[0])}
     assert menu["identify"] == (False, "not in a fight")

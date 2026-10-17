@@ -275,12 +275,17 @@ CLASS = Obj(
         "mastery": List(List(Int(min=0, max=20), min_items=2, max_items=2), optional=True),
         "spellcasting": Obj({"ability": Str(choices=list(ABILITY_IDS)), "type": Str(choices=["prepared", "spellbook", "known"]),
                              "cantrips": List(Int(min=0, max=10), min_items=10),
-                             "slots": List(List(Int(min=0, max=10)), min_items=10)}, optional=True),
+                             "slots": List(List(Int(min=0, max=10)), min_items=10),
+                             # level 1+ spells prepared at each level (2024: the Prepared Spells column)
+                             "prepared": List(Int(min=0, max=30), min_items=10, optional=True)}, optional=True),
         "features": List(FEATURE, min_items=1),
         # A feature's choice (data "choose"): the options, each a feature of its own kept in Character.features.
         "options": Map(Obj({"name": Str(max_len=40), "text": Str(max_len=300), "gives": Any_(optional=True),
                             "cantrips": Int(min=1, max=3, optional=True)}), optional=True),
         "subclasses": Map(Obj({"name": Str(max_len=40), "text": Str(max_len=300), "features": List(FEATURE),
+                               # always-prepared spells by class level (a domain's spells); ids may wait for the
+                               # catalogue (Expansion 3 part D): only those in data/spells.json are prepared
+                               "spells": Map(List(Str(max_len=40)), optional=True),
                                "armor": List(Str(max_len=20), optional=True), "weapons": List(Str(max_len=30), optional=True)}),
                           min_items=1),
         "kits": List(KIT, min_items=1),

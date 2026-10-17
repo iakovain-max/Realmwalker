@@ -140,6 +140,11 @@ def road_problem(game, caster, spell_id: str, target=None) -> str | None:
         return why
     if game.battle is not None:
         return "you are in a fight"
+    if spell_id not in spellrules.known_spells(caster, t):
+        from realmwalker.rules import feats
+
+        if not spell.get("ritual") or spell_id not in spellrules.ritual_spells(caster, t) + feats.ritual_spells(caster, t):
+            return "not prepared (p prepares it)"
     if spell.get("ritual"):  # a ritual needs no slot, but armour without training still stops it
         why = spellrules.armour_problem(caster, t)
         ok = not why
