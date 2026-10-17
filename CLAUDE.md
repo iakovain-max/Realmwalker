@@ -505,6 +505,17 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   `char.effects["immune_spell:<id>"]` (effects.warded's `sid`); Sudden Learning is `feats.revoke` and the pending
   kind "relearn". Roll Redo is "wish:redo:<event index>" (`Battle.redo_options`, `do_redo`; attack events keep bonus,
   ac and round). Tests: tests/test_spells_road7.py.
+- Allies on the field (Expansion 3 F.1): a creature fighting for the party is a `Fighter` on the party's side with
+  `bond` {owner, kind (familiar, steed), spell, level, type, picture}, made by `Battle.add_ally` (beside its owner; a
+  familiar by its own Initiative, anything else right after its owner). It is played like a party member (z: Auto),
+  never runs, earns no XP, credits its kills to its owner, vanishes at 0 and does not keep a lost fight going
+  (`_check_end`). `Fighter.blows` False: no attacks, shoves, grapples or breaking (a familiar; `tactics._familiar_turn`
+  Helps). Records live on the owner (`char.spells["familiar"|"steed"]`): `rules/allies.py` (`bring_in` from
+  `fight.start_battle`, `after` from `finish_battle`, `rest` from `progression.long_rest`, `summon` from the "ally"
+  effects op, `steed_def`: a creature's numbers for its slot set on `Fighter.cdef`); outside a fight `game/allies.py`
+  (spellwork's door ALLIES: Find Familiar's form and heart, sending it away and back without a slot; the steed in the
+  herd with `summoned`, kept in step by `put_in_herd` from pass_time; the familiar's night watch). A creature's own
+  gift is a spell with classes ["creature"] (no scroll, no Wish copy). Tests: tests/test_allies.py.
 - Gear and tools 2024 (Expansion 2 part D): items.json `pack` (opens into its contents, gear.open_pack), `helps`
   {search, traps, force, disguise} (dungeon.helps, law.put_on_disguise), `utilize` (a tool's 2024 uses, on its card),
   `carry` also on carried containers (each kind once, Sheet.pack_carry), `trinket` (data/trinkets.json; the name and

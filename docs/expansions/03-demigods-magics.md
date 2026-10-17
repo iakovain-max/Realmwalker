@@ -455,7 +455,7 @@ Split at its start (2026-10-17, as E.2 and E.4-E.6 were): the part as planned wa
 some twenty creature-making spells on a battle that had no way yet for a creature to fight on the party's side. Each
 stat block now comes with the spell that brings it into play (never a block that nothing calls); each piece goes to
 `main` when done.
-- [ ] F.1 Allies on the field, Find Familiar and Find Steed: a creature fighting for the party (the foundation every
+- [x] F.1 Allies on the field, Find Familiar and Find Steed: a creature fighting for the party (the foundation every
   later piece uses); the familiar's forms of Appendix B (bat, cat, crab, frog, hawk, lizard, octopus, owl, rat, raven,
   scorpion, spider, weasel) with pictures; the Otherworldly Steed; the familiar and the steed as followers outside a
   fight.
