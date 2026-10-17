@@ -82,7 +82,20 @@ def working_now(game) -> list[str]:
                        f" <dim>({magic.lasting_text(hours)} left)</>")
     for ward, rec in spellwork.wards_here(game).items():
         left = max(0.0, (float(rec["until"]) - game.world.time) / 60)
-        out.append(f"<magic>{WARD_NAMES.get(ward, ward)}</> over the camp <dim>({magic.lasting_text(left)} left)</>")
+        when = "waiting" if ward in WAITING else f"{magic.lasting_text(left)} left"
+        out.append(f"<magic>{WARD_NAMES.get(ward, ward)}</> over the camp <dim>({when})</>")
+    from realmwalker.game import warding
+
+    holy = warding.hallowed_at(game)
+    if holy is not None:
+        out.append(f"<magic>Hallowed ground</> here <dim>({markup.escape(warding.HALLOW_EXTRAS[holy['extra']])})</>")
+    if game.renown.flags.get("glyph_room"):
+        out.append("<magic>A glyph</> on the door of your room at the inn <dim>(waiting)</>")
+    kept = warding.demiplane_things(game)
+    coin = int((game.renown.flags.get("demiplane") or {}).get("money", 0))
+    if kept or coin:
+        out.append(f"<magic>Your demiplane</> holds {len(kept)} thing{'s' if len(kept) != 1 else ''}"
+                   + (" and coin" if coin else ""))
     from realmwalker.game import waymagic
 
     for c in game.party:
@@ -98,7 +111,11 @@ def working_now(game) -> list[str]:
 
 
 WARD_NAMES = {"alarm": "Alarm", "hut": "Tiny Hut", "hound": "Faithful Hound", "rope": "Rope Trick",
-              "mansion": "Magnificent Mansion"}
+              "mansion": "Magnificent Mansion", "meld": "Meld into Stone", "decoy": "Programmed Illusion",
+              "mouth": "Magic Mouth", "veil": "An illusion of the land", "earthworks": "Move Earth's ditch and bank",
+              "glyph": "Glyph of Warding", "symbol": "Symbol", "guards": "Guards and Wards", "forbiddance": "Forbiddance",
+              "circle": "Magic Circle", "sanctum": "Private Sanctum", "demiplane": "The demiplane's door"}
+WAITING = ("glyph", "symbol")  # (set off by what comes, not timed)
 
 
 def spell_detail(game, char, sid: str, target, slot: int | None = None) -> list[str]:

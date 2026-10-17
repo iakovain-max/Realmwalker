@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 03 Demigods & Magics · Part E (spells outside battle), E.6 next · branch dlc/03-demigods-magics
+Current: 03 Demigods & Magics · Part E (spells outside battle), E.7 next · branch dlc/03-demigods-magics
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -19,10 +19,11 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   Awaken, Disguise Self, Seeming, the images, Mislead, Project Image, Illusory Script, Sequester, the camp's
   illusions, Druidcraft, Thaumaturgy...) and E.5 (locks and stone, weather and land: Knock, Arcane Lock, Mending, Mage
   Hand, Fabricate, Creation, Stone Shape, Passwall, Move Earth, Leomund's Secret Chest, Control Water, Control
-  Weather, Plant Growth, Tsunami)
+  Weather, Plant Growth, Tsunami) and E.6 (lasting protections and the caster's keeping: Glyph of Warding, Symbol,
+  Magic Circle, Forbiddance, Guards and Wards, Private Sanctum, Hallow, Demiplane, Tasha's Bubbling Cauldron)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
-  adapted); Expansion 3: 202 done, 277 adapted, 1 omitted of 558 (parts A, B, C, D and E.1 to E.5 settled). PHB 61% · DMG 12% · MM 8%
+  adapted); Expansion 3: 202 done, 286 adapted, 1 omitted of 558 (parts A, B, C, D and E.1 to E.6 settled). PHB 61% · DMG 12% · MM 8%
 Assumptions waiting for Anton:
 - The Player2 AI writer is removed (tagged `before-ai-removal`); its text is replaced everywhere by the game's own
   words, strengthened where they were thin.
@@ -280,20 +281,45 @@ Assumptions waiting for Anton:
   (+3 with the owner, fame) in a hamlet, village or town. Tsunami is cast from the meeting screen only when the band
   was seen first: 6d10 bludgeoning to each (Strength save for half), a minute passes, then the fight begins with them
   knowing you; its later rounds are left out; a band drowned to the last is a fight won (XP and loot as ever).
+- Expansion 3 E.6: E.6 was split at its start (13 spells and Wish's six other uses, four of them systems as big as a
+  part): lasting protections, the Demiplane and Tasha's cauldron are E.6; Contingency, Magic Jar, Clone, Imprisonment
+  and Wish's other uses are E.7. A protection is a camp ward (where the party rests, left behind when it moves on);
+  Glyph of Warding and Symbol are drawn on the way into a camp in the open (not underground: nothing comes to a
+  dungeon camp in the night) or on your room's door at an inn (the night's thief sets it off); they are always set
+  off by the party's foes (chosen triggers, creature-type refinements and passwords are left out). A glyph's stored
+  spell is a prepared spell of level 1 to 5, cast with an action at a foe or a point, without concentration; its own
+  slot is spent as the glyph is drawn, and it takes effect at the first of the band as the fight begins (an area
+  centred on it), with the numbers it had when stored. A symbol strikes the band once, before the fight (the ten
+  minutes of the sphere are left out: the fight is beyond the glyph); Fear sends those who fail away for good;
+  Discord is Disadvantage on attacks (on checks left out). Magic Circle and Forbiddance always take every kind they
+  can (five and six); the reversed circle waits for binding spells (Part F). Guards and Wards: half the night's bands
+  lose their way, the rest wake you; its doors, webs and other effects are not laid on any map. Private Sanctum: the
+  night's chance is half a cold camp's, fire or no fire. Hallow keeps out aberrations, elementals, fey, fiends and
+  undead (celestials welcome), on the whole map tile in the open, 60 feet underground; its blessings are Courage,
+  Fear (every non-humanoid foe), Resistance (necrotic), Vulnerability (radiant) and Peaceful Rest (a haunted field's
+  dead laid for good, a town's graves hallowed: each a deed); Daylight, Darkness, Silence, Tongues and
+  Extradimensional Interference are left out. Demiplane: one room, the party's, never lost; a short rest there for
+  the hour. Tasha's cauldron is cast outside a fight only and brews the common and uncommon potions the game has
+  (healing, greater healing).
+  A creature's saved `conditions` now come into a fight with it (a sleep brought in breaks on damage), the first
+  use of that record.
 Ideas for later:
 - (none yet)
-Next session starts at: task E.6 in docs/expansions/03-demigods-magics.md (Part E, spells outside battle: lasting
-protections, great magic and Wish's other uses; its spells are listed in the design note under E.6; it is the last of
-Part E, so Part E goes to `main` with it). 13 spells and Wish's six other uses: write E.6's "How" in the design note
-first, as E.5's is written.
+Next session starts at: task E.7 in docs/expansions/03-demigods-magics.md (Part E, spells outside battle: great magic
+and Wish's other uses; Contingency, Magic Jar, Clone, Imprisonment, and Wish's Object Creation, Resistance, Spell
+Immunity, Sudden Learning, Roll Redo and Reshape Reality; it is the last of Part E, so Part E goes to `main` with it,
+as every E part has). Write E.7's "How" in the design note first, as E.6's is written. The book's text of all four
+spells and of Wish is in build/codex/phb (p254, p259, p291, p297, p344: the page files match the codex's page
+numbers; OCR misreads 3 as 5 now and then, so check numbers on the page image).
 The way of Part E: a spell outside a fight has `road_only` (or `minutes`) and an op {"op": "road", "does": ...}
-(rules/spells.ROAD_USES and the kinds in E3_KINDS/E4_KINDS/E5_KINDS, checked at start-up), done in a module of its own
-(game/divining.py, speech.py, glamour.py, stonework.py...) through game/spellwork.py's door (subjects, problem, cast);
+(rules/spells.ROAD_USES and the kinds in E3_KINDS to E6_KINDS, checked at start-up), done in a module of its own
+(game/divining.py, speech.py, glamour.py, stonework.py, warding.py) through game/spellwork.py's door (subjects, problem, cast);
 game/magic.cast_on_road spends the slot and passes the casting time. A lasting spell (ten minutes or more) is a buff
 kept on the character (rules/engine/marks.py lists the keys); a camp ward is {"does": "ward", "ward": ...} with
-rounds or `days` (spellwork.ward_minutes); a spell aimed at something chosen lists Subjects (game/divining.Subject).
-A spell used both in a fight and outside one has `road_too` and `road_minutes` (Plant Growth). Tests:
-tests/test_spells_outside.py, test_spells_road2.py, road3, road4, road5. Parts A to D and E.1 to E.5 are in `main`.
+rounds or `days` (spellwork.ward_minutes), or a protection's record from game/warding._camp_ward; a spell aimed at
+something chosen lists Subjects (game/divining.Subject). A spell used both in a fight and outside one has `road_too` and
+`road_minutes` (Plant Growth). Tests: tests/test_spells_outside.py, test_spells_road2.py, road3, road4, road5, road6.
+Parts A to D and E.1 to E.6 are in `main`.
 
 ## Done
 
@@ -325,6 +351,7 @@ tests/test_spells_outside.py, test_spells_road2.py, road3, road4, road5. Parts A
 | 2026-10-17 | Demigods & Magics E.3: finding and seeing (Detect Magic, Find Traps, Locate Object and Creature, Clairvoyance, Arcane Eye, Scrying, Drawmij's Instant Summons...), asking the powers from the world's truth (Augury, Divination, Commune, Contact Other Plane, Commune with Nature, Legend Lore), talking (a language rule on the road, Tongues, Speak with Animals and Dead, Sending, Dream's nightmare, Detect Thoughts); merged into `main` | `dlc/03-demigods-magics` |
 | 2026-10-17 | Demigods & Magics E.4: minds and the law (Friends, Enthrall, Zone of Truth, Geas, Modify Memory, Glibness, Antipathy/Sympathy, Awaken), disguise and illusion (Disguise Self, Seeming, the images, Mislead, Project Image, Illusory Script, Nystul's Magic Aura, Nondetection, Sequester, the camp's illusions), the small arts (Druidcraft, Elementalism, Prestidigitation, Thaumaturgy); E.4 split, E.5 next; merged into `main` | `dlc/03-demigods-magics` |
 | 2026-10-17 | Demigods & Magics E.5: locks and stone (Knock, Arcane Lock, Mending, Mage Hand, Fabricate, Creation, Stone Shape, Passwall, Move Earth, Leomund's Secret Chest), weather and land (Control Water, Control Weather, Plant Growth with a new four-feet-a-foot ground, Tsunami from the meeting screen); E.5 split, E.6 next; merged into `main` | `dlc/03-demigods-magics` |
+| 2026-10-17 | Demigods & Magics E.6: lasting protections (Glyph of Warding, Symbol, Magic Circle, Forbiddance, Guards and Wards, Private Sanctum, Hallow) and the caster's keeping (Demiplane, Tasha's Bubbling Cauldron); E.6 split, E.7 next; merged into `main` | `dlc/03-demigods-magics` |
 
 ## Notes for the next session
 

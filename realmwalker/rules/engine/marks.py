@@ -78,6 +78,10 @@ On the one marked (the buff is on the creature):
   under it: Mislead, Invisibility), disguise (a disguise spell; its quality is in renown.flags["disguise_dc"]); Part
   E.5's: part_water (Control Water: the next river is crossed on its dry bed, GameState.magic_crossing).
     nondetection    no divination of a foe finds it: a foe's sense_thoughts does not (Nondetection)
+  Part E.6's, given as a fight begins (game/warding.at_the_start; not in any spell's data):
+    discord         Disadvantage on its attack rolls (Symbol's Discord, with rounds)
+    vulnerable      [damage types] it is vulnerable to (hallowed ground's Vulnerability)
+  and hallowed ground's Courage is `immune` ["frightened"], its Resistance `resist` ["necrotic"].
 On the one who gains (the caster, or a friend):
     hit_extra       dice (with hit_type, hit_with "weapon" | "melee" | "any"): extra damage on its hits (Divine Favor)
     weapon_plus     added to its weapon attack and damage rolls (Magic Weapon)
@@ -159,6 +163,8 @@ def attack_mods(b, att, target, opt, r) -> None:
         r.add("disadvantage", "enfeebled")
     if any(bf.get("dancing") for bf in att.buffs):
         r.add("disadvantage", "dancing")  # (Otto's Irresistible Dance)
+    if any(bf.get("discord") for bf in att.buffs):
+        r.add("disadvantage", "in discord")  # (Symbol's Discord, brought into the fight: game/warding.py)
     if any(bf.get("dancing") for bf in target.buffs):
         r.add("advantage", "dancing")
     if att.buff_value("foresight"):

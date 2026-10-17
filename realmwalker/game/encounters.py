@@ -120,7 +120,9 @@ def roll_encounter(game, minutes: float) -> PendingEncounter | None:
     rng = w.rng.child(f"enc/{w.time}/{p.x},{p.y}")
     from realmwalker.game import past
 
-    haunted = night and past.scar_at(w, p.x, p.y) is not None  # a field where the history left its dead
+    scar = past.scar_at(w, p.x, p.y)
+    haunted = night and scar is not None and not scar.get("laid")  # a field where the history left its dead
+    # (unless it was hallowed with Peaceful Rest: game/warding.py)
     if not rng.chance(encounter_chance(danger, minutes, night, on_road) * (1.6 if haunted else 1.0)):
         return None
     if haunted:

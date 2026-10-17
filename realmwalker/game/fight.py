@@ -107,6 +107,10 @@ def start_battle(game, creatures: list[Creature], intro: str, *, surprised: str 
         for f in battle.side(PARTY):
             f.conditions["prone"] = -1  # caught asleep: on the ground, and getting up takes half a move
     _magic_at_the_start(game, battle)
+    from realmwalker.game import warding
+
+    for line in warding.at_the_start(game, battle):  # (E.6: a glyph's spell, Forbiddance, a circle, hallowed ground)
+        game.say(line, "magic")
     from realmwalker.rules import spells as spellrules
 
     for c in game.party:
@@ -955,9 +959,14 @@ def rest(game, kind: str) -> list[str]:
             notes.append(f"<danger>{woke}</> Your night is broken after {hour + 1} hour{'s' if hour else ''}.")
             return notes
         if lm is None and kind == "long":
-            # A fire is seen from afar, but beasts fear it; a cold camp is harder to find.
-            enc = roll_encounter(game, 60 * (0.4 if fire else 0.25))
-            if enc is not None and fire and all(game.tables.creatures[c.def_id]["kind"] == "beast" for c in enc.creatures):
+            # A fire is seen from afar, but beasts fear it; a cold camp is harder to find. Inside a Private Sanctum
+            # (E.6) nothing outside sees the fire or hears the camp.
+            from realmwalker.game import warding
+
+            unseen = warding.unseen_camp(game)
+            seen_fire = fire and not unseen
+            enc = roll_encounter(game, 60 * (0.4 if seen_fire else 0.25) * (warding.SANCTUM_CHANCE if unseen else 1.0))
+            if enc is not None and seen_fire and all(game.tables.creatures[c.def_id]["kind"] == "beast" for c in enc.creatures):
                 if game.world.rng.child(f"firelight/{game.world.time}").chance(0.6):
                     notes.append("Eyes glint beyond the firelight in the night, but they do not come closer.")
                     enc = None

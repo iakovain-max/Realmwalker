@@ -70,7 +70,11 @@ def hidden(game, kind: str) -> bool:
         return True
     if warded(game, "veil") is not None and _veil_holds(game):
         return True
-    return warded(game, "mansion") is not None or (kind == "short" and warded(game, "rope") is not None)
+    from realmwalker.game import warding
+
+    if warding.keeps_out(game):  # (E.6: Guards and Wards' fog; a Magic Circle or hallowed ground against its kinds)
+        return True
+    return warded(game, "mansion") is not None or (kind == "short" and warded(game, "rope", "demiplane") is not None)
 
 
 def _veil_holds(game) -> bool:
@@ -105,14 +109,22 @@ def night_visitors(game, enc) -> tuple[object, list[str]]:
                           "nothing here."]
         ward = warded(game, "decoy", "earthworks", "hound", "mouth", "alarm")
         notes = ["<warn>Something in the night stops, and looks through the land's false face at the camp.</>"]
-        if ward is None:
-            return _awake_watch(game, enc, notes)
-        enc2, more = night_visitors_after_veil(game, enc, ward)
+        enc2, more = night_visitors_after_veil(game, enc, ward)  # (with no other ward: an awakened animal's watch)
         return enc2, notes + more
     return night_visitors_after_veil(game, enc, ward)
 
 
 def night_visitors_after_veil(game, enc, ward: str | None) -> tuple[object, list[str]]:
+    from realmwalker.game import warding
+
+    enc, first = warding.night(game, enc)  # (E.6: hallowed ground, a circle, the fog, a glyph, a symbol, forbiddance)
+    if enc is None:
+        return None, first
+    enc2, more = _after_the_lasting(game, enc, ward)
+    return enc2, first + more
+
+
+def _after_the_lasting(game, enc, ward: str | None) -> tuple[object, list[str]]:
     if ward == "decoy":  # (Programmed Illusion: they fall on an illusory camp; the real one is awake)
         enc.asleep, enc.warned = False, True
         enc.spotted_first = True
@@ -161,8 +173,10 @@ def _awake_watch(game, enc, notes: list[str]) -> tuple[object, list[str]]:
 def guards_the_animals(game) -> str:
     """Words for a ward that keeps the animals from rustlers, or ""."""
     ward = warded(game, "mansion", "hut", "veil", "hound", "mouth", "alarm")
-    from realmwalker.game import glamour
+    from realmwalker.game import glamour, warding
 
+    if ward is None and warding.guards_the_animals(game):  # (E.6: a sanctum's fog, Guards and Wards)
+        return warding.guards_the_animals(game)
     if ward is None and glamour.awake_animal(game) is not None:
         return (f"{escape_markup(glamour.awake_animal(game)['name'])} calls out in the small hours: someone was at the "
                 f"animals, and runs off with nothing.")
@@ -423,6 +437,8 @@ SPEECH = ("speak", "send", "read")
 GLAMOUR = ("mind", "illusion", "art")
 # Part E.5's: locks and stone, weather and land (game/stonework.py)
 STONEWORK = ("lock", "mend", "hand", "make", "stone", "chest", "weather", "plants", "wave")
+# Part E.6's: lasting protections and the caster's keeping (game/warding.py)
+WARDING = ("protect", "hallow", "demiplane", "cauldron")
 
 
 def _does(spell: dict) -> str | None:
@@ -448,6 +464,10 @@ def subjects(game, caster: Character, sid: str) -> list:
         from realmwalker.game import stonework
 
         return stonework.subjects(game, caster, sid)
+    if does in WARDING:
+        from realmwalker.game import warding
+
+        return warding.subjects(game, caster, sid)
     return []
 
 
@@ -471,6 +491,10 @@ def problem(game, caster: Character, sid: str, target) -> str | None:
         from realmwalker.game import stonework
 
         return stonework.problem(game, caster, sid, target)
+    if does in WARDING:
+        from realmwalker.game import warding
+
+        return warding.problem(game, caster, sid, target)
     if does == "ward":
         ward = _road(spell)["ward"]
         rec = wards_here(game).get(ward)
@@ -508,11 +532,11 @@ def cast(game, caster: Character, sid: str, target: Character | None, level: int
     spell's casting time (`minutes`)."""
     spell = game.tables.spells[sid]
     does = _does(spell)
-    if does in DIVINING or does in SPEECH or does in GLAMOUR or does in STONEWORK:
-        from realmwalker.game import divining, glamour, speech, stonework
+    if does in DIVINING or does in SPEECH or does in GLAMOUR or does in STONEWORK or does in WARDING:
+        from realmwalker.game import divining, glamour, speech, stonework, warding
 
         out = (divining if does in DIVINING else speech if does in SPEECH else glamour if does in GLAMOUR
-               else stonework).cast(game, caster, sid, target, level)
+               else stonework if does in STONEWORK else warding).cast(game, caster, sid, target, level)
         game.cue("spell")
         game.dirty = True
         return out
@@ -548,18 +572,41 @@ def before_rest(game) -> list[str]:
     if game.local is not None or warded(game, "mansion", "hut") is not None:
         return []
     t = game.tables
+    out: list[str] = []
     for sid in sorted((s for s, sp in t.spells.defs.items() if isinstance(sp, dict) and sp.get("ritual")
                        and _road(sp).get("does") == "ward"),
                       key=lambda s: -int(t.spells[s]["level"])):
         if warded(game, _road(t.spells[sid])["ward"]) is not None:
             continue
-        for c in _companion_casters(game):
-            from realmwalker.rules import feats
+        c = _ritual_caster(game, sid)
+        if c is not None:
+            out = magic.cast_on_road(game, c, sid)
+            break
+    # (E.6: Forbiddance, a ritual too, burns what comes in the night; white fire)
+    for sid in (s for s, sp in t.spells.defs.items() if isinstance(sp, dict) and sp.get("ritual")
+                and _road(sp).get("how") == "forbiddance"):
+        if warded(game, "forbiddance") is not None:
+            continue
+        from realmwalker.game import warding
 
-            if sid in spellrules.known_spells(c, t) or sid in spellrules.ritual_spells(c, t) + feats.ritual_spells(c, t):
-                if magic.road_problem(game, c, sid) is None:
-                    return magic.cast_on_road(game, c, sid)
-    return []
+        radiant = next((s for s in warding.subjects(game, game.leader, sid) if s.ref == "radiant"), None)
+        c = _ritual_caster(game, sid, radiant)
+        if c is not None:
+            out += magic.cast_on_road(game, c, sid, radiant)
+    return out
+
+
+def _ritual_caster(game, sid: str, target=None) -> Character | None:
+    """The first companion who can cast this spell as a ritual here and now (nothing in the way)."""
+    from realmwalker.game import magic
+    from realmwalker.rules import feats
+
+    t = game.tables
+    for c in _companion_casters(game):
+        if sid in spellrules.known_spells(c, t) or sid in spellrules.ritual_spells(c, t) + feats.ritual_spells(c, t):
+            if magic.road_problem(game, c, sid, target) is None:
+                return c
+    return None
 
 
 def conjure(game, need: str) -> list[str]:
@@ -588,10 +635,11 @@ def conjure(game, need: str) -> list[str]:
 def tick(game) -> None:
     """As time passes: berries that are only magic are gone when it ends; a Geas or a charm runs out
     (game/glamour.py)."""
-    from realmwalker.game import glamour, stonework
+    from realmwalker.game import glamour, stonework, warding
 
     glamour.tick(game)
     stonework.tick(game)
+    warding.tick(game)
     items = game.tables.items
     for m in distinct_packs(game.party):
         for it in list(m.inventory):

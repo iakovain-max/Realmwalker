@@ -335,10 +335,69 @@ system is built once and every spell that uses it comes with it.
     (`renown.flags["enriched"]`), and cast in a village it is a deed for its folk. Tsunami (a minute): when a band
     on the road is seen first, a great wave strikes it before the fight (6d10 bludgeoning, Strength save for half)
     and the fight begins with the band reeling (the wave rolls on; its later blows are left out).
-- [ ] E.6 Lasting protections, great magic, Wish's other uses; Part E to `main`. Lasting protections: glyph of
-  warding, symbol, guards and wards, forbiddance, hallow, magic circle, Mordenkainen's private sanctum. Great magic:
-  contingency, magic jar, Tasha's bubbling cauldron, clone, demiplane, imprisonment, and Wish's other uses outside a
-  fight (Object Creation, Resistance, Spell Immunity, Sudden Learning, Roll Redo, Reshape Reality).
+- [x] E.6 Lasting protections and the caster's keeping (9 spells). The old E.6 was split in two at its start
+  (2026-10-17): 13 spells and Wish's six other uses, four of them systems as big as a part (a soul in a jar, a body
+  grown in a vessel, a spell waiting for its moment, a prison for good), were too many for one part; great magic and
+  Wish became E.7. Lasting protections: glyph of warding, symbol, guards and wards, forbiddance, hallow, magic circle,
+  Mordenkainen's private sanctum. The caster's keeping: demiplane, Tasha's bubbling cauldron.
+  How (the design, at the start of E.6; numbers from the 2024 PHB):
+  - The new module is `game/warding.py`: road ops `does` "protect" (`how`: glyph, symbol, guards, forbiddance, circle,
+    sanctum), "hallow", "demiplane" and "cauldron" (in `spells.E6_KINDS` / ROAD_USES, checked at start-up), through
+    game/spellwork's door. A protection on a camp is a camp ward (`Camp.wards`, as E.1's), so it stands where the
+    party rests, in the wild or underground, and is left behind when the party moves on; a hallowed place is kept by
+    the world (`politics["hallowed"]`), for good.
+  - Where they act: the night's visitors (`spellwork.night_visitors` asks `warding.night` first), a rest underground
+    while hunters search the level (`spellwork.hidden` asks `warding.keeps_out`), and a fight at the camp or on
+    hallowed ground (`warding.at_the_start`, from `fight.start_battle`). A creature's saved `conditions` now come into
+    the fight with it (Battle: a sleep brought in breaks on damage; "discord" is Symbol's mark), so what a glyph did
+    in the dark is still on the band when the fight begins.
+  - Glyph of Warding (an hour; 200 GP of diamond dust, consumed): inscribed on the way into the camp, it waits until
+    something comes in the night (as long as you camp here). Subjects: an explosive rune of acid, cold, fire,
+    lightning or thunder (5d8, +1d8 a slot above 3; Dexterity save for half, on every one of the band), or a spell
+    glyph holding a prepared spell of level 5 or lower that is cast with an action at a foe or a point and asks no
+    concentration (its own slot spent as the glyph is made): as the fight begins it takes effect at the first of them
+    (an area centred on it), with no action. Either way the camp is woken. In a town, the glyph guards your room at
+    the inn while you stay there: the night's thief sets it off, is burnt and runs with nothing.
+  - Symbol (a minute; 1,000 GP of diamond dust, consumed): the same, with one of six effects (Subjects): Death
+    (10d10 necrotic, Constitution save for half), Discord (Wisdom: a minute of Disadvantage on attacks), Fear (Wisdom:
+    Frightened, they run: those who fail are gone from the band), Pain (Constitution: Incapacitated a minute), Sleep
+    (Wisdom: Unconscious ten minutes, woken by damage), Stunning (Wisdom: Stunned a minute). The fight begins with
+    the band as the symbol left it; a band that all fled or died is no fight at all.
+  - Magic Circle (a minute; 100 GP of salt and powdered silver, consumed; an hour, one more a slot above 3):
+    celestials, elementals, fey, fiends and undead cannot come into the camp: those of the night's band stay out
+    (a band all of them goes away); a fight at the camp gives the party the Protection from Evil mark against them;
+    underground the party may rest while only such creatures hunt the level.
+  - Forbiddance (ten minutes or a ritual; 1,000 GP of ruby dust, kept; a day): the same six kinds as the book
+    (aberrations, celestials, elementals, fey, fiends, undead) take 5d10 radiant or necrotic (Subjects) as they come
+    into the camp, and again at the end of each of their turns in a fight there. (Its ward against teleporting in
+    has nothing to stop yet: no foe teleports to a camp.)
+  - Guards and Wards (an hour; a silver rod, kept; 24 hours): fog, locked ways and webs round the camp: the night's
+    band loses its way half the time and goes elsewhere; when it finds the camp, the magic mouth has woken you.
+    Underground, hunters lose their way in the fog and the locked doors: the party may rest while it stands.
+  - Mordenkainen's Private Sanctum (ten minutes; 24 hours): the camp is dark fog and silence from outside: the
+    night is half as likely to bring anything as a cold camp's, fire or no fire (the fire still warms), and nobody
+    finds the animals. (Divination against the party, sensors and teleporting are nobody's to use yet.)
+  - Hallow (24 hours; 1,000 GP of incense, consumed; for good): aberrations, elementals, fey, fiends and undead cannot
+    come onto the ground (a camp there, in the wild on that map tile or underground within 60 feet), and one more
+    effect (Subjects): Courage (the party cannot be Frightened in a fight there), Fear (every foe there that is not
+    a humanoid is Frightened), Resistance (the party resists necrotic damage there), Vulnerability (foes of the
+    warded kinds are vulnerable to radiant damage there) or Peaceful Rest (the dead buried there never rise: a
+    haunted battlefield is laid to rest for good, and in a town or village the folk remember it as a deed).
+    Detect Evil and Good tells a hallowed place. Daylight, Darkness, Silence, Tongues and Extradimensional
+    Interference are left out (nothing in the game uses them yet).
+  - Demiplane (an action; an hour): a shadowy door to a stone room out of the world: put the coin and treasure, the
+    spare arms, or all of it inside, or take back everything (Subjects; kept as item records with the coin, as the
+    secret chest's things are, but never lost); for the hour it is also a room to rest in (a short rest whatever
+    hunts outside, like Rope Trick).
+  - Tasha's Bubbling Cauldron (an action; a 500 GP gilded ladle, kept): potions of one common or uncommon kind
+    (Subjects: today the potions of healing and greater healing; the rest come with their expansion), as many as
+    the caster's spellcasting modifier (at least one). They are real potions until the spell is cast again, when the
+    last ones vanish; no merchant buys them. Cast before a fight, not in one (drawing a potion is a bonus action,
+    as drinking one is).
+  - Companions: one who knows Forbiddance casts it as a ritual before a long rest in the wild (radiant).
+- [ ] E.7 Great magic and Wish's other uses; Part E to `main`: contingency, magic jar, clone, imprisonment, and
+  Wish's other uses outside a fight (Object Creation, Resistance, Spell Immunity, Sudden Learning, Roll Redo,
+  Reshape Reality).
 
 ### Part F — Appendix B: familiars, steeds and summons
 - [ ] F.1 The 36 stat blocks (beasts, imp, quasit, pseudodragon, sprite, sphinx of wonder, slaad tadpole) with

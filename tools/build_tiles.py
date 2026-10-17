@@ -354,6 +354,9 @@ ITEMS = {
     # the costly components of Part E.5's spells (Expansion 3 E.5)
     "gold_dust": "item/potion/yellow_new.png", "leomunds_chest": "dungeon/chest_2_closed.png",
     "chest_replica": "item/misc/misc_box.png",
+    "glyph_diamond_dust": "item/misc/misc_crystal_new.png", "symbol_diamond_dust": "item/potion/silver.png",
+    "silver_rod": "item/rod/rod_1_new.png", "hallowing_incense": "item/misc/misc_phial.png",
+    "silvered_salt": "item/misc/misc_stone_new.png", "gilded_ladle": "item/rod/rod_7_new.png",
     "wheat": "item/food/bread_ration_old.png", "salt": "item/misc/misc_stone_inert.png",
     "iron_bar": "item/misc/misc_rune.png", "wool_bolt": "item/armor/back/cloak_2.png",
     "linen_bolt": "item/armor/torso/robe_1_new.png", "furs": "item/armor/torso/animal_skin_3.png",

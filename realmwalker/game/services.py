@@ -296,9 +296,14 @@ def _night(game, npc: NPC, grade: str, rng, theft: bool = True) -> list[str]:
     from realmwalker.game import stonework
 
     if theft and not stonework.room_locked(game) and rng.chance(float(spec["theft"].get(grade, 0.0))):
+        from realmwalker.game import warding
+
         c = game.leader
         taken = c.money // rng.randint(5, 10)
-        if taken > 0:
+        guarded = warding.room_thief(game, rng) if taken > 0 else None  # (E.6: a glyph on the door)
+        if guarded:
+            out.append(guarded)
+        elif taken > 0:
             c.money -= taken
             out.append(f"<danger>In the morning your purse is lighter by {money_text(taken)}.</> Nobody saw anything.")
     if spec["rest"].get(grade):

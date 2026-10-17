@@ -479,6 +479,18 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   leaves out the squares near the caster's friends. Tsunami (`does: "wave"`) is cast from the encounter screen (w)
   when a band was seen first (`stonework.wave_casters`/`wave`); a Fighter made from a dead creature starts "dead" and
   `Battle.start` ends a fight with no foe standing. Tests: tests/test_spells_road5.py.
+- Lasting protections and the caster's keeping (Expansion 3 E.6): road ops `does` protect (`how` in
+  `spells.E6_KINDS`: glyph, symbol, guards, forbiddance, circle, sanctum), hallow, demiplane, cauldron are
+  `game/warding.py`. A protection is a camp ward record (`warding._camp_ward`, read with `warding.ward(game, key)`);
+  `warding.night` meets the night's band first (from `spellwork.night_visitors_after_veil`: kinds kept out, the fog,
+  a glyph or symbol set off, Forbiddance's burn), `warding.keeps_out` lets the party rest underground
+  (`spellwork.hidden`), `warding.at_the_start` (from `fight.start_battle`) casts a glyph's stored spell at the first
+  foe (`rec["fired"]`), gives Forbiddance's `dot`, the circle's `warded_kinds` and hallowed ground's blessing. A
+  creature's saved `conditions` come into the fight with it (Battle.__init__: "unconscious" breaks on damage,
+  "discord" is a buff mark). Hallowed ground is `world.politics["hallowed"]` ({x, y, local, lx, ly, extra}:
+  `warding.hallowed_at`); Peaceful Rest sets a scar's `laid` (past.restless, encounters). `renown.flags`
+  glyph_room (services._night: `warding.room_thief`), demiplane {money, items} (records, never lost); the cauldron's
+  potions carry the tag "cauldron:<minute>" (`warding.brewed`: economy refuses them). Tests: tests/test_spells_road6.py.
 - Gear and tools 2024 (Expansion 2 part D): items.json `pack` (opens into its contents, gear.open_pack), `helps`
   {search, traps, force, disguise} (dungeon.helps, law.put_on_disguise), `utilize` (a tool's 2024 uses, on its card),
   `carry` also on carried containers (each kind once, Sheet.pack_carry), `trinket` (data/trinkets.json; the name and

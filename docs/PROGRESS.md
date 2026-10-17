@@ -28,7 +28,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Clearing the decks for the expansions** | ✅ Done (2026-10-12), branch `prep/clear-the-decks` |
 | **Expansion 1, *Dice & Destiny*** (version 1.1.0) | ✅ Released (2026-10-13), branch `dlc/01-dice-destiny` |
 | **Expansion 2, *Blades & Backgrounds*** (version 1.2.0) | ✅ Released (2026-10-13), branch `dlc/02-blades-backgrounds` |
-| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete), D (the spell catalogue: 191 battle spells, cantrips to level 9, and Wish) E.1 (spells outside battle: healing, return from death, food, shelter and watch), E.2 (light, the body on the move, travel by magic), E.3 (finding and seeing, asking the powers, talking), E.4 (minds and the law, disguise and illusion, the small arts) and E.5 (locks and stone, weather and land, 2026-10-17) in `main`; E.6 (lasting protections, great magic, Wish's other uses: the last of Part E) next |
+| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete), D (the spell catalogue: 191 battle spells, cantrips to level 9, and Wish) E.1 (spells outside battle: healing, return from death, food, shelter and watch), E.2 (light, the body on the move, travel by magic), E.3 (finding and seeing, asking the powers, talking), E.4 (minds and the law, disguise and illusion, the small arts), E.5 (locks and stone, weather and land) and E.6 (lasting protections and the caster's keeping, 2026-10-17) in `main`; E.7 (great magic and Wish's other uses: the last of Part E) next |
 
 ---
 
@@ -39,6 +39,58 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-17 (midday): Demigods & Magics E.6 — spells outside battle: lasting protections and the caster's keeping
+
+Built by the relay builder realmwalker-b. Saves do not change: an old world of format 18 still loads. E.6 was split in
+two at its start (13 spells and Wish's six other uses, four of them systems as big as a whole part, were too many):
+this part is the lasting protections, the Demiplane and Tasha's cauldron; Contingency, Magic Jar, Clone,
+Imprisonment and Wish's other uses are E.7, the last of Part E.
+- **Glyphs on the way into the camp.** **Glyph of Warding** (an hour; a pouch of powdered diamond, 200 gold, sold in
+  towns): whatever comes in the night crosses it first. Choose an explosive rune of fire, cold, lightning, thunder or
+  acid (5d8, more with a higher slot; half on a Dexterity save, on every one of them), or a spell glyph: store a
+  spell like Fireball or Lightning Bolt in it (its own slot is spent too), and it bursts on the first of them as the
+  fight begins. Either way you wake up. In a town the glyph goes on the door of your room at the inn, and the night's
+  thief gets a faceful instead of your purse. **Symbol** (a jar of diamond dust, 1,000 gold, in cities) is the great
+  version: Death (10d10), Discord (they quarrel and strike badly), Fear (they run away for good), Pain, Sleep (they
+  sleep until hurt) or Stunning; the band comes into the fight the way the symbol left it.
+- **Wards round the camp.** **Magic Circle** (silvered salt from a temple; an hour, an hour more for each slot above
+  3rd): the undead, fiends, fey, elementals and celestials cannot come into the camp; the rest of a mixed band comes
+  on alone, and in a fight there those kinds strike at you badly. **Forbiddance** (ruby dust, kept; a day; a ritual):
+  aberrations, celestials, elementals, fey, fiends and undead burn coming in (5d10 radiant or necrotic) and again
+  every turn in a fight at the camp. A cleric companion who knows it casts it as a ritual before a night in the wild.
+  **Guards and Wards** (a silver rod, kept; a day): fog and tangled ways: half the night's bands lose their way and
+  go elsewhere, and a magic mouth wakes you for the rest. **Mordenkainen's Private Sanctum** (a day): the camp is dark
+  fog and silence from outside, so the night is half as likely to bring anything as a cold camp's, fire or no fire,
+  and nobody finds the animals.
+- **Resting underground.** Guards and Wards lets the party rest while hunters search the level (they lose their way);
+  a Magic Circle or hallowed ground lets it rest when only the kinds they keep out are hunting (a barrow full of the
+  dead).
+- **Hallow** (a day and a night of prayer; hallowing incense, 1,000 gold, in city temples): the ground becomes holy
+  for good (in the open the whole stretch of land, underground sixty feet): aberrations, elementals, fey, fiends and
+  undead cannot come onto it. Choose one more blessing: Courage (nobody of yours can be frightened there), Fear
+  (every foe there that is not a person is frightened), Resistance (necrotic hurts you half), Vulnerability (the
+  dead and the rest take double radiant), or **Peaceful Rest**: on a haunted battlefield its dead never walk again,
+  and in a town its graves are hallowed; the folk remember either as a deed. Detect Evil and Good tells holy ground.
+- **The caster's keeping.** **Demiplane** (8th level): a shadowy door to a stone room out of the world. Leave your
+  coin and treasure, your spare arms, or both there for as long as you like (unlike the secret chest it is never
+  lost), and take everything back with a later casting; for the hour the door stands it is a room to take a short
+  rest in, whatever hunts outside. **Tasha's Bubbling Cauldron** (a gilded ladle, 500 gold, in cities): potions of
+  healing or greater healing, as many as your spellcasting modifier; they keep until you brew again, when the last
+  ones vanish, and no merchant will buy them.
+- **In a fight**: a band brought in asleep, stunned or quarrelling by a symbol shows it on its cards ("In discord");
+  hallowed ground and Forbiddance show on the creatures too.
+- **The Spells page** lists what stands over the camp (a glyph "waiting", a circle with its hours left), hallowed
+  ground, a glyph on your inn room and what your demiplane holds.
+- **New things in the shops**: powdered diamond (a pouch and a jar), a silver rod, silvered salt, hallowing incense
+  and a gilded ladle, each with a picture.
+- **The codex**: 9 spells settled (all adapted, each with its note).
+- **How to try it**: a wizard of level 5 or more in the wild opens the Spells page (S), chooses Glyph of Warding,
+  picks an explosive rune or a stored spell with ← →, presses Enter, then rests (r) for the night.
+- **Choices made while Anton was away** (in STATUS.md): glyphs and symbols guard camps in the open and inn rooms,
+  not dungeons; a symbol strikes once, before the fight; the circle and Forbiddance always take every kind they can;
+  Hallow keeps out five kinds (celestials are welcome) and offers five of its ten blessings; the cauldron is cast
+  before a fight, not in one.
 
 ### Session, 2026-10-17 (late morning): Demigods & Magics E.5 — spells outside battle: locks and stone, weather and land
 

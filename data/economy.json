@@ -78,7 +78,9 @@
                 ["rare_incense", 0, 1, "city"], ["scrying_mirror", 0, 1, "city"], ["sapphire", 0, 1, "city"],
                 ["jade_dust", 0, 3, "town"], ["lead_ink", 0, 2, "town"], ["diamond_dust_pinch", 0, 3, "town"],
                 ["gem_1000", 0, 1, "city"], ["gem_5000", 0, 1, "city"],
-                ["gold_dust", 0, 3, "town"], ["leomunds_chest", 0, 1, "city"], ["chest_replica", 0, 1, "city"]],
+                ["gold_dust", 0, 3, "town"], ["leomunds_chest", 0, 1, "city"], ["chest_replica", 0, 1, "city"],
+                ["glyph_diamond_dust", 0, 2, "town"], ["symbol_diamond_dust", 0, 1, "city"], ["silver_rod", 0, 2, "town"],
+                ["gilded_ladle", 0, 1, "city"]],
       "markup": 0.95
     },
     "inn": {
@@ -95,7 +97,7 @@
                 ["bandages", 2, 6], ["vestments", 0, 1],
                 ["holy_emblem", 0, 2], ["reliquary", 0, 1, "town"], ["priests_pack", 0, 1], ["diamond", 0, 2, "town"],
                 ["gilded_reliquary", 0, 1, "city"], ["fine_diamond", 0, 1, "town"], ["flawless_diamond", 0, 1, "city"],
-                ["diamond_hoard", 0, 1, "city"]],
+                ["diamond_hoard", 0, 1, "city"], ["silvered_salt", 0, 2, "town"], ["hallowing_incense", 0, 1, "city"]],
       "markup": 1.0
     },
     "stable": {
