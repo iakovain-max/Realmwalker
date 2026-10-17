@@ -25,7 +25,7 @@ import numpy as np
 
 from realmwalker.core import dice
 from realmwalker.core.rng import RNG
-from realmwalker.rules import feats, grid
+from realmwalker.rules import feats, grid, simulacrum
 from realmwalker.rules import spells as spellrules
 from realmwalker.rules.character import Character, Sheet, modifier
 from realmwalker.rules.engine import actions, durations, effects, events, hazards, marks, query, reactions
@@ -786,19 +786,22 @@ class Battle:
             taken |= set(f.cells)
 
     # ------------------------------------------------------------------ allies: familiars and steeds (Expansion 3 F)
-    def add_ally(self, creature: Creature, owner: Fighter, kind: str, *, spell: str = "", level: int = 0,
-                 type_: str = "", cdef: dict | None = None, point: tuple[int, int] | None = None) -> Fighter:
-        """A creature that fights on `owner`'s side (a familiar, a steed, a summoned spirit): on the nearest free
-        squares beside its owner (or to `point`), at once. In a fight already under way a familiar rolls its own
-        Initiative and joins the order by it (its turn comes next round if its place has passed); anything else takes
-        its turn right after its owner's (PHB 2024)."""
-        f = Fighter(max((x.id for x in self.fighters), default=0) + 1, owner.side, self.t, creature=creature)
+    def add_ally(self, creature: Creature | None, owner: Fighter, kind: str, *, spell: str = "", level: int = 0,
+                 type_: str = "", cdef: dict | None = None, point: tuple[int, int] | None = None,
+                 char: Character | None = None) -> Fighter:
+        """A creature that fights on `owner`'s side (a familiar, a steed, a summoned spirit; with `char`, a character
+        that is not of the party: a Simulacrum's copy, Expansion 3 G.3): on the nearest free squares beside its owner
+        (or to `point`), at once. In a fight already under way a familiar rolls its own Initiative and joins the order
+        by it (its turn comes next round if its place has passed); anything else takes its turn right after its
+        owner's (PHB 2024)."""
+        f = Fighter(max((x.id for x in self.fighters), default=0) + 1, owner.side, self.t, creature=creature,
+                    char=char)
         if cdef is not None:
             f.cdef = cdef  # (its numbers for its slot: allies.steed_def, allies.summon_def)
             f.sq = grid.footprint(f.size)  # (an animated object's size: Medium, Large or Huge)
-        f.slots = list(f.cdef.get("spellcasting", {}).get("slots", []))
+        f.slots = list((f.cdef or {}).get("spellcasting", {}).get("slots", []))
         f.bond = {"owner": owner.id, "kind": kind, "spell": spell, "level": int(level), "type": type_}
-        for a in f.cdef["attacks"]:
+        for a in (f.cdef or {}).get("attacks", ()):
             if a.get("recharge"):
                 f.recharge[a["name"]] = True
         taken = {c for x in self.on_field() for c in x.cells}
@@ -3111,7 +3114,7 @@ class Battle:
                            dtype=dtype).survived:
                 return  # Death Ward, Relentless Endurance, Undead Fortitude...
             target.hp = 0
-            if target.char:
+            if target.char and not simulacrum.snow(target):  # (a Simulacrum melts at 0: no death saves)
                 # A blow that would take a whole life's worth below nothing kills outright (massive damage).
                 if -new_hp >= max(target.max_hp, WOUND_HP_FLOOR):
                     self._kill(target, cause, killer=source)
@@ -3204,7 +3207,14 @@ class Battle:
         self._event("dead", who=f.id)
         if killer is not None and killer.bond is not None:
             killer = self.fighter(killer.bond["owner"])  # (what a familiar or a steed kills, its owner is known for)
-        if f.creature and f.bond is not None and f.bond.get("kind") == "servant":
+        if simulacrum.snow(f):  # (a Simulacrum, a person's copy or a creature's: Expansion 3 G.3)
+            if f.creature is not None:
+                f.creature.alive = False
+            self._clear_bonded(f)
+            self._event("vanish", who=f.id)
+            self.say(f"{f.the_name[:1].upper() + f.the_name[1:]} slumps into a heap of wet snow and melts away.",
+                     "danger")
+        elif f.creature and f.bond is not None and f.bond.get("kind") == "servant":
             f.creature.alive = False  # (the raised dead fall, and this time they stay down: Expansion 3 F.4)
             self._clear_bonded(f)
             self.say(f"{f.the_name[:1].upper() + f.the_name[1:]} falls apart, and nothing moves it again.", "danger")
@@ -5310,6 +5320,9 @@ class Battle:
     def _heal(self, f: Fighter, amount: int) -> None:
         if f.state == "dead":
             return
+        if simulacrum.snow(f):  # (only its maker's repair at a long rest mends it: PHB 2024)
+            self.say(f"The magic finds nothing living in {f.the_name}: snow does not knit.", "warn")
+            return
         if f.char is not None and f.char.attuned:
             from realmwalker.rules import magic
 
@@ -5360,7 +5373,7 @@ class Battle:
         items = [i for c in dead for i in c.inventory] + list(self.thrown)
         if self.outcome in ("victory", "parley"):  # a minute's search finds half the ammunition loosed (2024)
             items += [Item(0, def_id, n // 2) for def_id, n in sorted(self.shot.items()) if n // 2 > 0]
-        party_dead = [f.char for f in self.side(PARTY) if f.state == "dead" and f.char is not None]
+        party_dead = [f.char for f in self.side(PARTY) if f.state == "dead" and f.char is not None and f.bond is None]
         return BattleResult(self.outcome or "victory", xp, dead, captives, fled, money, items, party_dead, self.round,
                             self.robbed_money)
 

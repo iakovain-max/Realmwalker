@@ -616,7 +616,8 @@ def after_battle(game, battle) -> list[str]:
 
 
 def following(game) -> list[dict]:
-    """The dead that walk behind the party here (for the close-up map's pictures)."""
-    if not here(game):
-        return []
-    return [r for c in game.party if c.alive for r in rules.records(c) if int(r.get("hp", 0)) > 0]
+    """The dead that walk behind the party here (for the close-up map's pictures); in a settlement only a
+    Simulacrum's copy of a creature (Expansion 3 G.3)."""
+    town = not here(game)
+    return [r for c in game.party if c.alive for r in rules.records(c) if int(r.get("hp", 0)) > 0
+            and (not town or r.get("spell") == "simulacrum")]

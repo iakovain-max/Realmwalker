@@ -744,4 +744,6 @@ def long_rest(char: Character, tables, rng: RNG) -> list[str]:
     if mastery_count(char, tables):
         char.uses["mastery_change"] = 1  # the weapons mastered may be changed (the character sheet)
         offer_masteries(char, tables)
-    return [f"{char.name.split()[0]} wakes rested."]
+    from realmwalker.rules import simulacrum
+
+    return [f"{char.name.split()[0]} wakes rested."] + simulacrum.repair(char)  # (a Simulacrum mended: G.3)

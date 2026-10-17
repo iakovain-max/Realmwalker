@@ -738,7 +738,7 @@ ROAD_USES = ("feed", "water", "purify", "goodberry", "feast", "ward", "repose", 
              # Part E.6: lasting protections and the caster's keeping (game/warding.py)
              "protect", "hallow", "demiplane", "cauldron",
              # Part E.7: great magic (game/greatmagic.py; Wish's other uses are its road_too "wish")
-             "contingency", "jar", "clone", "imprison", "wish",
+             "contingency", "jar", "clone", "imprison", "wish", "simulacrum",  # (Simulacrum: G.3)
              # Part F.1: a familiar and a steed (game/allies.py)
              "familiar", "steed",
              # Part F.4: the raised dead; F.5: the bound (game/servants.py)

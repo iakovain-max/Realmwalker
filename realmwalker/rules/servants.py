@@ -141,8 +141,9 @@ def rest(char) -> None:
             rec["uses"] = {}
 
 
-def bring_in(b, owners: list) -> list:
-    """Every servant of each master comes into the fight beside them. Returns the new fighters."""
+def bring_in(b, owners: list, only: str | None = None) -> list:
+    """Every servant of each master comes into the fight beside them (`only`: those of that spell). Returns the new
+    fighters."""
     out = []
     for owner in owners:
         if owner.char is None or not owner.char.alive:
@@ -150,10 +151,12 @@ def bring_in(b, owners: list) -> list:
         for rec in records(owner.char):
             if int(rec.get("hp", 0)) <= 0 or rec.get("cid") not in b.t.creatures:
                 continue
+            if only is not None and rec.get("spell") != only:
+                continue
             cr = creature_of(rec, UID + owner.id * 100 + int(rec["id"]))
             cdef = spirit_def(b.t, rec, owner.char)
             f = b.add_ally(cr, owner, "servant", spell=rec.get("spell", ""), level=int(rec.get("level", 0)),
-                           type_=b.t.creatures[rec["cid"]]["kind"], cdef=cdef)
+                           type_=rec.get("type") or b.t.creatures[rec["cid"]]["kind"], cdef=cdef)
             if rec.get("picture"):
                 f.bond["picture"] = rec["picture"]
             f.bond["word"] = bool(rec.get("word"))

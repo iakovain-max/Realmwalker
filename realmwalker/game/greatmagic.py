@@ -9,6 +9,8 @@ through game/spellwork's door (subjects, problem, cast). What they leave behind 
                                  would open the death screen) and `clone_wakes` (a companion, from companions.died)
     char.spells["wished_resist"] damage types resisted for good (rules/engine/query.resists)
     char.effects["immune_spell:<id>"]  hours left of a wished immunity to one spell (rules/engine/effects.warded)
+    char.spells["simulacrum"]    {of, char, made}: a Simulacrum's copy of a person (rules/simulacrum.py); a copy of a
+                                 creature is a servant record with spell "simulacrum" (rules/servants.py) (G.3)
 Imprisonment is cast from the meeting screen (`prison_casters`, `imprison`), as Tsunami is.
 """
 from __future__ import annotations
@@ -659,9 +661,73 @@ def _reshape(game, caster: Character, target) -> list[str]:
     return []
 
 
+# ---------------------------------------------------------------------------- Simulacrum (G.3)
+SIMULACRUM_KINDS = ("beast", "humanoid")
+
+
+def simulacrum_subjects(game, caster: Character) -> list[Subject]:
+    """Those within ten feet for the twelve hours: anyone of the party (the caster too), a beast of the herd with a
+    stat block, a prisoner who is a beast or a humanoid."""
+    t = game.tables
+    out = [Subject(c.name, "simulacrum", c.name, data={"what": "person"}) for c in game.party if c.alive]
+    for i, a in enumerate(game.leader.animals):
+        kind = a.get("kind")
+        if a.get("summoned") or kind not in t.creatures or t.creatures[kind]["kind"] not in SIMULACRUM_KINDS:
+            continue
+        out.append(Subject(f"{a.get('name') or t.creatures[kind]['name']}, the {t.creatures[kind]['name']}",
+                           "simulacrum", kind, data={"what": "creature", "name": a.get("name") or "", "herd": i}))
+    for i, cap in enumerate(_flags(game).get("captives") or []):
+        cid = cap.get("def_id")
+        if cid not in t.creatures or t.creatures[cid]["kind"] not in SIMULACRUM_KINDS:
+            continue
+        out.append(Subject(f"{cap.get('name') or t.creatures[cid]['name']}, your prisoner", "simulacrum", cid,
+                           data={"what": "creature", "name": "", "captive": i}))
+    return out
+
+
+def _simulacrum(game, caster: Character, target) -> list[str]:
+    from realmwalker.rules import servants as servant_rules, simulacrum as sim
+
+    t = game.tables
+    gone = sim.destroy(caster)
+    out = []
+    if gone:
+        out.append(f"<dim>Somewhere behind them {esc(gone)} slumps into wet snow: a second likeness unmakes the "
+                   "first.</>")
+    first = _first(caster)
+    if target.data.get("what") == "person":
+        who = next((c for c in game.party if c.name == target.ref), caster)
+        copy = sim.make(who, t)
+        sim.keep(caster, copy, who.name, _now(game))
+        self_ = who is caster
+        out.insert(0, f"<magic>For twelve hours {first} works the ruby dust into a heap of snow at "
+                      f"{'their own' if self_ else _first(who) + chr(39) + 's'} feet,</> and at the last touch it stands "
+                      f"up as {'them' if self_ else _first(who)}: the same face, the same voice, {sim.FROST}.")
+        out.append(f"<dim>{esc(copy.name)} ({copy.max_hp} hit points, half the original's) fights beside {first}, "
+                   "acting right after them. Nothing heals it; at a long rest beside it, 100 GP of powders mend each "
+                   "hit point. It never rests, learns or grows, its spells do not come back, and at 0 hit points it "
+                   "melts.</>")
+        return out
+    cid = str(target.ref)
+    block = t.creatures[cid]
+    top = max(1, servant_rules.avg_hp(t, cid) // 2)
+    name = sim.name_for(target.data.get("name") or block["name"]) if target.data.get("name") else         f"snow {block['name']}"
+    rec = servant_rules.add(caster, t, cid, sim.SPELL, until=None, now=_now(game), word=False, name=name,
+                            max_hp=top, type="construct")
+    if rec is None:
+        return out + [f"{first} has twelve creatures at their word already: the snow will not rise."]
+    out.insert(0, f"<magic>For twelve hours {first} works the ruby dust into a heap of snow beside "
+                  f"{esc(target.name.split(',')[0])},</> and at the last touch it rises as its likeness, {sim.FROST}.")
+    out.append(f"<dim>The {esc(name)} ({top} hit points) follows {first} and fights at their side, acting right after "
+               "them. Nothing heals it but the repair at a long rest (100 GP a hit point); at 0 it melts.</>")
+    return out
+
+
 # ---------------------------------------------------------------------------- the door
 def subjects(game, caster, sid: str) -> list[Subject]:
     does = _does(game, sid)
+    if does == "simulacrum":
+        return simulacrum_subjects(game, caster)
     if does == "contingency":
         t = game.tables
         return [Subject(f"{t.spells[s]['name']} (level {t.spells[s]['level']}), {words}", "contingency", s,
@@ -695,6 +761,8 @@ def problem(game, caster, sid: str, target) -> str | None:
                 "choose whose (←→)"
     if does == "imprison":
         return "cast from the meeting screen, when a band is seen first (i)"
+    if does == "simulacrum" and not aimed:
+        return "choose whose likeness (←→)"
     if does == "wish":
         if caster.spells.get("wish_lost"):
             return "the strain of an old wish: Wish will never come again"
@@ -714,6 +782,8 @@ def cast(game, caster, sid: str, target, level: int) -> list[str]:
         return _jar(game, caster, spell)
     if does == "clone" and target is not None:
         return _clone(game, caster, spell, target)
+    if does == "simulacrum" and target is not None:
+        return _simulacrum(game, caster, target)
     if does == "wish" and target is not None:
         return _wish(game, caster, sid, target, level)
     return []

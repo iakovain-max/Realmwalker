@@ -435,10 +435,24 @@ class LocalView:
                     look = [(f"creature/{rec['picture']}", dolls.WHITE, 0, 0)]
                 elif servants.rules.is_undead(rec):
                     look = [(f"creature/{rec['cid']}", dolls.WHITE, 0, 0)]
-                else:  # (a bound creature: drawn as itself)
+                else:  # (a bound creature: drawn as itself; a Simulacrum's copy, in snow)
                     look = dolls.creature(rec["cid"], game.tables, f"servant{i}", atlas)
+                    if rec.get("spell") == "simulacrum":
+                        look = dolls.frost(look)
                 people.append((fy - 0.002, look, *self.cell_px(fx, fy),
                                T, _cell_light(light, cx_ - x0, cy_ - y0), False))
+        # A Simulacrum's copy of a person walks with them, the original's likeness in snow (Expansion 3 G.3).
+        from realmwalker.rules import simulacrum
+
+        snow = [r for r in (simulacrum.record(c) for c in game.party if c.alive) if r is not None]
+        if snow:
+            taken = {(a.x, a.y) for a in lm.actors}
+            start = len(followers) + len(pets) + len(dead)
+            for i, (cx_, cy_) in enumerate(self._follow(game, lm, taken)[start:start + len(snow)]):
+                fx, fy = self.pos(("snow", i), cx_, cy_, now, animate)
+                look = dolls.frost(dolls.character(simulacrum.likeness(snow[i]), game.tables, atlas=atlas))
+                people.append((fy - 0.003, look, *self.cell_px(fx, fy), T,
+                               _cell_light(light, cx_ - x0, cy_ - y0), False))
         people.sort(key=lambda t: t[0])
         out = []
         for _, names, px_, py_, size, col, alert in people:
