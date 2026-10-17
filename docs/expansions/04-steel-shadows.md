@@ -61,12 +61,12 @@ last: the Vorpal Sword, the Luck Blade, the Defender, the Dancing Sword...
   `main`.
 
 ### Part B — The Eldritch Knight and the Arcane Trickster
-- [ ] B.1 Third-caster slots and known spells (both); the wizard list; companions casting them.
-- [ ] B.2 Eldritch Knight: War Bond (bonded weapons: never disarmed, called to hand), War Magic and Improved War Magic
+- [x] B.1 Third-caster slots and known spells (both); the wizard list; companions casting them.
+- [x] B.2 Eldritch Knight: War Bond (bonded weapons: never disarmed, called to hand), War Magic and Improved War Magic
   (a cantrip or a level 1-2 spell in place of attacks), Eldritch Strike, Arcane Charge.
-- [ ] B.3 Arcane Trickster: Mage Hand Legerdemain (the spectral hand in a fight and in towns: theft, locks),
+- [x] B.3 Arcane Trickster: Mage Hand Legerdemain (the spectral hand in a fight and in towns: theft, locks),
   Magical Ambush, Versatile Trickster (the hand trips), Spell Thief (a reaction; the stolen spell for 8 hours).
-- [ ] B.4 Tactics, the hand's picture, cards and icons; 13 codex entries; Part B to `main`.
+- [x] B.4 Tactics, the hand's picture, cards and icons; 13 codex entries; Part B to `main`.
 
 ### Part C — Poisons and the people of the shadows
 - [ ] C.1 The DMG poisons as items (buy, harvest, brew, apply; Potion of Poison, Dagger of Venom); the Poisoner feat

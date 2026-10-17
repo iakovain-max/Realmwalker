@@ -256,7 +256,7 @@ def save_roll(b, f, ability: str, *, bonus: int = 0, against: tuple = ()) -> Sav
     if "poisoned" in against and f.char is not None and f.char.effects.get("antitoxin", 0) > 0:
         out.roll.add("advantage", "antitoxin")  # (PHB 2024: for an hour after drinking it)
     caster = b.__dict__.get("_casting") if b is not None else None
-    if caster is not None and caster is not f:  # (a save against a spell: Expansion 4 Part B)
+    if caster is not None and caster is not f and hasattr(caster, "id"):  # (a save against a spell: Expansion 4 B)
         if caster.id in f.buff_value("eldritch_struck"):
             out.roll.add("disadvantage", "Eldritch Strike")
             b.__dict__.setdefault("_struck_used", set()).add(f.id)
