@@ -698,6 +698,22 @@ def _check_magic(game, fail) -> None:
             fail(f"odd foretold rolls on {c.name}: {dice_}")
         if (c.spells or {}).get("third_eye") not in (None, "dark", "unseen"):
             fail(f"a third eye open on something it cannot see: {c.spells['third_eye']}")
+    # Schools & Domains Part B: the Trickster's blessing is on one at a time; the gods' chances stay small
+    blessed = [c.name for c in game.party if (c.effects or {}).get("kept:trickster_blessing")]
+    if len(blessed) > 1:
+        fail(f"the Trickster's blessing on more than one: {blessed}")
+    from realmwalker.game import gods
+
+    for c in game.party:
+        p = gods.chance(game, c)
+        if not 0.0 <= p <= gods.MOST:
+            fail(f"a god's answer out of bounds for {c.name}: {p}")
+    battle = getattr(game, "battle", None)
+    if battle is not None:
+        ids = {f.id for f in battle.fighters}
+        for tok in battle.tokens:
+            if tok.kind == "duplicity" and tok.owner not in ids:
+                fail("a double with no maker on the field")
     owners: dict[int, int] = {}
     for c in game.party:
         for uid in c.attuned:
