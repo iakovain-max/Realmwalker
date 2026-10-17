@@ -260,6 +260,16 @@ def return_to_life(game, c: Character, spell: dict, o: dict, rng) -> list[str]:
         c.death_cause = None
     if o.get("species") == "new":
         out.append(_new_body(game, c, rng))
+    from realmwalker.game import servants
+
+    c.effects.pop("kept:dust", None)  # (the mummy's dust: Expansion 3 F.4)
+    if o.get("cures"):
+        servants.lift_rot(c)
+    elif c.effects.get("kept:mummy_rot"):
+        c.effects["kept:mummy_rot"] = float(game.world.time) or 1.0  # (the rot's days counted from now)
+        c.effects.pop("kept:rot_days", None)
+        c.effects.pop("kept:rot_hp", None)
+    c.max_hp = max(1, c.max_hp)
     if o.get("hp") == "all" or o.get("species") == "new":
         c.hp = c.max_hp
     else:

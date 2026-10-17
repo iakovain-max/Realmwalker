@@ -261,7 +261,7 @@ def died(game, char) -> None:
     turn on it)."""
     freed = list(rules.records(char))
     if freed:
-        char.spells["servants"] = []
+        char.spells.pop("servants", None)
         _go_free(game, char, freed)
 
 
@@ -282,7 +282,7 @@ def _rot_day(game, c, now: float) -> None:
     rng = game.world.rng.child(f"mummy_rot/{c.name}/{days}")
     while done < days and c.alive:
         done += 1
-        loss = dice.roll("3d6", rng).total
+        loss = min(dice.roll("3d6", rng).total, c.max_hp)  # (what is taken: no more than there is)
         c.effects[rules.ROT_LOST] = float(c.effects.get(rules.ROT_LOST, 0)) + loss
         c.max_hp = max(0, c.max_hp - loss)
         c.hp = min(c.hp, c.max_hp)
@@ -290,11 +290,15 @@ def _rot_day(game, c, now: float) -> None:
         game.say(f"<danger>The rot spreads in {_first(c)}'s flesh</>: the hit point maximum falls by {loss}. "
                  f"<dim>Remove Curse lifts it.</>", "danger")
         if c.max_hp <= 0:
-            c.alive = False
             c.hp = 0
             c.effects[rules.DUST] = 1.0
             c.death_cause = "rotted away to dust under a mummy's curse"
             game.say(f"<danger>{_first(c)} crumbles to grey dust.</>", "danger")
+            c.effects[rules.ROT_DAYS] = float(done)
+            from realmwalker.game import survival
+
+            survival.check_death(game, c)
+            return
     c.effects[rules.ROT_DAYS] = float(done)
 
 

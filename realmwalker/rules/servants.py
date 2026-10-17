@@ -21,13 +21,17 @@ WARN = 120  # (minutes before control ends that the game warns)
 ROT, ROT_HP, ROT_LOST, ROT_DAYS, DUST = "kept:mummy_rot", "kept:rot_hp", "kept:rot_lost", "kept:rot_days", "kept:dust"
 
 
-def records(char) -> list[dict]:
-    """The master's servants (the list itself; made on first use)."""
+def records(char, make: bool = False) -> list[dict]:
+    """The master's servants (the list itself). Only `make` writes the key: an empty one would make anyone look like a
+    caster to the code that reads `char.spells` as "has magic"."""
     if char is None:
         return []
     rows = char.spells.get("servants")
-    if not isinstance(rows, list):
-        rows = char.spells["servants"] = []
+    if isinstance(rows, list):
+        return rows
+    if not make:
+        return []
+    rows = char.spells["servants"] = []
     return rows
 
 
@@ -50,7 +54,7 @@ def avg_hp(tables, cid: str) -> int:
 def add(char, tables, cid: str, spell: str, *, until: float | None, now: float, word: bool = True,
         name: str = "", hp: int | None = None) -> dict | None:
     """A new servant for `char` (None when twelve already serve)."""
-    rows = records(char)
+    rows = records(char, make=True)
     if len(rows) >= MAX:
         return None
     top = avg_hp(tables, cid)
@@ -88,6 +92,8 @@ def drop(char, rec: dict) -> None:
     rows = records(char)
     if rec in rows:
         rows.remove(rec)
+    if not rows and "servants" in char.spells:
+        del char.spells["servants"]  # (none left: no empty key behind)
 
 
 def creature_of(rec: dict, uid: int) -> Creature:

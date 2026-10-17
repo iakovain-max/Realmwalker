@@ -2432,7 +2432,7 @@ class Battle:
         marks.after_hit(self, att, target, opt, guarded)  # (Armor of Agathys)
         if opt.extra.get("on_hit") and target.active:
             self._block_effects(att, target, opt, opt.extra["on_hit"])
-        if opt.extra.get("dust") and target.state == "down":
+        if opt.extra.get("dust") and target.state == "down" and before > 0:
             self._turn_to_dust(att, target)  # (a mummy's Rotting Fist: brought to 0 by it, they die and crumble)
         if opt.extra.get("disease") and target.char and self.rng.chance(float(opt.extra.get("disease_chance", 1.0))):
             target.char.conditions.append(f"exposed:{opt.extra['disease']}")

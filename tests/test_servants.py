@@ -498,3 +498,60 @@ def test_the_battle_screen_lists_the_command_and_draws_the_dead(tables):
     assert any("command_objects" in i for i in ids)
     ghoul = b.commanded_of(me)[0]
     assert ghoul.bond.get("type") == "undead"
+
+
+# ---------------------------------------------------------------------------- the fresh review's fixes
+def test_reading_the_servants_leaves_a_fighter_without_spells(world, tables):
+    fighter = hero(tables, "fighter", xp=0)
+    game = game_with(world, tables, fighter)
+    in_the_wild(game)
+    had = dict(fighter.spells)
+    servants.following(game)
+    servants.tick(game)
+    rules.bring_in(battle(tables, [fighter], ["bandit"], {0: (2, 4), 1: (9, 4)}), [])
+    assert fighter.spells == had and "servants" not in fighter.spells
+    rec = rules.add(fighter, tables, "zombie", "animate_dead", until=1, now=0)
+    rules.drop(fighter, rec)
+    assert "servants" not in fighter.spells
+
+
+def test_rotting_away_to_nothing_is_a_real_death_and_true_resurrection_makes_them_whole(world, tables):
+    cleric, friend = hero(tables, "cleric"), hero(tables, "fighter", seed=2)
+    friend.companion = {"loyalty": 50, "wage": 0}
+    game = game_with(world, tables, cleric, friend)
+    in_the_wild(game)
+    top = friend.max_hp
+    friend.effects[rules.ROT] = float(game.world.time) or 1.0
+    friend.max_hp = 3  # (all but gone already)
+    friend.effects[rules.ROT_LOST] = float(top - 3)
+    game.world.time += rules.DAY + 1
+    servants.tick(game)
+    assert not friend.alive and friend.effects.get(rules.DUST)
+    assert friend not in game.party
+    out = revival.return_to_life(game, friend, tables.spells["true_resurrection"],
+                                 sp.op(tables.spells["true_resurrection"], "revive"), RNG(1, "r"))
+    assert out and friend.alive and friend.max_hp == top and friend.hp == top
+    assert not friend.effects.get(rules.DUST) and not friend.effects.get(rules.ROT)
+
+
+def test_a_fist_on_someone_already_down_is_not_dust(tables):
+    fighter = hero(tables, "fighter")
+    b = battle(tables, [fighter], ["mummy"], {0: (4, 4), 1: (5, 4)})
+    me, mummy = b.fighters[0], b.side(FOE)[0]
+    fist = next(o for o in b.attack_options(mummy) if o.extra.get("id") == "rotting_fist")
+    me.hp = 0
+    me.state = "down"
+    me.conditions = {"unconscious": -1, "prone": -1}
+    me.death_saves = [0, 0]
+    my_turn(b, mummy)
+    b._attack(mummy, fist, me)
+    assert not fighter.effects.get(rules.DUST)
+
+
+def test_the_warning_comes_in_the_middle_of_a_long_rest(world, tables):
+    wiz = hero(tables)
+    game = game_with(world, tables, wiz)
+    in_the_wild(game)
+    rules.add(wiz, tables, "zombie", "animate_dead", until=game.world.time + 6 * 60, now=game.world.time)
+    game.pass_time(5 * 60, "rest")
+    assert rules.records(wiz) and rules.records(wiz)[0]["warned"]
