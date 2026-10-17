@@ -73,6 +73,7 @@
                 ["black_pearl", 0, 1, "city"], ["ruby_dust", 0, 1, "city"], ["miniature_sword", 0, 1, "city"],
                 ["gilded_acorn", 0, 1, "city"], ["gilded_flower", 0, 1, "city"], ["gilded_skull", 0, 1, "city"],
                 ["platinum_vial", 0, 1, "city"], ["lockbox", 0, 1, "city"], ["elemental_vial", 0, 1, "city"],
+                ["silver_reliquary", 0, 1, "city"], ["dragon_token", 0, 1, "city"], ["bloody_vial", 0, 1, "city"],
                 ["rare_oils", 0, 1, "city"], ["feast_bowl", 0, 1, "city"], ["miniature_door", 0, 1, "town"],
                 ["forked_rod", 0, 1, "city"], ["ruby_dust_pinch", 0, 2, "town"], ["rare_inks", 0, 2, "town"],
                 ["divination_tools", 0, 1, "town"], ["jacinth", 0, 1, "city"], ["great_diamond", 0, 1, "city"],

@@ -230,8 +230,9 @@ def options(b, f, only: tuple[str, ...] | None = None) -> list[Option]:
         only = ("ability",)  # (Magic Jar: a soul in its gem can only take a body or go home)
     acting = b.has_action(f)
     for o in (b.attack_options(f) if only is None or "attack" in only else ()):
-        ok = o.available and acting
-        why = o.reason if not o.available else ("" if acting else "no action left this turn")
+        free_too = o.extra.get("with_multiattack")  # (a breath made with the Rends: its availability says it all)
+        ok = o.available and (acting or free_too)
+        why = o.reason if not o.available else ("" if acting or free_too else "no action left this turn")
         targets = b.targets_for(f, o) if ok else []
         if ok and not targets:
             ok, why = False, "no one in reach"
@@ -255,7 +256,8 @@ def options(b, f, only: tuple[str, ...] | None = None) -> list[Option]:
                 out.append(_spell_option(b, f, sid, True, ""))
     for aid, name, ok, why in (b.class_abilities(f) if only is None or "ability" in only else ()):
         a = find(f, aid)
-        cost = a["cost"] if a else ("bonus" if aid in ("offhand", "spirit_strike", "hew", "pole_strike") else "action")
+        bonus_ones = ("offhand", "spirit_strike", "hew", "pole_strike", "command_objects")
+        cost = a["cost"] if a else ("bonus" if aid in bonus_ones else "action")
         targets = []
         if aid == "offhand" and ok:
             opt = b.offhand_option(f)

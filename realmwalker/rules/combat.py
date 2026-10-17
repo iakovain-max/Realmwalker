@@ -788,6 +788,7 @@ class Battle:
         f = Fighter(max((x.id for x in self.fighters), default=0) + 1, owner.side, self.t, creature=creature)
         if cdef is not None:
             f.cdef = cdef  # (its numbers for its slot: allies.steed_def, allies.summon_def)
+            f.sq = grid.footprint(f.size)  # (an animated object's size: Medium, Large or Huge)
         f.slots = list(f.cdef.get("spellcasting", {}).get("slots", []))
         f.bond = {"owner": owner.id, "kind": kind, "spell": spell, "level": int(level), "type": type_}
         for a in f.cdef["attacks"]:
@@ -828,6 +829,7 @@ class Battle:
 
     def dismiss(self, x: Fighter, quiet: bool = False) -> None:
         """A summoned creature leaves the field for good, leaving nothing (the spell that held it ended)."""
+        events.emit(self, "dismissed", target=x)  # (a demon spirit's Death Throes, Expansion 3 F.3)
         self._release(x)
         self._clear_bonded(x)
         x.state = "dead"
@@ -996,6 +998,9 @@ class Battle:
             self._start_of_turn(f)
             if self.outcome is not None:
                 return True
+            if self._waits_for_word(f):  # (Animate Objects: uncommanded, it takes the Dodge action)
+                self.end_turn()
+                return True
         if f.__dict__.pop("lost_turn", False):  # (Maze: the turn spent finding the way out)
             self.end_turn()
             return True
@@ -1047,6 +1052,10 @@ class Battle:
         if f.creature is not None and (f.fly_speed > 0 and f.has_trait("flyby") or f.has_trait("agile")):
             f.disengaged = True  # (Flyby, Agile: an owl or a rat slips out of reach and nobody gets a blow at it)
         f.cast_bonus_spell = f.cast_action_spell = False
+        if f.creature is not None:
+            for a in f.cdef["attacks"]:
+                if a.get("with_multiattack"):
+                    f.recharge[a["name"]] = True  # (a draconic spirit's breath: every turn, with its Rends)
         f.moved_feet = 0
         f.__dict__["turn_start_at"] = (f.x, f.y)  # (Charger: how far they ran at a foe)
         f.spent_round += 1
@@ -1313,6 +1322,8 @@ class Battle:
             return False  # Invisible (See Invisibility sees it as if it were not)
         if b.hidden and b.hidden > a.passive() - (5 if self.dim_for(a, b) else 0) and self.gap(a, b) > 1:
             return False
+        if self._devils_sight(a, b, feet):
+            return True  # (a devil spirit: magical darkness does not stop its darkvision)
         if any(self.field.zone_opaque[x, y] for x, y in b.cells) and self.gap(a, b) > 1:
             return False
         if self.field.cover(a.space, b.space) == grid.TOTAL:
@@ -1320,6 +1331,16 @@ class Battle:
         if self.light_on(b) >= grid.DIM or senses.get("truesight", 0) >= feet:
             return True
         return a.darkvision > 0 and feet <= a.darkvision
+
+    def _devils_sight(self, a: Fighter, b: Fighter, feet: int) -> bool:
+        """Devil's Sight: within its darkvision, magical darkness hides nothing from it (fog and walls still do)."""
+        if a.creature is None or feet > a.darkvision or not a.has_trait("devils_sight"):
+            return False
+        ax, ay, bx, by = (a.x + a.sq / 2 - 0.01, a.y + a.sq / 2 - 0.01, b.x + b.sq / 2 - 0.01, b.y + b.sq / 2 - 0.01)
+        line = set(grid.crossed(ax, ay, bx, by)) | set(b.cells)  # (centres a hair inside a square: a Large one's
+        if any(z.opaque and not z.dark and line & z.cells for z in self.zones):  # falls on a line between four)
+            return False  # (a fog cloud)
+        return self.field.line_clear(ax, ay, bx, by, set(a.cells) | set(b.cells), terrain_only=True)
 
     def thinks(self, f: Fighter) -> bool:
         """A mind Detect Thoughts can sense: a person, or a creature that knows a language (and is not warded by
@@ -1810,13 +1831,20 @@ class Battle:
         return made
 
     def area_attack(self, f: Fighter, opt: AttackOption, point: tuple[int, int]) -> None:
-        """A breath weapon or the like: everyone in the area saves for half; then it must recharge."""
+        """A breath weapon or the like: everyone in the area saves for half; then it must recharge. One made with the
+        Multiattack (a draconic spirit's) is part of the Attack action: it begins it, or comes with this turn's
+        attacks, once a turn."""
         a = opt.extra
         shape = a["area"]["shape"]
         cells = self.field.area(shape, int(a["area"]["size"]), origin=f.space, toward=point, from_self=True)
         f.recharge[a["name"]] = False
         self._spend_use(f, opt)
-        if f.action > 0:
+        if a.get("with_multiattack"):
+            if not self.struck_this_turn(f) and f.action > 0:
+                f.action -= 1
+                f.attacks_left = query.attacks_per_action(f)  # (the Rends are still to come)
+                f.__dict__["struck_turn"] = f.spent_round
+        elif f.action > 0:
             f.action -= 1
         self.say(f"{f.the_name} unleashes {f.possessive} {opt.name}!", "danger")
         self._event("cast", by=f.id, to=None, spell=a["name"], effect="breath", dtype=opt.damage_type, area=list(cells),
@@ -1949,6 +1977,10 @@ class Battle:
     def has_action(self, f: Fighter) -> bool:
         return f.action > 0 or f.attacks_left > 0
 
+    def struck_this_turn(self, f: Fighter) -> bool:
+        """Its action went on this turn's attacks (a breath made with the Multiattack may still come)."""
+        return f.__dict__.get("struck_turn") == f.spent_round
+
     def _after_action(self, f: Fighter, quiet: bool = False) -> None:
         self._check_end()
         if self.outcome is not None or self.current is not f or not self.turn_started:
@@ -1986,6 +2018,10 @@ class Battle:
                 if a.get("area") or a.get("recharge"):
                     opt.available = f.recharge.get(a["name"], True)
                     opt.reason = "not ready again yet" if not opt.available else ""
+                    if a.get("with_multiattack") and not opt.available:
+                        opt.reason = "once a turn"
+                    elif a.get("with_multiattack") and f.action <= 0 and not self.struck_this_turn(f):
+                        opt.available, opt.reason = False, "part of the Attack action"
                 if a.get("uses") and self.uses_left(f, a) <= 0:
                     opt.available, opt.reason = False, "used up for the day"
                 if f.attached_to is not None and any(e.get("op") == "special" and e.get("attach") for e in a.get("on_hit", [])):
@@ -2189,7 +2225,7 @@ class Battle:
     def attack_problem(self, f: Fighter, opt: AttackOption, target: Fighter) -> str | None:
         if not opt.available:
             return opt.reason or "not possible"
-        if not self.has_action(f):
+        if not self.has_action(f) and not opt.extra.get("with_multiattack"):
             return "no action left this turn"
         if "loading" in opt.properties and not opt.is_melee and f.loaded_fired and f.attacks_left > 0 \
                 and not (f.char is not None and feats.has(f.char, "crossbow_expert")):
@@ -2958,10 +2994,15 @@ class Battle:
         why = self.attack_problem(f, opt, target)
         if why:
             return False
+        if opt.extra.get("area"):  # (a creature's breath, played by the player: aimed at the target)
+            self.area_attack(f, opt, (target.x, target.y))
+            self._after_action(f)
+            return True
         if f.attacks_left <= 0:
             f.action -= 1
             f.attacks_left = query.attacks_per_action(f)
             f.loaded_fired = False
+            f.__dict__["struck_turn"] = f.spent_round
         f.attacks_left -= 1
         if "loading" in opt.properties and not opt.is_melee:
             f.loaded_fired = True
@@ -3066,6 +3107,7 @@ class Battle:
             f.action -= 1
             f.attacks_left = query.attacks_per_action(f)
             f.loaded_fired = False
+            f.__dict__["struck_turn"] = f.spent_round  # (a breath made with the Multiattack may still follow)
         f.attacks_left -= 1
         return True
 
@@ -3379,7 +3421,47 @@ class Battle:
         if self.burning(f):
             out.append(("put_out", "Put out the flames (roll on the ground)", f.action > 0,
                         "" if f.action > 0 else "no action left"))
+        if self.objects_of(f):
+            told = all(x.bond.get("told") == self.round for x in self.objects_of(f))
+            ok = f.bonus > 0 and not told
+            out.append(("command_objects", "Command the animated objects (bonus action)", ok,
+                        "" if ok else ("they have their orders" if told else "no bonus action left")))
         return out
+
+    # ------------------------------------------------------------------ Animate Objects (Expansion 3 F.3)
+    def objects_of(self, f: Fighter) -> list[Fighter]:
+        """The things `f` animated that still stand."""
+        return [x for x in self.allies_of_owner(f) if x.bond.get("kind") == "objects" and x.active]
+
+    def command_objects(self, f: Fighter) -> bool:
+        """The caster's Bonus Action: every thing it animated acts on its next turn (otherwise it Dodges)."""
+        things = self.objects_of(f)
+        if not things or not self._spend(f, bonus=True):
+            return False
+        for x in things:
+            x.bond["told"] = self.round
+        self.say(f"{f.the_name} sends {'the animated thing' if len(things) == 1 else 'the animated things'} "
+                 f"against {f.possessive if f.char is not None else 'its'} foes.", "magic")
+        self._after_action(f)
+        return True
+
+    def _waits_for_word(self, f: Fighter) -> bool:
+        """An animated object with no command since its caster's last turn takes the Dodge action as its turn begins
+        (a creature that casts Animate Objects commands them as part of its own turn)."""
+        if f.bond is None or f.bond.get("kind") != "objects" or not f.can_act():
+            return False
+        owner = self.fighter(f.bond["owner"])
+        if owner is None or owner.char is None:
+            return False
+        if f.bond.get("told") == self.round:  # (its caster commanded it on this round's turn)
+            return False
+        f.dodging = True
+        f.action = 0
+        things = self.objects_of(owner)
+        if things and things[0] is f:
+            what = "the animated thing only keeps" if len(things) == 1 else "the animated things only keep"
+            self.say(f"With no word from {owner.the_name}, {what} out of harm's way.", "system")
+        return True
 
     def burning(self, f: Fighter) -> bool:
         return any(bf.get("burning") for bf in f.buffs)
@@ -3397,7 +3479,7 @@ class Battle:
     def _ability_cost(self, f: Fighter, aid: str) -> str:
         if aid == "offhand" and mastery.nick_ready(self, f):
             return "free"
-        if aid in ("offhand", "spirit_strike", "hew", "pole_strike"):
+        if aid in ("offhand", "spirit_strike", "hew", "pole_strike", "command_objects"):
             return "bonus"
         if aid == "put_out":
             return "action"
@@ -3428,6 +3510,9 @@ class Battle:
             return
         if ability == "put_out":
             self.do_extinguish(f)
+            return
+        if ability == "command_objects":
+            self.command_objects(f)
             return
         if ability == "jar_possess":
             if target is not None:
@@ -3707,7 +3792,8 @@ class Battle:
         if target == "enemy":
             return [x for x in self.enemies_of(f) if near(x)]
         if target == "ally":
-            return [x for x in self.team(f.team) if (x.active or x.state == "down") and near(x)]
+            return [x for x in self.team(f.team) if (x.active or x.state == "down") and near(x)
+                    and not (spell.get("others") and x is f)]
         if target == "downed_ally":
             return [x for x in self.team(f.team) if x.state == "down" and not x.stable and near(x)]
         if target == "bound":  # (a follow-up at the creature the spell was cast at: Witch Bolt, Heat Metal)

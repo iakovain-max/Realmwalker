@@ -462,7 +462,7 @@ stat block now comes with the spell that brings it into play (never a block that
 - [x] F.2 Summoned spirits, levels 2-4 (split at its start, 2026-10-17): a creature whose numbers grow with the
   slot, held by concentration; Summon Beast, Summon Fey, Summon Undead, Summon Aberration, Summon Construct, Summon
   Elemental and Giant Insect, with their stat blocks, pictures and the costly components.
-- [ ] F.3 Summoned spirits, levels 5-6: Summon Celestial, Summon Dragon (Shared Resistances, Breath Weapon), Summon
+- [x] F.3 Summoned spirits, levels 5-6: Summon Celestial, Summon Dragon (Shared Resistances, Breath Weapon), Summon
   Fiend (Death Throes) and Animate Objects (several creatures at once, commanded with the caster's Bonus Action).
 - [ ] F.4 The dead and the bound: Animate Dead, Create Undead, Finger of Death's zombie, Planar Ally, Planar Binding
   (and Magic Circle reversed): servants that outlast a fight and must be held again.
@@ -470,6 +470,60 @@ stat block now comes with the spell that brings it into play (never a block that
   constrictor snake, crocodile, elephant, elk, giant badger, crab, goat, seahorse and weasel, badger, goat, lion,
   panther, reef shark, tiger, venomous snake; imp, quasit, pseudodragon, sprite, sphinx of wonder, slaad tadpole) as
   the forms, and the cult fanatic's imp or quasit; Part F complete.
+
+#### F.3 — How
+- **The three spirits** are F.2's summoning ({"op": "ally", "kind": "summon"}, `allies.summon_spirit`, numbers by
+  the slot from the creature's `summon` record), with what F.2 did not need:
+  - **Summon Celestial** (level 5, a reliquary of 500 GP): the celestial spirit, Large, AC 11 + the level (+2 as the
+    Defender), 40 hit points + 10 a level above 5, flies 40; Radiant Bow (the Avenger: 600 feet, 2d6 + 2 + the level)
+    or Radiant Mace (the Defender: 1d10 + 3 + the level, and itself or a friend it sees within 10 feet of the target
+    gains 1d10 temporary hit points: the kernel op `special` "defender_ward", to the friend who needs it most);
+    Healing Touch once a summoning (its own spell with `per_day`, an action, 2d8 + the level to another creature it
+    touches: the heal op's `plus_level` reads the spirit's slot level from its bond). Resists radiant; never charmed or
+    frightened. The game picks the Avenger when the foes stand far off or fly, the Defender beside friends in a brawl.
+  - **Summon Dragon** (level 5, an object engraved with a dragon, 500 GP): the draconic spirit, Large, AC 14 + the
+    level, 50 hit points + 10 a level above 5, flies 60 and swims 30, blindsight 30; Rend (reach 10 feet, 1d6 + 4 +
+    the level) half the level times, and its Breath Weapon in the same Multiattack (a 30-foot cone, a Dexterity save
+    against the caster's DC, 2d6 of the chosen type, half on a save). The chosen resistance is its form (acid, cold,
+    fire, lightning, poison: the one the foes resist least, as Chromatic Orb picks); Shared Resistances gives the
+    caster that resistance for as long as they hold the spell (a buff with `conc`). An attack's `with_multiattack`
+    makes it part of the Attack action: once a turn, while the action is unspent or spent on this turn's attacks, it
+    costs nothing more (`Battle.area_attack`; the tactics breathe first when it catches a foe and no friend, then
+    Rend); a creature's attacks a turn are its Multiattack when the player commands it too (`query.attacks_per_action`).
+  - **Summon Fiend** (level 6, a bloody vial of 600 GP): the fiendish spirit, Large, AC 12 + the level, 50 (Demon),
+    40 (Devil) or 60 (Yugoloth) hit points + 15 a level above 6, Magic Resistance (Advantage on saves against
+    spells), resists fire, immune to poison. Demon: climbs 40, Bite (1d12 + 3 + the level necrotic) and Death Throes
+    (when it drops to 0 or the spell ends: everyone within 10 feet makes a Dexterity save, 2d10 + the level fire, half
+    on a save; the "dismissed" event is new, emitted by `Battle.dismiss`). Devil: flies 60, Fiery Strike (melee or 150
+    feet, 2d6 + 3 + the level fire) and Devil's Sight (magical darkness does not stop its darkvision:
+    `Battle.can_see`). Yugoloth: Claws (1d8 + 3 + the level slashing) and after each a teleport of up to 30 feet (the
+    game's choice: beside a new foe when its own fell, or out of a crowd when it is bloodied). The form: the Demon
+    among many foes, the Devil when they fly or stand far off, the Yugoloth otherwise.
+- **Animate Objects** (level 5, V S, 120 feet, concentration up to a minute) wakes things lying about: as many as
+  the caster's spellcasting modifier, a Large one counting two and a Huge one three (the game's choice: a Huge one
+  against a single great foe, Large ones in pairs, a Medium one for what is left). The animated object (AC 15, 10,
+  20 or 40 hit points, Speed 30, blindsight 30, immune to poison and psychic and to charm, exhaustion, fear,
+  paralysis and poison) slams with force for 1d4 + 3 (Medium), 2d6 + 3 + the modifier (Large) or 2d12 + 3 + the
+  modifier (Huge), one more 1d4/1d6/1d12 a slot above 5 (the creature's `summon` record has `sizes` in place of
+  `forms`; `allies.animate_objects`). What they are follows the place: a chest, a table or a statue under a roof, a
+  stone, a log or a boulder outside (built-in words, three pictures for each). They act right after the caster, and
+  only when commanded: "Command the animated objects" is the caster's Bonus Action (`Battle.class_abilities`,
+  "command_objects"; the Auto gives it whenever a foe stands); otherwise each takes the Dodge action as its turn
+  begins. A creature that casts it commands them as part of its turn. At 0 they fall back into things (gone, as a
+  spirit); all of them go when the concentration ends.
+- **The Auto** values each summoning as F.2's (`estimates._summon_worth`: the blows of the form it would pick, the
+  breath for a cone, the Healing Touch), and Animate Objects by the objects it would make; it commands the objects
+  with its Bonus Action. The spirits are played like any ally (z).
+- **Costly components** (kept, not used up): a reliquary (500 GP), a dragon-engraved token (500 GP), a bloody vial
+  (600 GP), sold in cities.
+- **Pictures**: the Crawl pack's angels for the Avenger and the Defender, its dragons in the five colours (the red
+  one recoloured), a balrug, a red devil and a neqoxec for the fiends; the animated objects drawn by hand
+  (`tools/beast_art.py`); the three components.
+- **Tests**: tests/test_summons.py (each spell in a real fight: numbers at two slots, every trait and blow, the
+  Shared Resistance gone with the spell, the breath with the Rends, Death Throes at 0 and when the spell ends,
+  Devil's Sight, the yugoloth's step; the objects by the modifier, waiting without a command, commanded by the player
+  and the Auto, their slams by size and slot, gone with the concentration); the arena's coverage test fights each
+  new creature in its forms; the catalogue test casts each.
 
 #### F.2 — How
 - **A summoned spirit** is an ally (F.1) with `bond` kind "summon" and `conc` True: the spell's effects op

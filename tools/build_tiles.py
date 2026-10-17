@@ -264,6 +264,19 @@ CREATURES = {
     "construct_spirit": "monster/nonliving/iron_golem.png",
     "elemental_spirit": "monster/nonliving/earth_elemental.png",
     "giant_insect": "monster/animals/giant_centipede.png",
+    # the spirits of levels 5-6 (Expansion 3 F.3; the animated objects are drawn in tools/beast_art.py)
+    "celestial_spirit": "monster/holy/angel_new.png",
+    "celestial_avenger": "monster/holy/angel_new.png",
+    "celestial_defender": "monster/holy/angel_mace.png",
+    "draconic_spirit": "monster/dragons/dragon.png",
+    "draconic_acid": "monster/dragons/dragon.png",
+    "draconic_cold": "monster/dragons/ice_dragon_new.png",
+    "draconic_lightning": "monster/dragons/storm_dragon_new.png",
+    "draconic_poison": "monster/dragons/swamp_dragon_new.png",
+    "fiendish_spirit": "monster/demons/red_devil_new.png",
+    "fiend_demon": "monster/demons/balrug_new.png",
+    "fiend_devil": "monster/demons/red_devil_new.png",
+    "fiend_yugoloth": "monster/demons/neqoxec_new.png",
 }
 for cid, path in CREATURES.items():
     pick(f"creature/{cid}", path, "creature")
@@ -273,6 +286,8 @@ pick("creature/boar", "monster/animals/hog_new.png", "creature", hue=14, sat=0.5
 pick("creature/bugbear", "monster/boggart_new.png", "creature", hue=18, sat=0.6, val=0.7)
 # A slaad spirit (Summon Aberration): the pack's giant frog in a red slaad's colours.
 pick("creature/slaad_spirit", "monster/animals/giant_frog.png", "creature", hue=2, sat=0.75, val=0.8)
+# A draconic spirit of flame (Summon Dragon): the pack's green dragon in a red dragon's colours.
+pick("creature/draconic_fire", "monster/dragons/dragon.png", "creature", hue=0, sat=0.8, val=0.85)
 # A hawk: the pack's shrike in a hawk's browns.
 pick("creature/hawk", "monster/animals/caustic_shrike.png", "creature", hue=28, sat=0.5, val=0.8)
 
@@ -438,6 +453,11 @@ pick("item/gilded_skull", "gui/spells/components/skull.png", "item", hue=45, sat
 pick("item/platinum_vial", "item/misc/misc_phial.png", "item")
 pick("item/lockbox", "item/misc/misc_box.png", "item")
 pick("item/elemental_vial", "item/potion/golden.png", "item")
+# Summon Celestial, Dragon and Fiend's components (Expansion 3 F.3): a saint's face in silver, a disc cut with a
+# coiled sign, a vial of dark blood.
+pick("item/silver_reliquary", "item/amulet/face_1_gold.png", "item", hue=40, sat=0.08, val=1.0)
+pick("item/dragon_token", "item/misc/misc_quad.png", "item")
+pick("item/bloody_vial", "item/potion/ruby_new.png", "item", hue=0, sat=0.9, val=0.6)
 for i, path in enumerate(["item/gold/gold_pile_1.png", "item/gold/gold_pile_3.png", "item/gold/gold_pile_7.png",
                           "item/gold/gold_pile_16.png"]):
     pick(f"item/_coins_{i}", path, "item")

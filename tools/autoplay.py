@@ -293,6 +293,10 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
                     owner = b.fighter(f.bond["owner"])
                     if (owner.concentration or {}).get("spell") != f.bond.get("spell") or owner.side != f.side:
                         fail(f"{f.name} is on the field, but {owner.name} no longer holds {f.bond.get('spell')}")
+                shared = any(str(bf.get("source", "")).startswith("shared_resistance:") for bf in f.buffs)
+                if shared and (f.concentration or {}).get("spell") != "summon_dragon":
+                    # (Expansion 3 F.3: a draconic spirit's resistance is shared only while its caster holds it)
+                    fail(f"{f.name} still shares a draconic spirit's resistance without holding Summon Dragon")
         _check_factions(game, fail)
         _check_law(game, fail)
         _check_quests(game, fail)

@@ -28,7 +28,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Clearing the decks for the expansions** | ✅ Done (2026-10-12), branch `prep/clear-the-decks` |
 | **Expansion 1, *Dice & Destiny*** (version 1.1.0) | ✅ Released (2026-10-13), branch `dlc/01-dice-destiny` |
 | **Expansion 2, *Blades & Backgrounds*** (version 1.2.0) | ✅ Released (2026-10-13), branch `dlc/02-blades-backgrounds` |
-| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete), D (the spell catalogue: 191 battle spells, cantrips to level 9, and Wish) E.1 (spells outside battle: healing, return from death, food, shelter and watch), E.2 (light, the body on the move, travel by magic), E.3 (finding and seeing, asking the powers, talking), E.4 (minds and the law, disguise and illusion, the small arts), E.5 (locks and stone, weather and land), E.6 (lasting protections and the caster's keeping) and E.7 (great magic and Wish's other uses, 2026-10-17: Part E complete) and F.1 (a familiar and a steed fight beside you) and F.2 (summoned spirits of levels 2 to 4) in `main`; F.3 (the level 5 and 6 spirits and Animate Objects) next |
+| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete), D (the spell catalogue: 191 battle spells, cantrips to level 9, and Wish) E.1 (spells outside battle: healing, return from death, food, shelter and watch), E.2 (light, the body on the move, travel by magic), E.3 (finding and seeing, asking the powers, talking), E.4 (minds and the law, disguise and illusion, the small arts), E.5 (locks and stone, weather and land), E.6 (lasting protections and the caster's keeping) and E.7 (great magic and Wish's other uses, 2026-10-17: Part E complete) and F.1 (a familiar and a steed fight beside you), F.2 (summoned spirits of levels 2 to 4) and F.3 (the level 5 and 6 spirits and Animate Objects) in `main`; F.4 (the dead and the bound) next |
 
 ---
 
@@ -39,6 +39,40 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-17 (afternoon): Demigods & Magics F.3 — angels, dragons, fiends and walking furniture
+
+Built by the relay builder realmwalker-b. Saves do not change: an old world of format 18 still loads.
+- **Summon Celestial** (5th level, clerics and paladins; a reliquary of 500 GP, kept): a winged spirit in burning
+  armour flies to your side. As an **Avenger** it shoots a bow of light that reaches across any battlefield; as a
+  **Defender** it is harder to hit, and every blow of its mace wraps a hurt friend near its target (or itself) in
+  temporary hit points. Once each time it is called it can lay a **healing touch** on someone, and on Auto it goes
+  to a friend who is down or badly hurt to do it.
+- **Summon Dragon** (5th level, wizards; a token engraved with a dragon, 500 GP): a dragon of acid, frost, flame,
+  lightning or venom. Every turn it rends with its claws (reach 10 feet) **and** breathes a 30-foot cone. While you
+  hold the spell **you resist the same element** it breathes.
+- **Summon Fiend** (6th level, warlocks and wizards; a bloody vial, 600 GP): a **Demon** that bites and, when it falls
+  or the spell ends, **bursts into hellfire** (stand clear: it burns friends too); a **Devil** that flies, strikes
+  with fire near or far and **sees through magical darkness**; or a **Yugoloth** whose claws let it **step through the
+  world** after each blow, to the next foe or out of a crowd. All of them shrug off spells more easily.
+- **Animate Objects** (5th level, bards, sorcerers and wizards): things lying about **sprout legs and fight for you**
+  for a minute. How many depends on your spellcasting ability: two or three small ones, a pair of big ones, or one
+  huge one against a single great foe. Indoors they are chests, tables and statues; outdoors stones, logs and
+  boulders. They only act when you **command them with your bonus action** (a new line, "Command the animated
+  objects", in your list); otherwise they just keep out of harm's way. On Auto your companion gives the word.
+- As with the other summons, the game picks the shape for the fight (the Avenger against fliers or archers far off,
+  the Defender in a brawl; the dragon's element the one your foes resist least; the Demon among many foes, the Devil
+  against fliers). Each spirit is harder to hit, tougher and strikes more often with a higher slot, using your own
+  spell attack and save DC.
+- **A creature you command now strikes as often as it should**: a summoned spirit of 4th level or more played by you
+  (not on Auto) used to make one attack a turn; it now makes all of them.
+- Pictures: angels for the celestial spirit, dragons in five colours, a balrug, a red devil and a neqoxec for the
+  fiends, and six walking things drawn by hand (they have jointed legs, like crabs).
+- Checked: tests for every spirit's numbers at two slots, each new trait and blow, the objects waiting for a word and
+  acting when told, the Auto casting each spell; the arena fights every new creature; the whole test suite, the
+  autoplay bot and the window smoke test. The fresh review's fixes: the dragon still breathes after a shove or a
+  grapple in place of a Rend, the demon's burst does not pass through walls, and the "no word" line says "thing" for
+  one. (The full suite also caught a slip during the part that had cut a gnoll's Rampage out of its turn; fixed.)
 
 ### Session, 2026-10-17 (afternoon): Demigods & Magics F.2 — summoned spirits fight beside you
 

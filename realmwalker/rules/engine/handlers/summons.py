@@ -1,7 +1,8 @@
-"""The summoned spirits' traits and gifts (Expansion 3 F.2, PHB 2024): the slaad's Regeneration, the mind flayer's
-Whispering Aura, the putrid spirit's Festering Aura, the construct's Heated Body, Stony Lethargy and Berserk
-Lashing, and the fey spirit's moods after its Fey Step. A spirit's DC is its caster's spell save DC (its
-`spellcasting` numbers, set by rules/allies.summon_def)."""
+"""The summoned spirits' traits and gifts (Expansion 3 F.2 and F.3, PHB 2024): the slaad's Regeneration, the mind
+flayer's Whispering Aura, the putrid spirit's Festering Aura, the construct's Heated Body, Stony Lethargy and Berserk
+Lashing, the fey spirit's moods after its Fey Step; the celestial Defender's ward, the demon's Death Throes and the
+yugoloth's step. A spirit's DC is its caster's spell save DC (its `spellcasting` numbers, set by
+rules/allies.summon_def)."""
 
 from __future__ import annotations
 
@@ -138,3 +139,91 @@ def fey_mood(c, o, victim) -> None:
         z = Zone(b._zone_id(), "darkness", cells, owner=f.id, spell=c.sid, rounds=1, centre=here, dark=True)
         b._add_zone(z)
         b.say(f"{f.the_name} giggles, and darkness pools beside it.", "magic")
+
+
+# ---------------------------------------------------------------------------- Expansion 3 F.3
+@special("defender_ward")
+def defender_ward(c, o, victim) -> None:
+    """A celestial Defender's Radiant Mace: itself or a friend it sees within 10 feet of the target gains 1d10
+    temporary hit points (the one who needs them most: the most hurt, with the fewest temporary hit points)."""
+    b, f = c.b, c.caster
+    if victim is None:
+        return
+    near = [x for x in b.team(f.team) if x.active and b.gap(x, victim) <= 2 and (x is f or b.can_see(f, x))]
+    if not near:
+        return
+    x = max(near, key=lambda y: ((y.max_hp - y.hp) / max(1, y.max_hp) - y.temp_hp / 10.0, y is not f, -y.id))
+    amount = dice.roll("1d10", b.rng).total
+    if amount > x.temp_hp:
+        x.temp_hp = amount
+        b._event("buff", who=x.id, spell=c.sid)
+        whom = "itself" if x is f else x.the_name
+        b.say(f"Light from {f.the_name}'s mace settles on {whom} like armour "
+              f"({amount} temporary hit point{'' if amount == 1 else 's'}).", "magic")
+
+
+@handler("death_throes")
+def death_throes(b, f, ev, hook, buff) -> None:
+    """A demon spirit falling to 0 or the spell ending: it explodes; everyone within 10 feet makes a Dexterity save
+    against its caster's DC, 2d10 fire and the spell's level, half on a save."""
+    if f.__dict__.get("throes_done") or f.bond is None:
+        return
+    f.__dict__["throes_done"] = True
+    level = int(f.bond.get("level", 6))
+    near = [x for x in b.on_field() if x is not f and x.state in ("fighting", "fleeing", "down") and b.gap(f, x) <= 2
+            and b.field.cover(f.space, x.space) != grid.TOTAL]  # (an emanation: total cover keeps it off)
+    cells = {(x, y) for x in range(f.x - 2, f.x + f.sq + 2) for y in range(f.y - 2, f.y + f.sq + 2)
+             if b.field.in_bounds(x, y)}
+    b.say(f"{f.the_name[:1].upper() + f.the_name[1:]} bursts apart in a gout of hellfire!", "danger")
+    b._event("cast", by=f.id, to=None, spell="death_throes", effect="burst", dtype="fire", area=sorted(cells),
+             point=(f.x, f.y), shape="emanation")
+    rolled = dice.roll(f"2d10+{level}", b.rng).total
+    for x in near:
+        b._save_damage(f, x, "dex", _dc(f), f"2d10+{level}", "fire", "half", rolled=rolled)
+        if b.outcome is not None:
+            return
+    b._check_end()
+
+
+def _free(b, f, x: int, y: int, occ: set) -> bool:
+    return b.field.fits(x, y, f.sq) and not any(c in occ for c in grid.cells(x, y, f.sq))
+
+
+@handler("yugoloth_step")
+def yugoloth_step(b, f, ev, hook, buff) -> None:
+    """A yugoloth spirit's Claws, hit or miss: it may teleport up to 30 feet to a space it can see (the game's
+    choice: beside the foe hurt worst when its own target fell and no other foe is within reach, or out of a crowd
+    when it is bloodied and two or more foes stand beside it)."""
+    opt = getattr(ev, "opt", None)
+    if opt is None or opt.extra.get("id") != "claws" or not f.active or not f.can_act() or f.bond is None:
+        return
+    foes = [e for e in b.enemies_of(f) if e.active]
+    if not foes:
+        return
+    occ = b.occupied_by_others(f)
+    reach = 6  # (30 feet)
+    spots = [(x, y) for x in range(f.x - reach, f.x + reach + 1) for y in range(f.y - reach, f.y + reach + 1)
+             if (x, y) != (f.x, f.y) and _free(b, f, x, y, occ) and b.can_see_point(f, x, y)]
+    if not spots:
+        return
+    beside = [e for e in foes if b.gap(f, e) <= 1]
+    goal = None
+    if not ev.target.active and not beside:
+        e = min(foes, key=lambda e: (e.hp, b.gap(f, e)))
+        near = [sq for sq in spots if grid.gap((sq[0], sq[1], f.sq), e.space) == 1]
+        if near:
+            goal = min(near, key=lambda sq: max(abs(sq[0] - f.x), abs(sq[1] - f.y)))
+    elif f.hp <= f.max_hp // 2 and len(beside) >= 2:
+        def threat(sq):
+            return sum(1 for e in foes if grid.gap((sq[0], sq[1], f.sq), e.space) <= 1)
+
+        calm = [sq for sq in spots if threat(sq) == 0]
+        if calm:
+            goal = min(calm, key=lambda sq: max(abs(sq[0] - f.x), abs(sq[1] - f.y)))
+    if goal is None:
+        return
+    start = (f.x, f.y)
+    f.x, f.y = goal
+    b._event("teleport", who=f.id, path=[start, goal])
+    b._sync_grapples(f)
+    b.say(f"{f.the_name[:1].upper() + f.the_name[1:]} folds out of the world and back into it somewhere else.", "magic")

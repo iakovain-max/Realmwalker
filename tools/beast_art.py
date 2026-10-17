@@ -429,6 +429,109 @@ def sled() -> Image.Image:
     return shadow(outline(im))
 
 
+
+# ---------------------------------------------------------------------------- Animate Objects (Expansion 3 F.3)
+# Things that have sprouted legs: a chest, a table and a statue under a roof; a stone, a log and a boulder outside.
+# Side views facing right, the legs thin and jointed like a crab's, so a thing on the field reads as alive.
+LEG, LEG_HI = c(58, 46, 36), c(96, 80, 62)
+
+
+def _legs(d, feet: list[tuple[int, int]], top: int, gy: int = 28) -> None:
+    """Jointed legs from the underside (`top`) to the ground, each bent outwards at the knee."""
+    for x, lean in feet:
+        knee = (x + lean * 2, top + (gy - top) // 2)
+        d.line([(x, top), knee], fill=LEG)
+        d.line([knee, (x + lean, gy)], fill=LEG)
+        d.point(knee, fill=LEG_HI)
+
+
+def animated_chest() -> Image.Image:
+    im = blank()
+    d = ImageDraw.Draw(im)
+    _legs(d, [(8, -1), (12, 1), (19, -1), (23, 1)], 21)
+    d.rectangle([5, 12, 26, 21], fill=WOOD)                          # the box
+    d.polygon([(5, 12), (7, 8), (24, 8), (26, 12)], fill=WOOD_HI)    # the lid, ajar like a mouth
+    d.line([(6, 12), (25, 12)], fill=c(30, 18, 12))                  # the dark gap under the lid
+    for x in (9, 22):
+        d.line([(x, 8), (x, 21)], fill=IRON)                          # iron bands
+    d.rectangle([14, 13, 17, 16], fill=c(190, 160, 70))              # the lock
+    d.point((15, 15), fill=K)
+    d.line([(5, 21), (26, 21)], fill=WOOD_LO)
+    return shadow(outline(im))
+
+
+def animated_table() -> Image.Image:
+    im = blank()
+    d = ImageDraw.Draw(im)
+    _legs(d, [(5, -1), (10, 1), (21, -1), (26, 1)], 15)
+    for x in (6, 25):                                                 # its own carved legs, lifted like arms
+        d.line([(x, 14), (x + (-3 if x < 15 else 3), 6)], fill=WOOD_LO, width=2)
+    d.rectangle([2, 12, 29, 15], fill=WOOD)                           # the top
+    d.line([(2, 12), (29, 12)], fill=WOOD_HI)
+    d.line([(3, 15), (28, 15)], fill=WOOD_LO)
+    d.rectangle([8, 16, 23, 17], fill=WOOD_LO)                        # the apron
+    return shadow(outline(im))
+
+
+def animated_statue() -> Image.Image:
+    im = blank()
+    d = ImageDraw.Draw(im)
+    stone, hi, lo = c(150, 148, 140), c(190, 188, 178), c(104, 102, 98)
+    _legs(d, [(10, -1), (21, 1)], 25)
+    d.rectangle([8, 22, 23, 25], fill=lo)                             # the plinth, walking
+    d.polygon([(12, 22), (11, 13), (13, 9), (18, 9), (20, 13), (19, 22)], fill=stone)   # the robed body
+    d.line([(13, 10), (13, 21)], fill=hi)
+    d.line([(18, 12), (18, 21)], fill=lo)
+    d.ellipse([12, 3, 18, 9], fill=stone)                             # the head
+    d.point((16, 6), fill=c(120, 220, 230))                          # an eye lit from within
+    d.line([(19, 12), (25, 7)], fill=stone, width=2)                  # a raised arm
+    d.line([(12, 12), (8, 17)], fill=stone, width=2)
+    return shadow(outline(im))
+
+
+def animated_stone() -> Image.Image:
+    im = blank()
+    d = ImageDraw.Draw(im)
+    stone, hi, lo = c(132, 124, 112), c(170, 162, 148), c(92, 86, 78)
+    _legs(d, [(10, -1), (14, 1), (18, -1), (22, 1)], 21)
+    d.polygon([(7, 21), (8, 15), (12, 11), (19, 10), (24, 13), (26, 19), (24, 22), (9, 22)], fill=stone)
+    d.line([(11, 13), (18, 11)], fill=hi)
+    d.line([(9, 21), (24, 21)], fill=lo)
+    d.line([(15, 13), (17, 17), (21, 18)], fill=lo)                    # a crack
+    return shadow(outline(im))
+
+
+def animated_log() -> Image.Image:
+    im = blank()
+    d = ImageDraw.Draw(im)
+    bark, hi, lo = c(98, 70, 44), c(132, 98, 62), c(66, 46, 30)
+    _legs(d, [(5, -1), (10, 1), (16, -1), (21, 1), (26, 1)], 19)
+    d.rectangle([3, 12, 27, 19], fill=bark)                           # the trunk
+    d.line([(4, 12), (26, 12)], fill=hi)
+    d.line([(4, 19), (26, 19)], fill=lo)
+    for x in (9, 15, 21):
+        d.line([(x, 14), (x + 2, 17)], fill=lo)                       # the bark's furrows
+    d.ellipse([25, 11, 30, 20], fill=c(176, 140, 92))                 # the cut end, ringed
+    d.ellipse([26, 13, 29, 18], outline=c(140, 106, 66))
+    d.line([(8, 12), (6, 7)], fill=bark, width=2)                     # a broken branch
+    return shadow(outline(im))
+
+
+def animated_boulder() -> Image.Image:
+    im = blank()
+    d = ImageDraw.Draw(im)
+    stone, hi, lo = c(118, 112, 104), c(160, 154, 142), c(80, 76, 70)
+    _legs(d, [(6, -1), (11, 1), (20, -1), (25, 1)], 22)
+    d.ellipse([3, 4, 28, 24], fill=stone)                             # the boulder
+    d.arc([5, 5, 26, 22], 200, 300, fill=hi)
+    d.line([(6, 20), (25, 21)], fill=lo)
+    d.line([(10, 9), (14, 14), (12, 19)], fill=lo)                    # cracks
+    d.line([(19, 7), (21, 12)], fill=lo)
+    d.ellipse([16, 9, 18, 11], fill=c(96, 132, 70))                   # moss
+    d.point((22, 13), fill=c(220, 120, 60))                           # a glint where its eye should be
+    return shadow(outline(im))
+
+
 def hard_edges(im: Image.Image) -> Image.Image:
     """A creature on the field has no soft pixels (tests/test_adapted_art.py): the drop shadow goes, the rest is
     solid."""
@@ -457,6 +560,13 @@ def all_drawn() -> dict[str, Image.Image]:
         "creature/cat": cat(),
         "creature/owl": owl(),
         "creature/weasel": weasel(),
+        "creature/animated_object": animated_chest(),  # (Animate Objects: the card's picture)
+        "creature/animated_chest": animated_chest(),
+        "creature/animated_table": animated_table(),
+        "creature/animated_statue": animated_statue(),
+        "creature/animated_stone": animated_stone(),
+        "creature/animated_log": animated_log(),
+        "creature/animated_boulder": animated_boulder(),
         "item/riding_saddle": riding_saddle(),
         "item/military_saddle": military_saddle(),
         "item/exotic_saddle": exotic_saddle(),

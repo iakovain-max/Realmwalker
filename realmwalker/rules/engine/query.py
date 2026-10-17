@@ -401,4 +401,5 @@ def attacks_per_action(f) -> int:
     """How many attacks the Attack action makes (Extra Attack: 2)."""
     if f.buff_value("sluggish"):
         return 1  # (Slow: one attack an action)
-    return max([1] + [int(v) for v in tr.values(f, "attacks")]) + (1 if f.buff_value("haste") else 0)
+    own = int(f.cdef.get("multiattack", 1) or 1) if f.creature is not None else 1  # (a creature's Multiattack)
+    return max([1, own] + [int(v) for v in tr.values(f, "attacks")]) + (1 if f.buff_value("haste") else 0)

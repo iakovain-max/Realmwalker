@@ -167,7 +167,7 @@ def _monster_turn(b: Battle, f: Fighter) -> None:
         _familiar_turn(b, f)
         return
     opts = [o for o in b.attack_options(f) if o.available]
-    breath = [o for o in opts if o.extra.get("area")]
+    breath = [o for o in opts if o.extra.get("area") and not o.extra.get("with_multiattack")]
     if breath and _try_area_attack(b, f, breath[0]):
         _rise(b, f)  # a dragon breathes, then takes to the air out of reach
         return
@@ -177,6 +177,8 @@ def _monster_turn(b: Battle, f: Fighter) -> None:
             return
     plain = [o for o in opts if not o.extra.get("area")]
     _come_down(b, f, plain)
+    if f.cdef.get("spells") and _touch_heal(b, f):
+        return  # (a celestial spirit's Healing Touch on a friend in need)
     if f.cdef.get("spells"):
         _creature_magic(b, f)
         if b.current is not f or b.outcome is not None or not f.active:
@@ -197,6 +199,7 @@ def _monster_turn(b: Battle, f: Fighter) -> None:
         f.bonus -= 1  # Aggressive (a bonus action to close in), or a troll's Charge (half its speed)
         f.move_left += f.speed if f.has_trait("aggressive") else f.speed // 2
     _fight(b, f, plain, attacks=max(1, int(f.cdef.get("multiattack", 1))))
+    _breath_with_blows(b, f)
     _hew(b, f)
     if f.has_trait("rampage") and f.bonus > 0 and b.outcome is None and b.current is f and f.active \
             and f.creature.uses.get("rampage", 1) > 0:
@@ -211,6 +214,17 @@ def _monster_turn(b: Battle, f: Fighter) -> None:
         _slip_away(b, f)
     if b.outcome is None and b.current is f and f.active:
         _rise(b, f)
+
+
+def _breath_with_blows(b: Battle, f: Fighter) -> None:
+    """A breath made with the Multiattack (a draconic spirit's): after its blows, at whoever it catches without a
+    friend in the cone (or in place of them, if nothing could be reached)."""
+    if b.current is not f or b.outcome is not None or not f.active or not f.can_act():
+        return
+    for o in b.attack_options(f):
+        if o.available and o.extra.get("with_multiattack") and o.extra.get("area"):
+            _try_area_attack(b, f, o, need=1, friends_ok=False)
+            return
 
 
 def _come_down(b: Battle, f: Fighter, opts: list[AttackOption]) -> None:
@@ -291,6 +305,7 @@ def _fight(b: Battle, f: Fighter, opts: list[AttackOption], attacks: int) -> boo
         if f.creature is not None:
             if i == 0:
                 f.action -= 1
+                f.__dict__["struck_turn"] = f.spent_round  # (a breath made with the Multiattack may follow)
             b._attack(f, choice, target)
             b._check_end()
             struck = True
@@ -701,6 +716,34 @@ def _creature_magic(b: Battle, f: Fighter) -> None:
         _cast_best(b, f, "action", beat=_best_attack_worth(b, f))
 
 
+def _touch_heal(b: Battle, f: Fighter) -> bool:
+    """A creature's healing touch (a celestial spirit's, once): to a friend who is down or below a third of its hit
+    points, walking to its side first if it must. True if it was given."""
+    if f.action <= 0:
+        return False
+    for sid in b.creature_spells(f):
+        sp = b.t.spells[sid]
+        if sp["target"] != "ally" or not spellrules.heal_op(sp) or sp.get("cast") == "bonus":
+            continue
+        need = [x for x in b.team(f.team) if (x.state == "down" or x.active and x.hp < x.max_hp / 3)
+                and not (sp.get("others") and x is f)]
+        if not need:
+            continue
+        x = min(need, key=lambda y: (y.state != "down", y.hp / max(1, y.max_hp), b.gap(f, y)))
+        if x not in b.spell_targets(f, sid) and f.move_left >= 5:
+            tree = b.move_tree(f)
+            occ = b.occupied_by_others(f)
+            spots = [sq for sq in _ring(x, 1, f.sq) if sq in tree and grid.can_stop(sq, f.sq, occ)
+                     and tree[sq].cost <= f.move_left]
+            if spots:
+                b.walk(f, grid.route(tree, min(spots, key=lambda sq: tree[sq].cost + tree[sq].risk * 3)))
+        if b.current is not f or b.outcome is not None or not f.active or not f.can_act():
+            return True
+        if x in b.spell_targets(f, sid) and b.creature_cast(f, sid, target=x):
+            return True
+    return False
+
+
 def _best_attack_worth(b: Battle, f: Fighter) -> float:
     """What a turn of plain attacks from here would be worth (the bar a spell must clear)."""
     opts = [o for o in b.attack_options(f) if o.available and not o.extra.get("area")]
@@ -874,8 +917,10 @@ def _step_back(b: Battle, f: Fighter) -> None:
         b.walk(f, grid.route(tree, best[1]))
 
 
-def _try_area_attack(b: Battle, f: Fighter, opt: AttackOption) -> bool:
-    """A breath weapon: worth it if it catches two (or the only one there is), from where it stands."""
+def _try_area_attack(b: Battle, f: Fighter, opt: AttackOption, need: int | None = None,
+                     friends_ok: bool = True) -> bool:
+    """A breath weapon: worth it if it catches two (or the only one there is), from where it stands; one that costs
+    nothing more (made with the Multiattack) is worth it catching `need` and no friend."""
     a = opt.extra
     best = None
     for t in b.enemies_of(f):
@@ -883,10 +928,12 @@ def _try_area_attack(b: Battle, f: Fighter, opt: AttackOption) -> bool:
         hit = b.in_area(cells, "all", f)
         enemies = sum(1 for x in hit if x.team != f.team)
         friends = sum(1 for x in hit if x.team == f.team and x is not f)
+        if friends and not friends_ok:
+            continue
         score = enemies - 2 * friends
         if enemies and (best is None or score > best[0]):
             best = (score, (t.x, t.y))
-    if best is None or best[0] < min(2, len(b.enemies_of(f))):
+    if best is None or best[0] < (need if need is not None else min(2, len(b.enemies_of(f)))):
         return False
     b.area_attack(f, opt, best[1])
     return True
@@ -917,6 +964,7 @@ def _party_turn(b: Battle, f: Fighter) -> None:
         _drink(b, f, f)  # (still in danger: a potion with the bonus action)
     if b.current is not f or b.outcome is not None:
         return
+    _command_objects(b, f)
     _divine_help(b, f)
     if b.current is not f or b.outcome is not None:
         return
@@ -928,6 +976,8 @@ def _party_turn(b: Battle, f: Fighter) -> None:
         return
     if (spellrules.is_caster(c, b.t) or feats.innate_spells(c, b.t) or _reads_scrolls(b, f)) and f.action > 0:
         if _cast_something(b, f):
+            if b.current is f and b.outcome is None:
+                _command_objects(b, f)  # (things it has just animated: sent at once)
             if b.current is f and b.outcome is None:
                 _bonus_strike(b, f)  # (the spiritual weapon, War Priest)
             if b.current is f and b.outcome is None:
@@ -1087,6 +1137,13 @@ def _abilities(b: Battle, f: Fighter, does: str) -> list[tuple]:
             if _does(opt, a) == does:
                 out.append((opt, a))
     return out
+
+
+def _command_objects(b: Battle, f: Fighter) -> None:
+    """Animate Objects: the Bonus Action that sends the animated things at the foes, whenever a foe stands."""
+    if f.bonus > 0 and b.objects_of(f) and any(e.standing for e in b.enemies_of(f)):
+        if any(aid == "command_objects" and ok for aid, _, ok, _ in b.class_abilities(f)):
+            b.do_ability(f, "command_objects")
 
 
 def _does(opt, a: dict | None) -> str:

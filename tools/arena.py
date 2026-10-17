@@ -127,7 +127,18 @@ SUMMON_ATTACK, SUMMON_DC = 7, 15  # (a summoned spirit's caster: a 9th level wiz
 
 
 def summon_forms(tables, creature: str) -> list[str]:
-    return list(tables.creatures[creature]["summon"]["forms"])
+    s = tables.creatures[creature]["summon"]
+    return list(s.get("forms") or {"medium": None})  # (an animated object: a Medium one; its Slam is the same at
+    # every size)
+
+
+def _summoned_def(tables, creature: str, form: str) -> dict:
+    from realmwalker.rules import allies
+
+    s = tables.creatures[creature]["summon"]
+    if "sizes" in s:
+        return allies.object_def(tables, form, int(s["level"]), SUMMON_ATTACK, 4, False)
+    return allies.summon_def(tables, creature, int(s["level"]), form, SUMMON_ATTACK, SUMMON_DC)
 
 
 def _as_summoned(tables, f, creature: str, scenario_i: int, seed: int, i: int) -> None:
@@ -136,8 +147,7 @@ def _as_summoned(tables, f, creature: str, scenario_i: int, seed: int, i: int) -
 
     forms = summon_forms(tables, creature)
     form = forms[(seed + scenario_i * 2 + i) % len(forms)]
-    s = tables.creatures[creature]["summon"]
-    f.cdef = allies.summon_def(tables, creature, int(s["level"]), form, SUMMON_ATTACK, SUMMON_DC)
+    f.cdef = _summoned_def(tables, creature, form)
     f.slots = []
     f.creature.name = f.cdef["name"]
     f.creature.hp = f.creature.max_hp = int(f.cdef["hp"])
@@ -152,7 +162,7 @@ def options_of(tables, creature: str) -> list[str]:
 
         out = []
         for form in summon_forms(tables, creature):
-            sd = allies.summon_def(tables, creature, int(d["summon"]["level"]), form, SUMMON_ATTACK, SUMMON_DC)
+            sd = _summoned_def(tables, creature, form)
             out += [f"attack:{a['name']}" for a in sd["attacks"]] + [f"cast:{sid}" for sid in sd.get("spells", [])]
         return list(dict.fromkeys(out))
     out = [f"attack:{a['name']}" for a in d.get("attacks", [])]
