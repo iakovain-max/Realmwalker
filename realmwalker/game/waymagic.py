@@ -183,6 +183,8 @@ def problem(game, caster, sid: str, target) -> str | None:
     how = _how(spell)
     if game.battle is not None:
         return "you are in a fight"
+    if game.busy:
+        return "not with trouble at hand"
     travellers = [c for c in game.party if c.alive]
     if how in CARRIES and len(travellers) > CARRIES[how]:
         return f"it carries {CARRIES[how]} at most, and you are {len(travellers)}"
