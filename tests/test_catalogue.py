@@ -158,6 +158,10 @@ NO_USE: dict[str, str] = {
     "dispel_magic": "no spell is on anyone here",
     "dispel_evil_and_good": "no celestial, elemental, fey, fiend or undead here",
     "greater_restoration": "nobody here is charmed, petrified or cursed",
+    "circle_of_death": "its 60-foot sphere takes in the caster and a friend wherever it falls on this small field",
+    "otilukes_freezing_sphere": "its 60-foot sphere takes in the caster and a friend wherever it falls on this small field",
+    "true_seeing": "no foe here is invisible, hidden or in magical darkness",
+    "reverse_gravity": "its 50-foot cylinder lifts the caster and a friend too wherever it falls on this small field",
 }
 
 

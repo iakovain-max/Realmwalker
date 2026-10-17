@@ -114,7 +114,20 @@ spellcasting and scrolls at the book's prices.
   seeming, teleportation circle, tree stride. Waiting for F: animate dead, summon fey, summon undead; giant
   insect, polymorph (the beasts it turns into come with F's stat blocks), summon aberration, summon construct,
   summon elemental; animate objects, planar binding, summon celestial, summon dragon.
-- [ ] D.3 6th and 7th level (55).
+- [x] D.3 6th and 7th level (55). Battle spells (27): blade barrier, chain lightning, circle of death, conjure fey
+  (2024: a spirit that strikes, a token), disintegrate, eyebite, flesh to stone, globe of invulnerability, harm,
+  heal, mass suggestion, Otiluke's freezing sphere, Otto's irresistible dance, sunbeam, true seeing, wall of ice,
+  wall of thorns; conjure celestial (2024: a pillar of light, ground that heals friends and sears foes), delayed
+  blast fireball, divine word, finger of death, fire storm, forcecage (the solid box), Mordenkainen's sword, power
+  word fortify, prismatic spray, reverse gravity. New kernel pieces: a bolt that
+  leaps (`leap`), dust, a lowered maximum, the three saves of stone, a spell ward, dancing, true sight, ground of
+  blades, thorns, celestial light and ice, the forcecage, banished for good, effects by hit points left, slaying,
+  falling upward, a random ray, shared temporary hit points, a conjured thing's hit that frightens. Waiting for E:
+  arcane gate, contingency, Drawmij's instant summons, find the path, forbiddance, guards and wards, heroes' feast,
+  magic jar, move earth, programmed illusion, Tasha's bubbling cauldron, transport via plants, wind walk, word of
+  recall; etherealness, mirage arcane, Mordenkainen's magnificent mansion, plane shift (the 2024 spell only
+  carries willing travellers; its old banishing touch is gone), project image, regenerate (cast in a minute), resurrection, sequester, symbol, teleport. Waiting for F: create undead, planar ally, summon fiend,
+  simulacrum.
 - [ ] D.4 8th and 9th level (34), Wish (its safe uses and its stress) and Meteor Swarm; Part D to `main`.
 
 ### Part E — Spells outside battle

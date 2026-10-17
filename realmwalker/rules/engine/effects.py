@@ -11,10 +11,12 @@ an op inside another (`on_hit`, `on_fail`, `then`) works on the creature the out
                (false: cover does not help), kinds / not_kinds (who it works on), sure_save (traits that always
                succeed), on_fail [ops]
     condition  condition, and how it ends: ends ("own_turn_end", "caster_turn_start"...), rounds (the old way),
+               immune_as (a condition that, if it is immune to it, keeps this off too: Suggestion's charm),
                repeat_save (shaken off with the same save at the end of each of its turns), on_damage, then
                {save, on_fail}; while the spell needs concentration, the condition ends with it
     heal       dice, add_mod, up, mends_wound; count / count_up for several
-    modifier   buff {...} for `rounds` (a lasting spell outlives the fight: rules/spells.py)
+    modifier   buff {...} for `rounds` (a lasting spell outlives the fight: rules/spells.py); needs (a condition
+               the creature must have for it to take: Otto's dance rides on its charm)
     zone       zone (web, ice, fire, fog, caltrops, bearings), rounds, dc (a fixed DC); a web catches (Dexterity save,
                Restrained); caltrops and ball bearings catch whoever walks in (Battle._zone_underfoot)
     aura       an emanation that moves with the caster and hurts enemies in it (Spirit Guardians)
@@ -44,7 +46,32 @@ The second wave (D.2):
                the field while the caster concentrates (Battle.send_away)
     dispel     ends every spell on the creature at the point and on the ground there: of the slot's level or lower
                at once, higher ones on a check (10 + the spell's level); Spell Breaker adds proficiency and keeps
-               the slot when nothing ends
+               the slot when nothing ends; never a spell marked `no_dispel` (Forcecage)
+
+The third wave (D.3):
+    spell      `leap` (feet): a one-target spell's extra targets (`targets`, `targets_up`) must be that close to the
+               first target, nearest it first (Chain Lightning: targets 4, targets_up 1, leap 30)
+    attack     with no damage: a touch that only carries its on_hit (Plane Shift)
+    save       dust (a creature it brings to 0 hit points is dust: dead, and nothing brings it back: Disintegrate);
+               max_hp_loss (a failed save lowers its hit point maximum by the damage taken, for the fight: Harm)
+    condition  petrify (with save): it saves at the end of each of its turns; three successes free it, three
+               failures turn it to stone (Petrified while the spell lasts; for good from an instant spell)
+    heal       per_up: hit points more for each slot level above (Heal: dice "70", per_up 10)
+    temp_hp    share (spell target all_allies, count): the amount divided evenly among up to `count` friends in
+               range (Power Word Fortify)
+    zone       "blades" and "thorns" (a save on entering or starting a turn there; rough, dark as said), "celestial"
+               (with heal + heal_up + add_mod: the caster's friends in it are healed once a turn, foes save against
+               its damage; friends_safe), "icewall" (a wall like stone; with damage and catch, those standing in
+               its area as it rises save against it)
+    banish     how "cage" (Forcecage's box: everyone in the area is sealed off, as by the sphere); `forever` (sent
+               from this plane for good, no concentration needed, and beaten: Plane Shift, Divine Word); kinds
+    by_hp      tiers [[most, [ops]], ...]: the first tier whose number is at least its hit points now (Divine Word)
+    slay       it dies outright; max_hp: only if it has that many hit points or fewer (Power Word Kill)
+    lift       feet: it falls upward and hangs there while the caster concentrates, then falls (Reverse Gravity;
+               under a roof it strikes the ceiling twenty feet up)
+    one_of     choices [[ops], ...] and a die: one of them for each creature; a face past the choices brings two
+               (Prismatic Spray's rays)
+    summon     on_hit [ops]: what the conjured thing's hit brings besides its damage (Conjure Fey's fear)
 
 Unknown ops are data errors at start-up (rules/engine/check.py).
 """
@@ -60,6 +87,9 @@ from realmwalker.rules import spells as spellrules
 from realmwalker.rules.engine import conditions, durations, events, statblocks
 
 OPS: dict[str, Callable] = {}
+WALLS = ("stone", "force", "icewall")  # zones that rise as walls on the free squares of their area
+GROUND = ("tentacles", "cloud", "stench", "hunger", "insects", "sleet", "radiance", "spirits", "elemental", "blades",
+          "thorns", "celestial")  # zones whose harm is Battle._ground's: a save, and what a failure brings
 ENERGY = ("acid", "cold", "fire", "lightning", "thunder")  # (Protection from Energy's choice)
 SPECIAL: dict[str, Callable] = {}  # what an op {"op": "special", "handler": id} calls (rules/engine/handlers/)
 
@@ -119,6 +149,9 @@ def cast(b, f, sid: str, spell: dict, target, point, *, up: int, mod: int, dc: i
          level: int, slotted: bool = True) -> None:
     """A spell's effects, once it has been paid for (by a party caster, or a monster's own magic)."""
     area = b.spell_area(f, sid, point, target) if spell.get("area") else []
+    shut = [x for x in b.fighters if x.buffs and warded(b, f, x, level)]
+    if shut and area:  # (Globe of Invulnerability: its barrier is left out of the spell's area)
+        area = [sq for sq in area if not any(sq in x.cells for x in shut)]
     if spell.get("thrown"):
         b.say(f"{f.the_name} throws a flask: <danger>{spell['name'].lower()}</>!", "info")
     elif spell.get("again_of"):
@@ -152,6 +185,9 @@ def cast(b, f, sid: str, spell: dict, target, point, *, up: int, mod: int, dc: i
         from realmwalker.rules.engine.handlers import wizard
 
         c.maximize = wizard.overchannel(b, f, spell, level)
+    if target is not None and target in shut:
+        b.say(f"The spell breaks against the shimmering barrier around {target.the_name}.", "magic")
+        return
     before = b.__dict__.get("_casting")
     b._casting = f if not spell.get("ability") and "item" not in spell.get("classes", ()) else None
     try:
@@ -210,14 +246,27 @@ def _allowed(o: dict, x) -> bool:
 def _targets(c: Cast) -> list:
     """The creature(s) a spell aimed at one target works on: the target, and with a higher slot more of the same kind
     (Hold Person, Command), nearest first."""
-    if c.target is None:
+    return many(c.b, c.caster, c.sid, c.spell, c.target, c.up, level=c.level)
+
+
+def many(b, f, sid: str, spell: dict, target, up: int, *, level: int | None = None) -> list:
+    """The creatures a one-target spell works on: the target, and `targets` - 1 (+ `targets_up` a slot level above)
+    more of the same kind, nearest the caster first; with `leap` (feet), only those that close to the first target,
+    nearest it first (Chain Lightning's bolts)."""
+    if target is None:
         return []
-    out = [c.target]
-    extra = int(c.spell.get("targets", 1)) - 1 + int(c.spell.get("targets_up", 0)) * c.up
+    out = [target]
+    extra = int(spell.get("targets", 1)) - 1 + int(spell.get("targets_up", 0)) * up
     if extra:
-        mine = c.spell["target"] == "ally"  # (a blessing may be on the caster too: Aid)
-        others = [x for x in c.b.spell_targets(c.caster, c.sid) if x is not c.target and (mine or x is not c.caster)]
-        others.sort(key=lambda x: c.b.gap(c.caster, x))
+        mine = spell["target"] == "ally"  # (a blessing may be on the caster too: Aid)
+        others = [x for x in b.spell_targets(f, sid) if x is not target and (mine or x is not f)
+                  and (level is None or not warded(b, f, x, level))]
+        if spell.get("leap"):
+            n = int(spell["leap"]) // grid.SQUARE_FT
+            others = [x for x in others if b.gap(target, x) <= n]
+            others.sort(key=lambda x: (b.gap(target, x), b.gap(f, x)))
+        else:
+            others.sort(key=lambda x: b.gap(f, x))
         out += others[:extra]
     return out
 
@@ -245,11 +294,12 @@ def _attack(c: Cast, o: dict, victim) -> None:
                 break
             target = b.rng.choice(options)
         struck.append(target)
-        for dice_, dtype, up in spellrules.damage_parts(o)[:1]:
+        for dice_, dtype, up in spellrules.damage_parts(o)[:1] or [("0", "force", "")]:
             opt = AttackOption("spell", spell["name"].lower(), "spell_melee" if o["attack"] == "melee" else "spell_ranged",
                                c.bonus, expr(c, dice_, up, scaling=o.get("scaling") == "cantrip", empower=True)
                                + (f"{c.mod:+d}" if o.get("add_mod") and c.mod else ""), dtype,  # (Flame Blade)
-                               range=(reach, reach))
+                               range=(reach, reach),
+                               extra={} if spellrules.damage_parts(o) else {"no_damage": True})  # (Plane Shift's touch)
             c.empowered = 0  # (one damage roll of the spell: the first ray)
             before = target.hp
             if b._attack(f, opt, target):
@@ -353,11 +403,17 @@ def _save(c: Cast, o: dict, victim) -> None:
                             against=_conditions_in(o.get("on_fail", ())),
                             advantage="advantage" if o.get("advantage") else "")  # (Charm Person in a fight)
         b._event("save", who=x.id, ok=saved)
+        before = x.hp
         for i, (e, dtype) in enumerate(parts):
             if i == 0 and o.get("hurt_damage") and x.hp < x.max_hp:  # (Toll the Dead: a bigger die for the hurt)
                 e = expr(c, o["hurt_damage"], scaling=o.get("scaling") == "cantrip")
             full = rolled[i] if i in rolled and not (i == 0 and o.get("hurt_damage")) else _roll(c, e, dtype)
             b._save_hit(f, x, ability, saved, full, dtype, on_save)
+        if o.get("max_hp_loss") and not saved and x.state != "dead" and before > max(0, x.hp):
+            cut(b, x, before - max(0, x.hp))  # (Harm: the maximum falls by the necrotic damage taken)
+        if o.get("dust") and not saved and x.hp <= 0 and before > 0 and x.state in ("down", "dead", "fighting"):
+            dust(b, x, f)  # (Disintegrate)
+            continue
         if not saved and x.active:
             run(c, o.get("on_fail", ()), x)
         elif saved and x.active:
@@ -368,6 +424,24 @@ def _save(c: Cast, o: dict, victim) -> None:
         if x.active:
             b._push(src, x, int(feet) // 5)
     c.pushed.clear()
+
+
+def cut(b, x, amount: int) -> None:
+    """Its hit point maximum falls for the rest of the fight (Harm), never below 1."""
+    x.max_cut += int(amount)
+    if x.hp > x.max_hp:
+        x.hp = x.max_hp
+    b.say(f"{x.the_name}'s life is withered: {x.possessive} greatest strength falls to {x.max_hp}.",
+          "danger" if x.side == "party" else "good")
+
+
+def dust(b, x, by) -> None:
+    """Brought to nothing by a disintegrating ray: dead at once, and no spell in the game brings it back."""
+    if x.state != "dead":
+        b._kill(x, "turned to dust", by)
+    x.__dict__["dust"] = True
+    b._event("dust", who=x.id)
+    b.say(f"{x.the_name} crumbles into fine grey dust.", "danger" if x.side == "party" else "good")
 
 
 @op("push")
@@ -444,6 +518,12 @@ def _condition(c: Cast, o: dict, victim) -> None:
             continue  # (a ghoul's touch: not the dead, not elves)
         if o.get("charge_feet") and f.moved_feet < int(o["charge_feet"]):
             continue
+        if o.get("immune_as"):
+            from realmwalker.rules.engine import query
+
+            if query.condition_immune(x, o["immune_as"]):
+                b.say(f"{x.the_name} shrugs it off.", "system")
+                continue  # (Suggestion is a charm: those who cannot be charmed are not stood down)
         extra = {}
         if o.get("escape"):
             extra["escape"] = int(o["escape"])
@@ -467,9 +547,10 @@ def _condition(c: Cast, o: dict, victim) -> None:
             continue
         if cid == "grappled":
             x.grappled_by = f.id
-        if o.get("repeat_save"):
+        if o.get("repeat_save") or o.get("petrify"):
             x.save_ends.append({"cond": cid, "save": o.get("save", spell_save(spell)), "dc": int(o.get("save_dc") or c.dc),
-                                "conc": f.id if spell.get("concentration") else None})
+                                "conc": f.id if spell.get("concentration") else None,
+                                **({"tally": [0, 0]} if o.get("petrify") else {})})  # (successes, failures)
         b._event("condition", who=x.id, cond=cid)
         b.say(f"{x.the_name} is {conditions.name(b.t, cid).lower()}.", "good" if x.side != f.side else "danger")
 
@@ -575,7 +656,7 @@ def _heal(c: Cast, o: dict, victim) -> None:
         if x.buff_value("heal_max"):  # (Beacon of Hope: the most the dice can give)
             n_, s_, flat_ = dice.parse(expr(c, o["dice"], o.get("up", "")))
             rolled = dice.roll(str(n_ * s_ + flat_), b.rng)
-        amount = rolled.total + (c.mod if o.get("add_mod") else 0)
+        amount = rolled.total + (c.mod if o.get("add_mod") else 0) + int(o.get("per_up", 0)) * c.up  # (Heal: +10)
         if f.has_trait("feat_healer") and not spell.get("ability"):  # Healer: healing dice of 1 rolled again
             amount += sum(b.rng.randint(1, max(1, dice.parse(o["dice"])[1])) - 1 for r in rolled.rolls if r == 1)
         if o.get("add") == "level" and f.char is not None:
@@ -611,6 +692,8 @@ def _modifier(c: Cast, o: dict, victim) -> None:
     for x in targets:
         if x is None:
             continue
+        if o.get("needs") and o["needs"] not in x.conditions:
+            continue  # (Otto's dance rides on the charm: no charm, no dance)
         if x.char is not None and spellrules.lasts(b.t, sid) and victim is None:
             # It outlives the fight: kept on them (the sheet counts its armour), the rest carried here.
             spellrules.keep(x.char, b.t, sid, c.level)
@@ -641,6 +724,8 @@ def filled(c: Cast, buff: dict) -> dict:
     modifier, at least 1)."""
     out = {}
     for k, v in buff.items():
+        if isinstance(v, dict):
+            v = filled(c, v)  # (an aura's grant: Globe of Invulnerability's ward by the slot's level)
         if v == "$caster":
             v = c.caster.id
         elif v == "$dc":
@@ -678,14 +763,42 @@ def filled(c: Cast, buff: dict) -> dict:
 
 @op("temp_hp")
 def _temp_hp(c: Cast, o: dict, victim) -> None:
-    """Temporary hit points (False Life, Armor of Agathys): the larger of the old and the new, never added."""
-    x = victim or (c.caster if c.spell["target"] == "self" else c.target)
-    if x is None or not x.active:
-        return
+    """Temporary hit points (False Life, Armor of Agathys): the larger of the old and the new, never added. With
+    `share` (and the spell's target all_allies), the amount is divided among up to `count` friends within range
+    (Power Word Fortify)."""
     amount = dice.roll(expr(c, str(o["amount"]), str(o.get("up", ""))), c.b.rng).total \
         + (max(0, c.mod) if o.get("add_mod") else 0)
     if o.get("per_up"):
         amount += int(o["per_up"]) * c.up
+    if o.get("share") and victim is None:
+        for x, each in shares(c.b, c.caster, c.spell, amount, int(o.get("count", 6)), level=c.level):
+            _give_temp(c, x, each)
+        return
+    x = victim or (c.caster if c.spell["target"] == "self" else c.target)
+    if x is None or not x.active:
+        return
+    _give_temp(c, x, amount)
+
+
+def shares(b, f, spell: dict, amount: int, count: int, *, level: int | None = None) -> list:
+    """How shared temporary hit points are divided: evenly among the friends in range who would gain from them,
+    those nearest a foe first; a friend who already has as many keeps them and the rest share more (Power Word
+    Fortify)."""
+    reach = b.spell_range(spell, f)
+    near = [x for x in b.team(f.team) if x.active and b.feet(f, x) <= reach
+            and (level is None or not warded(b, f, x, level))]
+    near.sort(key=lambda x: (min((b.gap(x, e) for e in b.enemies_of(f)), default=99), x.temp_hp, x.id))
+    picked = near[:max(1, count)]
+    while picked:
+        each = amount // len(picked)
+        keep = [x for x in picked if x.temp_hp < each]
+        if len(keep) == len(picked) or not keep:
+            break
+        picked = keep
+    return [(x, amount // len(picked)) for x in picked]
+
+
+def _give_temp(c: Cast, x, amount: int) -> None:
     if amount > x.temp_hp:
         x.temp_hp = amount
         c.b._event("buff", who=x.id, spell=c.sid)
@@ -807,6 +920,9 @@ def _revive(c: Cast, o: dict, victim) -> None:
     x = victim or c.target
     if x is None or x.state != "dead" or x.char is None:
         return
+    if x.__dict__.get("dust"):
+        b.say(f"Nothing of {x.the_name} is left to call back.", "warn")
+        return
     x.state = "fighting"  # (the diamond is the spell's costly component: spent as it is cast, rules/spells.py)
     x.char.alive = True
     x.char.death_cause = None  # (or the body would be found dead of it again as time passed)
@@ -854,8 +970,11 @@ def _zone(c: Cast, o: dict, victim) -> None:
              damage=expr(c, dmg[0][0], dmg[0][2]) if dmg else "", damage_type=dmg[0][1] if dmg else "",
              on_save="half" if o.get("half") else "none", centre=c.point,
              fail=o.get("fail", ""), rough=bool(o.get("rough")), dark=bool(o.get("dark")),
-             held=expr(c, *o["held"].split("|")) if o.get("held") else "", frees=bool(o.get("frees")))
-    if z.kind in ("stone", "force"):  # a wall: it rises on the free squares of the area
+             held=expr(c, *o["held"].split("|")) if o.get("held") else "", frees=bool(o.get("frees")),
+             friends_safe=bool(o.get("friends_safe")),
+             heal=(expr(c, o["heal"], o.get("heal_up", "")) + (f"+{c.mod}" if o.get("add_mod") and c.mod > 0 else ""))
+             if o.get("heal") else "")
+    if z.kind in WALLS:  # a wall: it rises on the free squares of the area
         taken = {sq for x in b.on_field() for sq in x.cells}
         name = "wall_stone" if z.kind == "stone" else "ice_wall"
         for sq in sorted(z.cells):
@@ -867,11 +986,18 @@ def _zone(c: Cast, o: dict, victim) -> None:
         b.field._derive()
         if not z.cells:
             return
+        b._add_zone(z)
+        if o.get("catch") and z.damage:  # (Wall of Ice: those it rises beside are thrown aside, frozen)
+            for x in b.in_area(c.area, spell.get("affects", "all"), f):
+                b.say(f"The ice bursts up around {x.the_name}.", "danger" if x.side == "party" else "info")
+                b._save_damage(f, x, z.save or "dex", z.dc, z.damage, z.damage_type, z.on_save)
+        return
     b._add_zone(z)
     if o.get("catch"):  # (whoever stands there as it appears: caught, or hurt)
         for x in b.in_area(c.area, spell.get("affects", "all"), f):
-            if z.fail or z.kind in ("tentacles", "cloud", "stench", "hunger", "insects", "sleet", "radiance",
-                                    "spirits", "elemental"):
+            if z.heal and x.team == f.team:
+                b._zones_on(x, start=False)  # (Conjure Celestial's healing light)
+            elif z.fail or z.kind in GROUND:
                 b._ground(x, z, start=False)
             elif z.holds or z.kind == "grease":
                 b._zone_catch(x, z)
@@ -881,15 +1007,28 @@ def _zone(c: Cast, o: dict, victim) -> None:
 
 @op("banish")
 def _banish(c: Cast, o: dict, victim) -> None:
-    """Banishment, Otiluke's Resilient Sphere, Banishing Smite: off the field while the caster concentrates."""
+    """Banishment, Otiluke's Resilient Sphere, Banishing Smite, Forcecage: off the field while the caster
+    concentrates; everyone in the spell's area for an area spell (the forcecage's box). `forever`: sent from this
+    plane for good, no concentration needed (Plane Shift, Divine Word's banishing): beaten."""
     b, f = c.b, c.caster
-    for x in ([victim] if victim is not None else _targets(c)):
+    if victim is not None:
+        victims = [victim]
+    elif c.area:
+        victims = b.in_area(c.area, c.spell.get("affects", "all"), f)
+    else:
+        victims = _targets(c)
+    for x in victims:
         if x is None or not x.active or x is f:
+            continue
+        if not _allowed(o, x):
             continue
         if o.get("below_hp") and x.hp > int(o["below_hp"]):
             continue
         if o.get("max_size") and not statblocks.size_at_most(x.size, o["max_size"]):
             continue  # (the sphere holds a Large creature at most)
+        if o.get("forever"):
+            b.send_off(x, by=f)
+            continue
         if f.concentration is None:
             continue  # (a spell that holds nothing cannot keep anyone away)
         b.send_away(x, o.get("how", "banished"), by=f, spell=c.sid)
@@ -974,6 +1113,8 @@ def held_spells(b, x) -> list:
         if not held and not away:
             continue
         sp = b.t.spells[conc["spell"]]
+        if sp.get("no_dispel"):
+            continue  # (Forcecage: Dispel Magic cannot end it)
 
         def end(x=x, caster=caster, held=tuple(held), away=away):
             for cid in held:
@@ -997,6 +1138,111 @@ def _aura(c: Cast, o: dict, victim) -> None:
              on_save="half" if o.get("half") else "none", friends_safe=True)
     b._add_zone(z)
     b._follow_auras()
+
+
+@op("by_hp")
+def _by_hp(c: Cast, o: dict, victim) -> None:
+    """What it does depends on the hit points it has left (Divine Word): `tiers` [[most, [ops]], ...], the first
+    whose number is at least its hit points now; nothing past the last."""
+    x = victim or c.target
+    if x is None or not x.active:
+        return
+    for most, ops_ in o["tiers"]:
+        if x.hp <= int(most):
+            run(c, ops_, x)
+            return
+
+
+@op("slay")
+def _slay(c: Cast, o: dict, victim) -> None:
+    """It dies outright (Divine Word at 20 hit points or fewer; with `max_hp`, only if it has that many or fewer)."""
+    x = victim or c.target
+    if x is None or x.state not in ("fighting", "fleeing", "down"):
+        return
+    if o.get("max_hp") is not None and x.hp > int(o["max_hp"]):
+        return
+    c.b.say(f"{x.the_name} falls dead at the word.", "danger" if x.side == "party" else "good")
+    c.b._kill(x, "slain by a word of power", c.caster)
+
+
+@op("lift")
+def _lift(c: Cast, o: dict, victim) -> None:
+    """Reverse Gravity: it falls upward, to `feet` above the ground in the open (under a roof or below ground it
+    strikes the ceiling twenty feet up and takes the fall), and hangs there while the caster concentrates; when the
+    spell ends it falls (Battle._end_concentration). A flier may fly as it likes."""
+    b = c.b
+    x = victim
+    if x is None or not x.active or x.hovers or x.fly_speed > 0:
+        return  # (a flier flies as it likes)
+    roof = b.env.place in ("underground", "indoors")
+    top = 20 if roof else int(o.get("feet", 100))
+    if x.z >= top:
+        return
+    rise = top - x.z
+    start = x.z
+    x.z = top
+    b._event("fly", who=x.id, z=x.z, before=start)
+    b.say(f"{x.the_name} falls upward" + (" and slams into the ceiling." if roof else " into the sky."),
+          "danger" if x.side == "party" else "good")
+    durations.buff(x, {"aloft": c.caster.id, "conc": c.caster.id, "source": f"aloft:{c.sid}"})
+    if roof:
+        from realmwalker.rules.engine import hazards
+
+        hurt = hazards.falling(b.t, rise)
+        if hurt:
+            b._hit(None, x, dice.roll(hurt, b.rng).total, "bludgeoning", crit=False, weapon="fall")
+
+
+@op("one_of")
+def _one_of(c: Cast, o: dict, victim) -> None:
+    """One of several effects for each creature, by a die (Prismatic Spray's rays): `choices` [[ops], ...]; a face of
+    the `die` past the choices brings two of them, rolled again."""
+    b = c.b
+    if victim is not None:
+        victims = [victim]
+    elif c.area:
+        victims = b.in_area(c.area, c.spell.get("affects", "all"), c.caster)
+    else:
+        victims = _targets(c)
+    choices = o["choices"]
+    die = int(o.get("die", len(choices)))
+    for x in victims:
+        if x is None or not x.active:
+            continue
+        face = b.rng.randint(1, die)
+        picks = [face - 1] if face <= len(choices) else [b.rng.randint(0, len(choices) - 1) for _ in range(2)]
+        b.dice_say(f"{x.name}: d{die} = {face}")
+        for i in picks:
+            if x.active:
+                run(c, choices[i], x)
+
+
+def after_strike(b, f, tok, target) -> None:
+    """What a conjured thing's hit brings besides its damage (Conjure Fey's fear): its summon op's `on_hit`."""
+    spell = b.t.spells[tok.spell] if tok.spell in b.t.spells else None
+    if spell is None or not target.active:
+        return
+    o = spellrules.op(spell, "summon") or {}
+    if o.get("on_hit"):
+        c = Cast(b, f, tok.spell, spell, target, None, dc=tok.bonus + 8)
+        run(c, o["on_hit"], target)
+
+
+def warded(b, f, x, level: int) -> bool:
+    """A Globe of Invulnerability keeps this spell off `x`: a ward above the spell's level, and the caster outside
+    the same barrier."""
+    wards = [bf for bf in x.buffs if bf.get("spell_ward") is not None and int(bf["spell_ward"]) > int(level)]
+    if not wards or f is x:
+        return False
+    for bf in wards:
+        bearer = next((y for y in b.fighters if y.id == bf.get("aura_of")), None)
+        if bearer is None:
+            return True
+        r = next((int(a["aura"].get("radius", 10)) for a in bearer.buffs
+                  if a.get("aura") and "spell_ward" in (a["aura"].get("grant") or {})), 10) // grid.SQUARE_FT
+        if grid.gap(bearer.space, f.space) > r:
+            return True  # (cast from outside that barrier)
+    return False
 
 
 @op("guardian")

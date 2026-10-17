@@ -39,7 +39,16 @@ On the one marked (the buff is on the creature):
     heal_max        healing it receives is the most the dice can give (Beacon of Hope)
     rise            at the start of its turn at 0 hit points it regains 1 (Aura of Life)
     aura            {"radius": feet, "grant": {buff}}: friends within the radius (and the bearer) have the grant
-                    while they stay there (Crusader's Mantle, Aura of Life, Aura of Purity, Circle of Power)
+                    while they stay there (Crusader's Mantle, Aura of Life, Aura of Purity, Circle of Power); the
+                    grant's "$level" and the like are filled in as the spell is cast
+    dancing         (with dc, by: "$caster") speed 0, Disadvantage on its attacks and Dexterity saves, Advantage on
+                    attacks against it; at the start of each of its turns it spends its action on a Wisdom save, and
+                    a success ends the dance and the caster's charm (Otto's Irresistible Dance)
+    aloft           the caster's id: it hangs in the air (speed 0) and falls when the spell ends (Reverse Gravity,
+                    given by the `lift` op)
+    spell_ward      a level: spells below it cast from outside the same barrier do nothing to its bearer and leave
+                    its squares out of their areas (Globe of Invulnerability, as an aura's grant: "$level")
+    truesight       feet of truesight: it sees the invisible and through any darkness (True Seeing)
 On the one who gains (the caster, or a friend):
     hit_extra       dice (with hit_type, hit_with "weapon" | "melee" | "any"): extra damage on its hits (Divine Favor)
     weapon_plus     added to its weapon attack and damage rolls (Magic Weapon)
@@ -67,12 +76,16 @@ BUFF_KEYS = frozenset({
     # the second wave's (D.2)
     "confused", "sluggish", "haste", "blink", "thorns", "thorns_type", "save_adv", "save_adv_against",
     "save_adv_spells", "evade_spells", "heal_max", "rise", "aura", "grant", "radius", "aura_of", "save_first",
+    # the third wave's (D.3)
+    "dancing", "truesight", "aloft", "spell_ward",
 })
 ZONES = frozenset({"web", "fire", "fog", "ice", "caltrops", "bearings", "darkness", "antimagic", "plants", "grease",
                    "spikes", "daggers", "moonbeam", "sphere", "silence",
                    # the second wave's (D.2): ground with a save and what a failure brings (Battle._ground)
                    "tentacles", "cloud", "stench", "hunger", "insects", "sleet", "radiance", "spirits", "elemental",
-                   "wind", "stone", "force"})
+                   "wind", "stone", "force",
+                   # the third wave's (D.3): walls of blades and thorns, a pillar of light, a wall of ice
+                   "blades", "thorns", "celestial", "icewall"})
 
 
 def _weapon(opt) -> bool:
@@ -86,7 +99,7 @@ def attack_mods(b, att, target, opt, r) -> None:
             r.add("advantage", "outlined")
             break
     if any(bf.get("blurred") for bf in target.buffs) and not att.has_trait("blindsight") \
-            and not att.has_trait("truesight"):
+            and not att.has_trait("truesight") and not att.buff_value("truesight"):
         r.add("disadvantage", "blurred")
     for bf in target.buffs:
         if att.kind in (bf.get("warded_kinds") or ()):
@@ -99,6 +112,10 @@ def attack_mods(b, att, target, opt, r) -> None:
             break
     if opt.is_melee and "finesse" not in opt.properties and any(bf.get("weak") for bf in att.buffs):
         r.add("disadvantage", "enfeebled")
+    if any(bf.get("dancing") for bf in att.buffs):
+        r.add("disadvantage", "dancing")  # (Otto's Irresistible Dance)
+    if any(bf.get("dancing") for bf in target.buffs):
+        r.add("advantage", "dancing")
 
 
 def roll_adjust(b, att, target, opt) -> int:
@@ -313,6 +330,27 @@ def share_auras(b) -> None:
                 if bf.get("conc") is not None:
                     grant["conc"] = bf["conc"]
                 x.buffs.append(grant)
+
+
+def dancing_turn(b, f) -> bool:
+    """Otto's Irresistible Dance: at the start of its turn the dancer spends its turn collecting itself, a Wisdom
+    save against the mark's DC; a success ends the dance and the caster's charm with it. True when the turn went on
+    it."""
+    bf = next((bf for bf in f.buffs if bf.get("dancing")), None)
+    if bf is None or f.action <= 0 or f.incapacitated:
+        return False
+    f.action -= 1
+    if b._save(f, "wis", int(bf.get("dc", 10))):
+        src = bf.get("source")
+        f.buffs = [x for x in f.buffs if x.get("source") != src or not src]
+        if "charmed" in f.conditions and f.sources.get("charmed") == bf.get("by"):
+            from realmwalker.rules.engine import durations
+
+            durations.remove(f, "charmed")
+        b.say(f"{f.the_name} stumbles out of the dance.", "system")
+    else:
+        b.say(f"{f.the_name} dances on, helplessly.", "good" if f.side == "foe" else "danger")
+    return True
 
 
 def confused_turn(b, f) -> bool:

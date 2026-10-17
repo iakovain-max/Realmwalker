@@ -156,7 +156,7 @@
    "fx": "zone", "text": "Thorns and spikes cover a 20-foot-radius patch up to 150 feet away (concentration, ten minutes): hard going, and 2d4 piercing for every 5 feet anyone walks through it. No save."},
   "suggestion": {"name": "Suggestion", "level": 2, "school": "enchantment", "classes": ["bard", "sorcerer", "warlock", "wizard"],
    "target": "enemy", "range": 30, "components": ["V", "M"], "concentration": true, "rounds": 4800, "battle_only": true,
-   "effects": [{"op": "save", "ability": "wis", "on_fail": [{"op": "condition", "condition": "incapacitated", "on_damage": true}]}],
+   "effects": [{"op": "save", "ability": "wis", "on_fail": [{"op": "condition", "condition": "incapacitated", "immune_as": "charmed", "on_damage": true}]}],
    "fx": "curse", "text": "A few honeyed words to a foe within 30 feet (concentration): on a failed Wisdom save it lays down its arms and waits, until it is hurt. The book lets you set it a task; in a fight here it only stands down."},
   "warding_bond": {"name": "Warding Bond", "level": 2, "school": "abjuration", "classes": ["cleric", "paladin"],
    "target": "ally", "range": "touch", "components": ["V", "S", "M"], "rounds": 600, "battle_only": true,

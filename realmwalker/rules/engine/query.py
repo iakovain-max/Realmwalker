@@ -234,6 +234,8 @@ def save_roll(b, f, ability: str, *, bonus: int = 0, against: tuple = ()) -> Sav
             out.roll.add("advantage", "against a spell")  # (Circle of Power)
         if ability == "dex" and f.buff_value("sluggish"):
             out.bonus -= 2  # (Slow)
+        if ability == "dex" and f.buff_value("dancing"):
+            out.roll.add("disadvantage", "dancing")  # (Otto's Irresistible Dance)
     if ability == "dex" and f.dodging and not incapacitated(f) and f.speed > 0:
         out.roll.add("advantage", "dodging")  # the Dodge action: easier to get out of the way of fire
     if "poisoned" in against and f.char is not None and f.char.effects.get("antitoxin", 0) > 0:
@@ -270,6 +272,8 @@ def speed(f) -> int:
     base = f.sheet.speed() if f.char else int(f.cdef["speed"])
     if flag(f, "speed_zero"):
         return 0
+    if f.buff_value("aloft") or f.buff_value("dancing"):
+        return 0  # (hanging in the air under Reverse Gravity; dancing in place)
     base -= sum(f.buff_value("slow"))
     if f.buff_value("haste"):
         base *= 2

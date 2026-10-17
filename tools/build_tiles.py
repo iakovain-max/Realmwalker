@@ -332,6 +332,9 @@ ITEMS = {
     # trade goods
     "sealed_crate": "dungeon/large_box.png", "diamond": "item/misc/misc_crystal_old.png",
     "diamond_dust": "item/potion/white_new.png",
+    "black_pearl": "item/misc/misc_stone_new.png", "mushroom_powder": "item/potion/brown_new.png",
+    "ruby_dust": "item/potion/ruby_new.png", "miniature_sword": "item/weapon/blessed_blade.png",
+    "forked_rod": "item/misc/misc_fan_inert.png",
     "wheat": "item/food/bread_ration_old.png", "salt": "item/misc/misc_stone_inert.png",
     "iron_bar": "item/misc/misc_rune.png", "wool_bolt": "item/armor/back/cloak_2.png",
     "linen_bolt": "item/armor/torso/robe_1_new.png", "furs": "item/armor/torso/animal_skin_3.png",

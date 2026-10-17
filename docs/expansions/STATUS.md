@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 03 Demigods & Magics · Part D (the spell catalogue), D.3 next · branch dlc/03-demigods-magics
+Current: 03 Demigods & Magics · Part D (the spell catalogue), D.4 next · branch dlc/03-demigods-magics
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -10,10 +10,10 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   levels and the epic boons; the fighter, rogue, cleric and wizard of 2024 to level 20 with the Champion, Knight,
   Thief, Assassin, Life and War Domains, Evoker and Abjurer; Counterspell; saves format 17) and C (preparing spells,
   rituals, one slot a turn, higher slots, components, spell scrolls of every level, the four potions of healing) and
-  D.1 and D.2 (the catalogue's first two waves: 145 battle spells, cantrips to level 5)
+  D.1 to D.3 (the catalogue's first three waves: 172 battle spells, cantrips to level 7)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
-  adapted); Expansion 3: 177 done, 132 adapted, 1 omitted of 558 (parts A, B, C, D.1 and D.2 settled). PHB 51% · DMG 12% · MM 8%
+  adapted); Expansion 3: 185 done, 151 adapted, 1 omitted of 558 (parts A, B, C and D.1 to D.3 settled). PHB 53% · DMG 12% · MM 8%
 Assumptions waiting for Anton:
 - The Player2 AI writer is removed (tagged `before-ai-removal`); its text is replaced everywhere by the game's own
   words, strengthened where they were thin.
@@ -118,14 +118,28 @@ Assumptions waiting for Anton:
   foes deal most; Elemental Weapon and Conjure Elemental are fire. Steel Wind Strike strikes each foe in reach once.
   Bigby's Hand is the Clenched Fist only (and takes the place of a Spiritual Weapon); Antilife Shell wards friends
   against every kind but undead and constructs rather than barring the way. Polymorph waits for Part F (the beasts).
+- Expansion 3 D.3: walls of blades and thorns are lines from the caster's side (no rings, no cover from the blades);
+  the Wall of Ice is a 20-foot block that cannot be broken; Fire Storm is one 30-foot block that spares friends;
+  Delayed Blast Fireball bursts at once (no growing bead); Eyebite always puts to sleep; Otto's dancer spends its
+  whole turn on each save to stop; Mass Suggestion stands foes down until hurt, as Suggestion does; Harm's lost
+  maximum comes back after the fight; the Globe of Invulnerability moves with its caster; Conjure Celestial's
+  pillar heals friends and sears foes and is moved with a bonus action; Divine Word's 24-hour exile is for good;
+  Plane Shift waits for Part E (the 2024 spell only carries willing travellers; the old banishing touch is not
+  in the book, so it was left out); the Forcecage is the solid box only, and a
+  caster whose only foes left are sealed in its own sphere or cage lets them go at the start of its turn (so a won
+  fight ends); Reverse Gravity lifts those in it as it is cast (100 feet, or into the ceiling 20 feet up under a
+  roof or below ground), not those who walk in later; Regenerate takes a minute to cast and so waits for Part E;
+  Prismatic Spray's violet ray sends its victim away for good. The new costly components are sold at markets:
+  mushroom powder in towns; a black pearl, ruby dust, a miniature platinum sword and a forked metal rod in cities.
 Ideas for later:
 - (none yet)
-Next session starts at: task D.3 in docs/expansions/03-demigods-magics.md (Part D, the spell catalogue, third wave:
-levels 6 and 7, the battle spells only, as D.1 and D.2 did - the outside-a-fight ones go to Part E's lists in the
-design note, summons to F; kernel ops first, then sonnet helpers into data/packs/03_demigods_magics/spells.level6.json
-and spells.level7.json. D.2's helper brief, docs/expansions/catalogue_brief.md, is a ready model for the next one (the ops and marks
-docstrings in rules/engine/effects.py and marks.py list everything; tests/test_catalogue.py and tests/test_wave2.py).
-Parts A, B, C, D.1 and D.2 are in `main`.
+Next session starts at: task D.4 in docs/expansions/03-demigods-magics.md (Part D, the spell catalogue, fourth and
+last wave: levels 8 and 9 (34), the battle spells only as before; Wish (its safe uses and its stress) and Meteor
+Swarm; then Part D to `main`). Kernel ops first (Power Word Kill can use the `slay` op's `max_hp`, Power Word Stun
+a `by_hp`-like test), then sonnet helpers into data/packs/03_demigods_magics/spells.level8.json and
+spells.level9.json. The D.3 brief, docs/expansions/catalogue_brief.md, is a ready model (it plans each spell; the
+ops and marks docstrings in rules/engine/effects.py and marks.py list everything; tests/test_catalogue.py,
+tests/test_wave3.py). Parts A, B, C and D.1 to D.3 are in `main`.
 
 ## Done
 
@@ -150,6 +164,7 @@ Parts A, B, C, D.1 and D.2 are in `main`.
 | 2026-10-17 | Demigods & Magics part C: preparing spells, rituals, one slot a turn, higher slots, components (focus, pouch, costly ones), spell scrolls of every level (2024), the four potions of healing; the spellcasting rules settled in the codex; merged into `main` | `dlc/03-demigods-magics` |
 | 2026-10-17 | Demigods & Magics D.1: the catalogue's first wave, 79 battle spells (cantrips to level 2) with new ground, marks and cards; outside-a-fight spells to Part E, summons to F; merged into `main` | `dlc/03-demigods-magics` |
 | 2026-10-17 | Demigods & Magics D.2: the second wave, 66 battle spells of levels 3 to 5 (creatures sent away, Dispel Magic and Spell Breaker, auras for friends, Haste, Slow, Confusion, Dominate, new ground and walls); merged into `main` | `dlc/03-demigods-magics` |
+| 2026-10-17 | Demigods & Magics D.3: the third wave, 27 battle spells of levels 6 and 7 (Chain Lightning, Disintegrate, Heal, Harm, Flesh to Stone, the Globe, Otto's dance, walls of ice, thorns and blades, Divine Word, Prismatic Spray, Reverse Gravity, the Forcecage...); merged into `main` | `dlc/03-demigods-magics` |
 
 ## Notes for the next session
 
