@@ -202,7 +202,7 @@ def test_geas_binds_a_guard_who_saw_a_crime(world, tables, monkeypatch):
     wiz = hero(tables)
     game = game_with(world, tables, wiz)
     town = in_town(game)
-    guard = someone_near(game, town)
+    guard = someone_near(game, town, job="guard")
     game.renown.crimes.append({"id": 77, "crime": "theft", "witnesses": [guard.id], "reported": False,
                                "report_at": game.world.time + 60, "time": game.world.time})
     fixed_d20(monkeypatch, 1)
@@ -212,6 +212,9 @@ def test_geas_binds_a_guard_who_saw_a_crime(world, tables, monkeypatch):
     assert int(guard.flags["bribed_until"]) > game.world.time, "the watch's guard never lays hands on you"
     talk = dialogue.Conversation(game, guard)
     assert talk.attitude() == "friendly"
+    monkeypatch.setattr(law, "_unseen", lambda game_, n: False)
+    monkeypatch.setattr("realmwalker.game.vision.can_see", lambda *a, **k: True)
+    assert guard not in law.witnesses_here(game), "a geased guard sees none of your new crimes"
     before = guard.disposition
     game.world.time += 31 * glamour.DAY
     glamour.tick(game)
@@ -233,15 +236,16 @@ def test_modify_memory_wipes_a_witness_and_their_grudge(world, tables, monkeypat
     game = game_with(world, tables, wiz)
     town = in_town(game)
     npc = someone_near(game, town)
-    npc.disposition = -40
-    npc.remember("saw the traveller commit theft")
+    severity = int(law.crime_def(game, "theft")["severity"])
+    npc.disposition = -5 - 10 * severity  # (an old -5, and the grudge the theft left)
+    npc.remember("saw the traveller commit " + law.crime_def(game, "theft")["name"])
     game.renown.crimes.append({"id": 5, "crime": "theft", "witnesses": [npc.id], "reported": False,
                                "report_at": game.world.time + 60, "time": game.world.time})
     fixed_d20(monkeypatch, 1)
     said = text(cast(game, wiz, "modify_memory", subject(game, wiz, "modify_memory", "person")))
     assert "no longer remember" in said
-    assert 5 in npc.flags["silenced"] and npc.disposition == 0
-    assert not any("traveller" in m for m in npc.memory)
+    assert 5 in npc.flags["silenced"] and npc.disposition == -5, "the day's grudge goes; the older one stays"
+    assert not any("traveller commit" in m for m in npc.memory)
 
 
 def test_glibness_makes_every_charisma_roll_at_least_fifteen(world, tables, monkeypatch):
@@ -323,7 +327,9 @@ def test_an_illusion_draws_the_town_eyes_away(world, tables, monkeypatch):
     game.world.time += 600
     assert glamour.distraction(game) == 10, "from a 4th-level slot it stays while you are in the town"
     game.leave_local()
-    assert glamour.distraction(game) == 0
+    glamour.tick(game)
+    in_town(game)
+    assert glamour.distraction(game) == 0, "out of the town, the image is gone for good"
 
 
 def test_minor_illusion_is_only_for_a_town(world, tables):
@@ -511,3 +517,67 @@ def test_an_encounter_on_the_road_goes_through_antipathy(world, tables, monkeypa
     monkeypatch.setattr(encounters, "encounter_chance", lambda *a: 1.0)
     encounters.roll_encounter(game, 60)
     assert seen
+
+
+def test_the_wards_wake_the_camp_in_a_real_rest(world, tables, monkeypatch):
+    wiz = hero(tables)
+    game = game_with(world, tables, wiz)
+    in_the_wild(game)
+    camp.make_camp(game)
+    cast(game, wiz, "programmed_illusion")
+    band = [spawn(tables, "wolf", RNG(6, "night"), 1)]
+    monkeypatch.setattr(encounters, "roll_encounter",
+                        lambda game_, minutes: PendingEncounter("test", list(band), "Wolves.", False, ""))
+    said = text(fight.rest(game, "long"))
+    assert game.encounter is not None and not game.encounter.asleep and game.encounter.spotted_first, said
+    game.encounter = None
+    game.camp.wards.clear()
+    game.leader.animals.append({"kind": "mastiff", "name": "Brindle", "unfed": 0, "bought": 0, "awake": True})
+    said = text(fight.rest(game, "long"))
+    assert game.encounter is not None and not game.encounter.asleep and "Brindle" in said
+
+
+def test_mislead_ends_when_you_strike_someone_in_a_town(world, tables, monkeypatch):
+    wiz = hero(tables)
+    game = game_with(world, tables, wiz)
+    town = in_town(game)
+    someone_near(game, town)
+    cast(game, wiz, "mislead")
+    assert glamour.unseen(game)
+    law.commit(game, "assault")
+    assert not glamour.unseen(game)
+
+
+def test_prestidigitation_warms_the_whole_party_meal(world, tables):
+    wiz = hero(tables)
+    friend = hero(tables, "fighter", 0, 2)
+    friend.is_player = False
+    friend.companion = {"loyalty": 60, "wage": 0}
+    game = game_with(world, tables, wiz, friend)
+    in_the_wild(game)
+    camp.make_camp(game).fire = False
+    cast(game, wiz, "prestidigitation")
+    for c in game.party:
+        add_item(c, tables.items, "bread", 2)
+        c.hunger, c.body_heat = 60.0, -40.0
+    for c in game.party:
+        camp.eat_meal(game, c)
+    assert all(c.body_heat > -40.0 for c in game.party), "everyone's food was warm"
+
+
+def test_glibness_reaches_haggling(world, tables, monkeypatch):
+    from realmwalker.game import economy
+
+    bard = hero(tables)
+    game = game_with(world, tables, bard)
+    cast(game, bard, "glibness")
+    seen = []
+    real = glamour.cha_roll
+    monkeypatch.setattr(glamour, "cha_roll", lambda *a: seen.append(a[2]) or real(*a))
+    town = in_town(game)
+    npc = next((n for n in game.world.npcs.values() if n.settlement == town.id and n.alive
+                and n.job in ("shopkeeper", "market_trader")), None)
+    if npc is None:
+        pytest.skip("no merchant in this town")
+    economy.haggle(game, npc)
+    assert seen and seen[0] in glamour.CHA_SKILLS

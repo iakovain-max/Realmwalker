@@ -30,6 +30,7 @@ class PendingEncounter:
     threat: str  # plain words on how dangerous this looks
     asleep: bool = False  # it came in the night, while the party slept
     attitude: str = "hostile"  # DMG 2024 starting attitude: hostile, indifferent or friendly
+    warned: bool = False  # a camp ward or a watcher woke the party before it came (game/spellwork.night_visitors)
 
 
 @dataclass

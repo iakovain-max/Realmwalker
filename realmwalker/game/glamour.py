@@ -91,13 +91,17 @@ def tick(game) -> None:
             if until is None:
                 bound.remove(nid)
             elif int(until) < now:
+                if npc.flags.get("bribed_until") == until:
+                    npc.flags.pop("bribed_until", None)  # (only the geas's own: a real bribe stands)
                 _sour(npc, "geas_until", GEAS_SOUR, "was bound by the traveller's geas")
-                npc.flags.pop("bribed_until", None)
                 bound.remove(nid)
-    for key in ("distraction", "booming"):
+    for key in ("distraction", "booming", "warm_meal"):
         rec = _flags(game).get(key)
         if rec is not None and int(rec.get("until", 0)) < now:
             del _flags(game)[key]
+    dis = _flags(game).get("distraction")
+    if dis is not None and dis.get("settlement") != _here_id(game):
+        del _flags(game)["distraction"]  # (out of the town: the image is gone, even one that stayed)
     anti = _flags(game).get("antipathy")
     if anti is not None and int(anti.get("until", 0)) < now:
         del _flags(game)["antipathy"]
@@ -136,6 +140,17 @@ def unseen(game) -> bool:
     return spellrules.lasting_flag(game.leader, game.tables, "unnoticed")
 
 
+def reveal(game) -> None:
+    """An attack ends Invisibility and Mislead on the leader (in a town: a violent crime)."""
+    from realmwalker.rules import spells as spellrules
+
+    c = game.leader
+    for sid in list(spellrules.lasting(c, game.tables)):
+        if "unnoticed" in spellrules.buff_of(game.tables.spells[sid], int(game.tables.spells[sid]["level"])):
+            spellrules.end(c, sid)
+            game.say(f"<warn>{esc(c.name.split()[0])} flickers into sight.</>", "warn")
+
+
 def glib(game, char: Character | None = None) -> bool:
     from realmwalker.rules import spells as spellrules
 
@@ -153,6 +168,12 @@ def booming(game) -> bool:
     """Thaumaturgy's booming voice: Advantage on Intimidation in the talk that follows."""
     rec = _flags(game).get("booming")
     return bool(rec) and int(rec.get("until", 0)) >= _now(game)
+
+
+def warm_meal(game) -> bool:
+    """Prestidigitation's flavour: whatever is eaten in the hour after it is warm and tasty."""
+    rec = _flags(game).get("warm_meal")
+    return isinstance(rec, dict) and int(rec.get("until", 0)) >= _now(game)
 
 
 def scripted(game) -> bool:
@@ -329,7 +350,6 @@ def _truth(game, caster, spell, npc) -> list[str]:
     out = [f"{_first(caster)} draws a circle of quiet round {name}."]
     if ok:
         return out + [f"{name} shakes it off and says nothing they did not mean to. {said}"]
-    npc.flags["truthful_until"] = _now(game) + int(spell.get("rounds", 100)) // 10
     works = [q for q in quests.active(game) + [q for q in game.quests if q["state"] == "offered"]
              if q.get("giver") == npc.id]
     for q in works:
@@ -391,9 +411,15 @@ def _memory(game, caster, spell, npc) -> list[str]:
     npc.flags["enthralled_until"] = _now(game) + int(spell.get("minutes", 1)) + 1  # (the casting is forgotten too)
     seen = [r for r in law.unreported_seen_by(game, npc) if int(r.get("time", 0)) >= since]
     law.silence(npc, seen)
-    npc.memory = [m for m in npc.memory if "traveller" not in m]
-    if npc.disposition < 0:
-        npc.disposition = 0
+    for r in seen:  # (what they saw, and the grudge it left: the book's "last day", nothing older)
+        spec = law.crime_def(game, r["crime"]) if r["crime"] in game.tables.law["crimes"] else {"severity": 1,
+                                                                                               "name": r["crime"]}
+        npc.disposition = min(100, npc.disposition + 10 * int(spec["severity"]))
+        npc.memory = [m for m in npc.memory if m != f"saw the traveller commit {spec['name']}"]
+    if int(npc.flags.get("friends_at", -DAY - 1)) > since:  # (a Friends of the last day is forgotten too)
+        if npc.flags.pop("charmed_until", None) is None and "was charmed by the traveller's magic" in npc.memory:
+            npc.disposition = min(100, npc.disposition - FRIENDS_SOUR)  # (the sour taste it left goes with it)
+            npc.memory = [m for m in npc.memory if m != "was charmed by the traveller's magic"]
     out.append(f"<good>The last day goes soft and grey in {name}'s mind: whatever passed between you is gone.</> "
                f"{said}")
     if seen:
@@ -438,7 +464,7 @@ def _distract(game, caster, spell, o, level: int) -> list[str]:
     minus = int(o.get("minus", 5))
     old = _flags(game).get("distraction")
     if old and old.get("settlement") == here and int(old.get("until", 0)) >= _now(game) \
-            and int(old.get("minus", 0)) > minus:
+            and int(old.get("minus", 0)) >= minus:
         minus, until = int(old["minus"]), max(until, int(old["until"]))
     _flags(game)["distraction"] = {"settlement": here, "until": until, "minus": minus}
     sight = {"minor_illusion": "a crash of pots from the next street, a cry, a dog that is not there",
@@ -543,9 +569,10 @@ def _art(game, caster, spell, how: str) -> list[str]:
     if how == "druidcraft":
         out = [f"{first} whispers to the wind and the grass. <good>The weather here {forecast(game)}.</>"]
         c = campmod.camp_here(game)
-        if c is not None and not c.fire and game.world.settlement_at(game.player.x, game.player.y) is None:
-            c.fire = True
-            out.append("At a word, the camp's kindling catches.")
+        if c is not None and game.world.settlement_at(game.player.x, game.player.y) is None:
+            c.fire = not c.fire
+            out.append("At a word, the camp's kindling catches." if c.fire
+                       else "At a word, the camp's fire sinks and goes out: no light to be seen from afar.")
         return out
     if how == "elementalism":
         c = campmod.camp_here(game)
@@ -560,15 +587,16 @@ def _art(game, caster, spell, how: str) -> list[str]:
                     f"<good>The party is a little drier.</>"]
         from realmwalker.game import spellwork
 
-        spellwork._drink_all(game, 0.5 * len([x for x in game.party if x.alive]))
-        return [f"{first} beckons water: <good>a cup of clean, cold water fills in each hand.</>"]
+        drunk = spellwork._drink_all(game, 0.5 * len([x for x in game.party if x.alive]))
+        return [f"{first} beckons water: <good>a cup of clean, cold water fills in each hand</>"
+                + (", and the thirsty drink." if drunk else "; nobody is thirsty, and it is poured away.")]
     if how == "prestidigitation":
         for x in game.party:
             if x.alive and getattr(x, "dirt", 0) > 0:
                 x.dirt = max(0.0, float(x.dirt) - 30.0)
-        _flags(game)["warm_meal"] = True
+        _flags(game)["warm_meal"] = {"until": _now(game) + 60 + int(spell.get("minutes", 1))}
         return [f"{first} snaps their fingers over everyone in turn: <good>the grime of days lifts from skin and "
-                f"clothes,</> and the next meal will be warm and tasty."]
+                f"clothes,</> and whatever is eaten in the next hour will be warm and tasty."]
     if how == "thaumaturgy":
         _flags(game)["booming"] = {"until": _now(game) + TALK_MINUTES}
         return [f"{first}'s voice booms, the ground trembles underfoot and the flames lean away. <good>For the talk "
@@ -601,8 +629,8 @@ def subjects(game, caster, sid: str, level: int | None = None) -> list[Subject]:
         for it in carried(game.party):
             if how == "mask" and (not getattr(it, "magic", None) or masked(game, it)):
                 continue
-            if how == "sequester" and (sequestered(it) or game.tables.items.value(it) < 100):
-                continue
+            if how == "sequester" and (sequestered(it) or game.tables.items.value(it) < 100 or it.qty > 1):
+                continue  # (one thing: a stack would be many)
             out.append(Subject(game.tables.items.name(it, False), "thing", it))
         if how == "sequester":
             from realmwalker.game import revival
@@ -636,8 +664,6 @@ def problem(game, caster, sid: str, target) -> str | None:
                     "sequester": "nothing you carry is worth hiding, and no body is with you"}[how]
         if how in ("project", "mask", "sequester") and not aimed:
             return "choose which (←→)"
-    if does == "art" and how == "thaumaturgy" and _here_id(game) is None and game.local is None:
-        return None
     return None
 
 

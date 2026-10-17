@@ -551,7 +551,9 @@ def eat_meal(game, char: Character) -> list[str]:
     while choices and char.hunger >= 12 and len(msgs) < 4:
         msgs.append(eat_item(game, char, choices[0], stretch=stretch))
         choices = food_choices(game, char, desperate=char.hunger >= 80, fire=bool(camp and camp.fire))
-    if game.renown.flags.pop("warm_meal", None) and cook is None:  # (Prestidigitation: warm and tasty)
+    from realmwalker.game import glamour
+
+    if cook is None and glamour.warm_meal(game):  # (Prestidigitation: warm and tasty, for the hour)
         char.body_heat = max(char.body_heat, min(0.0, char.body_heat + 15))
         msgs.append(f"{body.first(char)}'s food is warm, and tastes better than it has any right to.")
     if cook is not None:

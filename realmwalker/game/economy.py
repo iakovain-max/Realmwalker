@@ -324,7 +324,9 @@ def haggle(game, npc: NPC) -> str:
     dc = int(h["dc"]) + (2 if set(npc.traits) & {"greedy", "sly", "suspicious"} else 0) - \
         (2 if set(npc.traits) & {"trusting", "cheerful", "generous"} else 0)
     rng = game.world.rng.child(f"haggle/{npc.id}/{today}")
-    roll = dice.d20(rng).natural
+    from realmwalker.game import glamour
+
+    roll = glamour.cha_roll(game, c, skill, dice.d20(rng).natural)  # (Glibness)
     total = roll + bonus
     name = game.tables.rules["skills"][skill]["name"]
     line = f"<dice>{name}: {roll} {'+' if bonus >= 0 else '-'} {abs(bonus)} = {total} vs DC {dc}</>"

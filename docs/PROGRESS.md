@@ -52,9 +52,9 @@ locks and stone, weather and land, lasting protections and great magic are E.5, 
   watches your hands far less closely, and you creep past them easily. **Zone of Truth**: they cannot lie for ten
   minutes; a work they gave you that hides something is shown for what it is, an honest one is known honest.
   **Geas**: they obey you for 30 days (a year from a 7th-level slot, for good from a 9th): they say nothing of the
-  crimes they saw you do, tell you what they want and what they hide, stay Friendly, and a guard of the watch will
+  crimes they saw you do and see none of your new ones, tell you what they want and what they hide, stay Friendly, and a guard of the watch will
   never lay a hand on you; when it ends they know, and hate you for it. **Modify Memory**: they forget the last day:
-  the crime of yours they saw (and the spell itself) and their grudge from it. **Glibness** (an hour): every
+  the crime of yours they saw and have not yet told (and the spell itself), and the grudge it left. **Glibness** (an hour): every
   Charisma roll you make is 15 at least, in talk, bribes and disguise. **Antipathy/Sympathy** (an hour to cast, ten
   days): name a kind of creature of the land; a band of them met on the road flees from you, or comes to you
   entranced, so that you see them first. **Awaken** (eight hours, a rare stone of 1,000 gold): one of your animals
@@ -63,20 +63,20 @@ locks and stone, weather and land, lasting protections and great magic are E.5, 
   as good as your spell save DC. **Minor Illusion**, **Silent Image** and **Major Image** in a town draw every eye
   away (-5 or -10 to their Perception) for a minute or ten: a quick hand in a shop, a creep past the guards, a wanted
   face not looked at; a Major Image from a 4th-level slot stays until you leave the town. **Mislead**: in a fight you
-  turn invisible while your double goes on; in a town, for the hour, nobody sees what you do (**Invisibility** does
-  that too now). **Project Image**: your image walks into a town you know within 500 miles: you hear its news and
+  turn invisible while your double goes on; in a town, for the hour, nobody sees what you do until you strike
+  someone (**Invisibility** does that too now). **Project Image**: your image walks into a town you know within 500 miles: you hear its news and
   read its board. **Illusory Script** (lead ink, 10 gold): for ten days a letter shows each reader the seal they would
   honour: the gate wardens wave you through without a search, and your papers impress everyone as a lord's.
   **Nystul's Magic Aura**: for a day a magic thing you carry looks like nothing much, and robbers pass it over.
-  **Sequester** (a stone of 5,000 gold): a thing you carry is hidden from robbers, thieves and the watch until you take
-  it out, or a fallen friend's body is held out of time. **Nondetection**: no foe's Detect Thoughts finds the one
+  **Sequester** (a stone of 5,000 gold): a thing you carry is hidden from robbers, thieves and the watch for good
+  (the spell is never ended here), or a fallen friend's body is held out of time. **Nondetection**: no foe's Detect Thoughts finds the one
   warded. Camp wards: **Magic Mouth** cries out when anything comes near (companions cast it as a ritual before
   sleeping), **Programmed Illusion** makes the night's visitors fall on a camp that is not there while you wake, and
   **Hallucinatory Terrain** (a day) and **Mirage Arcane** (ten days) hide the camp: hunters and night prowlers pass it
   by unless they are clever enough to see through it, and you may rest with enemies near.
 - **The small arts** (cantrips). **Druidcraft** tells the weather here for the next day, and it comes true, and
   lights or puts out the camp's fire. **Elementalism** lights the fire, dries the party a little, or gives a cup of
-  clean water each. **Prestidigitation** cleans the grime of days off the party and warms the next meal.
+  clean water each. **Prestidigitation** cleans the grime of days off the party and warms what is eaten in the next hour.
   **Thaumaturgy** gives Advantage on Intimidation in the talk that follows.
 - **New things in the shops**: jade dust, lead ink and a pinch of diamond dust at town markets, rare stones of 1,000
   and 5,000 gold in cities, each with a picture.

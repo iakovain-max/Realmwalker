@@ -42,6 +42,13 @@ class _Spot:
         self.x, self.y = x, y
 
 
+def _cha(game, skill: str, roll: int) -> int:
+    """A Charisma check's die under Glibness (game/glamour.py)."""
+    from realmwalker.game import glamour
+
+    return glamour.cha_roll(game, game.leader, skill, roll)
+
+
 def spec(game) -> dict:
     return game.tables.quests
 
@@ -1671,7 +1678,7 @@ def _blackmail(conv, q) -> None:
     game, npc, rng = conv.game, conv.npc, conv.rng
     sheet = game.sheet()
     conv.you_say("I read your letter. What is it worth to you?")
-    roll = dice.d20(rng).natural + sheet.skill_bonus("intimidation")
+    roll = _cha(game, "intimidation", dice.d20(rng).natural) + sheet.skill_bonus("intimidation")
     if roll < BLACKMAIL_DC:
         conv.npc_says("\"Get out. Do what you like with it.\"")
         conv.note(f"<dim>(Intimidation {roll} vs {BLACKMAIL_DC})</>")
@@ -1702,7 +1709,7 @@ def _collect_debt(conv, q) -> None:
         return
     t["tried"] = game.moment.total_days
     skill = max(("persuasion", "intimidation"), key=lambda s: sheet.skill_bonus(s))
-    roll = dice.d20(rng).natural + sheet.skill_bonus(skill)
+    roll = _cha(game, skill, dice.d20(rng).natural) + sheet.skill_bonus(skill)
     if roll >= DEBT_DC:
         t["collected"] = t["debt"]
         game.leader.money += t["debt"]
@@ -1743,7 +1750,7 @@ def _make_peace(conv, q) -> None:
     game, npc, t, rng = conv.game, conv.npc, q["target"], conv.rng
     sheet = game.sheet()
     conv.you_say(f"About {other_name(game, npc=npc, q=q)}...")
-    roll = dice.d20(rng).natural + sheet.skill_bonus("persuasion")
+    roll = _cha(game, "persuasion", dice.d20(rng).natural) + sheet.skill_bonus("persuasion")
     dc = 13 + (2 if "proud" in npc.traits or "suspicious" in npc.traits else 0)
     if roll >= dc:
         t.setdefault("agreed", []).append(npc.id)

@@ -231,7 +231,7 @@ Assumptions waiting for Anton:
   town. Zone of Truth answers about a work they gave you (or tells what they want). Geas's command is the game's:
   silence about your crimes, what they want and hide, Friendly, and a guard never arrests you (they obey, so its 5d10
   never comes); when it ends -40. Modify Memory forgets the last day's unreported crimes (and the casting itself), and
-  their grudge (mood back to indifferent at worst); a report already made stands. Glibness covers the Influence
+  the grudge each left (by its severity) and a Friends of that day; a report already made stands; older grudges stay. Glibness covers the Influence
   checks, bribing the watch and a disguise kit. Antipathy/Sympathy is cast on the caster, names a kind of creature
   that roams the land here (from the land's encounters), and acts when a band of that kind is met on the road
   (Antipathy: most of it fails, it runs; Sympathy: the failed come entranced, the party sees them first). Awaken works
@@ -240,15 +240,17 @@ Assumptions waiting for Anton:
   stays one nobody sees through. Minor Illusion, Silent Image and Major Image are cast only in a town and are a
   penalty to every watcher's Perception there (thefts, creeping, the watch's look at a wanted face); a Major Image from
   a 4th-level slot stays until you leave the town. Mislead and Invisibility on the leader leave no witnesses in a town
-  for their hour. Programmed Illusion and Magic Mouth stand while you camp (camps are not kept when you move on);
+  for their hour, until an assault or a murder ends them; a geased person is no witness either. Programmed Illusion and Magic Mouth stand while you camp (camps are not kept when you move on);
   Hallucinatory Terrain and Mirage Arcane hide the camp (an Investigation check by the cleverest of a band against
-  the DC sees through) and let any rest be taken with enemies near. Project Image hears a known town's news within 500
+  the DC sees through, rolled hourly for hunters on a close-up map) and then let any rest be taken with enemies near.
+  Stacked illusions and Enthrall leave a merchant's watch at DC 5 at least; an illusion also lowers the chance that a
+  guard knows an undisguised wanted face (by a twentieth for each point). Project Image hears a known town's news within 500
   miles and reads its board. Illusory Script's letter waves you through gate searches and impresses everyone (+5, as
   a lord's signet). Nystul's Magic Aura masks a magic thing from robbers for a day; Sequester hides a thing from
-  robbers, thieves and the watch until taken out, or holds a body out of time (a century, here). Nondetection hides a
+  robbers, thieves and the watch for good (nothing ends it yet), or holds a body out of time (a century, here). Nondetection hides a
   mind from a foe's Detect Thoughts (no foe divines yet). Druidcraft's forecast is the world's own weather, so it comes
   true; Elementalism lights the fire, else dries the party (-25 wetness), else gives a cup of water; Prestidigitation
-  takes 30 of the grime off and warms the next meal; Thaumaturgy is Advantage on Intimidation in the next talk.
+  takes 30 of the grime off and warms what is eaten in the next hour; Thaumaturgy is Advantage on Intimidation in the next talk.
   Glibness, Disguise Self and Seeming are never cast in a fight (no use there). New components: jade dust (25 GP: one
   pinch serves Magic Mouth's 10 GP), lead ink, a pinch of diamond dust (Nondetection's 25 GP); rare stones of 1,000
   and 5,000 GP now sold in cities (for Awaken and Sequester).

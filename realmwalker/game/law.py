@@ -83,8 +83,8 @@ def witnesses_here(game, *, exclude=(), radius: int | None = None) -> list:
             continue
         if max(abs(n.x - p.lx), abs(n.y - p.ly)) > radius:
             continue
-        if glamour.enthralled(game, n):
-            continue  # (Enthrall: -10 to Perception, their eyes on the speaker)
+        if glamour.enthralled(game, n) or glamour.obeys(game, n):
+            continue  # (Enthrall: -10 to Perception, their eyes on the speaker; a Geas: they saw nothing)
         if can_see(game, lm, (n.x, n.y), (p.lx, p.ly), radius) and not _unseen(game, n):
             out.append(n)
     return out
@@ -117,6 +117,10 @@ def commit(game, cid: str, *, victim=None, value: int = 0, witnesses=None, repor
             magic_items.notice(game, "violence")
         if cid == "heresy" or _in_a_temple(game):
             magic_items.notice(game, "crime_holy")  # a templar's anger
+    from realmwalker.game import glamour
+
+    if cid in ("assault", "murder"):
+        glamour.reveal(game)  # (Invisibility, Mislead: an attack ends them)
     realm, s = jurisdiction(game)
     if realm is None:
         return None
@@ -356,7 +360,8 @@ def watch(game) -> None:
             spotted = dice.d20(rng).natural + 2 - glamour.distraction(game) >= int(game.renown.flags.get("disguise_dc",
                                                                                                         10))
         else:
-            spotted = rng.chance(law["recognise_chance"] + (0.25 if hated else 0.0))
+            spotted = rng.chance((law["recognise_chance"] + (0.25 if hated else 0.0))
+                                 * max(0.0, 1.0 - glamour.distraction(game) / 20))  # (an illusion: eyes elsewhere)
         if spotted:
             game.say(f"<danger>{n.label().capitalize()} looks at you hard, and then again.</>", "danger")
             start_arrest(game, n)
@@ -844,7 +849,7 @@ def steal_from_shop(game, npc, item_id: str) -> tuple[bool, str]:
     rng = rng_for(game, f"steal/{npc.id}/{item_id}")
     roll = dice.d20(rng).natural + sheet.skill_bonus("sleight_of_hand")
     watch_dc = 11 + (3 if "suspicious" in npc.traits else 0) - (2 if "weary" in npc.traits else 0)
-    watch_dc -= glamour.watcher_minus(game, npc)  # (Enthrall, an illusion: their eyes are elsewhere)
+    watch_dc = max(5, watch_dc - glamour.watcher_minus(game, npc))  # (Enthrall, an illusion: eyes elsewhere)
     value = int(game.tables.items.get(item_id)["value"])
     name = game.tables.items.get(item_id)["name"]
     if roll >= watch_dc:

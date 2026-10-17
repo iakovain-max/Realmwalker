@@ -157,7 +157,8 @@ def spell_detail(game, char, sid: str, target, slot: int | None = None) -> list[
             from realmwalker.game import spellwork
 
             took = spellwork.minutes(spell)
-            took_words = "an hour" if took == 60 else (f"{took} minutes" if took > 1 else "a minute")
+            took_words = "an hour" if took == 60 else (f"{took // 60} hours" if took >= 120 and took % 60 == 0
+                                                       else f"{took} minutes" if took > 1 else "a minute")
             lines.append(f"<good>Enter casts it{whom} now.</> <dim>It takes {took_words}"
                          + (" (ten more as a ritual, without a slot)." if spell.get("ritual") else ".") + "</>")
         else:

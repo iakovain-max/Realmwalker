@@ -68,9 +68,24 @@ def hidden(game, kind: str) -> bool:
     (any rest: hunters pass it by)."""
     if warded(game, "meld") is not None and len([c for c in game.party if c.alive]) == 1:
         return True
-    if warded(game, "veil") is not None:
+    if warded(game, "veil") is not None and _veil_holds(game):
         return True
     return warded(game, "mansion") is not None or (kind == "short" and warded(game, "rope") is not None)
+
+
+def _veil_holds(game) -> bool:
+    """Hunters on a close-up map look for the veiled camp: the cleverest of them makes an Intelligence (Investigation)
+    check against the caster's DC (rolled once an hour)."""
+    lm = game.local
+    if lm is None:
+        return True
+    rec = wards_here(game)["veil"]
+    hunters = [cr for a in lm.actors if a.alert for cr in a.creatures if cr.hp > 0]
+    if not hunters:
+        return True
+    best = max(int((game.tables.creatures[cr.def_id].get("abilities") or {}).get("int", 10)) for cr in hunters)
+    rng = game.world.rng.child(f"veil/hunt/{game.world.time // 60}")
+    return dice.d20(rng).natural + (best - 10) // 2 < int(rec.get("dc", 13))
 
 
 def night_visitors(game, enc) -> tuple[object, list[str]]:
@@ -99,7 +114,7 @@ def night_visitors(game, enc) -> tuple[object, list[str]]:
 
 def night_visitors_after_veil(game, enc, ward: str | None) -> tuple[object, list[str]]:
     if ward == "decoy":  # (Programmed Illusion: they fall on an illusory camp; the real one is awake)
-        enc.asleep = False
+        enc.asleep, enc.warned = False, True
         enc.spotted_first = True
         return enc, ["<warn>In the dark, shapes fall on a camp a little way off, and find nothing there but "
                      "an illusion.</> You are awake, and they have not seen you yet."]
@@ -116,13 +131,13 @@ def night_visitors_after_veil(game, enc, ward: str | None) -> tuple[object, list
                 hurt = dice.roll(HOUND_BITE, rng).total
                 foe.hp = max(1, foe.hp - hurt)
                 notes.append(f"Unseen jaws close on the first of them: {hurt} force.")
-        enc.asleep = False
+        enc.asleep, enc.warned = False, True
         return enc, notes
     if ward == "alarm":
-        enc.asleep = False
+        enc.asleep, enc.warned = False, True
         return enc, ["<warn>A bell rings out of nowhere in the dark: the alarm. Something is coming.</>"]
     if ward == "mouth":  # (Magic Mouth)
-        enc.asleep = False
+        enc.asleep, enc.warned = False, True
         return enc, ["<warn>A voice cries out from a stone at the edge of the camp: something is coming.</>"]
     return _awake_watch(game, enc, [])
 
@@ -132,8 +147,8 @@ def _awake_watch(game, enc, notes: list[str]) -> tuple[object, list[str]]:
     from realmwalker.game import glamour
 
     a = glamour.awake_animal(game)
-    if a is not None and enc.asleep:
-        enc.asleep = False
+    if a is not None and not enc.warned:
+        enc.asleep, enc.warned = False, True
         notes = notes + [f"<warn>{escape_markup(a['name'])} wakes you with a word: \"Up. Something comes.\"</>"]
     return enc, notes
 
