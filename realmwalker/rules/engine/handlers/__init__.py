@@ -13,10 +13,11 @@
     rogue.py      the 2024 rogue (Sneak Attack, Cunning Strike), the Thief and the Assassin
     cleric.py     the 2024 cleric (Divine Spark, Blessed Strikes, Divine Intervention), the Life and War Domains
     wizard.py     the 2024 wizard (Overchannel, the ward's mending, Counterspell)
+    schools.py    the Diviner (Portent, Expert Divination, The Third Eye) and the Illusionist (Expansion 5 Part A)
     summons.py    the summoned spirits' traits and the fey spirit's moods (Expansion 3 F.2)
     undead.py     the raised dead's traits: the ghast's Stench, the mummy's rot (Expansion 3 F.4)
 """
 
 from realmwalker.rules.engine.handlers import (arcane, arms, battle_master, boons, cleric, feats, features, fighter,  # noqa: F401
                                                general_feats,  # noqa: F401
-                                               mastery, monsters, rogue, summons, undead, wizard)  # noqa: F401  (registering is importing)
+                                               mastery, monsters, rogue, schools, summons, undead, wizard)  # noqa: F401  (registering is importing)

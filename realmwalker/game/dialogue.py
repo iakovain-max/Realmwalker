@@ -470,12 +470,19 @@ class Conversation:
         bonus = Sheet(c, self.game.tables).skill_bonus(skill)
         mode = self._mode(skill)
         roll = dice.d20(self.rng, advantage=mode == "advantage", disadvantage=mode == "disadvantage").natural
+        from realmwalker.rules.engine.handlers import schools
+
+        foretold, seer = schools.party_foretell(self.game.party, dc - bonus)
+        if foretold is not None:  # (a diviner's Portent)
+            roll = foretold
         glib = glamour.cha_roll(self.game, c, skill, roll)
         name = self.game.tables.rules["skills"][skill]["name"]
         sign = "+" if bonus >= 0 else "-"
         why = ("booming" if skill == "intimidation" and glamour.booming(self.game)
                else "friendly" if mode == "advantage" else "hostile")
         how = {"advantage": f" (adv: {why})", "disadvantage": " (dis: hostile)"}.get(mode, "")
+        if foretold is not None:
+            how += f" (foretold by {seer.name.split()[0]})"
         if glib > roll:
             how += " (glib: 15)"
             roll = glib

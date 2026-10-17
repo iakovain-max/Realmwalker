@@ -385,6 +385,9 @@ def spell_value(b, f, sid: str, *, target=None, point=None, dc: int | None = Non
                 w.control += part.control * share
                 w.friendly += part.friendly * share
                 w.kills += int(part.kills * share + 0.5) if share * part.kills >= 0.5 else 0
+        elif kind == "zone" and o.get("zone") == "illusion":
+            if point is not None:  # (an image: the shooters and casters it blinds to the caster's side)
+                w.control += image_worth(b, f, b.spell_area(f, sid, point, target))
         elif kind == "zone" and caught:
             _zone_worth(b, f, o, caught, dc, up, w)
         elif kind == "dispel":
@@ -692,6 +695,28 @@ def _dispel_worth(b, f, target, point) -> float:
                 owner = next((y for y in b.fighters if y.id == z.owner), None)
                 if owner is not None and owner.team != f.team:
                     out += 3.0
+    return out
+
+
+def image_worth(b, f, cells) -> float:
+    """An illusion laid on these squares (Expansion 5 Part A): for each foe striking from afar (or casting), the share
+    of the caster's side it could see and would no longer see, by how much it threatens; nothing over a creature."""
+    taken = {sq for x in b.on_field() for sq in x.cells}
+    cells = {c for c in cells if c not in taken and b.field.in_bounds(*c)}
+    if not cells:
+        return 0.0
+    hypo = b.field.thicker(cells)
+    friends = [x for x in b.team(f.team) if x.active][:6]
+    out = 0.0
+    for e in b.enemies_of(f):
+        if not e.active or b.feet(f, e) > 120 or any(b.gap(e, x) <= 1 for x in friends):
+            continue  # (one fighting hand to hand is not stopped by a picture)
+        seen = [x for x in friends if b.can_see(e, x)]
+        if not seen:
+            continue
+        hidden = [x for x in seen if hypo.cover(e.space, x.space) == grid.TOTAL]
+        if hidden:
+            out += threat(e) * (0.4 + 0.6 * len(hidden) / len(seen)) * (1.3 if f in hidden else 1.0)
     return out
 
 

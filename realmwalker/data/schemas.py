@@ -268,6 +268,9 @@ FEATURE = Obj({"level": Int(min=1, max=20), "id": Str(max_len=40), "name": Str(m
                                 optional=True),
                # A wizard school's Savant: two spells of the school (level 1-2) at once, one more with each new slot level.
                "savant": Str(max_len=20, optional=True),
+               # Cantrips beyond the table's count (Improved Illusions), and the one it teaches when not yet known.
+               "cantrips": Int(min=1, max=3, optional=True),
+               "learns": Str(max_len=40, optional=True),
                # Spells picked from the spellbook for a feature (Spell Mastery, Signature Spells), kept in spells[key].
                "picks": List(Obj({"key": Str(choices=["mastery", "signature"]), "spell_level": Int(min=1, max=9),
                                   "count": Int(min=1, max=3), "cast": Str(choices=["action"], optional=True)}),

@@ -300,6 +300,37 @@
       "name": "Projected Ward", "text": "The ward can take a blow meant for a friend within 30 feet.",
       "hooks": [{"event": "damage_incoming", "as": "ally", "handler": "projected_ward", "reaction": true}]
     },
+    "portent": {
+      "name": "Portent", "text": "Two foretold d20 rolls after each long rest: one may take the place of any D20 Test the diviner sees, once a turn.",
+      "hooks": [{"event": "d20_before", "as": "any", "handler": "portent"}]
+    },
+    "greater_portent": {"name": "Greater Portent", "text": "Three foretold rolls instead of two.", "where": "rest"},
+    "expert_divination": {
+      "name": "Expert Divination", "text": "A divination cast with a slot of level 2 or higher gives back a lower spent slot (5 at most).",
+      "hooks": [{"event": "spell_cast", "as": "self", "handler": "expert_divination"}]
+    },
+    "the_third_eye": {
+      "name": "The Third Eye", "text": "A bonus action, once between rests: Darkvision to 120 feet, or the invisible seen, until the next rest.",
+      "resource": {"id": "third_eye", "max": 1, "recover": "short"},
+      "hooks": [{"event": "battle_start", "as": "any", "handler": "eye_still_open"}],
+      "activate": [
+        {"id": "third_eye_dark", "name": "The Third Eye: Darkvision 120 feet (bonus action)", "cost": "bonus", "uses": "third_eye",
+         "does": "eye", "requires": ["eye_closed"], "effects": [{"op": "special", "handler": "third_eye_dark"}]},
+        {"id": "third_eye_unseen", "name": "The Third Eye: see the invisible (bonus action)", "cost": "bonus", "uses": "third_eye",
+         "does": "eye", "requires": ["eye_closed", "unseen_near"], "effects": [{"op": "special", "handler": "third_eye_unseen"}]}
+      ]
+    },
+    "improved_illusions": {"name": "Improved Illusions", "text": "Illusions need no spoken words and reach 60 feet farther; Minor Illusion is a bonus action with sound and image together.", "where": "spells"},
+    "phantasmal_creatures": {"name": "Phantasmal Creatures", "text": "Summon Beast and Summon Fey always prepared; each once a long rest without a slot, spectral, at half hit points.", "where": "spells.free_cast"},
+    "illusory_self": {
+      "name": "Illusory Self", "text": "A reaction when hit: a double takes the blow, which misses. Once between rests, or for a slot of level 2+.",
+      "resource": {"id": "illusory_self", "max": 1, "recover": "short"}, "where": "Battle._attack"
+    },
+    "illusory_reality": {
+      "name": "Illusory Reality", "text": "A bonus action while a slotted illusion lasts: one thing in it is real for a minute (it blocks the way, or bridges water and chasms), harming nobody.",
+      "activate": {"id": "illusory_reality", "name": "Illusory Reality: make the illusion real (bonus action)", "cost": "bonus",
+                   "does": "reality", "requires": ["illusion_up"], "effects": [{"op": "special", "handler": "illusory_reality"}]}
+    },
     "weapon_mastery": {"name": "Weapon Mastery", "text": "Uses the mastery property of the weapons it has mastered.", "hooks": [{"event": "attack_done", "as": "attacker", "handler": "mastery_done"}]},
     "mastery_cleave": {"name": "Cleave", "text": "A melee hit carries on into a second foe beside the first, once a turn: the weapon's damage without the ability bonus.", "where": "card"},
     "mastery_graze": {"name": "Graze", "text": "A miss still cuts: damage equal to the ability bonus of the attack.", "where": "card"},

@@ -92,7 +92,8 @@ def problems(tables) -> list[str]:
             if spell.get("outside") and spell["outside"] not in spellrules.OUTSIDE:
                 out.append(f"data/spells.json: {sid} does '{spell['outside']}' when cast outside a fight, which the "
                            "game does not know.")
-            if o.get("op") == "road" and not spellrules.out_of_battle(spell):
+            if o.get("op") == "road" and not spellrules.out_of_battle(spell) \
+                    and all(x["op"] == "road" for x in spellrules.ops(spell)):  # (an image: in a fight and in town)
                 out.append(f"data/spells.json: {sid} works only outside a fight: it needs \"road_only\" or \"minutes\".")
             if o.get("op") == "condition" and o.get("condition") not in cond.table(tables):
                 out.append(f"data/spells.json: {sid} gives the condition '{o.get('condition')}', which data/conditions.json "
