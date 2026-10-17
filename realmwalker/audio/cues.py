@@ -17,7 +17,7 @@ ZONE_SOUNDS = {"web": "web", "fire": "burn", "ice": "frost", "fog": "spell", "da
                "guardians": "buff", "guardian": "buff", "caltrops": "drop", "bearings": "drop",
                "blades": "spell", "thorns": "web", "celestial": "buff", "icewall": "frost",
                "antimagic": "spell", "quake": "thunder", "embers": "burn", "prismatic": "buff", "glare": "buff",
-               "storm": "thunder"}
+               "storm": "thunder", "illusion": "spell"}
 BOWS = ("bow", "crossbow")
 THROWN = ("sling", "dart", "javelin", "dagger", "handaxe", "hand axe", "spear", "rock", "stone", "net", "flask")
 
@@ -73,6 +73,10 @@ def battle_sounds(ev: dict) -> list[tuple[str, str]]:
         return [("start", sid)] if sid else []
     if k == "disarm":
         return [("impact", "drop")]
+    if k == "portent":  # (a diviner's foretold die: the chime of magic)
+        return [("start", "buff")]
+    if k in ("illusion", "illusion_seen"):  # (a double bursting, an image made real or seen through)
+        return [("start", "spell")]
     if k == "token" and ev.get("what") == "mage_hand":  # (the unseen hand: a whisper of magic)
         return [("start", "spell")]
     if k == "token" and ev.get("what") == "dancing_sword":  # (a Dancing Sword tossed up: the swish of steel)

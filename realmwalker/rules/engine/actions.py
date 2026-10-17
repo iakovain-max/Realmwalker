@@ -23,6 +23,7 @@ from realmwalker.rules.engine import effects, events
 from realmwalker.rules.engine.handlers import mastery
 from realmwalker.rules.engine import resources as res
 from realmwalker.rules.engine import traits as tr
+from realmwalker.rules.engine import query as _query
 
 
 def activations(f) -> list[dict]:
@@ -218,6 +219,14 @@ def _arms(test: Callable) -> Callable:
     return run
 
 
+def _schools(name: str):
+    def test(b, f):
+        from realmwalker.rules.engine.handlers import schools
+
+        return getattr(schools, name)(b, f)
+    return test
+
+
 REQUIRES: dict[str, Callable] = {
     "action_left": lambda b, f: None if f.action > 0 else "no action left",
     "bonus_left": lambda b, f: None if f.bonus > 0 else "no bonus action left",
@@ -241,6 +250,11 @@ REQUIRES: dict[str, Callable] = {
     "bond_away": lambda b, f: _arcane("bond_away")(b, f),
     "hand_known": lambda b, f: _arcane("hand_known")(b, f),
     "five_feet_left": lambda b, f: None if f.move_left >= 5 else "no movement left",
+    # the Diviner and the Illusionist (Expansion 5 Part A)
+    "eye_closed": lambda b, f: _schools("eye_problem")(b, f),
+    "unseen_near": lambda b, f: None if any(e.active and _query.flag(e, "unseen") for e in b.enemies_of(f))
+    else "nobody unseen near",
+    "illusion_up": lambda b, f: _schools("reality_problem")(b, f),
     # the magic arms (Expansion 4 Part D)
     "speed_held": _arms(lambda a, b, f: None if a.speed_option(b, f) is not None else "the scimitar is not in hand"),
     "dance_held": _arms(lambda a, b, f: None if a.held(f, "dancing_sword") is not None and a.dancer(b, f) is None
@@ -385,10 +399,11 @@ def options(b, f, only: tuple[str, ...] | None = None) -> list[Option]:
 
 
 def _spell_option(b, f, sid: str, ok: bool, why: str) -> Option:
-    from realmwalker.rules.combat import spell_id
+    from realmwalker.rules.combat import cast_kind, spell_id
 
     sp = b.t.spells[spell_id(sid)]
-    cost = {"bonus": "bonus", "reaction": "reaction"}.get(sp.get("cast", "action"), "action")
+    kind = cast_kind(f, sp) if ":" not in str(sid) else sp.get("cast", "action")  # (Improved Illusions, Spell Breaker)
+    cost = {"bonus": "bonus", "reaction": "reaction"}.get(kind, "action")
     if str(sid).startswith("wish:"):
         cost = "action"  # (Wish is spoken with an action, whatever it copies)
     mode = sp["target"]

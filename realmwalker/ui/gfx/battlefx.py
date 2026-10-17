@@ -299,6 +299,23 @@ class BattleBoard:
             if ev.get("trick") == "push":
                 self.shake_until = max(self.shake_until, at + 0.12)
             return t
+        if k == "portent":  # (a diviner's foretold die over the one whose roll it takes: a gold die face)
+            at = max(t, self._impact) + 0.05
+            to = ev.get("to", ev["who"])
+            self.fx.append({"kind": "float", "who": to, "text": f"foretold {ev.get('value', '')}",
+                            "color": (240, 214, 130), "t0": at, "dur": FLOAT, "size": 15, "low": False})
+            self.fx.append({"kind": "ring", "who": ev["who"], "t0": at, "dur": 0.5, "color": (240, 214, 130)})
+            return t
+        if k == "illusion" and ev.get("what") == "double":  # (Illusory Self: the struck figure bursts into mist)
+            at = max(t, self._impact)
+            self.fx.append({"kind": "ring", "who": ev["who"], "t0": at, "dur": 0.45, "color": (190, 170, 255)})
+            self.fx.append({"kind": "float", "who": ev["who"], "text": "a double", "color": (190, 170, 255),
+                            "t0": at + 0.05, "dur": FLOAT, "size": 14, "low": False})
+            return t
+        if k == "illusion_seen":  # (seen through: a pale flicker over the one who saw)
+            self.fx.append({"kind": "float", "who": ev["who"], "text": "an illusion!", "color": (190, 170, 255),
+                            "t0": t, "dur": FLOAT, "size": 14, "low": True})
+            return t
         if k == "maneuver":  # a Battle Master's maneuver: its name over the fighter, a steel-blue ring
             at = max(t, self._impact) + 0.05
             self.fx.append({"kind": "float", "who": ev["who"], "text": str(ev.get("what", "")).lower(),
@@ -661,6 +678,8 @@ class BattleBoard:
                     px, py = self.sq_px(x, y)
                     canvas.under(Image("bfog", _fog_image, (px - T * 0.25, py - T * 0.25, T * 1.5, T * 1.5),
                                        rgba=(180, 184, 190, 170) if z.kind == "fog" else (10, 8, 14, 230)))
+            elif z.kind == "illusion" and not z.real:  # (an image: Expansion 5 Part A)
+                self._image(canvas, battle, z, now)
             elif z.kind in GROUND_LOOKS:  # the second wave's ground (Expansion 3 D.2)
                 self._spell_ground(canvas, z, now)
             elif z.kind == "ice":
@@ -694,6 +713,31 @@ class BattleBoard:
                             sx, sy = ccx + math.cos(ang) * r, ccy + math.sin(ang) * r * 0.8
                             canvas.under(Image("bspirit", _glow_image, (sx - T * 0.3, sy - T * 0.3, T * 0.6, T * 0.6),
                                                rgba=(255, 236, 170, 200)))
+
+    IMAGE_LOOKS = ("feature/crates_0", "feature/boulder", "feature/barrels_0", "feature/crates_1", "feature/barrels_1")
+
+    def _image(self, canvas, battle, z, now: float) -> None:
+        """An illusion: the thing it shows (crates, a boulder, barrels). The player's side knows it for what it is, so
+        it shimmers, half there; a foe's image the party has not seen through looks as solid as the real thing."""
+        T = self.T
+        atlas = canvas.gfx.atlas
+        known = any(battle.knows_illusion(f, z) for f in battle.side("party"))
+        pulse = 0.5 + 0.5 * math.sin(now * 3.1 + z.id) if canvas.gfx.ambient else 0.6
+        alpha = int(120 + 50 * pulse) if known else 255
+        for i, (x, y) in enumerate(sorted(z.cells)):
+            px, py = self.sq_px(x, y)
+            name = self.IMAGE_LOOKS[(z.id + i) % len(self.IMAGE_LOOKS)]
+            if atlas.has(name):
+                canvas.under(Sprite(name, px, py, T, T, (255, 255, 255, alpha)))
+            if known:
+                canvas.under(Rect(px, py, T, T, (170, 150, 255, int(22 + 26 * pulse))))
+        if known:
+            xs = [c[0] for c in z.cells]
+            ys = [c[1] for c in z.cells]
+            if xs:
+                bx, by = self.sq_px(min(xs), min(ys))
+                canvas.under(theme.lines_box(bx, by, (max(xs) - min(xs) + 1) * T, (max(ys) - min(ys) + 1) * T,
+                                             (190, 170, 255, int(90 + 80 * pulse))))
 
     def _spell_ground(self, canvas, z, now: float) -> None:
         """Tentacles, poison clouds, swarms, sleet, storms of light, conjured spirits, walls of wind and force."""
@@ -899,6 +943,9 @@ class BattleBoard:
                 tint = tuple(v * 0.6 for v in tint)
             if f.hidden:
                 alpha = 0.55
+            if (getattr(f, "bond", None) or {}).get("spectral"):  # (an illusionist's phantom: pale and see-through)
+                alpha = min(alpha, 0.62 + (0.08 * math.sin(now * 2.7 + f.id) if gfx.ambient else 0.0))
+                tint = (tint[0] * 0.8, tint[1] * 0.82, min(1.0, tint[2] * 1.1))
             unseen = seen_by_party is not None and f.side != "party" and f.id not in seen_by_party and f.state != "dead"
             if unseen:  # somewhere in the dark: a shape, no more
                 tint = (0.10, 0.10, 0.16)

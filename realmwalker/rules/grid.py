@@ -268,6 +268,20 @@ class Field:
         if changed:
             self._refresh()
 
+    def without(self, cells) -> "Field":
+        """The field as one who has seen through an illusion sees it: these squares hide nothing (Expansion 5). A
+        shallow copy with its own sight lookups; everything else is shared."""
+        import copy
+
+        v = copy.copy(self)
+        opaque = self.zone_opaque.copy()
+        for x, y in cells:
+            if self.in_bounds(x, y):
+                opaque[x, y] = False
+        v.zone_opaque = opaque
+        v._refresh()
+        return v
+
     # ------------------------------------------------------------------ sight and cover
     def line_clear(self, x0: float, y0: float, x1: float, y1: float, skip: set | None = None, *,
                    terrain_only: bool = False) -> bool:

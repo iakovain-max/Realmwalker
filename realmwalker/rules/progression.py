@@ -72,6 +72,12 @@ def feature_gives(char: Character, tables, feat: dict) -> None:
         ex = feat["expertise"]
         add_pending(char, {"kind": "expertise", "count": int(ex["count"]), "skills": list(ex.get("skills") or []),
                            "feature": feat["id"], "level": char.level})
+    if feat.get("learns") and char.spells is not None:  # (Improved Illusions: Minor Illusion, beyond the count)
+        known = char.spells.setdefault("cantrips", [])
+        if feat["learns"] in tables.spells and feat["learns"] not in known:
+            known.append(feat["learns"])
+        else:
+            add_pending(char, {"kind": "cantrips", "count": 1, "level": char.level})
     if feat.get("savant") and char.spells is not None:  # two of the school's spells, level 1 or 2, for nothing
         add_pending(char, {"kind": "spells", "count": 2, "school": feat["savant"], "top": 2, "feature": feat["id"],
                            "level": char.level})
@@ -301,13 +307,23 @@ def add_pending(char: Character, choice: dict) -> None:
     char.pending.append(choice)
 
 
+def extra_cantrips(char: Character, tables) -> int:
+    """Cantrips a feature or a chosen option gives beyond the class table (a Thaumaturge's, Improved Illusions')."""
+    cls = tables.classes.get(char.cls) or {}
+    feats_ = list(cls.get("features", ())) + list((cls.get("subclasses", {}).get(char.subclass or "") or {})
+                                                   .get("features", ()))
+    n = sum(int(f.get("cantrips", 0)) for f in feats_ if f.get("id") in char.features)
+    return n + sum(int(o.get("cantrips", 0)) for oid, o in (cls.get("options") or {}).items() if oid in char.features)
+
+
 def cantrips_due(char: Character, tables) -> None:
     """Cantrips the table gives at this level that are not yet known nor waiting to be chosen."""
     cantrips = (spellrules.casting(char, tables) or {}).get("cantrips")
     if not cantrips or not char.spells:
         return
     waiting = sum(int(c.get("count", 1)) for c in char.pending if c["kind"] == "cantrips")
-    missing = cantrips[min(char.level, len(cantrips)) - 1] - len(char.spells.get("cantrips", [])) - waiting
+    known = len(char.spells.get("cantrips", []))
+    missing = cantrips[min(char.level, len(cantrips)) - 1] + extra_cantrips(char, tables) - known - waiting
     if missing > 0:
         add_pending(char, {"kind": "cantrips", "count": missing, "level": char.level})
 
@@ -747,6 +763,9 @@ def short_rest(char: Character, tables, rng: RNG, *, meal: bool = False) -> list
     if healed:
         notes.append(f"{char.name.split()[0]} recovers {healed} hit points.")
     resources.recover(char, tables, "short")  # Second Wind, Action Surge, Channel Divinity... (data/traits.json)
+    from realmwalker.rules.engine.handlers import schools
+
+    schools.rest(char, False)  # (the third eye closes; Illusory Self comes back)
     if "arcane_recovery" in char.features and char.uses.get("arcane_recovery", 1) and char.spells \
             and any(char.spells.get("slots_used", [])[:5]):
         # (2024: slot levels adding up to half the wizard's level, rounded up, none of level 6 or higher; the
@@ -797,6 +816,11 @@ def long_rest(char: Character, tables, rng: RNG) -> list[str]:
     char.uses["arcane_recovery"] = 1
     signature_back(char)
     char.uses.pop("overchannel", None)  # (an evoker's Overchannel is safe once more)
+    from realmwalker.rules.engine.handlers import schools
+
+    schools.rest(char, True)  # (the third eye closes; Illusory Self and the phantasms come back)
+    dreams = [f"{char.name.split()[0]} dreams of what is to come: the dice will fall "
+              f"{', '.join(map(str, char.spells['portent']))}."] if schools.roll_portent(char, rng) else []
     char.effects.pop("wish_stress", None)  # (a Wish's strain on every spell ends with a long rest)
     for key in [k for k in char.uses if k.startswith("omen:")]:  # (divinations asked again: clear answers again)
         del char.uses[key]
@@ -817,5 +841,5 @@ def long_rest(char: Character, tables, rng: RNG) -> list[str]:
         offer_masteries(char, tables)
     from realmwalker.rules import simulacrum, war_bond
 
-    return [f"{char.name.split()[0]} wakes rested."] + simulacrum.repair(char) \
+    return [f"{char.name.split()[0]} wakes rested."] + dreams + simulacrum.repair(char) \
         + war_bond.at_rest(char, tables)  # (a Simulacrum mended: G.3; a knight's weapon bound)

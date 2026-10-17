@@ -295,16 +295,23 @@ def summon_spirit(b, owner, cid: str, level: int, point=None, sid: str = "", for
     attack, dc, _mod = caster_attack_dc(b, owner)
     cdef = summon_def(b.t, cid, level, form, attack, dc)
     hp = int(cdef["hp"])  # (a summoned creature's hit points are a number, not dice)
+    spectral = sid and owner.__dict__.get("phantasm_cast") == sid
+    if spectral:  # (an illusionist's Phantasmal Creatures: cast without a slot, half the hit points)
+        owner.__dict__.pop("phantasm_cast", None)
+        hp = max(1, hp // 2)
     uid = max([SUMMON_UID] + [x.creature.uid + 1 for x in b.fighters if x.creature is not None])
     cr = Creature(uid=uid, def_id=cid, name=cdef["name"], hp=hp, max_hp=hp, named=False)
     f = b.add_ally(cr, owner, "summon", spell=sid, level=max(int(cdef["summon"]["level"]), int(level)),
                    type_=cdef.get("kind", ""), cdef=cdef, point=point)
     f.bond["conc"] = True
     f.bond["form"] = form
+    if spectral:
+        f.bond["spectral"] = True
     fm = cdef["summon"].get("forms", {}).get(form, {})
     if fm.get("picture"):
         f.bond["picture"] = fm["picture"]
-    b.say(f"{a_or_an(cdef['name']).capitalize()} answers the call.", "magic")
+    b.say(f"{a_or_an(cdef['name']).capitalize()} answers the call." if not spectral else
+          f"{a_or_an(cdef['name']).capitalize()} shimmers into being, a phantom half real.", "magic")
     if fm.get("shared"):  # (Shared Resistances: its caster resists its breath while the spell holds)
         from realmwalker.rules.engine import durations
 

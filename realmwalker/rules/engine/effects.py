@@ -456,7 +456,7 @@ def _save(c: Cast, o: dict, victim) -> None:
             continue
         cover = 0
         if ability == "dex" and o.get("cover", True):
-            cover = min(grid.THREE_QUARTERS, b.field.cover((origin[0], origin[1], 1), x.space))
+            cover = min(grid.THREE_QUARTERS, b.solid_field().cover((origin[0], origin[1], 1), x.space))
             cover = 0 if cover == grid.TOTAL else cover
         if any(x.has_trait(t) for t in o.get("sure_save", ())) or x.kind in o.get("sure_kinds", ()):
             saved = True
@@ -1169,6 +1169,11 @@ def _zone(c: Cast, o: dict, victim) -> None:
              if o.get("heal") else "",
              breaks=bool(o.get("breaks")), lasts=int(o.get("lasts", 0)), stages=list(o.get("stages", ())),
              cast={"dc": c.dc, "mod": c.mod, "level": c.level, "up": c.up})
+    if z.kind == "illusion":  # (an image: Illusory Reality may make what is in it real, if a slot was spent)
+        z.slotted = bool(c.slotted) and int(spell.get("level", 0)) >= 1
+        z.cells -= {sq for x in b.on_field() for sq in x.cells}  # (a picture of a thing, never over a creature)
+        if not z.cells:
+            return
     if o.get("spare"):  # (Plant Growth: the caster leaves out the ground round its friends, as the book lets)
         r = int(o["spare"])
         for x in b.on_field():

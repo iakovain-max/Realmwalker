@@ -29,7 +29,7 @@ from realmwalker.rules import feats, grid, poisons, simulacrum
 from realmwalker.rules import spells as spellrules
 from realmwalker.rules.character import Character, Sheet, modifier
 from realmwalker.rules.engine import actions, durations, effects, events, hazards, marks, query, reactions
-from realmwalker.rules.engine.handlers import arcane, arms, general_feats, mastery
+from realmwalker.rules.engine.handlers import arcane, arms, general_feats, mastery, schools
 from realmwalker.rules.engine.reactions import Decision
 from realmwalker.rules.engine import traits as trs
 from realmwalker.rules.creatures import Creature
@@ -129,6 +129,12 @@ class Zone:
     stage: int = 0  # the owner's turns it has lasted (Storm of Vengeance)
     stages: list = field(default_factory=list)  # [{ops, count, rough, dark}, ...]: what each later turn brings
     cast: dict = field(default_factory=dict)  # the numbers it was cast with (dc, mod, level, up): for its stages
+    # An illusion on the field (Expansion 5 Part A, PHB 372): an image that hides what is behind it from all but its
+    # caster's side and those who have seen through it (`seen`: fighter ids); `real`: the caster's turns it stays
+    # made real by Illusory Reality (its things then stand as terrain, in `was`); `slotted`: cast with a slot.
+    seen: set = field(default_factory=set)
+    real: int = 0
+    slotted: bool = False
 
     @property
     def difficult(self) -> bool:
@@ -141,7 +147,7 @@ class Zone:
 
     @property
     def opaque(self) -> bool:
-        return self.dark or self.kind in ("fog", "darkness")
+        return self.dark or self.kind in ("fog", "darkness") or self.kind == "illusion" and not self.real
 
     @property
     def light(self) -> int:
@@ -1190,8 +1196,9 @@ class Battle:
         d = target.cdef
         skill = self.study_skill(target)
         dc = self.study_dc(target)
-        roll = dice.d20(self.rng).natural
         bonus = f.skill(skill)
+        foretold = self.foretold(f, "check", dc - bonus)
+        roll = dice.d20(self.rng).natural if foretold is None else foretold
         self.dice_say(f"{self.t.rules['skills'][skill]['name']} ({f.name}): {roll} {signed_mod(bonus)} = {roll + bonus} vs DC {dc}")
         if roll + bonus < dc:
             self.say(f"{f.the_name} cannot place {target.the_name}.", "system")
@@ -1220,16 +1227,37 @@ class Battle:
         """The Search action: a Wisdom (Perception) check against everyone hiding; whoever it beats is found."""
         if not self._spend(f, bonus):
             return
-        roll = dice.d20(self.rng).natural
+        hiding = [e.hidden for e in self.enemies_of(f) if e.hidden]
+        foretold = self.foretold(f, "check", max(hiding) - f.skill("perception")) if hiding else None
+        roll = dice.d20(self.rng).natural if foretold is None else foretold
         total = roll + f.skill("perception")
         self.dice_say(f"Perception ({f.name}): {roll} {signed_mod(f.skill('perception'))} = {total}")
         found = [e for e in self.enemies_of(f) if e.hidden and e.hidden <= total]
         for e in found:
             e.hidden = 0
             self._event("found", who=e.id)
-        self.say(f"{f.the_name} finds {', '.join(e.the_name for e in found)}." if found
-                 else f"{f.the_name} looks hard, and finds nobody.", "good" if found else "system")
+        images = self.illusions_hiding(f)
+        if found or not images:
+            self.say(f"{f.the_name} finds {', '.join(e.the_name for e in found)}." if found
+                     else f"{f.the_name} looks hard, and finds nobody.", "good" if found else "system")
+        if images:  # (an illusion studied: Intelligence (Investigation) against its caster's spell DC, PHB 372)
+            foretold = self.foretold(f, "check", images[0].dc - f.skill("investigation"))
+            look = (dice.d20(self.rng).natural if foretold is None else foretold) + f.skill("investigation")
+            self.dice_say(f"Investigation ({f.name}): {look - f.skill('investigation')} "
+                          f"{signed_mod(f.skill('investigation'))} = {look} vs DC {images[0].dc}")
+            for z in images:
+                if look >= z.dc:
+                    self.see_through(f, z, "studies the image")
+                else:
+                    self.say(f"{f.the_name.capitalize()} studies the {self.illusion_word(z)} and sees nothing amiss.",
+                             "system")
         self._after_action(f)
+
+    def illusion_word(self, z: Zone) -> str:
+        """What an image looks like to those it fools (the same each time it is looked at)."""
+        words = ("stack of crates", "fallen pillar", "heap of rubble", "wall of stones", "wagon on its side",
+                 "row of barrels")
+        return words[z.id % len(words)] if len(z.cells) > 1 else ("crate", "boulder", "barrel", "pillar")[z.id % 4]
 
     def do_ready(self, f: Fighter, trigger: str) -> None:
         """The Ready action: wait with a blow for "reach" (an enemy coming within reach) or "sight" (an enemy coming
@@ -1352,6 +1380,10 @@ class Battle:
             z.rounds -= 1
             if z.rounds < 0:
                 self._remove_zone(z)
+        for z in [z for z in self.zones if z.owner == f.id and z.real > 0]:
+            z.real -= 1
+            if z.real <= 0:
+                schools.unreal(self, z)  # (Illusory Reality's minute is up: an image again)
         for z in [z for z in self.zones if z.owner == f.id and z.stages]:
             self._storm_turn(f, z)  # (Storm of Vengeance: what each later turn brings)
             if self.outcome is not None:
@@ -1586,14 +1618,15 @@ class Battle:
             return False  # (a soul in its gem sees from where the gem is: Magic Jar)
         feet = self.feet(a, b)
         senses = a.senses
-        if senses.get("blindsight", 0) >= feet and self.field.cover(a.space, b.space) != grid.TOTAL:
+        view = self.view(a) if self.zones else self.field
+        if senses.get("blindsight", 0) >= feet and view.cover(a.space, b.space) != grid.TOTAL:
             return True
         if senses.get("tremorsense", 0) >= feet and a.z == 0 and b.z == 0:
             return True  # Tremorsense: anything touching the same ground, through darkness and walls alike (2024)
         if "blinded" in a.conditions:
             return False
         if max(a.buff_value("sense_thoughts"), default=0) >= feet and self.thinks(b) \
-                and self.field.cover(a.space, b.space) != grid.TOTAL:
+                and view.cover(a.space, b.space) != grid.TOTAL:
             return True  # (Detect Thoughts: a thinking mind near is known where it is, invisible or hidden)
         if query.flag(b, "unseen") and senses.get("truesight", 0) < feet and not a.buff_value("see_invisible"):
             return False  # Invisible (See Invisibility sees it as if it were not)
@@ -1601,13 +1634,66 @@ class Battle:
             return False
         if self._devils_sight(a, b, feet):
             return True  # (a devil spirit: magical darkness does not stop its darkvision)
-        if any(self.field.zone_opaque[x, y] for x, y in b.cells) and self.gap(a, b) > 1:
+        if any(view.zone_opaque[x, y] for x, y in b.cells) and self.gap(a, b) > 1:
             return False
-        if self.field.cover(a.space, b.space) == grid.TOTAL:
+        if view.cover(a.space, b.space) == grid.TOTAL:
             return False
         if self.light_on(b) >= grid.DIM or senses.get("truesight", 0) >= feet:
             return True
         return a.darkvision > 0 and feet <= a.darkvision
+
+    def view(self, f: Fighter):
+        """The field as `f` sees it: the illusions it knows for what they are (its own side's, or seen through) hide
+        nothing from it (grid.Field.without)."""
+        seen = [z for z in self.zones if z.kind == "illusion" and not z.real and self.knows_illusion(f, z)]
+        if not seen:
+            return self.field
+        key = (self.field.version, frozenset(z.id for z in seen))
+        views = self.__dict__.setdefault("_views", {})
+        v = views.get(key)
+        if v is None:
+            other = {c for z in self.zones if z.opaque and z not in seen for c in z.cells}
+            if len(views) > 32:
+                views.clear()
+            v = views[key] = self.field.without({c for z in seen for c in z.cells} - other)
+        return v
+
+    def solid_field(self):
+        """The field without its images (what a blast or an emanation meets: a picture is no cover)."""
+        images = [z for z in self.zones if z.kind == "illusion" and not z.real]
+        if not images:
+            return self.field
+        key = (self.field.version, "solid", frozenset(z.id for z in images))
+        views = self.__dict__.setdefault("_views", {})
+        if key not in views:
+            other = {c for z in self.zones if z.opaque and z not in images for c in z.cells}
+            views[key] = self.field.without({c for z in images for c in z.cells} - other)
+        return views[key]
+
+    def knows_illusion(self, f: Fighter, z: Zone) -> bool:
+        """Its caster's side knows an image for what it is; anyone else once they have seen through it."""
+        if f.id in z.seen:
+            return True
+        owner = next((x for x in self.fighters if x.id == z.owner), None)
+        return owner is not None and owner.team == f.team
+
+    def see_through(self, f: Fighter, z: Zone, how: str = "") -> None:
+        if z.real or self.knows_illusion(f, z):
+            return
+        z.seen.add(f.id)
+        self.say(f"{f.the_name.capitalize()} {how or 'sees the image for what it is'}: it is only an illusion.",
+                 "warn" if f.side == FOE else "info")
+        self._event("illusion_seen", who=f.id, id=z.id)
+
+    def illusions_hiding(self, f: Fighter) -> list[Zone]:
+        """The images within 60 feet of `f` that it has not seen through (what a Search studies)."""
+        out = []
+        for z in self.zones:
+            if z.kind != "illusion" or z.real or self.knows_illusion(f, z):
+                continue
+            if any(max(abs(x - f.x), abs(y - f.y)) * grid.SQUARE_FT <= 60 for x, y in z.cells):
+                out.append(z)
+        return out
 
     def _devils_sight(self, a: Fighter, b: Fighter, feet: int) -> bool:
         """Devil's Sight: within its darkvision, magical darkness hides nothing from it (fog and walls still do)."""
@@ -1637,10 +1723,10 @@ class Battle:
 
     def cover(self, a: Fighter, b: Fighter) -> int:
         others = {c: x.id for x in self.on_field() if x is not a and x is not b and x.state != "dead" for c in x.cells}
-        return self.field.cover(a.space, b.space, others)
+        return (self.view(a) if self.zones else self.field).cover(a.space, b.space, others)
 
     def can_see_point(self, f: Fighter, x: int, y: int) -> bool:
-        return self.field.in_bounds(x, y) and self.field.cover(f.space, (x, y, 1)) != grid.TOTAL
+        return self.field.in_bounds(x, y) and (self.view(f) if self.zones else self.field).cover(f.space, (x, y, 1)) != grid.TOTAL
 
     # ------------------------------------------------------------------ moving
     def threats(self, f: Fighter) -> list[tuple[int, tuple[int, int, int], int]]:
@@ -1773,7 +1859,7 @@ class Battle:
                     self._event("push", who=x.id, path=[(x.x, x.y), before])
                     x.x, x.y = before
             if f.hidden and not any(self.field.hiding[c] for c in f.cells):
-                if any(self.can_see(e, f) for e in self.enemies_of(f) if e.standing and self.field.cover(e.space, f.space) < grid.HALF):
+                if any(self.can_see(e, f) for e in self.enemies_of(f) if e.standing and (self.view(e) if self.zones else self.field).cover(e.space, f.space) < grid.HALF):
                     f.hidden = 0
             if leap > 1 and not free and any(self.field.difficult(*c) for c in f.cells) and \
                     not self.check(f, "acrobatics", 10, "Landing on rough ground"):
@@ -1818,6 +1904,14 @@ class Battle:
                 return False
         return True
 
+    def foretold(self, f: Fighter, roll: str, need: int, *, target: Fighter | None = None, **more) -> int | None:
+        """A foretold d20 laid in place of this roll before it is made (a diviner's Portent: "d20_before"), or None.
+        `need` is the natural number that succeeds."""
+        if not any(x.char is not None and x.char.spells and x.char.spells.get("portent") for x in self.fighters):
+            return None
+        ev = events.emit(self, "d20_before", actor=f, target=target, roll=roll, need=int(need), natural=None, **more)
+        return ev.natural
+
     def check(self, f: Fighter, skill: str, dc: int, why: str = "") -> bool:
         """An ability check in a fight: a d20 and the skill (exhaustion counted in it) against the DC, in the dice log."""
         ability = self.t.rules["skills"].get(skill, {}).get("ability", skill)
@@ -1828,8 +1922,10 @@ class Battle:
         if ability in ("str", "dex") and query.untrained_armour(f):
             modes.add("disadvantage")
         adv, dis = "advantage" in modes, "disadvantage" in modes
-        roll = dice.d20(self.rng, advantage=adv and not dis, disadvantage=dis and not adv).natural
         bonus = f.skill(skill)
+        foretold = self.foretold(f, "check", dc - bonus, adv=adv, dis=dis)
+        roll = dice.d20(self.rng, advantage=adv and not dis, disadvantage=dis and not adv).natural
+        roll = roll if foretold is None else foretold
         self.dice_say(f"{why or skill.title()} ({f.name}): {roll} {'+' if bonus >= 0 else '-'} {abs(bonus)} = "
                       f"{roll + bonus} vs DC {dc}")
         total = roll + bonus
@@ -2557,7 +2653,7 @@ class Battle:
         normal, long = opt.range or DEFAULT_RANGE.get(opt.kind, (60, 120))
         if g * grid.SQUARE_FT > long:
             return False, "out of range"
-        if self.field.cover(space, target.space) == grid.TOTAL:
+        if (self.view(f) if self.zones else self.field).cover(space, target.space) == grid.TOTAL:
             return False, "no clear line"
         return True, ""
 
@@ -2632,7 +2728,7 @@ class Battle:
         cover = self.cover(att, target)
         if cover == grid.TOTAL:
             cover = grid.THREE_QUARTERS
-        if opt.is_melee and self.gap(att, target) <= 1 and cover == grid.HALF and self.field.cover(att.space, target.space) == grid.NONE:
+        if opt.is_melee and self.gap(att, target) <= 1 and cover == grid.HALF and (self.view(att) if self.zones else self.field).cover(att.space, target.space) == grid.NONE:
             cover = grid.NONE  # someone beside you does not shield the one you are fighting hand to hand
         if cover in (grid.HALF, grid.THREE_QUARTERS) and att.char is not None and (
                 opt.kind == "ranged" and feats.has(att.char, "sharpshooter")
@@ -2671,7 +2767,11 @@ class Battle:
                            durations.until(self, guard, "turn_start"))  # (and every attack on them, until then)
             why.append(f"{guard.name}'s shield")
             self.say(f"{guard.the_name} gets {guard.possessive} shield in the way.", "good" if guard.side == PARTY else "info")
+        foretold = self.foretold(att, "attack", self.target_ac(att, target, opt)[0] - opt.bonus, target=target,
+                                 adv=adv, dis=dis, big=att.creature is not None and float(att.cdef.get("cr", 0) or 0) >= 5)
         roll = dice.d20(self.rng, advantage=adv, disadvantage=dis)
+        if foretold is not None:
+            roll.natural = foretold  # (a diviner's Portent)
         att.buffs = [bf for bf in att.buffs if not bf.get("sapped") and bf.get("vex") != target.id
                      and not bf.get("aimed")]  # spent on this roll
         natural = events.emit(self, "d20_after", actor=att, target=target, roll="attack", natural=roll.natural).natural
@@ -2689,6 +2789,8 @@ class Battle:
             hit, total = ev.hit, ev.total
             if ev.crit:  # (a roll made again that came up 20: the Luck Blade)
                 crit, natural = True, 20
+        if hit and schools.illusory_self(self, att, target, shield=not crit and total < ac + 5):
+            hit = crit = False  # (an illusionist's Illusory Self: before Shield, as it costs no slot)
         # The Shield spell: a wizard who sees the blow coming turns it with a reaction, if that is enough.
         if hit and not crit and target.char and target.reaction and not target.incapacitated and total < ac + 5:
             if self._shield(target, att, opt, total, ac):
@@ -2950,7 +3052,11 @@ class Battle:
                 self.dice_say(f"{f.name} {ability.upper()} save: fails ({sr.auto_fail})")
             self.__dict__["failed_by"] = dc
             return False
+        foretold = self.foretold(f, "save", dc - sr.bonus, adv=sr.roll.advantage, dis=sr.roll.disadvantage,
+                                 spell=self.__dict__.get("_casting") is not None)
         roll = dice.d20(self.rng, advantage=sr.roll.advantage, disadvantage=sr.roll.disadvantage)
+        if foretold is not None:
+            roll.natural = foretold  # (a diviner's Portent)
         total_bonus = sr.bonus + sum(dice.roll(d, self.rng).total for d in sr.dice)
         total = roll.natural + total_bonus
         ok = total >= dc
@@ -3242,8 +3348,10 @@ class Battle:
     def _death_save(self, f: Fighter) -> None:
         survivor = f.has_trait("survivor")  # (the Champion's Defy Death)
         hope = any("death" in (v or ()) for v in f.buff_value("save_adv"))  # (Beacon of Hope)
+        foretold = self.foretold(f, "death", 10 - query.d20_penalty(f))
         roll = dice.d20(self.rng, advantage=f.char is not None and feats.has(f.char, "durable") or survivor
                         or hope).natural
+        roll = roll if foretold is None else foretold
         if survivor and roll >= 18:
             roll = 20
         if 1 < roll < 10 and roll + query.d20_penalty(f) < 10 and self._inspired(f, 10, "a death save"):
@@ -3625,7 +3733,9 @@ class Battle:
         web = next((z for z in self.zones if z.holds and any(c in z.cells for c in f.cells)), None)
         if stuck == "restrained" and web is not None:
             dc, skill = web.dc, f.skill("athletics")  # 2024: a Strength (Athletics) check against the spell's DC
-        if dice.d20(self.rng).natural + skill >= dc:
+        foretold = self.foretold(f, "check", dc - skill)  # (a diviner's Portent on the escape)
+        roll = dice.d20(self.rng).natural
+        if (roll if foretold is None else foretold) + skill >= dc:
             durations.remove(f, stuck)
             f.grappled_by = None
             f.move_left = f.speed
@@ -4259,7 +4369,8 @@ class Battle:
             return False, "befuddled: no spell will come (Befuddlement)"
         if f.buff_value("mist"):
             return False, "a drifting mist cannot cast (Gaseous Form)"
-        if "V" in spell.get("components", ()) and self.silenced(f):
+        if "V" in spell.get("components", ()) and self.silenced(f) \
+                and not (spell.get("school") == "illusion" and schools.improved(f.char)):
             return False, "no sound can be made here (Silence)"
         if cast_kind(f, spell) == "bonus":
             if f.bonus <= 0:
@@ -4295,6 +4406,8 @@ class Battle:
         if f is not None and f.char is not None and int(r) >= 10 and feats.has(f.char, "spell_sniper") \
                 and spellrules.has_op(spell, "attack"):
             return int(r) + 60  # (Spell Sniper: spells with an attack roll)
+        if f is not None and f.char is not None:
+            return schools.illusion_range(f.char, spell, int(r))  # (Improved Illusions: 60 feet farther)
         return int(r)
 
     def spell_targets(self, f: Fighter, sid: str) -> list[Fighter]:
@@ -4308,7 +4421,7 @@ class Battle:
         def near(x: Fighter) -> bool:
             if x is f:
                 return True
-            return self.feet(f, x) <= max(5, reach) and self.field.cover(f.space, x.space) != grid.TOTAL
+            return self.feet(f, x) <= max(5, reach) and (self.view(f) if self.zones else self.field).cover(f.space, x.space) != grid.TOTAL
 
         if target == "enemy":
             if spell.get("school") == "divination":  # (a foe warded against divination cannot be aimed at)
@@ -4580,8 +4693,11 @@ class Battle:
         if level > 0 and f.__dict__.get("free_slot", 0) >= level:
             level = 0  # (the god casts it: Divine Intervention, War God's Blessing)
         at_will = spellrules.free_cast(c, self.t, sid, slot_level) if level > 0 else None
+        f.__dict__.pop("phantasm_cast", None)
         if at_will:  # (a wizard's Spell Mastery or Signature Spells: at the spell's own level, no slot)
             spellrules.spend_free(c, sid, at_will)
+            if at_will == "phantasm":
+                f.__dict__["phantasm_cast"] = sid  # (the summon comes spectral, at half its hit points)
             slot_level = level
             level = 0
         slotted = False
@@ -5299,6 +5415,10 @@ class Battle:
                 continue
             if z.kind != "antimagic" and (z.spell or z.kind in ("guardians", "guardian")) and self.antimagic(f.cells):
                 continue  # a spell laid on the ground does nothing where magic does not work
+            if z.kind == "illusion":
+                if not z.real:
+                    self.see_through(f, z, "walks into the image")  # (touched: it is nothing, PHB 372)
+                continue
             if z.kind == "web":
                 stopped = self._zone_catch(f, z) or stopped
             elif z.kind in ("caltrops", "bearings", "grease") and not start and f.standing and f.z == 0:
@@ -5509,6 +5629,8 @@ def cast_kind(f: Fighter, spell: dict) -> str:
     Dispel Magic with a bonus action (the spell's `breaker_bonus`)."""
     if spell.get("breaker_bonus") and f.has_trait("spell_breaker"):
         return "bonus"
+    if spell.get("improved_bonus") and f.char is not None and schools.improved(f.char):
+        return "bonus"  # (an illusionist's Minor Illusion: a bonus action)
     return spell.get("cast", "action")
 
 

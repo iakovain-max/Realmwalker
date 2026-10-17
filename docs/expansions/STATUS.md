@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 05 Schools & Domains · step 1 of §5.1 (the branch and the design note) · branch dlc/05-schools-domains · design note docs/expansions/05-schools-domains.md (to write)
+Current: 05 Schools & Domains · Part B (the Light and Trickery Domains; the gods) · branch dlc/05-schools-domains · design note docs/expansions/05-schools-domains.md
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -13,12 +13,28 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   Appendix B; enemy casters; spells for pay and the law of magic; Simulacrum; saves format 18) · 04 Steel & Shadows
   (v1.4.0, 2026-10-17: the Battle Master and its twenty maneuvers; the Eldritch Knight and the Arcane Trickster; the
   DMG poisons, the Assassin, Spy and Spy Master, the black market, poisoned cups, duels, spies at court; the fighter's
-  and rogue's magic items of the DMG; saves format 18)
+  and rogue's magic items of the DMG; saves format 18) · 05 Schools & Domains Part A (2026-10-18: the Diviner and
+  the Illusionist; images on the battle mat)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
   adapted); Expansion 3: all 560 settled (223 done, 336 adapted, 1 omitted); Expansion 4: all 66 settled (36 done,
-  30 adapted). PHB 67% · DMG 15% · MM 16%
+  30 adapted); Expansion 5: 17 of 72 settled after Part A (12 done, 4 adapted, 1 omitted). PHB 68% · DMG 15% · MM 16%
+Known, not yet chased: one autoplay run of nine during Expansion 5 Part A's checks (2026-10-18) saw two townsfolk on
+  one square of a town for seven turns (town life, untouched by the part; the other eight runs, on main and on the
+  branch, were clean). The timing tests (an enemy turn under 150/400 ms) now and then miss while the suite runs
+  beside autoplay and the smoke test, and pass alone; this was already so in Expansions 3 and 4.
 Assumptions waiting for Anton:
+- Expansion 5 Part A (the Diviner and the Illusionist): Portent is laid by the battle's judgement (asked only under the
+  Reactions setting "all"), outside fights on the party's camp and conversation checks only; the Third Eye's reading
+  of every language is left out (every writing of the world is already readable); the Search action also studies the
+  images in sight (Investigation against the caster's DC; the Study action is aimed at creatures); the caster's whole
+  side knows an image for what it is; an image is never laid over a creature; the phantom summon is taken whenever
+  Summon Beast or Fey is cast at its own level with the free use ready (a higher slot gives the full creature; the
+  costly material is still needed; the battle screen offers the phantom beside the slots, the Auto takes the
+  phantom); Illusory Self comes before Shield and spends a slot only when Shield could not turn the blow; what
+  Illusory Reality makes real is a wall of stones (a bridge over water or a chasm), ending with the spell even inside
+  its minute; Portent is not laid on Initiative, nor on the dungeon's own checks (search, locks, traps). Casting options now take the caster's casting time (an abjurer's
+  bonus-action Dispel Magic is listed as one); a Thaumaturge's extra cantrip is no longer swallowed at the next level.
 - Expansion 4 Part D (the fighter's and rogue's magic items): the Defender's guard is chosen as each turn begins by the
   battle's judgement (all three to Armor Class when hurt and pressed, two against two foes, one against one, none
   with nobody near); the Rod of Lordly Might's Drain Life and Paralyze fire on a hit against a foe still strong
@@ -477,12 +493,17 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 5, Schools & Domains, step 1 of `docs/EXPANSIONS.md` §5.1: branch
-`dlc/05-schools-domains` from `main`, and the design note `docs/expansions/05-schools-domains.md` (§6.5 of the plan:
-the Diviner, the Illusionist, the Light and Trickery Domains; the Mage Apprentice, Mage, Archmage, Priest and
-Archpriest; wizards' towers; the wizard's and cleric's items of Appendix B) with its parts and checklist, then Part A.
-Expansion 4, Steel & Shadows, is released as 1.4.0 (all four parts in `main`). Per Anton's word of 2026-10-17, the
-relay stops once Expansion 5 is merged; Expansion 6 waits for his start.
+Next session starts at: Expansion 5, Schools & Domains, Part B (the Light and Trickery Domains; the DMG's gods and
+divine intervention), task B.1 of `docs/expansions/05-schools-domains.md`. Part A (the Diviner and the Illusionist) is
+in `main`. Per Anton's word of 2026-10-17, the relay stops once Expansion 5 is merged (all five parts); Expansion 6
+waits for his start.
+The way of Part A (the two schools): `rules/engine/handlers/schools.py` (Portent through the kernel's "d20_before"
+event, `Battle.foretold`; `party_foretell` outside fights; Expert Divination's `slot_back`; the Third Eye in
+`char.spells["third_eye"]`; Illusory Self in `Battle._attack` before Shield; Phantasmal Creatures as
+`spells.free_cast` "phantasm" with `bond["spectral"]`; Illusory Reality's `realisable`/`unreal`). Images are Zone kind
+"illusion" (`seen`, `real`, `slotted`): `Battle.view(f)` gives each viewer a field without the images it knows
+(`grid.Field.without`), `Battle.do_search` studies them, `_zones_on` sees through on entering; the Auto's worth is
+`estimates.image_worth` (lines worked out once a turn). tests/test_schools.py.
 The way of Part D (the magic arms): book makers in data/treasure.json with kernel traits in
 `rules/engine/handlers/arms.py` (CLAUDE.md "The magic arms"); tests/test_magic_arms.py.
 The way of Part C (poisons and the people of the shadows): a poison is an item with a `poison` record (schema POISON:

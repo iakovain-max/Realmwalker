@@ -110,6 +110,12 @@ def check(game, skill: str, dc: int, bonus: int = 0, tag: str = "", mode: str = 
     name = game.tables.rules["skills"][skill]["name"]
     sign = "+" if b >= 0 else "-"
     how = {"advantage": " (adv)", "disadvantage": " (dis)"}.get(mode, "")
+    from realmwalker.rules.engine.handlers import schools
+
+    foretold, seer = schools.party_foretell(game.party, dc - b)
+    if foretold is not None:  # (a diviner's Portent: laid in place of the roll before it is made)
+        roll = foretold
+        how += f" (foretold by {seer.name.split()[0]})"
     if roll < 10 and skill in who.skills and "reliable_talent" in tr.of_char(who, game.tables):
         roll = 10  # (a rogue's Reliable Talent)
     total, more = fighter.tactical_mind(who, game.tables, roll + b, dc, rng.child("tactical_mind"))

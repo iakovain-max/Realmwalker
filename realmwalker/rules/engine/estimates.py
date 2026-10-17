@@ -385,6 +385,9 @@ def spell_value(b, f, sid: str, *, target=None, point=None, dc: int | None = Non
                 w.control += part.control * share
                 w.friendly += part.friendly * share
                 w.kills += int(part.kills * share + 0.5) if share * part.kills >= 0.5 else 0
+        elif kind == "zone" and o.get("zone") == "illusion":
+            if point is not None:  # (an image: the shooters and casters it blinds to the caster's side)
+                w.control += image_worth(b, f, b.spell_area(f, sid, point, target))
         elif kind == "zone" and caught:
             _zone_worth(b, f, o, caught, dc, up, w)
         elif kind == "dispel":
@@ -693,6 +696,49 @@ def _dispel_worth(b, f, target, point) -> float:
                 if owner is not None and owner.team != f.team:
                     out += 3.0
     return out
+
+
+def image_worth(b, f, cells) -> float:
+    """An illusion laid on these squares (Expansion 5 Part A): for each foe striking from afar (or casting), the share
+    of the caster's side it sees now whose line from it would cross the image, by how much it threatens; nothing
+    over a creature. The lines are worked out once a turn (`_sight_lines`); each point is then a set test."""
+    lines = _sight_lines(b, f)
+    if not lines:
+        return 0.0
+    taken = lines[0]
+    cells = {c for c in cells if c not in taken}
+    if not cells:
+        return 0.0
+    out = 0.0
+    for e, pairs in lines[1]:
+        hidden = [x for x, line in pairs if line & cells]
+        if hidden:  # (out of its sight; a Search may undo it, so a little over half of what it seems)
+            out += 0.6 * threat(e) * (0.4 + 0.6 * len(hidden) / len(pairs)) * (1.3 if f in hidden else 1.0)
+    return out
+
+
+def _sight_lines(b, f):
+    """(squares where creatures stand, [(foe, [(friend it sees, squares between them)])]) for this turn."""
+    key = (b.round, b.turn, f.id, len(b.zones))
+    cache = b.__dict__.get("_image_lines")
+    if cache is not None and cache[0] == key:
+        return cache[1]
+    taken = {sq for x in b.on_field() for sq in x.cells}
+    friends = [x for x in b.team(f.team) if x.active][:6]
+    out = []
+    for e in b.enemies_of(f):
+        if not e.active or b.feet(f, e) > 120 or any(b.gap(e, x) <= 1 for x in friends):
+            continue  # (one fighting hand to hand is not stopped by a picture)
+        pairs = []
+        for x in friends:
+            if b.can_see(e, x):
+                line = set(grid.crossed(e.x + e.sq / 2, e.y + e.sq / 2, x.x + x.sq / 2, x.y + x.sq / 2))
+                pairs.append((x, line - set(e.cells) - set(x.cells)))
+        if pairs:
+            out.append((e, pairs))
+    result = (taken, out) if out else None
+    b.__dict__["_image_lines"] = (key, result)
+    return result
 
 
 def _zone_worth(b, f, o: dict, caught: list, dc: int, up: int, w: Worth) -> None:

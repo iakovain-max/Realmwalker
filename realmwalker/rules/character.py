@@ -307,6 +307,8 @@ class Sheet:
             from realmwalker.rules import spells
 
             own = max(own, spells.lasting_number(self.c, self.t, "darkvision"))  # (the Darkvision spell: 150 feet)
+        if self.c.spells and self.c.spells.get("third_eye") == "dark":
+            own = max(own, 120)  # (a diviner's Third Eye)
         return own
 
     @property

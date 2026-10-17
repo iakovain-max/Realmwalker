@@ -362,12 +362,21 @@ def free_cast(char: Character, tables, spell_id: str, slot_level: int | None = N
     if spell_id in char.spells.get("signature", ()) and "signature_spells" in char.features \
             and char.uses.get(f"signature:{spell_id}", 0) > 0:
         return "signature"
+    from realmwalker.rules.engine.handlers import schools
+
+    if slot_level is None and schools.phantasm_ready(char, spell_id):
+        return "phantasm"  # (an illusionist's Phantasmal Creatures: spectral, at half hit points; a slot chosen:
+        # the whole creature)
     return None
 
 
 def spend_free(char: Character, spell_id: str, how: str | None) -> None:
     if how == "signature":
         char.uses[f"signature:{spell_id}"] = 0
+    if how == "phantasm":
+        from realmwalker.rules.engine.handlers import schools
+
+        schools.phantasm_spent(char, spell_id)
 
 
 # ---------------------------------------------------------------------------- casting with a higher slot (2024)

@@ -73,7 +73,8 @@ _ORDER = {s: i for i, s in enumerate((
     "charmed", "frightened", "blinded", "poisoned", "burning", "bleeding", "prone", "attached", "deafened",
     "exhaustion", "slowed", "sapped", "baned", "no_heal", "no_opportunity", "marked", "surprised", "bloodied", "festering",
     "pain", "drunk", "wounded", "shaped", "grappling", "concentrating", "flying", "hidden", "invisible", "dodging", "readied",
-    "shielded", "warded", "resisting", "blessed", "guided", "vexing", "temp_hp", "heroic", "spell"))}
+    "shielded", "warded", "resisting", "blessed", "guided", "vexing", "temp_hp", "heroic", "portent", "third_eye",
+    "spell"))}
 
 # Words for the states that are not conditions (the conditions' own words are data/conditions.json).
 _WORDS = {
@@ -100,6 +101,9 @@ _WORDS = {
     "slowed": ("Slowed", "Their speed is lowered."),
     "sapped": ("Sapped", "Reeling from a blow: their next attack roll has disadvantage (before the one who struck "
                          "them takes another turn)."),
+    "portent": ("Foretold", "Rolls seen in dreams: before any D20 Test the diviner sees - their own, a friend's, a "
+                "foe's - one may take the roll's place, once a turn, each once. Lost at the next long rest."),
+    "third_eye": ("The third eye", "Open until the next rest: darkness or the invisible hide nothing from it."),
     "shaped": ("In another shape", "Polymorph holds them in a borrowed body: its blows, armour and speed, its hit "
                                    "points as temporary ones on top of their own. No spells, no gear. It ends when "
                                    "those are gone or the caster's concentration does."),
@@ -576,6 +580,9 @@ def statuses(f, b=None) -> list[Status]:
     if f.readied:
         add(_plain("readied", "Ready", _WORDS["readied"][1].replace("(or into sight)", "" if f.readied == "reach"
                                                                      else "(or into sight)")))
+    if (getattr(f, "bond", None) or {}).get("spectral"):  # (an illusionist's phantom: Expansion 5 Part A)
+        add(_plain("spell", "A phantom", "Half real, summoned without a slot by an illusionist's Phantasmal "
+                   "Creatures: it fights as the spirit does, with half its hit points."), "phantom")
     if getattr(f, "shape", None) is not None:  # (Polymorph: Expansion 3 F.6; Animal Shapes, Shapechange: F.8)
         by = esc(_name_of(b, f.shape["by"])) if b is not None else "a caster"
         add(_plain("shaped", _WORDS["shaped"][0], shape_words(f.shape, by)))
@@ -583,6 +590,12 @@ def statuses(f, b=None) -> list[Status]:
         add(_plain("temp_hp", f"{f.temp_hp} temporary hit points", _WORDS["temp_hp"][1]))
     if char is not None and char.uses.get("heroic_inspiration", 0) > 0:
         add(_plain("heroic", *_WORDS["heroic"]))
+    if char is not None and char.spells and char.spells.get("portent"):  # (a diviner's: Expansion 5 Part A)
+        seen = ", ".join(str(d) for d in char.spells["portent"])
+        add(_plain("portent", f"Foretold: {seen}", _WORDS["portent"][1]))
+    if char is not None and char.spells and char.spells.get("third_eye"):
+        gift = {"dark": "Darkvision to 120 feet.", "unseen": "The invisible are seen."}.get(char.spells["third_eye"], "")
+        add(_plain("third_eye", _WORDS["third_eye"][0], f"{_WORDS['third_eye'][1]} {gift}".strip()))
     if f.surprised:
         add(_plain("surprised", *_WORDS["surprised"]))
     if f.attached_to is not None:
@@ -771,9 +784,15 @@ def spell(tables, sid: str, *, b=None, f=None, target=None, level: int | None = 
     if level and lvl and level > lvl:
         sub += f", cast at level {level}"
     card = Card(esc(sp["name"]), sub, "icon/cast", [esc(sp.get("text", ""))])
-    cast = {"action": "an action", "bonus": "a bonus action", "reaction": "a reaction"}.get(sp.get("cast", "action"),
-                                                                                             "an action")
+    kind = sp.get("cast", "action")
+    if f is not None:
+        from realmwalker.rules.combat import cast_kind
+
+        kind = cast_kind(f, sp)  # (this caster's: an illusionist's Minor Illusion, an abjurer's Dispel Magic)
+    cast = {"action": "an action", "bonus": "a bonus action", "reaction": "a reaction"}.get(kind, "an action")
     rng = sp.get("range", 0)
+    if f is not None and b is not None and isinstance(rng, int):
+        rng = b.spell_range(sp, f) if rng >= 10 else rng  # (Improved Illusions, Spell Sniper: farther)
     if isinstance(rng, str):
         where = rng  # "self" or "touch"
     else:

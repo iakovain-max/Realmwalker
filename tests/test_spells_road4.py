@@ -134,11 +134,14 @@ def in_the_wild(game):
 
 
 # ---------------------------------------------------------------------------- the data
+IN_FIGHTS_TOO = ("minor_illusion", "silent_image", "major_image")  # (images on the battle mat: Expansion 5 Part A)
+
+
 def test_the_twenty_seven_spells_are_in_and_the_start_up_check_knows_them(tables):
     assert all(sid in tables.spells for sid in E4)
     assert not [p for p in check.problems(tables) if any(sid in p for sid in E4)]
     for sid in E4:
-        if sid not in LASTING:
+        if sid not in LASTING and sid not in IN_FIGHTS_TOO:
             assert sp.out_of_battle(tables.spells[sid]), f"{sid} is never cast in a fight"
         assert sp.road_use(tables, sid) is not None, f"{sid} has a use outside a fight"
     for cid in COMPONENTS:

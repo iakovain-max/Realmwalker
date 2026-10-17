@@ -447,6 +447,12 @@ def cast_on_road(game, caster, spell_id: str, target=None, slot_level: int | Non
         spellrules.spend_slot(caster, slot)
         strained = spellrules.strain(caster, slot, game.world.rng.child(f"strain/{game.world.time}"))
         pre += strain_on_road(game, caster, strained)
+        if spell.get("school") == "divination":
+            from realmwalker.rules.engine.handlers import schools
+
+            back = schools.slot_back(caster, slot)  # (a diviner's Expert Divination)
+            if back:
+                pre.append(f"<magic>{escape_markup(caster.name.split()[0])}</> {back}")
     used = spellrules.spend_material(caster, t, spell_id) if scroll is None and not hired else None
     if ritual:
         game.pass_time(10, "rest")

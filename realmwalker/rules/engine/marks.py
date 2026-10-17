@@ -134,6 +134,7 @@ BUFF_KEYS = frozenset({
 })
 ZONES = frozenset({"web", "fire", "fog", "ice", "caltrops", "bearings", "darkness", "antimagic", "plants", "grease",
                    "overgrowth",  # (Part E.5: Plant Growth, four feet of movement a foot)
+                   "illusion",  # (Expansion 5 Part A: an image that hides what is behind it, PHB 372)
                    "spikes", "daggers", "moonbeam", "sphere", "silence",
                    # the second wave's (D.2): ground with a save and what a failure brings (Battle._ground)
                    "tentacles", "cloud", "stench", "hunger", "insects", "sleet", "radiance", "spirits", "elemental",

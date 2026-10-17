@@ -253,7 +253,7 @@
         {"level": 1, "id": "ritual_adept", "name": "Ritual Adept", "text": "Any ritual in your spellbook can be cast as a ritual, read from the book: ten minutes longer, and no spell slot.", "rule": "ritual_adept"},
         {"level": 1, "id": "arcane_recovery", "name": "Arcane Recovery", "text": "Once between long rests, a short rest with your spellbook brings back spent spell slots: levels adding up to half your level (rounded up), none of level 6 or higher.", "rule": "arcane_recovery"},
         {"level": 2, "id": "scholar", "name": "Scholar", "text": "A field of study besides magic: Expertise in one of Arcana, History, Investigation, Medicine, Nature or Religion that you know.", "expertise": {"count": 1, "skills": ["arcana", "history", "investigation", "medicine", "nature", "religion"]}},
-        {"level": 3, "id": "subclass", "name": "Wizard Subclass", "text": "Your school: the Evoker or the Abjurer."},
+        {"level": 3, "id": "subclass", "name": "Wizard Subclass", "text": "Your school: the Evoker, the Abjurer, the Diviner or the Illusionist."},
         {"level": 4, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two, or a feat."},
         {"level": 5, "id": "memorize_spell", "name": "Memorize Spell", "text": "After a short rest, one spell you have prepared may be swapped for another from your spellbook.", "rule": "memorize_spell"},
         {"level": 8, "id": "asi", "name": "Ability Score Improvement", "text": "+2 to one ability, or +1 to two, or a feat."},
@@ -277,6 +277,20 @@
           {"level": 6, "id": "projected_ward", "name": "Projected Ward", "text": "With your reaction, the ward takes the damage of a creature you can see within 30 feet.", "rule": "projected_ward"},
           {"level": 10, "id": "spell_breaker", "name": "Spell Breaker", "text": "Counterspell and Dispel Magic are always ready for you; Dispel Magic takes only a bonus action and adds your proficiency to its check; a slot spent on either is kept if the spell does not stop a spell.", "rule": "spell_breaker"},
           {"level": 14, "id": "spell_resistance", "name": "Spell Resistance", "text": "Advantage on saving throws against spells, and resistance to the damage of spells.", "rule": "spell_resistance"}
+        ]},
+        "divination": {"name": "Diviner", "text": "Seers who part the veils of time: dice foretold at dawn, an eye that sees the hidden.", "features": [
+          {"level": 3, "id": "divination_savant", "name": "Divination Savant", "text": "Two divination spells of level 1 or 2 copied into your spellbook for nothing, and one more each time a new level of spell slots opens.", "savant": "divination"},
+          {"level": 3, "id": "portent", "name": "Portent", "text": "After each long rest you foresee two d20 rolls. Before any D20 Test of yours or of a creature you can see, you may put one of them in place of the roll - once a turn, each only once; unused ones are lost at the next long rest.", "rule": "portent"},
+          {"level": 6, "id": "expert_divination", "name": "Expert Divination", "text": "Casting a divination spell with a slot of level 2 or higher gives back a spent slot of a lower level (5 at most).", "rule": "expert_divination"},
+          {"level": 10, "id": "the_third_eye", "name": "The Third Eye", "text": "A bonus action opens your third eye until you start a short or long rest, once between rests: Darkvision to 120 feet, or the invisible seen as See Invisibility shows them (every writing of the world is already read).", "rule": "the_third_eye"},
+          {"level": 14, "id": "greater_portent", "name": "Greater Portent", "text": "Portent foresees three rolls instead of two.", "rule": "greater_portent"}
+        ]},
+        "illusion": {"name": "Illusionist", "text": "Weavers of phantoms that dazzle the senses and trick the mind until the impossible seems real.", "spells": {"6": ["summon_beast", "summon_fey"]}, "features": [
+          {"level": 3, "id": "illusion_savant", "name": "Illusion Savant", "text": "Two illusion spells of level 1 or 2 copied into your spellbook for nothing, and one more each time a new level of spell slots opens.", "savant": "illusion"},
+          {"level": 3, "id": "improved_illusions", "name": "Improved Illusions", "text": "Your illusions need no spoken words, and reach 60 feet farther. You know Minor Illusion (or another cantrip if you knew it) beyond your count, and cast it as a bonus action with both a sound and an image.", "rule": "improved_illusions", "cantrips": 1, "learns": "minor_illusion"},
+          {"level": 6, "id": "phantasmal_creatures", "name": "Phantasmal Creatures", "text": "Summon Beast and Summon Fey are always prepared. Each can be cast once between long rests as a spectral illusion without a slot, the creature with half its hit points.", "rule": "phantasmal_creatures"},
+          {"level": 10, "id": "illusory_self", "name": "Illusory Self", "text": "When a blow hits you, your reaction puts an illusory double in its way: the blow misses. Once between rests, or again for a slot of level 2 or higher.", "rule": "illusory_self"},
+          {"level": 14, "id": "illusory_reality", "name": "Illusory Reality", "text": "While an illusion you cast with a slot lasts, a bonus action makes one thing in it real for a minute: the image becomes a wall of stones that stops feet as well as eyes, or a bridge that carries you over water or a chasm. It harms nobody.", "rule": "illusory_reality"}
         ]}
       },
       "kits": [
