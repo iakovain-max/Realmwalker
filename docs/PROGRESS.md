@@ -28,7 +28,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Clearing the decks for the expansions** | ✅ Done (2026-10-12), branch `prep/clear-the-decks` |
 | **Expansion 1, *Dice & Destiny*** (version 1.1.0) | ✅ Released (2026-10-13), branch `dlc/01-dice-destiny` |
 | **Expansion 2, *Blades & Backgrounds*** (version 1.2.0) | ✅ Released (2026-10-13), branch `dlc/02-blades-backgrounds` |
-| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete), D (the spell catalogue: 191 battle spells, cantrips to level 9, and Wish) E.1 (spells outside battle: healing, return from death, food, shelter and watch), E.2 (light, the body on the move, travel by magic), E.3 (finding and seeing, asking the powers, talking), E.4 (minds and the law, disguise and illusion, the small arts), E.5 (locks and stone, weather and land), E.6 (lasting protections and the caster's keeping) and E.7 (great magic and Wish's other uses, 2026-10-17: Part E complete) and F.1 (a familiar and a steed fight beside you), F.2 (summoned spirits of levels 2 to 4) and F.3 (the level 5 and 6 spirits and Animate Objects) and F.4 (the raised dead: Animate Dead, Create Undead, Finger of Death's zombie, the ghast and the mummy) and F.5 (the bound: Planar Ally, Planar Binding, Magic Circle turned inward) in `main`; F.6 (shapes: Polymorph and the rest of Appendix B) next |
+| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete), D (the spell catalogue: 191 battle spells, cantrips to level 9, and Wish) E.1 (spells outside battle: healing, return from death, food, shelter and watch), E.2 (light, the body on the move, travel by magic), E.3 (finding and seeing, asking the powers, talking), E.4 (minds and the law, disguise and illusion, the small arts), E.5 (locks and stone, weather and land), E.6 (lasting protections and the caster's keeping) and E.7 (great magic and Wish's other uses, 2026-10-17: Part E complete) and F.1 (a familiar and a steed fight beside you), F.2 (summoned spirits of levels 2 to 4) and F.3 (the level 5 and 6 spirits and Animate Objects) and F.4 (the raised dead: Animate Dead, Create Undead, Finger of Death's zombie, the ghast and the mummy) and F.5 (the bound: Planar Ally, Planar Binding, Magic Circle turned inward) and F.6 (Polymorph and True Polymorph in a fight) in `main`; F.7 (the rest of Appendix B's creatures) next |
 
 ---
 
@@ -39,6 +39,35 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-17 (afternoon): Demigods & Magics F.6 — Polymorph: turn a friend into a bear, a foe into a rat
+
+Built by the relay builder realmwalker-b, straight after F.5 (the part before took under half an hour). Saves do not
+change. Part F was split once more at the start: this part is Polymorph and True Polymorph in a fight; the rest of
+the book's beasts and small fiends and fey (ape, elephant, lion, tiger, imp, pseudodragon...) with their pictures
+come next (F.7), then Animal Shapes and Shapechange (F.8).
+- **Polymorph** (4th level, bards, druids, sorcerers and wizards; a battle spell, held by concentration): aim it at
+  **a friend or a foe** within 60 feet (the first spell that can be aimed at either).
+  - **A foe** makes a Wisdom save. If it fails it becomes **the weakest beast it could be**: an ogre turns into a
+    rat, with the rat's bite, armour and speed. It keeps its own hit points and gets the rat's as **temporary hit
+    points**: knock those off and it is an ogre again, and whatever was left of the blow falls on the ogre.
+  - **A friend** is willing (no save) and becomes **the strongest beast it may be**, no stronger than its level (a
+    brown bear, for now: the bigger beasts arrive in the next part). You still play it, with the bear's claws and
+    the bear's hit points on top of its own; it cannot cast spells or use its gear while in the shape.
+- **True Polymorph** (9th level, bards, warlocks and wizards; 30 feet) does the same with **any creature**, not only
+  beasts: a 20th-level wizard can become a young dragon.
+- A shape ends when its borrowed hit points are gone, when the caster stops concentrating (or casts another spell
+  that needs it), when the one inside it dies, or when the fight ends. Nobody stays a rat after the fight. The
+  battle mat redraws the creature in its new body, with a puff of violet.
+- **The Auto** (z, and a companion on Auto) knows what it is worth: turning a strong foe into a frog is often its
+  best move against a single great enemy.
+- Choices made while Anton was away: the game picks the form (the strongest for a friend, the weakest for a foe), as
+  it picks Chromatic Orb's damage; the spell ends with the fight (it would last an hour by the book); True
+  Polymorph's lasting form after a full hour and its object forms are left out; the party's own are always willing.
+- Checked: tests for the forms by Challenge Rating, a foe turned and coming back with the rest of the blow, a foe
+  who saves, a friend as the strongest beast played by the player without spells and back when the concentration
+  ends, True Polymorph past the beasts, the fight's end and a death undoing it, the Auto choosing it against an ogre,
+  and the battle screen drawing and playing a shaped hero; the spell catalogue test casts both in a real fight.
 
 ### Session, 2026-10-17 (afternoon): Demigods & Magics F.5 — the bound: a god's spirit for hire, and binding
 

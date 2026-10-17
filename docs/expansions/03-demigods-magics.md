@@ -471,7 +471,7 @@ stat block now comes with the spell that brings it into play (never a block that
 - [x] F.5 The bound: Planar Ally (a spirit of the cleric's god for a price by the hour or day), Planar Binding (a
   captive celestial, elemental, fey or fiend, or a Planar Ally's spirit, bound for a day to a year) and Magic Circle
   turned inward (a spirit that will not stay to be bound is held in it), on F.4's servants.
-- [ ] F.6 Shapes in a fight (split at its start, 2026-10-17: the old F.6 was four spells and 24 stat blocks with
+- [x] F.6 Shapes in a fight (split at its start, 2026-10-17: the old F.6 was four spells and 24 stat blocks with
   pictures): Polymorph and True Polymorph, a fighter's numbers swapped for a creature's for the fight, the forms
   taken from the creatures the game has.
 - [ ] F.7 The rest of Appendix B: ape, badger, constrictor snake, crocodile, elephant, elk, giant badger, giant crab,
