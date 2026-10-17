@@ -245,6 +245,16 @@ def test_the_battle_screen_plays_a_familiar_and_a_steed(make_app, world):
         for size in ((80, 30), (160, 45)):
             screen.render(widgets.Canvas(tcod.console.Console(*size, order="F")))
     assert app.error_count == 0
+    b.order = [steed.id] + [i for i in b.order if i != steed.id]
+    b.turn, b.turn_started = 0, True
+    b._start_of_turn(steed)
+    app.handle_event(KeyEvent("c"))  # (the steed's gift from its spell list)
+    assert screen.mode == "choose" and any("Fell Glare" in row[0] for row in screen.choices), screen.choices
+    app.handle_event(KeyEvent("escape"))
+    foe = next(x for x in b.fighters if x.side != PARTY and x.active)
+    assert b.do_cast(steed, "steed_fell_glare", foe) is not False
+    assert "steed_fell_glare" not in b.creature_spells(steed), "once a long rest"
+    assert app.error_count == 0
     b.outcome = "victory"
     fight.finish_battle(game)
     assert me.spells["familiar"]["gone"] is False and me.spells["steed"]["hp"] > 0

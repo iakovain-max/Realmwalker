@@ -312,11 +312,11 @@ class BattleScreen(Screen):
                 return
             self._open_choices("attack", rows)
         elif action == "cast":
-            spells = b.spell_options(f)
+            spells = b.spell_options(f) if f.char is not None else [(s, True, "") for s in b.creature_spells(f)]
             if not spells:
                 self.app.notify(f"{f.name} knows no spells.", "warn")
                 return
-            slots = spellrules.slots_left(f.char, tables)
+            slots = spellrules.slots_left(f.char, tables) if f.char is not None else []  # (a steed's gift: no slots)
             self.slots_line = "slots " + " ".join(f"L{i + 1}:{n}" for i, n in enumerate(slots) if n or i == 0) if slots else ""
             rows = []
             for sid, ok, why in spells:

@@ -295,7 +295,7 @@ class Fighter:
     def possessive(self) -> str:
         if self.char:
             return "his" if self.char.sex == "male" else "her"
-        return "its" if self.cdef["kind"] in ("beast", "undead") else "his"
+        return "its" if self.cdef["kind"] in ("beast", "undead") or self.bond is not None else "his"
 
     @property
     def sheet(self) -> Sheet | None:
@@ -3183,7 +3183,7 @@ class Battle:
             return 13 + len(foes)
         if any(f.kind == "beast" for f in foes):
             return None
-        party = [f for f in self.side(PARTY) if f.standing]
+        party = [f for f in self.side(PARTY) if f.standing and f.bond is None]  # (an owl does not make you more)
         hurt = sum(1 for f in foes if f.hp < f.max_hp) / len(foes)
         from realmwalker.rules import encounter
 
@@ -3823,6 +3823,11 @@ class Battle:
             return self.do_redo(f, int(sid.split(":")[2]))
         if self.jar_still(f):
             return False
+        if f.char is None and f.creature is not None:  # (a creature the player commands: a steed's gift)
+            if sid not in self.creature_spells(f):
+                self.say("Not possible now.", "warn")
+                return False
+            return self.creature_cast(f, sid, target, point=point)
         why = self.cast_problem(f, sid, target, point)
         if why:
             self.say(f"Not possible: {why}.", "warn")

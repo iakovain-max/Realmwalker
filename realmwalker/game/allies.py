@@ -157,12 +157,6 @@ def after_battle(game, battle) -> None:
     put_in_herd(game)
 
 
-def long_rest(game) -> None:
-    for c in game.party:
-        if c.alive:
-            rules.rest(c, True)
-
-
 def died(game, char) -> None:
     """A steed vanishes when its owner dies; a familiar goes with its master."""
     for kind in ("familiar", "steed"):

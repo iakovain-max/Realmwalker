@@ -147,6 +147,7 @@ def summon(b, owner, kind: str, level: int):
 
 def after(b) -> None:
     """What became of each familiar and steed in the fight, written back into its owner's record."""
+    # (in the order they came: a steed replaced mid-fight comes before the new one, which has the last word)
     for f in b.fighters:
         if f.bond is None or f.creature is None:
             continue
