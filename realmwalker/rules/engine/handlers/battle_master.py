@@ -79,15 +79,12 @@ def ready(b, f) -> bool:
 
 def roll_die(b, f, what: str) -> int:
     """Spend a superiority die (or Relentless's free d8) and roll it."""
-    if _free_die(b, f) and (dice_left(f) <= 0 or sides(f) <= 8 or not f.active):
+    if _free_die(b, f):  # (the turn's first maneuver keeps the dice: a d8 of its own)
         f.__dict__["relentless_turn"] = _turn_key(b)
         n, how = 8, "Relentless"
-    elif dice_left(f) > 0:
+    else:
         res.spend(f.char, "superiority")
         n, how = sides(f), f"{dice_left(f)} left"
-    else:
-        f.__dict__["relentless_turn"] = _turn_key(b)
-        n, how = 8, "Relentless"
     v = dice.roll(f"1d{n}", b.rng).total
     b.dice_say(f"{f.name} ({what}): superiority die d{n} = {v} ({how})")
     b._event("maneuver", who=f.id, what=what)
