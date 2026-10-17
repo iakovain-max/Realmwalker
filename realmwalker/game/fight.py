@@ -112,6 +112,9 @@ def start_battle(game, creatures: list[Creature], intro: str, *, surprised: str 
         from realmwalker.rules import servants as servant_rules
 
         servant_rules.bring_in(battle, [f for f in battle.side(PARTY) if f.char is not None and f.bond is None])
+    for f in battle.bring_shapes():  # (Animal Shapes, Shapechange worn on the road: Expansion 3 F.8)
+        game.say(f"<magic>{markup_escape(f.name.split(',')[0])} goes into the fight as "
+                 f"{markup_escape(f.creature.name.split(', as ')[-1])}.</>", "magic")
     if situation == "camp":
         for f in battle.side(PARTY):
             if f.bond is not None and f.bond.get("kind") == "servant":

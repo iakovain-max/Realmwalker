@@ -222,12 +222,19 @@ class GameState:
 
         from realmwalker.rules import spells as spellrules
 
+        from realmwalker.game import shapeshift
+        from realmwalker.rules import shapes
+
         ridden = mounts.assign(self)[0] if not self.in_local and self.leader.animals else {}
         worst = 0.0
         borne = not self.in_local  # (everyone carried by magic on the big map: quicker than a walker)
         for member in self.party:
-            m = Sheet(member, self.tables).travel_multiplier()
             b = body.travel_multiplier(member)
+            form = shapeshift.form_of(self, member) if member.alive else None
+            if form is not None and b is not None:  # (Animal Shapes, Shapechange: the form's own legs or wings, F.8)
+                worst = max(worst, 30.0 / max(5, shapes.speed(self.tables, form)) * b)
+                continue
+            m = Sheet(member, self.tables).travel_multiplier()
             if m is None or b is None:
                 return None
             if borne and not (spellrules.lasting_flag(member, self.tables, "wind")
@@ -423,10 +430,11 @@ class GameState:
         if not target["passable"] and over is None:
             return None
         diagonal = x0 != x1 and y0 != y1
-        if over == "wind":
-            hours = 1.0  # (a cloud on the wind: every land alike; the pace makes it ten times quicker)
+        if over in ("wind", "fly"):
+            hours = 1.0  # (a cloud on the wind, or wings: every land alike; the pace makes it quicker)
         elif not target["passable"] or not self.biome_def(x0, y0)["passable"]:
-            hours = 2.0 if over == "under" else 1.0  # (the bottom of a lake is slow going; the water's face is not)
+            hours = 2.0 if over in ("under", "swim") else 1.0  # (the bottom of a lake, or swimming, is slow going;
+            # the water's face is not)
         elif w.road[x0, y0] and w.road[x1, y1]:
             hours = ROAD_HOURS.get(self.biome_key(x1, y1), DEFAULT_ROAD_HOURS)
         else:
@@ -447,11 +455,18 @@ class GameState:
 
         if waymagic.everyone(self, "wind"):
             return "wind"
+        from realmwalker.game import shapeshift
+        from realmwalker.rules import shapes
+
+        if shapeshift.all_shaped(self, shapes.flies):
+            return "fly"  # (Animal Shapes or Shapechange: everyone on wings, over water and mountains: F.8)
         watery = self.biome_key(x, y) in ("ocean", "lake") or bool(self.world.river[x, y])
         if not watery:
             return None
         if waymagic.everyone(self, "water_walk"):
             return "over"
+        if self.biome_key(x, y) != "ocean" and shapeshift.all_shaped(self, shapes.swims):
+            return "swim"  # (everyone in a swimmer's shape: rivers and lakes, not the open sea)
         if waymagic.everyone(self, "water_breathing") and self.biome_key(x, y) != "ocean":
             return "under"
         if self.world.river[x, y] and self.biome_key(x, y) not in ("ocean", "lake") and waymagic.anyone(self, "part_water"):
@@ -493,7 +508,8 @@ class GameState:
             return False
         crossing = self.magic_crossing(nx, ny)
         fording = (bool(self.world.river[nx, ny]) and not self.world.road[nx, ny] and crossing in (None, "under")
-                   or crossing == "under")  # (under a lake's water everyone is soaked; over it, nobody)
+                   or crossing in ("under", "swim"))  # (under a lake's water, or swimming, everyone is soaked; over
+        # it, nobody)
         prev_area = self.world.area_at(p.x, p.y)
         x0, y0 = p.x, p.y
         p.x, p.y = nx, ny
@@ -522,6 +538,12 @@ class GameState:
                      "up again soaked to the skin.", "warn")
         elif crossing == "over":
             self.say("You walk on the water as on a road, dry-shod.", "info")
+        elif crossing == "swim" and not self.world.river[nx, ny]:
+            self.say("You swim on through the cold water in your borrowed shapes, and climb out soaked.", "warn")
+        elif crossing == "swim":
+            self.say("You swim the river in your borrowed shapes, and shake yourselves dry on the far bank.", "info")
+        elif crossing == "fly" and not self.biome_def(nx, ny)["passable"]:
+            self.say(f"You fly over the {self.biome_def(nx, ny)['name']} on borrowed wings.", "info")
         elif crossing == "parted":
             self.say("The river draws back on either side like two walls of glass, and you cross on its wet stones, "
                      "dry-shod.", "info")

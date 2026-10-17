@@ -76,10 +76,15 @@ def working_now(game) -> list[str]:
     from realmwalker.game import revival, spellwork
 
     out = []
+    from realmwalker.game import shapeshift
+
     for c in game.party:
         for sid, hours in sp.lasting(c, game.tables).items():
             out.append(f"<magic>{markup.escape(game.tables.spells[sid]['name'])}</> on {markup.escape(c.name.split()[0])}"
                        f" <dim>({magic.lasting_text(hours)} left)</>")
+        shaped = shapeshift.words(game, c)  # (Animal Shapes, Shapechange: Expansion 3 F.8)
+        if shaped:
+            out.append(f"{markup.escape(c.name.split()[0])} as {shaped}")
     for ward, rec in spellwork.wards_here(game).items():
         left = max(0.0, (float(rec["until"]) - game.world.time) / 60)
         when = "waiting" if ward in WAITING else f"{magic.lasting_text(left)} left"

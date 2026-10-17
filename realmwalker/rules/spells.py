@@ -509,6 +509,10 @@ def can_cast(char: Character, tables, spell_id: str) -> tuple[bool, str]:
         if road_use(tables, spell_id) == "jar":
             return True, ""
         return False, "the soul is in the gem of a Magic Jar: go back to the body first"
+    shape = (char.spells or {}).get("shape")
+    if isinstance(shape, dict) and shape.get("spell") in tables.spells \
+            and "spells" not in ((op(tables.spells[shape["spell"]], "shape") or {}).get("keeps") or ()):
+        return False, "no spells in a beast's shape (Animal Shapes: let it go first)"
     if "item" not in spell.get("classes", ()) and armour_problem(char, tables):
         return False, armour_problem(char, tables)
     if "item" not in spell.get("classes", ()) and component_problem(char, tables, spell_id):
@@ -738,7 +742,9 @@ ROAD_USES = ("feed", "water", "purify", "goodberry", "feast", "ward", "repose", 
              # Part F.1: a familiar and a steed (game/allies.py)
              "familiar", "steed",
              # Part F.4: the raised dead; F.5: the bound (game/servants.py)
-             "raise", "bind")
+             "raise", "bind",
+             # Part F.8: Animal Shapes and Shapechange worn on the road (game/shapeshift.py)
+             "shape")
 # What each of Part E.3's road uses is about (an op's `what`, `how` or `with`; the start-up check knows them).
 E3_KINDS = {"sense": ("what", ("magic", "evil", "poison", "traps")),
             "locate": ("what", ("object", "creature", "nature")),

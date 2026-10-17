@@ -460,6 +460,8 @@ GREAT = ("contingency", "jar", "clone", "imprison", "wish")
 ALLIES = ("familiar", "steed")
 # Part F.4's: the raised dead; F.5's: the bound, Planar Ally and Planar Binding (game/servants.py)
 SERVANTS = ("raise", "bind")
+# Part F.8's: Animal Shapes and Shapechange worn on the road (game/shapeshift.py)
+SHAPES = ("shape",)
 
 
 def _does(spell: dict) -> str | None:
@@ -501,6 +503,10 @@ def subjects(game, caster: Character, sid: str) -> list:
         from realmwalker.game import servants
 
         return servants.subjects(game, caster, sid)
+    if does in SHAPES:
+        from realmwalker.game import shapeshift
+
+        return shapeshift.subjects(game, caster, sid)
     return []
 
 
@@ -540,6 +546,10 @@ def problem(game, caster: Character, sid: str, target) -> str | None:
         from realmwalker.game import servants
 
         return servants.problem(game, caster, sid, target)
+    if does in SHAPES:
+        from realmwalker.game import shapeshift
+
+        return shapeshift.problem(game, caster, sid, target)
     if does == "ward":
         ward = _road(spell)["ward"]
         rec = wards_here(game).get(ward)
@@ -578,13 +588,14 @@ def cast(game, caster: Character, sid: str, target: Character | None, level: int
     spell = game.tables.spells[sid]
     does = _does(spell)
     if does in DIVINING or does in SPEECH or does in GLAMOUR or does in STONEWORK or does in WARDING or does in GREAT \
-            or does in ALLIES or does in SERVANTS:
-        from realmwalker.game import allies, divining, glamour, greatmagic, servants, speech, stonework, warding
+            or does in ALLIES or does in SERVANTS or does in SHAPES:
+        from realmwalker.game import allies, divining, glamour, greatmagic, servants, shapeshift, speech, stonework, \
+            warding
 
         out = (divining if does in DIVINING else speech if does in SPEECH else glamour if does in GLAMOUR
                else stonework if does in STONEWORK else warding if does in WARDING
                else allies if does in ALLIES else servants if does in SERVANTS
-               else greatmagic).cast(game, caster, sid, target, level)
+               else shapeshift if does in SHAPES else greatmagic).cast(game, caster, sid, target, level)
         game.cue("spell")
         game.dirty = True
         return out
@@ -683,8 +694,9 @@ def conjure(game, need: str) -> list[str]:
 def tick(game) -> None:
     """As time passes: berries that are only magic are gone when it ends; a Geas or a charm runs out
     (game/glamour.py)."""
-    from realmwalker.game import glamour, greatmagic, stonework, warding
+    from realmwalker.game import glamour, greatmagic, shapeshift, stonework, warding
 
+    shapeshift.tick(game)
     glamour.tick(game)
     stonework.tick(game)
     warding.tick(game)

@@ -516,6 +516,11 @@ def drink_antitoxin(game, char: Character, item) -> list[str]:
 
 def use_item(game, char: Character, item) -> list[str]:
     """What happens on Enter in the pack for a thing used from it."""
+    from realmwalker.game import shapeshift
+
+    paws = shapeshift.no_hands(game, char)  # (Animal Shapes, Shapechange: the gear has melded into the form, F.8)
+    if paws:
+        return [paws[:1].upper() + paws[1:] + "."]
     name = use_name(game, item)
     if name == "Sharpen blades":
         return hone(game)

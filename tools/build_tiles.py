@@ -419,6 +419,8 @@ ITEMS = {
     # the costly components of Part E.7's spells (Expansion 3 E.7)
     "contingency_statuette": "dungeon/statues/statue_ancient_hero.png", "clone_vessel": "dungeon/sarcophagus_open.png",
     "imprisonment_statuette": "dungeon/statues/statue_iron.png",
+    # Shapechange's jade circlet (Expansion 3 F.8): a green band
+    "jade_circlet": "item/amulet/ring_green.png",
     "wheat": "item/food/bread_ration_old.png", "salt": "item/misc/misc_stone_inert.png",
     "iron_bar": "item/misc/misc_rune.png", "wool_bolt": "item/armor/back/cloak_2.png",
     "linen_bolt": "item/armor/torso/robe_1_new.png", "furs": "item/armor/torso/animal_skin_3.png",

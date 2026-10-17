@@ -107,6 +107,10 @@ Shapes (F.6):
                (Battle.shape: the form's numbers, its own hit points kept, temporary hit points the form's; ends with
                them, the concentration or the fight); a friend is willing and takes the strongest form, a foe saves
                (Wisdom) or takes the weakest (rules/shapes.py)
+               F.8: cr (a fixed cap), size (the largest form), not (kinds never taken), keeps ("mind",
+               "proficiencies", "spells"), leave (a Bonus Action out), shift ("self", "caster": a Magic action to
+               another form), hours (it outlasts the fight: rules/shapes.record); the spell's target all_allies takes
+               the willing within range (`willing`: every friend that casts no spells, never the caster)
 
 Outside a fight (Part E):
     max_up     amount (dice), per_up, count: the hit point maximum and hit points go up while the spell lasts (Aid;
@@ -1282,7 +1286,7 @@ def held_spells(b, x) -> list:
         held = [cid for cid, e in x.cond_ends.items() if e.get("conc") == caster.id] + \
             [se["cond"] for se in x.save_ends if se.get("conc") == caster.id]
         away = x.state == "away" and x.away and x.away.get("by") == caster.id
-        shaped = x.shape is not None and x.shape.get("by") == caster.id  # (Polymorph: Expansion 3 F.6)
+        shaped = x.shape is not None and x.shape.get("by") == caster.id and x.shape.get("conc", True)  # (F.6)
         if not held and not away and not shaped:
             continue
         sp = b.t.spells[conc["spell"]]
@@ -1467,28 +1471,53 @@ def _ally(c: Cast, o: dict, victim) -> None:
 def _shape(c: Cast, o: dict, victim) -> None:
     """Polymorph, True Polymorph (Expansion 3 F.6): the creature becomes another for as long as the caster
     concentrates (`forms`: the creature types it may become, or "any"). A friend is willing (no save) and takes the
-    strongest form it may; a foe makes a Wisdom save or takes the weakest (rules/shapes.py chooses)."""
+    strongest form it may; a foe makes a Wisdom save or takes the weakest (rules/shapes.py chooses). Animal Shapes and
+    Shapechange (F.8): the op's limits and what the shape keeps; Animal Shapes takes every willing friend in range."""
     from realmwalker.rules import shapes
 
     b, f = c.b, c.caster
-    x = victim if victim is not None else c.target
-    if x is None or f.concentration is None:
+    if c.spell.get("concentration") and f.concentration is None:
         return
-    if not shapes.shapeable(x):
-        b.say(f"The spell finds no grip on {x.the_name}.", "system")
-        return
+    if victim is None and c.spell["target"] == "all_allies":
+        targets = willing(b, f, c.spell)
+        if not targets:
+            b.say("Nobody near is willing to take a beast's shape.", "system")
+    else:
+        x = victim if victim is not None else (f if c.spell["target"] == "self" else c.target)
+        targets = [x] if x is not None else []
     kinds = o.get("forms", ["beast"])
-    friend = x.team == f.team
-    if not friend and b._save(x, "wis", c.dc):
-        return
-    cid = shapes.best(b.t, x, kinds) if friend else shapes.worst(b.t, x, kinds)
-    if cid is None:
-        b.say(f"There is no shape {x.the_name} could take.", "system")
-        return
-    was = x.the_name
-    if b.shape(x, cid, by=f, spell=c.sid):
-        b.say(f"<magic>{was[:1].upper() + was[1:]} twists and shrinks and swells into "
-              f"{a_or_an(b.t.creatures[cid]['name'])}.</>", "magic")
+    for x in targets:
+        if not shapes.shapeable(x):
+            b.say(f"The spell finds no grip on {x.the_name}.", "system")
+            continue
+        friend = x.team == f.team
+        if not friend and b._save(x, "wis", c.dc):
+            continue
+        cid = shapes.best(b.t, x, kinds, o) if friend else shapes.worst(b.t, x, kinds, o)
+        if cid is None:
+            b.say(f"There is no shape {x.the_name} could take.", "system")
+            continue
+        was = x.the_name
+        if b.shape(x, cid, by=f, spell=c.sid, how=o):
+            b.say(f"<magic>{was[:1].upper() + was[1:]} twists and shrinks and swells into "
+                  f"{a_or_an(b.t.creatures[cid]['name'])}.</>", "magic")
+
+
+def willing(b, f, spell: dict) -> list:
+    """Who takes Animal Shapes in a fight (Expansion 3 F.8): every friend within range that casts no spells (it would
+    lose them for a day) and is not already shaped, never the caster; the game's choice for "any number of willing
+    creatures"."""
+    from realmwalker.rules import shapes
+
+    reach = b.spell_range(spell)
+    out = []
+    for x in b.team(f.team):
+        if x is f or not x.active or not shapes.shapeable(x) or b.feet(f, x) > reach:
+            continue
+        if x.char is None or spellrules.is_caster(x.char, b.t):
+            continue  # (a creature has no shape of its own to keep; a caster would lose its spells)
+        out.append(x)
+    return out
 
 
 def a_or_an(words: str) -> str:

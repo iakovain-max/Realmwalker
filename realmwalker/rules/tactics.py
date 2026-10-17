@@ -114,11 +114,33 @@ def take_turn(b: Battle, f: Fighter) -> None:
         return
     if marks.maddened_by(f) is not None and _maddened(b, f):
         return
+    _shift_shapes(b, f)
+    if b.current is not f or b.outcome is not None:
+        return
     if f.char is not None:
         _party_turn(b, f)
         _epic_moves(b, f)
     else:
         _monster_turn(b, f)
+
+
+def _shift_shapes(b: Battle, f: Fighter) -> None:
+    """Shapechange and Animal Shapes on Auto (Expansion 3 F.8): when the borrowed hit points run low, the Magic action
+    takes a fresh shape - a Shapechanger its own, a druid its beasts' (two of them low, or its only one). Nobody on Auto
+    leaves a shape of their own will."""
+    if f.action <= 0 or not any(e.standing for e in b.enemies_of(f)):
+        return
+    from realmwalker.rules import shapes
+
+    ready = {aid for aid, _, ok, _ in b.shape_abilities(f) if ok}
+    if "shift_shape" in ready and f.temp_hp < shapes.form_hp(b.t, f.creature.def_id) / 3:
+        b.do_ability(f, "shift_shape")
+        return
+    if "reshape" in ready:
+        mine = b.shaped_by(f)
+        low = [x for x in mine if x.temp_hp < shapes.form_hp(b.t, x.creature.def_id) / 3]
+        if len(low) >= 2 or (low and len(mine) == 1):
+            b.do_ability(f, "reshape")
 
 
 def _maddened(b: Battle, f: Fighter) -> bool:

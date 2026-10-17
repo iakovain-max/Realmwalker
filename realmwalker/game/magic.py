@@ -189,7 +189,7 @@ def road_targets(game, caster, spell_id: str) -> list:
 
     if use in spellwork.DIVINING or use in spellwork.SPEECH or use in spellwork.GLAMOUR \
             or use in spellwork.STONEWORK or use in spellwork.WARDING or use in spellwork.GREAT \
-            or use in spellwork.ALLIES or use in spellwork.SERVANTS:  # (E.3 to F.4:
+            or use in spellwork.ALLIES or use in spellwork.SERVANTS or use in spellwork.SHAPES:  # (E.3 to F.8:
         # a thing to seek, a lock, a wall, a craft, a glyph's rune or spell, a blessing, a potion, a question, a
         # companion; a person near, a kind of creature, an animal, a far town, a thing carried; a spell to hold, a wish;
         # a familiar's form, a steed's look; the dead to raise or to hold)
@@ -248,6 +248,10 @@ def road_problem(game, caster, spell_id: str, target=None, scroll=None) -> str |
         return why
     if game.battle is not None:
         return "you are in a fight"
+    if spellrules.road_use(t, spell_id) == "shape" and getattr(target, "data", {}).get("free"):
+        from realmwalker.game import shapeshift  # (changing the shapes again, or letting them go: a Magic action, no
+
+        return shapeshift.problem(game, caster, spell_id, target)  # slot and no spell cast: Expansion 3 F.8)
     if caster.uses.get("addled"):  # (Contact Other Plane's failure, until a long rest)
         return "the mind is still reeling from what it touched (a long rest)"
     if scroll is not None:
@@ -336,6 +340,12 @@ def cast_on_road(game, caster, spell_id: str, target=None, slot_level: int | Non
         from realmwalker.game import greatmagic
 
         return greatmagic.return_to_body(game, caster)  # (going home needs no slot)
+    if spellrules.road_use(t, spell_id) == "shape":
+        from realmwalker.game import shapeshift
+
+        freely = shapeshift.free_use(game, caster, spell_id, target)  # (the shapes changed or let go: no slot)
+        if freely is not None:
+            return freely
     if spellrules.road_use(t, spell_id) == "familiar":
         from realmwalker.game import allies
 
