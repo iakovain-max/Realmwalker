@@ -590,3 +590,45 @@ def test_roll_redo_undoes_a_foes_hit(tables, monkeypatch):
     assert b.do_cast(me, f"wish:redo:{i}")
     assert me.hp == min(me.max_hp, hp + dealt) and wiz.effects.get("wish_stress")
     assert not any(j == i for j, *_ in b.redo_options(me)), "once undone, it is done"
+
+
+def test_the_battle_screen_plays_the_soul_and_the_body_it_took(make_app, world, tables, monkeypatch):
+    import tcod
+
+    from realmwalker.game import fight
+    from realmwalker.ui import widgets
+    from realmwalker.ui.input import KeyEvent
+    from realmwalker.ui.screens.battle import BattleScreen
+
+    app = make_app()
+    wiz = hero(app.tables)
+    wiz.spells["jar"] = {"since": 0, "dc": 30}
+    game = new_game(copy.deepcopy(world), app.tables, wiz)
+    app.start_game(game)
+    game.survival = False
+    rng = RNG(5, "band")
+    game.encounter = PendingEncounter("test", [spawn(app.tables, "bandit", rng, i + 1) for i in range(3)],
+                                      "They come.", False, "")
+    b = fight.encounter_fight(game, False)
+    game.encounter = None
+    me, foes = b.side(PARTY)[0], b.side(FOE)
+    screen = BattleScreen(app, game)
+    app.push(screen)
+    my_turn(b, me)
+    for key in ("tab", "escape", "a", "escape"):  # (the soul's turn: only its two abilities)
+        app.handle_event(KeyEvent(key))
+    app.render(tcod.console.Console(160, 45, order="F"))
+    monkeypatch.setattr(b, "_save", lambda *a, **k: False)
+    my_turn(b, me)
+    near = b.jar_targets(me)
+    assert near, "a bandit within 100 feet, in sight"
+    b.do_possess(me, near[0])
+    host = near[0]
+    assert "possessed" in host.conditions
+    my_turn(b, host)
+    assert screen.actor() is host
+    for key in ("tab", "escape", "a", "escape", "z"):
+        app.handle_event(KeyEvent(key))
+    for size in ((80, 30), (160, 45)):
+        screen.render(widgets.Canvas(tcod.console.Console(*size, order="F")))
+    assert app.error_count == 0
