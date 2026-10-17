@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 03 Demigods & Magics · Part E (spells outside battle), E.7 next · branch dlc/03-demigods-magics
+Current: 03 Demigods & Magics · Part F (familiars, steeds and summons), F.1 next · branch dlc/03-demigods-magics
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -20,10 +20,12 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   illusions, Druidcraft, Thaumaturgy...) and E.5 (locks and stone, weather and land: Knock, Arcane Lock, Mending, Mage
   Hand, Fabricate, Creation, Stone Shape, Passwall, Move Earth, Leomund's Secret Chest, Control Water, Control
   Weather, Plant Growth, Tsunami) and E.6 (lasting protections and the caster's keeping: Glyph of Warding, Symbol,
-  Magic Circle, Forbiddance, Guards and Wards, Private Sanctum, Hallow, Demiplane, Tasha's Bubbling Cauldron)
+  Magic Circle, Forbiddance, Guards and Wards, Private Sanctum, Hallow, Demiplane, Tasha's Bubbling Cauldron) and E.7
+  (great magic and Wish's other uses: Contingency, Magic Jar, Clone, Imprisonment; Wish's Object Creation, Resistance,
+  Spell Immunity, Sudden Learning, Reshape Reality, and Roll Redo in a fight: Part E complete)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
-  adapted); Expansion 3: 202 done, 286 adapted, 1 omitted of 558 (parts A, B, C, D and E.1 to E.6 settled). PHB 61% · DMG 12% · MM 8%
+  adapted); Expansion 3: 202 done, 290 adapted, 1 omitted of 558 (parts A, B, C, D and E settled). PHB 61% · DMG 12% · MM 8%
 Assumptions waiting for Anton:
 - The Player2 AI writer is removed (tagged `before-ai-removal`); its text is replaced everywhere by the game's own
   words, strengthened where they were thin.
@@ -303,23 +305,45 @@ Assumptions waiting for Anton:
   (healing, greater healing).
   A creature's saved `conditions` now come into a fight with it (a sleep brought in breaks on damage), the first
   use of that record.
+- Expansion 3 E.7: Contingency's trigger is one of three moments, all in a fight (as it begins, below half the hit
+  points, falling); the contingent spell is one the caster could cast now, cast with an action at themselves or a
+  friend, and it takes effect on the caster alone; triggers outside a fight (being engulfed, a fall) are left out.
+  Magic Jar works in a fight: the body lies still (Incapacitated, no movement), the soul sees from its gem, possesses
+  a humanoid foe within 100 feet (a foe that saves is safe from it for the rest of that fight, not a day) and the
+  player plays the host with its own hit points, attacks and speed (the caster's spells from a borrowed body are left
+  out); at a fight's end the soul goes back to the gem and a host left standing runs; possession outside a fight is
+  left out; outside one the caster casts nothing else until the soul goes home (Magic Jar again, no slot); the gem is
+  taken as the spell is cast. Clone is cast in a town or city (the temple keeps the vessel), on someone of the party;
+  the age is not chosen; the leader's clone wakes with nothing and the companions bring the gear at 24 miles a day; a
+  clone of someone outside the party is left out. Imprisonment is cast from the meeting screen only, when a band is
+  seen first, at its strongest; the form of the prison is the game's choice by the creature's kind; a success's day
+  of immunity lasts only for that meeting; the ending trigger is left out. Wish outside a fight: Object Creation lists
+  every non-magic thing of 100 to 25,000 GP in the game; Resistance and Spell Immunity are for the whole party (up to
+  ten); Spell Immunity lists the spells this world's foes cast at you; Sudden Learning takes back the old feat's
+  ability increases, skills, tools, training and hit points (what the class or background also gives stays) and a
+  style is swapped only for a style; Reshape Reality is four wishes (an artifact: carried to where it lies; a beast of
+  the songs or a dragon dead: half or a quarter of the time, else a beast comes down on the farms or the dragon wakes;
+  the realm forgets your crimes; a fallen friend the party carries lives, at the death toll); copying a spell outside
+  a fight is left out. Roll Redo undoes a foe's hit on a friend since the last round (rerolled with Disadvantage; a
+  miss gives back its damage, a lost critical half); redoing a save is left out; the Auto never wishes but to copy.
 Ideas for later:
 - (none yet)
-Next session starts at: task E.7 in docs/expansions/03-demigods-magics.md (Part E, spells outside battle: great magic
-and Wish's other uses; Contingency, Magic Jar, Clone, Imprisonment, and Wish's Object Creation, Resistance, Spell
-Immunity, Sudden Learning, Roll Redo and Reshape Reality; it is the last of Part E, so Part E goes to `main` with it,
-as every E part has). Write E.7's "How" in the design note first, as E.6's is written. The book's text of all four
-spells and of Wish is in build/codex/phb (p254, p259, p291, p297, p344: the page files match the codex's page
-numbers; OCR misreads 3 as 5 now and then, so check numbers on the page image).
+Next session starts at: task F.1 in docs/expansions/03-demigods-magics.md (Part F, Appendix B: familiars, steeds
+and summons: the 36 stat blocks of the PHB's Appendix B (beasts, imp, quasit, pseudodragon, sprite, sphinx of wonder,
+slaad tadpole) with pictures; Find Familiar, Find Steed, the Summon spells' spirits, Animate Dead; followers outside
+battle; Part F to `main`). Write F.1's "How" in the design note first, and split it at its start if it is too big for
+one part (as E.2, E.4, E.5 and E.6 were). The PHB's Appendix B is in build/codex/phb (check numbers on page images).
+Part E is complete in `main` (E.1 to E.7).
 The way of Part E: a spell outside a fight has `road_only` (or `minutes`) and an op {"op": "road", "does": ...}
 (rules/spells.ROAD_USES and the kinds in E3_KINDS to E6_KINDS, checked at start-up), done in a module of its own
-(game/divining.py, speech.py, glamour.py, stonework.py, warding.py) through game/spellwork.py's door (subjects, problem, cast);
+(game/divining.py, speech.py, glamour.py, stonework.py, warding.py, greatmagic.py) through game/spellwork.py's door (subjects, problem, cast);
 game/magic.cast_on_road spends the slot and passes the casting time. A lasting spell (ten minutes or more) is a buff
 kept on the character (rules/engine/marks.py lists the keys); a camp ward is {"does": "ward", "ward": ...} with
 rounds or `days` (spellwork.ward_minutes), or a protection's record from game/warding._camp_ward; a spell aimed at
 something chosen lists Subjects (game/divining.Subject). A spell used both in a fight and outside one has `road_too` and
-`road_minutes` (Plant Growth). Tests: tests/test_spells_outside.py, test_spells_road2.py, road3, road4, road5, road6.
-Parts A to D and E.1 to E.6 are in `main`.
+`road_minutes` (Plant Growth). Tests: tests/test_spells_outside.py, test_spells_road2.py, road3, road4, road5, road6, road7.
+Parts A to E are in `main`. Part F may need what Part E built: a summon or a follower outside a fight goes through the
+same door, and the arena's coverage test (tests/test_tactics_coverage.py) must stay green with the new creatures.
 
 ## Done
 
@@ -352,6 +376,7 @@ Parts A to D and E.1 to E.6 are in `main`.
 | 2026-10-17 | Demigods & Magics E.4: minds and the law (Friends, Enthrall, Zone of Truth, Geas, Modify Memory, Glibness, Antipathy/Sympathy, Awaken), disguise and illusion (Disguise Self, Seeming, the images, Mislead, Project Image, Illusory Script, Nystul's Magic Aura, Nondetection, Sequester, the camp's illusions), the small arts (Druidcraft, Elementalism, Prestidigitation, Thaumaturgy); E.4 split, E.5 next; merged into `main` | `dlc/03-demigods-magics` |
 | 2026-10-17 | Demigods & Magics E.5: locks and stone (Knock, Arcane Lock, Mending, Mage Hand, Fabricate, Creation, Stone Shape, Passwall, Move Earth, Leomund's Secret Chest), weather and land (Control Water, Control Weather, Plant Growth with a new four-feet-a-foot ground, Tsunami from the meeting screen); E.5 split, E.6 next; merged into `main` | `dlc/03-demigods-magics` |
 | 2026-10-17 | Demigods & Magics E.6: lasting protections (Glyph of Warding, Symbol, Magic Circle, Forbiddance, Guards and Wards, Private Sanctum, Hallow) and the caster's keeping (Demiplane, Tasha's Bubbling Cauldron); E.6 split, E.7 next; merged into `main` | `dlc/03-demigods-magics` |
+| 2026-10-17 | Demigods & Magics E.7: great magic (Contingency, Magic Jar, Clone, Imprisonment) and Wish's other uses (Instant Health, Object Creation, Resistance, Spell Immunity, Sudden Learning, Reshape Reality; Roll Redo in a fight); Part E complete, merged into `main` | `dlc/03-demigods-magics` |
 
 ## Notes for the next session
 

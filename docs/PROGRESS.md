@@ -28,7 +28,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Clearing the decks for the expansions** | ✅ Done (2026-10-12), branch `prep/clear-the-decks` |
 | **Expansion 1, *Dice & Destiny*** (version 1.1.0) | ✅ Released (2026-10-13), branch `dlc/01-dice-destiny` |
 | **Expansion 2, *Blades & Backgrounds*** (version 1.2.0) | ✅ Released (2026-10-13), branch `dlc/02-blades-backgrounds` |
-| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete), D (the spell catalogue: 191 battle spells, cantrips to level 9, and Wish) E.1 (spells outside battle: healing, return from death, food, shelter and watch), E.2 (light, the body on the move, travel by magic), E.3 (finding and seeing, asking the powers, talking), E.4 (minds and the law, disguise and illusion, the small arts), E.5 (locks and stone, weather and land) and E.6 (lasting protections and the caster's keeping, 2026-10-17) in `main`; E.7 (great magic and Wish's other uses: the last of Part E) next |
+| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete), D (the spell catalogue: 191 battle spells, cantrips to level 9, and Wish) E.1 (spells outside battle: healing, return from death, food, shelter and watch), E.2 (light, the body on the move, travel by magic), E.3 (finding and seeing, asking the powers, talking), E.4 (minds and the law, disguise and illusion, the small arts), E.5 (locks and stone, weather and land), E.6 (lasting protections and the caster's keeping) and E.7 (great magic and Wish's other uses, 2026-10-17: Part E complete) in `main`; F (familiars, steeds and summons) next |
 
 ---
 
@@ -39,6 +39,62 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-17 (afternoon): Demigods & Magics E.7 — great magic and Wish's other uses (Part E done)
+
+Built by the relay builder realmwalker-a. Saves do not change: an old world of format 18 still loads. This is the
+last piece of Part E: every spell of Expansion 3 that works outside a fight is now in the game, and Part E goes to
+`main` with it.
+- **Contingency** (a wizard's 6th level; a jewelled statuette of yourself, 1,500 gold, sold in cities, kept): ten
+  minutes to cast, and for ten days a spell waits on you: any spell of 5th level or lower you could cast now, cast
+  with an action, that works on yourself (Fire Shield, Stoneskin, Cure Wounds, Death Ward...). Choose its moment:
+  as a fight begins, when you are brought below half your hit points, or when you fall. When it comes, the spell
+  takes effect on you at once, without costing your turn. Both slots are spent as you cast it; the statuette must be
+  in the party's packs when it acts.
+- **Magic Jar** (6th level; a precious stone, now sold in town markets): your soul goes into the gem and your body
+  goes limp (the others carry it). In a fight the body lies still, and on its turns the soul can **Possess** a
+  person among the foes within 100 feet (they make a Charisma save) and then **you play that body**: its own hit
+  points, weapons and speed, fighting its old friends. **Leave** puts the soul back in the gem; **Return** sends it
+  home to your body and ends the spell. If the body you took dies, a Charisma save sends the soul back to the gem;
+  failing it, you die. If your own body dies while you are away, so do you. When the fight is won, the soul goes back
+  to the gem and the body you held runs off. Outside a fight you cast nothing else until you go home: cast Magic Jar
+  again (no slot). A wizard companion on Auto takes the strongest person among the foes.
+- **Clone** (8th level; a flawless diamond and a sealable vessel, 2,000 gold, in cities): an hour's work in a town
+  or city on yourself or a companion; the vessel goes down into the temple's crypt and the clone grows for 120 days.
+  If that person dies after it has grown, their soul wakes in it, whole and naked: the leader wakes in that town with
+  nothing (the companions pick up everything and walk there, 24 miles a day), a companion wakes there and waits for
+  you. The Spells page shows each clone and how long until it is grown.
+- **Imprisonment** (9th level; a blank jade statuette, 5,000 gold, in cities): on the meeting screen, when you saw a
+  band first, press **i**: the strongest of them makes a Wisdom save (a legendary creature spends its Legendary
+  Resistance), and if it fails it is bound for good: a dragon buried in a globe of force deep in the earth, the dead
+  chained, fiends and fey shut in prisons of their own, a person shrunk into a gem, anything else asleep for ever.
+  You get its experience; a named beast or dragon of the world is gone from it (its lair empty, its tribute lifted,
+  the land grateful). Then the fight begins with the rest.
+- **Wish outside a fight** (the Spells page; Shift with ← → jumps between the kinds): **Instant Health** (the whole
+  party whole); **Object Creation** (any non-magic thing worth 100 to 25,000 gold, from plate armour to the casket of
+  diamonds True Resurrection needs); **Resistance** (the whole party resists one kind of damage for the rest of their
+  lives); **Spell Immunity** (eight hours immune to one spell this world's foes cast, like Hold Person); **Sudden
+  Learning** (give up a feat and choose a new one on the character sheet); **Reshape Reality**, the dangerous one:
+  to hold a lost artifact (you are carried to the place where it lies), that a beast of the old songs or a dragon
+  were dead (half the time for a beast, a quarter for a dragon; otherwise it hears your name and comes down on the
+  farms), that the realm forgot your crimes (bounties and records gone), or that a fallen friend the party carries
+  were alive. Every one of them brings Wish's stress (Strength 3 for days, every spell hurts until a long rest, a
+  third of the time Wish is gone for ever).
+- **Wish in a fight: Roll Redo.** The Wish list in a fight now also offers each foe's hit on a friend since your last
+  turn: it is rolled again with Disadvantage, and if it misses the damage is given back (a friend who fell gets up);
+  a critical hit that is not one again gives back half. It brings the stress too.
+- **New things in the shops**: a jewelled statuette, a sealable vessel and a blank jade statuette (cities), each with
+  a picture; precious stones in town markets.
+- **The codex**: Contingency, Magic Jar, Clone and Imprisonment settled (adapted, with notes), Wish's note brought up
+  to date. Expansion 3 is at 88% of its 558 entries; the rest are the summons and familiars (Part F), the casters'
+  spell lists (G.1) and the services (G.2).
+- **How to try it**: a wizard of level 11 or more opens the Spells page (S), picks Contingency, chooses "Fire Shield,
+  as a fight begins" with ← →, presses Enter, and walks until something attacks.
+- **Choices made while Anton was away** (in STATUS.md): Contingency's moments are three, all in a fight; Magic Jar
+  works in fights (possessing townsfolk is left out) and the soul cannot cast from a borrowed body; Clone is cast in
+  a town or city and the age is not chosen; Imprisonment is cast from the meeting screen only and the form of the
+  prison is the game's choice by kind; Wish copying a spell outside a fight is left out, Reshape Reality is four
+  wishes the game understands, and Roll Redo undoes only blows, not saves.
 
 ### Session, 2026-10-17 (midday): Demigods & Magics E.6 — spells outside battle: lasting protections and the caster's keeping
 

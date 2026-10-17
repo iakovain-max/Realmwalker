@@ -491,6 +491,20 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   `warding.hallowed_at`); Peaceful Rest sets a scar's `laid` (past.restless, encounters). `renown.flags`
   glyph_room (services._night: `warding.room_thief`), demiplane {money, items} (records, never lost); the cauldron's
   potions carry the tag "cauldron:<minute>" (`warding.brewed`: economy refuses them). Tests: tests/test_spells_road6.py.
+- Great magic and Wish's other uses (Expansion 3 E.7): road ops `does` contingency/jar/clone/imprison and Wish's
+  `road_too: "wish"` are `game/greatmagic.py` (spellwork.GREAT). Contingency is `char.spells["contingency"]` {spell,
+  slot, trigger start/bloodied/down, until}, cast by `Battle._contingency` (from `start` and `_hit`). Magic Jar is
+  `char.spells["jar"]`; in a fight `Fighter.jar` {host, dc, tried}: the body Incapacitated and still but `can_act` (its
+  options are only the abilities jar_possess/jar_return, `Battle._jar_abilities`), a host has condition "possessed"
+  with `control` and `jar` (its body's id) in `cond_ends`, played by the player (`Battle.ridden`, `pending_party`);
+  `_host_dies`, `_body_dies`, `_jar_release` (at the outcome); `spells.can_cast` refuses all else while the soul is in
+  its gem. Clones are `renown.flags["clones"]`: `greatmagic.cheat_death` (called where the death screen would open:
+  GameScreen._open_event_screen, AftermathScreen._close) and `clone_wakes` (from companions.died). Imprisonment is the
+  meeting screen's i (`prison_casters`, `imprison`). Wish's Subjects carry `data["group"]` (Shift ←→ jumps on the
+  Spells page); a wished resistance is `char.spells["wished_resist"]` (query.resists), an immunity
+  `char.effects["immune_spell:<id>"]` (effects.warded's `sid`); Sudden Learning is `feats.revoke` and the pending
+  kind "relearn". Roll Redo is "wish:redo:<event index>" (`Battle.redo_options`, `do_redo`; attack events keep bonus,
+  ac and round). Tests: tests/test_spells_road7.py.
 - Gear and tools 2024 (Expansion 2 part D): items.json `pack` (opens into its contents, gear.open_pack), `helps`
   {search, traps, force, disguise} (dungeon.helps, law.put_on_disguise), `utilize` (a tool's 2024 uses, on its card),
   `carry` also on carried containers (each kind once, Sheet.pack_carry), `trinket` (data/trinkets.json; the name and

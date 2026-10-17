@@ -395,7 +395,7 @@ system is built once and every spell that uses it comes with it.
     last ones vanish; no merchant buys them. Cast before a fight, not in one (drawing a potion is a bonus action,
     as drinking one is).
   - Companions: one who knows Forbiddance casts it as a ritual before a long rest in the wild (radiant).
-- [ ] E.7 Great magic and Wish's other uses; Part E to `main`: contingency, magic jar, clone, imprisonment, and
+- [x] E.7 Great magic and Wish's other uses; Part E to `main`: contingency, magic jar, clone, imprisonment, and
   Wish's other uses outside a fight (Object Creation, Resistance, Spell Immunity, Sudden Learning, Roll Redo,
   Reshape Reality).
   How (the design, at the start of E.7; numbers from the 2024 PHB):
