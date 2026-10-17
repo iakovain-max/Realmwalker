@@ -207,9 +207,9 @@ def sell_price(game, npc: NPC, item: Item) -> tuple[int | None, str]:
     d = items.get(item.def_id)
     if d["category"] not in spec["buys"]:
         return None, f"they don't deal in {d['category']}"
-    from realmwalker.game import stonework
+    from realmwalker.game import stonework, warding
 
-    if stonework.conjured(item):
+    if stonework.conjured(item) or warding.brewed(item):
         return None, "they can see it is made by magic, and will not touch it"
     if "stolen" in item.tags:
         from realmwalker.game.law import is_fence

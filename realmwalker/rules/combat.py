@@ -603,11 +603,21 @@ class Battle:
             fid += 1
         if env.carried_light > 0 and self.fighters:
             self.fighters[0].glow = max(self.fighters[0].glow, int(env.carried_light))
+        from realmwalker.rules.engine import conditions as cond
+
         for cr in foes:
             f = Fighter(fid, FOE, tables, creature=cr)
             for a in f.cdef["attacks"]:
                 if a.get("recharge"):
                     f.recharge[a["name"]] = True
+            # What it comes into the fight with (a Symbol on the way into the camp, game/warding.py): a sleep brought
+            # in breaks on damage; "discord" is Symbol's quarrel (Disadvantage on its attacks).
+            for cid, n in sorted(cr.conditions.items()):
+                if cid == "discord":
+                    f.buffs.append({"discord": True, "rounds": int(n), "source": "symbol"})
+                elif cid in cond.table(tables):
+                    durations.give(self, f, cid, rounds=int(n), **({"on_damage": True} if cid == "unconscious" else {}))
+            cr.conditions.clear()
             self.fighters.append(f)
             fid += 1
         self._place(spots or {})

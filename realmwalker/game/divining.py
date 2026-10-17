@@ -233,8 +233,16 @@ def _sense_evil(game, caster, spell) -> list[str]:
             found += 1
     p = game.player
     scar = past.scar_at(game.world, p.x, p.y)
-    if scar is not None:
+    if scar is not None and not scar.get("laid"):
         out.append(f"<warn>The ground is haunted: {esc(scar.get('name', 'an old battle'))} left its dead here.</>")
+        found += 1
+    from realmwalker.game import warding
+
+    holy = warding.hallowed_at(game)  # (Hallow: the spell tells whether it is active here, and where)
+    if holy is not None:
+        out.append("<good>The ground here is hallowed: no aberration, elemental, fey, fiend or undead can come onto "
+                   "it.</>" + (" Where the dead of the old battle lie, they lie quiet." if scar is not None and
+                               scar.get("laid") else ""))
         found += 1
     site = game.world.site_at(p.x, p.y)
     if site is not None and site.kind == "barrow":

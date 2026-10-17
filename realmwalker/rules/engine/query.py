@@ -295,6 +295,8 @@ def defences(f, dtype: str) -> str:
         return "immune"  # (Mind Blank)
     if f.creature and dtype in f.cdef.get("vulnerable", []):
         return "vulnerable"
+    if f.buffs and any(dtype in (bf.get("vulnerable") or ()) for bf in f.buffs):
+        return "vulnerable"  # (hallowed ground: game/warding.py)
     weak = tr.values(f, "vulnerable", flat=True)
     if dtype in weak or ("all" in weak and dtype):
         return "vulnerable"

@@ -328,6 +328,12 @@ def _catalogue_mark(b, bf: dict, spell: dict) -> tuple[str, str, list[str]] | No
     if bf.get("heroism"):
         return "blessed", f"Heroism ({name})" if name else "Heroism", [
             f"Fearless; {int(bf['heroism'])} temporary hit points at the start of each of their turns."]
+    if bf.get("discord"):
+        return "baned", "In discord (Symbol)", ["Quarrelling with their own: their attack rolls have disadvantage."]
+    if bf.get("vulnerable"):
+        return "marked", "Hallowed ground", [f"Vulnerable to {esc(', '.join(bf['vulnerable']))} damage here."]
+    if bf.get("immune") and bf.get("source") == "hallow":
+        return "blessed", "Hallowed ground", ["Courage: they cannot be frightened here."]
     if bf.get("weak") or bf.get("damage_die"):
         return "sapped", f"Enfeebled ({name})" if name else "Enfeebled", [
             "Disadvantage on Strength attacks and saves" + (f"; {esc(str(bf['damage_die']).lstrip('-'))} off the "

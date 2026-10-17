@@ -726,7 +726,9 @@ ROAD_USES = ("feed", "water", "purify", "goodberry", "feast", "ward", "repose", 
              # Part E.4: minds and the law, illusions, the small arts (game/glamour.py)
              "mind", "illusion", "art",
              # Part E.5: locks and stone, weather and land (game/stonework.py)
-             "lock", "mend", "hand", "make", "stone", "chest", "weather", "plants", "wave")
+             "lock", "mend", "hand", "make", "stone", "chest", "weather", "plants", "wave",
+             # Part E.6: lasting protections and the caster's keeping (game/warding.py)
+             "protect", "hallow", "demiplane", "cauldron")
 # What each of Part E.3's road uses is about (an op's `what`, `how` or `with`; the start-up check knows them).
 E3_KINDS = {"sense": ("what", ("magic", "evil", "poison", "traps")),
             "locate": ("what", ("object", "creature", "nature")),
@@ -740,6 +742,7 @@ E4_KINDS = {"mind": ("how", ("friends", "enthrall", "truth", "geas", "memory", "
 E5_KINDS = {"lock": ("how", ("knock", "arcane")),
             "make": ("how", ("fabricate", "creation")),
             "stone": ("how", ("shape", "passwall"))}
+E6_KINDS = {"protect": ("how", ("glyph", "symbol", "guards", "forbiddance", "circle", "sanctum"))}
 WARDS = ("alarm", "hut", "hound", "rope", "mansion", "meld",
          "decoy", "mouth", "veil",  # (Part E.4: Programmed Illusion, Magic Mouth, Hallucinatory Terrain/Mirage Arcane)
          "earthworks")  # (Part E.5: Move Earth's ditch and bank)

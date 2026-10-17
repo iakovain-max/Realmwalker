@@ -304,8 +304,8 @@ def restless(game, rng) -> str | None:
     """At night on a field of the dead: the intro of the dead that come for you, or None (not here, not now)."""
     p = game.player
     scar = scar_at(game.world, p.x, p.y)
-    if scar is None or game.light >= 0.5 or not rng.chance(0.6):
-        return None
+    if scar is None or scar.get("laid") or game.light >= 0.5 or not rng.chance(0.6):
+        return None  # (a field hallowed with Peaceful Rest: game/warding.py)
     return scar_words(game, scar, "intro") or None
 
 
