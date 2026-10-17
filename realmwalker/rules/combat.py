@@ -780,19 +780,21 @@ class Battle:
 
     # ------------------------------------------------------------------ allies: familiars and steeds (Expansion 3 F)
     def add_ally(self, creature: Creature, owner: Fighter, kind: str, *, spell: str = "", level: int = 0,
-                 type_: str = "", cdef: dict | None = None) -> Fighter:
-        """A creature that fights for the party beside `owner` (a familiar, a steed): on the nearest free squares,
-        at once. In a fight already under way a familiar rolls its own Initiative and joins the order by it (its turn
-        comes next round if its place has passed); a steed takes its turn right after its owner's (PHB 2024)."""
-        f = Fighter(max((x.id for x in self.fighters), default=0) + 1, PARTY, self.t, creature=creature)
+                 type_: str = "", cdef: dict | None = None, point: tuple[int, int] | None = None) -> Fighter:
+        """A creature that fights on `owner`'s side (a familiar, a steed, a summoned spirit): on the nearest free
+        squares beside its owner (or to `point`), at once. In a fight already under way a familiar rolls its own
+        Initiative and joins the order by it (its turn comes next round if its place has passed); anything else takes
+        its turn right after its owner's (PHB 2024)."""
+        f = Fighter(max((x.id for x in self.fighters), default=0) + 1, owner.side, self.t, creature=creature)
         if cdef is not None:
-            f.cdef = cdef  # (the steed's numbers for its slot: allies.steed_def)
+            f.cdef = cdef  # (its numbers for its slot: allies.steed_def, allies.summon_def)
+        f.slots = list(f.cdef.get("spellcasting", {}).get("slots", []))
         f.bond = {"owner": owner.id, "kind": kind, "spell": spell, "level": int(level), "type": type_}
         for a in f.cdef["attacks"]:
             if a.get("recharge"):
                 f.recharge[a["name"]] = True
         taken = {c for x in self.on_field() for c in x.cells}
-        f.x, f.y = self._free_near((owner.x + owner.sq, owner.y), f.sq, taken)
+        f.x, f.y = self._free_near(point if point is not None else (owner.x + owner.sq, owner.y), f.sq, taken)
         f.z = 0
         self.fighters.append(f)
         if self.order:
@@ -813,8 +815,29 @@ class Battle:
         self._event("appear", who=f.id)
         return f
 
+    def _clear_bonded(self, x: Fighter) -> None:
+        """A summoned or bonded creature gone: the ground and tokens it laid go with it (a fey spirit's darkness)."""
+        for z in [z for z in self.zones if z.owner == x.id]:
+            self._remove_zone(z)
+        for tok in [t for t in self.tokens if t.owner == x.id]:
+            self.tokens.remove(tok)
+            self._event("token_end", id=tok.id)
+
     def allies_of_owner(self, owner: Fighter) -> list[Fighter]:
         return [x for x in self.fighters if x.bond is not None and x.bond.get("owner") == owner.id]
+
+    def dismiss(self, x: Fighter, quiet: bool = False) -> None:
+        """A summoned creature leaves the field for good, leaving nothing (the spell that held it ended)."""
+        self._release(x)
+        self._clear_bonded(x)
+        x.state = "dead"
+        x.hp = 0
+        x.conditions = {}
+        if x.creature is not None:
+            x.creature.alive = False
+        self._event("vanish", who=x.id)
+        if not quiet:
+            self.say(f"{x.the_name[:1].upper() + x.the_name[1:]} fades away.", "magic")
 
     def _bond_order(self) -> None:
         """A steed's turn comes right after its owner's, whatever it rolled (it shares the owner's count)."""
@@ -1240,8 +1263,8 @@ class Battle:
             if f.z > 0 and not f.hovers and ("prone" in f.conditions or f.incapacitated or f.state == "down"
                                              or f.fly_speed <= 0) and not f.buff_value("aloft"):
                 self._fall(f)
-        foes = [f for f in self.team(FOE) if f.active and "unconscious" not in f.conditions and not _feigning(f)
-                or f.state == "away"]
+        foes = [f for f in self.team(FOE) if f.bond is None and (
+            f.active and "unconscious" not in f.conditions and not _feigning(f) or f.state == "away")]
         # (an ally alone - a familiar, a steed - does not keep a fight going when every one of the party is down)
         party = [f for f in self.team(PARTY) if f.bond is None and (
             f.active and "unconscious" not in f.conditions and not _feigning(f) or f.state == "away")]
@@ -2843,6 +2866,7 @@ class Battle:
             killer = self.fighter(killer.bond["owner"])  # (what a familiar or a steed kills, its owner is known for)
         if f.creature and f.bond is not None:
             f.creature.alive = False  # (it disappears at 0 hit points, leaving nothing: PHB 2024)
+            self._clear_bonded(f)
             self._event("vanish", who=f.id)
             self.say(f"{f.the_name[:1].upper() + f.the_name[1:]} is gone, back to wherever it came from.", "danger")
         elif f.creature:
@@ -2877,7 +2901,7 @@ class Battle:
     def _morale_losses(self, side: str) -> None:
         if side != FOE:
             return
-        lost = [f for f in self.side(FOE) if not f.active]
+        lost = [f for f in self.side(FOE) if not f.active and f.bond is None]
         if len(lost) * 2 < self.initial_foes:
             return
         for f in self.side(FOE):
@@ -4338,6 +4362,9 @@ class Battle:
         for tok in [t for t in self.tokens if t.owner == f.id and t.rounds < 0]:
             self.tokens.remove(tok)  # a spiritual weapon held by concentration (2024)
             self._event("token_end", id=tok.id)
+        for x in self.allies_of_owner(f):  # a summoned spirit goes when the spell does (Expansion 3 F.2)
+            if x.bond.get("conc") and x.state not in ("dead", "fled"):
+                self.dismiss(x)
         durations.end_concentration(self, f)
         for x in self.fighters:  # a lasting spell held by concentration (Shield of Faith) ends with it
             if x.id in conc.get("on", []) and x.char is not None:
@@ -4792,7 +4819,7 @@ class Battle:
         return text[:1].upper() + text[1:]
 
     def result(self) -> BattleResult:
-        foes = self.side(FOE)
+        foes = [f for f in self.side(FOE) if f.bond is None]  # (an enemy caster's spirit leaves nothing behind)
         dead = [f.creature for f in foes if f.state == "dead"]
         captives = [f.creature for f in foes if f.state == "surrendered" or ("unconscious" in f.conditions and f.state == "fighting")]
         fled = [f.creature for f in foes if f.state in ("fled", "fleeing", "away")]

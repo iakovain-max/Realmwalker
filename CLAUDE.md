@@ -516,6 +516,13 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   (spellwork's door ALLIES: Find Familiar's form and heart, sending it away and back without a slot; the steed in the
   herd with `summoned`, kept in step by `put_in_herd` from pass_time; the familiar's night watch). A creature's own
   gift is a spell with classes ["creature"] (no scroll, no Wish copy). Tests: tests/test_allies.py.
+- Summoned spirits (Expansion 3 F.2): the "ally" op with kind "summon" and `creature` calls `allies.summon_spirit`: the
+  creature's `summon` record (creatures.allies.json: the spell's `level`, `ac`, `hp`, `hp_up`, `forms`) and its stat
+  block's `plus_level` attacks give its numbers for the slot and the caster (`allies.summon_def`: the caster's spell
+  attack and DC, Multiattack half the level); it appears at the spell's point, acts after its caster, has `bond`
+  kind "summon" with `conc` True and goes when the concentration ends (`Battle.dismiss` from `_end_concentration`).
+  The form is the game's choice (`allies.best_form`); traits in `engine/handlers/summons.py`; stat block `on_hit` may
+  carry {"op": "kernel", "ops": [...]}. The Auto's worth: `estimates._summon_worth`. Tests: tests/test_summons.py.
 - Gear and tools 2024 (Expansion 2 part D): items.json `pack` (opens into its contents, gear.open_pack), `helps`
   {search, traps, force, disguise} (dungeon.helps, law.put_on_disguise), `utilize` (a tool's 2024 uses, on its card),
   `carry` also on carried containers (each kind once, Sheet.pack_carry), `trinket` (data/trinkets.json; the name and

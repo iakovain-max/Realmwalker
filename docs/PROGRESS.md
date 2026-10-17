@@ -28,7 +28,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Clearing the decks for the expansions** | ✅ Done (2026-10-12), branch `prep/clear-the-decks` |
 | **Expansion 1, *Dice & Destiny*** (version 1.1.0) | ✅ Released (2026-10-13), branch `dlc/01-dice-destiny` |
 | **Expansion 2, *Blades & Backgrounds*** (version 1.2.0) | ✅ Released (2026-10-13), branch `dlc/02-blades-backgrounds` |
-| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete), D (the spell catalogue: 191 battle spells, cantrips to level 9, and Wish) E.1 (spells outside battle: healing, return from death, food, shelter and watch), E.2 (light, the body on the move, travel by magic), E.3 (finding and seeing, asking the powers, talking), E.4 (minds and the law, disguise and illusion, the small arts), E.5 (locks and stone, weather and land), E.6 (lasting protections and the caster's keeping) and E.7 (great magic and Wish's other uses, 2026-10-17: Part E complete) and F.1 (a familiar and a steed fight beside you) in `main`; F.2 (the Summon spells' spirits) next |
+| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete), D (the spell catalogue: 191 battle spells, cantrips to level 9, and Wish) E.1 (spells outside battle: healing, return from death, food, shelter and watch), E.2 (light, the body on the move, travel by magic), E.3 (finding and seeing, asking the powers, talking), E.4 (minds and the law, disguise and illusion, the small arts), E.5 (locks and stone, weather and land), E.6 (lasting protections and the caster's keeping) and E.7 (great magic and Wish's other uses, 2026-10-17: Part E complete) and F.1 (a familiar and a steed fight beside you) and F.2 (summoned spirits of levels 2 to 4) in `main`; F.3 (the level 5 and 6 spirits and Animate Objects) next |
 
 ---
 
@@ -39,6 +39,53 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-17 (afternoon): Demigods & Magics F.2 — summoned spirits fight beside you
+
+Built by the relay builder realmwalker-a. Saves do not change: an old world of format 18 still loads. The Summon
+spells were split in two at the start: this part has the summoning itself and the seven spells of levels 2 to 4;
+F.3 has Summon Celestial, Summon Dragon, Summon Fiend and Animate Objects. The dead and the bound are now F.4, the
+shapes F.5.
+- **Seven new spells call a creature to fight for you**: Summon Beast (2nd level, druids and rangers), Summon Fey and
+  Summon Undead (3rd), Summon Aberration, Summon Construct, Summon Elemental and Giant Insect (4th). You pick a spot
+  up to 90 feet away (60 for the insect) and the creature appears there. It takes its turn right after yours; you
+  give it its orders like a member of the party, or press **z** and the game plays it.
+- **It grows with the slot.** Cast with a higher slot, the creature is harder to hit, has more hit points, hits
+  harder, and from a 4th level slot strikes twice (three times from a 6th, and so on). It uses your own spell attack
+  and your own spell save DC, so a better caster calls a better spirit.
+- **It lasts while you concentrate.** If your concentration breaks (a blow, a new concentration spell, falling
+  unconscious) or the fight ends, the creature fades away. At 0 hit points it is gone. It never runs, earns no
+  experience, and does not keep a lost fight going.
+- **Each comes in shapes, and the game picks the one the fight needs** (as Chromatic Orb picks its colour): a flier
+  when the foes are up in the air, a shooter when they stand far off, the element that hurts them most.
+  - Beast: a wolf of the land (strikes at an advantage beside a friend, climbs), a hawk of the air (flies, slips out
+    of reach) or a shark of the water.
+  - Fey: a little fey with a blade of light that steps 30 feet through the world each turn; Fuming, it then strikes
+    at an advantage; Mirthful, it charms a foe beside it; Tricksy, it leaves a square of magical darkness.
+  - Undead: a putrid corpse that sickens those beside it and paralyses the sickened with its claws, a ghost that
+    flies and frightens with its touch, or a skeleton that shoots grave bolts 150 feet.
+  - Aberration: a slaad that heals 5 a turn and whose claws stop healing, a floating eye that shoots 150 feet, or a
+    mind flayer whose whispers hurt everyone beside it except you (friends too: keep them away from it).
+  - Construct: metal that burns whoever strikes it, stone that slows the foes beside it, or clay that lashes back at
+    whoever hurts it.
+  - Elemental: earth (hard to cut), air (flies, lightning), fire (fire-proof) or water (cold).
+  - Giant Insect: a centipede that spews poison, a spider that shoots webs that root a foe, or a wasp that flies.
+- **Costly components, kept, not used up**: a gilded acorn (200 gold), a gilded flower and a gilded skull (300 each),
+  a platinum-inlaid vial, an ornate lockbox and a gold-inlaid vial (400 each), sold in cities. Giant Insect needs
+  none.
+- **Companions and enemies use them too.** A companion on Auto who knows one calls its spirit when it is worth it; an
+  enemy caster's spirit fights on the enemy's side.
+- **New pictures**: a shark, a faun for the fey, a floating eye, a red slaad and a tentacled horror, the air and water
+  elementals, clay and iron golems and a giant wasp from the tile pack; the six components.
+- **Waiting for later**: the water beast breathes only water, the elementals squeeze through narrow gaps and the ghost
+  walks through walls in the book; those wait for fights under water and through walls. A clay spirit with nobody in
+  reach does not move toward whoever hurt it.
+- **The codex**: the seven spells settled (adapted, with notes).
+- **Checked**: tests/test_summons.py (every spell in a real fight at two slots, every shape's trait and blow, the
+  moods, the Auto calling a spirit and playing it, an enemy's spirit, the battle screen), the spell catalogue's test
+  casts each one and sees its worth, the full suite, the autoplay bot (it now checks that a spirit on the field is
+  held by its caster) and the window smoke test; a test draws every shape of every spirit with the real tile
+  sheets (the fresh review found that drawing one would have failed in the window; fixed).
 
 ### Session, 2026-10-17 (afternoon): Demigods & Magics F.1 — a familiar and a steed fight beside you
 

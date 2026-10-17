@@ -246,7 +246,7 @@ def finish_battle(game) -> Aftermath:
         if actor is not None and lm is not None and actor in lm.actors:
             lm.actors.remove(actor)
     elif result.outcome in ("defeat", "surrendered"):
-        foes = [f for f in battle.side(FOE) if f.active]
+        foes = [f for f in battle.side(FOE) if f.active and f.bond is None]
         merciful = any(f.morale_type in MERCIFUL for f in foes) or result.outcome == "surrendered"
         if merciful and any(c.alive for c in game.party):
             taken = _rob_party(game, rng)

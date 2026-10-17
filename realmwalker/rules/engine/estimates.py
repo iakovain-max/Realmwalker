@@ -221,6 +221,8 @@ def spell_value(b, f, sid: str, *, target=None, point=None, dc: int | None = Non
             w.help += max(0.0, amount - x.temp_hp) * (0.6 if any(b.gap(x, e) <= 6 for e in b.enemies_of(f)) else 0.2)
         elif kind == "move_zone" and point is not None:
             w.damage += _moved_zone_worth(b, f, spell, point)
+        elif kind == "ally" and o.get("kind") == "summon":  # (a summoned spirit: its blows for three rounds, its body)
+            w.help += _summon_worth(b, f, o["creature"], lvl, bonus, dc, point)
         elif kind == "ally":  # (Find Steed: a fighter more on the field, unless one stands there already)
             if not any(x.bond.get("kind") == o.get("kind", "steed") and x.active for x in b.allies_of_owner(f)):
                 w.help += (4.5 + lvl) * 0.55 * 3 + (5 + 10 * lvl) * 0.3
@@ -498,6 +500,8 @@ def _control_rounds(ops: list[dict]) -> float:
             return 0.4
         if o["op"] == "condition" and o["condition"] == "charmed":
             return 0.3  # (it will not strike the one who charmed it)
+        if o["op"] == "condition" and o["condition"] == "poisoned":
+            return 0.3  # (its attacks and checks at a disadvantage: a centipede's spew)
     return 0.0
 
 
@@ -762,6 +766,24 @@ def _mark_on_foe(b, f, x, buff: dict) -> float:
         hits = 2.0 if f.char is not None and f.char.equipped_item("main_hand") is not None else 1.5
         return avg(str(buff["quarry"])) * hits * min(3.0, x.hp / 8.0)
     return 0.0
+
+
+def _summon_worth(b, f, cid: str, level: int, bonus: int, dc: int, point) -> float:
+    """A summoned spirit (Expansion 3 F.2): its blows for three rounds (in the form the game would pick), its hit
+    points as a wall, more where it lands among the foes; nothing while one of its caster's spirits still fights."""
+    from realmwalker.rules import allies
+
+    if any(x.bond.get("conc") and x.active for x in b.allies_of_owner(f)):
+        return 0.0
+    d = allies.summon_def(b.t, cid, level, allies.best_form(b, f, cid), bonus, dc)
+    blow = max((avg(str(a["damage"])) + sum(avg(str(e.get("damage", "0"))) for e in a.get("extra", ()))
+                for a in d["attacks"]), default=0.0)
+    worth = blow * max(1, int(d.get("multiattack", 1))) * 0.6 * 3 + int(d["hp"]) * 0.3
+    if point is not None:
+        foes = [e for e in b.enemies_of(f) if e.active]
+        near = min((max(abs(e.x - point[0]), abs(e.y - point[1])) for e in foes), default=99)
+        worth *= 1.0 if near <= 2 else (0.9 if near <= 6 else 0.75)
+    return worth
 
 
 def _marks_worth(b, f, x, ops: list, up: int) -> float:

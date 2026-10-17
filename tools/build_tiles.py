@@ -246,6 +246,24 @@ CREATURES = {
     "necromancer": "monster/necromancer_new.png",
     "wizard": "monster/wizard.png",
     "death_knight": "monster/death_knight.png",
+    # the summoned spirits' forms (Expansion 3 F.2; the wolf, hawk, ghost, ghoul, skeleton, golem, elementals,
+    # centipede and spider are above)
+    "shark": "monster/aquatic/shark_new.png",
+    "fey_spirit": "monster/faun.png",
+    "beholderkin_spirit": "monster/eyes/giant_eyeball.png",
+    "mind_flayer_spirit": "monster/aberration/unseen_horror_new.png",
+    "air_elemental": "monster/nonliving/air_elemental_new.png",
+    "water_elemental": "monster/nonliving/water_elemental_new.png",
+    "clay_golem": "monster/nonliving/clay_golem.png",
+    "iron_golem": "monster/nonliving/iron_golem.png",
+    "giant_wasp": "monster/animals/yellow_wasp.png",
+    # each summoned creature by its own id (its card and anything that has no form), as its first form
+    "bestial_spirit": "monster/animals/wolf.png",
+    "undead_spirit": "monster/undead/ghoul.png",
+    "aberrant_spirit": "monster/eyes/giant_eyeball.png",
+    "construct_spirit": "monster/nonliving/iron_golem.png",
+    "elemental_spirit": "monster/nonliving/earth_elemental.png",
+    "giant_insect": "monster/animals/giant_centipede.png",
 }
 for cid, path in CREATURES.items():
     pick(f"creature/{cid}", path, "creature")
@@ -253,6 +271,8 @@ for cid, path in CREATURES.items():
 pick("creature/boar", "monster/animals/hog_new.png", "creature", hue=14, sat=0.55, val=0.48)
 # A bugbear: a hobgoblin made bigger and furrier in tone.
 pick("creature/bugbear", "monster/boggart_new.png", "creature", hue=18, sat=0.6, val=0.7)
+# A slaad spirit (Summon Aberration): the pack's giant frog in a red slaad's colours.
+pick("creature/slaad_spirit", "monster/animals/giant_frog.png", "creature", hue=2, sat=0.75, val=0.8)
 # A hawk: the pack's shrike in a hawk's browns.
 pick("creature/hawk", "monster/animals/caustic_shrike.png", "creature", hue=28, sat=0.5, val=0.8)
 
@@ -411,6 +431,13 @@ ITEMS = {
 }
 for iid, path in ITEMS.items():
     pick(f"item/{iid}", path, "item")
+# The Summon spells' costly components (Expansion 3 F.2), some gilded.
+pick("item/gilded_acorn", "item/food/apricot_new.png", "item")
+pick("item/gilded_flower", "item/misc/misc_fan_new.png", "item", hue=45, sat=0.75, val=1.0)
+pick("item/gilded_skull", "gui/spells/components/skull.png", "item", hue=45, sat=0.7, val=1.0)
+pick("item/platinum_vial", "item/misc/misc_phial.png", "item")
+pick("item/lockbox", "item/misc/misc_box.png", "item")
+pick("item/elemental_vial", "item/potion/golden.png", "item")
 for i, path in enumerate(["item/gold/gold_pile_1.png", "item/gold/gold_pile_3.png", "item/gold/gold_pile_7.png",
                           "item/gold/gold_pile_16.png"]):
     pick(f"item/_coins_{i}", path, "item")

@@ -29,7 +29,10 @@ an op inside another (`on_hit`, `on_fail`, `then`) works on the creature the out
     no_opportunity, no_heal, mark   (until a turn ends or starts: see each)
     lose_turn  it spends its next turn grovelling on the ground (Command)
     ally       kind ("steed"): a creature that fights for the caster appears beside them (Find Steed;
-               rules/allies.summon, Battle.add_ally)
+               rules/allies.summon, Battle.add_ally); kind "summon" with creature (an id with a `summon` record):
+               a spirit at the point, its numbers for the slot, gone when the concentration ends (Summon Beast...:
+               rules/allies.summon_spirit)
+    if_condition  condition, ops [ops]: those ops only if the creature has the condition now (Rotting Claw)
     burning    it catches fire (1d4 fire at the start of each of its turns, until put out with an action)
     damage     damage that has already landed (a stat block's extra harm): damage + type
     stabilize, restore (conditions, one, disease), revive (consumes, within_rounds), identify (outside a fight)
@@ -626,9 +629,15 @@ def _no_opportunity(c: Cast, o: dict, victim) -> None:
 
 @op("no_heal")
 def _no_heal(c: Cast, o: dict, victim) -> None:
-    if victim is not None:
+    if victim is not None:  # (until the end of the caster's next turn; `until` "turn_start": its start, a slaad's Claw)
         durations.buff(victim, {"no_heal": True, "source": f"chill:{c.sid}"},
-                       durations.until(c.b, c.caster, "turn_end"))
+                       durations.until(c.b, c.caster, o.get("until", "turn_end")))
+
+
+@op("if_condition")
+def _if_condition(c: Cast, o: dict, victim) -> None:
+    if victim is not None and o["condition"] in victim.conditions:
+        run(c, o["ops"], victim)
 
 
 @op("mark")
@@ -1425,7 +1434,11 @@ def _guardian(c: Cast, o: dict, victim) -> None:
 def _ally(c: Cast, o: dict, victim) -> None:
     from realmwalker.rules import allies
 
-    allies.summon(c.b, c.caster, o.get("kind", "steed"), c.level or int(c.spell.get("level", 1)))
+    level = c.level or int(c.spell.get("level", 1))
+    if o.get("kind") == "summon":
+        allies.summon_spirit(c.b, c.caster, o["creature"], level, c.point, sid=c.sid)
+        return
+    allies.summon(c.b, c.caster, o.get("kind", "steed"), level)
 
 
 @op("summon")

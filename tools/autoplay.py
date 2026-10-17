@@ -288,6 +288,11 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
                         taken.setdefault(c, f)
                 if f.move_left < 0:
                     fail(f"{f.name} has walked further than they could ({f.move_left} feet left)")
+                if f.bond is not None and f.bond.get("conc") and f.state in ("fighting", "fleeing"):
+                    # (Expansion 3 F.2: a summoned spirit is there only while its caster holds the spell)
+                    owner = b.fighter(f.bond["owner"])
+                    if (owner.concentration or {}).get("spell") != f.bond.get("spell") or owner.side != f.side:
+                        fail(f"{f.name} is on the field, but {owner.name} no longer holds {f.bond.get('spell')}")
         _check_factions(game, fail)
         _check_law(game, fail)
         _check_quests(game, fail)
