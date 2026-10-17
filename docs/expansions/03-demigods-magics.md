@@ -239,16 +239,67 @@ system is built once and every spell that uses it comes with it.
     next fight hurt). Rary's Telepathic Bond: while it lasts no one in the party is surprised unless all are. Detect
     Thoughts in a fight senses thinking creatures within 30 feet (the invisible and the hidden found); outside one it
     reads a person near you (Wisdom save): what they feel about you, and a work's hidden side if they gave it.
-- [ ] E.4 Moving minds and the law, disguise, locks and stone, weather and land, lasting protections, great magic;
-  Part E to `main`. Minds and the law: friends, enthrall, zone of truth, geas, modify memory, glibness,
+- [x] E.4 Minds and the law, disguise and illusion, the small arts (27 spells). The old E.4 was split in two at its
+  start (2026-10-17): 54 spells and Wish in seven groups were too many for one part; the spells of townsfolk and the
+  law (minds, disguise and illusion, the small arts) are E.4, locks and stone, weather and land, lasting protections
+  and great magic became E.5. Minds and the law: friends, enthrall, zone of truth, geas, modify memory, glibness,
   antipathy/sympathy, awaken. Disguise and illusion: disguise self, seeming, minor illusion, silent image, major
   image, programmed illusion, project image, mislead, hallucinatory terrain, mirage arcane, illusory script, magic
-  mouth, Nystul's magic aura, nondetection, sequester. Locks and stone: knock, arcane lock, mending, mage hand,
-  fabricate, stone shape, passwall, move earth, creation, Leomund's secret chest. The small arts: druidcraft,
-  elementalism, prestidigitation, thaumaturgy. Weather and land: control water, control weather, plant growth,
-  tsunami (cast in a minute). Lasting protections: glyph of warding, symbol, guards and wards, forbiddance, hallow,
-  magic circle, Mordenkainen's private sanctum. Great magic: contingency, magic jar, Tasha's bubbling cauldron,
-  clone, demiplane, imprisonment, and Wish's other uses outside a fight.
+  mouth, Nystul's magic aura, nondetection, sequester. The small arts: druidcraft, elementalism, prestidigitation,
+  thaumaturgy.
+  How (the design, at the start of E.4; numbers from the 2024 PHB):
+  - The new module is `game/glamour.py`: road ops `does` "mind" (`how`: friends, enthrall, truth, geas, memory,
+    antipathy, awaken), "illusion" (`how`: distract, decoy, veil, project, script, mask, sequester) and "art" (`how`:
+    druidcraft, elementalism, prestidigitation, thaumaturgy), listed in `spells.E4_KINDS` and checked at start-up.
+    Spells aimed at someone or something list Subjects, as E.3's do (a person near you, a party animal, a kind of
+    creature, a carried thing, a town far away). A conversation takes no time in this game, so a spell of a minute
+    lasts for the conversation that follows (ten minutes of the world): its record is a time on the person
+    (`npc.flags`) or in `renown.flags`, both saved.
+  - Minds: Friends (a person within 10 feet, Wisdom save; not twice in a day) makes them Friendly for the talk
+    (Advantage on Influence); when it ends they know, and like you less (-20). Enthrall: everyone of your choice within
+    60 feet who fails a Wisdom save has -10 to Perception for a minute: they are no witnesses to a theft or a crime,
+    a merchant watches your hands at -10, and creeping past them is easier. Zone of Truth (a person, Charisma save):
+    they cannot lie for ten minutes: a work they gave you that hides something is shown for what it is, and an
+    honest one is known honest. Geas (a person, Wisdom save; 30 days, a year from level 7, until ended at 9): they
+    obey: they keep silent about every crime of yours they saw, tell what they want and what they hide, and stay
+    Friendly; a guard under it never lays hands on you; when it ends they know (-40). Modify Memory (a person,
+    Wisdom save): they forget the last day: the crimes of yours they saw and not yet reported (silenced; a report
+    already made stands), the casting itself, and any grudge from it (their mood back to indifferent at worst).
+    Glibness (an hour): every Charisma check's die is at least 15 (conversations, bribes, disguise, haggling).
+    Antipathy/Sympathy (an hour to cast, 10 days, on the caster): a kind of creature (an encounter group) is chosen;
+    a band of that kind met on the road makes Wisdom saves: Antipathy sends it fleeing if most fail, Sympathy brings
+    it to you entranced (it is caught unaware). Awaken (8 hours, a 1,000 GP agate) wakes a party animal: it speaks,
+    it is named, and it keeps watch: the camp is never caught asleep while it is with you (awakened plants wait for
+    Part F's followers).
+  - Disguise: Disguise Self (an hour) and Seeming (8 hours, the whole party) are disguises whose quality is the
+    caster's spell save DC (a watchman's check against it sees through, as against a disguise kit's roll); Alter
+    Self's stays unseen-through. Illusions in a town distract (`renown.flags["distraction"]`: a penalty to the
+    Perception of everyone watching, for a time, in that town): Minor Illusion -5 for a minute, Silent Image -5 for
+    ten minutes, Major Image -10 for ten minutes, and from a 4th-level slot until you leave the town (it lasts until
+    dispelled). Mislead: in a fight the caster turns Invisible (until it attacks, deals damage or casts) and a double
+    stays; outside one, for the hour, nobody in town sees the caster (no witnesses). Wards on the camp: Magic Mouth
+    and Programmed Illusion ("mouth": it wakes the camp, as Alarm; "decoy": the night's visitors fall on an illusory
+    camp: the real one is awake and catches them unaware), Hallucinatory Terrain (24 hours) and Mirage Arcane (10 days):
+    "veil", hunters and night visitors pass the hidden camp by (an Investigation check against the DC sees it, which
+    only a clever band makes). Project Image: your image walks into a known town within 500 miles: you hear its news
+    and see its work board as if there. Illusory Script (10 days): a letter that shows each reader the seal they would
+    honour: the gate's guards wave you through without a search, and your papers impress as a noble's. Nystul's Magic
+    Aura (24 hours): a carried magic thing shows no aura: robbers take it for junk. Sequester (until dispelled): a
+    carried thing hidden from robbers, thieves, the watch and every divination; a fallen friend's body held out of
+    time (its days stop for good). Nondetection (8 hours): no Detect Thoughts or other divination of a foe finds the
+    one warded (in a fight: no enemy's `sense_thoughts`).
+  - The small arts: Druidcraft tells the next day's weather here (the weather is the world's own, so it is true) and
+    lights or snuffs the camp's fire; Elementalism lights the fire, gives everyone a cup of clean water, or dries the
+    party a little; Prestidigitation cleans the party (the grime of a few days) and warms the next meal; Thaumaturgy
+    gives Advantage on Intimidation in the talk that follows.
+  - The law: every one of them is magic seen (law.magic_check) where it is cast before witnesses; a spell on a
+    person is noticed when it ends (the charmed know, the enthralled do not).
+- [ ] E.5 Locks and stone, weather and land, lasting protections, great magic; Part E to `main`. Locks and stone:
+  knock, arcane lock, mending, mage hand, fabricate, stone shape, passwall, move earth, creation, Leomund's secret
+  chest. Weather and land: control water, control weather, plant growth, tsunami (cast in a minute). Lasting
+  protections: glyph of warding, symbol, guards and wards, forbiddance, hallow, magic circle, Mordenkainen's private
+  sanctum. Great magic: contingency, magic jar, Tasha's bubbling cauldron, clone, demiplane, imprisonment, and Wish's
+  other uses outside a fight.
 
 ### Part F — Appendix B: familiars, steeds and summons
 - [ ] F.1 The 36 stat blocks (beasts, imp, quasit, pseudodragon, sprite, sphinx of wonder, slaad tadpole) with

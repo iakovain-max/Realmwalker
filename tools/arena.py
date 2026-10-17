@@ -125,7 +125,10 @@ def options_of(tables, creature: str) -> list[str]:
     d = tables.creatures[creature]
     out = [f"attack:{a['name']}" for a in d.get("attacks", [])]
     for sid in d.get("spells", []):
-        if sid in tables.spells and tables.spells[sid].get("cast") != "reaction":
+        from realmwalker.rules import spells as spellrules
+
+        if sid in tables.spells and tables.spells[sid].get("cast") != "reaction" \
+                and not spellrules.out_of_battle(tables.spells[sid]):  # (Thaumaturgy's use is outside a fight)
             out.append(f"cast:{sid}")
     return list(dict.fromkeys(out))
 

@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 03 Demigods & Magics · Part E (spells outside battle), E.4 next · branch dlc/03-demigods-magics
+Current: 03 Demigods & Magics · Part E (spells outside battle), E.5 next · branch dlc/03-demigods-magics
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -14,10 +14,13 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   death, Aid, food and water, wards on the camp; saves format 18) and E.2 (light, the body on the move, travel by
   magic: Teleport, circles, Word of Recall, Wind Walk, Etherealness...) and E.3 (finding and seeing, asking the
   powers, talking: Detect Magic, Find Traps, Locate Object, Arcane Eye, Scrying, Augury, Divination, Commune, Legend
-  Lore, Tongues, Speak with Dead, Sending, Dream, Detect Thoughts...)
+  Lore, Tongues, Speak with Dead, Sending, Dream, Detect Thoughts...) and E.4 (minds and the law, disguise and
+  illusion, the small arts: Friends, Enthrall, Zone of Truth, Geas, Modify Memory, Glibness, Antipathy/Sympathy,
+  Awaken, Disguise Self, Seeming, the images, Mislead, Project Image, Illusory Script, Sequester, the camp's
+  illusions, Druidcraft, Thaumaturgy...)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
-  adapted); Expansion 3: 201 done, 237 adapted, 1 omitted of 558 (parts A, B, C, D, E.1, E.2 and E.3 settled). PHB 58% · DMG 12% · MM 8%
+  adapted); Expansion 3: 202 done, 263 adapted, 1 omitted of 558 (parts A, B, C, D, E.1, E.2, E.3 and E.4 settled). PHB 60% · DMG 12% · MM 8%
 Assumptions waiting for Anton:
 - The Player2 AI writer is removed (tagged `before-ai-removal`); its text is replaced everywhere by the game's own
   words, strengthened where they were thin.
@@ -220,18 +223,49 @@ Assumptions waiting for Anton:
   Rary's Telepathic Bond: none of the linked is surprised while two or more are linked (our surprise is a side's).
   Detect Thoughts senses a thinking mind (a person, or a creature with a language) within 30 feet as if it were seen;
   outside a fight it reads a townsman within 30 feet (Wisdom save, +2 for the notable; a success leaves them colder).
+- Expansion 3 E.4: E.4 was split at its start (54 spells and Wish in seven groups): minds and the law, disguise and
+  illusion and the small arts are E.4; locks and stone, weather and land, lasting protections and great magic are E.5.
+  A conversation takes no time here, so a spell of a minute (Friends, Thaumaturgy) lasts for the talk that follows
+  (ten minutes of the world). Friends' Friendly is Advantage on the Influence checks; when it ends they like you 20
+  less. Enthrall's -10 makes the held no witnesses at all (their eyes on the speaker), and it is offered only in a
+  town. Zone of Truth answers about a work they gave you (or tells what they want). Geas's command is the game's:
+  silence about your crimes, what they want and hide, Friendly, and a guard never arrests you (they obey, so its 5d10
+  never comes); when it ends -40. Modify Memory forgets the last day's unreported crimes (and the casting itself), and
+  the grudge each left (by its severity) and a Friends of that day; a report already made stands; older grudges stay. Glibness covers the Influence
+  checks, bribing the watch and a disguise kit. Antipathy/Sympathy is cast on the caster, names a kind of creature
+  that roams the land here (from the land's encounters), and acts when a band of that kind is met on the road
+  (Antipathy: most of it fails, it runs; Sympathy: the failed come entranced, the party sees them first). Awaken works
+  on the party's animals (a 1,000 GP rare stone for the agate); the awakened one keeps watch at night and calls out
+  rustlers; plants wait for Part F. Disguise Self and Seeming are disguises as good as the spell save DC; Alter Self
+  stays one nobody sees through. Minor Illusion, Silent Image and Major Image are cast only in a town and are a
+  penalty to every watcher's Perception there (thefts, creeping, the watch's look at a wanted face); a Major Image from
+  a 4th-level slot stays until you leave the town. Mislead and Invisibility on the leader leave no witnesses in a town
+  for their hour, until an assault or a murder ends them; a geased person is no witness either. Programmed Illusion and Magic Mouth stand while you camp (camps are not kept when you move on);
+  Hallucinatory Terrain and Mirage Arcane hide the camp (an Investigation check by the cleverest of a band against
+  the DC sees through, rolled hourly for hunters on a close-up map) and then let any rest be taken with enemies near.
+  Stacked illusions and Enthrall leave a merchant's watch at DC 5 at least; an illusion also lowers the chance that a
+  guard knows an undisguised wanted face (by a twentieth for each point). Project Image hears a known town's news within 500
+  miles and reads its board. Illusory Script's letter waves you through gate searches and impresses everyone (+5, as
+  a lord's signet). Nystul's Magic Aura masks a magic thing from robbers for a day; Sequester hides a thing from
+  robbers, thieves and the watch for good (nothing ends it yet), or holds a body out of time (a century, here). Nondetection hides a
+  mind from a foe's Detect Thoughts (no foe divines yet). Druidcraft's forecast is the world's own weather, so it comes
+  true; Elementalism lights the fire, else dries the party (-25 wetness), else gives a cup of water; Prestidigitation
+  takes 30 of the grime off and warms what is eaten in the next hour; Thaumaturgy is Advantage on Intimidation in the next talk.
+  Glibness, Disguise Self and Seeming are never cast in a fight (no use there). New components: jade dust (25 GP: one
+  pinch serves Magic Mouth's 10 GP), lead ink, a pinch of diamond dust (Nondetection's 25 GP); rare stones of 1,000
+  and 5,000 GP now sold in cities (for Awaken and Sequester).
 Ideas for later:
 - (none yet)
-Next session starts at: task E.4 in docs/expansions/03-demigods-magics.md (Part E, spells outside battle: moving
-minds and the law, disguise and illusion, locks and stone, the small arts, weather and land, lasting protections,
-great magic and Wish's other uses; its spells are listed in the design note under E.4; Part E goes to `main` with it).
-E.4 is large (about 50 spells): split it at its start as E.2 was, if needed. E.1's, E.2's and E.3's way of doing it: a spell outside a fight has `road_only` (or `minutes`) and an op {"op": "road", "does": ...}
-(rules/spells.ROAD_USES, checked at start-up), done in game/spellwork.py (or a module of its own, as game/revival.py);
-game/magic.cast_on_road spends the slot and passes the casting time; tests in tests/test_spells_outside.py and
-tests/test_spells_road2.py. A lasting spell (ten minutes or more) is a buff kept on the character and read outside a
-fight by the sheet or the world (E.2's keys are in rules/engine/marks.py); a spell aimed at a place has target
-"place" (game/waymagic.places), one aimed at something chosen lists Subjects (game/divining.Subject, through
-spellwork.subjects: E.3). Parts A, B, C, D, E.1, E.2 and E.3 are in `main`.
+Next session starts at: task E.5 in docs/expansions/03-demigods-magics.md (Part E, spells outside battle: locks and
+stone, weather and land, lasting protections, great magic and Wish's other uses; its spells are listed in the design
+note under E.5; it is the last of Part E). About 28 spells: split it at its start if needed, as E.2 and E.4 were.
+The way of Part E: a spell outside a fight has `road_only` (or `minutes`) and an op {"op": "road", "does": ...}
+(rules/spells.ROAD_USES and the kinds in E3_KINDS/E4_KINDS, checked at start-up), done in a module of its own
+(game/divining.py, speech.py, glamour.py...) through game/spellwork.py's door (subjects, problem, cast);
+game/magic.cast_on_road spends the slot and passes the casting time. A lasting spell (ten minutes or more) is a buff
+kept on the character (rules/engine/marks.py lists the keys); a camp ward is {"does": "ward", "ward": ...} with
+rounds or `days` (spellwork.ward_minutes); a spell aimed at something chosen lists Subjects (game/divining.Subject).
+Tests: tests/test_spells_outside.py, test_spells_road2.py, road3, road4. Parts A to D and E.1 to E.4 are in `main`.
 
 ## Done
 
@@ -261,6 +295,7 @@ spellwork.subjects: E.3). Parts A, B, C, D, E.1, E.2 and E.3 are in `main`.
 | 2026-10-17 | Demigods & Magics D.3: the third wave, 27 battle spells of levels 6 and 7 (Chain Lightning, Disintegrate, Heal, Harm, Flesh to Stone, the Globe, Otto's dance, walls of ice, thorns and blades, Divine Word, Prismatic Spray, Reverse Gravity, the Forcecage...); merged into `main` | `dlc/03-demigods-magics` |
 | 2026-10-17 | Demigods & Magics E.2: light, the body on the move and travel by magic (34 spells: Teleport by its table, Teleportation Circle, Word of Recall, Wind Walk, Water Walk, Etherealness, Feather Fall, Feign Death...); E.2 split, E.3 next; merged into `main` | `dlc/03-demigods-magics` |
 | 2026-10-17 | Demigods & Magics E.3: finding and seeing (Detect Magic, Find Traps, Locate Object and Creature, Clairvoyance, Arcane Eye, Scrying, Drawmij's Instant Summons...), asking the powers from the world's truth (Augury, Divination, Commune, Contact Other Plane, Commune with Nature, Legend Lore), talking (a language rule on the road, Tongues, Speak with Animals and Dead, Sending, Dream's nightmare, Detect Thoughts); merged into `main` | `dlc/03-demigods-magics` |
+| 2026-10-17 | Demigods & Magics E.4: minds and the law (Friends, Enthrall, Zone of Truth, Geas, Modify Memory, Glibness, Antipathy/Sympathy, Awaken), disguise and illusion (Disguise Self, Seeming, the images, Mislead, Project Image, Illusory Script, Nystul's Magic Aura, Nondetection, Sequester, the camp's illusions), the small arts (Druidcraft, Elementalism, Prestidigitation, Thaumaturgy); E.4 split, E.5 next; merged into `main` | `dlc/03-demigods-magics` |
 
 ## Notes for the next session
 

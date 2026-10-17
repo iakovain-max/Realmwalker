@@ -25,7 +25,8 @@ ROUNDS_PER_HOUR = 600
 # only the world outside a fight reads (Part E.2: a phantom horse, the servant, walking on water, flying as a cloud...).
 SHEET_KEYS = ("ac", "mage_armor", "darkvision", "speed", "skills", "check_adv", "carry",
               "steed", "servant", "water_walk", "water_breathing", "wind", "ethereal", "pathfinding",
-              "comprehend", "tongues", "beast_speech")  # (Part E.3: words on the road, game/speech.py)
+              "comprehend", "tongues", "beast_speech",  # (Part E.3: words on the road, game/speech.py)
+              "glib", "unnoticed", "disguise")  # (Part E.4: Glibness, Mislead in a town, a disguise: game/glamour.py)
 
 
 class SpellTable:
@@ -339,7 +340,8 @@ def spend_free(char: Character, spell_id: str, how: str | None) -> None:
 # What a higher slot adds is in the spell's ops: `up` (dice more per slot level above the spell's), `count_up` (one
 # more dart, one more creature blessed or healed), `rays_up` (one more ray) and the spell's `targets_up` (one more
 # creature of the same kind). A spell without any of them gains nothing from a higher slot.
-UP_KEYS = ("up", "count_up", "rays_up")
+UP_KEYS = ("up", "count_up", "rays_up",
+           "days_by_level", "stays_from")  # (Part E.4: a Geas's years, a Major Image that stays)
 UP_OPS = ("max_up", "road")  # ops whose `per_up` makes a higher slot worth it (Aid, Create or Destroy Water)
 
 
@@ -719,7 +721,9 @@ def heals_many(spell: dict) -> bool:
 ROAD_USES = ("feed", "water", "purify", "goodberry", "feast", "ward", "repose", "uncurse", "regenerate",
              "flame", "travel",  # (Part E.2: an everburning torch; travel by magic, game/waymagic.py)
              # Part E.3: finding and seeing, asking the powers (game/divining.py), talking (game/speech.py)
-             "sense", "locate", "scout", "summons", "ask", "speak", "send", "read")
+             "sense", "locate", "scout", "summons", "ask", "speak", "send", "read",
+             # Part E.4: minds and the law, illusions, the small arts (game/glamour.py)
+             "mind", "illusion", "art")
 # What each of Part E.3's road uses is about (an op's `what`, `how` or `with`; the start-up check knows them).
 E3_KINDS = {"sense": ("what", ("magic", "evil", "poison", "traps")),
             "locate": ("what", ("object", "creature", "nature")),
@@ -727,7 +731,11 @@ E3_KINDS = {"sense": ("what", ("magic", "evil", "poison", "traps")),
             "ask": ("how", ("augury", "divination", "commune", "nature", "other_plane", "lore")),
             "speak": ("with", ("dead", "plants")),
             "send": ("how", ("message", "sending", "animal", "dream", "telepathy"))}
-WARDS = ("alarm", "hut", "hound", "rope", "mansion", "meld")
+E4_KINDS = {"mind": ("how", ("friends", "enthrall", "truth", "geas", "memory", "antipathy", "awaken")),
+            "illusion": ("how", ("distract", "project", "script", "mask", "sequester")),
+            "art": ("how", ("druidcraft", "elementalism", "prestidigitation", "thaumaturgy"))}
+WARDS = ("alarm", "hut", "hound", "rope", "mansion", "meld",
+         "decoy", "mouth", "veil")  # (Part E.4: Programmed Illusion, Magic Mouth, Hallucinatory Terrain/Mirage Arcane)
 # How a "travel" spell goes (game/waymagic.py), and what a lasting spell does as it is cast outside a fight (its
 # "outside": game/waymagic.after_lasting).
 TRAVELS = ("teleport", "circle", "recall", "plants", "shift", "astral", "gate_far", "gate")

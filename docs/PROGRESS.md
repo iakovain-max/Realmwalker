@@ -28,7 +28,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Clearing the decks for the expansions** | ✅ Done (2026-10-12), branch `prep/clear-the-decks` |
 | **Expansion 1, *Dice & Destiny*** (version 1.1.0) | ✅ Released (2026-10-13), branch `dlc/01-dice-destiny` |
 | **Expansion 2, *Blades & Backgrounds*** (version 1.2.0) | ✅ Released (2026-10-13), branch `dlc/02-blades-backgrounds` |
-| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete), D (the spell catalogue: 191 battle spells, cantrips to level 9, and Wish) E.1 (spells outside battle: healing, return from death, food, shelter and watch), E.2 (light, the body on the move, travel by magic) and E.3 (finding and seeing, asking the powers, talking, 2026-10-17) in `main`; E.4 (minds and the law, disguise, locks and stone, weather, lasting protections, great magic) next |
+| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete), D (the spell catalogue: 191 battle spells, cantrips to level 9, and Wish) E.1 (spells outside battle: healing, return from death, food, shelter and watch), E.2 (light, the body on the move, travel by magic), E.3 (finding and seeing, asking the powers, talking) and E.4 (minds and the law, disguise and illusion, the small arts, 2026-10-17) in `main`; E.5 (locks and stone, weather and land, lasting protections, great magic: the last of Part E) next |
 
 ---
 
@@ -39,6 +39,55 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-17 (morning): Demigods & Magics E.4 — spells outside battle: minds and the law, disguise and illusion, the small arts
+
+Built by the relay builder realmwalker-b. Saves do not change: an old world of format 18 still loads. E.4 was split in
+two at its start (54 spells and Wish were too many for one part): this part is the spells of townsfolk and the law;
+locks and stone, weather and land, lasting protections and great magic are E.5, the last of Part E.
+- **Minds and the law** (cast on someone near you in a town; choose them with ← → on the Spells page). **Friends**:
+  they make a Wisdom save or are Friendly for the talk that follows (Advantage on your Persuasion, Deception and the
+  rest); when it wears off they know, and like you less, and it never works on them twice in a day. **Enthrall**:
+  everyone near who fails a Wisdom save hangs on your words for a minute: they witness no theft or crime, a merchant
+  watches your hands far less closely, and you creep past them easily. **Zone of Truth**: they cannot lie for ten
+  minutes; a work they gave you that hides something is shown for what it is, an honest one is known honest.
+  **Geas**: they obey you for 30 days (a year from a 7th-level slot, for good from a 9th): they say nothing of the
+  crimes they saw you do and see none of your new ones, tell you what they want and what they hide, stay Friendly, and a guard of the watch will
+  never lay a hand on you; when it ends they know, and hate you for it. **Modify Memory**: they forget the last day:
+  the crime of yours they saw and have not yet told (and the spell itself), and the grudge it left. **Glibness** (an hour): every
+  Charisma roll you make is 15 at least, in talk, bribes and disguise. **Antipathy/Sympathy** (an hour to cast, ten
+  days): name a kind of creature of the land; a band of them met on the road flees from you, or comes to you
+  entranced, so that you see them first. **Awaken** (eight hours, a rare stone of 1,000 gold): one of your animals
+  wakes to a mind of its own, speaks, and keeps watch: the camp is never caught asleep while it is with you.
+- **Disguise and illusion.** **Disguise Self** (an hour) and **Seeming** (eight hours, the whole party): a disguise
+  as good as your spell save DC. **Minor Illusion**, **Silent Image** and **Major Image** in a town draw every eye
+  away (-5 or -10 to their Perception) for a minute or ten: a quick hand in a shop, a creep past the guards, a wanted
+  face not looked at; a Major Image from a 4th-level slot stays until you leave the town. **Mislead**: in a fight you
+  turn invisible while your double goes on; in a town, for the hour, nobody sees what you do until you strike
+  someone (**Invisibility** does that too now). **Project Image**: your image walks into a town you know within 500 miles: you hear its news and
+  read its board. **Illusory Script** (lead ink, 10 gold): for ten days a letter shows each reader the seal they would
+  honour: the gate wardens wave you through without a search, and your papers impress everyone as a lord's.
+  **Nystul's Magic Aura**: for a day a magic thing you carry looks like nothing much, and robbers pass it over.
+  **Sequester** (a stone of 5,000 gold): a thing you carry is hidden from robbers, thieves and the watch for good
+  (the spell is never ended here), or a fallen friend's body is held out of time. **Nondetection**: no foe's Detect Thoughts finds the one
+  warded. Camp wards: **Magic Mouth** cries out when anything comes near (companions cast it as a ritual before
+  sleeping), **Programmed Illusion** makes the night's visitors fall on a camp that is not there while you wake, and
+  **Hallucinatory Terrain** (a day) and **Mirage Arcane** (ten days) hide the camp: hunters and night prowlers pass it
+  by unless they are clever enough to see through it, and you may rest with enemies near.
+- **The small arts** (cantrips). **Druidcraft** tells the weather here for the next day, and it comes true, and
+  lights or puts out the camp's fire. **Elementalism** lights the fire, dries the party a little, or gives a cup of
+  clean water each. **Prestidigitation** cleans the grime of days off the party and warms what is eaten in the next hour.
+  **Thaumaturgy** gives Advantage on Intimidation in the talk that follows.
+- **New things in the shops**: jade dust, lead ink and a pinch of diamond dust at town markets, rare stones of 1,000
+  and 5,000 gold in cities, each with a picture.
+- **The codex**: 27 spells settled (1 exactly as the book, 26 adapted, each with its note).
+- **How to try it**: a wizard of level 9 in a town walks up to someone, opens the Spells page (S), chooses Geas,
+  picks the person with ← →, and presses Enter. A wizard at a camp in the wild casts Hallucinatory Terrain and sleeps.
+- **Choices made while Anton was away** (in STATUS.md): a talk takes no time here, so a spell of a minute lasts for
+  the talk that follows; the Geas's command is the game's own (silence, the truth of their wants, no arrest);
+  Antipathy/Sympathy is cast on yourself and names a kind of creature that roams the land; a disguise spell is as
+  good as your spell save DC; illusions in a town are a penalty to every watcher's eyes; Awaken works on the party's
+  animals (plants wait for the followers of Part F).
 
 ### Session, 2026-10-17 (morning): Demigods & Magics E.3 — spells outside battle: finding and seeing, asking the powers, talking
 

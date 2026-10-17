@@ -68,10 +68,12 @@ def witnesses_here(game, *, exclude=(), radius: int | None = None) -> list:
     from realmwalker.game.people import npcs_in
     from realmwalker.game.vision import can_see
 
+    from realmwalker.game import glamour
+
     lm = game.local
     s = settlement_here(game)
-    if lm is None or lm.kind != "settlement" or s is None:
-        return []
+    if lm is None or lm.kind != "settlement" or s is None or glamour.unseen(game):
+        return []  # (Mislead, Invisibility: nobody sees what you do)
     radius = radius or game.tables.law["guard_sight"] + 4
     p = game.player
     skip = {getattr(n, "id", n) for n in exclude}
@@ -81,6 +83,8 @@ def witnesses_here(game, *, exclude=(), radius: int | None = None) -> list:
             continue
         if max(abs(n.x - p.lx), abs(n.y - p.ly)) > radius:
             continue
+        if glamour.enthralled(game, n) or glamour.obeys(game, n):
+            continue  # (Enthrall: -10 to Perception, their eyes on the speaker; a Geas: they saw nothing)
         if can_see(game, lm, (n.x, n.y), (p.lx, p.ly), radius) and not _unseen(game, n):
             out.append(n)
     return out
@@ -93,7 +97,10 @@ def _unseen(game, npc) -> bool:
         return False
     p = game.player
     dist = max(abs(npc.x - p.lx), abs(npc.y - p.ly))
+    from realmwalker.game import glamour
+
     sharp = 10 + (3 if npc.job == "guard" else 0) + (5 if dist <= 2 else 0) - (5 if game.light < 0.5 else 0)
+    sharp -= glamour.watcher_minus(game, npc)  # (an illusion drawing the eyes away, Enthrall)
     return sharp < game.sneak_roll
 
 
@@ -110,6 +117,10 @@ def commit(game, cid: str, *, victim=None, value: int = 0, witnesses=None, repor
             magic_items.notice(game, "violence")
         if cid == "heresy" or _in_a_temple(game):
             magic_items.notice(game, "crime_holy")  # a templar's anger
+    from realmwalker.game import glamour
+
+    if cid in ("assault", "murder"):
+        glamour.reveal(game)  # (Invisibility, Mislead: an attack ends them)
     realm, s = jurisdiction(game)
     if realm is None:
         return None
@@ -341,10 +352,16 @@ def watch(game) -> None:
             continue
         n.flags["looked_at"] = w.time
         rng = rng_for(game, f"recognise/{n.id}")
+        from realmwalker.game import glamour
+
+        if glamour.enthralled(game, n) or glamour.unseen(game):
+            continue
         if disguised(game):
-            spotted = dice.d20(rng).natural + 2 >= int(game.renown.flags.get("disguise_dc", 10))
+            spotted = dice.d20(rng).natural + 2 - glamour.distraction(game) >= int(game.renown.flags.get("disguise_dc",
+                                                                                                        10))
         else:
-            spotted = rng.chance(law["recognise_chance"] + (0.25 if hated else 0.0))
+            spotted = rng.chance((law["recognise_chance"] + (0.25 if hated else 0.0))
+                                 * max(0.0, 1.0 - glamour.distraction(game) / 20))  # (an illusion: eyes elsewhere)
         if spotted:
             game.say(f"<danger>{n.label().capitalize()} looks at you hard, and then again.</>", "danger")
             start_arrest(game, n)
@@ -392,7 +409,9 @@ def bribe_guard(game) -> tuple[bool, str]:
     dc = int(game.tables.law["bribe"]["dc"]) + worst_severity(game, a["realm"]) * 2
     if guard is not None:
         dc += -4 if "greedy" in guard.traits else 4 if "honest" in guard.traits else 0
-    roll = dice.d20(rng).natural + sheet.skill_bonus("persuasion")
+    from realmwalker.game import glamour
+
+    roll = glamour.cha_roll(game, game.leader, "persuasion", dice.d20(rng).natural) + sheet.skill_bonus("persuasion")
     if roll >= dc:
         take_money(game, cost)
         if guard is not None:
@@ -661,6 +680,9 @@ def confiscate(game, realm_id: int) -> None:
     from realmwalker.game import divining
 
     for c in distinct_packs(game.party):
+        from realmwalker.game import glamour
+
+        keep |= {it.uid for it in c.inventory if glamour.hidden_thing(game, it)}  # (Sequester: they never see it)
         taken = [it for it in c.inventory if it.uid not in keep]
         c.inventory[:] = [it for it in c.inventory if it.uid in keep]  # in place: the pack stays shared
         items += [it.to_dict() for it in taken]
@@ -715,6 +737,10 @@ def gate_search(game, settlement) -> list[str]:
     waved = uniques.waved_through(game)  # Wren knows every gate-warden in the land
     if waved:
         return [waved]
+    from realmwalker.game import glamour
+
+    if glamour.scripted(game):  # (Illusory Script: the letter shows each warden the seal they would honour)
+        return ["The gate wardens read your letter, straighten, and wave you through without a look at your packs."]
     banned = set(contraband_for(game, realm.id))
 
     def forbidden(it) -> bool:
@@ -818,9 +844,12 @@ def steal_from_shop(game, npc, item_id: str) -> tuple[bool, str]:
     if shop["stock"].get(item_id, 0) <= 0:
         return False, "There are none left."
     sheet = game.sheet()
+    from realmwalker.game import glamour
+
     rng = rng_for(game, f"steal/{npc.id}/{item_id}")
     roll = dice.d20(rng).natural + sheet.skill_bonus("sleight_of_hand")
     watch_dc = 11 + (3 if "suspicious" in npc.traits else 0) - (2 if "weary" in npc.traits else 0)
+    watch_dc = max(5, watch_dc - glamour.watcher_minus(game, npc))  # (Enthrall, an illusion: eyes elsewhere)
     value = int(game.tables.items.get(item_id)["value"])
     name = game.tables.items.get(item_id)["name"]
     if roll >= watch_dc:
@@ -828,7 +857,8 @@ def steal_from_shop(game, npc, item_id: str) -> tuple[bool, str]:
         if shop["stock"][item_id] <= 0:
             del shop["stock"][item_id]
         add_item(game.leader, game.tables.items, item_id, 1, made_at=game.world.time, tags=["stolen"])
-        seen_by = [n for n in witnesses_here(game, exclude=[npc]) if dice.d20(rng).natural + 1 >= roll]
+        seen_by = [n for n in witnesses_here(game, exclude=[npc])
+                   if dice.d20(rng).natural + 1 - glamour.watcher_minus(game, n) >= roll]
         text = f"<loot>The {name} goes into your sleeve.</> <dim>(Sleight of Hand {roll} vs {watch_dc})</>"
         if seen_by:
             text += f" <warn>But {seen_by[0].label()} saw.</>"
@@ -855,13 +885,15 @@ def put_on_disguise(game, char) -> str:
     bonus = sheet.skill_bonus("deception")
     if "disguise_kit" in char.tools:
         bonus += sheet.proficiency
-    quality = dice.d20(rng).natural + bonus
+    from realmwalker.game import glamour
+
+    quality = glamour.cha_roll(game, char, "deception", dice.d20(rng).natural) + bonus
     from realmwalker.rules import feats
 
     costume = any((game.tables.items.get(it.def_id).get("helps") or {}).get("disguise")
                   for it in char.inventory if it.uid in char.equipped.values())
     if feats.has(char, "actor") or costume:  # (Actor, or a costume worn: advantage in playing the part)
-        quality = max(quality, dice.d20(rng).natural + bonus)
+        quality = max(quality, glamour.cha_roll(game, char, "deception", dice.d20(rng).natural) + bonus)
     game.renown.flags["disguise_dc"] = quality
     char.effects["disguised"] = 12.0
     game.pass_time(20)

@@ -187,7 +187,8 @@ def road_targets(game, caster, spell_id: str) -> list:
     use = spellrules.road_use(game.tables, spell_id)
     from realmwalker.game import spellwork
 
-    if use in spellwork.DIVINING or use in spellwork.SPEECH:  # (Part E.3: a thing to seek, a question, a companion)
+    if use in spellwork.DIVINING or use in spellwork.SPEECH or use in spellwork.GLAMOUR:  # (E.3, E.4: a thing to seek,
+        # a question, a companion; a person near, a kind of creature, an animal, a far town, a thing carried)
         return spellwork.subjects(game, caster, spell_id)
     if target == "place":
         from realmwalker.game import waymagic

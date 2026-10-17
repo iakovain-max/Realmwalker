@@ -73,7 +73,10 @@ On the one marked (the buff is on the creature):
   its skills, the passive rule), carry (pounds more before laden). Read only outside a fight (game/): steed (miles
   an hour of a phantom horse), servant (camp chores in half the time), water_walk, water_breathing, wind (Wind
   Walk's flight), ethereal (Etherealness), pathfinding (Find the Path); Part E.3's words on the road (game/speech.py):
-  comprehend (any tongue understood), tongues (understood and spoken), beast_speech (talking with beasts).
+  comprehend (any tongue understood), tongues (understood and spoken), beast_speech (talking with beasts); Part
+  E.4's (game/glamour.py): glib (a Charisma check's die is 15 at least), unnoticed (in a town nobody sees the one
+  under it: Mislead, Invisibility), disguise (a disguise spell; its quality is in renown.flags["disguise_dc"]).
+    nondetection    no divination of a foe finds it: a foe's sense_thoughts does not (Nondetection)
 On the one who gains (the caster, or a friend):
     hit_extra       dice (with hit_type, hit_with "weapon" | "melee" | "any"): extra damage on its hits (Divine Favor)
     weapon_plus     added to its weapon attack and damage rolls (Magic Weapon)
@@ -110,6 +113,8 @@ BUFF_KEYS = frozenset({
     "steed", "servant", "water_walk", "water_breathing", "wind", "ethereal", "pathfinding", "feigning",
     # Part E.3's (talking): words on the road (read outside a fight), a linked party, thoughts sensed
     "comprehend", "tongues", "beast_speech", "linked", "sense_thoughts",
+    # Part E.4's (minds and illusions, game/glamour.py): Glibness, unseen in a town, a disguise, no divination finds
+    "glib", "unnoticed", "disguise", "nondetection",
 })
 ZONES = frozenset({"web", "fire", "fog", "ice", "caltrops", "bearings", "darkness", "antimagic", "plants", "grease",
                    "spikes", "daggers", "moonbeam", "sphere", "silence",

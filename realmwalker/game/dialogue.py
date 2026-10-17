@@ -425,29 +425,50 @@ class Conversation:
     # ------------------------------------------------------------------ special options
     def attitude(self) -> str:
         """Their attitude to you (PHB 2024): Friendly, Indifferent or Hostile, from their mood."""
+        from realmwalker.game import glamour
         from realmwalker.rules import encounter
 
+        if glamour.charmed(self.game, self.npc):  # (Friends, a Geas: Friendly while it holds)
+            return "friendly"
         return encounter.attitude_of_mood(self.game.tables, self.npc.mood())
 
     def influence_roll(self, skill: str) -> int:
         """A d20 and the leader's skill, with advantage or disadvantage by their attitude (PHB 2024 Influence)."""
+        from realmwalker.game import glamour
+
+        mode = self._mode(skill)
+        roll = dice.d20(self.rng, advantage=mode == "advantage", disadvantage=mode == "disadvantage").natural
+        roll = glamour.cha_roll(self.game, self.game.leader, skill, roll)  # (Glibness)
+        return roll + Sheet(self.game.leader, self.game.tables).skill_bonus(skill)
+
+    def _mode(self, skill: str) -> str:
+        """Advantage with someone Friendly, disadvantage with someone Hostile; Thaumaturgy's booming voice gives
+        Advantage on Intimidation (the two cancel)."""
+        from realmwalker.game import glamour
         from realmwalker.rules import encounter
 
         mode = encounter.influence_mode(self.game.tables, self.attitude())
-        roll = dice.d20(self.rng, advantage=mode == "advantage", disadvantage=mode == "disadvantage").natural
-        return roll + Sheet(self.game.leader, self.game.tables).skill_bonus(skill)
+        if skill == "intimidation" and glamour.booming(self.game):
+            mode = "" if mode == "disadvantage" else "advantage"
+        return mode
 
     def check(self, skill: str, dc: int) -> tuple[bool, str]:
         """A check in a conversation: advantage with someone Friendly, disadvantage with someone Hostile."""
-        from realmwalker.rules import encounter
+        from realmwalker.game import glamour
 
         c = self.game.leader
         bonus = Sheet(c, self.game.tables).skill_bonus(skill)
-        mode = encounter.influence_mode(self.game.tables, self.attitude())
+        mode = self._mode(skill)
         roll = dice.d20(self.rng, advantage=mode == "advantage", disadvantage=mode == "disadvantage").natural
+        glib = glamour.cha_roll(self.game, c, skill, roll)
         name = self.game.tables.rules["skills"][skill]["name"]
         sign = "+" if bonus >= 0 else "-"
-        how = {"advantage": " (adv: friendly)", "disadvantage": " (dis: hostile)"}.get(mode, "")
+        why = ("booming" if skill == "intimidation" and glamour.booming(self.game)
+               else "friendly" if mode == "advantage" else "hostile")
+        how = {"advantage": f" (adv: {why})", "disadvantage": " (dis: hostile)"}.get(mode, "")
+        if glib > roll:
+            how += " (glib: 15)"
+            roll = glib
         ok = roll + bonus >= dc
         return ok, (f"<dice>{name}{how}: {roll} {sign} {abs(bonus)} = {roll + bonus} vs DC {dc} — "
                     f"{'success' if ok else 'failure'}</>")

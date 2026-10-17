@@ -399,8 +399,10 @@ def _rob_party(game, rng) -> str:
     leader = game.party[0]
     from realmwalker.rules.inventory import worn_by
 
+    from realmwalker.game import glamour
+
     valuables = [i for i in leader.inventory if worn_by(leader, i.uid)[1] is None and game.tables.items.value(i) >= 100
-                 and not _keepsake(game, i)]
+                 and not _keepsake(game, i) and not glamour.hidden_thing(game, i, robbers=True)]
     valuables.sort(key=lambda i: -game.tables.items.value(i))
     for it in valuables[: rng.randint(1, 2)]:
         remove_item(leader, it.uid)
@@ -617,6 +619,9 @@ def encounter_talk(game) -> bool:
 
     mode = encounter.influence_mode(game.tables, enc.attitude)  # Friendly: advantage; Hostile: disadvantage
     roll = dice.d20(rng, advantage=mode == "advantage", disadvantage=mode == "disadvantage").natural
+    from realmwalker.game import glamour
+
+    roll = glamour.cha_roll(game, game.leader, "persuasion", roll)  # (Glibness)
     bonus = s.skill_bonus("persuasion")
     how = {"advantage": " (adv)", "disadvantage": " (dis)"}.get(mode, "")
     game.say(f"<dice>Persuasion{how}: {roll} {'+' if bonus >= 0 else '-'} {abs(bonus)} = {roll + bonus} vs DC {dc}</>",
@@ -841,7 +846,9 @@ def decide_captive(game, creature: Creature, fate: str) -> str:
     elif fate == "interrogate":
         s = game.sheet()
         skill = "intimidation" if s.skill_bonus("intimidation") >= s.skill_bonus("persuasion") else "persuasion"
-        roll = dice.d20(rng).natural + s.skill_bonus(skill)
+        from realmwalker.game import glamour
+
+        roll = glamour.cha_roll(game, game.leader, skill, dice.d20(rng).natural) + s.skill_bonus(skill)
         if roll >= 12:
             site = _nearest_unknown_site(game)
             if site is not None:
@@ -962,8 +969,8 @@ def rest(game, kind: str) -> list[str]:
 
                 from realmwalker.game.camp import has_flag
 
-                if spellwork.warded(game, "hound", "alarm") is not None:
-                    pass  # (woken by the ward: the camp is up)
+                if enc.warned:
+                    pass  # (woken by a ward or an awakened animal: the camp is up; a decoy lets you see them first)
                 elif watching(game):
                     enc.asleep = False
                     notes.append("<warn>The one on watch shakes you awake: something is coming.</>")
@@ -972,7 +979,8 @@ def rest(game, kind: str) -> list[str]:
                     notes.append("<warn>The bells on the cord round the camp jangle in the dark: something is coming.</>")
                 else:
                     enc.asleep = True
-                enc.spotted_first = False
+                if not (enc.warned and enc.spotted_first):  # (Programmed Illusion: they fell on the false camp)
+                    enc.spotted_first = False
                 game.encounter = enc
                 notes.append(f"<danger>Your rest is broken after {hour + 1} hour{'s' if hour else ''}.</>")
                 return notes

@@ -451,6 +451,18 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   for Speak with Dead; Dream's nightmares wait in `renown.flags["nightmares"]` (`speech.nightmares_at_the_start` in
   start_battle). Buffs: linked (no surprise while two are linked), sense_thoughts (feet: `Battle.thinks`, `can_see`);
   `effects` forewarned (a band is seen first), forage_tip, hunting_tip. Tests: tests/test_spells_road3.py.
+- Minds, illusions and the small arts (Expansion 3 E.4): road ops `does` mind/illusion/art (`how` in
+  `spells.E4_KINDS`) are `game/glamour.py` (through spellwork's door, Subjects as in E.3: a person near, a kind of
+  creature, a party animal, a far town, a thing carried or a body). A talk takes no time, so a minute's spell is a
+  time window: `npc.flags` charmed_until / enthralled_until / geas_until (+ `renown.flags["geased"]`, soured by
+  `glamour.tick` from spellwork.tick), `renown.flags` distraction {settlement, until, minus}, booming, antipathy {how,
+  kind, until, dc}, script_until, warm_meal. Read by the rest: `glamour.charmed` (dialogue attitude), `cha_roll`
+  (Glibness: dialogue, bribes, disguise kit), `watcher_minus`/`enthralled`/`unseen` (law: witnesses, thefts, creeping,
+  the watch), `scripted` (gate search, papers), `hidden_thing` (robbers, confiscation; item tags "masked:<until>",
+  "sequestered"), `on_meeting` (encounters: Antipathy/Sympathy), `awake_animal` (night visitors, rustlers). Lasting
+  buff keys glib, unnoticed (Mislead, Invisibility), disguise, nondetection (Battle.thinks); disguise spells say
+  `"disguise": "dc"` (waymagic.after_lasting); camp wards decoy, mouth, veil (`spellwork.ward_minutes`: rounds or
+  `days`). Tests: tests/test_spells_road4.py.
 - Gear and tools 2024 (Expansion 2 part D): items.json `pack` (opens into its contents, gear.open_pack), `helps`
   {search, traps, force, disguise} (dungeon.helps, law.put_on_disguise), `utilize` (a tool's 2024 uses, on its card),
   `carry` also on carried containers (each kind once, Sheet.pack_carry), `trinket` (data/trinkets.json; the name and

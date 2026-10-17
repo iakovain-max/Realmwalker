@@ -188,6 +188,8 @@ NO_USE: dict[str, str] = {
     "tree_stride": "no trees here",
     "gaseous_form": "nobody here is about to fall (as mist a fighter cannot strike)",
     "feign_death": "nobody here is about to fall (feigning, a fighter is out of the fight)",
+    # Part E.4
+    "nondetection": "no foe here senses thoughts (tests/test_spells_road4.py hides a mind from Detect Thoughts)",
 }
 
 

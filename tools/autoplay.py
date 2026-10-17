@@ -416,6 +416,18 @@ def _check_companions(game, fail) -> None:
     for m in getattr(game, "sensed", []) or []:
         if game.local is not None and m["map"] == game.local.key and not game.local.in_bounds(m["x"], m["y"]):
             fail(f"something sensed is marked off the map: {m}")
+    flags = game.renown.flags if getattr(game, "renown", None) else {}  # (Expansion 3 E.4: minds and illusions)
+    for nid in flags.get("geased") or []:
+        if nid not in game.world.npcs:
+            fail(f"a geas binds person {nid}, who is nobody in this world")
+    anti = flags.get("antipathy")
+    if anti and anti.get("kind") not in game.tables.creatures:
+        fail(f"Antipathy/Sympathy names a kind of creature that does not exist: {anti}")
+    dis = flags.get("distraction")
+    if dis and dis.get("settlement") is not None and not 0 <= int(dis["settlement"]) < len(game.world.settlements):
+        fail(f"an illusion draws the eyes of no town: {dis}")
+    if any(a.get("awake") and not a.get("name") for a in (game.leader.animals if game.party else [])):
+        fail("an awakened animal has no name")
     for b in getattr(game, "fallen", []) or []:  # (Expansion 3 E.1: the bodies the party carries for raising)
         if b["char"].alive or any(b["char"] is c for c in game.party):
             fail(f"{b['char'].name} is carried as a body but is alive or walks with the party")

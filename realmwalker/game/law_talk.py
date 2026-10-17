@@ -331,7 +331,10 @@ def pickpocket(conv) -> None:
 
             for line in quests.on_pickpocket(game, npc):
                 conv.note(line)
-        others = [n for n in law.witnesses_here(game, exclude=[npc]) if dice.d20(rng).natural + 2 >= roll]
+        from realmwalker.game import glamour
+
+        others = [n for n in law.witnesses_here(game, exclude=[npc])
+                  if dice.d20(rng).natural + 2 - glamour.watcher_minus(game, n) >= roll]
         if others:
             game.say(f"<warn>{others[0].label().capitalize()} saw that.</>", "warn")
             law.commit(game, "pickpocket", victim=npc, value=take, witnesses=others)
