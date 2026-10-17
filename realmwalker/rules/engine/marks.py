@@ -102,6 +102,8 @@ BUFF_KEYS = frozenset({
     "parry_ac", "reeling", "unsteady", "vex", "dazed",
     # the Battle Master's (Expansion 4): goaded by, exposed by, the weapon dropped, a die for a later hit
     "goaded", "exposed", "disarmed", "maneuver_die", "against", "melee",
+    # the Eldritch Knight's and Arcane Trickster's (Expansion 4 Part B): a ward undercut, the unseen hand's mark
+    "eldritch_struck",
     # this module's
     "outlined", "blurred", "warded_kinds", "ward_die", "sanctuary", "images", "ac_floor", "retaliate",
     "retaliate_type", "bond", "quarry", "quarry_type", "by", "dot", "dot_type", "dot_at", "dot_once", "dot_save",

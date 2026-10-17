@@ -270,10 +270,12 @@ def finish_battle(game) -> Aftermath:
         foes = [f for f in battle.side(FOE) if f.active and f.bond is None]
         merciful = any(f.morale_type in MERCIFUL for f in foes) or result.outcome == "surrendered"
         if merciful and any(c.alive for c in game.party):
-            taken = _rob_party(game, rng)
+            called: list[str] = []
+            taken = _rob_party(game, rng, called)
             after.outcome = "robbed"
             after.text = rng.choice(game.tables.combat_text["aftermath"]["robbed"])
             after.notes.append(f"They took {taken}.")
+            after.notes += called  # (a bonded weapon answers its knight's call: War Bond)
             for c in game.party:
                 if c.alive:
                     c.hp = max(1, c.hp)
@@ -421,7 +423,7 @@ def textgen_number(n: int) -> str:
     return {2: "two", 3: "three", 4: "four", 5: "five", 6: "six"}.get(n, str(n))
 
 
-def _rob_party(game, rng) -> str:
+def _rob_party(game, rng, called: list | None = None) -> str:
     taken = []
     total = 0
     for c in game.party:
@@ -443,6 +445,13 @@ def _rob_party(game, rng) -> str:
         from realmwalker.game import divining
 
         divining.taken(game, [it], "robbers")  # (Drawmij's Instant Summons can call it back)
+        from realmwalker.rules import war_bond
+
+        back = war_bond.taken(game, [it], "robbers")
+        if back:
+            taken.pop()  # (it did not stay taken)
+            if called is not None:
+                called += back
     beasts = [a for a in leader.animals if not a.get("summoned")]  # (a steed of another world will not be led off)
     if beasts:
         taken.append(", ".join(a["name"] for a in beasts) + " (your animals)")

@@ -139,6 +139,9 @@ def cunning_after(b, f, ev, hook, buff) -> None:
             if not b._save(t, "dex", dc, against=("prone",)) and durations.give(b, t, "prone", source=f):
                 b._event("prone", who=t.id)
                 b.say(f"{t.the_name} goes down.", _word(f))
+            from realmwalker.rules.engine.handlers import arcane
+
+            arcane.trip_beside_hand(b, f, t, dc)  # (an Arcane Trickster's Versatile Trickster)
         elif trick == "daze":
             if not b._save(t, "con", dc):
                 durations.buff(t, {"dazed": True, "by": f.id, "source": f"daze:{f.id}"}, durations.until(b, t, "turn_end"))

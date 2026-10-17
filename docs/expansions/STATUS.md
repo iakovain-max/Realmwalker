@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 04 Steel & Shadows · Part B (the Eldritch Knight and the Arcane Trickster) · branch dlc/04-steel-shadows · design note docs/expansions/04-steel-shadows.md
+Current: 04 Steel & Shadows · Part C (poisons and the people of the shadows) · branch dlc/04-steel-shadows · design note docs/expansions/04-steel-shadows.md
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -11,11 +11,22 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   spellcasting by the 2024 rules; the catalogue of 191 battle spells and Wish; spells outside battle in every system;
   familiars, steeds, summoned spirits, the raised dead, the bound, Polymorph and Shapechange, the 24 creatures of
   Appendix B; enemy casters; spells for pay and the law of magic; Simulacrum; saves format 18) · 04 Steel & Shadows
-  Part A (2026-10-17: the Battle Master and its twenty maneuvers)
+  Parts A and B (2026-10-17: the Battle Master and its twenty maneuvers; the Eldritch Knight and the Arcane
+  Trickster)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
   adapted); Expansion 3: all 560 settled (223 done, 336 adapted, 1 omitted). PHB 65% · DMG 12% · MM 16%
 Assumptions waiting for Anton:
+- Expansion 4 Part B (Eldritch Knight, Arcane Trickster): a new level opens the whole prepared list (the book: one
+  spell a level), no cantrip swap on a level; a component pouch comes with the path; War Bond's ritual is done at a
+  rest over the weapon in hand and one of another reach (no third bond), robbers cannot keep a bonded weapon;
+  Arcane Charge lands beside the weakest foe out of reach (the battle's judgement); the unseen hand robs stalls and
+  picks pockets unseen (no locks; no trap disarming exists); Spell Thief is the battle's judgement on a harmful spell
+  of level 1+, kept until the next long rest; hidden counts as Invisible for Magical Ambush; fighters and rogues on
+  Auto with Intelligence 14+ (not great weapon or shield) take the arcane path; mid-Attack-action casting now needs
+  War Magic (it used to be free), a vial thrown mid-action takes an attack. Spell Thief takes the reaction by
+  itself (it cannot be kept for Shield) and guards the trickster only when aimed at or caught in the area;
+  a knight is never disarmed even when Incapacitated (nothing disarms then anyway); the unseen hand has no card.
 - Expansion 4 Part A (Battle Master): one maneuver an attack, chosen by the battle unless the Reactions setting is
   "all" (Precision, Parry and Riposte are asked as Stroke of Luck is); Ambush at Initiative is the battle's choice on
   a poor roll; the check maneuvers spend a die only when it can turn a failure; no swapping a known maneuver; a friend
@@ -435,8 +446,21 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 4, Steel & Shadows, Part B (the Eldritch Knight and the Arcane Trickster) in
-`docs/expansions/04-steel-shadows.md` (branch `dlc/04-steel-shadows`; Part A merged into `main`).
+Next session starts at: Expansion 4, Steel & Shadows, Part C (poisons and the people of the shadows: the DMG
+poisons, the Assassin, Spy and Spy Master, guilds, black markets, spies at court, duels of honour) in
+`docs/expansions/04-steel-shadows.md` (branch `dlc/04-steel-shadows`; Parts A and B merged into `main`).
+The way of Part B (the Eldritch Knight, the Arcane Trickster): a subclass may carry its own `spellcasting` (schema
+SPELLCASTING: `list` "wizard", `focus`, `changes` "level", `given` cantrips); `spells.casting(char)` is the one door
+(also `spell_list`, `focus_kind`); `progression.start_casting` (when the path is chosen) and `cantrips_due`. War
+Magic is `Battle.war_magic` + `_spend_attacks` (the casting-time test refuses other casting mid-Attack-action;
+`tactics._pick_cast_now` lowers the bar to the attacks it replaces). `rules/war_bond.py` (bonds in
+`char.spells["war_bond"]`, `at_rest`, `holds`, `away`, `call`, `taken` from the robbery). `engine/handlers/arcane.py`:
+eldritch_strike (buff `eldritch_struck`, read in `query.save_roll` with `b._casting`, spent by `effects.cast`),
+`ambush_ready` (`ambush_turn` noted in `do_cast`), arcane_charge (on `ability_used`), the unseen hand (Token kind
+"mage_hand", ability `unseen_hand`, `trip_beside_hand` from rogue.py), `spell_thief` (from `effects.cast`, joins
+`shut`; `char.spells["stolen"]` in `known_spells` until `long_rest`; the caster's `stolen` set in `creature_spells`).
+`game/legerdemain.py` (`trickster`) is read by `law.steal_from_shop` and `law_talk.pickpocket`. Tactics:
+`_arcane_bonus`. Picture `fx/unseen_hand_glow` (tile_art.spectral_hand); event "rearm" (board words, sound).
 The way of Part A (the Battle Master): `rules/engine/handlers/battle_master.py` (superiority pool `uses["superiority"]`,
 `sides`, `roll_die` with Relentless, `dc_of`, `ready`; `maneuver_blow`/`maneuver_after` on a hit, `precision_attack`,
 `bm_parry`, `riposte`, the buff `maneuver_die` in events.BUFF_HOOKS; specials for the abilities; `ambush_initiative`
@@ -603,6 +627,7 @@ casting time. A spell aimed at something chosen lists Subjects (game/divining.Su
 | 2026-10-17 | Demigods & Magics F.2: summoned spirits of levels 2-4 - Summon Beast, Fey, Undead, Aberration, Construct, Elemental and Giant Insect (numbers by the slot, held by concentration, the form picked for the fight, every trait and blow, the costly components); F.2 split, F.3 next; merged into `main` | `dlc/03-demigods-magics` |
 | 2026-10-17 | Demigods & Magics F.3: the spirits of levels 5-6 (Summon Celestial: Avenger or Defender, Healing Touch; Summon Dragon: the breath with the Rends, its resistance shared; Summon Fiend: Death Throes, Devil's Sight, the yugoloth's step, Magic Resistance) and Animate Objects (things by the caster's modifier, commanded with the Bonus Action); F.4 next; merged into `main` | `dlc/03-demigods-magics` |
 | 2026-10-17 | Demigods & Magics F.7: the rest of Appendix B - 24 creatures of the 2025 MM with pictures, each a Polymorph shape and met in its biome (the water-breathers wait for Expansion 22), the cult's imp and quasit, the towers' tadpoles; Trample, holds that restrain, the Sting's sleep, Burst of Ingenuity, Running Leap; merged into `main` | `dlc/03-demigods-magics` |
+| 2026-10-17 | Steel & Shadows Part B: the Eldritch Knight (wizard spells, War Bond, War Magic, Eldritch Strike, Arcane Charge) and the Arcane Trickster (the unseen hand in fights and towns, Magical Ambush, Versatile Trickster, Spell Thief); merged into `main` | `dlc/04-steel-shadows` |
 | 2026-10-17 | Steel & Shadows begun (the branch, the design note, four parts); Part A: the Battle Master (superiority dice, the twenty maneuvers on the blow, as answers and as bonus actions, Student of War, Know Your Enemy, Relentless, the dice on checks; the Auto uses them); merged into `main` | `dlc/04-steel-shadows` |
 | 2026-10-17 | Demigods & Magics F.8: Animal Shapes and Shapechange - the party as beasts for a day (on the road: the beast chosen, its pace, wings over water and mountains, no spells or gear; in a fight: the willing, a Bonus Action to leave, the druid's fresh shapes), a wizard keeping mind and spells in a dragon's body for an hour, shapes kept from fight to fight; Part F complete; merged into `main` | `dlc/03-demigods-magics` |
 

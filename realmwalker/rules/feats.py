@@ -260,8 +260,10 @@ def default_choices(tables, char: Character, fid: str, fixed: dict | None = None
 def best_ability(char: Character, tables, opts: list[str]) -> str:
     """Of these abilities, the one that serves them best: their casting ability, then their class's main ones, an odd
     score first (+1 rounds it up), then the highest."""
+    from realmwalker.rules import spells as sr
+
     cls = tables.classes[char.cls]
-    sc = cls.get("spellcasting")
+    sc = sr.casting(char, tables)
     primary = list(cls.get("primary", []))
 
     def worth(a):

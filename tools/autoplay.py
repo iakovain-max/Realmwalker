@@ -656,6 +656,12 @@ def _check_magic(game, fail) -> None:
             it = pack.get(uid)
             if it is None or not it.magic.get("attune"):
                 fail(f"{c.name} is bound to a thing that is gone or needs no bond ({uid})")
+        from realmwalker.rules import spells as spellrules, war_bond
+
+        if len(war_bond.bonds(c)) > war_bond.MAX_BONDS:  # (an Eldritch Knight's War Bond, Expansion 4 Part B)
+            fail(f"{c.name} has {len(war_bond.bonds(c))} bonded weapons")
+        if c.spells and len(spellrules.prepared(c, game.tables)) > spellrules.prepared_count(c, game.tables):
+            fail(f"{c.name} has more spells prepared than the table allows")
     owners: dict[int, int] = {}
     for c in game.party:
         for uid in c.attuned:

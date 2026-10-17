@@ -930,6 +930,12 @@ def _pick_cast_now(b: Battle, f: Fighter, cost: str, *, beat: float, care: float
             price = 0.0  # (the follow-up of a spell already paid for)
         levels = _slot_levels(b, f, opt.value, sp) if not free else [sp["level"]]
         aims = _aims(b, f, opt)
+        bar = beat
+        war = b.war_magic(f, opt.value, sp) if f.char is not None and cost == "action" else 0
+        if war and beat > 0:  # (War Magic: it takes one attack, or two, of the Attack action, not all of it)
+            many = query.attacks_per_action(f)
+            if f.action <= 0 or many > war:
+                bar = beat * war / max(1, many)
         tops = None
         if f.char is None and len(levels) > 1 and len(aims) > 4:  # (an enemy with many aims: the higher slot
             # only where the lowest does best, G.1)
@@ -951,9 +957,9 @@ def _pick_cast_now(b: Battle, f: Fighter, cost: str, *, beat: float, care: float
                                                      price * _slot_price(b, f, lvl) / max(1, sp["level"]))
                 if f.char is not None and w.friendly > 0:
                     continue  # companions never catch friends
-                if best is None or score > best[0]:
-                    best = (score, opt.value, target, point, sp, lvl if lvl > sp["level"] else None)
-    if best is None or best[0] <= beat:
+                if best is None or score - bar > best[0]:
+                    best = (score - bar, opt.value, target, point, sp, lvl if lvl > sp["level"] else None)
+    if best is None or best[0] <= 0:
         return None
     return best
 
@@ -1067,19 +1073,24 @@ def _party_turn(b: Battle, f: Fighter) -> None:
         return
     if (spellrules.is_caster(c, b.t) or feats.innate_spells(c, b.t) or _reads_scrolls(b, f)) and f.action > 0:
         if _cast_something(b, f):
-            if b.current is f and b.outcome is None:
-                _command_objects(b, f)  # (things it has just animated: sent at once)
-            if b.current is f and b.outcome is None:
-                _bonus_strike(b, f)  # (the spiritual weapon, War Priest)
-            if b.current is f and b.outcome is None:
-                _mend_ward(b, f)
-            if b.current is f and b.outcome is None and f.move_left >= 5:
-                _keep_safe(b, f)
-            return
+            if b.current is f and b.outcome is None and f.action <= 0 and f.attacks_left > 0:
+                pass  # (War Magic: the Attack action's other attacks follow)
+            else:
+                if b.current is f and b.outcome is None:
+                    _command_objects(b, f)  # (things it has just animated: sent at once)
+                if b.current is f and b.outcome is None:
+                    _bonus_strike(b, f)  # (the spiritual weapon, War Priest)
+                if b.current is f and b.outcome is None:
+                    _mend_ward(b, f)
+                if b.current is f and b.outcome is None and f.move_left >= 5:
+                    _keep_safe(b, f)
+                return
     if b.current is not f or b.outcome is not None:
         return
     opts = [o for o in b.attack_options(f) if o.available]
     attacks = 2 if c.level >= 5 and "extra_attack" in c.features else 1
+    if f.action <= 0 and f.attacks_left > 0:
+        attacks = f.attacks_left  # (what War Magic left of the Attack action)
     if opts and f.hp < f.max_hp * 0.6 and len(b.enemies_of(f)) >= 2:  # one more action when it is hard going
         for opt, _ in _abilities(b, f, "action"):
             b.do_ability(f, opt.value)
@@ -1089,6 +1100,8 @@ def _party_turn(b: Battle, f: Fighter) -> None:
         for opt, _ in _abilities(b, f, "sense"):  # a foe it cannot see: feel for it through the stone
             b.do_ability(f, opt.value)
             break
+    if b.has_action(f) and f.bonus > 0 and _arcane_bonus(b, f):
+        opts = [o for o in b.attack_options(f) if o.available]  # (a weapon called to hand: its blows now)
     if opts and b.has_action(f):
         _maneuvers_first(b, f, opts)  # (a Battle Master's Commander's Strike, Bait and Switch, feint or lunge)
     if opts and b.has_action(f) and f.bonus > 0 and best_plan(b, f, opts) is None:
@@ -1219,6 +1232,45 @@ def _maneuvers_first(b: Battle, f: Fighter, opts: list) -> None:
         for opt, a in _abilities(b, f, "lunge"):
             b.do_ability(f, opt.value)
             return
+
+
+def _arcane_bonus(b: Battle, f: Fighter) -> bool:
+    """An Eldritch Knight's or Arcane Trickster's bonus action before striking (Expansion 4 Part B): a bonded weapon
+    called to hand - one thrown and lying on the field, or the other bond when the one held cannot reach (a bow with
+    blades all round, a blade with nobody near) - and the unseen hand set beside a foe that stands by another, so a
+    Cunning Strike's Trip catches both (Versatile Trickster). True if one was used."""
+    from realmwalker.rules import war_bond
+    from realmwalker.rules.engine.handlers import arcane
+
+    if b.current is not f or b.outcome is not None or f.bonus <= 0 or f.char is None:
+        return False
+    for opt, a in _abilities(b, f, "rearm"):
+        away = war_bond.away(b, f)
+        held = f.char.equipped_item("main_hand")
+        thrown = [it for it in away if it in b.thrown]
+        if thrown and (held is None or b.t.items.get(held.def_id).get("category") != "weapon"):
+            b.do_ability(f, opt.value)
+            return True
+        rest = [it for it in away if it not in b.thrown]
+        if not rest or held is None:
+            continue
+        shoots = "ranged" in b.t.items.get(held.def_id).get("properties", ())
+        other = "ranged" in b.t.items.get(rest[0].def_id).get("properties", ())
+        foes = [e for e in b.enemies_of(f) if e.active and e.standing]
+        pressed = any(b.gap(f, e) <= 1 for e in foes)
+        far = foes and min(b.gap(f, e) for e in foes) > 6  # (more than 30 feet: no blade reaches this turn)
+        if (shoots and not other and pressed) or (not shoots and other and far):
+            b.do_ability(f, opt.value)
+            return True
+    if f.has_trait("versatile_trickster") and arcane.hand_of(b, f) is None:
+        for opt, a in _abilities(b, f, "hand"):
+            pairs = [e for e in opt.targets if e.standing and b.gap(f, e) > 1
+                     and any(x is not e and x.standing and b.gap(x, e) <= 1 and b.gap(f, x) <= 1
+                             for x in b.enemies_of(f))]
+            if pairs:
+                b.do_ability(f, opt.value, min(pairs, key=lambda e: (e.hp, e.id)))
+                return True
+    return False
 
 
 def _maneuvers_after(b: Battle, f: Fighter) -> bool:

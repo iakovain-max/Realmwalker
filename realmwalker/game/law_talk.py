@@ -108,7 +108,10 @@ def choices(conv) -> list:
     hide = guilds.safehouse_offer(game, npc)
     if hide is not None:
         out.append(Choice("lie_low", f"I need somewhere to lie low. ({money_text(hide[1])})", hide[2], hide[3]))
-    out.append(Choice("pickpocket", "[Sleight of Hand] Try for their purse."))
+    from realmwalker.game import legerdemain
+
+    out.append(Choice("pickpocket", "[Sleight of Hand] Try for their purse" + (
+        " (the unseen hand)." if legerdemain.trickster(game) is not None else ".")))
     out.append(Choice("attack", "Attack them."))
     return out
 
@@ -318,9 +321,33 @@ def pickpocket(conv) -> None:
     npc = conv.npc
     sheet = game.sheet()
     rng = conv.rng
+    from realmwalker.game import legerdemain
+
+    unseen = legerdemain.trickster(game)  # (an Arcane Trickster's unseen hand does it from 30 feet away)
+    if unseen is not None:
+        sheet = game.sheet(unseen)
     roll = dice.d20(rng).natural + sheet.skill_bonus("sleight_of_hand")
     watch = 10 + (2 if "suspicious" in npc.traits else 0) + (2 if npc.job == "guard" else 0)
     npc.flags["picked_day"] = game.moment.total_days
+    if unseen is not None:
+        if roll >= watch:
+            take = min(npc.purse, max(1, int(npc.purse * rng.uniform(0.2, 0.6))))
+            npc.purse -= take
+            game.leader.money += take
+            conv.note(f"<loot>{legerdemain.first(unseen)}'s unseen hand slips into their purse: {money_text(take)}.</> "
+                      f"<dim>(Sleight of Hand {roll} vs {watch}, the unseen hand)</>" if take else
+                      f"<dim>The unseen hand finds their purse empty. (Sleight of Hand {roll} vs {watch})</>")
+            if game.quests:
+                from realmwalker.game import quests
+
+                for line in quests.on_pickpocket(game, npc):
+                    conv.note(line)
+            return
+        conv.npc_says("\"What - ?\"")
+        conv.note("They slap at their belt and look round; nobody is near enough to blame.")
+        conv.note(f"<warn>The unseen hand is felt, not seen.</> <dim>(Sleight of Hand {roll} vs {watch}, the unseen hand)</>")
+        change_disposition(npc, -5)
+        return
     if roll >= watch:
         take = min(npc.purse, max(1, int(npc.purse * rng.uniform(0.2, 0.6))))
         npc.purse -= take

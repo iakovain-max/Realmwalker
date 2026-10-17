@@ -29,7 +29,7 @@ from realmwalker.rules import feats, grid, simulacrum
 from realmwalker.rules import spells as spellrules
 from realmwalker.rules.character import Character, Sheet, modifier
 from realmwalker.rules.engine import actions, durations, effects, events, hazards, marks, query, reactions
-from realmwalker.rules.engine.handlers import general_feats, mastery
+from realmwalker.rules.engine.handlers import arcane, general_feats, mastery
 from realmwalker.rules.engine.reactions import Decision
 from realmwalker.rules.engine import traits as trs
 from realmwalker.rules.creatures import Creature
@@ -2255,6 +2255,32 @@ class Battle:
     def has_action(self, f: Fighter) -> bool:
         return f.action > 0 or f.attacks_left > 0
 
+    def _spend_attacks(self, f: Fighter, n: int) -> None:
+        """Part of the Attack action goes on something else: `n` of its attacks (a vial thrown, War Magic); the
+        action is taken if it had not begun."""
+        if f.attacks_left <= 0:
+            f.action -= 1
+            f.attacks_left = query.attacks_per_action(f)
+            f.loaded_fired = False
+            f.__dict__["struck_turn"] = f.spent_round
+        f.attacks_left = max(0, f.attacks_left - n)
+
+    def war_magic(self, f: Fighter, sid: str | None, spell: dict) -> int:
+        """How many of the Attack action's attacks this casting may take (Expansion 4 B.2): War Magic, one for a wizard
+        cantrip cast with an action; Improved War Magic, two for a level 1 or 2 wizard spell. 0: none (not their own
+        prepared spell, not an action's casting, or not theirs to do)."""
+        if f.char is None or not sid or ":" in sid or cast_kind(f, spell) != "action" \
+                or "wizard" not in spell.get("classes", ()):
+            return 0
+        level = spell["level"]
+        if level == 0 and f.has_trait("war_magic"):
+            need = 1
+        elif 1 <= level <= 2 and f.has_trait("improved_war_magic"):
+            need = 2
+        else:
+            return 0
+        return need if sid in spellrules.known_spells(f.char, self.t) else 0
+
     def struck_this_turn(self, f: Fighter) -> bool:
         """Its action went on this turn's attacks (a breath made with the Multiattack may still come)."""
         return f.__dict__.get("struck_turn") == f.spent_round
@@ -4015,6 +4041,8 @@ class Battle:
             if (spell is None or spell.get("cast") == "reaction" or spellrules.out_of_battle(spell)
                     or spellrules.has_op(spell, "identify")):
                 continue  # (Thaumaturgy and the like on a stat block: their use is outside a fight)
+            if sid in f.__dict__.get("stolen", ()):
+                continue  # (an Arcane Trickster's Spell Thief took it)
             level = spell["level"]
             per_day = self._per_day(f, sid)
             if per_day is not None:
@@ -4106,7 +4134,7 @@ class Battle:
                                   else "a reaction: cast by itself when a blow would land")
             if ok:
                 ok, why = self._casting_time_ok(f, spell, spell["level"] > 0
-                                                and not spellrules.free_cast(f.char, self.t, sid))
+                                                and not spellrules.free_cast(f.char, self.t, sid), sid=sid)
             out.append((sid, ok, why))
         again = again_spell(f, self.t)
         if again is not None:
@@ -4170,11 +4198,13 @@ class Battle:
             out.append((f"wish:copy:{sid}", ok, why))
         return out
 
-    def _casting_time_ok(self, f: Fighter, spell: dict, slotted: bool | None = None) -> tuple[bool, str]:
+    def _casting_time_ok(self, f: Fighter, spell: dict, slotted: bool | None = None,
+                         sid: str | None = None) -> tuple[bool, str]:
         """The action economy of spells: a bonus-action spell needs the bonus action, an ordinary one the action;
         and only one spell slot may be spent on a turn (2024; `slotted`: whether this casting would spend one, by
         default when the spell is not a cantrip). A cantrip, a scroll, an item's charge or a gift's spell may go
-        beside a slotted spell."""
+        beside a slotted spell. Once the Attack action has begun, only War Magic casts in place of its attacks
+        (`sid`: the caster's own spell, Expansion 4 B.2)."""
         if self.antimagic(f.cells):
             return False, "magic does not work here"
         if f.buff_value("befuddled") and not spell.get("ability") and "item" not in spell.get("classes", ()):
@@ -4186,8 +4216,14 @@ class Battle:
         if cast_kind(f, spell) == "bonus":
             if f.bonus <= 0:
                 return False, "no bonus action left"
-        elif f.action <= 0 and f.attacks_left <= 0:
-            return False, "no action left this turn"
+        elif f.action <= 0:
+            if f.attacks_left <= 0:
+                return False, "no action left this turn"
+            need = self.war_magic(f, sid, spell)
+            if not need:
+                return False, "the Attack action is under way: its attacks first"
+            if f.attacks_left < need:
+                return False, f"War Magic takes {need} attacks: {f.attacks_left} left"
         if (spell["level"] > 0 if slotted is None else slotted) and self.slot_used_now(f):
             return False, "one spell slot a turn: a slot has been spent this turn"
         return True, ""
@@ -4448,7 +4484,10 @@ class Battle:
         if flask is not None:
             # A flask thrown: the thrower's aim makes it hard to dodge (8 + proficiency + Dexterity); no magic is spent.
             remove_item(c, flask.uid, 1)
-            self._spend(f, bonus_cast)
+            if not bonus_cast and f.action <= 0 and f.attacks_left > 0:
+                self._spend_attacks(f, 1)  # (2024: a vial thrown in place of one of the Attack action's attacks)
+            else:
+                self._spend(f, bonus_cast)
             f.hidden = 0
             dc = 8 + s.proficiency + s.mod("dex")
             self.cast(f, sid, spell, target, point, up=0, mod=s.mod("dex"), dc=dc, bonus=s.proficiency + s.mod("dex"),
@@ -4505,11 +4544,21 @@ class Battle:
             spellrules.spend_slot(c, slot_level)
             self.note_slot(f)
             slotted = True
-        self._spend(f, bonus_cast)
+        own = scroll is None and charged is None and innate is None
+        war = self.war_magic(f, sid, spell) if own and not bonus_cast else 0
+        if war and (f.attacks_left >= war if f.action <= 0 else query.attacks_per_action(f) > war):
+            self._spend_attacks(f, war)  # (Expansion 4 B.2: in place of the Attack action's attacks)
+            self.say(f"{f.the_name} weaves the spell between blows (War Magic).", "magic")
+        else:
+            self._spend(f, bonus_cast)
         if bonus_cast:
             f.cast_bonus_spell = True
         else:
             f.cast_action_spell = True
+        if arcane.ambush_ready(self, f):  # (Magical Ambush: cast out of sight, the saves this turn are harder)
+            f.__dict__["ambush_turn"] = (self.round, self.turn)
+        else:
+            f.__dict__.pop("ambush_turn", None)  # (a second spell, cast in plain sight)
         f.hidden = 0
         up = max(0, (slot_level or level) - spell["level"])  # (0 for a free cast at its own level)
         if spell.get("again_of"):
@@ -5386,6 +5435,9 @@ class Battle:
             if self.outcome == "parley":
                 xp //= 2
         money = sum(c.money for c in dead)
+        from realmwalker.rules import war_bond
+
+        war_bond.home(self)  # (an Eldritch Knight's thrown bonded weapon answers the call when the fight is over)
         items = [i for c in dead for i in c.inventory] + list(self.thrown)
         if self.outcome in ("victory", "parley"):  # a minute's search finds half the ammunition loosed (2024)
             items += [Item(0, def_id, n // 2) for def_id, n in sorted(self.shot.items()) if n // 2 > 0]

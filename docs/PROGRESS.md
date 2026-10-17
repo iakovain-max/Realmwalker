@@ -29,7 +29,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Expansion 1, *Dice & Destiny*** (version 1.1.0) | ✅ Released (2026-10-13), branch `dlc/01-dice-destiny` |
 | **Expansion 2, *Blades & Backgrounds*** (version 1.2.0) | ✅ Released (2026-10-13), branch `dlc/02-blades-backgrounds` |
 | **Expansion 3, *Demigods & Magics*** (version 1.3.0) | ✅ Released (2026-10-17), branch `dlc/03-demigods-magics` |
-| **Expansion 4, *Steel & Shadows*** (version 1.4.0 with its last part) | Part A (the Battle Master) merged (2026-10-17), branch `dlc/04-steel-shadows` |
+| **Expansion 4, *Steel & Shadows*** (version 1.4.0 with its last part) | Parts A (the Battle Master) and B (the Eldritch Knight, the Arcane Trickster) merged (2026-10-17), branch `dlc/04-steel-shadows` |
 | **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansions 1-3 released; Expansion 4 under way (see STATUS.md) |
 
 ---
@@ -41,6 +41,47 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-17 (night): Steel & Shadows Part B — the Eldritch Knight and the Arcane Trickster — branch `dlc/04-steel-shadows`
+
+Built by the relay builder realmwalker-a. Saves do not change, and characters you already have keep working.
+- **Two new paths that cast.** At level 3 a fighter may become an **Eldritch Knight** and a rogue an **Arcane
+  Trickster**. Both cast wizard spells with Intelligence: two spell slots at level 3, rising to spells of level 4 at
+  level 19. They start with three prepared spells and end with thirteen. The knight knows two cantrips and the
+  trickster three, Mage Hand among them; each gets one more at level 10. A component pouch comes with the path.
+  Their list changes when they gain a level, not after every rest. The Spells page (S) works for them as for a wizard.
+- **The Eldritch Knight.** War Bond binds up to two weapons during a rest. A bonded weapon cannot be knocked from the
+  hand. A bonus action calls it back: a thrown spear leaps from the ground to the hand, or the bonded bow swaps in
+  for the sword. Robbers cannot keep a bonded weapon either. War Magic (level 7) lets one attack of the Attack
+  action be a cantrip, and Improved War Magic (level 18) lets two attacks be a level 1 or 2 spell. Eldritch Strike
+  (level 10) makes a creature hit by the knight's weapon worse at resisting the knight's next spell. Arcane Charge
+  (level 15) teleports the knight up to 30 feet beside a foe as Action Surge begins.
+- **The Arcane Trickster.** The unseen hand is cast and steered with a bonus action. In a town it robs stalls and
+  picks pockets from 30 feet away: nobody sees who did it, and a failure blames nobody. Magical Ambush (level 9)
+  makes a spell cast from hiding hard to resist. Versatile Trickster (level 13) lets a Cunning Strike's trip also
+  trip a foe beside the hand. Spell Thief (level 17) turns a spell cast at the trickster once a day: on a failed
+  save the spell passes them by, and the trickster can cast it until their next long rest.
+- **Your companions use it.** On Auto these casters prepare Shield first and cast between blows when a spell is
+  worth more than the attack it replaces. They call a bonded weapon that fits the moment, and they set the unseen hand
+  where a trip can catch two foes. A fighter or rogue on Auto with Intelligence 14 or more takes the arcane path,
+  unless they fight with a great weapon or a shield.
+- **How to see it.** Level a fighter or a rogue to 3 and choose the new path on the level-up screen. In a fight
+  the cantrips appear among the spells after the first attack. The unseen hand shows faintly on the battle mat, but
+  only to its own side.
+- Choices made while Anton was away:
+  - A new level opens the whole prepared list for change until the next fight. The book allows only one spell a
+    level. A cantrip is not swapped on a new level.
+  - War Bond's ritual is done at a rest over the weapon in hand and one of another reach, as the game chooses.
+    A third bond is never made. The watch's strongbox gives a bonded weapon back at the release, as with all gear.
+  - Arcane Charge lands beside the weakest foe out of reach, as the battle judges. It does nothing when a foe is
+    already in reach.
+  - The unseen hand cannot pick locks; there is nothing in the game it would add there yet. Traps cannot be
+    disarmed in the game at all.
+  - Spell Thief is the battle's judgement, used on a harmful spell of level 1 or more. A stolen spell lasts until
+    the next long rest instead of eight hours, and the caster loses it for the rest of the fight.
+  - Hidden counts as Invisible for Magical Ambush, as the 2024 Hide action gives that condition.
+- Fixed on the way: a caster in the middle of the Attack action could cast a spell for free after the first
+  attack. Now only War Magic casts in place of attacks. A vial thrown mid-action takes one of the attacks, as in 2024.
 
 ### Session, 2026-10-17 (evening): Steel & Shadows begun; Part A — the Battle Master — branch `dlc/04-steel-shadows`
 

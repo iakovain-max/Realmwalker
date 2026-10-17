@@ -141,7 +141,11 @@ def sweep_targets(b, f, target, opt) -> list:
 def held_weapon(t) -> str:
     """The name of the weapon a creature holds in its stat block's attacks ("" if none it could drop)."""
     if t.char is not None:
+        from realmwalker.rules import war_bond
+
         it = t.char.equipped_item("main_hand")
+        if war_bond.holds(t.char):
+            return ""  # (an Eldritch Knight's bonded weapon will not leave the hand)
         return it.name if it is not None else ""
     items = t.t.items
     for a in (t.cdef or {}).get("attacks", ()):

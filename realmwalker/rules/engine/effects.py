@@ -199,6 +199,12 @@ def cast(b, f, sid: str, spell: dict, target, point, *, up: int, mod: int, dc: i
     """A spell's effects, once it has been paid for (by a party caster, or a monster's own magic)."""
     area = b.spell_area(f, sid, point, target) if spell.get("area") else []
     shut = [x for x in b.fighters if (x.buffs or x.char is not None) and warded(b, f, x, level, sid)]
+    stolen = []
+    if not spell.get("thrown") and not spell.get("again_of"):
+        from realmwalker.rules.engine.handlers import arcane
+
+        stolen = arcane.spell_thief(b, f, spell, sid, level, target, area)  # (an Arcane Trickster's reaction)
+        shut += stolen
     if shut and area:  # (Globe of Invulnerability: its barrier is left out of the spell's area)
         area = [sq for sq in area if not any(sq in x.cells for x in shut)]
     if spell.get("thrown"):
@@ -234,6 +240,8 @@ def cast(b, f, sid: str, spell: dict, target, point, *, up: int, mod: int, dc: i
         from realmwalker.rules.engine.handlers import wizard
 
         c.maximize = wizard.overchannel(b, f, spell, level)
+    if target is not None and target in stolen:
+        return  # (Spell Thief: the spell passes them by; its words were said)
     if target is not None and target in shut:
         if target.char is not None and target.char.effects.get(f"immune_spell:{sid}", 0) > 0:
             b.say(f"{spell['name']} does not touch {target.the_name}: a wish keeps it off.", "magic")
@@ -255,6 +263,9 @@ def cast(b, f, sid: str, spell: dict, target, point, *, up: int, mod: int, dc: i
 
             wizard.overchannel_price(b, f)
     finally:
+        from realmwalker.rules.engine.handlers import arcane
+
+        arcane.spend_struck(b, f)  # (Eldritch Strike: spent on the save it weakened)
         b._casting = before
 
 
