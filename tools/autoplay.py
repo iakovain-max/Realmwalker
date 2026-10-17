@@ -506,6 +506,12 @@ def _check_companions(game, fail) -> None:
                     or r.get("until") is not None and float(r["until"]) < game.world.time - 31 \
                     or len({x.get("id") for x in rows}) != len(rows):
                 fail(f"{c.name}'s servant cannot be: {r}")
+            elif r.get("form"):  # (F.5: a Planar Ally's spirit has its creature's form and the numbers of its slot)
+                summon = game.tables.creatures[r["cid"]].get("summon") or {}
+                if r["form"] not in summon.get("forms", {}) or int(r.get("level", 0)) < int(summon.get("level", 99)) \
+                        or int(r["max_hp"]) != servant_rules.spirit_max_hp(game.tables, r["cid"], r["form"],
+                                                                           int(r["level"])):
+                    fail(f"{c.name}'s spirit cannot be: {r}")
         if c.effects.get(servant_rules.ROT) and c.alive and c.hp > c.effects.get(servant_rules.ROT_HP, c.hp) + 0.5:
             fail(f"{c.name} healed under a mummy's rot: {c.hp} above {c.effects.get(servant_rules.ROT_HP)}")
     if game.party:
