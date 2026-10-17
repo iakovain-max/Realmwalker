@@ -386,14 +386,9 @@ Ideas for later:
   inward, or one already bound); its orders are only to fight (a Hostile creature's twisting of them left out); a
   bound captive is no longer a captive (no bounty) and runs off when the binding ends. Spirits and the bound heal at
   a long rest (the dead still do not), wait outside towns as the dead do, and never turn on the party.
-Next session starts at: task F.6 in docs/expansions/03-demigods-magics.md (Part F: shapes - Polymorph, True
-Polymorph, Animal Shapes, Shapechange, with the rest of Appendix B as the forms: ape, constrictor snake, crocodile,
-elephant, elk, giant badger, crab, goat, seahorse and weasel, badger, goat, lion, panther, reef shark, tiger, venomous
-snake; imp, quasit, pseudodragon, sprite, sphinx of wonder, slaad tadpole; and the cult fanatic's imp or quasit; Part
-F complete). Write F.6's "How" first; split it at its start if it is too big for one part (the stat blocks and
-pictures through helpers on the sonnet model, numbers checked on the MM page images). Polymorph in a fight changes a
-Fighter's numbers for a while (a form's stat block with temporary hit points in the 2024 text): see how Magic Jar's
-host (`Fighter.jar`) and F.1's `Fighter.cdef` already swap a fighter's numbers.
+Next session starts at: task F.6 in docs/expansions/03-demigods-magics.md (Part F: shapes in a fight - Polymorph
+and True Polymorph; split at its start into F.6, F.7 (the rest of Appendix B's creatures with pictures) and F.8
+(Animal Shapes, Shapechange); F.6's How is written and the work is under way on dlc/03-demigods-magics).
 Part E and F.1 to F.5 are in `main`.
 The way of Part F (F.5): the bound are F.4's servant records with `form`, `level`, `picture`, `heals` (whole at a
 long rest: `rules/servants.rest` from progression.long_rest) and `bound`; `rules/servants.spirit_def` gives a spirit

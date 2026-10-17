@@ -471,10 +471,45 @@ stat block now comes with the spell that brings it into play (never a block that
 - [x] F.5 The bound: Planar Ally (a spirit of the cleric's god for a price by the hour or day), Planar Binding (a
   captive celestial, elemental, fey or fiend, or a Planar Ally's spirit, bound for a day to a year) and Magic Circle
   turned inward (a spirit that will not stay to be bound is held in it), on F.4's servants.
-- [ ] F.6 Shapes: Polymorph, True Polymorph, Animal Shapes, Shapechange, with the rest of Appendix B (ape,
-  constrictor snake, crocodile, elephant, elk, giant badger, crab, goat, seahorse and weasel, badger, goat, lion,
-  panther, reef shark, tiger, venomous snake; imp, quasit, pseudodragon, sprite, sphinx of wonder, slaad tadpole) as
-  the forms, and the cult fanatic's imp or quasit; Part F complete.
+- [ ] F.6 Shapes in a fight (split at its start, 2026-10-17: the old F.6 was four spells and 24 stat blocks with
+  pictures): Polymorph and True Polymorph, a fighter's numbers swapped for a creature's for the fight, the forms
+  taken from the creatures the game has.
+- [ ] F.7 The rest of Appendix B: ape, badger, constrictor snake, crocodile, elephant, elk, giant badger, giant crab,
+  giant goat, giant seahorse, giant weasel, goat, lion, octopus, panther, reef shark, tiger, venomous snake; imp,
+  quasit, pseudodragon, sprite, sphinx of wonder, slaad tadpole, with pictures; each as Polymorph's or True
+  Polymorph's form and met in the land where it lives (the beasts in their biomes' bands, the fiends and fey where
+  such things are met), and the cult fanatic's imp or quasit.
+- [ ] F.8 Animal Shapes and Shapechange (on F.6's swap), outside a fight too; Part F complete.
+
+#### F.6 — How
+- **A shape** is a fighter's numbers swapped for a creature's for the rest of the fight (the 2024 text: "the
+  target's game statistics are replaced by the stat block of the chosen Beast"). `Battle.shape(f, cid, by=caster,
+  spell=)` keeps what it was in `Fighter.shape` {char, creature, cdef, sq, by, spell, name} and gives the fighter a
+  new `Creature` of the form (named for who it is: "Aldric, as a brown bear"), with the hit points it had (hit points
+  are kept) and Temporary Hit Points equal to the form's own hit points (the higher of those and any it had). A party
+  member keeps playing as itself (control follows the side, as for allies): the form's attacks, speeds, senses, size
+  and traits; no spells (its character is set aside: `f.char` is None while shaped), no class features, no gear.
+- **It ends** (`Battle.unshape`) when its Temporary Hit Points are gone (`_apply_hp_loss`: what is left of the blow
+  falls on its own hit points), when the caster's concentration ends (`_end_concentration`), or when the fight ends
+  (at the outcome, with Magic Jar's release: the spell outlasts no fight; adapted). Conditions stay with the fighter.
+  On ending, its hit points go back to the character or creature it was. A shapechanger, a creature at 0 hit points
+  and one already shaped are not affected.
+- **Polymorph** (level 4, concentration up to an hour, 60 feet, a caterpillar cocoon: the component pouch serves): a
+  creature makes a Wisdom save or becomes a Beast whose Challenge Rating is no more than its own (a character: its
+  level). The party's own are willing: no save. The form is the game's choice (as Chromatic Orb picks its damage):
+  for a friend the strongest beast it may become (by hit points and blows, `shapes.best`), for a foe the weakest
+  (`shapes.worst`: a frog, a rat). **True Polymorph** (level 9, concentration up to an hour, 30 feet, a drop of
+  mercury, a dollop of gum arabic and a wisp of smoke: the pouch) does the same with any creature that is not unique
+  or a shapechanger, by the same Challenge Rating rule; the hour that makes it lasting and the object forms are left
+  out (no fight lasts an hour; objects wait). The spells' effects op is {"op": "shape", "kinds": ["beast"] | "any"}.
+- **The Auto** casts it by its worth (`estimates`: a foe's threat taken away times the chance it fails the save; a
+  friend's blows and the temporary hit points gained). The enemy's casters get it when G.1 gives them the spells.
+- **Pictures**: a shaped fighter is drawn as its form (battlefx draws a fighter without a character by its creature).
+- **Tests** (tests/test_shapes.py): a foe polymorphed into the weakest beast (the save, its blows and AC now the
+  beast's, back as it was when the temporary hit points go with the rest of the blow on its own hit points), a
+  friend into the strongest it may be (no save, played by the player, cannot cast, back at the end of the
+  concentration with its own hit points), True Polymorph into a non-beast; the fight's end undoes it; the Auto casts
+  it; the catalogue test casts both.
 
 #### F.5 — How
 - **The bound** are F.4's servants (`char.spells["servants"]`, rules/servants.py) with what the dead did not need: a
