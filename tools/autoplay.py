@@ -435,12 +435,9 @@ def _check_companions(game, fail) -> None:
     for room in flags.get("arcane_rooms") or []:
         if not 0 <= int(room) < len(game.world.settlements):
             fail(f"an inn room is locked in no town: {room}")
-    chest = flags.get("secret_chest")
-    away = [it for c in game.party for it in c.inventory if "ethereal" in (it.tags or [])]
-    if away and chest is None:
-        fail(f"{len(away)} things are on the Ethereal Plane with no secret chest to hold them")
-    if any(uid == it.uid for c in game.party for uid in c.equipped.values() for it in away):
-        fail("something worn or wielded is in the secret chest")
+    for d in (flags.get("secret_chest") or {}).get("items") or []:
+        if d.get("def_id") not in game.tables.items.defs:
+            fail(f"the secret chest holds a thing that does not exist: {d}")
     for c in game.party:
         for it in c.inventory:
             for tag in it.tags or []:

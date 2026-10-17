@@ -209,8 +209,6 @@ def sell_price(game, npc: NPC, item: Item) -> tuple[int | None, str]:
         return None, f"they don't deal in {d['category']}"
     from realmwalker.game import stonework
 
-    if stonework.in_chest(item):
-        return None, "it is in the secret chest, on the Ethereal Plane"
     if stonework.conjured(item):
         return None, "they can see it is made by magic, and will not touch it"
     if "stolen" in item.tags:

@@ -203,9 +203,7 @@ def _tag_until(item, name: str) -> float:
 def hidden_thing(game, item, *, robbers: bool = False) -> bool:
     """A thing that is not taken: sequestered (from robbers, thieves and the watch), or masked (robbers, who pick the
     best-looking things, pass it over)."""
-    from realmwalker.game import stonework
-
-    return sequestered(item) or stonework.in_chest(item) or (robbers and masked(game, item))
+    return sequestered(item) or (robbers and masked(game, item))
 
 
 # ---------------------------------------------------------------------------- the road: Antipathy/Sympathy

@@ -97,8 +97,6 @@ def equip(char: Character, items: ItemTable, uid: int, slot: str | None = None) 
     it = char.item(uid)
     if it is None:
         return False, "You don't have that."
-    if "ethereal" in (it.tags or ()):
-        return False, "It is in the secret chest, on the Ethereal Plane: touch the replica to call the chest back."
     wearer, _ = worn_by(char, uid)  # the party shares one pack: it may be on someone else
     if wearer is not None and wearer is not char:
         return False, f"{wearer.name.split()[0]} has the {items.name(it, False)}. Take it off them first."

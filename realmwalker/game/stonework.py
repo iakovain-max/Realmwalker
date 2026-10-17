@@ -10,9 +10,10 @@ A spell's {"op": "road", "does": ...} is done here (game/spellwork's door sends 
   a thing of plant stuff or stone that vanishes at its time (tag "conjured:<minute>": `tick`, and no merchant buys it).
 - "stone": Stone Shape and Passwall open a way through a dungeon's wall (Passwall's closes again after its hour:
   `on_step`, from game/dungeon.on_step).
-- "chest": Leomund's Secret Chest sends the party's coin and treasure or spare arms to the Ethereal Plane (item tag
-  "ethereal": it weighs nothing, nobody can take it, nothing in it can be used); the replica calls it back
-  (`recall_chest`, the replica's use in game/gear). After 60 days it may be lost.
+- "chest": Leomund's Secret Chest sends the party's coin and treasure or spare arms to the Ethereal Plane: they leave
+  the pack and are kept as records in `renown.flags["secret_chest"]` (so nothing on this side weighs, wears, spends,
+  sells or steals them); the replica calls it back (`recall_chest`, the replica's use in game/gear). After 60 days it
+  may be lost.
 - "weather": Control Weather holds the weather round the caster (`held_weather`, read through game/survival.weather).
 - "plants": Plant Growth's Enrichment (8 hours) doubles what is foraged on this tile for a year (`enriched`).
 - "wave": Tsunami is not cast on the road: it is offered on the encounter screen when a band is seen first
@@ -29,7 +30,7 @@ from realmwalker.core.textgen import escape_markup as esc
 from realmwalker.game.divining import Subject
 from realmwalker.rules import spells as spellrules
 from realmwalker.rules.character import Character
-from realmwalker.rules.inventory import add_item, carried, remove_item
+from realmwalker.rules.inventory import add_item, carried, distinct_packs, remove_item
 from realmwalker.rules.items import money_text
 
 DAY = 24 * 60
@@ -126,9 +127,10 @@ def room_locked(game) -> bool:
     return here is not None and here in (_flags(game).get("arcane_rooms") or [])
 
 
-def in_chest(item) -> bool:
-    """A thing in Leomund's Secret Chest, on the Ethereal Plane: weightless, untouchable, unusable."""
-    return "ethereal" in (getattr(item, "tags", None) or [])
+def chest_things(game) -> list[dict]:
+    """What is in Leomund's Secret Chest on the Ethereal Plane: things out of every pack, kept as records (so nothing
+    on this side weighs, wears, spends, sells or steals them)."""
+    return list((_flags(game).get("secret_chest") or {}).get("items") or [])
 
 
 def conjured(item) -> bool:
@@ -181,16 +183,17 @@ def tick(game) -> None:
     """As time passes: Creation's things vanish at their time; the weather held runs out; the secret chest left too
     long on the Ethereal Plane may be lost (from pass_time, through spellwork.tick)."""
     now = _now(game)
-    for c in game.party:
+    for c in distinct_packs(game.party):
         for it in list(c.inventory):
-            for tag in it.tags or []:
-                if tag.startswith("conjured:") and int(tag.split(":")[1]) < now:
-                    for slot, uid in list(c.equipped.items()):
-                        if uid == it.uid:
-                            c.equipped[slot] = None
-                    remove_item(c, it.uid)
-                    game.say(f"The {game.tables.items.name(it, False)} made by magic fades away to nothing.", "dim")
-                    break
+            until = next((int(t.split(":")[1]) for t in it.tags or [] if t.startswith("conjured:")), None)
+            if until is None or until >= now:
+                continue
+            for m in game.party:  # (worn or wielded by whoever: it goes from their hands too)
+                for slot, uid in list(m.equipped.items()):
+                    if uid == it.uid:
+                        m.equipped[slot] = None
+            remove_item(c, it.uid)
+            game.say(f"The {game.tables.items.name(it, False)} made by magic fades away to nothing.", "dim")
     rec = _flags(game).get("weather")
     if rec is not None and int(rec.get("until", 0)) < now:
         del _flags(game)["weather"]
@@ -211,27 +214,24 @@ def tick(game) -> None:
 
 
 def _lose_chest(game) -> None:
-    gone = 0
-    for c in game.party:
-        for it in list(c.inventory):
-            if in_chest(it):
-                remove_item(c, it.uid)
-                gone += 1
     rec = _flags(game).pop("secret_chest", {})
+    gone = len([d for d in rec.get("items") or [] if d.get("def_id") != "leomunds_chest"])
+    money = int(rec.get("money", 0))
     game.say("<warn>A thread of magic snaps somewhere far away: the secret chest is lost on the Ethereal Plane, with "
-             f"everything in it</> <dim>({gone} things{', ' + money_text(int(rec.get('money', 0))) if rec.get('money') else ''})</>.",
-             "warn")
+             f"everything in it</> <dim>({gone} things{', ' + money_text(money) if money else ''})</>.", "warn")
 
 
 def recall_chest(game) -> list[str]:
     """The replica touched: the chest comes back from the Ethereal Plane with all in it (the replica's use)."""
+    from realmwalker.rules.inventory import add_existing
+    from realmwalker.rules.items import Item
+
     rec = _flags(game).pop("secret_chest", None)
-    things = [it for c in game.party for it in c.inventory if in_chest(it)]
-    if rec is None and not things:
+    if rec is None:
         return ["You turn the little replica over in your hand. Nothing answers: the chest is not on the other side."]
-    for it in things:
-        it.tags = [t for t in it.tags if t != "ethereal"]
-    money = int((rec or {}).get("money", 0))
+    things = [add_existing(game.leader, game.tables.items, Item.from_dict(d)) for d in rec.get("items") or []]
+    things = [it for it in things if it.def_id != "leomunds_chest"]  # (the chest itself is not one of the things)
+    money = int(rec.get("money", 0))
     game.leader.money += money
     game.cue("chest")
     game.dirty = True
@@ -382,7 +382,7 @@ def _worn_things(game) -> list:
     items = game.tables.items
     return sorted((it for it in carried(game.party)
                    if items.category(it) in ("weapon", "armor", "shield", "helmet", "clothing")
-                   and it.condition < MEND_CAP and not in_chest(it)), key=lambda it: it.condition)
+                   and it.condition < MEND_CAP), key=lambda it: it.condition)
 
 
 def fabricable(game) -> list[tuple[str, str, int]]:
@@ -442,13 +442,25 @@ def _wall_ways(game, depth: int) -> list[Subject]:
     return out
 
 
-def _chest_loads(game) -> list[Subject]:
+def _goes_in(game, it, load: str, worn: set) -> bool:
+    """Whether a thing carried goes into the chest with this load: treasure is trade goods with no use of their own
+    (gems, art, ingots: not a spell's costly component, which would be out of reach), arms are weapons and armour
+    nobody wears or wields; never anything magic. The chest itself goes too."""
     items = game.tables.items
+    if it.magic or it.uid in worn:
+        return it.def_id == "leomunds_chest" and it.uid not in worn
+    d = items.get(it.def_id)
+    if it.def_id == "leomunds_chest":
+        return True
+    if load in ("treasure", "all") and d.get("category") == "trade" and not d.get("use") and not d.get("how"):
+        return True
+    return load in ("arms", "all") and d.get("category") in ("weapon", "armor", "shield", "helmet")
+
+
+def _chest_loads(game) -> list[Subject]:
     worn = {uid for c in game.party for uid in c.equipped.values() if uid is not None}
-    treasure = [it for it in carried(game.party) if items.category(it) == "trade" and not in_chest(it)
-                and not items.get(it.def_id).get("use") and not it.magic]
-    arms = [it for it in carried(game.party) if items.category(it) in ("weapon", "armor", "shield", "helmet")
-            and it.uid not in worn and not in_chest(it) and not it.magic]
+    treasure = [it for it in carried(game.party) if it.def_id != "leomunds_chest" and _goes_in(game, it, "treasure", worn)]
+    arms = [it for it in carried(game.party) if it.def_id != "leomunds_chest" and _goes_in(game, it, "arms", worn)]
     money = sum(c.money for c in game.party)
     out = []
     if treasure or money:
@@ -655,25 +667,21 @@ def _stone(game, caster, spell, o, target) -> list[str]:
 
 def _chest(game, caster, target) -> list[str]:
     load = target.ref
-    items = game.tables.items
     worn = {uid for c in game.party for uid in c.equipped.values() if uid is not None}
-    sent = 0
-    for c in game.party:
-        for it in c.inventory:
-            if in_chest(it) or it.magic:
-                continue
-            cat = items.category(it)
-            if load in ("treasure", "all") and cat == "trade" and not items.get(it.def_id).get("use") \
-                    or load in ("arms", "all") and cat in ("weapon", "armor", "shield", "helmet") and it.uid not in worn \
-                    or it.def_id == "leomunds_chest":
-                it.tags = list(it.tags or []) + ["ethereal"]
-                sent += 1
+    kept = []
+    for c in distinct_packs(game.party):
+        for it in list(c.inventory):
+            if _goes_in(game, it, load, worn):
+                gone = remove_item(c, it.uid)
+                if gone is not None:
+                    kept.append(gone.to_dict())
     money = 0
     if load in ("treasure", "all"):
         for c in game.party:
             money += c.money
             c.money = 0
-    _flags(game)["secret_chest"] = {"since": _now(game), "money": money, "checked": 0}
+    _flags(game)["secret_chest"] = {"since": _now(game), "money": money, "checked": 0, "items": kept}
+    sent = len(kept) - 1  # (the chest itself is not one of the things in it)
     return [f"<magic>{_first(caster)} touches the chest and its tiny replica, and the chest is gone into the grey,</> "
             f"with {sent} thing{'s' if sent != 1 else ''}" + (f" and {money_text(money)}" if money else "") +
             ". No robber can take it there, and it weighs nothing; touch the replica to call it back. "

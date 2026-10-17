@@ -106,8 +106,6 @@ class ItemTable:
         return self.get(item.def_id)["category"]
 
     def weight(self, item: Item) -> float:
-        if "ethereal" in (item.tags or ()):
-            return 0.0  # (in Leomund's Secret Chest, on the Ethereal Plane: game/stonework.py)
         return float(self.get(item.def_id)["weight"]) * item.qty + item.fill  # a pint of water weighs a pound
 
     def unit_value(self, item: Item) -> int:

@@ -8,7 +8,7 @@ import copy
 import pytest
 
 from realmwalker.core.rng import RNG
-from realmwalker.game import camp, dungeon, economy, fight, gear, glamour, law, magic, services, spellwork, stonework
+from realmwalker.game import camp, dungeon, economy, fight, gear, law, magic, services, spellwork, stonework
 from realmwalker.game.encounters import PendingEncounter
 from realmwalker.game.state import new_game
 from realmwalker.rules import grid
@@ -17,7 +17,7 @@ from realmwalker.rules.combat import FOE, PARTY, Battle, Env
 from realmwalker.rules.creation import CharacterBuilder
 from realmwalker.rules.creatures import spawn
 from realmwalker.rules.engine import check, estimates
-from realmwalker.rules.inventory import add_item, equip
+from realmwalker.rules.inventory import add_item
 from realmwalker.rules.progression import award_xp
 from realmwalker.world.generator import WorldOptions
 from realmwalker.world.tables import Tables
@@ -399,35 +399,42 @@ def test_the_secret_chest_hides_the_treasure_from_robbers_and_comes_back(world, 
     game = game_with(world, tables, wiz)
     in_the_wild(game)
     wiz.money = 5000
-    gem = add_item(wiz, tables.items, "gem_1000", 2)
-    axe = add_item(wiz, tables.items, "battleaxe")
+    add_item(wiz, tables.items, "gem_1000", 2)
+    add_item(wiz, tables.items, "battleaxe")
+    add_item(wiz, tables.items, "diamond", 1)  # (a spell's costly component stays at hand)
     weight = game.sheet(wiz).carried_weight()
     cast(game, wiz, "leomunds_secret_chest", subject(game, wiz, "leomunds_secret_chest", "load", "all of it"))
-    assert stonework.in_chest(gem) and stonework.in_chest(axe) and wiz.money == 0
-    assert game.sheet(wiz).carried_weight() < weight - 25, "the chest and what is in it weigh nothing"
-    assert glamour.hidden_thing(game, gem, robbers=True), "no robber can take it"
-    ok, why = equip(wiz, tables.items, axe.uid)
-    assert not ok and "Ethereal" in why
-    assert "Ethereal" in magic.road_problem(game, wiz, "leomunds_secret_chest")
+    held = {d["def_id"] for d in stonework.chest_things(game)}
+    assert {"gem_1000", "battleaxe", "leomunds_chest"} <= held and wiz.money == 0
+    assert not any(i.def_id in ("gem_1000", "battleaxe", "leomunds_chest") for i in wiz.inventory), "out of the pack"
+    assert any(i.def_id == "diamond" for i in wiz.inventory) and "diamond" not in held
+    assert game.sheet(wiz).carried_weight() < weight - 25, "the chest and what is in it weigh nothing here"
+    assert magic.road_problem(game, wiz, "leomunds_secret_chest") is not None, "the chest is away"
+    assert "Ethereal" in spellwork.problem(game, wiz, "leomunds_secret_chest", None)
     replica = next(i for i in wiz.inventory if i.def_id == "chest_replica")
     assert gear.use_name(game, replica) == "Call back the secret chest"
     said = text(gear.use_item(game, wiz, replica))
-    assert "out of the grey" in said and not stonework.in_chest(gem) and wiz.money == 5000
+    assert "out of the grey" in said and wiz.money == 5000
+    assert sum(i.qty for i in wiz.inventory if i.def_id == "gem_1000") == 2
+    assert any(i.def_id == "battleaxe" for i in wiz.inventory) and any(i.def_id == "leomunds_chest" for i in wiz.inventory)
+    assert "secret_chest" not in game.renown.flags
+    assert "Nothing answers" in text(gear.use_item(game, wiz, replica))
 
 
 def test_the_secret_chest_may_be_lost_after_sixty_days(world, tables, monkeypatch):
     wiz = hero(tables)
     game = game_with(world, tables, wiz)
     in_the_wild(game)
-    gem = add_item(wiz, tables.items, "gem_1000", 1)
+    add_item(wiz, tables.items, "gem_1000", 1)
     cast(game, wiz, "leomunds_secret_chest", subject(game, wiz, "leomunds_secret_chest", "load", "treasure"))
     game.world.time += 59 * stonework.DAY
     spellwork.tick(game)
-    assert stonework.in_chest(gem)
+    assert any(d["def_id"] == "gem_1000" for d in stonework.chest_things(game))
     monkeypatch.setattr(type(game.world.rng.child("x")), "chance", lambda self, p: True)
     game.world.time += 3 * stonework.DAY
     spellwork.tick(game)
-    assert not any(i.uid == gem.uid for i in wiz.inventory) and "secret_chest" not in game.renown.flags
+    assert not stonework.chest_things(game) and "secret_chest" not in game.renown.flags
+    assert not any(i.def_id == "gem_1000" for i in wiz.inventory)
 
 
 # ---------------------------------------------------------------------------- weather and land

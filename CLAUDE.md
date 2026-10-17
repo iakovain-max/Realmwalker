@@ -469,9 +469,9 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   `renown.flags["arcane_rooms"]` (services._night). Knock in the cells: `law.attempt_escape` (+10, a slot). Mage Hand:
   `flags["mage_hand"]` read by `law.steal_from_shop`. Creation's things carry the tag "conjured:<minute>" (vanish in
   `stonework.tick`; `economy.sell_price` refuses them). Passwall's cells and their old ground are in
-  `lm.meta["passwall"]` (closed by `stonework.on_step` from `dungeon.on_step`). Leomund's Secret Chest: items tagged
-  "ethereal" weigh nothing (`ItemTable.weight`), cannot be worn (`inventory.equip`) or sold, are `glamour.hidden_thing`;
-  coin in `flags["secret_chest"]`; the replica's `use.recall` calls it back. Control Weather is `flags["weather"]`
+  `lm.meta["passwall"]` (closed by `stonework.on_step` from `dungeon.on_step`). Leomund's Secret Chest: what goes in
+  leaves the pack and is kept as item records with the coin in `flags["secret_chest"]` (nothing on this side sees it);
+  the replica's `use.recall` calls it back. Control Weather is `flags["weather"]`
   applied in `survival.weather` (`stonework.held_weather`); Control Water the lasting key `part_water`
   (`GameState.magic_crossing` "parted"); Move Earth the camp ward "earthworks". Plant Growth is a battle spell with
   `road_too: "plants"` and `road_minutes` (Enrichment: `flags["enriched"]`, camp foraging doubled); its Overgrowth is
