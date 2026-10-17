@@ -80,7 +80,11 @@ Built by the relay builder realmwalker-b. Saves do not change: an old world of f
   still do not heal), its going home when its time ends and when its master dies, its waiting outside a town; Planar
   Binding on a captive goblin (the save, the jewel spent, the days by the slot, fighting for the party, running off at
   the end) and on a spirit (refused without the inward circle, bound for ten days with it, then bound again without
-  one); Magic Circle in both directions.
+  one); Magic Circle in both directions. The whole test suite, the autoplay bot (it now also checks every spirit's
+  form and hit points) and the window smoke test. The fresh review's fixes: a spirit's name takes the right article
+  ("an avenging celestial spirit", "an air spirit"); a companion who is dismissed or deserts takes their spirit,
+  bound creature or dead with them, and a companion told to wait keeps theirs only until its time runs out; the
+  inward circle says the binding must begin at once (it holds just the hour).
 
 ### Session, 2026-10-17 (afternoon): Demigods & Magics F.4 — the dead rise to serve you
 
