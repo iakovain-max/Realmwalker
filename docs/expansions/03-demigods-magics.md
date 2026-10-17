@@ -464,7 +464,7 @@ stat block now comes with the spell that brings it into play (never a block that
   Elemental and Giant Insect, with their stat blocks, pictures and the costly components.
 - [x] F.3 Summoned spirits, levels 5-6: Summon Celestial, Summon Dragon (Shared Resistances, Breath Weapon), Summon
   Fiend (Death Throes) and Animate Objects (several creatures at once, commanded with the caster's Bonus Action).
-- [ ] F.4 The dead (split at its start, 2026-10-17: the bound go to F.5): servants that outlast a fight - Animate
+- [x] F.4 The dead (split at its start, 2026-10-17: the bound go to F.5): servants that outlast a fight - Animate
   Dead (skeletons and zombies), Create Undead (ghouls, ghasts, wights, mummies) and Finger of Death's zombie; the
   ghast and the mummy with their stat blocks and pictures; commanded with the Bonus Action, held again each day or
   they go free.
@@ -523,8 +523,8 @@ stat block now comes with the spell that brings it into play (never a block that
   Frightened)): stat blocks in the pack (`statblocks.allies.json`), traits "stench" (a turn-start emanation, a
   creature that saves is spared it for the fight) and "mummy_rot" (Rotting Fist's curse: in a fight the target cannot
   regain hit points, and a creature brought to 0 by the fist dies and turns to dust; on a party member afterwards the
-  curse stays, `char.effects["mummy_rot"]`: no healing and the hit point maximum 3d6 lower each day until Remove
-  Curse or Greater Restoration lifts it; read by survival's day and by `spells.lower_max`). The Glare's 24-hour
+  curse stays, `char.effects["kept:mummy_rot"]`: no healing and the hit point maximum 3d6 lower each day until Remove
+  Curse lifts it; read by `game/servants._rot_day` as time passes). The Glare's 24-hour
   immunity is kept for the fight. Pictures: the Crawl pack's necrophage (the ghast) and its mummy.
 - **Tests** (tests/test_servants.py): Animate Dead on the fresh dead and on a crypt's bones, the numbers by slot,
   holding again, going free (the fight, and gone in a town); Create Undead at night only, by slot, the onyx stones;

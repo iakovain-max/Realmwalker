@@ -528,6 +528,14 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   "dismissed" event (Death Throes). Animate Objects: `summon` `sizes` (`allies.animate_objects`, op kind "objects"),
   bond kind "objects" acts only after `Battle.command_objects` (the caster's Bonus Action), else Dodges
   (`_waits_for_word`). Tests: tests/test_summons_high.py.
+- Servants (Expansion 3 F.4): creatures that outlast a fight are records on their master, `char.spells["servants"]`
+  (`rules/servants.py`: add, hold, due, bring_in, after; twelve at most), in a fight bond kind "servant" (`word`: waits
+  for the master's Bonus Action, `Battle.command_objects`/`commanded_of`/`within_word`; `keep`: Finger of Death's
+  zombie, the effects op "rise"). `game/servants.py`: Animate Dead and Create Undead (road op "raise"), the bodies of
+  the last fight and a crypt's bones, `tick` from pass_time (held again each day, else `_go_free`: the "raised_dead"
+  encounter out in the land), never on a settlement's map (`servants.here`), drawn behind the party (localview). Marks
+  kept on a character until lifted are "kept:" effects (rules/health never wears them down): the mummy's rot, dust.
+  Tests: tests/test_servants.py.
 - Gear and tools 2024 (Expansion 2 part D): items.json `pack` (opens into its contents, gear.open_pack), `helps`
   {search, traps, force, disguise} (dungeon.helps, law.put_on_disguise), `utilize` (a tool's 2024 uses, on its card),
   `carry` also on carried containers (each kind once, Sheet.pack_carry), `trinket` (data/trinkets.json; the name and
