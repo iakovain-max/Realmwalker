@@ -294,12 +294,51 @@ system is built once and every spell that uses it comes with it.
     gives Advantage on Intimidation in the talk that follows.
   - The law: every one of them is magic seen (law.magic_check) where it is cast before witnesses; a spell on a
     person is noticed when it ends (the charmed know, the enthralled do not).
-- [ ] E.5 Locks and stone, weather and land, lasting protections, great magic; Part E to `main`. Locks and stone:
-  knock, arcane lock, mending, mage hand, fabricate, stone shape, passwall, move earth, creation, Leomund's secret
-  chest. Weather and land: control water, control weather, plant growth, tsunami (cast in a minute). Lasting
-  protections: glyph of warding, symbol, guards and wards, forbiddance, hallow, magic circle, Mordenkainen's private
-  sanctum. Great magic: contingency, magic jar, Tasha's bubbling cauldron, clone, demiplane, imprisonment, and Wish's
-  other uses outside a fight.
+- [ ] E.5 Locks and stone, weather and land (14 spells). The old E.5 was split in two at its start (2026-10-17): 28
+  spells and Wish's other uses, each a system of its own, were too many for one part; lasting protections and great
+  magic became E.6. Locks and stone: knock, arcane lock, mending, mage hand, fabricate, stone shape, passwall, move
+  earth, creation, Leomund's secret chest. Weather and land: control water, control weather, plant growth, tsunami.
+  How (the design, at the start of E.5; numbers from the 2024 PHB):
+  - The new module is `game/stonework.py`: road ops `does` "lock" (`how`: knock, arcane), "mend", "hand", "make"
+    (`how`: fabricate, creation), "stone" (`how`: shape, passwall), "chest", "weather", "plants" and "part" (in
+    `spells.E5_KINDS` / ROAD_USES, checked at start-up), through game/spellwork's door; Move Earth is a camp ward
+    ("earthworks"); Tsunami is a road op "wave" cast from the encounter screen.
+  - Locks: Knock (in a dungeon) opens a locked door or chest within 60 feet (Subjects), with a knock that wakes the
+    level; in the cells, a sure way out of the lock (the escape's check +10: the jailer still may hear the run).
+    Arcane Lock (25 GP gold dust, consumed): in a dungeon a closed door next to you is locked for good to everyone but
+    the party (its DC +10 for anyone forcing it; the level's dwellers cannot pass it); in a town your room at the inn
+    is locked while you stay in that town (no inn thief).
+  - Mending (a minute) mends the most worn thing the party carries by 25, up to three-quarters (a break or a tear;
+    the last of the wear needs tools). Mage Hand (in a town, for the talk that follows): the next theft from a stall
+    is done by the hand from 30 feet (Advantage on Sleight of Hand; caught, nobody grabs your wrist: the merchant
+    cries witchcraft, the theft fails and the magic was seen).
+  - Making: Fabricate (10 minutes) makes any camp craft whose raw materials the party carries, without the tools,
+    the fire or the check, three batches at most; a craft that needs an artisan's tools needs someone trained with
+    them (the book's high craftsmanship). Creation (a minute) makes a thing of wood, cloth, leather or rope (vegetable
+    matter: 24 hours) or of stone (12 hours) from the gear list; the book's metals last an hour or less and are left
+    out (no iron crowbar for an hour), as are gems and coin: it vanishes at its time, and no merchant buys it.
+  - Stone: Stone Shape opens one 5-foot section of a dungeon's stone or cave wall next to you into the floor beyond
+    (Subjects: each way where one square of wall stands between you and floor), for good; Passwall opens up to 20
+    feet of wall for an hour (the passage closes behind you when it ends; a hidden room beyond is found).
+  - Move Earth (concentration up to two hours, cast in the wild): a ditch and a bank round the camp, a ward
+    "earthworks" (the night's visitors are seen climbing it: the camp is awake and sees them first).
+  - Leomund's Secret Chest (a 5,000 GP chest and its 50 GP replica): the party's coin, treasure or spare gear goes into
+    the chest on the Ethereal Plane (Subjects: the coin, the treasure, everything not worn): it weighs nothing and no
+    robber, thief or watchman can take it, and it cannot be used until the replica calls the chest back (the
+    replica's use). After 60 days each day has a growing 5% chance that the chest is lost with all in it.
+  - Weather and land: Control Water parts a river (a lasting spell of ten minutes: the next river crossed costs no
+    ford time and nobody gets wet). Control Weather (cast in ten minutes, outdoors, 8 hours, about two map tiles round
+    the caster): clear the sky, bring rain or snow, still the wind, warm or cool the air by 10 degrees
+    (`renown.flags["weather"]`, read through survival.weather). Plant Growth: in a fight its Overgrowth is ground
+    that costs four times the movement for the caster's foes (100 feet, the caster's friends' squares left out, as
+    the book lets); outside one its Enrichment (8 hours) doubles what is foraged on this map tile for a year
+    (`renown.flags["enriched"]`), and cast in a village it is a deed for its folk. Tsunami (a minute): when a band
+    on the road is seen first, a great wave strikes it before the fight (6d10 bludgeoning, Strength save for half)
+    and the fight begins with the band reeling (the wave rolls on; its later blows are left out).
+- [ ] E.6 Lasting protections, great magic, Wish's other uses; Part E to `main`. Lasting protections: glyph of
+  warding, symbol, guards and wards, forbiddance, hallow, magic circle, Mordenkainen's private sanctum. Great magic:
+  contingency, magic jar, Tasha's bubbling cauldron, clone, demiplane, imprisonment, and Wish's other uses outside a
+  fight (Object Creation, Resistance, Spell Immunity, Sudden Learning, Roll Redo, Reshape Reality).
 
 ### Part F — Appendix B: familiars, steeds and summons
 - [ ] F.1 The 36 stat blocks (beasts, imp, quasit, pseudodragon, sprite, sphinx of wonder, slaad tadpole) with
