@@ -237,10 +237,9 @@ def owl() -> Image.Image:
     return _finish(im)
 
 
-def weasel() -> Image.Image:
+def weasel(body=c(150, 92, 48), hi=c(186, 124, 70), low=c(110, 64, 32), dark=c(62, 36, 20),
+           belly=c(222, 206, 176)) -> Image.Image:
     """A weasel stretched low and long, head up and alert, a pale belly under a russet back."""
-    body, hi, low, dark = c(150, 92, 48), c(186, 124, 70), c(110, 64, 32), c(62, 36, 20)
-    belly = c(222, 206, 176)
     im = blank()
     d = ImageDraw.Draw(im)
     d.line([(3, 23), (6, 24), (9, 24)], fill=dark, width=2)                      # the tail, black at the tip
@@ -532,6 +531,405 @@ def animated_boulder() -> Image.Image:
     return shadow(outline(im))
 
 
+# BEGIN F7
+# ---- Expansion 3 F.7: the rest of Appendix B's beasts (big cats, elk, goats, badgers, ape, weasel, sea things, sprite)
+def _chain(d, pts, fill):
+    """A thick, tapering rope of discs: pts are (x, y, radius); the discs between neighbours are filled in."""
+    for (x0, y0, r0), (x1, y1, r1) in zip(pts, pts[1:]):
+        n = max(2, int(max(abs(x1 - x0), abs(y1 - y0)) * 2))
+        for i in range(n + 1):
+            t = i / n
+            x, y, r = x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, r0 + (r1 - r0) * t
+            d.ellipse([round(x - r), round(y - r), round(x + r), round(y + r)], fill=fill)
+
+
+def _big_cat(body, hi, low, dark, *, belly=None, mane=None, mane_hi=None, eye=None, nose=None, stripes=None,
+             tail_tip=None, muzzle=None, rings=None):
+    """A big cat side view facing right: low-slung, heavy shoulders, a long tail curving up at its end."""
+    belly = belly or low
+    tail_tip = tail_tip or dark
+    muzzle = muzzle or belly
+    eye = eye or c(226, 190, 60)
+    nose = nose or c(150, 90, 90)
+    im = blank()
+    d = ImageDraw.Draw(im)
+    tail = [(6, 12), (3, 11), (1, 14), (1, 18), (2, 21), (4, 21)]
+    d.line(tail, fill=body, width=2, joint="curve")
+    d.line(tail[-3:], fill=tail_tip, width=2, joint="curve")
+    if rings:
+        for p in ((2, 12), (1, 15), (1, 18)):
+            d.point(p, fill=rings)
+    # the far legs: one reaching forward, one back, a shade darker
+    d.polygon([(22, 15), (26, 15), (25, 21), (25, 27), (27, 28), (22, 28), (23, 26), (23, 21)], fill=low)
+    d.line([(22, 28), (27, 28)], fill=dark)
+    d.polygon([(12, 15), (15, 15), (14, 21), (14, 27), (15, 28), (11, 28), (12, 26), (12, 21)], fill=low)
+    d.line([(11, 28), (15, 28)], fill=dark)
+    # body: rump, flank, shoulders higher than the loins, the deep chest
+    d.polygon([(6, 12), (9, 10), (15, 10), (19, 8), (23, 8), (25, 11), (25, 16), (22, 19), (16, 18), (10, 17),
+               (6, 16)], fill=body)
+    d.line([(9, 10), (15, 10), (19, 8), (23, 8)], fill=hi)                         # the lit back
+    d.line([(10, 16), (21, 17)], fill=belly)                                        # the paler belly
+    d.line([(11, 17), (21, 18)], fill=low)
+    # near hind leg: big thigh, the hock, a long paw
+    d.polygon([(5, 12), (11, 11), (12, 17), (10, 21), (9, 27), (10, 28), (5, 28), (6, 26), (7, 21), (5, 17)], fill=body)
+    d.line([(7, 12), (10, 12)], fill=hi)
+    d.line([(6, 27), (9, 27)], fill=low)
+    d.line([(5, 28), (10, 28)], fill=dark)
+    # the mane, behind the head
+    if mane:
+        d.polygon([(18, 4), (22, 2), (27, 2), (29, 5), (30, 11), (29, 17), (26, 21), (21, 21), (17, 17), (16, 10)],
+                  fill=mane)
+        d.polygon([(18, 4), (22, 2), (26, 2), (23, 5), (19, 7)], fill=mane_hi or mane)
+        d.line([(18, 11), (18, 17)], fill=dark)
+        d.line([(21, 17), (22, 20)], fill=dark)
+        d.line([(25, 18), (25, 20)], fill=dark)
+    # near foreleg: thick, ending in a broad paw
+    d.polygon([(16, 14), (21, 14), (21, 19), (20, 27), (21, 28), (15, 28), (17, 26), (17, 19)], fill=body)
+    d.line([(18, 15), (18, 19)], fill=hi)
+    d.line([(17, 27), (20, 27)], fill=low)
+    d.line([(15, 28), (21, 28)], fill=dark)
+    # the head, carried low and forward
+    d.polygon([(22, 10), (24, 7), (28, 7), (31, 10), (31, 15), (28, 17), (24, 16), (22, 14)], fill=body)
+    d.line([(24, 7), (28, 7)], fill=hi)
+    d.rectangle([28, 12, 31, 16], fill=muzzle)                                    # the muzzle
+    d.point((31, 11), fill=nose)
+    d.point((31, 12), fill=nose)
+    d.line([(29, 16), (31, 16)], fill=dark)                                       # the mouth
+    d.point((27, 10), fill=eye)
+    d.point((28, 10), fill=eye)
+    d.line([(26, 11), (26, 13)], fill=dark)                                       # the tear line under the eye
+    d.rectangle([24, 5, 26, 6], fill=body)                                        # the ear
+    d.point((25, 5), fill=dark)
+    d.point((25, 6), fill=c(150, 100, 100))
+    if stripes:
+        for x, y0, y1 in ((7, 12, 15), (9, 11, 16), (11, 10, 16), (13, 10, 16), (15, 10, 16), (17, 9, 15),
+                          (19, 8, 14), (21, 8, 13), (23, 8, 11)):
+            d.line([(x, y0), (x - 1, y1)], fill=stripes)
+        for y in (14, 17):
+            d.line([(6, y), (8, y)], fill=stripes)                                # the thigh
+        d.line([(26, 8), (27, 10)], fill=stripes)                                 # the face
+        d.line([(24, 12), (26, 15)], fill=stripes)
+        d.line([(23, 9), (24, 11)], fill=stripes)
+        for y in (22, 25):
+            d.line([(17, y), (20, y)], fill=stripes)
+            d.line([(7, y), (9, y)], fill=stripes)
+            d.line([(23, y), (25, y)], fill=stripes)
+    return im, d
+
+
+def lion() -> Image.Image:
+    im, d = _big_cat(c(184, 140, 78), c(222, 180, 108), c(138, 98, 52), c(72, 44, 24), belly=c(214, 178, 118),
+                     mane=c(92, 56, 28), mane_hi=c(124, 80, 40), tail_tip=c(52, 32, 18), muzzle=c(220, 188, 130),
+                     eye=c(236, 196, 60))
+    d.line([(24, 8), (28, 8)], fill=c(230, 196, 130))
+    d.line([(22, 12), (22, 14)], fill=c(230, 196, 130))
+    for p in ((20, 4), (23, 3), (19, 12), (20, 16), (28, 4), (29, 9)):
+        d.point(p, fill=c(150, 100, 52))
+    return _finish(im)
+
+
+def tiger() -> Image.Image:
+    im, d = _big_cat(c(206, 120, 40), c(238, 160, 70), c(150, 82, 28), c(40, 24, 16), belly=c(236, 220, 188),
+                     stripes=c(34, 22, 18), muzzle=c(236, 224, 196), tail_tip=c(34, 22, 18), rings=c(34, 22, 18),
+                     eye=c(236, 210, 70))
+    return _finish(im)
+
+
+def panther() -> Image.Image:
+    im, d = _big_cat(c(40, 40, 50), c(86, 94, 112), c(58, 60, 76), c(14, 14, 20), belly=c(34, 34, 46),
+                     muzzle=c(52, 52, 62), eye=c(244, 214, 60), nose=c(90, 70, 76), tail_tip=c(20, 20, 28))
+    d.line([(12, 12), (18, 10)], fill=c(112, 122, 142))
+    d.line([(7, 14), (9, 13)], fill=c(70, 78, 96))
+    d.line([(18, 17), (20, 16)], fill=c(70, 78, 96))
+    return _finish(im)
+
+
+def elk() -> Image.Image:
+    body, hi, low, dark = c(132, 92, 58), c(168, 124, 82), c(98, 66, 40), c(40, 28, 20)
+    neck = c(82, 56, 36)
+    im, d = _equine(body, hi, low, dark, top=14, bot=22, gy=30, rump=5, chest=21, neck=5, mane=c(60, 40, 26),
+                    tail=body, tail_len=3, head=1.15, ears=1, leg_w=2)
+    d.polygon([(5, 14), (7, 13), (9, 14), (8, 16), (6, 16)], fill=c(210, 196, 160))        # the pale rump patch
+    d.line([(8, 22), (20, 22)], fill=c(204, 188, 150))                                       # a pale belly
+    # the heavy neck, darker than the body, with a shaggy throat
+    wy, nx = 15, 18
+    d.polygon([(nx - 2, wy), (nx + 1, wy - 4), (nx + 4, wy - 2), (nx + 5, wy + 4), (nx + 4, wy + 9), (nx, wy + 7),
+               (nx - 3, wy + 4)], fill=neck)
+    d.line([(nx + 5, wy + 2), (nx + 4, wy + 8)], fill=c(50, 34, 22))
+    # the great rack: a broad notched palm sweeping back from the brow, and a brow tine forward
+    ant, ant_hi, ant_lo = c(214, 198, 160), c(246, 234, 202), c(156, 138, 102)
+    d.polygon([(22, 8), (20, 6), (17, 5), (13, 4), (10, 3), (11, 1), (13, 3), (14, 0), (16, 3), (18, 0), (19, 3),
+               (22, 1), (22, 4), (23, 6)], fill=ant)
+    d.line([(22, 8), (20, 6), (17, 5), (13, 4)], fill=ant_lo)
+    d.line([(14, 3), (14, 1)], fill=ant_hi)
+    d.line([(18, 2), (18, 1)], fill=ant_hi)
+    d.line([(22, 4), (22, 2)], fill=ant_hi)
+    d.line([(23, 7), (26, 5), (27, 6)], fill=ant)                                          # the brow tine
+    d.point((26, 5), fill=ant_hi)
+    return _finish(im)
+
+
+def _goat(big: bool, body, hi, low, dark, horn, beard) -> Image.Image:
+    im = blank()
+    d = ImageDraw.Draw(im)
+    if not big:
+        d.line([(8, 16), (6, 13)], fill=body, width=2)                           # the short upturned tail
+        for x in (11, 21):                                                       # far legs
+            d.rectangle([x, 22, x + 1, 29], fill=low)
+        d.polygon([(8, 18), (11, 16), (20, 15), (24, 17), (24, 22), (21, 24), (10, 24), (8, 22)], fill=body)
+        d.line([(10, 17), (21, 16)], fill=hi)
+        d.line([(10, 23), (21, 23)], fill=low)
+        for x in (8, 22):                                                        # near legs
+            d.rectangle([x, 22, x + 2, 29], fill=body)
+            d.rectangle([x, 28, x + 2, 29], fill=dark)
+        d.polygon([(21, 16), (23, 12), (26, 10), (28, 13), (26, 19), (24, 21)], fill=body)          # the neck
+        d.polygon([(24, 10), (28, 9), (31, 13), (31, 15), (28, 16), (25, 15)], fill=body)            # the head
+        d.line([(25, 10), (28, 10)], fill=hi)
+        d.rectangle([29, 13, 31, 15], fill=hi)
+        d.point((31, 13), fill=K)
+        d.point((27, 11), fill=K)
+        d.line([(24, 9), (23, 6), (21, 5)], fill=horn)                                                # short curved horns
+        d.line([(25, 9), (24, 6), (22, 5)], fill=horn)
+        d.point((21, 5), fill=dark)
+        d.line([(23, 11), (21, 12)], fill=low, width=1)                                               # an ear
+        d.line([(28, 16), (28, 19)], fill=beard)                                                     # the beard
+        d.point((28, 20), fill=beard)
+    else:
+        d.polygon([(3, 12), (1, 15), (3, 17), (5, 15)], fill=dark)               # the shaggy tail
+        for x in (9, 20):
+            d.rectangle([x, 22, x + 2, 30], fill=low)
+        # shaggy body: the coat hangs in rags along the belly and chest
+        d.polygon([(3, 15), (7, 9), (13, 8), (18, 7), (23, 9), (25, 13), (25, 20), (24, 24), (22, 22), (20, 26), (18, 23),
+                   (15, 25), (13, 22), (10, 26), (8, 22), (5, 24), (4, 20)], fill=body)
+        d.line([(7, 10), (13, 9), (18, 8), (22, 10)], fill=dark, width=1)                              # the dark ridge
+        d.line([(6, 13), (11, 12)], fill=hi)
+        d.line([(12, 14), (17, 12)], fill=hi)
+        d.line([(8, 18), (14, 17)], fill=low)
+        d.line([(15, 19), (21, 18)], fill=low)
+        for x in (7, 22):                                                        # near legs
+            d.rectangle([x, 22, x + 3, 30], fill=body)
+            d.rectangle([x, 29, x + 3, 30], fill=dark)
+            d.line([(x + 1, 22), (x + 1, 27)], fill=hi)
+        d.polygon([(20, 11), (22, 6), (25, 5), (28, 8), (27, 16), (25, 19), (22, 18)], fill=body)    # neck and shoulders
+        d.polygon([(25, 4), (29, 4), (31, 8), (31, 12), (28, 13), (25, 11)], fill=body)               # the head
+        d.line([(26, 5), (29, 5)], fill=hi)
+        d.rectangle([28, 9, 31, 12], fill=c(176, 160, 134))
+        d.point((31, 9), fill=K)
+        d.point((27, 7), fill=c(226, 180, 60))
+        d.point((28, 7), fill=K)
+        # great horns sweeping up and back clear of the shoulders, ridged, a shade darker than ivory
+        _chain(d, [(26, 4, 1.9), (25, 1.4, 1.7), (22, 0.4, 1.4), (19.5, 1.2, 1.1), (18, 3.2, 0.6)], horn)
+        for x, y in ((25, 3), (23, 1), (20, 1)):                                            # rings on the horn
+            d.point((x, y), fill=low)
+        d.point((18, 3), fill=dark)
+        d.line([(24, 0), (21, 0)], fill=c(236, 224, 186))
+        d.line([(28, 13), (28, 18)], fill=beard, width=2)                                            # the long beard
+        d.point((28, 19), fill=beard)
+        d.line([(25, 8), (23, 10)], fill=dark, width=2)
+    return im
+
+
+def goat() -> Image.Image:
+    return _finish(_goat(False, c(206, 202, 192), c(236, 232, 222), c(150, 146, 138), c(60, 52, 48), c(214, 196, 150),
+                         c(240, 236, 228)))
+
+
+def giant_goat() -> Image.Image:
+    return _finish(_goat(True, c(110, 98, 84), c(148, 134, 116), c(74, 66, 58), c(36, 30, 26), c(176, 158, 120),
+                         c(70, 62, 54)))
+
+
+def _badger(k: float, ox: int, body, hi, low, dark) -> Image.Image:
+    """A badger side view facing right, drawn on a grid scaled by k so a giant one has the same build."""
+    im = blank()
+    d = ImageDraw.Draw(im)
+
+    def P(x, y):
+        return (round(ox + x * k), round(30 - (28 - y) * k))
+
+    def R(x0, y0, x1, y1):
+        a, b = P(x0, y0), P(x1, y1)
+        return [a[0], a[1], max(b[0], a[0]), max(b[1], a[1])]
+
+    white, stripe = c(228, 224, 212), c(26, 22, 22)
+    d.polygon([P(5, 17), P(2, 18), P(3, 21), P(6, 20)], fill=low)                        # the short tail
+    for x in (8, 18):
+        d.rectangle(R(x, 23, x + 2, 28), fill=dark)                                       # far legs
+    d.ellipse(R(4, 14, 22, 25), fill=body)                                                # the low round body
+    d.line([P(7, 15), P(12, 14), P(19, 15)], fill=hi, width=max(1, round(k)))              # grizzled back
+    d.line([P(8, 17), P(11, 16)], fill=low)
+    d.line([P(13, 18), P(17, 17)], fill=low)
+    d.line([P(6, 22), P(20, 23)], fill=dark)
+    for x in (6, 16):                                                                     # near legs, stubby
+        d.rectangle(R(x, 23, x + 3, 28), fill=dark)
+        d.line([P(x + 1, 28), P(x + 3, 28)], fill=c(210, 200, 180))                       # the claws
+    d.polygon([P(19, 15), P(23, 13), P(30, 18), P(30, 21), P(26, 23), P(20, 22)], fill=white)   # the head
+    d.polygon([P(21, 14), P(24, 12), P(25, 14)], fill=stripe)                              # ear
+    d.polygon([P(23, 14), P(30, 19), P(30, 20), P(26, 20), P(22, 16)], fill=stripe)        # the black eye stripe
+    d.line([P(22, 21), P(28, 22)], fill=stripe)                                           # lower jaw stripe
+    d.point(P(30, 19), fill=K)
+    d.point(P(26, 17), fill=c(230, 226, 214))                                             # the eye in the stripe
+    d.line([P(24, 14), P(29, 17)], fill=white)                                            # the white crown line
+    return im
+
+
+def badger() -> Image.Image:
+    return _finish(_badger(0.8, 3, c(116, 114, 112), c(162, 160, 154), c(86, 84, 84), c(38, 36, 36)))
+
+
+def giant_badger() -> Image.Image:
+    return _finish(_badger(1.0, 0, c(82, 80, 80), c(122, 120, 116), c(58, 56, 58), c(28, 26, 28)))
+
+
+def ape() -> Image.Image:
+    fur, hi, low, dark = c(60, 58, 64), c(100, 98, 106), c(38, 36, 42), c(20, 18, 22)
+    face, chest = c(132, 120, 110), c(92, 88, 90)
+    im = blank()
+    d = ImageDraw.Draw(im)
+    # far arm and far leg, in the shade
+    d.polygon([(19, 11), (23, 12), (24, 21), (26, 28), (21, 28), (20, 21)], fill=low)
+    d.polygon([(8, 22), (14, 22), (14, 28), (16, 29), (8, 29)], fill=low)
+    # the hunched trunk: shoulders highest, the back sloping down to the haunches
+    d.polygon([(3, 22), (6, 15), (11, 8), (16, 4), (21, 4), (25, 8), (26, 14), (24, 21), (20, 24), (11, 25), (5, 25)],
+              fill=fur)
+    d.line([(7, 15), (11, 9), (16, 5), (21, 5)], fill=hi)
+    d.line([(9, 17), (13, 12)], fill=hi)
+    d.line([(7, 21), (12, 18)], fill=low)
+    d.polygon([(19, 14), (25, 13), (24, 20), (20, 22)], fill=chest)                        # the paler chest
+    d.line([(20, 15), (24, 14)], fill=hi)
+    d.line([(22, 16), (22, 20)], fill=low)
+    # the near leg: short, bowed, with a broad foot
+    d.polygon([(6, 20), (14, 19), (16, 25), (15, 29), (5, 29), (8, 25)], fill=fur)
+    d.line([(8, 21), (12, 21)], fill=hi)
+    d.rectangle([5, 28, 16, 29], fill=low)
+    d.line([(7, 27), (14, 27)], fill=dark)
+    # the near arm, long and heavy, down to the knuckles on the ground
+    d.polygon([(15, 8), (22, 8), (26, 15), (27, 23), (29, 29), (22, 29), (22, 24), (19, 17)], fill=fur)
+    d.line([(16, 9), (21, 9), (25, 15), (26, 22)], fill=hi)
+    d.line([(15, 9), (18, 16), (21, 24), (22, 28)], fill=dark)                              # the arm's back edge
+    d.rectangle([22, 27, 29, 29], fill=low)
+    d.line([(23, 27), (28, 27)], fill=dark)
+    # the head, low between the shoulders: a crest, a heavy brow, a paler face
+    d.polygon([(22, 6), (25, 4), (29, 5), (31, 8), (31, 13), (28, 15), (24, 14), (21, 10)], fill=fur)
+    d.polygon([(22, 6), (25, 4), (28, 4), (25, 7)], fill=hi)                                # the crest
+    d.polygon([(26, 9), (31, 9), (31, 13), (28, 15), (26, 13)], fill=face)
+    d.line([(25, 8), (31, 8)], fill=dark)                                                   # the heavy brow
+    d.point((28, 10), fill=c(214, 170, 80))
+    d.point((29, 10), fill=c(214, 170, 80))
+    d.point((31, 11), fill=dark)
+    d.line([(28, 13), (31, 13)], fill=dark)
+    return _finish(im)
+
+
+def giant_weasel() -> Image.Image:
+    """A giant weasel: the weasel's lithe build in a polecat's coat, dark brown with a cream mask and belly."""
+    return weasel(c(92, 66, 46), c(128, 96, 68), c(64, 44, 30), c(34, 24, 18), c(214, 196, 160))
+
+def giant_seahorse() -> Image.Image:
+    body, hi, low, dark = c(66, 134, 110), c(110, 186, 156), c(40, 94, 82), c(22, 56, 56)
+    belly = c(176, 214, 180)
+    fin = c(170, 218, 214)
+    im = blank()
+    d = ImageDraw.Draw(im)
+    d.polygon([(9, 12), (6, 14), (5, 18), (7, 21), (10, 20)], fill=fin)                      # the dorsal fin
+    for x0, y0, x1, y1 in ((9, 13, 6, 15), (9, 15, 6, 18), (9, 18, 7, 20)):
+        d.line([(x0, y0), (x1, y1)], fill=c(110, 170, 170))
+    # the tail curling forward at the bottom, the trunk, the neck and the head
+    _chain(d, [(15, 22, 4.2), (14, 26, 3), (17, 29, 2.4), (21, 29, 1.8), (23, 26, 1.3), (21, 24, 0.9)], body)
+    _chain(d, [(20, 5, 3.2), (17, 9, 3.4), (15, 14, 5.2), (16, 19, 5.0), (15, 23, 3.8)], body)
+    # the paler belly on the front of the trunk
+    _chain(d, [(19, 13, 2.2), (20, 17, 2.4), (19, 21, 1.8)], belly)
+    for y in (12, 15, 18, 21, 24):                                                           # the body's rings
+        d.line([(12 if y < 20 else 13, y), (19 if y < 20 else 17, y)], fill=low)
+    d.line([(12, 11), (14, 8), (17, 6)], fill=hi)
+    d.line([(11, 14), (11, 20)], fill=hi)
+    d.line([(13, 27), (14, 25)], fill=low)
+    d.polygon([(20, 8), (24, 6), (30, 7), (30, 9), (24, 10), (21, 12)], fill=body)           # the snout
+    d.line([(24, 7), (29, 8)], fill=hi)
+    d.polygon([(15, 3), (16, 0), (18, 2), (20, 0), (21, 3), (22, 1), (22, 4)], fill=dark)    # the crown
+    d.point((19, 4), fill=c(244, 220, 90))                                                   # the eye
+    d.point((20, 4), fill=K)
+    d.line([(23, 9), (28, 9)], fill=low)
+    return _finish(im)
+
+
+def octopus() -> Image.Image:
+    body, hi, low, dark = c(150, 72, 54), c(196, 112, 84), c(104, 46, 40), c(60, 24, 28)
+    sucker = c(226, 170, 140)
+    im = blank()
+    d = ImageDraw.Draw(im)
+    arms = [  # from the body out along the ground, each curling its tip
+        [(12, 21), (8, 24), (4, 25), (2, 23)],
+        [(13, 23), (10, 27), (6, 28), (3, 28), (2, 26)],
+        [(14, 23), (13, 28), (9, 30)],
+        [(18, 23), (19, 28), (23, 30)],
+        [(20, 22), (24, 27), (28, 28), (30, 26)],
+        [(21, 20), (25, 23), (29, 22), (30, 19)],
+    ]
+    for pts in arms:
+        _chain(d, [(x, y, 1.9 - 0.4 * i) for i, (x, y) in enumerate(pts)], body)
+    for pts in arms:
+        for x, y in pts[1:-1]:
+            d.point((x, y + 1), fill=sucker)
+    d.ellipse([8, 7, 24, 24], fill=body)                                                     # the round mantle
+    d.polygon([(10, 12), (12, 7), (17, 5), (22, 8), (24, 13), (18, 10)], fill=body)           # the domed top
+    d.ellipse([8, 5, 23, 20], fill=body)
+    d.arc([10, 6, 21, 17], 200, 290, fill=hi)
+    d.line([(12, 9), (15, 7)], fill=hi)
+    for p in ((14, 11), (19, 12), (11, 14), (21, 16), (16, 9)):                                # mottling
+        d.point(p, fill=low)
+    d.ellipse([13, 17, 24, 24], fill=body)                                                   # the head under the mantle
+    eyeball = c(232, 206, 110)
+    for x0 in (13, 19):                                                                       # eyes, wide awake
+        d.rectangle([x0, 15, x0 + 2, 17], fill=eyeball)
+        d.rectangle([x0 + 1, 16, x0 + 2, 16], fill=K)                                         # a bar of a pupil
+    d.point((18, 21), fill=low)                                                               # the siphon
+    return _finish(im)
+
+
+def sprite() -> Image.Image:
+    """A sprite: a foot tall, a slim green-brown archer with a dragonfly's wings."""
+    skin, hi, tunic, dark = c(150, 156, 90), c(190, 194, 120), c(62, 100, 56), c(34, 52, 32)
+    wing, wing_hi, vein, far = c(206, 232, 244), c(242, 250, 255), c(132, 176, 200), c(170, 202, 222)
+    im = blank()
+    d = ImageDraw.Draw(im)
+    # the far wings, then the near pair: long ovals swept up and back, a smaller pair below
+    d.polygon([(15, 22), (11, 16), (9, 11), (10, 8), (12, 8), (15, 13), (16, 20)], fill=far)
+    d.polygon([(15, 24), (9, 22), (7, 25), (10, 26), (14, 26)], fill=far)
+    d.polygon([(16, 22), (14, 16), (13, 10), (14, 6), (16, 5), (18, 8), (19, 14), (18, 20)], fill=wing)
+    d.polygon([(16, 24), (10, 21), (8, 23), (9, 26), (14, 27)], fill=wing)
+    d.line([(16, 21), (14, 8)], fill=vein)
+    d.line([(16, 21), (16, 11)], fill=vein)
+    d.line([(15, 14), (17, 14)], fill=vein)
+    d.line([(16, 24), (9, 24)], fill=vein)
+    d.line([(14, 7), (16, 6)], fill=wing_hi)
+    d.line([(18, 10), (18, 15)], fill=wing_hi)
+    d.line([(10, 22), (13, 23)], fill=wing_hi)
+    # legs, tunic, arms, head
+    d.line([(17, 27), (16, 30)], fill=dark)
+    d.line([(19, 27), (20, 30)], fill=dark)
+    d.rectangle([15, 30, 16, 30], fill=dark)
+    d.rectangle([20, 30, 21, 30], fill=dark)
+    d.polygon([(16, 21), (20, 21), (21, 27), (16, 27)], fill=tunic)                         # the tunic
+    d.line([(17, 22), (19, 22)], fill=c(96, 140, 76))
+    d.line([(16, 25), (20, 25)], fill=dark)                                                 # a belt
+    d.rectangle([16, 16, 20, 20], fill=skin)                                                # the head
+    d.line([(16, 15), (20, 15)], fill=c(70, 52, 34))                                         # brown hair
+    d.rectangle([16, 16, 16, 18], fill=c(70, 52, 34))
+    d.polygon([(16, 15), (18, 13), (21, 15)], fill=tunic)                                   # a leaf cap
+    d.point((19, 17), fill=K)
+    d.point((20, 19), fill=hi)
+    d.line([(19, 22), (23, 21)], fill=skin)                                                 # the bow arm, out front
+    d.line([(17, 23), (19, 23)], fill=skin)
+    # the tiny bow, held upright, with its string and an arrow
+    d.arc([21, 17, 27, 29], 270, 90, fill=c(134, 92, 52))
+    d.line([(24, 17), (24, 29)], fill=c(216, 210, 190))
+    d.line([(20, 23), (24, 23)], fill=c(196, 176, 130))
+    d.point((23, 21), fill=skin)
+    return _finish(im)
+# END F7
+
+
 def hard_edges(im: Image.Image) -> Image.Image:
     """A creature on the field has no soft pixels (tests/test_adapted_art.py): the drop shadow goes, the rest is
     solid."""
@@ -560,6 +958,19 @@ def all_drawn() -> dict[str, Image.Image]:
         "creature/cat": cat(),
         "creature/owl": owl(),
         "creature/weasel": weasel(),
+        "creature/lion": lion(),
+        "creature/tiger": tiger(),
+        "creature/panther": panther(),
+        "creature/elk": elk(),
+        "creature/goat": goat(),
+        "creature/giant_goat": giant_goat(),
+        "creature/badger": badger(),
+        "creature/giant_badger": giant_badger(),
+        "creature/ape": ape(),
+        "creature/giant_weasel": giant_weasel(),
+        "creature/giant_seahorse": giant_seahorse(),
+        "creature/octopus": octopus(),
+        "creature/sprite": sprite(),
         "creature/animated_object": animated_chest(),  # (Animate Objects: the card's picture)
         "creature/animated_chest": animated_chest(),
         "creature/animated_table": animated_table(),

@@ -536,6 +536,14 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   encounter out in the land), never on a settlement's map (`servants.here`), drawn behind the party (localview). Marks
   kept on a character until lifted are "kept:" effects (rules/health never wears them down): the mummy's rot, dust.
   Tests: tests/test_servants.py.
+- Shapes and the rest of Appendix B (Expansion 3 F.6-F.7): Polymorph's swap is `Battle.shape`/`unshape` with
+  rules/shapes.py (forms are every creature; `breathes_only_water` ones never a friend's). The 24 creatures of F.7 are
+  pack fragments (data/packs/03_demigods_magics/statblocks.beasts.json, creatures.beasts.json with their encounters).
+  Stat block keys the kernel reads: a bonus action that is a blow or save becomes an attack with `bonus_action`
+  (`tactics._bonus_blow`), `requires: "target_prone"` and an action's `max_size` (`Battle.unfit_target`),
+  `advantage_if` (`query.ADVANTAGE_IF`), a condition `while: "grappled"` (op `with`: it ends with that condition in
+  `durations.remove`; release grapples only through it), `ends: "damage"`, `fail_by` {by, on_fail}, trait numbers
+  `running_leap` {feet}, `spellcasting.self_only`. Tests: tests/test_beasts.py.
 - Gear and tools 2024 (Expansion 2 part D): items.json `pack` (opens into its contents, gear.open_pack), `helps`
   {search, traps, force, disguise} (dungeon.helps, law.put_on_disguise), `utilize` (a tool's 2024 uses, on its card),
   `carry` also on carried containers (each kind once, Sheet.pack_carry), `trinket` (data/trinkets.json; the name and

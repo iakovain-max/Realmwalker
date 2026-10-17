@@ -28,7 +28,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Clearing the decks for the expansions** | ✅ Done (2026-10-12), branch `prep/clear-the-decks` |
 | **Expansion 1, *Dice & Destiny*** (version 1.1.0) | ✅ Released (2026-10-13), branch `dlc/01-dice-destiny` |
 | **Expansion 2, *Blades & Backgrounds*** (version 1.2.0) | ✅ Released (2026-10-13), branch `dlc/02-blades-backgrounds` |
-| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete), D (the spell catalogue: 191 battle spells, cantrips to level 9, and Wish) E.1 (spells outside battle: healing, return from death, food, shelter and watch), E.2 (light, the body on the move, travel by magic), E.3 (finding and seeing, asking the powers, talking), E.4 (minds and the law, disguise and illusion, the small arts), E.5 (locks and stone, weather and land), E.6 (lasting protections and the caster's keeping) and E.7 (great magic and Wish's other uses, 2026-10-17: Part E complete) and F.1 (a familiar and a steed fight beside you), F.2 (summoned spirits of levels 2 to 4) and F.3 (the level 5 and 6 spirits and Animate Objects) and F.4 (the raised dead: Animate Dead, Create Undead, Finger of Death's zombie, the ghast and the mummy) and F.5 (the bound: Planar Ally, Planar Binding, Magic Circle turned inward) and F.6 (Polymorph and True Polymorph in a fight) in `main`; F.7 (the rest of Appendix B's creatures) next |
+| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete), D (the spell catalogue: 191 battle spells, cantrips to level 9, and Wish) E.1 (spells outside battle: healing, return from death, food, shelter and watch), E.2 (light, the body on the move, travel by magic), E.3 (finding and seeing, asking the powers, talking), E.4 (minds and the law, disguise and illusion, the small arts), E.5 (locks and stone, weather and land), E.6 (lasting protections and the caster's keeping) and E.7 (great magic and Wish's other uses, 2026-10-17: Part E complete) and F.1 (a familiar and a steed fight beside you), F.2 (summoned spirits of levels 2 to 4) and F.3 (the level 5 and 6 spirits and Animate Objects) and F.4 (the raised dead: Animate Dead, Create Undead, Finger of Death's zombie, the ghast and the mummy) and F.5 (the bound: Planar Ally, Planar Binding, Magic Circle turned inward) and F.6 (Polymorph and True Polymorph in a fight) and F.7 (lions, tigers, elephants, imps, sprites and the rest of the book's beasts, met in the land) in `main`; F.8 (Animal Shapes and Shapechange) next |
 
 ---
 
@@ -39,6 +39,43 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-17 (afternoon): Demigods & Magics F.7 — lions, tigers, elephants, imps and sprites
+
+Built by the relay builder realmwalker-a. Saves do not change. The rest of the Player's Handbook's creature
+appendix is in: **24 creatures**, each with its picture, each a shape for Polymorph, and most met out in the land.
+- **Beasts in their lands.** Prides of **lions** on the savanna, steppe and desert edges; **elephants** on the
+  savanna (an elephant gores you down and then tramples you while you lie there); **tigers** and **panthers** in the
+  jungle and forest (they slip away after striking); troops of **apes** in the jungle, throwing rocks;
+  **crocodiles** in marshes and at the shore (a bite holds you and you cannot move until you break free); the
+  **constrictor snake** that wraps you; **venomous snakes** across the warm wild lands; **elk** in the rut,
+  **wild goats** and **giant goats** in the hills and mountains, **badgers** and **giant badgers**, **giant weasels**
+  at night, **giant crabs** on the coasts.
+- **Small magical things.** A **pseudodragon** guarding its little hoard (its sting can put you to sleep until you
+  are hurt); bands of **sprites** in the forests and the fey forest (they shoot charming arrows and turn invisible);
+  the **sphinx of wonder** alone in the desert, which helps its friends shrug off magic twice a day; a **cult
+  circle** may now come with its **imp** (a little devil that turns invisible and stings) or its **quasit** (a
+  little demon that frightens you first); **slaad tadpoles** spill from the vats of the wizards' towers.
+- **Polymorph and True Polymorph** have all of them to choose from: a friend of 4th level or more can now become an
+  **elephant**, a foe can be turned into an octopus flopping on dry land. The three sea creatures (octopus, giant
+  seahorse, reef shark) are never a friend's shape and are not met yet: they wait for fights under the sea.
+- A fix on the way: the bugbear's hammer now really strikes the one it holds with advantage, as its stat block
+  always said.
+- Choices made while Anton was away: the numbers are the 2025 Monster Manual's; where each creature is met was chosen
+  from its habitat and the world's biomes; the imp's and quasit's shape-shifting, the sprite's Heart Sight and
+  shaking a sleeper awake are left out (they matter little in a fight); the sphinx's help is used when it turns a
+  save.
+- Checked: tests for every creature's numbers and picture, the elephant's trample only on the fallen and with its
+  bonus action, the crocodile's hold, the pseudodragon's sleep, the quasit opening with its fear, the sphinx's help,
+  the lion's leap, the imp's invisibility, the sea creatures never a friend's shape, and where each is met; every
+  new creature fought in the arena (each uses all it has). The whole test suite, the autoplay bot and the window
+  smoke test. The fresh review's fixes: **a creature's hold now lasts** until you break free (the crocodile's, the
+  constrictor's, the giant crab's, and the bugbear's grab, which before let go at your next turn), and so do the
+  pseudodragon's sleep and poison and the quasit's fear; a sleeper falls asleep even when keeping a spell going; when
+  you play a friend turned into an elephant you can **trample after the gores** (the Attack menu offers it, marked
+  "bonus action"); panthers and tigers break away when hurt or crowded; the sphinx helps with a failed ability check
+  as well as a save; a trample is never made as an opportunity attack; the giant weasel and the pseudodragon got
+  clearer pictures.
 
 ### Session, 2026-10-17 (afternoon): Demigods & Magics F.6 — Polymorph: turn a friend into a bear, a foe into a rat
 

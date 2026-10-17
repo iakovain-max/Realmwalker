@@ -175,7 +175,7 @@ def _monster_turn(b: Battle, f: Fighter) -> None:
         b.do_search(f)  # nobody in sight, but someone is hiding here
         if b.current is not f or b.outcome is not None:
             return
-    plain = [o for o in opts if not o.extra.get("area")]
+    plain = [o for o in opts if not o.extra.get("area") and not o.extra.get("bonus_action")]
     _come_down(b, f, plain)
     if f.cdef.get("spells") and _touch_heal(b, f):
         return  # (a celestial spirit's Healing Touch on a friend in need)
@@ -201,6 +201,7 @@ def _monster_turn(b: Battle, f: Fighter) -> None:
     _fight(b, f, plain, attacks=max(1, int(f.cdef.get("multiattack", 1))))
     _breath_with_blows(b, f)
     _hew(b, f)
+    _bonus_blow(b, f)
     if f.has_trait("rampage") and f.bonus > 0 and b.outcome is None and b.current is f and f.active \
             and f.creature.uses.get("rampage", 1) > 0:
         hurt = [e for e in b.enemies_of(f) if e.standing and e.hp <= e.max_hp // 2 and b.gap(f, e) <= 1]
@@ -214,6 +215,26 @@ def _monster_turn(b: Battle, f: Fighter) -> None:
         _slip_away(b, f)
     if b.outcome is None and b.current is f and f.active:
         _rise(b, f)
+
+
+def _bonus_blow(b: Battle, f: Fighter) -> None:
+    """A stat block's blow made with the bonus action (the elephant's Trample on one its Gore threw down): at the
+    best target it may strike, if any."""
+    if f.bonus <= 0 or b.outcome is not None or b.current is not f or not f.active:
+        return
+    best = None
+    for o in b.attack_options(f):
+        if not o.extra.get("bonus_action") or not o.available:
+            continue
+        for t in b.enemies_of(f):
+            if not t.active or b.attack_problem(f, o, t) or not b.in_reach(f, o, t)[0]:
+                continue
+            v = _value(b, f, o, t, (f.x, f.y))
+            if best is None or v > best[0]:
+                best = (v, o, t)
+    if best is not None:
+        b.do_attack(f, best[1], best[2])
+        b._check_end()
 
 
 def _breath_with_blows(b: Battle, f: Fighter) -> None:
@@ -408,7 +429,11 @@ def _value(b: Battle, f: Fighter, opt: AttackOption, t: Fighter, sq, *, cover: i
         pf = estimates.fail_chance(b, t, opt.extra["save"], int(opt.extra["dc"]))
         ev = dmg * (pf + ((1 - pf) * 0.5 if opt.extra.get("half") else 0.0))
         if opt.extra.get("on_fail"):
-            ev += pf * estimates.threat(t) * 0.6
+            # A hold the target saves its way out of each turn lasts longer (the quasit's Scare): rounds expected.
+            again = next((e for e in opt.extra["on_fail"] if e.get("ends") == "repeat_save"), None)
+            rounds = min(3.0, 1.0 / max(0.34, 1.0 - estimates.fail_chance(b, t, again.get("save", "wis"), int(
+                again.get("dc") or opt.extra["dc"])))) if again else 1.0
+            ev += pf * estimates.threat(t) * 0.6 * rounds
     else:
         r = query.attack_roll(b, f, t, opt, space=space)
         p = estimates._p(t.ac() + grid.COVER_AC[cover] - opt.bonus, r.mode)
@@ -518,7 +543,8 @@ def _opening(b: Battle, f: Fighter, opt: AttackOption, t: Fighter) -> float:
     """A creature's opening move (creatures' "ai" opens_with): worth more while the target lacks what it brings."""
     if f.creature is None or (f.cdef.get("ai") or {}).get("opens_with") != opt.extra.get("id"):
         return 1.0
-    brings = [e.get("condition") for e in opt.extra.get("on_hit", ()) if e.get("op") == "condition"]
+    brings = [e.get("condition") for e in list(opt.extra.get("on_hit", ())) + list(opt.extra.get("on_fail", ()))
+              if e.get("op") == "condition"]  # (a hit's, or a failed save's: the quasit's Scare)
     return 1.0 if any(c in t.conditions for c in brings) else 3.0
 
 
@@ -890,10 +916,13 @@ def _keep_distance(b: Battle, f: Fighter) -> None:
 
 
 def _slip_away(b: Battle, f: Fighter) -> None:
-    """Goblins: strike and then step back out of reach without being cut down (Nimble Escape)."""
-    if not any(b.gap(f, e) <= 1 for e in b.enemies_of(f) if e.standing):
+    """Goblins: strike and then step back out of reach without being cut down (Nimble Escape). A beast that only
+    bites and claws (a panther, a tiger) breaks away so when it is hurt or more than one foe stands over it, to come
+    again from another side."""
+    near = [e for e in b.enemies_of(f) if e.standing and b.gap(f, e) <= 1]
+    if not near:
         return
-    if not any(not o.is_melee for o in b.attack_options(f)):
+    if not any(not o.is_melee for o in b.attack_options(f)) and not (len(near) >= 2 or f.hp <= f.max_hp // 2):
         return
     b.do_disengage(f, bonus=True)
     _step_back(b, f)

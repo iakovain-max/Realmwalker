@@ -181,6 +181,9 @@ def _merge_entry(container: dict, key: str, entry: Any, *, filename: str, sectio
         prov.of[(filename, section, key)] = pack_id
         return
     old = container[key]
+    if isinstance(entry, dict) and set(entry) == {"_append"} and isinstance(old, list):
+        old.extend(_clean(entry["_append"]))  # (a list entry of a section: a tower's inhabitants)
+        return
     if isinstance(entry, dict) and entry.get("_merge") and isinstance(old, dict):
         for k, v in entry.items():
             if str(k).startswith("_"):

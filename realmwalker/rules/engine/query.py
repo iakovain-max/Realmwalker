@@ -85,6 +85,12 @@ def source(f, cid: str) -> int | None:
     return f.sources.get(cid)
 
 
+# A stat block attack's "with Advantage if ..." (`advantage_if`): the test and the reason the dice log prints.
+ADVANTAGE_IF = {
+    "target_grappled_by_self": (lambda att, t: "grappled" in conditions(t) and source(t, "grappled") == att.id, "held"),
+}
+
+
 def _cond_name(f, cid: str) -> str:
     return cond.name(f.t, cid).lower()
 
@@ -118,6 +124,9 @@ def attack_roll(b, att, target, opt, *, space=None) -> Roll:
         r.add("disadvantage", "quick on their feet")  # Speedy: blows struck as they break away
     if target.marked:
         r.add("advantage", "marked")
+    why = ADVANTAGE_IF.get((opt.extra or {}).get("advantage_if")) if getattr(opt, "extra", None) else None
+    if why is not None and why[0](att, target):
+        r.add("advantage", why[1])  # (a stat block's "with Advantage if ...": a bugbear's hammer on the one it holds)
     defs = cond.table(att.t)
     # The target's conditions: easy to hit when helpless, at a distance hard to hit when lying down.
     for cid in sorted(conditions(target)):

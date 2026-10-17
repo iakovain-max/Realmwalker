@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 03 Demigods & Magics · Part F (familiars, steeds and summons), F.7 next · branch dlc/03-demigods-magics
+Current: 03 Demigods & Magics · Part F (familiars, steeds and summons), F.8 next · branch dlc/03-demigods-magics
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -28,9 +28,10 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   (the spirits of levels 5-6 and Animate Objects: Summon Celestial, Summon Dragon, Summon Fiend, Animate Objects) and
   F.4 (the raised dead: Animate Dead, Create Undead, Finger of Death's zombie, the ghast and the mummy) and F.5 (the
   bound: Planar Ally, Planar Binding, Magic Circle turned inward) and F.6 (Polymorph and True Polymorph in a fight)
+  and F.7 (the rest of Appendix B: 24 creatures of the 2025 MM with pictures, shapes and met in the land)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
-  adapted); Expansion 3: 203 done, 322 adapted, 1 omitted of 560 (parts A to E and F.1 to F.6 settled). PHB 61% · DMG 12% · MM 8%
+  adapted); Expansion 3: 217 done, 332 adapted, 1 omitted of 560 (parts A to E and F.1 to F.7 settled). PHB 64% · DMG 12% · MM 16%
 Assumptions waiting for Anton:
 - The Player2 AI writer is removed (tagged `before-ai-removal`); its text is replaced everywhere by the game's own
   words, strengthened where they were thin.
@@ -392,17 +393,38 @@ Ideas for later:
   lasting form and its objects are left out; a shaped character can still use the Influence actions (anatomy is not
   checked for speech); while shaped, what the game keeps on a character alone (exhaustion's penalties, Heroic
   Inspiration, drink and pain) is set aside with it until the shape ends.
-Next session starts at: task F.7 in docs/expansions/03-demigods-magics.md (Part F: the rest of Appendix B - ape,
-badger, constrictor snake, crocodile, elephant, elk, giant badger, giant crab, giant goat, giant seahorse, giant
-weasel, goat, lion, octopus, panther, reef shark, tiger, venomous snake; imp, quasit, pseudodragon, sprite, sphinx of
-wonder, slaad tadpole: stat blocks from the PHB 2024 Appendix B (pages 349-361; numbers checked on the page images:
-`tools/codex/extract.py --render phb 349 361`) and the 2025 MM where it has them, pictures (the Crawl pack through
-tools/build_tiles.py, else drawn in tools/beast_art.py), each a Polymorph or True Polymorph form (rules/shapes.forms
-reads every creature, so they are forms as soon as they exist) and met in the land where it lives (the beasts in
-their biomes' encounter bands, data/creatures.json encounters), and the cult fanatic's imp or quasit. Write F.7's
-"How" first; the stat blocks through two or three helpers on the sonnet model. Keep tests/test_tactics_coverage.py
-green with the new creatures (arena).
-Part E and F.1 to F.6 are in `main`.
+- Expansion 3 F.7: the stat blocks are the 2025 Monster Manual's (the PHB's Appendix B prints the same creatures).
+  The octopus, giant seahorse and reef shark breathe only water: a foe's Polymorph shape but never a friend's, and
+  not met until fights go under water (Expansion 22); the crocodile's Hold Breath waits with them. Where they are
+  met was chosen by their habitats and the world's biomes (lions and elephants on the savanna, tigers and apes in
+  the jungle, sprites in the fey forest, the sphinx of wonder in the desert...); the cult fanatic's imp or quasit is
+  a cult circle with one of them; slaad tadpoles hatch in the wizards' towers until the planes come (Expansion 26).
+  Shape-Shift (imp, quasit), Heart Sight (sprite) and shaking a sleeper awake (the pseudodragon's Sting) are left
+  out; Burst of Ingenuity is the battle's judgement (spent when the 2 turns a failed save or a check made in a
+  fight). A stat block's condition with no ending in its text lasts as the book means: a grapple until it is broken
+  (the bugbear's grab too, which before ended at the victim's next turn), Restrained with it, a sleep until damage,
+  a fear until saved, the pseudodragon's poison the whole fight (`rounds` in the op). Melee-only Nimble Escape
+  (panther, tiger) is used when hurt or crowded. The quasit opens with its
+  Scare and the pseudodragon with its Sting. The goat's Strength save is +2 as printed. Pictures: the Crawl pack's
+  where it has the animal (some recoloured), the rest drawn.
+Next session starts at: task F.8 in docs/expansions/03-demigods-magics.md (Part F: Animal Shapes and Shapechange
+on F.6's swap - Battle.shape/unshape and rules/shapes.py, now with all of Appendix B's creatures to choose from;
+the spells' numbers, durations and what each keeps from the 2024 PHB page images, `tools/codex/extract.py
+--render phb <pages>`), in a fight and outside one too. Write F.8's "How" first. Part F is then complete: update
+the codex (`tools/codex/coverage.py --dlc`) and name the next part from the design note.
+Part E and F.1 to F.7 are in `main`.
+The way of Part F (F.7): the 24 creatures are pack fragments, `statblocks.beasts.json` and `creatures.beasts.json`
+(flavour, encounters and the towers' inhabitants: a pack may now `{"_append": [...]}` to a list entry of a
+section). The kernel learned: a stat block's bonus action that is a blow or a save (`bonus_action` attacks from
+`statblocks.resolve`; `Battle.attack_problem`/`do_attack` spend the bonus action; the action list's cost "bonus";
+`tactics._bonus_blow` after the Attack), `requires` and an action's `max_size` (`Battle.unfit_target`, also in
+`targets_for`), `advantage_if` (`query.ADVANTAGE_IF`), a condition `with` another (Restrained while Grappled: ended
+by `durations.remove` of the grapple, every grapple release now goes through it), `ends: "damage"` (on_damage),
+`fail_by` (`Battle._save` keeps `failed_by`), Running Leap (`Fighter.jump`), Burst of Ingenuity
+(handlers/monsters.py on d20_after), `spellcasting.self_only` (`Battle.spell_targets`), `shapes.breathes_only_water`
+(never a friend's form). Tactics: `_opening` reads a failed save's conditions; a repeat-save hold is worth its
+expected rounds. Pictures: tools/beast_art.py (`_big_cat`, `_goat`, `_badger`...), build_tiles' `recolor` has a
+saturation `floor`. Tests: tests/test_beasts.py.
 The way of Part F (F.6): a shape is `Battle.shape(f, cid, by=, spell=)`: `Fighter.shape` keeps {char, creature,
 cdef, sq, slots, recharge, by, spell, temp} and the fighter becomes a `Creature` of the form (uid 94000 + id, named
 "X, as a rat") with its own hit points and the form's as temporary ones; `f.char` is None while shaped, so every
@@ -499,6 +521,7 @@ casting time. A spell aimed at something chosen lists Subjects (game/divining.Su
 | 2026-10-17 | Demigods & Magics F.1: allies on the field - Find Familiar (twelve forms of Appendix B, it Helps, keeps watch, follows on the map) and Find Steed (the Otherworldly Steed by its slot, its kind's gift, Life Bond, a mount on the road); Part F split in four; merged into `main` | `dlc/03-demigods-magics` |
 | 2026-10-17 | Demigods & Magics F.2: summoned spirits of levels 2-4 - Summon Beast, Fey, Undead, Aberration, Construct, Elemental and Giant Insect (numbers by the slot, held by concentration, the form picked for the fight, every trait and blow, the costly components); F.2 split, F.3 next; merged into `main` | `dlc/03-demigods-magics` |
 | 2026-10-17 | Demigods & Magics F.3: the spirits of levels 5-6 (Summon Celestial: Avenger or Defender, Healing Touch; Summon Dragon: the breath with the Rends, its resistance shared; Summon Fiend: Death Throes, Devil's Sight, the yugoloth's step, Magic Resistance) and Animate Objects (things by the caster's modifier, commanded with the Bonus Action); F.4 next; merged into `main` | `dlc/03-demigods-magics` |
+| 2026-10-17 | Demigods & Magics F.7: the rest of Appendix B - 24 creatures of the 2025 MM with pictures, each a Polymorph shape and met in its biome (the water-breathers wait for Expansion 22), the cult's imp and quasit, the towers' tadpoles; Trample, holds that restrain, the Sting's sleep, Burst of Ingenuity, Running Leap; merged into `main` | `dlc/03-demigods-magics` |
 
 ## Notes for the next session
 

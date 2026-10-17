@@ -231,14 +231,18 @@ def options(b, f, only: tuple[str, ...] | None = None) -> list[Option]:
     acting = b.has_action(f)
     for o in (b.attack_options(f) if only is None or "attack" in only else ()):
         free_too = o.extra.get("with_multiattack")  # (a breath made with the Rends: its availability says it all)
-        ok = o.available and (acting or free_too)
-        why = o.reason if not o.available else ("" if acting or free_too else "no action left this turn")
+        bonus = o.extra.get("bonus_action")  # (the elephant's Trample: the bonus action's)
+        can = (f.bonus > 0) if bonus else (acting or free_too)
+        ok = o.available and can
+        why = o.reason if not o.available else ("" if can else
+                                                ("no bonus action left" if bonus else "no action left this turn"))
         targets = b.targets_for(f, o) if ok else []
         if ok and not targets:
             ok, why = False, "no one in reach"
         trick = mastery.of(f, o)
         name = f"{o.name} ({trick.title()})" if trick else o.name
-        out.append(Option(f"attack:{o.key}", "attack", name, "attack", ok, why, o, "creature", targets))
+        out.append(Option(f"attack:{o.key}", "attack", name, "bonus" if bonus else "attack", ok, why, o, "creature",
+                          targets))
     if only is None or "object" in only:
         things = b.breakables(f) if acting and f.blows else {}  # (a familiar cannot attack, nor break things)
         if things or b.t.rules.get("objects", {}).get("terrain"):

@@ -435,7 +435,10 @@ class Fighter:
         if self.char is not None and self.has_trait("second_story_work"):
             s = max(s, self.score("dex"))  # (a thief leaps by Dexterity)
         leap = max([0] + [int(v) for v in self.buff_value("leap")])  # (Jump: 30 feet, standing or running)
-        return max(s // 2, leap), max(s, leap)
+        run = leap
+        if self.char is None and self.has_trait("running_leap"):  # (a lion: 25 feet with a 10-foot run)
+            run = max(run, int(((self.cdef or {}).get("trait_numbers") or {}).get("running_leap", {}).get("feet", 0)))
+        return max(s // 2, leap), max(s, run)
 
     @property
     def shine(self) -> int:
@@ -1037,7 +1040,8 @@ class Battle:
             if not mover.active:
                 return
             melee = r.readied == "reach"
-            opts = [o for o in self.attack_options(r) if o.available and o.is_melee == melee and self.in_reach(r, o, mover)[0]]
+            opts = [o for o in self.attack_options(r) if o.available and o.is_melee == melee and self.in_reach(r, o, mover)[0]
+                    and not o.extra.get("bonus_action") and not self.unfit_target(o, mover)]
             if not opts or not self.can_see(r, mover):
                 continue
             r.readied = None
@@ -1626,6 +1630,9 @@ class Battle:
             total, line = fighter.tactical_mind(f.char, self.t, total, dc, self.rng)
             if line:
                 self.dice_say(f"{f.name} ({line})")
+        if total < dc:  # (a friend's help with a check that failed: the sphinx's Burst of Ingenuity)
+            return events.emit(self, "d20_after", actor=f, roll="check", ability=ability, natural=roll,
+                               bonus=total - roll, dc=dc, ok=False).ok
         return total >= dc
 
     def object_at(self, cell: tuple[int, int]) -> dict | None:
@@ -1799,13 +1806,13 @@ class Battle:
         for x in self.fighters:
             if x.grappled_by == f.id and self.gap(x, f) > 1:
                 x.grappled_by = None
-                x.conditions.pop("grappled", None)
+                durations.remove(x, "grappled")
                 self.say(f"{x.the_name} is no longer held.", "system")
         if f.grappled_by is not None:
             g = next((x for x in self.fighters if x.id == f.grappled_by), None)
             if g is None or not g.standing or self.gap(f, g) > 1:
                 f.grappled_by = None
-                f.conditions.pop("grappled", None)
+                durations.remove(f, "grappled")
 
     def _opportunity(self, e: Fighter, f: Fighter) -> None:
         self.opportunity(e, f)
@@ -1816,7 +1823,8 @@ class Battle:
         whether it was made."""
         if not e.reaction or not e.active or e.incapacitated or self.frozen(e):
             return False
-        opts = [o for o in self.attack_options(e) if o.is_melee and o.available and self.gap(e, f) <= o.reach_sq]
+        opts = [o for o in self.attack_options(e) if o.is_melee and o.available and self.gap(e, f) <= o.reach_sq
+                and not o.extra.get("bonus_action") and not self.unfit_target(o, f)]  # (no Trample as a reaction)
         cantrip = self._war_cantrip(e, f, opts)
         if not opts and cantrip is None:
             return False
@@ -2021,7 +2029,7 @@ class Battle:
         for x in self.fighters:
             if x.grappled_by == f.id:
                 x.grappled_by = None
-                x.conditions.pop("grappled", None)
+                durations.remove(x, "grappled")
 
     # ------------------------------------------------------------------ the action economy
     def _spend(self, f: Fighter, bonus: bool = False) -> bool:
@@ -2287,8 +2295,14 @@ class Battle:
     def attack_problem(self, f: Fighter, opt: AttackOption, target: Fighter) -> str | None:
         if not opt.available:
             return opt.reason or "not possible"
-        if not self.has_action(f) and not opt.extra.get("with_multiattack"):
+        if opt.extra.get("bonus_action"):
+            if f.bonus <= 0:
+                return "no bonus action left this turn"
+        elif not self.has_action(f) and not opt.extra.get("with_multiattack"):
             return "no action left this turn"
+        unfit = self.unfit_target(opt, target)
+        if unfit:
+            return unfit
         if "loading" in opt.properties and not opt.is_melee and f.loaded_fired and f.attacks_left > 0 \
                 and not (f.char is not None and feats.has(f.char, "crossbow_expert")):
             return "it must be loaded again: one shot an action"
@@ -2306,7 +2320,19 @@ class Battle:
     def targets_for(self, f: Fighter, opt: AttackOption) -> list[Fighter]:
         """Who this fighter could attack with this option right now, from where they stand."""
         return [x for x in self.enemies_of(f) + [y for y in self.fighters if y.team != f.team and y.state == "down"]
-                if self.in_reach(f, opt, x)[0]]
+                if self.in_reach(f, opt, x)[0] and not self.unfit_target(opt, x)]
+
+    @staticmethod
+    def unfit_target(opt: AttackOption, target: Fighter) -> str:
+        """Why a stat block's blow cannot be aimed at this one ("": it can): the elephant's Trample only at one lying
+        down, a snake's Constrict only at one of a size it can wrap."""
+        a = opt.extra or {}
+        if a.get("requires") == "target_prone" and "prone" not in target.conditions:
+            return "only at one lying down"
+        if a.get("max_size") and not a.get("on_hit") and target.size in SIZES \
+                and SIZES.index(target.size) > SIZES.index(a["max_size"]):
+            return f"too big for it (it takes {a['max_size']} or smaller)"
+        return ""
 
     # ------------------------------------------------------------------ resolving attacks
     def _adv_dis(self, att: Fighter, target: Fighter, opt: AttackOption, *, space=None) -> tuple[bool, bool, list[str]]:
@@ -2518,8 +2544,12 @@ class Battle:
         else:
             saved = self._save(target, a["save"], int(a["dc"]))
             self._event("save", who=target.id, ok=saved)
+        short = self.__dict__.get("failed_by", 0)
         if not saved and target.active and a.get("on_fail"):
             self._block_effects(att, target, opt, a["on_fail"])
+        worse = a.get("fail_by")
+        if not saved and target.active and worse and short >= int(worse.get("by", 5)):
+            self._block_effects(att, target, opt, worse.get("on_fail", []))  # (the pseudodragon's sleep)
         if saved and a.get("spares"):
             spared.add(target.id)
         return not saved
@@ -2640,6 +2670,7 @@ class Battle:
         if sr.auto_fail:
             if not quiet:
                 self.dice_say(f"{f.name} {ability.upper()} save: fails ({sr.auto_fail})")
+            self.__dict__["failed_by"] = dc
             return False
         roll = dice.d20(self.rng, advantage=sr.roll.advantage, disadvantage=sr.roll.disadvantage)
         total_bonus = sr.bonus + sum(dice.roll(d, self.rng).total for d in sr.dice)
@@ -2658,6 +2689,8 @@ class Battle:
             ok = again >= dc
             self.dice_say(f"{f.name} spends Heroic Inspiration and rolls again: {again} vs DC {dc} — "
                           f"{'saved' if ok else 'failed'}")
+            total = again
+        self.__dict__["failed_by"] = 0 if ok else dc - total  # (a stat block's "Failure by 5 or More")
         return ok
 
     def _legendary_resistance(self, f: Fighter) -> bool:
@@ -2725,8 +2758,10 @@ class Battle:
         """A saving throw against damage (half on a save, or none); returns whether it was saved."""
         full = dice.roll(expr, self.rng).total if rolled is None else rolled
         saved = self._save(target, ability, dc, quiet=quiet, bonus=grid.COVER_AC[cover] if ability == "dex" else 0)
+        short = self.__dict__.get("failed_by", 0)
         self._event("save", who=target.id, ok=saved)
         self._save_hit(att, target, ability, saved, full, dtype, on_save)
+        self.__dict__["failed_by"] = short  # (this save's margin, not a concentration save the damage brought)
         return saved
 
     def _save_hit(self, att: Fighter | None, target: Fighter, ability: str, saved: bool, full: int, dtype: str,
@@ -3074,6 +3109,11 @@ class Battle:
             return False
         if opt.extra.get("area"):  # (a creature's breath, played by the player: aimed at the target)
             self.area_attack(f, opt, (target.x, target.y))
+            self._after_action(f)
+            return True
+        if opt.extra.get("bonus_action"):  # (the elephant's Trample: its bonus action, the Action untouched)
+            f.bonus -= 1
+            self._attack(f, opt, target)
             self._after_action(f)
             return True
         if f.attacks_left <= 0:
@@ -3941,6 +3981,9 @@ class Battle:
     def spell_targets(self, f: Fighter, sid: str) -> list[Fighter]:
         spell = self.t.spells[spell_id(sid)]
         target = spell["target"]
+        if f.char is None and f.creature is not None and (f.cdef.get("spellcasting") or {}).get("self_only") \
+                and target in ("ally", "creature"):
+            return [f]  # (an imp "casts Invisibility on itself")
         reach = self.spell_range(spell, f)
 
         def near(x: Fighter) -> bool:
@@ -4638,11 +4681,11 @@ class Battle:
         f.state = "away"
         if f.grappled_by is not None:
             f.grappled_by = None
-            f.conditions.pop("grappled", None)
+            durations.remove(f, "grappled")
         for x in self.fighters:
             if x.grappled_by == f.id:
                 x.grappled_by = None
-                x.conditions.pop("grappled", None)
+                durations.remove(x, "grappled")
         f.readied = None
         self._event("vanish", who=f.id, why=why)
         self.say({"banished": f"{f.the_name} vanishes from the field.",

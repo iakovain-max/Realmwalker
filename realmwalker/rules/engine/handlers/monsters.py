@@ -47,3 +47,26 @@ def leader_falls(b, f, ev, hook, buff) -> None:
     for other in b.team(f.team):
         if other.active and other is not f:
             b._morale_check(other, "leader")
+
+
+@handler("burst_of_ingenuity")
+def burst_of_ingenuity(b, f, ev, hook, buff) -> None:
+    """The sphinx of wonder's Reaction, twice a day: +2 to a failed saving throw or ability check of its own or a
+    friend's within 30 feet, spent only when the 2 turns it (the battle's judgement, for the party's sphinx too)."""
+    who = ev.actor
+    if ev.roll not in ("save", "check") or ev.ok or f.creature is None or who is None or who.team != f.team \
+            or not f.active or f.incapacitated or (who is not f and b.feet(f, who) > 30):
+        return
+    spec = next((a for a in f.cdef.get("reactions", ()) if a.get("id") == "burst_of_ingenuity"), {})
+    plus = int(spec.get("bonus", 2))
+    left = f.creature.uses.setdefault("burst_of_ingenuity", int(str(spec.get("uses", "2/day")).split("/")[0]))
+    if left <= 0 or ev.natural + ev.bonus + plus < ev.dc:
+        return
+    f.creature.uses["burst_of_ingenuity"] = left - 1
+    f.reaction = False
+    ev.ok = True
+    b.dice_say(f"{f.name} (Burst of Ingenuity): +{plus} → {ev.natural + ev.bonus + plus} vs DC {ev.dc} — "
+               f"{'saved' if ev.roll == 'save' else 'made'}")
+    whose = "its own" if who is f else f"{who.the_name}'s"
+    b.say(f"{f.the_name} turns {whose} failing aside with a bright thought.", "magic")
+
