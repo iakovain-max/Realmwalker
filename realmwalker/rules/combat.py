@@ -28,7 +28,7 @@ from realmwalker.core.rng import RNG
 from realmwalker.rules import feats, grid
 from realmwalker.rules import spells as spellrules
 from realmwalker.rules.character import Character, Sheet, modifier
-from realmwalker.rules.engine import actions, durations, effects, events, hazards, query, reactions
+from realmwalker.rules.engine import actions, durations, effects, events, hazards, marks, query, reactions
 from realmwalker.rules.engine.handlers import general_feats, mastery
 from realmwalker.rules.engine.reactions import Decision
 from realmwalker.rules.engine import traits as trs
@@ -483,6 +483,16 @@ def spell_id(value: str) -> str:
     return value.split(":", 2)[2] if value.startswith(("scroll:", "charge:", "throw:", "innate:")) else value
 
 
+def again_spell(f: Fighter, tables) -> str | None:
+    """The follow-up of the spell `f` concentrates on, when it has one (Witch Bolt's later bolts, a Flame Blade's
+    strikes, moving a Moonbeam): "<spell id>_again", cast without a slot (rules/spells.SpellTable)."""
+    conc = f.concentration
+    if conc is None:
+        return None
+    sid = f"{conc['spell']}_again"
+    return sid if sid in tables.spells else None
+
+
 BATTLE_USES = {"heal", "bandage", "throw", "coat"}  # what an item's "use" can do in a fight (do_item, or via do_cast)
 
 
@@ -517,7 +527,7 @@ class Battle:
             f = Fighter(fid, PARTY, tables, char=c)
             # Spells cast before the fight and still working (Stoneskin, Death Ward...) come into it with them.
             for sid in spellrules.lasting(c, tables):
-                part = spellrules.battle_part(tables, sid)
+                part = spellrules.battle_part(tables, sid, c)
                 if part:
                     f.buffs.append(part)
             self.fighters.append(f)
@@ -833,6 +843,7 @@ class Battle:
     def _start_of_turn(self, f: Fighter) -> None:
         self._rolls_waiting = []  # a roll that explained nothing (a check with no line after it) is not carried over
         durations.tick(self, f, "turn_start")  # what lasts "until the start of its next turn" ends
+        marks.turn_start(self, f)  # (Heroism; harm at the start of a turn)
         f.readied = None
         if f.creature is not None and f.cdef.get("legendary"):
             f.creature.uses["legendary_actions"] = int(f.cdef["legendary"].get("uses", 3))
@@ -947,6 +958,7 @@ class Battle:
         if f.hidden and f.active and any(self.gap(e, f) <= 1 for e in self.enemies_of(f) if e.standing):
             f.hidden = 0
             self.say(f"{f.the_name} is found.", "system")
+        marks.turn_end(self, f)  # (Melf's Acid Arrow; marks shaken off with a save)
         durations.tick(self, f, "turn_end")  # and what lasts "until the end of its next turn"
         self._crowded(f)
 
@@ -1934,6 +1946,8 @@ class Battle:
         return p
 
     def _attack(self, att: Fighter, opt: AttackOption, target: Fighter, *, spell_text: str = "") -> bool:
+        if marks.sanctuary_stops(self, att, target):
+            return False
         if opt.extra.get("single_save"):
             return self._save_action(att, opt, target)
         adv, dis, why = self._adv_dis(att, target, opt)
@@ -1950,7 +1964,8 @@ class Battle:
                      and not bf.get("aimed")]  # spent on this roll
         natural = events.emit(self, "d20_after", actor=att, target=target, roll="attack", natural=roll.natural).natural
         crit = natural >= query.crit_range(att)
-        bless = sum(dice.roll(d, self.rng).total for d in att.buff_value("attack_die"))
+        bless = sum(dice.roll(d, self.rng).total for d in att.buff_value("attack_die")) \
+            + marks.roll_adjust(self, att, target, opt)
         total = natural + opt.bonus + bless
         ac, cover = self.target_ac(att, target, opt)
         hit = crit or (natural != 1 and total >= ac)
@@ -1974,6 +1989,8 @@ class Battle:
             self.say(f"{target.the_name} parries.", "info" if target.side == FOE else "good")
         if hit and query.crit_within(self, att, target):
             crit = True  # a blow from right beside someone who cannot defend themselves at all
+        if hit and marks.image_takes_it(self, att, target):
+            hit = crit = False  # (Mirror Image: a duplicate took it)
         if hit:
             crit = events.emit(self, "attack_hit", actor=att, target=target, opt=opt, crit=crit).crit  # Assassinate...
         if crit and target.char is not None and magic_flag(target.char.equipped_item("armor"), "adamantine_armor"):
@@ -2028,6 +2045,7 @@ class Battle:
         amount += dmg_ev.extra  # Sneak Attack, Divine Strike...
         if dmg_ev.double:
             amount *= 2  # (an assassin's Death Strike)
+        amount = marks.hit_damage(self, att, target, opt, amount, crit)  # (Magic Weapon, Ray of Enfeeblement)
         self._spend_use(att, opt)
         before = target.hp + target.temp_hp
         self._melee_blow = opt.is_melee
@@ -2048,9 +2066,12 @@ class Battle:
             att.buffs = [bf for bf in att.buffs if "poisoned_blade" not in bf]  # (basic poison: spent on the first cut)
             self._hit(att, target, dice.roll("1d4", self.rng, double_dice=crit).total, "poison", crit=False,
                       weapon=opt.name)
-        for extra_amount, extra_type in dmg_ev.typed:  # damage of its own kind from a power (an artifact's force)
-            if target.active or target.state == "down":
+        for extra_amount, extra_type in dmg_ev.typed + marks.extra_hits(self, att, target, opt, crit):
+            if target.active or target.state == "down":  # (a power's own kind of damage; Divine Favor, Hex)
                 self._hit(att, target, extra_amount, extra_type, crit=False, weapon=opt.name)
+        if target.active or target.state == "down":
+            marks.smite(self, att, target, opt, crit)  # (a smite readied on the weapon)
+        marks.after_hit(self, att, target, opt)  # (Armor of Agathys)
         if opt.extra.get("on_hit") and target.active:
             self._block_effects(att, target, opt, opt.extra["on_hit"])
         if opt.extra.get("disease") and target.char and self.rng.chance(float(opt.extra.get("disease_chance", 1.0))):
@@ -2145,11 +2166,50 @@ class Battle:
         self._event("cast", by=f.id, to=f.id, spell="shield", effect="buff", dtype="force", area=[])
         return True
 
+    def _rebuke(self, f: Fighter, att: Fighter) -> bool:
+        """Hellish Rebuke (2024): hurt by a creature it can see within 60 feet, a caster who has the spell ready may
+        answer with its reaction and a level 1 slot or more."""
+        sid = "hellish_rebuke"
+        if sid not in self.t.spells or not f.active or not f.reaction or query.incapacitated(f) or not att.active \
+                or self.feet(f, att) > 60 or not self.can_see(f, att) or self.antimagic(f.cells):
+            return False
+        spell = self.t.spells[sid]
+        if f.char is not None:
+            if sid not in spellrules.known_spells(f.char, self.t):
+                return False
+            slot = spellrules.lowest_free_slot(f.char, self.t, 1)
+            if slot is None or self.slot_used_now(f) or spellrules.armour_problem(f.char, self.t):
+                return False
+            s = f.sheet
+            mod, dc = s.mod(spellrules.casting_ability(f.char, self.t)), spellrules.save_dc(s, self.t)
+        else:
+            sc = f.cdef.get("spellcasting") or {}
+            if sid not in f.cdef.get("spells", []) or not sc:
+                return False
+            slot = spell["level"]
+            mod, dc = f.mod(sc.get("ability", "cha")), int(sc.get("dc", 10))
+        if not reactions.yes(self, Decision(f, "hellish_rebuke", f"{att.the_name} has hurt {f.the_name}. Answer with "
+                                            "Hellish Rebuke? (your reaction: a DEX save against fire)",
+                                            [("yes", f"Hellish Rebuke (a level {slot} slot)"), ("no", "Let it go")],
+                                            default="yes")):
+            return False
+        f.reaction = False
+        if f.char is not None:
+            spellrules.spend_slot(f.char, slot)
+            self.note_slot(f)
+        if not self.cast(f, sid, spell, att, None, up=max(0, slot - spell["level"]), mod=mod, dc=dc, bonus=0, mult=1,
+                         level=slot):
+            if f.char is not None:
+                spellrules.unspend_slot(f.char, slot)
+        return True
+
     def _save(self, f: Fighter, ability: str, dc: int, *, quiet: bool = False, bonus: int = 0,
-              against: tuple = (), disadvantage: bool = False) -> bool:
+              against: tuple = (), disadvantage: bool = False, advantage: str = "") -> bool:
         sr = query.save_roll(self, f, ability, bonus=bonus, against=against)
         if disadvantage:
             sr.roll.add("disadvantage", "mage slayer")
+        if advantage:
+            sr.roll.add("advantage", advantage)
         if sr.auto_fail:
             if not quiet:
                 self.dice_say(f"{f.name} {ability.upper()} save: fails ({sr.auto_fail})")
@@ -2161,6 +2221,7 @@ class Battle:
         if not quiet:
             self.dice_say(f"{f.name} {ability.upper()} save: {roll.natural} {signed_mod(total_bonus)} = {total} vs DC {dc} — "
                           f"{'saved' if ok else 'failed'}")
+        marks.spend_saves(f)  # (Mind Sliver: the next save only)
         ok = events.emit(self, "d20_after", actor=f, roll="save", ability=ability, natural=roll.natural,
                          bonus=total_bonus, dc=dc, ok=ok).ok  # Indomitable...
         if not ok and self._legendary_resistance(f):
@@ -2319,6 +2380,9 @@ class Battle:
                             crit=crit, dtype=dtype)
         target.damage_taken += amount
         events.emit(self, "damage_taken", actor=att, target=target, amount=amount, dtype=dtype)  # Energy Redirection
+        marks.shared(self, target, amount)  # (Warding Bond)
+        if att is not None and att is not target:
+            self._rebuke(target, att)
         if target.state not in ("dead",) and hp_before > 0:
             # A wound is judged against the body, not the hit points: a level-1 wizard's seven are luck and nerve,
             # and a 5-point scratch on them is not a gushing wound. Below WOUND_HP_FLOOR the floor is used.
@@ -2698,6 +2762,33 @@ class Battle:
         for _ in range(squares):
             nx, ny = x + dx, y + dy
             if not self.field.fits(nx, ny, target.sq) or any(c in occ for c in grid.cells(nx, ny, target.sq)):
+                break
+            path.append((nx, ny))
+            x, y = nx, ny
+        if not path:
+            return False
+        start = (target.x, target.y)
+        target.x, target.y = path[-1]
+        self._event("push", who=target.id, path=[start] + path)
+        self._sync_grapples(target)
+        self._zones_on(target, start=False)
+        return True
+
+    def _pull(self, src: Fighter, target: Fighter, squares: int) -> bool:
+        """Pull a creature straight towards another, as far as there is room, until it stands beside it (Thorn
+        Whip)."""
+        path = []
+        x, y = target.x, target.y
+        occ = self.occupied_by_others(target)
+        for _ in range(squares):
+            if grid.gap((x, y, target.sq), src.space) <= 1:
+                break
+            sx, sy = grid.centre(*src.space)
+            tx, ty = x + target.sq / 2, y + target.sq / 2
+            dx = 0 if abs(tx - sx) < 0.5 else (-1 if tx > sx else 1)
+            dy = 0 if abs(ty - sy) < 0.5 else (-1 if ty > sy else 1)
+            nx, ny = x + dx, y + dy
+            if (dx, dy) == (0, 0) or not self.field.fits(nx, ny, target.sq)                     or any(c in occ for c in grid.cells(nx, ny, target.sq)):
                 break
             path.append((nx, ny))
             x, y = nx, ny
@@ -3132,6 +3223,9 @@ class Battle:
                 ok, why = self._casting_time_ok(f, spell, spell["level"] > 0
                                                 and not spellrules.free_cast(f.char, self.t, sid))
             out.append((sid, ok, why))
+        again = again_spell(f, self.t)
+        if again is not None:
+            out.append((again, *self._casting_time_ok(f, self.t.spells[again], False)))
         for it in f.char.inventory:  # (a scroll: on the reader's spell list, or a thief's Use Magic Device)
             sid = self.t.items.get(it.def_id).get("use", {}).get("scroll")
             if sid in self.t.spells and not spellrules.has_op(self.t.spells[sid], "revive", "identify") \
@@ -3218,6 +3312,9 @@ class Battle:
             return [x for x in self.team(f.team) if (x.active or x.state == "down") and near(x)]
         if target == "downed_ally":
             return [x for x in self.team(f.team) if x.state == "down" and not x.stable and near(x)]
+        if target == "bound":  # (a follow-up at the creature the spell was cast at: Witch Bolt, Heat Metal)
+            held = (f.concentration or {}).get("target")
+            return [x for x in self.fighters if x.id == held and x.active and x is not f and near(x)]
         if target == "dead_ally":
             return [x for x in self.team(f.team) if x.state == "dead" and self.round - x.died_round <= 10 and near(x)
                     and x.char is not None]
@@ -3315,7 +3412,7 @@ class Battle:
         if sid in opts and not opts[sid][0]:
             return opts[sid][1]
         mode = spell["target"]
-        if mode in ("enemy", "ally", "downed_ally", "dead_ally"):
+        if mode in ("enemy", "ally", "downed_ally", "dead_ally", "bound"):
             if target is None or target not in self.spell_targets(f, sid):
                 return "out of reach" if target is not None else "no target"
         elif mode in ("point", "direction"):
@@ -3370,6 +3467,10 @@ class Battle:
         s = f.sheet
         level = spell["level"]
         bonus_cast = spell.get("cast") == "bonus"
+        if spell.get("again_of"):
+            if again_spell(f, self.t) != sid:
+                return False
+            level = 0  # (the spell already paid for: no slot)
         if flask is not None:
             # A flask thrown: the thrower's aim makes it hard to dodge (8 + proficiency + Dexterity); no magic is spent.
             remove_item(c, flask.uid, 1)
@@ -3437,6 +3538,8 @@ class Battle:
             f.cast_action_spell = True
         f.hidden = 0
         up = max(0, (slot_level or level) - spell["level"])  # (0 for a free cast at its own level)
+        if spell.get("again_of"):
+            up = int((f.concentration or {}).get("up", 0))  # (as strong as the spell was cast)
         mod = s.mod(spellrules.casting_ability(c, self.t))
         dc = spellrules.save_dc(s, self.t)
         bonus = spellrules.attack_bonus(s, self.t) + s.attack_condition()
@@ -3448,7 +3551,7 @@ class Battle:
             mod = s.mod(spellrules.scroll_ability(c, self.t, scroll_how))
             dc, bonus = spellrules.scroll_numbers(self.t, spell["level"])
             bonus += s.attack_condition()
-        mult = spellrules.cantrip_multiplier(c.level) if spell.get("cantrip_scaling") else 1
+        mult = spellrules.cantrip_multiplier(c.level) if spell["level"] == 0 else 1  # (Cantrip Upgrade: 5, 11, 17)
         if not self.cast(f, sid, spell, target, point, up=up, mod=mod, dc=dc, bonus=bonus, mult=mult,
                          level=slot_level or level, slotted=slotted):
             if slotted:
@@ -3482,8 +3585,9 @@ class Battle:
         slot is kept when the spell holds."""
         from realmwalker.rules.engine.handlers import wizard
 
-        if spell.get("ability") or spell.get("thrown") or "item" in spell.get("classes", ()) or sid == "counterspell":
-            return False
+        if spell.get("ability") or spell.get("thrown") or "item" in spell.get("classes", ()) or sid == "counterspell" \
+                or spell.get("again_of"):
+            return False  # (a follow-up of a spell already cast is not a casting)
         for x in self.enemies_of(caster):
             if not x.reaction or query.incapacitated(x) or self.feet(x, caster) > 60 or not self.can_see(x, caster) \
                     or self.antimagic(x.cells):

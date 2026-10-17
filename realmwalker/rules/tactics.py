@@ -705,7 +705,7 @@ def _do_cast(b: Battle, f: Fighter, best) -> bool:
 def _slot_levels(b: Battle, f: Fighter, value: str, sp: dict) -> list[int]:
     """The slot levels worth weighing for this casting: its own (or the lowest left), and a higher one the Auto or the
     enemy would spend on it (a spare slot: no spell of that level ready)."""
-    if sp["level"] <= 0 or str(value).startswith(("scroll:", "charge:", "innate:", "throw:")):
+    if sp["level"] <= 0 or str(value).startswith(("scroll:", "charge:", "innate:", "throw:")) or sp.get("again_of"):
         return [sp["level"]]
     if f.char is not None:
         low = spellrules.lowest_free_slot(f.char, b.t, sp["level"]) or sp["level"]
@@ -756,6 +756,8 @@ def _pick_cast(b: Battle, f: Fighter, cost: str, *, beat: float = 0.0, care: flo
         free = spellrules.free_cast(f.char, b.t, opt.value) if f.char is not None else None
         if free:  # (Spell Mastery costs nothing; a signature spell comes back with a short rest)
             price = 0.0 if free == "mastery" else price * 0.3
+        if sp.get("again_of"):
+            price = 0.0  # (the follow-up of a spell already paid for)
         levels = _slot_levels(b, f, opt.value, sp) if not free else [sp["level"]]
         for target, point in _aims(b, f, opt):
             for lvl in levels:  # (the lowest slot, and a spare higher one when the spell does more with it)

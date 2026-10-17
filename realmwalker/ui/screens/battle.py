@@ -333,7 +333,7 @@ class BattleScreen(Screen):
                     lvl = "from a magic item"
                 if sp.get("cast") == "bonus":
                     lvl += ", bonus action"
-                if ok and sp["target"] in ("enemy", "ally", "downed_ally", "dead_ally") and not b.spell_targets(f, sid):
+                if ok and sp["target"] in ("enemy", "ally", "downed_ally", "dead_ally", "bound") and not b.spell_targets(f, sid):
                     ok, why = False, "no one in reach"
                 rows.append((f"{sp['name']} <dim>({lvl}) {sp['text']}</>", sid, ok, why))
             self._open_choices("cast", rows)
@@ -571,7 +571,7 @@ class BattleScreen(Screen):
         """After the spell (and its slot): at whom, where, or cast at once."""
         b = self.battle
         sp = self.game.tables.spells[spell_id(value)]
-        if sp["target"] in ("enemy", "ally", "downed_ally", "dead_ally"):
+        if sp["target"] in ("enemy", "ally", "downed_ally", "dead_ally", "bound"):
             self._open_targets("cast", b.spell_targets(f, value))
         elif sp["target"] in ("point", "direction"):
             self._open_aim("cast")
@@ -585,7 +585,7 @@ class BattleScreen(Screen):
             return False
         t = self.game.tables
         sp = t.spells[value]
-        if not spellrules.upcasts(sp) or spellrules.free_cast(f.char, t, value):
+        if not spellrules.upcasts(sp) or spellrules.free_cast(f.char, t, value) or sp.get("again_of"):
             return False
         levels = spellrules.slot_choices(f.char, t, value)
         if len(levels) < 2:

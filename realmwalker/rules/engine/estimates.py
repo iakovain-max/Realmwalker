@@ -109,13 +109,22 @@ def spell_value(b, f, sid: str, *, target=None, point=None, dc: int | None = Non
     for o in spell.get("effects", ()):
         kind = o["op"]
         if kind == "attack" and target is not None:
+            o = _typed(o, [target], f)
             for d, t, more in spellrules.damage_parts(o)[:1]:
                 expr = spellrules.scaled(_scaled(d, mult if o.get("scaling") == "cantrip" else 1), more, up)
                 opt = AttackOption("spell", spell["name"], "spell_ranged" if o["attack"] != "melee" else "spell_melee",
                                    bonus, expr, t)
-                ev = attack_value(b, f, opt, target) * (int(o.get("rays", 1)) + int(o.get("rays_up", 0)) * up)
+                rays = int(o.get("rays", 1)) * (mult if o.get("rays_scaling") else 1) + int(o.get("rays_up", 0)) * up
+                p = hit_chance(b, f, opt, target)
+                ev = attack_value(b, f, opt, target) * rays
+                if o.get("miss_half"):
+                    ev += (1 - p) * avg(expr) * 0.5 * damage_factor(target, t) * rays
+                ev += p * rays * _marks_worth(b, f, target, o.get("on_hit", ()), up)
                 w.damage += ev
                 w.kills += int(ev >= target.hp)
+            for a in o.get("after", ()):
+                if a["op"] == "save":
+                    _save_part(b, f, a, [target], target, dc, up, mult, w)
         elif kind == "darts" and target is not None:
             d, t, more = spellrules.damage_parts(o)[0]
             ev = avg(spellrules.scaled(d, more, up)) * (int(o.get("count", 1)) + int(o.get("count_up", 0)) * up) \
@@ -123,20 +132,7 @@ def spell_value(b, f, sid: str, *, target=None, point=None, dc: int | None = Non
             w.damage += ev
             w.kills += int(ev >= target.hp)
         elif kind == "save":
-            for x in caught:
-                if not _allowed(o, x):
-                    continue
-                pf = fail_chance(b, x, o["ability"], int(o.get("dc", dc)))
-                dmg = sum(avg(spellrules.scaled(_scaled(d, mult if o.get("scaling") == "cantrip" else 1), more, up))
-                          * damage_factor(x, t) for d, t, more in spellrules.damage_parts(o))
-                ev = dmg * (pf + (1 - pf) * (0.5 if o.get("half") else 0.0))
-                if x.team == f.team:
-                    w.friendly += ev
-                else:
-                    w.damage += ev
-                    w.kills += int(ev >= x.hp)
-                    if o.get("on_fail"):
-                        w.control += pf * threat(x) * _control_rounds(o["on_fail"])
+            _save_part(b, f, o, caught, target, dc, up, mult, w)
         elif kind == "heal":
             many = max(1, int(o.get("count", 1)) + int(o.get("count_up", 0)) * up)
             for x in sorted(caught, key=lambda x: x.hp / max(1, x.max_hp))[:many]:
@@ -147,7 +143,20 @@ def spell_value(b, f, sid: str, *, target=None, point=None, dc: int | None = Non
                     if x.state == "down":
                         w.heal += 10.0  # up again
         elif kind == "modifier":
-            w.help += _buff_worth(o.get("buff", {}), int(o.get("count", 1)) + int(o.get("count_up", 0)) * up)
+            n = int(o.get("count", 1)) + int(o.get("count_up", 0)) * up
+            if spell["target"] not in ("self", "all_allies"):
+                n = max(n, int(spell.get("targets", 1)) + int(spell.get("targets_up", 0)) * up)
+            on = target if target is not None else f
+            if on is not None and on.team != f.team:
+                w.control += _mark_on_foe(b, f, on, o.get("buff", {}))  # (Hex, Faerie Fire on a foe)
+            else:
+                w.help += _buff_worth(spellrules.buff_at(o, spell["level"] + up, spell), n, b, f, on, spell)
+        elif kind == "temp_hp" and caught:
+            x = caught[0] if spell["target"] != "self" else f
+            amount = avg(str(o["amount"])) + int(o.get("per_up", 0)) * up
+            w.help += max(0.0, amount - x.temp_hp) * (0.6 if any(b.gap(x, e) <= 6 for e in b.enemies_of(f)) else 0.2)
+        elif kind == "move_zone" and point is not None:
+            w.damage += _moved_zone_worth(b, f, spell, point)
         elif kind in ("summon", "aura", "guardian"):
             d, t, more = spellrules.damage_parts(o)[0] if spellrules.damage_parts(o) else ("0", "", "")
             w.help += avg(spellrules.scaled(d, more, up)) * 0.55 * 3
@@ -159,6 +168,39 @@ def spell_value(b, f, sid: str, *, target=None, point=None, dc: int | None = Non
             w.damage, w.control, w.kills = (w.damage * (1 + 0.8 * extra), w.control * (1 + 0.8 * extra),
                                             w.kills * (1 + extra))
     return w
+
+
+def _save_part(b, f, o: dict, caught: list, target, dc: int, up: int, mult: int, w: Worth) -> None:
+    """A saving throw's worth, added to `w`: the damage (half on a save), the turns it takes away, the marks it
+    leaves; `around` a creature, everyone that close (Ice Knife's burst)."""
+    who = caught
+    if o.get("around") and target is not None:
+        n = int(o["around"]) // 5
+        who = [x for x in b.fighters if (x.active or x.state == "down") and grid.gap(target.space, x.space) <= n
+               and not (o.get("affects") == "enemies" and x.team == f.team)]
+    o = _typed(o, who, f)
+    for x in who:
+        if x is None or not _allowed(o, x):
+            continue
+        pf = fail_chance(b, x, o["ability"], int(o.get("dc", dc)))
+        if o.get("advantage"):
+            pf *= pf
+        parts = spellrules.damage_parts(o)
+        if o.get("hurt_damage") and x.hp < x.max_hp and parts:
+            parts = [(o["hurt_damage"], parts[0][1], parts[0][2])] + parts[1:]
+        dmg = sum(avg(spellrules.scaled(_scaled(d, mult if o.get("scaling") == "cantrip" else 1), more, up))
+                  * damage_factor(x, t) for d, t, more in parts)
+        ev = dmg * (pf + (1 - pf) * (0.5 if o.get("half") else 0.0))
+        if x.team == f.team:
+            w.friendly += ev
+        else:
+            w.damage += ev
+            w.kills += int(ev >= x.hp)
+            if o.get("on_fail"):
+                w.control += pf * threat(x) * _control_rounds(o["on_fail"])
+                w.damage += pf * _marks_worth(b, f, x, o["on_fail"], up)
+            if o.get("on_save"):
+                w.damage += (1 - pf) * _marks_worth(b, f, x, o["on_save"], up)
 
 
 def _scaled(expr: str, mult: int) -> str:
@@ -258,17 +300,109 @@ def _control_rounds(ops: list[dict]) -> float:
     return 0.0
 
 
-def _buff_worth(buff: dict, count: int) -> float:
+def _buff_worth(buff: dict, count: int, b=None, f=None, on=None, spell: dict | None = None) -> float:
+    """What a blessing on friends is worth in a fight (rough, in damage dealt or kept off)."""
     w = 0.0
     if buff.get("ac"):
         w += 1.2 * int(buff["ac"])
-    if buff.get("attack_die"):
+    if buff.get("attack_die") and not str(buff["attack_die"]).startswith("-"):
         w += 2.5 * count
     if buff.get("resist"):
         w += 4.0
     if buff.get("death_ward"):
         w += 5.0
+    near = b is not None and on is not None and any(b.gap(on, e) <= 6 for e in b.enemies_of(f))
+    if buff.get("ac_floor") and on is not None:
+        w += max(0, int(buff["ac_floor"]) - on.ac()) * 1.2
+    if buff.get("blurred") or buff.get("images"):
+        w += (3.0 + 1.5 * int(buff.get("images", 0))) * (1.0 if near else 0.5)
+    if buff.get("sanctuary") is not None:
+        w += 2.5 if near and on is not None and on.hp < on.max_hp / 2 else 0.5
+    if buff.get("ward_die"):
+        w += 1.5 if near else 0.3
+    if buff.get("warded_kinds") and b is not None:
+        w += 3.0 * sum(1 for e in b.enemies_of(f) if e.kind in buff["warded_kinds"])
+    if buff.get("heroism"):
+        w += 4.0
+    if buff.get("retaliate"):
+        w += 3.0 if near else 1.0
+    if buff.get("hit_extra") or buff.get("weapon_plus") or buff.get("smite"):
+        striker = on if on is not None else f
+        weapon = striker is not None and striker.char is not None and striker.char.equipped_item("main_hand") is not None
+        wants = 1.0 if weapon and any(b.gap(striker, e) <= 2 for e in b.enemies_of(f)) else 0.2
+        if buff.get("hit_extra"):
+            w += avg(str(buff["hit_extra"])) * 2.5 * wants
+        if buff.get("weapon_plus"):
+            w += int(buff["weapon_plus"]) * 3.0 * wants
+        if buff.get("smite") and spell is not None:
+            w += sum(avg(d) for o in spell.get("on_hit", ()) for d, _, _ in spellrules.damage_parts(o)) * 0.7 * wants
+    if buff.get("bond") is not None:
+        w += 3.0 if near else 1.0
+    if buff.get("save_bonus") and not buff.get("bond"):
+        w += 1.0 * count
+    if buff.get("traits") and "expeditious_retreat" in buff["traits"]:
+        w += 0.5
     return w
+
+
+def _mark_on_foe(b, f, x, buff: dict) -> float:
+    """What a mark put on a foe without a save is worth (Hex, Hunter's Mark)."""
+    if buff.get("quarry"):
+        hits = 2.0 if f.char is not None and f.char.equipped_item("main_hand") is not None else 1.5
+        return avg(str(buff["quarry"])) * hits * min(3.0, x.hp / 8.0)
+    return 0.0
+
+
+def _marks_worth(b, f, x, ops: list, up: int) -> float:
+    """What the marks a hit or a failed save leaves are worth beyond its damage (Melf's Acid Arrow's sting, Faerie
+    Fire's light, Bane, Hex...)."""
+    w = 0.0
+    for o in ops:
+        if o["op"] == "modifier":
+            buff = o.get("buff", {})
+            if buff.get("outlined"):
+                w += 2.0 * sum(1 for a in b.team(f.team) if a.active and a is not x)
+            if buff.get("dot"):
+                w += avg(str(buff["dot"])) * (1.0 if buff.get("dot_once") else 2.0)
+            if str(buff.get("attack_die", "")).startswith("-") or buff.get("weak") or buff.get("duel") is not None:
+                w += 0.3 * threat(x)
+            if str(buff.get("save_die", "")).startswith("-"):
+                w += 1.0
+            if buff.get("sapped"):
+                w += 0.25 * threat(x)
+            if buff.get("maddened") is not None:
+                w += 1.2 * threat(x)
+        elif o["op"] in ("pull", "flee"):
+            w += 1.0
+        elif o["op"] == "no_reaction":
+            w += 0.5
+        elif o["op"] == "damage":
+            w += sum(avg(d) * damage_factor(x, t) for d, t, _ in spellrules.damage_parts(o))
+    return w
+
+
+def _typed(o: dict, xs: list, f) -> dict:
+    """The damage type the caster would choose for these creatures (`types`)."""
+    if not o.get("types"):
+        return o
+    foes = [x for x in xs if x is not None and x.team != f.team] or [x for x in xs if x is not None]
+    best = max(o["types"], key=lambda t: (sum(damage_factor(x, t) for x in foes), -o["types"].index(t)))
+    return {**o, "type": best}
+
+
+def _moved_zone_worth(b, f, spell: dict, point) -> float:
+    """Moving a spell's zone (Moonbeam, Cloud of Daggers): foes newly under it."""
+    base = spell.get("again_of", "")
+    z = next((z for z in b.zones if z.owner == f.id and z.spell == base), None)
+    if z is None:
+        return 0.0
+    area = b.t.spells[base].get("area") or {}
+    cells = set(b.field.area(area.get("shape", "sphere"), int(area.get("size", 5)), origin=f.space, toward=point))
+    now = sum(1 for e in b.enemies_of(f) if any(c in z.cells for c in e.cells))
+    then = sum(1 for e in b.enemies_of(f) if any(c in cells for c in e.cells))
+    friends = sum(1 for a in b.team(f.team) if any(c in cells for c in a.cells))
+    dmg = avg(z.damage) if z.damage else 3.0
+    return max(0.0, (then - now) * dmg * 0.6 - friends * dmg)
 
 
 def _caster_dc(b, f) -> int:

@@ -18,6 +18,7 @@ from realmwalker.rules.character import Character, Sheet
 
 
 LASTING = "spell:"  # the key prefix in Character.effects
+CAST_AT = "spell_at:"  # ...and the slot level a lasting spell was cast with, when higher than its own
 MIN_LASTING_ROUNDS = 100  # ten minutes (a round is six seconds): long enough to be worth casting before a fight
 ROUNDS_PER_HOUR = 600
 SHEET_KEYS = ("ac", "mage_armor")  # the parts of a lasting spell the character sheet already counts
@@ -27,6 +28,13 @@ class SpellTable:
     def __init__(self, data: dict) -> None:
         self.defs: dict[str, dict] = {k: v for k, v in data["spells"].items() if not k.startswith("_")}
         self.starting: dict[str, dict] = data.get("starting", {})
+        for sid, spell in list(self.defs.items()):
+            if spell.get("again"):  # its follow-up, cast without a slot while the spell is held (combat.again_spell)
+                self.defs[f"{sid}_again"] = again_def(sid, spell)
+
+    def learnable(self) -> dict[str, dict]:
+        """The spells of the books, without the follow-ups made from them."""
+        return {k: v for k, v in self.defs.items() if not v.get("again_of")}
 
     def __getitem__(self, spell_id: str) -> dict:
         return self.defs[spell_id]
@@ -36,6 +44,20 @@ class SpellTable:
 
     def for_class(self, cls: str, max_level: int) -> list[str]:
         return [sid for sid, s in self.defs.items() if cls in s["classes"] and s["level"] <= max_level]
+
+
+def again_def(sid: str, spell: dict) -> dict:
+    """A spell's follow-up as a spell of its own (`again` in data/spells.json: name, text, cast, target, range, area,
+    affects, effects), at the spell's level, of the class "again" (nobody learns it, no scroll is made of it)."""
+    a = spell["again"]
+    out = {"name": a.get("name", spell["name"]), "level": spell["level"], "school": spell.get("school", ""),
+           "classes": ["again"], "again_of": sid, "target": a.get("target", "enemy"),
+           "range": a.get("range", spell.get("range", 60)), "effects": a["effects"], "text": a["text"],
+           "fx": a.get("fx", spell.get("fx", "bolt"))}
+    for key in ("cast", "area", "affects"):
+        if key in a:
+            out[key] = a[key]
+    return out
 
 
 def is_caster(char: Character, tables) -> bool:
@@ -571,10 +593,25 @@ def main_type(spell: dict) -> str:
     return ""
 
 
-def buff_of(spell: dict) -> dict:
-    """What a spell's modifier puts on its target ({"ac": 2}, {"resist": [...]}...), {} if it has none."""
+def buff_of(spell: dict, level: int | None = None) -> dict:
+    """What a spell's modifier puts on its target ({"ac": 2}, {"resist": [...]}...), {} if it has none; cast with a
+    slot of `level`, its numbers grown by the op's `per_up` and `by_level`."""
     m = op(spell, "modifier")
-    return dict(m["buff"]) if m else {}
+    return buff_at(m, level, spell) if m else {}
+
+
+def buff_at(m: dict, level: int | None, spell: dict) -> dict:
+    """A modifier op's buff at a slot level: `per_up` {key: more for each level above the spell's}, `by_level`
+    {key: {"4": value, "6": value}} (the highest reached)."""
+    out = dict(m["buff"])
+    up = max(0, int(level or spell["level"]) - int(spell["level"]))
+    for k, more in (m.get("per_up") or {}).items():
+        out[k] = int(out.get(k, 0)) + int(more) * up
+    for k, steps in (m.get("by_level") or {}).items():
+        reached = [int(lv) for lv in steps if int(lv) <= int(level or spell["level"])]
+        if reached:
+            out[k] = steps[str(max(reached))]
+    return out
 
 
 def harms(spell: dict) -> bool:
@@ -622,7 +659,7 @@ def summary(spell: dict) -> list[str]:
 def lasts(tables, spell_id: str) -> bool:
     """A spell that outlives a fight: a buff of ten minutes or more."""
     spell = tables.spells[spell_id]
-    return bool(buff_of(spell)) and int(spell.get("rounds", 0)) >= MIN_LASTING_ROUNDS
+    return bool(buff_of(spell)) and int(spell.get("rounds", 0)) >= MIN_LASTING_ROUNDS and not spell.get("battle_only")
 
 
 def lasting(char: Character, tables=None) -> dict[str, float]:
@@ -631,30 +668,46 @@ def lasting(char: Character, tables=None) -> dict[str, float]:
     return {k: v for k, v in out.items() if tables is None or k in tables.spells}
 
 
-def keep(char: Character, tables, spell_id: str) -> float:
+def keep(char: Character, tables, spell_id: str, level: int | None = None) -> float:
     """A lasting spell has just been cast on this character: it works for its full time from now (casting it
-    again renews it; the same spell never stacks). Returns the hours it will last."""
+    again renews it; the same spell never stacks). `level`: the slot it was cast with (Magic Weapon grows with
+    it). Returns the hours it will last."""
     hours = int(tables.spells[spell_id].get("rounds", 0)) / ROUNDS_PER_HOUR
     key = LASTING + spell_id
     char.effects[key] = max(float(char.effects.get(key, 0.0)), hours)
+    if level and int(level) > int(tables.spells[spell_id]["level"]):
+        char.effects[CAST_AT + spell_id] = float(level)
+    else:
+        char.effects.pop(CAST_AT + spell_id, None)
     return hours
+
+
+def cast_at(char: Character, tables, spell_id: str) -> int:
+    """The slot level a lasting spell on a character was cast with."""
+    return int(char.effects.get(CAST_AT + spell_id, 0)) or int(tables.spells[spell_id]["level"])
 
 
 def end(char: Character, spell_id: str) -> None:
     char.effects.pop(LASTING + spell_id, None)
+    char.effects.pop(CAST_AT + spell_id, None)
 
 
 def lasting_values(char: Character, tables, key: str) -> list:
     """One part of the lasting spells on a character (their "ac" bonuses, a "mage_armor" base...)."""
     if not char.effects:
         return []
-    return [buff_of(tables.spells[sid])[key] for sid in lasting(char, tables)
-            if key in buff_of(tables.spells[sid])]
+    out = []
+    for sid in lasting(char, tables):
+        buff = buff_of(tables.spells[sid], cast_at(char, tables, sid))
+        if key in buff:
+            out.append(buff[key])
+    return out
 
 
-def battle_part(tables, spell_id: str) -> dict:
+def battle_part(tables, spell_id: str, char: Character | None = None) -> dict:
     """What a battle has to carry of a lasting spell (the sheet already counts its armour): {} for nothing."""
-    part = {k: v for k, v in buff_of(tables.spells[spell_id]).items() if k not in SHEET_KEYS}
+    level = cast_at(char, tables, spell_id) if char is not None else None
+    part = {k: v for k, v in buff_of(tables.spells[spell_id], level).items() if k not in SHEET_KEYS}
     return {**part, "lasting": spell_id, "source": spell_id} if part else {}
 
 

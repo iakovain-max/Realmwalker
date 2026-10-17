@@ -16,6 +16,7 @@ from dataclasses import dataclass, field
 
 from realmwalker.rules import grid
 from realmwalker.rules.engine import conditions as cond
+from realmwalker.rules.engine import marks
 from realmwalker.rules.engine import traits as tr
 
 METAL = {"chain_shirt", "scale_mail", "breastplate", "half_plate", "ring_mail", "chain_mail", "splint_armor", "plate_armor"}
@@ -189,6 +190,7 @@ def attack_roll(b, att, target, opt, *, space=None) -> Roll:
         if found is not None:
             r.add(found[0], found[1].format(name=k.name))
             break
+    marks.attack_mods(b, att, target, opt, r)  # (Faerie Fire, Blur, Compelled Duel...)
     if r.adv and tr.has(target, "elusive") and not incapacitated(target):
         r.adv.clear()  # (a rogue's Elusive: no attack roll against them has advantage)
         r.notes.append("elusive")
@@ -209,7 +211,8 @@ def crit_within(b, att, target) -> bool:
 # ---------------------------------------------------------------------------- saving throws
 def save_roll(b, f, ability: str, *, bonus: int = 0, against: tuple = ()) -> SaveRoll:
     """Advantage, disadvantage and the bonus on a saving throw; or why it fails without a roll."""
-    out = SaveRoll(Roll(), bonus=f.save_bonus(ability) + bonus, dice=list(f.buff_value("save_die")))
+    out = SaveRoll(Roll(), bonus=f.save_bonus(ability) + bonus + sum(int(v) for v in f.buff_value("save_bonus")),
+                   dice=list(f.buff_value("save_die")))
     for cid, abilities in cond.flags(f.t, f.conditions, "fails_saves"):
         if ability in abilities:
             out.auto_fail = _cond_name(f, cid)
@@ -220,6 +223,8 @@ def save_roll(b, f, ability: str, *, bonus: int = 0, against: tuple = ()) -> Sav
             out.roll.add(mode, _cond_name(f, cid))
     if ability in ("str", "dex") and untrained_armour(f):
         out.roll.add("disadvantage", "untrained in armour")
+    if ability == "str" and f.buff_value("weak"):
+        out.roll.add("disadvantage", "enfeebled")  # (Ray of Enfeeblement)
     if ability == "dex" and f.dodging and not incapacitated(f) and f.speed > 0:
         out.roll.add("advantage", "dodging")  # the Dodge action: easier to get out of the way of fire
     if "poisoned" in against and f.char is not None and f.char.effects.get("antitoxin", 0) > 0:
@@ -247,8 +252,8 @@ def ac(f) -> int:
         for base in f.buff_value("mage_armor"):
             if f.char.equipped_item("armor") is None:
                 value = max(value, base + s.mod("dex"))
-        return value + sum(f.buff_value("ac"))
-    return int(f.cdef["ac"]) + sum(f.buff_value("ac"))
+        return max([value + sum(f.buff_value("ac"))] + [int(v) for v in f.buff_value("ac_floor")])
+    return max([int(f.cdef["ac"]) + sum(f.buff_value("ac"))] + [int(v) for v in f.buff_value("ac_floor")])
 
 
 def speed(f) -> int:
@@ -361,6 +366,8 @@ def condition_immune(f, cid: str) -> bool:
         return True
     if f.creature is not None and cid in f.cdef.get("condition_immune", []):
         return True
+    if any(cid in (bf.get("immune") or ()) for bf in f.buffs):
+        return True  # (Heroism: not frightened)
     return cid in tr.values(f, "immune_condition", flat=True)
 
 
