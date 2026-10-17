@@ -255,8 +255,10 @@ def test_illusory_reality_makes_the_image_real_for_a_minute(tables):
     assert z.slotted
     on_turn(b, me)
     assert actions.use(b, me, "illusory_reality")
-    assert z.real == 10 and all(b.field.name(*sq) in ("crates", "bridge") for sq in z.was)
-    assert not b.field.passable(*sorted(z.was)[0]) or b.field.name(*sorted(z.was)[0]) == "bridge"
+    assert z.real == 10 and all(b.field.name(*sq) in ("ruin_wall", "bridge") for sq in z.was)
+    walls = [sq for sq in z.was if b.field.name(*sq) == "ruin_wall"]
+    assert walls and not any(b.field.passable(*sq) or b.field.climb[sq] for sq in walls)  # (it stops feet)
+    assert not z.opaque  # (a real thing is terrain now, not a picture)
     assert actions.problem(b, me, actions.find(me, "illusory_reality"))  # (once a casting)
     for _ in range(10):
         on_turn(b, me)
@@ -298,3 +300,32 @@ def test_a_foe_who_sees_nobody_studies_the_image(tables):
     on_turn(b, foe)
     tactics.take_turn(b, foe)
     assert foe.id in z.seen
+
+
+def test_those_who_know_an_image_shoot_and_cast_through_it(tables):
+    w, b, me, foe = image_fight(tables)
+    on_turn(b, me)
+    b.do_cast(me, "minor_illusion", point=(4, 4))
+    z = next(z for z in b.zones if z.kind == "illusion")
+    bow = next(o for o in b.attack_options(foe) if o.kind == "ranged")
+    assert b.in_reach(foe, bow, me) == (False, "no clear line")  # (fooled: a crate is in the way)
+    z.seen.add(foe.id)
+    assert b.in_reach(foe, bow, me)[0]  # (seen through: the arrow flies through the picture)
+    assert foe in b.spell_targets(me, "fire_bolt") and b.can_see_point(me, foe.x, foe.y)  # (its own side)
+    from realmwalker.rules import grid
+
+    assert b.solid_field().cover((3, 4, 1), foe.space) != grid.TOTAL  # (a blast meets no cover in a picture)
+
+
+def test_the_phantom_or_a_slot_for_the_whole_creature(tables):
+    i = school(tables, 6, "illusion")
+    assert spellrules.free_cast(i, tables, "summon_beast") == "phantasm"
+    assert spellrules.free_cast(i, tables, "summon_beast", 2) is None  # (a slot chosen: the whole creature)
+
+
+def test_the_spell_card_says_a_bonus_action_and_the_longer_reach(tables):
+    from realmwalker.rules import describe
+
+    w, b, me, foe = image_fight(tables)
+    lines = " ".join(describe.spell(tables, "minor_illusion", b=b, f=me).lines)
+    assert "a bonus action" in lines and "90 ft" in lines

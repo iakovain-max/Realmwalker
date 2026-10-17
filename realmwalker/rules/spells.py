@@ -364,8 +364,9 @@ def free_cast(char: Character, tables, spell_id: str, slot_level: int | None = N
         return "signature"
     from realmwalker.rules.engine.handlers import schools
 
-    if schools.phantasm_ready(char, spell_id):
-        return "phantasm"  # (an illusionist's Phantasmal Creatures: spectral, at half hit points)
+    if slot_level is None and schools.phantasm_ready(char, spell_id):
+        return "phantasm"  # (an illusionist's Phantasmal Creatures: spectral, at half hit points; a slot chosen:
+        # the whole creature)
     return None
 
 

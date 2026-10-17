@@ -322,7 +322,8 @@ def cantrips_due(char: Character, tables) -> None:
     if not cantrips or not char.spells:
         return
     waiting = sum(int(c.get("count", 1)) for c in char.pending if c["kind"] == "cantrips")
-    missing = cantrips[min(char.level, len(cantrips)) - 1] + extra_cantrips(char, tables)         - len(char.spells.get("cantrips", [])) - waiting
+    known = len(char.spells.get("cantrips", []))
+    missing = cantrips[min(char.level, len(cantrips)) - 1] + extra_cantrips(char, tables) - known - waiting
     if missing > 0:
         add_pending(char, {"kind": "cantrips", "count": missing, "level": char.level})
 

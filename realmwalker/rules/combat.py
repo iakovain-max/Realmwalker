@@ -147,7 +147,7 @@ class Zone:
 
     @property
     def opaque(self) -> bool:
-        return self.dark or self.kind in ("fog", "darkness", "illusion")
+        return self.dark or self.kind in ("fog", "darkness") or self.kind == "illusion" and not self.real
 
     @property
     def light(self) -> int:
@@ -1196,8 +1196,9 @@ class Battle:
         d = target.cdef
         skill = self.study_skill(target)
         dc = self.study_dc(target)
-        roll = dice.d20(self.rng).natural
         bonus = f.skill(skill)
+        foretold = self.foretold(f, "check", dc - bonus)
+        roll = dice.d20(self.rng).natural if foretold is None else foretold
         self.dice_say(f"{self.t.rules['skills'][skill]['name']} ({f.name}): {roll} {signed_mod(bonus)} = {roll + bonus} vs DC {dc}")
         if roll + bonus < dc:
             self.say(f"{f.the_name} cannot place {target.the_name}.", "system")
@@ -1226,7 +1227,9 @@ class Battle:
         """The Search action: a Wisdom (Perception) check against everyone hiding; whoever it beats is found."""
         if not self._spend(f, bonus):
             return
-        roll = dice.d20(self.rng).natural
+        hiding = [e.hidden for e in self.enemies_of(f) if e.hidden]
+        foretold = self.foretold(f, "check", max(hiding) - f.skill("perception")) if hiding else None
+        roll = dice.d20(self.rng).natural if foretold is None else foretold
         total = roll + f.skill("perception")
         self.dice_say(f"Perception ({f.name}): {roll} {signed_mod(f.skill('perception'))} = {total}")
         found = [e for e in self.enemies_of(f) if e.hidden and e.hidden <= total]
@@ -1238,7 +1241,8 @@ class Battle:
             self.say(f"{f.the_name} finds {', '.join(e.the_name for e in found)}." if found
                      else f"{f.the_name} looks hard, and finds nobody.", "good" if found else "system")
         if images:  # (an illusion studied: Intelligence (Investigation) against its caster's spell DC, PHB 372)
-            look = dice.d20(self.rng).natural + f.skill("investigation")
+            foretold = self.foretold(f, "check", images[0].dc - f.skill("investigation"))
+            look = (dice.d20(self.rng).natural if foretold is None else foretold) + f.skill("investigation")
             self.dice_say(f"Investigation ({f.name}): {look - f.skill('investigation')} "
                           f"{signed_mod(f.skill('investigation'))} = {look} vs DC {images[0].dc}")
             for z in images:
@@ -1654,6 +1658,18 @@ class Battle:
             v = views[key] = self.field.without({c for z in seen for c in z.cells} - other)
         return v
 
+    def solid_field(self):
+        """The field without its images (what a blast or an emanation meets: a picture is no cover)."""
+        images = [z for z in self.zones if z.kind == "illusion" and not z.real]
+        if not images:
+            return self.field
+        key = (self.field.version, "solid", frozenset(z.id for z in images))
+        views = self.__dict__.setdefault("_views", {})
+        if key not in views:
+            other = {c for z in self.zones if z.opaque and z not in images for c in z.cells}
+            views[key] = self.field.without({c for z in images for c in z.cells} - other)
+        return views[key]
+
     def knows_illusion(self, f: Fighter, z: Zone) -> bool:
         """Its caster's side knows an image for what it is; anyone else once they have seen through it."""
         if f.id in z.seen:
@@ -1710,7 +1726,7 @@ class Battle:
         return (self.view(a) if self.zones else self.field).cover(a.space, b.space, others)
 
     def can_see_point(self, f: Fighter, x: int, y: int) -> bool:
-        return self.field.in_bounds(x, y) and self.field.cover(f.space, (x, y, 1)) != grid.TOTAL
+        return self.field.in_bounds(x, y) and (self.view(f) if self.zones else self.field).cover(f.space, (x, y, 1)) != grid.TOTAL
 
     # ------------------------------------------------------------------ moving
     def threats(self, f: Fighter) -> list[tuple[int, tuple[int, int, int], int]]:
@@ -1843,7 +1859,7 @@ class Battle:
                     self._event("push", who=x.id, path=[(x.x, x.y), before])
                     x.x, x.y = before
             if f.hidden and not any(self.field.hiding[c] for c in f.cells):
-                if any(self.can_see(e, f) for e in self.enemies_of(f) if e.standing and self.field.cover(e.space, f.space) < grid.HALF):
+                if any(self.can_see(e, f) for e in self.enemies_of(f) if e.standing and (self.view(e) if self.zones else self.field).cover(e.space, f.space) < grid.HALF):
                     f.hidden = 0
             if leap > 1 and not free and any(self.field.difficult(*c) for c in f.cells) and \
                     not self.check(f, "acrobatics", 10, "Landing on rough ground"):
@@ -2637,7 +2653,7 @@ class Battle:
         normal, long = opt.range or DEFAULT_RANGE.get(opt.kind, (60, 120))
         if g * grid.SQUARE_FT > long:
             return False, "out of range"
-        if self.field.cover(space, target.space) == grid.TOTAL:
+        if (self.view(f) if self.zones else self.field).cover(space, target.space) == grid.TOTAL:
             return False, "no clear line"
         return True, ""
 
@@ -2712,7 +2728,7 @@ class Battle:
         cover = self.cover(att, target)
         if cover == grid.TOTAL:
             cover = grid.THREE_QUARTERS
-        if opt.is_melee and self.gap(att, target) <= 1 and cover == grid.HALF and self.field.cover(att.space, target.space) == grid.NONE:
+        if opt.is_melee and self.gap(att, target) <= 1 and cover == grid.HALF and (self.view(att) if self.zones else self.field).cover(att.space, target.space) == grid.NONE:
             cover = grid.NONE  # someone beside you does not shield the one you are fighting hand to hand
         if cover in (grid.HALF, grid.THREE_QUARTERS) and att.char is not None and (
                 opt.kind == "ranged" and feats.has(att.char, "sharpshooter")
@@ -3717,7 +3733,9 @@ class Battle:
         web = next((z for z in self.zones if z.holds and any(c in z.cells for c in f.cells)), None)
         if stuck == "restrained" and web is not None:
             dc, skill = web.dc, f.skill("athletics")  # 2024: a Strength (Athletics) check against the spell's DC
-        if dice.d20(self.rng).natural + skill >= dc:
+        foretold = self.foretold(f, "check", dc - skill)  # (a diviner's Portent on the escape)
+        roll = dice.d20(self.rng).natural
+        if (roll if foretold is None else foretold) + skill >= dc:
             durations.remove(f, stuck)
             f.grappled_by = None
             f.move_left = f.speed
@@ -4403,7 +4421,7 @@ class Battle:
         def near(x: Fighter) -> bool:
             if x is f:
                 return True
-            return self.feet(f, x) <= max(5, reach) and self.field.cover(f.space, x.space) != grid.TOTAL
+            return self.feet(f, x) <= max(5, reach) and (self.view(f) if self.zones else self.field).cover(f.space, x.space) != grid.TOTAL
 
         if target == "enemy":
             if spell.get("school") == "divination":  # (a foe warded against divination cannot be aimed at)

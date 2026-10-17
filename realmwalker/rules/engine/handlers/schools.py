@@ -300,7 +300,7 @@ def reality_problem(b, f) -> str | None:
 
 @special("illusory_reality")
 def illusory_reality(c, o, victim) -> None:
-    """One thing in the illusion is made real for a minute: on water or a chasm a bridge, elsewhere the crates or
+    """One thing in the illusion is made real for a minute: on water or a chasm a bridge, elsewhere a wall of the
     stones it showed (nobody standing there is touched; it harms nobody)."""
     b, f = c.b, c.caster
     zones = realisable(b, f)
@@ -319,7 +319,7 @@ def illusory_reality(c, o, victim) -> None:
             b.field.terrain[sq] = T.index["bridge"]
         elif b.field.passable(*sq):
             z.was[sq] = name
-            b.field.terrain[sq] = T.index["crates"]
+            b.field.terrain[sq] = T.index["ruin_wall"]  # (stones that stop feet as well as eyes)
     if not z.was:
         return
     b.field._derive()
@@ -327,7 +327,7 @@ def illusory_reality(c, o, victim) -> None:
     z.cast["made_real"] = True
     bridge = any(b.field.name(*sq) == "bridge" for sq in z.was)
     b.say(f"<magic>{f.the_name} weaves shadow into the image:</> the "
-          f"{'bridge' if bridge else b.illusion_word(z)} is real now.", "magic")
+          f"{'bridge' if bridge else 'wall of stones'} is real now.", "magic")
     b._event("illusion", who=f.id, what="real", id=z.id, cells=sorted(z.was))
     b._sync_zones()
 
@@ -336,6 +336,7 @@ def unreal(b, z) -> None:
     """Its minute is up: what was made real is an image again."""
     z.real = 0
     if not z.was:
+        b._sync_zones()
         return
     for (x, y), name in z.was.items():
         b.field.terrain[x, y] = b.t.terrain.index[name]

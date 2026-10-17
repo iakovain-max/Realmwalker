@@ -290,7 +290,7 @@
           {"level": 3, "id": "improved_illusions", "name": "Improved Illusions", "text": "Your illusions need no spoken words, and reach 60 feet farther. You know Minor Illusion (or another cantrip if you knew it) beyond your count, and cast it as a bonus action with both a sound and an image.", "rule": "improved_illusions", "cantrips": 1, "learns": "minor_illusion"},
           {"level": 6, "id": "phantasmal_creatures", "name": "Phantasmal Creatures", "text": "Summon Beast and Summon Fey are always prepared. Each can be cast once between long rests as a spectral illusion without a slot, the creature with half its hit points.", "rule": "phantasmal_creatures"},
           {"level": 10, "id": "illusory_self", "name": "Illusory Self", "text": "When a blow hits you, your reaction puts an illusory double in its way: the blow misses. Once between rests, or again for a slot of level 2 or higher.", "rule": "illusory_self"},
-          {"level": 14, "id": "illusory_reality", "name": "Illusory Reality", "text": "While an illusion you cast with a slot lasts, a bonus action makes one thing in it real for a minute: an image of a wall stops feet as well as eyes, a bridge carries you over water or a chasm. It harms nobody.", "rule": "illusory_reality"}
+          {"level": 14, "id": "illusory_reality", "name": "Illusory Reality", "text": "While an illusion you cast with a slot lasts, a bonus action makes one thing in it real for a minute: the image becomes a wall of stones that stops feet as well as eyes, or a bridge that carries you over water or a chasm. It harms nobody.", "rule": "illusory_reality"}
         ]}
       },
       "kits": [

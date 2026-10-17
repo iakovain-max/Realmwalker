@@ -130,7 +130,7 @@ def energy_redirection(b, f, ev, hook, buff) -> None:
     if f.char is None or ev.dtype not in featrules.boon_resists(f.char) or not f.active or f.incapacitated:
         return
     foes = [x for x in b.enemies_of(f) if x.active and b.feet(f, x) <= 60 and b.can_see(f, x)
-            and b.field.cover(f.space, x.space) != grid.TOTAL]
+            and b.solid_field().cover(f.space, x.space) != grid.TOTAL]
     foes = [x for x in foes if query.damage_taken(x, 10, ev.dtype)[0] > 0]
     if not foes:
         return

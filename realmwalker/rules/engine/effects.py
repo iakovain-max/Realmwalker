@@ -456,7 +456,7 @@ def _save(c: Cast, o: dict, victim) -> None:
             continue
         cover = 0
         if ability == "dex" and o.get("cover", True):
-            cover = min(grid.THREE_QUARTERS, b.field.cover((origin[0], origin[1], 1), x.space))
+            cover = min(grid.THREE_QUARTERS, b.solid_field().cover((origin[0], origin[1], 1), x.space))
             cover = 0 if cover == grid.TOTAL else cover
         if any(x.has_trait(t) for t in o.get("sure_save", ())) or x.kind in o.get("sure_kinds", ()):
             saved = True

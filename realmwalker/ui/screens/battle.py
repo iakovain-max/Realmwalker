@@ -632,13 +632,15 @@ class BattleScreen(Screen):
             return False
         t = self.game.tables
         sp = t.spells[value]
-        if not spellrules.upcasts(sp) or spellrules.free_cast(f.char, t, value) or sp.get("again_of"):
+        free = spellrules.free_cast(f.char, t, value)
+        phantom = free == "phantasm"  # (an illusionist's Phantasmal Creatures: the phantom, or a slot for the whole one)
+        if not (spellrules.upcasts(sp) or phantom) or free and not phantom or sp.get("again_of"):
             return False
         levels = spellrules.slot_choices(f.char, t, value)
-        if len(levels) < 2:
+        if len(levels) < (1 if phantom else 2):
             return False
         left = spellrules.slots_left(f.char, t)
-        rows = []
+        rows = [("A phantom: no slot, half its hit points (once a day)", None, True, "")] if phantom else []
         for lvl in levels:
             gain = spellrules.up_gain(sp, lvl - sp["level"])
             words = f"<dim>{', '.join(gain)}</>" if gain else "<dim>its own level</>"

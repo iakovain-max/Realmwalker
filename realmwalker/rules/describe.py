@@ -580,6 +580,9 @@ def statuses(f, b=None) -> list[Status]:
     if f.readied:
         add(_plain("readied", "Ready", _WORDS["readied"][1].replace("(or into sight)", "" if f.readied == "reach"
                                                                      else "(or into sight)")))
+    if (getattr(f, "bond", None) or {}).get("spectral"):  # (an illusionist's phantom: Expansion 5 Part A)
+        add(_plain("spell", "A phantom", "Half real, summoned without a slot by an illusionist's Phantasmal "
+                   "Creatures: it fights as the spirit does, with half its hit points."), "phantom")
     if getattr(f, "shape", None) is not None:  # (Polymorph: Expansion 3 F.6; Animal Shapes, Shapechange: F.8)
         by = esc(_name_of(b, f.shape["by"])) if b is not None else "a caster"
         add(_plain("shaped", _WORDS["shaped"][0], shape_words(f.shape, by)))
@@ -781,9 +784,15 @@ def spell(tables, sid: str, *, b=None, f=None, target=None, level: int | None = 
     if level and lvl and level > lvl:
         sub += f", cast at level {level}"
     card = Card(esc(sp["name"]), sub, "icon/cast", [esc(sp.get("text", ""))])
-    cast = {"action": "an action", "bonus": "a bonus action", "reaction": "a reaction"}.get(sp.get("cast", "action"),
-                                                                                             "an action")
+    kind = sp.get("cast", "action")
+    if f is not None:
+        from realmwalker.rules.combat import cast_kind
+
+        kind = cast_kind(f, sp)  # (this caster's: an illusionist's Minor Illusion, an abjurer's Dispel Magic)
+    cast = {"action": "an action", "bonus": "a bonus action", "reaction": "a reaction"}.get(kind, "an action")
     rng = sp.get("range", 0)
+    if f is not None and b is not None and isinstance(rng, int):
+        rng = b.spell_range(sp, f) if rng >= 10 else rng  # (Improved Illusions, Spell Sniper: farther)
     if isinstance(rng, str):
         where = rng  # "self" or "touch"
     else:

@@ -413,7 +413,7 @@ def best_plan(b: Battle, f: Fighter, opts: list[AttackOption]):
                     score = _value(b, f, opt, t, sq, cover=0) * many - less
                     if best is not None and score <= best[0]:
                         continue  # cover could only make it worse: no need to look for it
-                    cover = b.field.cover(space, t.space)
+                    cover = b.view(f).cover(space, t.space) if b.zones else b.field.cover(space, t.space)
                     if cover == grid.TOTAL:
                         continue
                     if cover:
@@ -463,7 +463,7 @@ def _value(b: Battle, f: Fighter, opt: AttackOption, t: Fighter, sq, *, cover: i
     with), more if it could finish them, weighted by who they are."""
     space = (sq[0], sq[1], f.sq)
     if cover is None:
-        cover = b.field.cover(space, t.space)
+        cover = (b.view(f) if b.zones else b.field).cover(space, t.space)
         cover = 0 if cover == grid.TOTAL else cover
     dmg = _avg(opt.damage) * estimates.damage_factor(t, opt.damage_type)
     if opt.extra.get("single_save"):  # a web, a touch that drains: no attack roll, a saving throw
