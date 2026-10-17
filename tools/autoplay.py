@@ -458,6 +458,21 @@ def _check_companions(game, fail) -> None:
     stamps = {tag for c in game.party for it in c.inventory for tag in it.tags or [] if tag.startswith("cauldron:")}
     if len(stamps) > 1:
         fail(f"potions from more than one of Tasha's cauldrons are still about: {sorted(stamps)}")
+    for c in list(game.party) + list(getattr(game, "waiting", []) or []):  # (Expansion 3 E.7: great magic)
+        rec = (c.spells or {}).get("contingency")
+        if rec and (rec.get("spell") not in game.tables.spells or rec.get("trigger") not in ("start", "bloodied", "down")
+                    or int(game.tables.spells[rec["spell"]]["level"]) > 5):
+            fail(f"a Contingency that cannot be on {c.name}: {rec}")
+        for d in (c.spells or {}).get("wished_resist", ()):
+            if d not in ("acid", "bludgeoning", "cold", "fire", "force", "lightning", "necrotic", "piercing",
+                         "poison", "psychic", "radiant", "slashing", "thunder"):
+                fail(f"{c.name} resists by a wish what is no damage type: {d}")
+        for key in c.effects:
+            if key.startswith("immune_spell:") and key.split(":", 1)[1] not in game.tables.spells:
+                fail(f"{c.name} is immune by a wish to a spell that does not exist: {key}")
+    for rec in flags.get("clones") or []:
+        if not 0 <= int(rec.get("settlement", -1)) < len(game.world.settlements):
+            fail(f"a clone grows in no town: {rec}")
     camp_now = getattr(game, "camp", None)
     for key, rec in ((camp_now.wards or {}).items() if camp_now is not None else ()):
         if key == "glyph" and rec.get("kind") == "spell" and rec.get("spell") not in game.tables.spells:
