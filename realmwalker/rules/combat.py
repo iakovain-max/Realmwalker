@@ -532,7 +532,7 @@ class BattleResult:
 def spell_id(value: str) -> str:
     """The spell behind a spell-menu value (a spell id, or "scroll:<uid>:<spell id>"; a flask thrown from the Item menu
     is "throw:<uid>:<spell id>")."""
-    return value.split(":", 2)[2] if value.startswith(("scroll:", "charge:", "throw:", "innate:")) else value
+    return value.split(":", 2)[2] if value.startswith(("scroll:", "charge:", "throw:", "innate:", "wish:")) else value
 
 
 def again_spell(f: Fighter, tables) -> str | None:
@@ -875,6 +875,9 @@ class Battle:
             self._start_of_turn(f)
             if self.outcome is not None:
                 return True
+        if f.__dict__.pop("lost_turn", False):  # (Maze: the turn spent finding the way out)
+            self.end_turn()
+            return True
         if f.surprised:
             f.surprised = False  # (2024: surprise costs only initiative; the Cutthroat still strikes them hard first)
         if f.grovel and f.can_act():
@@ -3403,6 +3406,28 @@ class Battle:
             out = [(sid, False, "magic does not work here") for sid, _, _ in out]
         return out
 
+    def _wish_ok(self, f: Fighter) -> tuple[bool, str]:
+        """Whether `f` can cast Wish now (to copy a spell with it)."""
+        if f.char is None or "wish" not in self.t.spells or "wish" not in spellrules.known_spells(f.char, self.t):
+            return False, "you cannot cast Wish"
+        ok, why = spellrules.can_cast(f.char, self.t, "wish")
+        if ok:
+            ok, why = self._casting_time_ok(f, self.t.spells["wish"], True)
+        return ok, why
+
+    def wish_options(self, f: Fighter, *, short: bool = False) -> list[tuple[str, bool, str]]:
+        """(value, possible, why not) for each spell Wish could copy now ("wish:copy:<spell id>"); `short`: only the
+        mightiest (levels 7 and 8), for the Auto's quick weighing."""
+        if f.char is None or "wish" not in spellrules.known_spells(f.char, self.t):
+            return []
+        ok, why = self._wish_ok(f)
+        out = []
+        for sid in spellrules.wish_copies(self.t):
+            if short and self.t.spells[sid]["level"] < 7:
+                continue
+            out.append((f"wish:copy:{sid}", ok, why))
+        return out
+
     def _casting_time_ok(self, f: Fighter, spell: dict, slotted: bool | None = None) -> tuple[bool, str]:
         """The action economy of spells: a bonus-action spell needs the bonus action, an ordinary one the action;
         and only one spell slot may be spent on a turn (2024; `slotted`: whether this casting would spend one, by
@@ -3563,7 +3588,12 @@ class Battle:
                     return "no bonus action left this turn"
             elif f.action <= 0 and f.attacks_left <= 0:
                 return "no action left this turn"
-        opts = {s: (ok, why) for s, ok, why in self.spell_options(f)} if not sid.startswith("throw:") else {}
+        if sid.startswith("wish:"):  # (a spell copied by Wish: Wish's own action and slot)
+            ok, why = self._wish_ok(f)
+            if not ok:
+                return why
+        opts = {s: (ok, why) for s, ok, why in self.spell_options(f)} \
+            if not sid.startswith(("throw:", "wish:")) else {}
         if sid in opts and not opts[sid][0]:
             return opts[sid][1]
         mode = spell["target"]
@@ -3584,6 +3614,8 @@ class Battle:
         scroll = None
         charged = None
         innate = None
+        if sid.startswith("wish:"):
+            return self._cast_wished(f, spell_id(sid), target, point)
         if sid.startswith("innate:"):
             _, src, sid = sid.split(":", 2)
             innate = next((a for s_, x, a in feats.innate_spells(f.char, self.t) if s_ == src and x == sid), None)
@@ -3707,6 +3739,7 @@ class Battle:
             dc, bonus = spellrules.scroll_numbers(self.t, spell["level"])
             bonus += s.attack_condition()
         mult = spellrules.cantrip_multiplier(c.level) if spell["level"] == 0 else 1  # (Cantrip Upgrade: 5, 11, 17)
+        strained = spellrules.strain(c, spell["level"], self.rng) if scroll is None and charged is None else 0
         if not self.cast(f, sid, spell, target, point, up=up, mod=mod, dc=dc, bonus=bonus, mult=mult,
                          level=slot_level or level, slotted=slotted):
             if slotted:
@@ -3721,6 +3754,46 @@ class Battle:
             used = spellrules.spend_material(c, self.t, sid)
             if used:
                 self.say(f"The {used} is gone into the spell.", "magic")
+        self._strain(f, strained)
+        if spell.get("stress"):  # (Wish used for anything but a copy)
+            for line in spellrules.wish_stress(c, self.rng):
+                self.say(line, "danger")
+        self._after_action(f)
+        return True
+
+    def _strain(self, f: Fighter, amount: int) -> None:
+        """An earlier Wish's stress: the spell just cast tears at its caster (necrotic; nothing reduces it)."""
+        if amount > 0 and f.active:
+            self.say(f"Casting tears at {f.the_name}: the strain of the wish.", "danger")
+            self._hit(None, f, amount, "necrotic", crit=False, weapon="the strain of a wish", raw=True)
+
+    def _cast_wished(self, f: Fighter, sid: str, target, point) -> bool:
+        """Wish's basic use (PHB 2024): any other spell of level 8 or lower simply takes effect, with no components
+        and nothing else asked of it; the Wish's action and its level 9 slot are what it costs, and no stress."""
+        c = f.char
+        wish = self.t.spells["wish"]
+        spell = self.t.spells[sid]
+        slot = spellrules.lowest_free_slot(c, self.t, 9)
+        if slot is None:
+            self.say("No spell slot left for that.", "warn")
+            return False
+        spellrules.spend_slot(c, slot)
+        self.note_slot(f)
+        self._spend(f, False)
+        f.cast_action_spell = True
+        f.hidden = 0
+        strained = spellrules.strain(c, 9, self.rng)
+        if self._countered(f, "wish", wish):
+            spellrules.unspend_slot(c, slot)  # (countered: the slot is not spent, 2024)
+            self._after_action(f)
+            return True
+        self.say(f"{f.the_name} speaks a <magic>Wish</>.", "magic")
+        s = f.sheet
+        mod = s.mod(spellrules.casting_ability(c, self.t))
+        effects.cast(self, f, sid, spell, target, point, up=0, mod=mod, dc=spellrules.save_dc(s, self.t),
+                     bonus=spellrules.attack_bonus(s, self.t) + s.attack_condition(), mult=1, level=spell["level"],
+                     slotted=True)
+        self._strain(f, strained)
         self._after_action(f)
         return True
 
@@ -3917,7 +3990,7 @@ class Battle:
             self._end_concentration(by, quiet=True)
         else:
             self.bring_back(f)
-        f.action = 0  # (the Study action that found the way)
+        f.lost_turn = True  # (the turn went on finding the way: Battle.step ends it)
 
     def _more_time(self, f: Fighter) -> bool:
         """Time Stop (2024): 1d4 + 1 turns in a row for the caster; it ends when an action or an effect of theirs
@@ -3952,7 +4025,8 @@ class Battle:
             z.rough = z.rough or bool(st.get("rough"))
             z.dark = z.dark or bool(st.get("dark"))
             self._sync_zones()
-        spell = self.t.spells.get(z.spell, {"name": "the storm", "level": 0, "target": "point"})
+        spell = self.t.spells[z.spell] if z.spell in self.t.spells else {"name": "the storm", "level": 0,
+                                                                          "target": "point"}
         under = [x for x in self.in_area(sorted(z.cells), "enemies" if z.friends_safe else "all", owner)
                  if x.active]
         if st.get("count"):

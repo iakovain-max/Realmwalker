@@ -478,6 +478,8 @@ def spend_material(char: Character, tables, spell_id: str) -> str | None:
 
 def can_cast(char: Character, tables, spell_id: str) -> tuple[bool, str]:
     spell = tables.spells[spell_id]
+    if spell_id == "wish" and char.spells.get("wish_lost"):
+        return False, "the strain of an old wish: Wish will never come again"
     if "item" not in spell.get("classes", ()) and armour_problem(char, tables):
         return False, armour_problem(char, tables)
     if "item" not in spell.get("classes", ()) and component_problem(char, tables, spell_id):
@@ -488,6 +490,54 @@ def can_cast(char: Character, tables, spell_id: str) -> tuple[bool, str]:
     if any(left[i] > 0 for i in range(spell["level"] - 1, len(left))):
         return True, ""
     return False, "no spell slots of that level left (rest to recover)"
+
+
+# ---------------------------------------------------------------------------- Wish (PHB 2024)
+# Its basic use copies any other spell of level 8 or lower, with no requirements (no components), and is safe. Any
+# other use (here: Instant Health, the "wish" spell's own effects) brings the stress: every spell cast until a long
+# rest costs 1d10 necrotic a level of it (nothing reduces it), Strength becomes 3 for 2d4 days, and a third of the time
+# Wish never comes again. Kept on the character: effects "wish_stress" (until a long rest) and "wish_strength"
+# (hours), spells["wish_lost"].
+def wish_copies(tables) -> list[str]:
+    """The spells Wish can copy in a fight: every battle spell of level 1 to 8 (not a reaction, not one cast in
+    minutes, not an item's or a follow-up)."""
+    cached = getattr(tables, "_wish_copies", None)
+    if cached is not None:
+        return cached
+    out = []
+    for sid, sp in tables.spells.defs.items():
+        if not isinstance(sp, dict) or sid.startswith("_") or not 1 <= int(sp.get("level", 0)) <= 8:
+            continue
+        cls = set(sp.get("classes", ()))
+        if not cls or cls <= {"item", "again", "wish"} or "item" in cls or sp.get("again_of") or sp.get("ability") \
+                or sp.get("thrown") or sp.get("minutes") or sp.get("cast") == "reaction" or sp.get("target") == "item" \
+                or has_op(sp, "identify", "revive"):
+            continue
+        out.append(sid)
+    out.sort(key=lambda s: (-int(tables.spells[s]["level"]), tables.spells[s]["name"]))
+    tables._wish_copies = out
+    return out
+
+
+def wish_stress(char: Character, rng) -> list[str]:
+    """The stress of a Wish used for anything but copying a spell. Returns what to say."""
+    days = rng.randint(1, 4) + rng.randint(1, 4)
+    char.effects["wish_stress"] = 1.0e6  # (until a long rest: progression.long_rest)
+    char.effects["wish_strength"] = 24.0 * days
+    first = char.name.split()[0]
+    out = [f"<danger>The wish takes its toll.</> {first}'s strength drains away (Strength 3 for {days} days), and "
+           "every spell until a long rest will tear at them."]
+    if rng.chance(0.33):
+        char.spells["wish_lost"] = True
+        out.append(f"<danger>Something in {first} has broken:</> Wish will never come to them again.")
+    return out
+
+
+def strain(char: Character | None, level: int, rng) -> int:
+    """The stress of an earlier Wish: necrotic damage for casting a spell of this level (0 when there is none)."""
+    if char is None or level <= 0 or not char.effects.get("wish_stress"):
+        return 0
+    return sum(rng.randint(1, 10) for _ in range(level))
 
 
 # ---------------------------------------------------------------------------- spell scrolls (DMG 2024)

@@ -246,6 +246,8 @@ def options(b, f, only: tuple[str, ...] | None = None) -> list[Option]:
         if f.char is not None:
             for sid, ok, why in b.spell_options(f):
                 out.append(_spell_option(b, f, sid, ok, why))
+            for sid, ok, why in b.wish_options(f, short=True):  # (Wish copying a mighty spell)
+                out.append(_spell_option(b, f, sid, ok, why))
         else:
             for sid in b.creature_spells(f):
                 out.append(_spell_option(b, f, sid, True, ""))

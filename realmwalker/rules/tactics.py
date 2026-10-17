@@ -724,7 +724,8 @@ def _do_cast(b: Battle, f: Fighter, best) -> bool:
 def _slot_levels(b: Battle, f: Fighter, value: str, sp: dict) -> list[int]:
     """The slot levels worth weighing for this casting: its own (or the lowest left), and a higher one the Auto or the
     enemy would spend on it (a spare slot: no spell of that level ready)."""
-    if sp["level"] <= 0 or str(value).startswith(("scroll:", "charge:", "innate:", "throw:")) or sp.get("again_of"):
+    if sp["level"] <= 0 or str(value).startswith(("scroll:", "charge:", "innate:", "throw:", "wish:")) \
+            or sp.get("again_of"):
         return [sp["level"]]
     if f.char is not None:
         low = spellrules.lowest_free_slot(f.char, b.t, sp["level"]) or sp["level"]
@@ -772,6 +773,12 @@ def _pick_cast(b: Battle, f: Fighter, cost: str, *, beat: float = 0.0, care: flo
             price = 0.5 * spell_cost(b, f, max(1, sp["level"]))
             odds = spellrules.scroll_odds(f.sheet, b.t, spell_id(opt.value),
                                           spellrules.scroll_reader(f.char, b.t, spell_id(opt.value)))
+        if str(opt.value).startswith("wish:"):
+            price = spell_cost(b, f, 9)  # (a copy by Wish spends its level 9 slot)
+        if sp.get("stress"):
+            price = price * 2 + 10.0  # (Wish's stress: Strength gone for days, and perhaps Wish for ever)
+        if f.char is not None and f.char.effects.get("wish_stress") and sp["level"] > 0:
+            price += 5.5 * (9 if str(opt.value).startswith("wish:") else sp["level"])  # (the strain of a wish)
         free = spellrules.free_cast(f.char, b.t, opt.value) if f.char is not None else None
         if free:  # (Spell Mastery costs nothing; a signature spell comes back with a short rest)
             price = 0.0 if free == "mastery" else price * 0.3

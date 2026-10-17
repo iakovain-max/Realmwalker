@@ -691,6 +691,7 @@ def long_rest(char: Character, tables, rng: RNG) -> list[str]:
     char.uses["arcane_recovery"] = 1
     signature_back(char)
     char.uses.pop("overchannel", None)  # (an evoker's Overchannel is safe once more)
+    char.effects.pop("wish_stress", None)  # (a Wish's strain on every spell ends with a long rest)
     for key in ("ward_made", "arcane_ward"):  # an abjurer's ward is made anew each day
         char.uses.pop(key, None)
     from realmwalker.rules import feats

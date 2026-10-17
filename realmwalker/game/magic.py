@@ -298,6 +298,11 @@ def cast_on_road(game, caster, spell_id: str, target=None, slot_level: int | Non
         spellrules.spend_free(caster, spell_id, free)
     if slot:
         spellrules.spend_slot(caster, slot)
+        strained = spellrules.strain(caster, level, game.world.rng.child(f"strain/{game.world.time}"))
+        if strained:  # (an earlier Wish's stress: the spell tears at its caster)
+            caster.hp = max(0, caster.hp - strained)
+            pre.append(f"<danger>Casting tears at {escape_markup(caster.name.split()[0])}: {strained} necrotic, "
+                       "the strain of the wish.</>")
     used = spellrules.spend_material(caster, t, spell_id) if scroll is None else None
     if ritual:
         game.pass_time(10, "rest")
