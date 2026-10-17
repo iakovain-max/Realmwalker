@@ -109,7 +109,7 @@ def attacks(actions: list[dict], extras: dict) -> list[dict]:
         kind = a.get("kind")
         base = {"id": a["id"], "name": a["name"].lower(), "bonus": int(a.get("bonus", 0)), "damage": a.get("damage", "0"),
                 "damage_type": a.get("type", "bludgeoning")}
-        for k in ("extra", "on_hit", "recharge", "uses", "plus_level"):
+        for k in ("extra", "on_hit", "recharge", "uses", "plus_level", "with_multiattack"):
             if a.get(k):
                 base[k] = a[k]
         base.update(extras.get(a["id"], {}))
@@ -120,7 +120,8 @@ def attacks(actions: list[dict], extras: dict) -> list[dict]:
             out.append({**base, "kind": "ranged", "range": [int(rng[0]), int(rng[1])]})
         if kind == "save" and a.get("area"):
             out.append({**base, "kind": "ranged", "area": dict(a["area"]), "save": a["save"], "dc": int(a["dc"]),
-                        "half": bool(a.get("half", True)), "on_fail": a.get("on_fail", [])})
+                        "half": bool(a.get("half", True)), "on_fail": a.get("on_fail", []),
+                        **({"range": [int(a["range"]), int(a["range"])]} if a.get("range") else {})})
         elif kind == "save":  # one creature in range makes the save (a spider's web, a wight's touch)
             reach = int(a.get("range", 5))
             out.append({**base, "kind": "melee" if reach <= 5 else "ranged", "single_save": True, "save": a["save"],

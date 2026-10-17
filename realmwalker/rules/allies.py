@@ -206,14 +206,19 @@ def summon_def(tables, cid: str, level: int, form: str, attack: int, dc: int) ->
             continue
         a = dict(a)
         a["bonus"] = int(attack)
+        if a.get("save"):
+            a["dc"] = int(dc)  # (a draconic spirit's breath: the caster's spell save DC)
         if a.get("plus_level"):
             n, sides, flat = dice.parse(str(a["damage"]))
             a["damage"] = f"{n}d{sides}+{flat + level}" if n else str(flat + level)
         if fm.get("damage_type"):
             a["damage_type"] = fm["damage_type"]  # (an elemental's Slam: cold, lightning, fire or bludgeoning)
+        if a["id"] in fm.get("attack_types", {}):
+            a["damage_type"] = fm["attack_types"][a["id"]]  # (a draconic spirit's breath: its chosen type)
         out.append(a)
     d["attacks"] = out
-    ids = list(dict.fromkeys(a["id"] for a in out))
+    # (the Multiattack's attacks; a breath made with them, `with_multiattack`, is not one of them)
+    ids = list(dict.fromkeys(a["id"] for a in out if not a.get("with_multiattack")))
     n = level // 2 if s.get("multiattack", True) else 1
     d.pop("multiattack", None)
     d.pop("multiattack_plan", None)
@@ -224,9 +229,12 @@ def summon_def(tables, cid: str, level: int, form: str, attack: int, dc: int) ->
     for key in ("resist", "immune", "condition_immune"):
         d[key] = list(dict.fromkeys(list(d.get(key, [])) + list(fm.get(key, []))))
     own = list(fm.get("spells", []))
-    d["spellcasting"] = {"ability": "int", "dc": int(dc), "attack": int(attack), "at_will": own, "per_day": {},
+    per_day = {str(n): list(sids) for n, sids in {**s.get("per_day", {}), **fm.get("per_day", {})}.items()}
+    d["spellcasting"] = {"ability": "int", "dc": int(dc), "attack": int(attack), "at_will": own, "per_day": per_day,
                          "slots": []}
-    d["spells"] = own
+    d["spells"] = own + [sid for sids in per_day.values() for sid in sids if sid not in own]
+    if fm.get("shared"):
+        d["resist"] = list(dict.fromkeys(list(d.get("resist", [])) + [fm["shared"]]))
     return d
 
 
@@ -255,13 +263,20 @@ def form_scores(b, owner, cid: str) -> dict[str, float]:
             score += 2.0
         if "many" in likes and len(foes) >= 3:
             score += 1.5
+        if "brawl" in likes and _brawl(b, owner, foes):
+            score += 1.5  # (a celestial Defender: friends already trading blows with the foes)
         if "water" in likes:
             score += 3.0 if wet > 0.3 else -10.0
-        if fm.get("damage_type") and foes:
-            hurt = sum(query.damage_taken(e, 10, fm["damage_type"])[0] for e in foes) / (10.0 * len(foes))
+        dtype = fm.get("damage_type") or next(iter(fm.get("attack_types", {}).values()), None)
+        if dtype and foes:
+            hurt = sum(query.damage_taken(e, 10, dtype)[0] for e in foes) / (10.0 * len(foes))
             score += 2.0 * hurt
         out[form] = score
     return out
+
+
+def _brawl(b, owner, foes: list) -> bool:
+    return any(b.gap(x, e) <= 1 for x in b.allies_of(owner) if x.active for e in foes)
 
 
 def best_form(b, owner, cid: str) -> str:
@@ -275,11 +290,7 @@ def summon_spirit(b, owner, cid: str, level: int, point=None, sid: str = "", for
     caster's side right after the caster's turn and goes when the spell ends (Battle._end_concentration) or at 0
     hit points. Returns the fighter."""
     form = form or best_form(b, owner, cid)
-    if owner.char is not None:
-        attack, dc = caster_numbers(owner.char, b.t)
-    else:
-        sc = owner.cdef.get("spellcasting") or {}
-        attack, dc = int(sc.get("attack", 5)), int(sc.get("dc", 13))
+    attack, dc, _mod = caster_attack_dc(b, owner)
     cdef = summon_def(b.t, cid, level, form, attack, dc)
     hp = int(cdef["hp"])  # (a summoned creature's hit points are a number, not dice)
     uid = max([SUMMON_UID] + [x.creature.uid + 1 for x in b.fighters if x.creature is not None])
@@ -288,11 +299,118 @@ def summon_spirit(b, owner, cid: str, level: int, point=None, sid: str = "", for
                    type_=cdef.get("kind", ""), cdef=cdef, point=point)
     f.bond["conc"] = True
     f.bond["form"] = form
-    pic = cdef["summon"]["forms"].get(form, {}).get("picture")
-    if pic:
-        f.bond["picture"] = pic
+    fm = cdef["summon"]["forms"].get(form, {})
+    if fm.get("picture"):
+        f.bond["picture"] = fm["picture"]
     b.say(f"{a_or_an(cdef['name']).capitalize()} answers the call.", "magic")
+    if fm.get("shared"):  # (Shared Resistances: its caster resists its breath while the spell holds)
+        from realmwalker.rules.engine import durations
+
+        durations.buff(owner, {"resist": [fm["shared"]], "conc": owner.id, "source": f"shared_resistance:{f.id}"})
+        b.say(f"The spirit's {fm['shared']} settles over {owner.the_name} like a cloak.", "magic")
     return f
+
+
+def caster_attack_dc(b, owner) -> tuple[int, int, int]:
+    """The spell attack, save DC and spellcasting modifier of whoever summons."""
+    if owner.char is not None:
+        from realmwalker.rules import spells as spellrules
+        from realmwalker.rules.character import Sheet
+
+        attack, dc = caster_numbers(owner.char, b.t)
+        return attack, dc, Sheet(owner.char, b.t).mod(spellrules.casting_ability(owner.char, b.t))
+    sc = owner.cdef.get("spellcasting") or {}
+    return int(sc.get("attack", 5)), int(sc.get("dc", 13)), owner.mod(sc.get("ability", "int"))
+
+
+# ---------------------------------------------------------------------------- Animate Objects (Expansion 3 F.3)
+OBJECT_SIZES = ("medium", "large", "huge")
+OBJECT_COUNT = {"medium": 1, "large": 2, "huge": 3}
+
+
+def object_sizes(b, owner, budget: int) -> list[str]:
+    """The things the game wakes for a budget of the caster's spellcasting modifier (a Large one counts two, a Huge
+    one three): a Huge one against a single great foe, else Large ones in pairs, a Medium one for what is left."""
+    foes = _foes_of(b, owner)
+    out = []
+    left = max(1, int(budget))
+    big = len(foes) == 1 and (foes[0].sq >= 2 or foes[0].hp >= 60)
+    while left >= 3 and big:
+        out.append("huge")
+        left -= 3
+    while left >= 2:
+        out.append("large")
+        left -= 2
+    return out + ["medium"] * left
+
+
+def object_def(tables, size: str, level: int, attack: int, mod: int, inside: bool) -> dict:
+    """An animated object's numbers (PHB 2024): its size's hit points and Slam (force; the caster's spell attack;
+    Large and Huge add the spellcasting modifier), one more die of its size for each slot above 5; what it is follows
+    the place (a chest, a table, a statue under a roof; a stone, a log, a boulder outside)."""
+    from realmwalker.core import dice
+
+    d = copy.deepcopy(tables.creatures["animated_object"])
+    s = d["summon"]
+    z = s["sizes"][size]
+    up = max(0, int(level) - int(s["level"]))
+    look = z["in" if inside else "out"]
+    d["name"] = look["name"]
+    d["size"] = size
+    d["form"] = size
+    d["hp"] = str(int(z["hp"]))
+    n, sides, flat = dice.parse(z["damage"])
+    un, _us, _ = dice.parse(z["up"])
+    n += un * up
+    flat += int(mod) if z.get("mod") else 0
+    out = []
+    for a in d["attacks"]:
+        a = dict(a)
+        a["bonus"] = int(attack)
+        a["damage"] = f"{n}d{sides}" + (f"+{flat}" if flat > 0 else (str(flat) if flat < 0 else ""))
+        out.append(a)
+    d["attacks"] = out
+    d.pop("multiattack", None)
+    d.pop("multiattack_plan", None)
+    d["spellcasting"] = {"ability": "int", "dc": 10, "attack": int(attack), "at_will": [], "per_day": {}, "slots": []}
+    d["spells"] = []
+    d["picture"] = look["picture"]
+    return d
+
+
+def indoors(b) -> bool:
+    """Under a roof or underground (what lies about there is furniture, not stones)."""
+    return getattr(b.env, "place", "") in ("indoors", "underground", "building", "dungeon", "town")
+
+
+def animate_objects(b, owner, level: int, point=None, sid: str = "") -> list:
+    """Animate Objects cast in a fight: as many things as the caster's spellcasting modifier wake at the point (the
+    nearest free squares to it), each a Fighter on the caster's side with `bond` kind "objects"; they act right after
+    the caster, only when commanded (`Battle.command_objects`), and go when the concentration ends or at 0."""
+    attack, _dc, mod = caster_attack_dc(b, owner)
+    inside = indoors(b)
+    made = []
+    for size in object_sizes(b, owner, mod):
+        cdef = object_def(b.t, size, level, attack, mod, inside)
+        hp = int(cdef["hp"])
+        uid = max([SUMMON_UID] + [x.creature.uid + 1 for x in b.fighters if x.creature is not None])
+        cr = Creature(uid=uid, def_id="animated_object", name=cdef["name"], hp=hp, max_hp=hp, named=False)
+        f = b.add_ally(cr, owner, "objects", spell=sid, level=max(5, int(level)), type_="construct", cdef=cdef,
+                       point=point)
+        f.bond["conc"] = True
+        f.bond["form"] = size
+        f.bond["picture"] = cdef["picture"]
+        made.append(f)
+    if made:
+        n = len(made)
+        what = "a thing" if n == 1 else f"{NUMBERS.get(n, str(n))} things"
+        b.say(f"{what[:1].upper() + what[1:]} lying about {'shudders' if n == 1 else 'shudder'}, "
+              f"{'sprouts' if n == 1 else 'sprout'} legs and {'rises' if n == 1 else 'rise'} for {owner.the_name}.",
+              "magic")
+    return made
+
+
+NUMBERS = {2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven"}
 
 
 def a_or_an(words: str) -> str:

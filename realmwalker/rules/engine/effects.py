@@ -31,7 +31,8 @@ an op inside another (`on_hit`, `on_fail`, `then`) works on the creature the out
     ally       kind ("steed"): a creature that fights for the caster appears beside them (Find Steed;
                rules/allies.summon, Battle.add_ally); kind "summon" with creature (an id with a `summon` record):
                a spirit at the point, its numbers for the slot, gone when the concentration ends (Summon Beast...:
-               rules/allies.summon_spirit)
+               rules/allies.summon_spirit); kind "objects": things lying about, as many as the caster's spellcasting
+               modifier, acting only when commanded (Animate Objects: rules/allies.animate_objects)
     if_condition  condition, ops [ops]: those ops only if the creature has the condition now (Rotting Claw)
     burning    it catches fire (1d4 fire at the start of each of its turns, until put out with an action)
     damage     damage that has already landed (a stat block's extra harm): damage + type
@@ -1437,6 +1438,9 @@ def _ally(c: Cast, o: dict, victim) -> None:
     level = c.level or int(c.spell.get("level", 1))
     if o.get("kind") == "summon":
         allies.summon_spirit(c.b, c.caster, o["creature"], level, c.point, sid=c.sid)
+        return
+    if o.get("kind") == "objects":  # (Animate Objects: Expansion 3 F.3)
+        allies.animate_objects(c.b, c.caster, level, c.point, sid=c.sid)
         return
     allies.summon(c.b, c.caster, o.get("kind", "steed"), level)
 

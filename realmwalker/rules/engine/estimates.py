@@ -223,6 +223,8 @@ def spell_value(b, f, sid: str, *, target=None, point=None, dc: int | None = Non
             w.damage += _moved_zone_worth(b, f, spell, point)
         elif kind == "ally" and o.get("kind") == "summon":  # (a summoned spirit: its blows for three rounds, its body)
             w.help += _summon_worth(b, f, o["creature"], lvl, bonus, dc, point)
+        elif kind == "ally" and o.get("kind") == "objects":  # (Animate Objects: the things it would wake)
+            w.help += _objects_worth(b, f, lvl, point)
         elif kind == "ally":  # (Find Steed: a fighter more on the field, unless one stands there already)
             if not any(x.bond.get("kind") == o.get("kind", "steed") and x.active for x in b.allies_of_owner(f)):
                 w.help += (4.5 + lvl) * 0.55 * 3 + (5 + 10 * lvl) * 0.3
@@ -777,8 +779,32 @@ def _summon_worth(b, f, cid: str, level: int, bonus: int, dc: int, point) -> flo
         return 0.0
     d = allies.summon_def(b.t, cid, level, allies.best_form(b, f, cid), bonus, dc)
     blow = max((avg(str(a["damage"])) + sum(avg(str(e.get("damage", "0"))) for e in a.get("extra", ()))
-                for a in d["attacks"]), default=0.0)
+                for a in d["attacks"] if not a.get("area")), default=0.0)
     worth = blow * max(1, int(d.get("multiattack", 1))) * 0.6 * 3 + int(d["hp"]) * 0.3
+    for a in d["attacks"]:
+        if a.get("area") and a.get("with_multiattack"):  # (a draconic spirit's breath every turn, on one or two)
+            worth += avg(str(a["damage"])) * 0.75 * 1.5 * 3
+    if d["spellcasting"].get("per_day"):  # (a celestial spirit's Healing Touch)
+        worth += 9.0 + level
+    if point is not None:
+        foes = [e for e in b.enemies_of(f) if e.active]
+        near = min((max(abs(e.x - point[0]), abs(e.y - point[1])) for e in foes), default=99)
+        worth *= 1.0 if near <= 2 else (0.9 if near <= 6 else 0.75)
+    return worth
+
+
+def _objects_worth(b, f, level: int, point) -> float:
+    """Animate Objects (Expansion 3 F.3): the things it would wake, their slams for three rounds (a fifth less: they
+    wait for the caster's word, a Bonus Action each turn) and their bodies."""
+    from realmwalker.rules import allies
+
+    if any(x.bond.get("conc") and x.active for x in b.allies_of_owner(f)):
+        return 0.0
+    attack, _dc, mod = allies.caster_attack_dc(b, f)
+    worth = 0.0
+    for size in allies.object_sizes(b, f, mod):
+        d = allies.object_def(b.t, size, level, attack, mod, allies.indoors(b))
+        worth += avg(str(d["attacks"][0]["damage"])) * 0.65 * 3 * 0.8 + int(d["hp"]) * 0.3
     if point is not None:
         foes = [e for e in b.enemies_of(f) if e.active]
         near = min((max(abs(e.x - point[0]), abs(e.y - point[1])) for e in foes), default=99)
