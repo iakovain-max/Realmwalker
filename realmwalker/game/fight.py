@@ -75,7 +75,8 @@ def battle_env(game, surprised: str | None) -> Env:
         from realmwalker.game.dungeon import light_radius
 
         carried = max(4, int(light_radius(game)) * 2 // 3) if light_radius(game) else 4
-    return Env(light=light, rain=rain, ground=ground, party_light=party_light, surprised=surprised, carried_light=carried)
+    return Env(light=light, rain=rain, ground=ground, party_light=party_light, surprised=surprised, carried_light=carried,
+               place="underground" if underground else ("indoors" if indoors else ""))
 
 
 def start_battle(game, creatures: list[Creature], intro: str, *, surprised: str | None = None, actor=None,

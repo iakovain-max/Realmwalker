@@ -121,6 +121,7 @@ class Zone:
     was: dict = field(default_factory=dict)  # a wall's squares and the ground they were before it rose
     held: str = ""  # the damage a held creature takes on a failed save each turn, when it differs (Conjure Elemental)
     frees: bool = False  # a held creature's later save frees it (Conjure Elemental; tentacles need an escape)
+    heal: str = ""  # friends of its owner in it are healed this much (once a turn) instead of hurt (Conjure Celestial)
 
     @property
     def difficult(self) -> bool:
@@ -167,6 +168,9 @@ GROUND_WORDS = {  # what the catalogue's ground does to whoever is caught in it 
     "spirits": "Spectral beasts rake at {T}.",
     "elemental": "The elemental spirit engulfs {T}.",
     "fire": "{T} is in the flames.",
+    "blades": "Whirling blades of force cut at {T}.",
+    "thorns": "Needle-sharp thorns tear at {T}.",
+    "celestial": "Searing light from above falls on {T}.",
 }
 
 
@@ -182,6 +186,7 @@ class Fighter:
         self.x = 0
         self.y = 0
         self.z = 0  # feet above the ground (a flier aloft)
+        self.max_cut = 0  # hit point maximum lost for the rest of the fight (Harm)
         self.sq = grid.footprint(self.size)
         self.initiative = 0
         self.state = "fighting"  # fighting, fleeing, down, dead, fled, surrendered
@@ -296,7 +301,8 @@ class Fighter:
 
     @property
     def max_hp(self) -> int:
-        return self.char.max_hp if self.char else self.creature.max_hp
+        top = self.char.max_hp if self.char else self.creature.max_hp
+        return max(1, top - self.max_cut) if self.max_cut else top
 
     @property
     def wounds(self) -> list:
@@ -415,9 +421,13 @@ class Fighter:
             tremor = max([0] + [int(v) for v in self.buff_value("tremorsense")])  # (Stonecunning)
             blind = 10 if feats.has(self.char, "blind_fighting") or feats.has(self.char, "skulker") else 0
             true = 60 if feats.has(self.char, "boon_of_truesight") else 0
+            true = max([true] + [int(v) for v in self.buff_value("truesight")])  # (True Seeing)
             return {"darkvision": self.darkvision, **({"tremorsense": tremor} if tremor else {}),
                     **({"blindsight": blind} if blind else {}), **({"truesight": true} if true else {})}
-        return {**self.cdef.get("senses", {}), "darkvision": self.darkvision}
+        out = {**self.cdef.get("senses", {}), "darkvision": self.darkvision}
+        if self.buffs and self.buff_value("truesight"):
+            out["truesight"] = max([int(out.get("truesight", 0))] + [int(v) for v in self.buff_value("truesight")])
+        return out
 
     @property
     def body(self) -> str:
@@ -863,6 +873,7 @@ class Battle:
                 self.say(f"{f.the_name} cannot move.", "system")
             self.end_turn()
             return True
+        marks.dancing_turn(self, f)  # (Otto's Irresistible Dance: the action spent collecting itself)
         if marks.confused_turn(self, f):  # (Confusion: the d10 says what it does with its turn)
             if self.outcome is None and self.turn_started and self.current is f:
                 self.end_turn()
@@ -991,6 +1002,9 @@ class Battle:
             if se["cond"] not in f.conditions:
                 f.save_ends.remove(se)
                 continue
+            if se.get("tally") is not None:  # (Flesh to Stone: three of a kind, successes or failures)
+                self._stone_save(f, se)
+                continue
             if self._save(f, se["save"], se["dc"], against=(se["cond"],)):
                 f.conditions.pop(se["cond"], None)
                 f.save_ends.remove(se)
@@ -1005,6 +1019,28 @@ class Battle:
                 self._zone_underfoot(f, z)  # (ending a turn on the grease)
         durations.tick(self, f, "turn_end")  # and what lasts "until the end of its next turn"
         self._crowded(f)
+
+    def _stone_save(self, f: Fighter, se: dict) -> None:
+        """Flesh to Stone, Prismatic Spray's indigo ray: a save at the end of each of its turns while it is held; three
+        successes free it, three failures turn it to stone (Petrified for as long as the spell lasts, for good from an
+        instant one). They need not come in a row."""
+        ok = self._save(f, se["save"], se["dc"], against=("petrified",))
+        se["tally"][0 if ok else 1] += 1
+        good, bad = se["tally"]
+        self.dice_say(f"{f.name} against the stone: {good} saved, {bad} failed")
+        if good >= 3:
+            f.conditions.pop(se["cond"], None)
+            f.save_ends.remove(se)
+            self.say(f"The grey drains out of {f.the_name}'s skin: the stone has lost its grip.", "system")
+        elif bad >= 3:
+            f.conditions.pop(se["cond"], None)
+            f.save_ends.remove(se)
+            if durations.give(self, f, "petrified", rounds=None if se.get("conc") is not None else -1,
+                              **({"conc": se["conc"]} if se.get("conc") is not None else {})):
+                self._event("condition", who=f.id, cond="petrified")
+                self.say(f"{f.the_name} turns to stone.", "good" if f.side == FOE else "danger")
+        else:
+            self.say(f"{f.the_name}'s limbs stiffen, grey as granite.", "good" if f.side == FOE else "danger")
 
     def _crowded(self, f: Fighter) -> None:
         """Ending a turn in another creature's space (stopped on the way through it) leaves you Prone, unless you are
@@ -1059,7 +1095,7 @@ class Battle:
             if f.concentration is not None and (query.flag(f, "breaks_concentration") or not f.active) and not blinked:
                 self._end_concentration(f, quiet=not f.active, why="is lost")  # incapacitated (2024)
             if f.z > 0 and not f.hovers and ("prone" in f.conditions or f.incapacitated or f.state == "down"
-                                             or f.fly_speed <= 0):
+                                             or f.fly_speed <= 0) and not f.buff_value("aloft"):
                 self._fall(f)
         foes = [f for f in self.team(FOE) if f.active and "unconscious" not in f.conditions or f.state == "away"]
         party = [f for f in self.team(PARTY) if f.active and "unconscious" not in f.conditions or f.state == "away"]
@@ -2086,6 +2122,9 @@ class Battle:
             self.say(self._fill(text, att, target, weapon=weapon, armor=armor or "armour"), "flavor")
             events.emit(self, "attack_done", actor=att, target=target, opt=opt, hit=False, dealt=0, crit=False)  # Graze
             return False
+        if opt.extra.get("no_damage"):  # (a touch that only carries the spell: Plane Shift)
+            events.emit(self, "attack_done", actor=att, target=target, opt=opt, hit=True, crit=crit, dealt=0)
+            return True
         dmg_expr = opt.damage
         n, sides, flat = dice.parse(dmg_expr)
         rolled = dice.roll(dmg_expr, self.rng, double_dice=crit)
@@ -3188,7 +3227,10 @@ class Battle:
         name = self.t.spells[tok.spell]["name"].lower() if tok.spell in self.t.spells else "spiritual weapon"
         opt = AttackOption("spirit", name, "spell_melee", tok.bonus, tok.damage, tok.damage_type)
         self._event("token_strike", id=tok.id, to=target.id)
-        self._attack(f, opt, target)
+        if self._attack(f, opt, target):
+            from realmwalker.rules.engine import effects
+
+            effects.after_strike(self, f, tok, target)  # (Conjure Fey: the fear it brings)
 
     # ------------------------------------------------------------------ spells
     def creature_spells(self, f: Fighter) -> list[str]:
@@ -3736,6 +3778,10 @@ class Battle:
                 x.save_ends.remove(se)
         for z in [z for z in self.zones if z.owner == f.id and z.rounds < 0]:
             self._remove_zone(z)
+        for x in self.fighters:  # (Reverse Gravity ends: those it held up come down)
+            if x.z > 0 and not x.hovers and x.state in ("fighting", "fleeing", "down") and not x.buff_value("aloft") \
+                    and (x.fly_speed <= 0 or x.incapacitated or x.state == "down"):
+                self._fall(x)
         for tok in [t for t in self.tokens if t.owner == f.id and t.rounds < 0]:
             self.tokens.remove(tok)  # a spiritual weapon held by concentration (2024)
             self._event("token_end", id=tok.id)
@@ -3757,7 +3803,7 @@ class Battle:
         if f.state not in ("fighting", "fleeing"):
             return
         f.away = {"why": why, "by": by.id if by is not None else None, "spell": spell, "state": f.state,
-                  "stays": why == "sphere"}
+                  "stays": why in ("sphere", "cage")}
         f.state = "away"
         if f.grappled_by is not None:
             f.grappled_by = None
@@ -3770,8 +3816,23 @@ class Battle:
         self._event("vanish", who=f.id, why=why)
         self.say({"banished": f"{f.the_name} vanishes from the field.",
                   "blink": f"{f.the_name} blinks out of sight.",
-                  "sphere": f"A shimmering sphere closes around {f.the_name}."}.get(why, f"{f.the_name} is gone."),
+                  "sphere": f"A shimmering sphere closes around {f.the_name}.",
+                  "cage": f"Walls of force snap shut around {f.the_name}."}.get(why, f"{f.the_name} is gone."),
                  "magic")
+
+    def send_off(self, f: Fighter, *, by: Fighter | None = None) -> None:
+        """Sent from this plane for good (Plane Shift, Divine Word): gone from the fight, and beaten."""
+        if f.state not in ("fighting", "fleeing", "away"):
+            return
+        self._release(f)
+        f.away = None
+        f.state = "fled"
+        f.__dict__["banished_home"] = True  # (beaten: full experience, as for a kill)
+        self._event("vanish", who=f.id, why="banished")
+        self._event("leave", who=f.id)
+        self.say(f"{f.the_name} is torn from this world and does not come back.",
+                 "good" if by is not None and f.team != by.team else "danger")
+        self._check_end()
 
     def lethargy(self, x: Fighter) -> None:
         """Haste ends (2024): until the end of its next turn it cannot move or take actions."""
@@ -3787,12 +3848,13 @@ class Battle:
         why = f.away.get("why")
         f.away = None
         f.state = state if state in ("fighting", "fleeing") else "fighting"
-        if why != "sphere":
+        if why not in ("sphere", "cage"):
             taken = {c for x in self.on_field() if x is not f for c in x.cells}
             if not self.field.fits(f.x, f.y, f.sq) or any(c in taken for c in f.cells):
                 f.x, f.y = self._free_near((f.x, f.y), f.sq, taken)
         self._event("appear", who=f.id)
         self.say(f"The sphere around {f.the_name} winks out." if why == "sphere" else
+                 f"The walls of force around {f.the_name} are gone." if why == "cage" else
                  f"{f.the_name} is back.", "magic")
 
     # ------------------------------------------------------------------ zones
@@ -3880,6 +3942,14 @@ class Battle:
                 break
             if not any(c in z.cells for c in f.cells):
                 continue
+            if z.heal and f.id not in z.struck and z.owner is not None:
+                owner = next((x for x in self.fighters if x.id == z.owner), None)
+                if owner is not None and owner.team == f.team:  # (Conjure Celestial: its healing light)
+                    z.struck.add(f.id)
+                    if f.hp < f.max_hp and not f.no_heal and f.state in ("fighting", "fleeing", "down"):
+                        self.say(f"Healing light bathes {f.the_name}.", "good" if f.side == PARTY else "info")
+                        self._heal(f, dice.roll(z.heal, self.rng).total)
+                    continue
             if z.friends_safe and z.owner is not None:
                 owner = next((x for x in self.fighters if x.id == z.owner), None)
                 if owner is not None and owner.team == f.team:

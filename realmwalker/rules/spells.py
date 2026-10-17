@@ -563,6 +563,10 @@ def ops(spell: dict) -> list[dict]:
         then = o.get("then")
         if then:
             todo.extend(then.get("on_fail", ()))
+        for _, inner in o.get("tiers", ()):  # (Divine Word: what each band of hit points brings)
+            todo.extend(inner)
+        for inner in o.get("choices", ()):  # (Prismatic Spray: each ray)
+            todo.extend(inner)
     return out
 
 

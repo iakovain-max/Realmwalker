@@ -69,7 +69,9 @@
                 ["raw_meat", 1, 6], ["raw_fish", 0, 6], ["ale", 2, 6], ["wine", 0, 2], ["wheat", 1, 6], ["salt", 1, 5],
                 ["wool_bolt", 0, 3], ["linen_bolt", 0, 2], ["hides", 0, 3], ["furs", 0, 1], ["pepper", 0, 2], ["iron_bar", 0, 3],
                 ["copper_ingot", 0, 2], ["silver_ingot", 0, 1], ["common_clothes", 0, 2], ["firewood", 1, 4],
-                ["pearl", 0, 1, "town"], ["diamond_dust", 0, 2, "town"]],
+                ["pearl", 0, 1, "town"], ["diamond_dust", 0, 2, "town"], ["mushroom_powder", 0, 3, "town"],
+                ["black_pearl", 0, 1, "city"], ["ruby_dust", 0, 1, "city"], ["miniature_sword", 0, 1, "city"],
+                ["forked_rod", 0, 1, "city"]],
       "markup": 0.95
     },
     "inn": {
