@@ -658,10 +658,13 @@ def confiscate(game, realm_id: int) -> None:
     for c in game.party:
         keep |= {uid for slot, uid in c.equipped.items()
                  if c.item(uid) is not None and game.tables.items.get(c.item(uid).def_id).get("category") == "clothing"}
+    from realmwalker.game import divining
+
     for c in distinct_packs(game.party):
         taken = [it for it in c.inventory if it.uid not in keep]
         c.inventory[:] = [it for it in c.inventory if it.uid in keep]  # in place: the pack stays shared
         items += [it.to_dict() for it in taken]
+        divining.taken(game, taken, "watch")  # (Drawmij's Instant Summons can call it back from the strongbox)
     for c in game.party:
         c.equipped = {slot: uid for slot, uid in c.equipped.items() if uid in keep}
         money += c.money

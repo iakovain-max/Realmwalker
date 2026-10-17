@@ -24,7 +24,8 @@ ROUNDS_PER_HOUR = 600
 # The parts of a lasting spell the character sheet already counts (so a fight does not count them twice), and the parts
 # only the world outside a fight reads (Part E.2: a phantom horse, the servant, walking on water, flying as a cloud...).
 SHEET_KEYS = ("ac", "mage_armor", "darkvision", "speed", "skills", "check_adv", "carry",
-              "steed", "servant", "water_walk", "water_breathing", "wind", "ethereal", "pathfinding")
+              "steed", "servant", "water_walk", "water_breathing", "wind", "ethereal", "pathfinding",
+              "comprehend", "tongues", "beast_speech")  # (Part E.3: words on the road, game/speech.py)
 
 
 class SpellTable:
@@ -471,6 +472,9 @@ def component_problem(char: Character, tables, spell_id: str) -> str:
     if m:
         if not any(it.def_id in m["items"] for it in char.inventory):
             return f"needs {m['text'].split(',')[0]}"
+        for also in m.get("also", ()):  # (a second thing, kept: Legend Lore's ivory strips)
+            if not any(it.def_id == also for it in char.inventory):
+                return f"needs {tables.items.get(also)['name']}"
         return ""
     if not has_focus(char, tables):
         return "needs a focus or a component pouch for its materials"
@@ -496,6 +500,8 @@ def can_cast(char: Character, tables, spell_id: str) -> tuple[bool, str]:
     spell = tables.spells[spell_id]
     if spell_id == "wish" and char.spells.get("wish_lost"):
         return False, "the strain of an old wish: Wish will never come again"
+    if char.uses.get("addled"):
+        return False, "the mind is still reeling from what it touched (a long rest)"
     if "item" not in spell.get("classes", ()) and armour_problem(char, tables):
         return False, armour_problem(char, tables)
     if "item" not in spell.get("classes", ()) and component_problem(char, tables, spell_id):
@@ -711,7 +717,16 @@ def heals_many(spell: dict) -> bool:
 # What the spells of Part E do outside a fight: a spell's {"op": "road", "does": ...} names one of these (game/spellwork
 # does it; the start-up check knows them), its "ward" one of WARDS (kept on the camp: game/spellwork.ward).
 ROAD_USES = ("feed", "water", "purify", "goodberry", "feast", "ward", "repose", "uncurse", "regenerate",
-             "flame", "travel")  # (Part E.2: an everburning torch; travel by magic, game/waymagic.py)
+             "flame", "travel",  # (Part E.2: an everburning torch; travel by magic, game/waymagic.py)
+             # Part E.3: finding and seeing, asking the powers (game/divining.py), talking (game/speech.py)
+             "sense", "locate", "scout", "summons", "ask", "speak", "send", "read")
+# What each of Part E.3's road uses is about (an op's `what`, `how` or `with`; the start-up check knows them).
+E3_KINDS = {"sense": ("what", ("magic", "evil", "poison", "traps")),
+            "locate": ("what", ("object", "creature", "nature")),
+            "scout": ("how", ("room", "level", "scry", "beast")),
+            "ask": ("how", ("augury", "divination", "commune", "nature", "other_plane", "lore")),
+            "speak": ("with", ("dead", "plants")),
+            "send": ("how", ("message", "sending", "animal", "dream", "telepathy"))}
 WARDS = ("alarm", "hut", "hound", "rope", "mansion", "meld")
 # How a "travel" spell goes (game/waymagic.py), and what a lasting spell does as it is cast outside a fight (its
 # "outside": game/waymagic.after_lasting).
@@ -730,6 +745,8 @@ def road_use(tables, spell_id: str) -> str | None:
     road = op(spell, "road")
     if road is not None:
         return road["does"]
+    if spell.get("road_too"):  # (a battle spell with its own use outside a fight: Detect Thoughts reads a person)
+        return spell["road_too"]
     if has_op(spell, "heal"):
         return "heal"
     if has_op(spell, "restore"):

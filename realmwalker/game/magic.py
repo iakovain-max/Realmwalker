@@ -184,6 +184,11 @@ def road_targets(game, caster, spell_id: str) -> list:
     """Who a spell cast outside battle can be aimed at (empty when it takes everyone, or only the caster): the fallen
     the party carries, for a spell of return or Gentle Repose; the places a travel spell can reach."""
     target = game.tables.spells[spell_id]["target"]
+    use = spellrules.road_use(game.tables, spell_id)
+    from realmwalker.game import spellwork
+
+    if use in spellwork.DIVINING or use in spellwork.SPEECH:  # (Part E.3: a thing to seek, a question, a companion)
+        return spellwork.subjects(game, caster, spell_id)
     if target == "place":
         from realmwalker.game import waymagic
 

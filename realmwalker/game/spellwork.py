@@ -329,10 +329,41 @@ DOES = {"ward": _ward, "water": _water, "feed": _feed, "goodberry": _goodberry, 
 ON_SOMEONE = {"uncurse": _uncurse, "regenerate": _regenerate, "repose": _repose}
 
 
-def problem(game, caster: Character, sid: str, target: Character | None) -> str | None:
+# Part E.3's: finding and seeing, asking the powers (game/divining.py), talking (game/speech.py)
+DIVINING = ("sense", "locate", "scout", "summons", "ask")
+SPEECH = ("speak", "send", "read")
+
+
+def _does(spell: dict) -> str | None:
+    return _road(spell).get("does") or spell.get("road_too")
+
+
+def subjects(game, caster: Character, sid: str) -> list:
+    """What a spell of Part E.3 can be aimed at here (a thing to seek, a question, a companion far away...)."""
+    does = _does(game.tables.spells[sid])
+    if does in DIVINING:
+        from realmwalker.game import divining
+
+        return divining.subjects(game, caster, sid)
+    if does in SPEECH:
+        from realmwalker.game import speech
+
+        return speech.subjects(game, caster, sid)
+    return []
+
+
+def problem(game, caster: Character, sid: str, target) -> str | None:
     """Why this spell would do nothing here and now (None when it would)."""
     spell = game.tables.spells[sid]
-    does = _road(spell).get("does")
+    does = _does(spell)
+    if does in DIVINING:
+        from realmwalker.game import divining
+
+        return divining.problem(game, caster, sid, target)
+    if does in SPEECH:
+        from realmwalker.game import speech
+
+        return speech.problem(game, caster, sid, target)
     if does == "ward":
         ward = _road(spell)["ward"]
         rec = wards_here(game).get(ward)
@@ -366,7 +397,14 @@ def cast(game, caster: Character, sid: str, target: Character | None, level: int
     """Do what the spell does (its slot and materials already spent). Passes no time: the caller passes the
     spell's casting time (`minutes`)."""
     spell = game.tables.spells[sid]
-    does = _road(spell)["does"]
+    does = _does(spell)
+    if does in DIVINING or does in SPEECH:
+        from realmwalker.game import divining, speech
+
+        out = (divining if does in DIVINING else speech).cast(game, caster, sid, target, level)
+        game.cue("spell")
+        game.dirty = True
+        return out
     if does in ON_SOMEONE:
         out = ON_SOMEONE[does](game, caster, spell, level, target or caster)
     elif does == "travel":

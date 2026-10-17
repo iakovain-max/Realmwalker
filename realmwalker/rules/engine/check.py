@@ -79,6 +79,13 @@ def problems(tables) -> list[str]:
                            "which the game does not know.")
             if o.get("op") == "road" and o.get("does") == "travel" and o.get("how") not in spellrules.TRAVELS:
                 out.append(f"data/spells.json: {sid} travels by '{o.get('how')}', which the game does not know.")
+            kind = spellrules.E3_KINDS.get(o.get("does")) if o.get("op") == "road" else None
+            if kind is not None and o.get(kind[0]) not in kind[1]:
+                out.append(f"data/spells.json: {sid} is for '{o.get('does')}' {kind[0]} '{o.get(kind[0])}' outside a "
+                           "fight, which the game does not know.")
+            if spell.get("road_too") and spell["road_too"] not in spellrules.ROAD_USES:
+                out.append(f"data/spells.json: {sid} has the use '{spell['road_too']}' outside a fight, which the game "
+                           "does not know.")
             if spell.get("outside") and spell["outside"] not in spellrules.OUTSIDE:
                 out.append(f"data/spells.json: {sid} does '{spell['outside']}' when cast outside a fight, which the "
                            "game does not know.")

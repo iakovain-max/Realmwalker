@@ -341,6 +341,11 @@ class LocalView:
                 name = art.trap_names.get(f.get("trap", ""), art.trap_names.get("_"))
                 c = tuple(light[fx_ - x0, fy_ - y0]) if not f.get("spent") else (0.5, 0.5, 0.5)
                 small.append((name, *self.cell_px(fx_, fy_), T, c))
+        from realmwalker.game.divining import marks_here
+
+        for m in marks_here(game):  # what divination magic senses, seen or not (a ring of light: tile_art.SENSED)
+            if x0 <= m["x"] < x1 and y0 <= m["y"] < y1:
+                small.append((f"mark/sensed_{m['kind']}", *self.cell_px(m["x"], m["y"]), T, (1.0, 1.0, 1.0)))
         for (ix, iy), pile in lm.items.items():
             if pile and x0 <= ix < x1 and y0 <= iy < y1 and lm.seen[ix, iy]:
                 it = pile[-1]

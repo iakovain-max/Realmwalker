@@ -492,6 +492,8 @@ SPELL = Obj(
                            "aura", "summon", "teleport", "heal", "buff", "curse", "sleep", "thrown"], optional=True), "components": List(Str(choices=["V", "S", "M"]), optional=True),
         # a Material component with a cost (2024): any of these items will do; consumed ones are used up by the casting
         "material": Obj({"items": List(Str(max_len=40), min_items=1), "consumed": Bool(optional=True),
+                         # (a second thing needed beside it, kept: Legend Lore's ivory strips)
+                         "also": List(Str(max_len=40), optional=True),
                          "text": Str(max_len=120)}, optional=True),
         "rounds": Int(min=0, max=100000, optional=True), "targets_up": Int(min=0, max=5, optional=True),
         "spheres": Int(min=2, max=8, optional=True),  # (Meteor Swarm: that many spheres, Battle._more_spheres)

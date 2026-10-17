@@ -64,11 +64,16 @@ On the one marked (the buff is on the creature):
     feigning        it lies as if dead (Feign Death): nobody aims at it, and it does not count among those standing
     mist            it is a drifting mist: no attacks, no spells, 10 feet of speed (Gaseous Form, with fly, resist,
                     save_adv and immune)
+    sense_thoughts  feet: it knows where every thinking creature (one with a language) is within that reach, the
+                    invisible and the hidden too, unless total cover stands between (Detect Thoughts)
+    linked          a mind linked to its friends' (Rary's Telepathic Bond): while two or more of a side are linked,
+                    none of the linked is surprised
   Read on the character sheet outside a fight and in one (rules/character.py, rules/spells.SHEET_KEYS): darkvision
   (feet), speed (feet more), skills ({skill: bonus}), check_adv (Enhance Ability: the target's best ability; +5 to
   its skills, the passive rule), carry (pounds more before laden). Read only outside a fight (game/): steed (miles
   an hour of a phantom horse), servant (camp chores in half the time), water_walk, water_breathing, wind (Wind
-  Walk's flight), ethereal (Etherealness), pathfinding (Find the Path).
+  Walk's flight), ethereal (Etherealness), pathfinding (Find the Path); Part E.3's words on the road (game/speech.py):
+  comprehend (any tongue understood), tongues (understood and spoken), beast_speech (talking with beasts).
 On the one who gains (the caster, or a friend):
     hit_extra       dice (with hit_type, hit_with "weapon" | "melee" | "any"): extra damage on its hits (Divine Favor)
     weapon_plus     added to its weapon attack and damage rolls (Magic Weapon)
@@ -103,6 +108,8 @@ BUFF_KEYS = frozenset({
     # Part E.2's (the body on the move): kept on a character as lasting spells, read outside a fight as well
     "light", "darkvision", "see_invisible", "speed", "climb", "swim", "leap", "mist", "skills", "check_adv", "carry",
     "steed", "servant", "water_walk", "water_breathing", "wind", "ethereal", "pathfinding", "feigning",
+    # Part E.3's (talking): words on the road (read outside a fight), a linked party, thoughts sensed
+    "comprehend", "tongues", "beast_speech", "linked", "sense_thoughts",
 })
 ZONES = frozenset({"web", "fire", "fog", "ice", "caltrops", "bearings", "darkness", "antimagic", "plants", "grease",
                    "spikes", "daggers", "moonbeam", "sphere", "silence",

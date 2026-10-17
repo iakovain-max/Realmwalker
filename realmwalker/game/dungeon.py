@@ -293,7 +293,8 @@ def spring(game, lm, x: int, y: int, f: dict) -> None:
     rng = rng_for(game, "trap")
     c = game.leader
     s = game.sheet(c)
-    roll = dice.d20(rng, disadvantage=s.armour_disadvantage("dex")).natural
+    ready = bool(f.get("sensed"))  # (Find Traps: you knew something waited, and were ready for it)
+    roll = dice.d20(rng, advantage=ready, disadvantage=s.armour_disadvantage("dex")).natural
     save = roll + s.save_bonus("dex")
     if f.get("trap", "pit") == "pit":
         from realmwalker.rules.engine import hazards
@@ -373,11 +374,13 @@ def search(game) -> list[str]:
     rng = rng_for(game, "search")
     glass, tool = helps(game, "search")
     roll = dice.d20(rng, advantage=bool(glass)).natural + best - 10
+    sensed = dice.d20(rng.child("sensed"), advantage=True).natural + best - 10  # (Find Traps: Advantage)
     out = []
     for (x, y), f in list(lm.features.items()):
         if max(abs(x - p.lx), abs(y - p.ly)) > SEARCH_RADIUS:
             continue
-        if f.get("kind") == "trap" and not f.get("found") and roll >= int(f.get("dc", 13)):
+        best_roll = max(roll, sensed) if f.get("sensed") else roll
+        if f.get("kind") == "trap" and not f.get("found") and best_roll >= int(f.get("dc", 13)):
             f["found"] = True
             name = gen.TRAPS.get(f.get("trap", "pit"), gen.TRAPS["pit"])[0]
             out.append(f"<good>{who.name.split()[0]} finds {name} hidden in the floor.</>")
@@ -496,15 +499,16 @@ def open_chest(game, lm, x: int, y: int) -> None:
     game.cue("chest")
     if not grave:
         set_terrain(lm, x, y, "chest_open")
-    from realmwalker.game import treasure
-
     rng = rng_for(game, "chest")
-    cr, theme = float(lm.meta.get("cr", max(0, int(f.get("treasure", 1)) - 1.5))), lm.meta.get("theme")
-    if f.get("hoard"):
-        items, money = treasure.hoard(game, cr, rng, theme=theme)
-        game.say("<loot>This is the hoard of whoever ruled this place.</>", "loot")
+    if f.get("contents") is not None:  # (fixed already: Detect Magic looked into it)
+        from realmwalker.rules.items import Item
+
+        kept = f.pop("contents")
+        items, money = [Item.from_dict(d) for d in kept["items"]], int(kept["money"])
     else:
-        items, money = treasure.roll(game, int(f.get("treasure", 1)), rng, grave=grave, cr=cr, theme=theme)
+        items, money = _roll_chest(game, lm, f, rng)
+    if f.get("hoard"):
+        game.say("<loot>This is the hoard of whoever ruled this place.</>", "loot")
     if any(it.magic for it in items):
         from realmwalker.game import magic_items
 
@@ -539,6 +543,26 @@ def open_chest(game, lm, x: int, y: int) -> None:
             react(game, "desecration")
         if f.get("rouse"):
             rouse_the_dead(game, lm, x, y, rng)
+
+
+def _roll_chest(game, lm, f: dict, rng: RNG) -> tuple[list, int]:
+    """What a chest holds (DMG 2024: by the level's strength and its folk's treasure theme; the ruler's hoard)."""
+    from realmwalker.game import treasure
+
+    cr, theme = float(lm.meta.get("cr", max(0, int(f.get("treasure", 1)) - 1.5))), lm.meta.get("theme")
+    if f.get("hoard"):
+        return treasure.hoard(game, cr, rng, theme=theme)
+    return treasure.roll(game, int(f.get("treasure", 1)), rng, grave=bool(f.get("grave")), cr=cr, theme=theme)
+
+
+def fix_contents(game, lm, pos) -> tuple[list[dict], int]:
+    """A closed chest's contents, settled now and kept until it is opened (Detect Magic senses what is inside):
+    (the items as dicts, money). The work's and the history's own things are added when it is opened."""
+    f = lm.features[pos]
+    if f.get("contents") is None:
+        items, money = _roll_chest(game, lm, f, game.world.rng.child(f"dungeon/chest/{lm.key}/{pos[0]},{pos[1]}"))
+        f["contents"] = {"items": [it.to_dict() for it in items], "money": int(money)}
+    return f["contents"]["items"], int(f["contents"]["money"])
 
 
 def rouse_the_dead(game, lm, x: int, y: int, rng: RNG) -> None:
