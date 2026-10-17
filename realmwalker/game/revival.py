@@ -180,6 +180,15 @@ def tick(game) -> None:
         game.dirty = True
 
 
+def bury_all(game) -> None:
+    """The leader is dead and nobody is left to raise anyone: the bodies carried are dead for good."""
+    from realmwalker.game.companions import died
+
+    for b in list(getattr(game, "fallen", []) or []):
+        died(game, b["char"])
+    game.fallen = []
+
+
 def when_text(minutes: float) -> str:
     if minutes < 1.5:
         return "moments ago"
@@ -199,10 +208,19 @@ def problem(game, sid: str, body: dict | None) -> str | None:
     if spellrules.has_op(spell, "revive"):
         dead = dead_for(game, body)
         if dead > reach(spell):
-            return f"{body['char'].name.split()[0]} has been dead too long for it ({when_text(dead)})"
+            return f"{escape_markup(body['char'].name.split()[0])} has been dead too long for it ({when_text(dead)})"
+        if not _room(game):
+            return "the party is full: someone must leave it first"
     elif spellrules.op(spell, "road") and float(body.get("repose", 0)) > game.world.time + DAY:
         return "the body is already kept from decay"
     return None
+
+
+def _room(game) -> bool:
+    """Is there room in the party for one more companion (the fallen do not count while they lie dead)?"""
+    from realmwalker.game import companions
+
+    return companions.room(game) if getattr(game.tables, "companions", None) else True
 
 
 def raise_body(game, caster: Character, sid: str, body: dict, rng=None) -> list[str]:
@@ -223,8 +241,7 @@ def raise_body(game, caster: Character, sid: str, body: dict, rng=None) -> list[
     if c not in game.party:
         game.party.append(c)
     pack.sync(game)
-    minutes = int(spell.get("minutes", 1))
-    game.pass_time(minutes, "rest")
+    game.pass_time(int(spell.get("minutes", 0)), "rest")  # (Revivify is an action: no minute passes)
     game.dirty = True
     return out
 
@@ -250,9 +267,10 @@ def return_to_life(game, c: Character, spell: dict, o: dict, rng) -> list[str]:
             w.infection = 0
         c.effects.pop("poisoned", None)
     else:
-        for w in c.wounds:  # (Revivify closes nothing: the one casting it binds what still bleeds as they work)
-            if w.bleed:
+        for w in c.wounds:  # (Revivify closes nothing: the one casting it binds what still bleeds as they work,
+            if w.bleed or w.internal:  # and the life coming back stems the bleeding inside)
                 w.bandaged = True
+                w.internal = False
     if o.get("regrow") or o.get("species") == "new":
         c.injuries = [i for i in c.injuries if not i.startswith("lost_")]
     if o.get("cures"):
@@ -298,7 +316,7 @@ def _new_body(game, c: Character, rng) -> str:
     old = c.species
     c.species = new
     lineages = (t.races.get(new) or {}).get("lineages") or {}
-    c.lineage = sorted(lineages)[0] if lineages else None
+    c.lineage = rng.choice(sorted(lineages)) if lineages else None
     c.looks = looks.random_looks(t, c.species, c.sex, c.age, rng)
     c.appearance = looks.describe(t, c.looks, c.species, c.sex)
     name = (t.races.get(new) or {}).get("name", new)
@@ -378,6 +396,8 @@ def auto_revive(game) -> list[str]:
     out = []
     for b in list(getattr(game, "fallen", []) or []):
         dead = dead_for(game, b)
+        if not _room(game):
+            break
         for sid in revive_spells(game.tables):
             window = reach(game.tables.spells[sid])
             if window < dead or window > 10:

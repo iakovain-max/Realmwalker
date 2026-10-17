@@ -417,3 +417,35 @@ def test_the_spells_page_shows_the_fallen_and_the_wards_and_raises_with_enter(ma
     for size in ((80, 30), (160, 45)):
         app.render(tcod.console.Console(*size, order="F"))
     assert app.error_count == 0
+
+
+# ---------------------------------------------------------------------------- the fresh review's fixes
+def test_a_body_cannot_be_raised_into_a_full_party_and_is_released_when_the_leader_dies(world, tables):
+    cleric = hero(tables, "cleric", 64000)
+    friend = companion(tables)
+    game = game_with(world, tables, cleric, friend)
+    prepare(cleric, tables, "raise_dead")
+    add_item(cleric, tables.items, "fine_diamond")
+    kill(game, friend)
+    full = int(tables.companions["max_companions"])
+    for i in range(full):
+        game.party.append(companion(tables, seed=20 + i))
+    assert magic.road_problem(game, cleric, "raise_dead", friend) == "the party is full: someone must leave it first"
+    game.party = game.party[:1]
+    from realmwalker.game import death
+
+    game.over = {"cause": "killed by a fall", "place": ""}
+    cleric.alive = False
+    death.die(game)
+    assert not game.fallen
+
+
+def test_two_castings_of_goodberry_keep_their_own_day(world, tables):
+    druid = hero(tables, "cleric")
+    game = game_with(world, tables, druid)
+    spellwork.cast(game, druid, "goodberry", None, 1)
+    game.pass_time(20 * 60, "rest")
+    spellwork.cast(game, druid, "goodberry", None, 1)
+    game.pass_time(5 * 60, "rest")  # (the first ten are a day old now)
+    left = [it for it in druid.inventory if it.def_id == "goodberry"]
+    assert sum(it.qty for it in left) == 10

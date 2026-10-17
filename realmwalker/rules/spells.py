@@ -481,9 +481,10 @@ def spend_material(char: Character, tables, spell_id: str) -> str | None:
         return None
     from realmwalker.rules.inventory import remove_item
 
-    it = next((it for it in char.inventory if it.def_id in m["items"]), None)
-    if it is None:
+    have = [it for it in char.inventory if it.def_id in m["items"]]
+    if not have:
         return None
+    it = min(have, key=lambda it: int(tables.items.get(it.def_id).get("value", 0)))  # (the cheapest that will do)
     remove_item(char, it.uid, 1)
     return tables.items.get(it.def_id)["name"]
 

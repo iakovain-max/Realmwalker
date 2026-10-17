@@ -268,8 +268,11 @@ def road_problem(game, caster, spell_id: str, target=None, scroll=None) -> str |
         return "nothing you carry is strange to you"
     if use in ("heal", "cure") and not _needs(game, spell, target):
         return "there is nothing for it to mend" if use == "cure" else "nobody needs healing"
-    on = caster if spell["target"] == "self" else target
+    on = caster if spell["target"] in ("self", "all_allies") else target
     left = spellrules.lasting(on, t).get(spell_id, 0.0)
+    if spell["target"] == "all_allies" and spellrules.has_op(spell, "max_up") \
+            and left > int(spell.get("rounds", 0)) / spellrules.ROUNDS_PER_HOUR / 2:
+        return f"it is still working ({lasting_text(left)} left)"
     if spell["target"] != "all_allies" and left > int(spell.get("rounds", 0)) / spellrules.ROUNDS_PER_HOUR / 2:
         return f"it is still working ({lasting_text(left)} left)"
     return None
@@ -398,7 +401,7 @@ def cast_on_road(game, caster, spell_id: str, target=None, slot_level: int | Non
         if raise_ is not None:
             gains.append(spellrules.raise_max(c, spell_id, spellrules.max_up_amount(spell, slot or spell["level"])))
     first = escape_markup(caster.name.split()[0])
-    on = "" if who == [caster] else (f" on {', '.join(c.name.split()[0] for c in who)}" if raise_ is not None
+    on = "" if who == [caster] else (f" on {', '.join(escape_markup(c.name.split()[0]) for c in who)}" if raise_ is not None
                                      else " on the party" if len(who) > 1 else f" on {who[0].name.split()[0]}")
     msgs = pre + [f"{first} casts <magic>{spell['name']}</>{on}. <dim>It will last {lasting_text(hours)}.</>"]
     if raise_ is not None and any(gains):

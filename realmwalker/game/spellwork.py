@@ -195,7 +195,8 @@ def _feed(game, caster: Character, spell: dict, level: int) -> list[str]:
     r = _road(spell)
     out = []
     if r.get("rations"):
-        add_item(caster, game.tables.items, r.get("item", "conjured_food"), int(r["rations"]), made_at=game.world.time)
+        add_item(caster, game.tables.items, r.get("item", "conjured_food"), int(r["rations"]), made_at=game.world.time,
+                 tags=[f"made:{int(game.world.time)}"])  # (its own stack: it spoils a day after this casting)
         out.append(f"{_first(caster)} spreads a cloth, and on it lies bread, cheese and dried fruit enough for "
                    f"{int(r['rations'])} days of eating. <dim>Bland, nourishing, and it spoils in a day.</>")
     if r.get("pints"):
@@ -208,7 +209,8 @@ def _feed(game, caster: Character, spell: dict, level: int) -> list[str]:
 
 def _goodberry(game, caster: Character, spell: dict, level: int) -> list[str]:
     n = int(_road(spell).get("berries", 10))
-    add_item(caster, game.tables.items, "goodberry", n, made_at=game.world.time)
+    add_item(caster, game.tables.items, "goodberry", n, made_at=game.world.time,
+             tags=[f"made:{int(game.world.time)}"])  # (its own stack: gone a day after this casting)
     return [f"{n} berries swell in {_first(caster)}'s hand, warm with magic. <dim>Each one feeds a body for a day "
             f"and heals a hit point; they are gone in a day.</>"]
 
@@ -274,7 +276,7 @@ def _uncurse(game, caster: Character, spell: dict, level: int, target: Character
         it.magic["loosed"] = True
         it.magic["curse_known"] = True
         target.attuned = [u for u in target.attuned if u != it.uid]
-        names.append(game.tables.items.name(it, False))
+        names.append(escape_markup(game.tables.items.name(it, False)))
     return [f"{_first(caster)} lays a hand on {_first(target)}: the grip of the {', the '.join(names)} loosens. "
             f"<dim>The curse is still in it, but it can be taken off and thrown away now; put on again, it "
             f"takes hold again.</>"]
