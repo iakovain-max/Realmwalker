@@ -479,7 +479,7 @@ stat block now comes with the spell that brings it into play (never a block that
   quasit, pseudodragon, sprite, sphinx of wonder, slaad tadpole, with pictures; each as Polymorph's or True
   Polymorph's form and met in the land where it lives (the beasts in their biomes' bands, the fiends and fey where
   such things are met), and the cult fanatic's imp or quasit.
-- [ ] F.8 Animal Shapes and Shapechange (on F.6's swap), outside a fight too; Part F complete.
+- [x] F.8 Animal Shapes and Shapechange (on F.6's swap), outside a fight too; Part F complete.
 
 #### F.8 — How
 - **The spells** (2024 PHB pages 243 and 318, read off the page images). **Animal Shapes** (level 8, druid; an

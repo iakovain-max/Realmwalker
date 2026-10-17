@@ -514,6 +514,13 @@ def _check_companions(game, fail) -> None:
                     fail(f"{c.name}'s spirit cannot be: {r}")
         if c.effects.get(servant_rules.ROT) and c.alive and c.hp > c.effects.get(servant_rules.ROT_HP, c.hp) + 0.5:
             fail(f"{c.name} healed under a mummy's rot: {c.hp} above {c.effects.get(servant_rules.ROT_HP)}")
+        shape = c.spells.get("shape")  # (Expansion 3 F.8: Animal Shapes, Shapechange worn outside a fight)
+        if shape is not None and game.battle is None and (
+                not isinstance(shape, dict) or shape.get("form") not in game.tables.creatures
+                or shape.get("spell") not in game.tables.spells or int(shape.get("temp", 0)) <= 0
+                or float(shape.get("until", 0)) < game.world.time - 31
+                or float(shape["until"]) > game.world.time + 24 * 60 + 1):
+            fail(f"{c.name}'s shape cannot be: {shape}")
     if game.party:
         riders = {c.name for c in game.party if c.alive and (ally_rules.record(c, "steed") or {}).get("gone") is False}
         herd = [a.get("summoned") for a in game.leader.animals if a.get("summoned")]
