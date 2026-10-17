@@ -24,7 +24,12 @@ def weather(game) -> Weather:
     if cache is None:
         cache = game._weather_cache = WeatherCache()
     p = game.player
-    return cache.get(game.world, game.tables, p.x, p.y, game.world.time)
+    w = cache.get(game.world, game.tables, p.x, p.y, game.world.time)
+    if game.renown.flags.get("weather"):  # (Control Weather holds it here: game/stonework.py)
+        from realmwalker.game import stonework
+
+        return stonework.held_weather(game, w)
+    return w
 
 
 def sheltered(game, activity: str) -> bool:

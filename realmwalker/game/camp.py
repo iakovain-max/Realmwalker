@@ -307,8 +307,11 @@ def forage_while_resting(game, forager) -> list[str]:
     if roll < dc:
         return [f"{who} forages around the camp and finds nothing worth eating."]
     found = []
+    from realmwalker.game import stonework
+
+    rich = 2 if stonework.enriched(game) else 1  # (Plant Growth's Enrichment: the land bears twice over)
     for item_id, amount in spec["find"]:
-        n = max(1, dice.roll(str(amount), rng).total)
+        n = max(1, dice.roll(str(amount), rng).total) * rich
         add_item(forager, game.tables.items, item_id, n, made_at=game.world.time)
         found.append(f"{game.tables.items.get(item_id)['name']}" + (f" ×{n}" if n > 1 else ""))
     return [f"{who} forages around the camp: {', '.join(found)}."]
@@ -330,8 +333,11 @@ def forage(game) -> list[str]:
     rng = game.world.rng.child(f"forage/{game.world.time}")
     leader = game.leader
     found = []
+    from realmwalker.game import stonework
+
+    rich = 2 if stonework.enriched(game) else 1  # (Plant Growth's Enrichment: the land bears twice over)
     for item_id, amount in spec["find"]:
-        n = max(1, dice.roll(str(amount), rng).total)
+        n = max(1, dice.roll(str(amount), rng).total) * rich
         it = add_item(leader, game.tables.items, item_id, n, made_at=game.world.time)
         found.append(game.tables.items.name(it) if n == 1 else f"{game.tables.items.get(item_id)['name']} ×{n}")
     for item_id, amount, chance in spec.get("extra", []):

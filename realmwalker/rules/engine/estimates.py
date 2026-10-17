@@ -571,6 +571,8 @@ def _zone_worth(b, f, o: dict, caught: list, dc: int, up: int, w: Worth) -> None
             w.control += pf * threat(x) * 1.2
         elif kind == "grease":
             w.control += pf * threat(x) * 0.5
+        elif kind == "overgrowth":  # (Plant Growth: a foe that must come to you through it hardly comes at all)
+            w.control += threat(x) * 0.4
         elif kind == "spikes":
             w.damage += dmg * 2.0  # (every square walked: a foe that comes at you through it)
         elif dmg or o.get("fail"):

@@ -91,7 +91,7 @@ def _veil_holds(game) -> bool:
 def night_visitors(game, enc) -> tuple[object, list[str]]:
     """Something comes for the camp in the night: what the wards do about it. Returns the encounter (None when it is
     turned away) and what to say."""
-    ward = warded(game, "mansion", "hut", "veil", "decoy", "hound", "mouth", "alarm")
+    ward = warded(game, "mansion", "hut", "veil", "decoy", "earthworks", "hound", "mouth", "alarm")
     if ward in ("mansion", "hut"):
         where = "the shimmering door" if ward == "mansion" else "the dome"
         return None, [f"In the night something comes to {where}, circles it, finds no way in, and goes away."]
@@ -103,7 +103,7 @@ def night_visitors(game, enc) -> tuple[object, list[str]]:
         if dice.d20(rng).natural + (best - 10) // 2 < int(rec.get("dc", 13)):
             return None, ["In the night something passes close by the camp, and goes on: to its eyes there was "
                           "nothing here."]
-        ward = warded(game, "decoy", "hound", "mouth", "alarm")
+        ward = warded(game, "decoy", "earthworks", "hound", "mouth", "alarm")
         notes = ["<warn>Something in the night stops, and looks through the land's false face at the camp.</>"]
         if ward is None:
             return _awake_watch(game, enc, notes)
@@ -118,6 +118,11 @@ def night_visitors_after_veil(game, enc, ward: str | None) -> tuple[object, list
         enc.spotted_first = True
         return enc, ["<warn>In the dark, shapes fall on a camp a little way off, and find nothing there but "
                      "an illusion.</> You are awake, and they have not seen you yet."]
+    if ward == "earthworks":  # (Move Earth: seen climbing the ditch and the bank)
+        enc.asleep, enc.warned = False, True
+        enc.spotted_first = True
+        return enc, ["<warn>Something comes over the ditch in the dark and scrabbles up the bank:</> you are awake, "
+                     "and see it before it sees you."]
     if ward == "hound":
         rec = wards_here(game)["hound"]
         notes = ["<warn>The phantom hound bays in the dark: something is coming.</>"]
@@ -211,6 +216,10 @@ def _ward(game, caster: Character, spell: dict, level: int) -> list[str]:
         "veil": f"{first} walks the camp's edge, and the land round it changes: to any eye outside, there is "
                 f"nothing here but {'more of the same land' if minutes < 2880 else 'land of another kind entirely'}, "
                 f"for {lasts}.",
+        # Part E.5's
+        "earthworks": f"{first} kneels and presses both hands to the ground, and for ten minutes the earth round the "
+                      f"camp heaves and slides: a ditch opens, a bank rises behind it. Whatever comes in the night "
+                      f"will have to climb it.",
     }
     out = [words[ward]]
     if ward == "mansion":
@@ -412,6 +421,8 @@ DIVINING = ("sense", "locate", "scout", "summons", "ask")
 SPEECH = ("speak", "send", "read")
 # Part E.4's: minds and the law, illusions, the small arts (game/glamour.py)
 GLAMOUR = ("mind", "illusion", "art")
+# Part E.5's: locks and stone, weather and land (game/stonework.py)
+STONEWORK = ("lock", "mend", "hand", "make", "stone", "chest", "weather", "plants", "wave")
 
 
 def _does(spell: dict) -> str | None:
@@ -433,6 +444,10 @@ def subjects(game, caster: Character, sid: str) -> list:
         from realmwalker.game import glamour
 
         return glamour.subjects(game, caster, sid)
+    if does in STONEWORK:
+        from realmwalker.game import stonework
+
+        return stonework.subjects(game, caster, sid)
     return []
 
 
@@ -452,6 +467,10 @@ def problem(game, caster: Character, sid: str, target) -> str | None:
         from realmwalker.game import glamour
 
         return glamour.problem(game, caster, sid, target)
+    if does in STONEWORK:
+        from realmwalker.game import stonework
+
+        return stonework.problem(game, caster, sid, target)
     if does == "ward":
         ward = _road(spell)["ward"]
         rec = wards_here(game).get(ward)
@@ -461,6 +480,9 @@ def problem(game, caster: Character, sid: str, target) -> str | None:
             return "not in the middle of a town"
         if ward == "meld" and len([c for c in game.party if c.alive]) > 1:
             return "only the caster fits in the stone: it hides one alone"
+        if ward == "earthworks" and (game.local is not None and game.local.under_rock(game.player.lx, game.player.ly)
+                                     or game.world.settlement_at(game.player.x, game.player.y) is not None):
+            return "only in the open country, on earth that can be moved"
     if does == "water" and not _skins(game) and not any(c.alive and c.thirst >= 10 for c in game.party):
         return "there is nothing to put the water in, and nobody is thirsty"
     if does == "travel":
@@ -486,11 +508,11 @@ def cast(game, caster: Character, sid: str, target: Character | None, level: int
     spell's casting time (`minutes`)."""
     spell = game.tables.spells[sid]
     does = _does(spell)
-    if does in DIVINING or does in SPEECH or does in GLAMOUR:
-        from realmwalker.game import divining, glamour, speech
+    if does in DIVINING or does in SPEECH or does in GLAMOUR or does in STONEWORK:
+        from realmwalker.game import divining, glamour, speech, stonework
 
-        out = (divining if does in DIVINING else speech if does in SPEECH else glamour).cast(game, caster, sid, target,
-                                                                                            level)
+        out = (divining if does in DIVINING else speech if does in SPEECH else glamour if does in GLAMOUR
+               else stonework).cast(game, caster, sid, target, level)
         game.cue("spell")
         game.dirty = True
         return out
@@ -509,7 +531,7 @@ def cast(game, caster: Character, sid: str, target: Character | None, level: int
 
 def minutes(spell: dict) -> int:
     """How long the casting takes outside a fight (a feast is eaten for an hour more)."""
-    m = int(spell.get("minutes", 1))
+    m = int(spell.get("road_minutes") or spell.get("minutes", 1))  # (Plant Growth: an action in a fight, 8 hours here)
     return m + (FEAST_EATING if _road(spell).get("does") == "feast" else 0)
 
 
@@ -566,9 +588,10 @@ def conjure(game, need: str) -> list[str]:
 def tick(game) -> None:
     """As time passes: berries that are only magic are gone when it ends; a Geas or a charm runs out
     (game/glamour.py)."""
-    from realmwalker.game import glamour
+    from realmwalker.game import glamour, stonework
 
     glamour.tick(game)
+    stonework.tick(game)
     items = game.tables.items
     for m in distinct_packs(game.party):
         for it in list(m.inventory):

@@ -428,6 +428,26 @@ def _check_companions(game, fail) -> None:
         fail(f"an illusion draws the eyes of no town: {dis}")
     if any(a.get("awake") and not a.get("name") for a in (game.leader.animals if game.party else [])):
         fail("an awakened animal has no name")
+    held = flags.get("weather")  # (Expansion 3 E.5: locks and stone, weather and land)
+    if held and (held.get("how") not in ("clear", "rain", "calm", "warm", "cold")
+                 or not game.world.in_bounds(int(held["x"]), int(held["y"]))):
+        fail(f"Control Weather holds a weather that cannot be: {held}")
+    room = flags.get("arcane_room")
+    if room is not None and not 0 <= int(room) < len(game.world.settlements):
+        fail(f"an inn room is locked in no town: {room}")
+    for d in (flags.get("secret_chest") or {}).get("items") or []:
+        if d.get("def_id") not in game.tables.items.defs:
+            fail(f"the secret chest holds a thing that does not exist: {d}")
+    for c in game.party:
+        for it in c.inventory:
+            for tag in it.tags or []:
+                if tag.startswith("conjured:") and int(tag.split(":")[1]) < game.world.time - 24 * 60:
+                    fail(f"Creation's {it.def_id} outlived its time by more than a day")
+    lm = game.local
+    if lm is not None and lm.kind == "dungeon":
+        for rec in lm.meta.get("passwall") or []:
+            if any(not lm.in_bounds(int(x), int(y)) for x, y, _ in rec["cells"]):
+                fail(f"a passage through the wall runs off the map: {rec}")
     for b in getattr(game, "fallen", []) or []:  # (Expansion 3 E.1: the bodies the party carries for raising)
         if b["char"].alive or any(b["char"] is c for c in game.party):
             fail(f"{b['char'].name} is carried as a body but is alive or walks with the party")

@@ -171,6 +171,11 @@ def on_step(game, x: int, y: int) -> None:
         return
     if lm.kind != "dungeon":
         return
+    if lm.meta.get("passwall"):  # (Passwall's hour over: the passage closes)
+        from realmwalker.game import stonework
+
+        if stonework.on_step(game):
+            return  # (put out of the closing passage: this step is over)
     f = lm.features.get((x, y))
     if f and f.get("kind") == "trap" and not f.get("spent"):
         spring(game, lm, x, y, f)
@@ -468,6 +473,10 @@ def bump(game, x: int, y: int) -> bool:
     tid = terrain_id(game, lm, x, y)
     if tid == "door_locked":
         f = lm.features.get((x, y), {"dc": 13})
+        if f.get("arcane"):  # (Arcane Lock: it opens for the party alone)
+            from realmwalker.game import stonework
+
+            return stonework.through_own_lock(game, lm, x, y)
         ok, text = unlock(game, lm, x, y, int(f.get("dc", 13)))
         game.say(text, "info" if ok else "warn")
         if ok:

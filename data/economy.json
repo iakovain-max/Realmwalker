@@ -77,7 +77,8 @@
                 ["seers_incense", 0, 3, "town"], ["ivory_strips", 0, 1, "town"], ["glass_eye", 0, 1, "town"],
                 ["rare_incense", 0, 1, "city"], ["scrying_mirror", 0, 1, "city"], ["sapphire", 0, 1, "city"],
                 ["jade_dust", 0, 3, "town"], ["lead_ink", 0, 2, "town"], ["diamond_dust_pinch", 0, 3, "town"],
-                ["gem_1000", 0, 1, "city"], ["gem_5000", 0, 1, "city"]],
+                ["gem_1000", 0, 1, "city"], ["gem_5000", 0, 1, "city"],
+                ["gold_dust", 0, 3, "town"], ["leomunds_chest", 0, 1, "city"], ["chest_replica", 0, 1, "city"]],
       "markup": 0.95
     },
     "inn": {

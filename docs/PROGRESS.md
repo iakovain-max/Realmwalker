@@ -28,7 +28,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Clearing the decks for the expansions** | ✅ Done (2026-10-12), branch `prep/clear-the-decks` |
 | **Expansion 1, *Dice & Destiny*** (version 1.1.0) | ✅ Released (2026-10-13), branch `dlc/01-dice-destiny` |
 | **Expansion 2, *Blades & Backgrounds*** (version 1.2.0) | ✅ Released (2026-10-13), branch `dlc/02-blades-backgrounds` |
-| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete), D (the spell catalogue: 191 battle spells, cantrips to level 9, and Wish) E.1 (spells outside battle: healing, return from death, food, shelter and watch), E.2 (light, the body on the move, travel by magic), E.3 (finding and seeing, asking the powers, talking) and E.4 (minds and the law, disguise and illusion, the small arts, 2026-10-17) in `main`; E.5 (locks and stone, weather and land, lasting protections, great magic: the last of Part E) next |
+| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete), D (the spell catalogue: 191 battle spells, cantrips to level 9, and Wish) E.1 (spells outside battle: healing, return from death, food, shelter and watch), E.2 (light, the body on the move, travel by magic), E.3 (finding and seeing, asking the powers, talking), E.4 (minds and the law, disguise and illusion, the small arts) and E.5 (locks and stone, weather and land, 2026-10-17) in `main`; E.6 (lasting protections, great magic, Wish's other uses: the last of Part E) next |
 
 ---
 
@@ -39,6 +39,52 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-17 (late morning): Demigods & Magics E.5 — spells outside battle: locks and stone, weather and land
+
+Built by the relay builder realmwalker-a. Saves do not change: an old world of format 18 still loads. E.5 was split in
+two at its start (28 spells and Wish's other uses were too many for one part): this part is locks and stone, weather
+and land; lasting protections, great magic and Wish's other uses are E.6, the last of Part E.
+- **Locks.** **Knock** (underground): a locked door or chest within 60 feet springs open with a knock like a hammer,
+  and everything on that level hears it. In the cells it is the best friend a prisoner has: the escape gets +10 (the
+  run is still yours to make). **Arcane Lock** (a pinch of gold dust, 25 gold): a door beside you locks for good to
+  everything that lives down there, while the party walks through it as if it were open; in a town it locks your room
+  at the inn, and no thief gets in.
+- **Small magic for things.** **Mending** (a minute) closes a break or a tear in the most worn thing you carry (up to
+  three-quarters sound: the last of the wear still needs tools). **Mage Hand** in a town: your next theft from a stall
+  is done by a spectral hand from 30 feet away, with Advantage; if it is seen the merchant cries witchcraft, nobody
+  grabs your wrist, and no theft is done.
+- **Making things.** **Fabricate** (ten minutes) turns the raw stuff you carry into any camp craft, up to three
+  batches at once, with no tools, no fire and no roll; a craft of an artisan's tools still needs someone trained in
+  them. **Creation** (a minute) makes a plain thing you have seen, of wood, cloth, leather or rope for a day or of
+  stone for twelve hours (a ladder, a pole, a rope, a club): then it fades away, and no merchant will buy it.
+- **Stone.** Underground, **Stone Shape** opens a way through five feet of wall beside you for good, and
+  **Passwall** opens up to twenty feet for an hour; when it closes, anyone still inside is put out where it began. A
+  way through the wall into a hidden room finds the room. **Move Earth** at a camp in the wild raises a ditch and a
+  bank round it: whatever comes in the night is seen climbing it, and you are awake to meet it.
+- **Leomund's Secret Chest** (an exquisite chest of 5,000 gold and its tiny replica of 50, sold in cities): your coin
+  and treasure, your spare arms and armour, or both go into the chest on the Ethereal Plane. There they weigh nothing
+  and no robber, thief or watchman can take them, but nothing in them can be worn, sold or used. Touch the replica
+  (Enter on it in the pack) to call the chest back. Left away more than sixty days, it may be lost.
+- **Weather and land.** **Control Water** parts the next river for you: you cross on its dry bed, with no ford to wade
+  and nobody wet. **Control Weather** (ten minutes, under the open sky): clear the sky, bring rain (or snow in the
+  cold), still the wind, or warm or cool the air, for eight hours five miles round: a blizzard on the high road
+  becomes a cold, still, clear day. **Plant Growth** in a fight makes the ground round your foes a thicket where
+  every step costs four (the ground round your friends is left clear); over eight hours on the road it makes the land
+  bear twice over for a year (foraging there finds twice as much), and cast in a village the folk remember it.
+  **Tsunami**: when you see a band on the road before it sees you, a druid with it ready can call up a wall of water
+  that falls on them before the fight (6d10, half on a Strength save); a band drowned to the last is a fight won.
+- **New things in the shops**: a pinch of gold dust at town markets; the exquisite chest and its replica in cities,
+  each with a picture.
+- **The codex**: 14 spells settled (all adapted, each with its note).
+- **How to try it**: a wizard of level 9 underground stands by a wall with a corridor beyond, opens the Spells page
+  (S), chooses Passwall, picks the way with ← →, and presses Enter. On the road, meeting a band you saw first, a
+  druid (or any caster with Tsunami) presses w on the meeting screen.
+- **Choices made while Anton was away** (in STATUS.md): Knock is for doors and chests underground and for the cells;
+  Arcane Lock for a dungeon door or your inn room; Mending stops at three-quarters; Creation makes no metal; the
+  secret chest takes coin and treasure or spare arms, never what is worn, food or magic; Control Water only parts
+  rivers on the road; Control Weather changes at once; Plant Growth's thicket spares the friends' squares;
+  Tsunami strikes once, before the fight.
 
 ### Session, 2026-10-17 (morning): Demigods & Magics E.4 — spells outside battle: minds and the law, disguise and illusion, the small arts
 
