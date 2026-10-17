@@ -459,14 +459,61 @@ stat block now comes with the spell that brings it into play (never a block that
   later piece uses); the familiar's forms of Appendix B (bat, cat, crab, frog, hawk, lizard, octopus, owl, rat, raven,
   scorpion, spider, weasel) with pictures; the Otherworldly Steed; the familiar and the steed as followers outside a
   fight.
-- [ ] F.2 The Summon spells' spirits (Summon Beast, Fey, Undead, Aberration, Construct, Elemental, Celestial, Dragon,
-  Fiend), Giant Insect, Animate Objects: concentration spells whose creature's numbers grow with the slot.
-- [ ] F.3 The dead and the bound: Animate Dead, Create Undead, Finger of Death's zombie, Planar Ally, Planar Binding
+- [ ] F.2 Summoned spirits, levels 2-4 (split at its start, 2026-10-17): a creature whose numbers grow with the
+  slot, held by concentration; Summon Beast, Summon Fey, Summon Undead, Summon Aberration, Summon Construct, Summon
+  Elemental and Giant Insect, with their stat blocks, pictures and the costly components.
+- [ ] F.3 Summoned spirits, levels 5-6: Summon Celestial, Summon Dragon (Shared Resistances, Breath Weapon), Summon
+  Fiend (Death Throes) and Animate Objects (several creatures at once, commanded with the caster's Bonus Action).
+- [ ] F.4 The dead and the bound: Animate Dead, Create Undead, Finger of Death's zombie, Planar Ally, Planar Binding
   (and Magic Circle reversed): servants that outlast a fight and must be held again.
-- [ ] F.4 Shapes: Polymorph, True Polymorph, Animal Shapes, Shapechange, with the rest of Appendix B (ape,
+- [ ] F.5 Shapes: Polymorph, True Polymorph, Animal Shapes, Shapechange, with the rest of Appendix B (ape,
   constrictor snake, crocodile, elephant, elk, giant badger, crab, goat, seahorse and weasel, badger, goat, lion,
   panther, reef shark, tiger, venomous snake; imp, quasit, pseudodragon, sprite, sphinx of wonder, slaad tadpole) as
   the forms, and the cult fanatic's imp or quasit; Part F complete.
+
+#### F.2 — How
+- **A summoned spirit** is an ally (F.1) with `bond` kind "summon" and `conc` True: the spell's effects op
+  {"op": "ally", "kind": "summon", "creature": id} calls `allies.summon_spirit`, which makes its numbers for the slot
+  (`allies.summon_def`) and puts it at the chosen point (the spell's target is a point in range: the nearest free
+  squares to it). It takes its turn right after its caster's (the 2024 text: it shares the caster's count). When the
+  caster's concentration ends (`Battle._end_concentration`: let go, broken by damage, a new concentration spell, the
+  caster down) it disappears, as at 0 hit points; it never outlasts the fight. On the enemy's side the same op gives
+  the caster's side a spirit (add_ally takes the owner's side).
+- **Numbers by the slot** come from the creature's `summon` record in creatures.allies.json: the spell's own `level`,
+  `ac` (+ the slot level; a form may add), `hp` and `hp_up` (for each level above the spell's), and `forms`
+  {form: {hp, speeds, traits, attacks, damage_type, resist, immune, picture, spells}}; the stat block (statblocks.
+  allies.json, numbers as printed at level 0 of "the spell's level") has every action of every form, each attack
+  with `plus_level` adding the slot level to its damage and the caster's spell attack as its bonus; the Multiattack
+  is half the slot level (round down) of the form's attacks. The creature's own DC is the caster's spell save DC.
+- **The form** (Air/Land/Water, a mood, Ghostly/Putrid/Skeletal...) is chosen by the game for this fight, as
+  Chromatic Orb picks its best damage type (`allies.best_form`): a form that flies when foes are aloft, the
+  element whose blow hurts the foes most, a ranged form when they stand far off, and the strongest otherwise. The
+  form is named in the log ("a skeletal spirit").
+- **Traits** (data/packs/03_demigods_magics/traits.json, handlers in engine/handlers/summons.py): Regeneration (the
+  slaad's 5, `spirit_regeneration`), Whispering Aura (2d6 psychic, Wisdom save, at the start of its turns, to every
+  creature but its caster within 5 feet), Festering Aura (Constitution save or Poisoned, whoever starts a turn beside
+  it but its caster), Heated Body (1d10 fire to whoever hits it in melee), Stony Lethargy (a foe starting its turn
+  within 10 feet: Wisdom save or no Opportunity Attacks and half Speed), Berserk Lashing (its reaction: a Slam at
+  whoever hurt it). Pack Tactics, Flyby and Spider Climb are the game's own. Water Breathing, Amorphous Form and
+  Incorporeal Passage wait for fights under water and through walls (codex: adapted).
+- **Blows that do more** (stat block `on_hit` with kernel ops, `statblocks.ops` "kernel"): the slaad's Claw (no
+  healing until the start of its next turn), Deathly Touch (Frightened until the end of the target's next turn),
+  Rotting Claw (a Poisoned target is Paralyzed until the end of its next turn: the op `if_condition`), Web Bolt
+  (Speed 0 until the start of the insect's next turn), Poison Jab's extra 1d4 poison.
+- **Its own magic** (spells of classes ["creature"], at will, Bonus Action): Fey Step (30 feet, then the mood's
+  effect: Fuming, Advantage on its next attack this turn; Mirthful, a foe within 10 feet saves or is Charmed until
+  it takes damage; Tricksy, magical Darkness on a 10-foot cube beside it until the end of its next turn) and the
+  centipede's Venomous Spew (Constitution save or Poisoned until the start of its next turn).
+- **The Auto** values a summoning by the spirit's blows over three rounds and its hit points (`estimates`), less
+  when the caster already concentrates on something worth more; the spirit itself is played like any ally (z).
+- **Costly components** (kept, not used up): a gilded acorn (200 GP), a gilded flower (300 GP), a gilded skull
+  (300 GP), a platinum-inlaid vial (400 GP), a lockbox (400 GP) and a gold-inlaid vial (400 GP), sold in cities.
+- **Pictures**: the forms from the Crawl pack (hawk, wolf, shark; a faun for the fey; ghost, ghoul, skeleton; an
+  eye, a red slaad and a tentacled horror; clay, iron and stone golems; the four elementals; wasp, spider,
+  centipede).
+- **Tests**: tests/test_summons.py (each spell in a real fight: numbers at two slots, placed at the point, its turn
+  after its caster's, gone when concentration ends and at 0, each trait and blow, the Auto casts one); the arena's
+  coverage test; the catalogue test's NO_USE has none of them.
 
 #### F.1 — How
 - **An ally on the field** is a `Fighter` on the party's side made from a `Creature` (no `char`), with
