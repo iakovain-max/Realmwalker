@@ -763,6 +763,11 @@ def problem(game, caster, sid: str, target) -> str | None:
         return "cast from the meeting screen, when a band is seen first (i)"
     if does == "simulacrum" and not aimed:
         return "choose whose likeness (←→)"
+    if does == "simulacrum" and target.data.get("what") == "creature":
+        from realmwalker.rules import servants as servant_rules, simulacrum as sim
+
+        if not servant_rules.room(caster) and not servant_rules.of_spell(caster, sim.SPELL):
+            return "twelve creatures are at your word already: the snow would not rise"
     if does == "wish":
         if caster.spells.get("wish_lost"):
             return "the strain of an old wish: Wish will never come again"

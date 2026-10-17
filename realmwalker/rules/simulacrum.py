@@ -16,6 +16,7 @@ party's dead. `after` writes back what the fight left of it. Pure rules: no UI, 
 characters."""
 from __future__ import annotations
 
+from realmwalker.core.textgen import escape_markup as esc
 from realmwalker.rules.character import Character
 
 KEY = "simulacrum"
@@ -157,15 +158,16 @@ def repair(maker: Character) -> list[str]:
             continue
         can = int(maker.money * SPEND_SHARE) // REPAIR
         n = min(need, can)
-        name = row.get("name", "the simulacrum")
+        name = esc(row.get("name", "the simulacrum"))
+        first = esc(maker.name.split()[0])
         if n <= 0:
             out.append(f"{name} stays as the last fight left it: the repair takes 100 GP of powders a hit point, and "
-                       f"{maker.name.split()[0]} has not the coin to spare.")
+                       f"{first} has not the coin to spare (they carry it themselves).")
             continue
         maker.money -= n * REPAIR
         row["hp"] = int(row.get("hp", 0)) + n
         whole = "whole again" if n >= need else f"{n} of {need} hit points mended"
-        out.append(f"Through the night {maker.name.split()[0]} packs fresh snow into {name}'s hurts and works "
+        out.append(f"Through the night {first} packs fresh snow into {name}'s hurts and works "
                    f"{n * REPAIR // 100} GP of powders into them: {whole}.")
     return out
 
@@ -174,9 +176,10 @@ def bring_in(b, owners: list) -> list:
     """Each maker's copy of a person comes into the fight beside them. Returns the new fighters."""
     out = []
     for owner in owners:
-        if owner.char is None or not owner.char.alive or owner.bond is not None:
+        char = b.person_of(owner)  # (a maker in a borrowed shape still has their copy: F.8)
+        if char is None or not char.alive or owner.bond is not None:
             continue
-        rec = record(owner.char)
+        rec = record(char)
         if rec is None or int(rec["char"].get("hp", 0)) <= 0:
             continue
         f = b.add_ally(None, owner, "simulacrum", char=copy_char(rec), type_="construct", spell=SPELL)
@@ -191,14 +194,15 @@ def after(b) -> list[str]:
         if f.bond is None or f.bond.get("kind") != "simulacrum" or f.char is None:
             continue
         owner = b.fighter(f.bond["owner"])
-        if owner is None or owner.char is None:
+        maker = b.person_of(owner) if owner is not None else None
+        if maker is None:
             continue
-        rec = record(owner.char)
+        rec = record(maker)
         if rec is None:
             continue
         if f.state == "dead" or f.hp <= 0:
-            owner.char.spells.pop(KEY, None)
-            out.append(f"{f.char.name} slumps into a heap of wet snow and is gone.")
+            maker.spells.pop(KEY, None)
+            out.append(f"{esc(f.char.name)} slumps into a heap of wet snow and is gone.")
             continue
         f.char.hp = int(f.hp)
         f.char.temp_hp = 0

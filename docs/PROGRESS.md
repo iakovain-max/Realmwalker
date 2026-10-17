@@ -108,7 +108,11 @@ test, not in play by eye.
 - it cannot be healed by any spell;
 - a long rest repairs it, but spends at most half of the maker's coin;
 - a beast's or prisoner's copy follows the party into towns, where the raised dead do not;
-- commands are the battle's (you play it as a party member).
+- commands are the battle's (you play it as a party member);
+- no snow on the ground is needed: the spell brings its own;
+- it acts right after its maker, not in the maker's own turn;
+- its once-a-rest powers, such as Second Wind, are as they were at the casting and never come back;
+- the repair is paid from the coin the maker carries, not the whole party's.
 
 **Codex** (`tools/codex/coverage.py`): Expansion 3: all 560 entries settled (223 done, 336 adapted, 1 omitted).
 Player's Handbook 65% · Dungeon Master's Guide 12% · Monster Manual 16%.

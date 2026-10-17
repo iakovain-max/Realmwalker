@@ -215,3 +215,37 @@ def test_the_record_is_kept_in_a_save(world, tables):
     cast(game, wiz, "simulacrum", subject(game, wiz, "simulacrum", wiz.name))
     back = Character.from_dict(wiz.to_dict())
     assert sim.copy_char(sim.record(back)).max_hp == wiz.max_hp // 2
+
+
+def test_melted_snow_cannot_be_raised_and_the_auto_does_not_heal_it(world, tables):
+    from realmwalker.rules.engine import estimates
+    from tests.test_wave4 import cast as battle_cast, my_turn
+
+    game, wiz = maker(tables, world)
+    cast(game, wiz, "simulacrum", subject(game, wiz, "simulacrum", wiz.name))
+    b = game_fight.start_battle(game, [spawn(tables, "bandit", RNG(9, "f"), 1)], "A fight.")
+    me, snow = fighter_of(b, wiz.name), copy_in(b)
+    snow.hp -= 10
+    assert estimates.mends(snow) == 0 and estimates.mends(me) == me.max_hp - me.hp
+    b._apply_hp_loss(snow, snow.hp + 1, source=None, cause="test")
+    assert snow.state == "dead"
+    my_turn(b, me)
+    battle_cast(b, me, "revivify", snow)
+    assert snow.state == "dead", "melted snow has no body to call back"
+    assert snow not in b.spell_targets(me, "revivify")
+
+
+def test_a_maker_in_a_borrowed_shape_still_brings_the_copy(world, tables):
+    from realmwalker.rules.combat import Battle, Env
+
+    game, wiz = maker(tables, world)
+    cast(game, wiz, "simulacrum", subject(game, wiz, "simulacrum", wiz.name))
+    b = Battle(tables, [wiz], [spawn(tables, "bandit", RNG(2, "f"), 1)], Env(), RNG(2, "b"), spots={})
+    me = b.fighters[0]
+    assert b.shape(me, "brown_bear", by=me, spell="polymorph")
+    assert me.char is None and b.person_of(me) is wiz
+    assert sim.bring_in(b, [me]), "the copy comes in beside a bear"
+    snow = copy_in(b)
+    snow.hp -= 2
+    sim.after(b)
+    assert sim.copy_char(sim.record(wiz)).hp == snow.hp

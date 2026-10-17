@@ -13,7 +13,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from realmwalker.core import dice
-from realmwalker.rules import grid
+from realmwalker.rules import grid, simulacrum
 from realmwalker.rules import spells as spellrules
 from realmwalker.rules.engine import query
 
@@ -146,6 +146,11 @@ def blow_mod(b, f, opt) -> int:
     return max(f.mod("str"), f.mod("dex")) if "finesse" in props else f.mod("str")
 
 
+
+def mends(x) -> int:
+    """The hit points healing could give back: none to a Simulacrum, which only its maker's repair mends (G.3)."""
+    return 0 if simulacrum.snow(x) else max(0, x.max_hp - x.hp)
+
 @dataclass
 class Worth:
     damage: float = 0.0  # expected damage to enemies
@@ -247,7 +252,7 @@ def spell_value(b, f, sid: str, *, target=None, point=None, dc: int | None = Non
                 reach = b.spell_range(spell, f)
                 whom = [x for x in b.team(f.team) if (x.active or x.state == "down") and b.feet(f, x) <= reach]
             for x in sorted(whom, key=lambda x: x.hp / max(1, x.max_hp)):
-                missing = max(0, x.max_hp - x.hp)
+                missing = mends(x)
                 got = missing if pool is None else min(missing, pool)
                 if pool is not None:
                     pool -= got
@@ -256,7 +261,7 @@ def spell_value(b, f, sid: str, *, target=None, point=None, dc: int | None = Non
         elif kind == "heal":
             many = max(1, int(o.get("count", 1)) + int(o.get("count_up", 0)) * up)
             for x in sorted(caught, key=lambda x: x.hp / max(1, x.max_hp))[:many]:
-                missing = x.max_hp - x.hp
+                missing = mends(x)
                 if missing > 0:
                     w.heal += min(missing, avg(spellrules.scaled(o["dice"], o.get("up", ""), up))
                                   + (_caster_mod(b, f) if o.get("add_mod") else 0) + int(o.get("per_up", 0)) * up)
@@ -496,7 +501,7 @@ def ability_value(b, f, a: dict) -> Worth:
         if o["op"] == "heal":
             add = o.get("add", 0)
             amount = avg(o["dice"]) + (f.char.level if add == "level" and f.char else add if isinstance(add, int) else 0)
-            w.heal += min(amount, max(0, f.max_hp - f.hp))
+            w.heal += min(amount, mends(f))
         elif o["op"] == "special" and o["handler"] in _ABILITY_WORTH:
             _ABILITY_WORTH[o["handler"]](b, f, w)
     return w
@@ -513,7 +518,7 @@ def _preserve_life(b, f, w: Worth) -> None:
     pool = 5 * f.char.level  # (as the handler shares it: the worst off first, nobody past half)
     near = [x for x in b.team(f.team) if (x.active or x.state == "down") and b.feet(f, x) <= 30]
     for x in sorted(near, key=lambda x: x.hp / max(1, x.max_hp)):
-        give = min(max(0, x.max_hp // 2 - x.hp), pool)
+        give = 0 if simulacrum.snow(x) else min(max(0, x.max_hp // 2 - x.hp), pool)
         pool -= give
         w.heal += give + (10.0 if give and x.state == "down" else 0.0)
 
@@ -523,7 +528,7 @@ def _battle_medic(b, f, w: Worth) -> None:
     if near:
         x = min(near, key=lambda x: x.hp / max(1, x.max_hp))
         die = (b.t.classes[x.char.cls]["hit_die"] if x.char is not None else 8) / 2 + 0.5
-        w.heal += min(die + proficiency_of(f), max(0, x.max_hp - x.hp)) + (10.0 if x.state == "down" else 0.0)
+        w.heal += min(die + proficiency_of(f), mends(x)) + (10.0 if x.state == "down" and mends(x) else 0.0)
 
 
 def proficiency_of(f) -> int:
@@ -534,7 +539,7 @@ def proficiency_of(f) -> int:
 
 def _speedy_recovery(b, f, w: Worth) -> None:
     die = (b.t.classes[f.char.cls]["hit_die"] if f.char is not None else 8) / 2 + 0.5
-    w.heal += min(die, max(0, f.max_hp - f.hp))
+    w.heal += min(die, mends(f))
 
 
 def _chef_treat(b, f, w: Worth) -> None:
@@ -547,7 +552,7 @@ def _telekinetic_shove(b, f, w: Worth) -> None:
 
 def _recover_vitality(b, f, w: Worth) -> None:
     left = f.char.uses.get("vitality_dice", 0) if f.char is not None else 0
-    want = max(0, f.max_hp - f.hp)
+    want = mends(f)
     w.heal += min(want, 5.5 * min(left, -(-want * 2 // 11)))
 
 
@@ -722,7 +727,7 @@ def _zone_worth(b, f, o: dict, caught: list, dc: int, up: int, w: Worth) -> None
     if o.get("heal"):
         heal = avg(spellrules.scaled(o["heal"], o.get("heal_up", ""), up)) + (_caster_mod(b, f) if o.get("add_mod") else 0)
         for x in [y for y in caught if y.team == f.team]:
-            w.heal += min(max(0, x.max_hp - x.hp), heal) * 1.5  # (now, and as they stay in its light)
+            w.heal += min(mends(x), heal) * 1.5  # (now, and as they stay in its light)
         friends = []  # (its light heals them rather than hurting them)
     for x in friends:
         if dmg:
@@ -877,7 +882,7 @@ def _again_worth(b, f, spell: dict, up: int) -> float:
     if not any(b.feet(f, e) <= 30 for e in b.enemies_of(f) if e.standing):
         return 0.0
     dmg = 0.0
-    hurt = sum(min(x.max_hp - x.hp, 10) for x in b.team(f.team) if x.active or x.state == "down")
+    hurt = sum(min(mends(x), 10) for x in b.team(f.team) if x.active or x.state == "down")
     for o in spellrules.ops({"effects": spell["again"].get("effects", ())}):
         for d, t, more in spellrules.damage_parts(o):
             dmg += avg(spellrules.scaled(d, more, up)) * (0.6 if o["op"] in ("attack", "save") else 1.0)

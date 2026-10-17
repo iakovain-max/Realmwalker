@@ -108,8 +108,8 @@ def wear_from_battle(game, battle) -> list[str]:
 
     for f in battle.side(PARTY):
         c = f.char
-        if c is None:
-            continue
+        if c is None or f.bond is not None:
+            continue  # (a Simulacrum's snow gear is not the party's)
         main = c.equipped_item("main_hand")
         if main is not None and items.category(main) == "weapon":
             worn(main, float(spec.get("weapon", 0)), gave.get(f.id, 0))

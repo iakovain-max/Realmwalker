@@ -17,7 +17,9 @@ Codex coverage: 2,951 entries from the three books, every one assigned to an exp
 Assumptions waiting for Anton:
 - Expansion 3 G.3 (Simulacrum): the copy's gear is snow in the likeness of what was worn and held, without its
   magic; no spell heals it; a long rest's repair spends at most half of the maker's coin; a beast's or a prisoner's
-  copy follows the party into towns (the raised dead do not); commands are the battle's (played as a party member).
+  copy follows the party into towns (the raised dead do not); commands are the battle's (played as a party member);
+  no snow on the ground is needed; it acts right after its maker; its once-a-rest uses are those of the casting and
+  never come back; the repair is paid from the maker's own coin.
 - The Player2 AI writer is removed (tagged `before-ai-removal`); its text is replaced everywhere by the game's own
   words, strengthened where they were thin.
 - Letters mode is gone; a PC that cannot draw the pictures is told so plainly.

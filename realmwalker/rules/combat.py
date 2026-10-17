@@ -4227,7 +4227,8 @@ class Battle:
         if target == "dead_ally":
             return [x for x in self.team(f.team) if x.state == "dead" and 0 <= x.died_round and self.round - x.died_round <= 10
                     and near(x)
-                    and (x.char is not None or x.creature is not None and x.bond is None)]  # (a foe's own: G.1)
+                    and (x.char is not None or x.creature is not None and x.bond is None)
+                    and not simulacrum.snow(x)]  # (a foe's own: G.1; melted snow is gone: G.3)
         return []
 
     def spell_points(self, f: Fighter, sid: str) -> set[tuple[int, int]]:
