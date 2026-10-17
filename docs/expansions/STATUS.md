@@ -498,7 +498,7 @@ event, `Battle.foretold`; `party_foretell` outside fights; Expert Divination's `
 `spells.free_cast` "phantasm" with `bond["spectral"]`; Illusory Reality's `realisable`/`unreal`). Images are Zone kind
 "illusion" (`seen`, `real`, `slotted`): `Battle.view(f)` gives each viewer a field without the images it knows
 (`grid.Field.without`), `Battle.do_search` studies them, `_zones_on` sees through on entering; the Auto's worth is
-`estimates.image_worth` (`grid.Field.thicker`). tests/test_schools.py.
+`estimates.image_worth` (lines worked out once a turn). tests/test_schools.py.
 The way of Part D (the magic arms): book makers in data/treasure.json with kernel traits in
 `rules/engine/handlers/arms.py` (CLAUDE.md "The magic arms"); tests/test_magic_arms.py.
 The way of Part C (poisons and the people of the shadows): a poison is an item with a `poison` record (schema POISON:

@@ -199,7 +199,7 @@ def _monster_turn(b: Battle, f: Fighter) -> None:
     if (not _targets(b, f) and f.action > 0 and any(e.hidden for e in b.enemies_of(f) if e.standing)) or (
             f.action > 0 and f.mod("int") >= -1 and b.illusions_hiding(f) and _none_in_sight(b, f)):
         b.do_search(f)  # nobody in sight, but someone is hiding here (or an image may be hiding them)
-        if b.current is not f or b.outcome is not None:
+        if b.current is not f or b.outcome is not None or f.action <= 0:
             return
     if f.has_trait("cunning_action") and f.creature is not None:
         _cunning_first(b, f, opts)  # (an assassin or a spy: out of sight before the blow, or a run to close in)
@@ -1167,7 +1167,7 @@ def _party_turn(b: Battle, f: Fighter) -> None:
         return
     if f.action > 0 and b.illusions_hiding(f) and _none_in_sight(b, f):
         b.do_search(f)  # (nobody to strike in sight, and an image that may be hiding them: study it)
-        if b.current is not f or b.outcome is not None:
+        if b.current is not f or b.outcome is not None or f.action <= 0:
             return
     if f.action > 0 and _use_power(b, f):
         if b.current is f and b.outcome is None:

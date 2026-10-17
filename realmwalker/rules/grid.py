@@ -282,20 +282,6 @@ class Field:
         v._refresh()
         return v
 
-    def thicker(self, cells) -> "Field":
-        """The field with these squares hidden as fog hides them (what an image laid there would do: the Auto's
-        estimate)."""
-        import copy
-
-        v = copy.copy(self)
-        opaque = self.zone_opaque.copy()
-        for x, y in cells:
-            if self.in_bounds(x, y):
-                opaque[x, y] = True
-        v.zone_opaque = opaque
-        v._refresh()
-        return v
-
     # ------------------------------------------------------------------ sight and cover
     def line_clear(self, x0: float, y0: float, x1: float, y1: float, skip: set | None = None, *,
                    terrain_only: bool = False) -> bool:
