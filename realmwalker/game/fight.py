@@ -207,6 +207,9 @@ def finish_battle(game) -> Aftermath:
     from realmwalker.game import gods
 
     after.notes += gods.after_battle(game, battle)  # (a god answered the dying: the world remembers)
+    from realmwalker.rules.engine.handlers import domains
+
+    domains.one_blessing(list(game.party) + list(getattr(game, "waiting", None) or ()))  # (the Trickster's: one)
     _settle_townsfolk(game, battle, result)
     if game.party[1:]:
         from realmwalker.game.companions import react

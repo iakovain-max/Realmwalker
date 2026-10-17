@@ -437,3 +437,53 @@ def test_the_new_statuses_have_cards_and_pictures(tables):
     assert {"double", "tricksters_blessing", "corona"} <= ids
     for s in describe.statuses(me, b):
         assert atlas.has(s.card.icon), s.card.icon
+
+
+# ---------------------------------------------------------------------------- the fresh review's cases
+def test_a_word_of_power_on_the_hale_and_one_miracle_a_fight(tables):
+    c = priest(tables, 3, "light")
+    friend = hero(tables, "fighter", seed=40, level=3)
+    b = fight(tables, [c, friend], "bandit", seed=40)
+    me = next(f for f in b.side("party") if f.char is c)
+    fr = next(f for f in b.side("party") if f.char is friend)
+    foe = b.side("foe")[0]
+    sure = {"chance": 1.0, "god": "Solun", "short": "Solun", "domains": ["trickery"]}
+    b.prayers = {me.id: dict(sure), fr.id: dict(sure)}
+    full = me.hp
+    b._kill(me, "slain by a word of power", foe)  # (struck down at full health)
+    assert me.state == "fighting" and me.hp == full  # (the god gives back no less than they had)
+    b._kill(fr, "slain by a word of power", foe)
+    assert fr.state == "dead"  # (once a fight)
+
+
+def test_dust_waits_for_the_god(tables):
+    from realmwalker.rules.engine import effects
+
+    c = priest(tables, 3, "light")
+    b = fight(tables, c, "bandit", seed=41)
+    me, (foe,) = me_and(b)
+    b.prayers = {me.id: {"chance": 1.0, "god": "Solun", "short": "Solun", "domains": ["life"]}}
+    effects.dust(b, me, foe)
+    assert me.state == "fighting" and not me.__dict__.get("dust")
+
+
+def test_no_flare_when_advantage_and_disadvantage_already_cancel(tables):
+    c = priest(tables, 3, "light")
+    b = fight(tables, c, "bandit", seed=42)
+    me, (foe,) = me_and(b)
+    me.hp = me.max_hp // 3
+    opt = next(o for o in b.attack_options(foe) if o.available)
+    dis, why = domains.warding_flare(b, foe, me, opt, True, True)
+    assert dis and why is None and c.uses["warding_flare"] == 3 and me.reaction
+
+
+def test_a_long_rest_ends_the_blessing_with_no_priest_and_the_newest_holds(game, tables):
+    a, bb = game.party[0], hero(tables, "rogue", seed=43)
+    game.party[:] = [a, bb]
+    domains.bless([a], a, 5)
+    domains.bless_after_rest(game)
+    assert not domains.blessed(a)
+    domains.bless([a], a, 5)
+    domains.bless([bb], bb, 9)  # (laid in a fight while the other waited elsewhere)
+    domains.one_blessing(game.party)
+    assert domains.blessed(bb) and not domains.blessed(a)

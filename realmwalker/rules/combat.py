@@ -3980,11 +3980,13 @@ class Battle:
     def _turn_to_dust(self, att: Fighter, f: Fighter) -> None:
         """Brought to 0 hit points by a mummy's fist: dead at once, and nothing left but dust (only True Resurrection
         or a wish reaches them: game/revival.problem)."""
+        self._kill(f, "the mummy's rot", killer=att)
+        if f.state != "dead":
+            return  # (their god answered: rules/miracles.py)
         if f.char is not None:
             from realmwalker.rules.servants import DUST
 
             f.char.effects[DUST] = 1.0
-        self._kill(f, "the mummy's rot", killer=att)
         f.__dict__["risen"] = True  # (no body to raise or to speak with)
         self.say(f"{f.the_name[:1].upper() + f.the_name[1:]} withers to grey dust in a breath.", "danger")
 

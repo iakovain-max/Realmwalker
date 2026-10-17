@@ -2,8 +2,9 @@
 Part B). The game's side is game/gods.py: who is devout and how likely their god is to hear them, worked out as a
 fight begins (`Battle.prayers`: fighter id -> {chance, faith, god, short, domains}), and what the world remembers
 after. This is the fight's side: `answer` is asked by `Battle._kill` when a devout character is about to die. A small
-chance; once a fight, and the game keeps it to once in a long while. The god does not win the fight (the DMG: never
-eliminate risk and danger): the dying one comes back to their feet hurt, with one gift chosen by the god's domain -
+chance; once a fight (for one of the party), and the game keeps it to once in a long while. The god does not win
+the fight (the DMG: never eliminate risk and danger): the dying one comes back to their feet hurt, with one gift
+chosen by the god's domain -
 
     life      healing: half their hit points
     light     a blinding light: a quarter of their hit points, foes within 30 feet blinded (a Constitution save)
@@ -21,7 +22,7 @@ GOD_DC = 15  # (a god's light, against a foe's Constitution)
 def answer(b, f) -> bool:
     """`f` is about to die: their god may answer. True if the god did (they live)."""
     p = (getattr(b, "prayers", None) or {}).get(f.id)
-    if p is None or p.get("answered") or f.char is None or f.bond is not None or f.state == "dead":
+    if p is None or p.get("answered") or b.answered or f.char is None or f.bond is not None or f.state == "dead":
         return False
     p["tried"] = True
     if b.rng.random() >= float(p.get("chance", 0.0)):
@@ -53,7 +54,7 @@ def answer(b, f) -> bool:
 
 
 def _rise(b, f, hp: int) -> None:
-    f.hp = max(1, min(f.max_hp, hp))
+    f.hp = max(f.hp, 1, min(f.max_hp, hp))  # (never less than they had: a word of power can strike the hale)
     f.state = "fighting"
     f.stable = False
     f.death_saves = [0, 0]

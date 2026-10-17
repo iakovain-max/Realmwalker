@@ -510,6 +510,8 @@ def dust(b, x, by) -> None:
     """Brought to nothing by a disintegrating ray: dead at once, and no spell in the game brings it back."""
     if x.state != "dead":
         b._kill(x, "turned to dust", by)
+        if x.state != "dead":
+            return  # (their god answered: rules/miracles.py)
     x.__dict__["dust"] = True
     b._event("dust", who=x.id)
     b.say(f"{x.the_name} crumbles into fine grey dust.", "danger" if x.side == "party" else "good")

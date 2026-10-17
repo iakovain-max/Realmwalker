@@ -29,9 +29,9 @@ Assumptions waiting for Anton:
   by the battle's judgement (asked under the Reactions setting "all"): a blow likely to land at a friend in a bad
   way, a heavy one, or any while uses are to spare; the Corona's "any spell that deals Fire or Radiant damage" is the
   cleric's own; the corona and the double are not dismissed early; the double is made or moved beside the foe it is
-  aimed at (the battle picks the square, flanking first), and spells with a range of 10 feet or more that do not move
+  aimed at, never elsewhere (the battle picks the square, flanking first), and spells aimed at a creature or a point with a range of 10 feet or more that do not move
   their caster go out from its square when the target is beyond the cleric's own reach (still seen with the cleric's
-  own eyes); the Blessing of the Trickster is laid on the party's worst sneak at each long rest (a Magic action moves
+  own eyes; cones and lines go out from the cleric; a foe sees the double unless Blinded); the Blessing of the Trickster is laid on the party's worst sneak at each long rest (a Magic action moves
   it in a fight) and read by hiding in a fight, creeping in towns and slipping past a band; each faith names its
   domains by the feel of its god (data/factions.json), a cleric takes the first by default (War for a fighting
   priest where the god has it); the gods answer only the dying devout in fights (2% and up to 12%, a year's quiet

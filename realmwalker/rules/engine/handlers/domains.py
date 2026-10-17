@@ -40,8 +40,8 @@ def warding_flare(b, att, target, opt, adv: bool, dis: bool) -> tuple[bool, str 
     disadvantage. Returns (disadvantage now, why)."""
     from realmwalker.rules.engine import query
 
-    if dis and not adv:
-        return dis, None  # (already at a disadvantage: a flare would add nothing)
+    if dis:
+        return dis, None  # (already at a disadvantage, or cancelled out by an advantage: a flare would add nothing)
     for x in b.fighters:
         if x.char is None or x.team == att.team or x.team != target.team or not x.has_trait("warding_flare"):
             continue
@@ -147,13 +147,15 @@ def corona_against(b, f) -> str | None:
     whose Corona of Light shines, and the save is against that cleric's Radiance of the Dawn or a spell of theirs that
     deals fire or radiant damage."""
     caster = b.__dict__.get("_dawn")
+    dawn = caster is not None
     if caster is None:
         caster = b.__dict__.get("_casting")
-        spell = b.__dict__.get("_casting_spell")
-        if caster is None or spell is None or not _fiery(spell):
-            return None
-    if not hasattr(caster, "buffs") or caster.team == f.team or not corona_of(caster):
+    if caster is None or not getattr(caster, "buffs", None) or caster.team == f.team or not corona_of(caster):
         return None
+    if not dawn:
+        spell = b.__dict__.get("_casting_spell")
+        if spell is None or not _fiery(spell):
+            return None
     if b.feet(caster, f) > 60:
         return None
     return "the corona's glare"
@@ -173,24 +175,37 @@ def blessed(char) -> bool:
     return char is not None and bool((char.effects or {}).get(BLESSING))
 
 
-def bless(party, who) -> None:
-    """The blessing moves to `who` (it ends on anyone else: one at a time)."""
+def bless(party, who, stamp: int = 1) -> None:
+    """The blessing moves to `who` (it ends on anyone else: one at a time). `stamp` says when it was laid (the
+    newest wins where the party is gathered again: `one_blessing`)."""
     for c in party:
         if c is not None and c.effects:
             c.effects.pop(BLESSING, None)
     if who is not None:
-        who.effects[BLESSING] = 1
+        who.effects[BLESSING] = max(1, int(stamp))
+
+
+def one_blessing(people) -> None:
+    """Only the newest blessing holds (one laid in a fight while a companion waited elsewhere with the old one)."""
+    have = [c for c in people if c is not None and (c.effects or {}).get(BLESSING)]
+    if len(have) > 1:
+        keep = max(have, key=lambda c: c.effects[BLESSING])
+        for c in have:
+            if c is not keep:
+                c.effects.pop(BLESSING, None)
 
 
 def bless_after_rest(game) -> list[str]:
     """A Trickery cleric rising from a long rest blesses the party's worst sneak (the last blessing ended with the
     rest). Returns what to say."""
+    everyone = list(game.party) + list(getattr(game, "waiting", None) or ())
     priests = [c for c in game.party if c.alive and "blessing_of_the_trickster" in c.features]
     if not priests:
+        bless(everyone, None)  # (the long rest ends it, priest or none)
         return []
     alive = [c for c in game.party if c.alive]
     worst = min(alive, key=lambda c: (game.sheet(c).skill_bonus("stealth"), c is not priests[0]))
-    bless(game.party, worst)
+    bless(everyone, worst, int(game.world.time) * 100)
     who = "themselves" if worst is priests[0] else worst.name.split()[0]
     return [f"{priests[0].name.split()[0]} lays the Trickster's blessing on {who}: soft feet until the next long rest."]
 
@@ -207,7 +222,8 @@ def blessing_of_the_trickster(c, o, victim) -> None:
     t = victim or c.target or f
     if t.char is None:
         return
-    bless([x.char for x in b.fighters if x.char is not None and x.team == f.team], t.char)
+    bless([x.char for x in b.fighters if x.char is not None and x.team == f.team], t.char,
+          int(b.now) * 100 + b.round)
     b._event("cast", by=f.id, to=t.id, spell="blessing_of_the_trickster", effect="buff", dtype="", area=list(t.cells),
              point=None, shape="", look="aura")
     b.say(f"{f.the_name} touches {'their own brow' if t is f else t.the_name} with the Trickster's blessing: "
@@ -281,7 +297,7 @@ def invoke_duplicity(c, o, victim) -> None:
         if f.char is not None:
             f.char.uses["channel_divinity"] = f.char.uses.get("channel_divinity", 0) + 1
         return
-    tok = Token(b._zone_id(), DOUBLE, spot[0], spot[1], f.id, rounds=10, spell="invoke_duplicity")
+    tok = Token(b._zone_id(), DOUBLE, spot[0], spot[1], f.id, rounds=9, spell="invoke_duplicity")  # (a minute)
     b.tokens.append(tok)
     b._event("token", id=tok.id, what=tok.kind, x=tok.x, y=tok.y, owner=f.id)
     b.say(f"A second {f.name.split(',')[0]} stands beside {e.the_name}, smiling the same smile.", "magic")
