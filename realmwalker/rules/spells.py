@@ -573,6 +573,8 @@ def ops(spell: dict) -> list[dict]:
             todo.extend(inner)
         for inner in o.get("choices", ()):  # (Prismatic Spray: each ray)
             todo.extend(inner)
+        for st in o.get("stages", ()):  # (Storm of Vengeance: each turn of the storm)
+            todo.extend(st.get("ops", ()))
     return out
 
 

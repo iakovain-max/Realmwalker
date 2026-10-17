@@ -232,6 +232,8 @@ def save_roll(b, f, ability: str, *, bonus: int = 0, against: tuple = ()) -> Sav
             out.roll.add("advantage", "warded")  # (Aura of Purity)
         if f.buff_value("save_adv_spells") and b is not None and b.__dict__.get("_casting") is not None:
             out.roll.add("advantage", "against a spell")  # (Circle of Power)
+        if f.buff_value("foresight"):
+            out.roll.add("advantage", "foresight")
         if ability == "dex" and f.buff_value("sluggish"):
             out.bonus -= 2  # (Slow)
         if ability == "dex" and f.buff_value("dancing"):
@@ -287,6 +289,8 @@ def defences(f, dtype: str) -> str:
     """What a creature has against a type of damage: "immune", "resist", "vulnerable" or ""."""
     if f.creature and dtype in f.cdef.get("immune", []):
         return "immune"
+    if f.buffs and any(dtype in (bf.get("immune_damage") or ()) for bf in f.buffs):
+        return "immune"  # (Mind Blank)
     if f.creature and dtype in f.cdef.get("vulnerable", []):
         return "vulnerable"
     weak = tr.values(f, "vulnerable", flat=True)

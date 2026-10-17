@@ -122,6 +122,13 @@ class Zone:
     held: str = ""  # the damage a held creature takes on a failed save each turn, when it differs (Conjure Elemental)
     frees: bool = False  # a held creature's later save frees it (Conjure Elemental; tentacles need an escape)
     heal: str = ""  # friends of its owner in it are healed this much (once a turn) instead of hurt (Conjure Celestial)
+    # The fourth wave's (Expansion 3 D.4):
+    follows: bool = False  # it moves with its owner, `radius` squares round them (Antimagic Field)
+    breaks: bool = False  # a failed save also breaks the creature's concentration (Earthquake)
+    lasts: int = 0  # a failure's condition lasts this many rounds (Prismatic Wall's glare: blinded for a minute)
+    stage: int = 0  # the owner's turns it has lasted (Storm of Vengeance)
+    stages: list = field(default_factory=list)  # [{ops, count, rough, dark}, ...]: what each later turn brings
+    cast: dict = field(default_factory=dict)  # the numbers it was cast with (dc, mod, level, up): for its stages
 
     @property
     def difficult(self) -> bool:
@@ -156,6 +163,8 @@ class Token:
     spell: str = ""
 
 
+TOUCHES = ("attack", "damage", "condition", "prone", "save", "heal", "push", "vanish", "buff", "dart", "dust", "down",
+           "dead", "teleport")  # (events that reach another creature: they end a Time Stop)
 EXTRAPLANAR = ("aberration", "celestial", "elemental", "fey", "fiend")  # (Banishment sends them home)
 GROUND_WORDS = {  # what the catalogue's ground does to whoever is caught in it (Battle._ground)
     "tentacles": "Black tentacles writhe up around {T}.",
@@ -171,6 +180,9 @@ GROUND_WORDS = {  # what the catalogue's ground does to whoever is caught in it 
     "blades": "Whirling blades of force cut at {T}.",
     "thorns": "Needle-sharp thorns tear at {T}.",
     "celestial": "Searing light from above falls on {T}.",
+    "quake": "The ground heaves and bucks under {T}.",
+    "embers": "Burning embers and smoke swirl round {T}.",
+    "glare": "The wall's many colours blaze in {T}'s eyes.",
 }
 
 
@@ -628,6 +640,10 @@ class Battle:
 
     def _event(self, kind: str, **data) -> None:
         self.events.append({"kind": kind, **data})
+        if kind in TOUCHES and self.__dict__.get("_time_stop") is not None:
+            other = data.get("to") if "to" in data else data.get("who")
+            if other is not None and other != self._time_stop:
+                self._time_broken = True
         if kind in ACTIVITY:
             self.active_round = self.round
 
@@ -921,6 +937,10 @@ class Battle:
             z.rounds -= 1
             if z.rounds < 0:
                 self._remove_zone(z)
+        for z in [z for z in self.zones if z.owner == f.id and z.stages]:
+            self._storm_turn(f, z)  # (Storm of Vengeance: what each later turn brings)
+            if self.outcome is not None:
+                return
         for tok in [t for t in self.tokens if t.owner == f.id and t.rounds >= 0]:
             tok.rounds -= 1
             if tok.rounds < 0:
@@ -930,6 +950,8 @@ class Battle:
             z.struck.discard(f.id)
         if f.state == "away" and (f.away or {}).get("why") == "blink":
             self.bring_back(f)  # (Blink: back from the Ethereal Plane at the start of its turn)
+        if f.state == "away" and (f.away or {}).get("escape"):
+            self._maze_turn(f)  # (Maze: its turn goes on looking for the way out)
         self._follow_auras()
         if f.state == "down":
             if not f.stable:
@@ -1073,6 +1095,9 @@ class Battle:
             return
         self._legendary_window(f)
         if self.outcome is not None:
+            return
+        if self._more_time(f):  # (Time Stop: another turn, and nobody else moves)
+            self.turn_started = False
             return
         self.turn += 1
         if self.turn >= len(self.order):
@@ -1348,6 +1373,8 @@ class Battle:
         ability = self.t.rules["skills"].get(skill, {}).get("ability", skill)
         ctx = trs.Ctx(self, f, ability=ability, skill=skill)
         modes = {mode for mode, _ in trs.modifiers(f, "check", ctx)}
+        if f.buff_value("foresight"):
+            modes.add("advantage")  # (Foresight: every D20 Test)
         if ability in ("str", "dex") and query.untrained_armour(f):
             modes.add("disadvantage")
         adv, dis = "advantage" in modes, "disadvantage" in modes
@@ -3383,6 +3410,8 @@ class Battle:
         beside a slotted spell."""
         if self.antimagic(f.cells):
             return False, "magic does not work here"
+        if f.buff_value("befuddled") and not spell.get("ability") and "item" not in spell.get("classes", ()):
+            return False, "befuddled: no spell will come (Befuddlement)"
         if "V" in spell.get("components", ()) and self.silenced(f):
             return False, "no sound can be made here (Silence)"
         if cast_kind(f, spell) == "bonus":
@@ -3482,8 +3511,11 @@ class Battle:
                                    origin=f.space, toward=point) + list(f.cells) if area["shape"] in ("sphere", "radius") else []
         if point is None:
             return []
-        return self.field.area(area["shape"], int(area["size"]), origin=f.space, toward=point,
-                               from_self=spell["target"] == "direction")
+        cells = self.field.area(area["shape"], int(area["size"]), origin=f.space, toward=point,
+                                from_self=spell["target"] == "direction")
+        if spell.get("spheres"):  # (Meteor Swarm: more spheres, each creature caught once)
+            cells = self._more_spheres(f, spell, cells, int(spell["spheres"]) - 1)
+        return cells
 
     def sculpted(self, f: Fighter, sid: str, victims: list[Fighter], level: int | None = None) -> set[int]:
         """An evoker's Sculpt Spells: up to one plus the spell's level of their friends caught in the area are left
@@ -3872,6 +3904,94 @@ class Battle:
                  f"The walls of force around {f.the_name} are gone." if why == "cage" else
                  f"{f.the_name} is back.", "magic")
 
+    def _maze_turn(self, f: Fighter) -> None:
+        """Maze (2024): lost in the labyrinth, it spends its turn on a Study action to find the way out, a DC 20
+        Intelligence (Investigation) check; on a success it escapes and the spell ends."""
+        esc = (f.away or {}).get("escape") or {}
+        if not self.check(f, esc.get("skill", "investigation"), int(esc.get("dc", 20)), "The way out of the maze"):
+            self.say(f"Somewhere in its maze, {f.the_name} takes another wrong turn.", "good" if f.side == FOE else "info")
+            return
+        by = next((x for x in self.fighters if x.id == (f.away or {}).get("by")), None)
+        self.say(f"{f.the_name} finds the way out of the maze.", "danger" if f.side == FOE else "good")
+        if by is not None and by.concentration is not None and by.concentration.get("spell") == f.away.get("spell"):
+            self._end_concentration(by, quiet=True)
+        else:
+            self.bring_back(f)
+        f.action = 0  # (the Study action that found the way)
+
+    def _more_time(self, f: Fighter) -> bool:
+        """Time Stop (2024): 1d4 + 1 turns in a row for the caster; it ends when an action or an effect of theirs
+        reaches another creature (Battle._event), or when they fall. True when they take another turn now."""
+        bf = next((bf for bf in f.buffs if bf.get("time_stop") is not None), None)
+        if bf is None:
+            return False
+        broken = self.__dict__.pop("_time_broken", False)
+        if broken or not f.active or int(bf["time_stop"]) <= 0:
+            f.buffs.remove(bf)
+            self._time_stop = None
+            self.say("Time flows again." if not broken else
+                     f"{f.the_name} has touched the world, and time flows again.", "magic")
+            self._event("time", who=f.id, stopped=False)
+            return False
+        bf["time_stop"] = int(bf["time_stop"]) - 1
+        self._time_stop = f.id
+        self.say(f"Time stands still: {f.the_name} moves alone.", "magic")
+        return True
+
+    def _storm_turn(self, owner: Fighter, z: Zone) -> None:
+        """Storm of Vengeance: at the start of each of the caster's later turns the storm brings its next stage
+        (the last one again and again): its ops on each creature under it it does not spare, `count` of them at most
+        (six bolts of lightning); `rough` and `dark` from then on."""
+        from realmwalker.rules.engine import effects
+
+        st = z.stages[min(z.stage, len(z.stages) - 1)]
+        z.stage += 1
+        if st.get("say"):
+            self.say(st["say"], "magic")
+        if st.get("rough") or st.get("dark"):
+            z.rough = z.rough or bool(st.get("rough"))
+            z.dark = z.dark or bool(st.get("dark"))
+            self._sync_zones()
+        spell = self.t.spells.get(z.spell, {"name": "the storm", "level": 0, "target": "point"})
+        under = [x for x in self.in_area(sorted(z.cells), "enemies" if z.friends_safe else "all", owner)
+                 if x.active]
+        if st.get("count"):
+            self.rng.shuffle(under)
+            under = under[:int(st["count"])]
+        c = effects.Cast(self, owner, z.spell, spell, None, z.centre, sorted(z.cells), int(z.cast.get("up", 0)),
+                         int(z.cast.get("mod", 0)), int(z.cast.get("dc", z.dc)), 0, 1,
+                         int(z.cast.get("level", spell.get("level", 0))), slotted=False)
+        before = self.__dict__.get("_casting")
+        self._casting = owner
+        try:
+            for x in under:
+                if x.active:
+                    effects.run(c, st.get("ops", ()), x)
+        finally:
+            self._casting = before
+        self._check_end()
+
+    def _more_spheres(self, f: Fighter, spell: dict, cells: list, more: int) -> list:
+        """Meteor Swarm: the other spheres fall where they catch the most foes not yet caught and the fewest friends
+        (the battle's judgement), each creature counted once."""
+        area = spell["area"]
+        have = set(cells)
+        for _ in range(max(0, more)):
+            caught = {x.id for x in self.in_area(sorted(have), "all", f)}
+            best, best_score = None, 0.0
+            for e in self.enemies_of(f):
+                if e.id in caught or not e.active:
+                    continue
+                sq = self.field.area(area["shape"], int(area["size"]), origin=f.space, toward=(e.x, e.y))
+                new = [x for x in self.in_area(sq, "all", f) if x.id not in caught]
+                score = sum(1.0 if x.team != f.team else -2.5 for x in new)
+                if score > best_score:
+                    best, best_score = sq, score
+            if best is None:
+                break
+            have |= set(best)
+        return sorted(have)
+
     # ------------------------------------------------------------------ zones
     def _zone_id(self) -> int:
         self._next_zone += 1
@@ -3925,7 +4045,7 @@ class Battle:
         Aura of Life, Circle of Power) is shared with those now within it (marks.share_auras)."""
         marks.share_auras(self)
         for z in self.zones:
-            if z.kind != "guardians" or z.owner is None:
+            if not (z.kind == "guardians" or z.follows) or z.owner is None:
                 continue
             o = next((x for x in self.fighters if x.id == z.owner), None)
             if o is None or o.state not in ("fighting", "down"):
@@ -3938,6 +4058,8 @@ class Battle:
                         cells_.add((x, y))
             if cells_ != z.cells:
                 z.cells = cells_
+                if z.follows:
+                    self._sync_zones()
                 self._event("zone_move", id=z.id, cells=sorted(cells_))
 
     def _ignite(self, f: Fighter, area: list[tuple[int, int]]) -> None:
@@ -4045,6 +4167,8 @@ class Battle:
             f.move_left = 0
             self._event("condition", who=f.id, cond="restrained")
             return True
+        if z.breaks and f.concentration is not None:  # (Earthquake: thrown down, the spell held is lost)
+            self._end_concentration(f, quiet=False, why="is shaken loose")
         if z.fail == "prone":
             if durations.give(self, f, "prone"):
                 self._event("prone", who=f.id)
@@ -4056,6 +4180,10 @@ class Battle:
                 if durations.give(self, f, "incapacitated", ends=durations.until(self, f, "turn_end")):
                     f.action = f.bonus = 0  # (on entering too: no action or bonus action for the rest of the turn)
                 self.say(f"{f.the_name} retches, helpless.", "good" if f.side == FOE else "danger")
+            return False
+        if z.lasts:  # (Prismatic Wall's glare: blinded for a minute)
+            if durations.give(self, f, z.fail, rounds=z.lasts):
+                self._event("condition", who=f.id, cond=z.fail)
             return False
         if durations.give(self, f, z.fail, ends=durations.until(self, f, "turn_end")):
             self._event("condition", who=f.id, cond=z.fail)

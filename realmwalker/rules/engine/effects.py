@@ -73,6 +73,23 @@ The third wave (D.3):
                (Prismatic Spray's rays)
     summon     on_hit [ops]: what the conjured thing's hit brings besides its damage (Conjure Fey's fear)
 
+The fourth wave (D.4):
+    spell      `spheres` (with an area): that many spheres, the others laid by the battle where they catch the most
+               foes and the fewest friends, each creature caught once (Meteor Swarm: Battle._more_spheres)
+    heal       full (every hit point it lacks: Power Word Heal); pool (hit points shared among the friends in
+               range, the most hurt first: Mass Heal, 700); restore [conditions] ended on each one healed
+    zone       follow (it moves with the caster, the area's size round them: Antimagic Field); breaks (a failed
+               save also breaks concentration: Earthquake, "quake"); "embers" (Incendiary Cloud); "prismatic" (a
+               wall like stone) with near (feet: a ring of "glare" beside it, foes only: near_save, near_fail and
+               lasts, the rounds the failure's condition lasts); "storm" with stages [{ops, count, say, rough,
+               dark}, ...]: at the start of each of the caster's later turns the next stage (the last again and
+               again) runs its ops on each creature under it, `count` of them at most (Storm of Vengeance:
+               Battle._storm_turn)
+    banish     escape {skill, dc}: each of its turns goes on a check, and a success brings it back and ends the
+               spell (Maze: Battle._maze_turn)
+    time_stop  dice ("1d4+1"): the caster takes that many more turns in a row; it ends when an action or an
+               effect of theirs reaches another creature (Battle._more_time, combat.TOUCHES)
+
 Unknown ops are data errors at start-up (rules/engine/check.py).
 """
 
@@ -87,9 +104,10 @@ from realmwalker.rules import spells as spellrules
 from realmwalker.rules.engine import conditions, durations, events, statblocks
 
 OPS: dict[str, Callable] = {}
-WALLS = ("stone", "force", "icewall")  # zones that rise as walls on the free squares of their area
+WALLS = ("stone", "force", "icewall", "prismatic")  # zones that rise as walls on the free squares of their area
 GROUND = ("tentacles", "cloud", "stench", "hunger", "insects", "sleet", "radiance", "spirits", "elemental", "blades",
-          "thorns", "celestial")  # zones whose harm is Battle._ground's: a save, and what a failure brings
+          "thorns", "celestial", "quake", "embers", "glare")  # zones whose harm is Battle._ground's: a save, and
+# what a failure brings
 ENERGY = ("acid", "cold", "fire", "lightning", "thunder")  # (Protection from Energy's choice)
 SPECIAL: dict[str, Callable] = {}  # what an op {"op": "special", "handler": id} calls (rules/engine/handlers/)
 
@@ -646,11 +664,29 @@ def _heal(c: Cast, o: dict, victim) -> None:
         targets = sorted(near, key=lambda x: x.hp / max(1, x.max_hp))[: int(o.get("count", 6))]
     else:
         targets = [c.target]
+    pool = int(o["pool"]) if o.get("pool") else None
+    if pool is not None and spell["target"] == "all_allies":  # (Mass Heal: everyone in range may share it)
+        reach = b.spell_range(spell)
+        targets = sorted([x for x in b.team(f.team) if (x.active or x.state == "down") and b.feet(f, x) <= reach],
+                         key=lambda x: (x.state != "down", x.hp / max(1, x.max_hp)))
     for x in targets:
         if x is None:
             continue
         if x.no_heal:
             b.say(f"The magic finds no hold in {x.the_name}.", "warn")
+            continue
+        if o.get("full") or pool is not None:  # (Power Word Heal: all it lacks; Mass Heal: from the pool)
+            need = max(0, x.max_hp - x.hp)
+            amount = need if pool is None else min(need, pool)
+            if pool is not None:
+                if amount <= 0 and not any(cid in x.conditions for cid in o.get("restore", ())):
+                    continue
+                pool -= amount
+            if amount > 0:
+                b._heal(x, amount)
+            _restored(c, x, o.get("restore", ()))
+            if pool is not None and pool <= 0:
+                break
             continue
         rolled = dice.roll(expr(c, o["dice"], o.get("up", "")), b.rng)
         if x.buff_value("heal_max"):  # (Beacon of Hope: the most the dice can give)
@@ -666,6 +702,7 @@ def _heal(c: Cast, o: dict, victim) -> None:
             amount = events.emit(b, "heal_spell", actor=f, target=x, amount=amount, level=c.level,
                                  rolled=rolled.total, most=n_ * s_ + flat_).amount
         b._heal(x, amount)
+        _restored(c, x, o.get("restore", ()))
         if o.get("mends_wound") and x.wounds:
             w = max(x.wounds, key=lambda w: (w.severity, w.bleed))
             w.severity -= 1
@@ -673,6 +710,31 @@ def _heal(c: Cast, o: dict, victim) -> None:
             if w.severity <= 0:
                 x.wounds.remove(w)
             b.say(f"The worst of {x.the_name}'s wounds closes a little.", "magic")
+
+
+def _restored(c: Cast, x, conds) -> None:
+    """The conditions a healing spell also ends (Mass Heal, Power Word Heal; prone: it gets up)."""
+    gone = [cid for cid in conds if cid in x.conditions]
+    for cid in gone:
+        durations.remove(x, cid)
+        x.save_ends = [se for se in x.save_ends if se["cond"] != cid]
+    if gone:
+        c.b.say(f"{x.the_name} is free of {', '.join(gone)}.", "good" if x.side == "party" else "info")
+
+
+@op("time_stop")
+def _time_stop(c: Cast, o: dict, victim) -> None:
+    """Time Stop: the caster takes 1d4 + 1 turns in a row (Battle._more_time); it ends when anything they do reaches
+    another creature."""
+    b, f = c.b, c.caster
+    n = dice.roll(str(o.get("dice", "1d4+1")), b.rng).total
+    b.dice_say(f"Time Stop: {n} turns")
+    f.buffs = [bf for bf in f.buffs if bf.get("time_stop") is None]
+    f.buffs.append({"time_stop": n, "source": c.sid})
+    b._time_stop = f.id
+    b.__dict__.pop("_time_broken", None)
+    b._event("time", who=f.id, stopped=True)
+    b.say(f"The world holds its breath. Nothing moves but {f.the_name}.", "magic")
 
 
 @op("modifier")
@@ -973,10 +1035,19 @@ def _zone(c: Cast, o: dict, victim) -> None:
              held=expr(c, *o["held"].split("|")) if o.get("held") else "", frees=bool(o.get("frees")),
              friends_safe=bool(o.get("friends_safe")),
              heal=(expr(c, o["heal"], o.get("heal_up", "")) + (f"+{c.mod}" if o.get("add_mod") and c.mod > 0 else ""))
-             if o.get("heal") else "")
+             if o.get("heal") else "",
+             breaks=bool(o.get("breaks")), lasts=int(o.get("lasts", 0)), stages=list(o.get("stages", ())),
+             cast={"dc": c.dc, "mod": c.mod, "level": c.level, "up": c.up})
+    if o.get("follow"):  # (Antimagic Field: it goes where the caster goes)
+        z.follows = True
+        z.radius = max(1, int((spell.get("area") or {}).get("size", 10)) // grid.SQUARE_FT)
+        z.cells = set()
+        b._add_zone(z)
+        b._follow_auras()
+        return
     if z.kind in WALLS:  # a wall: it rises on the free squares of the area
         taken = {sq for x in b.on_field() for sq in x.cells}
-        name = "wall_stone" if z.kind == "stone" else "ice_wall"
+        name = "wall_stone" if z.kind == "stone" else "ice_wall"  # (force and the prismatic wall: drawn over)
         for sq in sorted(z.cells):
             if sq in taken or not b.field.passable(*sq):
                 continue
@@ -987,6 +1058,16 @@ def _zone(c: Cast, o: dict, victim) -> None:
         if not z.cells:
             return
         b._add_zone(z)
+        if o.get("near"):  # (Prismatic Wall: the glare beside it blinds foes who come near or start a turn there)
+            r = int(o["near"]) // grid.SQUARE_FT
+            ring = {(x, y) for (wx, wy) in z.cells for x in range(wx - r, wx + r + 1) for y in range(wy - r, wy + r + 1)
+                    if b.field.in_bounds(x, y) and (x, y) not in z.cells}
+            g = Zone(b._zone_id(), "glare", ring, owner=f.id, spell=c.sid, rounds=z.rounds,
+                     save=o.get("near_save", "con"), dc=z.dc, fail=o.get("near_fail", "blinded"),
+                     lasts=int(o.get("lasts", 10)), friends_safe=True)
+            b._add_zone(g)
+            for x in b.in_area(sorted(ring), "enemies", f):
+                b._ground(x, g, start=False)
         if o.get("catch") and z.damage:  # (Wall of Ice: those it rises beside are thrown aside, frozen)
             for x in b.in_area(c.area, spell.get("affects", "all"), f):
                 b.say(f"The ice bursts up around {x.the_name}.", "danger" if x.side == "party" else "info")
@@ -1032,6 +1113,8 @@ def _banish(c: Cast, o: dict, victim) -> None:
         if f.concentration is None:
             continue  # (a spell that holds nothing cannot keep anyone away)
         b.send_away(x, o.get("how", "banished"), by=f, spell=c.sid)
+        if x.away is not None and o.get("escape"):
+            x.away["escape"] = dict(o["escape"])  # (Maze: a check each turn finds the way out)
         if x.away is not None and o.get("home") is False:
             x.away["home"] = False  # (Banishing Smite: back when it ends, wherever it comes from)
 

@@ -384,6 +384,22 @@ def _catalogue_mark(b, bf: dict, spell: dict) -> tuple[str, str, list[str]] | No
     if bf.get("truesight"):
         return "blessed", name or "True Seeing", [f"They see the invisible, and through any darkness, "
                                                   f"{int(bf['truesight'])} feet."]
+    # The fourth wave (D.4)
+    if bf.get("time_stop") is not None:
+        return "blessed", name or "Time stopped", [f"Time stands still for everyone else: {int(bf['time_stop'])} more "
+                                                   "turns in a row, until anything they do touches another creature."]
+    if bf.get("foresight"):
+        return "blessed", name or "Foresight", ["They see what is coming: advantage on their attacks, saves and "
+                                                "checks, and attacks against them have disadvantage."]
+    if bf.get("holy") is not None:
+        return "warded", name or "Holy Aura", ["Advantage on every save, and attacks against them have "
+                                               "disadvantage; a fiend or undead that strikes them in melee may be "
+                                               "blinded by the light."]
+    if bf.get("befuddled"):
+        return "sapped", name or "Befuddled", ["Their mind is in tatters: they cannot cast spells."]
+    if bf.get("immune_damage"):
+        what = ", ".join(esc(str(t)) for t in bf["immune_damage"])
+        return "warded", name or "Mind Blank", [f"No {what} damage can touch them, and they cannot be charmed."]
     if bf.get("aura"):
         r = int(bf["aura"].get("radius", 30))
         return "blessed", name or "An aura", [f"Friends within {r} feet share its gift."]

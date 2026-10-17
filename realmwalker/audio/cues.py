@@ -15,7 +15,9 @@ HIT_BY_TYPE = {
 }
 ZONE_SOUNDS = {"web": "web", "fire": "burn", "ice": "frost", "fog": "spell", "darkness": "spell",
                "guardians": "buff", "guardian": "buff", "caltrops": "drop", "bearings": "drop",
-               "blades": "spell", "thorns": "web", "celestial": "buff", "icewall": "frost"}
+               "blades": "spell", "thorns": "web", "celestial": "buff", "icewall": "frost",
+               "antimagic": "spell", "quake": "thunder", "embers": "burn", "prismatic": "buff", "glare": "buff",
+               "storm": "thunder"}
 BOWS = ("bow", "crossbow")
 THROWN = ("sling", "dart", "javelin", "dagger", "handaxe", "hand axe", "spear", "rock", "stone", "net", "flask")
 
