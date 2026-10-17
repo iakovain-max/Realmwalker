@@ -56,10 +56,19 @@ def problems(tables) -> list[str]:
                 out.append(f"{where}: hook {i} listens for '{h['event']}', which is not an event of a fight.")
             if h["handler"] not in events.HANDLERS:
                 out.append(f"{where}: hook {i} names the handler '{h['handler']}', which the code does not have.")
+    from realmwalker.rules.engine import marks
+
     for sid, spell in tables.spells.defs.items():
         if not isinstance(spell, dict):
             continue
-        for o in spellrules.ops(spell):
+        for o in spellrules.ops(spell) + spellrules.ops({"effects": spell.get("on_hit", [])}):
+            if o.get("op") == "modifier":
+                unknown = set(o.get("buff", {})) - marks.BUFF_KEYS
+                if unknown:
+                    out.append(f"data/spells.json: {sid} leaves the mark {', '.join(sorted(unknown))}, which the "
+                               "rules do not know.")
+            if o.get("op") == "zone" and o.get("zone") not in marks.ZONES:
+                out.append(f"data/spells.json: {sid} lays the zone '{o.get('zone')}', which the rules do not know.")
             if o.get("op") not in effects.OPS:
                 out.append(f"data/spells.json: {sid} does '{o.get('op')}', which the rules cannot do.")
             if o.get("op") == "special" and o.get("handler") not in effects.SPECIAL:

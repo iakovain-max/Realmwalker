@@ -1,0 +1,483 @@
+{
+ "_comment": "Expansion 3 part D.1: the cantrips of the 2024 Player's Handbook (docs/expansions/03-demigods-magics.md).",
+ "spells": {
+  "acid_splash": {
+   "name": "Acid Splash",
+   "level": 0,
+   "school": "evocation",
+   "classes": [
+    "sorcerer",
+    "wizard"
+   ],
+   "target": "point",
+   "range": 60,
+   "area": {
+    "shape": "sphere",
+    "size": 5
+   },
+   "components": [
+    "V",
+    "S"
+   ],
+   "effects": [
+    {
+     "op": "save",
+     "ability": "dex",
+     "damage": "1d6",
+     "type": "acid",
+     "scaling": "cantrip"
+    }
+   ],
+   "fx": "burst",
+   "text": "An acid bubble bursts at a point up to 60 feet away; everything within five feet of it must dodge or be eaten at. The damage grows at levels 5, 11 and 17."
+  },
+  "blade_ward": {
+   "name": "Blade Ward",
+   "level": 0,
+   "school": "abjuration",
+   "classes": [
+    "bard",
+    "sorcerer",
+    "warlock",
+    "wizard"
+   ],
+   "target": "self",
+   "range": "self",
+   "concentration": true,
+   "rounds": 10,
+   "components": [
+    "V",
+    "S"
+   ],
+   "effects": [
+    {
+     "op": "modifier",
+     "buff": {
+      "ward_die": "1d4"
+     },
+     "rounds": 10
+    }
+   ],
+   "fx": "buff",
+   "text": "A turning of the hand that spoils aim: every attack roll made against you loses 1d4 for a minute (concentration)."
+  },
+  "eldritch_blast": {
+   "name": "Eldritch Blast",
+   "level": 0,
+   "school": "evocation",
+   "classes": [
+    "warlock"
+   ],
+   "target": "enemy",
+   "range": 120,
+   "components": [
+    "V",
+    "S"
+   ],
+   "effects": [
+    {
+     "op": "attack",
+     "attack": "ranged",
+     "damage": "1d10",
+     "type": "force",
+     "rays_scaling": true
+    }
+   ],
+   "fx": "ray",
+   "text": "A crackling beam of force at a foe up to 120 feet away, 1d10 on a hit. Two beams at level 5, three at 11, four at 17, each with its own roll, at one foe or several."
+  },
+  "mind_sliver": {
+   "name": "Mind Sliver",
+   "level": 0,
+   "school": "enchantment",
+   "classes": [
+    "sorcerer",
+    "warlock",
+    "wizard"
+   ],
+   "target": "enemy",
+   "range": 60,
+   "components": [
+    "V"
+   ],
+   "effects": [
+    {
+     "op": "save",
+     "ability": "int",
+     "damage": "1d6",
+     "type": "psychic",
+     "scaling": "cantrip",
+     "on_fail": [
+      {
+       "op": "modifier",
+       "buff": {
+        "save_die": "-1d4",
+        "once": true
+       },
+       "rounds": 2,
+       "ends": "caster_turn_end"
+      }
+     ]
+    }
+   ],
+   "fx": "strike",
+   "text": "A splinter driven into a foe's mind up to 60 feet away: 1d6 psychic, and on a failed save it takes 1d4 off its next saving throw before your next turn ends. Grows at levels 5, 11 and 17."
+  },
+  "poison_spray": {
+   "name": "Poison Spray",
+   "level": 0,
+   "school": "necromancy",
+   "classes": [
+    "druid",
+    "sorcerer",
+    "warlock",
+    "wizard"
+   ],
+   "target": "enemy",
+   "range": 30,
+   "components": [
+    "V",
+    "S"
+   ],
+   "effects": [
+    {
+     "op": "attack",
+     "attack": "ranged",
+     "damage": "1d12",
+     "type": "poison",
+     "scaling": "cantrip"
+    }
+   ],
+   "fx": "bolt",
+   "text": "A puff of toxic mist at a foe up to 30 feet away: a ranged spell attack, 1d12 poison on a hit. Grows at levels 5, 11 and 17."
+  },
+  "produce_flame": {
+   "name": "Produce Flame",
+   "level": 0,
+   "school": "conjuration",
+   "classes": [
+    "druid"
+   ],
+   "target": "enemy",
+   "range": 60,
+   "components": [
+    "V",
+    "S"
+   ],
+   "effects": [
+    {
+     "op": "attack",
+     "attack": "ranged",
+     "damage": "1d8",
+     "type": "fire",
+     "scaling": "cantrip"
+    }
+   ],
+   "fx": "bolt",
+   "text": "Fire hurled from your palm at a foe up to 60 feet away: a ranged spell attack, 1d8 fire on a hit. Grows at levels 5, 11 and 17."
+  },
+  "resistance": {
+   "name": "Resistance",
+   "level": 0,
+   "school": "abjuration",
+   "classes": [
+    "cleric",
+    "druid"
+   ],
+   "target": "ally",
+   "range": "touch",
+   "concentration": true,
+   "rounds": 10,
+   "components": [
+    "V",
+    "S"
+   ],
+   "effects": [
+    {
+     "op": "modifier",
+     "buff": {
+      "soak": "1d4",
+      "soak_type": "$foe_type"
+     },
+     "rounds": 10
+    }
+   ],
+   "fx": "buff",
+   "text": "A touch that toughens a willing ally for a minute (concentration): once a turn they take 1d4 off damage of the kind the foes here deal most."
+  },
+  "shillelagh": {
+   "name": "Shillelagh",
+   "level": 0,
+   "school": "transmutation",
+   "classes": [
+    "druid"
+   ],
+   "target": "self",
+   "range": "self",
+   "cast": "bonus",
+   "rounds": 10,
+   "battle_only": true,
+   "components": [
+    "V",
+    "S",
+    "M"
+   ],
+   "effects": [
+    {
+     "op": "modifier",
+     "buff": {
+      "shillelagh": true,
+      "mod": "$mod",
+      "tier": "$mult"
+     },
+     "rounds": 10
+    }
+   ],
+   "fx": "buff",
+   "text": "A club or quarterstaff in your hand is filled with the wood's strength for a minute: you strike with your spellcasting ability, and its die becomes d8 (d10 at level 5, d12 at 11, 2d6 at 17)."
+  },
+  "sorcerous_burst": {
+   "name": "Sorcerous Burst",
+   "level": 0,
+   "school": "evocation",
+   "classes": [
+    "sorcerer"
+   ],
+   "target": "enemy",
+   "range": 120,
+   "components": [
+    "V",
+    "S"
+   ],
+   "effects": [
+    {
+     "op": "attack",
+     "attack": "ranged",
+     "damage": "1d8",
+     "type": "acid",
+     "scaling": "cantrip",
+     "types": [
+      "acid",
+      "cold",
+      "fire",
+      "lightning",
+      "poison",
+      "psychic",
+      "thunder"
+     ]
+    }
+   ],
+   "fx": "bolt",
+   "text": "Raw sorcery flung at a foe up to 120 feet away: a ranged spell attack, 1d8 of acid, cold, fire, lightning, poison, psychic or thunder as you choose. Grows at levels 5, 11 and 17."
+  },
+  "starry_wisp": {
+   "name": "Starry Wisp",
+   "level": 0,
+   "school": "evocation",
+   "classes": [
+    "bard",
+    "druid"
+   ],
+   "target": "enemy",
+   "range": 60,
+   "components": [
+    "V",
+    "S"
+   ],
+   "effects": [
+    {
+     "op": "attack",
+     "attack": "ranged",
+     "damage": "1d8",
+     "type": "radiant",
+     "scaling": "cantrip"
+    }
+   ],
+   "fx": "bolt",
+   "text": "A mote of starlight at a foe up to 60 feet away: a ranged spell attack, 1d8 radiant on a hit. Grows at levels 5, 11 and 17."
+  },
+  "thorn_whip": {
+   "name": "Thorn Whip",
+   "level": 0,
+   "school": "transmutation",
+   "classes": [
+    "druid"
+   ],
+   "target": "enemy",
+   "range": 30,
+   "components": [
+    "V",
+    "S",
+    "M"
+   ],
+   "effects": [
+    {
+     "op": "attack",
+     "attack": "melee",
+     "damage": "1d6",
+     "type": "piercing",
+     "scaling": "cantrip",
+     "on_hit": [
+      {
+       "op": "pull",
+       "feet": 10,
+       "max_size": "large"
+      }
+     ]
+    }
+   ],
+   "fx": "touch",
+   "text": "A whip of thorns lashes a foe up to 30 feet away: a melee spell attack, 1d6 piercing, and a Large or smaller foe is dragged up to 10 feet towards you. Grows at levels 5, 11 and 17."
+  },
+  "thunderclap": {
+   "name": "Thunderclap",
+   "level": 0,
+   "school": "evocation",
+   "classes": [
+    "bard",
+    "druid",
+    "sorcerer",
+    "warlock",
+    "wizard"
+   ],
+   "target": "self",
+   "range": "self",
+   "area": {
+    "shape": "emanation",
+    "size": 5
+   },
+   "components": [
+    "S"
+   ],
+   "effects": [
+    {
+     "op": "save",
+     "ability": "con",
+     "damage": "1d6",
+     "type": "thunder",
+     "scaling": "cantrip"
+    }
+   ],
+   "fx": "shock",
+   "text": "A deafening clap that hurts everything within five feet of you, friend or foe; they must pass a Constitution save or take 1d6 thunder. It carries for 100 feet. Grows at levels 5, 11 and 17."
+  },
+  "toll_the_dead": {
+   "name": "Toll the Dead",
+   "level": 0,
+   "school": "necromancy",
+   "classes": [
+    "cleric",
+    "warlock",
+    "wizard"
+   ],
+   "target": "enemy",
+   "range": 60,
+   "components": [
+    "V",
+    "S"
+   ],
+   "effects": [
+    {
+     "op": "save",
+     "ability": "wis",
+     "damage": "1d8",
+     "type": "necrotic",
+     "hurt_damage": "1d12",
+     "scaling": "cantrip"
+    }
+   ],
+   "fx": "strike",
+   "text": "A dolorous bell tolls over a foe up to 60 feet away: a Wisdom save or 1d8 necrotic, and 1d12 if it is already wounded. Grows at levels 5, 11 and 17."
+  },
+  "true_strike": {
+   "name": "True Strike",
+   "level": 0,
+   "school": "divination",
+   "classes": [
+    "bard",
+    "sorcerer",
+    "warlock",
+    "wizard"
+   ],
+   "target": "enemy",
+   "range": 120,
+   "components": [
+    "S",
+    "M"
+   ],
+   "effects": [
+    {
+     "op": "weapon_attack",
+     "extra": "1d6",
+     "extra_type": "radiant"
+    }
+   ],
+   "fx": "strike",
+   "text": "One blow with the weapon in your hand, guided by insight: you strike with your spellcasting ability, radiant if that hurts more, and from level 5 it carries extra radiant dice (1d6, 2d6 at 11, 3d6 at 17). The foe must be in the weapon's reach."
+  },
+  "vicious_mockery": {
+   "name": "Vicious Mockery",
+   "level": 0,
+   "school": "enchantment",
+   "classes": [
+    "bard"
+   ],
+   "target": "enemy",
+   "range": 60,
+   "components": [
+    "V"
+   ],
+   "effects": [
+    {
+     "op": "save",
+     "ability": "wis",
+     "damage": "1d6",
+     "type": "psychic",
+     "scaling": "cantrip",
+     "on_fail": [
+      {
+       "op": "modifier",
+       "buff": {
+        "sapped": true
+       },
+       "rounds": 2,
+       "ends": "own_turn_end"
+      }
+     ]
+    }
+   ],
+   "fx": "curse",
+   "text": "Insults laced with magic at a foe up to 60 feet away: a Wisdom save or 1d6 psychic and disadvantage on its next attack before its next turn ends. Grows at levels 5, 11 and 17."
+  },
+  "word_of_radiance": {
+   "name": "Word of Radiance",
+   "level": 0,
+   "school": "evocation",
+   "classes": [
+    "cleric"
+   ],
+   "target": "self",
+   "range": "self",
+   "area": {
+    "shape": "emanation",
+    "size": 5
+   },
+   "affects": "enemies",
+   "components": [
+    "V",
+    "M"
+   ],
+   "effects": [
+    {
+     "op": "save",
+     "ability": "con",
+     "damage": "1d6",
+     "type": "radiant",
+     "scaling": "cantrip"
+    }
+   ],
+   "fx": "burst",
+   "text": "Burning light bursts from you; each foe within five feet must pass a Constitution save or take 1d6 radiant. Your friends are spared. Grows at levels 5, 11 and 17."
+  }
+ }
+}

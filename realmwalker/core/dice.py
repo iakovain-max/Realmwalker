@@ -49,7 +49,11 @@ def parse(expression: str) -> tuple[int, int, int]:
 
 
 def roll(expression: str, rng: RNG, *, double_dice: bool = False) -> DiceRoll:
-    """Roll an expression. `double_dice` doubles the number of dice (critical hits)."""
+    """Roll an expression. `double_dice` doubles the number of dice (critical hits). A leading "-" takes the dice
+    off ("-1d4": Bane, Mind Sliver)."""
+    if expression.strip().startswith("-") and "d" in expression:
+        r = roll(expression.strip()[1:], rng, double_dice=double_dice)
+        return DiceRoll(expression, r.rolls, -r.modifier, -r.total)
     count, sides, mod = parse(expression)
     if double_dice:
         count *= 2

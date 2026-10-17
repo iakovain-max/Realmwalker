@@ -1,0 +1,9 @@
+{
+  "_comment": "Expansion 3 (docs/expansions/03-demigods-magics.md). Parts A-C went into the base files; the spell catalogue (Part D) comes as fragments beside this record: spells.cantrips.json, spells.level1.json, spells.level2.json... (realmwalker/data/packs.py merges them).",
+  "id": "demigods_magics", "order": 3,
+  "name": "Demigods & Magics",
+  "tagline": "Twenty levels of power. Every spell under the sky.",
+  "icon": "dlc/demigods_magics", "accent": [222, 196, 120],
+  "status": "planned", "version": "1.3.0", "released_on": "",
+  "adds": []
+}

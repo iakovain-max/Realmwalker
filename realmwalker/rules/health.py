@@ -270,9 +270,13 @@ def _timed_effects(char: Character, hours: float, tables=None) -> list[tuple[str
         if key.endswith("_clean"):
             char.effects[key] += hours  # counters since the last dose
             continue
+        if key.startswith("spell_at:"):
+            continue  # (the slot a lasting spell was cast with: it goes with the spell)
         char.effects[key] -= hours
         if char.effects[key] <= 0:
             del char.effects[key]
+            if key.startswith("spell:"):
+                char.effects.pop("spell_at:" + key[len("spell:"):], None)
             if key == "poppy":
                 events.append((f"{n}'s poppy dream fades, and the pain comes back.", "warn"))
             elif key == "hangover":

@@ -82,6 +82,7 @@ class Cast:
     empowered: int = 0  # damage added to one damage roll (Empowered Evocation, Potent Spellcasting)
     maximize: bool = False  # every damage die at its highest (an evoker's Overchannel)
     slotted: bool = True  # cast with a spell slot (not a scroll, a free cast, an item's or a creature's own magic)
+    crit: bool = False  # riding on a critical hit (a smite): its damage dice doubled
     pushed: list = field(default_factory=list)  # (fighter, feet) to throw back once everyone has saved
 
 
@@ -104,13 +105,24 @@ def cast(b, f, sid: str, spell: dict, target, point, *, up: int, mod: int, dc: i
     area = b.spell_area(f, sid, point, target) if spell.get("area") else []
     if spell.get("thrown"):
         b.say(f"{f.the_name} throws a flask: <danger>{spell['name'].lower()}</>!", "info")
+    elif spell.get("again_of"):
+        b.say(f"{f.the_name}: <magic>{spell['name']}</>.", "magic")
     else:
         b.say(f"{f.the_name} casts <magic>{spell['name']}</>.", "magic")
+    if not spell.get("ability"):
+        from realmwalker.rules.engine import marks
+
+        marks.acted(b, f)  # (Invisibility ends with a casting)
+    if spellrules.harms(spell) or spell.get("smite_with"):
+        from realmwalker.rules.engine import marks
+
+        marks.end_sanctuary(f)  # (Sanctuary ends when the warded one turns on an enemy)
     b._event("cast", by=f.id, to=target.id if target is not None else None, spell=sid, effect=mechanic(spell),
              look=spell.get("fx", ""), dtype=spellrules.main_type(spell), area=list(area), point=point,
              shape=(spell.get("area") or {}).get("shape", ""))
     if spell.get("concentration"):
         b._start_concentration(f, sid, spell)
+        f.concentration.update(target=target.id if target is not None else None, up=up)  # (for its follow-up)
     events.emit(b, "spell_cast", actor=f, spell=spell, sid=sid, level=level, slotted=slotted)  # an Arcane Ward...
     c = Cast(b, f, sid, spell, target, point, list(area), up, mod, dc, bonus, mult, level, slotted=slotted)
     if f.char is not None and spell.get("school") == "evocation" and f.char.cls == "wizard" \
@@ -127,6 +139,12 @@ def cast(b, f, sid: str, spell: dict, target, point, *, up: int, mod: int, dc: i
     before = b.__dict__.get("_casting")
     b._casting = f if not spell.get("ability") and "item" not in spell.get("classes", ()) else None
     try:
+        if target is not None and target.team != f.team and spellrules.harms(spell) and not spell.get("area") \
+                and not spellrules.has_op(spell, "attack"):  # (an attack roll meets Sanctuary in Battle._attack)
+            from realmwalker.rules.engine import marks
+
+            if marks.sanctuary_stops(b, f, target):
+                return  # (the spell is lost: Sanctuary)
         run(c, spell.get("effects", ()))
         if c.maximize:
             from realmwalker.rules.engine.handlers import wizard
@@ -179,9 +197,10 @@ def _targets(c: Cast) -> list:
     if c.target is None:
         return []
     out = [c.target]
-    extra = int(c.spell.get("targets_up", 0)) * c.up
+    extra = int(c.spell.get("targets", 1)) - 1 + int(c.spell.get("targets_up", 0)) * c.up
     if extra:
-        others = [x for x in c.b.spell_targets(c.caster, c.sid) if x is not c.target and x is not c.caster]
+        mine = c.spell["target"] == "ally"  # (a blessing may be on the caster too: Aid)
+        others = [x for x in c.b.spell_targets(c.caster, c.sid) if x is not c.target and (mine or x is not c.caster)]
         others.sort(key=lambda x: c.b.gap(c.caster, x))
         out += others[:extra]
     return out
@@ -194,8 +213,9 @@ def _attack(c: Cast, o: dict, victim) -> None:
 
     b, f, spell = c.b, c.caster, c.spell
     target = victim or c.target
-    rays = int(o.get("rays", 1)) + int(o.get("rays_up", 0)) * c.up
+    rays = int(o.get("rays", 1)) * (c.mult if o.get("rays_scaling") else 1) + int(o.get("rays_up", 0)) * c.up
     reach = b.spell_range(spell)
+    o = typed(c, o, [target])
     for _ in range(rays):
         if target is None or not target.active:
             options = b.spell_targets(f, c.sid)
@@ -204,17 +224,36 @@ def _attack(c: Cast, o: dict, victim) -> None:
             target = b.rng.choice(options)
         for dice_, dtype, up in spellrules.damage_parts(o)[:1]:
             opt = AttackOption("spell", spell["name"].lower(), "spell_melee" if o["attack"] == "melee" else "spell_ranged",
-                               c.bonus, expr(c, dice_, up, scaling=o.get("scaling") == "cantrip", empower=True), dtype,
+                               c.bonus, expr(c, dice_, up, scaling=o.get("scaling") == "cantrip", empower=True)
+                               + (f"{c.mod:+d}" if o.get("add_mod") and c.mod else ""), dtype,  # (Flame Blade)
                                range=(reach, reach))
             c.empowered = 0  # (one damage roll of the spell: the first ray)
             if b._attack(f, opt, target):
                 if target.active:
                     run(c, o.get("on_hit", ()), target)
+            elif o.get("miss_half") and (target.active or target.state == "down"):
+                half = _roll(c, opt.damage, dtype) // 2  # (Melf's Acid Arrow: splashed, if not struck)
+                if half > 0:
+                    b._hit(f, target, half, dtype, crit=False, weapon=spell["name"].lower())
             elif potent(c) and (target.active or target.state == "down"):
                 half = _roll(c, opt.damage, dtype) // 2
                 if half > 0:
                     b.say(f"<magic>The cantrip still bites.</> (Potent Cantrip)", "magic")
                     b._hit(f, target, half, dtype, crit=False, weapon=spell["name"].lower())
+        if o.get("after") and target is not None:
+            run(c, o["after"], target)  # hit or miss (Ice Knife's burst)
+
+
+def typed(c: Cast, o: dict, victims: list) -> dict:
+    """An op whose damage type the caster chooses (`types`: Chromatic Orb, Dragon's Breath): the one that hurts these
+    creatures most, the first listed when it makes no difference."""
+    if not o.get("types"):
+        return o
+    from realmwalker.rules.engine import estimates
+
+    xs = [x for x in victims if x is not None and x.team != c.caster.team] or [x for x in victims if x is not None]
+    best = max(o["types"], key=lambda t: (sum(estimates.damage_factor(x, t) for x in xs), -o["types"].index(t)))
+    return {**o, "type": best}
 
 
 @op("darts")
@@ -238,18 +277,30 @@ def _darts(c: Cast, o: dict, victim) -> None:
 @op("save")
 def _save(c: Cast, o: dict, victim) -> None:
     b, f, spell = c.b, c.caster, c.spell
-    if victim is not None:
+    area = c.area
+    if o.get("around"):  # everyone within so many feet of the creature (Ice Knife, Hail of Thorns)
+        centre = victim or c.target
+        n = int(o["around"]) // grid.SQUARE_FT
+        area = [] if centre is None else [(x, y) for x in range(centre.x - n, centre.x + centre.sq + n)
+                                          for y in range(centre.y - n, centre.y + centre.sq + n)
+                                          if b.field.in_bounds(x, y) and grid.gap(centre.space, (x, y, 1)) <= n]
+        victims = b.in_area(area, o.get("affects", "all"), f)
+        if area:
+            b._event("burst", by=f.id, cells=sorted(area), dtype=spellrules.damage_parts(o)[0][1]
+                     if spellrules.damage_parts(o) else "")
+    elif victim is not None:
         victims = [victim]
     elif c.area:
         victims = b.in_area(c.area, spell.get("affects", "all"), f)
     else:
         victims = _targets(c)
+    o = typed(c, o, victims)
     parts = [(expr(c, d, up, scaling=o.get("scaling") == "cantrip", empower=i == 0), t)
              for i, (d, t, up) in enumerate(spellrules.damage_parts(o))]
     c.empowered = 0 if parts else c.empowered  # (one damage roll of the spell)
-    rolled = {i: _roll(c, e, t) for i, (e, t) in enumerate(parts)} if c.area else {}
+    rolled = {i: _roll(c, e, t) for i, (e, t) in enumerate(parts)} if area else {}
     origin = c.point if spell["target"] == "point" and c.point is not None else (f.x, f.y)
-    spared = b.sculpted(f, c.sid, victims, c.level) if c.area else set()
+    spared = b.sculpted(f, c.sid, victims, c.level) if c.area and not o.get("around") else set()
     on_save = "half" if o.get("half") or (parts and potent(c)) else "none"
     ability = o["ability"]
     dc = int(o.get("dc", c.dc))
@@ -271,13 +322,18 @@ def _save(c: Cast, o: dict, victim) -> None:
             b.dice_say(f"{x.name} {ability.upper()} save: not affected")
         else:
             saved = b._save(x, ability, dc, bonus=grid.COVER_AC[cover] if ability == "dex" else 0,
-                            against=_conditions_in(o.get("on_fail", ())))
+                            against=_conditions_in(o.get("on_fail", ())),
+                            advantage="advantage" if o.get("advantage") else "")  # (Charm Person in a fight)
         b._event("save", who=x.id, ok=saved)
         for i, (e, dtype) in enumerate(parts):
-            full = rolled[i] if i in rolled else _roll(c, e, dtype)
+            if i == 0 and o.get("hurt_damage") and x.hp < x.max_hp:  # (Toll the Dead: a bigger die for the hurt)
+                e = expr(c, o["hurt_damage"], scaling=o.get("scaling") == "cantrip")
+            full = rolled[i] if i in rolled and not (i == 0 and o.get("hurt_damage")) else _roll(c, e, dtype)
             b._save_hit(f, x, ability, saved, full, dtype, on_save)
         if not saved and x.active:
             run(c, o.get("on_fail", ()), x)
+        elif saved and x.active:
+            run(c, o.get("on_save", ()), x)  # (Ray of Enfeeblement: even a save leaves its mark)
     # Hurled away, the farthest first so that nobody is stopped by a friend who is about to be thrown too.
     src = f if spell["target"] != "point" else (origin[0], origin[1])
     for x, feet in sorted(c.pushed, key=lambda p: -grid.gap((origin[0], origin[1], 1), p[0].space)):
@@ -299,7 +355,7 @@ def _push(c: Cast, o: dict, victim) -> None:
 
 def _roll(c: Cast, e: str, dtype: str) -> int:
     """A spell's damage roll (Elemental Adept: a 1 on a die of the chosen element counts as a 2)."""
-    rolled = dice.roll(e, c.b.rng)
+    rolled = dice.roll(e, c.b.rng, double_dice=c.crit)
     if c.caster.char is not None and c.b.__dict__.get("_casting") is c.caster:
         from realmwalker.rules import feats
 
@@ -310,8 +366,11 @@ def _roll(c: Cast, e: str, dtype: str) -> int:
 @op("damage")
 def _damage(c: Cast, o: dict, victim) -> None:
     """Damage without a roll to hit or a save (it has already landed)."""
+    victim = victim or c.target  # (at the top of a spell: its target; Witch Bolt's later bolts)
     if o.get("max_size") and victim is not None and not statblocks.size_at_most(victim.size, o["max_size"]):
         return
+    if victim is not None and not _allowed(o, victim):
+        return  # (Divine Smite's more against fiends and undead)
     if o.get("charge_feet") and c.caster.moved_feet < int(o["charge_feet"]):
         return  # only after a charge (a boar's Gore)
     if victim is not None and (victim.active or victim.state == "down"):
@@ -513,27 +572,160 @@ def _modifier(c: Cast, o: dict, victim) -> None:
     elif spell["target"] == "self":
         targets = [f]
     else:
-        targets = [c.target]
+        targets = _targets(c)
     for x in targets:
         if x is None:
             continue
-        if x.char is not None and spellrules.lasts(b.t, sid):
+        if x.char is not None and spellrules.lasts(b.t, sid) and victim is None:
             # It outlives the fight: kept on them (the sheet counts its armour), the rest carried here.
-            spellrules.keep(x.char, b.t, sid)
+            spellrules.keep(x.char, b.t, sid, c.level)
             x.buffs = [bf for bf in x.buffs if bf.get("lasting") != sid]
-            part = spellrules.battle_part(b.t, sid)
+            part = spellrules.battle_part(b.t, sid, x.char)
             if part:
                 x.buffs.append(part)
             if spell.get("concentration") and f.concentration is not None:
                 f.concentration.setdefault("on", []).append(x.id)  # (lost with the caster's concentration)
         else:
             x.buffs = [bf for bf in x.buffs if bf.get("source") != sid]
-            bf = {**o["buff"], "rounds": int(o.get("rounds", spell.get("rounds", 10))), "source": sid}
-            if spell.get("concentration"):
+            bf = {**filled(c, spellrules.buff_at(o, c.level, spell)), "source": sid}
+            if spell.get("concentration") and not o.get("not_conc"):
                 bf["conc"] = f.id
-            x.buffs.append(bf)
+            if o.get("ends"):
+                durations.buff(x, bf, _ends(c, x, o["ends"]))  # (until a turn of the caster's or its own)
+            else:
+                x.buffs.append({**bf, "rounds": int(o.get("rounds", spell.get("rounds", 10)))})
         b._event("buff", who=x.id, spell=sid)
-    b.say(spell["text"], "magic")
+    if victim is None:
+        b.say(spell["text"], "magic")
+
+
+def filled(c: Cast, buff: dict) -> dict:
+    """A buff with the casting's numbers put in: "$caster" (the caster's id), "$dc", "$mod" (the spellcasting
+    modifier, at least 1)."""
+    out = {}
+    for k, v in buff.items():
+        if v == "$caster":
+            v = c.caster.id
+        elif v == "$dc":
+            v = c.dc
+        elif v == "$mod":
+            v = max(1, c.mod)
+        elif v == "$spell":
+            v = c.sid
+        elif v == "$mult":
+            v = c.mult
+        elif v == "$foe_type":  # (Resistance: the kind of harm the foes here deal most)
+            from collections import Counter
+
+            seen = Counter(o.damage_type for e in c.b.enemies_of(c.caster) for o in c.b.attack_options(e)
+                           if o.damage_type)
+            v = seen.most_common(1)[0][0] if seen else "slashing"
+        elif v == "$up":
+            v = c.up
+        elif v == "$level":
+            v = c.level or c.spell.get("level", 0)
+        out[k] = v
+    return out
+
+
+@op("temp_hp")
+def _temp_hp(c: Cast, o: dict, victim) -> None:
+    """Temporary hit points (False Life, Armor of Agathys): the larger of the old and the new, never added."""
+    x = victim or (c.caster if c.spell["target"] == "self" else c.target)
+    if x is None or not x.active:
+        return
+    amount = dice.roll(expr(c, str(o["amount"]), str(o.get("up", ""))), c.b.rng).total \
+        + (max(0, c.mod) if o.get("add_mod") else 0)
+    if o.get("per_up"):
+        amount += int(o["per_up"]) * c.up
+    if amount > x.temp_hp:
+        x.temp_hp = amount
+        c.b._event("buff", who=x.id, spell=c.sid)
+        c.b.say(f"{x.the_name} has {amount} temporary hit points.", "magic")
+
+
+@op("weapon_attack")
+def _weapon_attack(c: Cast, o: dict, victim) -> None:
+    """True Strike (2024): one attack with a weapon in reach, with the spellcasting ability in place of Strength or
+    Dexterity; radiant if that hurts more; and `extra` radiant dice from level 5 (one fewer than the cantrip's
+    tier)."""
+    import dataclasses
+
+    from realmwalker.rules.engine import estimates
+
+    b, f = c.b, c.caster
+    target = victim or c.target
+    if target is None or not target.active:
+        return
+    opts = [x for x in b.attack_options(f) if x.available and x.item_uid is not None and x.kind in ("melee", "ranged")
+            and b.in_reach(f, x, target)[0]]
+    if not opts:
+        b.say(f"{f.the_name} has no weapon that reaches {target.the_name}.", "warn")
+        return
+    opt = opts[0]
+    am = int(opt.extra.get("ability_mod", 0))
+    n, sides, flat = dice.parse(opt.damage)
+    flat += c.mod - am
+    dmg = f"{n}d{sides}{'+' + str(flat) if flat > 0 else (str(flat) if flat < 0 else '')}" if n else str(max(1, flat))
+    dtype = opt.damage_type
+    if estimates.damage_factor(target, "radiant") > estimates.damage_factor(target, dtype):
+        dtype = "radiant"
+    extra = dict(opt.extra)
+    more = c.mult - 1
+    if more > 0 and o.get("extra"):
+        extra["extra"] = list(extra.get("extra", ())) + [{"damage": f"{more}{o['extra'][1:]}",
+                                                          "type": o.get("extra_type", "radiant")}]
+    struck = dataclasses.replace(opt, bonus=opt.bonus - am + c.mod, damage=dmg, damage_type=dtype, extra=extra)
+    b._attack(f, struck, target)
+
+
+@op("pull")
+def _pull(c: Cast, o: dict, victim) -> None:
+    """Pulled straight towards the caster (Thorn Whip)."""
+    if victim is None or not victim.active or victim is c.caster:
+        return
+    if o.get("max_size") and not statblocks.size_at_most(victim.size, o["max_size"]):
+        return
+    c.b._pull(c.caster, victim, int(o["feet"]) // grid.SQUARE_FT)
+
+
+@op("no_reaction")
+def _no_reaction(c: Cast, o: dict, victim) -> None:
+    """No reactions until the start of its next turn (Arms of Hadar)."""
+    if victim is not None and victim.active:
+        victim.reaction = False
+
+
+@op("flee")
+def _flee(c: Cast, o: dict, victim) -> None:
+    """It spends its reaction running from the caster as far as its speed allows (Dissonant Whispers)."""
+    if victim is None or not victim.active or not victim.reaction or victim.speed <= 0:
+        return
+    victim.reaction = False
+    c.b.say(f"{victim.the_name} flees in terror.", "good" if victim.side != c.caster.side else "danger")
+    c.b._push(c.caster, victim, victim.speed // grid.SQUARE_FT)
+
+
+@op("move_zone")
+def _move_zone(c: Cast, o: dict, victim) -> None:
+    """The caster moves what its spell left on the field to a new point (Moonbeam, Flaming Sphere, Cloud of
+    Daggers): the same shape, laid out again there."""
+    b, f = c.b, c.caster
+    base = c.spell.get("again_of", c.sid)
+    z = next((z for z in b.zones if z.owner == f.id and z.spell == base), None)
+    if z is None or c.point is None:
+        return
+    area = b.t.spells[base].get("area") or {}
+    cells = set(b.field.area(area.get("shape", "sphere"), int(area.get("size", 5)), origin=f.space, toward=c.point))
+    if not cells:
+        return
+    z.cells = cells
+    z.centre = c.point
+    z.struck.clear()
+    b._sync_zones()
+    b._event("zone_move", id=z.id, cells=sorted(cells))
+    for x in b.in_area(sorted(cells), "all", f):
+        b._zones_on(x, start=False)
 
 
 @op("stabilize")
@@ -607,12 +799,19 @@ def _zone(c: Cast, o: dict, victim) -> None:
 
     b, f, spell = c.b, c.caster, c.spell
     rounds = -1 if spell.get("concentration") else int(o.get("rounds", spell.get("rounds", 10)))
-    z = Zone(b._zone_id(), o["zone"], set(c.area), owner=f.id, spell=c.sid, rounds=rounds, save=o.get("save", "dex"),
-             dc=int(o.get("dc", c.dc)))  # (caltrops and ball bearings have the book's own DC)
+    dmg = spellrules.damage_parts(o)
+    z = Zone(b._zone_id(), o["zone"], set(c.area), owner=f.id, spell=c.sid, rounds=rounds,
+             save=o.get("save", "dex") if o.get("save", "dex") != "none" else "",
+             dc=int(o.get("dc", c.dc)),  # (caltrops and ball bearings have the book's own DC)
+             damage=expr(c, dmg[0][0], dmg[0][2]) if dmg else "", damage_type=dmg[0][1] if dmg else "",
+             on_save="half" if o.get("half") else "none", centre=c.point)
     b._add_zone(z)
-    if o.get("catch"):
+    if o.get("catch"):  # (whoever stands there as it appears: caught, or hurt)
         for x in b.in_area(c.area, spell.get("affects", "all"), f):
-            b._zone_catch(x, z)
+            if z.holds or z.kind == "grease":
+                b._zone_catch(x, z)
+            elif x is not f or not z.damage:
+                b._zones_on(x, start=False)
 
 
 @op("aura")

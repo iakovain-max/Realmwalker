@@ -87,7 +87,9 @@ def test_choices_can_be_made_for_you(tables):
     assert not c.pending and c.subclass
     top = progression.spell_top_level(c, tables)
     available = [s for s in tables.spells.for_class("wizard", top) if tables.spells[s]["level"] > 0]
-    assert len(c.spells["spellbook"]) == min(len(available), 6 + 14)
+    learned = min(len(available), 6 + 14)  # (six at level 1, two a level after)
+    savant = 4 if c.subclass == "evocation" else 0  # (an Evoker's Savant: two free evocation spells, one a new level)
+    assert learned <= len(c.spells["spellbook"]) <= learned + savant
     d = hero(tables, "rogue")
     progression.award_xp(d, 40000, tables, RNG(2), auto=True)
     assert not d.pending and d.subclass
@@ -112,7 +114,7 @@ def fixed_d20(monkeypatch, value):
 
 def test_there_is_a_scroll_for_every_spell(tables):
     for sid, spell in tables.spells.defs.items():
-        if "item" not in spell["classes"]:
+        if "item" not in spell["classes"] and "again" not in spell["classes"]:  # (no scroll of a follow-up)
             d = tables.items.get(f"scroll_{sid}")
             assert d["use"]["scroll"] == sid and d["value"] > 0
 

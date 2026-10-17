@@ -330,7 +330,7 @@ def _spell_option(b, f, sid: str, ok: bool, why: str) -> Option:
     cost = {"bonus": "bonus", "reaction": "reaction"}.get(sp.get("cast", "action"), "action")
     mode = sp["target"]
     targets, points, aim = [], None, "none"
-    if ok and mode in ("enemy", "ally", "downed_ally", "dead_ally"):
+    if ok and mode in ("enemy", "ally", "downed_ally", "dead_ally", "bound"):
         targets, aim = b.spell_targets(f, sid), "creature"
         if not targets:
             ok, why = False, "no one in reach"

@@ -28,7 +28,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Clearing the decks for the expansions** | ✅ Done (2026-10-12), branch `prep/clear-the-decks` |
 | **Expansion 1, *Dice & Destiny*** (version 1.1.0) | ✅ Released (2026-10-13), branch `dlc/01-dice-destiny` |
 | **Expansion 2, *Blades & Backgrounds*** (version 1.2.0) | ✅ Released (2026-10-13), branch `dlc/02-blades-backgrounds` |
-| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes) and C (spellcasting complete, 2026-10-17) in `main`; Part D (the spell catalogue) next |
+| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete) and D.1 (the first 79 spells of the catalogue, 2026-10-17) in `main`; D.2 (levels 3 to 5) next |
 
 ---
 
@@ -39,6 +39,36 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-17 (night): Demigods & Magics D.1 — the spell catalogue, first wave; in `main`
+
+Built by the relay builder realmwalker-a, with three helpers writing the spells from the book pages.
+- **79 new spells that work in a fight**, every cantrip and level 1 and 2 spell of the 2024 Player's Handbook that does
+  something in battle: Eldritch Blast, Toll the Dead, Vicious Mockery, Mind Sliver, Thorn Whip (it pulls), Shillelagh,
+  True Strike; Bane, Charm Person, Chromatic Orb, Color Spray, Hex and Hunter's Mark, Faerie Fire, Entangle, Grease,
+  Sanctuary, Armor of Agathys, Hellish Rebuke, Tasha's Hideous Laughter, Witch Bolt, Ice Knife and the smites; Blur,
+  Mirror Image, Invisibility, Moonbeam, Flaming Sphere, Spike Growth, Cloud of Daggers, Silence, Darkness, Magic
+  Weapon, Melf's Acid Arrow, Shatter, Warding Bond, Crown of Madness and more. Each has its look on the battle mat, its
+  scroll in the shops and treasure, and its card.
+- **New things on the battle grid**: Entangle's vines and Grease (both drawn), thorns that cut at every step, a cloud
+  of whirling blades, a pale moonbeam, a rolling sphere of fire, a ring of silence where no spell with words can be
+  spoken. Moonbeam, Flaming Sphere and Cloud of Daggers can be moved on later turns; Witch Bolt burns its victim again
+  with a bonus action; Flame Blade strikes with an action while it lasts.
+- **Marks you can see on a creature's card**: Outlined, Blurred, Mirror images, Sanctuary, Warded, Hexed or Hunted,
+  Enfeebled, Compelled to duel, Crowned with madness, a smite readied on the weapon, harm that comes each turn.
+- **The companions and the enemy use them** by what they are worth: a companion on Auto hexes the ogre, lays Spike
+  Growth in the wolves' path, keeps Moonbeam on the bandits, and will not catch friends in Shatter.
+- **Who can cast them now**: the cleric and the wizard learn the ones on their lists (Toll the Dead, Ice Knife, Mirror
+  Image, Shatter, Blindness...). Spells of classes not yet in the game (bard, druid, paladin, ranger, sorcerer,
+  warlock) can be read from scrolls and will be cast by enemies in Part G.
+- **Fixed**: cantrips never grew stronger at levels 5, 11 and 17 (a level 5 wizard's Fire Bolt now does 2d10).
+- **Waiting for later parts** (written in the design note): spells that do their work outside a fight (Light, Detect
+  Magic, Goodberry, Knock, Augury, Aid, Pass without Trace and the rest, 52 in all) come with Part E, where they plug
+  into travel, camp, towns and the world; Find Familiar, Find Steed and Summon Beast come with Part F.
+- **The codex**: 79 spells settled (34 exactly as the book, 45 adapted, each with its note); the older spells now
+  carry their full 2024 class lists.
+- **How to try it**: a new cleric or wizard sees the new spells when preparing (S); scrolls of the others turn up in
+  shops and hoards. In a fight, a creature's card shows what a spell has left on it.
 
 ### Session, 2026-10-17 (night): Demigods & Magics C.3 — spell scrolls and potions of healing; Part C in `main`
 

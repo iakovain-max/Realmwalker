@@ -384,6 +384,15 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   scroll above you `spells.scroll_check`; in a fight "scroll:<uid>:<spell>" through `Battle.do_cast`, outside one
   `magic.read_scroll` (via `cast_on_road(scroll=)`). Potions of healing (items with `use.heal`) take the bonus action
   in a fight (`Battle.item_cost`), are drunk on the road by `care.drink_potion`, and the Auto uses them (`tactics._drink`).
+- The spell catalogue (Expansion 3 part D): spells in data/packs/03_demigods_magics/spells.*.json, battle spells only
+  (outside-a-fight ones come with Part E's systems, summons with F). What a spell leaves on a creature is a buff "mark"
+  read in `rules/engine/marks.py` (its docstring lists every key; `engine/check` reports unknown ones and zone kinds):
+  smites ready a `smite` mark that runs the spell's top-level `on_hit` on the next fitting hit; a spell's `again`
+  becomes "<id>_again" (`spells.again_def`, class "again", no scroll), cast without a slot while the caster
+  concentrates (`combat.again_spell`, target "bound" = the creature it was cast at); `minutes` keeps a spell out of
+  fights; buffs take "$caster", "$dc", "$mod", "$spell", "$up", "$level", "$mult", "$foe_type" and `per_up`/`by_level`
+  (lasting spells remember their slot: `spells.cast_at`). `tests/test_catalogue.py` casts every catalogue spell in a
+  real fight and checks the Auto sees its worth (`estimates.spell_value`; NO_USE for reasoned exceptions).
 - Gear and tools 2024 (Expansion 2 part D): items.json `pack` (opens into its contents, gear.open_pack), `helps`
   {search, traps, force, disguise} (dungeon.helps, law.put_on_disguise), `utilize` (a tool's 2024 uses, on its card),
   `carry` also on carried containers (each kind once, Sheet.pack_carry), `trinket` (data/trinkets.json; the name and

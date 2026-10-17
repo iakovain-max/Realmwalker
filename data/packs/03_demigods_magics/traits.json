@@ -1,0 +1,8 @@
+{
+  "_comment": "Gifts the spell catalogue's marks give for their time (a buff's \"traits\", rules/engine/traits.of).",
+  "traits": {
+    "expeditious_retreat": {"name": "Expeditious Retreat", "text": "Dash as a bonus action while the spell lasts.",
+                            "activate": {"id": "retreat_dash", "name": "Expeditious Retreat: Dash (bonus action)",
+                                         "cost": "bonus", "via": "dash"}}
+  }
+}

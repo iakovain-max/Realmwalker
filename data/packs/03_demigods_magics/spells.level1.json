@@ -1,0 +1,1214 @@
+{
+ "_comment": "Expansion 3 part D.1: level 1 spells of the 2024 Player's Handbook (docs/expansions/03-demigods-magics.md).",
+ "spells": {
+  "ice_knife": {
+   "name": "Ice Knife",
+   "level": 1,
+   "school": "conjuration",
+   "classes": [
+    "druid",
+    "sorcerer",
+    "wizard"
+   ],
+   "target": "enemy",
+   "range": 60,
+   "components": [
+    "S",
+    "M"
+   ],
+   "effects": [
+    {
+     "op": "attack",
+     "attack": "ranged",
+     "damage": "1d10",
+     "type": "piercing",
+     "after": [
+      {
+       "op": "save",
+       "ability": "dex",
+       "around": 5,
+       "damage": "2d6",
+       "type": "cold",
+       "up": "1d6"
+      }
+     ]
+    }
+   ],
+   "fx": "bolt",
+   "text": "A shard of ice flung at a foe up to 60 feet away; hit or miss it bursts, and everyone within five feet of it must dodge the cold. Each higher slot adds 1d6 cold."
+  },
+  "witch_bolt": {
+   "name": "Witch Bolt",
+   "level": 1,
+   "school": "evocation",
+   "classes": [
+    "sorcerer",
+    "warlock",
+    "wizard"
+   ],
+   "target": "enemy",
+   "range": 60,
+   "components": [
+    "V",
+    "S",
+    "M"
+   ],
+   "concentration": true,
+   "rounds": 10,
+   "effects": [
+    {
+     "op": "attack",
+     "attack": "ranged",
+     "damage": "2d12",
+     "type": "lightning",
+     "up": "1d12"
+    }
+   ],
+   "again": {
+    "name": "Witch Bolt: the arc again",
+    "cast": "bonus",
+    "target": "bound",
+    "range": 60,
+    "effects": [
+     {
+      "op": "damage",
+      "damage": "1d12",
+      "type": "lightning"
+     }
+    ],
+    "text": "While the spell holds, a bonus action sends the lightning into the same creature again: 1d12, no roll."
+   },
+   "fx": "ray",
+   "text": "A crackling beam binds you to one creature up to 60 feet away (concentration). Each later turn a bonus action burns it again for 1d12, even if the first beam missed. Each higher slot adds 1d12 to the first."
+  },
+  "searing_smite": {
+   "name": "Searing Smite",
+   "level": 1,
+   "school": "evocation",
+   "classes": [
+    "paladin"
+   ],
+   "target": "self",
+   "range": "self",
+   "cast": "bonus",
+   "components": [
+    "V"
+   ],
+   "rounds": 10,
+   "battle_only": true,
+   "effects": [
+    {
+     "op": "modifier",
+     "rounds": 10,
+     "buff": {
+      "smite": "$spell",
+      "up": "$up",
+      "dc": "$dc",
+      "mod": "$mod",
+      "level": "$level",
+      "smite_with": "melee"
+     }
+    }
+   ],
+   "on_hit": [
+    {
+     "op": "damage",
+     "damage": "1d6",
+     "type": "fire",
+     "up": "1d6"
+    },
+    {
+     "op": "modifier",
+     "rounds": 10,
+     "per_up": {
+      "dot": "1d6"
+     },
+     "buff": {
+      "dot": "1d6",
+      "dot_type": "fire",
+      "dot_at": "start",
+      "dot_save": "con",
+      "dc": "$dc",
+      "by": "$caster",
+      "dot_name": "searing flames"
+     }
+    }
+   ],
+   "fx": "buff",
+   "text": "Readied on the blade: the next melee hit flares with 1d6 more fire, and the foe burns for 1d6 at the start of each of its turns until it makes a Constitution save. Each higher slot adds 1d6 to both."
+  },
+  "animal_friendship": {
+   "name": "Animal Friendship",
+   "level": 1,
+   "school": "enchantment",
+   "classes": [
+    "bard",
+    "druid",
+    "ranger"
+   ],
+   "target": "enemy",
+   "range": 30,
+   "components": [
+    "V",
+    "S",
+    "M"
+   ],
+   "rounds": 14400,
+   "targets_up": 1,
+   "effects": [
+    {
+     "op": "save",
+     "ability": "wis",
+     "kinds": [
+      "beast"
+     ],
+     "on_fail": [
+      {
+       "op": "condition",
+       "condition": "charmed",
+       "on_damage": true
+      }
+     ]
+    }
+   ],
+   "fx": "curse",
+   "text": "Calms a beast within 30 feet for a day unless it shakes the spell off with Wisdom; a blow from you or your friends breaks it. Each higher slot takes one more beast."
+  },
+  "armor_of_agathys": {
+   "name": "Armor of Agathys",
+   "level": 1,
+   "school": "abjuration",
+   "classes": [
+    "warlock"
+   ],
+   "target": "self",
+   "range": "self",
+   "cast": "bonus",
+   "components": [
+    "V",
+    "S",
+    "M"
+   ],
+   "rounds": 600,
+   "battle_only": true,
+   "effects": [
+    {
+     "op": "temp_hp",
+     "amount": 5,
+     "per_up": 5
+    },
+    {
+     "op": "modifier",
+     "rounds": 600,
+     "per_up": {
+      "retaliate": 5
+     },
+     "buff": {
+      "retaliate": 5,
+      "retaliate_type": "cold"
+     }
+    }
+   ],
+   "fx": "buff",
+   "text": "A bonus action wraps you in frost: 5 temporary hit points, and whoever hits you in melee takes 5 cold while they last. Each higher slot adds 5 to both."
+  },
+  "arms_of_hadar": {
+   "name": "Arms of Hadar",
+   "level": 1,
+   "school": "conjuration",
+   "classes": [
+    "warlock"
+   ],
+   "target": "self",
+   "range": "self",
+   "area": {
+    "shape": "emanation",
+    "size": 10
+   },
+   "components": [
+    "V",
+    "S"
+   ],
+   "effects": [
+    {
+     "op": "save",
+     "ability": "str",
+     "half": true,
+     "damage": "2d6",
+     "type": "necrotic",
+     "up": "1d6",
+     "on_fail": [
+      {
+       "op": "no_reaction"
+      }
+     ]
+    }
+   ],
+   "fx": "burst",
+   "text": "Black tendrils burst from you to 10 feet: 2d6 necrotic, half on a Strength save, and a failed save loses the creature's reaction. Each higher slot adds 1d6."
+  },
+  "bane": {
+   "name": "Bane",
+   "level": 1,
+   "school": "enchantment",
+   "classes": [
+    "bard",
+    "cleric",
+    "warlock"
+   ],
+   "target": "enemy",
+   "range": 30,
+   "components": [
+    "V",
+    "S",
+    "M"
+   ],
+   "concentration": true,
+   "rounds": 10,
+   "targets": 3,
+   "targets_up": 1,
+   "effects": [
+    {
+     "op": "save",
+     "ability": "cha",
+     "on_fail": [
+      {
+       "op": "modifier",
+       "rounds": 10,
+       "buff": {
+        "attack_die": "-1d4",
+        "save_die": "-1d4"
+       }
+      }
+     ]
+    }
+   ],
+   "fx": "curse",
+   "text": "Up to three foes within 30 feet that fail a Charisma save take 1d4 off every attack roll and save (concentration). Each higher slot takes one more."
+  },
+  "charm_person": {
+   "name": "Charm Person",
+   "level": 1,
+   "school": "enchantment",
+   "classes": [
+    "bard",
+    "druid",
+    "sorcerer",
+    "warlock",
+    "wizard"
+   ],
+   "target": "enemy",
+   "range": 30,
+   "components": [
+    "V",
+    "S"
+   ],
+   "rounds": 600,
+   "targets_up": 1,
+   "effects": [
+    {
+     "op": "save",
+     "ability": "wis",
+     "kinds": [
+      "humanoid"
+     ],
+     "advantage": true,
+     "on_fail": [
+      {
+       "op": "condition",
+       "condition": "charmed",
+       "on_damage": true
+      }
+     ]
+    }
+   ],
+   "fx": "curse",
+   "text": "A person within 30 feet saves with Wisdom, with advantage while you are fighting it; on a failure it is charmed for an hour or until you or your friends hurt it. Each higher slot takes one more."
+  },
+  "chromatic_orb": {
+   "name": "Chromatic Orb",
+   "level": 1,
+   "school": "evocation",
+   "classes": [
+    "sorcerer",
+    "wizard"
+   ],
+   "target": "enemy",
+   "range": 90,
+   "components": [
+    "V",
+    "S",
+    "M"
+   ],
+   "material": {
+    "items": [
+     "diamond"
+    ],
+    "text": "a diamond worth 50+ GP"
+   },
+   "effects": [
+    {
+     "op": "attack",
+     "attack": "ranged",
+     "damage": "3d8",
+     "type": "acid",
+     "up": "1d8",
+     "types": [
+      "acid",
+      "cold",
+      "fire",
+      "lightning",
+      "poison",
+      "thunder"
+     ]
+    }
+   ],
+   "fx": "bolt",
+   "text": "An orb of acid, cold, fire, lightning, poison or thunder (the one that hurts the foe most) flung up to 90 feet: 3d8 on a hit. Each higher slot adds 1d8."
+  },
+  "color_spray": {
+   "name": "Color Spray",
+   "level": 1,
+   "school": "illusion",
+   "classes": [
+    "bard",
+    "sorcerer",
+    "wizard"
+   ],
+   "target": "direction",
+   "range": "self",
+   "area": {
+    "shape": "cone",
+    "size": 15
+   },
+   "components": [
+    "V",
+    "S",
+    "M"
+   ],
+   "effects": [
+    {
+     "op": "save",
+     "ability": "con",
+     "on_fail": [
+      {
+       "op": "condition",
+       "condition": "blinded",
+       "ends": "caster_turn_end"
+      }
+     ]
+    }
+   ],
+   "fx": "cone",
+   "text": "A dazzling fan of light, 15 feet long: whoever fails a Constitution save is blinded until the end of your next turn."
+  },
+  "compelled_duel": {
+   "name": "Compelled Duel",
+   "level": 1,
+   "school": "enchantment",
+   "classes": [
+    "paladin"
+   ],
+   "target": "enemy",
+   "range": 30,
+   "cast": "bonus",
+   "components": [
+    "V"
+   ],
+   "concentration": true,
+   "rounds": 10,
+   "effects": [
+    {
+     "op": "save",
+     "ability": "wis",
+     "on_fail": [
+      {
+       "op": "modifier",
+       "rounds": 10,
+       "buff": {
+        "duel": "$caster"
+       }
+      }
+     ]
+    }
+   ],
+   "fx": "curse",
+   "text": "A bonus action challenges a foe within 30 feet: on a failed Wisdom save it has disadvantage on attacks against anyone but you (concentration)."
+  },
+  "dissonant_whispers": {
+   "name": "Dissonant Whispers",
+   "level": 1,
+   "school": "enchantment",
+   "classes": [
+    "bard"
+   ],
+   "target": "enemy",
+   "range": 60,
+   "components": [
+    "V"
+   ],
+   "effects": [
+    {
+     "op": "save",
+     "ability": "wis",
+     "half": true,
+     "damage": "3d6",
+     "type": "psychic",
+     "up": "1d6",
+     "on_fail": [
+      {
+       "op": "flee"
+      }
+     ]
+    }
+   ],
+   "fx": "curse",
+   "text": "A discordant tune in one mind within 60 feet: 3d6 psychic, half on a Wisdom save, and a failed save makes the foe spend its reaction running from you. Each higher slot adds 1d6."
+  },
+  "divine_favor": {
+   "name": "Divine Favor",
+   "level": 1,
+   "school": "transmutation",
+   "classes": [
+    "paladin"
+   ],
+   "target": "self",
+   "range": "self",
+   "cast": "bonus",
+   "components": [
+    "V",
+    "S"
+   ],
+   "rounds": 10,
+   "battle_only": true,
+   "effects": [
+    {
+     "op": "modifier",
+     "rounds": 10,
+     "buff": {
+      "hit_extra": "1d4",
+      "hit_type": "radiant",
+      "hit_with": "weapon"
+     }
+    }
+   ],
+   "fx": "buff",
+   "text": "A bonus action: for a minute your weapon hits deal an extra 1d4 radiant damage."
+  },
+  "divine_smite": {
+   "name": "Divine Smite",
+   "level": 1,
+   "school": "evocation",
+   "classes": [
+    "paladin"
+   ],
+   "target": "self",
+   "range": "self",
+   "cast": "bonus",
+   "components": [
+    "V"
+   ],
+   "rounds": 10,
+   "battle_only": true,
+   "effects": [
+    {
+     "op": "modifier",
+     "rounds": 10,
+     "buff": {
+      "smite": "$spell",
+      "up": "$up",
+      "dc": "$dc",
+      "mod": "$mod",
+      "level": "$level",
+      "smite_with": "melee"
+     }
+    }
+   ],
+   "on_hit": [
+    {
+     "op": "damage",
+     "damage": "2d8",
+     "type": "radiant",
+     "up": "1d8"
+    },
+    {
+     "op": "damage",
+     "damage": "1d8",
+     "type": "radiant",
+     "kinds": [
+      "fiend",
+      "undead"
+     ]
+    }
+   ],
+   "fx": "buff",
+   "text": "Readied on the blow: the next melee hit adds 2d8 radiant, and 1d8 more against fiends and the undead. Each higher slot adds 1d8."
+  },
+  "ensnaring_strike": {
+   "name": "Ensnaring Strike",
+   "level": 1,
+   "school": "conjuration",
+   "classes": [
+    "ranger"
+   ],
+   "target": "self",
+   "range": "self",
+   "cast": "bonus",
+   "components": [
+    "V"
+   ],
+   "concentration": true,
+   "rounds": 10,
+   "battle_only": true,
+   "effects": [
+    {
+     "op": "modifier",
+     "rounds": 10,
+     "buff": {
+      "smite": "$spell",
+      "up": "$up",
+      "dc": "$dc",
+      "mod": "$mod",
+      "level": "$level",
+      "smite_with": "weapon"
+     }
+    }
+   ],
+   "on_hit": [
+    {
+     "op": "save",
+     "ability": "str",
+     "on_fail": [
+      {
+       "op": "condition",
+       "condition": "restrained"
+      },
+      {
+       "op": "modifier",
+       "rounds": 10,
+       "per_up": {
+        "dot": "1d6"
+       },
+       "buff": {
+        "dot": "1d6",
+        "dot_type": "piercing",
+        "dot_at": "start",
+        "by": "$caster",
+        "dot_name": "thorny vines"
+       }
+      }
+     ]
+    }
+   ],
+   "fx": "buff",
+   "text": "Readied on the weapon (concentration): the next hit raises vines, and a foe failing a Strength save is held and takes 1d6 piercing at the start of each turn. Each higher slot adds 1d6."
+  },
+  "entangle": {
+   "name": "Entangle",
+   "level": 1,
+   "school": "conjuration",
+   "classes": [
+    "druid",
+    "ranger"
+   ],
+   "target": "point",
+   "range": 90,
+   "area": {
+    "shape": "cube",
+    "size": 20
+   },
+   "components": [
+    "V",
+    "S"
+   ],
+   "concentration": true,
+   "rounds": 10,
+   "effects": [
+    {
+     "op": "zone",
+     "zone": "plants",
+     "save": "str",
+     "catch": true
+    }
+   ],
+   "fx": "zone",
+   "text": "Grasping plants fill a 20-foot square up to 90 feet away: hard going, and whoever is there as it rises is held unless a Strength save is made (concentration)."
+  },
+  "expeditious_retreat": {
+   "name": "Expeditious Retreat",
+   "level": 1,
+   "school": "transmutation",
+   "classes": [
+    "sorcerer",
+    "warlock",
+    "wizard"
+   ],
+   "target": "self",
+   "range": "self",
+   "cast": "bonus",
+   "components": [
+    "V",
+    "S"
+   ],
+   "concentration": true,
+   "rounds": 100,
+   "battle_only": true,
+   "effects": [
+    {
+     "op": "modifier",
+     "rounds": 100,
+     "buff": {
+      "traits": [
+       "expeditious_retreat"
+      ]
+     }
+    }
+   ],
+   "fx": "buff",
+   "text": "A bonus action (concentration): while it holds, you may Dash again as a bonus action each turn."
+  },
+  "faerie_fire": {
+   "name": "Faerie Fire",
+   "level": 1,
+   "school": "evocation",
+   "classes": [
+    "bard",
+    "druid"
+   ],
+   "target": "point",
+   "range": 60,
+   "area": {
+    "shape": "cube",
+    "size": 20
+   },
+   "components": [
+    "V"
+   ],
+   "concentration": true,
+   "rounds": 10,
+   "effects": [
+    {
+     "op": "save",
+     "ability": "dex",
+     "on_fail": [
+      {
+       "op": "modifier",
+       "rounds": 10,
+       "buff": {
+        "outlined": true
+       }
+      }
+     ]
+    }
+   ],
+   "fx": "burst",
+   "text": "Coloured light outlines everything in a 20-foot cube; creatures failing a Dexterity save glow, and attacks against them have advantage (concentration)."
+  },
+  "false_life": {
+   "name": "False Life",
+   "level": 1,
+   "school": "necromancy",
+   "classes": [
+    "sorcerer",
+    "wizard"
+   ],
+   "target": "self",
+   "range": "self",
+   "components": [
+    "V",
+    "S",
+    "M"
+   ],
+   "battle_only": true,
+   "effects": [
+    {
+     "op": "temp_hp",
+     "amount": "2d4+4",
+     "per_up": 5
+    }
+   ],
+   "fx": "buff",
+   "text": "You gain 2d4 + 4 temporary hit points. Each higher slot adds 5."
+  },
+  "fog_cloud": {
+   "name": "Fog Cloud",
+   "level": 1,
+   "school": "conjuration",
+   "classes": [
+    "druid",
+    "ranger",
+    "sorcerer",
+    "wizard"
+   ],
+   "target": "point",
+   "range": 120,
+   "area": {
+    "shape": "sphere",
+    "size": 20
+   },
+   "components": [
+    "V",
+    "S"
+   ],
+   "concentration": true,
+   "rounds": 600,
+   "effects": [
+    {
+     "op": "zone",
+     "zone": "fog",
+     "save": "none"
+    }
+   ],
+   "fx": "zone",
+   "text": "A 20-foot sphere of fog up to 120 feet away, heavily obscured, for an hour (concentration)."
+  },
+  "grease": {
+   "name": "Grease",
+   "level": 1,
+   "school": "conjuration",
+   "classes": [
+    "sorcerer",
+    "wizard"
+   ],
+   "target": "point",
+   "range": 60,
+   "area": {
+    "shape": "cube",
+    "size": 10
+   },
+   "components": [
+    "V",
+    "S",
+    "M"
+   ],
+   "rounds": 10,
+   "effects": [
+    {
+     "op": "zone",
+     "zone": "grease",
+     "catch": true
+    }
+   ],
+   "fx": "zone",
+   "text": "Slick grease on a 10-foot square up to 60 feet away: hard going, and whoever is there, enters or ends a turn there falls prone unless a Dexterity save is made."
+  },
+  "hail_of_thorns": {
+   "name": "Hail of Thorns",
+   "level": 1,
+   "school": "conjuration",
+   "classes": [
+    "ranger"
+   ],
+   "target": "self",
+   "range": "self",
+   "cast": "bonus",
+   "components": [
+    "V"
+   ],
+   "rounds": 10,
+   "battle_only": true,
+   "effects": [
+    {
+     "op": "modifier",
+     "rounds": 10,
+     "buff": {
+      "smite": "$spell",
+      "up": "$up",
+      "dc": "$dc",
+      "mod": "$mod",
+      "level": "$level",
+      "smite_with": "ranged"
+     }
+    }
+   ],
+   "on_hit": [
+    {
+     "op": "save",
+     "ability": "dex",
+     "around": 5,
+     "half": true,
+     "damage": "1d10",
+     "type": "piercing",
+     "up": "1d10"
+    }
+   ],
+   "fx": "buff",
+   "text": "Readied on the bow: the next ranged hit rains thorns on the target and all within 5 feet, 1d10 piercing, half on a Dexterity save. Each higher slot adds 1d10."
+  },
+  "hellish_rebuke": {
+   "name": "Hellish Rebuke",
+   "level": 1,
+   "school": "evocation",
+   "classes": [
+    "warlock"
+   ],
+   "target": "enemy",
+   "range": 60,
+   "cast": "reaction",
+   "components": [
+    "V",
+    "S"
+   ],
+   "effects": [
+    {
+     "op": "save",
+     "ability": "dex",
+     "half": true,
+     "damage": "2d10",
+     "type": "fire",
+     "up": "1d10"
+    }
+   ],
+   "fx": "strike",
+   "text": "A reaction when a foe within 60 feet hurts you: green flames for 2d10 fire, half on a Dexterity save. Each higher slot adds 1d10."
+  },
+  "heroism": {
+   "name": "Heroism",
+   "level": 1,
+   "school": "enchantment",
+   "classes": [
+    "bard",
+    "paladin"
+   ],
+   "target": "ally",
+   "range": "touch",
+   "components": [
+    "V",
+    "S"
+   ],
+   "concentration": true,
+   "rounds": 10,
+   "targets_up": 1,
+   "effects": [
+    {
+     "op": "modifier",
+     "rounds": 10,
+     "buff": {
+      "heroism": "$mod",
+      "immune": [
+       "frightened"
+      ]
+     }
+    }
+   ],
+   "fx": "buff",
+   "text": "A willing creature you touch cannot be frightened and gains temporary hit points equal to your casting modifier at the start of each of its turns (concentration). Each higher slot takes one more."
+  },
+  "hex": {
+   "name": "Hex",
+   "level": 1,
+   "school": "enchantment",
+   "classes": [
+    "warlock"
+   ],
+   "target": "enemy",
+   "range": 90,
+   "cast": "bonus",
+   "components": [
+    "V",
+    "S",
+    "M"
+   ],
+   "concentration": true,
+   "rounds": 600,
+   "battle_only": true,
+   "effects": [
+    {
+     "op": "modifier",
+     "rounds": 600,
+     "buff": {
+      "quarry": "1d6",
+      "quarry_type": "necrotic",
+      "by": "$caster"
+     }
+    }
+   ],
+   "fx": "curse",
+   "text": "A bonus action curses a foe within 90 feet (concentration): your hits against it deal an extra 1d6 necrotic."
+  },
+  "hunters_mark": {
+   "name": "Hunter's Mark",
+   "level": 1,
+   "school": "divination",
+   "classes": [
+    "ranger"
+   ],
+   "target": "enemy",
+   "range": 90,
+   "cast": "bonus",
+   "components": [
+    "V"
+   ],
+   "concentration": true,
+   "rounds": 600,
+   "battle_only": true,
+   "effects": [
+    {
+     "op": "modifier",
+     "rounds": 600,
+     "buff": {
+      "quarry": "1d6",
+      "quarry_type": "force",
+      "by": "$caster"
+     }
+    }
+   ],
+   "fx": "curse",
+   "text": "A bonus action marks a quarry within 90 feet (concentration): your hits against it deal an extra 1d6 force."
+  },
+  "protection_from_evil_and_good": {
+   "name": "Protection from Evil and Good",
+   "level": 1,
+   "school": "abjuration",
+   "classes": [
+    "cleric",
+    "druid",
+    "paladin",
+    "warlock",
+    "wizard"
+   ],
+   "target": "ally",
+   "range": "touch",
+   "components": [
+    "V",
+    "S",
+    "M"
+   ],
+   "material": {
+    "items": [
+     "holy_water"
+    ],
+    "consumed": true,
+    "text": "a flask of holy water worth 25+ GP, which the spell consumes"
+   },
+   "concentration": true,
+   "rounds": 100,
+   "effects": [
+    {
+     "op": "modifier",
+     "rounds": 100,
+     "buff": {
+      "warded_kinds": [
+       "aberration",
+       "celestial",
+       "elemental",
+       "fey",
+       "fiend",
+       "undead"
+      ]
+     }
+    }
+   ],
+   "fx": "buff",
+   "text": "A willing creature you touch is warded for ten minutes (concentration): aberrations, celestials, elementals, fey, fiends and the undead attack it with disadvantage."
+  },
+  "ray_of_sickness": {
+   "name": "Ray of Sickness",
+   "level": 1,
+   "school": "necromancy",
+   "classes": [
+    "sorcerer",
+    "wizard"
+   ],
+   "target": "enemy",
+   "range": 60,
+   "components": [
+    "V",
+    "S"
+   ],
+   "effects": [
+    {
+     "op": "attack",
+     "attack": "ranged",
+     "damage": "2d8",
+     "type": "poison",
+     "up": "1d8",
+     "on_hit": [
+      {
+       "op": "condition",
+       "condition": "poisoned",
+       "ends": "caster_turn_end"
+      }
+     ]
+    }
+   ],
+   "fx": "ray",
+   "text": "A greenish ray up to 60 feet: 2d8 poison on a hit, and the foe is poisoned until the end of your next turn. Each higher slot adds 1d8."
+  },
+  "sanctuary": {
+   "name": "Sanctuary",
+   "level": 1,
+   "school": "abjuration",
+   "classes": [
+    "cleric"
+   ],
+   "target": "ally",
+   "range": 30,
+   "cast": "bonus",
+   "components": [
+    "V",
+    "S",
+    "M"
+   ],
+   "rounds": 10,
+   "battle_only": true,
+   "effects": [
+    {
+     "op": "modifier",
+     "rounds": 10,
+     "buff": {
+      "sanctuary": "$dc"
+     }
+    }
+   ],
+   "fx": "buff",
+   "text": "A bonus action wards a creature within 30 feet for a minute: a foe must pass a Wisdom save to attack it or lose the attack. It ends when the warded one attacks, casts or deals damage."
+  },
+  "tashas_hideous_laughter": {
+   "name": "Tasha's Hideous Laughter",
+   "level": 1,
+   "school": "enchantment",
+   "classes": [
+    "bard",
+    "warlock",
+    "wizard"
+   ],
+   "target": "enemy",
+   "range": 30,
+   "components": [
+    "V",
+    "S",
+    "M"
+   ],
+   "concentration": true,
+   "rounds": 10,
+   "targets_up": 1,
+   "effects": [
+    {
+     "op": "save",
+     "ability": "wis",
+     "on_fail": [
+      {
+       "op": "condition",
+       "condition": "prone"
+      },
+      {
+       "op": "condition",
+       "condition": "incapacitated",
+       "repeat_save": true,
+       "save": "wis"
+      }
+     ]
+    }
+   ],
+   "fx": "curse",
+   "text": "A foe within 30 feet that fails a Wisdom save falls laughing, prone and helpless, trying to recover at the end of each of its turns (concentration). Each higher slot takes one more."
+  },
+  "thunderous_smite": {
+   "name": "Thunderous Smite",
+   "level": 1,
+   "school": "evocation",
+   "classes": [
+    "paladin"
+   ],
+   "target": "self",
+   "range": "self",
+   "cast": "bonus",
+   "components": [
+    "V"
+   ],
+   "rounds": 10,
+   "battle_only": true,
+   "effects": [
+    {
+     "op": "modifier",
+     "rounds": 10,
+     "buff": {
+      "smite": "$spell",
+      "up": "$up",
+      "dc": "$dc",
+      "mod": "$mod",
+      "level": "$level",
+      "smite_with": "melee"
+     }
+    }
+   ],
+   "on_hit": [
+    {
+     "op": "damage",
+     "damage": "2d6",
+     "type": "thunder",
+     "up": "1d6"
+    },
+    {
+     "op": "save",
+     "ability": "str",
+     "on_fail": [
+      {
+       "op": "push",
+       "feet": 10
+      },
+      {
+       "op": "condition",
+       "condition": "prone"
+      }
+     ]
+    }
+   ],
+   "fx": "buff",
+   "text": "Readied on the blow: the next melee hit rings with thunder for 2d6 more, and a foe failing a Strength save is thrown 10 feet and knocked prone. Each higher slot adds 1d6."
+  },
+  "wrathful_smite": {
+   "name": "Wrathful Smite",
+   "level": 1,
+   "school": "necromancy",
+   "classes": [
+    "paladin"
+   ],
+   "target": "self",
+   "range": "self",
+   "cast": "bonus",
+   "components": [
+    "V"
+   ],
+   "rounds": 10,
+   "battle_only": true,
+   "effects": [
+    {
+     "op": "modifier",
+     "rounds": 10,
+     "buff": {
+      "smite": "$spell",
+      "up": "$up",
+      "dc": "$dc",
+      "mod": "$mod",
+      "level": "$level",
+      "smite_with": "melee"
+     }
+    }
+   ],
+   "on_hit": [
+    {
+     "op": "damage",
+     "damage": "1d6",
+     "type": "necrotic",
+     "up": "1d6"
+    },
+    {
+     "op": "save",
+     "ability": "wis",
+     "on_fail": [
+      {
+       "op": "condition",
+       "condition": "frightened",
+       "repeat_save": true,
+       "save": "wis"
+      }
+     ]
+    }
+   ],
+   "fx": "buff",
+   "text": "Readied on the blow: the next melee hit adds 1d6 necrotic, and a foe failing a Wisdom save is frightened until it shakes it off at the end of a turn. Each higher slot adds 1d6."
+  }
+ }
+}

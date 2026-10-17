@@ -88,7 +88,18 @@ spellcasting and scrolls at the book's prices.
   healing; the 31 spellcasting rules in the codex; Part C to `main`.
 
 ### Part D — The spell catalogue (four waves, helpers on the sonnet model)
-- [ ] D.1 Cantrips to 2nd level (134 spells): new ops first, then batches; fx for each; arena coverage green.
+- [x] D.1 Cantrips to 2nd level (134 spells): new ops first, then batches; fx for each; arena coverage green.
+  Decided while building: each wave brings the spells that work in a fight; a spell whose use is outside a
+  fight comes with the system it plugs into in Part E (its entry, scroll and codex mark together), and the
+  summoning spells with Part F. From this wave, waiting for E: dancing lights, druidcraft, elementalism,
+  friends, light, mage hand, mending, message, minor illusion, prestidigitation, thaumaturgy; alarm,
+  comprehend languages, create or destroy water, detect evil and good, detect magic, detect poison and
+  disease, disguise self, feather fall, goodberry, illusory script, jump, longstrider, purify food and drink,
+  silent image, speak with animals, Tenser's floating disk, unseen servant; aid (a raised maximum that
+  outlives the fight), alter self, animal messenger, arcane lock, augury, beast sense, continual flame,
+  darkvision, detect thoughts, enhance ability, enthrall, find traps, gentle repose, knock, levitate, locate
+  animals or plants, locate object, magic mouth, Nystul's magic aura, pass without trace, rope trick, see
+  invisibility, spider climb, zone of truth. Waiting for F: find familiar, find steed, summon beast.
 - [ ] D.2 3rd to 5th level (128; Counterspell is in already, B.4). Dispel Magic with the Abjurer's Spell Breaker: a
   bonus action for them, their proficiency added to its check, the slot kept when it ends nothing.
 - [ ] D.3 6th and 7th level (55).
