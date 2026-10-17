@@ -495,6 +495,19 @@ def _check_companions(game, fail) -> None:
                                   or int(steed.get("level", 0)) < 2
                                   or not 0 <= int(steed.get("hp", 0)) <= ally_rules.steed_max_hp(steed["level"])):
             fail(f"{c.name}'s steed cannot be: {steed}")
+    from realmwalker.rules import servants as servant_rules  # (Expansion 3 F.4: the raised dead)
+
+    for c in game.party:
+        rows = c.spells.get("servants") or []
+        if len(rows) > servant_rules.MAX:
+            fail(f"{c.name} has {len(rows)} servants, more than {servant_rules.MAX}")
+        for r in rows:
+            if r.get("cid") not in game.tables.creatures or not 0 < int(r.get("hp", 0)) <= int(r.get("max_hp", 0)) \
+                    or r.get("until") is not None and float(r["until"]) < game.world.time - 31 \
+                    or len({x.get("id") for x in rows}) != len(rows):
+                fail(f"{c.name}'s servant cannot be: {r}")
+        if c.effects.get(servant_rules.ROT) and c.alive and c.hp > c.effects.get(servant_rules.ROT_HP, c.hp) + 0.5:
+            fail(f"{c.name} healed under a mummy's rot: {c.hp} above {c.effects.get(servant_rules.ROT_HP)}")
     if game.party:
         riders = {c.name for c in game.party if c.alive and (ally_rules.record(c, "steed") or {}).get("gone") is False}
         herd = [a.get("summoned") for a in game.leader.animals if a.get("summoned")]
