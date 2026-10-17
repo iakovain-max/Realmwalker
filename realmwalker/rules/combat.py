@@ -25,7 +25,7 @@ import numpy as np
 
 from realmwalker.core import dice
 from realmwalker.core.rng import RNG
-from realmwalker.rules import feats, grid, simulacrum
+from realmwalker.rules import feats, grid, poisons, simulacrum
 from realmwalker.rules import spells as spellrules
 from realmwalker.rules.character import Character, Sheet, modifier
 from realmwalker.rules.engine import actions, durations, effects, events, hazards, marks, query, reactions
@@ -1398,6 +1398,10 @@ class Battle:
                     self.say(f"{f.the_name} drinks from {prey.the_name}.", "danger" if prey.side == PARTY else "info")
                     self._hit(f, prey, dice.roll(drink["damage"], self.rng).total, drink.get("type", "necrotic"),
                               crit=False, weapon=drink.get("type", "drain"))
+        if any(bf.get("fumes") for bf in f.buffs):  # (Burnt Othur Fumes in the lungs)
+            poisons.turn_start(self, f)
+            if not f.active:
+                return
         if any(bf.get("burning") for bf in f.buffs):  # (the Burning hazard, 2024)
             dmg, dtype = hazards.burning_damage(self.t)
             self.say(f"{f.the_name} is burning.", "danger" if f.side == PARTY else "info")
@@ -2744,11 +2748,8 @@ class Battle:
             if target.active or target.state == "down":
                 self._hit(att, target, dice.roll(e["damage"], self.rng, double_dice=crit).total, e["type"], crit=False,
                           weapon=opt.name)
-        if att.buff_value("poisoned_blade") and opt.damage_type in ("piercing", "slashing") \
-                and not opt.kind.startswith("spell") and (target.active or target.state == "down"):
-            att.buffs = [bf for bf in att.buffs if "poisoned_blade" not in bf]  # (basic poison: spent on the first cut)
-            self._hit(att, target, dice.roll("1d4", self.rng, double_dice=crit).total, "poison", crit=False,
-                      weapon=opt.name)
+        if att.buff_value("poisoned_blade"):
+            poisons.on_hit(self, att, target, opt, crit)  # (the poison on the blade: spent on the first fitting hit)
         for extra_amount, extra_type in dmg_ev.typed + marks.extra_hits(self, att, target, opt, crit):
             if target.active or target.state == "down":  # (a power's own kind of damage; Divine Favor, Hex)
                 self._hit(att, target, extra_amount, extra_type, crit=False, weapon=opt.name)
@@ -3723,7 +3724,12 @@ class Battle:
         d = self.t.items.get(it.def_id)
         use = d.get("use", {})
         name = d["name"]
-        if "heal" in use:
+        if "heal" in use and poisons.masked(it):
+            self._spend(f, quick)
+            remove_item(f.char, uid, 1)
+            self.say(f"{f.the_name} gets the {name} into {target.the_name}.", "info")
+            poisons.battle_drink(self, f, target, it)
+        elif "heal" in use:
             self._spend(f, quick)
             amount = dice.roll(use["heal"], self.rng).total
             self._heal(target, amount)
@@ -4492,6 +4498,8 @@ class Battle:
             dc = 8 + s.proficiency + s.mod("dex")
             self.cast(f, sid, spell, target, point, up=0, mod=s.mod("dex"), dc=dc, bonus=s.proficiency + s.mod("dex"),
                       mult=1, level=0)
+            if sid == "coat_poison":
+                poisons.coat(self, f, flask)  # (which poison is on the blade now)
             self._after_action(f)
             return True
         scroll_how = None

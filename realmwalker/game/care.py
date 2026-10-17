@@ -69,6 +69,16 @@ def drink_potion(game, patient: Character, item) -> list[str]:
         return [f"{escape_markup(patient.name.split()[0])} has no hurt for it to mend; better kept for when there "
                 f"is."]
     owner = next((c for c in game.party if c.item(item.uid) is not None), patient)
+    from realmwalker.rules import poisons
+
+    real = poisons.masked(item)
+    if real:  # (a Potion of Poison, passing for a potion of healing: DMG 2024)
+        remove_item(owner, item.uid, 1)
+        game.dirty = True
+        rec = poisons.record(game.tables, real) or {}
+        return [f"{escape_markup(patient.name.split()[0])} drinks the {d['name']}, and it burns all the way down: "
+                f"<danger>it was {game.tables.items.get(real)['name']}.</>"] + poisons.suffer(
+                    game, patient, rec, game.tables.items.get(real)["name"])
     remove_item(owner, item.uid, 1)
     rng = game.world.rng.child(f"potion/{game.world.time}/{patient.name}")
     amount = dice.roll(heal, rng).total

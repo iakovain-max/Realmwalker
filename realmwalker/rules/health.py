@@ -961,8 +961,8 @@ def describe_wound(w: Wound) -> str:
     return ", ".join(bits)
 
 
-def carry_battle_state(char: Character, conditions: dict) -> None:
-    """After a fight: poison lingers for a while."""
+def carry_battle_state(char: Character, conditions: dict, hours: float = 1.0) -> None:
+    """After a fight: poison lingers for a while (an hour, or as long as the poison that took says)."""
     if "poisoned" in conditions:
-        char.effects["poisoned"] = max(char.effects.get("poisoned", 0.0), 1.0)
+        char.effects["poisoned"] = max(char.effects.get("poisoned", 0.0), max(1.0, float(hours)))
 

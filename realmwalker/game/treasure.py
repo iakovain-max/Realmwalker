@@ -149,7 +149,14 @@ def make_listed(game, slug: str, variant: str, rarity: str, rng: RNG) -> Item | 
     if how is None:
         return None
     if how.get("item"):
-        return new_item(game, how["item"], rng) if how["item"] in game.tables.items else None
+        if how["item"] not in game.tables.items:
+            return None
+        it = new_item(game, how["item"], rng)
+        if how.get("secretly"):  # (a Potion of Poison passing for a potion of healing: rules/poisons.mask)
+            from realmwalker.rules import poisons
+
+            poisons.mask(it, how["secretly"])
+        return it
     if how.get("scroll"):
         levels = _levels(variant)
         scrolls = sorted(d for d, sd in game.tables.items.defs.items() if sd.get("use", {}).get("scroll")
@@ -163,6 +170,8 @@ def make_listed(game, slug: str, variant: str, rarity: str, rng: RNG) -> Item | 
                               sentient=False, bases=how.get("bases"), qty=rng.randint(int(lo), int(hi)))
         if it is not None:
             it.magic["book"] = f"{slug}{variant}"
+            if how.get("title"):
+                it.magic["title"] = how["title"]  # (a named item of the book: the Dagger of Venom)
             it.magic["source"] = "book"
             it.magic["attune"] = bool(how.get("attune", False))  # a book item binds only if its entry says so
         return it

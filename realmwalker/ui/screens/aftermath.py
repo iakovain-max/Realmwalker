@@ -94,6 +94,16 @@ class AftermathScreen(Screen):
             self.game.say(m, "info")
         self.fate_texts += msgs
 
+    def harvest(self) -> None:
+        from realmwalker.game.poisoning import harvest
+
+        items, msgs = harvest(self.game, self.after.venomous)
+        self.after.venomous = []
+        self.after.loot.extend(items)
+        for m in msgs:
+            self.game.say(m, "info")
+        self.fate_texts += msgs
+
     def done(self) -> None:
         if self.phase == "captives" and self._undecided():
             self.app.notify("Decide what happens to your prisoners first.", "warn")
@@ -141,6 +151,8 @@ class AftermathScreen(Screen):
             self.take_all()
         elif ev.key == "b" and self.after.carcasses:
             self.butcher()
+        elif ev.key == "v" and self.after.venomous:
+            self.harvest()
         elif ev.key == "t":
             self.take_marked()
         elif ev.key == "enter":
@@ -230,18 +242,26 @@ class AftermathScreen(Screen):
             bx = canvas.button(bx + 3, y, "Take marked", self.take_marked, hotkey="T")
             bx = canvas.button(bx + 3, y, "Leave the rest", self.done, hotkey="L")
             if after.carcasses:
-                canvas.button(bx + 3, y, "Butcher the carcasses", self.butcher, hotkey="B")
+                bx = canvas.button(bx + 3, y, "Butcher the carcasses", self.butcher, hotkey="B")
+            if after.venomous:
+                canvas.button(bx + 3, y, "Take the venom", self.harvest, hotkey="V",
+                              tooltip="A poisoner's kit and a DC 20 Nature check for each body: a dose of its "
+                                      "venom (a failure by 5 or more pricks the hand)")
             canvas.text(x, y + 1, "Space marks an item · Enter takes marked (or all) and goes on", colors.FAINT, max_width=w)
         else:
             canvas.text(x, y, "There is nothing here worth taking." if after.outcome == "victory" else "", colors.DIM)
             bx = canvas.button(x, y + 2, "Continue", self.done, hotkey="Enter")
             if after.carcasses:
-                canvas.button(bx + 3, y + 2, "Butcher the carcasses (30 min)", self.butcher, hotkey="B")
+                bx = canvas.button(bx + 3, y + 2, "Butcher the carcasses (30 min)", self.butcher, hotkey="B")
+            if after.venomous:
+                canvas.button(bx + 3, y + 2, "Take the venom", self.harvest, hotkey="V",
+                              tooltip="A poisoner's kit and a DC 20 Nature check for each body: a dose of its "
+                                      "venom (a failure by 5 or more pricks the hand)")
 
     def autoplay_keys(self) -> list[KeyEvent]:
         if self.phase == "captives" and self.after.outcome != "death":
             return [KeyEvent(k) for k in ("1", "2", "3", "4", "5")]
-        return [KeyEvent(k) for k in ("down", " ", "t", "b", "a", "enter", "l", "enter")]
+        return [KeyEvent(k) for k in ("down", " ", "t", "b", "v", "a", "enter", "l", "enter")]
 
 
 class DeathScreen(Screen):

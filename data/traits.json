@@ -1,6 +1,7 @@
 {
   "_comment": "Traits and features as definitions for the rules kernel (realmwalker/rules/engine/traits.py): creature traits by id, race traits and class features by their 'rule' tag, other features by id. modifiers: numbers and flags, with 'when' tests; hooks: what happens at the battle's events, by handler (rules/engine/handlers/); resource: a pool of uses and when it comes back; where 'sheet': handled by the character sheet or another system, nothing to do in a fight.",
   "traits": {
+    "proof_against_poison": {"name": "Proof against poison", "text": "A periapt's gift: no poison can harm them or make them sick.", "modifiers": [{"immune_condition": ["poisoned"]}, {"immune": ["poison"]}]},
     "item_ward_poison": {"name": "Warded against poison", "text": "A magic thing's gift: poison cannot make them sick.", "modifiers": [{"immune_condition": ["poisoned"]}]},
     "item_ward_mind": {"name": "Warded mind", "text": "A magic thing's gift: nothing can charm or frighten them.", "modifiers": [{"immune_condition": ["charmed", "frightened"]}]},
     "item_ward_senses": {"name": "Warded senses", "text": "A magic thing's gift: never blinded, deafened, turned to stone or stunned.", "modifiers": [{"immune_condition": ["blinded", "deafened", "petrified", "stunned"]}]},

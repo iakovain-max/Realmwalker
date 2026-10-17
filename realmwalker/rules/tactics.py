@@ -1102,6 +1102,8 @@ def _party_turn(b: Battle, f: Fighter) -> None:
             break
     if b.has_action(f) and f.bonus > 0 and _arcane_bonus(b, f):
         opts = [o for o in b.attack_options(f) if o.available]  # (a weapon called to hand: its blows now)
+    if opts and b.has_action(f) and f.bonus > 0:
+        _coat_blade(b, f, opts)  # (poison on the blade with the bonus action, before the blow)
     if opts and b.has_action(f):
         _maneuvers_first(b, f, opts)  # (a Battle Master's Commander's Strike, Bait and Switch, feint or lunge)
     if opts and b.has_action(f) and f.bonus > 0 and best_plan(b, f, opts) is None:
@@ -1232,6 +1234,35 @@ def _maneuvers_first(b: Battle, f: Fighter, opts: list) -> None:
         for opt, a in _abilities(b, f, "lunge"):
             b.do_ability(f, opt.value)
             return
+
+
+def _coat_blade(b: Battle, f: Fighter, opts) -> bool:
+    """Poison smeared on the weapon with the bonus action (Expansion 4 Part C), when a blow can land this turn on a
+    foe worth it: the Dagger of Venom's own venom first (it comes back at dawn), else the cheapest coating carried
+    that the weapon can deliver (a contact poison on any blow; an injury poison on one that cuts or pierces)."""
+    from realmwalker.rules import magic, poisons
+
+    if f.char is None or f.bonus <= 0 or f.buff_value("poisoned_blade") or b.current is not f:
+        return False
+    plan = best_plan(b, f, opts)
+    if plan is None:
+        return False
+    _score, _path, blow, foe = plan
+    if foe is None or not foe.standing or foe.hp < 8:
+        return False
+    for it, p in magic.charges(f.char):
+        if p.get("spell") == "dagger_venom" and magic.charges_left(p) > 0 and it.uid in f.char.equipped.values():
+            value = f"charge:{it.uid}:dagger_venom"
+            if b.do_cast(f, value, None):
+                return True
+    if blow.kind.startswith("spell"):
+        return False
+    usable = [it for it in poisons.coatings(b, f)
+              if poisons.delivers(poisons.of_item(b.t, it), blow.damage_type, poisoners=it.def_id == "poisoners_dose")]
+    if not usable:
+        return False
+    it = min(usable, key=lambda i: (b.t.items.unit_value(i), -poisons.worth(b, i)))
+    return bool(b.do_cast(f, b.throw_value(it), None))
 
 
 def _arcane_bonus(b: Battle, f: Fighter) -> bool:

@@ -330,6 +330,27 @@ BACKGROUND = Obj(
 )
 BACKGROUNDS = Obj({"backgrounds": Map(BACKGROUND, min_items=1), "tie_words": Map(word_list(1, 120))})
 
+# A poison (DMG 2024, p. 90-91; rules/poisons.py): how it gets in, the Constitution save, what a failure brings.
+POISON = Obj({
+    "kind": Str(choices=["contact", "ingested", "inhaled", "injury"]),
+    "dc": Int(min=0, max=30),  # 0: no save (basic poison); a brewed dose keeps its brewer's DC in a "dc:<n>" tag
+    "damage": Str(max_len=12, optional=True), "half": Bool(optional=True),  # (half on a success)
+    "sure": Bool(optional=True),  # the damage is taken whatever the save (the Potion of Poison)
+    "hours": Float(min=0, max=200, optional=True), "hours_dice": Str(max_len=8, optional=True),  # Poisoned this long
+    "ends": Str(choices=["caster_turn_end"], optional=True),  # (Poisoner's brew: until the end of the brewer's next turn)
+    "with": Str(choices=["paralyzed", "unconscious", "blinded"], optional=True),  # (while Poisoned in this way)
+    "wakes": Bool(optional=True),  # the Unconscious ends when it takes damage
+    "fail_by": Int(min=1, max=10, optional=True),  # `with` only on a failure by this much (Lolth's Sting)
+    "repeat": Bool(optional=True),  # saved again at the end of each of its turns (Carrion Crawler Mucus)
+    "fumes": Obj({"damage": Str(max_len=8), "successes": Int(min=1, max=10)}, optional=True),  # (Burnt Othur Fumes)
+    "slow": Bool(optional=True),  # Speed halved while Poisoned (Torpor)
+    "midnight": Bool(optional=True),  # nothing until the stroke of midnight (Midnight Tears)
+    "daily": Obj({"damage": Str(max_len=8), "successes": Int(min=1, max=10), "no_heal": Bool(optional=True)},
+                 optional=True),  # (Pale Tincture: a save every day)
+    "truth": Bool(optional=True),  # cannot knowingly lie (Truth Serum)
+    "from": List(Str(max_len=40), optional=True),  # the creatures (stat block ids) it is harvested from
+}, strict=True, optional=True)
+
 ITEM = Obj(
     {
         "name": Str(max_len=60), "category": Str(choices=["weapon", "ammo", "armor", "shield", "helmet", "clothing", "gear",
@@ -374,6 +395,7 @@ ITEM = Obj(
         "tack": Str(choices=["riding", "exotic"], optional=True),  # a saddle (game/mounts.saddled)
         # Expansion 3 C.3: a magic consumable's rarity (potions of healing; spell scrolls are made with one)
         "rarity": Str(choices=["common", "uncommon", "rare", "very_rare", "legendary"], optional=True),
+        "poison": POISON,
     }
 )
 ITEMS = Obj(
@@ -690,11 +712,15 @@ CAMPING = Obj(
         "fish": Obj({"dc": Int(min=0, max=30), "tackle_bonus": Int(min=0, max=10), "catch": List(Any_(), min_items=2, max_items=2)}),
         "cooking": Map(Obj({"becomes": Str(max_len=40), "needs_pot": Bool(optional=True)})),
         "night": NIGHT_SOUNDS,
-        "crafts": Map(Obj({"name": Str(max_len=40), "needs": List(List(Any_(), min_items=2, max_items=2), min_items=1),
+        "crafts": Map(Obj({"name": Str(max_len=40), "needs": List(List(Any_(), min_items=2, max_items=2), min_items=0),
                            "gives": List(List(Any_(), min_items=2, max_items=2), min_items=1),
                            "minutes": Int(min=1, max=600), "skill": Str(max_len=20), "dc": Int(min=0, max=30),
                            "text": Str(max_len=200), "fire": Bool(optional=True),
-                           "tool": Str(max_len=30, optional=True)})),
+                           "tool": Str(max_len=30, optional=True),
+                           # Expansion 4 C.1: only for one who has this feat (the Poisoner's brew), its materials
+                           # bought with coin (copper), as many as the maker's proficiency bonus, no check (dc 0)
+                           "feat": Str(max_len=30, optional=True), "coin": Int(min=0, max=10**6, optional=True),
+                           "by_proficiency": Bool(optional=True)})),
     }
 )
 
@@ -1182,7 +1208,8 @@ TREASURE = Obj(
         "goods": List(List(Any_(), min_items=2, max_items=2), min_items=1),
         "makers": Map(Map(Obj({"item": Str(max_len=40, optional=True), "scroll": Bool(optional=True),
                                "kind": Str(max_len=20, optional=True), "props": List(Map(Any_()), optional=True),
-                               "attune": Bool(optional=True),
+                               "attune": Bool(optional=True), "title": Str(max_len=60, optional=True),
+                               "secretly": Str(max_len=40, optional=True),  # what it really is (rules/poisons.mask)
                                "bases": List(Str(max_len=40), optional=True),  # what it may be made on
                                "qty": List(Int(min=1, max=100), min_items=2, max_items=2, optional=True)}))),
         "reroll": Int(min=0, max=50),

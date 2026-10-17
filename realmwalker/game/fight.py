@@ -30,6 +30,7 @@ class Aftermath:
     fates: dict[int, str] = field(default_factory=dict)  # creature uid -> fate chosen
     significant: bool = False
     carcasses: list[Creature] = field(default_factory=list)  # dead beasts that could be butchered
+    venomous: list[Creature] = field(default_factory=list)  # dead venomous things a poisoner's kit could milk
 
 
 def party_has_light(game) -> bool:
@@ -235,7 +236,7 @@ def finish_battle(game) -> Aftermath:
         c = f.char
         if c is None or f.bond is not None:
             continue  # (a familiar, a steed; a Simulacrum's copy, written back above)
-        health.carry_battle_state(c, f.conditions)
+        health.carry_battle_state(c, f.conditions, hours=f.__dict__.get("poison_hours", 1.0))
         if f.state != "down":
             continue
         if result.outcome == "fled":
@@ -252,6 +253,9 @@ def finish_battle(game) -> Aftermath:
         after.money = result.loot_money
         after.captives = list(result.captives)
         after.carcasses = [c for c in result.dead if game.tables.creatures[c.def_id].get("butcher")]
+        from realmwalker.game import poisoning
+
+        after.venomous = poisoning.harvestable(game, result.dead)
         after.significant = result.xp >= 100 or bool(dead_party) or len(result.dead) >= 3
         dead_text = _list_names(game, result.dead) or "Your enemies"
         survivors = ""

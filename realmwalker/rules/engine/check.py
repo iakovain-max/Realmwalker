@@ -14,7 +14,7 @@ from realmwalker.rules.engine import traits as tr
 
 MODIFIER_KEYS = {
     "attack", "attacked", "enemy_attacks", "save", "resist", "crit_range", "passive", "ignores_zone",
-    "immune_condition", "attacks", "drag_free", "vulnerable", "check", "initiative",
+    "immune_condition", "attacks", "drag_free", "vulnerable", "check", "initiative", "immune",
 }
 MODIFIER_EXTRAS = {"when", "why", "abilities", "against", "skills"}
 ATTACK_REQUIRES = {"target_prone"}  # (a stat block attack's `requires`: Battle.attack_problem)
