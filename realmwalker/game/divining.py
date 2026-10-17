@@ -129,8 +129,7 @@ def behind_stone(game, lm, x: int, y: int) -> bool:
     for cx, cy in _line(p.lx, p.ly, x, y):
         if not lm.in_bounds(cx, cy):
             return True
-        t = int(terrain[cx, cy])
-        if not T.see[t] and not T.walk[t] and "door" not in T.ids[t]:
+        if T.has_tag(int(terrain[cx, cy]), "wall"):  # (a wall, a cliff, a secret door; not a tree, a hedge, a door)
             return True
     return False
 
@@ -406,11 +405,11 @@ def _locate(game, caster, spell, target, what: str) -> list[str]:
         if target.kind == "game":
             for c in game.party:
                 c.effects["hunting_tip"] = max(float(c.effects.get("hunting_tip", 0)), TIP_HOURS)
-            return out + [f"<good>{first} knows where the nearest game is feeding</>: the next hunt here has +5."]
+            return out + [f"<good>{first} knows where the game is feeding</>: for half a day, hunting has +5."]
         if target.kind == "herbs":
             for c in game.party:
                 c.effects["forage_tip"] = max(float(c.effects.get("forage_tip", 0)), TIP_HOURS)
-            return out + [f"<good>{first} knows where good things grow</>: the next forage here has +5."]
+            return out + [f"<good>{first} knows where good things grow</>: for half a day, foraging has +5."]
         game.player.explored[max(0, target.x - 1): target.x + 2, max(0, target.y - 1): target.y + 2] = True
         return out + [f"<good>{esc(target.name[:1].upper() + target.name[1:])} is "
                       f"{way_words(target.x - p.x, target.y - p.y, 'miles')}.</> <dim>(The place is on your map.)</>"]
@@ -710,6 +709,13 @@ def taken(game, items, by: str) -> None:
                 entry["item"] = it.to_dict()
 
 
+def _same(it, d: dict | None) -> bool:
+    """Whether a carried thing is the one taken (the party took it back: a new uid, the same thing)."""
+    return bool(d) and it.def_id == d.get("def_id") and it.name == d.get("name", "") \
+        and int(it.made_at) == int(d.get("made_at", 0)) and it.quality == d.get("quality", "common") \
+        and it.magic == (d.get("magic") or {})
+
+
 def crush(game, char, gem) -> list[str]:
     """Crush a bound sapphire: the thing comes to the hand of whoever bound it."""
     from realmwalker.rules.inventory import add_existing, carried, remove_item
@@ -720,7 +726,12 @@ def crush(game, char, gem) -> list[str]:
     if uid is None or binder is None:
         return ["Only the one who bound it can call the thing; they are not with you."]
     entry = binder.spells[SUMMONS][uid]
-    if any(str(it.uid) == uid for it in carried(game.party)):
+    back = next((it for it in carried(game.party) if str(it.uid) == uid or _same(it, entry.get("item"))), None)
+    if back is not None:
+        if str(back.uid) != uid:  # (won back from the robbers or the watch: the bond follows it)
+            binder.spells[SUMMONS][str(back.uid)] = {"name": entry["name"]}
+            del binder.spells[SUMMONS][uid]
+            gem.tags = [t for t in gem.tags if not t.startswith(SUMMONS_TAG)] + [f"{SUMMONS_TAG}{back.uid}"]
         return [f"The {esc(entry['name'])} is with you already. The sapphire stays whole."]
     if not entry.get("item"):
         return [f"The {esc(entry['name'])} is in other hands now, given or sold: it will not come. "
@@ -934,8 +945,8 @@ def _commune(game, caster, spell, target, how: str) -> list[str]:
             hurt = dice.roll("6d6", rng).total
             caster.uses["addled"] = 1
             return out + [f"<danger>What answers is too vast: {first} reels from it.</> {said}"] + \
-                strain_on_road(game, caster, hurt) + [f"<warn>{first} sits senseless, staring, and will be no use "
-                                                      f"until a long rest.</>"]
+                strain_on_road(game, caster, hurt, f"<danger>It burns through {first}'s mind: {hurt} psychic.</>") \
+                + [f"<warn>{first} sits senseless, staring, and will be no use until a long rest.</>"]
         out.append(f"Something answers. {said}")
     if muddled(game, caster, sid):
         return out + ["<dim>No answer comes. Asked too often; rest first.</>"]
@@ -1121,7 +1132,8 @@ def _lore(game, caster, spell, target) -> list[str]:
                f"{master}.")
     lying = past.artifacts_lying_at(game, site)
     if lying:
-        out.append(f"<good>{esc(w.politics['artifacts'][lying[0]]['name']).capitalize()} lies there still.</>")
+        n = esc(w.politics["artifacts"][lying[0]]["name"])
+        out.append(f"<good>{n[:1].upper() + n[1:]} lies there still.</>")
     return out
 
 

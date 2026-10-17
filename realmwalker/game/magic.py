@@ -243,6 +243,8 @@ def road_problem(game, caster, spell_id: str, target=None, scroll=None) -> str |
         return why
     if game.battle is not None:
         return "you are in a fight"
+    if caster.uses.get("addled"):  # (Contact Other Plane's failure, until a long rest)
+        return "the mind is still reeling from what it touched (a long rest)"
     if scroll is not None:
         why = spellrules.scroll_problem(caster, t, spell_id)
         ok = not why
@@ -287,14 +289,14 @@ def road_problem(game, caster, spell_id: str, target=None, scroll=None) -> str |
     return None
 
 
-def strain_on_road(game, caster, amount: int) -> list[str]:
+def strain_on_road(game, caster, amount: int, words: str | None = None) -> list[str]:
     """An earlier Wish's stress tears at a caster outside a fight: necrotic damage nothing reduces; at 0 hit points
     they go down and lie senseless a while (down, not dead, as after a trap)."""
     if amount <= 0:
         return []
     first = escape_markup(caster.name.split()[0])
     caster.hp -= amount
-    out = [f"<danger>Casting tears at {first}: {amount} necrotic, the strain of the wish.</>"]
+    out = [words or f"<danger>Casting tears at {first}: {amount} necrotic, the strain of the wish.</>"]
     if caster.hp <= 0:
         from realmwalker.game.fight import lie_senseless
 

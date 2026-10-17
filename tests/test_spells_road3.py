@@ -659,3 +659,60 @@ def test_the_spells_page_lists_what_locate_object_seeks(make_app, world, tables)
     screen = SpellsScreen(app, game)
     screen.sel = screen.spells().index("locate_object")
     assert any(t.name == "the nearest chest" for t in screen.targets())
+
+
+# ---------------------------------------------------------------------------- from the fresh review
+def test_a_bound_thing_won_back_is_not_called_twice(world, tables):
+    from realmwalker.game import gear
+    from realmwalker.rules.inventory import add_existing, remove_item
+    from realmwalker.rules.items import Item
+
+    wiz = hero(tables)
+    game = game_with(world, tables, wiz)
+    s = subject(game, wiz, "drawmijs_instant_summons")
+    cast(game, wiz, "drawmijs_instant_summons", s)
+    gem = next(i for i in wiz.inventory if any(t.startswith("summons:") for t in i.tags))
+    thing = next(i for i in wiz.inventory if i.uid == s.ref)
+    remove_item(wiz, thing.uid)
+    divining.taken(game, [thing], "robbers")
+    back = Item.from_dict(thing.to_dict())
+    back.uid = 0
+    add_existing(wiz, tables.items, back)  # (the robbers beaten, the thing picked up again: a new uid)
+    count = sum(1 for i in wiz.inventory if i.def_id == thing.def_id and i.name == thing.name)
+    assert "with you already" in text(gear.use_item(game, wiz, gem))
+    assert sum(1 for i in wiz.inventory if i.def_id == thing.def_id and i.name == thing.name) == count
+
+
+def test_trees_do_not_stop_divination_but_walls_do(world, tables):
+    game = game_with(world, tables, hero(tables))
+    lm = into_dungeon(game)
+    near = open_cells(game, lm, 3, 5)[0]
+    p = game.player
+    line = divining._line(p.lx, p.ly, *near)
+    for x, y in line:
+        dungeon.set_terrain(lm, x, y, "tree_broadleaf")
+    assert not divining.behind_stone(game, lm, *near)
+    dungeon.set_terrain(lm, *line[0], "secret_door")
+    assert divining.behind_stone(game, lm, *near)
+
+
+def test_the_dead_of_the_last_fight_go_cold_after_a_day(world, tables):
+    cleric = hero(tables, "cleric")
+    game = game_with(world, tables, cleric)
+    b = fight_of(tables, [cleric], ("bandit",))
+    foe = b.side(FOE)[0]
+    foe.creature.hp, foe.creature.alive, foe.state, foe.hp = 0, False, "dead", 0
+    speech.remember_the_dead(game, b, "bandits")
+    assert speech._corpses(game)
+    game.world.time += 2 * 24 * 60
+    assert not speech._corpses(game)
+    b2 = fight_of(tables, [cleric], ("bandit",))
+    speech.remember_the_dead(game, b2, "bandits")  # (nobody fell this time)
+    assert game.fresh_dead is None
+
+
+def test_a_reeling_mind_reads_no_ritual(world, tables):
+    wiz = hero(tables)
+    game = game_with(world, tables, wiz)
+    wiz.uses["addled"] = 1
+    assert "reeling" in magic.road_problem(game, wiz, "comprehend_languages")

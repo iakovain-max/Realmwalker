@@ -212,7 +212,7 @@ Assumptions waiting for Anton:
   with the party (Common for everyone, and each one's languages) cannot be talked past; today only gnolls and trolls
   (the troll's fearlessness stops it anyway); Tongues opens it, Comprehend Languages at +5. Speak with Animals lets
   beasts be talked past (the Influence check by their Intelligence, as for anyone). Speak with Dead asks only a foe of
-  the last fight, where you fought (not kept in a save): its band is the nearest gang, cult or tribe of its kind with
+  the last fight, where you fought, within a day (not kept in a save): its band is the nearest gang, cult or tribe of its kind with
   a place of its own. Speak with Plants warns for four hours (a band is seen first) and gives +5 to forage. Message
   calls a companion waiting in the same town; Sending, Telepathy and Dream send a waiting companion on their way (24
   miles a day); Animal Messenger reaches 50 miles and is always a ritual on the road (a higher slot adds nothing).

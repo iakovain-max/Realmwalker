@@ -23,6 +23,7 @@ NIGHTMARE_DICE = "3d6"
 LANGUAGE_DC = 5  # Comprehend Languages: they are understood, and half understand your signs
 UNSPOKEN = ("one other language", "two other languages")  # (a stat block's words for "some tongue": not counted)
 THINKING_SQUARES = 6  # Detect Thoughts: 30 feet
+FRESH_MINUTES = 24 * 60  # Speak with Dead: the bodies of the last fight lie where it was for a day
 
 
 def _road(spell: dict) -> dict:
@@ -89,6 +90,7 @@ def remember_the_dead(game, battle, group: str | None) -> None:
         d = game.tables.creatures[c.def_id]
         dead.append({"name": c.name, "def_id": c.def_id, "kind": d.get("kind", ""), "named": bool(c.named)})
     if not dead:
+        game.fresh_dead = None  # (the last fight left no one to ask)
         return
     p = game.player
     game.fresh_dead = {"map": game.local.key if game.local is not None else None, "x": p.x, "y": p.y,
@@ -101,7 +103,7 @@ def _corpses(game) -> list[Subject]:
         return []
     p = game.player
     here = game.local.key if game.local is not None else None
-    if (rec["x"], rec["y"]) != (p.x, p.y) or rec["map"] != here:
+    if (rec["x"], rec["y"]) != (p.x, p.y) or rec["map"] != here or game.world.time - rec["time"] > FRESH_MINUTES:
         return []
     out = []
     for i, d in enumerate(rec["dead"]):
@@ -329,8 +331,7 @@ def _people_near(game) -> list[Subject]:
         if here is None or npc.settlement != here.id or not npc.alive or not npc.present:
             continue
         if max(abs(npc.x - p.lx), abs(npc.y - p.ly)) <= THINKING_SQUARES:
-            out.append(Subject(npc.name if npc.known else f"{npc.name.split()[0]}, the {npc.job}", "person", npc.id,
-                               npc.x, npc.y))
+            out.append(Subject(npc.name if npc.known else npc.label(), "person", npc.id, npc.x, npc.y))
     return out
 
 
