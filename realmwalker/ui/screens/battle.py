@@ -1323,8 +1323,9 @@ class BattleScreen(Screen):
 
     def full_details(self, f: Fighter) -> bool:
         """Whether a creature's card shows its whole stat block (Settings, Creature details)."""
-        if f.char is not None or f.bond is not None or self.app.settings.creature_details != "known":
-            return True  # (one's own familiar or steed is known)
+        if f.char is not None or f.bond is not None or self.app.settings.creature_details != "known" \
+                or (f.shape is not None and f.side == PARTY):
+            return True  # (one's own familiar or steed is known, and a friend in a borrowed shape)
         return f.creature.def_id in self.battle.known
 
     def _words_tip(self, f: Fighter) -> str:
