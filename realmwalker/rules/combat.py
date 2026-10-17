@@ -2279,7 +2279,7 @@ class Battle:
     def _shield(self, f: Fighter, att: Fighter | None = None, opt: AttackOption | None = None, total: int = 0,
                 ac: int = 0) -> bool:
         """Cast Shield as a reaction (wizards who know it, with a first-level slot to spare)."""
-        if not f.char or "shield" not in spellrules.known_spells(f.char, self.t):
+        if not f.char or "shield" not in spellrules.known_spells(f.char, self.t) or f.buff_value("befuddled"):
             return False
         if f.buff_value("ac") and any(b.get("source") == "shield" for b in f.buffs):
             return False
@@ -3818,7 +3818,7 @@ class Battle:
             return False  # (a follow-up of a spell already cast is not a casting)
         for x in self.enemies_of(caster):
             if not x.reaction or query.incapacitated(x) or self.feet(x, caster) > 60 or not self.can_see(x, caster) \
-                    or self.antimagic(x.cells):
+                    or self.antimagic(x.cells) or x.buff_value("befuddled"):
                 continue
             slot = wizard.counter_slot(self, x)
             if slot is None:

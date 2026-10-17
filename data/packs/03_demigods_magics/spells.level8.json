@@ -46,11 +46,6 @@
    "target": "point", "range": 150, "area": {"shape": "sphere", "size": 60}, "components": ["V", "S", "M"],
    "effects": [{"op": "save", "ability": "con", "damage": "12d6", "type": "radiant", "half": true,
                 "on_fail": [{"op": "condition", "condition": "blinded", "rounds": 10, "repeat_save": true, "save": "con"}]}],
-   "fx": "burst", "text": "Brilliant sunlight flashes in a 60-foot radius up to 150 feet away: everyone in it, friend or foe, makes a Constitution save or takes 12d6 radiant and is blinded for a minute (a save at each turn's end may free it); half damage on a save."},
-  "tsunami": {"name": "Tsunami", "level": 8, "school": "conjuration", "classes": ["druid"],
-   "target": "direction", "range": "self", "area": {"shape": "line", "size": 300}, "components": ["V", "S"], "concentration": true, "rounds": 6,
-   "effects": [{"op": "save", "ability": "str", "damage": "6d10", "type": "bludgeoning", "half": true,
-                "on_fail": [{"op": "push", "feet": 50}]}],
-   "fx": "line", "text": "A wall of water bursts across the field along a line 300 feet long (concentration, six rounds): everyone it sweeps over makes a Strength save or takes 6d10 bludgeoning and is flung 50 feet along its course; half damage on a save."}
+   "fx": "burst", "text": "Brilliant sunlight flashes in a 60-foot radius up to 150 feet away: everyone in it, friend or foe, makes a Constitution save or takes 12d6 radiant and is blinded for a minute (a save at each turn's end may free it); half damage on a save."}
  }
 }
