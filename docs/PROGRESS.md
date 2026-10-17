@@ -82,7 +82,13 @@ and the shape-changing spells the one after.
   waiting for the word, the word's reach, the player's and the Auto's commands; Finger of Death's zombie for you and
   for a foe; the ghast's stench and claws, the mummy's glare, rot and dust, the rot carried and lifted. The arena fights
   the ghast and the mummy (the ghast now both bites and claws); the autoplay bot checks every servant record and that
-  nobody heals under a mummy's rot; the whole test suite, the autoplay bot and the window smoke test.
+  nobody heals under a mummy's rot; the whole test suite, the autoplay bot and the window smoke test. The fresh
+  review's fixes: a fighter no longer looks like a spellcaster to the game after walking a close-up map (an empty
+  list of servants had been left on everyone); rotting away to nothing is a real death (the death screen, a
+  companion's body kept for raising); a spell of return clears the dust, True Resurrection lifts the rot and gives
+  back exactly what it took; a mummy's fist turns to dust only someone it drops to 0, not someone already down; the
+  warning that your dead grow restless now comes in the middle of a long rest, not after it. The "Your music" page
+  now writes a mood's particular folders as their paths (travel/pine_forest).
 
 ### Session, 2026-10-17 (afternoon): Demigods & Magics F.3 — angels, dragons, fiends and walking furniture
 
