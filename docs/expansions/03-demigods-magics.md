@@ -851,7 +851,7 @@ stat block now comes with the spell that brings it into play (never a block that
 - [x] G.1 Every caster stat block on the catalogue; arena: every battle spell cast by the AI in a scenario; a test
   caster of each spell level 1–9 casts without hangs.
 - [x] G.2 Spellcasting services and scrolls in temples, mages' guilds and shops; the law of magic.
-- [ ] G.3 Every Expansion 3 codex entry settled; balance; the icon; release v1.3.0.
+- [x] G.3 Every Expansion 3 codex entry settled; balance; the icon; release v1.3.0.
 
 #### G.1 — How
 - **The casters there are.** Today's stat blocks that cast (the acolyte, the cult fanatic; the imp, quasit and sprite's

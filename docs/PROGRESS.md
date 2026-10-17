@@ -28,7 +28,8 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Clearing the decks for the expansions** | ✅ Done (2026-10-12), branch `prep/clear-the-decks` |
 | **Expansion 1, *Dice & Destiny*** (version 1.1.0) | ✅ Released (2026-10-13), branch `dlc/01-dice-destiny` |
 | **Expansion 2, *Blades & Backgrounds*** (version 1.2.0) | ✅ Released (2026-10-13), branch `dlc/02-blades-backgrounds` |
-| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete), D (the spell catalogue: 191 battle spells, cantrips to level 9, and Wish) E.1 (spells outside battle: healing, return from death, food, shelter and watch), E.2 (light, the body on the move, travel by magic), E.3 (finding and seeing, asking the powers, talking), E.4 (minds and the law, disguise and illusion, the small arts), E.5 (locks and stone, weather and land), E.6 (lasting protections and the caster's keeping) and E.7 (great magic and Wish's other uses, 2026-10-17: Part E complete) and F.1 (a familiar and a steed fight beside you), F.2 (summoned spirits of levels 2 to 4) and F.3 (the level 5 and 6 spirits and Animate Objects) and F.4 (the raised dead: Animate Dead, Create Undead, Finger of Death's zombie, the ghast and the mummy) and F.5 (the bound: Planar Ally, Planar Binding, Magic Circle turned inward) and F.6 (Polymorph and True Polymorph in a fight) and F.7 (lions, tigers, elephants, imps, sprites and the rest of the book's beasts, met in the land) and F.8 (Animal Shapes and Shapechange, in a fight and on the road: Part F complete) and G.1 (enemy casters use the whole spell book) and G.2 (spells cast for pay by priests and mages, scrolls in temples and mages' shops, the law of magic) in `main`; G.3 (Simulacrum, balance, the release) next |
+| **Expansion 3, *Demigods & Magics*** (version 1.3.0) | ✅ Released (2026-10-17), branch `dlc/03-demigods-magics` |
+| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansions 1-3 released; Expansion 4 next (see STATUS.md) |
 
 ---
 
@@ -39,6 +40,78 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-17 (evening): Demigods & Magics G.3 — Simulacrum; **released as 1.3.0** — branch `dlc/03-demigods-magics`
+
+Built by the relay builder realmwalker-a. The last part of Expansion 3. **Expansion 3, *Demigods & Magics*, is
+released as version 1.3.0**: its icon (a crowned figure rising out of an open book that spills light) is on the main
+menu's shelf. Saves made since part E.1 this morning (format 18) still load. Saves from 1.2.0 and earlier do not:
+start a new world.
+
+**New in this last part: Simulacrum.** A wizard of level 13 or more can cast it outside a fight from the Spells page
+(S). It takes twelve hours and a vial of ruby dust (1,500 gold, sold in city markets).
+- **Whose likeness**: choose with ←→. It can be anyone of the party (yourself too), a beast of your herd (the mule,
+  a horse, the camel, the elephant, the mastiff), or a prisoner who is a person or a beast.
+- **A copy of a person** has the original's level, scores, class features and spells as they were at the casting.
+  It has half their hit points, and what they wore and held is copied in snow, without any magic. It has no pack and
+  no coin. It walks behind the party, drawn as the original, pale as frost.
+- **In a fight** it stands beside its maker and acts right after them. You play it like a companion (z hands it to
+  the Auto).
+- **What it cannot do**: nothing heals it. Its spell slots never come back. It never rests or gains a level. At 0
+  hit points it melts into a heap of wet snow, for good.
+- **Repair**: at a long rest beside it, its maker works 100 gold of powders into it for each hit point. The game
+  never spends more than half of what the maker carries.
+- **A copy of a beast or a prisoner** fights the same way and follows the party everywhere, into towns too.
+- **One at a time**: casting it again unmakes the old one.
+
+**The whole of Demigods & Magics** (parts A to G, all built today and on 2026-10-13):
+- **Twenty levels**, through the book's four tiers. At 19 you choose an epic boon instead of a feat (Combat Prowess,
+  Fate, Truesight, the Night Spirit...). The most dangerous regions, the deepest dungeon levels and the named beasts
+  grow with a high-level party; farmland stays quiet.
+- **The four 2024 classes from level 1 to 20**:
+  - the fighter: Second Wind, Tactical Mind, up to four attacks;
+  - the rogue: Cunning Strike (poison, trip, withdraw, daze, knock out, obscure);
+  - the cleric: Divine Order, Blessed Strikes;
+  - the wizard: Scholar, Spell Mastery, Signature Spells.
+  - Their subclasses are the Champion, the Knight (ours, to level 18), the Thief, the Assassin, the Life and War
+    Domains, the Evoker and the Abjurer.
+- **Spellcasting by the 2024 rules**: spells prepared each morning, rituals, one slotted spell a turn, higher
+  slots, costly components bought and spent, spell scrolls of every level, potions of healing as a bonus action.
+- **Every spell of the Player's Handbook**: 191 battle spells from cantrips to Wish, cast by you, your companions
+  and your enemies alike. The enemy chooses by what each spell would do, never by name.
+- **Spells outside a fight** plug into the rest of the game:
+  - food and water, Tiny Hut's safe night, wards on the camp;
+  - return from death, with the bodies of fallen friends carried along;
+  - light, travel by magic (Teleport, circles, Word of Recall, Wind Walk);
+  - finding and seeing, asking the powers (Augury and Commune answer from the world's own history);
+  - minds and the law, disguise and illusion, locks and stone, weather and land;
+  - lasting protections (Glyph of Warding, Hallow, Private Sanctum);
+  - great magic: Contingency, Magic Jar, Clone, Imprisonment, and Wish's other uses.
+- **Allies on the field**: a familiar, a summoned steed, the summoned spirits of every level, Animate Objects, the
+  raised dead, bound spirits and fiends, Polymorph and Shapechange, and now a Simulacrum. The 24 creatures of the
+  book's Appendix B have pictures and are met in the land.
+- **Spells for pay**: temple priests and town mages cast for you at the book's prices. Temples and mages' shops sell
+  scrolls by rarity, and each realm has its law of magic.
+
+**How to see it**: start a new world. Make a cleric or a wizard and open the Spells page (S). At level 13, with a vial
+of ruby dust, cast Simulacrum on yourself, then walk into a fight. The shelf on the main menu shows the icon and
+what the expansion adds.
+
+**Balance**: `tools/balance.py --runs 60` before the release. The fights, the winter night and the untreated wound
+stay inside their bands (see the numbers in `build/g3_balance.txt`).
+
+**What could not be checked**: the icon and the frost-pale copy were looked at enlarged and in the window smoke
+test, not in play by eye.
+
+**Anything assumed** (Simulacrum):
+- the copy's gear is snow in the likeness of what was worn and held, without its magic;
+- it cannot be healed by any spell;
+- a long rest repairs it, but spends at most half of the maker's coin;
+- a beast's or prisoner's copy follows the party into towns, where the raised dead do not;
+- commands are the battle's (you play it as a party member).
+
+**Codex** (`tools/codex/coverage.py`): Expansion 3: all 560 entries settled (223 done, 336 adapted, 1 omitted).
+Player's Handbook 65% · Dungeon Master's Guide 12% · Monster Manual 16%.
 
 ### Session, 2026-10-17 (evening): Demigods & Magics G.2 — spells for hire, the mage's shop, the law of magic
 

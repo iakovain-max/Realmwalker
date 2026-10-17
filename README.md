@@ -27,6 +27,11 @@ painted on parchment, and fights on a battle mat with animation. Playable with t
 - **Come from somewhere, and carry what you need** (*Blades & Backgrounds*, version 1.2): sixteen backgrounds and
   the peoples in their 2024 form, feats, a trick for every weapon, the 2024 tools and gear (every piece does
   something), inns and coaches and ships by the book, horses, carts and a hundred trinkets.
+- **Climb to level 20 and cast every spell under the sky** (*Demigods & Magics*, version 1.3): the 2024 fighter,
+  rogue, cleric and wizard to level 20 with their subclasses and epic boons, every spell of the Player's Handbook
+  for you, your companions and your enemies, spells that work on the road (Revivify, Teleport, Tiny Hut, Augury
+  from the world's own history), familiars, steeds, summoned spirits and the raised dead at your side, and priests
+  and mages who cast for pay.
 - **Talk to everyone.** They have names, trades, memories and opinions of you.
 - **Hire companions**, pay them, keep them loyal (or don't), and command them in a fight.
 - **Take on work**: bounties, lairs to clear, beasts to hunt, letters to carry, captives to free. Not every job is
