@@ -30,7 +30,8 @@ def _ids(data_dir="data"):
     d, _ = DataRegistry.load(Path(data_dir))
     spells = d.get("spells.json")["spells"]
     return sorted(sid for sid in spells if not sid.startswith("_") and d.origin("spells", sid, "spells") == PACK
-                  and not spells[sid].get("minutes") and not spells[sid].get("road_only"))  # (Part E's are cast
+                  and not spells[sid].get("minutes") and not spells[sid].get("road_only")
+                  and spells[sid].get("classes") != ["creature"])  # (a steed's gift: tests/test_allies.py)  # (Part E's are cast
     # outside a fight: tests/test_spells_outside.py)
 
 
