@@ -616,6 +616,8 @@ class BattleBoard:
                     px, py = self.sq_px(x, y)
                     canvas.under(Image("bfog", _fog_image, (px - T * 0.25, py - T * 0.25, T * 1.5, T * 1.5),
                                        rgba=(180, 184, 190, 170) if z.kind == "fog" else (10, 8, 14, 230)))
+            elif z.kind in GROUND_LOOKS:  # the second wave's ground (Expansion 3 D.2)
+                self._spell_ground(canvas, z, now)
             elif z.kind == "ice":
                 for (x, y) in z.cells:
                     px, py = self.sq_px(x, y)
@@ -647,6 +649,33 @@ class BattleBoard:
                             sx, sy = ccx + math.cos(ang) * r, ccy + math.sin(ang) * r * 0.8
                             canvas.under(Image("bspirit", _glow_image, (sx - T * 0.3, sy - T * 0.3, T * 0.6, T * 0.6),
                                                rgba=(255, 236, 170, 200)))
+
+    def _spell_ground(self, canvas, z, now: float) -> None:
+        """Tentacles, poison clouds, swarms, sleet, storms of light, conjured spirits, walls of wind and force."""
+        T = self.T
+        ambient = canvas.gfx.ambient
+        look = GROUND_LOOKS[z.kind]
+        col = look["colour"]
+        pulse = 0.5 + 0.5 * math.sin(now * 2.4) if ambient else 0.6
+        make = look.get("image")
+        for i, (x, y) in enumerate(sorted(z.cells)):
+            px, py = self.sq_px(x, y)
+            if look.get("fog"):
+                canvas.under(Image("bfog", _fog_image, (px - T * 0.25, py - T * 0.25, T * 1.5, T * 1.5),
+                                   rgba=(*col, look.get("alpha", 180))))
+            else:
+                canvas.under(Rect(px, py, T, T, (*col, int(look.get("alpha", 50) + 30 * pulse))))
+            if make is not None:
+                frame = (int(now * 6) + i) % 2 if ambient and look.get("frames") else 0
+                canvas.under(Image(f"b{z.kind}{frame}", (lambda m=make, fr=frame: m(fr)), (px, py, T, T),
+                                   rgba=(255, 255, 255, 230), smooth=False))
+        if look.get("edge"):
+            xs = [c[0] for c in z.cells]
+            ys = [c[1] for c in z.cells]
+            if xs:
+                bx, by = self.sq_px(min(xs), min(ys))
+                canvas.under(theme.lines_box(bx, by, (max(xs) - min(xs) + 1) * T, (max(ys) - min(ys) + 1) * T,
+                                             (*col, int(110 + 70 * pulse))))
 
     def _overlay_under(self, canvas, battle, ov: dict, now: float) -> None:
         T = self.T
@@ -773,8 +802,8 @@ class BattleBoard:
         seen_by_party = ov.get("seen", None)
         order = []
         for f in battle.fighters:
-            if f.state == "fled":
-                continue
+            if f.state == "fled" or f.state == "away" and not (f.away or {}).get("stays"):
+                continue  # (gone, or banished or blinked away for now)
             x, y = self.pos(f, now)
             order.append((y + f.sq, f, x, y))
         order.sort(key=lambda t: t[0])
@@ -792,6 +821,13 @@ class BattleBoard:
                 lx, ly = int(min(battle.field.width - 1, max(0, round(x)))), int(min(battle.field.height - 1, max(0, round(y))))
                 tint = tuple(float(v) for v in light[lx, ly])
             alpha = 1.0
+            if f.state == "away":  # (sealed in a sphere: seen through its shimmer)
+                alpha = 0.7
+                bx, by = self.sq_px(x, y)
+                pulse = 0.5 + 0.5 * math.sin(now * 3) if gfx.ambient else 0.6
+                pts = [(bx + T * f.sq / 2 + math.cos(a / 12 * math.pi) * T * f.sq * 0.55,
+                        by + T * f.sq / 2 + math.sin(a / 12 * math.pi) * T * f.sq * 0.55) for a in range(25)]
+                canvas.over(Lines(pts, max(2, T // 14), (190, 220, 255, int(140 + 80 * pulse))))
             flash = next((e for e in self.fx if e["kind"] == "hit" and e["who"] == f.id and e["t0"] <= now <= e["t0"] + e["dur"]),
                          None)
             if flash is not None:
@@ -839,7 +875,7 @@ class BattleBoard:
     def _label(self, canvas, battle, f, cx, fy, s, ov) -> None:
         from realmwalker.ui import colors
 
-        if f.state in ("dead", "fled"):
+        if f.state in ("dead", "fled") or f.state == "away" and not (f.away or {}).get("stays"):
             return
         T = self.T
         ratio = f.hp / max(1, f.max_hp)
@@ -1105,6 +1141,85 @@ def _burst_image():
     out[..., 2] = (160 + 95 * core).astype(np.uint8)
     out[..., 3] = (255 * a).astype(np.uint8)
     return out
+
+
+def _tentacles_image(frame: int = 0):
+    """Evard's Black Tentacles: dark rubbery arms curling up out of the ground (two frames)."""
+    from PIL import Image as PImage, ImageDraw
+
+    s = 32
+    im = PImage.new("RGBA", (s, s), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    rng = np.random.default_rng(41)
+    for _ in range(4):
+        x, y = (int(v) for v in rng.integers(4, s - 4, 2))
+        pts = [(x, y + 6)]
+        for k in range(5):
+            x = int(np.clip(x + (1 if (k + frame) % 2 else -1) * int(rng.integers(1, 3)), 1, s - 2))
+            y = int(np.clip(y - 2, 1, s - 2))
+            pts.append((x, y))
+        d.line(pts, fill=(34, 20, 44, 245), width=2)
+        d.point(pts[-1], fill=(120, 90, 140, 255))
+    return im
+
+
+def _insects_image(frame: int = 0):
+    """Insect Plague: a swarm of biting locusts, dark specks in the air (two frames)."""
+    from PIL import Image as PImage, ImageDraw
+
+    s = 32
+    im = PImage.new("RGBA", (s, s), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    rng = np.random.default_rng(53 + frame)
+    for _ in range(22):
+        x, y = (int(v) for v in rng.integers(1, s - 2, 2))
+        d.point((x, y), fill=(40, 34, 20, 255))
+        d.point((x + 1, y), fill=(90, 80, 40, 200))
+    return im
+
+
+def _wind_image(frame: int = 0):
+    """Wind Wall: streaks of a strong wind blowing straight up (two frames)."""
+    from PIL import Image as PImage, ImageDraw
+
+    s = 32
+    im = PImage.new("RGBA", (s, s), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    rng = np.random.default_rng(61 + frame)
+    for _ in range(6):
+        x, y = (int(v) for v in rng.integers(2, s - 2, 2))
+        d.line([(x, y), (x + 1, y - 6)], fill=(235, 240, 245, 200), width=1)
+    return im
+
+
+def _sleet_image(frame: int = 0):
+    """Sleet Storm: driving sleet over a skin of ice (two frames)."""
+    from PIL import Image as PImage, ImageDraw
+
+    s = 32
+    im = PImage.new("RGBA", (s, s), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    rng = np.random.default_rng(67 + frame)
+    for _ in range(9):
+        x, y = (int(v) for v in rng.integers(2, s - 3, 2))
+        d.line([(x, y), (x - 2, y + 4)], fill=(230, 240, 255, 230), width=1)
+    return im
+
+
+GROUND_LOOKS = {  # how the second wave's ground looks on the battle mat (BattleBoard._spell_ground)
+    "tentacles": {"colour": (40, 26, 52), "alpha": 70, "image": _tentacles_image, "frames": True},
+    "cloud": {"colour": (176, 200, 84), "fog": True, "alpha": 190},
+    "stench": {"colour": (190, 186, 90), "fog": True, "alpha": 175},
+    "hunger": {"colour": (8, 6, 12), "fog": True, "alpha": 235},
+    "insects": {"colour": (120, 104, 60), "alpha": 40, "image": _insects_image, "frames": True},
+    "sleet": {"colour": (200, 214, 236), "fog": True, "alpha": 160, "image": _sleet_image, "frames": True},
+    "radiance": {"colour": (255, 240, 190), "alpha": 70, "edge": True},
+    "spirits": {"colour": (170, 230, 190), "alpha": 40, "edge": True},
+    "elemental": {"colour": (150, 200, 255), "alpha": 50, "edge": True},
+    "wind": {"colour": (220, 230, 240), "alpha": 20, "image": _wind_image, "frames": True},
+    "force": {"colour": (150, 190, 255), "alpha": 150},
+    "stone": {"colour": (120, 116, 108), "alpha": 0},
+}
 
 
 def _fog_image():

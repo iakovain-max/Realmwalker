@@ -354,6 +354,43 @@ def _catalogue_mark(b, bf: dict, spell: dict) -> tuple[str, str, list[str]] | No
                                                    "damage, once a turn."]
     if "expeditious_retreat" in (bf.get("traits") or ()):
         return "spell", name or "Expeditious Retreat", ["They may Dash as a bonus action."]
+    # The second wave (D.2)
+    if bf.get("confused"):
+        return "spell", name or "Confused", ["At the start of each turn a d10 says what they do: wander off (1), "
+                                             "nothing (2-6), strike at someone near (7-8), or act freely (9-10)."]
+    if bf.get("sluggish"):
+        return "sapped", name or "Slowed", ["Half speed, -2 AC and Dexterity saves, no bonus action, one attack "
+                                            "an action."]
+    if bf.get("haste"):
+        return "blessed", name or "Hasted", ["Double speed, +2 AC, advantage on Dexterity saves and one more attack "
+                                             "an action. When it ends, a turn of lethargy."]
+    if bf.get("blink"):
+        return "shielded", name or "Blinking", ["At the end of each of their turns, an even chance to vanish into "
+                                                "the Ethereal Plane until their next turn."]
+    if bf.get("thorns"):
+        return "warded", name or "Fire Shield", [f"Whoever hits them in melee takes {esc(str(bf['thorns']))} "
+                                                 f"{esc(bf.get('thorns_type', 'fire'))} damage."]
+    if bf.get("aura"):
+        r = int(bf["aura"].get("radius", 30))
+        return "blessed", name or "An aura", [f"Friends within {r} feet share its gift."]
+    if bf.get("save_adv") or bf.get("heal_max"):
+        lines = []
+        if bf.get("save_adv"):
+            what = ["death saves" if a == "death" else f"{a.upper()} saves" for a in bf["save_adv"]]
+            lines.append(f"Advantage on {' and '.join(what)}.")
+        if bf.get("heal_max"):
+            lines.append("Healing they receive is the most the dice can give.")
+        return "blessed", name or "Hope", lines
+    if bf.get("save_adv_spells") or bf.get("save_adv_against") or bf.get("rise"):
+        lines = []
+        if bf.get("save_adv_spells"):
+            lines.append("Advantage on saves against spells" + ("; a save takes no damage at all." if
+                                                                  bf.get("evade_spells") else "."))
+        if bf.get("save_adv_against"):
+            lines.append("Advantage on saves against being " + ", ".join(esc(c) for c in bf["save_adv_against"]) + ".")
+        if bf.get("rise"):
+            lines.append("At the start of their turn at 0 hit points they regain 1.")
+        return "warded", name or "Warded", lines
     return None
 
 
