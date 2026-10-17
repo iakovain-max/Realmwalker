@@ -139,8 +139,12 @@ def aim_targets(b, f, a: dict) -> list:
     aim = a.get("aim")
     if aim == "enemy":
         return [e for e in b.enemies_of(f) if e.active and b.feet(f, e) <= int(a.get("range", 5)) and b.can_see(f, e)]
-    if aim == "unknown":
-        return [e for e in b.enemies_of(f) if e.creature is not None and e.creature.def_id not in b.known]
+    if aim == "unknown":  # (Know Your Enemy: a creature seen within its range)
+        return [e for e in b.enemies_of(f) if e.creature is not None and e.creature.def_id not in b.known
+                and (not a.get("range") or b.feet(f, e) <= int(a["range"]) and b.can_see(f, e))]
+    if aim == "friend":  # (another on their side, standing, seen within range: a Battle Master's Rally)
+        return [x for x in b.team(f.team) if x is not f and x.active and b.feet(f, x) <= int(a.get("range", 5))
+                and b.can_see(f, x)]
     if aim == "ally":  # (another creature on their side, hurt, seen within range: Divine Spark)
         return [x for x in b.team(f.team) if x is not f and (x.active or x.state == "down") and x.hp < x.max_hp
                 and b.feet(f, x) <= int(a.get("range", 5)) and b.can_see(f, x)]
@@ -181,6 +185,14 @@ def _surge_ready(b, f) -> str | None:
     return fighter.surge_ready(b, f)
 
 
+def _bm(name: str):
+    def test(b, f) -> str | None:
+        from realmwalker.rules.engine.handlers import battle_master
+
+        return getattr(battle_master, name)(b, f)
+    return test
+
+
 def _not_moved(b, f) -> str | None:
     from realmwalker.rules.engine.handlers import rogue
 
@@ -203,6 +215,11 @@ REQUIRES: dict[str, Callable] = {
     "on_stone": _on_stone,
     "medic_ready": _medic_ready,
     "hurt_with_hit_die": _hurt_with_hit_die,
+    "superiority_ready": _bm("superiority_ready"),
+    "know_ready": _bm("know_ready"),
+    "attack_left": _bm("attack_left"),
+    "own_turn": lambda b, f: None if b.current is f else "only on your turn",
+    "five_feet_left": lambda b, f: None if f.move_left >= 5 else "no movement left",
 }
 
 

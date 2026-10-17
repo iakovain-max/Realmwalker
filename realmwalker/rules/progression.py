@@ -64,7 +64,10 @@ def feature_gives(char: Character, tables, feat: dict) -> None:
         if t not in char.weapon_prof:
             char.weapon_prof.append(t)
     if feat.get("choose"):
-        add_pending(char, {"kind": "option", "feature": feat["id"], "level": char.level})
+        for _ in range(int(feat.get("choose_count", 1))):  # (a Battle Master's maneuvers: three, then two at a time)
+            add_pending(char, {"kind": "option", "feature": feat["id"], "level": char.level})
+    if gives.get("feat"):  # (Student of War: its tool and skill asked as a feat's choices are)
+        take_feat(char, tables, gives["feat"], front=False)
     if feat.get("expertise"):  # (a wizard's Scholar, a rogue's second Expertise)
         ex = feat["expertise"]
         add_pending(char, {"kind": "expertise", "count": int(ex["count"]), "skills": list(ex.get("skills") or []),
@@ -311,7 +314,7 @@ def options(char: Character, tables, choice: dict) -> list[tuple[str, str, str]]
     kind = choice["kind"]
     names = {a: tables.rules["abilities"][a]["name"] for a in tables.rules["abilities"]}
     if kind == "option":
-        feat = next((f for f in cls["features"] if f["id"] == choice["feature"]), {})
+        feat = option_feature(char, tables, choice)
         return [(o, cls["options"][o]["name"], cls["options"][o]["text"]) for o in feat.get("choose", ())
                 if o not in char.features]
     if kind == "subclass":
@@ -396,6 +399,29 @@ def options(char: Character, tables, choice: dict) -> list[tuple[str, str, str]]
     return []
 
 
+def option_feature(char: Character, tables, choice: dict) -> dict:
+    """The feature whose `choose` list an "option" choice picks from: the class's own, or its path's."""
+    cls = tables.classes[char.cls]
+    feats = list(cls["features"]) + [f for s in cls["subclasses"].values() for f in s.get("features", ())]
+    return next((f for f in feats if f["id"] == choice["feature"]), {})
+
+
+# The maneuvers a Battle Master learns first, by how they fight (Suggest and the Auto): what turns a fight for friends
+# and keeps the fighter standing; an archer has no use for blows that answer blows in melee.
+MANEUVER_ORDER = ["trip_attack", "precision_attack", "riposte", "menacing_attack", "parry", "rally", "goading_attack",
+                  "pushing_attack", "sweeping_attack", "distracting_strike", "feinting_attack", "evasive_footwork",
+                  "commander_s_strike", "lunging_attack", "disarming_attack", "bait_and_switch", "maneuvering_attack",
+                  "ambush", "tactical_assessment", "commanding_presence"]
+MANEUVER_ORDER_RANGED = ["precision_attack", "distracting_strike", "menacing_attack", "rally", "goading_attack",
+                         "evasive_footwork", "commander_s_strike", "trip_attack", "pushing_attack", "disarming_attack",
+                         "ambush", "maneuvering_attack", "parry", "riposte", "sweeping_attack", "feinting_attack",
+                         "lunging_attack", "bait_and_switch", "tactical_assessment", "commanding_presence"]
+# The path a fighter's Auto (and Suggest) takes by how they fight: the great weapon's crits, the shield's line, the
+# rest the art of maneuvers.
+SUBCLASS_FOR = {"fighter": {"great_weapon": "champion", "shield": "knight", "polearm": "battle_master",
+                            "duelist": "battle_master", "two_weapon": "battle_master", "archer": "battle_master"}}
+
+
 def relearn_options(char: Character, tables, choice: dict) -> list[str]:
     """The feats a Sudden Learning may take in place of the one given up: a fighting style for a style, an epic boon
     or any feat for a boon, else a general or origin feat they are eligible for (never the one given up)."""
@@ -428,7 +454,9 @@ def pick_options(char: Character, tables, choice: dict) -> list[str]:
 def choice_title(char: Character, tables, choice: dict) -> str:
     kind = choice["kind"]
     if kind == "option":
-        feat = next((f for f in tables.classes[char.cls]["features"] if f["id"] == choice["feature"]), {})
+        feat = option_feature(char, tables, choice)
+        if str(choice.get("feature", "")).startswith(("combat_superiority", "maneuvers_")):
+            return "Learn a maneuver (spent with a superiority die)"
         return f"{feat.get('name', 'A choice')}: choose one"
     if kind == "subclass":
         return f"Choose a path for {char.name.split()[0]}"
@@ -592,6 +620,12 @@ def suggest(char: Character, tables, choice: dict, opts: list | None = None) -> 
         return ""
     kind = choice["kind"]
     cls = tables.classes[char.cls]
+    if kind == "subclass":
+        want = SUBCLASS_FOR.get(char.cls, {}).get(feats.archetype(char, tables))
+        return want if want in ids else ids[0]
+    if kind == "option" and any(i.startswith("maneuver_") for i in ids):
+        order = MANEUVER_ORDER_RANGED if feats.archetype(char, tables) in ("archer", "skulker") else MANEUVER_ORDER
+        return next((f"maneuver_{m}" for m in order if f"maneuver_{m}" in ids), ids[0])
     if kind == "option":  # (a fighting priest guards and smites; a priest of the book prays and blasts)
         fighting = feats.archetype(char, tables) not in ("caster", "healer")
         for pick in (("order_protector", "blessed_divine_strike") if fighting else

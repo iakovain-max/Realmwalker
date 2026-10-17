@@ -105,6 +105,10 @@ def attack_roll(b, att, target, opt, *, space=None) -> Roll:
         r.add("advantage", "helped")
     if any(bf.get("distracted") == att.team for bf in target.buffs):
         r.add("advantage", "distracted")
+    if any(bf.get("exposed") is not None and bf["exposed"] != att.id for bf in target.buffs):
+        r.add("advantage", "distracted")  # (Distracting Strike: anyone but the one who struck)
+    if any(bf.get("goaded") is not None and bf["goaded"] != target.id for bf in att.buffs):
+        r.add("disadvantage", "goaded")  # (Goading Attack: anyone but the one who goaded them)
     if any(bf.get("sapped") for bf in att.buffs):
         r.add("disadvantage", "sapped")  # the Sap mastery: the next attack roll after the blow
     if any(bf.get("vex") == target.id for bf in att.buffs):

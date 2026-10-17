@@ -68,6 +68,11 @@ def battle_sounds(ev: dict) -> list[tuple[str, str]]:
     if k == "mastery":  # a weapon's trick: the thud of a fall, the shove of a push
         sid = {"topple": "fall", "push": "hit_blunt"}.get(ev.get("trick", ""))
         return [("impact", sid)] if sid else []
+    if k == "maneuver":  # a Battle Master's: steel turned aside, a friend rallied, light feet
+        sid = {"Parry": "deflect", "Rally": "buff", "Evasive Footwork": "buff"}.get(ev.get("what", ""))
+        return [("start", sid)] if sid else []
+    if k == "disarm":
+        return [("impact", "drop")]
     if k == "zone":
         sid = ZONE_SOUNDS.get(ev.get("zone", ""))
         return [("start", sid)] if sid else []

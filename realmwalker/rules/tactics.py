@@ -1089,6 +1089,8 @@ def _party_turn(b: Battle, f: Fighter) -> None:
         for opt, _ in _abilities(b, f, "sense"):  # a foe it cannot see: feel for it through the stone
             b.do_ability(f, opt.value)
             break
+    if opts and b.has_action(f):
+        _maneuvers_first(b, f, opts)  # (a Battle Master's Commander's Strike, Bait and Switch, feint or lunge)
     if opts and b.has_action(f) and f.bonus > 0 and best_plan(b, f, opts) is None:
         # Nothing in reach this turn: run with the bonus action (Adrenaline Rush, Cunning Action) to close the gap.
         dash = next((opt for opt, a in _abilities(b, f, "move") if a.get("via") == "dash"), None)
@@ -1102,6 +1104,8 @@ def _party_turn(b: Battle, f: Fighter) -> None:
             _bonus_strike(b, f)
     if b.current is f and b.outcome is None:
         _mend_ward(b, f)
+    if b.current is f and b.outcome is None and f.bonus > 0:
+        _maneuvers_after(b, f)
     if b.current is f and b.outcome is None and f.bonus > 0:
         _mind_shove(b, f)
     if b.current is f and b.outcome is None and f.bonus > 0:
@@ -1139,6 +1143,107 @@ def cunning_strike(b: Battle, f: Fighter, target: Fighter, opts: list[str], dice
     if strong and "obscure" in opts:
         return "obscure"
     return None
+
+
+def maneuver(b: Battle, f: Fighter, target: Fighter, opts: list[str]) -> str | None:
+    """A Battle Master's maneuver on a hit, by what the fight needs: a foe tripped where blows can follow, a caster or
+    a strong foe frightened, a foe goaded off a hurt friend or pushed into harm, a second foe swept, a friend moved
+    out of danger; the last die kept for a parry, a riposte or a near miss when those are known."""
+    from realmwalker.rules.engine.handlers import battle_master as bm
+
+    if not bm._free_die(b, f) and bm.dice_left(f) <= 1 and \
+            any(bm.knows(f, m) for m in ("parry", "riposte", "precision_attack")):
+        return None
+    dc = bm.dc_of(f)
+    friends = [x for x in b.allies_of(f) if x is not f and x.active]
+    hurt_by = [x for x in friends if b.gap(x, target) <= 1 and x.hp < x.max_hp // 2]
+
+    def worth(m: str) -> float:
+        if m == "trip_attack":
+            if query.condition_immune(target, "prone"):
+                return 0.0
+            follow = (1 if f.attacks_left > 0 else 0) + sum(1 for x in friends if b.gap(x, target) <= 1)
+            return estimates.fail_chance(b, target, "str", dc) * (2.0 + 1.5 * follow)
+        if m == "menacing_attack":
+            if query.condition_immune(target, "frightened") or "frightened" in target.conditions:
+                return 0.0
+            caster = 2.0 if (target.cdef or {}).get("spells") or (target.cdef or {}).get("spellcasting") else 0.0
+            return estimates.fail_chance(b, target, "wis", dc) * (1.5 + caster + estimates.threat(target) / 10.0)
+        if m == "goading_attack":
+            return estimates.fail_chance(b, target, "wis", dc) * (3.0 if hurt_by else 0.8)
+        if m == "pushing_attack":
+            if _push_lands_in_harm(b, f, target):
+                return 4.0 * estimates.fail_chance(b, target, "str", dc)
+            return 2.0 * estimates.fail_chance(b, target, "str", dc) if hurt_by else 0.4
+        if m == "distracting_strike":
+            n = sum(1 for x in friends if b.gap(x, target) <= 1 or x.prefers_range)
+            return 1.0 + 0.6 * n if n else 0.3
+        if m == "sweeping_attack":
+            return 2.0
+        if m == "maneuvering_attack":
+            return 2.5 if any(x.hp < x.max_hp // 3 for x in hurt_by) else 0.0
+        return 0.8  # (disarming: the weapon out of reach until its turn, and the die)
+    best = max(opts, key=lambda m: (worth(m), -opts.index(m)))
+    return best if worth(best) > 0.5 else None
+
+
+def _maneuvers_first(b: Battle, f: Fighter, opts: list) -> None:
+    """A Battle Master's moves before striking: a friend with a sneak attack given the first blow (Commander's
+    Strike), a feint at the foe beside them, a lunge when no foe is in reach, a hurt friend swapped out of the press."""
+    from realmwalker.rules.engine.handlers import battle_master as bm
+
+    if b.current is not f or b.outcome is not None or not bm.ready(b, f) or bm.dice_left(f) < 2:
+        return
+    for opt, a in _abilities(b, f, "command"):
+        rogues = [x for x in opt.targets if x.has_trait("sneak_attack") and x.char is not None
+                  and x.char.uses.get("sneak_round") != b.round
+                  and any(e.active for o in b.attack_options(x) if o.available for e in b.targets_for(x, o))]
+        if rogues and query.attacks_per_action(f) >= 2:
+            b.do_ability(f, opt.value, min(rogues, key=lambda x: x.id))
+        break
+    if b.current is not f or b.outcome is not None:
+        return
+    for opt, a in _abilities(b, f, "swap"):
+        mine = f.hp > f.max_hp // 2
+        low = [x for x in opt.targets if x.hp < x.max_hp // 3 and any(b.gap(x, e) <= 1 for e in b.enemies_of(x) if e.standing)]
+        if mine and low:
+            b.do_ability(f, opt.value, min(low, key=lambda x: (x.hp, x.id)))
+        break
+    if f.bonus <= 0 or any(True for _ in _abilities(b, f, "attack")):
+        return  # (the bonus action already has a blow to make: the off-hand, a spiritual weapon)
+    for opt, a in _abilities(b, f, "feint"):
+        if opt.targets and not f.prefers_range:
+            b.do_ability(f, opt.value, max(opt.targets, key=lambda t: (estimates.threat(t), -t.id)))
+            return
+    if best_plan(b, f, opts) is None:
+        for opt, a in _abilities(b, f, "lunge"):
+            b.do_ability(f, opt.value)
+            return
+
+
+def _maneuvers_after(b: Battle, f: Fighter) -> bool:
+    """A Battle Master's bonus action after striking: rally a hurt friend, or step away light-footed when hurt and
+    pressed (Evasive Footwork); Know Your Enemy on a foe not yet known while its use is free. True if one was used."""
+    from realmwalker.rules.engine.handlers import battle_master as bm
+    from realmwalker.rules.engine import resources as res
+
+    if b.current is not f or b.outcome is not None or f.bonus <= 0:
+        return False
+    for opt, a in _abilities(b, f, "rally"):
+        low = [x for x in opt.targets if x.hp < x.max_hp // 2 and x.temp_hp == 0]
+        if low:
+            b.do_ability(f, opt.value, min(low, key=lambda x: (x.hp / max(1, x.max_hp), x.id)))
+            return True
+    for opt, a in _abilities(b, f, "footwork"):
+        if f.hp < f.max_hp // 2 and any(b.gap(f, e) <= 1 for e in b.enemies_of(f) if e.standing):
+            b.do_ability(f, opt.value)
+            _step_back(b, f)
+            return True
+    for opt, a in _abilities(b, f, "study"):
+        if opt.value == "know_your_enemy" and opt.targets and res.left(f.char, "know_your_enemy") > 0:
+            b.do_ability(f, opt.value, max(opt.targets, key=lambda t: (estimates.threat(t), -t.id)))
+            return True
+    return False
 
 
 def tactical_mastery(b: Battle, f: Fighter, kind: str, target: Fighter) -> str:

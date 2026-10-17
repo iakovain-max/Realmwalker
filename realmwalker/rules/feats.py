@@ -194,8 +194,9 @@ def options(tables, char: Character, fid: str, key: str, choices: dict) -> list[
     """What one of a feat's choices may be, given the others already made."""
     spec = defs(tables)[fid]["choices"][key]
     kind = spec["kind"]
-    if kind == "skill":
-        return [s for s in SKILL_ORDER if s in tables.rules["skills"] and s not in char.skills]
+    if kind == "skill":  # (any skill, or one of a list: Student of War's fighter skills)
+        return [s for s in SKILL_ORDER if s in tables.rules["skills"] and s not in char.skills
+                and (not spec.get("from") or s in spec["from"])]
     if kind == "skill_or_tool":
         skills = [s for s in SKILL_ORDER if s in tables.rules["skills"] and s not in char.skills]
         tools = [t for group in ("artisan", "instrument", "other") for t in TOOL_GROUPS[group] if t not in char.tools]

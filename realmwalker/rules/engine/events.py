@@ -43,6 +43,7 @@ HANDLERS: dict[str, Callable] = {}
 BUFF_HOOKS = {
     "death_ward": {"event": "hp_zero", "as": "target", "handler": "death_ward"},
     "dazed": {"event": "turn_start", "as": "self", "handler": "dazed"},  # (a rogue's Cunning Strike)
+    "maneuver_die": {"event": "attack_damage", "as": "attacker", "handler": "maneuver_die"},  # (a Battle Master's)
 }
 
 
