@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 03 Demigods & Magics · Part D (the spell catalogue), D.2 next · branch dlc/03-demigods-magics
+Current: 03 Demigods & Magics · Part D (the spell catalogue), D.3 next · branch dlc/03-demigods-magics
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -10,10 +10,10 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   levels and the epic boons; the fighter, rogue, cleric and wizard of 2024 to level 20 with the Champion, Knight,
   Thief, Assassin, Life and War Domains, Evoker and Abjurer; Counterspell; saves format 17) and C (preparing spells,
   rituals, one slot a turn, higher slots, components, spell scrolls of every level, the four potions of healing) and
-  D.1 (the catalogue's first wave: 79 battle spells, cantrips to level 2)
+  D.1 and D.2 (the catalogue's first two waves: 145 battle spells, cantrips to level 5)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
-  adapted); Expansion 3: 158 done, 85 adapted, 1 omitted of 558 (parts A, B, C and D.1 settled). PHB 48% · DMG 12% · MM 8%
+  adapted); Expansion 3: 177 done, 132 adapted, 1 omitted of 558 (parts A, B, C, D.1 and D.2 settled). PHB 51% · DMG 12% · MM 8%
 Assumptions waiting for Anton:
 - The Player2 AI writer is removed (tagged `before-ai-removal`); its text is replaced everywhere by the game's own
   words, strengthened where they were thin.
@@ -105,13 +105,27 @@ Assumptions waiting for Anton:
   Arcane Vigor heals 2d6 + the modifier (no Hit Point Dice spent); Warding Bond lasts the fight. Every left-out
   rider is in the codex notes. The older spells now carry their full 2024 class lists. Fixed on the way: party
   cantrips never grew at levels 5, 11 and 17; a die taken off a roll (-1d4) could not be rolled.
+- Expansion 3 D.2: the 2024 Conjure spells (Animals, Barrage, Minor Elementals, Woodland Beings, Elemental, Volley)
+  are ground or auras, not creatures, so they came now; a moved pack of spirits or a later heal of Aura of Vitality
+  costs a bonus action (the book gives them free). Banishment's foe is out of the fight while the caster holds the
+  spell (a banished foe still counts for the fight's end); one from another plane kept away for the whole minute never
+  returns; Banishing Smite's always does. Blink rolls at the end of each turn (11+ away until the next). Dispel Magic
+  is aimed at a square (the creature there and the ground). Walls are laid at a point (a line always starts at the
+  caster); Wall of Force also hides what is behind it; Wall of Stone is never made permanent and cannot be broken.
+  Haste's extra action is one more attack in the Attack action; Slow takes the bonus action and all but one attack;
+  Slow and Hypnotic Pattern catch every foe in the area (no cap of six). Confusion's wanderer walks a random way.
+  Dominate turns a foe to the caster's side; each hurt lets it save again. Protection from Energy picks the energy the
+  foes deal most; Elemental Weapon and Conjure Elemental are fire. Steel Wind Strike strikes each foe in reach once.
+  Bigby's Hand is the Clenched Fist only (and takes the place of a Spiritual Weapon); Antilife Shell wards friends
+  against every kind but undead and constructs rather than barring the way. Polymorph waits for Part F (the beasts).
 Ideas for later:
 - (none yet)
-Next session starts at: task D.2 in docs/expansions/03-demigods-magics.md (Part D, the spell catalogue, second wave:
-levels 3 to 5, the battle spells only, as D.1 did - the outside-a-fight ones go to Part E's lists in the design note;
-Dispel Magic with the Abjurer's Spell Breaker; kernel ops first, then sonnet helpers into
-data/packs/03_demigods_magics/spells.level3.json... with the brief's shape (rules/engine/marks.py lists every mark,
-tests/test_catalogue.py casts every one in a real fight). Parts A, B, C and D.1 are in `main`.
+Next session starts at: task D.3 in docs/expansions/03-demigods-magics.md (Part D, the spell catalogue, third wave:
+levels 6 and 7, the battle spells only, as D.1 and D.2 did - the outside-a-fight ones go to Part E's lists in the
+design note, summons to F; kernel ops first, then sonnet helpers into data/packs/03_demigods_magics/spells.level6.json
+and spells.level7.json. D.2's helper brief, docs/expansions/catalogue_brief.md, is a ready model for the next one (the ops and marks
+docstrings in rules/engine/effects.py and marks.py list everything; tests/test_catalogue.py and tests/test_wave2.py).
+Parts A, B, C, D.1 and D.2 are in `main`.
 
 ## Done
 
@@ -135,6 +149,7 @@ tests/test_catalogue.py casts every one in a real fight). Parts A, B, C and D.1 
 | 2026-10-17 | Demigods & Magics part B: the 2024 fighter, rogue, cleric and wizard to 20 (Champion, Knight, Thief, Assassin, Life, War, Evoker, Abjurer), Counterspell, companions to 20; saves format 17; the first part built by the relay; merged into `main` | `dlc/03-demigods-magics` |
 | 2026-10-17 | Demigods & Magics part C: preparing spells, rituals, one slot a turn, higher slots, components (focus, pouch, costly ones), spell scrolls of every level (2024), the four potions of healing; the spellcasting rules settled in the codex; merged into `main` | `dlc/03-demigods-magics` |
 | 2026-10-17 | Demigods & Magics D.1: the catalogue's first wave, 79 battle spells (cantrips to level 2) with new ground, marks and cards; outside-a-fight spells to Part E, summons to F; merged into `main` | `dlc/03-demigods-magics` |
+| 2026-10-17 | Demigods & Magics D.2: the second wave, 66 battle spells of levels 3 to 5 (creatures sent away, Dispel Magic and Spell Breaker, auras for friends, Haste, Slow, Confusion, Dominate, new ground and walls); merged into `main` | `dlc/03-demigods-magics` |
 
 ## Notes for the next session
 

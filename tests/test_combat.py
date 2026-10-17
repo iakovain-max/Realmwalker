@@ -833,7 +833,7 @@ def test_every_spell_can_be_aimed(tables):
     for sid, sp in tables.spells.defs.items():
         assert "range" in sp, sid
         if sp["target"] in ("point", "direction"):
-            assert sp.get("area") or spellrules.has_op(sp, "teleport", "summon", "guardian"), sid
+            assert sp.get("area") or spellrules.has_op(sp, "teleport", "summon", "guardian", "dispel"), sid
         if sp.get("area"):
             assert sp["area"]["shape"] in ("sphere", "cylinder", "cube", "cone", "line", "emanation"), sid
 

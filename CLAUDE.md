@@ -393,6 +393,11 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   fights; buffs take "$caster", "$dc", "$mod", "$spell", "$up", "$level", "$mult", "$foe_type" and `per_up`/`by_level`
   (lasting spells remember their slot: `spells.cast_at`). `tests/test_catalogue.py` casts every catalogue spell in a
   real fight and checks the Auto sees its worth (`estimates.spell_value`; NO_USE for reasoned exceptions).
+  The second wave (D.2) added: fighters sent off the field (`Battle.send_away`/`bring_back`, state "away":
+  Banishment, Blink, Resilient Sphere), the `dispel` op (`effects.held_spells`), auras shared with friends
+  (`marks.share_auras`, run by `_follow_auras`), ground with a save and what a failure brings (`Battle._ground`,
+  Zone `fail`/`rough`/`dark`/`held`), walls laid as terrain and restored when they end (Zone `was`), the Wind
+  Wall (`Battle.wind_between`), `cast_kind` (Spell Breaker's bonus-action Dispel Magic); tests/test_wave2.py.
 - Gear and tools 2024 (Expansion 2 part D): items.json `pack` (opens into its contents, gear.open_pack), `helps`
   {search, traps, force, disguise} (dungeon.helps, law.put_on_disguise), `utilize` (a tool's 2024 uses, on its card),
   `carry` also on carried containers (each kind once, Sheet.pack_carry), `trinket` (data/trinkets.json; the name and
