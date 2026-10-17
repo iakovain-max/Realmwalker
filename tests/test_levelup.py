@@ -87,7 +87,9 @@ def test_choices_can_be_made_for_you(tables):
     assert not c.pending and c.subclass
     top = progression.spell_top_level(c, tables)
     available = [s for s in tables.spells.for_class("wizard", top) if tables.spells[s]["level"] > 0]
-    assert len(c.spells["spellbook"]) == min(len(available), 6 + 14)
+    learned = min(len(available), 6 + 14)  # (six at level 1, two a level after)
+    savant = 4 if c.subclass == "evocation" else 0  # (an Evoker's Savant: two free evocation spells, one a new level)
+    assert learned <= len(c.spells["spellbook"]) <= learned + savant
     d = hero(tables, "rogue")
     progression.award_xp(d, 40000, tables, RNG(2), auto=True)
     assert not d.pending and d.subclass
