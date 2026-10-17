@@ -872,3 +872,41 @@ stat block now comes with the spell that brings it into play (never a block that
   ms, in the thread's own time).
 - **Tests** (tests/test_enemy_casters.py, slow): every stat block's spells are the catalogue's and usable in a fight
   (or their use is outside one); each battle spell cast by the enemy; the nine levels without hangs.
+
+#### G.2 — How
+- **Who casts for pay** (PHB 2024 p. 232, Spellcasting; the table's prices checked on the page image): a temple's
+  priest casts from the cleric's list, a new townsperson, the **mage**, from the wizard's. Each has a highest spell
+  level they can cast for you: the table's availability by place (cantrips to level 2 in a village or hamlet, to 5 in
+  a town, hold or elf-hall, to 9 in a city), and within it each one's own reach, settled once by their name (a
+  village priest 1-2, a town's 3-5, a city's 5-9: "the higher the level, the harder to find"); a figure of the world
+  (a temple's high priest, the circle's archmage) reaches the place's limit. The price is the table's (30 GP a
+  cantrip, 50, 200, 300, 2,000 for levels 4-5, 20,000 for 6-8, 100,000 for 9), moved by their mood as every fee is,
+  plus the value of a costly component (the book: add its cost).
+- **What they cast** (`game/spellhire.py`): every spell of their list and reach that does something for the party
+  outside a fight, through the same code the party's own casting uses (`magic.cast_on_road(hired=True)`: no slot, no
+  material, no strain; the caster is the townsperson made a character of their class and level, kept for the
+  session only): healing and restoring (on whoever needs it most), returning the dead the party carries (Revivify,
+  Raise Dead, Resurrection, True Resurrection), lasting spells of an hour or more on one of the party or all of them
+  (Aid, Death Ward, Darkvision, Water Breathing, Mind Blank...), Remove Curse, Regenerate, Gentle Repose, food,
+  water, purifying, the Heroes' Feast, asking the powers (Augury, Divination, Commune, Legend Lore), Locate Object
+  and Locate Creature, Sending, Mending, Identify. Only what would do something now is offered, each with its
+  target ("Lesser Restoration, for Mira"). Spells that need the caster to stay with you (familiars, summons, shapes,
+  wards on a camp, travel, the great magic) are not for hire.
+- **The mage**: one in a town where a mages' circle keeps a house, two in a city, three in a great one (in the
+  library, or working at home); at the circle's seat its archmage is one of them (`people.FIGURE_JOBS`). Their wares
+  (economy.json shop "mage"): spellbooks, foci, ink, parchment, the costly components, scrolls of the wizard's list
+  and the common and uncommon magic items of a city. Scrolls by rarity (DMG 2024: common and uncommon are bought;
+  rare ones seldom, in cities; very rare and legendary never): the mage's scrolls to level 3 in a town and 5 in a
+  city; the temple's of the cleric's list to level 1 in a village, 3 in a town or city; the apothecary's and general
+  store's few as before.
+- **The law of magic** (`game/law.py`, realm laws legal / licensed / forbidden): casting by the party in a town is
+  seen and judged as before (`law.magic_check`), now for whoever in the party casts (a feat, a scroll, a companion),
+  and never for the townsperson you paid (they have their licence). A licence is bought from a lord, a headman or a
+  mage of a licensed realm by any party with a caster. Where magic is forbidden: no scrolls or magic things on open
+  sale (the temple's own prayers excepted), and a mage casts for you only where nobody else sees, at half as much
+  again for the risk.
+- **The screen**: the services list scrolls (arrows, Enter, the wheel), and a spell's line shows its card.
+- **Tests** (tests/test_spellhire.py): the price table and the reach by place; every spell a priest and a mage of
+  level 9 offer is cast for pay in a real town without error and does its work (a body raised, a wound healed, a
+  thing identified, a buff kept); nothing offered that would do nothing; a mage in a forbidden realm refuses with
+  witnesses near; the hired caster breaks no law; scrolls and the mage's wares by place and law.
