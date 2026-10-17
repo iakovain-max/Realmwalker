@@ -223,7 +223,8 @@ def _attack(c: Cast, o: dict, victim) -> None:
             target = b.rng.choice(options)
         for dice_, dtype, up in spellrules.damage_parts(o)[:1]:
             opt = AttackOption("spell", spell["name"].lower(), "spell_melee" if o["attack"] == "melee" else "spell_ranged",
-                               c.bonus, expr(c, dice_, up, scaling=o.get("scaling") == "cantrip", empower=True), dtype,
+                               c.bonus, expr(c, dice_, up, scaling=o.get("scaling") == "cantrip", empower=True)
+                               + (f"{c.mod:+d}" if o.get("add_mod") and c.mod else ""), dtype,  # (Flame Blade)
                                range=(reach, reach))
             c.empowered = 0  # (one damage roll of the spell: the first ray)
             if b._attack(f, opt, target):

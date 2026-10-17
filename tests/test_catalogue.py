@@ -45,7 +45,7 @@ def caster(tables, seed=1):
     b.set_background("acolyte")
     c = b.build()
     award_xp(c, 14000, tables, RNG(seed), auto=True)  # level 6: slots to level 3
-    c.hp = c.max_hp
+    c.hp = c.max_hp - 8  # (a little hurt: a healing spell on oneself is worth something)
     staff = add_item(c, tables.items, "quarterstaff")
     equip(c, tables.items, staff.uid, "main_hand")
     return c
@@ -150,7 +150,12 @@ def test_each_spell_is_cast_in_a_real_fight(tables, sid):
 
 
 # Spells the Auto has no use for in this scene (a reason each).
-NO_USE: dict[str, str] = {}
+NO_USE: dict[str, str] = {
+    "arms_of_hadar": "it catches everyone around the caster, and a friend stands within ten feet",
+    "expeditious_retreat": "nobody here is hurt badly enough to want to run",
+    "protection_from_evil_and_good": "no aberration, celestial, elemental, fey, fiend or undead here",
+    "silence": "no foe here casts spells",
+}
 
 
 @pytest.mark.parametrize("sid", SPELLS)
