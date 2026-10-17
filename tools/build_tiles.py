@@ -335,6 +335,11 @@ ITEMS = {
     "black_pearl": "item/misc/misc_stone_new.png", "mushroom_powder": "item/potion/brown_new.png",
     "ruby_dust": "item/potion/ruby_new.png", "miniature_sword": "item/weapon/blessed_blade.png",
     "forked_rod": "item/misc/misc_fan_inert.png",
+    # the costly components and the food of Part E's spells (Expansion 3 E.1)
+    "fine_diamond": "item/amulet/crystal_white.png", "flawless_diamond": "item/misc/misc_crystal_new.png",
+    "diamond_hoard": "item/misc/misc_box.png", "rare_oils": "item/potion/golden.png",
+    "feast_bowl": "item/misc/misc_disc_new.png", "miniature_door": "dungeon/doors/closed_door.png",
+    "goodberry": "item/food/strawberry_new.png", "conjured_food": "item/food/piece_of_ambrosia_new.png",
     "wheat": "item/food/bread_ration_old.png", "salt": "item/misc/misc_stone_inert.png",
     "iron_bar": "item/misc/misc_rune.png", "wool_bolt": "item/armor/back/cloak_2.png",
     "linen_bolt": "item/armor/torso/robe_1_new.png", "furs": "item/armor/torso/animal_skin_3.png",

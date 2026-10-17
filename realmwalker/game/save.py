@@ -38,7 +38,7 @@ from realmwalker.world.tables import Tables
 
 log = logging.getLogger("realmwalker.save")
 
-FORMAT_VERSION = 17  # 17: the 2024 classes (fighter, rogue, cleric, wizard: subclass at 3, the Assassin, picks, expertise); 16: fighting styles are feats, general feats; 15: species, lineage, feats, choices, masteries (Expansion 2); 14: attunement, travel pace,
+FORMAT_VERSION = 18  # 18: the fallen carried for raising (Expansion 3 E.1); 17: the 2024 classes (fighter, rogue, cleric, wizard: subclass at 3, the Assassin, picks, expertise); 16: fighting styles are feats, general feats; 15: species, lineage, feats, choices, masteries (Expansion 2); 14: attunement, travel pace,
 # artifacts and sentient items (13: no code for old saves; older refused)
 WORLD_FILE = "world.zip"
 CHARACTER_FILE = "character.zip"
@@ -193,7 +193,7 @@ def load_world(folder: Path) -> World:
 
 # ---------------------------------------------------------------------------- character
 def character_entries(game: GameState) -> dict[str, bytes | str]:
-    from realmwalker.game import pack
+    from realmwalker.game import pack, revival
 
     pack.sync(game)
     p = game.player
@@ -211,6 +211,7 @@ def character_entries(game: GameState) -> dict[str, bytes | str]:
         "arrest": game.arrest,
         "sentence": game.sentence,
         "waiting": [c.to_dict() for c in game.waiting if c.alive],
+        "fallen": revival.to_save(game),
         "lit": game.lit,
         "quests": game.quests,
     }
@@ -245,7 +246,7 @@ def load_player(folder: Path) -> tuple[PlayerState, MessageLog, list[Character] 
     party_chars = [Character.from_dict(c) for c in party] if party else None
     extra = {"renown": body.get("renown", {}), "arrest": body.get("arrest"), "sentence": body.get("sentence"),
              "waiting": [Character.from_dict(c) for c in body.get("waiting", [])], "lit": body.get("lit"),
-             "quests": list(body.get("quests", []))}
+             "quests": list(body.get("quests", [])), "fallen": list(body.get("fallen", []))}
     return player, MessageLog.from_dict(body.get("log", {})), party_chars, extra
 
 
@@ -281,7 +282,9 @@ def load_game(folder: Path, tables: Tables) -> GameState:
     game.waiting = [c for c in extra.get("waiting", []) if c.alive]
     game.lit = extra.get("lit")
     game.quests = extra.get("quests", [])
-    from realmwalker.game import pack
+    from realmwalker.game import pack, revival
+
+    game.fallen = revival.from_save(extra.get("fallen", []))
 
     pack.sync(game)  # companions join the leader's pack again
     return game

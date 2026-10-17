@@ -71,13 +71,27 @@ def prepared_words(game, char, sid: str) -> str:
 
 
 def working_now(game) -> list[str]:
-    """The lasting spells on anyone in the party, and how long each has left."""
+    """The lasting spells on anyone in the party, and how long each has left; the wards on the camp; the fallen the
+    party carries."""
+    from realmwalker.game import revival, spellwork
+
     out = []
     for c in game.party:
         for sid, hours in sp.lasting(c, game.tables).items():
             out.append(f"<magic>{markup.escape(game.tables.spells[sid]['name'])}</> on {markup.escape(c.name.split()[0])}"
                        f" <dim>({magic.lasting_text(hours)} left)</>")
+    for ward, rec in spellwork.wards_here(game).items():
+        left = max(0.0, (float(rec["until"]) - game.world.time) / 60)
+        out.append(f"<magic>{WARD_NAMES.get(ward, ward)}</> over the camp <dim>({magic.lasting_text(left)} left)</>")
+    for b in revival.bodies(game):
+        out.append(f"<danger>{markup.escape(b['char'].name.split()[0])}</> lies dead "
+                   f"<dim>({revival.when_text(revival.dead_for(game, b))}"
+                   + ("; kept from decay" if float(b.get("repose", 0)) > game.world.time else "") + ")</>")
     return out
+
+
+WARD_NAMES = {"alarm": "Alarm", "hut": "Tiny Hut", "hound": "Faithful Hound", "rope": "Rope Trick",
+              "mansion": "Magnificent Mansion"}
 
 
 def spell_detail(game, char, sid: str, target, slot: int | None = None) -> list[str]:
@@ -121,6 +135,13 @@ def spell_detail(game, char, sid: str, target, slot: int | None = None) -> list[
             lines.append(f"<good>Enter casts it over the {markup.escape(thing)} now.</> <dim>It takes ten minutes.</>")
         elif use in ("heal", "cure"):
             lines.append(f"<good>Enter casts it{whom} now.</> <dim>It takes a minute.</>")
+        elif use == "revive" or use in sp.ROAD_USES:
+            from realmwalker.game import spellwork
+
+            took = spellwork.minutes(spell)
+            took_words = "an hour" if took == 60 else (f"{took} minutes" if took > 1 else "a minute")
+            lines.append(f"<good>Enter casts it{whom} now.</> <dim>It takes {took_words}"
+                         + (" (ten more as a ritual, without a slot)." if spell.get("ritual") else ".") + "</>")
         else:
             hours = int(spell.get("rounds", 0)) / sp.ROUNDS_PER_HOUR
             lines.append(f"<good>Enter casts it{whom} now.</> <dim>It takes a minute and lasts "

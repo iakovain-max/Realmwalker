@@ -82,7 +82,7 @@ def test_domain_spells_are_always_prepared_and_do_not_count(tables):
     sp.fill_prepared(c, tables)
     always = sp.always_prepared(c, tables)
     assert {"bless", "cure_wounds", "lesser_restoration", "mass_healing_word", "revivify"} <= set(always)
-    assert "aid" not in always  # (waits for the catalogue, Part D)
+    assert "aid" in always  # (the Life Domain's Aid came with Part E.1)
     assert sp.prepared_count(c, tables) == 9
     # (every other cleric spell of levels 1-3 the game has, until the catalogue brings more: Part D)
     assert len(sp.prepared(c, tables)) == min(9, len(sp.preparable(c, tables)))

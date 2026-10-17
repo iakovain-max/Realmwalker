@@ -71,6 +71,7 @@
                 ["copper_ingot", 0, 2], ["silver_ingot", 0, 1], ["common_clothes", 0, 2], ["firewood", 1, 4],
                 ["pearl", 0, 1, "town"], ["diamond_dust", 0, 2, "town"], ["mushroom_powder", 0, 3, "town"],
                 ["black_pearl", 0, 1, "city"], ["ruby_dust", 0, 1, "city"], ["miniature_sword", 0, 1, "city"],
+                ["rare_oils", 0, 1, "city"], ["feast_bowl", 0, 1, "city"], ["miniature_door", 0, 1, "town"],
                 ["forked_rod", 0, 1, "city"]],
       "markup": 0.95
     },
@@ -87,7 +88,8 @@
       "stock": [["holy_symbol", 1, 3], ["prayer_book", 0, 2], ["incense", 4, 12], ["candle", 4, 12], ["holy_water", 1, 4],
                 ["bandages", 2, 6], ["vestments", 0, 1],
                 ["holy_emblem", 0, 2], ["reliquary", 0, 1, "town"], ["priests_pack", 0, 1], ["diamond", 0, 2, "town"],
-                ["gilded_reliquary", 0, 1, "city"]],
+                ["gilded_reliquary", 0, 1, "city"], ["fine_diamond", 0, 1, "town"], ["flawless_diamond", 0, 1, "city"],
+                ["diamond_hoard", 0, 1, "city"]],
       "markup": 1.0
     },
     "stable": {

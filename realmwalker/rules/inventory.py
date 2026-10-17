@@ -80,7 +80,9 @@ def remove_item(char: Character, uid: int, qty: int | None = None) -> Item | Non
 
 
 def cursed(item: Item | None) -> bool:
-    return bool(item is not None and item.magic and item.magic.get("cursed"))
+    """A cursed thing clings to whoever has it on; Remove Curse loosens it (`magic["loosed"]`: the curse remains,
+    but it can be taken off and thrown away) until it is put on again."""
+    return bool(item is not None and item.magic and item.magic.get("cursed") and not item.magic.get("loosed"))
 
 
 def unequip(char: Character, slot: str) -> Item | None:
@@ -122,6 +124,8 @@ def equip(char: Character, items: ItemTable, uid: int, slot: str | None = None) 
     current = char.slot_of(uid)
     if current is not None:
         del char.equipped[current]
+    if it.magic and it.magic.get("loosed") and current is None:
+        it.magic.pop("loosed", None)  # (put on again, the curse takes hold again)
     props = d.get("properties", [])
     messages = []
     if slot == "main_hand" and "two_handed" in props:

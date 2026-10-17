@@ -482,6 +482,7 @@ def attune(game, char, item: Item) -> list[str]:
     game.pass_time(SHORT_REST, "rest")
     if game.over is not None or not char.alive:
         return []
+    item.magic.pop("loosed", None)  # (bound again, a curse Remove Curse loosened takes hold again)
     out = [f"<magic>{first} spends an hour with the {name} and feels it settle, like a hand closing.</>"]
     if not item.magic.get("identified"):
         # The bond teaches what the thing is (the hour spent with it is more than the PHB's study asks); what it does
@@ -546,7 +547,7 @@ def end_attunement(game, char, item: Item) -> list[str]:
     first = char.name.split()[0]
     if not magicrules.is_attuned(char, item):
         return [f"{first} is not bound to the {name}."]
-    if item.magic.get("cursed"):
+    if item.magic.get("cursed") and not item.magic.get("loosed"):
         item.magic["curse_known"] = True
         return [f"<danger>{first} tries to put the {name} out of mind, and cannot. It is cursed; a priest might lift "
                 f"it.</>"]

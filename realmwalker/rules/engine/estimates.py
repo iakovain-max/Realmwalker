@@ -205,6 +205,16 @@ def spell_value(b, f, sid: str, *, target=None, point=None, dc: int | None = Non
             for x, each in effects.shares(b, f, spell, int(amount), int(o.get("count", 6)), level=lvl):
                 gain = max(0.0, each - x.temp_hp)
                 w.help += gain * (0.6 if any(b.gap(x, e) <= 6 for e in b.enemies_of(f)) else 0.2)
+        elif kind == "max_up":  # (Aid: hit points now, and a higher maximum that outlives the fight)
+            amount = spellrules.max_up_amount(spell, lvl)
+            n = int(o.get("count", 3)) + int(o.get("count_up", 0)) * up
+            whom = sorted(caught if caught else [f], key=lambda x: (x is not f, x.hp / max(1, x.max_hp)))[:n]
+            for x in whom:
+                if x.char is None:
+                    continue
+                gain = max(0, amount - int(x.char.effects.get(spellrules.MAX_UP + spell_id(sid), 0)))
+                near = any(b.gap(x, e) <= 6 for e in b.enemies_of(f))
+                w.help += gain * (0.6 if near else 0.3) + (10.0 if x.state == "down" and gain else 0.0)
         elif kind == "temp_hp" and (caught or spell["target"] == "self"):
             x = caught[0] if spell["target"] != "self" else f
             amount = avg(str(o["amount"])) + int(o.get("per_up", 0)) * up

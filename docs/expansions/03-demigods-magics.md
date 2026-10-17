@@ -141,10 +141,36 @@ spellcasting and scrolls at the book's prices.
   resurrection, and Wish's other uses outside a fight. Waiting for F: animal shapes, shapechange, true polymorph.
 
 ### Part E — Spells outside battle
-- [ ] E.1 Healing, return from death, food and the body, shelter and watch.
+The spells that waited for Part E, sorted (2026-10-17, at the start of E.1). Spells of one system go together, so a
+system is built once and every spell that uses it comes with it.
+- [x] E.1 Healing, return from death, food and the body, shelter and watch (19 spells, and Revivify on the road).
+  Healing: aid (a raised maximum that outlives the fight; in a fight too), regenerate, remove curse. Return from
+  death: revivify, gentle repose, raise dead, reincarnate, resurrection, true resurrection (a fallen companion's body
+  is carried while someone in the party could raise it; companions raise a fallen leader at once if they can). Food
+  and the body: goodberry, create or destroy water, purify food and drink, create food and water, heroes' feast.
+  Shelter and watch (wards on the camp): alarm, Leomund's tiny hut, rope trick, Mordenkainen's faithful hound,
+  Mordenkainen's magnificent mansion.
 - [ ] E.2 Travel, finding and seeing, asking the powers (answered from the world's history), talking.
+  Light: light, dancing lights, continual flame, daylight. The body on the move: darkvision, see invisibility, jump,
+  longstrider, feather fall, spider climb, levitate, water breathing, water walk, gaseous form, meld into stone,
+  feign death, alter self, enhance ability, pass without trace. Travel: phantom steed, Tenser's floating disk, unseen
+  servant, wind walk, transport via plants, tree stride, teleport, teleportation circle, word of recall, arcane gate,
+  find the path, plane shift, etherealness, astral projection, gate. Finding and seeing: detect magic, detect evil
+  and good, detect poison and disease, find traps, locate object, locate creature, locate animals or plants,
+  clairvoyance, arcane eye, scrying, beast sense, Drawmij's instant summons. Asking the powers: augury, divination,
+  commune, commune with nature, contact other plane, legend lore. Talking: comprehend languages, tongues, speak with
+  animals, speak with dead, speak with plants, message, sending, animal messenger, dream, telepathy, Rary's telepathic
+  bond, detect thoughts.
 - [ ] E.3 Moving minds and the law, disguise, locks and stone, weather and land, lasting protections, great magic;
-  Part E to `main`.
+  Part E to `main`. Minds and the law: friends, enthrall, zone of truth, geas, modify memory, glibness,
+  antipathy/sympathy, awaken. Disguise and illusion: disguise self, seeming, minor illusion, silent image, major
+  image, programmed illusion, project image, mislead, hallucinatory terrain, mirage arcane, illusory script, magic
+  mouth, Nystul's magic aura, nondetection, sequester. Locks and stone: knock, arcane lock, mending, mage hand,
+  fabricate, stone shape, passwall, move earth, creation, Leomund's secret chest. The small arts: druidcraft,
+  elementalism, prestidigitation, thaumaturgy. Weather and land: control water, control weather, plant growth,
+  tsunami (cast in a minute). Lasting protections: glyph of warding, symbol, guards and wards, forbiddance, hallow,
+  magic circle, Mordenkainen's private sanctum. Great magic: contingency, magic jar, Tasha's bubbling cauldron,
+  clone, demiplane, imprisonment, and Wish's other uses outside a fight.
 
 ### Part F — Appendix B: familiars, steeds and summons
 - [ ] F.1 The 36 stat blocks (beasts, imp, quasit, pseudodragon, sprite, sphinx of wonder, slaad tadpole) with

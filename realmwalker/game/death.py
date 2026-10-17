@@ -74,6 +74,9 @@ def die(game) -> dict:
     record["obituary"] = write_obituary(game, record)
     fallen(w).append(record)
     remember(game, record)
+    from realmwalker.game import revival
+
+    revival.bury_all(game)  # (the bodies the party carried are dead for good now)
     release_companions(game)
     game.dirty = True
     return record

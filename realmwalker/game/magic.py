@@ -181,11 +181,26 @@ def scroll_stock(game, settlement, rng) -> dict[str, int]:
 
 # ---------------------------------------------------------------------------- casting on the road
 def road_targets(game, caster, spell_id: str) -> list:
-    """Who a spell cast outside battle can be aimed at (empty when it takes everyone, or only the caster)."""
+    """Who a spell cast outside battle can be aimed at (empty when it takes everyone, or only the caster): the fallen
+    the party carries, for a spell of return or Gentle Repose."""
     target = game.tables.spells[spell_id]["target"]
+    if target == "dead_ally":
+        from realmwalker.game import revival
+
+        return [b["char"] for b in revival.bodies(game, spell_id)]
     if target in ("ally", "downed_ally"):
         return [c for c in game.party if c.alive]
     return []
+
+
+def _body_target(game, spell_id: str, target):
+    """The fallen a spell of return (or Gentle Repose) is aimed at: the one chosen, or the first it can reach."""
+    from realmwalker.game import revival
+
+    if target is not None and not target.alive:
+        return target
+    first = next(iter(revival.bodies(game, spell_id)), None) or next(iter(revival.bodies(game)), None)
+    return first["char"] if first else None
 
 
 def lasting_text(hours: float) -> str:
@@ -236,14 +251,28 @@ def road_problem(game, caster, spell_id: str, target=None, scroll=None) -> str |
         ok, why = spellrules.can_cast(caster, t, spell_id)
     if not ok:
         return why
-    target = target or caster
     use = spellrules.road_use(t, spell_id)
+    if use == "revive" or spell["target"] == "dead_ally":
+        from realmwalker.game import revival, spellwork
+
+        body = _body_target(game, spell_id, target)
+        if use == "revive":
+            return revival.problem(game, spell_id, revival.body_of(game, body) if body is not None else None)
+        return spellwork.problem(game, caster, spell_id, body)
+    target = target or caster
+    if use in spellrules.ROAD_USES:
+        from realmwalker.game import spellwork
+
+        return spellwork.problem(game, caster, spell_id, target)
     if use == "identify" and not strange_things(game, caster):
         return "nothing you carry is strange to you"
     if use in ("heal", "cure") and not _needs(game, spell, target):
         return "there is nothing for it to mend" if use == "cure" else "nobody needs healing"
-    on = caster if spell["target"] == "self" else target
+    on = caster if spell["target"] in ("self", "all_allies") else target
     left = spellrules.lasting(on, t).get(spell_id, 0.0)
+    if spell["target"] == "all_allies" and spellrules.has_op(spell, "max_up") \
+            and left > int(spell.get("rounds", 0)) / spellrules.ROUNDS_PER_HOUR / 2:
+        return f"it is still working ({lasting_text(left)} left)"
     if spell["target"] != "all_allies" and left > int(spell.get("rounds", 0)) / spellrules.ROUNDS_PER_HOUR / 2:
         return f"it is still working ({lasting_text(left)} left)"
     return None
@@ -265,6 +294,14 @@ def strain_on_road(game, caster, amount: int) -> list[str]:
     return out
 
 
+def _magic_seen(game, caster) -> None:
+    """Casting in a town is seen (the local law of magic)."""
+    if game.world.factions:
+        from realmwalker.game import law
+
+        law.magic_check(game, caster)
+
+
 def cast_on_road(game, caster, spell_id: str, target=None, slot_level: int | None = None, scroll=None) -> list[str]:
     """Cast a spell outside battle. Healing goes through game/care.py (the worst wound first); a lasting spell is
     kept on whoever it was cast on. `slot_level`: a higher slot, for a spell that does more with one; `scroll`: read
@@ -273,6 +310,8 @@ def cast_on_road(game, caster, spell_id: str, target=None, slot_level: int | Non
 
     t = game.tables
     spell = t.spells[spell_id]
+    if spell["target"] == "dead_ally":
+        target = _body_target(game, spell_id, target)
     target = target or caster
     why = road_problem(game, caster, spell_id, target, scroll=scroll)
     if why:
@@ -319,6 +358,23 @@ def cast_on_road(game, caster, spell_id: str, target=None, slot_level: int | Non
     used = spellrules.spend_material(caster, t, spell_id) if scroll is None else None
     if ritual:
         game.pass_time(10, "rest")
+    if use == "revive":
+        from realmwalker.game import revival
+
+        msgs = pre + revival.raise_body(game, caster, spell_id, revival.body_of(game, target))
+        if used:
+            msgs.append(f"<dim>The {used} is used up.</>")
+        _magic_seen(game, caster)
+        return msgs
+    if use in spellrules.ROAD_USES:
+        from realmwalker.game import spellwork
+
+        msgs = pre + spellwork.cast(game, caster, spell_id, target, slot or int(spell["level"]))
+        if used:
+            msgs.append(f"<dim>The {used} is used up.</>")
+        game.pass_time(spellwork.minutes(spell), "rest")
+        _magic_seen(game, caster)
+        return msgs
     if use == "identify":
         from realmwalker.game import magic_items
 
@@ -335,12 +391,21 @@ def cast_on_road(game, caster, spell_id: str, target=None, slot_level: int | Non
         return msgs
     who = [c for c in game.party if c.alive] if spell["target"] == "all_allies" else \
         [caster if spell["target"] == "self" else target]
+    raise_ = spellrules.op(spell, "max_up")
+    if raise_ is not None and spell["target"] == "all_allies":  # (Aid: up to three, the caster and the worst hurt)
+        who = sorted(who, key=lambda c: (c is not caster, c.hp / max(1, c.max_hp)))[: int(raise_.get("count", 3))]
     hours = 0.0
+    gains = []
     for c in who:
-        hours = spellrules.keep(c, t, spell_id)
+        hours = spellrules.keep(c, t, spell_id, slot or None)
+        if raise_ is not None:
+            gains.append(spellrules.raise_max(c, spell_id, spellrules.max_up_amount(spell, slot or spell["level"])))
     first = escape_markup(caster.name.split()[0])
-    on = "" if who == [caster] else (" on the party" if len(who) > 1 else f" on {who[0].name.split()[0]}")
+    on = "" if who == [caster] else (f" on {', '.join(escape_markup(c.name.split()[0]) for c in who)}" if raise_ is not None
+                                     else " on the party" if len(who) > 1 else f" on {who[0].name.split()[0]}")
     msgs = pre + [f"{first} casts <magic>{spell['name']}</>{on}. <dim>It will last {lasting_text(hours)}.</>"]
+    if raise_ is not None and any(gains):
+        msgs.append(f"<good>+{max(gains)} hit points and as much on the maximum</>, while it lasts.")
     if used:
         msgs.append(f"<dim>The {used} is used up.</>")
     game.pass_time(1, "rest")
