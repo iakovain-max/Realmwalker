@@ -82,7 +82,14 @@ visited keeps the people it had, so its mages appear only in towns you have not 
   a real town. That is 31 spells for the priest, raising the dead included, and many for the mage. Each one did its
   work and was paid for exactly, and none broke a law. The tests also cover the price table, the reach by place,
   nothing offered that would do nothing, the forbidden realm, the licence, the mages' scrolls, and the window
-  scrolling.
+  scrolling. The full test suite, the autoplay bot and the window smoke test passed.
+- The fresh review found and these were fixed:
+  - Food from Create Food and Water went into the priest's own bag. It now goes into yours.
+  - Aid for the party could be bought again while it was still on you.
+  - A caster's bad day (a failed Contact Other Plane) lasted forever. Hired casters are now fresh each morning.
+  - A thing you had just sold could still be named for coin.
+  - Clicking a spell's line did nothing. It now buys it.
+  - The number keys could buy a line that was scrolled out of sight.
 
 ### Session, 2026-10-17 (evening): Demigods & Magics G.1 — enemy casters use the whole spell book
 

@@ -34,7 +34,7 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   temples and mages' shops, the law of magic)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
-  adapted); Expansion 3: 224 done, 334 adapted, 1 omitted of 560 (all but Simulacrum, G.3). PHB 65% · DMG 12% · MM 16%
+  adapted); Expansion 3: 223 done, 335 adapted, 1 omitted of 560 (all but Simulacrum, G.3). PHB 65% · DMG 12% · MM 16%
 Assumptions waiting for Anton:
 - The Player2 AI writer is removed (tagged `before-ai-removal`); its text is replaced everywhere by the game's own
   words, strengthened where they were thin.
