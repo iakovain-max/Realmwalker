@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 04 Steel & Shadows · step 1 (branch and design note) next · branch dlc/04-steel-shadows (to be made from main)
+Current: 04 Steel & Shadows · Part A (the Battle Master) · branch dlc/04-steel-shadows · design note docs/expansions/04-steel-shadows.md
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -427,10 +427,8 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 4, Steel & Shadows (docs/EXPANSIONS.md §6.4), step 1 of §5.1: make the branch
-`dlc/04-steel-shadows` from `main`, write its design note `docs/expansions/04-steel-shadows.md` (what Anton will see,
-the decisions, its parts and the codex entries it delivers: `tools/codex/coverage.py --dlc`, Expansion 4: 66 entries),
-then build its first part. Expansion 3 is released (v1.3.0, tag v1.3.0).
+Next session starts at: Expansion 4, Steel & Shadows, Part A (the Battle Master) in
+`docs/expansions/04-steel-shadows.md` (branch `dlc/04-steel-shadows`, made; design note written).
 The way of G.3 (Simulacrum): `rules/simulacrum.py` (the person's copy: `make`, `keep`, `destroy`, `repair` from
 `progression.long_rest`, `bring_in` from `fight.start_battle` after the shapes, `after` from `finish_battle`, `snow(f)`,
 `likeness` for the map); a creature's copy is a servant record with spell "simulacrum" and `type` "construct"
