@@ -303,3 +303,65 @@ def test_every_new_form_is_drawn(tables):
             assert atlas.has(f"creature/{z[where]['picture']}"), (size, where)
     for iid in ("silver_reliquary", "dragon_token", "bloody_vial"):
         assert atlas.has(f"item/{iid}")
+
+
+def test_the_battle_screen_plays_the_new_spirits_and_the_objects(make_app):
+    import copy
+
+    import tcod
+
+    from realmwalker.core.rng import RNG
+    from realmwalker.game import fight as gamefight
+    from realmwalker.game.encounters import PendingEncounter
+    from realmwalker.game.state import new_game
+    from realmwalker.rules.creatures import spawn
+    from realmwalker.ui import widgets
+    from realmwalker.ui.input import KeyEvent
+    from realmwalker.ui.screens.battle import BattleScreen
+    from realmwalker.world.generator import WorldOptions
+    from tests.worlds import cached_world
+
+    app = make_app()
+    world = cached_world(WorldOptions("Lastrites", 37, "small"), app.tables)
+    me = hero(app.tables, xp=355000)
+    game = new_game(copy.deepcopy(world), app.tables, me)
+    app.start_game(game)
+    game.survival = False
+    rng = RNG(5, "band")
+    game.encounter = PendingEncounter("test", [spawn(app.tables, "bandit", rng, i + 1) for i in range(2)],
+                                      "They come.", False, "")
+    b = gamefight.encounter_fight(game, False)
+    game.encounter = None
+    caster = next(f for f in b.fighters if f.char is me)
+    screen = BattleScreen(app, game)
+    app.push(screen)
+
+    def turn_of(f):
+        b.order = [f.id] + [i for i in b.order if i != f.id]
+        b.turn, b.turn_started = 0, True
+        b._start_of_turn(f)
+
+    for sid, form in (("summon_dragon", "fire"), ("summon_celestial", "defender"), ("summon_fiend", "devil")):
+        turn_of(caster)
+        s = summon(b, caster, sid, point=(caster.x + 2, caster.y), form=form)
+        assert s.bond["picture"]
+        turn_of(s)
+        assert b.pending_party() is s
+        for key in ("tab", "escape", "a", "escape", "c", "escape"):
+            app.handle_event(KeyEvent(key))
+        for size in ((80, 30), (160, 45)):
+            screen.render(widgets.Canvas(tcod.console.Console(*size, order="F")))
+    turn_of(caster)
+    things = objects(b, caster, mod=3, point=(caster.x + 2, caster.y))
+    assert things and b.pending_party() is caster
+    opt = next(o for o in actions.options(b, caster) if o.id == "ability:command_objects")
+    assert opt.available
+    for size in ((80, 30), (160, 45)):
+        screen.render(widgets.Canvas(tcod.console.Console(*size, order="F")))
+    b.do_ability(caster, "command_objects")
+    turn_of(things[0])
+    assert b.pending_party() is things[0], "a commanded thing is the player's to move"
+    for key in ("tab", "escape", "a", "escape"):
+        app.handle_event(KeyEvent(key))
+    screen.render(widgets.Canvas(tcod.console.Console(160, 45, order="F")))
+    assert app.error_count == 0

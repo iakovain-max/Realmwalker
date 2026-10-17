@@ -177,6 +177,8 @@ def _monster_turn(b: Battle, f: Fighter) -> None:
             return
     plain = [o for o in opts if not o.extra.get("area")]
     _come_down(b, f, plain)
+    if f.cdef.get("spells") and _touch_heal(b, f):
+        return  # (a celestial spirit's Healing Touch on a friend in need)
     if f.cdef.get("spells"):
         _creature_magic(b, f)
         if b.current is not f or b.outcome is not None or not f.active:
@@ -714,6 +716,34 @@ def _creature_magic(b: Battle, f: Fighter) -> None:
         _cast_best(b, f, "action", beat=_best_attack_worth(b, f))
 
 
+def _touch_heal(b: Battle, f: Fighter) -> bool:
+    """A creature's healing touch (a celestial spirit's, once): to a friend who is down or below a third of its hit
+    points, walking to its side first if it must. True if it was given."""
+    if f.action <= 0:
+        return False
+    for sid in b.creature_spells(f):
+        sp = b.t.spells[sid]
+        if sp["target"] != "ally" or not spellrules.heal_op(sp) or sp.get("cast") == "bonus":
+            continue
+        need = [x for x in b.team(f.team) if (x.state == "down" or x.active and x.hp < x.max_hp / 3)
+                and not (sp.get("others") and x is f)]
+        if not need:
+            continue
+        x = min(need, key=lambda y: (y.state != "down", y.hp / max(1, y.max_hp), b.gap(f, y)))
+        if x not in b.spell_targets(f, sid) and f.move_left >= 5:
+            tree = b.move_tree(f)
+            occ = b.occupied_by_others(f)
+            spots = [sq for sq in _ring(x, 1, f.sq) if sq in tree and grid.can_stop(sq, f.sq, occ)
+                     and tree[sq].cost <= f.move_left]
+            if spots:
+                b.walk(f, grid.route(tree, min(spots, key=lambda sq: tree[sq].cost + tree[sq].risk * 3)))
+        if b.current is not f or b.outcome is not None or not f.active or not f.can_act():
+            return True
+        if x in b.spell_targets(f, sid) and b.creature_cast(f, sid, target=x):
+            return True
+    return False
+
+
 def _best_attack_worth(b: Battle, f: Fighter) -> float:
     """What a turn of plain attacks from here would be worth (the bar a spell must clear)."""
     opts = [o for o in b.attack_options(f) if o.available and not o.extra.get("area")]
@@ -887,7 +917,8 @@ def _step_back(b: Battle, f: Fighter) -> None:
         b.walk(f, grid.route(tree, best[1]))
 
 
-def _try_area_attack(b: Battle, f: Fighter, opt: AttackOption, need: int | None = None, friends_ok: bool = True) -> bool:
+def _try_area_attack(b: Battle, f: Fighter, opt: AttackOption, need: int | None = None,
+                     friends_ok: bool = True) -> bool:
     """A breath weapon: worth it if it catches two (or the only one there is), from where it stands; one that costs
     nothing more (made with the Multiattack) is worth it catching `need` and no friend."""
     a = opt.extra

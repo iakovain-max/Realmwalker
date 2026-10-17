@@ -256,8 +256,8 @@ def options(b, f, only: tuple[str, ...] | None = None) -> list[Option]:
                 out.append(_spell_option(b, f, sid, True, ""))
     for aid, name, ok, why in (b.class_abilities(f) if only is None or "ability" in only else ()):
         a = find(f, aid)
-        cost = a["cost"] if a else ("bonus" if aid in ("offhand", "spirit_strike", "hew", "pole_strike", "command_objects")
-                                    else "action")
+        bonus_ones = ("offhand", "spirit_strike", "hew", "pole_strike", "command_objects")
+        cost = a["cost"] if a else ("bonus" if aid in bonus_ones else "action")
         targets = []
         if aid == "offhand" and ok:
             opt = b.offhand_option(f)
