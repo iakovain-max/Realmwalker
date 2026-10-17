@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 05 Schools & Domains · step 1 of §5.1 (the branch and the design note) · branch dlc/05-schools-domains · design note docs/expansions/05-schools-domains.md (to write)
+Current: 05 Schools & Domains · Part A (the Diviner and the Illusionist) · branch dlc/05-schools-domains · design note docs/expansions/05-schools-domains.md
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -477,12 +477,11 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 5, Schools & Domains, step 1 of `docs/EXPANSIONS.md` §5.1: branch
-`dlc/05-schools-domains` from `main`, and the design note `docs/expansions/05-schools-domains.md` (§6.5 of the plan:
-the Diviner, the Illusionist, the Light and Trickery Domains; the Mage Apprentice, Mage, Archmage, Priest and
-Archpriest; wizards' towers; the wizard's and cleric's items of Appendix B) with its parts and checklist, then Part A.
-Expansion 4, Steel & Shadows, is released as 1.4.0 (all four parts in `main`). Per Anton's word of 2026-10-17, the
-relay stops once Expansion 5 is merged; Expansion 6 waits for his start.
+Next session starts at: Expansion 5, Schools & Domains, Part A (the Diviner and the Illusionist), task A.1 of
+`docs/expansions/05-schools-domains.md` (five parts: A the two wizard schools, B the Light and Trickery Domains and
+the DMG's gods, C the mages and priests of the world, D wands, staffs and rods, E robes, hats and the rest with the
+release 1.5.0). Per Anton's word of 2026-10-17, the relay stops once Expansion 5 is merged (all five parts);
+Expansion 6 waits for his start.
 The way of Part D (the magic arms): book makers in data/treasure.json with kernel traits in
 `rules/engine/handlers/arms.py` (CLAUDE.md "The magic arms"); tests/test_magic_arms.py.
 The way of Part C (poisons and the people of the shadows): a poison is an item with a `poison` record (schema POISON:
