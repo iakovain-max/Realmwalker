@@ -4557,6 +4557,8 @@ class Battle:
             f.cast_action_spell = True
         if arcane.ambush_ready(self, f):  # (Magical Ambush: cast out of sight, the saves this turn are harder)
             f.__dict__["ambush_turn"] = (self.round, self.turn)
+        else:
+            f.__dict__.pop("ambush_turn", None)  # (a second spell, cast in plain sight)
         f.hidden = 0
         up = max(0, (slot_level or level) - spell["level"])  # (0 for a free cast at its own level)
         if spell.get("again_of"):
@@ -5433,6 +5435,9 @@ class Battle:
             if self.outcome == "parley":
                 xp //= 2
         money = sum(c.money for c in dead)
+        from realmwalker.rules import war_bond
+
+        war_bond.home(self)  # (an Eldritch Knight's thrown bonded weapon answers the call when the fight is over)
         items = [i for c in dead for i in c.inventory] + list(self.thrown)
         if self.outcome in ("victory", "parley"):  # a minute's search finds half the ammunition loosed (2024)
             items += [Item(0, def_id, n // 2) for def_id, n in sorted(self.shot.items()) if n // 2 > 0]

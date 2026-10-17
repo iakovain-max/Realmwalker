@@ -20,4 +20,6 @@ def trickster(game):
 
 
 def first(c) -> str:
-    return c.name.split()[0]
+    from realmwalker.core.textgen import escape_markup
+
+    return escape_markup(c.name.split()[0])

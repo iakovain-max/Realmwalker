@@ -24,7 +24,9 @@ Assumptions waiting for Anton:
   picks pockets unseen (no locks; no trap disarming exists); Spell Thief is the battle's judgement on a harmful spell
   of level 1+, kept until the next long rest; hidden counts as Invisible for Magical Ambush; fighters and rogues on
   Auto with Intelligence 14+ (not great weapon or shield) take the arcane path; mid-Attack-action casting now needs
-  War Magic (it used to be free), a vial thrown mid-action takes an attack.
+  War Magic (it used to be free), a vial thrown mid-action takes an attack. Spell Thief takes the reaction by
+  itself (it cannot be kept for Shield) and guards the trickster only when aimed at or caught in the area;
+  a knight is never disarmed even when Incapacitated (nothing disarms then anyway); the unseen hand has no card.
 - Expansion 4 Part A (Battle Master): one maneuver an attack, chosen by the battle unless the Reactions setting is
   "all" (Precision, Parry and Riposte are asked as Stroke of Luck is); Ambush at Initiative is the battle's choice on
   a poor roll; the check maneuvers spend a die only when it can turn a failure; no swapping a known maneuver; a friend

@@ -11,6 +11,7 @@ bond would break one of these, so the game never makes one. A bonded weapon:
 
 from __future__ import annotations
 
+from realmwalker.core.textgen import escape_markup as esc
 from realmwalker.rules.character import Character
 
 KEY = "war_bond"
@@ -62,7 +63,8 @@ def at_rest(char: Character, tables) -> list[str]:
     out = []
     for it in picks[:MAX_BONDS - len(have)]:
         have[str(it.uid)] = {"name": tables.items.name(it, False)}
-        out.append(f"{char.name.split()[0]} binds the {tables.items.name(it, False)} with an hour's ritual (War Bond).")
+        out.append(f"{esc(char.name.split()[0])} binds the {esc(tables.items.name(it, False))} with an hour's ritual "
+                   f"(War Bond).")
     if out:
         char.spells[KEY] = have
     return out
@@ -99,6 +101,21 @@ def call(b, f, it) -> bool:
     if not ok:
         ok, _ = equip(c, b.t.items, it.uid)
     return ok
+
+
+def home(b) -> None:
+    """The fight is over: a bonded weapon thrown and lying on the field goes back to its knight (the bond kept)."""
+    from realmwalker.rules.inventory import add_existing
+
+    for it in list(getattr(b, "thrown", ())):
+        knight = next((f.char for f in b.fighters if f.char is not None and f.char.alive
+                       and str(it.uid) in bonds(f.char)), None)
+        if knight is None:
+            continue
+        b.thrown.remove(it)
+        rec = bonds(knight).pop(str(it.uid))
+        it = add_existing(knight, b.t.items, it)
+        bonds(knight)[str(it.uid)] = rec
 
 
 def taken(game, items, by: str) -> list[str]:

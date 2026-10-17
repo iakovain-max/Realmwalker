@@ -73,6 +73,8 @@ def battle_sounds(ev: dict) -> list[tuple[str, str]]:
         return [("start", sid)] if sid else []
     if k == "disarm":
         return [("impact", "drop")]
+    if k == "token" and ev.get("what") == "mage_hand":  # (the unseen hand: a whisper of magic)
+        return [("start", "spell")]
     if k == "rearm":  # (War Bond: the bonded weapon slaps into the knight's hand)
         return [("start", "equip")]
     if k == "zone":

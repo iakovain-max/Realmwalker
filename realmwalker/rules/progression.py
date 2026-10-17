@@ -321,7 +321,9 @@ def start_casting(char: Character, tables) -> list[str]:
     spellrules.fill_prepared(char, tables)
     cantrips_due(char, tables)
     ready = [tables.spells[s]["name"] for s in spellrules.prepared(char, tables)]
-    return [f"{char.name.split()[0]} learns to cast wizard spells" + (f": {', '.join(ready)} prepared" if ready else "")
+    from realmwalker.core.textgen import escape_markup
+
+    return [f"{escape_markup(char.name.split()[0])} learns to cast wizard spells" + (f": {', '.join(ready)} prepared" if ready else "")
             + " <dim>(the Spells page, S)</>."]
 
 

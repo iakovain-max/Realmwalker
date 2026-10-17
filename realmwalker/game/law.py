@@ -865,12 +865,12 @@ def steal_from_shop(game, npc, item_id: str) -> tuple[bool, str]:
     rng = rng_for(game, f"steal/{npc.id}/{item_id}")
     from realmwalker.game import stonework
 
-    hand = stonework.hand_ready(game)  # (Mage Hand: from 30 feet away, with Advantage)
-    if hand:
-        stonework.spend_hand(game)
     from realmwalker.game import legerdemain
 
     unseen = legerdemain.trickster(game)  # (an Arcane Trickster's unseen hand: nobody sees who does it)
+    hand = stonework.hand_ready(game)  # (Mage Hand: from 30 feet away, with Advantage)
+    if hand and unseen is None:
+        stonework.spend_hand(game)
     if unseen is not None:
         hand = True
         sheet = game.sheet(unseen)

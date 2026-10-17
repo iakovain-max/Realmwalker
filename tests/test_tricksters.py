@@ -340,3 +340,50 @@ def test_a_knight_and_a_trickster_on_auto_fight_with_their_magic(tables):
         ours = {f.id for f in b.side("party")}
         cast += sum(1 for e in b.events if e["kind"] == "cast" and e.get("by") in ours)
     assert cast, "neither caster cast a spell in four fights"
+
+
+# ---------------------------------------------------------------------------- from the fresh review
+def test_a_third_caster_reads_wizard_scrolls(tables):
+    c = path(tables, "eldritch_knight", 5)
+    assert sr.scroll_reader(c, tables, "magic_missile") == "sure"
+    assert sr.scroll_reader(c, tables, "fireball") == "check"
+
+
+def test_magical_ambush_through_a_real_casting(tables, monkeypatch):
+    c = path(tables, "arcane_trickster", 9)
+    b = fight(tables, c, "bandit")
+    me, foe = b.fighters[0], b.fighters[1]
+    on_turn(b, me)
+    me.hidden = 15
+    seen = []
+    real = query.save_roll
+
+    def watch(bb, f, ability, **k):
+        r = real(bb, f, ability, **k)
+        if f is foe:
+            seen.append(list(r.roll.dis))
+        return r
+    monkeypatch.setattr(query, "save_roll", watch)
+    sp = "mind_sliver" if "mind_sliver" in tables.spells else "poison_spray"  # (a cantrip with a save)
+    if sp not in c.spells["cantrips"]:
+        c.spells["cantrips"].append(sp)
+    assert b.do_cast(me, sp, foe)
+    assert any("Magical Ambush" in d for d in seen)
+    me.action, me.attacks_left = 1, 0
+    b.do_cast(me, sp, foe)  # (the second, in plain sight)
+    assert "ambush_turn" not in me.__dict__
+
+
+def test_a_thrown_bonded_weapon_comes_home_after_the_fight(tables):
+    c = knight(tables, 3, weapon="javelin")
+    c.equipped_item("main_hand").qty = 1
+    war_bond.at_rest(c, tables)
+    b = fight(tables, c, "bandit", spots={0: (2, 2), 1: (6, 2)})
+    me, foe = b.fighters[0], b.fighters[1]
+    on_turn(b, me)
+    held = c.equipped_item("main_hand")
+    throw = next(o for o in b.attack_options(me) if o.key.startswith("throw") and o.item_uid == held.uid)
+    b.do_attack(me, throw, foe)
+    assert b.thrown
+    war_bond.home(b)
+    assert not b.thrown and any(it.def_id == "javelin" and war_bond.is_bonded(c, it) for it in c.inventory)

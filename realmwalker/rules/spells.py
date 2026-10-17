@@ -628,7 +628,8 @@ def scroll_reader(char: Character, tables, spell_id: str) -> str | None:
     if spell is None:
         return None
     level = int(spell["level"])
-    own = is_caster(char, tables) and (char.cls in spell.get("classes", ()) or spell_id in always_prepared(char, tables))
+    own = is_caster(char, tables) and (spell_list(char, tables) in spell.get("classes", ())
+                                       or spell_id in always_prepared(char, tables))
     if own:
         return "sure" if level <= max_spell_level(char, tables) else "check"
     if "use_magic_device" in char.features:
