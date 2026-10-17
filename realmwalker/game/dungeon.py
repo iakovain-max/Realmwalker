@@ -397,7 +397,7 @@ def search(game) -> list[str]:
         best_roll = max(roll, sensed) if f.get("sensed") else roll
         if f.get("kind") == "trap" and not f.get("found") and best_roll >= int(f.get("dc", 13)):
             f["found"] = True
-            name = gen.TRAPS.get(f.get("trap", "pit"), gen.TRAPS["pit"])[0]
+            name = {**gen.TRAPS, **gen.WARDS}.get(f.get("trap", "pit"), gen.TRAPS["pit"])[0]
             out.append(f"<good>{who.name.split()[0]} finds {name} hidden in the floor.</>")
         elif f.get("kind") == "secret" and roll >= int(f.get("dc", 14)):
             set_terrain(lm, x, y, "door_closed")

@@ -41,6 +41,17 @@ NOT_CHOSEN: dict[str, str] = {
     # dark in tests/test_spells_road2.py.)
     "acolyte/cast:light": "every arena field is lit",
     "cult_fanatic/cast:light": "every arena field is lit",
+    # Expansion 5 C.4: the book's mages and priests. Each is cast in its own scene in tests/test_mages_priests.py.
+    "mage/cast:light": "every arena field is lit",
+    "archmage/cast:light": "every arena field is lit",
+    "priest/cast:light": "every arena field is lit",
+    "archpriest/cast:light": "every arena field is lit",
+    "archmage/cast:detect_thoughts": "cast when no foe is in sight but minds hide near; the arena's party never hides",
+    "archmage/cast:invisibility": "a hurt archmage ringed by blades vanishes; it seldom falls that low here",
+    "archmage/cast:fly": "it rises above foes that only strike close; the arena's party always has shooters",
+    "priest/cast:lesser_restoration": "cast on a friend held by what it ends; the arena's party lays no such hold",
+    "archpriest/cast:lesser_restoration": "cast on a friend held by what it ends; the arena's party lays no such hold",
+    "archpriest/cast:greater_restoration": "cast on a friend petrified or charmed; the arena's party does neither",
 }
 
 # What the tactics do through these must never be refused (a False back means they tried what the rules forbid).

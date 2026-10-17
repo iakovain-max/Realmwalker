@@ -401,3 +401,89 @@ def test_with_no_wizard_the_lesson_is_a_scroll(game):
     lines = quests.lesson(game, {"id": 992}, npc)
     assert lines and len(game.leader.inventory) == n + 1
     assert game.leader.inventory[-1].def_id.startswith("scroll_")
+
+
+# ---------------------------------------------------------------------------- C.4 the tactics in their scenes
+def cast_events(b, f):
+    return [e.get("spell") for e in b.events if e["kind"] == "cast" and e.get("by") == f.id]
+
+
+def test_a_hurt_mage_ringed_by_blades_vanishes(tables):
+    from realmwalker.rules import tactics
+    from tools import arena
+
+    for seed in range(1, 6):
+        b = arena.setup(tables, "mage", "close", seed)
+        m = next(f for f in b.fighters if f.side == FOE and f.creature.uid == 1)
+        m.creature.hp = m.max_hp // 3
+        for sid in ("misty_step", "cone_of_cold", "fireball"):  # (the end of its day: no step away, no blast)
+            m.creature.uses[f"spell:{sid}"] = 0
+        for o in b.fighters:
+            if o.side == FOE and o is not m:
+                o.creature.hp = 0
+                o.state = "dead"
+        on_turn(b, m)
+        if sum(1 for e in b.enemies_of(m) if b.gap(m, e) <= 2) < 3:
+            continue
+        tactics.take_turn(b, m)
+        if "invisibility" in cast_events(b, m):
+            assert "invisible" in m.conditions or m.concentration is not None
+            return
+    pytest.fail("a hurt mage among blades never vanished")
+
+
+def swordsmen(tables, n=4, level=8):
+    """Fighters with blades and nothing to shoot or throw."""
+    out = []
+    for s in range(n):
+        c = hero(tables, "fighter", seed=10 + s, level=level)
+        c.inventory = [it for it in c.inventory if "range" not in tables.items.get(it.def_id)
+                       and "thrown" not in tables.items.get(it.def_id).get("properties", ())]
+        out.append(c)
+    return out
+
+
+def test_a_mage_rises_above_swordsmen(tables):
+    from realmwalker.rules import tactics
+
+    b = fight(tables, swordsmen(tables), "mage", spots={0: (3, 4), 1: (3, 6), 2: (2, 5), 3: (4, 7), 4: (5, 5)})
+    m = foe(b, "mage")
+    from realmwalker.rules.engine import estimates
+
+    assert all(estimates._strikes_only_close(b, e) for e in b.enemies_of(m))
+    on_turn(b, m)
+    tactics.take_turn(b, m)
+    assert "fly" in cast_events(b, m)
+    assert m.fly_speed >= 60
+
+
+def test_an_archmage_reads_the_minds_it_cannot_see(tables):
+    from realmwalker.rules import tactics
+
+    c = hero(tables, "rogue", level=10)
+    b = fight(tables, c, "archmage", spots={0: (3, 4), 1: (8, 4)})
+    a = foe(b, "archmage")
+    pc = next(f for f in b.fighters if f.side == PARTY)
+    pc.conditions["invisible"] = -1
+    pc.hidden = 20
+    on_turn(b, a)
+    tactics.take_turn(b, a)
+    assert "detect_thoughts" in cast_events(b, a)
+
+
+@pytest.mark.parametrize("healer, spell, held", [("priest", "lesser_restoration", "paralyzed"),
+                                                  ("archpriest", "lesser_restoration", "paralyzed"),
+                                                  ("archpriest", "greater_restoration", "petrified")])
+def test_a_priest_frees_a_friend_held_by_what_the_prayer_ends(tables, healer, spell, held):
+    from realmwalker.rules import tactics
+
+    c = hero(tables, "fighter", level=8)
+    b = fight(tables, c, healer, "mage", spots={0: (2, 4), 1: (8, 4), 2: (9, 4)})
+    h, friend = foe(b, healer), foe(b, "mage")
+    friend.conditions[held] = -1
+    if spell == "greater_restoration":
+        h.creature.uses["pool:divine_aid"] = 0  # (Lesser Restoration cannot end petrification anyway)
+    on_turn(b, h)
+    tactics.take_turn(b, h)
+    assert spell in cast_events(b, h)
+    assert held not in friend.conditions

@@ -204,7 +204,7 @@
     "lair": {"floor": "floor/lair", "wall": "wall/cave", "stairs_down": "feature/cave_down", "stairs_up": "feature/cave_up"}
   },
   "town_walls": {"hamlet": "wall/wood", "village": "wall/wood", "town": "wall/stone", "city": "wall/stone", "hold": "wall/stone_gray", "elfhall": "wall/vines"},
-  "traps": {"pit": "trap/pit", "darts": "trap/darts", "blade": "trap/blade", "fire": "trap/fire", "_": "trap/plate"},
+  "traps": {"pit": "trap/pit", "darts": "trap/darts", "blade": "trap/blade", "fire": "trap/fire", "glyph": "trap/glyph", "_": "trap/plate"},
   "figures": {
     "_comment": "People in pixel art (tools/figure_art.py): a body for each race and sex, then layers. Outfits list choices per slot; one is picked per person, the same every time. A choice is 'thing@colour' ('' is nothing). body/legs/feet/over/belt/hands are clothes and armour (see tools/figure_gear.py GARMENTS), head is a hat or helmet, cloak a colour, held 'weapon@metal', shield 'shape@field@emblem@emblem colour'.",
     "colours": {

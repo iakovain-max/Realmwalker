@@ -319,7 +319,7 @@ def _sense_traps(game, caster, spell) -> list[str]:
         for (x, y), f in lm.features.items():
             if f.get("kind") == "trap" and not f.get("spent") and not f.get("found") and fov[x, y]:
                 f["sensed"] = True
-                name = gen.TRAPS.get(f.get("trap", "pit"), gen.TRAPS["pit"])[0]
+                name = {**gen.TRAPS, **gen.WARDS}.get(f.get("trap", "pit"), gen.TRAPS["pit"])[0]
                 kinds[name] = kinds.get(name, 0) + 1
     if not kinds:
         return out + ["<dim>No trap you could see the way to lies within 120 feet.</>"]
