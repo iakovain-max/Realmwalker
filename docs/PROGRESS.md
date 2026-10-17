@@ -84,7 +84,8 @@ shapes F.5.
 - **Checked**: tests/test_summons.py (every spell in a real fight at two slots, every shape's trait and blow, the
   moods, the Auto calling a spirit and playing it, an enemy's spirit, the battle screen), the spell catalogue's test
   casts each one and sees its worth, the full suite, the autoplay bot (it now checks that a spirit on the field is
-  held by its caster) and the window smoke test.
+  held by its caster) and the window smoke test; a test draws every shape of every spirit with the real tile
+  sheets (the fresh review found that drawing one would have failed in the window; fixed).
 
 ### Session, 2026-10-17 (afternoon): Demigods & Magics F.1 — a familiar and a steed fight beside you
 
