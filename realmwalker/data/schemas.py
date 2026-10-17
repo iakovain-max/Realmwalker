@@ -819,7 +819,13 @@ ECONOMY = Obj(
                          # Expansion 2 part D (PHB 2024 p. 234): lifestyles, tolls, coaches, ships, messengers
                          "inn": INN, "toll": Int(min=0), "coach": PASSAGE, "ship": PASSAGE,
                          "messenger": Obj({"per_mile": Int(min=0), "miles_a_day": Int(min=1, max=200)}),
-                         "stabling": Int(min=0), "feed": Int(min=0)}),
+                         "stabling": Int(min=0), "feed": Int(min=0),
+                         # Expansion 3 G.2 (PHB 2024 p. 232): spellcasting for pay
+                         "spellcasting": Obj({"price": List(Int(min=0), min_items=10, max_items=10),
+                                              "reach": Map(Int(min=0, max=9)),
+                                              "own": Map(List(Int(min=0, max=9), min_items=2, max_items=2)),
+                                              "secret_markup": Float(min=1, max=5),
+                                              "min_hours": Float(min=0, max=24)})}),
         "culture_stock": Map(List(List(Any_(), min_items=3, max_items=4)), optional=True),
     }
 )

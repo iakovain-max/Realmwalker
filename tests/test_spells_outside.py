@@ -176,6 +176,14 @@ def test_a_body_nobody_could_raise_is_buried_at_once(world, tables):
     friend = companion(tables)
     game = game_with(world, tables, lead, friend)
     kill(game, friend)
+    assert game.fallen, "a priest in a city could raise them, for pay (Expansion 3 G.2): the body is carried"
+    for s in game.world.settlements:  # (a land of villages: no priest there reaches a spell of return)
+        s.kind = "village"
+        s.great = False
+    other = companion(tables, seed=7)
+    game.party.append(other)
+    game.fallen = []
+    kill(game, other)
     assert not game.fallen
 
 

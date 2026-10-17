@@ -63,12 +63,13 @@ def choices(conv) -> list:
         if captives:
             out.append(Choice("prisoners", f"I have {len(captives)} prisoner{'s' if len(captives) > 1 else ''} for "
                                            f"the law."))
-        laws = fx.laws_of(w, realm)
-        if npc.job in ("headman", "lord") and laws.get("magic") == "licensed" and \
-                realm.id not in game.renown.flags.get("licences", []) and game.leader.cls in ("wizard", "cleric"):
-            fee = int(law_data["licence_fee"])
-            out.append(Choice("licence", f"I need a licence to work magic ({money_text(fee)}).",
-                              law.party_money(game) >= fee, "you don't have enough"))
+    if realm is not None and npc.job in ("headman", "lord", "mage") and \
+            fx.laws_of(w, realm).get("magic") == "licensed" and \
+            realm.id not in game.renown.flags.get("licences", []) and law.party_casts(game):  # (Expansion 3 G.2:
+        # anyone in the party who casts; the circle's mages write licences too)
+        fee = int(law_data["licence_fee"])
+        out.append(Choice("licence", f"I need a licence to work magic ({money_text(fee)}).",
+                          law.party_money(game) >= fee, "you don't have enough"))
     if law.is_fence(game, npc) and game.renown.flags.get("captives"):
         captives = game.renown.flags["captives"]
         out.append(Choice("ransom", f"I have {len(captives)} prisoner{'s' if len(captives) > 1 else ''}. "

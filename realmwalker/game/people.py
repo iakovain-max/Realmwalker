@@ -339,6 +339,18 @@ def populate_town(game, lm, settlement) -> Town:
         if b.kind == "temple" and settlement.kind in ("town", "city"):
             spot = inside(b)
             add(world, town, make_npc(game, settlement, "acolyte", rng.child(f"{bi}/acolyte"), building=bi, post=spot, home=spot))
+    # Mages (Expansion 3 G.2): where a mages' circle keeps a house, one; two in a city, three in a great one. In the
+    # library if there is one, else working at home. They cast for pay and sell scrolls (game/spellhire.py).
+    from realmwalker.game.magic import mages_here
+
+    if "mage" in people["occupations"] and mages_here(game, settlement):
+        library = next((i for i, b in enumerate(lm.buildings) if b.kind == "library"), None)
+        many = 3 if getattr(settlement, "great", False) else 2 if settlement.kind == "city" else 1
+        for i in range(many):
+            home = a_home()
+            post = inside(lm.buildings[library]) if library is not None and i == 0 else home
+            add(world, town, make_npc(game, settlement, "mage", rng.child(f"mage/{i}"),
+                                      building=library if post != home else -1, post=post, home=home))
     spec = people["settlement_people"].get(settlement.kind, people["settlement_people"]["village"])
     if getattr(settlement, "great", False):
         spec = people["settlement_people"].get("great", spec)
@@ -397,7 +409,7 @@ def populate_town(game, lm, settlement) -> Town:
 # ---------------------------------------------------------------------------- townsfolk and factions (M6)
 FIGURE_JOBS = {"kingdom": "lord", "noble_house": "lord", "free_city": "lord", "highland_clan": "headman",
                "clan": "headman", "elven_realm": "headman", "temple": "priest", "merchant_guild": "shopkeeper",
-               "smiths_guild": "smith", "healers_guild": "healer"}
+               "smiths_guild": "smith", "healers_guild": "healer", "mages_circle": "mage"}
 
 
 def link_figures(game, town: Town, settlement, lm, inside, rng: RNG) -> None:

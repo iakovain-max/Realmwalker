@@ -625,6 +625,20 @@ def _check_law(game, fail) -> None:
     for c in r.flags.get("captives", []):
         if c.get("def_id") not in game.tables.creatures:
             fail(f"a captive of unknown kind {c.get('def_id')}")
+    # Spellcasting for pay (Expansion 3 G.2): who casts reaches no higher than the place allows, and a mage keeps a shop.
+    if game.local is not None and game.local.kind == "settlement":
+        from realmwalker.game import economy, spellhire
+        from realmwalker.game.people import npcs_in
+
+        s = w.settlement_at(game.player.x, game.player.y)
+        for n in npcs_in(w, s.id) if s is not None else []:
+            if n.job not in spellhire.TRADITION or not n.alive:
+                continue
+            cap = int(spellhire.spec(game)["reach"].get(spellhire._kind(game, n), 2))
+            if not 0 <= spellhire.reach(game, n) <= cap:
+                fail(f"a {n.job} who casts above what {s.name} allows: {spellhire.reach(game, n)} > {cap}")
+            if n.job == "mage" and economy.shop_kind(game, n) != "mage":
+                fail("a mage with no wares")
 
 
 def _check_magic(game, fail) -> None:

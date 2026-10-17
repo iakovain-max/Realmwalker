@@ -558,6 +558,12 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   `tactics._touch_heal` walks to heal, restore or revive). `tools/arena.py --spells` gives each battle spell to a test
   war mage (`caster_def`); tests/test_enemy_casters.py (slow) must stay green for a new spell, or give its NOT_CAST
   reason.
+- Spells for pay (Expansion 3 G.2): `game/spellhire.py`: a priest (cleric list) or a mage (townsperson, data/people.json;
+  placed by `people.populate_town` where `magic.mages_here`) casts what would help the party for the PHB 2024 price
+  (economy.json services "spellcasting": price, reach by place, own range; + `component_value`), through
+  `magic.cast_on_road(hired=True)` (no slot, material, strain or law: `law.magic_check` ignores casters outside the
+  party). A new road use must be added to `spellhire.FOR_HIRE` to be sold. Scrolls by rarity: `magic.scroll_stock(
+  tradition=, top=)` (temple: cleric; shop "mage": wizard); none on open sale where `magic.magic_forbidden`.
 - Gear and tools 2024 (Expansion 2 part D): items.json `pack` (opens into its contents, gear.open_pack), `helps`
   {search, traps, force, disguise} (dungeon.helps, law.put_on_disguise), `utilize` (a tool's 2024 uses, on its card),
   `carry` also on carried containers (each kind once, Sheet.pack_carry), `trinket` (data/trinkets.json; the name and

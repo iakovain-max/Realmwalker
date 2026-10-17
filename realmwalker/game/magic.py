@@ -159,23 +159,65 @@ def _owner(game, item):
     return next((c for c in game.party if c.item(item.uid) is not None), None)
 
 
-def scroll_stock(game, settlement, rng) -> dict[str, int]:
-    """A few scrolls for sale where there are mages about."""
+def mages_here(game, settlement) -> bool:
+    """Whether mages keep a house here: always in a city, elsewhere where a mages' circle is present or seated."""
     from realmwalker.world import factions as fx
 
+    if settlement.kind == "city" or getattr(settlement, "great", False):
+        return True
+    if not game.world.factions:
+        return False
+    return any(settlement.id in f.presence or f.seat == settlement.id
+               for f in fx.active_factions(game.world, "mages_circle"))
+
+
+def magic_forbidden(game, settlement) -> bool:
+    """The lord's law here forbids magic (the realm's laws: legal, licensed or forbidden)."""
+    from realmwalker.world import factions as fx
+
+    return bool(game.world.factions) and fx.laws_at(game.world, settlement).get("magic") == "forbidden"
+
+
+SCROLL_WEIGHT = {"common": 6, "uncommon": 3, "rare": 1}  # (DMG 2024: rare things are seldom for sale; rarer, never)
+
+
+def scroll_stock(game, settlement, rng, tradition: str | None = None, top: int | None = None,
+                 lo: int = 1, hi: int = 3) -> dict[str, int]:
+    """Scrolls for sale: a few of any list where there are mages about (a store, an apothecary), a temple's of the
+    cleric's list, a mage's of the wizard's (`tradition`), up to spell level `top`; the commoner ones more often, at
+    most one rare. None on open sale where magic is forbidden, but a temple's prayers."""
     t = game.tables
-    mages = any(settlement.id in f.presence or f.seat == settlement.id
-                for f in fx.active_factions(game.world, "mages_circle")) if game.world.factions else False
-    if not mages and settlement.kind != "city":
+    if tradition != "cleric" and magic_forbidden(game, settlement):
         return {}
-    top = 3 if settlement.kind == "city" else 2
-    scrolls = [d for d, spec in t.items.defs.items() if spec.get("use", {}).get("scroll")
-               and t.spells[spec["use"]["scroll"]]["level"] <= top]
-    out = {}
-    for _ in range(rng.randint(1, 3)):
-        if scrolls:
-            pick = rng.choice(scrolls)
-            out[pick] = out.get(pick, 0) + 1
+    if tradition is None and not mages_here(game, settlement):
+        return {}
+    if top is None:
+        top = 3 if settlement.kind == "city" else 2
+    rarity = t.rules.get("spell_scrolls", {}).get("rarity") or []
+    scrolls, weights = [], []
+    for d, spec in t.items.defs.items():
+        sid = (spec.get("use") or {}).get("scroll")
+        if not sid or sid not in t.spells:
+            continue
+        spell = t.spells[sid]
+        level = int(spell["level"])
+        grade = rarity[level] if level < len(rarity) else "legendary"
+        if level > top or grade not in SCROLL_WEIGHT or (tradition and tradition not in spell.get("classes", ())):
+            continue
+        scrolls.append(d)
+        weights.append(SCROLL_WEIGHT[grade])
+    out: dict[str, int] = {}
+    rare_taken = False
+    for _ in range(rng.randint(lo, hi)):
+        if not scrolls:
+            break
+        pick = rng.weighted(scrolls, weights)
+        level = int(t.spells[t.items.get(pick)["use"]["scroll"]]["level"])
+        if level < len(rarity) and rarity[level] == "rare":
+            if rare_taken:
+                continue
+            rare_taken = True
+        out[pick] = out.get(pick, 0) + 1
     return out
 
 
@@ -239,8 +281,9 @@ def _needs(game, spell, target) -> bool:
     return any(c.hp < c.max_hp or c.wounds for c in who)
 
 
-def road_problem(game, caster, spell_id: str, target=None, scroll=None) -> str | None:
-    """Why this spell can't be cast here and now (None when it can); `scroll`: read from that scroll instead."""
+def road_problem(game, caster, spell_id: str, target=None, scroll=None, hired: bool = False) -> str | None:
+    """Why this spell can't be cast here and now (None when it can); `scroll`: read from that scroll instead;
+    `hired`: cast for pay by a townsperson (game/spellhire.py), who has the slot and the materials."""
     t = game.tables
     spell = t.spells[spell_id]
     ok, why = spellrules.on_the_road(t, spell_id)
@@ -254,7 +297,9 @@ def road_problem(game, caster, spell_id: str, target=None, scroll=None) -> str |
         return shapeshift.problem(game, caster, spell_id, target)  # slot and no spell cast: Expansion 3 F.8)
     if caster.uses.get("addled"):  # (Contact Other Plane's failure, until a long rest)
         return "the mind is still reeling from what it touched (a long rest)"
-    if scroll is not None:
+    if hired:
+        pass  # (their own slot and materials, paid for)
+    elif scroll is not None:
         why = spellrules.scroll_problem(caster, t, spell_id)
         ok = not why
     elif spell_id not in spellrules.known_spells(caster, t):
@@ -262,8 +307,8 @@ def road_problem(game, caster, spell_id: str, target=None, scroll=None) -> str |
 
         if not spell.get("ritual") or spell_id not in spellrules.ritual_spells(caster, t) + feats.ritual_spells(caster, t):
             return "not prepared (p prepares it)"
-    if scroll is not None:
-        pass  # (no slot and no materials: the scroll's own magic)
+    if scroll is not None or hired:
+        ok, why = True, ""  # (no slot and no materials: the scroll's own magic, or the hired caster's)
     elif spell.get("ritual"):  # a ritual needs no slot, but armour without training still stops it, and it needs
         why = spellrules.armour_problem(caster, t) or spellrules.component_problem(caster, t, spell_id)  # its materials
         ok = not why
@@ -286,9 +331,16 @@ def road_problem(game, caster, spell_id: str, target=None, scroll=None) -> str |
         return spellwork.problem(game, caster, spell_id, target)
     if use == "identify" and not strange_things(game, caster):
         return "nothing you carry is strange to you"
+    if use == "identify":
+        from realmwalker.rules.items import Item
+
+        if hired and isinstance(target, Item) and not any(it is target for it in strange_things(game, game.leader)):
+            return "you no longer carry it"
+        return None  # (no spell kept on anyone: the thing is named)
     if use in ("heal", "cure") and not _needs(game, spell, target):
         return "there is nothing for it to mend" if use == "cure" else "nobody needs healing"
-    on = caster if spell["target"] in ("self", "all_allies") else target
+    on = (game.leader if hired else caster) if spell["target"] in ("self", "all_allies") else target  # (hired: the
+    # townsperson never holds the party's spell)
     left = spellrules.lasting(on, t).get(spell_id, 0.0)
     if spell["target"] == "all_allies" and spellrules.has_op(spell, "max_up") \
             and left > int(spell.get("rounds", 0)) / spellrules.ROUNDS_PER_HOUR / 2:
@@ -322,10 +374,12 @@ def _magic_seen(game, caster) -> None:
         law.magic_check(game, caster)
 
 
-def cast_on_road(game, caster, spell_id: str, target=None, slot_level: int | None = None, scroll=None) -> list[str]:
+def cast_on_road(game, caster, spell_id: str, target=None, slot_level: int | None = None, scroll=None,
+                 hired: bool = False) -> list[str]:
     """Cast a spell outside battle. Healing goes through game/care.py (the worst wound first); a lasting spell is
     kept on whoever it was cast on. `slot_level`: a higher slot, for a spell that does more with one; `scroll`: read
-    from that scroll (no slot, no materials; a check first when it is above the reader). Returns what to say."""
+    from that scroll (no slot, no materials; a check first when it is above the reader); `hired`: a townsperson casts
+    it for pay (game/spellhire.py: no slot, no materials, no strain, nothing for the law). Returns what to say."""
     from realmwalker.game import care
 
     t = game.tables
@@ -333,7 +387,7 @@ def cast_on_road(game, caster, spell_id: str, target=None, slot_level: int | Non
     if spell["target"] == "dead_ally":
         target = _body_target(game, spell_id, target)
     target = target or caster
-    why = road_problem(game, caster, spell_id, target, scroll=scroll)
+    why = road_problem(game, caster, spell_id, target, scroll=scroll, hired=hired)
     if why:
         return [f"{spell['name']}: {why}."]
     if spellrules.road_use(t, spell_id) == "jar" and caster.spells.get("jar"):
@@ -376,9 +430,11 @@ def cast_on_road(game, caster, spell_id: str, target=None, slot_level: int | Non
     use = spellrules.road_use(t, spell_id)
     if use in ("heal", "cure"):
         wound = max(target.wounds, key=lambda w: (w.severity, w.bleed), default=None)
-        return pre + care.cast(game, caster, target, wound, spell_id, slot_level, free=scroll is not None)
-    level = spell["level"] if scroll is None else 0  # (a scroll's own magic: no slot)
-    ritual = bool(spell.get("ritual")) and scroll is None  # a Ritual (2024): ten minutes longer, and no slot spent
+        if hired:
+            pre.append(f"<magic>{escape_markup(caster.name.split()[0])} casts {spell['name']}.</>")
+        return pre + care.cast(game, caster, target, wound, spell_id, slot_level, free=scroll is not None or hired)
+    level = spell["level"] if scroll is None and not hired else 0  # (a scroll's own magic, or a hired one's: no slot)
+    ritual = bool(spell.get("ritual")) and scroll is None and not hired  # a Ritual (2024): ten minutes longer, no slot
     free = spellrules.free_cast(caster, t, spell_id) if level and not ritual else None  # (Spell Mastery...)
     slot = spellrules.lowest_free_slot(caster, t, level) if level and not ritual and not free else None
     if slot and slot_level in spellrules.slot_choices(caster, t, spell_id) and spellrules.upcasts(spell):
@@ -391,7 +447,7 @@ def cast_on_road(game, caster, spell_id: str, target=None, slot_level: int | Non
         spellrules.spend_slot(caster, slot)
         strained = spellrules.strain(caster, slot, game.world.rng.child(f"strain/{game.world.time}"))
         pre += strain_on_road(game, caster, strained)
-    used = spellrules.spend_material(caster, t, spell_id) if scroll is None else None
+    used = spellrules.spend_material(caster, t, spell_id) if scroll is None and not hired else None
     if ritual:
         game.pass_time(10, "rest")
     if use == "revive":
@@ -418,7 +474,10 @@ def cast_on_road(game, caster, spell_id: str, target=None, slot_level: int | Non
     if use == "identify":
         from realmwalker.game import magic_items
 
-        item = strange_things(game, caster)[0]
+        from realmwalker.rules.items import Item
+
+        item = target if isinstance(target, Item) else strange_things(game, caster)[0]  # (a hired caster: the one
+        # you asked about)
         name = game.tables.items.name(item, False)
         game.pass_time(1, "rest")  # (its casting time: a minute; a ritual's ten more are passed above)
         msgs = pre + [f"{escape_markup(caster.name.split()[0])} casts <magic>{spell['name']}</> over the {name}"
