@@ -729,6 +729,13 @@ def _break_through(b: Battle, f: Fighter, targets: list[Fighter], reach: int) ->
     return bool(before)
 
 
+def _item_charges(c) -> bool:
+    """A magic thing with charges in hand or bound (a Mace of Terror, a Rod of Lordly Might): worth weighing as a cast."""
+    from realmwalker.rules import magic
+
+    return any(magic.charges_left(p) > 0 for _it, p in magic.charges(c))
+
+
 def _terror_turn(b: Battle, f: Fighter) -> None:
     """Frightened by a Mace of Terror: the turn goes on getting away from the one it fears - out of a grip first,
     then a Dash to the square farthest from them it can reach (never off the field: the dread holds it here)."""
@@ -1156,7 +1163,8 @@ def _party_turn(b: Battle, f: Fighter) -> None:
         if b.current is f and b.outcome is None and f.move_left >= 5:
             _keep_safe(b, f)
         return
-    if (spellrules.is_caster(c, b.t) or feats.innate_spells(c, b.t) or _reads_scrolls(b, f)) and f.action > 0:
+    if (spellrules.is_caster(c, b.t) or feats.innate_spells(c, b.t) or _reads_scrolls(b, f)
+            or _item_charges(c)) and f.action > 0:
         if _cast_something(b, f):
             if b.current is f and b.outcome is None and f.action <= 0 and f.attacks_left > 0:
                 pass  # (War Magic: the Attack action's other attacks follow)

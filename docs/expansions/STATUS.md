@@ -16,8 +16,8 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   and rogue's magic items of the DMG; saves format 18)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
-  adapted); Expansion 3: all 560 settled (223 done, 336 adapted, 1 omitted); Expansion 4: all 66 settled (37 done,
-  29 adapted). PHB 67% · DMG 15% · MM 16%
+  adapted); Expansion 3: all 560 settled (223 done, 336 adapted, 1 omitted); Expansion 4: all 66 settled (36 done,
+  30 adapted). PHB 67% · DMG 15% · MM 16%
 Assumptions waiting for Anton:
 - Expansion 4 Part D (the fighter's and rogue's magic items): the Defender's guard is chosen as each turn begins by the
   battle's judgement (all three to Armor Class when hurt and pressed, two against two foes, one against one, none
@@ -27,13 +27,17 @@ Assumptions waiting for Anton:
   only, and its Wish is cast in a fight (Instant Health, with Wish's stress), as no item casts on the road; the
   Veteran's Cane strikes as a club while it is a cane (the Auto draws the sword at once); a Dancing Sword more than 30
   feet away as its bearer's turn begins flies straight back to the hand; the Vorpal Sword finds no head on oozes,
-  elementals, plants, swarms, amorphous or many-headed creatures or anything Gargantuan (30 slashing instead); the
+  elementals, plants, constructs, swarms, amorphous or many-headed creatures or anything Gargantuan (30 slashing
+  instead); the Sword of Wounding's unclosing wound lasts the fight (the book: an hour); the
   Sword of Vengeance's spirit binds blows only (spells may go elsewhere), and the curse lifts in the usual ways
   (Banishment cannot be aimed at a thing), leaving a +1 sword; the Executioner's Axe's temporary hit points are the
   extra damage as rolled; the Sword of Sharpness's exhaustion on a creature lasts the fight; the Boots of False Tracks
   give +5 to seeing a band of people first (there is no tracking); the Amulet of Proof against Detection keeps foes'
   divination spells and Detect Thoughts off its bearer (nobody scries the party yet); the Weapon of Warning works from
-  the pack once bound and wakes a sleeping camp.
+  the pack once bound and wakes a sleeping camp. From the fresh review: the unclosing wound now stops every healing
+  (potions, Second Wind, a troll's regeneration); the terrified make no opportunity attacks; the Gloves of Thievery
+  hide only while worn; a Luck Blade reroll of 20 is a critical; companions on Auto use charged things (a Mace of
+  Terror against a crowd).
 - Expansion 4 Part C (poisons and the people of the shadows): the assassins' trade is the thieves' guilds' (no
   separate assassins' faction: the world's history is unchanged); inhaled poisons are thrown up to 20 feet like a
   flask (the book: blown beside you); contact poisons on a weapon work on any hit, nothing else is smeared and

@@ -102,8 +102,9 @@ legendary ones from level 11 or so). Make a fighter and choose the Battle Master
 or a rogue and the Arcane Trickster. In a fight, the new weapons' powers are in the abilities menu (the bonus
 actions) and in the item list (the charges). The shelf on the main menu shows the icon and what the expansion adds.
 
-**Balance**: the plain fights do not change (the new things only come with treasure). The balance bands are checked by
-the full test suite before the release.
+**Balance**: the plain fights do not change (the new things only come with treasure). `tools/balance.py --runs 30`
+before the release: the fights, the winter night and the untreated wound stay inside their bands (the numbers are in
+`build/d_balance.txt`).
 
 **What could not be checked**: the icon was looked at enlarged and in the window smoke test, and the dancing sword on
 the battle mat only in the headless picture tests, not in play by eye.
@@ -117,12 +118,14 @@ the battle mat only in the headless picture tests, not in play by eye.
   no magic item casts on the road yet;
 - the Veteran's Cane strikes as a club while it is a cane;
 - a dancing sword left more than 30 feet behind comes straight back to the hand (the book: it falls);
+- the Sword of Wounding's wound that will not close lasts the fight (the book: an hour);
+- the Vorpal Sword finds no head on oozes, elementals, plants, constructs, swarms and anything Gargantuan;
 - the Sword of Vengeance's spirit binds your blows only, and the curse is lifted in the usual ways (the book's
   Banishment on the sword cannot be aimed at a thing here);
 - the Boots of False Tracks give +5 to seeing a band of people first, as the game has no tracking;
 - the Amulet keeps foes' divination spells and Detect Thoughts off you; nobody scries the party yet.
 
-**Codex** (`tools/codex/coverage.py`): Expansion 4: all 66 entries settled (37 done, 29 adapted).
+**Codex** (`tools/codex/coverage.py`): Expansion 4: all 66 entries settled (36 done, 30 adapted).
 Player's Handbook 67% · Dungeon Master's Guide 15% · Monster Manual 16%.
 
 | Book | Done | Adapted | Omitted | To do | Total |

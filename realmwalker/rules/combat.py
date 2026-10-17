@@ -2044,6 +2044,8 @@ class Battle:
         whether it was made."""
         if not e.reaction or not e.active or e.incapacitated or self.frozen(e):
             return False
+        if "frightened" in e.conditions and (e.cond_ends.get("frightened") or {}).get("terror"):
+            return False  # (a Mace of Terror's fright: it thinks only of getting away)
         opts = [o for o in self.attack_options(e) if o.is_melee and o.available and self.gap(e, f) <= o.reach_sq
                 and not o.extra.get("bonus_action") and not self.unfit_target(o, f)]  # (no Trample as a reaction)
         cantrip = self._war_cantrip(e, f, opts)
@@ -2683,8 +2685,10 @@ class Battle:
         hit = crit or (natural != 1 and total >= ac)
         if not hit:
             ev = events.emit(self, "attack_missed", actor=att, target=target, opt=opt, natural=natural, total=total, ac=ac,
-                             hit=False)  # Guided Strike...
+                             hit=False, crit=False)  # Guided Strike...
             hit, total = ev.hit, ev.total
+            if ev.crit:  # (a roll made again that came up 20: the Luck Blade)
+                crit, natural = True, 20
         # The Shield spell: a wizard who sees the blow coming turns it with a reaction, if that is enough.
         if hit and not crit and target.char and target.reaction and not target.incapacitated and total < ac + 5:
             if self._shield(target, att, opt, total, ac):
@@ -5438,6 +5442,9 @@ class Battle:
             return
         if simulacrum.snow(f):  # (only its maker's repair at a long rest mends it: PHB 2024)
             self.say(f"The magic finds nothing living in {f.the_name}: snow does not knit.", "warn")
+            return
+        if f.no_heal:  # (a wound that will not close: a Sword of Wounding, a mummy's rot, Chill Touch)
+            self.say(f"The wound on {f.the_name} will not close: no healing takes.", "warn")
             return
         if f.char is not None and f.char.attuned:
             from realmwalker.rules import magic

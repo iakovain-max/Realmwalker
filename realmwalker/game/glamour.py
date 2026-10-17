@@ -205,8 +205,9 @@ def hidden_thing(game, item, *, robbers: bool = False) -> bool:
     best-looking things, pass it over)."""
     from realmwalker.rules import magic
 
-    return sequestered(item) or (robbers and masked(game, item)) or magic.item_flag(item, "imperceptible")
-    # (Gloves of Thievery: nobody sees or feels them on the hands)
+    worn = any(item.uid in c.equipped.values() for c in getattr(game, "party", ()))
+    return sequestered(item) or (robbers and masked(game, item)) or (worn and magic.item_flag(item, "imperceptible"))
+    # (Gloves of Thievery: nobody sees or feels them on the hands that wear them)
 
 
 # ---------------------------------------------------------------------------- the road: Antipathy/Sympathy

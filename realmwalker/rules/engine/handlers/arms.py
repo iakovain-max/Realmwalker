@@ -37,7 +37,7 @@ from realmwalker.rules.engine.events import handler
 from realmwalker.rules.engine.reactions import Decision, yes
 
 HANDS = ("main_hand", "off_hand")
-NO_HEAD_KINDS = ("ooze", "elemental", "plant")  # (the DM's call in the book: these have no head to lose)
+NO_HEAD_KINDS = ("ooze", "elemental", "plant", "construct")  # (the DM's call in the book: these have no head to lose)
 TOO_BIG = ("gargantuan",)
 FORMS = {"flame": "longsword", "axe": "battleaxe", "spear": "spear", "cane": "club", "sword": "longsword"}
 
@@ -496,6 +496,8 @@ def luck_blade_attack(b, f, ev, hook, buff) -> None:
     b.dice_say(f"{f.name} calls on the Luck Blade: {again} → {total} vs AC {ev.ac}")
     if again == 20 or again != 1 and total >= ev.ac:
         ev.hit, ev.total = True, total
+        if again == 20:
+            ev.crit = True  # (a 20 rolled again is a critical hit)
 
 
 # ---------------------------------------------------------------------------- the Rod of Lordly Might
@@ -562,7 +564,7 @@ def lordly_might(b, f, ev, hook, buff) -> None:
 
 def _press(b, f, key: str, t, name: str) -> bool:
     return yes(b, Decision(f, key, f"{f.name} hits {t.the_name} with the rod. Press its {name} button? (once a day)",
-                           [("yes", name), ("no", "Not now")], default="yes"))
+                           [("yes", name), ("no", "Not now")], default="yes", free=True))
 
 
 # ---------------------------------------------------------------------------- the Veteran's Cane

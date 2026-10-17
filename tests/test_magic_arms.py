@@ -400,3 +400,49 @@ def test_a_companion_on_auto_fights_with_it(game, tables, slug):
         if nxt is not None and not b.turn_started:
             b._start_of_turn(nxt)
     assert me.state != "dead" or them.state != "dead"
+
+
+# ---------------------------------------------------------------------------- from the fresh review
+def test_a_wound_that_will_not_close_stops_every_healing(game, tables, monkeypatch):
+    c, it, b, me, them = armed(game, tables, "sword_of_wounding")
+    fail_saves(b, monkeypatch)
+    assert hit(b, me, them, blow(b, me, it))
+    hp = them.hp
+    b._heal(them, 5)
+    assert them.hp == hp  # (a potion, Second Wind, a drained life: none of it takes)
+
+
+def test_the_terrified_make_no_opportunity_attacks(game, tables, monkeypatch):
+    c, it, b, me, them = armed(game, tables, "mace_of_terror")
+    fail_saves(b, monkeypatch)
+    assert b.do_cast(me, f"charge:{it.uid}:mace_terror", None)
+    them.reaction = True
+    assert not b.opportunity(them, me)
+
+
+def test_gloves_of_thievery_hide_only_on_the_hands(game, tables):
+    gloves = give(game.leader, make(game, "gloves_of_thievery"), slot=None)
+    assert not glamour.hidden_thing(game, gloves)
+    game.leader.equipped["hands"] = gloves.uid
+    assert glamour.hidden_thing(game, gloves)
+
+
+def test_the_auto_swings_the_mace_of_terror_at_a_crowd(game, tables):
+    from realmwalker.rules.combat import Battle, Env
+    from realmwalker.rules.creatures import spawn
+    from tests.test_gear import open_field
+
+    c = person(tables)
+    it = give(c, make(game, "mace_of_terror"))
+    foes = [spawn(tables, "bandit", RNG(7, "m"), i + 1) for i in range(4)]
+    b = Battle(tables, [c], foes, Env(), RNG(3, "battle"), field=open_field(tables))
+    b.start("A crowd.")
+    me = b.side(PARTY)[0]
+    for i, e in enumerate(f for f in b.fighters if f.side != PARTY):
+        e.x, e.y = [(me.x + 1, me.y), (me.x - 1, me.y), (me.x, me.y + 1), (me.x, me.y - 1)][i]
+        e.hp = e.creature.hp = e.creature.max_hp = 60
+    my_turn(b, me)
+    me.auto = True
+    tactics.take_turn(b, me)
+    terror = next(p for p in it.magic["props"] if p.get("spell") == "mace_terror")
+    assert magic.charges_left(terror) < 3

@@ -622,6 +622,8 @@ def _control_rounds(ops: list[dict]) -> float:
             return 1.4  # (held fast, and perhaps turned to stone)
         if o["op"] == "condition" and o.get("control"):
             return 3.5  # (its turns lost to its friends, and spent against them)
+        if o["op"] == "condition" and o.get("terror"):
+            return 2.0  # (a Mace of Terror: its turns spent running away, no blows, until it shakes the fright off)
         if o["op"] == "condition" and o["condition"] in ("paralyzed", "stunned", "unconscious", "incapacitated"):
             return 2.5  # its turns lost, and every blow at it with advantage (and from beside it, a critical)
         if o["op"] == "lose_turn":
