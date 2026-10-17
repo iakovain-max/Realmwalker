@@ -80,7 +80,7 @@
         "maneuver_parry": {"name": "Parry", "text": "A reaction when a melee attack roll hurts you: the damage is less by the die plus your Strength or Dexterity modifier."},
         "maneuver_precision_attack": {"name": "Precision Attack", "text": "When you miss with an attack roll: the die added to it, perhaps turning the miss into a hit."},
         "maneuver_pushing_attack": {"name": "Pushing Attack", "text": "On a hit with a weapon or unarmed strike, the die to the damage; a Large or smaller foe makes a Strength save or is pushed up to 15 feet away."},
-        "maneuver_rally": {"name": "Rally", "text": "A bonus action: a friend within 30 feet who sees or hears you gains temporary hit points: the die plus half your fighter level."},
+        "maneuver_rally": {"name": "Rally", "text": "A bonus action: a friend within 50 feet who sees or hears you gains temporary hit points: the die plus half your fighter level."},
         "maneuver_riposte": {"name": "Riposte", "text": "A reaction when a foe misses you in melee: strike back at it, adding the die to the damage if you hit."},
         "maneuver_sweeping_attack": {"name": "Sweeping Attack", "text": "On a melee hit, the blow carries on into another foe beside the first and within your reach: if the roll would hit it, it takes the die in damage of the same kind."},
         "maneuver_tactical_assessment": {"name": "Tactical Assessment", "text": "A superiority die added to a History, Investigation or Insight check."},

@@ -570,6 +570,12 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   "simulacrum", type construct: `Battle.add_ally(char=)`), never healed, melting at 0, never among the party's dead
   (fight.py's party loops skip `f.bond is not None`). A creature's copy is a servant record with spell "simulacrum"
   (it goes into towns). `simulacrum.snow(f)` asks; pictures through `dolls.frost`.
+- The Battle Master (Expansion 4 Part A): `rules/engine/handlers/battle_master.py`; superiority dice are the pool
+  `uses["superiority"]` (traits.json combat_superiority), maneuvers are fighter `options` kept as features
+  ("maneuver_<slug>", each a kernel trait; a feature's `choose_count` asks several "option" choices, `gives.feat` takes
+  a feat such as Student of War). A blow's maneuver on `attack_damage`/`attack_done` (`tactics.maneuver`), Precision,
+  Parry and Riposte on their events with the reaction, the rest are abilities; a die promised to a later hit is the
+  buff `maneuver_die`; `check_die` from camp.check, Battle.check and dialogue.check. Tests: tests/test_battle_master.py.
 - Gear and tools 2024 (Expansion 2 part D): items.json `pack` (opens into its contents, gear.open_pack), `helps`
   {search, traps, force, disguise} (dungeon.helps, law.put_on_disguise), `utilize` (a tool's 2024 uses, on its card),
   `carry` also on carried containers (each kind once, Sheet.pack_carry), `trinket` (data/trinkets.json; the name and

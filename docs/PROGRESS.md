@@ -29,7 +29,8 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Expansion 1, *Dice & Destiny*** (version 1.1.0) | ✅ Released (2026-10-13), branch `dlc/01-dice-destiny` |
 | **Expansion 2, *Blades & Backgrounds*** (version 1.2.0) | ✅ Released (2026-10-13), branch `dlc/02-blades-backgrounds` |
 | **Expansion 3, *Demigods & Magics*** (version 1.3.0) | ✅ Released (2026-10-17), branch `dlc/03-demigods-magics` |
-| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansions 1-3 released; Expansion 4 next (see STATUS.md) |
+| **Expansion 4, *Steel & Shadows*** (version 1.4.0 with its last part) | Part A (the Battle Master) merged (2026-10-17), branch `dlc/04-steel-shadows` |
+| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansions 1-3 released; Expansion 4 under way (see STATUS.md) |
 
 ---
 
@@ -40,6 +41,62 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-17 (evening): Steel & Shadows begun; Part A — the Battle Master — branch `dlc/04-steel-shadows`
+
+Built by the relay builder realmwalker-b. Saves do not change, and characters you already have keep working. The
+fourth expansion, *Steel & Shadows*, is planned in four parts (`docs/expansions/04-steel-shadows.md`): the Battle
+Master; the Eldritch Knight and the Arcane Trickster; poisons and the people of the shadows (assassins, spies,
+guilds, black markets, duels); and the fighter's and rogue's magic items with the release.
+- **A new path for fighters.** At level 3 a fighter may become a **Battle Master**. It has four superiority dice
+  (d8s), five from level 7 and six from 15. They become d10s at level 10 and d12s at 18, and all come back after a
+  short rest. It learns three maneuvers at level 3 and two more at levels 7, 10 and 15, out of the book's twenty.
+- **Maneuvers on a blow.** When a Battle Master hits, one maneuver can ride on the blow and adds the die to the
+  damage. Trip knocks the foe down, Push drives it 15 feet back, and Menace frightens it. Goad makes it strike badly
+  at anyone but the fighter, Distract opens it to the next friend's attack, and Sweep carries the blow into a second
+  foe. Disarm knocks its weapon from its hand until its next turn, and Maneuvering lets a hurt friend slip clear.
+- **Answers.** Precision Attack adds the die to a near miss. Parry takes the die plus Strength or Dexterity off a
+  blow, and Riposte strikes back when a foe misses in melee. Each one asks you, as Stroke of Luck does.
+- **Bonus actions and more.** Feinting gives advantage and the die on the next attack, and Lunging dashes and bites
+  harder. Evasive Footwork disengages behind a harder guard, and Rally gives a friend temporary hit points.
+  Bait and Switch trades places with a friend, and Commander's Strike gives one of your attacks to a friend's
+  reaction. All of these are in the battle menu's abilities.
+- **The rest of the path.** Student of War teaches a craft's tools and a fighter's skill. Know Your Enemy lays a
+  creature's immunities and weaknesses bare with a bonus action. Relentless rolls a free d8 for the first maneuver
+  of each turn from level 15. Ambush adds the die to a poor Initiative roll and to a failed Stealth check.
+  Commanding Presence and Tactical Assessment add it to failed talk and insight checks, in conversations too.
+- **Your companions use it.** On Auto a Battle Master trips where friends can follow up, and frightens casters and
+  strong foes. It goads a foe off a hurt friend, pushes foes into fire, and parries and ripostes. It gives a rogue
+  friend the first blow, and rallies the wounded. Fighters on Auto now choose their path by how they fight: a great
+  weapon makes a Champion, a shield a Knight, and a sword, a spear, two blades or a bow a Battle Master.
+- **How to see it.** Level a fighter to 3 and choose the Battle Master on the level-up screen. The character sheet
+  lists the maneuvers learned and the dice left. In a fight the board shows the maneuver's name over the fighter.
+- Choices made while Anton was away:
+  - One maneuver can ride on each attack. The battle picks which one, unless the Reactions setting is "all".
+  - Ambush at Initiative is the battle's choice, used when the roll is poor; it would be odd to ask before the order
+    is known.
+  - The check maneuvers spend a die only when it can turn a failed check, as Tactical Mind does.
+  - Swapping a known maneuver at a new level is left out.
+  - A friend moved by Maneuvering Attack draws no blows from anyone as it goes, not only from the target.
+  - Lunging Attack counts any 5 feet moved this turn, not only a straight line just before the blow.
+  - Disarm: the dropped weapon comes back to hand at the start of its holder's next turn.
+  - Know Your Enemy makes the creature's kind known for the fight, as the Study action does, so its card also shows
+    its AC and hit points.
+  - Bait and Switch works only with a friend who takes up one square, as the fighter does.
+- Checked: 28 new tests cover each maneuver in a real fight, the checks, the dice by level, the choices and Suggest,
+  and companions using at least three kinds of maneuver in whole fights on Auto. The full suite, the autoplay bot and
+  the window smoke test pass.
+- The fresh review's fixes:
+  - A feint or a lunge no longer outlives its turn, and a feint is spent on the next attack even if it misses.
+  - The new superiority die at levels 7 and 15 is there at once, not after the next rest. Any pool that grows with
+    a level now does the same.
+  - Rally reaches 50 feet, as the book says.
+  - Commander's Strike gives only a weapon blow or a fist.
+  - Precision Attack is no longer stacked on a blow that already carries a maneuver.
+  - After Bait and Switch, the ground and any grapple follow the two who traded places.
+  - Goading Attack's save no longer counts as a save against a charm.
+- Fixed on the way: an enemy war mage could cage your whole party in Forcecages and then wait for the hour to pass.
+  It no longer cages the last foes left free, since that only stalls the fight.
 
 ### Session, 2026-10-17 (evening): Demigods & Magics G.3 — Simulacrum; **released as 1.3.0** — branch `dlc/03-demigods-magics`
 

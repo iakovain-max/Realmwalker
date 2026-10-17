@@ -47,17 +47,17 @@ last: the Vorpal Sword, the Luck Blade, the Defender, the Dancing Sword...
 ## Parts and tasks
 
 ### Part A — The Battle Master
-- [ ] A.1 Data: the subclass and its features in classes.json; traits and the superiority pool; the twenty maneuvers
+- [x] A.1 Data: the subclass and its features in classes.json; traits and the superiority pool; the twenty maneuvers
   (data/traits.json "maneuvers" with cost, when, save); the "maneuvers" pending choice (creation, level-up, Suggest,
   the Auto); Student of War's tool and skill.
-- [ ] A.2 On a blow: Disarming, Distracting, Goading, Menacing, Pushing, Sweeping, Trip, Maneuvering, Precision (on a
+- [x] A.2 On a blow: Disarming, Distracting, Goading, Menacing, Pushing, Sweeping, Trip, Maneuvering, Precision (on a
   miss); reactions Parry and Riposte; Commander's Strike (one attack given to a friend's reaction); bonus actions
   Evasive Footwork, Feinting, Lunging, Rally; Bait and Switch; Ambush at Initiative; Relentless; Know Your Enemy.
-- [ ] A.3 Checks: Ambush (Stealth), Commanding Presence, Tactical Assessment through `camp.check` / `Battle.check`.
-- [ ] A.4 Tactics: Trip for friends' advantage, Precision on a near miss, Riposte and Parry, Menacing on a caster,
+- [x] A.3 Checks: Ambush (Stealth), Commanding Presence, Tactical Assessment through `camp.check` / `Battle.check`.
+- [x] A.4 Tactics: Trip for friends' advantage, Precision on a near miss, Riposte and Parry, Menacing on a caster,
   Goading off a weak friend, Rally a hurt one; the Auto and the battle screen; arena green; a test in a real fight
   each.
-- [ ] A.5 Cards, status icons (goaded, distracted), log lines, sounds; the codex's 28 Battle Master entries; Part A to
+- [x] A.5 Cards, status icons (goaded, distracted), log lines, sounds; the codex's 28 Battle Master entries; Part A to
   `main`.
 
 ### Part B — The Eldritch Knight and the Arcane Trickster

@@ -372,3 +372,49 @@ def test_the_auto_uses_its_maneuvers_in_a_whole_fight(tables):
                 b.end_turn()
         used |= {e.get("what") for e in b.events if e.get("kind") == "maneuver"}
     assert len(used) >= 3, used
+
+
+# ---------------------------------------------------------------------------- the fresh review's cases
+def test_a_feint_is_spent_on_the_next_attack_hit_or_miss_and_a_lunge_ends_with_the_turn(tables):
+    c = master(tables, 5, know=["feinting_attack", "lunging_attack"])
+    b = fight(tables, c, "bandit")
+    me, foe = b.fighters
+    soft(foe, ac=60)
+    on_turn(b, me)
+    b.do_ability(me, "feinting_attack", foe)
+    assert not b._attack(me, main_opt(b, me), foe)  # (a miss)
+    assert not any(bf.get("maneuver_die") for bf in me.buffs)  # (the feint is gone with it)
+    on_turn(b, me)
+    b.do_ability(me, "lunging_attack")
+    assert any(bf.get("source") == "lunge" for bf in me.buffs)
+    b.end_turn()
+    assert not any(bf.get("source") == "lunge" for bf in me.buffs)
+
+
+def test_new_dice_come_with_the_level(tables):
+    c = master(tables, 6)
+    assert c.uses["superiority"] == 4
+    progression.level_up(c, tables, RNG(1, "lv7"))
+    assert c.uses["superiority"] == 5
+
+
+def test_a_passed_save_keeps_its_feet(tables, monkeypatch):
+    always(monkeypatch, "trip_attack")
+    c = master(tables, 3, know=["trip_attack"])
+    b = fight(tables, c, "bandit")
+    me, foe = b.fighters
+    soft(foe, ac=1)
+    on_turn(b, me)
+    monkeypatch.setattr(b, "_save", lambda *a, **k: True)
+    assert b._attack(me, main_opt(b, me), foe)
+    assert "prone" not in foe.conditions and c.uses["superiority"] == 3
+
+
+def test_rally_reaches_fifty_feet(tables):
+    c = master(tables, 3, know=["rally"])
+    friend = armed(tables, "dagger", cls="rogue", level=3, seed=4)
+    b = fight(tables, [c, friend], "bandit", spots={0: (2, 2), 1: (11, 2), 2: (2, 9)})
+    me, pal, foe = b.fighters
+    on_turn(b, me)
+    opt = next(o for o in actions.options(b, me, only=("ability",)) if o.value == "rally")
+    assert b.feet(me, pal) > 30 and pal in opt.targets

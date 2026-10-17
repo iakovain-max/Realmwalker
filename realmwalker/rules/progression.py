@@ -88,6 +88,7 @@ def feature_gives(char: Character, tables, feat: dict) -> None:
 def _level_up(char: Character, tables, rng: RNG) -> list[str]:
     cls = tables.classes[char.cls]
     before = trs.of_char(char, tables)
+    most_before = {rid: resources.maximum(char, r) for rid, r in resources.pools(char, tables).items()}
     top_before = spell_top_level(char, tables)
     savants = [f.get("savant") for f in cls["subclasses"].get(char.subclass or "", {}).get("features", [])
                if f.get("savant") and f["id"] in char.features]
@@ -133,6 +134,9 @@ def _level_up(char: Character, tables, rng: RNG) -> list[str]:
         if missing > 0:
             add_pending(char, {"kind": "cantrips", "count": missing, "level": char.level})
     resources.granted(char, tables, before)  # a new Action Surge or Channel Divinity starts ready
+    for rid, r in resources.pools(char, tables).items():  # (a pool that grows: the new uses are there at once)
+        if rid in most_before and resources.maximum(char, r) > most_before[rid]:
+            char.uses[rid] = char.uses.get(rid, 0) + resources.maximum(char, r) - most_before[rid]
     from realmwalker.rules import feats
 
     feats.level_up(char, tables)  # more luck points; a lineage's spell of this level ready to cast

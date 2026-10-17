@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 04 Steel & Shadows · Part A (the Battle Master) · branch dlc/04-steel-shadows · design note docs/expansions/04-steel-shadows.md
+Current: 04 Steel & Shadows · Part B (the Eldritch Knight and the Arcane Trickster) · branch dlc/04-steel-shadows · design note docs/expansions/04-steel-shadows.md
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -10,11 +10,19 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   twenty levels and the epic boons; the fighter, rogue, cleric and wizard of 2024 to level 20 with eight subclasses;
   spellcasting by the 2024 rules; the catalogue of 191 battle spells and Wish; spells outside battle in every system;
   familiars, steeds, summoned spirits, the raised dead, the bound, Polymorph and Shapechange, the 24 creatures of
-  Appendix B; enemy casters; spells for pay and the law of magic; Simulacrum; saves format 18)
+  Appendix B; enemy casters; spells for pay and the law of magic; Simulacrum; saves format 18) · 04 Steel & Shadows
+  Part A (2026-10-17: the Battle Master and its twenty maneuvers)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
   adapted); Expansion 3: all 560 settled (223 done, 336 adapted, 1 omitted). PHB 65% · DMG 12% · MM 16%
 Assumptions waiting for Anton:
+- Expansion 4 Part A (Battle Master): one maneuver an attack, chosen by the battle unless the Reactions setting is
+  "all" (Precision, Parry and Riposte are asked as Stroke of Luck is); Ambush at Initiative is the battle's choice on
+  a poor roll; the check maneuvers spend a die only when it can turn a failure; no swapping a known maneuver; a friend
+  moved by Maneuvering Attack draws no blows at all; Lunging counts any 5 feet moved this turn; a disarmed weapon is
+  back in hand at its holder's next turn; Relentless always takes the turn's first maneuver free; fighters on Auto
+  take the Battle Master unless they fight with a great weapon (Champion) or a shield (Knight); Know Your Enemy makes
+  the creature's kind known (its card shows AC and hit points too); Bait and Switch only with a one-square friend.
 - Expansion 3 G.3 (Simulacrum): the copy's gear is snow in the likeness of what was worn and held, without its
   magic; no spell heals it; a long rest's repair spends at most half of the maker's coin; a beast's or a prisoner's
   copy follows the party into towns (the raised dead do not); commands are the battle's (played as a party member);
@@ -427,8 +435,18 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 4, Steel & Shadows, Part A (the Battle Master) in
-`docs/expansions/04-steel-shadows.md` (branch `dlc/04-steel-shadows`, made; design note written).
+Next session starts at: Expansion 4, Steel & Shadows, Part B (the Eldritch Knight and the Arcane Trickster) in
+`docs/expansions/04-steel-shadows.md` (branch `dlc/04-steel-shadows`; Part A merged into `main`).
+The way of Part A (the Battle Master): `rules/engine/handlers/battle_master.py` (superiority pool `uses["superiority"]`,
+`sides`, `roll_die` with Relentless, `dc_of`, `ready`; `maneuver_blow`/`maneuver_after` on a hit, `precision_attack`,
+`bm_parry`, `riposte`, the buff `maneuver_die` in events.BUFF_HOOKS; specials for the abilities; `ambush_initiative`
+from `Battle.start`, `check_die` from `camp.check`, `Battle.check`, `dialogue.check`). The maneuvers are fighter
+`options` in classes.json kept as features ("maneuver_<slug>", each a kernel trait); a feature's `choose_count`
+adds that many "option" choices and `gives.feat` takes a feat (Student of War, offered: false);
+`progression.option_feature` finds a subclass feature's list; `MANEUVER_ORDER`/`SUBCLASS_FOR` for Suggest. Aims
+"friend" and "unknown" with a range in `actions.aim_targets`; buffs goaded, exposed, disarmed (attack options),
+maneuver_die; tactics `maneuver`, `_maneuvers_first`, `_maneuvers_after`. Cards reuse icons (sapped, marked, guided,
+shielded) with their own titles.
 The way of G.3 (Simulacrum): `rules/simulacrum.py` (the person's copy: `make`, `keep`, `destroy`, `repair` from
 `progression.long_rest`, `bring_in` from `fight.start_battle` after the shapes, `after` from `finish_battle`, `snow(f)`,
 `likeness` for the map); a creature's copy is a servant record with spell "simulacrum" and `type` "construct"
@@ -585,6 +603,7 @@ casting time. A spell aimed at something chosen lists Subjects (game/divining.Su
 | 2026-10-17 | Demigods & Magics F.2: summoned spirits of levels 2-4 - Summon Beast, Fey, Undead, Aberration, Construct, Elemental and Giant Insect (numbers by the slot, held by concentration, the form picked for the fight, every trait and blow, the costly components); F.2 split, F.3 next; merged into `main` | `dlc/03-demigods-magics` |
 | 2026-10-17 | Demigods & Magics F.3: the spirits of levels 5-6 (Summon Celestial: Avenger or Defender, Healing Touch; Summon Dragon: the breath with the Rends, its resistance shared; Summon Fiend: Death Throes, Devil's Sight, the yugoloth's step, Magic Resistance) and Animate Objects (things by the caster's modifier, commanded with the Bonus Action); F.4 next; merged into `main` | `dlc/03-demigods-magics` |
 | 2026-10-17 | Demigods & Magics F.7: the rest of Appendix B - 24 creatures of the 2025 MM with pictures, each a Polymorph shape and met in its biome (the water-breathers wait for Expansion 22), the cult's imp and quasit, the towers' tadpoles; Trample, holds that restrain, the Sting's sleep, Burst of Ingenuity, Running Leap; merged into `main` | `dlc/03-demigods-magics` |
+| 2026-10-17 | Steel & Shadows begun (the branch, the design note, four parts); Part A: the Battle Master (superiority dice, the twenty maneuvers on the blow, as answers and as bonus actions, Student of War, Know Your Enemy, Relentless, the dice on checks; the Auto uses them); merged into `main` | `dlc/04-steel-shadows` |
 | 2026-10-17 | Demigods & Magics F.8: Animal Shapes and Shapechange - the party as beasts for a day (on the road: the beast chosen, its pace, wings over water and mountains, no spells or gear; in a fight: the willing, a Bonus Action to leave, the druid's fresh shapes), a wizard keeping mind and spells in a dragon's body for an hour, shapes kept from fight to fight; Part F complete; merged into `main` | `dlc/03-demigods-magics` |
 
 ## Notes for the next session

@@ -96,6 +96,17 @@ def _avg(expr: str) -> float:
     return n * (s + 1) / 2 + flat
 
 
+def _this_turn(f) -> dict:
+    """An ending at the end of this very turn (a feint's or a lunge's promise does not outlive it)."""
+    return {"at": "turn_end", "of": f.id, "left": 1}
+
+
+def _promised(f, target) -> bool:
+    """A die already promised to this attack (a feint, a lunge, a riposte, a commanded strike): one maneuver an
+    attack, so no Precision Attack on top of it."""
+    return any(bf.get("maneuver_die") and bf.get("against") in (None, target.id) for bf in f.buffs)
+
+
 def _small_enough(t) -> bool:
     return t.size in _SMALL_ENOUGH
 
@@ -175,6 +186,8 @@ def maneuver_after(b, f, ev, hook, buff) -> None:
     f.__dict__.pop("maneuver_this_attack", None)
     got = f.__dict__.pop("maneuver", None)
     t = ev.target
+    if t is not None:  # (a feint is for the next attack at that foe, hit or miss)
+        f.buffs = [bf for bf in f.buffs if not (bf.get("source") == "feint" and bf.get("against") == t.id)]
     if got is None or t is None or got[0] != t.id:
         return
     _, m, v, total = got
@@ -204,7 +217,7 @@ def maneuver_after(b, f, ev, hook, buff) -> None:
             b._event("condition", who=t.id, cond="frightened")
             b.say(f"{t.the_name} falters before {f.the_name}.", _word(f))
     elif m == "goading_attack":
-        if not b._save(t, "wis", dc, against=("charmed",)):
+        if not b._save(t, "wis", dc):
             durations.buff(t, {"goaded": f.id, "source": f"goaded:{f.id}"}, durations.until(b, f, "turn_end"))
             b.say(f"{t.the_name} has eyes only for {f.the_name}.", _word(f))
     elif m == "distracting_strike":
@@ -249,7 +262,7 @@ def _move_friend(b, f, target) -> None:
 @handler("precision_attack")
 def precision_attack(b, f, ev, hook, buff) -> None:
     """A miss: the die added to the roll, if it could be enough."""
-    if ev.hit or ev.target is None or ev.natural == 1 or not ready(b, f) or ev.total + sides(f) < ev.ac:
+    if ev.hit or ev.target is None or ev.natural == 1 or not ready(b, f) or ev.total + sides(f) < ev.ac             or _promised(f, ev.target):
         return
     need = ev.ac - ev.total
     if not yes(b, Decision(f, "precision_attack", f"{f.name}'s attack misses {ev.target.the_name} ({ev.total} against "
@@ -367,7 +380,7 @@ def lunging_attack(c, o, victim) -> None:
     b, f = c.b, c.caster
     victim = victim if victim is not None else c.target
     v = roll_die(b, f, "Lunging Attack")
-    durations.buff(f, {"maneuver_die": v, "melee": True, "source": "lunge"}, durations.until(b, f, "turn_end"))
+    durations.buff(f, {"maneuver_die": v, "melee": True, "source": "lunge"}, _this_turn(f))
     b.say(f"{f.the_name} gathers for a lunge.", "system")
 
 
@@ -378,8 +391,8 @@ def feinting_attack(c, o, victim) -> None:
     if victim is None:
         return
     v = roll_die(b, f, "Feinting Attack")
-    durations.buff(f, {"vex": victim.id, "source": f"feint_adv:{victim.id}"}, durations.until(b, f, "turn_end"))
-    durations.buff(f, {"maneuver_die": v, "against": victim.id, "source": "feint"}, durations.until(b, f, "turn_end"))
+    durations.buff(f, {"vex": victim.id, "source": f"feint_adv:{victim.id}"}, _this_turn(f))
+    durations.buff(f, {"maneuver_die": v, "against": victim.id, "source": "feint"}, _this_turn(f))
     b.say(f"{f.the_name} feints at {victim.the_name}.", "system")
 
 
@@ -413,6 +426,9 @@ def bait_and_switch(c, o, victim) -> None:
     (f.x, f.y), (x.x, x.y) = there, here
     b._event("push", who=f.id, path=[here, there])  # (drawn as each sliding into the other's place)
     b._event("push", who=x.id, path=[there, here])
+    for y in (f, x):
+        b._sync_grapples(y)
+        b._zones_on(y, start=False)
     foes = [e for e in b.enemies_of(f) if e.standing]
     pressed = max((f, x), key=lambda y: (sum(1 for e in foes if grid.gap(y.space, e.space) <= 1), y is not f))
     durations.buff(pressed, {"ac": v, "source": f"bait:{f.id}"}, durations.until(b, f, "turn_start"))
@@ -434,7 +450,7 @@ def commanders_strike(c, o, victim) -> None:
     if x is None or not x.reaction or not x.active or query.incapacitated(x):
         return
     blows = [(opt, e) for opt in b.attack_options(x) if opt.available and not opt.extra.get("bonus_action")
-             for e in b.targets_for(x, opt) if e.active]
+             and opt.kind in ("melee", "ranged") for e in b.targets_for(x, opt) if e.active]  # (a weapon or a fist)
     if not blows:
         b.say(f"{x.the_name} has nothing to strike at.", "system")
         return
