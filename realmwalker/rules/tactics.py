@@ -930,6 +930,12 @@ def _pick_cast_now(b: Battle, f: Fighter, cost: str, *, beat: float, care: float
             price = 0.0  # (the follow-up of a spell already paid for)
         levels = _slot_levels(b, f, opt.value, sp) if not free else [sp["level"]]
         aims = _aims(b, f, opt)
+        bar = beat
+        war = b.war_magic(f, opt.value, sp) if f.char is not None and cost == "action" else 0
+        if war and beat > 0:  # (War Magic: it takes one attack, or two, of the Attack action, not all of it)
+            many = query.attacks_per_action(f)
+            if f.action <= 0 or many > war:
+                bar = beat * war / max(1, many)
         tops = None
         if f.char is None and len(levels) > 1 and len(aims) > 4:  # (an enemy with many aims: the higher slot
             # only where the lowest does best, G.1)
@@ -951,9 +957,9 @@ def _pick_cast_now(b: Battle, f: Fighter, cost: str, *, beat: float, care: float
                                                      price * _slot_price(b, f, lvl) / max(1, sp["level"]))
                 if f.char is not None and w.friendly > 0:
                     continue  # companions never catch friends
-                if best is None or score > best[0]:
-                    best = (score, opt.value, target, point, sp, lvl if lvl > sp["level"] else None)
-    if best is None or best[0] <= beat:
+                if best is None or score - bar > best[0]:
+                    best = (score - bar, opt.value, target, point, sp, lvl if lvl > sp["level"] else None)
+    if best is None or best[0] <= 0:
         return None
     return best
 
@@ -1067,19 +1073,24 @@ def _party_turn(b: Battle, f: Fighter) -> None:
         return
     if (spellrules.is_caster(c, b.t) or feats.innate_spells(c, b.t) or _reads_scrolls(b, f)) and f.action > 0:
         if _cast_something(b, f):
-            if b.current is f and b.outcome is None:
-                _command_objects(b, f)  # (things it has just animated: sent at once)
-            if b.current is f and b.outcome is None:
-                _bonus_strike(b, f)  # (the spiritual weapon, War Priest)
-            if b.current is f and b.outcome is None:
-                _mend_ward(b, f)
-            if b.current is f and b.outcome is None and f.move_left >= 5:
-                _keep_safe(b, f)
-            return
+            if b.current is f and b.outcome is None and f.action <= 0 and f.attacks_left > 0:
+                pass  # (War Magic: the Attack action's other attacks follow)
+            else:
+                if b.current is f and b.outcome is None:
+                    _command_objects(b, f)  # (things it has just animated: sent at once)
+                if b.current is f and b.outcome is None:
+                    _bonus_strike(b, f)  # (the spiritual weapon, War Priest)
+                if b.current is f and b.outcome is None:
+                    _mend_ward(b, f)
+                if b.current is f and b.outcome is None and f.move_left >= 5:
+                    _keep_safe(b, f)
+                return
     if b.current is not f or b.outcome is not None:
         return
     opts = [o for o in b.attack_options(f) if o.available]
     attacks = 2 if c.level >= 5 and "extra_attack" in c.features else 1
+    if f.action <= 0 and f.attacks_left > 0:
+        attacks = f.attacks_left  # (what War Magic left of the Attack action)
     if opts and f.hp < f.max_hp * 0.6 and len(b.enemies_of(f)) >= 2:  # one more action when it is hard going
         for opt, _ in _abilities(b, f, "action"):
             b.do_ability(f, opt.value)

@@ -274,6 +274,18 @@ FEATURE = Obj({"level": Int(min=1, max=20), "id": Str(max_len=40), "name": Str(m
                              optional=True)})
 KIT =Obj({"name": Str(max_len=40), "items": WEIGHTED,
            "style": Str(max_len=30, optional=True)})  # the fighting style that suits it (the default)
+# A class's (or a casting subclass's) spellcasting, every list by class level. `list`: whose spell list it draws on
+# (the class's own by default; the Eldritch Knight's and Arcane Trickster's is the wizard's); `focus`: arcane or
+# divine (by the type when left out); `changes` "level": the prepared list changes one spell a level, not after a
+# long rest (the third casters); `given`: cantrips that come with it and are never swapped (the trickster's Mage Hand).
+SPELLCASTING = Obj({"ability": Str(choices=list(ABILITY_IDS)), "type": Str(choices=["prepared", "spellbook", "known"]),
+                    "cantrips": List(Int(min=0, max=10), min_items=10),
+                    "slots": List(List(Int(min=0, max=10)), min_items=10),
+                    # level 1+ spells prepared at each level (2024: the Prepared Spells column)
+                    "prepared": List(Int(min=0, max=30), min_items=10, optional=True),
+                    "list": Str(max_len=20, optional=True), "focus": Str(choices=["arcane", "divine"], optional=True),
+                    "changes": Str(choices=["rest", "level"], optional=True),
+                    "given": List(Str(max_len=40), optional=True)}, optional=True)
 CLASS = Obj(
     {
         "name": Str(max_len=30), "description": Str(max_len=600), "hit_die": Int(min=4, max=12),
@@ -284,11 +296,7 @@ CLASS = Obj(
         "choices_at_1": List(Str(max_len=30)),
         # Weapon Mastery (2024): [[from level, how many kinds of weapon], ...]
         "mastery": List(List(Int(min=0, max=20), min_items=2, max_items=2), optional=True),
-        "spellcasting": Obj({"ability": Str(choices=list(ABILITY_IDS)), "type": Str(choices=["prepared", "spellbook", "known"]),
-                             "cantrips": List(Int(min=0, max=10), min_items=10),
-                             "slots": List(List(Int(min=0, max=10)), min_items=10),
-                             # level 1+ spells prepared at each level (2024: the Prepared Spells column)
-                             "prepared": List(Int(min=0, max=30), min_items=10, optional=True)}, optional=True),
+        "spellcasting": SPELLCASTING,
         "features": List(FEATURE, min_items=1),
         # A feature's choice (data "choose"): the options, each a feature of its own kept in Character.features.
         "options": Map(Obj({"name": Str(max_len=40), "text": Str(max_len=300), "gives": Any_(optional=True),
@@ -297,6 +305,9 @@ CLASS = Obj(
                                # always-prepared spells by class level (a domain's spells); ids may wait for the
                                # catalogue (Expansion 3 part D): only those in data/spells.json are prepared
                                "spells": Map(List(Str(max_len=40)), optional=True),
+                               # a subclass that casts (Expansion 4 Part B: the Eldritch Knight, the Arcane
+                               # Trickster): its own table by class level, from the level it is chosen
+                               "spellcasting": SPELLCASTING,
                                "armor": List(Str(max_len=20), optional=True), "weapons": List(Str(max_len=30), optional=True)}),
                           min_items=1),
         "kits": List(KIT, min_items=1),

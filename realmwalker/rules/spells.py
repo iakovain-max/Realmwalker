@@ -66,17 +66,43 @@ def again_def(sid: str, spell: dict) -> dict:
     return out
 
 
+def casting(char: Character, tables) -> dict | None:
+    """The one door to how this person casts: their class's spellcasting, or a casting subclass's from the level it is
+    chosen (Expansion 4 Part B: the Eldritch Knight and the Arcane Trickster, third casters of the wizard's list)."""
+    cls = tables.classes.get(char.cls)
+    if not cls:
+        return None
+    if cls.get("spellcasting"):
+        return cls["spellcasting"]
+    if char.subclass:
+        return (cls.get("subclasses", {}).get(char.subclass) or {}).get("spellcasting")
+    return None
+
+
+def spell_list(char: Character, tables) -> str:
+    """Whose spell list they draw on: the class's own, or the one their spellcasting names (a third caster's wizard
+    list)."""
+    return (casting(char, tables) or {}).get("list") or char.cls
+
+
+def focus_kind(char: Character, tables) -> str:
+    sc = casting(char, tables) or {}
+    return sc.get("focus") or ("arcane" if sc.get("type") == "spellbook" else "divine")
+
+
 def is_caster(char: Character, tables) -> bool:
-    return "spellcasting" in tables.classes[char.cls]
+    return casting(char, tables) is not None
 
 
 def init_spells(char: Character, tables) -> None:
-    """Give a new caster their starting cantrips (and, for a wizard, a spellbook)."""
+    """Give a new caster their starting cantrips (and, for a wizard, a spellbook); a subclass that casts begins with
+    the cantrips it gives (the trickster's Mage Hand) and chooses the rest (`progression.cantrips_due`)."""
     if not is_caster(char, tables):
         return
-    start = tables.spells.starting.get(char.cls, {})
+    start = tables.spells.starting.get(char.cls, {}) if "spellcasting" in tables.classes[char.cls] else {}
     char.spells = {
-        "cantrips": list(start.get("cantrips", [])),
+        "cantrips": list(start.get("cantrips", [])) + [s for s in (casting(char, tables) or {}).get("given", ())
+                                                       if s in tables.spells],
         "spellbook": list(start.get("spellbook", [])),
         "slots_used": [0] * 9,
     }
@@ -85,7 +111,7 @@ def init_spells(char: Character, tables) -> None:
 
 def slots_total(char: Character, tables) -> list[int]:
     """Spell slots per spell level (index 0 = level 1)."""
-    sc = tables.classes[char.cls].get("spellcasting")
+    sc = casting(char, tables)
     if not sc:
         return []
     row = sc["slots"][max(0, min(len(sc["slots"]) - 1, char.level - 1))]
@@ -108,6 +134,9 @@ def known_spells(char: Character, tables) -> list[str]:
         return []
     out = [s for s in char.spells.get("cantrips", []) if s in tables.spells]
     out += prepared(char, tables) + always_prepared(char, tables)
+    stolen = char.spells.get("stolen")  # (Spell Thief: a caster's spell, kept until the next long rest)
+    if stolen in tables.spells and 0 < tables.spells[stolen]["level"] <= max_spell_level(char, tables):
+        out.append(stolen)
     return list(dict.fromkeys(out))
 
 
@@ -119,7 +148,7 @@ def known_spells(char: Character, tables) -> list[str]:
 # (`char.uses["memorize"]`); either stays open until the next fight. An empty place may be filled at any time.
 # Nobody is left with empty places: the Auto fills them by what the caster is for (`fill_prepared`).
 def prepared_count(char: Character, tables) -> int:
-    row = (tables.classes[char.cls].get("spellcasting") or {}).get("prepared")
+    row = (casting(char, tables) or {}).get("prepared")
     if not row:
         return 0
     return int(row[max(0, min(len(row) - 1, char.level - 1))])
@@ -145,10 +174,10 @@ def preparable(char: Character, tables) -> list[str]:
     if not is_caster(char, tables) or not char.spells:
         return []
     top = max_spell_level(char, tables)
-    if (tables.classes[char.cls].get("spellcasting") or {}).get("type") == "spellbook":
+    if (casting(char, tables) or {}).get("type") == "spellbook":
         pool = [s for s in char.spells.get("spellbook", []) if s in tables.spells]
     else:
-        pool = tables.spells.for_class(char.cls, top)
+        pool = tables.spells.for_class(spell_list(char, tables), top)
     always = set(always_prepared(char, tables))
     return [s for s in dict.fromkeys(pool) if 0 < tables.spells[s]["level"] <= top and s not in always]
 
@@ -456,8 +485,7 @@ def armour_problem(char: Character, tables) -> str:
 # one pack, so a focus anywhere in it serves (the book has it held or worn). Verbal and Somatic components are taken
 # as given until something in the game can silence a caster or bind their hands.
 def has_focus(char: Character, tables) -> bool:
-    sc = tables.classes[char.cls].get("spellcasting") if char.cls in tables.classes else None
-    kind = "arcane" if (sc or {}).get("type") == "spellbook" else "divine"
+    kind = focus_kind(char, tables) if char.cls in tables.classes else "divine"
     for it in char.inventory:
         d = tables.items.get(it.def_id)
         if it.def_id == "component_pouch" or (d.get("focus") or {}).get("kind") == kind \
@@ -974,17 +1002,17 @@ def restore_slots(char: Character) -> None:
 
 
 def casting_ability(char: Character, tables) -> str:
-    sc = tables.classes[char.cls].get("spellcasting")
+    sc = casting(char, tables)
     return sc["ability"] if sc else "int"
 
 
 def focus_bonus(char: Character, tables) -> int:
     """+1 to spell attacks and spell DCs with the right focus: a priest's holy symbol worn or held, a wizard's crystal
     held in the hand or component pouch carried (data/items.json `focus`)."""
-    sc = tables.classes[char.cls].get("spellcasting") if char.cls in tables.classes else None
+    sc = casting(char, tables) if char.cls in tables.classes else None
     if not sc:
         return 0
-    kind = "arcane" if sc.get("type") == "spellbook" else "divine"
+    kind = focus_kind(char, tables)
     worn = set(char.equipped.values())
     for it in char.inventory:
         f = tables.items.get(it.def_id).get("focus")

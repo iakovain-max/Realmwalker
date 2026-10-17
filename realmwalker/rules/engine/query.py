@@ -255,6 +255,13 @@ def save_roll(b, f, ability: str, *, bonus: int = 0, against: tuple = ()) -> Sav
         out.roll.add("advantage", "dodging")  # the Dodge action: easier to get out of the way of fire
     if "poisoned" in against and f.char is not None and f.char.effects.get("antitoxin", 0) > 0:
         out.roll.add("advantage", "antitoxin")  # (PHB 2024: for an hour after drinking it)
+    caster = b.__dict__.get("_casting") if b is not None else None
+    if caster is not None and caster is not f:  # (a save against a spell: Expansion 4 Part B)
+        if caster.id in f.buff_value("eldritch_struck"):
+            out.roll.add("disadvantage", "Eldritch Strike")
+            b.__dict__.setdefault("_struck_used", set()).add(f.id)
+        if caster.__dict__.get("ambush_turn") == (b.round, b.turn):
+            out.roll.add("disadvantage", "Magical Ambush")
     ctx = tr.Ctx(b, f, ability=ability, against=tuple(against))
     for mode, why in tr.modifiers(f, "save", ctx):
         out.roll.add(mode, why)

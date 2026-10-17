@@ -128,11 +128,7 @@ def _level_up(char: Character, tables, rng: RNG) -> list[str]:
             for school in savants:
                 add_pending(char, {"kind": "spells", "count": 1, "school": school, "level": char.level})
     offer_masteries(char, tables)  # a fourth kind of weapon at level 4, a fifth at 10 (fighters)
-    cantrips = cls.get("spellcasting", {}).get("cantrips")
-    if cantrips and char.spells:
-        missing = cantrips[char.level - 1] - len(char.spells.get("cantrips", []))
-        if missing > 0:
-            add_pending(char, {"kind": "cantrips", "count": missing, "level": char.level})
+    cantrips_due(char, tables)
     resources.granted(char, tables, before)  # a new Action Surge or Channel Divinity starts ready
     for rid, r in resources.pools(char, tables).items():  # (a pool that grows: the new uses are there at once)
         if rid in most_before and resources.maximum(char, r) > most_before[rid]:
@@ -305,8 +301,32 @@ def add_pending(char: Character, choice: dict) -> None:
     char.pending.append(choice)
 
 
+def cantrips_due(char: Character, tables) -> None:
+    """Cantrips the table gives at this level that are not yet known nor waiting to be chosen."""
+    cantrips = (spellrules.casting(char, tables) or {}).get("cantrips")
+    if not cantrips or not char.spells:
+        return
+    waiting = sum(int(c.get("count", 1)) for c in char.pending if c["kind"] == "cantrips")
+    missing = cantrips[min(char.level, len(cantrips)) - 1] - len(char.spells.get("cantrips", [])) - waiting
+    if missing > 0:
+        add_pending(char, {"kind": "cantrips", "count": missing, "level": char.level})
+
+
+def start_casting(char: Character, tables) -> list[str]:
+    """A path that casts was chosen (an Eldritch Knight, an Arcane Trickster): the spells begin, the prepared list is
+    filled the Auto's way (changed on the Spells page until the next fight) and the cantrips wait to be chosen."""
+    if char.spells or not spellrules.is_caster(char, tables):
+        return []
+    spellrules.init_spells(char, tables)
+    spellrules.fill_prepared(char, tables)
+    cantrips_due(char, tables)
+    ready = [tables.spells[s]["name"] for s in spellrules.prepared(char, tables)]
+    return [f"{char.name.split()[0]} learns to cast wizard spells" + (f": {', '.join(ready)} prepared" if ready else "")
+            + " <dim>(the Spells page, S)</>."]
+
+
 def spell_top_level(char: Character, tables) -> int:
-    sc = tables.classes[char.cls].get("spellcasting")
+    sc = spellrules.casting(char, tables)
     if not sc:
         return 0
     return len(sc["slots"][min(char.level, len(sc["slots"])) - 1])
@@ -392,7 +412,8 @@ def options(char: Character, tables, choice: dict) -> list[tuple[str, str, str]]
     if kind == "cantrips":
         known = char.spells.get("cantrips", [])
         return [(s, tables.spells[s]["name"], tables.spells[s].get("text", tables.spells[s].get("description", "")))
-                for s in tables.spells.for_class(char.cls, 0) if tables.spells[s]["level"] == 0 and s not in known]
+                for s in tables.spells.for_class(spellrules.spell_list(char, tables), 0)
+                if tables.spells[s]["level"] == 0 and s not in known]
     if kind == "expertise":
         rules = tables.rules["skills"]
         return [(sk, rules[sk]["name"], f"Twice your proficiency bonus on {rules[sk]['name']} checks.")
@@ -529,6 +550,7 @@ def resolve(char: Character, tables, choice: dict, option_id: str) -> list[str]:
                 feature_gives(char, tables, feat)
                 _offer_style(char, feat)
         char.pending.remove(choice)
+        notes += start_casting(char, tables)  # (an Eldritch Knight, an Arcane Trickster)
     elif kind in ("asi", "boon") and option_id.startswith("feat:"):
         char.pending.remove(choice)
         notes += take_feat(char, tables, option_id[5:])
@@ -736,6 +758,9 @@ def short_rest(char: Character, tables, rng: RNG, *, meal: bool = False) -> list
             notes.append(f"Arcane Recovery restores spell slots (level {', '.join(str(n) for n in back)}).")
     signature_back(char)
     spellrules.open_preparing(char, "memorize")  # a wizard's Memorize Spell: one prepared spell may be swapped
+    from realmwalker.rules import war_bond
+
+    notes += war_bond.at_rest(char, tables)  # (an Eldritch Knight's hour of ritual over a weapon)
     return notes
 
 
@@ -758,8 +783,10 @@ def long_rest(char: Character, tables, rng: RNG) -> list[str]:
     char.hit_dice = min(char.level, char.hit_dice + max(1, char.level // 2))
     restore_slots(char)
     if char.spells:
+        char.spells.pop("stolen", None)  # (Spell Thief: a stolen spell is forgotten after eight hours)
         spellrules.fill_prepared(char, tables)
-        spellrules.open_preparing(char, "prepare")  # (2024: the prepared list may change after a long rest)
+        if (spellrules.casting(char, tables) or {}).get("changes") != "level":  # (a third caster: by level only)
+            spellrules.open_preparing(char, "prepare")  # (2024: the prepared list may change after a long rest)
     resources.recover(char, tables, "long")  # every pool (data/traits.json), an orc's toughness among them
     char.uses["arcane_recovery"] = 1
     signature_back(char)
@@ -782,6 +809,7 @@ def long_rest(char: Character, tables, rng: RNG) -> list[str]:
     if mastery_count(char, tables):
         char.uses["mastery_change"] = 1  # the weapons mastered may be changed (the character sheet)
         offer_masteries(char, tables)
-    from realmwalker.rules import simulacrum
+    from realmwalker.rules import simulacrum, war_bond
 
-    return [f"{char.name.split()[0]} wakes rested."] + simulacrum.repair(char)  # (a Simulacrum mended: G.3)
+    return [f"{char.name.split()[0]} wakes rested."] + simulacrum.repair(char) \
+        + war_bond.at_rest(char, tables)  # (a Simulacrum mended: G.3; a knight's weapon bound)

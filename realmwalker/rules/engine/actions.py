@@ -199,6 +199,12 @@ def _not_moved(b, f) -> str | None:
     return rogue.not_moved(b, f)
 
 
+def _arcane(name: str) -> Callable:
+    from realmwalker.rules.engine.handlers import arcane
+
+    return getattr(arcane, name)
+
+
 REQUIRES: dict[str, Callable] = {
     "action_left": lambda b, f: None if f.action > 0 else "no action left",
     "bonus_left": lambda b, f: None if f.bonus > 0 else "no bonus action left",
@@ -219,6 +225,8 @@ REQUIRES: dict[str, Callable] = {
     "know_ready": _bm("know_ready"),
     "attack_left": _bm("attack_left"),
     "own_turn": lambda b, f: None if b.current is f else "only on your turn",
+    "bond_away": lambda b, f: _arcane("bond_away")(b, f),
+    "hand_known": lambda b, f: _arcane("hand_known")(b, f),
     "five_feet_left": lambda b, f: None if f.move_left >= 5 else "no movement left",
 }
 
