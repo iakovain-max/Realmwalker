@@ -476,6 +476,45 @@ stat block now comes with the spell that brings it into play (never a block that
   panther, reef shark, tiger, venomous snake; imp, quasit, pseudodragon, sprite, sphinx of wonder, slaad tadpole) as
   the forms, and the cult fanatic's imp or quasit; Part F complete.
 
+#### F.5 — How
+- **The bound** are F.4's servants (`char.spells["servants"]`, rules/servants.py) with what the dead did not need: a
+  record may carry `form` and `level` (a spirit's numbers for its slot, made in each fight by `allies.summon_def`
+  with its master's spell attack and DC), `picture`, `heals` (whole again at a long rest: `servants.rest` from
+  `progression.long_rest`; the dead never heal) and `bound` (held by Planar Binding). Neither kind waits for a word
+  (`word` False): a spirit or a bound creature acts on its own in a fight, played by the player or the Auto (z), right
+  after its master. When its time is up it goes (no fight): a spirit reports and returns home, a bound captive runs
+  off into the wild; a master's death sends them all away. They wait outside a settlement's close-up map, as the dead
+  do, and are drawn behind the party by their own picture.
+- **Planar Ally** (level 6, cleric, ten minutes, outside a fight: road op "bind", how "ally"): the cleric's god
+  (the faith of their people, `faction.faith_for_culture`) sends a spirit of its kind: data/factions.json faiths
+  `ally` {creature, form} - a celestial for the gods of light and law, an elemental for the old gods of land, sky and
+  sea, a fiend for the dark gods and cults - as F.3's (or F.2's) spirit at the slot's level, named for the god ("a
+  defending celestial spirit of Solun"). The bargain is the book's price (100 GP a minute is never cheaper than an
+  hour here, so the terms are by the hour or day): an hour 1,000 GP, a day 10,000, three days 30,000, ten days 100,000
+  (each a Subject on the Spells page), paid at once from the party's purse; half when the party's leader belongs to
+  that god's church (the book's "aligned with the creature's ethos"). No money, no casting. The work asked is always
+  the same (to fight beside you and keep you safe on the road): tasks of another kind, choosing a creature by name and
+  the spirit's refusal of a suicidal task are left out.
+- **Planar Binding** (level 5, an hour, 60 feet, a jewel of 1,000 GP consumed: the rare stone, a sapphire, a jacinth
+  or a flawless diamond; road op "bind", how "binding"): the target is a celestial, elemental, fey or fiend the party
+  holds - a captive taken after a fight (`renown.flags["captives"]`: the 2025 goblins are fey), a Planar Ally spirit
+  serving one of the party, or a creature this spell already binds (to bind it again for longer) - each a Subject. It
+  makes a Charisma save against the caster's DC (Magic Resistance: Advantage); on a failure it serves for 24 hours,
+  10, 30, 180 or 366 days by the slot (5 to 9). A captive bound leaves the captives (no bounty for it then) and fights
+  for its master; a spirit's term grows to match (the book: "that spell's duration is extended"). On a success the
+  jewel is spent and nothing changes. A Hostile creature twisting its orders is left out (orders are only to fight).
+- **Magic Circle turned inward** (the E.6 spell, a Subject now: "outward: keep them out of the camp" or "inward: hold
+  what stands inside it"): an inward circle (`renown.flags["inward_circle"]` {until, x, y, map}) holds a spirit
+  inside it for its hour (one more a slot above 3). A Planar Ally's spirit will not stay an hour to be bound unless
+  held so: Planar Binding on one needs an inward circle here that lasts the hour of the casting. A captive is tied
+  already and needs none.
+- **Tests** (tests/test_bound.py): Planar Ally's price by term and the church's half, the god's kind, the spirit in a
+  real fight (its numbers at the slot, acting on its own, played by the Auto), healed at a long rest, gone home when
+  its time ends and when its master dies, waiting outside a town; Planar Binding on a captive goblin (the save, the
+  jewel, its term by slot, fighting for the party, running off when it ends) and on a spirit (refused without the
+  inward circle, its term extended with one); the circle's two directions. The autoplay bot's servant checks cover
+  the new records.
+
 #### F.4 — How
 - **A servant** is a creature that serves a party member beyond one fight. Its record lives on its master, in
   `char.spells["servants"]` (saved with the character): a list of {id, cid (its creature), name, hp, max_hp, spell,
