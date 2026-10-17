@@ -150,7 +150,7 @@ system is built once and every spell that uses it comes with it.
   and the body: goodberry, create or destroy water, purify food and drink, create food and water, heroes' feast.
   Shelter and watch (wards on the camp): alarm, Leomund's tiny hut, rope trick, Mordenkainen's faithful hound,
   Mordenkainen's magnificent mansion.
-- [ ] E.2 Light, the body on the move, travel (34 spells). E.2 was split in two at its start (2026-10-17): 64
+- [x] E.2 Light, the body on the move, travel (34 spells). E.2 was split in two at its start (2026-10-17): 64
   spells in six groups were too many for one part; finding and seeing, asking the powers and talking became E.3.
   Light: light, dancing lights, continual flame, daylight. The body on the move: darkvision, see invisibility, jump,
   longstrider, feather fall, spider climb, levitate, water breathing, water walk, gaseous form, meld into stone,

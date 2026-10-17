@@ -422,6 +422,19 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   (`health.DEATH_TOLL`, down one a long rest), `closes`, `regrow`, `cures`, `species: "new"`. A raised maximum is the
   `max_up` op (`spells.raise_max`/`lower_max`, `effects["spell_hp:<id>"]`, lowered when the spell ends). Companions
   act on their own through `spellwork.before_rest` and `conjure`. Tests: tests/test_spells_outside.py.
+- The body on the move and travel by magic (Expansion 3 E.2): a lasting spell's buff is read outside a fight too:
+  `rules/spells.SHEET_KEYS` are the sheet's (darkvision, speed, skills {skill: n}, check_adv: +5 on the best ability,
+  carry) and the world's (steed, servant, water_walk, water_breathing, wind, ethereal, pathfinding: `game/waymagic.
+  everyone`/`anyone`, `spells.lasting_flag`/`lasting_number`); light, see_invisible, climb/swim (true = the Speed),
+  leap, mist and feigning are the battle's (rules/engine/marks.py lists them). `GameState.magic_crossing` carries the
+  party over water and wind (`step_minutes`; `waymagic.ashore` when it ends out there); `GameState.pace` is never below
+  a walker's unless everyone is borne by magic. Travel spells have target "place" (`waymagic.places`, Place objects on
+  the Spells page) and op road `does: "travel"` with `how` in `spells.TRAVELS` (Teleport's 2024 table by familiarity,
+  circles, Word of Recall's sanctuary `effects["recall_sanctuary"]`, plants, the planar three until Expansion 26, Arcane
+  Gate to a dungeon's stairs); a lasting spell's `outside` (`spells.OUTSIDE`: disguise, path) runs
+  `waymagic.after_lasting` as it is cast. Feather Fall is cast by itself (`Battle._feather_fall`, `dungeon.
+  feather_fall`); `lift` has `gentle` (Levitate); `undark` ends low darkness (Daylight); zone "lights" (Dancing Lights);
+  a teleport op's `near: "tree"` (Tree Stride); `camp.chore` is a chore's time. Tests: tests/test_spells_road2.py.
 - Gear and tools 2024 (Expansion 2 part D): items.json `pack` (opens into its contents, gear.open_pack), `helps`
   {search, traps, force, disguise} (dungeon.helps, law.put_on_disguise), `utilize` (a tool's 2024 uses, on its card),
   `carry` also on carried containers (each kind once, Sheet.pack_carry), `trinket` (data/trinkets.json; the name and

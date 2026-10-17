@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 03 Demigods & Magics · Part E (spells outside battle), E.2 next · branch dlc/03-demigods-magics
+Current: 03 Demigods & Magics · Part E (spells outside battle), E.3 next · branch dlc/03-demigods-magics
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -11,10 +11,11 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   Thief, Assassin, Life and War Domains, Evoker and Abjurer; Counterspell; saves format 17) and C (preparing spells,
   rituals, one slot a turn, higher slots, components, spell scrolls of every level, the four potions of healing) and
   D (the catalogue: 191 battle spells, cantrips to level 9, and Wish) and E.1 (spells outside battle: return from
-  death, Aid, food and water, wards on the camp; saves format 18)
+  death, Aid, food and water, wards on the camp; saves format 18) and E.2 (light, the body on the move, travel by
+  magic: Teleport, circles, Word of Recall, Wind Walk, Etherealness...)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
-  adapted); Expansion 3: 196 done, 178 adapted, 1 omitted of 558 (parts A, B, C, D and E.1 settled). PHB 53% · DMG 12% · MM 8%
+  adapted); Expansion 3: 200 done, 208 adapted, 1 omitted of 558 (parts A, B, C, D, E.1 and E.2 settled). PHB 57% · DMG 12% · MM 8%
 Assumptions waiting for Anton:
 - The Player2 AI writer is removed (tagged `before-ai-removal`); its text is replaced everywhere by the game's own
   words, strengthened where they were thin.
@@ -166,14 +167,37 @@ Assumptions waiting for Anton:
   conjure food or water by themselves when there is none, and cast a ritual ward before a long rest in the wild.
   Spells used only outside a fight carry `road_only` (or `minutes`) and are never offered in one; the Auto prepares
   them last (the player chooses them for a need).
+- Expansion 3 E.2: E.2 was split at its start (64 spells in six groups): light, the body on the move and travel are
+  E.2; finding and seeing, asking the powers and talking became E.3; the old E.3 is E.4. Teleport's familiarity: a city
+  visited is a permanent circle whose sigils are known (always on target: its temple keeps one), the character's home
+  town is very familiar, a town visited was seen casually, a town only heard of was viewed once; a similar area is the
+  nearest town of the same kind; teleporting an object alone and false destinations are left out. Teleportation
+  Circle's sigils are learned by visiting a city (not two given at the start). Word of Recall's sanctuary is made by
+  casting it standing in any temple (gods are not told apart yet). Travel by magic (Teleport, the circle, Recall, the
+  plants, Plane Shift, Etherealness...) is never cast in a fight. Only a party carried wholly by magic (Phantom Steeds
+  for everyone, Wind Walk) travels faster than a walker: the 2024 travel pace does not grow with speed, so Longstrider
+  only makes up for a load or a lame leg on the road. Light and Daylight shine round their caster (not on a thing set
+  down); Dancing Lights light one patch and are not moved. Enhance Ability works on the target's best ability, its
+  Advantage counted as +5 (the passive rule) everywhere. Gaseous Form and Feign Death are fight spells only, and the Auto
+  uses them only on a friend about to fall; a lost fight with a feigner: the foes take all for dead and go, the fallen
+  beside the feigner make the Constitution save of those left for dead. Water Breathing walks a lake's bottom (not the
+  sea's: Expansion 22) at half pace, soaked; Water Walk walks lakes and the sea's face; a spell ending out on the water
+  means an hour's swim for the shore. Etherealness under the ground lets the party walk through walls and doors, traps
+  do not spring, chests cannot be touched; on the road nothing meets it; back inside stone it is pushed out (2 force a
+  foot). Until the planes (Expansion 26) Plane Shift lands at a city's circle or 2d12 miles from another known town;
+  Astral Projection and Gate land on target at any known town (Astral Projection takes a jacinth and four 25 GP silver
+  bars a traveller, the book's 100 GP bar). Meld into Stone is a ward for a lone caster. The Unseen Servant halves the
+  camp's chores. Feather Fall is cast by itself (the battle's judgement, and over a dungeon's pit).
 Ideas for later:
 - (none yet)
-Next session starts at: task E.2 in docs/expansions/03-demigods-magics.md (Part E, spells outside battle: travel,
-finding and seeing, asking the powers, talking; its list of spells is in the design note under E.2). E.1's way of
-doing it: a spell outside a fight has `road_only` (or `minutes`) and an op {"op": "road", "does": ...}
+Next session starts at: task E.3 in docs/expansions/03-demigods-magics.md (Part E, spells outside battle: finding
+and seeing, asking the powers answered from the world's history, talking; its 30 spells are listed in the design note
+under E.3). E.1's and E.2's way of doing it: a spell outside a fight has `road_only` (or `minutes`) and an op {"op": "road", "does": ...}
 (rules/spells.ROAD_USES, checked at start-up), done in game/spellwork.py (or a module of its own, as game/revival.py);
-game/magic.cast_on_road spends the slot and passes the casting time; tests in tests/test_spells_outside.py. Parts A,
-B, C, D and E.1 are in `main`.
+game/magic.cast_on_road spends the slot and passes the casting time; tests in tests/test_spells_outside.py and
+tests/test_spells_road2.py. A lasting spell (ten minutes or more) is a buff kept on the character and read outside a
+fight by the sheet or the world (E.2's keys are in rules/engine/marks.py); a spell aimed at a place has target
+"place" (game/waymagic.places). Parts A, B, C, D, E.1 and E.2 are in `main`.
 
 ## Done
 
@@ -201,6 +225,7 @@ B, C, D and E.1 are in `main`.
 | 2026-10-17 | Demigods & Magics D.4: the fourth wave, 19 battle spells of levels 8 and 9 and Wish (copies, Instant Health and its stress), Meteor Swarm, Time Stop, Storm of Vengeance, the Prismatic Wall, Earthquake, Maze, the words of power; Part D merged into `main` | `dlc/03-demigods-magics` |
 | 2026-10-17 | Demigods & Magics E.1: spells outside battle - return from death (bodies carried, Raise Dead to True Resurrection, Gentle Repose, a fallen leader called back), Aid, Regenerate, Remove Curse, food and water, wards on the camp; companions cast them on their own; saves format 18; merged into `main` | `dlc/03-demigods-magics` |
 | 2026-10-17 | Demigods & Magics D.3: the third wave, 27 battle spells of levels 6 and 7 (Chain Lightning, Disintegrate, Heal, Harm, Flesh to Stone, the Globe, Otto's dance, walls of ice, thorns and blades, Divine Word, Prismatic Spray, Reverse Gravity, the Forcecage...); merged into `main` | `dlc/03-demigods-magics` |
+| 2026-10-17 | Demigods & Magics E.2: light, the body on the move and travel by magic (34 spells: Teleport by its table, Teleportation Circle, Word of Recall, Wind Walk, Water Walk, Etherealness, Feather Fall, Feign Death...); E.2 split, E.3 next; merged into `main` | `dlc/03-demigods-magics` |
 
 ## Notes for the next session
 
