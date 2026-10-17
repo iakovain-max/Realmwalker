@@ -452,6 +452,9 @@
       "commoner": {"body": ["tunic@brown", "shirt_long@undyed"], "legs": ["pants@brown"], "feet": ["shoes@leather"], "held": ["club", ""]},
       "guard": {"body": ["shirt_long@undyed"], "over": ["chain_mail@steel"], "legs": ["pants@grey"], "feet": ["boots@dark_leather"], "head": ["kettle@steel", "nasal@steel"], "held": ["spear@iron", "halberd@steel"], "shield": ["heater@navy@tower@white"], "tabard": ["blue", "red"]},
       "acolyte": {"body": ["robe@white", "robe@brown"], "feet": ["shoes@leather"], "held": ["mace@iron", "quarterstaff"]},
+      "assassin": {"body": ["tunic@black", "shirt_long@dark_brown"], "over": ["studded@dark_leather"], "legs": ["pants@black"], "feet": ["boots@black"], "head": ["hood@black", "hood@dark_brown"], "held": ["shortsword@blackened"], "cloak": ["black"]},
+      "spy": {"body": ["tunic@grey", "coat@navy", "tunic@brown"], "legs": ["pants@brown", "pants@grey"], "feet": ["boots@dark_leather"], "head": ["hood@grey", ""], "held": ["shortsword@steel", "hand_crossbow"], "cloak": ["grey", "", "brown"]},
+      "spy_master": {"body": ["coat@black", "coat@wine"], "legs": ["pants@black"], "feet": ["boots@black"], "belt": ["belt@silver"], "head": ["hood@black", ""], "held": ["rapier@silver"], "cloak": ["black", "wine"]},
       "noble": {"body": ["coat@crimson", "coat@navy"], "legs": ["pants@black"], "feet": ["boots@black"], "belt": ["belt@gold"], "head": ["circlet@gold", ""], "held": ["rapier@silver"], "cloak": ["crimson", "purple"]}
     }
   },

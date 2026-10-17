@@ -2112,14 +2112,23 @@ class Battle:
                 made = self.opportunity(e, f, why="polearm") or made
         return made
 
+    def area_cells(self, f: Fighter, a: dict, point: tuple[int, int]) -> list:
+        """The squares a creature's area action covers: a breath from its own space, or a thing thrown to burst at a
+        point within its range (a spy master's Smoke Bomb)."""
+        if a.get("range") and a["area"]["shape"] == "sphere":
+            return self.field.area("sphere", int(a["area"]["size"]), origin=f.space, toward=point)
+        return self.field.area(a["area"]["shape"], int(a["area"]["size"]), origin=f.space, toward=point,
+                               from_self=True)
+
     def area_attack(self, f: Fighter, opt: AttackOption, point: tuple[int, int]) -> None:
         """A breath weapon or the like: everyone in the area saves for half; then it must recharge. One made with the
         Multiattack (a draconic spirit's) is part of the Attack action: it begins it, or comes with this turn's
         attacks, once a turn."""
         a = opt.extra
         shape = a["area"]["shape"]
-        cells = self.field.area(shape, int(a["area"]["size"]), origin=f.space, toward=point, from_self=True)
-        f.recharge[a["name"]] = False
+        cells = self.area_cells(f, a, point)
+        if a.get("recharge") or not a.get("uses"):
+            f.recharge[a["name"]] = False
         self._spend_use(f, opt)
         if a.get("with_multiattack"):
             if not self.struck_this_turn(f) and f.action > 0:

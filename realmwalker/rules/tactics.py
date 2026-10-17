@@ -197,6 +197,10 @@ def _monster_turn(b: Battle, f: Fighter) -> None:
         b.do_search(f)  # nobody in sight, but someone is hiding here
         if b.current is not f or b.outcome is not None:
             return
+    if f.has_trait("cunning_action") and f.creature is not None:
+        _cunning_first(b, f, opts)  # (an assassin or a spy: out of sight before the blow, or a run to close in)
+        if b.current is not f or b.outcome is not None:
+            return
     plain = [o for o in opts if not o.extra.get("area") and not o.extra.get("bonus_action")]
     _come_down(b, f, plain)
     if f.cdef.get("spells") and _touch_heal(b, f):
@@ -233,7 +237,8 @@ def _monster_turn(b: Battle, f: Fighter) -> None:
             f.creature.uses["rampage"] = 0
             b._attack(f, rend, min(hurt, key=lambda e: e.hp))
             b._check_end()
-    if f.has_trait("nimble_escape") and f.bonus > 0 and b.outcome is None and b.current is f and f.active:
+    if (f.has_trait("nimble_escape") or f.has_trait("cunning_action")) and f.bonus > 0 and b.outcome is None \
+            and b.current is f and f.active:
         _slip_away(b, f)
     if b.outcome is None and b.current is f and f.active:
         _rise(b, f)
@@ -983,6 +988,22 @@ def _keep_distance(b: Battle, f: Fighter) -> None:
         b.walk(f, grid.route(tree, best[1]))
 
 
+def _cunning_first(b: Battle, f: Fighter, opts) -> None:
+    """A creature's Cunning Action before it strikes (the 2025 Assassin, Spy and Spy Master): hidden first when it
+    can be (its blows then come with advantage), else a Dash with the bonus action when no foe is in reach this turn."""
+    if f.bonus <= 0 or f.action <= 0:
+        return
+    if not f.hidden and b.hide_problem(f) is None:
+        b.do_hide(f, bonus=True)
+        return
+    plain = [o for o in opts if o.available and not o.extra.get("area")]
+    if not plain or any(not o.is_melee for o in plain):
+        return  # (a crossbow reaches them from here)
+    foes = [e for e in b.enemies_of(f) if e.standing]
+    if foes and min(b.gap(f, e) for e in foes) * grid.SQUARE_FT > f.move_left + 5:
+        b.do_dash(f, bonus=True)  # (too far to reach this turn: run)
+
+
 def _slip_away(b: Battle, f: Fighter) -> None:
     """Goblins: strike and then step back out of reach without being cut down (Nimble Escape). A beast that only
     bites and claws (a panther, a tiger) breaks away so when it is hurt or more than one foe stands over it, to come
@@ -1020,8 +1041,11 @@ def _try_area_attack(b: Battle, f: Fighter, opt: AttackOption, need: int | None 
     nothing more (made with the Multiattack) is worth it catching `need` and no friend."""
     a = opt.extra
     best = None
+    far = int((a.get("range") or (0, 0))[0]) // grid.SQUARE_FT if a["area"]["shape"] == "sphere" else 0
     for t in b.enemies_of(f):
-        cells = b.field.area(a["area"]["shape"], int(a["area"]["size"]), origin=f.space, toward=(t.x, t.y), from_self=True)
+        if far and (b.gap(f, t) > far or not b.can_see(f, t)):
+            continue  # (a bomb thrown at a point it can see within its range)
+        cells = b.area_cells(f, a, (t.x, t.y))
         hit = b.in_area(cells, "all", f)
         enemies = sum(1 for x in hit if x.team != f.team)
         friends = sum(1 for x in hit if x.team == f.team and x is not f)
