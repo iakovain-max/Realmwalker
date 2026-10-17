@@ -554,7 +554,7 @@ def wish_stress(char: Character, rng) -> list[str]:
     char.effects["wish_stress"] = 1.0e6  # (until a long rest: progression.long_rest)
     char.effects["wish_strength"] = 24.0 * days
     first = char.name.split()[0]
-    out = [f"<danger>The wish takes its toll.</> {first}'s strength drains away (Strength 3 for {days} days), and "
+    out = [f"<danger>The wish takes its toll.</> {first}'s strength drains away (Strength 5 for {days} days), and "
            "every spell until a long rest will tear at them."]
     if rng.chance(0.33):
         char.spells["wish_lost"] = True

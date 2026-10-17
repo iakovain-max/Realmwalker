@@ -632,3 +632,36 @@ def test_the_battle_screen_plays_the_soul_and_the_body_it_took(make_app, world, 
     for size in ((80, 30), (160, 45)):
         screen.render(widgets.Canvas(tcod.console.Console(*size, order="F")))
     assert app.error_count == 0
+
+
+def test_after_waking_in_a_clone_two_companions_rejoin_and_the_next_fight_goes_well(world, tables):
+    from realmwalker.game import fight
+
+    wiz = hero(tables)
+    a, b_ = follower(tables, "Osmund Reed", 7), follower(tables, "Wenna Cole", 8)
+    game = game_with(world, tables, wiz, a, b_)
+    town = in_town(game)
+    things = sum(it.qty for it in wiz.inventory)
+    cast(game, wiz, "clone", subject(game, wiz, "clone", "clone", wiz.name))
+    greatmagic.clone_of(game, wiz)["ready"] = game.world.time
+    game.leave_local()
+    in_the_wild(game)
+    game.over = {"cause": "fell", "place": ""}
+    wiz.alive = False
+    assert greatmagic.cheat_death(game)
+    assert a.inventory is not b_.inventory, "one carries the pack, the other walks with their own gear"
+    game.world.time = max(int(a.companion["coming"]), int(b_.companion["coming"])) + 1
+    companions.rejoin(game)
+    assert a in game.party and b_ in game.party
+    uids = [it.uid for it in wiz.inventory]
+    assert len(uids) == len(set(uids)), "nothing doubled"
+    assert sum(it.qty for it in wiz.inventory) <= things, "nothing made out of nothing"
+    rng = RNG(5, "band")
+    battle_now = fight.start_battle(game, [spawn(tables, "bandit", rng, 1)], "A bandit.")
+    assert battle_now is not None and battle_now.side(PARTY)
+
+
+def test_a_body_warded_against_evil_cannot_be_taken(tables):
+    wiz, b, me, foes = jar_fight(tables, 7)
+    foes[0].buffs.append({"warded_kinds": ["undead"], "source": "protection_from_evil_and_good"})
+    assert foes[0] not in b.jar_targets(me)

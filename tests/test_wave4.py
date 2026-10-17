@@ -279,7 +279,7 @@ def test_wishing_for_instant_health_brings_the_stress(tables):
     assert b.do_cast(me, "wish")
     assert friend.hp == friend.max_hp
     assert c.effects.get("wish_stress") and c.effects.get("wish_strength", 0) >= 48
-    assert me.sheet.score("str") == 3, "Strength 3 for days"
+    assert me.sheet.score("str") == 5, "Strength 5 for days"
     assert estimates.spell_value(b, me, "wish").total() >= 0
     # the strain: the next spell tears at its caster
     me.action, me.bonus = 1, 1

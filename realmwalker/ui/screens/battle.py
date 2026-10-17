@@ -581,7 +581,7 @@ class BattleScreen(Screen):
         b = self.battle
         tables = self.game.tables
         ok, why = b._wish_ok(f)
-        rows = [("Instant Health <dim>(you and twenty friends whole again; <warn>the stress: Strength 3 for days, "
+        rows = [("Instant Health <dim>(you and twenty friends whole again; <warn>the stress: Strength 5 for days, "
                  "every spell hurts until a long rest, and Wish may be lost</>)</>", "wish", ok, why)]
         for value, ok_, why_ in b.wish_options(f):
             sp = tables.spells[spell_id(value)]

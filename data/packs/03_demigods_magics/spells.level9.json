@@ -50,6 +50,6 @@
   "wish": {"name": "Wish", "level": 9, "school": "conjuration", "classes": ["sorcerer", "wizard"],
    "target": "all_allies", "range": 120, "components": ["V"], "stress": true, "battle_only": true, "road_too": "wish",
    "effects": [{"op": "heal", "dice": "0", "full": true, "count": 21, "restore": ["charmed", "petrified", "blinded", "deafened", "poisoned", "paralyzed", "stunned"]}],
-   "fx": "heal", "text": "The mightiest spell. In a fight, copy any battle spell of level 8 or lower with no components (safe), or wish for Instant Health: you and twenty friends whole again. That brings the stress: Strength 3 for days, every spell hurts until a long rest, and Wish may be lost."}
+   "fx": "heal", "text": "The mightiest spell. In a fight, copy any battle spell of level 8 or lower with no components (safe), or wish for Instant Health: you and twenty friends whole again. That brings the stress: Strength 5 for days, every spell hurts until a long rest, and Wish may be lost."}
  }
 }

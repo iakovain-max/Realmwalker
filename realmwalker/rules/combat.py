@@ -3959,7 +3959,7 @@ class Battle:
         n = 100 // grid.SQUARE_FT
         return [e for e in self.enemies_of(f) if e.active and e.creature is not None and e.kind == "humanoid"
                 and e.id not in f.jar["tried"] and self.gap(f, e) <= n and self.can_see(f, e)
-                and "possessed" not in e.conditions]
+                and "possessed" not in e.conditions and not any(bf.get("warded_kinds") for bf in e.buffs)]
 
     def _jar_abilities(self, f: Fighter) -> list[tuple[str, str, bool, str]] | None:
         """What a soul in a gem may do (Possess, Return), and a taken body's way back (Leave); None for anyone else."""
@@ -3971,8 +3971,11 @@ class Battle:
                     ("jar_return", "Return to the body (Magic Jar ends; the gem shatters)", free,
                      "" if free else "no action left")]
         if "possessed" in f.conditions:
-            free = f.action > 0
-            return [("jar_leave", "Leave this body (back into the gem)", free, "" if free else "no action left")]
+            body = self._body_of(f)
+            near = body is not None and self.gap(f, body) <= 100 // grid.SQUARE_FT
+            ok = f.action > 0 and near
+            return [("jar_leave", "Leave this body (back into the gem)", ok,
+                     "" if ok else ("no action left" if f.action <= 0 else "the gem is more than 100 feet away"))]
         return None
 
     def do_possess(self, f: Fighter, target: Fighter) -> None:
@@ -3995,7 +3998,7 @@ class Battle:
     def do_jar_leave(self, host: Fighter) -> None:
         """Magic Jar: the soul goes back into its gem; the host's own soul returns to its body."""
         body = self._body_of(host)
-        if body is None or not self._spend(host):
+        if body is None or self.gap(host, body) > 100 // grid.SQUARE_FT or not self._spend(host):
             return
         durations.remove(host, "possessed")
         body.jar["host"] = None

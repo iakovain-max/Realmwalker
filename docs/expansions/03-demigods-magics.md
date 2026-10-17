@@ -135,7 +135,7 @@ spellcasting and scrolls at the book's prices.
   heal, power word kill, prismatic wall (a wall foes cannot pass, blinding glare beside it), storm of vengeance (a
   storm by its turns), time stop (turns in a row until you touch another), weird, and Wish: in a fight it copies
   any battle spell of level 8 or lower without its components (safe), or gives Instant Health to up to twenty
-  friends (the stress: 1d10 necrotic a spell level for every spell until a long rest, Strength 3 for 2d4 days, a
+  friends (the stress: 1d10 necrotic a spell level for every spell until a long rest, Strength 5 for 2d4 days, a
   third of the time never Wish again). Waiting for E: antipathy/sympathy, clone, control weather, demiplane,
   glibness, telepathy, tsunami (cast in a minute); astral projection, gate, imprisonment (cast in a minute), true
   resurrection, and Wish's other uses outside a fight. Waiting for F: animal shapes, shapechange, true polymorph.
@@ -434,8 +434,8 @@ system is built once and every spell that uses it comes with it.
     tribute lifted, a deed of the land as slaying it is). A success makes it immune for a day. The minute passes; then
     the fight begins with whoever is left knowing you. The ending trigger is left out (nothing is likely to end it).
   - Wish outside a fight (`road_too: "wish"`; the battle's Wish is as D.4 made it): Subjects in groups (Shift ←→ jumps
-    to the next group on the Spells page): Object Creation (any thing that is not magic, worth up to 25,000 GP, into
-    the pack; a vehicle among the party's), Instant Health (the party whole, the Greater Restoration effects ended),
+    to the next group on the Spells page): Object Creation (any thing that is not magic, worth 100 to 25,000 GP, into
+    the pack), Instant Health (the party whole, the Greater Restoration effects ended),
     Resistance (the party, for good, to one damage type: `char.spells["wished_resist"]`), Spell Immunity (the party
     for 8 hours to one spell a foe of this world casts: `char.effects["immune_spell:<id>"]`), Sudden Learning (give
     up a feat that nothing else needs; a new one they are eligible for is chosen as a waiting choice, on the sheet),

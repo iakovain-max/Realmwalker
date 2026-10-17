@@ -205,8 +205,7 @@ def _strip(game, c: Character, to: Character | None) -> None:
     """The clone has none of the original's things: the companions take them up (else they are lost)."""
     from realmwalker.rules.inventory import add_existing
 
-    for slot in list(c.equipped):
-        c.equipped[slot] = None
+    c.equipped.clear()
     others = [m for m in list(game.party) + list(getattr(game, "waiting", []) or []) if m is not c]
     if any(m.inventory is c.inventory for m in others):  # (the party's one pack: it stays with them)
         c.inventory = []
@@ -237,6 +236,11 @@ def cheat_death(game) -> list[str] | None:
     s = w.settlements[rec["settlement"]] if 0 <= int(rec.get("settlement", -1)) < len(w.settlements) else None
     x, y = (s.x, s.y) if s is not None else (int(rec["x"]), int(rec["y"]))
     friends = [c for c in game.party[1:] if c.alive]
+    from realmwalker.rules.inventory import take_out
+
+    for c in friends[1:]:
+        if c.inventory is leader.inventory:
+            take_out(c, keep_gear=True)  # (each walks with what they wear; the first carries the pack)
     _strip(game, leader, friends[0] if friends else None)
     _restore(game, leader)
     if game.local is not None:
@@ -273,7 +277,7 @@ def clone_wakes(game, c: Character) -> bool:
     clones(game).remove(rec)
     w = game.world
     s = w.settlements[rec["settlement"]] if 0 <= int(rec.get("settlement", -1)) < len(w.settlements) else None
-    _strip(game, c, None)  # (what they carried stayed with the party: pack.sync)
+    _strip(game, c, game.leader if game.party else None)  # (what they carried stayed with the party: pack.sync)
     _restore(game, c)
     c.companion["order"] = "wait"
     c.companion["wait_at"] = [s.x, s.y] if s is not None else [int(rec["x"]), int(rec["y"])]
@@ -452,24 +456,26 @@ def _reshape_wishes(game) -> list[Subject]:
     if lost:
         p = game.player
         i, a = min(lost, key=lambda ia: abs(w.sites[ia[1]["site"]].x - p.x) + abs(w.sites[ia[1]["site"]].y - p.y))
-        out.append(Subject(f"Reshape Reality: to hold {esc(past.cap(a['name']))} (it carries you to where it lies)",
+        out.append(Subject(f"Reshape Reality: to hold {past.cap(a['name'])} (it carries you to where it lies)",
                            "reshape", "artifact", data={"group": "reshape", "index": i}))
     for key, hid in sorted(w.politics.get("lairs", {}).items()):
         fig = w.figures.get(hid)
         if fig is not None and fig.alive:
-            out.append(Subject(f"Reshape Reality: that {esc(past.beast_title(fig))} were dead (half the time; else it "
+            out.append(Subject(f"Reshape Reality: that {past.beast_title(fig)} were dead (half the time; else it "
                                "comes for you)", "reshape", "beast", data={"group": "reshape", "fig": hid,
                                                                              "site": int(key)}))
     for d in dragons.living(w):
-        out.append(Subject(f"Reshape Reality: that the dragon {esc(d['name'])} were dead (a quarter of the time; else "
+        out.append(Subject(f"Reshape Reality: that the dragon {d['name']} were dead (a quarter of the time; else "
                            "it comes for you)", "reshape", "dragon", data={"group": "reshape", "dragon": d["name"]}))
     realm = fx.realm_at(w, game.player.x, game.player.y)
     if realm is not None and (game.renown.bounties.get(realm.id, 0) > 0
                               or any(r.get("realm") == realm.id and not r.get("settled") for r in game.renown.crimes)):
-        out.append(Subject(f"Reshape Reality: that {esc(realm.name)} forgot your crimes", "reshape", "law",
+        out.append(Subject(f"Reshape Reality: that {realm.name} forgot your crimes", "reshape", "law",
                            data={"group": "reshape", "realm": realm.id}))
-    for b in getattr(game, "fallen", []) or []:
-        out.append(Subject(f"Reshape Reality: that {_first(b['char'])} were alive again", "reshape", "friend",
+    from realmwalker.game import revival
+
+    for b in (getattr(game, "fallen", []) or []) if revival._room(game) else ():
+        out.append(Subject(f"Reshape Reality: that {b['char'].name.split()[0]} were alive again", "reshape", "friend",
                            data={"group": "reshape", "name": b["char"].name}))
     return out
 
@@ -481,7 +487,7 @@ def wish_subjects(game, caster: Character) -> list[Subject]:
     t = game.tables
     out = [Subject("Instant Health: you and every friend here whole, the effects Greater Restoration ends ended",
                    "health", "all", data={"group": "health"})]
-    out += [Subject(f"Object Creation: {esc(t.items.get(i)['name'])} ({t.items.get(i)['value'] // 100:,} GP)",
+    out += [Subject(f"Object Creation: {t.items.get(i)['name']} ({t.items.get(i)['value'] // 100:,} GP)",
                     "object", i, data={"group": "object"}) for i in wish_objects(game)]
     out += [Subject(f"Resistance: the whole party resists {d} damage, for good", "resist", d,
                     data={"group": "resist"}) for d in DAMAGE_TYPES
