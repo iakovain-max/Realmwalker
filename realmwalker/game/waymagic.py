@@ -400,6 +400,16 @@ def after_lasting(game, caster, sid: str, who: list) -> list[str]:
     caster's face (a disguise no watchman sees through), Find the Path shows the way to a dungeon level's stairs."""
     spell = game.tables.spells[sid]
     what = spell.get("outside")
+    if what == "disguise" and spell.get("disguise") == "dc" and game.leader in who:
+        # Disguise Self, Seeming (Part E.4): an illusion; a watchman's check against the caster's DC sees through it
+        dc = spellrules.save_dc(game.sheet(caster), game.tables)
+        hours = int(spell.get("rounds", 600)) / spellrules.ROUNDS_PER_HOUR
+        if float(game.leader.effects.get("disguised", 0)) <= 0 or int(game.renown.flags.get("disguise_dc", 0)) < dc:
+            game.renown.flags["disguise_dc"] = int(dc)
+        game.leader.effects["disguised"] = max(float(game.leader.effects.get("disguised", 0)), hours)
+        many = len(who) > 1
+        return [f"<good>{'Every face in the party shifts' if many else 'Your face, clothes and gear shift'} into "
+                f"someone else's.</> <dim>(A watchman must beat DC {dc} to see through it.)</>"]
     if what == "disguise" and caster is game.leader:
         game.renown.flags["disguise_dc"] = max(int(game.renown.flags.get("disguise_dc", 0)), 30)
         caster.effects["disguised"] = max(float(caster.effects.get("disguised", 0)),

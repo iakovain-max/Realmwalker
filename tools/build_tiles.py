@@ -348,6 +348,9 @@ ITEMS = {
     "seers_incense": "item/misc/misc_phial_inert.png", "rare_incense": "item/misc/misc_lamp_old.png",
     "ivory_strips": "item/amulet/bone_gray.png", "glass_eye": "item/amulet/eye_cyan.png",
     "scrying_mirror": "item/misc/misc_phantom_mirror.png", "sapphire": "item/amulet/stone_2_blue.png",
+    # the costly components of Part E.4's spells (Expansion 3 E.4)
+    "jade_dust": "item/potion/emerald.png", "lead_ink": "item/potion/black_new.png",
+    "diamond_dust_pinch": "item/potion/white_new.png",
     "wheat": "item/food/bread_ration_old.png", "salt": "item/misc/misc_stone_inert.png",
     "iron_bar": "item/misc/misc_rune.png", "wool_bolt": "item/armor/back/cloak_2.png",
     "linen_bolt": "item/armor/torso/robe_1_new.png", "furs": "item/armor/torso/animal_skin_3.png",

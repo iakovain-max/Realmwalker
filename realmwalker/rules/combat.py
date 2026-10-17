@@ -1213,7 +1213,10 @@ class Battle:
         return a.darkvision > 0 and feet <= a.darkvision
 
     def thinks(self, f: Fighter) -> bool:
-        """A mind Detect Thoughts can sense: a person, or a creature that knows a language."""
+        """A mind Detect Thoughts can sense: a person, or a creature that knows a language (and is not warded by
+        Nondetection)."""
+        if f.buff_value("nondetection"):
+            return False
         return f.char is not None or bool((f.cdef or {}).get("languages"))
 
     def dim_for(self, a: Fighter, b: Fighter) -> bool:

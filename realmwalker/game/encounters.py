@@ -131,7 +131,9 @@ def roll_encounter(game, minutes: float) -> PendingEncounter | None:
     group = choose_encounter(game.tables, game.land_key(p.x, p.y), danger, night, on_road, rng)
     if group is None:
         return None
-    return make_encounter(game, group, rng)
+    from realmwalker.game import glamour
+
+    return glamour.on_meeting(game, make_encounter(game, group, rng))  # (Antipathy/Sympathy, Part E.4)
 
 
 def land_budget(game, rng: RNG, *, difficulty: str | None = None, deeper: int = 0) -> int:

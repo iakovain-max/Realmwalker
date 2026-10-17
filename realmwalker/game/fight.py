@@ -399,8 +399,10 @@ def _rob_party(game, rng) -> str:
     leader = game.party[0]
     from realmwalker.rules.inventory import worn_by
 
+    from realmwalker.game import glamour
+
     valuables = [i for i in leader.inventory if worn_by(leader, i.uid)[1] is None and game.tables.items.value(i) >= 100
-                 and not _keepsake(game, i)]
+                 and not _keepsake(game, i) and not glamour.hidden_thing(game, i, robbers=True)]
     valuables.sort(key=lambda i: -game.tables.items.value(i))
     for it in valuables[: rng.randint(1, 2)]:
         remove_item(leader, it.uid)

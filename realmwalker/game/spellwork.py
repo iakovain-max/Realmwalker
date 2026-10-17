@@ -64,8 +64,11 @@ def sheltering(game) -> bool:
 
 def hidden(game, kind: str) -> bool:
     """May the party rest here though enemies hunt nearby? Out of the world: a Mansion (any rest), a Rope Trick (a
-    short one); a lone caster melded into stone (any rest)."""
+    short one); a lone caster melded into stone (any rest); a camp veiled by Hallucinatory Terrain or Mirage Arcane
+    (any rest: hunters pass it by)."""
     if warded(game, "meld") is not None and len([c for c in game.party if c.alive]) == 1:
+        return True
+    if warded(game, "veil") is not None:
         return True
     return warded(game, "mansion") is not None or (kind == "short" and warded(game, "rope") is not None)
 
@@ -73,10 +76,33 @@ def hidden(game, kind: str) -> bool:
 def night_visitors(game, enc) -> tuple[object, list[str]]:
     """Something comes for the camp in the night: what the wards do about it. Returns the encounter (None when it is
     turned away) and what to say."""
-    ward = warded(game, "mansion", "hut", "hound", "alarm")
+    ward = warded(game, "mansion", "hut", "veil", "decoy", "hound", "mouth", "alarm")
     if ward in ("mansion", "hut"):
         where = "the shimmering door" if ward == "mansion" else "the dome"
         return None, [f"In the night something comes to {where}, circles it, finds no way in, and goes away."]
+    if ward == "veil":  # (Hallucinatory Terrain, Mirage Arcane: an Investigation check against the DC sees through)
+        rec = wards_here(game)["veil"]
+        rng = game.world.rng.child(f"veil/{game.world.time}")
+        best = max((int((game.tables.creatures[cr.def_id].get("abilities") or {}).get("int", 10))
+                    for cr in enc.creatures if cr.hp > 0), default=10)
+        if dice.d20(rng).natural + (best - 10) // 2 < int(rec.get("dc", 13)):
+            return None, ["In the night something passes close by the camp, and goes on: to its eyes there was "
+                          "nothing here."]
+        ward = warded(game, "decoy", "hound", "mouth", "alarm")
+        notes = ["<warn>Something in the night stops, and looks through the land's false face at the camp.</>"]
+        if ward is None:
+            return _awake_watch(game, enc, notes)
+        enc2, more = night_visitors_after_veil(game, enc, ward)
+        return enc2, notes + more
+    return night_visitors_after_veil(game, enc, ward)
+
+
+def night_visitors_after_veil(game, enc, ward: str | None) -> tuple[object, list[str]]:
+    if ward == "decoy":  # (Programmed Illusion: they fall on an illusory camp; the real one is awake)
+        enc.asleep = False
+        enc.spotted_first = True
+        return enc, ["<warn>In the dark, shapes fall on a camp a little way off, and find nothing there but "
+                     "an illusion.</> You are awake, and they have not seen you yet."]
     if ward == "hound":
         rec = wards_here(game)["hound"]
         notes = ["<warn>The phantom hound bays in the dark: something is coming.</>"]
@@ -95,17 +121,46 @@ def night_visitors(game, enc) -> tuple[object, list[str]]:
     if ward == "alarm":
         enc.asleep = False
         return enc, ["<warn>A bell rings out of nowhere in the dark: the alarm. Something is coming.</>"]
-    return enc, []
+    if ward == "mouth":  # (Magic Mouth)
+        enc.asleep = False
+        return enc, ["<warn>A voice cries out from a stone at the edge of the camp: something is coming.</>"]
+    return _awake_watch(game, enc, [])
+
+
+def _awake_watch(game, enc, notes: list[str]) -> tuple[object, list[str]]:
+    """An awakened animal keeps watch (Awaken): the camp is never caught asleep."""
+    from realmwalker.game import glamour
+
+    a = glamour.awake_animal(game)
+    if a is not None and enc.asleep:
+        enc.asleep = False
+        notes = notes + [f"<warn>{escape_markup(a['name'])} wakes you with a word: \"Up. Something comes.\"</>"]
+    return enc, notes
 
 
 def guards_the_animals(game) -> str:
     """Words for a ward that keeps the animals from rustlers, or ""."""
-    ward = warded(game, "mansion", "hut", "hound", "alarm")
+    ward = warded(game, "mansion", "hut", "veil", "hound", "mouth", "alarm")
+    from realmwalker.game import glamour
+
+    if ward is None and glamour.awake_animal(game) is not None:
+        return (f"{escape_markup(glamour.awake_animal(game)['name'])} calls out in the small hours: someone was at the "
+                f"animals, and runs off with nothing.")
     return {"mansion": "The animals stand safe in the Mansion's stable.",
+            "veil": "Whoever came for the animals in the night could not find the camp.",
+            "mouth": "A voice cries out from a stone in the small hours: someone was at the animals, and runs off.",
             "hut": "Whoever came for the animals found the dome and went away with nothing.",
             "hound": "The phantom hound bays at someone by the tethers, and whoever it was runs off with nothing.",
             "alarm": "The alarm rings in the small hours: someone was at the animals, and runs off with nothing."
             }.get(ward or "", "")
+
+
+def ward_minutes(spell: dict) -> int:
+    """How long a ward stands: its rounds, or its days (Mirage Arcane's ten; Magic Mouth and Programmed Illusion
+    stand while you camp, which is never a month)."""
+    if _road(spell).get("days"):
+        return int(_road(spell)["days"]) * 24 * 60
+    return int(spell.get("rounds", 4800)) // 10
 
 
 def _ward(game, caster: Character, spell: dict, level: int) -> list[str]:
@@ -113,13 +168,13 @@ def _ward(game, caster: Character, spell: dict, level: int) -> list[str]:
 
     ward = _road(spell)["ward"]
     camp = make_camp(game)
-    minutes = int(spell.get("rounds", 4800)) // 10
+    minutes = ward_minutes(spell)
     dc = spellrules.save_dc(game.sheet(caster), game.tables)
     # (from the end of the casting: the minute it takes is still to pass)
     camp.wards[ward] = {"until": game.world.time + minutes + int(spell.get("minutes", 1)), "dc": int(dc),
                         "by": caster.name}
     first = _first(caster)
-    lasts = f"{minutes // 60} hours" if minutes >= 120 else ("an hour" if minutes >= 60 else f"{minutes} minutes")
+    lasts = f"{minutes // 1440} days" if minutes >= 2880 else f"{minutes // 60} hours" if minutes >= 120 else ("an hour" if minutes >= 60 else f"{minutes} minutes")
     words = {
         "alarm": f"{first} walks the edge of the camp with a bell and a silver wire: anything that comes near in the "
                  f"next {lasts} will wake you.",
@@ -133,6 +188,14 @@ def _ward(game, caster: Character, spell: dict, level: int) -> list[str]:
                    f"and soft beds: yours for {lasts}.",
         "meld": f"{first} lays both hands on a great rock and steps into it, gear and all. For {lasts}, nothing of "
                 f"{first} can be seen or found; the stone hums faintly with the world outside.",
+        # Part E.4's
+        "decoy": f"{first} sprinkles jade dust in a ring some way off. Whatever comes in the night will find a camp "
+                 f"there, fire and sleepers and all, and fall on it; the real one will be awake.",
+        "mouth": f"{first} touches a stone at the edge of the camp, and a mouth opens in it, then closes. It will cry "
+                 f"out when anything comes near, as long as you camp here.",
+        "veil": f"{first} walks the camp's edge, and the land round it changes: to any eye outside, there is "
+                f"nothing here but {'more of the same land' if minutes < 2880 else 'land of another kind entirely'}, "
+                f"for {lasts}.",
     }
     out = [words[ward]]
     if ward == "mansion":
@@ -332,6 +395,8 @@ ON_SOMEONE = {"uncurse": _uncurse, "regenerate": _regenerate, "repose": _repose}
 # Part E.3's: finding and seeing, asking the powers (game/divining.py), talking (game/speech.py)
 DIVINING = ("sense", "locate", "scout", "summons", "ask")
 SPEECH = ("speak", "send", "read")
+# Part E.4's: minds and the law, illusions, the small arts (game/glamour.py)
+GLAMOUR = ("mind", "illusion", "art")
 
 
 def _does(spell: dict) -> str | None:
@@ -349,6 +414,10 @@ def subjects(game, caster: Character, sid: str) -> list:
         from realmwalker.game import speech
 
         return speech.subjects(game, caster, sid)
+    if does in GLAMOUR:
+        from realmwalker.game import glamour
+
+        return glamour.subjects(game, caster, sid)
     return []
 
 
@@ -364,10 +433,14 @@ def problem(game, caster: Character, sid: str, target) -> str | None:
         from realmwalker.game import speech
 
         return speech.problem(game, caster, sid, target)
+    if does in GLAMOUR:
+        from realmwalker.game import glamour
+
+        return glamour.problem(game, caster, sid, target)
     if does == "ward":
         ward = _road(spell)["ward"]
         rec = wards_here(game).get(ward)
-        if rec is not None and float(rec["until"]) - game.world.time > int(spell.get("rounds", 0)) // 20:
+        if rec is not None and float(rec["until"]) - game.world.time > ward_minutes(spell) // 2:
             return f"it is still working here ({max(1, round((float(rec['until']) - game.world.time) / 60))}h left)"
         if game.local is not None and game.local.kind == "settlement" and ward not in ("mansion", "meld"):
             return "not in the middle of a town"
@@ -398,10 +471,11 @@ def cast(game, caster: Character, sid: str, target: Character | None, level: int
     spell's casting time (`minutes`)."""
     spell = game.tables.spells[sid]
     does = _does(spell)
-    if does in DIVINING or does in SPEECH:
-        from realmwalker.game import divining, speech
+    if does in DIVINING or does in SPEECH or does in GLAMOUR:
+        from realmwalker.game import divining, glamour, speech
 
-        out = (divining if does in DIVINING else speech).cast(game, caster, sid, target, level)
+        out = (divining if does in DIVINING else speech if does in SPEECH else glamour).cast(game, caster, sid, target,
+                                                                                            level)
         game.cue("spell")
         game.dirty = True
         return out
@@ -475,7 +549,11 @@ def conjure(game, need: str) -> list[str]:
 
 
 def tick(game) -> None:
-    """As time passes: berries that are only magic are gone when it ends."""
+    """As time passes: berries that are only magic are gone when it ends; a Geas or a charm runs out
+    (game/glamour.py)."""
+    from realmwalker.game import glamour
+
+    glamour.tick(game)
     items = game.tables.items
     for m in distinct_packs(game.party):
         for it in list(m.inventory):
