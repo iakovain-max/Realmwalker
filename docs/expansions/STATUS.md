@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 03 Demigods & Magics · Part D (the spell catalogue) · branch dlc/03-demigods-magics
+Current: 03 Demigods & Magics · Part D (the spell catalogue), D.2 next · branch dlc/03-demigods-magics
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -9,10 +9,11 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   messengers, mounts, saddles, stabling and vehicles; saves format 16) · 03 Demigods & Magics parts A and B (twenty
   levels and the epic boons; the fighter, rogue, cleric and wizard of 2024 to level 20 with the Champion, Knight,
   Thief, Assassin, Life and War Domains, Evoker and Abjurer; Counterspell; saves format 17) and C (preparing spells,
-  rituals, one slot a turn, higher slots, components, spell scrolls of every level, the four potions of healing)
+  rituals, one slot a turn, higher slots, components, spell scrolls of every level, the four potions of healing) and
+  D.1 (the catalogue's first wave: 79 battle spells, cantrips to level 2)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
-  adapted); Expansion 3: 124 done, 40 adapted, 1 omitted of 558 (parts A, B and C settled). PHB 43% · DMG 12% · MM 8%
+  adapted); Expansion 3: 158 done, 85 adapted, 1 omitted of 558 (parts A, B, C and D.1 settled). PHB 48% · DMG 12% · MM 8%
 Assumptions waiting for Anton:
 - The Player2 AI writer is removed (tagged `before-ai-removal`); its text is replaced everywhere by the game's own
   words, strengthened where they were thin.
@@ -93,12 +94,24 @@ Assumptions waiting for Anton:
   the pack; Identify takes a minute (eleven as a ritual). Codex: a repeated spell replaces the old casting rather
   than keeping the stronger (adapted), and an ongoing spell needs no Study check to name: it shows on its card.
   Spellcasting services (PHB p. 235) wait for G.2, as planned.
+- Expansion 3 D.1: each wave of the catalogue brings the spells that work in a fight; a spell whose use is outside a
+  fight comes with its system in Part E, the summoning spells with Part F (the lists are in the design note; Aid
+  waits for E because its raised maximum must outlive the fight). The 2024 smites and Hail of Thorns are readied on
+  the weapon with the bonus action before the blow (the next fitting hit within a minute). A chosen damage type
+  (Chromatic Orb, Dragon's Breath, Sorcerous Burst) is the one the target is weakest to; Resistance's type is the one
+  the foes deal most. Moonbeam, Flaming Sphere and Cloud of Daggers move anywhere within 60 feet of the caster.
+  Reduce is in (Enlarge waits); Dragon's Breath and Magic Weapon work on the caster only; Calm Emotions and
+  Suggestion make a foe stand down until hurt; Crown of Madness's blow is at the foe's own friend hurt worst;
+  Arcane Vigor heals 2d6 + the modifier (no Hit Point Dice spent); Warding Bond lasts the fight. Every left-out
+  rider is in the codex notes. The older spells now carry their full 2024 class lists. Fixed on the way: party
+  cantrips never grew at levels 5, 11 and 17; a die taken off a roll (-1d4) could not be rolled.
 Ideas for later:
 - (none yet)
-Next session starts at: task D.1 in docs/expansions/03-demigods-magics.md (Part D, the spell catalogue, first wave:
-cantrips to 2nd level, 134 spells; new kernel ops first in the main session, then batches by helper agents on the
-sonnet model into data/packs/03_demigods_magics/spells.*.json, each with its fx; the 49 existing spells re-checked
-against the 2024 text; tools/arena.py and tests/test_tactics_coverage.py green). Parts A, B and C are in `main`.
+Next session starts at: task D.2 in docs/expansions/03-demigods-magics.md (Part D, the spell catalogue, second wave:
+levels 3 to 5, the battle spells only, as D.1 did - the outside-a-fight ones go to Part E's lists in the design note;
+Dispel Magic with the Abjurer's Spell Breaker; kernel ops first, then sonnet helpers into
+data/packs/03_demigods_magics/spells.level3.json... with the brief's shape (rules/engine/marks.py lists every mark,
+tests/test_catalogue.py casts every one in a real fight). Parts A, B, C and D.1 are in `main`.
 
 ## Done
 
@@ -121,6 +134,7 @@ against the 2024 text; tools/arena.py and tests/test_tactics_coverage.py green).
 | 2026-10-13 | Demigods & Magics part A: twenty levels, the twelve epic boons (in play, on Auto), danger tiers for the worst lands, legends that grow, five-level dungeons; finished after a usage limit; merged into `main` | `dlc/03-demigods-magics` |
 | 2026-10-17 | Demigods & Magics part B: the 2024 fighter, rogue, cleric and wizard to 20 (Champion, Knight, Thief, Assassin, Life, War, Evoker, Abjurer), Counterspell, companions to 20; saves format 17; the first part built by the relay; merged into `main` | `dlc/03-demigods-magics` |
 | 2026-10-17 | Demigods & Magics part C: preparing spells, rituals, one slot a turn, higher slots, components (focus, pouch, costly ones), spell scrolls of every level (2024), the four potions of healing; the spellcasting rules settled in the codex; merged into `main` | `dlc/03-demigods-magics` |
+| 2026-10-17 | Demigods & Magics D.1: the catalogue's first wave, 79 battle spells (cantrips to level 2) with new ground, marks and cards; outside-a-fight spells to Part E, summons to F; merged into `main` | `dlc/03-demigods-magics` |
 
 ## Notes for the next session
 

@@ -88,7 +88,7 @@ spellcasting and scrolls at the book's prices.
   healing; the 31 spellcasting rules in the codex; Part C to `main`.
 
 ### Part D — The spell catalogue (four waves, helpers on the sonnet model)
-- [ ] D.1 Cantrips to 2nd level (134 spells): new ops first, then batches; fx for each; arena coverage green.
+- [x] D.1 Cantrips to 2nd level (134 spells): new ops first, then batches; fx for each; arena coverage green.
   Decided while building: each wave brings the spells that work in a fight; a spell whose use is outside a
   fight comes with the system it plugs into in Part E (its entry, scroll and codex mark together), and the
   summoning spells with Part F. From this wave, waiting for E: dancing lights, druidcraft, elementalism,
