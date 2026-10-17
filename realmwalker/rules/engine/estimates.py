@@ -351,7 +351,13 @@ def _buff_worth(buff: dict, count: int, b=None, f=None, on=None, spell: dict | N
     if buff.get("save_bonus") and not buff.get("bond"):
         w += 1.0 * count
     if buff.get("traits") and "expeditious_retreat" in buff["traits"]:
-        w += 0.5
+        w += 0.6 if f is not None and f.hp < f.max_hp / 2 else 0.2
+    if buff.get("shillelagh") and on is not None and on.char is not None:
+        staff = on.char.equipped_item("main_hand")
+        if staff is not None and staff.def_id in ("club", "quarterstaff"):
+            w += 3.0 if any(b.gap(on, e) <= 2 for e in b.enemies_of(f)) else 1.0
+    if buff.get("soak"):
+        w += 2.5 if near else 0.8
     return w
 
 

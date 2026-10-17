@@ -112,7 +112,7 @@ def fixed_d20(monkeypatch, value):
 
 def test_there_is_a_scroll_for_every_spell(tables):
     for sid, spell in tables.spells.defs.items():
-        if "item" not in spell["classes"]:
+        if "item" not in spell["classes"] and "again" not in spell["classes"]:  # (no scroll of a follow-up)
             d = tables.items.get(f"scroll_{sid}")
             assert d["use"]["scroll"] == sid and d["value"] > 0
 

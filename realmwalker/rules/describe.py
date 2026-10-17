@@ -192,6 +192,15 @@ def _buff_status(b, f, bf: dict, tables) -> Status | None:
     name = spell.get("name") or sid.replace("_", " ").capitalize()
     if src == "dazed_still":
         return None  # (shown as the daze itself)
+    marked = _catalogue_mark(b, bf, spell)
+    if marked is not None:
+        kind, title, lines = marked
+        if bf.get("conc") is not None:
+            lines.append(f"<dim>Held by {esc(_name_of(b, bf['conc']))}'s concentration.</>")
+        footer = _ending(b, bf.get("ends"), int(bf["rounds"]) if bf.get("rounds") else None)
+        return Status(kind, Card(title, "", f"status/{kind}", lines, footer))
+    if bf.get("until_act"):
+        return None  # (Invisibility: the condition shows itself)
     if bf.get("marked"):
         kind = "marked"
     elif bf.get("burning"):
@@ -271,6 +280,81 @@ def _buff_status(b, f, bf: dict, tables) -> Status | None:
         lines.append(f"<dim>Held by {esc(_name_of(b, bf['conc']))}'s concentration.</>")
     footer = _ending(b, bf.get("ends"), int(bf["rounds"]) if bf.get("rounds") else None)
     return Status(kind, Card(title, "", f"status/{kind}", lines, footer))
+
+
+def _catalogue_mark(b, bf: dict, spell: dict) -> tuple[str, str, list[str]] | None:
+    """The marks of the spell catalogue (rules/engine/marks.py), as (status kind, title, lines); None for others."""
+    name = spell.get("name", "")
+    who = lambda key: esc(_name_of(b, bf.get(key))) or "the caster"  # noqa: E731
+    if bf.get("outlined"):
+        return "marked", "Outlined", ["Shining with a telltale light: every attack against them has advantage."]
+    if bf.get("blurred"):
+        return "shielded", "Blurred", ["Their shape swims and shifts: attacks against them have disadvantage."]
+    if bf.get("images"):
+        return "shielded", "Mirror images", [f"{int(bf['images'])} duplicates of them: a hit may land on one of "
+                                             "them instead (a d6 each, 3 or more), and that image is gone."]
+    if bf.get("sanctuary") is not None:
+        return "warded", "Sanctuary", [f"A foe must make a Wisdom save (DC {int(bf['sanctuary'])}) to strike them or "
+                                       "aim a spell at them; it ends if they attack or cast at a foe."]
+    if bf.get("warded_kinds"):
+        return "warded", f"Warded ({name or 'protection'})", [
+            "Aberrations, celestials, elementals, fey, fiends and undead have disadvantage on attacks against them."
+            if len(bf["warded_kinds"]) > 3 else
+            f"{', '.join(k.capitalize() for k in bf['warded_kinds'])} have disadvantage on attacks against them."]
+    if bf.get("ward_die"):
+        return "shielded", f"Warded ({name or 'Blade Ward'})", [f"Every attack roll against them loses "
+                                                                f"{esc(str(bf['ward_die']))}."]
+    if bf.get("ac_floor"):
+        return "shielded", f"Hard skin ({name or 'Barkskin'})", [f"Their Armour Class is at least "
+                                                                 f"{int(bf['ac_floor'])}."]
+    if bf.get("retaliate"):
+        return "warded", f"Armour of frost ({name})" if name else "Armour of frost", [
+            f"While their temporary hit points last, a melee blow on them costs the striker "
+            f"{int(bf['retaliate'])} {esc(bf.get('retaliate_type', 'cold'))} damage."]
+    if bf.get("bond") is not None:
+        return "warded", "Warding Bond", [f"+{int(bf.get('ac', 1))} AC and saves, and half damage of every kind; "
+                                          f"{who('bond')} takes the same harm they do."]
+    if bf.get("quarry"):
+        return "marked", f"{'Hexed' if bf.get('quarry_type') == 'necrotic' else 'Hunted'} ({name})" if name else             "Hunted", [f"{who('by')}'s hits on them deal {esc(str(bf['quarry']))} "
+                       f"{esc(bf.get('quarry_type', 'force'))} more."]
+    if bf.get("dot"):
+        when = "start" if bf.get("dot_at", "start") == "start" else "end"
+        line = f"{esc(str(bf['dot']))} {esc(bf.get('dot_type', 'fire'))} damage at the {when} of their " \
+               f"{'next turn' if bf.get('dot_once') else 'turns'}"
+        if bf.get("dot_save"):
+            line += f", until a {bf['dot_save'].upper()} save (DC {int(bf.get('dc', 10))}) ends it"
+        return ("burning" if bf.get("dot_type") == "fire" else "spell"), \
+            (name or str(bf.get("dot_name", "Harm")).capitalize()), [line + "."]
+    if bf.get("heroism"):
+        return "blessed", f"Heroism ({name})" if name else "Heroism", [
+            f"Fearless; {int(bf['heroism'])} temporary hit points at the start of each of their turns."]
+    if bf.get("weak") or bf.get("damage_die"):
+        return "sapped", f"Enfeebled ({name})" if name else "Enfeebled", [
+            "Disadvantage on Strength attacks and saves" + (f"; {esc(str(bf['damage_die']).lstrip('-'))} off the "
+                                                            f"damage they deal." if bf.get("damage_die") else ".")]
+    if bf.get("duel") is not None:
+        return "sapped", "Compelled to duel", [f"Disadvantage on attacks against anyone but {who('duel')}."]
+    if bf.get("maddened") is not None:
+        return "spell", f"Crowned with madness ({name})" if name else "Maddened", [
+            "Its action goes on a blow at one of its own friends within reach."]
+    if bf.get("hit_extra"):
+        return "blessed", name or "Favoured", [f"Their weapon hits deal {esc(str(bf['hit_extra']))} "
+                                               f"{esc(bf.get('hit_type', 'radiant'))} more."]
+    if bf.get("weapon_plus"):
+        return "blessed", name or "Magic weapon", [f"+{int(bf['weapon_plus'])} to weapon attack and damage rolls."]
+    if bf.get("smite"):
+        how = {"melee": "melee weapon", "ranged": "ranged weapon"}.get(bf.get("smite_with", "melee"), "weapon")
+        return "blessed", f"{name} readied" if name else "A smite readied", [
+            f"Their next {how} hit carries the spell." + (f" {esc(spell['text'])}" if spell.get("text") else "")]
+    if bf.get("shillelagh"):
+        return "blessed", name or "Shillelagh", ["Their club or staff strikes with the spellcasting ability and a "
+                                                 "bigger die."]
+    if bf.get("soak"):
+        return "resisting", name or "Resistance", [f"{esc(str(bf['soak']))} off {esc(str(bf.get('soak_type')))} "
+                                                   "damage, once a turn."]
+    if "expeditious_retreat" in (bf.get("traits") or ()):
+        return "spell", name or "Expeditious Retreat", ["They may Dash as a bonus action."]
+    return None
 
 
 def statuses(f, b=None) -> list[Status]:

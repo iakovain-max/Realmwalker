@@ -58,7 +58,7 @@ def spy_cast(monkeypatch):
 # ---------------------------------------------------------------------------- the scrolls themselves
 def test_a_scroll_for_every_spell_valued_by_the_book(tables):
     for sid, spell in tables.spells.defs.items():
-        if "item" in spell["classes"]:
+        if "item" in spell["classes"] or "again" in spell["classes"]:  # (a flask; a spell's follow-up)
             assert f"scroll_{sid}" not in tables.items
             continue
         d = tables.items.get(f"scroll_{sid}")
