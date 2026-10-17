@@ -150,6 +150,11 @@ def aim_targets(b, f, a: dict) -> list:
         from realmwalker.rules.engine.handlers import arms
 
         return {"speed": arms.speed_targets, "dance_toss": arms.toss_targets, "dance": arms.dance_targets}[aim](b, f)
+    if aim in ("double_new", "double_move", "trickster_blessable"):  # (the Trickery Domain: Expansion 5 Part B)
+        from realmwalker.rules.engine.handlers import domains
+
+        return {"double_new": domains.new_targets, "double_move": domains.move_targets,
+                "trickster_blessable": domains.blessable}[aim](b, f)
     if aim == "ally":  # (another creature on their side, hurt, seen within range: Divine Spark)
         return [x for x in b.team(f.team) if x is not f and (x.active or x.state == "down") and x.hp < x.max_hp
                 and b.feet(f, x) <= int(a.get("range", 5)) and b.can_see(f, x)]
@@ -227,6 +232,12 @@ def _schools(name: str):
     return test
 
 
+def _domains(name: str):
+    from realmwalker.rules.engine.handlers import domains
+
+    return getattr(domains, name)
+
+
 REQUIRES: dict[str, Callable] = {
     "action_left": lambda b, f: None if f.action > 0 else "no action left",
     "bonus_left": lambda b, f: None if f.bonus > 0 else "no bonus action left",
@@ -255,6 +266,11 @@ REQUIRES: dict[str, Callable] = {
     "unseen_near": lambda b, f: None if any(e.active and _query.flag(e, "unseen") for e in b.enemies_of(f))
     else "nobody unseen near",
     "illusion_up": lambda b, f: _schools("reality_problem")(b, f),
+    # the Light and the Trickery Domains (Expansion 5 Part B)
+    "dawn_worth": lambda b, f: _domains("dawn_worth")(b, f),
+    "corona_out": lambda b, f: _domains("corona_out")(b, f),
+    "no_double": lambda b, f: _domains("no_double")(b, f),
+    "double_up": lambda b, f: _domains("double_up")(b, f),
     # the magic arms (Expansion 4 Part D)
     "speed_held": _arms(lambda a, b, f: None if a.speed_option(b, f) is not None else "the scimitar is not in hand"),
     "dance_held": _arms(lambda a, b, f: None if a.held(f, "dancing_sword") is not None and a.dancer(b, f) is None

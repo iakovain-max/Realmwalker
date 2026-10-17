@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 05 Schools & Domains · Part B (the Light and Trickery Domains; the gods) · branch dlc/05-schools-domains · design note docs/expansions/05-schools-domains.md
+Current: 05 Schools & Domains · Part C (mages and priests of the world) · branch dlc/05-schools-domains · design note docs/expansions/05-schools-domains.md
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -14,16 +14,28 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   (v1.4.0, 2026-10-17: the Battle Master and its twenty maneuvers; the Eldritch Knight and the Arcane Trickster; the
   DMG poisons, the Assassin, Spy and Spy Master, the black market, poisoned cups, duels, spies at court; the fighter's
   and rogue's magic items of the DMG; saves format 18) · 05 Schools & Domains Part A (2026-10-18: the Diviner and
-  the Illusionist; images on the battle mat)
+  the Illusionist; images on the battle mat) · Part B (2026-10-18: the Light and Trickery Domains; the faiths'
+  domains and the gods' answer to the dying devout)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
   adapted); Expansion 3: all 560 settled (223 done, 336 adapted, 1 omitted); Expansion 4: all 66 settled (36 done,
-  30 adapted); Expansion 5: 17 of 72 settled after Part A (12 done, 4 adapted, 1 omitted). PHB 68% · DMG 15% · MM 16%
+  30 adapted); Expansion 5: 31 of 72 settled after Part B (20 done, 10 adapted, 1 omitted). PHB 69% · DMG 16% · MM 16%
 Known, not yet chased: one autoplay run of nine during Expansion 5 Part A's checks (2026-10-18) saw two townsfolk on
   one square of a town for seven turns (town life, untouched by the part; the other eight runs, on main and on the
   branch, were clean). The timing tests (an enemy turn under 150/400 ms) now and then miss while the suite runs
   beside autoplay and the smoke test, and pass alone; this was already so in Expansions 3 and 4.
 Assumptions waiting for Anton:
+- Expansion 5 Part B (the Light and Trickery Domains, the gods): Warding Flare shields only the cleric's own side, laid
+  by the battle's judgement (asked under the Reactions setting "all"): a blow likely to land at a friend in a bad
+  way, a heavy one, or any while uses are to spare; the Corona's "any spell that deals Fire or Radiant damage" is the
+  cleric's own; the corona and the double are not dismissed early; the double is made or moved beside the foe it is
+  aimed at, never elsewhere (the battle picks the square, flanking first), and spells aimed at a creature or a point with a range of 10 feet or more that do not move
+  their caster go out from its square when the target is beyond the cleric's own reach (still seen with the cleric's
+  own eyes; cones and lines go out from the cleric; a foe sees the double unless Blinded); the Blessing of the Trickster is laid on the party's worst sneak at each long rest (a Magic action moves
+  it in a fight) and read by hiding in a fight, creeping in towns and slipping past a band; each faith names its
+  domains by the feel of its god (data/factions.json), a cleric takes the first by default (War for a fighting
+  priest where the god has it); the gods answer only the dying devout in fights (2% and up to 12%, a year's quiet
+  after), with a gift by domain - the DMG's blessings, emissaries and omens wait.
 - Expansion 5 Part A (the Diviner and the Illusionist): Portent is laid by the battle's judgement (asked only under the
   Reactions setting "all"), outside fights on the party's camp and conversation checks only; the Third Eye's reading
   of every language is left out (every writing of the world is already readable); the Search action also studies the
@@ -493,10 +505,23 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 5, Schools & Domains, Part B (the Light and Trickery Domains; the DMG's gods and
-divine intervention), task B.1 of `docs/expansions/05-schools-domains.md`. Part A (the Diviner and the Illusionist) is
-in `main`. Per Anton's word of 2026-10-17, the relay stops once Expansion 5 is merged (all five parts); Expansion 6
-waits for his start.
+Next session starts at: Expansion 5, Schools & Domains, Part C (mages and priests of the world: the Mage Apprentice,
+Mage, Archmage, Priest and Archpriest; wizards' towers lived in; apprenticeships), task C.1 of
+`docs/expansions/05-schools-domains.md`. Parts A and B are in `main`. Per Anton's word of 2026-10-17, the relay stops
+once Expansion 5 is merged (all five parts); Expansion 6 waits for his start.
+The way of Part B (the domains and the gods): `rules/engine/handlers/domains.py` (Warding Flare from `Battle._attack`
+after the Protection style; Radiance of the Dawn a "power" ability valued by `estimates._radiance_of_the_dawn`; the
+corona a buff `corona` read by `query.save_roll` through `domains.corona_against`, with `Battle._dawn` during the
+Dawn and `Battle._casting_spell` set by `effects.cast`; the blessing the mark `kept:trickster_blessing`, read by
+`Battle.do_hide`, `GameState` sneaking and `fight.encounter_evade`, laid by `domains.bless_after_rest` from
+`fight.rest`; the double a Token kind "duplicity": `Battle.spell_targets`/`spell_points` add what it reaches,
+`do_cast` wraps `_do_cast` in `domains.standing_in` when `cast_from_double` says so, `query.attack_roll` asks
+`domains.distracted`, `double_ends`/`check_doubles` from the turn start). Aims "double_new", "double_move",
+"trickster_blessable" in `actions.aim_targets`; tactics `_domain_bonus`, `_corona`. The gods: data/factions.json
+faiths `domains`, `progression.faith_domain` (the default domain), `game/gods.py` (`chance`, `prayers` set on
+`Battle.prayers` by `fight.start_battle`, `after_battle` from `finish_battle`: history kind "miracle",
+`renown.flags["god_answered"]`), `rules/miracles.answer` from `Battle._kill`. Events flare, miracle, double_cast
+(board and sounds). tests/test_domains.py.
 The way of Part A (the two schools): `rules/engine/handlers/schools.py` (Portent through the kernel's "d20_before"
 event, `Battle.foretold`; `party_foretell` outside fights; Expert Divination's `slot_back`; the Third Eye in
 `char.spells["third_eye"]`; Illusory Self in `Battle._attack` before Shield; Phantasmal Creatures as

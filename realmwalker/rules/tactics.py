@@ -1163,6 +1163,10 @@ def _party_turn(b: Battle, f: Fighter) -> None:
     _command_objects(b, f)
     _divine_help(b, f)
     _school_bonus(b, f)
+    if b.current is f and b.outcome is None:
+        _domain_bonus(b, f)  # (the Trickery Domain's double)
+    if b.current is f and b.outcome is None:
+        _corona(b, f)  # (the Light Domain's corona)
     if b.current is not f or b.outcome is not None:
         return
     if f.action > 0 and b.illusions_hiding(f) and _none_in_sight(b, f):
@@ -1479,6 +1483,58 @@ def _school_bonus(b: Battle, f: Fighter) -> None:
         if any(e.creature is not None and any(grid.gap((x, y, 1), e.space) <= 1 for x, y in cells) for e in foes):
             b.do_ability(f, opt.value)
             return
+
+
+def _domain_bonus(b: Battle, f: Fighter) -> None:
+    """A Trickery cleric's double with the bonus action (Expansion 5 Part B): made beside the foe they will fight (a
+    fighting priest's flank) or the most dangerous one (a praying priest's spells reach from it), sent on when its foe
+    has fallen; with Trickster's Transposition, made beside a far foe and swapped with, to bring a fighting priest to
+    it. A Channel Divinity is kept for a friend bleeding out."""
+    if f.bonus <= 0 or f.char is None:
+        return
+    from realmwalker.rules.engine.handlers import domains
+
+    foes = [e for e in b.enemies_of(f) if e.standing]
+    if not foes:
+        return
+    tok = domains.double_of(b, f)
+    if tok is not None:
+        if any(e.standing and grid.gap((tok.x, tok.y, 1), e.space) <= 1 for e in foes):
+            return
+        for opt, a in _abilities(b, f, "double"):
+            if a["id"] == "move_duplicity" and opt.targets:
+                b.do_ability(f, opt.value, max(opt.targets, key=lambda e: (estimates.threat(e), -e.id)))
+                return
+        return
+    if any(x.state == "down" and not x.stable for x in b.team(f.team)) and f.char.uses.get("channel_divinity", 0) <= 1:
+        return  # (the last use is for Divine Spark)
+    made = {a["id"]: opt for opt, a in _abilities(b, f, "double")}
+    fighting = not f.prefers_range
+    if fighting and "duplicity_swap" in made and not any(b.gap(f, e) <= 1 for e in foes) and made["duplicity_swap"].targets:
+        far = [e for e in made["duplicity_swap"].targets if b.feet(f, e) > f.move_left + 5]
+        if far:
+            b.do_ability(f, "duplicity_swap", max(far, key=lambda e: (estimates.threat(e), -e.id)))
+            return
+    opt = made.get("invoke_duplicity")
+    if opt is None or not opt.targets:
+        return
+    if fighting:
+        pick = min(opt.targets, key=lambda e: (b.feet(f, e), -estimates.threat(e), e.id))
+    else:
+        pick = max(opt.targets, key=lambda e: (estimates.threat(e), -e.id))
+    b.do_ability(f, opt.value, pick)
+
+
+def _corona(b: Battle, f: Fighter) -> None:
+    """A Light cleric's Corona of Light with the action, early in a fight worth it: two foes or a strong one in its
+    light, while it does not shine."""
+    if f.action <= 0 or b.round > 4:
+        return
+    for opt, a in _abilities(b, f, "corona"):
+        near = [e for e in b.enemies_of(f) if e.standing and b.feet(f, e) <= 60]
+        if len(near) >= 2 or any(float(e.cdef.get("cr", 0) or 0) >= 5 for e in near if e.creature is not None):
+            b.do_ability(f, opt.value)
+        return
 
 
 def _mend_ward(b: Battle, f: Fighter) -> None:

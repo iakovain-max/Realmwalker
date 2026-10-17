@@ -569,9 +569,28 @@ def _divine_spark_harm(b, f, w: Worth) -> None:
     w.damage += 0.75 * (n * (sides + 1) / 2 + f.mod("wis"))  # (a Constitution save halves it)
 
 
+def _radiance_of_the_dawn(b, f, w: Worth) -> None:
+    """2d10 + the level on each foe in 30 feet, half on a Constitution save (the corona's glare counted)."""
+    from realmwalker.rules.engine.handlers import domains
+
+    dc = _caster_dc(b, f)
+    full = 11.0 + (f.char.level if f.char is not None else 1)
+    cells = set(domains._area(b, f))
+    for e in b.enemies_of(f):
+        if e.active and cells & set(e.cells):
+            p = fail_chance(b, e, "con", dc)
+            dealt = min(full * (p + (1 - p) / 2), max(1, e.hp))
+            w.damage += dealt
+            if dealt >= e.hp:
+                w.kills += 1
+    if domains._darkness_near(b, f):
+        w.help += 4.0  # (the dark burnt away: those in it can be seen and struck)
+
+
 _ABILITY_WORTH = {"divine_spark_harm": _divine_spark_harm, "turn_undead": _turn_undead, "preserve_life": _preserve_life, "battle_medic": _battle_medic,
                   "speedy_recovery": _speedy_recovery, "chef_treat": _chef_treat,
-                  "telekinetic_shove": _telekinetic_shove, "recover_vitality": _recover_vitality}
+                  "telekinetic_shove": _telekinetic_shove, "recover_vitality": _recover_vitality,
+                  "radiance_of_the_dawn": _radiance_of_the_dawn}
 
 
 def _already(b, f, x, fail: list[dict]) -> bool:

@@ -30,7 +30,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Expansion 2, *Blades & Backgrounds*** (version 1.2.0) | ✅ Released (2026-10-13), branch `dlc/02-blades-backgrounds` |
 | **Expansion 3, *Demigods & Magics*** (version 1.3.0) | ✅ Released (2026-10-17), branch `dlc/03-demigods-magics` |
 | **Expansion 4, *Steel & Shadows*** (version 1.4.0) | ✅ Released (2026-10-17), branch `dlc/04-steel-shadows` |
-| **Expansion 5, *Schools & Domains*** (version 1.5.0 to come) | Part A in `main` (2026-10-18), branch `dlc/05-schools-domains` |
+| **Expansion 5, *Schools & Domains*** (version 1.5.0 to come) | Parts A and B in `main` (2026-10-18), branch `dlc/05-schools-domains` |
 | **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansions 1-4 released; Expansion 5 under way (see STATUS.md) |
 
 ---
@@ -42,6 +42,78 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-18 (night): Schools & Domains Part B — the Light and Trickery Domains; the gods answer — branch `dlc/05-schools-domains`
+
+Built by the relay builder realmwalker-a. Saves do not change, and characters you already have keep working.
+- **The Light Domain.** At level 3 a cleric may serve a god of light. Its spells are always ready: Burning Hands,
+  Faerie Fire, Scorching Ray and See Invisibility, then Daylight and Fireball, Arcane Eye and Wall of Fire, Flame
+  Strike and Scrying.
+  - **Warding Flare.** When a foe within 30 feet swings at the cleric or a friend, light flares in its eyes and the
+    blow is at a disadvantage (the cleric's reaction). It works as many times as the Wisdom modifier between long
+    rests. From level 6 a short rest brings it back too, and the one shielded gains 2d6 + Wisdom temporary hit points.
+  - **Radiance of the Dawn.** A Channel Divinity: light bursts 30 feet out from the cleric. Magical darkness there
+    burns away, and every foe in it makes a Constitution save against 2d10 + the cleric's level radiant damage.
+  - **Corona of Light.** From level 17, an action: the cleric shines like the sun for a minute. Foes within 60 feet
+    save at a disadvantage against the cleric's Dawn and fire and radiant spells.
+- **The Trickery Domain.** At level 3 a cleric may serve a god of tricks. Its spells are always ready: Charm Person,
+  Disguise Self, Invisibility and Pass without Trace, then Hypnotic Pattern and Nondetection, Confusion and Dimension
+  Door, Dominate Person and Modify Memory.
+  - **Blessing of the Trickster.** One person moves at an advantage on Stealth: hiding in a fight, creeping in towns
+    (z), slipping past a band on the road. Each time the party rises from a long rest, the cleric blesses whoever
+    sneaks worst. In a fight an action moves the blessing to someone else.
+  - **Invoke Duplicity.** A Channel Divinity with the bonus action: a double of the cleric appears beside a foe for a
+    minute. When the cleric and the double both stand beside a foe, the cleric's blows have advantage. A spell aimed
+    at someone out of the cleric's own reach goes out from the double's square instead. Another bonus action sends the
+    double up to 50 feet, beside another foe.
+  - **Trickster's Transposition.** From level 6 the cleric may swap places with the double as it is made or moved.
+  - **Improved Duplicity.** From level 17 the cleric's friends also have advantage on a foe beside the double. When
+    the double fades, the cleric or a hurt friend beside it regains the cleric's level in hit points.
+- **The gods answer the devout.** Every faith of the world now names the domains its priests serve. Solun the Bright
+  serves Light and Life, the Thunder-Kin War and Trickery, the Twelve all four. A new cleric takes their people's
+  god's domain unless you choose another. A cleric with a heavy weapon or a shield takes War where the god has it.
+  Someone devout who is about to die in a fight may be answered by their god. Devout means a cleric, a member of their
+  people's church, or someone that church thinks well of. The chance is small: 2% for the faithful, more for the god's
+  own priests and for rank and deeds in the church, 12% at most. A god who has answered will not answer again for a
+  year. The god never wins the fight. The dying one gets back up hurt, with one gift by the god's domain:
+  - Life: half their hit points come back.
+  - Light: a blinding light falls on the foes within 30 feet.
+  - Trickery: they slip from sight, unseen for a round or two.
+  - War: they are blessed for a minute.
+  The world's history remembers it.
+- **Your companions use it.** A Trickery cleric on Auto makes its double beside the foe it will fight, or beside the
+  most dangerous one when it fights with prayers. It sends the double on when that foe falls. With Transposition it
+  swaps in beside a far foe. A Light cleric on Auto weighs the Dawn against its spells and blows, and burns a crowd
+  with it. It lights the Corona early against a crowd or a strong foe. Warding Flare is laid by the battle's own
+  judgement, and asks you first when the Reactions setting is "all".
+- **How to see it.** Level a cleric to 3 and choose the Light or the Trickery Domain on the level-up screen. In a
+  fight the double is a pale, shimmering likeness of the cleric. The corona is a sun's glow about the cleric, and the
+  flare a dazzle over the attacker. The cards show "Corona of Light", "A double" and "The Trickster's blessing".
+- Choices made while Anton was away:
+  - Warding Flare only shields the cleric's own side, and only when the battle judges it worth a use. That means a
+    blow likely to land at a friend in a bad way, a heavy blow, or any blow when uses are to spare.
+  - The Corona's "any spell that deals Fire or Radiant damage" is read as the cleric's own spells.
+  - The double is made beside the foe it is aimed at, in the square the battle picks (flanking first). Spells with a
+    range of at least 10 feet go out from its square, except those that move their caster. The target must still be
+    in the cleric's own sight.
+  - Neither the corona nor the double can be dismissed early.
+  - The gods step in only in fights. Their other answers in the DMG (blessings, emissaries, omens) wait for later
+    expansions.
+- The fresh review's fixes:
+  - A god never gives back fewer hit points than the dying one had. A word of power can strike down someone unhurt.
+  - The gods answer once a fight for the whole party, not once for each of them.
+  - Someone turned to dust, or withered by a mummy's rot, is no longer marked as dust when their god saved them.
+  - Warding Flare is not spent on a blow whose advantage and disadvantage already cancel out.
+  - A long rest ends the Trickster's blessing even when the priest is not with the party. If two people end up
+    blessed (one blessed in a fight while the other waited elsewhere), only the newest blessing holds.
+  - The double lasts exactly a minute, ten rounds.
+- Checked: 29 new tests cover Warding Flare and its improvement, the Dawn on foes and darkness, the Corona's glare,
+  the blessing at a rest, in a fight and on a Stealth roll, and the double: made, distracting, cast through, moved,
+  swapped, healing as it fades, and ending when its maker is stunned. They also cover each faith's domains, the
+  devout and the rest, each god's miracle, the year's quiet after, the Auto's choices, the cards and the battle mat.
+  The full suite, the autoplay bot and the window smoke test pass. In the first full run, five timing tests missed
+  their time limit while autoplay and the smoke test ran beside them, and one missed again in the last full run;
+  they all passed when run alone, as before.
 
 ### Session, 2026-10-18 (night): Schools & Domains begun; Part A — the Diviner and the Illusionist — branch `dlc/05-schools-domains`
 

@@ -140,6 +140,7 @@ def test_shield_of_faith_never_counts_twice(world, tables):
 
 def test_a_death_ward_rides_into_battle_and_is_spent_there(world, tables):
     cleric = hero(tables, "cleric")
+    cleric.culture = "highland"  # (the Old Ways: a priest of the Mother serves Life, Death Ward always ready)
     award_xp(cleric, 23000, tables, RNG(2), auto=True)  # level 7: 4th-level prayers, Death Ward among them
     assert "death_ward" in sp.known_spells(cleric, tables)
     game = game_with(world, tables, cleric)

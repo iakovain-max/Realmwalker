@@ -79,6 +79,14 @@ def battle_sounds(ev: dict) -> list[tuple[str, str]]:
         return [("start", "spell")]
     if k == "token" and ev.get("what") == "mage_hand":  # (the unseen hand: a whisper of magic)
         return [("start", "spell")]
+    if k == "token" and ev.get("what") == "duplicity":  # (a Trickery cleric's double steps out of the air)
+        return [("start", "spell")]
+    if k == "flare":  # (Warding Flare: the bright chime of light in the eyes)
+        return [("start", "buff")]
+    if k == "miracle":  # (a god answers the dying: healing light and the harp of a turning fate)
+        return [("start", "heal"), ("impact", "buff")]
+    if k == "double_cast":  # (the spell leaves from the double)
+        return [("start", "spell")]
     if k == "token" and ev.get("what") == "dancing_sword":  # (a Dancing Sword tossed up: the swish of steel)
         return [("start", "swing")]
     if k == "arms_form":  # (a rod's blade springing out, a cane's sword drawn)

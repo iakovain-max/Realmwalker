@@ -923,7 +923,10 @@ class GameState:
                 from realmwalker.rules import magic
 
                 clanks = clanks or magic.flag(c, "stench")  # an artifact's sour stink
-            roll = dice.d20(rng, disadvantage=clanks).natural + self.sheet(c).skill_bonus("stealth")
+            from realmwalker.rules.engine.handlers import domains
+
+            soft = domains.blessed(c)  # (the Trickster's blessing: soft feet)
+            roll = dice.d20(rng, advantage=soft, disadvantage=clanks).natural + self.sheet(c).skill_bonus("stealth")
             if worst is None or roll < worst[0]:
                 worst = (roll, c, clanks)
         roll, c, clanks = worst

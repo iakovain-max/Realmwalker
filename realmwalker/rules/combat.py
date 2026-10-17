@@ -29,7 +29,7 @@ from realmwalker.rules import feats, grid, poisons, simulacrum
 from realmwalker.rules import spells as spellrules
 from realmwalker.rules.character import Character, Sheet, modifier
 from realmwalker.rules.engine import actions, durations, effects, events, hazards, marks, query, reactions
-from realmwalker.rules.engine.handlers import arcane, arms, general_feats, mastery, schools
+from realmwalker.rules.engine.handlers import arcane, arms, domains, general_feats, mastery, schools
 from realmwalker.rules.engine.reactions import Decision
 from realmwalker.rules.engine import traits as trs
 from realmwalker.rules.creatures import Creature
@@ -616,6 +616,9 @@ class Battle:
         self.fighters: list[Fighter] = []
         self.zones: list[Zone] = []
         self.tokens: list[Token] = []
+        # The devout whose god may answer as they die (game/gods.py fills it; rules/miracles.py), and those answered.
+        self.prayers: dict[int, dict] = {}
+        self.answered: list[int] = []
         self._next_zone = 1
         fid = 1
         for c in party:
@@ -1391,8 +1394,13 @@ class Battle:
         for tok in [t for t in self.tokens if t.owner == f.id and t.rounds >= 0]:
             tok.rounds -= 1
             if tok.rounds < 0:
+                if tok.kind == domains.DOUBLE:
+                    domains.double_ends(self, f, tok)  # (Invoke Duplicity's minute is up: Improved Duplicity heals)
+                    continue
                 self.tokens.remove(tok)
                 self._event("token_end", id=tok.id)
+        if self.tokens:
+            domains.check_doubles(self)  # (a double ends when its maker is Incapacitated)
         for z in self.zones:
             z.struck.discard(f.id)
         if f.state == "away" and (f.away or {}).get("why") == "blink":
@@ -2316,6 +2324,7 @@ class Battle:
 
             stink = magic.flag(f.char, "stench")  # an artifact's sour stink gives them away
         skulker = f.char is not None and feats.has(f.char, "skulker")  # (Skulker: the fog of war)
+        skulker = skulker or domains.blessed(f.char)  # (Blessing of the Trickster)
         roll = dice.d20(self.rng, advantage=skulker, disadvantage=stink).natural
         total = roll + f.skill("stealth")
         self.dice_say(f"Stealth ({f.name}): {roll} {signed_mod(f.skill('stealth'))} = {total}")
@@ -2767,6 +2776,9 @@ class Battle:
                            durations.until(self, guard, "turn_start"))  # (and every attack on them, until then)
             why.append(f"{guard.name}'s shield")
             self.say(f"{guard.the_name} gets {guard.possessive} shield in the way.", "good" if guard.side == PARTY else "info")
+        dis, flare = domains.warding_flare(self, att, target, opt, adv, dis)  # (a Light cleric's Warding Flare)
+        if flare:
+            why.append(flare)
         foretold = self.foretold(att, "attack", self.target_ac(att, target, opt)[0] - opt.bonus, target=target,
                                  adv=adv, dis=dis, big=att.creature is not None and float(att.cdef.get("cr", 0) or 0) >= 5)
         roll = dice.d20(self.rng, advantage=adv, disadvantage=dis)
@@ -3385,6 +3397,11 @@ class Battle:
             self.say(f"{f.the_name} is bleeding out.", "danger")
 
     def _kill(self, f: Fighter, cause: str, killer: Fighter | None = None) -> None:
+        if getattr(self, "prayers", None) and f.char is not None and f.bond is None and f.id in self.prayers:
+            from realmwalker.rules import miracles
+
+            if miracles.answer(self, f):
+                return  # (the god of the devout answers: DMG 2024 Divine Intervention)
         if f.shape is not None:
             self.unshape(f, quiet=True)  # (what dies is the creature itself, not its borrowed form)
         if "possessed" in f.conditions:
@@ -3963,11 +3980,13 @@ class Battle:
     def _turn_to_dust(self, att: Fighter, f: Fighter) -> None:
         """Brought to 0 hit points by a mummy's fist: dead at once, and nothing left but dust (only True Resurrection
         or a wish reaches them: game/revival.problem)."""
+        self._kill(f, "the mummy's rot", killer=att)
+        if f.state != "dead":
+            return  # (their god answered: rules/miracles.py)
         if f.char is not None:
             from realmwalker.rules.servants import DUST
 
             f.char.effects[DUST] = 1.0
-        self._kill(f, "the mummy's rot", killer=att)
         f.__dict__["risen"] = True  # (no body to raise or to speak with)
         self.say(f"{f.the_name[:1].upper() + f.the_name[1:]} withers to grey dust in a breath.", "danger")
 
@@ -4411,6 +4430,17 @@ class Battle:
         return int(r)
 
     def spell_targets(self, f: Fighter, sid: str) -> list[Fighter]:
+        """Whom a spell can be aimed at; with a Trickery cleric's double, also whom it can reach from the double's
+        square (seen with the cleric's own eyes)."""
+        out = self._spell_targets(f, sid)
+        tok = domains.casting_double(self, f)
+        if tok is None or not domains.casts_through(self.t.spells[spell_id(sid)]):
+            return out
+        with domains.standing_in(self, f, tok):
+            more = self._spell_targets(f, sid)
+        return out + [x for x in more if x not in out and self.can_see(f, x)]
+
+    def _spell_targets(self, f: Fighter, sid: str) -> list[Fighter]:
         spell = self.t.spells[spell_id(sid)]
         target = spell["target"]
         if f.char is None and f.creature is not None and (f.cdef.get("spellcasting") or {}).get("self_only") \
@@ -4446,7 +4476,17 @@ class Battle:
         return []
 
     def spell_points(self, f: Fighter, sid: str) -> set[tuple[int, int]]:
-        """Squares a spell aimed at a point (or in a direction) can be aimed at."""
+        """Squares a spell aimed at a point (or in a direction) can be aimed at; with a Trickery cleric's double, also
+        those it reaches from the double's square (seen with the cleric's own eyes)."""
+        out = self._spell_points(f, sid)
+        tok = domains.casting_double(self, f)
+        if tok is None or not domains.casts_through(self.t.spells[spell_id(sid)]):
+            return out
+        with domains.standing_in(self, f, tok):
+            more = self._spell_points(f, sid)
+        return out | {p for p in more if p not in out and self.can_see_point(f, *p)}
+
+    def _spell_points(self, f: Fighter, sid: str) -> set[tuple[int, int]]:
         spell = self.t.spells[spell_id(sid)]
         if spell["target"] == "direction":
             out = set()
@@ -4584,6 +4624,16 @@ class Battle:
 
     def do_cast(self, f: Fighter, sid: str, target: Fighter | None = None, slot_level: int | None = None,
                 point: tuple[int, int] | None = None) -> bool:
+        tok = domains.cast_from_double(self, f, sid, target, point) if self.tokens else None
+        if tok is None:
+            return self._do_cast(f, sid, target, slot_level, point)
+        self._event("double_cast", id=tok.id, by=f.id)  # (Invoke Duplicity: the spell comes from the double)
+        self.say(f"The spell comes from {f.the_name}'s double.", "magic")
+        with domains.standing_in(self, f, tok):
+            return self._do_cast(f, sid, target, slot_level, point)
+
+    def _do_cast(self, f: Fighter, sid: str, target: Fighter | None = None, slot_level: int | None = None,
+                 point: tuple[int, int] | None = None) -> bool:
         if sid.startswith("wish:redo:"):  # (Wish's Roll Redo: no spell, no aim)
             return self.do_redo(f, int(sid.split(":")[2]))
         if self.jar_still(f):

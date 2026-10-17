@@ -886,6 +886,8 @@ FAITH = Obj(
         "values": List(Str(choices=VALUE_IDS)),
         # (Planar Ally, Expansion 3 F.5: the spirit this god sends, a summoned creature and its form)
         "ally": Obj({"creature": Str(max_len=40), "form": Str(max_len=30)}, optional=True),
+        # (Expansion 5 Part B: the cleric domains its priests serve, and so its miracles: game/gods.py)
+        "domains": List(Str(choices=["life", "light", "trickery", "war"]), min_items=1, optional=True),
     }
 )
 FACTION_KIND = Obj(

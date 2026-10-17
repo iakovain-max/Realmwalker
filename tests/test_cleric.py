@@ -51,7 +51,7 @@ def test_the_domain_comes_at_three_and_channel_divinity_grows(tables):
     c = hero(tables, "cleric", level=2)
     assert c.subclass is None and res.maximum(c, res.pools(c, tables)["channel_divinity"]) == 2
     progression.award_xp(c, tables.rules["xp_for_level"][2], tables, RNG(1), auto=True)
-    assert c.level == 3 and c.subclass in ("life", "war")
+    assert c.level == 3 and c.subclass in tables.classes["cleric"]["subclasses"]  # (their god's domain: Expansion 5 B)
     c18 = cleric(tables, 18)
     assert res.maximum(c18, res.pools(c18, tables)["channel_divinity"]) == 4
 
