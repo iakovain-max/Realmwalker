@@ -858,9 +858,11 @@ def _touch_heal(b: Battle, f: Fighter) -> bool:
     it was given."""
     from realmwalker.rules.engine import estimates
 
+    from realmwalker.rules.combat import cast_kind
+
     for sid in b.creature_spells(f):
         sp = b.t.spells[sid]
-        bonus = sp.get("cast") == "bonus"
+        bonus = cast_kind(f, sp, sid) == "bonus"
         revive = sp["target"] == "dead_ally" and spellrules.has_op(sp, "revive") and not bonus
         ends = ([c for o in spellrules.ops(sp) if o["op"] == "restore" for c in o.get("conditions", ())]
                 if sp["target"] == "ally" else [])
@@ -1121,7 +1123,7 @@ def _try_area_attack(b: Battle, f: Fighter, opt: AttackOption, need: int | None 
         if far and (b.gap(f, t) > far or not b.can_see(f, t)):
             continue  # (a bomb thrown at a point it can see within its range)
         cells = b.area_cells(f, a, (t.x, t.y))
-        hit = b.in_area(cells, "all", f)
+        hit = b.in_area(cells, "enemies" if a.get("enemies") else "all", f)
         enemies = sum(1 for x in hit if x.team != f.team)
         friends = sum(1 for x in hit if x.team == f.team and x is not f)
         if friends and not friends_ok:

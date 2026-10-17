@@ -152,6 +152,13 @@ def land_budget(game, rng: RNG, *, difficulty: str | None = None, deeper: int = 
     return encounter.budget(game.tables, [encounter.land_level(game.tables, base, deeper)] * size, difficulty)
 
 
+def _folk_here(game) -> str:
+    """The people whose land the party stands in ("" where nobody's)."""
+    if game.world.culture is None:
+        return ""
+    return game.world.culture_at(game.player.x, game.player.y) or ""
+
+
 def make_encounter(game, group: str, rng: RNG) -> PendingEncounter:
     tables = game.tables
     from realmwalker.rules import encounter
@@ -159,6 +166,10 @@ def make_encounter(game, group: str, rng: RNG) -> PendingEncounter:
     special = float(tables.creatures.encounters[group].get("weight", 1)) == 0  # the watch, a mob: set pieces
     creatures = spawn_group(tables, group, rng, now=game.world.time, party_size=len(game.party),
                             budget=None if special else land_budget(game, rng.child("budget")))
+    folk = _folk_here(game)
+    for c in creatures:  # (people met on the road are of this land's people, and dress as its mages and priests do)
+        if not c.culture and tables.creatures[c.def_id].get("kind") == "humanoid":
+            c.culture = folk
     g = tables.creatures.encounters[group]
     stealth = max(int(tables.creatures[c.def_id].get("skills", {}).get("stealth", 0)) for c in creatures)
     their_roll = dice.d20(rng).natural + stealth
