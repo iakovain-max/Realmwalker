@@ -4209,6 +4209,8 @@ class Battle:
         down, knocked over, retching). Once a turn for each. True if it stops a move."""
         if f.z > 0 and z.fail in ("restrained", "prone"):
             return False  # (tentacles and ice catch only those on the ground)
+        if z.lasts and z.fail in f.conditions:
+            return False  # (already blinded by the glare: nothing more it can do)
         owner = next((x for x in self.fighters if x.id == z.owner), None)
         if z.fail == "restrained" and f.conditions.get("restrained") == -1 and "restrained" not in f.cond_ends:
             if z.damage and start and z.save:  # (held by the tentacles: the save again each turn, hurt if it fails)

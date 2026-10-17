@@ -28,7 +28,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Clearing the decks for the expansions** | ✅ Done (2026-10-12), branch `prep/clear-the-decks` |
 | **Expansion 1, *Dice & Destiny*** (version 1.1.0) | ✅ Released (2026-10-13), branch `dlc/01-dice-destiny` |
 | **Expansion 2, *Blades & Backgrounds*** (version 1.2.0) | ✅ Released (2026-10-13), branch `dlc/02-blades-backgrounds` |
-| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete) and D.1 to D.3 (the first 172 spells of the catalogue, cantrips to level 7, 2026-10-17) in `main`; D.4 (levels 8 and 9, Wish) next |
+| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete) and D (the spell catalogue: 191 battle spells, cantrips to level 9, and Wish, 2026-10-17) in `main`; Part E (spells outside battle) next |
 
 ---
 
@@ -39,6 +39,41 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-17 (morning): Demigods & Magics D.4 — the spell catalogue, fourth and last wave; Part D in `main`
+
+Built by the relay builder realmwalker-b, with two helpers writing the spells from the book pages.
+- **19 new spells of levels 8 and 9 that work in a fight**: Antimagic Field (no spell works within 10 feet of the
+  caster, and the field goes where they go), Befuddlement (a blasted mind: no spells for a day), Dominate Monster,
+  Earthquake (the ground heaves under the foes: down they go, and any spell they were holding is lost), Holy Aura
+  (friends near the priest have advantage on every save and are hard to hit; undead and fiends that strike them are
+  blinded), Incendiary Cloud, Maze (a foe lost in a labyrinth until it finds the way out, a hard Intelligence check
+  each turn), Mind Blank, Power Word Stun, Sunburst; and at level 9 Foresight (advantage on everything, and blows at
+  you have disadvantage), Mass Heal (700 hit points shared among your friends, the worst hurt first), Meteor Swarm
+  (four great spheres of fire and stone, laid where they catch the most foes; nobody is hit twice), Power Word Heal,
+  Power Word Kill (a foe of 100 hit points or fewer simply dies), Prismatic Wall (a wall of seven colours your foes
+  cannot pass; those who come near it are blinded), Storm of Vengeance (thunder, then acid rain, six bolts of
+  lightning, hail, and freezing wind, one each turn), Time Stop (two to five turns in a row while nobody else moves;
+  it ends the moment you touch another creature) and Weird.
+- **Wish**: choosing it in a fight opens a list. Copying any battle spell of level 8 or lower is safe and needs no
+  components (a Forcecage without its ruby dust). Or wish for Instant Health: you and up to twenty friends are whole
+  again, and the stress follows, as the book says: your Strength falls to 3 for two to eight days, every spell you cast
+  until a long rest tears at you (1d10 necrotic a spell level, in a fight and on the road), and one time in three you
+  can never cast Wish again.
+- **New things on the battle mat**: cracked heaving ground, a cloud of embers, the seven-coloured wall and its glare,
+  a dark storm with sleet, the grey of an antimagic field.
+- **A new costly component**: a gilded reliquary (1,000 gold) for Holy Aura, sold at city temples (drawn in code).
+- **The companions use them** by what they are worth: the Auto also weighs Wish's copies of the mightiest spells
+  (levels 7 and 8) against the price of its level 9 slot, and the stress of Instant Health as a heavy cost.
+- **Waiting for later parts** (in the design note): ten spells that do their work outside a fight (Antipathy/Sympathy,
+  Clone, Control Weather, Demiplane, Glibness, Telepathy, Tsunami and Imprisonment, which take a minute to cast,
+  Astral Projection, Gate, True Resurrection) and Wish's other uses come with Part E; Animal Shapes, Shapechange and
+  True Polymorph come with Part F. Storm of Vengeance and Tsunami are druid spells: they wait for the druid too.
+- **The codex**: 20 spells settled (7 exactly as the book, 13 adapted, each with its note).
+- **How to try it**: a cleric or wizard of level 15 or more prepares them (S); scrolls turn up in shops and hoards.
+- **Choices made while Anton was away** (in STATUS.md): Earthquake and Storm of Vengeance spare the caster's side, as
+  if cast from afar (on our small fields they would cover everyone); the Prismatic Wall stops friends as well as
+  foes; the Earthquake's save comes as foes enter or start a turn in it; the Incendiary Cloud does not drift.
 
 ### Session, 2026-10-17 (early morning): Demigods & Magics D.3 — the spell catalogue, third wave; in `main`
 
