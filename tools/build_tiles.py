@@ -265,6 +265,12 @@ CREATURES = {
     "construct_spirit": "monster/nonliving/iron_golem.png",
     "elemental_spirit": "monster/nonliving/earth_elemental.png",
     "giant_insect": "monster/animals/giant_centipede.png",
+    # the rest of Appendix B (Expansion 3 F.7; the big cats, elk, goats, badgers, ape, giant weasel, giant seahorse,
+    # octopus and sprite are drawn in tools/beast_art.py; recoloured ones below; the elephant is above)
+    "reef_shark": "monster/aquatic/shark_new.png",
+    "constrictor_snake": "monster/animals/anaconda_new.png",
+    "venomous_snake": "monster/animals/adder.png",
+    "imp": "monster/demons/imp.png",
     # the spirits of levels 5-6 (Expansion 3 F.3; the animated objects are drawn in tools/beast_art.py)
     "celestial_spirit": "monster/holy/angel_new.png",
     "celestial_avenger": "monster/holy/angel_new.png",
@@ -289,6 +295,14 @@ pick("creature/bugbear", "monster/boggart_new.png", "creature", hue=18, sat=0.6,
 pick("creature/slaad_spirit", "monster/animals/giant_frog.png", "creature", hue=2, sat=0.75, val=0.8)
 # A draconic spirit of flame (Summon Dragon): the pack's green dragon in a red dragon's colours.
 pick("creature/draconic_fire", "monster/dragons/dragon.png", "creature", hue=0, sat=0.8, val=0.85)
+# Expansion 3 F.7: a crocodile the alligator in a river's olive, a quasit in its sickly green, a sphinx of wonder in a bright turquoise, a pseudodragon a drake in
+# rust-red, a slaad tadpole a newt in a slaad's red, a giant crab the fire crab in a shore crab's grey-green.
+pick("creature/quasit", "monster/demons/quasit_new.png", "creature", hue=48, sat=2.0, val=0.9, floor=110)
+pick("creature/sphinx_of_wonder", "monster/sphinx_new.png", "creature", hue=122, sat=2.0, val=1.05, floor=120)
+pick("creature/crocodile", "monster/animals/alligator.png", "creature", hue=48, sat=0.55, val=0.7)
+pick("creature/pseudodragon", "monster/forest_drake.png", "creature", hue=10, sat=0.85, val=0.9)
+pick("creature/slaad_tadpole", "monster/animals/giant_newt_new.png", "creature", hue=245, sat=1.3, val=0.95)
+pick("creature/giant_crab", "monster/animals/fire_crab.png", "creature", hue=110, sat=0.45, val=0.85)
 # A hawk: the pack's shrike in a hawk's browns.
 pick("creature/hawk", "monster/animals/caustic_shrike.png", "creature", hue=28, sat=0.5, val=0.8)
 
@@ -545,11 +559,13 @@ def grade(im: Image.Image, which: str) -> Image.Image:
     return Image.fromarray(a.astype(np.uint8), "RGBA")
 
 
-def recolor(im: Image.Image, hue: float, sat: float = 1.0, val: float = 1.0) -> Image.Image:
+def recolor(im: Image.Image, hue: float, sat: float = 1.0, val: float = 1.0, floor: float = 0.0) -> Image.Image:
+    """Every pixel to one hue, its saturation and value scaled; `floor` is the least saturation (a grey picture
+    given a colour: the quasit's green)."""
     alpha = im.getchannel("A")
     hsv = np.asarray(im.convert("RGB").convert("HSV"), np.float32).copy()
     hsv[..., 0] = hue
-    hsv[..., 1] = np.clip(hsv[..., 1] * sat, 0, 255)
+    hsv[..., 1] = np.clip(np.maximum(hsv[..., 1] * sat, floor), 0, 255)
     hsv[..., 2] = np.clip(hsv[..., 2] * val, 0, 255)
     out = Image.fromarray(hsv.astype(np.uint8), "HSV").convert("RGBA")
     out.putalpha(alpha)
@@ -675,7 +691,7 @@ def gather(pack: Path) -> dict[str, Image.Image]:
             continue
         im = Image.open(f).convert("RGBA")
         if "hue" in extra:
-            im = recolor(im, extra["hue"], extra.get("sat", 1.0), extra.get("val", 1.0))
+            im = recolor(im, extra["hue"], extra.get("sat", 1.0), extra.get("val", 1.0), extra.get("floor", 0.0))
         tiles[name] = grade(im, which)
     if missing:
         raise SystemExit("Missing from the pack:\n  " + "\n  ".join(missing))

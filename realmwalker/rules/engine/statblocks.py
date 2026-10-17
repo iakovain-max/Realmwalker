@@ -56,6 +56,9 @@ def resolve(cid: str, flavour: dict, blocks: dict) -> dict:
     swap = flavour.get("action_swap", {})
     actions = [swap.get(a["id"], a) for a in sb.get("actions", [])]
     out["attacks"] = attacks(actions, extras)
+    # A bonus action that is a blow or a save against one creature (the elephant's Trample), made besides the Action.
+    out["attacks"] += [{**x, "bonus_action": True}
+                       for x in attacks([a for a in sb.get("bonus_actions", []) if a.get("kind") != "special"], extras)]
     multi = sb.get("multiattack")
     if multi and swap:
         rename = {old: new["id"] for old, new in swap.items()}
@@ -73,7 +76,7 @@ def resolve(cid: str, flavour: dict, blocks: dict) -> dict:
         out["spellcasting"] = {"ability": sc["ability"], "dc": int(dc), "attack": int(attack),
                                "at_will": list(sc.get("at_will", [])),
                                "per_day": {str(k): list(v) for k, v in (sc.get("per_day") or {}).items()},
-                               "slots": list(sc.get("slots", []))}
+                               "slots": list(sc.get("slots", [])), "self_only": bool(sc.get("self_only"))}
         out["spells"] = list(dict.fromkeys(out["spellcasting"]["at_will"]
                                            + [s for v in out["spellcasting"]["per_day"].values() for s in v]))
     # Bonus actions that cast a spell so many times a day (a fanatic's Spiritual Weapon, an acolyte's Divine Aid).
@@ -109,7 +112,8 @@ def attacks(actions: list[dict], extras: dict) -> list[dict]:
         kind = a.get("kind")
         base = {"id": a["id"], "name": a["name"].lower(), "bonus": int(a.get("bonus", 0)), "damage": a.get("damage", "0"),
                 "damage_type": a.get("type", "bludgeoning")}
-        for k in ("extra", "on_hit", "recharge", "uses", "plus_level", "with_multiattack", "spares", "dust"):
+        for k in ("extra", "on_hit", "recharge", "uses", "plus_level", "with_multiattack", "spares", "dust",
+                  "advantage_if", "requires", "fail_by", "max_size"):
             if a.get(k):
                 base[k] = a[k]
         base.update(extras.get(a["id"], {}))
@@ -174,7 +178,11 @@ def ops(block_effects: list[dict]) -> list[dict]:
                 e = {**e, "save": e["save_to_avoid"]}
             if e.get("escape_dc"):
                 o["escape"] = int(e["escape_dc"])
+            if e.get("while") == "grappled":
+                o["with"] = "grappled"  # (Restrained while Grappled: it ends with the hold)
             ends = e.get("ends")
+            if ends == "damage":
+                o["on_damage"], ends = True, None  # (the pseudodragon's sleep: until it takes damage)
             if ends in ENDS:
                 o["ends"] = ENDS[ends]
             if ends == "repeat_save":

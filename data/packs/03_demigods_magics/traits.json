@@ -36,6 +36,10 @@
     "devils_sight": {"name": "Devil's Sight", "text": "Magical darkness does not stop its darkvision.", "where": "Battle.can_see"},
     "yugoloth_step": {"name": "Yugoloth's Step", "text": "After each blow of its Claws, hit or miss, it can teleport up to 30 feet to a space it can see.", "hooks": [{"event": "attack_done", "as": "self", "handler": "yugoloth_step"}]},
     "stench": {"name": "Stench", "text": "Any creature that starts its turn within 5 feet makes a Constitution save or is Poisoned until the start of its next turn; one that saves is spared it for the fight.",
-               "hooks": [{"event": "turn_start", "as": "any", "handler": "stench"}]}
+               "hooks": [{"event": "turn_start", "as": "any", "handler": "stench"}]},
+    "running_leap": {"name": "Running Leap", "text": "With a 10-foot run it leaps far further than its Strength would carry it (a lion: 25 feet).",
+                     "where": "Fighter.jump"},
+    "burst_of_ingenuity": {"name": "Burst of Ingenuity", "text": "Twice a day, its Reaction: +2 to a saving throw it or a friend within 30 feet has just failed, when that turns it.",
+                           "hooks": [{"event": "d20_after", "as": "any", "handler": "burst_of_ingenuity", "reaction": true}]}
   }
 }

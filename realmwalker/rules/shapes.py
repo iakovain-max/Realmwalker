@@ -57,9 +57,15 @@ def strength(tables, cid: str) -> float:
     return avg(d["hp"]) + 3 * blows + 2 * int(d.get("ac", 10))
 
 
+def breathes_only_water(tables, cid: str) -> bool:
+    """A form that would flounder on dry ground (an octopus, a reef shark): never a friend's (Expansion 3 F.7)."""
+    return "water_breathing" in tables.creatures[cid].get("traits", ())
+
+
 def best(tables, f, kinds) -> str | None:
-    """The strongest form a friend may take (None: none)."""
-    out = forms(tables, kinds, challenge(f))
+    """The strongest form a friend may take (None: none); never one that breathes only water, as fights are on dry
+    ground until they go under the sea."""
+    out = [c for c in forms(tables, kinds, challenge(f)) if not breathes_only_water(tables, c)]
     return max(out, key=lambda c: (strength(tables, c), c)) if out else None
 
 

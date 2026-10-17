@@ -17,6 +17,7 @@ MODIFIER_KEYS = {
     "immune_condition", "attacks", "drag_free", "vulnerable", "check", "initiative",
 }
 MODIFIER_EXTRAS = {"when", "why", "abilities", "against", "skills"}
+ATTACK_REQUIRES = {"target_prone"}  # (a stat block attack's `requires`: Battle.attack_problem)
 
 
 def problems(tables) -> list[str]:
@@ -96,10 +97,19 @@ def problems(tables) -> list[str]:
             if o.get("op") == "condition" and o.get("condition") not in cond.table(tables):
                 out.append(f"data/spells.json: {sid} gives the condition '{o.get('condition')}', which data/conditions.json "
                            "does not define.")
+    from realmwalker.rules.engine import query
+
     for cid, c in tables.creatures.defs.items():
         for t in c.get("traits", []):
             if t not in defs:
                 out.append(f"data/creatures.json: {cid} has the trait '{t}', which data/traits.json does not define.")
+        for a in c.get("attacks", []):
+            if a.get("advantage_if") and a["advantage_if"] not in query.ADVANTAGE_IF:
+                out.append(f"data/statblocks.json: {cid}'s {a['name']} has Advantage if '{a['advantage_if']}', "
+                           "which the rules cannot test.")
+            if a.get("requires") and a["requires"] not in ATTACK_REQUIRES:
+                out.append(f"data/statblocks.json: {cid}'s {a['name']} requires '{a['requires']}', which the rules "
+                           "cannot test.")
     for rid, r in tables.races.items():
         for t in r.get("traits", []):
             if t.get("rule") and t["rule"] not in defs:

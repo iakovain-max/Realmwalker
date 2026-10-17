@@ -65,6 +65,9 @@ def remove(f, cid: str) -> None:
     f.sources.pop(cid, None)
     if had and cid == "unconscious":
         f.conditions["prone"] = -1
+    for other, e in list(f.cond_ends.items()):
+        if e.get("with") == cid:  # (a crocodile's hold: Restrained while Grappled)
+            remove(f, other)
 
 
 def tick(b, f, at: str) -> None:
