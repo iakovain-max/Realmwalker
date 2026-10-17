@@ -463,6 +463,22 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   buff keys glib, unnoticed (Mislead, Invisibility), disguise, nondetection (Battle.thinks); disguise spells say
   `"disguise": "dc"` (waymagic.after_lasting); camp wards decoy, mouth, veil (`spellwork.ward_minutes`: rounds or
   `days`). Tests: tests/test_spells_road4.py.
+- Locks and stone, weather and land (Expansion 3 E.5): road ops `does` lock/mend/hand/make/stone/chest/weather/plants/
+  wave are `game/stonework.py` (kinds in `spells.E5_KINDS`). Arcane Lock's doors are `door_locked` with feature
+  `arcane` (the party steps through: `stonework.through_own_lock` from `dungeon.bump`); inn rooms in
+  `renown.flags["arcane_rooms"]` (services._night). Knock in the cells: `law.attempt_escape` (+10, a slot). Mage Hand:
+  `flags["mage_hand"]` read by `law.steal_from_shop`. Creation's things carry the tag "conjured:<minute>" (vanish in
+  `stonework.tick`; `economy.sell_price` refuses them). Passwall's cells and their old ground are in
+  `lm.meta["passwall"]` (closed by `stonework.on_step` from `dungeon.on_step`). Leomund's Secret Chest: items tagged
+  "ethereal" weigh nothing (`ItemTable.weight`), cannot be worn (`inventory.equip`) or sold, are `glamour.hidden_thing`;
+  coin in `flags["secret_chest"]`; the replica's `use.recall` calls it back. Control Weather is `flags["weather"]`
+  applied in `survival.weather` (`stonework.held_weather`); Control Water the lasting key `part_water`
+  (`GameState.magic_crossing` "parted"); Move Earth the camp ward "earthworks". Plant Growth is a battle spell with
+  `road_too: "plants"` and `road_minutes` (Enrichment: `flags["enriched"]`, camp foraging doubled); its Overgrowth is
+  zone "overgrowth": `Field.zone_thick` (20 feet a square in `grid.step_feet`/`paths`), and a zone op's `spare`
+  leaves out the squares near the caster's friends. Tsunami (`does: "wave"`) is cast from the encounter screen (w)
+  when a band was seen first (`stonework.wave_casters`/`wave`); a Fighter made from a dead creature starts "dead" and
+  `Battle.start` ends a fight with no foe standing. Tests: tests/test_spells_road5.py.
 - Gear and tools 2024 (Expansion 2 part D): items.json `pack` (opens into its contents, gear.open_pack), `helps`
   {search, traps, force, disguise} (dungeon.helps, law.put_on_disguise), `utilize` (a tool's 2024 uses, on its card),
   `carry` also on carried containers (each kind once, Sheet.pack_carry), `trinket` (data/trinkets.json; the name and

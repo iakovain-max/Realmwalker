@@ -294,7 +294,7 @@ system is built once and every spell that uses it comes with it.
     gives Advantage on Intimidation in the talk that follows.
   - The law: every one of them is magic seen (law.magic_check) where it is cast before witnesses; a spell on a
     person is noticed when it ends (the charmed know, the enthralled do not).
-- [ ] E.5 Locks and stone, weather and land (14 spells). The old E.5 was split in two at its start (2026-10-17): 28
+- [x] E.5 Locks and stone, weather and land (14 spells). The old E.5 was split in two at its start (2026-10-17): 28
   spells and Wish's other uses, each a system of its own, were too many for one part; lasting protections and great
   magic became E.6. Locks and stone: knock, arcane lock, mending, mage hand, fabricate, stone shape, passwall, move
   earth, creation, Leomund's secret chest. Weather and land: control water, control weather, plant growth, tsunami.

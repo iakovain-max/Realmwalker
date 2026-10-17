@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 03 Demigods & Magics · Part E (spells outside battle), E.5 next · branch dlc/03-demigods-magics
+Current: 03 Demigods & Magics · Part E (spells outside battle), E.6 next · branch dlc/03-demigods-magics
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -17,10 +17,12 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   Lore, Tongues, Speak with Dead, Sending, Dream, Detect Thoughts...) and E.4 (minds and the law, disguise and
   illusion, the small arts: Friends, Enthrall, Zone of Truth, Geas, Modify Memory, Glibness, Antipathy/Sympathy,
   Awaken, Disguise Self, Seeming, the images, Mislead, Project Image, Illusory Script, Sequester, the camp's
-  illusions, Druidcraft, Thaumaturgy...)
+  illusions, Druidcraft, Thaumaturgy...) and E.5 (locks and stone, weather and land: Knock, Arcane Lock, Mending, Mage
+  Hand, Fabricate, Creation, Stone Shape, Passwall, Move Earth, Leomund's Secret Chest, Control Water, Control
+  Weather, Plant Growth, Tsunami)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
-  adapted); Expansion 3: 202 done, 263 adapted, 1 omitted of 558 (parts A, B, C, D, E.1, E.2, E.3 and E.4 settled). PHB 60% · DMG 12% · MM 8%
+  adapted); Expansion 3: 202 done, 277 adapted, 1 omitted of 558 (parts A, B, C, D and E.1 to E.5 settled). PHB 61% · DMG 12% · MM 8%
 Assumptions waiting for Anton:
 - The Player2 AI writer is removed (tagged `before-ai-removal`); its text is replaced everywhere by the game's own
   words, strengthened where they were thin.
@@ -254,18 +256,44 @@ Assumptions waiting for Anton:
   Glibness, Disguise Self and Seeming are never cast in a fight (no use there). New components: jade dust (25 GP: one
   pinch serves Magic Mouth's 10 GP), lead ink, a pinch of diamond dust (Nondetection's 25 GP); rare stones of 1,000
   and 5,000 GP now sold in cities (for Awaken and Sequester).
+- Expansion 3 E.5: E.5 was split at its start (28 spells and Wish's other uses): locks and stone, weather and land are
+  E.5; lasting protections, great magic and Wish's other uses are E.6. Knock works underground (a locked door or
+  chest within 60 feet; the whole level is alerted) and in the cells (+10 on the escape check; the slot is spent);
+  suppressing an Arcane Lock is left out. Arcane Lock locks a dungeon door beside you (open or closed) to everything
+  but the party, who step through it to the square beyond; in a town it locks your room at that town's inn for good
+  (no inn thief). Mending mends the most worn thing by 25, up to 75 (a break, not the wear of years). Mage Hand is a
+  thief's tool in a town: the next theft from a stall with Advantage; caught, the merchant cries witchcraft (-20,
+  the magic seen) and no theft is done. Fabricate makes up to three batches of a camp craft at once, without tools,
+  fire or a check (an artisan's craft needs someone trained in its tools). Creation makes gear of plant stuff (24
+  hours) or stone (12 hours) only: metal, gems and coin are left out; it vanishes at its time, no merchant buys it.
+  Stone Shape opens one square of wall for good; Passwall up to four for an hour, closing when a step on that level
+  comes after the hour (whoever is inside is put out where it began). Move Earth is a camp ward: the night's visitors
+  are seen climbing the bank (awake, and seeing them first). Leomund's Secret Chest takes the coin and the treasure
+  (gems, art, ingots: trade goods with no use), the spare arms and armour, or both; never what is worn, food, drink,
+  tools or anything magic; the exquisite chest goes too; things in it weigh nothing, cannot be worn, sold or used, and
+  no robber, thief or watchman takes them; the replica calls it back (no slot); after 60 days each day has a 5%
+  growing chance (5%, 10%...) that it is lost. Control Water is a lasting spell of ten minutes that parts the next river
+  on the road (no flood, whirlpool or redirected flow; never cast in a fight). Control Weather: five choices (clear,
+  rain or snow, calm, warm +10, cool -10) for 8 hours within two map tiles, at once (the book: a stage at a time).
+  Plant Growth's Overgrowth costs 4 feet a foot (a new kind of ground) in a 100-foot sphere but within two squares of
+  the caster's friends as it is cast; its Enrichment doubles the forage of that map tile for a year and is a deed
+  (+3 with the owner, fame) in a hamlet, village or town. Tsunami is cast from the meeting screen only when the band
+  was seen first: 6d10 bludgeoning to each (Strength save for half), a minute passes, then the fight begins with them
+  knowing you; its later rounds are left out; a band drowned to the last is a fight won (XP and loot as ever).
 Ideas for later:
 - (none yet)
-Next session starts at: task E.5 in docs/expansions/03-demigods-magics.md (Part E, spells outside battle: locks and
-stone, weather and land, lasting protections, great magic and Wish's other uses; its spells are listed in the design
-note under E.5; it is the last of Part E). About 28 spells: split it at its start if needed, as E.2 and E.4 were.
+Next session starts at: task E.6 in docs/expansions/03-demigods-magics.md (Part E, spells outside battle: lasting
+protections, great magic and Wish's other uses; its spells are listed in the design note under E.6; it is the last of
+Part E, so Part E goes to `main` with it). 13 spells and Wish's six other uses: write E.6's "How" in the design note
+first, as E.5's is written.
 The way of Part E: a spell outside a fight has `road_only` (or `minutes`) and an op {"op": "road", "does": ...}
-(rules/spells.ROAD_USES and the kinds in E3_KINDS/E4_KINDS, checked at start-up), done in a module of its own
-(game/divining.py, speech.py, glamour.py...) through game/spellwork.py's door (subjects, problem, cast);
+(rules/spells.ROAD_USES and the kinds in E3_KINDS/E4_KINDS/E5_KINDS, checked at start-up), done in a module of its own
+(game/divining.py, speech.py, glamour.py, stonework.py...) through game/spellwork.py's door (subjects, problem, cast);
 game/magic.cast_on_road spends the slot and passes the casting time. A lasting spell (ten minutes or more) is a buff
 kept on the character (rules/engine/marks.py lists the keys); a camp ward is {"does": "ward", "ward": ...} with
 rounds or `days` (spellwork.ward_minutes); a spell aimed at something chosen lists Subjects (game/divining.Subject).
-Tests: tests/test_spells_outside.py, test_spells_road2.py, road3, road4. Parts A to D and E.1 to E.4 are in `main`.
+A spell used both in a fight and outside one has `road_too` and `road_minutes` (Plant Growth). Tests:
+tests/test_spells_outside.py, test_spells_road2.py, road3, road4, road5. Parts A to D and E.1 to E.5 are in `main`.
 
 ## Done
 
@@ -296,6 +324,7 @@ Tests: tests/test_spells_outside.py, test_spells_road2.py, road3, road4. Parts A
 | 2026-10-17 | Demigods & Magics E.2: light, the body on the move and travel by magic (34 spells: Teleport by its table, Teleportation Circle, Word of Recall, Wind Walk, Water Walk, Etherealness, Feather Fall, Feign Death...); E.2 split, E.3 next; merged into `main` | `dlc/03-demigods-magics` |
 | 2026-10-17 | Demigods & Magics E.3: finding and seeing (Detect Magic, Find Traps, Locate Object and Creature, Clairvoyance, Arcane Eye, Scrying, Drawmij's Instant Summons...), asking the powers from the world's truth (Augury, Divination, Commune, Contact Other Plane, Commune with Nature, Legend Lore), talking (a language rule on the road, Tongues, Speak with Animals and Dead, Sending, Dream's nightmare, Detect Thoughts); merged into `main` | `dlc/03-demigods-magics` |
 | 2026-10-17 | Demigods & Magics E.4: minds and the law (Friends, Enthrall, Zone of Truth, Geas, Modify Memory, Glibness, Antipathy/Sympathy, Awaken), disguise and illusion (Disguise Self, Seeming, the images, Mislead, Project Image, Illusory Script, Nystul's Magic Aura, Nondetection, Sequester, the camp's illusions), the small arts (Druidcraft, Elementalism, Prestidigitation, Thaumaturgy); E.4 split, E.5 next; merged into `main` | `dlc/03-demigods-magics` |
+| 2026-10-17 | Demigods & Magics E.5: locks and stone (Knock, Arcane Lock, Mending, Mage Hand, Fabricate, Creation, Stone Shape, Passwall, Move Earth, Leomund's Secret Chest), weather and land (Control Water, Control Weather, Plant Growth with a new four-feet-a-foot ground, Tsunami from the meeting screen); E.5 split, E.6 next; merged into `main` | `dlc/03-demigods-magics` |
 
 ## Notes for the next session
 
