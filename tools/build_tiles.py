@@ -208,6 +208,7 @@ CREATURES = {
     "ghost": "monster/undead/ghost_new.png",
     "wraith": "monster/undead/wraith.png",
     "mummy": "monster/undead/mummy.png",
+    "ghast": "monster/undead/necrophage_new.png",  # (Create Undead's ghast: Expansion 3 F.4)
     "lich": "monster/undead/lich.png",
     "vampire": "monster/undead/vampire_new.png",
     "skeleton_large": "monster/undead/skeletons/skeleton_humanoid_large_new.png",
@@ -458,6 +459,8 @@ pick("item/elemental_vial", "item/potion/golden.png", "item")
 pick("item/silver_reliquary", "item/amulet/face_1_gold.png", "item", hue=40, sat=0.08, val=1.0)
 pick("item/dragon_token", "item/misc/misc_quad.png", "item")
 pick("item/bloody_vial", "item/potion/ruby_new.png", "item", hue=0, sat=0.9, val=0.6)
+# Create Undead's black onyx (Expansion 3 F.4): a stone gone dark.
+pick("item/black_onyx", "item/misc/misc_stone_new.png", "item", hue=260, sat=0.15, val=0.35)
 for i, path in enumerate(["item/gold/gold_pile_1.png", "item/gold/gold_pile_3.png", "item/gold/gold_pile_7.png",
                           "item/gold/gold_pile_16.png"]):
     pick(f"item/_coins_{i}", path, "item")

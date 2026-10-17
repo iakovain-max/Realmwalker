@@ -28,7 +28,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Clearing the decks for the expansions** | ✅ Done (2026-10-12), branch `prep/clear-the-decks` |
 | **Expansion 1, *Dice & Destiny*** (version 1.1.0) | ✅ Released (2026-10-13), branch `dlc/01-dice-destiny` |
 | **Expansion 2, *Blades & Backgrounds*** (version 1.2.0) | ✅ Released (2026-10-13), branch `dlc/02-blades-backgrounds` |
-| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete), D (the spell catalogue: 191 battle spells, cantrips to level 9, and Wish) E.1 (spells outside battle: healing, return from death, food, shelter and watch), E.2 (light, the body on the move, travel by magic), E.3 (finding and seeing, asking the powers, talking), E.4 (minds and the law, disguise and illusion, the small arts), E.5 (locks and stone, weather and land), E.6 (lasting protections and the caster's keeping) and E.7 (great magic and Wish's other uses, 2026-10-17: Part E complete) and F.1 (a familiar and a steed fight beside you), F.2 (summoned spirits of levels 2 to 4) and F.3 (the level 5 and 6 spirits and Animate Objects) in `main`; F.4 (the dead and the bound) next |
+| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete), D (the spell catalogue: 191 battle spells, cantrips to level 9, and Wish) E.1 (spells outside battle: healing, return from death, food, shelter and watch), E.2 (light, the body on the move, travel by magic), E.3 (finding and seeing, asking the powers, talking), E.4 (minds and the law, disguise and illusion, the small arts), E.5 (locks and stone, weather and land), E.6 (lasting protections and the caster's keeping) and E.7 (great magic and Wish's other uses, 2026-10-17: Part E complete) and F.1 (a familiar and a steed fight beside you), F.2 (summoned spirits of levels 2 to 4) and F.3 (the level 5 and 6 spirits and Animate Objects) and F.4 (the raised dead: Animate Dead, Create Undead, Finger of Death's zombie, the ghast and the mummy) in `main`; F.5 (the bound: Planar Ally, Planar Binding) next |
 
 ---
 
@@ -39,6 +39,56 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-17 (afternoon): Demigods & Magics F.4 — the dead rise to serve you
+
+Built by the relay builder realmwalker-a. Saves do not change: an old world of format 18 still loads. Part F was split
+once more at the start: this part is the raised dead; Planar Ally and Planar Binding (the bound) are the next part,
+and the shape-changing spells the one after.
+- **Animate Dead** (3rd level, clerics and wizards; a minute to cast, outside a fight): after a fight, the bodies of
+  the people you killed can be **raised as zombies**, and the bones of skeletons you smashed, or the old dead of a
+  crypt's level underground, as **skeletons**. One at the spell's own level, two more for every higher slot. They are
+  yours for **a day**. Cast the spell again before the day is out to **hold up to four of them for another day**
+  (more with a higher slot); the Spells page offers both ("raise the dead here", "hold your dead for another day").
+- **Create Undead** (6th level, clerics, warlocks and wizards; **only at night**): three corpses rise as **ghouls**;
+  with a 7th-level slot four; with an 8th-level slot five ghouls, or two **ghasts** or two **wights**; with a 9th-level
+  slot six ghouls, three ghasts or wights, or two **mummies**. Each corpse needs a **black onyx** stone (150 GP, sold
+  in cities; the stones are not used up). They too must be held again each day.
+- **In a fight** your dead stand beside you and do nothing but keep out of harm's way until you **command them with
+  your bonus action** ("Command the dead" in your list; the word carries 60 feet for Animate Dead's, 120 for Create
+  Undead's). One command sends them all. On Auto a companion gives the word whenever a foe stands.
+- **If you do not hold them**, two hours before the day runs out the log warns you ("The dead grow restless").
+  When it does run out, out in the land **they turn on you**: a fight with your own dead. In a town they shamble off
+  into the dark instead. If their master dies, they go free at once.
+- **The dead and other people**: your dead follow you through the wild and underground (they walk behind the party
+  on the close-up map), but **never come into a town or village**: they wait outside the walls and fall in behind you
+  again when you leave. They do not eat, sleep or heal: what a fight takes from them stays taken. Twelve at most
+  will answer one master. Devout companions hate to see the dead raised.
+- **Finger of Death** now does what the book says: a person it kills **gets up at the start of your next turn as your
+  zombie**. It follows your spoken orders (no bonus action needed) and **keeps serving you after the fight, for
+  good**. A foe's Finger of Death raises a zombie for them, for that fight.
+- **Two new undead**: the **ghast** (its stench sickens anyone beside it; its claws paralyse the living) and the
+  **mummy** (slow, fire burns it badly, its glare frightens, and its **rotting fists curse**: no healing while the
+  fight lasts, and a party member it struck **keeps the rot** afterwards, losing 3d6 of their hit point maximum every
+  day and unable to heal, until **Remove Curse** lifts it and gives the strength back). Anyone a mummy's fist drops
+  to 0 hit points **dies and turns to dust**: only True Resurrection can bring them back. For now they come only as
+  Create Undead's servants (or as your freed dead); they will be met in the wild with the undead expansion.
+- **A fix from F.1**: the Spells page now lists Find Familiar's forms and Find Steed's looks (before, those spells
+  could not be cast from it).
+- Pictures: the ghast, the black onyx stone (the mummy, the zombie, the skeleton, the ghoul and the wight had theirs).
+- Checked: tests for raising zombies and skeletons by the slot, the crypt's bones, holding them again, the warning,
+  the fight with the freed dead out in the land and their leaving in a town, a dead master's servants going free,
+  the twelve-servant limit; Create Undead at night only, by the slot, with the onyx stones; the dead in a fight
+  waiting for the word, the word's reach, the player's and the Auto's commands; Finger of Death's zombie for you and
+  for a foe; the ghast's stench and claws, the mummy's glare, rot and dust, the rot carried and lifted. The arena fights
+  the ghast and the mummy (the ghast now both bites and claws); the autoplay bot checks every servant record and that
+  nobody heals under a mummy's rot; the whole test suite, the autoplay bot and the window smoke test. The fresh
+  review's fixes: a fighter no longer looks like a spellcaster to the game after walking a close-up map (an empty
+  list of servants had been left on everyone); rotting away to nothing is a real death (the death screen, a
+  companion's body kept for raising); a spell of return clears the dust, True Resurrection lifts the rot and gives
+  back exactly what it took; a mummy's fist turns to dust only someone it drops to 0, not someone already down; the
+  warning that your dead grow restless now comes in the middle of a long rest, not after it. The "Your music" page
+  now writes a mood's particular folders as their paths (travel/pine_forest).
 
 ### Session, 2026-10-17 (afternoon): Demigods & Magics F.3 — angels, dragons, fiends and walking furniture
 

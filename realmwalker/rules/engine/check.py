@@ -79,7 +79,8 @@ def problems(tables) -> list[str]:
                            "which the game does not know.")
             if o.get("op") == "road" and o.get("does") == "travel" and o.get("how") not in spellrules.TRAVELS:
                 out.append(f"data/spells.json: {sid} travels by '{o.get('how')}', which the game does not know.")
-            kind = {**spellrules.E3_KINDS, **spellrules.E4_KINDS, **spellrules.E5_KINDS, **spellrules.E6_KINDS}.get(o.get("does")) \
+            kind = {**spellrules.E3_KINDS, **spellrules.E4_KINDS, **spellrules.E5_KINDS, **spellrules.E6_KINDS,
+                    **spellrules.F4_KINDS}.get(o.get("does")) \
                 if o.get("op") == "road" else None
             if kind is not None and o.get(kind[0]) not in kind[1]:
                 out.append(f"data/spells.json: {sid} is for '{o.get('does')}' {kind[0]} '{o.get(kind[0])}' outside a "

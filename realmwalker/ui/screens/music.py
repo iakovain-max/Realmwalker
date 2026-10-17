@@ -143,7 +143,8 @@ class MusicScreen(Screen):
             parts = []
             for k in kinds:
                 n = self.library.count(f"{mood}/{k}")[0]
-                parts.append(f"<good>{k} ({n})</>" if n else f"<dim>{k}</>")
+                where = f"{mood}/{k}"  # (a folder's own name, written as its path: the player makes it so)
+                parts.append(f"<good>{where} ({n})</>" if n else f"<dim>{where}</>")
             lines += ["", f"<dim>More particular folders inside it (empty ones borrow from {mood}):</>", ", ".join(parts)]
         yy = y
         for line in lines:

@@ -1066,6 +1066,8 @@ class Battle:
                     f.buffs.remove(b)
         f.move_left = f.speed
         marks.after_turn_start(self, f)  # (Slow: no bonus action)
+        if self.__dict__.get("risings"):
+            self._rise_as_zombies(f)  # (Finger of Death: the slain rise as its caster's turn begins)
         if extra:  # (Time Stop: a fresh turn, but nothing wears down, nothing burns, nothing bleeds)
             self._follow_auras()
             if f.active:
@@ -2430,6 +2432,8 @@ class Battle:
         marks.after_hit(self, att, target, opt, guarded)  # (Armor of Agathys)
         if opt.extra.get("on_hit") and target.active:
             self._block_effects(att, target, opt, opt.extra["on_hit"])
+        if opt.extra.get("dust") and target.state == "down" and before > 0:
+            self._turn_to_dust(att, target)  # (a mummy's Rotting Fist: brought to 0 by it, they die and crumble)
         if opt.extra.get("disease") and target.char and self.rng.chance(float(opt.extra.get("disease_chance", 1.0))):
             target.char.conditions.append(f"exposed:{opt.extra['disease']}")
         events.emit(self, "attack_done", actor=att, target=target, opt=opt, hit=True, crit=crit,
@@ -2441,6 +2445,10 @@ class Battle:
         a = opt.extra
         self._spend_use(att, opt)
         att.hidden = 0
+        spared = att.__dict__.setdefault("spared", set()) if a.get("spares") else set()
+        if target.id in spared:  # (a mummy's Dreadful Glare: one who withstood it is spared it for the day)
+            self.say(f"{target.the_name} meets {att.the_name}'s {a['name'].lower()} and does not flinch.", "info")
+            return False
         self.say(f"{att.the_name} uses {a['name'].title()} on {target.the_name}.", "danger" if target.side == PARTY else "info")
         self._event("cast", by=att.id, to=target.id, spell=a.get("id", a["name"]), effect="save", dtype=opt.damage_type,
                     area=list(target.cells), point=None, shape="")
@@ -2452,6 +2460,8 @@ class Battle:
             self._event("save", who=target.id, ok=saved)
         if not saved and target.active and a.get("on_fail"):
             self._block_effects(att, target, opt, a["on_fail"])
+        if saved and a.get("spares"):
+            spared.add(target.id)
         return not saved
 
     def _block_effects(self, att: Fighter, target: Fighter, opt: AttackOption, block_effects: list[dict]) -> None:
@@ -2900,7 +2910,11 @@ class Battle:
         self._event("dead", who=f.id)
         if killer is not None and killer.bond is not None:
             killer = self.fighter(killer.bond["owner"])  # (what a familiar or a steed kills, its owner is known for)
-        if f.creature and f.bond is not None:
+        if f.creature and f.bond is not None and f.bond.get("kind") == "servant":
+            f.creature.alive = False  # (the raised dead fall, and this time they stay down: Expansion 3 F.4)
+            self._clear_bonded(f)
+            self.say(f"{f.the_name[:1].upper() + f.the_name[1:]} falls apart, and nothing moves it again.", "danger")
+        elif f.creature and f.bond is not None:
             f.creature.alive = False  # (it disappears at 0 hit points, leaving nothing: PHB 2024)
             self._clear_bonded(f)
             self._event("vanish", who=f.id)
@@ -3421,11 +3435,14 @@ class Battle:
         if self.burning(f):
             out.append(("put_out", "Put out the flames (roll on the ground)", f.action > 0,
                         "" if f.action > 0 else "no action left"))
-        if self.objects_of(f):
-            told = all(x.bond.get("told") == self.round for x in self.objects_of(f))
-            ok = f.bonus > 0 and not told
-            out.append(("command_objects", "Command the animated objects (bonus action)", ok,
-                        "" if ok else ("they have their orders" if told else "no bonus action left")))
+        waiting = self.commanded_of(f)
+        if waiting:
+            told = all(x.bond.get("told") == self.round for x in waiting)
+            near = [x for x in waiting if self.within_word(f, x)]
+            ok = f.bonus > 0 and not told and bool(near)
+            out.append(("command_objects", f"{self.command_words(f)} (bonus action)", ok,
+                        "" if ok else ("they have their orders" if told else "no bonus action left" if f.bonus <= 0
+                                       else "none of them is near enough to hear")))
         return out
 
     # ------------------------------------------------------------------ Animate Objects (Expansion 3 F.3)
@@ -3433,33 +3450,111 @@ class Battle:
         """The things `f` animated that still stand."""
         return [x for x in self.allies_of_owner(f) if x.bond.get("kind") == "objects" and x.active]
 
+    # ------------------------------------------------------------------ the raised dead (Expansion 3 F.4)
+    def _turn_to_dust(self, att: Fighter, f: Fighter) -> None:
+        """Brought to 0 hit points by a mummy's fist: dead at once, and nothing left but dust (only True Resurrection
+        or a wish reaches them: game/revival.problem)."""
+        if f.char is not None:
+            from realmwalker.rules.servants import DUST
+
+            f.char.effects[DUST] = 1.0
+        self._kill(f, "the mummy's rot", killer=att)
+        f.__dict__["risen"] = True  # (no body to raise or to speak with)
+        self.say(f"{f.the_name[:1].upper() + f.the_name[1:]} withers to grey dust in a breath.", "danger")
+
+    def mark_rising(self, caster: Fighter, victim: Fighter, cid: str) -> None:
+        """A creature slain by Finger of Death will rise as `cid` at the start of its slayer's next turn."""
+        rows = self.__dict__.setdefault("risings", [])
+        if not any(r["who"] == victim.id for r in rows):
+            rows.append({"by": caster.id, "who": victim.id, "as": cid})
+
+    def _rise_as_zombies(self, f: Fighter) -> list[Fighter]:
+        """Those `f` slew with Finger of Death stand up again as its zombies, where they fell; they act right after
+        it and follow its spoken orders (no Bonus Action: played like any ally). A party caster keeps them after the
+        fight (rules/servants.after); a foe's go with the fight."""
+        from realmwalker.rules import servants
+
+        rows = self.__dict__.get("risings") or []
+        mine = [r for r in rows if r["by"] == f.id]
+        self.__dict__["risings"] = [r for r in rows if r["by"] != f.id]
+        out = []
+        for r in mine:
+            body = self.fighter(r["who"])
+            if body is None or body.state != "dead" or body.__dict__.get("risen") or r["as"] not in self.t.creatures:
+                continue
+            body.__dict__["risen"] = True
+            hp = servants.avg_hp(self.t, r["as"])
+            uid = max([servants.UID + 5000] + [x.creature.uid + 1 for x in self.fighters if x.creature is not None])
+            cr = Creature(uid=uid, def_id=r["as"], name=self.t.creatures[r["as"]]["name"], hp=hp, max_hp=hp,
+                          named=False)
+            z = self.add_ally(cr, f, "servant", spell="finger_of_death", type_="undead", point=(body.x, body.y))
+            z.bond["word"] = False
+            z.bond["keep"] = True
+            self.say(f"{body.the_name[:1].upper() + body.the_name[1:]} jerks, and gets up again: a "
+                     f"{cr.name}, and {f.the_name}'s.", "magic")
+            out.append(z)
+        return out
+
+    @staticmethod
+    def _needs_word(x: Fighter) -> bool:
+        """An animated object, or a servant raised by Animate Dead or Create Undead (Expansion 3 F.4)."""
+        return x.bond is not None and (x.bond.get("kind") == "objects"
+                                       or x.bond.get("kind") == "servant" and bool(x.bond.get("word")))
+
+    def commanded_of(self, f: Fighter) -> list[Fighter]:
+        """Everything of `f`'s that waits for its word: animated objects and the raised dead still standing."""
+        return [x for x in self.allies_of_owner(f) if self._needs_word(x) and x.active]
+
+    def within_word(self, f: Fighter, x: Fighter) -> bool:
+        """A command carries to an animated object anywhere, to the raised dead within their spell's reach."""
+        if x.bond.get("kind") != "servant":
+            return True
+        return self.gap(f, x) * grid.SQUARE_FT <= int(x.bond.get("reach", 60))
+
+    def command_words(self, f: Fighter) -> str:
+        kinds = {x.bond.get("kind") for x in self.commanded_of(f)}
+        if kinds == {"objects"}:
+            return "Command the animated objects"
+        return "Command the dead" if kinds == {"servant"} else "Command your servants"
+
     def command_objects(self, f: Fighter) -> bool:
-        """The caster's Bonus Action: every thing it animated acts on its next turn (otherwise it Dodges)."""
-        things = self.objects_of(f)
+        """The caster's Bonus Action: every thing it animated, and every one of its raised dead within the command's
+        reach, acts on its next turn (otherwise it Dodges)."""
+        things = [x for x in self.commanded_of(f) if self.within_word(f, x)]
         if not things or not self._spend(f, bonus=True):
             return False
         for x in things:
             x.bond["told"] = self.round
-        self.say(f"{f.the_name} sends {'the animated thing' if len(things) == 1 else 'the animated things'} "
-                 f"against {f.possessive if f.char is not None else 'its'} foes.", "magic")
+        kinds = {x.bond.get("kind") for x in things}
+        if kinds == {"objects"}:
+            what = "the animated thing" if len(things) == 1 else "the animated things"
+        elif kinds == {"servant"}:
+            what = f"the {things[0].cdef['name']}" if len(things) == 1 else "the dead"
+        else:
+            what = "the things and the dead that serve"
+        self.say(f"{f.the_name} sends {what} against {f.possessive if f.char is not None else 'its'} foes.", "magic")
         self._after_action(f)
         return True
 
     def _waits_for_word(self, f: Fighter) -> bool:
-        """An animated object with no command since its caster's last turn takes the Dodge action as its turn begins
-        (a creature that casts Animate Objects commands them as part of its own turn)."""
-        if f.bond is None or f.bond.get("kind") != "objects" or not f.can_act():
+        """An animated object or a raised servant with no command since its master's last turn takes the Dodge action
+        as its turn begins (a creature that casts Animate Objects commands them as part of its own turn)."""
+        if not self._needs_word(f) or not f.can_act():
             return False
         owner = self.fighter(f.bond["owner"])
         if owner is None or owner.char is None:
             return False
-        if f.bond.get("told") == self.round:  # (its caster commanded it on this round's turn)
+        if f.bond.get("told") == self.round:  # (its master commanded it on this round's turn)
             return False
         f.dodging = True
         f.action = 0
-        things = self.objects_of(owner)
-        if things and things[0] is f:
-            what = "the animated thing only keeps" if len(things) == 1 else "the animated things only keep"
+        kind = f.bond.get("kind")
+        alike = [x for x in self.commanded_of(owner) if x.bond.get("kind") == kind]
+        if alike and alike[0] is f:
+            if kind == "objects":
+                what = "the animated thing only keeps" if len(alike) == 1 else "the animated things only keep"
+            else:
+                what = f"the {f.cdef['name']} only keeps" if len(alike) == 1 else "the dead only keep"
             self.say(f"With no word from {owner.the_name}, {what} out of harm's way.", "system")
         return True
 

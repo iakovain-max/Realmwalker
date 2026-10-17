@@ -420,6 +420,17 @@ class LocalView:
                 px_, py_ = self.cell_px(fx, fy)
                 people.append((fy - 0.001, [(f"creature/{pets[i]['form']}", dolls.WHITE, 0, 0)], px_ + (T - small) / 2,
                                py_, small, _cell_light(light, cx_ - x0, cy_ - y0), False))
+        # The raised dead shamble after them, last of all (Animate Dead, Create Undead: Expansion 3 F.4).
+        from realmwalker.game import servants
+
+        dead = servants.following(game)
+        if dead:
+            taken = {(a.x, a.y) for a in lm.actors}
+            start = len(followers) + len(pets)
+            for i, (cx_, cy_) in enumerate(self._follow(game, lm, taken)[start:start + len(dead)]):
+                fx, fy = self.pos(("dead", i), cx_, cy_, now, animate)
+                people.append((fy - 0.002, [(f"creature/{dead[i]['cid']}", dolls.WHITE, 0, 0)], *self.cell_px(fx, fy),
+                               T, _cell_light(light, cx_ - x0, cy_ - y0), False))
         people.sort(key=lambda t: t[0])
         out = []
         for _, names, px_, py_, size, col, alert in people:

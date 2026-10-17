@@ -97,6 +97,11 @@ The fourth wave (D.4):
     time_stop  dice ("1d4+1"): the caster takes that many more turns in a row; it ends when an action or an
                effect of theirs reaches another creature (Battle._more_time, combat.TOUCHES)
 
+Servants (F.4):
+    rise       as (a creature id), types (creature kinds): a creature of those kinds the spell has killed rises at
+               the start of its caster's next turn as `as`, on the caster's side (Finger of Death's zombie:
+               Battle.mark_rising, _rise_as_zombies; kept after the fight by rules/servants.after)
+
 Outside a fight (Part E):
     max_up     amount (dice), per_up, count: the hit point maximum and hit points go up while the spell lasts (Aid;
                rules/spells.raise_max); in a fight too, on up to `count` friends in range
@@ -1443,6 +1448,18 @@ def _ally(c: Cast, o: dict, victim) -> None:
         allies.animate_objects(c.b, c.caster, level, c.point, sid=c.sid)
         return
     allies.summon(c.b, c.caster, o.get("kind", "steed"), level)
+
+
+@op("rise")
+def _rise(c: Cast, o: dict, victim) -> None:
+    """Finger of Death: the creature it was aimed at, if it lies dead and is of the kinds named, rises at the start
+    of the caster's next turn (Expansion 3 F.4)."""
+    x = victim if victim is not None else c.target
+    if x is None or not hasattr(x, "state") or x.state != "dead" or x.bond is not None:
+        return
+    if o.get("types") and x.kind not in o["types"]:
+        return
+    c.b.mark_rising(c.caster, x, o.get("as", "zombie"))
 
 
 @op("summon")

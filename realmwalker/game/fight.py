@@ -106,8 +106,16 @@ def start_battle(game, creatures: list[Creature], intro: str, *, surprised: str 
     from realmwalker.rules import allies as ally_rules
 
     ally_rules.bring_in(battle, [f for f in battle.side(PARTY) if f.char is not None])  # (familiars, steeds)
+    from realmwalker.game import servants
+
+    if servants.here(game):  # (the raised dead: never in a settlement's fights; Expansion 3 F.4)
+        from realmwalker.rules import servants as servant_rules
+
+        servant_rules.bring_in(battle, [f for f in battle.side(PARTY) if f.char is not None and f.bond is None])
     if situation == "camp":
         for f in battle.side(PARTY):
+            if f.bond is not None and f.bond.get("kind") == "servant":
+                continue  # (the raised dead never sleep: they stand where they were left)
             f.conditions["prone"] = -1  # caught asleep: on the ground, and getting up takes half a move
     _magic_at_the_start(game, battle)
     from realmwalker.game import warding
@@ -210,6 +218,9 @@ def finish_battle(game) -> Aftermath:
     from realmwalker.game import allies
 
     allies.after_battle(game, battle)  # (what became of a familiar or a steed)
+    from realmwalker.game import servants
+
+    servants.after_battle(game, battle)  # (the raised dead: hit points kept, the fallen struck off, new zombies)
     for f in battle.side(PARTY):
         c = f.char
         if c is None:

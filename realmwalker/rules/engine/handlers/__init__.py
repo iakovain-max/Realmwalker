@@ -11,7 +11,8 @@
     cleric.py     the 2024 cleric (Divine Spark, Blessed Strikes, Divine Intervention), the Life and War Domains
     wizard.py     the 2024 wizard (Overchannel, the ward's mending, Counterspell)
     summons.py    the summoned spirits' traits and the fey spirit's moods (Expansion 3 F.2)
+    undead.py     the raised dead's traits: the ghast's Stench, the mummy's rot (Expansion 3 F.4)
 """
 
 from realmwalker.rules.engine.handlers import (boons, cleric, feats, features, fighter, general_feats,  # noqa: F401
-                                               mastery, monsters, rogue, summons, wizard)  # noqa: F401  (registering is importing)
+                                               mastery, monsters, rogue, summons, undead, wizard)  # noqa: F401  (registering is importing)

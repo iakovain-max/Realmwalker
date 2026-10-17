@@ -321,6 +321,10 @@ class GameState:
             self.world.time += step
             remaining -= step
             survival.tick(self, step, activity)
+            if any(c.spells.get("servants") or c.effects.get("kept:mummy_rot") for c in self.party):
+                from realmwalker.game import servants
+
+                servants.tick(self)  # (the raised dead: their hold, going free; a mummy's rot)
             if self.over is not None:
                 self.world.time += remaining
                 break

@@ -1140,8 +1140,9 @@ def _abilities(b: Battle, f: Fighter, does: str) -> list[tuple]:
 
 
 def _command_objects(b: Battle, f: Fighter) -> None:
-    """Animate Objects: the Bonus Action that sends the animated things at the foes, whenever a foe stands."""
-    if f.bonus > 0 and b.objects_of(f) and any(e.standing for e in b.enemies_of(f)):
+    """Animate Objects, Animate Dead, Create Undead: the Bonus Action that sends the animated things and the raised
+    dead at the foes, whenever a foe stands."""
+    if f.bonus > 0 and b.commanded_of(f) and any(e.standing for e in b.enemies_of(f)):
         if any(aid == "command_objects" and ok for aid, _, ok, _ in b.class_abilities(f)):
             b.do_ability(f, "command_objects")
 

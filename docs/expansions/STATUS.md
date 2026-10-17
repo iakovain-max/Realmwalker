@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 03 Demigods & Magics · Part F (familiars, steeds and summons), F.4 next · branch dlc/03-demigods-magics
+Current: 03 Demigods & Magics · Part F (familiars, steeds and summons), F.5 next · branch dlc/03-demigods-magics
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -25,10 +25,11 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   Spell Immunity, Sudden Learning, Reshape Reality, and Roll Redo in a fight: Part E complete) and F.1 (allies on
   the field: Find Familiar's twelve forms and Find Steed's Otherworldly Steed fight beside their owner) and F.2
   (summoned spirits of levels 2-4: Summon Beast, Fey, Undead, Aberration, Construct, Elemental, Giant Insect) and F.3
-  (the spirits of levels 5-6 and Animate Objects: Summon Celestial, Summon Dragon, Summon Fiend, Animate Objects)
+  (the spirits of levels 5-6 and Animate Objects: Summon Celestial, Summon Dragon, Summon Fiend, Animate Objects) and
+  F.4 (the raised dead: Animate Dead, Create Undead, Finger of Death's zombie, the ghast and the mummy)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
-  adapted); Expansion 3: 202 done, 315 adapted, 1 omitted of 558 (parts A to E and F.1 to F.3 settled). PHB 61% · DMG 12% · MM 8%
+  adapted); Expansion 3: 203 done, 318 adapted, 1 omitted of 560 (parts A to E and F.1 to F.4 settled). PHB 61% · DMG 12% · MM 8%
 Assumptions waiting for Anton:
 - The Player2 AI writer is removed (tagged `before-ai-removal`); its text is replaced everywhere by the game's own
   words, strengthened where they were thin.
@@ -362,16 +363,40 @@ Ideas for later:
   is not kept. A creature the player commands now makes its Multiattack's attacks (it made one before), and a breath
   it is given is aimed at the target. The 500 GP reliquary is a new "silver reliquary" (the 1,000 GP gilded one, Holy
   Aura's, serves too).
-Next session starts at: task F.4 in docs/expansions/03-demigods-magics.md (Part F: the dead and the bound - Animate
-Dead (a skeleton or a zombie from bones or a corpse; four held again each day by a new casting; commanded with the
-Bonus Action as F.3's animated objects are), Create Undead (ghouls, ghasts, wights, mummies by the slot), Finger of
-Death's zombie, Planar Ally and Planar Binding (and Magic Circle reversed): servants that outlast a fight, follow the
-party outside it and must be held again or they go free). Write F.4's "How" first. The pages (PHB PDF): Animate Dead
-243, Create Undead 261, Finger of Death 276, Planar Ally 307, Planar Binding 308; the stat blocks in the MM (skeleton
-285, zombie 349, ghoul 135, ghast 133, wight 335, mummy 222; page images with tools/codex/extract.py --render mm N).
-Build on rules/allies (F.1's records kept on the owner for servants that outlast a fight; F.3's commanding:
-`Battle.objects_of`, `command_objects`, `_waits_for_word`).
-Part E and F.1 to F.3 are in `main`.
+- Expansion 3 F.4: Part F was split again at its start (F.4 the dead; F.5 the bound: Planar Ally, Planar Binding,
+  Magic Circle turned inward; F.6 shapes). The bodies Animate Dead and Create Undead raise are the fresh dead of the
+  last fight where it was fought (six hours, as for Speak with Dead), the skeletons it destroyed and a crypt level's
+  six piles of old bones; the party's own fallen are not raised (they are kept for a spell of return). A command is
+  the battle's Bonus Action only (a general order such as guarding a place is left out). Twelve servants at most to a
+  master. Unheld, the dead turn on the party out in the land (an encounter, seen coming) and wander off anywhere
+  else; a dead master's go free at once. The dead never enter a settlement's close-up map (they wait outside) and do
+  not heal. Create Undead's choice of ghouls, ghasts, wights or mummies is the player's (a choice above the slot
+  falls back to ghouls, said in the log); the onyx stones are kept. The ghast's Stench and the mummy's Glare spare one
+  who saves for the fight (the book: 24 hours). The mummy's rot outside a fight: hit points kept no higher than they
+  were (checked as time passes), the maximum 3d6 lower each day, at 0 dust; Remove Curse lifts it (Greater
+  Restoration does not yet). Dust: only True Resurrection (its "cures") reaches the body.
+Next session starts at: task F.5 in docs/expansions/03-demigods-magics.md (Part F: the bound - Planar Ally (a spirit
+of the cleric's god for a price: 1,000 GP an hour, 10,000 a day up to ten days; the F.3 celestial, elemental or
+fiendish spirit at the spell's level as the creature, the god's kind deciding which), Planar Binding (a captive
+celestial, elemental, fey or fiend - the 2025 goblins, hobgoblins and bugbears are fey and gnolls fiends, so captives
+from `renown.flags["captives"]` qualify - or a Planar Ally's spirit, bound for 24 hours, 10, 30, 180 or 366 days by
+the slot; a Charisma save; the jewel of 1,000 GP consumed) and Magic Circle turned inward (a Planar Ally's spirit
+will not stay an hour to be bound unless held in it). Write F.5's "How" first. The pages (PHB PDF): Planar Ally 307-308,
+Planar Binding 308, Magic Circle 296 (its reversal: the cylinder holds what is inside). Build on F.4's servants
+(rules/servants.py records with `until`, game/servants.py tick and freeing; a bound creature acts on its own, `word`
+False).
+Part E and F.1 to F.4 are in `main`.
+The way of Part F (F.4): a servant is a record in `char.spells["servants"]` {id, cid, name, hp, max_hp, spell, word,
+reach, until, made, warned} (rules/servants.py: add, hold, due, soon, bring_in from fight.start_battle when
+game/servants.here, after from finish_battle); in a fight bond kind "servant" with `word` (waits for
+`Battle.command_objects`, now also "Command the dead" and "Command your servants": `commanded_of`, `within_word`,
+`_needs_word`, `_waits_for_word`), `reach`, `rid`, and `keep` for a zombie risen in the fight (the effects op "rise":
+`Battle.mark_rising`, `_rise_as_zombies` at its caster's turn start). game/servants.py: the road op "raise" (how
+"dead"/"ghouls", `spells.F4_KINDS`; spellwork.SERVANTS), the bodies (`corpses`, `bones`), `tick` from pass_time
+(warning, `_go_free`: the encounter "raised_dead"), `died`, `following` (localview draws them), the mummy's rot
+(`_rot_day`, `lift_rot`). Marks kept until lifted are "kept:" effects (rules/health leaves them alone):
+`servants.ROT`, `ROT_HP`, `ROT_LOST`, `ROT_DAYS`, `DUST` (revival.problem). Kernel: handler "stench", special
+"mummy_rot", an attack's `spares` (Battle._save_action) and `dust` (`Battle._turn_to_dust`). Tests: tests/test_servants.py.
 The way of Part F (F.3): a summoned creature's form may say `attack_types` {attack: type} (a draconic spirit's
 breath), `shared` (a resistance its caster gets while the spell holds: a buff with `conc`), `ac` (+2 for the Defender)
 and its record `per_day` (a creature spell once a summoning: Healing Touch); an attack with `with_multiattack` is part

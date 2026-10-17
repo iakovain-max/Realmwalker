@@ -382,16 +382,24 @@ def cursed_on(c: Character) -> list:
 
 
 def _uncurse(game, caster: Character, spell: dict, level: int, target: Character) -> list[str]:
+    from realmwalker.game import servants
+
+    out = []
+    if servants.lift_rot(target):  # (a mummy's rot: Expansion 3 F.4)
+        out.append(f"{_first(caster)} lays a hand on {_first(target)}, and the grey rot in the flesh dries up and "
+                   f"flakes away. <good>The curse is lifted; the strength it ate comes back.</>")
     things = cursed_on(target)
+    if not things:
+        return out
     names = []
     for it in things:
         it.magic["loosed"] = True
         it.magic["curse_known"] = True
         target.attuned = [u for u in target.attuned if u != it.uid]
         names.append(escape_markup(game.tables.items.name(it, False)))
-    return [f"{_first(caster)} lays a hand on {_first(target)}: the grip of the {', the '.join(names)} loosens. "
-            f"<dim>The curse is still in it, but it can be taken off and thrown away now; put on again, it "
-            f"takes hold again.</>"]
+    return out + [f"{_first(caster)} lays a hand on {_first(target)}: the grip of the {', the '.join(names)} loosens. "
+                  f"<dim>The curse is still in it, but it can be taken off and thrown away now; put on again, it "
+                  f"takes hold again.</>"]
 
 
 def _regenerate(game, caster: Character, spell: dict, level: int, target: Character) -> list[str]:
@@ -450,6 +458,8 @@ WARDING = ("protect", "hallow", "demiplane", "cauldron")
 GREAT = ("contingency", "jar", "clone", "imprison", "wish")
 # Part F.1's: a familiar and a steed (game/allies.py)
 ALLIES = ("familiar", "steed")
+# Part F.4's: the raised dead (game/servants.py)
+SERVANTS = ("raise",)
 
 
 def _does(spell: dict) -> str | None:
@@ -487,6 +497,10 @@ def subjects(game, caster: Character, sid: str) -> list:
         from realmwalker.game import allies
 
         return allies.subjects(game, caster, sid)
+    if does in SERVANTS:
+        from realmwalker.game import servants
+
+        return servants.subjects(game, caster, sid)
     return []
 
 
@@ -522,6 +536,10 @@ def problem(game, caster: Character, sid: str, target) -> str | None:
         from realmwalker.game import allies
 
         return allies.problem(game, caster, sid, target)
+    if does in SERVANTS:
+        from realmwalker.game import servants
+
+        return servants.problem(game, caster, sid, target)
     if does == "ward":
         ward = _road(spell)["ward"]
         rec = wards_here(game).get(ward)
@@ -542,7 +560,7 @@ def problem(game, caster: Character, sid: str, target) -> str | None:
         return waymagic.problem(game, caster, sid, target)
     if does == "purify" and spoiled_things(game) == ([], []):
         return "nothing you carry has turned or gone foul"
-    if does == "uncurse" and (target is None or not cursed_on(target)):
+    if does == "uncurse" and (target is None or not cursed_on(target) and not target.effects.get("kept:mummy_rot")):
         return "no curse holds them"
     if does == "regenerate" and (target is None or (target.hp >= target.max_hp and not target.wounds
                                                     and not any(i.startswith("lost_") for i in target.injuries))):
@@ -560,12 +578,13 @@ def cast(game, caster: Character, sid: str, target: Character | None, level: int
     spell = game.tables.spells[sid]
     does = _does(spell)
     if does in DIVINING or does in SPEECH or does in GLAMOUR or does in STONEWORK or does in WARDING or does in GREAT \
-            or does in ALLIES:
-        from realmwalker.game import allies, divining, glamour, greatmagic, speech, stonework, warding
+            or does in ALLIES or does in SERVANTS:
+        from realmwalker.game import allies, divining, glamour, greatmagic, servants, speech, stonework, warding
 
         out = (divining if does in DIVINING else speech if does in SPEECH else glamour if does in GLAMOUR
                else stonework if does in STONEWORK else warding if does in WARDING
-               else allies if does in ALLIES else greatmagic).cast(game, caster, sid, target, level)
+               else allies if does in ALLIES else servants if does in SERVANTS
+               else greatmagic).cast(game, caster, sid, target, level)
         game.cue("spell")
         game.dirty = True
         return out

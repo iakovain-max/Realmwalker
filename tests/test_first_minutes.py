@@ -158,7 +158,7 @@ def test_travel_days_read_like_speech(make_app):
 
 
 SLIPS = {
-    "a raw id": r"(?<![\w/.])[a-z]+_[a-z0-9_]+(?![\w/.])",
+    "a raw id": r"(?<![\w/.\\])[a-z]+_[a-z0-9_]+(?![\w/.\\])",  # (not in a path: a folder's name is meant)
     "the the": r"\b[Tt]he the\b",
     "died died": r"\bdied died\b",
     "1 and a plural": r"(?<![\d.,])1 (days|hours|pints|miles|weeks)\b",
