@@ -583,8 +583,8 @@ class BattleBoard:
                 for (x, y) in z.cells:
                     px, py = self.sq_px(x, y)
                     canvas.under(Image("bweb", _web_image, (px, py, T, T), rgba=(235, 235, 225, 210), smooth=False))
-            elif z.kind in ("plants", "grease", "spikes", "daggers"):
-                make = {"plants": _vines_image, "grease": _grease_image, "spikes": _thorns_image,
+            elif z.kind in ("plants", "grease", "spikes", "daggers", "overgrowth"):
+                make = {"plants": _vines_image, "overgrowth": _vines_image, "grease": _grease_image, "spikes": _thorns_image,
                         "daggers": _blades_image}[z.kind]
                 for i, (x, y) in enumerate(sorted(z.cells)):
                     px, py = self.sq_px(x, y)

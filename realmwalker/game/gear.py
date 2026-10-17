@@ -485,6 +485,8 @@ def use_name(game, item) -> str | None:
         return "Drink the antitoxin"
     if any(t.startswith("summons:") for t in item.tags):
         return "Crush the sapphire"
+    if use.get("recall"):
+        return "Call back the secret chest"
     if game.tables.items.get(item.def_id).get("pack"):
         return "Open the pack"
     return None
@@ -517,6 +519,10 @@ def use_item(game, char: Character, item) -> list[str]:
     name = use_name(game, item)
     if name == "Sharpen blades":
         return hone(game)
+    if name == "Call back the secret chest":
+        from realmwalker.game import stonework
+
+        return stonework.recall_chest(game)
     if name == "Mend gear":
         return mend(game)
     if name == "Set it for the night":

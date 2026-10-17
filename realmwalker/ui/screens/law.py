@@ -138,7 +138,10 @@ class SentenceScreen(Screen):
         if s is None or s.get("finished") or self.game.over is not None:
             return [("enter", "Go on", "close")]
         if s.get("gallows"):
-            return [("e", f"[Sleight of Hand / Athletics] Try to get out of the cell tonight (very hard)", "escape_gallows"),
+            from realmwalker.game import stonework
+
+            how = "Knock +10" if stonework.knock_in_cell(self.game) is not None else "Sleight of Hand / Athletics"
+            return [("e", f"[{how}] Try to get out of the cell tonight (very hard)", "escape_gallows"),
                     ("a", "Wait for the morning", "hang")]
         step = law.next_step(self.game)
         if step is None:
@@ -149,7 +152,10 @@ class SentenceScreen(Screen):
                  "labour": f"Serve {n} days of hard labour"}.get(kind, "Go on")
         out = [("enter", label, "step")]
         if kind in ("jail", "labour"):
-            out.append(("e", "[Sleight of Hand / Athletics] Try to escape instead", "escape"))
+            from realmwalker.game import stonework
+
+            how = "Knock +10" if stonework.knock_in_cell(self.game) is not None else "Sleight of Hand / Athletics"
+            out.append(("e", f"[{how}] Try to escape instead", "escape"))
         return out
 
     def act(self, action: str) -> None:

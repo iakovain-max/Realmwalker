@@ -75,7 +75,8 @@ On the one marked (the buff is on the creature):
   Walk's flight), ethereal (Etherealness), pathfinding (Find the Path); Part E.3's words on the road (game/speech.py):
   comprehend (any tongue understood), tongues (understood and spoken), beast_speech (talking with beasts); Part
   E.4's (game/glamour.py): glib (a Charisma check's die is 15 at least), unnoticed (in a town nobody sees the one
-  under it: Mislead, Invisibility), disguise (a disguise spell; its quality is in renown.flags["disguise_dc"]).
+  under it: Mislead, Invisibility), disguise (a disguise spell; its quality is in renown.flags["disguise_dc"]); Part
+  E.5's: part_water (Control Water: the next river is crossed on its dry bed, GameState.magic_crossing).
     nondetection    no divination of a foe finds it: a foe's sense_thoughts does not (Nondetection)
 On the one who gains (the caster, or a friend):
     hit_extra       dice (with hit_type, hit_with "weapon" | "melee" | "any"): extra damage on its hits (Divine Favor)
@@ -115,8 +116,11 @@ BUFF_KEYS = frozenset({
     "comprehend", "tongues", "beast_speech", "linked", "sense_thoughts",
     # Part E.4's (minds and illusions, game/glamour.py): Glibness, unseen in a town, a disguise, no divination finds
     "glib", "unnoticed", "disguise", "nondetection",
+    # Part E.5's (game/stonework.py): Control Water parts the next river
+    "part_water",
 })
 ZONES = frozenset({"web", "fire", "fog", "ice", "caltrops", "bearings", "darkness", "antimagic", "plants", "grease",
+                   "overgrowth",  # (Part E.5: Plant Growth, four feet of movement a foot)
                    "spikes", "daggers", "moonbeam", "sphere", "silence",
                    # the second wave's (D.2): ground with a save and what a failure brings (Battle._ground)
                    "tentacles", "cloud", "stench", "hunger", "insects", "sleet", "radiance", "spirits", "elemental",

@@ -56,6 +56,13 @@ class EncounterScreen(Screen):
         food, why = encounter_bait_food(self.game)
         if food is not None or why == "you have not enough food to throw them":
             out.append(("b", "Throw them food and back away", "bait", food is not None, why))
+        from realmwalker.game import stonework
+
+        waves = stonework.wave_casters(self.game)
+        if waves:
+            c, sid = waves[0]
+            out.append(("w", f"{c.name.split()[0]} calls up a great wave ({self.game.tables.spells[sid]['name']}: "
+                             "6d10, then the fight)", "wave", enc.spotted_first, "they have already seen you"))
         return out
 
     def act(self, action: str) -> None:
@@ -77,6 +84,12 @@ class EncounterScreen(Screen):
             encounter_pay(game)
         elif action == "bait":
             encounter_bait(game)
+        elif action == "wave":
+            from realmwalker.game import stonework
+
+            for line in stonework.wave(game):
+                game.say(line, "info")
+            encounter_fight(game, ambush=False)  # (the drowned lie on the field: a fight already won is ended at once)
         self.close()  # the game screen opens the battle, if there is one
 
     def handle_key(self, ev: KeyEvent) -> bool:
@@ -122,4 +135,4 @@ class EncounterScreen(Screen):
         canvas.hit(0, 0, canvas.width, canvas.height)
 
     def autoplay_keys(self) -> list[KeyEvent]:
-        return [KeyEvent(k) for k in ("l", "f", "a", "s", "t", "p", "b", "enter")]
+        return [KeyEvent(k) for k in ("l", "f", "a", "s", "t", "p", "b", "w", "enter")]

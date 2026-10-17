@@ -1084,6 +1084,12 @@ def _zone(c: Cast, o: dict, victim) -> None:
              if o.get("heal") else "",
              breaks=bool(o.get("breaks")), lasts=int(o.get("lasts", 0)), stages=list(o.get("stages", ())),
              cast={"dc": c.dc, "mod": c.mod, "level": c.level, "up": c.up})
+    if o.get("spare"):  # (Plant Growth: the caster leaves out the ground round its friends, as the book lets)
+        r = int(o["spare"])
+        for x in b.on_field():
+            if x.team == f.team:
+                z.cells -= {(cx + dx, cy + dy) for (cx, cy) in x.cells for dx in range(-r, r + 1)
+                            for dy in range(-r, r + 1)}
     if o.get("follow"):  # (Antimagic Field: it goes where the caster goes)
         z.follows = True
         z.radius = max(1, int((spell.get("area") or {}).get("size", 10)) // grid.SQUARE_FT)

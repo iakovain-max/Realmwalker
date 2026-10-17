@@ -132,7 +132,7 @@ class Zone:
 
     @property
     def difficult(self) -> bool:
-        return self.rough or self.kind in ("web", "ice", "guardians", "plants", "grease", "spikes")
+        return self.rough or self.kind in ("web", "ice", "guardians", "plants", "grease", "spikes", "overgrowth")
 
     @property
     def holds(self) -> bool:
@@ -207,6 +207,8 @@ class Fighter:
         self.sq = grid.footprint(self.size)
         self.initiative = 0
         self.state = "fighting"  # fighting, fleeing, down, dead, fled, surrendered
+        if creature is not None and (creature.hp <= 0 or not creature.alive):
+            self.state = "dead"  # (killed before the fight began: Tsunami's wave, game/stonework.py)
         self.conditions: dict[str, int] = {}  # the 2024 conditions (data/conditions.json): rounds left, -1 until ended
         self.sources: dict[str, int] = {}  # who caused a condition, where that matters (rules/engine/query.source)
         self.cond_ends: dict[str, dict] = {}  # how a condition ends, when it is timed by turns (rules/engine/durations.py)
@@ -791,6 +793,7 @@ class Battle:
         self._known_from_before()
         order = ", ".join(self.fighter(i).name for i in self.order)
         self.say(f"Order of battle: {order}.", "system")
+        self._check_end()  # (a band drowned to the last before it began: Tsunami)
 
     def _known_from_before(self) -> None:
         """What the party has killed before, it knows (the rest is learned with the Study action, 2024)."""
@@ -4204,6 +4207,7 @@ class Battle:
         W, H = self.field.width, self.field.height
         opaque = np.zeros((W, H), dtype=bool)
         difficult = np.zeros((W, H), dtype=bool)
+        thick = np.zeros((W, H), dtype=bool)
         for z in self.zones:
             for (x, y) in z.cells:
                 if 0 <= x < W and 0 <= y < H:
@@ -4211,7 +4215,9 @@ class Battle:
                         opaque[x, y] = True
                     if z.difficult and z.kind != "guardians":
                         difficult[x, y] = True
-        self.field.set_zones(opaque, difficult)
+                    if z.kind == "overgrowth":
+                        thick[x, y] = True
+        self.field.set_zones(opaque, difficult, thick)
 
     def _follow_auras(self) -> None:
         """An aura (Spirit Guardians) moves with whoever carries it; an aura that helps friends (Crusader's Mantle,

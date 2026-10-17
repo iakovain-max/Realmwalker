@@ -447,6 +447,8 @@ class GameState:
             return "over"
         if waymagic.everyone(self, "water_breathing") and self.biome_key(x, y) != "ocean":
             return "under"
+        if self.world.river[x, y] and self.biome_key(x, y) not in ("ocean", "lake") and waymagic.anyone(self, "part_water"):
+            return "parted"  # (Control Water: the river stands aside, and its bed is crossed dry)
         return None
 
     @property
@@ -513,6 +515,9 @@ class GameState:
                      "up again soaked to the skin.", "warn")
         elif crossing == "over":
             self.say("You walk on the water as on a road, dry-shod.", "info")
+        elif crossing == "parted":
+            self.say("The river draws back on either side like two walls of glass, and you cross on its wet stones, "
+                     "dry-shod.", "info")
         elif fording:
             river = self.world.river_at(nx, ny)
             name = f"the {river.name.removeprefix('the ')}" if river else "a river"

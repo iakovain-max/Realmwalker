@@ -618,6 +618,12 @@ def attempt_escape(game, dc: int) -> tuple[bool, str]:
     skill = "sleight_of_hand" if sheet.skill_bonus("sleight_of_hand") >= sheet.skill_bonus("athletics") else "athletics"
     roll = dice.d20(rng_for(game, "escape")).natural + sheet.skill_bonus(skill)
     how = "work the lock with a bent nail" if skill == "sleight_of_hand" else "wrench a bar loose"
+    from realmwalker.game import stonework
+
+    knock = stonework.knock_out(game)  # (Knock: the lock is no bar, only the run; a slot spent)
+    if knock is not None:
+        roll += stonework.KNOCK_ESCAPE
+        how = knock
     realm_id = s["realm"]
     if roll >= dc:
         s["escaped"] = True
@@ -847,7 +853,12 @@ def steal_from_shop(game, npc, item_id: str) -> tuple[bool, str]:
     from realmwalker.game import glamour
 
     rng = rng_for(game, f"steal/{npc.id}/{item_id}")
-    roll = dice.d20(rng).natural + sheet.skill_bonus("sleight_of_hand")
+    from realmwalker.game import stonework
+
+    hand = stonework.hand_ready(game)  # (Mage Hand: from 30 feet away, with Advantage)
+    if hand:
+        stonework.spend_hand(game)
+    roll = dice.d20(rng, advantage=hand).natural + sheet.skill_bonus("sleight_of_hand")
     watch_dc = 11 + (3 if "suspicious" in npc.traits else 0) - (2 if "weary" in npc.traits else 0)
     watch_dc = max(5, watch_dc - glamour.watcher_minus(game, npc))  # (Enthrall, an illusion: eyes elsewhere)
     value = int(game.tables.items.get(item_id)["value"])
@@ -859,11 +870,18 @@ def steal_from_shop(game, npc, item_id: str) -> tuple[bool, str]:
         add_item(game.leader, game.tables.items, item_id, 1, made_at=game.world.time, tags=["stolen"])
         seen_by = [n for n in witnesses_here(game, exclude=[npc])
                    if dice.d20(rng).natural + 1 - glamour.watcher_minus(game, n) >= roll]
-        text = f"<loot>The {name} goes into your sleeve.</> <dim>(Sleight of Hand {roll} vs {watch_dc})</>"
+        text = (f"<loot>{'A spectral hand lifts the ' + name + ' and brings it to you' if hand else 'The ' + name + ' goes into your sleeve'}"
+                f".</> <dim>(Sleight of Hand {roll} vs {watch_dc}{', Mage Hand: advantage' if hand else ''})</>")
         if seen_by:
             text += f" <warn>But {seen_by[0].label()} saw.</>"
             commit(game, "theft", victim=npc, value=value, witnesses=seen_by)
         return True, text
+    if hand:  # (the hand is seen, not you: nobody can grab your wrist, but the magic was seen)
+        change_disposition(npc, -20)
+        npc.remember("saw a ghostly hand at the stall")
+        magic_check(game, game.leader)
+        return False, (f"<warn>\"Witchcraft!\"</> {npc.first_name} slaps at a spectral hand over the stall, and it "
+                       f"lets the {name} fall. <dim>(Sleight of Hand {roll} vs {watch_dc}, Mage Hand)</>")
     change_disposition(npc, -40)
     npc.remember("caught the traveller stealing")
     commit(game, "theft", victim=npc, value=value, witnesses=[npc] + witnesses_here(game, exclude=[npc]))

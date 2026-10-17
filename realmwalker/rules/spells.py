@@ -26,7 +26,8 @@ ROUNDS_PER_HOUR = 600
 SHEET_KEYS = ("ac", "mage_armor", "darkvision", "speed", "skills", "check_adv", "carry",
               "steed", "servant", "water_walk", "water_breathing", "wind", "ethereal", "pathfinding",
               "comprehend", "tongues", "beast_speech",  # (Part E.3: words on the road, game/speech.py)
-              "glib", "unnoticed", "disguise")  # (Part E.4: Glibness, Mislead in a town, a disguise: game/glamour.py)
+              "glib", "unnoticed", "disguise",  # (Part E.4: Glibness, Mislead in a town, a disguise: game/glamour.py)
+              "part_water")  # (Part E.5: Control Water, the next river crossed dry: GameState.magic_crossing)
 
 
 class SpellTable:
@@ -723,7 +724,9 @@ ROAD_USES = ("feed", "water", "purify", "goodberry", "feast", "ward", "repose", 
              # Part E.3: finding and seeing, asking the powers (game/divining.py), talking (game/speech.py)
              "sense", "locate", "scout", "summons", "ask", "speak", "send", "read",
              # Part E.4: minds and the law, illusions, the small arts (game/glamour.py)
-             "mind", "illusion", "art")
+             "mind", "illusion", "art",
+             # Part E.5: locks and stone, weather and land (game/stonework.py)
+             "lock", "mend", "hand", "make", "stone", "chest", "weather", "plants", "wave")
 # What each of Part E.3's road uses is about (an op's `what`, `how` or `with`; the start-up check knows them).
 E3_KINDS = {"sense": ("what", ("magic", "evil", "poison", "traps")),
             "locate": ("what", ("object", "creature", "nature")),
@@ -734,8 +737,12 @@ E3_KINDS = {"sense": ("what", ("magic", "evil", "poison", "traps")),
 E4_KINDS = {"mind": ("how", ("friends", "enthrall", "truth", "geas", "memory", "antipathy", "awaken")),
             "illusion": ("how", ("distract", "project", "script", "mask", "sequester")),
             "art": ("how", ("druidcraft", "elementalism", "prestidigitation", "thaumaturgy"))}
+E5_KINDS = {"lock": ("how", ("knock", "arcane")),
+            "make": ("how", ("fabricate", "creation")),
+            "stone": ("how", ("shape", "passwall"))}
 WARDS = ("alarm", "hut", "hound", "rope", "mansion", "meld",
-         "decoy", "mouth", "veil")  # (Part E.4: Programmed Illusion, Magic Mouth, Hallucinatory Terrain/Mirage Arcane)
+         "decoy", "mouth", "veil",  # (Part E.4: Programmed Illusion, Magic Mouth, Hallucinatory Terrain/Mirage Arcane)
+         "earthworks")  # (Part E.5: Move Earth's ditch and bank)
 # How a "travel" spell goes (game/waymagic.py), and what a lasting spell does as it is cast outside a fight (its
 # "outside": game/waymagic.after_lasting).
 TRAVELS = ("teleport", "circle", "recall", "plants", "shift", "astral", "gate_far", "gate")

@@ -186,6 +186,7 @@ class Field:
         self.version = 0
         self.zone_opaque = np.zeros((self.width, self.height), dtype=bool)  # fog and darkness laid by spells
         self.zone_difficult = np.zeros((self.width, self.height), dtype=bool)  # webs, ice, the press of guardians
+        self.zone_thick = np.zeros((self.width, self.height), dtype=bool)  # four feet a foot (Plant Growth's Overgrowth)
         self._derive()
 
     # ------------------------------------------------------------------ what each square is
@@ -259,10 +260,11 @@ class Field:
             return True
         return False
 
-    def set_zones(self, opaque: np.ndarray, difficult: np.ndarray) -> None:
+    def set_zones(self, opaque: np.ndarray, difficult: np.ndarray, thick: np.ndarray | None = None) -> None:
         changed = not np.array_equal(opaque, self.zone_opaque)
         self.zone_opaque = opaque
         self.zone_difficult = difficult
+        self.zone_thick = thick if thick is not None else np.zeros_like(difficult)
         if changed:
             self._refresh()
 
@@ -462,6 +464,8 @@ def step_feet(field: Field, entering, *, crawling: bool = False, flying: bool = 
     Swim Speed. A flier is slowed only by what is in the air (webs, spirits)."""
     rough = any(field.zone_difficult[c] if flying else (field.rough[c] or field.zone_difficult[c]) for c in entering)
     feet = 10 if crawling or rough else 5
+    if not flying and any(field.zone_thick[c] for c in entering):
+        feet = 20  # (Plant Growth's Overgrowth: every foot costs four)
     if not flying and any((field.climb[c] and not climber) or (field.swim[c] and not swimmer) for c in entering):
         feet += 5  # (in difficult terrain that makes three feet for every foot, as the book says)
     return feet
@@ -495,6 +499,7 @@ def paths(field: Field, start: tuple[int, int], size: int, budget: int, *, block
         for c in through:
             walk[c] = True
     rough = field.zone_difficult if flying else field.rough | field.zone_difficult
+    thick = None if flying or not field.zone_thick.any() else field.zone_thick  # (Overgrowth: four feet a foot)
     hard_going = [] if flying else [m for m, easy in ((field.climb, climber), (field.swim, swimmer)) if not easy]
     labour = np.logical_or.reduce(hard_going) if hard_going else None  # climbing, swimming without the speed for it
     if labour is not None and not labour.any():
@@ -522,6 +527,8 @@ def paths(field: Field, start: tuple[int, int], size: int, budget: int, *, block
             entering = [c for c in new if not (x <= c[0] < x + size and y <= c[1] < y + size)] or new
             hard = any(rough[c] for c in entering)
             step = 10 if crawling or hard else 5
+            if thick is not None and any(thick[c] for c in entering):
+                step = 20
             if labour is not None and any(labour[c] for c in entering):
                 step += 5  # climbing, swimming (step_feet)
             ncost = cost + step
