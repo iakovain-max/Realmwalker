@@ -295,12 +295,13 @@ pick("creature/bugbear", "monster/boggart_new.png", "creature", hue=18, sat=0.6,
 pick("creature/slaad_spirit", "monster/animals/giant_frog.png", "creature", hue=2, sat=0.75, val=0.8)
 # A draconic spirit of flame (Summon Dragon): the pack's green dragon in a red dragon's colours.
 pick("creature/draconic_fire", "monster/dragons/dragon.png", "creature", hue=0, sat=0.8, val=0.85)
-# Expansion 3 F.7: a crocodile the alligator in a river's olive, a quasit in its sickly green, a sphinx of wonder in a bright turquoise, a pseudodragon a drake in
-# rust-red, a slaad tadpole a newt in a slaad's red, a giant crab the fire crab in a shore crab's grey-green.
+# Expansion 3 F.7: a crocodile the alligator in a river's olive, a quasit in its sickly green, a sphinx of wonder
+# in a bright turquoise, a pseudodragon the fire drake in rust-red, a slaad tadpole a newt in a slaad's red, a giant
+# crab the fire crab in a shore crab's grey-green.
 pick("creature/quasit", "monster/demons/quasit_new.png", "creature", hue=48, sat=2.0, val=0.9, floor=110)
 pick("creature/sphinx_of_wonder", "monster/sphinx_new.png", "creature", hue=122, sat=2.0, val=1.05, floor=120)
 pick("creature/crocodile", "monster/animals/alligator.png", "creature", hue=48, sat=0.55, val=0.7)
-pick("creature/pseudodragon", "monster/forest_drake.png", "creature", hue=10, sat=0.85, val=0.9)
+pick("creature/pseudodragon", "monster/fire_drake.png", "creature", hue=9, sat=0.7, val=0.8)
 pick("creature/slaad_tadpole", "monster/animals/giant_newt_new.png", "creature", hue=245, sat=1.3, val=0.95)
 pick("creature/giant_crab", "monster/animals/fire_crab.png", "creature", hue=110, sat=0.45, val=0.85)
 # A hawk: the pack's shrike in a hawk's browns.

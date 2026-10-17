@@ -237,10 +237,9 @@ def owl() -> Image.Image:
     return _finish(im)
 
 
-def weasel() -> Image.Image:
+def weasel(body=c(150, 92, 48), hi=c(186, 124, 70), low=c(110, 64, 32), dark=c(62, 36, 20),
+           belly=c(222, 206, 176)) -> Image.Image:
     """A weasel stretched low and long, head up and alert, a pale belly under a russet back."""
-    body, hi, low, dark = c(150, 92, 48), c(186, 124, 70), c(110, 64, 32), c(62, 36, 20)
-    belly = c(222, 206, 176)
     im = blank()
     d = ImageDraw.Draw(im)
     d.line([(3, 23), (6, 24), (9, 24)], fill=dark, width=2)                      # the tail, black at the tip
@@ -823,35 +822,8 @@ def ape() -> Image.Image:
 
 
 def giant_weasel() -> Image.Image:
-    body, hi, low, dark = c(158, 94, 46), c(196, 130, 72), c(114, 64, 30), c(60, 34, 18)
-    belly = c(226, 210, 180)
-    im = blank()
-    d = ImageDraw.Draw(im)
-    d.line([(6, 22), (3, 21), (1, 23), (1, 27)], fill=body, width=3)                       # the bushy tail
-    d.line([(1, 25), (1, 28)], fill=dark, width=2)
-    d.point((3, 22), fill=hi)
-    for x in (10, 20):                                                                      # far legs
-        d.rectangle([x, 25, x + 2, 30], fill=low)
-    d.ellipse([3, 19, 27, 29], fill=body)                                                   # the long low body
-    d.line([(7, 20), (23, 20)], fill=hi)
-    d.line([(6, 21), (10, 21)], fill=hi)
-    d.line([(8, 27), (24, 27)], fill=belly)
-    d.line([(10, 28), (22, 28)], fill=belly)
-    for x in (5, 17):                                                                       # near legs
-        d.rectangle([x, 26, x + 3, 30], fill=body)
-        d.rectangle([x, 29, x + 3, 30], fill=dark)
-        d.line([(x + 1, 26), (x + 1, 28)], fill=hi)
-    d.polygon([(21, 21), (21, 15), (24, 12), (27, 14), (26, 24), (22, 25)], fill=body)      # the neck, lifted
-    d.line([(26, 16), (26, 23)], fill=belly)
-    d.line([(22, 16), (22, 20)], fill=hi)
-    d.polygon([(23, 8), (26, 7), (30, 9), (31, 12), (30, 15), (26, 15), (23, 13)], fill=body)   # the head, small and flat
-    d.line([(25, 8), (28, 8)], fill=hi)
-    d.rectangle([28, 12, 31, 14], fill=belly)                                               # the pale muzzle
-    d.point((31, 11), fill=K)
-    d.point((26, 10), fill=K)
-    d.polygon([(23, 8), (22, 5), (25, 7)], fill=dark)                                       # the round ear
-    return _finish(im)
-
+    """A giant weasel: the weasel's lithe build in a polecat's coat, dark brown with a cream mask and belly."""
+    return weasel(c(92, 66, 46), c(128, 96, 68), c(64, 44, 30), c(34, 24, 18), c(214, 196, 160))
 
 def giant_seahorse() -> Image.Image:
     body, hi, low, dark = c(66, 134, 110), c(110, 186, 156), c(40, 94, 82), c(22, 56, 56)

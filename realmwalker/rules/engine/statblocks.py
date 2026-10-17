@@ -183,6 +183,10 @@ def ops(block_effects: list[dict]) -> list[dict]:
             ends = e.get("ends")
             if ends == "damage":
                 o["on_damage"], ends = True, None  # (the pseudodragon's sleep: until it takes damage)
+            if e.get("rounds"):
+                o["rounds"] = int(e["rounds"])  # (the pseudodragon's poison: an hour, the whole fight)
+            elif e["condition"] == "grappled" or o.get("with") or o.get("on_damage") or ends == "repeat_save":
+                o["rounds"] = -1  # (held until it breaks free, is woken or saves: not a round's worth)
             if ends in ENDS:
                 o["ends"] = ENDS[ends]
             if ends == "repeat_save":

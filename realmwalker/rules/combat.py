@@ -1040,7 +1040,8 @@ class Battle:
             if not mover.active:
                 return
             melee = r.readied == "reach"
-            opts = [o for o in self.attack_options(r) if o.available and o.is_melee == melee and self.in_reach(r, o, mover)[0]]
+            opts = [o for o in self.attack_options(r) if o.available and o.is_melee == melee and self.in_reach(r, o, mover)[0]
+                    and not o.extra.get("bonus_action") and not self.unfit_target(o, mover)]
             if not opts or not self.can_see(r, mover):
                 continue
             r.readied = None
@@ -1629,6 +1630,9 @@ class Battle:
             total, line = fighter.tactical_mind(f.char, self.t, total, dc, self.rng)
             if line:
                 self.dice_say(f"{f.name} ({line})")
+        if total < dc:  # (a friend's help with a check that failed: the sphinx's Burst of Ingenuity)
+            return events.emit(self, "d20_after", actor=f, roll="check", ability=ability, natural=roll,
+                               bonus=total - roll, dc=dc, ok=False).ok
         return total >= dc
 
     def object_at(self, cell: tuple[int, int]) -> dict | None:
@@ -1819,7 +1823,8 @@ class Battle:
         whether it was made."""
         if not e.reaction or not e.active or e.incapacitated or self.frozen(e):
             return False
-        opts = [o for o in self.attack_options(e) if o.is_melee and o.available and self.gap(e, f) <= o.reach_sq]
+        opts = [o for o in self.attack_options(e) if o.is_melee and o.available and self.gap(e, f) <= o.reach_sq
+                and not o.extra.get("bonus_action") and not self.unfit_target(o, f)]  # (no Trample as a reaction)
         cantrip = self._war_cantrip(e, f, opts)
         if not opts and cantrip is None:
             return False
@@ -2753,8 +2758,10 @@ class Battle:
         """A saving throw against damage (half on a save, or none); returns whether it was saved."""
         full = dice.roll(expr, self.rng).total if rolled is None else rolled
         saved = self._save(target, ability, dc, quiet=quiet, bonus=grid.COVER_AC[cover] if ability == "dex" else 0)
+        short = self.__dict__.get("failed_by", 0)
         self._event("save", who=target.id, ok=saved)
         self._save_hit(att, target, ability, saved, full, dtype, on_save)
+        self.__dict__["failed_by"] = short  # (this save's margin, not a concentration save the damage brought)
         return saved
 
     def _save_hit(self, att: Fighter | None, target: Fighter, ability: str, saved: bool, full: int, dtype: str,

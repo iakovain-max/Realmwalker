@@ -69,7 +69,13 @@ appendix is in: **24 creatures**, each with its picture, each a shape for Polymo
   bonus action, the crocodile's hold, the pseudodragon's sleep, the quasit opening with its fear, the sphinx's help,
   the lion's leap, the imp's invisibility, the sea creatures never a friend's shape, and where each is met; every
   new creature fought in the arena (each uses all it has). The whole test suite, the autoplay bot and the window
-  smoke test.
+  smoke test. The fresh review's fixes: **a creature's hold now lasts** until you break free (the crocodile's, the
+  constrictor's, the giant crab's, and the bugbear's grab, which before let go at your next turn), and so do the
+  pseudodragon's sleep and poison and the quasit's fear; a sleeper falls asleep even when keeping a spell going; when
+  you play a friend turned into an elephant you can **trample after the gores** (the Attack menu offers it, marked
+  "bonus action"); panthers and tigers break away when hurt or crowded; the sphinx helps with a failed ability check
+  as well as a save; a trample is never made as an opportunity attack; the giant weasel and the pseudodragon got
+  clearer pictures.
 
 ### Session, 2026-10-17 (afternoon): Demigods & Magics F.6 — Polymorph: turn a friend into a bear, a foe into a rat
 

@@ -249,8 +249,8 @@ class BattleScreen(Screen):
     def available(self, f: Fighter, action: str) -> tuple[bool, str]:
         b = self.battle
         opts = self.options(f)
-        if action == "attack":
-            return (b.has_action(f), "no action left this turn")
+        if action == "attack":  # (or a blow made with the bonus action: an elephant's Trample)
+            return (b.has_action(f) or self._bonus_blow_ready(f), "no action left this turn")
         if action == "cast":
             return (any(o.kind == "cast" for o in opts), f"{f.name} knows no spells")
         if action == "item":
@@ -447,14 +447,30 @@ class BattleScreen(Screen):
     def _attack_label(self, f: Fighter, o) -> str:
         kind = {"melee": "melee", "ranged": "ranged", "spell_melee": "touch", "spell_ranged": "spell"}[o.kind]
         reach = f", reach {o.reach_sq * 5} ft" if o.is_melee else (f", {o.range[0]}/{o.range[1]} ft" if o.range[0] else "")
-        return f"{o.name} <dim>({kind}{reach}: {o.bonus:+d} to hit, {o.damage} {o.damage_type})</>"
+        if o.extra.get("single_save"):
+            how = f"{o.extra['save'].upper()} save DC {o.extra['dc']}, {o.damage} {o.damage_type}"
+        else:
+            how = f"{o.bonus:+d} to hit, {o.damage} {o.damage_type}"
+        bonus = ", bonus action" if o.extra.get("bonus_action") else ""
+        return f"{o.name} <dim>({kind}{reach}{bonus}: {how})</>"
 
     def _attack_ok(self, f: Fighter, o) -> tuple[bool, str]:
+        b = self.battle
         if not o.available:
             return False, o.reason
-        if not self.battle.targets_for(f, o):
+        if o.extra.get("bonus_action") and f.bonus <= 0:
+            return False, "no bonus action left this turn"
+        if not o.extra.get("bonus_action") and not b.has_action(f) and not o.extra.get("with_multiattack"):
+            return False, "no action left this turn"
+        if not b.targets_for(f, o):
             return False, "no one in reach"
         return True, ""
+
+    def _bonus_blow_ready(self, f: Fighter) -> bool:
+        """A stat block blow made with the bonus action, with someone to aim it at (a shaped hero's Trample)."""
+        b = self.battle
+        return f.bonus > 0 and any(o.available and o.extra.get("bonus_action") and b.targets_for(f, o)
+                                   for o in b.attack_options(f))
 
     def _open_choices(self, kind: str, rows: list[tuple]) -> None:
         if not rows:
@@ -721,8 +737,9 @@ class BattleScreen(Screen):
 
     def best_attack(self, f: Fighter, target: Fighter):
         """The attack that reaches the target from here, best first: melee if they are beside you."""
-        options = [o for o in self.battle.attack_options(f) if o.available]
-        reach = [o for o in options if self.battle.in_reach(f, o, target)[0]]
+        b = self.battle
+        options = [o for o in b.attack_options(f) if o.available and not b.attack_problem(f, o, target)]
+        reach = [o for o in options if b.in_reach(f, o, target)[0]]
         if not reach:
             return None
         return max(reach, key=lambda o: (o.is_melee, o.bonus + len(o.damage)))
@@ -733,7 +750,7 @@ class BattleScreen(Screen):
         b = self.battle
         if f is None:
             return
-        if not b.has_action(f):
+        if not b.has_action(f) and not self._bonus_blow_ready(f):
             self.app.notify(f"{f.name} has no action left. (e ends the turn.)", "warn")
             return
         opt = self.best_attack(f, target)

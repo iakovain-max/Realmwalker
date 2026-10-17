@@ -580,6 +580,8 @@ def _condition(c: Cast, o: dict, victim) -> None:
         if o.get("on_damage"):
             extra["on_damage"] = True
         if o.get("with"):
+            if o["with"] not in x.conditions:
+                continue  # (no hold took: nothing to be restrained by)
             extra["with"] = o["with"]  # (it ends when that condition does: Restrained while Grappled)
         if o.get("control"):
             extra["control"] = f.team  # (Dominate: it fights for the caster's side while it lasts)

@@ -916,10 +916,13 @@ def _keep_distance(b: Battle, f: Fighter) -> None:
 
 
 def _slip_away(b: Battle, f: Fighter) -> None:
-    """Goblins: strike and then step back out of reach without being cut down (Nimble Escape)."""
-    if not any(b.gap(f, e) <= 1 for e in b.enemies_of(f) if e.standing):
+    """Goblins: strike and then step back out of reach without being cut down (Nimble Escape). A beast that only
+    bites and claws (a panther, a tiger) breaks away so when it is hurt or more than one foe stands over it, to come
+    again from another side."""
+    near = [e for e in b.enemies_of(f) if e.standing and b.gap(f, e) <= 1]
+    if not near:
         return
-    if not any(not o.is_melee for o in b.attack_options(f)):
+    if not any(not o.is_melee for o in b.attack_options(f)) and not (len(near) >= 2 or f.hp <= f.max_hp // 2):
         return
     b.do_disengage(f, bonus=True)
     _step_back(b, f)

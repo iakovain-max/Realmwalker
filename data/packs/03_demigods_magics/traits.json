@@ -39,7 +39,7 @@
                "hooks": [{"event": "turn_start", "as": "any", "handler": "stench"}]},
     "running_leap": {"name": "Running Leap", "text": "With a 10-foot run it leaps far further than its Strength would carry it (a lion: 25 feet).",
                      "where": "Fighter.jump"},
-    "burst_of_ingenuity": {"name": "Burst of Ingenuity", "text": "Twice a day, its Reaction: +2 to a saving throw it or a friend within 30 feet has just failed, when that turns it.",
+    "burst_of_ingenuity": {"name": "Burst of Ingenuity", "text": "Twice a day, its Reaction: +2 to a saving throw or ability check it or a friend within 30 feet has just failed, when that turns it.",
                            "hooks": [{"event": "d20_after", "as": "any", "handler": "burst_of_ingenuity", "reaction": true}]}
   }
 }

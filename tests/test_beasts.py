@@ -184,3 +184,114 @@ def test_they_are_met_where_they_live(tables, data):
         assert any({m[0] for m in e["members"]} >= {"cult_fanatic", familiar} for e in enc.values())
     assert "slaad_tadpoles" in data.get("creatures.json")["site_inhabitants"]["tower"]
     assert all(len(e["intro"]) >= 3 for e in enc.values())
+
+
+# ---------------------------------------------------------------------------- the fresh review's fixes
+def test_holds_sleep_and_fear_outlast_the_victims_next_turn(tables):
+    b = battle(tables, [hero(tables, "fighter")], ["crocodile", "quasit"], {0: (2, 4), 1: (3, 4), 2: (2, 6)})
+    me, croc, q = b.fighters[0], foe(b, "crocodile"), foe(b, "quasit")
+    bite = next(o for o in b.attack_options(croc) if o.extra.get("id") == "bite")
+    b._block_effects(croc, me, bite, bite.extra["on_hit"])
+    scare = next(o for o in b.attack_options(q) if o.extra.get("id") == "scare")
+    b._block_effects(q, me, scare, scare.extra["on_fail"])
+    my_turn(b, me)
+    assert {"grappled", "restrained", "frightened"} <= set(me.conditions) and me.grappled_by == croc.id
+    durations.remove(me, "grappled")
+    assert "restrained" not in me.conditions
+
+
+def test_no_restraint_without_the_hold(tables):
+    b = battle(tables, [hero(tables, "fighter")], ["crocodile"], {0: (2, 4), 1: (3, 4)})
+    me, croc = b.fighters[0], foe(b, "crocodile")
+    bite = next(o for o in b.attack_options(croc) if o.extra.get("id") == "bite")
+    b._block_effects(croc, me, bite, [e for e in bite.extra["on_hit"] if e["condition"] == "restrained"])
+    assert "restrained" not in me.conditions
+
+
+def test_a_concentrating_sleeper_still_sleeps(tables, monkeypatch):
+    b = battle(tables, [hero(tables)], ["pseudodragon"], {0: (2, 4), 1: (3, 4)})
+    me, pd = b.fighters[0], foe(b, "pseudodragon")
+    me.char.hp = me.char.max_hp = 500
+    me.concentration = {"spell": "bless", "rounds": 10}
+    real = type(b)._save
+    calls = []
+
+    def save(self, f, ability, dc, **k):
+        calls.append(k.get("against"))
+        if len(calls) == 1:
+            self.__dict__["failed_by"] = 8
+            return False
+        return real(self, f, ability, 1, **k)  # (the concentration save holds)
+
+    monkeypatch.setattr(type(b), "_save", save)
+    b._save_action(pd, next(o for o in b.attack_options(pd) if o.extra.get("id") == "sting"), me)
+    assert len(calls) == 2 and "unconscious" in me.conditions and "poisoned" in me.conditions
+    my_turn(b, me)
+    assert "poisoned" in me.conditions  # (an hour: the whole fight)
+
+
+def test_the_sphinx_helps_a_failed_check_too(tables):
+    b = battle(tables, [hero(tables, "fighter")], ["sphinx_of_wonder", "bandit"], {0: (2, 4), 1: (7, 4), 2: (8, 6)})
+    sphinx, bandit = foe(b, "sphinx_of_wonder"), foe(b, "bandit")
+    from realmwalker.rules.engine import events
+
+    ev = events.emit(b, "d20_after", actor=bandit, roll="check", ability="str", natural=9, bonus=2, dc=12, ok=False)
+    assert ev.ok and sphinx.creature.uses["burst_of_ingenuity"] == 1
+
+
+def test_a_tiger_breaks_away_when_hurt(tables):
+    b = battle(tables, [hero(tables, "fighter", xp=0)], ["tiger"], {0: (2, 4), 1: (3, 4)})  # (no Sentinel at 1st)
+    me, tiger = b.fighters[0], foe(b, "tiger")
+    me.char.hp = me.char.max_hp = 500
+    tiger.creature.hp = tiger.max_hp // 3
+    my_turn(b, tiger)
+    tactics.take_turn(b, tiger)
+    assert b.gap(me, tiger) > 1
+
+
+def test_the_player_tramples_after_the_gores(make_app, world):
+    import copy
+
+    from realmwalker.core.rng import RNG
+    from realmwalker.game import fight
+    from realmwalker.game.encounters import PendingEncounter
+    from realmwalker.game.state import new_game
+    from realmwalker.rules.combat import PARTY
+    from realmwalker.rules.creatures import spawn
+    from realmwalker.ui.screens.battle import BattleScreen
+
+    app = make_app()
+    me = hero(app.tables, "fighter")
+    game = new_game(copy.deepcopy(world), app.tables, me)
+    app.start_game(game)
+    game.survival = False
+    game.encounter = PendingEncounter("test", [spawn(app.tables, "bandit", RNG(5, "band"), 1)], "They come.", False, "")
+    b = fight.encounter_fight(game, False)
+    game.encounter = None
+    f = b.side(PARTY)[0]
+    bandit = next(x for x in b.fighters if x.side == FOE)
+    screen = BattleScreen(app, game)
+    app.push(screen)
+    my_turn(b, f)
+    assert b.shape(f, "elephant", by=f)
+    my_turn(b, f)
+    bandit.creature.hp = bandit.creature.max_hp = 500
+    bandit.x, bandit.y = f.x + f.sq, f.y  # (beside the elephant)
+    durations.give(b, bandit, "prone", rounds=-1)
+    f.action, f.attacks_left = 0, 0  # (the Gores are spent)
+    assert screen.available(f, "attack")[0]
+    trample = next(o for o in b.attack_options(f) if o.extra.get("id") == "trample")
+    assert screen._attack_ok(f, trample) == (True, "")
+    assert b.do_attack(f, trample, bandit) and f.bonus == 0
+    assert "bonus action" in screen._attack_label(f, trample)
+    gore = next(o for o in b.attack_options(f) if o.extra.get("id") == "gore")
+    assert screen._attack_ok(f, gore)[1] == "no action left this turn"
+    assert app.error_count == 0
+
+
+@pytest.fixture(scope="module")
+def world(tables):
+    from realmwalker.world.generator import WorldOptions
+    from tests.worlds import cached_world
+
+    return cached_world(WorldOptions("Lastrites", 37, "small"), tables)

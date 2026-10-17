@@ -400,7 +400,11 @@ Ideas for later:
   the jungle, sprites in the fey forest, the sphinx of wonder in the desert...); the cult fanatic's imp or quasit is
   a cult circle with one of them; slaad tadpoles hatch in the wizards' towers until the planes come (Expansion 26).
   Shape-Shift (imp, quasit), Heart Sight (sprite) and shaking a sleeper awake (the pseudodragon's Sting) are left
-  out; Burst of Ingenuity is the battle's judgement (spent when the 2 turns a failed save). The quasit opens with its
+  out; Burst of Ingenuity is the battle's judgement (spent when the 2 turns a failed save or a check made in a
+  fight). A stat block's condition with no ending in its text lasts as the book means: a grapple until it is broken
+  (the bugbear's grab too, which before ended at the victim's next turn), Restrained with it, a sleep until damage,
+  a fear until saved, the pseudodragon's poison the whole fight (`rounds` in the op). Melee-only Nimble Escape
+  (panther, tiger) is used when hurt or crowded. The quasit opens with its
   Scare and the pseudodragon with its Sting. The goat's Strength save is +2 as printed. Pictures: the Crawl pack's
   where it has the animal (some recoloured), the rest drawn.
 Next session starts at: task F.8 in docs/expansions/03-demigods-magics.md (Part F: Animal Shapes and Shapechange
