@@ -1285,6 +1285,44 @@ def dlc_icons() -> dict[str, Image.Image]:
     d.line([(4, 29), (8, 25)], fill=leather, width=2)
     d.ellipse([1, 28, 4, 31], fill=brass, outline=k)
     out["dlc/blades_backgrounds"] = im
+    # Demigods & Magics: a crowned silhouette rising out of an open book whose pages spill light upwards.
+    im = Image.new("RGBA", (32, 32), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    glow_o, glow_i, glow_c = (222, 196, 120, 120), (242, 222, 156, 190), (255, 246, 210, 235)
+    gold, gold_l, gold_d = (222, 196, 120, 255), (252, 236, 170, 255), (150, 112, 46, 255)
+    shade, shade_l = (34, 28, 52, 255), (70, 60, 98, 255)
+    page, page_l, page_d = (232, 216, 178, 255), (250, 242, 220, 255), (176, 150, 104, 255)
+    cover, cover_l = (96, 40, 44, 255), (140, 62, 60, 255)
+    # the light: rays fanning up from the open pages, and a halo behind the head
+    for end, col in (((1, 10), glow_i), ((3, 4), glow_c), ((8, 1), glow_i), ((24, 1), glow_i), ((29, 4), glow_c),
+                     ((31, 10), glow_i)):
+        d.line([(16, 22), end], fill=col)
+    d.ellipse([7, 1, 25, 19], fill=glow_o)
+    d.ellipse([9, 3, 23, 17], fill=glow_i)
+    d.ellipse([11, 5, 21, 15], fill=glow_c)
+    # the silhouette: broad shoulders rising out of the book, a neck, a head, and a crown of gold
+    d.polygon([(6, 25), (7, 20), (10, 17), (22, 17), (25, 20), (26, 25)], fill=shade, outline=k)
+    d.line([(8, 21), (10, 18)], fill=shade_l)
+    d.rectangle([14, 14, 18, 17], fill=shade)
+    d.ellipse([12, 7, 20, 15], fill=shade, outline=k)
+    d.point((13, 10), fill=shade_l)
+    d.polygon([(12, 9), (12, 4), (14, 6), (16, 2), (18, 6), (20, 4), (20, 9)], fill=gold, outline=k)
+    d.line([(13, 8), (19, 8)], fill=gold_d)
+    d.point((16, 4), fill=gold_l)
+    d.point((16, 7), fill=(176, 40, 52, 255))  # a garnet at the crown's front
+    # the open book: two pages bowed from the spine, a red cover under them
+    d.polygon([(1, 24), (15, 26), (16, 31), (1, 29)], fill=cover, outline=k)
+    d.polygon([(31, 24), (17, 26), (16, 31), (31, 29)], fill=cover, outline=k)
+    d.line([(2, 29), (15, 30)], fill=cover_l)
+    d.polygon([(2, 22), (15, 24), (16, 29), (2, 27)], fill=page, outline=k)
+    d.polygon([(30, 22), (17, 24), (16, 29), (30, 27)], fill=page, outline=k)
+    d.line([(3, 23), (14, 25)], fill=page_l)
+    d.line([(29, 23), (18, 25)], fill=page_l)
+    for y in (25, 27):  # lines of writing
+        d.line([(4, y - 1), (12, y)], fill=page_d)
+        d.line([(28, y - 1), (20, y)], fill=page_d)
+    d.line([(16, 24), (16, 30)], fill=page_d)
+    out["dlc/demigods_magics"] = im
     return out
 
 
