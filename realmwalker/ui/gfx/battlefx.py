@@ -198,6 +198,12 @@ class BattleBoard:
             self.fx.append({"kind": "float", "who": ev["who"], "text": "gone", "color": (210, 200, 180), "t0": t,
                             "dur": FLOAT, "size": 16})
             return t + 0.2
+        if k in ("shape", "unshape"):  # (Polymorph: drawn anew in its new body, or its own again)
+            self.figures.pop(ev["who"], None)
+            f = battle.fighter(ev["who"])
+            if f is not None:
+                self.fx.append({"kind": "puff", "at": (f.x, f.y), "t0": t, "dur": 0.4, "color": (190, 160, 240)})
+            return t + 0.3
         if k == "burst":  # a spell bursting around a creature (Ice Knife, Hail of Thorns)
             col = COLOURS.get(ev.get("dtype", ""), (230, 230, 240))
             for c in ev.get("cells", ())[::2]:

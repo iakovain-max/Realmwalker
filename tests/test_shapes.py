@@ -108,3 +108,57 @@ def test_the_auto_turns_a_strong_foe_into_something_harmless(tables, monkeypatch
     me.auto = True
     tactics.take_turn(b, me)
     assert any(e.get("kind") == "cast" and e.get("spell") == "polymorph" for e in b.events)
+
+
+@pytest.fixture(scope="module")
+def world(tables):
+    from realmwalker.world.generator import WorldOptions
+    from tests.worlds import cached_world
+
+    return cached_world(WorldOptions("Lastrites", 37, "small"), tables)
+
+
+def test_the_battle_screen_draws_and_plays_a_shaped_hero_and_the_fight_ends_clean(make_app, world):
+    import copy
+
+    import tcod
+
+    from realmwalker.core.rng import RNG
+    from realmwalker.game import fight
+    from realmwalker.game.encounters import PendingEncounter
+    from realmwalker.game.state import new_game
+    from realmwalker.rules.creatures import spawn
+    from realmwalker.ui import widgets
+    from realmwalker.ui.input import KeyEvent
+    from realmwalker.ui.screens.battle import BattleScreen
+
+    app = make_app()
+    me = hero(app.tables)
+    game = new_game(copy.deepcopy(world), app.tables, me)
+    app.start_game(game)
+    game.survival = False
+    rng = RNG(5, "band")
+    game.encounter = PendingEncounter("test", [spawn(app.tables, "bandit", rng, i + 1) for i in range(2)],
+                                      "They come.", False, "")
+    b = fight.encounter_fight(game, False)
+    game.encounter = None
+    f = b.side(PARTY)[0]
+    foe = next(x for x in b.fighters if x.side == FOE)
+    screen = BattleScreen(app, game)
+    app.push(screen)
+    my_turn(b, f)
+    cast(b, f, "polymorph", f, dc=40)
+    cast(b, f, "polymorph", foe, dc=40)  # (a second casting: the first shape ends with the old concentration)
+    assert f.shape is None and foe.shape is not None
+    cast(b, f, "true_polymorph", f, dc=40, level=9)
+    assert f.shape is not None and foe.shape is None
+    my_turn(b, f)
+    assert b.pending_party() is f
+    for key in ("tab", "escape", "a", "escape", "c", "escape"):
+        app.handle_event(KeyEvent(key))
+    for size in ((80, 30), (160, 45)):
+        screen.render(widgets.Canvas(tcod.console.Console(*size, order="F")))
+    assert app.error_count == 0
+    b.outcome = "victory"
+    fight.finish_battle(game)
+    assert f.shape is None and f.char is me and me.alive and app.error_count == 0
