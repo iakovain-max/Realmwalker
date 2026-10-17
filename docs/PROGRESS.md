@@ -73,7 +73,10 @@ work outside a fight too: **Part F is complete**.
   shape kept from one fight to the next and lost with its cushion, the wizard casting in a dragon's body with the slot
   spent, the shift, the Auto), on the road (the forms, flying over a lake, the pace, no spells, no gear, the picture,
   back to themselves with no slot, the end at its hour, a Shapechanger going into a fight in its shape). The whole
-  test suite, the autoplay bot (it now checks the shapes worn on the road) and the window smoke test.
+  test suite, the autoplay bot (it now checks the shapes worn on the road) and the window smoke test. The fresh
+  review's fixes: **a fight now starts properly when the whole party wears a shape** (it stopped before), the
+  shape's tooltip says what each spell keeps and how it ends, a beast's unused bonus action no longer keeps your
+  turn open, and the strongest fliers come first in the list.
 
 ### Session, 2026-10-17 (afternoon): Demigods & Magics F.7 — lions, tigers, elephants, imps and sprites
 
