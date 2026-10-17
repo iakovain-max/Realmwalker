@@ -65,7 +65,7 @@ def scene(tables, seed=1):
     rng = RNG(seed, "foes")
     foes = [spawn(tables, d, rng, i + 1) for i, d in enumerate(("bandit", "bandit", "wolf"))]
     b = Battle(tables, [caster(tables), friend(tables)], foes, Env(), RNG(seed, "battle"),
-               spots={0: (3, 4), 1: (4, 5), 2: (5, 4), 3: (8, 4), 4: (5, 3)})
+               spots={0: (3, 4), 1: (1, 6), 2: (4, 4), 3: (8, 4), 4: (6, 2)})  # (a foe beside the caster, the friend apart)
     b.start("Test fight.")
     return b
 
