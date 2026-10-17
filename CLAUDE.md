@@ -587,6 +587,14 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   `helps` and `bearings` (dungeon.helps, GameState.bearings_bonus); flags `imperceptible` (glamour.hidden_thing),
   `false_tracks` (encounters), `nondetection` (`arms.hidden_from_divination`: foes' divination spells and Detect
   Thoughts). Tests: tests/test_magic_arms.py.
+- The Diviner and the Illusionist (Expansion 5 Part A): `rules/engine/handlers/schools.py`. Portent's dice are
+  `char.spells["portent"]` (rolled at `progression.long_rest`), laid through the kernel's "d20_before" event
+  (`Battle.foretold` before every attack, save, check and death save; `schools.party_foretell` on camp and dialogue
+  checks). Images are Zone kind "illusion" (`seen`, `real`, `slotted`): opaque to all but those who know them
+  (`Battle.knows_illusion`: the caster's side, or `seen`), each viewer's field from `Battle.view(f)`
+  (`grid.Field.without`); seen through by `do_search` (Investigation vs the DC) or by walking in; never over a
+  creature. A spell may keep a road op beside battle ops (Minor Illusion, Silent Image, Major Image). `cast_kind`
+  is the caster's casting time (the options read it). tests/test_schools.py.
 - Gear and tools 2024 (Expansion 2 part D): items.json `pack` (opens into its contents, gear.open_pack), `helps`
   {search, traps, force, disguise} (dungeon.helps, law.put_on_disguise), `utilize` (a tool's 2024 uses, on its card),
   `carry` also on carried containers (each kind once, Sheet.pack_carry), `trinket` (data/trinkets.json; the name and

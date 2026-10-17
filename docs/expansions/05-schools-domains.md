@@ -65,13 +65,13 @@ ball.
 ## Parts and tasks
 
 ### Part A — The Diviner and the Illusionist
-- [ ] A.1 Data: both subclasses in classes.json with savants; traits; Portent's dice at a long rest; the card.
-- [ ] A.2 Portent in a fight (attacks, saves, checks, death saves; once a turn; asked or judged) and outside one;
+- [x] A.1 Data: both subclasses in classes.json with savants; traits; Portent's dice at a long rest; the card.
+- [x] A.2 Portent in a fight (attacks, saves, checks, death saves; once a turn; asked or judged) and outside one;
   Expert Divination; The Third Eye's three gifts; Greater Portent.
-- [ ] A.3 Illusions on the field: zone kind "illusion" (sight blocked, seen through by Study or touch); Minor
+- [x] A.3 Illusions on the field: zone kind "illusion" (sight blocked, seen through by Study or touch); Minor
   Illusion, Silent Image, Major Image in battle; Improved Illusions; Illusory Self; Illusory Reality; Phantasmal
   Creatures (spectral summons at half hit points).
-- [ ] A.4 Tactics (Portent on the deciding roll; images cutting a shooter's line; the Auto's choices), the battle
+- [x] A.4 Tactics (Portent on the deciding roll; images cutting a shooter's line; the Auto's choices), the battle
   screen, pictures (portent dice, illusion shimmer), cards, icons, sounds; 17 codex entries + the Illusions rule; a
   test in a real fight each; Part A to `main`.
 

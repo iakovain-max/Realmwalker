@@ -30,7 +30,8 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Expansion 2, *Blades & Backgrounds*** (version 1.2.0) | ✅ Released (2026-10-13), branch `dlc/02-blades-backgrounds` |
 | **Expansion 3, *Demigods & Magics*** (version 1.3.0) | ✅ Released (2026-10-17), branch `dlc/03-demigods-magics` |
 | **Expansion 4, *Steel & Shadows*** (version 1.4.0) | ✅ Released (2026-10-17), branch `dlc/04-steel-shadows` |
-| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansions 1-4 released; Expansion 5 next (see STATUS.md) |
+| **Expansion 5, *Schools & Domains*** (version 1.5.0 to come) | Part A in `main` (2026-10-18), branch `dlc/05-schools-domains` |
+| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansions 1-4 released; Expansion 5 under way (see STATUS.md) |
 
 ---
 
@@ -41,6 +42,56 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-18 (night): Schools & Domains begun; Part A — the Diviner and the Illusionist — branch `dlc/05-schools-domains`
+
+Built by the relay builder realmwalker-b. Saves do not change, and characters you already have keep working. The
+fifth expansion, *Schools & Domains*, is planned in five parts (`docs/expansions/05-schools-domains.md`): the
+Diviner and the Illusionist; the Light and Trickery Domains with the gods' answers to prayer; the mages and priests
+of the world and their towers; wands, staffs and rods; and robes, hats and the rest, with the release.
+- **The Diviner.** At level 3 a wizard may follow the school of divination. Each long rest the diviner dreams two
+  d20 rolls (three from level 14), shown on their card as "Foretold". Before any roll the diviner can see, theirs,
+  a friend's or a foe's, one of these numbers can take the roll's place, once a turn. A foe's save against your
+  spell fails on a foretold 2, and a dying friend's save comes up 20. Outside a fight a foretold high roll can carry
+  a hard check at camp or in a conversation. The battle lays the dice by its own judgement, and asks you first when
+  the Reactions setting is "all".
+- **More for the Diviner.** A divination cast with a slot of level 2 or more gives back a lower spent slot (Expert
+  Divination). From level 10 a bonus action opens the Third Eye until the next rest: darkvision to 120 feet, or the
+  sight of the invisible.
+- **The Illusionist.** At level 3 a wizard may follow the school of illusion. Its spells need no spoken words and
+  reach 60 feet farther. It knows Minor Illusion beyond its count and casts it as a bonus action. From level 6
+  Summon Beast and Summon Fey are always ready, and each can be cast once a day without a slot as a pale phantom
+  with half the hit points. From level 10, when a blow hits, a double takes it instead: the blow misses. From level
+  14 a bonus action makes an image real for a minute: its crates block the way, or it becomes a bridge over water.
+- **Images on the battle mat.** Minor Illusion, Silent Image and Major Image now work in fights too, besides their
+  old use in towns. The image of a crate, a wall of stones or a wagon hides whatever is behind it from the enemy.
+  Your own side knows it for what it is, so it shimmers for you. A foe sees through it only by studying it with the
+  Search action (an Investigation check against your spell DC) or by walking into it. An image is never laid over a
+  creature.
+- **Your companions and the enemy use it.** A diviner on Auto spends the dice on the rolls that decide a fight. An
+  illusionist on Auto lays an image between itself and the archers, and makes it real when a foe is about to walk
+  through. A foe who can see nobody to strike studies the image that might be hiding them.
+- **How to see it.** Level a wizard to 3 and choose the Diviner or the Illusionist on the level-up screen. The
+  foretold dice are on the character's card. In a fight the board shows "foretold 17" over the one whose roll it
+  took, and images shimmer violet for your side.
+- Choices made while Anton was away:
+  - The Third Eye's third gift, reading every language, is left out. Every writing in the world is already one the
+    party can read, so it would do nothing.
+  - The Search action also studies the images in sight. Aiming the Study action at a patch of ground would need new
+    screen work, and the check is the book's: Investigation against the caster's DC.
+  - The caster's whole side knows an image for what it is, not only the caster.
+  - The phantom summon is taken whenever Summon Beast or Summon Fey is cast at its own level and the free use is
+    ready. Choose a higher slot to get the full creature. The phantom still needs its gilded acorn or flower.
+  - Illusory Self is used before Shield, since it costs no slot. A slot is spent on it only when Shield could not
+    turn the blow.
+  - What Illusory Reality makes real is the image's crates or stones, or a bridge over water or a chasm. It ends
+    with the spell, even inside the minute.
+- Fixed on the way: a Thaumaturge cleric's extra cantrip was swallowed by the next level's count, and now stays. A
+  spell cast with a bonus action by one caster only (an abjurer's Dispel Magic) is now listed as a bonus action.
+- Checked: 20 new tests cover Portent in fights and out of them, the dice at a rest, Expert Divination, the Third
+  Eye, Illusory Self, the phantoms, images hiding and being seen through, Illusory Reality, the Auto and the enemy
+  with images, and the cards. Whole fights on Auto with a diviner and an illusionist against bandit archers were won
+  twelve times in twelve. The full suite, the autoplay bot and the window smoke test pass.
 
 ### Session, 2026-10-17 (night): Steel & Shadows Part D — the fighter's and rogue's magic weapons; **released as 1.4.0** — branch `dlc/04-steel-shadows`
 
