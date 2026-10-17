@@ -40,6 +40,27 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-10-17 (night, continued): Demigods & Magics C.2 — higher slots and components — branch `dlc/03-demigods-magics` (not yet in `main`)
+
+The same relay builder went straight on (C.1 took under half an hour).
+- **Casting with a higher slot.** When a spell does more with a higher slot (Fireball's extra dice, Magic Missile's
+  extra dart, Cure Wounds' extra healing, Hold Person's extra target...) and you have slots of more than one level
+  left, the battle asks which slot to use, and says what each level adds. The spell's card says it too. Outside a
+  fight, the Spells page (S) casts higher as well: l picks the slot level (a Cure Wounds from a level 2 slot heals
+  more; a Life cleric's Disciple of Life counts the slot's level).
+- **Companions and enemies use higher slots sensibly.** They spend a higher slot only when it is spare (no spell of
+  that level ready to use it) and the spell is worth more for it: a level 3 wizard with no level 2 spell prepared
+  throws a four-dart Magic Missile.
+- **Spell components.** Spells with a material component need a focus of the caster's kind (a priest's holy symbol;
+  a wizard's crystal, orb, rod, pouch, or the spellbook itself) or a component pouch. Four spells need a costly thing:
+  Bless a holy symbol, Identify a pearl (100 crowns, not used up), Revivify a diamond (300 crowns, used up) and
+  Stoneskin a vial of diamond dust (100 crowns, used up). The spell card names it and says when the pack has none.
+- **Where to buy them:** diamonds at temples, pearls and diamond dust at town markets, at their book price. The pearl
+  and the vial of diamond dust are new items with their own pictures.
+- **Choices made without Anton**: a focus anywhere in the party's shared pack serves (the book wants it in hand); a
+  hand is taken as free for gestures, and a voice as free for words, until something in the game can bind or silence
+  a caster; a component the spell consumes is kept when a Counterspell stops the spell.
+
 ### Session, 2026-10-17 (night): Demigods & Magics C.1 — preparing spells — branch `dlc/03-demigods-magics` (not yet in `main`)
 
 Built by the relay builder realmwalker-a. Casters now prepare their spells, as in the 2024 book. Part C goes to

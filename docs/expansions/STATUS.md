@@ -80,12 +80,16 @@ Assumptions waiting for Anton:
   spell after a short rest (Memorize Spell); an empty place may be filled at any time; a new level fills new places
   with the Auto's choice (the player changes them on the Spells page); domain spells not yet in the catalogue are
   listed in data/classes.json and prepared as they arrive (Part D).
+- Expansion 3 C.2: a focus anywhere in the shared pack serves; Verbal and Somatic components are taken as given (no
+  silence or bound hands yet); a consumed component is kept when a Counterspell stops the spell; the Auto and the
+  enemy spend a higher slot only when it is spare (no spell of that level ready); diamonds are sold at temples,
+  pearls and diamond dust at town markets, at book price.
 Ideas for later:
 - (none yet)
-Next session starts at: task C.2 in docs/expansions/03-demigods-magics.md (Part C: components - a focus or a pouch
-for free materials, costly components as items sold in shops and spent when consumed; upcasting for every spell with
-a `higher` op; the spell's card shows the level chosen). C.1 (preparing) is on the branch; Part C goes to `main` with
-C.3.
+Next session starts at: task C.3 in docs/expansions/03-demigods-magics.md (Part C: spell scrolls 2024 - any level,
+an Arcana check to read one above your level, copying into a spellbook; potions of healing; the rest of the 31
+spellcasting rules in the codex (Preparing, Always-Prepared, One Slot a Turn, Components, Material, Verbal, Somatic,
+Higher-Level Slot are settled); the fresh review; Part C to `main`). C.1 and C.2 are on the branch.
 
 ## Done
 
