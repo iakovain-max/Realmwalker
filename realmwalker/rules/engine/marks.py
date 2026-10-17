@@ -17,7 +17,8 @@ On the one marked (the buff is on the creature):
     bond            the caster's id: the caster takes the same damage it takes (Warding Bond)
     quarry          dice (with quarry_type, by): extra damage when `by` hits it with an attack (Hex, Hunter's Mark)
     dot             dice (with dot_type, by, dot_at "start" | "end", dot_once): damage at its turn (Melf's Acid Arrow,
-                    Searing Smite, Ensnaring Strike, Phantasmal Force)
+                    Searing Smite, Ensnaring Strike, Phantasmal Force); with dot_save and save_first, the save comes
+                    first and only a failure hurts (Phantasmal Killer)
     repeat          an ability: a save at the end of each of its turns ends the mark (against the mark's `dc`)
     heroism         temporary hit points at the start of each of its turns (Heroism)
     immune          [conditions] that cannot take hold of it (Heroism: frightened)
@@ -65,7 +66,7 @@ BUFF_KEYS = frozenset({
     "shillelagh", "tier", "until_act", "soak", "soak_type", "soak_turn",
     # the second wave's (D.2)
     "confused", "sluggish", "haste", "blink", "thorns", "thorns_type", "save_adv", "save_adv_against",
-    "save_adv_spells", "evade_spells", "heal_max", "rise", "aura", "grant", "radius", "aura_of",
+    "save_adv_spells", "evade_spells", "heal_max", "rise", "aura", "grant", "radius", "aura_of", "save_first",
 })
 ZONES = frozenset({"web", "fire", "fog", "ice", "caltrops", "bearings", "darkness", "antimagic", "plants", "grease",
                    "spikes", "daggers", "moonbeam", "sphere", "silence",
@@ -368,6 +369,14 @@ def _dots(b, f, at: str) -> None:
         if not bf.get("dot") or bf.get("dot_at", "start") != at or not (f.active or f.state == "down"):
             continue
         by = next((x for x in b.fighters if x.id == bf.get("by")), None)
+        if bf.get("save_first") and bf.get("dot_save"):  # (Phantasmal Killer: the save comes first)
+            if b._save(f, bf["dot_save"], int(bf.get("dc", 10))):
+                f.buffs.remove(bf)
+                b.say(f"{f.the_name} is free of it.", "system")
+                continue
+            b._hit(by, f, dice.roll(str(bf["dot"]), b.rng).total, bf.get("dot_type", "fire"), crit=False,
+                   weapon=bf.get("dot_name", "the spell"))
+            continue
         amount = dice.roll(str(bf["dot"]), b.rng).total
         b._hit(by, f, amount, bf.get("dot_type", "fire"), crit=False, weapon=bf.get("dot_name", "the spell"))
         if bf.get("dot_once") and bf in f.buffs:

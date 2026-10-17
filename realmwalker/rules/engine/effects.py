@@ -32,13 +32,15 @@ an op inside another (`on_hit`, `on_fail`, `then`) works on the creature the out
     gain_action (one more action this turn), say (a line: {name}, {their}), special (Python by id: SPECIAL)
 
 The second wave (D.2):
-    attack     drain: the caster heals that share of the damage dealt (Vampiric Touch: 0.5)
+    attack     drain: the caster heals that share of the damage dealt (Vampiric Touch: 0.5); spread: each ray at
+               a different creature (Steel Wind Strike)
     condition  control: the one it holds fights for the caster's side (Dominate); damage_save: each time it takes
                damage it saves again, and a success ends it
     zone       fail (a condition a failed save brings: "restrained" holds, "prone", "retching"), rough (difficult
-               terrain), dark (heavily obscured); "stone" and "force" raise a wall on the area's free squares (the
+               terrain), dark (heavily obscured), held ("4d8|2d8": the damage and its `up` for one already
+               held, on a failed save each turn), frees (that save frees it); "stone" and "force" raise a wall on the area's free squares (the
                ground comes back when the spell ends); "wind" turns ordinary missiles aside
-    banish     how ("banished" | "sphere"), below_hp (only if it has no more hit points left: Banishing Smite): off
+    banish     how ("banished" | "sphere"), max_size, home (false: it comes back even from its own plane), below_hp (only if it has no more hit points left: Banishing Smite): off
                the field while the caster concentrates (Battle.send_away)
     dispel     ends every spell on the creature at the point and on the ground there: of the slot's level or lower
                at once, higher ones on a check (10 + the spell's level); Spell Breaker adds proficiency and keeps
@@ -58,6 +60,7 @@ from realmwalker.rules import spells as spellrules
 from realmwalker.rules.engine import conditions, durations, events, statblocks
 
 OPS: dict[str, Callable] = {}
+ENERGY = ("acid", "cold", "fire", "lightning", "thunder")  # (Protection from Energy's choice)
 SPECIAL: dict[str, Callable] = {}  # what an op {"op": "special", "handler": id} calls (rules/engine/handlers/)
 
 
@@ -229,12 +232,19 @@ def _attack(c: Cast, o: dict, victim) -> None:
     rays = int(o.get("rays", 1)) * (c.mult if o.get("rays_scaling") else 1) + int(o.get("rays_up", 0)) * c.up
     reach = b.spell_range(spell)
     o = typed(c, o, [target])
+    struck = []
     for _ in range(rays):
+        if o.get("spread") and target is not None and target in struck:
+            fresh = [x for x in b.spell_targets(f, c.sid) if x not in struck and x.team != f.team]
+            if not fresh:
+                break  # (Steel Wind Strike: one blow for each creature, no more)
+            target = min(fresh, key=lambda x: b.gap(f, x))
         if target is None or not target.active:
-            options = b.spell_targets(f, c.sid)
+            options = [x for x in b.spell_targets(f, c.sid) if not o.get("spread") or x not in struck]
             if not options:
                 break
             target = b.rng.choice(options)
+        struck.append(target)
         for dice_, dtype, up in spellrules.damage_parts(o)[:1]:
             opt = AttackOption("spell", spell["name"].lower(), "spell_melee" if o["attack"] == "melee" else "spell_ranged",
                                c.bonus, expr(c, dice_, up, scaling=o.get("scaling") == "cantrip", empower=True)
@@ -647,6 +657,17 @@ def filled(c: Cast, buff: dict) -> dict:
             seen = Counter(o.damage_type for e in c.b.enemies_of(c.caster) for o in c.b.attack_options(e)
                            if o.damage_type)
             v = seen.most_common(1)[0][0] if seen else "slashing"
+        elif v == "$foe_energy":  # (Protection from Energy: the energy the foes here deal most)
+            from collections import Counter
+
+            seen = Counter(o.damage_type for e in c.b.enemies_of(c.caster) for o in c.b.attack_options(e)
+                           if o.damage_type in ENERGY)
+            for e in c.b.enemies_of(c.caster):
+                for sid_ in (e.cdef or {}).get("spells", ()) if e.creature is not None else ():
+                    t_ = spellrules.main_type(c.b.t.spells[sid_]) if sid_ in c.b.t.spells else ""
+                    if t_ in ENERGY:
+                        seen[t_] += 2
+            v = [seen.most_common(1)[0][0] if seen else "fire"]
         elif v == "$up":
             v = c.up
         elif v == "$level":
@@ -832,7 +853,8 @@ def _zone(c: Cast, o: dict, victim) -> None:
              dc=int(o.get("dc", c.dc)),  # (caltrops and ball bearings have the book's own DC)
              damage=expr(c, dmg[0][0], dmg[0][2]) if dmg else "", damage_type=dmg[0][1] if dmg else "",
              on_save="half" if o.get("half") else "none", centre=c.point,
-             fail=o.get("fail", ""), rough=bool(o.get("rough")), dark=bool(o.get("dark")))
+             fail=o.get("fail", ""), rough=bool(o.get("rough")), dark=bool(o.get("dark")),
+             held=expr(c, *o["held"].split("|")) if o.get("held") else "", frees=bool(o.get("frees")))
     if z.kind in ("stone", "force"):  # a wall: it rises on the free squares of the area
         taken = {sq for x in b.on_field() for sq in x.cells}
         name = "wall_stone" if z.kind == "stone" else "ice_wall"
@@ -866,9 +888,13 @@ def _banish(c: Cast, o: dict, victim) -> None:
             continue
         if o.get("below_hp") and x.hp > int(o["below_hp"]):
             continue
+        if o.get("max_size") and not statblocks.size_at_most(x.size, o["max_size"]):
+            continue  # (the sphere holds a Large creature at most)
         if f.concentration is None:
             continue  # (a spell that holds nothing cannot keep anyone away)
         b.send_away(x, o.get("how", "banished"), by=f, spell=c.sid)
+        if x.away is not None and o.get("home") is False:
+            x.away["home"] = False  # (Banishing Smite: back when it ends, wherever it comes from)
 
 
 @op("dispel")

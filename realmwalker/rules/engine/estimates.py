@@ -115,6 +115,9 @@ def spell_value(b, f, sid: str, *, target=None, point=None, dc: int | None = Non
                 opt = AttackOption("spell", spell["name"], "spell_ranged" if o["attack"] != "melee" else "spell_melee",
                                    bonus, expr, t)
                 rays = int(o.get("rays", 1)) * (mult if o.get("rays_scaling") else 1) + int(o.get("rays_up", 0)) * up
+                if o.get("spread"):  # (one blow for each foe in reach)
+                    rays = min(rays, max(1, len([e for e in b.enemies_of(f)
+                                                 if b.feet(f, e) <= b.spell_range(spell, f)])))
                 p = hit_chance(b, f, opt, target)
                 ev = attack_value(b, f, opt, target) * rays
                 if o.get("miss_half"):
@@ -179,6 +182,11 @@ def spell_value(b, f, sid: str, *, target=None, point=None, dc: int | None = Non
             _zone_worth(b, f, o, caught, dc, up, w)
         elif kind == "dispel":
             w.control += _dispel_worth(b, f, target, point)
+        elif kind == "condition" and o.get("condition") == "invisible" and spell["target"] in ("ally", "self"):
+            on = target if target is not None else f
+            if on is not None and "invisible" not in on.conditions:  # (Greater Invisibility: unseen, striking freely)
+                near = any(b.gap(on, e) <= 6 for e in b.enemies_of(f))
+                w.help += 5.0 if near else 1.5
         elif kind == "teleport" and point is not None:
             w.help += _escape_worth(b, f, point)
     if spell.get("again"):
@@ -480,7 +488,7 @@ def _buff_worth(buff: dict, count: int, b=None, f=None, on=None, spell: dict | N
     if buff.get("immune") and not buff.get("heroism"):
         w += 0.5 * len(buff["immune"])
     if buff.get("fly"):
-        w += 0.5
+        w += 1.0 if near else 0.6  # (out of reach of those on the ground)
     if buff.get("aura") and b is not None and f is not None:
         aura = buff["aura"]
         bearer = on if on is not None else f

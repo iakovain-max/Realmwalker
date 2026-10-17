@@ -119,6 +119,8 @@ class Zone:
     rough: bool = False  # difficult terrain (Evard's tentacles, insects, sleet)
     dark: bool = False  # heavily obscured (Cloudkill, Stinking Cloud, Hunger of Hadar, Sleet Storm)
     was: dict = field(default_factory=dict)  # a wall's squares and the ground they were before it rose
+    held: str = ""  # the damage a held creature takes on a failed save each turn, when it differs (Conjure Elemental)
+    frees: bool = False  # a held creature's later save frees it (Conjure Elemental; tentacles need an escape)
 
     @property
     def difficult(self) -> bool:
@@ -2002,7 +2004,7 @@ class Battle:
             return False
         if opt.kind == "ranged" and self.wind_between(att, target):
             self.say(f"The wall of wind tears {att.the_name}'s missile aside.", "magic")
-            self._event("attack", by=att.id, to=target.id, hit=False, kind=opt.kind, weapon=opt.name)
+            self._event("attack", by=att.id, to=target.id, hit=False, weapon=opt.name)
             return False
         if opt.extra.get("single_save"):
             return self._save_action(att, opt, target)
@@ -3165,7 +3167,7 @@ class Battle:
     def _spirit_strike(self, f: Fighter, tok: Token, target: Fighter) -> None:
         # The weapon flies to a free square beside its target (twenty feet at most), then strikes.
         if self.antimagic(target.cells) or self.antimagic([(tok.x, tok.y)]):
-            self.say("The spiritual weapon wavers and fades where no magic works.", "system")
+            self.say("The spell's conjured weapon wavers and fades where no magic works.", "system")
             return
         best = None
         occ = {c for x in self.on_field() for c in x.cells}
@@ -3181,7 +3183,8 @@ class Battle:
             start = (tok.x, tok.y)
             tok.x, tok.y = best[1]
             self._event("token_move", id=tok.id, path=[start, best[1]])
-        opt = AttackOption("spirit", "spiritual weapon", "spell_melee", tok.bonus, tok.damage, tok.damage_type)
+        name = self.t.spells[tok.spell]["name"].lower() if tok.spell in self.t.spells else "spiritual weapon"
+        opt = AttackOption("spirit", name, "spell_melee", tok.bonus, tok.damage, tok.damage_type)
         self._event("token_strike", id=tok.id, to=target.id)
         self._attack(f, opt, target)
 
@@ -3719,7 +3722,8 @@ class Battle:
                 self.say(f"A wave of lethargy sweeps over {x.the_name} as the haste leaves them.", "system")
             x.buffs = [b for b in x.buffs if b.get("conc") != f.id]
             if x.state == "away" and x.away and x.away.get("by") == f.id and x.away.get("why") != "blink":
-                if why == "runs its course" and x.away.get("why") == "banished" and x.kind in EXTRAPLANAR:
+                if why == "runs its course" and x.away.get("why") == "banished" and x.kind in EXTRAPLANAR \
+                        and x.away.get("home", True):
                     x.state = "fled"  # (banished for the whole minute to the plane it came from: it stays there)
                     x.away = None
                     self._event("leave", who=x.id)
@@ -3919,10 +3923,12 @@ class Battle:
             return False  # (tentacles and ice catch only those on the ground)
         owner = next((x for x in self.fighters if x.id == z.owner), None)
         if z.fail == "restrained" and "restrained" in f.conditions:
-            if z.damage and start:  # (held by the tentacles: hurt again at the start of each turn)
+            if z.damage and start and z.save:  # (held by the tentacles: the save again each turn, hurt if it fails)
                 z.struck.add(f.id)
-                self._hit(owner, f, dice.roll(z.damage, self.rng).total, z.damage_type, crit=False,
-                          weapon=z.damage_type)
+                if self._save_damage(owner or f, f, z.save, z.dc, z.held or z.damage, z.damage_type, "none") \
+                        and z.frees:
+                    f.conditions.pop("restrained", None)
+                    self.say(f"{f.the_name} tears free.", "system")
             return False
         z.struck.add(f.id)
         self.say(GROUND_WORDS.get(z.kind, "The spell catches {T}.").replace("{T}", f.the_name),
@@ -3955,7 +3961,7 @@ class Battle:
         if z.fail == "retching":  # (Stinking Cloud: Poisoned, and no action or bonus action, this turn)
             if durations.give(self, f, "poisoned", ends=durations.until(self, f, "turn_end")):
                 self._event("condition", who=f.id, cond="poisoned")
-                if start:
+                if start and durations.give(self, f, "incapacitated", ends=durations.until(self, f, "turn_end")):
                     f.action = f.bonus = 0
                 self.say(f"{f.the_name} retches, helpless.", "good" if f.side == FOE else "danger")
             return False
