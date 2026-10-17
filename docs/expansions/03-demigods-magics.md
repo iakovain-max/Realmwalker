@@ -474,7 +474,7 @@ stat block now comes with the spell that brings it into play (never a block that
 - [x] F.6 Shapes in a fight (split at its start, 2026-10-17: the old F.6 was four spells and 24 stat blocks with
   pictures): Polymorph and True Polymorph, a fighter's numbers swapped for a creature's for the fight, the forms
   taken from the creatures the game has.
-- [ ] F.7 The rest of Appendix B: ape, badger, constrictor snake, crocodile, elephant, elk, giant badger, giant crab,
+- [x] F.7 The rest of Appendix B: ape, badger, constrictor snake, crocodile, elephant, elk, giant badger, giant crab,
   giant goat, giant seahorse, giant weasel, goat, lion, octopus, panther, reef shark, tiger, venomous snake; imp,
   quasit, pseudodragon, sprite, sphinx of wonder, slaad tadpole, with pictures; each as Polymorph's or True
   Polymorph's form and met in the land where it lives (the beasts in their biomes' bands, the fiends and fey where
@@ -503,8 +503,11 @@ stat block now comes with the spell that brings it into play (never a block that
   underwater") and the octopus as a familiar's form; until then they are shapes only (adapted).
 - **What the kernel learns**: a creature's bonus action that is a save against one creature (the elephant's
   Trample: only on a Prone creature within 5 feet, `requires: "target_prone"`), made after its Attack action; a
-  stat block action's `advantage_if` (the reef shark's Bite on a creature not at full hit points; the crocodile's on
-  the creature it grapples); a save that fails by 5 or more bringing more (`fail_by` {by, on_fail}: the
+  stat block action's `advantage_if` (`query.ADVANTAGE_IF`: the bugbear warrior's Light Hammer on the creature it
+  holds, written in its block since Expansion 1 and read by nothing until now; the reef shark has only Pack Tactics,
+  the Advantage on the hurt is the giant shark's); a hold that restrains while it lasts (the crocodile's Bite: a
+  condition op's `with`, ended by `durations.remove` with the grapple); a save that fails by 5 or more bringing more
+  (`fail_by` {by, on_fail}: the
   pseudodragon's Sting, Unconscious until it takes damage); Running Leap (the lion's 25 feet with a run, `Fighter.jump`
   from the trait's `feet`); the sphinx of wonder's Burst of Ingenuity (its Reaction, twice a day: +2 to a failed save
   of its own or a friend's within 30 feet that the 2 would turn); Invisibility cast at will on itself (the imp, the
@@ -513,14 +516,16 @@ stat block now comes with the spell that brings it into play (never a block that
   (no water or cracks in the fights yet); the pseudodragon's sleeper is woken by damage only (shaking it awake is left
   out).
 - **The Auto and the enemy** use what they have by the existing worth (attacks, saves, Roar in place of a Rend, the
-  imp's Invisibility before it strikes); the arena's coverage test fights all 24.
+  imp's Invisibility before it strikes); the quasit opens with its Scare and the pseudodragon with its Sting (their
+  `ai` `opens_with`, which now also reads what a failed save brings), and a hold the target saves its way out of is
+  worth its expected rounds; the arena's coverage test fights all 24.
 - **Pictures**: from the Crawl pack where it has the animal (the crocodile, elephant, reef shark, constrictor snake,
   venomous snake, imp, quasit, sphinx of wonder in a sphinx's colours, giant crab and pseudodragon recoloured, the
   slaad tadpole a recoloured newt), the rest drawn in tools/beast_art.py: the big cats (lion, tiger, panther) on one
   frame, the elk and the goats on the equine frame, the badgers, the ape, the giant weasel, the giant seahorse, the
   octopus and the sprite.
 - **Tests** (tests/test_beasts.py): every new block resolves and has a picture; Trample only on the Prone, as a
-  bonus action; the reef shark's Advantage; the pseudodragon's sleep by 5; the sphinx's Burst turns a failed save;
+  bonus action; the crocodile's hold restrains; Advantage on the one held; the pseudodragon's sleep by 5; the sphinx's Burst turns a failed save;
   the lion's leap; the imp turns invisible and strikes; the water-breathers never a friend's form; each beast is met in
   its biome; a cult circle with its imp; the tower's tadpoles. The codex marks the 24 (done or adapted).
 
