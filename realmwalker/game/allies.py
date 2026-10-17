@@ -134,12 +134,16 @@ def put_in_herd(game) -> None:
     if not game.party:
         return
     herd = game.leader.animals
-    herd[:] = [a for a in herd if not a.get("summoned")]
-    for c in game.party:
-        rec = rules.record(c, "steed")
-        if c.alive and rec is not None and not rec.get("gone"):
+    want = {c.name: rec for c in game.party if c.alive
+            for rec in [rules.record(c, "steed")] if rec is not None and not rec.get("gone")}
+    if sorted(a.get("summoned") for a in herd if a.get("summoned")) == sorted(want):
+        return  # (as it should be: nothing to do, as on most calls)
+    herd[:] = [a for a in herd if not a.get("summoned") or a.get("summoned") in want]
+    have = {a.get("summoned") for a in herd if a.get("summoned")}
+    for name, rec in want.items():
+        if name not in have:
             herd.append({"kind": STEED_ANIMAL, "name": rec.get("name") or "steed", "unfed": 0,
-                         "bought": game.world.time, "summoned": c.name})
+                         "bought": game.world.time, "summoned": name})
 
 
 def summoned(animal: dict) -> bool:
