@@ -1004,6 +1004,12 @@ class GameState:
                 self.say(f"{who[:1].upper() + who[1:]} {why}.", "system")
                 return False
         target = actor_at(lm, nx, ny)
+        if target is not None and lm.kind == "dungeon":
+            from realmwalker.game import waymagic
+
+            if waymagic.ethereal_here(self):
+                self.say("They cannot see you, and your hands pass through them like smoke (Etherealness).", "system")
+                return False
         if target is not None:
             from realmwalker.game.fight import start_battle
             from realmwalker.rules.combat import FOE

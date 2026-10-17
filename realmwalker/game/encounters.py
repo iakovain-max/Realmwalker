@@ -254,6 +254,10 @@ def notice_chance(game, a: LocalActor, dist: int) -> float:
     """How likely a band that could see you is to notice you this step. Walking openly it is a matter of luck
     and light; creeping (z), it is their Perception against your Stealth, which the dark helps and nearness
     hurts."""
+    from realmwalker.game import waymagic
+
+    if waymagic.ethereal_here(game):
+        return 0.0  # (walkers on the Border Ethereal: nothing on this side can see them)
     if not getattr(game, "sneaking", False):
         return (0.9 if dist <= 6 else 0.5) * (0.6 if game.light < 0.5 else 1.0)
     sharp = passive_perception(game, a)
