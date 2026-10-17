@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 03 Demigods & Magics · Part F (familiars, steeds and summons), F.1 next · branch dlc/03-demigods-magics
+Current: 03 Demigods & Magics · Part F (familiars, steeds and summons), F.2 next · branch dlc/03-demigods-magics
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -22,10 +22,11 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   Weather, Plant Growth, Tsunami) and E.6 (lasting protections and the caster's keeping: Glyph of Warding, Symbol,
   Magic Circle, Forbiddance, Guards and Wards, Private Sanctum, Hallow, Demiplane, Tasha's Bubbling Cauldron) and E.7
   (great magic and Wish's other uses: Contingency, Magic Jar, Clone, Imprisonment; Wish's Object Creation, Resistance,
-  Spell Immunity, Sudden Learning, Reshape Reality, and Roll Redo in a fight: Part E complete)
+  Spell Immunity, Sudden Learning, Reshape Reality, and Roll Redo in a fight: Part E complete) and F.1 (allies on
+  the field: Find Familiar's twelve forms and Find Steed's Otherworldly Steed fight beside their owner)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
-  adapted); Expansion 3: 202 done, 290 adapted, 1 omitted of 558 (parts A, B, C, D and E settled). PHB 61% · DMG 12% · MM 8%
+  adapted); Expansion 3: 202 done, 304 adapted, 1 omitted of 558 (parts A to E and F.1 settled). PHB 61% · DMG 12% · MM 8%
 Assumptions waiting for Anton:
 - The Player2 AI writer is removed (tagged `before-ai-removal`); its text is replaced everywhere by the game's own
   words, strengthened where they were thin.
@@ -327,24 +328,41 @@ Assumptions waiting for Anton:
   a fight is left out. Roll Redo undoes a foe's hit on a friend since the last round (rerolled with Disadvantage; a
   miss gives back its damage, a lost critical half); redoing a save is left out; the Auto never wishes but to copy. From the fresh review: Wish's stress makes Strength 5, as the book says
   (D.4 had 3); a body under Protection from Evil and Good cannot be taken; leaving a body needs the gem within 100 feet.
+- Expansion 3 F.1: Part F was split in four at its start (F.1 allies, the familiar and the steed; F.2 the Summon
+  spells' spirits, Giant Insect, Animate Objects; F.3 Animate Dead, Create Undead, Finger of Death's zombie, Planar
+  Ally and Binding; F.4 shapes with the rest of Appendix B and the cult fanatic's imp or quasit). Each stat block
+  comes with the spell that brings it into play. An ally is played by the player like a party member (z: the
+  Auto); it never runs, earns no XP, its kills count for its owner, and it does not keep a lost fight going. The
+  octopus waits for fights under water (Expansion 22: it breathes only water); a familiar's hit points are its
+  form's average; seeing through its eyes and delivering touch spells are left out; a familiar sent away stays
+  out of fights (calling it back is a road use, not an action in a fight). Find Steed's looks are horse, camel and
+  dire wolf (the elk waits for its picture, F.4); it fights beside its rider until mounted combat (Expansion 9);
+  its gift (once a long rest) and its hit points come back at a long rest; on the road it is its rider's mount at
+  a warhorse's pace and eats nothing; with no paladin yet it comes from scrolls. Flyby and Agile are one rule: no
+  opportunity attacks for the whole turn (Flyby only while it can fly).
 Ideas for later:
 - (none yet)
-Next session starts at: task F.1 in docs/expansions/03-demigods-magics.md (Part F, Appendix B: familiars, steeds
-and summons: the 36 stat blocks of the PHB's Appendix B (beasts, imp, quasit, pseudodragon, sprite, sphinx of wonder,
-slaad tadpole) with pictures; Find Familiar, Find Steed, the Summon spells' spirits, Animate Dead; followers outside
-battle; Part F to `main`). Write F.1's "How" in the design note first, and split it at its start if it is too big for
-one part (as E.2, E.4, E.5 and E.6 were). The PHB's Appendix B is in build/codex/phb (check numbers on page images).
-Part E is complete in `main` (E.1 to E.7).
+Next session starts at: task F.2 in docs/expansions/03-demigods-magics.md (Part F: the Summon spells' spirits -
+Summon Beast, Fey, Undead, Aberration, Construct, Elemental, Celestial, Dragon, Fiend - Giant Insect and Animate
+Objects: concentration spells whose creature's numbers grow with the slot). Write F.2's "How" in the design note
+first, and split it at its start if it is too big. The spirits' stat blocks are in the spells' own pages of the
+PHB (build/codex/phb; check numbers on page images).
+Part E and F.1 are in `main`.
+The way of Part F (F.1): a creature fighting for the party is a Fighter on the party's side with `bond` {owner,
+kind, spell, level, type, picture} made by `Battle.add_ally` (beside its owner; a familiar by its own Initiative,
+anything else right after its owner); rules/allies.py keeps the records on the owner (`char.spells["familiar"]`,
+`["steed"]`), brings them into a fight (`bring_in`, from fight.start_battle), writes them back (`after`) and heals
+them at a long rest; the "ally" effects op summons in a fight (`allies.summon`); a creature's numbers for its slot
+are a copy of its definition set on `Fighter.cdef` (`allies.steed_def`); a creature-only gift is a spell with
+classes ["creature"] in its `spellcasting.per_day` (no scroll, no Wish copy). `Fighter.blows` False: no attacks
+(a familiar); the Auto's `tactics._familiar_turn` Helps. Outside a fight game/allies.py goes through spellwork's
+door (ALLIES); the steed is a herd animal with `summoned` (economy.json animals `summoned`: never sold, fed,
+stabled, stolen or awakened; `allies.put_in_herd` keeps the herd in step from pass_time). Tests: tests/test_allies.py.
 The way of Part E: a spell outside a fight has `road_only` (or `minutes`) and an op {"op": "road", "does": ...}
 (rules/spells.ROAD_USES and the kinds in E3_KINDS to E6_KINDS, checked at start-up), done in a module of its own
-(game/divining.py, speech.py, glamour.py, stonework.py, warding.py, greatmagic.py) through game/spellwork.py's door (subjects, problem, cast);
-game/magic.cast_on_road spends the slot and passes the casting time. A lasting spell (ten minutes or more) is a buff
-kept on the character (rules/engine/marks.py lists the keys); a camp ward is {"does": "ward", "ward": ...} with
-rounds or `days` (spellwork.ward_minutes), or a protection's record from game/warding._camp_ward; a spell aimed at
-something chosen lists Subjects (game/divining.Subject). A spell used both in a fight and outside one has `road_too` and
-`road_minutes` (Plant Growth). Tests: tests/test_spells_outside.py, test_spells_road2.py, road3, road4, road5, road6, road7.
-Parts A to E are in `main`. Part F may need what Part E built: a summon or a follower outside a fight goes through the
-same door, and the arena's coverage test (tests/test_tactics_coverage.py) must stay green with the new creatures.
+through game/spellwork.py's door (subjects, problem, cast); game/magic.cast_on_road spends the slot and passes the
+casting time. A spell aimed at something chosen lists Subjects (game/divining.Subject). The arena's coverage test
+(tests/test_tactics_coverage.py) must stay green with the new creatures.
 
 ## Done
 
@@ -378,6 +396,7 @@ same door, and the arena's coverage test (tests/test_tactics_coverage.py) must s
 | 2026-10-17 | Demigods & Magics E.5: locks and stone (Knock, Arcane Lock, Mending, Mage Hand, Fabricate, Creation, Stone Shape, Passwall, Move Earth, Leomund's Secret Chest), weather and land (Control Water, Control Weather, Plant Growth with a new four-feet-a-foot ground, Tsunami from the meeting screen); E.5 split, E.6 next; merged into `main` | `dlc/03-demigods-magics` |
 | 2026-10-17 | Demigods & Magics E.6: lasting protections (Glyph of Warding, Symbol, Magic Circle, Forbiddance, Guards and Wards, Private Sanctum, Hallow) and the caster's keeping (Demiplane, Tasha's Bubbling Cauldron); E.6 split, E.7 next; merged into `main` | `dlc/03-demigods-magics` |
 | 2026-10-17 | Demigods & Magics E.7: great magic (Contingency, Magic Jar, Clone, Imprisonment) and Wish's other uses (Instant Health, Object Creation, Resistance, Spell Immunity, Sudden Learning, Reshape Reality; Roll Redo in a fight); Part E complete, merged into `main` | `dlc/03-demigods-magics` |
+| 2026-10-17 | Demigods & Magics F.1: allies on the field - Find Familiar (twelve forms of Appendix B, it Helps, keeps watch, follows on the map) and Find Steed (the Otherworldly Steed by its slot, its kind's gift, Life Bond, a mount on the road); Part F split in four; merged into `main` | `dlc/03-demigods-magics` |
 
 ## Notes for the next session
 

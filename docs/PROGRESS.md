@@ -28,7 +28,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Clearing the decks for the expansions** | ✅ Done (2026-10-12), branch `prep/clear-the-decks` |
 | **Expansion 1, *Dice & Destiny*** (version 1.1.0) | ✅ Released (2026-10-13), branch `dlc/01-dice-destiny` |
 | **Expansion 2, *Blades & Backgrounds*** (version 1.2.0) | ✅ Released (2026-10-13), branch `dlc/02-blades-backgrounds` |
-| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete), D (the spell catalogue: 191 battle spells, cantrips to level 9, and Wish) E.1 (spells outside battle: healing, return from death, food, shelter and watch), E.2 (light, the body on the move, travel by magic), E.3 (finding and seeing, asking the powers, talking), E.4 (minds and the law, disguise and illusion, the small arts), E.5 (locks and stone, weather and land), E.6 (lasting protections and the caster's keeping) and E.7 (great magic and Wish's other uses, 2026-10-17: Part E complete) in `main`; F (familiars, steeds and summons) next |
+| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete), D (the spell catalogue: 191 battle spells, cantrips to level 9, and Wish) E.1 (spells outside battle: healing, return from death, food, shelter and watch), E.2 (light, the body on the move, travel by magic), E.3 (finding and seeing, asking the powers, talking), E.4 (minds and the law, disguise and illusion, the small arts), E.5 (locks and stone, weather and land), E.6 (lasting protections and the caster's keeping) and E.7 (great magic and Wish's other uses, 2026-10-17: Part E complete) and F.1 (a familiar and a steed fight beside you) in `main`; F.2 (the Summon spells' spirits) next |
 
 ---
 
@@ -39,6 +39,48 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-17 (afternoon): Demigods & Magics F.1 — a familiar and a steed fight beside you
+
+Built by the relay builder realmwalker-b. Saves do not change: an old world of format 18 still loads. Part F was too
+big for one piece (36 stat blocks and some twenty spells that make creatures, on a battle where no creature could yet
+fight for the party), so it was split in four, like Part E: F.1 a familiar and a steed (this one), F.2 the Summon
+spells' spirits, F.3 the raised dead and bound servants, F.4 shapes (Polymorph and its kin, with the rest of the
+book's creatures). Each goes to `main` when it is done.
+- **Creatures can fight on your side.** Anything the party brings into a fight stands beside its owner and is played
+  like a member of the party: you give it its orders on its turn, or press **z** and the game plays it. It never
+  runs away, gets no share of the experience, and what it kills counts for its owner. It does not keep a lost fight
+  going: when every one of the party is down, the fight is lost, whatever the owl is doing.
+- **Find Familiar** (a wizard's 1st level, a ritual: an hour and a coil of burning incense, 10 gold, now sold in
+  town markets; no slot). On the Spells page choose its shape, a bat, cat, crab, frog, hawk, lizard, owl, rat, raven,
+  scorpion, spider or weasel, and what it is at heart: a celestial, fey or fiendish spirit. The game names it. It
+  follows you on close-up maps (small, on the square behind you), keeps watch at night (a camp with a familiar is
+  never caught asleep) and comes into every fight beside you. It cannot attack, but it can **Help**: fly to a foe a
+  friend is fighting and distract it, so the friend's next blow has advantage (this is what it does on Auto). The
+  owl and the hawk fly out of reach without giving anyone a blow at them, as the rat slips away. At 0 hit points it is
+  gone until the spell is cast again; cast again while it lives, it takes the new shape. From the same page you can
+  send it into its pocket of the world and call it back without a slot (one kept away does not come into a fight).
+  It is whole again after a long rest.
+- **Find Steed** (a paladin's 2nd level: there is no paladin yet, so it is cast from a scroll or by a companion who
+  knows it). A steed from another world, a horse, a camel or a dire wolf to look at, celestial (pale gold), fey
+  (green-silver) or fiendish (black and ember) under its hide. Its strength grows with the slot: armour 10 + the
+  level, 5 + 10 hit points a level, a slam of 1d8 + the level in radiant, psychic or necrotic, and wings from a 4th
+  level slot. Once a long rest it uses its kind's gift: a celestial's healing touch, a fey's step through the world
+  (60 feet), a fiend's glare that frightens. When its rider is healed by a spell beside it, it heals as much. In a
+  fight it appears at once and acts right after its rider; on the road it is its rider's mount (a warhorse's pace),
+  eats nothing and cannot be sold, stabled or stolen. It vanishes at 0 hit points or when its rider dies.
+- **Mounted combat waits for Expansion 9**: until then the steed fights beside its rider, not under them.
+- **New pictures**: a cat, an owl and a weasel drawn by hand; a rat, spider, frog, lizard and crab from the tile pack,
+  and a hawk in a shrike's shape recoloured brown. The steed is drawn as the animal you chose, in its kind's colours.
+- **The codex**: Find Familiar and Find Steed settled (adapted, with notes), the twelve familiar forms' 2025 stat
+  blocks in the game (they are met in the wild with Expansion 11). Expansion 3 is at 91% of its 558 entries.
+- **How to try it**: a wizard buys burning incense in a town market, opens the Spells page (S), picks Find
+  Familiar, chooses "an owl, a fey spirit" with ← → and presses Enter. Then walk out of town until something
+  attacks, and on the owl's turn choose Help in its actions and point at the foe your fighter is facing.
+- **Choices made while Anton was away** (in STATUS.md): Part F split in four; the octopus waits for fights under
+  water (it breathes only water); the elk waits for its picture (F.4); a familiar's hit points are its form's average;
+  seeing through its eyes and delivering touch spells are left out; the steed's gift and its hit points come back at
+  a long rest.
 
 ### Session, 2026-10-17 (afternoon): Demigods & Magics E.7 — great magic and Wish's other uses (Part E done)
 

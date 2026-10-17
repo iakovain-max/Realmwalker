@@ -9,7 +9,6 @@ For each creature, seeded fights in every arena scenario, in which
   the time the thinking takes (the thread's own time: six test workers on a warm PC must not make it fail).
 """
 
-import json
 import time
 from collections import Counter
 from pathlib import Path
@@ -24,7 +23,15 @@ from tools import arena
 pytestmark = pytest.mark.slow  # some three hundred fights
 
 ROOT = Path(__file__).resolve().parents[1]
-CREATURES = sorted(json.loads((ROOT / "data" / "creatures.json").read_text(encoding="utf-8"))["creatures"])
+def _creatures() -> list[str]:
+    """Every creature, the expansion packs' too (the Otherworldly Steed)."""
+    from realmwalker.data.registry import DataRegistry
+
+    d, _ = DataRegistry.load(ROOT / "data")
+    return sorted(k for k in d.get("creatures.json")["creatures"] if not k.startswith("_"))
+
+
+CREATURES = _creatures()
 SEEDS = 2
 MORE_SEEDS = 5  # tried while an option has not been chosen yet
 

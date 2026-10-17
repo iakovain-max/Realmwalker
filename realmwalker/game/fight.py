@@ -103,6 +103,9 @@ def start_battle(game, creatures: list[Creature], intro: str, *, surprised: str 
     battle = Battle(game.tables, [c for c in game.party if c.alive], creatures, env, rng,
                     show_dice=getattr(game, "show_dice", True), title=title, now=game.world.time, field=field,
                     spots=spots)
+    from realmwalker.rules import allies as ally_rules
+
+    ally_rules.bring_in(battle, [f for f in battle.side(PARTY) if f.char is not None])  # (familiars, steeds)
     if situation == "camp":
         for f in battle.side(PARTY):
             f.conditions["prone"] = -1  # caught asleep: on the ground, and getting up takes half a move
@@ -204,8 +207,13 @@ def finish_battle(game) -> Aftermath:
     from realmwalker.rules import health
 
     # Survivors of the party who were down get back on their feet (or die of their wounds).
+    from realmwalker.game import allies
+
+    allies.after_battle(game, battle)  # (what became of a familiar or a steed)
     for f in battle.side(PARTY):
         c = f.char
+        if c is None:
+            continue  # (a familiar, a steed)
         health.carry_battle_state(c, f.conditions)
         if f.state != "down":
             continue
@@ -414,9 +422,10 @@ def _rob_party(game, rng) -> str:
         from realmwalker.game import divining
 
         divining.taken(game, [it], "robbers")  # (Drawmij's Instant Summons can call it back)
-    if leader.animals:
-        taken.append(", ".join(a["name"] for a in leader.animals) + " (your animals)")
-        leader.animals = []
+    beasts = [a for a in leader.animals if not a.get("summoned")]  # (a steed of another world will not be led off)
+    if beasts:
+        taken.append(", ".join(a["name"] for a in beasts) + " (your animals)")
+        leader.animals = [a for a in leader.animals if a.get("summoned")]
     if leader.vehicles:
         specs = game.tables.economy.get("vehicles", {})
         taken.append(", ".join("the " + specs.get(v["kind"], {}).get("name", "cart") for v in leader.vehicles))
@@ -913,7 +922,10 @@ def _rustlers(game, fire: bool) -> list[str]:
     if dog is not None:  # a guard dog among the animals is as good as a watch
         return [f"<warn>In the small hours {dog['name']} goes for someone at the tethers,</> snarling, and whoever it "
                 f"was runs off into the dark with nothing but bites."]
-    animal = rng.choice(game.leader.animals)
+    herd = [a for a in game.leader.animals if not a.get("summoned")]  # (a steed of another world is not taken)
+    if not herd:
+        return []
+    animal = rng.choice(herd)
     game.leader.animals.remove(animal)
     game.dirty = True
     what = f"{animal['name']} the {str(animal.get('kind', 'animal')).replace('_', ' ')}"

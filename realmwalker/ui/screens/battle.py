@@ -312,11 +312,11 @@ class BattleScreen(Screen):
                 return
             self._open_choices("attack", rows)
         elif action == "cast":
-            spells = b.spell_options(f)
+            spells = b.spell_options(f) if f.char is not None else [(s, True, "") for s in b.creature_spells(f)]
             if not spells:
                 self.app.notify(f"{f.name} knows no spells.", "warn")
                 return
-            slots = spellrules.slots_left(f.char, tables)
+            slots = spellrules.slots_left(f.char, tables) if f.char is not None else []  # (a steed's gift: no slots)
             self.slots_line = "slots " + " ".join(f"L{i + 1}:{n}" for i, n in enumerate(slots) if n or i == 0) if slots else ""
             rows = []
             for sid, ok, why in spells:
@@ -1323,8 +1323,8 @@ class BattleScreen(Screen):
 
     def full_details(self, f: Fighter) -> bool:
         """Whether a creature's card shows its whole stat block (Settings, Creature details)."""
-        if f.char is not None or self.app.settings.creature_details != "known":
-            return True
+        if f.char is not None or f.bond is not None or self.app.settings.creature_details != "known":
+            return True  # (one's own familiar or steed is known)
         return f.creature.def_id in self.battle.known
 
     def _words_tip(self, f: Fighter) -> str:
@@ -1334,7 +1334,7 @@ class BattleScreen(Screen):
             return f"<name>{markup.escape(f.char.name)}</> {f.hp}/{f.max_hp}: {wounds}."
         desc = markup.escape(f.cdef["descriptions"][0]) if f.cdef.get("descriptions") else markup.escape(f.cdef["name"])
         wounds = "; ".join(w.label for w in f.creature.wounds)
-        known = f.creature.def_id in b.known
+        known = f.creature.def_id in b.known or f.bond is not None
         stats = f" <dim>AC {f.ac()}, {f.hp}/{f.max_hp} hp.</>" if known else ""
         return desc + stats + (f" <danger>{wounds[:1].upper() + wounds[1:]}.</>" if wounds else "")
 

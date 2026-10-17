@@ -583,6 +583,9 @@ def died(game, c: Character) -> None:
         return
 
     followers.died(game, c)  # a realm that lent you its sword, the world that loses someone like no one else
+    from realmwalker.game import allies
+
+    allies.died(game, c)  # (their steed vanishes, their familiar goes)
     npc = game.world.npcs.get(c.companion.get("npc", -1)) if c.companion else None
     if npc is not None:
         npc.alive = False

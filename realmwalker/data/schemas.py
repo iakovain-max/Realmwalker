@@ -28,7 +28,9 @@ CULTURE = Obj(
     }
 )
 
-NAMES = Obj({"cultures": Map(CULTURE, min_items=1)})
+NAMES = Obj({"cultures": Map(CULTURE, min_items=1),
+             # Expansion 3 F.1: names for a familiar and a steed (game/allies.py)
+             "familiars": Obj({"familiar": word_list(5, 20), "steed": word_list(5, 20)}, optional=True)})
 
 PATRONYMICS = ["norse", "gaelic", "arabic", "slavic"]
 FAMILY_FORMS = ["slavic", "greek"]
@@ -798,7 +800,9 @@ ECONOMY = Obj(
                             # Expansion 2 part D: only Small riders (a mastiff); a land where it goes better or worse
                             # than ride_lands says (a camel in the dunes); the saddle it needs; what it eats
                             "small_only": Bool(optional=True), "lands": Map(Float(min=0, max=1), optional=True),
-                            "saddle": Str(max_len=40, optional=True), "eats": Str(choices=["fodder", "meat"], optional=True)}),
+                            "saddle": Str(max_len=40, optional=True), "eats": Str(choices=["fodder", "meat"], optional=True),
+                            # Expansion 3 F.1: a steed of another world (Find Steed), never sold
+                            "summoned": Bool(optional=True)}),
                        min_items=1),
         "vehicles": Map(Obj({"name": Str(max_len=40), "price": Int(min=0, max=10**7), "weight": Int(min=0, max=5000),
                              "rough": Float(min=1, max=5), "ride": Float(min=0.1, max=2), "seats": Int(min=0, max=8),

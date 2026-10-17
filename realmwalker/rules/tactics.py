@@ -139,7 +139,33 @@ def _maddened(b: Battle, f: Fighter) -> bool:
 
 
 # ---------------------------------------------------------------------------- monsters
+def _familiar_turn(b: Battle, f: Fighter) -> None:
+    """A familiar on Auto (Find Familiar: it cannot attack): it goes to the foe a friend beside it is fighting, the
+    friend with the best blow and the foe hurt worst, and Helps (that friend's next attack has advantage); with no such
+    foe it Dodges near its owner."""
+    friends = [a for a in b.allies_of(f) if a is not f and a.standing and a.blows and a.can_act()]
+    pairs = [(e, a) for e in b.enemies_of(f) if e.standing for a in friends if b.gap(a, e) <= 1]
+    if pairs and f.action > 0:
+        foe, _ = max(pairs, key=lambda p: (_best_attack_worth(b, p[1]), 1 - p[0].hp / max(1, p[0].max_hp)))
+        if b.gap(f, foe) > 1 and f.move_left >= 5:
+            tree = b.move_tree(f)
+            occ = b.occupied_by_others(f)
+            spots = [sq for sq in _ring(foe, 1, f.sq) if sq in tree and grid.can_stop(sq, f.sq, occ)]
+            if spots:
+                b.walk(f, grid.route(tree, min(spots, key=lambda sq: tree[sq].cost + tree[sq].risk * 3)))
+        if b.current is not f or b.outcome is not None:
+            return
+        if b.gap(f, foe) <= 1 and foe.standing and f.action > 0:
+            b.do_help(f, foe)
+            return
+    if f.action > 0:
+        b.do_dodge(f)
+
+
 def _monster_turn(b: Battle, f: Fighter) -> None:
+    if not f.blows:
+        _familiar_turn(b, f)
+        return
     opts = [o for o in b.attack_options(f) if o.available]
     breath = [o for o in opts if o.extra.get("area")]
     if breath and _try_area_attack(b, f, breath[0]):

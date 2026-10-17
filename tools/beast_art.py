@@ -183,6 +183,83 @@ def camel() -> Image.Image:
     return _finish(im)
 
 
+# ---- small beasts: the familiar's forms the Crawl pack lacks (Expansion 3 F.1) -----------------------------------
+def cat() -> Image.Image:
+    """A grey tabby sitting half-turned, tail curled round its feet: small on its square, as a cat is."""
+    body, hi, low, dark = c(128, 120, 112), c(168, 160, 150), c(92, 86, 80), c(52, 48, 46)
+    im = blank()
+    d = ImageDraw.Draw(im)
+    d.line([(9, 27), (6, 26), (5, 23), (6, 20)], fill=dark, width=2)           # the tail, curled up the side
+    d.ellipse([8, 17, 21, 29], fill=body)                                        # haunch and body
+    d.polygon([(15, 18), (20, 14), (23, 18), (22, 28), (17, 28)], fill=body)     # chest, sitting up
+    d.line([(10, 20), (13, 18)], fill=low)                                       # tabby stripes
+    d.line([(10, 23), (14, 21)], fill=low)
+    d.line([(11, 26), (15, 24)], fill=low)
+    d.rectangle([18, 25, 19, 28], fill=hi)                                       # the forepaws
+    d.rectangle([21, 25, 22, 28], fill=hi)
+    d.ellipse([18, 9, 27, 17], fill=body)                                        # the head
+    d.polygon([(19, 11), (19, 6), (22, 9)], fill=body)                           # ears
+    d.polygon([(24, 9), (27, 6), (27, 11)], fill=body)
+    d.point((20, 8), fill=c(196, 150, 140))
+    d.point((26, 8), fill=c(196, 150, 140))
+    d.point((22, 12), fill=c(150, 196, 96))                                      # green eyes
+    d.point((25, 12), fill=c(150, 196, 96))
+    d.point((24, 14), fill=c(196, 150, 140))                                     # the nose
+    d.line([(20, 15), (26, 15)], fill=hi)                                        # a pale muzzle
+    d.line([(18, 10), (21, 9)], fill=low)
+    return _finish(im)
+
+
+def owl() -> Image.Image:
+    """A tawny owl perched upright on the ground, round-faced, wings folded."""
+    body, hi, low, dark = c(140, 104, 64), c(184, 150, 104), c(102, 74, 44), c(58, 40, 24)
+    face = c(206, 184, 146)
+    im = blank()
+    d = ImageDraw.Draw(im)
+    d.ellipse([10, 13, 23, 29], fill=body)                                       # the body
+    d.polygon([(10, 18), (8, 26), (12, 29), (14, 20)], fill=low)                 # the folded wing
+    for y in (19, 22, 25):                                                       # breast markings
+        d.point((17, y), fill=dark)
+        d.point((20, y + 1), fill=dark)
+    d.ellipse([11, 6, 24, 18], fill=body)                                        # the head
+    d.polygon([(11, 8), (12, 4), (14, 7)], fill=body)                            # ear tufts
+    d.polygon([(21, 7), (23, 4), (24, 8)], fill=body)
+    d.ellipse([12, 8, 23, 17], fill=face)                                        # the facial disc
+    d.line([(17, 8), (17, 16)], fill=low)
+    d.rectangle([13, 10, 15, 12], fill=c(232, 176, 40))                          # great yellow eyes
+    d.rectangle([19, 10, 21, 12], fill=c(232, 176, 40))
+    d.point((14, 11), fill=K)
+    d.point((20, 11), fill=K)
+    d.polygon([(17, 13), (16, 14), (17, 16), (18, 14)], fill=dark)               # the beak
+    d.line([(14, 29), (15, 30)], fill=c(160, 150, 120))                          # talons
+    d.line([(19, 29), (20, 30)], fill=c(160, 150, 120))
+    d.line([(13, 6), (22, 6)], fill=hi)
+    return _finish(im)
+
+
+def weasel() -> Image.Image:
+    """A weasel stretched low and long, head up and alert, a pale belly under a russet back."""
+    body, hi, low, dark = c(150, 92, 48), c(186, 124, 70), c(110, 64, 32), c(62, 36, 20)
+    belly = c(222, 206, 176)
+    im = blank()
+    d = ImageDraw.Draw(im)
+    d.line([(3, 23), (6, 24), (9, 24)], fill=dark, width=2)                      # the tail, black at the tip
+    d.line([(6, 24), (9, 24)], fill=body, width=2)
+    d.ellipse([7, 20, 24, 27], fill=body)                                        # the long body
+    d.line([(10, 26), (22, 26)], fill=belly)
+    d.line([(9, 21), (21, 21)], fill=hi)
+    for x in (9, 12, 19, 22):                                                    # short legs
+        d.rectangle([x, 26, x + 1, 29], fill=low)
+    d.polygon([(21, 21), (24, 16), (27, 16), (27, 22), (24, 24)], fill=body)     # the neck, raised
+    d.line([(25, 18), (25, 23)], fill=belly)
+    d.ellipse([23, 12, 30, 18], fill=body)                                       # the head
+    d.rectangle([28, 15, 31, 17], fill=belly)                                    # the muzzle
+    d.point((31, 15), fill=K)
+    d.point((26, 14), fill=K)                                                    # the eye
+    d.point((24, 12), fill=dark)                                                 # a round ear
+    return _finish(im)
+
+
 # ---- saddles ---------------------------------------------------------------------------------------------------
 
 def _saddle(leather, hi, dark, *, high=False, iron=None, pad=None):
@@ -371,11 +448,15 @@ def all_drawn() -> dict[str, Image.Image]:
     return {k: (hard_edges(v.transpose(flip)) if k.startswith("creature/") else v) for k, v in {
         "creature/riding_horse": horse,
         "creature/horse": horse.copy(),
+        "creature/otherworldly_steed": horse.copy(),  # (Find Steed: drawn as the look chosen, in its kind's colours)
         "creature/pony": pony(),
         "creature/mule": mule(),
         "creature/draft_horse": draft_horse(),
         "creature/warhorse": warhorse(),
         "creature/camel": camel(),
+        "creature/cat": cat(),
+        "creature/owl": owl(),
+        "creature/weasel": weasel(),
         "item/riding_saddle": riding_saddle(),
         "item/military_saddle": military_saddle(),
         "item/exotic_saddle": exotic_saddle(),

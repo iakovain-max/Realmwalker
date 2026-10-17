@@ -177,10 +177,11 @@ def services_for(game, npc: NPC) -> list[Service]:
             out.append(Service("labour", "Ask for a day's work (8 hours)", 0, not done, "no more work for you today"))
     if npc.job == "stablemaster":
         animals = game.tables.economy["animals"]
-        options = [(aid, a["name"], fee(game, npc, int(a["price"]))) for aid, a in animals.items() if not aid.startswith("_")]
+        options = [(aid, a["name"], fee(game, npc, int(a["price"]))) for aid, a in animals.items()
+                   if not aid.startswith("_") and not a.get("summoned")]  # (a steed of another world is not sold)
         out.append(Service("buy_animal", "Buy a pack or riding animal", 0, True, "", options=options))
         mine = [(str(i), a["name"], int(animals[a["kind"]]["price"]) // 2) for i, a in enumerate(c.animals)
-                if a["kind"] in animals]
+                if a["kind"] in animals and not a.get("summoned")]
         if mine:
             out.append(Service("sell_animal", "Sell one of your animals", 0, True, "", options=mine))
         from realmwalker.game.mounts import vehicle_specs
@@ -750,6 +751,8 @@ def feed_animals(game) -> list[str]:
     stabling = int(game.tables.economy["services"].get("stabling", 0))
     paid = 0
     for a in list(c.animals):
+        if a.get("summoned"):
+            continue  # (a steed of another world eats nothing)
         meat = specs.get(a["kind"], {}).get("eats") == "meat"  # a mastiff: meat, not fodder or grass
         food_ids = ("raw_meat", "cooked_meat", "salt_pork", "dried_fish", "raw_fish") if meat else ("fodder",)
         fodder = next((it for it in c.inventory if it.def_id in food_ids), None)

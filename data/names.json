@@ -1,5 +1,11 @@
 {
   "_comment": "Name pools per people (data/cultures.json says how each people puts a name together). world/names.py also grows new names from each pool's own sounds, so worlds differ. Add freely.",
+  "familiars": {
+    "familiar": ["Ash", "Pip", "Wren", "Soot", "Bramble", "Nettle", "Tallow", "Quill", "Mote", "Cinder", "Thistle",
+                 "Ink", "Rook", "Sloe", "Hob", "Midge", "Sorrel", "Flint", "Moth", "Tansy", "Whisper", "Pell"],
+    "steed": ["Gloam", "Ember", "Morrow", "Halt", "Sable", "Vesper", "Tarn", "Cairn", "Dusk", "Brand", "Hallow",
+              "Thane", "Wake", "Gale", "Ashen", "Lantern", "Pyre", "Mist"]
+  },
   "cultures": {
     "heartland": {
       "label": "Heartland",

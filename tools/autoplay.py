@@ -473,6 +473,24 @@ def _check_companions(game, fail) -> None:
     for rec in flags.get("clones") or []:
         if not 0 <= int(rec.get("settlement", -1)) < len(game.world.settlements):
             fail(f"a clone grows in no town: {rec}")
+    from realmwalker.rules import allies as ally_rules  # (Expansion 3 F.1: familiars and steeds)
+
+    for c in game.party:
+        fam = ally_rules.record(c, "familiar")
+        if fam is not None and (fam.get("form") not in ally_rules.FAMILIAR_FORMS or fam.get("type") not in ally_rules.TYPES
+                                or not 0 <= int(fam.get("hp", 0)) <= int(fam.get("max_hp", 0))
+                                or fam.get("gone") and int(fam.get("hp", 0)) > 0):
+            fail(f"{c.name}'s familiar cannot be: {fam}")
+        steed = ally_rules.record(c, "steed")
+        if steed is not None and (steed.get("look") not in ally_rules.STEED_LOOKS or steed.get("type") not in ally_rules.TYPES
+                                  or int(steed.get("level", 0)) < 2
+                                  or not 0 <= int(steed.get("hp", 0)) <= ally_rules.steed_max_hp(steed["level"])):
+            fail(f"{c.name}'s steed cannot be: {steed}")
+    if game.party:
+        riders = {c.name for c in game.party if c.alive and (ally_rules.record(c, "steed") or {}).get("gone") is False}
+        herd = [a.get("summoned") for a in game.leader.animals if a.get("summoned")]
+        if sorted(herd) != sorted(riders):
+            fail(f"the steeds in the herd ({herd}) are not those of the living with a steed ({sorted(riders)})")
     camp_now = getattr(game, "camp", None)
     for key, rec in ((camp_now.wards or {}).items() if camp_now is not None else ()):
         if key == "glyph" and rec.get("kind") == "spell" and rec.get("spell") not in game.tables.spells:

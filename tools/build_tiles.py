@@ -192,6 +192,12 @@ CREATURES = {
     "giant_frog": "monster/animals/giant_frog.png",
     "giant_beetle": "monster/animals/giant_beetle.png",
     "scorpion": "monster/animals/scorpion_new.png",
+    # the familiar's forms (Expansion 3 F.1; the cat, owl and weasel are drawn in tools/beast_art.py)
+    "rat": "monster/animals/grey_rat.png",
+    "spider": "monster/animals/spider.png",
+    "frog": "monster/animals/giant_frog.png",
+    "lizard": "monster/animals/iguana.png",
+    "crab": "monster/animals/fire_crab.png",
     "giant_centipede": "monster/animals/giant_centipede.png",
     "polar_bear": "monster/animals/polar_bear.png",
     "hound": "monster/animals/hound.png",
@@ -247,6 +253,8 @@ for cid, path in CREATURES.items():
 pick("creature/boar", "monster/animals/hog_new.png", "creature", hue=14, sat=0.55, val=0.48)
 # A bugbear: a hobgoblin made bigger and furrier in tone.
 pick("creature/bugbear", "monster/boggart_new.png", "creature", hue=18, sat=0.6, val=0.7)
+# A hawk: the pack's shrike in a hawk's browns.
+pick("creature/hawk", "monster/animals/caustic_shrike.png", "creature", hue=28, sat=0.5, val=0.8)
 
 # Items. Every item in data/items.json gets item/<id>; several share a picture.
 ITEMS = {
@@ -345,7 +353,7 @@ ITEMS = {
     "divination_tools": "item/misc/misc_deck_new.png", "jacinth": "item/amulet/crystal_red.png",
     "great_diamond": "item/misc/misc_crystal_old.png", "everburning_torch": "item/misc/misc_lantern.png",
     # the costly components of Part E.3's spells (Expansion 3 E.3)
-    "seers_incense": "item/misc/misc_phial_inert.png", "rare_incense": "item/misc/misc_lamp_old.png",
+    "seers_incense": "item/misc/misc_phial_inert.png", "burning_incense": "item/misc/misc_phial.png", "rare_incense": "item/misc/misc_lamp_old.png",
     "ivory_strips": "item/amulet/bone_gray.png", "glass_eye": "item/amulet/eye_cyan.png",
     "scrying_mirror": "item/misc/misc_phantom_mirror.png", "sapphire": "item/amulet/stone_2_blue.png",
     # the costly components of Part E.4's spells (Expansion 3 E.4)

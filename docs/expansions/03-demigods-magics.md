@@ -451,9 +451,66 @@ system is built once and every spell that uses it comes with it.
     taken back cleanly). It brings the stress; the Auto never uses it.
 
 ### Part F — Appendix B: familiars, steeds and summons
-- [ ] F.1 The 36 stat blocks (beasts, imp, quasit, pseudodragon, sprite, sphinx of wonder, slaad tadpole) with
-  pictures; Find Familiar, Find Steed, the Summon spells' spirits, Animate Dead; followers outside battle; Part F
-  to `main`.
+Split at its start (2026-10-17, as E.2 and E.4-E.6 were): the part as planned was 36 stat blocks with pictures and
+some twenty creature-making spells on a battle that had no way yet for a creature to fight on the party's side. Each
+stat block now comes with the spell that brings it into play (never a block that nothing calls); each piece goes to
+`main` when done.
+- [x] F.1 Allies on the field, Find Familiar and Find Steed: a creature fighting for the party (the foundation every
+  later piece uses); the familiar's forms of Appendix B (bat, cat, crab, frog, hawk, lizard, octopus, owl, rat, raven,
+  scorpion, spider, weasel) with pictures; the Otherworldly Steed; the familiar and the steed as followers outside a
+  fight.
+- [ ] F.2 The Summon spells' spirits (Summon Beast, Fey, Undead, Aberration, Construct, Elemental, Celestial, Dragon,
+  Fiend), Giant Insect, Animate Objects: concentration spells whose creature's numbers grow with the slot.
+- [ ] F.3 The dead and the bound: Animate Dead, Create Undead, Finger of Death's zombie, Planar Ally, Planar Binding
+  (and Magic Circle reversed): servants that outlast a fight and must be held again.
+- [ ] F.4 Shapes: Polymorph, True Polymorph, Animal Shapes, Shapechange, with the rest of Appendix B (ape,
+  constrictor snake, crocodile, elephant, elk, giant badger, crab, goat, seahorse and weasel, badger, goat, lion,
+  panther, reef shark, tiger, venomous snake; imp, quasit, pseudodragon, sprite, sphinx of wonder, slaad tadpole) as
+  the forms, and the cult fanatic's imp or quasit; Part F complete.
+
+#### F.1 — How
+- **An ally on the field** is a `Fighter` on the party's side made from a `Creature` (no `char`), with
+  `Fighter.bond` {owner (fighter id), kind ("familiar", "steed", later "summon"), spell, level}. `Battle.add_ally(
+  creature, owner, kind, ...)` puts it beside its owner (the nearest free squares) at any time; at a fight's start
+  `fight.start_battle` brings in every follower of the party (below) through it. Turns: a familiar rolls its own
+  Initiative and is put into the order by it; a steed acts right after its owner (the 2024 text: it shares the
+  owner's count). Who plays it: the player, as a party member (the battle screen's options for a creature are the
+  ones a possessed host already uses), or the Auto with `z` (tactics treat it as any fighter on its team). A
+  familiar cannot attack (`actions.options` leaves out every attack, a spell and a blow for it); it can Help, Dodge,
+  Dash, Disengage, Hide and move, and the Auto has it Help the friend about to strike the most hurt foe (or Dodge
+  out of reach). The steed fights with Otherworldly Slam and its kind's bonus action (Fell Glare, Fey Step, Healing
+  Touch, once a long rest each) and Life Bond (it gains what its owner gains from a spell of level 1 or more within
+  5 feet). Mounted combat waits for Expansion 9: until then the steed fights beside its rider, not under them.
+- **Who has won**: the fight is lost when no character of the party stands (an ally alone does not keep it going: it
+  goes with the fallen, as the book's steed disappears when its owner dies), and won when no foe stands, as ever.
+  Allies earn no XP and are not the party's dead; what they kill counts for the party (the kills ledger).
+- **At 0 hit points** a familiar or a steed disappears (the book): its record is marked gone until the spell is cast
+  again; a new casting while one lives changes its form (familiar) or replaces it (steed).
+- **Followers outside a fight** are kept on their owner: `char.spells["familiar"]` {form, type, name, hp, gone,
+  away} and `char.spells["steed"]` {look, type, level, name, hp, gone} (saved with the character, no format change:
+  `spells` is a free dict). Their hit points come back at a long rest. Find Familiar is a ritual (the hour, no slot,
+  the 10 GP incense spent); its type (celestial, fey, fiend) and form are chosen on the Spells page (Subjects, as
+  E.3), with a name from the game's words. Dismissing it to its pocket and calling it back are road uses of the
+  same spell (no slot): one kept away does not come into a fight. Find Steed is a paladin spell (no paladin yet):
+  cast from a scroll, a wand or by a companion who knows it, at its slot's level (`level` in the stat block's
+  numbers). Its look (horse, camel, dire wolf, elk) and type are chosen as it is cast.
+- **On the road**: the steed is a mount in the herd (`leader.animals`, an entry with `summoned` {owner, ...}) that
+  its owner rides first (`mounts.assign`); it eats nothing, is never sold, stabled, rustled, robbed or awakened, and
+  vanishes when its owner dies. Its pace is a warhorse's (the 2024 travel pace does not grow with speed). The
+  familiar keeps watch at night as an awakened animal does (the camp is not caught asleep, `spellwork._awake_watch`)
+  and walks behind the party on close-up maps (drawn as followers are, small). Delivering touch spells and seeing
+  through its eyes are left out (no touch spell reaches further in a fight than the caster's reach yet; the eyes
+  wait for a scouting system).
+- **Pictures**: the thirteen forms from the Crawl pack where it has them (bat, rat, raven, spider, scorpion, frog,
+  crab, lizard, octopus, hawk recoloured), the cat, owl and weasel drawn by hand (`tools/beast_art.py`), the steed as
+  the riding horse in its kind's colours (celestial pale gold, fey green-silver, fiend black and ember). The forms'
+  stat blocks are the 2025 MM's (Appendix B's numbers checked on the page images); a type other than beast is
+  carried on the creature (`Creature.kind_as`), read where a kind matters (Protection from Evil and Good, Magic
+  Circle, Hallow).
+- **Tests**: tests/test_allies.py (a familiar and a steed in a real fight: placed, turns in order, the familiar's
+  options without attacks and its Help, the steed's slam and bonus action, Life Bond, disappearing at 0, the fight
+  lost with only an ally standing, followers kept and healed, the steed ridden on the road, the night watch);
+  the arena's coverage test with the new creatures; the autoplay bot checks every follower's record.
 
 ### Part G — Enemy casters, services, release
 - [ ] G.1 Every caster stat block on the catalogue; arena: every battle spell cast by the AI in a scenario; a test

@@ -332,6 +332,9 @@ class GameState:
         from realmwalker.game import spellwork
 
         spellwork.tick(self)  # (magic berries are gone when their day is out)
+        from realmwalker.game import allies
+
+        allies.put_in_herd(self)  # (a steed goes and comes with its rider)
         p = self.player
         if not self.in_local and self.party and self.over is None and not self.biome_def(p.x, p.y)["passable"]:
             from realmwalker.game import waymagic

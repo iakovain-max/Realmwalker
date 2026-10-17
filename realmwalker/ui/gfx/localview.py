@@ -407,6 +407,19 @@ class LocalView:
                 fx, fy = self.pos(("comp", i), cx_, cy_, now, animate)
                 people.append((fy, dolls.character(followers[i], game.tables, atlas=atlas), *self.cell_px(fx, fy), T,
                                _cell_light(light, cx_ - x0, cy_ - y0), False))
+        # A familiar trots (or flutters) behind, small on its square (Find Familiar).
+        from realmwalker.rules import allies as ally_rules
+
+        pets = [r for r in (ally_rules.present(c, "familiar") for c in game.party if c.alive) if r is not None]
+        if pets:
+            taken = {(a.x, a.y) for a in lm.actors}
+            spots = self._follow(game, lm, taken)[len(followers):len(followers) + len(pets)]
+            small = T * 0.62
+            for i, (cx_, cy_) in enumerate(spots):
+                fx, fy = self.pos(("pet", i), cx_, cy_, now, animate)
+                px_, py_ = self.cell_px(fx, fy)
+                people.append((fy - 0.001, [(f"creature/{pets[i]['form']}", dolls.WHITE, 0, 0)], px_ + (T - small) / 2,
+                               py_, small, _cell_light(light, cx_ - x0, cy_ - y0), False))
         people.sort(key=lambda t: t[0])
         out = []
         for _, names, px_, py_, size, col, alert in people:

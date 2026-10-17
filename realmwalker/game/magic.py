@@ -334,6 +334,12 @@ def cast_on_road(game, caster, spell_id: str, target=None, slot_level: int | Non
         from realmwalker.game import greatmagic
 
         return greatmagic.return_to_body(game, caster)  # (going home needs no slot)
+    if spellrules.road_use(t, spell_id) == "familiar":
+        from realmwalker.game import allies
+
+        freely = allies.free_use(game, caster, target)  # (a familiar sent away or called back: no slot)
+        if freely is not None:
+            return freely
     pre = []
     if scroll is not None:
         owner = _owner(game, scroll) or caster

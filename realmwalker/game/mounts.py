@@ -71,8 +71,13 @@ def assign(game) -> tuple[dict[int, dict], list[Character]]:
     saddles = tack(game)
     out: dict[int, dict] = {}
     walkers = []
-    for c in riders(game):
-        pick = next((a for a in mounts if rideable(game, a, c, saddles)), None)
+    people = riders(game)
+    names = {c.name for c in people}
+    for c in people:
+        # A steed of another world carries its own rider; nobody else takes it while that rider is with the party.
+        own = next((a for a in mounts if a.get("summoned") == c.name), None)
+        pick = own or next((a for a in mounts if rideable(game, a, c, saddles) and a.get("summoned") not in names),
+                           None)
         if pick is not None:
             mounts.remove(pick)
             out[id(c)] = pick
