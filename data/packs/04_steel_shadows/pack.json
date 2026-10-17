@@ -1,0 +1,16 @@
+{
+  "_comment": "Expansion 4 (docs/expansions/04-steel-shadows.md). Its rules and data went into the base files as it was built (realmwalker/data/packs.py merges any fragments placed beside this record).",
+  "id": "steel_shadows", "order": 4,
+  "name": "Steel & Shadows",
+  "tagline": "Masters of the blade, and of the knife in the dark.",
+  "icon": "dlc/steel_shadows", "accent": [150, 128, 206],
+  "status": "released", "version": "1.4.0", "released_on": "2026-10-17",
+  "adds": [
+    "The Battle Master: superiority dice and twenty maneuvers - trip, parry, riposte, rally, push, disarm, goad, frighten, sweep - used by you, your companions and offered with every blow",
+    "The Eldritch Knight, casting wizard spells between sword blows and calling a bonded weapon to hand",
+    "The Arcane Trickster, with an unseen hand that picks pockets and trips foes, and steals spells from the minds of casters",
+    "The poisons of the Dungeon Master's Guide: bought in black markets, milked from the slain, brewed, coated on blades and slipped into cups",
+    "Assassins, spies and spy masters in the world: thieves' guilds with work and poison, spies caught at court, duels of honour among some peoples",
+    "The fighter's and rogue's magic weapons: the Vorpal Sword, the Luck Blade, the Defender, the Dancing Sword, the Swords of Sharpness, Wounding, Answering and Vengeance, the Rod of Lordly Might and more"
+  ]
+}
