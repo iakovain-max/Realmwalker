@@ -443,6 +443,27 @@ def _check_companions(game, fail) -> None:
             for tag in it.tags or []:
                 if tag.startswith("conjured:") and int(tag.split(":")[1]) < game.world.time - 24 * 60:
                     fail(f"Creation's {it.def_id} outlived its time by more than a day")
+    glyph = flags.get("glyph_room")  # (Expansion 3 E.6: lasting protections and the caster's keeping)
+    if glyph is not None and not 0 <= int(glyph.get("settlement", -1)) < len(game.world.settlements):
+        fail(f"a glyph guards an inn room in no town: {glyph}")
+    for d in (flags.get("demiplane") or {}).get("items") or []:
+        if d.get("def_id") not in game.tables.items.defs:
+            fail(f"the demiplane holds a thing that does not exist: {d}")
+    if int((flags.get("demiplane") or {}).get("money", 0)) < 0:
+        fail("the demiplane holds less than no money")
+    for rec in game.world.politics.get("hallowed", ()):
+        if not game.world.in_bounds(int(rec["x"]), int(rec["y"])) or rec.get("extra") not in (
+                "courage", "fear", "resistance", "vulnerability", "peaceful_rest"):
+            fail(f"hallowed ground that cannot be: {rec}")
+    stamps = {tag for c in game.party for it in c.inventory for tag in it.tags or [] if tag.startswith("cauldron:")}
+    if len(stamps) > 1:
+        fail(f"potions from more than one of Tasha's cauldrons are still about: {sorted(stamps)}")
+    camp_now = getattr(game, "camp", None)
+    for key, rec in ((camp_now.wards or {}).items() if camp_now is not None else ()):
+        if key == "glyph" and rec.get("kind") == "spell" and rec.get("spell") not in game.tables.spells:
+            fail(f"a glyph holds a spell that does not exist: {rec}")
+        if key == "symbol" and rec.get("effect") not in ("death", "discord", "fear", "pain", "sleep", "stunning"):
+            fail(f"a symbol bears an effect that cannot be: {rec}")
     lm = game.local
     if lm is not None and lm.kind == "dungeon":
         for rec in lm.meta.get("passwall") or []:
