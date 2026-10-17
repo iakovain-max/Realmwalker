@@ -14,7 +14,8 @@ HIT_BY_TYPE = {
     "necrotic": "magic_hit", "radiant": "magic_hit", "force": "magic_hit", "psychic": "magic_hit",
 }
 ZONE_SOUNDS = {"web": "web", "fire": "burn", "ice": "frost", "fog": "spell", "darkness": "spell",
-               "guardians": "buff", "guardian": "buff", "caltrops": "drop", "bearings": "drop"}
+               "guardians": "buff", "guardian": "buff", "caltrops": "drop", "bearings": "drop",
+               "blades": "spell", "thorns": "web", "celestial": "buff", "icewall": "frost"}
 BOWS = ("bow", "crossbow")
 THROWN = ("sling", "dart", "javelin", "dagger", "handaxe", "hand axe", "spear", "rock", "stone", "net", "flask")
 

@@ -370,6 +370,20 @@ def _catalogue_mark(b, bf: dict, spell: dict) -> tuple[str, str, list[str]] | No
     if bf.get("thorns"):
         return "warded", name or "Fire Shield", [f"Whoever hits them in melee takes {esc(str(bf['thorns']))} "
                                                  f"{esc(bf.get('thorns_type', 'fire'))} damage."]
+    # The third wave (D.3)
+    if bf.get("dancing"):
+        return "sapped", name or "Dancing", ["Dancing helplessly: they cannot move, their attacks and Dexterity saves "
+                                             "have disadvantage, and attacks against them have advantage. Each turn "
+                                             "they spend their action trying to stop (a Wisdom save)."]
+    if bf.get("aloft"):
+        return "spell", name or "Falling upward", ["Hanging high in the air where gravity runs backwards; they will "
+                                                   "fall when the spell ends."]
+    if bf.get("spell_ward") is not None:
+        return "warded", name or "Globe of Invulnerability", [
+            f"Spells below level {int(bf['spell_ward'])} cast from outside the barrier cannot touch them."]
+    if bf.get("truesight"):
+        return "blessed", name or "True Seeing", [f"They see the invisible, and through any darkness, "
+                                                  f"{int(bf['truesight'])} feet."]
     if bf.get("aura"):
         r = int(bf["aura"].get("radius", 30))
         return "blessed", name or "An aura", [f"Friends within {r} feet share its gift."]

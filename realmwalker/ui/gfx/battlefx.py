@@ -1206,6 +1206,38 @@ def _sleet_image(frame: int = 0):
     return im
 
 
+def _blades_image(frame: int = 0):
+    """Blade Barrier: whirling blades of force, bright slivers turning in the air (two frames)."""
+    from PIL import Image as PImage, ImageDraw
+
+    s = 32
+    im = PImage.new("RGBA", (s, s), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    rng = np.random.default_rng(71)
+    for _ in range(5):
+        x, y = (int(v) for v in rng.integers(4, s - 4, 2))
+        dx, dy = ((3, -2), (2, 3))[(frame + x) % 2]
+        d.line([(x - dx, y - dy), (x + dx, y + dy)], fill=(225, 210, 255, 240), width=1)
+        d.point((x + dx, y + dy), fill=(255, 255, 255, 255))
+    return im
+
+
+def _thorns_image(frame: int = 0):
+    """Wall of Thorns: a tangle of dark brambles bristling with pale thorns."""
+    from PIL import Image as PImage, ImageDraw
+
+    s = 32
+    im = PImage.new("RGBA", (s, s), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    rng = np.random.default_rng(79)
+    for _ in range(6):
+        x0, y0, x1, y1 = (int(v) for v in rng.integers(1, s - 1, 4))
+        d.line([(x0, y0), (x1, y1)], fill=(46, 64, 30, 250), width=2)
+        mx, my = (x0 + x1) // 2, (y0 + y1) // 2
+        d.point([(mx, my - 1), (mx + 1, my)], fill=(210, 200, 150, 255))
+    return im
+
+
 GROUND_LOOKS = {  # how the second wave's ground looks on the battle mat (BattleBoard._spell_ground)
     "tentacles": {"colour": (40, 26, 52), "alpha": 70, "image": _tentacles_image, "frames": True},
     "cloud": {"colour": (176, 200, 84), "fog": True, "alpha": 190},
@@ -1219,6 +1251,11 @@ GROUND_LOOKS = {  # how the second wave's ground looks on the battle mat (Battle
     "wind": {"colour": (220, 230, 240), "alpha": 20, "image": _wind_image, "frames": True},
     "force": {"colour": (150, 190, 255), "alpha": 150},
     "stone": {"colour": (120, 116, 108), "alpha": 0},
+    # the third wave's (D.3)
+    "blades": {"colour": (150, 120, 220), "alpha": 35, "image": _blades_image, "frames": True},
+    "thorns": {"colour": (40, 58, 26), "alpha": 140, "image": _thorns_image},
+    "celestial": {"colour": (255, 246, 205), "alpha": 70, "edge": True},
+    "icewall": {"colour": (200, 232, 255), "alpha": 120},
 }
 
 

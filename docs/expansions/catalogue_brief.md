@@ -1,4 +1,6 @@
-# Brief: the spell catalogue, second wave (Expansion 3, task D.2) — spells of level 3, 4 and 5
+# Brief: the spell catalogue, third wave (Expansion 3, task D.3) — spells of level 6 and 7
+
+(The D.2 brief for levels 3 to 5 is in git history: `git show 1544733:docs/expansions/catalogue_brief.md`.)
 
 You write game data for Realmwalker, a D&D 5e (2024 rules) party RPG in Python. You write **JSON only**: never edit
 Python code. The project is at `D:\Project Dawn` (Windows; the Bash tool is Git Bash: `cd "/d/Project Dawn"`; Python is
@@ -7,29 +9,32 @@ Python code. The project is at `D:\Project Dawn` (Windows; the Bash tool is Git 
 ## What to write
 
 1. `data/packs/03_demigods_magics/spells.level<N>.json` (your level): `{"_comment": "...", "spells": {id: spell}}`,
-   one entry per spell in your list below, ids in snake_case (`evards_black_tentacles`, `otilukes_resilient_sphere`).
-2. `build/d2_codex_level<N>.json`: `{id: {"status": "done" | "adapted", "note": "..."}}` for every spell you wrote.
+   one entry per spell in your list below, ids exactly as listed.
+2. `build/d3_codex_level<N>.json`: `{id: {"status": "done" | "adapted", "note": "..."}}` for every spell you wrote.
    "done" only when the spell works as the book says in a fight; otherwise "adapted" and a short note of what is left
-   out or changed (style: "the disadvantage on one ability's checks and moving it to a new creature are left out").
+   out or changed (style: "the ring wall and the three-quarters cover are left out").
 
 ## How a spell is written
 
 Read these first (they are the vocabulary; do not invent ops, buff keys or zone kinds):
-- `realmwalker/rules/engine/effects.py`: the docstring at the top lists every op and its parameters (two parts: the
-  first wave's, and "The second wave (D.2)").
+- `realmwalker/rules/engine/effects.py`: the docstring at the top lists every op and its parameters (three parts: the
+  first wave's, "The second wave (D.2)" and "The third wave (D.3)" — the third is new and made for your spells).
 - `realmwalker/rules/engine/marks.py`: the docstring lists every buff key a `modifier` op may carry; `BUFF_KEYS` and
   `ZONES` (zone kinds) are the complete sets.
 - `realmwalker/data/schemas.py`, `SPELL`: the fields (`fx` must be one of its looks; `area.shape` one of its shapes;
   `target` one of its targets; `text` at most 300 characters).
-- Finished examples: `data/packs/03_demigods_magics/spells.level1.json` and `spells.level2.json` (the first wave;
-  smites, `again` follow-ups, zones, marks, `$caster`/`$dc`/`$mod`/`$spell`/`$up`/`$level`/`$foe_type`, `per_up`) and
-  in `data/spells.json`: `spirit_guardians` (an aura), `fireball`, `hold_monster`, `spiritual_weapon` (a token).
+- Finished examples: `data/packs/03_demigods_magics/spells.level3.json`, `spells.level4.json`, `spells.level5.json`
+  (the second wave: zones, walls, auras, banishing, `again` follow-ups, `material`) and `spells.level2.json`
+  (Suggestion), `data/spells.json` (`fireball`, `hold_monster`, `spiritual_weapon`).
 
 Rules of the house:
-- Fields: name, level, school, classes (the 2024 class list from the book), target, range (feet, "self" or "touch"),
-  area if any, cast ("bonus"/"reaction" when not an action), components, concentration, rounds (10 = a minute, 100 =
-  ten minutes, 600 = an hour), effects, fx, text. `targets_up` for "one more creature for each slot level above".
-  `up` on a damage op = dice added per slot level above. `battle_only: true` on smites (as in level 1).
+- Fields: name, level, school, classes (the 2024 class list from the book, as listed below), target, range (feet,
+  "self" or "touch"), area if any, cast ("bonus"/"reaction" when not an action), components, concentration, rounds
+  (10 = a minute, 100 = ten minutes, 600 = an hour, 14400 = a day), effects, fx, text. `up` on a damage op = dice
+  added per slot level above. `battle_only: true` on spells whose blessing only matters in a fight (as in level 5).
+- A costly material component: `"material": {"items": [item id], "consumed": true/false, "text": "<the book's words>"}`.
+  The items exist: `black_pearl`, `mushroom_powder`, `ruby_dust`, `miniature_sword`, `forked_rod` (and `diamond`,
+  `pearl`, `diamond_dust`). Leave `material` out for components with no cost.
 - `text`: plain English for the player, in the game's voice (look at the examples), at most 300 characters; say what
   happens in the fight and what each higher slot adds; mention anything left out only briefly if at all (the codex
   note carries that).
@@ -40,84 +45,96 @@ Rules of the house:
   `.venv/Scripts/python.exe tools/codex/extract.py --render phb <page>` (writes `build/codex/pages/`) and read it.
 - Every spell must be castable in a real fight and do something the Auto (the game's own tactics) can value.
 
-## The kernel's new pieces you will use (all in the docstrings)
+## The plan for each spell (the main session made the kernel pieces for these; follow it)
 
-- Sent away: `{"op": "banish", "how": "banished"}` (Banishment), `"how": "sphere"` (Resilient Sphere),
-  `"below_hp": 50` (Banishing Smite's on_hit). Needs `concentration: true` on the spell. Put it in a save's
-  `on_fail`, or directly for a sure effect.
-- Blink: a `modifier` with buff `{"blink": true}` on the caster for 10 rounds (no concentration).
-- Dispel: `{"op": "dispel"}`; spell target "point" (the creature on the square and the ground there).
-  Add `"breaker_bonus": true` to Dispel Magic (the Abjurer's Spell Breaker casts it with a bonus action).
-- Auras that help friends: a `modifier` on the caster with buff `{"aura": {"radius": 30, "grant": {...}}}` where
-  grant is any buff (e.g. `{"hit_extra": "1d4", "hit_type": "radiant", "hit_with": "weapon"}` for Crusader's Mantle;
-  `{"resist": ["necrotic"], "rise": true}` for Aura of Life; `{"resist": ["poison"], "immune": ["poisoned"],
-  "save_adv_against": ["blinded", "charmed", "deafened", "frightened", "paralyzed", "poisoned", "stunned"]}` for Aura
-  of Purity; `{"save_adv_spells": true, "evade_spells": true}` for Circle of Power). Concentration spells.
-- Marks: `confused` (Confusion: with `"repeat": "wis", "dc": "$dc"`), `sluggish` (Slow: with `"ac": -2`, `"repeat":
-  "wis"`, `"dc": "$dc"`), `haste` (with `"ac": 2`, `"save_adv": ["dex"]`), `thorns` + `thorns_type` (Fire Shield, with
-  `resist`), `save_adv` (["wis", "death"] for Beacon of Hope), `heal_max` (Beacon of Hope).
-- Ground: a `zone` op with a kind from ZONES and `save`, `damage`/`type`/`up`, `half`, `fail` ("restrained" holds while
-  in it, "prone", "retching" = Poisoned and no action that turn, or another condition until the end of the turn),
-  `rough` (difficult terrain), `dark` (heavily obscured), `catch: true` (those inside when it appears are caught at
-  once). Kinds: tentacles, cloud (Cloudkill), stench (Stinking Cloud), hunger (Hunger of Hadar), insects (Insect
-  Plague), sleet (Sleet Storm), radiance (Jallarzi's), spirits (Conjure Animals), elemental (Conjure Elemental), fire
-  (Wall of Fire, along a "line" area), wind (Wind Wall, a "line": missiles cannot cross it), stone and force (Wall of
-  Stone, Wall of Force: impassable walls on the area's free squares, gone when the spell ends). A zone deals its
-  damage when someone enters or starts a turn there, once a turn. Two zone ops on one spell are fine (Hunger of
-  Hadar: cold with no save, `"save": "none"`, and acid on a Dexterity save).
-- Movable things: an `again` follow-up with `{"op": "move_zone"}` (see Cloud of Daggers, Moonbeam) — Conjure Animals,
-  Call Lightning's later bolts are an `again` with a save op at a point.
-- Vampiric Touch: an `attack` op with `"drain": 0.5`, and an `again` for the later touches.
-- Dominate: a `condition` "charmed" with `"control": true, "damage_save": true` (and `"save": "wis"`) in a save's
-  on_fail, concentration.
-- Moving a foe: `push` (feet), `pull`; conditions with `repeat_save`; `dot` marks with `dot_save` (Phantasmal Killer),
-  `dot_once` (Vitriolic Sphere's later acid); `quarry` (Bestow Curse's extra necrotic, by "$caster");
-  `weapon_attack` (Swift Quiver's `again`: two of them); `attack` with `rays` (Steel Wind Strike: 5) ; `teleport`
-  (Dimension Door: range 500).
+**Level 6 (spells.level6.json), 17 spells:**
+- `blade_barrier` [250] cleric: target "direction", range "self", area line 100, concentration, rounds 100; a `zone`
+  "blades", save dex, 6d10 force, half, rough, catch. (Adapted: three-quarters cover, the ring wall, the 90-foot range.)
+- `chain_lightning` [252] sorcerer, wizard: target "enemy", range 150, `"targets": 4, "targets_up": 1, "leap": 30`;
+  a `save` dex 10d8 lightning half. Material: three silver pins (no cost).
+- `circle_of_death` [253] sorcerer, warlock, wizard: target "point", range 150, area sphere 60; save con 8d8 necrotic
+  half, up 2d8; material black_pearl, not consumed ("the powder of a crushed black pearl worth 500+ GP").
+- `conjure_fey` [258] druid: target "point", range 60, concentration, rounds 100; `summon` (token
+  "spiritual_weapon") damage 3d12 psychic, up 2d12, add_mod true, `on_hit`: [condition frightened, ends
+  "caster_turn_start"]. Text: a bonus action on later turns sends it to strike again.
+- `disintegrate` [266] sorcerer, wizard: target "enemy", range 60; save dex, damage "10d6+40" force, up "3d6", no half,
+  `"dust": true`. (Adapted: objects and walls of force.)
+- `eyebite` [273] bard, sorcerer, warlock, wizard: target "enemy", range 60, concentration, rounds 10; save wis,
+  on_fail [condition unconscious, on_damage true] (Asleep); an `again` (cast "action", target "enemy", range 60, the
+  same save). (Adapted: always Asleep — Panicked and Sickened left out; the "not again after a success" rule.)
+- `flesh_to_stone` [278] druid, sorcerer, wizard: target "enemy", range 60, concentration, rounds 10; save con,
+  `"sure_kinds": ["construct"]`, on_fail [condition restrained, `"petrify": true`, "save": "con"], on_save
+  [{"op": "slow", "feet": 999}] (speed 0 until the start of your next turn). (Adapted: the permanent stone after a
+  full minute.)
+- `globe_of_invulnerability` [282] sorcerer, wizard: target "self", range "self", concentration, rounds 10,
+  battle_only; a `modifier` rounds 10 with buff `{"aura": {"radius": 10, "grant": {"spell_ward": "$level"}}}` (spells
+  below the slot's level are kept out: 5th and lower at level 6, one more per slot above). (Adapted: the barrier moves
+  with the caster.)
+- `harm` [286] cleric: target "enemy", range 60; save con 14d6 necrotic half, `"max_hp_loss": true`. (Adapted: the
+  maximum comes back after the fight.)
+- `heal` [287] cleric, druid: target "ally", range 60; `heal` dice "70", per_up 10; then `restore` conditions
+  ["blinded", "deafened", "poisoned"].
+- `mass_suggestion` [299] bard, sorcerer, wizard: target "enemy", range 60, `"targets": 12`, rounds 14400 (no
+  concentration), battle_only; save wis, on_fail [condition incapacitated, on_damage true] — as Suggestion (level 2).
+- `otilukes_freezing_sphere` [305] sorcerer, wizard: target "point", range 300, area sphere 60; save con 10d6 cold
+  half, up 1d6. (Adapted: freezing water and holding the globe to throw later.)
+- `ottos_irresistible_dance` [306] bard, wizard: target "enemy", range 30, concentration, rounds 10; save wis, on_fail
+  [condition charmed; modifier buff `{"dancing": true, "dc": "$dc", "by": "$caster"}`], on_save [{"op": "slow",
+  "feet": 999}].
+- `sunbeam` [332] cleric, druid, sorcerer, wizard: target "direction", range "self", area line 60, concentration,
+  rounds 10; save con 6d8 radiant half, on_fail [condition blinded, ends "caster_turn_start"]; an `again` (cast
+  "action", the same line and save). Material: a magnifying glass (no cost).
+- `true_seeing` [339] bard, cleric, sorcerer, warlock, wizard: target "ally", range "touch", rounds 600, battle_only;
+  a `modifier` rounds 600 buff `{"truesight": 120}`; material mushroom_powder, consumed ("mushroom powder worth 25+ GP,
+  which the spell consumes").
+- `wall_of_ice` [342] wizard: target "point", range 120, area cube 20, concentration, rounds 100; a `zone` "icewall",
+  save dex, 10d6 cold, up 2d6, half, catch. (Adapted: the dome and panel shapes, breaking it, the frigid air.)
+- `wall_of_thorns` [342] druid: target "direction", range "self", area line 60, concentration, rounds 100; first a
+  `save` dex 7d8 piercing half up 1d8 (those in it as it appears), then a `zone` "thorns", save dex, 7d8 slashing,
+  up 1d8, half, rough, dark (no catch). (Adapted: the four feet of movement per foot are ordinary difficult terrain.)
 
-## Lists (book page in brackets)
+**Level 7 (spells.level7.json), 11 spells:**
+- `conjure_celestial` [257] cleric: target "point", range 90, area cylinder 10, concentration, rounds 100; a `zone`
+  "celestial", save dex, 6d12 radiant, up 1d12, half, `"heal": "4d12", "heal_up": "1d12", "add_mod": true,
+  "friends_safe": true, "catch": true`; an `again` (cast "bonus", target "point", range 90, area cylinder 10,
+  effects [{"op": "move_zone"}]) as in Conjure Animals (level 3). (Adapted: moved with a bonus action, not as you move.)
+- `delayed_blast_fireball` [264] sorcerer, wizard: target "point", range 150, area sphere 20; save dex 12d6 fire half,
+  up 1d6; then {"op": "ignite"}. No concentration. (Adapted: the bead bursts at once; its growing and being thrown
+  back are left out.)
+- `divine_word` [268] cleric: cast "bonus" (check the page), target "self", range "self", area emanation 30, affects
+  "enemies"; save cha, on_fail [{"op": "banish", "forever": true, "kinds": ["celestial", "elemental", "fey", "fiend"]},
+  {"op": "by_hp", "tiers": [[20, [{"op": "slay"}]], [30, [blinded, deafened, stunned conditions with rounds 600]],
+  [40, [blinded, deafened, rounds 100]], [50, [deafened, rounds 10]]]}].
+- `finger_of_death` [276] sorcerer, warlock, wizard: target "enemy", range 60; save con, damage "7d8+30" necrotic,
+  half. (Adapted: the zombie that rises waits for Part F.)
+- `fire_storm` [278] cleric, druid, sorcerer: target "point", range 150, area cube 30, affects "enemies"; save dex
+  7d10 fire half; then {"op": "ignite"}. (Adapted: the ten cubes are one block, arranged round your friends.)
+- `forcecage` [279] bard, warlock, wizard: target "point", range 100, area cube 10, concentration, rounds 600,
+  `"no_dispel": true`; effects [{"op": "banish", "how": "cage"}]; material ruby_dust, consumed. (Adapted: the solid
+  box only; the cage of bars and the Charisma save to teleport out are left out.)
+- `mordenkainens_sword` [305] bard, wizard: target "point", range 90, concentration, rounds 10; `summon` damage 4d12
+  force, add_mod true; material miniature_sword, not consumed.
+- `plane_shift` [308] cleric, druid, sorcerer, warlock, wizard: target "enemy", range "touch"; an `attack` melee with
+  no damage, on_hit [save cha, on_fail [{"op": "banish", "forever": true}]]; material forked_rod, not consumed.
+  (Adapted: travelling with willing friends waits for Part E.)
+- `power_word_fortify` [309] bard, cleric: target "all_allies", range 60; `temp_hp` amount 120, `"share": true,
+  "count": 6`.
+- `prismatic_spray` [310] bard, sorcerer, wizard: target "direction", range "self", area cone 60; one op
+  `{"op": "one_of", "die": 8, "choices": [...]}` with seven choices, each a list holding one `save` dex (a `say` op
+  first is welcome: "A red ray strikes {name}."): red 12d6 fire half, orange acid, yellow lightning, green poison, blue
+  cold (all 12d6, half); indigo: no damage, on_fail [condition restrained, petrify true, save "con"]; violet: no
+  damage, on_fail [condition blinded, ends "caster_turn_start", then {"save": "wis", "on_fail": [{"op": "banish",
+  "forever": true}]}]. The eighth face (two rays) is the die's own rule.
+- `reverse_gravity` [315] druid, sorcerer, wizard: target "point", range 100, area cylinder 50, concentration, rounds
+  10; save dex, on_fail [{"op": "lift", "feet": 100}]. (Adapted: those who walk in later, objects.)
 
-**Level 3 (spells.level3.json):** Aura of Vitality [247] (an `again` bonus-action heal 2d6 on an ally), Beacon of Hope
-[248], Bestow Curse [249] (the extra 1d8 necrotic from the caster's attacks: a `quarry` mark; touch; save Wis),
-Blinding Smite [250], Blink [251], Call Lightning [251] (point, then `again` each turn), Conjure Animals [257] (2024:
-a pack of spirits, zone "spirits", radius 10 around a point, Dex save 3d10 slashing, moved by an `again` bonus action
-with `move_zone`), Conjure Barrage [257], Crusader's Mantle [262], Dispel Magic [267], Elemental Weapon [271] (a
-`modifier`: weapon_plus 1 and hit_extra 1d4 of a type; target ally touch), Fear [274] (cone; frightened + `flee`),
-Fly [279] (`fly` buff, targets_up), Haste [287], Hunger of Hadar [289], Hypnotic Pattern [290] (charmed +
-incapacitated, `on_damage`), Lightning Arrow [295] (a smite on a ranged weapon; on_hit damage and a `save` with
-`around: 10`), Protection from Energy [312] (`resist` with "$foe_type"), Sleet Storm [320], Slow [321], Stinking Cloud
-[324], Vampiric Touch [340], Wind Wall [344].
-
-**Level 4 (spells.level4.json):** Aura of Life [247], Aura of Purity [247], Banishment [248], Blight [250] (kinds:
-plants fail automatically or take max — say what you can), Charm Monster [252] (see Charm Person in level1),
-Compulsion [255] (adapt: those failing must spend their move going away from the caster — `flee` without fear, or as
-you judge best), Confusion [256], Conjure Minor Elementals [258] (2024: your attacks deal 2d8 more of a chosen type
-to creatures within 15 feet: a `modifier` hit_extra with hit_with "any" on the caster), Conjure Woodland Beings [258]
-(2024: an `aura` op like Spirit Guardians, 10 feet, Wis save 5d8 force half), Dimension Door [265], Dominate Beast
-[268] (kinds ["beast"]), Evard's Black Tentacles [273], Fire Shield [277], Fount of Moonlight [280] (resist radiant
-and hit_extra 2d6 radiant melee; the blinding reaction left out), Freedom of Movement [280] (`immune` paralyzed and
-restrained; lasts an hour, 600 rounds), Grasping Vine [283] (a `save`/`pull`/grappled at a point and an `again`),
-Greater Invisibility [284] (condition invisible on the target, concentration; it does not end on attacking),
-Otiluke's Resilient Sphere [306], Phantasmal Killer [307], Staggering Smite [323], Vitriolic Sphere [340], Wall of
-Fire [341].
-
-**Level 5 (spells.level5.json):** Antilife Shell [244] (adapt as you best can with the ops: e.g. an aura on the
-caster whose grant is warded_kinds for every kind but undead and constructs — say what it really does in the note),
-Banishing Smite [248], Bigby's Hand [249] (a `summon` token like Spiritual Weapon: Clenched Fist 5d8 force, `up`
-2d8; the other hands left out), Circle of Power [253], Cloudkill [254], Conjure Elemental [257] (2024: zone
-"elemental" at a point, Dex save 8d8 of a chosen type, fail restrained), Conjure Volley [258], Contagion [259],
-Destructive Wave [264] (an emanation of 30 feet around the caster, affects enemies: Con save, 5d6 thunder + 5d6
-radiant, half, prone on a fail), Dispel Evil and Good [266] (warded_kinds; the Dismissal and Break Enchantment
-options as you can), Dominate Person [269] (kinds ["humanoid"]), Greater Restoration [284] (`restore`, what the op
-allows), Insect Plague [292], Jallarzi's Storm of Radiance [292], Steel Wind Strike [323], Swift Quiver [332], Synaptic
-Static [333] (`attack_die` "-1d6" mark with repeat Int), Telekinesis [334] (adapt: Str save or pushed/pulled and
-restrained until the end of the caster's next turn, with an `again` each turn), Wall of Force [341], Wall of Stone
-[342], Yolande's Regal Presence [346] (an `aura` op 10 feet, Wis save 4d6 psychic; its prone and push as you can).
+For every spell, read its page: the numbers, the class list and the components (V, S, M) come from the book. The plan
+above says how to build it; if the book disagrees with a number in the plan, the book wins (say so in your reply).
 
 ## Checking your work
 
 - `.venv/Scripts/python.exe -m pytest -q -n 3 tests/test_engine.py tests/test_schema_data.py` (the data loads; every op,
-  key and zone kind is known) — use `-n 3`, never more (other helpers run beside you).
+  key and zone kind is known) — use `-n 3`, never more (another helper runs beside you).
 - `.venv/Scripts/python.exe -m pytest -q -n 3 tests/test_catalogue.py -k "<your ids, separated by ' or '>"`: every
   spell is cast in a real fight, the fight goes on to its end, and the Auto sees the spell's worth. A worth failure
   may be the main session's to fix (the Auto's valuation code): say which in your reply rather than bending the

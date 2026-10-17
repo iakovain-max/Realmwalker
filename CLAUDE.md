@@ -398,6 +398,12 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   (`marks.share_auras`, run by `_follow_auras`), ground with a save and what a failure brings (`Battle._ground`,
   Zone `fail`/`rough`/`dark`/`held`), walls laid as terrain and restored when they end (Zone `was`), the Wind
   Wall (`Battle.wind_between`), `cast_kind` (Spell Breaker's bonus-action Dispel Magic); tests/test_wave2.py.
+  The third wave (D.3, levels 6-7; the effects docstring's "third wave" part): `leap` (extra targets near the first,
+  `effects.many`), dust and a lowered maximum (`Fighter.max_cut`), the three saves of stone (`Battle._stone_save`),
+  the spell ward (`effects.warded`), shared temporary hit points (`effects.shares`), ground that heals friends (Zone
+  `heal`), walls of ice, the forcecage (`send_away` "cage") and banishing for good (`Battle.send_off`), `by_hp`,
+  `slay`, `lift` (Reverse Gravity: `Env.place` "underground"/"indoors" gives a ceiling), `one_of` (a die per
+  creature), a summon's `on_hit`, `no_dispel`; marks dancing, aloft, spell_ward, truesight; tests/test_wave3.py.
 - Gear and tools 2024 (Expansion 2 part D): items.json `pack` (opens into its contents, gear.open_pack), `helps`
   {search, traps, force, disguise} (dungeon.helps, law.put_on_disguise), `utilize` (a tool's 2024 uses, on its card),
   `carry` also on carried containers (each kind once, Sheet.pack_carry), `trinket` (data/trinkets.json; the name and
