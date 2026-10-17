@@ -40,6 +40,31 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-10-17 (night): Demigods & Magics C.1 — preparing spells — branch `dlc/03-demigods-magics` (not yet in `main`)
+
+Built by the relay builder realmwalker-a. Casters now prepare their spells, as in the 2024 book. Part C goes to
+`main` when its three tasks are done (C.3).
+- **Prepared spells.** A cleric prepares from every cleric prayer, a wizard from the spellbook, as many as the book's
+  table allows (4 at level 1, 9 at level 5, up to 22 for a cleric and 25 for a wizard at 20). Only prepared spells
+  and cantrips can be cast, in a fight or on the road. A new character starts with a sensible list already chosen.
+- **The Spells page (S) prepares.** It now lists every spell you could prepare: √ marks one prepared, ◆ one always
+  prepared. p prepares the chosen spell or puts it aside (also a button). After a long rest or a new level the list
+  may be changed freely until the next fight; after a short rest a wizard of level 5 or more may swap one spell
+  (**Memorize Spell**); an empty place can be filled at any time.
+- **Domain spells.** A Life cleric always has Bless, Cure Wounds and Lesser Restoration prepared from level 3, Mass
+  Healing Word and Revivify from 5, and more later; a War cleric Guiding Bolt, Shield of Faith and Spiritual Weapon,
+  then Spirit Guardians, Hold Monster... They do not count against the list. The ones the game does not have yet (Aid,
+  Magic Weapon, Fire Shield...) arrive with the spell catalogue (Part D).
+- **Ritual Adept.** A wizard reads a ritual (Identify) from the book without preparing it: twenty minutes, no slot.
+- **Companions prepare for themselves** by what they are for: a healing priest prays for healing first, a fighting
+  priest for blessings and the spiritual weapon, a wizard for Magic Missile, Shield and fire; empty places are always
+  filled. You can change a companion's list on their Spells page (Tab).
+- **One spell slot a turn** (2024) replaces the old rule about bonus-action spells: Healing Word and then Guiding
+  Bolt in one turn is no longer possible, but a cantrip, a scroll or a wand's charge can go beside a slotted spell.
+  Shield and Counterspell follow the same rule on the turn they are cast.
+- **Choices made without Anton**: the list stays open for changes until the next fight begins (the book says "when
+  you finish a long rest"); a new level opens it the same way.
+
 ### Session, 2026-10-17 (night): Demigods & Magics B.4 — the 2024 wizard — and Part B into `main`
 
 The first part built by a relay builder (realmwalker-b). The wizard is now the 2024 book's from level 1 to 20, and

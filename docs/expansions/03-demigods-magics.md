@@ -79,7 +79,7 @@ spellcasting and scrolls at the book's prices.
   FORMAT_VERSION bump; companion archetypes to 20; Part B to `main`.
 
 ### Part C — Spellcasting complete
-- [ ] C.1 Preparing spells (counts by table; the Spells screen prepares; Auto prepares by archetype); always-prepared
+- [x] C.1 Preparing spells (counts by table; the Spells screen prepares; Auto prepares by archetype); always-prepared
   spells; rituals; one slotted spell per turn; the wizard's Memorize Spell (one prepared spell swapped after a short
   rest) and Ritual Adept (rituals from the book, prepared or not).
 - [ ] C.2 Components: focus and pouch, costly components as items (shops), consumed ones spent; upcasting for every

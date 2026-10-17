@@ -76,11 +76,16 @@ Assumptions waiting for Anton:
   No creature knows Counterspell yet: enemies use it when their stat blocks name it (Part G puts the catalogue in
   the casters' hands). From the fresh review: the 2024 Assassinate has no critical hit on the surprised (the 2014
   rule is gone).
+- Expansion 3 C.1: the prepared list may change from a long rest (or a new level) until the next fight begins, one
+  spell after a short rest (Memorize Spell); an empty place may be filled at any time; a new level fills new places
+  with the Auto's choice (the player changes them on the Spells page); domain spells not yet in the catalogue are
+  listed in data/classes.json and prepared as they arrive (Part D).
 Ideas for later:
 - (none yet)
-Next session starts at: task C.1 in docs/expansions/03-demigods-magics.md (Part C: preparing spells by the class
-tables, the Spells screen prepares, the Auto prepares by archetype; always-prepared spells; rituals; one slotted spell
-per turn; the wizard's Memorize Spell and Ritual Adept). Part B is in `main` (saves format 17).
+Next session starts at: task C.2 in docs/expansions/03-demigods-magics.md (Part C: components - a focus or a pouch
+for free materials, costly components as items sold in shops and spent when consumed; upcasting for every spell with
+a `higher` op; the spell's card shows the level chosen). C.1 (preparing) is on the branch; Part C goes to `main` with
+C.3.
 
 ## Done
 
