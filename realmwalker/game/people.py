@@ -441,6 +441,17 @@ def link_figures(game, town: Town, settlement, lm, inside, rng: RNG) -> None:
             add(w, town, npc)
         if npc is not None:
             become_figure(game, npc, fig, rng.child(f"figure/{fig.id}"))
+            npc.stats = figure_stats(npc.job, fig) or npc.stats
+
+
+def figure_stats(job: str, fig) -> str | None:
+    """The book's block a figure of the world fights with (Expansion 5 C.3): a temple's head is an Archpriest, a
+    mages' circle's an Archmage when great (level 13+ or fame 8+), else a Mage. None: their trade's own."""
+    if job == "priest":
+        return "archpriest"
+    if job == "mage":
+        return "archmage" if int(getattr(fig, "level", 0) or 0) >= 13 or int(fig.fame) >= 8 else "mage"
+    return None
 
 
 TRAVELLERS = {"hamlet": (0, 0), "village": (0, 1), "town": (1, 2), "city": (2, 3), "hold": (0, 1), "elfhall": (0, 1)}

@@ -316,3 +316,88 @@ def test_temples_and_mages_on_the_books_blocks(game, tables):
     high = [n for n in folk if n.stats == "archpriest"]
     assert len(high) == 1 and high[0].title.startswith("high priest")
     assert spellhire.reach(game, high[0]) == int(spellhire.spec(game)["reach"]["city"])
+
+
+# ---------------------------------------------------------------------------- C.3 apprenticeships, the history's casters
+def test_the_historys_temple_heads_and_circle_mages_fight_on_the_books_blocks():
+    from types import SimpleNamespace
+
+    from realmwalker.game.people import figure_stats
+
+    assert figure_stats("priest", SimpleNamespace(level=3, fame=1)) == "archpriest"
+    assert figure_stats("mage", SimpleNamespace(level=14, fame=2)) == "archmage"
+    assert figure_stats("mage", SimpleNamespace(level=8, fame=8)) == "archmage"
+    assert figure_stats("mage", SimpleNamespace(level=8, fame=3)) == "mage"
+    assert figure_stats("lord", SimpleNamespace(level=8, fame=3)) is None
+
+
+def town_mage(game):
+    from realmwalker.game.people import add, make_npc, town_of
+
+    s = game.world.settlements[0]
+    npc = make_npc(game, s, "mage", RNG(5, "mage"))
+    add(game.world, town_of(game.world, s.id), npc)
+    game.player.x, game.player.y = s.x, s.y
+    return npc
+
+
+def test_a_mage_offers_an_apprenticeship_for_a_grimoire(game):
+    from realmwalker.game import quests
+
+    site, fig = lived_tower(game)
+    npc = town_mage(game)
+    q = quests.make_offer(game, npc, RNG(2, "offer"), template="apprenticeship")
+    assert q is not None and q["giver_job"] == "mage"
+    t = q["target"]
+    assert t["item"].startswith("the grimoire of ") and t["base"] == "spellbook"
+    if t["wizard"] == fig.name:
+        assert t["rival"] is True  # (the wizard lives: their own shelves)
+    words = quests.pitch(game, q)
+    assert t["wizard"] in words or t["item"] in words
+
+
+def test_the_grimoire_waits_at_the_bottom_and_counts_as_carried_back(game):
+    from realmwalker.game import quests
+    from realmwalker.world import dungeon as gen
+
+    site, fig = lived_tower(game)
+    fig.died = 1  # (a dead wizard's tower)
+    npc = town_mage(game)
+    q = quests.make_offer(game, npc, RNG(2, "offer"), template="apprenticeship")
+    q["target"].update(site=site.id)
+    quests.accept(game, q)
+    game.player.x, game.player.y = site.x, site.y
+    lm = gen.get_dungeon(game.world, game.tables, site, gen.depth_for(game.world, site))
+    lm.populated = True
+    quests.on_arrive_dungeon(game, lm)
+    feat = next(f for f in lm.features.values() if f.get("quest") == q["id"])
+    items = quests.on_chest(game, feat)
+    assert items and items[0].def_id == "spellbook" and q["done"]
+    assert "apprenticeship" in quests.FETCHED and not quests.holds_quest_item(game, q)
+
+
+def test_the_lesson_writes_a_spell_into_a_wizards_book(game, tables):
+    from realmwalker.game import quests
+
+    npc = town_mage(game)
+    wiz = hero(tables, "wizard", level=5)
+    game.party.append(wiz)
+    before = set(wiz.spells.get("spellbook", []))
+    q = {"id": 991}
+    lines = quests.lesson(game, q, npc)
+    new = set(wiz.spells["spellbook"]) - before
+    assert len(new) == 1 and lines
+    sid = new.pop()
+    assert "wizard" in tables.spells[sid]["classes"] and 1 <= tables.spells[sid]["level"] <= 3
+
+
+def test_with_no_wizard_the_lesson_is_a_scroll(game):
+    from realmwalker.game import quests
+
+    npc = town_mage(game)
+    game.party[:] = [c for c in game.party if c.cls != "wizard"] or game.party[:1]
+    game.leader.cls = "fighter" if game.leader.cls == "wizard" else game.leader.cls
+    n = len(game.leader.inventory)
+    lines = quests.lesson(game, {"id": 992}, npc)
+    assert lines and len(game.leader.inventory) == n + 1
+    assert game.leader.inventory[-1].def_id.startswith("scroll_")
