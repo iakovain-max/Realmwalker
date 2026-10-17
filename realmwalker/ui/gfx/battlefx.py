@@ -1215,7 +1215,7 @@ GROUND_LOOKS = {  # how the second wave's ground looks on the battle mat (Battle
     "sleet": {"colour": (200, 214, 236), "fog": True, "alpha": 160, "image": _sleet_image, "frames": True},
     "radiance": {"colour": (255, 240, 190), "alpha": 70, "edge": True},
     "spirits": {"colour": (170, 230, 190), "alpha": 40, "edge": True},
-    "elemental": {"colour": (150, 200, 255), "alpha": 50, "edge": True},
+    "elemental": {"colour": (255, 150, 70), "alpha": 50, "edge": True},
     "wind": {"colour": (220, 230, 240), "alpha": 20, "image": _wind_image, "frames": True},
     "force": {"colour": (150, 190, 255), "alpha": 150},
     "stone": {"colour": (120, 116, 108), "alpha": 0},

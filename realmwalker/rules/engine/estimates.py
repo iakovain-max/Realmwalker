@@ -340,15 +340,24 @@ def _control_rounds(ops: list[dict]) -> float:
 def _wall_worth(b, f, o: dict, point) -> float:
     """A wall raised near the foes (Wind Wall against archers; stone and force against everyone who must go round)."""
     out = 0.0
+    friends = [x for x in b.team(f.team) if x.active]
     for e in b.enemies_of(f):
         if max(abs(e.x - point[0]), abs(e.y - point[1])) > 6:
+            continue
+        if any(b.gap(x, e) <= 1 for x in friends):
+            out -= 0.3 * threat(e)  # (already at blows with us: a wall would only part friends from them)
+            continue
+        ex, ey = e.x - f.x, e.y - f.y
+        px, py = point[0] - f.x, point[1] - f.y
+        between = ex * px + ey * py > 0 and px * px + py * py < ex * ex + ey * ey
+        if not between:
             continue
         if o.get("zone") == "wind":
             if any(op.kind == "ranged" for op in b.attack_options(e)):
                 out += 0.8 * threat(e)
         else:
             out += 0.35 * threat(e)
-    return out
+    return max(0.0, out)
 
 
 def _escape_worth(b, f, point) -> float:
@@ -368,11 +377,18 @@ def _dispel_worth(b, f, target, point) -> float:
     x = target if target is not None else (b.at(*point) if point is not None else None)
     out = 0.0
     if x is not None:
-        for level, _, _ in held_spells(b, x):
-            out += (0.6 + 0.2 * level) * threat(x) if x.team != f.team else 2.0 + level
+        for level, _, _, by in held_spells(b, x):
+            caster = next((y for y in b.fighters if y.id == by), None) if by is not None else None
+            team = caster.team if caster is not None else x.team  # (a blessing of unknown hand: the bearer's own)
+            if x.team != f.team and team == x.team:
+                out += (0.6 + 0.2 * level) * threat(x)  # (a foe's blessing undone)
+            elif x.team == f.team and team != f.team:
+                out += 2.0 + level  # (a friend freed of a foe's spell)
+            elif team == f.team:
+                out -= 2.0 + level  # (our own magic undone: never wanted)
     if point is not None:
         for z in b.zones:
-            if point in z.cells and z.spell and z.owner is not None:
+            if point in z.cells and z.spell and z.owner is not None and z.kind != "force":
                 owner = next((y for y in b.fighters if y.id == z.owner), None)
                 if owner is not None and owner.team != f.team:
                     out += 3.0

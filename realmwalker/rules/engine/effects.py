@@ -916,13 +916,13 @@ def _dispel(c: Cast, o: dict, victim) -> None:
         return roll + bonus >= 10 + level
 
     if target is not None and target.state in ("fighting", "fleeing", "down", "away"):
-        for (level, name, end) in held_spells(b, target):
+        for (level, name, end, _by) in held_spells(b, target):
             if beats(level, name):
                 end()
                 ended += 1
                 b.say(f"{name} on {target.the_name} unravels.", "magic")
     if c.point is not None:
-        for z in [z for z in b.zones if c.point in z.cells and z.spell in b.t.spells]:
+        for z in [z for z in b.zones if c.point in z.cells and z.spell in b.t.spells and z.kind != "force"]:
             sp = b.t.spells[z.spell]
             if beats(sp["level"], sp["name"]):
                 owner = next((x for x in b.fighters if x.id == z.owner), None)
@@ -945,8 +945,8 @@ def query_prof(f) -> int:
 
 
 def held_spells(b, x) -> list:
-    """The spells working on a creature now, as (level, name, end it): its marks and blessings, the conditions a
-    caster's concentration holds on it, and being sent away."""
+    """The spells working on a creature now, as (level, name, end it, the caster's id or None): its marks and
+    blessings, the conditions a caster's concentration holds on it, and being sent away."""
     out = []
     seen = set()
     for bf in list(x.buffs):
@@ -957,10 +957,13 @@ def held_spells(b, x) -> list:
         sp = b.t.spells[sid]
 
         def end(x=x, sid=sid):
+            if any(g.get("haste") for g in x.buffs if g.get("source") == sid) and x.active:
+                b.lethargy(x)
             x.buffs = [g for g in x.buffs if g.get("source") != sid and g.get("lasting") != sid]
             if x.char is not None:
                 spellrules.end(x.char, sid)
-        out.append((max(int(sp["level"]), int(bf.get("level") or 0)), sp["name"], end))
+        by = bf.get("conc") if bf.get("conc") is not None else bf.get("by")
+        out.append((max(int(sp["level"]), int(bf.get("level") or 0)), sp["name"], end, by))
     for caster in b.fighters:
         conc = caster.concentration
         if conc is None or conc["spell"] not in b.t.spells:
@@ -978,7 +981,7 @@ def held_spells(b, x) -> list:
                 x.save_ends = [se for se in x.save_ends if se.get("cond") != cid]
             if away:
                 b.bring_back(x)
-        out.append((int(sp["level"]) + int(conc.get("up", 0)), sp["name"], end))
+        out.append((int(sp["level"]) + int(conc.get("up", 0)), sp["name"], end, caster.id))
     return out
 
 

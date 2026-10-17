@@ -261,3 +261,31 @@ def test_beacon_of_hope_makes_healing_the_most_it_can_be(tables):
     b.cast(me, "cure_wounds", sp, friend, None, up=0, mod=0, dc=10, bonus=0, mult=1, level=1)
     most = sum(int(n) * int(s) for n, s in [spellrules.ops(sp)[0]["dice"].split("d")])
     assert friend.hp == min(friend.max_hp, 1 + most)
+
+
+def test_a_banished_last_foe_is_not_a_stand_off(tables):
+    """From the fresh review: a fight whose only foe is banished must wait for it, not break off."""
+    b = fight(tables, [hero(tables)], ["ogre"], {0: (2, 4), 1: (9, 4)})
+    me, ogre = b.fighters
+    my_turn(b, me)
+    cast(b, me, "banishment", ogre)
+    assert ogre.state == "away"
+    me.auto = True
+    for _ in range(400):
+        if b.outcome is not None or ogre.state != "away":
+            break
+        b.step()
+    assert b.outcome != "parley"
+    assert ogre.state != "away" or b.outcome is None
+
+
+def test_the_auto_never_dispels_its_own_magic(tables):
+    from realmwalker.rules.engine import estimates
+
+    b = fight(tables, [hero(tables, xp=14000), hero(tables, "fighter", seed=2)], ["bandit"],
+              {0: (2, 4), 1: (3, 4), 2: (9, 4)})
+    me, friend, bandit = b.fighters
+    my_turn(b, me)
+    cast(b, me, "haste", friend)
+    w = estimates.spell_value(b, me, "dispel_magic", point=(friend.x, friend.y))
+    assert w.total(care=4.0) <= 0.0

@@ -1038,6 +1038,8 @@ class Battle:
         if self.turn >= len(self.order):
             self.turn = 0
             self.round += 1
+            if any(x.state == "away" for x in self.fighters):
+                self.active_round = self.round  # (someone sent away is coming back: not a stand-off)
             if self.round - self.active_round > QUIET_ROUNDS:
                 self._break_off()
         self.turn_started = False
@@ -3717,15 +3719,14 @@ class Battle:
         sid = conc["spell"]
         for x in self.fighters:
             if any(b.get("haste") and b.get("conc") == f.id for b in x.buffs) and x.active:
-                durations.give(self, x, "incapacitated", ends=durations.until(self, x, "turn_end"))
-                x.buffs.append({"slow": 999, "source": "lethargy", "rounds": 1})
-                self.say(f"A wave of lethargy sweeps over {x.the_name} as the haste leaves them.", "system")
+                self.lethargy(x)
             x.buffs = [b for b in x.buffs if b.get("conc") != f.id]
             if x.state == "away" and x.away and x.away.get("by") == f.id and x.away.get("why") != "blink":
                 if why == "runs its course" and x.away.get("why") == "banished" and x.kind in EXTRAPLANAR \
                         and x.away.get("home", True):
                     x.state = "fled"  # (banished for the whole minute to the plane it came from: it stays there)
                     x.away = None
+                    x.__dict__["banished_home"] = True  # (beaten: full experience, as for a kill)
                     self._event("leave", who=x.id)
                     self.say(f"{x.the_name} does not come back.", "good" if x.team != f.team else "danger")
                 else:
@@ -3771,6 +3772,12 @@ class Battle:
                   "blink": f"{f.the_name} blinks out of sight.",
                   "sphere": f"A shimmering sphere closes around {f.the_name}."}.get(why, f"{f.the_name} is gone."),
                  "magic")
+
+    def lethargy(self, x: Fighter) -> None:
+        """Haste ends (2024): until the end of its next turn it cannot move or take actions."""
+        durations.give(self, x, "incapacitated", ends=durations.until(self, x, "turn_end"))
+        x.buffs.append({"slow": 999, "source": "lethargy", "rounds": 1})
+        self.say(f"A wave of lethargy sweeps over {x.the_name} as the haste leaves them.", "system")
 
     def bring_back(self, f: Fighter) -> None:
         """Back from wherever it was sent: where it left, or the nearest free place."""
@@ -3922,7 +3929,7 @@ class Battle:
         if f.z > 0 and z.fail in ("restrained", "prone"):
             return False  # (tentacles and ice catch only those on the ground)
         owner = next((x for x in self.fighters if x.id == z.owner), None)
-        if z.fail == "restrained" and "restrained" in f.conditions:
+        if z.fail == "restrained" and f.conditions.get("restrained") == -1 and "restrained" not in f.cond_ends:
             if z.damage and start and z.save:  # (held by the tentacles: the save again each turn, hurt if it fails)
                 z.struck.add(f.id)
                 if self._save_damage(owner or f, f, z.save, z.dc, z.held or z.damage, z.damage_type, "none") \
@@ -3961,8 +3968,8 @@ class Battle:
         if z.fail == "retching":  # (Stinking Cloud: Poisoned, and no action or bonus action, this turn)
             if durations.give(self, f, "poisoned", ends=durations.until(self, f, "turn_end")):
                 self._event("condition", who=f.id, cond="poisoned")
-                if start and durations.give(self, f, "incapacitated", ends=durations.until(self, f, "turn_end")):
-                    f.action = f.bonus = 0
+                if durations.give(self, f, "incapacitated", ends=durations.until(self, f, "turn_end")):
+                    f.action = f.bonus = 0  # (on entering too: no action or bonus action for the rest of the turn)
                 self.say(f"{f.the_name} retches, helpless.", "good" if f.side == FOE else "danger")
             return False
         if durations.give(self, f, z.fail, ends=durations.until(self, f, "turn_end")):
@@ -4053,6 +4060,8 @@ class Battle:
                 value = int(f.cdef["xp"])
                 if f.state == "dead" or f in [x for x in foes if x.creature in captives]:
                     xp += value
+                elif f.__dict__.get("banished_home"):
+                    xp += value  # (sent home for good by Banishment: beaten)
                 elif f.state in ("fled", "fleeing") and f.damage_taken > 0:
                     xp += value // 2
             if self.outcome == "parley":
