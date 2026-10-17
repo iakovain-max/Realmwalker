@@ -222,10 +222,11 @@ Assumptions waiting for Anton:
   outside a fight it reads a townsman within 30 feet (Wisdom save, +2 for the notable; a success leaves them colder).
 Ideas for later:
 - (none yet)
-Next session starts at: task E.4 in docs/expansions/03-demigods-magics.md (Part E, spells outside battle: moving
-minds and the law, disguise and illusion, locks and stone, the small arts, weather and land, lasting protections,
-great magic and Wish's other uses; its spells are listed in the design note under E.4; Part E goes to `main` with it).
-E.4 is large (about 50 spells): split it at its start as E.2 was, if needed. E.1's, E.2's and E.3's way of doing it: a spell outside a fight has `road_only` (or `minutes`) and an op {"op": "road", "does": ...}
+Next session starts at: task E.4 in docs/expansions/03-demigods-magics.md (Part E, spells outside battle). E.4 was
+split at its start (2026-10-17): E.4 is minds and the law, disguise and illusion and the small arts (27 spells; the
+design is written in the note: game/glamour.py, road ops "mind", "illusion", "art"); E.5 is locks and stone,
+weather and land, lasting protections and great magic, and Part E goes to `main` with E.5.
+E.1's, E.2's and E.3's way of doing it: a spell outside a fight has `road_only` (or `minutes`) and an op {"op": "road", "does": ...}
 (rules/spells.ROAD_USES, checked at start-up), done in game/spellwork.py (or a module of its own, as game/revival.py);
 game/magic.cast_on_road spends the slot and passes the casting time; tests in tests/test_spells_outside.py and
 tests/test_spells_road2.py. A lasting spell (ten minutes or more) is a buff kept on the character and read outside a
