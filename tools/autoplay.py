@@ -432,9 +432,9 @@ def _check_companions(game, fail) -> None:
     if held and (held.get("how") not in ("clear", "rain", "calm", "warm", "cold")
                  or not game.world.in_bounds(int(held["x"]), int(held["y"]))):
         fail(f"Control Weather holds a weather that cannot be: {held}")
-    for room in flags.get("arcane_rooms") or []:
-        if not 0 <= int(room) < len(game.world.settlements):
-            fail(f"an inn room is locked in no town: {room}")
+    room = flags.get("arcane_room")
+    if room is not None and not 0 <= int(room) < len(game.world.settlements):
+        fail(f"an inn room is locked in no town: {room}")
     for d in (flags.get("secret_chest") or {}).get("items") or []:
         if d.get("def_id") not in game.tables.items.defs:
             fail(f"the secret chest holds a thing that does not exist: {d}")

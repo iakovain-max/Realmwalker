@@ -241,6 +241,11 @@ def test_arcane_lock_on_the_room_keeps_the_inn_thieves_out(world, tables):
     assert "already" in magic.road_problem(game, wiz, "arcane_lock")
     services._night(game, npc, "squalid", Thief())
     assert wiz.money == 10000, "no thief gets into the locked room"
+    game.leave_local()
+    game.player.x, game.player.y = next((x, y) for x in range(game.world.width) for y in range(game.world.height)
+                                        if game.world.settlement_at(x, y) is None)
+    spellwork.tick(game)
+    assert not stonework.room_locked(game) and "arcane_room" not in game.renown.flags, "only while you stay in town"
 
 
 def test_knock_in_the_cells_is_ten_more_on_the_escape(world, tables, monkeypatch):
@@ -327,8 +332,10 @@ def test_creation_makes_a_ladder_that_fades_and_nobody_buys(world, tables):
     game = game_with(world, tables, wiz)
     in_the_wild(game)
     s = subject(game, wiz, "creation", "thing", "ladder")
-    assert all(tables.items.get(x.ref).get("material") not in ("iron", "steel", "gold", "silver")
-               for x in magic.road_targets(game, wiz, "creation")), "no metal"
+    made = magic.road_targets(game, wiz, "creation")
+    assert all(tables.items.get(x.ref).get("material") not in ("iron", "steel", "gold", "silver") for x in made), \
+        "no metal"
+    assert not {"leomunds_chest", "chest_replica"} & {x.ref for x in made}, "no spell's costly component"
     cast(game, wiz, "creation", s)
     ladder = next(i for i in wiz.inventory if i.def_id == "ladder")
     assert stonework.conjured(ladder)
@@ -374,10 +381,16 @@ def test_passwall_opens_twenty_feet_for_an_hour_and_puts_you_out_when_it_closes(
     assert not any("east" in s.name for s in magic.road_targets(game, wiz, "stone_shape")), "too thick to shape"
     cast(game, wiz, "passwall", subject(game, wiz, "passwall", "wall", "east"))
     assert all(walkable(tables, dungeon.terrain_id(game, lm, start[0] + i, start[1])) for i in range(1, 5))
-    p.lx = start[0] + 2  # (in the passage when the hour runs out)
+    from realmwalker.game.encounters import LocalActor
+
+    lm.actors.append(LocalActor(99, "wolves", start[0] + 3, start[1], [spawn(tables, "wolf", RNG(2, "w"), 1)]))
+    p.lx = start[0] + 2  # (in the passage when the hour runs out, a wolf behind)
     game.world.time += 61
     dungeon.on_step(game, p.lx, p.ly)
     assert (p.lx, p.ly) == start, "put out where it began"
+    wolf = lm.actors[-1]
+    assert walkable(tables, dungeon.terrain_id(game, lm, wolf.x, wolf.y)) and (wolf.x, wolf.y) != start, \
+        "the creature in it is put out too"
     assert all(dungeon.terrain_id(game, lm, start[0] + i, start[1]) == "wall_stone" for i in range(1, 5))
 
 
@@ -551,13 +564,16 @@ def test_tsunami_falls_on_a_band_seen_first_and_the_fight_begins(world, tables, 
     in_the_wild(game)
     rng = RNG(5, "band")
     ogres = [spawn(tables, "ogre", rng, i + 1) for i in range(2)]
-    game.encounter = PendingEncounter("ogres", ogres, "Ogres.", True, "")
+    group = next(g for g, e in tables.creatures.encounters.items() if e.get("name"))
+    game.encounter = PendingEncounter(group, ogres, "Ogres.", True, "")
     assert "seen first" in magic.road_problem(game, druid, "tsunami")
     assert stonework.wave_casters(game)
     hp = [o.hp for o in ogres]
     slots = sp.slots_left(druid, tables)[7]
     said = text(stonework.wave(game))
     assert "wall of water" in said and sp.slots_left(druid, tables)[7] == slots - 1
+    assert tables.creatures.encounters[group]["name"] in said and group not in said.replace(
+        tables.creatures.encounters[group]["name"], ""), "the band by its name, not its id"
     assert all(o.hp < h for o, h in zip(ogres, hp))
     fight.encounter_fight(game, ambush=False)
     assert game.battle is not None

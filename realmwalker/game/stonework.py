@@ -45,7 +45,7 @@ CREATION_HOURS = {"vegetable": 24, "stone": 12}  # (PHB 2024: precious metals an
 CREATION_CATEGORIES = ("gear", "tool", "weapon", "ammo", "clothing", "armor", "shield")
 CHEST_DAYS = 60  # Leomund's Secret Chest: after 60 days a growing 5% a day that it is lost
 CHEST_LOSS = 0.05
-WEATHER_TILES = 2  # five miles round the caster: the tile and the next ones (a tile is three miles)
+WEATHER_TILES = 2  # five miles round the caster (the book): the tile and two more each way (a tile is three miles)
 WEATHER_HOW = {"clear": "Clear the sky", "rain": "Bring rain (snow in the cold)", "calm": "Still the wind",
                "warm": "Warm the air", "cold": "Cool the air"}
 ENRICH_DAYS = 365
@@ -120,11 +120,8 @@ def spend_hand(game) -> None:
 
 def room_locked(game) -> bool:
     """Arcane Lock on your room at the inn of this town: no thief gets in (game/services)."""
-    here = _here_id(game)
-    if here is None:
-        s = game.world.settlement_at(game.player.x, game.player.y)
-        here = s.id if s is not None else None
-    return here is not None and here in (_flags(game).get("arcane_rooms") or [])
+    s = game.world.settlement_at(game.player.x, game.player.y)
+    return s is not None and _flags(game).get("arcane_room") == s.id
 
 
 def chest_things(game) -> list[dict]:
@@ -197,6 +194,11 @@ def tick(game) -> None:
     rec = _flags(game).get("weather")
     if rec is not None and int(rec.get("until", 0)) < now:
         del _flags(game)["weather"]
+    room = _flags(game).get("arcane_room")
+    if room is not None:
+        s = game.world.settlement_at(game.player.x, game.player.y)
+        if s is None or s.id != room:
+            del _flags(game)["arcane_room"]  # (you left the town: the room is someone else's now)
     rooms = _flags(game).get("enriched")
     if rooms:
         _flags(game)["enriched"] = [r for r in rooms if int(r["until"]) >= now]
@@ -310,7 +312,8 @@ def wave(game) -> list[str]:
     enc.spotted_first = False  # (they know you now)
     game.cue("spell")
     out = [f"<magic>{_first(c)} raises both hands for a long minute, and a wall of water rises out of nothing and "
-           f"falls on {esc(enc.group if hasattr(enc, 'group') else 'them')}.</> <dim>({o.get('dice', WAVE)} "
+           f"falls on {esc(game.tables.creatures.encounters.get(enc.group, {}).get('name', 'them'))}.</> "
+           f"<dim>({o.get('dice', WAVE)} "
            f"bludgeoning, Strength save DC {dc} for half)</>"]
     left = [cr for cr in enc.creatures if cr.hp > 0]
     if not left:
@@ -320,27 +323,48 @@ def wave(game) -> list[str]:
     return out
 
 
-def on_step(game) -> None:
-    """Passwall's hour is over: the passage closes (anyone in it is put out where it began). From dungeon.on_step and
-    when a level is entered."""
+def _free_floor(game, lm, x: int, y: int, taken: set) -> tuple[int, int]:
+    """The nearest walkable square to (x, y) that nobody stands on."""
+    for r in range(0, 8):
+        for cx in range(x - r, x + r + 1):
+            for cy in range(y - r, y + r + 1):
+                if max(abs(cx - x), abs(cy - y)) == r and lm.in_bounds(cx, cy) and (cx, cy) not in taken \
+                        and _tdef(game, _tid(lm, cx, cy)).get("walk"):
+                    return cx, cy
+    return x, y
+
+
+def on_step(game) -> bool:
+    """Passwall's hour is over: the passage closes (anyone in it, the party or the level's creatures, is put out
+    where it began). From dungeon.on_step. True when the party was moved (the step goes no further)."""
     lm = _dungeon(game)
     if lm is None or not lm.meta.get("passwall"):
-        return
+        return False
     now = _now(game)
     keep = []
     p = game.player
+    moved = False
     for rec in lm.meta["passwall"]:
         if int(rec["until"]) >= now:
             keep.append(rec)
             continue
         cells = [(int(x), int(y), str(tid)) for x, y, tid in rec["cells"]]
-        if any((p.lx, p.ly) == (x, y) for x, y, _ in cells):
-            p.lx, p.ly = int(rec["from"][0]), int(rec["from"][1])
+        squares = {(x, y) for x, y, _ in cells}
+        fx, fy = int(rec["from"][0]), int(rec["from"][1])
+        if (p.lx, p.ly) in squares:
+            p.lx, p.ly = fx, fy
+            moved = True
             game.say("The stone closes in round you and you are pushed out, gently, where the passage began.", "warn")
         for x, y, tid in cells:
             _set(lm, x, y, tid)
+        taken = {(p.lx, p.ly)} | {(a.x, a.y) for a in lm.actors}
+        for a in lm.actors:
+            if (a.x, a.y) in squares:
+                a.x, a.y = _free_floor(game, lm, fx, fy, taken)
+                taken.add((a.x, a.y))
         game.say("Somewhere near, the passage through the wall closes as if it had never been.", "dim")
     lm.meta["passwall"] = keep
+    return moved
 
 
 # ---------------------------------------------------------------------------- what can be aimed at
@@ -407,8 +431,14 @@ def fabricable(game) -> list[tuple[str, str, int]]:
 def creatable(game) -> list[tuple[str, str]]:
     """(item id, its kind of stuff) for each plain thing Creation can make."""
     out = []
+    components = set()  # (the book: a thing made by Creation fails as another spell's component; here it is not made)
+    for spell in game.tables.spells.defs.values():
+        m = spell.get("material") if isinstance(spell, dict) else None
+        if m:
+            components |= set(m.get("items") or ()) | set(m.get("also") or ())
     for iid, d in game.tables.items.defs.items():
-        if not isinstance(d, dict) or d.get("category") not in CREATION_CATEGORIES:
+        if not isinstance(d, dict) or d.get("category") not in CREATION_CATEGORIES or iid in components \
+                or (d.get("use") or {}).get("recall"):
             continue
         if d.get("rare") or d.get("pack") or d.get("magic") or not d.get("value"):
             continue
@@ -582,11 +612,9 @@ def _knock(game, caster, target) -> list[str]:
 def _arcane_lock(game, caster, target) -> list[str]:
     here = _here_id(game)
     if here is not None:
-        rooms = _flags(game).setdefault("arcane_rooms", [])
-        if here not in rooms:
-            rooms.append(here)
+        _flags(game)["arcane_room"] = here
         return [f"<magic>{_first(caster)} draws a line of gold dust across the door of your room at the inn:</> it "
-                "locks, and will open for nobody but you while it stands. <good>No thief will get in.</>"]
+                "locks, and will open for nobody but you. <good>No thief will get in while you stay in this town.</>"]
     lm = _dungeon(game)
     x, y = target.ref
     _set(lm, x, y, "door_locked")
@@ -696,14 +724,14 @@ def _weather(game, caster, target) -> list[str]:
              "to fall", "calm": "the wind drops away to nothing", "warm": "the air grows warmer, as if the season "
              "had turned", "cold": "the air turns cold, as if the season had turned"}[target.ref]
     return [f"<magic>{_first(caster)} burns incense and calls to the sky for ten minutes,</> and {words}. "
-            "<dim>It holds for eight hours, five miles round.</>"]
+            "<dim>It holds for eight hours, for miles round.</>"]
 
 
 def _plants(game, caster) -> list[str]:
     p = game.player
     _flags(game).setdefault("enriched", []).append({"x": p.x, "y": p.y, "until": _now(game) + ENRICH_DAYS * DAY})
     out = [f"<magic>{_first(caster)} walks the land and sings to what grows for eight hours.</> <good>For a year, "
-           "the plants for a mile round bear twice over: what is foraged here is doubled.</>"]
+           "the plants of this stretch of land bear twice over: what is foraged here is doubled.</>"]
     s = game.world.settlement_at(p.x, p.y)
     if s is not None and s.kind in ("hamlet", "village", "town") and getattr(s, "owner", None) is not None:
         from realmwalker.game import reputation

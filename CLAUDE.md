@@ -465,8 +465,8 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   `days`). Tests: tests/test_spells_road4.py.
 - Locks and stone, weather and land (Expansion 3 E.5): road ops `does` lock/mend/hand/make/stone/chest/weather/plants/
   wave are `game/stonework.py` (kinds in `spells.E5_KINDS`). Arcane Lock's doors are `door_locked` with feature
-  `arcane` (the party steps through: `stonework.through_own_lock` from `dungeon.bump`); inn rooms in
-  `renown.flags["arcane_rooms"]` (services._night). Knock in the cells: `law.attempt_escape` (+10, a slot). Mage Hand:
+  `arcane` (the party steps through: `stonework.through_own_lock` from `dungeon.bump`); the inn room in
+  `renown.flags["arcane_room"]` while you stay in that town (services._night). Knock in the cells: `law.attempt_escape` (+10, a slot). Mage Hand:
   `flags["mage_hand"]` read by `law.steal_from_shop`. Creation's things carry the tag "conjured:<minute>" (vanish in
   `stonework.tick`; `economy.sell_price` refuses them). Passwall's cells and their old ground are in
   `lm.meta["passwall"]` (closed by `stonework.on_step` from `dungeon.on_step`). Leomund's Secret Chest: what goes in

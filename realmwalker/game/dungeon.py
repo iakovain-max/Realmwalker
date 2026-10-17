@@ -174,7 +174,8 @@ def on_step(game, x: int, y: int) -> None:
     if lm.meta.get("passwall"):  # (Passwall's hour over: the passage closes)
         from realmwalker.game import stonework
 
-        stonework.on_step(game)
+        if stonework.on_step(game):
+            return  # (put out of the closing passage: this step is over)
     f = lm.features.get((x, y))
     if f and f.get("kind") == "trap" and not f.get("spent"):
         spring(game, lm, x, y, f)

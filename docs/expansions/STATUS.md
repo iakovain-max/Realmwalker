@@ -260,8 +260,8 @@ Assumptions waiting for Anton:
   E.5; lasting protections, great magic and Wish's other uses are E.6. Knock works underground (a locked door or
   chest within 60 feet; the whole level is alerted) and in the cells (+10 on the escape check; the slot is spent);
   suppressing an Arcane Lock is left out. Arcane Lock locks a dungeon door beside you (open or closed) to everything
-  but the party, who step through it to the square beyond; in a town it locks your room at that town's inn for good
-  (no inn thief). Mending mends the most worn thing by 25, up to 75 (a break, not the wear of years). Mage Hand is a
+  but the party, who step through it to the square beyond; in a town it locks your room at that town's inn while you
+  stay in the town (no inn thief). Mending mends the most worn thing by 25, up to 75 (a break, not the wear of years). Mage Hand is a
   thief's tool in a town: the next theft from a stall with Advantage; caught, the merchant cries witchcraft (-20,
   the magic seen) and no theft is done. Fabricate makes up to three batches of a camp craft at once, without tools,
   fire or a check (an artisan's craft needs someone trained in its tools). Creation makes gear of plant stuff (24
