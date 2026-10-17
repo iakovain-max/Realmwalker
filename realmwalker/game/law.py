@@ -726,7 +726,12 @@ def contraband_for(game, realm_id: int) -> list[str]:
     realm = game.world.factions.get(realm_id)
     if realm is None:
         return []
-    return list(game.tables.law["contraband"].get(realm.culture, []))
+    from realmwalker.game import shadows
+
+    out = list(game.tables.law["contraband"].get(realm.culture, []))
+    if not shadows.poison_allowed(game, realm.culture):
+        out += shadows.poison_ids(game.tables)  # (poison of every kind: DMG 2024 "Purchasing Poison")
+    return out
 
 
 # ---------------------------------------------------------------------------- other ways to break the law

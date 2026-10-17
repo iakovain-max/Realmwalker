@@ -58,7 +58,10 @@ def notices(game, settlement) -> list[dict]:
                         "text": f"{esc(realm.name[:1].upper() + realm.name[1:])}: {words[key][str(laws[key])]}"})
         banned = law.contraband_for(game, realm.id)
         if banned:
-            names = ", ".join(t.items.get(i)["name"] for i in banned if i in t.items.defs)
+            names = ", ".join([t.items.get(i)["name"] for i in banned if i in t.items.defs
+                               and not t.items.get(i).get("poison")]
+                              + (["poisons of every kind"] if any(t.items.get(i).get("poison") for i in banned)
+                                 else []))
             out.append({"kind": "law", "title": "BY ORDER", "text": f"Forbidden within the walls: {names}."})
     local = t.politics.get("notices", [])
     for line in rng.sample(local, min(2, len(local))):

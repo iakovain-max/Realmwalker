@@ -199,6 +199,10 @@ def offers_in(game, settlement) -> list[dict]:
 
 def make_offer(game, npc, rng: RNG, template: str | None = None, avoid=()) -> dict | None:
     kinds = [template] if template else [t for t, s in spec(game)["templates"].items() if npc.job in s["givers"]]
+    if not template:
+        from realmwalker.game import shadows
+
+        kinds += [k for k in shadows.guild_work(game, npc) if k not in kinds]  # (the guild's work for its own)
     rng.shuffle(kinds)
     # A town where three people all want an heirloom fetched is a dull town: spread the kinds about.
     counts = {k: sum(1 for a in avoid if a == k) for k in kinds}

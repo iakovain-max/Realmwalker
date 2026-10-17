@@ -389,6 +389,10 @@ def _settle_townsfolk(game, battle: Battle, result: BattleResult) -> None:
         npc = game.world.npcs.get(mapping.get(f.creature.uid, -1))
         if npc is None:
             continue
+        from realmwalker.game import shadows
+
+        if shadows.duel_settled(game, npc, f, result.outcome):
+            continue  # (a duel of honour: no crime either way)
         if f.state == "dead":
             npc.alive = False
             npc.present = False

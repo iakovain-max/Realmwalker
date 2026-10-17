@@ -942,6 +942,9 @@ LAW = Obj(
         "recognise_chance": Float(min=0, max=1), "guard_sight": Int(min=1, max=40),
         "gate_search_chance": Float(min=0, max=1),
         "contraband": Map(List(Str(max_len=40))), "hunting": Map(Str(choices=["free", "lords_only"])),
+        # Expansion 4 Part C (game/shadows.py): where poison is sold openly, who duels, the black market's prices
+        "shadows": Obj({"poison_allowed": List(Str(max_len=30)), "duels": List(Str(max_len=30)),
+                        "black_market_markup": Float(min=1, max=10)}, optional=True),
         "licence_fee": Int(min=0, max=10**7),
         "rewards": Map(Int(min=0, max=10**7)), "ransom_share": Float(min=0, max=100),
         "join": Map(JOIN), "rank_standing": List(Int(min=-100, max=100), min_items=4, max_items=4),

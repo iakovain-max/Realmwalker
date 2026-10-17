@@ -288,10 +288,21 @@ class Politics:
                     fx.change_relation(self.w, a.id, b.id, 15)
                     self.say("marriage", {"a": a.name, "b": b.name}, where=self.place_of(a), importance=2,
                              factions=[a, b])
+                elif r <= -10 and self.rng.chance(float(self.data["rates"].get("spy_caught", 0.0)) * share):
+                    self.spy_caught(a, b)
                 elif r >= 50 and self.rng.chance(float(self.data["rates"]["treaty"]) * share):
                     fx.change_relation(self.w, a.id, b.id, 10)
                     self.say("treaty", {"a": a.name, "b": b.name}, where=self.place_of(a), importance=2,
                              factions=[a, b])
+
+    def spy_caught(self, a, b) -> None:
+        """Realms that mistrust each other keep spies at each other's courts, and now and then one is caught
+        (Expansion 4 Part C): the court that caught them hangs or banishes the spy, and the two grow colder."""
+        spy, court = (a, b) if self.rng.chance(0.5) else (b, a)
+        fx.change_relation(self.w, a.id, b.id, -8)
+        self.say("spy_caught", {"spy_of": spy.name, "court": court.name,
+                                "fate": self.rng.choice(self.data["causes"].get("spy_fate", ["hanged"]))},
+                 where=self.place_of(court), importance=2, factions=[spy, court])
 
     # ------------------------------------------------------------------ war
     def at_war(self, a, b) -> bool:

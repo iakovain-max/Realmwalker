@@ -162,8 +162,10 @@ class Conversation:
         """Trade and services (M5), the law and the factions (M6), companions (M7) and work (M8)."""
         from realmwalker.game import companions, law_talk, quests, services
 
+        from realmwalker.game import shadows
+
         return (quests.talk_choices(self) + companions.talk_choices(self) + services.choices(self)
-                + law_talk.choices(self))
+                + law_talk.choices(self) + shadows.choices(self))
 
     # ------------------------------------------------------------------ doing
     def choose(self, choice: Choice) -> str | None:
@@ -213,6 +215,10 @@ class Conversation:
             from realmwalker.game import law_talk
 
             return law_talk.choose(self, choice)
+        elif cid in SHADOW_CHOICES:
+            from realmwalker.game import shadows
+
+            return shadows.choose(self, choice)
         else:
             from realmwalker.game import services
 
@@ -388,6 +394,10 @@ class Conversation:
         else:
             change_disposition(npc, -25)
             self.npc_says(self.fill(self.pick("threaten_failure")))
+            from realmwalker.game import shadows
+
+            if shadows.challenge(self):
+                return  # (a duel of honour is offered: game/shadows.py)
             if npc.job == "guard" or ("brave" in npc.traits and "cruel" in npc.traits):
                 self.apply_outcome("fight", "")
             elif self.town_has_guards() and self.rng.chance(0.25):
@@ -581,6 +591,7 @@ def quests_choices() -> set[str]:
     return QUEST_CHOICES
 
 
+SHADOW_CHOICES = {"black_market", "slip_poison", "duel_accept", "duel_refuse"}  # (game/shadows.py)
 LAW_CHOICES = {"pay_fines", "surrender", "prisoners", "ransom", "licence", "hush_pay", "hush_threat", "probe",
                "join", "title", "pickpocket", "attack", "train", "lie_low"}
 

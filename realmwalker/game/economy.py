@@ -22,8 +22,14 @@ DAY = 24 * 60
 SIZE_RANK = {"hamlet": 0, "village": 1, "town": 2, "hold": 2, "elfhall": 2, "city": 3}  # which places stock what
 
 
+from realmwalker.game import shadows  # noqa: E402
+
+
 def shop_kind(game, npc: NPC) -> str | None:
-    return game.tables.people["occupations"].get(npc.job, {}).get("trade")
+    trade = game.tables.people["occupations"].get(npc.job, {}).get("trade")
+    if trade is None and npc.flags.get("black_market"):
+        return "black_market"  # (a thieves' guild member's wares under the counter: game/shadows.py)
+    return trade
 
 
 def shop_spec(game, npc: NPC) -> dict | None:
@@ -118,6 +124,8 @@ def restock(game, npc: NPC, shop: dict) -> dict:
         item_id, lo, hi = line[:3]
         if item_id not in game.tables.items or (len(line) > 3 and rank < SIZE_RANK.get(line[3], 0)):
             continue  # (not sold here: a thing only towns or cities stock)
+        if shop["kind"] != "black_market" and not shadows.shop_sells(game, settlement, item_id):
+            continue  # (poison, where the realm forbids it: only under the counter)
         qty = int(round(rng.randint(int(lo), int(hi)) * float(size["stock"])))
         if qty > 0:
             stock[item_id] = qty
