@@ -314,3 +314,50 @@ def test_the_costly_components_are_needed_and_kept(tables):
     for iid in ("gilded_acorn", "gilded_flower", "gilded_skull", "platinum_vial", "lockbox", "elemental_vial"):
         assert tables.items.get(iid)["how"]
     assert spellrules.spend_material(c, tables, "summon_beast") is None, "kept, not used up"
+
+
+def test_the_battle_screen_plays_a_summoned_spirit(make_app):
+    import copy
+
+    import tcod
+
+    from realmwalker.core.rng import RNG
+    from realmwalker.game import fight as gamefight
+    from realmwalker.game.encounters import PendingEncounter
+    from realmwalker.game.state import new_game
+    from realmwalker.rules.creatures import spawn
+    from realmwalker.ui import widgets
+    from realmwalker.ui.input import KeyEvent
+    from realmwalker.ui.screens.battle import BattleScreen
+    from realmwalker.world.generator import WorldOptions
+    from tests.worlds import cached_world
+
+    app = make_app()
+    world = cached_world(WorldOptions("Lastrites", 37, "small"), app.tables)
+    me = hero(app.tables, xp=200000)
+    game = new_game(copy.deepcopy(world), app.tables, me)
+    app.start_game(game)
+    game.survival = False
+    rng = RNG(5, "band")
+    game.encounter = PendingEncounter("test", [spawn(app.tables, "bandit", rng, i + 1) for i in range(2)],
+                                      "They come.", False, "")
+    b = gamefight.encounter_fight(game, False)
+    game.encounter = None
+    caster = next(f for f in b.fighters if f.char is me)
+    screen = BattleScreen(app, game)
+    app.push(screen)
+    for sid, form in (("summon_fey", "tricksy"), ("giant_insect", "spider"), ("summon_beast", "air")):
+        b.order = [caster.id] + [i for i in b.order if i != caster.id]
+        b.turn, b.turn_started = 0, True
+        b._start_of_turn(caster)
+        s = summon(b, caster, sid, point=(caster.x + 1, caster.y), form=form)
+        assert s.bond["picture"]
+        b.order = [s.id] + [i for i in b.order if i != s.id]
+        b.turn, b.turn_started = 0, True
+        b._start_of_turn(s)
+        assert b.pending_party() is s, "the player commands a spirit like a member of the party"
+        for key in ("tab", "escape", "a", "escape", "c", "escape"):
+            app.handle_event(KeyEvent(key))
+        for size in ((80, 30), (160, 45)):
+            screen.render(widgets.Canvas(tcod.console.Console(*size, order="F")))
+    assert app.error_count == 0
