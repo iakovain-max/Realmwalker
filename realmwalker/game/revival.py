@@ -219,6 +219,7 @@ def raise_body(game, caster: Character, sid: str, body: dict, rng=None) -> list[
         game.fallen.remove(body)
     out = [f"<magic>{escape_markup(caster.name.split()[0])} casts {spell['name']} over {first}.</>"]
     out += return_to_life(game, c, spell, o, rng)
+    game.cue("heal")
     if c not in game.party:
         game.party.append(c)
     pack.sync(game)
@@ -363,6 +364,7 @@ def save_leader(game, minutes_dead: float = 0.0) -> list[str] | None:
     out = [f"<magic>All is dark. Then a voice: {escape_markup(c.name.split()[0])} kneels over you and {how} "
            f"{spell['name']}.</>"]
     out += return_to_life(game, leader, spell, spellrules.op(spell, "revive") or {}, rng)
+    game.cue("heal")
     if int(spell.get("minutes", 0)) > 1:
         out.append(f"<dim>It took {spell['minutes'] // 60 or spell['minutes']} "
                    f"{'hour' if spell['minutes'] >= 60 else 'minutes'}.</>")

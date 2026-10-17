@@ -143,7 +143,7 @@ spellcasting and scrolls at the book's prices.
 ### Part E — Spells outside battle
 The spells that waited for Part E, sorted (2026-10-17, at the start of E.1). Spells of one system go together, so a
 system is built once and every spell that uses it comes with it.
-- [ ] E.1 Healing, return from death, food and the body, shelter and watch (19 spells, and Revivify on the road).
+- [x] E.1 Healing, return from death, food and the body, shelter and watch (19 spells, and Revivify on the road).
   Healing: aid (a raised maximum that outlives the fight; in a fight too), regenerate, remove curse. Return from
   death: revivify, gentle repose, raise dead, reincarnate, resurrection, true resurrection (a fallen companion's body
   is carried while someone in the party could raise it; companions raise a fallen leader at once if they can). Food

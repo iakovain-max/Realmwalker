@@ -413,6 +413,15 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   "wish" spell itself is Instant Health with `stress` (`spells.wish_stress`: effects wish_stress until a long rest,
   wish_strength hours of Strength 3, spells["wish_lost"]; `spells.strain` hurts every later casting, in a fight and
   on the road); tests/test_wave4.py.
+- Spells outside battle (Expansion 3 part E): a spell used only outside a fight has `road_only` (or `minutes`:
+  `spells.out_of_battle`, never offered in one) and an op {"op": "road", "does": one of `spells.ROAD_USES`} done by
+  `game/spellwork.py` (food, water, purifying, the feast, curses, Regenerate, Gentle Repose; wards on the camp:
+  `Camp.wards`, read by `fight.rest` and `survival.environment`); `magic.cast_on_road` spends the slot and passes the
+  casting time. Return from death is `game/revival.py`: `game.fallen` (bodies carried, saved), `fall` (kept or buried),
+  `raise_body`, `save_leader` (a companion calls the leader back), `auto_revive`; the revive op's `within_days`, `toll`
+  (`health.DEATH_TOLL`, down one a long rest), `closes`, `regrow`, `cures`, `species: "new"`. A raised maximum is the
+  `max_up` op (`spells.raise_max`/`lower_max`, `effects["spell_hp:<id>"]`, lowered when the spell ends). Companions
+  act on their own through `spellwork.before_rest` and `conjure`. Tests: tests/test_spells_outside.py.
 - Gear and tools 2024 (Expansion 2 part D): items.json `pack` (opens into its contents, gear.open_pack), `helps`
   {search, traps, force, disguise} (dungeon.helps, law.put_on_disguise), `utilize` (a tool's 2024 uses, on its card),
   `carry` also on carried containers (each kind once, Sheet.pack_carry), `trinket` (data/trinkets.json; the name and

@@ -343,6 +343,7 @@ def cast(game, caster: Character, sid: str, target: Character | None, level: int
         out = ON_SOMEONE[does](game, caster, spell, level, target or caster)
     else:
         out = DOES[does](game, caster, spell, level)
+    game.cue("heal" if does in ("regenerate", "feast") else "spell")
     game.dirty = True
     return out
 

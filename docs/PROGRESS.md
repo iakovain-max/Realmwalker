@@ -28,7 +28,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Clearing the decks for the expansions** | ✅ Done (2026-10-12), branch `prep/clear-the-decks` |
 | **Expansion 1, *Dice & Destiny*** (version 1.1.0) | ✅ Released (2026-10-13), branch `dlc/01-dice-destiny` |
 | **Expansion 2, *Blades & Backgrounds*** (version 1.2.0) | ✅ Released (2026-10-13), branch `dlc/02-blades-backgrounds` |
-| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete) and D (the spell catalogue: 191 battle spells, cantrips to level 9, and Wish, 2026-10-17) in `main`; Part E (spells outside battle) next |
+| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete), D (the spell catalogue: 191 battle spells, cantrips to level 9, and Wish) and E.1 (spells outside battle: healing, return from death, food, shelter and watch, 2026-10-17) in `main`; E.2 (travel, finding and seeing, asking the powers, talking) next |
 
 ---
 
@@ -39,6 +39,53 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-17 (morning): Demigods & Magics E.1 — spells outside battle: healing, return from death, food, shelter and watch
+
+Built by the relay builder realmwalker-a. **Saves change (format 18): start a new world.**
+- **Bringing back the dead.** When a companion dies, the party now carries the body as long as someone in it could
+  still raise them (a priest who has, or could prepare, a spell of return, or a scroll someone can read); otherwise
+  they are buried at once, as before. A body is buried after ten days. **Gentle Repose** stops that count for ten
+  days. **Raise Dead** (a 500 gold diamond) calls back someone up to ten days dead with 1 hit point and their mortal
+  wounds closed; **Resurrection** (a 1,000 gold diamond) and **True Resurrection** (a casket of diamonds worth 25,000)
+  bring them back whole, lost limbs regrown; **Reincarnate** (rare oils) gives them a new body of a people the dice
+  choose. Coming back is an ordeal: -4 to every roll, one less after each long rest. **Revivify** now works outside a
+  fight too: after a fight a companion priest with it ready kneels at once by a friend who fell in its last minute,
+  and you are told when only you could still do it.
+- **The leader is not always lost.** If you die and a companion who is still standing can call you back (Revivify
+  within the minute, or a slower spell they have ready with its diamond), they do it at once and the game goes on,
+  after a fight or after a death of wounds or cold. A hanged leader stays dead.
+- **Aid** (a fight spell too): you and two friends gain 5 hit points and 5 on the maximum for eight hours, more from a
+  higher slot; it can stand a fallen friend up. **Heroes' Feast**: a feast for twelve eaten in an hour; for a day,
+  2d10 more hit points and maximum, poison and fear cannot take hold, poison harms less. **Regenerate**: every wound
+  mended and a lost arm or leg grown back. **Remove Curse**: a cursed thing stops clinging (the curse is still in it
+  if you put it on again).
+- **Food and water from magic.** **Goodberry**: ten berries, each a day's food and a hit point, gone in a day.
+  **Create or Destroy Water**: ten gallons of clean water, the thirsty drink and the skins are filled. **Create Food
+  and Water**: fifteen days of bland food and thirty gallons of water. **Purify Food and Drink** (a ritual): turned
+  food and foul water made good. A companion priest who knows one casts it by themselves when the party has nothing
+  to eat or drink.
+- **Wards on the camp.** **Alarm** (a ritual): whatever comes in the night wakes you, nobody steals the animals
+  unseen. **Mordenkainen's Faithful Hound**: the same, and the phantom dog bites the first of them. **Leomund's Tiny
+  Hut** (a ritual): a dome nothing gets into; the night's visitors go away, and inside it is dry and warm in any
+  weather. **Rope Trick**: an hour out of the world, a short rest even with enemies hunting nearby. **Mordenkainen's
+  Magnificent Mansion**: a day behind a shimmering door, a banquet, warm beds, safe rest. A companion wizard who knows
+  the Hut or Alarm as a ritual casts it before the party sleeps in the wild.
+- **The Spells page (S)** lists the wards over the camp and the fallen the party carries (how long dead, whether kept
+  from decay); a spell of return or Gentle Repose is aimed at a body with ← →.
+- **New things in the shops**: fine and flawless diamonds and a casket of diamonds at temples (towns and cities), rare
+  oils, a gem-encrusted bowl and a miniature door at city and town markets; goodberries and conjured food have
+  pictures.
+- **The plan**: every spell that waited for Part E is now sorted into E.1, E.2 (travel, finding and seeing, asking
+  the powers, talking) and E.3 (minds and the law, disguise, locks and stone, weather and land, protections, great
+  magic) in the design note.
+- **The codex**: 19 spells settled (4 exactly as the book, 14 adapted, each with its note), and Revivify's road use.
+- **How to try it**: a cleric of level 9 prepares Raise Dead (S, then p) and buys a fine diamond at a town temple; let
+  a companion fall; the body travels with you. A wizard of level 5 with the Tiny Hut in the book is shielded at night.
+- **Choices made while Anton was away** (in STATUS.md): the wards belong to the camp (walking away leaves them; they
+  are not kept in a save, like a campfire); a body is buried after ten days whatever Resurrection could do; companions
+  act on their own only for Revivify's minute, the leader's death, food, water and ritual wards; Regenerate does its
+  hour's work at once; Reincarnate's new body is whole.
 
 ### Session, 2026-10-17 (morning): Demigods & Magics D.4 — the spell catalogue, fourth and last wave; Part D in `main`
 

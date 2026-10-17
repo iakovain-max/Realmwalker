@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 03 Demigods & Magics · Part E (spells outside battle), E.1 next · branch dlc/03-demigods-magics
+Current: 03 Demigods & Magics · Part E (spells outside battle), E.2 next · branch dlc/03-demigods-magics
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -10,10 +10,11 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   levels and the epic boons; the fighter, rogue, cleric and wizard of 2024 to level 20 with the Champion, Knight,
   Thief, Assassin, Life and War Domains, Evoker and Abjurer; Counterspell; saves format 17) and C (preparing spells,
   rituals, one slot a turn, higher slots, components, spell scrolls of every level, the four potions of healing) and
-  D (the catalogue: 191 battle spells, cantrips to level 9, and Wish)
+  D (the catalogue: 191 battle spells, cantrips to level 9, and Wish) and E.1 (spells outside battle: return from
+  death, Aid, food and water, wards on the camp; saves format 18)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
-  adapted); Expansion 3: 192 done, 164 adapted, 1 omitted of 558 (parts A, B, C and D settled). PHB 53% · DMG 12% · MM 8%
+  adapted); Expansion 3: 196 done, 178 adapted, 1 omitted of 558 (parts A, B, C, D and E.1 settled). PHB 53% · DMG 12% · MM 8%
 Assumptions waiting for Anton:
 - The Player2 AI writer is removed (tagged `before-ai-removal`); its text is replaced everywhere by the game's own
   words, strengthened where they were thin.
@@ -147,13 +148,32 @@ Assumptions waiting for Anton:
   levels 7 and 8 (the player sees them all). Wish's other uses (Object Creation, Resistance, Spell Immunity, Sudden
   Learning, Roll Redo, Reshape Reality) wait for Part E. No druid yet: Storm of Vengeance is a druid spell, so no
   one can learn it until the druid comes (a scroll can be read by... nobody yet).
+- Expansion 3 E.1: a fallen companion's body is carried while someone in the party could raise them (a spell of
+  return ready, or one they could prepare whose reach is a day or more, or a scroll someone can read), and is buried
+  after ten days dead (Gentle Repose stops the count) whatever Resurrection could do, or at once when nobody could
+  raise them; a companion still standing calls a fallen leader back at once if a spell is ready (cheapest first), and
+  after a fight casts Revivify on a friend in its last minute; the player decides the slower raisings (Spells page,
+  aimed at a body). Revived bodies are held together a while (blood, hunger, thirst, cold eased so the cause does not
+  kill again at once); Revivify's caster binds bleeding wounds. The death toll (-4) goes down by one a long rest, not
+  by the hours. The wards belong to the camp and are not kept in a save (as a campfire is not); the Hut and the
+  Mansion turn the night's visitors away, Alarm and the Hound wake the camp (the Hound bites the first, 4d8 force on a
+  failed Dexterity save), Rope Trick lets a short rest happen with enemies hunting, the Mansion any rest; no ward in
+  the middle of a town but the Mansion. Aid on the road picks the caster and the two worst hurt; Heroes' Feast also
+  feeds and waters; Create Food and Water's food is fifteen days' rations that spoil in a day, its water fills the
+  skins after the thirsty drink; Regenerate's hour of healing happens at once; Reincarnate's new body is whole (the
+  book does not say) and its people are rolled on the book's table, again among this world's peoples if needed;
+  Remove Curse loosens every cursed thing on a person (the curse returns when it is put on or bound again). Companions
+  conjure food or water by themselves when there is none, and cast a ritual ward before a long rest in the wild.
+  Spells used only outside a fight carry `road_only` (or `minutes`) and are never offered in one; the Auto prepares
+  them last (the player chooses them for a need).
 Ideas for later:
 - (none yet)
-Next session starts at: task E.1 in docs/expansions/03-demigods-magics.md (Part E, spells outside battle: healing,
-return from death, food and the body, shelter and watch). First list which of the spells waiting for E (the D.1 to D.4
-lists in the design note) belong to E.1, E.2 and E.3, then build E.1's systems and their spells (data in
-data/packs/03_demigods_magics/, a new file per kind is fine; road casting is game/magic.cast_on_road and
-game/care.py; `spells.road_use`). Parts A, B, C and D are in `main`.
+Next session starts at: task E.2 in docs/expansions/03-demigods-magics.md (Part E, spells outside battle: travel,
+finding and seeing, asking the powers, talking; its list of spells is in the design note under E.2). E.1's way of
+doing it: a spell outside a fight has `road_only` (or `minutes`) and an op {"op": "road", "does": ...}
+(rules/spells.ROAD_USES, checked at start-up), done in game/spellwork.py (or a module of its own, as game/revival.py);
+game/magic.cast_on_road spends the slot and passes the casting time; tests in tests/test_spells_outside.py. Parts A,
+B, C, D and E.1 are in `main`.
 
 ## Done
 
@@ -179,6 +199,7 @@ game/care.py; `spells.road_use`). Parts A, B, C and D are in `main`.
 | 2026-10-17 | Demigods & Magics D.1: the catalogue's first wave, 79 battle spells (cantrips to level 2) with new ground, marks and cards; outside-a-fight spells to Part E, summons to F; merged into `main` | `dlc/03-demigods-magics` |
 | 2026-10-17 | Demigods & Magics D.2: the second wave, 66 battle spells of levels 3 to 5 (creatures sent away, Dispel Magic and Spell Breaker, auras for friends, Haste, Slow, Confusion, Dominate, new ground and walls); merged into `main` | `dlc/03-demigods-magics` |
 | 2026-10-17 | Demigods & Magics D.4: the fourth wave, 19 battle spells of levels 8 and 9 and Wish (copies, Instant Health and its stress), Meteor Swarm, Time Stop, Storm of Vengeance, the Prismatic Wall, Earthquake, Maze, the words of power; Part D merged into `main` | `dlc/03-demigods-magics` |
+| 2026-10-17 | Demigods & Magics E.1: spells outside battle - return from death (bodies carried, Raise Dead to True Resurrection, Gentle Repose, a fallen leader called back), Aid, Regenerate, Remove Curse, food and water, wards on the camp; companions cast them on their own; saves format 18; merged into `main` | `dlc/03-demigods-magics` |
 | 2026-10-17 | Demigods & Magics D.3: the third wave, 27 battle spells of levels 6 and 7 (Chain Lightning, Disintegrate, Heal, Harm, Flesh to Stone, the Globe, Otto's dance, walls of ice, thorns and blades, Divine Word, Prismatic Spray, Reverse Gravity, the Forcecage...); merged into `main` | `dlc/03-demigods-magics` |
 
 ## Notes for the next session
