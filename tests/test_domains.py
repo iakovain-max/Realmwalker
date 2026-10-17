@@ -298,3 +298,72 @@ def test_the_double_ends_when_its_maker_is_incapacitated(tables):
     me.conditions["stunned"] = 2
     on_turn(b, foe)
     assert domains.double_of(b, me) is None
+
+
+# ---------------------------------------------------------------------------- the gods (DMG 78-79)
+def test_every_faith_serves_domains_and_a_priest_takes_their_gods(tables):
+    faiths = tables.factions["faiths"]
+    subs = set(tables.classes["cleric"]["subclasses"])
+    assert all(f.get("domains") and set(f["domains"]) <= subs for f in faiths.values())
+    from realmwalker.world.cultures import faith_for
+
+    for culture in ("heartland", "northmarch", "volsk"):
+        c = hero(tables, "cleric", level=1, seed=3)
+        c.culture = culture
+        c.abilities["wis"] = 16
+        for _ in range(2):
+            progression.level_up(c, tables, RNG(3, "lv"))
+            c.pending = [p for p in c.pending if p["kind"] not in ("asi", "boon")]
+            progression.auto_resolve(c, tables)
+        doms = faiths[faith_for(tables, culture)]["domains"]
+        assert c.subclass in doms, (culture, c.subclass, doms)
+
+
+def test_the_devout_and_the_rest(game, tables):
+    from realmwalker.game import gods
+
+    c = priest(tables, 3, "light")
+    c.culture = game.party[0].culture
+    assert gods.chance(game, c) > 0  # (a priest is always devout)
+    plain = game.party[0]
+    if plain.cls != "cleric":
+        assert gods.chance(game, plain) == 0.0 or gods.chance(game, plain) <= gods.MOST
+    game.renown.flags["god_answered"] = game.world.time
+    assert gods.chance(game, c) == 0.0  # (answered lately: the god is quiet)
+
+
+@pytest.mark.parametrize("domain", ["life", "light", "trickery", "war"])
+def test_the_god_answers_the_dying_with_its_domains_gift(tables, domain):
+    c = priest(tables, 3, "light")
+    b = fight(tables, c, "bandit", "bandit", seed=20)
+    me, foes = me_and(b)
+    b.prayers = {me.id: {"chance": 1.0, "god": "Solun the Bright", "short": "Solun", "domains": [domain]}}
+    me.hp = 3
+    b._apply_hp_loss(me, 500, source=foes[0], cause="a test blow")  # (a whole life below nothing: dead outright)
+    assert me.state == "fighting" and me.hp >= 1 and c.alive
+    assert me.id in b.answered and any(e["kind"] == "miracle" for e in b.events)
+    if domain == "life":
+        assert me.hp == me.max_hp // 2
+    if domain == "trickery":
+        assert "invisible" in me.conditions
+    if domain == "war":
+        assert me.buff_value("attack_die")
+    b._kill(me, "again", foes[0])  # (once a fight)
+    assert me.state == "dead"
+
+
+def test_after_the_fight_the_world_remembers_and_the_god_is_quiet(game, tables):
+    from realmwalker.game import fight as fightmod
+    from realmwalker.game import gods
+
+    c = game.party[0]
+    c.cls = "cleric"
+    b = fight(tables, c, "bandit", seed=21)
+    me, _ = me_and(b)
+    b.prayers = {me.id: {"chance": 1.0, "god": "Solun the Bright", "short": "Solun", "domains": ["life"]}}
+    b.answered = [me.id]
+    before = len(game.world.history)
+    notes = gods.after_battle(game, b)
+    assert notes and "answered" in notes[0]
+    assert len(game.world.history) == before + 1 and game.world.history[-1]["kind"] == "miracle"
+    assert gods.chance(game, c) == 0.0

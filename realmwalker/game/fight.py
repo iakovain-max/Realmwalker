@@ -133,6 +133,9 @@ def start_battle(game, creatures: list[Creature], intro: str, *, surprised: str 
 
     for c in game.party:
         spellrules.close_preparing(c)  # (the prepared spells stay as they are until the next rest)
+    from realmwalker.game import gods
+
+    battle.prayers = gods.prayers(game, battle)  # (the devout: their god may answer as they die)
     battle.start(intro)
     game.battle = battle
     others = [c for c in game.party[1:] if c.alive]
@@ -201,6 +204,9 @@ def finish_battle(game) -> Aftermath:
     from realmwalker.game import speech
 
     speech.remember_the_dead(game, battle, getattr(game, "battle_group", None))  # (for Speak with Dead)
+    from realmwalker.game import gods
+
+    after.notes += gods.after_battle(game, battle)  # (a god answered the dying: the world remembers)
     _settle_townsfolk(game, battle, result)
     if game.party[1:]:
         from realmwalker.game.companions import react

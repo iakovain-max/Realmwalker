@@ -465,6 +465,21 @@ SUBCLASS_FOR = {"fighter": {"great_weapon": "champion", "shield": "knight", "pol
                             "duelist": "battle_master", "two_weapon": "battle_master", "archer": "battle_master"}}
 
 
+def faith_domain(char: Character, tables, ids) -> str | None:
+    """The domain a cleric of their people's faith takes (data/factions.json faiths "domains"): War for a priest who
+    fights with a heavy weapon or a shield where the god has it, else the god's first."""
+    from realmwalker.rules import feats
+    from realmwalker.world.cultures import faith_for
+
+    faith = (tables.factions.get("faiths") or {}).get(faith_for(tables, char.culture)) or {}
+    domains = [d for d in faith.get("domains", ()) if d in ids]
+    if not domains:
+        return None
+    if "war" in domains and feats.archetype(char, tables) not in ("caster", "healer"):
+        return "war"
+    return domains[0]
+
+
 def relearn_options(char: Character, tables, choice: dict) -> list[str]:
     """The feats a Sudden Learning may take in place of the one given up: a fighting style for a style, an epic boon
     or any feat for a boon, else a general or origin feat they are eligible for (never the one given up)."""
@@ -669,6 +684,10 @@ def suggest(char: Character, tables, choice: dict, opts: list | None = None) -> 
         if arcane in ids and char.abilities.get("int", 10) >= 14 \
                 and feats.archetype(char, tables) not in ("great_weapon", "shield"):
             return arcane  # (a sharp mind with a blade: the wizard's art beside it, Expansion 4 Part B)
+        if char.cls == "cleric":
+            pick = faith_domain(char, tables, ids)
+            if pick is not None:
+                return pick  # (a priest serves what their people's god is: Expansion 5 Part B)
         want = SUBCLASS_FOR.get(char.cls, {}).get(feats.archetype(char, tables))
         return want if want in ids else ids[0]
     if kind == "option" and any(i.startswith("maneuver_") for i in ids):

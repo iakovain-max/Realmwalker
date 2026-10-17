@@ -616,6 +616,9 @@ class Battle:
         self.fighters: list[Fighter] = []
         self.zones: list[Zone] = []
         self.tokens: list[Token] = []
+        # The devout whose god may answer as they die (game/gods.py fills it; rules/miracles.py), and those answered.
+        self.prayers: dict[int, dict] = {}
+        self.answered: list[int] = []
         self._next_zone = 1
         fid = 1
         for c in party:
@@ -3394,6 +3397,11 @@ class Battle:
             self.say(f"{f.the_name} is bleeding out.", "danger")
 
     def _kill(self, f: Fighter, cause: str, killer: Fighter | None = None) -> None:
+        if getattr(self, "prayers", None) and f.char is not None and f.bond is None and f.id in self.prayers:
+            from realmwalker.rules import miracles
+
+            if miracles.answer(self, f):
+                return  # (the god of the devout answers: DMG 2024 Divine Intervention)
         if f.shape is not None:
             self.unshape(f, quiet=True)  # (what dies is the creature itself, not its borrowed form)
         if "possessed" in f.conditions:
