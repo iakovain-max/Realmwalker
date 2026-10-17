@@ -332,10 +332,15 @@ def road_problem(game, caster, spell_id: str, target=None, scroll=None, hired: b
     if use == "identify" and not strange_things(game, caster):
         return "nothing you carry is strange to you"
     if use == "identify":
+        from realmwalker.rules.items import Item
+
+        if hired and isinstance(target, Item) and not any(it is target for it in strange_things(game, game.leader)):
+            return "you no longer carry it"
         return None  # (no spell kept on anyone: the thing is named)
     if use in ("heal", "cure") and not _needs(game, spell, target):
         return "there is nothing for it to mend" if use == "cure" else "nobody needs healing"
-    on = caster if spell["target"] in ("self", "all_allies") else target
+    on = (game.leader if hired else caster) if spell["target"] in ("self", "all_allies") else target  # (hired: the
+    # townsperson never holds the party's spell)
     left = spellrules.lasting(on, t).get(spell_id, 0.0)
     if spell["target"] == "all_allies" and spellrules.has_op(spell, "max_up") \
             and left > int(spell.get("rounds", 0)) / spellrules.ROUNDS_PER_HOUR / 2:

@@ -96,8 +96,8 @@ class ServicesScreen(Screen):
             self.scroll(step)
         elif ev.key in ("enter", "kp_enter"):
             self.pick(self.cur)
-        elif ev.is_text and ev.key.isdigit() and ev.key != "0":
-            self.pick(self.top + int(ev.key) - 1)
+        elif ev.is_text and ev.key.isdigit() and ev.key != "0" and int(ev.key) <= min(9, self.shown):
+            self.pick(self.top + int(ev.key) - 1)  # (only the rows on screen)
         return True
 
     def render(self, canvas: Canvas) -> None:
@@ -141,8 +141,8 @@ class ServicesScreen(Screen):
             else:
                 canvas.markup(x + 2, row, f"<faint>[{hk}] {markup.escape(markup.plain(label))}: {why}</>", max_width=iw)
             card = self.tip(key)
-            if card is not None:
-                canvas.hit(x + 2, row, iw, 1, None, card)
+            if card is not None:  # (the whole line clicks as the button does, and shows the spell's card)
+                canvas.hit(x + 2, row, iw, 1, (lambda i=i: self.pick(i)) if ok else None, card)
             row += 1
         if more:
             canvas.text(x + 2, row, "▼ more below" if self.top + self.shown < len(rows) else "", colors.FAINT)

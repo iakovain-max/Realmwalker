@@ -65,7 +65,8 @@ def caster(game, npc):
     """The townsperson as a character of their class who can cast up to their reach."""
     top = max(0, reach(game, npc))
     level = caster_level(top)
-    key = (id(game.world), npc.id, level)
+    key = (id(game.world), npc.id, npc.name, level, game.moment.total_days)  # (fresh each day: their slots, an
+    # addled mind and the day's omens come back with a night's rest)
     char = _CASTERS.get(key)
     if char is None:
         from realmwalker.game import companions
@@ -131,7 +132,8 @@ def could_raise(game, minutes_dead: float) -> bool:
     for sid in revival.revive_spells(t):
         spell = t.spells[sid]
         window = revival.reach(spell)
-        if "cleric" in spell.get("classes", ()) and int(spell["level"]) <= best and window >= revival.DAY                 and window >= minutes_dead:
+        if "cleric" in spell.get("classes", ()) and int(spell["level"]) <= best and window >= revival.DAY \
+                and window >= minutes_dead:
             return True
     return False
 
@@ -201,7 +203,7 @@ def offers(game, npc) -> list[tuple[str, str, int, str, object]]:
 
     party = tuple((id(m), m.hp, len(m.inventory), len(m.wounds), len(m.diseases), m.alive) for m in game.party)
     key = (id(game), npc.id, game.world.time, sum(m.money for m in game.party), party,
-           len(getattr(game, "fallen", []) or []))
+           len(getattr(game, "fallen", []) or []), npc.mood(), npc.flags.get("price_mod", 0.0))
     if _OFFERS.get("key") == key:
         return _OFFERS["offers"]
     out = []
@@ -264,7 +266,15 @@ def cast(game, npc, arg: str | None) -> list[str]:
     how = "murmurs a prayer over" if tradition(npc) == "cleric" else "chalks a circle and speaks the words of"
     pre = [f"{escape_markup(npc.first_name)} takes your {money_text(cost)} and {how} "
            f"<magic>{spell['name']}</>" + (" behind a shuttered door" if secret(game, npc) else "") + "."]
+    had = {it.uid for it in c.inventory}
     out = pre + magic.cast_on_road(game, c, sid, target, hired=True)
+    made = [it for it in c.inventory if it.uid not in had]  # (what the spell makes is yours: Create Food and Water)
+    if made:
+        from realmwalker.rules.inventory import add_existing
+
+        c.inventory = [it for it in c.inventory if it.uid in had]
+        for it in made:
+            add_existing(game.leader, t.items, it)
     npc.remember(f"cast {spell['name']} for the traveller on {game.moment.date_text()}")
     if tradition(npc) == "cleric" and game.party[1:]:
         from realmwalker.game.companions import react

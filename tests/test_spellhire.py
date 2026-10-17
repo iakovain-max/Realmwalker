@@ -305,3 +305,52 @@ def test_the_services_list_scrolls_and_shows_a_spells_card(make_app):
     assert game.leader.hp > hp and scr.sub is None
     app.render(tcod.console.Console(120, 40, order="F"))
     assert app.error_count == 0
+
+
+# ---------------------------------------------------------------------------- the fresh review's fixes
+def test_what_a_paid_spell_makes_is_the_partys_and_a_party_spell_is_not_sold_twice(game, monkeypatch):
+    s = into(game)
+    priest = one(game, s, "priest")
+    monkeypatch.setattr(spellhire, "reach", lambda g, n: 9 if n is priest else -1)
+    game.leader.money = 10 ** 8
+    arg = next(o[0] for o in spellhire.offers(game, priest) if o[3] == "create_food_and_water")
+    before = sum(1 for c in game.party for it in c.inventory)
+    services.perform(game, priest, "spellcasting", arg)
+    assert sum(1 for c in game.party for it in c.inventory) > before, "the food is in the party's pack"
+    assert not any(it.def_id.startswith("conjured") for it in spellhire.caster(game, priest).inventory)
+    arg = next(o[0] for o in spellhire.offers(game, priest) if o[3] == "aid")
+    services.perform(game, priest, "spellcasting", arg)
+    assert "aid" not in {o[3] for o in spellhire.offers(game, priest)}, "Aid is on the party already"
+
+
+def test_a_hired_caster_is_fresh_each_day_and_a_sold_thing_is_not_named(game, monkeypatch):
+    s = into(game)
+    mage = one(game, s, "mage")
+    c = spellhire.caster(game, mage)
+    c.uses["addled"] = 1
+    assert spellhire.caster(game, mage) is c
+    game.world.time += 24 * 60
+    assert spellhire.caster(game, mage) is not c and not spellhire.caster(game, mage).uses.get("addled")
+    made = [i for i in (magic_items.make(game, RNG(k, "y"), kind="jewellery", rarity="uncommon") for k in range(50))
+            if i is not None][:2]
+    for i in made:
+        i.magic["identified"] = False
+    add_existing(game.leader, game.tables.items, made[1])  # (another strange thing is carried; this one was sold)
+    it = made[0]
+    assert magic.road_problem(game, spellhire.caster(game, mage), "identify", it, hired=True) == "you no longer carry it"
+
+
+def test_only_the_rows_on_screen_answer_to_their_number():
+    from types import SimpleNamespace
+
+    from realmwalker.ui.input import KeyEvent
+    from realmwalker.ui.screens.services import ServicesScreen
+
+    scr = ServicesScreen.__new__(ServicesScreen)
+    scr.top, scr.shown, scr.cur = 0, 5, 0
+    picked = []
+    scr.pick = picked.append
+    scr.sub = SimpleNamespace(id="x")
+    scr.handle_key(KeyEvent("9"))
+    scr.handle_key(KeyEvent("3"))
+    assert picked == [2]
