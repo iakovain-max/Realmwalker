@@ -129,6 +129,17 @@ spellcasting and scrolls at the book's prices.
   carries willing travellers; its old banishing touch is gone), project image, regenerate (cast in a minute), resurrection, sequester, symbol, teleport. Waiting for F: create undead, planar ally, summon fiend,
   simulacrum.
 - [ ] D.4 8th and 9th level (34), Wish (its safe uses and its stress) and Meteor Swarm; Part D to `main`.
+  Battle spells (21): antimagic field (an emanation that moves with its caster), befuddlement (no spells for a
+  day), dominate monster, earthquake (ground that throws down and breaks concentration), holy aura, incendiary
+  cloud, maze (away until a DC 20 Intelligence check), mind blank, power word stun, sunburst, tsunami (one great
+  wave); foresight, mass heal (700 hit points shared), meteor swarm (four spheres, each creature once), power word
+  heal, power word kill, prismatic wall (a wall foes cannot pass, blinding glare beside it), storm of vengeance (a
+  storm by its turns), time stop (turns in a row until you touch another), weird, and Wish: in a fight it copies
+  any battle spell of level 8 or lower without its components (safe), or gives Instant Health to up to twenty
+  friends (the stress: 1d10 necrotic a spell level for every spell until a long rest, Strength 3 for 2d4 days, a
+  third of the time never Wish again). Waiting for E: antipathy/sympathy, clone, control weather, demiplane,
+  glibness, telepathy; astral projection, gate, imprisonment (cast in a minute), true resurrection, and Wish's
+  other uses outside a fight. Waiting for F: animal shapes, shapechange, true polymorph.
 
 ### Part E — Spells outside battle
 - [ ] E.1 Healing, return from death, food and the body, shelter and watch.
