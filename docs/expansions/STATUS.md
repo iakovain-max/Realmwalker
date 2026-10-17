@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 03 Demigods & Magics · Part G (enemy casters, services, release), G.2 next · branch dlc/03-demigods-magics
+Current: 03 Demigods & Magics · Part G (enemy casters, services, release), G.3 next · branch dlc/03-demigods-magics
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -30,10 +30,11 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   bound: Planar Ally, Planar Binding, Magic Circle turned inward) and F.6 (Polymorph and True Polymorph in a fight)
   and F.7 (the rest of Appendix B: 24 creatures of the 2025 MM with pictures, shapes and met in the land) and F.8
   (Animal Shapes and Shapechange, in a fight and on the road: Part F complete) and G.1 (enemy casters: every battle
-  spell cast by the enemy's tactics)
+  spell cast by the enemy's tactics) and G.2 (spellcasting for pay by priests and mages, scrolls by rarity in
+  temples and mages' shops, the law of magic)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
-  adapted); Expansion 3: 217 done, 334 adapted, 1 omitted of 560 (parts A to F settled). PHB 65% · DMG 12% · MM 16%
+  adapted); Expansion 3: 224 done, 334 adapted, 1 omitted of 560 (all but Simulacrum, G.3). PHB 65% · DMG 12% · MM 16%
 Assumptions waiting for Anton:
 - The Player2 AI writer is removed (tagged `before-ai-removal`); its text is replaced everywhere by the game's own
   words, strengthened where they were thin.
@@ -427,10 +428,31 @@ Ideas for later:
   dagger, a 17th-level caster's slots). The plan's turn budget (150 ms at the 95th percentile) is held for casters
   with a stat block's list (16-24 spells); a caster holding every spell of a level (35-72 spells) is held to "never
   400 ms" (its 95th percentile is about 100-200 ms).
-Next session starts at: task G.2 in docs/expansions/03-demigods-magics.md (spellcasting services and scrolls in
-temples, mages' guilds and shops, PHB p. 235; the law of magic in towns, `game/law.py`). Write G.2's "How" first; split
-it at its start if it is too big. Then G.3 (the codex's last eight entries: the spellcasting services and
-Simulacrum; balance; the icon; the release v1.3.0).
+- Expansion 3 G.2: a hamlet's priest is a village's (the book lists village, town or city); level 9 is in every city (the
+  book: "City only"), and each caster's own reach is a roll within the place's range (village 1-2, town 3-5, city 5-9;
+  a figure reaches the limit); the component's value is added whether or not the spell consumes it (the book: "add the
+  cost of those components"); a lasting spell is for hire if it lasts an hour or more and is cast on someone else;
+  spells needing the caster to stay (familiars, summons, shapes, camp wards, travel, great magic) and the "sense",
+  "scout", "speak", "mind", "illusion", "art", "lock", "make", "stone" uses are not for hire; Contact Other Plane and
+  Dream are (the mage bears the risk). The priest's "Ask what a strange thing is" and "Have a curse lifted" stay
+  (Identify is left off the priest's list for hire, to avoid two lines for one thing) at the book's price for Identify
+  (with its 100 GP pearl: 150 GP) and Remove Curse (300 GP). A companion's body is now carried (up to ten days, as
+  before) while a priest of this world's places could raise it (any revive spell of a day's reach or more of a level
+  some place reaches): in a world with a town or city that is always. The mage's fighting numbers are the acolyte's
+  until the book's Mage comes with its expansion. Magic items for sale moved from a city's apothecary and general store
+  to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
+  mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
+  mages there); no save format change.
+Next session starts at: task G.3 in docs/expansions/03-demigods-magics.md (the codex's last entry, Simulacrum; balance
+across the expansion; the icon; the release v1.3.0 as docs/EXPANSIONS.md §5.1 step 12 says). Write G.3's "How" first.
+The way of Part G (G.2): `game/spellhire.py` (TRADITION priest->cleric, mage->wizard; `reach` by economy.json
+services "spellcasting" `reach`/`own`, figures at the cap; `caster` builds the townsperson with `companions.build` at
+`caster_level`, cached per session; `price` = table + `component_value`, x`secret_markup` where forbidden; `offers` /
+`targets` / `options` / `cast`; FOR_HIRE uses; `could_raise` for revival.could_raise). `magic.road_problem/cast_on_road(
+hired=True)` (no slot, material, strain or ritual time; identify takes the Item as target); `law.magic_check` ignores a
+caster outside the party; `law.party_casts`; mages placed by `people.populate_town` (`magic.mages_here`), FIGURE_JOBS
+"mages_circle"; shop "mage" (economy.json); `magic.scroll_stock(tradition=, top=, lo=, hi=)` by rarity
+(SCROLL_WEIGHT), `magic.magic_forbidden`; services screen cursor/scroll (`ServicesScreen.cur/top/shown/tip`).
 The way of Part G (G.1): `tools/arena.py` `battle_spells` (every spell cast on one's own turn in a fight), `caster_def`
 / `caster_setup(..., second=)` (the war mage, an escort beside it), `--spells`, `--spell x`, `--shard k/n`; the arena
 plays a creature the party called in mid-fight on Auto. tests/test_enemy_casters.py: NOT_CAST (a reason each; "a

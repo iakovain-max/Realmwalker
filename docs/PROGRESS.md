@@ -28,7 +28,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Clearing the decks for the expansions** | ✅ Done (2026-10-12), branch `prep/clear-the-decks` |
 | **Expansion 1, *Dice & Destiny*** (version 1.1.0) | ✅ Released (2026-10-13), branch `dlc/01-dice-destiny` |
 | **Expansion 2, *Blades & Backgrounds*** (version 1.2.0) | ✅ Released (2026-10-13), branch `dlc/02-blades-backgrounds` |
-| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete), D (the spell catalogue: 191 battle spells, cantrips to level 9, and Wish) E.1 (spells outside battle: healing, return from death, food, shelter and watch), E.2 (light, the body on the move, travel by magic), E.3 (finding and seeing, asking the powers, talking), E.4 (minds and the law, disguise and illusion, the small arts), E.5 (locks and stone, weather and land), E.6 (lasting protections and the caster's keeping) and E.7 (great magic and Wish's other uses, 2026-10-17: Part E complete) and F.1 (a familiar and a steed fight beside you), F.2 (summoned spirits of levels 2 to 4) and F.3 (the level 5 and 6 spirits and Animate Objects) and F.4 (the raised dead: Animate Dead, Create Undead, Finger of Death's zombie, the ghast and the mummy) and F.5 (the bound: Planar Ally, Planar Binding, Magic Circle turned inward) and F.6 (Polymorph and True Polymorph in a fight) and F.7 (lions, tigers, elephants, imps, sprites and the rest of the book's beasts, met in the land) and F.8 (Animal Shapes and Shapechange, in a fight and on the road: Part F complete) and G.1 (enemy casters use the whole spell book) in `main`; G.2 (spellcasting for hire, scrolls in shops, the law of magic) and G.3 (the release) next |
+| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete), D (the spell catalogue: 191 battle spells, cantrips to level 9, and Wish) E.1 (spells outside battle: healing, return from death, food, shelter and watch), E.2 (light, the body on the move, travel by magic), E.3 (finding and seeing, asking the powers, talking), E.4 (minds and the law, disguise and illusion, the small arts), E.5 (locks and stone, weather and land), E.6 (lasting protections and the caster's keeping) and E.7 (great magic and Wish's other uses, 2026-10-17: Part E complete) and F.1 (a familiar and a steed fight beside you), F.2 (summoned spirits of levels 2 to 4) and F.3 (the level 5 and 6 spirits and Animate Objects) and F.4 (the raised dead: Animate Dead, Create Undead, Finger of Death's zombie, the ghast and the mummy) and F.5 (the bound: Planar Ally, Planar Binding, Magic Circle turned inward) and F.6 (Polymorph and True Polymorph in a fight) and F.7 (lions, tigers, elephants, imps, sprites and the rest of the book's beasts, met in the land) and F.8 (Animal Shapes and Shapechange, in a fight and on the road: Part F complete) and G.1 (enemy casters use the whole spell book) and G.2 (spells cast for pay by priests and mages, scrolls in temples and mages' shops, the law of magic) in `main`; G.3 (Simulacrum, balance, the release) next |
 
 ---
 
@@ -39,6 +39,50 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-17 (evening): Demigods & Magics G.2 — spells for hire, the mage's shop, the law of magic
+
+Built by the relay builder realmwalker-b. Saves still load, and no new world is needed. A town you had already
+visited keeps the people it had, so its mages appear only in towns you have not been to yet.
+- **Paying for a spell.** Ask a temple's priest, or a mage, "What can you do for me?", then choose "Cast a spell for
+  you, for a price". The list shows only what would help you right now, and each spell says whom it is for:
+  - **Healing**: Cure Wounds and the rest, on whoever needs it most.
+  - **Curing**: Lesser Restoration for the sick.
+  - **Raising the dead you carry**: Revivify, Raise Dead, Resurrection, True Resurrection.
+  - **Lasting spells**, if they last an hour or more: Aid, Death Ward, Darkvision, Water Breathing, Freedom of
+    Movement, Stoneskin...
+  - **And more**: Remove Curse, Regenerate, Gentle Repose, food and water, the Heroes' Feast, Commune, Legend Lore,
+    Sending, Identify.
+  - **Who casts what**: a priest casts the cleric's spells, a mage the wizard's.
+- **The price is the 2024 book's.** A cantrip costs 30 gold, a 1st-level spell 50, a 2nd 200 and a 3rd 300. A 4th or
+  5th costs 2,000, a 6th to 8th 20,000, and a 9th 100,000. A costly ingredient is added on top, such as Raise Dead's
+  500-gold diamond. A friendly caster charges a little less, a surly one more.
+- **How high they reach.** A village priest casts up to 2nd-level spells, a town's up to 5th, a city's up to 9th, and
+  no two are alike: shop around. A temple's high priest, or a mages' circle's archmage, reaches the most the place
+  allows. Raise Dead can always be found in a city.
+- **A fallen companion's body is carried** for up to ten days while a priest somewhere could still raise them, even
+  when nobody in the party can cast that spell. Before, they were buried at once.
+- **The mage, a new townsperson.** Every city has two mages, a great city three, and a town one where a mages' circle
+  keeps a house. You find them in the library or at home, in robes and a pointed hat. They sell spellbooks, foci, ink
+  and parchment, the costly ingredients (pearls, diamond and ruby dust, rare incense), the wizard's scrolls, and in
+  a city a few common and uncommon magic things. A circle's archmage is one of them.
+- **Scrolls go by rarity**, as in the 2024 book. Common and uncommon scrolls are sold often, rare ones seldom and only
+  in cities, very rare and legendary ones never. A mage sells the wizard's scrolls up to 3rd level in a town and 5th
+  in a city. A temple sells the cleric's: up to 1st level in a village, 3rd in a town. The general store and the
+  apothecary keep their few, as before.
+- **The law of magic.** Where magic is forbidden, no scrolls or magic things are sold openly; only a temple's prayers
+  are. A mage there casts for you only behind a shuttered door with nobody else watching, and charges half as much
+  again. Where magic needs a licence, anyone in the party who casts spells can buy one. Before, only a wizard or
+  priest leading the party could. A mage writes licences too, as well as a lord or headman. A spell you paid for is
+  never a crime of yours.
+- **The services window scrolls.** A long list moves with the arrows and Enter (or the mouse wheel), and pointing at a
+  spell shows its card. A priest's naming of a strange thing and lifting of a curse now cost the book's price for
+  Identify and Remove Curse.
+- Checked: a new test hires a city priest and a mage who reach 9th level and has them cast everything they offer, in
+  a real town. That is 31 spells for the priest, raising the dead included, and many for the mage. Each one did its
+  work and was paid for exactly, and none broke a law. The tests also cover the price table, the reach by place,
+  nothing offered that would do nothing, the forbidden realm, the licence, the mages' scrolls, and the window
+  scrolling.
 
 ### Session, 2026-10-17 (evening): Demigods & Magics G.1 — enemy casters use the whole spell book
 
