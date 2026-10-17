@@ -207,6 +207,13 @@ def _strip(game, c: Character, to: Character | None) -> None:
 
     for slot in list(c.equipped):
         c.equipped[slot] = None
+    others = [m for m in list(game.party) + list(getattr(game, "waiting", []) or []) if m is not c]
+    if any(m.inventory is c.inventory for m in others):  # (the party's one pack: it stays with them)
+        c.inventory = []
+        if to is not None:
+            to.money += c.money
+        c.money = 0
+        return
     for it in list(c.inventory):
         gone = remove_item(c, it.uid, it.qty)
         if gone is not None and to is not None:
@@ -409,7 +416,8 @@ def foe_spells(game) -> list[str]:
     for cdef in t.creatures.defs.values():
         for sid in (cdef.get("spells") or {}) if isinstance(cdef, dict) else ():
             sp = t.spells.defs.get(sid)
-            if sp is not None and int(sp.get("level", 0)) >= 1 and not spellrules.out_of_battle(sp):
+            if sp is not None and int(sp.get("level", 0)) >= 1 and not spellrules.out_of_battle(sp) \
+                    and spellrules.harms(sp):  # (only what is cast at you: not their own blessings)
                 seen.add(sid)
     out = sorted(seen, key=lambda s: (-int(t.spells[s]["level"]), t.spells[s]["name"]))
     t._foe_spells = out

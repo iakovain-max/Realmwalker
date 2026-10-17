@@ -103,6 +103,22 @@ def working_now(game) -> list[str]:
         if home is not None:
             out.append(f"<magic>Sanctuary</> of {markup.escape(c.name.split()[0])}: the temple of "
                        f"{markup.escape(home.name)} <dim>(Word of Recall)</>")
+    from realmwalker.game import greatmagic
+
+    for c in game.party:  # (Part E.7: a spell waiting on someone, a soul in its gem)
+        words = greatmagic.contingency_words(game, c)
+        if words:
+            out.append(f"<magic>Contingency:</> {words}")
+        if greatmagic.in_jar(c):
+            out.append(f"<magic>{markup.escape(c.name.split()[0])}'s soul</> is in the gem of a Magic Jar "
+                       "<dim>(Magic Jar again: go home)</>")
+    for rec in greatmagic.clones(game):
+        s = game.world.settlements[rec["settlement"]] if 0 <= int(rec.get("settlement", -1)) < len(
+            game.world.settlements) else None
+        days = (float(rec["ready"]) - game.world.time) / (24 * 60)
+        out.append(f"<magic>A clone of {markup.escape(rec['who'].split()[0])}</> in the crypt of "
+                   f"{markup.escape(s.name) if s else 'a temple'} "
+                   + (f"<dim>(grown in {max(1, round(days))} days)</>" if days > 0 else "<good>(grown)</>"))
     for b in revival.bodies(game):
         out.append(f"<danger>{markup.escape(b['char'].name.split()[0])}</> lies dead "
                    f"<dim>({revival.when_text(revival.dead_for(game, b))}"

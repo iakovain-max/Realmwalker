@@ -972,7 +972,7 @@ class Battle:
                 b["rounds"] -= 1
                 if b["rounds"] < 0:
                     f.buffs.remove(b)
-        f.move_left = f.speed if f.jar is None else 0  # (Magic Jar: the body lies still)
+        f.move_left = f.speed
         marks.after_turn_start(self, f)  # (Slow: no bonus action)
         if extra:  # (Time Stop: a fresh turn, but nothing wears down, nothing burns, nothing bleeds)
             self._follow_auras()
@@ -1062,7 +1062,7 @@ class Battle:
                     del f.conditions[cond]
                     if cond in ("stunned", "restrained", "frightened", "paralyzed"):
                         self.say(f"{f.the_name} is no longer {cond}.", "system")
-        f.move_left = max(f.speed, f.fly_speed)
+        f.move_left = max(f.speed, f.fly_speed) if f.jar is None else 0  # (Magic Jar: the body lies still)
         if any(z.kind == "guardians" and z.owner is not None and any(c in z.cells for c in f.cells)
                and self.fighter(z.owner).team != f.team for z in self.zones) and not self.antimagic(f.cells):
             f.move_left //= 2  # Spirit Guardians: half speed in the emanation (2024)
@@ -1212,8 +1212,8 @@ class Battle:
         """Whether `a` can see `b`: a line of sight, light enough (or darkvision close enough), not hidden, not
         invisible. Blindsight sees everything near that is not behind total cover; truesight sees the invisible and
         through any darkness (2024)."""
-        if a.incapacitated:
-            return False
+        if a.incapacitated and not (a.jar is not None and a.jar.get("host") is None):
+            return False  # (a soul in its gem sees from where the gem is: Magic Jar)
         feet = self.feet(a, b)
         senses = a.senses
         if senses.get("blindsight", 0) >= feet and self.field.cover(a.space, b.space) != grid.TOTAL:
