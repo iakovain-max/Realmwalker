@@ -827,6 +827,15 @@ class BattleBoard:
                 name = "fx/unseen_hand_glow" if atlas.has("fx/unseen_hand_glow") else "fx/magic_0"
                 canvas.under(Sprite(name, px + T * 0.1, py + bob + T * 0.1, T * 0.8, T * 0.8, (255, 255, 255, 170)))
                 continue
+            if tok.kind == "dancing_sword":  # (a Dancing Sword: the blade itself in the air, steel-bright)
+                owner = next((f for f in battle.fighters if f.id == tok.owner), None)
+                it = owner.char.item(tok.item_uid) if owner is not None and owner.char is not None else None
+                name = f"item/{it.def_id}" if it is not None and atlas.has(f"item/{it.def_id}") else "item/longsword"
+                canvas.under(Image("bglow", _glow_image, (px - T * 0.15, py - T * 0.15 + bob, T * 1.3, T * 1.3),
+                                   rgba=(200, 220, 255, 110)))
+                canvas.under(Sprite(name if atlas.has(name) else "fx/magic_0", px + T * 0.02, py + bob, T * 0.96, T * 0.96,
+                                    (240, 245, 255, 255), angle=-45.0 + math.sin(now * 2 + tok.id) * 20.0))
+                continue
             if tok.kind == "guardian":
                 canvas.under(Image("bglow", _glow_image, (px - T * 0.3, py - T * 0.3, T * 1.6, T * 1.6), rgba=(255, 230, 150, 120)))
                 name = "feature/statue_hero" if atlas.has("feature/statue_hero") else "feature/statue"

@@ -14,6 +14,7 @@ import tcod.path
 
 from realmwalker.core import dice
 from realmwalker.core.rng import RNG
+from realmwalker.rules import magic
 from realmwalker.rules.creatures import Creature, choose_encounter, spawn_group
 
 ALERT_RADIUS = 12
@@ -171,6 +172,8 @@ def make_encounter(game, group: str, rng: RNG) -> PendingEncounter:
         our_best += 2 * max((int(tables.items.get(it.def_id).get("sight", 0)) for it in carried(game.party)), default=0)
     if game.travel_pace() != "normal":
         our_best += int(encounter.pace(tables, game.travel_pace()).get("passive", 0))  # fast -5, slow +5
+    if any(tables.creatures[c.def_id].get("kind") == "humanoid" for c in creatures) and             any(c.alive and magic.flag(c, "false_tracks") for c in game.party):
+        our_best += 5  # (Boots of False Tracks: people trailing the party read someone else's trail, and come on carelessly)
     if any(c.alive and c.effects.get("forewarned", 0) > 0 for c in game.party):
         our_best = 99  # (Beast Sense, Speak with Plants: an animal ranging ahead, the grass that saw them pass)
     attitude = "hostile" if special else encounter.start_attitude(tables, [c.def_id for c in creatures], rng.child("mood"))

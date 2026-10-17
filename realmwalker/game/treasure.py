@@ -174,6 +174,14 @@ def make_listed(game, slug: str, variant: str, rarity: str, rng: RNG) -> Item | 
                 it.magic["title"] = how["title"]  # (a named item of the book: the Dagger of Venom)
             it.magic["source"] = "book"
             it.magic["attune"] = bool(how.get("attune", False))  # a book item binds only if its entry says so
+            if how.get("form"):
+                it.magic["form"] = how["form"]  # (the Veteran's Cane: a walking cane until it is twisted)
+            if how.get("curse"):
+                it.magic["cursed"] = True  # (the Sword of Vengeance: the book's own curse)
+                it.magic["curse"] = dict(how["curse"])
+            for p in it.magic.get("props", ()):
+                if p.get("dice"):  # (the Luck Blade's 1d3 charges of Wish)
+                    p["value"] = p["left"] = max(1, dice.roll(str(p.pop("dice")), rng).total)
         return it
     return None
 

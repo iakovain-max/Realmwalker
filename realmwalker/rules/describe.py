@@ -293,8 +293,8 @@ def _buff_status(b, f, bf: dict, tables) -> Status | None:
         kind = "vexing"
     elif bf.get("distracted"):
         return None  # (shown as the mark it leaves, not as its own state)
-    elif bf.get("goaded") is not None or bf.get("disarmed"):
-        kind = "sapped"  # (a Battle Master's Goading and Disarming Attacks)
+    elif bf.get("goaded") is not None or bf.get("disarmed") or bf.get("vengeful") is not None:
+        kind = "sapped"  # (a Battle Master's Goading and Disarming Attacks; a Sword of Vengeance's curse)
     elif bf.get("exposed") is not None:
         kind = "marked"  # (Distracting Strike)
     elif bf.get("maneuver_die"):
@@ -316,6 +316,16 @@ def _buff_status(b, f, bf: dict, tables) -> Status | None:
     elif kind == "sapped" and bf.get("goaded") is not None:
         title, lines = "Goaded (Battle Master)", ["Disadvantage on attack rolls against anyone but "
                                                  f"{esc(_name_of(b, bf['goaded']))}."]
+    elif kind == "sapped" and bf.get("vengeful") is not None:
+        title, lines = "Vengeful (Sword of Vengeance)", ["The spirit in the sword turns every blow on "
+                                                         f"{esc(_name_of(b, bf['vengeful']))}, until one of them falls."]
+    elif kind == "no_heal" and bf.get("source") == "wounding":
+        title, lines = "Wounded (Sword of Wounding)", ["The wound will not close: no hit points can be regained. A "
+                                                       f"Constitution save (DC {int(bf.get('dc', 15))}) at the end of "
+                                                       "each of their turns ends it."]
+    elif kind == "shielded" and bf.get("defender"):
+        title, lines = "On guard (Defender)", [f"Armour Class +{int(bf['ac'])} until their next turn; the Defender's "
+                                               f"blade is {int(bf['defender'])} less to hit and to wound."]
     elif kind == "sapped" and bf.get("disarmed"):
         title, lines = "Disarmed", [f"Their {esc(str(bf['disarmed']).lower())} lies at their feet: it cannot be used "
                                     "until they take it up again on their turn."]
@@ -535,7 +545,7 @@ def statuses(f, b=None) -> list[Status]:
             pips = "<good>" + "●" * ok + "</>" + "○" * (3 - ok) + "  <danger>" + "●" * bad + "</>" + "○" * (3 - bad)
             add(Status("dying", Card("Dying", "", "status/dying", [_WORDS["dying"][1], f"Saved {ok}, failed {bad}: {pips}"])))
     char = f.char
-    level = int(getattr(char, "exhaustion", 0) or 0) if char is not None else 0
+    level = int(getattr(char, "exhaustion", 0) or 0) if char is not None else int(f.__dict__.get("exhaustion", 0))
     if level:
         ex = _cond_data(tables).get("exhaustion") or {}
         add(Status("exhaustion", Card(f"Exhaustion {level}", "condition", "status/exhaustion",

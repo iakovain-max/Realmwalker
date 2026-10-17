@@ -195,6 +195,11 @@ def attack_roll(b, att, target, opt, *, space=None) -> Roll:
         r.add(mode, why)
     if att.buffs and any(bf.get("aimed") for bf in att.buffs):
         r.add("advantage", "steady aim")
+    if att.char is not None and att.char.attuned:
+        from realmwalker.rules.engine.handlers import arms
+
+        if arms.other_weapon(att, opt):
+            r.add("disadvantage", "the Sword of Vengeance's jealousy")
     for k in b.enemies_of(att):  # (only the first: a knight holding the line keeps the attacker busy enough)
         if k is target:
             continue
@@ -226,6 +231,8 @@ def save_roll(b, f, ability: str, *, bonus: int = 0, against: tuple = ()) -> Sav
     """Advantage, disadvantage and the bonus on a saving throw; or why it fails without a roll."""
     out = SaveRoll(Roll(), bonus=f.save_bonus(ability) + bonus + sum(int(v) for v in f.buff_value("save_bonus")),
                    dice=list(f.buff_value("save_die")))
+    if f.char is None and f.__dict__.get("exhaustion"):
+        out.bonus += d20_penalty(f)  # (a creature worn down in the fight; a character's is in its sheet)
     for cid, abilities in cond.flags(f.t, f.conditions, "fails_saves"):
         if ability in abilities:
             out.auto_fail = _cond_name(f, cid)
@@ -308,6 +315,8 @@ def speed(f) -> int:
     if f.buff_value("aloft") or f.buff_value("dancing"):
         return 0  # (hanging in the air under Reverse Gravity; dancing in place)
     base -= sum(f.buff_value("slow"))
+    if f.char is None and f.__dict__.get("exhaustion"):
+        base -= 5 * int(f.__dict__["exhaustion"])  # (a creature worn down in the fight: a Sword of Sharpness)
     if f.buff_value("mist"):
         base = min(base, 10)  # (Gaseous Form: it drifts at 10 feet)
     if f.buff_value("haste"):
@@ -388,7 +397,9 @@ def unarmed_dc(f) -> int:
 
 def d20_penalty(f) -> int:
     """What exhaustion takes off every d20 test (2024: 2 per level)."""
-    return -2 * f.char.exhaustion if f.char is not None else 0
+    if f.char is not None:
+        return -2 * f.char.exhaustion
+    return -2 * int(f.__dict__.get("exhaustion", 0))  # (a creature worn down in the fight: a Sword of Sharpness)
 
 
 def concentration_dc(damage: int) -> int:

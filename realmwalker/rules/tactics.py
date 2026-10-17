@@ -25,7 +25,7 @@ from realmwalker.rules import feats, grid
 from realmwalker.rules import spells as spellrules
 from realmwalker.rules.combat import FOE, PARTY, AttackOption, Battle, Fighter, _avg
 from realmwalker.rules.engine import actions, estimates, marks, query
-from realmwalker.rules.engine.handlers import mastery
+from realmwalker.rules.engine.handlers import arms, mastery
 
 CAUTION = {"beast": 2.0, "mindless": 0.5, "fanatic": 1.0, "warrior": 3.0, "bandit": 6.0, "soldier": 6.0,
            "coward": 14.0, "party": 10.0}
@@ -111,6 +111,9 @@ def take_turn(b: Battle, f: Fighter) -> None:
             return
     if f.state == "fleeing":
         flee(b, f)
+        return
+    if "frightened" in f.conditions and (f.cond_ends.get("frightened") or {}).get("terror"):
+        _terror_turn(b, f)  # (a Mace of Terror: it runs as far from the bearer as it can, and nothing else)
         return
     if marks.maddened_by(f) is not None and _maddened(b, f):
         return
@@ -427,6 +430,10 @@ def _targets(b: Battle, f: Fighter) -> list[Fighter]:
                 and not ("charmed" in f.conditions and f.sources.get("charmed") == e.id)]
     seen = [e for e in standing if b.can_see(f, e) or b.gap(f, e) <= 1]
     targets = seen or [e for e in standing if not e.hidden]
+    if f.buffs and targets:
+        foe = arms.vengeful(b, f)  # (a Sword of Vengeance's curse: that foe and no other while it stands)
+        if foe is not None and foe in targets:
+            targets = [foe]
     if not targets and f.creature is not None and f.morale_type in ("mindless", "fanatic"):
         targets = [e for e in b.fighters if e.team != f.team and e.state == "down"]
     return targets
@@ -720,6 +727,60 @@ def _break_through(b: Battle, f: Fighter, targets: list[Fighter], reach: int) ->
     if opt is not None and b.outcome is None and b.current is f:
         return b.attack_object(f, opt, cell) or True
     return bool(before)
+
+
+def _terror_turn(b: Battle, f: Fighter) -> None:
+    """Frightened by a Mace of Terror: the turn goes on getting away from the one it fears - out of a grip first,
+    then a Dash to the square farthest from them it can reach (never off the field: the dread holds it here)."""
+    src = next((x for x in b.fighters if x.id == f.sources.get("frightened")), None)
+    if "grappled" in f.conditions or "restrained" in f.conditions:
+        if f.action > 0:
+            b.do_escape(f)
+        return
+    if src is None or f.speed <= 0:
+        if f.action > 0:
+            b.do_dodge(f)  # (nowhere to go: it cowers)
+        return
+    if f.action > 0:
+        b.do_dash(f)
+    tree = b.move_tree(f, budget=f.move_left, risk=0.5)
+    occ = b.occupied_by_others(f)
+    spots = [sq for sq in tree if sq == (f.x, f.y) or grid.can_stop(sq, f.sq, occ)]
+    if not spots:
+        return
+    goal = max(spots, key=lambda sq: (grid.gap((sq[0], sq[1], f.sq), src.space), -tree[sq].cost))
+    if goal != (f.x, f.y) and grid.gap((goal[0], goal[1], f.sq), src.space) > b.gap(f, src):
+        _walk_budget(b, f, grid.route(tree, goal), tree)
+
+
+def _arms_bonus(b: Battle, f: Fighter) -> bool:
+    """The magic arms before striking (Expansion 4 Part D): a Veteran's Cane twisted into its sword and the Rod of
+    Lordly Might into its flaming blade, each with the bonus action, once there is a foe to fight. True if used."""
+    if b.current is not f or b.outcome is not None or f.bonus <= 0 or f.char is None:
+        return False
+    if not any(e.standing for e in b.enemies_of(f)):
+        return False
+    for opt, a in _abilities(b, f, "cane"):
+        b.do_ability(f, opt.value)
+        return True
+    for opt, a in _abilities(b, f, "rod"):
+        if opt.value == "rod_flame":
+            b.do_ability(f, opt.value)
+            return True
+    return False
+
+
+def _dance(b: Battle, f: Fighter) -> None:
+    """A Dancing Sword sent with the bonus action left: tossed at a foe only when the wielder's own blows could not
+    reach anyone this turn (it leaves the hand for four blows); then it strikes each turn as a bonus attack."""
+    if b.current is not f or b.outcome is not None or f.bonus <= 0:
+        return
+    for opt, a in _abilities(b, f, "dance"):
+        mine = [o for o in b.attack_options(f) if o.available and o.is_melee]
+        if any(b.targets_for(f, o) for o in mine) or not opt.targets:
+            return
+        b.do_ability(f, opt.value, min(opt.targets, key=lambda t: (t.hp, t.id)))
+        return
 
 
 def flee(b: Battle, f: Fighter) -> None:
@@ -1126,6 +1187,8 @@ def _party_turn(b: Battle, f: Fighter) -> None:
             break
     if b.has_action(f) and f.bonus > 0 and _arcane_bonus(b, f):
         opts = [o for o in b.attack_options(f) if o.available]  # (a weapon called to hand: its blows now)
+    if b.has_action(f) and f.bonus > 0 and _arms_bonus(b, f):
+        opts = [o for o in b.attack_options(f) if o.available]  # (the cane's sword, the rod's blade: their blows now)
     if opts and b.has_action(f) and f.bonus > 0:
         _coat_blade(b, f, opts)  # (poison on the blade with the bonus action, before the blow)
     if opts and b.has_action(f):
@@ -1143,6 +1206,8 @@ def _party_turn(b: Battle, f: Fighter) -> None:
             _bonus_strike(b, f)
     if b.current is f and b.outcome is None:
         _mend_ward(b, f)
+    if b.current is f and b.outcome is None and f.bonus > 0:
+        _dance(b, f)  # (a Dancing Sword sent where the hand cannot reach)
     if b.current is f and b.outcome is None and f.bonus > 0:
         _maneuvers_after(b, f)
     if b.current is f and b.outcome is None and f.bonus > 0:

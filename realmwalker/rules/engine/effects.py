@@ -605,6 +605,8 @@ def _condition(c: Cast, o: dict, victim) -> None:
             extra["with"] = o["with"]  # (it ends when that condition does: Restrained while Grappled)
         if o.get("control"):
             extra["control"] = f.team  # (Dominate: it fights for the caster's side while it lasts)
+        if o.get("terror"):
+            extra["terror"] = True  # (a Mace of Terror: it runs from the one who frightened it, and does nothing else)
         if o.get("damage_save"):
             extra["damage_save"] = {"save": o.get("save", spell_save(spell)), "dc": int(o.get("save_dc") or c.dc)}
         if o.get("then"):
