@@ -59,6 +59,9 @@ def setup(tables, creature: str, scenario: str, seed: int) -> Battle:
     else:
         spots = {0: (5, 4), 1: (5, 5), 2: (6, 4), 3: (6, 5), 4: (fx, 4), 5: (fx, 7)}
     b = Battle(tables, party, foes, Env(), rng, spots=spots)
+    if d.get("summon"):  # (a summoned spirit fights in its summoned shapes: each run and each foe another form)
+        for i, f in enumerate(b.side(FOE)):
+            _as_summoned(tables, f, creature, SCENARIOS.index(scenario) if scenario in SCENARIOS else 0, seed, i)
     for f in b.side(PARTY):
         f.auto = True
     b.start()
@@ -120,9 +123,38 @@ def run(b: Battle, *, max_steps: int = 3000, check=None, clock=time.perf_counter
     return {"used": used, "times": times, "outcome": b.outcome, "steps": steps, "rounds": b.round}
 
 
+SUMMON_ATTACK, SUMMON_DC = 7, 15  # (a summoned spirit's caster: a 9th level wizard's numbers)
+
+
+def summon_forms(tables, creature: str) -> list[str]:
+    return list(tables.creatures[creature]["summon"]["forms"])
+
+
+def _as_summoned(tables, f, creature: str, scenario_i: int, seed: int, i: int) -> None:
+    """A summoned creature's numbers at its spell's level, in one of its forms (rules/allies.summon_def)."""
+    from realmwalker.rules import allies
+
+    forms = summon_forms(tables, creature)
+    form = forms[(seed + scenario_i * 2 + i) % len(forms)]
+    s = tables.creatures[creature]["summon"]
+    f.cdef = allies.summon_def(tables, creature, int(s["level"]), form, SUMMON_ATTACK, SUMMON_DC)
+    f.slots = []
+    f.creature.name = f.cdef["name"]
+    f.creature.hp = f.creature.max_hp = int(f.cdef["hp"])
+
+
 def options_of(tables, creature: str) -> list[str]:
-    """Every option the creature has that the tactics may choose (passive traits are not options)."""
+    """Every option the creature has that the tactics may choose (passive traits are not options); a summoned
+    creature's, in all its forms."""
     d = tables.creatures[creature]
+    if d.get("summon"):
+        from realmwalker.rules import allies
+
+        out = []
+        for form in summon_forms(tables, creature):
+            sd = allies.summon_def(tables, creature, int(d["summon"]["level"]), form, SUMMON_ATTACK, SUMMON_DC)
+            out += [f"attack:{a['name']}" for a in sd["attacks"]] + [f"cast:{sid}" for sid in sd.get("spells", [])]
+        return list(dict.fromkeys(out))
     out = [f"attack:{a['name']}" for a in d.get("attacks", [])]
     for sid in d.get("spells", []):
         from realmwalker.rules import spells as spellrules

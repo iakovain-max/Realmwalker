@@ -500,6 +500,8 @@ def _control_rounds(ops: list[dict]) -> float:
             return 0.4
         if o["op"] == "condition" and o["condition"] == "charmed":
             return 0.3  # (it will not strike the one who charmed it)
+        if o["op"] == "condition" and o["condition"] == "poisoned":
+            return 0.3  # (its attacks and checks at a disadvantage: a centipede's spew)
     return 0.0
 
 
