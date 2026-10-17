@@ -111,7 +111,7 @@ def spell_value(b, f, sid: str, *, target=None, point=None, dc: int | None = Non
         reach = b.spell_range(spell, f)
         caught = [x for x in b.team(f.team) if (x.active or x.state == "down") and b.feet(f, x) <= reach]
     elif several:
-        caught = [x for x in effects.many(b, f, spell_id(sid), spell, target, up) if not effects.warded(b, f, x, lvl)]
+        caught = effects.many(b, f, spell_id(sid), spell, target, up, level=lvl)
     else:
         caught = [target] if target is not None else ([f] if spell["target"] == "self" else [])
     for o in spell.get("effects", ()):
@@ -189,7 +189,7 @@ def spell_value(b, f, sid: str, *, target=None, point=None, dc: int | None = Non
                 w.kills += int(ev >= target.hp)
         elif kind == "temp_hp" and o.get("share") and spell["target"] == "all_allies":
             amount = avg(str(o["amount"])) + int(o.get("per_up", 0)) * up
-            for x, each in effects.shares(b, f, spell, int(amount), int(o.get("count", 6))):
+            for x, each in effects.shares(b, f, spell, int(amount), int(o.get("count", 6)), level=lvl):
                 gain = max(0.0, each - x.temp_hp)
                 w.help += gain * (0.6 if any(b.gap(x, e) <= 6 for e in b.enemies_of(f)) else 0.2)
         elif kind == "temp_hp" and (caught or spell["target"] == "self"):
@@ -212,7 +212,7 @@ def spell_value(b, f, sid: str, *, target=None, point=None, dc: int | None = Non
                 if x is f or not x.active:
                     continue
                 if x.team == f.team:
-                    w.friendly += 2.0 * threat(x)
+                    w.friendly += 4.0 * threat(x)  # (a friend shut out of the fight for as long as it holds)
                 else:
                     w.control += 3.0 * threat(x)
         elif kind == "one_of":  # (Prismatic Spray: each ray by its chance)
@@ -275,14 +275,16 @@ def _save_part(b, f, o: dict, caught: list, target, dc: int, up: int, mult: int,
         if x.team == f.team:
             w.friendly += ev
             if o.get("on_fail"):  # (a friend held, lifted, charmed or sent away by it)
-                w.friendly += pf * threat(x) * _control_rounds(_resolve(o["on_fail"], x)) * 0.5
+                fail = _resolve(o["on_fail"], x)
+                w.friendly += pf * (threat(x) * _control_rounds(fail) + _marks_worth(b, f, x, fail, up))
         else:
             w.damage += ev
             w.kills += int(ev >= x.hp)
             if o.get("on_fail"):
                 fail = _resolve(o["on_fail"], x)
-                w.control += pf * threat(x) * _control_rounds(fail)
-                w.damage += pf * _marks_worth(b, f, x, fail, up)
+                if not _already(b, f, x, fail):
+                    w.control += pf * threat(x) * _control_rounds(fail)
+                    w.damage += pf * _marks_worth(b, f, x, fail, up)
                 if any(i["op"] == "slay" and (i.get("max_hp") is None or x.hp <= int(i["max_hp"])) for i in fail) \
                         or any(i["op"] == "banish" and i.get("forever") and _allowed(i, x) for i in fail):
                     w.kills += int(pf >= 0.4)
@@ -375,6 +377,27 @@ def _divine_spark_harm(b, f, w: Worth) -> None:
 _ABILITY_WORTH = {"divine_spark_harm": _divine_spark_harm, "turn_undead": _turn_undead, "preserve_life": _preserve_life, "battle_medic": _battle_medic,
                   "speedy_recovery": _speedy_recovery, "chef_treat": _chef_treat,
                   "telekinetic_shove": _telekinetic_shove, "recover_vitality": _recover_vitality}
+
+
+def _already(b, f, x, fail: list[dict]) -> bool:
+    """A failed save would bring nothing new: the foe already has the condition or the mark (a second Mass
+    Suggestion, Hold Person, Otto's dance on the same foe), or it is the last foe and banishing it only delays the
+    fight (it would come back)."""
+    from realmwalker.rules.combat import EXTRAPLANAR
+
+    for o in fail:
+        if o["op"] == "condition" and (o.get("condition") in x.conditions or o.get("petrify") and "petrified" in x.conditions):
+            return True
+        if o["op"] == "modifier":
+            keys = [k for k in o.get("buff", {}) if k not in ("dc", "by", "up", "level", "mod", "source")]
+            if keys and any(bf.get(k) for bf in x.buffs for k in keys):
+                return True
+        if o["op"] == "lift" and x.buff_value("aloft"):
+            return True
+        if o["op"] == "banish" and not o.get("forever") and o.get("how", "banished") == "banished" \
+                and x.kind not in EXTRAPLANAR and len([e for e in b.enemies_of(f) if e.active]) <= 1:
+            return True
+    return False
 
 
 def _resolve(ops: list[dict], x) -> list[dict]:

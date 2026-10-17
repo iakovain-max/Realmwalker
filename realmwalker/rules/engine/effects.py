@@ -11,10 +11,12 @@ an op inside another (`on_hit`, `on_fail`, `then`) works on the creature the out
                (false: cover does not help), kinds / not_kinds (who it works on), sure_save (traits that always
                succeed), on_fail [ops]
     condition  condition, and how it ends: ends ("own_turn_end", "caster_turn_start"...), rounds (the old way),
+               immune_as (a condition that, if it is immune to it, keeps this off too: Suggestion's charm),
                repeat_save (shaken off with the same save at the end of each of its turns), on_damage, then
                {save, on_fail}; while the spell needs concentration, the condition ends with it
     heal       dice, add_mod, up, mends_wound; count / count_up for several
-    modifier   buff {...} for `rounds` (a lasting spell outlives the fight: rules/spells.py)
+    modifier   buff {...} for `rounds` (a lasting spell outlives the fight: rules/spells.py); needs (a condition
+               the creature must have for it to take: Otto's dance rides on its charm)
     zone       zone (web, ice, fire, fog, caltrops, bearings), rounds, dc (a fixed DC); a web catches (Dexterity save,
                Restrained); caltrops and ball bearings catch whoever walks in (Battle._zone_underfoot)
     aura       an emanation that moves with the caster and hurts enemies in it (Spirit Guardians)
@@ -244,10 +246,10 @@ def _allowed(o: dict, x) -> bool:
 def _targets(c: Cast) -> list:
     """The creature(s) a spell aimed at one target works on: the target, and with a higher slot more of the same kind
     (Hold Person, Command), nearest first."""
-    return many(c.b, c.caster, c.sid, c.spell, c.target, c.up)
+    return many(c.b, c.caster, c.sid, c.spell, c.target, c.up, level=c.level)
 
 
-def many(b, f, sid: str, spell: dict, target, up: int) -> list:
+def many(b, f, sid: str, spell: dict, target, up: int, *, level: int | None = None) -> list:
     """The creatures a one-target spell works on: the target, and `targets` - 1 (+ `targets_up` a slot level above)
     more of the same kind, nearest the caster first; with `leap` (feet), only those that close to the first target,
     nearest it first (Chain Lightning's bolts)."""
@@ -257,7 +259,8 @@ def many(b, f, sid: str, spell: dict, target, up: int) -> list:
     extra = int(spell.get("targets", 1)) - 1 + int(spell.get("targets_up", 0)) * up
     if extra:
         mine = spell["target"] == "ally"  # (a blessing may be on the caster too: Aid)
-        others = [x for x in b.spell_targets(f, sid) if x is not target and (mine or x is not f)]
+        others = [x for x in b.spell_targets(f, sid) if x is not target and (mine or x is not f)
+                  and (level is None or not warded(b, f, x, level))]
         if spell.get("leap"):
             n = int(spell["leap"]) // grid.SQUARE_FT
             others = [x for x in others if b.gap(target, x) <= n]
@@ -515,6 +518,12 @@ def _condition(c: Cast, o: dict, victim) -> None:
             continue  # (a ghoul's touch: not the dead, not elves)
         if o.get("charge_feet") and f.moved_feet < int(o["charge_feet"]):
             continue
+        if o.get("immune_as"):
+            from realmwalker.rules.engine import query
+
+            if query.condition_immune(x, o["immune_as"]):
+                b.say(f"{x.the_name} shrugs it off.", "system")
+                continue  # (Suggestion is a charm: those who cannot be charmed are not stood down)
         extra = {}
         if o.get("escape"):
             extra["escape"] = int(o["escape"])
@@ -683,6 +692,8 @@ def _modifier(c: Cast, o: dict, victim) -> None:
     for x in targets:
         if x is None:
             continue
+        if o.get("needs") and o["needs"] not in x.conditions:
+            continue  # (Otto's dance rides on the charm: no charm, no dance)
         if x.char is not None and spellrules.lasts(b.t, sid) and victim is None:
             # It outlives the fight: kept on them (the sheet counts its armour), the rest carried here.
             spellrules.keep(x.char, b.t, sid, c.level)
@@ -760,7 +771,7 @@ def _temp_hp(c: Cast, o: dict, victim) -> None:
     if o.get("per_up"):
         amount += int(o["per_up"]) * c.up
     if o.get("share") and victim is None:
-        for x, each in shares(c.b, c.caster, c.spell, amount, int(o.get("count", 6))):
+        for x, each in shares(c.b, c.caster, c.spell, amount, int(o.get("count", 6)), level=c.level):
             _give_temp(c, x, each)
         return
     x = victim or (c.caster if c.spell["target"] == "self" else c.target)
@@ -769,12 +780,13 @@ def _temp_hp(c: Cast, o: dict, victim) -> None:
     _give_temp(c, x, amount)
 
 
-def shares(b, f, spell: dict, amount: int, count: int) -> list:
+def shares(b, f, spell: dict, amount: int, count: int, *, level: int | None = None) -> list:
     """How shared temporary hit points are divided: evenly among the friends in range who would gain from them,
     those nearest a foe first; a friend who already has as many keeps them and the rest share more (Power Word
     Fortify)."""
     reach = b.spell_range(spell, f)
-    near = [x for x in b.team(f.team) if x.active and b.feet(f, x) <= reach]
+    near = [x for x in b.team(f.team) if x.active and b.feet(f, x) <= reach
+            and (level is None or not warded(b, f, x, level))]
     near.sort(key=lambda x: (min((b.gap(x, e) for e in b.enemies_of(f)), default=99), x.temp_hp, x.id))
     picked = near[:max(1, count)]
     while picked:
@@ -1160,8 +1172,8 @@ def _lift(c: Cast, o: dict, victim) -> None:
     spell ends it falls (Battle._end_concentration). A flier may fly as it likes."""
     b = c.b
     x = victim
-    if x is None or not x.active or x.hovers:
-        return
+    if x is None or not x.active or x.hovers or x.fly_speed > 0:
+        return  # (a flier flies as it likes)
     roof = b.env.place in ("underground", "indoors")
     top = 20 if roof else int(o.get("feet", 100))
     if x.z >= top:
@@ -1222,8 +1234,15 @@ def warded(b, f, x, level: int) -> bool:
     wards = [bf for bf in x.buffs if bf.get("spell_ward") is not None and int(bf["spell_ward"]) > int(level)]
     if not wards or f is x:
         return False
-    mine = {bf.get("aura_of") for bf in f.buffs if bf.get("spell_ward") is not None}
-    return not any(bf.get("aura_of") in mine for bf in wards)
+    for bf in wards:
+        bearer = next((y for y in b.fighters if y.id == bf.get("aura_of")), None)
+        if bearer is None:
+            return True
+        r = next((int(a["aura"].get("radius", 10)) for a in bearer.buffs
+                  if a.get("aura") and "spell_ward" in (a["aura"].get("grant") or {})), 10) // grid.SQUARE_FT
+        if grid.gap(bearer.space, f.space) > r:
+            return True  # (cast from outside that barrier)
+    return False
 
 
 @op("guardian")

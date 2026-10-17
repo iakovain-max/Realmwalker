@@ -28,7 +28,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Clearing the decks for the expansions** | ✅ Done (2026-10-12), branch `prep/clear-the-decks` |
 | **Expansion 1, *Dice & Destiny*** (version 1.1.0) | ✅ Released (2026-10-13), branch `dlc/01-dice-destiny` |
 | **Expansion 2, *Blades & Backgrounds*** (version 1.2.0) | ✅ Released (2026-10-13), branch `dlc/02-blades-backgrounds` |
-| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete) D.1 and D.2 (the first 145 spells of the catalogue, cantrips to level 5, 2026-10-17) in `main`; D.3 (levels 6 and 7) next |
+| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete) and D.1 to D.3 (the first 172 spells of the catalogue, cantrips to level 7, 2026-10-17) in `main`; D.4 (levels 8 and 9, Wish) next |
 
 ---
 
@@ -39,6 +39,36 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-17 (early morning): Demigods & Magics D.3 — the spell catalogue, third wave; in `main`
+
+Built by the relay builder realmwalker-a, with two helpers writing the spells from the book pages.
+- **27 new spells of levels 6 and 7 that work in a fight**: Chain Lightning (a bolt that leaps to three more foes
+  near the first), Disintegrate (what it kills is grey dust, and nothing in the game brings it back), Harm (it
+  withers the foe's greatest strength for the rest of the fight), Heal (70 hit points, and blindness, deafness and
+  poison gone), Circle of Death, Otiluke's Freezing Sphere, Sunbeam, Eyebite, Flesh to Stone (three failed saves and
+  the foe is stone; three good ones and it shakes free), Otto's Irresistible Dance, Mass Suggestion (up to twelve foes
+  lay down their arms), True Seeing, the Globe of Invulnerability (lesser spells break on it), Blade Barrier and the
+  walls of Ice and Thorns, Conjure Fey; and at level 7 Divine Word (the weakest foes die at the word, the stronger are
+  struck blind, deaf or senseless, and fiends, fey, celestials and elementals are sent home for good), Finger of
+  Death, Fire Storm, Delayed Blast Fireball, Prismatic Spray (a ray of a random colour for each foe: fire, acid,
+  lightning, poison, cold, the indigo that turns to stone or the violet that sends away), Reverse Gravity (foes fall
+  into the sky and come crashing down when it ends; below ground they hit the ceiling), the Forcecage, Power Word Fortify (120 temporary hit points shared among your friends), Conjure Celestial (a
+  pillar of light that heals your friends and sears your foes) and Mordenkainen's Sword.
+- **New things on the battle mat**: whirling blades, a wall of thorns that hides what is behind it, a pillar of
+  heavenly light, a wall of ice; foes hanging high in the air under Reverse Gravity; a creature shut in the
+  forcecage shows through its walls.
+- **New costly components**, sold at the markets: a pinch of mushroom powder (True Seeing, in towns), and in cities a
+  black pearl (Circle of Death), a vial of ruby dust (the Forcecage uses it up), a miniature platinum sword
+  (Mordenkainen's Sword) and a forked metal rod (for Plane Shift, which comes with Part E).
+- **The companions and the enemy use them** by what they are worth: they never cast a spell at someone behind a
+  Globe of Invulnerability that it cannot pass, and they now count it against a spell when it would hold, lift or
+  charm a friend.
+- **Waiting for later parts** (in the design note): 24 spells that do their work outside a fight (Teleport, Plane
+  Shift, Word of Recall, Heroes' Feast, Resurrection, Regenerate, which takes a minute to cast, and the rest) come with Part E;
+  Create Undead, Planar Ally, Summon Fiend and Simulacrum come with Part F.
+- **The codex**: 27 spells settled (8 exactly as the book, 19 adapted, each with its note).
+- **How to try it**: a cleric or wizard of level 11 or more prepares them (S); scrolls turn up in shops and hoards.
 
 ### Session, 2026-10-17 (night): Demigods & Magics D.2 — the spell catalogue, second wave; in `main`
 

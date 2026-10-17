@@ -374,6 +374,12 @@ def up_gain(spell: dict, up: int) -> list[str]:
                 out.append(f"+{more_dice(more, up)} {dtype}".strip())
         if o["op"] == "heal" and o.get("up"):
             out.append(f"heals +{more_dice(o['up'], up)}")
+        if o["op"] == "heal" and o.get("per_up"):
+            out.append(f"heals +{int(o['per_up']) * up}")
+        if o.get("heal_up"):
+            out.append(f"heals +{more_dice(o['heal_up'], up)}")
+        if o["op"] == "temp_hp" and o.get("per_up"):
+            out.append(f"+{int(o['per_up']) * up} temporary hit points")
         what = {"darts": "dart", "heal": "creature healed", "modifier": "creature"}.get(o["op"], "more")
         if o.get("count_up"):
             n = int(o["count_up"]) * up

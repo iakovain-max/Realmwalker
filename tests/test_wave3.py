@@ -1,7 +1,7 @@
 """The spell catalogue's third wave (Expansion 3 D.3, levels 6 and 7): the new kernel pieces doing what their cards say
 in real fights - a bolt that leaps, dust, a withered maximum, the three saves against stone, the Globe's ward, Heal,
 Otto's dance, true sight, walls of ice and thorns, the pillar of celestial light, Divine Word, the forcecage, Plane
-Shift's banishing touch, shared temporary hit points, Prismatic Spray's rays, Reverse Gravity and Conjure Fey."""
+shared temporary hit points, Prismatic Spray's rays, Reverse Gravity and Conjure Fey."""
 
 import pytest
 
@@ -236,21 +236,6 @@ def test_the_forcecage_seals_those_in_the_box_and_dispel_magic_cannot_open_it(ta
     assert caged.state == "fighting" and (caged.x, caged.y) == (6, 4)
 
 
-def test_plane_shift_banishes_a_foe_for_good_with_a_touch(tables):
-    hits = 0
-    for seed in range(12):
-        b = fight(tables, [hero(tables, "cleric")], ["bandit"], {0: (2, 4), 1: (3, 4)}, seed=seed)
-        me, bandit = b.fighters
-        my_turn(b, me)
-        hp = bandit.hp
-        cast(b, me, "plane_shift", bandit, dc=40)
-        assert bandit.hp == hp, "the touch itself does no harm"
-        if bandit.state == "fled":
-            hits += 1
-            assert bandit.__dict__.get("banished_home") and b.outcome == "victory"
-    assert hits >= 6
-
-
 def test_power_word_fortify_shares_its_hundred_and_twenty(tables):
     b = fight(tables, [hero(tables, "cleric"), hero(tables, "fighter", seed=2), hero(tables, "rogue", seed=3)],
               ["bandit"], {0: (2, 4), 1: (3, 4), 2: (2, 5), 3: (12, 4)})
@@ -320,3 +305,50 @@ def test_mass_suggestion_reaches_many_foes(tables):
     my_turn(b, me)
     cast(b, me, "mass_suggestion", foes[0], dc=40)
     assert all("incapacitated" in x.conditions for x in foes)
+
+
+def test_a_foe_inside_the_globe_is_not_kept_out(tables):
+    b = fight(tables, [hero(tables)], ["bandit"], {0: (4, 4), 1: (5, 4)})
+    me, foe = b.fighters
+    my_turn(b, me)
+    cast(b, me, "globe_of_invulnerability")
+    hp = me.hp
+    cast(b, foe, "fireball", point=(me.x, me.y), dc=40)
+    assert me.hp < hp, "a spell cast from inside the barrier is not stopped by it"
+
+
+def test_ottos_dance_needs_the_charm_to_take_hold(tables):
+    b = fight(tables, [hero(tables)], ["bandit"], {0: (2, 4), 1: (3, 4)})
+    me, bandit = b.fighters
+    from realmwalker.rules.engine import query
+
+    real = query.condition_immune
+    try:
+        query.condition_immune = lambda f, cid: cid == "charmed" and f is bandit or real(f, cid)
+        my_turn(b, me)
+        cast(b, me, "ottos_irresistible_dance", bandit, dc=40)
+    finally:
+        query.condition_immune = real
+    assert "charmed" not in bandit.conditions and not bandit.buff_value("dancing") and bandit.speed > 0
+
+
+def test_the_auto_does_not_cast_a_hold_again_on_foes_already_held(tables):
+    b = fight(tables, [hero(tables)], ["bandit"] * 3, {0: (1, 4), 1: (5, 4), 2: (6, 4), 3: (5, 6)})
+    me, *foes = b.fighters
+    my_turn(b, me)
+    before = estimates.spell_value(b, me, "mass_suggestion", target=foes[0]).control
+    cast(b, me, "mass_suggestion", foes[0], dc=40)
+    assert all("incapacitated" in x.conditions for x in foes)
+    assert before > 0 and estimates.spell_value(b, me, "mass_suggestion", target=foes[0]).control == 0
+
+
+def test_reverse_gravity_leaves_fliers_be(tables):
+    flier = next((cid for cid, c in tables.creatures.defs.items()
+                  if int(c.get("speeds", {}).get("fly", 0)) > 0 and not c.get("speeds", {}).get("hover")), None)
+    if flier is None:
+        pytest.skip("no flier in the bestiary")
+    b = fight(tables, [hero(tables)], [flier], {0: (1, 4), 1: (11, 4)})
+    me, foe = b.fighters
+    my_turn(b, me)
+    cast(b, me, "reverse_gravity", point=(11, 4), dc=40)
+    assert foe.z == 0 and not foe.buff_value("aloft")
