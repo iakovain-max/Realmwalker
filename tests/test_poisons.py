@@ -255,3 +255,15 @@ def test_venom_is_harvested_from_the_slain_with_a_kit(game, tables, monkeypatch)
     c.hp = c.max_hp
     items, msgs = poisoning.harvest(game, [spider])
     assert not items and "pricks" in " ".join(msgs)
+
+
+def test_the_poison_on_a_blade_has_its_card(tables, monkeypatch):
+    from realmwalker.rules import describe
+
+    c, b, me, them = setup(tables, "serpent_venom")
+    assert b.do_cast(me, b.throw_value(first(c, "serpent_venom")), None)
+    cards = [s.card for s in describe.statuses(me, b)]
+    card = next(x for x in cards if x.title.startswith("Poisoned blade"))
+    assert "serpent venom" in card.title and "3d6" in card.lines[0] and "DC 11" in card.lines[0]
+    them.buffs.append({"fumes": 13, "fumes_dice": "1d6", "fumes_successes": 3, "source": "fumes:x"})
+    assert any(s.card.title == "Choking on fumes" for s in describe.statuses(them, b))

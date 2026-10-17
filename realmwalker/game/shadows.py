@@ -228,7 +228,7 @@ def die_of_poison(game, npc) -> None:
         law.commit(game, "murder", victim=npc, witnesses=[])
     if game.quests:
         quests.on_npc_death(game, npc)
-    game.cue("poison")
+    game.cue("acid")
 
 
 def truthful(game, npc) -> bool:
