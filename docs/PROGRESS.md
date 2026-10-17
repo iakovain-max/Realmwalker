@@ -70,7 +70,9 @@ Built by the relay builder realmwalker-b. Saves do not change: an old world of f
   fiends, and six walking things drawn by hand (they have jointed legs, like crabs).
 - Checked: tests for every spirit's numbers at two slots, each new trait and blow, the objects waiting for a word and
   acting when told, the Auto casting each spell; the arena fights every new creature; the whole test suite, the
-  autoplay bot and the window smoke test.
+  autoplay bot and the window smoke test. The fresh review's fixes: the dragon still breathes after a shove or a
+  grapple in place of a Rend, the demon's burst does not pass through walls, and the "no word" line says "thing" for
+  one. (The full suite also caught a slip during the part that had cut a gnoll's Rampage out of its turn; fixed.)
 
 ### Session, 2026-10-17 (afternoon): Demigods & Magics F.2 — summoned spirits fight beside you
 

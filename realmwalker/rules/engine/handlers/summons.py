@@ -170,7 +170,8 @@ def death_throes(b, f, ev, hook, buff) -> None:
         return
     f.__dict__["throes_done"] = True
     level = int(f.bond.get("level", 6))
-    near = [x for x in b.on_field() if x is not f and x.state in ("fighting", "fleeing", "down") and b.gap(f, x) <= 2]
+    near = [x for x in b.on_field() if x is not f and x.state in ("fighting", "fleeing", "down") and b.gap(f, x) <= 2
+            and b.field.cover(f.space, x.space) != grid.TOTAL]  # (an emanation: total cover keeps it off)
     cells = {(x, y) for x in range(f.x - 2, f.x + f.sq + 2) for y in range(f.y - 2, f.y + f.sq + 2)
              if b.field.in_bounds(x, y)}
     b.say(f"{f.the_name[:1].upper() + f.the_name[1:]} bursts apart in a gout of hellfire!", "danger")

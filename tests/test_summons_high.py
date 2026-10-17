@@ -365,3 +365,16 @@ def test_the_battle_screen_plays_the_new_spirits_and_the_objects(make_app):
         app.handle_event(KeyEvent(key))
     screen.render(widgets.Canvas(tcod.console.Console(160, 45, order="F")))
     assert app.error_count == 0
+
+
+def test_the_dragons_breath_follows_a_shove_too(tables):
+    b, me = scene(tables, foes=("bandit",))
+    my_turn(b, me)
+    s = summon(b, me, "summon_dragon", point=(6, 4), form="fire")
+    foe = b.fighters[1]
+    sturdy(foe)
+    foe.x, foe.y = s.x + 2, s.y
+    my_turn(b, s)
+    assert b._use_attack(s), "a shove or a grapple in place of a Rend begins the Attack action"
+    opt = next(o for o in b.attack_options(s) if o.extra.get("area"))
+    assert opt.available, "and the breath still comes with it"

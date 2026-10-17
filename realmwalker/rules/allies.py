@@ -250,11 +250,13 @@ def form_scores(b, owner, cid: str) -> dict[str, float]:
 
     s = b.t.creatures[cid]["summon"]
     foes = _foes_of(b, owner)
+    if not s.get("forms"):
+        return {"": 1.0}  # (no forms: an animated object's sizes are chosen by object_sizes)
     aloft = any(e.z > 0 or e.fly_speed > 0 for e in foes)
     near = min((b.gap(owner, e) for e in foes), default=0)
     wet = float(b.field.swim.mean()) if hasattr(b.field, "swim") else 0.0
     out = {}
-    for form, fm in s["forms"].items():
+    for form, fm in s.get("forms", {}).items():
         score = float(fm.get("weight", 1.0))
         likes = fm.get("likes", [])
         if "aloft" in likes and aloft:
@@ -299,7 +301,7 @@ def summon_spirit(b, owner, cid: str, level: int, point=None, sid: str = "", for
                    type_=cdef.get("kind", ""), cdef=cdef, point=point)
     f.bond["conc"] = True
     f.bond["form"] = form
-    fm = cdef["summon"]["forms"].get(form, {})
+    fm = cdef["summon"].get("forms", {}).get(form, {})
     if fm.get("picture"):
         f.bond["picture"] = fm["picture"]
     b.say(f"{a_or_an(cdef['name']).capitalize()} answers the call.", "magic")

@@ -3107,6 +3107,7 @@ class Battle:
             f.action -= 1
             f.attacks_left = query.attacks_per_action(f)
             f.loaded_fired = False
+            f.__dict__["struck_turn"] = f.spent_round  # (a breath made with the Multiattack may still follow)
         f.attacks_left -= 1
         return True
 
@@ -3456,9 +3457,10 @@ class Battle:
             return False
         f.dodging = True
         f.action = 0
-        first = next((x for x in self.objects_of(owner)), None)
-        if first is f:
-            self.say(f"With no word from {owner.the_name}, the animated things only keep out of harm's way.", "system")
+        things = self.objects_of(owner)
+        if things and things[0] is f:
+            what = "the animated thing only keeps" if len(things) == 1 else "the animated things only keep"
+            self.say(f"With no word from {owner.the_name}, {what} out of harm's way.", "system")
         return True
 
     def burning(self, f: Fighter) -> bool:
