@@ -377,6 +377,13 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   free spells) and `picks` (spells kept in `char.spells["mastery"|"signature"]`, cast without a slot through
   `spells.free_cast`); every cast goes through `Battle.cast`, which returns False when a foe's Counterspell stopped it
   (`Battle._countered`; the caller gives the slot back); `effects.cast(slotted=)` says whether a slot was spent.
+- Spellcasting 2024 (Expansion 3 part C): prepared lists (`spells.prepared`, `fill_prepared`), higher slots
+  (`spells.slot_choices`, `up_gain`), components (`spells.component_problem`, `spend_material`). Spell scrolls are made
+  for every spell by `ItemTable.add_scrolls` (`scroll_<spell id>`, numbers in data/rules.json "spell_scrolls"); who
+  reads one and how is `spells.scroll_reader` ("sure", "check", "device", "device_check" or None), the check before a
+  scroll above you `spells.scroll_check`; in a fight "scroll:<uid>:<spell>" through `Battle.do_cast`, outside one
+  `magic.read_scroll` (via `cast_on_road(scroll=)`). Potions of healing (items with `use.heal`) take the bonus action
+  in a fight (`Battle.item_cost`), are drunk on the road by `care.drink_potion`, and the Auto uses them (`tactics._drink`).
 - Gear and tools 2024 (Expansion 2 part D): items.json `pack` (opens into its contents, gear.open_pack), `helps`
   {search, traps, force, disguise} (dungeon.helps, law.put_on_disguise), `utilize` (a tool's 2024 uses, on its card),
   `carry` also on carried containers (each kind once, Sheet.pack_carry), `trinket` (data/trinkets.json; the name and
