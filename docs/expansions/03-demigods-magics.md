@@ -150,18 +150,52 @@ system is built once and every spell that uses it comes with it.
   and the body: goodberry, create or destroy water, purify food and drink, create food and water, heroes' feast.
   Shelter and watch (wards on the camp): alarm, Leomund's tiny hut, rope trick, Mordenkainen's faithful hound,
   Mordenkainen's magnificent mansion.
-- [ ] E.2 Travel, finding and seeing, asking the powers (answered from the world's history), talking.
+- [ ] E.2 Light, the body on the move, travel (34 spells). E.2 was split in two at its start (2026-10-17): 64
+  spells in six groups were too many for one part; finding and seeing, asking the powers and talking became E.3.
   Light: light, dancing lights, continual flame, daylight. The body on the move: darkvision, see invisibility, jump,
   longstrider, feather fall, spider climb, levitate, water breathing, water walk, gaseous form, meld into stone,
   feign death, alter self, enhance ability, pass without trace. Travel: phantom steed, Tenser's floating disk, unseen
   servant, wind walk, transport via plants, tree stride, teleport, teleportation circle, word of recall, arcane gate,
-  find the path, plane shift, etherealness, astral projection, gate. Finding and seeing: detect magic, detect evil
-  and good, detect poison and disease, find traps, locate object, locate creature, locate animals or plants,
-  clairvoyance, arcane eye, scrying, beast sense, Drawmij's instant summons. Asking the powers: augury, divination,
-  commune, commune with nature, contact other plane, legend lore. Talking: comprehend languages, tongues, speak with
-  animals, speak with dead, speak with plants, message, sending, animal messenger, dream, telepathy, Rary's telepathic
-  bond, detect thoughts.
-- [ ] E.3 Moving minds and the law, disguise, locks and stone, weather and land, lasting protections, great magic;
+  find the path, plane shift, etherealness, astral projection, gate.
+  How (the design, at the start of E.2):
+  - Most of the body's spells are lasting buffs (a spell of ten minutes or more is kept on the character, carried into
+    any fight: rules/spells.lasting), read by new keys outside a fight and by the battle inside one: `light` (squares
+    of light: Light, Daylight; the dungeon's light, the close view at night, a fighter's glow), `darkvision` (feet),
+    `see_invisible`, `speed` (Longstrider: the sheet's speed, so the road is quicker too), `climb` (Spider Climb: a
+    Climb Speed equal to the Speed), `swim` (Alter Self's gills), `skills` ({skill: bonus}: Pass without Trace's +10
+    Stealth, for creeping, slipping away and hiding), `check_adv` (Enhance Ability: Advantage on checks with the
+    target's best ability; outside a fight +5 to its skills, the passive rule), `carry` (Tenser's Floating Disk: 500
+    pounds more before the caster is laden), `steed` (Phantom Steed: its rider travels 13 miles an hour), `servant`
+    (Unseen Servant: the camp's chores take half the time), `water_walk` and `water_breathing` (fords cost nothing and
+    nobody gets wet; lakes and the sea can be walked over with Water Walk, lakes walked under with Water Breathing,
+    at half pace), `wind` (Wind Walk: the party flies, ten times a walker's pace, over anything, and nothing on the
+    ground meets it), `ethereal` (Etherealness: nobody on the road meets the party, and in a dungeon walls and doors
+    do not stop it and traps do not spring; chests cannot be touched), `pathfinding` (Find the Path: nobody loses the
+    way, and in a dungeon the way to the stairs is shown).
+  - In a fight: Dancing Lights lights a 20-foot patch of the field (a zone "lights"); Daylight also ends magical
+    Darkness of level 3 or lower (op `undark`); Jump lets a leap of 30 feet (`leap`); Feather Fall is cast as a reaction
+    by whoever has it ready when a friend falls (and in a dungeon's pit); Levitate lifts a foe 20 feet that fails a
+    Constitution save (the `lift` op with `gentle`: no ceiling, a soft landing); Gaseous Form makes a friend a slow
+    mist that cannot be hurt much, attack or cast (`mist`: for running); Feign Death takes a willing friend out of
+    the fight, lying as if dead (sent away, "feign"), back on their feet when it ends; Tree Stride steps from tree to
+    tree, again each turn (`near: "tree"` on the teleport op, and its `again`).
+  - Travel by magic is `game/waymagic.py` (road op `does` "travel" with `how`): Teleport (the book's table by
+    familiarity: a permanent circle known, the town the character comes from or a town stayed in, a town visited, a
+    town only heard of; mishaps do 3d10 force and roll again, a similar place is the nearest town of the same kind, off
+    target lands 2d12 miles away), Teleportation Circle (to a city's circle: its sigils are learned by visiting it),
+    Word of Recall (cast once in a temple town to make it the sanctuary; then back to it from anywhere, with five
+    more), Transport via Plants (from woodland to a visited place with woodland beside it), Plane Shift, Astral
+    Projection and Gate (until the planes come in Expansion 26: Plane Shift goes by way of another plane to a city's
+    circle, or near another known place; Astral Projection and Gate to any known place, on target), Arcane Gate (in a
+    dungeon, a gate to the stairs up or down within 500 feet). Etherealness and Wind Walk are lasting buffs (above);
+    Meld into Stone is a ward on the camp ("meld": a lone caster rests hidden from hunters).
+- [ ] E.3 Finding and seeing, asking the powers (answered from the world's history), talking (30 spells).
+  Finding and seeing: detect magic, detect evil and good, detect poison and disease, find traps, locate object, locate
+  creature, locate animals or plants, clairvoyance, arcane eye, scrying, beast sense, Drawmij's instant summons.
+  Asking the powers: augury, divination, commune, commune with nature, contact other plane, legend lore. Talking:
+  comprehend languages, tongues, speak with animals, speak with dead, speak with plants, message, sending, animal
+  messenger, dream, telepathy, Rary's telepathic bond, detect thoughts.
+- [ ] E.4 Moving minds and the law, disguise, locks and stone, weather and land, lasting protections, great magic;
   Part E to `main`. Minds and the law: friends, enthrall, zone of truth, geas, modify memory, glibness,
   antipathy/sympathy, awaken. Disguise and illusion: disguise self, seeming, minor illusion, silent image, major
   image, programmed illusion, project image, mislead, hallucinatory terrain, mirage arcane, illusory script, magic
