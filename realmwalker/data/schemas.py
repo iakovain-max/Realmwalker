@@ -483,6 +483,9 @@ SPELL = Obj(
         "effects": List(Obj({"op": Str(max_len=30)}, strict=False), min_items=1),
         "fx": Str(choices=["bolt", "ray", "darts", "touch", "cone", "burst", "shock", "line", "rain", "strike", "zone",
                            "aura", "summon", "teleport", "heal", "buff", "curse", "sleep", "thrown"], optional=True), "components": List(Str(choices=["V", "S", "M"]), optional=True),
+        # a Material component with a cost (2024): any of these items will do; consumed ones are used up by the casting
+        "material": Obj({"items": List(Str(max_len=40), min_items=1), "consumed": Bool(optional=True),
+                         "text": Str(max_len=120)}, optional=True),
         "rounds": Int(min=0, max=100000, optional=True), "targets_up": Int(min=0, max=5, optional=True),
         "target": Str(choices=["enemy", "ally", "self", "downed_ally", "dead_ally", "all_allies", "point", "direction", "item"]),
         "range": Any_(optional=True),

@@ -181,8 +181,11 @@ def test_stoneskin_resists_weapons_in_the_next_fight(world, tables):
     wiz.spells["spellbook"].append("stoneskin")
     wiz.spells["prepared"] = ["stoneskin"]  # (2024: a spell is cast only when prepared)
     game = game_with(world, tables, wiz)
+    assert magic.road_problem(game, wiz, "stoneskin") == "needs diamond dust worth 100+ GP"
+    add_item(wiz, tables.items, "diamond_dust")  # (its costly component, which it consumes)
     said = magic.cast_on_road(game, wiz, "stoneskin")
-    assert "an hour" in said[0]
+    assert "an hour" in said[0] and "used up" in said[-1]
+    assert not any(i.def_id == "diamond_dust" for i in wiz.inventory)
     b = fight(tables, [wiz])
     assert "slashing" in [r for x in b.side(PARTY)[0].buffs for r in x.get("resist", [])]
 
@@ -220,6 +223,8 @@ def test_identify_tells_a_wizard_what_a_strange_thing_is(world, tables):
     wiz = hero(tables, "wizard")
     wiz.spells["spellbook"].append("identify")
     game = game_with(world, tables, wiz)
+    assert magic.road_problem(game, wiz, "identify") == "needs a pearl worth 100+ GP"
+    add_item(wiz, tables.items, "pearl")  # (its costly component: looked through, not used up)
     assert magic.road_problem(game, wiz, "identify") == "nothing you carry is strange to you"
     from realmwalker.rules.inventory import add_existing
 

@@ -135,8 +135,11 @@ def test_ritual_adept_reads_a_ritual_from_the_book(world, tables):
     from realmwalker.game import magic_items
     from realmwalker.rules.inventory import add_existing
 
+    from realmwalker.rules.inventory import add_item
+
     wiz = hero(tables, "wizard")
     wiz.spells["spellbook"].append("identify")
+    add_item(wiz, tables.items, "pearl")
     assert "identify" not in sp.known_spells(wiz, tables)
     game = game_with(world, tables, wiz)
     ring = add_existing(wiz, tables.items, magic_items.make(game, game.world.rng.child("ring"), rarity="uncommon"))

@@ -540,6 +540,10 @@ def spell(tables, sid: str, *, b=None, f=None, target=None, level: int | None = 
         if kind:
             card.lines.append({"immune": "<danger>It is immune to that.</>", "resist": "<warn>It resists that.</>",
                                "vulnerable": "<good>It is hurt most by that.</>"}[kind])
+    if sp.get("material"):  # (a costly component: that very thing, not a focus)
+        card.lines.append(f"<dim>Needs {esc(sp['material']['text'])}.</>")
+        if f is not None and f.char is not None and sprules.component_problem(f.char, tables, sid):
+            card.lines.append("<warn>None in the pack.</>")
     if sp.get("concentration"):
         card.lines.append("<magic>Concentration</>: one such spell at a time; damage may break it.")
     if sp.get("rounds"):

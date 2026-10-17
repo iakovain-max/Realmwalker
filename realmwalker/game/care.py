@@ -86,6 +86,7 @@ def cast(game, caster: Character, patient: Character, wound, spell_id: str, slot
         return ["No spell slot left for that. A long rest restores them."]
     if slot:
         spellrules.spend_slot(caster, slot)
+    spellrules.spend_material(caster, t, spell_id)
     s = Sheet(caster, t)
     rng = game.world.rng.child(f"cast/{game.world.time}/{spell_id}")
     msgs = [f"{caster.name.split()[0]} casts <magic>{spell['name']}</>."]

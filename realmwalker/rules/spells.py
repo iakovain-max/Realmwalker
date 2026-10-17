@@ -402,10 +402,58 @@ def armour_problem(char: Character, tables) -> str:
     return ""
 
 
+# ---------------------------------------------------------------------------- components (2024)
+# A spell's Material component without a cost is stood in for by a component pouch or a spellcasting focus of the
+# caster's kind (a cleric's holy symbol, a wizard's crystal, orb, rod, staff or the spellbook itself); one with a cost
+# (`spell["material"]`) needs that very thing, and one the spell consumes is used up as it is cast. The party carries
+# one pack, so a focus anywhere in it serves (the book has it held or worn). Verbal and Somatic components are taken
+# as given until something in the game can silence a caster or bind their hands.
+def has_focus(char: Character, tables) -> bool:
+    sc = tables.classes[char.cls].get("spellcasting") if char.cls in tables.classes else None
+    kind = "arcane" if (sc or {}).get("type") == "spellbook" else "divine"
+    for it in char.inventory:
+        d = tables.items.get(it.def_id)
+        if it.def_id == "component_pouch" or (d.get("focus") or {}).get("kind") == kind \
+                or (kind == "arcane" and it.def_id == "spellbook"):
+            return True
+    return False
+
+
+def component_problem(char: Character, tables, spell_id: str) -> str:
+    """Why the spell's material component is missing ("" when it is at hand)."""
+    spell = tables.spells[spell_id]
+    if "M" not in (spell.get("components") or ()):
+        return ""
+    m = spell.get("material")
+    if m:
+        if not any(it.def_id in m["items"] for it in char.inventory):
+            return f"needs {m['text'].split(',')[0]}"
+        return ""
+    if not has_focus(char, tables):
+        return "needs a focus or a component pouch for its materials"
+    return ""
+
+
+def spend_material(char: Character, tables, spell_id: str) -> str | None:
+    """The spell is cast: a component it consumes is used up. Returns the thing's name, or None."""
+    m = tables.spells[spell_id].get("material")
+    if not m or not m.get("consumed"):
+        return None
+    from realmwalker.rules.inventory import remove_item
+
+    it = next((it for it in char.inventory if it.def_id in m["items"]), None)
+    if it is None:
+        return None
+    remove_item(char, it.uid, 1)
+    return tables.items.get(it.def_id)["name"]
+
+
 def can_cast(char: Character, tables, spell_id: str) -> tuple[bool, str]:
     spell = tables.spells[spell_id]
     if "item" not in spell.get("classes", ()) and armour_problem(char, tables):
         return False, armour_problem(char, tables)
+    if "item" not in spell.get("classes", ()) and component_problem(char, tables, spell_id):
+        return False, component_problem(char, tables, spell_id)
     if spell["level"] == 0 or free_cast(char, tables, spell_id):
         return True, ""
     left = slots_left(char, tables)

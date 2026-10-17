@@ -3106,9 +3106,6 @@ class Battle:
         for sid in spellrules.known_spells(f.char, self.t):
             ok, why = spellrules.can_cast(f.char, self.t, sid)
             spell = self.t.spells[sid]
-            need = (spellrules.op(spell, "revive") or {}).get("consumes")
-            if ok and need and not any(i.def_id == need for i in f.char.inventory):
-                ok, why = False, f"needs a {self.t.items.get(need)['name'].lower()}"
             if ok and spell["target"] == "self" and sid in spellrules.lasting(f.char, self.t):
                 ok, why = False, "already working on you"
             if ok and spellrules.has_op(spell, "identify"):
@@ -3416,8 +3413,13 @@ class Battle:
             bonus = s.proficiency + mod + s.attack_condition()
         mult = spellrules.cantrip_multiplier(c.level) if spell.get("cantrip_scaling") else 1
         if not self.cast(f, sid, spell, target, point, up=up, mod=mod, dc=dc, bonus=bonus, mult=mult,
-                         level=slot_level or level, slotted=slotted) and slotted:
-            spellrules.unspend_slot(c, slot_level)  # (countered: the slot is not spent, 2024)
+                         level=slot_level or level, slotted=slotted):
+            if slotted:
+                spellrules.unspend_slot(c, slot_level)  # (countered: the slot is not spent, 2024)
+        elif scroll is None and charged is None and innate is None:
+            used = spellrules.spend_material(c, self.t, sid)
+            if used:
+                self.say(f"The {used} is gone into the spell.", "magic")
         self._after_action(f)
         return True
 

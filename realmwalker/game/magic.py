@@ -145,8 +145,8 @@ def road_problem(game, caster, spell_id: str, target=None) -> str | None:
 
         if not spell.get("ritual") or spell_id not in spellrules.ritual_spells(caster, t) + feats.ritual_spells(caster, t):
             return "not prepared (p prepares it)"
-    if spell.get("ritual"):  # a ritual needs no slot, but armour without training still stops it
-        why = spellrules.armour_problem(caster, t)
+    if spell.get("ritual"):  # a ritual needs no slot, but armour without training still stops it, and it needs
+        why = spellrules.armour_problem(caster, t) or spellrules.component_problem(caster, t, spell_id)  # its materials
         ok = not why
     else:
         ok, why = spellrules.can_cast(caster, t, spell_id)
@@ -193,6 +193,7 @@ def cast_on_road(game, caster, spell_id: str, target=None, slot_level: int | Non
         spellrules.spend_free(caster, spell_id, free)
     if slot:
         spellrules.spend_slot(caster, slot)
+    used = spellrules.spend_material(caster, t, spell_id)
     if ritual:
         game.pass_time(10, "rest")
     if use == "identify":
@@ -217,6 +218,8 @@ def cast_on_road(game, caster, spell_id: str, target=None, slot_level: int | Non
     first = caster.name.split()[0]
     on = "" if who == [caster] else (" on the party" if len(who) > 1 else f" on {who[0].name.split()[0]}")
     msgs = [f"{first} casts <magic>{spell['name']}</>{on}. <dim>It will last {lasting_text(hours)}.</>"]
+    if used:
+        msgs.append(f"<dim>The {used} is used up.</>")
     game.pass_time(1, "rest")
     game.dirty = True
     if game.world.factions:
