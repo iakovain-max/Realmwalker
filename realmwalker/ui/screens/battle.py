@@ -324,7 +324,11 @@ class BattleScreen(Screen):
                 lvl = "cantrip" if sp["level"] == 0 else f"level {sp['level']}"
                 if sid.startswith("scroll:"):
                     dc, atk = spellrules.scroll_numbers(tables, sp["level"])
-                    lvl = f"from a scroll: DC {dc}, +{atk}"
+                    how = spellrules.scroll_reader(f.char, tables, spell_id(sid))
+                    harms = any(o.get("op") in ("save", "attack") for o in spellrules.ops(sp))
+                    lvl = f"from a scroll: DC {dc}, +{atk}" if harms else "from a scroll"
+                    if how in ("check", "device_check"):
+                        lvl += ", <warn>risky</>"
                 elif sid.startswith("charge:"):
                     lvl = "from a magic item"
                 if sp.get("cast") == "bonus":

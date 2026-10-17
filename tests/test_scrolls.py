@@ -185,7 +185,7 @@ def test_scroll_lines_and_copying(world, tables):
     it = add_item(wiz, tables.items, "scroll_fire_bolt")
     assert "cantrip" in magic.copy_problem(game, wiz, it)
     lines = magic.scroll_lines(game, add_item(wiz, tables.items, "scroll_fireball"))
-    assert any("DC 15" in line for line in lines) and any("above them" in line for line in lines)
+    assert any("DC 15" in line for line in lines) and any("beyond them" in line for line in lines)
     fighter = hero(tables, "fighter")
     lone = game_with(world, tables, fighter)
     assert any("No one in the party" in line for line in magic.scroll_lines(lone, add_item(fighter, tables.items,
@@ -253,4 +253,74 @@ def test_the_scroll_card_in_a_fight(tables):
     value, ok, why = scroll_option(b, me, "fireball")
     card = describe.choice(b, me, "cast", value, "Fireball", ok, why)
     words = " ".join(card.lines)
-    assert card.title == "Fireball" and "From a scroll" in words and "DC 15" in words and "Above you" in words
+    assert card.title == "Fireball" and "From a scroll" in words and "DC 15" in words and "Beyond you" in words
+
+
+# ---------------------------------------------------------------------------- after the fresh review
+def test_a_countered_scroll_is_kept_and_the_casting_lost(tables, monkeypatch):
+    wiz = hero(tables, "wizard")
+    it = add_item(wiz, tables.items, "scroll_magic_missile")
+    b = fight(tables, wiz, "cult_fanatic", spots={0: (3, 4), 1: (8, 4)})
+    me, foe = b.side("party")[0], b.side("foe")[0]
+    foe.cdef = dict(foe.cdef, spells=list(foe.cdef.get("spells", [])) + ["counterspell"])
+    foe.slots = [0, 0, 1]
+    monkeypatch.setattr(type(b), "_save", lambda self, f, ability, dc, **kw: False)
+    on_turn(b, me)
+    hp = foe.hp
+    value, ok, _ = scroll_option(b, me, "magic_missile")
+    assert ok and b.do_cast(me, value, foe)
+    assert foe.hp == hp and foe.slots == [0, 0, 0] and me.action == 0
+    assert wiz.item(it.uid) is not None  # (the scroll's words hold)
+
+
+def test_a_thief_who_fails_the_arcana_check_loses_the_scroll(tables, monkeypatch):
+    thief = rogue(tables, 13)
+    it = add_item(thief, tables.items, "scroll_fireball")
+    b = fight(tables, thief, "wolf")
+    me = b.fighters[0]
+    on_turn(b, me)
+    seen = spy_cast(monkeypatch)
+    fixed_d20(monkeypatch, 1)
+    value, ok, _ = scroll_option(b, me, "fireball")
+    assert ok and b.do_cast(me, value, point=b.enemies_of(me)[0].cells[0])
+    assert thief.item(it.uid) is None and not seen and me.cast_action_spell
+
+
+def test_a_potion_keeps_a_hurt_fighters_turn_open(tables):
+    c = hero(tables, "fighter")
+    add_item(c, tables.items, "potion_healing")
+    b = fight(tables, c, "wolf")
+    me = b.fighters[0]
+    on_turn(b, me)
+    me.action, me.attacks_left, me.move_left = 0, 0, 0
+    me.hp = me.max_hp
+    assert not any(x.startswith("item:") for x in b.bonus_options(me))  # (unhurt: not worth the bonus action)
+    me.hp = me.max_hp - 3
+    assert not b.turn_spent(me) and any(x.startswith("item:") for x in b.bonus_options(me))
+
+
+def test_a_lasting_self_scroll_already_at_work_is_not_offered(tables):
+    wiz = hero(tables, "wizard")
+    add_item(wiz, tables.items, "scroll_mage_armor", 2)
+    b = fight(tables, wiz, "wolf")
+    me = b.fighters[0]
+    on_turn(b, me)
+    value, ok, why = scroll_option(b, me, "mage_armor")
+    assert ok, why
+    assert b.do_cast(me, value)
+    on_turn(b, me)
+    value, ok, why = scroll_option(b, me, "mage_armor")
+    assert not ok and "already" in why
+
+
+def test_the_weakest_potion_that_will_do(tables):
+    a, friend = hero(tables, "fighter"), hero(tables, "fighter", seed=2)
+    add_item(a, tables.items, "potion_healing")
+    add_item(a, tables.items, "potion_healing_supreme")
+    b = fight(tables, [a, friend], "wolf", spots={0: (3, 4), 1: (3, 5), 2: (9, 9)})
+    me, other = b.fighters[0], b.fighters[1]
+    other.hp, other.state = 0, "down"
+    on_turn(b, me)
+    assert tactics._drink(b, me, other)
+    assert any(i.def_id == "potion_healing_supreme" for i in a.inventory)
+    assert not any(i.def_id == "potion_healing" for i in a.inventory)

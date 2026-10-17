@@ -511,6 +511,16 @@ def _check_magic(game, fail) -> None:
         mind = it.magic.get("sentient") if it.magic else None
         if mind and mind.get("purpose") not in game.tables.magic["sentient"]["purposes"]:
             fail(f"a sentient thing with an unknown purpose: {mind.get('purpose')}")
+        use = game.tables.items.get(it.def_id).get("use") or {}  # (Expansion 3 C.3: scrolls and potions)
+        if use.get("scroll") and use["scroll"] not in game.tables.spells:
+            fail(f"a scroll of a spell the game does not have: {it.def_id}")
+        if use.get("heal"):
+            from realmwalker.core import dice
+
+            try:
+                dice.parse(use["heal"])
+            except dice.DiceError:
+                fail(f"a potion whose healing cannot be rolled: {it.def_id} {use['heal']}")
     if game.player.pace not in ("slow", "normal", "fast"):
         fail(f"unknown travel pace {game.player.pace}")
     enc = game.encounter

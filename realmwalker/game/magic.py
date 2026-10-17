@@ -13,6 +13,7 @@ have something to say about it. Spells that only make sense in a fight say so.
 from __future__ import annotations
 
 from realmwalker.core import dice
+from realmwalker.core.textgen import escape_markup
 from realmwalker.rules import spells as spellrules
 from realmwalker.rules.inventory import remove_item
 from realmwalker.rules.items import money_text
@@ -112,10 +113,12 @@ def scroll_lines(game, item) -> list[str]:
     words = []
     for c, how in readers:
         check = spellrules.scroll_check(game.sheet(c), t, sid, how)
+        who = escape_markup(c.name.split()[0])
         if check is None:
-            words.append(f"{c.name.split()[0]}" + (" (Use Magic Device)" if how == "device" else ""))
+            words.append(who + (" (Use Magic Device)" if how == "device" else ""))
         else:
-            words.append(f"{c.name.split()[0]} (above them: {check[2]} DC {check[1]} first, or it fades)")
+            words.append(f"{who} (beyond them: an {check[2]} check first, DC {check[1]} at {check[0]:+d}, or the "
+                         f"scroll is lost)")
     lines.append("Can read it: " + ", ".join(words) + ".")
     if spellrules.on_the_road(t, sid)[0]:
         lines.append("<dim>Read it here (Enter), or in a fight from the spell menu.</>")
@@ -133,7 +136,8 @@ def read_scroll(game, item, target=None) -> list[str]:
     readers = scroll_readers(game, item)
     if not readers:
         return ["The writing means nothing to any of you: the spell is on none of your lists."]
-    reader = readers[0][0]
+    able = [c for c, _ in readers if not spellrules.scroll_problem(c, t, sid)]
+    reader = able[0] if able else readers[0][0]
     return cast_on_road(game, reader, sid, target or scroll_target(game, sid, reader), scroll=item)
 
 
@@ -264,18 +268,19 @@ def cast_on_road(game, caster, spell_id: str, target=None, slot_level: int | Non
         check = spellrules.scroll_check(game.sheet(caster), t, spell_id, how)
         remove_item(owner, scroll.uid, 1)  # (spent either way: cast, or faded on a failed check)
         game.dirty = True
+        first = escape_markup(caster.name.split()[0])
         if check is not None:
             bonus, dc, words = check
             roll = dice.d20(game.world.rng.child(f"scroll/{spell_id}/{game.world.time}")).natural
             said = f"<dim>({words} {roll} {bonus:+d} = {roll + bonus} vs DC {dc})</>"
             if roll + bonus < dc:
                 game.pass_time(1, "rest")
-                return [f"<warn>{caster.name.split()[0]} stumbles over the words of the scroll</>: they fade from the "
+                return [f"<warn>{first} stumbles over the words of the scroll</>: they fade from the "
                         f"page, and it crumbles to dust. {said}"]
-            pre.append(f"{caster.name.split()[0]} masters the words of a scroll beyond them and reads "
+            pre.append(f"{first} masters the words of a scroll beyond them and reads "
                        f"<magic>{spell['name']}</> aloud; it crumbles as the last word is spoken. {said}")
         else:
-            pre.append(f"{caster.name.split()[0]} reads <magic>{spell['name']}</> aloud from a scroll; it crumbles as "
+            pre.append(f"{first} reads <magic>{spell['name']}</> aloud from a scroll; it crumbles as "
                        f"the last word is spoken.")
     use = spellrules.road_use(t, spell_id)
     if use in ("heal", "cure"):
@@ -302,7 +307,7 @@ def cast_on_road(game, caster, spell_id: str, target=None, slot_level: int | Non
         item = strange_things(game, caster)[0]
         name = game.tables.items.name(item, False)
         game.pass_time(1, "rest")  # (its casting time: a minute; a ritual's ten more are passed above)
-        msgs = pre + [f"{caster.name.split()[0]} casts <magic>{spell['name']}</> over the {name}"
+        msgs = pre + [f"{escape_markup(caster.name.split()[0])} casts <magic>{spell['name']}</> over the {name}"
                       + (" as a ritual: ten minutes more, and no spell slot." if ritual else ".")]
         msgs += magic_items.identify(game, item)
         if game.world.factions:
@@ -315,7 +320,7 @@ def cast_on_road(game, caster, spell_id: str, target=None, slot_level: int | Non
     hours = 0.0
     for c in who:
         hours = spellrules.keep(c, t, spell_id)
-    first = caster.name.split()[0]
+    first = escape_markup(caster.name.split()[0])
     on = "" if who == [caster] else (" on the party" if len(who) > 1 else f" on {who[0].name.split()[0]}")
     msgs = pre + [f"{first} casts <magic>{spell['name']}</>{on}. <dim>It will last {lasting_text(hours)}.</>"]
     if used:

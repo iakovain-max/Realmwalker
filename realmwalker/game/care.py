@@ -4,6 +4,7 @@ healing magic used outside battle. The rules themselves are in rules/health.py."
 from __future__ import annotations
 
 from realmwalker.core import dice
+from realmwalker.core.textgen import escape_markup
 from realmwalker.rules import health
 from realmwalker.rules import spells as spellrules
 from realmwalker.rules.character import Character, Sheet
@@ -65,7 +66,8 @@ def drink_potion(game, patient: Character, item) -> list[str]:
     if not heal:
         return ["That is not a healing draught."]
     if patient.hp >= patient.max_hp and not patient.wounds:
-        return [f"{patient.name.split()[0]} has no hurt for it to mend; better kept for when there is."]
+        return [f"{escape_markup(patient.name.split()[0])} has no hurt for it to mend; better kept for when there "
+                f"is."]
     owner = next((c for c in game.party if c.item(item.uid) is not None), patient)
     remove_item(owner, item.uid, 1)
     rng = game.world.rng.child(f"potion/{game.world.time}/{patient.name}")
@@ -73,7 +75,7 @@ def drink_potion(game, patient: Character, item) -> list[str]:
     wound = max(patient.wounds, key=lambda w: (w.severity, w.bleed), default=None)
     game.dirty = True
     game.cue("heal")
-    return [f"{patient.name.split()[0]} drinks the {d['name']}: warmth runs through the limbs."] + \
+    return [f"{escape_markup(patient.name.split()[0])} drinks the {d['name']}: warmth runs through the limbs."] + \
         health.magic_heal(patient, wound, amount)
 
 

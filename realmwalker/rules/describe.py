@@ -533,7 +533,8 @@ def spell(tables, sid: str, *, b=None, f=None, target=None, level: int | None = 
         how = sprules.scroll_reader(f.char, tables, sid) if f is not None and f.char is not None else None
         check = sprules.scroll_check(f.sheet, tables, sid, how) if how else None
         if check is not None:
-            card.lines.append(f"<warn>Above you: {check[2]} DC {check[1]} first, or the words fade.</>")
+            card.lines.append(f"<warn>Beyond you: an {check[2]} check first (DC {check[1]}, you have "
+                              f"{check[0]:+d}); on a failure the scroll is lost and nothing happens.</>")
     elif f is not None and f.char is not None and not sp.get("thrown") \
             and any(o.get("op") == "save" for o in sp.get("effects", ())):
         card.lines.append(f"Save DC {sprules.save_dc(f.sheet, tables)}.")

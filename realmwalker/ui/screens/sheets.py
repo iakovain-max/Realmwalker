@@ -64,8 +64,9 @@ def item_details(game: GameState, item: Item) -> str:
 
         lines += scroll_lines(game, item)
     elif d.get("rarity") and "heal" in d.get("use", {}):
-        lines.append(f"<dim>A {d['rarity'].replace('_', ' ')} potion: {d['use']['heal']} hit points, drunk or given "
-                     f"to a friend beside you (Enter here; the Item menu in a fight, with the bonus action).</>")
+        lines.append(f"<dim>A {d['rarity'].replace('_', ' ')} potion: {d['use']['heal']} hit points. Enter drinks "
+                     f"it here (the page's owner drinks); in a fight the Item menu drinks it or pours it into a friend "
+                     f"beside you, with the bonus action.</>")
     cat = d["category"]
     if cat == "weapon":
         props = ", ".join(p.replace("_", "-") for p in d.get("properties", [])) or "none"

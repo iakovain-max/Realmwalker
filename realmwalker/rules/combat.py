@@ -2972,6 +2972,10 @@ class Battle:
                 sp = self.t.spells[spell_id(sid)]
                 if ok and sp.get("cast") == "bonus":
                     out.append(sid)
+            hurt = any(x.hp < x.max_hp for x in self.item_targets(f))
+            for it in self.usable_items(f) if hurt else ():  # (a potion, with the bonus action: only worth it when
+                if self.item_cost(f, it) == "bonus" and not self.item_problem(f, it):  # someone in reach is hurt)
+                    out.append(f"item:{it.uid}")
         return out
 
     def do_ability(self, f: Fighter, ability: str, target: Fighter | None = None) -> None:
@@ -3134,6 +3138,8 @@ class Battle:
                     and self.t.spells[sid].get("cast") != "reaction":
                 why = spellrules.scroll_problem(f.char, self.t, sid)
                 ok = not why
+                if ok and self.t.spells[sid]["target"] == "self" and sid in spellrules.lasting(f.char, self.t):
+                    ok, why = False, "already working on you"
                 if ok:
                     ok, why = self._casting_time_ok(f, self.t.spells[sid], False)
                 out.append((f"scroll:{it.uid}:{sid}", ok, why))
@@ -3389,6 +3395,11 @@ class Battle:
                 if roll + bonus < dc:
                     remove_item(c, scroll.uid, 1)
                     self._spend(f, bonus_cast)
+                    f.hidden = 0
+                    if bonus_cast:
+                        f.cast_bonus_spell = True
+                    else:
+                        f.cast_action_spell = True
                     self.say(f"{f.the_name} stumbles over the words of the scroll; they fade from the page, and it "
                              f"crumbles to dust.", "warn")
                     self._after_action(f)
@@ -3443,9 +3454,11 @@ class Battle:
             if slotted:
                 spellrules.unspend_slot(c, slot_level)  # (countered: the slot is not spent, 2024)
             if scroll is not None:
-                self.say("The scroll's words hold; it is not spent.", "magic")
+                self.say("The spell is lost and so is the turn's casting, but the scroll's words hold: it can be read "
+                         "again another turn.", "magic")
         elif scroll is not None:
             remove_item(c, scroll.uid, 1)  # (it crumbles once the spell is cast)
+            self.say("The scroll crumbles to dust as the last word is spoken.", "magic")
         elif charged is None and innate is None:
             used = spellrules.spend_material(c, self.t, sid)
             if used:

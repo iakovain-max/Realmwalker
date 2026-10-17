@@ -1161,7 +1161,10 @@ def _drink(b: Battle, f: Fighter, x: Fighter) -> bool:
         return False
     need = x.max_hp - max(0, x.hp)
     avg = {it.uid: _avg(b.t.items.get(it.def_id)["use"]["heal"]) for it in potions}
-    enough = [it for it in potions if avg[it.uid] >= min(need, 8)]
+    if x.state == "down":
+        enough = potions  # (any draught brings them round)
+    else:
+        enough = [it for it in potions if avg[it.uid] >= need * 0.75]
     pick = min(enough, key=lambda it: avg[it.uid]) if enough else max(potions, key=lambda it: avg[it.uid])
     b.do_item(f, pick.uid, x)
     return True

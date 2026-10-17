@@ -69,6 +69,13 @@ components, scrolls) is merged into `main`.
   keeping, so it is not thrown away on a rat), a thief on Auto reads scrolls too, and a companion drinks a potion when
   badly hurt, or pours one into a fallen friend beside it before anything else.
 - **Fixed**: Identify took ten minutes instead of the book's one (and twenty as a ritual instead of eleven).
+- **From the fresh review**: a hurt fighter's turn no longer ends by itself while a potion could still be drunk with
+  the bonus action; a Mage Armour scroll is not offered while Mage Armour is already on you; a fallen friend gets the
+  weakest potion (any draught brings them round); a scroll stopped by a Counterspell says plainly that the turn's
+  casting is lost but the scroll kept; a scroll read in a fight says it crumbles; the risk of a scroll beyond you shows
+  in the spell list ("risky") and its card gives the reader's bonus; reading from the pack passes over a reader stopped
+  by armour; names in the new lines are made safe for the log's colours; autoplay checks every scroll and potion it
+  carries.
 - **The codex**: every spellcasting rule of the PHB's chapter 7 is settled (most done; a few adapted, each with its note:
   a new casting of the same spell replaces the old one rather than keeping the stronger, every spell at work shows on
   its card so no Study check is needed to name it, the focus's +1 is the game's own).
