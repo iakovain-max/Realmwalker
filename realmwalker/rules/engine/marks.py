@@ -123,8 +123,8 @@ def acted(b, f) -> None:
 def image_takes_it(b, att, target) -> bool:
     """Mirror Image: a hit may land on a duplicate instead (a d6 for each left, 3 or more), which is destroyed."""
     bf = next((bf for bf in target.buffs if bf.get("images")), None)
-    if bf is None or att.has_trait("blindsight") or att.has_trait("truesight"):
-        return False
+    if bf is None or att.has_trait("blindsight") or att.has_trait("truesight") or "blinded" in att.conditions:
+        return False  # (an attacker who does not rely on sight is not fooled)
     n = int(bf["images"])
     if not any(b.rng.randint(1, 6) >= 3 for _ in range(n)):
         return False
@@ -198,12 +198,15 @@ def _main(spell: dict) -> str:
     return spellrules.main_type(spell)
 
 
-def after_hit(b, att, target, opt) -> None:
-    """Armor of Agathys: a melee blow on the warded one, while its temporary hit points hold, is answered in cold."""
+def after_hit(b, att, target, opt, guarded: bool = True) -> None:
+    """Armor of Agathys: a melee blow on the warded one, while its temporary hit points held (`guarded`: before the
+    blow), is answered in cold; the spell ends with the last of them."""
     if not opt.is_melee or not att.active:
         return
-    for bf in target.buffs:
-        if bf.get("retaliate") and target.temp_hp > 0:
+    for bf in list(target.buffs):
+        if bf.get("retaliate") and guarded:
+            if target.temp_hp <= 0:
+                target.buffs.remove(bf)
             b.say(f"Frost bites back at {att.the_name}.", "magic")
             b._hit(target, att, int(bf["retaliate"]), bf.get("retaliate_type", "cold"), crit=False,
                    weapon="armour of frost")
@@ -222,7 +225,9 @@ def soaked(b, target, amount: int, dtype: str) -> int:
 
 
 def shared(b, target, amount: int) -> None:
-    """Warding Bond: the caster takes the same damage as the warded one."""
+    """Warding Bond: the caster takes the same damage as the warded one (once: a hurt passed on is not passed back)."""
+    if b.__dict__.get("_bonded"):
+        return
     for bf in list(target.buffs):
         if bf.get("bond") is None or amount <= 0:
             continue
@@ -232,7 +237,11 @@ def shared(b, target, amount: int) -> None:
         if caster.hp <= amount:
             target.buffs.remove(bf)  # (the bond ends when the caster drops)
         b.say(f"The bond carries the hurt to {caster.the_name}.", "magic")
-        b._hit(None, caster, amount, "force", crit=False, weapon="warding bond", raw=True)
+        b._bonded = True
+        try:
+            b._hit(None, caster, amount, "force", crit=False, weapon="warding bond", raw=True)
+        finally:
+            b._bonded = False
 
 
 def turn_start(b, f) -> None:

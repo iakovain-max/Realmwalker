@@ -147,6 +147,9 @@ def spell_value(b, f, sid: str, *, target=None, point=None, dc: int | None = Non
             if spell["target"] not in ("self", "all_allies"):
                 n = max(n, int(spell.get("targets", 1)) + int(spell.get("targets_up", 0)) * up)
             on = target if target is not None else f
+            if on is not None and any(bf.get("source") == spell_id(sid) or bf.get("lasting") == spell_id(sid)
+                                      for bf in on.buffs):
+                continue  # (already on them: casting it again buys nothing)
             if on is not None and on.team != f.team:
                 w.control += _mark_on_foe(b, f, on, o.get("buff", {}))  # (Hex, Faerie Fire on a foe)
             else:

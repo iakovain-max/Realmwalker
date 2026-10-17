@@ -139,7 +139,8 @@ def cast(b, f, sid: str, spell: dict, target, point, *, up: int, mod: int, dc: i
     before = b.__dict__.get("_casting")
     b._casting = f if not spell.get("ability") and "item" not in spell.get("classes", ()) else None
     try:
-        if target is not None and target.team != f.team and spellrules.harms(spell) and not spell.get("area"):
+        if target is not None and target.team != f.team and spellrules.harms(spell) and not spell.get("area") \
+                and not spellrules.has_op(spell, "attack"):  # (an attack roll meets Sanctuary in Battle._attack)
             from realmwalker.rules.engine import marks
 
             if marks.sanctuary_stops(b, f, target):
@@ -640,7 +641,7 @@ def _temp_hp(c: Cast, o: dict, victim) -> None:
     if amount > x.temp_hp:
         x.temp_hp = amount
         c.b._event("buff", who=x.id, spell=c.sid)
-        c.b.say(f"{x.the_name} {'has' if x.char else 'has'} {amount} temporary hit points.", "magic")
+        c.b.say(f"{x.the_name} has {amount} temporary hit points.", "magic")
 
 
 @op("weapon_attack")

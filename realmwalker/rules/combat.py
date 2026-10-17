@@ -2068,6 +2068,7 @@ class Battle:
         amount = marks.hit_damage(self, att, target, opt, amount, crit)  # (Magic Weapon, Ray of Enfeeblement)
         self._spend_use(att, opt)
         before = target.hp + target.temp_hp
+        guarded = target.temp_hp > 0  # (Armor of Agathys answers the blow that breaks it too)
         self._melee_blow = opt.is_melee
         try:
             self._hit(att, target, max(1, amount), opt.damage_type, crit=crit, weapon=opt.name,
@@ -2091,7 +2092,7 @@ class Battle:
                 self._hit(att, target, extra_amount, extra_type, crit=False, weapon=opt.name)
         if target.active or target.state == "down":
             marks.smite(self, att, target, opt, crit)  # (a smite readied on the weapon)
-        marks.after_hit(self, att, target, opt)  # (Armor of Agathys)
+        marks.after_hit(self, att, target, opt, guarded)  # (Armor of Agathys)
         if opt.extra.get("on_hit") and target.active:
             self._block_effects(att, target, opt, opt.extra["on_hit"])
         if opt.extra.get("disease") and target.char and self.rng.chance(float(opt.extra.get("disease_chance", 1.0))):
@@ -2190,7 +2191,8 @@ class Battle:
         """Hellish Rebuke (2024): hurt by a creature it can see within 60 feet, a caster who has the spell ready may
         answer with its reaction and a level 1 slot or more."""
         sid = "hellish_rebuke"
-        if sid not in self.t.spells or not f.active or not f.reaction or query.incapacitated(f) or not att.active \
+        if sid not in self.t.spells or att.team == f.team or not f.active or not f.reaction \
+                or query.incapacitated(f) or not att.active \
                 or self.feet(f, att) > 60 or not self.can_see(f, att) or self.antimagic(f.cells):
             return False
         spell = self.t.spells[sid]

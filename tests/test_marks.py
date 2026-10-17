@@ -157,3 +157,71 @@ def test_a_lasting_spell_remembers_its_slot(tables):
     assert spellrules.buff_of(spell, 7)["weapon_plus"] == 3
     m = {"buff": {"dot": "1d6"}, "per_up": {"dot": "1d6"}}
     assert spellrules.buff_at(m, 3, {"level": 1})["dot"] == "3d6"
+
+
+# ---------------------------------------------------------------------------- from the fresh review
+def test_armor_of_agathys_answers_the_blow_that_breaks_it(tables):
+    b = fight(tables, [hero(tables)], ["bandit"], {0: (2, 4), 1: (3, 4)})
+    me, bandit = b.fighters
+    me.temp_hp = 5
+    me.buffs.append({"retaliate": 5, "retaliate_type": "cold", "source": "armor_of_agathys"})
+    opt = next(o for o in b.attack_options(bandit) if o.is_melee)
+    hp = bandit.hp
+    marks.after_hit(b, bandit, me, opt, guarded=True)  # (its pool already spent by the blow)
+    me.temp_hp = 0
+    marks.after_hit(b, bandit, me, opt, guarded=True)
+    assert bandit.hp < hp and not any(bf.get("retaliate") for bf in me.buffs)
+
+
+def test_hellish_rebuke_never_answers_a_friend(tables, monkeypatch):
+    b = fight(tables, [hero(tables), hero(tables, seed=2)], ["bandit"], {0: (2, 4), 1: (3, 4), 2: (8, 4)})
+    me, friend, bandit = b.fighters
+    monkeypatch.setattr(spellrules, "known_spells", lambda char, t: ["hellish_rebuke"])
+    assert b._rebuke(me, friend) is False
+    assert b._rebuke(me, bandit) is True and not me.reaction
+
+
+def test_sanctuary_is_one_save_against_a_spell_attack(tables):
+    b = fight(tables, [hero(tables)], ["bandit"], {0: (2, 4), 1: (8, 4)})
+    me, bandit = b.fighters
+    bandit.buffs.append({"sanctuary": 30, "source": "sanctuary"})
+    saves = []
+    real = b._save
+    b._save = lambda f, ability, dc, **k: saves.append(ability) or real(f, ability, dc, **k)
+    my_turn(b, me)
+    b.do_cast(me, "fire_bolt", bandit)
+    assert saves.count("wis") == 1
+
+
+def test_entangle_holds_those_inside_until_it_ends(tables):
+    b = fight(tables, [hero(tables)], ["bandit"], {0: (2, 4), 1: (8, 4)})
+    me, bandit = b.fighters
+    b._save = lambda *a, **k: False
+    my_turn(b, me)
+    b.cast(me, "entangle", tables.spells["entangle"], None, (8, 4), up=0, mod=3, dc=14, bonus=5, mult=1, level=1)
+    assert "restrained" in bandit.conditions
+    b._end_concentration(me, quiet=True)
+    assert "restrained" not in bandit.conditions
+
+
+def test_witch_bolt_burns_again_without_a_slot(tables):
+    b = fight(tables, [hero(tables)], ["bandit"], {0: (2, 4), 1: (8, 4)})
+    me, bandit = b.fighters
+    my_turn(b, me)
+    b.cast(me, "witch_bolt", tables.spells["witch_bolt"], bandit, None, up=0, mod=3, dc=14, bonus=5, mult=1, level=1)
+    slots = list(me.char.spells.get("slots_used", []))
+    my_turn(b, me)
+    hp = bandit.hp
+    assert b.do_cast(me, "witch_bolt_again", bandit)
+    assert bandit.hp < hp and list(me.char.spells.get("slots_used", [])) == slots
+
+
+def test_the_auto_does_not_cast_a_blessing_already_on(tables):
+    from realmwalker.rules.engine import estimates
+
+    b = fight(tables, [hero(tables)], ["bandit"], {0: (2, 4), 1: (3, 4)})
+    me, bandit = b.fighters
+    my_turn(b, me)
+    assert estimates.spell_value(b, me, "mirror_image").total() > 0.5
+    me.buffs.append({"images": 3, "source": "mirror_image", "rounds": 10})
+    assert estimates.spell_value(b, me, "mirror_image").total() <= 0.5
