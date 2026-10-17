@@ -227,7 +227,7 @@
     {"id": "rule:brewing_potions_of_healing", "name": "Brewing Potions of Healing", "book": "phb", "page": 236, "kind": "section", "dlc": 23, "status": "todo", "game": [], "note": ""},
     {"id": "rule:scribing_spell_scrolls", "name": "Scribing Spell Scrolls", "book": "phb", "page": 236, "kind": "section", "dlc": 23, "status": "todo", "game": [], "note": ""},
     {"id": "rule:gaining_spells", "name": "Gaining Spells", "book": "phb", "page": 238, "kind": "section", "dlc": 3, "status": "todo", "game": [], "note": ""},
-    {"id": "rule:preparing_spells", "name": "Preparing Spells", "book": "phb", "page": 238, "kind": "section", "dlc": 3, "status": "done", "game": ["spells.prepared", "spells.fill_prepared", "spells.toggle_prepared", "classes.json spellcasting prepared", "ui/screens/spells.py"], "note": ""},
+    {"id": "rule:preparing_spells", "name": "Preparing Spells", "book": "phb", "page": 238, "kind": "section", "dlc": 3, "status": "done", "game": ["spells.prepared", "spells.fill_prepared", "spells.toggle_prepared", "classes.json spellcasting prepared", "SpellsScreen.prepare"], "note": ""},
     {"id": "rule:always_prepared_spells", "name": "Always-Prepared Spells", "book": "phb", "page": 238, "kind": "section", "dlc": 3, "status": "done", "game": ["spells.always_prepared", "classes.json subclasses spells"], "note": ""},
     {"id": "rule:casting_in_armor", "name": "Casting in Armor", "book": "phb", "page": 238, "kind": "section", "dlc": 3, "status": "todo", "game": [], "note": ""},
     {"id": "rule:casting_spells", "name": "Casting Spells", "book": "phb", "page": 238, "kind": "section", "dlc": 3, "status": "todo", "game": [], "note": ""},
