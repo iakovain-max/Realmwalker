@@ -34,6 +34,8 @@
     "magic_resistance": {"name": "Magic Resistance", "text": "Advantage on saving throws against spells and other magical effects.", "modifiers": [{"save": "advantage", "when": ["against_spell"], "why": "magic resistance"}]},
     "death_throes": {"name": "Death Throes", "text": "When it drops to 0 hit points or the spell ends, it explodes: everyone within 10 feet makes a Dexterity save against its caster's spell save DC, 2d10 fire and the spell's level, half on a save.", "hooks": [{"event": "killed", "as": "target", "handler": "death_throes"}, {"event": "dismissed", "as": "target", "handler": "death_throes"}]},
     "devils_sight": {"name": "Devil's Sight", "text": "Magical darkness does not stop its darkvision.", "where": "Battle.can_see"},
-    "yugoloth_step": {"name": "Yugoloth's Step", "text": "After each blow of its Claws, hit or miss, it can teleport up to 30 feet to a space it can see.", "hooks": [{"event": "attack_done", "as": "self", "handler": "yugoloth_step"}]}
+    "yugoloth_step": {"name": "Yugoloth's Step", "text": "After each blow of its Claws, hit or miss, it can teleport up to 30 feet to a space it can see.", "hooks": [{"event": "attack_done", "as": "self", "handler": "yugoloth_step"}]},
+    "stench": {"name": "Stench", "text": "Any creature that starts its turn within 5 feet makes a Constitution save or is Poisoned until the start of its next turn; one that saves is spared it for the fight.",
+               "hooks": [{"event": "turn_start", "as": "any", "handler": "stench"}]}
   }
 }

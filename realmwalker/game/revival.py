@@ -205,6 +205,10 @@ def problem(game, sid: str, body: dict | None) -> str | None:
     spell = game.tables.spells[sid]
     if body is None:
         return "nobody of the party lies dead"
+    dust = body["char"].effects.get("kept:dust")
+    if spellrules.has_op(spell, "revive") and dust and not (spellrules.op(spell, "revive") or {}).get("cures"):
+        return (f"nothing is left of {escape_markup(body['char'].name.split()[0])} but dust: only True Resurrection "
+                "reaches them")
     if spellrules.has_op(spell, "revive"):
         dead = dead_for(game, body)
         if dead > reach(spell):

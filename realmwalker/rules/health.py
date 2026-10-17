@@ -279,9 +279,10 @@ def _timed_effects(char: Character, hours: float, tables=None) -> list[tuple[str
         if key.endswith("_clean"):
             char.effects[key] += hours  # counters since the last dose
             continue
-        if key.startswith(("spell_at:", "spell_hp:")) or key == DEATH_TOLL:
+        if key.startswith(("spell_at:", "spell_hp:", "kept:")) or key == DEATH_TOLL:
             continue  # (the slot a lasting spell was cast with, the maximum it raised: they go with the spell; the
-            # toll of coming back from death: a long rest takes it down, not the hours)
+            # toll of coming back from death: a long rest takes it down, not the hours; "kept:" marks stay until
+            # lifted: a mummy's rot, dust)
         char.effects[key] -= hours
         if char.effects[key] <= 0:
             del char.effects[key]

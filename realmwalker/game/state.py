@@ -335,6 +335,10 @@ class GameState:
         from realmwalker.game import allies
 
         allies.put_in_herd(self)  # (a steed goes and comes with its rider)
+        if any(c.spells.get("servants") or c.effects.get("kept:mummy_rot") for c in self.party):
+            from realmwalker.game import servants
+
+            servants.tick(self)  # (the raised dead: their hold, going free; a mummy's rot)
         p = self.player
         if not self.in_local and self.party and self.over is None and not self.biome_def(p.x, p.y)["passable"]:
             from realmwalker.game import waymagic

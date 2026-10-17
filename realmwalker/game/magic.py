@@ -188,9 +188,11 @@ def road_targets(game, caster, spell_id: str) -> list:
     from realmwalker.game import spellwork
 
     if use in spellwork.DIVINING or use in spellwork.SPEECH or use in spellwork.GLAMOUR \
-            or use in spellwork.STONEWORK or use in spellwork.WARDING or use in spellwork.GREAT:  # (E.3 to E.7:
+            or use in spellwork.STONEWORK or use in spellwork.WARDING or use in spellwork.GREAT \
+            or use in spellwork.ALLIES or use in spellwork.SERVANTS:  # (E.3 to F.4:
         # a thing to seek, a lock, a wall, a craft, a glyph's rune or spell, a blessing, a potion, a question, a
-        # companion; a person near, a kind of creature, an animal, a far town, a thing carried; a spell to hold, a wish)
+        # companion; a person near, a kind of creature, an animal, a far town, a thing carried; a spell to hold, a wish;
+        # a familiar's form, a steed's look; the dead to raise or to hold)
         return spellwork.subjects(game, caster, spell_id)
     if target == "place":
         from realmwalker.game import waymagic

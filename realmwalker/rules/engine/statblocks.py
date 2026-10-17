@@ -109,7 +109,7 @@ def attacks(actions: list[dict], extras: dict) -> list[dict]:
         kind = a.get("kind")
         base = {"id": a["id"], "name": a["name"].lower(), "bonus": int(a.get("bonus", 0)), "damage": a.get("damage", "0"),
                 "damage_type": a.get("type", "bludgeoning")}
-        for k in ("extra", "on_hit", "recharge", "uses", "plus_level", "with_multiattack"):
+        for k in ("extra", "on_hit", "recharge", "uses", "plus_level", "with_multiattack", "spares", "dust"):
             if a.get(k):
                 base[k] = a[k]
         base.update(extras.get(a["id"], {}))
