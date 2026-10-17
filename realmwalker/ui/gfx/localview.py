@@ -420,7 +420,8 @@ class LocalView:
                 px_, py_ = self.cell_px(fx, fy)
                 people.append((fy - 0.001, [(f"creature/{pets[i]['form']}", dolls.WHITE, 0, 0)], px_ + (T - small) / 2,
                                py_, small, _cell_light(light, cx_ - x0, cy_ - y0), False))
-        # The raised dead shamble after them, last of all (Animate Dead, Create Undead: Expansion 3 F.4).
+        # The raised dead shamble after them, last of all (Animate Dead, Create Undead: Expansion 3 F.4), and the
+        # bound walk with them (F.5: a spirit in its form's picture, a bound creature as itself).
         from realmwalker.game import servants
 
         dead = servants.following(game)
@@ -429,7 +430,14 @@ class LocalView:
             start = len(followers) + len(pets)
             for i, (cx_, cy_) in enumerate(self._follow(game, lm, taken)[start:start + len(dead)]):
                 fx, fy = self.pos(("dead", i), cx_, cy_, now, animate)
-                people.append((fy - 0.002, [(f"creature/{dead[i]['cid']}", dolls.WHITE, 0, 0)], *self.cell_px(fx, fy),
+                rec = dead[i]
+                if rec.get("picture"):  # (a spirit: its form's picture)
+                    look = [(f"creature/{rec['picture']}", dolls.WHITE, 0, 0)]
+                elif servants.rules.is_undead(rec):
+                    look = [(f"creature/{rec['cid']}", dolls.WHITE, 0, 0)]
+                else:  # (a bound creature: drawn as itself)
+                    look = dolls.creature(rec["cid"], game.tables, f"servant{i}", atlas)
+                people.append((fy - 0.002, look, *self.cell_px(fx, fy),
                                T, _cell_light(light, cx_ - x0, cy_ - y0), False))
         people.sort(key=lambda t: t[0])
         out = []

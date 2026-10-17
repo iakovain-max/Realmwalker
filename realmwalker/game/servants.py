@@ -1,7 +1,10 @@
 """The raised dead outside a fight (Expansion 3 F.4): Animate Dead and Create Undead on the road (through
 game/spellwork's door: subjects, problem, cast), holding them again, the warning before the hold ends and what they
 do when it does, where they go (never into a settlement's close-up map), their pictures behind the party, and the
-mummy's rot carried after a fight. What they do in a fight is rules/servants.py and the battle's command."""
+mummy's rot carried after a fight. The bound (F.5): Planar Ally (a spirit of the caster's god for a price) and
+Planar Binding (a captive celestial, elemental, fey or fiend, or a Planar Ally's spirit held in a Magic Circle turned
+inward); they serve on their own and go away, not against the party, when their time ends. What they do in a fight
+is rules/servants.py and the battle's command."""
 from __future__ import annotations
 
 from realmwalker.core.textgen import escape_markup as esc
@@ -14,6 +17,12 @@ CRYPT_BONES = 6  # (piles of old bones on a crypt's level underground)
 # Create Undead (PHB 2024): what each slot raises, and how many.
 UNDEAD_BY_SLOT = {6: {"ghoul": 3}, 7: {"ghoul": 4}, 8: {"ghoul": 5, "ghast": 2, "wight": 2},
                   9: {"ghoul": 6, "ghast": 3, "wight": 3, "mummy": 2}}
+# Planar Ally (PHB 2024): the terms (words, minutes, gold pieces); 100 GP a minute is never cheaper than an hour.
+TERMS = (("an hour", 60, 1000), ("a day", DAY, 10000), ("three days", 3 * DAY, 30000), ("ten days", 10 * DAY, 100000))
+# Planar Binding: days bound by the slot; the kinds it reaches; the casting (the creature stays in range for all of it).
+BINDING_DAYS = {5: 1, 6: 10, 7: 30, 8: 180, 9: 366}
+BINDABLE = ("celestial", "elemental", "fey", "fiend")
+BINDING_MINUTES = 60
 PLURAL = {"zombie": "zombies", "skeleton": "skeletons", "ghoul": "ghouls", "ghast": "ghasts", "wight": "wights",
           "mummy": "mummies"}
 
@@ -95,6 +104,10 @@ def _bodies(n: int, what: str = "body") -> str:
 
 def subjects(game, caster, sid: str) -> list[Subject]:
     how = _how(game, sid)
+    if how == "ally":
+        return ally_subjects(game, caster)
+    if how == "binding":
+        return binding_subjects(game, caster)
     out = []
     held = [r for r in rules.of_spell(caster, sid) if r.get("until") is not None]
     if how == "dead":
@@ -121,6 +134,10 @@ def subjects(game, caster, sid: str) -> list[Subject]:
 
 def problem(game, caster, sid: str, target) -> str | None:
     how = _how(game, sid)
+    if how == "ally":
+        return ally_problem(game, caster, target)
+    if how == "binding":
+        return binding_problem(game, caster, target)
     if how == "ghouls" and game.light >= 0.5:
         return "only at night"
     if not isinstance(target, Subject):
@@ -165,6 +182,11 @@ def cast(game, caster, sid: str, target, level: int) -> list[str]:
 
     if not isinstance(target, Subject):
         return []
+    how = _how(game, sid)
+    if how == "ally":
+        return cast_ally(game, caster, target, level)
+    if how == "binding":
+        return cast_binding(game, caster, target, level)
     now = float(game.world.time)
     first = _first(caster)
     if target.ref == "hold":
@@ -203,6 +225,229 @@ def cast(game, caster, sid: str, target, level: int) -> list[str]:
     return out
 
 
+# ---------------------------------------------------------------------------- the bound (F.5)
+def faith_of(game, caster) -> tuple[str, dict]:
+    """The caster's god: the faith of their people (data/factions.json faiths)."""
+    from realmwalker.world import factions as fx
+
+    fid = fx.faith_for_culture(game.tables, caster.culture)
+    faiths = game.tables.factions["faiths"]
+    return fid, faiths.get(fid) or faiths["radiant"]
+
+
+def ally_kind(game, caster) -> tuple[str, str]:
+    """The spirit the caster's god sends: (creature, form)."""
+    ally = faith_of(game, caster)[1].get("ally") or {"creature": "celestial_spirit", "form": "defender"}
+    return ally["creature"], ally["form"]
+
+
+def church_member(game, caster) -> bool:
+    """The party's leader belongs to the church of the caster's god (Planar Ally's price is halved)."""
+    from realmwalker.game import reputation
+    from realmwalker.world import factions as fx
+
+    church = fx.church_of(game.world, faith_of(game, caster)[0])
+    return church is not None and reputation.rank(game, church.id) is not None
+
+
+def ally_price(game, caster, gp: int) -> int:
+    """A term's price in copper."""
+    cp = int(gp) * 100
+    return cp // 2 if church_member(game, caster) else cp
+
+
+def _spirit_name(game, caster) -> str:
+    cid, form = ally_kind(game, caster)
+    return f"{game.tables.creatures[cid]['summon']['forms'][form]['name']} of {faith_of(game, caster)[1]['short']}"
+
+
+def ally_subjects(game, caster) -> list[Subject]:
+    from realmwalker.rules.items import money_text
+
+    half = " (half: you are of its church)" if church_member(game, caster) else ""
+    from realmwalker.rules.allies import a_or_an
+
+    what = esc(a_or_an(_spirit_name(game, caster)))
+    return [Subject(f"{what}, for {words}: {money_text(ally_price(game, caster, gp))}{half}", "term", words,
+                    data={"minutes": minutes, "gp": gp}) for words, minutes, gp in TERMS]
+
+
+def ally_problem(game, caster, target) -> str | None:
+    from realmwalker.game import law
+    from realmwalker.rules.items import money_text
+
+    if rules.room(caster) <= 0:
+        return f"no more will answer you: {rules.MAX} serve you already"
+    if not isinstance(target, Subject):
+        return "choose how long it will serve (←→)"
+    price = ally_price(game, caster, int(target.data.get("gp", 0)))
+    if law.party_money(game) < price:
+        return f"the price is {money_text(price)}, and the party has {money_text(law.party_money(game))}"
+    return None
+
+
+def cast_ally(game, caster, target, level: int) -> list[str]:
+    from realmwalker.game import law
+    from realmwalker.rules.items import money_text
+
+    now = float(game.world.time)
+    cid, form = ally_kind(game, caster)
+    _, faith = faith_of(game, caster)
+    fm = game.tables.creatures[cid]["summon"]["forms"][form]
+    price = ally_price(game, caster, int(target.data.get("gp", 0)))
+    if law.party_money(game) < price:
+        return ["The spirit names its price, and you cannot pay it: it is gone as it came."]
+    level = max(int(game.tables.creatures[cid]["summon"]["level"]), int(level))
+    # (its service starts as the ten minutes' prayer ends: they are still to pass)
+    until = now + int(game.tables.spells["planar_ally"].get("minutes", 10)) + int(target.data.get("minutes", 60))
+    rec = rules.add(caster, game.tables, cid, "planar_ally", until=until, now=now, word=False,
+                    name=_spirit_name(game, caster), max_hp=rules.spirit_max_hp(game.tables, cid, form, level),
+                    form=form, level=level, picture=fm.get("picture", ""), heals=True)
+    if rec is None:
+        return ["No spirit answers."]
+    law.take_money(game, price)
+    first = _first(caster)
+    from realmwalker.rules.allies import a_or_an
+
+    return [f"<magic>{first} prays to {esc(faith['god'])} for ten minutes</>, and {esc(a_or_an(rec['name']))} stands "
+            f"where the air was. {first} gives {money_text(price)} to {esc(faith['short'])}'s cause, and it agrees to serve "
+            f"for {target.ref}. <dim>It fights beside you on its own, and goes home when its time is up.</>"]
+
+
+def bound_rows(game) -> list[tuple]:
+    """Every spirit or bound creature serving one of the party: (master, record)."""
+    return [(c, r) for c in game.party if c.alive for r in rules.records(c)
+            if r.get("spell") in ("planar_ally", "planar_binding")]
+
+
+def bindable_captives(game) -> list[tuple[int, dict]]:
+    """The party's captives that Planar Binding reaches (celestials, elementals, fey, fiends): (index, record)."""
+    t = game.tables
+    return [(i, cap) for i, cap in enumerate(game.renown.flags.get("captives") or [])
+            if cap.get("def_id") in t.creatures and t.creatures[cap["def_id"]].get("kind") in BINDABLE]
+
+
+def _left(game, rec: dict) -> str:
+    m = max(0.0, float(rec.get("until") or 0) - game.world.time)
+    if m >= 2 * DAY:
+        return f"{int(m // DAY)} days"
+    if m >= 120:
+        return f"{int(m // 60)} hours"
+    return f"{max(1, int(m))} minutes"
+
+
+def binding_subjects(game, caster) -> list[Subject]:
+    out = []
+    for i, cap in bindable_captives(game):
+        kind = game.tables.creatures[cap["def_id"]]["kind"]
+        out.append(Subject(f"bind {esc(cap['name'])}, your captive ({kind})", "captive", str(i),
+                           data={"def_id": cap["def_id"], "group": "captive"}))
+    for c, r in bound_rows(game):
+        whose = "" if c is caster else f" ({_first(c)}'s)"
+        if r.get("bound"):
+            words = f"bind the {esc(r['name'])}{whose} again (bound {_left(game, r)} more)"
+        else:
+            words = f"bind the {esc(r['name'])}{whose} (its service ends in {_left(game, r)})"
+        out.append(Subject(words, "servant", f"{c.name}|{r['id']}", data={"group": "servant"}))
+    return out
+
+
+def servant_of(game, ref: str):
+    """(master, record) for a binding Subject's ref, or (None, None)."""
+    name, _, rid = ref.rpartition("|")
+    for c in game.party:
+        if c.name == name and c.alive:
+            rec = next((r for r in rules.records(c) if str(r.get("id")) == rid), None)
+            if rec is not None:
+                return c, rec
+    return None, None
+
+
+def binding_problem(game, caster, target) -> str | None:
+    from realmwalker.game import warding
+
+    if not isinstance(target, Subject):
+        if not binding_subjects(game, caster):
+            return "no celestial, elemental, fey or fiend is held here: a captive, or a Planar Ally's spirit"
+        return "choose (←→)"
+    if target.kind == "captive":
+        caps = game.renown.flags.get("captives") or []
+        i = int(target.ref)
+        if i >= len(caps) or caps[i].get("def_id") != target.data.get("def_id"):
+            return "that captive is gone"
+        if rules.room(caster) <= 0:
+            return f"no more will answer you: {rules.MAX} serve you already"
+        return None
+    master, rec = servant_of(game, target.ref)
+    if rec is None:
+        return "it is gone"
+    if master is not caster and rules.room(caster) <= 0:
+        return f"no more will answer you: {rules.MAX} serve you already"
+    if not rec.get("bound"):
+        held = warding.inward_circle(game)
+        if held is None or float(held["until"]) < game.world.time + BINDING_MINUTES:
+            return "it will not stay an hour to be bound: hold it first in a Magic Circle turned inward"
+    return None
+
+
+def _cha_save(game, cid: str, form: str, dc: int, rng) -> bool:
+    """A Charisma save against the binding (Magic Resistance: Advantage)."""
+    from realmwalker.core import dice
+
+    cdef = game.tables.creatures[cid]
+    bonus = int((cdef.get("saves") or {}).get("cha", (int((cdef.get("abilities") or {}).get("cha", 10)) - 10) // 2))
+    traits = list(cdef.get("traits", []))
+    if form and "summon" in cdef:
+        traits += list(cdef["summon"].get("forms", {}).get(form, {}).get("traits", []))
+    roll = dice.d20(rng).natural
+    if "magic_resistance" in traits:
+        roll = max(roll, dice.d20(rng).natural)
+    return roll + bonus >= dc
+
+
+def cast_binding(game, caster, target, level: int) -> list[str]:
+    from realmwalker.rules import spells as spellrules
+
+    now = float(game.world.time)
+    first = _first(caster)
+    days = BINDING_DAYS.get(min(9, max(5, int(level))), 1)
+    until = now + BINDING_MINUTES + days * DAY  # (from the end of the hour's casting)
+    lasts = "a day" if days == 1 else f"{days} days"
+    dc = spellrules.save_dc(game.sheet(caster), game.tables)
+    rng = game.world.rng.child(f"planar_binding/{caster.name}/{game.world.time}")
+    if target.kind == "captive":
+        caps = game.renown.flags.get("captives") or []
+        cap = caps[int(target.ref)]
+        if _cha_save(game, cap["def_id"], "", dc, rng):
+            return [f"<magic>{first} speaks the binding for an hour</> over {esc(cap['name'])}, who spits and will not "
+                    "bend: the jewel cracks and goes dark, and nothing is bound."]
+        name = cap["name"][4:] if cap["name"].startswith("the ") else cap["name"]
+        rec = rules.add(caster, game.tables, cap["def_id"], "planar_binding", until=until, now=now, word=False,
+                        name=name, heals=True, bound=True)
+        if rec is None:
+            return ["Nothing answers."]
+        caps.remove(cap)
+        if not caps:
+            game.renown.flags.pop("captives", None)
+        return [f"<magic>{first} speaks the binding for an hour</> over {esc(cap['name'])}, and the jewel burns to "
+                f"nothing: the eyes go dull, then fix on {first}. It is {first}'s to command for {lasts}. "
+                "<dim>Its bonds come off and it fights beside you on its own. No watch will pay for it now.</>"]
+    master, rec = servant_of(game, target.ref)
+    if _cha_save(game, rec["cid"], rec.get("form", ""), dc, rng):
+        return [f"<magic>{first} speaks the binding for an hour</> over the {esc(rec['name'])}, which only smiles: the "
+                "jewel cracks and goes dark, and nothing is bound. <dim>Its own bargain still holds.</>"]
+    rec["until"] = max(float(rec.get("until") or now), until)
+    rec["bound"] = True
+    rec["warned"] = False
+    if master is not caster:
+        rules.drop(master, rec)
+        rows = rules.records(caster, make=True)
+        rec["id"] = max([0] + [int(r.get("id", 0)) for r in rows]) + 1
+        rows.append(rec)
+    return [f"<magic>{first} speaks the binding for an hour</> over the {esc(rec['name'])}, and the jewel burns to "
+            f"nothing: it is bound to {first} for {lasts}."]
+
+
 # ---------------------------------------------------------------------------- as time passes
 def here(game) -> bool:
     """The dead follow the party in the wild and underground, never onto a settlement's close-up map."""
@@ -218,6 +463,12 @@ def tick(game) -> None:
     """From pass_time: warn before a hold ends; free those it has ended for (they turn on the party out in the land,
     or wander off); the mummy's rot each day."""
     now = float(game.world.time)
+    for c in list(getattr(game, "waiting", [])):  # (a companion told to wait: their servants wait with them)
+        gone = rules.due(c, now) if c.alive else list(rules.records(c))
+        for r in gone:
+            rules.drop(c, r)
+        if gone:
+            game.say(f"<dim>Far off, the servants {_first(c)} kept are gone: their time was up.</>", "info")
     for c in game.party:
         if not c.spells.get("servants"):
             _rot_day(game, c, now)
@@ -226,15 +477,54 @@ def tick(game) -> None:
         if warn:
             for r in warn:
                 r["warned"] = True
-            game.say(f"<warn>The dead grow restless: {_first(c)}'s hold on "
-                     f"{'them' if len(warn) > 1 else 'the ' + warn[0]['name']} ends within two hours.</> "
-                     f"<dim>Cast {game.tables.spells[warn[0]['spell']]['name']} again to hold them.</>", "warn")
+            dead = [r for r in warn if rules.is_undead(r)]
+            if dead:
+                game.say(f"<warn>The dead grow restless: {_first(c)}'s hold on "
+                         f"{'them' if len(dead) > 1 else 'the ' + dead[0]['name']} ends within two hours.</> "
+                         f"<dim>Cast {game.tables.spells[dead[0]['spell']]['name']} again to hold them.</>", "warn")
+            for r in warn:
+                if not rules.is_undead(r):
+                    keep = "" if r.get("bound") else \
+                        " <dim>Planar Binding, cast in a Magic Circle turned inward, would keep it.</>"
+                    game.say(f"<warn>The {esc(r['name'])}'s {'binding' if r.get('bound') else 'service'} to "
+                             f"{_first(c)} ends within two hours.</>{keep}", "warn")
         freed = rules.due(c, now) if c.alive else list(rules.records(c))
         if freed:
             for r in freed:
                 rules.drop(c, r)
-            _go_free(game, c, freed)
+            _leave(game, c, freed)
         _rot_day(game, c, now)
+
+
+def dismissed(game, char) -> None:
+    """A companion leaves the party for good: their servants go with them."""
+    rows = list(rules.records(char))
+    if rows:
+        char.spells.pop("servants", None)
+        game.say(f"{_first(char)}'s {'servants go' if len(rows) > 1 else rows[0]['name'] + ' goes'} with them.",
+                 "info")
+
+
+def _leave(game, master, freed: list[dict]) -> None:
+    """Those whose time is up: the dead go free (and may turn on the party); the bound go away."""
+    for r in freed:
+        if not rules.is_undead(r):
+            _go_home(game, master, r)
+    dead = [r for r in freed if rules.is_undead(r)]
+    if dead:
+        _go_free(game, master, dead)
+
+
+def _go_home(game, master, rec: dict) -> None:
+    """A spirit's service or a binding is over: a spirit reports and returns to its own plane; a bound creature of
+    this world slips off into the wild."""
+    name = esc(rec["name"])
+    if rec.get("form"):
+        game.say(f"<magic>The {name} has served its time.</> It bows its head to {_first(master)}, says that what was "
+                 "asked is done, and is gone like a candle blown out.", "magic")
+    else:
+        game.say(f"<warn>The binding on the {name} is over.</> It backs away from {_first(master)}, then turns and "
+                 "runs, and is soon lost to sight.", "warn")
 
 
 def _go_free(game, master, freed: list[dict]) -> None:
@@ -262,7 +552,7 @@ def died(game, char) -> None:
     freed = list(rules.records(char))
     if freed:
         char.spells.pop("servants", None)
-        _go_free(game, char, freed)
+        _leave(game, char, freed)
 
 
 def _rot_day(game, c, now: float) -> None:

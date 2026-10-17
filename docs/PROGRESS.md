@@ -28,7 +28,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Clearing the decks for the expansions** | ✅ Done (2026-10-12), branch `prep/clear-the-decks` |
 | **Expansion 1, *Dice & Destiny*** (version 1.1.0) | ✅ Released (2026-10-13), branch `dlc/01-dice-destiny` |
 | **Expansion 2, *Blades & Backgrounds*** (version 1.2.0) | ✅ Released (2026-10-13), branch `dlc/02-blades-backgrounds` |
-| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete), D (the spell catalogue: 191 battle spells, cantrips to level 9, and Wish) E.1 (spells outside battle: healing, return from death, food, shelter and watch), E.2 (light, the body on the move, travel by magic), E.3 (finding and seeing, asking the powers, talking), E.4 (minds and the law, disguise and illusion, the small arts), E.5 (locks and stone, weather and land), E.6 (lasting protections and the caster's keeping) and E.7 (great magic and Wish's other uses, 2026-10-17: Part E complete) and F.1 (a familiar and a steed fight beside you), F.2 (summoned spirits of levels 2 to 4) and F.3 (the level 5 and 6 spirits and Animate Objects) and F.4 (the raised dead: Animate Dead, Create Undead, Finger of Death's zombie, the ghast and the mummy) in `main`; F.5 (the bound: Planar Ally, Planar Binding) next |
+| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete), D (the spell catalogue: 191 battle spells, cantrips to level 9, and Wish) E.1 (spells outside battle: healing, return from death, food, shelter and watch), E.2 (light, the body on the move, travel by magic), E.3 (finding and seeing, asking the powers, talking), E.4 (minds and the law, disguise and illusion, the small arts), E.5 (locks and stone, weather and land), E.6 (lasting protections and the caster's keeping) and E.7 (great magic and Wish's other uses, 2026-10-17: Part E complete) and F.1 (a familiar and a steed fight beside you), F.2 (summoned spirits of levels 2 to 4) and F.3 (the level 5 and 6 spirits and Animate Objects) and F.4 (the raised dead: Animate Dead, Create Undead, Finger of Death's zombie, the ghast and the mummy) and F.5 (the bound: Planar Ally, Planar Binding, Magic Circle turned inward) in `main`; F.6 (shapes: Polymorph and the rest of Appendix B) next |
 
 ---
 
@@ -39,6 +39,52 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-17 (afternoon): Demigods & Magics F.5 — the bound: a god's spirit for hire, and binding
+
+Built by the relay builder realmwalker-b. Saves do not change: an old world of format 18 still loads.
+- **Planar Ally** (6th level, clerics; ten minutes of prayer, outside a fight): your god sends a spirit to serve
+  you, **for a price**. Which spirit depends on the god of your people: Solun and the gods of light and law send a
+  **celestial** (the defending or the avenging spirit), the old gods of land, sky and sea an **elemental** (earth,
+  air or water), the dark gods and the cults a **fiend** (a demon, a devil or a yugoloth). It is as strong as the
+  slot you cast it with, and named for its god ("a defending celestial spirit of Solun"). On the Spells page you
+  choose how long it serves and see the price: **an hour 1,000 GP, a day 10,000, three days 30,000, ten days
+  100,000**, paid at once from the party's purse, and **half if you belong to that god's church**. No money, no
+  spirit.
+- **The spirit fights beside you on its own**: no bonus action to command it, it takes its turn right after yours,
+  you play it as a party member (or z for Auto). It walks with you through the wild and underground (never into a
+  town: it waits outside the walls), is **whole again after a long rest**, and when its time is up it bows, says the
+  work is done and goes home. It never turns on you. If you die, it goes at once.
+- **Planar Binding** (5th level, bards, clerics, druids, warlocks and wizards; an hour, and a jewel of 1,000 GP that
+  burns away: a rare stone, a sapphire, a jacinth or a flawless diamond): you bind a **celestial, elemental, fey or
+  fiend** to your service. Two kinds of target are offered on the Spells page:
+  - **a captive** you took after a fight. Goblins are fey in the new rules, so a captured goblin can be bound: its
+    ropes come off and it fights for you instead of going to the watch for a bounty;
+  - **a Planar Ally's spirit**, to keep it far longer than you paid for. A spirit will not stand still for an hour's
+    binding, so first cast **Magic Circle turned inward** around it.
+  The creature makes a Charisma save. If it fails it serves you for **a day**, or **10, 30, 180 or 366 days** with a
+  slot of 6th to 9th level. If it saves, the jewel is spent and nothing changes. A creature already bound can be
+  bound again for longer without a circle. When a binding ends, a bound captive backs away and runs off, and a spirit
+  goes home.
+- **Magic Circle** now asks which way its runes face: **outward** (as before: celestials, elementals, fey, fiends and
+  undead cannot come into the camp) or **inward** (it holds such a creature inside it, long enough for Planar
+  Binding).
+- Choices made while Anton was away: the work a spirit or a bound creature does is always to fight beside you and
+  keep you safe on the road (other errands, guarding a place, carrying a message, asking for a spirit by name and a
+  spirit refusing a deadly task are left out); the book's 100 GP a minute is never cheaper than the hour here, so the
+  terms start at an hour; "aligned with the creature's ethos" became membership of its god's church; a hostile bound
+  creature twisting its orders is left out, since its only orders are to fight. Today only goblins among the captives
+  can be bound (the others are people, whom the spell does not reach).
+- Checked: tests for the price of each term and the church's half, the god's kind of spirit, the spirit in a real
+  fight at its slot's numbers acting on its own and played by the Auto, its healing at a long rest (the raised dead
+  still do not heal), its going home when its time ends and when its master dies, its waiting outside a town; Planar
+  Binding on a captive goblin (the save, the jewel spent, the days by the slot, fighting for the party, running off at
+  the end) and on a spirit (refused without the inward circle, bound for ten days with it, then bound again without
+  one); Magic Circle in both directions. The whole test suite, the autoplay bot (it now also checks every spirit's
+  form and hit points) and the window smoke test. The fresh review's fixes: a spirit's name takes the right article
+  ("an avenging celestial spirit", "an air spirit"); a companion who is dismissed or deserts takes their spirit,
+  bound creature or dead with them, and a companion told to wait keeps theirs only until its time runs out; the
+  inward circle says the binding must begin at once (it holds just the hour).
 
 ### Session, 2026-10-17 (afternoon): Demigods & Magics F.4 — the dead rise to serve you
 

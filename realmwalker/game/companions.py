@@ -292,7 +292,9 @@ def dismiss(game, c: Character, *, deserted: bool = False) -> list[str]:
         game.party.remove(c)
     if c in getattr(game, "waiting", []):
         game.waiting.remove(c)
-    from realmwalker.game import pack
+    from realmwalker.game import pack, servants
+
+    servants.dismissed(game, c)  # (a spirit, a bound creature or the dead they kept go with them)
 
     pack.sync(game)  # they go with what they wear and wield
     npc = game.world.npcs.get(c.companion.get("npc", -1))
