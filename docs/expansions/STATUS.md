@@ -19,6 +19,10 @@ Codex coverage: 2,951 entries from the three books, every one assigned to an exp
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
   adapted); Expansion 3: all 560 settled (223 done, 336 adapted, 1 omitted); Expansion 4: all 66 settled (36 done,
   30 adapted); Expansion 5: 17 of 72 settled after Part A (12 done, 4 adapted, 1 omitted). PHB 68% · DMG 15% · MM 16%
+Known, not yet chased: one autoplay run of nine during Expansion 5 Part A's checks (2026-10-18) saw two townsfolk on
+  one square of a town for seven turns (town life, untouched by the part; the other eight runs, on main and on the
+  branch, were clean). The timing tests (an enemy turn under 150/400 ms) now and then miss while the suite runs
+  beside autoplay and the smoke test, and pass alone; this was already so in Expansions 3 and 4.
 Assumptions waiting for Anton:
 - Expansion 5 Part A (the Diviner and the Illusionist): Portent is laid by the battle's judgement (asked only under the
   Reactions setting "all"), outside fights on the party's camp and conversation checks only; the Third Eye's reading
