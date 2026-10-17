@@ -257,8 +257,12 @@ FEATURE = Obj({"level": Int(min=1, max=20), "id": Str(max_len=40), "name": Str(m
                              "tools": List(Str(max_len=40), optional=True),
                              "items": List(Str(max_len=40), optional=True),
                              "armor": List(Str(max_len=20), optional=True),
-                             "weapons": List(Str(max_len=30), optional=True)}, optional=True),
+                             "weapons": List(Str(max_len=30), optional=True),
+                             # a feat taken with the feature, its choices asked as a feat's are (Student of War)
+                             "feat": Str(max_len=40, optional=True)}, optional=True),
                "choose": List(Str(max_len=40), optional=True),
+               # how many of `choose` are picked at once (a Battle Master's maneuvers: three, then two at a time)
+               "choose_count": Int(min=1, max=5, optional=True),
                # Expertise to choose (a wizard's Scholar: one of these skills they know; no list: any skill they know).
                "expertise": Obj({"count": Int(min=1, max=4), "skills": List(Str(max_len=30), optional=True)},
                                 optional=True),

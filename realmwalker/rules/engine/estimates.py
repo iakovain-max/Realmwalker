@@ -362,7 +362,10 @@ def spell_value(b, f, sid: str, *, target=None, point=None, dc: int | None = Non
             if o.get("catch") and spellrules.damage_parts(o):  # (Wall of Ice: those it rises beside)
                 _save_part(b, f, {**o, "ability": o.get("save", "dex")}, caught, target, dc, up, mult, w)
         elif kind == "banish" and spell.get("area"):  # (Forcecage: everyone in the box sealed away, no save)
+            left_free = [e for e in b.enemies_of(f) if e.active and e not in caught]
             for x in caught:
+                if x.team != f.team and not left_free:
+                    continue  # (the last foes caged: nobody left to fight, the fight only waits for the hour)
                 if x is f or not x.active:
                     continue
                 if x.team == f.team:

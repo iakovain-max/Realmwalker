@@ -318,6 +318,20 @@ class CharacterScreen(Screen):
                 change = " <dim>(m: choose again)</>" if c.uses.get("mastery_change", 0) > 0 else ""
                 notes.append(f"<loot>{f['name']}</>: {names}.{change}")
                 continue
+            if f["id"].startswith("maneuvers_"):
+                continue  # (the maneuvers learned are listed under Combat Superiority)
+            if f["id"] == "combat_superiority":  # (a Battle Master: the dice left and the maneuvers known)
+                from realmwalker.rules.engine import resources as res
+                from realmwalker.rules.engine.handlers import battle_master as bm
+
+                opts = t.classes[c.cls].get("options", {})
+                known = [opts[x]["name"] for x in c.features if x.startswith("maneuver_") and x in opts]
+                pool = res.pools(c, t).get("superiority")
+                most = res.maximum(c, pool) if pool else 0
+                notes.append(f"<loot>{f['name']}</>: {c.uses.get('superiority', 0)} of {most} superiority dice "
+                             f"(d{bm.char_sides(c, t)}; back after a short rest). Maneuvers: "
+                             f"{', '.join(known) or 'none yet'}.")
+                continue
             notes.append(f"<loot>{f['name']}</>: {f['text']}")
         feature = t.backgrounds[c.background]["feature"]
         notes.append(f"<loot>{feature['name']}</> <dim>(background)</>: {feature['text']}")

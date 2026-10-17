@@ -257,6 +257,12 @@ def _buff_status(b, f, bf: dict, tables) -> Status | None:
         kind = "vexing"
     elif bf.get("distracted"):
         return None  # (shown as the mark it leaves, not as its own state)
+    elif bf.get("goaded") is not None or bf.get("disarmed"):
+        kind = "sapped"  # (a Battle Master's Goading and Disarming Attacks)
+    elif bf.get("exposed") is not None:
+        kind = "marked"  # (Distracting Strike)
+    elif bf.get("maneuver_die"):
+        kind = "guided"  # (a feint's, a lunge's or a commanded strike's die waiting for the hit)
     else:
         kind = "spell"
     title, text = _WORDS[kind]
@@ -271,6 +277,21 @@ def _buff_status(b, f, bf: dict, tables) -> Status | None:
         title, lines = "Steady Aim", ["Their next attack roll this turn has advantage."]
     elif kind == "vexing":
         lines = [f"Their next attack roll against {esc(_name_of(b, bf['vex']))} has advantage."]
+    elif kind == "sapped" and bf.get("goaded") is not None:
+        title, lines = "Goaded (Battle Master)", ["Disadvantage on attack rolls against anyone but "
+                                                 f"{esc(_name_of(b, bf['goaded']))}."]
+    elif kind == "sapped" and bf.get("disarmed"):
+        title, lines = "Disarmed", [f"Their {esc(str(bf['disarmed']).lower())} lies at their feet: it cannot be used "
+                                    "until they take it up again on their turn."]
+    elif kind == "marked" and bf.get("exposed") is not None:
+        title, lines = "Distracted", ["The next attack against them by anyone but "
+                                      f"{esc(_name_of(b, bf['exposed']))} has advantage."]
+    elif kind == "guided" and bf.get("maneuver_die"):
+        title, lines = "A maneuver ready", [f"Their next hit{' in melee after moving' if bf.get('melee') else ''} adds "
+                                            f"{int(bf['maneuver_die'])} to the damage (a superiority die)."]
+    elif kind == "shielded" and str(bf.get("source", "")).startswith(("evasive_footwork", "bait:")):
+        title, lines = "Light-footed (Battle Master)", [f"Armour Class +{int(bf['ac'])} until the Battle Master's "
+                                                        "next turn."]
     elif kind == "sapped" and bf.get("unsteady"):
         title, lines = "Unsteady (Slasher)", ["Cut and off balance: their attack rolls have disadvantage until "
                                               f"{esc(_name_of(b, bf['unsteady']))}'s next turn."]

@@ -1,6 +1,9 @@
 {
   "_comment": "Feats (Player's Handbook 2024, chapter 5). category: origin (from a background, or a human's Versatile), general, fighting_style, epic. trait: the data/traits.json definition that does what it does in a fight (kernel hooks and modifiers). choices: picked when the feat is taken (rules/feats.py; a background may fix some, as Magic Initiate (Cleric) fixes the list): kind skill, skill_or_tool, tool (from a group in rules/feats.py TOOL_GROUPS), spell_list, cantrip, spell (level), ability. upgrade_in: the expansion that brings the rest of it. prerequisite: {level, abilities (any one of them at least), training (armour kind), spellcasting, style (the Fighting Style feature)}. Kinds increase (+1 to an ability, at most 20), damage_type, skill_or_expertise, expertise. gives: armour and weapon training, tools, a save (the raised ability). spells: cast once a long rest without a slot (as Magic Initiate's). suggest: what the Auto and Suggest take at an ability increase, by the kind of fighter (rules/feats.archetype).",
   "feats": {
+    "student_of_war": {"name": "Student of War", "category": "general", "offered": false,
+                       "text": "A Battle Master's schooling: proficiency with one kind of artisan's tools, and in one skill of the fighter's choosing.",
+                       "choices": {"tool": {"kind": "tool", "from": "artisan"}, "skill": {"kind": "skill", "from": ["acrobatics", "animal_handling", "athletics", "history", "insight", "intimidation", "perception", "survival"]}}},
     "alert": {"name": "Alert", "category": "origin", "trait": "feat_alert",
               "text": "Always ready: your proficiency bonus is added to your initiative."},
     "crafter": {"name": "Crafter", "category": "origin", "trait": "feat_crafter", "upgrade_in": 23,

@@ -299,6 +299,16 @@ class BattleBoard:
             if ev.get("trick") == "push":
                 self.shake_until = max(self.shake_until, at + 0.12)
             return t
+        if k == "maneuver":  # a Battle Master's maneuver: its name over the fighter, a steel-blue ring
+            at = max(t, self._impact) + 0.05
+            self.fx.append({"kind": "float", "who": ev["who"], "text": str(ev.get("what", "")).lower(),
+                            "color": (170, 200, 236), "t0": at, "dur": FLOAT, "size": 14, "low": False})
+            self.fx.append({"kind": "ring", "who": ev["who"], "t0": at, "dur": 0.45, "color": (170, 200, 236)})
+            return t
+        if k == "disarm":
+            self.fx.append({"kind": "float", "who": ev["who"], "text": "disarmed", "color": (236, 214, 170),
+                            "t0": max(t, self._impact) + 0.12, "dur": FLOAT, "size": 15, "low": True})
+            return t
         if k == "concentration_end":
             self.fx.append({"kind": "float", "who": ev["who"], "text": "concentration broken", "color": (200, 170, 255),
                             "t0": max(t, self._impact) + 0.15, "dur": FLOAT, "size": 13, "low": True})

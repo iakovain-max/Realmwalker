@@ -470,8 +470,14 @@ class Conversation:
             how += " (glib: 15)"
             roll = glib
         ok = roll + bonus >= dc
-        return ok, (f"<dice>{name}{how}: {roll} {sign} {abs(bonus)} = {roll + bonus} vs DC {dc} — "
-                    f"{'success' if ok else 'failure'}</>")
+        more = ""
+        if not ok:  # (a Battle Master's Commanding Presence, Tactical Assessment)
+            from realmwalker.rules.engine.handlers import battle_master
+
+            total, more = battle_master.check_die(c, self.game.tables, skill, roll + bonus, dc, self.rng)
+            ok = total >= dc
+        return ok, (f"<dice>{name}{how}: {roll} {sign} {abs(bonus)} = {roll + bonus} vs DC {dc}"
+                    f"{'; ' + more if more else ''} — {'success' if ok else 'failure'}</>")
 
     def special_option(self, i: int) -> None:
         opt = self.special[i]

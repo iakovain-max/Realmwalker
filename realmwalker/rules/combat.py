@@ -1142,6 +1142,10 @@ class Battle:
             bonus += query.initiative_bonus(f)  # (Alert)
             f.initiative = (dice.d20(self.rng, advantage=r.advantage, disadvantage=r.disadvantage).natural + bonus
                             + query.d20_penalty(f))
+            if f.char is not None and f.has_trait("maneuver_ambush"):
+                from realmwalker.rules.engine.handlers import battle_master
+
+                f.initiative += battle_master.ambush_initiative(self, f)  # (a Battle Master's Ambush)
         self.order = [f.id for f in sorted(self.fighters, key=lambda f: (-f.initiative, -f.mod("dex"), self.rng.random()))]
         self._bond_order()
         events.emit(self, "battle_start")  # (Improve Fate comes back with the initiative)
@@ -1828,6 +1832,12 @@ class Battle:
             total, line = fighter.tactical_mind(f.char, self.t, total, dc, self.rng)
             if line:
                 self.dice_say(f"{f.name} ({line})")
+            if total < dc:
+                from realmwalker.rules.engine.handlers import battle_master
+
+                total, line = battle_master.check_die(f.char, self.t, skill, total, dc, self.rng)
+                if line:
+                    self.dice_say(f"{f.name} ({line})")
         if total < dc:  # (a friend's help with a check that failed: the sphinx's Burst of Ingenuity)
             return events.emit(self, "d20_after", actor=f, roll="check", ability=ability, natural=roll,
                                bonus=total - roll, dc=dc, ok=False).ok
@@ -2268,6 +2278,10 @@ class Battle:
         if f.buffs and f.buff_value("mist"):
             for o in out:  # (Gaseous Form: a drifting mist cannot strike)
                 o.available, o.reason = False, "a drifting mist cannot strike (Gaseous Form)"
+        dropped = [str(v).lower() for v in f.buff_value("disarmed")] if f.buffs else []
+        for o in out:  # (a Battle Master's Disarming Attack: the weapon lies at their feet until their turn)
+            if dropped and o.name.lower() in dropped:
+                o.available, o.reason = False, "knocked from the hand"
         return out
 
     def _attack_options(self, f: Fighter) -> list[AttackOption]:
@@ -2636,7 +2650,8 @@ class Battle:
         att.helped = False
         if target.marked:
             target.marked = False  # spent on this roll, hit or miss
-        target.buffs = [bf for bf in target.buffs if bf.get("distracted") != att.team]
+        target.buffs = [bf for bf in target.buffs if bf.get("distracted") != att.team
+                        and not (bf.get("exposed") is not None and bf["exposed"] != att.id)]
         if att.hidden and (hit or not (att.char is not None and feats.has(att.char, "skulker"))):
             att.__dict__["was_hidden"] = att.hidden  # (a thief's Stealth Attack may keep it)
             att.hidden = 0  # (Skulker: a miss does not give away where they hide)
@@ -3910,7 +3925,7 @@ class Battle:
                     out.append(f"item:{it.uid}")
         return out
 
-    def do_ability(self, f: Fighter, ability: str, target: Fighter | None = None) -> None:
+    def do_ability(self, f: Fighter, ability: str, target: Fighter | None = None) -> bool | None:
         """Use an ability (rules/engine/actions.use), the off-hand blow, or the spiritual weapon."""
         if ability == "offhand":
             if target is not None:
@@ -3952,7 +3967,7 @@ class Battle:
             self._spirit_strike(f, tok, target)
             self._after_action(f)
             return
-        actions.use(self, f, ability, target)
+        return actions.use(self, f, ability, target)
 
     def spirit_targets(self, f: Fighter) -> list[Fighter]:
         """Who the spiritual weapon can reach this turn: it moves twenty feet and strikes someone beside it."""

@@ -100,6 +100,8 @@ BUFF_KEYS = frozenset({
     "ac", "mage_armor", "attack_die", "save_die", "check_die", "resist", "death_ward", "fly", "tremorsense", "slow",
     "no_heal", "no_opportunity", "marked", "burning", "poisoned_blade", "sapped", "distracted", "aimed", "protected",
     "parry_ac", "reeling", "unsteady", "vex", "dazed",
+    # the Battle Master's (Expansion 4): goaded by, exposed by, the weapon dropped, a die for a later hit
+    "goaded", "exposed", "disarmed", "maneuver_die", "against", "melee",
     # this module's
     "outlined", "blurred", "warded_kinds", "ward_die", "sanctuary", "images", "ac_floor", "retaliate",
     "retaliate_type", "bond", "quarry", "quarry_type", "by", "dot", "dot_type", "dot_at", "dot_once", "dot_save",

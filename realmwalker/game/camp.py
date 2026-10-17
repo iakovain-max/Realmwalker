@@ -112,6 +112,11 @@ def check(game, skill: str, dc: int, bonus: int = 0, tag: str = "", mode: str = 
     if roll < 10 and skill in who.skills and "reliable_talent" in tr.of_char(who, game.tables):
         roll = 10  # (a rogue's Reliable Talent)
     total, more = fighter.tactical_mind(who, game.tables, roll + b, dc, rng.child("tactical_mind"))
+    if total < dc:  # (a Battle Master's Ambush, Commanding Presence, Tactical Assessment)
+        from realmwalker.rules.engine.handlers import battle_master
+
+        total, more2 = battle_master.check_die(who, game.tables, skill, total, dc, rng.child("maneuver"))
+        more = "; ".join(x for x in (more, more2) if x)
     return total >= dc, (f"<dice>{name}{how} ({who.name.split()[0]}): {roll} {sign} {abs(b)} = {roll + b} "
                          f"vs DC {dc}{'; ' + more if more else ''}</>")
 
