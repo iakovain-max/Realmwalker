@@ -3,7 +3,7 @@
   "occupations": {
     "innkeeper": {"name": "innkeeper", "place": "inn", "notable": true, "social": "middle", "purse": [800, 4000], "stats": "commoner", "trade": "inn", "services": ["room", "meal", "bath", "rumours", "perform", "gamble"]},
     "serving_hand": {"name": "serving hand", "place": "inn", "social": "low", "purse": [5, 60], "stats": "commoner"},
-    "priest": {"name": "priest", "titles": {"hold": "rune-priest", "elfhall": "keeper of the grove"}, "place": "temple", "notable": true, "social": "middle", "purse": [200, 2000], "stats": "acolyte", "services": ["prayer_healing", "cure_disease", "blessing", "spellcasting"]},
+    "priest": {"name": "priest", "titles": {"hold": "rune-priest", "elfhall": "keeper of the grove"}, "place": "temple", "notable": true, "social": "middle", "purse": [200, 2000], "stats": "priest", "services": ["prayer_healing", "cure_disease", "blessing", "spellcasting"]},
     "acolyte": {"name": "acolyte", "place": "temple", "social": "low", "purse": [5, 50], "stats": "acolyte", "trade": "temple"},
     "smith": {"name": "smith", "place": "smithy", "notable": true, "social": "middle", "purse": [600, 5000], "stats": "commoner", "trade": "smith", "services": ["repair", "labour"]},
     "shopkeeper": {"name": "shopkeeper", "place": "store", "notable": true, "social": "middle", "purse": [800, 6000], "stats": "commoner", "trade": "general"},
@@ -31,7 +31,7 @@
     "cobbler": {"name": "cobbler", "place": "home", "social": "low", "purse": [10, 250], "stats": "commoner"},
     "potter": {"name": "potter", "place": "home", "social": "low", "purse": [10, 200], "stats": "commoner"},
     "tanner": {"name": "tanner", "place": "home", "social": "low", "purse": [10, 250], "stats": "commoner"},
-    "mage": {"name": "mage", "titles": {"hold": "rune-wright", "elfhall": "spellweaver", "city": "magister"}, "place": "home", "social": "middle", "purse": [300, 5000], "stats": "acolyte", "trade": "mage", "services": ["spellcasting", "rumours"]},
+    "mage": {"name": "mage", "titles": {"hold": "rune-wright", "elfhall": "spellweaver", "city": "magister"}, "place": "home", "social": "middle", "purse": [300, 5000], "stats": "mage", "trade": "mage", "services": ["spellcasting", "rumours"]},
     "scribe": {"name": "scribe", "titles": {"hold": "rune-carver", "elfhall": "loremaster"}, "place": "library", "social": "middle", "purse": [50, 900], "stats": "commoner", "services": ["rumours"]},
     "monk": {"name": "monk", "titles": {"elfhall": "grove-keeper"}, "place": "temple", "social": "low", "purse": [0, 20], "stats": "acolyte"},
     "soldier": {"name": "soldier", "titles": {"hold": "axe-bearer", "elfhall": "sentinel"}, "place": "barracks", "social": "low", "purse": [20, 250], "stats": "guard", "services": ["rumours"]},

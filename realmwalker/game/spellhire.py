@@ -50,7 +50,7 @@ def reach(game, npc) -> int:
         return -1
     kind = _kind(game, npc)
     cap = int(spec(game)["reach"].get(kind, 2))
-    if "figure" in npc.flags:  # (a temple's high priest, the circle's archmage)
+    if "figure" in npc.flags or npc.stats in ("archpriest", "archmage"):  # (a temple's high priest, an archmage)
         return cap
     lo, hi = spec(game)["own"].get(kind, [1, 2])
     return min(cap, game.world.rng.child(f"spellhire/{npc.id}").randint(int(lo), int(hi)))

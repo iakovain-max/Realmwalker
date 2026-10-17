@@ -334,6 +334,9 @@ def populate_town(game, lm, settlement) -> Town:
                 spot = inside(b)
                 npc = make_npc(game, settlement, job, rng.child(f"{bi}/{job}"), building=bi, post=spot,
                                home=spot if job in STAYS_AT_POST else a_home())
+                if job == "priest" and getattr(settlement, "great", False) and "priest" not in seen_roles:
+                    npc.stats = "archpriest"  # (a great city's first temple: Exp 5 C.2)
+                    npc.title = "high priestess" if npc.sex == "female" else "high priest"
                 add(world, town, npc)
                 seen_roles.add(job)
         if b.kind == "temple" and settlement.kind in ("town", "city"):
@@ -349,8 +352,11 @@ def populate_town(game, lm, settlement) -> Town:
         for i in range(many):
             home = a_home()
             post = inside(lm.buildings[library]) if library is not None and i == 0 else home
-            add(world, town, make_npc(game, settlement, "mage", rng.child(f"mage/{i}"),
-                                      building=library if post != home else -1, post=post, home=home))
+            npc = make_npc(game, settlement, "mage", rng.child(f"mage/{i}"),
+                           building=library if post != home else -1, post=post, home=home)
+            if i == 0 and getattr(settlement, "great", False):
+                npc.stats, npc.title = "archmage", "archmage"  # (the greatest city's first mage: Exp 5 C.2)
+            add(world, town, npc)
     spec = people["settlement_people"].get(settlement.kind, people["settlement_people"]["village"])
     if getattr(settlement, "great", False):
         spec = people["settlement_people"].get("great", spec)

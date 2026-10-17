@@ -55,7 +55,8 @@ def site_past(game, site) -> str:
     tower = pol.get("towers", {}).get(str(site.id))
     if tower is not None and tower in w.figures:
         fig = w.figures[tower]
-        out.append(f"<dim>Raised by the wizard {esc(fig.name)}.</>")
+        out.append(f"<dim>Raised by the wizard {esc(fig.name)}, who lives and works here still: wards on the stair, "
+                   f"apprentices, a library.</>" if fig.alive else f"<dim>Raised by the wizard {esc(fig.name)}.</>")
     beast = lair_beast(game, site)
     if beast is not None and close_enough(game, site):
         spec = beast_word(game, beast)
@@ -215,6 +216,11 @@ def on_battle(game, result) -> None:
         if fig is not None and fig.alive and fig.kind == "beast" and beast_title(fig) in names:
             beast_slain(game, fig, int(site_id))
     site = w.site_at(game.player.x, game.player.y)
+    if site is not None and site.kind == "tower":
+        hid = w.politics.get("towers", {}).get(str(site.id))
+        fig = w.figures.get(hid) if hid is not None else None
+        if fig is not None and fig.alive and fig.name in names:
+            tower_master_slain(game, fig, site)
     if site is not None and site.kind == "barrow":
         tomb = w.politics.get("tombs", {}).get(str(site.id))
         fig = w.figures.get(tomb) if tomb is not None else None
@@ -269,6 +275,22 @@ def beast_slain(game, fig, site_id: int) -> None:
                     news_text=text)
     game.say(f"<good>{esc(title)} is dead.</> <dim>The {esc(word)} of {esc(site.name)} will not come down to the "
              f"farms again.</>", "good")
+
+
+def tower_master_slain(game, fig, site) -> None:
+    """The wizard who raised a tower dies in it at the party's hands (Expansion 5 C.2): the world remembers, the
+    mages' circles hear of it, and the tower stands empty from now on (its levels as they are)."""
+    from realmwalker.game import reputation
+    from realmwalker.world.history import remember
+
+    figure_slain(game, fig.id, site.id)
+    text = f"{game.leader.name} slew the wizard {fig.name} in {site.name}, the tower {fig.name} had raised"
+    remember(game.world, game.moment.year, "slain", text, importance=3, sites=[site.id], figures=[fig.id],
+             player=True)
+    circles = {f.id: -6.0 for f in game.world.factions.values() if f.active and f.kind == "mages_circle"}
+    reputation.deed(game, f"slew the wizard {fig.name}", circles, x=site.x, y=site.y, fame=4 + int(fig.fame) // 2,
+                    importance=2, news_text=text)  # (the mages' circles think the less of whoever did it)
+    game.say(f"<good>{esc(fig.name)} is dead.</> <dim>The tower has no master now.</>", "good")
 
 
 # ---------------------------------------------------------------------------- the marks the history left on the land

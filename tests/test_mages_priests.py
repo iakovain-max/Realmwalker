@@ -168,3 +168,151 @@ def test_folk_met_on_the_road_are_of_the_land(tables, monkeypatch):
     e = make_encounter(g, "travelling_mage", RNG(3, "enc"))
     assert {c.def_id for c in e.creatures} <= {"mage", "mage_apprentice"}
     assert all(c.culture == (folk or "") for c in e.creatures)
+
+
+# ---------------------------------------------------------------------------- C.2 towers lived in, temples staffed
+@pytest.fixture
+def game(tables):
+    import copy
+
+    from realmwalker.game.state import new_game
+    from realmwalker.world.generator import WorldOptions
+    from tests.worlds import cached_world
+
+    g = new_game(copy.deepcopy(cached_world(WorldOptions("Mages", 7, "small"), tables)), tables)
+    g.survival = False
+    return g
+
+
+def lived_tower(game, rank="mage"):
+    """A tower of this world whose wizard lives (one made so if the history left none alive)."""
+    from realmwalker.world import dungeon as gen
+
+    w = game.world
+    towers = [s for s in w.sites if s.kind == "tower" and str(s.id) in w.politics.get("towers", {})
+              and gen.style_for(w, s) == "tower"]
+    assert towers, "the test world has no tower with a history"
+    site = towers[0]
+    fig = w.figures[w.politics["towers"][str(site.id)]]
+    fig.died = None
+    fig.level, fig.fame = (15, 9) if rank == "archmage" else (8, 4)
+    game.player.x, game.player.y = site.x, site.y
+    return site, fig
+
+
+def test_a_tower_whose_wizard_lives_is_kept(game):
+    from realmwalker.world import dungeon as gen
+
+    site, fig = lived_tower(game)
+    m = gen.tower_master(game.world, site)
+    assert m == {"figure": fig.id, "name": fig.name, "rank": "mage"}
+    depth = gen.depth_for(game.world, site)
+    top = gen.get_dungeon(game.world, game.tables, site, depth)
+    assert top.meta["master"]["rank"] == "mage" and top.meta["desc"] in game.tables.sites["dungeon_styles"]["tower_lived"]
+    kinds = [f.get("kind") for f in top.features.values()]
+    assert "library" in kinds
+    assert all(f["trap"] == "glyph" and f["dc"] == 14 for f in top.features.values() if f.get("kind") == "trap")
+    assert all(f.get("warded") for f in top.features.values() if f.get("kind") == "lock")
+    names = set(top.terrain_ids[int(i)] for i in set(top.terrain.flatten().tolist()))
+    assert "bookcase" in names and "rubble" not in names
+
+
+def test_an_empty_towers_floors_are_as_they_were(game):
+    from realmwalker.world import dungeon as gen
+
+    site, fig = lived_tower(game)
+    fig.died = 1
+    assert gen.tower_master(game.world, site) is None
+    lm = gen.get_dungeon(game.world, game.tables, site, 1)
+    assert "master" not in lm.meta
+    assert all(f.get("trap") != "glyph" for f in lm.features.values())
+
+
+def test_the_master_waits_at_the_top_with_the_household(game):
+    from realmwalker.game import dungeon
+    from realmwalker.world import dungeon as gen
+
+    site, fig = lived_tower(game, "archmage")
+    depth = gen.depth_for(game.world, site)
+    top = gen.get_dungeon(game.world, game.tables, site, depth)
+    dungeon.populate(game, top)
+    assert top.meta["boss"] == "tower_archmage"
+    master = next(c for a in top.actors for c in a.creatures if c.def_id == "archmage")
+    assert master.name == fig.name and master.named and master.culture == fig.culture
+    others = {a.group for a in top.actors} - {"tower_archmage"}
+    assert others <= {"tower_apprentices", "tower_familiars"}
+
+
+def test_a_glyph_on_the_stair_goes_off(game, monkeypatch):
+    from realmwalker.game import dungeon
+    from realmwalker.world import dungeon as gen
+
+    site, fig = lived_tower(game)
+    lm = gen.get_dungeon(game.world, game.tables, site, 1)
+    game.player.local_key = lm.key
+    pos, f = next((p, f) for p, f in lm.features.items() if f.get("trap") == "glyph")
+    monkeypatch.setattr(dungeon, "passive", lambda g, s: (0, g.leader))
+    before = game.leader.hp = game.leader.max_hp = 200
+    dungeon.spring(game, lm, *pos, f)
+    assert f["spent"] and game.leader.hp < before
+    assert any("glyph of warding" in m.text for m in game.log.recent(3))
+
+
+def test_the_library_gives_scrolls_and_lore_once(game):
+    from realmwalker.game import dungeon
+    from realmwalker.world import dungeon as gen
+
+    site, fig = lived_tower(game)
+    depth = gen.depth_for(game.world, site)
+    lm = gen.get_dungeon(game.world, game.tables, site, depth)
+    game.player.local_key = lm.key
+    (x, y), _ = next((p, f) for p, f in lm.features.items() if f.get("kind") == "library")
+    game.player.lx, game.player.ly = lm.entry
+    assert dungeon.bump(game, x, y)
+    found = lm.items[(game.player.lx, game.player.ly)]
+    ids = [i.def_id for i in found]
+    assert "lore_book" in ids and any(i.startswith("scroll_") for i in ids)
+    scrolls = [game.tables.items.get(i)["use"]["scroll"] for i in ids if i.startswith("scroll_")]
+    assert all("wizard" in game.tables.spells[s]["classes"] and 1 <= game.tables.spells[s]["level"] <= 3 for s in scrolls)
+    dungeon.bump(game, x, y)
+    assert len(lm.items[(game.player.lx, game.player.ly)]) == len(found)  # (once)
+
+
+def test_the_world_remembers_the_wizard_slain_in_their_tower(game):
+    from types import SimpleNamespace
+
+    from realmwalker.game import past
+
+    site, fig = lived_tower(game)
+    body = spawn(game.tables, "mage", RNG(1, "m"), 1)
+    body.name, body.named = fig.name, True
+    past.on_battle(game, SimpleNamespace(outcome="victory", dead=[body]))
+    assert not fig.alive and fig.died_at == f"X{site.id}"
+    assert any(e.get("player") and fig.id in e.get("figures", ()) for e in game.world.history)
+    from realmwalker.world import dungeon as gen
+
+    held = game.world.factions.get(site.faction) if getattr(site, "faction", -1) >= 0 else None
+    if held is None or held.kind != "mages_circle":
+        assert gen.tower_master(game.world, site) is None  # (empty now)
+
+
+def test_temples_and_mages_on_the_books_blocks(game, tables):
+    from realmwalker.game import spellhire
+
+    occ = tables.people["occupations"]
+    assert occ["priest"]["stats"] == "priest" and occ["mage"]["stats"] == "mage"
+
+    great = [s for s in game.world.settlements if getattr(s, "great", False)]
+    if not great:
+        pytest.skip("no great city in the small test world")
+    from realmwalker.game.people import npcs_in, populate_town
+    from realmwalker.world.local import get_local_map
+
+    s = great[0]
+    game.player.x, game.player.y = s.x, s.y
+    lm = get_local_map(game.world, tables, s.x, s.y)
+    populate_town(game, lm, s)
+    folk = npcs_in(game.world, s.id)
+    high = [n for n in folk if n.stats == "archpriest"]
+    assert len(high) == 1 and high[0].title.startswith("high priest")
+    assert spellhire.reach(game, high[0]) == int(spellhire.spec(game)["reach"]["city"])
