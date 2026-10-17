@@ -605,10 +605,14 @@ def encounter_evade(game) -> bool:
     from realmwalker.rules import encounter
 
     loud = encounter.pace(game.tables, game.travel_pace()).get("stealth") == "disadvantage"
-    roll = dice.d20(rng, advantage=enc.spotted_first, disadvantage=loud).natural
+    from realmwalker.rules.engine.handlers import domains
+
+    worst = min((c for c in game.party if c.alive), key=lambda c: game.sheet(c).skill_bonus("stealth"))
+    blessed = domains.blessed(worst)  # (the Trickster's blessing on the one most likely to give the party away)
+    roll = dice.d20(rng, advantage=enc.spotted_first or blessed, disadvantage=loud).natural
     bonus = 5 if enc.spotted_first else 0
     ok = roll + stealth + bonus >= best_eyes
-    adv = {(True, False): " (adv)", (False, True): " (dis)"}.get((enc.spotted_first, loud), "")
+    adv = {(True, False): " (adv)", (False, True): " (dis)"}.get((enc.spotted_first or blessed, loud), "")
     game.say(f"<dice>Stealth{adv}: {roll} {'+' if stealth + bonus >= 0 else '-'} {abs(stealth + bonus)} = "
              f"{roll + stealth + bonus} vs {best_eyes}</>", "dice")
     if ok:
@@ -1095,6 +1099,10 @@ def rest(game, kind: str) -> list[str]:
         if kind == "long":
             notes += body.sleep_recovery(c)
         body.clamp_hp(c)
+    if kind == "long":
+        from realmwalker.rules.engine.handlers import domains
+
+        notes += domains.bless_after_rest(game)  # (Blessing of the Trickster: laid again on rising)
     notes += _encouraging_song(game, sleepless)
     notes += _rousing_words(game, sleepless)
     return notes

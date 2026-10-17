@@ -224,6 +224,26 @@
           {"level": 3, "id": "guided_strike", "name": "Channel Divinity: Guided Strike", "text": "Add +10 to an attack roll that would miss: your own, or a friend's within 30 feet.", "rule": "guided_strike"},
           {"level": 6, "id": "war_gods_blessing", "name": "War God's Blessing", "text": "A use of Channel Divinity casts Shield of Faith or Spiritual Weapon without a slot, and it lasts its minute without your concentration.", "rule": "war_gods_blessing"},
           {"level": 17, "id": "avatar_of_battle", "name": "Avatar of Battle", "text": "Resistance to bludgeoning, piercing and slashing damage.", "rule": "avatar_of_battle"}
+        ]},
+        "light": {"name": "Light Domain", "text": "Torch-bearers of the faith, who burn the dark and the lie away.",
+          "spells": {"3": ["burning_hands", "faerie_fire", "scorching_ray", "see_invisibility"], "5": ["daylight", "fireball"],
+                     "7": ["arcane_eye", "wall_of_fire"], "9": ["flame_strike", "scrying"]},
+          "features": [
+          {"level": 3, "id": "light_domain_spells", "name": "Light Domain Spells", "text": "Always prepared, beyond your count: Burning Hands, Faerie Fire, Scorching Ray and See Invisibility; Daylight and Fireball from 5; Arcane Eye and Wall of Fire from 7; Flame Strike and Scrying from 9."},
+          {"level": 3, "id": "radiance_of_the_dawn", "name": "Channel Divinity: Radiance of the Dawn", "text": "A Magic action: light flashes out 30 feet from you, ending magical darkness there; the foes in it make a Constitution save or take 2d10 + your level radiant damage (half on a success).", "rule": "radiance_of_the_dawn"},
+          {"level": 3, "id": "warding_flare", "name": "Warding Flare", "text": "Your reaction as a creature you can see within 30 feet attacks: light flares in its eyes and the roll is at a disadvantage. As many times as your Wisdom modifier (at least once) between long rests.", "rule": "warding_flare"},
+          {"level": 6, "id": "improved_warding_flare", "name": "Improved Warding Flare", "text": "Warding Flare comes back with a short rest too, and the one it shields gains 2d6 + your Wisdom modifier temporary hit points.", "rule": "warding_flare_improved"},
+          {"level": 17, "id": "corona_of_light", "name": "Corona of Light", "text": "A Magic action: for a minute you shine with sunlight 60 feet round, and your foes in it make their saves against your Radiance of the Dawn and your fire and radiant spells at a disadvantage. As many times as your Wisdom modifier between long rests.", "rule": "corona_of_light"}
+        ]},
+        "trickery": {"name": "Trickery Domain", "text": "Mischief-makers and liberators of the faith, who mock the proud and free the bound.",
+          "spells": {"3": ["charm_person", "disguise_self", "invisibility", "pass_without_trace"], "5": ["hypnotic_pattern", "nondetection"],
+                     "7": ["confusion", "dimension_door"], "9": ["dominate_person", "modify_memory"]},
+          "features": [
+          {"level": 3, "id": "trickery_domain_spells", "name": "Trickery Domain Spells", "text": "Always prepared, beyond your count: Charm Person, Disguise Self, Invisibility and Pass without Trace; Hypnotic Pattern and Nondetection from 5; Confusion and Dimension Door from 7; Dominate Person and Modify Memory from 9."},
+          {"level": 3, "id": "blessing_of_the_trickster", "name": "Blessing of the Trickster", "text": "A Magic action: you or a friend within 30 feet moves at an advantage on Stealth until your next long rest, or until you bless another. You bless the party's worst sneak as you rise from each long rest.", "rule": "blessing_of_the_trickster"},
+          {"level": 3, "id": "invoke_duplicity", "name": "Channel Divinity: Invoke Duplicity", "text": "A Bonus Action: a perfect double of you stands within 30 feet for a minute. You cast spells from its square as well as your own; beside a foe with it, your blows have advantage; a Bonus Action moves it 50 feet. It ends if you are Incapacitated.", "rule": "invoke_duplicity"},
+          {"level": 6, "id": "tricksters_transposition", "name": "Trickster's Transposition", "text": "As you make or move your double, you may swap places with it.", "rule": "tricksters_transposition"},
+          {"level": 17, "id": "improved_duplicity", "name": "Improved Duplicity", "text": "You and your friends have advantage on blows at a foe beside your double, and when it ends, you or a friend beside it regains your cleric level in hit points.", "rule": "improved_duplicity"}
         ]}
       },
       "kits": [

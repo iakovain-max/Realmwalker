@@ -249,7 +249,9 @@ def cast(b, f, sid: str, spell: dict, target, point, *, up: int, mod: int, dc: i
             b.say(f"The spell breaks against the shimmering barrier around {target.the_name}.", "magic")
         return
     before = b.__dict__.get("_casting")
+    before_spell = b.__dict__.get("_casting_spell")
     b._casting = f if not spell.get("ability") and "item" not in spell.get("classes", ()) else None
+    b._casting_spell = spell  # (what is being cast: a Light cleric's corona reads its damage)
     try:
         if target is not None and target.team != f.team and spellrules.harms(spell) and not spell.get("area") \
                 and not spellrules.has_op(spell, "attack"):  # (an attack roll meets Sanctuary in Battle._attack)
@@ -267,6 +269,7 @@ def cast(b, f, sid: str, spell: dict, target, point, *, up: int, mod: int, dc: i
 
         arcane.spend_struck(b, f)  # (Eldritch Strike: spent on the save it weakened)
         b._casting = before
+        b._casting_spell = before_spell
 
 
 def run(c: Cast, ops, victim=None) -> None:

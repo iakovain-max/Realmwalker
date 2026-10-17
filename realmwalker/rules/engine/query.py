@@ -175,6 +175,12 @@ def attack_roll(b, att, target, opt, *, space=None) -> Roll:
         r.add("disadvantage", "rain")
     if opt.is_melee and b.flanker(att, target, space=a_space) is not None:
         r.add("advantage", "flanking")
+    if b.tokens:
+        from realmwalker.rules.engine.handlers import domains
+
+        why_d = domains.distracted(b, att, target, a_space)  # (Invoke Duplicity's Distract, Improved Duplicity)
+        if why_d:
+            r.add("advantage", why_d)
     if att.char and "heavy" in opt.properties and opt.kind in ("melee", "ranged"):
         # 2024: a Heavy melee weapon wants Strength 15, a Heavy ranged one Dexterity 13
         ability, need = ("str", 15) if opt.is_melee else ("dex", 13)
@@ -269,6 +275,12 @@ def save_roll(b, f, ability: str, *, bonus: int = 0, against: tuple = ()) -> Sav
             b.__dict__.setdefault("_struck_used", set()).add(f.id)
         if caster.__dict__.get("ambush_turn") == (b.round, b.turn):
             out.roll.add("disadvantage", "Magical Ambush")
+    if b is not None and (caster is not None or b.__dict__.get("_dawn") is not None):
+        from realmwalker.rules.engine.handlers import domains
+
+        glare = domains.corona_against(b, f)  # (a Light cleric's Corona of Light)
+        if glare:
+            out.roll.add("disadvantage", glare)
     ctx = tr.Ctx(b, f, ability=ability, against=tuple(against))
     for mode, why in tr.modifiers(f, "save", ctx):
         out.roll.add(mode, why)

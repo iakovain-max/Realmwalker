@@ -255,6 +255,44 @@
                     "requires": ["bonus_left", "foe_in_sight"], "effects": [{"op": "special", "handler": "war_gods_blessing", "spell": "spiritual_weapon"}]}]
     },
     "avatar_of_battle": {"name": "Avatar of Battle", "text": "Resistance to bludgeoning, piercing and slashing damage.", "modifiers": [{"resist": ["bludgeoning", "piercing", "slashing"]}]},
+    "radiance_of_the_dawn": {
+      "name": "Radiance of the Dawn", "text": "Channel Divinity: light flashes 30 feet out, ending magical darkness; foes in it take 2d10 + the cleric's level radiant (Constitution half).",
+      "activate": {"id": "radiance_of_the_dawn", "name": "Radiance of the Dawn", "cost": "action", "uses": "channel_divinity", "does": "power",
+                   "requires": ["dawn_worth"], "effects": [{"op": "special", "handler": "radiance_of_the_dawn"}]}
+    },
+    "warding_flare": {"name": "Warding Flare", "text": "A reaction as a seen foe within 30 feet attacks: light flares in its eyes, and the roll is at a disadvantage.",
+                      "resource": {"id": "warding_flare", "max": "wis_mod", "recover": "long"}, "where": "Battle._attack"},
+    "warding_flare_improved": {"name": "Improved Warding Flare", "text": "Warding Flare comes back with a short rest; the one it shields gains 2d6 + Wisdom temporary hit points.",
+                               "resource": {"id": "warding_flare", "max": "wis_mod", "recover": "short"}, "where": "Battle._attack"},
+    "corona_of_light": {
+      "name": "Corona of Light", "text": "For a minute, sunlight 60 feet round; foes in it save at a disadvantage against the cleric's Radiance of the Dawn and fire and radiant spells.",
+      "resource": {"id": "corona_of_light", "max": "wis_mod", "recover": "long"},
+      "activate": {"id": "corona_of_light", "name": "Corona of Light", "cost": "action", "uses": "corona_of_light", "does": "corona",
+                   "requires": ["corona_out", "foe_in_sight"], "effects": [{"op": "special", "handler": "corona_of_light"}]}
+    },
+    "blessing_of_the_trickster": {
+      "name": "Blessing of the Trickster", "text": "One blessed by the cleric moves at an advantage on Stealth until the cleric's next long rest.",
+      "where": "domains.blessed",
+      "activate": {"id": "blessing_of_the_trickster", "name": "Blessing of the Trickster", "cost": "action", "does": "blessing",
+                   "aim": "trickster_blessable", "range": 30, "effects": [{"op": "special", "handler": "blessing_of_the_trickster"}]}
+    },
+    "invoke_duplicity": {
+      "name": "Invoke Duplicity", "text": "Channel Divinity: a double of the cleric for a minute; spells cast from its square, advantage beside a foe with it, moved 50 feet with a bonus action.",
+      "where": "domains",
+      "activate": [{"id": "invoke_duplicity", "name": "Invoke Duplicity (a double beside a foe)", "cost": "bonus", "uses": "channel_divinity", "does": "double",
+                    "aim": "double_new", "range": 30, "requires": ["no_double"], "effects": [{"op": "special", "handler": "invoke_duplicity"}]},
+                   {"id": "move_duplicity", "name": "Move the double (bonus action)", "cost": "bonus", "does": "double",
+                    "aim": "double_move", "range": 120, "requires": ["double_up"], "effects": [{"op": "special", "handler": "move_duplicity"}]}]
+    },
+    "tricksters_transposition": {
+      "name": "Trickster's Transposition", "text": "As the double is made or moved, the cleric may swap places with it.",
+      "where": "domains",
+      "activate": [{"id": "duplicity_swap", "name": "Invoke Duplicity and swap places", "cost": "bonus", "uses": "channel_divinity", "does": "double",
+                    "aim": "double_new", "range": 30, "requires": ["no_double"], "effects": [{"op": "special", "handler": "invoke_duplicity", "swap": true}]},
+                   {"id": "move_duplicity_swap", "name": "Move the double and swap places", "cost": "bonus", "does": "double",
+                    "aim": "double_move", "range": 120, "requires": ["double_up"], "effects": [{"op": "special", "handler": "move_duplicity", "swap": true}]}]
+    },
+    "improved_duplicity": {"name": "Improved Duplicity", "text": "Friends' blows at a foe beside the double have advantage; as it ends, the cleric's level in healing.", "where": "domains"},
     "disciple_of_life": {
       "name": "Disciple of Life", "text": "Healing spells heal 2 + the spell's level more.",
       "hooks": [{"event": "heal_spell", "as": "self", "handler": "disciple_of_life"}]
