@@ -1,0 +1,6 @@
+{
+  "_comment": "Expansion 3 part F.1: the Otherworldly Steed of Find Steed (PHB 2024 p. 273, PDF 276), at the spell's own level 2; game/allies.steed_def sets its numbers for the slot and its rider (AC 10 + level, 5 + 10 HP a level, the rider's spell attack, 1d8 + level of radiant, psychic or necrotic, a Fly Speed from level 4).",
+  "statblocks": {
+    "otherworldly_steed": {"name": "Otherworldly Steed", "page": 276, "size": "large", "type": "celestial", "tags": [], "alignment": "neutral", "ac": 12, "initiative": 1, "hp": "25", "hp_avg": 25, "speed": {"walk": 60}, "abilities": {"str": 18, "dex": 12, "con": 14, "int": 6, "wis": 12, "cha": 8}, "saves": {}, "skills": {}, "senses": {}, "passive": 11, "languages": [], "telepathy": 0, "cr": 0, "xp": 0, "treasure": ["none"], "pb": 2, "resist": [], "vulnerable": [], "immune": [], "condition_immune": [], "gear": [], "traits": [{"id": "life_bond", "name": "Life Bond"}], "actions": [{"id": "otherworldly_slam", "name": "Otherworldly Slam", "kind": "melee", "bonus": 4, "reach": 5, "damage": "1d8+2", "type": "radiant"}], "multiattack": null, "bonus_actions": [], "reactions": [], "spellcasting": null, "legendary_resistance": null, "legendary": null}
+  }
+}

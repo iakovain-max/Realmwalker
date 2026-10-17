@@ -538,7 +538,7 @@ def wish_copies(tables) -> list[str]:
         if not isinstance(sp, dict) or sid.startswith("_") or not 1 <= int(sp.get("level", 0)) <= 8:
             continue
         cls = set(sp.get("classes", ()))
-        if not cls or cls <= {"item", "again", "wish"} or "item" in cls or sp.get("again_of") or sp.get("ability") \
+        if not cls or cls <= {"item", "again", "wish", "creature"} or "item" in cls or sp.get("again_of") or sp.get("ability") \
                 or sp.get("thrown") or out_of_battle(sp) or sp.get("cast") == "reaction" or sp.get("target") == "item" \
                 or has_op(sp, "identify", "revive"):
             continue
@@ -734,7 +734,9 @@ ROAD_USES = ("feed", "water", "purify", "goodberry", "feast", "ward", "repose", 
              # Part E.6: lasting protections and the caster's keeping (game/warding.py)
              "protect", "hallow", "demiplane", "cauldron",
              # Part E.7: great magic (game/greatmagic.py; Wish's other uses are its road_too "wish")
-             "contingency", "jar", "clone", "imprison", "wish")
+             "contingency", "jar", "clone", "imprison", "wish",
+             # Part F.1: a familiar and a steed (game/allies.py)
+             "familiar", "steed")
 # What each of Part E.3's road uses is about (an op's `what`, `how` or `with`; the start-up check knows them).
 E3_KINDS = {"sense": ("what", ("magic", "evil", "poison", "traps")),
             "locate": ("what", ("object", "creature", "nature")),

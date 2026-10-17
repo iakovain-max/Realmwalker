@@ -28,6 +28,8 @@ an op inside another (`on_hit`, `on_fail`, `then`) works on the creature the out
     slow       feet off its speed, until the start of the caster's next turn
     no_opportunity, no_heal, mark   (until a turn ends or starts: see each)
     lose_turn  it spends its next turn grovelling on the ground (Command)
+    ally       kind ("steed"): a creature that fights for the caster appears beside them (Find Steed;
+               rules/allies.summon, Battle.add_ally)
     burning    it catches fire (1d4 fire at the start of each of its turns, until put out with an action)
     damage     damage that has already landed (a stat block's extra harm): damage + type
     stabilize, restore (conditions, one, disease), revive (consumes, within_rounds), identify (outside a fight)
@@ -162,7 +164,7 @@ class Cast:
 
 MECHANICS = (("attack", "attack"), ("darts", "darts"), ("save", "save"), ("heal", "heal"), ("stabilize", "heal"),
              ("restore", "heal"), ("revive", "heal"), ("modifier", "buff"), ("teleport", "teleport"), ("zone", "zone"),
-             ("summon", "summon"), ("guardian", "summon"), ("aura", "aura"))
+             ("summon", "summon"), ("guardian", "summon"), ("aura", "aura"), ("ally", "summon"))
 
 
 def mechanic(spell: dict) -> str:
@@ -710,11 +712,18 @@ def _heal(c: Cast, o: dict, victim) -> None:
             amount += sum(b.rng.randint(1, max(1, dice.parse(o["dice"])[1])) - 1 for r in rolled.rolls if r == 1)
         if o.get("add") == "level" and f.char is not None:
             amount += f.char.level  # Second Wind
+        elif o.get("add") == "level" and f.bond is not None:
+            amount += int(f.bond.get("level", 0))  # (a celestial steed's Healing Touch: the spell's level)
         if not spell.get("ability"):
             n_, s_, flat_ = dice.parse(expr(c, o["dice"], o.get("up", "")))
             amount = events.emit(b, "heal_spell", actor=f, target=x, amount=amount, level=c.level,
                                  rolled=rolled.total, most=n_ * s_ + flat_).amount
         b._heal(x, amount)
+        if c.level >= 1 and not spell.get("ability"):  # (Life Bond: a steed beside its rider heals as much)
+            for s_ in b.fighters:
+                if s_.bond is not None and s_.bond.get("owner") == x.id and s_.active and s_.has_trait("life_bond") \
+                        and b.gap(s_, x) <= 1 and s_.hp < s_.max_hp:
+                    b._heal(s_, amount)
         _restored(c, x, o.get("restore", ()))
         if o.get("mends_wound") and x.wounds:
             w = max(x.wounds, key=lambda w: (w.severity, w.bleed))
@@ -1410,6 +1419,13 @@ def _guardian(c: Cast, o: dict, victim) -> None:
              on_save="half" if o.get("half") else "none", friends_safe=True, budget=int(o.get("budget", 60)))
     z.token = tok.id  # type: ignore[attr-defined]
     b._add_zone(z)
+
+
+@op("ally")
+def _ally(c: Cast, o: dict, victim) -> None:
+    from realmwalker.rules import allies
+
+    allies.summon(c.b, c.caster, o.get("kind", "steed"), c.level or int(c.spell.get("level", 1)))
 
 
 @op("summon")

@@ -345,7 +345,7 @@ ITEMS = {
     "divination_tools": "item/misc/misc_deck_new.png", "jacinth": "item/amulet/crystal_red.png",
     "great_diamond": "item/misc/misc_crystal_old.png", "everburning_torch": "item/misc/misc_lantern.png",
     # the costly components of Part E.3's spells (Expansion 3 E.3)
-    "seers_incense": "item/misc/misc_phial_inert.png", "rare_incense": "item/misc/misc_lamp_old.png",
+    "seers_incense": "item/misc/misc_phial_inert.png", "burning_incense": "item/misc/misc_phial.png", "rare_incense": "item/misc/misc_lamp_old.png",
     "ivory_strips": "item/amulet/bone_gray.png", "glass_eye": "item/amulet/eye_cyan.png",
     "scrying_mirror": "item/misc/misc_phantom_mirror.png", "sapphire": "item/amulet/stone_2_blue.png",
     # the costly components of Part E.4's spells (Expansion 3 E.4)

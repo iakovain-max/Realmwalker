@@ -256,6 +256,9 @@ class Fighter:
         self.acted = False  # has had a turn in this fight (the Cutthroat's Assassinate)
         self.glow = 0  # squares of bright light it carries (a torch, a glowing blade)
         self.jar: dict | None = None  # (Magic Jar: a body whose soul is in its gem: {host, dc, tried})
+        # A creature fighting for the party (Battle.add_ally): {owner: fighter id, kind: familiar/steed, spell, level,
+        # type: the creature type it has instead of its form's (a familiar's celestial, fey or fiend)}.
+        self.bond: dict | None = None
         if char is not None:
             from realmwalker.rules import magic
 
@@ -463,7 +466,14 @@ class Fighter:
 
     @property
     def kind(self) -> str:
+        if self.bond is not None and self.bond.get("type"):
+            return self.bond["type"]  # (a familiar in an owl's shape is a fey, a celestial or a fiend)
         return "humanoid" if self.char else self.cdef["kind"]
+
+    @property
+    def blows(self) -> bool:
+        """Whether it may attack at all: a familiar cannot (PHB 2024), though it can Help and do the rest."""
+        return self.bond is None or self.bond.get("kind") != "familiar"
 
     def has_trait(self, trait: str) -> bool:
         return trs.has(self, trait)
@@ -768,6 +778,53 @@ class Battle:
             f.x, f.y = self._free_near(want, f.sq, taken)
             taken |= set(f.cells)
 
+    # ------------------------------------------------------------------ allies: familiars and steeds (Expansion 3 F)
+    def add_ally(self, creature: Creature, owner: Fighter, kind: str, *, spell: str = "", level: int = 0,
+                 type_: str = "", cdef: dict | None = None) -> Fighter:
+        """A creature that fights for the party beside `owner` (a familiar, a steed): on the nearest free squares,
+        at once. In a fight already under way a familiar rolls its own Initiative and joins the order by it (its turn
+        comes next round if its place has passed); a steed takes its turn right after its owner's (PHB 2024)."""
+        f = Fighter(max((x.id for x in self.fighters), default=0) + 1, PARTY, self.t, creature=creature)
+        if cdef is not None:
+            f.cdef = cdef  # (the steed's numbers for its slot: allies.steed_def)
+        f.bond = {"owner": owner.id, "kind": kind, "spell": spell, "level": int(level), "type": type_}
+        for a in f.cdef["attacks"]:
+            if a.get("recharge"):
+                f.recharge[a["name"]] = True
+        taken = {c for x in self.on_field() for c in x.cells}
+        f.x, f.y = self._free_near((owner.x + owner.sq, owner.y), f.sq, taken)
+        f.z = 0
+        self.fighters.append(f)
+        if self.order:
+            if kind == "familiar":
+                bonus = int(f.cdef.get("initiative", f.mod("dex")))
+                f.initiative = dice.d20(self.rng).natural + bonus
+                at = next((i for i, fid in enumerate(self.order) if self.fighter(fid).initiative < f.initiative),
+                          len(self.order))
+                self.order.insert(at, f.id)
+                if at <= self.turn:
+                    self.turn += 1  # (its place has passed this round: it acts next round)
+            else:
+                f.initiative = owner.initiative
+                at = self.order.index(owner.id) + 1 if owner.id in self.order else len(self.order)
+                self.order.insert(at, f.id)
+                if at <= self.turn:
+                    self.turn += 1
+        self._event("appear", who=f.id)
+        return f
+
+    def allies_of_owner(self, owner: Fighter) -> list[Fighter]:
+        return [x for x in self.fighters if x.bond is not None and x.bond.get("owner") == owner.id]
+
+    def _bond_order(self) -> None:
+        """A steed's turn comes right after its owner's, whatever it rolled (it shares the owner's count)."""
+        for f in [x for x in self.fighters if x.bond is not None and x.bond.get("kind") != "familiar"]:
+            owner = f.bond["owner"]
+            if owner in self.order and f.id in self.order:
+                self.order.remove(f.id)
+                self.order.insert(self.order.index(owner) + 1, f.id)
+                f.initiative = self.fighter(owner).initiative
+
     def _free_near(self, want: tuple[int, int], size: int, taken: set) -> tuple[int, int]:
         """The nearest place (by walking, then as the crow flies) where a creature of this size can stand."""
         fld = self.field
@@ -801,6 +858,7 @@ class Battle:
             f.initiative = (dice.d20(self.rng, advantage=r.advantage, disadvantage=r.disadvantage).natural + bonus
                             + query.d20_penalty(f))
         self.order = [f.id for f in sorted(self.fighters, key=lambda f: (-f.initiative, -f.mod("dex"), self.rng.random()))]
+        self._bond_order()
         events.emit(self, "battle_start")  # (Improve Fate comes back with the initiative)
         if intro:
             self.say(intro, "danger")
@@ -963,6 +1021,8 @@ class Battle:
         f.action, f.bonus, f.reaction = 1, 1, True
         f.attacks_left = 0
         f.dashed = f.disengaged = f.light_attack = f.offhand_done = False
+        if f.creature is not None and (f.fly_speed > 0 and f.has_trait("flyby") or f.has_trait("agile")):
+            f.disengaged = True  # (Flyby, Agile: an owl or a rat slips out of reach and nobody gets a blow at it)
         f.cast_bonus_spell = f.cast_action_spell = False
         f.moved_feet = 0
         f.__dict__["turn_start_at"] = (f.x, f.y)  # (Charger: how far they ran at a foe)
@@ -1182,8 +1242,9 @@ class Battle:
                 self._fall(f)
         foes = [f for f in self.team(FOE) if f.active and "unconscious" not in f.conditions and not _feigning(f)
                 or f.state == "away"]
-        party = [f for f in self.team(PARTY) if f.active and "unconscious" not in f.conditions and not _feigning(f)
-                 or f.state == "away"]
+        # (an ally alone - a familiar, a steed - does not keep a fight going when every one of the party is down)
+        party = [f for f in self.team(PARTY) if f.bond is None and (
+            f.active and "unconscious" not in f.conditions and not _feigning(f) or f.state == "away")]
         if not foes:
             self.outcome = "victory"
         elif not party:
@@ -1878,6 +1939,8 @@ class Battle:
 
     # ------------------------------------------------------------------ attack options
     def attack_options(self, f: Fighter) -> list[AttackOption]:
+        if not f.blows:
+            return []  # (a familiar)
         out = self._attack_options(f)
         if f.buffs and f.buff_value("mist"):
             for o in out:  # (Gaseous Form: a drifting mist cannot strike)
@@ -2776,7 +2839,13 @@ class Battle:
         f.conditions = {}
         self._release(f)
         self._event("dead", who=f.id)
-        if f.creature:
+        if killer is not None and killer.bond is not None:
+            killer = self.fighter(killer.bond["owner"])  # (what a familiar or a steed kills, its owner is known for)
+        if f.creature and f.bond is not None:
+            f.creature.alive = False  # (it disappears at 0 hit points, leaving nothing: PHB 2024)
+            self._event("vanish", who=f.id)
+            self.say(f"{f.the_name[:1].upper() + f.the_name[1:]} is gone, back to wherever it came from.", "danger")
+        elif f.creature:
             f.creature.alive = False
             self.say(self._fill(self.rng.choice(self.t.combat_text["dead"]), killer, f), "good" if f.side == FOE else "danger")
             if killer is not None and killer.char:
@@ -2790,6 +2859,9 @@ class Battle:
                 kinds = [x.cdef["plural"] for x in self.side(FOE) if x.creature is not None]
                 f.char.death_cause = f"bled to death fighting {kinds[0]}" if kinds else "bled to death in a fight"
             self.say(f"<danger>{f.the_name} is dead.</> ({cause})", "danger")
+            for x in self.fighters:  # (a steed disappears when its rider dies: PHB 2024)
+                if x.bond is not None and x.bond.get("kind") == "steed" and x.bond["owner"] == f.id and x.active:
+                    self._kill(x, "its rider is dead")
         self._morale_losses(f.side)
         events.emit(self, "killed", actor=killer, target=f)  # a leader's fall...
 
@@ -2814,8 +2886,8 @@ class Battle:
                 self._morale_check(f, "losses")
 
     def _morale_check(self, f: Fighter, reason: str) -> None:
-        if f.morale_type in FEARLESS or f.state != "fighting" or "possessed" in f.conditions:
-            return
+        if f.morale_type in FEARLESS or f.state != "fighting" or "possessed" in f.conditions or f.bond is not None:
+            return  # (a familiar or a steed obeys: it does not run)
         dc = 10 + (2 if reason == "leader" else 0)
         roll = dice.d20(self.rng).natural + f.mod("wis")
         self.dice_say(f"{f.name} morale ({reason}): {roll} vs {dc}")
@@ -4735,7 +4807,7 @@ class Battle:
         items = [i for c in dead for i in c.inventory] + list(self.thrown)
         if self.outcome in ("victory", "parley"):  # a minute's search finds half the ammunition loosed (2024)
             items += [Item(0, def_id, n // 2) for def_id, n in sorted(self.shot.items()) if n // 2 > 0]
-        party_dead = [f.char for f in self.side(PARTY) if f.state == "dead"]
+        party_dead = [f.char for f in self.side(PARTY) if f.state == "dead" and f.char is not None]
         return BattleResult(self.outcome or "victory", xp, dead, captives, fled, money, items, party_dead, self.round,
                             self.robbed_money)
 

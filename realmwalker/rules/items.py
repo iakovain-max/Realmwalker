@@ -62,7 +62,7 @@ class ItemTable:
         values, rarities = numbers.get("value") or [], numbers.get("rarity") or []
         for sid, spell in spells.defs.items():
             level = int(spell["level"])
-            if spell.get("classes") in (["item"], ["again"]):
+            if spell.get("classes") in (["item"], ["again"], ["creature"]):
                 continue  # (a flask's or a coating's pseudo-spell, a spell's follow-up: nothing to write down)
             what = "a cantrip" if level == 0 else f"level {level}"
             self.defs[f"scroll_{sid}"] = {

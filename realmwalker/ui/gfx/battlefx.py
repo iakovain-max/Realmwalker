@@ -24,6 +24,8 @@ PUSH_STEP = 0.06
 LUNGE = 0.26
 FLIGHT = 0.26
 FLOAT = 1.1
+# A steed of another world, in its kind's colours (Find Steed: celestial pale gold, fey green-silver, fiend ember).
+STEED_TINT = {"celestial": (255, 238, 190, 255), "fey": (196, 255, 222, 255), "fiend": (225, 140, 120, 255)}
 FALL = 0.4
 STAGGER = 0.30
 TILE_SIZES = (96, 64, 48, 32, 24, 16)  # whole and half multiples of the 32-pixel tiles, so they stay sharp
@@ -811,8 +813,9 @@ class BattleBoard:
         seen_by_party = ov.get("seen", None)
         order = []
         for f in battle.fighters:
-            if f.state == "fled" or f.state == "away" and not (f.away or {}).get("stays"):
-                continue  # (gone, or banished or blinked away for now)
+            if f.state == "fled" or f.state == "away" and not (f.away or {}).get("stays") \
+                    or f.state == "dead" and getattr(f, "bond", None) is not None:
+                continue  # (gone, or banished or blinked away for now; a familiar or a steed vanishes at 0)
             x, y = self.pos(f, now)
             order.append((y + f.sq, f, x, y))
         order.sort(key=lambda t: t[0])
@@ -1082,6 +1085,9 @@ class BattleBoard:
 def _figure(f, game, atlas) -> list:
     if f.char is not None:
         return dolls.character(f.char, game.tables, atlas=atlas)
+    bond = getattr(f, "bond", None) or {}
+    if bond.get("picture"):  # (a steed: the animal it looks like, in its kind's colours)
+        return [(f"creature/{bond['picture']}", STEED_TINT.get(bond.get("type", ""), (1.0, 1.0, 1.0)), 0, 0)]
     return dolls.creature(f.creature.def_id, game.tables, f"foe{f.id}", atlas, sex=getattr(f.creature, "sex", ""))
 
 

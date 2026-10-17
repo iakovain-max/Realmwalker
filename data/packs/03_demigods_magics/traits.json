@@ -3,6 +3,17 @@
   "traits": {
     "expeditious_retreat": {"name": "Expeditious Retreat", "text": "Dash as a bonus action while the spell lasts.",
                             "activate": {"id": "retreat_dash", "name": "Expeditious Retreat: Dash (bonus action)",
-                                         "cost": "bonus", "via": "dash"}}
+                                         "cost": "bonus", "via": "dash"}},
+    "flyby": {"name": "Flyby", "text": "Flies in and out of reach without giving anyone a blow at it.",
+              "where": "Battle._start_of_turn"},
+    "agile": {"name": "Agile", "text": "Slips out of reach without giving anyone a blow at it.",
+              "where": "Battle._start_of_turn"},
+    "amphibious": {"name": "Amphibious", "text": "Breathes air and water alike.", "where": "not yet"},
+    "standing_leap": {"name": "Standing Leap", "text": "Leaps far for its size, running start or not.",
+                      "where": "not yet"},
+    "jumper": {"name": "Jumper", "text": "Leaps far for its size, running start or not.", "where": "not yet"},
+    "mimicry": {"name": "Mimicry", "text": "Mimics the voices and sounds it has heard.", "where": "not yet"},
+    "life_bond": {"name": "Life Bond", "text": "Healed by a spell of level 1 or more within 5 feet of it, its rider heals it as much.",
+                  "where": "effects.heal"}
   }
 }

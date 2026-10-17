@@ -221,6 +221,9 @@ def spell_value(b, f, sid: str, *, target=None, point=None, dc: int | None = Non
             w.help += max(0.0, amount - x.temp_hp) * (0.6 if any(b.gap(x, e) <= 6 for e in b.enemies_of(f)) else 0.2)
         elif kind == "move_zone" and point is not None:
             w.damage += _moved_zone_worth(b, f, spell, point)
+        elif kind == "ally":  # (Find Steed: a fighter more on the field, unless one stands there already)
+            if not any(x.bond.get("kind") == o.get("kind", "steed") and x.active for x in b.allies_of_owner(f)):
+                w.help += (4.5 + lvl) * 0.55 * 3 + (5 + 10 * lvl) * 0.3
         elif kind in ("summon", "aura", "guardian"):
             d, t, more = spellrules.damage_parts(o)[0] if spellrules.damage_parts(o) else ("0", "", "")
             w.help += avg(spellrules.scaled(d, more, up)) * 0.55 * 3

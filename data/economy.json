@@ -74,7 +74,7 @@
                 ["rare_oils", 0, 1, "city"], ["feast_bowl", 0, 1, "city"], ["miniature_door", 0, 1, "town"],
                 ["forked_rod", 0, 1, "city"], ["ruby_dust_pinch", 0, 2, "town"], ["rare_inks", 0, 2, "town"],
                 ["divination_tools", 0, 1, "town"], ["jacinth", 0, 1, "city"], ["great_diamond", 0, 1, "city"],
-                ["seers_incense", 0, 3, "town"], ["ivory_strips", 0, 1, "town"], ["glass_eye", 0, 1, "town"],
+                ["seers_incense", 0, 3, "town"], ["burning_incense", 0, 3, "town"], ["ivory_strips", 0, 1, "town"], ["glass_eye", 0, 1, "town"],
                 ["rare_incense", 0, 1, "city"], ["scrying_mirror", 0, 1, "city"], ["sapphire", 0, 1, "city"],
                 ["jade_dust", 0, 3, "town"], ["lead_ink", 0, 2, "town"], ["diamond_dust_pinch", 0, 3, "town"],
                 ["gem_500", 0, 1, "town"], ["gem_1000", 0, 1, "city"], ["gem_5000", 0, 1, "city"],

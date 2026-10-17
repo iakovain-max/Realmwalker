@@ -1,0 +1,7 @@
+{
+  "_comment": "Expansion 3 part F.1: the creatures that fight for the party (game/allies.py). Never met in the wild: no encounters.",
+  "creatures": {
+    "otherworldly_steed": {"statblock": "otherworldly_steed", "name": "steed", "plural": "steeds", "body": "quadruped", "morale": "beast", "ai": {"role": "brute"}, "butcher": [], "gear": [], "traits": [], "descriptions": ["A steed that is not quite of this world: its eyes hold another light, and it waits on its rider's thought.", "It stands too still for a living animal, and the air around it smells of somewhere else."]}
+  },
+  "encounters": {}
+}
