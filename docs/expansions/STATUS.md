@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 03 Demigods & Magics · Part F (familiars, steeds and summons), F.5 next · branch dlc/03-demigods-magics
+Current: 03 Demigods & Magics · Part F (familiars, steeds and summons), F.6 next · branch dlc/03-demigods-magics
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -26,10 +26,11 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   the field: Find Familiar's twelve forms and Find Steed's Otherworldly Steed fight beside their owner) and F.2
   (summoned spirits of levels 2-4: Summon Beast, Fey, Undead, Aberration, Construct, Elemental, Giant Insect) and F.3
   (the spirits of levels 5-6 and Animate Objects: Summon Celestial, Summon Dragon, Summon Fiend, Animate Objects) and
-  F.4 (the raised dead: Animate Dead, Create Undead, Finger of Death's zombie, the ghast and the mummy)
+  F.4 (the raised dead: Animate Dead, Create Undead, Finger of Death's zombie, the ghast and the mummy) and F.5 (the
+  bound: Planar Ally, Planar Binding, Magic Circle turned inward)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
-  adapted); Expansion 3: 203 done, 318 adapted, 1 omitted of 560 (parts A to E and F.1 to F.4 settled). PHB 61% · DMG 12% · MM 8%
+  adapted); Expansion 3: 203 done, 320 adapted, 1 omitted of 560 (parts A to E and F.1 to F.5 settled). PHB 61% · DMG 12% · MM 8%
 Assumptions waiting for Anton:
 - The Player2 AI writer is removed (tagged `before-ai-removal`); its text is replaced everywhere by the game's own
   words, strengthened where they were thin.
@@ -375,17 +376,33 @@ Ideas for later:
   who saves for the fight (the book: 24 hours). The mummy's rot outside a fight: hit points kept no higher than they
   were (checked as time passes), the maximum 3d6 lower each day, at 0 dust; Remove Curse lifts it (Greater
   Restoration does not yet). Dust: only True Resurrection (its "cures") reaches the body.
-Next session starts at: task F.5 in docs/expansions/03-demigods-magics.md (Part F: the bound - Planar Ally (a spirit
-of the cleric's god for a price: 1,000 GP an hour, 10,000 a day up to ten days; the F.3 celestial, elemental or
-fiendish spirit at the spell's level as the creature, the god's kind deciding which), Planar Binding (a captive
-celestial, elemental, fey or fiend - the 2025 goblins, hobgoblins and bugbears are fey and gnolls fiends, so captives
-from `renown.flags["captives"]` qualify - or a Planar Ally's spirit, bound for 24 hours, 10, 30, 180 or 366 days by
-the slot; a Charisma save; the jewel of 1,000 GP consumed) and Magic Circle turned inward (a Planar Ally's spirit
-will not stay an hour to be bound unless held in it). Write F.5's "How" first. The pages (PHB PDF): Planar Ally 307-308,
-Planar Binding 308, Magic Circle 296 (its reversal: the cylinder holds what is inside). Build on F.4's servants
-(rules/servants.py records with `until`, game/servants.py tick and freeing; a bound creature acts on its own, `word`
-False).
-Part E and F.1 to F.4 are in `main`.
+- Expansion 3 F.5: Planar Ally's god is the faith of the cleric's people (data/factions.json faiths `ally`: celestial
+  for the gods of light and law, elemental for the old gods of land, sky and sea, fiend for the dark gods and cults;
+  which form each sends was chosen by its god's nature); the terms are an hour, a day, three days or ten days at the
+  book's 1,000 GP an hour and 10,000 a day (the 100 GP minute is never cheaper here), paid at once; "aligned with the
+  creature's ethos" is the leader's membership of that god's church (half); the work is always to fight beside the
+  party and keep it on the road (errands, naming a creature, refusals left out). Planar Binding reaches the party's
+  captives of the four kinds (today only goblins, fey in 2025) and its Planar Ally spirits (in a Magic Circle turned
+  inward, or one already bound); its orders are only to fight (a Hostile creature's twisting of them left out); a
+  bound captive is no longer a captive (no bounty) and runs off when the binding ends. Spirits and the bound heal at
+  a long rest (the dead still do not), wait outside towns as the dead do, and never turn on the party.
+Next session starts at: task F.6 in docs/expansions/03-demigods-magics.md (Part F: shapes - Polymorph, True
+Polymorph, Animal Shapes, Shapechange, with the rest of Appendix B as the forms: ape, constrictor snake, crocodile,
+elephant, elk, giant badger, crab, goat, seahorse and weasel, badger, goat, lion, panther, reef shark, tiger, venomous
+snake; imp, quasit, pseudodragon, sprite, sphinx of wonder, slaad tadpole; and the cult fanatic's imp or quasit; Part
+F complete). Write F.6's "How" first; split it at its start if it is too big for one part (the stat blocks and
+pictures through helpers on the sonnet model, numbers checked on the MM page images). Polymorph in a fight changes a
+Fighter's numbers for a while (a form's stat block with temporary hit points in the 2024 text): see how Magic Jar's
+host (`Fighter.jar`) and F.1's `Fighter.cdef` already swap a fighter's numbers.
+Part E and F.1 to F.5 are in `main`.
+The way of Part F (F.5): the bound are F.4's servant records with `form`, `level`, `picture`, `heals` (whole at a
+long rest: `rules/servants.rest` from progression.long_rest) and `bound`; `rules/servants.spirit_def` gives a spirit
+its numbers in each fight (`allies.summon_def` with its master's spell attack and DC) and `is_undead` tells the dead
+from the rest (warnings, `game/servants._leave`: the dead go free, the others `_go_home`). game/servants.py's road op
+"bind" (how "ally"/"binding", spellwork.SERVANTS): `ally_kind` (the faith's `ally`), `ally_price` (`church_member`),
+`TERMS`, `binding_subjects` (captives by `bindable_captives`, spirits by `bound_rows`), `BINDING_DAYS`, `_cha_save`
+(Magic Resistance). Magic Circle's Subjects outward/inward (game/warding.py; `inward_circle` reads
+`renown.flags["inward_circle"]` {until, by, x, y, map}). Tests: tests/test_bound.py.
 The way of Part F (F.4): a servant is a record in `char.spells["servants"]` {id, cid, name, hp, max_hp, spell, word,
 reach, until, made, warned} (rules/servants.py: add, hold, due, soon, bring_in from fight.start_battle when
 game/servants.here, after from finish_battle); in a fight bond kind "servant" with `word` (waits for

@@ -468,7 +468,7 @@ stat block now comes with the spell that brings it into play (never a block that
   Dead (skeletons and zombies), Create Undead (ghouls, ghasts, wights, mummies) and Finger of Death's zombie; the
   ghast and the mummy with their stat blocks and pictures; commanded with the Bonus Action, held again each day or
   they go free.
-- [ ] F.5 The bound: Planar Ally (a spirit of the cleric's god for a price by the hour or day), Planar Binding (a
+- [x] F.5 The bound: Planar Ally (a spirit of the cleric's god for a price by the hour or day), Planar Binding (a
   captive celestial, elemental, fey or fiend, or a Planar Ally's spirit, bound for a day to a year) and Magic Circle
   turned inward (a spirit that will not stay to be bound is held in it), on F.4's servants.
 - [ ] F.6 Shapes: Polymorph, True Polymorph, Animal Shapes, Shapechange, with the rest of Appendix B (ape,
