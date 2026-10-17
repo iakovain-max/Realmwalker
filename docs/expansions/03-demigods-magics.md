@@ -459,7 +459,7 @@ stat block now comes with the spell that brings it into play (never a block that
   later piece uses); the familiar's forms of Appendix B (bat, cat, crab, frog, hawk, lizard, octopus, owl, rat, raven,
   scorpion, spider, weasel) with pictures; the Otherworldly Steed; the familiar and the steed as followers outside a
   fight.
-- [ ] F.2 Summoned spirits, levels 2-4 (split at its start, 2026-10-17): a creature whose numbers grow with the
+- [x] F.2 Summoned spirits, levels 2-4 (split at its start, 2026-10-17): a creature whose numbers grow with the
   slot, held by concentration; Summon Beast, Summon Fey, Summon Undead, Summon Aberration, Summon Construct, Summon
   Elemental and Giant Insect, with their stat blocks, pictures and the costly components.
 - [ ] F.3 Summoned spirits, levels 5-6: Summon Celestial, Summon Dragon (Shared Resistances, Breath Weapon), Summon

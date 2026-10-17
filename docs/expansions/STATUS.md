@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 03 Demigods & Magics · Part F (familiars, steeds and summons), F.2 next · branch dlc/03-demigods-magics
+Current: 03 Demigods & Magics · Part F (familiars, steeds and summons), F.3 next · branch dlc/03-demigods-magics
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -23,10 +23,11 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   Magic Circle, Forbiddance, Guards and Wards, Private Sanctum, Hallow, Demiplane, Tasha's Bubbling Cauldron) and E.7
   (great magic and Wish's other uses: Contingency, Magic Jar, Clone, Imprisonment; Wish's Object Creation, Resistance,
   Spell Immunity, Sudden Learning, Reshape Reality, and Roll Redo in a fight: Part E complete) and F.1 (allies on
-  the field: Find Familiar's twelve forms and Find Steed's Otherworldly Steed fight beside their owner)
+  the field: Find Familiar's twelve forms and Find Steed's Otherworldly Steed fight beside their owner) and F.2
+  (summoned spirits of levels 2-4: Summon Beast, Fey, Undead, Aberration, Construct, Elemental, Giant Insect)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
-  adapted); Expansion 3: 202 done, 304 adapted, 1 omitted of 558 (parts A to E and F.1 settled). PHB 61% · DMG 12% · MM 8%
+  adapted); Expansion 3: 202 done, 311 adapted, 1 omitted of 558 (parts A to E, F.1 and F.2 settled). PHB 61% · DMG 12% · MM 8%
 Assumptions waiting for Anton:
 - The Player2 AI writer is removed (tagged `before-ai-removal`); its text is replaced everywhere by the game's own
   words, strengthened where they were thin.
@@ -342,12 +343,28 @@ Assumptions waiting for Anton:
   opportunity attacks for the whole turn (Flyby only while it can fly).
 Ideas for later:
 - (none yet)
-Next session starts at: task F.2 in docs/expansions/03-demigods-magics.md (Part F: the Summon spells' spirits -
-Summon Beast, Fey, Undead, Aberration, Construct, Elemental, Celestial, Dragon, Fiend - Giant Insect and Animate
-Objects: concentration spells whose creature's numbers grow with the slot). Write F.2's "How" in the design note
-first, and split it at its start if it is too big. The spirits' stat blocks are in the spells' own pages of the
-PHB (build/codex/phb; check numbers on page images).
-Part E and F.1 are in `main`.
+- Expansion 3 F.2: the Summon spells were split at the start (F.2 levels 2-4 with the summoning itself, F.3 levels
+  5-6 and Animate Objects; the dead and the bound F.4, shapes F.5). The form (Air/Land/Water, mood, Ghostly...) is
+  chosen by the game for the fight (`allies.best_form`, as Chromatic Orb picks its type), not by the player; a spirit
+  never outlasts the fight; it uses the caster's real spell attack and DC (not a scroll's); Water Breathing,
+  Amorphous Form and Incorporeal Passage are "not yet" traits; Berserk Lashing only strikes (no move toward); Tricksy
+  darkness lasts until the spirit's next turn; the mind flayer's whispers hurt the caster's friends too (the book).
+Next session starts at: task F.3 in docs/expansions/03-demigods-magics.md (Part F: Summon Celestial - Avenger or
+Defender, Healing Touch once a day, the Defender's temporary hit points -, Summon Dragon - Shared Resistances on the
+caster, Breath Weapon with its Rends -, Summon Fiend - Demon's Death Throes, Devil's Sight, Magic Resistance, the
+Yugoloth's teleport after its Claws - and Animate Objects - several creatures at once by the caster's spellcasting
+modifier, Medium/Large/Huge, commanded with the caster's Bonus Action, else they Dodge). Write F.3's "How" first.
+The spirits' pages: PHB PDF 326 (Celestial), 327-328 (Dragon), 329-330 (Fiend), 243-244 (Animate Objects); page
+images with tools/codex/extract.py --render phb N. Build on rules/allies.summon_def (a creature's `summon` record).
+Part E, F.1 and F.2 are in `main`.
+The way of Part F (F.2): a summoned creature has a `summon` record in creatures.allies.json (the spell's `level`, `ac`
+and `hp` at it, `hp_up` a level, `forms` {form: name, picture, hp, ac, speeds, traits, attacks, damage_type, resist,
+immune, spells, likes, weight}); its stat block's attacks marked `plus_level` add the slot level; `allies.summon_def`
+makes its numbers for the slot and the caster (the caster's spell attack and DC; Multiattack = half the level),
+`allies.summon_spirit` puts it on the field (the "ally" op, kind "summon"; `bond` kind "summon", `conc` True, form,
+picture), `Battle._end_concentration` dismisses it (`Battle.dismiss`). Its traits are hooks in
+engine/handlers/summons.py; a stat block's `on_hit` may carry kernel ops ({"op": "kernel", "ops": [...]}); the
+`if_condition` op. The Auto's worth: `estimates._summon_worth`. Tests: tests/test_summons.py.
 The way of Part F (F.1): a creature fighting for the party is a Fighter on the party's side with `bond` {owner,
 kind, spell, level, type, picture} made by `Battle.add_ally` (beside its owner; a familiar by its own Initiative,
 anything else right after its owner); rules/allies.py keeps the records on the owner (`char.spells["familiar"]`,
@@ -397,6 +414,7 @@ casting time. A spell aimed at something chosen lists Subjects (game/divining.Su
 | 2026-10-17 | Demigods & Magics E.6: lasting protections (Glyph of Warding, Symbol, Magic Circle, Forbiddance, Guards and Wards, Private Sanctum, Hallow) and the caster's keeping (Demiplane, Tasha's Bubbling Cauldron); E.6 split, E.7 next; merged into `main` | `dlc/03-demigods-magics` |
 | 2026-10-17 | Demigods & Magics E.7: great magic (Contingency, Magic Jar, Clone, Imprisonment) and Wish's other uses (Instant Health, Object Creation, Resistance, Spell Immunity, Sudden Learning, Reshape Reality; Roll Redo in a fight); Part E complete, merged into `main` | `dlc/03-demigods-magics` |
 | 2026-10-17 | Demigods & Magics F.1: allies on the field - Find Familiar (twelve forms of Appendix B, it Helps, keeps watch, follows on the map) and Find Steed (the Otherworldly Steed by its slot, its kind's gift, Life Bond, a mount on the road); Part F split in four; merged into `main` | `dlc/03-demigods-magics` |
+| 2026-10-17 | Demigods & Magics F.2: summoned spirits of levels 2-4 - Summon Beast, Fey, Undead, Aberration, Construct, Elemental and Giant Insect (numbers by the slot, held by concentration, the form picked for the fight, every trait and blow, the costly components); F.2 split, F.3 next; merged into `main` | `dlc/03-demigods-magics` |
 
 ## Notes for the next session
 
