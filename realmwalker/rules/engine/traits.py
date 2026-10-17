@@ -51,10 +51,12 @@ def of(f) -> frozenset[str]:
                _magic_key(c))
     cached = f.__dict__.get("_traits")
     if cached is not None and cached[0] == key:
-        return cached[1]
-    found = frozenset(f.cdef.get("traits", [])) if f.char is None else of_char(f.char, f.t)
-    f.__dict__["_traits"] = (key, found)
-    return found
+        found = cached[1]
+    else:
+        found = frozenset(f.cdef.get("traits", [])) if f.char is None else of_char(f.char, f.t)
+        f.__dict__["_traits"] = (key, found)
+    given = [t for bf in getattr(f, "buffs", ()) for t in bf.get("traits", ())]
+    return found | frozenset(given) if given else found  # (a spell's gift for its time: Expeditious Retreat)
 
 
 def of_char(char, tables) -> frozenset[str]:

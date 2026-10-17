@@ -36,6 +36,22 @@ from __future__ import annotations
 
 from realmwalker.core import dice
 
+# Every key a buff may carry (the start-up check reports any other in data/spells.json).
+BUFF_KEYS = frozenset({
+    # the kernel's own
+    "ac", "mage_armor", "attack_die", "save_die", "check_die", "resist", "death_ward", "fly", "tremorsense", "slow",
+    "no_heal", "no_opportunity", "marked", "burning", "poisoned_blade", "sapped", "distracted", "aimed", "protected",
+    "parry_ac", "reeling", "unsteady", "vex", "dazed",
+    # this module's
+    "outlined", "blurred", "warded_kinds", "ward_die", "sanctuary", "images", "ac_floor", "retaliate",
+    "retaliate_type", "bond", "quarry", "quarry_type", "by", "dot", "dot_type", "dot_at", "dot_once", "dot_save",
+    "dot_name", "dc", "repeat", "heroism", "immune", "save_bonus", "weak", "damage_die", "duel", "maddened",
+    "hit_extra", "hit_type", "hit_with", "weapon_plus", "smite", "smite_with", "up", "mod", "level", "once", "traits",
+    "shillelagh", "tier",
+})
+ZONES = frozenset({"web", "fire", "fog", "ice", "caltrops", "bearings", "darkness", "antimagic", "plants", "grease",
+                   "spikes", "daggers", "moonbeam", "sphere", "silence"})
+
 
 def _weapon(opt) -> bool:
     return opt.kind in ("melee", "ranged") or opt.kind == "unarmed"

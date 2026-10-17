@@ -601,6 +601,14 @@ def filled(c: Cast, buff: dict) -> dict:
             v = c.dc
         elif v == "$mod":
             v = max(1, c.mod)
+        elif v == "$spell":
+            v = c.sid
+        elif v == "$mult":
+            v = c.mult
+        elif v == "$up":
+            v = c.up
+        elif v == "$level":
+            v = c.level or c.spell.get("level", 0)
         out[k] = v
     return out
 
@@ -618,6 +626,41 @@ def _temp_hp(c: Cast, o: dict, victim) -> None:
         x.temp_hp = amount
         c.b._event("buff", who=x.id, spell=c.sid)
         c.b.say(f"{x.the_name} {'has' if x.char else 'has'} {amount} temporary hit points.", "magic")
+
+
+@op("weapon_attack")
+def _weapon_attack(c: Cast, o: dict, victim) -> None:
+    """True Strike (2024): one attack with a weapon in reach, with the spellcasting ability in place of Strength or
+    Dexterity; radiant if that hurts more; and `extra` radiant dice from level 5 (one fewer than the cantrip's
+    tier)."""
+    import dataclasses
+
+    from realmwalker.rules.engine import estimates
+
+    b, f = c.b, c.caster
+    target = victim or c.target
+    if target is None or not target.active:
+        return
+    opts = [x for x in b.attack_options(f) if x.available and x.item_uid is not None and x.kind in ("melee", "ranged")
+            and b.in_reach(f, x, target)[0]]
+    if not opts:
+        b.say(f"{f.the_name} has no weapon that reaches {target.the_name}.", "warn")
+        return
+    opt = opts[0]
+    am = int(opt.extra.get("ability_mod", 0))
+    n, sides, flat = dice.parse(opt.damage)
+    flat += c.mod - am
+    dmg = f"{n}d{sides}{'+' + str(flat) if flat > 0 else (str(flat) if flat < 0 else '')}" if n else str(max(1, flat))
+    dtype = opt.damage_type
+    if estimates.damage_factor(target, "radiant") > estimates.damage_factor(target, dtype):
+        dtype = "radiant"
+    extra = dict(opt.extra)
+    more = c.mult - 1
+    if more > 0 and o.get("extra"):
+        extra["extra"] = list(extra.get("extra", ())) + [{"damage": f"{more}{o['extra'][1:]}",
+                                                          "type": o.get("extra_type", "radiant")}]
+    struck = dataclasses.replace(opt, bonus=opt.bonus - am + c.mod, damage=dmg, damage_type=dtype, extra=extra)
+    b._attack(f, struck, target)
 
 
 @op("pull")
@@ -740,8 +783,12 @@ def _zone(c: Cast, o: dict, victim) -> None:
 
     b, f, spell = c.b, c.caster, c.spell
     rounds = -1 if spell.get("concentration") else int(o.get("rounds", spell.get("rounds", 10)))
-    z = Zone(b._zone_id(), o["zone"], set(c.area), owner=f.id, spell=c.sid, rounds=rounds, save=o.get("save", "dex"),
-             dc=int(o.get("dc", c.dc)))  # (caltrops and ball bearings have the book's own DC)
+    dmg = spellrules.damage_parts(o)
+    z = Zone(b._zone_id(), o["zone"], set(c.area), owner=f.id, spell=c.sid, rounds=rounds,
+             save=o.get("save", "dex") if o.get("save", "dex") != "none" else "",
+             dc=int(o.get("dc", c.dc)),  # (caltrops and ball bearings have the book's own DC)
+             damage=expr(c, dmg[0][0], dmg[0][2]) if dmg else "", damage_type=dmg[0][1] if dmg else "",
+             on_save="half" if o.get("half") else "none", centre=c.point)
     b._add_zone(z)
     if o.get("catch"):
         for x in b.in_area(c.area, spell.get("affects", "all"), f):

@@ -548,7 +548,7 @@ def scroll_problem(char: Character, tables, spell_id: str) -> str:
 
 
 # ---------------------------------------------------------------------------- reading a spell's effects
-NESTED = ("on_hit", "on_fail", "do")
+NESTED = ("on_hit", "on_fail", "on_save", "after", "do")
 
 
 def ops(spell: dict) -> list[dict]:

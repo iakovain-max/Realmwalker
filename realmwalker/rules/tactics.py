@@ -24,7 +24,7 @@ from __future__ import annotations
 from realmwalker.rules import feats, grid
 from realmwalker.rules import spells as spellrules
 from realmwalker.rules.combat import FOE, PARTY, AttackOption, Battle, Fighter, _avg
-from realmwalker.rules.engine import actions, estimates, query
+from realmwalker.rules.engine import actions, estimates, marks, query
 from realmwalker.rules.engine.handlers import mastery
 
 CAUTION = {"beast": 2.0, "mindless": 0.5, "fanatic": 1.0, "warrior": 3.0, "bandit": 6.0, "soldier": 6.0,
@@ -112,11 +112,30 @@ def take_turn(b: Battle, f: Fighter) -> None:
     if f.state == "fleeing":
         flee(b, f)
         return
+    if marks.maddened_by(f) is not None and _maddened(b, f):
+        return
     if f.char is not None:
         _party_turn(b, f)
         _epic_moves(b, f)
     else:
         _monster_turn(b, f)
+
+
+def _maddened(b: Battle, f: Fighter) -> bool:
+    """Crown of Madness: before moving, its action goes on a melee blow at one of its own friends within reach (the
+    caster's choice: the one hurt worst by it). False when nobody is in reach: it acts as it would."""
+    if f.action <= 0:
+        return False
+    for opt in [o for o in b.attack_options(f) if o.available and o.is_melee]:
+        near = [x for x in b.allies_of(f) if x is not f and x.active and b.in_reach(f, opt, x)[0]]
+        if near:
+            b.say(f"The crown drives {f.the_name} against {f.possessive} own.", "magic")
+            f.action -= 1  # (the action, and no more: the rules would not let it strike a friend otherwise)
+            f.attacks_left = 0
+            b._attack(f, opt, min(near, key=lambda x: x.hp))
+            b._after_action(f)
+            return True  # (its turn spent on the blow)
+    return False
 
 
 # ---------------------------------------------------------------------------- monsters

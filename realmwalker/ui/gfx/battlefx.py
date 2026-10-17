@@ -196,6 +196,15 @@ class BattleBoard:
             self.fx.append({"kind": "float", "who": ev["who"], "text": "gone", "color": (210, 200, 180), "t0": t,
                             "dur": FLOAT, "size": 16})
             return t + 0.2
+        if k == "burst":  # a spell bursting around a creature (Ice Knife, Hail of Thorns)
+            col = COLOURS.get(ev.get("dtype", ""), (230, 230, 240))
+            for c in ev.get("cells", ())[::2]:
+                self.fx.append({"kind": "puff", "at": tuple(c), "t0": t, "dur": 0.35, "color": col})
+            return t + 0.3
+        if k == "image":  # Mirror Image: a duplicate takes the blow and is gone
+            self.fx.append({"kind": "float", "who": ev["who"], "text": "an image", "color": (200, 210, 255), "t0": t,
+                            "dur": FLOAT, "size": 14})
+            return t + 0.15
         if k == "attack":
             a, b = ev["by"], ev["to"]
             if ev.get("melee"):
@@ -574,7 +583,27 @@ class BattleBoard:
                 for (x, y) in z.cells:
                     px, py = self.sq_px(x, y)
                     canvas.under(Image("bweb", _web_image, (px, py, T, T), rgba=(235, 235, 225, 210), smooth=False))
-            elif z.kind == "fire":
+            elif z.kind in ("plants", "grease", "spikes", "daggers"):
+                make = {"plants": _vines_image, "grease": _grease_image, "spikes": _thorns_image,
+                        "daggers": _blades_image}[z.kind]
+                for i, (x, y) in enumerate(sorted(z.cells)):
+                    px, py = self.sq_px(x, y)
+                    wob = (int(now * 10) + i) % 2 if ambient and z.kind == "daggers" else 0
+                    canvas.under(Image(f"b{z.kind}{wob}", (lambda m=make, w=wob: m(w)), (px, py, T, T),
+                                       rgba=(255, 255, 255, 230), smooth=False))
+            elif z.kind in ("moonbeam", "silence"):
+                pulse = 0.5 + 0.5 * math.sin(now * 2.2) if ambient else 0.6
+                col = (225, 235, 255) if z.kind == "moonbeam" else (150, 170, 210)
+                for (x, y) in z.cells:
+                    px, py = self.sq_px(x, y)
+                    canvas.under(Rect(px, py, T, T, (*col, int((60 if z.kind == "moonbeam" else 30) + 30 * pulse))))
+                xs = [c[0] for c in z.cells]
+                ys = [c[1] for c in z.cells]
+                if xs:
+                    bx, by = self.sq_px(min(xs), min(ys))
+                    canvas.under(theme.lines_box(bx, by, (max(xs) - min(xs) + 1) * T, (max(ys) - min(ys) + 1) * T,
+                                                 (*col, int(110 + 70 * pulse))))
+            elif z.kind in ("fire", "sphere"):
                 frames = atlas.family("fx/fire") or atlas.family("fx/flame")
                 for i, (x, y) in enumerate(sorted(z.cells)):
                     px, py = self.sq_px(x, y)
@@ -1105,6 +1134,75 @@ def _web_image():
     for ring in (0.3, 0.55, 0.85):
         ring_pts = [(c + (p[0] - c) * ring, c + (p[1] - c) * ring) for p in pts]
         d.line(ring_pts + [ring_pts[0]], fill=(255, 255, 255, 170), width=1)
+    return im
+
+
+def _vines_image(_frame: int = 0):
+    """Entangle: grasping weeds and vines over the square, in sharp pixels."""
+    from PIL import Image as PImage, ImageDraw
+
+    s = 32
+    im = PImage.new("RGBA", (s, s), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    rng = np.random.default_rng(23)
+    d.rectangle([0, 0, s, s], fill=(60, 110, 40, 50))
+    for _ in range(7):
+        x, y = (int(v) for v in rng.integers(0, s, 2))
+        pts = [(x, y)]
+        for _k in range(4):
+            x = int(np.clip(x + rng.integers(-6, 7), 0, s - 1))
+            y = int(np.clip(y + rng.integers(-6, 7), 0, s - 1))
+            pts.append((x, y))
+        d.line(pts, fill=(70, 150, 50, 235), width=1)
+        for px, py in pts[1:]:
+            d.point((px, py), fill=(140, 210, 90, 255))
+    return im
+
+
+def _grease_image(_frame: int = 0):
+    """Grease: a dark slick with a few bright glints."""
+    from PIL import Image as PImage, ImageDraw
+
+    s = 32
+    im = PImage.new("RGBA", (s, s), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    rng = np.random.default_rng(29)
+    d.rectangle([0, 0, s, s], fill=(52, 44, 30, 120))
+    for _ in range(6):
+        x, y = (int(v) for v in rng.integers(1, s - 6, 2))
+        d.ellipse([x, y, x + 5, y + 3], fill=(84, 72, 46, 170))
+        d.point((x + 1, y + 1), fill=(230, 220, 170, 255))
+    return im
+
+
+def _thorns_image(_frame: int = 0):
+    """Spike Growth: hard thorns and spikes hidden in the ground."""
+    from PIL import Image as PImage, ImageDraw
+
+    s = 32
+    im = PImage.new("RGBA", (s, s), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    rng = np.random.default_rng(31)
+    for _ in range(11):
+        x, y = (int(v) for v in rng.integers(2, s - 3, 2))
+        d.line([(x, y + 2), (x + 1, y - 2)], fill=(110, 84, 50, 235), width=1)
+        d.point((x + 1, y - 2), fill=(200, 180, 140, 255))
+    return im
+
+
+def _blades_image(frame: int = 0):
+    """Cloud of Daggers: spinning blades glinting in the air (two frames)."""
+    from PIL import Image as PImage, ImageDraw
+
+    s = 32
+    im = PImage.new("RGBA", (s, s), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    rng = np.random.default_rng(37 + frame)
+    for _ in range(8):
+        x, y = (int(v) for v in rng.integers(3, s - 4, 2))
+        dx, dy = ((3, -3), (3, 3))[int(rng.integers(0, 2))]
+        d.line([(x, y), (x + dx, y + dy)], fill=(210, 216, 228, 245), width=1)
+        d.point((x, y), fill=(255, 255, 255, 255))
     return im
 
 

@@ -97,7 +97,9 @@ class Env:
 class Zone:
     """Something lying on the field for a while: a web, burning ground, fog, a spell's aura."""
     id: int
-    kind: str  # web, fire, fog, ice, guardians (moves with its owner), guardian (stays where it was set)
+    kind: str  # web, fire, fog, ice, guardians (moves with its owner), guardian (stays where it was set); the
+    # catalogue's: plants (Entangle), grease, spikes (Spike Growth), daggers (Cloud of Daggers), moonbeam, sphere
+    # (Flaming Sphere), silence, darkness
     cells: set
     owner: int | None = None
     spell: str = ""
@@ -115,7 +117,12 @@ class Zone:
 
     @property
     def difficult(self) -> bool:
-        return self.kind in ("web", "ice", "guardians")
+        return self.kind in ("web", "ice", "guardians", "plants", "grease", "spikes")
+
+    @property
+    def holds(self) -> bool:
+        """It holds whoever it catches Restrained until it ends (a web, Entangle's plants)."""
+        return self.kind in ("web", "plants")
 
     @property
     def opaque(self) -> bool:
@@ -959,6 +966,10 @@ class Battle:
             f.hidden = 0
             self.say(f"{f.the_name} is found.", "system")
         marks.turn_end(self, f)  # (Melf's Acid Arrow; marks shaken off with a save)
+        for z in [z for z in self.zones if z.kind == "grease" and any(c in z.cells for c in f.cells)]:
+            if f.active and f.z == 0 and "prone" not in f.conditions:
+                z.struck.discard(f.id)
+                self._zone_underfoot(f, z)  # (ending a turn on the grease)
         durations.tick(self, f, "turn_end")  # and what lasts "until the end of its next turn"
         self._crowded(f)
 
@@ -1798,12 +1809,20 @@ class Battle:
         if not it.magic and it.condition < int(self.t.items.upkeep.get("battered", 30)):
             bonus -= 1  # battered: a bent blade, a split haft, a warped bow (game/gear.py)
         dmg = d["damage"]
+        sh = next((bf for bf in f.buffs if bf.get("shillelagh")), None) if not ranged else None
+        if sh is not None and it.def_id in ("club", "quarterstaff") and int(sh.get("mod", 0)) > s.mod(ability):
+            bonus += int(sh["mod"]) - s.mod(ability)  # (Shillelagh: the spellcasting ability strikes)
+        if sh is not None and it.def_id in ("club", "quarterstaff"):
+            dmg = ("1d8", "1d10", "1d12", "2d6")[max(0, min(3, int(sh.get("tier", 1)) - 1))]
         both_hands = False  # a duellist keeps a versatile blade in one hand (d8 + 2 beats d10)
         if "versatile" in props and two_handed_free and not ranged and not feats.has(f.char, "dueling") \
                 and not ("lost_left_arm" in f.char.injuries or "lost_right_arm" in f.char.injuries):
             dmg = d.get("versatile", dmg)
             both_hands = True
         mod = s.mod(ability)
+        if sh is not None and it.def_id in ("club", "quarterstaff"):
+            mod = max(mod, int(sh.get("mod", 0)))
+            dmg = dmg if sh.get("tier") else d["damage"]
         if key == "off" and not thrown and not feats.has(f.char, "two_weapon_fighting") and not (
                 feats.has(f.char, "crossbow_expert") and "ranged" in props):
             mod = min(0, mod)  # the off hand adds no bonus damage
@@ -2825,7 +2844,7 @@ class Battle:
         dc = int(f.cond_ends.get("grappled", {}).get("escape") or (query.unarmed_dc(holder) if holder else 10))
         stuck = "grappled" if "grappled" in f.conditions else "restrained"
         skill = max(f.skill("athletics"), f.skill("acrobatics"))
-        web = next((z for z in self.zones if z.kind == "web" and any(c in z.cells for c in f.cells)), None)
+        web = next((z for z in self.zones if z.holds and any(c in z.cells for c in f.cells)), None)
         if stuck == "restrained" and web is not None:
             dc, skill = web.dc, f.skill("athletics")  # 2024: a Strength (Athletics) check against the spell's DC
         if dice.d20(self.rng).natural + skill >= dc:
@@ -3266,6 +3285,8 @@ class Battle:
         beside a slotted spell."""
         if self.antimagic(f.cells):
             return False, "magic does not work here"
+        if "V" in spell.get("components", ()) and self.silenced(f):
+            return False, "no sound can be made here (Silence)"
         if spell.get("cast") == "bonus":
             if f.bonus <= 0:
                 return False, "no bonus action left"
@@ -3389,6 +3410,10 @@ class Battle:
             if any(c in cs for c in x.cells):
                 out.append(x)
         return out
+
+    def silenced(self, f: Fighter) -> bool:
+        """Whether a creature stands in a Silence: no spell with a Verbal component can be cast there."""
+        return any(z.kind == "silence" and z.cells & set(f.cells) for z in self.zones)
 
     def antimagic(self, cells) -> bool:
         """Whether any of these squares lies in an antimagic area (no spell works there, 2024)."""
@@ -3673,7 +3698,7 @@ class Battle:
     def _remove_zone(self, z: Zone) -> None:
         if z in self.zones:
             self.zones.remove(z)
-            if z.kind == "web":
+            if z.holds:
                 for x in self.fighters:
                     if x.conditions.get("restrained") == -1 and any(c in z.cells for c in x.cells):
                         x.conditions.pop("restrained", None)
@@ -3740,15 +3765,29 @@ class Battle:
                 continue  # a spell laid on the ground does nothing where magic does not work
             if z.kind == "web":
                 stopped = self._zone_catch(f, z) or stopped
-            elif z.kind in ("caltrops", "bearings") and not start and f.standing and f.z == 0:
+            elif z.kind in ("caltrops", "bearings", "grease") and not start and f.standing and f.z == 0:
                 stopped = self._zone_underfoot(f, z) or stopped
-            elif z.kind in ("fire", "guardians", "guardian") and z.damage:
+            elif z.kind == "spikes" and not start and f.z == 0:
+                # (Spike Growth: every five feet walked through it, no save; once per square entered)
+                self.say(f"Thorns tear at {f.the_name}.", "good" if f.side == FOE else "danger")
+                owner = next((x for x in self.fighters if x.id == z.owner), None)
+                self._hit(owner, f, dice.roll(z.damage or "2d4", self.rng).total, z.damage_type or "piercing",
+                          crit=False, weapon="thorns")
+            elif z.kind in ("fire", "guardians", "guardian", "daggers", "moonbeam", "sphere") and z.damage:
                 z.struck.add(f.id)
                 owner = next((x for x in self.fighters if x.id == z.owner), None)
                 before = f.hp
                 if z.kind == "fire":
                     self.say(f"{f.the_name} is in the flames.", "danger" if f.side == PARTY else "info")
-                self._save_damage(owner or f, f, z.save, z.dc, z.damage, z.damage_type, z.on_save)
+                elif z.kind == "daggers":
+                    self.say(f"Blades whirl around {f.the_name}.", "danger" if f.side == PARTY else "info")
+                elif z.kind == "moonbeam":
+                    self.say(f"Pale light sears {f.the_name}.", "danger" if f.side == PARTY else "info")
+                if z.save:
+                    self._save_damage(owner or f, f, z.save, z.dc, z.damage, z.damage_type, z.on_save)
+                else:  # (no save: a cloud of daggers)
+                    self._hit(owner, f, dice.roll(z.damage, self.rng).total, z.damage_type, crit=False,
+                              weapon=z.damage_type)
                 if z.kind == "guardian":
                     z.budget -= max(0, before - f.hp)
                     if z.budget <= 0:
@@ -3760,7 +3799,15 @@ class Battle:
         """Caltrops (PHB 2024): Dexterity save or 1 piercing damage and no more moving this turn. Ball bearings: a
         Dexterity save or down on the ground. Once a turn for each. True if it stops the move."""
         z.struck.add(f.id)
+        if z.kind == "grease" and "prone" in f.conditions:
+            return False
         if self._save(f, "dex", z.dc):
+            return False
+        if z.kind == "grease":
+            if durations.give(self, f, "prone"):
+                self._event("prone", who=f.id)
+                self.say(f"{f.the_name} slips on the grease and falls.", "good" if f.side == FOE else "danger")
+                return True
             return False
         if z.kind == "caltrops":
             self.say(f"{f.the_name} treads on a caltrop.", "good" if f.side == FOE else "danger")
@@ -3774,15 +3821,20 @@ class Battle:
         return False
 
     def _zone_catch(self, f: Fighter, z: Zone) -> bool:
-        if z.kind != "web" or "restrained" in f.conditions or "web" in trs.values(f, "ignores_zone", flat=True):
+        if z.kind == "grease":
+            return self._zone_underfoot(f, z)  # (as the grease appears)
+        if not z.holds or "restrained" in f.conditions or z.kind in trs.values(f, "ignores_zone", flat=True):
+            return False
+        if query.condition_immune(f, "restrained"):
             return False
         z.struck.add(f.id)
-        if self._save(f, "dex", z.dc):
+        if self._save(f, z.save or "dex", z.dc):
             return False
         f.conditions["restrained"] = -1
         f.move_left = 0
         self._event("condition", who=f.id, cond="restrained")
-        self.say(f"{f.the_name} is caught in the web.", "good" if f.side == FOE else "danger")
+        self.say(f"{f.the_name} is caught in the web." if z.kind == "web" else
+                 f"Grasping weeds and vines seize {f.the_name}.", "good" if f.side == FOE else "danger")
         return True
 
     def _heal(self, f: Fighter, amount: int) -> None:

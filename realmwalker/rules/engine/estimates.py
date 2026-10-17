@@ -151,6 +151,16 @@ def spell_value(b, f, sid: str, *, target=None, point=None, dc: int | None = Non
                 w.control += _mark_on_foe(b, f, on, o.get("buff", {}))  # (Hex, Faerie Fire on a foe)
             else:
                 w.help += _buff_worth(spellrules.buff_at(o, spell["level"] + up, spell), n, b, f, on, spell)
+        elif kind == "weapon_attack" and target is not None and f.char is not None:
+            opts = [x for x in b.attack_options(f) if x.available and x.item_uid is not None
+                    and x.kind in ("melee", "ranged") and b.in_reach(f, x, target)[0]]
+            if opts:
+                am = int(opts[0].extra.get("ability_mod", 0))
+                spell_mod = _caster_mod(b, f)
+                ev = attack_value(b, f, opts[0], target) * (1.0 + 0.1 * max(0, spell_mod - am))
+                ev += hit_chance(b, f, opts[0], target) * (spell_mod - am + 3.5 * max(0, mult - 1))
+                w.damage += max(0.0, ev)
+                w.kills += int(ev >= target.hp)
         elif kind == "temp_hp" and caught:
             x = caught[0] if spell["target"] != "self" else f
             amount = avg(str(o["amount"])) + int(o.get("per_up", 0)) * up
