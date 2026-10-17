@@ -256,6 +256,7 @@ class Fighter:
         self.acted = False  # has had a turn in this fight (the Cutthroat's Assassinate)
         self.glow = 0  # squares of bright light it carries (a torch, a glowing blade)
         self.jar: dict | None = None  # (Magic Jar: a body whose soul is in its gem: {host, dc, tried})
+        self.shape: dict | None = None  # (Polymorph: what it was while it wears another form, Battle.shape)
         # A creature fighting for the party (Battle.add_ally): {owner: fighter id, kind: familiar/steed, spell, level,
         # type: the creature type it has instead of its form's (a familiar's celestial, fey or fiend)}.
         self.bond: dict | None = None
@@ -841,6 +842,58 @@ class Battle:
         if not quiet:
             self.say(f"{x.the_name[:1].upper() + x.the_name[1:]} fades away.", "magic")
 
+    # ------------------------------------------------------------------ shapes (Expansion 3 F.6)
+    def shape(self, f: Fighter, cid: str, *, by: Fighter, spell: str = "") -> bool:
+        """Polymorph, True Polymorph: `f`'s numbers become the creature `cid`'s for the fight (the 2024 text: its game
+        statistics replaced, its hit points kept, Temporary Hit Points equal to the form's). A character is set aside
+        while shaped (`f.char` is None: no spells, no features, no gear); `Fighter.shape` keeps what it was."""
+        from realmwalker.rules import shapes
+        from realmwalker.rules.allies import a_or_an
+
+        if not shapes.shapeable(f) or cid not in self.t.creatures:
+            return False
+        cdef = self.t.creatures[cid]
+        top = f.char.max_hp if f.char is not None else f.creature.max_hp
+        who = f.name if f.char is not None or f.creature.named else f"the {f.creature.name}"
+        f.shape = {"char": f.char, "creature": f.creature, "cdef": f.cdef, "sq": f.sq, "slots": list(f.slots),
+                   "recharge": dict(f.recharge), "by": by.id, "spell": spell, "temp": f.temp_hp}
+        cr = Creature(uid=94000 + f.id, def_id=cid, name=f"{who}, as {a_or_an(cdef['name'])}", hp=f.hp, max_hp=top,
+                      named=True)
+        f.char, f.creature, f.cdef = None, cr, cdef
+        f.slots = []
+        f.recharge = {a["name"]: True for a in cdef["attacks"] if a.get("recharge")}
+        f.temp_hp = max(f.temp_hp, shapes.form_hp(self.t, cid))
+        f.sq = grid.footprint(f.size)
+        if f.sq != f.shape["sq"]:  # (a bigger body needs room: the nearest place it fits)
+            taken = {c for x in self.on_field() if x is not f for c in x.cells}
+            f.x, f.y = self._free_near((f.x, f.y), f.sq, taken)
+        self._event("shape", who=f.id, form=cid, by=by.id, spell=spell)
+        return True
+
+    def unshape(self, f: Fighter, quiet: bool = False) -> None:
+        """A shape ends: the fighter is what it was, with the hit points it has now."""
+        was = f.shape
+        if was is None:
+            return
+        hp = max(0, f.hp)
+        f.shape = None
+        f.char, f.creature, f.cdef = was["char"], was["creature"], was["cdef"]
+        f.slots, f.recharge, f.sq = was["slots"], was["recharge"], was["sq"]
+        f.temp_hp = 0
+        f.hp = hp
+        taken = {c for x in self.on_field() if x is not f for c in x.cells}
+        if any(c in taken for c in f.cells):
+            f.x, f.y = self._free_near((f.x, f.y), f.sq, taken)
+        self._event("unshape", who=f.id)
+        if not quiet:
+            self.say(f"{f.the_name[:1].upper() + f.the_name[1:]} is {'themselves' if f.char else 'itself'} again.",
+                     "magic")
+
+    def unshape_all(self) -> None:
+        for f in self.fighters:
+            if f.shape is not None:
+                self.unshape(f, quiet=True)
+
     def _bond_order(self) -> None:
         """A steed's turn comes right after its owner's, whatever it rolled (it shares the owner's count)."""
         for f in [x for x in self.fighters if x.bond is not None and x.bond.get("kind") != "familiar"]:
@@ -1285,6 +1338,7 @@ class Battle:
             gone = any(f.state == "fled" for f in self.side(PARTY))
             self.outcome = "fled" if gone else "defeat"
         if self.outcome is not None:
+            self.unshape_all()  # (no shape outlasts the fight: Expansion 3 F.6)
             self._jar_release()
 
     # ------------------------------------------------------------------ light and sight
@@ -2797,6 +2851,8 @@ class Battle:
             took = min(target.temp_hp, amount)
             target.temp_hp -= took
             amount -= took  # temporary hit points go first (2024)
+            if target.shape is not None and target.temp_hp <= 0:  # (Polymorph: the form's hit points are gone)
+                self.unshape(target)  # (what is left of the blow falls on its own hit points)
             if amount <= 0:
                 return
         if source is not None and target.state == "fighting" and amount > 0:
@@ -2898,6 +2954,8 @@ class Battle:
             self.say(f"{f.the_name} is bleeding out.", "danger")
 
     def _kill(self, f: Fighter, cause: str, killer: Fighter | None = None) -> None:
+        if f.shape is not None:
+            self.unshape(f, quiet=True)  # (what dies is the creature itself, not its borrowed form)
         if "possessed" in f.conditions:
             self._host_dies(f)
         if f.jar is not None:
@@ -3698,7 +3756,7 @@ class Battle:
         if self.antimagic(f.cells) or (target is not None and self.antimagic(target.cells)):
             return False
         mode = spell["target"]  # the same reach as anyone's spell
-        if mode in ("enemy", "ally", "downed_ally", "dead_ally") and (target is None or target not in self.spell_targets(f, sid)):
+        if mode in ("enemy", "ally", "creature", "downed_ally", "dead_ally") and (target is None or target not in self.spell_targets(f, sid)):
             return False
         if mode in ("point", "direction") and (point is None or point not in self.spell_points(f, sid)):
             return False
@@ -3889,6 +3947,9 @@ class Battle:
         if target == "ally":
             return [x for x in self.team(f.team) if (x.active or x.state == "down") and near(x)
                     and not (spell.get("others") and x is f)]
+        if target == "creature":  # (friend or foe: Polymorph)
+            return [x for x in self.fighters if x.active and x.bond is None and near(x)
+                    and (x.team == f.team or x in self.enemies_of(f))]
         if target == "downed_ally":
             return [x for x in self.team(f.team) if x.state == "down" and not x.stable and near(x)]
         if target == "bound":  # (a follow-up at the creature the spell was cast at: Witch Bolt, Heat Metal)
@@ -4014,7 +4075,7 @@ class Battle:
         if sid in opts and not opts[sid][0]:
             return opts[sid][1]
         mode = spell["target"]
-        if mode in ("enemy", "ally", "downed_ally", "dead_ally", "bound"):
+        if mode in ("enemy", "ally", "creature", "downed_ally", "dead_ally", "bound"):
             if target is None or target not in self.spell_targets(f, sid):
                 return "out of reach" if target is not None else "no target"
         elif mode in ("point", "direction"):
@@ -4543,6 +4604,9 @@ class Battle:
         for tok in [t for t in self.tokens if t.owner == f.id and t.rounds < 0]:
             self.tokens.remove(tok)  # a spiritual weapon held by concentration (2024)
             self._event("token_end", id=tok.id)
+        for x in self.fighters:  # a shape held by the spell ends with it (Polymorph: Expansion 3 F.6)
+            if x.shape is not None and x.shape.get("by") == f.id:  # (one concentration at a time: this one)
+                self.unshape(x)
         for x in self.allies_of_owner(f):  # a summoned spirit goes when the spell does (Expansion 3 F.2)
             if x.bond.get("conc") and x.state not in ("dead", "fled"):
                 self.dismiss(x)
@@ -5000,7 +5064,8 @@ class Battle:
         return text[:1].upper() + text[1:]
 
     def result(self) -> BattleResult:
-        foes = [f for f in self.side(FOE) if f.bond is None]  # (an enemy caster's spirit leaves nothing behind)
+        self.unshape_all()  # (a parley or a surrender ends a fight too: everyone is themselves again)
+        foes =[f for f in self.side(FOE) if f.bond is None]  # (an enemy caster's spirit leaves nothing behind)
         dead = [f.creature for f in foes if f.state == "dead"]
         captives = [f.creature for f in foes if f.state == "surrendered" or ("unconscious" in f.conditions and f.state == "fighting")]
         fled = [f.creature for f in foes if f.state in ("fled", "fleeing", "away")]

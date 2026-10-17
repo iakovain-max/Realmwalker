@@ -340,7 +340,7 @@ def _spell_option(b, f, sid: str, ok: bool, why: str) -> Option:
         cost = "action"  # (Wish is spoken with an action, whatever it copies)
     mode = sp["target"]
     targets, points, aim = [], None, "none"
-    if ok and mode in ("enemy", "ally", "downed_ally", "dead_ally", "bound"):
+    if ok and mode in ("enemy", "ally", "creature", "downed_ally", "dead_ally", "bound"):
         targets, aim = b.spell_targets(f, sid), "creature"
         if not targets:
             ok, why = False, "no one in reach"

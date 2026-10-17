@@ -501,7 +501,7 @@ stat block now comes with the spell that brings it into play (never a block that
   (`shapes.worst`: a frog, a rat). **True Polymorph** (level 9, concentration up to an hour, 30 feet, a drop of
   mercury, a dollop of gum arabic and a wisp of smoke: the pouch) does the same with any creature that is not unique
   or a shapechanger, by the same Challenge Rating rule; the hour that makes it lasting and the object forms are left
-  out (no fight lasts an hour; objects wait). The spells' effects op is {"op": "shape", "kinds": ["beast"] | "any"}.
+  out (no fight lasts an hour; objects wait). The spells' effects op is {"op": "shape", "forms": ["beast"] | "any"}.
 - **The Auto** casts it by its worth (`estimates`: a foe's threat taken away times the chance it fails the save; a
   friend's blows and the temporary hit points gained). The enemy's casters get it when G.1 gives them the spells.
 - **Pictures**: a shaped fighter is drawn as its form (battlefx draws a fighter without a character by its creature).
