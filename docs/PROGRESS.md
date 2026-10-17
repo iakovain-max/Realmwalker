@@ -88,6 +88,12 @@ their shelves on their usual days.
   with an ingested poison in the pack to see the cup. A new world or character is not needed.
 - **What could not be checked here.** Nothing about the look has been seen by a person: the vials, the
   "envenomed" word on the battle mat and the cards were checked by the headless tests and the smoke test only.
+- **The checks.** The smoke test passed. Autoplay passed on four runs and three other seeds; one earlier run, made
+  while the suite and the smoke test shared the machine, found two townsfolk on one square in a town and could not be
+  made to happen again (the check now names the two). The full suite passed apart from the enemy-turn timing checks:
+  each run, one different creature had a single turn over 400 ms while ten test workers shared the machine (the
+  bandit captain, the young dragon, the elephant, a level 8 war mage). Each passes when run on its own, and the same
+  flake is in the logs of earlier parts.
 - Choices made while Anton was away:
   - The assassins' trade belongs to the thieves' guilds: there is no separate assassins' guild in the world's
     history. The guild gives killing work and sells poison to its own members.
