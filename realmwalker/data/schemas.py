@@ -495,7 +495,8 @@ SPELL = Obj(
                          "text": Str(max_len=120)}, optional=True),
         "rounds": Int(min=0, max=100000, optional=True), "targets_up": Int(min=0, max=5, optional=True),
         "spheres": Int(min=2, max=8, optional=True),  # (Meteor Swarm: that many spheres, Battle._more_spheres)
-        "target": Str(choices=["enemy", "ally", "self", "downed_ally", "dead_ally", "all_allies", "point", "direction", "item"]),
+        "target": Str(choices=["enemy", "ally", "self", "downed_ally", "dead_ally", "all_allies", "point", "direction", "item",
+                                "place"]),  # (place: where a travel spell goes, outside a fight: game/waymagic.py)
         "range": Any_(optional=True),
         "area": Obj({"shape": Str(choices=["cone", "line", "sphere", "cube", "cylinder", "emanation"]), "size": Int(min=5, max=300)},
                     optional=True),

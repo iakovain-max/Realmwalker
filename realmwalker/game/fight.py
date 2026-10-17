@@ -240,6 +240,10 @@ def finish_battle(game) -> Aftermath:
                 after.notes.append(lie_senseless(game, dice.roll("1d4", rng).total))
             if actor is not None and lm is not None and actor in lm.actors:
                 lm.actors.remove(actor)
+        elif any(f.char is not None and f.char.alive and f.buff_value("feigning") for f in battle.side(PARTY)):
+            _feigned(game, battle, rng, after)
+            if actor is not None and lm is not None and actor in lm.actors:
+                lm.actors.remove(actor)  # (they take you all for dead, and go)
         else:
             beasts = bool(foes) and all(f.kind == "beast" for f in foes)
             if beasts and any(c.alive for c in game.party):
@@ -404,6 +408,41 @@ def _rob_party(game, rng) -> str:
 
 
 MAULED_DC = 5  # plus one for each beast still on its feet: a Constitution save to wake up at all
+
+
+def _feigned(game, battle: Battle, rng, after: Aftermath) -> None:
+    """A lost fight with a friend lying as if dead (Feign Death): the foes take everyone for dead and go. The
+    feigner gets up when they are gone; the fallen beside them make the Constitution save of those left for dead
+    (as after beasts), and the feigner binds them if they wake."""
+    from realmwalker.core.textgen import escape_markup
+    from realmwalker.rules.character import Sheet
+
+    feigners = [f.char for f in battle.side(PARTY) if f.char is not None and f.char.alive and f.buff_value("feigning")]
+    for f in battle.side(PARTY):
+        c = f.char
+        if c is None or not c.alive or c in feigners:
+            continue
+        roll = dice.d20(rng).natural
+        sheet = Sheet(c, game.tables)
+        bonus = sheet.mod("con") + (sheet.proficiency if "con" in c.saves else 0)
+        game.say(f"<dice>{escape_markup(c.name.split()[0])} (Constitution save): {roll} {'+' if bonus >= 0 else '-'} "
+                 f"{abs(bonus)} = {roll + bonus} vs DC {MAULED_DC}</>", "dice")
+        if roll + bonus >= MAULED_DC:
+            c.hp = max(1, c.hp)
+        else:
+            c.alive = False
+            c.hp = 0
+            if c is not game.party[0]:
+                after.notes.append(f"<danger>{escape_markup(c.name.split()[0])} never wakes.</>")
+    for c in feigners:
+        c.hp = max(1, c.hp)
+    after.outcome = "mauled"
+    names = ", ".join(escape_markup(c.name.split()[0]) for c in feigners)
+    after.text = (f"They prod the bodies, take {names} for one more of the dead, and go. When the last sound of them "
+                  f"is gone, {names} gets up.")
+    if not game.party[0].alive:
+        game.over = {"cause": "killed in a lost fight", "place": battle.env.ground}
+        after.outcome = "death"
 
 
 def _left_for_dead(game, battle: Battle, rng, after: Aftermath, beasts: int) -> None:

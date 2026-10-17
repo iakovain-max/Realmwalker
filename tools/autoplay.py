@@ -397,6 +397,13 @@ def _check_companions(game, fail) -> None:
         fail("two people in the party wear the same thing")
     if any(c.inventory is game.party[0].inventory for c in getattr(game, "waiting", [])):
         fail("a companion left waiting still carries from the party's pack")
+    on_water = not game.in_local and game.party and not game.biome_def(game.player.x, game.player.y)["passable"]
+    if on_water and game.magic_crossing(game.player.x, game.player.y) is None:  # (Expansion 3 E.2: water walked on,
+        fail("the party stands on open water with no spell to carry it")  # a lake walked under, the wind)
+    for c in game.party:  # (E.2: a lasting spell's flags are kept only while it lasts)
+        home = (c.spells or {}).get("sanctuary")
+        if home is not None and not 0 <= int(home) < len(game.world.settlements):
+            fail(f"{c.name}'s sanctuary is no town")
     for b in getattr(game, "fallen", []) or []:  # (Expansion 3 E.1: the bodies the party carries for raising)
         if b["char"].alive or any(b["char"] is c for c in game.party):
             fail(f"{b['char'].name} is carried as a body but is alive or walks with the party")

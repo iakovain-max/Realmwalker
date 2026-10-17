@@ -293,6 +293,9 @@ def spell_value(b, f, sid: str, *, target=None, point=None, dc: int | None = Non
                 w.help += 5.0 if near else 1.5
         elif kind == "teleport" and point is not None:
             w.help += _escape_worth(b, f, point)
+        elif kind == "undark":  # (Daylight: a foe's magical darkness burned away)
+            mine = {x.id for x in b.team(f.team)}
+            w.control += 2.0 * sum(1 for z in b.zones if z.kind == "darkness" and z.owner not in mine)
     if spell.get("again"):
         w.help += _again_worth(b, f, spell, up)
     if up and spell.get("targets_up") and target is not None and not several:  # (more of the same kind nearby)
@@ -581,6 +584,8 @@ def _zone_worth(b, f, o: dict, caught: list, dc: int, up: int, w: Worth) -> None
                 w.control += 0.2 * threat(x)
         elif kind in ("fog", "darkness"):
             w.control += 0.3 * threat(x)
+        elif kind == "lights" and x in _unseen_foes(b, f):
+            w.control += 0.5 * threat(x)  # (Dancing Lights: a foe in the dark is lit, and can be seen and struck)
         elif kind == "silence" and x.cdef is not None and x.cdef.get("spells"):
             w.control += threat(x) * 1.5
     if o.get("heal"):
@@ -687,12 +692,42 @@ def _buff_worth(buff: dict, count: int, b=None, f=None, on=None, spell: dict | N
     if buff.get("immune_damage") and b is not None and f is not None:
         w += 0.5 + 3.0 * sum(1 for e in b.enemies_of(f) if any(
             a.get("type") in buff["immune_damage"] for a in (e.cdef or {}).get("attacks", ())))
+    # Part E.2 (the body on the move)
+    if b is not None and f is not None:
+        w += _body_worth(b, f, on if on is not None else f, buff, count)
     if buff.get("aura") and b is not None and f is not None:
         aura = buff["aura"]
         bearer = on if on is not None else f
         r = int(aura.get("radius", 30)) // 5
         friends = [x for x in b.team(f.team) if x.active and grid.gap(bearer.space, x.space) <= r]
         w += sum(_buff_worth(aura.get("grant", {}), 1, b, f, x, spell) for x in friends)
+    return w
+
+
+def _unseen_foes(b, f) -> list:
+    """Foes standing where the side of `f` cannot see them: in the dark, beyond darkvision."""
+    friends = [x for x in b.team(f.team) if x.active]
+    return [e for e in b.enemies_of(f) if not any(b.can_see(x, e) for x in friends)]
+
+
+def _body_worth(b, f, on, buff: dict, count: int) -> float:
+    """Part E.2's blessings: light and darkvision where the party cannot see its foes, sight of the invisible, a
+    mist or a feigned death only for a friend about to fall (anything else would take a fighter out of the fight)."""
+    w = 0.0
+    if buff.get("light") or buff.get("darkvision"):
+        dark = _unseen_foes(b, f)
+        sighted = on.darkvision > 0 if buff.get("darkvision") else False
+        w += 0.0 if sighted else 1.5 * len(dark)
+    if buff.get("see_invisible"):
+        w += 3.0 * sum(1 for e in b.enemies_of(f) if "invisible" in e.conditions)
+    if buff.get("mist") or buff.get("feigning"):
+        near = any(b.gap(on, e) <= 2 for e in b.enemies_of(f))
+        dying = on.hp <= on.max_hp // 4 and near
+        w += 4.0 if dying else -20.0
+    if buff.get("swim") is True and b.field.swim.any():
+        w += 0.6 * count
+    if buff.get("climb") is True and b.field.climb.any():
+        w += 0.4 * count
     return w
 
 

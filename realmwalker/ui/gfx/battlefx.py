@@ -591,6 +591,15 @@ class BattleBoard:
                     wob = (int(now * 10) + i) % 2 if ambient and z.kind == "daggers" else 0
                     canvas.under(Image(f"b{z.kind}{wob}", (lambda m=make, w=wob: m(w)), (px, py, T, T),
                                        rgba=(255, 255, 255, 230), smooth=False))
+            elif z.kind == "lights":  # (Dancing Lights: four bobbing torch-sized glows over a patch of the field)
+                xs = sorted({c[0] for c in z.cells})
+                ys = sorted({c[1] for c in z.cells})
+                cx, cy = (xs[len(xs) // 2], ys[len(ys) // 2]) if xs else (0, 0)
+                for i, (dx, dy) in enumerate(((-1, -1), (1, -1), (-1, 1), (1, 1))):
+                    bob = int(2 * math.sin(now * 3.0 + i * 1.7)) if ambient else 0
+                    px, py = self.sq_px(cx + dx, cy + dy)
+                    canvas.over(Rect(px + T // 2 - 3, py + T // 2 - 3 + bob, 6, 6, (255, 236, 170, 200)))
+                    canvas.over(Rect(px + T // 2 - 1, py + T // 2 - 1 + bob, 2, 2, (255, 255, 235, 255)))
             elif z.kind in ("moonbeam", "silence"):
                 pulse = 0.5 + 0.5 * math.sin(now * 2.2) if ambient else 0.6
                 col = (225, 235, 255) if z.kind == "moonbeam" else (150, 170, 210)

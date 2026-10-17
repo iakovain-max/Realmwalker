@@ -340,6 +340,10 @@ ITEMS = {
     "diamond_hoard": "item/misc/misc_box.png", "rare_oils": "item/potion/golden.png",
     "feast_bowl": "item/misc/misc_disc_new.png", "miniature_door": "dungeon/doors/closed_door.png",
     "goodberry": "item/food/strawberry_new.png", "conjured_food": "item/food/piece_of_ambrosia_new.png",
+    # the costly components of Part E.2's spells, and the everburning torch of Continual Flame (Expansion 3 E.2)
+    "ruby_dust_pinch": "item/potion/ruby_new.png", "rare_inks": "item/potion/magenta_new.png",
+    "divination_tools": "item/misc/misc_deck_new.png", "jacinth": "item/amulet/crystal_red.png",
+    "great_diamond": "item/misc/misc_crystal_old.png", "everburning_torch": "item/misc/misc_lantern.png",
     "wheat": "item/food/bread_ration_old.png", "salt": "item/misc/misc_stone_inert.png",
     "iron_bar": "item/misc/misc_rune.png", "wool_bolt": "item/armor/back/cloak_2.png",
     "linen_bolt": "item/armor/torso/robe_1_new.png", "furs": "item/armor/torso/animal_skin_3.png",

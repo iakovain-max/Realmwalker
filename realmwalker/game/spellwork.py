@@ -64,7 +64,9 @@ def sheltering(game) -> bool:
 
 def hidden(game, kind: str) -> bool:
     """May the party rest here though enemies hunt nearby? Out of the world: a Mansion (any rest), a Rope Trick (a
-    short one)."""
+    short one); a lone caster melded into stone (any rest)."""
+    if warded(game, "meld") is not None and len([c for c in game.party if c.alive]) == 1:
+        return True
     return warded(game, "mansion") is not None or (kind == "short" and warded(game, "rope") is not None)
 
 
@@ -129,6 +131,8 @@ def _ward(game, caster: Character, spell: dict, level: int) -> list[str]:
                 f"of the world. For {lasts} you may rest in it, whoever hunts below.",
         "mansion": f"A shimmering door stands in the air. Beyond it, a fire-warmed hall, a table laid for a hundred, "
                    f"and soft beds: yours for {lasts}.",
+        "meld": f"{first} lays both hands on a great rock and steps into it, gear and all. For {lasts}, nothing of "
+                f"{first} can be seen or found; the stone hums faintly with the world outside.",
     }
     out = [words[ward]]
     if ward == "mansion":
@@ -304,8 +308,24 @@ def _repose(game, caster: Character, spell: dict, level: int, target: Character)
             f"tongue.", revival.repose(game, body, max(1, days))]
 
 
+# ---------------------------------------------------------------------------- a flame that never goes out
+def _flame(game, caster: Character, spell: dict, level: int) -> list[str]:
+    """Continual Flame: a torch from the packs (or a stick, if there is none) burns for ever without heat."""
+    from realmwalker.rules.inventory import add_item, remove_item
+
+    torch = next(((m, it) for m in [caster] + [c for c in game.party if c is not caster]
+                  for it in m.inventory if it.def_id == "torch"), None)
+    if torch is not None:
+        remove_item(torch[0], torch[1].uid, 1)
+    add_item(caster, game.tables.items, "everburning_torch", 1)
+    what = "a torch" if torch is not None else "a stick of wood"
+    return [f"{_first(caster)} touches {what} and a flame springs from it: it gives no heat and burns no fuel. "
+            f"<good>An everburning torch</>, for as long as nobody dispels it."]
+
+
 # ---------------------------------------------------------------------------- the door
-DOES = {"ward": _ward, "water": _water, "feed": _feed, "goodberry": _goodberry, "purify": _purify, "feast": _feast}
+DOES = {"ward": _ward, "water": _water, "feed": _feed, "goodberry": _goodberry, "purify": _purify, "feast": _feast,
+        "flame": _flame}
 ON_SOMEONE = {"uncurse": _uncurse, "regenerate": _regenerate, "repose": _repose}
 
 
@@ -318,10 +338,16 @@ def problem(game, caster: Character, sid: str, target: Character | None) -> str 
         rec = wards_here(game).get(ward)
         if rec is not None and float(rec["until"]) - game.world.time > int(spell.get("rounds", 0)) // 20:
             return f"it is still working here ({max(1, round((float(rec['until']) - game.world.time) / 60))}h left)"
-        if game.local is not None and game.local.kind == "settlement" and ward != "mansion":
+        if game.local is not None and game.local.kind == "settlement" and ward not in ("mansion", "meld"):
             return "not in the middle of a town"
+        if ward == "meld" and len([c for c in game.party if c.alive]) > 1:
+            return "only the caster fits in the stone: it hides one alone"
     if does == "water" and not _skins(game) and not any(c.alive and c.thirst >= 10 for c in game.party):
         return "there is nothing to put the water in, and nobody is thirsty"
+    if does == "travel":
+        from realmwalker.game import waymagic
+
+        return waymagic.problem(game, caster, sid, target)
     if does == "purify" and spoiled_things(game) == ([], []):
         return "nothing you carry has turned or gone foul"
     if does == "uncurse" and (target is None or not cursed_on(target)):
@@ -343,6 +369,10 @@ def cast(game, caster: Character, sid: str, target: Character | None, level: int
     does = _road(spell)["does"]
     if does in ON_SOMEONE:
         out = ON_SOMEONE[does](game, caster, spell, level, target or caster)
+    elif does == "travel":
+        from realmwalker.game import waymagic
+
+        out = waymagic.travel(game, caster, sid, target, level)
     else:
         out = DOES[does](game, caster, spell, level)
     game.cue("heal" if does in ("regenerate", "feast") else "spell")

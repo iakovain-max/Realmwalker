@@ -28,7 +28,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Clearing the decks for the expansions** | ✅ Done (2026-10-12), branch `prep/clear-the-decks` |
 | **Expansion 1, *Dice & Destiny*** (version 1.1.0) | ✅ Released (2026-10-13), branch `dlc/01-dice-destiny` |
 | **Expansion 2, *Blades & Backgrounds*** (version 1.2.0) | ✅ Released (2026-10-13), branch `dlc/02-blades-backgrounds` |
-| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete), D (the spell catalogue: 191 battle spells, cantrips to level 9, and Wish) and E.1 (spells outside battle: healing, return from death, food, shelter and watch, 2026-10-17) in `main`; E.2 (travel, finding and seeing, asking the powers, talking) next |
+| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes), C (spellcasting complete), D (the spell catalogue: 191 battle spells, cantrips to level 9, and Wish) E.1 (spells outside battle: healing, return from death, food, shelter and watch) and E.2 (light, the body on the move, travel by magic, 2026-10-17) in `main`; E.3 (finding and seeing, asking the powers, talking) next |
 
 ---
 
@@ -39,6 +39,60 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-17 (morning): Demigods & Magics E.2 — spells outside battle: light, the body on the move, travel by magic
+
+Built by the relay builder realmwalker-b. Saves do not change: an old world of format 18 still loads.
+- **Light.** **Light** (a cantrip): something you carry glows like a torch for an hour, so no torch burns down in a
+  dungeon, and at night the close view reaches further. **Continual Flame** (a pinch of ruby dust, 50 gold) turns a
+  torch into an *everburning torch* that never goes out. **Daylight**: sunlight 60 feet round you for an hour; it burns
+  away magical darkness. In a fight **Dancing Lights** lights a patch of the dark field, so the foes hiding there can be
+  seen and struck, and Light shines round its caster.
+- **The body on the move.** **Darkvision** (150 feet for eight hours), **See Invisibility** (the invisible are seen),
+  **Longstrider** (+10 feet of speed; on the road it makes up for a heavy load or a lame leg), **Pass without Trace**
+  (+10 to everyone's Stealth for an hour: creeping, slipping away from trouble, hiding), **Enhance Ability** (a better
+  roll on everything done with one's best ability), **Alter Self** (on the road a new face no watchman sees through; in
+  a fight gills and webbed hands for deep water). In a fight: **Jump** (a 30-foot leap over water, chasms and fire),
+  **Spider Climb** (climbing as fast as walking), **Levitate** (a foe that fails its save hangs 20 feet up, out of
+  reach, and floats down when it ends), **Gaseous Form** (a friend about to fall becomes a slow mist that blows and
+  blades hardly hurt; it cannot strike or cast), **Feign Death** (a friend lies as if dead: no foe goes for them, and
+  if the fight is lost the foes take everyone for dead and go). **Feather Fall** is cast by itself when someone falls,
+  in a fight or into a dungeon's pit: no harm. **Meld into Stone** hides a lone caster in a rock to rest however many
+  hunt for them.
+- **Water.** **Water Walk**: for an hour the party walks over rivers (no wading, nobody wet), lakes and the sea's edge.
+  **Water Breathing**: for a day the party can walk across a lake's bottom, slowly and soaked. If the spell ends while
+  you are out there, you swim for the shore, spent.
+- **Travel by magic** (the Spells page, S: ← → chooses where). **Teleport**: you and up to eight friends to any town
+  you know. How well you know it decides the arrival, by the book's table: a city you have visited (its temple's
+  circle) always on target; your home town nearly always; a town visited, or one only heard of, may land you off
+  target (2d12 miles away), in a town like it, or go wrong and hurt everyone (3d10). **Teleportation Circle** (rare
+  inks, 50 gold): to the circle of any city you have visited, always on target. **Word of Recall** (clerics): cast it
+  once standing in a temple and that town becomes your sanctuary; cast it anywhere after and you and five friends are
+  back there at once. **Transport via Plants**: from woodland to the woods beside any town you have been to.
+  **Phantom Steed** (a ritual): a ghostly horse for each rider; a party all on them covers 13 miles an hour. **Wind
+  Walk**: the party becomes clouds for eight hours and flies ten times a walker's pace over land, lakes and mountains,
+  and nothing on the ground meets it. **Etherealness**: for eight hours nobody on the road sees you, and under the
+  ground walls and doors do not stop you and traps do not spring (chests cannot be touched; if it ends inside the
+  stone, you are pushed out and hurt). **Find the Path** (divination tools, 100 gold): for a day nobody loses the way,
+  and in a dungeon the way to the stairs is shown on the map. **Arcane Gate**: in a dungeon, a gate to the stairs up
+  or down within 500 feet. Until the other planes come (Expansion 26), **Plane Shift**, **Astral Projection** and
+  **Gate** go out of the world and back in: to a city's circle or near any known town (Plane Shift), straight to any
+  known town (the other two; Astral Projection spends a jacinth and silver for each traveller, Gate needs a great
+  diamond). **Tenser's Floating Disk** carries 500 pounds of your load; an **Unseen Servant** halves the time of the
+  camp's chores (fire, shelter, tent, cooking).
+- **New things in the shops**: a pinch of ruby dust, rare inks and divination tools at town markets, a jacinth and a
+  great diamond in cities; the everburning torch has a picture.
+- **The plan**: E.2 was split at its start (64 spells were too many for one part): finding and seeing, asking the
+  powers and talking are E.3; the old E.3 is E.4.
+- **The codex**: 34 spells settled (4 exactly as the book, 30 adapted, each with its note).
+- **How to try it**: a wizard of level 13 prepares Teleport (S, then p); visit a city once, then from far away cast
+  Teleport on the Spells page, choose the city with ← → and press Enter. A cleric of level 11 casts Word of Recall
+  standing in a town's temple, walks away, and casts it again.
+- **Choices made while Anton was away** (in STATUS.md): a city visited counts as a teleportation circle whose sigils
+  you know; travel by magic is never cast in a fight; only a party carried wholly by magic travels faster than a
+  walker (the 2024 travel pace does not grow with speed); Light and Daylight shine round the caster rather than on a
+  thing set down; Enhance Ability's advantage counts as +5; Gaseous Form and Feign Death are fight spells only, and the
+  Auto uses them only on a friend about to fall.
 
 ### Session, 2026-10-17 (morning): Demigods & Magics E.1 — spells outside battle: healing, return from death, food, shelter and watch
 

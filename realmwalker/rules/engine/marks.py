@@ -56,6 +56,19 @@ On the one marked (the buff is on the creature):
                     "$dc"; with save_adv for every ability)
     immune_damage   [damage types] it takes none of (Mind Blank: psychic)
     time_stop       turns left in a row (Time Stop: given by the `time_stop` op)
+    light           squares of bright light it carries (Light: 4, Daylight: 12); a lasting spell's light also lights a
+                    dungeon and the close view at night, half as far again with the dim light (game/vision.py)
+    see_invisible   it sees the invisible as if it were visible (See Invisibility)
+    climb, swim     a Climb or Swim Speed; true: equal to its Speed (Spider Climb, Alter Self, Water Walk)
+    leap            feet it can leap, standing or running (Jump)
+    feigning        it lies as if dead (Feign Death): nobody aims at it, and it does not count among those standing
+    mist            it is a drifting mist: no attacks, no spells, 10 feet of speed (Gaseous Form, with fly, resist,
+                    save_adv and immune)
+  Read on the character sheet outside a fight and in one (rules/character.py, rules/spells.SHEET_KEYS): darkvision
+  (feet), speed (feet more), skills ({skill: bonus}), check_adv (Enhance Ability: the target's best ability; +5 to
+  its skills, the passive rule), carry (pounds more before laden). Read only outside a fight (game/): steed (miles
+  an hour of a phantom horse), servant (camp chores in half the time), water_walk, water_breathing, wind (Wind
+  Walk's flight), ethereal (Etherealness), pathfinding (Find the Path).
 On the one who gains (the caster, or a friend):
     hit_extra       dice (with hit_type, hit_with "weapon" | "melee" | "any"): extra damage on its hits (Divine Favor)
     weapon_plus     added to its weapon attack and damage rolls (Magic Weapon)
@@ -87,6 +100,9 @@ BUFF_KEYS = frozenset({
     "dancing", "truesight", "aloft", "spell_ward",
     # the fourth wave's (D.4)
     "befuddled", "foresight", "holy", "immune_damage", "time_stop",
+    # Part E.2's (the body on the move): kept on a character as lasting spells, read outside a fight as well
+    "light", "darkvision", "see_invisible", "speed", "climb", "swim", "leap", "mist", "skills", "check_adv", "carry",
+    "steed", "servant", "water_walk", "water_breathing", "wind", "ethereal", "pathfinding", "feigning",
 })
 ZONES = frozenset({"web", "fire", "fog", "ice", "caltrops", "bearings", "darkness", "antimagic", "plants", "grease",
                    "spikes", "daggers", "moonbeam", "sphere", "silence",
@@ -96,7 +112,9 @@ ZONES = frozenset({"web", "fire", "fog", "ice", "caltrops", "bearings", "darknes
                    # the third wave's (D.3): walls of blades and thorns, a pillar of light, a wall of ice
                    "blades", "thorns", "celestial", "icewall",
                    # the fourth wave's (D.4): an earthquake, a burning cloud, the prismatic wall and its glare, a storm
-                   "quake", "embers", "prismatic", "glare", "storm"})
+                   "quake", "embers", "prismatic", "glare", "storm",
+                   # Part E.2's: four lights that light a patch of the field (Dancing Lights)
+                   "lights"})
 
 
 def _weapon(opt) -> bool:

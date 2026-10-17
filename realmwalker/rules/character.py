@@ -203,7 +203,19 @@ class Sheet:
             from realmwalker.rules import magic
 
             bonus += magic.total(self.c, "skill", skill=skill) + self.worn_skill_bonus(skill)
+        if self.c.effects:
+            bonus += self.spell_skill_bonus(skill, ability)
         return bonus + self.skill_condition(skill)
+
+    def spell_skill_bonus(self, skill: str, ability: str) -> int:
+        """What lasting spells add to a skill: Pass without Trace's +10 Stealth; Enhance Ability's Advantage on the
+        best ability's checks, counted as +5 (the 2024 rule for a passive score, used for every check here)."""
+        from realmwalker.rules import spells
+
+        out = sum(int((v or {}).get(skill, 0)) for v in spells.lasting_values(self.c, self.t, "skills"))
+        if spells.lasting_flag(self.c, self.t, "check_adv") and spells.best_ability(self.c) == ability:
+            out += 5
+        return out
 
     def skill_condition(self, skill: str) -> int:
         """What the body's state does to a skill: pain, hunger, sickness..., exhaustion (2024: 2 per level off every
@@ -290,7 +302,12 @@ class Sheet:
 
     @property
     def darkvision(self) -> int:
-        return int(self.lineage.get("darkvision", self.race.get("darkvision", 0)))
+        own = int(self.lineage.get("darkvision", self.race.get("darkvision", 0)))
+        if self.c.effects:
+            from realmwalker.rules import spells
+
+            own = max(own, spells.lasting_number(self.c, self.t, "darkvision"))  # (the Darkvision spell: 150 feet)
+        return own
 
     @property
     def lineage(self) -> dict:
@@ -420,6 +437,10 @@ class Sheet:
         s = self.c.abilities.get("str", 10)
         carry = self.rules["carry"]
         extra = self.pack_carry()
+        if self.c.effects:
+            from realmwalker.rules import spells
+
+            extra += sum(int(v) for v in spells.lasting_values(self.c, self.t, "carry"))  # (Tenser's Floating Disk)
         if self.c.animals:
             from realmwalker.game.services import animal_carry
 
@@ -526,6 +547,10 @@ class Sheet:
             from realmwalker.rules import magic
 
             speed += magic.total(self.c, "speed")
+        if self.c.effects:
+            from realmwalker.rules import spells
+
+            speed += sum(int(v) for v in spells.lasting_values(self.c, self.t, "speed"))  # (Longstrider)
         enc = self.encumbrance()
         if enc == 1:
             speed -= 10
@@ -535,6 +560,14 @@ class Sheet:
 
     def travel_multiplier(self) -> float | None:
         """How much longer journeys take than for an unburdened walker at 30 ft (None = cannot move)."""
+        if self.c.effects:
+            from realmwalker.rules import spells
+
+            if spells.lasting_flag(self.c, self.t, "wind"):
+                return 0.1  # (Wind Walk: a cloud flying at 300 feet, ten times a walker, carrying all it wears)
+            steed = spells.lasting_number(self.c, self.t, "steed")
+            if steed and self.encumbrance() < 3:
+                return 3.0 / steed  # (Phantom Steed: 13 miles an hour, a walker's 3)
         if self.encumbrance() >= 3:
             return None
         return 30.0 / max(5, self.speed())

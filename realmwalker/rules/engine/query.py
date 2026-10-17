@@ -277,6 +277,8 @@ def speed(f) -> int:
     if f.buff_value("aloft") or f.buff_value("dancing"):
         return 0  # (hanging in the air under Reverse Gravity; dancing in place)
     base -= sum(f.buff_value("slow"))
+    if f.buff_value("mist"):
+        base = min(base, 10)  # (Gaseous Form: it drifts at 10 feet)
     if f.buff_value("haste"):
         base *= 2
     if f.buff_value("sluggish"):

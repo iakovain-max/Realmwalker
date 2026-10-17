@@ -148,6 +148,11 @@ class Zone:
         return 2 if self.kind == "fire" else 0
 
 
+def _feigning(f) -> bool:
+    """Lying as if dead (Feign Death): it does not count among those still standing."""
+    return bool(f.buffs) and bool(f.buff_value("feigning"))
+
+
 @dataclass
 class Token:
     """A thing a spell put on the field that acts but is not a creature: a spiritual weapon, a guardian."""
@@ -399,7 +404,8 @@ class Fighter:
         if kind == "climb" and self.char is not None and (feats.has(self.char, "athlete")
                                                           or self.has_trait("second_story_work")):
             own = self.speed  # (Athlete, a thief's Second-Story Work: a Climb Speed equal to the Speed)
-        return max(own, max([0] + [int(v) for v in self.buff_value(kind)]))
+        # (a buff of True: a speed equal to the walking speed - Spider Climb, Alter Self's gills)
+        return max(own, max([0] + [self.speed if v is True else int(v) for v in self.buff_value(kind)]))
 
     @property
     def climb_speed(self) -> int:
@@ -418,7 +424,14 @@ class Fighter:
         s = self.score("str")
         if self.char is not None and self.has_trait("second_story_work"):
             s = max(s, self.score("dex"))  # (a thief leaps by Dexterity)
-        return s // 2, s
+        leap = max([0] + [int(v) for v in self.buff_value("leap")])  # (Jump: 30 feet, standing or running)
+        return max(s // 2, leap), max(s, leap)
+
+    @property
+    def shine(self) -> int:
+        """Squares of bright light it carries now: a torch or a glowing blade, or a spell's light on it (Light,
+        Daylight)."""
+        return max([self.glow] + [int(v) for v in self.buff_value("light")])
 
     @property
     def darkvision(self) -> int:
@@ -675,7 +688,8 @@ class Battle:
         return [f for f in self.fighters if f.team == team]
 
     def enemies_of(self, f: Fighter) -> list[Fighter]:
-        return [x for x in self.fighters if x.team != f.team and x.active]
+        # (one lying as if dead under Feign Death is taken for dead: nobody aims at it, though an area still catches it)
+        return [x for x in self.fighters if x.team != f.team and x.active and not (x.buffs and x.buff_value("feigning"))]
 
     def allies_of(self, f: Fighter) -> list[Fighter]:
         return [x for x in self.fighters if x.team == f.team and x.active]
@@ -1140,8 +1154,10 @@ class Battle:
             if f.z > 0 and not f.hovers and ("prone" in f.conditions or f.incapacitated or f.state == "down"
                                              or f.fly_speed <= 0) and not f.buff_value("aloft"):
                 self._fall(f)
-        foes = [f for f in self.team(FOE) if f.active and "unconscious" not in f.conditions or f.state == "away"]
-        party = [f for f in self.team(PARTY) if f.active and "unconscious" not in f.conditions or f.state == "away"]
+        foes = [f for f in self.team(FOE) if f.active and "unconscious" not in f.conditions and not _feigning(f)
+                or f.state == "away"]
+        party = [f for f in self.team(PARTY) if f.active and "unconscious" not in f.conditions and not _feigning(f)
+                 or f.state == "away"]
         if not foes:
             self.outcome = "victory"
         elif not party:
@@ -1151,9 +1167,9 @@ class Battle:
     # ------------------------------------------------------------------ light and sight
     def light(self) -> np.ndarray:
         """How lit each square is now: the field's own light, what people carry, and anything burning."""
-        carriers = [(f.x + f.sq // 2, f.y + f.sq // 2, f.glow) for f in self.fighters
-                    if f.glow and f.state in ("fighting", "fleeing", "down")]
-        fires = [(x, y, 1) for z in self.zones if z.kind == "fire" for (x, y) in z.cells]
+        carriers = [(f.x + f.sq // 2, f.y + f.sq // 2, f.shine) for f in self.fighters
+                    if f.shine and f.state in ("fighting", "fleeing", "down")]
+        fires = [(x, y, 1) for z in self.zones if z.kind in ("fire", "lights") for (x, y) in z.cells]
         key = (tuple(carriers), tuple(fires), self.field.version)
         if key != self._light_key:
             self._light_key = key
@@ -1178,8 +1194,8 @@ class Battle:
             return True  # Tremorsense: anything touching the same ground, through darkness and walls alike (2024)
         if "blinded" in a.conditions:
             return False
-        if query.flag(b, "unseen") and senses.get("truesight", 0) < feet:
-            return False  # Invisible
+        if query.flag(b, "unseen") and senses.get("truesight", 0) < feet and not a.buff_value("see_invisible"):
+            return False  # Invisible (See Invisibility sees it as if it were not)
         if b.hidden and b.hidden > a.passive() - (5 if self.dim_for(a, b) else 0) and self.gap(a, b) > 1:
             return False
         if any(self.field.zone_opaque[x, y] for x, y in b.cells) and self.gap(a, b) > 1:
@@ -1530,12 +1546,39 @@ class Battle:
         if it hurt (2024)."""
         feet, f.z = f.z, 0
         self._event("fall", who=f.id, feet=feet)
+        if f.__dict__.pop("soft_landing", False):
+            self.say(f"{f.the_name} floats gently to the ground.", "info")
+            return
+        if feet >= 10 and self._feather_fall(f):
+            return
         expr = hazards.falling(self.t, feet)
         self.say(f"{f.the_name} falls {feet} feet.", "danger" if f.side == PARTY else "info")
         if expr:
             self._hit(None, f, dice.roll(expr, self.rng).total, "bludgeoning", crit=False, weapon="fall")
             if f.active or f.state == "down":
                 f.conditions["prone"] = -1
+
+    def _feather_fall(self, f: Fighter) -> bool:
+        """Someone falls: a friend within 60 feet (or the faller) with Feather Fall ready casts it with the reaction,
+        and the fall does no harm (2024: a reaction, a level 1 slot, up to five falling creatures)."""
+        for x in sorted(self.team(f.team), key=lambda x: x is not f):
+            if x.char is None or not x.reaction or not x.active or query.incapacitated(x) or self.feet(x, f) > 60:
+                continue
+            if "feather_fall" not in spellrules.known_spells(x.char, self.t) or self.slot_used_now(x):
+                continue
+            ok, _why = spellrules.can_cast(x.char, self.t, "feather_fall")
+            slot = spellrules.lowest_free_slot(x.char, self.t, 1)
+            if not ok or slot is None or self.antimagic(x.cells):
+                continue
+            spellrules.spend_slot(x.char, slot)
+            self.note_slot(x)
+            x.reaction = False
+            self._event("cast", by=x.id, to=f.id, spell="feather_fall", effect="buff", look="buff", dtype="", area=[])
+            who = "" if x is f else f"{x.the_name} speaks a word: "
+            self.say(f"<magic>{who}{f.the_name} drifts down like a feather</> and lands unharmed. (Feather Fall)",
+                     "magic")
+            return True
+        return False
 
     def held_by(self, f: Fighter) -> list[Fighter]:
         return [x for x in self.fighters if x.grappled_by == f.id and x.active]
@@ -1797,6 +1840,13 @@ class Battle:
 
     # ------------------------------------------------------------------ attack options
     def attack_options(self, f: Fighter) -> list[AttackOption]:
+        out = self._attack_options(f)
+        if f.buffs and f.buff_value("mist"):
+            for o in out:  # (Gaseous Form: a drifting mist cannot strike)
+                o.available, o.reason = False, "a drifting mist cannot strike (Gaseous Form)"
+        return out
+
+    def _attack_options(self, f: Fighter) -> list[AttackOption]:
         if f.creature:
             out = []
             for i, a in enumerate(f.cdef["attacks"]):
@@ -1877,7 +1927,7 @@ class Battle:
 
     def offhand_option(self, f: Fighter) -> AttackOption | None:
         """Two-weapon fighting: a light weapon in each hand, and the main one already used this turn."""
-        if not f.char:
+        if not f.char or f.buff_value("mist"):
             return None
         items = self.t.items
         main, off = f.char.equipped_item("main_hand"), f.char.equipped_item("off_hand")
@@ -3382,7 +3432,10 @@ class Battle:
             out.append((sid, ok, why))
         again = again_spell(f, self.t)
         if again is not None:
-            out.append((again, *self._casting_time_ok(f, self.t.spells[again], False)))
+            ok, why = self._casting_time_ok(f, self.t.spells[again], False)
+            if ok and self.t.spells[again]["target"] == "point" and not self.spell_points(f, again):
+                ok, why = False, "nowhere to aim it from here"  # (Tree Stride with no tree beside you)
+            out.append((again, ok, why))
         for it in f.char.inventory:  # (a scroll: on the reader's spell list, or a thief's Use Magic Device)
             sid = self.t.items.get(it.def_id).get("use", {}).get("scroll")
             if sid in self.t.spells and not spellrules.has_op(self.t.spells[sid], "revive", "identify") \
@@ -3448,6 +3501,8 @@ class Battle:
             return False, "magic does not work here"
         if f.buff_value("befuddled") and not spell.get("ability") and "item" not in spell.get("classes", ()):
             return False, "befuddled: no spell will come (Befuddlement)"
+        if f.buff_value("mist"):
+            return False, "a drifting mist cannot cast (Gaseous Form)"
         if "V" in spell.get("components", ()) and self.silenced(f):
             return False, "no sound can be made here (Silence)"
         if cast_kind(f, spell) == "bonus":
@@ -3519,6 +3574,9 @@ class Battle:
         occ = {c for x in self.on_field() for c in x.cells} if spellrules.has_op(spell, "teleport", "summon", "guardian") \
             else set()
         out = set()
+        near = (spellrules.op(spell, "teleport") or {}).get("near")  # (Tree Stride: from beside a tree to beside one)
+        if near == "tree" and not self._beside_tree(f.cells):
+            return out
         for x in range(max(0, f.x - n), min(self.field.width, f.x + f.sq + n)):
             for y in range(max(0, f.y - n), min(self.field.height, f.y + f.sq + n)):
                 if grid.gap(f.space, (x, y, 1)) > n:
@@ -3527,10 +3585,18 @@ class Battle:
                     continue
                 if occ and ((x, y) in occ or not self.field.passable(x, y)):
                     continue
-                if not self.can_see_point(f, x, y):
+                if near == "tree":
+                    if not self._beside_tree([(x, y)]):
+                        continue  # (a tree strider knows where every tree is: it need not see the place)
+                elif not self.can_see_point(f, x, y):
                     continue
                 out.add((x, y))
         return out
+
+    def _beside_tree(self, cells) -> bool:
+        tree = self.field.tree
+        return any(tree[x + dx, y + dy] for x, y in cells for dx in (-1, 0, 1) for dy in (-1, 0, 1)
+                   if self.field.in_bounds(x + dx, y + dy))
 
     def spell_area(self, f: Fighter, sid: str, point: tuple[int, int] | None, target: Fighter | None = None) -> list[tuple[int, int]]:
         spell = self.t.spells[spell_id(sid)]

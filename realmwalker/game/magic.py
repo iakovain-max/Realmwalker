@@ -182,8 +182,12 @@ def scroll_stock(game, settlement, rng) -> dict[str, int]:
 # ---------------------------------------------------------------------------- casting on the road
 def road_targets(game, caster, spell_id: str) -> list:
     """Who a spell cast outside battle can be aimed at (empty when it takes everyone, or only the caster): the fallen
-    the party carries, for a spell of return or Gentle Repose."""
+    the party carries, for a spell of return or Gentle Repose; the places a travel spell can reach."""
     target = game.tables.spells[spell_id]["target"]
+    if target == "place":
+        from realmwalker.game import waymagic
+
+        return waymagic.places(game, caster, spell_id)
     if target == "dead_ally":
         from realmwalker.game import revival
 
@@ -369,11 +373,15 @@ def cast_on_road(game, caster, spell_id: str, target=None, slot_level: int | Non
     if use in spellrules.ROAD_USES:
         from realmwalker.game import spellwork
 
+        if use == "travel":  # (the casting's minutes and its witnesses are where it is cast, not where it goes)
+            game.pass_time(spellwork.minutes(spell), "rest")
+            _magic_seen(game, caster)
         msgs = pre + spellwork.cast(game, caster, spell_id, target, slot or int(spell["level"]))
         if used:
             msgs.append(f"<dim>The {used} is used up.</>")
-        game.pass_time(spellwork.minutes(spell), "rest")
-        _magic_seen(game, caster)
+        if use != "travel":
+            game.pass_time(spellwork.minutes(spell), "rest")
+            _magic_seen(game, caster)
         return msgs
     if use == "identify":
         from realmwalker.game import magic_items
@@ -394,6 +402,10 @@ def cast_on_road(game, caster, spell_id: str, target=None, slot_level: int | Non
     raise_ = spellrules.op(spell, "max_up")
     if raise_ is not None and spell["target"] == "all_allies":  # (Aid: up to three, the caster and the worst hurt)
         who = sorted(who, key=lambda c: (c is not caster, c.hp / max(1, c.max_hp)))[: int(raise_.get("count", 3))]
+    more = int(spell.get("targets_up", 0)) * max(0, (slot or 0) - int(spell["level"]))
+    if more and spell["target"] in ("ally", "self"):  # (a higher slot: more of the party, those without it first)
+        others = [c for c in game.party if c.alive and c not in who]
+        who += sorted(others, key=lambda c: spell_id in spellrules.lasting(c, t))[:more]
     hours = 0.0
     gains = []
     for c in who:
@@ -401,9 +413,15 @@ def cast_on_road(game, caster, spell_id: str, target=None, slot_level: int | Non
         if raise_ is not None:
             gains.append(spellrules.raise_max(c, spell_id, spellrules.max_up_amount(spell, slot or spell["level"])))
     first = escape_markup(caster.name.split()[0])
-    on = "" if who == [caster] else (f" on {', '.join(escape_markup(c.name.split()[0]) for c in who)}" if raise_ is not None
-                                     else " on the party" if len(who) > 1 else f" on {who[0].name.split()[0]}")
+    named = raise_ is not None or 1 < len(who) < len([c for c in game.party if c.alive])
+    on = "" if who == [caster] else (f" on {', '.join(escape_markup(c.name.split()[0]) for c in who)}" if named
+                                     else " on the party" if len(who) > 1
+                                     else f" on {escape_markup(who[0].name.split()[0])}")
     msgs = pre + [f"{first} casts <magic>{spell['name']}</>{on}. <dim>It will last {lasting_text(hours)}.</>"]
+    if spell.get("outside"):
+        from realmwalker.game import waymagic
+
+        msgs += waymagic.after_lasting(game, caster, spell_id, who)
     if raise_ is not None and any(gains):
         msgs.append(f"<good>+{max(gains)} hit points and as much on the maximum</>, while it lasts.")
     if used:

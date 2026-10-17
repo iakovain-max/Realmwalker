@@ -215,16 +215,24 @@ class GameState:
 
         from realmwalker.game import mounts
 
+        from realmwalker.rules import spells as spellrules
+
         ridden = mounts.assign(self)[0] if not self.in_local and self.leader.animals else {}
-        worst = 1.0
+        worst = 0.0
+        borne = not self.in_local  # (everyone carried by magic on the big map: quicker than a walker)
         for member in self.party:
             m = Sheet(member, self.tables).travel_multiplier()
             b = body.travel_multiplier(member)
             if m is None or b is None:
                 return None
+            if borne and not (spellrules.lasting_flag(member, self.tables, "wind")
+                              or spellrules.lasting_flag(member, self.tables, "steed")):
+                borne = False
             # A rider's lame leg does not slow the party (on the big map, with a mount under them).
             worst = max(worst, m * b * health.travel_multiplier(member, self.tables, riding=id(member) in ridden))
-        return worst
+        # A walker's pace at best: the 2024 travel pace does not grow with speed. Only a party borne by magic (Phantom
+        # Steeds for everyone, Wind Walk) goes quicker.
+        return worst if borne and 0 < worst < 1.0 else max(1.0, worst)
 
     @property
     def moment(self) -> Moment:
@@ -319,6 +327,13 @@ class GameState:
         from realmwalker.game import spellwork
 
         spellwork.tick(self)  # (magic berries are gone when their day is out)
+        p = self.player
+        if not self.in_local and self.party and self.over is None and not self.biome_def(p.x, p.y)["passable"]:
+            from realmwalker.game import waymagic
+
+            said = waymagic.ashore(self)  # (a spell that held the party over the water ran out while time passed)
+            if said:
+                self.say(said, "warn")
         self._weather_moment()
         after = self.moment
         from realmwalker.game import magic_items
@@ -392,19 +407,42 @@ class GameState:
         if not w.in_bounds(x1, y1):
             return None
         target = self.biome_def(x1, y1)
-        if not target["passable"]:
+        over = self.magic_crossing(x1, y1)  # (Wind Walk, Water Walk, Water Breathing: game/waymagic.py)
+        if not target["passable"] and over is None:
             return None
         diagonal = x0 != x1 and y0 != y1
-        if w.road[x0, y0] and w.road[x1, y1]:
+        if over == "wind":
+            hours = 1.0  # (a cloud on the wind: every land alike; the pace makes it ten times quicker)
+        elif not target["passable"] or not self.biome_def(x0, y0)["passable"]:
+            hours = 2.0 if over == "under" else 1.0  # (the bottom of a lake is slow going; the water's face is not)
+        elif w.road[x0, y0] and w.road[x1, y1]:
             hours = ROAD_HOURS.get(self.biome_key(x1, y1), DEFAULT_ROAD_HOURS)
         else:
             here = self.biome_def(x0, y0)
             hours = (float(here["move_hours"]) + float(target["move_hours"])) / 2.0
-            if w.river[x1, y1] and not w.road[x1, y1]:
+            if w.river[x1, y1] and not w.road[x1, y1] and over is None:
                 hours += FORD_MINUTES / 60.0
         if diagonal:
             hours *= 1.41
         return max(1, int(round(hours * MINUTES_PER_HOUR)))
+
+    def magic_crossing(self, x: int, y: int) -> str | None:
+        """How the party's lasting spells carry it over this tile, if they do: "wind" (Wind Walk: anything), "over"
+        (Water Walk: rivers, lakes and the sea), "under" (Water Breathing: a lake's bottom). None: on foot."""
+        if not self.party:
+            return None
+        from realmwalker.game import waymagic
+
+        if waymagic.everyone(self, "wind"):
+            return "wind"
+        watery = self.biome_key(x, y) in ("ocean", "lake") or bool(self.world.river[x, y])
+        if not watery:
+            return None
+        if waymagic.everyone(self, "water_walk"):
+            return "over"
+        if waymagic.everyone(self, "water_breathing") and self.biome_key(x, y) != "ocean":
+            return "under"
+        return None
 
     @property
     def busy(self) -> bool:
@@ -439,7 +477,9 @@ class GameState:
             if self.world.in_bounds(nx, ny):
                 self.say(f"The {self.biome_def(nx, ny)['name']} bars the way. There is no crossing without a boat.", "warn")
             return False
-        fording = bool(self.world.river[nx, ny]) and not self.world.road[nx, ny]
+        crossing = self.magic_crossing(nx, ny)
+        fording = (bool(self.world.river[nx, ny]) and not self.world.road[nx, ny] and crossing in (None, "under")
+                   or crossing == "under")  # (under a lake's water everyone is soaked; over it, nobody)
         prev_area = self.world.area_at(p.x, p.y)
         x0, y0 = p.x, p.y
         p.x, p.y = nx, ny
@@ -463,7 +503,12 @@ class GameState:
 
             road_talk(self)
         self._check_bearings()
-        if fording:
+        if crossing == "under" and not self.world.river[nx, ny]:
+            self.say("You walk down into the cold water and along the lake's bottom, breathing it like air, and come "
+                     "up again soaked to the skin.", "warn")
+        elif crossing == "over":
+            self.say("You walk on the water as on a road, dry-shod.", "info")
+        elif fording:
             river = self.world.river_at(nx, ny)
             name = f"the {river.name.removeprefix('the ')}" if river else "a river"
             rng = self.world.rng.child(f"ford/{self.player.steps}")
@@ -478,6 +523,12 @@ class GameState:
             filled = top_up(self)
             if filled:
                 self.say(filled, "info")
+        if self.over is None:
+            from realmwalker.game import waymagic
+
+            ashore = waymagic.ashore(self)
+            if ashore:
+                self.say(ashore, "warn")
         if self.encounter is None and self.battle is None:
             from realmwalker.game.encounters import roll_encounter
 
@@ -519,6 +570,11 @@ class GameState:
         w = self.world
         if w.road[p.x, p.y] or w.settlement_at(p.x, p.y) is not None:
             return None
+        if self.party:
+            from realmwalker.game import waymagic
+
+            if waymagic.anyone(self, "pathfinding") or waymagic.everyone(self, "wind"):
+                return None  # (Find the Path knows the way; clouds on the wind see the land laid out below)
         vis = self.weather.visibility
         dark = self.light < 0.3
         from realmwalker.world import wonders
@@ -929,6 +985,13 @@ class GameState:
         if lm is None:
             p.local_key = None
             return False
+        if lm.kind == "dungeon" and self.party:
+            from realmwalker.game import waymagic
+
+            out = waymagic.shunted(self)  # (Etherealness ended while you stood inside the stone)
+            if out:
+                self.say(out, "danger")
+                return True
         nx, ny = p.lx + dx, p.ly + dy
         if not lm.in_bounds(nx, ny):
             if any(a.alert for a in lm.actors):
@@ -948,6 +1011,12 @@ class GameState:
                 self.say(f"{who[:1].upper() + who[1:]} {why}.", "system")
                 return False
         target = actor_at(lm, nx, ny)
+        if target is not None and lm.kind == "dungeon":
+            from realmwalker.game import waymagic
+
+            if waymagic.ethereal_here(self):
+                self.say("They cannot see you, and your hands pass through them like smoke (Etherealness).", "system")
+                return False
         if target is not None:
             from realmwalker.game.fight import start_battle
             from realmwalker.rules.combat import FOE
@@ -969,6 +1038,18 @@ class GameState:
         if self.tables.terrain.has_tag(t, "notice_board"):
             self.read_board = True
             return True
+        if lm.kind == "dungeon" and (tid in ("chest", "sarcophagus") or not T.walk[t]):
+            from realmwalker.game import waymagic
+
+            if waymagic.ethereal_here(self):
+                if tid in ("chest", "sarcophagus"):
+                    self.say("Your hand passes through it like smoke: nothing on this side can be touched while you "
+                             "walk the grey (Etherealness).", "system")
+                    return False
+                p.lx, p.ly = nx, ny  # (walls and doors do not stop the ethereal)
+                p.steps += 1
+                self.pass_seconds(int(LOCAL_STEP_SECONDS * 2 * pace), "walk")
+                return True
         if tid in ("door_locked", "chest", "sarcophagus"):
             from realmwalker.game import dungeon
 

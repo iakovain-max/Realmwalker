@@ -83,6 +83,13 @@ def working_now(game) -> list[str]:
     for ward, rec in spellwork.wards_here(game).items():
         left = max(0.0, (float(rec["until"]) - game.world.time) / 60)
         out.append(f"<magic>{WARD_NAMES.get(ward, ward)}</> over the camp <dim>({magic.lasting_text(left)} left)</>")
+    from realmwalker.game import waymagic
+
+    for c in game.party:
+        home = waymagic.sanctuary(game, c)
+        if home is not None:
+            out.append(f"<magic>Sanctuary</> of {markup.escape(c.name.split()[0])}: the temple of "
+                       f"{markup.escape(home.name)} <dim>(Word of Recall)</>")
     for b in revival.bodies(game):
         out.append(f"<danger>{markup.escape(b['char'].name.split()[0])}</> lies dead "
                    f"<dim>({revival.when_text(revival.dead_for(game, b))}"
@@ -127,7 +134,13 @@ def spell_detail(game, char, sid: str, target, slot: int | None = None) -> list[
     problem = magic.road_problem(game, char, sid, target)
     if problem is None:
         whom = ""
-        if magic.road_targets(game, char, sid):
+        if t.spells[sid]["target"] == "place" and target is not char:
+            from realmwalker.game import waymagic
+
+            whom = f" to {markup.escape(target.name)}"
+            if target.kind == "town" and sp.op(spell, "road").get("how") == "teleport":
+                lines.append(f"<dim>{markup.escape(target.name)}: {waymagic.FAMILIARITY[target.known]} (←→ another place).</>")
+        elif magic.road_targets(game, char, sid):
             whom = " on yourself" if target is char else f" on {markup.escape(target.name.split()[0])}"
         use = sp.road_use(t, sid)
         if use == "identify":
@@ -381,7 +394,8 @@ class SpellsScreen(Screen):
                                    f"parchment, {magic.money_text(magic.scribe_cost(level))} of inks and a spell slot).")
         if len(game.party) > 1:
             bx = canvas.button(bx + 2, h - 2, "Next member", self.next_member, hotkey="Tab")
-        hint = "↑↓ choose" + (" · ←→ on whom" if self.targets() else "")
+        place = sid is not None and t.spells[sid]["target"] == "place"
+        hint = "↑↓ choose" + ((" · ←→ where" if place else " · ←→ on whom") if self.targets() else "")
         canvas.text(bx + 2, h - 2, hint, colors.FAINT, max_width=max(0, w - bx - 4))
 
     def autoplay_keys(self) -> list[KeyEvent]:

@@ -77,6 +77,11 @@ def problems(tables) -> list[str]:
                                           or o.get("does") == "ward" and o.get("ward") not in spellrules.WARDS):
                 out.append(f"data/spells.json: {sid} is for '{o.get('does')}' {o.get('ward') or ''} outside a fight, "
                            "which the game does not know.")
+            if o.get("op") == "road" and o.get("does") == "travel" and o.get("how") not in spellrules.TRAVELS:
+                out.append(f"data/spells.json: {sid} travels by '{o.get('how')}', which the game does not know.")
+            if spell.get("outside") and spell["outside"] not in spellrules.OUTSIDE:
+                out.append(f"data/spells.json: {sid} does '{spell['outside']}' when cast outside a fight, which the "
+                           "game does not know.")
             if o.get("op") == "road" and not spellrules.out_of_battle(spell):
                 out.append(f"data/spells.json: {sid} works only outside a fight: it needs \"road_only\" or \"minutes\".")
             if o.get("op") == "condition" and o.get("condition") not in cond.table(tables):

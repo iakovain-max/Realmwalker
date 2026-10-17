@@ -68,7 +68,8 @@ The third wave (D.3):
     by_hp      tiers [[most, [ops]], ...]: the first tier whose number is at least its hit points now (Divine Word)
     slay       it dies outright; max_hp: only if it has that many hit points or fewer (Power Word Kill)
     lift       feet: it falls upward and hangs there while the caster concentrates, then falls (Reverse Gravity;
-               under a roof it strikes the ceiling twenty feet up)
+               under a roof it strikes the ceiling twenty feet up); gentle (Levitate): it rises, roof or not, unhurt,
+               and floats down unhurt when the spell ends
     one_of     choices [[ops], ...] and a die: one of them for each creature; a face past the choices brings two
                (Prismatic Spray's rays)
     summon     on_hit [ops]: what the conjured thing's hit brings besides its damage (Conjure Fey's fear)
@@ -1302,7 +1303,8 @@ def _lift(c: Cast, o: dict, victim) -> None:
     x = victim
     if x is None or not x.active or x.hovers or x.fly_speed > 0:
         return  # (a flier flies as it likes)
-    roof = b.env.place in ("underground", "indoors")
+    gentle = bool(o.get("gentle"))  # (Levitate: it rises, hangs, and floats down gently when the spell ends)
+    roof = b.env.place in ("underground", "indoors") and not gentle
     top = 20 if roof else int(o.get("feet", 100))
     if x.z >= top:
         return
@@ -1310,8 +1312,13 @@ def _lift(c: Cast, o: dict, victim) -> None:
     start = x.z
     x.z = top
     b._event("fly", who=x.id, z=x.z, before=start)
-    b.say(f"{x.the_name} falls upward" + (" and slams into the ceiling." if roof else " into the sky."),
-          "danger" if x.side == "party" else "good")
+    if gentle:
+        x.__dict__["soft_landing"] = True
+        b.say(f"{x.the_name} rises {rise} feet into the air and hangs there, out of reach.",
+              "danger" if x.side == "party" else "good")
+    else:
+        b.say(f"{x.the_name} falls upward" + (" and slams into the ceiling." if roof else " into the sky."),
+              "danger" if x.side == "party" else "good")
     durations.buff(x, {"aloft": c.caster.id, "conc": c.caster.id, "source": f"aloft:{c.sid}"})
     if roof:
         from realmwalker.rules.engine import hazards
@@ -1422,4 +1429,20 @@ def _teleport(c: Cast, o: dict, victim) -> None:
         f.x, f.y = point
         b._event("teleport", who=f.id, path=[start, point])
         b._sync_grapples(f)
-        b.say(f"{f.the_name} steps through the mist and is somewhere else.", "magic")
+        if o.get("near") == "tree":
+            b.say(f"{f.the_name} steps into a tree and out of another.", "magic")
+        else:
+            b.say(f"{f.the_name} steps through the mist and is somewhere else.", "magic")
+
+
+@op("undark")
+def _undark(c: Cast, o: dict, victim) -> None:
+    """Sunlight ends magical Darkness of `level` or lower that its area overlaps (Daylight): the area is the light
+    the caster now carries, `light` squares round them."""
+    b, f = c.b, c.caster
+    reach = int(o.get("light", 12))
+    for z in [z for z in b.zones if z.kind == "darkness"]:
+        level = int(b.t.spells[z.spell]["level"]) if getattr(z, "spell", "") in b.t.spells else 2
+        if level <= int(o.get("level", 3)) and any(grid.gap(f.space, (x, y, 1)) <= reach for x, y in z.cells):
+            b._remove_zone(z)
+            b.say("The magical darkness burns away in the sunlight.", "magic")

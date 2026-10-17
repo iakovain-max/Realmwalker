@@ -349,7 +349,7 @@ def _hunt_beast(game, npc, rng):
         y = town.y + rng.randint(-12, 12)
         if not w.in_bounds(x, y) or abs(x - town.x) + abs(y - town.y) < 5:
             continue
-        if game.step_minutes(x, y, x, y) is None or w.settlement_at(x, y) or w.site_at(x, y):
+        if not game.biome_def(x, y)["passable"] or w.settlement_at(x, y) or w.site_at(x, y):
             continue  # water, or somewhere people live
         area = w.area_at(x, y)
         q = base_quest(game, npc, "hunt_beast", rng)
