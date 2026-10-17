@@ -307,7 +307,8 @@ ITEMS = {
     "ink_and_quill": "item/potion/black_new.png", "parchment": "item/scroll/blank_paper.png",
     "signet_ring": "item/ring/gold.png", "rank_insignia": "item/amulet/face_2.png",
     "trophy": "item/misc/misc_horn.png", "manacles": "item/misc/key.png",
-    "potion_healing": "item/potion/ruby_new.png", "fodder": "item/food/fruit.png",
+    "potion_healing": "item/potion/ruby_new.png", "potion_healing_greater": "item/potion/purple_red.png",
+    "potion_healing_superior": "item/potion/potion_purple_red.png", "potion_healing_supreme": "item/potion/ruby_old.png", "fodder": "item/food/fruit.png",
     "firewood": "item/weapon/club_2.png", "poppy_milk": "item/potion/white_new.png",
     "healing_herbs": "item/food/choko.png", "snares": "item/weapon/ranged/throwing_net.png",
     "bell_line": "item/misc/misc_disc_new.png", "spyglass": "item/wand/gem_brass_new.png",
@@ -330,6 +331,7 @@ ITEMS = {
     "colleague_letter": "item/scroll/scroll-green.png", "guild_letter": "item/scroll/scroll-blue.png",
     # trade goods
     "sealed_crate": "dungeon/large_box.png", "diamond": "item/misc/misc_crystal_old.png",
+    "diamond_dust": "item/potion/white_new.png",
     "wheat": "item/food/bread_ration_old.png", "salt": "item/misc/misc_stone_inert.png",
     "iron_bar": "item/misc/misc_rune.png", "wool_bolt": "item/armor/back/cloak_2.png",
     "linen_bolt": "item/armor/torso/robe_1_new.png", "furs": "item/armor/torso/animal_skin_3.png",

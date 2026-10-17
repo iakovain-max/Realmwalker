@@ -188,6 +188,8 @@ def test_the_ward_is_mended_with_a_slot_and_the_auto_does_it(tables):
     # On Auto, with the ward half gone and a foe beside it, the wizard spends its bonus action on it.
     c.uses["arcane_ward"] = 1
     me.auto = True
+    wolf = b.side("foe")[0]
+    wolf.creature.max_hp = wolf.hp = 300  # (a spare level 2 slot makes a Magic Missile of four darts: it must live through it)
     on_turn(b, me)
     tactics.take_turn(b, me)
     assert c.uses["arcane_ward"] > 1

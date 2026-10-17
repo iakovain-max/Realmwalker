@@ -54,17 +54,25 @@ class ItemTable:
         self.starting_packs = data.get("starting_packs", {})
         self.upkeep = data.get("upkeep", {})  # wear, mending, honing... (game/gear.py)
 
-    def add_scrolls(self, spells) -> None:
-        """A scroll for each spell above cantrips (made from data/spells.json, not listed in items.json)."""
+    def add_scrolls(self, spells, numbers: dict | None = None) -> None:
+        """A scroll for every spell, cantrips too (made from data/spells.json, not listed in items.json): DMG 2024's
+        Spell Scroll, valued and graded by data/rules.json "spell_scrolls" (its save DC and attack bonus are read
+        there by rules/spells.scroll_numbers)."""
+        numbers = numbers or {}
+        values, rarities = numbers.get("value") or [], numbers.get("rarity") or []
         for sid, spell in spells.defs.items():
             level = int(spell["level"])
-            if level <= 0:
-                continue
+            if spell.get("classes") == ["item"]:
+                continue  # (a flask's or a coating's pseudo-spell: nothing to write down)
+            what = "a cantrip" if level == 0 else f"level {level}"
             self.defs[f"scroll_{sid}"] = {
-                "name": f"scroll of {spell['name']}", "category": "book", "weight": 0.1, "value": 2500 * level,
+                "name": f"scroll of {spell['name']}", "category": "book", "weight": 0.1,
+                "value": values[level] if level < len(values) else 2500 * max(1, level),
+                "rarity": rarities[level] if level < len(rarities) else "common",
                 "material": "paper", "use": {"scroll": sid},
-                "description": f"A spell of the {spell.get('school', 'arcane')} school, level {level}, written out in "
-                               f"full. A wizard can copy it into a spellbook; in a fight it can be read aloud once.",
+                "description": f"{spell['name']} ({what}, {spell.get('school', 'arcane')}), written out in a mage's "
+                               f"cipher. Whoever has the spell on their calling's list can read it aloud once, with "
+                               f"no materials; a wizard can copy it into a spellbook instead.",
             }
 
     def get(self, def_id: str) -> dict:

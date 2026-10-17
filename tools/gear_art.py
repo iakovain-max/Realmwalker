@@ -391,6 +391,19 @@ def ball_bearings():
     return _fin(im)
 
 
+def pearl():
+    """A pearl on a scrap of dark velvet (a costly spell component: Identify)."""
+    im, d = _new()
+    d.rounded_rectangle([5, 16, 27, 26], radius=3, fill=C(48, 34, 72))
+    d.rounded_rectangle([6, 17, 26, 21], radius=2, fill=C(66, 48, 98))
+    d.ellipse([11, 9, 21, 19], fill=C(196, 188, 182))
+    d.ellipse([11, 9, 20, 17], fill=C(226, 220, 212))
+    d.ellipse([12, 10, 18, 15], fill=C(242, 236, 230))
+    _px(d, [(14, 11), (15, 11), (14, 12)], C(255, 255, 255))
+    _px(d, [(19, 16), (18, 17)], C(222, 196, 204))  # (a blush of pink on the shadowed side)
+    return _fin(im)
+
+
 def caltrops():
     im, d = _new()
     for cx, cy in ((10, 21), (22, 22), (16, 10)):
@@ -820,6 +833,6 @@ def all_drawn() -> dict[str, Image.Image]:
         "burglars_pack": pack("burglars"), "diplomats_pack": pack("diplomats"), "dungeoneers_pack": pack("dungeoneers"),
         "entertainers_pack": pack("entertainers"), "explorers_pack": pack("explorers"),
         "priests_pack": pack("priests"), "scholars_pack": pack("scholars"),
-        "mistletoe_sprig": mistletoe(), "reliquary": reliquary(),
+        "mistletoe_sprig": mistletoe(), "reliquary": reliquary(), "pearl": pearl(),
     }
     return {f"item/{k}": v for k, v in out.items()}

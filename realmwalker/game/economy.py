@@ -42,6 +42,9 @@ def lands_near(game, settlement, radius: int = 3) -> set[str]:
     return out
 
 
+SPELL_COMPONENTS = ("diamond", "diamond_dust", "pearl")  # (costly spell components keep their book price)
+
+
 def local_factor(game, settlement, item_id: str) -> float:
     """How this settlement's circumstances move the price of an item (1.0 = its book value)."""
     econ = game.tables.economy
@@ -53,7 +56,7 @@ def local_factor(game, settlement, item_id: str) -> float:
                  if item_id in lookup(econ["production"], b, {})]
     if made_here:
         factor *= min(made_here)
-    elif cat == "trade" and item_id != "diamond":
+    elif cat == "trade" and item_id not in SPELL_COMPONENTS:
         factor *= float(econ["trade_goods_scarcity"])
     kind = econ["kind_prices"].get(settlement.kind, {})
     factor *= float(kind.get(item_id, kind.get(cat, 1.0)))

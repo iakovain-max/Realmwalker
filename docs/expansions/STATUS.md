@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 03 Demigods & Magics · Part C (spellcasting complete) · branch dlc/03-demigods-magics
+Current: 03 Demigods & Magics · Part D (the spell catalogue) · branch dlc/03-demigods-magics
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -8,10 +8,11 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   general and fighting style feats; the 2024 tools and gear, trinkets, inns and lifestyles, coaches, ships and
   messengers, mounts, saddles, stabling and vehicles; saves format 16) · 03 Demigods & Magics parts A and B (twenty
   levels and the epic boons; the fighter, rogue, cleric and wizard of 2024 to level 20 with the Champion, Knight,
-  Thief, Assassin, Life and War Domains, Evoker and Abjurer; Counterspell; saves format 17)
+  Thief, Assassin, Life and War Domains, Evoker and Abjurer; Counterspell; saves format 17) and C (preparing spells,
+  rituals, one slot a turn, higher slots, components, spell scrolls of every level, the four potions of healing)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
-  adapted); Expansion 3: 98 done, 34 adapted, 1 omitted of 558 (parts A and B settled). PHB 41% · DMG 12% · MM 8%
+  adapted); Expansion 3: 124 done, 40 adapted, 1 omitted of 558 (parts A, B and C settled). PHB 43% · DMG 12% · MM 8%
 Assumptions waiting for Anton:
 - The Player2 AI writer is removed (tagged `before-ai-removal`); its text is replaced everywhere by the game's own
   words, strengthened where they were thin.
@@ -76,11 +77,28 @@ Assumptions waiting for Anton:
   No creature knows Counterspell yet: enemies use it when their stat blocks name it (Part G puts the catalogue in
   the casters' hands). From the fresh review: the 2024 Assassinate has no critical hit on the surprised (the 2014
   rule is gone).
+- Expansion 3 C.1: the prepared list may change from a long rest (or a new level) until the next fight begins, one
+  spell after a short rest (Memorize Spell); an empty place may be filled at any time; a new level fills new places
+  with the Auto's choice (the player changes them on the Spells page); domain spells not yet in the catalogue are
+  listed in data/classes.json and prepared as they arrive (Part D).
+- Expansion 3 C.2: a focus anywhere in the shared pack serves; Verbal and Somatic components are taken as given (no
+  silence or bound hands yet); a consumed component is kept when a Counterspell stops the spell; the Auto and the
+  enemy spend a higher slot only when it is spare (no spell of that level ready); diamonds are sold at temples,
+  pearls and diamond dust at town markets, at book price.
+- Expansion 3 C.3: the check to read a scroll above your level uses the spellcasting ability (the 2024 DMG; the
+  design note said Arcana, which is the thief's Use Magic Device check); a scroll stopped by a Counterspell is kept;
+  a domain's always-prepared spells count as on the cleric's list for scrolls; a scroll casts with its own DC and
+  attack (no focus bonus); a potion is a bonus action for everyone (Fast Hands is for the action's things); the
+  Auto weighs a scroll as half a slot of its level; out of a fight the surest reader in the party reads a scroll from
+  the pack; Identify takes a minute (eleven as a ritual). Codex: a repeated spell replaces the old casting rather
+  than keeping the stronger (adapted), and an ongoing spell needs no Study check to name: it shows on its card.
+  Spellcasting services (PHB p. 235) wait for G.2, as planned.
 Ideas for later:
 - (none yet)
-Next session starts at: task C.1 in docs/expansions/03-demigods-magics.md (Part C: preparing spells by the class
-tables, the Spells screen prepares, the Auto prepares by archetype; always-prepared spells; rituals; one slotted spell
-per turn; the wizard's Memorize Spell and Ritual Adept). Part B is in `main` (saves format 17).
+Next session starts at: task D.1 in docs/expansions/03-demigods-magics.md (Part D, the spell catalogue, first wave:
+cantrips to 2nd level, 134 spells; new kernel ops first in the main session, then batches by helper agents on the
+sonnet model into data/packs/03_demigods_magics/spells.*.json, each with its fx; the 49 existing spells re-checked
+against the 2024 text; tools/arena.py and tests/test_tactics_coverage.py green). Parts A, B and C are in `main`.
 
 ## Done
 
@@ -102,6 +120,7 @@ per turn; the wizard's Memorize Spell and Ritual Adept). Part B is in `main` (sa
 | 2026-10-13 | Demigods & Magics begun: the branch, the design note and its seven parts (twenty levels, the four classes, spellcasting, the catalogue, spells outside battle, familiars and summons, enemy casters) | `dlc/03-demigods-magics` |
 | 2026-10-13 | Demigods & Magics part A: twenty levels, the twelve epic boons (in play, on Auto), danger tiers for the worst lands, legends that grow, five-level dungeons; finished after a usage limit; merged into `main` | `dlc/03-demigods-magics` |
 | 2026-10-17 | Demigods & Magics part B: the 2024 fighter, rogue, cleric and wizard to 20 (Champion, Knight, Thief, Assassin, Life, War, Evoker, Abjurer), Counterspell, companions to 20; saves format 17; the first part built by the relay; merged into `main` | `dlc/03-demigods-magics` |
+| 2026-10-17 | Demigods & Magics part C: preparing spells, rituals, one slot a turn, higher slots, components (focus, pouch, costly ones), spell scrolls of every level (2024), the four potions of healing; the spellcasting rules settled in the codex; merged into `main` | `dlc/03-demigods-magics` |
 
 ## Notes for the next session
 

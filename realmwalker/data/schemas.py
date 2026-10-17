@@ -218,6 +218,11 @@ RULES = Obj(
         "study": Obj({"skills": Map(Str(max_len=30)),
                       "dc": Obj({"base": Int(min=1, max=30), "per_cr": Float(min=0, max=5), "max": Int(min=1, max=40)})},
                      optional=True),
+        "spell_scrolls": Obj({"dc": List(Int(min=1, max=30), min_items=10, max_items=10),
+                              "attack": List(Int(min=0, max=20), min_items=10, max_items=10),
+                              "rarity": List(Str(choices=["common", "uncommon", "rare", "very_rare", "legendary"]),
+                                             min_items=10, max_items=10),
+                              "value": List(Int(min=0, max=10**9), min_items=10, max_items=10)}, optional=True),
         "objects": Obj({"ac": Map(Int(min=1, max=30)), "hp": Map(List(Str(max_len=12), min_items=2, max_items=2)),
                         "immune": List(Str(max_len=20)), "terrain": Map(List(Any_(), min_items=4, max_items=4), optional=True)},
                        optional=True),
@@ -275,12 +280,17 @@ CLASS = Obj(
         "mastery": List(List(Int(min=0, max=20), min_items=2, max_items=2), optional=True),
         "spellcasting": Obj({"ability": Str(choices=list(ABILITY_IDS)), "type": Str(choices=["prepared", "spellbook", "known"]),
                              "cantrips": List(Int(min=0, max=10), min_items=10),
-                             "slots": List(List(Int(min=0, max=10)), min_items=10)}, optional=True),
+                             "slots": List(List(Int(min=0, max=10)), min_items=10),
+                             # level 1+ spells prepared at each level (2024: the Prepared Spells column)
+                             "prepared": List(Int(min=0, max=30), min_items=10, optional=True)}, optional=True),
         "features": List(FEATURE, min_items=1),
         # A feature's choice (data "choose"): the options, each a feature of its own kept in Character.features.
         "options": Map(Obj({"name": Str(max_len=40), "text": Str(max_len=300), "gives": Any_(optional=True),
                             "cantrips": Int(min=1, max=3, optional=True)}), optional=True),
         "subclasses": Map(Obj({"name": Str(max_len=40), "text": Str(max_len=300), "features": List(FEATURE),
+                               # always-prepared spells by class level (a domain's spells); ids may wait for the
+                               # catalogue (Expansion 3 part D): only those in data/spells.json are prepared
+                               "spells": Map(List(Str(max_len=40)), optional=True),
                                "armor": List(Str(max_len=20), optional=True), "weapons": List(Str(max_len=30), optional=True)}),
                           min_items=1),
         "kits": List(KIT, min_items=1),
@@ -345,6 +355,8 @@ ITEM = Obj(
                         "crafts": List(Str(max_len=40), optional=True)}, optional=True),
         "trinket": Bool(optional=True),  # its name and words come from data/trinkets.json
         "tack": Str(choices=["riding", "exotic"], optional=True),  # a saddle (game/mounts.saddled)
+        # Expansion 3 C.3: a magic consumable's rarity (potions of healing; spell scrolls are made with one)
+        "rarity": Str(choices=["common", "uncommon", "rare", "very_rare", "legendary"], optional=True),
     }
 )
 ITEMS = Obj(
@@ -478,6 +490,9 @@ SPELL = Obj(
         "effects": List(Obj({"op": Str(max_len=30)}, strict=False), min_items=1),
         "fx": Str(choices=["bolt", "ray", "darts", "touch", "cone", "burst", "shock", "line", "rain", "strike", "zone",
                            "aura", "summon", "teleport", "heal", "buff", "curse", "sleep", "thrown"], optional=True), "components": List(Str(choices=["V", "S", "M"]), optional=True),
+        # a Material component with a cost (2024): any of these items will do; consumed ones are used up by the casting
+        "material": Obj({"items": List(Str(max_len=40), min_items=1), "consumed": Bool(optional=True),
+                         "text": Str(max_len=120)}, optional=True),
         "rounds": Int(min=0, max=100000, optional=True), "targets_up": Int(min=0, max=5, optional=True),
         "target": Str(choices=["enemy", "ally", "self", "downed_ally", "dead_ally", "all_allies", "point", "direction", "item"]),
         "range": Any_(optional=True),

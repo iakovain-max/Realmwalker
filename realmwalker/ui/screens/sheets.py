@@ -59,6 +59,14 @@ def item_details(game: GameState, item: Item) -> str:
         from realmwalker.game.magic_items import describe
 
         lines += describe(game, item)
+    if d.get("use", {}).get("scroll"):
+        from realmwalker.game.magic import scroll_lines
+
+        lines += scroll_lines(game, item)
+    elif d.get("rarity") and "heal" in d.get("use", {}):
+        lines.append(f"<dim>A {d['rarity'].replace('_', ' ')} potion: {d['use']['heal']} hit points. Enter drinks "
+                     f"it here (the page's owner drinks); in a fight the Item menu drinks it or pours it into a friend "
+                     f"beside you, with the bonus action.</>")
     cat = d["category"]
     if cat == "weapon":
         props = ", ".join(p.replace("_", "-") for p in d.get("properties", [])) or "none"
@@ -522,8 +530,12 @@ class InventoryScreen(Screen):
             return "Take"
         if d.get("use", {}).get("disguise"):
             return "Disguise yourself"
+        if "heal" in d.get("use", {}):
+            return "Drink the potion"
         if d.get("use", {}).get("scroll"):
-            return "Copy into spellbook" if self.char.cls == "wizard" else "Read"
+            from realmwalker.game import magic
+
+            return "Copy into spellbook" if magic.copy_problem(self.game, self.char, it) is None else "Read"
         if it.magic and not it.magic.get("identified") and not self.game.tables.items.slots_for(it):
             return "Study it"
         if d.get("use", {}).get("read"):
@@ -588,11 +600,29 @@ class InventoryScreen(Screen):
 
             for line in magic.copy_scroll(self.game, self.char, it):
                 self.game.say(line, "magic")
+        elif name == "Drink the potion":
+            from realmwalker.game import care
+
+            for line in care.drink_potion(self.game, self.char, it):
+                self.game.say(line, "good")
         elif name == "Read":
+            from realmwalker.game import magic
+
             sid = self.game.tables.items.get(it.def_id)["use"]["scroll"]
-            spell = self.game.tables.spells[sid]
-            self.game.say(f"The scroll holds {spell['name']}: {spell['text']} It can be read aloud once in a fight "
-                          f"(Cast a spell).", "magic")
+            readers = magic.scroll_readers(self.game, it)
+            whom = magic.scroll_target(self.game, sid, readers[0][0]) if readers else None
+            if readers and magic.road_problem(self.game, readers[0][0], sid, whom, scroll=it) is None:
+                for line in magic.read_scroll(self.game, it):
+                    self.game.say(line, "magic")
+            else:
+                from realmwalker.rules import spells as spellrules
+
+                lines = magic.scroll_lines(self.game, it)
+                for line in lines[:1] + lines[2:]:
+                    self.game.say(line, "magic")
+                if readers and spellrules.on_the_road(self.game.tables, sid)[0]:
+                    self.game.say(f"Not now: {magic.road_problem(self.game, readers[0][0], sid, whom, scroll=it)}.",
+                                  "system")
         elif name == "Use":
             from realmwalker.game import gear
 

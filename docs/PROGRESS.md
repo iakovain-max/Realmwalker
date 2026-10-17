@@ -28,7 +28,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Clearing the decks for the expansions** | ✅ Done (2026-10-12), branch `prep/clear-the-decks` |
 | **Expansion 1, *Dice & Destiny*** (version 1.1.0) | ✅ Released (2026-10-13), branch `dlc/01-dice-destiny` |
 | **Expansion 2, *Blades & Backgrounds*** (version 1.2.0) | ✅ Released (2026-10-13), branch `dlc/02-blades-backgrounds` |
-| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels) and B (the four classes, 2026-10-17) in `main`; Part C next |
+| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansion 3, *Demigods & Magics*: parts A (twenty levels), B (the four classes) and C (spellcasting complete, 2026-10-17) in `main`; Part D (the spell catalogue) next |
 
 ---
 
@@ -39,6 +39,99 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-17 (night): Demigods & Magics C.3 — spell scrolls and potions of healing; Part C in `main`
+
+Built by the relay builder realmwalker-b. With this, Part C (spellcasting complete: preparing, higher slots,
+components, scrolls) is merged into `main`.
+- **Spell scrolls work as in the 2024 books.** There is a scroll for every spell, cantrips too. Only someone with the
+  spell on their own list can read one: a priest reads a scroll of Cure Wounds, a wizard a scroll of Fireball, and a
+  fighter can make nothing of either. A scroll casts with its own strength (a cantrip or a level 1 or 2 spell at save
+  DC 13 and +5 to hit, rising to DC 19 and +11 for level 9), needs no materials and no spell slot, and crumbles once
+  it is read.
+- **A scroll above you is a gamble.** A level 1 wizard can try a scroll of Fireball: a check with their spellcasting
+  ability (DC 10 + the spell's level) first, and on a failure the words fade from the page and nothing happens.
+- **The thief's Use Magic Device** (level 13) now reads any scroll at all, with Intelligence: cantrips and level 1
+  spells surely, higher ones after an Arcana check.
+- **Reading outside a fight.** Enter on a scroll in the pack reads it when its spell does something there (a scroll of
+  Cure Wounds heals, a scroll of Identify tells what a strange thing is, Mage Armour lasts the day); the surest reader
+  in the party reads it. A wizard who can copy it still gets Copy into spellbook first. The scroll's card says its
+  numbers and who in the party can read it (and who would have to risk the check). Cantrips cannot be copied into a
+  spellbook: they are learned.
+- **Prices from the books**: a cantrip scroll 30 crowns, a level 1 scroll 50, then twice the 2024 cost of writing one
+  (200 for level 2, 300 for level 3, 2,000 and 3,000 for 4 and 5... 100,000 for level 9), and the book's rarity.
+- **Four potions of healing.** Beside the old potion (2d4 + 2) there are now the greater (4d4 + 4), superior
+  (8d4 + 8) and supreme (10d4 + 20), each with its own picture, found in treasure as the DMG's tables say, priced at
+  half their rarity's value (50, 200, 2,000 and 20,000 crowns). In a fight, drinking one or pouring it into a friend
+  beside you takes the **bonus action**, as in the 2024 rules, so you can still strike. A potion can now also be drunk
+  from the pack outside a fight (Enter: Drink the potion).
+- **Companions use them.** A companion on Auto reads a scroll when it is worth it (a scroll is treated as worth
+  keeping, so it is not thrown away on a rat), a thief on Auto reads scrolls too, and a companion drinks a potion when
+  badly hurt, or pours one into a fallen friend beside it before anything else.
+- **Fixed**: Identify took ten minutes instead of the book's one (and twenty as a ritual instead of eleven).
+- **From the fresh review**: a hurt fighter's turn no longer ends by itself while a potion could still be drunk with
+  the bonus action; a Mage Armour scroll is not offered while Mage Armour is already on you; a fallen friend gets the
+  weakest potion (any draught brings them round); a scroll stopped by a Counterspell says plainly that the turn's
+  casting is lost but the scroll kept; a scroll read in a fight says it crumbles; the risk of a scroll beyond you shows
+  in the spell list ("risky") and its card gives the reader's bonus; reading from the pack passes over a reader stopped
+  by armour; names in the new lines are made safe for the log's colours; autoplay checks every scroll and potion it
+  carries.
+- **The codex**: every spellcasting rule of the PHB's chapter 7 is settled (most done; a few adapted, each with its note:
+  a new casting of the same spell replaces the old one rather than keeping the stronger, every spell at work shows on
+  its card so no Study check is needed to name it, the focus's +1 is the game's own).
+- **Choices made without Anton**: the check before reading a scroll above you uses the spellcasting ability, as the
+  2024 DMG says (the design note had said Arcana; Arcana is the thief's check); a scroll stopped by a Counterspell is
+  kept, as a slot is; a domain's always-prepared spells count as on the cleric's list; the scroll's numbers replace the
+  reader's (no focus bonus on them); a potion given in a fight needs the bonus action even for a thief (Fast Hands is
+  for the action's things).
+- **How to try it**: find or buy a scroll (cities and mages' towns sell a few), look at its card in the pack, and
+  read it in a fight from Cast a spell; or carry a scroll of Fireball with a level 1 wizard and try your luck.
+
+### Session, 2026-10-17 (night, continued): Demigods & Magics C.2 — higher slots and components — branch `dlc/03-demigods-magics` (not yet in `main`)
+
+The same relay builder went straight on (C.1 took under half an hour).
+- **Casting with a higher slot.** When a spell does more with a higher slot (Fireball's extra dice, Magic Missile's
+  extra dart, Cure Wounds' extra healing, Hold Person's extra target...) and you have slots of more than one level
+  left, the battle asks which slot to use, and says what each level adds. The spell's card says it too. Outside a
+  fight, the Spells page (S) casts higher as well: l picks the slot level (a Cure Wounds from a level 2 slot heals
+  more; a Life cleric's Disciple of Life counts the slot's level).
+- **Companions and enemies use higher slots sensibly.** They spend a higher slot only when it is spare (no spell of
+  that level ready to use it) and the spell is worth more for it: a level 3 wizard with no level 2 spell prepared
+  throws a four-dart Magic Missile.
+- **Spell components.** Spells with a material component need a focus of the caster's kind (a priest's holy symbol;
+  a wizard's crystal, orb, rod, pouch, or the spellbook itself) or a component pouch. Four spells need a costly thing:
+  Bless a holy symbol, Identify a pearl (100 crowns, not used up), Revivify a diamond (300 crowns, used up) and
+  Stoneskin a vial of diamond dust (100 crowns, used up). The spell card names it and says when the pack has none.
+- **Where to buy them:** diamonds at temples, pearls and diamond dust at town markets, at their book price. The pearl
+  and the vial of diamond dust are new items with their own pictures.
+- **Choices made without Anton**: a focus anywhere in the party's shared pack serves (the book wants it in hand); a
+  hand is taken as free for gestures, and a voice as free for words, until something in the game can bind or silence
+  a caster; a component the spell consumes is kept when a Counterspell stops the spell.
+
+### Session, 2026-10-17 (night): Demigods & Magics C.1 — preparing spells — branch `dlc/03-demigods-magics` (not yet in `main`)
+
+Built by the relay builder realmwalker-a. Casters now prepare their spells, as in the 2024 book. Part C goes to
+`main` when its three tasks are done (C.3).
+- **Prepared spells.** A cleric prepares from every cleric prayer, a wizard from the spellbook, as many as the book's
+  table allows (4 at level 1, 9 at level 5, up to 22 for a cleric and 25 for a wizard at 20). Only prepared spells
+  and cantrips can be cast, in a fight or on the road. A new character starts with a sensible list already chosen.
+- **The Spells page (S) prepares.** It now lists every spell you could prepare: √ marks one prepared, ◆ one always
+  prepared. p prepares the chosen spell or puts it aside (also a button). After a long rest or a new level the list
+  may be changed freely until the next fight; after a short rest a wizard of level 5 or more may swap one spell
+  (**Memorize Spell**); an empty place can be filled at any time.
+- **Domain spells.** A Life cleric always has Bless, Cure Wounds and Lesser Restoration prepared from level 3, Mass
+  Healing Word and Revivify from 5, and more later; a War cleric Guiding Bolt, Shield of Faith and Spiritual Weapon,
+  then Spirit Guardians, Hold Monster... They do not count against the list. The ones the game does not have yet (Aid,
+  Magic Weapon, Fire Shield...) arrive with the spell catalogue (Part D).
+- **Ritual Adept.** A wizard reads a ritual (Identify) from the book without preparing it: twenty minutes, no slot.
+- **Companions prepare for themselves** by what they are for: a healing priest prays for healing first, a fighting
+  priest for blessings and the spiritual weapon, a wizard for Magic Missile, Shield and fire; empty places are always
+  filled. You can change a companion's list on their Spells page (Tab).
+- **One spell slot a turn** (2024) replaces the old rule about bonus-action spells: Healing Word and then Guiding
+  Bolt in one turn is no longer possible, but a cantrip, a scroll or a wand's charge can go beside a slotted spell.
+  Shield and Counterspell follow the same rule on the turn they are cast.
+- **Choices made without Anton**: the list stays open for changes until the next fight begins (the book says "when
+  you finish a long rest"); a new level opens it the same way.
 
 ### Session, 2026-10-17 (night): Demigods & Magics B.4 — the 2024 wizard — and Part B into `main`
 

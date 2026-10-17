@@ -79,12 +79,12 @@ spellcasting and scrolls at the book's prices.
   FORMAT_VERSION bump; companion archetypes to 20; Part B to `main`.
 
 ### Part C — Spellcasting complete
-- [ ] C.1 Preparing spells (counts by table; the Spells screen prepares; Auto prepares by archetype); always-prepared
+- [x] C.1 Preparing spells (counts by table; the Spells screen prepares; Auto prepares by archetype); always-prepared
   spells; rituals; one slotted spell per turn; the wizard's Memorize Spell (one prepared spell swapped after a short
   rest) and Ritual Adept (rituals from the book, prepared or not).
-- [ ] C.2 Components: focus and pouch, costly components as items (shops), consumed ones spent; upcasting for every
+- [x] C.2 Components: focus and pouch, costly components as items (shops), consumed ones spent; upcasting for every
   spell with a `higher` op; the spell's card shows the level chosen.
-- [ ] C.3 Spell scrolls 2024 (any level; Arcana check above your level; copying into a spellbook); potions of
+- [x] C.3 Spell scrolls 2024 (any level; Arcana check above your level; copying into a spellbook); potions of
   healing; the 31 spellcasting rules in the codex; Part C to `main`.
 
 ### Part D — The spell catalogue (four waves, helpers on the sonnet model)

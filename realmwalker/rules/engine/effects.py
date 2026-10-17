@@ -43,7 +43,6 @@ from realmwalker.core import dice
 from realmwalker.rules import grid
 from realmwalker.rules import spells as spellrules
 from realmwalker.rules.engine import conditions, durations, events, statblocks
-from realmwalker.rules.inventory import remove_item
 
 OPS: dict[str, Callable] = {}
 SPECIAL: dict[str, Callable] = {}  # what an op {"op": "special", "handler": id} calls (rules/engine/handlers/)
@@ -568,12 +567,7 @@ def _revive(c: Cast, o: dict, victim) -> None:
     x = victim or c.target
     if x is None or x.state != "dead" or x.char is None:
         return
-    item = next((i for i in f.char.inventory if i.def_id == o.get("consumes")), None) if f.char else None
-    if o.get("consumes") and item is None:
-        return
-    if item is not None:
-        remove_item(f.char, item.uid, 1)
-    x.state = "fighting"
+    x.state = "fighting"  # (the diamond is the spell's costly component: spent as it is cast, rules/spells.py)
     x.char.alive = True
     x.char.death_cause = None  # (or the body would be found dead of it again as time passed)
     x.hp = int(o.get("hp", 1))

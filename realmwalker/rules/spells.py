@@ -1,7 +1,7 @@
 """Spellcasting: which spells a character can cast, spell slots, attack bonus and save DC.
 
-Wizards cast from their spellbook (they copy new spells in from scrolls and books, M8). Clerics
-may call on any cleric prayer of a level they have slots for. v1 has no separate preparation step.
+Casters prepare their level 1+ spells (2024): a wizard from the spellbook (new spells are copied in from scrolls
+and books, M8), a cleric from the whole cleric list; see "preparing spells" below.
 
 A spell that lasts ten minutes or more (Mage Armour, Shield of Faith, Stoneskin, Death Ward) outlives the fight it
 was cast in, and can be cast on the road before one: it is kept on the character as a timed effect,
@@ -52,6 +52,7 @@ def init_spells(char: Character, tables) -> None:
         "spellbook": list(start.get("spellbook", [])),
         "slots_used": [0] * 9,
     }
+    char.uses["prepare"] = 1  # (a new caster chooses the prepared list freely until the first fight)
 
 
 def slots_total(char: Character, tables) -> list[int]:
@@ -73,18 +74,211 @@ def max_spell_level(char: Character, tables) -> int:
 
 
 def known_spells(char: Character, tables) -> list[str]:
-    """Every spell this character could cast (given a free slot)."""
+    """Every spell this character could cast (given a free slot): the cantrips, the spells prepared today and the
+    ones always prepared (a domain's spells, Spell Breaker's)."""
     if not is_caster(char, tables):
         return []
     out = [s for s in char.spells.get("cantrips", []) if s in tables.spells]
-    top = max_spell_level(char, tables)
-    if char.cls == "wizard":
-        out += [s for s in char.spells.get("spellbook", []) if s in tables.spells and tables.spells[s]["level"] <= top]
-        if "spell_breaker" in char.features:  # (an abjurer's Spell Breaker: always ready, in the book or not)
-            out += [s for s in SPELL_BREAKER if s in tables.spells and tables.spells[s]["level"] <= top]
-    else:
-        out += [s for s in tables.spells.for_class(char.cls, top) if tables.spells[s]["level"] > 0]
+    out += prepared(char, tables) + always_prepared(char, tables)
     return list(dict.fromkeys(out))
+
+
+# ---------------------------------------------------------------------------- preparing spells (2024)
+# Every caster prepares a list of level 1+ spells, as many as the class table's Prepared Spells column says: a
+# cleric from the whole cleric list, a wizard from the spellbook. The list is `char.spells["prepared"]`; spells a
+# feature always has prepared (a domain's, Spell Breaker's) are on top of it. It may be changed whole after a long
+# rest or a new level (`char.uses["prepare"]`), one spell after a short rest for a wizard's Memorize Spell
+# (`char.uses["memorize"]`); either stays open until the next fight. An empty place may be filled at any time.
+# Nobody is left with empty places: the Auto fills them by what the caster is for (`fill_prepared`).
+def prepared_count(char: Character, tables) -> int:
+    row = (tables.classes[char.cls].get("spellcasting") or {}).get("prepared")
+    if not row:
+        return 0
+    return int(row[max(0, min(len(row) - 1, char.level - 1))])
+
+
+def always_prepared(char: Character, tables) -> list[str]:
+    """Spells a feature keeps prepared beyond the count: a domain's spells (by class level; those not yet in the game
+    wait for it), Spell Breaker's Counterspell and Dispel Magic."""
+    if not is_caster(char, tables):
+        return []
+    top = max_spell_level(char, tables)
+    sub = tables.classes[char.cls].get("subclasses", {}).get(char.subclass or "", {})
+    out = [sid for lvl, ids in sorted((sub.get("spells") or {}).items(), key=lambda kv: int(kv[0]))
+           if int(lvl) <= char.level for sid in ids]
+    if "spell_breaker" in char.features:  # (an abjurer's Spell Breaker: always ready, in the book or not)
+        out += SPELL_BREAKER
+    return [s for s in dict.fromkeys(out) if s in tables.spells and 0 < tables.spells[s]["level"] <= top]
+
+
+def preparable(char: Character, tables) -> list[str]:
+    """The level 1+ spells they may choose to prepare: a wizard's spellbook, a cleric's whole list (of a level they
+    have slots for), less those always prepared."""
+    if not is_caster(char, tables) or not char.spells:
+        return []
+    top = max_spell_level(char, tables)
+    if (tables.classes[char.cls].get("spellcasting") or {}).get("type") == "spellbook":
+        pool = [s for s in char.spells.get("spellbook", []) if s in tables.spells]
+    else:
+        pool = tables.spells.for_class(char.cls, top)
+    always = set(always_prepared(char, tables))
+    return [s for s in dict.fromkeys(pool) if 0 < tables.spells[s]["level"] <= top and s not in always]
+
+
+def prepared(char: Character, tables) -> list[str]:
+    """The spells they chose to prepare (not counting the always prepared). A caster who never chose has the Auto's
+    choice."""
+    if not is_caster(char, tables) or not char.spells:
+        return []
+    if "prepared" not in char.spells:
+        char.spells["prepared"] = []
+        fill_prepared(char, tables)
+    can = set(preparable(char, tables))
+    return [s for s in dict.fromkeys(char.spells["prepared"]) if s in can][:prepared_count(char, tables)]
+
+
+def room_to_prepare(char: Character, tables) -> int:
+    return max(0, prepared_count(char, tables) - len(prepared(char, tables)))
+
+
+# What each kind of spell is worth to each kind of caster (feats.archetype): a healer prays for healing first, a
+# fighting priest for blessings on the blade, a wizard for fire and the means to stop a foe.
+PREPARE_WEIGHTS = {
+    "healer": {"heal": 6.0, "buff": 4.0, "harm": 3.0, "guard": 2.0, "other": 0.5},
+    "caster": {"harm": 6.0, "guard": 4.5, "buff": 3.0, "heal": 2.0, "other": 0.5},
+    "_": {"buff": 5.0, "harm": 4.0, "heal": 4.0, "guard": 2.0, "other": 0.5},
+}
+
+
+def prepare_kind(spell: dict) -> str:
+    """What a spell is for, as the Auto prepares: heal, guard (a reaction), harm, buff or other."""
+    if heal_op(spell) or has_op(spell, "revive", "restore"):
+        return "heal"
+    if spell.get("cast") == "reaction":
+        return "guard"
+    if harms(spell):
+        return "harm"
+    if buff_of(spell) or has_op(spell, "summon", "zone"):
+        return "buff"
+    return "other"
+
+
+def auto_prepare_order(char: Character, tables, pool: list[str], have: list[str]) -> list[str]:
+    """The pool in the order the Auto would prepare it, after what they `have`: by what the caster is for, the
+    strongest first, and a mixture rather than many of one kind. A wizard's rituals are read from the book when
+    needed (Ritual Adept), so they come last."""
+    from realmwalker.rules import feats
+
+    weights = PREPARE_WEIGHTS.get(feats.archetype(char, tables), PREPARE_WEIGHTS["_"])
+    kinds: dict[str, int] = {}
+    for sid in have:
+        k = prepare_kind(tables.spells[sid])
+        kinds[k] = kinds.get(k, 0) + 1
+    adept = "ritual_adept" in char.features
+
+    def worth(sid: str) -> float:
+        sp = tables.spells[sid]
+        w = weights[prepare_kind(sp)] + 1.5 * sp["level"] - 2.0 * kinds.get(prepare_kind(sp), 0)
+        return w - 20 if adept and sp.get("ritual") else w
+
+    left = sorted(pool, key=lambda sid: tables.spells[sid]["name"])
+    out = []
+    while left:
+        best = max(left, key=worth)  # (the first in name order among equals)
+        left.remove(best)
+        out.append(best)
+        k = prepare_kind(tables.spells[best])
+        kinds[k] = kinds.get(k, 0) + 1
+    return out
+
+
+def fill_prepared(char: Character, tables) -> list[str]:
+    """Fill every empty place on the prepared list the way the Auto would; returns the spells added."""
+    if not is_caster(char, tables) or not char.spells:
+        return []
+    have = prepared(char, tables) if "prepared" in char.spells else []
+    char.spells["prepared"] = list(have)
+    room = prepared_count(char, tables) - len(have)
+    if room <= 0:
+        return []
+    pool = [s for s in preparable(char, tables) if s not in have]
+    added = auto_prepare_order(char, tables, pool, have)[:room]
+    char.spells["prepared"] += added
+    return added
+
+
+def open_preparing(char: Character, how: str) -> None:
+    """A long rest or a new level ("prepare": the whole list), a short rest ("memorize": one spell, a wizard's
+    Memorize Spell)."""
+    if not char.spells:
+        return
+    if how == "prepare":
+        char.uses["prepare"] = 1
+    elif how == "memorize" and "memorize_spell" in char.features:
+        char.uses["memorize"] = 1
+
+
+def close_preparing(char: Character) -> None:
+    """A fight begins: the list stays as it is until the next rest."""
+    char.uses.pop("prepare", None)
+    char.uses.pop("memorize", None)
+
+
+def preparing_open(char: Character) -> str:
+    """"prepare" (the whole list may change), "memorize" (one spell) or "" (only empty places may be filled)."""
+    if char.uses.get("prepare", 0) > 0:
+        return "prepare"
+    if char.uses.get("memorize", 0) > 0 and "memorize_spell" in char.features:
+        return "memorize"
+    return ""
+
+
+def unprepare_problem(char: Character, tables, spell_id: str) -> str | None:
+    if spell_id in always_prepared(char, tables):
+        return "always prepared"
+    if spell_id not in prepared(char, tables):
+        return "not prepared"
+    if not preparing_open(char):
+        return "prepared spells change after a long rest" + (
+            " (one after a short rest: Memorize Spell)" if "memorize_spell" in char.features else "")
+    return None
+
+
+def prepare_problem(char: Character, tables, spell_id: str) -> str | None:
+    if spell_id in always_prepared(char, tables) or spell_id in prepared(char, tables):
+        return "already prepared"
+    if spell_id not in preparable(char, tables):
+        return "not a spell you can prepare yet"
+    if room_to_prepare(char, tables) <= 0:
+        return "the list is full: put a spell aside first"
+    return None
+
+
+def toggle_prepared(char: Character, tables, spell_id: str) -> str:
+    """Prepare the spell, or put it aside; returns what to say."""
+    name = tables.spells[spell_id]["name"]
+    if spell_id in prepared(char, tables) or spell_id in always_prepared(char, tables):
+        why = unprepare_problem(char, tables, spell_id)
+        if why:
+            return f"{name}: {why}."
+        how = preparing_open(char)
+        char.spells["prepared"] = [s for s in prepared(char, tables) if s != spell_id]
+        if how == "memorize":
+            char.uses["memorize"] = 0
+            return f"{name} is put aside (Memorize Spell): prepare another from the book in its place."
+        return f"{name} is put aside: {room_to_prepare(char, tables)} to prepare."
+    why = prepare_problem(char, tables, spell_id)
+    if why:
+        return f"{name}: {why}."
+    char.spells["prepared"] = prepared(char, tables) + [spell_id]
+    return f"{name} is prepared."
+
+
+def ritual_spells(char: Character, tables) -> list[str]:
+    """Rituals they may cast outside a fight without having them prepared: a wizard's spellbook (Ritual Adept)."""
+    if "ritual_adept" not in char.features or not char.spells:
+        return []
+    return [s for s in char.spells.get("spellbook", []) if s in tables.spells and tables.spells[s].get("ritual")]
 
 
 SPELL_BREAKER = ("counterspell", "dispel_magic")  # (Dispel Magic comes with the catalogue, Part D)
@@ -109,6 +303,97 @@ def spend_free(char: Character, spell_id: str, how: str | None) -> None:
         char.uses[f"signature:{spell_id}"] = 0
 
 
+# ---------------------------------------------------------------------------- casting with a higher slot (2024)
+# What a higher slot adds is in the spell's ops: `up` (dice more per slot level above the spell's), `count_up` (one
+# more dart, one more creature blessed or healed), `rays_up` (one more ray) and the spell's `targets_up` (one more
+# creature of the same kind). A spell without any of them gains nothing from a higher slot.
+UP_KEYS = ("up", "count_up", "rays_up")
+
+
+def upcasts(spell: dict) -> bool:
+    """Whether a higher slot does more with this spell."""
+    if spell.get("level", 0) <= 0:
+        return False
+    return bool(spell.get("targets_up")) or any(o.get(k) for o in ops(spell) for k in UP_KEYS) \
+        or any(more for o in ops(spell) for _, _, more in damage_parts(o))
+
+
+def more_dice(more: str, up: int) -> str:
+    """`more` taken `up` times ("1d6", 2 -> "2d6")."""
+    from realmwalker.core import dice
+
+    n, sides, flat = dice.parse(more)
+    return (f"{n * up}d{sides}" if n else "") + (f"{flat * up:+d}" if flat else "")
+
+
+def scaled(base: str, more: str, up: int) -> str:
+    """Dice with `more` added `up` times ("8d6", "1d6", 2 -> "10d6"); a different die is added as its own term."""
+    if not more or up <= 0:
+        return base
+    from realmwalker.core import dice
+
+    bn, bs, bf = dice.parse(base)
+    mn, ms, mf = dice.parse(more)
+    if ms == bs or bn == 0:
+        n, sides = bn + mn * up, ms if bn == 0 else bs
+        flat = bf + mf * up
+        return f"{n}d{sides}" + (f"{flat:+d}" if flat else "")
+    return f"{base}+{mn * up}d{ms}" + (f"{mf * up:+d}" if mf else "")
+
+
+def up_gain(spell: dict, up: int) -> list[str]:
+    """What `up` slot levels above the spell's own add, in a few words ("+2d6 fire", "+1 dart")."""
+    if up <= 0:
+        return []
+    out: list[str] = []
+    for o in spell.get("effects", ()):
+        for _, dtype, more in damage_parts(o):
+            if more:
+                out.append(f"+{more_dice(more, up)} {dtype}".strip())
+        if o["op"] == "heal" and o.get("up"):
+            out.append(f"heals +{more_dice(o['up'], up)}")
+        what = {"darts": "dart", "heal": "creature healed", "modifier": "creature"}.get(o["op"], "more")
+        if o.get("count_up"):
+            n = int(o["count_up"]) * up
+            out.append(f"+{n} {what}{'s' if n > 1 and not what.endswith('more') else ''}")
+        if o.get("rays_up"):
+            n = int(o["rays_up"]) * up
+            out.append(f"+{n} ray{'s' if n > 1 else ''}")
+    if spell.get("targets_up"):
+        n = int(spell["targets_up"]) * up
+        out.append(f"+{n} target{'s' if n > 1 else ''}")
+    return list(dict.fromkeys(out))
+
+
+def slot_choices(char: Character, tables, spell_id: str) -> list[int]:
+    """The slot levels with a slot left that could cast this spell (its own level and up)."""
+    sp = tables.spells.defs.get(spell_id)
+    if sp is None or sp["level"] <= 0 or not char.spells:
+        return []
+    left = slots_left(char, tables)
+    return [i + 1 for i in range(sp["level"] - 1, len(left)) if left[i] > 0]
+
+
+def idle_levels(char: Character, tables) -> set[int]:
+    """Slot levels for which they have no spell of that very level ready: such a slot is only good for casting a
+    lower spell higher."""
+    have = {tables.spells[s]["level"] for s in known_spells(char, tables)}
+    return {lvl for lvl in range(1, max_spell_level(char, tables) + 1) if lvl not in have}
+
+
+def auto_slot(char: Character, tables, spell_id: str) -> int | None:
+    """The slot the Auto would cast this spell with: a spare higher slot (one with no spell of its own level ready)
+    when the spell does more with it, else the lowest that will do."""
+    levels = slot_choices(char, tables, spell_id)
+    if not levels:
+        return None
+    if upcasts(tables.spells[spell_id]):
+        idle = [lvl for lvl in levels if lvl > levels[0] and lvl in idle_levels(char, tables)]
+        if idle:
+            return max(idle)
+    return levels[0]
+
+
 def armour_problem(char: Character, tables) -> str:
     """Armour worn without training stops all spellcasting (2024)."""
     armor = char.equipped_item("armor")
@@ -117,16 +402,127 @@ def armour_problem(char: Character, tables) -> str:
     return ""
 
 
+# ---------------------------------------------------------------------------- components (2024)
+# A spell's Material component without a cost is stood in for by a component pouch or a spellcasting focus of the
+# caster's kind (a cleric's holy symbol, a wizard's crystal, orb, rod, staff or the spellbook itself); one with a cost
+# (`spell["material"]`) needs that very thing, and one the spell consumes is used up as it is cast. The party carries
+# one pack, so a focus anywhere in it serves (the book has it held or worn). Verbal and Somatic components are taken
+# as given until something in the game can silence a caster or bind their hands.
+def has_focus(char: Character, tables) -> bool:
+    sc = tables.classes[char.cls].get("spellcasting") if char.cls in tables.classes else None
+    kind = "arcane" if (sc or {}).get("type") == "spellbook" else "divine"
+    for it in char.inventory:
+        d = tables.items.get(it.def_id)
+        if it.def_id == "component_pouch" or (d.get("focus") or {}).get("kind") == kind \
+                or (kind == "arcane" and it.def_id == "spellbook"):
+            return True
+    return False
+
+
+def component_problem(char: Character, tables, spell_id: str) -> str:
+    """Why the spell's material component is missing ("" when it is at hand)."""
+    spell = tables.spells[spell_id]
+    if "M" not in (spell.get("components") or ()):
+        return ""
+    m = spell.get("material")
+    if m:
+        if not any(it.def_id in m["items"] for it in char.inventory):
+            return f"needs {m['text'].split(',')[0]}"
+        return ""
+    if not has_focus(char, tables):
+        return "needs a focus or a component pouch for its materials"
+    return ""
+
+
+def spend_material(char: Character, tables, spell_id: str) -> str | None:
+    """The spell is cast: a component it consumes is used up. Returns the thing's name, or None."""
+    m = tables.spells[spell_id].get("material")
+    if not m or not m.get("consumed"):
+        return None
+    from realmwalker.rules.inventory import remove_item
+
+    it = next((it for it in char.inventory if it.def_id in m["items"]), None)
+    if it is None:
+        return None
+    remove_item(char, it.uid, 1)
+    return tables.items.get(it.def_id)["name"]
+
+
 def can_cast(char: Character, tables, spell_id: str) -> tuple[bool, str]:
     spell = tables.spells[spell_id]
     if "item" not in spell.get("classes", ()) and armour_problem(char, tables):
         return False, armour_problem(char, tables)
+    if "item" not in spell.get("classes", ()) and component_problem(char, tables, spell_id):
+        return False, component_problem(char, tables, spell_id)
     if spell["level"] == 0 or free_cast(char, tables, spell_id):
         return True, ""
     left = slots_left(char, tables)
     if any(left[i] > 0 for i in range(spell["level"] - 1, len(left))):
         return True, ""
     return False, "no spell slots of that level left (rest to recover)"
+
+
+# ---------------------------------------------------------------------------- spell scrolls (DMG 2024)
+# A scroll is read by whoever has its spell on their spell list (their class's list, or a feature's spells that are
+# always prepared); to anyone else it is unintelligible. It casts with its own save DC and attack bonus (by the spell's
+# level, data/rules.json "spell_scrolls"), needs no materials and no slot, and crumbles once the spell is cast. A spell
+# above the highest level the reader can cast takes an ability check with the spellcasting ability first (DC 10 + the
+# spell's level); on a failure the words fade and nothing happens. A thief's Use Magic Device reads any scroll with
+# Intelligence: cantrips and level 1 spells surely, higher ones after an Intelligence (Arcana) check, DC the same.
+def scroll_numbers(tables, level: int) -> tuple[int, int]:
+    """(save DC, attack bonus) a scroll of this spell level casts with."""
+    n = tables.rules.get("spell_scrolls") or {}
+    dcs, attacks = n.get("dc") or [13], n.get("attack") or [5]
+    i = max(0, min(int(level), len(dcs) - 1))
+    return int(dcs[i]), int(attacks[min(i, len(attacks) - 1)])
+
+
+def scroll_reader(char: Character, tables, spell_id: str) -> str | None:
+    """How this character reads a scroll of this spell: "sure" (on their list, a level they can cast), "check" (on
+    their list but above them: a spellcasting check first), "device" (Use Magic Device: Intelligence, sure for a
+    cantrip or level 1, else an Arcana check: "device_check"), or None (unintelligible to them)."""
+    spell = tables.spells[spell_id] if spell_id in tables.spells else None
+    if spell is None:
+        return None
+    level = int(spell["level"])
+    own = is_caster(char, tables) and (char.cls in spell.get("classes", ()) or spell_id in always_prepared(char, tables))
+    if own:
+        return "sure" if level <= max_spell_level(char, tables) else "check"
+    if "use_magic_device" in char.features:
+        return "device" if level <= 1 else "device_check"
+    return None
+
+
+def scroll_ability(char: Character, tables, how: str | None) -> str:
+    """The ability the reader casts a scroll's spell with (Intelligence through Use Magic Device)."""
+    return "int" if how in ("device", "device_check") else casting_ability(char, tables)
+
+
+def scroll_check(sheet: Sheet, tables, spell_id: str, how: str | None) -> tuple[int, int, str] | None:
+    """(bonus, DC, words) of the check before reading a scroll above the reader, or None when none is needed."""
+    if how not in ("check", "device_check"):
+        return None
+    dc = 10 + int(tables.spells[spell_id]["level"])
+    if how == "device_check":
+        return sheet.skill_bonus("arcana"), dc, "Intelligence (Arcana)"
+    ability = casting_ability(sheet.c, tables)
+    return sheet.mod(ability), dc, tables.rules["abilities"][ability]["name"]
+
+
+def scroll_odds(sheet: Sheet, tables, spell_id: str, how: str | None) -> float:
+    """The chance a reading of the scroll works (1.0 when no check is needed)."""
+    check = scroll_check(sheet, tables, spell_id, how)
+    if check is None:
+        return 1.0
+    bonus, dc, _ = check
+    return max(0.05, min(1.0, (21 - (dc - bonus)) / 20))
+
+
+def scroll_problem(char: Character, tables, spell_id: str) -> str:
+    """Why this character cannot read a scroll of this spell ("" if they can)."""
+    if scroll_reader(char, tables, spell_id) is None:
+        return "unintelligible to you: the spell is not on your list"
+    return armour_problem(char, tables) or ""
 
 
 # ---------------------------------------------------------------------------- reading a spell's effects

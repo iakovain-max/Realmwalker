@@ -102,7 +102,7 @@ class Tables:
         self.creatures = CreatureTable(data["creatures.json"], data["statblocks.json"])
         self.sprites = data["sprites.json"]  # which picture shows what (ui/gfx)
         self.spells = SpellTable(data["spells.json"])
-        self.items.add_scrolls(self.spells)
+        self.items.add_scrolls(self.spells, self.rules.get("spell_scrolls"))
         self.combat_text = data["combat_text.json"]
         self.conditions = data["conditions.json"]  # the 2024 conditions (rules/engine/conditions.py)
         self.traits = data["traits.json"]  # traits and features as definitions (rules/engine/traits.py)

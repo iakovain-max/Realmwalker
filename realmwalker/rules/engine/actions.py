@@ -303,8 +303,8 @@ def options(b, f, only: tuple[str, ...] | None = None) -> list[Option]:
         throw = b.throw_value(it)
         name = b.t.items.name(it, False)
         if not throw:
-            ok = f.action > 0 or b.fast_hands(f)
-            out.append(Option(f"item:{it.uid}", "item", name, "action", ok, "" if ok else "no action left this turn",
+            why = b.item_problem(f, it)
+            out.append(Option(f"item:{it.uid}", "item", name, b.item_cost(f, it), not why, why,
                               it.uid, "creature", b.item_targets(f), None))
             continue
         sp = b.t.spells[throw.split(":", 2)[2]]  # a flask, acid, a net, caltrops, a coating: aimed as its spell says

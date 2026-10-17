@@ -104,7 +104,7 @@ def divine_intervention(c, o, victim) -> None:
             b.say("Nothing here needs the god's hand; the prayer goes unspent.", "system")
             f.char.uses["divine_intervention"] = f.char.uses.get("divine_intervention", 0) + 1
             return
-        _, sid, target, point, _sp = best
+        sid, target, point = best[1:4]  # (at its own level: the god casts it)
         if not b.do_cast(f, sid, target, point=point):
             f.char.uses["divine_intervention"] = f.char.uses.get("divine_intervention", 0) + 1
         elif f.action > 0:

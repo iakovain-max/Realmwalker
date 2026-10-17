@@ -190,6 +190,7 @@ class Fighter:
         self.offhand_done = False  # the Light property's one extra blow this turn
         self.cast_bonus_spell = False
         self.cast_action_spell = False
+        self.slot_turn: tuple | None = None  # the (round, turn) it last spent a spell slot in (one a turn, 2024)
         self.hidden = 0  # Stealth total while hidden (0: not hidden)
         self.concentration: dict | None = None  # {"spell": id, "rounds": n}
         self.save_ends: list[dict] = []  # conditions shaken off with a save at the end of each turn
@@ -2128,7 +2129,7 @@ class Battle:
         if f.buff_value("ac") and any(b.get("source") == "shield" for b in f.buffs):
             return False
         slot = spellrules.lowest_free_slot(f.char, self.t, 1)
-        if slot is None:
+        if slot is None or self.slot_used_now(f):
             return False
         blow = f"{att.the_name}'s {opt.name} would hit {f.the_name} ({total} against AC {ac})" if att and opt else \
             f"A blow would hit {f.the_name}"
@@ -2136,6 +2137,7 @@ class Battle:
                                             [("yes", f"Shield (a level {slot} slot)"), ("no", "Let it land")])):
             return False
         spellrules.spend_slot(f.char, slot)
+        self.note_slot(f)
         f.reaction = False
         f.buffs.append({"ac": 5, "rounds": 0, "source": "shield"})
         events.emit(self, "spell_cast", actor=f, spell=self.t.spells["shield"], sid="shield", level=slot)
@@ -2857,11 +2859,22 @@ class Battle:
         """A thief can use an object with a bonus action (Cunning Action)."""
         return f.char is not None and f.has_trait("fast_hands") and f.bonus > 0
 
+    def item_cost(self, f: Fighter, item) -> str:
+        """What using this thing takes: a potion is drunk or given with the bonus action (DMG 2024); other things
+        take the action (or a thief's bonus action: Fast Hands)."""
+        return "bonus" if "heal" in (self.t.items.get(item.def_id).get("use") or {}) else "action"
+
+    def item_problem(self, f: Fighter, item) -> str:
+        """Why this thing cannot be used now ("" if it can)."""
+        if self.item_cost(f, item) == "bonus":
+            return "" if f.bonus > 0 else "no bonus action left this turn"
+        return "" if f.action > 0 or self.fast_hands(f) else "no action left this turn"
+
     def do_item(self, f: Fighter, uid: int, target: Fighter) -> None:
         it = f.char.item(uid)
-        if it is None or (f.action <= 0 and not self.fast_hands(f)):
+        if it is None or self.item_problem(f, it):
             return
-        quick = f.action <= 0  # with the bonus action (Fast Hands)
+        quick = self.item_cost(f, it) == "bonus" or f.action <= 0  # (a potion; or Fast Hands)
         d = self.t.items.get(it.def_id)
         use = d.get("use", {})
         name = d["name"]
@@ -2957,8 +2970,12 @@ class Battle:
         if f.char:
             for sid, ok, _ in self.spell_options(f):
                 sp = self.t.spells[spell_id(sid)]
-                if ok and sp.get("cast") == "bonus" and (not f.cast_action_spell or sp["level"] == 0):
+                if ok and sp.get("cast") == "bonus":
                     out.append(sid)
+            hurt = any(x.hp < x.max_hp for x in self.item_targets(f))
+            for it in self.usable_items(f) if hurt else ():  # (a potion, with the bonus action: only worth it when
+                if self.item_cost(f, it) == "bonus" and not self.item_problem(f, it):  # someone in reach is hurt)
+                    out.append(f"item:{it.uid}")
         return out
 
     def do_ability(self, f: Fighter, ability: str, target: Fighter | None = None) -> None:
@@ -3031,11 +3048,12 @@ class Battle:
                     continue  # the 2025 way: so many times a day, no slots
             elif sid not in sc.get("at_will", []) and level and not any(n > 0 for n in f.slots[level - 1:]):
                 continue
-            if self._casting_time_ok(f, spell)[0]:
+            slotted = bool(level) and per_day is None and sid not in sc.get("at_will", [])
+            if self._casting_time_ok(f, spell, slotted)[0]:
                 out.append(sid)
         return out
 
-    def creature_cast(self, f: Fighter, sid: str, target: Fighter | None = None,
+    def creature_cast(self, f: Fighter, sid: str, target: Fighter | None = None, slot_level: int | None = None,
                       point: tuple[int, int] | None = None) -> bool:
         """A creature casts one of its spells, with its own save DC and spell attack."""
         spell = self.t.spells[sid]
@@ -3054,8 +3072,13 @@ class Battle:
         if self._per_day(f, sid) is not None:
             self._spend_per_day(f, sid)
         elif level and sid not in sc.get("at_will", []):
+            if self.slot_used_now(f):
+                return False
             slot_i = i = next(i for i in range(level - 1, len(f.slots)) if f.slots[i] > 0)
+            if slot_level and slot_level - 1 >= i and slot_level <= len(f.slots) and f.slots[slot_level - 1] > 0:
+                slot_i = i = slot_level - 1  # (a higher slot for more)
             f.slots[i] -= 1
+            self.note_slot(f)
             level = i + 1
         bonus_cast = spell.get("cast") == "bonus"
         self._spend(f, bonus_cast)
@@ -3098,9 +3121,6 @@ class Battle:
         for sid in spellrules.known_spells(f.char, self.t):
             ok, why = spellrules.can_cast(f.char, self.t, sid)
             spell = self.t.spells[sid]
-            need = (spellrules.op(spell, "revive") or {}).get("consumes")
-            if ok and need and not any(i.def_id == need for i in f.char.inventory):
-                ok, why = False, f"needs a {self.t.items.get(need)['name'].lower()}"
             if ok and spell["target"] == "self" and sid in spellrules.lasting(f.char, self.t):
                 ok, why = False, "already working on you"
             if ok and spellrules.has_op(spell, "identify"):
@@ -3109,19 +3129,25 @@ class Battle:
                 ok, why = False, ("a reaction: cast by itself when a foe nearby casts a spell" if sid == "counterspell"
                                   else "a reaction: cast by itself when a blow would land")
             if ok:
-                ok, why = self._casting_time_ok(f, spell)
+                ok, why = self._casting_time_ok(f, spell, spell["level"] > 0
+                                                and not spellrules.free_cast(f.char, self.t, sid))
             out.append((sid, ok, why))
-        for it in f.char.inventory:
+        for it in f.char.inventory:  # (a scroll: on the reader's spell list, or a thief's Use Magic Device)
             sid = self.t.items.get(it.def_id).get("use", {}).get("scroll")
             if sid in self.t.spells and not spellrules.has_op(self.t.spells[sid], "revive", "identify") \
                     and self.t.spells[sid].get("cast") != "reaction":
-                ok, why = self._casting_time_ok(f, self.t.spells[sid])
+                why = spellrules.scroll_problem(f.char, self.t, sid)
+                ok = not why
+                if ok and self.t.spells[sid]["target"] == "self" and sid in spellrules.lasting(f.char, self.t):
+                    ok, why = False, "already working on you"
+                if ok:
+                    ok, why = self._casting_time_ok(f, self.t.spells[sid], False)
                 out.append((f"scroll:{it.uid}:{sid}", ok, why))
         for src, sid, _ability in feats.innate_spells(f.char, self.t):  # a feat's or a lineage's spells
             sp = self.t.spells[sid]
             if sp.get("cast") == "reaction" or spellrules.has_op(sp, "revive", "identify"):
                 continue
-            ok, why = self._casting_time_ok(f, sp)
+            ok, why = self._casting_time_ok(f, sp, False)
             left = sp["level"] == 0 or f.char.uses.get(feats.innate_key(src, sid), 0) > 0
             if ok and not left:
                 ok, why = False, "once a long rest: used"
@@ -3133,28 +3159,35 @@ class Battle:
         for it, p in magic.charges(f.char):
             if p["spell"] in self.t.spells:
                 left = magic.charges_left(p)
-                ok, why = self._casting_time_ok(f, self.t.spells[p["spell"]])
+                ok, why = self._casting_time_ok(f, self.t.spells[p["spell"]], False)
                 out.append((f"charge:{it.uid}:{p['spell']}", left > 0 and ok, why if left > 0 else "no charges left until dawn"))
         if self.antimagic(f.cells):
             out = [(sid, False, "magic does not work here") for sid, _, _ in out]
         return out
 
-    def _casting_time_ok(self, f: Fighter, spell: dict) -> tuple[bool, str]:
+    def _casting_time_ok(self, f: Fighter, spell: dict, slotted: bool | None = None) -> tuple[bool, str]:
         """The action economy of spells: a bonus-action spell needs the bonus action, an ordinary one the action;
-        and after a bonus-action spell only a cantrip may be cast with the action (and the other way round)."""
+        and only one spell slot may be spent on a turn (2024; `slotted`: whether this casting would spend one, by
+        default when the spell is not a cantrip). A cantrip, a scroll, an item's charge or a gift's spell may go
+        beside a slotted spell."""
         if self.antimagic(f.cells):
             return False, "magic does not work here"
         if spell.get("cast") == "bonus":
             if f.bonus <= 0:
                 return False, "no bonus action left"
-            if f.cast_action_spell and spell["level"] > 0:
-                return False, "you have cast a spell this turn"
-            return True, ""
-        if f.action <= 0 and f.attacks_left <= 0:
+        elif f.action <= 0 and f.attacks_left <= 0:
             return False, "no action left this turn"
-        if f.cast_bonus_spell and spell["level"] > 0:
-            return False, "after a bonus-action spell, only a cantrip"
+        if (spell["level"] > 0 if slotted is None else slotted) and self.slot_used_now(f):
+            return False, "one spell slot a turn: a slot has been spent this turn"
         return True, ""
+
+    def slot_used_now(self, f: Fighter) -> bool:
+        """Whether `f` has spent a spell slot on this turn (anyone's turn: a reaction counts on the turn it is
+        taken)."""
+        return f.slot_turn == (self.round, self.turn)
+
+    def note_slot(self, f: Fighter) -> None:
+        f.slot_turn = (self.round, self.turn)
 
     def spell_range(self, spell: dict, f: Fighter | None = None) -> int:
         r = spell.get("range", 60)
@@ -3347,15 +3380,28 @@ class Battle:
                       mult=1, level=0)
             self._after_action(f)
             return True
-        if scroll is not None:
-            remove_item(c, scroll.uid, 1)
-            if c.cls not in spell["classes"]:
+        scroll_how = None
+        if scroll is not None:  # (DMG 2024 Spell Scroll; spells.scroll_reader)
+            scroll_how = spellrules.scroll_reader(c, self.t, sid)
+            if scroll_how is None:
+                self.say("The writing on the scroll means nothing to you.", "warn")
+                return False
+            check = spellrules.scroll_check(s, self.t, sid, scroll_how)
+            if check is not None:
+                bonus, dc, words = check
                 roll = dice.d20(self.rng).natural
-                bonus = f.skill("arcana")
-                self.dice_say(f"Arcana ({f.name}): {roll} {signed_mod(bonus)} = {roll + bonus} vs DC {10 + level}")
-                if roll + bonus < 10 + level:
+                self.dice_say(f"{words} ({f.name}), reading a scroll above you: {roll} {signed_mod(bonus)} = "
+                              f"{roll + bonus} vs DC {dc}")
+                if roll + bonus < dc:
+                    remove_item(c, scroll.uid, 1)
                     self._spend(f, bonus_cast)
-                    self.say(f"{f.the_name} stumbles over the words of the scroll, and it crumbles to dust.", "warn")
+                    f.hidden = 0
+                    if bonus_cast:
+                        f.cast_bonus_spell = True
+                    else:
+                        f.cast_action_spell = True
+                    self.say(f"{f.the_name} stumbles over the words of the scroll; they fade from the page, and it "
+                             f"crumbles to dust.", "warn")
                     self._after_action(f)
                     return True
             self.say(f"{f.the_name} reads from a scroll.", "magic")
@@ -3371,11 +3417,18 @@ class Battle:
             level = 0
         slotted = False
         if level > 0:
+            if slot_level and slot_level not in spellrules.slot_choices(c, self.t, sid):
+                self.say(f"No level {slot_level} spell slot left for that.", "warn")
+                return False
             slot_level = slot_level or spellrules.lowest_free_slot(c, self.t, level)
             if slot_level is None:
                 self.say("No spell slot left for that.", "warn")
                 return False
+            if self.slot_used_now(f):
+                self.say("Only one spell slot can be spent on a turn.", "warn")
+                return False
             spellrules.spend_slot(c, slot_level)
+            self.note_slot(f)
             slotted = True
         self._spend(f, bonus_cast)
         if bonus_cast:
@@ -3391,10 +3444,25 @@ class Battle:
             mod = s.mod(innate)
             dc = 8 + s.proficiency + mod
             bonus = s.proficiency + mod + s.attack_condition()
+        if scroll is not None:  # the scroll's own numbers, by the spell's level (data/rules.json spell_scrolls)
+            mod = s.mod(spellrules.scroll_ability(c, self.t, scroll_how))
+            dc, bonus = spellrules.scroll_numbers(self.t, spell["level"])
+            bonus += s.attack_condition()
         mult = spellrules.cantrip_multiplier(c.level) if spell.get("cantrip_scaling") else 1
         if not self.cast(f, sid, spell, target, point, up=up, mod=mod, dc=dc, bonus=bonus, mult=mult,
-                         level=slot_level or level, slotted=slotted) and slotted:
-            spellrules.unspend_slot(c, slot_level)  # (countered: the slot is not spent, 2024)
+                         level=slot_level or level, slotted=slotted):
+            if slotted:
+                spellrules.unspend_slot(c, slot_level)  # (countered: the slot is not spent, 2024)
+            if scroll is not None:
+                self.say("The spell is lost and so is the turn's casting, but the scroll's words hold: it can be read "
+                         "again another turn.", "magic")
+        elif scroll is not None:
+            remove_item(c, scroll.uid, 1)  # (it crumbles once the spell is cast)
+            self.say("The scroll crumbles to dust as the last word is spoken.", "magic")
+        elif charged is None and innate is None:
+            used = spellrules.spend_material(c, self.t, sid)
+            if used:
+                self.say(f"The {used} is gone into the spell.", "magic")
         self._after_action(f)
         return True
 

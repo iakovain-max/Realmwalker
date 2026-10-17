@@ -323,7 +323,12 @@ class BattleScreen(Screen):
                 sp = tables.spells[spell_id(sid)]
                 lvl = "cantrip" if sp["level"] == 0 else f"level {sp['level']}"
                 if sid.startswith("scroll:"):
-                    lvl = "from a scroll"
+                    dc, atk = spellrules.scroll_numbers(tables, sp["level"])
+                    how = spellrules.scroll_reader(f.char, tables, spell_id(sid))
+                    harms = any(o.get("op") in ("save", "attack") for o in spellrules.ops(sp))
+                    lvl = f"from a scroll: DC {dc}, +{atk}" if harms else "from a scroll"
+                    if how in ("check", "device_check"):
+                        lvl += ", <warn>risky</>"
                 elif sid.startswith("charge:"):
                     lvl = "from a magic item"
                 if sp.get("cast") == "bonus":
@@ -338,7 +343,13 @@ class BattleScreen(Screen):
                 throw = b.throw_value(i)
                 hint = f" <dim>({tables.spells[spell_id(throw)]['text']})</>" if throw else ""
                 ok = not throw or b.cast_problem(f, throw, None, None) in (None, "no target", "you cannot aim it there")
-                rows.append((markup.escape(tables.items.name(i)) + hint, i.uid, ok, "no action left this turn"))
+                why = "no action left this turn"
+                if not throw:
+                    why = b.item_problem(f, i)
+                    ok = not why
+                    if b.item_cost(f, i) == "bonus":
+                        hint = " <dim>(bonus action)</>"
+                rows.append((markup.escape(tables.items.name(i)) + hint, i.uid, ok, why))
             self._open_choices("item", rows)
         elif action == "ability":
             abilities = b.class_abilities(f)
@@ -495,17 +506,17 @@ class BattleScreen(Screen):
             return
         b = self.battle
         kind = self.choice_kind
+        if kind == "slot":  # (the slot level chosen for the spell picked a moment ago)
+            self.pending["slot"] = value
+            self._aim_spell(f, self.pending.get("value"))
+            return
+        self.pending.pop("slot", None)
         self.pending["value"] = value
         if kind == "attack":
             self._open_targets("attack", b.targets_for(f, value))
         elif kind == "cast":
-            sp = self.game.tables.spells[spell_id(value)]
-            if sp["target"] in ("enemy", "ally", "downed_ally", "dead_ally"):
-                self._open_targets("cast", b.spell_targets(f, value))
-            elif sp["target"] in ("point", "direction"):
-                self._open_aim("cast")
-            else:
-                self._do(b.do_cast, f, value, None)
+            if not self._ask_slot(f, value):
+                self._aim_spell(f, value)
         elif kind == "item":
             it = f.char.item(value) if f.char is not None else None
             throw = b.throw_value(it) if it is not None else None
@@ -556,6 +567,38 @@ class BattleScreen(Screen):
         elif kind == "fly":
             self._do(b.do_fly, f, value)
 
+    def _aim_spell(self, f: Fighter, value) -> None:
+        """After the spell (and its slot): at whom, where, or cast at once."""
+        b = self.battle
+        sp = self.game.tables.spells[spell_id(value)]
+        if sp["target"] in ("enemy", "ally", "downed_ally", "dead_ally"):
+            self._open_targets("cast", b.spell_targets(f, value))
+        elif sp["target"] in ("point", "direction"):
+            self._open_aim("cast")
+        else:
+            self._do(lambda x: b.do_cast(x, value, None, slot_level=self.pending.get("slot")), f)
+
+    def _ask_slot(self, f: Fighter, value) -> bool:
+        """A spell that does more with a higher slot, and more than one level of slot left: ask which (2024). True
+        if the question is open."""
+        if f.char is None or not isinstance(value, str) or ":" in value:
+            return False
+        t = self.game.tables
+        sp = t.spells[value]
+        if not spellrules.upcasts(sp) or spellrules.free_cast(f.char, t, value):
+            return False
+        levels = spellrules.slot_choices(f.char, t, value)
+        if len(levels) < 2:
+            return False
+        left = spellrules.slots_left(f.char, t)
+        rows = []
+        for lvl in levels:
+            gain = spellrules.up_gain(sp, lvl - sp["level"])
+            words = f"<dim>{', '.join(gain)}</>" if gain else "<dim>its own level</>"
+            rows.append((f"Level {lvl} slot ({left[lvl - 1]} left): {words}", lvl, True, ""))
+        self._open_choices("slot", rows)
+        return True
+
     def confirm_target(self) -> None:
         f = self.actor()
         if f is None or not self.targets:
@@ -568,7 +611,7 @@ class BattleScreen(Screen):
         if kind == "attack":
             self._do(b.do_attack, f, value, target)
         elif kind == "cast":
-            self._do(lambda x: b.do_cast(x, value, target), f)
+            self._do(lambda x: b.do_cast(x, value, target, slot_level=self.pending.get("slot")), f)
         elif kind == "item":
             self._do(b.do_item, f, value, target)
         elif kind == "help":
@@ -599,6 +642,7 @@ class BattleScreen(Screen):
             return
         value = self.pending.get("value")
         point = self.aim
+        slot = self.pending.get("slot")
         sp = self.game.tables.spells[spell_id(value)]
         caught = []
         if sp.get("area") and spellrules.has_op(sp, "save"):
@@ -610,9 +654,10 @@ class BattleScreen(Screen):
             names = ", ".join(caught[:-1]) + (" and " if len(caught) > 1 else "") + caught[-1]
             self.app.push(ConfirmBox(self.app, f"{sp['name']} will catch <danger>{markup.escape(names)}</> too. Cast it "
                                                f"there anyway?", lambda: self._do(lambda x: self.battle.do_cast(
-                                                   x, value, None, point=point), f), title=sp["name"], danger=True))
+                                                   x, value, None, slot_level=slot, point=point), f),
+                                   title=sp["name"], danger=True))
             return
-        self._do(lambda x: self.battle.do_cast(x, value, None, point=point), f)
+        self._do(lambda x: self.battle.do_cast(x, value, None, slot_level=slot, point=point), f)
 
     # ------------------------------------------------------------------ moving and quick attacks
     def step_toward(self, dx: int, dy: int) -> None:
@@ -1180,7 +1225,7 @@ class BattleScreen(Screen):
 
     def _render_choices(self, canvas: Canvas, x: int, y: int, w: int, h: int) -> int:
         canvas.text(x, y, "↑↓ or 1-9, Enter; Esc back", colors.DIM, max_width=w)
-        if self.choice_kind == "cast" and self.slots_line and len(self.slots_line) < w:
+        if self.choice_kind in ("cast", "slot") and self.slots_line and len(self.slots_line) < w:
             canvas.text(x, y + 1, self.slots_line, colors.named("magic"))
             y += 1
         room = max(1, h - 2)
@@ -1209,6 +1254,9 @@ class BattleScreen(Screen):
         foes = [e for e in b.enemies_of(f) if e.active]
         target = min(foes, key=lambda e: b.gap(f, e)) if foes else None  # the chance against the nearest foe
         known = target is None or self.full_details(target)
+        if self.choice_kind == "slot":
+            sid = self.pending.get("value")
+            return lambda: describe.spell(self.battle.t, sid, b=self.battle, f=f, target=target, level=value)
         return lambda: describe.choice(self.battle, f, self.choice_kind, value, label, enabled, why, target, known=known)
 
     def _click_choice(self, i: int) -> None:

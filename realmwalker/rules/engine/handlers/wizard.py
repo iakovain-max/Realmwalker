@@ -82,8 +82,10 @@ def overchannel_price(b, f) -> None:
 # ---------------------------------------------------------------------------- Counterspell
 def counter_slot(b, x) -> int | None:
     """The slot level a fighter would spend on Counterspell now, or None: a caster who knows it with a level 3 slot
-    left, or a creature whose spells name it."""
+    left, or a creature whose spells name it. Not when it has spent a slot on this turn already (one a turn)."""
     if x.char is not None:
+        if b.slot_used_now(x):
+            return None
         if "counterspell" not in spellrules.known_spells(x.char, b.t) or spellrules.armour_problem(x.char, b.t):
             return None
         return spellrules.lowest_free_slot(x.char, b.t, 3)
@@ -92,16 +94,20 @@ def counter_slot(b, x) -> int | None:
     per_day = b._per_day(x, "counterspell")
     if per_day is not None:
         return 3 if per_day > 0 else None
+    if b.slot_used_now(x):
+        return None
     return next((i + 1 for i in range(2, len(x.slots)) if x.slots[i] > 0), None)
 
 
 def pay_counter(b, x, slot: int) -> None:
     if x.char is not None:
         spellrules.spend_slot(x.char, slot)
+        b.note_slot(x)
     elif b._per_day(x, "counterspell") is not None:
         b._spend_per_day(x, "counterspell")
     else:
         x.slots[slot - 1] -= 1
+        b.note_slot(x)
 
 
 def counter_dc(b, x) -> int:

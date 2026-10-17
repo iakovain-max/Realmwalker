@@ -1,6 +1,8 @@
-"""The Spells screen (S): what a caster knows, what they can still cast today, and what each one does. A spell that
-works outside a fight (one that lasts, like Mage Armour, or one that heals) can be cast from here: pick it, pick
-who it is for, Enter."""
+"""The Spells screen (S): what a caster knows, what they have prepared, what they can still cast today, and what each
+one does. p prepares the chosen spell or puts it aside (2024: the list changes after a long rest or a new level, one
+spell after a short rest for a wizard's Memorize Spell; an empty place may be filled at any time). A spell that works
+outside a fight (one that lasts, like Mage Armour, or one that heals) can be cast from here: pick it, pick who it is
+for, Enter."""
 
 from __future__ import annotations
 
@@ -36,8 +38,36 @@ def caster_summary(game, char) -> list[str]:
     if char.cls == "wizard":
         book = [s for s in char.spells.get("spellbook", []) if s in t.spells]
         lines.append(f"<dim>Spellbook:</> {len(book)} spells. Copy more from scrolls (Enter on a scroll in the pack).")
+    count = sp.prepared_count(char, t)
+    if count:
+        mine, always = sp.prepared(char, t), sp.always_prepared(char, t)
+        lines.append(f"<dim>Prepared:</> {len(mine)} of {count}" + (f" <dim>and {len(always)} always prepared</>"
+                                                                   if always else ""))
+        how = sp.preparing_open(char)
+        lines.append("<dim>" + {"prepare": "Rested: change them freely (p) until the next fight.",
+                                "memorize": "Memorize Spell: one may be swapped (p) until the next fight."}.get(
+            how, "They change after a long rest" + (", one after a short rest" if "memorize_spell" in char.features
+                                                     else "") + ".") + "</>")
     lines.append("")
     return lines
+
+
+def prepared_words(game, char, sid: str) -> str:
+    """Whether the chosen spell is prepared, and what p would do."""
+    t = game.tables
+    if t.spells[sid]["level"] == 0 or not sp.prepared_count(char, t):
+        return ""
+    if sid in sp.always_prepared(char, t):
+        return "<good>Always prepared</> <dim>(beyond the count).</>"
+    if sid in sp.prepared(char, t):
+        why = sp.unprepare_problem(char, t, sid)
+        return "<good>Prepared.</> <dim>" + (f"{why[:1].upper() + why[1:]}." if why else "p puts it aside.") + "</>"
+    why = sp.prepare_problem(char, t, sid)
+    adept = " A ritual: read from the book without preparing it." if sid in sp.ritual_spells(char, t) else ""
+    if why and why != "not a spell you can prepare yet":
+        return f"<warn>Not prepared:</> <dim>{why}.{adept}</>"
+    return "<warn>Not prepared.</> <dim>" + ("p prepares it." if not why else why[:1].upper() + why[1:] + ".") \
+        + adept + "</>"
 
 
 def working_now(game) -> list[str]:
@@ -50,8 +80,8 @@ def working_now(game) -> list[str]:
     return out
 
 
-def spell_detail(game, char, sid: str, target) -> list[str]:
-    """What the chosen spell is, and whether it can be cast here and now."""
+def spell_detail(game, char, sid: str, target, slot: int | None = None) -> list[str]:
+    """What the chosen spell is, and whether it can be cast here and now (`slot`: a higher slot chosen with l)."""
     t = game.tables
     spell = t.spells[sid]
     school = SCHOOLS.get(spell.get("school", ""), "").lower()
@@ -60,6 +90,15 @@ def spell_detail(game, char, sid: str, target) -> list[str]:
     lines = [f"<magic>{markup.escape(spell['name'])}</> <dim>{level}{', ' + school if school else ''}"
              + (f" · {', '.join(bits)}" if bits else "") + "</>",
              markup.escape(spell.get("text", ""))]
+    prep = prepared_words(game, char, sid)
+    if prep:
+        lines.append(prep)
+    levels = sp.slot_choices(char, t, sid)
+    if sp.upcasts(spell) and len(levels) > 1 and not sp.free_cast(char, t, sid):
+        level_now = slot if slot in levels else levels[0]
+        gain = sp.up_gain(spell, level_now - spell["level"])
+        lines.append(f"<magic>Slot:</> level {level_now}" + (f" <good>{', '.join(gain)}</>" if gain else "")
+                     + " <dim>(l: another level)</>")
     if sid in (char.spells or {}).get("mastery", ()) and "spell_mastery" in char.features:
         lines.append("<good>Spell Mastery:</> <dim>cast at its own level without a slot, as often as you like.</>")
     elif sid in (char.spells or {}).get("signature", ()) and "signature_spells" in char.features:
@@ -67,7 +106,7 @@ def spell_detail(game, char, sid: str, target) -> list[str]:
         lines.append("<good>Signature spell:</> <dim>once without a slot, back with a short or long rest"
                      + (" (ready)." if ready else " (used).") + "</>")
     elif sid in sp.SPELL_BREAKER and "spell_breaker" in char.features:
-        lines.append("<good>Spell Breaker:</> <dim>always ready; a reaction when a foe casts nearby.</>")
+        lines.append("<good>Spell Breaker:</> <dim>a reaction when a foe casts nearby.</>")
     ok, why = sp.can_cast(char, t, sid)
     if not ok:
         lines.append(f"<warn>{markup.escape(why[:1].upper() + why[1:])}.</>")
@@ -102,6 +141,7 @@ class SpellsScreen(Screen):
         self.sel = 0
         self.offset = 0
         self.target = 0
+        self.slot: int | None = None  # a higher slot chosen with l (None: the lowest)
         self.message = ""
 
     @property
@@ -113,7 +153,9 @@ class SpellsScreen(Screen):
         t = self.game.tables
         from realmwalker.rules import feats
 
-        known = list(dict.fromkeys(sp.known_spells(self.char, t) + feats.ritual_spells(self.char, t)))
+        c = self.char
+        known = list(dict.fromkeys(sp.known_spells(c, t) + sp.preparable(c, t) + sp.ritual_spells(c, t)
+                                   + feats.ritual_spells(c, t)))
         return sorted(known, key=lambda s: (t.spells[s]["level"], t.spells[s]["name"]))
 
     def current(self) -> str | None:
@@ -141,10 +183,36 @@ class SpellsScreen(Screen):
         sid = self.current()
         if sid is None:
             return
-        lines = magic.cast_on_road(self.game, self.char, sid, self.chosen_target())
+        lines = magic.cast_on_road(self.game, self.char, sid, self.chosen_target(), self.slot)
         for text in lines:
             self.game.say(text, "magic")
         self.message = " ".join(lines)
+
+    def next_slot(self) -> None:
+        """l: the next slot level the chosen spell could be cast with (a higher one does more)."""
+        sid = self.current()
+        t = self.game.tables
+        if sid is None:
+            return
+        levels = sp.slot_choices(self.char, t, sid)
+        if not sp.upcasts(t.spells[sid]) or len(levels) < 2:
+            self.message = f"{t.spells[sid]['name']} gains nothing from a higher slot." if levels else ""
+            self.slot = None
+            return
+        now = self.slot if self.slot in levels else levels[0]
+        self.slot = levels[(levels.index(now) + 1) % len(levels)]
+
+    def prepare(self) -> None:
+        """Prepare the chosen spell, or put it aside."""
+        sid = self.current()
+        t = self.game.tables
+        if sid is None or t.spells[sid]["level"] == 0 or not sp.prepared_count(self.char, t):
+            return
+        if self.game.battle is not None:
+            self.message = "Not in the middle of a fight."
+            return
+        self.message = sp.toggle_prepared(self.char, t, sid)
+        self.game.dirty = True
 
     def scribe(self) -> None:
         """Write the chosen spell out as a scroll (ink and quill, parchment, inks and a slot)."""
@@ -169,8 +237,10 @@ class SpellsScreen(Screen):
             self.next_member()
         elif ev.key == "up":
             self.sel = max(0, self.sel - 1)
+            self.slot = None
         elif ev.key == "down":
             self.sel = min(max(0, n - 1), self.sel + 1)
+            self.slot = None
         elif ev.key == "pageup":
             self.sel = max(0, self.sel - 10)
         elif ev.key == "pagedown":
@@ -188,6 +258,10 @@ class SpellsScreen(Screen):
             self.cast()
         elif ev.key == "w":
             self.scribe()
+        elif ev.key == "p":
+            self.prepare()
+        elif ev.key == "l":
+            self.next_slot()
         return True
 
     # ------------------------------------------------------------------ drawing
@@ -218,6 +292,8 @@ class SpellsScreen(Screen):
         elif at >= self.offset + visible:
             self.offset = at - visible + 1
         target = self.chosen_target() if sid else c
+        known = set(sp.known_spells(c, t))
+        mine, always = set(sp.prepared(c, t)), set(sp.always_prepared(c, t))
         y = 2
         for label, i in rows[self.offset:self.offset + visible]:
             if i is None:
@@ -228,27 +304,31 @@ class SpellsScreen(Screen):
                 if chosen:
                     canvas.fill(2, y, lw, 1, colors.HILITE_BG)
                 canvas.hit(2, y, lw, 1, lambda idx=idx: setattr(self, "sel", idx))
-                ok, _ = sp.can_cast(c, t, label)
+                ready = label in known
+                ok = ready and sp.can_cast(c, t, label)[0]
                 road = magic.road_problem(game, c, label, target if chosen else None) is None
-                canvas.text(2, y, "►" if chosen else " ", colors.TITLE, colors.HILITE_BG if chosen else None)
-                canvas.text(3, y, "●" if road else " ", colors.named("good"), colors.HILITE_BG if chosen else None)
-                canvas.text(5, y, t.spells[label]["name"], colors.SELECT_FG if chosen else
-                            (colors.named("magic") if ok else colors.DIM),
-                            colors.HILITE_BG if chosen else None, max_width=lw - 3)
+                bg = colors.HILITE_BG if chosen else None
+                canvas.text(2, y, "►" if chosen else " ", colors.TITLE, bg)
+                canvas.text(3, y, "●" if road else " ", colors.named("good"), bg)
+                mark = "◆" if label in always else ("√" if label in mine else " ")
+                canvas.text(4, y, mark, colors.named("magic"), bg)
+                canvas.text(6, y, t.spells[label]["name"], colors.SELECT_FG if chosen else
+                            (colors.named("magic") if ok else colors.DIM), bg, max_width=lw - 4)
             y += 1
         if len(rows) > visible:
             canvas.text(2, bottom, f"{self.offset + 1}-{min(len(rows), self.offset + visible)} of {len(rows)}",
                         colors.FAINT, max_width=lw)
         if spells:
             canvas.markup(2, bottom - 1 if len(rows) > visible else min(bottom, y + 1),
-                          "<good>●</> <dim>castable here</>", max_width=lw)
+                          "<good>●</> <dim>castable here</>" + ("  <magic>√</> <dim>prepared</>" if mine or always
+                                                                else ""), max_width=lw)
         # The caster, what is working now, and the chosen spell.
         lines = caster_summary(game, c)
         now = working_now(game)
         if now:
             lines += ["<title>Working now</>"] + now + [""]
         if sid:
-            lines += spell_detail(game, c, sid, target)
+            lines += spell_detail(game, c, sid, target, self.slot)
         y = 2
         for line in lines:
             if y >= bottom - 2:
@@ -262,6 +342,16 @@ class SpellsScreen(Screen):
             bx = canvas.button(bx + 2, h - 2, "Cast", self.cast, hotkey="Enter",
                                enabled=magic.road_problem(game, c, sid, target) is None)
             level = game.tables.spells[sid]["level"]
+            if level > 0 and sp.prepared_count(c, t):
+                if sid in mine or sid in always:
+                    why = sp.unprepare_problem(c, t, sid)
+                    bx = canvas.button(bx + 2, h - 2, "Put aside", self.prepare, hotkey="p", enabled=why is None,
+                                       tooltip=f"Take it off the prepared list: {why}." if why else
+                                       "Take it off the prepared list, to prepare another in its place.")
+                else:
+                    why = sp.prepare_problem(c, t, sid)
+                    bx = canvas.button(bx + 2, h - 2, "Prepare", self.prepare, hotkey="p", enabled=why is None,
+                                       tooltip=f"Prepare it: {why}." if why else "Add it to the prepared list.")
             if level > 0:
                 problem = magic.scribe_problem(game, c, sid)
                 bx = canvas.button(bx + 2, h - 2, "Write a scroll", self.scribe, hotkey="w", enabled=problem is None,
@@ -274,4 +364,4 @@ class SpellsScreen(Screen):
         canvas.text(bx + 2, h - 2, hint, colors.FAINT, max_width=max(0, w - bx - 4))
 
     def autoplay_keys(self) -> list[KeyEvent]:
-        return [KeyEvent(k) for k in ("down", "enter", "right", "down", "tab", "pagedown", "escape")]
+        return [KeyEvent(k) for k in ("down", "enter", "right", "down", "p", "tab", "pagedown", "escape")]

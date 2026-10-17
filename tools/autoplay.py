@@ -199,6 +199,11 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
             used = member.spells.get("slots_used", []) if member.spells else []
             if any(u > n for u, n in zip(used, spellrules.slots_total(member, app.tables))):
                 fail(f"{member.name} has spent more spell slots than they have: {used}")
+            if member.spells and spellrules.prepared_count(member, app.tables):
+                ready = spellrules.prepared(member, app.tables)
+                if len(ready) > spellrules.prepared_count(member, app.tables) \
+                        or set(ready) - set(spellrules.preparable(member, app.tables)):
+                    fail(f"{member.name} has an impossible list of prepared spells: {ready}")
             from realmwalker.rules.inventory import container_capacity
 
             for it in member.inventory:
@@ -506,6 +511,16 @@ def _check_magic(game, fail) -> None:
         mind = it.magic.get("sentient") if it.magic else None
         if mind and mind.get("purpose") not in game.tables.magic["sentient"]["purposes"]:
             fail(f"a sentient thing with an unknown purpose: {mind.get('purpose')}")
+        use = game.tables.items.get(it.def_id).get("use") or {}  # (Expansion 3 C.3: scrolls and potions)
+        if use.get("scroll") and use["scroll"] not in game.tables.spells:
+            fail(f"a scroll of a spell the game does not have: {it.def_id}")
+        if use.get("heal"):
+            from realmwalker.core import dice
+
+            try:
+                dice.parse(use["heal"])
+            except dice.DiceError:
+                fail(f"a potion whose healing cannot be rolled: {it.def_id} {use['heal']}")
     if game.player.pace not in ("slow", "normal", "fast"):
         fail(f"unknown travel pace {game.player.pace}")
     enc = game.encounter

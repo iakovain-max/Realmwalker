@@ -179,9 +179,13 @@ def test_stoneskin_resists_weapons_in_the_next_fight(world, tables):
     wiz = hero(tables, "wizard")
     award_xp(wiz, 23000, tables, RNG(3), auto=True)
     wiz.spells["spellbook"].append("stoneskin")
+    wiz.spells["prepared"] = ["stoneskin"]  # (2024: a spell is cast only when prepared)
     game = game_with(world, tables, wiz)
+    assert magic.road_problem(game, wiz, "stoneskin") == "needs diamond dust worth 100+ GP"
+    add_item(wiz, tables.items, "diamond_dust")  # (its costly component, which it consumes)
     said = magic.cast_on_road(game, wiz, "stoneskin")
-    assert "an hour" in said[0]
+    assert "an hour" in said[0] and "used up" in said[-1]
+    assert not any(i.def_id == "diamond_dust" for i in wiz.inventory)
     b = fight(tables, [wiz])
     assert "slashing" in [r for x in b.side(PARTY)[0].buffs for r in x.get("resist", [])]
 
@@ -219,6 +223,8 @@ def test_identify_tells_a_wizard_what_a_strange_thing_is(world, tables):
     wiz = hero(tables, "wizard")
     wiz.spells["spellbook"].append("identify")
     game = game_with(world, tables, wiz)
+    assert magic.road_problem(game, wiz, "identify") == "needs a pearl worth 100+ GP"
+    add_item(wiz, tables.items, "pearl")  # (its costly component: looked through, not used up)
     assert magic.road_problem(game, wiz, "identify") == "nothing you carry is strange to you"
     from realmwalker.rules.inventory import add_existing
 
@@ -229,9 +235,11 @@ def test_identify_tells_a_wizard_what_a_strange_thing_is(world, tables):
     t0 = game.world.time
     said = magic.cast_on_road(game, wiz, "identify")
     assert "Identify" in said[0] and ring.magic["identified"]
-    # A ritual (2024): no slot spent, ten minutes longer than the casting's ten.
-    assert sp.slots_left(wiz, tables)[0] == slots and game.world.time - t0 == 20 and "ritual" in said[0]
-    # Never in a fight, and never from a scroll read aloud in one.
+    # A ritual (2024): no slot spent, ten minutes longer than the casting's one (PHB p. 290: 1 minute or Ritual).
+    assert sp.slots_left(wiz, tables)[0] == slots and game.world.time - t0 == 11 and "ritual" in said[0]
+    # Never in a fight, and never from a scroll read aloud in one. (A ritual read from the book needs no preparing;
+    # to be in a fight's list at all it must be prepared.)
+    wiz.spells["prepared"] = ["identify"]
     b = fight(tables, [wiz])
     menu = {sid: (ok, why) for sid, ok, why in b.spell_options(b.side(PARTY)[0])}
     assert menu["identify"] == (False, "not in a fight")
