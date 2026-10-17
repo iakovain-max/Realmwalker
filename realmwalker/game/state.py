@@ -681,6 +681,9 @@ class GameState:
             if d.get("bearings"):
                 trained = any(d.get("tool") in c.tools for c in self.party if c.alive)
                 best = max(best, int(d["bearings"]) + (self.sheet().proficiency if trained else 0))
+            for p in (it.magic or {}).get("props", ()):  # (the Rod of Lordly Might's needle)
+                if p.get("kind") == "bearings":
+                    best = max(best, int(p.get("value", 0)))
         return best
 
     def reveal(self) -> None:

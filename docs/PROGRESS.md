@@ -29,8 +29,8 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Expansion 1, *Dice & Destiny*** (version 1.1.0) | ✅ Released (2026-10-13), branch `dlc/01-dice-destiny` |
 | **Expansion 2, *Blades & Backgrounds*** (version 1.2.0) | ✅ Released (2026-10-13), branch `dlc/02-blades-backgrounds` |
 | **Expansion 3, *Demigods & Magics*** (version 1.3.0) | ✅ Released (2026-10-17), branch `dlc/03-demigods-magics` |
-| **Expansion 4, *Steel & Shadows*** (version 1.4.0 with its last part) | Parts A (the Battle Master), B (the Eldritch Knight, the Arcane Trickster) and C (poisons and the people of the shadows) merged (2026-10-17), branch `dlc/04-steel-shadows` |
-| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansions 1-3 released; Expansion 4 under way (see STATUS.md) |
+| **Expansion 4, *Steel & Shadows*** (version 1.4.0) | ✅ Released (2026-10-17), branch `dlc/04-steel-shadows` |
+| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansions 1-4 released; Expansion 5 next (see STATUS.md) |
 
 ---
 
@@ -41,6 +41,98 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-17 (night): Steel & Shadows Part D — the fighter's and rogue's magic weapons; **released as 1.4.0** — branch `dlc/04-steel-shadows`
+
+Built by the relay builder realmwalker-a. The last part of Expansion 4. **Expansion 4, *Steel & Shadows*, is
+released as version 1.4.0**: its icon (a steel gauntlet gripping a dagger whose blade runs into shadow) is on the
+main menu's shelf. Saves do not change: a world of 1.3.0 (format 18) still loads, and its treasure now holds the new
+weapons.
+
+**New in this last part: eighteen magic things of the Dungeon Master's Guide**, found in hoards and chests by the
+book's tables. Each has its own card (point at it in the pack once it is identified).
+- **Vorpal Sword** (+3): it cuts through resistance to slashing. A 20 on the die takes off the head of a creature
+  that has one. Oozes, plants, elementals, swarms and giants of Gargantuan size take 30 more damage instead, and a
+  legendary creature may spend a Legendary Resistance to keep its head.
+- **Sword of Sharpness**: a 20 on the die does 14 more damage and tires the foe (a level of exhaustion). Doors and
+  barrels struck with it take the most its dice can give.
+- **Sword of Wounding**: 2d6 necrotic more on every hit, and the wound may refuse to close: no healing until the foe
+  shakes it off at the end of a turn.
+- **Sword of Answering** (+3): whoever hurts you within reach gets a blow back with your reaction, with Advantage,
+  and nothing resists it.
+- **Sword of Vengeance** (+1, cursed): once bound it will not let you go. Other weapons turn in your hand, and when a
+  foe hurts you, a Wisdom save or every blow goes at that foe until one of you falls. A priest's Remove Curse leaves
+  a plain +1 sword.
+- **Scimitar of Speed** (+2): one more blow each turn with the bonus action.
+- **Dancing Sword**: toss it into the air with the bonus action. It flies 30 feet, strikes with your own blow, does
+  it again each turn, and comes back to your hand after the fourth.
+- **Defender** (+3): as your turn begins, part of the bonus moves to your Armour Class when foes press you.
+- **Luck Blade** (+1, +1 to saves): once a day a failed save or a missed blow is rolled again. It holds one to three
+  charges of Wish, once a day, and spent charges never come back.
+- **Executioner's Axe** (+1): 2d6 more against people, and as many temporary hit points for you.
+- **Vicious Weapon**: 2d6 more damage on every hit.
+- **Mace of Terror**: three charges a day of a wave of terror. Foes who fail run from you for a minute, doing nothing
+  else.
+- **Rod of Lordly Might** (+3 mace): bonus actions turn it into a flaming blade, an axe, a spear or the mace again.
+  Once a day each, a hit can drain life or paralyze. Once a day it terrifies foes within 30 feet. It is also a
+  battering ram for stuck doors and a needle that points north.
+- **Veteran's Cane**: a walking cane that twists into a longsword with the bonus action.
+- **Weapon of Warning**: you and friends within 30 feet roll Initiative with Advantage, and it wakes your camp when
+  something comes in the night.
+- **Gloves of Thievery**: +5 to Sleight of Hand, and no search or robber ever finds them on your hands.
+- **Boots of False Tracks**: people trailing you read someone else's tracks, so you see them first more often.
+- **Amulet of Proof against Detection and Location**: no foe's divination spell can be aimed at you, and Detect
+  Thoughts does not find you.
+- **Your companions use them too.** On Auto they draw the cane's sword, light the rod's blade, send the dancing sword
+  where their own blows cannot reach, strike with the scimitar's speed and use the charges.
+
+**The whole of Steel & Shadows** (parts A to D, all built today):
+- **The Battle Master**: superiority dice and the book's twenty maneuvers (trip, parry, riposte, rally, push,
+  disarm, goad, frighten, sweep...), for you, your companions and offered with every blow.
+- **The Eldritch Knight** casts wizard spells between sword blows and calls a bonded weapon to hand. **The Arcane
+  Trickster** works an unseen hand that picks pockets and trips foes, and steals spells from casters' minds.
+- **Poisons** from the Dungeon Master's Guide: bought in black markets where the law allows, milked from the slain,
+  brewed, coated on blades and slipped into cups.
+- **Assassins, spies and spy masters** walk the world: thieves' guilds offer work and poison, spies are caught at
+  court, and some peoples settle insults with duels of honour.
+- **The fighter's and rogue's magic weapons** of this part.
+
+**How to see it**: any world will do; a new character finds the new weapons in treasure as it grows stronger (the
+legendary ones from level 11 or so). Make a fighter and choose the Battle Master or the Eldritch Knight at level 3,
+or a rogue and the Arcane Trickster. In a fight, the new weapons' powers are in the abilities menu (the bonus
+actions) and in the item list (the charges). The shelf on the main menu shows the icon and what the expansion adds.
+
+**Balance**: the plain fights do not change (the new things only come with treasure). `tools/balance.py --runs 30`
+before the release: the fights, the winter night and the untreated wound stay inside their bands (the numbers are in
+`build/d_balance.txt`).
+
+**What could not be checked**: the icon was looked at enlarged and in the window smoke test, and the dancing sword on
+the battle mat only in the headless picture tests, not in play by eye.
+
+**Anything assumed**:
+- the Defender's guard is set as each turn begins, by the battle's judgement: all of it when you are hurt and
+  pressed, two against two foes, one against one, none with nobody near;
+- the Rod's Drain Life and Paralyze fire on a hit against a foe still strong (the player is asked only under the
+  Reactions setting "all"); its light and its ladder are left out;
+- the Luck Blade's luck works in a fight; its Wish is cast in a fight (Instant Health, with Wish's stress), because
+  no magic item casts on the road yet;
+- the Veteran's Cane strikes as a club while it is a cane;
+- a dancing sword left more than 30 feet behind comes straight back to the hand (the book: it falls);
+- the Sword of Wounding's wound that will not close lasts the fight (the book: an hour);
+- the Vorpal Sword finds no head on oozes, elementals, plants, constructs, swarms and anything Gargantuan;
+- the Sword of Vengeance's spirit binds your blows only, and the curse is lifted in the usual ways (the book's
+  Banishment on the sword cannot be aimed at a thing here);
+- the Boots of False Tracks give +5 to seeing a band of people first, as the game has no tracking;
+- the Amulet keeps foes' divination spells and Detect Thoughts off you; nobody scries the party yet.
+
+**Codex** (`tools/codex/coverage.py`): Expansion 4: all 66 entries settled (36 done, 30 adapted).
+Player's Handbook 67% · Dungeon Master's Guide 15% · Monster Manual 16%.
+
+| Book | Done | Adapted | Omitted | To do | Total |
+|---|---|---|---|---|---|
+| Player's Handbook | 748 | 454 | 7 | 588 | 1797 |
+| Dungeon Master's Guide | 38 | 40 | 21 | 552 | 651 |
+| Monster Manual | 44 | 38 | 0 | 421 | 503 |
 
 ### Session, 2026-10-17 (night): Steel & Shadows Part C — poisons and the people of the shadows — branch `dlc/04-steel-shadows`
 

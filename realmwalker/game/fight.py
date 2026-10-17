@@ -1037,6 +1037,10 @@ def rest(game, kind: str) -> list[str]:
                 elif has_flag(game, "alarm")[1] is not None:
                     enc.asleep = False  # the bells strung round the camp
                     notes.append("<warn>The bells on the cord round the camp jangle in the dark: something is coming.</>")
+                elif _warning_weapon(game):
+                    enc.asleep = False  # (a Weapon of Warning wakes its bearer and the camp)
+                    notes.append("<warn>A thrum runs through the weapon by your side, and you are awake at once: "
+                                 "something is coming.</>")
                 else:
                     enc.asleep = True
                 if not (enc.warned and enc.spotted_first):  # (Programmed Illusion: they fell on the false camp)
@@ -1131,3 +1135,10 @@ def _encouraging_song(game, sleepless) -> list[str]:
         if given:
             return [f"{c.name.split()[0]} plays for the others, and they rise heartened (Heroic Inspiration)."]
     return []
+
+
+def _warning_weapon(game) -> bool:
+    """A Weapon of Warning bound to someone in the party (its alarm wakes the sleepers when danger comes)."""
+    from realmwalker.rules.engine.handlers import arms
+
+    return any(c.alive and arms.carried(c, "weapon_of_warning") is not None for c in game.party)

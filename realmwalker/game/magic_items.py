@@ -818,3 +818,5 @@ def study(game, char, item) -> list[str]:
 def lift_curse(item) -> None:
     item.magic["cursed"] = False
     item.magic.pop("curse", None)
+    # (a curse that is a power of the thing itself goes with it: the Sword of Vengeance is a +1 weapon after)
+    item.magic["props"] = [p for p in item.magic.get("props", ()) if not p.get("curse_prop")]

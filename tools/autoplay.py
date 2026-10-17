@@ -678,6 +678,19 @@ def _check_magic(game, fail) -> None:
             rec = poisons.of_item(game.tables, it)
             if rec is None or not isinstance(rec.get("dc"), int):
                 fail(f"a poison without a proper save ({it.def_id})")
+    # Steel & Shadows Part D: a shifting thing is in a shape it has; a once-a-day power is spent or ready, nothing else;
+    # the Luck Blade's Wish never grows back (rules/engine/handlers/arms.py)
+    from realmwalker.rules.engine.handlers import arms
+
+    for it in pack.values():
+        form = (it.magic or {}).get("form")
+        if form and (form not in arms.FORMS or arms.FORMS[form] not in game.tables.items):
+            fail(f"a magic thing in a shape it cannot take ({it.def_id}: {form})")
+        for p in magic.props(it):
+            if p.get("today") not in (None, 1):
+                fail(f"a once-a-day power in an odd state on {it.def_id}: {p}")
+            if p.get("no_regain") and int(p.get("left", 0)) > int(p.get("value", 0)):
+                fail(f"charges that came back on {it.def_id}")
     owners: dict[int, int] = {}
     for c in game.party:
         for uid in c.attuned:

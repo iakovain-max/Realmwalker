@@ -32,7 +32,7 @@ def undead_fortitude(b, f, ev, hook, buff) -> None:
 @handler("regeneration")
 def regeneration(b, f, ev, hook, buff) -> None:
     """Trolls: wounds close at the start of its turn, unless fire or acid burned it since the last."""
-    if f.hp > 0 and not f.took_fire:
+    if f.hp > 0 and not f.took_fire and not f.no_heal:  # (a wound that will not close stops it too)
         amount = (f.cdef or {}).get("trait_numbers", {}).get("regeneration", {}).get("amount", hook.get("amount", 10))
         healed = min(int(amount), f.max_hp - f.hp)
         if healed:

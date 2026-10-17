@@ -1323,6 +1323,58 @@ def dlc_icons() -> dict[str, Image.Image]:
         d.line([(28, y - 1), (20, y)], fill=page_d)
     d.line([(16, 24), (16, 30)], fill=page_d)
     out["dlc/demigods_magics"] = im
+    # Steel & Shadows: a steel gauntlet in the lower left gripping a dagger whose blade runs to the upper right and
+    # fades into shadow, wisps of dark peeling off it.
+    im = Image.new("RGBA", (32, 32), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    k = (22, 17, 16, 255)
+    steel, steel_l, steel_d, steel_dd = (176, 184, 196, 255), (232, 236, 242, 255), (110, 116, 130, 255), (70, 74, 88, 255)
+    brass, brass_l, brass_d = (200, 160, 72, 255), (238, 204, 120, 255), (128, 96, 40, 255)
+    dusk = [(150, 128, 206), (112, 88, 170), (78, 58, 128), (48, 36, 88)]
+    # the blade: steel at the guard, darkening into shadow and thinning to nothing at the point
+    steps = 15
+    for i in range(steps):
+        x, y = 13 + i, 17 - i
+        t = i / (steps - 1)
+        if t < 0.45:
+            out_c, edge, ridge, back = k, steel_d, steel_l, steel
+        else:
+            j = min(3, int((t - 0.45) / 0.55 * 4))
+            al = int(255 - 175 * max(0.0, (t - 0.55) / 0.45))
+            out_c = (*dusk[3], max(40, al - 40))
+            edge, ridge, back = (*dusk[min(3, j + 1)], al), (*dusk[max(0, j - 1)], al), (*dusk[j], al)
+        d.point((x - 1, y - 1), fill=out_c)
+        d.point((x + 1, y + 1), fill=out_c)
+        d.point((x, y - 1), fill=ridge)
+        d.point((x, y), fill=back)
+        d.point((x + 1, y), fill=edge)
+    d.point((28, 2), fill=(*dusk[3], 70))
+    for (x, y), al in (((22, 4), 130), ((20, 3), 90), ((25, 1), 70), ((27, 8), 120), ((29, 6), 90), ((24, 10), 100),
+                       ((18, 6), 70), ((30, 3), 50)):
+        d.point((x, y), fill=(*dusk[2], al))
+    # the forearm's cuff, coming up from the bottom edge to the fist
+    d.polygon([(9, 25), (15, 22), (20, 31), (11, 31)], fill=steel_d, outline=k)
+    d.line([(12, 27), (16, 25)], fill=steel_dd)
+    d.line([(13, 30), (18, 28)], fill=steel_dd)
+    d.point((14, 26), fill=steel_l)
+    # the crossguard, across the blade's foot
+    d.line([(10, 14), (17, 21)], fill=k, width=4)
+    d.line([(10, 14), (17, 21)], fill=brass, width=2)
+    d.line([(10, 13), (17, 20)], fill=brass_l)
+    # the pommel at the grip's end, below the fist
+    d.rectangle([1, 25, 3, 27], fill=brass, outline=k)
+    d.point((2, 26), fill=brass_l)
+    # the fist closed round the grip: four plated fingers across it, knuckles up and to the left, the thumb over them
+    d.polygon([(9, 16), (10, 16), (15, 21), (15, 22), (8, 29), (7, 29), (2, 24), (2, 23)], fill=steel, outline=k)
+    for cx, cy in ((11.0, 19.5), (9.25, 21.25), (7.5, 23.0), (5.75, 24.75)):
+        d.point((int(cx - 2), int(cy - 2)), fill=steel_l)  # a knuckle catching the light
+        d.point((int(cx - 1), int(cy - 2)), fill=steel_l)
+    for cx, cy in ((10.1, 20.4), (8.4, 22.1), (6.6, 23.9)):
+        d.line([(int(cx - 2), int(cy - 2) + 1), (int(cx + 2), int(cy + 2) + 1)], fill=steel_dd)
+    d.line([(14, 21), (11, 24)], fill=k, width=3)  # the thumb, laid over the fingers
+    d.line([(14, 21), (11, 24)], fill=steel_l)
+    d.point((13, 21), fill=(255, 255, 255, 255))
+    out["dlc/steel_shadows"] = im
     return out
 
 

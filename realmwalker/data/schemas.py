@@ -1212,6 +1212,8 @@ TREASURE = Obj(
                                "kind": Str(max_len=20, optional=True), "props": List(Map(Any_()), optional=True),
                                "attune": Bool(optional=True), "title": Str(max_len=60, optional=True),
                                "secretly": Str(max_len=40, optional=True),  # what it really is (rules/poisons.mask)
+                               "form": Str(max_len=20, optional=True),  # its shape at first (the Veteran's Cane)
+                               "curse": Map(Any_(), optional=True),  # the book's own curse (the Sword of Vengeance)
                                "bases": List(Str(max_len=40), optional=True),  # what it may be made on
                                "qty": List(Int(min=1, max=100), min_items=2, max_items=2, optional=True)}))),
         "reroll": Int(min=0, max=50),

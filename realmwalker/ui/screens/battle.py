@@ -13,6 +13,7 @@ from realmwalker.audio import cues
 from realmwalker.rules import describe, grid
 from realmwalker.rules import spells as spellrules
 from realmwalker.rules.combat import FOE, PARTY, Battle, Fighter, cast_kind, spell_id
+from realmwalker.rules.engine import actions
 from realmwalker.ui import colors, markup
 from realmwalker.ui.input import KeyEvent, MouseEvent
 from realmwalker.ui.screens.base import ConfirmBox, Screen
@@ -564,6 +565,8 @@ class BattleScreen(Screen):
             elif value == "war_priest":
                 opts = [o for o in b.attack_options(f) if o.available and o.item_uid is not None]
                 self._open_targets("war_priest", b.targets_for(f, opts[0]) if opts else [])
+            elif (actions.find(f, value) or {}).get("pick"):  # (the magic arms: whom the blow goes at)
+                self._open_targets("pick_ability", actions.aim_targets(b, f, actions.find(f, value)))
             else:
                 self._do(b.do_ability, f, value)
         elif kind == "ready":
@@ -675,6 +678,9 @@ class BattleScreen(Screen):
             self._do(lambda x: b.do_ability(x, "jar_possess", target), f)
         elif kind == "war_priest":
             self._do(lambda x: b.do_ability(x, "war_priest", target), f)
+        elif kind == "pick_ability":
+            aid = self.pending.get("value")
+            self._do(lambda x: b.do_ability(x, aid, target), f)
         else:
             self.mode = "idle"
 

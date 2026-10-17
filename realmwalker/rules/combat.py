@@ -29,7 +29,7 @@ from realmwalker.rules import feats, grid, poisons, simulacrum
 from realmwalker.rules import spells as spellrules
 from realmwalker.rules.character import Character, Sheet, modifier
 from realmwalker.rules.engine import actions, durations, effects, events, hazards, marks, query, reactions
-from realmwalker.rules.engine.handlers import arcane, general_feats, mastery
+from realmwalker.rules.engine.handlers import arcane, arms, general_feats, mastery
 from realmwalker.rules.engine.reactions import Decision
 from realmwalker.rules.engine import traits as trs
 from realmwalker.rules.creatures import Creature
@@ -166,6 +166,8 @@ class Token:
     bonus: int = 0
     damage_type: str = "force"
     spell: str = ""
+    item_uid: int | None = None  # (a Dancing Sword: the weapon in the air)
+    blows: int = 0  # (a Dancing Sword's blows so far: back to the hand after the fourth)
 
 
 TOUCHES = ("attack", "damage", "condition", "prone", "save", "heal", "push", "vanish", "buff", "dart", "dust", "down",
@@ -1134,10 +1136,13 @@ class Battle:
     def start(self, intro: str = "") -> None:
         """Initiative, the 2024 way: a Dexterity check, at a disadvantage for the surprised (they still act)."""
         linked = {s: sum(1 for f in self.fighters if f.side == s and f.buff_value("linked")) for s in (PARTY, FOE)}
+        warned = arms.warned(self)  # (a Weapon of Warning: its bearer and friends within 30 feet)
         for f in self.fighters:
             if self.env.surprised == f.side and not (f.buff_value("linked") and linked[f.side] >= 2):
                 f.surprised = True  # (minds linked by Rary's Telepathic Bond: one warning reaches them all)
             r = query.initiative_roll(f)
+            if f.id in warned:
+                r.add("advantage", "Weapon of Warning")
             bonus = int(f.cdef["initiative"]) if f.cdef and "initiative" in f.cdef else f.mod("dex")
             bonus += query.initiative_bonus(f)  # (Alert)
             f.initiative = (dice.d20(self.rng, advantage=r.advantage, disadvantage=r.disadvantage).natural + bonus
@@ -1617,8 +1622,8 @@ class Battle:
     def thinks(self, f: Fighter) -> bool:
         """A mind Detect Thoughts can sense: a person, or a creature that knows a language (and is not warded by
         Nondetection)."""
-        if f.buff_value("nondetection"):
-            return False
+        if arms.hidden_from_divination(f):
+            return False  # (Nondetection; an Amulet of Proof against Detection and Location)
         return f.char is not None or bool((f.cdef or {}).get("languages"))
 
     def dim_for(self, a: Fighter, b: Fighter) -> bool:
@@ -1881,7 +1886,11 @@ class Battle:
         if hit and not hazards.object_immune(self.t, opt.damage_type):
             hard = f.char is not None and opt.item_uid is not None and magic_flag(f.char.item(opt.item_uid),
                                                                                     "adamantine_weapon")
-            obj["hp"] -= dice.roll(opt.damage, self.rng, double_dice=roll == 20 or hard).total
+            if arms.sharp(f, opt):  # (a Sword of Sharpness: the most its dice can give)
+                n, sides, flat = dice.parse(opt.damage)
+                obj["hp"] -= n * sides * (2 if roll == 20 or hard else 1) + flat
+            else:
+                obj["hp"] -= dice.roll(opt.damage, self.rng, double_dice=roll == 20 or hard).total
             if obj["hp"] <= 0:
                 becomes = obj["becomes"] if obj["becomes"] != "ground" else (self.field.ground or "rubble")
                 self.field.set_terrain(*cell, becomes if becomes in self.t.terrain.index else "rubble")
@@ -2035,6 +2044,8 @@ class Battle:
         whether it was made."""
         if not e.reaction or not e.active or e.incapacitated or self.frozen(e):
             return False
+        if "frightened" in e.conditions and (e.cond_ends.get("frightened") or {}).get("terror"):
+            return False  # (a Mace of Terror's fright: it thinks only of getting away)
         opts = [o for o in self.attack_options(e) if o.is_melee and o.available and self.gap(e, f) <= o.reach_sq
                 and not o.extra.get("bonus_action") and not self.unfit_target(o, f)]  # (no Trample as a reaction)
         cantrip = self._war_cantrip(e, f, opts)
@@ -2440,6 +2451,11 @@ class Battle:
 
     def _weapon_option(self, f: Fighter, s: Sheet, it, key: str, *, two_handed_free: bool = False,
                        thrown: bool = False) -> AttackOption:
+        form = arms.form_def(it)  # (the Rod of Lordly Might's blades, the Veteran's Cane: what it is now)
+        if form is not None and form in self.t.items:
+            from dataclasses import replace as _replace
+
+            it = _replace(it, def_id=form)
         d = self.t.items.get(it.def_id)
         props = d.get("properties", [])
         ranged = "ranged" in props or thrown
@@ -2450,7 +2466,7 @@ class Battle:
         quality = int(self.t.items.qualities.get(it.quality, {}).get("attack", 0))
         from realmwalker.rules import magic
 
-        enchant = magic.item_bonus(it, char=f.char)
+        enchant = magic.item_bonus(it, char=f.char) - arms.defender_shift(f, it)  # (the Defender's guard)
         bonus = s.mod(ability) + prof + quality + s.attack_condition(ranged) + enchant + magic.total(f.char, "attack")
         if ranged and not thrown and feats.has(f.char, "archery"):
             bonus += 2
@@ -2500,6 +2516,8 @@ class Battle:
             opt.available, opt.reason = False, "it needs two good arms"
         elif key == "off" and health.one_armed(f.char):
             opt.available, opt.reason = False, "there is only one hand"
+        if opt.available and it.magic and arms.dancing(self, f, it):
+            opt.available, opt.reason = False, "it is dancing in the air"
         if "ammunition" in props:
             ammo = d.get("ammo")
             opt.ammo_def = ammo
@@ -2554,6 +2572,9 @@ class Battle:
         unfit = self.unfit_target(opt, target)
         if unfit:
             return unfit
+        foe = arms.vengeful(self, f) if f.buffs else None
+        if foe is not None and foe is not target and foe in self.targets_for(f, opt):
+            return f"the sword's spirit wants only {foe.the_name}"
         if "loading" in opt.properties and not opt.is_melee and f.loaded_fired and f.attacks_left > 0 \
                 and not (f.char is not None and feats.has(f.char, "crossbow_expert")):
             return "it must be loaded again: one shot an action"
@@ -2570,8 +2591,9 @@ class Battle:
 
     def targets_for(self, f: Fighter, opt: AttackOption) -> list[Fighter]:
         """Who this fighter could attack with this option right now, from where they stand."""
-        return [x for x in self.enemies_of(f) + [y for y in self.fighters if y.team != f.team and y.state == "down"]
-                if self.in_reach(f, opt, x)[0] and not self.unfit_target(opt, x)]
+        out = [x for x in self.enemies_of(f) + [y for y in self.fighters if y.team != f.team and y.state == "down"]
+               if self.in_reach(f, opt, x)[0] and not self.unfit_target(opt, x)]
+        return arms.only_at(self, f, out) if f.buffs else out  # (a Sword of Vengeance's curse)
 
     @staticmethod
     def unfit_target(opt: AttackOption, target: Fighter) -> str:
@@ -2657,12 +2679,16 @@ class Battle:
         bless = sum(dice.roll(d, self.rng).total for d in att.buff_value("attack_die")) \
             + marks.roll_adjust(self, att, target, opt)
         total = natural + opt.bonus + bless
+        if att.char is None and att.__dict__.get("exhaustion"):
+            total += query.d20_penalty(att)  # (a creature worn down in the fight: a Sword of Sharpness)
         ac, cover = self.target_ac(att, target, opt)
         hit = crit or (natural != 1 and total >= ac)
         if not hit:
             ev = events.emit(self, "attack_missed", actor=att, target=target, opt=opt, natural=natural, total=total, ac=ac,
-                             hit=False)  # Guided Strike...
+                             hit=False, crit=False)  # Guided Strike...
             hit, total = ev.hit, ev.total
+            if ev.crit:  # (a roll made again that came up 20: the Luck Blade)
+                crit, natural = True, 20
         # The Shield spell: a wizard who sees the blow coming turns it with a reaction, if that is enough.
         if hit and not crit and target.char and target.reaction and not target.incapacitated and total < ac + 5:
             if self._shield(target, att, opt, total, ac):
@@ -2745,6 +2771,7 @@ class Battle:
         before = target.hp + target.temp_hp
         guarded = target.temp_hp > 0  # (Armor of Agathys answers the blow that breaks it too)
         self._melee_blow = opt.is_melee
+        self.__dict__["_wielded"] = (att, opt)
         try:
             self._hit(att, target, max(1, amount), opt.damage_type, crit=crit, weapon=opt.name,
                       bite=opt.extra.get("wound") == "bite",
@@ -2761,7 +2788,9 @@ class Battle:
             poisons.on_hit(self, att, target, opt, crit)  # (the poison on the blade: spent on the first fitting hit)
         for extra_amount, extra_type in dmg_ev.typed + marks.extra_hits(self, att, target, opt, crit):
             if target.active or target.state == "down":  # (a power's own kind of damage; Divine Favor, Hex)
+                self.__dict__["_wielded"] = (att, opt)
                 self._hit(att, target, extra_amount, extra_type, crit=False, weapon=opt.name)
+        self.__dict__.pop("_wielded", None)
         if target.active or target.state == "down":
             marks.smite(self, att, target, opt, crit)  # (a smite readied on the weapon)
         marks.after_hit(self, att, target, opt, guarded)  # (Armor of Agathys)
@@ -3041,6 +3070,8 @@ class Battle:
         resistance."""
         if att is None or att.char is None:
             return False
+        if arms.cuts_through(self, att, dtype):
+            return True  # (a Vorpal Sword)
         if dtype in ("bludgeoning", "piercing", "slashing") and feats.has(att.char, "boon_of_irresistible_offense"):
             return True  # (Boon of Irresistible Offense)
         if dtype == "poison" and (feats.has(att.char, "poisoner") or self.__dict__.get("_envenom") is att):
@@ -3053,6 +3084,8 @@ class Battle:
         Overchannel)."""
         rolled_amount = amount
         shadow = self._night_spirit(target, dtype) or self._spell_resisted(target, att)
+        if not raw and arms.answering(self, att):
+            raw = True  # (the Sword of Answering's blow: no resistance or immunity stops it)
         if raw:
             defence = ""
         else:
@@ -4278,6 +4311,8 @@ class Battle:
             return self.feet(f, x) <= max(5, reach) and self.field.cover(f.space, x.space) != grid.TOTAL
 
         if target == "enemy":
+            if spell.get("school") == "divination":  # (a foe warded against divination cannot be aimed at)
+                return [x for x in self.enemies_of(f) if near(x) and not arms.hidden_from_divination(x)]
             return [x for x in self.enemies_of(f) if near(x)]
         if target == "ally":
             return [x for x in self.team(f.team) if (x.active or x.state == "down") and near(x)
@@ -5407,6 +5442,9 @@ class Battle:
             return
         if simulacrum.snow(f):  # (only its maker's repair at a long rest mends it: PHB 2024)
             self.say(f"The magic finds nothing living in {f.the_name}: snow does not knit.", "warn")
+            return
+        if f.no_heal:  # (a wound that will not close: a Sword of Wounding, a mummy's rot, Chill Touch)
+            self.say(f"The wound on {f.the_name} will not close: no healing takes.", "warn")
             return
         if f.char is not None and f.char.attuned:
             from realmwalker.rules import magic

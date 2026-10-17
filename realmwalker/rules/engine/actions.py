@@ -145,6 +145,10 @@ def aim_targets(b, f, a: dict) -> list:
     if aim == "friend":  # (another on their side, standing, seen within range: a Battle Master's Rally)
         return [x for x in b.team(f.team) if x is not f and x.active and b.feet(f, x) <= int(a.get("range", 5))
                 and b.can_see(f, x)]
+    if aim in ("speed", "dance_toss", "dance"):  # (the magic arms: the scimitar's reach, the dancing sword's flight)
+        from realmwalker.rules.engine.handlers import arms
+
+        return {"speed": arms.speed_targets, "dance_toss": arms.toss_targets, "dance": arms.dance_targets}[aim](b, f)
     if aim == "ally":  # (another creature on their side, hurt, seen within range: Divine Spark)
         return [x for x in b.team(f.team) if x is not f and (x.active or x.state == "down") and x.hp < x.max_hp
                 and b.feet(f, x) <= int(a.get("range", 5)) and b.can_see(f, x)]
@@ -205,6 +209,15 @@ def _arcane(name: str) -> Callable:
     return getattr(arcane, name)
 
 
+def _arms(test: Callable) -> Callable:
+    """A test of the magic arms (rules/engine/handlers/arms.py), read when it is asked (no import loop)."""
+    def run(b, f) -> str | None:
+        from realmwalker.rules.engine.handlers import arms
+
+        return test(arms, b, f)
+    return run
+
+
 REQUIRES: dict[str, Callable] = {
     "action_left": lambda b, f: None if f.action > 0 else "no action left",
     "bonus_left": lambda b, f: None if f.bonus > 0 else "no bonus action left",
@@ -228,6 +241,17 @@ REQUIRES: dict[str, Callable] = {
     "bond_away": lambda b, f: _arcane("bond_away")(b, f),
     "hand_known": lambda b, f: _arcane("hand_known")(b, f),
     "five_feet_left": lambda b, f: None if f.move_left >= 5 else "no movement left",
+    # the magic arms (Expansion 4 Part D)
+    "speed_held": _arms(lambda a, b, f: None if a.speed_option(b, f) is not None else "the scimitar is not in hand"),
+    "dance_held": _arms(lambda a, b, f: None if a.held(f, "dancing_sword") is not None and a.dancer(b, f) is None
+                        else "the sword is not in hand"),
+    "dance_away": _arms(lambda a, b, f: None if a.dancer(b, f) is not None else "the sword is not dancing"),
+    "rod_not_flame": _arms(lambda a, b, f: a.rod_form(b, f, "rod_flame")),
+    "rod_not_axe": _arms(lambda a, b, f: a.rod_form(b, f, "rod_axe")),
+    "rod_not_spear": _arms(lambda a, b, f: a.rod_form(b, f, "rod_spear")),
+    "rod_not_mace": _arms(lambda a, b, f: a.rod_form(b, f, "rod_mace")),
+    "cane_not_sword": _arms(lambda a, b, f: a.cane_form(b, f, "sword")),
+    "cane_not_cane": _arms(lambda a, b, f: a.cane_form(b, f, "cane")),
 }
 
 

@@ -265,6 +265,10 @@ def helps(game, key: str):
             v = (items.get(it.def_id).get("helps") or {}).get(key)
             if v and int(v) > best:
                 best, name = int(v), items.get(it.def_id)["name"]
+            for p in (it.magic or {}).get("props", ()):  # (the Rod of Lordly Might's ram)
+                v = (p.get("helps") or {}).get(key) if p.get("kind") == "helps" else None
+                if v and int(v) > best:
+                    best, name = int(v), items.name(it, False)
     return best, name
 
 

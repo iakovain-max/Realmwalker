@@ -106,6 +106,9 @@ BUFF_KEYS = frozenset({
     "eldritch_struck",
     # poisons (Expansion 4 Part C, rules/poisons.py): what is on the blade, Burnt Othur's smoke in the lungs
     "poison_dc", "venom", "fumes", "fumes_dice", "fumes_successes", "fumes_saved",
+    # the magic arms (Expansion 4 Part D, rules/engine/handlers/arms.py): the Defender's guard, a Sword of Vengeance's
+    # foe (a Sword of Wounding's wound is a no_heal with repeat)
+    "defender", "vengeful",
     # this module's
     "outlined", "blurred", "warded_kinds", "ward_die", "sanctuary", "images", "ac_floor", "retaliate",
     "retaliate_type", "bond", "quarry", "quarry_type", "by", "dot", "dot_type", "dot_at", "dot_once", "dot_save",

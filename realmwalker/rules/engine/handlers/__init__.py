@@ -9,6 +9,7 @@
     fighter.py    the 2024 fighter, the Champion and the Knight
     battle_master.py   the Battle Master's superiority dice and maneuvers (Expansion 4)
     arcane.py     the Eldritch Knight and the Arcane Trickster (Expansion 4 Part B)
+    arms.py       the fighter's and rogue's magic weapons and things (Expansion 4 Part D)
     rogue.py      the 2024 rogue (Sneak Attack, Cunning Strike), the Thief and the Assassin
     cleric.py     the 2024 cleric (Divine Spark, Blessed Strikes, Divine Intervention), the Life and War Domains
     wizard.py     the 2024 wizard (Overchannel, the ward's mending, Counterspell)
@@ -16,6 +17,6 @@
     undead.py     the raised dead's traits: the ghast's Stench, the mummy's rot (Expansion 3 F.4)
 """
 
-from realmwalker.rules.engine.handlers import (arcane, battle_master, boons, cleric, feats, features, fighter,  # noqa: F401
+from realmwalker.rules.engine.handlers import (arcane, arms, battle_master, boons, cleric, feats, features, fighter,  # noqa: F401
                                                general_feats,  # noqa: F401
                                                mastery, monsters, rogue, summons, undead, wizard)  # noqa: F401  (registering is importing)

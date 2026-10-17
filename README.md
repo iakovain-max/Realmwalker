@@ -32,6 +32,10 @@ painted on parchment, and fights on a battle mat with animation. Playable with t
   for you, your companions and your enemies, spells that work on the road (Revivify, Teleport, Tiny Hut, Augury
   from the world's own history), familiars, steeds, summoned spirits and the raised dead at your side, and priests
   and mages who cast for pay.
+- **Master the blade, and the knife in the dark** (*Steel & Shadows*, version 1.4): the Battle Master and its twenty
+  maneuvers, the Eldritch Knight and the Arcane Trickster, the poisons of the Dungeon Master's Guide (bought, milked,
+  brewed, coated on blades and slipped into cups), assassins, spies and duels of honour, and the fighter's and
+  rogue's magic weapons (the Vorpal Sword, the Luck Blade, the Defender, the Dancing Sword, the Rod of Lordly Might).
 - **Talk to everyone.** They have names, trades, memories and opinions of you.
 - **Hire companions**, pay them, keep them loyal (or don't), and command them in a fight.
 - **Take on work**: bounties, lairs to clear, beasts to hunt, letters to carry, captives to free. Not every job is

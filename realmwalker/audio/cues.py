@@ -75,6 +75,12 @@ def battle_sounds(ev: dict) -> list[tuple[str, str]]:
         return [("impact", "drop")]
     if k == "token" and ev.get("what") == "mage_hand":  # (the unseen hand: a whisper of magic)
         return [("start", "spell")]
+    if k == "token" and ev.get("what") == "dancing_sword":  # (a Dancing Sword tossed up: the swish of steel)
+        return [("start", "swing")]
+    if k == "arms_form":  # (a rod's blade springing out, a cane's sword drawn)
+        return [("start", "equip")]
+    if k == "behead":  # (a Vorpal Sword's stroke: the crit's crack and the fall)
+        return [("impact", "hit_crit"), ("impact", "fall")]
     if k == "rearm":  # (War Bond: the bonded weapon slaps into the knight's hand)
         return [("start", "equip")]
     if k == "poison":  # (the poison on a blade goes into the wound: a hiss and a bubble)

@@ -5,11 +5,15 @@ An item's magic is `Item.magic`: {"rarity", "props": [{"kind", "value", ...}], "
 
 - `bonus` (attack and damage), `ac`, `save`, `skill`, `ability`, `resist`, `light`, `warmth`, `speed`;
 - `proficiency` {"skill"}: proficiency in a skill;
-- `charges` {"spell", "value", "left", "regain", "keep_on", "at_will"}: a spell cast from the item (the Magic action,
-  or the spell's own casting time), `left` of `value`, regaining `regain` dice at dawn (all of them if none);
+- `charges` {"spell", "value", "left", "regain", "keep_on", "at_will", "no_regain", "daily"}: a spell cast from the
+  item (the Magic action, or the spell's own casting time), `left` of `value`, regaining `regain` dice at dawn (all of
+  them if none; none ever with `no_regain`);
   `keep_on` n: after a cast, a d6 of n or more keeps the charge (an artifact's "1-5: not again until dawn");
 - `trait` {"trait"}: a definition in data/traits.json for the rules kernel (immunities, vulnerabilities, hooks);
-- `flag` {"flag"}: something another system checks (data/magic.json "artifact" properties say what).
+- `flag` {"flag"}: something another system checks (data/magic.json "artifact" properties say what);
+- `helps` {"helps": {key: n}}: what it does for a task (as data/items.json "helps": a ram for forcing doors);
+  `bearings` {"value"}: a needle that finds north (GameState.bearings_bonus).
+Any property may say `daily`: used once (`today`), it is ready again at dawn (`dawn`; rules/engine/handlers/arms.py).
 
 Attunement (PHB 2024): an item with `attune` works only for the one attuned to it, three items at most, one copy of a
 kind; attuning and ending it take a short rest focused on the item (game/magic_items.py); a cursed item's attunement
@@ -154,6 +158,8 @@ def spend_charge(prop: dict, rng) -> bool:
     if prop.get("at_will"):
         return False
     keep = int(prop.get("keep_on", 0) or 0)
+    if prop.get("daily"):
+        prop["today"] = 1  # (a power used once between dawns, whatever charges are left: the Luck Blade's Wish)
     if keep and rng.randint(1, 6) >= keep:
         return False
     prop["left"] = max(0, int(prop.get("left", prop.get("value", 1))) - 1)
@@ -163,6 +169,8 @@ def spend_charge(prop: dict, rng) -> bool:
 def charges_left(prop: dict) -> int:
     if prop.get("at_will"):
         return 1
+    if prop.get("daily") and prop.get("today"):
+        return 0  # (used since the last dawn)
     return int(prop.get("left", prop.get("value", 1)))
 
 
@@ -172,7 +180,9 @@ def dawn(items, rng) -> None:
 
     for it in items:
         for p in props(it):
-            if p.get("kind") != "charges" or p.get("at_will"):
+            if p.get("daily"):
+                p.pop("today", None)  # (once a day: ready again)
+            if p.get("kind") != "charges" or p.get("at_will") or p.get("no_regain"):
                 continue
             most = int(p.get("value", 1))
             if p.get("regain"):
@@ -183,8 +193,10 @@ def dawn(items, rng) -> None:
 
 def recharge(char) -> None:
     """Everything back to full (a long rest where no dawn is counted: tests and old callers)."""
-    for it, p in [(it, p) for it in char.inventory for p in props(it) if p.get("kind") == "charges"]:
-        p["left"] = int(p.get("value", 1))
+    for it, p in [(it, p) for it in char.inventory for p in props(it)]:
+        p.pop("today", None)
+        if p.get("kind") == "charges" and not p.get("no_regain"):
+            p["left"] = int(p.get("value", 1))
 
 
 def cursed_and_worn(char, item) -> bool:
