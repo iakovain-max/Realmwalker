@@ -431,7 +431,12 @@ class LocalView:
             for i, (cx_, cy_) in enumerate(self._follow(game, lm, taken)[start:start + len(dead)]):
                 fx, fy = self.pos(("dead", i), cx_, cy_, now, animate)
                 rec = dead[i]
-                look = [(f"creature/{rec['picture']}", dolls.WHITE, 0, 0)] if rec.get("picture") else                     [(f"creature/{rec['cid']}", dolls.WHITE, 0, 0)] if servants.rules.is_undead(rec) else                     dolls.creature(rec["cid"], game.tables, f"servant{i}", atlas)
+                if rec.get("picture"):  # (a spirit: its form's picture)
+                    look = [(f"creature/{rec['picture']}", dolls.WHITE, 0, 0)]
+                elif servants.rules.is_undead(rec):
+                    look = [(f"creature/{rec['cid']}", dolls.WHITE, 0, 0)]
+                else:  # (a bound creature: drawn as itself)
+                    look = dolls.creature(rec["cid"], game.tables, f"servant{i}", atlas)
                 people.append((fy - 0.002, look, *self.cell_px(fx, fy),
                                T, _cell_light(light, cx_ - x0, cy_ - y0), False))
         people.sort(key=lambda t: t[0])

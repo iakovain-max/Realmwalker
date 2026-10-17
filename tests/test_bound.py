@@ -84,7 +84,7 @@ def test_planar_ally_sends_the_gods_spirit_for_the_price_of_its_term(world, tabl
     assert (cid, form) == ("celestial_spirit", "defender")  # (a human of the heartland: Solun's)
     before = c.money
     rec = spirit(game, c, 7)
-    assert before - c.money == 10000 * 100 or servants.church_member(game, c)
+    assert before - c.money == (10000 * 100) // (2 if servants.church_member(game, c) else 1)
     assert (rec["cid"], rec["form"], rec["level"], rec["word"], rec["heals"]) == (cid, form, 7, False, True)
     assert rec["name"].endswith("of Solun") and rec["picture"] == "celestial_defender"
     assert rec["until"] == pytest.approx(game.world.time + rules.DAY, abs=1)
@@ -175,6 +175,25 @@ def test_a_dead_masters_spirit_goes_home_and_none_wait_in_a_town(world, tables):
     assert not servants.following(game)
     servants.died(game, c)
     assert not rules.records(c) and game.encounter is None
+
+
+def test_a_spirit_reads_with_the_right_article_and_goes_with_a_dismissed_companion(world, tables):
+    from realmwalker.game import companions
+
+    c = cleric(tables)
+    friend = cleric(tables)
+    friend.name = "Brannoc Hale"
+    friend.culture = "northmarch"  # (the All-Father of the Ash sends an avenging celestial spirit)
+    friend.companion = {"npc": -1}
+    game = game_with(world, tables, c, friend)
+    in_the_wild(game)
+    assert servants.ally_kind(game, friend) == ("celestial_spirit", "avenger")
+    words = subject(game, friend, "planar_ally", "a day").name
+    assert words.startswith("an avenging celestial spirit")
+    out = cast(game, friend, "planar_ally", subject(game, friend, "planar_ally", "a day"), 6)
+    assert any("and an avenging" in m for m in out)
+    companions.dismiss(game, friend)
+    assert not rules.records(friend) and game.encounter is None
 
 
 # ---------------------------------------------------------------------------- Planar Binding

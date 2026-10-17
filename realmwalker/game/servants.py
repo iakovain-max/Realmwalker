@@ -265,8 +265,10 @@ def ally_subjects(game, caster) -> list[Subject]:
     from realmwalker.rules.items import money_text
 
     half = " (half: you are of its church)" if church_member(game, caster) else ""
-    what = esc(_spirit_name(game, caster))
-    return [Subject(f"a {what}, for {words}: {money_text(ally_price(game, caster, gp))}{half}", "term", words,
+    from realmwalker.rules.allies import a_or_an
+
+    what = esc(a_or_an(_spirit_name(game, caster)))
+    return [Subject(f"{what}, for {words}: {money_text(ally_price(game, caster, gp))}{half}", "term", words,
                     data={"minutes": minutes, "gp": gp}) for words, minutes, gp in TERMS]
 
 
@@ -305,8 +307,10 @@ def cast_ally(game, caster, target, level: int) -> list[str]:
         return ["No spirit answers."]
     law.take_money(game, price)
     first = _first(caster)
-    return [f"<magic>{first} prays to {esc(faith['god'])} for ten minutes</>, and a {esc(rec['name'])} stands where "
-            f"the air was. {first} gives {money_text(price)} to {esc(faith['short'])}'s cause, and it agrees to serve "
+    from realmwalker.rules.allies import a_or_an
+
+    return [f"<magic>{first} prays to {esc(faith['god'])} for ten minutes</>, and {esc(a_or_an(rec['name']))} stands "
+            f"where the air was. {first} gives {money_text(price)} to {esc(faith['short'])}'s cause, and it agrees to serve "
             f"for {target.ref}. <dim>It fights beside you on its own, and goes home when its time is up.</>"]
 
 
@@ -459,6 +463,12 @@ def tick(game) -> None:
     """From pass_time: warn before a hold ends; free those it has ended for (they turn on the party out in the land,
     or wander off); the mummy's rot each day."""
     now = float(game.world.time)
+    for c in list(getattr(game, "waiting", [])):  # (a companion told to wait: their servants wait with them)
+        gone = rules.due(c, now) if c.alive else list(rules.records(c))
+        for r in gone:
+            rules.drop(c, r)
+        if gone:
+            game.say(f"<dim>Far off, the servants {_first(c)} kept are gone: their time was up.</>", "info")
     for c in game.party:
         if not c.spells.get("servants"):
             _rot_day(game, c, now)
@@ -484,6 +494,15 @@ def tick(game) -> None:
                 rules.drop(c, r)
             _leave(game, c, freed)
         _rot_day(game, c, now)
+
+
+def dismissed(game, char) -> None:
+    """A companion leaves the party for good: their servants go with them."""
+    rows = list(rules.records(char))
+    if rows:
+        char.spells.pop("servants", None)
+        game.say(f"{_first(char)}'s {'servants go' if len(rows) > 1 else rows[0]['name'] + ' goes'} with them.",
+                 "info")
 
 
 def _leave(game, master, freed: list[dict]) -> None:

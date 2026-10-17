@@ -618,7 +618,7 @@ def _protect(game, caster, sid: str, spell: dict, o: dict, target, level: int) -
                                          "by": caster.name, **_here(game)}
         return [f"{first} pours a ring of silvered salt and turns the runes inward as they glow: for {lasts}, a "
                 "celestial, elemental, fey or fiend inside it cannot leave. <dim>Long enough for Planar Binding's "
-                "hour.</>"]
+                "hour, if it is begun at once.</>"]
     if how == "circle":
         _camp_ward(game, caster, "circle", hours * 60, spell)
         return [f"{first} pours a ring of silvered salt round the camp, and runes glow where it falls: for {lasts}, "
