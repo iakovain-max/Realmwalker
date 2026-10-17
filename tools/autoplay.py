@@ -248,7 +248,7 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
                 from realmwalker.game.people import npcs_in, settlement_here
 
                 here = settlement_here(game)
-                spots = set()
+                spots: dict = {}
                 town = game.world.towns.get(here.id) if here is not None else None
                 for shop in (town.shops.values() if town is not None else []):
                     if shop["coin"] < 0 or any(q < 0 for q in shop["stock"].values()):
@@ -260,8 +260,10 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
                         if not lm.in_bounds(npc.x, npc.y) or not walk[npc.x, npc.y]:
                             fail(f"{npc.name} the {npc.title} stands in a wall at {(npc.x, npc.y)}")
                         if (npc.x, npc.y) in spots:
-                            fail(f"two townsfolk stand at {(npc.x, npc.y)}")
-                        spots.add((npc.x, npc.y))
+                            other = spots[(npc.x, npc.y)]
+                            fail(f"two townsfolk stand at {(npc.x, npc.y)}: {other.name} the {other.title} "
+                                 f"({other.flags.get('stays', '')}) and {npc.name} the {npc.title}")
+                        spots[(npc.x, npc.y)] = npc
         b = game.battle
         if b is not None:
             if b.outcome is None and not b.order:

@@ -1268,11 +1268,11 @@ def _coat_blade(b: Battle, f: Fighter, opts) -> bool:
 
     if f.char is None or f.bonus <= 0 or f.buff_value("poisoned_blade") or b.current is not f:
         return False
-    plan = best_plan(b, f, opts)
-    if plan is None:
-        return False
-    _score, _path, blow, foe = plan
-    if foe is None or not foe.standing or foe.hp < 8:
+    # (no second plan of the blow: a foe worth it within this turn's reach of the weapon in hand will do)
+    blow = max(opts, key=lambda o: o.is_melee)
+    reach = (f.move_left + 5) if blow.is_melee else int(blow.range[1] or blow.range[0] or 30)
+    foes = [e for e in b.enemies_of(f) if e.standing and e.hp >= 8 and b.gap(f, e) * grid.SQUARE_FT <= reach]
+    if not foes:
         return False
     for it, p in magic.charges(f.char):
         if p.get("spell") == "dagger_venom" and magic.charges_left(p) > 0 and it.uid in f.char.equipped.values():

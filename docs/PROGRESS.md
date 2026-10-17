@@ -29,7 +29,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Expansion 1, *Dice & Destiny*** (version 1.1.0) | ✅ Released (2026-10-13), branch `dlc/01-dice-destiny` |
 | **Expansion 2, *Blades & Backgrounds*** (version 1.2.0) | ✅ Released (2026-10-13), branch `dlc/02-blades-backgrounds` |
 | **Expansion 3, *Demigods & Magics*** (version 1.3.0) | ✅ Released (2026-10-17), branch `dlc/03-demigods-magics` |
-| **Expansion 4, *Steel & Shadows*** (version 1.4.0 with its last part) | Parts A (the Battle Master) and B (the Eldritch Knight, the Arcane Trickster) merged (2026-10-17), branch `dlc/04-steel-shadows` |
+| **Expansion 4, *Steel & Shadows*** (version 1.4.0 with its last part) | Parts A (the Battle Master), B (the Eldritch Knight, the Arcane Trickster) and C (poisons and the people of the shadows) merged (2026-10-17), branch `dlc/04-steel-shadows` |
 | **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansions 1-3 released; Expansion 4 under way (see STATUS.md) |
 
 ---
@@ -41,6 +41,70 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-17 (night): Steel & Shadows Part C — poisons and the people of the shadows — branch `dlc/04-steel-shadows`
+
+Built by the relay builder realmwalker-b. Saves do not change; an old world gains all of it, though shops restock
+their shelves on their usual days.
+- **Fourteen poisons from the Dungeon Master's Guide.** Each is a vial with its own colour, its own price and its
+  book numbers. Injury poisons (serpent venom, wyvern poison, purple worm poison, Lolth's sting) are smeared on a
+  blade with the bonus action and go into the next cut or stab within a minute. Contact poisons (carrion crawler
+  mucus, oil of taggit) work on any blow. Inhaled poisons (burnt othur fumes, essence of ether, malice) are thrown
+  like a flask and burst over one square. The worst of them paralyze, put to sleep until a blow wakes the sleeper,
+  or blind; burnt othur smoke stays in the lungs and is fought off over several turns. A poisoned party member stays
+  sick after the fight for as long as the poison says.
+- **Poison in a cup.** Ingested poisons (assassin's blood, midnight tears, pale tincture, torpor, truth serum) are
+  slipped into someone's cup during a conversation. Sleight of Hand decides whether anyone sees. A lethal dose kills
+  an ordinary person before morning, and nobody knows who did it. Truth serum makes them tell their secret guild,
+  what they want, and the hidden side of any work they offered you. Torpor sends them home to sleep. A clumsy hand
+  is an assault, with witnesses.
+- **Venom from the slain.** With a poisoner's kit in the pack, the after-fight screen offers "Take the venom" (V)
+  for each venomous body: a hard Nature check gives a vial of that creature's own venom (a snake gives serpent
+  venom). A bad slip pricks the hand.
+- **The Poisoner feat is whole.** At camp (m) a poisoner brews doses for 50 gp of materials, as many as their
+  proficiency bonus. A dose deals 2d8 poison damage on any hit, against the poisoner's own DC.
+- **Three magic things.** The Dagger of Venom wakes its venom once a day. The Periapt of Proof against Poison makes
+  its wearer immune to poison. The Potion of Poison looks exactly like a potion of healing until someone drinks it,
+  or Detect Poison and Disease finds it out. All three can turn up in treasure.
+- **Poison and the law.** Most peoples forbid poison: it is contraband at the gate, the notice boards say "poisons
+  of every kind", and the honest apothecaries do not sell it. Four peoples allow it (the orcs, the Khurgan, the Itzan
+  and the Thalassians), and their city apothecaries sell a few of the book's poisons.
+- **The black market.** Join a thieves' guild, and its members without a shop of their own sell poisons, thieves'
+  tools and disguise kits "round the back", at half again the honest price. The guild also gives its own members
+  the killing and thieving work.
+- **Assassins and spies on the roads.** The Assassin (strong, poisonous, hard to see), the Spy and the Spy Master
+  come from the 2025 Monster Manual with their own numbers. They hide before they strike when there is cover, run to
+  close the distance, and slip away afterwards. The Spy Master throws a smoke bomb once a day. Each carries a poison
+  worth taking.
+- **Duels of honour.** Among the southerners, the highlanders, the northmarchers and the Volsk, a gentleman or
+  gentlewoman you fail to intimidate challenges you to a duel. Accept, and you fight to the first fall: no crime
+  either way, and the town respects the winner. Refuse, and the town thinks the less of you.
+- **Spies at court.** Realms that mistrust each other now catch each other's spies. You hear of it in the news,
+  and the two realms grow colder.
+- **Your companions use it.** On Auto a companion smears the cheapest fitting poison on their blade before a blow
+  at a foe worth it, and wakes a Dagger of Venom first.
+- **How to see it.** Buy poison where it is legal, or join a thieves' guild in a city and ask a member who keeps no
+  shop "What do you have that the shops don't sell?". In a fight, poisons are in the Item menu. Talk to someone
+  with an ingested poison in the pack to see the cup. A new world or character is not needed.
+- **What could not be checked here.** Nothing about the look has been seen by a person: the vials, the
+  "envenomed" word on the battle mat and the cards were checked by the headless tests and the smoke test only.
+- Choices made while Anton was away:
+  - The assassins' trade belongs to the thieves' guilds: there is no separate assassins' guild in the world's
+    history. The guild gives killing work and sells poison to its own members.
+  - Inhaled poisons are thrown up to 20 feet, like a flask. The book has them blown or released beside you.
+  - Contact poisons on a weapon work on any hit; the book smears them on any object, and doorknobs and letters are
+    left out. Washing a blade clean is not modelled.
+  - A condition that comes with a poison (asleep, paralyzed, blinded) ends with the fight; being Poisoned itself
+    lasts the poison's hours.
+  - A lethal cup kills an ordinary person before morning, without days of sickness.
+  - Venom is harvested only from the dead, not from a creature lying helpless.
+  - Truth serum works only in the conversation where it was given.
+  - The black market charges half again the honest price, and is found only in towns and cities.
+  - The peoples that allow poison and the peoples that duel were chosen by the feel of each culture.
+  - A duel is fought to the first fall. A duellist killed in it is not murder; the law looks the other way.
+  - Identify shows only magic things in this game, so it does not reveal a Potion of Poison.
+  - The Spy and the Spy Master speak "one other" and "two other" languages, which the language rule treats as
+    unknown tongues besides Common.
 
 ### Session, 2026-10-17 (night): Steel & Shadows Part B — the Eldritch Knight and the Arcane Trickster — branch `dlc/04-steel-shadows`
 
