@@ -112,7 +112,7 @@ def fixed_d20(monkeypatch, value):
 
 def test_there_is_a_scroll_for_every_spell(tables):
     for sid, spell in tables.spells.defs.items():
-        if spell["level"] > 0:
+        if "item" not in spell["classes"]:
             d = tables.items.get(f"scroll_{sid}")
             assert d["use"]["scroll"] == sid and d["value"] > 0
 
@@ -148,7 +148,7 @@ def test_copying_can_fail_and_fighters_cannot_copy(game, monkeypatch):
 
 
 def test_reading_a_scroll_in_battle(tables):
-    c = hero(tables, "fighter")
+    c = hero(tables, "wizard")  # (2024: the spell must be on the reader's list; tests/test_scrolls.py has the rest)
     it = add_item(c, tables.items, "scroll_magic_missile", 1)
     rng = RNG(1, "foes")
     b = Battle(tables, [c], [spawn(tables, "wolf", rng, 1)], Env(), RNG(1, "battle"))

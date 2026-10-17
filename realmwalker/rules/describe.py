@@ -494,9 +494,9 @@ def chance_lines(b, f, opt, target) -> list[str]:
     return out
 
 
-def spell(tables, sid: str, *, b=None, f=None, target=None, level: int | None = None) -> Card:
+def spell(tables, sid: str, *, b=None, f=None, target=None, level: int | None = None, scroll: bool = False) -> Card:
     """A spell: level, cost, range, area, concentration, what it does; the save DC or attack of the caster. `level`:
-    the slot it would be cast with (what a higher slot adds)."""
+    the slot it would be cast with (what a higher slot adds); `scroll`: read from a scroll (its own numbers)."""
     from realmwalker.rules import spells as sprules
 
     sp = tables.spells[sid]
@@ -523,12 +523,21 @@ def spell(tables, sid: str, *, b=None, f=None, target=None, level: int | None = 
     if level and lvl and level > lvl:
         gain = sprules.up_gain(sp, level - lvl)
         card.lines.append(f"<good>With a level {level} slot:</> {', '.join(gain) if gain else 'nothing more'}.")
-    elif lvl and sprules.upcasts(sp) and level is None:
+    elif lvl and sprules.upcasts(sp) and level is None and not scroll:
         card.lines.append(f"<dim>A higher slot: {', '.join(sprules.up_gain(sp, 1))} a level.</>")
-    if f is not None and f.char is not None and not sp.get("thrown") \
+    if scroll:  # (DMG 2024: the scroll's numbers, no slot, no materials)
+        dc, attack = sprules.scroll_numbers(tables, lvl)
+        card.subtitle = f"{card.subtitle}, from a scroll"
+        card.lines.append(f"<magic>From a scroll</>: save DC {dc}, attack +{attack}; no slot and no materials. It "
+                          f"crumbles once the spell is cast.")
+        how = sprules.scroll_reader(f.char, tables, sid) if f is not None and f.char is not None else None
+        check = sprules.scroll_check(f.sheet, tables, sid, how) if how else None
+        if check is not None:
+            card.lines.append(f"<warn>Above you: {check[2]} DC {check[1]} first, or the words fade.</>")
+    elif f is not None and f.char is not None and not sp.get("thrown") \
             and any(o.get("op") == "save" for o in sp.get("effects", ())):
         card.lines.append(f"Save DC {sprules.save_dc(f.sheet, tables)}.")
-    free = sprules.free_cast(f.char, tables, sid) if f is not None and f.char is not None else None
+    free = sprules.free_cast(f.char, tables, sid) if f is not None and f.char is not None and not scroll else None
     if free:  # (a wizard's Spell Mastery or Signature Spells)
         card.lines.append("<good>No slot: Spell Mastery.</>" if free == "mastery" else
                           "<good>No slot this time: a signature spell.</>")
@@ -540,7 +549,7 @@ def spell(tables, sid: str, *, b=None, f=None, target=None, level: int | None = 
         if kind:
             card.lines.append({"immune": "<danger>It is immune to that.</>", "resist": "<warn>It resists that.</>",
                                "vulnerable": "<good>It is hurt most by that.</>"}[kind])
-    if sp.get("material"):  # (a costly component: that very thing, not a focus)
+    if sp.get("material") and not scroll:  # (a costly component: that very thing, not a focus)
         card.lines.append(f"<dim>Needs {esc(sp['material']['text'])}.</>")
         if f is not None and f.char is not None and sprules.component_problem(f.char, tables, sid):
             card.lines.append("<warn>None in the pack.</>")
@@ -590,8 +599,8 @@ def choice(b, f, kind: str, value, label: str, ok: bool, why: str, target=None, 
     """The card for a row of the battle's choice list."""
     if kind == "attack" and value is not None and hasattr(value, "damage"):
         return attack(b, f, value, target, known=known)
-    if kind == "cast" and isinstance(value, str) and value in f.t.spells:
-        card = spell(f.t, value, b=b, f=f, target=target)
+    if kind == "cast" and isinstance(value, str) and value.split(":")[-1] in f.t.spells:
+        card = spell(f.t, value.split(":")[-1], b=b, f=f, target=target, scroll=value.startswith("scroll:"))
         if not ok and why:
             card.lines.append(f"<warn>{esc(why)}</>")
         return card

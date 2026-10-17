@@ -323,7 +323,8 @@ class BattleScreen(Screen):
                 sp = tables.spells[spell_id(sid)]
                 lvl = "cantrip" if sp["level"] == 0 else f"level {sp['level']}"
                 if sid.startswith("scroll:"):
-                    lvl = "from a scroll"
+                    dc, atk = spellrules.scroll_numbers(tables, sp["level"])
+                    lvl = f"from a scroll: DC {dc}, +{atk}"
                 elif sid.startswith("charge:"):
                     lvl = "from a magic item"
                 if sp.get("cast") == "bonus":
@@ -338,7 +339,13 @@ class BattleScreen(Screen):
                 throw = b.throw_value(i)
                 hint = f" <dim>({tables.spells[spell_id(throw)]['text']})</>" if throw else ""
                 ok = not throw or b.cast_problem(f, throw, None, None) in (None, "no target", "you cannot aim it there")
-                rows.append((markup.escape(tables.items.name(i)) + hint, i.uid, ok, "no action left this turn"))
+                why = "no action left this turn"
+                if not throw:
+                    why = b.item_problem(f, i)
+                    ok = not why
+                    if b.item_cost(f, i) == "bonus":
+                        hint = " <dim>(bonus action)</>"
+                rows.append((markup.escape(tables.items.name(i)) + hint, i.uid, ok, why))
             self._open_choices("item", rows)
         elif action == "ability":
             abilities = b.class_abilities(f)

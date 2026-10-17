@@ -1,8 +1,9 @@
 """Magic outside battle.
 
-Spell scrolls (M7): a wizard can copy one into their spellbook. It takes an Arcana check, costly inks (50 gold
-crowns a spell level) and two hours a level, and the scroll is used up either way. Reading scrolls in battle is in
-rules/combat.py.
+Spell scrolls (DMG 2024): a wizard can copy one into their spellbook. It takes an Arcana check, costly inks (50
+gold crowns a spell level) and two hours a level, and the scroll is used up either way. Whoever has the spell on their
+list can read it aloud once (rules/spells.scroll_reader): in a fight from the spell menu (rules/combat.py), outside one
+from the pack when the spell has a use there (`read_scroll`, through `cast_on_road`).
 
 Casting on the road (after v1): from the Spells screen, a spell that lasts (Mage Armour before the day's walk,
 Stoneskin before the dungeon door) or one that heals. It takes a minute and a slot, and the law of the place may
@@ -34,6 +35,8 @@ def copy_problem(game, char, item) -> str | None:
     spell = game.tables.spells[sid]
     if "wizard" not in spell["classes"]:
         return "that is a priest's prayer, not a wizard's spell"
+    if spell["level"] == 0:
+        return "cantrips are learned, not kept in a spellbook"
     if sid in char.spells.get("spellbook", []):
         return "it is already in your spellbook"
     from realmwalker.rules.progression import spell_top_level
@@ -78,6 +81,64 @@ def copy_scroll(game, char, item) -> list[str]:
     game.dirty = True
     return [f"<warn>The copy goes wrong</>: a slip of the pen, a word misread, and the scroll's magic unravels. "
             f"{check}"]
+
+
+def scroll_readers(game, item) -> list[tuple]:
+    """(character, how) for each of the party who can read this scroll, the surest first."""
+    sid = scroll_spell(game.tables, item)
+    if sid not in game.tables.spells:
+        return []
+    order = {"sure": 0, "device": 1, "check": 2, "device_check": 3}
+    out = [(c, spellrules.scroll_reader(c, game.tables, sid)) for c in game.party if c.alive]
+    return sorted([(c, how) for c, how in out if how], key=lambda p: order[p[1]])
+
+
+def scroll_lines(game, item) -> list[str]:
+    """What a spell scroll's card says: the spell, the scroll's numbers, and who in the party can read it."""
+    t = game.tables
+    sid = scroll_spell(t, item)
+    if sid not in t.spells:
+        return []
+    spell = t.spells[sid]
+    dc, attack = spellrules.scroll_numbers(t, spell["level"])
+    rarity = (t.items.get(item.def_id).get("rarity") or "common").replace("_", " ")
+    lines = [f"<magic>{spell['name']}</>: {spell['text']}",
+             f"<dim>A {rarity} scroll. Read aloud it casts with save DC {dc} and attack +{attack}, needs no materials "
+             f"and no spell slot, and crumbles once the spell is cast.</>"]
+    readers = scroll_readers(game, item)
+    if not readers:
+        lines.append("<warn>No one in the party can read it: the spell is on none of your lists.</>")
+        return lines
+    words = []
+    for c, how in readers:
+        check = spellrules.scroll_check(game.sheet(c), t, sid, how)
+        if check is None:
+            words.append(f"{c.name.split()[0]}" + (" (Use Magic Device)" if how == "device" else ""))
+        else:
+            words.append(f"{c.name.split()[0]} (above them: {check[2]} DC {check[1]} first, or it fades)")
+    lines.append("Can read it: " + ", ".join(words) + ".")
+    if spellrules.on_the_road(t, sid)[0]:
+        lines.append("<dim>Read it here (Enter), or in a fight from the spell menu.</>")
+    else:
+        lines.append("<dim>Read it in a fight, from the spell menu (Cast a spell).</>")
+    return lines
+
+
+def read_scroll(game, item, target=None) -> list[str]:
+    """Read a scroll aloud outside a fight: the surest reader in the party, when its spell has a use here."""
+    t = game.tables
+    sid = scroll_spell(t, item)
+    if sid not in t.spells:
+        return ["That is not a spell scroll."]
+    readers = scroll_readers(game, item)
+    if not readers:
+        return ["The writing means nothing to any of you: the spell is on none of your lists."]
+    reader = readers[0][0]
+    return cast_on_road(game, reader, sid, target, scroll=item)
+
+
+def _owner(game, item):
+    return next((c for c in game.party if c.item(item.uid) is not None), None)
 
 
 def scroll_stock(game, settlement, rng) -> dict[str, int]:
@@ -131,8 +192,8 @@ def _needs(game, spell, target) -> bool:
     return any(c.hp < c.max_hp or c.wounds for c in who)
 
 
-def road_problem(game, caster, spell_id: str, target=None) -> str | None:
-    """Why this spell can't be cast here and now (None when it can)."""
+def road_problem(game, caster, spell_id: str, target=None, scroll=None) -> str | None:
+    """Why this spell can't be cast here and now (None when it can); `scroll`: read from that scroll instead."""
     t = game.tables
     spell = t.spells[spell_id]
     ok, why = spellrules.on_the_road(t, spell_id)
@@ -140,12 +201,17 @@ def road_problem(game, caster, spell_id: str, target=None) -> str | None:
         return why
     if game.battle is not None:
         return "you are in a fight"
-    if spell_id not in spellrules.known_spells(caster, t):
+    if scroll is not None:
+        why = spellrules.scroll_problem(caster, t, spell_id)
+        ok = not why
+    elif spell_id not in spellrules.known_spells(caster, t):
         from realmwalker.rules import feats
 
         if not spell.get("ritual") or spell_id not in spellrules.ritual_spells(caster, t) + feats.ritual_spells(caster, t):
             return "not prepared (p prepares it)"
-    if spell.get("ritual"):  # a ritual needs no slot, but armour without training still stops it, and it needs
+    if scroll is not None:
+        pass  # (no slot and no materials: the scroll's own magic)
+    elif spell.get("ritual"):  # a ritual needs no slot, but armour without training still stops it, and it needs
         why = spellrules.armour_problem(caster, t) or spellrules.component_problem(caster, t, spell_id)  # its materials
         ok = not why
     else:
@@ -165,24 +231,44 @@ def road_problem(game, caster, spell_id: str, target=None) -> str | None:
     return None
 
 
-def cast_on_road(game, caster, spell_id: str, target=None, slot_level: int | None = None) -> list[str]:
+def cast_on_road(game, caster, spell_id: str, target=None, slot_level: int | None = None, scroll=None) -> list[str]:
     """Cast a spell outside battle. Healing goes through game/care.py (the worst wound first); a lasting spell is
-    kept on whoever it was cast on. `slot_level`: a higher slot, for a spell that does more with one. Returns what
-    to say."""
+    kept on whoever it was cast on. `slot_level`: a higher slot, for a spell that does more with one; `scroll`: read
+    from that scroll (no slot, no materials; a check first when it is above the reader). Returns what to say."""
     from realmwalker.game import care
 
     t = game.tables
     spell = t.spells[spell_id]
     target = target or caster
-    why = road_problem(game, caster, spell_id, target)
+    why = road_problem(game, caster, spell_id, target, scroll=scroll)
     if why:
         return [f"{spell['name']}: {why}."]
+    pre = []
+    if scroll is not None:
+        owner = _owner(game, scroll) or caster
+        how = spellrules.scroll_reader(caster, t, spell_id)
+        check = spellrules.scroll_check(game.sheet(caster), t, spell_id, how)
+        remove_item(owner, scroll.uid, 1)  # (spent either way: cast, or faded on a failed check)
+        game.dirty = True
+        if check is not None:
+            bonus, dc, words = check
+            roll = dice.d20(game.world.rng.child(f"scroll/{spell_id}/{game.world.time}")).natural
+            said = f"<dim>({words} {roll} {bonus:+d} = {roll + bonus} vs DC {dc})</>"
+            if roll + bonus < dc:
+                game.pass_time(1, "rest")
+                return [f"<warn>{caster.name.split()[0]} stumbles over the words of the scroll</>: they fade from the "
+                        f"page, and it crumbles to dust. {said}"]
+            pre.append(f"{caster.name.split()[0]} masters the words of a scroll beyond them and reads "
+                       f"<magic>{spell['name']}</> aloud; it crumbles as the last word is spoken. {said}")
+        else:
+            pre.append(f"{caster.name.split()[0]} reads <magic>{spell['name']}</> aloud from a scroll; it crumbles as "
+                       f"the last word is spoken.")
     use = spellrules.road_use(t, spell_id)
     if use in ("heal", "cure"):
         wound = max(target.wounds, key=lambda w: (w.severity, w.bleed), default=None)
-        return care.cast(game, caster, target, wound, spell_id, slot_level)
-    level = spell["level"]
-    ritual = bool(spell.get("ritual"))  # a Ritual (2024): ten minutes longer, and no slot spent
+        return pre + care.cast(game, caster, target, wound, spell_id, slot_level, free=scroll is not None)
+    level = spell["level"] if scroll is None else 0  # (a scroll's own magic: no slot)
+    ritual = bool(spell.get("ritual")) and scroll is None  # a Ritual (2024): ten minutes longer, and no slot spent
     free = spellrules.free_cast(caster, t, spell_id) if level and not ritual else None  # (Spell Mastery...)
     slot = spellrules.lowest_free_slot(caster, t, level) if level and not ritual and not free else None
     if slot and slot_level in spellrules.slot_choices(caster, t, spell_id) and spellrules.upcasts(spell):
@@ -193,7 +279,7 @@ def cast_on_road(game, caster, spell_id: str, target=None, slot_level: int | Non
         spellrules.spend_free(caster, spell_id, free)
     if slot:
         spellrules.spend_slot(caster, slot)
-    used = spellrules.spend_material(caster, t, spell_id)
+    used = spellrules.spend_material(caster, t, spell_id) if scroll is None else None
     if ritual:
         game.pass_time(10, "rest")
     if use == "identify":
@@ -201,9 +287,9 @@ def cast_on_road(game, caster, spell_id: str, target=None, slot_level: int | Non
 
         item = strange_things(game, caster)[0]
         name = game.tables.items.name(item, False)
-        game.pass_time(10, "rest")
-        msgs = [f"{caster.name.split()[0]} casts <magic>{spell['name']}</> over the {name}"
-                + (" as a ritual: ten minutes more, and no spell slot." if ritual else ".")]
+        game.pass_time(1, "rest")  # (its casting time: a minute; a ritual's ten more are passed above)
+        msgs = pre + [f"{caster.name.split()[0]} casts <magic>{spell['name']}</> over the {name}"
+                      + (" as a ritual: ten minutes more, and no spell slot." if ritual else ".")]
         msgs += magic_items.identify(game, item)
         if game.world.factions:
             from realmwalker.game import law
@@ -217,7 +303,7 @@ def cast_on_road(game, caster, spell_id: str, target=None, slot_level: int | Non
         hours = spellrules.keep(c, t, spell_id)
     first = caster.name.split()[0]
     on = "" if who == [caster] else (" on the party" if len(who) > 1 else f" on {who[0].name.split()[0]}")
-    msgs = [f"{first} casts <magic>{spell['name']}</>{on}. <dim>It will last {lasting_text(hours)}.</>"]
+    msgs = pre + [f"{first} casts <magic>{spell['name']}</>{on}. <dim>It will last {lasting_text(hours)}.</>"]
     if used:
         msgs.append(f"<dim>The {used} is used up.</>")
     game.pass_time(1, "rest")

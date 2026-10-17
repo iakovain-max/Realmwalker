@@ -218,6 +218,11 @@ RULES = Obj(
         "study": Obj({"skills": Map(Str(max_len=30)),
                       "dc": Obj({"base": Int(min=1, max=30), "per_cr": Float(min=0, max=5), "max": Int(min=1, max=40)})},
                      optional=True),
+        "spell_scrolls": Obj({"dc": List(Int(min=1, max=30), min_items=10, max_items=10),
+                              "attack": List(Int(min=0, max=20), min_items=10, max_items=10),
+                              "rarity": List(Str(choices=["common", "uncommon", "rare", "very_rare", "legendary"]),
+                                             min_items=10, max_items=10),
+                              "value": List(Int(min=0, max=10**9), min_items=10, max_items=10)}, optional=True),
         "objects": Obj({"ac": Map(Int(min=1, max=30)), "hp": Map(List(Str(max_len=12), min_items=2, max_items=2)),
                         "immune": List(Str(max_len=20)), "terrain": Map(List(Any_(), min_items=4, max_items=4), optional=True)},
                        optional=True),
@@ -350,6 +355,8 @@ ITEM = Obj(
                         "crafts": List(Str(max_len=40), optional=True)}, optional=True),
         "trinket": Bool(optional=True),  # its name and words come from data/trinkets.json
         "tack": Str(choices=["riding", "exotic"], optional=True),  # a saddle (game/mounts.saddled)
+        # Expansion 3 C.3: a magic consumable's rarity (potions of healing; spell scrolls are made with one)
+        "rarity": Str(choices=["common", "uncommon", "rare", "very_rare", "legendary"], optional=True),
     }
 )
 ITEMS = Obj(

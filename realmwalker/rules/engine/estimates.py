@@ -93,6 +93,8 @@ def spell_value(b, f, sid: str, *, target=None, point=None, dc: int | None = Non
 
     spell = b.t.spells[spell_id(sid)]
     w = Worth()
+    if str(sid).startswith("scroll:") and dc is None:  # (a scroll casts with its own numbers)
+        dc, bonus = spellrules.scroll_numbers(b.t, spell["level"])
     dc = dc if dc is not None else _caster_dc(b, f)
     bonus = bonus if bonus is not None else _caster_attack(b, f)
     mult = spellrules.cantrip_multiplier(f.char.level) if f.char is not None else 1

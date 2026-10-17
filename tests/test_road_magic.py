@@ -235,8 +235,8 @@ def test_identify_tells_a_wizard_what_a_strange_thing_is(world, tables):
     t0 = game.world.time
     said = magic.cast_on_road(game, wiz, "identify")
     assert "Identify" in said[0] and ring.magic["identified"]
-    # A ritual (2024): no slot spent, ten minutes longer than the casting's ten.
-    assert sp.slots_left(wiz, tables)[0] == slots and game.world.time - t0 == 20 and "ritual" in said[0]
+    # A ritual (2024): no slot spent, ten minutes longer than the casting's one (PHB p. 290: 1 minute or Ritual).
+    assert sp.slots_left(wiz, tables)[0] == slots and game.world.time - t0 == 11 and "ritual" in said[0]
     # Never in a fight, and never from a scroll read aloud in one. (A ritual read from the book needs no preparing;
     # to be in a fight's list at all it must be prepared.)
     wiz.spells["prepared"] = ["identify"]

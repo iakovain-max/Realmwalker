@@ -462,6 +462,69 @@ def can_cast(char: Character, tables, spell_id: str) -> tuple[bool, str]:
     return False, "no spell slots of that level left (rest to recover)"
 
 
+# ---------------------------------------------------------------------------- spell scrolls (DMG 2024)
+# A scroll is read by whoever has its spell on their spell list (their class's list, or a feature's spells that are
+# always prepared); to anyone else it is unintelligible. It casts with its own save DC and attack bonus (by the spell's
+# level, data/rules.json "spell_scrolls"), needs no materials and no slot, and crumbles once the spell is cast. A spell
+# above the highest level the reader can cast takes an ability check with the spellcasting ability first (DC 10 + the
+# spell's level); on a failure the words fade and nothing happens. A thief's Use Magic Device reads any scroll with
+# Intelligence: cantrips and level 1 spells surely, higher ones after an Intelligence (Arcana) check, DC the same.
+def scroll_numbers(tables, level: int) -> tuple[int, int]:
+    """(save DC, attack bonus) a scroll of this spell level casts with."""
+    n = tables.rules.get("spell_scrolls") or {}
+    dcs, attacks = n.get("dc") or [13], n.get("attack") or [5]
+    i = max(0, min(int(level), len(dcs) - 1))
+    return int(dcs[i]), int(attacks[min(i, len(attacks) - 1)])
+
+
+def scroll_reader(char: Character, tables, spell_id: str) -> str | None:
+    """How this character reads a scroll of this spell: "sure" (on their list, a level they can cast), "check" (on
+    their list but above them: a spellcasting check first), "device" (Use Magic Device: Intelligence, sure for a
+    cantrip or level 1, else an Arcana check: "device_check"), or None (unintelligible to them)."""
+    spell = tables.spells[spell_id] if spell_id in tables.spells else None
+    if spell is None:
+        return None
+    level = int(spell["level"])
+    own = is_caster(char, tables) and (char.cls in spell.get("classes", ()) or spell_id in always_prepared(char, tables))
+    if own:
+        return "sure" if level <= max_spell_level(char, tables) else "check"
+    if "use_magic_device" in char.features:
+        return "device" if level <= 1 else "device_check"
+    return None
+
+
+def scroll_ability(char: Character, tables, how: str | None) -> str:
+    """The ability the reader casts a scroll's spell with (Intelligence through Use Magic Device)."""
+    return "int" if how in ("device", "device_check") else casting_ability(char, tables)
+
+
+def scroll_check(sheet: Sheet, tables, spell_id: str, how: str | None) -> tuple[int, int, str] | None:
+    """(bonus, DC, words) of the check before reading a scroll above the reader, or None when none is needed."""
+    if how not in ("check", "device_check"):
+        return None
+    dc = 10 + int(tables.spells[spell_id]["level"])
+    if how == "device_check":
+        return sheet.skill_bonus("arcana"), dc, "Intelligence (Arcana)"
+    ability = casting_ability(sheet.c, tables)
+    return sheet.mod(ability), dc, tables.rules["abilities"][ability]["name"]
+
+
+def scroll_odds(sheet: Sheet, tables, spell_id: str, how: str | None) -> float:
+    """The chance a reading of the scroll works (1.0 when no check is needed)."""
+    check = scroll_check(sheet, tables, spell_id, how)
+    if check is None:
+        return 1.0
+    bonus, dc, _ = check
+    return max(0.05, min(1.0, (21 - (dc - bonus)) / 20))
+
+
+def scroll_problem(char: Character, tables, spell_id: str) -> str:
+    """Why this character cannot read a scroll of this spell ("" if they can)."""
+    if scroll_reader(char, tables, spell_id) is None:
+        return "unintelligible to you: the spell is not on your list"
+    return armour_problem(char, tables) or ""
+
+
 # ---------------------------------------------------------------------------- reading a spell's effects
 NESTED = ("on_hit", "on_fail", "do")
 

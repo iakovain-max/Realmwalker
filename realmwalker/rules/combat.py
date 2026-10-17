@@ -2859,11 +2859,22 @@ class Battle:
         """A thief can use an object with a bonus action (Cunning Action)."""
         return f.char is not None and f.has_trait("fast_hands") and f.bonus > 0
 
+    def item_cost(self, f: Fighter, item) -> str:
+        """What using this thing takes: a potion is drunk or given with the bonus action (DMG 2024); other things
+        take the action (or a thief's bonus action: Fast Hands)."""
+        return "bonus" if "heal" in (self.t.items.get(item.def_id).get("use") or {}) else "action"
+
+    def item_problem(self, f: Fighter, item) -> str:
+        """Why this thing cannot be used now ("" if it can)."""
+        if self.item_cost(f, item) == "bonus":
+            return "" if f.bonus > 0 else "no bonus action left this turn"
+        return "" if f.action > 0 or self.fast_hands(f) else "no action left this turn"
+
     def do_item(self, f: Fighter, uid: int, target: Fighter) -> None:
         it = f.char.item(uid)
-        if it is None or (f.action <= 0 and not self.fast_hands(f)):
+        if it is None or self.item_problem(f, it):
             return
-        quick = f.action <= 0  # with the bonus action (Fast Hands)
+        quick = self.item_cost(f, it) == "bonus" or f.action <= 0  # (a potion; or Fast Hands)
         d = self.t.items.get(it.def_id)
         use = d.get("use", {})
         name = d["name"]
@@ -3117,11 +3128,14 @@ class Battle:
                 ok, why = self._casting_time_ok(f, spell, spell["level"] > 0
                                                 and not spellrules.free_cast(f.char, self.t, sid))
             out.append((sid, ok, why))
-        for it in f.char.inventory:
+        for it in f.char.inventory:  # (a scroll: on the reader's spell list, or a thief's Use Magic Device)
             sid = self.t.items.get(it.def_id).get("use", {}).get("scroll")
             if sid in self.t.spells and not spellrules.has_op(self.t.spells[sid], "revive", "identify") \
                     and self.t.spells[sid].get("cast") != "reaction":
-                ok, why = self._casting_time_ok(f, self.t.spells[sid], False)
+                why = spellrules.scroll_problem(f.char, self.t, sid)
+                ok = not why
+                if ok:
+                    ok, why = self._casting_time_ok(f, self.t.spells[sid], False)
                 out.append((f"scroll:{it.uid}:{sid}", ok, why))
         for src, sid, _ability in feats.innate_spells(f.char, self.t):  # a feat's or a lineage's spells
             sp = self.t.spells[sid]
@@ -3360,15 +3374,23 @@ class Battle:
                       mult=1, level=0)
             self._after_action(f)
             return True
-        if scroll is not None:
-            remove_item(c, scroll.uid, 1)
-            if c.cls not in spell["classes"]:
+        scroll_how = None
+        if scroll is not None:  # (DMG 2024 Spell Scroll; spells.scroll_reader)
+            scroll_how = spellrules.scroll_reader(c, self.t, sid)
+            if scroll_how is None:
+                self.say("The writing on the scroll means nothing to you.", "warn")
+                return False
+            check = spellrules.scroll_check(s, self.t, sid, scroll_how)
+            if check is not None:
+                bonus, dc, words = check
                 roll = dice.d20(self.rng).natural
-                bonus = f.skill("arcana")
-                self.dice_say(f"Arcana ({f.name}): {roll} {signed_mod(bonus)} = {roll + bonus} vs DC {10 + level}")
-                if roll + bonus < 10 + level:
+                self.dice_say(f"{words} ({f.name}), reading a scroll above you: {roll} {signed_mod(bonus)} = "
+                              f"{roll + bonus} vs DC {dc}")
+                if roll + bonus < dc:
+                    remove_item(c, scroll.uid, 1)
                     self._spend(f, bonus_cast)
-                    self.say(f"{f.the_name} stumbles over the words of the scroll, and it crumbles to dust.", "warn")
+                    self.say(f"{f.the_name} stumbles over the words of the scroll; they fade from the page, and it "
+                             f"crumbles to dust.", "warn")
                     self._after_action(f)
                     return True
             self.say(f"{f.the_name} reads from a scroll.", "magic")
@@ -3411,12 +3433,20 @@ class Battle:
             mod = s.mod(innate)
             dc = 8 + s.proficiency + mod
             bonus = s.proficiency + mod + s.attack_condition()
+        if scroll is not None:  # the scroll's own numbers, by the spell's level (data/rules.json spell_scrolls)
+            mod = s.mod(spellrules.scroll_ability(c, self.t, scroll_how))
+            dc, bonus = spellrules.scroll_numbers(self.t, spell["level"])
+            bonus += s.attack_condition()
         mult = spellrules.cantrip_multiplier(c.level) if spell.get("cantrip_scaling") else 1
         if not self.cast(f, sid, spell, target, point, up=up, mod=mod, dc=dc, bonus=bonus, mult=mult,
                          level=slot_level or level, slotted=slotted):
             if slotted:
                 spellrules.unspend_slot(c, slot_level)  # (countered: the slot is not spent, 2024)
-        elif scroll is None and charged is None and innate is None:
+            if scroll is not None:
+                self.say("The scroll's words hold; it is not spent.", "magic")
+        elif scroll is not None:
+            remove_item(c, scroll.uid, 1)  # (it crumbles once the spell is cast)
+        elif charged is None and innate is None:
             used = spellrules.spend_material(c, self.t, sid)
             if used:
                 self.say(f"The {used} is gone into the spell.", "magic")
