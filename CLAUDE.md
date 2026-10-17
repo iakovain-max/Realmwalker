@@ -523,6 +523,11 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   kind "summon" with `conc` True and goes when the concentration ends (`Battle.dismiss` from `_end_concentration`).
   The form is the game's choice (`allies.best_form`); traits in `engine/handlers/summons.py`; stat block `on_hit` may
   carry {"op": "kernel", "ops": [...]}. The Auto's worth: `estimates._summon_worth`. Tests: tests/test_summons.py.
+  F.3: a form may say `attack_types`, `shared` (its caster's resistance, a buff with `conc`), `per_day` spells; an
+  attack with `with_multiattack` (a dragon's breath) is part of the Attack action (`Battle.struck_this_turn`); the
+  "dismissed" event (Death Throes). Animate Objects: `summon` `sizes` (`allies.animate_objects`, op kind "objects"),
+  bond kind "objects" acts only after `Battle.command_objects` (the caster's Bonus Action), else Dodges
+  (`_waits_for_word`). Tests: tests/test_summons_high.py.
 - Gear and tools 2024 (Expansion 2 part D): items.json `pack` (opens into its contents, gear.open_pack), `helps`
   {search, traps, force, disguise} (dungeon.helps, law.put_on_disguise), `utilize` (a tool's 2024 uses, on its card),
   `carry` also on carried containers (each kind once, Sheet.pack_carry), `trinket` (data/trinkets.json; the name and

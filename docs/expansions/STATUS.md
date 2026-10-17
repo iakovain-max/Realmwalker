@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 03 Demigods & Magics · Part F (familiars, steeds and summons), F.3 next · branch dlc/03-demigods-magics
+Current: 03 Demigods & Magics · Part F (familiars, steeds and summons), F.4 next · branch dlc/03-demigods-magics
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -24,10 +24,11 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   (great magic and Wish's other uses: Contingency, Magic Jar, Clone, Imprisonment; Wish's Object Creation, Resistance,
   Spell Immunity, Sudden Learning, Reshape Reality, and Roll Redo in a fight: Part E complete) and F.1 (allies on
   the field: Find Familiar's twelve forms and Find Steed's Otherworldly Steed fight beside their owner) and F.2
-  (summoned spirits of levels 2-4: Summon Beast, Fey, Undead, Aberration, Construct, Elemental, Giant Insect)
+  (summoned spirits of levels 2-4: Summon Beast, Fey, Undead, Aberration, Construct, Elemental, Giant Insect) and F.3
+  (the spirits of levels 5-6 and Animate Objects: Summon Celestial, Summon Dragon, Summon Fiend, Animate Objects)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
-  adapted); Expansion 3: 202 done, 311 adapted, 1 omitted of 558 (parts A to E, F.1 and F.2 settled). PHB 61% · DMG 12% · MM 8%
+  adapted); Expansion 3: 202 done, 315 adapted, 1 omitted of 558 (parts A to E and F.1 to F.3 settled). PHB 61% · DMG 12% · MM 8%
 Assumptions waiting for Anton:
 - The Player2 AI writer is removed (tagged `before-ai-removal`); its text is replaced everywhere by the game's own
   words, strengthened where they were thin.
@@ -349,14 +350,37 @@ Ideas for later:
   never outlasts the fight; it uses the caster's real spell attack and DC (not a scroll's); Water Breathing,
   Amorphous Form and Incorporeal Passage are "not yet" traits; Berserk Lashing only strikes (no move toward); Tricksy
   darkness lasts until the spirit's next turn; the mind flayer's whispers hurt the caster's friends too (the book).
-Next session starts at: task F.3 in docs/expansions/03-demigods-magics.md (Part F: Summon Celestial - Avenger or
-Defender, Healing Touch once a day, the Defender's temporary hit points -, Summon Dragon - Shared Resistances on the
-caster, Breath Weapon with its Rends -, Summon Fiend - Demon's Death Throes, Devil's Sight, Magic Resistance, the
-Yugoloth's teleport after its Claws - and Animate Objects - several creatures at once by the caster's spellcasting
-modifier, Medium/Large/Huge, commanded with the caster's Bonus Action, else they Dodge). Write F.3's "How" first.
-The spirits' pages: PHB PDF 326 (Celestial), 327-328 (Dragon), 329-330 (Fiend), 243-244 (Animate Objects); page
-images with tools/codex/extract.py --render phb N. Build on rules/allies.summon_def (a creature's `summon` record).
-Part E, F.1 and F.2 are in `main`.
+- Expansion 3 F.3: the Avenger or Defender, the dragon's resistance (and breath) and the Demon, Devil or Yugoloth are
+  chosen by the game for the fight, as F.2's forms are (the dragon's: the type the foes resist least); the Defender's
+  temporary hit points go to whoever near the target needs them most; Healing Touch is once each time the spirit is
+  summoned; the yugoloth's teleport after its Claws is the game's choice (beside the next foe when its target fell,
+  out of a crowd when bloodied), for the player's spirit too; Devil's Sight sees through magical darkness within its
+  darkvision (fog and walls still hide). Animate Objects: the game picks the sizes (a Huge one against a single great
+  foe, Large ones in pairs, a Medium one for the rest) and what they are follows the place (a chest, a table, a statue
+  under a roof; a stone, a log, a boulder outside); they act only on their caster's Bonus Action command (else they
+  Dodge), and a creature that casts it commands them as part of its own turn; damage carried over to the object at 0
+  is not kept. A creature the player commands now makes its Multiattack's attacks (it made one before), and a breath
+  it is given is aimed at the target. The 500 GP reliquary is a new "silver reliquary" (the 1,000 GP gilded one, Holy
+  Aura's, serves too).
+Next session starts at: task F.4 in docs/expansions/03-demigods-magics.md (Part F: the dead and the bound - Animate
+Dead (a skeleton or a zombie from bones or a corpse; four held again each day by a new casting; commanded with the
+Bonus Action as F.3's animated objects are), Create Undead (ghouls, ghasts, wights, mummies by the slot), Finger of
+Death's zombie, Planar Ally and Planar Binding (and Magic Circle reversed): servants that outlast a fight, follow the
+party outside it and must be held again or they go free). Write F.4's "How" first. The pages (PHB PDF): Animate Dead
+243, Create Undead 261, Finger of Death 276, Planar Ally 307, Planar Binding 308; the stat blocks in the MM (skeleton
+285, zombie 349, ghoul 135, ghast 133, wight 335, mummy 222; page images with tools/codex/extract.py --render mm N).
+Build on rules/allies (F.1's records kept on the owner for servants that outlast a fight; F.3's commanding:
+`Battle.objects_of`, `command_objects`, `_waits_for_word`).
+Part E and F.1 to F.3 are in `main`.
+The way of Part F (F.3): a summoned creature's form may say `attack_types` {attack: type} (a draconic spirit's
+breath), `shared` (a resistance its caster gets while the spell holds: a buff with `conc`), `ac` (+2 for the Defender)
+and its record `per_day` (a creature spell once a summoning: Healing Touch); an attack with `with_multiattack` is part
+of the Attack action (`Battle.area_attack`, `struck_this_turn`; tactics `_breath_with_blows`); kernel `special`
+"defender_ward", traits magic_resistance, death_throes (the new "dismissed" event from `Battle.dismiss`),
+devils_sight (`Battle._devils_sight`), yugoloth_step. Animate Objects: the creature's `summon` has `sizes` in place of
+`forms` (`allies.object_sizes`, `object_def`, `animate_objects`; the "ally" op's kind "objects"); bond kind
+"objects" waits for `Battle.command_objects` (the caster's "command_objects" ability, a Bonus Action; the Auto's
+`tactics._command_objects`). Tests: tests/test_summons_high.py.
 The way of Part F (F.2): a summoned creature has a `summon` record in creatures.allies.json (the spell's `level`, `ac`
 and `hp` at it, `hp_up` a level, `forms` {form: name, picture, hp, ac, speeds, traits, attacks, damage_type, resist,
 immune, spells, likes, weight}); its stat block's attacks marked `plus_level` add the slot level; `allies.summon_def`
@@ -415,6 +439,7 @@ casting time. A spell aimed at something chosen lists Subjects (game/divining.Su
 | 2026-10-17 | Demigods & Magics E.7: great magic (Contingency, Magic Jar, Clone, Imprisonment) and Wish's other uses (Instant Health, Object Creation, Resistance, Spell Immunity, Sudden Learning, Reshape Reality; Roll Redo in a fight); Part E complete, merged into `main` | `dlc/03-demigods-magics` |
 | 2026-10-17 | Demigods & Magics F.1: allies on the field - Find Familiar (twelve forms of Appendix B, it Helps, keeps watch, follows on the map) and Find Steed (the Otherworldly Steed by its slot, its kind's gift, Life Bond, a mount on the road); Part F split in four; merged into `main` | `dlc/03-demigods-magics` |
 | 2026-10-17 | Demigods & Magics F.2: summoned spirits of levels 2-4 - Summon Beast, Fey, Undead, Aberration, Construct, Elemental and Giant Insect (numbers by the slot, held by concentration, the form picked for the fight, every trait and blow, the costly components); F.2 split, F.3 next; merged into `main` | `dlc/03-demigods-magics` |
+| 2026-10-17 | Demigods & Magics F.3: the spirits of levels 5-6 (Summon Celestial: Avenger or Defender, Healing Touch; Summon Dragon: the breath with the Rends, its resistance shared; Summon Fiend: Death Throes, Devil's Sight, the yugoloth's step, Magic Resistance) and Animate Objects (things by the caster's modifier, commanded with the Bonus Action); F.4 next; merged into `main` | `dlc/03-demigods-magics` |
 
 ## Notes for the next session
 

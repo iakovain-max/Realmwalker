@@ -462,7 +462,7 @@ stat block now comes with the spell that brings it into play (never a block that
 - [x] F.2 Summoned spirits, levels 2-4 (split at its start, 2026-10-17): a creature whose numbers grow with the
   slot, held by concentration; Summon Beast, Summon Fey, Summon Undead, Summon Aberration, Summon Construct, Summon
   Elemental and Giant Insect, with their stat blocks, pictures and the costly components.
-- [ ] F.3 Summoned spirits, levels 5-6: Summon Celestial, Summon Dragon (Shared Resistances, Breath Weapon), Summon
+- [x] F.3 Summoned spirits, levels 5-6: Summon Celestial, Summon Dragon (Shared Resistances, Breath Weapon), Summon
   Fiend (Death Throes) and Animate Objects (several creatures at once, commanded with the caster's Bonus Action).
 - [ ] F.4 The dead and the bound: Animate Dead, Create Undead, Finger of Death's zombie, Planar Ally, Planar Binding
   (and Magic Circle reversed): servants that outlast a fight and must be held again.
