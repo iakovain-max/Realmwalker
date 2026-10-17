@@ -647,6 +647,10 @@ def suggest(char: Character, tables, choice: dict, opts: list | None = None) -> 
     kind = choice["kind"]
     cls = tables.classes[char.cls]
     if kind == "subclass":
+        arcane = {"fighter": "eldritch_knight", "rogue": "arcane_trickster"}.get(char.cls)
+        if arcane in ids and char.abilities.get("int", 10) >= 14 \
+                and feats.archetype(char, tables) not in ("great_weapon", "shield"):
+            return arcane  # (a sharp mind with a blade: the wizard's art beside it, Expansion 4 Part B)
         want = SUBCLASS_FOR.get(char.cls, {}).get(feats.archetype(char, tables))
         return want if want in ids else ids[0]
     if kind == "option" and any(i.startswith("maneuver_") for i in ids):

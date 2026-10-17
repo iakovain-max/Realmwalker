@@ -263,6 +263,8 @@ def _buff_status(b, f, bf: dict, tables) -> Status | None:
         kind = "marked"  # (Distracting Strike)
     elif bf.get("maneuver_die"):
         kind = "guided"  # (a feint's, a lunge's or a commanded strike's die waiting for the hit)
+    elif bf.get("eldritch_struck") is not None:
+        kind = "baned"  # (an Eldritch Knight's Eldritch Strike: the next save against their spell is harder)
     else:
         kind = "spell"
     title, text = _WORDS[kind]
@@ -286,6 +288,10 @@ def _buff_status(b, f, bf: dict, tables) -> Status | None:
     elif kind == "marked" and bf.get("exposed") is not None:
         title, lines = "Distracted", ["The next attack against them by anyone but "
                                       f"{esc(_name_of(b, bf['exposed']))} has advantage."]
+    elif kind == "baned" and bf.get("eldritch_struck") is not None:
+        title, lines = "Eldritch Strike", ["Disadvantage on the next save against a spell of "
+                                           f"{esc(_name_of(b, bf['eldritch_struck']))}'s, until the end of their next "
+                                           "turn."]
     elif kind == "guided" and bf.get("maneuver_die"):
         title, lines = "A maneuver ready", [f"Their next hit{' in melee after moving' if bf.get('melee') else ''} adds "
                                             f"{int(bf['maneuver_die'])} to the damage (a superiority die)."]

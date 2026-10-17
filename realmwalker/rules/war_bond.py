@@ -20,7 +20,8 @@ MAX_BONDS = 2
 def bonds(char: Character | None) -> dict:
     if char is None or not isinstance(char.spells, dict):
         return {}
-    return char.spells.get(KEY) or {}
+    have = char.spells.get(KEY)
+    return have if have is not None else {}
 
 
 def is_bonded(char: Character | None, item) -> bool:

@@ -1326,6 +1326,45 @@ def dlc_icons() -> dict[str, Image.Image]:
     return out
 
 
+def spectral_hand() -> Image.Image:
+    """An Arcane Trickster's unseen hand (Expansion 4 Part B), as its friends see it on the battle mat: an open hand
+    of pale, cold light, fingers spread, with a faint glow behind. Drawn from a pixel map (o outline, # light, + shade,
+    * gleam, - the fading wrist)."""
+    rows = [
+        "          oo              ",
+        "       oo o*o oo          ",
+        "       o*oo#oo*o          ",
+        "       o#oo#oo#o oo       ",
+        "       o#oo#oo#oo*o       ",
+        "       o#oo#oo#oo#o       ",
+        "       o#oo#oo#oo#o       ",
+        "  oo   o#+o#+o#+o#o       ",
+        "  o*o  o#+o#+o#+o#o       ",
+        "  o#+o o##########o       ",
+        "   o#+oo##########o       ",
+        "    o#+###########o       ",
+        "     o############o       ",
+        "     o###########+o       ",
+        "      o##########+o       ",
+        "      o#########++o       ",
+        "       o#######++o        ",
+        "        o#######+o        ",
+        "        o--------o        ",
+        "        oooooooooo        ",
+    ]
+    colours = {"o": (54, 74, 140, 235), "#": (214, 232, 255, 220), "+": (160, 190, 238, 220),
+               "*": (255, 255, 255, 240), "-": (186, 210, 248, 150)}
+    im = blank()
+    d = ImageDraw.Draw(im)
+    d.ellipse([4, 2, 28, 30], fill=(150, 190, 255, 55))
+    x0, y0 = 3, 5
+    for y, row in enumerate(rows):
+        for x, ch in enumerate(row):
+            if ch in colours:
+                d.point((x0 + x, y0 + y), fill=colours[ch])
+    return im
+
+
 def all_drawn() -> dict[str, Image.Image]:
     """Every tile this module draws, by its name in the atlas."""
     out: dict[str, Image.Image] = {}
@@ -1367,6 +1406,7 @@ def all_drawn() -> dict[str, Image.Image]:
         out[f"feature/rock_{i}"] = boulder(685 + i)
     out["feature/well"] = well(690)
     out["feature/chains"] = chains(700)
+    out["fx/unseen_hand_glow"] = spectral_hand()  # (an Arcane Trickster's Mage Hand on the battle mat)
     for kind in SENSED:
         out[f"mark/sensed_{kind}"] = sensed_mark(kind)
     for i in range(2):

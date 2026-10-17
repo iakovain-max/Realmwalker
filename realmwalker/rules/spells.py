@@ -74,8 +74,9 @@ def casting(char: Character, tables) -> dict | None:
         return None
     if cls.get("spellcasting"):
         return cls["spellcasting"]
-    if char.subclass:
-        return (cls.get("subclasses", {}).get(char.subclass) or {}).get("spellcasting")
+    sub = getattr(char, "subclass", None)
+    if sub:
+        return (cls.get("subclasses", {}).get(sub) or {}).get("spellcasting")
     return None
 
 
@@ -204,6 +205,8 @@ PREPARE_WEIGHTS = {
     "healer": {"heal": 6.0, "buff": 4.0, "harm": 3.0, "guard": 2.0, "other": 0.5},
     "caster": {"harm": 6.0, "guard": 4.5, "buff": 3.0, "heal": 2.0, "other": 0.5},
     "_": {"buff": 5.0, "harm": 4.0, "heal": 4.0, "guard": 2.0, "other": 0.5},
+    # a blade that casts (the Eldritch Knight, the Arcane Trickster): Shield first, then what strikes many
+    "third": {"guard": 7.0, "harm": 5.0, "buff": 4.0, "heal": 1.0, "other": 0.5},
 }
 
 
@@ -229,7 +232,8 @@ def auto_prepare_order(char: Character, tables, pool: list[str], have: list[str]
     needed (Ritual Adept), so they come last."""
     from realmwalker.rules import feats
 
-    weights = PREPARE_WEIGHTS.get(feats.archetype(char, tables), PREPARE_WEIGHTS["_"])
+    weights = PREPARE_WEIGHTS["third"] if (casting(char, tables) or {}).get("changes") == "level" else \
+        PREPARE_WEIGHTS.get(feats.archetype(char, tables), PREPARE_WEIGHTS["_"])
     kinds: dict[str, int] = {}
     for sid in have:
         k = prepare_kind(tables.spells[sid])

@@ -868,6 +868,12 @@ def steal_from_shop(game, npc, item_id: str) -> tuple[bool, str]:
     hand = stonework.hand_ready(game)  # (Mage Hand: from 30 feet away, with Advantage)
     if hand:
         stonework.spend_hand(game)
+    from realmwalker.game import legerdemain
+
+    unseen = legerdemain.trickster(game)  # (an Arcane Trickster's unseen hand: nobody sees who does it)
+    if unseen is not None:
+        hand = True
+        sheet = game.sheet(unseen)
     roll = dice.d20(rng, advantage=hand).natural + sheet.skill_bonus("sleight_of_hand")
     watch_dc = 11 + (3 if "suspicious" in npc.traits else 0) - (2 if "weary" in npc.traits else 0)
     watch_dc = max(5, watch_dc - glamour.watcher_minus(game, npc))  # (Enthrall, an illusion: eyes elsewhere)
@@ -880,12 +886,20 @@ def steal_from_shop(game, npc, item_id: str) -> tuple[bool, str]:
         add_item(game.leader, game.tables.items, item_id, 1, made_at=game.world.time, tags=["stolen"])
         seen_by = [n for n in witnesses_here(game, exclude=[npc])
                    if dice.d20(rng).natural + 1 - glamour.watcher_minus(game, n) >= roll]
+        if unseen is not None:
+            seen_by = []  # (the hand cannot be seen, and nobody near it moved)
+            return True, (f"<loot>{legerdemain.first(unseen)}'s unseen hand lifts the {name} off the stall and brings "
+                          f"it away.</> <dim>(Sleight of Hand {roll} vs {watch_dc}, the unseen hand: advantage)</>")
         text = (f"<loot>{'A spectral hand lifts the ' + name + ' and brings it to you' if hand else 'The ' + name + ' goes into your sleeve'}"
                 f".</> <dim>(Sleight of Hand {roll} vs {watch_dc}{', Mage Hand: advantage' if hand else ''})</>")
         if seen_by:
             text += f" <warn>But {seen_by[0].label()} saw.</>"
             commit(game, "theft", victim=npc, value=value, witnesses=seen_by)
         return True, text
+    if unseen is not None:  # (nothing to see: the thing falls, and nobody knows why)
+        npc.remember("saw wares fall from the stall by themselves")
+        return False, (f"The {name} slips from the unseen hand and falls among the wares; {npc.first_name} puts it "
+                       f"back with a puzzled look. <dim>(Sleight of Hand {roll} vs {watch_dc}, the unseen hand)</>")
     if hand:  # (the hand is seen, not you: nobody can grab your wrist, but the magic was seen)
         change_disposition(npc, -20)
         npc.remember("saw a ghostly hand at the stall")

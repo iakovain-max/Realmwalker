@@ -1100,6 +1100,8 @@ def _party_turn(b: Battle, f: Fighter) -> None:
         for opt, _ in _abilities(b, f, "sense"):  # a foe it cannot see: feel for it through the stone
             b.do_ability(f, opt.value)
             break
+    if b.has_action(f) and f.bonus > 0 and _arcane_bonus(b, f):
+        opts = [o for o in b.attack_options(f) if o.available]  # (a weapon called to hand: its blows now)
     if opts and b.has_action(f):
         _maneuvers_first(b, f, opts)  # (a Battle Master's Commander's Strike, Bait and Switch, feint or lunge)
     if opts and b.has_action(f) and f.bonus > 0 and best_plan(b, f, opts) is None:
@@ -1230,6 +1232,45 @@ def _maneuvers_first(b: Battle, f: Fighter, opts: list) -> None:
         for opt, a in _abilities(b, f, "lunge"):
             b.do_ability(f, opt.value)
             return
+
+
+def _arcane_bonus(b: Battle, f: Fighter) -> bool:
+    """An Eldritch Knight's or Arcane Trickster's bonus action before striking (Expansion 4 Part B): a bonded weapon
+    called to hand - one thrown and lying on the field, or the other bond when the one held cannot reach (a bow with
+    blades all round, a blade with nobody near) - and the unseen hand set beside a foe that stands by another, so a
+    Cunning Strike's Trip catches both (Versatile Trickster). True if one was used."""
+    from realmwalker.rules import war_bond
+    from realmwalker.rules.engine.handlers import arcane
+
+    if b.current is not f or b.outcome is not None or f.bonus <= 0 or f.char is None:
+        return False
+    for opt, a in _abilities(b, f, "rearm"):
+        away = war_bond.away(b, f)
+        held = f.char.equipped_item("main_hand")
+        thrown = [it for it in away if it in b.thrown]
+        if thrown and (held is None or b.t.items.get(held.def_id).get("category") != "weapon"):
+            b.do_ability(f, opt.value)
+            return True
+        rest = [it for it in away if it not in b.thrown]
+        if not rest or held is None:
+            continue
+        shoots = "ranged" in b.t.items.get(held.def_id).get("properties", ())
+        other = "ranged" in b.t.items.get(rest[0].def_id).get("properties", ())
+        foes = [e for e in b.enemies_of(f) if e.active and e.standing]
+        pressed = any(b.gap(f, e) <= 1 for e in foes)
+        far = foes and min(b.gap(f, e) for e in foes) > 6  # (more than 30 feet: no blade reaches this turn)
+        if (shoots and not other and pressed) or (not shoots and other and far):
+            b.do_ability(f, opt.value)
+            return True
+    if f.has_trait("versatile_trickster") and arcane.hand_of(b, f) is None:
+        for opt, a in _abilities(b, f, "hand"):
+            pairs = [e for e in opt.targets if e.standing and b.gap(f, e) > 1
+                     and any(x is not e and x.standing and b.gap(x, e) <= 1 and b.gap(f, x) <= 1
+                             for x in b.enemies_of(f))]
+            if pairs:
+                b.do_ability(f, opt.value, min(pairs, key=lambda e: (e.hp, e.id)))
+                return True
+    return False
 
 
 def _maneuvers_after(b: Battle, f: Fighter) -> bool:
