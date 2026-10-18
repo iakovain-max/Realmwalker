@@ -2,7 +2,8 @@
 one does. p prepares the chosen spell or puts it aside (2024: the list changes after a long rest or a new level, one
 spell after a short rest for a wizard's Memorize Spell; an empty place may be filled at any time). A spell that works
 outside a fight (one that lasts, like Mage Armour, or one that heals) can be cast from here: pick it, pick who it is
-for, Enter."""
+for, Enter. Spells a wand, a staff or a rod can cast outside a fight are listed last (Expansion 5 Part D): Enter
+spends its charges, l pours more in for a higher level."""
 
 from __future__ import annotations
 
@@ -208,6 +209,56 @@ def spell_detail(game, char, sid: str, target, slot: int | None = None) -> list[
     return lines
 
 
+def item_spell(game, char, value):
+    """(item, property) of a spell listed from a wand, a staff or a rod ("charge:<uid>:<spell>"), or None."""
+    if not str(value).startswith("charge:"):
+        return None
+    _, uid, sid = str(value).split(":", 2)
+    return next(((it, pr) for it, pr in magic.item_spells(game, char) if it.uid == int(uid) and pr["spell"] == sid),
+                None)
+
+
+def spell_of(value) -> str:
+    return str(value).split(":", 2)[2] if str(value).startswith("charge:") else value
+
+
+def item_detail(game, char, value, target, slot: int | None = None) -> list[str]:
+    """What a spell drawn from a magic thing is, what it costs of the thing's charges, and whether it can be cast."""
+    from realmwalker.rules import magic as magicrules
+
+    t = game.tables
+    held = item_spell(game, char, value)
+    if held is None:
+        return []
+    it, prop = held
+    sid = spell_of(value)
+    spell = t.spells[sid]
+    store = magicrules.pool(it) or {}
+    title = markup.escape(it.magic.get("title") or t.items.name(it, False))
+    levels = magicrules.charge_levels(it, prop, int(spell["level"]))
+    level = slot if slot in levels else levels[0]
+    cost = magicrules.charge_cost(prop, level)
+    lines = [f"<magic>{markup.escape(spell['name'])}</> <dim>from the {title}</>", markup.escape(spell.get("text", "")),
+             "<dim>" + ("At will." if magicrules.pooled(prop) and cost <= 0 else
+                        f"{cost} charge{'s' if cost != 1 else ''} of {store.get('left', 0)} left" if store else
+                        f"{magicrules.charges_left(prop, it)} left") + (f", at level {level}" if level > spell["level"]
+                                                                        else "") + "</>"]
+    if len(levels) > 1:
+        gain = sp.up_gain(spell, level - spell["level"]) if level > spell["level"] else []
+        lines.append("<magic>Charges:</> " + (f"<good>{', '.join(gain)}</>" if gain else "its own level")
+                     + " <dim>(l: more or fewer)</>")
+    problem = magic.road_problem(game, char, sid, target, charge=held)
+    if problem is None:
+        whom = ""
+        if magic.road_targets(game, char, sid):
+            whom = " on yourself" if target is char else f" on {markup.escape(getattr(target, 'name', '').split()[0])}" \
+                if getattr(target, "name", "") else ""
+        lines.append(f"<good>Enter casts it{whom} now.</>")
+    else:
+        lines.append(f"<dim>{markup.escape(problem[:1].upper() + problem[1:])}.</>")
+    return lines
+
+
 class SpellsScreen(Screen):
     title = "Spells"
     sound_open = "ui_page"
@@ -234,7 +285,9 @@ class SpellsScreen(Screen):
         c = self.char
         known = list(dict.fromkeys(sp.known_spells(c, t) + sp.preparable(c, t) + sp.ritual_spells(c, t)
                                    + feats.ritual_spells(c, t)))
-        return sorted(known, key=lambda s: (t.spells[s]["level"], t.spells[s]["name"]))
+        things = [f"charge:{it.uid}:{pr['spell']}" for it, pr in magic.item_spells(self.game, c)]
+        return sorted(known, key=lambda s: (t.spells[s]["level"], t.spells[s]["name"])) + \
+            sorted(dict.fromkeys(things), key=lambda v: t.spells[spell_of(v)]["name"])
 
     def current(self) -> str | None:
         spells = self.spells()
@@ -245,7 +298,7 @@ class SpellsScreen(Screen):
 
     def targets(self) -> list:
         sid = self.current()
-        return magic.road_targets(self.game, self.char, sid) if sid else []
+        return magic.road_targets(self.game, self.char, spell_of(sid)) if sid else []
 
     def chosen_target(self):
         targets = self.targets()
@@ -261,6 +314,14 @@ class SpellsScreen(Screen):
         sid = self.current()
         if sid is None:
             return
+        held = item_spell(self.game, self.char, sid)
+        if held is not None:  # (a wand's, a staff's or a rod's spell: its charges)
+            lines = magic.cast_on_road(self.game, self.char, spell_of(sid), self.chosen_target(), self.slot,
+                                       charge=held)
+            for text in lines:
+                self.game.say(text, "magic")
+            self.message = " ".join(lines)
+            return
         lines = magic.cast_on_road(self.game, self.char, sid, self.chosen_target(), self.slot)
         for text in lines:
             self.game.say(text, "magic")
@@ -271,6 +332,16 @@ class SpellsScreen(Screen):
         sid = self.current()
         t = self.game.tables
         if sid is None:
+            return
+        held = item_spell(self.game, self.char, sid)
+        if held is not None:  # (more charges, a higher level)
+            from realmwalker.rules import magic as magicrules
+
+            levels = magicrules.charge_levels(held[0], held[1], int(t.spells[spell_of(sid)]["level"]))
+            now = self.slot if self.slot in levels else levels[0]
+            self.slot = levels[(levels.index(now) + 1) % len(levels)] if len(levels) > 1 else None
+            if len(levels) < 2:
+                self.message = "It takes no more charges than that."
             return
         levels = sp.slot_choices(self.char, t, sid)
         if not sp.upcasts(t.spells[sid]) or len(levels) < 2:
@@ -284,7 +355,7 @@ class SpellsScreen(Screen):
         """Prepare the chosen spell, or put it aside."""
         sid = self.current()
         t = self.game.tables
-        if sid is None or t.spells[sid]["level"] == 0 or not sp.prepared_count(self.char, t):
+        if sid is None or sid.startswith("charge:") or t.spells[sid]["level"] == 0 or not sp.prepared_count(self.char, t):
             return
         if self.game.battle is not None:
             self.message = "Not in the middle of a fight."
@@ -295,7 +366,7 @@ class SpellsScreen(Screen):
     def scribe(self) -> None:
         """Write the chosen spell out as a scroll (ink and quill, parchment, inks and a slot)."""
         sid = self.current()
-        if sid is None:
+        if sid is None or sid.startswith("charge:"):
             return
         lines = magic.scribe(self.game, self.char, sid)
         for text in lines:
@@ -372,9 +443,10 @@ class SpellsScreen(Screen):
         rows: list[tuple[str, str | None]] = []
         last = None
         for i, s in enumerate(spells):
-            level = t.spells[s]["level"]
+            level = "items" if s.startswith("charge:") else t.spells[s]["level"]
             if level != last:
-                rows.append(("Cantrips" if level == 0 else f"Level {level}", None))
+                rows.append(("Wands, staffs, rods" if level == "items" else "Cantrips" if level == 0
+                             else f"Level {level}", None))
                 last = level
             rows.append((s, str(i)))
         visible = max(1, bottom - 2)
@@ -396,15 +468,23 @@ class SpellsScreen(Screen):
                 if chosen:
                     canvas.fill(2, y, lw, 1, colors.HILITE_BG)
                 canvas.hit(2, y, lw, 1, lambda idx=idx: setattr(self, "sel", idx))
-                ready = label in known
-                ok = ready and sp.can_cast(c, t, label)[0]
-                road = magic.road_problem(game, c, label, target if chosen else None) is None
+                held = item_spell(game, c, label)
+                if held is not None:  # (a wand's, a staff's or a rod's spell)
+                    from realmwalker.rules import magic as magicrules
+
+                    ok = magicrules.charges_left(held[1], held[0]) > 0
+                    road = magic.road_problem(game, c, spell_of(label), target if chosen else None,
+                                              charge=held) is None
+                else:
+                    ready = label in known
+                    ok = ready and sp.can_cast(c, t, label)[0]
+                    road = magic.road_problem(game, c, label, target if chosen else None) is None
                 bg = colors.HILITE_BG if chosen else None
                 canvas.text(2, y, "►" if chosen else " ", colors.TITLE, bg)
                 canvas.text(3, y, "●" if road else " ", colors.named("good"), bg)
                 mark = "◆" if label in always else ("√" if label in mine else " ")
                 canvas.text(4, y, mark, colors.named("magic"), bg)
-                canvas.text(6, y, t.spells[label]["name"], colors.SELECT_FG if chosen else
+                canvas.text(6, y, t.spells[spell_of(label)]["name"], colors.SELECT_FG if chosen else
                             (colors.named("magic") if ok else colors.DIM), bg, max_width=lw - 4)
             y += 1
         if len(rows) > visible:
@@ -419,7 +499,9 @@ class SpellsScreen(Screen):
         now = working_now(game)
         if now:
             lines += ["<title>Working now</>"] + now + [""]
-        if sid:
+        if sid and sid.startswith("charge:"):
+            lines += item_detail(game, c, sid, target, self.slot)
+        elif sid:
             lines += spell_detail(game, c, sid, target, self.slot)
         y = 2
         for line in lines:
@@ -430,7 +512,11 @@ class SpellsScreen(Screen):
             canvas.wrapped(rx, bottom - 1, self.message, rw, max_lines=2)
         # Buttons along the bottom.
         bx = canvas.button(2, h - 2, "Close", self.close, hotkey="Esc")
-        if sid:
+        held = item_spell(game, c, sid) if sid else None
+        if held is not None:
+            bx = canvas.button(bx + 2, h - 2, "Cast", self.cast, hotkey="Enter",
+                               enabled=magic.road_problem(game, c, spell_of(sid), target, charge=held) is None)
+        elif sid:
             bx = canvas.button(bx + 2, h - 2, "Cast", self.cast, hotkey="Enter",
                                enabled=magic.road_problem(game, c, sid, target) is None)
             level = game.tables.spells[sid]["level"]
@@ -452,7 +538,7 @@ class SpellsScreen(Screen):
                                    f"parchment, {magic.money_text(magic.scribe_cost(level))} of inks and a spell slot).")
         if len(game.party) > 1:
             bx = canvas.button(bx + 2, h - 2, "Next member", self.next_member, hotkey="Tab")
-        place = sid is not None and t.spells[sid]["target"] == "place"
+        place = sid is not None and t.spells[spell_of(sid)]["target"] == "place"
         hint = "↑↓ choose" + ((" · ←→ where" if place else " · ←→ on whom") if self.targets() else "")
         canvas.text(bx + 2, h - 2, hint, colors.FAINT, max_width=max(0, w - bx - 4))
 

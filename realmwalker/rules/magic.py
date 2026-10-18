@@ -15,6 +15,13 @@ An item's magic is `Item.magic`: {"rarity", "props": [{"kind", "value", ...}], "
   `bearings` {"value"}: a needle that finds north (GameState.bearings_bonus).
 Any property may say `daily`: used once (`today`), it is ready again at dawn (`dawn`; rules/engine/handlers/arms.py).
 
+Wands, staffs and rods (Expansion 5 Part D) keep one store of charges for all their spells: a `pool` property {"value",
+"left", "regain", "last", "lucky"} and spells drawn from it, `charges` properties with a `cost` (0: at will) and maybe
+`level` (the version cast), `more` (charges that may be added, a level each: the Wand of Fireballs, the Staff of
+Healing's Cure Wounds), `dc` and `attack` (the item's own numbers; else the user's). When the last charge goes, `last`
+says what a d20 of 1 does (`drained`): "crumble", "vanish" or "display" (gone), "mundane" (a plain thing of its kind),
+"weaken" (only its +N to hit and damage stays: the Staff of Power); `lucky` dice come back on a 20.
+
 Attunement (PHB 2024): an item with `attune` works only for the one attuned to it, three items at most, one copy of a
 kind; attuning and ending it take a short rest focused on the item (game/magic_items.py); a cursed item's attunement
 cannot be ended. A property of an item that needs attunement works while attuned, if the item is worn or wielded or
@@ -153,10 +160,47 @@ def charges(char) -> list[tuple[object, dict]]:
             if p.get("kind") == "charges" and p.get("spell") and working(char, it)]
 
 
-def spend_charge(prop: dict, rng) -> bool:
-    """Use one charge (none for an at-will power); a `keep_on` power may keep it. True if a charge was spent."""
+def pool(item) -> dict | None:
+    """The store of charges a wand, staff or rod shares among its spells (a `pool` property), if it has one."""
+    return next((p for p in props(item) if p.get("kind") == "pool"), None)
+
+
+def pooled(prop: dict) -> bool:
+    """A spell drawn from its item's store of charges (it says its `cost`)."""
+    return prop.get("cost") is not None
+
+
+def charge_cost(prop: dict, level: int | None = None) -> int:
+    """Charges a spell from the store takes, cast at `level` (each level above its own takes one more)."""
+    base = int(prop.get("cost", 1))
+    if level is None or not prop.get("more"):
+        return base
+    return base + max(0, min(int(prop["more"]), int(level) - int(prop.get("level", 0))))
+
+
+def charge_levels(item, prop: dict, own: int) -> list[int]:
+    """The levels this item's spell can be cast at now: its own version, and one more for each charge added (no
+    more than the store holds)."""
+    first = int(prop.get("level", own))
+    if not pooled(prop) or not prop.get("more"):
+        return [first]
+    store = pool(item)
+    left = int(store.get("left", store.get("value", 0))) if store else 0
+    return [first + n for n in range(int(prop["more"]) + 1) if int(prop.get("cost", 1)) + n <= left] or [first]
+
+
+def spend_charge(prop: dict, rng, item=None, level: int | None = None) -> bool:
+    """Use one charge (none for an at-will power); a `keep_on` power may keep it; a spell of a store takes its cost
+    (more for a higher `level`). True if a charge was spent."""
     if prop.get("at_will"):
         return False
+    if pooled(prop):
+        cost = charge_cost(prop, level)
+        store = pool(item) if item is not None else None
+        if store is None or cost <= 0:
+            return False
+        store["left"] = max(0, int(store.get("left", store.get("value", 0))) - cost)
+        return True
     keep = int(prop.get("keep_on", 0) or 0)
     if prop.get("daily"):
         prop["today"] = 1  # (a power used once between dawns, whatever charges are left: the Luck Blade's Wish)
@@ -166,12 +210,56 @@ def spend_charge(prop: dict, rng) -> bool:
     return True
 
 
-def charges_left(prop: dict) -> int:
+def charges_left(prop: dict, item=None) -> int:
+    """How many times it can still be used: charges left, or casts the store still pays for (at will: 1)."""
     if prop.get("at_will"):
         return 1
     if prop.get("daily") and prop.get("today"):
         return 0  # (used since the last dawn)
+    if pooled(prop):
+        cost = int(prop.get("cost", 1))
+        if cost <= 0:
+            return 1
+        store = pool(item) if item is not None else None
+        return int(store.get("left", store.get("value", 0))) // cost if store else 0
     return int(prop.get("left", prop.get("value", 1)))
+
+
+def drained(char, item, rng) -> list[str]:
+    """After a charge is spent: if that was the last of the store, a d20 says what becomes of the thing (DMG 2024).
+    Returns what to say (empty when nothing happened). The item is taken from `char` when it is gone."""
+    store = pool(item)
+    if store is None or int(store.get("left", 0)) > 0 or not (store.get("last") or store.get("lucky")):
+        return []
+    from realmwalker.core import dice
+
+    roll = rng.randint(1, 20)
+    name = item.magic.get("title") or "it"
+    if roll == 20 and store.get("lucky"):
+        back = max(1, dice.roll(str(store["lucky"]), rng).total)
+        store["left"] = min(int(store.get("value", back)), back)
+        return [f"The last charge goes out of the {name}, and the power floods back into it ({back} charges)."]
+    if roll != 1 or not store.get("last"):
+        return []
+    last = store["last"]
+    if last in ("crumble", "vanish", "display"):
+        from realmwalker.rules.inventory import remove_item
+
+        remove_item(char, item.uid, 1)
+        char.attuned = [u for u in char.attuned if u != item.uid]
+        return [f"The {name} " + {"crumble": "crumbles into ashes and is gone.",
+                                  "vanish": "vanishes in a flash of light, lost for ever.",
+                                  "display": "goes up in a last harmless blaze of coloured fire and is gone."}[last]]
+    if last == "mundane":
+        char.attuned = [u for u in char.attuned if u != item.uid]
+        item.magic = {}
+        return [f"The {name} gives up its last power: it is a plain thing now."]
+    if last == "weaken":
+        item.magic["props"] = [p for p in props(item) if p.get("kind") == "bonus"]
+        item.magic["attune"] = False
+        char.attuned = [u for u in char.attuned if u != item.uid]
+        return [f"The {name} goes dull: its strength as a weapon stays, and every other power is gone."]
+    return []
 
 
 def dawn(items, rng) -> None:
@@ -182,7 +270,7 @@ def dawn(items, rng) -> None:
         for p in props(it):
             if p.get("daily"):
                 p.pop("today", None)  # (once a day: ready again)
-            if p.get("kind") != "charges" or p.get("at_will") or p.get("no_regain"):
+            if p.get("kind") not in ("charges", "pool") or p.get("at_will") or p.get("no_regain") or pooled(p):
                 continue
             most = int(p.get("value", 1))
             if p.get("regain"):
@@ -195,7 +283,7 @@ def recharge(char) -> None:
     """Everything back to full (a long rest where no dawn is counted: tests and old callers)."""
     for it, p in [(it, p) for it in char.inventory for p in props(it)]:
         p.pop("today", None)
-        if p.get("kind") == "charges" and not p.get("no_regain"):
+        if p.get("kind") in ("charges", "pool") and not p.get("no_regain") and not pooled(p):
             p["left"] = int(p.get("value", 1))
 
 

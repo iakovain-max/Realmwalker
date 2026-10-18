@@ -104,11 +104,13 @@ def healing_magic(game, caster: Character) -> list[tuple[str, str, bool, str]]:
 def cast(game, caster: Character, patient: Character, wound, spell_id: str, slot_level: int | None = None,
          free: bool = False) -> list[str]:
     """Cast a healing spell outside battle: it uses a slot like any other casting (`slot_level`: a higher one heals
-    more); `free`: read from a scroll (no slot, no materials, at the spell's own level)."""
+    more); `free`: read from a scroll or drawn from a staff (no slot, no materials; at `slot_level` if one is given,
+    else at the spell's own level)."""
     t = game.tables
     spell = t.spells[spell_id]
     level = spell["level"]
-    slot = None
+    slot = slot_level if free and slot_level and slot_level > level else None  # (a staff's Cure Wounds: charges
+    # for a higher level, no slot)
     if not free:
         ok, why = spellrules.can_cast(caster, t, spell_id)
         if not ok:

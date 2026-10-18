@@ -281,9 +281,11 @@ def _needs(game, spell, target) -> bool:
     return any(c.hp < c.max_hp or c.wounds for c in who)
 
 
-def road_problem(game, caster, spell_id: str, target=None, scroll=None, hired: bool = False) -> str | None:
+def road_problem(game, caster, spell_id: str, target=None, scroll=None, hired: bool = False,
+                 charge=None) -> str | None:
     """Why this spell can't be cast here and now (None when it can); `scroll`: read from that scroll instead;
-    `hired`: cast for pay by a townsperson (game/spellhire.py), who has the slot and the materials."""
+    `hired`: cast for pay by a townsperson (game/spellhire.py), who has the slot and the materials; `charge`: (item,
+    property) drawn from a wand, a staff or a rod (Expansion 5 Part D: no slot, no materials)."""
     t = game.tables
     spell = t.spells[spell_id]
     ok, why = spellrules.on_the_road(t, spell_id)
@@ -299,6 +301,13 @@ def road_problem(game, caster, spell_id: str, target=None, scroll=None, hired: b
         return "the mind is still reeling from what it touched (a long rest)"
     if hired:
         pass  # (their own slot and materials, paid for)
+    elif charge is not None:
+        from realmwalker.rules import magic as magicrules
+
+        if not magicrules.working(caster, charge[0]):
+            return "it answers only the one bound to it"
+        if magicrules.charges_left(charge[1], charge[0]) <= 0:
+            return "it has no charges left until dawn"
     elif scroll is not None:
         why = spellrules.scroll_problem(caster, t, spell_id)
         ok = not why
@@ -307,8 +316,8 @@ def road_problem(game, caster, spell_id: str, target=None, scroll=None, hired: b
 
         if not spell.get("ritual") or spell_id not in spellrules.ritual_spells(caster, t) + feats.ritual_spells(caster, t):
             return "not prepared (p prepares it)"
-    if scroll is not None or hired:
-        ok, why = True, ""  # (no slot and no materials: the scroll's own magic, or the hired caster's)
+    if scroll is not None or hired or charge is not None:
+        ok, why = True, ""  # (no slot and no materials: the scroll's own magic, the item's, or the hired caster's)
     elif spell.get("ritual"):  # a ritual needs no slot, but armour without training still stops it, and it needs
         why = spellrules.armour_problem(caster, t) or spellrules.component_problem(caster, t, spell_id)  # its materials
         ok = not why
@@ -350,6 +359,47 @@ def road_problem(game, caster, spell_id: str, target=None, scroll=None, hired: b
     return None
 
 
+def _cast_from_item(game, caster, spell_id: str, target, slot_level, charge) -> list[str]:
+    """A spell drawn from a wand, a staff or a rod outside a fight: its charges spent (more for a higher level), then
+    cast as a hired caster would cast it (no slot, no materials, no strain), and a d20 if that was the last charge."""
+    from realmwalker.rules import magic as magicrules
+
+    t = game.tables
+    item, prop = charge
+    own = int(t.spells[spell_id]["level"])
+    levels = magicrules.charge_levels(item, prop, own)
+    level = slot_level if slot_level in levels else levels[0]
+    rng = game.world.rng.child(f"charge/{spell_id}/{game.world.time}")
+    magicrules.spend_charge(prop, rng, item, level)
+    name = escape_markup(item.magic.get("title") or t.items.name(item, False))
+    first = escape_markup(caster.name.split()[0])
+    pre = [f"{first} calls on the {name}: <magic>{t.spells[spell_id]['name']}</>"
+           + (f" at level {level}" if level > own else "") + "."]
+    use = spellrules.road_use(t, spell_id)
+    owner = _owner(game, item) or caster
+    if use in ("heal", "cure"):
+        wound = max(target.wounds, key=lambda w: (w.severity, w.bleed), default=None)
+        from realmwalker.game import care
+
+        out = pre + care.cast(game, caster, target, wound, spell_id, level if level > own else None, free=True)
+    else:
+        out = pre + cast_on_road(game, caster, spell_id, target, slot_level=level, hired=True)
+    game.dirty = True
+    return out + magicrules.drained(owner, item, rng)
+
+
+def item_spells(game, char) -> list[tuple]:
+    """(item, property) for each spell a wand, staff or rod of this character could cast outside a fight."""
+    from realmwalker.rules import magic as magicrules
+
+    out = []
+    for it, p in magicrules.charges(char):
+        sid = p.get("spell")
+        if sid in game.tables.spells and spellrules.on_the_road(game.tables, sid)[0]:
+            out.append((it, p))
+    return out
+
+
 def strain_on_road(game, caster, amount: int, words: str | None = None) -> list[str]:
     """An earlier Wish's stress tears at a caster outside a fight: necrotic damage nothing reduces; at 0 hit points
     they go down and lie senseless a while (down, not dead, as after a trap)."""
@@ -375,11 +425,12 @@ def _magic_seen(game, caster) -> None:
 
 
 def cast_on_road(game, caster, spell_id: str, target=None, slot_level: int | None = None, scroll=None,
-                 hired: bool = False) -> list[str]:
+                 hired: bool = False, charge=None) -> list[str]:
     """Cast a spell outside battle. Healing goes through game/care.py (the worst wound first); a lasting spell is
     kept on whoever it was cast on. `slot_level`: a higher slot, for a spell that does more with one; `scroll`: read
     from that scroll (no slot, no materials; a check first when it is above the reader); `hired`: a townsperson casts
-    it for pay (game/spellhire.py: no slot, no materials, no strain, nothing for the law). Returns what to say."""
+    it for pay (game/spellhire.py: no slot, no materials, no strain, nothing for the law); `charge`: (item, property)
+    of a wand, a staff or a rod, its charges spent (`slot_level`: the level more charges buy). Returns what to say."""
     from realmwalker.game import care
 
     t = game.tables
@@ -387,9 +438,11 @@ def cast_on_road(game, caster, spell_id: str, target=None, slot_level: int | Non
     if spell["target"] == "dead_ally":
         target = _body_target(game, spell_id, target)
     target = target or caster
-    why = road_problem(game, caster, spell_id, target, scroll=scroll, hired=hired)
+    why = road_problem(game, caster, spell_id, target, scroll=scroll, hired=hired, charge=charge)
     if why:
         return [f"{spell['name']}: {why}."]
+    if charge is not None:
+        return _cast_from_item(game, caster, spell_id, target, slot_level, charge)
     if spellrules.road_use(t, spell_id) == "jar" and caster.spells.get("jar"):
         from realmwalker.game import greatmagic
 

@@ -1036,7 +1036,10 @@ def focus_bonus(char: Character, tables) -> int:
 
 
 def attack_bonus(sheet: Sheet, tables) -> int:
-    return sheet.proficiency + sheet.mod(casting_ability(sheet.c, tables)) + focus_bonus(sheet.c, tables)
+    from realmwalker.rules import magic
+
+    return sheet.proficiency + sheet.mod(casting_ability(sheet.c, tables)) + focus_bonus(sheet.c, tables) \
+        + magic.total(sheet.c, "spell_attack")  # (a Wand of the War Mage, a Staff of Power held)
 
 
 def save_dc(sheet: Sheet, tables) -> int:

@@ -81,6 +81,28 @@ def health_word(f: Fighter) -> tuple[str, str]:
     return "near death", "danger"
 
 
+def charge_words(char, value: str, tables) -> str:
+    """How a spell from a magic thing reads on the list: the thing, and what it costs of its store."""
+    from realmwalker.rules import magic as magicrules
+
+    _, uid, sid = value.split(":", 2)
+    it = char.item(int(uid)) if char is not None else None
+    if it is None:
+        return "from a magic item"
+    prop = next((p for p in magicrules.props(it) if p.get("kind") == "charges" and p.get("spell") == sid), None)
+    name = it.magic.get("title") if it.magic.get("identified") else None
+    head = f"from the {markup.escape(name)}" if name else "from a magic item"
+    if prop is None or not magicrules.pooled(prop):
+        return head
+    store = magicrules.pool(it) or {}
+    cost = int(prop.get("cost", 1))
+    if cost <= 0:
+        return f"{head}, at will"
+    more = " or more for a higher level" if prop.get("more") else ""
+    dc = f", DC {prop['dc']}" if prop.get("dc") else ""
+    return f"{head}: {cost} charge{'s' if cost != 1 else ''}{more}, {store.get('left', 0)} left{dc}"
+
+
 class BattleScreen(Screen):
     title = "Battle"
     animating = True
@@ -331,7 +353,7 @@ class BattleScreen(Screen):
                     if how in ("check", "device_check"):
                         lvl += ", <warn>risky</>"
                 elif sid.startswith("charge:"):
-                    lvl = "from a magic item"
+                    lvl = charge_words(f.char, sid, tables)
                 if cast_kind(f, sp) == "bonus":
                     lvl += ", bonus action"
                 if ok and sp["target"] in ("enemy", "ally", "creature", "downed_ally", "dead_ally", "bound") and not b.spell_targets(f, sid):
@@ -627,7 +649,9 @@ class BattleScreen(Screen):
 
     def _ask_slot(self, f: Fighter, value) -> bool:
         """A spell that does more with a higher slot, and more than one level of slot left: ask which (2024). True
-        if the question is open."""
+        if the question is open. A wand's spell that takes more charges for a higher level asks how many."""
+        if f.char is not None and isinstance(value, str) and value.startswith("charge:"):
+            return self._ask_charges(f, value)
         if f.char is None or not isinstance(value, str) or ":" in value:
             return False
         t = self.game.tables
@@ -645,6 +669,30 @@ class BattleScreen(Screen):
             gain = spellrules.up_gain(sp, lvl - sp["level"])
             words = f"<dim>{', '.join(gain)}</>" if gain else "<dim>its own level</>"
             rows.append((f"Level {lvl} slot ({left[lvl - 1]} left): {words}", lvl, True, ""))
+        self._open_choices("slot", rows)
+        return True
+
+    def _ask_charges(self, f: Fighter, value: str) -> bool:
+        """How many charges to pour into a wand's or a staff's spell (each one more a level higher)."""
+        from realmwalker.rules import magic as magicrules
+
+        t = self.game.tables
+        _, uid, sid = value.split(":", 2)
+        it = f.char.item(int(uid))
+        prop = next((p for p in magicrules.props(it) if p.get("kind") == "charges" and p.get("spell") == sid), None) \
+            if it is not None else None
+        if prop is None:
+            return False
+        sp = t.spells[sid]
+        levels = magicrules.charge_levels(it, prop, int(sp["level"]))
+        if len(levels) < 2:
+            return False
+        rows = []
+        for lvl in levels:
+            gain = spellrules.up_gain(sp, lvl - sp["level"]) if lvl > sp["level"] else []
+            n = magicrules.charge_cost(prop, lvl)
+            words = f"<dim>{', '.join(gain)}</>" if gain else "<dim>its own level</>"
+            rows.append((f"Level {lvl}, {n} charge{'s' if n != 1 else ''}: {words}", lvl, True, ""))
         self._open_choices("slot", rows)
         return True
 

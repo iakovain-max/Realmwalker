@@ -174,6 +174,10 @@ def make_listed(game, slug: str, variant: str, rarity: str, rng: RNG) -> Item | 
                 it.magic["title"] = how["title"]  # (a named item of the book: the Dagger of Venom)
             it.magic["source"] = "book"
             it.magic["attune"] = bool(how.get("attune", False))  # a book item binds only if its entry says so
+            if how.get("attune_by"):
+                it.magic["attune_by"] = how["attune_by"]  # ("spellcaster", or [classes]: the Staff of Healing)
+            if how.get("enspell") and not _enspell(game, it, variant, rng):
+                return None  # (no spell of those levels the game can bind: rolled again)
             if how.get("form"):
                 it.magic["form"] = how["form"]  # (the Veteran's Cane: a walking cane until it is twisted)
             if how.get("curse"):
@@ -184,6 +188,29 @@ def make_listed(game, slug: str, variant: str, rarity: str, rng: RNG) -> Item | 
                     p["value"] = p["left"] = max(1, dice.roll(str(p.pop("dice")), rng).total)
         return it
     return None
+
+
+def _enspell(game, it, variant: str, rng: RNG) -> bool:
+    """The Enspelled Staff (DMG 2024): a spell of the variant's levels bound into it, cast for a charge with the
+    staff's own save DC and attack bonus by the spell's level (data/treasure.json "enspell"). False if none fits."""
+    from realmwalker.rules import spells as spellrules
+
+    levels = _levels(variant)
+    pool = sorted(sid for sid, sp in game.tables.spells.defs.items()
+                  if int(sp.get("level", 0)) in levels and sp.get("school") not in (None, "none")
+                  and not set(sp.get("classes", ())) & {"item", "creature", "again"} and not sp.get("again_of")
+                  and not sp.get("stress") and not spellrules.has_op(sp, "identify")
+                  and (not spellrules.out_of_battle(sp) or spellrules.on_the_road(game.tables, sid)[0]))
+    if not pool:
+        return False
+    sid = rng.choice(pool)
+    sp = game.tables.spells[sid]
+    dc, attack = spec(game).get("enspell", {}).get(str(sp["level"]), [13, 5])
+    words = f"{sp['name']} is bound into it: a charge casts it (save DC {dc}, attack +{attack})."
+    it.magic["props"].append({"kind": "charges", "spell": sid, "cost": 1, "dc": int(dc), "attack": int(attack),
+                              "text": words})
+    it.magic["title"] = f"Enspelled Staff of {sp['name']}"
+    return True
 
 
 def _levels(variant: str) -> set[int]:

@@ -1220,8 +1220,11 @@ TREASURE = Obj(
                                "form": Str(max_len=20, optional=True),  # its shape at first (the Veteran's Cane)
                                "curse": Map(Any_(), optional=True),  # the book's own curse (the Sword of Vengeance)
                                "bases": List(Str(max_len=40), optional=True),  # what it may be made on
+                               "attune_by": Any_(optional=True),  # "spellcaster" or [classes] (Expansion 5 Part D)
+                               "enspell": Bool(optional=True),  # a spell bound in by its level (the Enspelled Staff)
                                "qty": List(Int(min=1, max=100), min_items=2, max_items=2, optional=True)}))),
         "reroll": Int(min=0, max=50),
+        "enspell": Map(List(Int(min=0, max=30), min_items=2, max_items=2), optional=True),  # [DC, attack] by level
         "magic_scale": List(Float(min=0, max=5), min_items=3, max_items=3),
         "tables": Map(List(List(Any_(), min_items=4, max_items=4), min_items=1), min_items=20),
     }

@@ -746,9 +746,12 @@ def _check_magic(game, fail) -> None:
         fail("one magic thing bound to two people")
     for it in pack.values():
         for p in magic.props(it):
-            if p.get("kind") == "charges" and not p.get("at_will"):
+            if p.get("kind") in ("charges", "pool") and not p.get("at_will") and not magic.pooled(p):
                 if not 0 <= int(p.get("left", p.get("value", 1))) <= int(p.get("value", 1)):
                     fail(f"charges out of bounds on {it.def_id}: {p}")
+            if magic.pooled(p) and (magic.pool(it) is None and int(p.get("cost", 1)) > 0
+                                    or p.get("spell") not in game.tables.spells):
+                fail(f"a wand's spell with no store of charges, or a spell the game lacks, on {it.def_id}: {p}")
         mind = it.magic.get("sentient") if it.magic else None
         if mind and mind.get("purpose") not in game.tables.magic["sentient"]["purposes"]:
             fail(f"a sentient thing with an unknown purpose: {mind.get('purpose')}")

@@ -26,6 +26,7 @@ import numpy as np
 from realmwalker.core import dice
 from realmwalker.core.rng import RNG
 from realmwalker.rules import feats, grid, poisons, simulacrum
+from realmwalker.rules import magic as magicrules
 from realmwalker.rules import spells as spellrules
 from realmwalker.rules.character import Character, Sheet, modifier
 from realmwalker.rules.engine import actions, durations, effects, events, hazards, marks, query, reactions
@@ -1636,6 +1637,9 @@ class Battle:
         if max(a.buff_value("sense_thoughts"), default=0) >= feet and self.thinks(b) \
                 and view.cover(a.space, b.space) != grid.TOTAL:
             return True  # (Detect Thoughts: a thinking mind near is known where it is, invisible or hidden)
+        if max(a.buff_value("sense_foes"), default=0) >= feet and b.side != a.side \
+                and view.cover(a.space, b.space) != grid.TOTAL:
+            return True  # (the Wand of Enemy Detection: every foe near is known where it is)
         if query.flag(b, "unseen") and senses.get("truesight", 0) < feet and not a.buff_value("see_invisible"):
             return False  # Invisible (See Invisibility sees it as if it were not)
         if b.hidden and b.hidden > a.passive() - (5 if self.dim_for(a, b) else 0) and self.gap(a, b) > 1:
@@ -2751,6 +2755,9 @@ class Battle:
                 opt.kind == "ranged" and feats.has(att.char, "sharpshooter")
                 or opt.kind.startswith("spell") and feats.has(att.char, "spell_sniper")):
             cover = grid.NONE  # (Sharpshooter, Spell Sniper: half and three-quarters cover ignored)
+        if cover == grid.HALF and att.char is not None and opt.kind.startswith("spell") \
+                and magicrules.flag(att.char, "spell_cover"):
+            cover = grid.NONE  # (a Wand of the War Mage held: half cover ignored by spell attacks)
         parry = sum(int(v) for v in target.buff_value("parry_ac")) if opt.is_melee else 0
         return target.ac() + grid.COVER_AC[cover] + parry, cover
 
@@ -4375,7 +4382,7 @@ class Battle:
 
         for it, p in magic.charges(f.char):
             if p["spell"] in self.t.spells:
-                left = magic.charges_left(p)
+                left = magic.charges_left(p, it)
                 ok, why = self._casting_time_ok(f, self.t.spells[p["spell"]], False)
                 out.append((f"charge:{it.uid}:{p['spell']}", left > 0 and ok, why if left > 0 else "no charges left until dawn"))
         if self.antimagic(f.cells):
@@ -4678,6 +4685,8 @@ class Battle:
             return False
         scroll = None
         charged = None
+        charged_item = None
+        charge_level = None
         innate = None
         if sid.startswith("wish:"):
             return self._cast_wished(f, spell_id(sid), target, point)
@@ -4696,11 +4705,15 @@ class Battle:
 
             charged = next((p for p in magic.props(item) if p.get("kind") == "charges" and p.get("spell") == sid),
                            None) if item is not None else None
-            if charged is None or magic.charges_left(charged) <= 0:
+            if charged is None or magic.charges_left(charged, item) <= 0:
                 self.say("It has no power left until dawn.", "warn")
                 return False
+            charged_item = item
+            levels = magic.charge_levels(item, charged, int(self.t.spells[sid]["level"]))
+            charge_level = slot_level if slot_level in levels else levels[0]  # (more charges, a higher level)
             spent = False if f.has_trait("use_magic_device") and self.rng.randint(1, 6) == 6 \
-                else magic.spend_charge(charged, self.rng)  # (a thief's Use Magic Device: a 6 keeps the charge)
+                else magic.spend_charge(charged, self.rng, item, charge_level)  # (a thief's Use Magic Device: a 6
+            # keeps the charge)
             self.say(f"{f.the_name} calls on the power in the {self.t.items.name(item, False)}"
                      f"{'' if spent or charged.get('at_will') else ', and the power stays in it'}.", "magic")
         if sid.startswith("scroll:"):
@@ -4769,6 +4782,8 @@ class Battle:
             level = 0  # the scroll's own magic: no spell slot
         if charged is not None or innate is not None:
             level = 0  # the item's own magic, or a gift of blood or training (no slot)
+        if charged is not None and magicrules.pooled(charged):
+            slot_level = max(int(spell["level"]), charge_level or 0) or None  # (a wand's Fireball: level 3 and up)
         if level > 0 and f.__dict__.get("free_slot", 0) >= level:
             level = 0  # (the god casts it: Divine Intervention, War God's Blessing)
         at_will = spellrules.free_cast(c, self.t, sid, slot_level) if level > 0 else None
@@ -4824,6 +4839,11 @@ class Battle:
             mod = s.mod(spellrules.scroll_ability(c, self.t, scroll_how))
             dc, bonus = spellrules.scroll_numbers(self.t, spell["level"])
             bonus += s.attack_condition()
+        if charged is not None:  # a wand's or a staff's own numbers, when it has them (else the user's)
+            if charged.get("dc"):
+                dc = int(charged["dc"])
+            if charged.get("attack") is not None:
+                bonus = int(charged["attack"]) + s.attack_condition()
         mult = spellrules.cantrip_multiplier(c.level) if spell["level"] == 0 else 1  # (Cantrip Upgrade: 5, 11, 17)
         strained = spellrules.strain(c, slot_level or spell["level"], self.rng) \
             if scroll is None and charged is None else 0
@@ -4844,6 +4864,9 @@ class Battle:
             if used:
                 self.say(f"The {used} is gone into the spell.", "magic")
         self._strain(f, strained)
+        if charged_item is not None and magicrules.pooled(charged):
+            for line in magicrules.drained(c, charged_item, self.rng):  # (the last charge: a d20 says what is left)
+                self.say(line, "magic")
         if spell.get("stress") and held:  # (Wish used for anything but a copy)
             for line in spellrules.wish_stress(c, self.rng):
                 self.say(line, "danger")
@@ -5112,8 +5135,13 @@ class Battle:
         stopped it (the action spent, the effects lost)."""
         if self._countered(f, sid, spell):
             return False
+        from realmwalker.rules.engine.handlers import staves
+
+        if staves.absorbed(self, f, sid, spell, target, level):
+            return True  # (drunk by a Rod of Absorption or a Staff of the Magi: cast, and nothing comes of it)
         effects.cast(self, f, sid, spell, target, point, up=up, mod=mod, dc=dc, bonus=bonus, mult=mult, level=level,
                      slotted=slotted)
+        staves.after_cast(self)  # (an enchantment turned back by a Staff of Charming)
         return True
 
     def _countered(self, caster: Fighter, sid: str, spell: dict) -> bool:
