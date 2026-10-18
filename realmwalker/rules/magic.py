@@ -181,9 +181,14 @@ def item_focus(char) -> bool:
 
 
 def sense(char, name: str) -> int:
-    """Feet of a sense the character's working magic gives (the Robe of Eyes: darkvision, truesight); the best one."""
-    return max((int(p.get("value", 0)) for _it, p in active(char) if p.get("kind") == "sense"
-                and p.get("sense") == name), default=0)
+    """Feet of a sense the character's worn magic gives (the Robe of Eyes: darkvision, truesight); the best one. Only
+    worn things are looked at (sight is asked often in a fight)."""
+    best = 0
+    for it in equipped(char):
+        for p in props(it):
+            if p.get("kind") == "sense" and p.get("sense") == name and working(char, it):
+                best = max(best, int(p.get("value", 0)))
+    return best
 
 
 def unstore(item, prop: dict) -> None:
