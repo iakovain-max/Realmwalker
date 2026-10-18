@@ -1,0 +1,15 @@
+{
+  "_comment": "Expansion 5 (docs/expansions/05-schools-domains.md). Its rules and data went into the base files as it was built (realmwalker/data/packs.py merges any fragments placed beside this record).",
+  "id": "schools_domains", "order": 5,
+  "name": "Schools & Domains",
+  "tagline": "Every school of the arcane. Every domain of the divine.",
+  "icon": "dlc/schools_domains", "accent": [120, 150, 220],
+  "status": "released", "version": "1.5.0", "released_on": "2026-10-18",
+  "adds": [
+    "The Diviner, who wakes with dice already rolled and lays them in place of anyone's roll, and opens a third eye; and the Illusionist, whose phantom walls and crates stand on the battle mat until someone sees through them",
+    "The Light Domain, flaring to spoil a foe's blow and burning the dark away with the dawn; and the Trickery Domain, with a double that flanks foes and casts its maker's spells",
+    "The gods of the world's faiths now and then answer the desperate prayers of the devout",
+    "Real mages and priests in the world: apprentices, mages and archmagi at the wizards' towers - lived in again, with wards, guardians and a library - and priests and archpriests in the temples; apprenticeships as work",
+    "The wizard's and cleric's magic items of the Dungeon Master's Guide: eleven wands, seven staffs, four rods, crystal balls, the Hat of Many Spells and the Hat of Wizardry, the Pearl of Power, the Ring of Spell Storing, the five robes and the Ruby of the War Mage"
+  ]
+}
