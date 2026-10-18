@@ -612,6 +612,15 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   bookcase searched by `game/dungeon.search_library`; the master and household groups in `game/dungeon.MASTERS`/KIN;
   `past.tower_master_slain`). Temple priests fight as Priests, the history's heads by `people.figure_stats`. Quest
   template "apprenticeship" (`quests.lesson`). tests/test_mages_priests.py.
+- Wands, staffs and rods (Expansion 5 Part D): book makers from `tools/codex/wands_staffs_rods.py` (makers'
+  `attune_by`, `enspell`). One store of charges a thing: prop `pool` {value, left, regain, last, lucky}; its spells are
+  `charges` props with a `cost` (0: at will), `level`, `more` (a level a charge), `dc`, `attack` (`rules/magic.pool`,
+  `charge_levels`, `spend_charge(prop, rng, item, level)`, `charges_left(prop, item)`, `drained`: the last charge's
+  d20). In a fight "charge:<uid>:<spell>" with `slot_level` = the level bought (the battle screen asks; the Auto prices
+  charges: `tactics.charge_price`); outside one `magic.cast_on_road(charge=(item, prop))`, listed on the Spells page
+  (`magic.item_spells`). Powers in `rules/engine/handlers/staves.py` (Striking, Charming, absorption from `Battle.cast`,
+  the rod's slots, Retributive Strike); props `spell_attack`, flags `spell_cover`, `fireworks`; mark `sense_foes`.
+  Debug console: `book <item> [variant]`. tests/test_wands_staffs_rods.py.
 - Gear and tools 2024 (Expansion 2 part D): items.json `pack` (opens into its contents, gear.open_pack), `helps`
   {search, traps, force, disguise} (dungeon.helps, law.put_on_disguise), `utilize` (a tool's 2024 uses, on its card),
   `carry` also on carried containers (each kind once, Sheet.pack_carry), `trinket` (data/trinkets.json; the name and

@@ -232,6 +232,12 @@ def _schools(name: str):
     return test
 
 
+def _staves(name: str):
+    from realmwalker.rules.engine.handlers import staves
+
+    return getattr(staves, name)
+
+
 def _domains(name: str):
     from realmwalker.rules.engine.handlers import domains
 
@@ -282,6 +288,9 @@ REQUIRES: dict[str, Callable] = {
     "rod_not_mace": _arms(lambda a, b, f: a.rod_form(b, f, "rod_mace")),
     "cane_not_sword": _arms(lambda a, b, f: a.cane_form(b, f, "sword")),
     "cane_not_cane": _arms(lambda a, b, f: a.cane_form(b, f, "cane")),
+    # wands, staffs and rods (Expansion 5 Part D)
+    "staff_breakable": lambda b, f: _staves("breakable_problem")(b, f),
+    "rod_energy": lambda b, f: _staves("draw_problem")(b, f),
 }
 
 

@@ -133,6 +133,34 @@ class DebugConsole(Screen):
                 game.leader.money = max(0, game.leader.money + int(args[0]) * 100)
                 self.say(f"Money: {game.leader.money // 100} gp")
 
+        @self.command("book", "book <item> [variant] — give the leader a magic item of the DMG (book list: show them)")
+        def _book(args):
+            game = need_game()
+            if game is None:
+                return
+            from realmwalker.core.rng import RNG
+            from realmwalker.game import treasure
+
+            makers = treasure.spec(game)["makers"]
+            if not args or args[0] == "list" or args[0] not in makers:
+                self.say("Items: " + ", ".join(sorted(makers)))
+                return
+            slug = args[0]
+            variants = makers[slug]
+            variant = " ".join(args[1:]) if len(args) > 1 else ("" if "" in variants else next(iter(variants)))
+            if variant not in variants and "*" not in variants:
+                self.say("Variants: " + "; ".join(sorted(variants)))
+                return
+            it = treasure.make_listed(game, slug, variant, "rare", RNG(game.world.time, f"debug-book/{slug}"))
+            if it is None:
+                self.say(f"<warn>The game cannot make '{slug}' yet.</>")
+                return
+            it.magic["identified"] = True
+            from realmwalker.rules.inventory import add_existing
+
+            add_existing(game.leader, app.tables.items, it)
+            self.say(f"<good>{markup.escape(it.magic.get('title') or slug)}</> is in {game.leader.name}'s pack.")
+
         @self.command("xp", "xp <n> — give the leader experience")
         def _xp(args):
             game = need_game()

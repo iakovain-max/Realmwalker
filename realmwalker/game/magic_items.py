@@ -732,8 +732,12 @@ def prop_text(game, p: dict) -> str:
         if p["kind"] == "charges":
             text += f" ({p.get('left', p.get('value'))} left" + (f", {p['regain']} back at dawn" if p.get("regain")
                                                                   else ", all back at dawn") + ")"
-    if p.get("kind") == "charges" and p.get("text") and not p.get("at_will"):
+    if p.get("kind") == "charges" and p.get("text") and not p.get("at_will") and not magicrules.pooled(p):
         text += f" ({magicrules.charges_left(p)} left)"
+    if p.get("kind") == "absorb":  # (the Rod of Absorption's stored levels)
+        text += f" ({p.get('left', 0)} levels stored; {p.get('value', 0)} of {p.get('most', 50)} drunk in its life)"
+    if p.get("kind") == "pool":  # (a wand's or a staff's store, shared by its spells)
+        text += f" ({p.get('left', p.get('value'))} of {p.get('value')} left)"
     return text
 
 
@@ -758,6 +762,8 @@ def describe(game, item, char=None) -> list[str]:
     if bond:
         lines.append(bond)
     for p in magic.get("props", []):
+        if p.get("kind") == "trait" and not p.get("text"):
+            continue  # (a power the item's other words already tell: the Staff of Charming's daily resistance)
         mark = "<danger>" if p.get("artifact") in ("minor_bad", "major_bad") else ""
         lines.append(f"· {mark}{esc(prop_text(game, p))}{'</>' if mark else ''}")
     for effect in magic.get("on", []):
@@ -793,6 +799,9 @@ def _bond_line(game, item, char) -> str:
         return f"<good>Bound to {who.name.split()[0]}.</>"
     need = item.magic.get("attune_by")
     extra = " (only by one who casts spells)" if need == "spellcaster" else ""
+    if isinstance(need, list):
+        names = [n + "s" for n in need]
+        extra = " (only by " + (", ".join(names[:-1]) + " or " if len(names) > 1 else "") + names[-1] + ")"
     return f"<warn>It must be bound to work{extra}: a short rest's attunement (a). Three such bonds at most.</>"
 
 

@@ -173,6 +173,16 @@ def spell_value(b, f, sid: str, *, target=None, point=None, dc: int | None = Non
     w = Worth()
     if str(sid).startswith("scroll:") and dc is None:  # (a scroll casts with its own numbers)
         dc, bonus = spellrules.scroll_numbers(b.t, spell["level"])
+    if str(sid).startswith("charge:") and f.char is not None and dc is None:  # (a wand's own DC and attack)
+        from realmwalker.rules import magic
+
+        _, uid, _s = str(sid).split(":", 2)
+        it = f.char.item(int(uid))
+        prop = next((p for p in magic.props(it) if p.get("kind") == "charges" and p.get("spell") == _s), None) \
+            if it is not None else None
+        if prop is not None:
+            dc = int(prop["dc"]) if prop.get("dc") else None
+            bonus = int(prop["attack"]) if prop.get("attack") is not None else None
     dc = dc if dc is not None else _caster_dc(b, f)
     bonus = bonus if bonus is not None else _caster_attack(b, f)
     mult = spellrules.cantrip_multiplier(f.char.level) if f.char is not None else 1

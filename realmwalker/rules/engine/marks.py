@@ -68,6 +68,8 @@ On the one marked (the buff is on the creature):
                     invisible and the hidden too, unless total cover stands between (Detect Thoughts)
     linked          a mind linked to its friends' (Rary's Telepathic Bond): while two or more of a side are linked,
                     none of the linked is surprised
+    sense_foes      feet: it knows where every foe within that reach is, the invisible and the hidden too, unless
+                    total cover stands between (the Wand of Enemy Detection, Expansion 5 Part D)
   Read on the character sheet outside a fight and in one (rules/character.py, rules/spells.SHEET_KEYS): darkvision
   (feet), speed (feet more), skills ({skill: bonus}), check_adv (Enhance Ability: the target's best ability; +5 to
   its skills, the passive rule), carry (pounds more before laden). Read only outside a fight (game/): steed (miles
@@ -131,6 +133,8 @@ BUFF_KEYS = frozenset({
     "glib", "unnoticed", "disguise", "nondetection",
     # Part E.5's (game/stonework.py): Control Water parts the next river
     "part_water",
+    # Expansion 5 Part D's (wands, staffs and rods): the Wand of Enemy Detection
+    "sense_foes",
 })
 ZONES = frozenset({"web", "fire", "fog", "ice", "caltrops", "bearings", "darkness", "antimagic", "plants", "grease",
                    "overgrowth",  # (Part E.5: Plant Growth, four feet of movement a foot)

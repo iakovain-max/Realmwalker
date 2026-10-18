@@ -760,7 +760,32 @@ def _item_charges(c) -> bool:
     """A magic thing with charges in hand or bound (a Mace of Terror, a Rod of Lordly Might): worth weighing as a cast."""
     from realmwalker.rules import magic
 
-    return any(magic.charges_left(p) > 0 for _it, p in magic.charges(c))
+    return any(magic.charges_left(p, it) > 0 for it, p in magic.charges(c))
+
+
+def charge_of(f: Fighter, value) -> tuple | None:
+    """(item, property) of a spell cast from a magic thing ("charge:<uid>:<spell>"), or None."""
+    from realmwalker.rules import magic
+
+    if f.char is None or not str(value).startswith("charge:"):
+        return None
+    _, uid, sid = str(value).split(":", 2)
+    it = f.char.item(int(uid))
+    prop = next((p for p in magic.props(it) if p.get("kind") == "charges" and p.get("spell") == sid), None) \
+        if it is not None else None
+    return (it, prop) if prop is not None else None
+
+
+def charge_price(b: Battle, f: Fighter, value, level: int) -> float | None:
+    """What spending a wand's or a staff's charges on this casting is worth giving up (they come back at dawn, a
+    few at a time: under half a slot's worth each), or None for a thing without a store."""
+    from realmwalker.rules import magic
+
+    held = charge_of(f, value)
+    if held is None or not magic.pooled(held[1]):
+        return None
+    n = magic.charge_cost(held[1], level)
+    return 0.0 if n <= 0 else 0.4 * spell_cost(b, f, n)
 
 
 def _terror_turn(b: Battle, f: Fighter) -> None:
@@ -965,6 +990,12 @@ def _do_cast(b: Battle, f: Fighter, best) -> bool:
 def _slot_levels(b: Battle, f: Fighter, value: str, sp: dict) -> list[int]:
     """The slot levels worth weighing for this casting: its own (or the lowest left), and a higher one the Auto or the
     enemy would spend on it (a spare slot: no spell of that level ready)."""
+    held = charge_of(f, value)
+    if held is not None:  # (a wand's Fireball: level 3, or more charges for 4 or 5)
+        from realmwalker.rules import magic
+
+        levels = magic.charge_levels(held[0], held[1], int(sp["level"]))
+        return sorted({levels[0], levels[-1]})
     if sp["level"] <= 0 or str(value).startswith(("scroll:", "charge:", "innate:", "throw:", "wish:")) \
             or sp.get("again_of"):
         return [sp["level"]]
@@ -1055,7 +1086,9 @@ def _pick_cast_now(b: Battle, f: Fighter, cost: str, *, beat: float, care: float
                 w = estimates.spell_value(b, f, opt.value, target=target, point=point, up=max(0, lvl - sp["level"]))
                 if w.total(care=care) <= 0.5:
                     continue
-                score = w.total(care=care) * odds - (price if lvl <= sp["level"] or price == 0 else
+                charged = charge_price(b, f, opt.value, lvl)
+                score = w.total(care=care) * odds - (charged if charged is not None else
+                                                     price if lvl <= sp["level"] or price == 0 else
                                                      price * _slot_price(b, f, lvl) / max(1, sp["level"]))
                 if f.char is not None and w.friendly > 0:
                     continue  # companions never catch friends
@@ -1183,6 +1216,7 @@ def _party_turn(b: Battle, f: Fighter) -> None:
     if b.current is not f or b.outcome is not None:
         return
     _command_objects(b, f)
+    _rod_slots(b, f)
     _divine_help(b, f)
     _school_bonus(b, f)
     if b.current is f and b.outcome is None:
@@ -1633,6 +1667,21 @@ def _command_objects(b: Battle, f: Fighter) -> None:
     if f.bonus > 0 and b.commanded_of(f) and any(e.standing for e in b.enemies_of(f)):
         if any(aid == "command_objects" and ok for aid, _, ok, _ in b.class_abilities(f)):
             b.do_ability(f, "command_objects")
+
+
+def _rod_slots(b: Battle, f: Fighter) -> None:
+    """A Rod of Absorption's stored levels drawn as a spent slot (no action), once its bearer's best slots are gone
+    and a foe still stands: the highest it can pay for (Expansion 5 Part D)."""
+    if f.char is None or not any(e.standing for e in b.enemies_of(f)):
+        return
+    total = spellrules.slots_total(f.char, b.t)
+    left = spellrules.slots_left(f.char, b.t)
+    top = max((i + 1 for i in range(min(5, len(total))) if total[i]), default=0)
+    if not top or left[top - 1] > 0:
+        return
+    for opt, _a in _abilities(b, f, "draw"):
+        b.do_ability(f, opt.value)
+        return
 
 
 def _does(opt, a: dict | None) -> str:

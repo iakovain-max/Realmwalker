@@ -503,6 +503,10 @@ def _catalogue_mark(b, bf: dict, spell: dict) -> tuple[str, str, list[str]] | No
     if bf.get("truesight"):
         return "blessed", name or "True Seeing", [f"They see the invisible, and through any darkness, "
                                                   f"{int(bf['truesight'])} feet."]
+    if bf.get("sense_foes"):  # (Expansion 5 Part D: the Wand of Enemy Detection)
+        return "blessed", name or "Sensing foes", [f"They know where every foe within {int(bf['sense_foes'])} feet "
+                                                   "is, the invisible and the hidden too, unless solid walls stand "
+                                                   "between."]
     # The fourth wave (D.4)
     if bf.get("time_stop") is not None:
         return "blessed", name or "Time stopped", [f"Time stands still for everyone else: {int(bf['time_stop'])} more "

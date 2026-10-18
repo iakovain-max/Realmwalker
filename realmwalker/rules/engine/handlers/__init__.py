@@ -16,6 +16,7 @@
                   (Blessing of the Trickster, Invoke Duplicity's double, Trickster's Transposition; Expansion 5 Part B)
     wizard.py     the 2024 wizard (Overchannel, the ward's mending, Counterspell)
     schools.py    the Diviner (Portent, Expert Divination, The Third Eye) and the Illusionist (Expansion 5 Part A)
+    staves.py     the wizard's and cleric's wands, staffs and rods (Expansion 5 Part D)
     summons.py    the summoned spirits' traits and the fey spirit's moods (Expansion 3 F.2)
     undead.py     the raised dead's traits: the ghast's Stench, the mummy's rot (Expansion 3 F.4)
 """
@@ -23,4 +24,5 @@
 from realmwalker.rules.engine.handlers import (arcane, arms, battle_master, boons, cleric, domains, feats,  # noqa: F401
                                                features, fighter,  # noqa: F401
                                                general_feats,  # noqa: F401
-                                               mastery, monsters, rogue, schools, summons, undead, wizard)  # noqa: F401  (registering is importing)
+                                               mastery, monsters, rogue, schools, staves, summons, undead,  # noqa: F401
+                                               wizard)  # noqa: F401  (registering is importing)

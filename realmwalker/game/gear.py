@@ -306,8 +306,21 @@ def evening_problem(game) -> str | None:
     if game.leader.uses.get("evening_day") == game.moment.total_days:
         return "you have already passed this evening"
     music, games = pastimes(game)
-    if music is None and games is None:
+    if music is None and games is None and fireworks(game) is None:
         return "you have no instrument, cards or dice"
+    return None
+
+
+def fireworks(game):
+    """(the holder, a Wand of Pyrotechnics with a charge left) for an evening's show, or None (Expansion 5 Part D)."""
+    from realmwalker.rules import magic
+
+    for c in game.party:
+        if not c.alive:
+            continue
+        for it in c.inventory:
+            if magic.item_flag(it, "fireworks") and magic.working(c, it) and int((magic.pool(it) or {}).get("left", 0)) > 0:
+                return c, it
     return None
 
 
@@ -346,7 +359,18 @@ def evening(game) -> list[str]:
     game.leader.uses["evening_day"] = game.moment.total_days
     rng = game.world.rng.child(f"evening/{game.moment.total_days}")
     out = []
-    if music is not None:
+    show = fireworks(game) if music is None and games is None else None
+    if show is not None:  # (a Wand of Pyrotechnics: a charge a burst of coloured fire over the camp)
+        from realmwalker.rules import magic
+
+        holder, wand = show
+        store = magic.pool(wand)
+        store["left"] = int(store["left"]) - 1
+        lift = float(spec.get("music", 3))
+        out.append(f"{first(holder)} sends bursts of coloured fire crackling up into the dark, one after another, "
+                   "until everyone round the fire is laughing like children.")
+        out += magic.drained(holder, wand, rng)
+    elif music is not None:
         it, player = music
         roll = dice.d20(rng).natural
         bonus = _music_bonus(game, player, it)
