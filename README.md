@@ -36,6 +36,10 @@ painted on parchment, and fights on a battle mat with animation. Playable with t
   maneuvers, the Eldritch Knight and the Arcane Trickster, the poisons of the Dungeon Master's Guide (bought, milked,
   brewed, coated on blades and slipped into cups), assassins, spies and duels of honour, and the fighter's and
   rogue's magic weapons (the Vorpal Sword, the Luck Blade, the Defender, the Dancing Sword, the Rod of Lordly Might).
+- **Every school of the arcane, every domain of the divine** (*Schools & Domains*, version 1.5): the Diviner and
+  the Illusionist, the Light and Trickery Domains, gods who sometimes answer the dying devout, real mages and
+  priests in towers and temples, and the wizard's and cleric's magic items (wands, staffs, rods, crystal balls,
+  the Hat of Many Spells, the Ring of Spell Storing, the Robe of the Archmagi and more).
 - **Talk to everyone.** They have names, trades, memories and opinions of you.
 - **Hire companions**, pay them, keep them loyal (or don't), and command them in a fight.
 - **Take on work**: bounties, lairs to clear, beasts to hunt, letters to carry, captives to free. Not every job is

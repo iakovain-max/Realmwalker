@@ -468,7 +468,8 @@ class Fighter:
             tremor = max([0] + [int(v) for v in self.buff_value("tremorsense")])  # (Stonecunning)
             blind = 10 if feats.has(self.char, "blind_fighting") or feats.has(self.char, "skulker") else 0
             true = 60 if feats.has(self.char, "boon_of_truesight") else 0
-            true = max([true] + [int(v) for v in self.buff_value("truesight")])  # (True Seeing)
+            true = max([true, magic_sense(self.char, "truesight")]
+                       + [int(v) for v in self.buff_value("truesight")])  # (True Seeing; the Robe of Eyes)
             return {"darkvision": self.darkvision, **({"tremorsense": tremor} if tremor else {}),
                     **({"blindsight": blind} if blind else {}), **({"truesight": true} if true else {})}
         out = {**self.cdef.get("senses", {}), "darkvision": self.darkvision}
@@ -573,10 +574,20 @@ class BattleResult:
     robbed_money: int = 0
 
 
+def magic_sense(char, name: str) -> int:
+    """Feet of a sense the character's magic items give (rules/magic.sense), 0 if they wear nothing."""
+    if not char.equipped:
+        return 0
+    from realmwalker.rules import magic as magicrules
+
+    return magicrules.sense(char, name)
+
+
 def spell_id(value: str) -> str:
     """The spell behind a spell-menu value (a spell id, or "scroll:<uid>:<spell id>"; a flask thrown from the Item menu
-    is "throw:<uid>:<spell id>")."""
-    return value.split(":", 2)[2] if value.startswith(("scroll:", "charge:", "throw:", "innate:", "wish:")) else value
+    is "throw:<uid>:<spell id>"; a spell pulled from a wizard's hat "hat:<uid>:<spell id>")."""
+    return value.split(":", 2)[2] if value.startswith(("scroll:", "charge:", "throw:", "innate:", "wish:", "hat:")) \
+        else value
 
 
 def again_spell(f: Fighter, tables) -> str | None:
@@ -1406,6 +1417,10 @@ class Battle:
             z.struck.discard(f.id)
         if f.state == "away" and (f.away or {}).get("why") == "blink":
             self.bring_back(f)  # (Blink: back from the Ethereal Plane at the start of its turn)
+        if f.state == "away" and (f.away or {}).get("why") == "astral":
+            from realmwalker.rules.engine.handlers import wonders
+
+            wonders.back_from_astral(self, f)  # (the Robe of Stars: the Magic action brings them back)
         if f.state == "away" and (f.away or {}).get("escape"):
             self._maze_turn(f)  # (Maze: its turn goes on looking for the way out)
         self._follow_auras()
@@ -4645,8 +4660,12 @@ class Battle:
             ok, why = self._wish_ok(f)
             if not ok:
                 return why
+        if sid.startswith("hat:"):  # (a spell pulled from a wizard's hat: rules/hats.py)
+            why = self._hat_problem(f, sid)
+            if why:
+                return why
         opts = {s: (ok, why) for s, ok, why in self.spell_options(f)} \
-            if not sid.startswith(("throw:", "wish:")) else {}
+            if not sid.startswith(("throw:", "wish:", "hat:")) else {}
         if sid in opts and not opts[sid][0]:
             return opts[sid][1]
         mode = spell["target"]
@@ -4691,6 +4710,8 @@ class Battle:
         innate = None
         if sid.startswith("wish:"):
             return self._cast_wished(f, spell_id(sid), target, point)
+        if sid.startswith("hat:"):
+            return self._cast_from_hat(f, sid, target, point)
         if sid.startswith("innate:"):
             _, src, sid = sid.split(":", 2)
             innate = next((a for s_, x, a in feats.innate_spells(f.char, self.t) if s_ == src and x == sid), None)
@@ -4783,8 +4804,9 @@ class Battle:
             level = 0  # the scroll's own magic: no spell slot
         if charged is not None or innate is not None:
             level = 0  # the item's own magic, or a gift of blood or training (no slot)
-        if charged is not None and magicrules.pooled(charged):
-            slot_level = max(int(spell["level"]), charge_level or 0) or None  # (a wand's Fireball: level 3 and up)
+        if charged is not None and (magicrules.pooled(charged) or charged.get("level")):
+            slot_level = max(int(spell["level"]), charge_level or 0) or None  # (a wand's Fireball: level 3 and up;
+            # a ring's kept spell at the slot it was cast into it with; the Robe of Stars' missiles at level 5)
         if level > 0 and f.__dict__.get("free_slot", 0) >= level:
             level = 0  # (the god casts it: Divine Intervention, War God's Blessing)
         at_will = spellrules.free_cast(c, self.t, sid, slot_level) if level > 0 else None
@@ -4845,6 +4867,8 @@ class Battle:
                 dc = int(charged["dc"])
             if charged.get("attack") is not None:
                 bonus = int(charged["attack"]) + s.attack_condition()
+            if charged.get("mod") is not None:
+                mod = int(charged["mod"])  # (a Ring of Spell Storing: its caster's spellcasting ability)
         mult = spellrules.cantrip_multiplier(c.level) if spell["level"] == 0 else 1  # (Cantrip Upgrade: 5, 11, 17)
         strained = spellrules.strain(c, slot_level or spell["level"], self.rng) \
             if scroll is None and charged is None else 0
@@ -4865,6 +4889,8 @@ class Battle:
             if used:
                 self.say(f"The {used} is gone into the spell.", "magic")
         self._strain(f, strained)
+        if charged_item is not None and charged.get("stored") and spent:
+            magicrules.unstore(charged_item, charged)  # (out of the ring: its room free again)
         if charged_item is not None and magicrules.pooled(charged) and spent:  # (an at-will casting spends none)
             for line in magicrules.drained(c, charged_item, self.rng):  # (the last charge: a d20 says what is left)
                 self.say(line, "magic")
@@ -5130,6 +5156,104 @@ class Battle:
         self._after_action(f)
         return True
 
+    # ------------------------------------------------------------------ the wizard's hats (Expansion 5 Part E)
+    def hat_options(self, f: Fighter, *, short: bool = False) -> list[tuple[str, bool, str]]:
+        """(value, possible, why not) for each spell a worn wizard's hat could bring out now ("hat:<uid>:<spell>");
+        `short`: for the Auto's weighing, only spells of the highest slot level it has left (the Hat of Many
+        Spells) or the cantrips (the Hat of Wizardry)."""
+        from realmwalker.rules import hats
+
+        out = []
+        c = f.char
+        if c is None or self.antimagic(f.cells):
+            return out
+        for it, _p in hats.worn(c):
+            if short and not hats.ready(it):
+                continue
+            level = None
+            if short and hats.many(it):
+                left = spellrules.slots_left(c, self.t)
+                level = max((i + 1 for i, n in enumerate(left) if n), default=None)
+                if level is None:
+                    continue
+            for sid in hats.spells(c, self.t, it, battle=True, level=level):
+                value = f"hat:{it.uid}:{sid}"
+                why = self._hat_problem(f, value, listed=True)
+                out.append((value, why is None, why or ""))
+        return out
+
+    def _hat_problem(self, f: Fighter, value: str, *, listed: bool = False) -> str | None:
+        from realmwalker.rules import hats
+
+        _, uid, sid = value.split(":", 2)
+        c = f.char
+        it = c.item(int(uid)) if c is not None else None
+        if it is None:
+            return "no such hat"
+        why = hats.problem(c, self.t, it, sid, listed=listed)
+        if why:
+            return why
+        spell = self.t.spells[sid]
+        ok, why = self._casting_time_ok(f, spell, int(spell["level"]) > 0, sid=sid)
+        return None if ok else why
+
+    def _cast_from_hat(self, f: Fighter, value: str, target, point) -> bool:
+        """Unknown Spell (DMG 2024): the slot of the spell's level is spent (none for a cantrip), the action or bonus
+        action its casting time asks, and an Intelligence (Arcana) check made; a success casts it with the wearer's
+        own numbers, a failure wastes it (the Hat of Wizardry) or brings the hat's mishap (the Hat of Many Spells)."""
+        from realmwalker.rules import hats
+
+        _, uid, sid = value.split(":", 2)
+        c = f.char
+        it = c.item(int(uid))
+        spell = self.t.spells[sid]
+        level = int(spell["level"])
+        bonus_cast = cast_kind(f, spell) == "bonus"
+        if level > 0:
+            if self.slot_used_now(f):
+                self.say("Only one spell slot can be spent on a turn.", "warn")
+                return False
+            spellrules.spend_slot(c, level)
+            self.note_slot(f)
+        self._spend(f, bonus_cast)
+        if bonus_cast:
+            f.cast_bonus_spell = True
+        else:
+            f.cast_action_spell = True
+        f.hidden = 0
+        title = it.magic.get("title") or "hat"
+        ok = self.check(f, "arcana", hats.dc(self.t, sid, it), f"Pulling {spell['name']} out of the {title}")
+        hats.spend(it, ok)
+        if not ok:
+            if hats.many(it):
+                self.say(f"{f.the_name} reaches into the {title} for {spell['name']}, and something else comes out.",
+                         "warn")
+                hats.mishap(self, f, self.rng)
+            else:
+                self.say(f"{f.the_name} reaches into the {title} for {spell['name']}; nothing comes. The action is "
+                         "wasted.", "warn")
+            self._after_action(f)
+            return True
+        self.say(f"{f.the_name} pulls <magic>{spell['name']}</> out of the {title}.", "magic")
+        s = f.sheet
+        mod = s.mod(spellrules.casting_ability(c, self.t))
+        mult = spellrules.cantrip_multiplier(c.level) if level == 0 else 1
+        strained = spellrules.strain(c, level, self.rng) if level else 0
+        held = self.cast(f, sid, spell, target, point, up=0, mod=mod, dc=spellrules.save_dc(s, self.t),
+                         bonus=spellrules.attack_bonus(s, self.t) + s.attack_condition(), mult=mult, level=level,
+                         slotted=level > 0)
+        if not held:
+            strained = 0
+            if level > 0:
+                spellrules.unspend_slot(c, level)  # (countered: the slot is not spent, 2024)
+        else:
+            used = spellrules.spend_material(c, self.t, sid)
+            if used:
+                self.say(f"The {used} is gone into the spell.", "magic")
+        self._strain(f, strained)
+        self._after_action(f)
+        return True
+
     def cast(self, f: Fighter, sid: str, spell: dict, target: Fighter | None, point: tuple[int, int] | None, *,
              up: int, mod: int, dc: int, bonus: int, mult: int, level: int, slotted: bool = True) -> bool:
         """A spell's effects, once it has been paid for (rules/engine/effects.py); False if a foe's Counterspell
@@ -5142,6 +5266,10 @@ class Battle:
             return True  # (drunk by a Rod of Absorption or a Staff of the Magi: cast, and nothing comes of it)
         effects.cast(self, f, sid, spell, target, point, up=up, mod=mod, dc=dc, bonus=bonus, mult=mult, level=level,
                      slotted=slotted)
+        if sid in ("light", "daylight"):
+            from realmwalker.rules.engine.handlers import wonders
+
+            wonders.after_light(self, f, sid)  # (a Robe of Eyes in the glare)
         return True
 
     def _countered(self, caster: Fighter, sid: str, spell: dict) -> bool:
@@ -5270,7 +5398,9 @@ class Battle:
         self.say({"banished": f"{f.the_name} vanishes from the field.",
                   "blink": f"{f.the_name} blinks out of sight.",
                   "sphere": f"A shimmering sphere closes around {f.the_name}.",
-                  "cage": f"Walls of force snap shut around {f.the_name}."}.get(why, f"{f.the_name} is gone."),
+                  "cage": f"Walls of force snap shut around {f.the_name}.",
+                  "astral": f"{f.the_name} is gone from the field, a shape of starlight for a moment."}.get(
+                     why, f"{f.the_name} is gone."),
                  "magic")
 
     def _unseal_the_last(self, f: Fighter) -> None:

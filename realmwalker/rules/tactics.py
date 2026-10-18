@@ -996,7 +996,7 @@ def _slot_levels(b: Battle, f: Fighter, value: str, sp: dict) -> list[int]:
 
         levels = magic.charge_levels(held[0], held[1], int(sp["level"]))
         return sorted({levels[0], levels[-1]})
-    if sp["level"] <= 0 or str(value).startswith(("scroll:", "charge:", "innate:", "throw:", "wish:")) \
+    if sp["level"] <= 0 or str(value).startswith(("scroll:", "charge:", "innate:", "throw:", "wish:", "hat:")) \
             or sp.get("again_of"):
         return [sp["level"]]
     if f.char is not None:
@@ -1052,6 +1052,10 @@ def _pick_cast_now(b: Battle, f: Fighter, cost: str, *, beat: float, care: float
                                           spellrules.scroll_reader(f.char, b.t, spell_id(opt.value)))
         if str(opt.value).startswith("wish:"):
             price = spell_cost(b, f, 9)  # (a copy by Wish spends its level 9 slot)
+        if str(opt.value).startswith("hat:") and f.char is not None:  # (a wizard's hat: the slot, on an Arcana check)
+            from realmwalker.rules import hats
+
+            odds = hats.odds(f.sheet, b.t, spell_id(opt.value), f.char.item(int(str(opt.value).split(":")[1])))
         if sp.get("stress"):
             price = price * 2 + 10.0  # (Wish's stress: Strength gone for days, and perhaps Wish for ever)
         if f.char is not None and f.char.effects.get("wish_stress") and sp["level"] > 0:
@@ -1217,6 +1221,8 @@ def _party_turn(b: Battle, f: Fighter) -> None:
         return
     _command_objects(b, f)
     _rod_slots(b, f)
+    if b.current is f and b.outcome is None:
+        _wondrous(b, f)  # (the Pearl of Power, the Robe of Stars: Expansion 5 Part E)
     _divine_help(b, f)
     _school_bonus(b, f)
     if b.current is f and b.outcome is None:
@@ -1682,6 +1688,26 @@ def _rod_slots(b: Battle, f: Fighter) -> None:
     for opt, _a in _abilities(b, f, "draw"):
         b.do_ability(f, opt.value)
         return
+
+
+def _wondrous(b: Battle, f: Fighter) -> None:
+    """A wizard's wondrous things, used with the action when nothing better is to be had: the Pearl of Power when
+    every spell slot is spent, no foe is at hand and one still stands (the slot comes back for the next turn); the
+    Robe of Stars' step into the Astral Plane when badly hurt and hemmed in by two or more foes."""
+    if f.char is None or f.action <= 0:
+        return
+    foes = [e for e in b.enemies_of(f) if e.standing]
+    if not foes:
+        return
+    near = [e for e in foes if b.gap(f, e) <= 1]
+    if f.hp <= f.max_hp // 4 and len(near) >= 2:
+        for opt, _a in _abilities(b, f, "astral"):
+            b.do_ability(f, opt.value)
+            return
+    if not near and spellrules.is_caster(f.char, b.t) and not any(spellrules.slots_left(f.char, b.t)):
+        for opt, _a in _abilities(b, f, "pearl"):
+            b.do_ability(f, opt.value)
+            return
 
 
 def _does(opt, a: dict | None) -> str:

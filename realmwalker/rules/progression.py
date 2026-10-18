@@ -766,7 +766,9 @@ def short_rest(char: Character, tables, rng: RNG, *, meal: bool = False) -> list
     die = tables.classes[char.cls]["hit_die"]
     con = modifier(char.abilities["con"])
     healed = 0
-    from realmwalker.rules import magic
+    from realmwalker.rules import hats, magic
+
+    hats.rest(char, False)  # (the Hat of Many Spells wakes)
 
     if magic.flag(char, "no_healing"):
         notes.append(f"{char.name.split()[0]} cannot heal: the artifact will not allow it.")
@@ -818,7 +820,9 @@ def long_rest(char: Character, tables, rng: RNG) -> list[str]:
     """A full night: hit points, spell slots and features restored; half the hit dice back."""
     if not char.alive:
         return []
-    from realmwalker.rules import allies, magic, servants
+    from realmwalker.rules import allies, hats, magic, servants
+
+    hats.rest(char, True)  # (a wizard's hat wakes)
 
     allies.rest(char, True)  # (a familiar and a steed are whole again; the steed's gift comes back)
     servants.rest(char)  # (a Planar Ally's spirit and a bound creature too; the dead never heal)

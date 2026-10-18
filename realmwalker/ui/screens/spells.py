@@ -219,7 +219,30 @@ def item_spell(game, char, value):
 
 
 def spell_of(value) -> str:
-    return str(value).split(":", 2)[2] if str(value).startswith("charge:") else value
+    return str(value).split(":", 2)[2] if str(value).startswith(("charge:", "hat:")) else value
+
+
+def hat_detail(game, char, value, target) -> list[str]:
+    """A spell a wizard's hat could bring out: the check it asks, what a failure costs, and whether it can be tried."""
+    from realmwalker.rules import hats
+
+    t = game.tables
+    _, uid, sid = str(value).split(":", 2)
+    it = char.item(int(uid))
+    if it is None:
+        return []
+    spell = t.spells[sid]
+    title = markup.escape(it.magic.get("title") or "hat")
+    lvl = "a cantrip" if spell["level"] == 0 else f"level {spell['level']}: a slot of that level"
+    lines = [f"<magic>{markup.escape(spell['name'])}</> <dim>out of the {title}</>",
+             markup.escape(spell.get("text", "")),
+             f"<dim>A spell you do not know ({lvl}); Intelligence (Arcana) DC {hats.dc(t, sid, it)}. "
+             + ("A failure spends the slot and brings something else out of the hat." if hats.many(it) else
+                "Tried or not, the hat rests until a long rest.") + "</>"]
+    problem = magic.hat_problem(game, char, value, target)
+    lines.append("<good>Enter reaches into the hat.</>" if problem is None else
+                 f"<dim>{markup.escape(problem[:1].upper() + problem[1:])}.</>")
+    return lines
 
 
 def item_detail(game, char, value, target, slot: int | None = None) -> list[str]:
@@ -286,8 +309,11 @@ class SpellsScreen(Screen):
         known = list(dict.fromkeys(sp.known_spells(c, t) + sp.preparable(c, t) + sp.ritual_spells(c, t)
                                    + feats.ritual_spells(c, t)))
         things = [f"charge:{it.uid}:{pr['spell']}" for it, pr in magic.item_spells(self.game, c)]
+        from realmwalker.rules import hats
+
+        hat = [f"hat:{it.uid}:{s}" for it, _p in hats.worn(c) for s in hats.spells(c, t, it, battle=False)]
         return sorted(known, key=lambda s: (t.spells[s]["level"], t.spells[s]["name"])) + \
-            sorted(dict.fromkeys(things), key=lambda v: t.spells[spell_of(v)]["name"])
+            sorted(dict.fromkeys(things), key=lambda v: t.spells[spell_of(v)]["name"]) + hat
 
     def current(self) -> str | None:
         spells = self.spells()
@@ -314,6 +340,12 @@ class SpellsScreen(Screen):
         sid = self.current()
         if sid is None:
             return
+        if sid.startswith("hat:"):  # (a wizard's hat: a spell not known, on a check)
+            lines = magic.cast_from_hat(self.game, self.char, sid, self.chosen_target())
+            for text in lines:
+                self.game.say(text, "magic")
+            self.message = " ".join(lines)
+            return
         held = item_spell(self.game, self.char, sid)
         if held is not None:  # (a wand's, a staff's or a rod's spell: its charges)
             lines = magic.cast_on_road(self.game, self.char, spell_of(sid), self.chosen_target(), self.slot,
@@ -331,7 +363,7 @@ class SpellsScreen(Screen):
         """l: the next slot level the chosen spell could be cast with (a higher one does more)."""
         sid = self.current()
         t = self.game.tables
-        if sid is None:
+        if sid is None or sid.startswith("hat:"):
             return
         held = item_spell(self.game, self.char, sid)
         if held is not None:  # (more charges, a higher level)
@@ -355,7 +387,8 @@ class SpellsScreen(Screen):
         """Prepare the chosen spell, or put it aside."""
         sid = self.current()
         t = self.game.tables
-        if sid is None or sid.startswith("charge:") or t.spells[sid]["level"] == 0 or not sp.prepared_count(self.char, t):
+        if sid is None or sid.startswith(("charge:", "hat:")) or t.spells[sid]["level"] == 0 \
+                or not sp.prepared_count(self.char, t):
             return
         if self.game.battle is not None:
             self.message = "Not in the middle of a fight."
@@ -366,9 +399,21 @@ class SpellsScreen(Screen):
     def scribe(self) -> None:
         """Write the chosen spell out as a scroll (ink and quill, parchment, inks and a slot)."""
         sid = self.current()
-        if sid is None or sid.startswith("charge:"):
+        if sid is None or sid.startswith(("charge:", "hat:")):
             return
         lines = magic.scribe(self.game, self.char, sid)
+        for text in lines:
+            self.game.say(text, "magic")
+        self.message = " ".join(lines)
+
+    def store(self) -> None:
+        """r: cast the chosen spell into a Ring of Spell Storing someone in the party wears (game/wonders.py)."""
+        sid = self.current()
+        if sid is None or sid.startswith(("charge:", "hat:")):
+            return
+        from realmwalker.game import wonders
+
+        lines = wonders.store(self.game, self.char, sid, self.slot)
         for text in lines:
             self.game.say(text, "magic")
         self.message = " ".join(lines)
@@ -425,6 +470,8 @@ class SpellsScreen(Screen):
             self.prepare()
         elif ev.key == "l":
             self.next_slot()
+        elif ev.key == "r":
+            self.store()
         return True
 
     # ------------------------------------------------------------------ drawing
@@ -443,10 +490,10 @@ class SpellsScreen(Screen):
         rows: list[tuple[str, str | None]] = []
         last = None
         for i, s in enumerate(spells):
-            level = "items" if s.startswith("charge:") else t.spells[s]["level"]
+            level = "items" if s.startswith("charge:") else "hat" if s.startswith("hat:") else t.spells[s]["level"]
             if level != last:
-                rows.append(("Wands, staffs, rods" if level == "items" else "Cantrips" if level == 0
-                             else f"Level {level}", None))
+                rows.append(("Wands, staffs, rods" if level == "items" else "Out of the hat" if level == "hat"
+                             else "Cantrips" if level == 0 else f"Level {level}", None))
                 last = level
             rows.append((s, str(i)))
         visible = max(1, bottom - 2)
@@ -469,7 +516,9 @@ class SpellsScreen(Screen):
                     canvas.fill(2, y, lw, 1, colors.HILITE_BG)
                 canvas.hit(2, y, lw, 1, lambda idx=idx: setattr(self, "sel", idx))
                 held = item_spell(game, c, label)
-                if held is not None:  # (a wand's, a staff's or a rod's spell)
+                if label.startswith("hat:"):  # (a wizard's hat's Unknown Spell)
+                    ok = road = magic.hat_problem(game, c, label, target if chosen else None, listed=True) is None
+                elif held is not None:  # (a wand's, a staff's or a rod's spell)
                     from realmwalker.rules import magic as magicrules
 
                     ok = magicrules.charges_left(held[1], held[0]) > 0
@@ -501,6 +550,8 @@ class SpellsScreen(Screen):
             lines += ["<title>Working now</>"] + now + [""]
         if sid and sid.startswith("charge:"):
             lines += item_detail(game, c, sid, target, self.slot)
+        elif sid and sid.startswith("hat:"):
+            lines += hat_detail(game, c, sid, target)
         elif sid:
             lines += spell_detail(game, c, sid, target, self.slot)
         y = 2
@@ -513,7 +564,10 @@ class SpellsScreen(Screen):
         # Buttons along the bottom.
         bx = canvas.button(2, h - 2, "Close", self.close, hotkey="Esc")
         held = item_spell(game, c, sid) if sid else None
-        if held is not None:
+        if sid and sid.startswith("hat:"):
+            bx = canvas.button(bx + 2, h - 2, "Reach into the hat", self.cast, hotkey="Enter",
+                               enabled=magic.hat_problem(game, c, sid, target) is None)
+        elif held is not None:
             bx = canvas.button(bx + 2, h - 2, "Cast", self.cast, hotkey="Enter",
                                enabled=magic.road_problem(game, c, spell_of(sid), target, charge=held) is None)
         elif sid:
@@ -536,6 +590,14 @@ class SpellsScreen(Screen):
                                    tooltip=f"Write it out as a scroll: {problem}." if problem else
                                    f"Write it out as a scroll ({magic.SCRIBE_HOURS_PER_LEVEL * level} hours, a sheet of "
                                    f"parchment, {magic.money_text(magic.scribe_cost(level))} of inks and a spell slot).")
+            from realmwalker.game import wonders
+
+            if 1 <= level <= 5 and wonders.rings(game):
+                why = wonders.store_problem(game, c, sid, self.slot)
+                bx = canvas.button(bx + 2, h - 2, "Into the ring", self.store, hotkey="r", enabled=why is None,
+                                   tooltip=f"Cast it into the Ring of Spell Storing: {why}." if why else
+                                   "Cast it into the Ring of Spell Storing (the slot spent): whoever wears the ring "
+                                   "can cast it later, once, with your numbers.")
         if len(game.party) > 1:
             bx = canvas.button(bx + 2, h - 2, "Next member", self.next_member, hotkey="Tab")
         place = sid is not None and t.spells[spell_of(sid)]["target"] == "place"

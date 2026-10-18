@@ -102,6 +102,7 @@
     "fur_cloak": {"name": "fur cloak", "category": "clothing", "slot": "outer", "weight": 6, "value": 800, "material": "fur", "warmth": 6, "wind": 0.7, "water": 0.3, "social": 1},
     "oilskin_coat": {"name": "oilskin coat", "category": "clothing", "slot": "outer", "weight": 5, "value": 600, "material": "leather", "warmth": 2, "wind": 0.6, "water": 0.9, "social": 0},
     "hood": {"name": "wool hood", "category": "clothing", "slot": "head", "weight": 0.5, "value": 20, "material": "wool", "warmth": 1, "wind": 0.3, "water": 0.1, "social": 0},
+    "pointed_hat": {"name": "pointed hat", "category": "clothing", "slot": "head", "weight": 0.5, "value": 50, "material": "wool", "warmth": 1, "wind": 0.2, "water": 0.1, "social": 0, "description": "A tall cone of felt with a wide brim, the hat a hedge wizard wears to be taken for a real one."},
     "fur_hat": {"name": "fur hat", "category": "clothing", "slot": "head", "weight": 1, "value": 200, "material": "fur", "warmth": 3, "wind": 0.6, "water": 0.2, "social": 0},
     "wool_gloves": {"name": "wool mittens", "category": "clothing", "slot": "hands", "weight": 0.3, "value": 30, "material": "wool", "warmth": 2, "wind": 0.3, "water": 0.1, "social": 0},
     "leather_gloves": {"name": "leather gloves", "category": "clothing", "slot": "hands", "weight": 0.5, "value": 80, "material": "leather", "warmth": 1, "wind": 0.5, "water": 0.4, "social": 0},

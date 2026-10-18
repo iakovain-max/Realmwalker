@@ -309,6 +309,10 @@ class Sheet:
             own = max(own, spells.lasting_number(self.c, self.t, "darkvision"))  # (the Darkvision spell: 150 feet)
         if self.c.spells and self.c.spells.get("third_eye") == "dark":
             own = max(own, 120)  # (a diviner's Third Eye)
+        if self.c.equipped:
+            from realmwalker.rules import magic
+
+            own = max(own, magic.sense(self.c, "darkvision"))  # (the Robe of Eyes)
         return own
 
     @property
@@ -337,7 +341,12 @@ class Sheet:
         else:
             from realmwalker.rules import spells
 
-            ac = max([10] + [int(b) for b in spells.lasting_values(self.c, self.t, "mage_armor")]) + dex
+            base = [10] + [int(b) for b in spells.lasting_values(self.c, self.t, "mage_armor")]
+            if self.c.equipped:
+                from realmwalker.rules import magic
+
+                base += [int(p.get("value", 10)) for _it, p in magic.active(self.c) if p.get("kind") == "base_ac"]
+            ac = max(base) + dex  # (Mage Armor; the Robe of the Archmagi)
         shield = self.c.equipped_item("off_hand")
         if shield is not None and self.items.category(shield) == "shield" and self.proficient_with_armor(shield):
             ac += int(self.items.get(shield.def_id).get("ac_bonus", 2))

@@ -176,7 +176,7 @@ def make_listed(game, slug: str, variant: str, rarity: str, rng: RNG) -> Item | 
             it.magic["attune"] = bool(how.get("attune", False))  # a book item binds only if its entry says so
             if how.get("attune_by"):
                 it.magic["attune_by"] = how["attune_by"]  # ("spellcaster", or [classes]: the Staff of Healing)
-            if how.get("enspell") and not _enspell(game, it, variant, rng):
+            if how.get("enspell") and not _enspell(game, it, variant, rng, how):
                 return None  # (no spell of those levels the game can bind: rolled again)
             if how.get("title"):  # (its look from the book's name, not the made-up one: a Staff of Frost is icy)
                 it.magic["look"] = magic_items.look_for(game, it.magic, rng.child("look"))
@@ -188,18 +188,25 @@ def make_listed(game, slug: str, variant: str, rarity: str, rng: RNG) -> Item | 
             for p in it.magic.get("props", ()):
                 if p.get("dice"):  # (the Luck Blade's 1d3 charges of Wish)
                     p["value"] = p["left"] = max(1, dice.roll(str(p.pop("dice")), rng).total)
+            if any(p.get("kind") in ("store", "patches") for p in it.magic.get("props", ())):
+                from realmwalker.game import wonders
+
+                wonders.on_make(game, it, rng.child("fill"))  # (a ring's spells; a robe's patches)
         return it
     return None
 
 
-def _enspell(game, it, variant: str, rng: RNG) -> bool:
-    """The Enspelled Staff (DMG 2024): a spell of the variant's levels bound into it, cast for a charge with the
-    staff's own save DC and attack bonus by the spell's level (data/treasure.json "enspell"). False if none fits."""
+def _enspell(game, it, variant: str, rng: RNG, how: dict | None = None) -> bool:
+    """The Enspelled Staff, Armor and Weapon (DMG 2024): a spell of the variant's levels (and, for the armour and the
+    weapon, of the schools its `enspell` names) bound into it, cast for a charge with the thing's own save DC and
+    attack bonus by the spell's level (data/treasure.json "enspell"). False if none fits."""
     from realmwalker.rules import spells as spellrules
 
     levels = _levels(variant)
+    schools = set((how or {}).get("enspell")) if isinstance((how or {}).get("enspell"), list) else None
     pool = sorted(sid for sid, sp in game.tables.spells.defs.items()
                   if int(sp.get("level", 0)) in levels and sp.get("school") not in (None, "none")
+                  and (schools is None or sp.get("school") in schools)
                   and not set(sp.get("classes", ())) & {"item", "creature", "again"} and not sp.get("again_of")
                   and not sp.get("stress") and not spellrules.has_op(sp, "identify")
                   and (not spellrules.out_of_battle(sp) or spellrules.on_the_road(game.tables, sid)[0]))
@@ -209,9 +216,10 @@ def _enspell(game, it, variant: str, rng: RNG) -> bool:
     sp = game.tables.spells[sid]
     dc, attack = spec(game).get("enspell", {}).get(str(sp["level"]), [13, 5])
     words = f"{sp['name']} is bound into it: a charge casts it (save DC {dc}, attack +{attack})."
+    title = (how or {}).get("title") or "Enspelled Staff"
     it.magic["props"].append({"kind": "charges", "spell": sid, "cost": 1, "dc": int(dc), "attack": int(attack),
                               "text": words})
-    it.magic["title"] = f"Enspelled Staff of {sp['name']}"
+    it.magic["title"] = f"{title} of {sp['name']}"
     return True
 
 

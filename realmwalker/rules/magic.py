@@ -155,9 +155,51 @@ def fingerprint(char) -> tuple:
 
 
 def charges(char) -> list[tuple[object, dict]]:
-    """(item, property) for every spell an item can cast for this character (worn or carried)."""
+    """(item, property) for every spell an item can cast for this character (carried; one that says `worn` only
+    while worn or held: a robe's, Enspelled Armor's)."""
+    on = set(char.equipped.values())
     return [(it, p) for it in char.inventory for p in props(it)
-            if p.get("kind") == "charges" and p.get("spell") and working(char, it)]
+            if p.get("kind") == "charges" and p.get("spell") and working(char, it)
+            and not ((p.get("worn") or _worn_store(it)) and it.uid not in on)]
+
+
+def _worn_store(item) -> bool:
+    store = pool(item)
+    return bool(store and store.get("worn"))
+
+
+def item_focus(char) -> bool:
+    """A magic thing worn or held serves as the character's spellcasting focus: a Hat of Wizardry or of Many Spells
+    for a wizard (a `focus` property `for` their class), a weapon in hand with an attuned Ruby of the War Mage set on
+    it (the ruby's `set_on`)."""
+    for _it, p in active(char):
+        if p.get("kind") == "focus" and p.get("for") in (char.cls, "any"):
+            return True
+    hands = {char.equipped.get("main_hand"), char.equipped.get("off_hand")} - {None}
+    return any(it.magic.get("set_on") in hands and any(p.get("kind") == "war_ruby" for p in props(it))
+               for it in attuned_items(char) if working(char, it))
+
+
+def sense(char, name: str) -> int:
+    """Feet of a sense the character's worn magic gives (the Robe of Eyes: darkvision, truesight); the best one. Only
+    worn things are looked at (sight is asked often in a fight)."""
+    best = 0
+    for it in equipped(char):
+        for p in props(it):
+            if p.get("kind") == "sense" and p.get("sense") == name and working(char, it):
+                best = max(best, int(p.get("value", 0)))
+    return best
+
+
+def unstore(item, prop: dict) -> None:
+    """A spell kept in a Ring of Spell Storing, cast: gone from the ring, its room free again."""
+    if prop.get("stored") and int(prop.get("left", 0)) <= 0:
+        item.magic["props"] = [p for p in props(item) if p is not prop]
+
+
+def stored_levels(item) -> int:
+    """The levels of spells a ring keeps now."""
+    return sum(int(p.get("level", 0)) for p in props(item) if p.get("stored"))
 
 
 def pool(item) -> dict | None:

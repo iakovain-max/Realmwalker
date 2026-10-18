@@ -347,7 +347,7 @@ ITEMS = {
     "fine_clothes": "item/armor/torso/robe_art_1.png", "vestments": "item/armor/torso/robe_3.png",
     "wool_cloak": "item/armor/back/cloak_2.png", "hooded_cloak": "item/armor/back/cloak_3.png",
     "fur_cloak": "item/armor/back/cloak_1_leather.png", "oilskin_coat": "item/armor/back/cloak_4.png",
-    "hood": "item/armor/headgear/hat_2.png", "fur_hat": "item/armor/headgear/hat_3.png",
+    "hood": "item/armor/headgear/hat_2.png", "fur_hat": "item/armor/headgear/hat_3.png", "pointed_hat": "item/armor/headgear/wizard_hat_1.png",
     "wool_gloves": "item/armor/hands/glove_1_new.png", "leather_gloves": "item/armor/hands/glove_3_new.png",
     "boots": "item/armor/feet/boots_1_brown_new.png", "fine_boots": "item/armor/feet/boots_2_jackboots.png",
     "sandals": "item/armor/feet/low_boots.png",

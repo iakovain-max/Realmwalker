@@ -238,6 +238,12 @@ def _staves(name: str):
     return getattr(staves, name)
 
 
+def _wonders(name: str):
+    from realmwalker.rules.engine.handlers import wonders
+
+    return getattr(wonders, name)
+
+
 def _domains(name: str):
     from realmwalker.rules.engine.handlers import domains
 
@@ -291,6 +297,9 @@ REQUIRES: dict[str, Callable] = {
     # wands, staffs and rods (Expansion 5 Part D)
     "staff_breakable": lambda b, f: _staves("breakable_problem")(b, f),
     "rod_energy": lambda b, f: _staves("draw_problem")(b, f),
+    # the wizard's wondrous things (Expansion 5 Part E)
+    "pearl_ready": lambda b, f: _wonders("pearl_problem")(b, f),
+    "astral_ok": lambda b, f: _wonders("astral_problem")(b, f),
 }
 
 
@@ -342,6 +351,8 @@ def options(b, f, only: tuple[str, ...] | None = None) -> list[Option]:
             for sid, ok, why in b.spell_options(f):
                 out.append(_spell_option(b, f, sid, ok, why))
             for sid, ok, why in b.wish_options(f, short=True):  # (Wish copying a mighty spell)
+                out.append(_spell_option(b, f, sid, ok, why))
+            for sid, ok, why in b.hat_options(f, short=True):  # (a spell pulled from a wizard's hat)
                 out.append(_spell_option(b, f, sid, ok, why))
         else:
             for sid in b.creature_spells(f):

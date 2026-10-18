@@ -624,10 +624,11 @@ def _scry(game, caster, spell, target, level: int) -> list[str]:
     fig = w.figures[target.ref]
     first = _first(caster)
     name = esc(target.name)
-    out = [f"{first} gazes into the mirror and calls up {name}."]
+    out = [f"{first} gazes into the {'crystal ball' if game.__dict__.get('item_dc') else 'mirror'} and calls up "
+           f"{name}."]
     knowledge = {"heard": 5, "met": 0, "well": -5}[target.data.get("knowledge", "heard")]
     rng = w.rng.child(f"scry/{target.ref}/{w.time}")
-    dc = save_dc(game.sheet(caster), game.tables)
+    dc = game.__dict__.get("item_dc") or save_dc(game.sheet(caster), game.tables)  # (a crystal ball's DC 17)
     roll = dice.d20(rng).natural
     total = roll + scry_bonus(game, fig) + knowledge
     said = f"<dim>(Wisdom save {roll} {scry_bonus(game, fig) + knowledge:+d} = {total} vs DC {dc})</>"
@@ -644,7 +645,10 @@ def _scry(game, caster, spell, target, level: int) -> list[str]:
     p = game.player
     away = way_words(x - p.x, y - p.y, "miles") if (x, y) != (p.x, p.y) else "here, close by"
     doing = _doing(game, fig, rng)
-    return out + [f"<good>{name} is {words}</>, {away}: {doing} {said}", "<dim>(The place is on your map.)</>"]
+    from realmwalker.game import wonders
+
+    return out + [f"<good>{name} is {words}</>, {away}: {doing} {said}", "<dim>(The place is on your map.)</>"] \
+        + wonders.scry_extras(game, caster, fig, rng.child("ball"))  # (a crystal ball's thoughts, word, truesight)
 
 
 def _doing(game, fig, rng) -> str:

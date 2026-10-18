@@ -1375,6 +1375,46 @@ def dlc_icons() -> dict[str, Image.Image]:
     d.line([(14, 21), (11, 24)], fill=steel_l)
     d.point((13, 21), fill=(255, 255, 255, 255))
     out["dlc/steel_shadows"] = im
+    # Schools & Domains: an open grimoire, its covers arcane blue, under a radiant sun-disc whose rays fall on the
+    # pages, a few motes of light rising between.
+    im = Image.new("RGBA", (32, 32), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    k = (22, 17, 16, 255)
+    gold, gold_l, gold_d = (232, 190, 84, 255), (252, 236, 160, 255), (168, 120, 40, 255)
+    cover, cover_l, cover_d = (84, 108, 192, 255), (130, 156, 226, 255), (46, 60, 122, 255)
+    page, page_l, page_d, ink = (232, 216, 176, 255), (250, 242, 216, 255), (176, 154, 112, 255), (104, 82, 60, 255)
+    import math
+
+    for a in range(0, 360, 45):  # the sun's rays, every eighth of the way round
+        r = math.radians(a - 90)
+        x0, y0 = 16 + math.cos(r) * 6.5, 9 + math.sin(r) * 6.5
+        x1, y1 = 16 + math.cos(r) * (9.5 if a % 90 == 0 else 8.5), 9 + math.sin(r) * (9.5 if a % 90 == 0 else 8.5)
+        d.line([(round(x0), round(y0)), (round(x1), round(y1))], fill=gold_d, width=2)
+        d.line([(round(x0), round(y0)), (round(x1), round(y1))], fill=gold)
+    d.ellipse([10, 3, 22, 15], fill=gold, outline=k)  # the disc
+    d.ellipse([12, 5, 18, 11], fill=gold_l)
+    d.point((13, 6), fill=(255, 255, 255, 255))
+    d.arc([10, 3, 22, 15], 20, 160, fill=gold_d)
+    # the book, lying open: the covers' edges below the pages, the spine in the middle
+    d.polygon([(1, 20), (16, 23), (31, 20), (31, 29), (16, 31), (1, 29)], fill=cover_d, outline=k)
+    d.line([(2, 28), (15, 30)], fill=cover)
+    d.line([(17, 30), (30, 28)], fill=cover)
+    d.line([(2, 21), (2, 28)], fill=cover_l)
+    d.polygon([(3, 18), (15, 20), (15, 29), (3, 27)], fill=page, outline=k)  # the left page
+    d.polygon([(17, 20), (29, 18), (29, 27), (17, 29)], fill=page, outline=k)  # the right page
+    d.line([(4, 19), (14, 21)], fill=page_l)
+    d.line([(18, 21), (28, 19)], fill=page_l)
+    d.line([(14, 21), (14, 28)], fill=page_d)
+    d.line([(18, 21), (18, 28)], fill=page_d)
+    d.line([(16, 21), (16, 30)], fill=k)  # the spine
+    for y in (22, 24, 26):  # lines of writing, and a small diagram on the right page
+        d.line([(5, y - 1), (12, y)], fill=ink)
+    d.line([(20, 23), (26, 22)], fill=ink)
+    d.ellipse([21, 24, 25, 27], outline=ink)
+    d.point((23, 25), fill=gold_d)
+    for x, y, c in ((8, 16, gold_l), (24, 15, gold), (16, 18, gold_l), (11, 17, gold), (21, 17, gold_l)):
+        d.point((x, y), fill=c)  # motes of light rising from the pages
+    out["dlc/schools_domains"] = im
     return out
 
 

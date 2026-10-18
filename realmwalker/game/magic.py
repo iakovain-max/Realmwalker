@@ -383,9 +383,64 @@ def _cast_from_item(game, caster, spell_id: str, target, slot_level, charge) -> 
 
         out = pre + care.cast(game, caster, target, wound, spell_id, level if level > own else None, free=True)
     else:
-        out = pre + cast_on_road(game, caster, spell_id, target, slot_level=level, hired=True)
+        game.__dict__["item_dc"] = prop.get("dc")  # (the thing's own save DC: a crystal ball's Scrying, DC 17)
+        try:
+            out = pre + cast_on_road(game, caster, spell_id, target, slot_level=level, hired=True)
+        finally:
+            game.__dict__.pop("item_dc", None)
     game.dirty = True
+    if spent and prop.get("stored"):
+        magicrules.unstore(item, prop)  # (a Ring of Spell Storing's spell: gone from it)
     return out + (magicrules.drained(owner, item, rng) if spent else [])  # (at will: no d20)
+
+
+def hat_problem(game, caster, value: str, target=None, *, listed: bool = False) -> str | None:
+    """Why a spell cannot be pulled from a wizard's hat outside a fight now ("hat:<uid>:<spell>"; rules/hats.py)."""
+    from realmwalker.rules import hats
+
+    _, uid, sid = str(value).split(":", 2)
+    it = caster.item(int(uid))
+    if it is None:
+        return "no such hat"
+    why = hats.problem(caster, game.tables, it, sid, listed=listed)
+    if why:
+        return why
+    return road_problem(game, caster, sid, target, hired=True)
+
+
+def cast_from_hat(game, caster, value: str, target=None) -> list[str]:
+    """A wizard's hat's Unknown Spell outside a fight: the slot of its level, an Intelligence (Arcana) check (DC 10,
+    + the spell's level for the Hat of Many Spells); a success casts it (as a hired caster would: the slot already
+    paid), a failure wastes it or brings the hat's mishap."""
+    from realmwalker.rules import hats
+
+    t = game.tables
+    _, uid, sid = str(value).split(":", 2)
+    spell = t.spells[sid]
+    why = hat_problem(game, caster, value, target)
+    if why:
+        return [f"{spell['name']}: {why}."]
+    it = caster.item(int(uid))
+    level = int(spell["level"])
+    if level:
+        spellrules.spend_slot(caster, level)
+    rng = game.world.rng.child(f"hat/{sid}/{game.world.time}")
+    bonus = game.sheet(caster).skill_bonus("arcana")
+    dc = hats.dc(t, sid, it)
+    roll = rng.randint(1, 20)
+    ok = roll + bonus >= dc
+    hats.spend(it, ok)
+    first = escape_markup(caster.name.split()[0])
+    title = escape_markup(it.magic.get("title") or "hat")
+    said = f"<dim>(Arcana {roll} {bonus:+d} = {roll + bonus} vs DC {dc})</>"
+    game.dirty = True
+    if not ok:
+        if hats.many(it):
+            return [f"{first} reaches into the {title} for {spell['name']}, and something else comes out. {said}"] \
+                + hats.road_mishap(game, caster, rng.child("mishap"))
+        return [f"{first} reaches into the {title} for {spell['name']}; nothing comes. {said}"]
+    return [f"{first} pulls <magic>{spell['name']}</> out of the {title}. {said}"] \
+        + cast_on_road(game, caster, sid, target, slot_level=level or None, hired=True)
 
 
 def item_spells(game, char) -> list[tuple]:

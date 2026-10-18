@@ -2,7 +2,7 @@
 
 A grim, text-heavy open-world party RPG on D&D 5e rules, drawn with pixel-art tiles and figures over a text grid
 (python-tcod + its SDL renderer; pictures are the only look); every word the player reads is written into the game.
-**Version 1.4.0** (2026-10-17, Steel & Shadows; 1.0 brought the pictures and the new interface, `docs/PROGRESS.md`). **The user is not a programmer**: explain progress in
+**Version 1.5.0** (2026-10-18, Schools & Domains; 1.0 brought the pictures and the new interface, `docs/PROGRESS.md`). **The user is not a programmer**: explain progress in
 gameplay terms, give Windows click-by-click steps when they must do something, never ask them to edit code.
 
 - Source of truth for the design: `docs/DESIGN.md` (verbatim copy of the user's document).
@@ -621,6 +621,14 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   (`magic.item_spells`). Powers in `rules/engine/handlers/staves.py` (Striking, Charming, absorption from `Battle.cast`,
   the rod's slots, Retributive Strike); props `spell_attack`, flags `spell_cover`, `fireworks`; mark `sense_foes`.
   Debug console: `book <item> [variant]`. tests/test_wands_staffs_rods.py.
+- The wizard's wondrous things (Expansion 5 Part E): book makers from `tools/codex/wizard_wonders.py`. Props: `charges`
+  or a `pool` with `worn` (only while worn or held: `magic.charges`), `stored` (a Ring of Spell Storing's spell: `level`,
+  `dc`, `attack`, `mod`; gone once cast, `magic.unstore`), `sense` (`magic.sense`: Sheet.darkvision, Fighter.senses),
+  `base_ac`, `spell_dc`, `focus` {for} and the ruby's `set_on` (`magic.item_focus`: spells.has_focus, focus_bonus).
+  The hats are rules/hats.py: cast ids "hat:<uid>:<spell>" (`Battle.hat_options`, `_cast_from_hat`; the battle screen's
+  hat row; on the road `game/magic.cast_from_hat`). The pack's pearl, patches and ruby, a spell cast into a ring (the
+  Spells page's r) and a crystal ball's gifts to Scrying are game/wonders.py; the pearl, the Astral step and the Robe of
+  Eyes' drawback are rules/engine/handlers/wonders.py; the Auto's use is `tactics._wondrous`. tests/test_wizard_wonders*.py.
 - Gear and tools 2024 (Expansion 2 part D): items.json `pack` (opens into its contents, gear.open_pack), `helps`
   {search, traps, force, disguise} (dungeon.helps, law.put_on_disguise), `utilize` (a tool's 2024 uses, on its card),
   `carry` also on carried containers (each kind once, Sheet.pack_carry), `trinket` (data/trinkets.json; the name and

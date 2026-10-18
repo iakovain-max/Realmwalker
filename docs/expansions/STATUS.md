@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 05 Schools & Domains · Part E (robes, hats and the rest; release) · branch dlc/05-schools-domains · design note docs/expansions/05-schools-domains.md
+Current: 05 Schools & Domains released (v1.5.0, 2026-10-18) · the relay has stopped (Anton's word of 2026-10-17): Expansion 6, Tieflings & Warlocks, waits for his start
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -17,16 +17,32 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   the Illusionist; images on the battle mat) · Part B (2026-10-18: the Light and Trickery Domains; the faiths'
   domains and the gods' answer to the dying devout) · Part C (2026-10-18: the Mage Apprentice, Mage, Archmage, Priest
   and Archpriest in the world; wizards' towers lived in; apprenticeships) · Part D (2026-10-18: the eleven wands, seven
-  staffs and four rods of the DMG; one store of charges a thing, cast in fights and from the Spells page)
+  staffs and four rods of the DMG; one store of charges a thing, cast in fights and from the Spells page) · Part E (2026-10-18: crystal balls, the wizard's
+  hats, the Pearl of Power, the Ring of Spell Storing, the five robes, Enspelled Armor and Weapon, the Ruby of the War Mage;
+  **released as v1.5.0**)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
   adapted); Expansion 3: all 560 settled (223 done, 336 adapted, 1 omitted); Expansion 4: all 66 settled (36 done,
-  30 adapted); Expansion 5: 58 of 72 settled after Part D (33 done, 24 adapted, 1 omitted). PHB 69% · DMG 16% · MM 16%
+  30 adapted); Expansion 5: all 72 settled (39 done, 32 adapted, 1 omitted). PHB 69% · DMG 21% · MM 17%
 Known, not yet chased: one autoplay run of nine during Expansion 5 Part A's checks (2026-10-18) saw two townsfolk on
   one square of a town for seven turns (town life, untouched by the part; the other eight runs, on main and on the
   branch, were clean). The timing tests (an enemy turn under 150/400 ms) now and then miss while the suite runs
   beside autoplay and the smoke test, and pass alone; this was already so in Expansions 3 and 4.
 Assumptions waiting for Anton:
+- Expansion 5 Part E (robes, hats and the rest): a Hat of Many Spells is worn, not held, and its wrong spell goes at a
+  target chosen by chance; its creatures run off the field (nobody's), its bats bite once (2d4) and scatter, its
+  portal closes at once, its magic item is a potion of healing of the rolled rarity and stays; spells go into a
+  Ring of Spell Storing only outside a fight (the Spells page, r), and a found ring holds wizard and cleric battle
+  spells at the numbers of a caster of their level; the game's Light lights its caster, so it blinds a Robe of Eyes'
+  wearer who casts it (Daylight within 5 feet as printed); the Scintillating Colors spare the wearer's friends; the
+  Robe of Stars' stars come back at dawn, and its Astral Plane is a round off the field (back at the start of the
+  wearer's next turn, the Magic action spent); the Robe of Useful Items' door, pit, window and rowboat are rolled
+  again and its silver coffer is a 750 GP art object; the ruby is set from the pack (ten minutes) and the weapon must
+  be in hand; patches are torn off and the ruby taken off outside a fight only (the pack); a ring takes spells only
+  on an attuned finger; the crystal balls' gifts work through Scrying on the road (Telepathy's Suggestion: a person who fails
+  thinks well of you for eight hours); the Enduring Spellbook's gift is on its card only (nothing harms paper yet);
+  the Auto breathes on the Pearl of Power only when every slot is gone and no foe is at hand, and steps into the
+  Astral at a quarter of its hit points with two foes beside it.
 - Expansion 5 Part D (wands, staffs and rods): a wand's, staff's or rod's spells are cast from the pack, as Expansion
   4's charged things already were (the book: "while holding"); the War Mage's +N, the Staff of Power's +2s, spell
   absorption (the Staff of the Magi, the Rod of Absorption and its slots) and the Staff of Charming need the thing in
@@ -531,9 +547,25 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 5, Schools & Domains, Part E (robes, hats and the rest; release v1.5.0), task E.1
-of `docs/expansions/05-schools-domains.md`. Parts A to D are in `main`. Per Anton's word of 2026-10-17, the relay
-stops once Expansion 5 is merged and released (all five parts); Expansion 6 waits for his start.
+Next session starts at: nothing until Anton starts it. Expansion 5 is merged and released (v1.5.0); per his word of
+2026-10-17 the relay stops here. When he starts it again: Expansion 6, Tieflings & Warlocks, step 1 of
+`docs/EXPANSIONS.md` §5.1 (the branch `dlc/06-tieflings-warlocks` and its design note
+`docs/expansions/06-tieflings-warlocks.md`, not yet written).
+The way of Part E (robes, hats and the rest): book makers written by `tools/codex/wizard_wonders.py` into
+data/treasure.json (and its "patches" table); a maker's `enspell` may be a list of schools (Enspelled Armor and
+Weapon). Properties: `charges` with `worn` (and a `pool` with `worn`: only while worn or held, `magic.charges`),
+`stored` (a ring's spell: its `level`, `dc`, `attack`, `mod`; gone once cast, `magic.unstore`), `sense` (darkvision,
+truesight: `magic.sense`, read by Sheet.darkvision and Fighter.senses), `base_ac` (Sheet.armor_class unarmoured),
+`spell_dc` (spells.save_dc), `focus` {for} and the ruby's `war_ruby` + `item.magic["set_on"]` (`magic.item_focus`, read
+by spells.has_focus and focus_bonus), `hat` (rules/hats.py), `store`, `patches`. The hats: cast ids
+"hat:<uid>:<spell>" (`Battle.hat_options`/`_hat_problem`/`_cast_from_hat`, the Auto's short list in
+actions.options, `hats.odds` in tactics; the battle screen's "hatmenu:<uid>" row and `_open_hat`; on the road
+`game/magic.cast_from_hat` and the Spells page's "Out of the hat"); `hats.rest` from progression's rests. The
+pack's things outside a fight are game/wonders.py (`use_name`/`use`, `choices`/`choose` behind the pack's
+ContextMenu; the ring's `store`, the Spells page's r). Battle powers in rules/engine/handlers/wonders.py (the pearl,
+the Astral step `send_away("astral")` back at the turn's start, the Robe of Eyes' `after_light` from Battle.cast);
+the item spell robe_colors; `tactics._wondrous`. Scrying through a ball: `game.__dict__["item_dc"]` while an item's
+spell is cast on the road, `wonders.scry_extras`. tests/test_wizard_wonders*.py.
 The way of Part D (wands, staffs and rods): book makers written by `tools/codex/wands_staffs_rods.py` into
 data/treasure.json (`attune_by`, `enspell` with the top-level "enspell" table [DC, attack] by level). One store of
 charges a thing: prop `pool` {value, left, regain, last crumble|vanish|display|mundane|weaken, lucky}; its spells are
@@ -784,6 +816,8 @@ casting time. A spell aimed at something chosen lists Subjects (game/divining.Su
 | 2026-10-17 | Steel & Shadows begun (the branch, the design note, four parts); Part A: the Battle Master (superiority dice, the twenty maneuvers on the blow, as answers and as bonus actions, Student of War, Know Your Enemy, Relentless, the dice on checks; the Auto uses them); merged into `main` | `dlc/04-steel-shadows` |
 | 2026-10-17 | Demigods & Magics F.8: Animal Shapes and Shapechange - the party as beasts for a day (on the road: the beast chosen, its pace, wings over water and mountains, no spells or gear; in a fight: the willing, a Bonus Action to leave, the druid's fresh shapes), a wizard keeping mind and spells in a dragon's body for an hour, shapes kept from fight to fight; Part F complete; merged into `main` | `dlc/03-demigods-magics` |
 | 2026-10-18 | Schools & Domains Part C: the Mage Apprentice, Mage, Archmage, Priest and Archpriest (blocks, dress by people, the road, temples and great cities), wizards' towers lived in (wards, glyphs, guardians, the master, the library), apprenticeships, the casters' tactics; merged into `main` | `dlc/05-schools-domains` |
+| 2026-10-18 | Schools & Domains Part D: the eleven wands, seven staffs and four rods of the DMG, one store of charges a thing | `dlc/05-schools-domains` |
+| 2026-10-18 | Schools & Domains Part E: crystal balls, the Enduring Spellbook, Enspelled Armor and Weapon, the Hat of Many Spells and the Hat of Wizardry, the Pearl of Power, the Ring of Spell Storing, the five robes, the Ruby of the War Mage; the icon; **released as v1.5.0** | `dlc/05-schools-domains` |
 
 ## Notes for the next session
 

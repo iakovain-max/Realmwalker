@@ -300,7 +300,7 @@
       "wool_cloak": {"cloak": "", "dyes": ["brown", "grey", "forest", "russet", "navy"]},
       "hooded_cloak": {"cloak": "", "dyes": ["grey", "forest", "brown", "black"]},
       "fur_cloak": {"cloak": "fur"}, "oilskin_coat": {"cloak": "dark_leather"},
-      "hood": {"head": "hood", "dyes": ["brown", "grey", "forest", "russet"]}, "fur_hat": {"head": "furhat@fur"},
+      "hood": {"head": "hood", "dyes": ["brown", "grey", "forest", "russet"]}, "fur_hat": {"head": "furhat@fur"}, "pointed_hat": {"head": "wizard", "dyes": ["purple", "navy", "black", "wine"]},
       "wool_gloves": {"hands": "gloves@grey"}, "leather_gloves": {"hands": "gloves@leather"},
       "boots": {"feet": "boots@dark_leather"}, "fine_boots": {"feet": "boots@black"}, "sandals": {"feet": "shoes@leather"},
       "club": {"held": "club"}, "dagger": {"held": "dagger@steel"}, "knife": {"held": "knife@steel"},
