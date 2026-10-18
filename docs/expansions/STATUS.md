@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 05 Schools & Domains · Part D (wands, staffs and rods) · branch dlc/05-schools-domains · design note docs/expansions/05-schools-domains.md
+Current: 05 Schools & Domains · Part E (robes, hats and the rest; release) · branch dlc/05-schools-domains · design note docs/expansions/05-schools-domains.md
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -16,16 +16,32 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   and rogue's magic items of the DMG; saves format 18) · 05 Schools & Domains Part A (2026-10-18: the Diviner and
   the Illusionist; images on the battle mat) · Part B (2026-10-18: the Light and Trickery Domains; the faiths'
   domains and the gods' answer to the dying devout) · Part C (2026-10-18: the Mage Apprentice, Mage, Archmage, Priest
-  and Archpriest in the world; wizards' towers lived in; apprenticeships)
+  and Archpriest in the world; wizards' towers lived in; apprenticeships) · Part D (2026-10-18: the eleven wands, seven
+  staffs and four rods of the DMG; one store of charges a thing, cast in fights and from the Spells page)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
   adapted); Expansion 3: all 560 settled (223 done, 336 adapted, 1 omitted); Expansion 4: all 66 settled (36 done,
-  30 adapted); Expansion 5: 36 of 72 settled after Part C (21 done, 14 adapted, 1 omitted). PHB 69% · DMG 16% · MM 16%
+  30 adapted); Expansion 5: 58 of 72 settled after Part D (33 done, 24 adapted, 1 omitted). PHB 69% · DMG 16% · MM 16%
 Known, not yet chased: one autoplay run of nine during Expansion 5 Part A's checks (2026-10-18) saw two townsfolk on
   one square of a town for seven turns (town life, untouched by the part; the other eight runs, on main and on the
   branch, were clean). The timing tests (an enemy turn under 150/400 ms) now and then miss while the suite runs
   beside autoplay and the smoke test, and pass alone; this was already so in Expansions 3 and 4.
 Assumptions waiting for Anton:
+- Expansion 5 Part D (wands, staffs and rods): a wand's, staff's or rod's spells are cast from the pack, as Expansion
+  4's charged things already were (the book: "while holding"); the War Mage's +N, the Staff of Power's +2s and the
+  Staff of the Magi's absorption need the thing in hand; the Wand of Enemy Detection shows where every foe within 60
+  feet stands for a minute (not only the nearest one's direction); the Wand of Fear's Command is "Grovel!" (the game's
+  Command has no "Flee"); Retributive Strike's "travel to a random plane" is being thrown clear, unharmed, half the
+  time (no planes until Expansion 26), and the Auto never breaks a staff; the Rod of Absorption's stored levels give
+  back a spent slot, with no action, in a fight (the Auto draws one when its best slots are spent); the Rod of
+  Alertness's planted aura goes with its bearer and lets friends in it see the invisible anywhere in it; the Rod of
+  Rulership's charmed foes stand still awaiting your word (Incapacitated) until harmed, and with the Staff of
+  Charming it works in fights only; a reflected enchantment is cast at its caster once its own casting is done;
+  the Staff of Striking spends as many charges as fell the foe (all three on a strong one); the Staff of the Magi
+  drinks a spell only when it would not burst (unless the player says so); the Wand of Pyrotechnics is an evening's
+  show at camp (the spirits rise as with music); the Staff of Adornment's trinkets are words on its card; the
+  Enspelled Staff binds a spell the game can cast of the variant's levels; a book item's look now comes from its book
+  name; the book's Mage carries a plain wand (its focus); the debug console's `book <item>` gives one.
 - Expansion 5 Part C (mages and priests of the world): the book's "Gear: Wand" is the crystal focus until Part D's
   wands; a priest's unprinted DC is 8 + PB + Wis (13); a tower master's ward makes a lock 5 harder (the book's Arcane
   Lock says 10: a party without Knock would find a lived-in tower shut for good); a tower's guardians are the master's
@@ -514,10 +530,23 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 5, Schools & Domains, Part D (wands, staffs and rods: the eleven wands, the seven
-staffs, the four rods), task D.1 of `docs/expansions/05-schools-domains.md`. Parts A, B and C are in `main`. Per
-Anton's word of 2026-10-17, the relay stops once Expansion 5 is merged (all five parts); Expansion 6 waits for his
-start.
+Next session starts at: Expansion 5, Schools & Domains, Part E (robes, hats and the rest; release v1.5.0), task E.1
+of `docs/expansions/05-schools-domains.md`. Parts A to D are in `main`. Per Anton's word of 2026-10-17, the relay
+stops once Expansion 5 is merged and released (all five parts); Expansion 6 waits for his start.
+The way of Part D (wands, staffs and rods): book makers written by `tools/codex/wands_staffs_rods.py` into
+data/treasure.json (`attune_by`, `enspell` with the top-level "enspell" table [DC, attack] by level). One store of
+charges a thing: prop `pool` {value, left, regain, last crumble|vanish|display|mundane|weaken, lucky}; its spells are
+`charges` props with a `cost` (0: at will), `level`, `more`, `dc`, `attack` (`rules/magic.pool`, `pooled`,
+`charge_cost`, `charge_levels`, `spend_charge(prop, rng, item, level)`, `charges_left(prop, item)`, `drained`); in a
+fight "charge:<uid>:<spell>" with `slot_level` as the level the charges buy (`Battle._do_cast`; the battle screen's
+`_ask_charges`, `charge_words`; `tactics.charge_of`/`charge_price` and `_slot_levels`; `estimates.spell_value` reads
+the item's DC); outside one `game/magic.cast_on_road(charge=(item, prop))` -> `_cast_from_item` and `item_spells`
+(the Spells page lists them after a "Wands, staffs, rods" heading; `care.cast(free=True, slot_level=)` heals at the
+level bought). Powers: `rules/engine/handlers/staves.py` (staff_of_striking, staff_of_charming + resist_enchantment and
+`after_cast`, `absorbed` from `Battle.cast`, `rod_draw` and `tactics._rod_slots`, `retributive_strike`/`retribution`);
+item spells wand_enemy_detection (mark `sense_foes`, `Battle.can_see`), wand_fear, wand_paralysis, rod_aura,
+rod_rulership; props `spell_attack` (`spells.attack_bonus`) and flag `spell_cover` (`Battle.target_ac`); flag
+`fireworks` (`gear.fireworks`, the camp evening). `effects.cast` keeps `b._casting_sid`. tests/test_wands_staffs_rods.py.
 The way of Part C (mages and priests): the five 2025 blocks in data/statblocks.json with creatures in
 data/creatures.json. Stat block keys added: spellcasting `levels` {spell: level} ("Fireball (level 4 version)", read
 in `Battle.creature_cast`), `before` (spells already in the block: Mage Armor, Mind Blank; left out of `spells`); a

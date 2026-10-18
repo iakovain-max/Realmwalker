@@ -91,9 +91,9 @@ ball.
 - [x] C.4 Tactics (Counterspell, Shield, healing their side), arena green; cards, words; 5 codex entries; to `main`.
 
 ### Part D — Wands, staffs and rods
-- [ ] D.1 The eleven wands (binding, enemy detection, fear, fireballs, lightning bolts, magic detection, magic
+- [x] D.1 The eleven wands (binding, enemy detection, fear, fireballs, lightning bolts, magic detection, magic
   missiles, paralysis, polymorph, pyrotechnics, the war mage).
-- [ ] D.2 The seven staffs (adornment, charming, healing, power, striking, the magi, the enspelled staff) and the four
+- [x] D.2 The seven staffs (adornment, charming, healing, power, striking, the magi, the enspelled staff) and the four
   rods (absorption, alertness, resurrection, rulership); treasure placement, pictures, the Auto's use; to `main`.
 
 ### Part E — Robes, hats and the rest; release

@@ -429,3 +429,20 @@ def test_the_spells_page_casts_from_a_staff(make_app):
     for size in ((80, 30), (160, 45)):
         app.render(tcod.console.Console(*size, order="F"))
     assert app.error_count == 0
+
+
+def test_the_console_hands_out_a_book_item(make_app):
+    from realmwalker.game.state import new_game
+    from realmwalker.ui.screens.debug_console import DebugConsole
+    from realmwalker.world.generator import WorldOptions
+    from tests.worlds import cached_world
+
+    app = make_app()
+    t = app.tables
+    app.start_game(new_game(cached_world(WorldOptions("Screenland", 5, "small"), t), t, person(t, "wizard", bg="sage")))
+    console = DebugConsole(app)
+    console.run("book wand_of_fireballs")
+    console.run("book wand_of_the_war_mage +3")
+    titles = {it.magic.get("title") for it in app.game.leader.inventory if it.magic}
+    assert {"Wand of Fireballs", "Wand of the War Mage +3"} <= titles
+    assert app.error_count == 0

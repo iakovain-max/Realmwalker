@@ -30,7 +30,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Expansion 2, *Blades & Backgrounds*** (version 1.2.0) | ✅ Released (2026-10-13), branch `dlc/02-blades-backgrounds` |
 | **Expansion 3, *Demigods & Magics*** (version 1.3.0) | ✅ Released (2026-10-17), branch `dlc/03-demigods-magics` |
 | **Expansion 4, *Steel & Shadows*** (version 1.4.0) | ✅ Released (2026-10-17), branch `dlc/04-steel-shadows` |
-| **Expansion 5, *Schools & Domains*** (version 1.5.0 to come) | Parts A, B and C in `main` (2026-10-18), branch `dlc/05-schools-domains` |
+| **Expansion 5, *Schools & Domains*** (version 1.5.0 to come) | Parts A, B, C and D in `main` (2026-10-18), branch `dlc/05-schools-domains` |
 | **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansions 1-4 released; Expansion 5 under way (see STATUS.md) |
 
 ---
@@ -42,6 +42,59 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-18 (night): Schools & Domains Part D — wands, staffs and rods — branch `dlc/05-schools-domains`
+
+Built by the relay builder realmwalker-a. Saves do not change: worlds and characters you already have keep working.
+- **Twenty-two magic wands, staffs and rods** from the Dungeon Master's Guide can now be found in treasure hoards,
+  chests and tower libraries, mostly among a wizard's and a priest's things.
+  - **Wands:** Binding (Hold Person or Hold Monster), Enemy Detection, Fear, Fireballs, Lightning Bolts, Magic
+    Detection, Magic Missiles, Paralysis, Polymorph, Pyrotechnics, and the War Mage's wand (+1, +2 or +3 to spell
+    attacks, and half cover no help to the target).
+  - **Staffs:** Adornment, Charming, Healing, Power, Striking, the Magi, and the Enspelled Staff, which holds one
+    spell of its own (a different one in each staff found).
+  - **Rods:** Absorption, Alertness, Resurrection and Rulership.
+- **Charges.** Each one holds a store of charges, shown on its card, and gets some back every dawn. A spell from it
+  costs one charge or several (Hold Monster takes 5 of the Wand of Binding's 7). Some spells burn hotter for more
+  charges: a Wand of Fireballs casts the level 3 Fireball for one charge, level 4 for two, level 5 for three. The
+  battle screen asks how many to spend. When the last charge goes, a d20 is rolled: on a 1 most of them crumble to
+  ash. The Staff of Power keeps only its edge as a weapon. The Staff of the Magi refills on a 20.
+- **Using them in a fight.** Their spells are on the spell list (c), marked with the thing's name, the charges each
+  costs and how many are left. Wands that say so cast with their own save DC (15 or 17), whoever holds them. Your
+  companions on Auto use them too, and spend charges as if they were worth something.
+  - The Staff of Power and the Staff of Striking are fine quarterstaffs. A hit with the Staff of Striking can pour in
+    up to three charges for extra force.
+  - The Staff of Power also gives +2 to Armor Class, saves and spell attacks.
+  - Either great staff can be broken over the knee (an ability, a): it explodes 30 feet round. Your companions never
+    do this.
+  - A Staff of the Magi or a Rod of Absorption can drink a spell aimed at its bearer alone. The staff turns it into
+    charges. The rod stores it and later gives back a spent spell slot.
+  - A Staff of Charming shrugs off an enchantment once a day, and can turn one aimed at you back on its caster.
+  - The Rod of Alertness gives Advantage on Initiative and Perception. Once a day it can be planted to shine a
+    guarding light: +1 to Armor Class and saves for friends near, who also see the invisible.
+  - The Rod of Rulership makes foes who fail a Wisdom save stand charmed, waiting for your word, until someone on your
+    side harms them.
+- **Using them outside a fight.** The Spells page (S) now lists every spell your wands, staffs and rods can cast
+  outside a fight, under "Wands, staffs, rods". Enter casts it, and l spends more charges for a higher level. So a
+  Staff of Healing heals on the road, and a Rod of Resurrection raises a fallen companion.
+- **A Wand of Pyrotechnics** has no use in a fight. At camp it gives an evening's show of coloured fire (the evening
+  by the fire, with no instrument or dice needed), and your companions' spirits rise.
+- **The book's mage now carries a wand** (a plain one, its focus).
+- **How to see it.** Open chests and hoards, especially in wizards' towers and old temples. Look at a found wand's
+  card once you have studied it. To try one at once, open the debug console (if it is switched on in config.json)
+  and type `book wand_of_fireballs`, or `book list` for all of them.
+- Choices made while Anton was away:
+  - A wand's spells work from the pack, as the other magic items' charges already did; the book says "while holding".
+    The War Mage's +N and the Staff of Power's bonuses need the thing in hand.
+  - The Wand of Enemy Detection shows where every foe within 60 feet stands, for a minute, instead of only the
+    direction of the nearest. On a battle grid a direction alone would mean little.
+  - The Wand of Fear's Command is "Grovel!": the game's Command has no "Flee".
+  - Retributive Strike's "flung to a random plane" is "thrown clear, unharmed", half the time. There are no other
+    planes until Expansion 26.
+  - The Rod of Absorption's stored levels give back a spent slot, with no action, in a fight. The Rod of Alertness's
+    planted light goes with its bearer. The Rod of Rulership and the Staff of Charming work in fights only, since
+    nothing outside one enchants the party.
+  - The Staff of Adornment's floating trinkets are words on its card. It works as an arcane focus.
 
 ### Session, 2026-10-18 (night): Schools & Domains Part C — mages and priests of the world — branch `dlc/05-schools-domains`
 
