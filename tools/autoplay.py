@@ -714,6 +714,30 @@ def _check_magic(game, fail) -> None:
         for tok in battle.tokens:
             if tok.kind == "duplicity" and tok.owner not in ids:
                 fail("a double with no maker on the field")
+    # Schools & Domains Part C: a tower lived in is kept by a living wizard (or a mages' circle) at its master's
+    # numbers; nobody's people is one the world does not know; a creature fights with a block that exists
+    from realmwalker.world import dungeon as gen
+
+    for key, lm in game.world.local_maps.items():
+        master = (lm.meta or {}).get("master") if lm.kind == "dungeon" else None
+        if master is None:
+            continue
+        if master.get("rank") not in gen.MASTER_DC:
+            fail(f"a tower master of no rank the game knows at {key}: {master}")
+        fig = game.world.figures.get(master.get("figure"))
+        if master.get("figure") is not None and fig is None:
+            fail(f"a tower kept by a wizard the world never had at {key}")
+        for f in lm.features.values():
+            if f.get("trap") == "glyph" and int(f.get("dc", 0)) != gen.MASTER_DC[master["rank"]]:
+                fail(f"a glyph at {key} not in its master's hand: DC {f.get('dc')}")
+        for a in lm.actors:
+            for cr in a.creatures:
+                if cr.culture and cr.culture not in getattr(game.tables.cultures, "ids", ()) \
+                        and cr.culture not in game.tables.sprites["figures"]["cultures"]:
+                    fail(f"a creature of an unknown people at {key}: {cr.culture}")
+    for npc in game.world.npcs.values():
+        if npc.stats not in game.tables.creatures.defs:
+            fail(f"{npc.name} fights with a block the game does not have: {npc.stats}")
     owners: dict[int, int] = {}
     for c in game.party:
         for uid in c.attuned:
