@@ -178,6 +178,8 @@ def make_listed(game, slug: str, variant: str, rarity: str, rng: RNG) -> Item | 
                 it.magic["attune_by"] = how["attune_by"]  # ("spellcaster", or [classes]: the Staff of Healing)
             if how.get("enspell") and not _enspell(game, it, variant, rng):
                 return None  # (no spell of those levels the game can bind: rolled again)
+            if how.get("title"):  # (its look from the book's name, not the made-up one: a Staff of Frost is icy)
+                it.magic["look"] = magic_items.look_for(game, it.magic, rng.child("look"))
             if how.get("form"):
                 it.magic["form"] = how["form"]  # (the Veteran's Cane: a walking cane until it is twisted)
             if how.get("curse"):

@@ -380,3 +380,52 @@ def test_an_items_spells_are_listed_on_the_road(game, tables):
     it = next(i for i, _p in roadmagic.item_spells(game, c))
     assert "at will" in charge_words(c, f"charge:{it.uid}:detect_magic", tables)
     assert "7 charges" in charge_words(c, f"charge:{it.uid}:plane_shift", tables)
+
+
+def test_the_auto_draws_a_slot_from_the_rod(game, tables):
+    c, it, b, me, them = battle(game, tables, "rod_of_absorption")
+    prop = next(p for p in magic.props(it) if p.get("kind") == "absorb")
+    prop["left"] = 5
+    while spellrules.slots_left(c, tables)[0] > 0:
+        spellrules.spend_slot(c, 1)
+    tactics._rod_slots(b, me)
+    assert spellrules.slots_left(c, tables)[0] == 1 and prop["left"] == 4
+
+
+def test_the_mage_carries_a_wand(tables):
+    gear = dict(tables.creatures["mage"]["gear"]) if isinstance(tables.creatures["mage"], dict) else {}
+    assert "arcane_wand" in gear
+
+
+def test_the_spells_page_casts_from_a_staff(make_app):
+    import tcod.console
+
+    from realmwalker.game.state import new_game
+    from realmwalker.ui.input import KeyEvent
+    from realmwalker.ui.screens.spells import SpellsScreen
+    from realmwalker.world.generator import WorldOptions
+    from tests.worlds import cached_world
+
+    app = make_app()
+    t = app.tables
+    world = cached_world(WorldOptions("Screenland", 5, "small"), t)
+    c = person(t, "fighter")
+    app.start_game(new_game(world, t, c))
+    app.game.survival = False
+    staff = give(c, make(app.game, "staff_of_healing"), slot=None)
+    c.hp = 1
+    screen = SpellsScreen(app, app.game)
+    app.push(screen)
+    order = screen.spells()
+    v = f"charge:{staff.uid}:cure_wounds"
+    assert v in order
+    screen.sel = order.index(v)
+    app.render(tcod.console.Console(120, 40, order="F"))
+    shown = app.last_canvas.words()
+    assert "Wands, staffs, rods" in shown and "Staff of Healing" in shown and "1 charge of 10 left" in shown
+    app.handle_event(KeyEvent("l"))
+    app.handle_event(KeyEvent("enter"))
+    assert c.hp > 1 and magic.pool(staff)["left"] == 8
+    for size in ((80, 30), (160, 45)):
+        app.render(tcod.console.Console(*size, order="F"))
+    assert app.error_count == 0

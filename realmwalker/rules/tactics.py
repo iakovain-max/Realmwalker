@@ -1216,6 +1216,7 @@ def _party_turn(b: Battle, f: Fighter) -> None:
     if b.current is not f or b.outcome is not None:
         return
     _command_objects(b, f)
+    _rod_slots(b, f)
     _divine_help(b, f)
     _school_bonus(b, f)
     if b.current is f and b.outcome is None:
@@ -1666,6 +1667,21 @@ def _command_objects(b: Battle, f: Fighter) -> None:
     if f.bonus > 0 and b.commanded_of(f) and any(e.standing for e in b.enemies_of(f)):
         if any(aid == "command_objects" and ok for aid, _, ok, _ in b.class_abilities(f)):
             b.do_ability(f, "command_objects")
+
+
+def _rod_slots(b: Battle, f: Fighter) -> None:
+    """A Rod of Absorption's stored levels drawn as a spent slot (no action), once its bearer's best slots are gone
+    and a foe still stands: the highest it can pay for (Expansion 5 Part D)."""
+    if f.char is None or not any(e.standing for e in b.enemies_of(f)):
+        return
+    total = spellrules.slots_total(f.char, b.t)
+    left = spellrules.slots_left(f.char, b.t)
+    top = max((i + 1 for i in range(min(5, len(total))) if total[i]), default=0)
+    if not top or left[top - 1] > 0:
+        return
+    for opt, _a in _abilities(b, f, "draw"):
+        b.do_ability(f, opt.value)
+        return
 
 
 def _does(opt, a: dict | None) -> str:
