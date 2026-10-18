@@ -20,7 +20,7 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
   adapted); Expansion 3: all 560 settled (223 done, 336 adapted, 1 omitted); Expansion 4: all 66 settled (36 done,
-  30 adapted); Expansion 5: 36 of 72 settled after Part C (23 done, 12 adapted, 1 omitted). PHB 69% · DMG 16% · MM 16%
+  30 adapted); Expansion 5: 36 of 72 settled after Part C (21 done, 14 adapted, 1 omitted). PHB 69% · DMG 16% · MM 16%
 Known, not yet chased: one autoplay run of nine during Expansion 5 Part A's checks (2026-10-18) saw two townsfolk on
   one square of a town for seven turns (town life, untouched by the part; the other eight runs, on main and on the
   branch, were clean). The timing tests (an enemy turn under 150/400 ms) now and then miss while the suite runs

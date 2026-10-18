@@ -102,7 +102,15 @@ was.
   bonus action, Protective Magic's Counterspell and Shield sharing three uses, Holy Word sparing friends and
   recharging on a 4, dress by people, road bands taking the land's people, and towers lived in. They also cover the
   glyphs, warded locks and library, the master at the top and their death in the history, temples and great cities,
-  the apprenticeship from offer to lesson, and each tactic in its scene.
+  the apprenticeship from offer to lesson, and each tactic in its scene. The autoplay bot (RESULT: OK) and the window
+  smoke test pass. The full suite passes except the turn-time tests. Those missed their limit under the suite's own
+  load in both full runs, and passed when run again on their own, as has happened since Expansion 3.
+- The fresh review's fixes:
+  - Look says a tower's wizard lives there only while they keep it, not when a gang or a cult holds it now.
+  - A foe's spell card gives its own casting time: a priest's Divine Aid shows as a bonus action.
+  - The Priest and Archpriest codex entries are marked adapted, with notes.
+  - Checked on the page images and kept as printed: the Archmage's 8,000 XP, and Holy Word's stun lasting to the end
+    of the archpriest's next turn.
 
 ### Session, 2026-10-18 (night): Schools & Domains Part B — the Light and Trickery Domains; the gods answer — branch `dlc/05-schools-domains`
 
