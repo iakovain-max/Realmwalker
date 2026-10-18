@@ -1417,7 +1417,7 @@ class Battle:
         events.emit(self, "turn_start", actor=f)  # regeneration...
         f.took_fire = False
         for name in list(f.recharge):
-            if not f.recharge[name] and self.rng.randint(1, 6) >= 5:
+            if not f.recharge[name] and self.rng.randint(1, 6) >= self._recharge_on(f, name):
                 f.recharge[name] = True
         if f.char and f.state == "fighting" and "stunned" not in f.conditions:
             from realmwalker.rules import health
@@ -2227,6 +2227,14 @@ class Battle:
                 made = self.opportunity(e, f, why="polearm") or made
         return made
 
+    @staticmethod
+    def _recharge_on(f: Fighter, name: str) -> int:
+        """The lowest d6 that brings an action back: "Recharge 5-6" is 5, an archpriest's Holy Word (4-6) 4."""
+        for a in (f.cdef or {}).get("attacks", ()):
+            if a.get("name") == name and isinstance(a.get("recharge"), int) and 2 <= a["recharge"] <= 6:
+                return a["recharge"]
+        return 5
+
     def area_cells(self, f: Fighter, a: dict, point: tuple[int, int]) -> list:
         """The squares a creature's area action covers: a breath from its own space, or a thing thrown to burst at a
         point within its range (a spy master's Smoke Bomb)."""
@@ -2256,7 +2264,7 @@ class Battle:
         self._event("cast", by=f.id, to=None, spell=a["name"], effect="breath", dtype=opt.damage_type, area=list(cells),
                     point=point, shape=shape)
         rolled = dice.roll(opt.damage, self.rng).total
-        for x in self.in_area(cells, "all", f):
+        for x in self.in_area(cells, "enemies" if a.get("enemies") else "all", f):  # (Holy Word: each enemy)
             if x is f:
                 continue
             saved = self._save_damage(f, x, a.get("save", "dex"), int(a.get("dc", 13)), opt.damage, opt.damage_type,
@@ -2804,7 +2812,8 @@ class Battle:
         if hit and schools.illusory_self(self, att, target, shield=not crit and total < ac + 5):
             hit = crit = False  # (an illusionist's Illusory Self: before Shield, as it costs no slot)
         # The Shield spell: a wizard who sees the blow coming turns it with a reaction, if that is enough.
-        if hit and not crit and target.char and target.reaction and not target.incapacitated and total < ac + 5:
+        if hit and not crit and (target.char or target.creature) and target.reaction and not target.incapacitated \
+                and total < ac + 5:
             if self._shield(target, att, opt, total, ac):
                 ac += 5
                 hit = False
@@ -2992,21 +3001,38 @@ class Battle:
 
     def _shield(self, f: Fighter, att: Fighter | None = None, opt: AttackOption | None = None, total: int = 0,
                 ac: int = 0) -> bool:
-        """Cast Shield as a reaction (wizards who know it, with a first-level slot to spare)."""
-        if not f.char or "shield" not in spellrules.known_spells(f.char, self.t) or f.buff_value("befuddled"):
+        """Cast Shield as a reaction (wizards who know it, with a first-level slot to spare; a creature whose spells
+        name it: a mage's Protective Magic, so many a day)."""
+        if f.buff_value("befuddled") or self.antimagic(f.cells) or self.frozen(f):
+            return False
+        if f.char is not None:
+            if "shield" not in spellrules.known_spells(f.char, self.t):
+                return False
+        elif f.creature is None or "shield" not in f.cdef.get("spells", ()):
             return False
         if f.buff_value("ac") and any(b.get("source") == "shield" for b in f.buffs):
             return False
-        slot = spellrules.lowest_free_slot(f.char, self.t, 1)
-        if slot is None or self.slot_used_now(f):
+        if f.char is not None:
+            slot = spellrules.lowest_free_slot(f.char, self.t, 1)
+        elif self._per_day(f, "shield") is not None:
+            slot = 1 if self._per_day(f, "shield") > 0 else None
+        else:
+            slot = next((i + 1 for i, n in enumerate(f.slots) if n > 0), None)
+        if slot is None or self.slot_used_now(f) and self._per_day(f, "shield") is None:
             return False
         blow = f"{att.the_name}'s {opt.name} would hit {f.the_name} ({total} against AC {ac})" if att and opt else \
             f"A blow would hit {f.the_name}"
         if not reactions.yes(self, Decision(f, "shield", f"{blow}. Cast Shield? +5 AC turns it.",
                                             [("yes", f"Shield (a level {slot} slot)"), ("no", "Let it land")])):
             return False
-        spellrules.spend_slot(f.char, slot)
-        self.note_slot(f)
+        if f.char is not None:
+            spellrules.spend_slot(f.char, slot)
+            self.note_slot(f)
+        elif self._per_day(f, "shield") is not None:
+            self._spend_per_day(f, "shield")
+        else:
+            f.slots[slot - 1] -= 1
+            self.note_slot(f)
         f.reaction = False
         f.buffs.append({"ac": 5, "rounds": 0, "source": "shield"})
         events.emit(self, "spell_cast", actor=f, spell=self.t.spells["shield"], sid="shield", level=slot)
@@ -4228,7 +4254,7 @@ class Battle:
             elif sid not in sc.get("at_will", []) and level and not any(n > 0 for n in f.slots[level - 1:]):
                 continue
             slotted = bool(level) and per_day is None and sid not in sc.get("at_will", [])
-            if self._casting_time_ok(f, spell, slotted)[0]:
+            if self._casting_time_ok(f, spell, slotted, sid=sid)[0]:
                 out.append(sid)
         return out
 
@@ -4250,7 +4276,10 @@ class Battle:
         slot_i = None
         if self._per_day(f, sid) is not None:
             self._spend_per_day(f, sid)
-        elif level and sid not in sc.get("at_will", []):
+            level = max(level, int((sc.get("levels") or {}).get(sid, level)))  # (a mage's level 4 Fireball)
+        elif sid in sc.get("at_will", []):
+            level = max(level, int((sc.get("levels") or {}).get(sid, level)))
+        elif level:
             if self.slot_used_now(f):
                 return False
             slot_i = i = next(i for i in range(level - 1, len(f.slots)) if f.slots[i] > 0)
@@ -4259,7 +4288,7 @@ class Battle:
             f.slots[i] -= 1
             self.note_slot(f)
             level = i + 1
-        bonus_cast = spell.get("cast") == "bonus"
+        bonus_cast = cast_kind(f, spell, sid) == "bonus"
         self._spend(f, bonus_cast)
         if bonus_cast:
             f.cast_bonus_spell = True
@@ -4391,7 +4420,7 @@ class Battle:
         if "V" in spell.get("components", ()) and self.silenced(f) \
                 and not (spell.get("school") == "illusion" and schools.improved(f.char)):
             return False, "no sound can be made here (Silence)"
-        if cast_kind(f, spell) == "bonus":
+        if cast_kind(f, spell, sid) == "bonus":
             if f.bonus <= 0:
                 return False, "no bonus action left"
         elif f.action <= 0:
@@ -5674,9 +5703,12 @@ class Battle:
                             self.robbed_money)
 
 
-def cast_kind(f: Fighter, spell: dict) -> str:
+def cast_kind(f: Fighter, spell: dict, sid: str | None = None) -> str:
     """How long a casting takes for this caster: "bonus", "reaction" or "action". An abjurer's Spell Breaker casts
-    Dispel Magic with a bonus action (the spell's `breaker_bonus`)."""
+    Dispel Magic with a bonus action (the spell's `breaker_bonus`); a creature casts with a bonus action what its
+    block casts through one (a priest's Divine Aid, a mage's Misty Step: spellcasting `bonus`)."""
+    if sid and f.creature is not None and sid in ((f.cdef.get("spellcasting") or {}).get("bonus") or ()):
+        return "bonus"
     if spell.get("breaker_bonus") and f.has_trait("spell_breaker"):
         return "bonus"
     if spell.get("improved_bonus") and f.char is not None and schools.improved(f.char):

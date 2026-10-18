@@ -809,7 +809,7 @@ def spell(tables, sid: str, *, b=None, f=None, target=None, level: int | None = 
     if f is not None:
         from realmwalker.rules.combat import cast_kind
 
-        kind = cast_kind(f, sp)  # (this caster's: an illusionist's Minor Illusion, an abjurer's Dispel Magic)
+        kind = cast_kind(f, sp, sid)  # (this caster's: Minor Illusion, Dispel Magic, a priest's Divine Aid)
     cast = {"action": "an action", "bonus": "a bonus action", "reaction": "a reaction"}.get(kind, "an action")
     rng = sp.get("range", 0)
     if f is not None and b is not None and isinstance(rng, int):

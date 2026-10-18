@@ -77,14 +77,22 @@ def resolve(cid: str, flavour: dict, blocks: dict) -> dict:
                                "at_will": list(sc.get("at_will", [])),
                                "per_day": {str(k): list(v) for k, v in (sc.get("per_day") or {}).items()},
                                "slots": list(sc.get("slots", [])), "self_only": bool(sc.get("self_only"))}
-        out["spells"] = list(dict.fromkeys(out["spellcasting"]["at_will"]
-                                           + [s for v in out["spellcasting"]["per_day"].values() for s in v]))
-    # Bonus actions that cast a spell so many times a day (a fanatic's Spiritual Weapon, an acolyte's Divine Aid).
-    for a in sb.get("bonus_actions", []):
+        if sc.get("levels"):  # ("Fireball (level 4 version)": cast at that level)
+            out["spellcasting"]["levels"] = {k: int(v) for k, v in sc["levels"].items()}
+        before = set(sc.get("before", ()))  # (Mage Armor "included in AC", Mind Blank "cast before combat")
+        out["spells"] = [s for s in dict.fromkeys(out["spellcasting"]["at_will"]
+                                                  + [s for v in out["spellcasting"]["per_day"].values() for s in v])
+                         if s not in before]
+    # Bonus actions that cast a spell so many times a day (a fanatic's Spiritual Weapon, an acolyte's Divine Aid,
+    # cast with the bonus action whatever the spell's own casting time), and reactions that do (a mage's Protective
+    # Magic: Counterspell or Shield, three a day between them).
+    for a in sb.get("bonus_actions", []) + sb.get("reactions", []):
         spells = [a["casts"]] if a.get("casts") else list(a.get("casts_one_of", []))
         if spells and a.get("uses"):
             sc_out = out.setdefault("spellcasting", {"ability": "wis", "dc": 10, "attack": 2, "at_will": [], "per_day": {},
                                                      "slots": []})
+            if a in sb.get("bonus_actions", []):
+                sc_out.setdefault("bonus", []).extend(s for s in spells if s not in sc_out.get("bonus", []))
             n = int(str(a["uses"]).split("/")[0])
             if len(spells) == 1:
                 sc_out["per_day"].setdefault(str(n), []).extend(spells)
@@ -125,7 +133,8 @@ def attacks(actions: list[dict], extras: dict) -> list[dict]:
         if kind == "save" and a.get("area"):
             out.append({**base, "kind": "ranged", "area": dict(a["area"]), "save": a["save"], "dc": int(a["dc"]),
                         "half": bool(a.get("half", True)), "on_fail": a.get("on_fail", []),
-                        **({"range": [int(a["range"]), int(a["range"])]} if a.get("range") else {})})
+                        **({"range": [int(a["range"]), int(a["range"])]} if a.get("range") else {}),
+                        **({"enemies": True} if a.get("enemies") else {})})  # (Holy Word: each enemy in it)
         elif kind == "save":  # one creature in range makes the save (a spider's web, a wight's touch)
             reach = int(a.get("range", 5))
             out.append({**base, "kind": "melee" if reach <= 5 else "ranged", "single_save": True, "save": a["save"],

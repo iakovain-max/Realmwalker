@@ -30,7 +30,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Expansion 2, *Blades & Backgrounds*** (version 1.2.0) | ✅ Released (2026-10-13), branch `dlc/02-blades-backgrounds` |
 | **Expansion 3, *Demigods & Magics*** (version 1.3.0) | ✅ Released (2026-10-17), branch `dlc/03-demigods-magics` |
 | **Expansion 4, *Steel & Shadows*** (version 1.4.0) | ✅ Released (2026-10-17), branch `dlc/04-steel-shadows` |
-| **Expansion 5, *Schools & Domains*** (version 1.5.0 to come) | Parts A and B in `main` (2026-10-18), branch `dlc/05-schools-domains` |
+| **Expansion 5, *Schools & Domains*** (version 1.5.0 to come) | Parts A, B and C in `main` (2026-10-18), branch `dlc/05-schools-domains` |
 | **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansions 1-4 released; Expansion 5 under way (see STATUS.md) |
 
 ---
@@ -42,6 +42,75 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-18 (night): Schools & Domains Part C — mages and priests of the world — branch `dlc/05-schools-domains`
+
+Built by the relay builder realmwalker-b. Saves do not change: worlds and characters you already have keep working.
+Towns you have already visited keep the people they had. A tower whose floors you have already explored stays as it
+was.
+- **Real mages and priests.** The Monster Manual's Mage Apprentice, Mage, Archmage, Priest and Archpriest now walk
+  the world, each fighting with the spells of their stat block.
+  - A **mage** throws three bolts of force a turn, or a Fireball, a Cone of Cold, Invisibility or Fly. Three times a
+    day it answers a spell with Counterspell or a blow with Shield. Three times a day it Misty Steps away from blades.
+  - An **archmage** throws four bolts. It shrugs off spells more easily (Magic Resistance) and casts a great
+    Lightning Bolt and Cone of Cold. Its mind is shielded (Mind Blank), so it is never charmed and takes no psychic
+    harm.
+  - A **priest** fights with a mace and radiant flame, calls up Spirit Guardians, and three times a day blesses,
+    heals with a word, dispels or restores with a quick prayer.
+  - An **archpriest** speaks a Holy Word that stuns and burns every foe within 20 feet, sparing its friends, and
+    calls down Flame Strike.
+- **Where you meet them.**
+  - On the road: a travelling mage with an apprentice or two, apprentices out on an errand, a priest leading
+    acolytes, and rarely an archmage or an archpriest's procession.
+  - In towns: every temple's priest now fights as the book's Priest. A great city's first temple has an Archpriest
+    as its high priest, and its first mage is an Archmage. Both cast for pay at the city's highest reach. The heads of
+    the world's temples and mages' circles from the history fight as Archpriests, Archmages or Mages.
+  - They dress as their people do: a mage of the south in a turban, of the steppe in a fur hat and deel, an elven
+    mage with a silver circlet. A townsperson you come to blows with now looks in the fight as they do in the street.
+- **Wizards' towers lived in.** A lonely tower whose wizard from the history still lives is kept by that wizard.
+  - The rubble is swept away, and there are tables, beds and lecterns.
+  - Every trap is a Glyph of Warding in the master's hand: 5d8 thunder, at DC 14 for a Mage, 17 for an Archmage. One
+    more glyph guards each stair down. Glyphs have their own picture, a ring of runes, once found.
+  - Locked doors carry a ward: a sigil glows, and the lock is harder to pick or force. Knock opens it.
+  - Apprentices and the master's familiars (imps, a pseudodragon) keep the floors.
+  - At the top the master waits under their own name: a Mage, or an Archmage if they are great. Their library is
+    there too: walk into the shelves to search them (half an hour, once). You find wizard scrolls in the master's hand
+    and a book of old lore, and one more scroll if someone knows Arcana.
+  - Kill the master and the world remembers it. The mages' circles think less of you, and the tower has no master
+    afterwards. Look at the tower on the map: it says when its wizard still lives there.
+- **Apprenticeships.** A town's mage may offer work: "bring me the grimoire of a wizard, and I will take one of you as
+  my apprentice". The grimoire waits at the bottom of that wizard's tower, or on a rival wizard's own shelves while
+  they live, which is harder and better paid. Bring it back and the mage pays a little. Then they teach a wizard of
+  your party a spell they lack, up to third level, written into their book. With no wizard among you, they write out
+  a scroll instead.
+- **How they fight.** Mages fight from afar and never grab a foe beside them. A hurt mage ringed by swords vanishes
+  with Invisibility once its Misty Steps and blasts are spent. A mage takes to the air with Fly above foes who can
+  only strike close. With nobody in sight but minds hiding near, an archmage reads them with Detect Thoughts instead
+  of searching blind. Priests free a friend held fast with Lesser or Greater Restoration. Your own companions on Auto
+  use Fly and Invisibility the same way.
+- **How to see it.** Travel the roads at middling or high danger to meet them. Enter a tower whose Look says "lives
+  and works here still". Ask a mage "Is there any work?". In a great city, talk to the high priest.
+- Choices made while Anton was away:
+  - The book's "Gear: Wand" is the crystal focus for now. Plain wands come with Part D.
+  - A priest's spell save DC is not printed in the book; it is worked out as for any caster: 13.
+  - The book's Arcane Lock makes a lock 10 harder; a tower's ward makes it 5 harder. Otherwise a party without Knock
+    could find a tower shut to it for good.
+  - Tower guardians are the master's familiars and apprentices. Animated armour and golems come with Expansion 17.
+  - An archmage's Scrying and Teleport, and an archpriest's Raise Dead and Zone of Truth, are out-of-battle spells a
+    creature never casts. Mage Armor and Mind Blank are already counted in their blocks.
+- Checked: 38 new tests cover the five stat blocks, casting at a higher level, Divine Aid and Misty Step with the
+  bonus action, Protective Magic's Counterspell and Shield sharing three uses, Holy Word sparing friends and
+  recharging on a 4, dress by people, road bands taking the land's people, and towers lived in. They also cover the
+  glyphs, warded locks and library, the master at the top and their death in the history, temples and great cities,
+  the apprenticeship from offer to lesson, and each tactic in its scene. The autoplay bot (RESULT: OK) and the window
+  smoke test pass. The full suite passes except the turn-time tests. Those missed their limit under the suite's own
+  load in both full runs, and passed when run again on their own, as has happened since Expansion 3.
+- The fresh review's fixes:
+  - Look says a tower's wizard lives there only while they keep it, not when a gang or a cult holds it now.
+  - A foe's spell card gives its own casting time: a priest's Divine Aid shows as a bonus action.
+  - The Priest and Archpriest codex entries are marked adapted, with notes.
+  - Checked on the page images and kept as printed: the Archmage's 8,000 XP, and Holy Word's stun lasting to the end
+    of the archpriest's next turn.
 
 ### Session, 2026-10-18 (night): Schools & Domains Part B — the Light and Trickery Domains; the gods answer — branch `dlc/05-schools-domains`
 

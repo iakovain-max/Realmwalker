@@ -21,6 +21,7 @@ from __future__ import annotations
 import math
 
 from realmwalker.core import dice, textgen
+from realmwalker.core.textgen import escape_markup as esc
 from realmwalker.core.rng import RNG
 from realmwalker.game.encounters import DEADLY_RATIO, ratio_words, threat_ratio
 from realmwalker.rules.creatures import typical_group
@@ -34,7 +35,9 @@ BLACKMAIL_DC = 13
 LIVE = ("active", "return")
 COVERT = ("assassinate", "steal", "smuggle")  # work nobody boasts about, and nobody hears of
 TAGS = {"bounty": ("victory",), "clear_lair": ("victory",), "hunt_beast": ("victory",), "rescue": ("help_poor",),
-        "investigate": ("cult_hunted",), "retrieve": ("discovery",), "slay_dragon": ("victory", "hard_fight")}
+        "investigate": ("cult_hunted",), "retrieve": ("discovery",), "slay_dragon": ("victory", "hard_fight"),
+        "apprenticeship": ("discovery",)}
+FETCHED = ("retrieve", "steal", "apprenticeship")  # work that ends with a thing carried back to whoever set it
 
 
 class _Spot:
@@ -448,6 +451,72 @@ def _retrieve(game, npc, rng):
     return q
 
 
+def _apprenticeship(game, npc, rng):
+    """A mage's proof of worth (Expansion 5 C.3): bring back a wizard's grimoire - from the tower of a wizard of the
+    world's history who is dead (or, while they live, from their own shelves: a rival's), else from a place where
+    one was lost - and the mage takes one of you as an apprentice: a spell taught (`lesson`)."""
+    from realmwalker.world import dungeon as gen
+
+    w = game.world
+    town = w.settlements[npc.settlement]
+    taken = {q["target"].get("site") for q in _all_quests(game) if q["template"] == "apprenticeship"}
+    towers = []
+    for sid, hid in w.politics.get("towers", {}).items():
+        site = w.sites[int(sid)] if 0 <= int(sid) < len(w.sites) else None
+        fig = w.figures.get(hid)
+        if site is None or fig is None or site.id in taken or gen.style_for(w, site) != "tower":
+            continue
+        if 3 <= dist(site, town) <= 30:
+            towers.append((site, fig))
+    if towers:
+        site, fig = rng.choice(towers)
+        wizard, rival = fig.name, fig.alive
+    else:
+        sites = [x for x in w.sites if 4 <= dist(x, town) <= 25 and x.id not in taken]
+        if not sites:
+            return None
+        site, rival = rng.choice(sites), False
+        wizard = rng.choice(spec(game)["text"]["apprenticeship"]["nameless"])
+    q = base_quest(game, npc, "apprenticeship", rng, hard=(1.5 if rival else 1.0) + site.danger / 8)
+    item = f"the grimoire of {wizard}"
+    q["target"] = {"site": site.id, "item": item, "base": "spellbook", "wizard": wizard, "rival": rival}
+    q["words"].update(item=item, site=site.name, where=direction(town, site), wizard=wizard)
+    return q
+
+
+LESSON_TOP = 3  # (the highest spell level a town's mage teaches an apprentice)
+
+
+def lesson(game, q, npc) -> list[str]:
+    """The apprenticeship's real pay: the mage teaches a wizard of the party a spell for their book (of a level
+    they could prepare, at most third, that they lack), or, with no wizard among you, writes out a scroll."""
+    from realmwalker.game import treasure
+    from realmwalker.rules.inventory import add_existing
+    from realmwalker.rules.progression import spell_top_level
+
+    t = game.tables
+    rng = game.world.rng.child(f"lesson/{q['id']}")
+    for c in (c for c in game.party if c.alive and c.cls == "wizard"):
+        top = min(LESSON_TOP, spell_top_level(c, t))
+        book = set(c.spells.get("spellbook", []))
+        can = sorted(sid for sid, sp in t.spells.defs.items() if "wizard" in sp.get("classes", ())
+                     and 1 <= int(sp["level"]) <= top and sid not in book and not sp.get("again_of"))
+        if can:
+            sid = rng.choice(can)
+            c.spells.setdefault("spellbook", []).append(sid)
+            return [f"<magic>{esc(npc.first_name)} keeps the bargain: a long night over the grimoire with "
+                    f"{esc(c.name.split()[0])}, and {t.spells[sid]['name']} is written into their book.</> "
+                    f"<dim>(an apprentice's lesson)</>"]
+    scrolls = sorted(d for d, it in t.items.defs.items() if (it.get("use") or {}).get("scroll") in t.spells
+                     and "wizard" in t.spells[it["use"]["scroll"]].get("classes", ())
+                     and 1 <= int(t.spells[it["use"]["scroll"]]["level"]) <= 2)
+    if not scrolls:
+        return []
+    it = add_existing(game.leader, t.items, treasure.new_item(game, rng.choice(scrolls), rng))
+    return [f"<magic>No wizard among you to teach, so {esc(npc.first_name)} writes out a scroll instead: "
+            f"{t.items.name(it)}.</>"]
+
+
 def _rescue(game, npc, rng):
     w = game.world
     town = w.settlements[npc.settlement]
@@ -726,7 +795,8 @@ def _steal(game, npc, rng):
 
 BUILDERS = {"bounty": _bounty, "slay_dragon": _slay_dragon, "escort": _escort, "assassinate": _assassinate,
             "cure": _cure, "feud": _feud, "steal": _steal, "defend": _defend, "smuggle": _smuggle, "clear_lair": _clear_lair, "hunt_beast": _hunt_beast, "deliver": _deliver,
-            "retrieve": _retrieve, "rescue": _rescue, "collect_debt": _collect_debt, "investigate": _investigate}
+            "retrieve": _retrieve, "rescue": _rescue, "collect_debt": _collect_debt, "investigate": _investigate,
+            "apprenticeship": _apprenticeship}
 
 
 def _all_quests(game) -> list[dict]:
@@ -1046,7 +1116,7 @@ def on_arrive_dungeon(game, lm) -> None:
             found_cult(game, q)
         if not deepest(lm):
             continue
-        if tpl == "retrieve" and not t.get("placed"):
+        if tpl in ("retrieve", "apprenticeship") and not t.get("placed"):
             t["placed"] = place_in_room(game, lm, {"kind": "chest", "locked": 0, "treasure": 2, "quest": q["id"]},
                                         "chest")
         elif tpl == "rescue" and not t.get("placed"):
@@ -1161,7 +1231,7 @@ def on_pickpocket(game, npc) -> list[str]:
 def on_goods_seized(game) -> None:
     """The wardens took what you were carrying: any job that depended on it is over."""
     for q in active(game):
-        if q["template"] in ("smuggle", "deliver", "retrieve", "steal") and not holds_quest_item(game, q) \
+        if q["template"] in ("smuggle", "deliver") + FETCHED and not holds_quest_item(game, q) \
                 and not q["done"]:
             fail(game, q, "The watch has it now.")
 
@@ -1503,7 +1573,7 @@ def talk_choices(conv) -> list:
         tpl = q["template"]
         name = title(game, q)
         if q["done"] and payer(game, q, npc):
-            if tpl in ("retrieve", "steal") and not holds_quest_item(game, q):
+            if tpl in FETCHED and not holds_quest_item(game, q):
                 out.append(Choice("quest_turn_in", f"About {name}...", False, "you don't have it with you",
                                   {"q": q["id"]}))
             elif tpl == "collect_debt" and game.leader.money < t.get("collected", 0):
@@ -1604,7 +1674,7 @@ def _turn_in(conv, q) -> None:
     game, npc, t = conv.game, conv.npc, q["target"]
     conv.you_say("It's done.")
     share, text = 1.0, None
-    if q["template"] in ("retrieve", "steal"):
+    if q["template"] in FETCHED:
         take_quest_item(game, q)
     elif q["template"] == "collect_debt":
         game.leader.money -= t.get("collected", 0)
@@ -1624,6 +1694,9 @@ def _turn_in(conv, q) -> None:
                                        "\"Then it's paid for.\""]))
     for line in reward(game, q, share=share, text=text):
         conv.note(line)
+    if q["template"] == "apprenticeship":
+        for line in lesson(game, q, npc):
+            conv.note(line)
 
 
 def _deliver_letter(conv, q) -> None:

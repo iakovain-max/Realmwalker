@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 05 Schools & Domains · Part C (mages and priests of the world) · branch dlc/05-schools-domains · design note docs/expansions/05-schools-domains.md
+Current: 05 Schools & Domains · Part D (wands, staffs and rods) · branch dlc/05-schools-domains · design note docs/expansions/05-schools-domains.md
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -15,16 +15,25 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   DMG poisons, the Assassin, Spy and Spy Master, the black market, poisoned cups, duels, spies at court; the fighter's
   and rogue's magic items of the DMG; saves format 18) · 05 Schools & Domains Part A (2026-10-18: the Diviner and
   the Illusionist; images on the battle mat) · Part B (2026-10-18: the Light and Trickery Domains; the faiths'
-  domains and the gods' answer to the dying devout)
+  domains and the gods' answer to the dying devout) · Part C (2026-10-18: the Mage Apprentice, Mage, Archmage, Priest
+  and Archpriest in the world; wizards' towers lived in; apprenticeships)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
   adapted); Expansion 3: all 560 settled (223 done, 336 adapted, 1 omitted); Expansion 4: all 66 settled (36 done,
-  30 adapted); Expansion 5: 31 of 72 settled after Part B (20 done, 10 adapted, 1 omitted). PHB 69% · DMG 16% · MM 16%
+  30 adapted); Expansion 5: 36 of 72 settled after Part C (21 done, 14 adapted, 1 omitted). PHB 69% · DMG 16% · MM 16%
 Known, not yet chased: one autoplay run of nine during Expansion 5 Part A's checks (2026-10-18) saw two townsfolk on
   one square of a town for seven turns (town life, untouched by the part; the other eight runs, on main and on the
   branch, were clean). The timing tests (an enemy turn under 150/400 ms) now and then miss while the suite runs
   beside autoplay and the smoke test, and pass alone; this was already so in Expansions 3 and 4.
 Assumptions waiting for Anton:
+- Expansion 5 Part C (mages and priests of the world): the book's "Gear: Wand" is the crystal focus until Part D's
+  wands; a priest's unprinted DC is 8 + PB + Wis (13); a tower master's ward makes a lock 5 harder (the book's Arcane
+  Lock says 10: a party without Knock would find a lived-in tower shut for good); a tower's guardians are the master's
+  familiars and apprentices until the constructs (Expansion 17); a tower master is an Archmage at level 13+ or fame
+  8+, else a Mage, and so are the history's circle heads (temple heads are Archpriests); a great city's first temple
+  and first mage are an Archpriest and an Archmage; the apprenticeship's lesson is a wizard spell up to third level
+  (or a scroll of first or second level with no wizard in the party); killing a tower master costs 6 standing with
+  every mages' circle.
 - Expansion 5 Part B (the Light and Trickery Domains, the gods): Warding Flare shields only the cleric's own side, laid
   by the battle's judgement (asked under the Reactions setting "all"): a blow likely to land at a friend in a bad
   way, a heavy one, or any while uses are to spare; the Corona's "any spell that deals Fire or Radiant damage" is the
@@ -505,10 +514,27 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 5, Schools & Domains, Part C (mages and priests of the world: the Mage Apprentice,
-Mage, Archmage, Priest and Archpriest; wizards' towers lived in; apprenticeships), task C.1 of
-`docs/expansions/05-schools-domains.md`. Parts A and B are in `main`. Per Anton's word of 2026-10-17, the relay stops
-once Expansion 5 is merged (all five parts); Expansion 6 waits for his start.
+Next session starts at: Expansion 5, Schools & Domains, Part D (wands, staffs and rods: the eleven wands, the seven
+staffs, the four rods), task D.1 of `docs/expansions/05-schools-domains.md`. Parts A, B and C are in `main`. Per
+Anton's word of 2026-10-17, the relay stops once Expansion 5 is merged (all five parts); Expansion 6 waits for his
+start.
+The way of Part C (mages and priests): the five 2025 blocks in data/statblocks.json with creatures in
+data/creatures.json. Stat block keys added: spellcasting `levels` {spell: level} ("Fireball (level 4 version)", read
+in `Battle.creature_cast`), `before` (spells already in the block: Mage Armor, Mind Blank; left out of `spells`); a
+reaction that casts with `uses` is a shared pool like Divine Aid (Protective Magic: Counterspell or Shield); a bonus
+action that casts puts its spells in spellcasting `bonus` (`combat.cast_kind(f, spell, sid)` makes them bonus
+actions); an area save action's `enemies` (Holy Word); a recharge number other than 5 (`Battle._recharge_on`). Shield
+for creatures in `Battle._shield`. `Creature.culture` (saved only when set) dresses a creature whose figure says
+`dress` (["mage"], ["priest"]) as that trade among its people (`dolls.creature(culture=)`; cultures' `mage`/`priest`
+dress in data/sprites.json); `encounters._folk_here` gives road bands the land's people; a townsperson in a fight is
+drawn by `dolls.npc` (battlefx `_townsperson`). Towers: `world/dungeon.tower_master` (the history's living wizard or a
+mages' circle), `DungeonBuilder.lived_in`/`library` (glyph traps `WARDS`, `MASTER_DC`, warded locks, bookcases with a
+feature "library"), `lm.meta["master"]`; `game/dungeon.MASTERS`, `search_library` (bump on the bookcase), groups
+tower_mage/tower_archmage/tower_apprentices/tower_familiars; `past.tower_master_slain`. People: priest stats "priest",
+mage stats "mage", `people.figure_stats` for the history's heads; a great city's first temple and mage. Quests:
+template "apprenticeship" (`quests._apprenticeship`, `lesson`, `FETCHED`). Tactics: `estimates._escape_unseen`
+(Invisibility for the hurt), `_out_of_reach` (Fly above melee-only foes), `tactics._read_minds` (sense_thoughts
+instead of a blind search), no grapple by a ranged fighter. tests/test_mages_priests.py.
 The way of Part B (the domains and the gods): `rules/engine/handlers/domains.py` (Warding Flare from `Battle._attack`
 after the Protection style; Radiance of the Dawn a "power" ability valued by `estimates._radiance_of_the_dawn`; the
 corona a buff `corona` read by `query.save_roll` through `domains.corona_against`, with `Battle._dawn` during the
@@ -727,6 +753,7 @@ casting time. A spell aimed at something chosen lists Subjects (game/divining.Su
 | 2026-10-17 | Steel & Shadows Part B: the Eldritch Knight (wizard spells, War Bond, War Magic, Eldritch Strike, Arcane Charge) and the Arcane Trickster (the unseen hand in fights and towns, Magical Ambush, Versatile Trickster, Spell Thief); merged into `main` | `dlc/04-steel-shadows` |
 | 2026-10-17 | Steel & Shadows begun (the branch, the design note, four parts); Part A: the Battle Master (superiority dice, the twenty maneuvers on the blow, as answers and as bonus actions, Student of War, Know Your Enemy, Relentless, the dice on checks; the Auto uses them); merged into `main` | `dlc/04-steel-shadows` |
 | 2026-10-17 | Demigods & Magics F.8: Animal Shapes and Shapechange - the party as beasts for a day (on the road: the beast chosen, its pace, wings over water and mountains, no spells or gear; in a fight: the willing, a Bonus Action to leave, the druid's fresh shapes), a wizard keeping mind and spells in a dragon's body for an hour, shapes kept from fight to fight; Part F complete; merged into `main` | `dlc/03-demigods-magics` |
+| 2026-10-18 | Schools & Domains Part C: the Mage Apprentice, Mage, Archmage, Priest and Archpriest (blocks, dress by people, the road, temples and great cities), wizards' towers lived in (wards, glyphs, guardians, the master, the library), apprenticeships, the casters' tactics; merged into `main` | `dlc/05-schools-domains` |
 
 ## Notes for the next session
 

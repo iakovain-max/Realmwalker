@@ -91,7 +91,7 @@ def test_every_caster_names_catalogue_spells_it_can_use(tables):
         for sid in d.get("spells", []):
             sp = tables.spells[sid]
             casters += 1
-            assert sp.get("cast") != "reaction" or sid == "counterspell", f"{cid}: {sid}"
+            assert sp.get("cast") != "reaction" or sid in ("counterspell", "shield"), f"{cid}: {sid}"  # (Protective Magic)
             sc = d["spellcasting"]
             assert sid in sc.get("at_will", []) or any(sid in v for v in sc.get("per_day", {}).values()) \
                 or any(sid in p["spells"] for p in sc.get("shared", {}).values()) \

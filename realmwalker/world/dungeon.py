@@ -29,6 +29,26 @@ STYLES = {
 }
 TRAPS = {"pit": ("a pit trap", "2d6", "bludgeoning"), "darts": ("poisoned darts", "2d4", "piercing"),
          "blade": ("a swinging blade", "2d8", "slashing"), "fire": ("a gout of fire", "3d6", "fire")}
+# A tower's master wards its stairs (Expansion 5 C.2): Glyph of Warding's explosive runes, never laid by chance.
+WARDS = {"glyph": ("a glyph of warding", "5d8", "thunder")}
+# Spell save DC of a tower's master by the book (MM 2025: Mage 14, Archmage 17).
+MASTER_DC = {"mage": 14, "archmage": 17}
+
+
+def tower_master(world, site) -> dict | None:
+    """Who lives in a tower and keeps it (Expansion 5 C.2): the history's wizard who raised it, while they live (an
+    Archmage if great, else a Mage), or a mages' circle's own when the circle holds the place. None: an empty tower."""
+    if style_for(world, site) != "tower":
+        return None
+    fid = world.politics.get("towers", {}).get(str(site.id))
+    fig = world.figures.get(fid) if fid is not None else None
+    if fig is not None and fig.alive:
+        rank = "archmage" if int(getattr(fig, "level", 0) or 0) >= 13 or int(fig.fame) >= 8 else "mage"
+        return {"figure": fig.id, "name": fig.name, "rank": rank}
+    f = world.factions.get(site.faction) if getattr(site, "faction", -1) >= 0 else None
+    if f is not None and f.active and f.kind == "mages_circle":
+        return {"figure": None, "name": "", "rank": "mage"}
+    return None
 
 
 def style_description(tables, style: str, rng) -> str:
@@ -82,6 +102,7 @@ class DungeonBuilder:
         self.rooms: list[list[int]] = []  # [x, y, w, h]
         self.hidden: set[int] = set()  # rooms behind a secret door
         self.features: dict = {}
+        self.master = tower_master(world, site)  # (a tower lived in: its wizard, wards and library)
 
     def set(self, x: int, y: int, name: str) -> None:
         if 0 < x < self.w - 1 and 0 < y < self.h - 1:
@@ -103,6 +124,8 @@ class DungeonBuilder:
         self.furnish()
         self.chests()
         self.traps()
+        if self.master is not None:
+            self.lived_in()
         variant = self.rng.numpy("variant").integers(0, 256, size=(self.w, self.h)).astype(np.uint8)
         up = self.rooms[0]
         entry = (up[0] + up[2] // 2, up[1] + up[3] // 2)
@@ -112,8 +135,67 @@ class DungeonBuilder:
             features=self.features,
             meta={"site": self.site.id, "level": self.level, "depth": self.depth, "style": self.style,
                   "rooms": self.rooms, "hidden": sorted(self.hidden), "name": self.spec["name"],
-                  "desc": style_description(self.tables, self.style, self.rng)},
+                  "desc": style_description(self.tables, self.style, self.rng),
+                  **self._lived_meta()},
         )
+
+    def _lived_meta(self) -> dict:
+        if self.master is None:
+            return {}
+        rng = RNG(self.world.meta.seed, f"tower-words/{self.site.x},{self.site.y}/{self.level}")
+        return {"master": dict(self.master), "desc": style_description(self.tables, "tower_lived", rng)}
+
+    # ------------------------------------------------------------------ a tower lived in (Expansion 5 C.2)
+    def lived_in(self) -> None:
+        """Its wizard keeps it: the rubble swept away, every trap a glyph of warding in the master's hand and one on
+        the way down, the locks warded, and at the top, where the master works, a library."""
+        rng = RNG(self.world.meta.seed, f"tower-lived/{self.site.x},{self.site.y}/{self.level}")
+        floor = self.spec["floor"]
+        for x in range(self.w):
+            for y in range(self.h):
+                if self.is_(x, y, "rubble") or self.is_(x, y, "bones"):
+                    self.set(x, y, floor)
+        dc = MASTER_DC[self.master["rank"]]
+        for f in self.features.values():
+            if f.get("kind") == "trap":
+                f.update(trap="glyph", dc=dc)
+            elif f.get("kind") == "lock":
+                f.update(warded=True, dc=int(f["dc"]) + 5)
+        down = [(x, y) for x in range(self.w) for y in range(self.h) if self.is_(x, y, "stairs_down")]
+        for sx, sy in down:  # (the stair down is warded)
+            near = [(sx + dx, sy + dy) for dx in (-1, 0, 1) for dy in (-1, 0, 1) if (dx or dy)
+                    and self.floor(sx + dx, sy + dy) and not self.features.get((sx + dx, sy + dy))]
+            if near:
+                self.features[rng.choice(near)] = {"kind": "trap", "trap": "glyph", "dc": dc, "found": False,
+                                                   "spent": False}
+        for i in range(1, len(self.rooms)):
+            if i in self.hidden or not rng.chance(0.5):
+                continue
+            cells = [c for c in self.open_cells(i) if not self.features.get(c)]
+            if cells:
+                x, y = rng.choice(cells)
+                self.set(x, y, rng.weighted(["table", "lectern", "bed"], [3, 1, 1]))
+        if self.level == self.depth:
+            self.library(rng)
+
+    def library(self, rng) -> None:
+        """Shelves of the master's books along the walls of the biggest room: one of them (a feature "library")
+        holds what is worth taking - scrolls in the master's hand, and a book of what they know."""
+        open_rooms = [i for i in range(1, len(self.rooms)) if i not in self.hidden]
+        if not open_rooms:
+            return
+        big = max(open_rooms, key=lambda i: self.rooms[i][2] * self.rooms[i][3])
+        placed = 0
+        for _ in range(3):
+            cells = [(x, y) for x, y in self.open_cells(big) if not self.features.get((x, y))
+                     and any(not self.passable(x + dx, y + dy) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)))]
+            if not cells:
+                break
+            x, y = rng.choice(cells)
+            self.set(x, y, "bookcase")
+            if not placed:
+                self.features[(x, y)] = {"kind": "library", "searched": False}
+            placed += 1
 
     # ------------------------------------------------------------------ rooms and corridors
     def rooms_and_corridors(self) -> None:

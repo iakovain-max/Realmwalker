@@ -196,6 +196,9 @@ def _monster_turn(b: Battle, f: Fighter) -> None:
     if breath and _try_area_attack(b, f, breath[0]):
         _rise(b, f)  # a dragon breathes, then takes to the air out of reach
         return
+    if not _targets(b, f) and f.action > 0 and _read_minds(b, f):
+        if b.current is not f or b.outcome is not None:
+            return  # (Detect Thoughts: the hidden minds found by magic instead of a search: C.4)
     if (not _targets(b, f) and f.action > 0 and any(e.hidden for e in b.enemies_of(f) if e.standing)) or (
             f.action > 0 and f.mod("int") >= -1 and b.illusions_hiding(f) and _none_in_sight(b, f)):
         b.do_search(f)  # nobody in sight, but someone is hiding here (or an image may be hiding them)
@@ -426,6 +429,22 @@ def best_plan(b: Battle, f: Fighter, opts: list[AttackOption]):
     return score, grid.route(tree, sq) if sq != here else [], opt, t
 
 
+def _read_minds(b: Battle, f: Fighter) -> bool:
+    """Nobody in sight, but minds hiding near: a caster that can sense thoughts (a spell whose blessing is
+    `sense_thoughts`, read by what it does) casts it instead of searching blind. True if it did."""
+    if f.concentration is not None:
+        return False
+    for sid in b.creature_spells(f):
+        sp = b.t.spells[sid]
+        reach = int(spellrules.buff_of(sp).get("sense_thoughts", 0) or 0)
+        if not reach or sp["target"] != "self":
+            continue
+        if any((e.hidden or "invisible" in e.conditions) and b.thinks(e) and b.feet(f, e) <= reach
+               for e in b.enemies_of(f) if e.standing):
+            return b.creature_cast(f, sid)
+    return False
+
+
 def _none_in_sight(b: Battle, f: Fighter) -> bool:
     """Foes stand, and none of them can be seen or reached from here."""
     standing = [e for e in b.enemies_of(f) if e.standing]
@@ -607,7 +626,8 @@ def _instead_of_a_blow(b: Battle, f: Fighter, opts: list[AttackOption], opt: Att
         if pf * gain > mine:
             b.do_shove(f, t, "prone")
             return "shove"
-    if smarts(f) >= 2 and t.prefers_range and "grappled" not in t.conditions and _plan_attacks(f, opt) > 1 and pf > 0.4:
+    if smarts(f) >= 2 and t.prefers_range and not f.prefers_range and "grappled" not in t.conditions \
+            and _plan_attacks(f, opt) > 1 and pf > 0.4:  # (a mage that fights from afar does not grab one: C.4)
         b.do_grapple(f, t)
         return "grapple"
     if f.creature is not None and friends and f.action > 0 and _plan_attacks(f, opt) == 1:
@@ -858,9 +878,11 @@ def _touch_heal(b: Battle, f: Fighter) -> bool:
     it was given."""
     from realmwalker.rules.engine import estimates
 
+    from realmwalker.rules.combat import cast_kind
+
     for sid in b.creature_spells(f):
         sp = b.t.spells[sid]
-        bonus = sp.get("cast") == "bonus"
+        bonus = cast_kind(f, sp, sid) == "bonus"
         revive = sp["target"] == "dead_ally" and spellrules.has_op(sp, "revive") and not bonus
         ends = ([c for o in spellrules.ops(sp) if o["op"] == "restore" for c in o.get("conditions", ())]
                 if sp["target"] == "ally" else [])
@@ -1121,7 +1143,7 @@ def _try_area_attack(b: Battle, f: Fighter, opt: AttackOption, need: int | None 
         if far and (b.gap(f, t) > far or not b.can_see(f, t)):
             continue  # (a bomb thrown at a point it can see within its range)
         cells = b.area_cells(f, a, (t.x, t.y))
-        hit = b.in_area(cells, "all", f)
+        hit = b.in_area(cells, "enemies" if a.get("enemies") else "all", f)
         enemies = sum(1 for x in hit if x.team != f.team)
         friends = sum(1 for x in hit if x.team == f.team and x is not f)
         if friends and not friends_ok:

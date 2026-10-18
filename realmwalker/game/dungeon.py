@@ -34,7 +34,11 @@ BOSSES = {"crypt": "barrow_wight", "warren": "goblin_warband", "temple": "cult_t
 KIN = {"bandit_gang": ["bandits", "footpads", "thugs"], "bandit_hideout": ["bandits", "footpads", "thugs"],
        "barrow_wight": ["restless_dead", "zombies", "ghouls"], "goblin_warband": ["goblins", "orc_raiders"],
        "cult_temple": ["cultists", "cult_circle"], "cult_circle": ["cultists"],
-       "ogre": ["wolf_pack", "bear", "spiders"], "dragon": []}
+       "ogre": ["wolf_pack", "bear", "spiders"], "dragon": [],
+       "tower_mage": ["tower_apprentices", "tower_familiars"], "tower_archmage": ["tower_apprentices", "tower_familiars"]}
+# A tower lived in (Expansion 5 C.2): its master by rank, at the top (world/dungeon.tower_master).
+MASTERS = {"mage": "tower_mage", "archmage": "tower_archmage"}
+LIBRARY_TOP = {"mage": 3, "archmage": 5}  # (the highest spell level of the scrolls on a master's shelves)
 VERMIN = ("rats", "spiders", "wild_dogs")
 
 
@@ -282,7 +286,7 @@ def passive(game, skill: str) -> tuple[int, object]:
 
 
 def spring(game, lm, x: int, y: int, f: dict) -> None:
-    name, damage, dtype = gen.TRAPS.get(f.get("trap", "pit"), gen.TRAPS["pit"])
+    name, damage, dtype = {**gen.TRAPS, **gen.WARDS}.get(f.get("trap", "pit"), gen.TRAPS["pit"])
     if f.get("found"):
         game.say(f"You step carefully around {name}.", "dim")
         return
@@ -393,7 +397,7 @@ def search(game) -> list[str]:
         best_roll = max(roll, sensed) if f.get("sensed") else roll
         if f.get("kind") == "trap" and not f.get("found") and best_roll >= int(f.get("dc", 13)):
             f["found"] = True
-            name = gen.TRAPS.get(f.get("trap", "pit"), gen.TRAPS["pit"])[0]
+            name = {**gen.TRAPS, **gen.WARDS}.get(f.get("trap", "pit"), gen.TRAPS["pit"])[0]
             out.append(f"<good>{who.name.split()[0]} finds {name} hidden in the floor.</>")
         elif f.get("kind") == "secret" and roll >= int(f.get("dc", 14)):
             set_terrain(lm, x, y, "door_closed")
@@ -481,11 +485,18 @@ def bump(game, x: int, y: int) -> bool:
             from realmwalker.game import stonework
 
             return stonework.through_own_lock(game, lm, x, y)
+        if f.get("warded") and not f.get("ward_seen"):
+            f["ward_seen"] = True
+            game.say("A sigil glows on the lock as you touch it: the tower's master has sealed it with a ward "
+                     "(harder to pick or force; Knock opens it).", "magic")
         ok, text = unlock(game, lm, x, y, int(f.get("dc", 13)))
         game.say(text, "info" if ok else "warn")
         if ok:
             set_terrain(lm, x, y, "door_open")
             lm.features.pop((x, y), None)
+        return True
+    if tid == "bookcase" and (lm.features.get((x, y)) or {}).get("kind") == "library":
+        search_library(game, lm, x, y)
         return True
     if tid in ("chest", "sarcophagus"):
         open_chest(game, lm, x, y)
@@ -496,6 +507,59 @@ def bump(game, x: int, y: int) -> bool:
         quests.free_captive(game, lm, x, y)
         return True
     return False
+
+
+LIBRARY_FINDS = (
+    "Between the master's own notebooks you find",
+    "Behind a row of star almanacs, rolled and tied with ribbon:",
+    "On the highest shelf, under a skin of dust that someone has lately disturbed:",
+    "In a locked drawer that is not, after all, very well locked:",
+)
+
+
+def search_library(game, lm, x: int, y: int) -> None:
+    """A tower master's shelves (Expansion 5 C.2): half an hour among the books finds scrolls in the master's hand
+    (wizard spells, up to the master's reach) and a book of old lore; one who knows Arcana (DC 15) finds one more.
+    Once: what is left is only the master's own scribbles."""
+    from realmwalker.game import treasure
+    from realmwalker.game.camp import check
+
+    f = lm.features[(x, y)]
+    if f.get("searched"):
+        game.say("You have been through these shelves: nothing left but the master's own scribbles.", "dim")
+        return
+    f["searched"] = True
+    rank = (lm.meta.get("master") or {}).get("rank", "mage")
+    rng = rng_for(game, "library")
+    game.pass_time(30, "rest")
+    if game.over is not None:
+        return
+    alert_nearby(game, lm, x, y, 6)  # (books fall; the tower hears)
+    top = LIBRARY_TOP.get(rank, 3)
+    t = game.tables
+    rarity = t.rules.get("spell_scrolls", {}).get("rarity") or []
+    pool, weights = [], []
+    for d, spec in t.items.defs.items():
+        sid = (spec.get("use") or {}).get("scroll")
+        if not sid or sid not in t.spells or "wizard" not in t.spells[sid].get("classes", ()):
+            continue
+        level = int(t.spells[sid]["level"])
+        grade = rarity[level] if level < len(rarity) else "legendary"
+        if 1 <= level <= top:
+            pool.append(d)
+            weights.append({"common": 6, "uncommon": 4, "rare": 2}.get(grade, 1))
+    n = rng.randint(1, 2) + (1 if rank == "archmage" else 0)
+    ok, roll = check(game, "arcana", 15, tag=f"library/{lm.key}")
+    if ok:
+        n += 1
+    items = [treasure.new_item(game, rng.weighted(pool, weights), rng) for _ in range(n)] if pool else []
+    items.append(treasure.new_item(game, "lore_book", rng))
+    p = game.player
+    lm.items.setdefault((p.lx, p.ly), []).extend(items)
+    names = ", ".join(t.items.name(i) for i in items)
+    game.cue("chest")
+    game.say(f"{rng.choice(LIBRARY_FINDS)} <loot>{names}</>. <dim>(g to pick up)</> {roll}"
+             + (" <good>A knowing eye finds one more.</>" if ok else ""), "loot")
 
 
 def open_chest(game, lm, x: int, y: int) -> None:
@@ -662,6 +726,9 @@ def populate(game, lm) -> None:
     from realmwalker.game import past
 
     boss, boss_name = past.boss_for(game, site, BOSSES.get(style))  # the beast or the dead king of the history
+    master = meta.get("master")
+    if master is not None:  # (a tower lived in: its wizard keeps it, and nothing else moves in)
+        boss, boss_name = MASTERS[master["rank"]], master.get("name") or None
     if game.quests and site is not None:
         from realmwalker.game import quests
 
@@ -706,6 +773,12 @@ def populate(game, lm) -> None:
                 creatures[0].name = d["name"]
                 creatures[0].named = True
                 encounter.legend_grows(game.tables, creatures[0], game.leader.level)
+        elif master is not None and has_boss and n == 0 and creatures:
+            if boss_name:  # (the history's own wizard, in the dress of their people)
+                creatures[0].name, creatures[0].named = boss_name, True
+            fig = game.world.figures.get(master.get("figure"))
+            for c in creatures:
+                c.culture = c.culture or (fig.culture if fig is not None else "")
         elif boss_name and has_boss and n == 0 and creatures:
             creatures[0].name = boss_name  # the troll the old songs are about; the king who was laid here
             creatures[0].named = True

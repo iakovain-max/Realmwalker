@@ -1231,7 +1231,7 @@ DATA_FILES.update({"treasure.json": TREASURE})
 # ---------------------------------------------------------------------------- quests (M8)
 QUEST_TEMPLATES = ("bounty", "clear_lair", "hunt_beast", "deliver", "retrieve", "rescue", "collect_debt",
                    "investigate", "slay_dragon", "escort", "assassinate", "cure", "feud", "steal", "defend",
-                   "smuggle")
+                   "smuggle", "apprenticeship")
 QUESTS = Obj(
     {
         "templates": Map(Obj({"givers": word_list(1, 30), "reward": List(Int(min=0, max=10**7), min_items=2, max_items=2),
@@ -1244,7 +1244,8 @@ QUESTS = Obj(
         "text": Map(Obj({"title": word_list(1, 80), "pitch": word_list(1, 600), "journal": word_list(1, 600),
                          "done": word_list(1, 300), "failed": word_list(1, 300),
                          "hidden": Map(word_list(1, 600), optional=True),
-                         "clue": List(Str(max_len=400), min_items=1, optional=True)})),
+                         "clue": List(Str(max_len=400), min_items=1, optional=True),
+                         "nameless": List(Str(max_len=60), min_items=1, optional=True)})),  # (apprenticeship: a lost wizard)
         "rewards_text": word_list(1, 200),
     }
 )

@@ -204,7 +204,7 @@
     "lair": {"floor": "floor/lair", "wall": "wall/cave", "stairs_down": "feature/cave_down", "stairs_up": "feature/cave_up"}
   },
   "town_walls": {"hamlet": "wall/wood", "village": "wall/wood", "town": "wall/stone", "city": "wall/stone", "hold": "wall/stone_gray", "elfhall": "wall/vines"},
-  "traps": {"pit": "trap/pit", "darts": "trap/darts", "blade": "trap/blade", "fire": "trap/fire", "_": "trap/plate"},
+  "traps": {"pit": "trap/pit", "darts": "trap/darts", "blade": "trap/blade", "fire": "trap/fire", "glyph": "trap/glyph", "_": "trap/plate"},
   "figures": {
     "_comment": "People in pixel art (tools/figure_art.py): a body for each race and sex, then layers. Outfits list choices per slot; one is picked per person, the same every time. A choice is 'thing@colour' ('' is nothing). body/legs/feet/over/belt/hands are clothes and armour (see tools/figure_gear.py GARMENTS), head is a hat or helmet, cloak a colour, held 'weapon@metal', shield 'shape@field@emblem@emblem colour'.",
     "colours": {
@@ -332,18 +332,23 @@
         "_female": {"head": ["veil@indigo", "veil@black", "veil@white", "headscarf@saffron"]},
         "lord": {"body": ["robe@purple", "robe@white"], "head": ["turban@white"], "cloak": ["purple", "white"]},
         "priest": {"body": ["robe@white"], "head": ["turban@white"]},
-        "guard": {"body": ["robe@white"], "over": ["lamellar@steel", "scale_mail@bronze"], "head": ["spired@steel", "turban@white"], "held": ["scimitar@steel", "spear@steel"], "shield": ["round@indigo@none@", "round@red@none@"], "tabard": [""], "legs": [""]}
+        "guard": {"body": ["robe@white"], "over": ["lamellar@steel", "scale_mail@bronze"], "head": ["spired@steel", "turban@white"], "held": ["scimitar@steel", "spear@steel"], "shield": ["round@indigo@none@", "round@red@none@"], "tabard": [""], "legs": [""]},
+        "mage": {"body": ["robe@indigo", "robe@saffron"], "head": ["turban@indigo", "turban@saffron"]}
       },
       "khurgan": {
         "_": {"body": ["deel@blue", "deel@red", "deel@teal", "deel@brown", "deel@ochre"], "legs": ["pants@brown", "pants@black"], "feet": ["boots@dark_leather", "boots@red"], "head": ["furhat@fur", "furhat@brown", ""], "belt": ["belt@saffron", "belt@red", "belt@leather"]},
         "lord": {"body": ["deel@crimson", "deel@yellow"], "head": ["furhat@white_fur"], "cloak": ["white_fur", "crimson"]},
-        "guard": {"over": ["lamellar@leather", "lamellar@steel"], "head": ["spired@steel", "furhat@fur"], "held": ["shortbow", "scimitar@steel", "spear@iron"], "shield": ["round@red@none@", ""], "tabard": [""]}
+        "guard": {"over": ["lamellar@leather", "lamellar@steel"], "head": ["spired@steel", "furhat@fur"], "held": ["shortbow", "scimitar@steel", "spear@iron"], "shield": ["round@red@none@", ""], "tabard": [""]},
+        "mage": {"body": ["deel@purple", "deel@black"], "head": ["furhat@fur"]},
+        "priest": {"body": ["deel@white", "deel@saffron"], "head": ["furhat@white_fur"]}
       },
       "volsk": {
         "_": {"body": ["kaftan@red", "kaftan@blue", "kaftan@green", "shirt_long@linen", "kaftan@crimson"], "belt": ["belt@red", "belt@saffron"], "feet": ["boots@dark_leather", "boots@black"], "head": ["tall_hat@brown", "tall_hat@black", "cap@grey", ""]},
         "_female": {"body": ["dress@red", "dress@blue", "dress@white", "kaftan@crimson"], "head": ["headscarf@red", "headscarf@blue", "headscarf@white", "headscarf@saffron"]},
         "lord": {"body": ["kaftan@crimson", "kaftan@purple"], "head": ["tall_hat@fur"], "cloak": ["crimson", "fur"]},
-        "guard": {"over": ["scale_mail@steel", "chain_mail@steel"], "head": ["spired@steel"], "held": ["battleaxe@steel", "spear@steel"], "shield": ["kite@red@none@", "round@red@none@"], "tabard": [""]}
+        "guard": {"over": ["scale_mail@steel", "chain_mail@steel"], "head": ["spired@steel"], "held": ["battleaxe@steel", "spear@steel"], "shield": ["kite@red@none@", "round@red@none@"], "tabard": [""]},
+        "mage": {"body": ["kaftan@purple", "kaftan@black"], "head": ["tall_hat@black"]},
+        "priest": {"body": ["robe@black"], "head": ["tall_hat@black"]}
       },
       "northmarch": {
         "_": {"body": ["tunic@undyed", "tunic@blue", "tunic@red", "tunic@green", "shirt_long@linen"], "legs": ["pants@grey", "pants@brown"], "feet": ["boots@leather"], "head": ["", "", "cap@grey"]},
@@ -356,40 +361,51 @@
         "_female": {"body": ["dress@white", "dress@sky", "dress@rose"]},
         "lord": {"body": ["chiton@purple", "chiton@white"], "cloak": ["purple"], "head": ["circlet@gold"]},
         "priest": {"body": ["robe@white"], "head": ["headband@white"]},
-        "guard": {"body": ["chiton@red", "chiton@white"], "over": ["breastplate@bronze"], "head": ["crested@bronze"], "held": ["spear@bronze"], "shield": ["round@bronze@none@", "round@red@none@"], "legs": [""], "tabard": [""], "feet": ["shoes@tan"]}
+        "guard": {"body": ["chiton@red", "chiton@white"], "over": ["breastplate@bronze"], "head": ["crested@bronze"], "held": ["spear@bronze"], "shield": ["round@bronze@none@", "round@red@none@"], "legs": [""], "tabard": [""], "feet": ["shoes@tan"]},
+        "mage": {"body": ["chiton@violet", "chiton@navy"], "head": [""]}
       },
       "itzan": {
         "_": {"body": ["tunic@white", "tunic@ochre", "tunic@turquoise", "shirt@white"], "legs": ["loincloth@white", "loincloth@red"], "feet": [""], "head": ["headband@red", "headband@turquoise", ""]},
         "_female": {"body": ["dress@white", "dress@turquoise", "dress@saffron"], "legs": [""]},
         "lord": {"body": ["robe@white"], "head": ["feathers@turquoise", "feathers@green"], "cloak": ["jade", "turquoise"]},
         "priest": {"body": ["robe@black", "robe@red"], "head": ["feathers@green"]},
-        "guard": {"over": ["quilted@white", "quilted@linen"], "head": ["feathers@green", "feathers@turquoise", "feathers@red"], "held": ["club", "spear@bone"], "shield": ["round@turquoise@none@", "round@red@none@"], "tabard": [""], "legs": ["loincloth@white"], "feet": [""]}
+        "guard": {"over": ["quilted@white", "quilted@linen"], "head": ["feathers@green", "feathers@turquoise", "feathers@red"], "held": ["club", "spear@bone"], "shield": ["round@turquoise@none@", "round@red@none@"], "tabard": [""], "legs": ["loincloth@white"], "feet": [""]},
+        "mage": {"body": ["tunic@turquoise", "tunic@jade"], "head": ["feathers@turquoise"]}
       },
       "highland": {
         "_male": {"legs": ["kilt@forest", "kilt@red", "kilt@navy", "kilt@green"], "over": ["plaid@forest", "plaid@red", "plaid@navy", ""], "head": ["tam@navy", "tam@forest", ""]},
         "_female": {"body": ["dress@undyed", "dress@grey", "dress@green"], "over": ["plaid@forest", "plaid@red", ""]},
-        "guard": {"over": ["studded@leather", "leather@dark_leather"], "head": ["tam@navy", "cap@grey"], "held": ["greatsword@steel", "spear@iron"], "shield": ["round@leather@none@"], "tabard": [""]}
+        "guard": {"over": ["studded@leather", "leather@dark_leather"], "head": ["tam@navy", "cap@grey"], "held": ["greatsword@steel", "spear@iron"], "shield": ["round@leather@none@"], "tabard": [""]},
+        "mage": {"body": ["robe@forest", "robe@navy"], "head": ["tam@forest", ""]}
       },
       "southron": {
         "_": {"body": ["shirt_long@linen", "shirt_long@white", "tunic@wine", "tunic@ochre"], "over": ["vest@black", "vest@wine", ""], "head": ["cap@black", "", ""]},
         "_female": {"body": ["dress@black", "dress@wine", "dress@ochre", "dress@white"], "head": ["headscarf@black", ""]},
-        "guard": {"over": ["breastplate@steel"], "head": ["kettle@steel"], "held": ["halberd@steel", "pike@steel"], "tabard": ["", "yellow", "red"]}
+        "guard": {"over": ["breastplate@steel"], "head": ["kettle@steel"], "held": ["halberd@steel", "pike@steel"], "tabard": ["", "yellow", "red"]},
+        "mage": {"body": ["robe@black", "robe@wine"], "head": ["cap@black", ""]}
       },
       "elven": {
         "_": {"body": ["robe@forest", "robe@moss", "tunic@green", "robe@sky", "robe@white"], "head": ["circlet@silver", "", "", "hood@forest"], "feet": ["shoes@leather"]},
-        "guard": {"over": ["scale_mail@silver", "leather@forest"], "head": ["hood@forest", "circlet@silver"], "held": ["longbow"], "shield": [""], "tabard": [""]}
+        "guard": {"over": ["scale_mail@silver", "leather@forest"], "head": ["hood@forest", "circlet@silver"], "held": ["longbow"], "shield": [""], "tabard": [""]},
+        "mage": {"body": ["robe@sky", "robe@forest"], "head": ["circlet@silver", ""]},
+        "priest": {"body": ["robe@white", "robe@moss"], "head": ["circlet@silver"]}
       },
       "dwarven": {
         "_": {"body": ["tunic@brown", "tunic@grey", "tunic@russet", "coat@dark_brown"], "over": ["apron@leather", "", "leather@dark_leather"], "head": ["cap@grey", "hood@brown", ""], "feet": ["boots@dark_leather"]},
-        "guard": {"over": ["chain_mail@steel", "plate@iron"], "head": ["kettle@steel", "nasal@steel", "greathelm@steel"], "held": ["battleaxe@steel", "warhammer@steel"], "shield": ["round@red@none@", ""]}
+        "guard": {"over": ["chain_mail@steel", "plate@iron"], "head": ["kettle@steel", "nasal@steel", "greathelm@steel"], "held": ["battleaxe@steel", "warhammer@steel"], "shield": ["round@red@none@", ""]},
+        "mage": {"body": ["coat@dark_brown", "robe@grey"], "head": ["hood@brown", "cap@grey"]},
+        "priest": {"body": ["coat@grey", "robe@grey"], "head": ["cap@grey"]}
       },
       "halfling": {
         "_": {"body": ["shirt@linen", "shirt_long@undyed", "shirt@white"], "over": ["vest@green", "vest@yellow", "vest@red", "vest@ochre"], "legs": ["shorts@brown", "pants@green"], "feet": [""]},
-        "_female": {"body": ["dress@yellow", "dress@green", "dress@rose"], "over": ["apron@white", ""]}
+        "_female": {"body": ["dress@yellow", "dress@green", "dress@rose"], "over": ["apron@white", ""]},
+        "mage": {"body": ["robe@green", "robe@ochre"]}
       },
       "orcish": {
         "_": {"body": ["hide@hide", "rags@brown", "hide@fur"], "legs": ["pants@dark_brown", "shorts@hide"], "feet": ["", "boots@hide"]},
-        "guard": {"over": ["hide@fur", "studded@dark_leather"], "head": ["horned@iron", ""], "held": ["greataxe@iron", "club"], "shield": [""], "tabard": [""]}
+        "guard": {"over": ["hide@fur", "studded@dark_leather"], "head": ["horned@iron", ""], "held": ["greataxe@iron", "club"], "shield": [""], "tabard": [""]},
+        "mage": {"body": ["hide@hide", "rags@brown"], "head": ["horned@iron", ""]},
+        "priest": {"body": ["hide@fur"]}
       }
     },
     "outfits": {
@@ -455,7 +471,12 @@
       "assassin": {"body": ["tunic@black", "shirt_long@dark_brown"], "over": ["studded@dark_leather"], "legs": ["pants@black"], "feet": ["boots@black"], "head": ["hood@black", "hood@dark_brown"], "held": ["shortsword@blackened"], "cloak": ["black"]},
       "spy": {"body": ["tunic@grey", "coat@navy", "tunic@brown"], "legs": ["pants@brown", "pants@grey"], "feet": ["boots@dark_leather"], "head": ["hood@grey", ""], "held": ["shortsword@steel", "hand_crossbow"], "cloak": ["grey", "", "brown"]},
       "spy_master": {"body": ["coat@black", "coat@wine"], "legs": ["pants@black"], "feet": ["boots@black"], "belt": ["belt@silver"], "head": ["hood@black", ""], "held": ["rapier@silver"], "cloak": ["black", "wine"]},
-      "noble": {"body": ["coat@crimson", "coat@navy"], "legs": ["pants@black"], "feet": ["boots@black"], "belt": ["belt@gold"], "head": ["circlet@gold", ""], "held": ["rapier@silver"], "cloak": ["crimson", "purple"]}
+      "noble": {"body": ["coat@crimson", "coat@navy"], "legs": ["pants@black"], "feet": ["boots@black"], "belt": ["belt@gold"], "head": ["circlet@gold", ""], "held": ["rapier@silver"], "cloak": ["crimson", "purple"]},
+      "mage_apprentice": {"body": ["robe@grey", "robe@undyed", "robe@navy"], "belt": ["belt@leather"], "feet": ["shoes@leather"], "head": ["hood@grey", ""], "held": ["book", "dagger@iron"], "dress": ["mage"]},
+      "mage": {"body": ["robe@purple", "robe@navy", "robe@wine"], "feet": ["shoes@dark_leather"], "head": ["wizard@purple", "wizard@navy"], "held": ["staff"], "cloak": ["", "black"], "dress": ["mage"]},
+      "archmage": {"body": ["robe@black", "robe@violet", "robe@crimson"], "belt": ["belt@gold"], "feet": ["shoes@dark_leather"], "head": ["wizard@black", "wizard@violet"], "held": ["staff"], "cloak": ["purple", "black"], "dress": ["mage"]},
+      "priest": {"body": ["robe@white", "robe@linen"], "over": ["chain_shirt@steel"], "belt": ["belt@gold", "belt@red"], "feet": ["shoes@leather"], "held": ["mace@iron", "holy_symbol"], "dress": ["priest"]},
+      "archpriest": {"body": ["robe@white"], "over": ["chain_mail@steel"], "belt": ["belt@gold"], "feet": ["shoes@leather"], "head": ["circlet@gold", ""], "held": ["holy_symbol"], "cloak": ["white", "crimson"], "dress": ["priest"]}
     }
   },
   "world": {

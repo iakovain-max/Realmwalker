@@ -150,6 +150,7 @@ pick("trap/darts", "dungeon/traps/trap_dart.png", "feature")
 pick("trap/blade", "dungeon/traps/trap_blade.png", "feature")
 pick("trap/fire", "dungeon/traps/trap_magical.png", "feature")
 pick("trap/plate", "dungeon/traps/pressure_plate.png", "feature")
+pick("trap/glyph", "dungeon/traps/trap_zot.png", "feature")  # (a tower master's Glyph of Warding: Exp 5 C.2)
 # Trees and plants
 pick_many("tree/autumn", "dungeon/trees/tree_*.png", "tree")
 pick_many("tree/mangrove", "dungeon/trees/mangrove_*.png", "tree")

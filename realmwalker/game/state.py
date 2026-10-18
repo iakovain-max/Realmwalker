@@ -1095,8 +1095,9 @@ class GameState:
                 p.steps += 1
                 self.pass_seconds(int(LOCAL_STEP_SECONDS * 2 * pace), "walk")
                 return True
-        if tid in ("door_locked", "chest", "sarcophagus"):
-            from realmwalker.game import dungeon
+        if tid in ("door_locked", "chest", "sarcophagus") or (
+                tid == "bookcase" and (lm.features.get((nx, ny)) or {}).get("kind") == "library"):
+            from realmwalker.game import dungeon  # (a tower master's library: Expansion 5 C.2)
 
             dungeon.bump(self, nx, ny)
             return True

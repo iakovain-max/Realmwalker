@@ -830,6 +830,8 @@ def _buff_worth(buff: dict, count: int, b=None, f=None, on=None, spell: dict | N
         w += 2.5 if near and on is not None and on.hp < on.max_hp / 2 else (1.0 if near else 0.3)
     if buff.get("until_act"):
         w += 1.5 if near else 0.4  # (unseen: blows at them have disadvantage, theirs advantage)
+        if b is not None and on is not None and on.hp < on.max_hp / 2:
+            w += _escape_unseen(b, f, on)  # (Expansion 5 C.4: a hurt mage vanishes from the blades about it)
     if buff.get("ward_die"):
         w += 1.5 if near else 0.3
     if buff.get("warded_kinds") and b is not None:
@@ -888,6 +890,8 @@ def _buff_worth(buff: dict, count: int, b=None, f=None, on=None, spell: dict | N
         w += 0.5 * len(buff["immune"])
     if buff.get("fly"):
         w += 1.0 if near else 0.6  # (out of reach of those on the ground)
+        if b is not None and on is not None and on.fly_speed <= 0:
+            w += _out_of_reach(b, f, on)  # (Expansion 5 C.4: a mage rises above the swords)
     if buff.get("truesight") and b is not None and f is not None:
         hidden = sum(1 for e in b.enemies_of(f) if "invisible" in e.conditions or e.hidden
                      or any(bf.get("blurred") or bf.get("images") for bf in e.buffs))
@@ -914,6 +918,37 @@ def _buff_worth(buff: dict, count: int, b=None, f=None, on=None, spell: dict | N
         friends = [x for x in b.team(f.team) if x.active and grid.gap(bearer.space, x.space) <= r]
         w += sum(_buff_worth(aura.get("grant", {}), 1, b, f, x, spell) for x in friends)
     return w
+
+
+def _strikes_only_close(b, e) -> bool:
+    """A foe that can hurt nothing it cannot walk up to: no shot, no thrown blade, no spell, no wings."""
+    if e.fly_speed > 0 or casts_spells(b, e):
+        return False
+    if e.creature is not None:
+        return all(a.get("kind") == "melee" and not a.get("area") for a in e.cdef.get("attacks", ()))
+    if e.char is None:
+        return False
+    return not any("range" in b.t.items.get(it.def_id) for it in e.char.inventory)  # (a bow, a sling, a javelin)
+
+
+def _escape_unseen(b, f, on) -> float:
+    """Unseen, a hurt creature is let alone by the foes beside it for a round or so: the harm they would do."""
+    close = [e for e in b.enemies_of(f) if e.standing and b.gap(on, e) <= 2 and b.can_see(e, on)]
+    return 0.8 * sum(threat(e) for e in close)
+
+
+def _out_of_reach(b, f, on) -> float:
+    """Aloft, one who fights from afar is out of reach of foes that can only strike close: a few rounds of their
+    harm kept off (none if it has nothing to fight with from up there)."""
+    from_afar = casts_spells(b, on) or (on.creature is not None and any(
+        a.get("kind") == "ranged" for a in on.cdef.get("attacks", ()))) or (
+        on.char is not None and not _strikes_only_close(b, on))
+    if not from_afar:
+        return 0.0
+    close = [e for e in b.enemies_of(f) if e.standing and b.gap(on, e) <= 6 and _strikes_only_close(b, e)]
+    if len(close) < len([e for e in b.enemies_of(f) if e.standing]) / 2:
+        return 0.0  # (most of them shoot or cast: flying only makes it a target)
+    return 1.5 * sum(threat(e) for e in close)
 
 
 def _unseen_foes(b, f) -> list:

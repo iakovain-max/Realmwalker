@@ -603,6 +603,15 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   `_do_cast` in `domains.standing_in`; `domains.distracted` in `query.attack_roll`. Faiths name their `domains`
   (data/factions.json; `progression.faith_domain`); the dying devout may be answered: `game/gods.py` fills
   `Battle.prayers`, `rules/miracles.answer` from `Battle._kill`, `gods.after_battle` remembers it. tests/test_domains.py.
+- Mages and priests of the world (Expansion 5 Part C): the MM's five caster blocks. Stat block spellcasting `levels`
+  (a spell's version), `before` (already in the block), `bonus` (cast with the bonus action: `cast_kind(f, spell,
+  sid)`); a reaction that casts with uses is a shared pool (Protective Magic; creature Shield in `Battle._shield`); an
+  area action's `enemies`; recharge read by `Battle._recharge_on`. `Creature.culture` + figure `dress` dress a creature
+  as its people's mages/priests (`dolls.creature(culture=)`); road bands take the land's people. A tower whose history
+  wizard lives is kept (`world/dungeon.tower_master`, `lived_in`: glyphs `WARDS`, warded locks, a "library"
+  bookcase searched by `game/dungeon.search_library`; the master and household groups in `game/dungeon.MASTERS`/KIN;
+  `past.tower_master_slain`). Temple priests fight as Priests, the history's heads by `people.figure_stats`. Quest
+  template "apprenticeship" (`quests.lesson`). tests/test_mages_priests.py.
 - Gear and tools 2024 (Expansion 2 part D): items.json `pack` (opens into its contents, gear.open_pack), `helps`
   {search, traps, force, disguise} (dungeon.helps, law.put_on_disguise), `utilize` (a tool's 2024 uses, on its card),
   `carry` also on carried containers (each kind once, Sheet.pack_carry), `trinket` (data/trinkets.json; the name and

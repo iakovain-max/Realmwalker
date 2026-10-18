@@ -1232,7 +1232,17 @@ def _likeness(f, game, atlas) -> list:
     if bond.get("picture"):  # (a steed: the animal it looks like, in its kind's colours; a spirit: its form's)
         tint = STEED_TINT.get(bond.get("type", ""), dolls.WHITE) if bond.get("kind") == "steed" else dolls.WHITE
         return [(f"creature/{bond['picture']}", tint, 0, 0)]
-    return dolls.creature(f.creature.def_id, game.tables, f"foe{f.id}", atlas, sex=getattr(f.creature, "sex", ""))
+    npc = _townsperson(f, game)
+    if npc is not None:  # (the town's own priest or mage, in the dress they wear in its streets)
+        return dolls.npc(npc, game.tables, atlas)
+    return dolls.creature(f.creature.def_id, game.tables, f"foe{f.id}", atlas, sex=getattr(f.creature, "sex", ""),
+                          culture=getattr(f.creature, "culture", ""))
+
+
+def _townsperson(f, game):
+    """The townsperson a foe is (a fight picked in the street, the watch, a duel), or None."""
+    nid = (getattr(game, "battle_npcs", None) or {}).get(f.creature.uid)
+    return None if nid is None else game.world.npcs.get(nid)
 
 
 def _missile(weapon: str, kind: str, dtype: str) -> str:

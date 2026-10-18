@@ -270,15 +270,19 @@ def culture_style(tables, culture: str) -> str:
     return culture
 
 
-def creature(def_id: str, tables, key: str, atlas=None, sex: str = "") -> list[Part]:
-    """A creature: its own picture, or a dressed figure for people (bandits, guards...); `sex` when their name says."""
+def creature(def_id: str, tables, key: str, atlas=None, sex: str = "", culture: str = "") -> list[Part]:
+    """A creature: its own picture, or a dressed figure for people (bandits, guards...); `sex` when their name says.
+    One whose figure says `dress` (a trade: mages, priests) wears what that trade wears among its `culture`."""
     spec = _fig(tables)["creatures"].get(def_id)
     if spec is None:
         return [(f"creature/{def_id}", WHITE, 0, 0)]
     sex = sex or ("female" if stable(key + "sex", 5) == 0 else "male")
     race = spec.get("race", ["human"])[0] if isinstance(spec.get("race"), list) else "human"
     fig = Figure(tables, race, sex, key, looks_rules.from_text(tables, "", race, sex, 30, key))
-    fig.outfit({k: v for k, v in spec.items() if k != "race"})
+    wear = {k: v for k, v in spec.items() if k not in ("race", "dress")}
+    if spec.get("dress") and culture:  # (["mage"]: a list, as every figure slot is)
+        wear.update(_fig(tables).get("cultures", {}).get(culture_style(tables, culture), {}).get(spec["dress"][0], {}))
+    fig.outfit(wear)
     return fig.parts(atlas or _atlas())
 
 
@@ -384,6 +388,9 @@ def problems(tables, atlas) -> list[str]:
         for who, spec in f[group].items():
             for slot, options in spec.items():
                 if slot == "race":
+                    continue
+                if slot == "dress":  # (a trade whose dress among each people it borrows)
+                    out.extend(f"{group} {who}: dress {o} is no trade's outfit" for o in options if o not in f["outfits"])
                     continue
                 for o in ([options] if isinstance(options, str) else options):
                     check(f"{group} {who}", slot, o)
