@@ -47,6 +47,8 @@ NOT_CHOSEN: dict[str, str] = {
     "priest/cast:light": "every arena field is lit",
     "archpriest/cast:light": "every arena field is lit",
     "archmage/cast:detect_thoughts": "cast when no foe is in sight but minds hide near; the arena's party never hides",
+    "mage/cast:invisibility": "a hurt mage ringed by blades vanishes, its blasts spent; it seldom falls that low here",
+    "mage/cast:fly": "it rises above foes that only strike close; the arena's party always has shooters",
     "archmage/cast:invisibility": "a hurt archmage ringed by blades vanishes; it seldom falls that low here",
     "archmage/cast:fly": "it rises above foes that only strike close; the arena's party always has shooters",
     "priest/cast:lesser_restoration": "cast on a friend held by what it ends; the arena's party lays no such hold",

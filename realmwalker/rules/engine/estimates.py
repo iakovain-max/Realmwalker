@@ -926,7 +926,9 @@ def _strikes_only_close(b, e) -> bool:
         return False
     if e.creature is not None:
         return all(a.get("kind") == "melee" and not a.get("area") for a in e.cdef.get("attacks", ()))
-    return all(o.is_melee for o in b.attack_options(e))
+    if e.char is None:
+        return False
+    return not any("range" in b.t.items.get(it.def_id) for it in e.char.inventory)  # (a bow, a sling, a javelin)
 
 
 def _escape_unseen(b, f, on) -> float:
@@ -940,7 +942,7 @@ def _out_of_reach(b, f, on) -> float:
     harm kept off (none if it has nothing to fight with from up there)."""
     from_afar = casts_spells(b, on) or (on.creature is not None and any(
         a.get("kind") == "ranged" for a in on.cdef.get("attacks", ()))) or (
-        on.char is not None and any(not o.is_melee for o in b.attack_options(on)))
+        on.char is not None and not _strikes_only_close(b, on))
     if not from_afar:
         return 0.0
     close = [e for e in b.enemies_of(f) if e.standing and b.gap(on, e) <= 6 and _strikes_only_close(b, e)]
