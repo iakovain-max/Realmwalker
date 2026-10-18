@@ -4687,6 +4687,7 @@ class Battle:
         charged = None
         charged_item = None
         charge_level = None
+        spent = False
         innate = None
         if sid.startswith("wish:"):
             return self._cast_wished(f, spell_id(sid), target, point)
@@ -4864,7 +4865,7 @@ class Battle:
             if used:
                 self.say(f"The {used} is gone into the spell.", "magic")
         self._strain(f, strained)
-        if charged_item is not None and magicrules.pooled(charged):
+        if charged_item is not None and magicrules.pooled(charged) and spent:  # (an at-will casting spends none)
             for line in magicrules.drained(c, charged_item, self.rng):  # (the last charge: a d20 says what is left)
                 self.say(line, "magic")
         if spell.get("stress") and held:  # (Wish used for anything but a copy)
@@ -5141,7 +5142,6 @@ class Battle:
             return True  # (drunk by a Rod of Absorption or a Staff of the Magi: cast, and nothing comes of it)
         effects.cast(self, f, sid, spell, target, point, up=up, mod=mod, dc=dc, bonus=bonus, mult=mult, level=level,
                      slotted=slotted)
-        staves.after_cast(self)  # (an enchantment turned back by a Staff of Charming)
         return True
 
     def _countered(self, caster: Fighter, sid: str, spell: dict) -> bool:

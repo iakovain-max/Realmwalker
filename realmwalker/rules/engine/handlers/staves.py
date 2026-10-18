@@ -24,7 +24,7 @@ from realmwalker.rules import grid, magic
 from realmwalker.rules.engine import query
 from realmwalker.rules.engine.effects import special
 from realmwalker.rules.engine.events import handler
-from realmwalker.rules.engine.handlers.arms import blade, carried, held, ready, spend, trait_prop
+from realmwalker.rules.engine.handlers.arms import blade, held, ready, spend, trait_prop
 from realmwalker.rules.engine.reactions import Decision, yes
 
 RETRIBUTION_DC = 17
@@ -83,7 +83,7 @@ def staff_of_charming(b, f, ev, hook, buff) -> None:
     if ev.roll != "save" or f.char is None or query.incapacitated(f):
         return
     aimed = _enchantment_at_me(b, f)
-    it = carried(f.char, "staff_of_charming")
+    it = held(f, "staff_of_charming")
     if aimed is None or it is None:
         return
     caster, sid, sp = aimed
@@ -139,7 +139,7 @@ def absorbed(b, caster, sid: str, sp: dict, target, level: int) -> bool:
             or "item" in sp.get("classes", ()):
         return False
     staff = held(target, "staff_of_the_magi")
-    rod = carried(target.char, "rod_of_absorption")
+    rod = held(target, "rod_of_absorption")
     if staff is not None:
         left = _left(staff)
         burst = left + level > 50
@@ -175,7 +175,7 @@ def draw_level(b, f) -> int | None:
 
     if f.char is None:
         return None
-    rod = carried(f.char, "rod_of_absorption")
+    rod = held(f, "rod_of_absorption")
     prop = next((p for p in magic.props(rod) if p.get("kind") == "absorb"), None) if rod is not None else None
     if prop is None or not spellrules.is_caster(f.char, b.t):
         return None
@@ -199,7 +199,7 @@ def rod_draw(c, o, victim) -> None:
     level = draw_level(b, f)
     if level is None:
         return
-    rod = carried(f.char, "rod_of_absorption")
+    rod = held(f, "rod_of_absorption")
     prop = next(p for p in magic.props(rod) if p.get("kind") == "absorb")
     prop["left"] = int(prop.get("left", 0)) - level
     spellrules.unspend_slot(f.char, level)

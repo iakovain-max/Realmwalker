@@ -370,7 +370,7 @@ def _cast_from_item(game, caster, spell_id: str, target, slot_level, charge) -> 
     levels = magicrules.charge_levels(item, prop, own)
     level = slot_level if slot_level in levels else levels[0]
     rng = game.world.rng.child(f"charge/{spell_id}/{game.world.time}")
-    magicrules.spend_charge(prop, rng, item, level)
+    spent = magicrules.spend_charge(prop, rng, item, level)
     name = escape_markup(item.magic.get("title") or t.items.name(item, False))
     first = escape_markup(caster.name.split()[0])
     pre = [f"{first} calls on the {name}: <magic>{t.spells[spell_id]['name']}</>"
@@ -385,7 +385,7 @@ def _cast_from_item(game, caster, spell_id: str, target, slot_level, charge) -> 
     else:
         out = pre + cast_on_road(game, caster, spell_id, target, slot_level=level, hired=True)
     game.dirty = True
-    return out + magicrules.drained(owner, item, rng)
+    return out + (magicrules.drained(owner, item, rng) if spent else [])  # (at will: no d20)
 
 
 def item_spells(game, char) -> list[tuple]:

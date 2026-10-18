@@ -95,6 +95,19 @@ Built by the relay builder realmwalker-a. Saves do not change: worlds and charac
     planted light goes with its bearer. The Rod of Rulership and the Staff of Charming work in fights only, since
     nothing outside one enchants the party.
   - The Staff of Adornment's floating trinkets are words on its card. It works as an arcane focus.
+  - Powers beyond a spell (the Staff of Charming, spell absorption, the rod's slots) need the thing in hand. A spell
+    from a wand that a foe counters still costs its charges.
+- Checked: 56 new tests cover every item as the book makes it, charges and levels, the last charge's d20, dawn,
+  each power in a real fight, healing from a staff on the road, the Spells page, the Auto, and the console. The
+  autoplay bot (RESULT: OK) and the window smoke test pass. The full suite passes except the turn-time tests, which
+  missed their limit under the suite's own load and passed when run again on their own, as since Expansion 3.
+- The fresh review's fixes:
+  - The Rod of Resurrection binds to anyone: the 2024 book names no class, unlike the old one.
+  - An at-will spell from an empty Staff of the Magi no longer rolls the last charge's d20 (a 20 refilled it for
+    free).
+  - The level choice for a wand's spell shows its card again.
+  - A turned-back enchantment is cast as soon as any casting ends.
+  - An unstudied wand no longer gives away its charges and DC on the spell list.
 
 ### Session, 2026-10-18 (night): Schools & Domains Part C — mages and priests of the world — branch `dlc/05-schools-domains`
 

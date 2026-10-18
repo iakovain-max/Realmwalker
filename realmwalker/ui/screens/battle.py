@@ -92,7 +92,7 @@ def charge_words(char, value: str, tables) -> str:
     prop = next((p for p in magicrules.props(it) if p.get("kind") == "charges" and p.get("spell") == sid), None)
     name = it.magic.get("title") if it.magic.get("identified") else None
     head = f"from the {markup.escape(name)}" if name else "from a magic item"
-    if prop is None or not magicrules.pooled(prop):
+    if prop is None or not magicrules.pooled(prop) or not name:  # (unknown: what it costs is not known either)
         return head
     store = magicrules.pool(it) or {}
     cost = int(prop.get("cost", 1))
@@ -1358,7 +1358,7 @@ class BattleScreen(Screen):
         target = min(foes, key=lambda e: b.gap(f, e)) if foes else None  # the chance against the nearest foe
         known = target is None or self.full_details(target)
         if self.choice_kind == "slot":
-            sid = self.pending.get("value")
+            sid = spell_id(self.pending.get("value"))  # (a wand's spell: "charge:<uid>:<spell>")
             return lambda: describe.spell(self.battle.t, sid, b=self.battle, f=f, target=target, level=value)
         return lambda: describe.choice(self.battle, f, self.choice_kind, value, label, enabled, why, target, known=known)
 

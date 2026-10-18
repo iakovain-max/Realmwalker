@@ -27,13 +27,14 @@ def pool(n: int, regain: str, last: str | None = "crumble", lucky: str | None = 
         p["last"] = last
     if lucky:
         p["lucky"] = lucky
-    p["text"] = text or (f"{n} charges; {regain} come back each dawn" + (
+    p["text"] = text or (f"It holds {n} charges; {regain} come back each dawn" + (
+        ". When the last is spent, a d20: on a 20, " + lucky + " come back" if lucky and not last else "") + (
         ". When the last is spent, a d20: on a 1 it " + {"crumble": "crumbles into ashes",
                                                           "vanish": "is gone for ever",
                                                           "display": "goes up in a last display",
                                                           "mundane": "loses its magic",
                                                           "weaken": "keeps only its edge as a weapon"}[last]
-        if last else "") + (f"; on a 20, {lucky} come back" if lucky else "") + ".")
+        if last else "") + (f"; on a 20, {lucky} come back" if lucky and last else "") + ".")
     return p
 
 
@@ -83,7 +84,7 @@ MAKERS: dict[str, dict] = {
         pool(7, "1d6+1"),
         spell("polymorph", 1, "Polymorph (DC 15) for 1 charge.", dc=15)]}},
     "wand_of_pyrotechnics": {"": {"kind": "focus", "bases": WAND, "title": "Wand of Pyrotechnics", "props": [
-        pool(7, "1d6+1", last="display", text="7 charges; 1d6+1 come back each dawn. When the last is spent, a d20: on a 1 it goes up "
+        pool(7, "1d6+1", last="display", text="It holds 7 charges; 1d6+1 come back each dawn. When the last is spent, a d20: on a 1 it goes up "
              "in a last harmless display and is gone."),
         {"kind": "flag", "flag": "fireworks", "text": "A charge throws a harmless burst of coloured fire into the night "
          "with a crackle heard far off: an evening's show by the camp fire (the camp's evening, e), and the "
@@ -192,8 +193,8 @@ MAKERS: dict[str, dict] = {
          "it sheds bright light 60 feet round for ten minutes; you and your friends in it have +1 to Armor Class and "
          "saves and see the invisible."}]}},
     "rod_of_resurrection": {"": {"kind": "focus", "bases": ROD, "title": "Rod of Resurrection", "attune": True,
-                                 "attune_by": ["cleric", "druid", "paladin"], "props": [
-        pool(5, "1", last="vanish", text="5 charges; 1 comes back each dawn. When the last is spent, a d20: on a 1 it "
+                                 "props": [
+        pool(5, "1", last="vanish", text="It holds 5 charges; 1 comes back each dawn. When the last is spent, a d20: on a 1 it "
              "is gone in a harmless burst of radiance."),
         spell("heal", 1, "Heal for 1 charge."),
         spell("resurrection", 5, "Resurrection for 5 charges.")]}},

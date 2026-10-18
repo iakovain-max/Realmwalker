@@ -28,8 +28,9 @@ Known, not yet chased: one autoplay run of nine during Expansion 5 Part A's chec
   beside autoplay and the smoke test, and pass alone; this was already so in Expansions 3 and 4.
 Assumptions waiting for Anton:
 - Expansion 5 Part D (wands, staffs and rods): a wand's, staff's or rod's spells are cast from the pack, as Expansion
-  4's charged things already were (the book: "while holding"); the War Mage's +N, the Staff of Power's +2s and the
-  Staff of the Magi's absorption need the thing in hand; the Wand of Enemy Detection shows where every foe within 60
+  4's charged things already were (the book: "while holding"); the War Mage's +N, the Staff of Power's +2s, spell
+  absorption (the Staff of the Magi, the Rod of Absorption and its slots) and the Staff of Charming need the thing in
+  hand; a countered spell from a wand still spends its charges (the 2024 Counterspell gives back only a slot); the Wand of Enemy Detection shows where every foe within 60
   feet stands for a minute (not only the nearest one's direction); the Wand of Fear's Command is "Grovel!" (the game's
   Command has no "Flee"); Retributive Strike's "travel to a random plane" is being thrown clear, unharmed, half the
   time (no planes until Expansion 26), and the Auto never breaks a staff; the Rod of Absorption's stored levels give

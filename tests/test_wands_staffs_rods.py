@@ -446,3 +446,69 @@ def test_the_console_hands_out_a_book_item(make_app):
     titles = {it.magic.get("title") for it in app.game.leader.inventory if it.magic}
     assert {"Wand of Fireballs", "Wand of the War Mage +3"} <= titles
     assert app.error_count == 0
+
+
+def test_an_at_will_spell_rolls_no_d20_on_an_empty_store(game, tables, monkeypatch):
+    c, it, b, me, them = battle(game, tables, "staff_of_the_magi")
+    magic.pool(it)["left"] = 0
+    rolled = []
+    monkeypatch.setattr(magic, "drained", lambda *a, **k: rolled.append(a) or [])
+    assert b.do_cast(me, value(c, it, "light"), None)
+    assert rolled == [] and magic.pool(it)["left"] == 0
+
+
+def test_the_staff_of_charming_turns_an_enchantment_back(game, tables):
+    c, it, b, me, them = battle(game, tables, "staff_of_charming", cls="cleric")
+    foe = them[0]
+    foe.cdef = dict(foe.cdef, abilities=dict(foe.cdef["abilities"], wis=1), saves={})
+    me.reaction = True
+    left = magic.pool(it)["left"]
+    b._casting, b._casting_sid = foe, "command"
+    try:
+        assert b._save(me, "wis", 1)  # (a save made: the reaction and a charge send it back)
+    finally:
+        b._casting = b._casting_sid = None
+    assert magic.pool(it)["left"] == left - 1 and not me.reaction
+    from realmwalker.rules.engine.handlers import staves as st
+
+    st.after_cast(b)
+    assert b.__dict__.get("_reflected") in (None, [])
+
+
+def test_the_staff_of_the_magi_bursts_when_overfilled(game, tables, monkeypatch):
+    c, it, b, me, them = battle(game, tables, "staff_of_the_magi")
+    magic.pool(it)["left"] = 49
+    me.reaction = True
+    before = them[0].hp
+    monkeypatch.setattr(staves, "yes", lambda bb, d: True)  # (the player says drink it anyway)
+    assert staves.absorbed(b, them[0], "hold_person", tables.spells["hold_person"], me, 2)
+    assert it not in c.inventory and them[0].hp < before
+
+
+@pytest.mark.parametrize("slug,sid", [("wand_of_fear", "wand_fear"), ("wand_of_binding", "hold_person"),
+                                      ("wand_of_polymorph", "polymorph")])
+def test_a_wand_casts_in_a_real_fight(game, tables, slug, sid):
+    c, it, b, me, them = battle(game, tables, slug, near=False)
+    t = them[0]
+    t.cdef = dict(t.cdef, abilities={k: 1 for k in t.cdef["abilities"]}, saves={})
+    left = magic.pool(it)["left"]
+    sp = tables.spells[sid]
+    was = t.cdef
+    landed = False
+    for _ in range(6):  # (a 20 on its save now and then: the wand tries again next turn)
+        my_turn(b, me)
+        assert b.do_cast(me, value(c, it, sid), t if sp["target"] in ("enemy", "creature") else None,
+                         point=(t.x, t.y))
+        landed = {"wand_fear": "frightened" in t.conditions, "hold_person": "paralyzed" in t.conditions,
+                  "polymorph": t.cdef is not was}[sid]
+        if landed or magic.pool(it)["left"] < 2:
+            break
+    assert magic.pool(it)["left"] < left and landed
+
+
+def test_the_charge_level_list_has_cards(game, tables):
+    from realmwalker.rules import describe
+
+    c, it, b, me, them = battle(game, tables, "wand_of_fireballs", near=False)
+    card = describe.spell(tables, "fireball", b=b, f=me, target=them[0], level=5)
+    assert card is not None

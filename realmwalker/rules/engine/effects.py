@@ -273,6 +273,10 @@ def cast(b, f, sid: str, spell: dict, target, point, *, up: int, mod: int, dc: i
         b._casting = before
         b._casting_spell = before_spell
         b._casting_sid = before_sid
+    if before is None:  # (the outermost casting done: an enchantment a Staff of Charming turned back goes home now)
+        from realmwalker.rules.engine.handlers import staves
+
+        staves.after_cast(b)
 
 
 def run(c: Cast, ops, victim=None) -> None:
