@@ -9,6 +9,8 @@ from realmwalker.game import treasure, wonders
 from realmwalker.rules import magic
 from realmwalker.rules import spells as spellrules
 from realmwalker.rules.combat import PARTY
+from realmwalker.rules.combat import spell_id as spell_of
+from realmwalker.rules.engine import actions
 from tests.test_gear import companion, fight_with, game, person, tables, world  # noqa: F401 (fixtures)
 from tests.test_gear_2024 import my_turn
 
