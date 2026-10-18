@@ -171,12 +171,12 @@ def _worn_store(item) -> bool:
 def item_focus(char) -> bool:
     """A magic thing worn or held serves as the character's spellcasting focus: a Hat of Wizardry or of Many Spells
     for a wizard (a `focus` property `for` their class), a weapon in hand with an attuned Ruby of the War Mage set on
-    it (the ruby's `on`)."""
+    it (the ruby's `set_on`)."""
     for _it, p in active(char):
         if p.get("kind") == "focus" and p.get("for") in (char.cls, "any"):
             return True
     hands = {char.equipped.get("main_hand"), char.equipped.get("off_hand")} - {None}
-    return any(it.magic.get("on") in hands and any(p.get("kind") == "war_ruby" for p in props(it))
+    return any(it.magic.get("set_on") in hands and any(p.get("kind") == "war_ruby" for p in props(it))
                for it in attuned_items(char) if working(char, it))
 
 

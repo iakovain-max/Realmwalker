@@ -74,8 +74,11 @@ def test_every_part_e_item_is_made_from_the_book(game, slug):
         assert it.magic["title"] == title
     if base:
         assert it.def_id == base
-    assert all(p.get("text") or p.get("kind") in ("pool",) for p in it.magic["props"] if p.get("kind") != "trait"
-               or p.get("text"))
+    assert all(p.get("text") for p in it.magic["props"] if p.get("kind") not in ("trait", "pool"))
+    from realmwalker.game import magic_items
+
+    card = " ".join(magic_items.describe(game, it))
+    assert it.magic["title"] in card and "{" not in card
 
 
 def test_the_tables_reach_every_part_e_item(game):

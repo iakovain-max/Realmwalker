@@ -298,10 +298,10 @@ def test_the_ruby_of_the_war_mage_makes_a_weapon_a_focus(game, tables):
     rows = wonders.choices(game, c, ruby)
     assert rows and rows[0][1] == weapon.uid
     wonders.choose(game, c, ruby, weapon.uid)
-    assert ruby.magic["on"] == weapon.uid and spellrules.has_focus(c, tables)
+    assert ruby.magic["set_on"] == weapon.uid and spellrules.has_focus(c, tables)
     assert spellrules.focus_bonus(c, tables) == 1
     wonders.use(game, c, ruby)
-    assert "on" not in ruby.magic and not spellrules.has_focus(c, tables)
+    assert "set_on" not in ruby.magic and not spellrules.has_focus(c, tables)
 
 
 def test_a_crystal_ball_scries_at_dc_17(game, tables):
@@ -321,3 +321,35 @@ def test_a_crystal_ball_scries_at_dc_17(game, tables):
 def test_the_enduring_spellbook_is_a_spellbook(game, tables):
     book = make(game, "enduring_spellbook")
     assert book.def_id == "spellbook" and magic.item_flag(book, "enduring")
+
+
+# ---------------------------------------------------------------------------- the Auto
+def test_the_auto_breathes_on_the_pearl_when_its_slots_are_gone(game, tables):
+    from realmwalker.rules import tactics
+
+    c, pearl, b, me, them = battle(game, tables, "pearl_of_power", near=False)
+    for _ in range(sum(spellrules.slots_total(c, tables))):
+        level = next(i + 1 for i, n in enumerate(spellrules.slots_left(c, tables)) if n)
+        spellrules.spend_slot(c, level)
+    me.auto = True
+    tactics._wondrous(b, me)
+    assert spellrules.slots_left(c, tables)[0] == 1 and me.action == 0
+
+
+def test_the_auto_steps_into_the_astral_when_hemmed_in(game, tables):
+    from realmwalker.rules import tactics
+
+    c, robe, b, me, them = battle(game, tables, "robe_of_stars", foes=("bandit", "bandit"))
+    me.hp = 1
+    me.auto = True
+    tactics._wondrous(b, me)
+    assert me.state == "away" and me.away["why"] == "astral"
+
+
+def test_the_auto_weighs_the_dazzling_robe(game, tables):
+    from realmwalker.rules.engine import estimates
+
+    c, robe, b, me, them = battle(game, tables, "robe_of_scintillating_colors", foes=("bandit", "bandit"))
+    value = f"charge:{robe.uid}:robe_colors"
+    assert any(o.value == value and o.available for o in actions.options(b, me, only=("cast",)))
+    assert estimates.spell_value(b, me, value).total() > 0

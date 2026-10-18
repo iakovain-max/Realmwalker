@@ -1221,6 +1221,8 @@ def _party_turn(b: Battle, f: Fighter) -> None:
         return
     _command_objects(b, f)
     _rod_slots(b, f)
+    if b.current is f and b.outcome is None:
+        _wondrous(b, f)  # (the Pearl of Power, the Robe of Stars: Expansion 5 Part E)
     _divine_help(b, f)
     _school_bonus(b, f)
     if b.current is f and b.outcome is None:
@@ -1686,6 +1688,26 @@ def _rod_slots(b: Battle, f: Fighter) -> None:
     for opt, _a in _abilities(b, f, "draw"):
         b.do_ability(f, opt.value)
         return
+
+
+def _wondrous(b: Battle, f: Fighter) -> None:
+    """A wizard's wondrous things, used with the action when nothing better is to be had: the Pearl of Power when
+    every spell slot is spent, no foe is at hand and one still stands (the slot comes back for the next turn); the
+    Robe of Stars' step into the Astral Plane when badly hurt and hemmed in by two or more foes."""
+    if f.char is None or f.action <= 0:
+        return
+    foes = [e for e in b.enemies_of(f) if e.standing]
+    if not foes:
+        return
+    near = [e for e in foes if b.gap(f, e) <= 1]
+    if f.hp <= f.max_hp // 4 and len(near) >= 2:
+        for opt, _a in _abilities(b, f, "astral"):
+            b.do_ability(f, opt.value)
+            return
+    if not near and spellrules.is_caster(f.char, b.t) and not any(spellrules.slots_left(f.char, b.t)):
+        for opt, _a in _abilities(b, f, "pearl"):
+            b.do_ability(f, opt.value)
+            return
 
 
 def _does(opt, a: dict | None) -> str:

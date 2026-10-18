@@ -732,10 +732,13 @@ def prop_text(game, p: dict) -> str:
         if p["kind"] == "charges":
             text += f" ({p.get('left', p.get('value'))} left" + (f", {p['regain']} back at dawn" if p.get("regain")
                                                                   else ", all back at dawn") + ")"
-    if p.get("kind") == "charges" and p.get("text") and not p.get("at_will") and not magicrules.pooled(p):
+    if p.get("kind") == "charges" and p.get("text") and not p.get("at_will") and not magicrules.pooled(p) \
+            and not p.get("stored"):
         text += f" ({magicrules.charges_left(p)} left)"
     if p.get("kind") == "absorb":  # (the Rod of Absorption's stored levels)
         text += f" ({p.get('left', 0)} levels stored; {p.get('value', 0)} of {p.get('most', 50)} drunk in its life)"
+    if p.get("kind") == "patches":  # (the Robe of Useful Items)
+        text += f" ({len(p.get('left', ()))} patches left)"
     if p.get("kind") == "pool":  # (a wand's or a staff's store, shared by its spells)
         text += f" ({p.get('left', p.get('value'))} of {p.get('value')} left)"
     return text
@@ -766,6 +769,12 @@ def describe(game, item, char=None) -> list[str]:
             continue  # (a power the item's other words already tell: the Staff of Charming's daily resistance)
         mark = "<danger>" if p.get("artifact") in ("minor_bad", "major_bad") else ""
         lines.append(f"· {mark}{esc(prop_text(game, p))}{'</>' if mark else ''}")
+    if magic.get("set_on") is not None:  # (the Ruby of the War Mage)
+        from realmwalker.game import wonders
+
+        weapon = wonders.ruby_on(game, item)
+        if weapon:
+            lines.append(f"· Set on the {weapon}: it is your spellcasting focus while you hold it.")
     for effect in magic.get("on", []):
         if effect in data(game)["artifact"]["properties"] and not any(p.get("id") == effect for p in magic["props"]):
             lines.append(f"· <danger>{esc(data(game)['artifact']['properties'][effect]['text'])}</>")

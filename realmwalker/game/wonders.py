@@ -244,7 +244,7 @@ def set_ruby(game, char, ruby, weapon) -> list[str]:
     """Pressed against the weapon for ten minutes, the ruby holds fast: that weapon is a focus for its bearer."""
     if not magicrules.is_attuned(char, ruby):
         return [f"{_first(char)} must be attuned to the ruby first (a short rest with it)."]
-    ruby.magic["on"] = weapon.uid
+    ruby.magic["set_on"] = weapon.uid
     game.pass_time(10, "rest")
     game.dirty = True
     return [f"{_first(char)} presses the ruby to the {esc(game.tables.items.name(weapon, False))} for ten minutes; "
@@ -252,13 +252,13 @@ def set_ruby(game, char, ruby, weapon) -> list[str]:
 
 
 def take_off_ruby(game, char, ruby) -> list[str]:
-    ruby.magic.pop("on", None)
+    ruby.magic.pop("set_on", None)
     game.dirty = True
     return [f"{_first(char)} works the ruby free (the Magic action)."]
 
 
 def ruby_on(game, ruby) -> str:
-    uid = ruby.magic.get("on")
+    uid = ruby.magic.get("set_on")
     for c in game.party:
         it = c.item(uid) if uid is not None else None
         if it is not None:
@@ -313,7 +313,7 @@ def use_name(game, item) -> str | None:
     if _patch_prop(item) is not None and patches(item)             and any(item.uid in set(c.equipped.values()) for c in game.party):  # (worn: else Enter puts it on)
         return "Tear off a patch"
     if _ruby_prop(item) is not None:
-        return "Take the ruby off its weapon" if item.magic.get("on") is not None else "Set it on a weapon"
+        return "Take the ruby off its weapon" if item.magic.get("set_on") is not None else "Set it on a weapon"
     if _pearl_prop(item) is not None:
         return "Take back a spell slot"
     return None
