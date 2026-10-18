@@ -55,8 +55,11 @@ def site_past(game, site) -> str:
     tower = pol.get("towers", {}).get(str(site.id))
     if tower is not None and tower in w.figures:
         fig = w.figures[tower]
+        from realmwalker.world import dungeon as gen
+
+        kept = fig.alive and (gen.tower_master(w, site) or {}).get("figure") == fig.id  # (not a gang's den now)
         out.append(f"<dim>Raised by the wizard {esc(fig.name)}, who lives and works here still: wards on the stair, "
-                   f"apprentices, a library.</>" if fig.alive else f"<dim>Raised by the wizard {esc(fig.name)}.</>")
+                   f"apprentices, a library.</>" if kept else f"<dim>Raised by the wizard {esc(fig.name)}.</>")
     beast = lair_beast(game, site)
     if beast is not None and close_enough(game, site):
         spec = beast_word(game, beast)

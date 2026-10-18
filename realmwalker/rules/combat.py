@@ -2812,7 +2812,8 @@ class Battle:
         if hit and schools.illusory_self(self, att, target, shield=not crit and total < ac + 5):
             hit = crit = False  # (an illusionist's Illusory Self: before Shield, as it costs no slot)
         # The Shield spell: a wizard who sees the blow coming turns it with a reaction, if that is enough.
-        if hit and not crit and (target.char or target.creature) and target.reaction and not target.incapacitated                 and total < ac + 5:
+        if hit and not crit and (target.char or target.creature) and target.reaction and not target.incapacitated \
+                and total < ac + 5:
             if self._shield(target, att, opt, total, ac):
                 ac += 5
                 hit = False

@@ -487,3 +487,40 @@ def test_a_priest_frees_a_friend_held_by_what_the_prayer_ends(tables, healer, sp
     tactics.take_turn(b, h)
     assert spell in cast_events(b, h)
     assert held not in friend.conditions
+
+
+# ---------------------------------------------------------------------------- the fresh review's fixes
+def test_walking_into_the_shelves_searches_them(game):
+    from realmwalker.world import dungeon as gen
+
+    site, fig = lived_tower(game)
+    lm = gen.get_dungeon(game.world, game.tables, site, gen.depth_for(game.world, site))
+    lm.populated = True  # (nobody about to interrupt)
+    game.player.local_key = lm.key
+    (x, y), f = next((p, f) for p, f in lm.features.items() if f.get("kind") == "library")
+    walk = game.tables.terrain.walk[game.remap_for(lm)[lm.terrain]]
+    spot = next((x + dx, y + dy) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)) if walk[x + dx, y + dy])
+    game.player.lx, game.player.ly = spot
+    assert game.move(x - spot[0], y - spot[1])
+    assert f["searched"] and (game.player.lx, game.player.ly) == spot
+    assert any(i.def_id == "lore_book" for i in lm.items[spot])
+
+
+def test_look_says_a_wizard_lives_there_only_when_they_keep_it(game, monkeypatch):
+    from realmwalker.game import past
+    from realmwalker.world import dungeon as gen
+
+    site, fig = lived_tower(game)
+    assert "lives and works here still" in past.site_past(game, site)
+    monkeypatch.setattr(gen, "style_for", lambda w, s: "hideout")  # (a gang holds it now)
+    words = past.site_past(game, site)
+    assert fig.name in words and "lives and works here still" not in words
+
+
+def test_a_foe_priests_card_says_divine_aid_is_a_bonus_action(tables):
+    from realmwalker.rules import describe
+
+    c = hero(tables, "fighter", level=3)
+    b = fight(tables, c, "priest")
+    card = describe.spell(tables, "bless", b=b, f=foe(b, "priest"))
+    assert any("a bonus action" in str(line) for line in [card.subtitle, *card.lines, card.footer])
