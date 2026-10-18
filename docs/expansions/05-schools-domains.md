@@ -84,11 +84,11 @@ ball.
   rules; Part B to `main`.
 
 ### Part C — Mages and priests of the world
-- [ ] C.1 Mage Apprentice, Mage, Archmage, Priest, Archpriest stat blocks, creatures, dolls by culture, encounters.
-- [ ] C.2 Wizards' towers lived in: the history's tower mage as its master (Mage or Archmage by fame), apprentices,
+- [x] C.1 Mage Apprentice, Mage, Archmage, Priest, Archpriest stat blocks, creatures, dolls by culture, encounters.
+- [x] C.2 Wizards' towers lived in: the history's tower mage as its master (Mage or Archmage by fame), apprentices,
   wards and guardians, the library; temples staffed by priests (spells for pay from Expansion 3 G.2 by them).
-- [ ] C.3 Apprenticeships as work (quests), the history's tower mages and high priests on these stat blocks.
-- [ ] C.4 Tactics (Counterspell, Shield, healing their side), arena green; cards, words; 5 codex entries; to `main`.
+- [x] C.3 Apprenticeships as work (quests), the history's tower mages and high priests on these stat blocks.
+- [x] C.4 Tactics (Counterspell, Shield, healing their side), arena green; cards, words; 5 codex entries; to `main`.
 
 ### Part D — Wands, staffs and rods
 - [ ] D.1 The eleven wands (binding, enemy detection, fear, fireballs, lightning bolts, magic detection, magic
