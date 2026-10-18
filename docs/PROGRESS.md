@@ -30,8 +30,8 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Expansion 2, *Blades & Backgrounds*** (version 1.2.0) | ✅ Released (2026-10-13), branch `dlc/02-blades-backgrounds` |
 | **Expansion 3, *Demigods & Magics*** (version 1.3.0) | ✅ Released (2026-10-17), branch `dlc/03-demigods-magics` |
 | **Expansion 4, *Steel & Shadows*** (version 1.4.0) | ✅ Released (2026-10-17), branch `dlc/04-steel-shadows` |
-| **Expansion 5, *Schools & Domains*** (version 1.5.0 to come) | Parts A, B, C and D in `main` (2026-10-18), branch `dlc/05-schools-domains` |
-| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansions 1-4 released; Expansion 5 under way (see STATUS.md) |
+| **Expansion 5, *Schools & Domains*** (version 1.5.0) | ✅ Released (2026-10-18), branch `dlc/05-schools-domains` |
+| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansions 1-5 released; Expansion 6 waits for Anton's start (see STATUS.md) |
 
 ---
 
@@ -42,6 +42,72 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-18 (night): Schools & Domains Part E — robes, hats and the rest; **released as 1.5.0** — branch `dlc/05-schools-domains`
+
+Built by the relay builder realmwalker-b. Saves do not change: worlds and characters you already have keep working.
+This finishes Expansion 5: the shelf on the title screen shows its icon, an open spellbook under a shining sun.
+- **Fourteen more wizard's things** from the Dungeon Master's Guide can now turn up in treasure, mostly among the
+  arcane finds.
+  - **Crystal Ball.** Hold it and cast Scrying at will (DC 17); no mirror is needed. Three rarer balls exist too:
+    one also reads the thoughts of whoever you scry, one also lets you plant a suggestion once a day, and one shows
+    them as they truly are.
+  - **Enduring Spellbook.** A spellbook that fire, water and years cannot harm.
+  - **Enspelled Armor and Enspelled Weapon.** Each holds one spell of its own (protective or illusion spells in
+    armour; others in a weapon), six charges, cast only while you wear it or hold it.
+  - **Hat of Wizardry.** A wizard's focus. Once a long rest you can try a wizard cantrip you do not know: an Arcana
+    check, DC 10.
+  - **Hat of Many Spells.** A wizard's focus. You can pull out a wizard spell you do not know, of any level you can
+    cast: spend a slot of its level and pass an Arcana check (DC 10 plus the level). Succeed, and it is cast, and the
+    hat rests until a short rest. Fail, and something else comes out: the wrong spell (even a Fireball), a stun, a
+    cloud of butterflies, a crowbar, a camel, a swarm of bats, or a potion.
+  - **Pearl of Power.** Once a day, a spent spell slot of level 3 or lower comes back.
+  - **Ring of Spell Storing.** Holds up to five levels of spells. A found ring may already hold some. Anyone in the
+    party can cast a spell into it outside a fight. Whoever wears it can cast each kept spell once, with the numbers
+    of the one who put it there.
+  - **Robe of Eyes.** Darkvision and truesight to 120 feet, and an edge on spotting things. But Daylight cast beside
+    you, or Light cast on yourself, blinds you for a while.
+  - **Robe of Scintillating Colors.** Three times a day, dazzling colours until your next turn ends: attacks against
+    you are made at a disadvantage, and foes around you may be stunned.
+  - **Robe of Stars.** +1 to every save. Six stars, each a level 5 Magic Missile (seven darts). And you can step into
+    the Astral Plane for a round, out of everyone's reach.
+  - **Robe of the Archmagi.** For a wizard: Armor Class 15 + Dexterity without armour, an edge on saves against
+    magic, +2 to spell save DCs and spell attacks.
+  - **Robe of Useful Items.** Covered in cloth patches. Wear it and tear one off, and it becomes the thing it shows:
+    a lantern, a pole, rope, a sack, a bag of gold, gems, a ladder, a horse with a saddle, potions, a scroll, two
+    mastiffs, a ram.
+  - **Ruby of the War Mage.** Press it to a weapon, and that weapon becomes your spellcasting focus.
+- **How to see it.**
+  - In a fight, the spell list (c) has a line for a worn hat. It opens the spells the hat could bring out, each
+    with its check.
+  - The robes' and the ring's spells are on the spell list like a wand's.
+  - The pearl and the Robe of Stars' step are abilities (a).
+  - On the Spells page (S), a worn hat's spells are listed under "Out of the hat". On a spell you know, r casts it
+    into a party member's Ring of Spell Storing.
+  - In the pack, Enter on the pearl gives back a slot. Enter on a worn Robe of Useful Items lists its patches. Enter
+    on the ruby lists the weapons it can go on.
+  - Your companions on Auto use the robes' and the ring's spells, reach into a hat when nothing better is ready,
+    breathe on the pearl when their slots are gone, and step into the Astral when badly hurt and surrounded.
+  - The debug console's `book <item> [variant]` hands one out, for example `book crystal_ball of true seeing`.
+- **Expansion 5 is complete.** All 72 of its book entries are settled: 39 as printed, 32 adapted (with notes), one
+  left out.
+- Assumed (also in STATUS.md):
+  - A Hat of Many Spells is worn, not held.
+  - The hat's wrong spell goes at a target chosen by chance.
+  - The hat's creatures run off the field, being nobody's. Its bats bite once and scatter. Its portal closes at
+    once. Its magic item is a potion of healing of the rolled rarity, and it does not vanish.
+  - Spells go into a ring only outside a fight. A found ring holds wizard and cleric battle spells at the numbers of
+    a caster of their level.
+  - The game's Light spell lights its caster, so it blinds a Robe of Eyes' wearer who casts it.
+  - The dazzling robe spares your friends: they know to look away.
+  - The Robe of Stars' stars come back at dawn with every other charge, not at dusk. The Astral is a round away from
+    the field (there are no planes until Expansion 26).
+  - The Robe of Useful Items' iron door, pit, window and rowboat patches are rolled again: nothing in the world can
+    show them yet. Its silver coffer is a 750 GP art object.
+  - A ruby is set on a weapon from the pack, taking ten minutes; the weapon must be in hand to serve as a focus.
+  - The crystal balls' extra powers work through Scrying on the road.
+  - Nothing in the game harms a spellbook yet, so the Enduring Spellbook's gift is on its card only.
+CHECKS_GO_HERE
 
 ### Session, 2026-10-18 (night): Schools & Domains Part D — wands, staffs and rods — branch `dlc/05-schools-domains`
 
