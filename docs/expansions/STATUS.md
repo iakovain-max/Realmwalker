@@ -38,7 +38,8 @@ Assumptions waiting for Anton:
   Robe of Stars' stars come back at dawn, and its Astral Plane is a round off the field (back at the start of the
   wearer's next turn, the Magic action spent); the Robe of Useful Items' door, pit, window and rowboat are rolled
   again and its silver coffer is a 750 GP art object; the ruby is set from the pack (ten minutes) and the weapon must
-  be in hand; the crystal balls' gifts work through Scrying on the road (Telepathy's Suggestion: a person who fails
+  be in hand; patches are torn off and the ruby taken off outside a fight only (the pack); a ring takes spells only
+  on an attuned finger; the crystal balls' gifts work through Scrying on the road (Telepathy's Suggestion: a person who fails
   thinks well of you for eight hours); the Enduring Spellbook's gift is on its card only (nothing harms paper yet);
   the Auto breathes on the Pearl of Power only when every slot is gone and no foe is at hand, and steps into the
   Astral at a quarter of its hit points with two foes beside it.

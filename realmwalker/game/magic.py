@@ -394,7 +394,7 @@ def _cast_from_item(game, caster, spell_id: str, target, slot_level, charge) -> 
     return out + (magicrules.drained(owner, item, rng) if spent else [])  # (at will: no d20)
 
 
-def hat_problem(game, caster, value: str, target=None) -> str | None:
+def hat_problem(game, caster, value: str, target=None, *, listed: bool = False) -> str | None:
     """Why a spell cannot be pulled from a wizard's hat outside a fight now ("hat:<uid>:<spell>"; rules/hats.py)."""
     from realmwalker.rules import hats
 
@@ -402,7 +402,7 @@ def hat_problem(game, caster, value: str, target=None) -> str | None:
     it = caster.item(int(uid))
     if it is None:
         return "no such hat"
-    why = hats.problem(caster, game.tables, it, sid)
+    why = hats.problem(caster, game.tables, it, sid, listed=listed)
     if why:
         return why
     return road_problem(game, caster, sid, target, hired=True)

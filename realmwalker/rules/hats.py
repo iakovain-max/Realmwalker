@@ -92,8 +92,9 @@ def spells(char, tables, item, *, battle: bool | None = None, level: int | None 
     return sorted(out, key=lambda s: (tables.spells[s]["level"], tables.spells[s]["name"]))
 
 
-def problem(char, tables, item, sid: str) -> str | None:
-    """Why this spell cannot be pulled from the hat now (None: it can be tried)."""
+def problem(char, tables, item, sid: str, *, listed: bool = False) -> str | None:
+    """Why this spell cannot be pulled from the hat now (None: it can be tried). `listed`: the spell came from
+    `spells` a moment ago (not worked out again: the lists are long)."""
     p = prop(item)
     if p is None or not magic.working(char, item):
         return "the hat answers only a wizard attuned to it"
@@ -101,7 +102,7 @@ def problem(char, tables, item, sid: str) -> str | None:
         return "the hat must be worn"
     if p.get("spent"):
         return "the hat rests until a " + ("short or long rest" if p["spent"] == "short" else "long rest")
-    if sid not in tables.spells or sid not in spells(char, tables, item):
+    if sid not in tables.spells or (not listed and sid not in spells(char, tables, item)):
         return "not a spell the hat can bring out for you"
     lvl = int(tables.spells[sid]["level"])
     if lvl > 0 and not spellrules.slots_left(char, tables)[lvl - 1]:
@@ -155,7 +156,7 @@ def mishap(b, f, rng) -> None:
     if roll <= 50:
         sid = MISHAP_SPELLS[rng.randint(1, 10) - 1]
         if sid not in b.t.spells:
-            b.say(f"Something sputters out of the hat and fizzles.", "magic")
+            b.say("Something sputters out of the hat and fizzles.", "magic")
             return
         sp = b.t.spells[sid]
         target, point = _random_aim(b, f, sid, rng)

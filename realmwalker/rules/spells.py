@@ -1053,7 +1053,8 @@ def attack_bonus(sheet: Sheet, tables) -> int:
 def save_dc(sheet: Sheet, tables) -> int:
     from realmwalker.rules import magic
 
-    return 8 + sheet.proficiency + sheet.mod(casting_ability(sheet.c, tables)) + focus_bonus(sheet.c, tables)         + magic.total(sheet.c, "spell_dc")  # (the Robe of the Archmagi)
+    return 8 + sheet.proficiency + sheet.mod(casting_ability(sheet.c, tables)) + focus_bonus(sheet.c, tables) \
+        + magic.total(sheet.c, "spell_dc")  # (the Robe of the Archmagi)
 
 
 def cantrip_multiplier(level: int) -> int:

@@ -647,7 +647,8 @@ def _scry(game, caster, spell, target, level: int) -> list[str]:
     doing = _doing(game, fig, rng)
     from realmwalker.game import wonders
 
-    return out + [f"<good>{name} is {words}</>, {away}: {doing} {said}", "<dim>(The place is on your map.)</>"]         + wonders.scry_extras(game, caster, fig, rng.child("ball"))  # (a crystal ball's thoughts, word, truesight)
+    return out + [f"<good>{name} is {words}</>, {away}: {doing} {said}", "<dim>(The place is on your map.)</>"] \
+        + wonders.scry_extras(game, caster, fig, rng.child("ball"))  # (a crystal ball's thoughts, word, truesight)
 
 
 def _doing(game, fig, rng) -> str:

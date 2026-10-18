@@ -21,7 +21,7 @@ RING_MOST = 5  # levels a Ring of Spell Storing keeps
 PATCH_WORDS = {  # what each patch becomes, as the robe's card and the pack say it
     "bullseye_lantern": "a bullseye lantern, filled and lit", "dagger": "a dagger", "mirror": "a steel mirror",
     "pole": "a ten-foot pole", "rope": "a coil of rope", "sack": "a sack", "gold_100": "a bag of 100 gold pieces",
-    "silver_coffer": "a silver coffer worth 500 gold pieces", "gems_10": "ten gems worth 100 gold pieces each",
+    "silver_coffer": "a silver coffer, a foot long and finely worked", "gems_10": "ten gems worth 100 gold pieces each",
     "ladder": "a wooden ladder, 24 feet long", "riding_horse": "a riding horse with a riding saddle",
     "potions_4": "four potions of healing", "scroll_1_3": "a spell scroll of the first to third level",
     "mastiffs_2": "two mastiffs", "portable_ram": "a portable ram"}
@@ -121,7 +121,7 @@ def rings(game) -> list[tuple[object, object]]:
     for c in game.party:
         on = set(c.equipped.values())
         for it in c.inventory:
-            if it.uid in on and _store_prop(it) is not None:
+            if it.uid in on and _store_prop(it) is not None and magicrules.working(c, it):  # (attuned to it)
                 out.append((c, it))
     return out
 
@@ -310,7 +310,8 @@ def pearl_holder(game, pearl):
 def use_name(game, item) -> str | None:
     if not item.magic:
         return None
-    if _patch_prop(item) is not None and patches(item)             and any(item.uid in set(c.equipped.values()) for c in game.party):  # (worn: else Enter puts it on)
+    if _patch_prop(item) is not None and patches(item) \
+            and any(item.uid in set(c.equipped.values()) for c in game.party):  # (worn: else Enter puts it on)
         return "Tear off a patch"
     if _ruby_prop(item) is not None:
         return "Take the ruby off its weapon" if item.magic.get("set_on") is not None else "Set it on a weapon"

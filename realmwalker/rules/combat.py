@@ -5178,11 +5178,11 @@ class Battle:
                     continue
             for sid in hats.spells(c, self.t, it, battle=True, level=level):
                 value = f"hat:{it.uid}:{sid}"
-                why = self._hat_problem(f, value)
+                why = self._hat_problem(f, value, listed=True)
                 out.append((value, why is None, why or ""))
         return out
 
-    def _hat_problem(self, f: Fighter, value: str) -> str | None:
+    def _hat_problem(self, f: Fighter, value: str, *, listed: bool = False) -> str | None:
         from realmwalker.rules import hats
 
         _, uid, sid = value.split(":", 2)
@@ -5190,7 +5190,7 @@ class Battle:
         it = c.item(int(uid)) if c is not None else None
         if it is None:
             return "no such hat"
-        why = hats.problem(c, self.t, it, sid)
+        why = hats.problem(c, self.t, it, sid, listed=listed)
         if why:
             return why
         spell = self.t.spells[sid]

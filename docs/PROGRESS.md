@@ -107,7 +107,17 @@ This finishes Expansion 5: the shelf on the title screen shows its icon, an open
   - A ruby is set on a weapon from the pack, taking ten minutes; the weapon must be in hand to serve as a focus.
   - The crystal balls' extra powers work through Scrying on the road.
   - Nothing in the game harms a spellbook yet, so the Enduring Spellbook's gift is on its card only.
-CHECKS_GO_HERE
+- Checked: 47 new tests cover every item as the book makes it, each power in a real fight, the road, the Spells
+  page, the battle screen's hat list, the pack's patch list, and the Auto. The autoplay bot (RESULT: OK), the window
+  smoke test and the balance numbers pass (the plain fights do not change). The full suite passes except the
+  turn-time tests, which missed their limit under the suite's own load and passed when run again on their own, as
+  since Expansion 3.
+- The fresh review's fixes:
+  - A ring takes spells only on a finger that is attuned to it (else they could never come out).
+  - Long hat lists are worked out once, not once for every spell on them.
+  - The silver coffer patch no longer claims a worth it does not have.
+  - The Astral return is tested through the real turn order.
+  - Tearing a patch off and taking the ruby off its weapon stay outside fights.
 
 ### Session, 2026-10-18 (night): Schools & Domains Part D — wands, staffs and rods — branch `dlc/05-schools-domains`
 

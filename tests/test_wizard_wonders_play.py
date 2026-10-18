@@ -133,6 +133,17 @@ def test_the_robe_of_stars(game, tables):
     assert me.state == "fighting" and me.action == 0
 
 
+def test_back_from_the_astral_through_the_turns(game, tables):
+    c, robe, b, me, them = battle(game, tables, "robe_of_stars")
+    b.do_ability(me, "astral_step")
+    b.end_turn()
+    for _ in range(20):
+        if b.pending_party() is me or b.outcome is not None:
+            break
+        b.step()
+    assert me.state == "fighting" and me.action == 0 and b.pending_party() is me
+
+
 def test_the_robe_of_stars_casts_only_while_worn(game, tables):
     c = person(tables, "wizard", bg="sage")
     give(c, make(game, "robe_of_stars"), slot="")

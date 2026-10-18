@@ -517,7 +517,7 @@ class SpellsScreen(Screen):
                 canvas.hit(2, y, lw, 1, lambda idx=idx: setattr(self, "sel", idx))
                 held = item_spell(game, c, label)
                 if label.startswith("hat:"):  # (a wizard's hat's Unknown Spell)
-                    ok = road = magic.hat_problem(game, c, label, target if chosen else None) is None
+                    ok = road = magic.hat_problem(game, c, label, target if chosen else None, listed=True) is None
                 elif held is not None:  # (a wand's, a staff's or a rod's spell)
                     from realmwalker.rules import magic as magicrules
 
