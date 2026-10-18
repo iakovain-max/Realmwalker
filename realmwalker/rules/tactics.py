@@ -996,7 +996,7 @@ def _slot_levels(b: Battle, f: Fighter, value: str, sp: dict) -> list[int]:
 
         levels = magic.charge_levels(held[0], held[1], int(sp["level"]))
         return sorted({levels[0], levels[-1]})
-    if sp["level"] <= 0 or str(value).startswith(("scroll:", "charge:", "innate:", "throw:", "wish:")) \
+    if sp["level"] <= 0 or str(value).startswith(("scroll:", "charge:", "innate:", "throw:", "wish:", "hat:")) \
             or sp.get("again_of"):
         return [sp["level"]]
     if f.char is not None:
@@ -1052,6 +1052,10 @@ def _pick_cast_now(b: Battle, f: Fighter, cost: str, *, beat: float, care: float
                                           spellrules.scroll_reader(f.char, b.t, spell_id(opt.value)))
         if str(opt.value).startswith("wish:"):
             price = spell_cost(b, f, 9)  # (a copy by Wish spends its level 9 slot)
+        if str(opt.value).startswith("hat:") and f.char is not None:  # (a wizard's hat: the slot, on an Arcana check)
+            from realmwalker.rules import hats
+
+            odds = hats.odds(f.sheet, b.t, spell_id(opt.value), f.char.item(int(str(opt.value).split(":")[1])))
         if sp.get("stress"):
             price = price * 2 + 10.0  # (Wish's stress: Strength gone for days, and perhaps Wish for ever)
         if f.char is not None and f.char.effects.get("wish_stress") and sp["level"] > 0:

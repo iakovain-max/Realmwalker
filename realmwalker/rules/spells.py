@@ -504,6 +504,10 @@ def has_focus(char: Character, tables) -> bool:
         if it.def_id == "component_pouch" or (d.get("focus") or {}).get("kind") == kind \
                 or (kind == "arcane" and it.def_id == "spellbook"):
             return True
+    if char.equipped:
+        from realmwalker.rules import magic
+
+        return magic.item_focus(char)  # (a Hat of Wizardry worn; a weapon with the Ruby of the War Mage)
     return False
 
 
@@ -1032,6 +1036,10 @@ def focus_bonus(char: Character, tables) -> int:
         f = tables.items.get(it.def_id).get("focus")
         if f and f["kind"] == kind and (it.uid in worn or f.get("carried")):
             return 1
+    if worn:
+        from realmwalker.rules import magic
+
+        return 1 if magic.item_focus(char) else 0  # (a Hat of Wizardry worn; a weapon with the Ruby of the War Mage)
     return 0
 
 
@@ -1043,7 +1051,9 @@ def attack_bonus(sheet: Sheet, tables) -> int:
 
 
 def save_dc(sheet: Sheet, tables) -> int:
-    return 8 + sheet.proficiency + sheet.mod(casting_ability(sheet.c, tables)) + focus_bonus(sheet.c, tables)
+    from realmwalker.rules import magic
+
+    return 8 + sheet.proficiency + sheet.mod(casting_ability(sheet.c, tables)) + focus_bonus(sheet.c, tables)         + magic.total(sheet.c, "spell_dc")  # (the Robe of the Archmagi)
 
 
 def cantrip_multiplier(level: int) -> int:

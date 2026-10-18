@@ -383,8 +383,14 @@ def _cast_from_item(game, caster, spell_id: str, target, slot_level, charge) -> 
 
         out = pre + care.cast(game, caster, target, wound, spell_id, level if level > own else None, free=True)
     else:
-        out = pre + cast_on_road(game, caster, spell_id, target, slot_level=level, hired=True)
+        game.__dict__["item_dc"] = prop.get("dc")  # (the thing's own save DC: a crystal ball's Scrying, DC 17)
+        try:
+            out = pre + cast_on_road(game, caster, spell_id, target, slot_level=level, hired=True)
+        finally:
+            game.__dict__.pop("item_dc", None)
     game.dirty = True
+    if spent and prop.get("stored"):
+        magicrules.unstore(item, prop)  # (a Ring of Spell Storing's spell: gone from it)
     return out + (magicrules.drained(owner, item, rng) if spent else [])  # (at will: no d20)
 
 

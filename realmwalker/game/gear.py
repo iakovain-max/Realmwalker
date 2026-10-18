@@ -488,6 +488,12 @@ def captives_slip(game) -> list[str]:
 # ---------------------------------------------------------------------------- the pack: what each thing is for
 def use_name(game, item) -> str | None:
     """The pack's verb for a thing with a use of its own (None: no use from the pack)."""
+    if item.magic:
+        from realmwalker.game import wonders
+
+        verb = wonders.use_name(game, item)  # (the Pearl of Power, the Ruby of the War Mage, a robe's patches)
+        if verb:
+            return verb
     use = game.tables.items.get(item.def_id).get("use") or {}
     if use.get("hone"):
         return "Sharpen blades"
@@ -546,6 +552,10 @@ def use_item(game, char: Character, item) -> list[str]:
     if paws:
         return [paws[:1].upper() + paws[1:] + "."]
     name = use_name(game, item)
+    from realmwalker.game import wonders
+
+    if name in wonders.VERBS:
+        return wonders.use(game, char, item)
     if name == "Sharpen blades":
         return hone(game)
     if name == "Call back the secret chest":

@@ -359,6 +359,20 @@ class BattleScreen(Screen):
                 if ok and sp["target"] in ("enemy", "ally", "creature", "downed_ally", "dead_ally", "bound") and not b.spell_targets(f, sid):
                     ok, why = False, "no one in reach"
                 rows.append((f"{sp['name']} <dim>({lvl}) {sp['text']}</>", sid, ok, why))
+            if f.char is not None:  # (a wizard's hat: a spell you do not know, pulled out of it: rules/hats.py)
+                from realmwalker.rules import hats
+
+                for it, _p in hats.worn(f.char):
+                    many = hats.many(it)
+                    title = markup.escape(it.magic.get("title") or "hat")
+                    choices = b.hat_options(f)
+                    ready = hats.ready(it) and any(ok_ for v, ok_, _w in choices if v.startswith(f"hat:{it.uid}:"))
+                    why = "" if ready else ("the hat rests until a " + ("short or long rest" if many else "long rest")
+                                            if not hats.ready(it) else "nothing it could bring out for you now")
+                    rows.append((f"Pull a spell from the {title} <dim>(" + (
+                        "a wizard spell you do not know: its slot, and Arcana DC 10 + its level; a failure brings "
+                        "something else out" if many else "a wizard cantrip you do not know: Arcana DC 10, once a "
+                        "long rest") + ")</>", f"hatmenu:{it.uid}", ready, why))
             self._open_choices("cast", rows)
         elif action == "item":
             rows = []
@@ -555,6 +569,10 @@ class BattleScreen(Screen):
             self._open_targets("attack", b.targets_for(f, value))
         elif kind == "cast" and value == "wish" and f.char is not None:
             self._open_wish(f)  # (Wish: what to wish for)
+        elif kind == "cast" and str(value).startswith("hatmenu:") and f.char is not None:
+            self._open_hat(f, int(str(value).split(":")[1]))  # (a wizard's hat: which spell to reach for)
+        elif kind == "hat":
+            self._aim_spell(f, value)
         elif kind == "wish" and str(value).startswith("wish:redo:"):
             self._do(b.do_cast, f, value, None)  # (Roll Redo: nothing to aim)
         elif kind == "wish":
@@ -635,6 +653,30 @@ class BattleScreen(Screen):
             rows.insert(1, (f"Roll Redo: {markup.escape(words)} <dim>(rolled again with Disadvantage; <warn>the "
                             "stress</>)</>", f"wish:redo:{i}", ok_, why_))
         self._open_choices("wish", rows)
+
+    def _open_hat(self, f: Fighter, uid: int) -> None:
+        """A wizard's hat: the spells it could bring out for this wearer, each with the check it asks."""
+        from realmwalker.rules import hats
+
+        b = self.battle
+        tables = self.game.tables
+        it = f.char.item(uid)
+        rows = []
+        for value, ok, why in b.hat_options(f):
+            if not value.startswith(f"hat:{uid}:"):
+                continue
+            sp = tables.spells[spell_id(value)]
+            fine = ok
+            if fine and sp["target"] in ("enemy", "ally", "creature", "downed_ally", "dead_ally") \
+                    and not b.spell_targets(f, value):
+                fine, why = False, "no one in reach"
+            lvl = "cantrip" if sp["level"] == 0 else f"level {sp['level']}"
+            rows.append((f"{sp['name']} <dim>({lvl}, Arcana DC {hats.dc(tables, spell_id(value), it)}) "
+                         f"{sp['text']}</>", value, fine, why))
+        if not rows:
+            self.app.notify("The hat has nothing it could bring out for you now.", "warn")
+            return
+        self._open_choices("hat", rows)
 
     def _aim_spell(self, f: Fighter, value) -> None:
         """After the spell (and its slot): at whom, where, or cast at once."""
@@ -1328,7 +1370,7 @@ class BattleScreen(Screen):
 
     def _render_choices(self, canvas: Canvas, x: int, y: int, w: int, h: int) -> int:
         canvas.text(x, y, "↑↓ or 1-9, Enter; Esc back", colors.DIM, max_width=w)
-        if self.choice_kind in ("cast", "slot", "wish") and self.slots_line and len(self.slots_line) < w:
+        if self.choice_kind in ("cast", "slot", "wish", "hat") and self.slots_line and len(self.slots_line) < w:
             canvas.text(x, y + 1, self.slots_line, colors.named("magic"))
             y += 1
         room = max(1, h - 2)

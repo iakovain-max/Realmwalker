@@ -910,7 +910,7 @@ def choice(b, f, kind: str, value, label: str, ok: bool, why: str, target=None, 
     """The card for a row of the battle's choice list."""
     if kind == "attack" and value is not None and hasattr(value, "damage"):
         return attack(b, f, value, target, known=known)
-    if kind in ("cast", "wish") and isinstance(value, str) and value.split(":")[-1] in f.t.spells:
+    if kind in ("cast", "wish", "hat") and isinstance(value, str) and value.split(":")[-1] in f.t.spells:
         card = spell(f.t, value.split(":")[-1], b=b, f=f, target=target, scroll=value.startswith("scroll:"))
         if not ok and why:
             card.lines.append(f"<warn>{esc(why)}</>")

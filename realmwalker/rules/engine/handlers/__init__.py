@@ -19,10 +19,11 @@
     staves.py     the wizard's and cleric's wands, staffs and rods (Expansion 5 Part D)
     summons.py    the summoned spirits' traits and the fey spirit's moods (Expansion 3 F.2)
     undead.py     the raised dead's traits: the ghast's Stench, the mummy's rot (Expansion 3 F.4)
+    wonders.py    the Pearl of Power, the Robe of Stars' Astral step, the Robe of Eyes' drawback (Exp. 5 E)
 """
 
 from realmwalker.rules.engine.handlers import (arcane, arms, battle_master, boons, cleric, domains, feats,  # noqa: F401
                                                features, fighter,  # noqa: F401
                                                general_feats,  # noqa: F401
                                                mastery, monsters, rogue, schools, staves, summons, undead,  # noqa: F401
-                                               wizard)  # noqa: F401  (registering is importing)
+                                               wizard, wonders)  # noqa: F401  (registering is importing)

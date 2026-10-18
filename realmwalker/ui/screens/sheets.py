@@ -493,7 +493,9 @@ def item_picture(canvas, game, it, x: float, y: float, size: float) -> None:
 
 
 GEAR_VERBS = ("Sharpen blades", "Mend gear", "Set it for the night", "Pass the evening", "Pray", "Write a scroll",
-              "Throw (in a fight)", "Coat a blade (in a fight)", "Drink the antitoxin", "Open the pack")  # game/gear.use_name
+              "Throw (in a fight)", "Coat a blade (in a fight)", "Drink the antitoxin", "Open the pack",
+              "Take back a spell slot", "Take the ruby off its weapon")  # game/gear.use_name (and game/wonders)
+WONDER_CHOICES = ("Tear off a patch", "Set it on a weapon")  # game/wonders.CHOOSE: a list to choose from first
 
 
 class InventoryScreen(Screen):
@@ -646,6 +648,8 @@ class InventoryScreen(Screen):
             from realmwalker.game import gear
 
             self.game.say(gear.how_text(self.game, it), "system")
+        elif name in WONDER_CHOICES:
+            self._wonder_menu(it)
         elif name in GEAR_VERBS:
             from realmwalker.game import gear
 
@@ -654,6 +658,25 @@ class InventoryScreen(Screen):
             self.game.dirty = True
         else:
             self.toggle_equip()
+
+    def _wonder_menu(self, it) -> None:
+        """A robe's patches or the weapons a ruby could be set on: choose one (game/wonders)."""
+        from realmwalker.game import wonders
+        from realmwalker.ui.screens.popup import ContextMenu
+
+        rows = wonders.choices(self.game, self.char, it)
+        if not rows:
+            self.game.say("There is no weapon to set it on." if wonders.use_name(self.game, it) == "Set it on a weapon"
+                          else "Nothing to choose.", "system")
+            return
+
+        def pick(what) -> None:
+            for line in wonders.choose(self.game, self.char, it, what):
+                self.game.say(line, "magic")
+            self.game.dirty = True
+
+        entries = [(markup.escape(words), (lambda w=what: pick(w)), "") for words, what in rows]
+        self.app.push(ContextMenu(self.app, self.app.mouse, entries, wonders.use_name(self.game, it) or ""))
 
     def give(self) -> None:
         """Hand the chosen thing to the next member of the party."""
