@@ -584,3 +584,48 @@ def test_the_story_s_screens_draw_and_answer_keys(pictured):
     render(app)
     assert game.epilogue is None and game.renown.legend["epithet"] == "the Hunter"
     assert app.error_count == 0
+
+
+def test_the_story_s_pictures_draw(pictured):
+    """Expansion 6 A.10: a beat's picture (the camp at night) above its words, the chapter card's seal and band, and
+    on the world map a seal where a tale wants you and claw marks at a den whose signs you have heard."""
+    from realmwalker.game import story
+    from realmwalker.game.story import beats, forge
+    from realmwalker.ui.gfx.scene import Sprite
+    from realmwalker.world import threats
+
+    app, game = pictured
+    t = next((t for t in threats.records(game.world).values() if t["kind"] == "beast" and t["state"] != "ended"
+              and forge.fitting(game, t)), None)
+    if t is None:
+        pytest.skip("no beast tale in this world")
+    if t["state"] == "dormant":
+        threats.stir(game.world, app.tables, t, game.world.rng, day=0)
+    other = next((o for o in threats.live(game.world) if o is not t), None)
+    adv = forge.make(game, t)
+    beats.director(game.world)["pending"] = None
+    beats.director(game.world)["card"] = {"adv": adv["id"], "chapter": 0}
+    render(app)
+    canvas = render(app)
+    names = {c.name for c in commands(canvas, Sprite)}
+    assert type(app.screens[-1]).__name__ == "TitleCardScreen" and "map/story" in names
+    assert "Chapter I" in canvas.words()
+    app.handle_event(KeyEvent("enter"))
+    render(app)
+    beats.offer(game, "beast_kill_found", adv=adv["id"], step=adv["chapters"][0]["steps"][0]["id"])
+    render(app)
+    canvas = render(app)
+    names = {c.name for c in commands(canvas, Sprite)}
+    assert type(app.screens[-1]).__name__ == "BeatScreen"
+    assert any(n.startswith("feature/campfire") for n in names), "the camp at night above the beat's words"
+    app.handle_event(KeyEvent("1"))
+    app.handle_event(KeyEvent("enter"))
+    render(app)
+    if other is not None and other.get("signs"):
+        game.renown.heard.add(other["signs"][0])
+    marks = story.map_signs(game)
+    assert any(k == "story" for _, _, k in marks)
+    if other is not None and other.get("signs"):
+        assert any(k == "sign" for _, _, k in marks)
+    assert all(app.gfx.atlas.has(f"map/{k}") for k in ("story", "sign"))
+    assert app.error_count == 0

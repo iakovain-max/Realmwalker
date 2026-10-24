@@ -10,6 +10,17 @@ from realmwalker.ui.screens.base import Screen, modal_box
 from realmwalker.ui.widgets import Canvas
 
 ROMAN = ("I", "II", "III", "IV", "V", "VI", "VII")
+PICTURE_ROWS = 9  # (a beat's picture above its words: `picture` in beats.json)
+
+
+def picture(canvas: Canvas, game, name: str, rect: tuple[float, float, float, float]) -> bool:
+    """Draw a beat's picture in a rect of cells; False when there is none by that name (Part B brings the rest)."""
+    if name == "camp_night":
+        from realmwalker.ui.gfx import scenes
+
+        scenes.camp(canvas, game, tuple(int(v) for v in canvas.cell_rect(*rect)), canvas.now)
+        return True
+    return False
 
 
 class BeatScreen(Screen):
@@ -76,9 +87,15 @@ class BeatScreen(Screen):
         if self.result is not None:
             for line in self.result:
                 tail += markup.wrap(line, iw) if line else []
-        height = len(body) + len(tail) + len(opts) + 8
+        pic = game.tables.beats.get(self.rec["beat"], {}).get("picture") if self.page == 0 else None
+        pic_rows = PICTURE_ROWS + 1 if pic in ("camp_night",) else 0
+        height = len(body) + len(tail) + len(opts) + 8 + pic_rows
         x, y, w, h = modal_box(canvas, width, height, beats.title(game, self.rec) or self.title)
         row = y + 2
+        if pic_rows:
+            canvas.clear_cells(x + 2, row, iw, PICTURE_ROWS)
+            picture(canvas, game, pic, (x + 2, row, iw, PICTURE_ROWS))
+            row += pic_rows
         for line in body:
             canvas.spans(x + 2, row, line, max_width=iw)
             row += 1
@@ -167,9 +184,19 @@ class TitleCardScreen(Screen):
         for i, line in enumerate(body):
             text = line if line.startswith("<") else markup.escape(line)
             wrapped += markup.wrap(text, iw) + [""]
-        x, y, w, h = modal_box(canvas, width, len(wrapped) + 9, name)
-        canvas.markup(x + 3, y + 2, f"<title>{markup.escape(head)}</>", max_width=iw)
-        row = y + 4
+        x, y, w, h = modal_box(canvas, width, len(wrapped) + 11, name)
+        # The card's frame: an inset band with the chapter's name set in it, and the tale's seal.
+        from realmwalker.ui.gfx import theme
+        from realmwalker.ui.gfx.scene import Sprite, Text
+
+        canvas.clear_cells(x + 2, y + 2, w - 4, 3)
+        bx, by, bw, bh = canvas.cell_rect(x + 2, y + 2, w - 4, 3)
+        canvas.under(*theme.panel(bx, by, bw, bh, "inset", ornaments=True, border=True))
+        seal = bh * 0.9
+        canvas.under(Sprite("map/story", bx + bw - seal - 8, by + (bh - seal) / 2, seal, seal))
+        canvas.under(Text(bx + (bw - seal) / 2, by + bh / 2, head, "heading", int(canvas.cell_h * 1.4),
+                          (236, 206, 140, 255), anchor="mm", shadow=True))
+        row = y + 6
         for line in wrapped:
             canvas.spans(x + 3, row, line, max_width=iw)
             row += 1

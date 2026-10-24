@@ -122,6 +122,7 @@ def _chapter_check(game, adv: dict) -> None:
     day = int(game.moment.total_days)
     journal(adv, ch["reveal"], day)
     game.say(f"<title>{esc(ch['title'])}</> <dim>is behind you.</> {esc(ch['reveal'])}", "story")
+    game.cue("reveal")
     beats.OPS["clock"](game, {"adv": adv["id"]}, -10)  # (a chapter done holds the villain's scheme a while)
     if int(adv["chapter"]) + 1 < len(adv["chapters"]):
         adv["chapter"] = int(adv["chapter"]) + 1
@@ -129,7 +130,6 @@ def _chapter_check(game, adv: dict) -> None:
         nxt["state"] = "open"
         journal(adv, nxt["opening"], day)
         beats.director(game.world)["card"] = {"adv": adv["id"], "chapter": int(adv["chapter"])}
-        game.cue("chapter")
 
 
 def begin_card(game, adv: dict) -> None:
@@ -138,7 +138,6 @@ def begin_card(game, adv: dict) -> None:
     journal(adv, adv["words"]["hook"], int(game.moment.total_days))
     journal(adv, adv["chapters"][0]["opening"], int(game.moment.total_days))
     beats.director(game.world)["card"] = {"adv": adv["id"], "chapter": 0}
-    game.cue("chapter")
 
 
 # ---------------------------------------------------------------------------- the story's foes
@@ -656,6 +655,20 @@ def map_marks(game) -> list[tuple[int, int]]:
             for r in st["target"].get("routes", []):
                 if r.get("at"):
                     out.append(places.xy(game.world, r["at"]))
+    return out
+
+
+def map_signs(game) -> list[tuple[int, int, str]]:
+    """The story's pictures on the world map: a seal ("story") where a tale wants the hero, and claw marks ("sign")
+    at the den of a threat whose signs they have heard and whose tale they have not taken."""
+    from realmwalker.world import threats
+
+    out = [(x, y, "story") for x, y in dict.fromkeys(map_marks(game))]
+    heard = game.renown.heard
+    for t in threats.live(game.world):
+        if t.get("adventure") is None and any(n in heard for n in t.get("signs", [])):
+            x, y = threats.home_xy(game.world, t)
+            out.append((x, y, "sign"))
     return out
 
 

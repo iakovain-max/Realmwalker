@@ -25,6 +25,8 @@ def hear(game, *, count: int = 1, rng=None, x: int | None = None, y: int | None 
     fresh = [n for n in known_at(w, x, y) if n["id"] not in heard and not (exclude_player and n.get("player"))]
     fresh.sort(key=lambda n: (-n["importance"], -n["day"]))
     out = []
+    if any(n.get("kind") == "threat_sign" for n in fresh[:count]):
+        game.cue("sign")  # (a threat's sign: Expansion 6)
     for n in fresh[:count]:
         heard.add(n["id"])
         when = age_text(today - n["day"])
