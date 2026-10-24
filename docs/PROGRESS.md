@@ -46,6 +46,21 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-10-25 (small hours): Adventures & Events Part C, task C.1 — the income reference — branch `dlc/06-adventures-events` (not yet on main)
+
+Nothing changes in play yet. Part C replaces the weekly "Is there any work?" offers with situations, contracts and
+bounties, and promises that a careful player's purse does not suffer for it. Before anything changes, the yardstick
+is kept: a scripted careful party of four at level 3 lives thirty days by its work (asking in each town, taking the
+honest jobs it can walk to, turning down beasts and raids that would likely kill it, clearing places, carrying
+letters and travellers, standing by villages, coming back for the pay, resting when hurt). Over 24 such months on the
+three test worlds it took in about 817 silver on average, some 375 of it pay for work and the rest coin found in
+fights and chests (`tools/storyplay.py --income`; kept in `tests/data/income_ref.json`). At the end of Part C the
+same player must earn between 0.7 and 1.3 times as much.
+- Noticed while measuring: even this careful party died in 5 of the 24 months (mostly in raids and dungeon fights it
+  judged no worse than "hard"). Nothing was changed for it; it is a number to keep an eye on.
+- Fixed in the story-playing tool: its party never climbed out of a dungeon's first level and "travelled" while the
+  game still had it underground (the Beast's own measure still passes).
+
 ### Session, 2026-10-25 (small hours): Adventures & Events Part B, task B.9 — the Beast, shown — Part B merged into `main`
 
 **What is different when you play**

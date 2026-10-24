@@ -556,10 +556,23 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part C, task C.1 (*the reference*: storyplay's careful
-player's income over thirty days on the build before Part C, kept in tests/data/income_ref.json), on branch
-`dlc/06-adventures-events` (Part B merged into main 2026-10-25). Read docs/expansions/06-adventures-events.md Part C and
-ADVENTURES.md §5.15-5.16, §6.7-6.11, §7, §8.10 first.
+Next session starts at: Expansion 6, **Adventures & Events**, Part C, task C.2 (*the end of the weekly offers*; the
+builders split into pickers and `make(game, giver, target, rng)`), on branch `dlc/06-adventures-events` (Part B merged
+into main 2026-10-25). Read docs/expansions/06-adventures-events.md Part C and ADVENTURES.md §5.15-5.16, §6.7-6.11, §7,
+§8.10 first.
+C.1 (2026-10-25, realmwalker-b): `tools/storyplay.py --income [--write]`: the income measure's careful player
+`Earner` (a Player: level 3, four, survival off; asks every giver of the town it is in through the Conversation's
+"work" choice, takes the best HONEST offer for the walk within REACH 20 tiles, refuses beast/raid groups above
+CAREFUL_RATIO 1.0, slips past road bands >= DEADLY_RATIO and abandons a place whose band is; `clear` goes down every
+level fighting each band, opens chests and frees captives; long rests when hurt, short underground; road events
+answered without paying; `keeps_things = False`: coin and quest-tagged things only). Pay is counted by wrapping
+`quests.reward` in `earn_once`; totals beyond 30 days are scaled to thirty days' rate. tests/data/income_ref.json:
+24 runs (`income(24)`, WORLDS x 8 start towns): mean_total 81683 cp, mean_work 37505 cp, 6 jobs, 5 died. The loot
+share is noisy (per run 3.7k-215k); the work share is steadier: C.10 compares mean_total as ADVENTURES.md §9 says,
+and should look at mean_work too. **C.2 must move the Earner** from offers to contracts and situations (its
+`ask_for_work`, `do`, `turn_in` read the offers and the conversation choices "work", "work_accept",
+"quest_turn_in", "deliver_letter"); the reference itself is never rewritten. tests/test_storyplay.py checks the file
+and runs the Earner for 8 days. Fixed: storyplay's `go` never climbed out of a dungeon's first level.
 B.9 (2026-10-25, realmwalker-a): scenes.json "survivor" (the witness tells it to a crowd in their street, then
 comes to you: story._show_tale from on_enter_town; step "shown") and "ally_note" (den chapter + key ally: a boy brings
 the hunter's note; stage._letter honours scene words sender/hand_of; adv["ally_note"]); beats.json `leaves`

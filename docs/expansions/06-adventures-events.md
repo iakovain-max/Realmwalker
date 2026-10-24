@@ -267,7 +267,7 @@ ways through that the game recognises however they are done and endings that lea
 bounties pay as jobs did; favours and contacts are kept and used; `storybook` prints situations, and the variety,
 rarity and income measures pass. ADVENTURES.md §5.15–5.16, §6.7–6.11, §7, §8.10.
 
-- [ ] C.1 **The reference** (before anything changes): the income of storyplay's careful player over thirty days on
+- [x] C.1 **The reference** (before anything changes): the income of storyplay's careful player over thirty days on
   the build before Part C (the same player the income measure uses later), kept in `tests/data/income_ref.json`.
 - [ ] C.2 **The end of the weekly offers**: `quests.offer_for` rolls no more offers; `offers_in` and
   `GameScreen._think_of_work` go; "Is there any work?" goes; people with a contract, a commission or a role in a
