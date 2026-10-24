@@ -21,8 +21,8 @@ Animations off (`game.animations`), movement completes at once. If a cue cannot 
 is about), the scene jumps to its end and plays only the cues marked `"always": true` (the beat a runner would have
 brought still opens).
 
-Scenes advance only on a town's map (the people who act in them are townsfolk); a camp's scenes are played by the
-camp screen in its picture (Part B.9).
+Scenes advance only on a town's map (the people who act in them are townsfolk); what a villain does at your camp is a
+beat, and what it leaves there lies in the camp screen's picture (story.left_at_camp: the beast's carcass, B.9).
 """
 
 from __future__ import annotations
