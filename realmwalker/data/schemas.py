@@ -1272,6 +1272,7 @@ SPRITE_TERRAIN = Obj(
         "water": Bool(optional=True),
         "autotile": Bool(optional=True),
         "animate": Int(min=1, max=8, optional=True),
+        "animate_ground": Int(min=1, max=8, optional=True),  # the ground's frames (embers: Expansion 6 B.7)
         "light": List(Any_(), min_items=2, max_items=2, optional=True),
         "cold": Str(max_len=60, optional=True),
     }

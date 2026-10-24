@@ -35,6 +35,7 @@ import tile_art  # noqa: E402
 import gear_art  # noqa: E402
 import beast_art  # noqa: E402
 import town_art  # noqa: E402
+import fire_art  # noqa: E402
 
 PACK_URL = "https://opengameart.org/sites/default/files/Dungeon%20Crawl%20Stone%20Soup%20Full.zip"
 OUT = ROOT / "assets" / "tiles"
@@ -736,9 +737,9 @@ def gather(pack: Path) -> dict[str, Image.Image]:
     figs, _ = figure_tiles()
     tiles.update(figs)
     for name, im in {**tile_art.all_drawn(), **nature_art.all_drawn(), **map_art.all_drawn(), **gear_art.all_drawn(), **beast_art.all_drawn(),
-                     **town_art.all_drawn()}.items():
+                     **town_art.all_drawn(), **fire_art.all_drawn()}.items():
         which = "none" if name.startswith(("icon/", "map/", "status/", "dlc/")) else ("ground" if name.startswith(("floor/", "wall/")) else "feature")
-        if any(k in name for k in ("glow", "/fey", "water/hot", "moonstone")):
+        if any(k in name for k in ("glow", "/fey", "water/hot", "moonstone", "/blaze", "/embers")):
             which = "fx"  # things that shine keep their light
         tiles[name] = grade(im, which) if which != "none" else im
     return tiles
