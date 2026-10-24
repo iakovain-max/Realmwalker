@@ -161,7 +161,11 @@ class Forge:
             found = self.resolve_all(text)
             if not found:
                 self.fail(f"no place for {name} ({text})")
-            self.places[name] = dict(found[0]) if text.startswith("threat.") else dict(self.pick(found))
+            asked = (self.threat.get("offer") or {}).get("by")
+            if name == "town" and asked is not None and {"settlement": int(asked)} in found:
+                self.places[name] = {"settlement": int(asked)}  # (the town whose people asked is the tale's town)
+            else:
+                self.places[name] = dict(found[0]) if text.startswith("threat.") else dict(self.pick(found))
         for role, spec in bp["cast"].items():
             if not _built(spec) or ("chance" in spec and not rng.chance(float(spec["chance"]))):
                 continue

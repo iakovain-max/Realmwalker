@@ -33,7 +33,8 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Expansion 3, *Demigods & Magics*** (version 1.3.0) | ✅ Released (2026-10-17), branch `dlc/03-demigods-magics` |
 | **Expansion 4, *Steel & Shadows*** (version 1.4.0) | ✅ Released (2026-10-17), branch `dlc/04-steel-shadows` |
 | **Expansion 5, *Schools & Domains*** (version 1.5.0) | ✅ Released (2026-10-18), branch `dlc/05-schools-domains` |
-| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansions 1-5 released; Expansion 6 waits for Anton's start (see STATUS.md) |
+| **Expansion 6, *Adventures & Events*** (version 1.6.0) | Part A on main (2026-10-24): the story engine and the Beast; Parts B-K to come |
+| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansions 1-5 released; Expansion 6 under way (see STATUS.md) |
 
 ---
 
@@ -44,6 +45,41 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-24 (night): Adventures & Events Part A finished — the Beast, played through — merged into `main`
+
+The rest of Part A, and Part A goes to `main` (the release of 1.6.0 waits for the whole of Expansion 6).
+
+**What is different when you play**
+- **The tale holds together from start to end.** A robot party played the Beast twenty times on three worlds, on
+  real roads in real time, and finished it every time. On the way it found four things that would have spoiled it,
+  all fixed: the choice to bait the beast or track it was never put to you in play (the tale stopped there); met at
+  the bait, the beast already fought as the boss of the finale and could wipe a party (now it fights as itself and,
+  hurt, bolts into the dark for its den: "It came, and it bled, and it ran"); a troll could be given to a party of
+  third-level heroes (a tale's tier now fits its beast); and a beast put to sleep at the end of the fight was taken
+  "captive" and the tale never ended (now you finish it where it lies). At its den it never runs.
+- **If the hunt goes badly**, the beast comes for you at your camp in the night: a lost fight moves the tale on.
+- **Magic can answer the tale's question.** Divination, Commune and Contact Other Plane can ask "What will kill it?",
+  and the answer is what it fears.
+- **A hunting job on a beast that has a tale opens that tale** when you take the job.
+- **On the world map** a red wax seal pressed with a claw marks where your tale wants you, and three claw rakes mark
+  the den of a beast whose signs you have heard.
+- **The chapter's card** sets its name in a band with the tale's seal; a beat at your camp shows the camp at night
+  above its words.
+- **Three new sounds**: a low drum and a slow minor strum when a chapter opens, a falling line over a bell when a
+  chapter ends with what it revealed, and a far drum with an uneasy bell when you hear of a threat's sign.
+- The tale's title, hook and chapter lines now always use real names (before, a few could show a raw {patron}).
+
+**How to see it**: start a **new world** (saves are format 19; old saves are refused politely, the files stay).
+A tale is offered on your first day.
+
+**Checked**: the full test suite, the autoplay bot (3,000 turns), the window smoke test (it now also shows the beat,
+the chapter card, the Adventures tab, the finale card and the epilogue), `tools/storybook.py --check` on three worlds,
+`tools/storyplay.py` (20 of 20).
+
+**Choices made while you were away**: the beast bolts at half its hit points before its den (it never runs at the
+den); a party fighting the bait at night is helped by nothing special (the dark is part of the hunt); the story's
+own experience comes with Part C, so following the Beast gives only its fights' experience for now.
 
 ### Session, 2026-10-24 (evening): Adventures & Events Part A, first half — the story engine — branch `dlc/06-adventures-events` (not yet on main)
 
