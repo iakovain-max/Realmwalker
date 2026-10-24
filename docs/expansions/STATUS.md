@@ -547,10 +547,10 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: nothing until Anton starts it. Expansion 5 is merged and released (v1.5.0); per his word of
-2026-10-17 the relay stops here. When he starts it again: Expansion 6, Tieflings & Warlocks, step 1 of
-`docs/EXPANSIONS.md` §5.1 (the branch `dlc/06-tieflings-warlocks` and its design note
-`docs/expansions/06-tieflings-warlocks.md`, not yet written).
+Next session starts at: Expansion 6, **Adventures & Events** (Anton, 2026-10-24: it replaces Tieflings & Warlocks as
+number 6). Read `docs/ADVENTURES.md` (§0–§4 and §8) and `docs/expansions/06-adventures-events.md` (its design note,
+written by Claude in a chat with Anton), then begin with task A.0 of Part A on a new branch `dlc/06-adventures-events`
+from `main`.
 The way of Part E (robes, hats and the rest): book makers written by `tools/codex/wizard_wonders.py` into
 data/treasure.json (and its "patches" table); a maker's `enspell` may be a list of schools (Enspelled Armor and
 Weapon). Properties: `charges` with `worn` (and a `pool` with `worn`: only while worn or held, `magic.charges`),
