@@ -1590,8 +1590,22 @@ FIRE = Obj({  # live fire on a town's map (game/fire.py)
     "cries": word_list(3, 120),
 }, optional=True)
 MARKS = Obj({"marks": Map(MARK), "fire": FIRE})
+WORK = Obj({  # work that waits to be taken (game/story/work.py; the kinds are data/quests.json templates)
+    "commissions": Obj({
+        "renew": DAY_SPAN,
+        "reach": Int(min=1, max=200),
+        "goals": Map(Obj({"match": word_list(1, 80), "kinds": word_list(1, 30)})),
+        "by_kind": Map(word_list(1, 30)),
+        "choice": word_list(2, 120),  # ({faction})
+        "word": word_list(2, 200),  # ({faction}, {giver}, {title}, {town})
+    }, optional=True),
+    "pleas": List(Obj({"kind": Str(max_len=30), "jobs": List(Str(max_len=30)),
+                       "need": Str(choices=["always", "sickness", "dragon", "grudge"]),
+                       "choice": word_list(2, 120)}), min_items=1, optional=True),
+    "plea_gap": Int(min=1, max=365, optional=True),
+}, optional=True)
 DATA_FILES.update({"threats.json": THREATS, "adventures.json": ADVENTURES, "villains.json": VILLAINS,
-                   "beats.json": BEATS, "scenes.json": SCENES, "marks.json": MARKS})
+                   "beats.json": BEATS, "scenes.json": SCENES, "marks.json": MARKS, "work.json": WORK})
 PACK_ONLY.update({"threats.json": {"kinds": {}}, "adventures.json": {"blueprints": {}},
                   "villains.json": {"tempers": {}, "moves": {}, "bosses": {}, "weaknesses": {}},
-                  "beats.json": {"beats": {}}, "scenes.json": {"scenes": {}}, "marks.json": {"marks": {}}})
+                  "beats.json": {"beats": {}}, "scenes.json": {"scenes": {}}, "marks.json": {"marks": {}}, "work.json": {}})

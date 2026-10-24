@@ -5,7 +5,7 @@ This package is the one door the rest of the game calls (§8.4); the world's sid
 world/threats.py and runs without a game. The hooks:
 - `daily` (pass_time's day change; its own catch-up stamp): quiet lowers the villain's attention, steps repair
   themselves, carried means finish a prepare step, scheduled beats come due, an adventure whose threat ended in the
-  world ends too;
+  world ends too; the factions you serve send their commissions (story/work.py);
 - `on_travel` (before a travel event; True when a story beat takes its place), `on_arrive` (a tile of the world map),
   `on_enter_town`, `on_night` (camp and inn), `on_descend` (a dungeon level), `on_battle` (after past.on_battle,
   whether or not there are jobs), `on_quest_end`, `on_read`;
@@ -207,6 +207,9 @@ def daily(game) -> None:
         return
     d["day"] = today
     d["at"] = [int(game.player.x), int(game.player.y)]
+    from realmwalker.game.story import work
+
+    work.daily(game)  # (commissions from the factions you serve: C.2)
     for adv in active(game):
         villain.quiet(game, adv)
         t = threat_of(game, adv)

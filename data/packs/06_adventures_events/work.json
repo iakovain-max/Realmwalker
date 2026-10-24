@@ -1,0 +1,44 @@
+{
+  "_comment": "Work that waits to be taken (Expansion 6 C.2; game/story/work.py; ADVENTURES.md 5.15 and 8.10). The weekly offers are gone: a faction you have joined sends a commission from its goals now and then, and a person whose town has a real need asks you themselves (a plea). Each giver has their own choice in a conversation. Contracts come in C.3.",
+  "commissions": {
+    "renew": [10, 20],
+    "reach": 30,
+    "goals": {
+      "expand": {"match": ["to take the lands of", "to raid the soft lands", "to take back the old hunting grounds",
+                           "to find a war that pays"],
+                 "kinds": ["bounty", "defend", "clear_lair"]},
+      "revenge": {"match": ["to be free of", "to buy the watch"],
+                  "kinds": ["bounty", "assassinate", "steal"]},
+      "purge": {"match": ["to root out heresy", "to put down the servants of darkness", "to keep the plague from the towns",
+                          "to bring the faithful home", "to wake"],
+                "kinds": ["investigate", "clear_lair", "hunt_beast", "cure", "rescue"]},
+      "wealth": {"match": ["to grow rich on trade", "to control the trade of the realm", "to own the night markets",
+                           "to take a rich ship", "to grow fat on the roads", "to keep the secrets of good steel"],
+                 "kinds": ["deliver", "escort", "collect_debt", "smuggle"]},
+      "lore": {"match": ["to recover lost lore"],
+               "kinds": ["retrieve", "apprenticeship"]}
+    },
+    "by_kind": {
+      "thieves_guild": ["steal", "assassinate", "smuggle"],
+      "mages_circle": ["apprenticeship", "retrieve"],
+      "temple": ["cure", "investigate", "retrieve"],
+      "knightly_order": ["clear_lair", "hunt_beast", "investigate"]
+    },
+    "choice": ["About the work {faction} has for me.", "I hear {faction} has need of me.",
+               "I was told to come to you, for {faction}."],
+    "word": ["<info>Word from {faction}:</> {giver}, the {title} in {town}, has work for one of their own.",
+             "<info>A message finds you from {faction}:</> go to {giver}, the {title}, in {town}. There is work.",
+             "<info>{faction} sends for you.</> {giver}, the {title} in {town}, will tell you the rest."]
+  },
+  "pleas": [
+    {"kind": "cure", "jobs": ["healer", "priest", "headman"], "need": "sickness",
+     "choice": ["Is there anything that would help the sick?", "What does this sickness need?"]},
+    {"kind": "slay_dragon", "jobs": ["lord", "headman", "priest"], "need": "dragon",
+     "choice": ["About the dragon...", "Is anyone going to do something about the dragon?"]},
+    {"kind": "apprenticeship", "jobs": ["mage"], "need": "always",
+     "choice": ["Do you ever take an apprentice?", "What would it take to learn from you?"]},
+    {"kind": "assassinate", "jobs": [], "need": "grudge",
+     "choice": ["You have the look of someone who has lost kin.", "Someone wronged your family. Who?"]}
+  ],
+  "plea_gap": 14
+}

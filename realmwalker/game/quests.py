@@ -2,8 +2,9 @@
 real gang's captain in a real hideout, a real site near the town, a named beast in real country, a letter for a
 real innkeeper in a real town, an artifact from the world's history lying in a real barrow.
 
-People with something to offer have one piece of work at a time (a new one each week or so), kept with their town
-(`Town.flags["offers"]`). Accepted work goes into the journal (`game.quests`, saved with the character). Progress is
+Nobody rolls a job each week (Expansion 6 C.2): work is a commission, a plea, a bounty, a contract, a situation or a
+chapter of an adventure, built here by `make` for a target its source chooses (game/story/work.py keeps what waits
+to be taken). Accepted work goes into the journal (`game.quests`, saved with the character). Progress is
 noticed where it happens (a fight won, a chest opened, chains broken, a word with the right person); rewards and
 consequences go through reputation, news and the companions. Some work has a hidden side: the outlaws are starving
 deserters, the letter would hang its sender, the debtor has nothing.
@@ -28,7 +29,6 @@ from realmwalker.rules.creatures import typical_group
 from realmwalker.rules.items import Item, money_text
 from realmwalker.world import factions as fx
 
-OFFER_DAYS = 7  # a person thinks of new work about once a week
 AUTHORITY_JOBS = ("guard", "headman", "lord")  # who pays a bounty posted on the board
 DEBT_DC = 12
 BLACKMAIL_DC = 13
@@ -137,50 +137,10 @@ def days_left(game, q) -> int | None:
     return q["deadline"] - game.moment.total_days
 
 
-# ---------------------------------------------------------------------------- making offers
-def offer_for(game, npc) -> dict | None:
-    """This person's current piece of work (thought of fresh every week or so), or None."""
-    from realmwalker.game.people import town_of
-
-    if not npc.alive or npc.job not in giver_jobs(game) or npc.flags.get("disgraced"):
-        return None
-    if any(q["giver"] == npc.id for q in active(game)):
-        return None  # one job at a time from each person
-    town = town_of(game.world, npc.settlement)
-    offers = town.flags.setdefault("offers", {})
-    day = game.moment.total_days
-    q = offers.get(str(npc.id))
-    if q is not None and (q.get("state") != "offered" or day - q.get("offered_day", day) > OFFER_DAYS * 2):
-        del offers[str(npc.id)]
-        q = None
-    if q is None:
-        stamps = town.flags.setdefault("offer_day", {})
-        if day - stamps.get(str(npc.id), -10**6) < OFFER_DAYS:
-            return None
-        stamps[str(npc.id)] = day
-        rng = game.world.rng.child(f"offer/{npc.id}/{day}")
-        if not rng.chance(0.6 if npc.notable else 0.3):
-            return None  # not everyone has work worth paying for, every week
-        q = make_offer(game, npc, rng, avoid=[o.get("template") for o in offers.values()])
-        if q is None:
-            return None
-        mark_trial(game, npc, q)
-        offers[str(npc.id)] = q
-    return q
-
-
-def mark_trial(game, npc, q) -> None:
-    """If this person's faction is waiting to promote you, their work is the trial for it."""
-    from realmwalker.game.people import npc_factions
-    from realmwalker.game.reputation import needs_trial
-
-    for f in npc_factions(game, npc):
-        if needs_trial(game, f.id):
-            q["trial"] = f.id
-            q["reward"] = int(q["reward"] * 1.2)
-            return
-
-
+# ---------------------------------------------------------------------------- making work
+# Nobody thinks of a job every week any more (Expansion 6 C.2, ADVENTURES.md 5.15): work is a commission from a
+# faction you serve, a plea from someone with a real need, a bounty on the board, a contract, a situation or a
+# chapter of an adventure (game/story/work.py holds who has which). `make_offer` is today's choice for a person.
 def trial_note(game, q) -> str:
     f = game.world.factions.get(q.get("trial", -1))
     if f is None:
@@ -191,33 +151,16 @@ def trial_note(game, q) -> str:
             f"{rank_name(game, f.id)} to them.</>")
 
 
-def offers_in(game, settlement) -> list[dict]:
-    """Think of the work people here might offer (before anyone asks)."""
-    from realmwalker.game.people import npcs_in
-
-    out = []
-    for npc in npcs_in(game.world, settlement.id):
-        if npc.notable or npc.job == "guard":
-            q = offer_for(game, npc)
-            if q is not None:
-                out.append(q)
-    return out
-
-
 def make_offer(game, npc, rng: RNG, template: str | None = None, avoid=()) -> dict | None:
+    """Work this person might set today: of the kind asked for, or of any kind their trade gives."""
     kinds = [template] if template else [t for t, s in spec(game)["templates"].items() if npc.job in s["givers"]]
-    if not template:
-        from realmwalker.game import shadows
-
-        kinds += [k for k in shadows.guild_work(game, npc) if k not in kinds]  # (the guild's work for its own)
     rng.shuffle(kinds)
     # A town where three people all want an heirloom fetched is a dull town: spread the kinds about.
     counts = {k: sum(1 for a in avoid if a == k) for k in kinds}
     kinds.sort(key=lambda k: counts.get(k, 0))
     for kind in kinds:
-        q = BUILDERS[kind](game, npc, rng)
+        q = build(game, npc, kind, rng)
         if q is not None:
-            allow_the_walk(game, q)
             return q
     return None
 
@@ -303,15 +246,26 @@ def cleared(game) -> set[int]:
     return set(game.world.politics.get("cleared", []))
 
 
-def _bounty(game, npc, rng, *, gang=None, town=None):
+# ---------------------------------------------------------------------------- the builders: pick, then make
+# Each kind of work has two halves (Expansion 6 C.2). A picker chooses today's target near the giver, as the weekly
+# offers did; it is kept for whatever still wants a random target (a companion's own request, a commission, the debug
+# console). A maker builds the quest dict for a target it is given, so that situations, contracts, commissions and an
+# adventure's steps can say what the work is about. A target is a plain dict: "kind" (the template), "town" (the
+# settlement the work is set from, when there is no giver to say it) and the ids its kind needs (each picker says).
+
+def _bounty_pick(game, npc, rng, town):
+    """{"gang"}: the nearest gang within reach."""
     w = game.world
-    town = town or w.settlements[npc.settlement]
-    if gang is None:
-        gangs = [f for f in fx.active_factions(w, "bandit_gang") if 0 <= f.site < len(w.sites)
-                 and f.site not in cleared(game) and dist(w.sites[f.site], town) <= 32]
-        if not gangs:
-            return None
-        gang = min(gangs, key=lambda f: dist(w.sites[f.site], town))
+    gangs = [f for f in fx.active_factions(w, "bandit_gang") if 0 <= f.site < len(w.sites)
+             and f.site not in cleared(game) and dist(w.sites[f.site], town) <= 32]
+    if not gangs:
+        return None
+    return {"gang": min(gangs, key=lambda f: dist(w.sites[f.site], town)).id}
+
+
+def _bounty(game, npc, target, rng, town):
+    w = game.world
+    gang = w.factions[target["gang"]]
     site = w.sites[gang.site]
     leader = fx.leader_of(w, gang)
     q = base_quest(game, npc, "bounty", rng, hard=1 + dist(site, town) / 40, town=town)
@@ -322,23 +276,29 @@ def _bounty(game, npc, rng, *, gang=None, town=None):
     return q
 
 
-def _clear_lair(game, npc, rng):
+def _clear_lair_pick(game, npc, rng, town):
+    """{"site"}: a place to clear near the town, a beast of the old songs first."""
+    from realmwalker.game import past
     from realmwalker.world import dungeon as gen
 
     w = game.world
-    town = w.settlements[npc.settlement]
     done = cleared(game) | {q["target"].get("site") for q in _all_quests(game) if q["template"] == "clear_lair"}
     sites = [s for s in w.sites if s.id not in done and 3 <= dist(s, town) <= 16
              and gen.style_for(w, s) in ("cellars", "crypt", "cave", "warren", "tower")]
     if not sites:
         return None
-    from realmwalker.game import past
-
     # A beast of the old songs, if one lairs near enough: the town has a name for it, and its dead.
     named = [s for s in sites if past.lair_beast(game, s) is not None and
              past.lair_beast(game, s).kind == "beast"]
-    site = rng.choice(named) if named and rng.chance(0.7) else rng.choice(sites)
-    q = base_quest(game, npc, "clear_lair", rng, hard=1 + site.danger / 6)
+    return {"site": (rng.choice(named) if named and rng.chance(0.7) else rng.choice(sites)).id}
+
+
+def _clear_lair(game, npc, target, rng, town):
+    from realmwalker.game import past
+
+    w = game.world
+    site = w.sites[target["site"]]
+    q = base_quest(game, npc, "clear_lair", rng, hard=1 + site.danger / 6, town=town)
     q["target"] = {"site": site.id}
     q["words"].update(site=site.name, where=direction(town, site))
     beast = past.lair_beast(game, site)
@@ -352,19 +312,20 @@ def _clear_lair(game, npc, rng):
     return q
 
 
-def _hunt_beast(game, npc, rng):
+def _hunt_beast_pick(game, npc, rng, town):
+    """{"beast", "site", "group"} (a beast of the history in its lair) or {"group", "x", "y"} (one of the list)."""
     w = game.world
-    town = w.settlements[npc.settlement]
-    q = _hunt_lair_beast(game, npc, rng, town)
-    if q is not None:
-        return q
+    found = _lair_beasts(game, town)
+    if found:
+        site, fig, group = rng.choice(found)
+        return {"beast": fig.id, "site": site.id, "group": group}
     beasts = [b for b in spec(game)["beasts"] if b[0] in game.tables.creatures.encounters]
     if not beasts:
         return None
     # Nobody sends a green traveller after a troll: the beast is one the party might live through (the boar and the
     # orchard bear at first, the trolls and ogres once they have made a name).
     fitting = [b for b in beasts if beast_ratio(game, b[0]) < DEADLY_RATIO]
-    group, name, what = rng.choice(fitting or [min(beasts, key=lambda b: beast_ratio(game, b[0]))])
+    group = rng.choice(fitting or [min(beasts, key=lambda b: beast_ratio(game, b[0]))])[0]
     for _ in range(40):
         x = town.x + rng.randint(-12, 12)
         y = town.y + rng.randint(-12, 12)
@@ -372,18 +333,13 @@ def _hunt_beast(game, npc, rng):
             continue
         if not game.biome_def(x, y)["passable"] or w.settlement_at(x, y) or w.site_at(x, y):
             continue  # water, or somewhere people live
-        area = w.area_at(x, y)
-        q = base_quest(game, npc, "hunt_beast", rng)
-        q["target"] = {"x": x, "y": y, "group": group}
-        where = f"in {area.name}" if area is not None else "out in the wild"
-        q["words"].update(beast=name, beast_what=what, where=f"{where}, {direction(town, _Spot(x, y))}")
-        return q
+        return {"group": group, "x": x, "y": y}
     return None
 
 
-def _hunt_lair_beast(game, npc, rng, town):
-    """A real beast of the history, lairing within reach and one the party might live through, before any beast of
-    the fixed list: the town knows its name, and where it sleeps."""
+def _lair_beasts(game, town) -> list:
+    """Real beasts of the history, lairing within reach and ones the party might live through, before any beast of
+    the fixed list: the town knows their names, and where they sleep."""
     from realmwalker.game import past
 
     w = game.world
@@ -395,15 +351,30 @@ def _hunt_lair_beast(game, npc, rng, town):
             continue
         site = w.sites[int(key)]
         group = past.group_of(game, fig)
-        if 3 <= dist(site, town) <= 16 and group in game.tables.creatures.encounters and                 beast_ratio(game, group) < DEADLY_RATIO:
+        if 3 <= dist(site, town) <= 16 and group in game.tables.creatures.encounters and \
+                beast_ratio(game, group) < DEADLY_RATIO:
             found.append((site, fig, group))
-    if not found:
-        return None
-    site, fig, group = rng.choice(found)
-    q = base_quest(game, npc, "hunt_beast", rng)
-    q["target"] = {"x": site.x, "y": site.y, "group": group, "beast": fig.id, "site": site.id}
-    q["words"].update(beast=past.beast_title(fig), beast_what=past.beast_word(game, fig),
-                      where=f"in its lair at {site.name}, {direction(town, site)}")
+    return found
+
+
+def _hunt_beast(game, npc, target, rng, town):
+    from realmwalker.game import past
+
+    w = game.world
+    q = base_quest(game, npc, "hunt_beast", rng, town=town)
+    fig = w.figures.get(target.get("beast", -1))
+    if fig is not None and target.get("site") is not None:
+        site = w.sites[target["site"]]
+        q["target"] = {"x": site.x, "y": site.y, "group": target["group"], "beast": fig.id, "site": site.id}
+        q["words"].update(beast=past.beast_title(fig), beast_what=past.beast_word(game, fig),
+                          where=f"in its lair at {site.name}, {direction(town, site)}")
+        return q
+    x, y, group = int(target["x"]), int(target["y"]), target["group"]
+    _, name, what = next((b for b in spec(game)["beasts"] if b[0] == group), (group, "the beast", "a beast"))
+    area = w.area_at(x, y)
+    q["target"] = {"x": x, "y": y, "group": group}
+    where = f"in {area.name}" if area is not None else "out in the wild"
+    q["words"].update(beast=name, beast_what=what, where=f"{where}, {direction(town, _Spot(x, y))}")
     return q
 
 
@@ -436,62 +407,75 @@ def _someone_in(game, dest, rng: RNG, jobs=None):
     return rng.choice(folk) if folk else None
 
 
-def _deliver(game, npc, rng):
-    w = game.world
-    town = w.settlements[npc.settlement]
-    dests = [s for s in w.settlements if s.id != town.id and 8 <= dist(s, town) <= 40]
+def _someone_far(game, town, rng, lo, hi, jobs=None, walled=False):
+    """{"dest", "npc"}: a person of standing in another place between lo and hi tiles away."""
+    dests = [s for s in game.world.settlements if s.id != town.id and lo <= dist(s, town) <= hi
+             and (s.walled or not walled)]
     if not dests:
         return None
     dest = rng.choice(dests)
-    who = _someone_in(game, dest, rng)
-    if who is None:
-        return None
-    q = base_quest(game, npc, "deliver", rng, hard=1 + dist(dest, town) / 30)
+    who = _someone_in(game, dest, rng, jobs=jobs)
+    return None if who is None else {"dest": dest.id, "npc": who.id}
+
+
+def _deliver_pick(game, npc, rng, town):
+    return _someone_far(game, town, rng, 8, 40)
+
+
+def _deliver(game, npc, target, rng, town):
+    w = game.world
+    dest, who = w.settlements[target["dest"]], w.npcs[target["npc"]]
+    q = base_quest(game, npc, "deliver", rng, hard=1 + dist(dest, town) / 30, town=town)
     q["target"] = {"dest": dest.id, "npc": who.id}
     q["words"].update(recipient=f"{who.name}, the {who.title}", recipient_name=who.name, dest=dest.name)
     allow_for(q, dist(dest, town))
     return q
 
 
-def _retrieve(game, npc, rng):
+def _retrieve_pick(game, npc, rng, town):
+    """{"site", "artifact"} (a lost treasure of the old days, for a priest or a lord) or {"site"} (an heirloom)."""
     w = game.world
-    town = w.settlements[npc.settlement]
     taken = {q["target"].get("artifact") for q in _all_quests(game) if q["template"] == "retrieve"}
     artifacts = [(i, a) for i, a in enumerate(w.politics.get("artifacts", []))
                  if 0 <= a.get("site", -1) < len(w.sites) and not a.get("found") and i not in taken
                  and dist(w.sites[a["site"]], town) <= 40]
-    if artifacts and npc.job in ("priest", "lord") and rng.chance(0.6):
+    if artifacts and npc is not None and npc.job in ("priest", "lord") and rng.chance(0.6):
         i, a = rng.choice(artifacts)
-        site = w.sites[a["site"]]
-        q = base_quest(game, npc, "retrieve", rng, hard=2.5)
+        return {"site": a["site"], "artifact": i}
+    sites = [s for s in w.sites if 4 <= dist(s, town) <= 25]
+    return {"site": rng.choice(sites).id} if sites else None
+
+
+def _retrieve(game, npc, target, rng, town):
+    from realmwalker.game.people import family_of
+
+    w = game.world
+    site = w.sites[target["site"]]
+    if target.get("artifact") is not None:
+        i = int(target["artifact"])
+        a = w.politics["artifacts"][i]
+        q = base_quest(game, npc, "retrieve", rng, hard=2.5, town=town)
         q["target"] = {"site": site.id, "artifact": i, "item": a["name"]}
         q["words"].update(item=a["name"], site=site.name, where=direction(town, site))
         allow_for(q, dist(site, town) * 2)
         return q
-    sites = [s for s in w.sites if 4 <= dist(s, town) <= 25]
-    if not sites:
-        return None
-    site = rng.choice(sites)
-    from realmwalker.game.people import family_of
-
-    family = family_of(npc)
+    family = family_of(npc) if npc is not None else town.name
     # Keyed on the family, so two houses in one town do not both want the same thing.
-    thing, base = w.rng.child(f"heirloom/{family}/{npc.id}").choice(spec(game)["heirlooms"])
+    thing, base = w.rng.child(f"heirloom/{family}/{npc.id if npc is not None else -1}").choice(
+        spec(game)["heirlooms"])
     name = f"the {family} {thing}"
-    q = base_quest(game, npc, "retrieve", rng, hard=1 + site.danger / 6)
+    q = base_quest(game, npc, "retrieve", rng, hard=1 + site.danger / 6, town=town)
     q["target"] = {"site": site.id, "item": name, "base": base}
     q["words"].update(item=name, site=site.name, where=direction(town, site))
     return q
 
 
-def _apprenticeship(game, npc, rng):
-    """A mage's proof of worth (Expansion 5 C.3): bring back a wizard's grimoire - from the tower of a wizard of the
-    world's history who is dead (or, while they live, from their own shelves: a rival's), else from a place where
-    one was lost - and the mage takes one of you as an apprentice: a spell taught (`lesson`)."""
+def _apprenticeship_pick(game, npc, rng, town):
+    """{"site", "wizard", "rival"}: a wizard's grimoire - from the tower of a wizard of the world's history who is dead
+    (or, while they live, from their own shelves: a rival's), else from a place where one was lost."""
     from realmwalker.world import dungeon as gen
 
     w = game.world
-    town = w.settlements[npc.settlement]
     taken = {q["target"].get("site") for q in _all_quests(game) if q["template"] == "apprenticeship"}
     towers = []
     for sid, hid in w.politics.get("towers", {}).items():
@@ -503,14 +487,20 @@ def _apprenticeship(game, npc, rng):
             towers.append((site, fig))
     if towers:
         site, fig = rng.choice(towers)
-        wizard, rival = fig.name, fig.alive
-    else:
-        sites = [x for x in w.sites if 4 <= dist(x, town) <= 25 and x.id not in taken]
-        if not sites:
-            return None
-        site, rival = rng.choice(sites), False
-        wizard = rng.choice(spec(game)["text"]["apprenticeship"]["nameless"])
-    q = base_quest(game, npc, "apprenticeship", rng, hard=(1.5 if rival else 1.0) + site.danger / 8)
+        return {"site": site.id, "wizard": fig.name, "rival": fig.alive}
+    sites = [x for x in w.sites if 4 <= dist(x, town) <= 25 and x.id not in taken]
+    if not sites:
+        return None
+    return {"site": rng.choice(sites).id, "wizard": rng.choice(spec(game)["text"]["apprenticeship"]["nameless"]),
+            "rival": False}
+
+
+def _apprenticeship(game, npc, target, rng, town):
+    """A mage's proof of worth (Expansion 5 C.3): bring back a wizard's grimoire, and the mage takes one of you as an
+    apprentice: a spell taught (`lesson`)."""
+    site = game.world.sites[target["site"]]
+    wizard, rival = target["wizard"], bool(target.get("rival"))
+    q = base_quest(game, npc, "apprenticeship", rng, hard=(1.5 if rival else 1.0) + site.danger / 8, town=town)
     item = f"the grimoire of {wizard}"
     q["target"] = {"site": site.id, "item": item, "base": "spellbook", "wizard": wizard, "rival": rival}
     q["words"].update(item=item, site=site.name, where=direction(town, site), wizard=wizard)
@@ -550,43 +540,49 @@ def lesson(game, q, npc) -> list[str]:
             f"{t.items.name(it)}.</>"]
 
 
-def _rescue(game, npc, rng):
+def _rescue_pick(game, npc, rng, town):
+    """{"holder", "kin"}: a gang, cult or tribe within reach holds someone of the giver's."""
     w = game.world
-    town = w.settlements[npc.settlement]
     holders = [f for f in fx.active_factions(w, "bandit_gang", "cult", "tribe") if 0 <= f.site < len(w.sites)
                and f.site not in cleared(game) and dist(w.sites[f.site], town) <= 22]
     if not holders:
         return None
-    holder = rng.choice(holders)
-    site = w.sites[holder.site]
-    kin = rng.choice(spec(game)["kin"])
+    return {"holder": rng.choice(holders).id, "kin": rng.choice(spec(game)["kin"])}
+
+
+def _rescue(game, npc, target, rng, town):
     from realmwalker.game.people import family_of
     from realmwalker.world.names import forge
 
-    nf = forge(w, game.tables)
-    sex = ("male" if kin in ("son", "brother", "husband") else "female" if kin in ("daughter", "sister", "wife")
-           else rng.choice(["male", "female"]))
-    captive = nf.person(town.culture, sex, rng, family=family_of(npc)) if kin != "apprentice" else \
-        nf.person(town.culture, sex, rng)
-    q = base_quest(game, npc, "rescue", rng, hard=1.5)
+    w = game.world
+    holder = w.factions[target["holder"]]
+    site = w.sites[holder.site]
+    kin = target.get("kin") or rng.choice(spec(game)["kin"])
+    sex = target.get("sex") or ("male" if kin in ("son", "brother", "husband") else
+                                "female" if kin in ("daughter", "sister", "wife") else rng.choice(["male", "female"]))
+    captive = target.get("captive")
+    if captive is None:
+        nf = forge(w, game.tables)
+        captive = nf.person(town.culture, sex, rng, family=family_of(npc)) if kin != "apprentice" and \
+            npc is not None else nf.person(town.culture, sex, rng)
+    q = base_quest(game, npc, "rescue", rng, hard=1.5, town=town)
     q["target"] = {"site": site.id, "captive": captive, "sex": sex, "holder": holder.id}
     q["words"].update(captive=captive, kin=kin, site=site.name, where=direction(town, site))
     allow_for(q, dist(site, town) * 2)
     return q
 
 
-def _collect_debt(game, npc, rng):
+def _collect_debt_pick(game, npc, rng, town):
+    """{"dest", "npc", "debt"}."""
+    t = _someone_far(game, town, rng, 6, 30, jobs=("innkeeper", "smith", "shopkeeper", "headman", "stablemaster"))
+    return None if t is None else {**t, "debt": rng.randint(20, 100) * 100}
+
+
+def _collect_debt(game, npc, target, rng, town):
     w = game.world
-    town = w.settlements[npc.settlement]
-    dests = [s for s in w.settlements if s.id != town.id and 6 <= dist(s, town) <= 30]
-    if not dests:
-        return None
-    dest = rng.choice(dests)
-    who = _someone_in(game, dest, rng, jobs=("innkeeper", "smith", "shopkeeper", "headman", "stablemaster"))
-    if who is None:
-        return None
-    debt = rng.randint(20, 100) * 100
-    q = base_quest(game, npc, "collect_debt", rng)
+    dest, who = w.settlements[target["dest"]], w.npcs[target["npc"]]
+    debt = int(target.get("debt") or rng.randint(20, 100) * 100)
+    q = base_quest(game, npc, "collect_debt", rng, town=town)
     q["reward"] = debt // 4
     q["target"] = {"dest": dest.id, "npc": who.id, "debt": debt, "collected": 0}
     q["words"].update(debtor=f"{who.name}, the {who.title}", debtor_name=who.name, dest=dest.name,
@@ -595,31 +591,34 @@ def _collect_debt(game, npc, rng):
     return q
 
 
-def _investigate(game, npc, rng):
+def _investigate_pick(game, npc, rng, town):
+    """{"cult"}: the missing are taken somewhere a cart can reach in a night or two, not to a ruin a fortnight's walk
+    away: a cult with a foothold in the town is the likeliest, but only if its hiding place is near enough."""
     w = game.world
-    town = w.settlements[npc.settlement]
-    # The missing are taken somewhere a cart can reach in a night or two, not to a ruin a fortnight's walk away:
-    # a cult with a foothold in the town is the likeliest, but only if its hiding place is near enough.
     cults = [f for f in fx.active_factions(w, "cult") if 0 <= f.site < len(w.sites)
              and dist(w.sites[f.site], town) <= 30]
     if not cults:
         return None
     rooted = [f for f in cults if town.id in f.presence]
-    cult = rng.choice(rooted or cults)
+    return {"cult": rng.choice(rooted or cults).id}
+
+
+def _investigate(game, npc, target, rng, town):
+    w = game.world
+    cult = w.factions[target["cult"]]
     site = w.sites[cult.site]
-    q = base_quest(game, npc, "investigate", rng)
+    q = base_quest(game, npc, "investigate", rng, town=town)
     q["target"] = {"site": site.id, "cult": cult.id, "asked": []}
     q["words"].update(site=site.name, where=direction(town, site), cult=cult.name)
     allow_for(q, dist(site, town) * 2)
     return q
 
 
-def _slay_dragon(game, npc, rng):
-    """The one job a lord will not offer to just anyone: it is a way of dying, for most."""
+def _slay_dragon_pick(game, npc, rng, town):
+    """{"dragon"}: the one job a lord will not give to just anyone: it is a way of dying, for most."""
     from realmwalker.game import dragons
 
     w = game.world
-    town = w.settlements[npc.settlement]
     level = max(c.level for c in game.party) if game.party else 1
     desperate = bool(town.status.get("tribute") or town.status.get("burned"))
     if level < 4 and not (desperate and level >= 3):
@@ -628,9 +627,14 @@ def _slay_dragon(game, npc, rng):
             and not any(q["target"].get("dragon") == d["name"] for q in _all_quests(game))]
     if not near:
         return None
-    d = min(near, key=lambda d: dist(w.sites[d["lair"]], town))
+    return {"dragon": min(near, key=lambda d: dist(w.sites[d["lair"]], town))["name"]}
+
+
+def _slay_dragon(game, npc, target, rng, town):
+    w = game.world
+    d = next(d for d in w.politics.get("dragons", []) if d["name"] == target["dragon"])
     site = w.sites[d["lair"]]
-    q = base_quest(game, npc, "slay_dragon", rng, hard=1.0)
+    q = base_quest(game, npc, "slay_dragon", rng, hard=1.0, town=town)
     q["target"] = {"site": site.id, "dragon": d["name"]}
     q["words"].update(dragon=d["name"], colour=d.get("color", "great"), site=site.name,
                       where=direction(town, site))
@@ -642,18 +646,16 @@ RAIDER_GROUPS = {"tribe": ("orc_raiders", "goblin_warband", "orc_warband"), "ban
                  "cult": ("cultists",)}
 
 
-def _smuggle(game, npc, rng):
+def _smuggle_pick(game, npc, rng, town):
     """A crate that must not be seen. Walled towns search travellers at the gate (game/law.py)."""
+    return _someone_far(game, town, rng, 8, 35, jobs=("innkeeper", "shopkeeper", "market_trader", "smith"),
+                        walled=True)
+
+
+def _smuggle(game, npc, target, rng, town):
     w = game.world
-    town = w.settlements[npc.settlement]
-    dests = [s for s in w.settlements if s.id != town.id and 8 <= dist(s, town) <= 35 and s.walled]
-    if not dests:
-        return None
-    dest = rng.choice(dests)
-    who = _someone_in(game, dest, rng, jobs=("innkeeper", "shopkeeper", "market_trader", "smith"))
-    if who is None:
-        return None
-    q = base_quest(game, npc, "smuggle", rng, hard=1 + dist(dest, town) / 25)
+    dest, who = w.settlements[target["dest"]], w.npcs[target["npc"]]
+    q = base_quest(game, npc, "smuggle", rng, hard=1 + dist(dest, town) / 25, town=town)
     q["target"] = {"dest": dest.id, "npc": who.id}
     q["words"].update(recipient=f"{who.name}, the {who.title}", recipient_name=who.name, dest=dest.name,
                       where=direction(town, dest))
@@ -661,10 +663,9 @@ def _smuggle(game, npc, rng):
     return q
 
 
-def _defend(game, npc, rng):
-    """They came last year, and they are coming again. Be there on the day."""
+def _defend_pick(game, npc, rng, town):
+    """{"faction", "group", "when"}: they came last year, and they are coming again."""
     w = game.world
-    town = w.settlements[npc.settlement]
     if town.kind in ("city",):
         return None  # a city has walls and a watch of its own
     threats = [f for f in fx.active_factions(w, "tribe", "bandit_gang", "cult")
@@ -675,12 +676,21 @@ def _defend(game, npc, rng):
     groups = [g for g in RAIDER_GROUPS.get(foe.kind, ()) if g in game.tables.creatures.encounters]
     if not groups:
         return None
-    when = game.moment.total_days + rng.randint(3, 8)
-    q = base_quest(game, npc, "defend", rng, hard=1.4)
-    q["target"] = {"settlement": town.id, "group": rng.choice(groups), "when": when, "faction": foe.id}
+    return {"faction": foe.id, "group": rng.choice(groups), "when": game.moment.total_days + rng.randint(3, 8)}
+
+
+def _defend(game, npc, target, rng, town):
+    """Be there on the day ("when": the day they come, if the target says)."""
+    w = game.world
+    foe = w.factions[target["faction"]]
+    group = target.get("group") or next(g for g in RAIDER_GROUPS[foe.kind] if g in game.tables.creatures.encounters)
+    when = int(target.get("when") or game.moment.total_days + rng.randint(3, 8))
+    q = base_quest(game, npc, "defend", rng, hard=1.4, town=town)
+    q["target"] = {"settlement": town.id, "group": group, "when": when, "faction": foe.id}
     q["days"] = when - game.moment.total_days + 2
-    spot = _Spot(*news_place(w, foe))
-    q["words"].update(raiders=foe.name, where=direction(town, spot).split(" of ")[0], when=when_text(game, when))
+    spot = news_place(w, foe)
+    q["words"].update(raiders=foe.name, where=direction(town, _Spot(*spot)).split(" of ")[0] if spot else "the wild",
+                      when=when_text(game, when))
     return q
 
 
@@ -699,34 +709,44 @@ def when_text(game, day: int) -> str:
     return f"in {left} days, at the turn of the moon"
 
 
-def _escort(game, npc, rng):
-    """Somebody who has to get somewhere, and knows what the roads are like."""
+def _escort_pick(game, npc, rng, town):
+    """{"dest", "npc"}: somebody of the town who has to get somewhere, and knows what the roads are like."""
     from realmwalker.game.people import npcs_in
 
     w = game.world
-    town = w.settlements[npc.settlement]
     dests = [s for s in w.settlements if s.id != town.id and 6 <= dist(s, town) <= 30]
     folk = [n for n in npcs_in(w, town.id) if n.alive and not n.notable and not n.flags.get("companion")
             and not n.flags.get("escort") and n.job not in ("guard", "beggar")]
     if not dests or not folk:
         return None
     dest = rng.choice(dests)
-    who = rng.choice(folk)
-    q = base_quest(game, npc, "escort", rng, hard=1 + dist(dest, town) / 30)
+    return {"dest": dest.id, "npc": rng.choice(folk).id}
+
+
+def _escort(game, npc, target, rng, town):
+    w = game.world
+    dest, who = w.settlements[target["dest"]], w.npcs[target["npc"]]
+    q = base_quest(game, npc, "escort", rng, hard=1 + dist(dest, town) / 30, town=town)
     q["target"] = {"dest": dest.id, "npc": who.id}
     q["words"].update(traveller=who.name, dest=dest.name, where=direction(town, dest))
     allow_for(q, dist(dest, town))
     return q
 
 
-def _vendetta(game, npc, rng):
-    """A blood feud the history left (world/ages): the one who killed their kin still lives, and sits somewhere."""
+def _grudge(game, npc):
+    """The blood feud the history left this person (world/ages), or None."""
     from realmwalker.game import past
+
+    fig = game.world.figures.get(npc.flags.get("figure", -1)) if npc is not None else None
+    return past.grudge_of(game.world, fig.id) if fig is not None else None
+
+
+def _vendetta_pick(game, npc, rng, town):
+    """{"npc", "vendetta"}: the one who killed their kin still lives, and sits somewhere."""
     from realmwalker.game.people import prepare_town
 
     w = game.world
-    fig = w.figures.get(npc.flags.get("figure", -1))
-    grudge = past.grudge_of(w, fig.id) if fig is not None else None
+    grudge = _grudge(game, npc)
     if grudge is None:
         return None
     target = w.figures[grudge["against"]]
@@ -738,66 +758,70 @@ def _vendetta(game, npc, rng):
     mark = w.npcs.get(target.npc) if target.npc >= 0 else None
     if mark is None or not mark.alive or mark.settlement == npc.settlement:
         return None
-    town = w.settlements[npc.settlement]
-    dest = w.settlements[mark.settlement]
-    kin = w.figures.get(grudge["kin"])
-    q = base_quest(game, npc, "assassinate", rng, hard=1.5 + dist(dest, town) / 30)
-    q["hidden"] = None  # no doubt about this one: it is true
-    q["text_key"] = "assassinate_vendetta"
-    q["target"] = {"dest": dest.id, "npc": mark.id}
-    q["words"].update(target=target.full_name(), dest=dest.name, where=direction(town, dest),
-                      relation=grudge["relation"], kin=kin.full_name() if kin is not None else "my kin",
-                      cause=grudge.get("cause", ""))
-    allow_for(q, dist(dest, town) * 2)
-    return q
+    return {"npc": mark.id, "vendetta": True}
 
 
-def _assassinate(game, npc, rng):
-    """A knife in the dark, for money. The law does not care who paid."""
-    vendetta = _vendetta(game, npc, rng)
+def _assassinate_pick(game, npc, rng, town):
+    """A knife in the dark, for money (a blood feud's, most often, when there is one). The law does not care who
+    paid."""
+    vendetta = _vendetta_pick(game, npc, rng, town)
     if vendetta is not None and rng.chance(0.8):
         return vendetta
+    return _someone_far(game, town, rng, 4, 30)
+
+
+def _assassinate(game, npc, target, rng, town):
     w = game.world
-    town = w.settlements[npc.settlement]
-    dests = [s for s in w.settlements if s.id != town.id and 4 <= dist(s, town) <= 30]
-    if not dests:
-        return None
-    dest = rng.choice(dests)
-    mark = _someone_in(game, dest, rng)
-    if mark is None:
-        return None
-    q = base_quest(game, npc, "assassinate", rng, hard=1 + dist(dest, town) / 30)
+    mark = w.npcs[target["npc"]]
+    dest = w.settlements[mark.settlement]
+    grudge = _grudge(game, npc) if target.get("vendetta") else None
+    q = base_quest(game, npc, "assassinate", rng, hard=(1.5 if grudge else 1) + dist(dest, town) / 30, town=town)
     q["target"] = {"dest": dest.id, "npc": mark.id}
-    q["words"].update(target=mark.name, dest=dest.name, where=direction(town, dest))
+    if grudge is not None:
+        kin = w.figures.get(grudge["kin"])
+        q["hidden"] = None  # no doubt about this one: it is true
+        q["text_key"] = "assassinate_vendetta"
+        q["words"].update(target=w.figures[grudge["against"]].full_name(), dest=dest.name,
+                          where=direction(town, dest), relation=grudge["relation"],
+                          kin=kin.full_name() if kin is not None else "my kin", cause=grudge.get("cause", ""))
+    else:
+        q["words"].update(target=mark.name, dest=dest.name, where=direction(town, dest))
     allow_for(q, dist(dest, town) * 2)
     return q
 
 
-def _cure(game, npc, rng):
-    """The sickness is here, and the herbs are not."""
-    w = game.world
-    town = w.settlements[npc.settlement]
+def _cure_pick(game, npc, rng, town):
+    """{"count"}: the sickness is here, and the herbs are not."""
     if not town.status.get("plague") and not town.status.get("famine"):
         return None
     if "healing_herbs" not in game.tables.items:
         return None
-    q = base_quest(game, npc, "cure", rng, hard=1.2)
-    q["target"] = {"count": rng.randint(4, 7), "item": "healing_herbs", "settlement": town.id}
+    return {"count": rng.randint(4, 7)}
+
+
+def _cure(game, npc, target, rng, town):
+    q = base_quest(game, npc, "cure", rng, hard=1.2, town=town)
+    q["target"] = {"count": int(target.get("count") or rng.randint(4, 7)), "item": "healing_herbs",
+                   "settlement": town.id}
     q["words"].update(count=str(q["target"]["count"]))
     return q
 
 
-def _feud(game, npc, rng):
-    """Two people who will not speak, and a town taking sides."""
+def _feud_pick(game, npc, rng, town):
+    """{"a", "b"}: two people who will not speak, and a town taking sides."""
     from realmwalker.game.people import npcs_in
 
-    w = game.world
-    town = w.settlements[npc.settlement]
-    folk = [n for n in npcs_in(w, town.id) if n.alive and n.notable and n.id != npc.id]
+    folk = [n for n in npcs_in(game.world, town.id) if n.alive and n.notable and (npc is None or n.id != npc.id)]
     if len(folk) < 2:
         return None
     one, two = rng.sample(folk, 2)
-    q = base_quest(game, npc, "feud", rng)
+    return {"a": one.id, "b": two.id}
+
+
+def _feud(game, npc, target, rng, town):
+    w = game.world
+    one, two = w.npcs[target["a"]], w.npcs[target["b"]]
+    q = base_quest(game, npc, "feud", rng, town=town)
     q["target"] = {"a": one.id, "b": two.id, "agreed": []}
     q["words"].update(one=one.name, two=two.name)
     return q
@@ -807,36 +831,65 @@ STEAL_THINGS = [("a ledger", "ledger"), ("a bundle of letters", "letters"), ("a 
                 ("a deed of land", "deed"), ("a key", "key")]
 
 
-def _steal(game, npc, rng):
-    """Something small, in somebody else's pocket."""
+def _steal_pick(game, npc, rng, town):
+    """{"dest", "npc", "thing"}: something small, in somebody else's pocket."""
     w = game.world
-    town = w.settlements[npc.settlement]
     places = [s for s in w.settlements if dist(s, town) <= 25]
     rng.shuffle(places)
     for dest in places:
         mark = _someone_in(game, dest, rng)
-        if mark is None or mark.id == npc.id:
+        if mark is None or (npc is not None and mark.id == npc.id):
             continue
-        what, kind = rng.choice(STEAL_THINGS)
-        q = base_quest(game, npc, "steal", rng, hard=1 + dist(dest, town) / 25)
-        q["target"] = {"dest": dest.id, "npc": mark.id, "kind": kind}
-        q["words"].update(item=what, mark=mark.name, dest=dest.name, where=direction(town, dest))
-        allow_for(q, dist(dest, town) * 2)
-        return q
+        return {"dest": dest.id, "npc": mark.id, "thing": rng.choice(STEAL_THINGS)[1]}
     return None
 
 
-BUILDERS = {"bounty": _bounty, "slay_dragon": _slay_dragon, "escort": _escort, "assassinate": _assassinate,
-            "cure": _cure, "feud": _feud, "steal": _steal, "defend": _defend, "smuggle": _smuggle, "clear_lair": _clear_lair, "hunt_beast": _hunt_beast, "deliver": _deliver,
-            "retrieve": _retrieve, "rescue": _rescue, "collect_debt": _collect_debt, "investigate": _investigate,
-            "apprenticeship": _apprenticeship}
+def _steal(game, npc, target, rng, town):
+    w = game.world
+    mark = w.npcs[target["npc"]]
+    dest = w.settlements[mark.settlement]
+    what, kind = next((t for t in STEAL_THINGS if t[1] == target.get("thing")), None) or rng.choice(STEAL_THINGS)
+    q = base_quest(game, npc, "steal", rng, hard=1 + dist(dest, town) / 25, town=town)
+    q["target"] = {"dest": dest.id, "npc": mark.id, "kind": kind}
+    q["words"].update(item=what, mark=mark.name, dest=dest.name, where=direction(town, dest))
+    allow_for(q, dist(dest, town) * 2)
+    return q
+
+
+KINDS = ("bounty", "slay_dragon", "escort", "assassinate", "cure", "feud", "steal", "defend", "smuggle", "clear_lair",
+         "hunt_beast", "deliver", "retrieve", "rescue", "collect_debt", "investigate", "apprenticeship")
+PICKERS = {k: globals()[f"_{k}_pick"] for k in KINDS}
+MAKERS = {k: globals()[f"_{k}"] for k in KINDS}
+
+
+def pick(game, kind: str, giver, rng: RNG, town=None) -> dict | None:
+    """Today's choice of a target for this kind of work, set by this giver (or from this town), or None."""
+    town = town or game.world.settlements[giver.settlement]
+    target = PICKERS[kind](game, giver, rng, town)
+    return None if target is None else {"kind": kind, "town": town.id, **target}
+
+
+def make(game, giver, target: dict, rng: RNG) -> dict:
+    """The quest dict for work on a target someone has chosen: its terms, its words, and days enough for the real
+    walk. `giver` is the person setting it (None: the town's watch, `target["town"]`)."""
+    w = game.world
+    town = w.settlements[int(target["town"])] if target.get("town") is not None else w.settlements[giver.settlement]
+    q = MAKERS[target["kind"]](game, giver, target, rng, town)
+    allow_the_walk(game, q)
+    return q
+
+
+def build(game, giver, kind: str, rng: RNG, town=None) -> dict | None:
+    """Pick, then make: work of this kind with today's target, or None when nothing near fits."""
+    target = pick(game, kind, giver, rng, town)
+    return None if target is None else make(game, giver, target, rng)
 
 
 def _all_quests(game) -> list[dict]:
-    out = list(game.quests)
-    for town in game.world.towns.values():
-        out += list(town.flags.get("offers", {}).values())
-    return out
+    """Work taken on and work waiting to be taken (so two pieces of work do not chase one thing)."""
+    from realmwalker.game.story import work
+
+    return list(game.quests) + work.waiting(game)
 
 
 def board_bounties(game, settlement) -> list[dict]:
@@ -855,7 +908,8 @@ def board_bounties(game, settlement) -> list[dict]:
             continue
         q = posted.get(str(gang.id))
         if q is None or q.get("state") != "offered":
-            q = _bounty(game, None, w.rng.child(f"board/{settlement.id}/{gang.id}"), gang=gang, town=settlement)
+            q = make(game, None, {"kind": "bounty", "gang": gang.id, "town": settlement.id},
+                     w.rng.child(f"board/{settlement.id}/{gang.id}"))
             posted[str(gang.id)] = q
         out.append(q)
     return out
@@ -868,12 +922,14 @@ def accept(game, q) -> list[str]:
 
     if q.get("state") != "offered" or by_id(game, q["id"]) is not None:
         return []
+    from realmwalker.game.story import work
+
     town = town_of(game.world, q["town"])
-    for key in ("offers", "board"):
-        pool = town.flags.get(key, {})
-        for k, v in list(pool.items()):
-            if v is q or v.get("id") == q["id"]:
-                del pool[k]
+    pool = town.flags.get("board", {})
+    for k, v in list(pool.items()):
+        if v is q or v.get("id") == q["id"]:
+            del pool[k]
+    work.taken(game, q)
     q["state"] = "active"
     q["taken"] = game.moment.total_days
     q["deadline"] = game.moment.total_days + int(q["days"])
@@ -1602,7 +1658,7 @@ def payer(game, q, npc) -> bool:
 
 
 # ---------------------------------------------------------------------------- conversation
-QUEST_CHOICES = {"work", "work_accept", "work_decline", "quest_turn_in", "deliver_letter", "show_letter",
+QUEST_CHOICES = {"own_work", "work_accept", "work_decline", "quest_turn_in", "deliver_letter", "show_letter",
                  "blackmail", "collect_debt", "debt_take", "debt_forgive", "ask_missing", "make_peace",
                  "buy_peace", "warn_target", "hand_over_goods", "deliver_goods"}
 
@@ -1666,18 +1722,19 @@ def talk_choices(conv) -> list:
         if tpl == "investigate" and not q["done"] and here == q["town"] and not npc.notable and \
                 npc.id not in t.get("asked", []) and not t.get("clue"):
             out.append(Choice("ask_missing", "What do you know about the people going missing?", data={"q": q["id"]}))
-    offer = offer_for(game, npc)
-    if offer is not None:
-        out.append(Choice("work", "Is there any work?", data={"q": offer["id"]}))
-    return out
+    from realmwalker.game.story import work
+
+    return out + work.choices(conv)  # (what they have for you: a commission, a plea)
 
 
 def talk_choose(conv, choice) -> None:
     """Carry out a work-related choice. One small handler per choice (CHOICE_HANDLERS below)."""
     game = conv.game
     cid = choice.id
-    if cid == "work":
-        return _offer_work(conv)
+    if cid == "own_work":
+        from realmwalker.game.story import work
+
+        return work.offer(conv, choice)
     if cid in ("work_accept", "work_decline"):
         return _answer_offer(conv, cid)
     q = by_id(game, choice.data.get("q", -1))
@@ -1685,23 +1742,6 @@ def talk_choose(conv, choice) -> None:
     if q is None or handler is None:
         return
     handler(conv, q)
-
-
-def _offer_work(conv) -> None:
-    game, npc = conv.game, conv.npc
-    conv.you_say("Is there any work?")
-    q = offer_for(game, npc)
-    if q is None:
-        conv.npc_says("\"Not for you. Not today.\"")
-        return
-    conv.npc_says(pitch(game, q))
-    danger = danger_note(game, q)
-    if danger:
-        conv.note(danger)
-    if q.get("trial") is not None:
-        conv.note(trial_note(game, q))
-    conv.pending_offer = q
-    conv.mode = "quest_offer"
 
 
 def _answer_offer(conv, cid: str) -> None:
