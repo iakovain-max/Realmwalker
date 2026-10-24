@@ -1,0 +1,9 @@
+{
+  "_comment": "Expansion 6 (docs/expansions/06-adventures-events.md; the design is docs/ADVENTURES.md). Its story data (threats, adventures, villains, beats, situations...) lives beside this record as fragments merged by realmwalker/data/packs.py.",
+  "id": "adventures_events", "order": 6,
+  "name": "Adventures & Events",
+  "tagline": "Every road a story. Every story an ending.",
+  "icon": "dlc/adventures_events", "accent": [178, 58, 48],
+  "status": "planned", "version": "1.6.0", "released_on": "",
+  "adds": []
+}

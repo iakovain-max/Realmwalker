@@ -23,7 +23,7 @@ def test_the_codex_covers_the_three_books():
 
 def test_every_entry_belongs_to_one_expansion_of_the_programme():
     by_dlc = codex.coverage()["dlc"]
-    assert set(by_dlc) <= set(range(1, 27))
+    assert set(by_dlc) <= set(range(1, 28))
     assert 1 in by_dlc, "Dice & Destiny has entries of its own"
 
 

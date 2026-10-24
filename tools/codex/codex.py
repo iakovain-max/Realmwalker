@@ -89,8 +89,8 @@ def problems(data=None, released: set[int] | None = None, folder: Path = CODEX) 
         seen[eid] = kind
         if e.get("book") not in BOOKS:
             out.append(f"{where}: book must be one of {', '.join(BOOKS)}")
-        if not isinstance(e.get("dlc"), int) or not 1 <= e["dlc"] <= 26:
-            out.append(f"{where}: dlc must be an expansion number, 1 to 26")
+        if not isinstance(e.get("dlc"), int) or not 1 <= e["dlc"] <= 27:
+            out.append(f"{where}: dlc must be an expansion number, 1 to 27")
         status = e.get("status")
         if status not in STATUSES:
             out.append(f"{where}: status must be one of {', '.join(STATUSES)}")

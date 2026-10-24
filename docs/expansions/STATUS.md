@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 05 Schools & Domains released (v1.5.0, 2026-10-18) · the relay has stopped (Anton's word of 2026-10-17): Expansion 6, Tieflings & Warlocks, waits for his start
+Current: 06 Adventures & Events · Part A (the story engine, and one whole adventure: the Beast) · branch dlc/06-adventures-events
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -49,7 +49,7 @@ Assumptions waiting for Anton:
   hand; a countered spell from a wand still spends its charges (the 2024 Counterspell gives back only a slot); the Wand of Enemy Detection shows where every foe within 60
   feet stands for a minute (not only the nearest one's direction); the Wand of Fear's Command is "Grovel!" (the game's
   Command has no "Flee"); Retributive Strike's "travel to a random plane" is being thrown clear, unharmed, half the
-  time (no planes until Expansion 26), and the Auto never breaks a staff; the Rod of Absorption's stored levels give
+  time (no planes until Expansion 27), and the Auto never breaks a staff; the Rod of Absorption's stored levels give
   back a spent slot, with no action, in a fight (the Auto draws one when its best slots are spent); the Rod of
   Alertness's planted aura goes with its bearer and lets friends in it see the invisible anywhere in it; the Rod of
   Rulership's charmed foes stand still awaiting your word (Incapacitated) until harmed, and with the Staff of
@@ -62,7 +62,7 @@ Assumptions waiting for Anton:
 - Expansion 5 Part C (mages and priests of the world): the book's "Gear: Wand" is the crystal focus until Part D's
   wands; a priest's unprinted DC is 8 + PB + Wis (13); a tower master's ward makes a lock 5 harder (the book's Arcane
   Lock says 10: a party without Knock would find a lived-in tower shut for good); a tower's guardians are the master's
-  familiars and apprentices until the constructs (Expansion 17); a tower master is an Archmage at level 13+ or fame
+  familiars and apprentices until the constructs (Expansion 18); a tower master is an Archmage at level 13+ or fame
   8+, else a Mage, and so are the history's circle heads (temple heads are Archpriests); a great city's first temple
   and first mage are an Archpriest and an Archmage; the apprenticeship's lesson is a wizard spell up to third level
   (or a scroll of first or second level with no wizard in the party); killing a tower master costs 6 standing with
@@ -153,7 +153,7 @@ Assumptions waiting for Anton:
 - Part E: the chance on an attack or spell card while choosing is against the nearest foe; a party member's
   melee blow that would kill a beaten humanoid asks to knock them out (the Auto and the enemy kill, as before);
   rituals cast outside a fight spend no slot; small beasts' heights on their squares were chosen by eye.
-- Expansion 2 part A: the lance is always two-handed until mounted combat (Expansion 9); magic ammunition is spent
+- Expansion 2 part A: the lance is always two-handed until mounted combat (Expansion 10); magic ammunition is spent
   once loosed, hit or miss; only a bow or crossbow is swung as an improvised weapon (throwing a blade without the
   Thrown property is left out); the silvered weapon's extra die waits for shapechangers; push and topple are the
   battle's judgement (asked only under the Reactions setting "all"); a Nick weapon in either hand frees the off-hand
@@ -164,7 +164,7 @@ Assumptions waiting for Anton:
   the realm's tongues are standard languages; two wolves at level 1: 85% won, 15% down (band widened).
 - A window smoke test from part B's first run hung (the creation tour lacked a step; fixed) and its process may
   still be open on this PC (main.py --smoke-test ... --home build/smoke_home): it can be closed from Task Manager.
-- Expansion 2 part C: Mounted Combatant is written but not offered until mounted combat (Expansion 9); a duellist
+- Expansion 2 part C: Mounted Combatant is written but not offered until mounted combat (Expansion 10); a duellist
   keeps a versatile blade in one hand; Spell Sniper's reach is for attack-roll spells only; Sentinel answers a hit
   on anyone but the sentinel.
 - Expansion 2 part D: coaches run up to 160 miles at 4 mph for 10 hours a day; ships 2 mph day and night up to 600
@@ -172,7 +172,7 @@ Assumptions waiting for Anton:
   2 gp a day, as they share the loot); the inn charges each of the party; a mirror and perfume please the gentry a
   little (+2, +3); a carried basket, pouch, quiver or chest adds to what you can carry; a thrown net is shaken off
   with a Strength save at the end of each turn (the book: an action and a DC 10 Strength check), and catches a Huge
-  thing too; barding and the horses' stat blocks wait for mounted combat (Expansion 9: there is nothing for a mount
+  thing too; barding and the horses' stat blocks wait for mounted combat (Expansion 10: there is nothing for a mount
   to be armoured against before then), and so does Mounted Combatant (written, not offered; the plan's §6.2 wanted a
   basic form now); the cart's load counts the fastest animals as ridden (a mastiff may be counted wrongly).
 - Expansion 3 part A: Blink Steps picks the place itself; Energy Redirection turns on whoever struck, else the
@@ -304,10 +304,10 @@ Assumptions waiting for Anton:
   Advantage counted as +5 (the passive rule) everywhere. Gaseous Form and Feign Death are fight spells only, and the Auto
   uses them only on a friend about to fall; a lost fight with a feigner: the foes take all for dead and go, the fallen
   beside the feigner make the Constitution save of those left for dead. Water Breathing walks a lake's bottom (not the
-  sea's: Expansion 22) at half pace, soaked; Water Walk walks lakes and the sea's face; a spell ending out on the water
+  sea's: Expansion 23) at half pace, soaked; Water Walk walks lakes and the sea's face; a spell ending out on the water
   means an hour's swim for the shore. Etherealness under the ground lets the party walk through walls and doors, traps
   do not spring, chests cannot be touched; on the road nothing meets it; back inside stone it is pushed out (2 force a
-  foot). Until the planes (Expansion 26) Plane Shift lands at a city's circle or 2d12 miles from another known town;
+  foot). Until the planes (Expansion 27) Plane Shift lands at a city's circle or 2d12 miles from another known town;
   Astral Projection and Gate land on target at any known town (Astral Projection takes a jacinth and four 25 GP silver
   bars a traveller, the book's 100 GP bar). Meld into Stone is a ward for a lone caster. The Unseen Servant halves the
   camp's chores. Feather Fall is cast by itself (the battle's judgement, and over a dungeon's pit).
@@ -445,10 +445,10 @@ Assumptions waiting for Anton:
   Ally and Binding; F.4 shapes with the rest of Appendix B and the cult fanatic's imp or quasit). Each stat block
   comes with the spell that brings it into play. An ally is played by the player like a party member (z: the
   Auto); it never runs, earns no XP, its kills count for its owner, and it does not keep a lost fight going. The
-  octopus waits for fights under water (Expansion 22: it breathes only water); a familiar's hit points are its
+  octopus waits for fights under water (Expansion 23: it breathes only water); a familiar's hit points are its
   form's average; seeing through its eyes and delivering touch spells are left out; a familiar sent away stays
   out of fights (calling it back is a road use, not an action in a fight). Find Steed's looks are horse, camel and
-  dire wolf (the elk waits for its picture, F.4); it fights beside its rider until mounted combat (Expansion 9);
+  dire wolf (the elk waits for its picture, F.4); it fights beside its rider until mounted combat (Expansion 10);
   its gift (once a long rest) and its hit points come back at a long rest; on the road it is its rider's mount at
   a warhorse's pace and eats nothing; with no paladin yet it comes from scrolls. Flyby and Agile are one rule: no
   opportunity attacks for the whole turn (Flyby only while it can fly).
@@ -512,10 +512,10 @@ Ideas for later:
   still serve a shaped party, someone being taken to hold them (adapted). A lame leg does not slow a beast.
 - Expansion 3 F.7: the stat blocks are the 2025 Monster Manual's (the PHB's Appendix B prints the same creatures).
   The octopus, giant seahorse and reef shark breathe only water: a foe's Polymorph shape but never a friend's, and
-  not met until fights go under water (Expansion 22); the crocodile's Hold Breath waits with them. Where they are
+  not met until fights go under water (Expansion 23); the crocodile's Hold Breath waits with them. Where they are
   met was chosen by their habitats and the world's biomes (lions and elephants on the savanna, tigers and apes in
   the jungle, sprites in the fey forest, the sphinx of wonder in the desert...); the cult fanatic's imp or quasit is
-  a cult circle with one of them; slaad tadpoles hatch in the wizards' towers until the planes come (Expansion 26).
+  a cult circle with one of them; slaad tadpoles hatch in the wizards' towers until the planes come (Expansion 27).
   Shape-Shift (imp, quasit), Heart Sight (sprite) and shaking a sleeper awake (the pseudodragon's Sting) are left
   out; Burst of Ingenuity is the battle's judgement (spent when the 2 turns a failed save or a check made in a
   fight). A stat block's condition with no ending in its text lasts as the book means: a grapple until it is broken
@@ -547,10 +547,12 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events** (Anton, 2026-10-24: it replaces Tieflings & Warlocks as
-number 6). Read `docs/ADVENTURES.md` (§0–§4 and §8) and `docs/expansions/06-adventures-events.md` (its design note,
-written by Claude in a chat with Anton), then begin with task A.0 of Part A on a new branch `dlc/06-adventures-events`
-from `main`.
+Next session starts at: Expansion 6, **Adventures & Events**, Part A, task **A.1** (Deeds that stick) in
+`docs/expansions/06-adventures-events.md`, on branch `dlc/06-adventures-events`. A.0 is done (2026-10-24): the programme
+is renumbered (EXPANSIONS.md §6.6 is this expansion; Tieflings & Warlocks is 7, Planes & Portals 27; the codex moved by
+`tools/codex/renumber_programme.py`, the DMG's renown, marks of prestige and calamities are Expansion 6's), the pack
+record is `data/packs/06_adventures_events/pack.json` (planned), the map key screen is called *Map key*. Read
+`docs/ADVENTURES.md` §0–§4 and §8 and the sections Part A names.
 The way of Part E (robes, hats and the rest): book makers written by `tools/codex/wizard_wonders.py` into
 data/treasure.json (and its "patches" table); a maker's `enspell` may be a list of schools (Enspelled Armor and
 Weapon). Properties: `charges` with `worn` (and a `pool` with `worn`: only while worn or held, `magic.charges`),

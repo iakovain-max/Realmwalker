@@ -178,7 +178,7 @@ def test_they_are_met_where_they_live(tables, data):
     for cid, biome in lives.items():
         assert any(any(m[0] == cid for m in e["members"]) and biome in e["biomes"] and e["weight"] > 0
                    for e in enc.values()), cid
-    for cid in WATER:  # (under the sea: Expansion 22)
+    for cid in WATER:  # (under the sea: Expansion 23)
         assert not any(any(m[0] == cid for m in e["members"]) for e in enc.values())
     for familiar in ("imp", "quasit"):
         assert any({m[0] for m in e["members"]} >= {"cult_fanatic", familiar} for e in enc.values())

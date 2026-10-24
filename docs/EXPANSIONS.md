@@ -67,7 +67,7 @@ Anton asked for these clear-outs before the expansions begin. Do them on one bra
 
 **Monster Manual (2025)**: every stat block – about 500 – with traits, actions, bonus actions, reactions, legendary actions and resistances, lairs and their regional effects, spellcasting, habitats, treasure themes and groups.
 
-**Dungeon Master's Guide (2024)**: every magic item (several hundred entries, many with variants), artifacts, sentient and cursed items, the treasure and random-magic-item tables, magic item crafting; the DM's Toolbox systems that can run inside a game – chases, curses and magical contagions, environmental effects, fear and mental stress, firearms and explosives (as limited in §1.3), hazards, mobs, objects, poisons, siege equipment, supernatural gifts (blessings and charms), traps, renown and marks of prestige, settlement traits and calamities, travel; encounter building and XP budgets; bastions; the cosmology (as reachable planar realms, Expansion 26).
+**Dungeon Master's Guide (2024)**: every magic item (several hundred entries, many with variants), artifacts, sentient and cursed items, the treasure and random-magic-item tables, magic item crafting; the DM's Toolbox systems that can run inside a game – chases, curses and magical contagions, environmental effects, fear and mental stress, firearms and explosives (as limited in §1.3), hazards, mobs, objects, poisons, siege equipment, supernatural gifts (blessings and charms), traps, renown and marks of prestige, settlement traits and calamities, travel; encounter building and XP budgets; bastions; the cosmology (as reachable planar realms, Expansion 27).
 
 ### 1.2 The Realmwalker filter
 
@@ -83,8 +83,8 @@ Nothing is pasted in raw. Every class, species, spell, monster and item answers 
 
 - **Greyhawk** (DMG chapter 5), the **Lore Glossary** (DMG Appendix A) and the named gods and powers of the D&D multiverse are not transplanted: Realmwalker's worlds are generated and have their own faiths. Proper names that are part of game items (the Wand of Orcus, the Eye of Vecna, the Sword of Kas) keep their names; who made them and where they went is generated per world.
 - **DM advice** (most of DMG chapters 1, 2, 4 and 5) is used as design guidance – attitudes, travel pace, encounter difficulty, rewards – not as content.
-- **Firearms and explosives**: the Renaissance items only, as rare gnomish inventions (Expansion 17). The DMG's modern and futuristic weapons and its alien technology are left out; they break the setting.
-- **The DMG's tools for the DM's own creations** (creating a background, a creature, a magic item or a spell, in chapter 3) are used as guidance whenever Realmwalker invents something of its own, and recorded as `omitted` with that reason. **Alignment** stays a field of stat blocks and sentient items (and matters on the planes, Expansion 26); there is no alignment system for the player.
+- **Firearms and explosives**: the Renaissance items only, as rare gnomish inventions (Expansion 18). The DMG's modern and futuristic weapons and its alien technology are left out; they break the setting.
+- **The DMG's tools for the DM's own creations** (creating a background, a creature, a magic item or a spell, in chapter 3) are used as guidance whenever Realmwalker invents something of its own, and recorded as `omitted` with that reason. **Alignment** stays a field of stat blocks and sentient items (and matters on the planes, Expansion 27); there is no alignment system for the player.
 - **The DMG's Appendix B maps** are not copied; they are used as archetypes for new site and dungeon styles (barrow crypt, caravan encampment, dragon's lair, dungeon hideout, keep, manor, mine, roadside inn, ship, spooky house, Underdark warren, volcanic caves, wizard's tower...).
 - **Rules that would remove a Realmwalker system**: the game's own health (wounds, blood, infection, injuries, pain), survival (hunger, thirst, cold, wetness) and death rules stay on top of the book's hit point rules. A long rest restores hit points, Hit Point Dice and features as the 2024 rules say, but wounds still need tending and a body still needs food and warmth. Record every such adaptation in the codex (§4.2).
 
@@ -162,7 +162,7 @@ data/
       conditions.json          a new kind of file this pack introduces
       creatures.json           a fragment with the same shape as data/creatures.json
       ...
-    06_tieflings_warlocks/
+    07_tieflings_warlocks/
       pack.json
       classes.json  races.json  cultures.json  names.json  place_names.json  towns.json
       creatures.json  magic_items.json  history.json  quests.json  travel_events.json
@@ -180,11 +180,11 @@ data/
 
 ```json
 {
-  "id": "tieflings_warlocks", "order": 6,
+  "id": "tieflings_warlocks", "order": 7,
   "name": "Tieflings & Warlocks",
   "tagline": "Born of old bargains. Sworn to new ones.",
   "icon": "dlc/tieflings_warlocks", "accent": [150, 64, 170],
-  "status": "planned", "version": "1.6.0", "released_on": "",
+  "status": "planned", "version": "1.7.0", "released_on": "",
   "adds": [
     "The Tieflings: three infernal legacies, their own names and quarters in the great cities, and a few cities still ruled by an old pact",
     "The Warlock, levels 1–20: four patrons, every eldritch invocation, the three pacts and the mystic arcana",
@@ -303,7 +303,7 @@ A new setting, **Reactions** (in Settings, after "Companions in a fight"): *Ask 
 #### 4.3.6 Movement in three dimensions, and the rest of the battlefield
 
 - **Elevation**: `Fighter.z` in feet. Flying (and hovering), levitating, jumping (long and high jumps from Strength), climbing; falling – a flier knocked prone, at speed 0 or incapacitated falls unless it hovers – with the 2024 falling damage. Distance and reach are measured in three dimensions on the 5-5-5 grid (the larger of the horizontal and vertical distance). The battle board draws fliers lifted above a shadow with a small height label. (Height of the ground itself – ledges, stairs, balconies – is welcome where maps have it, but not required.)
-- Swimming and burrowing speeds; underwater rules (Expansion 22); mounted rules (Expansion 9).
+- Swimming and burrowing speeds; underwater rules (Expansion 23); mounted rules (Expansion 10).
 - **Size and space**: Tiny creatures and swarms may share squares; squeezing through narrow spaces; Huge (3×3) and Gargantuan (4×4) footprints.
 - **Senses**: blindsight, darkvision, tremorsense, truesight; lightly and heavily obscured areas; magical darkness; the 2024 Invisible condition and hiding (a creature that hides successfully is Invisible until found). **Telepathy** as a way of speaking (it matters for parley, Command and silenced casters).
 - **Changing sides**: a charmed, dominated or possessed creature can act for another side until freed – including a companion, whom the AI then plays against the party. Many expansions need this (Dominate Person, fiends' and ghosts' possession, vampires, mind flayers), so it is built here.
@@ -338,7 +338,7 @@ Balance must not drift during the refactor: run `tools/balance.py` before and af
 - `data/rules.json`: `max_level` 20; the 2024 XP table (300, 900, 2,700 ... 355,000) and proficiency bonus to +6; level 19 grants an Epic Boon feat (or another feat).
 - Class data runs to level 20 with the 2024 features, each one a definition (§4.3.2).
 - **Choices** generalize `Character.pending` and `rules/progression.py`: subclass; ability score increase *or* a feat; epic boon; fighting style feat; Weapon Mastery picks; expertise; cantrips and spells (prepared casters change their prepared spells after a long rest; wizards also add to their spellbook); maneuvers; eldritch invocations; metamagic; pact boon; Wild Shape forms known; primal companion; Hunter's options; and every other option list in the books. `auto_resolve` makes sensible picks for companions by archetype and role, never at random.
-- `Character` gains `feats` (with their own choices), `choices` (option picks per feature), `resources` (current pools – today's `uses`), `masteries`, `heroic_inspiration`, `species` and `lineage` (replacing `race`), and `classes` – a list of {class, subclass, level} for multiclassing (Expansion 14). Store it as a list from the start, with one entry.
+- `Character` gains `feats` (with their own choices), `choices` (option picks per feature), `resources` (current pools – today's `uses`), `masteries`, `heroic_inspiration`, `species` and `lineage` (replacing `race`), and `classes` – a list of {class, subclass, level} for multiclassing (Expansion 15). Store it as a list from the start, with one entry.
 - **Backgrounds (2024)**: ability score increases (+2/+1 or +1/+1/+1 among the three abilities the background names), an origin feat, two skills, a tool, equipment or gold – plus Realmwalker's own social ties and starting places, which stay. The eight existing backgrounds map onto 2024 ones (Folk Hero → Farmer, Outlander → Guide, Guild Artisan → Artisan; Soldier, Acolyte, Criminal, Noble and Sage keep their names) and the other eight are added (Charlatan, Entertainer, Guard, Hermit, Merchant, Sailor, Scribe, Wayfarer).
 - **Species (2024)**: traits only; a size choice where the book offers one; lineage, legacy or ancestry as a choice; lineage spells. The character's people (`culture`, from World Variety) stays a separate choice: a goliath can be born among the Northmen.
 - **Character creation** follows the 2024 order (class → background → species → languages → ability scores → details and looks), keeping point buy and adding the standard array and rolling 4d6.
@@ -354,7 +354,7 @@ Out of battle, spells plug into Realmwalker's own systems; **Appendix C** lists 
 
 ### 4.6 Monsters
 
-- Every MM stat block becomes a creature definition (§4.3.8) in its expansion's pack, with: `habitat` mapped to the game's biomes – Arctic → tundra, glacier; Coastal → coast; Desert → desert, dunes, salt flat, badlands; Forest → forest, pine forest, jungle, fey forest; Grassland → plains, steppe, savanna; Hill → hills; Mountain → mountains, high mountains, volcanic; Swamp → marsh; Underdark → deep dungeon levels and the Underdark (Expansion 19); Underwater → sea and lakes (Expansion 22); Urban → towns; Planar → planar realms (Expansion 26) – and its `treasure` theme, `groups` (whom it is found with), `morale` (the game's types: beast, bandit, soldier, coward, warrior, fanatic, mindless), `ai` hints (§4.7), `art` (§4.11), names and epithets where it can be a named individual, and original descriptions.
+- Every MM stat block becomes a creature definition (§4.3.8) in its expansion's pack, with: `habitat` mapped to the game's biomes – Arctic → tundra, glacier; Coastal → coast; Desert → desert, dunes, salt flat, badlands; Forest → forest, pine forest, jungle, fey forest; Grassland → plains, steppe, savanna; Hill → hills; Mountain → mountains, high mountains, volcanic; Swamp → marsh; Underdark → deep dungeon levels and the Underdark (Expansion 20); Underwater → sea and lakes (Expansion 23); Urban → towns; Planar → planar realms (Expansion 27) – and its `treasure` theme, `groups` (whom it is found with), `morale` (the game's types: beast, bandit, soldier, coward, warrior, fanatic, mindless), `ai` hints (§4.7), `art` (§4.11), names and epithets where it can be a named individual, and original descriptions.
 - **Encounters are built, not only hand-listed.** The DMG 2024 XP budget (low, moderate and high difficulty per character, DMG PDF 118–119) sets a budget from the region's danger, and a group is chosen from the creatures of the habitat by family templates: a pack, a band, a lone hunter, a lair guardian, a patrol, a swarm, a master with its servants. The hand-written encounters in `creatures.json` stay. Each family template gets intro lines (at least four variants), and the generator fills in the creatures' names.
 - **Lairs**: every legendary monster has a lair site and a dungeon style; fought there, it has its in-lair uses; its regional effects change the land around it (§4.10).
 
@@ -386,9 +386,9 @@ The current AI (`rules/tactics.py`) already weighs squares and attacks well. It 
 
 - **The framework (Expansion 1).** Magic items are definitions on the kernel: properties as effects; **attunement** (three items at most; a short rest to attune; some only for a class or species); **charges** that recover at dawn by the book's dice; activation by the Magic action, a bonus action or a reaction; spells cast from items; **cursed** items (today's curses in `magic.json` fold into this); identification the 2024 way (handling an item through a short rest, Identify, or Detect Magic's aura); and the DMG's rules for **artifacts** (major and minor properties rolled per world, destruction) and **sentient items** (senses, communication, personality, purpose, conflict), so that any expansion can deliver a themed artifact or sentient weapon complete. `rules/magic.total(...)` becomes a thin reader over the kernel.
 - **Realmwalker's own procedural items** (`game/magic_items.make`, named from the built-in word lists) stay as a family of their own – one-off heirlooms and "blades with a story" built from the same effects and rarity budgets – alongside the book's named items.
-- **Treasure follows DMG chapters 4 and 7** (Expansion 1): individual treasure and hoards by Challenge Rating (Expansion 15 adds only the sizing of dragons' hoards by age and the business of carrying one away); magic items by the four themes – Arcana, Armaments, Implements, Relics – and rarity, rolled on the random tables (DMG PDF 330–338); each monster's own treasure theme from the MM; "magic items awarded by level" as a guide for quest rewards. An item not in the game yet is skipped and rerolled, so treasure grows richer as the expansions land.
-- **Rarity and the world**: the world's *Magic* setting scales how often magic items appear. Common and uncommon items can be bought in cities (DMG prices by rarity, under the local law and suspicion); rare and better ones are found, earned or made; artifacts are placed in the world's history (Expansion 24).
-- Each expansion brings the items of its theme (Appendix B); Expansions 23 and 24 bring the rest.
+- **Treasure follows DMG chapters 4 and 7** (Expansion 1): individual treasure and hoards by Challenge Rating (Expansion 16 adds only the sizing of dragons' hoards by age and the business of carrying one away); magic items by the four themes – Arcana, Armaments, Implements, Relics – and rarity, rolled on the random tables (DMG PDF 330–338); each monster's own treasure theme from the MM; "magic items awarded by level" as a guide for quest rewards. An item not in the game yet is skipped and rerolled, so treasure grows richer as the expansions land.
+- **Rarity and the world**: the world's *Magic* setting scales how often magic items appear. Common and uncommon items can be bought in cities (DMG prices by rarity, under the local law and suspicion); rare and better ones are found, earned or made; artifacts are placed in the world's history (Expansion 25).
+- Each expansion brings the items of its theme (Appendix B); Expansions 24 and 25 bring the rest.
 
 ### 4.9 Peoples in the world
 
@@ -465,7 +465,7 @@ Anton wants far more information on hover, above all in battle. Build it once (E
 
 Quality comes first: everything must work, and work correctly. Speed comes from not wasting effort, never from skipping checks.
 
-- **The design is decided here.** No brainstorming and no long specifications: the design note is one page at most, and the task list is a checklist.
+- **The design is decided here.** No brainstorming and no long specifications: the design note is one page at most, and the task list is a checklist. (A design expansion, one that is more the game's own design than the books' – Adventures & Events – may have a longer note, with its full design in its own document.)
 - **Big expansions come in parts.** Each XL expansion below lists its parts. A part is a self-contained piece that meets §5.2 on its own and goes to GitHub when it does; the expansion's icon appears with its last part. An L expansion may be split the same way, usually into "the class and the people" and "the monsters and the world".
 - **Helpers in parallel.** Use subagents for independent batches – one family of monsters, one batch of spells, one batch of items, one batch of pictures, one chapter of the codex – each writing its own fragment files (§4.1). Give each a precise brief: its codex entries, the schema, one finished example entry, the book pages, and the rule that every number is checked on the page image. Each returns a list of what it did and anything it was unsure of. Run up to about four at once. The main session owns the kernel, joins the pieces, runs the tests and reviews.
 - **Templates after the first time.** After the first class, people, monster family and item batch, write short checklists in `docs/expansions/templates/` (what a class needs, a people, a monster family, an item batch), so that later expansions follow them step by step.
@@ -502,6 +502,7 @@ Quality comes first: everything must work, and work correctly. Speed comes from 
 - [ ] The performance budgets of §3 hold.
 - [ ] Everything new has a picture, a sound cue, original text, a tooltip card, and icons for its statuses.
 - [ ] If what a save holds changed, `FORMAT_VERSION` is bumped and an older save is refused kindly (never a crash, never a deleted file); the notes say whether a new character or world is needed.
+- [ ] Its design note answers *What stories does it tell?* and *What does it show?*, and what it says is in the game (from Expansion 6 on: villains, blueprints, beats, happenings or ambitions; marks, scenes, map signs or backdrops).
 - [ ] The fresh reviewer's findings are fixed.
 - [ ] With the last part: the icon is on the shelf and its tooltip reads well.
 
@@ -517,19 +518,19 @@ Decide from the books, the design and the game's tone; write the assumption in `
 
 ```
 # Expansion programme – status
-Current: 06 Tieflings & Warlocks · part B (the fiends) · branch dlc/06-tieflings-warlocks · step 6 (world) of §5.1
-On GitHub (main): 01 Dice & Destiny (v1.1.0) · 02 Blades & Backgrounds (v1.2.0) · ... · 06 part A
+Current: 07 Tieflings & Warlocks · part B (the fiends) · branch dlc/07-tieflings-warlocks · step 6 (world) of §5.1
+On GitHub (main): 01 Dice & Destiny (v1.1.0) · 02 Blades & Backgrounds (v1.2.0) · ... · 07 part A
 Codex coverage: PHB 61% · MM 23% · DMG 18%
 Assumptions waiting for Anton: ...
 Ideas for later: ...
-Next session starts at: task B.4 in docs/expansions/06-tieflings-warlocks.md
+Next session starts at: task B.4 in docs/expansions/07-tieflings-warlocks.md
 ```
 
 ---
 
 ## 6. The expansions
 
-Every expansion is named *Thing & Related Thing*, in Anton's style; his own two names – *Demigods & Magics* and *Tieflings & Warlocks* – are kept. The order below keeps the game playable and improving at every step: first the rules everything else needs (Act I), then the new classes and peoples (Act II), then the monster families and the places they live (Act III), and last the treasures, strongholds and other planes (Act IV). Within an act the order may change if Anton prefers; the "Needs" column is what must truly come first. Sizes are relative (S, M, L, XL).
+Every expansion is named *Thing & Related Thing*, in Anton's style; his own names – *Demigods & Magics*, *Adventures & Events* and *Tieflings & Warlocks* – are kept. The order below keeps the game playable and improving at every step: first the rules everything else needs (Act I), then the new classes and peoples (Act II), then the monster families and the places they live (Act III), and last the treasures, strongholds and other planes (Act IV). Within an act the order may change if Anton prefers; the "Needs" column is what must truly come first. Sizes are relative (S, M, L, XL).
 
 | # | Expansion | Mainly adds | Needs | Size |
 |---|---|---|---|---|
@@ -539,30 +540,31 @@ Every expansion is named *Thing & Related Thing*, in Anton's style; his own two 
 | 3 | Demigods & Magics | levels 11–20; epic boons; the 2024 fighter, rogue, cleric and wizard; every PHB spell | 2 | XL |
 | 4 | Steel & Shadows | Battle Master, Eldritch Knight, Arcane Trickster; poisons; spies and assassins | 3 | M |
 | 5 | Schools & Domains | Diviner, Illusionist, Light and Trickery domains; mages and priests of the world | 3 | M |
+| 6 | Adventures & Events | threats, adventures, situations, villains who act, places that change, the Storyteller, Legend, ambitions | 5 | XL |
 | | **Act II – New Blood** | | | |
-| 6 | Tieflings & Warlocks | the Tiefling; the Warlock; every fiend | 3 | L |
-| 7 | Dragonborn & Sorcerers | the Dragonborn; the Sorcerer; kobolds and lesser dragon-kin | 3 | L |
-| 8 | Orcs & Barbarians | the Orcs as a full people; the Barbarian; war-bands and mobs | 3 | L |
-| 9 | Aasimar & Paladins | the Aasimar; the Paladin; every celestial; mounted combat; blessings and charms | 3 | L |
-| 10 | Elves & Rangers | the elven lineages in full; the Ranger; the fey and goblinkind | 3 | L |
-| 11 | Druids & Beasts | the Druid; every beast and the plant-folk; Wild Shape | 3 | XL |
-| 12 | Bards & Brigands | the Bard; the people of towns and roads; chases; settlement life | 3 | L |
-| 13 | Monks & Elementals | the Monk; every elemental and genie; environmental effects | 3 | L |
-| 14 | Callings & Crossroads | multiclassing; starting at higher levels | 6–13 | S |
+| 7 | Tieflings & Warlocks | the Tiefling; the Warlock; every fiend | 3 | L |
+| 8 | Dragonborn & Sorcerers | the Dragonborn; the Sorcerer; kobolds and lesser dragon-kin | 3 | L |
+| 9 | Orcs & Barbarians | the Orcs as a full people; the Barbarian; war-bands and mobs | 3 | L |
+| 10 | Aasimar & Paladins | the Aasimar; the Paladin; every celestial; mounted combat; blessings and charms | 3 | L |
+| 11 | Elves & Rangers | the elven lineages in full; the Ranger; the fey and goblinkind | 3 | L |
+| 12 | Druids & Beasts | the Druid; every beast and the plant-folk; Wild Shape | 3 | XL |
+| 13 | Bards & Brigands | the Bard; the people of towns and roads; chases; settlement life | 3 | L |
+| 14 | Monks & Elementals | the Monk; every elemental and genie; environmental effects | 3 | L |
+| 15 | Callings & Crossroads | multiclassing; starting at higher levels | 6–14 | S |
 | | **Act III – The Monstrous World** | | | |
-| 15 | Dragons & Hoards | every true dragon; legendary lairs; hoards | 7 | XL |
-| 16 | Goliaths & Giants | the Goliath; every giant; the mountain beasts | 3 | L |
-| 17 | Gnomes & Golems | the Gnome; every construct; firearms and explosives | 3 | M |
-| 18 | Crypts & Curses | every undead; lycanthropes and blights; curses, contagions, fear and stress | 3 | XL |
-| 19 | Drow & the Underdark | the world below; the drow cities; the Underdark's creatures | 10 | XL |
-| 20 | Mind Flayers & Psionics | Psi Warrior and Soulknife; every aberration; the gith | 19 | L |
-| 21 | Traps & Terrors | traps and hazards; mythic monsters and oozes | 3 | L |
-| 22 | Ships & Sea Monsters | ships and sea travel; underwater combat; the creatures of the sea | 11, 13 | XL |
+| 16 | Dragons & Hoards | every true dragon; legendary lairs; hoards | 8 | XL |
+| 17 | Goliaths & Giants | the Goliath; every giant; the mountain beasts | 3 | L |
+| 18 | Gnomes & Golems | the Gnome; every construct; firearms and explosives | 3 | M |
+| 19 | Crypts & Curses | every undead; lycanthropes and blights; curses, contagions, fear and stress | 3 | XL |
+| 20 | Drow & the Underdark | the world below; the drow cities; the Underdark's creatures | 11 | XL |
+| 21 | Mind Flayers & Psionics | Psi Warrior and Soulknife; every aberration; the gith | 20 | L |
+| 22 | Traps & Terrors | traps and hazards; mythic monsters and oozes | 3 | L |
+| 23 | Ships & Sea Monsters | ships and sea travel; underwater combat; the creatures of the sea | 12, 14 | XL |
 | | **Act IV – Treasures, Strongholds and Other Worlds** | | | |
-| 23 | Potions & Scrolls | every consumable magic item; crafting gear, potions, scrolls and magic items | 3 | L |
-| 24 | Rings & Relics | every remaining magic item; artifacts; sentient and cursed items | 23 | XL |
-| 25 | Bastions & Banners | bastions; siege equipment and sieges; marks of prestige and renown | 8, 17, 23 | L |
-| 26 | Planes & Portals | the planes as reachable realms; planar travel; slaadi, modrons and the tarrasque | 6, 9, 10, 13, 19, 20 | XL |
+| 24 | Potions & Scrolls | every consumable magic item; crafting gear, potions, scrolls and magic items | 3 | L |
+| 25 | Rings & Relics | every remaining magic item; artifacts; sentient and cursed items | 24 | XL |
+| 26 | Bastions & Banners | bastions; siege equipment and sieges | 9, 18, 24 | L |
+| 27 | Planes & Portals | the planes as reachable realms; planar travel; slaadi, modrons and the tarrasque | 7, 10, 11, 14, 20, 21 | XL |
 
 Each section below lists: the icon and the tooltip's tagline; what Anton will notice; and the work under **Rules**, **Content**, **World**, **Tactics**, **Pictures**, **Books**, and **Done when** (in addition to §5.2). XL expansions list their **parts** (§5.0). Monster lists are in Appendix A and item rules in Appendix B; they are part of each section.
 
@@ -598,10 +600,10 @@ Each section below lists: the icon and the tooltip's tagline; what Anton will no
 
 **Rules**
 - **Weapon Mastery**: Cleave, Graze, Nick, Push, Sap, Slow, Topple, Vex; mastery picks for fighters and rogues now (the 2024 numbers), later for barbarians, paladins and rangers.
-- **Equipment** (PHB 216–236) complete: weapons and their properties; armour and shields; adventuring gear with its 2024 uses (Utilize) – except the Potion of Healing and the Spell Scroll, which Expansion 3 brings in every strength and level; tools with their checks and uses (making things with them is crafting, Expansion 23); barding; land mounts and vehicles (riding horse, draft horse, warhorse, pony, mule, camel; cart, wagon, carriage, chariot, sled); services and lifestyle; the trinkets table (starting gear and loot).
+- **Equipment** (PHB 216–236) complete: weapons and their properties; armour and shields; adventuring gear with its 2024 uses (Utilize) – except the Potion of Healing and the Spell Scroll, which Expansion 3 brings in every strength and level; tools with their checks and uses (making things with them is crafting, Expansion 24); barding; land mounts and vehicles (riding horse, draft horse, warhorse, pony, mule, camel; cart, wagon, carriage, chariot, sled); services and lifestyle; the trinkets table (starting gear and loot).
 - **Backgrounds**: the 16 of the 2024 book (§4.4), each with Realmwalker ties and starting places.
-- **Feats**: every origin feat, general feat and fighting style feat (the epic boons come with Expansion 3). Feats that grant spells (Magic Initiate, Fey-Touched, Shadow-Touched, Ritual Caster) read their choices from the spell data, so their options grow by themselves when Expansion 3 adds the spells. Feats whose subject arrives later – Poisoner (poisons, Expansion 4), Mounted Combatant (mounted combat, Expansion 9), Crafter (crafting, Expansion 23) – work in a basic form now and carry `upgrade_in` in the codex.
-- **Species** in 2024 form: Human (Resourceful, Skillful, Versatile), Elf (the Drow, High Elf and Wood Elf lineages as a choice, with their spells; their full cultures arrive in Expansions 10 and 19), Dwarf, Halfling, and **Orc** replacing the Half-Orc (Adrenaline Rush, Relentless Endurance, darkvision 120 ft; the orcs' full culture arrives in Expansion 8). Ability bonuses move from species to backgrounds.
+- **Feats**: every origin feat, general feat and fighting style feat (the epic boons come with Expansion 3). Feats that grant spells (Magic Initiate, Fey-Touched, Shadow-Touched, Ritual Caster) read their choices from the spell data, so their options grow by themselves when Expansion 3 adds the spells. Feats whose subject arrives later – Poisoner (poisons, Expansion 4), Mounted Combatant (mounted combat, Expansion 10), Crafter (crafting, Expansion 24) – work in a basic form now and carry `upgrade_in` in the codex.
+- **Species** in 2024 form: Human (Resourceful, Skillful, Versatile), Elf (the Drow, High Elf and Wood Elf lineages as a choice, with their spells; their full cultures arrive in Expansions 11 and 20), Dwarf, Halfling, and **Orc** replacing the Half-Orc (Adrenaline Rush, Relentless Endurance, darkvision 120 ft; the orcs' full culture arrives in Expansion 9). Ability bonuses move from species to backgrounds.
 - **Languages** in 2024 form (standard and rare languages), merged with the game's regional tongues, which become dialects of Common or languages of their own as World Variety decided.
 - **Character creation** in the 2024 order, with standard array and rolling.
 
@@ -685,7 +687,102 @@ Each section below lists: the icon and the tooltip's tagline; what Anton will no
 
 ---
 
-### 6.6 Tieflings & Warlocks (Expansion 6, L) – Anton's name
+### 6.6 Adventures & Events (Expansion 6, XL – eleven parts) – Anton's name
+
+*Icon*: an open book whose pages become a road winding up to a dark tower under a red moon. *Tagline*: "Every road a
+story. Every story an ending." Branch `dlc/06-adventures-events`; pack `data/packs/06_adventures_events/`; each part
+goes to `main` when it meets §5.2 of `docs/EXPANSIONS.md`; the icon and version 1.6.0 come with Part K.
+
+**The design is `docs/ADVENTURES.md`** (Anton asked for this expansion on 2026-10-22, before Tieflings & Warlocks:
+"the core gameplay loop is extremely tedious... we need to make this game a dopamine machine"; and widened it on
+2026-10-24: quests "rarer... each and every quest being meaningful", "extremely varied, to the point where they barely
+have any types at all", and "show don't tell"). Read its §0–§4 once, then the sections each part names. This expansion
+is the game's own design more than the books'; it draws on the DMG 2024 (pages 109–146: creating adventures and
+campaigns; 84–85 marks of prestige; 96 renown; 98 settlement calamities) and, for structures only, on Ravenloft: The
+Horrors Within, Curse of Strahd and the solo-play books in `C:\Users\Alpine\Desktop\dndnstuff` – never their prose.
+Because it is a design expansion, this note is longer than §5.0's one page (A.0 records the exception).
+
+**What Anton will see**
+
+The world's dangers become **threats** with villains from the world's own history and schemes that move week by week,
+with signs on the roads and in the news; ignore one and it wins, and the map changes. Take one on and the game builds
+an **adventure**: chapters that send you to new places, a patron, an ally with a stake, a rival after the same prize,
+the villain's lieutenants, hidden truths to find (where the relic lies, what the villain fears, who is lying), and a
+**finale**: a big, fair fight against a boss you have heard of for hours, made winnable by everything you found. The
+villain **notices you** – letters at dawn, tests in the night, invitations to dinner, bargains, revenge on the people
+who helped you. A **Storyteller** makes something worth telling happen every day or two of travel, always for a
+reason: villains' moves, allies seeking you, the bandit you spared coming back, a coronation with a tournament.
+Every ending changes the world (a town freed or emptied, a cult destroyed, a ruler crowned, a statue, a song, a page
+in the Legends book) and ends with *What became of them*. You grow in **Legend**: an epithet you choose, lords and
+kings who send for you, titles and land, songs. You choose an **Ambition** at creation, woven through your adventures,
+and when it is fulfilled you may end your tale and stay in the world as a figure your next character can meet.
+
+The weekly job board is gone. **Quests are situations**: something gone wrong in a real person's life (a son run off
+to the gang, an innocent in the stocks, a debt come due), met in the street, assembled from the world so that no two
+are alike, rare (one at a time in a town), each with a decision, a way through without blood and an ending you can
+see later; many lead into adventures. Contracts and bounties pay the bills. And **you see it happen**: a boy runs up
+with a letter in its writer's hand, a crowd gathers under the gibbet, a burned town stays burned (with its dead, its
+blood, its new graves and, in a season, its scaffolds), whole towns burn round you in the last chapters, and the world
+map shows smoke, sieges, marching hosts and – once in a life – a wound torn across the land by a god, with a
+crusaders' camp-city at its edge.
+
+Part by part: **A** one whole adventure (the hunt for a named beast of the history) from its hook to its epilogue;
+**B** show, don't tell: scenes on the map, letters and title cards, places that keep what happened to them, the dead
+and the blood left by fights, fire; **C** quests reborn: the job board retired, situations from people's lives,
+contracts and bounties, favours and contacts; **D** the risen dead king, the outlaw lord, and an opening tale for
+every new life; **E** villains who answer you and finales in full; **F** allies, rivals, traitors and the card
+reading; **G** the world changes (consequences in full, the land itself, hosts on the roads, new places founded);
+**H** battles through a burning town; **I** the Storyteller and the world's events (echoes, coronations, tournaments,
+sieges); **J** Legend and ambitions; **K** the rest of the tales, cataclysms, and the release.
+
+**Decisions** (details in `docs/ADVENTURES.md`)
+
+- **Two layers**: threats live in the world (`world.politics["threats"]`, advanced inside `Politics.advance`, so they
+  move in the interlude too – at most one stage each); adventures and situations are world-side records as well
+  (`world.politics["adventures"]`, `["situations"]`), so a dead hero's story stays in the world for the next. Legend
+  lives on the character (`Renown.legend`).
+- **A threat's tier comes from its region** (DESIGN.md §6), and its finale is measured for the tier's target level;
+  the Storyteller offers threats that fit you first.
+- **The world fights back too**: threats also end without the player, dooms are bounded and recoverable, and only two
+  untaken threats stir near the hero at once (ADVENTURES.md §5.1).
+- **Adventures are forged when a hook is accepted**; an offer is a light record on the threat. At most three at once.
+- **Steps reuse the quest machinery** where they can (a step quest is an ordinary quest dict with `adventure` and
+  `step`, the patron as giver, a long deadline, no pay of its own); step kinds are a registry of small handlers with a
+  `repair`, so nothing is ever stuck. Each part builds the step kinds, beat conditions and ops its content uses.
+- **The weekly job offers are retired** (Part C): a quest is a situation, a chapter or a commission; paid work is
+  contracts and bounties; the seventeen templates stay as machinery. Situations are assembled from predicaments,
+  roles bound to real people, obstacles with ways through, turns and meetings, and their goals are conditions on the
+  world, so however the player makes them true, the game recognises it (ADVENTURES.md §5.15–5.16, §8.10).
+- **Show, don't tell** is law 11 (ADVENTURES.md §5.17): scenes are played on the map by real townsfolk; places carry
+  marks that change their close-up maps and their signs on the world map, and age; the dead and blood of fights are
+  written back to the map through `Field.origin`; buildings are marked, never removed; the land itself changes only
+  through a ledger that autoplay replays; new places are only ever appended to the world's lists. Figures keep their
+  one pose.
+- **Bosses and story things are bound to their exact dungeon level when the adventure is forged**
+  (`politics["story_sites"]`, keyed by the level's dungeon key), because a level is populated once; the story's hook
+  in `populate` runs last and wins. Story creatures carry a `story` tag; `past.on_battle` skips them.
+- **Bosses come from creatures the game has**, made bosses by data templates (hit points, Legendary Resistances,
+  legendary actions, a second phase) until later expansions bring the Monster Manual's legendary families. So do
+  attackers: assaults and the rift's hordes use the dead, raiders, orcs, goblins, gnolls and dragons the game has,
+  and demon bands come with Tieflings & Warlocks, the next expansion, as more data.
+- **The eleven laws** (ADVENTURES.md §3) are the review checklist for all story content; the content rule (every
+  chapter has a step that is not a fight and a choice with a lasting consequence) and the six rules of a quest that
+  matters (§5.15) are enforced by `storybook --check`.
+- **Saves**: every part that changes what a save holds bumps `FORMAT_VERSION` (19 with Part A) and says that a new
+  world is needed. Story records are JSON-native, and a test checks it.
+- **The programme is renumbered**: Adventures & Events is 6; Tieflings & Warlocks becomes 7 and so on; Planes &
+  Portals (27) stays version 2.0.0. Every expansion's design note now answers *What stories does it tell?* and *What
+  does it show?*
+- **Words are written in batches by helpers** (two or three at once, on a cheaper model, each with a precise brief and
+  finished examples), joined and reviewed by the main session; every family has floors (ADVENTURES.md §9). **Pictures**
+  are DCSS picks first and code-drawn the rest, reviewed on `tools/showcase.py`'s contact sheets.
+
+
+**Parts and tasks**: `docs/expansions/06-adventures-events.md`.
+
+---
+
+### 6.7 Tieflings & Warlocks (Expansion 7, L) – Anton's name
 
 *Icon*: a curling horned silhouette before a violet eye ringed with sigils. *Tagline*: "Born of old bargains. Sworn to new ones."
 
@@ -715,7 +812,7 @@ Each section below lists: the icon and the tooltip's tagline; what Anton will no
 
 ---
 
-### 6.7 Dragonborn & Sorcerers (Expansion 7, L)
+### 6.8 Dragonborn & Sorcerers (Expansion 8, L)
 
 *Icon*: a dragon-headed silhouette breathing a spiral of wild sparks. *Tagline*: "Magic in the blood. Fire in the breath."
 
@@ -741,7 +838,7 @@ Each section below lists: the icon and the tooltip's tagline; what Anton will no
 
 ---
 
-### 6.8 Orcs & Barbarians (Expansion 8, L)
+### 6.9 Orcs & Barbarians (Expansion 9, L)
 
 *Icon*: a tusked face behind crossed axes, streaked with red. *Tagline*: "The fury of the blood, and the people who own it."
 
@@ -751,7 +848,7 @@ Each section below lists: the icon and the tooltip's tagline; what Anton will no
 
 **Class**: Barbarian, levels 1–20 – Rage, Unarmored Defense, Weapon Mastery, Danger Sense, Reckless Attack, Primal Knowledge, Extra Attack, Fast Movement, Feral Instinct, Instinctive Pounce, Brutal Strike and its improvements, Relentless Rage, Persistent Rage, Indomitable Might, Primal Champion; paths of the Berserker, the Wild Heart (every animal aspect), the World Tree and the Zealot.
 
-**Rules**: **Mobs** (DMG about 86): large groups of the same weak creatures fought as mobs, so big fights stay quick – used here for war-bands and later for sieges (Expansion 25).
+**Rules**: **Mobs** (DMG about 86): large groups of the same weak creatures fought as mobs, so big fights stay quick – used here for war-bands and later for sieges (Expansion 26).
 
 **Monsters**: Warrior Veteran, Warrior Commander, Berserker Commander (Warrior Infantry came in Expansion 1).
 
@@ -765,7 +862,7 @@ Each section below lists: the icon and the tooltip's tagline; what Anton will no
 
 ---
 
-### 6.9 Aasimar & Paladins (Expansion 9, L)
+### 6.10 Aasimar & Paladins (Expansion 10, L)
 
 *Icon*: a winged helm before an upright radiant sword. *Tagline*: "Oaths sworn in light. Wings unfolded in wrath."
 
@@ -793,13 +890,13 @@ Each section below lists: the icon and the tooltip's tagline; what Anton will no
 
 ---
 
-### 6.10 Elves & Rangers (Expansion 10, L)
+### 6.11 Elves & Rangers (Expansion 11, L)
 
 *Icon*: a leaf-shaped arrowhead crossing a crescent moon above treetops. *Tagline*: "The old blood of the woods, and those who walk its edges."
 
 **For Anton**: high elves and wood elves as distinct peoples, and drow wanderers from below; the Ranger and their beast companions; pixies, dryads, satyrs, centaurs, hags – and the rest of goblinkind (hexers, warlords, stalkers) as the fey they are in the new Monster Manual (the common goblin, hobgoblin and bugbear were re-made in Expansion 1).
 
-**Species and cultures**: the elf lineages in full – High Elves (the elven halls), Wood Elves (the groves of World Variety's grove style), and Drow (playable from Expansion 2; their cities arrive in Expansion 19, so until then drow are exiles and wanderers on the surface). Each lineage gets its own culture: names, dress, law, faith and a place in the history (the elder peoples' sub-peoples).
+**Species and cultures**: the elf lineages in full – High Elves (the elven halls), Wood Elves (the groves of World Variety's grove style), and Drow (playable from Expansion 2; their cities arrive in Expansion 20, so until then drow are exiles and wanderers on the surface). Each lineage gets its own culture: names, dress, law, faith and a place in the history (the elder peoples' sub-peoples).
 
 **Class**: Ranger, levels 1–20 – Favored Enemy (Hunter's Mark), Weapon Mastery, Deft Explorer, Fighting Style, Roving, Expertise, Tireless, Relentless Hunter, Nature's Veil, Precise Hunter, Feral Senses, Foe Slayer; Beast Master (the primal companions of land, sea and sky, commanded in battle), Fey Wanderer, Gloom Stalker, Hunter. Outside battle rangers find paths, forage and hunt better (camp and wayfinding), and can follow tracks to a quarry.
 
@@ -817,7 +914,7 @@ Each section below lists: the icon and the tooltip's tagline; what Anton will no
 
 ---
 
-### 6.11 Druids & Beasts (Expansion 11, XL)
+### 6.12 Druids & Beasts (Expansion 12, XL)
 
 *Icon*: an antlered head made of leaves, a paw print beneath. *Tagline*: "Every beast of the wild, and the druids who become them."
 
@@ -841,7 +938,7 @@ Each section below lists: the icon and the tooltip's tagline; what Anton will no
 
 ---
 
-### 6.12 Bards & Brigands (Expansion 12, L)
+### 6.13 Bards & Brigands (Expansion 13, L)
 
 *Icon*: a lute crossed with a hooked knife beneath a single coin. *Tagline*: "Songs in the tavern. Knives in the alley."
 
@@ -851,7 +948,7 @@ Each section below lists: the icon and the tooltip's tagline; what Anton will no
 
 **Monsters and people**: Bandit Crime Lord, Bandit Deceiver, Gladiator, Guard Captain, Noble Prodigy, Performer, Performer Maestro, Performer Legend, Cultist Hierophant; the doppelganger and the kenku (Appendix A). Every humanoid stat block is a person of the place's people (§4.3.8).
 
-**Rules**: the DMG's **Nonplayer Characters** section guides how townsfolk are made and behave; **Chases** (DMG 57–58): fleeing the watch, running down a thief, escaping a lost battle, with the urban and wilderness complications; **Settlements** (DMG 97–99): every town has defining traits and, sometimes, a current calamity that shapes its news, quests and mood; the **Influence** action deepened with the DMG's attitudes.
+**Rules**: the DMG's **Nonplayer Characters** section guides how townsfolk are made and behave; **Chases** (DMG 57–58): fleeing the watch, running down a thief, escaping a lost battle, with the urban and wilderness complications; **Settlements** (DMG 97–99): every town has defining traits that shape its news, quests and mood (its calamities came with Adventures & Events, Expansion 6, as threat seeds); the **Influence** action deepened with the DMG's attitudes.
 
 **World**: performers on tour; gladiatorial arenas in great cities (fights for money); thieves' guilds and crime lords as figures in politics; con artists' schemes as events; doppelgangers replacing townsfolk (a quest); kenku messengers and thieves.
 
@@ -865,11 +962,11 @@ Each section below lists: the icon and the tooltip's tagline; what Anton will no
 
 ---
 
-### 6.13 Monks & Elementals (Expansion 13, L)
+### 6.14 Monks & Elementals (Expansion 14, L)
 
 *Icon*: a closed fist wreathed in flame, wave, wind and stone, one in each quarter. *Tagline*: "The body as weapon. The four elements unbound."
 
-**For Anton**: the Monk; every elemental and genie (the water weird apart: it lives in the seas of Expansion 22) – fire spirits in the volcanoes, air spirits on the great peaks, a djinni who grants a bargained wish; heat, cold, wind, storms and thin air that bite as the Dungeon Master's Guide says.
+**For Anton**: the Monk; every elemental and genie (the water weird apart: it lives in the seas of Expansion 23) – fire spirits in the volcanoes, air spirits on the great peaks, a djinni who grants a bargained wish; heat, cold, wind, storms and thin air that bite as the Dungeon Master's Guide says.
 
 **Class**: Monk, levels 1–20 – Martial Arts, Unarmored Defense, Monk's Focus (Flurry of Blows, Patient Defense, Step of the Wind), Unarmored Movement, Uncanny Metabolism, Deflect Attacks, Slow Fall, Extra Attack, Stunning Strike, Empowered Strikes, Evasion, Acrobatic Movement, Heightened Focus, Self-Restoration, Deflect Energy, Disciplined Survivor, Perfect Focus, Superior Defense, Body and Mind; Warriors of Mercy, Shadow, the Elements and the Open Hand. Monasteries as sites, schools in the history, monk companions.
 
@@ -888,7 +985,7 @@ Each section below lists: the icon and the tooltip's tagline; what Anton will no
 **Books**: PHB 103–110; DMG 72–73; MM elemental entries.
 
 ---
-### 6.14 Callings & Crossroads (Expansion 14, S)
+### 6.15 Callings & Crossroads (Expansion 15, S)
 
 *Icon*: a signpost with twelve small arrows pointing every way. *Tagline*: "Walk more than one road."
 
@@ -904,7 +1001,7 @@ Each section below lists: the icon and the tooltip's tagline; what Anton will no
 
 ---
 
-### 6.15 Dragons & Hoards (Expansion 15, XL)
+### 6.16 Dragons & Hoards (Expansion 16, XL)
 
 *Icon*: a coiled dragon asleep on a heap of coins, a crown on top. *Tagline*: "Ten colours of dragon. A hoard for every one."
 
@@ -928,7 +1025,7 @@ Each section below lists: the icon and the tooltip's tagline; what Anton will no
 
 ---
 
-### 6.16 Goliaths & Giants (Expansion 16, L)
+### 6.17 Goliaths & Giants (Expansion 17, L)
 
 *Icon*: a stone-grey giant's fist around a boulder, peaks behind. *Tagline*: "The children of giants, and their towering kin."
 
@@ -952,7 +1049,7 @@ Each section below lists: the icon and the tooltip's tagline; what Anton will no
 
 ---
 
-### 6.17 Gnomes & Golems (Expansion 17, M)
+### 6.18 Gnomes & Golems (Expansion 18, M)
 
 *Icon*: a gnome's pointed hat beside a riveted golem head with glowing eyes. *Tagline*: "Tinkers, tricksters, and the things they build."
 
@@ -978,7 +1075,7 @@ Each section below lists: the icon and the tooltip's tagline; what Anton will no
 
 ---
 
-### 6.18 Crypts & Curses (Expansion 18, XL)
+### 6.19 Crypts & Curses (Expansion 19, XL)
 
 *Icon*: a skull under a cracked tombstone, lit by a green ghost-light. *Tagline*: "The dead that walk, and the curses that raise them."
 
@@ -992,7 +1089,7 @@ Each section below lists: the icon and the tooltip's tagline; what Anton will no
 
 **World**: undead in the history – a tower mage who lived too long rises as a lich; a vampire court takes a town by night (people vanish, then the news, then the quests); mummy lords in desert tombs (the barrow system extended to the desert); death knights as fallen heroes of the history (a famous paladin who betrayed his oath in a war); haunted battlefields (`politics["scars"]`) gain specters and banshees; ghosts of named dead from the Legends book haunt their homes (a "spooky house" site style, after the DMG archetype); werewolf curses spreading through villages (news, hunts); blights around a vampiric tree corrupting a forest (a regional effect). Lairs: lich tower, vampire castle, mummy tomb, haunted manor.
 
-**Items**: undead and death-cursed items (Sword of Life Stealing, Nine Lives Stealer, Talisman of Ultimate Evil, the Book of Vile Darkness, the Eye and Hand of Vecna, the Sword of Kas, and the cursed items whose curse is death or undeath; the other cursed items come in Expansion 24; Appendix B).
+**Items**: undead and death-cursed items (Sword of Life Stealing, Nine Lives Stealer, Talisman of Ultimate Evil, the Book of Vile Darkness, the Eye and Hand of Vecna, the Sword of Kas, and the cursed items whose curse is death or undeath; the other cursed items come in Expansion 25; Appendix B).
 
 **Tactics**: vampires charm, bite and turn to mist; liches counterspell, use their power words and legendary actions; banshees wail when many can hear; ghosts possess (a possessed companion fights for the ghost until freed); wraiths raise specters from the slain; mummies' dreadful glare; mindless undead press on, smart undead plan; incorporeal undead pass through walls.
 
@@ -1002,7 +1099,7 @@ Each section below lists: the icon and the tooltip's tagline; what Anton will no
 
 ---
 
-### 6.19 Drow & the Underdark (Expansion 19, XL)
+### 6.20 Drow & the Underdark (Expansion 20, XL)
 
 *Icon*: a spider hanging over a faintly glowing mushroom, framed by stalactites. *Tagline*: "Below the deepest mine, another world."
 
@@ -1012,7 +1109,7 @@ Each section below lists: the icon and the tooltip's tagline; what Anton will no
 
 **World layer – the Underdark**: the deepest levels of certain sites open into **Reaches** – huge cavern regions, each several large levels deep, with fungus forests, underground lakes, chasms and bridges, glowing lichens, crystals, and *faerzress* (zones of strange magic where teleportation fails and divinations blur). A world has a few Reaches (more in larger worlds), entered through deep sites and linked to one another by slow underground roads. They are part of the history (drow raids, deep wars, lost dwarven delvings), of the Legends book, and of the world map as a simple "below" view. Underdark travel uses the survival systems (no sun, darkness, getting lost, fungus to eat).
 
-**Peoples**: the **drow** cities – a drow culture of their own (names; law of rival noble houses; an original spider faith; spider-silk, dark mail and white hair; a new town style of stalagmite spires, faerie-fire lanterns, webs and mushroom fields) – raiding the surface in the history and while you play; drow exiles on the surface (since Expansion 10). Others below: dwarven deep holds (World Variety's holds reaching down), kuo-toa shrines, myconid circles.
+**Peoples**: the **drow** cities – a drow culture of their own (names; law of rival noble houses; an original spider faith; spider-silk, dark mail and white hair; a new town style of stalagmite spires, faerie-fire lanterns, webs and mushroom fields) – raiding the surface in the history and while you play; drow exiles on the surface (since Expansion 11). Others below: dwarven deep holds (World Variety's holds reaching down), kuo-toa shrines, myconid circles.
 
 **Monsters**: the Underdark's aberrations, monstrosities and fungi (Appendix A) – grimlocks, kuo-toa, gricks, ropers, piercers, darkmantles, hook horrors, umber hulks, quaggoths, troglodytes, carrion crawlers, purple worms, driders, myconids, gas spores, shriekers, violet fungi.
 
@@ -1026,7 +1123,7 @@ Each section below lists: the icon and the tooltip's tagline; what Anton will no
 
 ---
 
-### 6.20 Mind Flayers & Psionics (Expansion 20, L)
+### 6.21 Mind Flayers & Psionics (Expansion 21, L)
 
 *Icon*: a tentacled head in profile with a violet swirl where the brain would be. *Tagline*: "Minds that devour minds, and the warriors who fight with thought."
 
@@ -1036,7 +1133,7 @@ Each section below lists: the icon and the tooltip's tagline; what Anton will no
 
 **Monsters**: every aberration not placed in the Underdark (Appendix A) – mind flayer and arcanist, intellect devourer, beholder, death tyrant, spectator, beholder zombie, aboleth, chuul, cloaker, gibbering mouther, grell, nothic, otyugh, flumph, githyanki soldier, knight and dracomancer, githzerai monk, psion and zerth – with the thri-kreen and the Aberrant Cultist.
 
-**World**: mind flayer colonies deep in the Reaches; beholders in isolated lairs (each a paranoid tyrant with regional effects); aboleths beneath deep lakes, remembering the whole history (they can answer Legends questions, at a price); githyanki raiders arriving through rare portals (their full home comes in Expansion 26), some riding red dragons; githzerai monasteries hidden in remote mountains (monk companions); thri-kreen nomads in deserts and savannas; Great Old One warlocks and aberrant cults finally have something to serve; otyughs in sewers and refuse pits; cloakers in deep caves.
+**World**: mind flayer colonies deep in the Reaches; beholders in isolated lairs (each a paranoid tyrant with regional effects); aboleths beneath deep lakes, remembering the whole history (they can answer Legends questions, at a price); githyanki raiders arriving through rare portals (their full home comes in Expansion 27), some riding red dragons; githzerai monasteries hidden in remote mountains (monk companions); thri-kreen nomads in deserts and savannas; Great Old One warlocks and aberrant cults finally have something to serve; otyughs in sewers and refuse pits; cloakers in deep caves.
 
 **Items**: psionic and aberrant items (the githyanki silver sword if the DMG has it, Helm of Telepathy, Ring of Mind Shielding; Appendix B).
 
@@ -1048,7 +1145,7 @@ Each section below lists: the icon and the tooltip's tagline; what Anton will no
 
 ---
 
-### 6.21 Traps & Terrors (Expansion 21, L)
+### 6.22 Traps & Terrors (Expansion 22, L)
 
 *Icon*: a spiked pit below a treasure chest that has teeth. *Tagline*: "The dungeon wants you dead. So does everything living in it."
 
@@ -1070,7 +1167,7 @@ Each section below lists: the icon and the tooltip's tagline; what Anton will no
 
 ---
 
-### 6.22 Ships & Sea Monsters (Expansion 22, XL)
+### 6.23 Ships & Sea Monsters (Expansion 23, XL)
 
 *Icon*: a ship's prow cutting a wave, a tentacle rising beside it. *Tagline*: "Set sail. Something vast is waiting below."
 
@@ -1078,11 +1175,11 @@ Each section below lists: the icon and the tooltip's tagline; what Anton will no
 
 **Parts**: A – ships and sea travel; B – underwater and deck battles; C – the sea's creatures and their place in the world.
 
-**Rules**: **Vehicles** (PHB 216–236): rowboat, keelboat, longship, sailing ship, galley and warship, with their speeds, crews, cargo and prices (the land vehicles came in Expansion 2); **sea travel** between ports on the world map (World Variety's coasts, islands and bays) – passage, or your own ship with crew wages and upkeep; days at sea with weather and storms; sea events; ports and docks in coastal towns; **underwater combat** (PHB Rules Glossary): melee disadvantage except with the right weapons, ranged attacks that fail beyond normal range, resistance to fire, swimming speeds, holding breath and suffocation; **ship battles** on deck maps and boarding actions (ship-mounted ballistas and mangonels join in when Expansion 25 adds siege equipment; mark them `upgrade_in` 25).
+**Rules**: **Vehicles** (PHB 216–236): rowboat, keelboat, longship, sailing ship, galley and warship, with their speeds, crews, cargo and prices (the land vehicles came in Expansion 2); **sea travel** between ports on the world map (World Variety's coasts, islands and bays) – passage, or your own ship with crew wages and upkeep; days at sea with weather and storms; sea events; ports and docks in coastal towns; **underwater combat** (PHB Rules Glossary): melee disadvantage except with the right weapons, ranged attacks that fail beyond normal range, resistance to fire, swimming speeds, holding breath and suffocation; **ship battles** on deck maps and boarding actions (ship-mounted ballistas and mangonels join in when Expansion 26 adds siege equipment; mark them `upgrade_in` 25).
 
-**Monsters**: the kraken, merrow, sahuagin warrior, priest and baron, merfolk skirmisher and wavebender, water weird, dragon turtle, lacedon ghoul, and the pirates (pirate, pirate captain, pirate admiral) (Appendix A); the sea beasts of Expansion 11 (sharks, the killer whale, giant octopus and squid, plesiosaurus, archelon, piranhas) now appear at sea.
+**Monsters**: the kraken, merrow, sahuagin warrior, priest and baron, merfolk skirmisher and wavebender, water weird, dragon turtle, lacedon ghoul, and the pirates (pirate, pirate captain, pirate admiral) (Appendix A); the sea beasts of Expansion 12 (sharks, the killer whale, giant octopus and squid, plesiosaurus, archelon, piranhas) now appear at sea.
 
-**World**: pirate factions and havens (piracy in the history and the news; a pirate admiral as a figure); sahuagin raids on coastal villages; the kraken as a legendary beast of the deep (its regional effect: ships lost); a dragon turtle in warm seas; merfolk and marids (from Expansion 13) as rare undersea peoples to trade with or quarrel with; shipwrecks as dungeons (explored with water breathing); lighthouses and harbours as sites (after the DMG's ship archetype).
+**World**: pirate factions and havens (piracy in the history and the news; a pirate admiral as a figure); sahuagin raids on coastal villages; the kraken as a legendary beast of the deep (its regional effect: ships lost); a dragon turtle in warm seas; merfolk and marids (from Expansion 14) as rare undersea peoples to trade with or quarrel with; shipwrecks as dungeons (explored with water breathing); lighthouses and harbours as sites (after the DMG's ship archetype).
 
 **Items**: sea items (Cap of Water Breathing, Cloak of the Manta Ray, Trident of Fish Command, Folding Boat, Ring of Swimming, Ring of Water Walking, Decanter of Endless Water, Necklace of Adaptation; Appendix B).
 
@@ -1094,13 +1191,13 @@ Each section below lists: the icon and the tooltip's tagline; what Anton will no
 
 ---
 
-### 6.23 Potions & Scrolls (Expansion 23, L)
+### 6.24 Potions & Scrolls (Expansion 24, L)
 
 *Icon*: a stoppered flask beside a scroll with a wax seal, a few sparks. *Tagline*: "Every draught, every scroll, and the craft to make them."
 
 **For Anton**: every potion, oil, elixir, dust and scroll of the Dungeon Master's Guide; making things – gear with tools, potions of healing with herbs, spell scrolls with ink, and magic items with time, gold and the right materials; shops where alchemists and scribes sell them.
 
-**Content**: every consumable magic item not already delivered (potions, oils, philters, elixirs, dusts, beads, candles, magic ammunition and special arrows, and items used up with their charges; Appendix B) – the Potions of Healing and Spell Scrolls came with Expansion 3, the +N ammunition with Expansion 2, the Potions of Giant Strength with Expansion 16.
+**Content**: every consumable magic item not already delivered (potions, oils, philters, elixirs, dusts, beads, candles, magic ammunition and special arrows, and items used up with their charges; Appendix B) – the Potions of Healing and Spell Scrolls came with Expansion 3, the +N ammunition with Expansion 2, the Potions of Giant Strength with Expansion 17.
 
 **Rules**: **Crafting** – the PHB's crafting of gear with tools (time and cost), brewing potions of healing (herbalism kit), scribing spell scrolls; the DMG's crafting of magic items (time and cost by rarity, the recipe, the tools and spells it needs) – at camp, in workshops and in towns, through `game/camp.py` crafts and the services system; **magic shops** (alchemists, scriveners) by settlement size and the world's *Magic* setting; identifying and attuning made easy on the item card.
 
@@ -1114,7 +1211,7 @@ Each section below lists: the icon and the tooltip's tagline; what Anton will no
 
 ---
 
-### 6.24 Rings & Relics (Expansion 24, XL)
+### 6.25 Rings & Relics (Expansion 25, XL)
 
 *Icon*: a gold ring set with a red stone before an ancient crowned relic. *Tagline*: "The magic that remains, and the relics that shaped history."
 
@@ -1136,13 +1233,13 @@ Each section below lists: the icon and the tooltip's tagline; what Anton will no
 
 ---
 
-### 6.25 Bastions & Banners (Expansion 25, L)
+### 6.26 Bastions & Banners (Expansion 26, L)
 
 *Icon*: a small keep tower flying a banner, a ballista before it. *Tagline*: "A home to hold. A war to wage."
 
 **For Anton**: a bastion of your own – a keep, a manor, a tower or a temple – with rooms you build, hirelings who work there and events that happen while you are away; siege engines, and joining real sieges of the world's wars; titles, land and medals from the realms you serve.
 
-**Rules**: **Bastions** (DMG 339–357): gaining one at 5th level (or buying or being granted land), basic facilities, every special facility by level, hirelings, the orders (Craft, Empower, Harvest, Maintain, Recruit, Research, Trade), a bastion turn every seven days of game time, every bastion event, defenders, attacks, and the fall of a bastion – a real place on the world map with its own close-up map, visitors and defenders (this is the "owning property" idea in the PROGRESS parking lot); **Marks of Prestige** (DMG 84–85): titles, land grants, medals, letters of recommendation, fortifications and training, granted by realms through the reputation system; **Renown** (DMG 96) folded into faction rank; **Siege Equipment** (DMG 100–101): ballista, cannon (gnomish, from Expansion 17), mangonel, trebuchet, ram, siege tower, cauldron and every other engine in the section, crewed on the battle grid; **joining sieges** – the politics engine's sieges can be joined on either side, as large battles with mobs (Expansion 8) and engines.
+**Rules**: **Bastions** (DMG 339–357): gaining one at 5th level (or buying or being granted land), basic facilities, every special facility by level, hirelings, the orders (Craft, Empower, Harvest, Maintain, Recruit, Research, Trade), a bastion turn every seven days of game time, every bastion event, defenders, attacks, and the fall of a bastion – a real place on the world map with its own close-up map, visitors and defenders (this is the "owning property" idea in the PROGRESS parking lot); a stronghold's own marks of prestige (fortifications and training; the DMG's **Marks of Prestige** and **Renown** came with Adventures & Events, Expansion 6, as Legend, titles and rights); **Siege Equipment** (DMG 100–101): ballista, cannon (gnomish, from Expansion 18), mangonel, trebuchet, ram, siege tower, cauldron and every other engine in the section, crewed on the battle grid; **joining sieges** – the politics engine's sieges can be joined on either side, as large battles with mobs (Expansion 9) and engines.
 
 **World**: bastions attacked by enemies the player made; realms granting land to heroes; the history's sieges now use engines; hirelings come from the world's people.
 
@@ -1154,7 +1251,7 @@ Each section below lists: the icon and the tooltip's tagline; what Anton will no
 
 ---
 
-### 6.26 Planes & Portals (Expansion 26, XL – version 2.0.0)
+### 6.27 Planes & Portals (Expansion 27, XL – version 2.0.0)
 
 *Icon*: a ring-shaped portal with a starry void inside, two different horizons on either side. *Tagline*: "Beyond the edge of the world, other worlds."
 
@@ -1166,7 +1263,7 @@ Each section below lists: the icon and the tooltip's tagline; what Anton will no
 
 **Monsters**: the slaadi (tadpole, red, blue, green, gray, death), the modrons (monodrone to pentadrone) and the tarrasque (Appendix A); planar versions of the fiends, celestials, elementals and fey already in the game live here.
 
-**World**: portals at wonders (the drifting stones, glowing lakes, the giant tree) and in the history; portals opened by cults (Expansion 6), archmages (Expansion 5) and aberrant rifts (Expansion 20); rare planar incursions late in long histories (a githyanki raid, a slaad plague, a modron march); the tarrasque as a doom asleep beneath the world that a history may wake – the game's greatest fight; the Legends book's pages on other worlds.
+**World**: portals at wonders (the drifting stones, glowing lakes, the giant tree) and in the history; portals opened by cults (Expansion 7), archmages (Expansion 5) and aberrant rifts (Expansion 21); rare planar incursions late in long histories (a githyanki raid, a slaad plague, a modron march); the tarrasque as a doom asleep beneath the world that a history may wake – the game's greatest fight; the Legends book's pages on other worlds.
 
 **Tactics**: planar creatures' teleports and gates; slaadi spread their chaos (the slaad's implanted eggs as a contagion); modrons move in formation.
 
@@ -1189,43 +1286,43 @@ Cleaned from the Monster Manual's own lists (Appendix B, PDF 377–387) and chec
 
 **Expansion 5 – Schools & Domains**: Mage Apprentice, Mage, Archmage, Priest, Archpriest.
 
-**Expansion 6 – Tieflings & Warlocks** (every fiend): *devils* – Imp, Lemure, Swarm of Lemures, Spined Devil, Bearded Devil, Barbed Devil, Chain Devil, Bone Devil, Horned Devil, Erinyes, Ice Devil, Pit Fiend; *demons* – Manes, Manes Vaporspawn, Dretch, Swarm of Dretches, Quasit, Shadow Demon, Barlgura, Chasme, Vrock, Hezrou, Glabrezu, Yochlol, Nalfeshnee, Marilith, Goristro, Balor; *yugoloths* – Mezzoloth, Nycaloth, Arcanaloth, Ultroloth; *others* – Cambion, Succubus, Incubus, Hell Hound, Nightmare, Night Hag, Rakshasa, Oni, Lamia, Larva, Swarm of Larvae, Jackalwere, Spirit Naga; *the demon lord's gnolls* – Gnoll Pack Lord, Gnoll Demoniac, Gnoll Fang of Yeenoghu; Fiend Cultist.
+**Expansion 7 – Tieflings & Warlocks** (every fiend): *devils* – Imp, Lemure, Swarm of Lemures, Spined Devil, Bearded Devil, Barbed Devil, Chain Devil, Bone Devil, Horned Devil, Erinyes, Ice Devil, Pit Fiend; *demons* – Manes, Manes Vaporspawn, Dretch, Swarm of Dretches, Quasit, Shadow Demon, Barlgura, Chasme, Vrock, Hezrou, Glabrezu, Yochlol, Nalfeshnee, Marilith, Goristro, Balor; *yugoloths* – Mezzoloth, Nycaloth, Arcanaloth, Ultroloth; *others* – Cambion, Succubus, Incubus, Hell Hound, Nightmare, Night Hag, Rakshasa, Oni, Lamia, Larva, Swarm of Larvae, Jackalwere, Spirit Naga; *the demon lord's gnolls* – Gnoll Pack Lord, Gnoll Demoniac, Gnoll Fang of Yeenoghu; Fiend Cultist.
 
-**Expansion 7 – Dragonborn & Sorcerers**: Kobold Warrior, Winged Kobold, Half-Dragon, Pseudodragon, Faerie Dragon Youth, Faerie Dragon Adult, Wyvern.
+**Expansion 8 – Dragonborn & Sorcerers**: Kobold Warrior, Winged Kobold, Half-Dragon, Pseudodragon, Faerie Dragon Youth, Faerie Dragon Adult, Wyvern.
 
-**Expansion 8 – Orcs & Barbarians**: Warrior Veteran, Warrior Commander, Berserker Commander.
+**Expansion 9 – Orcs & Barbarians**: Warrior Veteran, Warrior Commander, Berserker Commander.
 
-**Expansion 9 – Aasimar & Paladins** (every celestial): Deva, Planetar, Solar, Couatl, Empyrean, Empyrean Iota, Pegasus, Unicorn, Sphinx of Lore, Sphinx of Secrets, Sphinx of Valor, Sphinx of Wonder, Guardian Naga, Giant Eagle, Giant Owl, Giant Elk; Knight, Questing Knight.
+**Expansion 10 – Aasimar & Paladins** (every celestial): Deva, Planetar, Solar, Couatl, Empyrean, Empyrean Iota, Pegasus, Unicorn, Sphinx of Lore, Sphinx of Secrets, Sphinx of Valor, Sphinx of Wonder, Guardian Naga, Giant Eagle, Giant Owl, Giant Elk; Knight, Questing Knight.
 
-**Expansion 10 – Elves & Rangers** (the fey and the forest): Goblin Minion, Goblin Hexer, Hobgoblin Captain, Hobgoblin Warlord, Bugbear Stalker, Green Hag, Sea Hag, Arch-hag, Pixie, Pixie Wonderbringer, Sprite, Dryad, Satyr, Satyr Revelmaster, Blink Dog, Centaur Trooper, Centaur Warden, Bullywug Warrior, Bullywug Bog Sage, Worg, Dire Worg; Displacer Beast, Ettercap, Phase Spider; Scout Captain.
+**Expansion 11 – Elves & Rangers** (the fey and the forest): Goblin Minion, Goblin Hexer, Hobgoblin Captain, Hobgoblin Warlord, Bugbear Stalker, Green Hag, Sea Hag, Arch-hag, Pixie, Pixie Wonderbringer, Sprite, Dryad, Satyr, Satyr Revelmaster, Blink Dog, Centaur Trooper, Centaur Warden, Bullywug Warrior, Bullywug Bog Sage, Worg, Dire Worg; Displacer Beast, Ettercap, Phase Spider; Scout Captain.
 
-**Expansion 11 – Druids & Beasts**: *beasts* – Allosaurus, Ankylosaurus, Ape, Archelon, Baboon, Badger, Bat, Blood Hawk, Cat, Constrictor Snake, Crab, Crocodile, Deer, Eagle, Elephant, Elk, Frog, Giant Ape, Giant Badger, Giant Bat, Giant Boar, Giant Centipede, Giant Constrictor Snake, Giant Crab, Giant Crocodile, Giant Fire Beetle, Giant Frog, Giant Goat, Giant Hyena, Giant Lizard, Giant Octopus, Giant Scorpion, Giant Seahorse, Giant Shark, Giant Squid, Giant Toad, Giant Venomous Snake, Giant Wasp, Giant Weasel, Giant Wolf Spider, Goat, Hawk, Hippopotamus, Hunter Shark, Hyena, Killer Whale, Lion, Lizard, Mammoth, Octopus, Owl, Panther, Piranha, Plesiosaurus, Polar Bear, Pteranodon, Rat, Raven, Reef Shark, Rhinoceros, Saber-Toothed Tiger, Scorpion, Seahorse, Spider, Swarm of Bats, Swarm of Insects, Swarm of Piranhas, Swarm of Rats, Swarm of Ravens, Swarm of Venomous Snakes, Tiger, Triceratops, Tyrannosaurus Rex, Venomous Snake, Vulture, Weasel (and any other animal of the MM's Appendix A not named elsewhere here); *plants* – Awakened Shrub, Awakened Tree, Shambling Mound, Treant; *monstrosities* – Owlbear, Primeval Owlbear, Axe Beak, Giant Axe Beak, Giant Vulture, Peryton, Hippogriff, Ankheg, Flying Snake, Swarm of Stirges; Animal Lord; Druid.
+**Expansion 12 – Druids & Beasts**: *beasts* – Allosaurus, Ankylosaurus, Ape, Archelon, Baboon, Badger, Bat, Blood Hawk, Cat, Constrictor Snake, Crab, Crocodile, Deer, Eagle, Elephant, Elk, Frog, Giant Ape, Giant Badger, Giant Bat, Giant Boar, Giant Centipede, Giant Constrictor Snake, Giant Crab, Giant Crocodile, Giant Fire Beetle, Giant Frog, Giant Goat, Giant Hyena, Giant Lizard, Giant Octopus, Giant Scorpion, Giant Seahorse, Giant Shark, Giant Squid, Giant Toad, Giant Venomous Snake, Giant Wasp, Giant Weasel, Giant Wolf Spider, Goat, Hawk, Hippopotamus, Hunter Shark, Hyena, Killer Whale, Lion, Lizard, Mammoth, Octopus, Owl, Panther, Piranha, Plesiosaurus, Polar Bear, Pteranodon, Rat, Raven, Reef Shark, Rhinoceros, Saber-Toothed Tiger, Scorpion, Seahorse, Spider, Swarm of Bats, Swarm of Insects, Swarm of Piranhas, Swarm of Rats, Swarm of Ravens, Swarm of Venomous Snakes, Tiger, Triceratops, Tyrannosaurus Rex, Venomous Snake, Vulture, Weasel (and any other animal of the MM's Appendix A not named elsewhere here); *plants* – Awakened Shrub, Awakened Tree, Shambling Mound, Treant; *monstrosities* – Owlbear, Primeval Owlbear, Axe Beak, Giant Axe Beak, Giant Vulture, Peryton, Hippogriff, Ankheg, Flying Snake, Swarm of Stirges; Animal Lord; Druid.
 
-**Expansion 12 – Bards & Brigands**: Bandit Crime Lord, Bandit Deceiver, Gladiator, Guard Captain, Noble Prodigy, Performer, Performer Maestro, Performer Legend, Cultist Hierophant; Doppelganger, Kenku.
+**Expansion 13 – Bards & Brigands**: Bandit Crime Lord, Bandit Deceiver, Gladiator, Guard Captain, Noble Prodigy, Performer, Performer Maestro, Performer Legend, Cultist Hierophant; Doppelganger, Kenku.
 
-**Expansion 13 – Monks & Elementals** (every elemental): Air Elemental, Earth Elemental, Fire Elemental, Water Elemental, Elemental Cataclysm; Djinni, Efreeti, Dao, Marid; Dust Mephit, Ice Mephit, Magma Mephit, Mud Mephit, Smoke Mephit, Steam Mephit; Magmin; Salamander, Salamander Fire Snake, Salamander Inferno Master; Azer Sentinel, Azer Pyromancer; Gargoyle, Galeb Duhr, Xorn, Invisible Stalker; Aarakocra Skirmisher, Aarakocra Aeromancer; Lizardfolk Geomancer, Lizardfolk Sovereign; Elemental Cultist.
+**Expansion 14 – Monks & Elementals** (every elemental): Air Elemental, Earth Elemental, Fire Elemental, Water Elemental, Elemental Cataclysm; Djinni, Efreeti, Dao, Marid; Dust Mephit, Ice Mephit, Magma Mephit, Mud Mephit, Smoke Mephit, Steam Mephit; Magmin; Salamander, Salamander Fire Snake, Salamander Inferno Master; Azer Sentinel, Azer Pyromancer; Gargoyle, Galeb Duhr, Xorn, Invisible Stalker; Aarakocra Skirmisher, Aarakocra Aeromancer; Lizardfolk Geomancer, Lizardfolk Sovereign; Elemental Cultist.
 
-**Expansion 15 – Dragons & Hoards**: Black, Blue, Green, Red and White Dragons and Brass, Bronze, Copper, Gold and Silver Dragons, each as Wyrmling, Young, Adult and Ancient (the Young Red was re-made in Expansion 1); Juvenile Shadow Dragon, Shadow Dragon; Dracolich.
+**Expansion 16 – Dragons & Hoards**: Black, Blue, Green, Red and White Dragons and Brass, Bronze, Copper, Gold and Silver Dragons, each as Wyrmling, Young, Adult and Ancient (the Young Red was re-made in Expansion 1); Juvenile Shadow Dragon, Shadow Dragon; Dracolich.
 
-**Expansion 16 – Goliaths & Giants**: Hill Giant, Stone Giant, Frost Giant, Fire Giant, Cloud Giant, Storm Giant, Ettin, Cyclops Sentry, Cyclops Oracle, Fomorian, Ogrillon Ogre, Troll Limb; Roc, Griffon, Yeti, Abominable Yeti, Remorhaz, Young Remorhaz, Winter Wolf, Behir, Harpy.
+**Expansion 17 – Goliaths & Giants**: Hill Giant, Stone Giant, Frost Giant, Fire Giant, Cloud Giant, Storm Giant, Ettin, Cyclops Sentry, Cyclops Oracle, Fomorian, Ogrillon Ogre, Troll Limb; Roc, Griffon, Yeti, Abominable Yeti, Remorhaz, Young Remorhaz, Winter Wolf, Behir, Harpy.
 
-**Expansion 17 – Gnomes & Golems**: Animated Armor, Animated Broom, Animated Flying Sword, Animated Rug of Smothering, Homunculus, Scarecrow, Shield Guardian, Helmed Horror, Flesh Golem, Clay Golem, Stone Golem, Iron Golem, Gorgon, Brazen Gorgon, Colossus.
+**Expansion 18 – Gnomes & Golems**: Animated Armor, Animated Broom, Animated Flying Sword, Animated Rug of Smothering, Homunculus, Scarecrow, Shield Guardian, Helmed Horror, Flesh Golem, Clay Golem, Stone Golem, Iron Golem, Gorgon, Brazen Gorgon, Colossus.
 
-**Expansion 18 – Crypts & Curses**: *undead* – Banshee, Bone Naga, Crawling Claw, Swarm of Crawling Claws, Death Knight, Death Knight Aspirant, Demilich, Flameskull, Flaming Skeleton, Ghast, Ghast Gravecaller, Ghost, Revenant, Graveyard Revenant, Haunting Revenant, Lich, Minotaur Skeleton, Mummy, Mummy Lord, Ogre Zombie, Poltergeist, Shadow, Specter, Vampire, Vampire Spawn, Vampire Nightbringer, Vampire Umbral Lord, Warhorse Skeleton, Will-o'-Wisp, Wraith; *lycanthropes* – Werewolf, Wererat, Wereboar, Weretiger, Werebear; *blights* – Twig Blight, Needle Blight, Vine Blight, Tree Blight, Gulthias Blight; Death Cultist, Vampire Familiar.
+**Expansion 19 – Crypts & Curses**: *undead* – Banshee, Bone Naga, Crawling Claw, Swarm of Crawling Claws, Death Knight, Death Knight Aspirant, Demilich, Flameskull, Flaming Skeleton, Ghast, Ghast Gravecaller, Ghost, Revenant, Graveyard Revenant, Haunting Revenant, Lich, Minotaur Skeleton, Mummy, Mummy Lord, Ogre Zombie, Poltergeist, Shadow, Specter, Vampire, Vampire Spawn, Vampire Nightbringer, Vampire Umbral Lord, Warhorse Skeleton, Will-o'-Wisp, Wraith; *lycanthropes* – Werewolf, Wererat, Wereboar, Weretiger, Werebear; *blights* – Twig Blight, Needle Blight, Vine Blight, Tree Blight, Gulthias Blight; Death Cultist, Vampire Familiar.
 
-**Expansion 19 – Drow & the Underdark**: Grimlock; Kuo-toa, Kuo-toa Whip, Kuo-toa Monitor, Kuo-toa Archpriest; Grick, Grick Ancient; Roper, Piercer, Darkmantle; Hook Horror, Umber Hulk, Quaggoth, Quaggoth Thonot, Troglodyte, Carrion Crawler, Purple Worm, Drider; Myconid Sprout, Myconid Adult, Myconid Sovereign, Myconid Spore Servant, Gas Spore Fungus, Shrieker Fungus, Violet Fungus, Violet Fungus Necrohulk.
+**Expansion 20 – Drow & the Underdark**: Grimlock; Kuo-toa, Kuo-toa Whip, Kuo-toa Monitor, Kuo-toa Archpriest; Grick, Grick Ancient; Roper, Piercer, Darkmantle; Hook Horror, Umber Hulk, Quaggoth, Quaggoth Thonot, Troglodyte, Carrion Crawler, Purple Worm, Drider; Myconid Sprout, Myconid Adult, Myconid Sovereign, Myconid Spore Servant, Gas Spore Fungus, Shrieker Fungus, Violet Fungus, Violet Fungus Necrohulk.
 
-**Expansion 20 – Mind Flayers & Psionics**: Mind Flayer, Mind Flayer Arcanist, Intellect Devourer; Beholder, Death Tyrant, Spectator, Beholder Zombie; Aboleth, Chuul, Cloaker, Gibbering Mouther, Grell, Nothic, Otyugh, Flumph; Githyanki Soldier, Githyanki Knight, Githyanki Dracomancer; Githzerai Monk, Githzerai Psion, Githzerai Zerth; Thri-kreen Marauder, Thri-kreen Psion; Aberrant Cultist.
+**Expansion 21 – Mind Flayers & Psionics**: Mind Flayer, Mind Flayer Arcanist, Intellect Devourer; Beholder, Death Tyrant, Spectator, Beholder Zombie; Aboleth, Chuul, Cloaker, Gibbering Mouther, Grell, Nothic, Otyugh, Flumph; Githyanki Soldier, Githyanki Knight, Githyanki Dracomancer; Githzerai Monk, Githzerai Psion, Githzerai Zerth; Thri-kreen Marauder, Thri-kreen Psion; Aberrant Cultist.
 
-**Expansion 21 – Traps & Terrors**: Mimic, Rust Monster, Basilisk, Cockatrice, Cockatrice Regent, Medusa, Chimera, Manticore, Hydra, Bulette, Bulette Pup, Minotaur of Baphomet, Death Dog, Yuan-ti Infiltrator, Yuan-ti Malison, Yuan-ti Abomination; *oozes* – Black Pudding, Gray Ooze, Psychic Gray Ooze, Ochre Jelly, Gelatinous Cube, Blob of Annihilation.
+**Expansion 22 – Traps & Terrors**: Mimic, Rust Monster, Basilisk, Cockatrice, Cockatrice Regent, Medusa, Chimera, Manticore, Hydra, Bulette, Bulette Pup, Minotaur of Baphomet, Death Dog, Yuan-ti Infiltrator, Yuan-ti Malison, Yuan-ti Abomination; *oozes* – Black Pudding, Gray Ooze, Psychic Gray Ooze, Ochre Jelly, Gelatinous Cube, Blob of Annihilation.
 
-**Expansion 22 – Ships & Sea Monsters**: Kraken, Merrow, Sahuagin Warrior, Sahuagin Priest, Sahuagin Baron, Merfolk Skirmisher, Merfolk Wavebender, Water Weird, Dragon Turtle, Lacedon Ghoul, Pirate, Pirate Captain, Pirate Admiral.
+**Expansion 23 – Ships & Sea Monsters**: Kraken, Merrow, Sahuagin Warrior, Sahuagin Priest, Sahuagin Baron, Merfolk Skirmisher, Merfolk Wavebender, Water Weird, Dragon Turtle, Lacedon Ghoul, Pirate, Pirate Captain, Pirate Admiral.
 
-**Expansion 26 – Planes & Portals**: Slaad Tadpole, Red Slaad, Blue Slaad, Green Slaad, Gray Slaad, Death Slaad; Modron Monodrone, Modron Duodrone, Modron Tridrone, Modron Quadrone, Modron Pentadrone; Tarrasque.
+**Expansion 27 – Planes & Portals**: Slaad Tadpole, Red Slaad, Blue Slaad, Green Slaad, Gray Slaad, Death Slaad; Modron Monodrone, Modron Duodrone, Modron Tridrone, Modron Quadrone, Modron Pentadrone; Tarrasque.
 
 **Anything the codex finds that is not listed above** goes by its creature type: Aberration → 20 (19 if its habitat is the Underdark); Beast → 11; Celestial → 9; Construct → 17; Dragon → 15; Elemental → 13; Fey → 10; Fiend → 6; Giant → 16; Humanoid → 12; Monstrosity → by habitat (Underdark 19, Underwater or Coastal 22, Mountain or Arctic 16, Forest or Grassland 11, otherwise 21); Ooze → 21; Plant → 11 (19 if Underdark); Undead → 18; a creature that lives only on the planes → 26. Write the choice into the codex.
 
-The PHB's own stat blocks (its Appendix B: familiars, the Otherworldly Steed, summoned spirits, animated dead and the beasts printed there) all arrive in Expansion 3 – including those the MM also prints, whose family expansion above then only places them in the world. The Beast Master's primal companions, printed in the ranger chapter, arrive with Expansion 10.
+The PHB's own stat blocks (its Appendix B: familiars, the Otherworldly Steed, summoned spirits, animated dead and the beasts printed there) all arrive in Expansion 3 – including those the MM also prints, whose family expansion above then only places them in the world. The Beast Master's primal companions, printed in the ranger chapter, arrive with Expansion 11.
 
 ---
 
@@ -1233,30 +1330,30 @@ The PHB's own stat blocks (its Appendix B: familiars, the Otherworldly Steed, su
 
 Apply these rules in order when building the codex; the first that fits decides. Write every assignment into `magic_items.json` in the codex; when an item could go two ways, choose the expansion whose part of the world it belongs to and say so in the note.
 
-1. **Artifacts** → Expansion 24, except: the Wand of Orcus and the Demonomicon of Iggwilv → 6; the Book of Exalted Deeds → 9; the Orb of Dragonkind → 15; the Book of Vile Darkness, the Eye and Hand of Vecna and the Sword of Kas → 18. (Axe of the Dwarvish Lords, Blackrazor, Wave, Whelm and any other artifact → 24.)
+1. **Artifacts** → Expansion 25, except: the Wand of Orcus and the Demonomicon of Iggwilv → 7; the Book of Exalted Deeds → 10; the Orb of Dragonkind → 16; the Book of Vile Darkness, the Eye and Hand of Vecna and the Sword of Kas → 19. (Axe of the Dwarvish Lords, Blackrazor, Wave, Whelm and any other artifact → 25.)
 2. **Plain enhancement**: +1/+2/+3 weapons, armour, shields and ammunition; adamantine and mithral armour → 2. Potions of Healing (all) and Spell Scrolls (all levels) → 3.
 3. **Themed items**, by what they are for:
-   - fiends, the Hells and the Abyss, pacts, warlocks → 6
-   - sorcery, wild magic, draconic bloodlines → 7; dragons themselves (Dragon Scale Mail, Dragon Slayer and other dragon-named items) → 15
-   - rage, berserkers, war-bands → 8
-   - holy and radiant things, celestials, paladins, barding, smiting the undead → 9
-   - elves, the fey, archery and rangers → 10
-   - beasts, animals, plants, druids, the wild → 11
-   - instruments, performers, disguise and confidence tricks → 12
-   - elements and genies, elemental weapons (Flame Tongue, Frost Brand), monks and unarmed fighting → 13
-   - giants and ogres, thunder and storm-giant things, Potions of Giant Strength → 16
-   - constructs, golems, clockwork and machinery, gnomes, firearms → 17
-   - undeath, necromancy, life-stealing, vampires, ghosts, and cursed items whose curse is death or undeath → 18
-   - spiders, darkness, the Underdark, seeing what is hidden → 19
-   - the mind, telepathy, psionics, the gith, aberrations → 20
-   - dungeon delving: ropes, opening and closing, holes and spheres, devouring bags → 21
-   - water, swimming, breathing, boats and the sea → 22
+   - fiends, the Hells and the Abyss, pacts, warlocks → 7
+   - sorcery, wild magic, draconic bloodlines → 8; dragons themselves (Dragon Scale Mail, Dragon Slayer and other dragon-named items) → 16
+   - rage, berserkers, war-bands → 9
+   - holy and radiant things, celestials, paladins, barding, smiting the undead → 10
+   - elves, the fey, archery and rangers → 11
+   - beasts, animals, plants, druids, the wild → 12
+   - instruments, performers, disguise and confidence tricks → 13
+   - elements and genies, elemental weapons (Flame Tongue, Frost Brand), monks and unarmed fighting → 14
+   - giants and ogres, thunder and storm-giant things, Potions of Giant Strength → 17
+   - constructs, golems, clockwork and machinery, gnomes, firearms → 18
+   - undeath, necromancy, life-stealing, vampires, ghosts, and cursed items whose curse is death or undeath → 19
+   - spiders, darkness, the Underdark, seeing what is hidden → 20
+   - the mind, telepathy, psionics, the gith, aberrations → 21
+   - dungeon delving: ropes, opening and closing, holes and spheres, devouring bags → 22
+   - water, swimming, breathing, boats and the sea → 23
    - poison, stealth, thievery, assassins, fighters' and rogues' weapons with a trick → 4
    - wizards' and clerics' tools of the trade: staffs, wands, rods, robes, spellbooks, pearls, spell-storing → 5
-   - fortresses, banners, war-horns, siege → 25
-   - planes, portals, the Astral and Ethereal, gates → 26
-4. **Consumables** not placed by rules 2–3 (potions, oils, philters, elixirs, dusts, beads, candles, magic ammunition and arrows, other single-use items) → 23.
-5. **Everything else** (rings, cloaks, boots, belts, amulets, ioun stones, decks, figurines, wondrous items of every kind, the remaining cursed items) → 24.
+   - fortresses, banners, war-horns, siege → 26
+   - planes, portals, the Astral and Ethereal, gates → 27
+4. **Consumables** not placed by rules 2–3 (potions, oils, philters, elixirs, dusts, beads, candles, magic ammunition and arrows, other single-use items) → 24.
+5. **Everything else** (rings, cloaks, boots, belts, amulets, ioun stones, decks, figurines, wondrous items of every kind, the remaining cursed items) → 25.
 
 ---
 
@@ -1269,18 +1366,18 @@ From Expansion 3 every spell works in battle. Outside battle, these groups plug 
 | Healing and restoration | Cure Wounds, Healing Word, Prayer of Healing, Aid, Lesser and Greater Restoration, Remove Curse, Heal, Regenerate, Mass Heal | `rules/health.py`, `game/care.py`: hit points, wounds, blood, infection, diseases, poison, exhaustion, curses; Regenerate regrows lost limbs |
 | Return from death | Spare the Dying, Revivify, Gentle Repose, Raise Dead, Reincarnate, Resurrection, True Resurrection | `game/death.py` (§4.5), temples (`game/services.py`), costly components |
 | Food, water and the body | Goodberry, Create or Destroy Water, Purify Food and Drink, Create Food and Water, Heroes' Feast | `game/survival.py`, `game/camp.py`, `rules/body.py` |
-| Shelter and watch | Alarm, Leomund's Tiny Hut, Rope Trick, Mordenkainen's Magnificent Mansion, Private Sanctum, Demiplane, Guards and Wards | camp (a safe night, no night encounters), dungeon rests, bastions (25) |
-| Travel and movement | Longstrider, Jump, Feather Fall, Spider Climb, Levitate, Fly, Water Walk, Water Breathing, Pass without Trace, Phantom Steed, Wind Walk, Tree Stride, Transport via Plants, Teleport, Teleportation Circle, Word of Recall, Find the Path | `game/journey.py`, wayfinding, the world map; ships (22); planes (26); the survival clock keeps running |
+| Shelter and watch | Alarm, Leomund's Tiny Hut, Rope Trick, Mordenkainen's Magnificent Mansion, Private Sanctum, Demiplane, Guards and Wards | camp (a safe night, no night encounters), dungeon rests, bastions (26) |
+| Travel and movement | Longstrider, Jump, Feather Fall, Spider Climb, Levitate, Fly, Water Walk, Water Breathing, Pass without Trace, Phantom Steed, Wind Walk, Tree Stride, Transport via Plants, Teleport, Teleportation Circle, Word of Recall, Find the Path | `game/journey.py`, wayfinding, the world map; ships (23); planes (27); the survival clock keeps running |
 | Finding and seeing | Detect Magic, Detect Evil and Good, Detect Poison and Disease, Detect Thoughts, Locate Animals or Plants, Locate Object, Locate Creature, Arcane Eye, Clairvoyance, Scrying, See Invisibility, True Seeing, Identify | the world map, dungeons (traps, secret doors), magic items, people's secrets |
 | Asking the powers | Augury, Divination, Commune, Commune with Nature, Contact Other Plane, Legend Lore | answered from the world's real history and state (`world.politics`, the Legends book data, quests); vague where the truth is vague |
 | Talking | Message, Comprehend Languages, Tongues, Speak with Animals, Speak with Plants, Speak with Dead, Sending, Animal Messenger, Rary's Telepathic Bond, Dream, Telepathy | conversations (written lines), languages, people the party knows, news, companions |
 | Moving minds | Friends, Charm Person, Command, Calm Emotions, Suggestion, Zone of Truth, Compulsion, Geas, Dominate Person, Modify Memory, Mass Suggestion | conversation outcomes (whitelisted), `game/law.py` (enchanting people is a crime where magic is forbidden; victims remember being charmed), quests (Geas) |
 | Disguise and stealth | Minor Illusion, Silent Image, Disguise Self, Alter Self, Invisibility, Silence, Major Image, Greater Invisibility, Nondetection, Seeming, Mind Blank | `game/law.py` (disguise, witnesses, bounties), stealth in towns and dungeons |
-| Locks, stone and making | Mage Hand, Mending, Prestidigitation, Thaumaturgy, Unseen Servant, Knock, Arcane Lock, Stone Shape, Passwall, Wall of Stone, Fabricate, Creation, Move Earth, Glyph of Warding, Hallow, Forbiddance, Symbol | `game/dungeon.py` (locks, walls, secret ways, traps you set), crafting (23), bastions (25) |
+| Locks, stone and making | Mage Hand, Mending, Prestidigitation, Thaumaturgy, Unseen Servant, Knock, Arcane Lock, Stone Shape, Passwall, Wall of Stone, Fabricate, Creation, Move Earth, Glyph of Warding, Hallow, Forbiddance, Symbol | `game/dungeon.py` (locks, walls, secret ways, traps you set), crafting (24), bastions (26) |
 | Weather and land | Druidcraft, Plant Growth, Control Water, Control Weather, Hallucinatory Terrain, Earthquake, Mirage Arcane, Storm of Vengeance | `world/weather.py` (an override of the weather function for a region and a time), harvests and the economy, close-up maps |
 | Lasting protections | Mage Armor, Aid, Protection from Energy, Freedom of Movement, Death Ward, Stoneskin, Foresight | the existing lasting spells (`rules/spells.lasting`), carried into the next fight |
 | Servants and summons | Find Familiar, Find Steed, Animate Dead, Create Undead, Planar Binding | `game/followers.py` (they follow and are seen by the law), mounts (`game/mounts.py`), scouting |
-| Great magic | Plane Shift, Etherealness, Astral Projection, Gate, Magic Jar, Clone, Simulacrum, True Polymorph, Imprisonment, Wish | planes (26), death (Clone), companions (Simulacrum), Wish's safe uses and its stress |
+| Great magic | Plane Shift, Etherealness, Astral Projection, Gate, Magic Jar, Clone, Simulacrum, True Polymorph, Imprisonment, Wish | planes (27), death (Clone), companions (Simulacrum), Wish's safe uses and its stress |
 
 ---
 
@@ -1292,8 +1389,8 @@ From Expansion 3 every spell works in battle. Outside battle, these groups plug 
 | Champion, Thief, Life, War, Evocation, Abjuration | Champion, Thief, Life Domain, War Domain, Evoker, Abjurer (2024) | 3 |
 | Cutthroat | the Assassin (2024) | 3 |
 | Knight | kept as a Realmwalker subclass, extended to level 18 | 3 |
-| Human, Elf, Dwarf, Halfling | their 2024 versions (elf lineages chosen) | 2; full elven cultures 10, drow cities 19 |
-| Half-Orc | the Orc (2024) | 2; the orcs' full culture 8 |
+| Human, Elf, Dwarf, Halfling | their 2024 versions (elf lineages chosen) | 2; full elven cultures 11, drow cities 20 |
+| Half-Orc | the Orc (2024) | 2; the orcs' full culture 9 |
 | Backgrounds (8) | 2024 backgrounds (16): Folk Hero → Farmer, Outlander → Guide, Guild Artisan → Artisan | 2 |
 | Spells (41) and thrown flasks | definitions on the kernel, 2024 numbers | 1 (the full catalogue in 3) |
 | Creatures (35) | their 2025 stat blocks (Appendix A), ids renamed freely | 1 |
@@ -1301,9 +1398,9 @@ From Expansion 3 every spell works in battle. Outside battle, these groups plug 
 | Magic item properties, curses | effects on the kernel; the procedural "blades with a story" kept as a family | 1 |
 | Conditions, exhaustion, surprise, grappling | 2024 rules | 1 |
 | Companion archetypes, unique companions | 2024 classes; new archetypes for every new class | 3 and each class expansion |
-| Dragons (`game/dragons.py`) | all ten colours and four ages | 15 |
-| History beasts and tribes (`history.json`) | extended by every monster expansion | 6–22 |
-| Dungeon traps | rebuilt on the DMG's trap rules | 21 |
+| Dragons (`game/dragons.py`) | all ten colours and four ages | 16 |
+| History beasts and tribes (`history.json`) | extended by every monster expansion | 7–23 |
+| Dungeon traps | rebuilt on the DMG's trap rules | 22 |
 | Battle formation, morale, wounds, parley, surrender, death saves | kept – they are Realmwalker's own – and connected to the kernel | 1 |
 | Player2 AI writer (descriptions, conversations, names, chronicle, obituaries) | removed for now; the built-in text everywhere, strengthened where thin; restorable from the `before-ai-removal` tag | §0.4 |
 | Friends' build (`Build_For_Friends.bat`, the `.exe`, `README_FRIENDS.txt`) | removed; friends download from GitHub; `README.md` is the front page | §0.4 |
@@ -1322,27 +1419,28 @@ From Expansion 3 every spell works in battle. Outside battle, these groups plug 
 | PHB | Weapon Mastery; weapons, armour, gear, tools; land mounts and vehicles; services; trinkets | 2 |
 | PHB | Backgrounds; origin, general and fighting style feats; creating a character | 2 |
 | PHB | Level advancement to 20; epic boons; spellcasting; every spell; Appendix B stat blocks | 3 |
-| PHB | Mounted combat | 9 |
-| PHB | Multiclassing; starting at higher levels | 14 |
-| PHB | Water vehicles; underwater combat | 22 |
-| PHB | Crafting gear, potions of healing and spell scrolls | 23 |
-| PHB | The multiverse | 26 |
+| PHB | Mounted combat | 10 |
+| PHB | Multiclassing; starting at higher levels | 15 |
+| PHB | Water vehicles; underwater combat | 23 |
+| PHB | Crafting gear, potions of healing and spell scrolls | 24 |
+| PHB | The multiverse | 27 |
 | DMG | Travel pace; starting attitudes; objects; encounter difficulty and XP budget; adventure rewards; treasure and hoard tables; magic item rules, including the rules for artifacts, sentient items and cursed items | 1 |
 | DMG | Poison | 4 |
 | DMG | Gods and divine intervention | 5 |
-| DMG | Demonic possession | 6 |
-| DMG | Mobs | 8 |
-| DMG | Supernatural gifts (blessings and charms) | 9 |
-| DMG | Chases; settlements; Nonplayer Characters and attitudes in depth | 12 |
-| DMG | Environmental effects | 13 |
-| DMG | Dragons' hoards by age, and carrying them off | 15 |
-| DMG | Firearms and explosives (Renaissance only) | 17 |
-| DMG | Curses and magical contagions; fear and mental stress; death | 18 |
-| DMG | Hazards; traps; doors and dungeons | 21 |
-| DMG | Crafting magic items; consumable items | 23 |
-| DMG | The remaining artifacts, sentient and cursed items; the random magic item tables in full | 24 |
-| DMG | Bastions; siege equipment; marks of prestige; renown | 25 |
-| DMG | Cosmology; planar travel; planar effects | 26 |
+| DMG | Renown; marks of prestige; settlement calamities; creating adventures and campaigns (as the story engine's guidance) | 6 |
+| DMG | Demonic possession | 7 |
+| DMG | Mobs | 9 |
+| DMG | Supernatural gifts (blessings and charms) | 10 |
+| DMG | Chases; settlements; Nonplayer Characters and attitudes in depth | 13 |
+| DMG | Environmental effects | 14 |
+| DMG | Dragons' hoards by age, and carrying them off | 16 |
+| DMG | Firearms and explosives (Renaissance only) | 18 |
+| DMG | Curses and magical contagions; fear and mental stress; death | 19 |
+| DMG | Hazards; traps; doors and dungeons | 22 |
+| DMG | Crafting magic items; consumable items | 24 |
+| DMG | The remaining artifacts, sentient and cursed items; the random magic item tables in full | 25 |
+| DMG | Bastions; siege equipment | 26 |
+| DMG | Cosmology; planar travel; planar effects | 27 |
 | DMG | Greyhawk; Lore Glossary; DM advice; maps; creating backgrounds, creatures, magic items and spells; alignment (kept only as a stat block field) | omitted or used as guidance (§1.3) |
 | MM | Stat block rules; legendary actions and resistance; lairs and regional effects; habitats, treasure themes and groups | 1 (each family as in Appendix A) |
 

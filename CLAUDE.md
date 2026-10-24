@@ -430,7 +430,7 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   party over water and wind (`step_minutes`; `waymagic.ashore` when it ends out there); `GameState.pace` is never below
   a walker's unless everyone is borne by magic. Travel spells have target "place" (`waymagic.places`, Place objects on
   the Spells page) and op road `does: "travel"` with `how` in `spells.TRAVELS` (Teleport's 2024 table by familiarity,
-  circles, Word of Recall's sanctuary `effects["recall_sanctuary"]`, plants, the planar three until Expansion 26, Arcane
+  circles, Word of Recall's sanctuary `effects["recall_sanctuary"]`, plants, the planar three until Expansion 27, Arcane
   Gate to a dungeon's stairs); a lasting spell's `outside` (`spells.OUTSIDE`: disguise, path) runs
   `waymagic.after_lasting` as it is cast. Feather Fall is cast by itself (`Battle._feather_fall`, `dungeon.
   feather_fall`); `lift` has `gentle` (Levitate); `undark` ends low darkness (Daylight); zone "lights" (Dancing Lights);

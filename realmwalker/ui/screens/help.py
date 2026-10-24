@@ -214,7 +214,7 @@ Settings has <loot>Text detail</>: <loot>Brief</> keeps only what matters (fight
 
 <title>Other screens</>
   <loot>o</>               The full message log (or click the messages)
-  <loot>k</>               Map legend: what every symbol means
+  <loot>k</>               Map key: what every symbol means
   <loot>Esc</>             Game menu: help, settings, save and leave
 
 <title>If something goes wrong</>

@@ -106,7 +106,7 @@ class Character:
 
     @property
     def classes(self) -> list[dict]:
-        """Classes as a list (2024; one entry until multiclassing, Expansion 14): {class, subclass, level}."""
+        """Classes as a list (2024; one entry until multiclassing, Expansion 15): {class, subclass, level}."""
         return [{"class": self.cls, "subclass": self.subclass, "level": self.level}]
 
     def feat_ids(self) -> list[str]:

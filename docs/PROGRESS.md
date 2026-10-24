@@ -2,6 +2,8 @@
 
 Newest session first. Each milestone lists what's new, how to try it, decisions made, and known issues.
 
+*2026-10-24: the expansion programme was renumbered. Adventures & Events is now Expansion 6 (version 1.6.0), and Tieflings & Warlocks and everything after it moved down one (7-27; Planes & Portals is still 2.0.0). The dated entries below keep the numbers they were written with.*
+
 ## Status at a glance
 
 | Milestone | State |

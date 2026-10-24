@@ -528,5 +528,5 @@ def test_the_map_legend_shows_the_maps_own_pictures(make_app, atlas):
     assert sum(1 for kind, _, _ in rows if kind == "swatch") >= len(app.tables.biomes.ids)
     app.push(LegendScreen(app))
     canvas = render(app)
-    assert "Map legend" in canvas.words() and commands(canvas, Batch)
+    assert "Map key" in canvas.words() and commands(canvas, Batch)
     assert app.error_count == 0
