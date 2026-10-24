@@ -637,7 +637,7 @@ FEATS = Obj({"feats": Map(Obj({"name": Str(max_len=40), "category": Str(choices=
                                                                                    "epic"]),
                                "text": Str(max_len=500), "trait": Str(max_len=40, optional=True),
                                "repeatable": Bool(optional=True), "prerequisite": Any_(optional=True), "offered": Bool(optional=True),
-                               "upgrade_in": Int(min=2, max=26, optional=True),
+                               "upgrade_in": Int(min=2, max=27, optional=True),
                                "choices": Map(FEAT_CHOICE, optional=True),
                                "gives": Obj({"armor": List(Str(max_len=20), optional=True),
                                              "weapons": List(Str(max_len=20), optional=True),
@@ -1406,3 +1406,157 @@ TRINKETS = Obj({"chance": Obj({"pocket": Float(min=0, max=1), "chest": Float(min
                 "trinkets": List(Obj({"id": Str(max_len=40), "name": Str(max_len=40), "text": Str(max_len=160)}),
                                  min_items=20)})
 DATA_FILES.update({"trinkets.json": TRINKETS})
+
+# ---------------------------------------------------------------------------- Adventures & Events (Expansion 6)
+# The story engine's data (docs/ADVENTURES.md §8.2), all in data/packs/06_adventures_events/. The schemas check the
+# shapes; what the entries name (step kinds, selectors, conditions, ops, finale keys) is checked against the code by
+# realmwalker/game/story/check.py at start-up, as rules/engine/check.py does for the kernel.
+TIER_BAND = List(Int(min=1, max=4), min_items=2, max_items=2)
+DAY_BAND = List(Int(min=0, max=3650), min_items=2, max_items=2)
+
+
+def ops_list(optional: bool = False) -> List:
+    """[["op", arg, ...], ...]: what a stage, a beat or an ending does (each op checked by story/check.py)."""
+    return List(List(Any_(), min_items=1), optional=optional)
+
+
+THREAT_SOURCES = ("lairs", "tombs", "gangs", "cults", "towers", "tribes", "dragons", "crowns", "grudges", "artifacts",
+                  "plagues")
+THREAT_STAGE = Obj({
+    "id": Str(max_len=30),
+    "days": DAY_BAND,  # how long the stage lasts at tier 1 (threats.json stage_days stretches it for the tiers above)
+    "signs": word_list(1, 300),  # news when it begins ({villain}, {home}, {place}, {area})
+    "flavour": List(Str(max_len=300), optional=True),  # words on the land, behind Text detail
+    "effects": ops_list(optional=True),  # world/threats.STAGE_OPS
+    "doom": Bool(optional=True),
+})
+THREAT_KIND = Obj({
+    "name": Str(max_len=40),
+    "from": Str(choices=list(THREAT_SOURCES)),
+    "tiers": TIER_BAND,
+    "tempers": List(Str(max_len=30), min_items=1),
+    "blueprints": List(Str(max_len=40), min_items=1),
+    "reach": Int(min=1, max=60),  # tiles round its home that its signs and effects touch
+    "stages": List(THREAT_STAGE, min_items=3, max_items=7),
+    "hooks": word_list(3, 300),  # a notice board's line or a patron's plea ({villain}, {home}, {town}, {where})
+})
+THREATS = Obj({
+    "budget": Map(List(Int(min=0, max=40), min_items=2, max_items=2), optional=True),  # active threats by world size
+    "near_hero": Obj({"tiles": Int(min=5, max=200), "untaken": Int(min=0, max=10)}, optional=True),
+    "start": Obj({"tiles": Int(min=5, max=200), "tier_one": Int(min=0, max=10)}, optional=True),
+    "stage_days": Map(DAY_BAND, optional=True),  # by tier
+    "sign_lead_days": Int(min=0, max=60, optional=True),
+    "target_level": Map(Int(min=1, max=20), optional=True),  # by tier: the level a finale is measured for
+    "tier_by_danger": List(List(Int(min=0, max=10), min_items=2, max_items=2), optional=True),  # [least danger, tier]
+    "wake": Float(min=0, max=1, optional=True),  # a dormant threat's weekly chance to stir by itself
+    "emptied": Obj({"floor": Float(min=0.05, max=1), "rebuild_days": Int(min=7, max=3650)}, optional=True),
+    "hunters": Obj({"chance": Float(min=0, max=1), "per_fame": Float(min=0, max=1)}, optional=True),
+    "interlude_stages": Int(min=0, max=5, optional=True),
+    "kinds": Map(THREAT_KIND),
+})
+
+CHOICE = Obj({
+    "label": word_list(1, 160),
+    "requires": Map(Any_(), optional=True),
+    "check": Obj({"skill": Str(max_len=30), "dc": Int(min=1, max=30)}, optional=True),
+    "ops": ops_list(optional=True),
+    "success": ops_list(optional=True),
+    "failure": ops_list(optional=True),
+    "result": List(Str(max_len=600), optional=True),
+    "fail_result": List(Str(max_len=600), optional=True),
+})
+BEAT = Obj({
+    "family": Str(max_len=30),
+    "where": List(Str(max_len=30), optional=True),
+    "time": Str(max_len=20, optional=True),
+    "when": Map(Any_(), optional=True),  # conditions (story/beats.CONDITIONS)
+    "weight": Int(min=0, max=100, optional=True),
+    "title": List(Str(max_len=80), optional=True),
+    "picture": Str(max_len=60, optional=True),
+    "text": List(word_list(1, 600), min_items=1),  # pages, each a list of variants
+    "choices": List(CHOICE, optional=True),
+    "ops": ops_list(optional=True),  # what it does when it has no choices
+})
+BEATS = Obj({"beats": Map(BEAT)})
+
+STEP = Obj({"kind": Str(max_len=20)}, strict=False)  # its other keys are its kind's own (story/steps.py fields)
+CHAPTER = Obj({
+    "id": Str(max_len=30),
+    "need": Any_(),  # "all", or how many of its steps
+    "title": word_list(2, 80),
+    "goal": word_list(1, 200),  # the journal's one line
+    "opening": word_list(3, 600),
+    "reveal": word_list(3, 600),
+    "steps": List(STEP, min_items=1),
+    "set_piece": Str(max_len=30, optional=True),
+    "tier_min": Int(min=1, max=4, optional=True),
+})
+ENDING = Obj({
+    "id": Str(max_len=30),
+    "if": List(Str(max_len=60), optional=True),
+    "ops": ops_list(),
+    "pages": Map(word_list(1, 600), optional=True),  # the epilogue's pages of this ending, by whom they tell of
+    "from_part": Str(max_len=2, optional=True),
+})
+CAST_ROLE = Obj({"pick": List(Str(max_len=200), min_items=1), "count": List(Int(min=0, max=4), optional=True),
+                 "chance": Float(min=0, max=1, optional=True), "as": Str(max_len=30, optional=True),
+                 "from_part": Str(max_len=2, optional=True)})
+BLUEPRINT = Obj({
+    "name": Str(max_len=60),
+    "tiers": TIER_BAND,
+    "from": List(Str(max_len=30), min_items=1),  # threat kinds
+    "flavours": List(Str(max_len=30), optional=True),
+    "needs": Map(Any_(), optional=True),
+    "title": word_list(3, 80),
+    "hook": word_list(3, 600),
+    "premise": word_list(1, 600),
+    "places": Map(Str(max_len=300), min_items=1),  # selectors (story/selectors.py)
+    "cast": Map(CAST_ROLE),
+    "hidden": Map(Str(max_len=300), optional=True),
+    "chapters": List(CHAPTER, min_items=2, max_items=6),
+    "finale": Obj({"boss": Str(max_len=60), "template": Str(max_len=40), "at": Str(max_len=80),
+                   "with": List(Str(max_len=60), optional=True), "keys": Map(List(Str(max_len=60)), optional=True),
+                   "words": Map(word_list(1, 600), optional=True)}),
+    "endings": List(ENDING, min_items=2),
+    "epithets": List(Str(max_len=40), optional=True),  # tags of the epithets its epilogue offers
+})
+ADVENTURES = Obj({
+    "max_active": Int(min=1, max=10, optional=True),
+    "words": Map(word_list(1, 400), optional=True),  # nested tables for the story's text (story/words.py)
+    "epithets": Map(word_list(3, 40), optional=True),  # by tag
+    "blueprints": Map(BLUEPRINT),
+})
+
+BOSS = Obj({
+    "tiers": TIER_BAND,
+    "roles": List(Str(max_len=30), min_items=1),  # what it makes a boss of (a beast, a dead king, a captain...)
+    "hp": Float(min=1, max=10),  # times the creature's hit points
+    "resistances": Int(min=0, max=5),  # Legendary Resistances a day
+    "actions": Int(min=0, max=5),  # legendary actions a round
+    "menu": List(Str(max_len=30), min_items=1),  # what those actions may be (story/finale.LEGENDARY)
+    "phase": Obj({"at": Float(min=0.05, max=0.95), "kind": Str(max_len=30), "lines": word_list(3, 300)},
+                 optional=True),
+})
+TEMPER = Obj({
+    "speaks": Bool(),
+    "moves": Map(Int(min=0, max=100), min_items=1),  # move id: weight
+    "first_words": word_list(6, 300),
+    "omens": word_list(8, 300),
+})
+WEAKNESS = Obj({"id": Str(max_len=30), "name": Str(max_len=60), "keys": List(Str(max_len=60)),
+                "for": List(Str(max_len=40), optional=True), "lore": word_list(3, 400),
+                "means": List(Str(max_len=40), optional=True)})
+VILLAINS = Obj({
+    "attention": Obj({"step": Int(min=0, max=5), "lieutenant": Int(min=0, max=5), "fortnight": Int(min=-5, max=0),
+                      "max": Int(min=1, max=20), "moves_apart_days": Int(min=0, max=30),
+                      "per_chapter": Int(min=0, max=10)}, optional=True),
+    "tempers": Map(TEMPER),
+    "moves": Map(Obj({"beat": Str(max_len=60), "attention": List(Int(min=0, max=20), min_items=2, max_items=2)})),
+    "bosses": Map(BOSS),
+    "weaknesses": Map(List(WEAKNESS, min_items=1)),  # by what the villain is (a creature type, or a creature id)
+})
+DATA_FILES.update({"threats.json": THREATS, "adventures.json": ADVENTURES, "villains.json": VILLAINS,
+                   "beats.json": BEATS})
+PACK_ONLY.update({"threats.json": {"kinds": {}}, "adventures.json": {"blueprints": {}},
+                  "villains.json": {"tempers": {}, "moves": {}, "bosses": {}, "weaknesses": {}},
+                  "beats.json": {"beats": {}}})

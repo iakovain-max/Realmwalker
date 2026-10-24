@@ -128,4 +128,9 @@ class Tables:
         self.trinkets = {t["id"]: t for t in data["trinkets.json"]["trinkets"]}  # keepsakes (rules/items.make_trinket)
         self.trinket_chance = data["trinkets.json"]["chance"]  # in a pocket, in a chest
         self.quests = data["quests.json"]
+        # The story engine (Expansion 6, game/story): threat kinds, blueprints, villains' tempers and bosses, beats.
+        self.threats = data["threats.json"]
+        self.adventures = data["adventures.json"]
+        self.villains = data["villains.json"]
+        self.beats = {k: v for k, v in data["beats.json"]["beats"].items() if not k.startswith("_")}
         self.travel_events = {k: v for k, v in data["travel_events.json"]["events"].items() if not k.startswith("_")}

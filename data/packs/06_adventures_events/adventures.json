@@ -1,0 +1,7 @@
+{
+  "_comment": "Adventures (docs/ADVENTURES.md §5.2, §6, §8.5; game/story/forge.py): blueprints, each forged into an adventure when its hook is taken. max_active: how many a hero carries at once. words: nested tables for the story's text. epithets: what the epilogue offers, by tag.",
+  "max_active": 3,
+  "words": {},
+  "epithets": {},
+  "blueprints": {}
+}

@@ -1,0 +1,8 @@
+{
+  "_comment": "Villains (docs/ADVENTURES.md §5.4, §5.8; game/story/villain.py, finale.py): attention (how much the villain notices you: step done, lieutenant slain, a quiet fortnight, the most, days between two moves, moves a chapter); tempers and the moves they choose; moves (the beat each plays, the attention it needs); boss templates by tier and role; weaknesses by what the villain is, each with the finale keys it gives.",
+  "attention": {"step": 1, "lieutenant": 2, "fortnight": -1, "max": 9, "moves_apart_days": 2, "per_chapter": 1},
+  "tempers": {},
+  "moves": {},
+  "bosses": {},
+  "weaknesses": {}
+}

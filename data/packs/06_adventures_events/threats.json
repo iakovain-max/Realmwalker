@@ -1,0 +1,15 @@
+{
+  "_comment": "Threats (docs/ADVENTURES.md §5.1, §8.3; world/threats.py): kinds of danger with a will behind them, made from what the history left. budget: how many may be stirring or active at once, by world size. near_hero: at most `untaken` of them within `tiles` of the hero that the hero has not taken on. start: at least `tier_one` tier-1 threats within `tiles` of a starting town (a week's walk is about 56 tiles). stage_days: how long a scheme's stage lasts, by tier. sign_lead_days: a stage's first sign comes at least this long before its effects. target_level: the party level a finale is measured for, by tier. tier_by_danger: [least danger of the home, tier]. wake: a dormant threat's weekly chance to stir by itself. emptied: a doomed settlement keeps `floor` of its people and comes back after `rebuild_days`. hunters: the history's beast-hunting heroes go on hunting (a weekly chance, more by fame). interlude_stages: the most stages a threat moves while nobody plays.",
+  "budget": {"small": [3, 5], "medium": [5, 8], "large": [8, 12]},
+  "near_hero": {"tiles": 30, "untaken": 2},
+  "start": {"tiles": 56, "tier_one": 2},
+  "stage_days": {"1": [10, 20], "2": [15, 30], "3": [20, 40], "4": [30, 60]},
+  "sign_lead_days": 7,
+  "target_level": {"1": 3, "2": 7, "3": 13, "4": 18},
+  "tier_by_danger": [[0, 1], [4, 2], [7, 3], [9, 4]],
+  "wake": 0.03,
+  "emptied": {"floor": 0.2, "rebuild_days": 90},
+  "hunters": {"chance": 0.01, "per_fame": 0.002},
+  "interlude_stages": 1,
+  "kinds": {}
+}

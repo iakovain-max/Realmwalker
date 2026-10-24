@@ -104,6 +104,9 @@ class App:
                 from realmwalker.rules.engine import check
 
                 self.data_errors.extend(check.problems(self.tables))  # what the rules data names must exist in code
+                from realmwalker.game.story import check as story_check
+
+                self.data_errors.extend(story_check.problems(self.tables))  # and the story data's
         from realmwalker.ui.gfx import headless
 
         # The pictures: headless they are recorded and checked, never shown; a window replaces this with its own.

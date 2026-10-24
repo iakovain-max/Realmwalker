@@ -1,0 +1,4 @@
+{
+  "_comment": "Beats (docs/ADVENTURES.md §5.10, §8.6; game/story/beats.py): small scenes with pages and choices, played on the beat screen. when: conditions; choices: label, requires, check {skill, dc}, ops or success/failure, result lines.",
+  "beats": {}
+}
