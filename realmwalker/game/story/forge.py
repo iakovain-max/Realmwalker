@@ -216,14 +216,10 @@ class Forge:
 
     def _record(self, chapters: list[dict]) -> dict:
         game, w, bp, rng = self.game, self.world, self.bp, self.rng
-        from realmwalker.world import news, threats
+        from realmwalker.world import news
 
         t = self.threat
-        town = self.places.get("town", self.home)
-        words = {"villain": threats.villain_name(w, t), "home": pl.name(w, self.home), "place": pl.name(w, town),
-                 "town": pl.name(w, town)}
-        tables = self.tables.adventures.get("words", {})
-        title = textgen.fill(rng.choice(bp["title"]), rng, tables, words)
+        title = rng.choice(bp["title"])
         lead = game.leader
         adv = {"id": self.aid, "threat": t["id"], "blueprint": self.bid, "tier": int(t["tier"]), "title": title,
                "state": "active", "hero": {"name": lead.name, "life": life_of(game)},
@@ -234,13 +230,21 @@ class Forge:
                "target_level": int(self.tables.threats.get("target_level", {}).get(str(t["tier"]), 3)),
                "finale": {"template": bp["finale"]["template"], "keys": dict(bp["finale"].get("keys", {})),
                           "boss": bp["finale"]["boss"]},
-               "words": {"hook": textgen.fill(rng.choice(bp["hook"]), rng, tables, words),
-                         "premise": textgen.fill(rng.choice(bp["premise"]), rng, tables, words)}}
+               "words": {"hook": rng.choice(bp["hook"]), "premise": rng.choice(bp["premise"])}}
+        for role, entry in self.cast.items():
+            adv["cast"][role] = castmod.bind_now(game, adv, role, entry) if castmod.pending(entry) else dict(entry)
+        # (the words are written once the cast is bound: the patron, the villain's kind, its victim, the area)
+        from realmwalker.game.story import words as wordsmod
+
+        words = wordsmod.for_adventure(game, adv)
+        words.setdefault("place", words.get("town", pl.name(w, self.home)))
+        tables = self.tables.adventures.get("words", {})
+        adv["title"] = textgen.fill(adv["title"], rng, tables, words)
+        for k in ("hook", "premise"):
+            adv["words"][k] = textgen.fill(adv["words"][k], rng, tables, words)
         for ch in chapters:
             for k in ("title", "goal", "opening", "reveal"):
                 ch[k] = textgen.fill(ch[k], rng, tables, words)
-        for role, entry in self.cast.items():
-            adv["cast"][role] = castmod.bind_now(game, adv, role, entry) if castmod.pending(entry) else dict(entry)
         for ch in chapters:  # (steps that name a role see whoever was bound to it)
             for st in ch["steps"]:
                 if "role" in st["target"]:

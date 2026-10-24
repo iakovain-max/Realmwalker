@@ -288,10 +288,14 @@
       ],
       "text": [
         [
-          "{omen}"
+          "{omen}",
+          "You stop on the way, and look, and wish you had not. {omen}",
+          "{omen} Nobody else on the road seems to have seen it, or they will not say."
         ],
         [
-          "You go on, but you go on faster."
+          "You go on, but you go on faster.",
+          "It is a long way yet to anywhere with a door that bars.",
+          "{villain_short} is not far. It wants you to know that."
         ]
       ]
     },

@@ -27,7 +27,11 @@ BLUEPRINT = {
         "{patron} has the hide of a dog that was torn in half laid out on the table. \"That was the bravest dog in "
         "{town},\" they say. \"{villain} did that in the dark, in a breath. Will you hunt it?\""],
     "premise": ["A named killer of the old songs has come down from {home} on {town}: find what it is, learn what it "
-                "fears, and kill it in its den."],
+                "fears, and kill it in its den.",
+                "{villain} is killing in {area} again. Read its kills, find the one who saw it, learn what it fears, "
+                "and finish it at {home}.",
+                "{town} is being eaten, a family at a time, by {villain} out of {home}. Somebody has to learn how it "
+                "can be killed, and then go up and do it."],
     "places": {
         "home": "threat.home",
         "town": "settlement_near(home, 2, 18) | settlement_near(home, 0, 40)",
@@ -277,7 +281,10 @@ BEATS = {
              "result": ["You go in shouting. Let it come. You are done with waiting."]}]},
     "beast_omen": {
         "family": "villain", "where": ["road", "wild", "camp"],
-        "text": [["{omen}"], ["You go on, but you go on faster."]]},
+        "text": [["{omen}", "You stop on the way, and look, and wish you had not. {omen}",
+                  "{omen} Nobody else on the road seems to have seen it, or they will not say."],
+                 ["You go on, but you go on faster.", "It is a long way yet to anywhere with a door that bars.",
+                  "{villain_short} is not far. It wants you to know that."]]},
     "beast_carcass": {
         "family": "villain", "where": ["camp"], "time": ["dawn", "day"],
         "text": [["In the morning there is a dead hind at the edge of your camp, laid out as neat as a gift, its "

@@ -85,7 +85,9 @@
         "{patron} has the hide of a dog that was torn in half laid out on the table. \"That was the bravest dog in {town},\" they say. \"{villain} did that in the dark, in a breath. Will you hunt it?\""
       ],
       "premise": [
-        "A named killer of the old songs has come down from {home} on {town}: find what it is, learn what it fears, and kill it in its den."
+        "A named killer of the old songs has come down from {home} on {town}: find what it is, learn what it fears, and kill it in its den.",
+        "{villain} is killing in {area} again. Read its kills, find the one who saw it, learn what it fears, and finish it at {home}.",
+        "{town} is being eaten, a family at a time, by {villain} out of {home}. Somebody has to learn how it can be killed, and then go up and do it."
       ],
       "places": {
         "home": "threat.home",

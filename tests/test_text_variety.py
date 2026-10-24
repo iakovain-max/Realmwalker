@@ -106,3 +106,59 @@ def test_every_kind_of_companion_has_a_voice_of_their_own(data):
     for value in comp["values"]:
         for kind in ("road", "camp", "approve", "disapprove"):
             assert len(comp["lines"].get(f"{kind}_{value}", [])) >= 2, f"a {value} companion has no {kind} lines"
+
+
+def _pack(data, name):
+    from realmwalker.world.tables import Tables
+
+    return getattr(Tables(data), name)
+
+
+def test_every_story_has_enough_ways_to_be_told(data):
+    """docs/ADVENTURES.md §8.8: each beat >=3 intros; each blueprint >=3 titles and hooks, every chapter >=2 titles
+    and >=3 reveals and openings; each villain temper >=6 first words and >=8 omens; each epilogue page kind >=4;
+    epithets >=6 a tag; each weakness >=3 lore lines; each threat stage >=3 signs; a boss phase >=3 lines."""
+    adventures, beats = _pack(data, "adventures"), _pack(data, "beats")
+    villains, threats = _pack(data, "villains"), _pack(data, "threats")
+    short = []
+    for bid, beat in beats.items():
+        if len(beat["text"][0]) < 3:
+            short.append(f"beat {bid}: {len(beat['text'][0])} intros")
+    for bid, bp in adventures.get("blueprints", {}).items():
+        for k in ("title", "hook"):
+            if len(bp[k]) < 3:
+                short.append(f"blueprint {bid}: {len(bp[k])} {k}s")
+        for ch in bp["chapters"]:
+            if len(ch["title"]) < 2:
+                short.append(f"{bid} chapter {ch['id']}: {len(ch['title'])} titles")
+            for k in ("reveal", "opening"):
+                if len(ch[k]) < 3:
+                    short.append(f"{bid} chapter {ch['id']}: {len(ch[k])} {k}s")
+        for e in bp.get("endings", []):
+            for kind, lines in e.get("pages", {}).items():
+                if len(lines) < 4:
+                    short.append(f"{bid} ending {e['id']} page {kind}: {len(lines)} lines")
+        for k, lines in bp["finale"].get("words", {}).items():
+            if len(lines) < 3:
+                short.append(f"{bid} finale {k}: {len(lines)} lines")
+    for tag, lines in adventures.get("epithets", {}).items():
+        if len(lines) < 6:
+            short.append(f"epithets {tag}: {len(lines)}")
+    for tid, temper in villains.get("tempers", {}).items():
+        if len(temper.get("first_words", [])) < 6:
+            short.append(f"temper {tid}: {len(temper.get('first_words', []))} first words")
+        if len(temper.get("omens", [])) < 8:
+            short.append(f"temper {tid}: {len(temper.get('omens', []))} omens")
+    for kind, lst in villains.get("weaknesses", {}).items():
+        for w in lst:
+            if len(w.get("lore", [])) < 3:
+                short.append(f"weakness {w['id']}: {len(w.get('lore', []))} lore lines")
+    for bid, boss in villains.get("bosses", {}).items():
+        phase = boss.get("phase")
+        if phase and len(phase.get("lines", [])) < 3:
+            short.append(f"boss {bid} phase: {len(phase['lines'])} lines")
+    for kid, kind in threats.get("kinds", {}).items():
+        for st in kind.get("stages", []):
+            if len(st.get("signs", [])) < 3:
+                short.append(f"threat {kid} stage {st['id']}: {len(st.get('signs', []))} signs")
+    assert not short, "\n".join(short)
