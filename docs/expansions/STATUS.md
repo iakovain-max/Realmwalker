@@ -576,6 +576,8 @@ quest_offer mode, then the old work_accept/work_decline). **C.3 must**: put cont
 `held_by` (so the bot, the Earner and the first-hour tests find them), restore `jobs >= 1` in
 tests/test_storyplay.py, and drop the xfail in tests/test_first_hour.py `waiting`. Autoplay checks no town has
 weekly offers and waiting work is not in the journal; it now and then joins a faction.
+C.2's checks: full suite green but for the turn-time and fire-step timing tests (each passed alone, as
+before); autoplay clean twice (3000 turns, and 6000 with seed 7); smoke test clean.
 C.1 (2026-10-25, realmwalker-b): `tools/storyplay.py --income [--write]`: the income measure's careful player
 `Earner` (a Player: level 3, four, survival off; asks every giver of the town it is in through the Conversation's
 "work" choice, takes the best HONEST offer for the walk within REACH 20 tiles, refuses beast/raid groups above
