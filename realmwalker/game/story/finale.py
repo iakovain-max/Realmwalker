@@ -94,7 +94,9 @@ def prepare(battle, game) -> list[str]:
             continue
         battle.__dict__.setdefault("story_bosses", {})[f.id] = adv["id"]
         template = template_for(game.tables, adv)
-        if not _is_finale(adv):
+        from realmwalker.game import story
+
+        if not _is_finale(adv) and not story.at_its_den(adv, game.local.key if game.local is not None else None):
             # Met before its den it fights as itself, and breaks off when it is hurt (its template's "before"):
             # the template and the keys are for the end (law 5: the finale is where it stands and fights).
             if template.get("before"):

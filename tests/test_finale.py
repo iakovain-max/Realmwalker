@@ -112,11 +112,20 @@ def test_met_before_its_den_it_breaks_off_when_hurt(made, tables):
 
     game, adv, band = _at_the_den(made, tables)
     adv["chapter"] = 1  # (the hunt's price: the bait or the trail)
+    den = game.player.local_key
+    early = setup(tables, band.creatures[0].def_id, "close", 3)
+    early.side(FOE)[0].creature.story = {"adv": adv["id"], "role": "villain"}
+    finmod.prepare(early, game)
+    assert early.side(FOE)[0].cdef.get("legendary"), "met in its den early, it is the boss all the same"
+    assert story.hold_for_finale(game, band), "and its card shows first"
+    game.finale = None
+    game.player.local_key = None  # (out on the road, at the bait)
     b = setup(tables, band.creatures[0].def_id, "close", 1)
     boss = b.side(FOE)[0]
     boss.creature.story = {"adv": adv["id"], "role": "villain"}
     base = boss.max_hp
     finmod.prepare(b, game)
+    game.player.local_key = den
     assert boss.max_hp == base and not boss.cdef.get("legendary"), "not the boss yet"
     assert boss.cdef["boss_phase"]["kind"] == "breaks_off"
     boss.hp = boss.max_hp // 2 - 1

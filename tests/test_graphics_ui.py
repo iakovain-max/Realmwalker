@@ -612,7 +612,7 @@ def test_the_story_s_pictures_draw(pictured):
     assert "Chapter I" in canvas.words()
     app.handle_event(KeyEvent("enter"))
     render(app)
-    beats.offer(game, "beast_kill_found", adv=adv["id"], step=adv["chapters"][0]["steps"][0]["id"])
+    beats.offer(game, "beast_carcass", adv=adv["id"], where="camp")
     render(app)
     canvas = render(app)
     names = {c.name for c in commands(canvas, Sprite)}

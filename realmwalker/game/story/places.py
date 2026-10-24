@@ -32,6 +32,9 @@ def name(world, place: dict) -> str:
             return f"the road near {near.name}"
     area = world.area_at(x, y)
     if area is None:
+        if world.settlements:
+            near = min(world.settlements, key=lambda t: math.hypot(t.x - x, t.y - y))
+            return f"the wilds near {near.name}"
         return "the open country"
     return area.name if area.name.lower().startswith("the ") else f"the country of {area.name}"
 

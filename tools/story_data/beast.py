@@ -16,7 +16,7 @@ PACK = Path(__file__).resolve().parents[2] / "data" / "packs" / "06_adventures_e
 BLUEPRINT = {
     "name": "The Beast of {place}", "tiers": [1, 3], "from": ["beast"], "flavours": ["folk", "dark_fantasy"],
     "title": ["The Beast of {town}", "The Hunt for {villain}", "{villain_short} of {home}", "What Walks Above {town}",
-              "The Hunger in {area}"],
+              "The Hunger at {town}"],
     "hook": [
         "{patron} meets you at the door with the look of someone who has not slept. \"It is {villain}. It has come "
         "down from {home} again, and this time it took one of ours. You have the look of someone who could finish it.\"",
@@ -28,7 +28,7 @@ BLUEPRINT = {
         "{town},\" they say. \"{villain} did that in the dark, in a breath. Will you hunt it?\""],
     "premise": ["A named killer of the old songs has come down from {home} on {town}: find what it is, learn what it "
                 "fears, and kill it in its den.",
-                "{villain} is killing in {area} again. Read its kills, find the one who saw it, learn what it fears, "
+                "{villain} is killing round {town} again. Read its kills, find the one who saw it, learn what it fears, "
                 "and finish it at {home}.",
                 "{town} is being eaten, a family at a time, by {villain} out of {home}. Somebody has to learn how it "
                 "can be killed, and then go up and do it."],
@@ -98,7 +98,7 @@ BLUEPRINT = {
     "finale": {"boss": "villain", "template": "beast", "at": "home.deepest",
                "keys": {"weakness": ["weakness"], "bait": ["surprise"], "quiet": ["surprise"], "ally": ["ally_fights"]},
                "words": {
-                   "warning": ["The air beyond this point stinks of old blood and wet fur. Whatever lives here is very "
+                   "warning": ["The air beyond this point stinks of old blood and rot. Whatever lives here is very "
                                "close, and it is awake.",
                                "Bones underfoot, gnawed white, and a breathing in the dark ahead that is not yours.",
                                "This is the end of the den. Rest now if you mean to, because there will be no rest "
@@ -113,8 +113,8 @@ BLUEPRINT = {
          "pages": {
              "place": ["{town} sleeps with its doors unbarred for the first time in a year. The children are let "
                        "out to the fields again, though their mothers still count them at dusk.",
-                       "The people of {town} dragged what was left of {villain_short} down from {home} and burned it "
-                       "in the square. Everyone came to watch, and nobody cheered until it was ash.",
+                       "The people of {town} dragged what was left of {villain_short} into the square and burned it "
+                       "there. Everyone came to watch, and nobody cheered until it was ash.",
                        "There is a new song in the inn at {town}, and it is about you. It is not a good song, but they "
                        "sing it every night.",
                        "{town} hung the skull of {villain} over the door of its hall, and the elders swear the flocks "
@@ -124,9 +124,9 @@ BLUEPRINT = {
                         "{patron} keeps a seat by the fire for you, they say, should you ever come back to {town}.",
                         "{patron} has sent word to every farm in {area}: whoever shelters you, shelters a friend of "
                         "{town}.",
-                        "{patron} went up to {home} afterwards, alone, to see it for themselves. They came back and "
+                        "{patron} went out afterwards, alone, to see the body for themselves. They came back and "
                         "said nothing at all for a day."],
-             "ally": ["{ally} has the den's mouth for a trap-line now, and says the hares are bolder than they were.",
+             "ally": ["{ally} has the beast's old runs for a trap-line now, and says the hares are bolder than they were.",
                       "{ally} tells the tale in the inn whenever someone buys the ale, and makes your part bigger "
                       "every time.",
                       "{ally} went back to the woods. They say they think of you when the light goes.",
@@ -135,11 +135,11 @@ BLUEPRINT = {
                          "{witness} came to see the body, to be sure. They stood over it a long time.",
                          "{witness} lit a candle at the shrine for the ones who did not come back, and one for you.",
                          "{witness} has told it so often that they half believe they were brave."],
-             "hero": ["You came down from {home} with blood to the elbow and the name {villain} in every mouth.",
-                      "The hunt is over. You are a little more than you were: someone who went up to {home} and came "
-                      "back.",
+             "hero": ["You came back to {town} with blood to the elbow and the name {villain} in every mouth.",
+                      "The hunt is over. You are a little more than you were: someone who hunted {villain} and "
+                      "lived.",
                       "Somewhere a minstrel is already getting it wrong. That is what it is to be remembered.",
-                      "You will not forget the den at {home}. Neither, now, will anyone in {area}."]}},
+                      "You will not forget {villain}. Neither, now, will anyone in {area}."]}},
         {"id": "doom", "if": ["scheme_done"],
          "ops": [["fame", -1]],
          "pages": {
@@ -174,13 +174,13 @@ EPITHETS = {
 
 WORDS = {
     "beast_witness": [
-        "\"I was on the hill road with the cart,\" {witness} says, and has to stop. \"It came out of the gorse like the "
-        "hill itself was getting up. It took the ox, not me. It looked at me, and took the ox.\"",
+        "\"I was on the hill road with the cart,\" {witness} says, and has to stop. \"It came out of the scrub like the "
+        "ground itself was getting up. It took the ox, not me. It looked at me, and took the ox.\"",
         "{witness} will not look at you while they tell it. \"Big as a haywain. It went up towards {home} with half the "
         "carcass in its jaws, and I never heard it breathe hard once.\"",
-        "\"They'll tell you I was drunk,\" says {witness}. \"I wasn't. It stood up on its hind legs to look at me. "
-        "Then it went back up to {home}, slow, like it had all the time there is.\"",
-        "{witness} shows you the scar first. \"It did that with one swipe, going past. If it had stopped I'd be dead. "
+        "\"They'll tell you I was drunk,\" says {witness}. \"I wasn't. It stopped in the road to look at me. "
+        "Then it went back towards {home}, slow, like it had all the time there is.\"",
+        "{witness} shows you the scar first. \"It did that going past, without even stopping. If it had stopped I'd be dead. "
         "It wasn't hungry for me. Not that night.\""],
     "witness_tale": [
         "{witness} tells you what they saw, and their hands shake the whole time.",
@@ -195,8 +195,8 @@ WORDS = {
              "the long shadows reaching for the road"],
     "carcass": ["what is left of a big ox, opened along the belly", "the remains of a carter's mule, half of it gone",
                 "a cow, or what was a cow, dragged a long way from its field"],
-    "track": ["prints as broad as a shield, pressed deep", "a furrow where something heavy dragged its kill",
-              "claw marks in the bark of an old ash, higher than a man can reach"]}
+    "track": ["marks in the soft earth as broad as a shield, pressed deep", "a furrow where something heavy dragged its kill",
+              "the bark of an old ash torn away higher than a man can reach"]}
 
 BEATS = {
     "story_hook": {
@@ -208,22 +208,22 @@ BEATS = {
             {"label": ["Not now."], "ops": [["decline_hook"]],
              "result": ["Someone else, then. Or no one. You put it out of your mind, almost."]}]},
     "beast_kill_found": {
-        "family": "step", "picture": "camp_night",
-        "text": [["The road leaves the fields here and goes up between banks of gorse, and at the bend you find it: "
+        "family": "step",
+        "text": [["The road leaves the fields here and goes on between banks of scrub, and at the bend you find it: "
                   "{carcass}. The crows go up all at once.",
                   "You smell it before you see it. Off the road, in the ditch, {carcass}, and the flies thick over it.",
-                  "There is a bend in the road where the gorse closes in, and it is there: {carcass}, and the ground "
+                  "There is a bend in the road where the scrub closes in, and it is there: {carcass}, and the ground "
                   "round it torn up."],
                  ["Whatever did this was not hungry. It ate the best of it and left the rest, as if to say it could.",
-                  "Beyond the carcass the gorse is flattened in a wide swathe going up towards {home}.",
-                  "Nothing on the road but you, and the wind in the gorse, and that smell."]],
+                  "Beyond the carcass the scrub is flattened in a wide swathe going off towards {home}.",
+                  "Nothing on the road but you, and the wind in the scrub, and that smell."]],
         "choices": [{"label": ["Look closer."], "ops": [["clue", "kill"]],
                      "result": ["You kneel by it. Whatever left this, you will know it again."]}]},
     "beast_search_kill": {
         "family": "step",
         "text": [["You go over the ground round the kill, a yard at a time: {track}.",
                   "Now you look properly. There is a story in the trampled ground, if you can read it: {track}.",
-                  "The wounds first, then the ground: {track}, and blood on the gorse at a man's height."]],
+                  "The wounds first, then the ground: {track}, and blood on the scrub at a man's height."]],
         "choices": [
             {"label": ["Read the tracks, however long it takes."], "check": {"skill": "survival", "dc": 12},
              "success": [["clue", "size"], ["clue", "lair_way"]], "failure": [["clue", "size"], ["time", 180]],
@@ -243,19 +243,19 @@ BEATS = {
         "text": [["You know what it fears now. What is left is to bring it to you, or to go to it.",
                   "There are two ways to hunt a beast like {villain}: make it come to you, or follow it until it "
                   "turns. Both have killed better hunters than you.",
-                  "{ally} lays it out plainly. \"Stake out bait at the kill and wait, or follow the blood up the "
-                  "hill. Your choice. I know which one I'd pick, and I'm not telling you.\""]],
+                  "{ally} lays it out plainly. \"Stake out bait and wait, or follow its trail till it turns."
+                  " Your choice. I know which one I'd pick, and I'm not telling you.\""]],
         "choices": [
-            {"label": ["Stake out a bait at the kill, and wait in the dark."], "requires": {"item": ["raw_meat",
+            {"label": ["Stake out a bait here, and wait in the dark."], "requires": {"item": ["raw_meat",
                                                                                                      "cooked_meat",
                                                                                                      "rations"]},
              "ops": [["flag", "baited"], ["key", "bait"], ["use", "raw_meat", "cooked_meat", "rations"], ["time", 360],
                      ["named_fight", "villain"]],
              "result": ["The night is long and cold and nothing comes, and nothing, and then the bait is gone and "
                         "{villain_short} is among you."]},
-            {"label": ["Follow the blood up the hill, and let it turn on you."],
+            {"label": ["Follow its trail, and let it turn on you."],
              "ops": [["flag", "tracked"], ["time", 240], ["fatigue", 10], ["named_fight", "villain"]],
-             "result": ["The trail goes up through the gorse and into the trees, and then there is no more trail, "
+             "result": ["The trail goes on through the scrub and the broken ground, and then there is no more trail, "
                         "because {villain_short} has stopped running."]}]},
     "beast_the_den": {
         "family": "step",
@@ -274,8 +274,8 @@ BEATS = {
             {"label": ["Light a fire at the mouth and let the smoke go in first."],
              "requires": {"item": ["firewood", "oil_flask", "torch"]},
              "ops": [["flag", "smoked_it"], ["time", 60]],
-             "result": ["The smoke rolls into the den. From somewhere deep comes a cough that is almost like a man's, "
-                        "and then a growl that is not."]},
+             "result": ["The smoke rolls into the den. From somewhere deep comes the sound of something heavy moving, "
+                        "and then a noise like no animal you know."]},
             {"label": ["Go in with everything you have, and let it know you are coming."],
              "ops": [["flag", "went_loudly"]],
              "result": ["You go in shouting. Let it come. You are done with waiting."]}]},
@@ -286,7 +286,8 @@ BEATS = {
                  ["You go on, but you go on faster.", "It is a long way yet to anywhere with a door that bars.",
                   "{villain_short} is not far. It wants you to know that."]]},
     "beast_carcass": {
-        "family": "villain", "where": ["camp"], "time": ["dawn", "day"],
+        "family": "villain", "where": ["camp"], "time": ["dawn", "day"], "picture": "camp_night",
+        "when": {"adventure": {"chapter": ["killings", "price"], "at_large": True}},
         "text": [["In the morning there is a dead hind at the edge of your camp, laid out as neat as a gift, its "
                   "throat torn out.",
                   "At first light you find it: a sheep's head, set on a stone where the fire was, watching the "
@@ -304,7 +305,8 @@ BEATS = {
              "result": ["The bite is the bite of the old songs. You learn a little of how it kills."],
              "fail_result": ["It tells you nothing you did not know, except that it was very strong."]}]},
     "beast_test_night": {
-        "family": "villain", "where": ["camp"], "time": ["night"],
+        "family": "villain", "where": ["camp"], "time": ["night"], "picture": "camp_night",
+        "when": {"adventure": {"chapter": ["killings", "price"], "at_large": True}},
         "text": [["In the dead of night the horses scream, and then there is something huge between the fire and "
                   "the dark.",
                   "The watch shouts once, and you wake to a weight hitting the edge of camp and a smell like a "
@@ -338,15 +340,15 @@ TEMPER = {
     "first_words": [
         "It does not roar. It breathes, long and slow, and the sound fills the dark.",
         "It comes out of the dark without hurry, as if this is the hundredth time and you are the hundredth hunter.",
-        "A sound like a mill-wheel turning, deep in its chest. Then it comes.",
-        "It lowers its head, and the bristles rise along its back, and it looks at you with something like hate.",
-        "It shakes itself, and old blood flies from its hide, and it opens its mouth wide.",
+        "A sound like a mill-wheel turning, somewhere in the dark ahead. Then it comes.",
+        "It lowers itself, and gathers, and looks at you with something like hate.",
+        "It shakes itself, and old blood flies from it, and it opens its jaws wide.",
         "It smells you before it sees you, and it is glad."],
     "omens": [
         "A dead raven on the path, its head bitten clean away.",
         "Every dog in the hamlet you pass is howling, and none of them will say why.",
         "The birds go quiet in the trees around you, all at once, as if a door had shut.",
-        "Tufts of coarse hair caught on the brambles at the height of your shoulder.",
+        "The brambles torn and wet at the height of your shoulder, as if something big had pushed through.",
         "A shepherd's crook broken in two and thrown down in the road.",
         "Somewhere far off, on the wind, a sound that might be a laugh and is certainly not.",
         "The horses will not settle. They stare at the treeline with their ears flat.",

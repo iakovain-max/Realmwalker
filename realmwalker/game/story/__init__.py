@@ -235,7 +235,8 @@ def _play_scheduled(game, item: dict) -> None:
 
         t = threats.records(game.world).get(item["hook"])
         if t is not None and t["state"] in threats.LIVE and t.get("adventure") is None:
-            offer_hook(game, t)
+            town = item.get("town")
+            offer_hook(game, t, game.world.settlements[int(town)] if town is not None else None)
         return
     if item.get("beat") in game.tables.beats:
         beats.offer(game, item["beat"], adv=item.get("adv"), where=_where(game))
@@ -306,7 +307,8 @@ def _offer_choice(game) -> bool:
         for i, st in enumerate(ch["steps"]):
             if st["kind"] != "choose" or st["state"] != "open" or not st.get("beat"):
                 continue
-            if all(o["state"] != "open" or o["optional"] for o in ch["steps"][:i]) and                     beats.eligible(game, st["beat"], {"adv": adv["id"], "where": _where(game)}):
+            if all(o["state"] != "open" or o["optional"] for o in ch["steps"][:i]) and \
+                    beats.eligible(game, st["beat"], {"adv": adv["id"], "where": _where(game)}):
                 beats.offer(game, st["beat"], adv=adv["id"], step=st["id"], where=_where(game))
                 return True
     return False
@@ -322,7 +324,8 @@ def _due_slay(game) -> bool:
         if ch is None:
             continue
         for i, st in enumerate(ch["steps"]):
-            if st["kind"] == "slay" and st["state"] == "open" and                     all(o["state"] != "open" or o["optional"] for o in ch["steps"][:i]):
+            if st["kind"] == "slay" and st["state"] == "open" and \
+                    all(o["state"] != "open" or o["optional"] for o in ch["steps"][:i]):
                 named_encounter(game, adv, st["target"].get("role", "villain"))
                 if game.encounter is not None:
                     game.say(f"<danger>{esc(_villain_name(game, adv))} has come for you in the dark.</>", "story")
@@ -398,7 +401,7 @@ def on_descend(game, lm) -> None:
     """Down into a level: a band bound here already in place is tagged (a level filled before the tale began), and
     the finale's level warns before it (law 5: never a surprise)."""
     for adv in active(game):
-        for st in open_steps(adv):
+        for st in [s for ch in adv["chapters"] for s in ch["steps"] if s["state"] == "open"]:  # (early too)
             if st["kind"] != "finale" or st["target"].get("level") != lm.key:
                 continue
             group, name = villain_group(game, adv)
@@ -500,7 +503,7 @@ def on_job_taken(game, q: dict) -> None:
                 offer_hook(game, t, game.world.settlements[int(q["town"])])
             else:
                 beats.director(game.world).setdefault("scheduled", []).append(
-                    {"day": int(game.moment.total_days), "hook": t["id"]})
+                    {"day": int(game.moment.total_days), "hook": t["id"], "town": int(q["town"])})
             return
 
 
@@ -736,7 +739,8 @@ def map_signs(game) -> list[tuple[int, int, str]]:
     for t in threats.live(game.world):
         if t.get("adventure") is None and any(n in heard for n in t.get("signs", [])):
             x, y = threats.home_xy(game.world, t)
-            out.append((x, y, "sign"))
+            if game.player.explored[x, y]:  # (the signs do not give away a den you have never seen)
+                out.append((x, y, "sign"))
     return out
 
 
@@ -799,7 +803,16 @@ def finale_band(game, actor) -> dict | None:
     adv = adventures(game.world).get(tag.get("adv"))
     if adv is None or adv["state"] != "active":
         return None
-    return adv if any(st["kind"] == "finale" for st in open_steps(adv)) else None
+    if any(st["kind"] == "finale" for st in open_steps(adv)):
+        return adv
+    lm = game.local
+    return adv if lm is not None and at_its_den(adv, lm.key) else None
+
+
+def at_its_den(adv: dict, key: str | None) -> bool:
+    """This close-up map is the level the tale's finale is bound to (met there early, it is the finale still)."""
+    return key is not None and any(st["kind"] == "finale" and st["state"] == "open" and
+                                   st["target"].get("level") == key for ch in adv["chapters"] for st in ch["steps"])
 
 
 def hold_for_finale(game, actor) -> bool:

@@ -18,15 +18,15 @@
       "a cow, or what was a cow, dragged a long way from its field"
     ],
     "track": [
-      "prints as broad as a shield, pressed deep",
+      "marks in the soft earth as broad as a shield, pressed deep",
       "a furrow where something heavy dragged its kill",
-      "claw marks in the bark of an old ash, higher than a man can reach"
+      "the bark of an old ash torn away higher than a man can reach"
     ],
     "beast_witness": [
-      "\"I was on the hill road with the cart,\" {witness} says, and has to stop. \"It came out of the gorse like the hill itself was getting up. It took the ox, not me. It looked at me, and took the ox.\"",
+      "\"I was on the hill road with the cart,\" {witness} says, and has to stop. \"It came out of the scrub like the ground itself was getting up. It took the ox, not me. It looked at me, and took the ox.\"",
       "{witness} will not look at you while they tell it. \"Big as a haywain. It went up towards {home} with half the carcass in its jaws, and I never heard it breathe hard once.\"",
-      "\"They'll tell you I was drunk,\" says {witness}. \"I wasn't. It stood up on its hind legs to look at me. Then it went back up to {home}, slow, like it had all the time there is.\"",
-      "{witness} shows you the scar first. \"It did that with one swipe, going past. If it had stopped I'd be dead. It wasn't hungry for me. Not that night.\""
+      "\"They'll tell you I was drunk,\" says {witness}. \"I wasn't. It stopped in the road to look at me. Then it went back towards {home}, slow, like it had all the time there is.\"",
+      "{witness} shows you the scar first. \"It did that going past, without even stopping. If it had stopped I'd be dead. It wasn't hungry for me. Not that night.\""
     ],
     "witness_tale": [
       "{witness} tells you what they saw, and their hands shake the whole time.",
@@ -76,7 +76,7 @@
         "The Hunt for {villain}",
         "{villain_short} of {home}",
         "What Walks Above {town}",
-        "The Hunger in {area}"
+        "The Hunger at {town}"
       ],
       "hook": [
         "{patron} meets you at the door with the look of someone who has not slept. \"It is {villain}. It has come down from {home} again, and this time it took one of ours. You have the look of someone who could finish it.\"",
@@ -86,7 +86,7 @@
       ],
       "premise": [
         "A named killer of the old songs has come down from {home} on {town}: find what it is, learn what it fears, and kill it in its den.",
-        "{villain} is killing in {area} again. Read its kills, find the one who saw it, learn what it fears, and finish it at {home}.",
+        "{villain} is killing round {town} again. Read its kills, find the one who saw it, learn what it fears, and finish it at {home}.",
         "{town} is being eaten, a family at a time, by {villain} out of {home}. Somebody has to learn how it can be killed, and then go up and do it."
       ],
       "places": {
@@ -280,7 +280,7 @@
         },
         "words": {
           "warning": [
-            "The air beyond this point stinks of old blood and wet fur. Whatever lives here is very close, and it is awake.",
+            "The air beyond this point stinks of old blood and rot. Whatever lives here is very close, and it is awake.",
             "Bones underfoot, gnawed white, and a breathing in the dark ahead that is not yours.",
             "This is the end of the den. Rest now if you mean to, because there will be no rest beyond it."
           ],
@@ -323,7 +323,7 @@
           "pages": {
             "place": [
               "{town} sleeps with its doors unbarred for the first time in a year. The children are let out to the fields again, though their mothers still count them at dusk.",
-              "The people of {town} dragged what was left of {villain_short} down from {home} and burned it in the square. Everyone came to watch, and nobody cheered until it was ash.",
+              "The people of {town} dragged what was left of {villain_short} into the square and burned it there. Everyone came to watch, and nobody cheered until it was ash.",
               "There is a new song in the inn at {town}, and it is about you. It is not a good song, but they sing it every night.",
               "{town} hung the skull of {villain} over the door of its hall, and the elders swear the flocks are fatter for it already."
             ],
@@ -331,10 +331,10 @@
               "{patron} paid what they promised, and would have paid twice. \"I did not think anyone would come,\" they said. \"Nobody ever does.\"",
               "{patron} keeps a seat by the fire for you, they say, should you ever come back to {town}.",
               "{patron} has sent word to every farm in {area}: whoever shelters you, shelters a friend of {town}.",
-              "{patron} went up to {home} afterwards, alone, to see it for themselves. They came back and said nothing at all for a day."
+              "{patron} went out afterwards, alone, to see the body for themselves. They came back and said nothing at all for a day."
             ],
             "ally": [
-              "{ally} has the den's mouth for a trap-line now, and says the hares are bolder than they were.",
+              "{ally} has the beast's old runs for a trap-line now, and says the hares are bolder than they were.",
               "{ally} tells the tale in the inn whenever someone buys the ale, and makes your part bigger every time.",
               "{ally} went back to the woods. They say they think of you when the light goes.",
               "{ally} is the one the villages call for now, when something is at the flocks."
@@ -346,10 +346,10 @@
               "{witness} has told it so often that they half believe they were brave."
             ],
             "hero": [
-              "You came down from {home} with blood to the elbow and the name {villain} in every mouth.",
-              "The hunt is over. You are a little more than you were: someone who went up to {home} and came back.",
+              "You came back to {town} with blood to the elbow and the name {villain} in every mouth.",
+              "The hunt is over. You are a little more than you were: someone who hunted {villain} and lived.",
               "Somewhere a minstrel is already getting it wrong. That is what it is to be remembered.",
-              "You will not forget the den at {home}. Neither, now, will anyone in {area}."
+              "You will not forget {villain}. Neither, now, will anyone in {area}."
             ]
           }
         },

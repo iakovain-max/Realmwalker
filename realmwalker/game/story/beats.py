@@ -199,8 +199,11 @@ def _adventure(game, rec, value) -> bool:
     if "blueprint" in value and adv["blueprint"] not in (value["blueprint"] if isinstance(value["blueprint"], list)
                                                           else [value["blueprint"]]):
         return False
-    if "chapter" in value and adv["chapters"][adv["chapter"]]["id"] != value["chapter"]:
+    if "chapter" in value and adv["chapters"][adv["chapter"]]["id"] not in (
+            value["chapter"] if isinstance(value["chapter"], list) else [value["chapter"]]):
         return False
+    if value.get("at_large") and (adv.get("boss_fled") or adv.get("boss_dead")):
+        return False  # (gone to ground, hurt: it no longer comes looking for you)
     return True
 
 

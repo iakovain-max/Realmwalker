@@ -265,8 +265,9 @@ def _templates(game, adv: dict) -> list[tuple[str, str]]:
     wk = wordsmod.weakness(game, adv)
     for line in (wk or {}).get("lore", []):
         out.append(("weakness lore", line))
-    for line in tb.adventures.get("epithets", {}).get("", []):
-        out.append(("epithet", line))
+    for family, lines in tb.adventures.get("words", {}).items():  # (witnesses' tales, the patron, nested tables)
+        for line in lines:
+            out.append((f"words {family}", line))
     for tag in bp.get("epithets", []):
         for line in tb.adventures.get("epithets", {}).get(tag, []):
             out.append((f"epithet {tag}", line))

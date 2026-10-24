@@ -113,7 +113,7 @@ def test_the_beast_from_its_hook_to_its_ending(made, tables, monkeypatch):
     story.daily(game)
     assert story.find_step(game, adv["id"], "price.2")["state"] == "done"
     assert story.on_night(game, "camp") and beats.pending(game)["beat"] == "beast_bait_or_track",         "the choice is put once what comes before it is done"
-    _play(game, _choice(game, "Follow the blood"))
+    _play(game, _choice(game, "Follow its trail"))
     assert "tracked" in adv["flags"] and game.encounter is not None
     beast = game.encounter.creatures[0]
     assert beast.story == {"adv": adv["id"], "role": "villain"}
