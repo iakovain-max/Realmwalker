@@ -3,8 +3,11 @@
     .venv/Scripts/python.exe tools/showcase.py [--sheet vignettes] [--out build/showcase]
 
 Sheets: vignettes (the fourteen backdrops at day and at night, with figures); letter (a letter's page, in each of the
-three hands); mark (a town's close-up map dressed for a mark: --mark burned, festival, siege...). Opens the game's window for a moment,
-draws the sheet, saves it as a PNG and closes. Anton looks at these to judge the pictures.
+three hands); mark (a town's close-up map dressed for a mark: --mark burned, festival, siege...); signs (the world map
+with a town under each sign, B.8); titlecard (the Beast's first chapter opening); epilogue (its first page, with its
+picture); camp (the camp at dawn with the carcass the beast left); all (every sheet, and the mark sheet for each mark
+that dresses a town). Opens the game's window for a moment, draws the sheet, saves it as a PNG and closes. Anton
+looks at these to judge the pictures.
 """
 
 from __future__ import annotations
@@ -16,7 +19,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-SHEETS = ("vignettes", "letter", "mark")
+SHEETS = ("vignettes", "letter", "mark", "signs", "titlecard", "epilogue", "camp")
+MARKS = ("burning", "burned", "sacked", "siege", "plague", "festival", "memorial", "rebuilding", "emptied")
 
 
 def _letter_screen(app, hand: str):
@@ -76,6 +80,70 @@ def _mark_town(app, mark: str, world_name: str = "Townland:21") -> None:
                 break
 
 
+def _signs(app) -> None:
+    """The world map, with the towns about the start each under a sign (the console's showcase)."""
+    import copy
+
+    from realmwalker.game.state import new_game
+    from realmwalker.ui.screens.debug_console import DebugConsole
+    from realmwalker.ui.screens.world_map import WorldMapScreen
+    from realmwalker.world.generator import WorldOptions
+    from tests.worlds import cached_world
+
+    world = copy.deepcopy(cached_world(WorldOptions("Signland", 21, "small", history=60), app.tables))
+    game = new_game(world, app.tables)
+    game.survival = False
+    app.start_game(game)
+    game.world.time = (game.world.time // 1440 + 1) * 1440 + 15 * 60
+    DebugConsole(app).run("showcase")
+    app.push(WorldMapScreen(app, app.top))
+
+
+def _zoom_in(app) -> None:
+    """Closer, once the map has opened (it opens fitted to the land)."""
+    app.top.target = app.top.ppc = 32.0
+
+
+def _tale(app, what: str) -> None:
+    """A game near a beast with its tale begun: its title card, its epilogue, or the camp it left a carcass at."""
+    import copy
+
+    from realmwalker.game import camp, story
+    from realmwalker.game.state import new_game
+    from realmwalker.game.story import beats, endings, forge
+    from realmwalker.world import threats
+    from realmwalker.world.generator import WorldOptions
+    from tests.worlds import cached_world
+
+    world = copy.deepcopy(cached_world(WorldOptions("Forgeland", 77, "medium"), app.tables))
+    t = next(t for t in threats.records(world).values() if t["kind"] == "beast" and t["state"] != "ended")
+    town = min((s for s in world.settlements if s.kind in ("town", "village")),
+               key=lambda s: threats.distance(world, t, s.x, s.y))
+    game = new_game(world, app.tables, start_settlement=town.id)
+    game.survival = False
+    app.start_game(game)
+    adv = forge.make(game, threats.records(game.world)[t["id"]])
+    d = beats.director(game.world)
+    d["scheduled"] = []
+    if what == "titlecard":
+        d["card"] = {"adv": adv["id"], "chapter": 0}
+        return
+    d["card"] = None
+    if what == "epilogue":
+        endings.finish(game, adv)
+        return
+    game.world.time = (game.world.time // 1440 + 1) * 1440 + 6 * 60  # (dawn)
+    camp.make_camp(game)
+    camp.light_fire(game)
+    story.on_night(game, "camp")  # (whatever the beast does; the carcass is set below so the sheet shows it)
+    beats.director(game.world)["left"] = {"what": "carcass", "x": game.player.x, "y": game.player.y,
+                                          "day": int(game.moment.total_days)}
+    beats.director(game.world)["pending"] = None
+    from realmwalker.ui.screens.camp import CampScreen
+
+    app.push(CampScreen(app, game))
+
+
 def _sheet_screen(app, sheet: str):
     from realmwalker.ui.screens.base import Screen
 
@@ -119,12 +187,24 @@ def _vignettes(canvas, app) -> None:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--sheet", default="vignettes", choices=SHEETS)
+    ap.add_argument("--sheet", default="vignettes", choices=SHEETS + ("all",))
     ap.add_argument("--out", default=str(ROOT / "build" / "showcase"))
     ap.add_argument("--hand", default="plain", choices=("plain", "fine", "dark"))
     ap.add_argument("--mark", default="burned")
     ap.add_argument("--world", default="Townland:21", help="the test world, name:seed (Lifeland:33 has timber towns)")
     args = ap.parse_args(argv)
+    if args.sheet == "all":
+        rest = ["--out", args.out, "--world", args.world]
+        for sheet in SHEETS:
+            if sheet == "mark":
+                for mark in MARKS:
+                    main(["--sheet", "mark", "--mark", mark] + rest)
+            elif sheet == "letter":
+                for hand in ("plain", "fine", "dark"):
+                    main(["--sheet", "letter", "--hand", hand] + rest)
+            else:
+                main(["--sheet", sheet] + rest)
+        return 0
     from realmwalker.app import App
     from realmwalker.ui import window
 
@@ -138,10 +218,17 @@ def main(argv=None) -> int:
         if args.sheet == "mark":
             _mark_town(app, args.mark, args.world)
             return
+        if args.sheet == "signs":
+            _signs(app)
+            return
+        if args.sheet in ("titlecard", "epilogue", "camp"):
+            _tale(app, args.sheet)
+            return
         app.push(_sheet_screen(app, args.sheet))
 
     try:
-        window.run(app, script=[(10, show)], max_frames=70, screenshots_at={60: shot})
+        script = [(10, show)] + ([(30, _zoom_in)] if args.sheet == "signs" else [])
+        window.run(app, script=script, max_frames=70, screenshots_at={60: shot})
     finally:
         app.shutdown()
     print(f"Saved {shot}")

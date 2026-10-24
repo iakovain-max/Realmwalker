@@ -147,3 +147,31 @@ def test_the_carcass_lies_in_the_camps_picture(made, tables, monkeypatch):
     assert "creature/elk" in drawn(), "the dead hind at the camp's edge"
     camp.break_camp(game)
     assert story.left_at_camp(game) is None
+
+
+def test_the_console_stages_marks_scenes_and_the_showcase(make_app):
+    import copy
+
+    from realmwalker.game.state import new_game
+    from realmwalker.ui.screens.debug_console import DebugConsole
+    from realmwalker.world.generator import WorldOptions
+
+    app = make_app()
+    t = app.tables
+    game = new_game(copy.deepcopy(cached_world(WorldOptions("Lifeland", 33, "small", history=40), t)), t)
+    game.survival = False
+    app.start_game(game)
+    console = DebugConsole(app)
+    console.run("showcase")
+    assert sum(1 for s in game.world.settlements if s.status) >= 6, "towns about you carry a sign each"
+    s = max((s for s in game.world.settlements if s.kind in ("town", "city")), key=lambda s: s.population)
+    game.player.local_key = None
+    game.player.x, game.player.y = s.x, s.y
+    game.enter_local()
+    console.run("mark memorial")
+    assert "memorial" in s.status and "memorial" in (game.local.meta.get("marks") or {}), "stamped where you stand"
+    console.run("mark clear")
+    assert not s.status
+    console.run("scene plea")
+    assert (stage.current(game) or {}).get("id") == "plea"
+    assert app.error_count == 0

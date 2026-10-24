@@ -161,6 +161,79 @@ class DebugConsole(Screen):
             add_existing(game.leader, app.tables.items, it)
             self.say(f"<good>{markup.escape(it.magic.get('title') or slug)}</> is in {game.leader.name}'s pack.")
 
+        def town_here(game):
+            here = game.world.settlement_at(game.player.x, game.player.y)
+            if here is None:
+                self.say("<warn>Stand on a town first.</>")
+            return here
+
+        @self.command("mark", "mark <mark> | mark clear — put a mark on the town you stand on (mark list: show them)")
+        def _mark(args):
+            game = need_game()
+            if game is None:
+                return
+            from realmwalker.world import marks
+
+            known = sorted(marks.table(app.tables))
+            if not args or args[0] == "list" or args[0] not in known + ["clear"]:
+                self.say("Marks: " + ", ".join(known))
+                return
+            here = town_here(game)
+            if here is None:
+                return
+            day = game.moment.total_days
+            if args[0] == "clear":
+                here.status.clear()
+            else:
+                marks.add(game.world, here, args[0], day, app.tables, **({"by": 0} if args[0] == "siege" else {}))
+            if game.in_local and game.local is not None and game.local.kind == "settlement":
+                from realmwalker.game import fire, placemarks
+
+                placemarks.stamp(game, game.local, here)
+                fire.kindle(game, game.local, here)
+            self.say(f"{markup.escape(here.name)}: {', '.join(marks.marks_of(here)) or 'no marks'}.")
+
+        @self.command("scene", "scene <id> — play a scene on the town map you stand in (scene list: show them)")
+        def _scene(args):
+            game = need_game()
+            if game is None:
+                return
+            from realmwalker.game.story import stage
+
+            ids = sorted(app.tables.scenes)
+            if not args or args[0] == "list" or args[0] not in ids:
+                self.say("Scenes: " + ", ".join(ids))
+                return
+            if stage.current(game) is not None:
+                self.say("<warn>A scene is already playing.</>")
+                return
+            words = {"town": "this town", "hook": "Something has been killing our people.", "villain": "the beast",
+                     "home": "the hills", "hero": game.leader.name.split()[0], "sender": "a hunter",
+                     "ally": "the hunter"}
+            if stage.start(game, args[0], words=words, force=True) is None:
+                self.say("<warn>Scenes play on a town's map (> to go in).</>")
+                return
+            self.close()
+
+        @self.command("showcase", "showcase — mark the towns about you, one of each sign, to see on the world map")
+        def _showcase(args):
+            game = need_game()
+            if game is None:
+                return
+            from realmwalker.world import marks
+
+            p = game.player
+            day = game.moment.total_days
+            near = sorted(game.world.settlements, key=lambda s: abs(s.x - p.x) + abs(s.y - p.y))
+            here = game.world.settlement_at(p.x, p.y)
+            shown = ("burning", "siege", "plague", "tribute", "festival", "memorial", "sacked", "beset", "burned")
+            for s, mark in zip([s for s in near if s is not here], shown):
+                p.known_settlements.add(s.id)
+                marks.add(game.world, s, mark, day, app.tables, **({"by": 0} if mark == "siege" else
+                                                                   {"name": "a dragon"} if mark == "tribute" else {}))
+                self.say(f"{markup.escape(s.name)}: {mark}")
+            self.say("Open the world map (m) to see their signs. 'mark <mark>' marks the town you stand on.")
+
         @self.command("xp", "xp <n> — give the leader experience")
         def _xp(args):
             game = need_game()

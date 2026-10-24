@@ -167,7 +167,7 @@ def _shadow(canvas, s, x, y, size, a, t) -> None:
     heading = math.degrees(math.atan2(math.cos(ang) * ry, -math.sin(ang) * rx))
     w, h = size * 1.05, size * 0.66
     canvas.under(Image(("sign", "dragon_shadow"), _dragon, (px - w / 2, py - h / 2, w, h), rgba=(255, 255, 255,
-                                                                                                int(80 * a)),
+                                                                                                int(105 * a)),
                        angle=heading))
 
 
