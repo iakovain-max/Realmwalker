@@ -1434,8 +1434,9 @@ THREAT_KIND = Obj({
     "name": Str(max_len=40),
     "from": Str(choices=list(THREAT_SOURCES)),
     "tiers": TIER_BAND,
-    "tempers": List(Str(max_len=30), min_items=1),
-    "blueprints": List(Str(max_len=40), min_items=1),
+    # (a kind may live in the world before its tales are written: its threats still move, and end without the hero)
+    "tempers": List(Str(max_len=30)),
+    "blueprints": List(Str(max_len=40)),
     "reach": Int(min=1, max=60),  # tiles round its home that its signs and effects touch
     "stages": List(THREAT_STAGE, min_items=3, max_items=7),
     "hooks": word_list(3, 300),  # a notice board's line or a patron's plea ({villain}, {home}, {town}, {where})

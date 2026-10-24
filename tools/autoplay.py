@@ -300,6 +300,7 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
                     # (Expansion 3 F.3: a draconic spirit's resistance is shared only while its caster holds it)
                     fail(f"{f.name} still shares a draconic spirit's resistance without holding Summon Dragon")
         _check_factions(game, fail)
+        _check_threats(game, fail)
         _check_law(game, fail)
         _check_quests(game, fail)
         _check_magic(game, fail)
@@ -313,6 +314,36 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
             fail("the leader is dead but the game goes on")
         if game.over is None and any(not c.alive for c in game.party) and b is None and game.aftermath is None:
             fail("a dead companion is still in the party")
+
+
+def _check_threats(game, fail) -> None:
+    """Expansion 6: every threat points at real places and a real villain; a live one's villain still lives and its
+    clock is on a real stage; a doom never takes a settlement to nobody."""
+    from realmwalker.world import threats
+
+    w = game.world
+    kinds = game.tables.threats.get("kinds", {})
+    for tid, t in threats.records(w).items():
+        if t["id"] != tid or t["state"] not in threats.STATES or t["kind"] not in kinds:
+            fail(f"threat {tid} is broken ({t.get('state')}, {t.get('kind')})")
+            continue
+        home = t["home"]
+        if not (0 <= home.get("site", 0) < len(w.sites) and 0 <= home.get("settlement", 0) < len(w.settlements)):
+            fail(f"threat {tid} has a home that does not exist")
+        if any(not 0 <= s < len(w.settlements) for s in t["stakes"]):
+            fail(f"threat {tid} threatens a settlement that does not exist")
+        stage = t["scheme"]["stage"]
+        if t["state"] in threats.LIVE:
+            if not 0 <= stage < len(kinds[t["kind"]]["stages"]):
+                fail(f"threat {tid} is on a stage its scheme does not have ({stage})")
+            fig = threats.villain_figure(w, t)
+            if fig is not None and not fig.alive:
+                fail(f"threat {tid} goes on though its villain is dead")
+        elif t["state"] == "ended" and not t.get("outcome"):
+            fail(f"threat {tid} ended without an outcome")
+    for s in w.settlements:
+        if s.population <= 0:
+            fail(f"{s.name} has nobody left in it")
 
 
 def _check_factions(game, fail) -> None:

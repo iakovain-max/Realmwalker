@@ -77,6 +77,9 @@ class Politics:
         self.declare_wars(share)
         self.fight_wars(days)
         self.pressures(share)
+        from realmwalker.world import threats
+
+        threats.advance(self, days)  # the schemes of the world's villains (Expansion 6)
         if self.changed:
             fx.touch(self.w)
 
@@ -627,6 +630,9 @@ class Politics:
         dead = "one person" if lost == 1 else f"{lost} people"
         self.say("beast_attack", {"beast": f"{fig.name} {fig.epithet}".strip(), "place": s.name, "dead": dead},
                  where=(s.x, s.y), importance=3, factions=[realm] if realm else [], places=[s], figures=[fig.id])
+        from realmwalker.world import threats
+
+        threats.seed_from(self, "beast", figure=fig, site=site_id)  # its hunger has a shape now
 
     def dragon_wakes(self, d: dict) -> None:
         """A dragon comes down from its lair: a village burns, or buys its life with cattle and silver."""

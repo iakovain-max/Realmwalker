@@ -176,6 +176,9 @@ class WorldGenerator:
         self.sim.run()
         self.sim = None
         self._great_cities(world)
+        from realmwalker.world import threats
+
+        threats.seed(world, self.tables, self.rng.child("threats"))  # the dangers the history left (Expansion 6)
         self._progress(9)
         log.info("Generated world '%s' (seed %d, %s) in %.1f s: %d settlements, %d sites, %d named areas, "
                  "%d years of history (%d figures, %d events)", world.meta.name, world.meta.seed, world.meta.size,

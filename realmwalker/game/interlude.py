@@ -41,7 +41,13 @@ def pass_the_years(world, tables, rng: RNG | None = None, days: int | None = Non
     before = snapshot(world)
     from_day = news.now_days(world)
     world.time += days * 1440
-    politics.tick(world, tables)
+    world.politics["interlude"] = True  # (a threat moves at most a stage or so while nobody plays)
+    try:
+        politics.tick(world, tables)
+    finally:
+        world.politics.pop("interlude", None)
+        for t in world.politics.get("threats", {}).values():
+            t.pop("interlude_moved", None)
     after = snapshot(world)
     items = [n for n in world.news if n["day"] >= from_day and n.get("importance", 2) >= 2 and not n.get("player")]
     items.sort(key=lambda n: (-n.get("importance", 2), -n["day"]))

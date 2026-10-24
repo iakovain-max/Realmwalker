@@ -345,6 +345,11 @@ def figure_slain(game, hid, site_id: int | None = None) -> None:
     for key, holder in list(lairs.items()):
         if holder == fig.id:
             del lairs[key]
+    from realmwalker.world import news, threats
+
+    for t in threats.records(w).values():
+        if t["state"] != "ended" and t["villain"].get("figure") == fig.id:
+            threats.end(w, t, "slain", news.now_days(w))  # (its scheme dies with it)
 
 
 def beast_slain(game, fig, site_id: int) -> None:

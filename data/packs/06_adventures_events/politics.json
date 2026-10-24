@@ -1,0 +1,8 @@
+{
+  "_comment": "Expansion 6: what the politics engine says of threats (world/threats.py): a beast brought down by a hero of the history, a place emptied by a doom, a place filling again.",
+  "text": {
+    "threat_hunted": ["{hero} brought {beast} down at last, in its lair at {home}, and came home with its head.", "The hunt is over: {hero} killed {beast} in {home}. The farms round about lit fires all night.", "{beast} is dead. {hero} tracked it to {home} and finished it there, and will not say what it cost.", "Word from {home}: {hero} has slain {beast}, that the shepherds feared for a lifetime."],
+    "threat_emptied": ["{place} is empty. Those who lived went in the night, and {villain} has the fields.", "The last families have left {place}. Nobody would stay another winter with {villain} so near.", "{place} stands empty: doors open, hearths cold. The people who are left say {villain} drove them out.", "No smoke over {place} now. {villain} took too many, and the rest took to the roads."],
+    "threat_rebuilding": ["Smoke over {place} again: families have come back to mend the roofs and sow the fields.", "Settlers are coming to {place}, some of them its own folk, some strangers, all of them hopeful.", "{place} is filling again. The first harvest since the bad years is in, and the inn has opened its shutters."]
+  }
+}
