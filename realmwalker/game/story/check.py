@@ -176,8 +176,9 @@ def scene_problems(tables) -> list[str]:
             where = f"scenes.json: {sid}, cue {i + 1}"
             if c["cue"] not in stage.CUES:
                 out.append(f"{where}: the cue '{c['cue']}' is not one the stage knows.")
-            if c.get("key") and c["key"] not in scene.get("words", {}):
-                out.append(f"{where}: there are no words called '{c['key']}'.")
+            for k in ("key", "letter"):
+                if c.get(k) and c[k] not in scene.get("words", {}):
+                    out.append(f"{where}: there are no words called '{c[k]}'.")
             if c["cue"] == "beat" and c.get("id") and c["id"] not in tables.beats:
                 out.append(f"{where}: there is no beat called '{c['id']}'.")
             if c.get("role"):

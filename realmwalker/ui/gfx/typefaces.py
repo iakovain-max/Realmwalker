@@ -3,6 +3,7 @@
 heading: Cinzel (titles of screens and panels, names on the map)
 prose:   EB Garamond (longer passages, where there is room)
 title:   Grenze Gotisch (the name of the game)
+hand:    letters in their writers' hands (EB Garamond for plain folk and the great, Grenze Gotisch for villains)
 mono:    DejaVu Sans Mono (numbers)
 All are under the SIL Open Font Licence or the DejaVu licence; see assets/fonts.
 """
@@ -24,6 +25,9 @@ FACES = {
     "prose_bold": ("EBGaramond.ttf", "SemiBold"),
     "prose_italic": ("EBGaramond.ttf", "Regular"),
     "title": ("GrenzeGotisch.ttf", "Bold"),
+    "hand": ("EBGaramond.ttf", "Regular"),  # letters (game/letters.py): a plain hand
+    "hand_fine": ("EBGaramond.ttf", "Medium"),  # a lord's, a priest's, a scribe's
+    "hand_dark": ("GrenzeGotisch.ttf", "Regular"),  # a villain's
     "mono": ("DejaVuSansMono.ttf", None),
 }
 

@@ -166,6 +166,7 @@ class GameState:
         self.animations = "full"  # likewise (the stage: with "off" a scene's movement completes at once)
         self.stage_fx: list[dict] = []  # things changing hands in a scene, for the close-up map (never saved)
         self.camera: dict | None = None  # a scene's focus {"to": [x, y], "n"} (never saved)
+        self.letter: str | None = None  # a letter whose page opens next (game/letters.py; never saved)
         self._weather_said = -10**6  # world minute of the last remark about the sky
         self._realm_here: int | None = None
         self._wading = False

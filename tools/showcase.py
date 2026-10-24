@@ -2,7 +2,8 @@
 
     .venv/Scripts/python.exe tools/showcase.py [--sheet vignettes] [--out build/showcase]
 
-Sheets: vignettes (the fourteen backdrops at day and at night, with figures). Opens the game's window for a moment,
+Sheets: vignettes (the fourteen backdrops at day and at night, with figures); letter (a letter's page, in each of the
+three hands). Opens the game's window for a moment,
 draws the sheet, saves it as a PNG and closes. Anton looks at these to judge the pictures.
 """
 
@@ -15,11 +16,30 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-SHEETS = ("vignettes",)
+SHEETS = ("vignettes", "letter")
+
+
+def _letter_screen(app, hand: str):
+    from types import SimpleNamespace
+
+    from realmwalker.ui.screens.letter import LetterScreen
+
+    lines = ["To whoever carries a sword through Starograd,",
+             "Ysscara the Weaver has killed again. Anyone with the stomach for a hunt, ask for the headman of "
+             "Starograd. Its lair is the ruins of Haukhall, about fifteen miles to the north.",
+             "We are not fighters. We have tried, and we have buried those who tried.",
+             "What we can pay is yours. Only come."]
+    world = SimpleNamespace(politics={"letters": {"L1": {"from": "Gyda, headman of Starograd", "hand": hand,
+                                                         "seal": [150, 40, 32] if hand != "dark" else [30, 26, 30],
+                                                         "lines": lines, "key": 1, "read": True, "day": 0}}})
+    return LetterScreen(app, SimpleNamespace(world=world), "L1")
 
 
 def _sheet_screen(app, sheet: str):
     from realmwalker.ui.screens.base import Screen
+
+    if sheet == "letter":
+        return _letter_screen(app, app.showcase_hand)
 
     class Sheet(Screen):
         title = "Showcase"
@@ -60,6 +80,7 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--sheet", default="vignettes", choices=SHEETS)
     ap.add_argument("--out", default=str(ROOT / "build" / "showcase"))
+    ap.add_argument("--hand", default="plain", choices=("plain", "fine", "dark"))
     args = ap.parse_args(argv)
     from realmwalker.app import App
     from realmwalker.ui import window
@@ -67,7 +88,8 @@ def main(argv=None) -> int:
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     app = App(home=str(ROOT / "build" / "showcase_home"))
-    shot = out / f"{args.sheet}.png"
+    shot = out / (f"{args.sheet}.png" if args.sheet != "letter" else f"letter_{args.hand}.png")
+    app.showcase_hand = args.hand
 
     def show(app):
         app.push(_sheet_screen(app, args.sheet))

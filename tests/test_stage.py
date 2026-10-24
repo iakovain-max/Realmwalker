@@ -108,7 +108,8 @@ def test_a_runner_comes_to_you_through_a_crowded_street(tables, world):
     sq = townlife.town_for(game, lm).square
     taken = {(n.x, n.y) for n in npcs_in(game.world, s.id) if n.alive and n.present}
     p.lx, p.ly = next(c for c in sq[len(sq) // 2:] + sq if c not in taken)
-    rec = stage.start(game, "runner", force=True, then={"beat": "story_hook", "words": {}})
+    rec = stage.start(game, "runner", force=True, then={"beat": "story_hook", "words": {
+        "hook": "The wolf has killed again.", "villain": "the wolf", "home": "the hills", "where": "north"}})
     assert rec is not None
     reached = None
     for i in range(80):
@@ -127,6 +128,14 @@ def test_a_runner_comes_to_you_through_a_crowded_street(tables, world):
             break
         townlife.tick(game, lm, s)
     assert beats.pending(game) is not None and beats.pending(game)["beat"] == "story_hook", "and the beat opens"
+    # They pressed a letter into your hand: a page in its writer's hand, opening now and again from the pack.
+    from realmwalker.game import letters
+
+    item = next(it for it in game.leader.inventory if letters.lid_of(it))
+    rec = letters.of_item(game, item)
+    assert rec["lines"] and rec["from"] and rec["hand"] in letters.HANDS
+    assert game.letter == letters.lid_of(item), "its page opens"
+    assert "{" not in " ".join(rec["lines"]), rec["lines"]
 
 
 def test_words_of_a_scene_are_shown_whatever_the_text_detail(tables, world):

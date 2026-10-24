@@ -674,3 +674,31 @@ def test_every_story_picture_draws(pictured):
         assert any(isinstance(c, Image) and isinstance(c.key, tuple) and c.key[0] == "vig_far"
                    for c in commands(canvas)), "the chapter's place, painted"
     assert app.error_count == 0
+
+
+def test_a_letter_opens_as_a_page_and_again_from_the_pack(pictured):
+    """Expansion 6 B.2: a letter put in your hand is a page in its writer's hand, with its seal; its key line is
+    underlined once read; the pack offers to read the page again."""
+    from realmwalker.game import letters
+    from realmwalker.ui.gfx.scene import Text
+
+    app, game = pictured
+    lid = letters.write(game, sender="Gyda, headman of Oxbridge", hand="dark",
+                        lines=["Stranger,", "The wolf has killed again.", "Come."], key=1)
+    item = letters.give(game, lid)
+    letters.show(game, lid)
+    render(app)
+    canvas = render(app)
+    assert type(app.screens[-1]).__name__ == "LetterScreen"
+    texts = [c for c in commands(canvas, Text)]
+    assert any(c.text == "The wolf has killed again." and c.font == "hand_dark" for c in texts)
+    assert any(isinstance(c.key, tuple) and c.key[0] == "parchment" for c in commands(canvas, Image))
+    assert letters.records(game.world)[lid]["read"]
+    app.handle_event(KeyEvent("enter"))
+    render(app)
+    assert type(app.screens[-1]).__name__ != "LetterScreen"
+    from realmwalker.ui.screens.sheets import InventoryScreen
+
+    inv = InventoryScreen(app, game)
+    assert inv.action_name(item) == "Read the page"
+    assert app.error_count == 0

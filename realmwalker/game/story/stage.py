@@ -488,10 +488,22 @@ def _shout(game, lm, rec, c) -> bool:
 # ---------------------------------------------------------------------------- things
 @cue("give")
 def _give(game, lm, rec, c) -> bool:
-    """An item changes hands, drawn between the two for a moment: `who` gives `item` (an item id) to you."""
+    """An item changes hands, drawn between the two for a moment: `who` gives `item` (an item id) to you; with
+    `letter` (a words key), a sealed letter written from those words, in its sender's hand (game/letters.py)."""
     from realmwalker.rules.inventory import add_item
 
     npc = _actor(game, rec, c.get("who"))
+    if npc is not None and c.get("letter"):
+        lid = _letter(game, rec, c["letter"])
+        if lid is not None:
+            from realmwalker.game import letters
+
+            letters.give(game, lid)
+            rec["letter"] = lid
+            _fx(game, "sealed_letter", (npc.x, npc.y), (game.player.lx, game.player.ly))
+            game.say(f"<loot>{textgen.escape_markup(npc.first_name)} presses a sealed letter into your hand.</>",
+                     "loot")
+        return True
     item_id = c.get("item") or (rec.get("then") or {}).get("item")
     if npc is None or not item_id or game.tables.items.get(item_id) is None:
         return True
@@ -519,6 +531,44 @@ def _take(game, lm, rec, c) -> bool:
     if taken is not None:
         npc.inventory.append(taken)
         _fx(game, item_id, (game.player.lx, game.player.ly), (npc.x, npc.y))
+    return True
+
+
+def _letter(game, rec: dict, key: str) -> str | None:
+    """Write the scene's letter: its words (paragraphs split by a blank line), signed by the town's headman, lord or
+    eldest (or "the people of" the town), the paragraph naming the trouble ({hook}) underlined once read."""
+    from realmwalker.game import letters
+    from realmwalker.game.people import npcs_in
+
+    lines = game.tables.scenes.get(rec["id"], {}).get("words", {}).get(key)
+    if not lines:
+        return None
+    rng = game.world.rng.child(f"scene/letter/{rec['day']}/{rec['id']}")
+    template = rng.choice(list(lines))
+    words = dict((rec.get("then") or {}).get("words") or {})
+    words.update({k: v for k, v in rec["words"].items() if isinstance(v, str)})
+    folk = [n for n in npcs_in(game.world, rec["town"]) if n.alive]
+    writer = next((n for job in ("lord", "headman", "priest", "elder", "scribe") for n in folk if n.job == job), None)
+    town = game.world.settlements[rec["town"]].name
+    sender = f"{writer.first_name}, {writer.title} of {town}" if writer is not None else f"the people of {town}"
+    words.setdefault("town", town)
+    words["sender"] = sender
+    values = {k: str(v) for k, v in words.items()}
+    parts = template.split("\n\n")
+    paragraphs = [textgen.fill(part, rng, game.tables.adventures.get("words", {}), values) for part in parts]
+    key_line = next((i for i, part in enumerate(parts) if "{hook}" in part), None)
+    hand = letters.hand_for(writer.job if writer is not None else "plain")
+    return letters.write(game, sender=sender, lines=paragraphs, hand=hand, key=key_line)
+
+
+@cue("read")
+def _read(game, lm, rec, c) -> bool:
+    """The letter just given opens as its page (the scene waits under it)."""
+    from realmwalker.game import letters
+
+    if rec.get("letter"):
+        rec["hold"] = False
+        letters.show(game, rec["letter"])
     return True
 
 

@@ -543,6 +543,11 @@ class GameScreen(Screen):
             from realmwalker.ui.screens.finale import FinaleScreen
 
             self.app.push(FinaleScreen(self.app, game))
+        elif getattr(game, "letter", None) is not None:  # (a letter put in your hand: its page)
+            from realmwalker.ui.screens.letter import LetterScreen
+
+            lid, game.letter = game.letter, None
+            self.app.push(LetterScreen(self.app, game, lid))
         elif (game.world.politics.get("director") or {}).get("card"):
             from realmwalker.ui.screens.titlecard import TitleCardScreen
 

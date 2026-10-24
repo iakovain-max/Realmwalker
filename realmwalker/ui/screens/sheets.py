@@ -559,6 +559,8 @@ class InventoryScreen(Screen):
             return "Copy into spellbook" if magic.copy_problem(self.game, self.char, it) is None else "Read"
         if it.magic and not it.magic.get("identified") and not self.game.tables.items.slots_for(it):
             return "Study it"
+        if any(tag.startswith("letter:") for tag in it.tags):
+            return "Read the page"
         if d.get("use", {}).get("read"):
             return "Read it"
         if it.def_id == "sealed_letter" and any(tag.startswith("quest:") for tag in it.tags):
@@ -599,6 +601,13 @@ class InventoryScreen(Screen):
 
             for line in magic_items.study(self.game, self.char, it):
                 self.game.say(line, "magic")
+        elif name == "Read the page":  # (a letter of a story: its page in its writer's hand)
+            from realmwalker.game import letters
+            from realmwalker.ui.screens.letter import LetterScreen
+
+            lid = letters.lid_of(it)
+            if lid in letters.records(self.game.world):
+                self.app.push(LetterScreen(self.app, self.game, lid))
         elif name == "Read it":
             from realmwalker.game import books
 
