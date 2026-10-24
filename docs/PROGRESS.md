@@ -46,6 +46,29 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-10-25 (small hours): Adventures & Events Part C, task C.3 — paid work — branch `dlc/06-adventures-events` (not yet on main)
+
+Every town with people in it has paid work again: honest, small and few.
+- **Contracts.** A town has one at a time (a city or a great city two), and a new one every two to four weeks
+  whether or not you took the last. What it is comes from what the town has: a merchant wants a guard for the carts
+  to the nearest market town, or someone to carry sealed papers to a partner there; a priest wants the pilgrims
+  walked to a temple town; a village that knows its raiders hires swords for the day they come.
+- **Each road has a real danger on it**, and the one hiring tells you: a gang whose hideout is near the road, the
+  beasts that run with a beast of the old songs, a threat's brood, or — when the road is quiet of those — what its
+  land breeds (wolves out of the forest, footpads). You meet it there, on the road, once. Walk round it and you may
+  slip past.
+- **The terms are always shown**: pay, days, from where to where and how many miles, and what is on the road (with
+  how it measures up against your party) — when they ask you, in the journal, and on the town's notice board, which
+  now says who is hiring.
+- **Board bounties** now also name the beasts of the history that lair within reach (the two nearest), paid by the
+  watch; one that is a threat's villain opens its tale when you take it.
+- How to try: walk into any town, read the notice board (the HIRING line names who to ask), talk to them and pick
+  their own line ("About the carts to ..."), accept, and walk the road.
+- Checked: the careful player of the income measure takes a job again in its short run; every first town of the
+  test worlds has a contract.
+- Choices made without Anton: "a threat's servants" is the threat's own beast-kind for now (threats have no
+  lieutenants yet); a contract taken keeps the town's slot until its time is up; paid work has no hidden sides.
+
 ### Session, 2026-10-25 (small hours): Adventures & Events Part C, task C.2 — the end of the weekly offers — branch `dlc/06-adventures-events` (not yet on main)
 
 The job board is gone. Nobody thinks of a new job every week any more, and "Is there any work?" is no longer

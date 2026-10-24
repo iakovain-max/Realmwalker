@@ -338,16 +338,19 @@ def _contract(game, s, cid: str, rng) -> dict | None:
     giver = givers[0] if givers[0].notable else rng.choice(givers)
     if c["kind"] == "defend":
         target = quests.pick(game, "defend", giver, rng, town=s)
-        if target is None:
+        if target is None or int(target["when"]) - 1 <= today:
             return None
         danger = {"kind": "raiders", "group": target["group"], "faction": target["faction"], "met": False}
         route = [s.id, s.id]
     else:
-        dest = _destination(game, s, c["to"])
+        dest = _destination(game, s, c.get("to", "market"))
         if dest is None:
             return None
         path = _route(game, s, dest)
         if path is None:
+            return None
+        danger = danger_on(game, path, s, rng)  # (before anyone in the far town is thought of: it may be quiet)
+        if danger is None:
             return None
         if c["kind"] == "escort":
             used = {q["target"].get("npc") for q in waiting(game) + quests.active(game)}
@@ -363,9 +366,6 @@ def _contract(game, s, cid: str, rng) -> dict | None:
             if who is None:
                 return None
             target = {"kind": "deliver", "town": s.id, "dest": dest.id, "npc": who.id}
-        danger = danger_on(game, path, s, rng)
-        if danger is None:
-            return None
         route = [s.id, dest.id]
     q = quests.make(game, giver, target, rng)
     n = int(w.politics.get("next_contract", 0))
@@ -496,13 +496,14 @@ def on_the_road(game):
             continue
         if max(abs(p.x - d["at"][0]), abs(p.y - d["at"][1])) > 2 or d["group"] not in game.tables.creatures.encounters:
             continue
-        d["met"], d["met_day"] = True, int(game.moment.total_days)
         rng = w.rng.child(f"contract-danger/{q['id']}")
         enc = make_encounter(game, d["group"], rng)
         if not enc.creatures:
             continue
+        d["met"], d["met_day"] = True, int(game.moment.total_days)
         words = {"site": "", "area": "", **d.get("words", {}), "town": w.settlements[q["town"]].name,
                  "giver": q["words"].get("giver", "they")}
+        words = {k: esc(str(v)) for k, v in words.items()}
         enc.intro = rng.choice(_cspec(game)["met"][d["kind"]]).format(**words) + " " + enc.intro
         enc.attitude = "hostile"
         return enc
@@ -522,6 +523,8 @@ def terms_note(game, q) -> str:
                f"{esc(q['words'].get('when', 'when they come'))}."
     dest = w.settlements[q["target"]["dest"]]
     d = q.get("danger") or {}
+    if d.get("met"):
+        d = {"name": "met, and behind you"}
     return _cspec(game)["terms"].format(pay=money_text(q["reward"]), days=q["days"], town=esc(town.name),
                                         dest=esc(dest.name), miles=int(round(dist(town, dest) * 3)),
                                         danger=esc(d.get("name", "nothing worse than the weather")))

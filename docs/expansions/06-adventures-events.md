@@ -279,7 +279,7 @@ rarity and income measures pass. ADVENTURES.md §5.15–5.16, §6.7–6.11, §7,
   empty Work tab (`journal.py`) are rewritten. Tests: `tests/test_quests.py` (no offers rolled; every builder's
   `make` builds for a given target), and the tests that look for work today (`test_first_hour.py`, `test_app_ui.py`,
   `test_followers.py`) look for situations and contracts instead.
-- [ ] C.3 **Paid work** (`game/story/work.py`): one contract a town (two in a city or a great city), from its trade and
+- [x] C.3 **Paid work** (`game/story/work.py`): one contract a town (two in a city or a great city), from its trade and
   roads, its faiths and its known raiders, renewed every 14–28 days, each naming a real danger on its way (a threat's
   servants, a gang, a lair's beasts) so it can turn into a situation; built through `make` for `escort`, `deliver` and
   `defend`, paid by `base_quest`; bounties on real gangs, beasts with lairs and threats' servants; the Work tab shows

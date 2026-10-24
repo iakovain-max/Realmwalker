@@ -556,9 +556,27 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part C, task C.3 (*paid work*: `game/story/work.py`
-contracts, one a town, two in a city; bounties on beasts with lairs and threats' servants), on branch
-`dlc/06-adventures-events`. Read docs/expansions/06-adventures-events.md Part C and ADVENTURES.md §5.15, §8.10 first.
+Next session starts at: Expansion 6, **Adventures & Events**, Part C, task C.4 (*lives*: `game/story/lives.py`,
+`lives.json`: `npc.flags["life"]` by `lives.ensure` for towns near the hero; ties, wants, fears, secrets, things of
+note; `npc.profile` from the life; weekly life events that show by themselves; tests/test_lives.py), on branch
+`dlc/06-adventures-events`. Read docs/expansions/06-adventures-events.md Part C and ADVENTURES.md §5.16, §8.10 first.
+C.3 (2026-10-25, realmwalker-b): contracts are `world.politics["contracts"]` {sid: [record]} (`work.contracts(game,
+s)` renews: `_stale` drops expired/dead-giver/dead-traveller ones, `renew` fills `slots(s)` (2 for a city or great
+city) from work.json `contracts.kinds` caravan/papers/pilgrims/raiders, then looks again only after `renew` days
+when a slot stays empty: `politics["contract_day"]`). A record: {id "K<n>", kind, giver, until (14-28 days; a
+raiders one ends the day before they come), taken, danger, terms {pay, days, route}, quest}; the quest (built by
+`quests.make`, so base_quest pays) carries `contract`, `text_key` (quests.json contract_caravan/_pilgrims/_papers),
+`hidden` None and, for escort/deliver, `danger` {kind threat|gang|lair|wild, group, at [x, y] on the tcod route
+`_route`, name, words, met}. `danger_on` takes the real danger nearest the route (within `near` 8 tiles, the middle
+half of the road), not deadly first, threat > gang > lair, else what `choose_encounter` gives for the land there;
+`on_the_road` (state.py, before roll_encounter) makes the fight within 2 tiles of `at`, once. Taken: the record stays
+`taken` until its time is up (one at a time). Shown: `work.label` (the giver's own choice, contracts.kinds choice),
+`terms_note` in the offer and the journal, `work.notices` (HIRING) on the board; `quests.danger_note` reads
+`q["danger"]`. Board bounties also post the two nearest living beasts of the history within 30 tiles (hunt_beast,
+the watch pays; gangs' posters first; a threat's villain's opens its tale through story.on_job_taken). "A threat's
+servants" is read as the threat villain's own encounter group (threats have no lieutenants yet). The Earner's
+careful check reads `q["danger"]`. test_storyplay asks jobs >= 1 again; test_first_hour asserts a contract in every
+first town. Autoplay checks contract slots, kinds and dangers. No save format change.
 C.2 (2026-10-25, realmwalker-a): the weekly offers are gone (`offer_for`, `offers_in`, the "work" choice,
 `_offer_work`, `GameScreen._think_of_work`, `shadows.guild_work`, `Town.flags["offers"/"offer_day"]`). quests.py:
 each kind is `_<kind>_pick(game, npc, rng, town)` -> target ids (or None) and `_<kind>(game, npc, target, rng, town)`

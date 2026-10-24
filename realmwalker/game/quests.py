@@ -389,7 +389,8 @@ def danger_note(game, q: dict) -> str:
     uses for a band you meet), or "" when there is nothing to judge."""
     road = q.get("danger")  # (a contract's danger on the way: game/story/work.py)
     if road and not road.get("met") and road.get("group") in game.tables.creatures.encounters:
-        return f"<dim>On the road, {road.get('name', 'trouble')}:</> {ratio_words(beast_ratio(game, road['group']))}"
+        return f"<dim>On the road, {textgen.escape_markup(road.get('name', 'trouble'))}:</> " \
+               f"{ratio_words(beast_ratio(game, road['group']))}"
     group = q.get("target", {}).get("group")
     if q.get("template") not in ("hunt_beast", "defend") or group not in game.tables.creatures.encounters:
         return ""
@@ -908,14 +909,16 @@ def board_bounties(game, settlement) -> list[dict]:
     taken = {q["target"].get("gang") for q in active(game) if q["template"] == "bounty"}
     hunted = {q["target"].get("beast") for q in _all_quests(game) if q["template"] in ("hunt_beast", "clear_lair")}
     beasts = []
+    done = cleared(game)
     for key, hid in sorted(w.politics.get("lairs", {}).items()):
         fig = w.figures.get(hid)
         if fig is None or not fig.alive or fig.kind != "beast" or fig.id in hunted or not 0 <= int(key) < len(w.sites):
             continue
         site = w.sites[int(key)]
         group = past.group_of(game, fig)
-        if site.id not in cleared(game) and 3 <= dist(site, settlement) <= 30 and \
-                group in game.tables.creatures.encounters:
+        # (the watch posts only what it might hope a traveller could kill, as anyone setting work does)
+        if site.id not in done and 3 <= dist(site, settlement) <= 30 and \
+                group in game.tables.creatures.encounters and beast_ratio(game, group) < DEADLY_RATIO:
             beasts.append((dist(site, settlement), site.id, fig.id, group))
     wild = []  # (the gangs' posters first, then the beasts')
     for _, sid, fid, group in sorted(beasts)[:2]:

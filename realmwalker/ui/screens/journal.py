@@ -310,8 +310,9 @@ class JournalScreen(Screen):
                     canvas.text(3, y, f"{mark} {quests.title(game, q)}"[: list_w - 4], color)
             y += 1
         if not rows:
-            empty = ("<dim>You have taken on no work. Read the notice boards for bounties, and listen to people: "
-                     "someone with a real need will ask you. A faction you join sends word of its own work.</>"
+            empty = ("<dim>You have taken on no work. Read the notice boards for bounties and for who is hiring, "
+                     "and listen to people: someone with a real need will ask you. A faction you join sends word of "
+                     "its own work.</>"
                      if self.tab == WORK else
                      "<dim>You are part of no tale yet. Listen in towns for what troubles them, and read the notice "
                      "boards: someone always needs a hero.</>" if self.tab == ADVENTURES else
