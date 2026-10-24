@@ -872,6 +872,17 @@ def _check_quests(game, fail) -> None:
             fail(f"waiting quest {q['id']} ({q['template']}) has no giver")
         if q.get("state") != "offered":
             fail(f"waiting quest {q['id']} ({q['template']}) is {q.get('state')!r}")
+    for sid, recs in w.politics.get("contracts", {}).items():  # (paid work, C.3)
+        s = w.settlements[int(sid)]
+        if len(recs) > work.slots(s):
+            fail(f"{s.name} has {len(recs)} contracts at once")
+        for rec in recs:
+            q = rec["quest"]
+            if q["template"] not in ("escort", "deliver", "defend") or q.get("contract") != rec["id"]:
+                fail(f"contract {rec['id']} in {s.name} is not paid work of a known kind")
+            if q["template"] != "defend" and (not q.get("danger") or
+                                              q["danger"].get("group") not in game.tables.creatures.encounters):
+                fail(f"contract {rec['id']} in {s.name} names no real danger on its road")
     for q in game.quests:
         where = f"quest {q.get('id')} ({q.get('template')})"
         if q.get("template") not in game.tables.quests["templates"]:
