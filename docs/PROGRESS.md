@@ -75,7 +75,7 @@ A tale is offered on your first day.
 
 **Checked**: the full test suite, the autoplay bot (3,000 turns), the window smoke test (it now also shows the beat,
 the chapter card, the Adventures tab, the finale card and the epilogue), `tools/storybook.py --check` on three worlds,
-`tools/storyplay.py` (20 of 20).
+`tools/storyplay.py` (20 of 20), and a fresh review: its findings are fixed (the Beast's words fit a spider or a wolf as well as a troll; the beast troubles your camp only while it is at large; walking into its den early shows its card and meets the real boss; one name for the tale's town).
 
 **Choices made while you were away**: the beast bolts at half its hit points before its den (it never runs at the
 den); a party fighting the bait at night is helped by nothing special (the dark is part of the hunt); the story's
