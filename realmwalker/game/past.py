@@ -188,11 +188,30 @@ def beast_title(fig) -> str:
     return f"{fig.name} {fig.epithet}".strip()
 
 
+# Who holds a den, and the master they keep at its bottom (world/dungeon.style_for: hideout, temple).
+DEN_BOSSES = {"bandit_gang": "bandit_hideout", "cult": "cult_temple"}
+
+
+def den_holder(game, site):
+    """The gang or the cult whose den this site is, while it lasts."""
+    w = game.world
+    f = w.factions.get(site.faction) if site is not None and getattr(site, "faction", -1) >= 0 else None
+    return f if f is not None and f.active and f.kind in DEN_BOSSES and f.site == site.id else None
+
+
 def boss_for(game, site, boss: str | None) -> tuple[str | None, str | None]:
-    """Who waits at the bottom of a site, by the history: a named beast in its lair, or the king in the barrow.
-    Returns (encounter group, name), the name None when the place's master has no story."""
+    """Who waits at the bottom of a site, by the history: a named beast in its lair, the king in the barrow, or the
+    gang's own captain and the cult's own Voice in their dens. Returns (encounter group, name), the name None when
+    the place's master has no story."""
     if site is None:
         return boss, None
+    holder = den_holder(game, site)
+    if holder is not None and boss == DEN_BOSSES[holder.kind]:
+        from realmwalker.world import factions as fx
+
+        leader = fx.leader_of(game.world, holder)
+        if leader is not None and leader.alive:
+            return boss, leader.full_name()
     beast = lair_beast(game, site)
     if beast is not None and beast.kind == "beast":
         group = group_of(game, beast)
@@ -219,6 +238,15 @@ def on_battle(game, result) -> None:
         if fig is not None and fig.alive and fig.kind == "beast" and beast_title(fig) in names:
             beast_slain(game, fig, int(site_id))
     site = w.site_at(game.player.x, game.player.y)
+    holder = den_holder(game, site)
+    if holder is not None:
+        from realmwalker.world import factions as fx
+
+        leader = fx.leader_of(w, holder)
+        if leader is not None and leader.alive and leader.full_name() in names:
+            den_leader_slain(game, holder, leader, site)
+        if holder.flags.get("leader_slain") is not None and den_cleared(game):
+            den_falls(game, holder, site)
     if site is not None and site.kind == "tower":
         hid = w.politics.get("towers", {}).get(str(site.id))
         fig = w.figures.get(hid) if hid is not None else None
@@ -236,6 +264,71 @@ def on_battle(game, result) -> None:
                      player=True)
             game.say(f"<good>{esc(fig.full_name())} is still at last.</> <dim>{esc(cap(site.name))} is only a grave "
                      f"now.</>", "good")
+
+
+def _politics(game):
+    from realmwalker.world import news
+    from realmwalker.world.politics import Politics
+
+    w = game.world
+    rng = w.rng.child(f"deeds/{w.time}")
+    return Politics(w, game.tables, rng, day=news.now_days(w), year=game.tables.calendar.at(int(w.time)).year)
+
+
+def den_cleared(game) -> bool:
+    """The bottom of the den is taken: its master's band is no longer down here."""
+    from realmwalker.game import quests
+
+    lm = game.local
+    return quests.deepest(lm) and lm.populated and not any(a.group == quests.boss_of(lm) for a in lm.actors)
+
+
+def den_leader_slain(game, holder, leader, site) -> None:
+    """The gang's captain or the cult's Voice dies at the party's hands in their own den: the succession runs (a gang
+    may break up or choose a new captain; never one led by the dead), and the world remembers who did it."""
+    from realmwalker.game import reputation
+    from realmwalker.world import factions as fx
+    from realmwalker.world.history import remember
+
+    w = game.world
+    pol = _politics(game)
+    title = leader.full_name()
+    pol.die(leader, f"slain by {game.leader.name}", led=holder)
+    leader.died_at = f"X{site.id}"
+    holder.flags["leader_slain"] = game.moment.total_days
+    what = "the Voice of" if holder.kind == "cult" else "the captain of"
+    text = f"{game.leader.name} killed {title}, {what} {holder.name}, in {site.name}"
+    remember(w, pol.year, "slain", text, importance=2, factions=[holder.id], sites=[site.id], figures=[leader.id],
+             player=True)
+    amounts = {holder.id: -40.0}
+    for s in w.settlements:
+        if abs(s.x - site.x) + abs(s.y - site.y) <= 20:
+            realm = fx.realm_of_settlement(w, s)
+            if realm is not None:
+                amounts[realm.id] = max(amounts.get(realm.id, 0.0), 5.0)
+    reputation.deed(game, f"killed {title}", amounts, x=site.x, y=site.y, fame=3, importance=2, news_text=text)
+    game.say(f"<good>{esc(title)} is dead.</>", "good")
+
+
+def den_falls(game, holder, site) -> None:
+    """Its leader killed and its den taken: the gang or the cult is finished (Politics.fall), and the land hears."""
+    from realmwalker.game import reputation
+    from realmwalker.world.history import remember
+
+    if not holder.active:
+        return
+    w = game.world
+    pol = _politics(game)
+    pol.fall(holder)
+    if holder.kind == "cult":
+        text = f"{cap(holder.name)} are no more: {game.leader.name} killed their Voice and broke their temple in "                f"{site.name}"
+        said = f"<good>{esc(cap(holder.name))} are finished.</> <dim>Whatever was worshipped down here has nobody "                f"left to answer it.</>"
+    else:
+        text = f"{cap(holder.name)} are no more: {game.leader.name} killed their captain and cleared their den in "                f"{site.name}"
+        said = f"<good>{esc(cap(holder.name))} are finished.</> <dim>The roads round {esc(site.name)} will be the "                f"quieter for it.</>"
+    remember(w, pol.year, "faction_broken", text, importance=3, factions=[holder.id], sites=[site.id], player=True)
+    reputation.deed(game, f"broke {holder.name}", {}, x=site.x, y=site.y, fame=4, importance=3, news_text=text)
+    game.say(said, "good")
 
 
 def figure_slain(game, hid, site_id: int | None = None) -> None:
@@ -396,11 +489,15 @@ def artifacts_lying_at(game, site) -> list[int]:
 
 
 def on_arrive_dungeon(game, lm, site) -> None:
-    """The deepest level of a site keeps whatever the history left there, in a chest (or a coffin, in a barrow)."""
+    """The deepest level of a site keeps whatever the history left there, in a chest (or a coffin, in a barrow); a
+    den whose leader you killed, found empty below, is the end of its gang or cult."""
     from realmwalker.game import quests
 
     if site is None or not quests.deepest(lm):
         return
+    holder = den_holder(game, site)
+    if holder is not None and holder.flags.get("leader_slain") is not None and den_cleared(game):
+        den_falls(game, holder, site)
     wanted = {q["target"].get("artifact") for q in quests.active(game) if q["template"] == "retrieve"}
     for i in artifacts_lying_at(game, site):
         a = game.world.politics["artifacts"][i]

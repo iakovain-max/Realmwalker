@@ -334,6 +334,8 @@ def _check_factions(game, fail) -> None:
                 break
         if f.active and f.leader not in w.figures:
             fail(f"{f.name} has no leader")
+        elif f.active and f.kind in ("bandit_gang", "cult") and not w.figures[f.leader].alive:
+            fail(f"{f.name} is led by the dead")
     for war in w.wars:
         if war.get("attacker") not in w.factions or war.get("defender") not in w.factions:
             fail(f"a war between factions that do not exist: {war}")

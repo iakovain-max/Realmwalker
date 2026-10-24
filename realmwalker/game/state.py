@@ -379,6 +379,10 @@ class GameState:
                     from realmwalker.game import companions
 
                     companions.daily(self)
+                else:
+                    from realmwalker.game import uniques
+
+                    uniques.daily(self)  # (the rumours of the seven reach a hero who travels alone too)
             if self.renown.flags.get("captives"):
                 from realmwalker.game.gear import captives_slip
 
@@ -387,15 +391,15 @@ class GameState:
                 from realmwalker.game import quests
 
                 quests.daily(self)
-                here = self.world.settlement_at(self.player.x, self.player.y)
-                if here is not None and here.status.get("plague") and self.survival:
-                    from realmwalker.rules import health
+            here = self.world.settlement_at(self.player.x, self.player.y)
+            if here is not None and here.status.get("plague") and self.survival:
+                from realmwalker.rules import health
 
-                    rng = self.world.rng.child(f"plague-day/{self.world.time}")
-                    for c in self.party:
-                        if rng.chance(0.15):
-                            health.expose(c, self.tables, "plague", rng)
-                news.prune(self.world)
+                rng = self.world.rng.child(f"plague-day/{self.world.time}")
+                for c in self.party:
+                    if rng.chance(0.15):
+                        health.expose(c, self.tables, "plague", rng)
+            news.prune(self.world)
             if self.leader.animals:
                 from realmwalker.game.services import feed_animals
 
