@@ -1,0 +1,236 @@
+{
+ "_comment": "The income of storyplay's careful player over thirty days on the build before Part C of Adventures & Events (C.1; docs/ADVENTURES.md \u00a79, the income measure). Written by tools/storyplay.py --income --write; never rewritten after Part C begins.",
+ "build": "4d5512e 2026-10-25",
+ "runs": 24,
+ "days": 30,
+ "level": 3,
+ "worlds": [
+  "Forgeland",
+  "Threatland",
+  "Lawland"
+ ],
+ "mean_total": 81682.6,
+ "median_total": 76773.5,
+ "mean_work": 37505.1,
+ "mean_jobs": 6,
+ "mean_fights": 10.79,
+ "died": 5,
+ "per_run": [
+  {
+   "world": "Forgeland",
+   "total": 76260,
+   "work": 6360,
+   "jobs": 1,
+   "failed": 0,
+   "fights": 4,
+   "died": true
+  },
+  {
+   "world": "Threatland",
+   "total": 92894,
+   "work": 53368,
+   "jobs": 7,
+   "failed": 1,
+   "fights": 9,
+   "died": false
+  },
+  {
+   "world": "Lawland",
+   "total": 37802,
+   "work": 33488,
+   "jobs": 4,
+   "failed": 0,
+   "fights": 13,
+   "died": false
+  },
+  {
+   "world": "Forgeland",
+   "total": 78393,
+   "work": 34536,
+   "jobs": 4,
+   "failed": 1,
+   "fights": 9,
+   "died": false
+  },
+  {
+   "world": "Threatland",
+   "total": 106110,
+   "work": 43381,
+   "jobs": 6,
+   "failed": 0,
+   "fights": 8,
+   "died": false
+  },
+  {
+   "world": "Lawland",
+   "total": 51688,
+   "work": 45858,
+   "jobs": 9,
+   "failed": 0,
+   "fights": 11,
+   "died": false
+  },
+  {
+   "world": "Forgeland",
+   "total": 9737,
+   "work": 17957,
+   "jobs": 3,
+   "failed": 1,
+   "fights": 6,
+   "died": false
+  },
+  {
+   "world": "Threatland",
+   "total": 124390,
+   "work": 47940,
+   "jobs": 10,
+   "failed": 1,
+   "fights": 19,
+   "died": true
+  },
+  {
+   "world": "Lawland",
+   "total": 62740,
+   "work": 56125,
+   "jobs": 10,
+   "failed": 0,
+   "fights": 15,
+   "died": false
+  },
+  {
+   "world": "Forgeland",
+   "total": 34629,
+   "work": 21886,
+   "jobs": 5,
+   "failed": 0,
+   "fights": 9,
+   "died": false
+  },
+  {
+   "world": "Threatland",
+   "total": 31347,
+   "work": 29058,
+   "jobs": 5,
+   "failed": 1,
+   "fights": 4,
+   "died": false
+  },
+  {
+   "world": "Lawland",
+   "total": 77287,
+   "work": 29741,
+   "jobs": 6,
+   "failed": 0,
+   "fights": 6,
+   "died": false
+  },
+  {
+   "world": "Forgeland",
+   "total": -200,
+   "work": 14190,
+   "jobs": 3,
+   "failed": 1,
+   "fights": 6,
+   "died": true
+  },
+  {
+   "world": "Threatland",
+   "total": 82252,
+   "work": 34053,
+   "jobs": 5,
+   "failed": 0,
+   "fights": 10,
+   "died": false
+  },
+  {
+   "world": "Lawland",
+   "total": 63771,
+   "work": 53091,
+   "jobs": 8,
+   "failed": 0,
+   "fights": 16,
+   "died": false
+  },
+  {
+   "world": "Forgeland",
+   "total": 205070,
+   "work": 59279,
+   "jobs": 9,
+   "failed": 0,
+   "fights": 17,
+   "died": false
+  },
+  {
+   "world": "Threatland",
+   "total": 159187,
+   "work": 37410,
+   "jobs": 5,
+   "failed": 0,
+   "fights": 11,
+   "died": false
+  },
+  {
+   "world": "Lawland",
+   "total": -200,
+   "work": 48380,
+   "jobs": 9,
+   "failed": 1,
+   "fights": 14,
+   "died": true
+  },
+  {
+   "world": "Forgeland",
+   "total": 67185,
+   "work": 50844,
+   "jobs": 8,
+   "failed": 0,
+   "fights": 9,
+   "died": false
+  },
+  {
+   "world": "Threatland",
+   "total": 173599,
+   "work": 38035,
+   "jobs": 6,
+   "failed": 0,
+   "fights": 15,
+   "died": false
+  },
+  {
+   "world": "Lawland",
+   "total": 127870,
+   "work": 48835,
+   "jobs": 8,
+   "failed": 0,
+   "fights": 11,
+   "died": false
+  },
+  {
+   "world": "Forgeland",
+   "total": 80072,
+   "work": 41957,
+   "jobs": 5,
+   "failed": 0,
+   "fights": 8,
+   "died": false
+  },
+  {
+   "world": "Threatland",
+   "total": 214799,
+   "work": 42401,
+   "jobs": 6,
+   "failed": 0,
+   "fights": 12,
+   "died": false
+  },
+  {
+   "world": "Lawland",
+   "total": 3700,
+   "work": 11950,
+   "jobs": 2,
+   "failed": 0,
+   "fights": 17,
+   "died": true
+  }
+ ]
+}
