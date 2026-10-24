@@ -26,8 +26,14 @@ def name(world, place: dict) -> str:
     s = world.settlement_at(x, y)
     if s is not None:
         return s.name
+    if world.road[x, y] and world.settlements:  # (a kill on the road: "the road near Skartun")
+        near = min(world.settlements, key=lambda t: math.hypot(t.x - x, t.y - y))
+        if math.hypot(near.x - x, near.y - y) <= 12:
+            return f"the road near {near.name}"
     area = world.area_at(x, y)
-    return f"the country of {area.name}" if area is not None else "the open country"
+    if area is None:
+        return "the open country"
+    return area.name if area.name.lower().startswith("the ") else f"the country of {area.name}"
 
 
 def dist(world, a: dict, b: dict) -> float:
