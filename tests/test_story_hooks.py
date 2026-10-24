@@ -200,3 +200,55 @@ def test_a_tale_and_its_foes_are_saved_and_come_back_the_same(made, tables, tmp_
     lm = back.world.local_maps[game.local.key]
     assert any(getattr(c, "story", None) == {"adv": adv["id"], "role": "villain"} for a in lm.actors
                for c in a.creatures)
+
+
+def _take_the_tale(made, tables):
+    game, _ = _start_near_a_beast(made, tables)
+    story.daily(game)
+    _play(game, _choice(game, "hunt it"))
+    adv = story.active(game)[0]
+    beats.director(game.world)["card"] = None
+    for st in adv["chapters"][0]["steps"]:  # (straight to the second chapter: what it fears)
+        story.step_done(game, adv["id"], st["id"])
+    beats.director(game.world)["card"] = None
+    return game, adv
+
+
+def test_the_powers_answer_what_will_kill_it(made, tables):
+    from realmwalker.game import divining
+
+    game, adv = _take_the_tale(made, tables)
+    asks = [s for s in divining.questions(game) if s.kind == "story"]
+    assert asks and asks[0].ref == adv["id"], "Commune and Contact Other Plane can ask the tale's question first"
+    assert any(s.kind == "story" for s in divining._story_subjects(game))
+    said = divining._answer(game, asks[0], ("Yes.", "No."))
+    assert "{" not in said and len(said) > 30
+    learn = story.find_step(game, adv["id"], "price.1")
+    assert learn["state"] == "done" and "weakness" in adv["keys"] and adv["clues"].get("villain")
+    assert not [s for s in divining.questions(game) if s.kind == "story"], "asked once, answered once"
+
+
+def test_the_divination_spell_answers_it_too(made, tables):
+    from realmwalker.game import divining
+
+    game, adv = _take_the_tale(made, tables)
+    subject = divining._story_subjects(game)[0]
+    out = divining._divination(game, game.leader, game.tables.spells["divination"], subject)
+    assert any("far bell" in line for line in out)
+    assert story.find_step(game, adv["id"], "price.1")["state"] == "done"
+
+
+def test_a_hunting_job_on_a_threat_s_beast_opens_its_tale(made, tables, monkeypatch):
+    from realmwalker.game import quests
+
+    game, t = _start_near_a_beast(made, tables)
+    beats.director(game.world)["scheduled"] = []
+    town = game.world.settlements[t["stakes"][0]] if t["stakes"] else game.world.settlements[0]
+    site = game.world.sites[t["home"]["site"]]
+    q = {"id": "Q900", "template": "hunt_beast", "state": "offered", "town": town.id, "days": 20, "journal": [],
+         "target": {"x": site.x, "y": site.y, "group": "wolves", "beast": t["villain"]["figure"], "site": site.id},
+         "words": {}, "reward": 50, "done": False}
+    monkeypatch.setattr(quests, "fill", lambda game, q, key: "Hunt it.")  # (the job's words are not tested here)
+    quests.accept(game, q)
+    rec = beats.pending(game)
+    assert rec is not None and rec["beat"] == "story_hook" and rec["words"]["threat"] == t["id"]

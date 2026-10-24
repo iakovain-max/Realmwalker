@@ -893,6 +893,10 @@ def accept(game, q) -> list[str]:
     if q["template"] == "hunt_beast":
         game.player.explored[t["x"], t["y"]] = True
         notes.append("<info>Where it was last seen is marked on your map.</>")
+    if t.get("beast") is not None:
+        from realmwalker.game import story
+
+        story.on_job_taken(game, q)  # (a beast with a tale of its own: Expansion 6)
     if q["template"] == "escort":
         who = w.npcs.get(t["npc"])
         if who is not None:

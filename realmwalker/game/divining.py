@@ -885,12 +885,23 @@ def _work_truth(game, q) -> list[str]:
     return out
 
 
+def _story_subjects(game) -> list[Subject]:
+    from realmwalker.game import story
+
+    return [Subject(q["ask"], "story", q["adv"], data={"ask": "story", "step": q["step"], "yes": True})
+            for q in story.divine_questions(game)]
+
+
 def _divination(game, caster, spell, target) -> list[str]:
-    from realmwalker.game import quests
+    from realmwalker.game import quests, story
 
     out = [f"{_first(caster)} burns the incense and asks the gods of {esc(target.name)}."]
     if muddled(game, caster, "divination"):
         return out + ["<dim>The smoke curls and says nothing. Asked too often; rest first.</>"]
+    if target.kind == "story":
+        said = story.divined(game, target.ref, target.data["step"])
+        return out + ["<magic>A voice like a far bell answers:</>"] + [esc(x) for x in said or
+                                                                     ["<dim>No answer comes.</>"]]
     q = quests.by_id(game, target.ref)
     if q is None:
         return out + ["<dim>No answer comes.</>"]
@@ -903,7 +914,7 @@ def questions(game) -> list[Subject]:
     from realmwalker.game import quests
 
     w = game.world
-    out = []
+    out = _story_subjects(game)
     for q in quests.active(game):
         if q["done"]:
             continue
@@ -936,6 +947,11 @@ def _answer(game, s: Subject, words: tuple[str, str]) -> str:
     from realmwalker.game import quests
 
     w = game.world
+    if s.data.get("ask") == "story":
+        from realmwalker.game import story
+
+        said = story.divined(game, s.ref, s.data["step"])
+        return f"{esc(s.name)} <magic>{esc(said[0]) if said else 'No answer comes.'}</>"
     yes = bool(s.data.get("yes"))
     if s.data.get("ask") == "work" and not yes:
         q = quests.by_id(game, s.ref)
@@ -974,7 +990,7 @@ def _commune(game, caster, spell, target, how: str) -> list[str]:
     pool = questions(game)
     if not pool:
         return out + ["<dim>You have nothing to ask that the powers would answer.</>"]
-    chosen = [target] if target is not None and target.kind == "question" else []
+    chosen = [target] if target is not None and target.kind in ("question", "story") else []
     chosen += [q for q in pool if q.name not in {c.name for c in chosen}][: n - len(chosen)]
     for s in chosen:
         if how == "other_plane" and rng.random() < 1 / 6:
@@ -1193,7 +1209,7 @@ def subjects(game, caster, sid: str) -> list[Subject]:
         if how == "augury":
             return _augury_subjects(game)
         if how == "divination":
-            return _work_subjects(game)
+            return _story_subjects(game) + _work_subjects(game)
         if how in ("commune", "other_plane"):
             return questions(game)
         if how == "lore":

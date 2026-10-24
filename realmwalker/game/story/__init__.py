@@ -416,6 +416,58 @@ def on_quest_end(game, q: dict, ok: bool) -> None:
             st["state"] = "failed"
 
 
+def on_job_taken(game, q: dict) -> None:
+    """A hunting job on a beast that is a threat's villain opens that threat's tale (its hook beat now, or as soon as
+    no other beat waits): until Part C retires the job offers, the board's beasts lead into their stories."""
+    from realmwalker.game.story import beats
+    from realmwalker.world import threats
+
+    if q.get("template") not in ("hunt_beast", "clear_lair") or q.get("adventure"):
+        return
+    fig = q.get("target", {}).get("beast")
+    if fig is None:
+        return
+    for t in threats.records(game.world).values():
+        if t["state"] in threats.LIVE and t.get("adventure") is None and t["villain"].get("figure") == fig:
+            if beats.pending(game) is None:
+                offer_hook(game, t, game.world.settlements[int(q["town"])])
+            else:
+                beats.director(game.world).setdefault("scheduled", []).append(
+                    {"day": int(game.moment.total_days), "hook": t["id"]})
+            return
+
+
+def divine_questions(game) -> list[dict]:
+    """What the powers can be asked of a tale (a learn step with a divination route, in the open chapter):
+    [{"adv", "step", "ask"}] for divining.questions and the Divination spell."""
+    from realmwalker.game.story import words as wordsmod
+
+    out = []
+    for adv in active(game):
+        for st in open_steps(adv):
+            if st["kind"] == "learn" and any(r.get("how") == "divine" for r in st["target"].get("routes", [])):
+                name = wordsmod.for_adventure(game, adv).get("villain_short", "it")
+                out.append({"adv": adv["id"], "step": st["id"], "ask": f"What will kill {name}?"})
+    return out
+
+
+def divined(game, aid: str, sid: str) -> list[str]:
+    """The powers answered a tale's question: its truth in words (what it fears), a clue, and the step is done."""
+    from realmwalker.game.story import beats
+    from realmwalker.game.story import words as wordsmod
+
+    adv = adventures(game.world).get(aid)
+    st = find_step(game, aid, sid)
+    if adv is None or st is None or st["state"] != "open":
+        return []
+    words = wordsmod.for_adventure(game, adv)
+    beats.OPS["clue"](game, {"adv": aid}, st["target"].get("truth", "villain"))
+    journal(adv, f"The powers answered me: {words.get('weakness_lore', 'it can be killed')}",
+            int(game.moment.total_days))
+    step_done(game, aid, sid)
+    return [words.get("weakness_lore", "It can be killed, like anything that lives.")]
+
+
 def on_read(game, item) -> None:
     """A document read: a read step whose tag it carries is done."""
     tags = set(getattr(item, "tags", []) or [])

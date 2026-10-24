@@ -114,7 +114,7 @@ def _route(game, adv: dict, r: dict) -> str:
     if how == "check":
         return f"{r.get('skill', 'a check')} at {_place(game, r.get('at'))}"
     if how == "divine":
-        return "divination (Speak with Dead, Commune, Augury...)"
+        return "divination (Divination, Commune, Contact Other Plane)"
     return str(r)
 
 
