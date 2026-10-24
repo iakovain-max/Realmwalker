@@ -40,5 +40,41 @@
     {"kind": "assassinate", "jobs": [], "need": "grudge",
      "choice": ["You have the look of someone who has lost kin.", "Someone wronged your family. Who?"]}
   ],
-  "plea_gap": 14
+  "plea_gap": 14,
+  "contracts": {
+    "renew": [14, 28],
+    "near": 8,
+    "kinds": {
+      "caravan": {"kind": "escort", "from": "trade", "to": "market", "text": "contract_caravan",
+                  "givers": ["market_trader", "shopkeeper", "smith", "innkeeper", "moneylender"],
+                  "travellers": ["carter", "porter", "market_trader", "labourer"],
+                  "choice": ["About the carts to {dest}.", "You need a guard for the road to {dest}?",
+                             "About the goods going to {dest}."]},
+      "papers": {"kind": "deliver", "from": "trade", "to": "market", "text": "contract_papers",
+                 "givers": ["market_trader", "shopkeeper", "smith", "innkeeper", "moneylender", "headman"],
+                 "recipients": ["market_trader", "shopkeeper", "innkeeper", "moneylender", "smith"],
+                 "choice": ["About the papers for {dest}.", "You have something to go to {dest}?"]},
+      "pilgrims": {"kind": "escort", "from": "faith", "to": "holy", "text": "contract_pilgrims",
+                   "givers": ["priest"], "travellers": ["pilgrim", "monk", "acolyte", "elder", "preacher"],
+                   "choice": ["About the pilgrims to {dest}.", "The pilgrims need a guard to {dest}?"]},
+      "raiders": {"kind": "defend", "from": "raiders", "givers": ["headman", "lord", "innkeeper", "priest", "farmer"],
+                  "choice": ["About {raiders}.", "When are {raiders} coming?", "You are hiring swords against {raiders}?"]}
+    },
+    "danger": {
+      "threat": ["the beasts that run with {name}", "the brood of {name}"],
+      "lair": ["the beasts of {name}'s lair", "what dens with {name} at {site}"],
+      "gang": ["the outlaws called {name}", "{name}, who rob that road"],
+      "wild": ["{name} out of {area}", "{name} in {area}"]
+    },
+    "met": {
+      "threat": ["The things that run with {name} are on the road ahead, as they said in {town}.",
+                 "Here they are, as {giver} said: the brood of {name}, across the road."],
+      "lair": ["Out of the trees by the road, from the way of {site}: the beasts that den with {name}.",
+               "The talk in {town} was true. {name}'s kind are on the road."],
+      "gang": ["{name}. They have been waiting for carts on this stretch, and here you are.",
+               "Men step out onto the road ahead and behind: {name}, as everyone in {town} said."],
+      "wild": ["The road was said to be bad here, and it is.", "As they warned you in {town}: {name}."]
+    },
+    "terms": "<dim>Paid work:</> {pay}, {days} days, from {town} to {dest} ({miles} miles). <dim>On the road:</> {danger}."
+  }
 }

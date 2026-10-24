@@ -29,8 +29,7 @@ def test_the_income_reference_is_kept():
 
 def test_the_careful_player_earns_by_its_work(data, monkeypatch):
     """A short stretch of the income measure's player: what waits in the towns looked at, taken, done and paid for.
-    From C.2 to C.3 there is little honest work about (the weekly offers are gone, the contracts not yet come), so
-    the stretch must only run its days and count what it is paid; C.3 asks for a job again (jobs >= 1)."""
+    Since C.3 every peopled town has a contract, so the careful player finds work again (jobs >= 1)."""
     from realmwalker.world.generator import WorldOptions
     from tests.worlds import cached_world
 
@@ -40,3 +39,4 @@ def test_the_careful_player_earns_by_its_work(data, monkeypatch):
     e = storyplay.earn_once(tables, cached_world(WorldOptions(*w), tables), w[0], 0)
     assert e.days >= 8 or e.died, "\n".join(e.log)
     assert (e.work > 0) == (e.jobs > 0), "\n".join(e.log)
+    assert e.jobs >= 1, "\n".join(e.log)

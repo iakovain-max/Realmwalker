@@ -418,6 +418,12 @@ def _check_quest_refs(files: dict[str, Any]) -> list[str]:
         for job in p["jobs"]:
             if jobs and job not in jobs:
                 errors.append(f"work.json: pleas[{i}] names unknown occupation {job!r}.")
+    for cid, c in work.get("contracts", {}).get("kinds", {}).items():
+        for job in c["givers"] + c.get("travellers", []) + c.get("recipients", []):
+            if jobs and job not in jobs:
+                errors.append(f"work.json: contracts.kinds.{cid} names unknown occupation {job!r}.")
+        if c.get("text") and c["text"] not in data["text"]:
+            errors.append(f"work.json: contracts.kinds.{cid} names words {c['text']!r} that data/quests.json has not.")
     return errors
 
 

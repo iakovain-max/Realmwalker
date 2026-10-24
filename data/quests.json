@@ -104,6 +104,43 @@
       "done": ["{town} still stands, and the dead in the street are theirs, not ours."],
       "failed": ["They came to {town}, and you were somewhere else."]
     },
+    "contract_caravan": {
+      "title": ["Guarding {giver}'s goods to {dest}", "The carts to {dest}", "Hired: the road to {dest}"],
+      "pitch": [
+        "\"Two carts for the market at {dest}, and {traveller} to drive them. I need a blade beside them. The talk on that road is of {danger}. {reward} when the carts are in {dest}, {days} days. That is the whole of it.\"",
+        "\"Paid work, if you want it. {traveller} takes my goods to {dest}; you walk beside the carts and see they get there. There is talk of {danger} on the way. {reward} at the far end.\"",
+        "\"I am sending wool to {dest} with {traveller}, and I am not sending it unguarded, not with {danger} about. {reward}, paid on arrival. {days} days.\"",
+        "\"The usual terms: you guard, {traveller} drives, the goods reach {dest} and you are paid {reward} there. The road goes near {danger}. I will not pretend otherwise.\"",
+        "\"A guard for the carts to {dest}. {reward}, {days} days. Last month a load was lost on that road to {danger}, so I pay for a sword now.\""
+      ],
+      "journal": ["Guard the carts of {giver} of {town}, driven by {traveller}, to {dest} ({where}). On the way: {danger}. {traveller} pays {reward} on arrival. {days} days."],
+      "done": ["The carts are in {dest}, and the goods with them."],
+      "failed": ["The carts will not be reaching {dest} now."]
+    },
+    "contract_pilgrims": {
+      "title": ["Pilgrims to {dest}", "The pilgrims' road to {dest}", "Hired: walking the pilgrims to {dest}"],
+      "pitch": [
+        "\"{traveller} goes to pray at the temple in {dest}, and the faithful of {town} have put together {reward} for a guard. The road passes near {danger}. Will you walk with them? {days} days.\"",
+        "\"Pilgrims are poor, and the road does not care. {traveller} must reach {dest}; between here and there is {danger}. The temple pays {reward} when they arrive.\"",
+        "\"It is a holy walk, not a safe one. There is word of {danger} on the road to {dest}. Keep {traveller} alive to the temple door, and you will have {reward}. {days} days.\"",
+        "\"{traveller} has vowed to walk to {dest}. Vows do not stop {danger}. A sword might. {reward}, from the alms, paid at the end of the road.\""
+      ],
+      "journal": ["Walk with {traveller}, a pilgrim of {town}, to the temple in {dest} ({where}). On the way: {danger}. {reward} on arrival. {days} days."],
+      "done": ["{traveller} has prayed in {dest}."],
+      "failed": ["{traveller} will not be praying in {dest} now."]
+    },
+    "contract_papers": {
+      "title": ["{giver}'s papers to {recipient_name}", "A merchant's packet for {dest}", "Hired: carrying to {dest}"],
+      "pitch": [
+        "\"Bills of sale and a letter of credit, for {recipient} in {dest}. Worth nothing to a thief and a great deal to me. That road has {danger} on it. {recipient_name} pays {reward} when it is in their hand. {days} days.\"",
+        "\"Paid carrying work: this packet to {recipient} in {dest}, seal unbroken. {reward} at the far end. Mind {danger} on the way.\"",
+        "\"My partner in {dest}, {recipient}, needs these accounts before the market. The road is slow, with {danger} about. {reward}, from them, on delivery.\"",
+        "\"Ordinary work, honestly paid. A sealed packet to {recipient} in {dest}, {days} days, {reward} at their door. The road passes near {danger}.\""
+      ],
+      "journal": ["Carry the sealed papers of {giver} of {town} to {recipient} in {dest}, who will pay {reward}. On the way: {danger}. {days} days."],
+      "done": ["The papers are delivered."],
+      "failed": ["The papers are too late to matter now."]
+    },
     "escort": {
       "title": ["Take {traveller} to {dest}", "The road to {dest}", "Safe to {dest}"],
       "pitch": ["\"{traveller} has to reach {dest}, and the roads are what they are. Walk with them, keep them breathing, and they'll pay you {reward} when you get there. {days} days.\"", "\"I'll not send {traveller} out alone. Go with them as far as {dest} and there's {reward} in it at the other end.\"", "\"{traveller} goes to {dest}, and the roads are what they are this year. Walk with them. {reward} at the far end, from their own purse.\"", "\"{traveller} needs to be in {dest}, and alive when they get there. The roads have taken two this month. {reward} from them at the far end. {days} days.\"", "\"I'd feel better with a blade beside {traveller} on the road to {dest}. Yours will do. {reward}, paid when you arrive.\"", "\"{traveller} can't fight and won't stay. {dest}, {days} days at most. Keep them breathing and they'll pay {reward}.\""],

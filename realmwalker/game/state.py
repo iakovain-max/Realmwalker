@@ -607,8 +607,9 @@ class GameState:
                 self.say(ashore, "warn")
         if self.encounter is None and self.battle is None:
             from realmwalker.game.encounters import roll_encounter
+            from realmwalker.game.story import work
 
-            enc = roll_encounter(self, minutes)
+            enc = work.on_the_road(self) or roll_encounter(self, minutes)  # (a contract's danger, where it was said)
             if enc is not None:
                 self.encounter = enc
                 self.travel = None

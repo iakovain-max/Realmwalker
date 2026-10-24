@@ -35,10 +35,19 @@ def notices(game, settlement) -> list[dict]:
 
     for q in quests.board_bounties(game, settlement):
         words = q["words"]
+        if q["template"] == "hunt_beast":  # (a beast of the history, in its lair)
+            out.append({"kind": "wanted", "title": "WANTED", "bounty": q,
+                        "text": f"{esc(words['beast'])}, {esc(words['beast_what'])}, {esc(words['where'])}. "
+                                f"{money_text(q['reward'])} from the watch of {esc(settlement.name)} for its head, "
+                                f"within {q['days']} days."})
+            continue
         out.append({"kind": "wanted", "title": "WANTED", "bounty": q,
                     "text": f"{esc(words['target'])} and the outlaws called {esc(words['gang'])}, for robbery and "
                             f"murder on the roads. They hide at {esc(words['site'])}. {money_text(q['reward'])} from "
                             f"the watch of {esc(settlement.name)} for the end of them, within {q['days']} days."})
+    from realmwalker.game.story import work
+
+    out += work.notices(game, settlement)  # (the town's paid work: who is hiring, and the terms)
     from realmwalker.game import story
     from realmwalker.world import threats
 

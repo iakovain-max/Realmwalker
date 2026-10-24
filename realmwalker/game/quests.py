@@ -387,6 +387,9 @@ def beast_ratio(game, group: str) -> float:
 def danger_note(game, q: dict) -> str:
     """What a sensible person thinks on hearing what the work is: how the beast measures up (the same words the road
     uses for a band you meet), or "" when there is nothing to judge."""
+    road = q.get("danger")  # (a contract's danger on the way: game/story/work.py)
+    if road and not road.get("met") and road.get("group") in game.tables.creatures.encounters:
+        return f"<dim>On the road, {road.get('name', 'trouble')}:</> {ratio_words(beast_ratio(game, road['group']))}"
     group = q.get("target", {}).get("group")
     if q.get("template") not in ("hunt_beast", "defend") or group not in game.tables.creatures.encounters:
         return ""
@@ -893,13 +896,35 @@ def _all_quests(game) -> list[dict]:
 
 
 def board_bounties(game, settlement) -> list[dict]:
-    """Bounties posted on the notice board here: one for each gang within reach, paid by the town's watch."""
+    """Bounties posted on the notice board here, paid by the town's watch: one for each gang within reach, and for
+    the two nearest beasts of the history that lair within it (a threat's villain among them: taking that bounty
+    opens its tale, story.on_job_taken)."""
+    from realmwalker.game import past
     from realmwalker.game.people import town_of
 
     w = game.world
     town = town_of(w, settlement.id)
     posted = town.flags.setdefault("board", {})
     taken = {q["target"].get("gang") for q in active(game) if q["template"] == "bounty"}
+    hunted = {q["target"].get("beast") for q in _all_quests(game) if q["template"] in ("hunt_beast", "clear_lair")}
+    beasts = []
+    for key, hid in sorted(w.politics.get("lairs", {}).items()):
+        fig = w.figures.get(hid)
+        if fig is None or not fig.alive or fig.kind != "beast" or fig.id in hunted or not 0 <= int(key) < len(w.sites):
+            continue
+        site = w.sites[int(key)]
+        group = past.group_of(game, fig)
+        if site.id not in cleared(game) and 3 <= dist(site, settlement) <= 30 and \
+                group in game.tables.creatures.encounters:
+            beasts.append((dist(site, settlement), site.id, fig.id, group))
+    wild = []  # (the gangs' posters first, then the beasts')
+    for _, sid, fid, group in sorted(beasts)[:2]:
+        q = posted.get(f"beast{fid}")
+        if q is None or q.get("state") != "offered":
+            q = make(game, None, {"kind": "hunt_beast", "beast": fid, "site": sid, "group": group,
+                                  "town": settlement.id}, w.rng.child(f"board/{settlement.id}/beast{fid}"))
+            posted[f"beast{fid}"] = q
+        wild.append(q)
     out = []
     for gang in fx.active_factions(w, "bandit_gang"):
         if not 0 <= gang.site < len(w.sites) or gang.site in cleared(game) or gang.id in taken:
@@ -912,7 +937,7 @@ def board_bounties(game, settlement) -> list[dict]:
                      w.rng.child(f"board/{settlement.id}/{gang.id}"))
             posted[str(gang.id)] = q
         out.append(q)
-    return out
+    return out + wild
 
 
 # ---------------------------------------------------------------------------- taking it on

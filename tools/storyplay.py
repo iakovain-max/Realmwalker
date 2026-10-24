@@ -390,7 +390,7 @@ class Earner(Player):
             tiles = self.trip_tiles(q, s)
             if q["template"] not in HONEST or tiles is None or tiles > 2 * REACH:
                 continue
-            group = q["target"].get("group")
+            group = (q.get("danger") or {}).get("group") or q["target"].get("group")  # (a contract's: on the road)
             if group in g.tables.creatures.encounters and quests.beast_ratio(g, group) > CAREFUL_RATIO:
                 continue  # (a careful party does not stand against what would likely kill it)
             worth = q["reward"] / (4 + tiles)

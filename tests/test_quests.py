@@ -254,7 +254,7 @@ def test_a_plea_from_a_sick_town(game):
     assert q["template"] == "cure" and q["plea"] == "sickness" and own.label
     assert work.plea_of(game, healer) is q  # (the same plea, asked again)
     s.status.pop("plague")
-    assert work.plea_of(game, healer) is None and not work.held_by(game, healer)
+    assert work.plea_of(game, healer) is None and not [x for x in work.held_by(game, healer) if x.get("plea")]
 
 
 def test_work_json_names_real_kinds(game):

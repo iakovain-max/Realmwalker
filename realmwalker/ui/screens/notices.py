@@ -8,7 +8,7 @@ from realmwalker.ui.input import KeyEvent
 from realmwalker.ui.screens.base import Screen, modal_box
 from realmwalker.ui.widgets import Canvas, ScrollText
 
-COLORS = {"wanted": "danger", "proclamation": "info", "law": "warn", "local": "dim", "hook": "title"}
+COLORS = {"wanted": "danger", "proclamation": "info", "law": "warn", "local": "dim", "hook": "title", "hiring": "info"}
 
 
 class NoticeBoardScreen(Screen):

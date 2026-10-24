@@ -1603,6 +1603,21 @@ WORK = Obj({  # work that waits to be taken (game/story/work.py; the kinds are d
                        "need": Str(choices=["always", "sickness", "dragon", "grudge"]),
                        "choice": word_list(2, 120)}), min_items=1, optional=True),
     "plea_gap": Int(min=1, max=365, optional=True),
+    "contracts": Obj({  # paid work: one a town, two in a city (C.3)
+        "renew": DAY_SPAN,
+        "near": Int(min=1, max=40),  # how far from the road a danger may be
+        "kinds": Map(Obj({"kind": Str(choices=["escort", "deliver", "defend"]),
+                          "from": Str(choices=["trade", "faith", "raiders"]),
+                          "to": Str(choices=["market", "holy"], optional=True),
+                          "text": Str(max_len=40, optional=True),  # a quests.json text variant
+                          "givers": word_list(1, 30),
+                          "travellers": List(Str(max_len=30), min_items=1, optional=True),
+                          "recipients": List(Str(max_len=30), min_items=1, optional=True),
+                          "choice": word_list(2, 120)})),  # ({dest}, {raiders})
+        "danger": Obj({k: word_list(2, 120) for k in ("threat", "lair", "gang", "wild")}),  # ({name}, {site}, {area})
+        "met": Obj({k: word_list(2, 200) for k in ("threat", "lair", "gang", "wild")}),  # (+ {town}, {giver})
+        "terms": Str(max_len=300),
+    }, optional=True),
 }, optional=True)
 DATA_FILES.update({"threats.json": THREATS, "adventures.json": ADVENTURES, "villains.json": VILLAINS,
                    "beats.json": BEATS, "scenes.json": SCENES, "marks.json": MARKS, "work.json": WORK})

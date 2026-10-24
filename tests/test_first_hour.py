@@ -22,13 +22,12 @@ def tables(data):
 
 
 def waiting(game, town):
-    """What waits to be taken in the first town (Expansion 6 C.2: no weekly offers; the bounties on its board, its
-    people's pleas). C.3's contracts give every town paid work: until then a town with none is a known gap."""
+    """What waits to be taken in the first town (Expansion 6: the bounties on its board, its people's pleas, and the
+    contract every peopled town has, C.3)."""
     from realmwalker.game.story import work
 
     offers = work.offers_here(game, town)
-    if not offers:
-        pytest.xfail("no waiting work in this first town until C.3's contracts")
+    assert any(q.get("contract") for _, q in offers), "every peopled town has paid work"
     return offers
 
 
