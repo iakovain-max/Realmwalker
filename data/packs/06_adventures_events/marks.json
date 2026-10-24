@@ -1,5 +1,36 @@
 {
   "_comment": "Marks on places (docs/ADVENTURES.md §5.19, §8.13; world/marks.py): what a settlement is going through, kept in Settlement.status. form: day (a day number: sacked, burned), name (tribute), or record (a dict with since, until...). label: the world map's word for it (with a colour: danger or warn). ages: {into, after [lo, hi] days from since} - when it passes into the next mark (into null: it is simply over); lasts [lo, hi]: the days a record lasts when it is given no until; a record with an until ends at it (siege is its war's; emptied and rebuilding are world/threats.py's, which mends the population). troubles: what you see walking in ({town}, {by}); moments: a thing seen in its streets; description: a line for a town's first description. dress: how it changes the town's close-up map (game/placemarks.py): share of buildings touched (near: centre or anywhere; spare: kinds left alone), roofless (share of those), floor, furniture, walls [[terrain, share]], doors, look (a building's look over), shut (their trades), scatter [[walkable terrain, share of street squares]], props [[terrain, count]] (props_near: square).",
+  "fire": {
+    "_comment": "Live fire on a town's close-up map (game/fire.py, docs/ADVENTURES.md §8.14). burns: terrain -> [steps of time it burns (6 s each), chance a step that a burning neighbour lights it]; anything not listed never burns (stone, water, wells). into: what it is when it has burned (a terrain not listed: walls charred_wall, floors charred_floor, furniture embers, the rest scorched). beams: the share of burned floors under a roof that a fallen beam lies on. shell: the share of a building's squares burned that makes it a roofless shell. kindle: the buildings a burning town has alight when you walk in [lo, hi]. cries: what townsfolk call out when a building catches ({what}).",
+    "burns": {
+      "grass": [4, 0.12], "tall_grass": [5, 0.24], "dry_grass": [5, 0.32], "feather_grass": [5, 0.26], "heather": [5, 0.2],
+      "leaf_litter": [2, 0.15], "needles": [2, 0.2], "marsh_reeds": [3, 0.1], "bush": [6, 0.2], "crops": [4, 0.22],
+      "garden": [3, 0.06], "haystack": [8, 0.4], "woodpile": [14, 0.25], "hedge": [10, 0.12], "thorn_hedge": [10, 0.1],
+      "fence": [8, 0.12], "palisade": [16, 0.08], "dead_tree": [20, 0.15], "tree_broadleaf": [30, 0.05], "tree_pine": [24, 0.1],
+      "wall_wood": [20, 0.12], "wall_logs": [26, 0.09], "wall_plaster": [18, 0.07], "wall_felt": [6, 0.3],
+      "floor_wood": [12, 0.18], "floor_earth": [5, 0.1], "rug_floor": [5, 0.16], "rug": [5, 0.18], "hollow_floor": [10, 0.1],
+      "doorway": [8, 0.12], "door_closed": [10, 0.1], "door_open": [10, 0.1], "door_locked": [10, 0.08],
+      "boardwalk": [12, 0.1], "bridge": [16, 0.06], "bed": [6, 0.25], "bedroll": [4, 0.25], "table": [10, 0.14],
+      "chair": [6, 0.16], "stool": [5, 0.16], "bench": [8, 0.14], "counter": [12, 0.12], "shelf": [8, 0.16],
+      "bookcase": [12, 0.2], "wardrobe": [12, 0.14], "trunk": [10, 0.1], "barrels": [10, 0.1], "crates": [8, 0.18],
+      "sacks": [6, 0.18], "cart": [10, 0.12], "stall": [8, 0.2], "planter": [5, 0.06], "notice_board": [6, 0.15],
+      "pew": [10, 0.14], "beehive": [6, 0.2], "scaffold": [10, 0.2], "barricade": [10, 0.15], "gallows": [12, 0.1],
+      "pyre": [16, 0.4], "cage": [0, 0]
+    },
+    "into": {
+      "grass": "scorched", "tall_grass": "scorched", "dry_grass": "scorched", "feather_grass": "scorched", "heather": "scorched",
+      "leaf_litter": "scorched", "needles": "scorched", "marsh_reeds": "mud", "crops": "scorched", "garden": "scorched",
+      "bush": "scorched", "hedge": "embers", "thorn_hedge": "embers", "fence": "embers", "palisade": "charred_wall",
+      "dead_tree": "embers", "tree_broadleaf": "embers", "tree_pine": "embers",
+      "floor_earth": "scorched", "doorway": "charred_floor", "door_closed": "door_broken", "door_open": "door_broken",
+      "door_locked": "door_broken", "boardwalk": "scorched", "bridge": "charred_floor", "wall_felt": "scorched",
+      "pyre": "embers"
+    },
+    "beams": 0.12,
+    "shell": 0.35,
+    "kindle": [2, 4],
+    "cries": ["Fire! Fire at {what}!", "Water! Bring water - {what} is alight!", "Fire! Get them out of {what}!", "Buckets! {what} is burning!", "The roof of {what} has caught!", "Fire, fire! Ring the bell!"]
+  },
   "marks": {
     "siege": {
       "form": "record", "label": "under siege", "colour": "danger",

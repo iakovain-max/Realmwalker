@@ -1580,7 +1580,15 @@ MARK = Obj({
     "description": word_list(1, 300),  # a line for a town's first description
     "dress": Obj({"share": Float(min=0, max=1, optional=True)}, strict=False, optional=True),  # (game/placemarks.py)
 })
-MARKS = Obj({"marks": Map(MARK)})
+FIRE = Obj({  # live fire on a town's map (game/fire.py)
+    "burns": Map(List(Float(min=0, max=100), min_items=2, max_items=2)),
+    "into": Map(Str(max_len=40)),
+    "beams": Float(min=0, max=1),
+    "shell": Float(min=0, max=1),
+    "kindle": List(Int(min=0, max=20), min_items=2, max_items=2),
+    "cries": word_list(3, 120),
+}, optional=True)
+MARKS = Obj({"marks": Map(MARK), "fire": FIRE})
 DATA_FILES.update({"threats.json": THREATS, "adventures.json": ADVENTURES, "villains.json": VILLAINS,
                    "beats.json": BEATS, "scenes.json": SCENES, "marks.json": MARKS})
 PACK_ONLY.update({"threats.json": {"kinds": {}}, "adventures.json": {"blueprints": {}},

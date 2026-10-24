@@ -87,7 +87,7 @@ def test_the_town_buries_its_own(made, tables):
     graves = lm.meta["graves"]
     assert len(graves) == len(dead), "a fresh grave each"
     for g in graves:
-        assert lm.terrain_ids[int(lm.terrain[g["x"], g["y"]])] == "grave"
+        assert lm.terrain_ids[int(lm.terrain[g["x"], g["y"]])] == "grave_fresh"
         assert lm.building_at(g["x"], g["y"]) is None
     assert lines, "you are told, being there"
     from tests.test_place_marks import _as_tables_order

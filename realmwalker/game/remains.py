@@ -126,7 +126,7 @@ def tick(game, lm) -> list[str]:
                 break
             from realmwalker.game.dungeon import set_terrain
 
-            set_terrain(lm, spot[0], spot[1], "grave")
+            set_terrain(lm, spot[0], spot[1], "grave_fresh")  # (raw earth, a wooden marker: B.7)
             lm.meta.setdefault("graves", []).append({"x": spot[0], "y": spot[1], "who": b["who"], "day": now})
         if own and game.local is lm:
             out.append("<dim>The town has carried its dead away. There are new graves.</>")

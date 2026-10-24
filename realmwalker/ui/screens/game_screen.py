@@ -705,6 +705,10 @@ class GameScreen(Screen):
     def _weather(self, canvas: Canvas, rect) -> None:
         """Rain, snow and fog over the map, when animations are on."""
         gfx = canvas.gfx
+        if gfx.animate and self.game.local is not None:  # (embers, ash, haze: still when calm; B.7)
+            from realmwalker.ui.gfx import atmosfx
+
+            atmosfx.draw(canvas, rect, self.game, gfx.now, float(self.game.light), moving=gfx.ambient)
         if not gfx.ambient:
             return
         from realmwalker.ui.gfx import weatherfx

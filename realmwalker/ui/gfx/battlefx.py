@@ -698,11 +698,12 @@ class BattleBoard:
                     if frames:
                         name = frames[(int(now * 8) + i) % len(frames)] if ambient else frames[i % len(frames)]
                         canvas.under(Sprite(name, px, py, T, T, (255, 255, 255, 220)))
-            elif z.kind in ("fog", "darkness"):
+            elif z.kind in ("fog", "darkness", "smoke"):
+                look = {"fog": (180, 184, 190, 170), "darkness": (10, 8, 14, 230), "smoke": (70, 64, 60, 110)}[z.kind]
                 for (x, y) in z.cells:
                     px, py = self.sq_px(x, y)
                     canvas.under(Image("bfog", _fog_image, (px - T * 0.25, py - T * 0.25, T * 1.5, T * 1.5),
-                                       rgba=(180, 184, 190, 170) if z.kind == "fog" else (10, 8, 14, 230)))
+                                       rgba=look))
             elif z.kind == "illusion" and not z.real:  # (an image: Expansion 5 Part A)
                 self._image(canvas, battle, z, now)
             elif z.kind in GROUND_LOOKS:  # the second wave's ground (Expansion 3 D.2)

@@ -45,7 +45,7 @@ def shut(lm, i: int) -> bool:
     for rec in (lm.meta or {}).get("marks", {}).values():
         if i in rec.get("shut", ()):
             return True
-    return False
+    return str(i) in ((lm.meta or {}).get("shells") or {})  # (burned out by a live fire: game/fire.py)
 
 
 def stamp(game, lm, s) -> bool:

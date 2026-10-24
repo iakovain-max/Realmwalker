@@ -60,6 +60,13 @@ class _Town:
         doors = [T.index[n] for n in DOORS if n in T.index]
         self.stand = T.walk[terrain].copy()  # where one can stand (not in a shut doorway)
         self.walk = self.stand | np.isin(terrain, doors)  # where one can walk (doors open as you go through)
+        from realmwalker.game import fire
+
+        burning = fire.blocked(lm)  # (nobody walks into a fire: Expansion 6 B.7)
+        if burning is not None:
+            self.stand &= ~burning
+            self.walk &= ~burning
+        self.doors = doors
         self.astar = tcod.path.AStar(self.walk.astype(np.int16), diagonal=1.41)
         self.lm = lm
         self.count = len(lm.buildings)
@@ -106,6 +113,31 @@ def _town(game, lm) -> _Town:
 def forget() -> None:
     """Drop what is known of the towns' ways (a new game, a loaded save)."""
     _towns.clear()
+
+
+def patch(game, lm, cells) -> None:
+    """Some squares changed (caught fire, burned out): walkers learn them square by square, and a way that crosses
+    one that can no longer be walked is dropped and found again (never forget() on every spread)."""
+    t = _towns.get(lm.key)
+    if t is None or not t.fresh(lm):
+        return
+    from realmwalker.game import fire
+
+    T = game.tables.terrain
+    remap = game.remap_for(lm)
+    shut = []
+    for x, y in cells:
+        i = int(remap[lm.terrain[x, y]])
+        stand = bool(T.walk[i]) and not fire.burning(lm, x, y)
+        walk = (stand or i in t.doors) and not fire.burning(lm, x, y)
+        t.stand[x, y], t.walk[x, y] = stand, walk
+        if not walk:
+            shut.append((x, y))
+    t.astar = tcod.path.AStar(t.walk.astype(np.int16), diagonal=1.41)
+    if shut:
+        bad = set(shut)
+        for nid in [n for n, (g, path) in t.paths.items() if g in bad or bad.intersection(path)]:
+            del t.paths[nid]
 
 
 def town_for(game, lm) -> _Town:
@@ -184,6 +216,20 @@ def goal(game, lm, npc, town: _Town | None = None) -> tuple[int, int]:
     errand = npc.flags.get("errand")
     if errand is not None:
         return int(errand["to"][0]), int(errand["to"][1])
+    spot = _goal(game, lm, npc, town)
+    if lm.meta.get("fire"):
+        from realmwalker.game import fire
+
+        if fire.unsafe(lm, spot) or fire.unsafe(lm, (npc.x, npc.y)):  # (away from the fire, into the open)
+            v = (lm.meta.get("fire_n"), len(lm.meta["fire"]))
+            if getattr(town, "safe", (None,))[0] != v:
+                town.safe = (v, [c for c in town.square if not fire.unsafe(lm, c)] or [tuple(lm.entry)])
+            safe = town.safe[1]
+            return safe[npc.id % len(safe)]
+    return spot
+
+
+def _goal(game, lm, npc, town: _Town) -> tuple[int, int]:
     gathering = town.gathering
     if gathering is not None and npc.id in gathering["ids"]:
         cells = _ring(town, gathering)
@@ -320,6 +366,9 @@ def settle(game, lm) -> None:
     from realmwalker.game.story import stage
 
     stage.settle(game, lm)  # (a scene being played is simply over)
+    from realmwalker.game import fire
+
+    fire.settle(game, lm)  # (the fire moved on for the time that passed)
     town = _town(game, lm)
     town.paths.clear()
     town.gathering = _flags(game, s).get("gathering")
@@ -407,6 +456,10 @@ def tick(game, lm, s) -> None:
         from realmwalker.game.story import stage
 
         stage.tick(game, lm)
+    if lm.meta.get("fire"):
+        from realmwalker.game import fire
+
+        fire.tick(game, lm)
     town = _town(game, lm)
     town.ticks += 1
     flags = _flags(game, s)

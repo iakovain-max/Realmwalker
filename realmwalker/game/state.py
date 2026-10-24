@@ -991,8 +991,15 @@ class GameState:
             from realmwalker.game import placemarks
 
             placemarks.stamp(self, lm, self.world.settlement_at(p.x, p.y))
-        from realmwalker.game import remains
+        from realmwalker.game import fire, remains
 
+        if lm.kind == "settlement":  # (a town that burns, a town that mends: B.7)
+            here = self.world.settlement_at(p.x, p.y)
+            fire.mend(self, lm, here)
+            fire.settle(self, lm)
+            fire.kindle(self, lm, here)
+        else:
+            fire.burn_out_all(self, lm)
         remains.tick(self, lm)  # (the dead left here carried off or gone to bones; old blood faded)
         from realmwalker.game.encounters import populate_local
 
@@ -1062,6 +1069,9 @@ class GameState:
 
             for line in remains.follow_off(self, self.local):  # (tracks followed to the map's edge: B.6)
                 self.say(line, "info")
+            from realmwalker.game import fire
+
+            fire.settle(self, self.local)  # (the fire's last steps, before the map is left to itself)
         self.player.local_key = None
         self.sneaking = False
         self.say("You return to the road and the wider land.", "flavor")
@@ -1155,6 +1165,12 @@ class GameState:
             return True
         if not T.walk[t]:
             return False
+        if lm.meta.get("fire"):
+            from realmwalker.game import fire
+
+            if fire.burning(lm, nx, ny):
+                self.say("<danger>The heat drives you back: that way is on fire.</>", "danger")
+                return False
         before_building = lm.building_at(p.lx, p.ly)
         p.lx, p.ly = nx, ny
         p.steps += 1
