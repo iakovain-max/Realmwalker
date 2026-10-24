@@ -1,6 +1,6 @@
 """The overworld as a painted map (paint.py), with the towns and ruins on it (each people's towns drawn in their own
-manner), names on the land, fog over country you have not seen, the work you have in hand, the road you are on, and
-you. The map is painted once (paint.ChunkCache) and shown at any zoom.
+manner), what the towns are going through (mapsigns.py), names on the land, fog over country you have not seen, the
+work you have in hand, the road you are on, and you. The map is painted once (paint.ChunkCache) and shown at any zoom.
 """
 
 from __future__ import annotations
@@ -9,7 +9,7 @@ import math
 
 import numpy as np
 
-from realmwalker.ui.gfx import dolls
+from realmwalker.ui.gfx import dolls, mapsigns
 from realmwalker.ui.gfx.paint import CANON, OVERVIEW, ChunkCache, WorldPainter
 from realmwalker.ui.gfx.scene import Clip, Image, Lines, Rect, Sprite, Text, tile_batch
 
@@ -227,7 +227,7 @@ class WorldView:
         sp = game.tables.sprites["world"]
         stypes = sp["settlements"]
         names, dst, cols = [], [], []
-        labels = []
+        labels, signs = [], []
         light = tint[0] / 255
         for s in world.settlements:
             known = s.id in p.known_settlements
@@ -242,6 +242,8 @@ class WorldView:
             names.append(town_mark(game.tables, s, stypes.get(s.kind, "map/village")))
             dst.append((sx + ppc / 2 - size / 2, sy + ppc - size * 0.92, size, size))
             a = 1.0 if explored[s.x, s.y] else 0.6
+            if s.status:
+                signs.append((s, dst[-1][0], dst[-1][1], size, a))
             cols.append((light, light, min(1.0, light * 1.05), a))
             if ppc >= 12 or (ppc >= 6 and s.kind in ("city", "town", "hold", "elfhall")) or getattr(s, "great", False):
                 labels.append((sx + ppc / 2, sy + ppc + 1, s.name, "great" if getattr(s, "great", False) else s.kind, a))
@@ -255,8 +257,12 @@ class WorldView:
             names.append(sp["sites"].get(site.kind, "map/ruin"))
             dst.append((sx + ppc / 2 - size / 2, sy + ppc - size * 0.95, size, size))
             cols.append((light, light, light, 1.0))
+        if signs:  # what the towns are going through (Expansion 6): the far side of it behind their marks
+            mapsigns.under(canvas, game, signs, now, tint)
         if names:
             canvas.under(*tile_batch(gfx.atlas, names, np.array(dst, np.float32), np.array(cols, np.float32)))
+        if signs:
+            mapsigns.over(canvas, game, signs, now, tint)
         town_boxes = []
         for lx, ly, name, kind, a in labels:
             big = kind in ("town", "city", "hold", "great")

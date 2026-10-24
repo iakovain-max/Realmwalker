@@ -76,7 +76,26 @@ def smoke_script():
 
     steps.append((frame, peaceful))
     frame += 6
+
+    def signs(app):
+        """What the towns near you are going through, shown on the map (the nearest, which the tour visits, is left
+        alone)."""
+        game = app.game
+        if game is None:
+            return
+        p = game.player
+        towns = sorted(game.world.settlements, key=lambda s: abs(s.x - p.x) + abs(s.y - p.y))[1:7]
+        from realmwalker.world import news
+
+        day = news.now_days(game.world)
+        for s, (mark, value) in zip(towns, (("burning", {"since": day}), ("siege", {"since": day, "by": 0}),
+                                            ("plague", {"since": day}), ("tribute", "a dragon"),
+                                            ("festival", {"since": day}), ("memorial", {"since": day}))):
+            s.status[mark] = value
+
     press("right", "right", "down", "down", gap=4)
+    steps.append((frame, signs))
+    frame += 3
     shots[frame - 1] = "overworld"
     press("c")
     shots[frame - 4] = "character"
