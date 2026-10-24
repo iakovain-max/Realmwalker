@@ -26,13 +26,15 @@ class Creature:
     named: bool = False
     sex: str = ""  # for named people: the sex their name goes with (so their picture matches)
     culture: str = ""  # the people they come from, for their dress (a mage in a turban); "" for no one in particular
+    story: dict | None = None  # a story's foe (Expansion 6): {"adv", "role"}; game/story reads it, past.on_battle skips it
 
     def to_dict(self) -> dict:
         return {"uid": self.uid, "def_id": self.def_id, "name": self.name, "hp": self.hp, "max_hp": self.max_hp,
                 "money": self.money, "inventory": [i.to_dict() for i in self.inventory],
                 "wounds": [w.to_dict() for w in self.wounds], "conditions": dict(self.conditions),
                 "uses": dict(self.uses), "alive": self.alive, "named": self.named, "sex": self.sex,
-                **({"culture": self.culture} if self.culture else {})}
+                **({"culture": self.culture} if self.culture else {}),
+                **({"story": dict(self.story)} if self.story else {})}
 
     @classmethod
     def from_dict(cls, d: dict) -> Creature:
@@ -40,7 +42,8 @@ class Creature:
                    money=d.get("money", 0), inventory=[Item.from_dict(i) for i in d.get("inventory", [])],
                    wounds=[Wound.from_dict(w) for w in d.get("wounds", [])], conditions=dict(d.get("conditions", {})),
                    uses=dict(d.get("uses", {})), alive=d.get("alive", True), named=d.get("named", False),
-                   sex=d.get("sex", ""), culture=d.get("culture", ""))
+                   sex=d.get("sex", ""), culture=d.get("culture", ""),
+                   story=dict(d["story"]) if d.get("story") else None)
 
 
 class CreatureTable:

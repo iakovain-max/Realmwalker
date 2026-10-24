@@ -42,8 +42,12 @@ def _selector(where: str, text: str, bound: set[str], out: list[str]) -> None:
     for call in selectors.calls(tree):
         if call.name != "hidden" and call.name not in selectors.SELECTORS:
             out.append(f"{where}: the selector '{call.name}' is not one the game knows.")
+    words = {id(a) for c in selectors.calls(tree) for a in c.args
+             if isinstance(a, selectors.Path) and len(a.parts) == 1 and isinstance(a.parts[0], str)}
     for path in selectors.paths(tree):
         root = path.parts[0]
+        if id(path) in words and root not in bound:
+            continue  # (a word given to a selector: settlement_with(temple, 0, 40))
         if isinstance(root, str) and root not in bound and root not in selectors.ROOTS:
             out.append(f"{where}: '{root}' is not bound yet (a place or a role of this blueprint).")
         for part in path.parts[1:]:

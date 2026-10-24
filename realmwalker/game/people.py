@@ -408,6 +408,9 @@ def populate_town(game, lm, settlement) -> Town:
                                   home=home))
     link_figures(game, town, settlement, lm, inside, rng)
     secret_members(game, town, settlement, rng)
+    from realmwalker.game.story import cast
+
+    cast.place_people(game, town, settlement)  # (the people a story waited for: Expansion 6)
     update_positions(game, lm)
     return town
 
@@ -472,7 +475,7 @@ def refresh_travellers(game, lm, settlement) -> None:
         return
     town.flags["travellers_day"] = day
     for n in npcs_in(world, settlement.id):
-        if n.job == "adventurer" and not n.flags.get("companion") and not n.flags.get("grateful") and n.alive:
+        if n.job == "adventurer" and not n.flags.get("companion") and not n.flags.get("grateful") and n.alive                 and not n.flags.get("story"):  # (someone a story is about stays: Expansion 6)
             n.alive = False  # moved on (they are not dead; they are simply gone from here)
             n.present = False
             n.flags["moved_on"] = True

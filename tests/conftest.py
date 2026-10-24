@@ -12,6 +12,17 @@ from realmwalker.data.registry import DataRegistry  # noqa: E402
 from realmwalker.paths import Paths  # noqa: E402
 
 
+@pytest.fixture(autouse=True)
+def _quiet_tales(request, monkeypatch):
+    """Expansion 6: a new life is offered a tale at once, and entering a town near a threat may offer one: a hook
+    beat that waits for the player, as it should in play. The tests written before the story engine walk and talk
+    through towns, so outside tests marked `story` no hook is offered (everything else of the story runs)."""
+    if request.node.get_closest_marker("story") is None:
+        from realmwalker.game import story
+
+        monkeypatch.setattr(story, "offer_hook", lambda game, t, town=None: None)
+
+
 @pytest.fixture
 def home(tmp_path: Path) -> Path:
     return tmp_path / "home"

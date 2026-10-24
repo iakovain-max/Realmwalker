@@ -164,8 +164,10 @@ class Conversation:
 
         from realmwalker.game import shadows
 
-        return (quests.talk_choices(self) + companions.talk_choices(self) + services.choices(self)
-                + law_talk.choices(self) + shadows.choices(self))
+        from realmwalker.game import story
+
+        return (story.talk_choices(self) + quests.talk_choices(self) + companions.talk_choices(self)
+                + services.choices(self) + law_talk.choices(self) + shadows.choices(self))
 
     # ------------------------------------------------------------------ doing
     def choose(self, choice: Choice) -> str | None:
@@ -211,6 +213,10 @@ class Conversation:
             from realmwalker.game import quests
 
             quests.talk_choose(self, choice)
+        elif cid in story_choices():
+            from realmwalker.game import story
+
+            story.talk_choose(self, choice)
         elif cid in LAW_CHOICES:
             from realmwalker.game import law_talk
 
@@ -590,6 +596,12 @@ class Conversation:
             game.encounter = make_encounter(game, "town_watch", self.rng)
             game.leader.deeds.append(f"had the watch called on them in {self.settlement.name}")
         self.ended = True
+
+
+def story_choices() -> set[str]:
+    from realmwalker.game.story import STORY_CHOICES
+
+    return STORY_CHOICES
 
 
 def quests_choices() -> set[str]:

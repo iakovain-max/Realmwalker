@@ -61,9 +61,13 @@ def active(game) -> list[dict]:
 
 
 def map_marks(game) -> list[tuple[int, int]]:
-    """Where the work you have in hand wants you, lit on the maps: sites, towns and a patch of wild country."""
+    """Where the work you have in hand wants you, lit on the maps: sites, towns and a patch of wild country; and
+    the places your tales want you (Expansion 6)."""
+    from realmwalker.game import story
+
+    tales = story.map_marks(game)
     if not getattr(game, "quests", None):
-        return []
+        return tales
     w = game.world
     out = []
     for q in active(game):
@@ -76,7 +80,7 @@ def map_marks(game) -> list[tuple[int, int]]:
             out.append((w.settlements[t["dest"]].x, w.settlements[t["dest"]].y))
         if q["template"] == "hunt_beast":
             out.append((int(t["x"]), int(t["y"])))
-    return out
+    return out + tales
 
 
 def by_id(game, qid) -> dict | None:
@@ -1441,6 +1445,10 @@ def strongroom_gift(game, q, giver, share: float) -> list[str]:
 
 
 def reward(game, q, *, share: float = 1.0, text: str | None = None) -> list[str]:
+    if q.get("adventure"):
+        from realmwalker.game import story
+
+        story.on_quest_end(game, q, True)  # (a step of a tale: Expansion 6)
     from realmwalker.game import followers, reputation
     from realmwalker.game.companions import react
     from realmwalker.game.people import change_disposition
@@ -1520,6 +1528,11 @@ def fail(game, q, why: str | None = None) -> None:
     from realmwalker.game import reputation
     from realmwalker.game.people import change_disposition
 
+    if q.get("adventure"):
+        from realmwalker.game import story
+
+        story.on_quest_end(game, q, False)
+
     q["state"] = "failed"
     line = why or fill(game, q, "failed")
     q["journal"].append(line)
@@ -1563,7 +1576,7 @@ def daily(game) -> None:
                 raid_missed(game, q)
     for q in active(game):
         giver = game.world.npcs.get(q["giver"])
-        if q.get("personal") is None and q["giver"] >= 0 and (giver is None or not giver.alive):
+        if q.get("personal") is None and q["giver"] >= 0 and (giver is None or not giver.alive) and                 not q.get("adventure"):  # (a step of a story: the story decides what a dead giver means)
             q["state"] = "finished"
             q["journal"].append(f"{q['giver_name']} is dead. Nobody will pay for this now.")
             game.say(f"<warn>Journal: {title(game, q)}: {q['giver_name']} is dead.</>", "warn")

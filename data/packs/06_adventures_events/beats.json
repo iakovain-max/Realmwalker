@@ -1,4 +1,522 @@
 {
   "_comment": "Beats (docs/ADVENTURES.md §5.10, §8.6; game/story/beats.py): small scenes with pages and choices, played on the beat screen. when: conditions; choices: label, requires, check {skill, dc}, ops or success/failure, result lines.",
-  "beats": {}
+  "beats": {
+    "beast_kill_found": {
+      "family": "step",
+      "picture": "camp_night",
+      "text": [
+        [
+          "The road leaves the fields here and goes up between banks of gorse, and at the bend you find it: {carcass}. The crows go up all at once.",
+          "You smell it before you see it. Off the road, in the ditch, {carcass}, and the flies thick over it.",
+          "There is a bend in the road where the gorse closes in, and it is there: {carcass}, and the ground round it torn up."
+        ],
+        [
+          "Whatever did this was not hungry. It ate the best of it and left the rest, as if to say it could.",
+          "Beyond the carcass the gorse is flattened in a wide swathe going up towards {home}.",
+          "Nothing on the road but you, and the wind in the gorse, and that smell."
+        ]
+      ],
+      "choices": [
+        {
+          "label": [
+            "Look closer."
+          ],
+          "ops": [
+            [
+              "clue",
+              "kill"
+            ]
+          ],
+          "result": [
+            "You kneel by it. Whatever left this, you will know it again."
+          ]
+        }
+      ]
+    },
+    "beast_search_kill": {
+      "family": "step",
+      "text": [
+        [
+          "You go over the ground round the kill, a yard at a time: {track}.",
+          "Now you look properly. There is a story in the trampled ground, if you can read it: {track}.",
+          "The wounds first, then the ground: {track}, and blood on the gorse at a man's height."
+        ]
+      ],
+      "choices": [
+        {
+          "label": [
+            "Read the tracks, however long it takes."
+          ],
+          "check": {
+            "skill": "survival",
+            "dc": 12
+          },
+          "success": [
+            [
+              "clue",
+              "size"
+            ],
+            [
+              "clue",
+              "lair_way"
+            ]
+          ],
+          "failure": [
+            [
+              "clue",
+              "size"
+            ],
+            [
+              "time",
+              180
+            ]
+          ],
+          "result": [
+            "It is big, bigger than anything that should live in {area}, and it went back up towards {home} by a way the herders do not use."
+          ],
+          "fail_result": [
+            "It takes you half the day, and a good deal of swearing, but in the end the ground tells you: it is big, and it went up towards {home}."
+          ]
+        },
+        {
+          "label": [
+            "Take a tooth from the carcass, broken off in the wound. Proof for {town}."
+          ],
+          "ops": [
+            [
+              "clue",
+              "size"
+            ],
+            [
+              "flag",
+              "took_tooth"
+            ]
+          ],
+          "result": [
+            "The tooth is as long as your finger and yellow with age. {town} will believe you now."
+          ]
+        },
+        {
+          "label": [
+            "Burn the carcass, so it draws nothing else down from {home}."
+          ],
+          "ops": [
+            [
+              "clue",
+              "size"
+            ],
+            [
+              "flag",
+              "burned_carcass"
+            ],
+            [
+              "time",
+              60
+            ]
+          ],
+          "result": [
+            "The smoke goes up black and greasy. Whatever watches from the hills will know someone is here, and is not afraid."
+          ]
+        }
+      ]
+    },
+    "beast_bait_or_track": {
+      "family": "step",
+      "text": [
+        [
+          "You know what it fears now. What is left is to bring it to you, or to go to it.",
+          "There are two ways to hunt a beast like {villain}: make it come to you, or follow it until it turns. Both have killed better hunters than you.",
+          "{ally} lays it out plainly. \"Stake out bait at the kill and wait, or follow the blood up the hill. Your choice. I know which one I'd pick, and I'm not telling you.\""
+        ]
+      ],
+      "choices": [
+        {
+          "label": [
+            "Stake out a bait at the kill, and wait in the dark."
+          ],
+          "requires": {
+            "item": [
+              "raw_meat",
+              "cooked_meat",
+              "rations"
+            ]
+          },
+          "ops": [
+            [
+              "flag",
+              "baited"
+            ],
+            [
+              "key",
+              "bait"
+            ],
+            [
+              "use",
+              "raw_meat",
+              "cooked_meat",
+              "rations"
+            ],
+            [
+              "time",
+              360
+            ],
+            [
+              "named_fight",
+              "villain"
+            ]
+          ],
+          "result": [
+            "The night is long and cold and nothing comes, and nothing, and then the bait is gone and {villain_short} is among you."
+          ]
+        },
+        {
+          "label": [
+            "Follow the blood up the hill, and let it turn on you."
+          ],
+          "ops": [
+            [
+              "flag",
+              "tracked"
+            ],
+            [
+              "time",
+              240
+            ],
+            [
+              "fatigue",
+              10
+            ],
+            [
+              "named_fight",
+              "villain"
+            ]
+          ],
+          "result": [
+            "The trail goes up through the gorse and into the trees, and then there is no more trail, because {villain_short} has stopped running."
+          ]
+        }
+      ]
+    },
+    "beast_the_den": {
+      "family": "step",
+      "text": [
+        [
+          "{home} gapes in the hillside. Nothing grows near the mouth of it, and the bones there are not all sheep.",
+          "You reach {home} with the wind in your face, which is the only luck you have had. The den's mouth breathes out a warm stink.",
+          "Here it is: {home}. Below the mouth, a midden of bones and wool, and a path worn smooth by something heavy coming and going."
+        ]
+      ],
+      "choices": [
+        {
+          "label": [
+            "Go in quietly, keeping to the walls."
+          ],
+          "check": {
+            "skill": "stealth",
+            "dc": 13
+          },
+          "success": [
+            [
+              "key",
+              "quiet"
+            ],
+            [
+              "flag",
+              "went_quietly"
+            ]
+          ],
+          "failure": [
+            [
+              "flag",
+              "went_quietly"
+            ]
+          ],
+          "result": [
+            "You go in as quiet as breath. If it sleeps, it will wake to you standing over it."
+          ],
+          "fail_result": [
+            "A stone turns under your boot and rattles away into the dark. Somewhere below, something stops breathing to listen."
+          ]
+        },
+        {
+          "label": [
+            "Light a fire at the mouth and let the smoke go in first."
+          ],
+          "requires": {
+            "item": [
+              "firewood",
+              "oil_flask",
+              "torch"
+            ]
+          },
+          "ops": [
+            [
+              "flag",
+              "smoked_it"
+            ],
+            [
+              "time",
+              60
+            ]
+          ],
+          "result": [
+            "The smoke rolls into the den. From somewhere deep comes a cough that is almost like a man's, and then a growl that is not."
+          ]
+        },
+        {
+          "label": [
+            "Go in with everything you have, and let it know you are coming."
+          ],
+          "ops": [
+            [
+              "flag",
+              "went_loudly"
+            ]
+          ],
+          "result": [
+            "You go in shouting. Let it come. You are done with waiting."
+          ]
+        }
+      ]
+    },
+    "beast_omen": {
+      "family": "villain",
+      "where": [
+        "road",
+        "wild",
+        "camp"
+      ],
+      "text": [
+        [
+          "{omen}"
+        ],
+        [
+          "You go on, but you go on faster."
+        ]
+      ]
+    },
+    "beast_carcass": {
+      "family": "villain",
+      "where": [
+        "camp"
+      ],
+      "time": [
+        "dawn",
+        "day"
+      ],
+      "text": [
+        [
+          "In the morning there is a dead hind at the edge of your camp, laid out as neat as a gift, its throat torn out.",
+          "At first light you find it: a sheep's head, set on a stone where the fire was, watching the camp.",
+          "Something came in the night, and went, and left you a carcass at the edge of the firelight. Nobody heard a thing."
+        ],
+        [
+          "It knows where you sleep. It wants you to know it knows.",
+          "{villain_short} does not need to write letters.",
+          "The message is plain enough: it is not afraid of you."
+        ]
+      ],
+      "choices": [
+        {
+          "label": [
+            "Burn it, and break camp."
+          ],
+          "ops": [
+            [
+              "flag",
+              "burned_its_gift"
+            ]
+          ],
+          "result": [
+            "You burn it, and go, and keep looking back."
+          ]
+        },
+        {
+          "label": [
+            "Study it: how it was killed tells you something."
+          ],
+          "check": {
+            "skill": "nature",
+            "dc": 12
+          },
+          "success": [
+            [
+              "clue",
+              "villain"
+            ]
+          ],
+          "failure": [
+            [
+              "time",
+              30
+            ]
+          ],
+          "result": [
+            "The bite is the bite of the old songs. You learn a little of how it kills."
+          ],
+          "fail_result": [
+            "It tells you nothing you did not know, except that it was very strong."
+          ]
+        }
+      ]
+    },
+    "beast_test_night": {
+      "family": "villain",
+      "where": [
+        "camp"
+      ],
+      "time": [
+        "night"
+      ],
+      "text": [
+        [
+          "In the dead of night the horses scream, and then there is something huge between the fire and the dark.",
+          "The watch shouts once, and you wake to a weight hitting the edge of camp and a smell like a slaughterhouse.",
+          "It comes in the black hour before dawn, testing: a rush at the firelight, and then gone, and then a rush from the other side."
+        ]
+      ],
+      "choices": [
+        {
+          "label": [
+            "Stand to the fire and drive it off."
+          ],
+          "check": {
+            "skill": "athletics",
+            "dc": 13
+          },
+          "success": [
+            [
+              "attention",
+              1
+            ]
+          ],
+          "failure": [
+            [
+              "hurt",
+              "1d6"
+            ],
+            [
+              "attention",
+              1
+            ]
+          ],
+          "result": [
+            "You stand, and shout, and swing, and it goes. It was only testing you."
+          ],
+          "fail_result": [
+            "It knocks you down on its way out of the light, and is gone before you are up."
+          ]
+        },
+        {
+          "label": [
+            "Throw it the meat you carry, and let it go."
+          ],
+          "requires": {
+            "item": [
+              "raw_meat",
+              "cooked_meat"
+            ]
+          },
+          "ops": [
+            [
+              "use",
+              "raw_meat",
+              "cooked_meat"
+            ],
+            [
+              "flag",
+              "fed_it"
+            ]
+          ],
+          "result": [
+            "It takes the meat and goes. You have taught it something, and you are not sure what."
+          ]
+        }
+      ]
+    },
+    "beast_lore_at_kill": {
+      "family": "step",
+      "where": [
+        "road",
+        "wild"
+      ],
+      "text": [
+        [
+          "You come back to the kill to look again, now that you know what you are looking for.",
+          "The kill is older now, and the crows have done their work, but there is more here to read.",
+          "The bones of the kill tell their story to anyone who knows the beasts of {area}."
+        ]
+      ],
+      "choices": [
+        {
+          "label": [
+            "Think back on every beast-tale you know."
+          ],
+          "check": {
+            "skill": "nature",
+            "dc": 13
+          },
+          "success": [
+            [
+              "clue",
+              "villain"
+            ],
+            [
+              "step_done"
+            ]
+          ],
+          "failure": [
+            [
+              "time",
+              120
+            ]
+          ],
+          "result": [
+            "{weakness_lore}"
+          ],
+          "fail_result": [
+            "Nothing comes. You will have to ask someone who knows."
+          ]
+        }
+      ]
+    },
+    "story_hook": {
+      "family": "hook",
+      "title": [
+        "{villain}"
+      ],
+      "text": [
+        [
+          "{hook}",
+          "Word is going round, and it is all the same word: {hook}",
+          "{hook} Everyone you meet seems to be talking of nothing else."
+        ]
+      ],
+      "choices": [
+        {
+          "label": [
+            "I will hunt it. (A tale begins: the journal keeps it.)"
+          ],
+          "ops": [
+            [
+              "take_hook"
+            ]
+          ]
+        },
+        {
+          "label": [
+            "Not now."
+          ],
+          "ops": [
+            [
+              "decline_hook"
+            ]
+          ],
+          "result": [
+            "Someone else, then. Or no one. You put it out of your mind, almost."
+          ]
+        }
+      ]
+    }
+  }
 }

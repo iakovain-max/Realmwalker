@@ -1,0 +1,6 @@
+{
+  "_comment": "Expansion 6: the story's sounds. Until A.10 builds their own (tools/build_sounds.py), the chapter's card turns a page.",
+  "sounds": {
+    "chapter": {"files": ["ui_page_1.wav", "ui_page_2.wav"], "group": "interface", "volume": 0.7, "pitch": 0.02, "priority": 3, "about": "A tale begins, or a chapter of it"}
+  }
+}

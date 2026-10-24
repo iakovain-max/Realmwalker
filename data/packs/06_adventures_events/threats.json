@@ -83,8 +83,12 @@
         1,
         3
       ],
-      "tempers": [],
-      "blueprints": [],
+      "tempers": [
+        "bestial"
+      ],
+      "blueprints": [
+        "beast"
+      ],
       "reach": 14,
       "stages": [
         {

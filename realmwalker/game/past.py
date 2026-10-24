@@ -230,7 +230,7 @@ def on_battle(game, result) -> None:
     if result.outcome != "victory":
         return
     w = game.world
-    names = {c.name for c in result.dead if getattr(c, "named", False)}
+    names = {c.name for c in result.dead if getattr(c, "named", False) and not getattr(c, "story", None)}
     if not names:
         return
     for site_id, hid in list(w.politics.get("lairs", {}).items()):

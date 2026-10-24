@@ -1469,7 +1469,7 @@ CHOICE = Obj({
 BEAT = Obj({
     "family": Str(max_len=30),
     "where": List(Str(max_len=30), optional=True),
-    "time": Str(max_len=20, optional=True),
+    "time": Any_(optional=True),  # dawn, day, dusk, night: one, or a list
     "when": Map(Any_(), optional=True),  # conditions (story/beats.CONDITIONS)
     "weight": Int(min=0, max=100, optional=True),
     "title": List(Str(max_len=80), optional=True),
