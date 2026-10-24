@@ -76,7 +76,26 @@ def smoke_script():
 
     steps.append((frame, peaceful))
     frame += 6
+
+    def signs(app):
+        """What the towns near you are going through, shown on the map (the nearest, which the tour visits, is left
+        alone)."""
+        game = app.game
+        if game is None:
+            return
+        p = game.player
+        towns = sorted(game.world.settlements, key=lambda s: abs(s.x - p.x) + abs(s.y - p.y))[1:7]
+        from realmwalker.world import news
+
+        day = news.now_days(game.world)
+        for s, (mark, value) in zip(towns, (("burning", {"since": day}), ("siege", {"since": day, "by": 0}),
+                                            ("plague", {"since": day}), ("tribute", "a dragon"),
+                                            ("festival", {"since": day}), ("memorial", {"since": day}))):
+            s.status[mark] = value
+
     press("right", "right", "down", "down", gap=4)
+    steps.append((frame, signs))
+    frame += 3
     shots[frame - 1] = "overworld"
     press("c")
     shots[frame - 4] = "character"
@@ -278,6 +297,61 @@ def smoke_script():
         frame += 10
         shots[frame] = name
         frame += 4
+
+    def burned(app):
+        """Expansion 6: a town burned by a war, walked into (charred shells, ash in the streets), and a letter's
+        page."""
+        from realmwalker.ui.screens.game_screen import GameScreen
+        from realmwalker.world import marks
+
+        game = app.game
+        if game is None:
+            return
+        while app.screens and not isinstance(app.top, GameScreen):
+            app.pop()
+        towns = [s for s in game.world.settlements if s.kind in ("town", "village")]
+        if not towns:
+            return
+        s = max(towns, key=lambda s: s.population)
+        marks.add(game.world, s, "burned", game.moment.total_days, app.tables)
+        game.world.local_maps.pop(f"{s.x},{s.y}", None)
+        game.player.local_key = None
+        game.player.x, game.player.y = s.x, s.y
+        game.enter_local()
+        from realmwalker.game.story import beats
+
+        d = beats.director(game.world)
+        d["pending"], d["scene"] = None, None  # (no tale at its door for this picture)
+        cells = ((game.local.meta.get("marks") or {}).get("burned") or {}).get("cells") or []
+        if cells:
+            lm = game.local
+            walk = game.tables.terrain.walk[game.remap_for(lm)[lm.terrain]]
+            x, y = cells[len(cells) // 2][:2]
+            spot = next(((x + dx, y + dy) for r in range(2, 9) for dx in range(-r, r + 1) for dy in range(-r, r + 1)
+                         if lm.in_bounds(x + dx, y + dy) and walk[x + dx, y + dy]
+                         and lm.building_at(x + dx, y + dy) is None), None)
+            if spot:
+                game.player.lx, game.player.ly = spot
+
+    def letter(app):
+        from realmwalker.game import letters
+
+        game = app.game
+        if game is not None:
+            game.letter = letters.write(game, sender="Gyda, headman of the burned town", hand="plain", key=1,
+                                        lines=["To whoever comes through the gate,",
+                                               "They burned the mill first, then the houses along the river. We "
+                                               "have nothing left to pay you with but our thanks.",
+                                               "If you find who did it, tell them we remember."])
+
+    steps.append((frame, burned))
+    frame += 10
+    shots[frame] = "burned_town"
+    frame += 4
+    steps.append((frame, letter))
+    frame += 8
+    shots[frame] = "letter"
+    press("escape")
 
     def surface(app):
         if app.game is not None:

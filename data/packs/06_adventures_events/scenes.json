@@ -1,0 +1,343 @@
+{
+  "_comment": "Scenes (docs/ADVENTURES.md §5.18, §8.11; game/story/stage.py): choreography played on a town's map by its own people. cues: the whitelist in stage.CUES (pick, arrive, walk, run, follow, flee, say, shout, give, take, kneel, rise, fall, die, crowd, disperse, door, bell, focus, wait, hold, release, talk, beat, fight, read), each with its own keys (who, role, to, at, words or key, letter, ticks, always...). words: lines for a cue's key. A pick that finds nobody sends the scene to its end, where only cues marked always still play.",
+  "scenes": {
+    "runner": {
+      "about": "A child or a serving hand runs up to you through the street and presses a sealed letter into your hand from people who need you; its page opens, then the tale's hook.",
+      "cues": [
+        {
+          "cue": "pick",
+          "role": "runner",
+          "jobs": [
+            "child",
+            "serving_hand",
+            "porter",
+            "labourer"
+          ],
+          "within": 40,
+          "holding": "letter"
+        },
+        {
+          "cue": "hold"
+        },
+        {
+          "cue": "shout",
+          "who": "runner",
+          "key": "call",
+          "ticks": 1
+        },
+        {
+          "cue": "focus",
+          "at": "runner"
+        },
+        {
+          "cue": "run",
+          "who": "runner",
+          "to": "you"
+        },
+        {
+          "cue": "say",
+          "who": "runner",
+          "key": "breath",
+          "ticks": 3
+        },
+        {
+          "cue": "give",
+          "who": "runner",
+          "letter": "letter"
+        },
+        {
+          "cue": "say",
+          "who": "runner",
+          "key": "plea",
+          "ticks": 3
+        },
+        {
+          "cue": "read"
+        },
+        {
+          "cue": "beat",
+          "always": true
+        },
+        {
+          "cue": "walk",
+          "who": "runner",
+          "to": "home"
+        }
+      ],
+      "words": {
+        "call": [
+          "Wait! Please, wait!",
+          "You there! Stranger!",
+          "Hey! Hold on!",
+          "Wait for me!",
+          "You - the one with the sword!"
+        ],
+        "breath": [
+          "They said you'd come in by this gate.",
+          "I ran the whole way. Sorry.",
+          "I saw you from the end of the street.",
+          "Nobody else would come and find you.",
+          "Please - just listen."
+        ],
+        "plea": [
+          "They said give it to you and nobody else.",
+          "It's from the elders. Read it, please.",
+          "I'm to wait while you read it.",
+          "I didn't open it. Honest.",
+          "Everybody's scared. Please read it."
+        ],
+        "letter": [
+          "To whoever carries a sword through {town},\n\n{hook}\n\nWe are not fighters. We have tried, and we have buried those who tried.\n\nWhat we can pay is yours. Only come.",
+          "Forgive the hand, it shakes.\n\n{hook}\n\nThe child who brings this knows nothing of it; do not frighten them.\n\nIf you are what they say you are, you will come.",
+          "Stranger,\n\nI write because I am too proud to beg aloud.\n\n{hook}\n\nThere is coin set by. There is a bed. There is our thanks, for what it is worth.",
+          "To the one who came in today,\n\n{hook}\n\nThe lord will not come. The watch will not go up there. You are what is left to us.\n\nBurn this when you have read it.",
+          "Friend, if you will be one,\n\n{hook}\n\nAsk anyone in {town} and they will tell you the same, if they dare.\n\nWe will be waiting."
+        ]
+      }
+    },
+    "plea": {
+      "about": "Folk gather round you in the street, murmuring, and the eldest of them steps out to speak for them; the tale's hook opens.",
+      "cues": [
+        {
+          "cue": "pick",
+          "role": "speaker",
+          "jobs": [
+            "elder",
+            "headman",
+            "priest",
+            "preacher",
+            "farmer",
+            "innkeeper"
+          ],
+          "within": 45
+        },
+        {
+          "cue": "hold"
+        },
+        {
+          "cue": "crowd",
+          "at": "you",
+          "count": 7,
+          "radius": 2,
+          "key": "murmur",
+          "ticks": 14
+        },
+        {
+          "cue": "walk",
+          "who": "speaker",
+          "to": "you"
+        },
+        {
+          "cue": "say",
+          "who": "speaker",
+          "key": "open",
+          "ticks": 3
+        },
+        {
+          "cue": "beat",
+          "always": true
+        },
+        {
+          "cue": "disperse"
+        },
+        {
+          "cue": "walk",
+          "who": "speaker",
+          "to": "home"
+        }
+      ],
+      "words": {
+        "murmur": [
+          "That's the one.",
+          "Look at the gear on them.",
+          "Ask them. Go on.",
+          "Will they help, do you think?",
+          "Hush, here comes the old one.",
+          "They've the look of it.",
+          "Somebody has to do something."
+        ],
+        "open": [
+          "Forgive us, stranger. We have no one else to ask.",
+          "You'll have heard there's trouble. Hear us out.",
+          "Don't go yet. We've a thing to ask of you.",
+          "We are plain folk, and we are frightened.",
+          "Stay a moment. This concerns us all."
+        ]
+      }
+    },
+    "survivor": {
+      "about": "The one who saw the beast tells it again in the street, a crowd pressed round to hear; seeing you, they come to you and the telling opens as a conversation (the tale's witness step).",
+      "cues": [
+        {
+          "cue": "pick",
+          "role": "survivor",
+          "jobs": [
+            "farmer",
+            "herder",
+            "shepherd",
+            "labourer",
+            "woodcutter",
+            "carter"
+          ],
+          "within": 70
+        },
+        {
+          "cue": "hold"
+        },
+        {
+          "cue": "focus",
+          "at": "survivor"
+        },
+        {
+          "cue": "crowd",
+          "at": "survivor",
+          "count": 6,
+          "radius": 2,
+          "key": "murmur",
+          "ticks": 12
+        },
+        {
+          "cue": "say",
+          "who": "survivor",
+          "key": "account",
+          "ticks": 3
+        },
+        {
+          "cue": "say",
+          "who": "survivor",
+          "key": "account_more",
+          "ticks": 3
+        },
+        {
+          "cue": "walk",
+          "who": "survivor",
+          "to": "you"
+        },
+        {
+          "cue": "talk",
+          "who": "survivor",
+          "key": "open",
+          "always": true
+        },
+        {
+          "cue": "disperse",
+          "always": true
+        }
+      ],
+      "words": {
+        "murmur": [
+          "Tell it again. Tell it all.",
+          "Hush, let them speak.",
+          "Look at their hands shake.",
+          "They were there. They saw it.",
+          "Say what you told the priest.",
+          "Poor soul.",
+          "Was it really that big?",
+          "Let the stranger hear it."
+        ],
+        "account": [
+          "It came out of the dark, I tell you. No sound at all till it was on us.",
+          "Bigger than a horse. Bigger. I saw its back against the sky.",
+          "It took him off the cart like he weighed nothing at all.",
+          "I heard it breathing before I saw it. Like a smith's bellows.",
+          "Its eyes caught the lantern. That is all I saw. The eyes.",
+          "We had the dogs with us. The dogs ran first."
+        ],
+        "account_more": [
+          "And I ran. God forgive me, I ran and I did not look back.",
+          "I lay in the ditch till it was light. I could hear it eating.",
+          "Nobody believes me about the size of it. You'll see.",
+          "When I came back with the others there was nothing left to bury.",
+          "It looked at me. It looked right at me, and it let me go.",
+          "I have not slept since. Not properly."
+        ],
+        "open": [
+          "You're the one hunting it? Then you'd best hear it from me, not from them.",
+          "They say you'll go after {villain}. Then listen, for I'll only tell it once more.",
+          "You want to know what it is? Come here. I'll tell you what I saw.",
+          "You've the look of a hunter. Ask me, then. Ask me anything.",
+          "Everyone wants to hear it. You, at least, might do something with it."
+        ]
+      }
+    },
+    "ally_note": {
+      "about": "A boy runs up through the street with a note from the hunter who will stand with you against the beast: where it lies up, and that the hunter is waiting. Its page opens in the hunter's hand.",
+      "cues": [
+        {
+          "cue": "pick",
+          "role": "runner",
+          "jobs": [
+            "child",
+            "serving_hand",
+            "porter",
+            "labourer",
+            "herder"
+          ],
+          "within": 40,
+          "holding": "letter"
+        },
+        {
+          "cue": "hold"
+        },
+        {
+          "cue": "shout",
+          "who": "runner",
+          "key": "call",
+          "ticks": 1
+        },
+        {
+          "cue": "focus",
+          "at": "runner"
+        },
+        {
+          "cue": "run",
+          "who": "runner",
+          "to": "you"
+        },
+        {
+          "cue": "say",
+          "who": "runner",
+          "key": "breath",
+          "ticks": 3
+        },
+        {
+          "cue": "give",
+          "who": "runner",
+          "letter": "letter"
+        },
+        {
+          "cue": "read",
+          "always": true
+        },
+        {
+          "cue": "walk",
+          "who": "runner",
+          "to": "home"
+        }
+      ],
+      "words": {
+        "call": [
+          "Wait! I've a note for you!",
+          "You! The hunter's friend!",
+          "Hold on! Hold on, please!",
+          "Stranger! I was told to find you!",
+          "Wait up!"
+        ],
+        "breath": [
+          "The hunter paid me a penny to find you. Here.",
+          "From {ally}. I ran all the way from the hill road.",
+          "I was to give it you and nobody else.",
+          "They said you'd know who it's from.",
+          "It's from up the valley. I didn't read it."
+        ],
+        "letter": [
+          "{hero},\n\nI have been up above {home} three nights now. {villain} goes out at dusk and comes back before first light, always by the same gully.\n\nCome when you are ready. I will be at the edge of the trees.\n\n{sender}",
+          "{hero},\n\nI have found where it lies up: {home}. I have seen the bones at the mouth of it.\n\nI will not go in alone, and you should not either. Send word, or just come.\n\n{sender}",
+          "To {hero}, by the boy's hand,\n\nIt has fed, and it will sleep the day through. If we are going to do this, it should be soon.\n\nI am camped below {home}, where the stream bends. Look for my smoke.\n\n{sender}",
+          "{hero},\n\nI know the ground round {home} better than anyone living. There is a way up on the lee side that it does not watch.\n\nI am ready when you are.\n\n{sender}",
+          "{hero} -\n\nMy hand is no good for writing, so this is short. {villain} is at {home}. I am close by. Come.\n\n{sender}"
+        ]
+      }
+    }
+  }
+}

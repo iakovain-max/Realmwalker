@@ -628,6 +628,7 @@ class Battle:
         self.fighters: list[Fighter] = []
         self.zones: list[Zone] = []
         self.tokens: list[Token] = []
+        self.round_hooks: list = []  # callables run as each new round begins (a street on fire: game/fire.py)
         # The devout whose god may answer as they die (game/gods.py fills it; rules/miracles.py), and those answered.
         self.prayers: dict[int, dict] = {}
         self.answered: list[int] = []
@@ -1581,6 +1582,10 @@ class Battle:
         if self.turn >= len(self.order):
             self.turn = 0
             self.round += 1
+            for hook in list(self.round_hooks):
+                hook(self)
+                if self.outcome is not None:
+                    return
             if any(x.state == "away" for x in self.fighters):
                 self.active_round = self.round  # (someone sent away is coming back: not a stand-off)
             if self.round - self.active_round > QUIET_ROUNDS:
@@ -3314,6 +3319,9 @@ class Battle:
         hp_before = target.hp
         self.say(f"{text} <dim>({amount})</>", "danger" if target.side == PARTY else "info")
         self._event("damage", to=target.id, by=att.id if att else None, amount=amount, dtype=dtype, crit=crit)
+        if dtype in ("slashing", "piercing") and amount > 0 and \
+                (target.cdef or {}).get("kind") not in ("construct", "elemental", "ooze", "undead"):
+            self.__dict__.setdefault("blood", []).append([int(target.x), int(target.y)])  # (where it drew blood)
         self._apply_hp_loss(target, amount, source=att, cause=f"{att.the_name if att else 'a wound'}'s {weapon}" if att else weapon,
                             crit=crit, dtype=dtype)
         if target.char is not None and (target.char.spells or {}).get("contingency"):

@@ -14,9 +14,15 @@ import math
 import numpy as np
 
 from realmwalker.ui.gfx import dolls
-from realmwalker.ui.gfx.scene import Batch, Image, Rect, Text
+from realmwalker.ui.gfx.scene import Batch, Image, Rect, Sprite, Text
 
 STEP_SECONDS = 0.13  # how long a step takes to glide
+PATCH_MOST = 400  # squares changed at once that are patched (more: the whole map's art is made again)
+FIRE_ANIMATED = 64  # burning squares drawn moving (the rest: still flames)
+SMOKE_COLUMNS = 40  # smoke columns over burning roofs, at most
+FIRE_LIGHT = np.array([1.0, 0.55, 0.22], np.float32)
+FOCUS_SECONDS = 3.0  # a scene's camera focus lasts at most this long (game/story/stage.py)
+HAND_SECONDS = 0.5  # a thing handed over in a scene is drawn going from one to the other this long
 NIGHT = np.array([0.20, 0.24, 0.42], np.float32)
 DAY = np.array([1.0, 1.0, 1.0], np.float32)
 DUSK = np.array([1.0, 0.78, 0.62], np.float32)
@@ -105,6 +111,7 @@ class LocalArt:
         over = np.full(n, -1, np.int64)
         over_chance = np.ones(n, np.float32)
         anim = np.ones(n, np.int64)
+        anim_g = np.ones(n, np.int64)
         water = np.zeros(n, bool)
         self.light_spec: dict[int, tuple[float, np.ndarray]] = {}
         fence_id = T.index.get("fence", -1)
@@ -134,11 +141,16 @@ class LocalArt:
             over[i] = fam.get(ov)
             over_chance[i] = float(spec.get("over_chance", 1.0))
             anim[i] = int(spec.get("animate", 1))
+            anim_g[i] = int(spec.get("animate_ground", 1))
             water[i] = bool(spec.get("water"))
             if spec.get("light"):
                 r, c = spec["light"]
                 self.light_spec[i] = (float(r), np.array(c, np.float32) / 255.0)
         default_ground = fam.get(style.get("floor") if style else ("floor/cobble" if lm.kind == "settlement" else "floor/grass"))
+        self._by = {"ground": ground, "wall": wall, "obj": obj, "over": over, "over_chance": over_chance, "anim": anim,
+                    "anim_g": anim_g, "water": water, "default": default_ground,
+                    "special": {i for i in (fence_id, bridge_id) if i >= 0}}  # (what patch() needs)
+        self.src = lm.terrain.copy()
         self.hash = cell_hash(W, H, zlib_key(lm.key))
         # The ground under each square; things standing take theirs from their neighbours.
         G = ground[terr]
@@ -182,11 +194,55 @@ class LocalArt:
                 V = np.where(here & (V >= 0), pick, V)
         self.V = V
         self.ANIM = anim[terr]
+        self.ANIM_G = anim_g[terr]
         self.WATER = water[terr]
         self.lights = [(int(x), int(y), *self.light_spec[int(terr[x, y])]) for x, y in np.argwhere(np.isin(terr, list(self.light_spec)))] \
             if self.light_spec else []
         self.fam_rects, self.fam_start, self.fam_count = fam.arrays()
         self.trap_names = sp["traps"]
+
+    def patch(self, game, cells) -> bool:
+        """A few squares changed (a fire burned them out, a door opened): their looks picked again, square by square,
+        instead of the whole map's (Expansion 6 B.7). False when a change needs the whole map (fences, bridges)."""
+        by = self._by
+        lm = self.lm
+        terr = game.remap_for(lm)[lm.terrain]
+        if len(by["ground"]) <= int(terr.max()):
+            return False
+        W, H = terr.shape
+        for x, y in cells:
+            t = int(terr[x, y])
+            if t in by["special"] or int(self.terr[x, y]) in by["special"] or by["obj"][t] == -2:
+                return False
+        for x, y in cells:
+            t = int(terr[x, y])
+            self.terr[x, y] = t
+            self.WALL[x, y] = int(by["wall"][t])
+            g = int(by["ground"][t])
+            if g < 0 and self.WALL[x, y] < 0:  # (a thing standing takes its ground from a neighbour; a wall has none)
+                g = int(by["default"])
+                for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    nx, ny = x + dx, y + dy
+                    if 0 <= nx < W and 0 <= ny < H and self.WALL[nx, ny] < 0 and self.G[nx, ny] >= 0:
+                        g = int(self.G[nx, ny])
+                        break
+            self.G[x, y] = g
+            self.O[x, y] = int(by["obj"][t])
+            v = int(by["over"][t])
+            if v >= 0 and (int(self.hash[x, y]) % 1000) / 1000.0 >= float(by["over_chance"][t]):
+                v = -1
+            choices = getattr(self, "_over_list", {}).get(t)
+            if v >= 0 and choices:
+                v = int(choices[(int(self.hash[x, y]) // 7) % len(choices)])
+            self.V[x, y] = v
+            self.ANIM[x, y] = int(by["anim"][t])
+            self.ANIM_G[x, y] = int(by["anim_g"][t])
+            self.WATER[x, y] = bool(by["water"][t])
+        self.lights = [(int(x), int(y), *self.light_spec[int(terr[x, y])])
+                       for x, y in np.argwhere(np.isin(terr, list(self.light_spec)))] if self.light_spec else []
+        self.src = lm.terrain.copy()
+        self.stamp = hash(lm.terrain.tobytes())
+        return True
 
 
 def zlib_key(key: str) -> int:
@@ -207,12 +263,19 @@ class LocalView:
         self.origin = (0.0, 0.0)  # pixel of the top left of square (0, 0)
         self.tile = 32
         self.rect = (0, 0, 0, 0)
+        self.focus: tuple[int, float] | None = None  # a scene's camera focus: (its number, when it began)
+        self.fx_seen: dict[int, float] = {}  # a scene's things changing hands: number -> when first drawn
 
     # ------------------------------------------------------------------ helpers
     def art_for(self, game, lm, atlas) -> LocalArt:
         stamp = hash(lm.terrain.tobytes())
-        if self.art is None or self.art.lm is not lm or self.art.stamp != stamp:
+        art = self.art
+        if art is None or art.lm is not lm:
             self.art = LocalArt(game, lm, atlas)
+        elif art.stamp != stamp:
+            changed = np.argwhere(art.src != lm.terrain) if art.src.shape == lm.terrain.shape else None
+            if changed is None or len(changed) > PATCH_MOST or not art.patch(game, [tuple(c) for c in changed]):
+                self.art = LocalArt(game, lm, atlas)  # (many squares at once: the whole map's looks again)
         return self.art
 
     def pos(self, key, x: int, y: int, now: float, animate: bool) -> tuple[float, float]:
@@ -264,6 +327,12 @@ class LocalView:
         # The camera glides after you.
         ppos = self.pos("player", p.lx, p.ly, now, animate)
         target = (ppos[0] + 0.5, ppos[1] + 0.5)
+        cam = getattr(game, "camera", None)
+        if cam and animate:  # a scene eases the camera to a spot, for three seconds at most (game/story/stage.py)
+            if self.focus is None or self.focus[0] != cam["n"]:
+                self.focus = (cam["n"], now)
+            if now - self.focus[1] < FOCUS_SECONDS:
+                target = (cam["to"][0] + 0.5, cam["to"][1] + 0.5)
         key = (lm.key, T)
         dt = max(0.0, now - self.last_t)
         self.last_t = now
@@ -328,12 +397,14 @@ class LocalView:
             # Water breathes: a slow ripple of light across it.
             k = 0.90 + 0.10 * np.sin(now * 1.6 + gx / 37.0 + gy / 22.0)
             shimmer = np.where(art.WATER[sl], k, 1.0).astype(np.float32)
-        layer(art.G[sl], seen, mult=shimmer)
+        layer(art.G[sl], seen, art.ANIM_G[sl], mult=shimmer)
         layer(art.WALL[sl], seen)
         layer(art.V[sl], seen)
         layer(art.O[sl], seen, art.ANIM[sl])
         cmds = _batches(quads)
         canvas.under(*cmds)
+        canvas.under(*self._decals(game, lm, atlas, x0, y0, x1, y1, light))
+        canvas.under(*self._flames(lm, atlas, x0, y0, x1, y1, now, ambient))
         # Traps that were found, and what lies on the ground.
         small: list[tuple[str, float, float, float, tuple]] = []
         for (fx_, fy_), f in lm.features.items():
@@ -387,8 +458,14 @@ class LocalView:
                 nx, ny = self.pos(("npc", npc.id), npc.x, npc.y, now, animate)
                 small = T * 0.74 if npc.age < 14 else T  # children come up to your chest
                 px_, py_ = self.cell_px(nx, ny)
-                people.append((ny, dolls.npc(npc, game.tables, atlas), px_ + (T - small) / 2, py_, small,
-                               _cell_light(light, npc.x - x0, npc.y - y0), False))
+                col = _cell_light(light, npc.x - x0, npc.y - y0)
+                pose = npc.flags.get("pose")
+                if pose == "kneel":  # (lowered by a quarter of their height: a scene)
+                    py_ += small * 0.25
+                elif pose == "down":
+                    py_ += small * 0.4
+                    col = tuple(v * 0.6 for v in col)
+                people.append((ny, dolls.npc(npc, game.tables, atlas), px_ + (T - small) / 2, py_, small, col, False))
                 if npc.id in said:
                     words.append((*self.cell_px(nx, ny), said[npc.id]))
         lit = bool(game.lit and game.lit.get("hours", 0) > 0) if getattr(game, "lit", None) else False
@@ -456,7 +533,7 @@ class LocalView:
                 people.append((fy - 0.003, look, *self.cell_px(fx, fy), T,
                                _cell_light(light, cx_ - x0, cy_ - y0), False))
         people.sort(key=lambda t: t[0])
-        out = []
+        out = self._fallen(game, lm, atlas, fov, roofed, x0, y0, light)  # (the dead lie under the living)
         for _, names, px_, py_, size, col, alert in people:
             out.append(Image("shadow", _shadow_image, (px_ + size * 0.18, py_ + size * 0.78, size * 0.64, size * 0.22),
                              rgba=(255, 255, 255, 150)))
@@ -467,11 +544,122 @@ class LocalView:
             cmd = dolls.draw(atlas, names, px_, py_ + (T - size), size, col)
             if cmd is not None:
                 out.append(cmd)
+        out.extend(self._handed(game, atlas, now, animate))
         size = max(11, int(T * 0.38))
         for wx, wy, text in words:  # what people say in passing, over their heads
             out.append(Text(wx + T / 2, wy - T * 0.08, text, "prose_bold", size, (250, 240, 214, 255), anchor="mb",
                             shadow=False, outline=True))
         canvas.under(*out)
+
+    def _decals(self, game, lm, atlas, x0, y0, x1, y1, light) -> list:
+        """Blood where a fight was (game/remains.py), fading by its age; only on squares you have seen."""
+        decals = (lm.meta or {}).get("decals")
+        if not decals:
+            return []
+        from realmwalker.game import remains
+
+        now = game.world.time / 1440.0
+        T = self.tile
+        out = []
+        for key, rec in decals.items():
+            x, y = (int(v) for v in key.split(","))
+            if not (x0 <= x < x1 and y0 <= y < y1) or not lm.seen[x, y]:
+                continue
+            a = remains.blood_alpha(now, rec)
+            if a <= 0:
+                continue
+            lit = _cell_light(light, x - x0, y - y0)
+            col = tuple(int(255 * min(1.0, c)) for c in lit)
+            px_, py_ = self.cell_px(x, y)
+            if rec[0] == "tracks":  # (prints pointing the way they went)
+                out.append(Image("tracks", _tracks_image, (px_ + T * 0.15, py_ + T * 0.15, T * 0.7, T * 0.7),
+                                 rgba=(int(col[0] * 0.3), int(col[1] * 0.25), int(col[2] * 0.2), int(200 * a)),
+                                 angle=45.0 * int(rec[2])))
+                continue
+            fam = atlas.family("decal/pool" if rec[0] == "pool" else "decal/blood")
+            if not fam:
+                continue
+            out.append(Sprite(fam[int(rec[2]) % len(fam)], px_, py_, T, T, (*col, int(230 * (0.35 + 0.65 * a)))))
+        return out
+
+    def _flames(self, lm, atlas, x0, y0, x1, y1, now: float, ambient: bool) -> list:
+        """Fire on the squares that burn (game/fire.py): a red heart and tongues of flame, the first FIRE_ANIMATED of
+        them moving; on squares you have seen."""
+        fire = (lm.meta or {}).get("fire")
+        if not fire:
+            return []
+        frames = atlas.family("fx/blaze") or atlas.family("fx/fire")
+        if not frames:
+            return []
+        T = self.tile
+        out = []
+        moving = 0
+        for k, (stage, _) in fire.items():
+            x, y = _fire_xy(k)
+            if not (x0 <= x < x1 and y0 <= y < y1) or not lm.seen[x, y]:
+                continue
+            px_, py_ = self.cell_px(x, y)
+            alive = stage < 3
+            out.append(Rect(px_, py_, T, T, (255, 110, 30, 60 if alive else 30)))
+            if not alive:
+                continue
+            i = (x * 7 + y * 13) % len(frames)
+            if ambient and moving < FIRE_ANIMATED:
+                i = (int(now * 8) + x + y) % len(frames)
+                moving += 1
+            s = T * (0.8 if stage == 0 else 1.15 if stage == 1 else 0.7)
+            out.append(Sprite(frames[i], px_ + (T - s) / 2, py_ + T - s, s, s, (255, 255, 255, 235)))
+        return out
+
+    def _fallen(self, game, lm, atlas, fov, roofed, x0, y0, light) -> list:
+        """The dead where they fell (game/remains.py): their own figures, turned on their side and darkened."""
+        bodies = (lm.meta or {}).get("bodies")
+        if not bodies:
+            return []
+        out = []
+        T = self.tile
+        for i, b in enumerate(bodies):
+            x, y = int(b["x"]), int(b["y"])
+            if not lm.in_bounds(x, y) or not fov[x, y] or roofed(x, y):
+                continue
+            who = b["who"]
+            if "npc" in who:
+                npc = game.world.npcs.get(who["npc"])
+                if npc is None:
+                    continue
+                parts = dolls.npc(npc, game.tables, atlas)
+            else:
+                parts = dolls.creature(who.get("creature", ""), game.tables, f"body{i}", atlas)
+            lit = tuple(v * 0.6 for v in _cell_light(light, x - x0, y - y0))
+            px_, py_ = self.cell_px(x, y)
+            cmd = dolls.draw(atlas, parts, px_, py_ + T * 0.18, T, lit, angle=float(b.get("angle", 90)))
+            if cmd is not None:
+                out.append(cmd)
+        return out
+
+    def _handed(self, game, atlas, now: float, animate: bool) -> list:
+        """A thing changing hands in a scene: its picture goes from one figure to the other (half a second)."""
+        fx = getattr(game, "stage_fx", None)
+        if not fx or not animate:
+            return []
+        out = []
+        T = self.tile
+        for e in fx:
+            t0 = self.fx_seen.setdefault(e["n"], now)
+            t = (now - t0) / HAND_SECONDS
+            if t > 1.0:
+                continue
+            t = t * t * (3 - 2 * t)
+            x = e["a"][0] + (e["b"][0] - e["a"][0]) * t
+            y = e["a"][1] + (e["b"][1] - e["a"][1]) * t - math.sin(t * math.pi) * 0.4
+            from types import SimpleNamespace
+
+            name = item_sprite(atlas, game.tables, SimpleNamespace(def_id=e["item"]))
+            px_, py_ = self.cell_px(x, y)
+            out.extend(_sprites(atlas, [(name, px_ + T * 0.25, py_ + T * 0.1, T * 0.5, (1.0, 1.0, 1.0))]))
+        if len(self.fx_seen) > 32:
+            self.fx_seen = {k: v for k, v in self.fx_seen.items() if now - v < 5}
+        return out
 
     def _follow(self, game, lm, taken: set) -> list[tuple[int, int]]:
         """Where companions stand: the squares you were last on, then the free squares beside you."""
@@ -488,12 +676,13 @@ class LocalView:
         self.last_cell = cur
         walk = game.tables.terrain.walk
         remap = game.remap_for(lm)
+        fire_on = (lm.meta or {}).get("fire")
         out: list[tuple[int, int]] = []
         around = [(cur[0] + dx, cur[1] + dy) for dx, dy in ((-1, 1), (1, 1), (0, 1), (-1, 0), (1, 0), (-1, -1), (1, -1), (0, -1))]
         for x, y in self.trail + around:
             if (x, y) == cur or (x, y) in out or (x, y) in taken or not lm.in_bounds(x, y):
                 continue
-            if not walk[remap[lm.terrain[x, y]]]:
+            if not walk[remap[lm.terrain[x, y]]] or (fire_on and _fire_key(x, y) in fire_on):
                 continue
             out.append((x, y))
         return out
@@ -551,6 +740,13 @@ class LocalView:
                 radius = 5.0
             if radius > 0:
                 add(p.lx, p.ly, (radius + 2.5) * flick(99), TORCH, 1.3)
+        fire = (lm.meta or {}).get("fire")
+        if fire:  # (a fire lights the street by day too: B.7)
+            near = [_fire_xy(k) for k, rec in fire.items() if rec[0] < 3]
+            near = [c for c in near if x0 - 5 <= c[0] < x0 + w + 5 and y0 - 5 <= c[1] < y0 + h + 5]
+            step = max(1, len(near) // 40)
+            for i, (fx, fy) in enumerate(near[::step]):
+                add(fx, fy, 4.5 * flick(i + 7), FIRE_LIGHT, 0.9 if dark else 0.35)
         np.clip(L, 0, 1.0, out=L)
         memory = seen & ~vis
         L[memory] = MEMORY
@@ -579,6 +775,12 @@ class LocalView:
         k = T // r  # screen pixels to a building pixel
         lit = float(game.light) < 0.45
         shadow = []
+        alight = set()
+        if (lm.meta or {}).get("fire"):
+            from realmwalker.game import fire
+
+            alight = fire.alight_buildings(lm)
+        blazing = []  # (roof's pixel rect, seed) of buildings on fire
         for i, b in enumerate(lm.buildings):
             if b is inside or b.x >= x1 or b.y >= y1 or b.x + b.w <= x0 or b.y + b.h <= y0:
                 continue
@@ -633,6 +835,8 @@ class LocalView:
             shadow.append(Rect(px_ + T * 0.3, py_ + b.h * T, b.w * T, T * 0.22, (0, 0, 0, 60)))
             out.append(Image(("bld", *args), lambda args=args, draw=draw: draw(*args)[0], dst, rgba=(*base, 255),
                              smooth=False))
+            if i in alight:
+                blazing.append((dst, seed))
             if lit and draw(*args)[1] is not None:
                 glows.append(Image(("bldglow", *args), lambda args=args, draw=draw: draw(*args)[1], dst,
                                    rgba=(255, 255, 255, 235), smooth=False))
@@ -668,6 +872,8 @@ class LocalView:
         canvas.under(*shadow)
         canvas.under(*out)
         canvas.under(*glows)
+        if blazing:
+            self._roof_fire(canvas, blazing, now, ambient)
         for cx, cy, seed in smoke:
             for k in range(3):
                 t = (now * 0.22 + k / 3 + (seed % 97) / 97) % 1.0
@@ -680,6 +886,51 @@ class LocalView:
             return any(b.contains(x, y) for b in covered)
 
         return roofed
+
+    def _roof_fire(self, canvas, blazing, now: float, ambient: bool) -> None:
+        """A burning building's roof: an orange glow, flames along its ridge and two to four columns of smoke, darker,
+        larger and faster than a chimney's (game/fire.py)."""
+        from realmwalker.ui.gfx import roofs
+
+        T = self.tile
+        frames = canvas.gfx.atlas.family("fx/blaze") or canvas.gfx.atlas.family("fx/fire")
+        pulse = (0.8 + 0.2 * math.sin(now * 5.0)) if ambient else 1.0
+        columns = 0
+        moving = 0
+        for (x, y, w, h), seed in blazing:
+            canvas.under(Rect(x, y, w, h, (255, 120, 40, int(95 * pulse))))
+            n = max(2, min(6, int(w // T)))
+            for k in range(n if frames else 0):
+                i = (seed + k) % len(frames)
+                if ambient and moving < FIRE_ANIMATED:
+                    i = (int(now * 8) + seed + k) % len(frames)
+                    moving += 1
+                s = T * (0.9 + 0.3 * ((seed >> k) & 1))
+                fx = x + (k + 0.5) * w / n - s / 2
+                fy = y + h * 0.18 - s * 0.6 + ((seed >> (k + 3)) & 3) * T * 0.08
+                canvas.under(Sprite(frames[i], fx, fy, s, s, (255, 255, 255, 240)))
+            if not ambient:
+                continue
+            for k in range(2 + seed % 3):
+                if columns >= SMOKE_COLUMNS:
+                    break
+                columns += 1
+                cx = x + w * (0.2 + 0.6 * ((seed * (k + 3)) % 97) / 97)
+                for j in range(3):
+                    t = (now * 0.45 + j / 3 + ((seed + k * 31) % 89) / 89) % 1.0
+                    size = T * (0.6 + 1.4 * t)
+                    canvas.under(Image("smoke", roofs.smoke_puff,
+                                       (cx + T * 0.9 * t - size / 2, y - T * 3.0 * t - size / 2, size, size),
+                                       rgba=(178, 168, 158, int(225 * (1 - t) * min(1.0, t * 5)))))
+
+
+def _fire_xy(key: str) -> tuple[int, int]:
+    a, b = key.split(",")
+    return int(a), int(b)
+
+
+def _fire_key(x: int, y: int) -> str:
+    return f"{x},{y}"
 
 
 def _plaque_image():
@@ -744,6 +995,19 @@ def item_sprite(atlas, tables, item) -> str | None:
                 "clothing": "_armor", "food": "_food", "drink": "_drink", "book": "_book", "trade": "_trade",
                 "jewellery": "_jewellery"}.get(cat, "_gear")
     return f"item/{fallback}"
+
+
+def _tracks_image():
+    """Two prints, side by side, the toes to the top (turned to the way they go)."""
+    from PIL import Image as PImage, ImageDraw
+
+    im = PImage.new("RGBA", (32, 32), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    for x0, y0 in ((7, 12), (18, 4)):
+        d.ellipse([x0, y0 + 4, x0 + 7, y0 + 16], fill=(255, 255, 255, 255))
+        for i in range(3):
+            d.ellipse([x0 + i * 2.5 - 0.5, y0, x0 + i * 2.5 + 2, y0 + 3], fill=(255, 255, 255, 255))
+    return im
 
 
 def _shadow_image():

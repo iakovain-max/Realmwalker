@@ -760,6 +760,7 @@ EVENT_OPTION = Obj(
 TRAVEL_EVENT = Obj(
     {
         "name": Str(max_len=60),
+        "picture": Str(max_len=60, optional=True),  # a vignette's backdrop (ui/gfx/vignette.BACKDROPS)
         "where": Obj({"road": Bool(optional=True), "biomes": List(Str(max_len=30), min_items=1),
                       "danger": List(Int(min=0, max=10), min_items=2, max_items=2), "time": Str(choices=["any", "day", "night"]),
                       "season": Any_()}),
@@ -1271,6 +1272,7 @@ SPRITE_TERRAIN = Obj(
         "water": Bool(optional=True),
         "autotile": Bool(optional=True),
         "animate": Int(min=1, max=8, optional=True),
+        "animate_ground": Int(min=1, max=8, optional=True),  # the ground's frames (embers: Expansion 6 B.7)
         "light": List(Any_(), min_items=2, max_items=2, optional=True),
         "cold": Str(max_len=60, optional=True),
     }
@@ -1474,6 +1476,7 @@ BEAT = Obj({
     "weight": Int(min=0, max=100, optional=True),
     "title": List(Str(max_len=80), optional=True),
     "picture": Str(max_len=60, optional=True),
+    "leaves": Str(max_len=30, optional=True),  # what it leaves at your camp, in the camp's picture (story.LEFT)
     "text": List(word_list(1, 600), min_items=1),  # pages, each a list of variants
     "choices": List(CHOICE, optional=True),
     "ops": ops_list(optional=True),  # what it does when it has no choices
@@ -1559,8 +1562,36 @@ VILLAINS = Obj({
     "bosses": Map(BOSS),
     "weaknesses": Map(List(WEAKNESS, min_items=1)),  # by what the villain is (a creature type, or a creature id)
 })
+CUE = Obj({"cue": Str(max_len=20)}, strict=False)  # its other keys are its cue's own (story/stage.py CUES)
+SCENE = Obj({
+    "about": Str(max_len=300, optional=True),
+    "cues": List(CUE, min_items=1),
+    "words": Map(word_list(1, 300), optional=True),  # lines for its cues' `key`
+})
+SCENES = Obj({"scenes": Map(SCENE)})
+DAY_SPAN = List(Int(min=0, max=3650), min_items=2, max_items=2)
+MARK = Obj({
+    "form": Str(choices=["day", "name", "record"]),
+    "label": Str(max_len=40),
+    "colour": Str(max_len=20),
+    "ages": Obj({"into": Any_(), "after": DAY_SPAN}, optional=True),  # into: the next mark, or null
+    "lasts": List(Int(min=0, max=3650), min_items=2, max_items=2, optional=True),  # a record's days with no until
+    "troubles": word_list(3, 300),  # walking in ({town}, {by}, {by_part})
+    "moments": word_list(3, 300),  # a thing seen in its streets
+    "description": word_list(1, 300),  # a line for a town's first description
+    "dress": Obj({"share": Float(min=0, max=1, optional=True)}, strict=False, optional=True),  # (game/placemarks.py)
+})
+FIRE = Obj({  # live fire on a town's map (game/fire.py)
+    "burns": Map(List(Float(min=0, max=100), min_items=2, max_items=2)),
+    "into": Map(Str(max_len=40)),
+    "beams": Float(min=0, max=1),
+    "shell": Float(min=0, max=1),
+    "kindle": List(Int(min=0, max=20), min_items=2, max_items=2),
+    "cries": word_list(3, 120),
+}, optional=True)
+MARKS = Obj({"marks": Map(MARK), "fire": FIRE})
 DATA_FILES.update({"threats.json": THREATS, "adventures.json": ADVENTURES, "villains.json": VILLAINS,
-                   "beats.json": BEATS})
+                   "beats.json": BEATS, "scenes.json": SCENES, "marks.json": MARKS})
 PACK_ONLY.update({"threats.json": {"kinds": {}}, "adventures.json": {"blueprints": {}},
                   "villains.json": {"tempers": {}, "moves": {}, "bosses": {}, "weaknesses": {}},
-                  "beats.json": {"beats": {}}})
+                  "beats.json": {"beats": {}}, "scenes.json": {"scenes": {}}, "marks.json": {"marks": {}}})

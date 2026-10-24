@@ -638,11 +638,12 @@ WEAPONS = {
     "musket": ["b", "b", "b", "b", "b", "b", "b", "b", "bg", "w", "h", "ww", "ww"],
     "pistol": ["b", "b", "bg", "wh", "w"],
     "holy_symbol": [" g ", "ggg", " g ", " h"],
+    "letter": ["sss", "srs", "sss", " h"],  # (a sealed letter, carried to someone in a scene: Expansion 6 B.2)
 }
 COLOURS = {
     "M": None, "m": None,  # metal: highlight / body (coloured when drawn)
     "g": (220, 172, 70), "w": (116, 80, 46), "l": (90, 60, 38), "s": (222, 212, 184), "f": (244, 140, 40),
-    "F": (255, 224, 120), "o": (150, 210, 255), "b": (70, 70, 78), "h": (102, 70, 46),
+    "F": (255, 224, 120), "o": (150, 210, 255), "b": (70, 70, 78), "h": (102, 70, 46), "r": (172, 36, 30),
 }
 
 

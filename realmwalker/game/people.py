@@ -637,6 +637,9 @@ def prepare_town(game, settlement) -> Town:
     lm = get_local_map(game.world, game.tables, settlement.x, settlement.y)
     if lm.kind != "settlement":
         return town_of(game.world, settlement.id)
+    from realmwalker.game import placemarks
+
+    placemarks.stamp(game, lm, settlement)  # (what it has been through, before its people are placed)
     return populate_town(game, lm, settlement)
 
 
@@ -884,9 +887,14 @@ def town_moment(game, settlement) -> str:
     if is_day(game) and settlement.kind in ("town", "city") and game.moment.weekday in MARKET_DAYS:
         pools.append("moments_market")
     lines = [line for pool in pools for line in text.get(pool, [])]
+    rng = game.world.rng.child(f"moment/{settlement.id}/{game.world.time}/{game.player.steps}")
+    from realmwalker.world import marks
+
+    marked = marks.words(game.world, game.tables, settlement, "moments", rng)  # (what it is going through)
+    if marked and (not lines or rng.chance(0.5)):
+        return rng.choice(marked)
     if not lines:
         return ""
-    rng = game.world.rng.child(f"moment/{settlement.id}/{game.world.time}/{game.player.steps}")
     return rng.choice(lines)
 
 

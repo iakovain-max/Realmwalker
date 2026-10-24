@@ -195,6 +195,19 @@
     "bell_post": {"name": "bell", "walk": false, "see": true, "cost": 1, "tags": [], "desc": "A bell hung in a little wooden frame, for fire and for feasts."},
     "mine_cart": {"name": "ore cart", "walk": false, "see": true, "cost": 1, "tags": ["climb"], "desc": "A cart of ore on its rails."},
     "beehive": {"name": "beehives", "walk": false, "see": true, "cost": 1, "tags": [], "desc": "Straw skeps full of bees, busy and loud."},
-    "skull_post": {"name": "skull post", "walk": false, "see": true, "cost": 1, "tags": [], "desc": "A stake with a skull on it, and other skulls at its foot."}
+    "skull_post": {"name": "skull post", "walk": false, "see": true, "cost": 1, "tags": [], "desc": "A stake with a skull on it, and other skulls at its foot."},
+    "embers": {"name": "embers", "walk": true, "see": true, "cost": 1.3, "tags": ["burnt"], "desc": "Ash with coals still glowing in it. The heat comes up through your boots."},
+    "scorched": {"name": "scorched ground", "walk": true, "see": true, "cost": 1, "tags": ["burnt"], "desc": "Ground burned black, ash in drifts, the smell of it in everything."},
+    "charred_floor": {"name": "charred floor", "walk": true, "see": true, "cost": 1.2, "tags": ["floor", "burnt"], "desc": "Floorboards burned black and split, with holes through to the earth."},
+    "charred_wall": {"name": "charred wall", "walk": false, "see": false, "cost": 1, "tags": ["wall", "burnt"], "desc": "What the fire left of a wall: black timbers, still standing, for now."},
+    "fallen_beam": {"name": "fallen beam", "walk": false, "see": true, "cost": 1, "tags": ["climb", "burnt"], "desc": "A roof beam come down across the floor, burned black."},
+    "door_broken": {"name": "broken door", "walk": true, "see": true, "cost": 1, "tags": ["door", "open"], "desc": "A door kicked in, hanging by one hinge."},
+    "barricade": {"name": "barricade", "walk": false, "see": true, "cost": 1, "tags": ["climb"], "desc": "Planks, a cart and sacks of earth heaped across the way."},
+    "gallows": {"name": "gallows", "walk": false, "see": true, "cost": 1, "tags": [], "desc": "A gallows of new timber, its rope waiting."},
+    "pyre": {"name": "pyre", "walk": false, "see": true, "cost": 1, "tags": [], "desc": "Logs stacked crosswise to the height of a man's waist, and a shrouded shape laid on them."},
+    "scaffold": {"name": "scaffold", "walk": false, "see": true, "cost": 1, "tags": ["climb"], "desc": "Poles lashed together, and a plank walk against a wall going up again."},
+    "grave_fresh": {"name": "fresh grave", "walk": true, "see": true, "cost": 1, "tags": ["grave"], "desc": "A new grave, the earth still raw, a wooden marker and flowers left on it."},
+    "ritual_circle": {"name": "a drawn circle", "walk": true, "see": true, "cost": 1, "tags": [], "desc": "A circle drawn on the ground in chalk and something darker, with signs at its points."},
+    "cage": {"name": "cage", "walk": false, "see": true, "cost": 1, "tags": [], "desc": "An iron cage, man-high, its door chained shut."}
   }
 }

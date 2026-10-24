@@ -88,7 +88,9 @@ def charge(game, npc: NPC, price: int) -> None:
 def services_for(game, npc: NPC) -> list[Service]:
     occ = game.tables.people["occupations"].get(npc.job, {})
     offered = [s for s in occ.get("services", []) if s != "rumours"]
-    if not offered or npc.mood() == "hostile":
+    from realmwalker.game.economy import burnt_out
+
+    if not offered or npc.mood() == "hostile" or burnt_out(game, npc):  # (no trade in a burnt shell)
         return []
     econ = game.tables.economy["services"]
     c = game.leader

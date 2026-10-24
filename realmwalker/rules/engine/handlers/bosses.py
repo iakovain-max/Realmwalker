@@ -35,7 +35,7 @@ def _frenzy(battle, f, spec) -> None:
     d["morale"] = "fanatic"
     f.cdef = d
     f.buffs.append({"id": "frenzy", "name": "frenzy", "attack_die": "1d4", "damage_die": "1d6", "rounds": -1})
-    battle.events.append({"kind": "phase", "who": f.id, "by": f.id, "phase": "frenzy"})
+    battle.events.append({"kind": "phase", "who": f.id, "by": f.id, "phase": "frenzy", "name": f.name, "line": line})
 
 
 @phase("breaks_off")
@@ -44,8 +44,9 @@ def _breaks_off(battle, f, spec) -> None:
     tale goes on: it will be waiting at its den). Held fast, it can only run as anything runs."""
     if f.state != "fighting":
         return
-    battle.say(battle.rng.choice(spec["lines"]), "danger")
-    battle.events.append({"kind": "phase", "who": f.id, "by": f.id, "phase": "breaks_off"})
+    line = battle.rng.choice(spec["lines"])
+    battle.say(line, "danger")
+    battle.events.append({"kind": "phase", "who": f.id, "by": f.id, "phase": "breaks_off", "name": f.name, "line": line})
     if "grappled" in f.conditions or "restrained" in f.conditions or "paralyzed" in f.conditions:
         f.state = "fleeing"
         return

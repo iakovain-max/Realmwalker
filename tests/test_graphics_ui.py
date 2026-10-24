@@ -578,6 +578,8 @@ def test_the_story_s_screens_draw_and_answer_keys(pictured):
     render(app)  # (the game screen opens what waits)
     canvas = render(app)
     assert type(app.screens[-1]).__name__ == "EpilogueScreen" and "It was over." in canvas.words()
+    assert any(isinstance(c.key, tuple) and str(c.key[0]).startswith("vig_") for c in commands(canvas, Image)), \
+        "the page has its picture: the place as it now is (B.9)"
     app.handle_event(KeyEvent("enter"))
     render(app)
     app.handle_event(KeyEvent("1"))
@@ -628,4 +630,135 @@ def test_the_story_s_pictures_draw(pictured):
     if other is not None and other.get("signs"):
         assert any(k == "sign" for _, _, k in marks)
     assert all(app.gfx.atlas.has(f"map/{k}") for k in ("story", "sign"))
+    assert app.error_count == 0
+
+
+def test_every_story_picture_draws(pictured):
+    """Expansion 6 B.2: the fourteen backdrops of a story's pictures (ui/gfx/vignette.py), by day and by night with
+    figures, fire and air; a beat's picture of its place; an event's picture above its words; the title card's place."""
+    from realmwalker.game import events
+    from realmwalker.game.story import beats, forge
+    from realmwalker.ui.gfx import vignette
+    from realmwalker.ui.gfx.scene import Sprite
+    from realmwalker.ui.widgets import Canvas
+    from realmwalker.world import threats
+
+    app, game = pictured
+    for kind in vignette.BACKDROPS:
+        for time in ("day", "night"):
+            canvas = Canvas(tcod.console.Console(*SIZE, order="F"), app.mouse, gfx=app.gfx_frame())
+            spec = {"backdrop": kind, "time": time, "figures": vignette.party_figures(game), "pan": True}
+            assert vignette.compose(canvas, (10, 10, 600, 200), spec, 1.5, game), kind
+            assert len(commands(canvas)) > 8, kind
+    assert not vignette.compose(canvas, (0, 0, 10, 10), {"backdrop": "nowhere"}, 0.0, game)
+    assert vignette.for_place(game, {"settlement": 0}) == "square"
+    assert vignette.for_place(game, {"site": 0}) in ("barrow", "ruin")
+    # An event met on the road, with its picture above the words.
+    game.event = events.make_event(game, "flooded_ford")
+    render(app)
+    canvas = render(app)
+    assert type(app.screens[-1]).__name__ == "EventScreen"
+    assert any(isinstance(c, Sprite) and c.name.startswith(("tree/", "feature/")) for c in commands(canvas))
+    app.pop()
+    # The title card opens on its chapter's place.
+    t = next((t for t in threats.records(game.world).values() if t["kind"] == "beast" and t["state"] != "ended"
+              and forge.fitting(game, t)), None)
+    if t is not None:
+        if t["state"] == "dormant":
+            threats.stir(game.world, app.tables, t, game.world.rng, day=0)
+        game.event = None
+        adv = forge.make(game, t)
+        beats.director(game.world)["pending"] = None
+        beats.director(game.world)["card"] = {"adv": adv["id"], "chapter": 0}
+        render(app)
+        canvas = render(app)
+        assert type(app.screens[-1]).__name__ == "TitleCardScreen"
+        assert any(isinstance(c, Image) and isinstance(c.key, tuple) and c.key[0] == "vig_far"
+                   for c in commands(canvas)), "the chapter's place, painted"
+    assert app.error_count == 0
+
+
+def test_a_letter_opens_as_a_page_and_again_from_the_pack(pictured):
+    """Expansion 6 B.2: a letter put in your hand is a page in its writer's hand, with its seal; its key line is
+    underlined once read; the pack offers to read the page again."""
+    from realmwalker.game import letters
+    from realmwalker.ui.gfx.scene import Text
+
+    app, game = pictured
+    lid = letters.write(game, sender="Gyda, headman of Oxbridge", hand="dark",
+                        lines=["Stranger,", "The wolf has killed again.", "Come."], key=1)
+    item = letters.give(game, lid)
+    letters.show(game, lid)
+    render(app)
+    canvas = render(app)
+    assert type(app.screens[-1]).__name__ == "LetterScreen"
+    texts = [c for c in commands(canvas, Text)]
+    assert any(c.text == "The wolf has killed again." and c.font == "hand_dark" for c in texts)
+    assert any(isinstance(c.key, tuple) and c.key[0] == "parchment" for c in commands(canvas, Image))
+    assert letters.records(game.world)[lid]["read"]
+    app.handle_event(KeyEvent("enter"))
+    render(app)
+    assert type(app.screens[-1]).__name__ != "LetterScreen"
+    from realmwalker.ui.screens.sheets import InventoryScreen
+
+    inv = InventoryScreen(app, game)
+    assert inv.action_name(item) == "Read the page"
+    # A runner carrying a letter in a scene is drawn holding it.
+    npc = next(iter(game.world.npcs.values()), None)
+    if npc is not None:
+        npc.flags["holding"] = "letter"
+        assert any(p[0].startswith("fig/held/letter/") for p in dolls.npc(npc, app.tables, app.gfx.atlas))
+        npc.flags.pop("holding")
+    assert app.error_count == 0
+
+
+def test_a_villain_s_name_crosses_the_battle_mat(pictured):
+    """Expansion 6 B.2: a story's boss enters with its name and its tale across the mat (the villain sound, a shake);
+    its second phase the same with its line."""
+    from realmwalker.audio.cues import battle_sounds
+    from realmwalker.game import fight
+    from realmwalker.game.encounters import make_encounter
+    from realmwalker.rules.combat import FOE
+    from realmwalker.ui.gfx.scene import Text
+    from realmwalker.ui.screens.battle import BattleScreen
+
+    app, game = pictured
+    enc = make_encounter(game, "wolf_pack", game.world.rng.child("boss"))
+    battle = fight.start_battle(game, enc.creatures, enc.intro, title="Wolves")
+    render(app)
+    screen = app.top
+    assert isinstance(screen, BattleScreen)
+    boss = battle.side(FOE)[0]
+    battle.events.append({"kind": "boss", "who": boss.id, "name": "Ysscara the Weaver", "line": "The Beast of Oxbridge"})
+    assert ("start", "villain") in battle_sounds(battle.events[-1])
+    found = False
+    for _ in range(12):
+        canvas = render(app)
+        texts = [c.text for c in commands(canvas, Text)]
+        if "Ysscara the Weaver" in texts and "The Beast of Oxbridge" in texts:
+            found = True
+            break
+        app.gfx.now += 0.1
+    assert found, "the name and the tale across the mat"
+    assert screen.board.shake_until > 0
+    assert app.error_count == 0
+
+
+def test_the_fallen_and_their_blood_are_drawn(pictured):
+    """Expansion 6 B.5: the dead lie where they fell, turned and darkened, with blood under them (game/remains.py)."""
+    from realmwalker.ui.gfx.scene import Sprite
+
+    app, game = pictured
+    if game.local is None:
+        game.enter_local()
+    lm = game.local
+    p = game.player
+    day = game.world.time / 1440.0
+    lm.seen[:, :] = True
+    lm.meta["bodies"] = [{"x": p.lx + 1, "y": p.ly, "who": {"creature": "wolf"}, "angle": 90, "day": day,
+                          "side": "foe"}]
+    lm.meta["decals"] = {f"{p.lx + 1},{p.ly}": ["pool", day, 1], f"{p.lx},{p.ly + 1}": ["blood", day, 2]}
+    canvas = render(app)
+    names = {c.name for c in commands(canvas, Sprite)}
+    assert any(n.startswith("decal/pool") for n in names) and any(n.startswith("decal/blood") for n in names)
     assert app.error_count == 0

@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 06 Adventures & Events · Part B (show, don't tell: the stage, pictures, places that change) · branch dlc/06-adventures-events
+Current: 06 Adventures & Events · Part C (quests reborn: situations, lives and honest work) · branch dlc/06-adventures-events
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -20,7 +20,9 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   staffs and four rods of the DMG; one store of charges a thing, cast in fights and from the Spells page) · Part E (2026-10-18: crystal balls, the wizard's
   hats, the Pearl of Power, the Ring of Spell Storing, the five robes, Enspelled Armor and Weapon, the Ruby of the War Mage;
   **released as v1.5.0**) · 06 Adventures & Events Part A (2026-10-24: threats, the story engine and the Beast of
-  {place} from its hook to its epilogue; saves format 19)
+  {place} from its hook to its epilogue; saves format 19) · Part B (2026-10-25: the stage and its scenes, pictures for
+  stories, title cards and letters, marks on places stamped on their maps, the fallen and graves, eavesdropping and
+  tailing, live fire, signs on the world map, the Beast shown; saves format 20)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
   adapted); Expansion 3: all 560 settled (223 done, 336 adapted, 1 omitted); Expansion 4: all 66 settled (36 done,
@@ -30,6 +32,12 @@ Known, not yet chased: one autoplay run of nine during Expansion 5 Part A's chec
   branch, were clean). The timing tests (an enemy turn under 150/400 ms) now and then miss while the suite runs
   beside autoplay and the smoke test, and pass alone; this was already so in Expansions 3 and 4.
 Assumptions waiting for Anton:
+- Expansion 6 B.7 (fire): fire spreads only on town maps (a wild map or dungeon level scorches at once); fire leans
+  west to east, turning a little each day (the weather keeps no wind direction); rain or snow slows it to a fifth at
+  most; after more than twelve minutes at once what burned has burned out; battle smoke is a picture only; a falling
+  wall is Acrobatics DC 12 or 2d6 and prone; a burning town has two to four buildings alight as you walk in; burned
+  squares are built again four months after the town's last fire mark; straw or hay set alight by fire in a town fight
+  burns on afterwards. The numbers (marks.json "fire") were set by measure, not by eye.
 - Expansion 5 Part E (robes, hats and the rest): a Hat of Many Spells is worn, not held, and its wrong spell goes at a
   target chosen by chance; its creatures run off the field (nobody's), its bats bite once (2d4) and scatter, its
   portal closes at once, its magic item is a potion of healing of the rolled rarity and stays; spells go into a
@@ -548,9 +556,72 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part B (*Show, don't tell: the stage, pictures, places
-that change*), task B.1, on branch `dlc/06-adventures-events` (Part A merged into main 2026-10-24). Read
-docs/expansions/06-adventures-events.md Part B and ADVENTURES.md §5.17-5.19, §5.21, §8.11-8.18 first.
+Next session starts at: Expansion 6, **Adventures & Events**, Part C, task C.1 (*the reference*: storyplay's careful
+player's income over thirty days on the build before Part C, kept in tests/data/income_ref.json), on branch
+`dlc/06-adventures-events` (Part B merged into main 2026-10-25). Read docs/expansions/06-adventures-events.md Part C and
+ADVENTURES.md §5.15-5.16, §6.7-6.11, §7, §8.10 first.
+B.9 (2026-10-25, realmwalker-a): scenes.json "survivor" (the witness tells it to a crowd in their street, then
+comes to you: story._show_tale from on_enter_town; step "shown") and "ally_note" (den chapter + key ally: a boy brings
+the hunter's note; stage._letter honours scene words sender/hand_of; adv["ally_note"]); beats.json `leaves`
+(schema) and director["left"] read by story.left_at_camp and drawn by scenes.camp (the carcass); the beast's doom is
+["emptied", "nearest", "burned"] (threats._emptied *also); vignette.for_epilogue (EpilogueScreen picture rows) and
+for_place gives "burned_street" for a scarred town; debug console showcase / mark / scene; tools/showcase.py sheets
+signs, titlecard, epilogue, camp, all; tests/test_frame_time.py (slow; it found dolls.npc reading looks from words
+every frame: now kept in dolls._NPC_PARTS, 213 -> ~9 ms a frame on a burning great city); FORMAT_VERSION 20; the
+smoke tour walks a burned town and opens a letter. tests/test_beast_shown.py.
+B.8 (2026-10-25, realmwalker-a): `ui/gfx/mapsigns.py`: `signed(s)` (SHOWN marks, the strongest smoke only), `under`
+(far tents, a burning town's glow) before the towns' tile batch and `over` (smoke puffs, near tents and banners in the
+siege's `by` faction colour, beset BESET_RGB, plague black flag 2 frames, tribute dragon shadow circling with `angle`,
+festival lantern string, memorial statue) after it, from WorldView.draw's `signs` list [(s, x, y, size, alpha)] of
+seen/known towns with a status. Pictures are cached Images keyed ("sign", name); `_frame` lays signs round marks under
+SMALLEST=24 px. Still when `gfx.ambient` is off. main.py's smoke tour `signs` step marks six towns near the start
+before the overworld shot. tests/test_mapsigns.py (headless on the world map; 40 towns under 2 ms a frame). Not done
+(Part G, as planned): refugee columns, hosts, threat washes, the rift, the encampment composite.
+B.7 (2026-10-25, realmwalker-b): `game/fire.py`: live fire lm.meta["fire"] {"x,y": [stage 0-3, steps]} (+ fire_at, fire_n,
+fire_cried; burnt [[x, y, old, day]], shells {"i": old look}, kindled); numbers in marks.json "fire" (burns: terrain ->
+[steps, catch], into, beams, shell, kindle, cries; schemas FIRE; tables.fire). One mask: `fire.blocked(lm)` read by
+townlife._Town (and `townlife.patch(game, lm, cells)`, square by square, dropping ways through), encounters.move_actors,
+GameState._move_local, LocalView._follow. `townlife.tick` calls `fire.tick` first (vectorised spread; batches every
+FLUSH=10 steps via `fire.flush`); `townlife.settle`, `enter_local` (mend, settle, kindle; burn_out_all off town maps) and
+`leave_local` call `fire.settle`; `townlife.goal` sends people out of `fire.unsafe` spots to the square. Battle:
+`fire.on_battle_start` (fight.start_battle after warding) lays an ownerless Zone "fire" (rounds -1) and Zone "smoke",
+marks `field.__dict__["burning"]` and widens `field.flammable` with fire.HOUSE_BURNS; `Battle.round_hooks` (new, run
+as each round begins in end_turn) gets `fire._round` (spread 0.3, burn-out after 4 rounds to scorched, TIMBER_WALLS fall
+after WALL_FALLS rounds via `_wall_falls`, event "collapse"); `fire.write_back` from finish_battle after remains.
+Terrains embers, scorched, charred_floor, charred_wall, fallen_beam, door_broken, barricade, gallows, pyre, scaffold,
+grave_fresh (remains' graves now), ritual_circle, cage (rift_edge waits for Part G) drawn in tools/fire_art.py (+ fx/blaze);
+sprites `animate_ground`. LocalArt keeps `src` and `patch(game, cells)`; LocalView._flames, _roof_fire (glow, flames,
+SMOKE_COLUMNS), fire light by day in _light; `ui/gfx/atmosfx.py` (choose/draw, from GameScreen._weather). placemarks.shut
+reads shells. Not done here (B.9): the frame-timing test (tests/test_frame_time.py), the smoke tour's burned town.
+B.6 (2026-10-24): stage cues `overhear` (two actors' lines said only while you are within HEAR=6 squares and see
+them; the line `matters` makes `knows` known: the scene's tale gets the flag) and `tail` (named so, not `follow`,
+which stays the simple walk-after cue: a suspect walks to `to`, looks back every third tick within TAIL_SEEN=8 -
+Perception 10, +5 close, -5 dark, against game.sneak_roll when you creep, else seen; seen: "run" or "face" (talk);
+lost out of sight beyond TAIL_LOST=14; followed: `knows`); PATIENCE per cue (overhear an hour, tail forty minutes);
+_finish never plays them (skipped = did not happen). Tracks: remains.lay_tracks(game, lm, start, toward) lays
+"tracks" decals (variant = the way they go, drawn as prints turned that way) to the map's edge and keeps
+lm.meta["tracks_to"]; leaving near that edge (GameState.leave_local -> remains.follow_off) marks the next world square
+for a day (politics["director"]["tracks"], read by story.map_marks). Nothing calls lay_tracks or the two cues in
+play yet: B.9 wires them into the Beast (the tracks choice; a scene overheard).
+Part B's first half (2026-10-24, realmwalker-a): B.1 the stage `game/story/stage.py` + scenes.json (one scene at a
+time in politics["director"]["scene"]; cues are a registry `@cue`, checked at start-up by story/check.scene_problems;
+townlife.tick calls stage.tick first, townlife.settle plays it out; errands in npc.flags["errand"] read first by
+townlife.goal, runners two steps a tick; gatherings Town.flags["gathering"]; townlife.speak; GameState.held, animations,
+stage_fx, camera, letter (none saved); Conversation.greet's opener; stage.on_load from save.load_game, stage.check_here
+from the game screen; story.offer_hook plays "runner" or "plea" when you stand on the town's map). B.2 pictures
+`ui/gfx/vignette.py` (BACKDROPS, compose, for_place), beat.picture/backdrop_for ("place", "here", a backdrop),
+travel_events.json `picture`, ui/screens/titlecard.py, letters `game/letters.py` + ui/screens/letter.py (typefaces
+hand/hand_fine/hand_dark; item tag letter:<id>; the pack's "Read the page"), stage cues give `letter` and read, npc
+flags "holding" (fig/held/letter), the battle events "boss"/"phase" with name and line (battlefx banner, the villain
+sound). B.3 `world/marks.py` + marks.json (add/lift/age/since/label/words; Politics.expire_status is marks.age; OWNED
+marks: siege, emptied, rebuilding). B.4 `game/placemarks.py` (stamp from enter_local, prepare_town and the day's
+politics; lm.meta["marks"]; economy.burnt_out shuts shops and services; roofs/houses "charred"). B.5
+`game/remains.py` (Field.cut_from set by arena._local; Battle.__dict__["blood"] filled in Battle._hit; after_field
+from fight.finish_battle; tick from enter_local and the day change; lm.meta bodies/decals/graves; LocalView _decals and
+_fallen; DCSS blood picked as decal/blood and decal/pool). tools/showcase.py sheets vignettes, letter, mark.
+Still to do in B: B.8 map signs, B.9 (the Beast shown: its scenes incl. the camp screen's, title cards, its doom as a mark, vignettes on
+epilogue pages; showcase first form exists; debug console showcase/mark/scene; frame timing test; FORMAT_VERSION +1 for
+Part B's new saved records; smoke tour shows a burned town, a title card and a letter; merge).
 Part A's second half (2026-10-24, realmwalker-b): `tools/storybook.py` (synopses; `--check`: roles, places, every
 word of every line a tale can show, three routes, the content rule, the six rules as they apply to a tale;
 tests/test_storybook.py on three test worlds) and the story's floors in tests/test_text_variety.py; the powers
@@ -841,6 +912,7 @@ casting time. A spell aimed at something chosen lists Subjects (game/divining.Su
 | 2026-10-18 | Schools & Domains Part C: the Mage Apprentice, Mage, Archmage, Priest and Archpriest (blocks, dress by people, the road, temples and great cities), wizards' towers lived in (wards, glyphs, guardians, the master, the library), apprenticeships, the casters' tactics; merged into `main` | `dlc/05-schools-domains` |
 | 2026-10-18 | Schools & Domains Part D: the eleven wands, seven staffs and four rods of the DMG, one store of charges a thing | `dlc/05-schools-domains` |
 | 2026-10-18 | Schools & Domains Part E: crystal balls, the Enduring Spellbook, Enspelled Armor and Weapon, the Hat of Many Spells and the Hat of Wizardry, the Pearl of Power, the Ring of Spell Storing, the five robes, the Ruby of the War Mage; the icon; **released as v1.5.0** | `dlc/05-schools-domains` |
+| 2026-10-25 | Adventures & Events Part B: the stage and its scenes, pictures for stories, title cards and letters, marks stamped on towns, the fallen and graves, eavesdropping and tailing, live fire, signs on the world map, the Beast shown (the survivor, the hunter's note, the carcass at camp, the epilogue's pictures); saves format 20 | `dlc/06-adventures-events` |
 
 ## Notes for the next session
 

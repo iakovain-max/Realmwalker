@@ -200,7 +200,7 @@ WORDS = {
 
 BEATS = {
     "story_hook": {
-        "family": "hook", "title": ["{villain}"],
+        "family": "hook", "picture": "here", "title": ["{villain}"],
         "text": [["{hook}", "Word is going round, and it is all the same word: {hook}",
                   "{hook} Everyone you meet seems to be talking of nothing else."]],
         "choices": [
@@ -208,7 +208,7 @@ BEATS = {
             {"label": ["Not now."], "ops": [["decline_hook"]],
              "result": ["Someone else, then. Or no one. You put it out of your mind, almost."]}]},
     "beast_kill_found": {
-        "family": "step",
+        "family": "step", "picture": "place",
         "text": [["The road leaves the fields here and goes on between banks of scrub, and at the bend you find it: "
                   "{carcass}. The crows go up all at once.",
                   "You smell it before you see it. Off the road, in the ditch, {carcass}, and the flies thick over it.",
@@ -220,7 +220,7 @@ BEATS = {
         "choices": [{"label": ["Look closer."], "ops": [["clue", "kill"]],
                      "result": ["You kneel by it. Whatever left this, you will know it again."]}]},
     "beast_search_kill": {
-        "family": "step",
+        "family": "step", "picture": "place",
         "text": [["You go over the ground round the kill, a yard at a time: {track}.",
                   "Now you look properly. There is a story in the trampled ground, if you can read it: {track}.",
                   "The wounds first, then the ground: {track}, and blood on the scrub at a man's height."]],
@@ -239,7 +239,7 @@ BEATS = {
              "result": ["The smoke goes up black and greasy. Whatever watches from the hills will know someone is "
                         "here, and is not afraid."]}]},
     "beast_bait_or_track": {
-        "family": "step",
+        "family": "step", "picture": "place",
         "text": [["You know what it fears now. What is left is to bring it to you, or to go to it.",
                   "There are two ways to hunt a beast like {villain}: make it come to you, or follow it until it "
                   "turns. Both have killed better hunters than you.",
@@ -258,7 +258,7 @@ BEATS = {
              "result": ["The trail goes on through the scrub and the broken ground, and then there is no more trail, "
                         "because {villain_short} has stopped running."]}]},
     "beast_the_den": {
-        "family": "step",
+        "family": "step", "picture": "place",
         "text": [["{home} gapes in the hillside. Nothing grows near the mouth of it, and the bones there are not "
                   "all sheep.",
                   "You reach {home} with the wind in your face, which is the only luck you have had. The den's mouth "
@@ -280,7 +280,7 @@ BEATS = {
              "ops": [["flag", "went_loudly"]],
              "result": ["You go in shouting. Let it come. You are done with waiting."]}]},
     "beast_omen": {
-        "family": "villain", "where": ["road", "wild", "camp"],
+        "family": "villain", "picture": "here", "where": ["road", "wild", "camp"],
         "text": [["{omen}", "You stop on the way, and look, and wish you had not. {omen}",
                   "{omen} Nobody else on the road seems to have seen it, or they will not say."],
                  ["You go on, but you go on faster.", "It is a long way yet to anywhere with a door that bars.",
@@ -323,7 +323,7 @@ BEATS = {
              "ops": [["use", "raw_meat", "cooked_meat"], ["flag", "fed_it"]],
              "result": ["It takes the meat and goes. You have taught it something, and you are not sure what."]}]},
     "beast_lore_at_kill": {
-        "family": "step", "where": ["road", "wild"],
+        "family": "step", "picture": "place", "where": ["road", "wild"],
         "text": [["You come back to the kill to look again, now that you know what you are looking for.",
                   "The kill is older now, and the crows have done their work, but there is more here to read.",
                   "The bones of the kill tell their story to anyone who knows the beasts of {area}."]],

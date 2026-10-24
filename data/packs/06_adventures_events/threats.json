@@ -159,7 +159,8 @@
           "effects": [
             [
               "emptied",
-              "nearest"
+              "nearest",
+              "burned"
             ],
             [
               "danger",

@@ -20,7 +20,7 @@ import math
 from realmwalker.core import textgen
 from realmwalker.core.rng import RNG
 from realmwalker.world import factions as fx
-from realmwalker.world import news
+from realmwalker.world import marks, news
 
 WAR_KINDS = ("kingdom", "free_city", "clan", "highland_clan", "elven_realm", "noble_house", "tribe")
 DYNASTIC = ("kingdom", "noble_house", "clan", "highland_clan", "elven_realm")
@@ -463,7 +463,7 @@ class Politics:
                 return  # the capital holds until the war is nearly lost
             war["siege"] = {"settlement": target.id, "by": besieger.id, "since": self.day,
                             "until": self.day + self.rng.uniform(14, 60)}
-            target.status["siege"] = {"war": war["id"], "by": besieger.id, "since": self.day}
+            marks.add(w, target, "siege", self.day, self.t, war=war["id"], by=besieger.id)
             self.say("siege", {"attacker": besieger.name, "place": target.name}, where=(target.x, target.y),
                      importance=3, factions=[besieger], places=[target])
             return
@@ -471,7 +471,7 @@ class Politics:
             return
         target = w.settlements[siege["settlement"]]
         besieger = w.factions.get(siege["by"])
-        target.status.pop("siege", None)
+        marks.lift(w, target, "siege")
         war["siege"] = None
         if besieger is None or not besieger.active:
             return
@@ -511,7 +511,7 @@ class Politics:
             self.set_owner(target, winner.id)
         if sacked:
             target.population = max(10, int(target.population * self.rng.uniform(0.55, 0.8)))
-            target.status["sacked"] = self.day
+            marks.add(w, target, "sacked", self.day, self.t)
         war["score"] += 15 if winner.id == war["attacker"] else -15
         self.changed = True
         kind = "sacked" if sacked else "taken"
@@ -526,7 +526,7 @@ class Politics:
         war["end_year"] = self.year
         if war.get("siege"):
             s = w.settlements[war["siege"]["settlement"]]
-            s.status.pop("siege", None)
+            marks.lift(w, s, "siege")
             war["siege"] = None
         a = w.factions.get(war["attacker"])
         d = w.factions.get(war["defender"])
@@ -624,7 +624,7 @@ class Politics:
         s = self.rng.choice(near)
         lost = max(1, int(s.population * self.rng.uniform(0.005, 0.03)))
         s.population = max(10, s.population - lost)
-        s.status["beast"] = {"until": self.day + 30, "since": self.day, "by": fig.name}
+        marks.add(w, s, "beast", self.day, self.t, until=self.day + 30, by=fig.name)
         fig.fame += 1
         realm = fx.realm_of_settlement(w, s)
         dead = "one person" if lost == 1 else f"{lost} people"
@@ -647,26 +647,19 @@ class Politics:
         d["last_seen"] = self.year
         realm = fx.realm_of_settlement(w, s)
         if self.rng.chance(0.45):
-            s.status["burned"] = self.day
+            marks.add(w, s, "burned", self.day, self.t)
             s.population = max(10, int(s.population * self.rng.uniform(0.5, 0.8)))
             self.say("dragon", {"dragon": d["name"], "place": s.name}, where=(s.x, s.y), importance=4,
                      factions=[realm] if realm else [], places=[s])
         else:
-            s.status["tribute"] = d["name"]
+            marks.add(w, s, "tribute", self.day, self.t, name=d["name"])
             self.say("dragon_tribute", {"dragon": d["name"], "place": s.name}, where=(s.x, s.y), importance=3,
                      factions=[realm] if realm else [], places=[s])
         self.changed = True
 
     def expire_status(self) -> None:
-        for s in self.w.settlements:
-            for key in ("plague", "famine", "raided", "beast"):
-                v = s.status.get(key)
-                if isinstance(v, dict) and v.get("until", 0) < self.day:
-                    del s.status[key]
-            if s.status.get("sacked", self.day) < self.day - 120:
-                del s.status["sacked"]
-            if s.status.get("burned", self.day) < self.day - 365:
-                del s.status["burned"]
+        """Marks grow older (world/marks.py): a plague passes, a burned town begins to build again."""
+        marks.age(self.w, self.t, self.day)
 
     def plague(self, realm) -> None:
         w = self.w
@@ -681,13 +674,13 @@ class Politics:
             lost = int(s.population * self.rng.uniform(0.04, 0.18))
             deaths += lost
             s.population = max(10, s.population - lost)
-            s.status["plague"] = {"until": self.day + self.rng.uniform(45, 120), "since": self.day}
+            marks.add(w, s, "plague", self.day, self.t, until=self.day + self.rng.uniform(45, 120))
         self.say("plague", {"place": start.name, "deaths": f"{round(deaths, -1 if deaths < 1000 else -2):,}"},
                  where=(start.x, start.y), importance=4, factions=[realm], places=struck)
 
     def famine(self, realm) -> None:
         for s in fx.holdings(self.w, realm, deep=True):
-            s.status["famine"] = {"until": self.day + self.rng.uniform(90, 200), "since": self.day}
+            marks.add(self.w, s, "famine", self.day, self.t, until=self.day + self.rng.uniform(90, 200))
         self.say("famine", {"faction": realm.name}, where=self.place_of(realm), importance=3, factions=[realm])
 
     def raid(self, tribe) -> None:
@@ -702,9 +695,9 @@ class Politics:
         s = self.rng.choice(targets)
         burned = s.kind == "hamlet" and self.rng.chance(0.3)
         s.population = max(10, int(s.population * (0.5 if burned else self.rng.uniform(0.85, 0.95))))
-        s.status["raided"] = {"until": self.day + 30, "since": self.day, "by": tribe.id}
+        marks.add(w, s, "raided", self.day, self.t, until=self.day + 30, by=tribe.id)
         if burned:
-            s.status["burned"] = self.day
+            marks.add(w, s, "burned", self.day, self.t)
         realm = fx.realm_of_settlement(w, s)
         if realm is not None:
             fx.change_relation(w, tribe.id, realm.id, -8)

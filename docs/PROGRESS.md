@@ -46,6 +46,155 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-10-25 (small hours): Adventures & Events Part B, task B.9 — the Beast, shown — Part B merged into `main`
+
+**What is different when you play**
+- **The one who saw it tells it.** Walk into the town of the beast's survivor while you are looking for them, and
+  they are in the street telling it again, a crowd pressed round them murmuring; they see you, come over, and the
+  conversation opens with their words - ask them to tell it.
+- **The hunter sends word.** Once the hunter has said they will stand with you and the hunt turns to the den, a boy
+  runs up to you in the next town with a note in the hunter's own rough hand: where the beast lies up, and that they
+  are waiting.
+- **The carcass at your camp.** When the beast leaves a dead hind at your camp's edge in the night, it lies there in
+  the camp screen's picture, in its blood, until you break camp.
+- **What became of them, shown.** Every page of a tale's ending has its picture: the town as it now is (a burned
+  street at dusk if it burned or emptied, a statue in its square if it keeps a memorial, scaffolds while it is
+  rebuilt, lanterns for a feast), the one who asked you in their hall, the hunter at a camp at dusk, the witness in
+  their street (a fresh grave if they died), and you and yours on the road at dusk. A beat's picture of a burned town
+  is its burned street too.
+- **If the beast wins.** Its doom now leaves the village burned as well as emptied: smoke over it on the world map,
+  black shells when you walk in.
+- **Towns are smoother.** Drawing a crowded town worked out every townsperson's looks from their description every
+  frame; now each is worked out once. A burning great city with some 340 people in view went from about a fifth of a
+  second a frame to about a hundredth.
+- **Saves**: the save format is now 20. Saves from before are refused with the usual friendly message; start a new
+  world (the files stay untouched).
+
+**How to try it**: the debug console (the config switch) has `showcase` (marks the towns about you, one sign each:
+open the world map), `mark <mark>` / `mark clear` (the town you stand on, re-dressed at once) and `scene <id>` (plays
+a scene on a town's map: runner, plea, survivor, ally_note). `tools/showcase.py --sheet all` saves the contact sheet
+(signs, title card, epilogue, camp, a letter in each hand, a town dressed for each mark) in `build/showcase`. The
+smoke test now also walks a burned town and opens a letter.
+
+**Decisions**: the survivor's scene plays in the witness's own town (the kill is out on the road); the hunter's note
+comes in any town but the hunter's own, once a tale. The carcass is the elk picture turned on its side (as the fallen
+are on the battle mat), darkened, on a pool of blood.
+
+### Session, 2026-10-25 (small hours): Adventures & Events Part B, task B.8 — signs on the world map — branch `dlc/06-adventures-events` (not yet on main)
+
+**What is different when you play**
+- **You can see from afar what a town is going through.** On the world map (and the travel view), a town that is
+  burning has a column of dark smoke rising from it, lit orange from below and glowing at night; a sacked town smokes
+  grey, a burned one with thin old wisps. A besieged town has a ring of tents round it with banners in the besieging
+  realm's colours (a town beset by a horde: dark red banners). A town with plague flies a black flag. Over a town
+  that pays a dragon tribute, the dragon's shadow circles slowly. A town at a festival has a string of coloured
+  lanterns and pennants across it; a town that keeps a memorial has a statue beside it. Signs show for towns you have
+  seen or heard of; smoke drifts and flags flap with Animations on, and stand still with them calm or off.
+
+**How to try it**: the smoke test's overworld picture marks six towns near the start; in play, wars, raids, plague,
+dragons and festivals put the marks on towns as before.
+
+**Decisions**: a memorial is always shown as a statue (the plan allowed a gibbet; it waits for a tale that needs one).
+Only the strongest smoke shows (burning over sacked over burned). Signs round a very small mark are drawn at a
+readable size. Refugee columns, hosts on the march, threat washes and the rift are Part G, as planned.
+
+### Session, 2026-10-25 (small hours): Adventures & Events Part B, task B.7 — fire — branch `dlc/06-adventures-events` (not yet on main)
+
+**What is different when you play**
+- **A burning town burns.** Walk into a town the politics have set alight and a few of its houses are on fire: flames
+  stand on the burning squares and run along the roofs, an orange glow pulses over them, thick dark smoke rolls up
+  from each, the fire lights the street even at noon, and embers drift across the whole view (a red sky over a great
+  blaze). The fire spreads square by square as the town's clock runs: straw, hay and dry grass go up fast, timber
+  walls and floors slower, furniture in between; it runs with the wind and crawls in the rain; stone, water and wells
+  stop it. Someone nearby shouts "Fire!" when a building catches, and the townsfolk leave burning houses and stand off
+  in the open square. Nobody - you, the townsfolk, a band of creatures - ever steps into a burning square ("The heat
+  drives you back").
+- **What it leaves.** Burned squares become charred floorboards, black charred walls, glowing embers (they go cold
+  after half a day), scorched earth, broken doors and here and there a fallen roof beam. A building burned through
+  becomes a roofless black shell, and its shop or service is shut. Long after (about four months, once the town is no
+  longer marked burned or rebuilding) the burned squares are built again as they were.
+- **Fighting in a burning street.** A fight on a burning map starts with the fire on the battle mat: burning squares
+  hurt (1d6 fire, a Dexterity save), smoke drifts beside them, and each round the fire spreads to timber, floors and
+  furniture near it (never under anyone). A burning timber wall groans ("The beams groan overhead") and the round
+  after comes down in a rush of sparks, knocking those beside it flat unless they leap clear. When the fight ends, what
+  burned on the mat is scorched on the map and what still burns keeps burning. Straw or hay set alight by fire in an
+  ordinary street fight in a town now burns on after the fight; a Fireball in an inn still starts no blaze.
+- **New pictures**: flames, embers, scorched ground, charred floors and walls, fallen beams, broken doors, barricades,
+  a gallows, a pyre, scaffolds, a fresh grave (the town's new graves use it), a ritual circle, a cage (the last five are
+  ready for the tales and situations to come). Atmospheres over a close-up map: embers over a burning town, falling ash
+  over a burned one, a dark haze over a sacked or plague-struck one (still with Animations on "calm", none on "off").
+
+**Choices made (Anton was away)**
+- Fire spreads only on a town's map; fire carried back to a wild map or a dungeon from a fight burns out at once into
+  scorched ground (the design's rule). A burning town has two to four buildings alight when you walk in, next to the
+  shells the war already left, once for each time it is marked burning.
+- The wind's way is not in the weather yet: fire leans west to east (the way the weather's fronts drift), turning a
+  little day by day; its strength is the weather's wind. Rain or snow slows it to a fifth at most.
+- After a long wait (more than twelve minutes of the world at once) whatever was burning has burned out; the twelve
+  minutes are played out step by step.
+- On the battle mat smoke is a picture only (it does not hide anyone); a falling wall is an Acrobatics check (DC 12) to
+  leap clear, else 2d6 bludgeoning and knocked prone.
+- The fire's numbers (how long each thing burns and how readily it catches) are data/packs/06_adventures_events/
+  marks.json "fire" and were set by measure, not by eye: they await Anton's play.
+
+**Checks**: tests/test_fire.py (spread stops at stone and water and is slowed by rain; nobody ever stands on a burning
+square through 150 steps of a burning town's life; townsfolk make for the open; a battle in a burning street burns and
+writes back; a Fireball's fire in an ordinary inn catches nothing; burned squares are patched in the map's pictures
+square by square, not the whole map; the town mends; fire burns out at once in the wild; a step of fire on a great city
+with 579 squares alight about 1.3 ms, a written batch under 5 ms); the autoplay bot checks nobody stands on a burning
+square; the full suite, autoplay and the window smoke test.
+
+### Session, 2026-10-24 (late night): Adventures & Events Part B, first half — show, don't tell — branch `dlc/06-adventures-events` (not yet on main)
+
+Tasks B.1 to B.6 of Part B (B.7, fire, is the entry above; B.8 and B.9 come next; Part B goes to `main` with B.9).
+
+**What is different when you play**
+- **Towns act out their stories.** When a town at a beast's door asks you to hunt it, you are no longer handed a box
+  of words as you walk in: a child or a serving hand comes running through the crowd calling after you, carrying a
+  sealed letter, and presses it into your hand; or the townsfolk gather round you murmuring ("That's the one."), and
+  the eldest of them steps out to speak. The whole town keeps living while it happens. Your keys wait while they come
+  to you; Space or Escape skips to the end. A town's bell can ring now (a new sound).
+- **Letters are pages.** The runner's letter opens as a page of old parchment in its writer's hand (a plain hand for
+  farmers and headmen, a fine one for lords and priests, a black-letter hand for villains), sealed in wax; the line
+  that matters is underlined a moment after you first read it. Read it again from your pack: "Read the page".
+- **Pictures.** A tale's beats and every event on the road have a picture above their words: fourteen kinds of place
+  (a street, a square, an inn, a hall, a camp, a road, a ford, a barrow, a ruin, a battlefield, a burned street, the
+  rift, a crusaders' camp, a sickroom), by the hour's light, with you in them. A chapter now opens on a title card
+  with a painting of where it begins, slowly panning, its name across it.
+- **The villain enters.** When you face a tale's beast at its den, its name and the tale's title slide across the
+  battle mat, the ground shakes, and a deep drum sounds; when it turns at half its strength (or breaks off before its
+  den) its line crosses the mat the same way.
+- **Places keep what happened to them.** A town burned by a war, a dragon or raiders now looks burned the first time
+  you walk in: charred shells of houses open to the sky, ash on the floors, fallen walls, broken doors, ash and rubble
+  in the streets; its burnt-out shops and inns are shut. A sacked town has broken doors and rubble; a besieged one
+  sacks and crates in its square; an emptied one weeds and doors left open; a town rebuilding its burned quarter has
+  woodpiles; a festival has banners, lanterns and stalls; a memorial a statue. Every one of these is spoken of when you
+  walk in and in the streets, and on the world map's line for the town. They age: a burning town is burned in a day or
+  two, a burned one begins to rebuild after a season, and within the year it is itself again (the map changes back).
+- **The dead stay where they fell.** After a fight in a town's street or out in the wild, the dead lie where they fell,
+  turned on their side and darkened, with blood under them and on the squares where the blows landed; you stand where
+  you stood when it ended. A day later the town has carried its dead away and dug a fresh grave for each of its own
+  ("There are new graves"); out in the wild the dead lie two days and then are bones. Blood fades in three to six days.
+- **Listening and following (ready for the tales to use).** Two people can talk low in a street, and you hear their
+  words over their heads only if you are near enough to see them; someone can be followed through the streets, and
+  if you creep (z) well enough they never see you, while walking upright they look back and run (or turn on you).
+  Tracks can lead across a map to its edge, prints pointing the way, and following them off the map marks the next
+  square of the land. The Beast's tale will use these with B.9.
+
+**Choices made (Anton was away)**
+- Scenes play only on town maps for now (the actors are townsfolk); the camp's scenes (the carcass at dawn) come with
+  B.9, a scene's fire and lamps with B.7 (fire). A town stages at most one scene a day.
+- No handwriting typeface was downloaded (an unattended run takes no downloads): letters use the game's own book faces
+  (EB Garamond, Grenze Gotisch). A real script face can be added to assets/fonts later.
+- Graves use the existing grave picture (the "fresh grave" terrain comes with B.7's new terrains); foes' bodies are
+  simply gone from a town after a day (the pyre outside the walls is later).
+- Found and left for a separate fix: a highland town and a volsk town (at the "town" size) are built with no way out /
+  a shut-off corner; tests/test_towns.py never checked those sizes (a task chip was raised).
+
+**Checks**: the quick suite; new tests tests/test_stage.py, tests/test_place_marks.py, tests/test_remains.py and new
+picture tests in tests/test_graphics_ui.py. Look at the new pictures with `tools/showcase.py` (`--sheet vignettes`,
+`--sheet letter --hand dark`, `--sheet mark --mark burned`); the contact sheets land in build/showcase/.
+
 ### Session, 2026-10-24 (night): Adventures & Events Part A finished — the Beast, played through — merged into `main`
 
 The rest of Part A, and Part A goes to `main` (the release of 1.6.0 waits for the whole of Expansion 6).

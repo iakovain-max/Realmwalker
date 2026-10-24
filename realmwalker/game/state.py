@@ -163,6 +163,10 @@ class GameState:
         self._last_moment = -10**6  # the step count when street life was last remarked on
         self._last_weather: str | None = None  # the sky as it was, to notice when it turns
         self.verbosity = "normal"  # set from the player's settings by the game screen
+        self.animations = "full"  # likewise (the stage: with "off" a scene's movement completes at once)
+        self.stage_fx: list[dict] = []  # things changing hands in a scene, for the close-up map (never saved)
+        self.camera: dict | None = None  # a scene's focus {"to": [x, y], "n"} (never saved)
+        self.letter: str | None = None  # a letter whose page opens next (game/letters.py; never saved)
         self._weather_said = -10**6  # world minute of the last remark about the sky
         self._realm_here: int | None = None
         self._wading = False
@@ -376,6 +380,10 @@ class GameState:
 
                 if getattr(self, "politics_live", True):
                     politics.tick(self.world, self.tables)
+                    if self.in_local and self.local is not None and self.local.kind == "settlement":
+                        from realmwalker.game import placemarks  # (a mark came or went while you stood here)
+
+                        placemarks.stamp(self, self.local, self.world.settlement_at(self.player.x, self.player.y))
                 reputation.tick(self)
                 if self.party[1:] or self.waiting:
                     from realmwalker.game import companions
@@ -385,6 +393,11 @@ class GameState:
                     from realmwalker.game import uniques
 
                     uniques.daily(self)  # (the rumours of the seven reach a hero who travels alone too)
+            if self.in_local and self.local is not None:
+                from realmwalker.game import remains
+
+                for line in remains.tick(self, self.local):  # (a day: the town buries its dead)
+                    self.say(line, "flavor")
             if self.renown.flags.get("captives"):
                 from realmwalker.game.gear import captives_slip
 
@@ -496,8 +509,16 @@ class GameState:
         return bool(d.get("pending") or d.get("card") or getattr(self, "finale", None)
                     or getattr(self, "epilogue", None))
 
+    @property
+    def held(self) -> bool:
+        """A scene on this town's map holds the player's keys (Space or Escape skips it: game/story/stage.py). Not
+        `busy`: the town clock keeps running while it plays."""
+        from realmwalker.game.story import stage
+
+        return stage.holding(self)
+
     def move(self, dx: int, dy: int) -> bool:
-        if self.busy:
+        if self.busy or self.held:
             return False
         self.camp = None  # moving on breaks camp
         if self.in_local:
@@ -872,26 +893,12 @@ class GameState:
         """Siege, sack, fire, plague and hunger, as you see them walking in. Plague may follow you out."""
         from realmwalker.world import factions as fx
 
-        out = []
+        from realmwalker.world import marks
+
         st = s.status
-        if st.get("siege"):
-            by = self.world.factions.get(st["siege"].get("by", -1))
-            out.append(f"<danger>{s.name} is under siege{' by ' + by.name if by else ''}.</> Soldiers' fires ring the "
-                       f"walls, and food is dear inside them.")
-        if st.get("sacked") is not None:
-            out.append(f"<danger>{s.name} was sacked not long ago.</> Burned roofs, fresh graves, and people who look "
-                       f"at strangers with hate.")
-        if st.get("burned") is not None:
-            out.append(f"<warn>Much of {s.name} has been burned.</> What is left huddles among the black beams.")
-        if st.get("tribute"):
-            out.append(f"<danger>{s.name} pays tribute to {st['tribute']}.</> Cattle are driven up the mountain "
-                       f"roads, and nobody looks at the sky for long.")
-        if st.get("raided"):
-            out.append(f"<warn>{s.name} was raided days ago.</> The people are frightened and angry.")
-        if st.get("famine"):
-            out.append("<warn>There is hunger here.</> Bread costs what meat should, and the children are thin.")
+        rng = self.world.rng.child(f"troubles/{s.id}/{int(self.world.time) // 1440}")
+        out = marks.words(self.world, self.tables, s, "troubles", rng)  # (every mark it carries: world/marks.py)
         if st.get("plague"):
-            out.append(f"<danger>Plague is in {s.name}.</> Doors are marked with chalk, and the dead-carts go by.")
             from realmwalker.rules import health
 
             rng = self.world.rng.child(f"plague/{s.id}/{self.world.time}")
@@ -980,6 +987,20 @@ class GameState:
         lm = get_local_map(self.world, self.tables, p.x, p.y)
         p.local_key = lm.key
         p.lx, p.ly = lm.entry
+        if lm.kind == "settlement":  # (what the town has been through, on its map before anyone is placed)
+            from realmwalker.game import placemarks
+
+            placemarks.stamp(self, lm, self.world.settlement_at(p.x, p.y))
+        from realmwalker.game import fire, remains
+
+        if lm.kind == "settlement":  # (a town that burns, a town that mends: B.7)
+            here = self.world.settlement_at(p.x, p.y)
+            fire.mend(self, lm, here)
+            fire.settle(self, lm)
+            fire.kindle(self, lm, here)
+        else:
+            fire.burn_out_all(self, lm)
+        remains.tick(self, lm)  # (the dead left here carried off or gone to bones; old blood faded)
         from realmwalker.game.encounters import populate_local
 
         populate_local(self, lm)
@@ -1043,6 +1064,14 @@ class GameState:
         here = self.world.settlement_at(self.player.x, self.player.y)
         if here is not None:
             self.let_in = (here.id, self._night_of())  # the wardens have seen you go out: they will let you back in
+        if self.local is not None:
+            from realmwalker.game import remains
+
+            for line in remains.follow_off(self, self.local):  # (tracks followed to the map's edge: B.6)
+                self.say(line, "info")
+            from realmwalker.game import fire
+
+            fire.settle(self, self.local)  # (the fire's last steps, before the map is left to itself)
         self.player.local_key = None
         self.sneaking = False
         self.say("You return to the road and the wider land.", "flavor")
@@ -1136,6 +1165,12 @@ class GameState:
             return True
         if not T.walk[t]:
             return False
+        if lm.meta.get("fire"):
+            from realmwalker.game import fire
+
+            if fire.burning(lm, nx, ny):
+                self.say("<danger>The heat drives you back: that way is on fire.</>", "danger")
+                return False
         before_building = lm.building_at(p.lx, p.ly)
         p.lx, p.ly = nx, ny
         p.steps += 1

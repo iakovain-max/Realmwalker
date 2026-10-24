@@ -24,6 +24,7 @@ PUSH_STEP = 0.06
 LUNGE = 0.26
 FLIGHT = 0.26
 FLOAT = 1.1
+BANNER = 2.0  # a story villain's name across the mat (Expansion 6 B.2)
 # A steed of another world, in its kind's colours (Find Steed: celestial pale gold, fey green-silver, fiend ember).
 STEED_TINT = {"celestial": (255, 238, 190, 255), "fey": (196, 255, 222, 255), "fiend": (225, 140, 120, 255)}
 FALL = 0.4
@@ -194,6 +195,11 @@ class BattleBoard:
             dur = 0.3 if k == "fly" else 0.22
             self.lifts[who] = (t, start, end, dur)
             return t + dur
+        if k in ("boss", "phase"):  # a story's villain: its name and its line cross the mat, and the ground shakes
+            self.fx.append({"kind": "banner", "title": ev.get("name", ""), "sub": ev.get("line", ""), "t0": t,
+                            "dur": BANNER})
+            self.shake_until = max(self.shake_until, t + 0.45)
+            return t + 0.5
         if k == "leave":
             self.fx.append({"kind": "float", "who": ev["who"], "text": "gone", "color": (210, 200, 180), "t0": t,
                             "dur": FLOAT, "size": 16})
@@ -692,11 +698,12 @@ class BattleBoard:
                     if frames:
                         name = frames[(int(now * 8) + i) % len(frames)] if ambient else frames[i % len(frames)]
                         canvas.under(Sprite(name, px, py, T, T, (255, 255, 255, 220)))
-            elif z.kind in ("fog", "darkness"):
+            elif z.kind in ("fog", "darkness", "smoke"):
+                look = {"fog": (180, 184, 190, 170), "darkness": (10, 8, 14, 230), "smoke": (70, 64, 60, 110)}[z.kind]
                 for (x, y) in z.cells:
                     px, py = self.sq_px(x, y)
                     canvas.under(Image("bfog", _fog_image, (px - T * 0.25, py - T * 0.25, T * 1.5, T * 1.5),
-                                       rgba=(180, 184, 190, 170) if z.kind == "fog" else (10, 8, 14, 230)))
+                                       rgba=look))
             elif z.kind == "illusion" and not z.real:  # (an image: Expansion 5 Part A)
                 self._image(canvas, battle, z, now)
             elif z.kind in GROUND_LOOKS:  # the second wave's ground (Expansion 3 D.2)
@@ -1085,6 +1092,9 @@ class BattleBoard:
             if p > 1:
                 continue
             k = e["kind"]
+            if k == "banner":
+                self._banner(canvas, e, p)
+                continue
             if k == "shot":
                 a, b = self._centre(e["from"], now), self._centre(e["to"], now)
                 if a is None or b is None:
@@ -1208,6 +1218,25 @@ class BattleBoard:
                 r, g, bl = e["color"]
                 canvas.over(Image("bring2", _ring_image, (cx - rad, fy - s * 0.5 - rad * 0.5, rad * 2, rad),
                                   rgba=(r, g, bl, int(220 * (1 - p)))))
+
+    def _banner(self, canvas, e: dict, p: float) -> None:
+        """A villain's name across the mat in the title face, its line beneath, sliding in and out."""
+        x, y, w, h = self.rect
+        band = max(64.0, h * 0.2)
+        by = y + (h - band) / 2
+        come = min(1.0, p / 0.15)
+        go = min(1.0, (1 - p) / 0.15)
+        a = min(come, go)
+        slide = (1 - come) * -w * 0.3 + (1 - go) * w * 0.3
+        canvas.over(Rect(x, by, w, band, (6, 3, 3, int(190 * a)), bottom=(30, 6, 6, int(210 * a))))
+        canvas.over(Rect(x, by, w, 2, (*theme.BRONZE, int(255 * a))))
+        canvas.over(Rect(x, by + band - 2, w, 2, (*theme.BRONZE, int(255 * a))))
+        size = int(band * 0.42)
+        canvas.over(Text(x + w / 2 + slide, by + band * 0.4, e["title"], "title", size, (240, 200, 140, int(255 * a)),
+                         anchor="mm", shadow=True))
+        if e.get("sub"):
+            canvas.over(Text(x + w / 2 - slide * 0.6, by + band * 0.8, e["sub"], "prose_italic", int(size * 0.45),
+                             (220, 196, 170, int(235 * a)), anchor="mm", shadow=True))
 
     def _centre(self, fid, now):
         f = self._fighters.get(fid)

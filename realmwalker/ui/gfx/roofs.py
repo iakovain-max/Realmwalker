@@ -21,6 +21,7 @@ import numpy as np
 
 # Roof colours: base (the slope facing you), shade (the far slope), light (ridge and highlights).
 STYLES = {
+    "charred": ((44, 38, 36), (24, 20, 18), (70, 58, 50)),  # (blackened by fire: game/placemarks.py)
     "thatch": ((178, 146, 86), (128, 100, 56), (206, 178, 116)),
     "slate": ((96, 104, 118), (66, 72, 86), (134, 142, 154)),
     "tile": ((164, 78, 56), (112, 50, 40), (196, 110, 80)),
@@ -43,6 +44,7 @@ WALLS = {
     "marble": ((234, 230, 222), (170, 166, 158), (196, 192, 184)),
     "limestone": ((228, 220, 196), (160, 150, 124), (190, 182, 160)),
     "dark_wood": ((96, 70, 48), (60, 42, 28), (76, 56, 38)),
+    "charred": ((58, 48, 42), (28, 22, 20), (42, 34, 30)),  # (a house the fire went through: game/placemarks.py)
 }
 STYLES.setdefault("hide", ((150, 116, 80), (116, 88, 60), (178, 144, 104)))
 OUTLINE = (34, 26, 20)

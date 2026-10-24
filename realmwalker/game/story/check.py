@@ -9,6 +9,7 @@ part is built.
 
 from __future__ import annotations
 
+from realmwalker.game.story import LEFT
 from realmwalker.game.story import beats as beatlang
 from realmwalker.game.story import endings, finale, selectors, steps
 from realmwalker.world import threats
@@ -131,6 +132,8 @@ def problems(tables) -> list[str]:
             if cond not in beatlang.CONDITIONS:
                 out.append(f"{where}: the condition '{cond}' is not one the game knows.")
         _ops(where, beat.get("ops"), beatlang.OPS, out, "op")
+        if beat.get("leaves") and beat["leaves"] not in LEFT:
+            out.append(f"{where}: it leaves '{beat['leaves']}', which the camp's picture cannot draw.")
         for i, ch in enumerate(beat.get("choices", [])):
             cw = f"{where}, choice {i + 1}"
             for part in ("ops", "success", "failure"):
@@ -161,4 +164,30 @@ def problems(tables) -> list[str]:
         for w in lst:
             for key in w["keys"]:
                 _key(f"villains.json: weakness {kind}/{w['id']}", key, out)
+    out.extend(scene_problems(tables))
+    return out
+
+
+def scene_problems(tables) -> list[str]:
+    """Every scene's cues are ones the stage knows, every `key` has its words, every beat it opens exists."""
+    from realmwalker.game.story import stage
+
+    out = []
+    for sid, scene in getattr(tables, "scenes", {}).items():
+        roles = {"you"}
+        for i, c in enumerate(scene["cues"]):
+            where = f"scenes.json: {sid}, cue {i + 1}"
+            if c["cue"] not in stage.CUES:
+                out.append(f"{where}: the cue '{c['cue']}' is not one the stage knows.")
+            for k in ("key", "letter"):
+                if c.get(k) and c[k] not in scene.get("words", {}):
+                    out.append(f"{where}: there are no words called '{c[k]}'.")
+            if c["cue"] == "beat" and c.get("id") and c["id"] not in tables.beats:
+                out.append(f"{where}: there is no beat called '{c['id']}'.")
+            if c.get("role"):
+                roles.add(c["role"])
+            for k in ("who", "to", "at", "near"):
+                v = c.get(k)
+                if isinstance(v, str) and v not in roles and v not in ("home", "gate", "away", "square"):
+                    out.append(f"{where}: '{v}' is not cast before this cue.")
     return out

@@ -107,6 +107,10 @@ class Conversation:
             return
         self.greeted = True
         npc = self.npc
+        opener = npc.flags.pop("opener", None)
+        if opener:  # (they came to you, in a scene: what they came to say comes first: game/story/stage.py)
+            self.npc_says(opener)
+            return
         if npc.flags.get("unique"):
             from realmwalker.game.uniques import greeting
 

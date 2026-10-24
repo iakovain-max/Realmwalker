@@ -103,6 +103,7 @@ def prepare(battle, game) -> list[str]:
                 f.cdef = dict(f.cdef, boss_phase=dict(template["before"]))
             continue
         make_boss(battle, f, template, int(adv["tier"]))
+        battle.events.append({"kind": "boss", "who": f.id, "name": f.name, "line": adv["title"]})  # (its entrance)
         for found, keys in adv["finale"]["keys"].items():
             if found not in adv["keys"]:
                 continue

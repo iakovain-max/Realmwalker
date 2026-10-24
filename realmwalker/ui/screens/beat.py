@@ -1,5 +1,6 @@
 """The story's screens of words (Expansion 6, docs/ADVENTURES.md §8.7): a beat (pages, numbered choices with their
-checks and costs, what came of it) and a chapter's title card ("Chapter II - What Binds Him")."""
+checks and costs, what came of it), with its picture above (ui/gfx/vignette.py). A chapter's title card is
+ui/screens/titlecard.py."""
 
 from __future__ import annotations
 
@@ -9,18 +10,51 @@ from realmwalker.ui.input import KeyEvent
 from realmwalker.ui.screens.base import Screen, modal_box
 from realmwalker.ui.widgets import Canvas
 
-ROMAN = ("I", "II", "III", "IV", "V", "VI", "VII")
 PICTURE_ROWS = 9  # (a beat's picture above its words: `picture` in beats.json)
 
 
-def picture(canvas: Canvas, game, name: str, rect: tuple[float, float, float, float]) -> bool:
-    """Draw a beat's picture in a rect of cells; False when there is none by that name (Part B brings the rest)."""
+def picture(canvas: Canvas, game, name: str, rect: tuple[float, float, float, float], rec: dict | None = None) -> bool:
+    """Draw a beat's (or an event's) picture in a rect of cells: "camp_night" (the party round their own camp), a
+    vignette's backdrop (ui/gfx/vignette.BACKDROPS), "place" (the backdrop of the step's place) or "here" (of where you
+    stand). False when there is none by that name."""
+    px = tuple(int(v) for v in canvas.cell_rect(*rect))
     if name == "camp_night":
         from realmwalker.ui.gfx import scenes
 
-        scenes.camp(canvas, game, tuple(int(v) for v in canvas.cell_rect(*rect)), canvas.now)
+        scenes.camp(canvas, game, px, canvas.now)
         return True
-    return False
+    from realmwalker.ui.gfx import vignette
+
+    backdrop = backdrop_for(game, name, rec)
+    if backdrop is None:
+        return False
+    spec = {"backdrop": backdrop, "figures": vignette.party_figures(game, 1),
+            "seed": int((rec or {}).get("n", 0))}
+    return vignette.compose(canvas, px, spec, canvas.now, game)
+
+
+def backdrop_for(game, name: str | None, rec: dict | None = None) -> str | None:
+    """The vignette backdrop a picture's name stands for (None: no picture)."""
+    from realmwalker.ui.gfx import vignette
+
+    if not name:
+        return None
+    if name in vignette.BACKDROPS:
+        return name
+    if name == "place" and rec is not None:
+        from realmwalker.game import story
+
+        st = story.find_step(game, rec.get("adv"), rec.get("step"))
+        place = ((st or {}).get("target") or {}).get("place") if st else None
+        if place:
+            return vignette.for_place(game, place)
+        name = "here"
+    if name == "here":
+        p = game.player
+        if game.in_local and game.local is not None and game.local.kind == "dungeon":
+            return "barrow"
+        return vignette.for_place(game, {"tile": [p.x, p.y]})
+    return None
 
 
 class BeatScreen(Screen):
@@ -88,13 +122,13 @@ class BeatScreen(Screen):
             for line in self.result:
                 tail += markup.wrap(line, iw) if line else []
         pic = game.tables.beats.get(self.rec["beat"], {}).get("picture") if self.page == 0 else None
-        pic_rows = PICTURE_ROWS + 1 if pic in ("camp_night",) else 0
+        pic_rows = PICTURE_ROWS + 1 if pic == "camp_night" or backdrop_for(game, pic, self.rec) else 0
         height = len(body) + len(tail) + len(opts) + 8 + pic_rows
         x, y, w, h = modal_box(canvas, width, height, beats.title(game, self.rec) or self.title)
         row = y + 2
         if pic_rows:
             canvas.clear_cells(x + 2, row, iw, PICTURE_ROWS)
-            picture(canvas, game, pic, (x + 2, row, iw, PICTURE_ROWS))
+            picture(canvas, game, pic, (x + 2, row, iw, PICTURE_ROWS), self.rec)
             row += pic_rows
         for line in body:
             canvas.spans(x + 2, row, line, max_width=iw)
@@ -130,78 +164,3 @@ class BeatScreen(Screen):
         if self.page < len(self.pages) - 1:
             return [KeyEvent("enter")]
         return [KeyEvent(str(i)) for i in range(1, 4)]
-
-
-class TitleCardScreen(Screen):
-    """A tale begins, or a chapter of it: the chapter's number and name, and how it opens."""
-
-    modal = True
-    title = "A tale"
-    sound_open = "chapter"
-
-    def __init__(self, app, game) -> None:
-        super().__init__(app)
-        self.game = game
-        d = beats.director(game.world)
-        self.card = d.get("card") or {}
-        self.adv = game.world.politics.get("adventures", {}).get(self.card.get("adv"))
-
-    def music(self) -> str | None:
-        return "story/omen"
-
-    def finish(self) -> None:
-        beats.director(self.game.world)["card"] = None
-        self.app.save_game()
-        self.close()
-
-    def handle_key(self, ev: KeyEvent) -> bool:
-        if ev.key in ("enter", "escape", " "):
-            self.finish()
-        return True
-
-    def lines(self) -> tuple[str, str, list[str]]:
-        adv = self.adv
-        if adv is None:
-            return "", "", []
-        i = int(self.card.get("chapter", 0))
-        ch = adv["chapters"][i]
-        head = f"Chapter {ROMAN[i] if i < len(ROMAN) else i + 1} - {ch['title']}"
-        body = []
-        if i == 0:
-            body.append(adv["words"]["hook"])
-        body.append(ch["opening"])
-        body.append(f"<dim>{markup.escape(ch['goal'])}</>")
-        return adv["title"], head, body
-
-    def render(self, canvas: Canvas) -> None:
-        name, head, body = self.lines()
-        if not name:
-            self.finish()
-            return
-        width = min(70, canvas.width - 4)
-        iw = width - 6
-        wrapped = []
-        for i, line in enumerate(body):
-            text = line if line.startswith("<") else markup.escape(line)
-            wrapped += markup.wrap(text, iw) + [""]
-        x, y, w, h = modal_box(canvas, width, len(wrapped) + 11, name)
-        # The card's frame: an inset band with the chapter's name set in it, and the tale's seal.
-        from realmwalker.ui.gfx import theme
-        from realmwalker.ui.gfx.scene import Sprite, Text
-
-        canvas.clear_cells(x + 2, y + 2, w - 4, 3)
-        bx, by, bw, bh = canvas.cell_rect(x + 2, y + 2, w - 4, 3)
-        canvas.under(*theme.panel(bx, by, bw, bh, "inset", ornaments=True, border=True))
-        seal = bh * 0.9
-        canvas.under(Sprite("map/story", bx + bw - seal - 8, by + (bh - seal) / 2, seal, seal))
-        canvas.under(Text(bx + (bw - seal) / 2, by + bh / 2, head, "heading", int(canvas.cell_h * 1.4),
-                          (236, 206, 140, 255), anchor="mm", shadow=True))
-        row = y + 6
-        for line in wrapped:
-            canvas.spans(x + 3, row, line, max_width=iw)
-            row += 1
-        canvas.button(x + 3, y + h - 2, "Begin", self.finish, hotkey="Enter")
-        canvas.hit(0, 0, canvas.width, canvas.height)
-
-    def autoplay_keys(self) -> list[KeyEvent]:
-        return [KeyEvent("enter")]

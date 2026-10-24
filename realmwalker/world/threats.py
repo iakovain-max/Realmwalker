@@ -21,6 +21,7 @@ from __future__ import annotations
 import math
 
 from realmwalker.core import textgen
+from realmwalker.world import marks
 
 STAGE_OPS: dict[str, object] = {}
 STATES = ("dormant", "stirring", "active", "ended")
@@ -326,14 +327,14 @@ def _recover(pol) -> None:
     for s in w.settlements:
         e = s.status.get("emptied")
         if isinstance(e, dict) and pol.day >= float(e.get("until", 0)):
-            del s.status["emptied"]
+            marks.lift(w, s, "emptied")
             was = int(e.get("was", s.population))
             s.population = max(s.population, int(was * 0.5))
-            s.status["rebuilding"] = {"since": pol.day, "until": pol.day + float(spec["rebuild_days"]), "was": was}
+            marks.add(w, s, "rebuilding", pol.day, pol.t, until=pol.day + float(spec["rebuild_days"]), was=was)
             pol.say("threat_rebuilding", {"place": s.name}, where=(s.x, s.y), importance=2, places=[s])
         r = s.status.get("rebuilding")
         if isinstance(r, dict) and pol.day >= float(r.get("until", 0)):
-            del s.status["rebuilding"]
+            marks.lift(w, s, "rebuilding")
             s.population = max(s.population, int(int(r.get("was", s.population)) * 0.8))
 
 
@@ -371,7 +372,7 @@ def _status(pol, t: dict, key: str, how: str = "nearest") -> None:
         towns = towns[:1]
     until = float(t["scheme"]["next"]) + 7.0
     for s in towns:
-        s.status[key] = {"until": until, "since": pol.day, "by": villain_name(pol.w, t), "threat": t["id"]}
+        marks.add(pol.w, s, key, pol.day, pol.t, until=until, by=villain_name(pol.w, t), threat=t["id"])
 
 
 @stage_op("danger")
@@ -388,8 +389,9 @@ def _danger(pol, t: dict, n: int) -> None:
 
 
 @stage_op("emptied")
-def _emptied(pol, t: dict, which: str = "nearest") -> None:
-    """The doom: the nearest small place it threatens empties, keeping a floor of its people, until it fills again."""
+def _emptied(pol, t: dict, which: str = "nearest", *also: str) -> None:
+    """The doom: the nearest small place it threatens empties, keeping a floor of its people, until it fills again.
+    `also` are marks the place is left with besides (the beast's: "burned", a farmstead burned as its people fled)."""
     from realmwalker.world.history import remember
 
     w = pol.w
@@ -400,8 +402,10 @@ def _emptied(pol, t: dict, which: str = "nearest") -> None:
     spec = pol.t.threats.get("emptied", {"floor": 0.2, "rebuild_days": 90})
     was = s.population
     s.population = max(10, int(s.population * float(spec["floor"])))
-    s.status["emptied"] = {"since": pol.day, "until": pol.day + float(spec["rebuild_days"]), "was": was,
-                           "by": villain_name(w, t), "threat": t["id"]}
+    marks.add(w, s, "emptied", pol.day, pol.t, until=pol.day + float(spec["rebuild_days"]), was=was,
+              by=villain_name(w, t), threat=t["id"])
+    for mark in also:
+        marks.add(w, s, mark, pol.day, pol.t)
     text = pol.say("threat_emptied", {"villain": villain_name(w, t), "place": s.name}, where=(s.x, s.y),
                    importance=2, places=[s])
     remember(w, pol.year, "emptied", text, importance=3, places=[s.id],

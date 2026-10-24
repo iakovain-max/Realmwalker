@@ -129,6 +129,10 @@ def start_battle(game, creatures: list[Creature], intro: str, *, surprised: str 
 
     for line in warding.at_the_start(game, battle):  # (E.6: a glyph's spell, Forbiddance, a circle, hallowed ground)
         game.say(line, "magic")
+    from realmwalker.game import fire
+
+    for line in fire.on_battle_start(battle, game):  # (a fight in a burning street: Expansion 6 B.7)
+        game.say(line, "danger")
     from realmwalker.game.story import finale
 
     for line in finale.prepare(battle, game):  # (a story's boss: its template and the keys found: Expansion 6)
@@ -215,6 +219,12 @@ def finish_battle(game) -> Aftermath:
 
     domains.one_blessing(list(game.party) + list(getattr(game, "waiting", None) or ()))  # (the Trickster's: one)
     _settle_townsfolk(game, battle, result)
+    from realmwalker.game import remains
+
+    remains.after_field(game, battle, result)  # (the dead and the blood stay where they fell)
+    from realmwalker.game import fire
+
+    fire.write_back(game, battle)  # (what still burns burns on; what burned is scorched)
     if game.party[1:]:
         from realmwalker.game.companions import react
 

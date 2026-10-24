@@ -35,6 +35,7 @@ import tile_art  # noqa: E402
 import gear_art  # noqa: E402
 import beast_art  # noqa: E402
 import town_art  # noqa: E402
+import fire_art  # noqa: E402
 
 PACK_URL = "https://opengameart.org/sites/default/files/Dungeon%20Crawl%20Stone%20Soup%20Full.zip"
 OUT = ROOT / "assets" / "tiles"
@@ -70,6 +71,9 @@ def pick_many(prefix: str, pattern: str, grade: str, limit: int | None = None) -
 
 # Ground
 pick_many("floor/grass", "dungeon/floor/grass/grass_[0-2]_new.png", "ground")
+# Blood left where a fight was (Expansion 6 B.5: game/remains.py, drawn by LocalView's decal layer)
+pick_many("decal/blood", "misc/blood/blood_red_[0-9]*.png", "feature", limit=8)
+pick_many("decal/pool", "misc/blood/blood_puddle_red*.png", "feature", limit=5)
 pick_many("floor/grass_old", "dungeon/floor/grass/grass_[0-2]_old.png", "ground")
 pick_many("floor/grass_flowers", "dungeon/floor/grass/grass_flowers_*_new.png", "ground")
 pick_many("floor/dirt", "dungeon/floor/dirt_[0-2]_new.png", "ground")
@@ -733,9 +737,9 @@ def gather(pack: Path) -> dict[str, Image.Image]:
     figs, _ = figure_tiles()
     tiles.update(figs)
     for name, im in {**tile_art.all_drawn(), **nature_art.all_drawn(), **map_art.all_drawn(), **gear_art.all_drawn(), **beast_art.all_drawn(),
-                     **town_art.all_drawn()}.items():
+                     **town_art.all_drawn(), **fire_art.all_drawn()}.items():
         which = "none" if name.startswith(("icon/", "map/", "status/", "dlc/")) else ("ground" if name.startswith(("floor/", "wall/")) else "feature")
-        if any(k in name for k in ("glow", "/fey", "water/hot", "moonstone")):
+        if any(k in name for k in ("glow", "/fey", "water/hot", "moonstone", "/blaze", "/embers")):
             which = "fx"  # things that shine keep their light
         tiles[name] = grade(im, which) if which != "none" else im
     return tiles

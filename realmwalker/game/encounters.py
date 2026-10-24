@@ -299,6 +299,11 @@ def move_actors(game, lm) -> LocalActor | None:
         return None
     fov = player_fov(game, lm, remember=False)
     walk = game.tables.terrain.walk[game.remap_for(lm)[lm.terrain]]
+    from realmwalker.game import fire
+
+    burning = fire.blocked(lm)
+    if burning is not None:
+        walk = walk & ~burning  # (nobody walks into a fire)
     for a in lm.actors:
         a.seen = bool(fov[a.x, a.y])
         dist = max(abs(a.x - p.lx), abs(a.y - p.ly))

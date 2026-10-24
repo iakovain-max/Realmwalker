@@ -23,7 +23,7 @@ from realmwalker.core.textgen import escape_markup as esc
 # The modules whose handlers fill the registries story/check.py reads (step kinds, selectors, ops, keys).
 HANDLER_MODULES = ("realmwalker.world.threats", "realmwalker.game.story.selectors", "realmwalker.game.story.cast",
                    "realmwalker.game.story.steps", "realmwalker.game.story.beats", "realmwalker.game.story.endings",
-                   "realmwalker.game.story.finale")
+                   "realmwalker.game.story.finale", "realmwalker.game.story.stage")
 STORY_CHOICES = {"story_witness", "story_learn", "story_patron", "story_hook"}
 
 
@@ -372,12 +372,47 @@ def on_enter_town(game, settlement) -> None:
 
     if beats.pending(game) is not None:
         return
+    if _show_tale(game, settlement):
+        return
     for t in threats.live(game.world):
         if settlement.id in t["stakes"][:6] and t.get("adventure") is None and _can_take(game, t):
             offer = t.get("offer") or {}
             if int(game.moment.total_days) - int(offer.get("since", -99)) >= 7:
                 offer_hook(game, t, settlement)
                 return
+
+
+def _show_tale(game, town) -> bool:
+    """Show, don't tell (B.9): the one who saw it tells it again in their street, a crowd round them, and comes to
+    you (the witness step's conversation); once the den chapter begins, the hunter who stands with you sends a boy
+    running with a note in the hunter's own hand. Each once a tale. True when a scene began."""
+    from realmwalker.game.people import npcs_in
+    from realmwalker.game.story import cast, stage
+    from realmwalker.game.story import words as wordsmod
+
+    if not _on_its_map(game, town):
+        return False
+    for adv in active(game):
+        words = {k: v for k, v in wordsmod.for_adventure(game, adv).items() if isinstance(v, str)}
+        for st in open_steps(adv):
+            if st["kind"] != "witness" or st.get("shown"):
+                continue
+            npc = next((n for n in npcs_in(game.world, town.id) if n.alive and _is(game, st["target"].get("who"), n)),
+                       None)
+            if npc is not None and stage.start(game, "survivor", cast={"survivor": npc.id}, words=words) is not None:
+                st["shown"] = True
+                return True
+        ch = chapter(adv)
+        if ch is None or ch["id"] != "den" or "ally" not in adv["keys"] or adv.get("ally_note") is not None:
+            continue
+        ally = cast.person(game.world, adv["cast"].get("ally"))
+        if ally is None or not getattr(ally, "alive", True) or getattr(ally, "settlement", None) == town.id:
+            continue  # (in the hunter's own town, the hunter would simply come)
+        words.update(sender=f"{ally.first_name}, {ally.title}", hand_of=getattr(ally, "job", "plain"))
+        if stage.start(game, "ally_note", words=words) is not None:
+            adv["ally_note"] = int(game.moment.total_days)
+            return True
+    return False
 
 
 def on_night(game, where: str) -> bool:
@@ -393,8 +428,26 @@ def on_night(game, where: str) -> bool:
         beat = villain.due_move(game, adv, where)
         if beat is not None:
             beats.offer(game, beat, adv=adv["id"], where=where)
+            left = game.tables.beats.get(beat, {}).get("leaves")
+            if left and where == "camp":  # (and there it lies in the camp's picture until you move on)
+                p = game.player
+                beats.director(game.world)["left"] = {"what": left, "x": p.x, "y": p.y,
+                                                      "day": int(game.moment.total_days)}
             return True
     return False
+
+
+LEFT = ("carcass",)  # what a beat may leave at your camp (beats.json `leaves`; drawn by ui/gfx/scenes.camp)
+
+
+def left_at_camp(game) -> str | None:
+    """What the villain left at the camp you are in (a carcass), for the camp's picture; None once you move on."""
+    from realmwalker.game.story import beats
+
+    rec = beats.director(game.world).get("left") if getattr(game, "camp", None) is not None else None
+    if not rec or (rec["x"], rec["y"]) != (game.player.x, game.player.y):
+        return None
+    return rec["what"] if int(game.moment.total_days) - int(rec["day"]) <= 1 else None
 
 
 def on_descend(game, lm) -> None:
@@ -585,7 +638,20 @@ def offer_hook(game, t: dict, town=None) -> None:
     words = hook_words(game, t, town)
     words["hook"] = hook_line(game, t, town)
     words["threat"] = t["id"]
-    beats.offer(game, "story_hook", where=_where(game), words=words)
+    then = {"beat": "story_hook", "where": _where(game), "words": words}
+    if town is not None and _on_its_map(game, town):  # (show, don't tell: someone of the town comes to you with it)
+        from realmwalker.game.story import stage
+
+        scene = ("runner", "plea")[int(game.moment.total_days + town.id) % 2]
+        if stage.start(game, scene, words={"town": words.get("town", town.name)}, then=then) is not None:
+            return
+    beats.offer(game, "story_hook", where=then["where"], words=words)
+
+
+def _on_its_map(game, town) -> bool:
+    lm = game.local
+    return bool(game.in_local and lm is not None and lm.kind == "settlement"
+                and game.world.settlement_at(game.player.x, game.player.y) is town)
 
 
 def take_hook(game, tid: str) -> list[str]:
@@ -726,6 +792,10 @@ def map_marks(game) -> list[tuple[int, int]]:
             for r in st["target"].get("routes", []):
                 if r.get("at"):
                     out.append(places.xy(game.world, r["at"]))
+    now = game.world.time / 1440.0
+    for t in game.world.politics.get("director", {}).get("tracks", []):  # (tracks followed off a map: B.6)
+        if now - float(t["day"]) <= 1.0:
+            out.append((int(t["x"]), int(t["y"])))
     return out
 
 
