@@ -3,6 +3,7 @@
   "beats": {
     "beast_kill_found": {
       "family": "step",
+      "picture": "place",
       "text": [
         [
           "The road leaves the fields here and goes on between banks of scrub, and at the bend you find it: {carcass}. The crows go up all at once.",
@@ -34,6 +35,7 @@
     },
     "beast_search_kill": {
       "family": "step",
+      "picture": "place",
       "text": [
         [
           "You go over the ground round the kill, a yard at a time: {track}.",
@@ -121,6 +123,7 @@
     },
     "beast_bait_or_track": {
       "family": "step",
+      "picture": "place",
       "text": [
         [
           "You know what it fears now. What is left is to bring it to you, or to go to it.",
@@ -198,6 +201,7 @@
     },
     "beast_the_den": {
       "family": "step",
+      "picture": "place",
       "text": [
         [
           "{home} gapes in the hillside. Nothing grows near the mouth of it, and the bones there are not all sheep.",
@@ -280,6 +284,7 @@
     },
     "beast_omen": {
       "family": "villain",
+      "picture": "here",
       "where": [
         "road",
         "wild",
@@ -459,6 +464,7 @@
     },
     "beast_lore_at_kill": {
       "family": "step",
+      "picture": "place",
       "where": [
         "road",
         "wild"
@@ -505,6 +511,7 @@
     },
     "story_hook": {
       "family": "hook",
+      "picture": "here",
       "title": [
         "{villain}"
       ],

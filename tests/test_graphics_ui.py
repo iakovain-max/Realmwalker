@@ -629,3 +629,48 @@ def test_the_story_s_pictures_draw(pictured):
         assert any(k == "sign" for _, _, k in marks)
     assert all(app.gfx.atlas.has(f"map/{k}") for k in ("story", "sign"))
     assert app.error_count == 0
+
+
+def test_every_story_picture_draws(pictured):
+    """Expansion 6 B.2: the fourteen backdrops of a story's pictures (ui/gfx/vignette.py), by day and by night with
+    figures, fire and air; a beat's picture of its place; an event's picture above its words; the title card's place."""
+    from realmwalker.game import events
+    from realmwalker.game.story import beats, forge
+    from realmwalker.ui.gfx import vignette
+    from realmwalker.ui.gfx.scene import Sprite
+    from realmwalker.ui.widgets import Canvas
+    from realmwalker.world import threats
+
+    app, game = pictured
+    for kind in vignette.BACKDROPS:
+        for time in ("day", "night"):
+            canvas = Canvas(tcod.console.Console(*SIZE, order="F"), app.mouse, gfx=app.gfx_frame())
+            spec = {"backdrop": kind, "time": time, "figures": vignette.party_figures(game), "pan": True}
+            assert vignette.compose(canvas, (10, 10, 600, 200), spec, 1.5, game), kind
+            assert len(commands(canvas)) > 8, kind
+    assert not vignette.compose(canvas, (0, 0, 10, 10), {"backdrop": "nowhere"}, 0.0, game)
+    assert vignette.for_place(game, {"settlement": 0}) == "square"
+    assert vignette.for_place(game, {"site": 0}) in ("barrow", "ruin")
+    # An event met on the road, with its picture above the words.
+    game.event = events.make_event(game, "flooded_ford")
+    render(app)
+    canvas = render(app)
+    assert type(app.screens[-1]).__name__ == "EventScreen"
+    assert any(isinstance(c, Sprite) and c.name.startswith(("tree/", "feature/")) for c in commands(canvas))
+    app.pop()
+    # The title card opens on its chapter's place.
+    t = next((t for t in threats.records(game.world).values() if t["kind"] == "beast" and t["state"] != "ended"
+              and forge.fitting(game, t)), None)
+    if t is not None:
+        if t["state"] == "dormant":
+            threats.stir(game.world, app.tables, t, game.world.rng, day=0)
+        game.event = None
+        adv = forge.make(game, t)
+        beats.director(game.world)["pending"] = None
+        beats.director(game.world)["card"] = {"adv": adv["id"], "chapter": 0}
+        render(app)
+        canvas = render(app)
+        assert type(app.screens[-1]).__name__ == "TitleCardScreen"
+        assert any(isinstance(c, Image) and isinstance(c.key, tuple) and c.key[0] == "vig_far"
+                   for c in commands(canvas)), "the chapter's place, painted"
+    assert app.error_count == 0

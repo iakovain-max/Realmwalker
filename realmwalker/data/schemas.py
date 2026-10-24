@@ -760,6 +760,7 @@ EVENT_OPTION = Obj(
 TRAVEL_EVENT = Obj(
     {
         "name": Str(max_len=60),
+        "picture": Str(max_len=60, optional=True),  # a vignette's backdrop (ui/gfx/vignette.BACKDROPS)
         "where": Obj({"road": Bool(optional=True), "biomes": List(Str(max_len=30), min_items=1),
                       "danger": List(Int(min=0, max=10), min_items=2, max_items=2), "time": Str(choices=["any", "day", "night"]),
                       "season": Any_()}),

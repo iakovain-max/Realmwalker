@@ -544,7 +544,7 @@ class GameScreen(Screen):
 
             self.app.push(FinaleScreen(self.app, game))
         elif (game.world.politics.get("director") or {}).get("card"):
-            from realmwalker.ui.screens.beat import TitleCardScreen
+            from realmwalker.ui.screens.titlecard import TitleCardScreen
 
             self.app.push(TitleCardScreen(self.app, game))
         elif (game.world.politics.get("director") or {}).get("pending"):

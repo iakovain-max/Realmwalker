@@ -2,7 +2,7 @@
   "_comment": "Things met on the road that are not (at first) a fight. where: road (true = only on roads, false = only off them, missing = either), biomes (or [\"any\"]), danger [min, max], time any/day/night, season list or any. Each option has a label and one of: outcome, check (skill, dc, success, failure) or shop (stock [item, qty], markup). Outcomes: text (one is chosen; {name} is the leader), items [[item, qty or dice]] (negative qty = given away), money (copper; negative = paid), xp, deed, news (true: hear of a place you don't know), fatigue (change), effect [name, hours], loot [[item, dice, chance]], fight (an encounter group), ambush [group, chance], time (minutes). requires: items [[item, qty]] and/or money.",
   "events": {
     "flooded_ford": {
-      "name": "a flooded ford",
+      "name": "a flooded ford", "picture": "ford",
       "where": {"biomes": ["any"], "danger": [0, 10], "time": "any", "season": "any"},
       "weight": 2,
       "intro": ["The ford is under brown water, moving fast, carrying branches. The marker stones are gone.",
@@ -20,7 +20,7 @@
       ]
     },
     "burnt_farm": {
-      "name": "a burnt farm",
+      "name": "a burnt farm", "picture": "burned_street",
       "where": {"biomes": ["plains", "forest", "hills", "marsh"], "danger": [2, 10], "time": "any", "season": "any"},
       "weight": 2,
       "intro": ["Black beams, a fallen roof, and a yard where nothing moves. It happened weeks ago, and nobody came back.",
@@ -36,7 +36,7 @@
       ]
     },
     "toll_men": {
-      "name": "toll men on the road",
+      "name": "toll men on the road", "picture": "road",
       "where": {"road": true, "biomes": ["any"], "danger": [0, 6], "time": "day", "season": "any"},
       "weight": 3,
       "intro": ["A rope across the road, two men with spears, and a third with a ledger. \"Bridge toll. Lord's orders.\"",
@@ -50,7 +50,7 @@
       ]
     },
     "broken_cart": {
-      "name": "a carter in trouble",
+      "name": "a carter in trouble", "picture": "road",
       "where": {"road": true, "biomes": ["any"], "danger": [0, 8], "time": "day", "season": "any"},
       "weight": 3,
       "intro": ["A cart is down to its axle in the ruts, one wheel off, and a carter is arguing with an ox about it.",
@@ -66,7 +66,7 @@
       ]
     },
     "stone_circle": {
-      "name": "a ring of standing stones",
+      "name": "a ring of standing stones", "picture": "barrow",
       "where": {"biomes": ["plains", "hills", "tundra", "forest"], "danger": [0, 10], "time": "any", "season": "any"},
       "weight": 1,
       "intro": ["Nine stones, or eight and the stump of one, in a ring on the open ground. Older than anything with a name.",
@@ -80,7 +80,7 @@
       ]
     },
     "charcoal_burners": {
-      "name": "charcoal burners",
+      "name": "charcoal burners", "picture": "road",
       "where": {"biomes": ["forest", "pine_forest"], "danger": [0, 8], "time": "any", "season": "any"},
       "weight": 2,
       "intro": ["Smoke from a covered mound, and two soot-black figures who watch you come with the patience of people who cannot leave their fire.",
@@ -92,7 +92,7 @@
       ]
     },
     "sick_child": {
-      "name": "a sick child at a cottage",
+      "name": "a sick child at a cottage", "picture": "road",
       "where": {"biomes": ["any"], "danger": [0, 6], "time": "any", "season": "any"},
       "weight": 2,
       "intro": ["A woman comes out of a turf cottage at the sound of you and asks, without preamble, whether you have anything for a fever.",
@@ -107,7 +107,7 @@
       ]
     },
     "drowned_man": {
-      "name": "a body in the reeds",
+      "name": "a body in the reeds", "picture": "ford",
       "where": {"biomes": ["marsh", "plains", "forest"], "danger": [0, 10], "time": "any", "season": "any"},
       "weight": 1,
       "intro": ["Face down in the reeds, a week in the water, with the crows already disappointed.",
@@ -119,7 +119,7 @@
       ]
     },
     "caravan": {
-      "name": "a merchant caravan",
+      "name": "a merchant caravan", "picture": "road",
       "where": {"road": true, "biomes": ["any"], "danger": [0, 8], "time": "day", "season": "any"},
       "weight": 3,
       "intro": ["Six carts, twenty oxen and a dozen hired swords, going the other way at the pace of the slowest wheel.",
@@ -135,7 +135,7 @@
       ]
     },
     "pedlar": {
-      "name": "a travelling pedlar",
+      "name": "a travelling pedlar", "picture": "road",
       "where": {"road": true, "biomes": ["any"], "danger": [0, 6], "time": "day", "season": "any"},
       "weight": 4,
       "intro": ["A pedlar comes the other way, bent under a pack twice his width, a cudgel through his belt. He raises a hand: friendly, careful.",
@@ -147,7 +147,7 @@
       ]
     },
     "pilgrims": {
-      "name": "pilgrims",
+      "name": "pilgrims", "picture": "road",
       "where": {"road": true, "biomes": ["any"], "danger": [0, 5], "time": "day", "season": "any"},
       "weight": 3,
       "intro": ["A file of pilgrims in grey wool trudges along the verge, singing badly. Their leader carries a staff hung with little bells.",
@@ -159,7 +159,7 @@
       ]
     },
     "patrol": {
-      "name": "a patrol",
+      "name": "a patrol", "picture": "road",
       "where": {"road": true, "biomes": ["any"], "danger": [0, 4], "time": "any", "season": "any"},
       "weight": 3,
       "intro": ["Four spearmen and a sergeant on a tired horse block the road. \"Where from, and where to?\"",
@@ -173,7 +173,7 @@
       ]
     },
     "refugees": {
-      "name": "refugees",
+      "name": "refugees", "picture": "road",
       "where": {"road": true, "biomes": ["any"], "danger": [3, 10], "time": "day", "season": "any"},
       "weight": 2,
       "intro": ["A cart with a broken wheel, and around it a family: two children, a grandmother, a man with his arm in a sling. Everything they own is on the cart.",
@@ -186,7 +186,7 @@
       ]
     },
     "wounded_traveller": {
-      "name": "a wounded traveller",
+      "name": "a wounded traveller", "picture": "road",
       "where": {"biomes": ["any"], "danger": [1, 10], "time": "day", "season": "any"},
       "weight": 2,
       "intro": ["A man sits against a tree, grey-faced, his hands pressed to his side. There is a lot of blood on the grass.",
@@ -200,7 +200,7 @@
       ]
     },
     "abandoned_camp": {
-      "name": "an abandoned camp",
+      "name": "an abandoned camp", "picture": "camp",
       "where": {"road": false, "biomes": ["any"], "danger": [1, 10], "time": "any", "season": "any"},
       "weight": 2,
       "intro": ["A cold fire-pit, a torn lean-to, scattered belongings. Whoever camped here left in a hurry, or didn't leave at all.",
@@ -214,7 +214,7 @@
       ]
     },
     "hunters": {
-      "name": "hunters",
+      "name": "hunters", "picture": "camp",
       "where": {"biomes": ["forest", "pine_forest", "hills", "tundra", "plains"], "danger": [0, 7], "time": "day", "season": "any"},
       "weight": 2,
       "intro": ["Two hunters with a deer slung on a pole between them stop to look you over.",
@@ -226,7 +226,7 @@
       ]
     },
     "carcass": {
-      "name": "a fresh carcass",
+      "name": "a fresh carcass", "picture": "road",
       "where": {"biomes": ["forest", "pine_forest", "plains", "hills", "tundra"], "danger": [0, 10], "time": "any", "season": "any"},
       "weight": 1,
       "intro": ["A deer lies dead in the grass, throat torn, barely touched. Whatever killed it will be back.",
@@ -240,7 +240,7 @@
       ]
     },
     "shrine": {
-      "name": "a wayside shrine",
+      "name": "a wayside shrine", "picture": "ruin",
       "where": {"biomes": ["any"], "danger": [0, 10], "time": "any", "season": "any"},
       "weight": 2,
       "intro": ["A little stone shrine stands at the crossroads, its saint worn faceless by weather. Someone has left fresh flowers and a few coins.",
@@ -252,7 +252,7 @@
       ]
     },
     "herbs": {
-      "name": "a patch of herbs",
+      "name": "a patch of herbs", "picture": "road",
       "where": {"road": false, "biomes": ["forest", "plains", "hills", "marsh"], "danger": [0, 10], "time": "day", "season": ["spring", "summer", "autumn"]},
       "weight": 2,
       "intro": ["In a sheltered hollow, a patch of plants you half recognise: yarrow, comfrey, perhaps woundwort.", "A bank of plants in the shelter of a wall: yarrow, and something that might be comfrey.", "Somebody's old physic garden gone wild at the edge of a ruin, and still useful."],
@@ -265,7 +265,7 @@
       ]
     },
     "hungry_deserters": {
-      "name": "hungry deserters",
+      "name": "hungry deserters", "picture": "battlefield",
       "where": {"biomes": ["any"], "danger": [2, 8], "time": "any", "season": "any"},
       "weight": 2,
       "intro": ["Three men in stained soldiers' coats step out of the trees. They have weapons but they look more hungry than dangerous. \"Food,\" one says. \"Please.\"", "Men in soldiers' rags sit by the road and get up when they see you, slowly, without enthusiasm.", "Four of them, thin, with spears they are holding like walking sticks."],
@@ -279,7 +279,7 @@
       ]
     },
     "gibbet": {
-      "name": "a gibbet",
+      "name": "a gibbet", "picture": "road",
       "where": {"road": true, "biomes": ["any"], "danger": [0, 10], "time": "any", "season": "any"},
       "weight": 1,
       "intro": ["A gibbet at the crossroads, and in it what is left of a man. A board nailed below says what he did.",
@@ -292,7 +292,7 @@
       ]
     },
     "fallen_climber": {
-      "name": "someone fallen into a ravine",
+      "name": "someone fallen into a ravine", "picture": "road",
       "where": {"biomes": ["hills", "mountains", "high_mountains", "pine_forest"], "danger": [0, 10], "time": "day", "season": "any"},
       "weight": 2,
       "intro": ["A voice from below the path: on a ledge thirty feet down a gully, a goatherd with a twisted leg is shouting up at the sky.",
@@ -311,7 +311,7 @@
       ]
     },
     "rockfall": {
-      "name": "a rockfall across the way",
+      "name": "a rockfall across the way", "picture": "road",
       "where": {"biomes": ["hills", "mountains", "high_mountains"], "danger": [0, 10], "time": "any", "season": "any"},
       "weight": 2,
       "intro": ["The way ahead is gone under a slide of broken rock and earth, fresh enough that dust still hangs over it.",
@@ -331,7 +331,7 @@
       ]
     },
     "old_well": {
-      "name": "an old well",
+      "name": "an old well", "picture": "ruin",
       "where": {"road": false, "biomes": ["plains", "hills", "forest", "coast", "desert"], "danger": [0, 10], "time": "day", "season": "any"},
       "weight": 2,
       "intro": ["A ring of mossy stones in the grass: a well, from some farm long gone. Far down, something catches the light.",
@@ -350,7 +350,7 @@
     },
     "shut_gate": {
       "_comment": "Not met on the road: a walled town or city after dark, when you press > at its gate (game/state.py gate_shut).",
-      "name": "a shut gate",
+      "name": "a shut gate", "picture": "street",
       "where": {"biomes": ["none"], "danger": [0, 10], "time": "night", "season": "any"},
       "weight": 0,
       "intro": ["The gates are shut for the night. A lantern moves on the wall above, and stops.",

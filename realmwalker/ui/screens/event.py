@@ -64,10 +64,18 @@ class EventScreen(Screen):
             for m in self.ev.result:
                 body_lines += markup.wrap(m, iw)
         opts = ev_logic.options(game, self.ev)
-        height = len(intro) + len(body_lines) + (len(opts) if not self.ev.done else 1) + 8
+        from realmwalker.ui.screens.beat import PICTURE_ROWS, backdrop_for, picture
+
+        pic = spec.get("picture") if backdrop_for(game, spec.get("picture")) and canvas.height >= 40 else None
+        pic_rows = PICTURE_ROWS + 1 if pic else 0  # (what you came upon, as a picture above the words)
+        height = len(intro) + len(body_lines) + (len(opts) if not self.ev.done else 1) + 8 + pic_rows
         title = spec["name"][:1].upper() + spec["name"][1:]
         x, y, w, h = modal_box(canvas, width, height, title)
         row = y + 2
+        if pic:
+            canvas.clear_cells(x + 2, row, iw, PICTURE_ROWS)
+            picture(canvas, game, pic, (x + 2, row, iw, PICTURE_ROWS))
+            row += pic_rows
         for line in intro:
             canvas.spans(x + 2, row, line, max_width=iw)
             row += 1
