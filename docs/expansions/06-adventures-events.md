@@ -236,7 +236,7 @@ the battle mat. ADVENTURES.md §5.17–5.19, §5.21 (signs), §8.11–8.14, §8.
 - [x] B.6 **Eavesdropping, tailing and tracks** (on B.1 and B.5's decals): the scenes `overhear` and `follow` (a
   `look_back` DC against the party's Stealth, the law's sneaking rules), track decals to the map's edge and the next
   square lit on the world map.
-- [ ] B.7 **Fire** (`game/fire.py`; ADVENTURES.md §8.14): live fire as an overlay (`lm.meta["fire"]` =
+- [x] B.7 **Fire** (`game/fire.py`; ADVENTURES.md §8.14): live fire as an overlay (`lm.meta["fire"]` =
   `{"x,y": [stage, ticks]}`, never a Python set) with one mask that townlife's walk grid (cell by cell, dropping only
   the paths that cross a newly burning cell), `move_actors` and the player's moves respect; cells lit only when nobody
   stands on them; burn-outs written to terrain in batches and patched cell by cell (`LocalArt.patch`); the new

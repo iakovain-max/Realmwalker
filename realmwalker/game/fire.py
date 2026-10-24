@@ -50,7 +50,7 @@ MEND_DAYS = 120  # a burned square built again (once no fire mark is left on the
 COOL_DAYS = 0.5  # embers go cold
 SMOKE = 3  # battle: smoke drifts this many squares from a fire
 WALL_FALLS = 4  # battle: rounds a timber wall burns before it comes down
-OCC_NEAR = 1  # nobody stands on a square that is lit
+SPARKS = 0.05  # how readily sparks carry a fire over a lane, downwind (times the square's own catch and the wind)
 
 _mats: dict = {}  # lm.key -> (len(terrain_ids), burns list, catch list, into list): never saved
 _weather: dict = {}  # (world minute // 10) -> (wind dx, dy, strength, wet)
@@ -295,6 +295,14 @@ def tick(game, lm, rng=None) -> int:
             hit = ok & ~alight[nx, ny] & (rolls[d] < p)
             for x, y in zip(nx[hit].tolist(), ny[hit].tolist()):
                 want[(x, y)] = None
+        if strength > 0.2:  # (sparks carried over a lane, downwind, from what is fully ablaze)
+            jx, jy = int(round(wx * 3)), int(round(wy * 3))
+            nx, ny = xs_ + jx, ys_ + jy
+            ok = (nx >= 0) & (nx < W) & (ny >= 0) & (ny < H) & (heat_ >= damp * 0.99)
+            nx, ny = np.where(ok, nx, 0), np.where(ok, ny, 0)
+            hit = ok & ~alight[nx, ny] & (rolls[0] * rolls[1] < C[nx, ny] * SPARKS * strength * damp)
+            for x, y in zip(nx[hit].tolist(), ny[hit].tolist()):
+                want[(x, y)] = None
     lit = 0
     if want:
         taken = _occupied(game, lm)
@@ -462,19 +470,17 @@ def settle(game, lm) -> None:
 
 # ---------------------------------------------------------------------------- a town that burns, a town that mends
 def kindle(game, lm, s) -> int:
-    """A town marked "burning" has a few buildings alight when you walk in: the nearest to the burned ones that are
-    still standing (once a burning mark)."""
-    if lm is None or lm.kind != "settlement" or s is None or "burning" not in s.status:
+    """A town marked "burning" has a few buildings alight: when you walk in, and again whenever its fire has died down
+    (at most once an hour of the world) while the mark lasts - the nearest still standing to the burned ones."""
+    if lm is None or lm.kind != "settlement" or s is None or "burning" not in s.status or lm.meta.get("fire"):
         return 0
-    from realmwalker.world import marks
-
-    since = marks.since(s, "burning")
-    if lm.meta.get("kindled") == since:
+    hour = int(game.world.time) // 60
+    if lm.meta.get("kindled") is not None and hour - int(lm.meta["kindled"]) < 1:
         return 0
-    lm.meta["kindled"] = since
+    lm.meta["kindled"] = hour
     lo, hi = (_spec(game).get("kindle") or [2, 4])
-    count = int(lo) + (int(s.id) * 31 + int(since or 0)) % max(1, int(hi) - int(lo) + 1)
-    shut = set()
+    count = int(lo) + (int(s.id) * 31 + hour) % max(1, int(hi) - int(lo) + 1)
+    shut = {int(i) for i in (lm.meta.get("shells") or {})}
     for rec in (lm.meta.get("marks") or {}).values():
         shut |= set(rec.get("shut", ()))
     burned = [lm.buildings[i] for i in shut if 0 <= i < len(lm.buildings)]
@@ -490,7 +496,7 @@ def kindle(game, lm, s) -> int:
         b = lm.buildings[i]
         cells = [(x, y) for x in range(b.x, b.x + b.w) for y in range(b.y, b.y + b.h)
                  if lm.in_bounds(x, y) and b.contains(x, y) and (x, y) != tuple(b.door)]
-        seeds = [c for c in cells if (c[0] * 17 + c[1] * 29 + i) % 5 == 0][:6] or cells[:3]
+        seeds = [c for c in cells if (c[0] * 17 + c[1] * 29 + i) % 3 == 0] or cells[:3]
         lit += light(game, lm, seeds, taken=taken)
     return lit
 

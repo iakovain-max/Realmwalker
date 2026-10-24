@@ -46,9 +46,55 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-10-25 (small hours): Adventures & Events Part B, task B.7 — fire — branch `dlc/06-adventures-events` (not yet on main)
+
+**What is different when you play**
+- **A burning town burns.** Walk into a town the politics have set alight and a few of its houses are on fire: flames
+  stand on the burning squares and run along the roofs, an orange glow pulses over them, thick dark smoke rolls up
+  from each, the fire lights the street even at noon, and embers drift across the whole view (a red sky over a great
+  blaze). The fire spreads square by square as the town's clock runs: straw, hay and dry grass go up fast, timber
+  walls and floors slower, furniture in between; it runs with the wind and crawls in the rain; stone, water and wells
+  stop it. Someone nearby shouts "Fire!" when a building catches, and the townsfolk leave burning houses and stand off
+  in the open square. Nobody - you, the townsfolk, a band of creatures - ever steps into a burning square ("The heat
+  drives you back").
+- **What it leaves.** Burned squares become charred floorboards, black charred walls, glowing embers (they go cold
+  after half a day), scorched earth, broken doors and here and there a fallen roof beam. A building burned through
+  becomes a roofless black shell, and its shop or service is shut. Long after (about four months, once the town is no
+  longer marked burned or rebuilding) the burned squares are built again as they were.
+- **Fighting in a burning street.** A fight on a burning map starts with the fire on the battle mat: burning squares
+  hurt (1d6 fire, a Dexterity save), smoke drifts beside them, and each round the fire spreads to timber, floors and
+  furniture near it (never under anyone). A burning timber wall groans ("The beams groan overhead") and the round
+  after comes down in a rush of sparks, knocking those beside it flat unless they leap clear. When the fight ends, what
+  burned on the mat is scorched on the map and what still burns keeps burning. Straw or hay set alight by fire in an
+  ordinary street fight in a town now burns on after the fight; a Fireball in an inn still starts no blaze.
+- **New pictures**: flames, embers, scorched ground, charred floors and walls, fallen beams, broken doors, barricades,
+  a gallows, a pyre, scaffolds, a fresh grave (the town's new graves use it), a ritual circle, a cage (the last five are
+  ready for the tales and situations to come). Atmospheres over a close-up map: embers over a burning town, falling ash
+  over a burned one, a dark haze over a sacked or plague-struck one (still with Animations on "calm", none on "off").
+
+**Choices made (Anton was away)**
+- Fire spreads only on a town's map; fire carried back to a wild map or a dungeon from a fight burns out at once into
+  scorched ground (the design's rule). A burning town has two to four buildings alight when you walk in, next to the
+  shells the war already left, once for each time it is marked burning.
+- The wind's way is not in the weather yet: fire leans west to east (the way the weather's fronts drift), turning a
+  little day by day; its strength is the weather's wind. Rain or snow slows it to a fifth at most.
+- After a long wait (more than twelve minutes of the world at once) whatever was burning has burned out; the twelve
+  minutes are played out step by step.
+- On the battle mat smoke is a picture only (it does not hide anyone); a falling wall is an Acrobatics check (DC 12) to
+  leap clear, else 2d6 bludgeoning and knocked prone.
+- The fire's numbers (how long each thing burns and how readily it catches) are data/packs/06_adventures_events/
+  marks.json "fire" and were set by measure, not by eye: they await Anton's play.
+
+**Checks**: tests/test_fire.py (spread stops at stone and water and is slowed by rain; nobody ever stands on a burning
+square through 150 steps of a burning town's life; townsfolk make for the open; a battle in a burning street burns and
+writes back; a Fireball's fire in an ordinary inn catches nothing; burned squares are patched in the map's pictures
+square by square, not the whole map; the town mends; fire burns out at once in the wild; a step of fire on a great city
+with 579 squares alight about 1.3 ms, a written batch under 5 ms); the autoplay bot checks nobody stands on a burning
+square; the full suite, autoplay and the window smoke test.
+
 ### Session, 2026-10-24 (late night): Adventures & Events Part B, first half — show, don't tell — branch `dlc/06-adventures-events` (not yet on main)
 
-Tasks B.1 to B.6 of Part B (the rest, B.7 to B.9, comes next; Part B goes to `main` with B.9).
+Tasks B.1 to B.6 of Part B (B.7, fire, is the entry above; B.8 and B.9 come next; Part B goes to `main` with B.9).
 
 **What is different when you play**
 - **Towns act out their stories.** When a town at a beast's door asks you to hunt it, you are no longer handed a box

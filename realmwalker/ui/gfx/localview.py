@@ -898,7 +898,7 @@ class LocalView:
         columns = 0
         moving = 0
         for (x, y, w, h), seed in blazing:
-            canvas.under(Rect(x, y, w, h, (255, 120, 40, int(70 * pulse))))
+            canvas.under(Rect(x, y, w, h, (255, 120, 40, int(95 * pulse))))
             n = max(2, min(6, int(w // T)))
             for k in range(n if frames else 0):
                 i = (seed + k) % len(frames)
@@ -921,7 +921,7 @@ class LocalView:
                     size = T * (0.6 + 1.4 * t)
                     canvas.under(Image("smoke", roofs.smoke_puff,
                                        (cx + T * 0.9 * t - size / 2, y - T * 3.0 * t - size / 2, size, size),
-                                       rgba=(46, 40, 38, int(190 * (1 - t) * min(1.0, t * 5)))))
+                                       rgba=(178, 168, 158, int(225 * (1 - t) * min(1.0, t * 5)))))
 
 
 def _fire_xy(key: str) -> tuple[int, int]:

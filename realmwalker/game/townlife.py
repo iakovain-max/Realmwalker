@@ -456,10 +456,11 @@ def tick(game, lm, s) -> None:
         from realmwalker.game.story import stage
 
         stage.tick(game, lm)
-    if lm.meta.get("fire"):
+    if lm.meta.get("fire") or "burning" in s.status:
         from realmwalker.game import fire
 
         fire.tick(game, lm)
+        fire.kindle(game, lm, s)  # (a burning town keeps burning while it is marked so)
     town = _town(game, lm)
     town.ticks += 1
     flags = _flags(game, s)

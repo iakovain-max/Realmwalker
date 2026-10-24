@@ -264,6 +264,16 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
                             fail(f"two townsfolk stand at {(npc.x, npc.y)}: {other.name} the {other.title} "
                                  f"({other.flags.get('stays', '')}) and {npc.name} the {npc.title}")
                         spots[(npc.x, npc.y)] = npc
+            burning = (lm.meta or {}).get("fire")
+            if burning:  # (nobody ever stands in a fire: game/fire.py)
+                if f"{game.player.lx},{game.player.ly}" in burning and game.local is lm:
+                    fail(f"you stand on a burning square at {(game.player.lx, game.player.ly)}")
+                for (x, y), npc in (spots.items() if lm.kind == "settlement" else ()):
+                    if f"{x},{y}" in burning:
+                        fail(f"{npc.name} the {npc.title} stands on a burning square at {(x, y)}")
+                for a in lm.actors:
+                    if f"{a.x},{a.y}" in burning:
+                        fail(f"a band of {a.group} stands on a burning square at {(a.x, a.y)}")
         b = game.battle
         if b is not None:
             if b.outcome is None and not b.order:

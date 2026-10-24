@@ -30,6 +30,12 @@ Known, not yet chased: one autoplay run of nine during Expansion 5 Part A's chec
   branch, were clean). The timing tests (an enemy turn under 150/400 ms) now and then miss while the suite runs
   beside autoplay and the smoke test, and pass alone; this was already so in Expansions 3 and 4.
 Assumptions waiting for Anton:
+- Expansion 6 B.7 (fire): fire spreads only on town maps (a wild map or dungeon level scorches at once); fire leans
+  west to east, turning a little each day (the weather keeps no wind direction); rain or snow slows it to a fifth at
+  most; after more than twelve minutes at once what burned has burned out; battle smoke is a picture only; a falling
+  wall is Acrobatics DC 12 or 2d6 and prone; a burning town has two to four buildings alight as you walk in; burned
+  squares are built again four months after the town's last fire mark; straw or hay set alight by fire in a town fight
+  burns on afterwards. The numbers (marks.json "fire") were set by measure, not by eye.
 - Expansion 5 Part E (robes, hats and the rest): a Hat of Many Spells is worn, not held, and its wrong spell goes at a
   target chosen by chance; its creatures run off the field (nobody's), its bats bite once (2d4) and scatter, its
   portal closes at once, its magic item is a potion of healing of the rolled rarity and stays; spells go into a
@@ -548,9 +554,25 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part B, task B.7 (*fire*: game/fire.py), on branch
-`dlc/06-adventures-events` (B.1-B.6 done there, not yet merged; Part B goes to main with B.9). Read
-docs/expansions/06-adventures-events.md Part B (B.7-B.9) and ADVENTURES.md §8.14 (fire), §8.16, §8.17-8.18 first.
+Next session starts at: Expansion 6, **Adventures & Events**, Part B, task B.8 (*signs on the world map for marks*:
+ui/gfx/mapsigns.py in WorldView.draw), on branch `dlc/06-adventures-events` (B.1-B.7 done there, not yet merged; Part B
+goes to main with B.9). Read docs/expansions/06-adventures-events.md Part B (B.8-B.9) and ADVENTURES.md §8.16-8.18 first.
+B.7 (2026-10-25, realmwalker-b): `game/fire.py`: live fire lm.meta["fire"] {"x,y": [stage 0-3, steps]} (+ fire_at, fire_n,
+fire_cried; burnt [[x, y, old, day]], shells {"i": old look}, kindled); numbers in marks.json "fire" (burns: terrain ->
+[steps, catch], into, beams, shell, kindle, cries; schemas FIRE; tables.fire). One mask: `fire.blocked(lm)` read by
+townlife._Town (and `townlife.patch(game, lm, cells)`, square by square, dropping ways through), encounters.move_actors,
+GameState._move_local, LocalView._follow. `townlife.tick` calls `fire.tick` first (vectorised spread; batches every
+FLUSH=10 steps via `fire.flush`); `townlife.settle`, `enter_local` (mend, settle, kindle; burn_out_all off town maps) and
+`leave_local` call `fire.settle`; `townlife.goal` sends people out of `fire.unsafe` spots to the square. Battle:
+`fire.on_battle_start` (fight.start_battle after warding) lays an ownerless Zone "fire" (rounds -1) and Zone "smoke",
+marks `field.__dict__["burning"]` and widens `field.flammable` with fire.HOUSE_BURNS; `Battle.round_hooks` (new, run
+as each round begins in end_turn) gets `fire._round` (spread 0.3, burn-out after 4 rounds to scorched, TIMBER_WALLS fall
+after WALL_FALLS rounds via `_wall_falls`, event "collapse"); `fire.write_back` from finish_battle after remains.
+Terrains embers, scorched, charred_floor, charred_wall, fallen_beam, door_broken, barricade, gallows, pyre, scaffold,
+grave_fresh (remains' graves now), ritual_circle, cage (rift_edge waits for Part G) drawn in tools/fire_art.py (+ fx/blaze);
+sprites `animate_ground`. LocalArt keeps `src` and `patch(game, cells)`; LocalView._flames, _roof_fire (glow, flames,
+SMOKE_COLUMNS), fire light by day in _light; `ui/gfx/atmosfx.py` (choose/draw, from GameScreen._weather). placemarks.shut
+reads shells. Not done here (B.9): the frame-timing test (tests/test_frame_time.py), the smoke tour's burned town.
 B.6 (2026-10-24): stage cues `overhear` (two actors' lines said only while you are within HEAR=6 squares and see
 them; the line `matters` makes `knows` known: the scene's tale gets the flag) and `tail` (named so, not `follow`,
 which stays the simple walk-after cue: a suspect walks to `to`, looks back every third tick within TAIL_SEEN=8 -
@@ -577,7 +599,7 @@ politics; lm.meta["marks"]; economy.burnt_out shuts shops and services; roofs/ho
 `game/remains.py` (Field.cut_from set by arena._local; Battle.__dict__["blood"] filled in Battle._hit; after_field
 from fight.finish_battle; tick from enter_local and the day change; lm.meta bodies/decals/graves; LocalView _decals and
 _fallen; DCSS blood picked as decal/blood and decal/pool). tools/showcase.py sheets vignettes, letter, mark.
-Still to do in B: B.7 fire, B.8 map signs, B.9 (the Beast shown: its scenes incl. the camp screen's, title cards, its doom as a mark, vignettes on
+Still to do in B: B.8 map signs, B.9 (the Beast shown: its scenes incl. the camp screen's, title cards, its doom as a mark, vignettes on
 epilogue pages; showcase first form exists; debug console showcase/mark/scene; frame timing test; FORMAT_VERSION +1 for
 Part B's new saved records; smoke tour shows a burned town, a title card and a letter; merge).
 Part A's second half (2026-10-24, realmwalker-b): `tools/storybook.py` (synopses; `--check`: roles, places, every

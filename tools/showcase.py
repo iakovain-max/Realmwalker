@@ -35,7 +35,7 @@ def _letter_screen(app, hand: str):
     return LetterScreen(app, SimpleNamespace(world=world), "L1")
 
 
-def _mark_town(app, mark: str) -> None:
+def _mark_town(app, mark: str, world_name: str = "Townland:21") -> None:
     """A game in a test world, standing in its biggest town with the mark on it (the game screen as you would see
     it)."""
     import copy
@@ -45,7 +45,8 @@ def _mark_town(app, mark: str) -> None:
     from realmwalker.world.generator import WorldOptions
     from tests.worlds import cached_world
 
-    world = copy.deepcopy(cached_world(WorldOptions("Townland", 21, "small", history=40), app.tables))
+    name, seed = world_name.split(":")
+    world = copy.deepcopy(cached_world(WorldOptions(name, int(seed), "small", history=40), app.tables))
     game = new_game(world, app.tables)
     game.survival = False
     s = max((t for t in world.settlements if t.kind in ("town", "city")), key=lambda t: t.population)
@@ -59,12 +60,17 @@ def _mark_town(app, mark: str) -> None:
     game.enter_local()
     rec = (game.local.meta.get("marks") or {}).get(mark) or {}
     cells = rec.get("cells") or []
+    burning = sorted(game.local.meta.get("fire") or {})
+    if burning:  # (a burning town: stand a few steps from its fire, B.7)
+        x, y = (int(v) for v in burning[len(burning) // 2].split(","))
+        cells = [(x, y + 2, None)]
     if cells:  # stand where the mark is
         x, y, _ = cells[len(cells) // 2]
         walk = app.tables.terrain.walk[game.remap_for(game.local)[game.local.terrain]]
         for r in range(0, 6):
             spot = next(((x + dx, y + dy) for dx in range(-r, r + 1) for dy in range(-r, r + 1)
-                         if game.local.in_bounds(x + dx, y + dy) and walk[x + dx, y + dy]), None)
+                         if game.local.in_bounds(x + dx, y + dy) and walk[x + dx, y + dy]
+                         and (not burning or game.local.building_at(x + dx, y + dy) is None)), None)
             if spot:
                 game.player.lx, game.player.ly = spot
                 break
@@ -117,6 +123,7 @@ def main(argv=None) -> int:
     ap.add_argument("--out", default=str(ROOT / "build" / "showcase"))
     ap.add_argument("--hand", default="plain", choices=("plain", "fine", "dark"))
     ap.add_argument("--mark", default="burned")
+    ap.add_argument("--world", default="Townland:21", help="the test world, name:seed (Lifeland:33 has timber towns)")
     args = ap.parse_args(argv)
     from realmwalker.app import App
     from realmwalker.ui import window
@@ -129,7 +136,7 @@ def main(argv=None) -> int:
 
     def show(app):
         if args.sheet == "mark":
-            _mark_town(app, args.mark)
+            _mark_town(app, args.mark, args.world)
             return
         app.push(_sheet_screen(app, args.sheet))
 
