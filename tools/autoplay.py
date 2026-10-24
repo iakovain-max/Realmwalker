@@ -301,6 +301,7 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
                     fail(f"{f.name} still shares a draconic spirit's resistance without holding Summon Dragon")
         _check_factions(game, fail)
         _check_threats(game, fail)
+        _check_adventures(game, fail)
         _check_law(game, fail)
         _check_quests(game, fail)
         _check_magic(game, fail)
@@ -314,6 +315,43 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
             fail("the leader is dead but the game goes on")
         if game.over is None and any(not c.alive for c in game.party) and b is None and game.aftermath is None:
             fail("a dead companion is still in the party")
+
+
+def _check_adventures(game, fail) -> None:
+    """Expansion 6: every tale points at its threat and real places; a live tale's chapter is open, its live steps
+    have targets that exist (or a repair), its cast's people exist or wait for their town; a waiting beat exists; the
+    records are JSON-native."""
+    import json
+
+    from realmwalker.game import story
+    from realmwalker.game.story import cast, places
+    from realmwalker.world import threats
+
+    w = game.world
+    for aid, adv in w.politics.get("adventures", {}).items():
+        if adv["id"] != aid or adv["threat"] not in threats.records(w):
+            fail(f"tale {aid} has no threat")
+            continue
+        if adv["state"] == "active":
+            ch = story.chapter(adv)
+            if ch is None or ch["state"] != "open":
+                fail(f"tale {aid} is under way with no open chapter")
+            for name, pl in adv["places"].items():
+                if not places.exists(w, pl):
+                    fail(f"tale {aid}: its place {name} does not exist")
+            for role, entry in adv["cast"].items():
+                if "npc" in entry and entry["npc"] not in w.npcs:
+                    fail(f"tale {aid}: its {role} is nobody")
+                if cast.pending(entry) and not any(r["adv"] == aid and r["role"] == role for r in
+                                                   w.politics.get("story_people", {}).get(f"S{entry['settlement']}", [])):
+                    fail(f"tale {aid}: its {role} waits for a town that will never give them")
+    d = w.politics.get("director") or {}
+    if d.get("pending") and d["pending"]["beat"] not in game.tables.beats:
+        fail(f"a beat waits that does not exist ({d['pending']['beat']})")
+    for key in ("threats", "adventures", "director", "story_sites", "story_people"):
+        rec = w.politics.get(key)
+        if rec is not None and json.loads(json.dumps(rec)) != rec:
+            fail(f"politics[{key!r}] is not JSON-native")
 
 
 def _check_threats(game, fail) -> None:
