@@ -35,4 +35,4 @@ def _frenzy(battle, f, spec) -> None:
     d["morale"] = "fanatic"
     f.cdef = d
     f.buffs.append({"id": "frenzy", "name": "frenzy", "attack_die": "1d4", "damage_die": "1d6", "rounds": -1})
-    battle.events.append({"kind": "phase", "who": f.id, "phase": "frenzy"})
+    battle.events.append({"kind": "phase", "who": f.id, "by": f.id, "phase": "frenzy"})

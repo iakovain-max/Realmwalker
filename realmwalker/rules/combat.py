@@ -3147,6 +3147,7 @@ class Battle:
             return False
         f.creature.uses["legendary_resistance"] = left - 1
         self.say(f"{f.the_name} will not be moved. <dim>(Legendary Resistance, {left - 1} left)</>", "danger")
+        self._event("legendary", by=f.id, what="resistance")
         return True
 
     def legendary_options(self, f: Fighter) -> list[AttackOption]:
@@ -3184,6 +3185,7 @@ class Battle:
                 if targets:
                     f.creature.uses["legendary_actions"] = left - 1
                     self.say(f"{f.the_name} strikes out of turn. <dim>(Legendary Action)</>", "danger")
+                    self._event("legendary", by=f.id, what="strike")
                     self._attack(f, opt, min(targets, key=lambda t: t.hp))
                     self._check_end()
                     struck = True
@@ -3206,6 +3208,7 @@ class Battle:
         best = min(spots, key=lambda sq: self.gap_from(f, sq, near))
         f.creature.uses["legendary_actions"] = left - 1
         self.say(f"{f.the_name} moves out of turn. <dim>(Legendary Action)</>", "danger")
+        self._event("legendary", by=f.id, what="move")
         self.walk(f, grid.route(tree, best), free=True, provoke=False)
 
     def _inspired(self, f: Fighter, need: int, what: str = "a saving throw") -> bool:
@@ -4353,6 +4356,8 @@ class Battle:
 
     def _per_day(self, f: Fighter, sid: str) -> int | None:
         """Casts left today of a spell a 2025 block lists as "N/day" (None if it is not one of those)."""
+        if f.cdef is None or f.creature is None:
+            return None  # (a person casts from slots: a Shield out of another's turn, Expansion 6's legendary blows)
         sc = f.cdef.get("spellcasting") or {}
         for n, sids in (sc.get("per_day") or {}).items():
             if sid in sids:
