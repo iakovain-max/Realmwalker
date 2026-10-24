@@ -148,6 +148,9 @@ def problems(tables) -> list[str]:
         for m in boss["menu"]:
             if m not in finale.LEGENDARY:
                 out.append(f"villains.json: boss {tid}: the legendary action '{m}' is not one the game knows.")
+        if "before" in boss and boss["before"]["kind"] not in finale.PHASES:
+            out.append(f"villains.json: boss {tid}: what it does before its finale, '{boss['before']['kind']}', is "
+                       f"not one the game knows.")
         if "phase" in boss and boss["phase"]["kind"] not in finale.PHASES:
             out.append(f"villains.json: boss {tid}: the second phase '{boss['phase']['kind']}' is not one the game "
                        f"knows.")

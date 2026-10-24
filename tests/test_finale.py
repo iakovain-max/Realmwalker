@@ -102,3 +102,43 @@ def test_the_frenzy_comes_at_half_its_hit_points(made, tables):
     assert boss.__dict__.get("phased") and boss.cdef["morale"] == "fanatic"
     assert any(bf.get("id") == "frenzy" for bf in boss.buffs)
     assert any(e.get("kind") == "phase" for e in b.events)
+
+
+def test_met_before_its_den_it_breaks_off_when_hurt(made, tables):
+    """Before its finale the beast fights as itself (no template) and bolts at half its hit points; at its den it
+    never runs."""
+    from realmwalker.game.story import finale as finmod
+    from tools.arena import setup
+
+    game, adv, band = _at_the_den(made, tables)
+    adv["chapter"] = 1  # (the hunt's price: the bait or the trail)
+    b = setup(tables, band.creatures[0].def_id, "close", 1)
+    boss = b.side(FOE)[0]
+    boss.creature.story = {"adv": adv["id"], "role": "villain"}
+    base = boss.max_hp
+    finmod.prepare(b, game)
+    assert boss.max_hp == base and not boss.cdef.get("legendary"), "not the boss yet"
+    assert boss.cdef["boss_phase"]["kind"] == "breaks_off"
+    boss.hp = boss.max_hp // 2 - 1
+    bosses.after_damage(b, boss)
+    assert boss.state == "fled"
+    result = b.result()
+    assert boss.creature in result.fled
+    adv["chapter"] = len(adv["chapters"]) - 1
+    b2 = setup(tables, band.creatures[0].def_id, "close", 2)
+    boss2 = b2.side(FOE)[0]
+    boss2.creature.story = {"adv": adv["id"], "role": "villain"}
+    finmod.prepare(b2, game)
+    assert boss2.cdef["morale"] == "fanatic" and boss2.cdef.get("legendary"), "at its den it stands and fights"
+
+
+def test_a_beast_left_helpless_at_the_end_is_killed_where_it_lies(made, tables):
+    from types import SimpleNamespace
+
+    game, adv, band = _at_the_den(made, tables)
+    beast = band.creatures[0]
+    result = SimpleNamespace(outcome="victory", dead=[], captives=[beast], fled=[])
+    lines = story.finish_off(game, result)
+    assert lines and beast in result.dead and not result.captives and not beast.alive
+    story.on_battle(game, result)
+    assert adv["ending"] == "slain"

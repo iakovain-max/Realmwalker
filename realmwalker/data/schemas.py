@@ -1537,6 +1537,9 @@ BOSS = Obj({
     "menu": List(Str(max_len=30), min_items=1),  # what those actions may be (story/finale.LEGENDARY)
     "phase": Obj({"at": Float(min=0.05, max=0.95), "kind": Str(max_len=30), "lines": word_list(3, 300)},
                  optional=True),
+    # met before its finale it fights as itself, and does this when it falls to `at` of its hit points (breaks off)
+    "before": Obj({"at": Float(min=0.05, max=0.95), "kind": Str(max_len=30), "lines": word_list(3, 300)},
+                  optional=True),
 })
 TEMPER = Obj({
     "speaks": Bool(),

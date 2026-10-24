@@ -71,6 +71,7 @@ def make_boss(battle, f, template: dict, tier: int) -> None:
         d["legendary"] = {"uses": int(template["actions"]), "actions": actions}
     if template.get("phase"):
         d["boss_phase"] = dict(template["phase"])
+    d["morale"] = "fanatic"  # (at its end it stands and fights: law 5, and the tale's own words)
     f.cdef = d
     if f.creature is not None:
         f.creature.uses.pop("legendary_resistance", None)
@@ -91,10 +92,15 @@ def prepare(battle, game) -> list[str]:
         adv = advs.get(tag.get("adv"))
         if adv is None or adv.get("state") != "active":
             continue
-        make_boss(battle, f, template_for(game.tables, adv), int(adv["tier"]))
         battle.__dict__.setdefault("story_bosses", {})[f.id] = adv["id"]
+        template = template_for(game.tables, adv)
         if not _is_finale(adv):
-            continue  # (met before the den, it is the boss all the same, but the keys are for the end)
+            # Met before its den it fights as itself, and breaks off when it is hurt (its template's "before"):
+            # the template and the keys are for the end (law 5: the finale is where it stands and fights).
+            if template.get("before"):
+                f.cdef = dict(f.cdef, boss_phase=dict(template["before"]))
+            continue
+        make_boss(battle, f, template, int(adv["tier"]))
         for found, keys in adv["finale"]["keys"].items():
             if found not in adv["keys"]:
                 continue

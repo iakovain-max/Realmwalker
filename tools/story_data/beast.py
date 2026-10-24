@@ -360,7 +360,11 @@ BOSS = {"tiers": [1, 3], "roles": ["beast"], "hp": 1.6, "resistances": 1, "actio
         "phase": {"at": 0.5, "kind": "frenzy", "lines": [
             "Cornered and bleeding, it stops being careful.",
             "It howls, and when it comes again it comes like a landslide.",
-            "Something breaks in it. It is past fear now, and past cunning."]}}
+            "Something breaks in it. It is past fear now, and past cunning."]},
+        "before": {"at": 0.5, "kind": "breaks_off", "lines": [
+            "It has had enough of you, for now. It turns and goes, faster than anything that size should move.",
+            "Bleeding, it backs off a step, and another, and then it is gone into the dark towards its den.",
+            "It gives one long look at you, as if to remember your faces, and runs."]}}
 
 FIRE_LORE = ["The old ones say {villain_short} hates fire more than it hates the hunters: its wounds that are burned do "
              "not close.",

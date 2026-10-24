@@ -260,6 +260,10 @@ def finish_battle(game) -> Aftermath:
             c.hp = max(1, c.hp)
             after.notes.append(f"{c.name.split()[0]} comes round, weak and hurting.")
     dead_party = [c for c in game.party if not c.alive]
+    from realmwalker.game import story
+
+    for line in story.finish_off(game, result):  # (a story's beast lying helpless is killed where it lies)
+        after.notes.append(line)
     if result.outcome == "victory":
         after.xp = result.xp
         after.loot = list(result.loot_items)

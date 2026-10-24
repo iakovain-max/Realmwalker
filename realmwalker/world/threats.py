@@ -72,6 +72,20 @@ def tier_for(tables, kind: dict, danger: int) -> int:
     return max(lo, min(hi, tier))
 
 
+def tier_for_villain(tables, kind: dict, tier: int, creature: str) -> int:
+    """At least the tier whose party can fight the villain's own kind fairly (a troll is no tale for a band of
+    third-level heroes, however quiet its hills): about 1.3 levels a challenge, as tools/arena.py pits them."""
+    d = tables.creatures[creature] if creature and creature in tables.creatures else None
+    if not d:
+        return tier
+    need = max(1, int(round(float(d.get("cr", 0)) * 1.3)))
+    levels = tables.threats.get("target_level", {})
+    lo, hi = kind["tiers"]
+    while tier < hi and int(levels.get(str(tier), 99)) < need:
+        tier += 1
+    return tier
+
+
 def villain_figure(world, t: dict):
     fid = t["villain"].get("figure")
     return world.figures.get(fid) if fid is not None else None
@@ -101,7 +115,8 @@ def make(world, tables, rng, kind_id: str, *, source: dict, home: dict, figure=N
          "lieutenants": [], "signs": [], "offer": None, "adventure": None, "born": float(day), "ended": None,
          "outcome": None}
     hx, hy = home_xy(world, t)
-    t["tier"] = tier_for(tables, kind, int(world.danger[hx, hy]))
+    t["tier"] = tier_for_villain(tables, kind, tier_for(tables, kind, int(world.danger[hx, hy])),
+                                 t["villain"]["creature"])
     t["villain"]["name"] = villain_name(world, t)
     t["reach"] = {"x": hx, "y": hy, "r": int(kind["reach"])}
     near = sorted((math.hypot(s.x - hx, s.y - hy), s.id) for s in world.settlements

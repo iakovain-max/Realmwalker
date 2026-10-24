@@ -312,6 +312,24 @@ def _offer_choice(game) -> bool:
     return False
 
 
+def _due_slay(game) -> bool:
+    """A named foe still to be fought whose meeting has passed (the hunt lost, the beast not driven off): it comes for
+    the hero in the night (law 6: a lost fight moves the story on, it does not stop it). True when it is here."""
+    if game.encounter is not None or game.battle is not None:
+        return False
+    for adv in active(game):
+        ch = chapter(adv)
+        if ch is None:
+            continue
+        for i, st in enumerate(ch["steps"]):
+            if st["kind"] == "slay" and st["state"] == "open" and                     all(o["state"] != "open" or o["optional"] for o in ch["steps"][:i]):
+                named_encounter(game, adv, st["target"].get("role", "villain"))
+                if game.encounter is not None:
+                    game.say(f"<danger>{esc(_villain_name(game, adv))} has come for you in the dark.</>", "story")
+                    return True
+    return False
+
+
 def on_arrive(game) -> bool:
     """The party stands on a tile of the world map: a step that is here (go, search, a learning route's check) plays
     its beat, or is done. True when a beat waits."""
@@ -366,7 +384,7 @@ def on_night(game, where: str) -> bool:
 
     if beats.pending(game) is not None:
         return False
-    if _offer_choice(game):
+    if _offer_choice(game) or (where == "camp" and _due_slay(game)):
         return True
     for adv in active(game):
         beat = villain.due_move(game, adv, where)
@@ -394,6 +412,30 @@ def on_descend(game, lm) -> None:
             if words.get("warning"):
                 rng = game.world.rng.child(f"warning/{adv['id']}")
                 game.say(f"<warn>{esc(rng.choice(words['warning']))}</>", "story")
+
+
+def finish_off(game, result) -> list[str]:
+    """A story's villain that is not a person (a beast) taken helpless - asleep, held, senseless - is killed where it
+    lies: no hunter leaves it to wake, and nobody pays for a captive beast. It becomes one of the dead (before the
+    aftermath asks what to do with captives, and before the listeners hear of the fight)."""
+    out = []
+    for c in list(result.captives):
+        tag = getattr(c, "story", None)
+        adv = adventures(game.world).get((tag or {}).get("adv"))
+        if not tag or tag.get("role") != "villain" or adv is None or adv["state"] != "active":
+            continue
+        from realmwalker.world import threats
+
+        t = threat_of(game, adv)
+        fig = threats.villain_figure(game.world, t) if t is not None else None
+        if fig is None or fig.kind != "beast":
+            continue  # (a person taken is the aftermath's to judge)
+        result.captives.remove(c)
+        c.hp = 0
+        c.alive = False
+        result.dead.append(c)
+        out.append(f"<warn>{esc(c.name)} does not wake. You make sure of it.</>")
+    return out
 
 
 def on_battle(game, result, actor=None) -> None:
