@@ -250,7 +250,7 @@ the battle mat. ADVENTURES.md §5.17–5.19, §5.21 (signs), §8.11–8.14, §8.
   written back. Tests: `tests/test_fire.py` (spread stops at stone and water; nobody ever stands on a burning cell; a
   battle in a burning street burns and writes back; a Fireball in an ordinary inn starts no blaze; under 1 ms a tick
   on a great city); autoplay: nobody on a burning cell.
-- [ ] B.8 **Signs on the world map for marks** (`ui/gfx/mapsigns.py` in `WorldView.draw`): smoke over burning, burned
+- [x] B.8 **Signs on the world map for marks** (`ui/gfx/mapsigns.py` in `WorldView.draw`): smoke over burning, burned
   and sacked towns; a ring of tents round a besieged or beset one; the black flag of plague; a dragon's shadow over
   tribute; festival lanterns; memorial marks. Tests: drawn headless; under 2 ms a frame.
 - [ ] B.9 **The Beast, shown** *(parallel words)*: its scenes (the survivor's account told at the kill site with a

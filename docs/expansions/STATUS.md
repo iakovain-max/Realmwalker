@@ -554,9 +554,17 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part B, task B.8 (*signs on the world map for marks*:
-ui/gfx/mapsigns.py in WorldView.draw), on branch `dlc/06-adventures-events` (B.1-B.7 done there, not yet merged; Part B
-goes to main with B.9). Read docs/expansions/06-adventures-events.md Part B (B.8-B.9) and ADVENTURES.md §8.16-8.18 first.
+Next session starts at: Expansion 6, **Adventures & Events**, Part B, task B.9 (*the Beast, shown*; frame timing,
+FORMAT_VERSION +1, Part B to main), on branch `dlc/06-adventures-events` (B.1-B.8 done there, not yet merged). Read
+docs/expansions/06-adventures-events.md Part B (B.9) and ADVENTURES.md §8.18 and the Beast's tale first.
+B.8 (2026-10-25, realmwalker-a): `ui/gfx/mapsigns.py`: `signed(s)` (SHOWN marks, the strongest smoke only), `under`
+(far tents, a burning town's glow) before the towns' tile batch and `over` (smoke puffs, near tents and banners in the
+siege's `by` faction colour, beset BESET_RGB, plague black flag 2 frames, tribute dragon shadow circling with `angle`,
+festival lantern string, memorial statue) after it, from WorldView.draw's `signs` list [(s, x, y, size, alpha)] of
+seen/known towns with a status. Pictures are cached Images keyed ("sign", name); `_frame` lays signs round marks under
+SMALLEST=24 px. Still when `gfx.ambient` is off. main.py's smoke tour `signs` step marks six towns near the start
+before the overworld shot. tests/test_mapsigns.py (headless on the world map; 40 towns under 2 ms a frame). Not done
+(Part G, as planned): refugee columns, hosts, threat washes, the rift, the encampment composite.
 B.7 (2026-10-25, realmwalker-b): `game/fire.py`: live fire lm.meta["fire"] {"x,y": [stage 0-3, steps]} (+ fire_at, fire_n,
 fire_cried; burnt [[x, y, old, day]], shells {"i": old look}, kindled); numbers in marks.json "fire" (burns: terrain ->
 [steps, catch], into, beams, shell, kindle, cries; schemas FIRE; tables.fire). One mask: `fire.blocked(lm)` read by

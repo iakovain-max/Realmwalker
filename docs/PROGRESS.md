@@ -46,6 +46,24 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-10-25 (small hours): Adventures & Events Part B, task B.8 — signs on the world map — branch `dlc/06-adventures-events` (not yet on main)
+
+**What is different when you play**
+- **You can see from afar what a town is going through.** On the world map (and the travel view), a town that is
+  burning has a column of dark smoke rising from it, lit orange from below and glowing at night; a sacked town smokes
+  grey, a burned one with thin old wisps. A besieged town has a ring of tents round it with banners in the besieging
+  realm's colours (a town beset by a horde: dark red banners). A town with plague flies a black flag. Over a town
+  that pays a dragon tribute, the dragon's shadow circles slowly. A town at a festival has a string of coloured
+  lanterns and pennants across it; a town that keeps a memorial has a statue beside it. Signs show for towns you have
+  seen or heard of; smoke drifts and flags flap with Animations on, and stand still with them calm or off.
+
+**How to try it**: the smoke test's overworld picture marks six towns near the start; in play, wars, raids, plague,
+dragons and festivals put the marks on towns as before.
+
+**Decisions**: a memorial is always shown as a statue (the plan allowed a gibbet; it waits for a tale that needs one).
+Only the strongest smoke shows (burning over sacked over burned). Signs round a very small mark are drawn at a
+readable size. Refugee columns, hosts on the march, threat washes and the rift are Part G, as planned.
+
 ### Session, 2026-10-25 (small hours): Adventures & Events Part B, task B.7 — fire — branch `dlc/06-adventures-events` (not yet on main)
 
 **What is different when you play**
