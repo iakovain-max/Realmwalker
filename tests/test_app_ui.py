@@ -1090,7 +1090,7 @@ def test_the_journal_remembers_people(make_app, size):
     screen = app.top
     assert isinstance(screen, JournalScreen)
     app.handle_event(KeyEvent("tab"))
-    assert screen.tab == 1
+    assert screen.tab == 2  # (Adventures, Work, People: Expansion 6)
     text = screen_text(render(app, size))
     assert folk[0].name.split()[0] in text
     for key in ("down", "down", "pagedown"):

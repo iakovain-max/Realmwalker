@@ -1,4 +1,5 @@
-"""The Journal: work you have taken on, what is left to do and how it ended, and the people you have met."""
+"""The Journal: the tales you are part of (Expansion 6), work you have taken on, what is left to do and how it
+ended, and the people you have met."""
 
 from __future__ import annotations
 
@@ -10,7 +11,9 @@ from realmwalker.ui.screens.base import ConfirmBox, Screen
 from realmwalker.ui.widgets import Canvas, ScrollText
 
 GROUPS = (("In hand", quests.LIVE), ("Finished", ("finished",)), ("Failed or given up", ("failed", "abandoned")))
-TABS = ("Work", "People")
+TABS = ("Adventures", "Work", "People")
+ADVENTURES, WORK, PEOPLE = 0, 1, 2
+TALE_GROUPS = (("Under way", ("active",)), ("Ended", ("won", "lost", "abandoned", "orphaned")))
 
 
 def met_people(game) -> list:
@@ -19,6 +22,62 @@ def met_people(game) -> list:
     folk.sort(key=lambda n: (game.world.settlements[n.settlement].name if 0 <= n.settlement <
                              len(game.world.settlements) else "", not n.notable, n.name))
     return folk
+
+
+STEP_WORDS = {"go": "Go to {place}.", "search": "Search {place} for what it left.",
+              "witness": "Find {who}, who saw it, and hear it from them.", "read": "Read {what}.",
+              "learn": "Learn what {villain} fears: {routes}.", "prepare": "Get the means: {means}.",
+              "choose": "Decide how to bring it to you.", "slay": "Face {villain}.",
+              "finale": "Finish it at {place}."}
+ROUTE_WORDS = {"talk": "ask someone who knows", "check": "study its kill", "divine": "magic"}
+
+
+def tale_lines(game, adv) -> str:
+    """A tale in the journal: its chapters (done, now, to come), what is to be done now and where, the people of it,
+    what you have found, and what you have written of it."""
+    from realmwalker.game import story
+    from realmwalker.game.story import cast, places
+    from realmwalker.game.story import words as wordsmod
+    from realmwalker.world import threats
+
+    esc = markup.escape
+    w = game.world
+    words = wordsmod.for_adventure(game, adv)
+    lines = [f"<title>{esc(adv['title'])}</>", "", esc(adv["words"]["premise"]), ""]
+    for i, ch in enumerate(adv["chapters"]):
+        now = i == adv["chapter"] and adv["state"] == "active"
+        mark = "<good>[x]</>" if ch["state"] == "done" else "<warn>[>]</>" if now else "<faint>[ ]</>"
+        lines.append(f"{mark} {esc(ch['title'])}" if ch["state"] != "locked" else f"{mark} <faint>to come</>")
+    ch = story.chapter(adv)
+    if adv["state"] == "active" and ch is not None:
+        lines += ["", f"<title>Now</> {esc(ch['goal'])}"]
+        for st in ch["steps"]:
+            tg = st["target"]
+            routes = ", ".join(ROUTE_WORDS.get(r.get("how", ""), r.get("how", "")) for r in tg.get("routes", []))
+            means = ", ".join(game.tables.items.get(m)["name"] for m in tg.get("means", []) if game.tables.items.get(m))
+            text = STEP_WORDS.get(st["kind"], st["kind"]).format(
+                place=places.name(w, tg["place"]) if tg.get("place") else "the place",
+                who=cast.describe(game, adv, tg["role"]) if tg.get("role") else "them",
+                villain=words.get("villain", "it"), routes=routes, means=means or "something",
+                what=tg.get("item", "it"))
+            mark = "<good>[x]</>" if st["state"] == "done" else "<faint>(if you like)</>" if st["optional"] else "-"
+            lines.append(f"  {mark} {esc(text)}")
+    known = [r for r in ("patron", "ally", "witness") if r in adv["cast"]]
+    if known:
+        lines += ["", "<title>People</> " + "; ".join(f"{esc(cast.describe(game, adv, r))} ({r})" for r in known)]
+    if adv["keys"]:
+        lines += ["", "<title>Found</> " + "; ".join(esc(wordsmod.key_text(game, adv, k)) for k in adv["keys"])]
+    th = threats.records(w).get(adv["threat"])
+    if th is not None and th["state"] in threats.LIVE:
+        n = len(th["scheme"]["stages"])
+        clock = "".join("#" if i <= th["scheme"]["stage"] else "." for i in range(n))
+        lines += ["", f"<title>Its time</> <danger>{clock}</> <dim>(when the last mark is filled, it has won)</>"]
+    if adv.get("journal"):
+        lines += ["", "<title>Your notes</>"] + [f"<dim>{esc(j['text'])}</>" for j in adv["journal"][-6:]]
+    if adv.get("ending"):
+        lines += ["", f"<title>How it ended</> {esc(adv['ending'].replace('_', ' '))}"]
+        lines += [f"<dim>{esc(pg['text'])}</>" for pg in adv.get("epilogue", [])]
+    return "\n".join(lines)
 
 
 def person_lines(game, npc) -> str:
@@ -106,9 +165,15 @@ class JournalScreen(Screen):
     title = "Journal"
     sound_open = "ui_page"
 
-    def __init__(self, app, game, tab: int = 0) -> None:
+    def __init__(self, app, game, tab: int | None = None) -> None:
         super().__init__(app)
         self.game = game
+        if tab is None:  # (the tales first, when there are any; else the work in hand)
+            from realmwalker.game.story import forge
+
+            life = forge.life_of(game)
+            tales = any(a["hero"]["life"] == life for a in game.world.politics.get("adventures", {}).values())
+            tab = ADVENTURES if tales else WORK
         self.tab = tab
         self.sel = 0
         self.offset = 0
@@ -116,7 +181,19 @@ class JournalScreen(Screen):
         self._shown = None
 
     def rows(self) -> list[tuple[str, object]]:
-        if self.tab == 1:
+        if self.tab == ADVENTURES:
+            from realmwalker.game.story import forge
+
+            life = forge.life_of(self.game)
+            mine = [a for a in self.game.world.politics.get("adventures", {}).values() if a["hero"]["life"] == life]
+            out: list[tuple[str, object]] = []
+            for label, states in TALE_GROUPS:
+                members = sorted((a for a in mine if a["state"] in states), key=lambda a: -int(a["id"][1:]))
+                if members:
+                    out.append(("group", label))
+                    out += [("quest", a) for a in members]
+            return out
+        if self.tab == PEOPLE:
             out: list[tuple[str, object]] = []
             town = None
             for npc in met_people(self.game):
@@ -129,7 +206,7 @@ class JournalScreen(Screen):
             return out
         out: list[tuple[str, object]] = []
         for label, states in GROUPS:
-            members = [q for q in self.game.quests if q["state"] in states]
+            members = [q for q in self.game.quests if q["state"] in states and not q.get("adventure")]
             if not members:
                 continue
             members.sort(key=lambda q: (q["state"] != "return", q.get("deadline") or 0) if q["state"] in quests.LIVE
@@ -172,7 +249,7 @@ class JournalScreen(Screen):
 
     def ask_abandon(self) -> None:
         q = self.selected()
-        if self.tab != 0 or q is None or q["state"] not in quests.LIVE:
+        if self.tab != WORK or q is None or q["state"] not in quests.LIVE:
             return
 
         def yes(q=q) -> None:
@@ -187,7 +264,8 @@ class JournalScreen(Screen):
     def render(self, canvas: Canvas) -> None:
         game = self.game
         w, h = canvas.width, canvas.height
-        title = "Journal: the work you have taken on" if self.tab == 0 else "Journal: the people you have met"
+        title = {ADVENTURES: "Journal: the tales you are part of", WORK: "Journal: the work you have taken on",
+                 PEOPLE: "Journal: the people you have met"}[self.tab]
         canvas.frame(0, 0, w, h - 1, title, double=True)
         list_w = min(46, max(26, w // 3))
         rows = self.rows()
@@ -211,7 +289,11 @@ class JournalScreen(Screen):
                 if chosen:
                     canvas.fill(2, y, list_w - 2, 1, colors.HILITE_BG)
                 canvas.hit(2, y, list_w - 2, 1, lambda i=qi: self.pick(i))
-                if self.tab == 1:
+                if self.tab == ADVENTURES:
+                    mark = "·" if q["state"] == "active" else ("*" if q["state"] == "won" else "-")
+                    color = colors.SELECT_FG if chosen else (colors.FG if q["state"] == "active" else colors.DIM)
+                    canvas.text(3, y, f"{mark} {q['title']}"[: list_w - 4], color)
+                elif self.tab == PEOPLE:
                     mark = "†" if not q.alive else ("·" if not q.notable else "*")
                     color = colors.SELECT_FG if chosen else (colors.DIM if not q.alive else colors.FG)
                     canvas.text(3, y, f"{mark} {q.name}, {q.title}"[: list_w - 4], color)
@@ -223,20 +305,23 @@ class JournalScreen(Screen):
             y += 1
         if not rows:
             empty = ("<dim>You have taken on no work. Ask people in towns: \"Is there any work?\" "
-                     "The notice board may have bounties.</>" if self.tab == 0 else
+                     "The notice board may have bounties.</>" if self.tab == WORK else
+                     "<dim>You are part of no tale yet. Listen in towns for what troubles them, and read the notice "
+                     "boards: someone always needs a hero.</>" if self.tab == ADVENTURES else
                      "<dim>You have spoken to nobody yet. Walk into a town and walk into people.</>")
             canvas.markup(3, top, empty, max_width=w - 6)
         dx = list_w + 2
         if sel is not None:
             key = (self.tab, id(sel), game.world.time)
             if self._shown != key:
-                self.detail.set_text(person_lines(game, sel) if self.tab == 1 else details(game, sel))
+                self.detail.set_text(person_lines(game, sel) if self.tab == PEOPLE else
+                                     tale_lines(game, sel) if self.tab == ADVENTURES else details(game, sel))
                 self._shown = key
             self.detail.render(canvas, dx, top, w - dx - 2, bottom - top)
         bx = canvas.button(2, h - 2, "Close", self.close, hotkey="Esc")
         bx = canvas.button(bx + 2, h - 2, TABS[(self.tab + 1) % len(TABS)],
                            lambda: self.handle_key(KeyEvent("tab")), hotkey="Tab")
-        if self.tab == 0 and sel is not None and sel["state"] in quests.LIVE:
+        if self.tab == WORK and sel is not None and sel["state"] in quests.LIVE:
             bx = canvas.button(bx + 2, h - 2, "Give it up", self.ask_abandon, hotkey="a")
         canvas.text(bx + 2, h - 2, "↑↓ choose · PgUp PgDn scroll", colors.FAINT, max_width=max(0, w - bx - 4))
 

@@ -172,3 +172,31 @@ def test_the_board_shows_every_stirring_threat_near(made, tables):
     town = game.world.settlements[t["stakes"][0]] if t["stakes"] else game.world.settlements[0]
     lines = story.notices(game, town)
     assert any(threats.villain_name(game.world, t) in line for line in lines)
+
+
+def test_a_tale_and_its_foes_are_saved_and_come_back_the_same(made, tables, tmp_path):
+    """Story records are JSON-native: they come back from a save exactly as they were (A.11)."""
+    import json
+
+    from realmwalker.game import save
+
+    game, t = _start_near_a_beast(made, tables)
+    adv = forge.make(game, t)
+    game.renown.legend["epithet"] = "the Hunter"
+    site = game.world.sites[adv["places"]["home"]["site"]]
+    game.player.x, game.player.y = site.x, site.y
+    game.enter_local()
+    depth = dungeon.gen.depth_for(game.world, site)
+    dungeon.descend(game, 1)
+    while int(game.local.meta.get("level", 1)) < depth:
+        dungeon.descend(game, int(game.local.meta["level"]) + 1)
+    folder = save.save_game(game, tmp_path)
+    back = save.load_game(folder, tables)
+    for key in ("threats", "adventures", "director", "story_sites", "story_people"):
+        mine = game.world.politics.get(key)
+        assert json.loads(json.dumps(mine)) == mine, key
+        assert back.world.politics.get(key) == mine, key
+    assert back.renown.legend["epithet"] == "the Hunter"
+    lm = back.world.local_maps[game.local.key]
+    assert any(getattr(c, "story", None) == {"adv": adv["id"], "role": "villain"} for a in lm.actors
+               for c in a.creatures)
