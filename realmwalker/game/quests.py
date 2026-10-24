@@ -1060,9 +1060,12 @@ def raid_missed(game, q) -> None:
 
     w = game.world
     s = w.settlements[q["target"]["settlement"]]
-    s.status["raided"] = {"until": news.now_days(w) + 20}
+    from realmwalker.world import marks
+
+    day = news.now_days(w)
+    marks.add(w, s, "raided", day, game.tables, until=day + 20, by=q["words"].get("raiders", ""))
     if s.kind in ("hamlet", "village") and w.rng.child(f"raid-burn/{q['id']}").chance(0.4):
-        s.status["burned"] = news.now_days(w)
+        marks.add(w, s, "burned", day, game.tables)
         s.population = max(10, int(s.population * 0.75))
     news.add(w, f"{q['words'].get('raiders', 'raiders')} fell on {s.name}", s.x, s.y, kind="raid", importance=3,
              places=[s.id])

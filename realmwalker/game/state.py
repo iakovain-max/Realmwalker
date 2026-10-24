@@ -884,26 +884,12 @@ class GameState:
         """Siege, sack, fire, plague and hunger, as you see them walking in. Plague may follow you out."""
         from realmwalker.world import factions as fx
 
-        out = []
+        from realmwalker.world import marks
+
         st = s.status
-        if st.get("siege"):
-            by = self.world.factions.get(st["siege"].get("by", -1))
-            out.append(f"<danger>{s.name} is under siege{' by ' + by.name if by else ''}.</> Soldiers' fires ring the "
-                       f"walls, and food is dear inside them.")
-        if st.get("sacked") is not None:
-            out.append(f"<danger>{s.name} was sacked not long ago.</> Burned roofs, fresh graves, and people who look "
-                       f"at strangers with hate.")
-        if st.get("burned") is not None:
-            out.append(f"<warn>Much of {s.name} has been burned.</> What is left huddles among the black beams.")
-        if st.get("tribute"):
-            out.append(f"<danger>{s.name} pays tribute to {st['tribute']}.</> Cattle are driven up the mountain "
-                       f"roads, and nobody looks at the sky for long.")
-        if st.get("raided"):
-            out.append(f"<warn>{s.name} was raided days ago.</> The people are frightened and angry.")
-        if st.get("famine"):
-            out.append("<warn>There is hunger here.</> Bread costs what meat should, and the children are thin.")
+        rng = self.world.rng.child(f"troubles/{s.id}/{int(self.world.time) // 1440}")
+        out = marks.words(self.world, self.tables, s, "troubles", rng)  # (every mark it carries: world/marks.py)
         if st.get("plague"):
-            out.append(f"<danger>Plague is in {s.name}.</> Doors are marked with chalk, and the dead-carts go by.")
             from realmwalker.rules import health
 
             rng = self.world.rng.child(f"plague/{s.id}/{self.world.time}")

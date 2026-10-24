@@ -1,0 +1,145 @@
+{
+  "_comment": "Marks on places (docs/ADVENTURES.md §5.19, §8.13; world/marks.py): what a settlement is going through, kept in Settlement.status. form: day (a day number: sacked, burned), name (tribute), or record (a dict with since, until...). label: the world map's word for it (with a colour: danger or warn). ages: {into, after [lo, hi] days from since} - when it passes into the next mark (into null: it is simply over); lasts [lo, hi]: the days a record lasts when it is given no until; a record with an until ends at it (siege is its war's; emptied and rebuilding are world/threats.py's, which mends the population). troubles: what you see walking in ({town}, {by}); moments: a thing seen in its streets; description: a line for a town's first description.",
+  "marks": {
+    "siege": {
+      "form": "record", "label": "under siege", "colour": "danger",
+      "troubles": [
+        "<danger>{town} is under siege{by_part}.</> Soldiers' fires ring the walls, and food is dear inside them.",
+        "<danger>{town} is besieged{by_part}.</> The gates open only a crack, and the guards count every face.",
+        "<danger>The enemy's tents stand round {town}{by_part}.</> Inside, the streets are full of soldiers and short of bread."
+      ],
+      "moments": ["A sergeant counts sacks of grain into a cart and swears at the number.", "Boys carry buckets of water up to the wall-walk.", "Someone has chalked a tally of the days on the gatehouse."],
+      "description": ["The town is shut up behind its walls; the enemy's fires burn beyond them every night."]
+    },
+    "beset": {
+      "form": "record", "label": "beset", "colour": "danger",
+      "troubles": [
+        "<danger>{town} is beset{by_part}.</> Nobody goes beyond the fences after dark, and the gates are barred at noon.",
+        "<danger>Something has {town} ringed round{by_part}.</> Fires are kept burning all night at every gap in the fence.",
+        "<danger>{town} lives behind barred doors{by_part}.</> The fields outside are not worked, and nobody says why aloud."
+      ],
+      "moments": ["Men stand at the gap in the fence with spears and lanterns, watching the dark.", "A woman drives the last goats in through the gate and bars it behind them.", "The bell is rung at noon to call the field-hands in, and they come running."],
+      "description": ["Its people keep behind their fences, and look out over them often."]
+    },
+    "sacked": {
+      "form": "day", "label": "sacked", "colour": "danger", "ages": {"into": null, "after": [120, 120]},
+      "troubles": [
+        "<danger>{town} was sacked not long ago.</> Broken doors, fresh graves, and people who look at strangers with hate.",
+        "<danger>{town} has been sacked.</> The shutters are smashed, the wells fouled, and the market is ash.",
+        "<danger>Soldiers took {town} and did as soldiers do.</> Nobody here will tell you about it, and nobody needs to."
+      ],
+      "moments": ["A man nails a plank across a door that has no lock left to it.", "Two women sort through a heap of broken pots for any that will still hold water.", "Someone has scrubbed at a dark stain on the step until the stone is pale."],
+      "description": ["It was sacked not long ago, and has not yet forgotten it."]
+    },
+    "burning": {
+      "form": "record", "label": "burning", "colour": "danger", "ages": {"into": "burned", "after": [1, 2]},
+      "troubles": [
+        "<danger>{town} is burning.</> The smoke is black and low, and people run past you with buckets and children.",
+        "<danger>Fire has taken {town}.</> Roofs fall in with a roar, and the heat comes down the street like a wall.",
+        "<danger>Half of {town} is alight.</> Nobody is guarding anything; everyone is carrying water or carrying the dead."
+      ],
+      "moments": ["A chain of people passes buckets from the well; the fire does not notice.", "A roof falls in with a sound like a great breath let out.", "A child sits in the road with a singed dog in her arms and does not cry."],
+      "description": ["It is burning."]
+    },
+    "burned": {
+      "form": "day", "label": "burned", "colour": "warn", "ages": {"into": "rebuilding", "after": [90, 150]},
+      "troubles": [
+        "<warn>Much of {town} has been burned.</> What is left huddles among the black beams.",
+        "<warn>{town} has burned.</> The ash is still soft underfoot, and the smell of it is in everything.",
+        "<warn>Where the houses of {town} stood there are black shells, open to the sky.</> People live in what is left."
+      ],
+      "moments": ["Crows walk in the ash of a house as if they own it.", "A man sifts the ashes of his home through his fingers, looking for something small.", "Someone has hung a black rag on a charred doorpost."],
+      "description": ["Fire went through it not long ago, and the black shells of houses stand open to the sky."]
+    },
+    "rebuilding": {
+      "form": "record", "label": "rebuilding", "colour": "warn", "lasts": [215, 275],
+      "troubles": [
+        "<warn>{town} is building itself again.</> New timber stands pale among the blackened beams.",
+        "<warn>Scaffolds stand over half of {town}.</> The hammering never stops while it is light.",
+        "<warn>{town} is coming back.</> There are new roofs, and new faces under them."
+      ],
+      "moments": ["A carpenter whistles on a scaffold, a mouthful of nails in his cheek.", "A cart of new-cut stone grinds up the street.", "Two neighbours argue over where one house ended and the next began."],
+      "description": ["It is being built again: new timber stands pale among the old black beams."]
+    },
+    "emptied": {
+      "form": "record", "label": "emptied", "colour": "danger",
+      "troubles": [
+        "<danger>{town} is nearly empty.</> Doors stand open on empty rooms, and the few who stayed will not meet your eye.",
+        "<danger>Most of {town} has fled{by_part}.</> The houses are dark, and the dogs have gone wild in the lanes.",
+        "<danger>{town} has emptied{by_part}.</> Weeds already push up between the stones of the square."
+      ],
+      "moments": ["A door bangs in the wind, over and over, and nobody comes to shut it.", "An old woman sweeps the step of a house with nobody in it.", "Someone left a table laid for supper, and the mice have had it."],
+      "description": ["Most of its people have gone, and the empty houses wait for them."]
+    },
+    "plague": {
+      "form": "record", "label": "plague", "colour": "danger",
+      "troubles": [
+        "<danger>Plague is in {town}.</> Doors are marked with chalk, and the dead-carts go by.",
+        "<danger>{town} is sick.</> Masked healers go from door to door, and the pyres smoke outside the walls.",
+        "<danger>There is plague in {town}.</> The streets are empty but for the carts, and the bells ring for the dead all day."
+      ],
+      "moments": ["A healer in a beaked mask knocks at a chalked door and waits.", "The dead-cart creaks past, its driver with a cloth over his face.", "Someone has hung bunches of rue over every window in the lane."],
+      "description": ["Sickness is in it, and the chalk marks on its doors say where."]
+    },
+    "famine": {
+      "form": "record", "label": "hungry", "colour": "warn",
+      "troubles": [
+        "<warn>There is hunger here.</> Bread costs what meat should, and the children are thin.",
+        "<warn>{town} is hungry.</> A queue stands at the granary door from first light, and goes home with little.",
+        "<warn>The stalls of {town} are bare.</> What food there is goes for silver, and is watched while it is eaten."
+      ],
+      "moments": ["A queue stands at the granary door, and nobody in it speaks.", "A boy is chased off from a bakery step, and comes straight back.", "Someone is boiling nettles in a pot in the street."],
+      "description": ["It is a hungry place this year, and its people are thin."]
+    },
+    "raided": {
+      "form": "record", "label": "raided", "colour": "warn",
+      "troubles": [
+        "<warn>{town} was raided days ago.</> The people are frightened and angry.",
+        "<warn>Raiders came to {town}{by_part}.</> Pens stand empty, and a burned barn still smokes.",
+        "<warn>{town} has been raided.</> Men with new spears stand at the gate, and do not much like your look."
+      ],
+      "moments": ["Men sharpen hay-forks by the well and talk low.", "A woman counts her geese again, and again comes up short.", "Someone has nailed a raider's shield to the gatepost, split."],
+      "description": ["It was raided not long ago, and keeps a closer watch on the road now."]
+    },
+    "tribute": {
+      "form": "name", "label": "paying tribute", "colour": "danger",
+      "troubles": [
+        "<danger>{town} pays tribute to {by}.</> Cattle are driven up the mountain roads, and nobody looks at the sky for long.",
+        "<danger>{town} feeds {by}.</> Every month the best of its herds goes up the high road and does not come back.",
+        "<danger>{by} takes its due from {town}.</> The people here have learned to listen for wings."
+      ],
+      "moments": ["Herders drive a string of cattle out of the gate towards the hills, with their heads down.", "A child points at a cloud, and her mother pulls her arm down hard.", "The tithe-reeve chalks the count of the herds on a board by the gate."],
+      "description": ["It pays tribute to a dragon, and lives with one eye on the sky."]
+    },
+    "beast": {
+      "form": "record", "label": "beset by a beast", "colour": "danger",
+      "troubles": [
+        "<danger>{by} has been at {town}.</> Doors are barred at dusk, and the dogs will not go out.",
+        "<danger>Something has killed near {town}{by_part}.</> Nobody walks the lanes alone, even at noon.",
+        "<danger>{town} is afraid{by_part}.</> Charms hang over every door, and the shepherds have brought the flocks in."
+      ],
+      "moments": ["A shepherd shows a torn fleece to anyone who will look.", "Someone has hung a bundle of hawthorn over the gate.", "Children play at hunting the beast, and the smallest has to be it."],
+      "description": ["A beast has been killing near it, and its doors are barred at dusk."]
+    },
+    "festival": {
+      "form": "record", "label": "celebrating", "colour": "good", "lasts": [3, 7],
+      "troubles": [
+        "<good>{town} is celebrating.</> Garlands hang across the streets, and there is music in the square.",
+        "<good>It is a feast day in {town}.</> Stalls crowd the square, and nobody is working who can help it.",
+        "<good>{town} is in its best.</> Banners hang from the windows, and the inns are full to the doors."
+      ],
+      "moments": ["A fiddler plays for a ring of dancers who keep losing the step.", "Children run under the garlands with ribbons in their hair.", "A whole sheep turns on a spit in the square, and a crowd stands round it."],
+      "description": ["It is decked for a feast, garlands across its streets."]
+    },
+    "memorial": {
+      "form": "record", "label": "remembering", "colour": "dim",
+      "troubles": [
+        "<dim>In the square of {town} stands a new memorial.</> Flowers are left at its foot.",
+        "<dim>{town} remembers what happened here.</> A stone in the square names the dead.",
+        "<dim>There is a memorial in {town} now.</> People touch it as they pass, without thinking."
+      ],
+      "moments": ["An old man stops at the memorial stone and takes off his hat.", "Someone has left fresh flowers at the foot of the memorial.", "A child traces the names cut in the memorial with one finger."],
+      "description": ["A memorial in its square names those it lost."]
+    }
+  }
+}

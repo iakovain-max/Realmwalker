@@ -42,13 +42,14 @@ def settlement_line(game: GameState, s) -> str:
     line += holder_line(game, s)
     p = getattr(game, "player", None)  # (the character creation screen shows these lines too)
     if p is not None and abs(s.x - p.x) + abs(s.y - p.y) <= 12:  # close enough to see the smoke
-        st = s.status
-        words = [w for key, w in (("siege", "<danger>under siege</>"), ("plague", "<danger>plague</>"),
-                                  ("sacked", "<danger>sacked</>"), ("burned", "<warn>burned</>"),
-                                  ("famine", "<warn>hungry</>"), ("raided", "<warn>raided</>"),
-                                  ("beast", "<danger>beset by a beast</>")) if st.get(key) is not None]
+        from realmwalker.world import marks
+
+        words = marks.label(game.tables, s)  # (what it is going through: world/marks.py)
         if words:
-            line += " " + ", ".join(words).capitalize() + "."
+            first = words[0]
+            at = first.index(">") + 1
+            words[0] = first[:at] + first[at:at + 1].upper() + first[at + 1:]
+            line += " " + ", ".join(words) + "."
     return line
 
 

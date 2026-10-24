@@ -24,7 +24,11 @@ def town_description(game, settlement, rng: RNG) -> str:
     values = {"name": settlement.name, "kind": KIND_WORDS.get(settlement.kind, settlement.kind),
               "land": land, "land_in": "on the coast" if land == "coast" else f"in the {land}",
               "season": game.moment.season}
-    return textgen.tidy(textgen.fill(rng.choice(tables["passage"]), rng, tables, values))
+    text = textgen.tidy(textgen.fill(rng.choice(tables["passage"]), rng, tables, values))
+    from realmwalker.world import marks
+
+    marked = marks.words(game.world, game.tables, settlement, "description", rng)  # (what it is going through now)
+    return text + (" " + " ".join(marked) if marked else "")
 
 
 def inn_name(game, rng: RNG) -> str:

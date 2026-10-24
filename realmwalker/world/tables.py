@@ -134,4 +134,5 @@ class Tables:
         self.villains = data["villains.json"]
         self.beats = {k: v for k, v in data["beats.json"]["beats"].items() if not k.startswith("_")}
         self.scenes = {k: v for k, v in data["scenes.json"]["scenes"].items() if not k.startswith("_")}
+        self.marks = {k: v for k, v in data["marks.json"]["marks"].items() if not k.startswith("_")}  # (world/marks.py)
         self.travel_events = {k: v for k, v in data["travel_events.json"]["events"].items() if not k.startswith("_")}
