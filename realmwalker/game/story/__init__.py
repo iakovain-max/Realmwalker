@@ -739,6 +739,10 @@ def map_marks(game) -> list[tuple[int, int]]:
             for r in st["target"].get("routes", []):
                 if r.get("at"):
                     out.append(places.xy(game.world, r["at"]))
+    now = game.world.time / 1440.0
+    for t in game.world.politics.get("director", {}).get("tracks", []):  # (tracks followed off a map: B.6)
+        if now - float(t["day"]) <= 1.0:
+            out.append((int(t["x"]), int(t["y"])))
     return out
 
 

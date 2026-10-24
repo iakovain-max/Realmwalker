@@ -506,12 +506,19 @@ class LocalView:
             if not (x0 <= x < x1 and y0 <= y < y1) or not lm.seen[x, y]:
                 continue
             a = remains.blood_alpha(now, rec)
-            fam = atlas.family("decal/pool" if rec[0] == "pool" else "decal/blood")
-            if a <= 0 or not fam:
+            if a <= 0:
                 continue
             lit = _cell_light(light, x - x0, y - y0)
             col = tuple(int(255 * min(1.0, c)) for c in lit)
             px_, py_ = self.cell_px(x, y)
+            if rec[0] == "tracks":  # (prints pointing the way they went)
+                out.append(Image("tracks", _tracks_image, (px_ + T * 0.15, py_ + T * 0.15, T * 0.7, T * 0.7),
+                                 rgba=(int(col[0] * 0.3), int(col[1] * 0.25), int(col[2] * 0.2), int(200 * a)),
+                                 angle=45.0 * int(rec[2])))
+                continue
+            fam = atlas.family("decal/pool" if rec[0] == "pool" else "decal/blood")
+            if not fam:
+                continue
             out.append(Sprite(fam[int(rec[2]) % len(fam)], px_, py_, T, T, (*col, int(230 * (0.35 + 0.65 * a)))))
         return out
 
@@ -836,6 +843,19 @@ def item_sprite(atlas, tables, item) -> str | None:
                 "clothing": "_armor", "food": "_food", "drink": "_drink", "book": "_book", "trade": "_trade",
                 "jewellery": "_jewellery"}.get(cat, "_gear")
     return f"item/{fallback}"
+
+
+def _tracks_image():
+    """Two prints, side by side, the toes to the top (turned to the way they go)."""
+    from PIL import Image as PImage, ImageDraw
+
+    im = PImage.new("RGBA", (32, 32), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    for x0, y0 in ((7, 12), (18, 4)):
+        d.ellipse([x0, y0 + 4, x0 + 7, y0 + 16], fill=(255, 255, 255, 255))
+        for i in range(3):
+            d.ellipse([x0 + i * 2.5 - 0.5, y0, x0 + i * 2.5 + 2, y0 + 3], fill=(255, 255, 255, 255))
+    return im
 
 
 def _shadow_image():

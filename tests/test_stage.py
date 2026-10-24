@@ -294,3 +294,118 @@ def test_a_town_s_people_bring_a_tale_to_you(tables):
         townlife.tick(game, lm, town)
     pend = beats.pending(game)
     assert pend is not None and pend["beat"] == "story_hook" and pend["words"]["threat"] == t["id"]
+
+
+# ---------------------------------------------------------------------------- eavesdropping, tailing, tracks (B.6)
+def _two_talking(game, s):
+    lm = game.local
+    rec = stage.start(game, {"id": "talk", "cues": [
+        {"cue": "pick", "role": "a", "any": True, "within": 200},
+        {"cue": "pick", "role": "b", "any": True, "within": 200},
+        {"cue": "walk", "who": "a", "to": "square"},
+        {"cue": "walk", "who": "b", "to": "a"},
+        {"cue": "overhear", "a": "a", "b": "b", "matters": 1, "knows": "the_mill",
+         "words": ["Did you see him at the mill?", "At midnight. With a lantern.", "Say nothing."]}]}, force=True)
+    for _ in range(80):  # (they go to their spot and wait there, talking low, for someone to hear)
+        townlife.tick(game, lm, s)
+        if rec["i"] == 4:
+            break
+    return rec
+
+
+def test_a_talk_overheard_only_near_enough(tables, world):
+    game = new_game(copy.deepcopy(world), tables)
+    game.survival = False
+    townlife.forget()
+    s = go_to(game)
+    at_hour(game, 11)
+    townlife.settle(game, game.local)
+    lm = game.local
+    p = game.player
+    town = townlife.town_for(game, lm)
+    sq = town.square[len(town.square) // 2]
+    taken = {(n.x, n.y) for n in game.world.npcs.values() if n.present}
+    p.lx, p.ly = max((c for c in town.streets if c not in taken),
+                     key=lambda c: max(abs(c[0] - sq[0]), abs(c[1] - sq[1])))  # (you, far off down the streets)
+    rec = _two_talking(game, s)
+    a = game.world.npcs[rec["cast"]["a"]]
+    for _ in range(10):
+        townlife.tick(game, lm, s)
+    assert not rec.get("said") and not rec.get("known"), "too far: nothing heard"
+    walk = tables.terrain.walk[game.remap_for(lm)[lm.terrain]]
+    from realmwalker.game import vision
+
+    near = next((x, y) for x in range(a.x - 3, a.x + 4) for y in range(a.y - 3, a.y + 4)
+                if lm.in_bounds(x, y) and walk[x, y] and (x, y) != (a.x, a.y)
+                and all((n.x, n.y) != (x, y) for n in game.world.npcs.values() if n.present)
+                and vision.can_see(game, lm, (x, y), (a.x, a.y), 6))
+    p.lx, p.ly = near
+    for _ in range(12):
+        townlife.tick(game, lm, s)
+        if stage.current(game) is None:
+            break
+    assert "the_mill" in rec.get("known", []), "near: the line that matters is heard"
+
+
+def test_tailing_a_suspect(tables, world):
+    game = new_game(copy.deepcopy(world), tables)
+    game.survival = False
+    townlife.forget()
+    s = go_to(game)
+    at_hour(game, 11)
+    townlife.settle(game, game.local)
+    lm = game.local
+    scene = {"id": "tail", "cues": [{"cue": "pick", "role": "s", "any": True, "within": 8},
+                                    {"cue": "tail", "who": "s", "to": "gate", "seen": "run", "knows": "the_door"}]}
+    # Walking upright behind them, you are seen when they look back.
+    rec = stage.start(game, copy.deepcopy(scene), force=True)
+    for _ in range(60):
+        townlife.tick(game, lm, s)
+        if stage.current(game) is None:
+            break
+    assert rec.get("spotted") or rec.get("followed") or rec.get("lost")
+    if rec.get("spotted"):
+        assert "the_door" not in rec.get("known", [])
+    # Creeping well, you follow them all the way (you keep up, a step behind).
+    stage.end(game)
+    game.sneaking, game.sneak_roll = True, 40
+    s.__dict__  # (the same town)
+    import realmwalker.game.people as people_mod
+
+    town = people_mod.town_of(game.world, s.id)
+    town.flags.pop("scene_day", None)
+    rec = stage.start(game, copy.deepcopy(scene), force=True)
+    for _ in range(200):
+        townlife.tick(game, lm, s)
+        if stage.current(game) is None:
+            break
+        npc = game.world.npcs.get(rec["cast"].get("s"))
+        if npc is not None:  # (you keep two squares behind)
+            walk = tables.terrain.walk[game.remap_for(lm)[lm.terrain]]
+            spots = [(npc.x + dx, npc.y + dy) for dx in (-2, -1, 1, 2) for dy in (-2, -1, 1, 2)
+                     if lm.in_bounds(npc.x + dx, npc.y + dy) and walk[npc.x + dx, npc.y + dy]
+                     and all((n.x, n.y) != (npc.x + dx, npc.y + dy) for n in game.world.npcs.values() if n.present)]
+            if spots:
+                game.player.lx, game.player.ly = spots[0]
+    assert rec.get("followed") and "the_door" in rec.get("known", []), rec
+
+
+def test_tracks_lead_off_the_map_and_on_across_the_land(tables, world):
+    from realmwalker.game import remains, story
+
+    game = new_game(copy.deepcopy(world), tables)
+    game.survival = False
+    townlife.forget()
+    go_to(game)
+    lm = game.local
+    p = game.player
+    path = remains.lay_tracks(game, lm, (p.lx, p.ly))
+    assert path and (path[-1][0] in (0, lm.width - 1) or path[-1][1] in (0, lm.height - 1)), "to the map's edge"
+    assert all(lm.meta["decals"][f"{x},{y}"][0] == "tracks" for x, y in path)
+    p.lx, p.ly = path[-1]
+    game.leave_local()
+    tile = tuple(lm.meta["tracks_to"]["tile"])
+    assert tile in story.map_marks(game), "the next square of the land is marked"
+    game.world.time += 1440 * 2
+    remains.tick(game, lm)
+    assert not any(rec[0] == "tracks" for rec in lm.meta["decals"].values()), "in two days they are gone"

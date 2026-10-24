@@ -48,7 +48,7 @@ the expansion programme (the first entries below).
 
 ### Session, 2026-10-24 (late night): Adventures & Events Part B, first half — show, don't tell — branch `dlc/06-adventures-events` (not yet on main)
 
-Tasks B.1 to B.5 of Part B (the rest, B.6 to B.9, comes next; Part B goes to `main` with B.9).
+Tasks B.1 to B.6 of Part B (the rest, B.7 to B.9, comes next; Part B goes to `main` with B.9).
 
 **What is different when you play**
 - **Towns act out their stories.** When a town at a beast's door asks you to hunt it, you are no longer handed a box
@@ -77,6 +77,11 @@ Tasks B.1 to B.5 of Part B (the rest, B.6 to B.9, comes next; Part B goes to `ma
   turned on their side and darkened, with blood under them and on the squares where the blows landed; you stand where
   you stood when it ended. A day later the town has carried its dead away and dug a fresh grave for each of its own
   ("There are new graves"); out in the wild the dead lie two days and then are bones. Blood fades in three to six days.
+- **Listening and following (ready for the tales to use).** Two people can talk low in a street, and you hear their
+  words over their heads only if you are near enough to see them; someone can be followed through the streets, and
+  if you creep (z) well enough they never see you, while walking upright they look back and run (or turn on you).
+  Tracks can lead across a map to its edge, prints pointing the way, and following them off the map marks the next
+  square of the land. The Beast's tale will use these with B.9.
 
 **Choices made (Anton was away)**
 - Scenes play only on town maps for now (the actors are townsfolk); the camp's scenes (the carcass at dawn) come with

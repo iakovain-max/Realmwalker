@@ -233,7 +233,7 @@ the battle mat. ADVENTURES.md §5.17–5.19, §5.21 (signs), §8.11–8.14, §8.
   fight ended; the town carries its dead off after a day (a scene if you are there) and gives each of its own a fresh
   grave; in the wild, crows and then bones; the unused DCSS blood picked in `build_tiles.py`. Tests:
   `tests/test_remains.py` (a street fight's dead lie on the right squares; graves appear; the caps hold).
-- [ ] B.6 **Eavesdropping, tailing and tracks** (on B.1 and B.5's decals): the scenes `overhear` and `follow` (a
+- [x] B.6 **Eavesdropping, tailing and tracks** (on B.1 and B.5's decals): the scenes `overhear` and `follow` (a
   `look_back` DC against the party's Stealth, the law's sneaking rules), track decals to the map's edge and the next
   square lit on the world map.
 - [ ] B.7 **Fire** (`game/fire.py`; ADVENTURES.md §8.14): live fire as an overlay (`lm.meta["fire"]` =

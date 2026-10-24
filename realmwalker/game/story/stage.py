@@ -31,6 +31,7 @@ from realmwalker.core import textgen
 
 CUES: dict[str, object] = {}
 STALL = 40  # town ticks a cue may take before the scene goes on without it
+PATIENCE = {"overhear": 600, "tail": 400}  # (cues that wait for you longer: an hour, forty minutes)
 SAY_TICKS = 3  # a line stays over a head this many ticks before the next cue (a short while to read it)
 COOLDOWN_DAYS = 1  # a town's people stage something for you at most once a day
 BESIDE = ((0, 1), (1, 0), (-1, 0), (0, -1), (1, 1), (-1, 1), (1, -1), (-1, -1))
@@ -120,7 +121,7 @@ def tick(game, lm) -> None:
             return  # (the cue ended the scene)
         if not done:
             rec["t"] += 1
-            if rec["t"] < STALL:
+            if rec["t"] < int(c.get("patience", PATIENCE.get(c.get("cue"), STALL))):
                 return
             _give_up(game, lm, rec, c)
         rec["i"] += 1
@@ -399,7 +400,7 @@ def _arrive(game, lm, rec, c) -> bool:
 
 # ---------------------------------------------------------------------------- moving
 MOVES = ("walk", "run", "follow", "flee")
-SKIPPED = ()  # (cues that _finish never plays; none yet)
+SKIPPED = ("overhear", "tail")  # (cues that _finish never plays: skipped, they simply did not happen)
 
 
 def _arrive_now(game, lm, rec, npc, c) -> None:
@@ -776,3 +777,104 @@ def _fight(game, lm, rec, c) -> bool:
         for line in apply_outcome(game, {"fight": group}, game.world.rng.child(f"scene/fight/{rec['day']}")):
             game.say(line, "warn")
     return True
+
+
+# ---------------------------------------------------------------------------- eavesdropping and tailing (B.6)
+HEAR = 6  # squares within which a talk overheard is heard (and seen)
+TAIL_SEEN = 8  # a suspect looking back sees the party within this many squares
+TAIL_LOST = 14  # out of sight and this far: lost
+
+
+def _sees(game, lm, a, b, radius: int) -> bool:
+    from realmwalker.game import vision
+
+    return max(abs(a[0] - b[0]), abs(a[1] - b[1])) <= radius and vision.can_see(game, lm, a, b, radius)
+
+
+def _learn(game, rec: dict, knows: str | None) -> None:
+    """What was overheard or found by following is known: a flag on the scene's tale (beats' `flag`), and kept on
+    the scene's record."""
+    rec.setdefault("known", [])
+    if knows and knows not in rec["known"]:
+        rec["known"].append(knows)
+        adv = game.world.politics.get("adventures", {}).get(rec.get("adv") or (rec.get("then") or {}).get("adv"))
+        if adv is not None and knows not in adv.setdefault("flags", []):
+            adv["flags"].append(knows)
+
+
+@cue("overhear")
+def _overhear(game, lm, rec, c) -> bool:
+    """Two people (`a`, `b`) talk where you can hear them: each of the `key` lines (said in turn) is spoken only
+    while you stand within HEAR squares and can see them; hearing the line `matters` (its index) makes `knows` known.
+    It waits for you (`patience` ticks) and is over when every line is said."""
+    a, b = _actor(game, rec, c.get("a")), _actor(game, rec, c.get("b"))
+    lines = game.tables.scenes.get(rec["id"], {}).get("words", {}).get(c.get("key", ""), []) or c.get("words", [])
+    if a is None or b is None or not lines:
+        return True
+    i = int(rec.get("said", 0))
+    if i >= len(lines):
+        rec.pop("said", None)
+        return True
+    me = (game.player.lx, game.player.ly)
+    near = _sees(game, lm, me, (a.x, a.y), HEAR) or _sees(game, lm, me, (b.x, b.y), HEAR)
+    if not near or (rec["t"] - int(rec.get("said_t", -9))) < 2:
+        return False
+    from realmwalker.game import townlife
+
+    who = a if i % 2 == 0 else b
+    townlife.speak(game, lm, who, lines[i], townlife.BARK_TICKS)
+    if c.get("log", True):
+        game.say(f"<dim>{textgen.escape_markup(who.first_name)}, low:</> “{textgen.escape_markup(lines[i])}”", "speech")
+    if i == int(c.get("matters", len(lines) - 1)):
+        _learn(game, rec, c.get("knows"))
+    rec["said"] = i + 1
+    rec["said_t"] = rec["t"]
+    return False
+
+
+@cue("tail")
+def _tail(game, lm, rec, c) -> bool:
+    """A suspect (`who`) walks to `to`, looking back every few steps: while you are within TAIL_SEEN squares and in
+    their sight, their Perception (10, sharper close by, duller in the dark) against your Stealth when you creep (z) -
+    or you are simply seen. Seen: they run (`seen`: "run") or turn on you ("face": they speak to you). Lost (out of
+    sight and TAIL_LOST away): the scene fails. Followed to the end: `knows` is known."""
+    npc = _actor(game, rec, c.get("who"))
+    if npc is None:
+        return True
+    me = (game.player.lx, game.player.ly)
+    spot = _spot(game, lm, rec, c.get("to", "home"), npc)
+    if spot is None:
+        return True
+    if (npc.x, npc.y) == tuple(spot) or (rec["t"] > 4 and max(abs(npc.x - spot[0]), abs(npc.y - spot[1])) <= 1):
+        npc.flags.pop("errand", None)
+        if max(abs(me[0] - npc.x), abs(me[1] - npc.y)) <= TAIL_LOST:
+            _learn(game, rec, c.get("knows"))
+            rec["followed"] = True
+        else:
+            rec["failed"] = True
+        return True
+    sees = _sees(game, lm, (npc.x, npc.y), me, TAIL_SEEN)
+    if rec["t"] % 3 == 2 and sees:
+        dist = max(abs(npc.x - me[0]), abs(npc.y - me[1]))
+        sharp = 10 + (5 if dist <= 2 else 0) - (5 if game.light < 0.5 else 0)
+        seen = not getattr(game, "sneaking", False) or sharp >= int(getattr(game, "sneak_roll", 0))
+        if seen:
+            rec["spotted"] = True
+            from realmwalker.game import townlife
+
+            townlife.speak(game, lm, npc, _words(game, rec, {"key": c.get("seen_key", "seen")}, npc) or "Who's there?")
+            if c.get("seen") == "face":
+                npc.flags.pop("errand", None)
+                npc.flags["opener"] = _words(game, rec, {"key": c.get("face_key", "face")}, npc) or "Following me?"
+                game.talk_to = npc.id
+                return True
+            npc.flags["errand"] = {"to": [int(spot[0]), int(spot[1])], "pace": 2, "scene": rec["id"]}
+            rec["failed"] = True
+            return True
+    if not sees and max(abs(npc.x - me[0]), abs(npc.y - me[1])) > TAIL_LOST:
+        npc.flags.pop("errand", None)
+        rec["failed"] = True  # (lost them)
+        rec["lost"] = True
+        return True
+    npc.flags["errand"] = {"to": [int(spot[0]), int(spot[1])], "pace": 1, "scene": rec["id"]}
+    return False

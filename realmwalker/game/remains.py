@@ -89,9 +89,11 @@ def _caps(lm) -> None:
 
 
 def blood_alpha(day_now: float, rec) -> float:
-    """How strong a decal still shows (1 fresh, fading to 0)."""
+    """How strong a decal still shows (1 fresh, fading to 0): blood over days, tracks over a day."""
     kind, day, variant = rec
     age = day_now - float(day)
+    if kind == "tracks":
+        return max(0.0, 1.0 - age / TRACK_DAYS)
     life = BLOOD_DAYS[0] + (BLOOD_DAYS[1] - BLOOD_DAYS[0]) * (int(variant) % 4) / 3.0
     return max(0.0, 1.0 - age / life)
 
@@ -168,3 +170,65 @@ def _grave_spot(game, lm):
         if best is None or d < best[0]:
             best = (d, (x, y))
     return best[1] if best else None
+
+
+# ---------------------------------------------------------------------------- tracks (B.6)
+DIRS = ((0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1))  # (decal variant = the way they go)
+TRACK_DAYS = 1.0  # tracks last a day (rain takes them sooner: Part G)
+
+
+def lay_tracks(game, lm, start, toward: tuple[int, int] | None = None) -> list[tuple[int, int]]:
+    """Tracks from `start` to the map's edge (the edge nearest `toward`, or the nearest): a decal on every square of
+    the way, pointing the way they went; the world map's square beyond that edge is where they lead. Returns the way."""
+    import numpy as np
+    import tcod.path
+
+    T = game.tables.terrain
+    walk = T.walk[game.remap_for(lm)[lm.terrain]]
+    sx, sy = int(start[0]), int(start[1])
+    if toward is None:
+        cands = [(0, sy), (lm.width - 1, sy), (sx, 0), (sx, lm.height - 1)]
+        toward = min(cands, key=lambda c: abs(c[0] - sx) + abs(c[1] - sy))
+    edge = [(x, y) for x in range(lm.width) for y in (0, lm.height - 1)] + \
+        [(x, y) for x in (0, lm.width - 1) for y in range(1, lm.height - 1)]
+    edge = sorted((c for c in edge if walk[c]), key=lambda c: (c[0] - toward[0]) ** 2 + (c[1] - toward[1]) ** 2)
+    if not edge:
+        return []
+    astar = tcod.path.AStar(walk.astype(np.int16), diagonal=1.41)
+    path = [(int(x), int(y)) for x, y in astar.get_path(sx, sy, edge[0][0], edge[0][1])]
+    if not path:
+        return []
+    day = _days(game)
+    decals = lm.meta.setdefault("decals", {})
+    prev = (sx, sy)
+    for x, y in path:
+        d = (x - prev[0], y - prev[1])
+        variant = DIRS.index(d) if d in DIRS else 0
+        if decals.get(f"{x},{y}", [""])[0] not in ("blood", "pool"):
+            decals[f"{x},{y}"] = ["tracks", day, variant]
+        prev = (x, y)
+    ex, ey = path[-1]
+    dx = -1 if ex == 0 else (1 if ex == lm.width - 1 else 0)
+    dy = -1 if ey == 0 else (1 if ey == lm.height - 1 else 0)
+    wx, wy = (int(v) for v in lm.key.split("/")[0].split(","))
+    lm.meta["tracks_to"] = {"edge": [ex, ey], "tile": [wx + dx, wy + dy], "day": day}
+    _caps(lm)
+    return path
+
+
+def follow_off(game, lm) -> list[str]:
+    """Leaving a map where the tracks you were following end at its edge: the world map's next square lights up
+    (story.map_marks), for a day."""
+    t = (lm.meta or {}).get("tracks_to")
+    p = game.player
+    if not t or _days(game) - float(t["day"]) > TRACK_DAYS:
+        return []
+    ex, ey = t["edge"]
+    if max(abs(p.lx - ex), abs(p.ly - ey)) > 4:
+        return []
+    wx, wy = t["tile"]
+    if not game.world.in_bounds(wx, wy):
+        return []
+    led = game.world.politics.setdefault("director", {}).setdefault("tracks", [])
+    led[:] = [r for r in led if _days(game) - float(r["day"]) <= TRACK_DAYS] + [{"x": wx, "y": wy, "day": _days(game)}]
+    return ["<info>The tracks go on beyond, out into the land. You mark where.</>"]

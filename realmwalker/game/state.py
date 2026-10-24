@@ -1057,6 +1057,11 @@ class GameState:
         here = self.world.settlement_at(self.player.x, self.player.y)
         if here is not None:
             self.let_in = (here.id, self._night_of())  # the wardens have seen you go out: they will let you back in
+        if self.local is not None:
+            from realmwalker.game import remains
+
+            for line in remains.follow_off(self, self.local):  # (tracks followed to the map's edge: B.6)
+                self.say(line, "info")
         self.player.local_key = None
         self.sneaking = False
         self.say("You return to the road and the wider land.", "flavor")
