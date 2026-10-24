@@ -578,6 +578,8 @@ def test_the_story_s_screens_draw_and_answer_keys(pictured):
     render(app)  # (the game screen opens what waits)
     canvas = render(app)
     assert type(app.screens[-1]).__name__ == "EpilogueScreen" and "It was over." in canvas.words()
+    assert any(isinstance(c.key, tuple) and str(c.key[0]).startswith("vig_") for c in commands(canvas, Image)), \
+        "the page has its picture: the place as it now is (B.9)"
     app.handle_event(KeyEvent("enter"))
     render(app)
     app.handle_event(KeyEvent("1"))

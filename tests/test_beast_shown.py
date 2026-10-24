@@ -107,6 +107,24 @@ def test_the_hunter_sends_a_note_once_the_den_chapter_begins(made, tables):
     assert adv["ally_note"] is not None
 
 
+def test_the_epilogue_shows_the_places_as_they_now_are(made, tables):
+    from realmwalker.ui.gfx import vignette
+    from realmwalker.world import marks
+
+    game, adv = _tale(made, tables)
+    town = game.world.settlements[adv["places"]["town"]["settlement"]]
+    town.status.clear()
+    assert vignette.for_epilogue(game, adv, "place")["backdrop"] == "square"
+    marks.add(game.world, town, "memorial", 1.0, tables)
+    assert "feature/statue" in vignette.for_epilogue(game, adv, "place")["props"], "a statue in its square"
+    marks.add(game.world, town, "burned", 1.0, tables)
+    assert vignette.for_epilogue(game, adv, "place")["backdrop"] == "burned_street"
+    hero = vignette.for_epilogue(game, adv, "hero")
+    assert hero["backdrop"] == "road" and hero["figures"]
+    for about in ("patron", "ally", "witness", "innocent"):
+        assert vignette.for_epilogue(game, adv, about)["backdrop"] in vignette.BACKDROPS
+
+
 def test_the_carcass_lies_in_the_camps_picture(made, tables, monkeypatch):
     from realmwalker.game import camp
     from realmwalker.game.story import villain

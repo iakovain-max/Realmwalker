@@ -8,6 +8,7 @@ from realmwalker.ui.input import KeyEvent
 from realmwalker.ui.screens.base import Screen, modal_box
 from realmwalker.ui.widgets import Canvas
 
+PICTURE_ROWS = 9  # (a picture above each page: ui/gfx/vignette.for_epilogue)
 ABOUT = {"place": "The place", "patron": "The one who asked", "ally": "The one who helped", "witness": "The one who saw",
          "innocent": "The ones it would have taken", "hero": "You"}
 
@@ -74,10 +75,19 @@ class EpilogueScreen(Screen):
         iw = width - 6
         body = markup.wrap(markup.escape(page["text"]), iw)
         extra = len(self.offered) + 3 if self.last and self.offered else 0
-        x, y, w, h = modal_box(canvas, width, len(body) + extra + 9, self.adv["title"] if self.adv else self.title)
+        pic = PICTURE_ROWS if self.adv and canvas.height >= len(body) + extra + PICTURE_ROWS + 14 else 0
+        x, y, w, h = modal_box(canvas, width, len(body) + extra + 9 + (pic + 1 if pic else 0),
+                               self.adv["title"] if self.adv else self.title)
         canvas.markup(x + 3, y + 2, f"<title>{ABOUT.get(page['about'], 'What became of them')}</>  "
                                     f"<dim>{self.page + 1} of {len(self.pages)}</>", max_width=iw)
         row = y + 4
+        if pic:  # the place as it now is, the one the page tells of (B.9)
+            from realmwalker.ui.gfx import vignette
+
+            spec = vignette.for_epilogue(self.game, self.adv, page["about"])
+            vignette.compose(canvas, tuple(int(v) for v in canvas.cell_rect(x + 3, row, iw, pic)), spec, canvas.now,
+                             self.game)
+            row += pic + 1
         for line in body:
             canvas.spans(x + 3, row, line, max_width=iw)
             row += 1

@@ -370,3 +370,49 @@ def party_figures(game, most: int = 3) -> list:
     if game is None:
         return []
     return [dolls.character(c, game.tables) for c in game.party if c.alive][:most]
+
+
+SCARRED = ("burning", "burned", "sacked", "emptied")
+PERSON_BACKDROP = {"patron": "hall", "ally": "camp", "witness": "street"}
+
+
+def for_epilogue(game, adv: dict, about: str) -> dict:
+    """An epilogue page's picture (B.9): the place as it now is - burned, rebuilding, a statue in its square, decked
+    for a feast - the one the page tells of in their own place (a fresh grave if they are dead), and last, you on
+    the road."""
+    from realmwalker.game.story import cast
+
+    w = game.world
+    spec: dict = {"seed": int(str(adv.get("id", "A0"))[1:] or 0) * 7 + len(about), "time": "day"}
+    if about in ("place", "innocent"):
+        entry = adv["cast"].get("innocent") if about == "innocent" else None
+        sid = (entry or {}).get("settlement", (adv["places"].get("town") or {}).get("settlement"))
+        s = w.settlements[int(sid)] if sid is not None and 0 <= int(sid) < len(w.settlements) else None
+        st = s.status if s is not None else {}
+        scarred = any(m in st for m in SCARRED)
+        spec["backdrop"] = "burned_street" if scarred else "square"
+        props = []
+        if "memorial" in st:
+            props += ["feature/statue", "feature/grave_0"]
+        if "rebuilding" in st:
+            props.append("feature/scaffold_0")
+        if "festival" in st:
+            props += ["feature/banner_0", "feature/lantern_post"]
+        if props:
+            spec["props"] = props
+        if scarred:
+            spec["time"] = "dusk"
+        return spec
+    if about in PERSON_BACKDROP:
+        spec["backdrop"] = PERSON_BACKDROP[about]
+        if about == "ally":
+            spec["time"] = "dusk"
+        person = cast.person(w, adv["cast"].get(about))
+        if person is not None and hasattr(person, "job"):
+            if getattr(person, "alive", True):
+                spec["figures"] = [dolls.npc(person, game.tables)]
+            else:
+                spec["props"] = ["feature/grave_fresh_0"]
+        return spec
+    spec.update(backdrop="road", time="dusk", figures=party_figures(game, 3))
+    return spec
