@@ -437,6 +437,9 @@ def on_night(game, where: str) -> bool:
     return False
 
 
+LEFT = ("carcass",)  # what a beat may leave at your camp (beats.json `leaves`; drawn by ui/gfx/scenes.camp)
+
+
 def left_at_camp(game) -> str | None:
     """What the villain left at the camp you are in (a carcass), for the camp's picture; None once you move on."""
     from realmwalker.game.story import beats

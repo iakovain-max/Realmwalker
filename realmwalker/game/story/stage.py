@@ -747,7 +747,7 @@ def _talk(game, lm, rec, c) -> bool:
         return True
     words = _words(game, rec, c, npc)
     if words:
-        npc.flags["opener"] = words
+        npc.flags["opener"] = textgen.escape_markup(words)  # (names the world made)
     rec["hold"] = False
     game.talk_to = npc.id
     return True

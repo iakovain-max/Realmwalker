@@ -9,6 +9,7 @@ part is built.
 
 from __future__ import annotations
 
+from realmwalker.game.story import LEFT
 from realmwalker.game.story import beats as beatlang
 from realmwalker.game.story import endings, finale, selectors, steps
 from realmwalker.world import threats
@@ -131,6 +132,8 @@ def problems(tables) -> list[str]:
             if cond not in beatlang.CONDITIONS:
                 out.append(f"{where}: the condition '{cond}' is not one the game knows.")
         _ops(where, beat.get("ops"), beatlang.OPS, out, "op")
+        if beat.get("leaves") and beat["leaves"] not in LEFT:
+            out.append(f"{where}: it leaves '{beat['leaves']}', which the camp's picture cannot draw.")
         for i, ch in enumerate(beat.get("choices", [])):
             cw = f"{where}, choice {i + 1}"
             for part in ("ops", "success", "failure"):

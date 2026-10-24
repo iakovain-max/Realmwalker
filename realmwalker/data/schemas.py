@@ -1476,7 +1476,7 @@ BEAT = Obj({
     "weight": Int(min=0, max=100, optional=True),
     "title": List(Str(max_len=80), optional=True),
     "picture": Str(max_len=60, optional=True),
-    "leaves": Str(max_len=30, optional=True),  # what it leaves at your camp, in the camp's picture (scenes.LEFT)
+    "leaves": Str(max_len=30, optional=True),  # what it leaves at your camp, in the camp's picture (story.LEFT)
     "text": List(word_list(1, 600), min_items=1),  # pages, each a list of variants
     "choices": List(CHOICE, optional=True),
     "ops": ops_list(optional=True),  # what it does when it has no choices

@@ -79,7 +79,8 @@ def _camp(canvas, factions, s, x, y, size, a, tint, behind: bool, mark: str) -> 
     if mark == "siege":
         rec = s.status.get("siege")
         fid = rec.get("by") if isinstance(rec, dict) else None
-        colour = tuple(factions[fid].color) if isinstance(fid, int) and 0 <= fid < len(factions) else (160, 40, 36)
+        f = factions.get(fid) if isinstance(fid, int) else None  # (world.factions: id -> Faction)
+        colour = tuple(f.color) if f is not None else (160, 40, 36)
     else:
         colour = BESET_RGB
     tw = max(7.0, size * 0.34)
