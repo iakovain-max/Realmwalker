@@ -1559,8 +1559,15 @@ VILLAINS = Obj({
     "bosses": Map(BOSS),
     "weaknesses": Map(List(WEAKNESS, min_items=1)),  # by what the villain is (a creature type, or a creature id)
 })
+CUE = Obj({"cue": Str(max_len=20)}, strict=False)  # its other keys are its cue's own (story/stage.py CUES)
+SCENE = Obj({
+    "about": Str(max_len=300, optional=True),
+    "cues": List(CUE, min_items=1),
+    "words": Map(word_list(1, 300), optional=True),  # lines for its cues' `key`
+})
+SCENES = Obj({"scenes": Map(SCENE)})
 DATA_FILES.update({"threats.json": THREATS, "adventures.json": ADVENTURES, "villains.json": VILLAINS,
-                   "beats.json": BEATS})
+                   "beats.json": BEATS, "scenes.json": SCENES})
 PACK_ONLY.update({"threats.json": {"kinds": {}}, "adventures.json": {"blueprints": {}},
                   "villains.json": {"tempers": {}, "moves": {}, "bosses": {}, "weaknesses": {}},
-                  "beats.json": {"beats": {}}})
+                  "beats.json": {"beats": {}}, "scenes.json": {"scenes": {}}})

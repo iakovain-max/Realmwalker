@@ -70,6 +70,8 @@ class _Town:
         self.near_home: dict[int, list[tuple[int, int]]] = {}  # npc id -> the streets round their home (children)
         self.brawl: dict | None = None  # {"spot", "a", "b", "until", "told"}: a fight in the street
         self.route: list[tuple[int, int]] | None = None  # the procession's way round the square
+        self.gathering: dict | None = None  # the town's gathering this tick (Town.flags["gathering"])
+        self.rings: dict = {}  # (spot, radius) -> the squares round a gathering (the stage's crowds)
         s = settlement_of(game, lm)
         streets = outdoor_cells(game, lm, settlement=s) if s is not None else []
         self.streets = [c for c in streets if self.walk[c]] or [tuple(lm.entry)]
@@ -104,6 +106,17 @@ def _town(game, lm) -> _Town:
 def forget() -> None:
     """Drop what is known of the towns' ways (a new game, a loaded save)."""
     _towns.clear()
+
+
+def town_for(game, lm) -> _Town:
+    """What walking knows of this town's map (the stage reads where one can stand, the square)."""
+    return _town(game, lm)
+
+
+def forget_person(npc_id: int) -> None:
+    """Drop the way someone was walking (the stage has put them somewhere else)."""
+    for t in _towns.values():
+        t.paths.pop(npc_id, None)
 
 
 def _h(*parts: int) -> int:
@@ -166,8 +179,16 @@ def asleep(game, npc) -> bool:
 
 
 def goal(game, lm, npc, town: _Town | None = None) -> tuple[int, int]:
-    """The square this person is making for at this hour."""
+    """The square this person is making for at this hour (a scene's errand first: game/story/stage.py)."""
     town = town or _town(game, lm)
+    errand = npc.flags.get("errand")
+    if errand is not None:
+        return int(errand["to"][0]), int(errand["to"][1])
+    gathering = town.gathering
+    if gathering is not None and npc.id in gathering["ids"]:
+        cells = _ring(town, gathering)
+        if cells:
+            return cells[gathering["ids"].index(npc.id) % len(cells)]
     brawl = town.brawl
     if brawl is not None:
         if npc.id in (brawl["a"], brawl["b"]):
@@ -211,6 +232,59 @@ def _near(npc, spot, d: int) -> bool:
     return max(abs(npc.x - spot[0]), abs(npc.y - spot[1])) <= d
 
 
+def _ring(town: _Town, g: dict) -> list[tuple[int, int]]:
+    """The free-standing squares round a gathering's spot, nearest first (its people stand in rings)."""
+    spot, r = (int(g["spot"][0]), int(g["spot"][1])), int(g.get("radius", 2))
+    key = (spot, r)
+    cells = town.rings.get(key)
+    if cells is None:
+        w, h = town.stand.shape
+        cells = [(x, y) for x in range(max(0, spot[0] - r - 2), min(w, spot[0] + r + 3))
+                 for y in range(max(0, spot[1] - r - 2), min(h, spot[1] + r + 3))
+                 if town.stand[x, y] and 1 <= max(abs(x - spot[0]), abs(y - spot[1])) <= r + 2]
+        cells.sort(key=lambda c: (max(abs(c[0] - spot[0]), abs(c[1] - spot[1])) < r,
+                                  max(abs(c[0] - spot[0]), abs(c[1] - spot[1])), c))
+        if len(town.rings) > 16:
+            town.rings.clear()
+        town.rings[key] = cells
+    return cells
+
+
+def _flags(game, s) -> dict:
+    from realmwalker.game.people import town_of
+
+    return town_of(game.world, s.id).flags
+
+
+def gather_now(game, lm, g: dict) -> None:
+    """A gathering's people are simply there (Animations off, or time jumped)."""
+    from realmwalker.game.people import settlement_of
+
+    s = settlement_of(game, lm)
+    if s is None:
+        return
+    town = _town(game, lm)
+    town.gathering = g
+    people = _people(game, s)
+    ids = set(g["ids"])
+    taken = {_you(game, lm)} | {(a.x, a.y) for a in lm.actors} | {(n.x, n.y) for n in people if n.id not in ids}
+    for npc in people:
+        if npc.id in ids:
+            spot = _free_near(town, goal(game, lm, npc, town), taken)
+            if spot is not None:
+                npc.x, npc.y = spot
+            taken.add((npc.x, npc.y))
+            town.paths.pop(npc.id, None)
+
+
+def speak(game, lm, npc, words: str, ticks: int = BARK_TICKS) -> None:
+    """Words over someone's head that belong to a story (the stage): shown whatever the Text detail setting, for they
+    are not flavour; drawn like words in passing."""
+    town = _town(game, lm)
+    town.barks[npc.id] = (words, town.ticks + max(1, int(ticks)))
+    town.barked[npc.id] = town.ticks
+
+
 def _route(town: _Town, lm) -> list[tuple[int, int]]:
     """The procession's way: from the temple's door round the corners of the square and back."""
     if town.route is None:
@@ -243,8 +317,12 @@ def settle(game, lm) -> None:
     s = settlement_of(game, lm)
     if s is None:
         return
+    from realmwalker.game.story import stage
+
+    stage.settle(game, lm)  # (a scene being played is simply over)
     town = _town(game, lm)
     town.paths.clear()
+    town.gathering = _flags(game, s).get("gathering")
     taken = {_you(game, lm)} | {(a.x, a.y) for a in lm.actors}
     for npc in sorted(_people(game, s), key=lambda n: n.id):
         spot = _free_near(town, goal(game, lm, npc, town), taken)
@@ -268,6 +346,7 @@ def place_new(game, lm) -> None:
     if not new:
         return
     town = _town(game, lm)
+    town.gathering = _flags(game, s).get("gathering")
     taken = {_you(game, lm)} | {(a.x, a.y) for a in lm.actors} | \
         {(n.x, n.y) for n in people if n.flags.get("placed")}
     for npc in new:
@@ -322,9 +401,16 @@ def catch_up(game, lm) -> None:
 
 
 def tick(game, lm, s) -> None:
-    """One step of time: everyone takes a step towards where they are going."""
+    """One step of time: a scene's cue first (game/story/stage.py), then everyone takes a step towards where they are
+    going (a runner on a scene's errand, two)."""
+    if game.local is lm:
+        from realmwalker.game.story import stage
+
+        stage.tick(game, lm)
     town = _town(game, lm)
     town.ticks += 1
+    flags = _flags(game, s)
+    town.gathering = flags.get("gathering")
     people = _people(game, s)
     if not people:
         return
@@ -332,53 +418,77 @@ def tick(game, lm, s) -> None:
     occupied = {(n.x, n.y): n for n in people}
     for a in lm.actors:
         occupied.setdefault((a.x, a.y), None)
-    budget = PATHS_PER_TICK
+    budget = [PATHS_PER_TICK]
     start = town.ticks % len(people)  # who goes first goes round, so nobody is always last
     for npc in people[start:] + people[:start]:
-        here = (npc.x, npc.y)
-        g = goal(game, lm, npc, town)
-        if here == g:
-            npc.flags.pop("waited", None)
-            continue
-        if max(abs(here[0] - g[0]), abs(here[1] - g[1])) <= 1 and (g in occupied or g == me):
-            continue  # beside the spot, and somebody is on it: near enough
-        kept = town.paths.get(npc.id)
-        if kept is None or kept[0] != g or not kept[1] or max(abs(kept[1][0][0] - here[0]),
-                                                               abs(kept[1][0][1] - here[1])) != 1:
-            if budget <= 0:
-                continue
-            budget -= 1
-            cells = town.path(here, g)
-            if not cells:
-                continue
-            kept = town.paths[npc.id] = (g, cells)
-        nxt = kept[1][0]
-        if nxt == me:  # you are in the way: wait, then go round you
-            if _waited(npc) > 2:
-                _side_step(town, npc, g, occupied, me)
-            continue
-        if nxt in occupied:
-            other = occupied[nxt]
-            if other is None:  # a beast in the street
-                _side_step(town, npc, g, occupied, me)
-                continue
-            coming = town.paths.get(other.id)
-            head_on = coming is not None and coming[1] and coming[1][0] == here
-            idle = asleep(game, other) or (other.x, other.y) == goal(game, lm, other, town)
-            waited = _waited(npc)
-            if head_on or (idle and waited > 1):
-                _swap(town, npc, other, occupied)  # two in a narrow way pass each other; one standing lets you by
-            elif not _side_step(town, npc, g, occupied, me) and waited > 8:
-                _swap(town, npc, other, occupied)  # (a queue that will not move: push through at last)
-            continue
-        _move(town, npc, nxt, occupied)
-        kept[1].pop(0)
-        npc.flags.pop("waited", None)
+        _step(game, lm, town, npc, occupied, me, budget)
+        errand = npc.flags.get("errand")
+        if errand is not None and int(errand.get("pace", 1)) > 1:
+            _step(game, lm, town, npc, occupied, me, budget)
     for npc in people:  # whoever passes through a door leaves it open behind them
         _door(game, lm, npc)
     if game.local is lm:
+        _murmur(game, lm, town, people)
         _brawl(game, lm, town, people)
         _call_out(game, lm, town, people)
+
+
+def _step(game, lm, town: _Town, npc, occupied, me, budget: list[int]) -> None:
+    """One person's step towards where they are going: round others, swapping in narrow ways, never onto you."""
+    here = (npc.x, npc.y)
+    g = goal(game, lm, npc, town)
+    if here == g:
+        npc.flags.pop("waited", None)
+        return
+    if max(abs(here[0] - g[0]), abs(here[1] - g[1])) <= 1 and (g in occupied or g == me):
+        return  # beside the spot, and somebody is on it: near enough
+    kept = town.paths.get(npc.id)
+    if kept is None or kept[0] != g or not kept[1] or max(abs(kept[1][0][0] - here[0]),
+                                                           abs(kept[1][0][1] - here[1])) != 1:
+        if budget[0] <= 0 and "errand" not in npc.flags:  # (a scene's actor never waits for a way)
+            return
+        budget[0] -= 1
+        cells = town.path(here, g)
+        if not cells:
+            return
+        kept = town.paths[npc.id] = (g, cells)
+    nxt = kept[1][0]
+    if nxt == me:  # you are in the way: wait, then go round you
+        if _waited(npc) > 2:
+            _side_step(town, npc, g, occupied, me)
+        return
+    if nxt in occupied:
+        other = occupied[nxt]
+        if other is None:  # a beast in the street
+            _side_step(town, npc, g, occupied, me)
+            return
+        coming = town.paths.get(other.id)
+        head_on = coming is not None and coming[1] and coming[1][0] == here
+        idle = asleep(game, other) or (other.x, other.y) == goal(game, lm, other, town)
+        waited = _waited(npc)
+        if head_on or (idle and waited > 1) or ("errand" in npc.flags and "errand" not in other.flags and waited > 1):
+            _swap(town, npc, other, occupied)  # two in a narrow way pass each other; one standing lets you by (and
+            # everyone lets a runner through)
+        elif not _side_step(town, npc, g, occupied, me) and waited > 8:
+            _swap(town, npc, other, occupied)  # (a queue that will not move: push through at last)
+        return
+    _move(town, npc, nxt, occupied)
+    kept[1].pop(0)
+    npc.flags.pop("waited", None)
+
+
+def _murmur(game, lm, town: _Town, people) -> None:
+    """A gathering murmurs: now and then one of those standing round says a line of it (a story's words, shown
+    whatever the Text detail)."""
+    g = town.gathering
+    if not g or not g.get("murmur") or _h(town.ticks, 17) % 3:
+        return
+    far = int(g.get("radius", 2)) + 2
+    near = [n for n in people if n.id in g["ids"] and n.id not in town.barks and _near(n, g["spot"], far)]
+    if near:
+        npc = near[_h(town.ticks, len(near), 18) % len(near)]
+        lines = g["murmur"]
+        speak(game, lm, npc, lines[_h(npc.id, town.ticks, 19) % len(lines)])
 
 
 def _waited(npc) -> int:

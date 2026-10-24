@@ -1,8 +1,9 @@
 {
-  "_comment": "Expansion 6: the story's sounds, made by tools/build_sounds.py (made_sounds: chapter, reveal, sign).",
+  "_comment": "Expansion 6: the story's sounds, made by tools/build_sounds.py (made_sounds: chapter, reveal, sign, bell).",
   "sounds": {
     "chapter": {"files": ["chapter_1.wav"], "group": "interface", "volume": 0.75, "pitch": 0.0, "priority": 3, "about": "A tale begins, or a chapter of it (its title card)"},
     "reveal": {"files": ["reveal_1.wav"], "group": "effects", "volume": 0.7, "pitch": 0.0, "cooldown": 2.0, "priority": 4, "about": "A chapter ends with what it revealed"},
-    "sign": {"files": ["sign_1.wav"], "group": "effects", "volume": 0.6, "pitch": 0.02, "cooldown": 5.0, "priority": 4, "about": "A threat's sign is heard"}
+    "sign": {"files": ["sign_1.wav"], "group": "effects", "volume": 0.6, "pitch": 0.02, "cooldown": 5.0, "priority": 4, "about": "A threat's sign is heard"},
+    "bell": {"files": ["bell_1.wav"], "group": "effects", "volume": 0.65, "pitch": 0.0, "cooldown": 4.0, "priority": 4, "about": "A town's bell rung in a scene (the stage)"}
   }
 }

@@ -396,7 +396,23 @@ def made_sounds(folder: Path) -> dict[str, list[np.ndarray]]:
     sign[: len(far)] += far
     sign[: len(uneasy)] += uneasy
     out["sign"] = [room(fft_filter(sign, RATE, lp=3500), srng, wet=0.3, seconds=0.6)]
+    out["bell"] = [town_bell()]
     return out
+
+
+def town_bell() -> np.ndarray:
+    """A town's bell rung for a scene (Expansion 6 B.1): three strokes of a big bronze bell, its hum ringing on under
+    the next, from its own seed so the sounds above stay as they were."""
+    brng = np.random.default_rng(607)
+    partials = [(note("G3"), 0.0), (note("G4"), 0.0), (note("A#4") * 1.01, 0.0), (note("D5"), 0.0)]
+    stroke = chime(partials, 1.1)
+    clang = fft_filter(drum(0.25, 80, 160), RATE, lp=900) * 0.3
+    stroke[: len(clang)] += clang
+    bell = np.zeros(int(0.45 * RATE * 2) + len(stroke))
+    for i in range(3):
+        at = int(0.45 * RATE * i)
+        bell[at:at + len(stroke)] += stroke * (1.0 - 0.12 * i)
+    return room(fft_filter(bell, RATE, hp=90, lp=5000), brng, wet=0.3, seconds=0.35)
 
 
 # ---------------------------------------------------------------------------- music

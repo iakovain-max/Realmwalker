@@ -287,6 +287,9 @@ def load_game(folder: Path, tables: Tables) -> GameState:
     game.fallen = revival.from_save(extra.get("fallen", []))
 
     pack.sync(game)  # companions join the leader's pack again
+    from realmwalker.game.story import stage
+
+    stage.on_load(game)  # (a scene saved in its middle is played to its end)
     return game
 
 

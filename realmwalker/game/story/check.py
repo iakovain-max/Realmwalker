@@ -161,4 +161,29 @@ def problems(tables) -> list[str]:
         for w in lst:
             for key in w["keys"]:
                 _key(f"villains.json: weakness {kind}/{w['id']}", key, out)
+    out.extend(scene_problems(tables))
+    return out
+
+
+def scene_problems(tables) -> list[str]:
+    """Every scene's cues are ones the stage knows, every `key` has its words, every beat it opens exists."""
+    from realmwalker.game.story import stage
+
+    out = []
+    for sid, scene in getattr(tables, "scenes", {}).items():
+        roles = {"you"}
+        for i, c in enumerate(scene["cues"]):
+            where = f"scenes.json: {sid}, cue {i + 1}"
+            if c["cue"] not in stage.CUES:
+                out.append(f"{where}: the cue '{c['cue']}' is not one the stage knows.")
+            if c.get("key") and c["key"] not in scene.get("words", {}):
+                out.append(f"{where}: there are no words called '{c['key']}'.")
+            if c["cue"] == "beat" and c.get("id") and c["id"] not in tables.beats:
+                out.append(f"{where}: there is no beat called '{c['id']}'.")
+            if c.get("role"):
+                roles.add(c["role"])
+            for k in ("who", "to", "at", "near"):
+                v = c.get(k)
+                if isinstance(v, str) and v not in roles and v not in ("home", "gate", "away", "square"):
+                    out.append(f"{where}: '{v}' is not cast before this cue.")
     return out

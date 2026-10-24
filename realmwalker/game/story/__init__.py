@@ -23,7 +23,7 @@ from realmwalker.core.textgen import escape_markup as esc
 # The modules whose handlers fill the registries story/check.py reads (step kinds, selectors, ops, keys).
 HANDLER_MODULES = ("realmwalker.world.threats", "realmwalker.game.story.selectors", "realmwalker.game.story.cast",
                    "realmwalker.game.story.steps", "realmwalker.game.story.beats", "realmwalker.game.story.endings",
-                   "realmwalker.game.story.finale")
+                   "realmwalker.game.story.finale", "realmwalker.game.story.stage")
 STORY_CHOICES = {"story_witness", "story_learn", "story_patron", "story_hook"}
 
 
@@ -585,7 +585,20 @@ def offer_hook(game, t: dict, town=None) -> None:
     words = hook_words(game, t, town)
     words["hook"] = hook_line(game, t, town)
     words["threat"] = t["id"]
-    beats.offer(game, "story_hook", where=_where(game), words=words)
+    then = {"beat": "story_hook", "where": _where(game), "words": words}
+    if town is not None and _on_its_map(game, town):  # (show, don't tell: someone of the town comes to you with it)
+        from realmwalker.game.story import stage
+
+        scene = ("runner", "plea")[int(game.moment.total_days + town.id) % 2]
+        if stage.start(game, scene, words={"town": words.get("town", town.name)}, then=then) is not None:
+            return
+    beats.offer(game, "story_hook", where=then["where"], words=words)
+
+
+def _on_its_map(game, town) -> bool:
+    lm = game.local
+    return bool(game.in_local and lm is not None and lm.kind == "settlement"
+                and game.world.settlement_at(game.player.x, game.player.y) is town)
 
 
 def take_hook(game, tid: str) -> list[str]:

@@ -17,6 +17,8 @@ from realmwalker.ui.gfx import dolls
 from realmwalker.ui.gfx.scene import Batch, Image, Rect, Text
 
 STEP_SECONDS = 0.13  # how long a step takes to glide
+FOCUS_SECONDS = 3.0  # a scene's camera focus lasts at most this long (game/story/stage.py)
+HAND_SECONDS = 0.5  # a thing handed over in a scene is drawn going from one to the other this long
 NIGHT = np.array([0.20, 0.24, 0.42], np.float32)
 DAY = np.array([1.0, 1.0, 1.0], np.float32)
 DUSK = np.array([1.0, 0.78, 0.62], np.float32)
@@ -207,6 +209,8 @@ class LocalView:
         self.origin = (0.0, 0.0)  # pixel of the top left of square (0, 0)
         self.tile = 32
         self.rect = (0, 0, 0, 0)
+        self.focus: tuple[int, float] | None = None  # a scene's camera focus: (its number, when it began)
+        self.fx_seen: dict[int, float] = {}  # a scene's things changing hands: number -> when first drawn
 
     # ------------------------------------------------------------------ helpers
     def art_for(self, game, lm, atlas) -> LocalArt:
@@ -264,6 +268,12 @@ class LocalView:
         # The camera glides after you.
         ppos = self.pos("player", p.lx, p.ly, now, animate)
         target = (ppos[0] + 0.5, ppos[1] + 0.5)
+        cam = getattr(game, "camera", None)
+        if cam and animate:  # a scene eases the camera to a spot, for three seconds at most (game/story/stage.py)
+            if self.focus is None or self.focus[0] != cam["n"]:
+                self.focus = (cam["n"], now)
+            if now - self.focus[1] < FOCUS_SECONDS:
+                target = (cam["to"][0] + 0.5, cam["to"][1] + 0.5)
         key = (lm.key, T)
         dt = max(0.0, now - self.last_t)
         self.last_t = now
@@ -387,8 +397,14 @@ class LocalView:
                 nx, ny = self.pos(("npc", npc.id), npc.x, npc.y, now, animate)
                 small = T * 0.74 if npc.age < 14 else T  # children come up to your chest
                 px_, py_ = self.cell_px(nx, ny)
-                people.append((ny, dolls.npc(npc, game.tables, atlas), px_ + (T - small) / 2, py_, small,
-                               _cell_light(light, npc.x - x0, npc.y - y0), False))
+                col = _cell_light(light, npc.x - x0, npc.y - y0)
+                pose = npc.flags.get("pose")
+                if pose == "kneel":  # (lowered by a quarter of their height: a scene)
+                    py_ += small * 0.25
+                elif pose == "down":
+                    py_ += small * 0.4
+                    col = tuple(v * 0.6 for v in col)
+                people.append((ny, dolls.npc(npc, game.tables, atlas), px_ + (T - small) / 2, py_, small, col, False))
                 if npc.id in said:
                     words.append((*self.cell_px(nx, ny), said[npc.id]))
         lit = bool(game.lit and game.lit.get("hours", 0) > 0) if getattr(game, "lit", None) else False
@@ -467,11 +483,36 @@ class LocalView:
             cmd = dolls.draw(atlas, names, px_, py_ + (T - size), size, col)
             if cmd is not None:
                 out.append(cmd)
+        out.extend(self._handed(game, atlas, now, animate))
         size = max(11, int(T * 0.38))
         for wx, wy, text in words:  # what people say in passing, over their heads
             out.append(Text(wx + T / 2, wy - T * 0.08, text, "prose_bold", size, (250, 240, 214, 255), anchor="mb",
                             shadow=False, outline=True))
         canvas.under(*out)
+
+    def _handed(self, game, atlas, now: float, animate: bool) -> list:
+        """A thing changing hands in a scene: its picture goes from one figure to the other (half a second)."""
+        fx = getattr(game, "stage_fx", None)
+        if not fx or not animate:
+            return []
+        out = []
+        T = self.tile
+        for e in fx:
+            t0 = self.fx_seen.setdefault(e["n"], now)
+            t = (now - t0) / HAND_SECONDS
+            if t > 1.0:
+                continue
+            t = t * t * (3 - 2 * t)
+            x = e["a"][0] + (e["b"][0] - e["a"][0]) * t
+            y = e["a"][1] + (e["b"][1] - e["a"][1]) * t - math.sin(t * math.pi) * 0.4
+            from types import SimpleNamespace
+
+            name = item_sprite(atlas, game.tables, SimpleNamespace(def_id=e["item"]))
+            px_, py_ = self.cell_px(x, y)
+            out.extend(_sprites(atlas, [(name, px_ + T * 0.25, py_ + T * 0.1, T * 0.5, (1.0, 1.0, 1.0))]))
+        if len(self.fx_seen) > 32:
+            self.fx_seen = {k: v for k, v in self.fx_seen.items() if now - v < 5}
+        return out
 
     def _follow(self, game, lm, taken: set) -> list[tuple[int, int]]:
         """Where companions stand: the squares you were last on, then the free squares beside you."""

@@ -1,0 +1,41 @@
+{
+  "_comment": "Scenes (docs/ADVENTURES.md §5.18, §8.11; game/story/stage.py): choreography played on a town's map by its own people. cues: the whitelist in stage.CUES (pick, arrive, walk, run, follow, flee, say, shout, give, take, kneel, rise, fall, die, crowd, disperse, door, bell, focus, wait, hold, release, talk, beat, fight), each with its own keys (who, role, to, at, words or key, ticks, always...). words: lines for a cue's key. A pick that finds nobody sends the scene to its end, where only cues marked always still play.",
+  "scenes": {
+    "runner": {
+      "about": "A child or a serving hand runs up to you through the street with word from people who need you; the tale's hook opens when they reach you.",
+      "cues": [
+        {"cue": "pick", "role": "runner", "jobs": ["child", "serving_hand", "porter", "labourer"], "within": 40},
+        {"cue": "hold"},
+        {"cue": "shout", "who": "runner", "key": "call", "ticks": 1},
+        {"cue": "focus", "at": "runner"},
+        {"cue": "run", "who": "runner", "to": "you"},
+        {"cue": "say", "who": "runner", "key": "breath", "ticks": 3},
+        {"cue": "say", "who": "runner", "key": "plea", "ticks": 3},
+        {"cue": "beat", "always": true},
+        {"cue": "walk", "who": "runner", "to": "home"}
+      ],
+      "words": {
+        "call": ["Wait! Please, wait!", "You there! Stranger!", "Hey! Hold on!", "Wait for me!", "You - the one with the sword!"],
+        "breath": ["They said you'd come in by this gate.", "I ran the whole way. Sorry.", "I saw you from the end of the street.", "Nobody else would come and find you.", "Please - just listen."],
+        "plea": ["They sent me. They need someone who can fight.", "My mam says you're the kind who helps.", "The elders want a word. It's about the trouble.", "Everybody's scared. Will you hear them?", "It's not a joke, I swear it isn't."]
+      }
+    },
+    "plea": {
+      "about": "Folk gather round you in the street, murmuring, and the eldest of them steps out to speak for them; the tale's hook opens.",
+      "cues": [
+        {"cue": "pick", "role": "speaker", "jobs": ["elder", "headman", "priest", "preacher", "farmer", "innkeeper"], "within": 45},
+        {"cue": "hold"},
+        {"cue": "crowd", "at": "you", "count": 7, "radius": 2, "key": "murmur", "ticks": 14},
+        {"cue": "walk", "who": "speaker", "to": "you"},
+        {"cue": "say", "who": "speaker", "key": "open", "ticks": 3},
+        {"cue": "beat", "always": true},
+        {"cue": "disperse"},
+        {"cue": "walk", "who": "speaker", "to": "home"}
+      ],
+      "words": {
+        "murmur": ["That's the one.", "Look at the gear on them.", "Ask them. Go on.", "Will they help, do you think?", "Hush, here comes the old one.", "They've the look of it.", "Somebody has to do something."],
+        "open": ["Forgive us, stranger. We have no one else to ask.", "You'll have heard there's trouble. Hear us out.", "Don't go yet. We've a thing to ask of you.", "We are plain folk, and we are frightened.", "Stay a moment. This concerns us all."]
+      }
+    }
+  }
+}

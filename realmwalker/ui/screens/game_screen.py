@@ -331,6 +331,12 @@ class GameScreen(Screen):
             return True
         if self.look is not None:
             return self._look_key(ev)
+        if game.held:  # a scene is playing: only Space or Escape (straight to its end)
+            if ev.key in ("space", " ", "escape"):
+                from realmwalker.game.story import stage
+
+                stage.skip(game)
+            return True
         d = key_direction(ev)
         if d is not None:
             self.move(*d)
@@ -651,7 +657,11 @@ class GameScreen(Screen):
         game = self.game
         game.show_dice = self.app.settings.show_dice
         game.verbosity = self.app.settings.verbosity
+        game.animations = self.app.settings.animations
         game.auto_supplies = self.app.settings.auto_supplies
+        from realmwalker.game.story import stage
+
+        stage.check_here(game)  # (a scene left behind on another map is simply over)
         if self._open_event_screen():
             return
         if game.narration:
@@ -681,9 +691,10 @@ class GameScreen(Screen):
 
     def time_flows(self) -> bool:
         """In a town, with Time in towns set to flow, and nothing going on: its clock runs by itself (this screen is
-        only updated while it is on top, so the clock stops under any other screen)."""
+        only updated while it is on top, so the clock stops under any other screen). While a scene holds your keys
+        it runs whatever the setting (game/story/stage.py)."""
         game = self.game
-        return (self.app.settings.time_in_towns == "flows" and game.in_local and game.local is not None
+        return ((self.app.settings.time_in_towns == "flows" or game.held) and game.in_local and game.local is not None
                 and game.local.kind == "settlement" and not game.busy and game.over is None)
 
     def _weather(self, canvas: Canvas, rect) -> None:
@@ -776,4 +787,4 @@ class GameScreen(Screen):
         moves = [KeyEvent(k) for k in ("up", "down", "left", "right", "upleft", "upright", "downleft", "downright")]
         return moves * 4 + [KeyEvent(k) for k in (">", "<", "x", "l", "enter", "escape", ".", "m", "t", "o", "k",
                                                    "c", "i", "e", "g", "r", "h", "w", "b", "f", "n", "p", "s", "j", "a",
-                                                   "z", "v", "+", "-")]
+                                                   "z", "v", "+", "-", "space")]

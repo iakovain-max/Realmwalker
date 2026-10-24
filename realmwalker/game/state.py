@@ -163,6 +163,9 @@ class GameState:
         self._last_moment = -10**6  # the step count when street life was last remarked on
         self._last_weather: str | None = None  # the sky as it was, to notice when it turns
         self.verbosity = "normal"  # set from the player's settings by the game screen
+        self.animations = "full"  # likewise (the stage: with "off" a scene's movement completes at once)
+        self.stage_fx: list[dict] = []  # things changing hands in a scene, for the close-up map (never saved)
+        self.camera: dict | None = None  # a scene's focus {"to": [x, y], "n"} (never saved)
         self._weather_said = -10**6  # world minute of the last remark about the sky
         self._realm_here: int | None = None
         self._wading = False
@@ -496,8 +499,16 @@ class GameState:
         return bool(d.get("pending") or d.get("card") or getattr(self, "finale", None)
                     or getattr(self, "epilogue", None))
 
+    @property
+    def held(self) -> bool:
+        """A scene on this town's map holds the player's keys (Space or Escape skips it: game/story/stage.py). Not
+        `busy`: the town clock keeps running while it plays."""
+        from realmwalker.game.story import stage
+
+        return stage.holding(self)
+
     def move(self, dx: int, dy: int) -> bool:
-        if self.busy:
+        if self.busy or self.held:
             return False
         self.camp = None  # moving on breaks camp
         if self.in_local:
