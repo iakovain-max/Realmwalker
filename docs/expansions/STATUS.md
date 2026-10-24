@@ -556,10 +556,26 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part C, task C.2 (*the end of the weekly offers*; the
-builders split into pickers and `make(game, giver, target, rng)`), on branch `dlc/06-adventures-events` (Part B merged
-into main 2026-10-25). Read docs/expansions/06-adventures-events.md Part C and ADVENTURES.md §5.15-5.16, §6.7-6.11, §7,
-§8.10 first.
+Next session starts at: Expansion 6, **Adventures & Events**, Part C, task C.3 (*paid work*: `game/story/work.py`
+contracts, one a town, two in a city; bounties on beasts with lairs and threats' servants), on branch
+`dlc/06-adventures-events`. Read docs/expansions/06-adventures-events.md Part C and ADVENTURES.md §5.15, §8.10 first.
+C.2 (2026-10-25, realmwalker-a): the weekly offers are gone (`offer_for`, `offers_in`, the "work" choice,
+`_offer_work`, `GameScreen._think_of_work`, `shadows.guild_work`, `Town.flags["offers"/"offer_day"]`). quests.py:
+each kind is `_<kind>_pick(game, npc, rng, town)` -> target ids (or None) and `_<kind>(game, npc, target, rng, town)`
+(KINDS, PICKERS, MAKERS); public `pick(game, kind, giver, rng, town=None)` -> {"kind", "town", ...},
+`make(game, giver, target, rng)` (giver None = the town's watch; calls allow_the_walk), `build` = pick + make,
+`make_offer` (today's choice for a person; companions' personal work, debug console, tests). The conversation
+handler for debts is `_press_debt` now (it shadowed the maker). `game/story/work.py` + pack work.json (schema WORK,
+`tables.work`, cross-checked in registry `_check_quest_refs`): `waiting(game)` (commissions + pleas; quests.
+_all_quests reads it), `held_by(game, npc)`, `offers_here(game, settlement)` -> [(npc or None, q)] incl. board
+bounties (the bot, the Earner, the smoke tour, tests), `taken` (from quests.accept), `daily` (from story.daily:
+commissions in `renown.flags["commissions"]` {fid: q} and `["commission_day"]`, from `kinds_for(f)` (goal words ->
+kinds, `by_kind`), given by `member(game, npc, f)` in a peopled town within `reach`, `mark_trial`), `plea_of`
+(`Town.flags["pleas"]`/`["plea_day"]`; needs sickness/dragon/always/grudge), `choices`/`offer` ("own_work" ->
+quest_offer mode, then the old work_accept/work_decline). **C.3 must**: put contracts in `work.offers_here` and
+`held_by` (so the bot, the Earner and the first-hour tests find them), restore `jobs >= 1` in
+tests/test_storyplay.py, and drop the xfail in tests/test_first_hour.py `waiting`. Autoplay checks no town has
+weekly offers and waiting work is not in the journal; it now and then joins a faction.
 C.1 (2026-10-25, realmwalker-b): `tools/storyplay.py --income [--write]`: the income measure's careful player
 `Earner` (a Player: level 3, four, survival off; asks every giver of the town it is in through the Conversation's
 "work" choice, takes the best HONEST offer for the walk within REACH 20 tiles, refuses beast/raid groups above

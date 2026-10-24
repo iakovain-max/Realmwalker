@@ -46,6 +46,31 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-10-25 (small hours): Adventures & Events Part C, task C.2 — the end of the weekly offers — branch `dlc/06-adventures-events` (not yet on main)
+
+The job board is gone. Nobody thinks of a new job every week any more, and "Is there any work?" is no longer
+something you can ask. Work now waits with the person who really has it, and they have their own line in the
+conversation:
+- **Commissions.** Join a faction (a realm, a church, a guild, an order) and now and then (every ten to twenty days,
+  while none of its work is in hand) it sends word: who to see, and in which town near you. The work comes from what
+  that faction wants — land, trade, rooting out heresy, lost lore — and a thieves' guild's fences give its knives and
+  light fingers. When the faction is ready to raise you a rank, its commission is the trial.
+- **Pleas.** People with a real need ask you themselves: the healer of a town with the plague wants herbs, a lord
+  whose town pays a dragon its tribute (or has burned) wants it dead, a mage may take an apprentice who brings back a
+  lost grimoire, someone whose kin were killed in the old days knows where the killer sits. The plea lasts while the
+  need does.
+- **The notice board** still has its bounties on real gangs, and its pleas against the threats that trouble the land.
+- For the coming parts, every kind of work can now be built for a target chosen elsewhere (a contract's road, a
+  situation's people, a step of an adventure).
+- The first-day hint, the help (F1) and the empty journal now say how work is found. The game no longer quietly
+  builds far-away towns every day while you stand in one.
+- **Known gap until the next task (C.3, contracts):** with the weekly offers gone and contracts not yet come, there
+  is much less paid work about; a town may have nothing waiting. The careful player of the income measure took no
+  job in its short test run.
+- Choices made without Anton: commissions come only from factions you have joined (work.json's goals map the
+  faction's goal words to kinds of work); pleas are the four needs above (others become situations in C.6); a refused
+  plea stays while the need lasts, and a person asks again at most every 14 days.
+
 ### Session, 2026-10-25 (small hours): Adventures & Events Part C, task C.1 — the income reference — branch `dlc/06-adventures-events` (not yet on main)
 
 Nothing changes in play yet. Part C replaces the weekly "Is there any work?" offers with situations, contracts and

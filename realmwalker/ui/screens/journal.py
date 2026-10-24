@@ -132,6 +132,8 @@ def details(game, q) -> str:
     lines = [f"<title>{esc(quests.title(game, q))}</>", status_markup(game, q), ""]
     if q.get("personal") is not None:
         lines.append(f"<dim>For</> {esc(q['giver_name'])} <dim>(who travels with you)</>")
+    elif q["giver_name"].endswith(town.name):  # ("the watch of Bradwich", not "... of Bradwich of Bradwich")
+        lines.append(f"<dim>For</> {esc(q['giver_name'])}")
     else:
         lines.append(f"<dim>For</> {esc(q['giver_name'])} <dim>of</> {esc(town.name)}")
     reward = q["reward"]
