@@ -569,6 +569,12 @@ for_place gives "burned_street" for a scarred town; debug console showcase / mar
 signs, titlecard, epilogue, camp, all; tests/test_frame_time.py (slow; it found dolls.npc reading looks from words
 every frame: now kept in dolls._NPC_PARTS, 213 -> ~9 ms a frame on a burning great city); FORMAT_VERSION 20; the
 smoke tour walks a burned town and opens a letter. tests/test_beast_shown.py.
+Part B's fresh review (2026-10-25) left two things for later, not bugs: (1) `offer_hook` plays the runner or plea
+scene even when you asked for the tale yourself (a notice, "I hear something is killing your people"), so someone
+may run up with what you just heard - Part C's situations replace these hooks; (2) memorial, festival and beset have
+signs, dressing and epilogue pictures, but only the console and the tours set them until Parts G-J write them in play.
+The turn-time tests (tactics coverage, enemy casters) missed by a little in both full runs of B.9's checks and passed
+alone, as noted above.
 B.8 (2026-10-25, realmwalker-a): `ui/gfx/mapsigns.py`: `signed(s)` (SHOWN marks, the strongest smoke only), `under`
 (far tents, a burning town's glow) before the towns' tile batch and `over` (smoke puffs, near tents and banners in the
 siege's `by` faction colour, beset BESET_RGB, plague black flag 2 frames, tribute dragon shadow circling with `angle`,
