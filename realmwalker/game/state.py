@@ -142,6 +142,8 @@ class GameState:
 
         self.renown = Renown()  # standing with factions, bounties, crimes, news heard (game.reputation)
         self.arrest: dict | None = None  # the watch has hold of the player (game.law)
+        self.finale: dict | None = None  # a story's boss before the fight: its card waits (game/story/finale.py)
+        self.epilogue: dict | None = None  # a tale has ended: "What became of them" waits (story/endings.py)
         self.sentence: dict | None = None  # the law's punishment, being carried out (game.law)
         self.confined: dict | None = None  # in jail or at hard labour: fed and sheltered, going nowhere
         self.read_board = False  # walked into a notice board (the screen shows it)
@@ -379,6 +381,10 @@ class GameState:
                     from realmwalker.game import companions
 
                     companions.daily(self)
+                else:
+                    from realmwalker.game import uniques
+
+                    uniques.daily(self)  # (the rumours of the seven reach a hero who travels alone too)
             if self.renown.flags.get("captives"):
                 from realmwalker.game.gear import captives_slip
 
@@ -387,15 +393,18 @@ class GameState:
                 from realmwalker.game import quests
 
                 quests.daily(self)
-                here = self.world.settlement_at(self.player.x, self.player.y)
-                if here is not None and here.status.get("plague") and self.survival:
-                    from realmwalker.rules import health
+            from realmwalker.game import story
 
-                    rng = self.world.rng.child(f"plague-day/{self.world.time}")
-                    for c in self.party:
-                        if rng.chance(0.15):
-                            health.expose(c, self.tables, "plague", rng)
-                news.prune(self.world)
+            story.daily(self)  # (adventures: Expansion 6)
+            here = self.world.settlement_at(self.player.x, self.player.y)
+            if here is not None and here.status.get("plague") and self.survival:
+                from realmwalker.rules import health
+
+                rng = self.world.rng.child(f"plague-day/{self.world.time}")
+                for c in self.party:
+                    if rng.chance(0.15):
+                        health.expose(c, self.tables, "plague", rng)
+            news.prune(self.world)
             if self.leader.animals:
                 from realmwalker.game.services import feed_animals
 
@@ -478,7 +487,14 @@ class GameState:
         """Something must be dealt with first: trouble on the road, a fight or its aftermath, or death."""
         return (self.encounter is not None or self.battle is not None or self.aftermath is not None
                 or self.over is not None or self.event is not None or self.arrest is not None
-                or self.sentence is not None)
+                or self.sentence is not None or self.story_waiting)
+
+    @property
+    def story_waiting(self) -> bool:
+        """A story screen waits (Expansion 6): a beat, a chapter's title card, a finale's card, an epilogue."""
+        d = self.world.politics.get("director") or {}
+        return bool(d.get("pending") or d.get("card") or getattr(self, "finale", None)
+                    or getattr(self, "epilogue", None))
 
     def move(self, dx: int, dy: int) -> bool:
         if self.busy:
@@ -576,9 +592,10 @@ class GameState:
                 self.encounter = enc
                 self.travel = None
             else:
+                from realmwalker.game import story
                 from realmwalker.game.events import roll_event
 
-                ev = roll_event(self, minutes)
+                ev = None if story.on_travel(self, minutes) else roll_event(self, minutes)
                 if ev is not None:
                     self.event = ev
                     self.travel = None
@@ -791,6 +808,10 @@ class GameState:
             from realmwalker.game import quests
 
             quests.on_arrive(self)
+        if self.encounter is None and self.battle is None:
+            from realmwalker.game import story
+
+            story.on_arrive(self)  # (a step of a tale that is here: Expansion 6)
 
     def discover(self, kind: str, key: str | None = None) -> tuple[str, list[str]]:
         """Experience for finding somewhere new (the design's discovery): a region, a site, a level deeper under the
@@ -999,6 +1020,9 @@ class GameState:
                 arrive_town(self, lm, where)  # the homeless of places nearby, and those who have heard of you
                 for text in self.settlement_troubles(where):
                     self.say(text, "warn")
+                from realmwalker.game import story
+
+                story.on_enter_town(self, where)  # (a tale at the town's door: Expansion 6)
                 if not town.seen and town.description:
                     from realmwalker.core.textgen import escape_markup
 
@@ -1063,9 +1087,12 @@ class GameState:
                 self.say("They cannot see you, and your hands pass through them like smoke (Etherealness).", "system")
                 return False
         if target is not None:
+            from realmwalker.game import story
             from realmwalker.game.fight import start_battle
             from realmwalker.rules.combat import FOE
 
+            if story.hold_for_finale(self, target):
+                return True  # (the boss's card first: Expansion 6)
             name = self.tables.creatures.encounters.get(target.group, {}).get("name", "them")
             intro = f"You fall on {name}!" if not target.alert else f"You close with {name}."
             start_battle(self, target.creatures, intro, surprised=None if target.alert else FOE, actor=target,

@@ -1,0 +1,212 @@
+{
+  "_comment": "Villains (docs/ADVENTURES.md §5.4, §5.8; game/story/villain.py, finale.py): attention (how much the villain notices you: step done, lieutenant slain, a quiet fortnight, the most, days between two moves, moves a chapter); tempers and the moves they choose; moves (the beat each plays, the attention it needs); boss templates by tier and role; weaknesses by what the villain is, each with the finale keys it gives.",
+  "attention": {
+    "step": 1,
+    "lieutenant": 2,
+    "fortnight": -1,
+    "max": 9,
+    "moves_apart_days": 2,
+    "per_chapter": 1
+  },
+  "tempers": {
+    "bestial": {
+      "speaks": false,
+      "moves": {
+        "omen": 3,
+        "carcass": 2,
+        "test": 1
+      },
+      "first_words": [
+        "It does not roar. It breathes, long and slow, and the sound fills the dark.",
+        "It comes out of the dark without hurry, as if this is the hundredth time and you are the hundredth hunter.",
+        "A sound like a mill-wheel turning, somewhere in the dark ahead. Then it comes.",
+        "It lowers itself, and gathers, and looks at you with something like hate.",
+        "It shakes itself, and old blood flies from it, and it opens its jaws wide.",
+        "It smells you before it sees you, and it is glad."
+      ],
+      "omens": [
+        "A dead raven on the path, its head bitten clean away.",
+        "Every dog in the hamlet you pass is howling, and none of them will say why.",
+        "The birds go quiet in the trees around you, all at once, as if a door had shut.",
+        "The brambles torn and wet at the height of your shoulder, as if something big had pushed through.",
+        "A shepherd's crook broken in two and thrown down in the road.",
+        "Somewhere far off, on the wind, a sound that might be a laugh and is certainly not.",
+        "The horses will not settle. They stare at the treeline with their ears flat.",
+        "A trail of blood crossing the road, still wet, going nowhere you can see."
+      ]
+    }
+  },
+  "moves": {
+    "omen": {
+      "beat": "beast_omen",
+      "attention": [
+        0,
+        9
+      ]
+    },
+    "carcass": {
+      "beat": "beast_carcass",
+      "attention": [
+        1,
+        9
+      ]
+    },
+    "test": {
+      "beat": "beast_test_night",
+      "attention": [
+        2,
+        9
+      ]
+    }
+  },
+  "bosses": {
+    "beast": {
+      "tiers": [
+        1,
+        3
+      ],
+      "roles": [
+        "beast"
+      ],
+      "hp": 1.6,
+      "resistances": 1,
+      "actions": 2,
+      "menu": [
+        "move",
+        "strike"
+      ],
+      "phase": {
+        "at": 0.5,
+        "kind": "frenzy",
+        "lines": [
+          "Cornered and bleeding, it stops being careful.",
+          "It howls, and when it comes again it comes like a landslide.",
+          "Something breaks in it. It is past fear now, and past cunning."
+        ]
+      },
+      "before": {
+        "at": 0.5,
+        "kind": "breaks_off",
+        "lines": [
+          "It has had enough of you, for now. It turns and goes, faster than anything that size should move.",
+          "Bleeding, it backs off a step, and another, and then it is gone into the dark towards its den.",
+          "It gives one long look at you, as if to remember your faces, and runs."
+        ]
+      }
+    }
+  },
+  "weaknesses": {
+    "troll": [
+      {
+        "id": "troll_fire",
+        "name": "fire",
+        "keys": [
+          "vulnerable(fire)"
+        ],
+        "lore": [
+          "The old ones say {villain_short} hates fire more than it hates the hunters: its wounds that are burned do not close.",
+          "Fire. The tales all agree on it. Whatever {villain_short} is, burning flesh stays burned.",
+          "\"Bring fire,\" the old songs say of beasts like this one. \"Iron cuts, but fire ends.\""
+        ],
+        "means": [
+          "oil_flask",
+          "alchemists_fire",
+          "torch"
+        ]
+      }
+    ],
+    "giant_spider": [
+      {
+        "id": "spider_fire",
+        "name": "fire",
+        "keys": [
+          "vulnerable(fire)"
+        ],
+        "lore": [
+          "The old ones say {villain_short} hates fire more than it hates the hunters: its wounds that are burned do not close.",
+          "Fire. The tales all agree on it. Whatever {villain_short} is, burning flesh stays burned.",
+          "\"Bring fire,\" the old songs say of beasts like this one. \"Iron cuts, but fire ends.\""
+        ],
+        "means": [
+          "torch",
+          "oil_flask",
+          "alchemists_fire"
+        ]
+      }
+    ],
+    "ogre": [
+      {
+        "id": "ogre_greed",
+        "name": "its greed",
+        "keys": [
+          "surprise"
+        ],
+        "lore": [
+          "It is greedy, the tales say. It has never once passed by a meal laid out for it, though it knew it was a trap.",
+          "Its hunger is its weakness: lay out meat and it will come to it, every time, and come blind.",
+          "Old hunters of {area} say it is bait that kills such beasts, not blades: it cannot help itself."
+        ],
+        "means": [
+          "raw_meat",
+          "cooked_meat",
+          "rations"
+        ]
+      }
+    ],
+    "brown_bear": [
+      {
+        "id": "bear_greed",
+        "name": "its hunger",
+        "keys": [
+          "surprise"
+        ],
+        "lore": [
+          "It is greedy, the tales say. It has never once passed by a meal laid out for it, though it knew it was a trap.",
+          "Its hunger is its weakness: lay out meat and it will come to it, every time, and come blind.",
+          "Old hunters of {area} say it is bait that kills such beasts, not blades: it cannot help itself."
+        ],
+        "means": [
+          "raw_meat",
+          "cooked_meat",
+          "rations"
+        ]
+      }
+    ],
+    "dire_wolf": [
+      {
+        "id": "wolf_fire",
+        "name": "fire in the hand",
+        "keys": [
+          "frightened(1)"
+        ],
+        "lore": [
+          "Fire frightens it, as it frightens every beast: a burning brand thrust in its face will make it shy.",
+          "It is a beast still, for all its name: fire in the hand will turn it, for a moment.",
+          "The hunters' trick is old and simple: a torch in the face, and it falters long enough for a blow."
+        ],
+        "means": [
+          "torch",
+          "oil_flask"
+        ]
+      }
+    ],
+    "beast": [
+      {
+        "id": "beast_fire",
+        "name": "fire in the hand",
+        "keys": [
+          "frightened(1)"
+        ],
+        "lore": [
+          "Fire frightens it, as it frightens every beast: a burning brand thrust in its face will make it shy.",
+          "It is a beast still, for all its name: fire in the hand will turn it, for a moment.",
+          "The hunters' trick is old and simple: a torch in the face, and it falters long enough for a blow."
+        ],
+        "means": [
+          "torch",
+          "oil_flask"
+        ]
+      }
+    ]
+  }
+}

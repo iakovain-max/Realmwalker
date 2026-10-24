@@ -118,6 +118,9 @@ def descend(game, level: int, *, from_below: bool = False) -> None:
     from realmwalker.game import past
 
     past.on_arrive_dungeon(game, lm, site)  # a treasure the history left here
+    from realmwalker.game import story
+
+    story.on_descend(game, lm)  # (a tale's band and the finale's warning: Expansion 6)
     name = lm.meta.get("name", "dark")
     rng = game.world.rng.child(f"descend/{lm.key}/{game.player.steps}")
     deep = lm.meta.get("depth", 1) > 1
@@ -735,6 +738,11 @@ def populate(game, lm) -> None:
         quest_boss = quests.boss_for(game, site, boss)
         if quest_boss != boss:
             boss, boss_name = quest_boss, None
+    from realmwalker.game import story
+
+    story_band = story.boss_for(game, lm)  # (a tale's boss bound to this very level: Expansion 6, first of all)
+    if story_band is not None:
+        boss, boss_name = story_band["group"], story_band["name"]
     meta["boss"] = boss
     if boss_name:
         meta["boss_name"] = boss_name
@@ -779,6 +787,8 @@ def populate(game, lm) -> None:
             fig = game.world.figures.get(master.get("figure"))
             for c in creatures:
                 c.culture = c.culture or (fig.culture if fig is not None else "")
+        elif story_band is not None and has_boss and n == 0 and creatures:
+            story.tag_band(creatures, story_band["adv"], story_band["name"])
         elif boss_name and has_boss and n == 0 and creatures:
             creatures[0].name = boss_name  # the troll the old songs are about; the king who was laid here
             creatures[0].named = True

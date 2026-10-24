@@ -46,7 +46,7 @@ Fields every entry has:
 - `name` — the name as printed, with the OCR's mistakes corrected (checked on the page image).
 - `book` — `phb`, `dmg` or `mm`; `page` — the **PDF** page where the entry begins (printed page + 3 in the PHB and
   MM, + 4 in the DMG). A creature printed in both the MM and the PHB adds `"also": [{"book": "phb", "page": 352}]`.
-- `dlc` — the number of the expansion that delivers it (1–26, `docs/EXPANSIONS.md` §6 and Appendices A, B and E).
+- `dlc` — the number of the expansion that delivers it (1–27, `docs/EXPANSIONS.md` §6 and Appendices A, B and E).
 - `status` — `todo`, `done`, `adapted` or `omitted`.
 - `game` — the ids in the game's data that implement it (empty while `todo`).
 - `note` — required for `adapted` (what changed and why) and `omitted` (a §1.3 reason).

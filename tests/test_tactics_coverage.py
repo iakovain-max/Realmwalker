@@ -127,6 +127,43 @@ def test_the_tactics_use_everything_a_creature_has_and_only_what_is_allowed(tabl
     assert p95 < 150 and ms[-1] < 400, f"{creature}: 95th percentile {p95:.0f} ms, slowest {ms[-1]:.0f} ms"
 
 
+def _bosses() -> list[tuple[str, str]]:
+    """(creature, template): every creature a story names a weakness for, in the boss template its threat kind's
+    blueprints use (Expansion 6: the Beast's)."""
+    from realmwalker.data.registry import DataRegistry
+
+    d, _ = DataRegistry.load(ROOT / "data")
+    v = Tables(d).villains
+    beasts = sorted(k for k in v.get("weaknesses", {}) if k in d.get("creatures.json")["creatures"])
+    return [(c, "beast") for c in beasts if "beast" in v.get("bosses", {})]
+
+
+@pytest.mark.parametrize("creature,template", _bosses())
+def test_a_story_s_boss_uses_its_legendary_actions_and_its_second_phase(tables, creature, template):
+    """A finale's boss (Expansion 6 A.8): its blows and moves out of turn, its Legendary Resistance, its second
+    phase at half its hit points, in every arena scenario, with nothing broken and in time."""
+    used: Counter = Counter()
+    times: list[float] = []
+    broken: list[str] = []
+    for seed in range(SEEDS + 1):
+        for scenario in arena.SCENARIOS:
+            where = f"{scenario}, seed {seed}"
+            b = arena.setup(tables, creature, scenario, seed, boss=template, tier=1)
+            boss = b.side(FOE)[0]
+            assert boss.cdef.get("legendary") and boss.cdef.get("boss_phase")
+            r = arena.run(b, clock=time.thread_time, check=lambda bb, f, where=where: broken.extend(
+                f"{where}, round {bb.round}, after {f.name}: {p}" for p in problems(bb)))
+            assert b.outcome is not None, f"{where}: the fight did not end"
+            used += r["used"]
+            times += r["times"]
+    assert not broken, broken[:5]
+    for what in ("legendary:strike", "legendary:move", "phase:frenzy"):
+        assert used.get(what), f"{creature} as a boss never used {what} ({dict(used)})"
+    ms = sorted(x * 1000 for x in times)
+    p95 = ms[max(0, int(len(ms) * 0.95) - 1)]
+    assert p95 < 150 and ms[-1] < 400, f"{creature} as a boss: 95th percentile {p95:.0f} ms, slowest {ms[-1]:.0f} ms"
+
+
 def test_every_creature_is_in_the_arena_and_every_exception_is_a_real_option(tables):
     assert CREATURES == sorted(tables.creatures.defs)
     for key in NOT_CHOSEN:

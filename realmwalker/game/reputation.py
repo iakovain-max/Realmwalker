@@ -29,6 +29,9 @@ class Renown:
     pending: list[dict] = field(default_factory=list)  # deeds still travelling to the factions who care
     marks: list[str] = field(default_factory=list)  # "branded", "flogged"
     flags: dict = field(default_factory=dict)
+    # Legend (Expansion 6, game/story): the tier, the epithet, epithets offered at the end of a tale; Part J adds the
+    # rest (lands, songs, the ambition, echoes).
+    legend: dict = field(default_factory=dict)
 
     def to_dict(self) -> dict:
         return {
@@ -37,7 +40,7 @@ class Renown:
             "members": {str(k): v for k, v in self.members.items()},
             "bounties": {str(k): v for k, v in self.bounties.items()},
             "crimes": self.crimes, "heard": sorted(self.heard), "pending": self.pending, "marks": self.marks,
-            "flags": self.flags,
+            "flags": self.flags, "legend": self.legend,
         }
 
     @classmethod
@@ -49,7 +52,7 @@ class Renown:
             members={int(k): int(v) for k, v in d.get("members", {}).items()},
             bounties={int(k): int(v) for k, v in d.get("bounties", {}).items()},
             crimes=list(d.get("crimes", [])), heard=set(d.get("heard", [])), pending=list(d.get("pending", [])),
-            marks=list(d.get("marks", [])), flags=dict(d.get("flags", {})),
+            marks=list(d.get("marks", [])), flags=dict(d.get("flags", {})), legend=dict(d.get("legend", {})),
         )
 
 
@@ -429,6 +432,9 @@ def starting_knowledge(game) -> None:
     apply_ties(game)
     game.renown.flags["started"] = True
     game.renown.flags["start_day"] = game.moment.total_days
+    from realmwalker.game import story
+
+    story.begin(game)  # (a tale near where the hero sets out: Expansion 6)
 
 
 def apply_ties(game) -> None:

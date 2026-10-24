@@ -61,9 +61,13 @@ def active(game) -> list[dict]:
 
 
 def map_marks(game) -> list[tuple[int, int]]:
-    """Where the work you have in hand wants you, lit on the maps: sites, towns and a patch of wild country."""
+    """Where the work you have in hand wants you, lit on the maps: sites, towns and a patch of wild country; and
+    the places your tales want you (Expansion 6)."""
+    from realmwalker.game import story
+
+    tales = story.map_marks(game)
     if not getattr(game, "quests", None):
-        return []
+        return tales
     w = game.world
     out = []
     for q in active(game):
@@ -76,7 +80,7 @@ def map_marks(game) -> list[tuple[int, int]]:
             out.append((w.settlements[t["dest"]].x, w.settlements[t["dest"]].y))
         if q["template"] == "hunt_beast":
             out.append((int(t["x"]), int(t["y"])))
-    return out
+    return out + tales
 
 
 def by_id(game, qid) -> dict | None:
@@ -351,6 +355,9 @@ def _clear_lair(game, npc, rng):
 def _hunt_beast(game, npc, rng):
     w = game.world
     town = w.settlements[npc.settlement]
+    q = _hunt_lair_beast(game, npc, rng, town)
+    if q is not None:
+        return q
     beasts = [b for b in spec(game)["beasts"] if b[0] in game.tables.creatures.encounters]
     if not beasts:
         return None
@@ -372,6 +379,32 @@ def _hunt_beast(game, npc, rng):
         q["words"].update(beast=name, beast_what=what, where=f"{where}, {direction(town, _Spot(x, y))}")
         return q
     return None
+
+
+def _hunt_lair_beast(game, npc, rng, town):
+    """A real beast of the history, lairing within reach and one the party might live through, before any beast of
+    the fixed list: the town knows its name, and where it sleeps."""
+    from realmwalker.game import past
+
+    w = game.world
+    taken = {q["target"].get("beast") for q in _all_quests(game) if q["template"] == "hunt_beast"}
+    found = []
+    for key, hid in sorted(w.politics.get("lairs", {}).items()):
+        fig = w.figures.get(hid)
+        if fig is None or not fig.alive or fig.kind != "beast" or fig.id in taken or not 0 <= int(key) < len(w.sites):
+            continue
+        site = w.sites[int(key)]
+        group = past.group_of(game, fig)
+        if 3 <= dist(site, town) <= 16 and group in game.tables.creatures.encounters and                 beast_ratio(game, group) < DEADLY_RATIO:
+            found.append((site, fig, group))
+    if not found:
+        return None
+    site, fig, group = rng.choice(found)
+    q = base_quest(game, npc, "hunt_beast", rng)
+    q["target"] = {"x": site.x, "y": site.y, "group": group, "beast": fig.id, "site": site.id}
+    q["words"].update(beast=past.beast_title(fig), beast_what=past.beast_word(game, fig),
+                      where=f"in its lair at {site.name}, {direction(town, site)}")
+    return q
 
 
 def beast_ratio(game, group: str) -> float:
@@ -860,6 +893,10 @@ def accept(game, q) -> list[str]:
     if q["template"] == "hunt_beast":
         game.player.explored[t["x"], t["y"]] = True
         notes.append("<info>Where it was last seen is marked on your map.</>")
+    if t.get("beast") is not None:
+        from realmwalker.game import story
+
+        story.on_job_taken(game, q)  # (a beast with a tale of its own: Expansion 6)
     if q["template"] == "escort":
         who = w.npcs.get(t["npc"])
         if who is not None:
@@ -1084,8 +1121,8 @@ def on_arrive(game) -> None:
         return
     for q in active(game):
         t = q["target"]
-        if q["template"] != "hunt_beast" or q["done"] or (p.x, p.y) != (t["x"], t["y"]):
-            continue
+        if q["template"] != "hunt_beast" or q["done"] or (p.x, p.y) != (t["x"], t["y"]) or "beast" in t:
+            continue  # (a beast of the history waits at the bottom of its lair)
         from realmwalker.game.encounters import make_encounter
 
         rng = game.world.rng.child(f"beast/{q['id']}/{game.world.time}")
@@ -1412,6 +1449,10 @@ def strongroom_gift(game, q, giver, share: float) -> list[str]:
 
 
 def reward(game, q, *, share: float = 1.0, text: str | None = None) -> list[str]:
+    if q.get("adventure"):
+        from realmwalker.game import story
+
+        story.on_quest_end(game, q, True)  # (a step of a tale: Expansion 6)
     from realmwalker.game import followers, reputation
     from realmwalker.game.companions import react
     from realmwalker.game.people import change_disposition
@@ -1491,6 +1532,11 @@ def fail(game, q, why: str | None = None) -> None:
     from realmwalker.game import reputation
     from realmwalker.game.people import change_disposition
 
+    if q.get("adventure"):
+        from realmwalker.game import story
+
+        story.on_quest_end(game, q, False)
+
     q["state"] = "failed"
     line = why or fill(game, q, "failed")
     q["journal"].append(line)
@@ -1534,7 +1580,7 @@ def daily(game) -> None:
                 raid_missed(game, q)
     for q in active(game):
         giver = game.world.npcs.get(q["giver"])
-        if q.get("personal") is None and q["giver"] >= 0 and (giver is None or not giver.alive):
+        if q.get("personal") is None and q["giver"] >= 0 and (giver is None or not giver.alive) and                 not q.get("adventure"):  # (a step of a story: the story decides what a dead giver means)
             q["state"] = "finished"
             q["journal"].append(f"{q['giver_name']} is dead. Nobody will pay for this now.")
             game.say(f"<warn>Journal: {title(game, q)}: {q['giver_name']} is dead.</>", "warn")

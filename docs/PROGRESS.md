@@ -2,6 +2,8 @@
 
 Newest session first. Each milestone lists what's new, how to try it, decisions made, and known issues.
 
+*2026-10-24: the expansion programme was renumbered. Adventures & Events is now Expansion 6 (version 1.6.0), and Tieflings & Warlocks and everything after it moved down one (7-27; Planes & Portals is still 2.0.0). The dated entries below keep the numbers they were written with.*
+
 ## Status at a glance
 
 | Milestone | State |
@@ -31,7 +33,8 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Expansion 3, *Demigods & Magics*** (version 1.3.0) | ✅ Released (2026-10-17), branch `dlc/03-demigods-magics` |
 | **Expansion 4, *Steel & Shadows*** (version 1.4.0) | ✅ Released (2026-10-17), branch `dlc/04-steel-shadows` |
 | **Expansion 5, *Schools & Domains*** (version 1.5.0) | ✅ Released (2026-10-18), branch `dlc/05-schools-domains` |
-| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansions 1-5 released; Expansion 6 waits for Anton's start (see STATUS.md) |
+| **Expansion 6, *Adventures & Events*** (version 1.6.0) | Part A on main (2026-10-24): the story engine and the Beast; Parts B-K to come |
+| **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansions 1-5 released; Expansion 6 under way (see STATUS.md) |
 
 ---
 
@@ -42,6 +45,73 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-24 (night): Adventures & Events Part A finished — the Beast, played through — merged into `main`
+
+The rest of Part A, and Part A goes to `main` (the release of 1.6.0 waits for the whole of Expansion 6).
+
+**What is different when you play**
+- **The tale holds together from start to end.** A robot party played the Beast twenty times on three worlds, on
+  real roads in real time, and finished it every time. On the way it found four things that would have spoiled it,
+  all fixed: the choice to bait the beast or track it was never put to you in play (the tale stopped there); met at
+  the bait, the beast already fought as the boss of the finale and could wipe a party (now it fights as itself and,
+  hurt, bolts into the dark for its den: "It came, and it bled, and it ran"); a troll could be given to a party of
+  third-level heroes (a tale's tier now fits its beast); and a beast put to sleep at the end of the fight was taken
+  "captive" and the tale never ended (now you finish it where it lies). At its den it never runs.
+- **If the hunt goes badly**, the beast comes for you at your camp in the night: a lost fight moves the tale on.
+- **Magic can answer the tale's question.** Divination, Commune and Contact Other Plane can ask "What will kill it?",
+  and the answer is what it fears.
+- **A hunting job on a beast that has a tale opens that tale** when you take the job.
+- **On the world map** a red wax seal pressed with a claw marks where your tale wants you, and three claw rakes mark
+  the den of a beast whose signs you have heard.
+- **The chapter's card** sets its name in a band with the tale's seal; a beat at your camp shows the camp at night
+  above its words.
+- **Three new sounds**: a low drum and a slow minor strum when a chapter opens, a falling line over a bell when a
+  chapter ends with what it revealed, and a far drum with an uneasy bell when you hear of a threat's sign.
+- The tale's title, hook and chapter lines now always use real names (before, a few could show a raw {patron}).
+
+**How to see it**: start a **new world** (saves are format 19; old saves are refused politely, the files stay).
+A tale is offered on your first day.
+
+**Checked**: the full test suite, the autoplay bot (3,000 turns), the window smoke test (it now also shows the beat,
+the chapter card, the Adventures tab, the finale card and the epilogue), `tools/storybook.py --check` on three worlds,
+`tools/storyplay.py` (20 of 20), and a fresh review: its findings are fixed (the Beast's words fit a spider or a wolf as well as a troll; the beast troubles your camp only while it is at large; walking into its den early shows its card and meets the real boss; one name for the tale's town).
+
+**Choices made while you were away**: the beast bolts at half its hit points before its den (it never runs at the
+den); a party fighting the bait at night is helped by nothing special (the dark is part of the hunt); the story's
+own experience comes with Part C, so following the Beast gives only its fights' experience for now.
+
+### Session, 2026-10-24 (evening): Adventures & Events Part A, first half — the story engine — branch `dlc/06-adventures-events` (not yet on main)
+
+Anton's new Expansion 6 (it replaces Tieflings & Warlocks as number 6) began. Nothing of it is on `main` yet: Part A
+goes there when all of it is done and checked.
+
+**What is different when you play (on the branch)**
+- The world's named beasts are **threats** now: each lives in the history's lair, and a few of them stir. A stirring
+  beast has a scheme: first the herders find its kills (news), then it kills people and a village keeps its gates
+  shut, then the roads round it empty and its country grows more dangerous, and at last the nearest hamlet is left
+  by its people. An emptied place keeps a few of its folk and fills again after a season. The history's own
+  beast-hunters sometimes bring one down while you play, and you hear of it.
+- A new character is offered a tale on the first day: **The Beast of {place}**. Taking it on opens a chapter card,
+  and the journal has a new first tab, **Adventures**, with its chapters, what to do now and where, the people of
+  it, what you have found and the beast's clock.
+- The tale: go to its last kill and read it (a page of words with choices and a skill check that can only cost you
+  time), hear the one who saw it, learn what it fears (from the priest of a town with a temple, from the hunter who
+  will come with you, by studying the kill, or by magic), carry the means, then choose: bait it or track it - and it
+  comes. Wounded, it runs to its den. At the den, choose how to go in; at the bottom, the beast's card shows its name,
+  its first words and what you know before the fight. The beast is a boss now: more hit points, a Legendary
+  Resistance, blows and moves out of turn, and a frenzy at half its hit points. What you found changes the fight:
+  fire hurts a troll twice over, the bait or a quiet approach catches it unready, the hunter fights beside you.
+- When it dies the world keeps it: the history, the news, the region safer, fame, and *What became of them* - a page
+  for the town, the one who asked, the hunter, the one who saw - and the epithet the tale gives you, to take or leave.
+- Notice boards post every stirring beast within a week's walk as a plea you can answer. The beast may answer you
+  too: an omen on the road, a carcass left at your camp by morning, a rush at the fire in the night.
+- The map key screen is called *Map key* now (Legend will mean the hero's Legend).
+
+**How to see it**: a **new world** is needed (saves are format 19). Not merged yet: the branch only.
+
+**Still to do in Part A** (next session): the storybook check and the words' floors, the pictures and sounds, the
+storyplay tool and the first-hour measure, the fresh review, then `main`.
 
 ### Session, 2026-10-18 (night): Schools & Domains Part E — robes, hats and the rest; **released as 1.5.0** — branch `dlc/05-schools-domains`
 

@@ -98,7 +98,7 @@ Each task lists its files and its tests. Do them in order; tasks marked *(parall
 the region is safer, the news says so, and an epithet is offered. ADVENTURES.md §5.1–5.3, §5.8–5.9 (first forms),
 §5.14, §6.2 (the Beast), §8.1–8.9.
 
-- [ ] A.0 **The programme.** Insert §6.6 *Adventures & Events* into `docs/EXPANSIONS.md` (the first three sections of
+- [x] A.0 **The programme.** Insert §6.6 *Adventures & Events* into `docs/EXPANSIONS.md` (the first three sections of
   this note; the table row `6 | Adventures & Events | threats, adventures, situations, villains who act, places that
   change, the Storyteller, Legend, ambitions | 5 | XL`); renumber the old 6–26 to 7–27 everywhere ADVENTURES.md §10
   lists (§6 and its table with the Needs column, the appendices, §4.1's `pack.json` example, §5.5's STATUS template,
@@ -110,7 +110,7 @@ the region is safer, the news says so, and an epithet is offered. ADVENTURES.md 
   map key screen's title to *Map key* (`ui/screens/legend.py`), so that "Legend" means one thing.
   `docs/expansions/STATUS.md`: "Current: 06 Adventures & Events · Part A". Branch `dlc/06-adventures-events`;
   `data/packs/06_adventures_events/pack.json` (status planned, order 6). Commit the two design files with it.
-- [ ] A.1 **Deeds that stick** (ADVENTURES.md §5.14). A gang hideout's boss is the gang's real leader, named
+- [x] A.1 **Deeds that stick** (ADVENTURES.md §5.14). A gang hideout's boss is the gang's real leader, named
   (`past.boss_for`); killing them goes through `Politics.die(fig, cause, led=gang)` (the succession runs), and with
   the hideout cleared too the gang falls (`Politics.fall`, news). A cult temple's boss is its leader figure (the
   Voice); clearing it ends the cult. `hunt_beast` and beast bounties prefer a living beast of `lairs` within reach
@@ -118,19 +118,19 @@ the region is safer, the news says so, and an epithet is offered. ADVENTURES.md 
   `uniques.daily` runs without companions; `dragons.mark_slain` writes through `history.remember`. Tests:
   `tests/test_quests.py`, `tests/test_past.py`; autoplay's `_check_factions` stays green (no active gang led by the
   dead).
-- [ ] A.2 **Data kinds.** `threats.json`, `adventures.json`, `villains.json`, `beats.json` (+ fragments): schemas in
+- [x] A.2 **Data kinds.** `threats.json`, `adventures.json`, `villains.json`, `beats.json` (+ fragments): schemas in
   `realmwalker/data/schemas.py` (`DATA_FILES`, `PACK_ONLY`), `Tables` attributes (`world/tables.py`), cross-references
   (`registry.check_cross_references`), and `realmwalker/game/story/check.py` (unknown step kinds, selectors – the
   grammar of ADVENTURES.md §8.5 –, condition keys, ops and finale keys on the data-problems screen, as
   `engine/check.problems` does). Tests: `tests/test_story_data.py`.
-- [ ] A.3 **Threats** (`realmwalker/world/threats.py`) for the *beast* kind: `seed` after the ages; the record (§8.3);
+- [x] A.3 **Threats** (`realmwalker/world/threats.py`) for the *beast* kind: `seed` after the ages; the record (§8.3);
   `advance` from `Politics.advance` (stages, signs through `world/news.add` at importance ≤2, stage effects, a bounded
   doom: the `emptied` status with a floor of survivors and the `rebuilding` return); the world's own ending (the
   history's beast-hunters keep hunting: a weekly chance by fame); `seed_from` from `beast_comes`; the budget and the
   cap of two untaken threats near the hero; one stage at most per interlude. Tests: `tests/test_threats.py` (same seed
   same threats; seeded on the cached test worlds; an ignored threat reaches its doom and the world stays consistent –
   owners replay from the ledger, no settlement at 0); autoplay `_check_threats`.
-- [ ] A.4 **The forge** (`game/story/forge.py`, `selectors.py`, `cast.py`, `steps.py`): places, then cast (from the
+- [x] A.4 **The forge** (`game/story/forge.py`, `selectors.py`, `cast.py`, `steps.py`): places, then cast (from the
   world first; made people kept in `story_people` and placed when their town is next populated), hidden variables,
   chapters and steps, three routes per truth, the content rule, scaling to the tier's target level, `story_sites` by
   dungeon key; the Part A step kinds go, search, witness, read, learn, prepare, choose, slay, finale, each with
@@ -138,11 +138,11 @@ the region is safer, the news says so, and an epithet is offered. ADVENTURES.md 
   the `story` tag on spawned creatures (saved with actors); `past.on_battle` skips story creatures; `flags["story"]`
   respected by `people.refresh_travellers` and `quests.daily`. Tests: `tests/test_forge.py` (slow: forge seeds on the
   cached worlds; every role bound, every place reachable, every truth with three routes, record equality per seed).
-- [ ] A.5 **The Beast** (first form, ADVENTURES.md §6.2) with all its words *(parallel: the main session writes the
+- [x] A.5 **The Beast** (first form, ADVENTURES.md §6.2) with all its words *(parallel: the main session writes the
   blueprint and one finished example of each word family; helpers write the rest)*: its scheme and signs, its chapter
   openings and reveals, its `choose` (bait or track) and the codeword it leaves; `tools/storybook.py` with `--check`.
   Tests: floors in `tests/test_text_variety.py`; `storybook --check` on three seeds (`tests/test_storybook.py`).
-- [ ] A.6 **Hooks, Part A set** (ADVENTURES.md §8.4): `story.daily` (catch-up stamp), `on_travel` (a simple director:
+- [x] A.6 **Hooks, Part A set** (ADVENTURES.md §8.4): `story.daily` (catch-up stamp), `on_travel` (a simple director:
   due and scheduled beats, a target quiet gap, at most one villain move in two days), `on_arrive`, `on_enter_town`,
   `on_night` (camp and inn), `on_descend`, `on_chest`/`on_feature`/`on_search`, `on_battle` (outside `if game.quests:`),
   `on_quest_end`, `on_read`, `on_legends_page`, adventure answers in `divining.questions`; dialogue `story.talk_choices`
@@ -152,7 +152,7 @@ the region is safer, the news says so, and an epithet is offered. ADVENTURES.md 
   threat opens its hook when done); the cap of three adventures; a minimal `story.on_death` (orphan the hero's
   adventures, clear the pending beat) and `story.begin` (reset the director; offer a fitting hook near the start town).
   Tests: `tests/test_story_hooks.py` (each listener moves its step in a real game state).
-- [ ] A.7 **The beat screen and the first beats**: `ui/screens/beat.py` (pages, numbered choices with checks and costs,
+- [x] A.7 **The beat screen and the first beats**: `ui/screens/beat.py` (pages, numbered choices with checks and costs,
   results, chapter title cards; `autoplay_keys`); `game.beat` in `GameState.busy` and in
   `GameScreen._open_event_screen` after the level-up branch; the pending beat in `politics["director"]`; conditions
   where, time, adventure, attention, `villain.*`, flag, cooldown, once; ops: all of `events.apply_outcome` plus clue,
@@ -160,26 +160,26 @@ the region is safer, the news says so, and an epithet is offered. ADVENTURES.md 
   `Conversation.check` with a speaker, `camp.check` without. **Minimal attention**: +1 a step done, +2 a lieutenant
   slain, −1 a fortnight, and one villain reaction per chapter: for the beast an omen, a carcass left at your camp,
   a test by night. Tests: `tests/test_beats.py`; `tests/test_graphics_ui.py` draws the screen.
-- [ ] A.8 **The finale, first form**: boss templates for tiers 1–2 (`villains.json`); keys `no_legendary_resistance`,
+- [x] A.8 **The finale, first form**: boss templates for tiers 1–2 (`villains.json`); keys `no_legendary_resistance`,
   `vulnerable`, `frightened`, `ally_fights`, `minions`, `surprise`, applied by `story.finale.prepare` from
   `fight.start_battle`; the second phase at half hit points (a kernel handler); the pending finale card (`game.finale`,
   set in `GameState._move_local` and `_creatures_act` before the battle starts; `ui/screens/finale.py`, "Fight" / "Not
   yet"; story boss actors never hunt); legendary actions and resistances in a real fight, used well by
   `rules/tactics.py`; boss templates in `tools/arena.py`'s scenarios (arena coverage green). Tests:
   `tests/test_finale.py`.
-- [ ] A.9 **Endings, first form**: the ordered ending list with its default (ADVENTURES.md §8.6); the consequence ops
+- [x] A.9 **Endings, first form**: the ordered ending list with its default (ADVENTURES.md §8.6); the consequence ops
   the Beast needs (`beast_slain`, `clear_site`, `danger`, `fame`, `history`, `news`, `emptied`, `sequel`,
   `threat_free`); `ui/screens/epilogue.py`; the epithet offer kept in `Renown.legend`. Tests: `tests/test_endings.py`
   (every Beast ending on a test world leaves it consistent).
-- [ ] A.10 **Pictures and sounds of Part A** (`tools/tile_art.py`, `tools/build_sounds.py`): map marks (a story place,
+- [x] A.10 **Pictures and sounds of Part A** (`tools/tile_art.py`, `tools/build_sounds.py`): map marks (a story place,
   a sign), the title-card frame, a camp-at-night beat backdrop; sounds `chapter`, `reveal`, `sign`; the music mood
   `story/omen` in `data/music.json` (falling back to an existing mood until the player adds tunes); contact sheet
   looked at; `tests/test_audio.py` green.
-- [ ] A.11 **Save and the bot**: `Renown.legend` in `to_dict` and its loader, the `story` tag on actors, FORMAT_VERSION
+- [x] A.11 **Save and the bot**: `Renown.legend` in `to_dict` and its loader, the `story` tag on actors, FORMAT_VERSION
   19; the JSON-native and round-trip test; autoplay's `_check_adventures` and the bot's story moves (take hooks,
   follow steps, answer beats, fight finales); `tools/storyplay.py` (basic). Measures: the Beast finishes in at least
   90% of 20 storyplay runs; a hook is offered on the first game day (`tests/test_first_hour.py`).
-- [ ] A.12 **Verify** (§5.2; the smoke test shows the beat screen, the Adventures tab, the finale card and the
+- [x] A.12 **Verify** (§5.2; the smoke test shows the beat screen, the Adventures tab, the finale card and the
   epilogue); the fresh reviewer reads ten storybook synopses against the eleven laws and plays one adventure in
   storyplay's log; Part A to `main`.
 

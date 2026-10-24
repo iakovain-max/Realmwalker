@@ -129,6 +129,10 @@ def start_battle(game, creatures: list[Creature], intro: str, *, surprised: str 
 
     for line in warding.at_the_start(game, battle):  # (E.6: a glyph's spell, Forbiddance, a circle, hallowed ground)
         game.say(line, "magic")
+    from realmwalker.game.story import finale
+
+    for line in finale.prepare(battle, game):  # (a story's boss: its template and the keys found: Expansion 6)
+        game.say(line, "story")
     from realmwalker.rules import spells as spellrules
 
     for c in game.party:
@@ -256,6 +260,10 @@ def finish_battle(game) -> Aftermath:
             c.hp = max(1, c.hp)
             after.notes.append(f"{c.name.split()[0]} comes round, weak and hurting.")
     dead_party = [c for c in game.party if not c.alive]
+    from realmwalker.game import story
+
+    for line in story.finish_off(game, result):  # (a story's beast lying helpless is killed where it lies)
+        after.notes.append(line)
     if result.outcome == "victory":
         after.xp = result.xp
         after.loot = list(result.loot_items)
@@ -382,6 +390,9 @@ def finish_battle(game) -> Aftermath:
             from realmwalker.game import quests
 
             quests.on_battle(game, result, actor)
+        from realmwalker.game import story
+
+        story.on_battle(game, result, actor)  # (a story's foes, by their tag: Expansion 6)
     game.battle = None
     game.battle_actor = None
     game.aftermath = after
@@ -1022,6 +1033,12 @@ def rest(game, kind: str) -> list[str]:
         if woke is not None:
             notes.append(f"<danger>{woke}</> Your night is broken after {hour + 1} hour{'s' if hour else ''}.")
             return notes
+        if lm is None and kind == "long" and hour == hours // 2:
+            from realmwalker.game import story
+
+            if story.on_night(game, "camp"):  # (the villain answers in the dark: Expansion 6)
+                notes.append(f"<danger>Your rest is broken after {hour + 1} hour{'s' if hour else ''}.</>")
+                return notes
         if lm is None and kind == "long":
             # A fire is seen from afar, but beasts fear it; a cold camp is harder to find. Inside a Private Sanctum
             # (E.6) nothing outside sees the fire or hears the camp.
@@ -1063,6 +1080,10 @@ def rest(game, kind: str) -> list[str]:
                 return notes
     if kind == "long" and lm is None and game.over is None and game.leader.animals:
         notes += _rustlers(game, fire)
+    if kind == "long" and lm is None and game.over is None:
+        from realmwalker.game import story
+
+        story.on_night(game, "camp")  # (what was left at the camp's edge by morning: Expansion 6)
     if kind == "long" and game.over is None:
         from realmwalker.game.gear import check_snares
 

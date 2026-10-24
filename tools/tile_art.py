@@ -703,6 +703,40 @@ def site_mark(kind: str, size: int = 32) -> Image.Image:
     return big.resize((size, size), Image.LANCZOS)
 
 
+def story_mark(kind: str, size: int = 48) -> Image.Image:
+    """The story's marks on the world map (Expansion 6): "story" - a red wax seal pressed with a claw, where a tale
+    wants you; "sign" - three claw rakes, dark and wet, where a threat has left its signs."""
+    sc = 4
+
+    def draw(d, s):
+        k = size / 32 * s
+        if kind == "story":
+            d.polygon([(6 * k, 27 * k), (9 * k, 31 * k), (13 * k, 26 * k)], fill=(150, 30, 26, 255), outline=INK)
+            d.polygon([(19 * k, 26 * k), (23 * k, 31 * k), (26 * k, 27 * k)], fill=(150, 30, 26, 255), outline=INK)
+            pts = []
+            for i in range(14):  # (the seal's poured edge, a little uneven)
+                a = i / 14 * 6.2832
+                r = (12.5 if i % 2 else 11.5) * k
+                pts.append((16 * k + r * math.cos(a), 15 * k + r * math.sin(a)))
+            d.polygon(pts, fill=(176, 36, 30, 255), outline=INK)
+            d.ellipse([7.5 * k, 6.5 * k, 24.5 * k, 23.5 * k], outline=(110, 18, 16, 255), width=max(1, s))
+            for x0 in (11, 15, 19):  # the claw pressed into it
+                d.line([(x0 * k, 9.5 * k), ((x0 - 2) * k, 20.5 * k)], fill=(96, 14, 12, 255), width=2 * s)
+                d.line([((x0 + 0.6) * k, 9.5 * k), ((x0 - 1.4) * k, 20.5 * k)], fill=(222, 92, 76, 255), width=s)
+            d.ellipse([10 * k, 7 * k, 14 * k, 9 * k], fill=(236, 140, 120, 200))
+        else:
+            for i, x0 in enumerate((8, 14, 20)):
+                top, bottom = 5 + i % 2 * 2, 25 + (i == 1) * 3
+                d.line([(x0 * k, top * k), ((x0 + 5) * k, bottom * k)], fill=INK, width=4 * s)
+                d.line([(x0 * k, top * k), ((x0 + 5) * k, bottom * k)], fill=(150, 24, 20, 255), width=2 * s)
+                d.ellipse([(x0 + 4) * k, (bottom - 0.5) * k, (x0 + 6.5) * k, (bottom + 2.5) * k],
+                          fill=(150, 24, 20, 255), outline=INK)
+
+    big = Image.new("RGBA", (size * sc, size * sc), (0, 0, 0, 0))
+    draw(ImageDraw.Draw(big), sc)
+    return big.resize((size, size), Image.LANCZOS)
+
+
 # ---------------------------------------------------------------------------- icons for the action bar
 GOLD = (226, 190, 116)
 GOLD_DARK = (120, 90, 48)
@@ -1520,6 +1554,8 @@ def all_drawn() -> dict[str, Image.Image]:
         out[f"map/{kind}"] = town_mark(kind, 64)
     for kind in ("ruin", "cave", "barrow", "tower", "lair"):
         out[f"map/{kind}"] = site_mark(kind, 48)
+    for kind in ("story", "sign"):
+        out[f"map/{kind}"] = story_mark(kind, 48)
     for name in ICON_NAMES:
         out[f"icon/{name}"] = icon(name)
     from status_art import STATUS_NAMES, status_icon  # the battle's status pictograms (10x10, drawn doubled)

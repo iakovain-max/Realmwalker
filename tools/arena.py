@@ -41,10 +41,13 @@ def party_level(cr: float) -> int:
     return max(1, min(10, int(round(cr * 1.3)) or 1))
 
 
-def setup(tables, creature: str, scenario: str, seed: int, *, second: str | None = None) -> Battle:
-    """`second`: the other foe is this creature instead (an enemy caster's escort: Expansion 3 G.1)."""
+def setup(tables, creature: str, scenario: str, seed: int, *, second: str | None = None, boss: str | None = None,
+          tier: int = 1) -> Battle:
+    """`second`: the other foe is this creature instead (an enemy caster's escort: Expansion 3 G.1). `boss`: the first
+    foe wears this boss template of villains.json at this tier (a story's finale: Expansion 6), its party a level
+    higher, as a finale is met by a party that came prepared."""
     d = tables.creatures[creature]
-    level = party_level(float(d["cr"]))
+    level = party_level(float(d["cr"])) + (1 if boss else 0)
     party = [make_hero(tables, PARTY_CLASSES[i % len(PARTY_CLASSES)], level, seed * 10 + i) for i in range(4)]
     rng = RNG(seed, f"arena/{creature}/{scenario}")
     foes = [spawn(tables, creature, rng, 1), spawn(tables, second or creature, rng, 2)]
@@ -63,6 +66,10 @@ def setup(tables, creature: str, scenario: str, seed: int, *, second: str | None
     if d.get("summon"):  # (a summoned spirit fights in its summoned shapes: each run and each foe another form)
         for i, f in enumerate(b.side(FOE)):
             _as_summoned(tables, f, creature, SCENARIOS.index(scenario) if scenario in SCENARIOS else 0, seed, i)
+    if boss:
+        from realmwalker.game.story import finale
+
+        finale.make_boss(b, b.side(FOE)[0], tables.villains["bosses"][boss], tier)
     for f in b.side(PARTY):
         f.auto = True
     b.start()
@@ -117,6 +124,10 @@ def run(b: Battle, *, max_steps: int = 3000, check=None, clock=time.perf_counter
             continue
         if e["kind"] == "attack":
             used[f"attack:{e.get('weapon')}"] += 1
+        elif e["kind"] == "legendary":
+            used[f"legendary:{e['what']}"] += 1
+        elif e["kind"] == "phase":
+            used[f"phase:{e['phase']}"] += 1
         elif e["kind"] == "cast":
             sp = e.get("spell")
             if sp in b.t.spells and sp in who.cdef.get("spells", []):

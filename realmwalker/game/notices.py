@@ -39,6 +39,13 @@ def notices(game, settlement) -> list[dict]:
                     "text": f"{esc(words['target'])} and the outlaws called {esc(words['gang'])}, for robbery and "
                             f"murder on the roads. They hide at {esc(words['site'])}. {money_text(q['reward'])} from "
                             f"the watch of {esc(settlement.name)} for the end of them, within {q['days']} days."})
+    from realmwalker.game import story
+    from realmwalker.world import threats
+
+    for t_ in threats.live(w):  # (every stirring threat within a week's walk that nobody has taken on: Expansion 6)
+        if t_.get("adventure") is None and threats.distance(w, t_, settlement.x, settlement.y) <=                 int(t.threats.get("start", {}).get("tiles", 56)) and story._can_take(game, t_):
+            out.append({"kind": "hook", "title": "A PLEA", "text": esc(story.hook_line(game, t_, settlement)),
+                        "hook": t_["id"]})
     heard = []
     for item in news.known_at(w, settlement.x, settlement.y):
         if item.get("kind") in PROCLAIMED and not item.get("player") and item["importance"] >= 2:

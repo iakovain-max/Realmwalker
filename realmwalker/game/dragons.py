@@ -127,8 +127,10 @@ def mark_slain(game, d: dict) -> None:
     year = year_of(w, game.tables)
     d["slain_year"] = year
     text = f"{game.leader.name} slew the dragon {d['name']}"
-    w.history.append({"year": year, "kind": "dragon_slain", "text": text, "factions": [], "places": [],
-                      "figures": [], "importance": 5, "player": True})
+    from realmwalker.world.history import remember
+
+    remember(w, year, "dragon_slain", text, importance=5, sites=[d["lair"]],
+             figures=[d["figure"]] if d.get("figure") in w.figures else [], player=True)
     amounts = {}
     for s in tribute_towns(w, d, 20.0):
         s.status.pop("tribute", None)

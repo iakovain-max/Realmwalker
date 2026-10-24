@@ -1,0 +1,89 @@
+"""The words a story is written with (docs/ADVENTURES.md §8.8): real names everywhere - the villain's name and kind,
+its home, the towns, the cast, a victim of the history and the year they died, what it fears - for textgen's
+templates and nested tables (adventures.json "words")."""
+
+from __future__ import annotations
+
+
+def for_adventure(game, adv: dict | None) -> dict:
+    from realmwalker.game.story import cast, places
+    from realmwalker.world import threats
+
+    w = game.world
+    out = {"hero": game.leader.name.split()[0]}
+    if adv is None:
+        return out
+    t = threats.records(w).get(adv["threat"])
+    if t is not None:
+        name = threats.villain_name(w, t)
+        fig = threats.villain_figure(w, t)
+        out["villain"] = name
+        out["villain_short"] = fig.name if fig is not None else name
+        out["beast"] = _beast_word(game, fig) if fig is not None else "beast"
+        victim = _victim(w, fig)
+        out["victim"] = victim[0]
+        out["victim_year"] = victim[1]
+        temper = game.tables.villains.get("tempers", {}).get(t["villain"].get("temper") or "", {})
+        if temper.get("omens"):
+            rng = w.rng.child(f"omen/{adv['id']}/{game.moment.total_days}")
+            out["omen"] = rng.choice(temper["omens"])
+    for name, p in adv["places"].items():
+        if places.exists(w, p):
+            out[name] = places.name(w, p)
+    home = adv["places"].get("home")
+    if home:
+        x, y = places.xy(w, home)
+        area = w.area_at(x, y)
+        out["area"] = area.name if area is not None else "the hill country"
+    for role in adv["cast"]:
+        out[role] = cast.describe(game, adv, role)
+    wk = weakness(game, adv)
+    if wk is not None:
+        out["weakness"] = wk["name"]
+        rng = w.rng.child(f"lore/{adv['id']}")
+        from realmwalker.core import textgen
+
+        out["weakness_lore"] = textgen.fill(rng.choice(wk["lore"]), rng, {}, out)
+    return out
+
+
+def weakness(game, adv: dict) -> dict | None:
+    wid = (adv.get("hidden") or {}).get("weakness", {}).get("weakness")
+    for lst in game.tables.villains.get("weaknesses", {}).values():
+        for x in lst:
+            if x["id"] == wid:
+                return x
+    return None
+
+
+def _beast_word(game, fig) -> str:
+    from realmwalker.game import past
+
+    try:
+        return past.beast_word(game, fig)
+    except (KeyError, AttributeError):
+        return "beast"
+
+
+def _victim(world, fig) -> tuple[str, str]:
+    from realmwalker.game.past import year_text
+
+    if fig is not None:
+        for k in getattr(fig, "kills", []):
+            v = world.figures.get(k)
+            if v is not None:
+                return v.full_name(), year_text(v.died) if v.died is not None else "the old days"
+    return "more people than anyone has counted", "the old days"
+
+
+KEY_WORDS = {"weakness": "what it fears", "means": "the means to use it", "bait": "the bait it could not pass by",
+             "quiet": "it does not know you have come", "ally": "{ally} at your side"}
+
+
+def key_text(game, adv: dict, k: str) -> str:
+    from realmwalker.core import textgen
+
+    words = for_adventure(game, adv)
+    if k == "weakness" and "weakness" in words:
+        return f"it fears {words['weakness']}"
+    return textgen.fill(KEY_WORDS.get(k, k.replace("_", " ")), game.world.rng, {}, words)

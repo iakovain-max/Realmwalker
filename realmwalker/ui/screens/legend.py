@@ -1,4 +1,4 @@
-"""Map legend: what each thing on the maps is, with the picture the map draws for it."""
+"""Map key: what each thing on the maps is, with the picture the map draws for it."""
 
 from __future__ import annotations
 
@@ -53,7 +53,7 @@ def legend_rows(tables, atlas=None) -> list[Row]:
 
 
 class LegendScreen(Screen):
-    title = "Map legend"
+    title = "Map key"
     sound_open = "ui_page"
 
     def __init__(self, app) -> None:

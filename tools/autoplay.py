@@ -300,6 +300,8 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
                     # (Expansion 3 F.3: a draconic spirit's resistance is shared only while its caster holds it)
                     fail(f"{f.name} still shares a draconic spirit's resistance without holding Summon Dragon")
         _check_factions(game, fail)
+        _check_threats(game, fail)
+        _check_adventures(game, fail)
         _check_law(game, fail)
         _check_quests(game, fail)
         _check_magic(game, fail)
@@ -313,6 +315,73 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
             fail("the leader is dead but the game goes on")
         if game.over is None and any(not c.alive for c in game.party) and b is None and game.aftermath is None:
             fail("a dead companion is still in the party")
+
+
+def _check_adventures(game, fail) -> None:
+    """Expansion 6: every tale points at its threat and real places; a live tale's chapter is open, its live steps
+    have targets that exist (or a repair), its cast's people exist or wait for their town; a waiting beat exists; the
+    records are JSON-native."""
+    import json
+
+    from realmwalker.game import story
+    from realmwalker.game.story import cast, places
+    from realmwalker.world import threats
+
+    w = game.world
+    for aid, adv in w.politics.get("adventures", {}).items():
+        if adv["id"] != aid or adv["threat"] not in threats.records(w):
+            fail(f"tale {aid} has no threat")
+            continue
+        if adv["state"] == "active":
+            ch = story.chapter(adv)
+            if ch is None or ch["state"] != "open":
+                fail(f"tale {aid} is under way with no open chapter")
+            for name, pl in adv["places"].items():
+                if not places.exists(w, pl):
+                    fail(f"tale {aid}: its place {name} does not exist")
+            for role, entry in adv["cast"].items():
+                if "npc" in entry and entry["npc"] not in w.npcs:
+                    fail(f"tale {aid}: its {role} is nobody")
+                if cast.pending(entry) and not any(r["adv"] == aid and r["role"] == role for r in
+                                                   w.politics.get("story_people", {}).get(f"S{entry['settlement']}", [])):
+                    fail(f"tale {aid}: its {role} waits for a town that will never give them")
+    d = w.politics.get("director") or {}
+    if d.get("pending") and d["pending"]["beat"] not in game.tables.beats:
+        fail(f"a beat waits that does not exist ({d['pending']['beat']})")
+    for key in ("threats", "adventures", "director", "story_sites", "story_people"):
+        rec = w.politics.get(key)
+        if rec is not None and json.loads(json.dumps(rec)) != rec:
+            fail(f"politics[{key!r}] is not JSON-native")
+
+
+def _check_threats(game, fail) -> None:
+    """Expansion 6: every threat points at real places and a real villain; a live one's villain still lives and its
+    clock is on a real stage; a doom never takes a settlement to nobody."""
+    from realmwalker.world import threats
+
+    w = game.world
+    kinds = game.tables.threats.get("kinds", {})
+    for tid, t in threats.records(w).items():
+        if t["id"] != tid or t["state"] not in threats.STATES or t["kind"] not in kinds:
+            fail(f"threat {tid} is broken ({t.get('state')}, {t.get('kind')})")
+            continue
+        home = t["home"]
+        if not (0 <= home.get("site", 0) < len(w.sites) and 0 <= home.get("settlement", 0) < len(w.settlements)):
+            fail(f"threat {tid} has a home that does not exist")
+        if any(not 0 <= s < len(w.settlements) for s in t["stakes"]):
+            fail(f"threat {tid} threatens a settlement that does not exist")
+        stage = t["scheme"]["stage"]
+        if t["state"] in threats.LIVE:
+            if not 0 <= stage < len(kinds[t["kind"]]["stages"]):
+                fail(f"threat {tid} is on a stage its scheme does not have ({stage})")
+            fig = threats.villain_figure(w, t)
+            if fig is not None and not fig.alive:
+                fail(f"threat {tid} goes on though its villain is dead")
+        elif t["state"] == "ended" and not t.get("outcome"):
+            fail(f"threat {tid} ended without an outcome")
+    for s in w.settlements:
+        if s.population <= 0:
+            fail(f"{s.name} has nobody left in it")
 
 
 def _check_factions(game, fail) -> None:
@@ -334,6 +403,8 @@ def _check_factions(game, fail) -> None:
                 break
         if f.active and f.leader not in w.figures:
             fail(f"{f.name} has no leader")
+        elif f.active and f.kind in ("bandit_gang", "cult") and not w.figures[f.leader].alive:
+            fail(f"{f.name} is led by the dead")
     for war in w.wars:
         if war.get("attacker") not in w.factions or war.get("defender") not in w.factions:
             fail(f"a war between factions that do not exist: {war}")

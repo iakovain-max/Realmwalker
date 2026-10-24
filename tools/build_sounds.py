@@ -373,6 +373,29 @@ def made_sounds(folder: Path) -> dict[str, list[np.ndarray]]:
         at = int(0.3 * RATE * i)
         walk[at:at + len(s)] += s * (1.0 - 0.18 * i)
     out["stairs"] = [fft_filter(walk, RATE, hp=60, lp=7000)]
+    # The story's (Expansion 6), from their own seed so the sounds above stay as they were.
+    srng = np.random.default_rng(606)
+    # A chapter opens: one low drum, then a slow minor strum, as a tale is taken up.
+    beat = drum(0.6, 40, 96) * 0.7
+    strummed = strum(["A2", "E3", "A3", "C4", "E4"], 0.11, 0.9, srng, bright=0.35, last_ring=1.2)
+    chapter = np.zeros(int(0.25 * RATE) + len(strummed))
+    chapter[: len(beat)] += beat
+    chapter[int(0.25 * RATE):] += strummed
+    out["chapter"] = [room(chapter, srng, wet=0.22, seconds=0.5)]
+    # A truth comes out: a falling minor line ringing over a bell.
+    falling = strum(["D4", "A3", "F3", "D3"], 0.13, 0.9, srng, bright=0.4, last_ring=1.3)
+    bell = chime([(note("D5"), 0.0), (note("A4"), 0.4)], 1.7) * 0.3
+    reveal = np.zeros(max(len(falling), len(bell)))
+    reveal[: len(falling)] += falling
+    reveal[: len(bell)] += bell
+    out["reveal"] = [room(reveal, srng, wet=0.25, seconds=0.5)]
+    # A sign of a threat: a far drum and an uneasy bell (a tritone), quiet and dark.
+    far = fft_filter(drum(0.8, 36, 70), RATE, lp=400) * 0.8
+    uneasy = chime([(note("C5"), 0.2), (note("F#5"), 0.28)], 1.4) * 0.22
+    sign = np.zeros(max(len(far), len(uneasy)))
+    sign[: len(far)] += far
+    sign[: len(uneasy)] += uneasy
+    out["sign"] = [room(fft_filter(sign, RATE, lp=3500), srng, wet=0.3, seconds=0.6)]
     return out
 
 

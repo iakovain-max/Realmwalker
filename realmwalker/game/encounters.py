@@ -302,6 +302,8 @@ def move_actors(game, lm) -> LocalActor | None:
     for a in lm.actors:
         a.seen = bool(fov[a.x, a.y])
         dist = max(abs(a.x - p.lx), abs(a.y - p.ly))
+        if a.creatures and (getattr(a.creatures[0], "story", None) or {}).get("role") == "villain":
+            continue  # (a story's boss waits in its own room for the hero: Expansion 6)
         if not a.alert and dist <= ALERT_RADIUS:
             rng = game.world.rng.child(f"notice/{lm.key}/{a.id}/{game.world.time}")
             chance = notice_chance(game, a, dist)

@@ -81,3 +81,32 @@ def test_you_can_walk_from_the_town_towards_the_work(tables, seed, monkeypatch):
             break
     now = abs(spot[0] - game.player.x) + abs(spot[1] - game.player.y)
     assert now < was, f"walking gets you closer to the work ({was} -> {now})"
+
+
+@pytest.mark.story
+@pytest.mark.parametrize("seed", SEEDS)
+def test_a_new_life_is_offered_a_tale_on_its_first_day(tables, seed):
+    """Expansion 6 (docs/ADVENTURES.md §9, the first hour): within its first game day a new life is offered a hook -
+    a beat that asks the hero to take a threat on, shown by the game screen as soon as nothing else waits."""
+    from realmwalker.game.story import beats
+
+    world = cached_world(WorldOptions("Firstland", seed, "small"), tables)
+    b = CharacterBuilder(tables, RNG(seed, "hero"))
+    b.set_race("human")
+    b.set_class("fighter")
+    b.set_background("soldier")
+    game = new_game(world, tables, b.build())
+    game.survival = False
+    began = game.world.time
+    offered = None
+    for _ in range(24):
+        rec = beats.pending(game)
+        if rec is not None and rec["beat"] == "story_hook":
+            offered = rec
+            break
+        if rec is not None:
+            beats.director(game.world)["pending"] = None  # (another beat: let it pass)
+        game.pass_time(60, "rest")
+    assert offered is not None, "no tale was offered on the first day"
+    assert offered["words"]["threat"] in game.world.politics["threats"]
+    assert game.world.time - began <= 24 * 60

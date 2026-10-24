@@ -143,6 +143,7 @@ def check_cross_references(files: dict[str, Any]) -> list[str]:
     errors.extend(_check_wonder_refs(files))
     errors.extend(_check_town_refs(files))
     errors.extend(_check_people_refs(files))
+    errors.extend(_check_story_refs(files))
     regions = names.get("regions", {})
     for kind, patterns in regions.items():
         for pattern in patterns:
@@ -151,6 +152,33 @@ def check_cross_references(files: dict[str, Any]) -> list[str]:
                     errors.append(f"data/place_names.json: regions.{kind} pattern {pattern!r} uses {{{slot}}}, "
                                   f"which is not a list in 'regions'.")
     errors.extend(_check_geo(names))
+    return errors
+
+
+def _check_story_refs(files: dict[str, Any]) -> list[str]:
+    """Expansion 6: the story files name each other and the creatures (what they name in code is story/check.py's)."""
+    errors: list[str] = []
+    kinds = {k: v for k, v in files.get("threats.json", {}).get("kinds", {}).items() if not k.startswith("_")}
+    blueprints = {k: v for k, v in files.get("adventures.json", {}).get("blueprints", {}).items()
+                  if not k.startswith("_")}
+    villains = files.get("villains.json", {})
+    tempers = villains.get("tempers", {})
+    moves = villains.get("moves", {})
+    for kid, kind in kinds.items():
+        for b in kind["blueprints"]:
+            if b not in blueprints:
+                errors.append(f"data/threats.json: {kid} names the blueprint '{b}', which adventures.json does not have.")
+        for t in kind["tempers"]:
+            if t not in tempers:
+                errors.append(f"data/threats.json: {kid} names the temper '{t}', which villains.json does not have.")
+    for bid, bp in blueprints.items():
+        for k in bp["from"]:
+            if k not in kinds:
+                errors.append(f"data/adventures.json: {bid} is made from '{k}', which is not a kind of threat.")
+    for tid, temper in tempers.items():
+        for m in temper["moves"]:
+            if m not in moves:
+                errors.append(f"data/villains.json: the temper {tid} names the move '{m}', which is not in moves.")
     return errors
 
 

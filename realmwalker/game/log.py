@@ -16,6 +16,7 @@ CATEGORY_COLOR = {
     "system": "dim",
     "magic": "magic",
     "speech": "name",
+    "story": "title",  # (a tale: Expansion 6)
 }
 MAX_MESSAGES = 600
 

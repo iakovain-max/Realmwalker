@@ -160,6 +160,68 @@ def smoke_script():
     shots[frame - 4] = "journal"
     press("escape")
 
+    def tale(app):
+        """Expansion 6: a beast's tale offered (its hook beat), so the tour sees the story's screens."""
+        from realmwalker.game import story
+        from realmwalker.game.story import beats, forge
+        from realmwalker.ui.screens.game_screen import GameScreen
+        from realmwalker.world import threats
+
+        game = app.game
+        while app.screens and not isinstance(app.top, GameScreen):
+            app.pop()
+        if game is None:
+            return
+        t = next((t for t in threats.records(game.world).values() if t["kind"] == "beast" and t["state"] != "ended"
+                  and t.get("adventure") is None and forge.fitting(game, t)), None)
+        if t is None:
+            return
+        if t["state"] == "dormant":
+            threats.stir(game.world, app.tables, t, game.world.rng.child("smoke-tale"), day=0)
+        beats.director(game.world)["pending"] = None
+        story.offer_hook(game, t)
+
+    def ending(app):
+        """The finale's card, then what became of them."""
+        from realmwalker.game import story
+
+        game = app.game
+        advs = story.active(game) if game is not None else []
+        if not advs:
+            return
+        game.finale = {"adv": advs[0]["id"], "actor": -1}
+
+    def epilogue(app):
+        from realmwalker.game import story
+
+        game = app.game
+        advs = story.active(game) if game is not None else []
+        if not advs:
+            return
+        game.finale = None
+        advs[0]["epilogue"] = [{"about": "place", "text": "The village sleeps with its doors unbarred again."},
+                               {"about": "hero", "text": "You went on, a little more than you were."}]
+        game.renown.legend["offered"] = ["the Hunter"]
+        game.epilogue = {"adv": advs[0]["id"]}
+
+    steps.append((frame, tale))
+    frame += 8
+    shots[frame - 2] = "beat"
+    press("1", "enter", gap=6)
+    frame += 4
+    shots[frame - 2] = "title_card"
+    press("enter", "j", gap=6)
+    shots[frame - 2] = "adventures"
+    press("escape")
+    steps.append((frame, ending))
+    frame += 8
+    shots[frame - 2] = "finale"
+    press("escape")
+    steps.append((frame, epilogue))
+    frame += 8
+    shots[frame - 2] = "epilogue"
+    press("enter", "2", "escape", gap=6)
+
     def underground(app):
         from realmwalker.game import dungeon
         from realmwalker.ui.screens.game_screen import GameScreen

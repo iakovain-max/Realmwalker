@@ -11,7 +11,7 @@ import numpy as np
 
 from realmwalker.ui.gfx import dolls
 from realmwalker.ui.gfx.paint import CANON, OVERVIEW, ChunkCache, WorldPainter
-from realmwalker.ui.gfx.scene import Clip, Image, Lines, Rect, Text, tile_batch
+from realmwalker.ui.gfx.scene import Clip, Image, Lines, Rect, Sprite, Text, tile_batch
 
 STEP_SECONDS = 0.16
 NIGHT_TINT = (96, 108, 150)
@@ -279,6 +279,13 @@ class WorldView:
             r = ppc * (1.3 + 0.25 * pulse)
             canvas.under(Image("ring", _ring_image, (sx + ppc / 2 - r, sy + ppc / 2 - r, 2 * r, 2 * r),
                                rgba=(255, 200, 90, int(140 + 90 * pulse))))
+        # Tales: a seal where a tale wants you, claw marks at a den whose signs you have heard (Expansion 6).
+        from realmwalker.game import story
+
+        mark = max(18.0, ppc * 1.15)
+        for qx, qy, kind in story.map_signs(game):
+            sx, sy = self.cell_px(qx, qy)
+            canvas.under(Sprite(f"map/{kind}", sx + ppc / 2 - mark / 2, sy - mark * 0.75, mark, mark))
         # The road ahead.
         path = route if route is not None else (game.travel.path if game.travel is not None else None)
         if path:

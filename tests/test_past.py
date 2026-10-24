@@ -336,3 +336,111 @@ def test_a_treasure_of_the_history_lies_where_the_history_left_it(game):
     found = [it for pile in game.local.items.values() for it in pile if it.magic and it.magic.get("source") == "history"]
     assert found and found[0].magic["title"].lower() == a["name"].lower()
     assert a["found"] and any(e.get("player") and e["kind"] == "artifact_found" for e in w.history)
+
+
+# ---------------------------------------------------------------------------- deeds that stick (Expansion 6 A.1)
+def _down_to_the_bottom(game, site):
+    stand_on(game, site)
+    game.enter_local()
+    dungeon.descend(game, 1)
+    deepest = int(game.local.meta.get("depth", 1))
+    while int(game.local.meta.get("level", 1)) < deepest:
+        dungeon.descend(game, int(game.local.meta["level"]) + 1)
+
+
+def _a_den(game, kind):
+    from realmwalker.world import factions as fx
+
+    w = game.world
+    dens = [f for f in fx.active_factions(w, kind) if 0 <= f.site < len(w.sites) and past.den_holder(game, w.sites[f.site])
+            and fx.leader_of(w, f) is not None and fx.leader_of(w, f).alive]
+    if not dens:
+        pytest.skip(f"no {kind} den in this world")
+    return dens[0], w.sites[dens[0].site]
+
+
+@pytest.mark.parametrize("kind", ["bandit_gang", "cult"])
+def test_a_den_s_master_is_its_real_leader_and_killing_them_breaks_it(game, kind):
+    from realmwalker.world import factions as fx
+
+    w = game.world
+    holder, site = _a_den(game, kind)
+    leader = fx.leader_of(w, holder)
+    _down_to_the_bottom(game, site)
+    lm = game.local
+    boss = [a for a in lm.actors if a.group == quests.boss_of(lm)]
+    assert boss, [a.group for a in lm.actors]
+    named = [c for c in boss[0].creatures if getattr(c, "named", False)]
+    assert named and named[0].name == leader.full_name()
+    lm.actors.remove(boss[0])  # (the band beaten)
+    past.on_battle(game, result(dead=named[:1]))
+    assert not leader.alive and leader.died_at == f"X{site.id}"
+    assert not holder.active, "the leader dead and the den taken: the gang or cult is finished"
+    assert site.faction != holder.id
+    assert any(e.get("player") and e["kind"] == "faction_broken" for e in w.history)
+    new = fx.leader_of(w, holder)
+    assert not (holder.active and new is not None and not new.alive)  # never led by the dead
+
+
+def test_a_leader_killed_but_the_den_still_held_leaves_the_gang_standing_until_it_is_taken(game):
+    from realmwalker.world import factions as fx
+
+    w = game.world
+    holder, site = _a_den(game, "bandit_gang")
+    leader = fx.leader_of(w, holder)
+    _down_to_the_bottom(game, site)
+    lm = game.local
+    named = [c for a in lm.actors for c in a.creatures if getattr(c, "named", False)]
+    past.on_battle(game, result(dead=named[:1]))  # (the captain fell, but the band still holds the bottom)
+    assert not leader.alive
+    if holder.active:  # (a gang may also break up of itself when its captain dies)
+        new = fx.leader_of(w, holder)
+        assert new is not None and new.alive, "a new captain, never one led by the dead"
+        lm.actors = [a for a in lm.actors if a.group != quests.boss_of(lm)]
+        past.on_arrive_dungeon(game, lm, site)
+        assert not holder.active
+
+
+def test_hunting_work_prefers_a_real_beast_of_the_history(game, monkeypatch):
+    w = game.world
+    site, beast = a_lair(game)
+    town = min(w.settlements, key=lambda s: abs(s.x - site.x) + abs(s.y - site.y))
+    if not 3 <= quests.dist(site, town) <= 16:
+        pytest.skip("no town within reach of a lair")
+    monkeypatch.setattr(quests, "beast_ratio", lambda game, group: 0.1)
+    npc = SimpleNamespace(settlement=town.id, id=-1, name="Someone", flags={})
+    monkeypatch.setattr(quests, "base_quest", lambda game, npc, tpl, rng, **kw: {"template": tpl, "words": {},
+                                                                                  "target": {}})
+    q = quests._hunt_beast(game, npc, RNG(5))
+    assert q is not None and q["target"].get("beast") is not None
+    fig = w.figures[q["target"]["beast"]]
+    assert fig.alive and fig.kind == "beast" and q["words"]["beast"] == past.beast_title(fig)
+
+
+def test_the_days_run_without_a_job_or_a_companion(game, monkeypatch):
+    from realmwalker.game import uniques
+    from realmwalker.world import news
+
+    called = []
+    monkeypatch.setattr(uniques, "daily", lambda g: called.append("uniques"))
+    monkeypatch.setattr(news, "prune", lambda world, force=False: called.append("prune"))
+    from realmwalker.game import news as game_news
+
+    monkeypatch.setattr(game_news, "prune", lambda world, force=False: called.append("prune"))
+    assert not game.quests and not game.party[1:]
+    game.pass_time(24 * 60, "rest")
+    assert "uniques" in called and "prune" in called
+
+
+def test_a_slain_dragon_is_written_into_the_history_with_an_id(game):
+    from realmwalker.game import dragons
+
+    w = game.world
+    living = [d for d in w.politics.get("dragons", []) if d.get("alive")]
+    if not living:
+        pytest.skip("no dragon")
+    d = living[0]
+    before = int(w.politics.get("next_event", len(w.history)))
+    dragons.mark_slain(game, d)
+    e = next(e for e in reversed(w.history) if e["kind"] == "dragon_slain")
+    assert e["id"] >= before and e.get("player") and d["lair"] in e.get("sites", [])

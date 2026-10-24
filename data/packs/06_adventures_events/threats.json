@@ -1,0 +1,185 @@
+{
+  "_comment": "Threats (docs/ADVENTURES.md §5.1, §8.3; world/threats.py): kinds of danger with a will behind them, made from what the history left. budget: how many may be stirring or active at once, by world size. near_hero: at most `untaken` of them within `tiles` of the hero that the hero has not taken on. start: at least `tier_one` tier-1 threats within `tiles` of a starting town (a week's walk is about 56 tiles). stage_days: how long a scheme's stage lasts, by tier. sign_lead_days: a stage's first sign comes at least this long before its effects. target_level: the party level a finale is measured for, by tier. tier_by_danger: [least danger of the home, tier]. wake: a dormant threat's weekly chance to stir by itself. emptied: a doomed settlement keeps `floor` of its people and comes back after `rebuild_days`. hunters: the history's beast-hunting heroes go on hunting (a weekly chance, more by fame). interlude_stages: the most stages a threat moves while nobody plays.",
+  "budget": {
+    "small": [
+      3,
+      5
+    ],
+    "medium": [
+      5,
+      8
+    ],
+    "large": [
+      8,
+      12
+    ]
+  },
+  "near_hero": {
+    "tiles": 30,
+    "untaken": 2
+  },
+  "start": {
+    "tiles": 56,
+    "tier_one": 2
+  },
+  "stage_days": {
+    "1": [
+      10,
+      20
+    ],
+    "2": [
+      15,
+      30
+    ],
+    "3": [
+      20,
+      40
+    ],
+    "4": [
+      30,
+      60
+    ]
+  },
+  "sign_lead_days": 7,
+  "target_level": {
+    "1": 3,
+    "2": 7,
+    "3": 13,
+    "4": 18
+  },
+  "tier_by_danger": [
+    [
+      0,
+      1
+    ],
+    [
+      4,
+      2
+    ],
+    [
+      7,
+      3
+    ],
+    [
+      9,
+      4
+    ]
+  ],
+  "wake": 0.03,
+  "emptied": {
+    "floor": 0.2,
+    "rebuild_days": 90
+  },
+  "hunters": {
+    "chance": 0.01,
+    "per_fame": 0.002
+  },
+  "interlude_stages": 1,
+  "kinds": {
+    "beast": {
+      "name": "the beast",
+      "from": "lairs",
+      "tiers": [
+        1,
+        3
+      ],
+      "tempers": [
+        "bestial"
+      ],
+      "blueprints": [
+        "beast"
+      ],
+      "reach": 14,
+      "stages": [
+        {
+          "id": "spoor",
+          "days": [
+            10,
+            20
+          ],
+          "signs": [
+            "Herders above {place} say something has been at the flocks again: whole ewes taken, the fences pushed flat.",
+            "In {area} they are finding sheep torn open and left, and tracks too big for any wolf, going up towards {home}.",
+            "A shepherd of {place} swears he saw {villain} on the ridge at dusk, and has not let his boys out since.",
+            "Dogs will not go near the woods below {home} now. The people of {place} have started to keep them in at night.",
+            "Charcoal-burners have left their pits in {area}: something circled the fires two nights running, and it was not hungry for bread."
+          ],
+          "flavour": [
+            "Here and there along the track, tufts of wool caught on the thorns, and dark patches in the grass that the flies like.",
+            "A dead ewe lies by the path, opened and left. Whatever did it ate only the best of it.",
+            "Deep prints in the mud by the stream, and the bank torn where something heavy went up it."
+          ]
+        },
+        {
+          "id": "killings",
+          "days": [
+            10,
+            20
+          ],
+          "effects": [
+            [
+              "status",
+              "beast",
+              "nearest"
+            ]
+          ],
+          "signs": [
+            "{villain} has killed a man of {place}: a carter on the hill road, found in the morning with his ox beside him.",
+            "Two children of {place} went for firewood and one came back. They are saying {villain} is down from {home}.",
+            "{place} keeps its gates shut by day now. {villain} took a woman at the well, and nobody saw it come.",
+            "The bell at {place} rang all night: {villain} was among the houses, and a family is gone."
+          ]
+        },
+        {
+          "id": "hunger",
+          "days": [
+            10,
+            20
+          ],
+          "effects": [
+            [
+              "danger",
+              1
+            ]
+          ],
+          "signs": [
+            "Nobody walks the roads of {area} after dark now. {villain} has taken travellers within sight of {place}.",
+            "Farms round {place} stand empty, their people crowded into the village. {villain} grows bolder every week.",
+            "The lord's men went up to {home} after {villain}, and two of them came back. The country round is no one's now.",
+            "They are leaving the outlying farms of {area}. {villain} has the taste for people, the old women say, and will not stop."
+          ]
+        },
+        {
+          "id": "doom",
+          "days": [
+            7,
+            14
+          ],
+          "doom": true,
+          "effects": [
+            [
+              "emptied",
+              "nearest"
+            ],
+            [
+              "danger",
+              1
+            ]
+          ],
+          "signs": [
+            "{place} is packing its carts. Whoever can walk is leaving before {villain} comes again.",
+            "Refugees from {place} are on the roads with what they could carry. {villain} has had the last of their patience and their kin.",
+            "The headman of {place} has given up: the village will be left by the next new moon, and {villain} can have it.",
+            "There is talk in {area} of nothing but {villain}. {place} cannot hold another month of it."
+          ]
+        }
+      ],
+      "hooks": [
+        "{town} pays good silver for the hide of {villain}, that lairs at {home}, {where}.",
+        "Wanted: someone to put an end to {villain}. The people of {town} will feed and house whoever tries. It lairs at {home}, {where}.",
+        "{villain} has killed again. Anyone with the stomach for a hunt, ask for the headman of {town}. Its lair is {home}, {where}.",
+        "A widow of {town} will give everything she has to whoever kills {villain}. It sleeps at {home}, {where}."
+      ]
+    }
+  }
+}

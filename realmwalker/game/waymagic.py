@@ -11,7 +11,7 @@ places it can reach (`places`), and `travel` takes the party there.
 - recall (Word of Recall): cast standing in a temple, it makes that town the sanctuary (`SANCTUARY` in the caster's
   effects); cast anywhere after, it takes the caster and five more back to it.
 - plants (Transport via Plants): from woodland to a town visited that has woodland beside it.
-- shift, astral, gate_far (Plane Shift, Astral Projection, Gate): until the planes come (Expansion 26), the way out of
+- shift, astral, gate_far (Plane Shift, Astral Projection, Gate): until the planes come (Expansion 27), the way out of
   the world and back in: Plane Shift arrives at a city's circle known, or somewhere near any other known town (off
   target); Astral Projection and Gate arrive where they were aimed, at any known town. Astral Projection spends a
   jacinth and a silver bar of 100 GP (four bars of 25) for each traveller.

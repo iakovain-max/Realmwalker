@@ -54,6 +54,9 @@ def die(game) -> dict:
     kept = record_for(game)
     if kept is not None:
         return kept
+    from realmwalker.game import story
+
+    story.on_death(game)  # (the hero's tales are orphaned; the threats go on: Expansion 6)
     w = game.world
     c = game.leader
     over = game.over or {}
