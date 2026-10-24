@@ -45,6 +45,38 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-10-24 (evening): Adventures & Events Part A, first half — the story engine — branch `dlc/06-adventures-events` (not yet on main)
+
+Anton's new Expansion 6 (it replaces Tieflings & Warlocks as number 6) began. Nothing of it is on `main` yet: Part A
+goes there when all of it is done and checked.
+
+**What is different when you play (on the branch)**
+- The world's named beasts are **threats** now: each lives in the history's lair, and a few of them stir. A stirring
+  beast has a scheme: first the herders find its kills (news), then it kills people and a village keeps its gates
+  shut, then the roads round it empty and its country grows more dangerous, and at last the nearest hamlet is left
+  by its people. An emptied place keeps a few of its folk and fills again after a season. The history's own
+  beast-hunters sometimes bring one down while you play, and you hear of it.
+- A new character is offered a tale on the first day: **The Beast of {place}**. Taking it on opens a chapter card,
+  and the journal has a new first tab, **Adventures**, with its chapters, what to do now and where, the people of
+  it, what you have found and the beast's clock.
+- The tale: go to its last kill and read it (a page of words with choices and a skill check that can only cost you
+  time), hear the one who saw it, learn what it fears (from the priest of a town with a temple, from the hunter who
+  will come with you, by studying the kill, or by magic), carry the means, then choose: bait it or track it - and it
+  comes. Wounded, it runs to its den. At the den, choose how to go in; at the bottom, the beast's card shows its name,
+  its first words and what you know before the fight. The beast is a boss now: more hit points, a Legendary
+  Resistance, blows and moves out of turn, and a frenzy at half its hit points. What you found changes the fight:
+  fire hurts a troll twice over, the bait or a quiet approach catches it unready, the hunter fights beside you.
+- When it dies the world keeps it: the history, the news, the region safer, fame, and *What became of them* - a page
+  for the town, the one who asked, the hunter, the one who saw - and the epithet the tale gives you, to take or leave.
+- Notice boards post every stirring beast within a week's walk as a plea you can answer. The beast may answer you
+  too: an omen on the road, a carcass left at your camp by morning, a rush at the fire in the night.
+- The map key screen is called *Map key* now (Legend will mean the hero's Legend).
+
+**How to see it**: a **new world** is needed (saves are format 19). Not merged yet: the branch only.
+
+**Still to do in Part A** (next session): the storybook check and the words' floors, the pictures and sounds, the
+storyplay tool and the first-hour measure, the fresh review, then `main`.
+
 ### Session, 2026-10-18 (night): Schools & Domains Part E — robes, hats and the rest; **released as 1.5.0** — branch `dlc/05-schools-domains`
 
 Built by the relay builder realmwalker-b. Saves do not change: worlds and characters you already have keep working.
