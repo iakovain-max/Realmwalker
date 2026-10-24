@@ -298,6 +298,61 @@ def smoke_script():
         shots[frame] = name
         frame += 4
 
+    def burned(app):
+        """Expansion 6: a town burned by a war, walked into (charred shells, ash in the streets), and a letter's
+        page."""
+        from realmwalker.ui.screens.game_screen import GameScreen
+        from realmwalker.world import marks
+
+        game = app.game
+        if game is None:
+            return
+        while app.screens and not isinstance(app.top, GameScreen):
+            app.pop()
+        towns = [s for s in game.world.settlements if s.kind in ("town", "village")]
+        if not towns:
+            return
+        s = max(towns, key=lambda s: s.population)
+        marks.add(game.world, s, "burned", game.moment.total_days, app.tables)
+        game.world.local_maps.pop(f"{s.x},{s.y}", None)
+        game.player.local_key = None
+        game.player.x, game.player.y = s.x, s.y
+        game.enter_local()
+        from realmwalker.game.story import beats
+
+        d = beats.director(game.world)
+        d["pending"], d["scene"] = None, None  # (no tale at its door for this picture)
+        cells = ((game.local.meta.get("marks") or {}).get("burned") or {}).get("cells") or []
+        if cells:
+            lm = game.local
+            walk = game.tables.terrain.walk[game.remap_for(lm)[lm.terrain]]
+            x, y = cells[len(cells) // 2][:2]
+            spot = next(((x + dx, y + dy) for r in range(2, 9) for dx in range(-r, r + 1) for dy in range(-r, r + 1)
+                         if lm.in_bounds(x + dx, y + dy) and walk[x + dx, y + dy]
+                         and lm.building_at(x + dx, y + dy) is None), None)
+            if spot:
+                game.player.lx, game.player.ly = spot
+
+    def letter(app):
+        from realmwalker.game import letters
+
+        game = app.game
+        if game is not None:
+            game.letter = letters.write(game, sender="Gyda, headman of the burned town", hand="plain", key=1,
+                                        lines=["To whoever comes through the gate,",
+                                               "They burned the mill first, then the houses along the river. We "
+                                               "have nothing left to pay you with but our thanks.",
+                                               "If you find who did it, tell them we remember."])
+
+    steps.append((frame, burned))
+    frame += 10
+    shots[frame] = "burned_town"
+    frame += 4
+    steps.append((frame, letter))
+    frame += 8
+    shots[frame] = "letter"
+    press("escape")
+
     def surface(app):
         if app.game is not None:
             app.game.player.local_key = None

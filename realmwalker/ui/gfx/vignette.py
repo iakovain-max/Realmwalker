@@ -340,6 +340,13 @@ def _air(canvas, kind, x, y, w, h, now, ambient) -> None:
 
 
 # ---------------------------------------------------------------------------- choosing
+SCARRED = ("burning", "burned", "sacked", "emptied")  # (a place that has been through these is a burned street)
+
+
+def _scarred(s) -> bool:
+    return s is not None and any(m in s.status for m in SCARRED)
+
+
 def for_place(game, place: dict | None) -> str:
     """The backdrop for a story's place: a town's square, a barrow or a ruin, a ford, the road."""
     if not place or game is None:
@@ -347,6 +354,8 @@ def for_place(game, place: dict | None) -> str:
     w = game.world
     if "settlement" in place:
         part = place.get("part")
+        if part not in ("inn", "hall", "temple") and _scarred(w.settlements[int(place["settlement"])]):
+            return "burned_street"
         return {"inn": "inn", "hall": "hall", "temple": "hall"}.get(part, "square")
     if "site" in place:
         site = w.sites[int(place["site"])]
@@ -358,8 +367,9 @@ def for_place(game, place: dict | None) -> str:
         x, y = int(place["tile"][0]), int(place["tile"][1])
     except (KeyError, TypeError, ValueError):
         return "road"
-    if w.settlement_at(x, y) is not None:
-        return "street"
+    s = w.settlement_at(x, y)
+    if s is not None:
+        return "burned_street" if _scarred(s) else "street"
     if w.river[x, y] and not w.road[x, y]:
         return "ford"
     return "road"
@@ -372,7 +382,6 @@ def party_figures(game, most: int = 3) -> list:
     return [dolls.character(c, game.tables) for c in game.party if c.alive][:most]
 
 
-SCARRED = ("burning", "burned", "sacked", "emptied")
 PERSON_BACKDROP = {"patron": "hall", "ally": "camp", "witness": "street"}
 
 
@@ -389,7 +398,7 @@ def for_epilogue(game, adv: dict, about: str) -> dict:
         sid = (entry or {}).get("settlement", (adv["places"].get("town") or {}).get("settlement"))
         s = w.settlements[int(sid)] if sid is not None and 0 <= int(sid) < len(w.settlements) else None
         st = s.status if s is not None else {}
-        scarred = any(m in st for m in SCARRED)
+        scarred = _scarred(s)
         spec["backdrop"] = "burned_street" if scarred else "square"
         props = []
         if "memorial" in st:
