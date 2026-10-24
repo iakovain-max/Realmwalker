@@ -802,7 +802,7 @@ def test_the_journal_window(make_app, size):
         game.player.x, game.player.y = s.x, s.y
         game.enter_local()
         for npc in npcs_in(game.world, s.id):
-            q = quests.offer_for(game, npc)
+            q = quests.make_offer(game, npc, game.world.rng.child(f"ui/{npc.id}")) if npc.notable else None
             if q is not None:
                 quests.accept(game, q)
                 taken += 1
@@ -893,9 +893,13 @@ def test_a_job_from_the_first_word_to_the_pay(make_app):
     town = next(s for s in game.world.settlements if s.kind in ("town", "city"))
     game.player.x, game.player.y = town.x, town.y
     game.enter_local()
+    from realmwalker.game.story import work
+
+    town.status["plague"] = {"until": 10**9}  # (the sick town's healer asks you themselves: a plea)
+    game.world.towns[town.id].flags.pop("plea_day", None)
     offer = npc = None
     for person in npcs_in(game.world, town.id):
-        offer = quests.offer_for(game, person)
+        offer = next(iter(work.held_by(game, person)), None)
         if offer is not None:
             npc = person
             break
@@ -906,8 +910,8 @@ def test_a_job_from_the_first_word_to_the_pay(make_app):
     assert isinstance(app.top, DialogueScreen)
     screen = app.top
     menu = screen.conv.menu()
-    work = next(i for i, c in enumerate(menu) if c.id == "work")
-    screen.choose(work)
+    own = next(i for i, c in enumerate(menu) if c.id == "own_work")
+    screen.choose(own)
     render(app)
     assert screen.conv.mode == "quest_offer"
     yes = next(i for i, c in enumerate(screen.conv.menu()) if c.id == "work_accept")

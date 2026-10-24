@@ -1865,7 +1865,7 @@ def _blackmail(conv, q) -> None:
     react(game, "cruelty", "theft")
 
 
-def _collect_debt(conv, q) -> None:
+def _press_debt(conv, q) -> None:
     game, npc, t, rng = conv.game, conv.npc, q["target"], conv.rng
     sheet = game.sheet()
     conv.you_say(f"You owe {q['giver_name']} money.")
@@ -1999,7 +1999,7 @@ def _ask_missing(conv, q) -> None:
 
 CHOICE_HANDLERS = {
     "quest_turn_in": _turn_in, "deliver_letter": _deliver_letter, "deliver_goods": _deliver_goods,
-    "show_letter": _show_letter, "blackmail": _blackmail, "collect_debt": _collect_debt,
+    "show_letter": _show_letter, "blackmail": _blackmail, "collect_debt": _press_debt,
     "debt_take": _debt_take, "debt_forgive": _debt_forgive, "make_peace": _make_peace, "buy_peace": _buy_peace,
     "warn_target": _warn_target, "hand_over_goods": _hand_over_goods, "ask_missing": _ask_missing,
 }

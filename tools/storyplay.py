@@ -326,8 +326,9 @@ class Earnings:
 
 
 class Earner(Player):
-    """The careful player of the income measure: it asks the people of the town it is in for paid work, takes the
-    honest kind it can walk to (the best pay for the walk), does it (the letter carried, the traveller seen there,
+    """The careful player of the income measure: it looks at the work waiting in the town it is in (the board's
+    bounties, the people's own pleas and commissions: Expansion 6 C.2; contracts and situations as they come), takes
+    the honest kind it can walk to (the best pay for the walk), does it (the letter carried, the traveller seen there,
     the place cleared and its chests opened, the beast found, the village stood by), comes back for the money, and
     walks on to the next town when nobody here has any. It counts coin: it takes the money and what the work is
     after, and leaves the rest where it lies."""
@@ -377,23 +378,15 @@ class Earner(Player):
         self.settle()
 
     def ask_for_work(self, s) -> dict | None:
-        """Ask everyone here who might have work; take the best honest job within reach."""
+        """Look at what waits here (Expansion 6 C.2: the bounties on the board, the pleas and commissions of the
+        people who have them, through their own choice); take the best honest piece within reach."""
         from realmwalker.game import quests
+        from realmwalker.game.story import work
 
         g = self.game
         self.asked[s.id] = self.day()
-        best, best_worth, best_conv = None, 0.0, None
-        for npc in npcs_in(g.world, s.id):
-            if not npc.alive or npc.job not in quests.giver_jobs(g):
-                continue
-            conv = Conversation(g, npc)
-            ch = next((c for c in conv.menu() if c.id == "work"), None)
-            if ch is None:
-                continue
-            conv.choose(ch)
-            q = conv.pending_offer
-            if q is None:
-                continue
+        best, best_worth, best_npc = None, 0.0, None
+        for npc, q in work.offers_here(g, s):
             tiles = self.trip_tiles(q, s)
             if q["template"] not in HONEST or tiles is None or tiles > 2 * REACH:
                 continue
@@ -402,13 +395,23 @@ class Earner(Player):
                 continue  # (a careful party does not stand against what would likely kill it)
             worth = q["reward"] / (4 + tiles)
             if worth > best_worth:
-                best, best_worth, best_conv = q, worth, conv
+                best, best_worth, best_npc = q, worth, npc
         if best is None:
             return None
-        accept = next((c for c in best_conv.menu() if c.id == "work_accept"), None)
-        if accept is None:
+        if best_npc is None:
+            quests.accept(g, best)  # (a poster taken down from the board)
+        else:
+            conv = Conversation(g, best_npc)
+            own = next((c for c in conv.menu() if c.id == "own_work" and c.data.get("q") == best["id"]), None)
+            if own is None:
+                return None
+            conv.choose(own)
+            accept = next((c for c in conv.menu() if c.id == "work_accept"), None)
+            if accept is None:
+                return None
+            conv.choose(accept)
+        if best not in g.quests:
             return None
-        best_conv.choose(accept)
         self.note(f"took {best['template']} from {best['giver_name']} for {best['reward']}")
         return best
 

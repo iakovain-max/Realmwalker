@@ -229,7 +229,11 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   `rules/encounter` (XP budgets, `counts_for`, attitudes, travel pace; `spawn_group(budget=)`); `PlayerState.pace`.
 - Quests (`game/quests.py`) are plain dicts in `game.quests` (saved with the character) made from
   `data/quests.json` templates and tied to real things: a faction, a site, a settlement, an npc, an artifact.
-  Offers live in `Town.flags["offers"]` (one per person, a new one about once a week). Progress is noticed where
+  No weekly offers (Expansion 6 C.2): each kind is a picker and a maker, `quests.make(game, giver, target, rng)`
+  for a target its source chose (`pick`/`build`/`make_offer` for today's random one). What waits to be taken is
+  `game/story/work.py` (work.json): commissions from joined factions' goals (`renown.flags["commissions"]`, the rank
+  trial rides on them) and pleas of people with a real need (`Town.flags["pleas"]`), each its giver's own choice
+  ("own_work"); bounties on the board (`board_bounties`). Progress is noticed where
   it happens: `quests.on_battle` (from `fight.finish_battle`), `on_arrive` (overworld), `on_arrive_dungeon` and
   `on_chest`/`free_captive` (from `game/dungeon.py`), and the conversation choices in `quests.QUEST_CHOICES`.
   Rewards go through `reputation.deed`; failure through `quests.daily` (from `pass_time`). The game always shows

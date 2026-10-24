@@ -1545,6 +1545,6 @@ def new_game(world: World, tables: Tables, character: Character | None = None,
     game.say("Press <loot>F1</> for help. Arrow keys, the number pad or a click walk; <loot>Enter</> goes into the land "
              "around you. Every action is also a button along the bottom, and a right click on the map says what "
              "you can do there.", "system")
-    game.say("Walk into a town, talk to the people in it, and ask <loot>\"Is there any work?\"</> — that is how you "
-             "start. <loot>j</> is your journal.", "system")
+    game.say("Walk into a town: read its notice board, watch its streets and talk to its people — those with a real "
+             "need will ask you themselves. <loot>j</> is your journal.", "system")
     return game

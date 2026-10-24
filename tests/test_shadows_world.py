@@ -53,11 +53,16 @@ def test_the_black_market_sells_under_the_counter_to_the_guild(game, monkeypatch
 
 
 def test_the_guild_gives_its_own_the_killing_work(game):
+    """A thieves' guild's commissions (Expansion 6 C.2) are its knives and its light fingers, given by its fences."""
+    from realmwalker.game.story import work
+
     s, realm = in_town(game)
     npc = someone(game, s, exclude=("guard", "lord"))
-    assert shadows.guild_work(game, npc) == []
+    guild = next(f for f in game.world.factions.values() if f.kind == "thieves_guild")
+    assert not work.member(game, npc, guild)
     member_of_guild(game, npc)
-    assert set(shadows.guild_work(game, npc)) == {"assassinate", "steal"}
+    assert work.member(game, npc, guild)
+    assert {"assassinate", "steal"} <= set(work.kinds_for(game, guild))
     offer = quests.make_offer(game, npc, RNG(9, "q"), template="assassinate")
     assert offer is None or offer["template"] == "assassinate"
 

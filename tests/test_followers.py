@@ -194,7 +194,7 @@ def a_quest(game):
         game.player.x, game.player.y = s.x, s.y
         game.enter_local()
         for npc in npcs_in(game.world, s.id):
-            q = quests.offer_for(game, npc)
+            q = quests.make_offer(game, npc, game.world.rng.child(f"a_quest/{npc.id}")) if npc.notable else None
             if q is not None and q["reward"] >= 50:
                 quests.accept(game, q)
                 return q
