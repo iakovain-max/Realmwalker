@@ -277,6 +277,8 @@ def on_travel(game, minutes: float) -> bool:
         return False
     d = beats.director(game.world)
     today = int(game.moment.total_days)
+    if _offer_choice(game):
+        return True
     if int(d.get("travel_beat_day", -10)) >= today:
         return False
     where = _where(game)
@@ -286,6 +288,27 @@ def on_travel(game, minutes: float) -> bool:
             beats.offer(game, beat, adv=adv["id"], where=where)
             d["travel_beat_day"] = today
             return True
+    return False
+
+
+def _offer_choice(game) -> bool:
+    """A choose step's beat is offered once every step before it in its chapter is done (the Beast's bait or tracks,
+    once its weakness is known and the means carried): on the road, at camp, or arriving anywhere. True when it
+    waits now."""
+    from realmwalker.game.story import beats
+
+    if beats.pending(game) is not None:
+        return False
+    for adv in active(game):
+        ch = chapter(adv)
+        if ch is None:
+            continue
+        for i, st in enumerate(ch["steps"]):
+            if st["kind"] != "choose" or st["state"] != "open" or not st.get("beat"):
+                continue
+            if all(o["state"] != "open" or o["optional"] for o in ch["steps"][:i]) and                     beats.eligible(game, st["beat"], {"adv": adv["id"], "where": _where(game)}):
+                beats.offer(game, st["beat"], adv=adv["id"], step=st["id"], where=_where(game))
+                return True
     return False
 
 
@@ -312,7 +335,7 @@ def on_arrive(game) -> bool:
                     if r.get("how") == "check" and places.here(game, r["at"]):
                         beats.offer(game, st["beat"], adv=adv["id"], step=st["id"], where=_where(game))
                         return True
-    return False
+    return _offer_choice(game)
 
 
 def after_beat(game) -> None:
@@ -337,11 +360,14 @@ def on_enter_town(game, settlement) -> None:
 
 
 def on_night(game, where: str) -> bool:
-    """A night at camp or at the inn: the villain may answer you (a carcass at the camp's edge, a test by night)."""
+    """A night at camp or at the inn: the villain may answer you (a carcass at the camp's edge, a test by night), or a
+    choice that is due is put to you."""
     from realmwalker.game.story import beats, villain
 
     if beats.pending(game) is not None:
         return False
+    if _offer_choice(game):
+        return True
     for adv in active(game):
         beat = villain.due_move(game, adv, where)
         if beat is not None:
