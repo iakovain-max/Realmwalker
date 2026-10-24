@@ -397,7 +397,21 @@ def made_sounds(folder: Path) -> dict[str, list[np.ndarray]]:
     sign[: len(uneasy)] += uneasy
     out["sign"] = [room(fft_filter(sign, RATE, lp=3500), srng, wet=0.3, seconds=0.6)]
     out["bell"] = [town_bell()]
+    out["villain"] = [villain_comes()]
     return out
+
+
+def villain_comes() -> np.ndarray:
+    """A story's villain enters the fight (Expansion 6 B.2): two deep drums and a low, sour chord swelling under them,
+    from its own seed."""
+    vrng = np.random.default_rng(608)
+    hit = drum(0.7, 34, 64) * 0.9
+    chord = strum(["D2", "A2", "D#3"], 0.03, 1.3, vrng, bright=0.25, last_ring=1.4) * 0.8
+    out = np.zeros(int(0.32 * RATE) + max(len(hit), len(chord)))
+    out[: len(hit)] += hit
+    out[int(0.32 * RATE): int(0.32 * RATE) + len(hit)] += hit * 0.8
+    out[int(0.1 * RATE): int(0.1 * RATE) + len(chord)] += chord
+    return room(fft_filter(out, RATE, lp=2500), vrng, wet=0.25, seconds=0.4)
 
 
 def town_bell() -> np.ndarray:

@@ -212,6 +212,7 @@ def end(game) -> None:
         npc = game.world.npcs.get(who) if isinstance(who, int) else None
         if npc is not None:
             npc.flags.pop("errand", None)
+            npc.flags.pop("holding", None)
             if npc.flags.get("pose") == "kneel":
                 npc.flags.pop("pose", None)
     for nid in rec.get("made", []):
@@ -359,6 +360,8 @@ def _pick(game, lm, rec, c) -> bool:
         return True
     npc = min(pool, key=lambda n: ((n.x - centre[0]) ** 2 + (n.y - centre[1]) ** 2, n.id))
     rec["cast"][role] = npc.id
+    if c.get("holding"):  # (drawn carrying it until it changes hands)
+        npc.flags["holding"] = c["holding"]
     return True
 
 
@@ -495,6 +498,7 @@ def _give(game, lm, rec, c) -> bool:
     npc = _actor(game, rec, c.get("who"))
     if npc is not None and c.get("letter"):
         lid = _letter(game, rec, c["letter"])
+        npc.flags.pop("holding", None)
         if lid is not None:
             from realmwalker.game import letters
 

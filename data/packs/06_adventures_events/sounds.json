@@ -1,9 +1,10 @@
 {
-  "_comment": "Expansion 6: the story's sounds, made by tools/build_sounds.py (made_sounds: chapter, reveal, sign, bell).",
+  "_comment": "Expansion 6: the story's sounds, made by tools/build_sounds.py (made_sounds: chapter, reveal, sign, bell, villain).",
   "sounds": {
     "chapter": {"files": ["chapter_1.wav"], "group": "interface", "volume": 0.75, "pitch": 0.0, "priority": 3, "about": "A tale begins, or a chapter of it (its title card)"},
     "reveal": {"files": ["reveal_1.wav"], "group": "effects", "volume": 0.7, "pitch": 0.0, "cooldown": 2.0, "priority": 4, "about": "A chapter ends with what it revealed"},
     "sign": {"files": ["sign_1.wav"], "group": "effects", "volume": 0.6, "pitch": 0.02, "cooldown": 5.0, "priority": 4, "about": "A threat's sign is heard"},
-    "bell": {"files": ["bell_1.wav"], "group": "effects", "volume": 0.65, "pitch": 0.0, "cooldown": 4.0, "priority": 4, "about": "A town's bell rung in a scene (the stage)"}
+    "bell": {"files": ["bell_1.wav"], "group": "effects", "volume": 0.65, "pitch": 0.0, "cooldown": 4.0, "priority": 4, "about": "A town's bell rung in a scene (the stage)"},
+    "villain": {"files": ["villain_1.wav"], "group": "effects", "volume": 0.8, "pitch": 0.0, "cooldown": 1.5, "priority": 6, "about": "A story's villain enters the fight, or turns at its second phase (its name across the battle mat)"}
   }
 }

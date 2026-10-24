@@ -701,4 +701,42 @@ def test_a_letter_opens_as_a_page_and_again_from_the_pack(pictured):
 
     inv = InventoryScreen(app, game)
     assert inv.action_name(item) == "Read the page"
+    # A runner carrying a letter in a scene is drawn holding it.
+    npc = next(iter(game.world.npcs.values()), None)
+    if npc is not None:
+        npc.flags["holding"] = "letter"
+        assert any(p[0].startswith("fig/held/letter/") for p in dolls.npc(npc, app.tables, app.gfx.atlas))
+        npc.flags.pop("holding")
+    assert app.error_count == 0
+
+
+def test_a_villain_s_name_crosses_the_battle_mat(pictured):
+    """Expansion 6 B.2: a story's boss enters with its name and its tale across the mat (the villain sound, a shake);
+    its second phase the same with its line."""
+    from realmwalker.audio.cues import battle_sounds
+    from realmwalker.game import fight
+    from realmwalker.game.encounters import make_encounter
+    from realmwalker.rules.combat import FOE
+    from realmwalker.ui.gfx.scene import Text
+    from realmwalker.ui.screens.battle import BattleScreen
+
+    app, game = pictured
+    enc = make_encounter(game, "wolf_pack", game.world.rng.child("boss"))
+    battle = fight.start_battle(game, enc.creatures, enc.intro, title="Wolves")
+    render(app)
+    screen = app.top
+    assert isinstance(screen, BattleScreen)
+    boss = battle.side(FOE)[0]
+    battle.events.append({"kind": "boss", "who": boss.id, "name": "Ysscara the Weaver", "line": "The Beast of Oxbridge"})
+    assert ("start", "villain") in battle_sounds(battle.events[-1])
+    found = False
+    for _ in range(12):
+        canvas = render(app)
+        texts = [c.text for c in commands(canvas, Text)]
+        if "Ysscara the Weaver" in texts and "The Beast of Oxbridge" in texts:
+            found = True
+            break
+        app.gfx.now += 0.1
+    assert found, "the name and the tale across the mat"
+    assert screen.board.shake_until > 0
     assert app.error_count == 0

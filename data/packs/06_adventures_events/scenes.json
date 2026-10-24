@@ -13,7 +13,8 @@
             "porter",
             "labourer"
           ],
-          "within": 40
+          "within": 40,
+          "holding": "letter"
         },
         {
           "cue": "hold"

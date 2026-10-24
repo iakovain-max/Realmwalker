@@ -127,11 +127,11 @@ class Figure:
         if slot == "held":
             metal = colour(self.t, look.get("metal") or rest or "steel")
             glow = colour(self.t, look["glow"]) if look.get("glow") else None
-            small = thing in ("torch", "lantern", "book", "holy_symbol")
+            small = thing in ("torch", "lantern", "book", "holy_symbol", "letter")
             if hand == "left" or (small and self.held is not None):
                 self.left = (thing, metal)
             else:
-                if self.held is not None and self.held[0] in ("torch", "lantern", "book", "holy_symbol"):
+                if self.held is not None and self.held[0] in ("torch", "lantern", "book", "holy_symbol", "letter"):
                     self.left = (self.held[0], self.held[1])
                 self.held = (thing, metal, glow)
             return
@@ -243,6 +243,8 @@ def npc(npc, tables, atlas=None) -> list[Part]:
     """A townsperson dressed for their trade, in the manner of their people."""
     fig = Figure(tables, npc.race, npc.sex, f"npc{npc.id}", looks_rules.of_npc(tables, npc))
     fig.outfit(outfit_for(tables, npc.job, npc.culture, npc.sex))
+    if npc.flags.get("holding"):  # (something they carry in a scene: a letter for you)
+        fig.wear("held", npc.flags["holding"])
     return fig.parts(atlas or _atlas())
 
 
