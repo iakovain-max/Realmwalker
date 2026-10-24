@@ -556,13 +556,16 @@ def _letter(game, rec: dict, key: str) -> str | None:
     writer = next((n for job in ("lord", "headman", "priest", "elder", "scribe") for n in folk if n.job == job), None)
     town = game.world.settlements[rec["town"]].name
     sender = f"{writer.first_name}, {writer.title} of {town}" if writer is not None else f"the people of {town}"
+    hand_of = writer.job if writer is not None else "plain"
+    if rec["words"].get("sender"):  # (a letter from someone not of this town: the hunter's note)
+        sender, hand_of = rec["words"]["sender"], rec["words"].get("hand_of", "plain")
     words.setdefault("town", town)
     words["sender"] = sender
     values = {k: str(v) for k, v in words.items()}
     parts = template.split("\n\n")
     paragraphs = [textgen.fill(part, rng, game.tables.adventures.get("words", {}), values) for part in parts]
     key_line = next((i for i, part in enumerate(parts) if "{hook}" in part), None)
-    hand = letters.hand_for(writer.job if writer is not None else "plain")
+    hand = letters.hand_for(hand_of)
     return letters.write(game, sender=sender, lines=paragraphs, hand=hand, key=key_line)
 
 

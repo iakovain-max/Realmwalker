@@ -372,12 +372,47 @@ def on_enter_town(game, settlement) -> None:
 
     if beats.pending(game) is not None:
         return
+    if _show_tale(game, settlement):
+        return
     for t in threats.live(game.world):
         if settlement.id in t["stakes"][:6] and t.get("adventure") is None and _can_take(game, t):
             offer = t.get("offer") or {}
             if int(game.moment.total_days) - int(offer.get("since", -99)) >= 7:
                 offer_hook(game, t, settlement)
                 return
+
+
+def _show_tale(game, town) -> bool:
+    """Show, don't tell (B.9): the one who saw it tells it again in their street, a crowd round them, and comes to
+    you (the witness step's conversation); once the den chapter begins, the hunter who stands with you sends a boy
+    running with a note in the hunter's own hand. Each once a tale. True when a scene began."""
+    from realmwalker.game.people import npcs_in
+    from realmwalker.game.story import cast, stage
+    from realmwalker.game.story import words as wordsmod
+
+    if not _on_its_map(game, town):
+        return False
+    for adv in active(game):
+        words = {k: v for k, v in wordsmod.for_adventure(game, adv).items() if isinstance(v, str)}
+        for st in open_steps(adv):
+            if st["kind"] != "witness" or st.get("shown"):
+                continue
+            npc = next((n for n in npcs_in(game.world, town.id) if n.alive and _is(game, st["target"].get("who"), n)),
+                       None)
+            if npc is not None and stage.start(game, "survivor", cast={"survivor": npc.id}, words=words) is not None:
+                st["shown"] = True
+                return True
+        ch = chapter(adv)
+        if ch is None or ch["id"] != "den" or "ally" not in adv["keys"] or adv.get("ally_note") is not None:
+            continue
+        ally = cast.person(game.world, adv["cast"].get("ally"))
+        if ally is None or not getattr(ally, "alive", True) or getattr(ally, "settlement", None) == town.id:
+            continue  # (in the hunter's own town, the hunter would simply come)
+        words.update(sender=f"{ally.first_name}, {ally.title}", hand_of=getattr(ally, "job", "plain"))
+        if stage.start(game, "ally_note", words=words) is not None:
+            adv["ally_note"] = int(game.moment.total_days)
+            return True
+    return False
 
 
 def on_night(game, where: str) -> bool:
@@ -393,8 +428,23 @@ def on_night(game, where: str) -> bool:
         beat = villain.due_move(game, adv, where)
         if beat is not None:
             beats.offer(game, beat, adv=adv["id"], where=where)
+            left = game.tables.beats.get(beat, {}).get("leaves")
+            if left and where == "camp":  # (and there it lies in the camp's picture until you move on)
+                p = game.player
+                beats.director(game.world)["left"] = {"what": left, "x": p.x, "y": p.y,
+                                                      "day": int(game.moment.total_days)}
             return True
     return False
+
+
+def left_at_camp(game) -> str | None:
+    """What the villain left at the camp you are in (a carcass), for the camp's picture; None once you move on."""
+    from realmwalker.game.story import beats
+
+    rec = beats.director(game.world).get("left") if getattr(game, "camp", None) is not None else None
+    if not rec or (rec["x"], rec["y"]) != (game.player.x, game.player.y):
+        return None
+    return rec["what"] if int(game.moment.total_days) - int(rec["day"]) <= 1 else None
 
 
 def on_descend(game, lm) -> None:

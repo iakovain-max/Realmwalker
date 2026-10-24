@@ -82,6 +82,15 @@ def camp(canvas, game, rect, now: float) -> None:
         canvas.under(Sprite(f"feature/campfire_{frame}", fx - size / 2, fy - size * 0.8, size, size))
     else:
         canvas.under(Sprite("feature/campfire_0", fx - size / 2, fy - size * 0.8, size, size, (90, 80, 80, 255)))
+    from realmwalker.game import story
+
+    if story.left_at_camp(game) == "carcass":  # (the beast's "letter", laid at the camp's edge: Expansion 6)
+        cw = size * 1.5
+        cx, cy = x + w * 0.16, fy - size * 0.1
+        dim = int(90 + 120 * k)
+        canvas.under(Sprite("decal/blood_3", cx - cw * 0.6, cy - cw * 0.35, cw * 1.2, cw * 0.7, (dim, dim, dim, 230)))
+        canvas.under(Sprite("creature/elk", cx - cw / 2, cy - cw * 0.75, cw, cw, (dim, int(dim * 0.9), int(dim * 0.9),
+                                                                                   255), angle=90.0))
     lit = 0.45 + (0.55 if fire else 0.0) * (1 - k) + 0.5 * k
     fs = 64 if size >= 48 else 32
     tint = (int(255 * min(1, lit)), int(235 * min(1, lit)), int(215 * min(1, lit)))

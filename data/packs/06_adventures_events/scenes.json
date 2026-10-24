@@ -164,6 +164,180 @@
           "Stay a moment. This concerns us all."
         ]
       }
+    },
+    "survivor": {
+      "about": "The one who saw the beast tells it again in the street, a crowd pressed round to hear; seeing you, they come to you and the telling opens as a conversation (the tale's witness step).",
+      "cues": [
+        {
+          "cue": "pick",
+          "role": "survivor",
+          "jobs": [
+            "farmer",
+            "herder",
+            "shepherd",
+            "labourer",
+            "woodcutter",
+            "carter"
+          ],
+          "within": 70
+        },
+        {
+          "cue": "hold"
+        },
+        {
+          "cue": "focus",
+          "at": "survivor"
+        },
+        {
+          "cue": "crowd",
+          "at": "survivor",
+          "count": 6,
+          "radius": 2,
+          "key": "murmur",
+          "ticks": 12
+        },
+        {
+          "cue": "say",
+          "who": "survivor",
+          "key": "account",
+          "ticks": 3
+        },
+        {
+          "cue": "say",
+          "who": "survivor",
+          "key": "account_more",
+          "ticks": 3
+        },
+        {
+          "cue": "walk",
+          "who": "survivor",
+          "to": "you"
+        },
+        {
+          "cue": "talk",
+          "who": "survivor",
+          "key": "open",
+          "always": true
+        },
+        {
+          "cue": "disperse",
+          "always": true
+        }
+      ],
+      "words": {
+        "murmur": [
+          "Tell it again. Tell it all.",
+          "Hush, let them speak.",
+          "Look at their hands shake.",
+          "They were there. They saw it.",
+          "Say what you told the priest.",
+          "Poor soul.",
+          "Was it really that big?",
+          "Let the stranger hear it."
+        ],
+        "account": [
+          "It came out of the dark, I tell you. No sound at all till it was on us.",
+          "Bigger than a horse. Bigger. I saw its back against the sky.",
+          "It took him off the cart like he weighed nothing at all.",
+          "I heard it breathing before I saw it. Like a smith's bellows.",
+          "Its eyes caught the lantern. That is all I saw. The eyes.",
+          "We had the dogs with us. The dogs ran first."
+        ],
+        "account_more": [
+          "And I ran. God forgive me, I ran and I did not look back.",
+          "I lay in the ditch till it was light. I could hear it eating.",
+          "Nobody believes me about the size of it. You'll see.",
+          "When I came back with the others there was nothing left to bury.",
+          "It looked at me. It looked right at me, and it let me go.",
+          "I have not slept since. Not properly."
+        ],
+        "open": [
+          "You're the one hunting it? Then you'd best hear it from me, not from them.",
+          "They say you'll go after {villain}. Then listen, for I'll only tell it once more.",
+          "You want to know what it is? Come here. I'll tell you what I saw.",
+          "You've the look of a hunter. Ask me, then. Ask me anything.",
+          "Everyone wants to hear it. You, at least, might do something with it."
+        ]
+      }
+    },
+    "ally_note": {
+      "about": "A boy runs up through the street with a note from the hunter who will stand with you against the beast: where it lies up, and that the hunter is waiting. Its page opens in the hunter's hand.",
+      "cues": [
+        {
+          "cue": "pick",
+          "role": "runner",
+          "jobs": [
+            "child",
+            "serving_hand",
+            "porter",
+            "labourer",
+            "herder"
+          ],
+          "within": 40,
+          "holding": "letter"
+        },
+        {
+          "cue": "hold"
+        },
+        {
+          "cue": "shout",
+          "who": "runner",
+          "key": "call",
+          "ticks": 1
+        },
+        {
+          "cue": "focus",
+          "at": "runner"
+        },
+        {
+          "cue": "run",
+          "who": "runner",
+          "to": "you"
+        },
+        {
+          "cue": "say",
+          "who": "runner",
+          "key": "breath",
+          "ticks": 3
+        },
+        {
+          "cue": "give",
+          "who": "runner",
+          "letter": "letter"
+        },
+        {
+          "cue": "read",
+          "always": true
+        },
+        {
+          "cue": "walk",
+          "who": "runner",
+          "to": "home"
+        }
+      ],
+      "words": {
+        "call": [
+          "Wait! I've a note for you!",
+          "You! The hunter's friend!",
+          "Hold on! Hold on, please!",
+          "Stranger! I was told to find you!",
+          "Wait up!"
+        ],
+        "breath": [
+          "The hunter paid me a penny to find you. Here.",
+          "From {ally}. I ran all the way from the hill road.",
+          "I was to give it you and nobody else.",
+          "They said you'd know who it's from.",
+          "It's from up the valley. I didn't read it."
+        ],
+        "letter": [
+          "{hero},\n\nI have been up above {home} three nights now. {villain} goes out at dusk and comes back before first light, always by the same gully.\n\nCome when you are ready. I will be at the edge of the trees.\n\n{sender}",
+          "{hero},\n\nI have found where it lies up: {home}. I have seen the bones at the mouth of it.\n\nI will not go in alone, and you should not either. Send word, or just come.\n\n{sender}",
+          "To {hero}, by the boy's hand,\n\nIt has fed, and it will sleep the day through. If we are going to do this, it should be soon.\n\nI am camped below {home}, where the stream bends. Look for my smoke.\n\n{sender}",
+          "{hero},\n\nI know the ground round {home} better than anyone living. There is a way up on the lee side that it does not watch.\n\nI am ready when you are.\n\n{sender}",
+          "{hero} -\n\nMy hand is no good for writing, so this is short. {villain} is at {home}. I am close by. Come.\n\n{sender}"
+        ]
+      }
     }
   }
 }

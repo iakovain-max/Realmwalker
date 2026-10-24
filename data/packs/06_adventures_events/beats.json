@@ -313,6 +313,7 @@
         "day"
       ],
       "picture": "camp_night",
+      "leaves": "carcass",
       "when": {
         "adventure": {
           "chapter": [
