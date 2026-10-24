@@ -253,7 +253,7 @@ the battle mat. ADVENTURES.md §5.17–5.19, §5.21 (signs), §8.11–8.14, §8.
 - [x] B.8 **Signs on the world map for marks** (`ui/gfx/mapsigns.py` in `WorldView.draw`): smoke over burning, burned
   and sacked towns; a ring of tents round a besieged or beset one; the black flag of plague; a dragon's shadow over
   tribute; festival lanterns; memorial marks. Tests: drawn headless; under 2 ms a frame.
-- [ ] B.9 **The Beast, shown** *(parallel words)*: its scenes (the survivor's account told at the kill site with a
+- [x] B.9 **The Beast, shown** *(parallel words)*: its scenes (the survivor's account told at the kill site with a
   crowd round; the carcass at your camp at dawn, in the camp screen's picture; the hunter ally's runner), title cards
   for its chapters, its doom stage as a mark (a burned farmstead), vignettes on its epilogue pages;
   `tools/showcase.py` (first form) and the debug console's `showcase`, `mark` and `scene`; frame timing

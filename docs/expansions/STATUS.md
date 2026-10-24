@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 06 Adventures & Events · Part B (show, don't tell: the stage, pictures, places that change) · branch dlc/06-adventures-events
+Current: 06 Adventures & Events · Part C (quests reborn: situations, lives and honest work) · branch dlc/06-adventures-events
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -20,7 +20,9 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   staffs and four rods of the DMG; one store of charges a thing, cast in fights and from the Spells page) · Part E (2026-10-18: crystal balls, the wizard's
   hats, the Pearl of Power, the Ring of Spell Storing, the five robes, Enspelled Armor and Weapon, the Ruby of the War Mage;
   **released as v1.5.0**) · 06 Adventures & Events Part A (2026-10-24: threats, the story engine and the Beast of
-  {place} from its hook to its epilogue; saves format 19)
+  {place} from its hook to its epilogue; saves format 19) · Part B (2026-10-25: the stage and its scenes, pictures for
+  stories, title cards and letters, marks on places stamped on their maps, the fallen and graves, eavesdropping and
+  tailing, live fire, signs on the world map, the Beast shown; saves format 20)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
   adapted); Expansion 3: all 560 settled (223 done, 336 adapted, 1 omitted); Expansion 4: all 66 settled (36 done,
@@ -554,9 +556,19 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part B, task B.9 (*the Beast, shown*; frame timing,
-FORMAT_VERSION +1, Part B to main), on branch `dlc/06-adventures-events` (B.1-B.8 done there, not yet merged). Read
-docs/expansions/06-adventures-events.md Part B (B.9) and ADVENTURES.md §8.18 and the Beast's tale first.
+Next session starts at: Expansion 6, **Adventures & Events**, Part C, task C.1 (*the reference*: storyplay's careful
+player's income over thirty days on the build before Part C, kept in tests/data/income_ref.json), on branch
+`dlc/06-adventures-events` (Part B merged into main 2026-10-25). Read docs/expansions/06-adventures-events.md Part C and
+ADVENTURES.md §5.15-5.16, §6.7-6.11, §7, §8.10 first.
+B.9 (2026-10-25, realmwalker-a): scenes.json "survivor" (the witness tells it to a crowd in their street, then
+comes to you: story._show_tale from on_enter_town; step "shown") and "ally_note" (den chapter + key ally: a boy brings
+the hunter's note; stage._letter honours scene words sender/hand_of; adv["ally_note"]); beats.json `leaves`
+(schema) and director["left"] read by story.left_at_camp and drawn by scenes.camp (the carcass); the beast's doom is
+["emptied", "nearest", "burned"] (threats._emptied *also); vignette.for_epilogue (EpilogueScreen picture rows) and
+for_place gives "burned_street" for a scarred town; debug console showcase / mark / scene; tools/showcase.py sheets
+signs, titlecard, epilogue, camp, all; tests/test_frame_time.py (slow; it found dolls.npc reading looks from words
+every frame: now kept in dolls._NPC_PARTS, 213 -> ~9 ms a frame on a burning great city); FORMAT_VERSION 20; the
+smoke tour walks a burned town and opens a letter. tests/test_beast_shown.py.
 B.8 (2026-10-25, realmwalker-a): `ui/gfx/mapsigns.py`: `signed(s)` (SHOWN marks, the strongest smoke only), `under`
 (far tents, a burning town's glow) before the towns' tile batch and `over` (smoke puffs, near tents and banners in the
 siege's `by` faction colour, beset BESET_RGB, plague black flag 2 frames, tribute dragon shadow circling with `angle`,
@@ -900,6 +912,7 @@ casting time. A spell aimed at something chosen lists Subjects (game/divining.Su
 | 2026-10-18 | Schools & Domains Part C: the Mage Apprentice, Mage, Archmage, Priest and Archpriest (blocks, dress by people, the road, temples and great cities), wizards' towers lived in (wards, glyphs, guardians, the master, the library), apprenticeships, the casters' tactics; merged into `main` | `dlc/05-schools-domains` |
 | 2026-10-18 | Schools & Domains Part D: the eleven wands, seven staffs and four rods of the DMG, one store of charges a thing | `dlc/05-schools-domains` |
 | 2026-10-18 | Schools & Domains Part E: crystal balls, the Enduring Spellbook, Enspelled Armor and Weapon, the Hat of Many Spells and the Hat of Wizardry, the Pearl of Power, the Ring of Spell Storing, the five robes, the Ruby of the War Mage; the icon; **released as v1.5.0** | `dlc/05-schools-domains` |
+| 2026-10-25 | Adventures & Events Part B: the stage and its scenes, pictures for stories, title cards and letters, marks stamped on towns, the fallen and graves, eavesdropping and tailing, live fire, signs on the world map, the Beast shown (the survivor, the hunter's note, the carcass at camp, the epilogue's pictures); saves format 20 | `dlc/06-adventures-events` |
 
 ## Notes for the next session
 

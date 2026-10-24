@@ -46,6 +46,40 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-10-25 (small hours): Adventures & Events Part B, task B.9 — the Beast, shown — Part B merged into `main`
+
+**What is different when you play**
+- **The one who saw it tells it.** Walk into the town of the beast's survivor while you are looking for them, and
+  they are in the street telling it again, a crowd pressed round them murmuring; they see you, come over, and the
+  conversation opens with their words - ask them to tell it.
+- **The hunter sends word.** Once the hunter has said they will stand with you and the hunt turns to the den, a boy
+  runs up to you in the next town with a note in the hunter's own rough hand: where the beast lies up, and that they
+  are waiting.
+- **The carcass at your camp.** When the beast leaves a dead hind at your camp's edge in the night, it lies there in
+  the camp screen's picture, in its blood, until you break camp.
+- **What became of them, shown.** Every page of a tale's ending has its picture: the town as it now is (a burned
+  street at dusk if it burned or emptied, a statue in its square if it keeps a memorial, scaffolds while it is
+  rebuilt, lanterns for a feast), the one who asked you in their hall, the hunter at a camp at dusk, the witness in
+  their street (a fresh grave if they died), and you and yours on the road at dusk. A beat's picture of a burned town
+  is its burned street too.
+- **If the beast wins.** Its doom now leaves the village burned as well as emptied: smoke over it on the world map,
+  black shells when you walk in.
+- **Towns are smoother.** Drawing a crowded town worked out every townsperson's looks from their description every
+  frame; now each is worked out once. A burning great city with some 340 people in view went from about a fifth of a
+  second a frame to about a hundredth.
+- **Saves**: the save format is now 20. Saves from before are refused with the usual friendly message; start a new
+  world (the files stay untouched).
+
+**How to try it**: the debug console (the config switch) has `showcase` (marks the towns about you, one sign each:
+open the world map), `mark <mark>` / `mark clear` (the town you stand on, re-dressed at once) and `scene <id>` (plays
+a scene on a town's map: runner, plea, survivor, ally_note). `tools/showcase.py --sheet all` saves the contact sheet
+(signs, title card, epilogue, camp, a letter in each hand, a town dressed for each mark) in `build/showcase`. The
+smoke test now also walks a burned town and opens a letter.
+
+**Decisions**: the survivor's scene plays in the witness's own town (the kill is out on the road); the hunter's note
+comes in any town but the hunter's own, once a tale. The carcass is the elk picture turned on its side (as the fallen
+are on the battle mat), darkened, on a pool of blood.
+
 ### Session, 2026-10-25 (small hours): Adventures & Events Part B, task B.8 — signs on the world map — branch `dlc/06-adventures-events` (not yet on main)
 
 **What is different when you play**
