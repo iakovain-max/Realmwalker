@@ -3158,7 +3158,8 @@ class Battle:
 
         opts = []
         mine = {o.extra.get("id"): o for o in self.attack_options(f)}
-        for i, a in enumerate(statblocks.attacks(leg.get("actions", []), {})):
+        own = [a for a in leg.get("actions", []) if "id" in a]  # (a "use" of its own attack, or a move: below)
+        for i, a in enumerate(statblocks.attacks(own, {})):
             if a["kind"] in ("melee", "ranged") and not a.get("area"):
                 opts.append(AttackOption(f"L{i}", a["name"], a["kind"], int(a["bonus"]), a["damage"], a["damage_type"],
                                          reach=bool(a.get("reach")), extra=a, range=tuple(a.get("range") or (0, 0))))
@@ -3177,6 +3178,7 @@ class Battle:
             left = f.creature.uses.setdefault("legendary_actions", int(leg.get("uses", 3)))
             if left <= 0:
                 continue
+            struck = False
             for opt in self.legendary_options(f):
                 targets = [t for t in self.targets_for(f, opt) if t.active and t.team != f.team]
                 if targets:
@@ -3184,7 +3186,27 @@ class Battle:
                     self.say(f"{f.the_name} strikes out of turn. <dim>(Legendary Action)</>", "danger")
                     self._attack(f, opt, min(targets, key=lambda t: t.hp))
                     self._check_end()
+                    struck = True
                     break
+            if not struck and any(a.get("move") for a in leg.get("actions", ())):
+                self._legendary_move(f, left)
+
+    def _legendary_move(self, f: Fighter, left: int) -> None:
+        """A legendary move out of turn (a story's boss, Expansion 6): up to half its speed towards the nearest foe,
+        drawing no blows; only when no foe is at hand already."""
+        foes = [t for t in self.fighters if t.active and t.team != f.team and t.state == "fighting"]
+        if not foes or any(self.gap(f, t) <= 1 for t in foes):
+            return
+        tree = self.move_tree(f, budget=max(5, f.speed // 2), risk=0.0)
+        occ = self.occupied_by_others(f)
+        near = min(foes, key=lambda t: self.gap(f, t))
+        spots = [sq for sq in tree if sq != (f.x, f.y) and grid.can_stop(sq, f.sq, occ)]
+        if not spots:
+            return
+        best = min(spots, key=lambda sq: self.gap_from(f, sq, near))
+        f.creature.uses["legendary_actions"] = left - 1
+        self.say(f"{f.the_name} moves out of turn. <dim>(Legendary Action)</>", "danger")
+        self.walk(f, grid.route(tree, best), free=True, provoke=False)
 
     def _inspired(self, f: Fighter, need: int, what: str = "a saving throw") -> bool:
         """Heroic Inspiration (2024): a party member may reroll a die once; spent on a failed save worth saving."""
@@ -3331,6 +3353,10 @@ class Battle:
                 self._casting = casting
             if not held:
                 self._end_concentration(target, quiet=False, why="breaks")
+        if target.active and target.creature is not None and target.cdef.get("boss_phase"):
+            from realmwalker.rules.engine.handlers import bosses
+
+            bosses.after_damage(self, target)  # (a story's boss: its second phase, Expansion 6)
         if target.active and target.side == FOE:
             self._morale_after_hit(target)
 

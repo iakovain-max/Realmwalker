@@ -1,0 +1,7 @@
+{
+  "_comment": "Expansion 6: the music of tales. story/omen behind a beat and a chapter's card, story/finale before the last fight, story/epilogue for what became of them; until the player adds their own (the Music page), they borrow from the rest and the dungeon.",
+  "moods": {
+    "story": {"about": "Tales: a beat, a chapter's title card, the finale's card, the epilogue.", "kinds": ["omen", "finale", "epilogue"],
+              "fallback": "rest", "gap": [10, 30], "first": [0, 2], "fade_in": 2.0, "fade_out": 2.0, "resume": true}
+  }
+}

@@ -529,6 +529,22 @@ class GameScreen(Screen):
 
             index = next(i for i, c in enumerate(game.party) if progression.has_new_choices(c))
             self.app.push(LevelUpScreen(self.app, game, index))
+        elif game.epilogue is not None:  # (the story's screens: Expansion 6)
+            from realmwalker.ui.screens.epilogue import EpilogueScreen
+
+            self.app.push(EpilogueScreen(self.app, game))
+        elif game.finale is not None:
+            from realmwalker.ui.screens.finale import FinaleScreen
+
+            self.app.push(FinaleScreen(self.app, game))
+        elif (game.world.politics.get("director") or {}).get("card"):
+            from realmwalker.ui.screens.beat import TitleCardScreen
+
+            self.app.push(TitleCardScreen(self.app, game))
+        elif (game.world.politics.get("director") or {}).get("pending"):
+            from realmwalker.ui.screens.beat import BeatScreen
+
+            self.app.push(BeatScreen(self.app, game))
         elif game.read_board:
             from realmwalker.ui.screens.notices import NoticeBoardScreen
 

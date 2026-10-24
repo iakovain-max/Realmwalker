@@ -550,11 +550,32 @@ def talk_choose(conv, choice) -> None:
         step_done(game, adv["id"], data["step"])
     elif cid == "story_learn":
         conv.note(esc(words.get("weakness_lore", "Nobody knows for sure.")))
+        st = find_step(game, adv["id"], data["step"])
+        route = next((r for r in (st or {}).get("target", {}).get("routes", []) if r.get("how") == "talk"
+                      and _is(game, r.get("who"), conv.npc)), None)
+        if route is not None and route.get("role"):
+            _bind_role(game, adv, route["role"], conv.npc)
+            if route["role"] == "ally":
+                from realmwalker.game.story import beats
+
+                conv.note(esc(f"\"And I'll come with you,\" {conv.npc.first_name} says. \"When you go up there.\""))
+                for line in beats.OPS["key"](game, {"adv": adv["id"]}, "ally"):
+                    conv.note(line)
         step_done(game, adv["id"], data["step"])
     elif cid == "story_patron":
         ch = chapter(adv)
         lines = tables.get("patron_brief", ["{goal}"])
         conv.note(esc(textgen.fill(rng.choice(lines), rng, tables, dict(words, goal=ch["goal"] if ch else ""))))
+
+
+def _bind_role(game, adv: dict, role: str, npc) -> None:
+    """A role still waiting for its town is this townsperson (met in their own town before it was ever filled)."""
+    from realmwalker.game.story import cast
+
+    entry = adv["cast"].get(role)
+    if entry and cast.pending(entry):
+        adv["cast"][role] = cast._take(npc, adv, role, entry)
+        cast._rebind_steps(adv, role, adv["cast"][role])
 
 
 def _bind_if_waiting(game, adv, st, npc) -> None:
@@ -634,3 +655,60 @@ def on_death(game) -> None:
     d["pending"] = None
     d["card"] = None
     d["scheduled"] = []
+
+
+# ---------------------------------------------------------------------------- the finale's card
+def finale_band(game, actor) -> dict | None:
+    """The adventure whose finale this band on a close-up map is (its villain, with the finale step open), or None."""
+    tag = getattr(actor.creatures[0], "story", None) if actor is not None and actor.creatures else None
+    if not tag or tag.get("role") != "villain":
+        return None
+    adv = adventures(game.world).get(tag.get("adv"))
+    if adv is None or adv["state"] != "active":
+        return None
+    return adv if any(st["kind"] == "finale" for st in open_steps(adv)) else None
+
+
+def hold_for_finale(game, actor) -> bool:
+    """Walking into the boss's band (or it reaching you) shows its card first: Fight, or Not yet (law 5)."""
+    adv = finale_band(game, actor)
+    if adv is None:
+        return False
+    game.finale = {"adv": adv["id"], "actor": int(actor.id)}
+    return True
+
+
+def fight_finale(game) -> None:
+    """The card said Fight: the battle with the boss's band begins."""
+    from realmwalker.game.fight import start_battle
+    from realmwalker.rules.combat import FOE
+
+    rec, game.finale = game.finale, None
+    lm = game.local
+    actor = next((a for a in (lm.actors if lm is not None else []) if a.id == (rec or {}).get("actor")), None)
+    if actor is None:
+        return
+    name = actor.creatures[0].name if actor.creatures else "it"
+    start_battle(game, actor.creatures, f"{name}!", surprised=None if actor.alert else FOE, actor=actor,
+                 title=name)
+
+
+def finale_card(game) -> dict:
+    """What the boss's card shows: its name, its first words, and what you know (keys found, unknowns)."""
+    from realmwalker.game.story import words as wordsmod
+
+    rec = game.finale or {}
+    adv = adventures(game.world).get(rec.get("adv"))
+    if adv is None:
+        return {}
+    bp = game.tables.adventures["blueprints"][adv["blueprint"]]
+    temper = game.tables.villains.get("tempers", {}).get((threat_of(game, adv) or {}).get("villain", {})
+                                                          .get("temper") or "", {})
+    rng = game.world.rng.child(f"first/{adv['id']}")
+    first = rng.choice(temper.get("first_words") or bp["finale"].get("words", {}).get("first", ["..."]))
+    known = []
+    for k in bp["finale"].get("keys", {}):
+        known.append((wordsmod.key_text(game, adv, k) if k in adv["keys"] else "?", k in adv["keys"]))
+    level = int(adv["target_level"])
+    return {"name": _villain_name(game, adv), "title": adv["title"], "first": first, "known": known,
+            "warning": level > game.leader.level, "level": level}

@@ -1087,9 +1087,12 @@ class GameState:
                 self.say("They cannot see you, and your hands pass through them like smoke (Etherealness).", "system")
                 return False
         if target is not None:
+            from realmwalker.game import story
             from realmwalker.game.fight import start_battle
             from realmwalker.rules.combat import FOE
 
+            if story.hold_for_finale(self, target):
+                return True  # (the boss's card first: Expansion 6)
             name = self.tables.creatures.encounters.get(target.group, {}).get("name", "them")
             intro = f"You fall on {name}!" if not target.alert else f"You close with {name}."
             start_battle(self, target.creatures, intro, surprised=None if target.alert else FOE, actor=target,

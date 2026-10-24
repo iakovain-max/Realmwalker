@@ -530,3 +530,57 @@ def test_the_map_legend_shows_the_maps_own_pictures(make_app, atlas):
     canvas = render(app)
     assert "Map key" in canvas.words() and commands(canvas, Batch)
     assert app.error_count == 0
+
+
+@pytest.mark.story
+def test_the_story_s_screens_draw_and_answer_keys(pictured):
+    """Expansion 6: the beat screen (pages, choices), a chapter's title card, the boss's card and the epilogue open
+    from the game screen when they wait, draw, and close on their keys."""
+    from realmwalker.game import story
+    from realmwalker.game.story import beats, forge
+    from realmwalker.ui.input import KeyEvent
+    from realmwalker.world import threats
+
+    app, game = pictured
+    t = next((t for t in threats.records(game.world).values() if t["kind"] == "beast" and t["state"] != "ended"
+              and forge.fitting(game, t)), None)
+    if t is None:
+        pytest.skip("no beast tale in this world")
+    if t["state"] == "dormant":
+        threats.stir(game.world, app.tables, t, game.world.rng, day=0)
+    beats.director(game.world)["pending"] = None
+    story.offer_hook(game, t)
+    render(app)  # (the game screen opens what waits)
+    canvas = render(app)
+    assert type(app.screens[-1]).__name__ == "BeatScreen"
+    assert threats.villain_name(game.world, t) in canvas.words()
+    app.handle_event(KeyEvent("1"))  # (I will hunt it)
+    app.handle_event(KeyEvent("enter"))
+    render(app)
+    adv = story.active(game)[0]
+    assert type(app.screens[-1]).__name__ == "TitleCardScreen"
+    render(app)  # (the game screen opens what waits)
+    canvas = render(app)
+    assert "Chapter I" in canvas.words()
+    app.handle_event(KeyEvent("enter"))
+    render(app)
+    assert not (game.world.politics["director"].get("card") or game.world.politics["director"].get("pending"))
+    game.finale = {"adv": adv["id"], "actor": -1}
+    render(app)  # (the game screen opens what waits)
+    canvas = render(app)
+    assert type(app.screens[-1]).__name__ == "FinaleScreen" and "What you know" in canvas.words()
+    app.handle_event(KeyEvent("escape"))
+    render(app)
+    assert game.finale is None
+    adv["epilogue"] = [{"about": "place", "text": "It was over."}, {"about": "hero", "text": "You went on."}]
+    game.renown.legend["offered"] = ["the Hunter"]
+    game.epilogue = {"adv": adv["id"]}
+    render(app)  # (the game screen opens what waits)
+    canvas = render(app)
+    assert type(app.screens[-1]).__name__ == "EpilogueScreen" and "It was over." in canvas.words()
+    app.handle_event(KeyEvent("enter"))
+    render(app)
+    app.handle_event(KeyEvent("1"))
+    render(app)
+    assert game.epilogue is None and game.renown.legend["epithet"] == "the Hunter"
+    assert app.error_count == 0

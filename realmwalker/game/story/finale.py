@@ -12,9 +12,10 @@ the adventure from it, so any fight with the boss is its finale, wherever it is 
 
 from __future__ import annotations
 
+from realmwalker.rules.engine.handlers.bosses import PHASES  # noqa: F401  (the second phases are the kernel's)
+
 KEYS: dict[str, object] = {}
 LEGENDARY: dict[str, object] = {}
-PHASES: dict[str, object] = {}
 
 
 def key(name: str):
@@ -29,14 +30,6 @@ def legendary(name: str):
     """fn(fighter) -> the legendary actions it gives the boss (a stat block's `legendary.actions` entries)"""
     def wrap(fn):
         LEGENDARY[name] = fn
-        return fn
-    return wrap
-
-
-def phase(name: str):
-    """fn(battle, fighter, spec) when the boss falls to the phase's share of its hit points"""
-    def wrap(fn):
-        PHASES[name] = fn
         return fn
     return wrap
 
@@ -65,11 +58,10 @@ def make_boss(battle, f, template: dict, tier: int) -> None:
     d = dict(f.cdef)
     mult = float(template["hp"]) * (1.0 + 0.15 * (int(tier) - int(template["tiers"][0])))
     hp = max(f.max_hp, int(round(f.max_hp * mult)))
-    f.max_hp = hp
-    f.hp = hp
-    if f.creature is not None:
-        f.creature.max_hp = max(f.creature.max_hp, hp)
+    if f.creature is not None and not f.creature.uses.get("boss_hp"):
+        f.creature.max_hp = hp  # (once: a boss met again keeps the hit points it has left)
         f.creature.hp = hp
+        f.creature.uses["boss_hp"] = 1
     if int(template["resistances"]) > 0:
         d["legendary_resistance"] = {"per_day": int(template["resistances"])}
     actions = []
@@ -119,15 +111,6 @@ def _is_finale(adv: dict) -> bool:
     return ch is not None and any(st["kind"] == "finale" and st["state"] == "open" for st in ch["steps"])
 
 
-def after_damage(battle, f) -> None:
-    """The boss's second phase, once, when it falls to its share of its hit points (from Battle._hit)."""
-    spec = f.cdef.get("boss_phase") if f.creature is not None else None
-    if not spec or f.__dict__.get("phased") or f.hp <= 0 or f.hp > f.max_hp * float(spec["at"]):
-        return
-    f.phased = True
-    PHASES[spec["kind"]](battle, f, spec)
-
-
 # ---------------------------------------------------------------------------- legendary actions and phases
 @legendary("strike")
 def _strike(f) -> list[dict]:
@@ -141,18 +124,6 @@ def _strike(f) -> list[dict]:
 def _move(f) -> list[dict]:
     """It moves out of turn (half its speed, without drawing blows): Battle._legendary_window."""
     return [{"move": True}]
-
-
-@phase("frenzy")
-def _frenzy(battle, f, spec) -> None:
-    """Cornered, it goes mad: no more flight, and it strikes harder (a beast's second phase)."""
-    line = battle.rng.choice(spec["lines"])
-    battle.say(f"<danger>{line}</>", "danger")
-    d = dict(f.cdef)
-    d["morale"] = "fanatic"
-    f.cdef = d
-    f.buffs.append({"id": "frenzy", "name": "frenzy", "attack_die": "1d4", "damage_die": "1d6", "rounds": -1})
-    battle.events.append({"kind": "phase", "who": f.id, "phase": "frenzy"})
 
 
 # ---------------------------------------------------------------------------- keys
