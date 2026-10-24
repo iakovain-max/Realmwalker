@@ -14,7 +14,7 @@ import math
 import numpy as np
 
 from realmwalker.ui.gfx import dolls
-from realmwalker.ui.gfx.scene import Batch, Image, Rect, Text
+from realmwalker.ui.gfx.scene import Batch, Image, Rect, Sprite, Text
 
 STEP_SECONDS = 0.13  # how long a step takes to glide
 FOCUS_SECONDS = 3.0  # a scene's camera focus lasts at most this long (game/story/stage.py)
@@ -344,6 +344,7 @@ class LocalView:
         layer(art.O[sl], seen, art.ANIM[sl])
         cmds = _batches(quads)
         canvas.under(*cmds)
+        canvas.under(*self._decals(game, lm, atlas, x0, y0, x1, y1, light))
         # Traps that were found, and what lies on the ground.
         small: list[tuple[str, float, float, float, tuple]] = []
         for (fx_, fy_), f in lm.features.items():
@@ -472,7 +473,7 @@ class LocalView:
                 people.append((fy - 0.003, look, *self.cell_px(fx, fy), T,
                                _cell_light(light, cx_ - x0, cy_ - y0), False))
         people.sort(key=lambda t: t[0])
-        out = []
+        out = self._fallen(game, lm, atlas, fov, roofed, x0, y0, light)  # (the dead lie under the living)
         for _, names, px_, py_, size, col, alert in people:
             out.append(Image("shadow", _shadow_image, (px_ + size * 0.18, py_ + size * 0.78, size * 0.64, size * 0.22),
                              rgba=(255, 255, 255, 150)))
@@ -489,6 +490,56 @@ class LocalView:
             out.append(Text(wx + T / 2, wy - T * 0.08, text, "prose_bold", size, (250, 240, 214, 255), anchor="mb",
                             shadow=False, outline=True))
         canvas.under(*out)
+
+    def _decals(self, game, lm, atlas, x0, y0, x1, y1, light) -> list:
+        """Blood where a fight was (game/remains.py), fading by its age; only on squares you have seen."""
+        decals = (lm.meta or {}).get("decals")
+        if not decals:
+            return []
+        from realmwalker.game import remains
+
+        now = game.world.time / 1440.0
+        T = self.tile
+        out = []
+        for key, rec in decals.items():
+            x, y = (int(v) for v in key.split(","))
+            if not (x0 <= x < x1 and y0 <= y < y1) or not lm.seen[x, y]:
+                continue
+            a = remains.blood_alpha(now, rec)
+            fam = atlas.family("decal/pool" if rec[0] == "pool" else "decal/blood")
+            if a <= 0 or not fam:
+                continue
+            lit = _cell_light(light, x - x0, y - y0)
+            col = tuple(int(255 * min(1.0, c)) for c in lit)
+            px_, py_ = self.cell_px(x, y)
+            out.append(Sprite(fam[int(rec[2]) % len(fam)], px_, py_, T, T, (*col, int(230 * (0.35 + 0.65 * a)))))
+        return out
+
+    def _fallen(self, game, lm, atlas, fov, roofed, x0, y0, light) -> list:
+        """The dead where they fell (game/remains.py): their own figures, turned on their side and darkened."""
+        bodies = (lm.meta or {}).get("bodies")
+        if not bodies:
+            return []
+        out = []
+        T = self.tile
+        for i, b in enumerate(bodies):
+            x, y = int(b["x"]), int(b["y"])
+            if not lm.in_bounds(x, y) or not fov[x, y] or roofed(x, y):
+                continue
+            who = b["who"]
+            if "npc" in who:
+                npc = game.world.npcs.get(who["npc"])
+                if npc is None:
+                    continue
+                parts = dolls.npc(npc, game.tables, atlas)
+            else:
+                parts = dolls.creature(who.get("creature", ""), game.tables, f"body{i}", atlas)
+            lit = tuple(v * 0.6 for v in _cell_light(light, x - x0, y - y0))
+            px_, py_ = self.cell_px(x, y)
+            cmd = dolls.draw(atlas, parts, px_, py_ + T * 0.18, T, lit, angle=float(b.get("angle", 90)))
+            if cmd is not None:
+                out.append(cmd)
+        return out
 
     def _handed(self, game, atlas, now: float, animate: bool) -> list:
         """A thing changing hands in a scene: its picture goes from one figure to the other (half a second)."""

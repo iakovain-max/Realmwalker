@@ -740,3 +740,23 @@ def test_a_villain_s_name_crosses_the_battle_mat(pictured):
     assert found, "the name and the tale across the mat"
     assert screen.board.shake_until > 0
     assert app.error_count == 0
+
+
+def test_the_fallen_and_their_blood_are_drawn(pictured):
+    """Expansion 6 B.5: the dead lie where they fell, turned and darkened, with blood under them (game/remains.py)."""
+    from realmwalker.ui.gfx.scene import Sprite
+
+    app, game = pictured
+    if game.local is None:
+        game.enter_local()
+    lm = game.local
+    p = game.player
+    day = game.world.time / 1440.0
+    lm.seen[:, :] = True
+    lm.meta["bodies"] = [{"x": p.lx + 1, "y": p.ly, "who": {"creature": "wolf"}, "angle": 90, "day": day,
+                          "side": "foe"}]
+    lm.meta["decals"] = {f"{p.lx + 1},{p.ly}": ["pool", day, 1], f"{p.lx},{p.ly + 1}": ["blood", day, 2]}
+    canvas = render(app)
+    names = {c.name for c in commands(canvas, Sprite)}
+    assert any(n.startswith("decal/pool") for n in names) and any(n.startswith("decal/blood") for n in names)
+    assert app.error_count == 0

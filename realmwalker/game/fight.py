@@ -215,6 +215,9 @@ def finish_battle(game) -> Aftermath:
 
     domains.one_blessing(list(game.party) + list(getattr(game, "waiting", None) or ()))  # (the Trickster's: one)
     _settle_townsfolk(game, battle, result)
+    from realmwalker.game import remains
+
+    remains.after_field(game, battle, result)  # (the dead and the blood stay where they fell)
     if game.party[1:]:
         from realmwalker.game.companions import react
 

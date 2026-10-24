@@ -3314,6 +3314,9 @@ class Battle:
         hp_before = target.hp
         self.say(f"{text} <dim>({amount})</>", "danger" if target.side == PARTY else "info")
         self._event("damage", to=target.id, by=att.id if att else None, amount=amount, dtype=dtype, crit=crit)
+        if dtype in ("slashing", "piercing") and amount > 0 and \
+                (target.cdef or {}).get("kind") not in ("construct", "elemental", "ooze", "undead"):
+            self.__dict__.setdefault("blood", []).append([int(target.x), int(target.y)])  # (where it drew blood)
         self._apply_hp_loss(target, amount, source=att, cause=f"{att.the_name if att else 'a wound'}'s {weapon}" if att else weapon,
                             crit=crit, dtype=dtype)
         if target.char is not None and (target.char.spells or {}).get("contingency"):

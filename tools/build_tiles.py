@@ -70,6 +70,9 @@ def pick_many(prefix: str, pattern: str, grade: str, limit: int | None = None) -
 
 # Ground
 pick_many("floor/grass", "dungeon/floor/grass/grass_[0-2]_new.png", "ground")
+# Blood left where a fight was (Expansion 6 B.5: game/remains.py, drawn by LocalView's decal layer)
+pick_many("decal/blood", "misc/blood/blood_red_[0-9]*.png", "feature", limit=8)
+pick_many("decal/pool", "misc/blood/blood_puddle_red*.png", "feature", limit=5)
 pick_many("floor/grass_old", "dungeon/floor/grass/grass_[0-2]_old.png", "ground")
 pick_many("floor/grass_flowers", "dungeon/floor/grass/grass_flowers_*_new.png", "ground")
 pick_many("floor/dirt", "dungeon/floor/dirt_[0-2]_new.png", "ground")

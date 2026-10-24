@@ -113,6 +113,7 @@ def _local(game, lm, party, creatures, env, rng, *, actor, near, situation, numb
     field = grid.Field(game.tables, terrain, kind=lm.kind, style=lm.meta.get("style", ""),
                        key=f"{lm.key}/battle{number}", base_light=env.light, indoors=indoors, underground=under,
                        ground=env.ground, lights=lights, origin=(x0, y0))
+    field.cut_from = lm.key  # (its dead and blood are written back there: game/remains.py)
     lead = (me[0] - x0, me[1] - y0)
     if them is not None:
         foe_at = (max(0, min(W - 1, them[0] - x0)), max(0, min(H - 1, them[1] - y0)))

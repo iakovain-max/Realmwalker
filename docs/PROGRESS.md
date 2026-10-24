@@ -46,6 +46,52 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-10-24 (late night): Adventures & Events Part B, first half — show, don't tell — branch `dlc/06-adventures-events` (not yet on main)
+
+Tasks B.1 to B.5 of Part B (the rest, B.6 to B.9, comes next; Part B goes to `main` with B.9).
+
+**What is different when you play**
+- **Towns act out their stories.** When a town at a beast's door asks you to hunt it, you are no longer handed a box
+  of words as you walk in: a child or a serving hand comes running through the crowd calling after you, carrying a
+  sealed letter, and presses it into your hand; or the townsfolk gather round you murmuring ("That's the one."), and
+  the eldest of them steps out to speak. The whole town keeps living while it happens. Your keys wait while they come
+  to you; Space or Escape skips to the end. A town's bell can ring now (a new sound).
+- **Letters are pages.** The runner's letter opens as a page of old parchment in its writer's hand (a plain hand for
+  farmers and headmen, a fine one for lords and priests, a black-letter hand for villains), sealed in wax; the line
+  that matters is underlined a moment after you first read it. Read it again from your pack: "Read the page".
+- **Pictures.** A tale's beats and every event on the road have a picture above their words: fourteen kinds of place
+  (a street, a square, an inn, a hall, a camp, a road, a ford, a barrow, a ruin, a battlefield, a burned street, the
+  rift, a crusaders' camp, a sickroom), by the hour's light, with you in them. A chapter now opens on a title card
+  with a painting of where it begins, slowly panning, its name across it.
+- **The villain enters.** When you face a tale's beast at its den, its name and the tale's title slide across the
+  battle mat, the ground shakes, and a deep drum sounds; when it turns at half its strength (or breaks off before its
+  den) its line crosses the mat the same way.
+- **Places keep what happened to them.** A town burned by a war, a dragon or raiders now looks burned the first time
+  you walk in: charred shells of houses open to the sky, ash on the floors, fallen walls, broken doors, ash and rubble
+  in the streets; its burnt-out shops and inns are shut. A sacked town has broken doors and rubble; a besieged one
+  sacks and crates in its square; an emptied one weeds and doors left open; a town rebuilding its burned quarter has
+  woodpiles; a festival has banners, lanterns and stalls; a memorial a statue. Every one of these is spoken of when you
+  walk in and in the streets, and on the world map's line for the town. They age: a burning town is burned in a day or
+  two, a burned one begins to rebuild after a season, and within the year it is itself again (the map changes back).
+- **The dead stay where they fell.** After a fight in a town's street or out in the wild, the dead lie where they fell,
+  turned on their side and darkened, with blood under them and on the squares where the blows landed; you stand where
+  you stood when it ended. A day later the town has carried its dead away and dug a fresh grave for each of its own
+  ("There are new graves"); out in the wild the dead lie two days and then are bones. Blood fades in three to six days.
+
+**Choices made (Anton was away)**
+- Scenes play only on town maps for now (the actors are townsfolk); the camp's scenes (the carcass at dawn) come with
+  B.9, a scene's fire and lamps with B.7 (fire). A town stages at most one scene a day.
+- No handwriting typeface was downloaded (an unattended run takes no downloads): letters use the game's own book faces
+  (EB Garamond, Grenze Gotisch). A real script face can be added to assets/fonts later.
+- Graves use the existing grave picture (the "fresh grave" terrain comes with B.7's new terrains); foes' bodies are
+  simply gone from a town after a day (the pyre outside the walls is later).
+- Found and left for a separate fix: a highland town and a volsk town (at the "town" size) are built with no way out /
+  a shut-off corner; tests/test_towns.py never checked those sizes (a task chip was raised).
+
+**Checks**: the quick suite; new tests tests/test_stage.py, tests/test_place_marks.py, tests/test_remains.py and new
+picture tests in tests/test_graphics_ui.py. Look at the new pictures with `tools/showcase.py` (`--sheet vignettes`,
+`--sheet letter --hand dark`, `--sheet mark --mark burned`); the contact sheets land in build/showcase/.
+
 ### Session, 2026-10-24 (night): Adventures & Events Part A finished — the Beast, played through — merged into `main`
 
 The rest of Part A, and Part A goes to `main` (the release of 1.6.0 waits for the whole of Expansion 6).

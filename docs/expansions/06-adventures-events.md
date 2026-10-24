@@ -190,7 +190,7 @@ blood where they fell, and the town buries its own; a runner can run up to you w
 its writer's hand; the Beast's chapters open on title cards over pictures; a burning street burns, on the map and on
 the battle mat. ADVENTURES.md §5.17–5.19, §5.21 (signs), §8.11–8.14, §8.16 (signs), §8.17–8.18.
 
-- [ ] B.1 **The stage** (`game/story/stage.py`, `scenes.json`; ADVENTURES.md §8.11): the scene record in
+- [x] B.1 **The stage** (`game/story/stage.py`, `scenes.json`; ADVENTURES.md §8.11): the scene record in
   `politics["director"]`; the cues of §5.18; errands (`npc.flags["errand"]`, read first in `townlife.goal`; runners
   two steps a tick), openers (`Conversation.greet`), gatherings (`Town.flags["gathering"]`), story words whatever the
   Text detail (`townlife.speak`), the hand-over drawn between two figures, the camera's focus (LocalView), arrivals
@@ -203,13 +203,13 @@ the battle mat. ADVENTURES.md §5.17–5.19, §5.21 (signs), §8.11–8.14, §8.
   `tests/test_stage.py` (every cue on a town of each people; a runner reaches you through a crowded street; the town
   clock runs while a scene holds; the townlife 30 ms test with a scene of twenty actors; never two people on one
   square).
-- [ ] B.2 **Pictures for stories** (ADVENTURES.md §8.12): `ui/gfx/vignette.py` (the fourteen backdrops, figures from
+- [x] B.2 **Pictures for stories** (ADVENTURES.md §8.12): `ui/gfx/vignette.py` (the fourteen backdrops, figures from
   the real people, props, light, atmospheres); a picture panel on the beat screen and the event screen (a `picture`
   key in beats and in `travel_events.json`); `ui/screens/titlecard.py` (the Beast's chapters open with it);
   `ui/screens/letter.py` (one or two OFL handwriting faces in `assets/fonts` and `typefaces.py`, parchment, seals,
   letters as items with a `letter:<id>` tag whose page opens again from the inventory); the held letter layer
   (`tools/figure_gear.py`); the boss entrance on the battle mat. Tests: `tests/test_graphics_ui.py` draws them all.
-- [ ] B.3 **Marks** (`world/marks.py`, `marks.json`; ADVENTURES.md §8.13): today's statuses become marks (siege,
+- [x] B.3 **Marks** (`world/marks.py`, `marks.json`; ADVENTURES.md §8.13): today's statuses become marks (siege,
   sacked, burned, plague, famine, raided, tribute, beast) and the first new ones (burning, rebuilding, emptied, beset,
   memorial, festival); every place that writes a status writes it through `marks.add`; `siege` stays a war's own
   (autoplay's check), `beset` for a ring with no war behind it; aging in `Politics.expire_status` (burned → rebuilding
@@ -217,7 +217,7 @@ the battle mat. ADVENTURES.md §5.17–5.19, §5.21 (signs), §8.11–8.14, §8.
   `Town.description` (beast and tribute too). Tests: `tests/test_place_marks.py` (`tests/test_marks.py` already
   tests the marks spells leave on creatures): each Politics path writes its mark; marks age by the clock; old
   day-number values still read.
-- [ ] B.4 **Stamping** (`game/placemarks.py`): marks dressed on close-up maps in `enter_local` right after
+- [x] B.4 **Stamping** (`game/placemarks.py`): marks dressed on close-up maps in `enter_local` right after
   `get_local_map` (before bands and people are placed) and in `people.prepare_town` between the map and its people,
   and again when a mark changes while you are there (people and bands step off changed cells first); the cells each
   mark changed recorded with their old ids in `lm.meta["marks"]` (the Passwall pattern); building looks (roofless
@@ -226,7 +226,7 @@ the battle mat. ADVENTURES.md §5.17–5.19, §5.21 (signs), §8.11–8.14, §8.
   `lm._building_grid` reset, `townlife.forget()`, posts and homes moved out of blocked cells; no trade in a burnt
   shell (`economy.shop_spec`, `services`). Tests: every mark stamped on a test town of every people keeps
   `check_works` (`tests/test_towns.py`'s rules); stamping then restoring gives back the original terrain exactly.
-- [ ] B.5 **The fallen, blood and graves** (`game/remains.py`): `lm.meta["bodies"]` (who they were, never doll
+- [x] B.5 **The fallen, blood and graves** (`game/remains.py`): `lm.meta["bodies"]` (who they were, never doll
   parts: LocalView composes the figure), `["decals"]` and `["graves"]`; LocalView's decal layer and the fallen drawn as
   turned, darkened dolls with a pool of blood; the write-back in `fight.finish_battle` through `Field.origin`
   (`Battle.blood` filled where slashing and piercing damage lands); the party stands where its leader stood when the

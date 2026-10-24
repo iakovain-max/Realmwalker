@@ -548,9 +548,30 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part B (*Show, don't tell: the stage, pictures, places
-that change*), task B.1, on branch `dlc/06-adventures-events` (Part A merged into main 2026-10-24). Read
-docs/expansions/06-adventures-events.md Part B and ADVENTURES.md §5.17-5.19, §5.21, §8.11-8.18 first.
+Next session starts at: Expansion 6, **Adventures & Events**, Part B, task B.6 (*eavesdropping, tailing and
+tracks*), on branch `dlc/06-adventures-events` (B.1-B.5 done there, not yet merged; Part B goes to main with B.9).
+Read docs/expansions/06-adventures-events.md Part B (B.6-B.9) and ADVENTURES.md §5.18 (its last paragraph), §8.11
+(eavesdropping), §8.14 (fire), §8.16, §8.17-8.18 first.
+Part B's first half (2026-10-24, realmwalker-a): B.1 the stage `game/story/stage.py` + scenes.json (one scene at a
+time in politics["director"]["scene"]; cues are a registry `@cue`, checked at start-up by story/check.scene_problems;
+townlife.tick calls stage.tick first, townlife.settle plays it out; errands in npc.flags["errand"] read first by
+townlife.goal, runners two steps a tick; gatherings Town.flags["gathering"]; townlife.speak; GameState.held, animations,
+stage_fx, camera, letter (none saved); Conversation.greet's opener; stage.on_load from save.load_game, stage.check_here
+from the game screen; story.offer_hook plays "runner" or "plea" when you stand on the town's map). B.2 pictures
+`ui/gfx/vignette.py` (BACKDROPS, compose, for_place), beat.picture/backdrop_for ("place", "here", a backdrop),
+travel_events.json `picture`, ui/screens/titlecard.py, letters `game/letters.py` + ui/screens/letter.py (typefaces
+hand/hand_fine/hand_dark; item tag letter:<id>; the pack's "Read the page"), stage cues give `letter` and read, npc
+flags "holding" (fig/held/letter), the battle events "boss"/"phase" with name and line (battlefx banner, the villain
+sound). B.3 `world/marks.py` + marks.json (add/lift/age/since/label/words; Politics.expire_status is marks.age; OWNED
+marks: siege, emptied, rebuilding). B.4 `game/placemarks.py` (stamp from enter_local, prepare_town and the day's
+politics; lm.meta["marks"]; economy.burnt_out shuts shops and services; roofs/houses "charred"). B.5
+`game/remains.py` (Field.cut_from set by arena._local; Battle.__dict__["blood"] filled in Battle._hit; after_field
+from fight.finish_battle; tick from enter_local and the day change; lm.meta bodies/decals/graves; LocalView _decals and
+_fallen; DCSS blood picked as decal/blood and decal/pool). tools/showcase.py sheets vignettes, letter, mark.
+Still to do in B: B.6 (overhear/follow scenes, track decals to the map's edge and the world map), B.7 fire, B.8 map
+signs, B.9 (the Beast shown: its scenes incl. the camp screen's, title cards, its doom as a mark, vignettes on
+epilogue pages; showcase first form exists; debug console showcase/mark/scene; frame timing test; FORMAT_VERSION +1 for
+Part B's new saved records; smoke tour shows a burned town, a title card and a letter; merge).
 Part A's second half (2026-10-24, realmwalker-b): `tools/storybook.py` (synopses; `--check`: roles, places, every
 word of every line a tale can show, three routes, the content rule, the six rules as they apply to a tale;
 tests/test_storybook.py on three test worlds) and the story's floors in tests/test_text_variety.py; the powers

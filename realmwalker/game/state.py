@@ -393,6 +393,11 @@ class GameState:
                     from realmwalker.game import uniques
 
                     uniques.daily(self)  # (the rumours of the seven reach a hero who travels alone too)
+            if self.in_local and self.local is not None:
+                from realmwalker.game import remains
+
+                for line in remains.tick(self, self.local):  # (a day: the town buries its dead)
+                    self.say(line, "flavor")
             if self.renown.flags.get("captives"):
                 from realmwalker.game.gear import captives_slip
 
@@ -986,6 +991,9 @@ class GameState:
             from realmwalker.game import placemarks
 
             placemarks.stamp(self, lm, self.world.settlement_at(p.x, p.y))
+        from realmwalker.game import remains
+
+        remains.tick(self, lm)  # (the dead left here carried off or gone to bones; old blood faded)
         from realmwalker.game.encounters import populate_local
 
         populate_local(self, lm)
