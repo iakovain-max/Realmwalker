@@ -389,8 +389,9 @@ def _danger(pol, t: dict, n: int) -> None:
 
 
 @stage_op("emptied")
-def _emptied(pol, t: dict, which: str = "nearest") -> None:
-    """The doom: the nearest small place it threatens empties, keeping a floor of its people, until it fills again."""
+def _emptied(pol, t: dict, which: str = "nearest", *also: str) -> None:
+    """The doom: the nearest small place it threatens empties, keeping a floor of its people, until it fills again.
+    `also` are marks the place is left with besides (the beast's: "burned", a farmstead burned as its people fled)."""
     from realmwalker.world.history import remember
 
     w = pol.w
@@ -403,6 +404,8 @@ def _emptied(pol, t: dict, which: str = "nearest") -> None:
     s.population = max(10, int(s.population * float(spec["floor"])))
     marks.add(w, s, "emptied", pol.day, pol.t, until=pol.day + float(spec["rebuild_days"]), was=was,
               by=villain_name(w, t), threat=t["id"])
+    for mark in also:
+        marks.add(w, s, mark, pol.day, pol.t)
     text = pol.say("threat_emptied", {"villain": villain_name(w, t), "place": s.name}, where=(s.x, s.y),
                    importance=2, places=[s])
     remember(w, pol.year, "emptied", text, importance=3, places=[s.id],

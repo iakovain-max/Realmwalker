@@ -103,6 +103,18 @@ def test_a_doom_is_recovered_from(world, tables):
     assert s.population >= int(was * 0.5)
 
 
+def test_the_beasts_doom_leaves_a_burned_farmstead(world, tables):
+    """B.9: the beast's doom empties the hamlet and leaves it burned (its smoke on the world map, charred houses)."""
+    s = next(s for s in world.settlements if s.kind in ("hamlet", "village"))
+    pol = _politics(world, tables)
+    t = threats.make(world, tables, RNG(5), "beast", source={"kind": "test"}, home={"settlement": s.id}, day=pol.day)
+    t["stakes"] = [s.id]
+    doom = next(st for st in threats.stages(tables, t) if st.get("doom"))
+    for op in doom["effects"]:
+        threats.STAGE_OPS[op[0]](pol, t, *op[1:])
+    assert "emptied" in s.status and "burned" in s.status
+
+
 def test_the_owners_still_replay_from_the_ledger_after_a_year_of_threats(world, tables):
     _weeks(world, tables, 52)
     owners = {}
