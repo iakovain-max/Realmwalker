@@ -239,13 +239,26 @@ METAL_THINGS = {"chain_shirt", "chain_mail", "ring_mail", "scale_mail", "breastp
 
 
 # ---------------------------------------------------------------------------- who
+_NPC_PARTS: dict = {}  # (a town's people are drawn every frame: their looks are read from their words once)
+NPC_KEPT = 4096
+
+
 def npc(npc, tables, atlas=None) -> list[Part]:
-    """A townsperson dressed for their trade, in the manner of their people."""
-    fig = Figure(tables, npc.race, npc.sex, f"npc{npc.id}", looks_rules.of_npc(tables, npc))
-    fig.outfit(outfit_for(tables, npc.job, npc.culture, npc.sex))
-    if npc.flags.get("holding"):  # (something they carry in a scene: a letter for you)
-        fig.wear("held", npc.flags["holding"])
-    return fig.parts(atlas or _atlas())
+    """A townsperson dressed for their trade, in the manner of their people (kept by everything it is made from)."""
+    atlas = atlas or _atlas()
+    key = (npc.id, npc.race, npc.sex, npc.age, npc.job, npc.culture, npc.flags.get("holding"),
+           (npc.profile or {}).get("appearance", ""), id(tables), id(atlas))
+    parts = _NPC_PARTS.get(key)
+    if parts is None:
+        fig = Figure(tables, npc.race, npc.sex, f"npc{npc.id}", looks_rules.of_npc(tables, npc))
+        fig.outfit(outfit_for(tables, npc.job, npc.culture, npc.sex))
+        if npc.flags.get("holding"):  # (something they carry in a scene: a letter for you)
+            fig.wear("held", npc.flags["holding"])
+        parts = fig.parts(atlas)
+        if len(_NPC_PARTS) >= NPC_KEPT:
+            _NPC_PARTS.clear()
+        _NPC_PARTS[key] = parts
+    return list(parts)
 
 
 def outfit_for(tables, job: str, culture: str, sex: str) -> dict:
