@@ -1,8 +1,9 @@
 {
-  "_comment": "Marks on places (docs/ADVENTURES.md §5.19, §8.13; world/marks.py): what a settlement is going through, kept in Settlement.status. form: day (a day number: sacked, burned), name (tribute), or record (a dict with since, until...). label: the world map's word for it (with a colour: danger or warn). ages: {into, after [lo, hi] days from since} - when it passes into the next mark (into null: it is simply over); lasts [lo, hi]: the days a record lasts when it is given no until; a record with an until ends at it (siege is its war's; emptied and rebuilding are world/threats.py's, which mends the population). troubles: what you see walking in ({town}, {by}); moments: a thing seen in its streets; description: a line for a town's first description.",
+  "_comment": "Marks on places (docs/ADVENTURES.md §5.19, §8.13; world/marks.py): what a settlement is going through, kept in Settlement.status. form: day (a day number: sacked, burned), name (tribute), or record (a dict with since, until...). label: the world map's word for it (with a colour: danger or warn). ages: {into, after [lo, hi] days from since} - when it passes into the next mark (into null: it is simply over); lasts [lo, hi]: the days a record lasts when it is given no until; a record with an until ends at it (siege is its war's; emptied and rebuilding are world/threats.py's, which mends the population). troubles: what you see walking in ({town}, {by}); moments: a thing seen in its streets; description: a line for a town's first description. dress: how it changes the town's close-up map (game/placemarks.py): share of buildings touched (near: centre or anywhere; spare: kinds left alone), roofless (share of those), floor, furniture, walls [[terrain, share]], doors, look (a building's look over), shut (their trades), scatter [[walkable terrain, share of street squares]], props [[terrain, count]] (props_near: square).",
   "marks": {
     "siege": {
       "form": "record", "label": "under siege", "colour": "danger",
+      "dress": {"props": [["sacks", 6], ["crates", 3]], "props_near": "square"},
       "troubles": [
         "<danger>{town} is under siege{by_part}.</> Soldiers' fires ring the walls, and food is dear inside them.",
         "<danger>{town} is besieged{by_part}.</> The gates open only a crack, and the guards count every face.",
@@ -13,6 +14,7 @@
     },
     "beset": {
       "form": "record", "label": "beset", "colour": "danger",
+      "dress": {"props": [["sacks", 4], ["torch_post", 3]], "props_near": "square"},
       "troubles": [
         "<danger>{town} is beset{by_part}.</> Nobody goes beyond the fences after dark, and the gates are barred at noon.",
         "<danger>Something has {town} ringed round{by_part}.</> Fires are kept burning all night at every gap in the fence.",
@@ -23,6 +25,7 @@
     },
     "sacked": {
       "form": "day", "label": "sacked", "colour": "danger", "ages": {"into": null, "after": [120, 120]},
+      "dress": {"share": 0.3, "roofless": 0.25, "floor": "ash", "furniture": "rubble", "doors": "doorway", "walls": [["rubble", 0.06]], "look": {"walls": "charred", "roof": "charred"}, "shut": true, "scatter": [["rubble", 0.02], ["ash", 0.02]]},
       "troubles": [
         "<danger>{town} was sacked not long ago.</> Broken doors, fresh graves, and people who look at strangers with hate.",
         "<danger>{town} has been sacked.</> The shutters are smashed, the wells fouled, and the market is ash.",
@@ -33,6 +36,7 @@
     },
     "burning": {
       "form": "record", "label": "burning", "colour": "danger", "ages": {"into": "burned", "after": [1, 2]},
+      "dress": {"share": 0.4, "near": "centre", "roofless": 0.65, "floor": "ash", "furniture": "ash", "walls": [["rubble", 0.12], ["ruin_wall", 0.3]], "doors": "doorway", "look": {"walls": "charred", "roof": "charred"}, "shut": true, "scatter": [["ash", 0.05], ["rubble", 0.015]]},
       "troubles": [
         "<danger>{town} is burning.</> The smoke is black and low, and people run past you with buckets and children.",
         "<danger>Fire has taken {town}.</> Roofs fall in with a roar, and the heat comes down the street like a wall.",
@@ -43,6 +47,7 @@
     },
     "burned": {
       "form": "day", "label": "burned", "colour": "warn", "ages": {"into": "rebuilding", "after": [90, 150]},
+      "dress": {"share": 0.4, "near": "centre", "roofless": 0.65, "floor": "ash", "furniture": "ash", "walls": [["rubble", 0.12], ["ruin_wall", 0.3]], "doors": "doorway", "look": {"walls": "charred", "roof": "charred"}, "shut": true, "scatter": [["ash", 0.05], ["rubble", 0.015]]},
       "troubles": [
         "<warn>Much of {town} has been burned.</> What is left huddles among the black beams.",
         "<warn>{town} has burned.</> The ash is still soft underfoot, and the smell of it is in everything.",
@@ -53,6 +58,7 @@
     },
     "rebuilding": {
       "form": "record", "label": "rebuilding", "colour": "warn", "lasts": [215, 275],
+      "dress": {"share": 0.15, "near": "centre", "roofless": 0.7, "floor": "floor_earth", "furniture": "rubble", "walls": [["ruin_wall", 0.2]], "doors": "doorway", "look": {"walls": "charred", "roof": "charred"}, "shut": true, "props": [["woodpile", 5], ["crates", 2]]},
       "troubles": [
         "<warn>{town} is building itself again.</> New timber stands pale among the blackened beams.",
         "<warn>Scaffolds stand over half of {town}.</> The hammering never stops while it is light.",
@@ -63,6 +69,7 @@
     },
     "emptied": {
       "form": "record", "label": "emptied", "colour": "danger",
+      "dress": {"share": 0.5, "doors": "door_open", "scatter": [["tall_grass", 0.04], ["leaf_litter", 0.02]]},
       "troubles": [
         "<danger>{town} is nearly empty.</> Doors stand open on empty rooms, and the few who stayed will not meet your eye.",
         "<danger>Most of {town} has fled{by_part}.</> The houses are dark, and the dogs have gone wild in the lanes.",
@@ -73,6 +80,7 @@
     },
     "plague": {
       "form": "record", "label": "plague", "colour": "danger",
+      "dress": {"props": [["cart", 2]]},
       "troubles": [
         "<danger>Plague is in {town}.</> Doors are marked with chalk, and the dead-carts go by.",
         "<danger>{town} is sick.</> Masked healers go from door to door, and the pyres smoke outside the walls.",
@@ -123,6 +131,7 @@
     },
     "festival": {
       "form": "record", "label": "celebrating", "colour": "good", "lasts": [3, 7],
+      "dress": {"props": [["banner", 6], ["lantern_post", 4], ["stall", 2]], "props_near": "square"},
       "troubles": [
         "<good>{town} is celebrating.</> Garlands hang across the streets, and there is music in the square.",
         "<good>It is a feast day in {town}.</> Stalls crowd the square, and nobody is working who can help it.",
@@ -133,6 +142,7 @@
     },
     "memorial": {
       "form": "record", "label": "remembering", "colour": "dim",
+      "dress": {"props": [["statue", 1]], "props_near": "square"},
       "troubles": [
         "<dim>In the square of {town} stands a new memorial.</> Flowers are left at its foot.",
         "<dim>{town} remembers what happened here.</> A stone in the square names the dead.",

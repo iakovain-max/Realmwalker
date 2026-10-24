@@ -34,7 +34,22 @@ def shop_kind(game, npc: NPC) -> str | None:
 
 def shop_spec(game, npc: NPC) -> dict | None:
     kind = shop_kind(game, npc)
+    if kind and burnt_out(game, npc):
+        return None  # (a burnt shell sells nothing: game/placemarks.py)
     return game.tables.economy["shops"].get(kind) if kind else None
+
+
+def burnt_out(game, npc: NPC) -> bool:
+    """Their workplace is a shell a mark has shut (burned, sacked, still being built again)."""
+    if npc.building < 0:
+        return False
+    s = game.world.settlements[npc.settlement] if 0 <= npc.settlement < len(game.world.settlements) else None
+    lm = game.world.local_maps.get(f"{s.x},{s.y}") if s is not None else None
+    if lm is None or npc.building >= len(lm.buildings):
+        return False
+    from realmwalker.game import placemarks
+
+    return placemarks.shut(lm, npc.building)
 
 
 def lands_near(game, settlement, radius: int = 3) -> set[str]:

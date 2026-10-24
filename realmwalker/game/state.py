@@ -380,6 +380,10 @@ class GameState:
 
                 if getattr(self, "politics_live", True):
                     politics.tick(self.world, self.tables)
+                    if self.in_local and self.local is not None and self.local.kind == "settlement":
+                        from realmwalker.game import placemarks  # (a mark came or went while you stood here)
+
+                        placemarks.stamp(self, self.local, self.world.settlement_at(self.player.x, self.player.y))
                 reputation.tick(self)
                 if self.party[1:] or self.waiting:
                     from realmwalker.game import companions
@@ -978,6 +982,10 @@ class GameState:
         lm = get_local_map(self.world, self.tables, p.x, p.y)
         p.local_key = lm.key
         p.lx, p.ly = lm.entry
+        if lm.kind == "settlement":  # (what the town has been through, on its map before anyone is placed)
+            from realmwalker.game import placemarks
+
+            placemarks.stamp(self, lm, self.world.settlement_at(p.x, p.y))
         from realmwalker.game.encounters import populate_local
 
         populate_local(self, lm)

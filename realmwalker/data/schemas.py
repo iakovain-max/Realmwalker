@@ -1577,6 +1577,7 @@ MARK = Obj({
     "troubles": word_list(3, 300),  # walking in ({town}, {by}, {by_part})
     "moments": word_list(3, 300),  # a thing seen in its streets
     "description": word_list(1, 300),  # a line for a town's first description
+    "dress": Obj({"share": Float(min=0, max=1, optional=True)}, strict=False, optional=True),  # (game/placemarks.py)
 })
 MARKS = Obj({"marks": Map(MARK)})
 DATA_FILES.update({"threats.json": THREATS, "adventures.json": ADVENTURES, "villains.json": VILLAINS,

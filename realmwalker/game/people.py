@@ -637,6 +637,9 @@ def prepare_town(game, settlement) -> Town:
     lm = get_local_map(game.world, game.tables, settlement.x, settlement.y)
     if lm.kind != "settlement":
         return town_of(game.world, settlement.id)
+    from realmwalker.game import placemarks
+
+    placemarks.stamp(game, lm, settlement)  # (what it has been through, before its people are placed)
     return populate_town(game, lm, settlement)
 
 

@@ -3,7 +3,7 @@
     .venv/Scripts/python.exe tools/showcase.py [--sheet vignettes] [--out build/showcase]
 
 Sheets: vignettes (the fourteen backdrops at day and at night, with figures); letter (a letter's page, in each of the
-three hands). Opens the game's window for a moment,
+three hands); mark (a town's close-up map dressed for a mark: --mark burned, festival, siege...). Opens the game's window for a moment,
 draws the sheet, saves it as a PNG and closes. Anton looks at these to judge the pictures.
 """
 
@@ -16,7 +16,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-SHEETS = ("vignettes", "letter")
+SHEETS = ("vignettes", "letter", "mark")
 
 
 def _letter_screen(app, hand: str):
@@ -33,6 +33,41 @@ def _letter_screen(app, hand: str):
                                                          "seal": [150, 40, 32] if hand != "dark" else [30, 26, 30],
                                                          "lines": lines, "key": 1, "read": True, "day": 0}}})
     return LetterScreen(app, SimpleNamespace(world=world), "L1")
+
+
+def _mark_town(app, mark: str) -> None:
+    """A game in a test world, standing in its biggest town with the mark on it (the game screen as you would see
+    it)."""
+    import copy
+
+    from realmwalker.game.state import new_game
+    from realmwalker.world import marks
+    from realmwalker.world.generator import WorldOptions
+    from tests.worlds import cached_world
+
+    world = copy.deepcopy(cached_world(WorldOptions("Townland", 21, "small", history=40), app.tables))
+    game = new_game(world, app.tables)
+    game.survival = False
+    s = max((t for t in world.settlements if t.kind in ("town", "city")), key=lambda t: t.population)
+    s.status.clear()
+    marks.add(world, s, mark, 1.0, app.tables, until=999.0)
+    world.local_maps.pop(f"{s.x},{s.y}", None)
+    app.start_game(game)
+    game.player.local_key = None
+    game.player.x, game.player.y = s.x, s.y
+    game.world.time = (game.world.time // 1440 + 1) * 1440 + 11 * 60
+    game.enter_local()
+    rec = (game.local.meta.get("marks") or {}).get(mark) or {}
+    cells = rec.get("cells") or []
+    if cells:  # stand where the mark is
+        x, y, _ = cells[len(cells) // 2]
+        walk = app.tables.terrain.walk[game.remap_for(game.local)[game.local.terrain]]
+        for r in range(0, 6):
+            spot = next(((x + dx, y + dy) for dx in range(-r, r + 1) for dy in range(-r, r + 1)
+                         if game.local.in_bounds(x + dx, y + dy) and walk[x + dx, y + dy]), None)
+            if spot:
+                game.player.lx, game.player.ly = spot
+                break
 
 
 def _sheet_screen(app, sheet: str):
@@ -81,6 +116,7 @@ def main(argv=None) -> int:
     ap.add_argument("--sheet", default="vignettes", choices=SHEETS)
     ap.add_argument("--out", default=str(ROOT / "build" / "showcase"))
     ap.add_argument("--hand", default="plain", choices=("plain", "fine", "dark"))
+    ap.add_argument("--mark", default="burned")
     args = ap.parse_args(argv)
     from realmwalker.app import App
     from realmwalker.ui import window
@@ -88,10 +124,13 @@ def main(argv=None) -> int:
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     app = App(home=str(ROOT / "build" / "showcase_home"))
-    shot = out / (f"{args.sheet}.png" if args.sheet != "letter" else f"letter_{args.hand}.png")
+    shot = out / {"letter": f"letter_{args.hand}.png", "mark": f"mark_{args.mark}.png"}.get(args.sheet, f"{args.sheet}.png")
     app.showcase_hand = args.hand
 
     def show(app):
+        if args.sheet == "mark":
+            _mark_town(app, args.mark)
+            return
         app.push(_sheet_screen(app, args.sheet))
 
     try:
