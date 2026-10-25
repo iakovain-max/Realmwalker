@@ -3426,13 +3426,15 @@ class Battle:
 
     def _knock_out(self, source: Fighter | None, target: Fighter) -> bool:
         """Knocking a creature out (PHB 2024): a melee blow that would drop it to 0 may leave it senseless instead.
-        A party member's blow on someone who can be taken alive asks (the Auto, and the enemy, kill)."""
+        A party member's blow on someone who can be taken alive asks (the Auto, and the enemy, kill - unless a tale
+        wants them alive: Expansion 6's capture)."""
         if source is None or source.side != PARTY or not self._melee_blow or target.creature is None \
                 or target.kind != "humanoid" or not target.active:
             return False
+        wanted = bool((getattr(target.creature, "story", None) or {}).get("alive"))
         if not reactions.yes(self, Decision(source, "knock_out", f"{target.the_name} is beaten. Knock them out "
                                             f"instead of killing? (taken alive, a prisoner)", [("yes", "Knock out"), ("no", "Kill")],
-                                            default="no")):
+                                            default="yes" if wanted else "no")):
             return False
         target.hp = 0
         target.state = "surrendered"  # taken alive: a prisoner when the fight is over

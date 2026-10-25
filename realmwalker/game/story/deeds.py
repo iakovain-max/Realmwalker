@@ -255,6 +255,8 @@ def band(game, adv: dict, st: dict, role: str, group: str, rng) -> list:
     for i, c in enumerate(creatures):
         c.story = {"adv": adv["id"], "role": role if i == 0 or role in ("wave", "ambush") else "minion",
                    "step": st["id"]}
+        if i == 0 and st["kind"] == "capture":
+            c.story["alive"] = True  # (wanted alive: a beaten blow knocks them out, on Auto too)
     if creatures and name:
         creatures[0].name, creatures[0].named = name, True
     return creatures

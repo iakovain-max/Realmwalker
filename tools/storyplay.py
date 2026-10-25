@@ -40,6 +40,8 @@ WORLDS = [("Forgeland", 77, "medium"), ("Threatland", 61, "medium"), ("Lawland",
 PARTY_CLASSES = ("fighter", "cleric", "rogue", "wizard")
 MAX_DAYS = 120
 MAX_ACTIONS = 400
+KINDS = ("beast", "risen", "outlaw")  # (the threats whose tales are written: Parts A and D)
+PART_D = ("rescue", "fetch", "defeat", "capture", "recruit", "rally", "hold", "rite", "escort", "confront")
 
 
 @dataclass
@@ -149,18 +151,42 @@ class Player:
 
         g = self.game
         b = g.battle
+        enc = g.encounter
         for f in b.side(PARTY):
             f.auto = True
         play_out(b, max_steps=6000)
         self.run.fights += 1
         after = fight.finish_battle(g)
         self.note(f"a fight: {after.outcome}")
+        for c in after.captives:  # (a tale's foe taken alive is questioned: Part D's capture)
+            if getattr(c, "story", None) and g.aftermath is not None:
+                self.note(f"questioned {c.name}")
+                fight.decide_captive(g, c, "interrogate")
         fight.take_loot(g, None if self.keeps_things else [])
         fight.leave_loot(g)
+        self.shed()
         g.aftermath = None
-        g.encounter = None
+        if g.encounter is enc:  # (a hold's next wave is a new encounter: it stays)
+            g.encounter = None
         if g.over is None:
             self.recover()
+
+    def shed(self) -> None:
+        """Nobody walks laden: the heaviest things nobody wears or the tale needs are left behind."""
+        from realmwalker.rules.character import Sheet
+        from realmwalker.rules.inventory import remove_item
+
+        g = self.game
+        for c in g.party:
+            for _ in range(40):
+                if not c.alive or Sheet(c, g.tables).encumbrance() < 2:
+                    break
+                worn = set(c.equipped.values())
+                loose = [it for it in c.inventory if it.uid not in worn and g.tables.items.weight(it) > 0
+                         and not any(t.startswith(("quest:", "story")) for t in it.tags)]
+                if not loose:
+                    break
+                remove_item(c, max(loose, key=g.tables.items.weight).uid)
 
     def recover(self) -> None:
         """A careful party rests when it is hurt (a long rest outside a map, a short one in it)."""
@@ -314,6 +340,156 @@ class Player:
             self.settle()
         elif kind == "finale":
             self.finale(adv, st)
+        elif kind in PART_D:
+            getattr(self, kind)(adv, st)
+
+    # ------------------------------------------------------------------ Part D's steps (Expansion 6 D.2)
+    def wait_a_day(self, st: dict) -> None:
+        """Nothing more to try today (a refusal, a failed check): tomorrow."""
+        if st["state"] == "open":
+            self.game.pass_time(24 * 60, "rest")
+            self.settle()
+
+    def delve(self, site_id: int, depth: int) -> None:
+        """Down a site's levels to `depth`, fighting every band met, opening the chests, freeing the captives."""
+        from realmwalker.game import quests
+
+        g = self.game
+        site = g.world.sites[site_id]
+        for _ in range(4):  # (it climbs out to rest when hard pressed, and comes back: the levels are kept)
+            if not self.go((site.x, site.y)):
+                self.note(f"could not reach {site.name} at {site.x},{site.y} from {g.player.x},{g.player.y}")
+                return
+            for line in fight.rest(g, "long"):  # (a careful party goes down rested)
+                pass
+            self.settle()
+            if g.over is not None or g.busy:
+                return
+            g.enter_local()
+            pressed = False
+            for level in range(1, depth + 1):
+                dungeon.descend(g, level)
+                lm = g.local
+                for _ in range(12):
+                    band = next((a for a in lm.actors if a.creatures and any(c.hp > 0 for c in a.creatures)), None)
+                    if band is None or g.over is not None:
+                        break
+                    if not story.hold_for_finale(g, band):
+                        fight.start_battle(g, band.creatures, "You close with them.", actor=band)
+                    self.settle()
+                    if g.over is not None or not any(c.alive and c.hp > 0 for c in g.party):
+                        return
+                    if band in lm.actors and any(c.hp > 0 for c in band.creatures):
+                        break  # (they got away, or would not be fought: on)
+                    pressed = sum(max(0, c.hp) for c in g.party if c.alive) < 0.5 * sum(c.max_hp for c in g.party) \
+                        or any(c.alive and c.hp <= 0 for c in g.party)
+                    if pressed:
+                        break
+                    self.recover()
+                if pressed:
+                    self.note(f"climbed out to rest from level {level}")
+                    break
+                for pos, f in list(lm.features.items()):
+                    if f.get("kind") == "chest" and not f.get("opened"):
+                        g.player.lx, g.player.ly = pos
+                        dungeon.open_chest(g, lm, *pos)
+                        self.pick_up(lm, pos)
+                    elif f.get("kind") == "captive":
+                        quests.free_captive(g, lm, *pos)
+                self.settle()
+                self.note(f"level {level} of {site.name}: {sum(1 for f in lm.features.values() if f.get('opened'))} "
+                          f"chests opened")
+                if g.over is not None:
+                    return
+            if not pressed:
+                return
+
+    def pick_up(self, lm, pos) -> None:
+        """What a chest gave up that the work or the tale is after."""
+        from realmwalker.game.story import goals
+        from realmwalker.rules.inventory import add_existing
+
+        g = self.game
+        pile = lm.items.get(tuple(pos), [])
+        for it in [it for it in pile if any(t.startswith("quest:") or t.startswith("story") for t in it.tags)]:
+            pile.remove(it)
+            add_existing(g.leader, g.tables.items, it)
+            self.note(f"took {it.name}")
+        goals.notify(g, "item", "force")
+
+    def rescue(self, adv: dict, st: dict) -> None:
+        self.delve(st["target"]["place"]["site"], int(st["target"]["n"]))
+
+    fetch = rescue
+
+    def defeat(self, adv: dict, st: dict) -> None:
+        t = st["target"]
+        if t.get("level"):
+            self.delve(t["place"]["site"], int(str(t["level"]).rsplit("/", 1)[1]))
+        elif self.go(places.xy(self.game.world, t["place"])):
+            story.on_arrive(self.game)
+            self.settle()
+        self.wait_a_day(st)  # (on the land the band is met once a day)
+
+    capture = defeat
+
+    def recruit(self, adv: dict, st: dict) -> None:
+        self.talk(st["target"].get("who") or adv["cast"].get(st["target"]["role"], {}), "story_recruit", st["id"])
+        self.wait_a_day(st)
+
+    def confront(self, adv: dict, st: dict) -> None:
+        self.talk(st["target"].get("who") or adv["cast"].get(st["target"]["role"], {}), "story_confront", st["id"])
+        self.settle()  # (a confrontation gone wrong is a fight)
+        self.wait_a_day(st)
+
+    def escort(self, adv: dict, st: dict) -> None:
+        g, t = self.game, st["target"]
+        if st.get("quest") is None:
+            if not self.talk(t.get("who") or adv["cast"].get(t["role"], {}), "story_escort", st["id"]):
+                self.run.why = "the one to escort could not be found"
+                return
+        if self.town(int(t["to"]["settlement"])) is not None:
+            story.on_arrive(g)
+            self.settle()
+        self.wait_a_day(st)
+
+    def rally(self, adv: dict, st: dict) -> None:
+        g, t = self.game, st["target"]
+        s = self.town(int(t["place"]["settlement"]))
+        if s is not None:
+            for who in [n for n in npcs_in(g.world, s.id) if n.alive and n.present]:
+                conv = Conversation(g, who)
+                ch = next((c for c in conv.menu() if c.id == "story_rally" and c.enabled), None)
+                if ch is not None:
+                    conv.choose(ch)
+                    self.moment()
+                    self.note(f"called on {who.name} to rally the town")
+                    break
+        self.wait_a_day(st)
+
+    def hold(self, adv: dict, st: dict) -> None:
+        g, t = self.game, st["target"]
+        if not self.go(places.xy(g.world, t["place"])):
+            return
+        self.recover()
+        for _ in range(24 * 40):  # (waits there, an hour at a time, until the night they come)
+            if st["state"] != "open" or g.over is not None or adv["state"] != "active":
+                return
+            if g.encounter is None and g.battle is None:
+                story.on_arrive(g)
+            if g.encounter is not None or g.battle is not None:
+                self.note(f"the night at {places.name(g.world, t['place'])}: wave {st.get('wave', 0)}")
+                self.moment()
+                self.settle()
+                continue
+            g.pass_time(60, "rest")
+            self.settle()
+
+    def rite(self, adv: dict, st: dict) -> None:
+        if self.go(places.xy(self.game.world, st["target"]["place"])):
+            story.on_arrive(self.game)
+            self.settle()
+        self.wait_a_day(st)
 
     def finale(self, adv: dict, st: dict) -> None:
         g = self.game
@@ -880,13 +1056,15 @@ def make_party(game, level: int, seed: int) -> None:
         companions.enlist(g, folk[i], char, bond)
 
 
-def play_once(tables, made, label: str, i: int, verbose: bool = False, hours: int = 0) -> Run:
-    """One life on one world: the i-th beast threat, setting out `hours` into the first day (each run its own dice)."""
+def play_once(tables, made, label: str, i: int, verbose: bool = False, hours: int = 0, kind: str = "beast") -> Run:
+    """One life on one world: the i-th threat of the kind, setting out `hours` into the first day (each run its own
+    dice)."""
     w = copy.deepcopy(made)
     run = Run(world=label)
-    found = [t for t in threats.records(w).values() if t["kind"] == "beast" and t["state"] != "ended"]
+    found = [t for t in threats.records(w).values() if t["kind"] == kind and t["state"] != "ended"
+             and (kind == "beast" or t.get("stakes"))]  # (a threat with no stakes has no tale)
     if not found:
-        run.why = "no beast threat"
+        run.why = f"no {kind} threat"
         return run
     t = found[i % len(found)]
     run.threat = t["id"]
@@ -903,6 +1081,7 @@ def play_once(tables, made, label: str, i: int, verbose: bool = False, hours: in
     p = Player(game, run, verbose)
     beats.director(w)["pending"] = None
     beats.director(w)["scheduled"] = []
+    beats.director(w)["opening"] = None  # (the first hour is measured on its own: --openings)
     story.offer_hook(game, t, town)
     start_day = game.world.time / 1440
     start_levels = sum(c.level for c in game.party)
@@ -926,6 +1105,8 @@ def play_once(tables, made, label: str, i: int, verbose: bool = False, hours: in
             run.why = "no open step"
             break
         before = (st["id"], st["state"], game.world.time)
+        if not p.run.log or not p.run.log[-1].endswith(f"step {st['id']} ({st['kind']})"):
+            p.note(f"step {st['id']} ({st['kind']})")
         p.act(adv, st)
         if (st["id"], st["state"]) == before[:2] and game.world.time == before[2] and adv["state"] == "active":
             run.why = run.why or f"stuck at {st['id']} ({st['kind']})"
@@ -938,7 +1119,7 @@ def play_once(tables, made, label: str, i: int, verbose: bool = False, hours: in
     return run
 
 
-def play(runs: int, verbose: bool = False, tables=None) -> list[Run]:
+def play(runs: int, verbose: bool = False, tables=None, kind: str = "beast") -> list[Run]:
     from tests.worlds import cached_world
     from tools.balance import load_tables
 
@@ -947,7 +1128,7 @@ def play(runs: int, verbose: bool = False, tables=None) -> list[Run]:
     out = []
     for i in range(runs):
         w = WORLDS[i % len(WORLDS)]
-        r = play_once(tables, made[w], w[0], i // len(WORLDS), verbose, hours=i % 24)
+        r = play_once(tables, made[w], w[0], i // len(WORLDS), verbose, hours=i % 24, kind=kind)
         out.append(r)
         print(f"run {i + 1:2d} {r.world:<10} {r.threat:<4} {'FINISHED' if r.finished else 'not done':<9} "
               f"ending={r.ending} days={r.days:.1f} fights={r.fights} beats={len(r.beats)} "
@@ -962,12 +1143,13 @@ def main() -> int:
     ap.add_argument("--income", action="store_true", help="the income measure: thirty days of honest work")
     ap.add_argument("--write", action="store_true", help="with --income: keep the result as the reference")
     ap.add_argument("--meet", action="store_true", help="the variety and rarity measures: thirty situations met")
+    ap.add_argument("--kind", choices=KINDS, default="beast", help="whose tale is played (Part D: risen, outlaw)")
     a = ap.parse_args()
     if a.meet:
         return meet_report(meet(a.verbose))
     if a.income:
         return income_report(income(a.runs, a.verbose), a.write)
-    results = play(a.runs, a.verbose)
+    results = play(a.runs, a.verbose, kind=a.kind)
     done = [r for r in results if r.finished]
     gaps = [x for r in results for x in r.gaps()]
     print(f"\nfinished {len(done)} of {len(results)} ({100 * len(done) / max(1, len(results)):.0f}%); "

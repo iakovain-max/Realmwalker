@@ -312,17 +312,17 @@ def finish_battle(game) -> Aftermath:
                     c.hp = max(1, c.hp)
             if result.outcome == "defeat":
                 after.notes.append(lie_senseless(game, dice.roll("1d4", rng).total))
-            if actor is not None and lm is not None and actor in lm.actors:
+            if actor is not None and lm is not None and actor in lm.actors and not _at_home(game, actor):
                 lm.actors.remove(actor)
         elif any(f.char is not None and f.char.alive and f.buff_value("feigning") for f in battle.side(PARTY)):
             _feigned(game, battle, rng, after)
-            if actor is not None and lm is not None and actor in lm.actors:
+            if actor is not None and lm is not None and actor in lm.actors and not _at_home(game, actor):
                 lm.actors.remove(actor)  # (they take you all for dead, and go)
         else:
             beasts = bool(foes) and all(f.kind == "beast" for f in foes)
             if beasts and any(c.alive for c in game.party):
                 _left_for_dead(game, battle, rng, after, len(foes))
-                if actor is not None and lm is not None and actor in lm.actors:
+                if actor is not None and lm is not None and actor in lm.actors and not _at_home(game, actor):
                     lm.actors.remove(actor)  # they have had what they came for, and gone
             if after.outcome != "mauled" or not game.party[0].alive:
                 for c in game.party:
@@ -895,6 +895,13 @@ CAPTIVE_FATES = {
     "execute": "Kill them",
     "capture": "Take them for a bounty or ransom",
 }
+
+
+def _at_home(game, actor) -> bool:
+    """A tale's master and their band, beaten you, stay where they live (the tale waits for you to come back)."""
+    from realmwalker.game import story
+
+    return story.finale_band(game, actor) is not None
 
 
 def decide_captive(game, creature: Creature, fate: str) -> str:
