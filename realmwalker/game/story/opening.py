@@ -5,7 +5,8 @@ kind, the hero's background and where the start town stands (adventures.json "op
 - **crisis**: arriving into it. The start town lies within the threat's reach: as you come in at the gate the bell
   goes, the gate is barred behind you, a crowd gathers and one of them speaks for it (scene `opening_gate`); then the
   beat `opening_crisis` (take the tale, or not now).
-- **summons**: a letter with a seal. A runner finds you in the street with a letter from the threat's own town
+- **summons**: a letter with a seal (only when the threat hangs over a town other than the start town). A runner
+  finds you in the street with a letter from that town
   (scene `opening_summons`: its page opens), then the beat `opening_summons`.
 - **terror**: you wake as the gang's captive (outlaws only). The beat `opening_captive` opens at once, before
   anything else: work the knots, strain at the stake or talk the youngest guard round. The tale begins either way
@@ -13,7 +14,8 @@ kind, the hero's background and where the start town stands (adventures.json "op
   Fight them or slip away (the encounter screen); the captors' camp is its own field (arena.FIELDS "captors").
 
 Crisis and summons are staged on the start town's map when you first walk into it; leave without going in, or let the
-first day go by, and the opening is told as its beat wherever you are (`on_travel`, `daily`). Either way a hook is
+first day go by, and the opening is told as its beat wherever you are (`on_travel`, `daily`; the crisis away
+from its town as `opening_crisis_word`, the word of the barred gate coming after you). Either way a hook is
 offered on the first game day (tests/test_first_hour.py).
 
 The record is `politics["director"]["opening"]` = {"kind", "threat", "town", "day", "state" (waiting, played)}; the
@@ -27,6 +29,7 @@ from realmwalker.core.textgen import escape_markup as esc
 KINDS = ("crisis", "summons", "terror")
 BEATS = {"crisis": "opening_crisis", "summons": "opening_summons", "terror": "opening_captive"}
 SCENES = {"crisis": "opening_gate", "summons": "opening_summons"}
+TOLD = {"crisis": "opening_crisis_word"}  # (told away from its town: the word of the barred gate comes after you)
 GUARDS = "bandits"  # who watches a captive by the fire (an encounter group, cut to the land's budget)
 
 
@@ -52,14 +55,22 @@ def choose(game, t: dict, town) -> str:
             continue
         if kind in SCENES and town is None:
             continue
+        if kind == "summons" and _asking(game.world, t, town) is town:
+            continue  # (nobody sends for you to the town you are standing in)
         kinds.append(kind)
         weights.append(int(spec.get("weight", 1)) + int(spec.get("backgrounds", {}).get(bg, 0)))
     if not kinds:
-        return "summons"
+        return "summons"  # (from the town you stand in, then: better than no opening)
     from realmwalker.game.story.forge import life_of
 
     rng = game.world.rng.child(f"opening/{life_of(game)}")
     return rng.weighted(kinds, weights)
+
+
+def _asking(w, t: dict, town):
+    """The town a summons comes from: the first of the threat's stakes that is not the start town."""
+    other = next((sid for sid in t["stakes"] if town is None or sid != town.id), None)
+    return w.settlements[other] if other is not None else town
 
 
 def begin(game, t: dict) -> str:
@@ -88,9 +99,7 @@ def words(game, rec: dict) -> dict:
     w = game.world
     t = threats.records(w).get(rec["threat"])
     start = w.settlements[rec["town"]] if rec.get("town") is not None else None
-    asking = start
-    if rec["kind"] == "summons" and t["stakes"]:
-        asking = w.settlements[t["stakes"][0]]
+    asking = _asking(w, t, start) if rec["kind"] == "summons" else start
     out = story.hook_words(game, t, asking)
     out["hook"] = story.hook_line(game, t, asking)
     out["threat"] = t["id"]
@@ -132,14 +141,17 @@ def play(game, *, staged: bool = False) -> bool:
                   "since": int(game.moment.total_days)}
     then = {"beat": BEATS[rec["kind"]], "where": "town", "words": wd}
     if staged and rec["kind"] in SCENES and town is not None:
-        sw = {"town": wd["start"]} if rec["kind"] == "crisis" else {}  # (a summons' {town} is the one that asks)
+        sw = {"town": wd["start"] if rec["kind"] == "crisis" else wd["town"]}  # (a summons': the one that asks)
         if rec["kind"] == "summons" and wd["town"] != wd["start"]:
             sw["sender"] = f"the elders of {wd['town']}"
             sw["hand_of"] = "elder"
         if stage.start(game, SCENES[rec["kind"]], words=sw, then=then, force=True) is not None:
             rec["state"] = "played"
             return True
-    beats.offer(game, BEATS[rec["kind"]], where=story._where(game), words=wd)
+    told = BEATS[rec["kind"]]
+    if not (town is not None and story._on_its_map(game, town)):
+        told = TOLD.get(rec["kind"], told)
+    beats.offer(game, told, where=story._where(game), words=wd)
     rec["state"] = "played"
     return True
 
@@ -167,7 +179,7 @@ def on_travel(game) -> bool:
 def daily(game) -> None:
     """The first day is over and the opening never came: it comes now, wherever you are."""
     rec = live(game)
-    if rec is not None and int(game.moment.total_days) > int(rec["day"]):
+    if rec is not None and not game.busy and int(game.moment.total_days) > int(rec["day"]):
         play(game)
 
 

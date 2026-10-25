@@ -46,6 +46,51 @@
         }
       ]
     },
+    "opening_crisis_word": {
+      "family": "hook",
+      "picture": "here",
+      "title": [
+        "Word from {start}",
+        "{start}, Barred",
+        "The Bell Behind You"
+      ],
+      "text": [
+        [
+          "Behind you the bell of {start} begins to ring, and goes on ringing. A carter whipping his team the other way shouts it as he passes: they have barred the gate. {hook}",
+          "A boy on a lathered pony overtakes you on the road and reins in, white to the lips. {start} has shut its gates, he says, and they are asking for anyone who can fight. {hook}",
+          "People are coming up the road from {start} with what they can carry, and every one of them tells you the same thing. The gate is barred. {hook}",
+          "You hear it from a woman at a well: {start} shut its gate this morning, in broad day, and nobody in it is working. {hook}"
+        ],
+        [
+          "\"They'll open for you,\" someone says. \"They'll open for anyone with a blade, now.\"",
+          "Nobody on the road is going towards {start}. Only you, if you turn round.",
+          "\"Somebody has to go back,\" the carter says, and does not."
+        ]
+      ],
+      "choices": [
+        {
+          "label": [
+            "Turn back for {start}. (A tale begins: the journal keeps it.)",
+            "\"Then I will go.\" (A tale begins: the journal keeps it.)"
+          ],
+          "ops": [["take_hook"]],
+          "result": [
+            "You turn round. Whoever told you stares after you, and then hurries on, the other way.",
+            "Back, then. The bell is still going when you come in sight of the walls."
+          ]
+        },
+        {
+          "label": [
+            "Keep walking. Not today."
+          ],
+          "ops": [["decline_hook"]],
+          "result": [
+            "You keep walking, and the bell follows you a long way before the wind takes it.",
+            "Not today. You do not look back, and you hear it anyway."
+          ]
+        }
+      ]
+    },
     "opening_summons": {
       "family": "hook",
       "picture": "here",

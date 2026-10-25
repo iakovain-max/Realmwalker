@@ -125,7 +125,7 @@ def test_a_new_life_is_offered_a_tale_on_its_first_day(tables, seed):
         game.pass_time(60, "rest")
     assert offered is not None, "no tale was offered on the first day"
     assert offered["words"]["threat"] == first["threat"]
-    assert offered["beat"] == opening.BEATS[first["kind"]]
+    assert offered["beat"] in (opening.BEATS[first["kind"]], opening.TOLD.get(first["kind"]))
     assert game.world.time - began <= 25 * 60
 
 
@@ -256,6 +256,7 @@ def test_arriving_into_a_crisis(made, tables, monkeypatch):
 
 @pytest.mark.story
 def test_a_summons_with_a_seal(made, tables, monkeypatch):
+    """A runner with a sealed letter from the town the threat hangs over (never the one you stand in)."""
     from realmwalker.game import letters, story
     from realmwalker.game.story import beats, stage
 
@@ -264,12 +265,13 @@ def test_a_summons_with_a_seal(made, tables, monkeypatch):
     _into_town(game, town)
     sc = stage.current(game)
     assert sc is not None and sc["id"] == "opening_summons", "a runner comes with a letter"
+    assert sc["words"]["town"] != town.name, "from the threat's own town, not the one you stand in"
     pend = _until_beat(game)
     assert pend is not None and pend["beat"] == "opening_summons"
     held = [it for it in game.leader.inventory if letters.lid_of(it)]
     assert held, "the letter is yours to keep"
-    asking = game.world.settlements[t["stakes"][0]].name if t["stakes"] else town.name
-    assert pend["words"]["town"] == asking, "it comes from the threat's own town"
+    asking = sc["words"]["town"]
+    assert pend["words"]["town"] == asking and asking in [game.world.settlements[i].name for i in t["stakes"]]
     page = " ".join(letters.records(game.world)[letters.lid_of(held[-1])]["lines"])
     assert "{" not in page and asking in page
     beats.choose(game, pend, 0)
@@ -292,7 +294,8 @@ def test_leaving_without_going_in_the_opening_finds_you_on_the_road(made, tables
             break
     assert story.on_travel(game, 10)
     pend = beats.pending(game)
-    assert pend is not None and pend["beat"] == "opening_crisis"
+    assert pend is not None and pend["beat"] == "opening_crisis_word", "the word of the barred gate comes after you"
+    assert "{" not in " ".join(beats.pages(game, pend))
 
 
 @pytest.mark.story

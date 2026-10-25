@@ -875,7 +875,7 @@ def take_hook(game, tid: str) -> list[str]:
     from realmwalker.game.story import beats, deeds
 
     first = beats.director(game.world).get("opening") or {}
-    if first.get("threat") == tid:
+    if first.get("threat") == tid and first.get("state") == "played":
         adv["opening"] = first["kind"]  # (the tale a life began with: D.4)
     begin_card(game, adv)
 
