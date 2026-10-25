@@ -46,6 +46,33 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-10-25 (morning): Adventures & Events Part C, task C.7 — favours and contacts — branch `dlc/06-adventures-events`
+
+What a trouble's end leaves you, besides coin, now **does something**:
+- **A favour owed** ("Marda owes you a favour: a roof and a hiding place") can be **called in** inside someone
+  else's trouble. Talking to the one in the way – a creditor, a stubborn witness, the lord's judge, a priest who wants
+  paying, a family that will not bless a match – you may say "Marda sends me. She said you would remember her." and
+  the way opens, with no coin and no roll. It works when the one who owes you can reach them: they live in that town,
+  share a guild or a temple with them, follow the same trade, or are that very person ("You said you owed me").
+  There are five kinds: a word in the right ear, a door opened, goods or coin, a roof and a hiding place, a blade at
+  your side. Each opens its own sorts of trouble, and a lord or the law needs a heavy one. A debt settled that way has
+  its own ending.
+- **A hiding place**: someone who owes you shelter will hide you in their house for two days where the watch wants
+  you. When you come out, the price on your head there is halved.
+- **Contacts** (the witness who saw it, the healer who cured the sick, the priest who lifted the curse, the merchant
+  who sold you the heirloom back): they **send word**. A child finds you at the gate when you come to their town with
+  what they have for you; a letter finds you on the road every ten to twenty days when you are within forty leagues.
+  When a crime of yours reaches the watch in their country, **they warn you**: for a day you know which streets the
+  watch walk, and they are half as likely to know your face. They **open their door at night** (walking into their
+  house is no trespass) and **deal as their kind does**: a fence buys stolen goods and has wares under the counter, a
+  healer stitches your wounds, a scholar names the strange things you carry, all a little cheaper; an informant tells
+  you the news and points you at someone near who needs help.
+- Both are listed first in the journal's **People** tab, under "Favours and contacts", with what each one owes you.
+
+Decisions (Anton may want to change): a favour is spent when called in, whatever its weight; a contact's runner comes
+at most once a day; letters reach you only within forty leagues; a contact's prices are 15% under the rest; the bot
+calls in favours and asks informants for news.
+
 ### Session, 2026-10-25 (early morning): Adventures & Events Part C, task C.6 — situations (the people's troubles) — branch `dlc/06-adventures-events`
 
 Towns near you now have **troubles of their own people**: small stories about real townsfolk, not jobs off a board.

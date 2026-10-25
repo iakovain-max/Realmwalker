@@ -12,8 +12,8 @@ The records are written by the situations' `favour` and `contact` ops and live i
 `favour` block (situations.predicaments.json: the `then` ops that passing it does, and maybe its own `kinds`, `weight`,
 `say`, `note`), the favour's kind must open that kind of obstacle and be heavy enough (favours.json `kinds`, `weights`),
 and its giver must reach the one who stands in the way: they live in the situation's town or the other's, share a
-faction with them (a guild, a temple; never only the realm), or follow the same trade - or they are the very one who
-owes it. The conversation with the one in the way offers "fav_call" (`call_choices`); calling it in (`call_in`) passes
+faction with them (a guild, a temple; never only the realm), or follow the same trade in the same realm - or they are
+the very one who owes it. The conversation with the one in the way offers "fav_call" (`call_choices`); calling it in (`call_in`) passes
 the obstacle with the way "favour" (goals.notify), runs its ops and marks the favour used. A shelter favour can also be
 called in with its giver where the hero is wanted ("fav_hide": days in their house, the price on your head halved).
 
@@ -24,7 +24,8 @@ law.report). A warning means the watch has your description: for a day you know 
 (`warned`: law.watch's chance to know you is halved). A contact opens their door at night (`opens_at_night`: the game
 screen's talk; law.trespass_check lets you in) and deals as their kind does: a fence buys stolen goods (law.is_fence),
 a smuggler sells what the shops do not (shadows.black_market_choice), a healer sees to wounds, a scholar names strange
-things (services.services_for), all a little cheaper (`discount`: services.fee); an informant tells what they have
+things (services.services_for), their services a little cheaper (`discount`: services.fee; shop prices are the
+shop's); an informant tells what they have
 heard ("contact_ask": the news where they live, and a trouble near that wants you). Both are listed in the journal's
 People tab (`people_rows`, `person_lines`).
 
@@ -126,12 +127,16 @@ def need(game, ob: dict) -> tuple[tuple, int]:
 
 def reaches(game, fav: dict, sit: dict, npc) -> bool:
     """Whether the one who owes the favour reaches this person: the same person, the situation's town or theirs, a
-    faction they share (not only the realm), or the same trade."""
+    faction they share (not only the realm), or the same trade in the same realm."""
     giver = _npc(game, fav.get("from"))
     if giver is None or not giver.alive:
         return False
-    if giver.id == npc.id or giver.settlement in (sit.get("town"), npc.settlement) or giver.job == npc.job:
+    if giver.id == npc.id or giver.settlement in (sit.get("town"), npc.settlement):
         return True
+    if giver.job == npc.job:
+        a, b = _realm_of(game, giver), _realm_of(game, npc)
+        if a is not None and b is not None and a.id == b.id:
+            return True
     from realmwalker.game.people import npc_factions
     from realmwalker.world import factions as fx
 
@@ -204,7 +209,7 @@ def choose(conv, choice) -> None:
         if sit is None or sit["state"] != "taken" or not 0 <= i < len(favs):
             return
         ob = next((o for o in sit["obstacles"] if o["id"] == choice.data.get("ob")), None)
-        if ob is not None and ob["state"] == "standing":
+        if ob is not None and ob["state"] == "standing" and not favs[i].get("used") and _alive(game, favs[i]["from"]):
             conv.you_say(esc(choice.label.rsplit(" (call in", 1)[0]))
             call_in(conv, sit, ob, favs[i])
     elif choice.id == "fav_hide":
@@ -224,7 +229,7 @@ def call_in(conv, sit: dict, ob: dict, fav: dict) -> None:
 
     game = conv.game
     giver = _npc(game, fav["from"])
-    if giver is None or fav.get("used"):
+    if not _alive(game, fav["from"]) or fav.get("used"):
         return
     blk = ob.get("favour") or {}
     said = situations._fill(game, sit, blk["say"], f"favour/{ob['id']}") if blk.get("say") else \
@@ -283,6 +288,8 @@ def hide(conv, fav: dict) -> None:
         for _ in range(days):
             game.pass_time(16 * 60, "rest")
             game.pass_time(8 * 60, "sleep")
+            if game.over is not None:
+                break
     finally:
         game.confined = None
     game.renown.bounties[realm.id] = int(game.renown.bounties.get(realm.id, 0) * float(spec["bounty_left"]))
@@ -329,7 +336,7 @@ def _trouble_line(game, npc, spec) -> str:
     sit = min(near, key=lambda s: (max(abs(w.settlements[s["town"]].x - me.x), abs(w.settlements[s["town"]].y - me.y)),
                                    s["id"]))
     asker = situations.asker(game, sit)
-    if asker is None:
+    if asker is None or not asker.alive:
         return ""
     vals = situations._values(game, sit)
     role = situations.spec_of(game, sit).get("asks", "asker")
@@ -363,7 +370,7 @@ def _kind_has_word(game, kind: str) -> bool:
     if kind == "fence":
         return any("stolen" in it.tags for m in packs for it in m.inventory)
     if kind == "healer":
-        return any(c.wounds or c.hp < c.max_hp for c in game.party)
+        return any(c.alive and (c.wounds or c.hp < c.max_hp) for c in game.party)
     if kind == "scholar":
         return any(it.magic and not it.magic.get("identified") for m in packs for it in m.inventory)
     return True

@@ -1694,7 +1694,7 @@ FAVOURS = Obj({  # favours and contacts (game/story/favours.py, C.7)
     "hide": Obj({"label": word_list(2, 160), "say": word_list(2, 300), "after": word_list(2, 400),
                  "days": Int(min=1, max=14), "bounty_left": Float(min=0, max=1)}),
     "contacts": Map(_CONTACT, min_items=1),
-    "warn": Obj({"runner": word_list(2, 300), "letter": word_list(2, 300), "warned": word_list(1, 200)}),
+    "warn": Obj({"runner": word_list(2, 300), "letter": word_list(2, 300)}),
     "knock": word_list(2, 300), "vouch": word_list(1, 300),
     "letters": Obj({"gap": DAY_SPAN, "reach": Int(min=1, max=500)}),
     "warned_hours": Int(min=1, max=24 * 14), "warned_factor": Float(min=0, max=1), "discount": Float(min=0.1, max=1),

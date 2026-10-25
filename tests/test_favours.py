@@ -85,7 +85,9 @@ def test_a_favour_too_light_or_out_of_reach_is_not_offered(life):
         pytest.skip("the stranger shares a guild with the creditor")
     owe(game, stranger, "goods", 3)
     assert not [c for c in Conversation(game, creditor).menu() if c.id == "fav_call"], "out of reach"
-    same_trade = next((n for n in game.world.npcs.values() if n.job == creditor.job and n.settlement != town.id), None)
+    realm = realm_of_npc(game, creditor)
+    same_trade = next((n for n in game.world.npcs.values() if n.job == creditor.job and n.settlement != town.id
+                       and realm is not None and getattr(realm_of_npc(game, n), "id", None) == realm.id), None)
     if same_trade is not None:
         owe(game, same_trade, "goods", 2)
         assert [c for c in Conversation(game, creditor).menu() if c.id == "fav_call"], "their own trade reaches"

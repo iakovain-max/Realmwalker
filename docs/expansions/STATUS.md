@@ -562,10 +562,34 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part C, task C.7 (*favours and contacts*:
-`game/story/favours.py`: favours spent as ways through, contacts who send word by runner, deal at night and warn of the
-law; both in the People tab), on branch `dlc/06-adventures-events`. Read docs/expansions/06-adventures-events.md Part C
-and ADVENTURES.md §8.10 (Favours and contacts) first.
+Next session starts at: Expansion 6, **Adventures & Events**, Part C, task C.8 (*experience from stories*: the
+`xp_story` op by encounter budgets; the *Experience* setting, fights and stories or stories only, in the Settings
+screen, copied onto `game.experience` as `verbosity` is, and read by `fight.finish_battle`), on branch
+`dlc/06-adventures-events`. Read docs/expansions/06-adventures-events.md Part C and ADVENTURES.md §8.10 (Story
+experience) first.
+C.7 (2026-10-25, realmwalker-b): `game/story/favours.py` (docstring has the records and API), data `favours.json`
+(schema FAVOURS; `tables.favours`): `kinds` {word, door, goods, shelter, sword: name, opens = obstacle kinds},
+`weights` by obstacle kind (`_default` 1; rank, law, ward, honour 2), words call/own/answer/spent, `hide` (label, say,
+after, days 2, bounty_left .5), `contacts` {informant, fence, smuggler, healer, scholar: name, runner, letter; the
+informant also ask, says, trouble, nothing}, `warn` (runner, letter), knock, vouch, `letters` {gap 10-20,
+reach 40}, warned_hours 24, warned_factor .5, discount .85. An obstacle's `favour` block (schema in _SIT_OBSTACLE: then,
+kinds?, weight?, say?, note?) makes it openable: fourteen of the predicaments' obstacles have one. Favours are
+`used: True` + `used_day` + `spent_on` (sit id or "hide") once spent (never a day number in `used`: day 0 is falsy).
+Reach: the giver is the one in the way, or lives in the situation's town or theirs, or shares a non-realm faction
+(people.npc_factions), or has the same job in the same realm. Choices "fav_call", "fav_hide", "contact_ask" (STORY_CHOICES; story.
+talk_choices/talk_choose). Hooks: story.daily -> favours.daily (letters, a queued warning `rec["warn"]` first),
+story.on_enter_town -> favours.on_enter_town (runner once a day: the warning when wanted, else the kind's word when it
+has one: a fence when you carry stolen goods, a healer when hurt, a scholar when you carry something unidentified),
+law.report (both branches) -> favours.on_report, law.watch reads `favours.warned` (chance x warned_factor, -2 on the
+disguise roll), law.trespass_check (a contact inside: no crime; vouch line if others), economy.sell_price (fence
+contact buys stolen), shadows.black_market_choice (smuggler or fence contact, any settlement), services.services_for
+(healer: treat_wounds/surgery/herbal_cure; scholar: "identify" = the blessing's identify without remove curse),
+services.fee x `favours.discount`, GameScreen.talk (an asleep contact knocks and talks). Journal People tab: group
+"Favours and contacts" first (`people_rows`), `person_lines` in journal.person_lines. Contact ops added to endings:
+truth_to_prove proven (witness informant), sickness_with_cause cured (healer healer), curse_on_house lifted (priest
+scholar), precious_wrong_hands bought (holder fence); promise_unkept's new ending kept_favour (`way:favour`). No
+smuggler comes from the data yet (for later parts). Autoplay checks the records and the bot calls in favours and asks
+informants. Tests: tests/test_favours.py. No save format change.
 C.6 (2026-10-25, realmwalker-a; checks: suite green but for the turn-time tests, each passing alone as before; autoplay clean; smoke clean; a fresh review's fifteen points fixed in 8977157): `game/story/situations.py` (docstring has the record and API), data
 `situations.json` (rarity, roots key -> predicaments, 12 meetings -> scenes, 15 turns) + `situations.predicaments.json`
 (the first twenty of §6.7) + `scenes.situations.json` (12 meeting scenes; SCENE `cast`/`given` = roles and words the

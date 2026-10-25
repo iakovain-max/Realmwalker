@@ -223,12 +223,13 @@ class JournalScreen(Screen):
 
             out: list[tuple[str, object]] = []
             friends = favours.people_rows(self.game)  # (favours owed and contacts first: C.7)
+            friend_ids = {n.id for n in friends}
             if friends:
                 out.append(("group", "Favours and contacts"))
                 out += [("quest", n) for n in friends]
             town = None
             for npc in met_people(self.game):
-                if npc in friends:
+                if npc.id in friend_ids:
                     continue
                 where = self.game.world.settlements[npc.settlement].name if 0 <= npc.settlement < \
                     len(self.game.world.settlements) else "elsewhere"

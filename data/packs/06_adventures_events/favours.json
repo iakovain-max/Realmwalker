@@ -125,10 +125,6 @@
     "letter": [
       "A letter from {giver} in {giver_town}, hurried and short: the watch of {realm} have your description. Stay away, or come in quiet.",
       "{giver} writes from {giver_town}: your name is on the watch's lips in {realm}. They know your face. Mind the gates."
-    ],
-    "warned": [
-      "You know which streets the watch walk.",
-      "You keep to the lanes {giver} told you of."
     ]
   },
   "knock": [
