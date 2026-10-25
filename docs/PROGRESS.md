@@ -46,6 +46,32 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-10-25 (morning): Adventures & Events Part D, task D.4 — the first hour — branch `dlc/06-adventures-events`
+
+- A new life no longer starts on a quiet road. The game picks a trouble near your start town and opens your life with
+  it, in one of three ways:
+  - **Arriving into a crisis.** You walk into your start town as the bell starts ringing; someone shouts for the gate
+    to be barred behind you, a crowd gathers in the street round one of the townsfolk, who turns and asks you for
+    help. Only when the trouble is close enough to the town to have it shut its gates.
+  - **A summons.** A child or a porter runs up to you through the street with a sealed letter from the town the
+    trouble threatens (it opens as a page, and you keep it), asking you to come.
+  - **Waking as the gang's captive** (only where an outlaw gang bleeds the roads). The game begins with you tied to a
+    stake at the outlaws' fire. Work the knots loose (Sleight of Hand), tear the stake out (Athletics) or talk the
+    youngest guard round (Deception). Quietly done, you find the guards with their backs to you; botched, they are on
+    their feet with blades out. Fight them by their fire, or slip away into the dark. Their captain's tale is yours
+    from that moment.
+- The kind depends on the trouble, on how close it is, and on your background (a criminal is likelier to wake in the
+  ropes, a noble or a priest to be sent for, a farmer or a guard to walk into a town shut tight).
+- If you walk away from the start town without going in, or the first day passes, the crisis or the letter finds you
+  wherever you are. Either way the tale is offered on your first day; say "not now", and the town may ask again.
+- Try it: start a new character (any world) and walk into your start town.
+
+Decisions (Anton may want to change): a captive's tale begins whatever is chosen (being their prisoner makes it your
+business); the guards are an ordinary road band of bandits cut to your level, and your gear lies by their fire, so
+you fight with it; their camp is the nearest open tile outside the start town; the opening's trouble may be up to
+twice the usual distance away when nothing is nearer (so every life gets one where the map allows); the checks are
+DC 12 (knots) and 13 (stake, talk).
+
 ### Session, 2026-10-25 (morning): Adventures & Events Part D, task D.3 — the Risen and the Outlaw Lord — branch `dlc/06-adventures-events`
 
 - Two new tales a town may ask you to take on, besides the Beast:

@@ -565,12 +565,29 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part D, task D.4 (*the opening, ADVENTURES.md §5.12:
-arriving into a crisis (the gate shut and a crowd at the mill), a summons (a letter), present terror (waking as the
-gang's captive), built on the threats near the start town and staged; `story.begin` offers it; tests
-tests/test_first_hour.py*), on branch `dlc/06-adventures-events`. Read docs/expansions/06-adventures-events.md Part
-D, ADVENTURES.md §5.12, story.begin and the three blueprints (adventures.json, adventures.risen.json,
-adventures.outlaw.json).
+Next session starts at: Expansion 6, **Adventures & Events**, Part D, task D.5 (*pictures (barrow and hideout
+backdrops for the vignettes; the new beats' pictures, the dead left at the camp), sounds; text floors; storyplay and
+the autoplay bot learn Part D's steps (rescue, fetch, defeat, capture, recruit, rally, hold, rite, escort, confront)
+and the openings, and each blueprint finishes in at least 90% of runs; FORMAT_VERSION +1; verify; Part D to `main`*),
+on branch `dlc/06-adventures-events`. Read docs/expansions/06-adventures-events.md Part D, tools/storyplay.py, the
+D.2-D.4 notes below.
+D.4 (2026-10-25, realmwalker-a): the first hour, `game/story/opening.py` (docstring has the API). `story.begin` picks
+the threat as before (now up to twice `start.tiles` away when nothing is nearer) and `opening.begin` records
+`politics["director"]["opening"]` {kind, threat, town, day, state} instead of the day-0 scheduled hook. Kinds and
+weights in adventures.opening.json "openings" (schema ADVENTURES "openings"): crisis (`near`: the start town in the
+threat's reach or stakes), summons, terror (`kinds` ["outlaw"]); extra weight by background. Crisis and summons are
+staged when the start town's map is entered (`opening.on_enter_town` from story.on_enter_town, before `_show_tale`;
+scenes.opening.json opening_gate / opening_summons, `force=True`), else told as their beat by `opening.on_travel`
+(story.on_travel, once off the start tile) or `opening.daily` (after the first day). Terror plays at once: beat
+`opening_captive` (beats.opening.json, picture "camp"), op `opening_escape` quiet/loud (registered in opening.py,
+in HANDLER_MODULES): take_hook, the party onto the nearest open tile outside town, an encounter of "bandits" tagged
+minion with `spotted_first` = quiet and `field` "captors" (arena.FIELDS: fire, bedrolls, a horse_post as the stake).
+`adv["opening"]` = the kind (story.take_hook). Beats opening_crisis / opening_summons / opening_captive (family
+"hook"; words threat, opening, start, gang, town, hook). Tests that start from new_game for other things use
+`tests/worlds.quiet_start` (test_stage, test_app_ui's start_small_world, a_life in test_first_hour);
+test_story_hooks' `_start_near_a_beast` clears the opening and offers the hook directly; test_app_ui's creation flow
+accepts the opening's beat over the game screen. tests/test_first_hour.py (+7). Not yet: storyplay and autoplay
+moves for the captive's beat (the bot picks a choice like any beat) - D.5's measure. No save format change.
 D.3 (2026-10-25, realmwalker-b): the blueprints `risen` and `outlaw` as pack fragments (adventures.risen.json,
 adventures.outlaw.json; their beats beats.risen/outlaw.json; tempers proud/grieving and cunning/cruel, moves and boss
 templates in villains.risen/outlaw.json; scene midnight_tail in scenes.outlaw.json; Part D's step words, three a key,

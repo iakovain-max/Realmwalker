@@ -331,7 +331,7 @@ with an opening tale. ADVENTURES.md §5.12 (the first hour), §6.2.
   the camp's edge by night; a warning nailed to your door; the inside man followed through the streets at midnight);
   their arenas (the ford at night with burning carts across the road, fire on the field; the hideout); their
   villains' minimal reactions (a letter in an old hand, as a page; a test on the road).
-- [ ] D.4 The opening (ADVENTURES.md §5.12): arriving into a crisis (the gate shut and a crowd at the mill), a summons
+- [x] D.4 The opening (ADVENTURES.md §5.12): arriving into a crisis (the gate shut and a crowd at the mill), a summons
   (a letter), present terror (waking as the gang's captive), built on the threats near the start town and staged;
   `story.begin` offers it. Tests: `tests/test_first_hour.py`.
 - [ ] D.5 Pictures (barrow and hideout backdrops for the vignettes), sounds; floors; storyplay: each blueprint finishes
