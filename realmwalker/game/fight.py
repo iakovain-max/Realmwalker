@@ -295,8 +295,14 @@ def finish_battle(game) -> Aftermath:
         after.text = template.replace("{dead}", dead_text).replace("{ground}", battle.env.ground).replace(
             "{weather}", "dark" if battle.env.light < 0.5 else "grey light").replace("{survivors}", survivors).replace(
             "{lie}", "lies" if one else "lie").replace("{are}", "is" if one else "are").strip()
+        fled = {id(c) for c in result.fled}
         if actor is not None and lm is not None and actor in lm.actors:
-            lm.actors.remove(actor)
+            if _at_home(game, actor) and any(id(c) in fled for c in actor.creatures):
+                actor.creatures = [c for c in actor.creatures if id(c) in fled]  # (a tale's master, turned or
+                # driven off, falls back into the dark of their own den: met again there, the tale not lost)
+                actor.alert = True
+            else:
+                lm.actors.remove(actor)
     elif result.outcome in ("defeat", "surrendered"):
         foes = [f for f in battle.side(FOE) if f.active and f.bond is None]
         merciful = any(f.morale_type in MERCIFUL for f in foes) or result.outcome == "surrendered"

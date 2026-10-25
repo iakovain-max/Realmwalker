@@ -58,9 +58,9 @@
       "places": {
         "home": "threat.home",
         "town": "settlement_near(home, 2, 18) | settlement_near(home, 0, 40)",
-        "field": "scar_of(villain) | road_tile_near(home, 2, 10) | road_tile_near(town, 1, 14)",
-        "ford": "road_tile_near(town, 2, 8) | road_tile_near(home, 2, 16) | road_tile_near(town, 1, 20)",
-        "camp": "road_tile_near(home, 2, 9) | road_tile_near(town, 2, 12) | road_tile_near(home, 1, 20)",
+        "field": "scar_of(villain) | road_tile_near(home, 2, 10) | road_tile_near(town, 1, 14) | open_tile_near(town, 2, 10)",
+        "ford": "road_tile_near(town, 2, 8) | road_tile_near(home, 2, 16) | road_tile_near(town, 1, 20) | open_tile_near(town, 2, 8)",
+        "camp": "road_tile_near(home, 2, 9) | road_tile_near(town, 2, 12) | road_tile_near(home, 1, 20) | open_tile_near(home, 2, 9)",
         "crypt": "site_style(crypt|temple, 4, 30) | home",
         "lore": "settlement_with(temple, 0, 40) | town"
       },

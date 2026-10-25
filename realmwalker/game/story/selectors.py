@@ -227,6 +227,30 @@ def _road_tile_near(forge, ref, lo, hi):
     return [{"tile": [x, y]} for d, x, y in out]
 
 
+@selector("open_tile_near")
+def _open_tile_near(forge, ref, lo, hi):
+    """Open country in the band round `ref`, road or none (the last choice for a set piece where no road runs: its
+    battlefield lays out its own, D.5); by a river first, as a ford would be."""
+    from realmwalker.game.story import places
+
+    w = forge.world
+    x0, y0 = places.xy(w, ref)
+    out = []
+    for dx in range(-int(hi), int(hi) + 1):
+        for dy in range(-int(hi), int(hi) + 1):
+            x, y = x0 + dx, y0 + dy
+            d = (dx * dx + dy * dy) ** 0.5
+            if not lo <= d <= hi or not w.in_bounds(x, y):
+                continue
+            if w.settlement_at(x, y) is not None or w.site_at(x, y) is not None:
+                continue
+            if not forge.game.biome_def(x, y)["passable"]:
+                continue
+            out.append((not w.river[x, y], d, x, y))
+    out.sort()
+    return [{"tile": [x, y]} for _, d, x, y in out]
+
+
 @selector("site_style")
 def _site_style(forge, words, lo, hi):
     from realmwalker.game.story import places

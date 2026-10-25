@@ -58,7 +58,7 @@
       "places": {
         "home": "threat.home",
         "town": "settlement_near(home, 2, 18) | settlement_near(home, 0, 40)",
-        "road": "road_tile_near(town, 2, 7) | road_tile_near(home, 1, 12) | road_tile_near(town, 1, 20)",
+        "road": "road_tile_near(town, 2, 7) | road_tile_near(home, 1, 12) | road_tile_near(town, 1, 20) | open_tile_near(town, 2, 7)",
         "dest": "settlement_near(town, 3, 30) | settlement_near(town, 3, 60)"
       },
       "cast": {

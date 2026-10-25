@@ -1090,6 +1090,12 @@ def play_once(tables, made, label: str, i: int, verbose: bool = False, hours: in
     if adv is None:
         run.why = "the hook was not taken (no tale forged)"
         return run
+    return play_tale(p, adv, start_day, start_levels)
+
+
+def play_tale(p: Player, adv: dict, start_day: float, start_levels: int) -> Run:
+    """The careful party does what the journal says, step by step, to the tale's end (or its death, or MAX_DAYS)."""
+    game, run = p.game, p.run
     for _ in range(MAX_ACTIONS):
         p.settle()
         if game.over is not None:
@@ -1119,6 +1125,76 @@ def play_once(tables, made, label: str, i: int, verbose: bool = False, hours: in
     return run
 
 
+
+# ---------------------------------------------------------------------------- the first hour (D.4)
+@dataclass
+class Opened(Run):
+    kind: str = ""  # (crisis, summons, terror)
+    begun: bool = False  # (a tale was taken within the first two days)
+
+
+def open_once(tables, made, label: str, i: int, verbose: bool = False) -> Opened:
+    """A new life in the i-th town of a world, as the game begins one (its opening chosen by story.begin): the party
+    walks into the start town's streets and waits there while the first hour plays out, takes the tale it opens, and
+    plays that tale through."""
+    w = copy.deepcopy(made)
+    run = Opened(world=label)
+    towns = sorted((s for s in w.settlements if s.kind in ("town", "village", "hamlet", "city")), key=lambda s: s.id)
+    town = towns[(i * 7) % len(towns)]
+    game = new_game(w, tables, start_settlement=town.id)
+    game.survival = False
+    rec = beats.director(w).get("opening")
+    if rec is None:
+        run.why = "no opening (no threat near enough)"
+        return run
+    run.kind, run.threat = rec["kind"], rec["threat"]
+    t = threats.records(w)[rec["threat"]]
+    make_party(game, int(tables.threats.get("target_level", {}).get(str(t["tier"]), 3)), 2000 + i)
+    p = Player(game, run, verbose)
+    start_day = game.world.time / 1440
+    start_levels = sum(c.level for c in game.party)
+    from realmwalker.game import townlife
+
+    for n in range(4 * 48):  # (two days, a quarter hour at a time, in the streets of the start town)
+        p.settle()
+        if getattr(game, "letter", None):
+            game.letter = None  # (the page read)
+        if story.active(game) or game.over is not None:
+            break
+        if game.local is None and (game.player.x, game.player.y) == (town.x, town.y):
+            game.enter_local()
+        if n < 8 and game.town_tick():  # (the first two hours on the town's own clock: a scene plays out in it)
+            for _ in range(int(15 * 60 / townlife.STEP_SECONDS) - 1):
+                p.settle()
+                if beats.pending(game) is not None or not game.town_tick():
+                    break
+        else:
+            game.pass_time(15, "rest")
+    adv = story.active(game)[0] if story.active(game) else None
+    if adv is None:
+        run.why = run.why or "the opening began no tale"
+        return run
+    run.begun = True
+    p.note(f"the opening ({run.kind}) began {adv['blueprint']}")
+    return play_tale(p, adv, start_day, start_levels)
+
+
+def openings(runs: int, verbose: bool = False, tables=None) -> list[Opened]:
+    from tests.worlds import cached_world
+    from tools.balance import load_tables
+
+    tables = tables or load_tables()
+    made = {w: cached_world(WorldOptions(*w), tables) for w in WORLDS}
+    out = []
+    for i in range(runs):
+        w = WORLDS[i % len(WORLDS)]
+        r = open_once(tables, made[w], w[0], i // len(WORLDS) + i, verbose)
+        out.append(r)
+        print(f"run {i + 1:2d} {r.world:<10} {r.kind:<8} {'begun' if r.begun else 'NO TALE':<8} "
+              f"{'FINISHED' if r.finished else 'not done':<9} ending={r.ending} days={r.days:.1f} {r.why}")
+    return out
+
+
 def play(runs: int, verbose: bool = False, tables=None, kind: str = "beast") -> list[Run]:
     from tests.worlds import cached_world
     from tools.balance import load_tables
@@ -1144,7 +1220,14 @@ def main() -> int:
     ap.add_argument("--write", action="store_true", help="with --income: keep the result as the reference")
     ap.add_argument("--meet", action="store_true", help="the variety and rarity measures: thirty situations met")
     ap.add_argument("--kind", choices=KINDS, default="beast", help="whose tale is played (Part D: risen, outlaw)")
+    ap.add_argument("--openings", action="store_true", help="the first hour: new lives, each with its opening")
     a = ap.parse_args()
+    if a.openings:
+        res = openings(a.runs, a.verbose)
+        begun = sum(r.begun for r in res)
+        done = sum(r.finished for r in res)
+        print(f"\nbegun {begun} of {len(res)} ({100 * begun / max(1, len(res)):.0f}%), finished {done}")
+        return 0 if begun >= 0.9 * len(res) else 1
     if a.meet:
         return meet_report(meet(a.verbose))
     if a.income:
