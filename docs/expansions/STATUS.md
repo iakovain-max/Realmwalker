@@ -562,11 +562,18 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part C, task C.8 (*experience from stories*: the
-`xp_story` op by encounter budgets; the *Experience* setting, fights and stories or stories only, in the Settings
-screen, copied onto `game.experience` as `verbosity` is, and read by `fight.finish_battle`), on branch
-`dlc/06-adventures-events`. Read docs/expansions/06-adventures-events.md Part C and ADVENTURES.md §8.10 (Story
-experience) first.
+Next session starts at: Expansion 6, **Adventures & Events**, Part C, task C.9 (*vignettes*: the first twenty
+hand-made of ADVENTURES.md §6.11 with their scenes, parallel words), on branch `dlc/06-adventures-events`. Read
+docs/expansions/06-adventures-events.md Part C and ADVENTURES.md §6.11 first.
+C.8 (2026-10-25, realmwalker-b): `game/story/experience.py` (docstring has the API): `award(game, size, key,
+no_fight=)` gives `amount` to the living (encounter.budget of the living's levels x share / count; x `no_fight` when
+asked; x `stories_only` when `game.experience == "stories"`), data situations.json `experience` {sizes: {small, fair,
+great: [moderate, .25/.5/1], chapter: [high, 1], finale: [high, .5]}, no_fight 1.25, stories_only 2} (schema in
+SITUATIONS; `experience.problems` in story/check). Callers: situations `_o_xp` (no_fight = no "fight" way used),
+story `_chapter_check` (each chapter once, key chapter/<adv>/<n>), endings.finish when the tale is won (finale).
+`Settings.experience` (config EXPERIENCE_CHOICES both/stories) -> `game.experience` in GameScreen.update (not saved;
+GameState default "both"); `experience.fights_count(game)` zeroes `after.xp` in fight.finish_battle. Quest rewards,
+books and discoveries still give experience under "stories". Tests: tests/test_story_xp.py. No save format change.
 C.7 (2026-10-25, realmwalker-b): `game/story/favours.py` (docstring has the records and API), data `favours.json`
 (schema FAVOURS; `tables.favours`): `kinds` {word, door, goods, shelter, sword: name, opens = obstacle kinds},
 `weights` by obstacle kind (`_default` 1; rank, law, ward, honour 2), words call/own/answer/spent, `hide` (label, say,

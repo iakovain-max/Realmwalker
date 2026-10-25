@@ -113,8 +113,8 @@ def _chapter_check(game, adv: dict) -> None:
     from realmwalker.game.story import beats
 
     ch = chapter(adv)
-    if ch is None:
-        return
+    if ch is None or ch["state"] == "done":
+        return  # (a last chapter stays the current one: it is done, and paid, once)
     required = [s for s in ch["steps"] if not s["optional"]]
     done = [s for s in required if s["state"] == "done"]
     need = len(required) if ch["need"] == "all" else min(int(ch["need"]), len(required))

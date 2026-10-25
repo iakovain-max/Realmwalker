@@ -11,6 +11,7 @@ from realmwalker.rules.combat import FOE
 from realmwalker.world.tables import Tables
 from tests.test_first_hour import SEEDS, a_life
 from tests.test_situations import forced, talk
+from tests.test_story_hooks import _start_near_a_beast, made  # noqa: F401 (a fixture)
 
 
 @pytest.fixture(scope="module")
@@ -67,8 +68,8 @@ def test_stories_only_fights_give_none_and_stories_twice(life):
     both = experience.amount(game, "fair")
     game.experience = "stories"
     assert abs(experience.amount(game, "fair") - 2 * both) <= 1
-    if game.battle is not None or game.busy:
-        pytest.skip("the last fight is still being settled")
+    game.aftermath = None  # (the first fight's aftermath screen, read and closed)
+    assert game.battle is None and game.over is None
     assert won_fight(game) == 0, "stories only: no experience from fights"
 
 
@@ -85,3 +86,21 @@ def test_the_setting_is_copied_onto_the_game(life, make_app):
     assert app.settings.experience == "stories" and opt.value() == "Stories only"
     GameScreen(app, game).update()
     assert game.experience == "stories"
+
+
+def test_a_chapter_behind_you_pays_once(made, tables):
+    from realmwalker.game import story
+    from realmwalker.game.story import forge
+
+    game, t = _start_near_a_beast(made, tables)
+    adv = forge.make(game, t)
+    adv["chapter"] = len(adv["chapters"]) - 1  # (the last chapter stays the current one when it is done)
+    ch = story.chapter(adv)
+    ch["state"] = "open"
+    for st in ch["steps"]:
+        st["state"] = "done"
+    want = experience.amount(game, "chapter")
+    xp = game.leader.xp
+    story._chapter_check(game, adv)
+    story._chapter_check(game, adv)
+    assert ch["state"] == "done" and game.leader.xp - xp == want

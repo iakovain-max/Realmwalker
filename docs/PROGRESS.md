@@ -46,6 +46,19 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-10-25 (morning): Adventures & Events Part C, task C.8 — experience from stories — branch `dlc/06-adventures-events`
+
+- **Stories are worth experience**, sized to your party the way fights are: a trouble seen through gives a quarter,
+  a half or a whole of a fair fight's worth (a quarter more if nobody had to bleed for it), each chapter of a tale
+  behind you gives as much as a hard fight, and a tale won gives half a hard fight's worth on top of its last battle.
+- **A new setting, Experience** (Settings screen): "Fights and stories" (as before, the default) or **"Stories
+  only"**, the way many tabletop tables play: beating foes gives nothing, and the ends of stories give twice as much.
+  You can change it at any time; it is the player's setting, not the save's.
+
+Decisions (Anton may want to change): stories give double under "Stories only" so that levels still come at a fair
+pace; quest rewards, books learned and places discovered still give their experience under either setting (they are
+not fights).
+
 ### Session, 2026-10-25 (morning): Adventures & Events Part C, task C.7 — favours and contacts — branch `dlc/06-adventures-events`
 
 What a trouble's end leaves you, besides coin, now **does something**:
