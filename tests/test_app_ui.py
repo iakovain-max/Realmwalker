@@ -187,7 +187,9 @@ def start_small_world(app, seed=5):
     from realmwalker.world.generator import WorldOptions
 
     world = cached_world(WorldOptions("Screenland", seed, "small"), app.tables)
-    app.start_game(new_game(world, app.tables))
+    from tests.worlds import quiet_start
+
+    app.start_game(quiet_start(new_game(world, app.tables)))  # (the first hour's opening: tests/test_first_hour.py)
     return app.top
 
 
@@ -234,11 +236,15 @@ def test_new_world_flow_generates_and_starts(make_app):
     assert isinstance(app.top, CreationScreen)
     # Accepting every default makes a playable character.
     for _ in range(12):
-        if isinstance(app.top, GameScreen):
+        if any(isinstance(sc, GameScreen) for sc in app.screens):
             break
         app.handle_event(KeyEvent("enter"))
         render(app)
-    assert isinstance(app.top, GameScreen)
+    assert any(isinstance(sc, GameScreen) for sc in app.screens)
+    render(app)
+    from realmwalker.ui.screens.beat import BeatScreen
+
+    assert isinstance(app.top, (GameScreen, BeatScreen)), "the game, or the life's opening over it (Expansion 6 D.4)"
     assert app.game is not None and app.saves_with_characters()
     assert app.game.leader.ties and app.game.leader.backstory
 

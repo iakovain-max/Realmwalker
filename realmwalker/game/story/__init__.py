@@ -24,7 +24,7 @@ from realmwalker.core.textgen import escape_markup as esc
 HANDLER_MODULES = ("realmwalker.world.threats", "realmwalker.game.story.selectors", "realmwalker.game.story.cast",
                    "realmwalker.game.story.steps", "realmwalker.game.story.beats", "realmwalker.game.story.endings",
                    "realmwalker.game.story.finale", "realmwalker.game.story.stage", "realmwalker.game.story.goals",
-                   "realmwalker.game.story.situations")
+                   "realmwalker.game.story.situations", "realmwalker.game.story.opening")
 STORY_CHOICES = {"story_witness", "story_learn", "story_patron", "story_hook", "sit_ask", "sit_take", "sit_refuse",
                  "sit_act", "fav_call", "fav_hide", "contact_ask",  # (situations, C.6; favours and contacts, C.7)
                  "story_recruit", "story_rally", "story_confront", "story_escort"}  # (Part D's steps: story/deeds.py)
@@ -276,6 +276,9 @@ def daily(game) -> None:
     from realmwalker.game.story import deeds
 
     deeds.daily(game)  # (chapters set up, a hold's night missed: D.2)
+    from realmwalker.game.story import opening
+
+    opening.daily(game)  # (the first day gone by and the opening never came: D.4)
     for item in list(d.get("scheduled", [])):
         if int(item["day"]) <= today and beats.pending(game) is None:
             d["scheduled"].remove(item)
@@ -334,6 +337,10 @@ def on_travel(game, minutes: float) -> bool:
     d = beats.director(game.world)
     today = int(game.moment.total_days)
     if _offer_choice(game):
+        return True
+    from realmwalker.game.story import opening
+
+    if opening.on_travel(game):  # (walking away from the start without going in: D.4)
         return True
     if int(d.get("travel_beat_day", -10)) >= today:
         return False
@@ -443,6 +450,10 @@ def on_enter_town(game, settlement) -> None:
     from realmwalker.game.story import situations
 
     if beats.pending(game) is not None:
+        return
+    from realmwalker.game.story import opening
+
+    if opening.on_enter_town(game, settlement):  # (the crisis at the gate, the runner with the summons: D.4)
         return
     if _show_tale(game, settlement):
         return
@@ -861,8 +872,12 @@ def take_hook(game, tid: str) -> list[str]:
     adv = forge.make(game, t)
     if adv is None:
         return ["<dim>Nobody can tell you where to begin. Perhaps another time.</>"]
+    from realmwalker.game.story import beats, deeds
+
+    first = beats.director(game.world).get("opening") or {}
+    if first.get("threat") == tid:
+        adv["opening"] = first["kind"]  # (the tale a life began with: D.4)
     begin_card(game, adv)
-    from realmwalker.game.story import deeds
 
     deeds.setup(game, adv)  # (the first chapter's rescues, fetches, bands and nights: D.2)
     return [f"<title>{esc(adv['title'])}</> <dim>(the journal, j: Adventures)</>"]
@@ -1071,19 +1086,24 @@ def begin(game) -> None:
     d["card"] = None
     d["scheduled"] = []
     d["day"] = -1
+    d["opening"] = None
     w = game.world
     x, y = game.player.x, game.player.y
     d["at"] = [int(x), int(y)]
     reach = int(game.tables.threats.get("start", {}).get("tiles", 56))
     near = [t for t in threats.records(w).values() if t["state"] != "ended" and t.get("adventure") is None
-            and threats.distance(w, t, x, y) <= reach and _can_take(game, t)]
+            and threats.distance(w, t, x, y) <= reach * 2 and _can_take(game, t)]
     if not near:
         return
+    if any(threats.distance(w, t, x, y) <= reach for t in near):  # (twice as far only when nothing is near: D.4)
+        near = [t for t in near if threats.distance(w, t, x, y) <= reach]
     near.sort(key=lambda t: (t["state"] not in threats.LIVE, t["tier"], threats.distance(w, t, x, y), t["id"]))
     t = near[0]
     if t["state"] == "dormant":
         threats.stir(w, game.tables, t, w.rng.child(f"begin/{t['id']}"), day=news.now_days(w))
-    d["scheduled"].append({"day": int(game.moment.total_days), "hook": t["id"]})
+    from realmwalker.game.story import opening
+
+    opening.begin(game, t)  # (the first hour: a crisis, a summons or the gang's captive, D.4)
 
 
 def on_death(game) -> None:
@@ -1099,6 +1119,7 @@ def on_death(game) -> None:
     d["pending"] = None
     d["card"] = None
     d["scheduled"] = []
+    d["opening"] = None
     from realmwalker.game.story import situations
 
     situations.on_death(game)  # (live troubles lose their work and wait for the next hero: C.6)

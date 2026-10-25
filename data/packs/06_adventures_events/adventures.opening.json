@@ -1,0 +1,8 @@
+{
+  "_comment": "The first hour (Expansion 6 D.4, docs/ADVENTURES.md §5.12; game/story/opening.py): which opening a new life starts with. kinds: the threats it fits (none: any); near: only when the start town lies within the threat's reach or among its stakes; backgrounds: extra weight for heroes from that life.",
+  "openings": {
+    "crisis": {"weight": 4, "near": true, "backgrounds": {"farmer": 2, "guard": 2, "artisan": 1, "wayfarer": 1}},
+    "summons": {"weight": 2, "backgrounds": {"noble": 3, "soldier": 2, "acolyte": 2, "sage": 2, "scribe": 2, "merchant": 1}},
+    "terror": {"weight": 3, "kinds": ["outlaw"], "backgrounds": {"criminal": 3, "charlatan": 2, "entertainer": 1, "sailor": 1, "wayfarer": 1}}
+  }
+}

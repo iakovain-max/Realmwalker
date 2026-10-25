@@ -258,7 +258,24 @@ def _ford(terrain, tables, lead, foe_at, nrng) -> tuple[list, set]:
     return lights, fires
 
 
-FIELDS = {"ford": _ford}  # a story's own battlefields (the hold step's `field`: Expansion 6 D.3)
+def _captors(terrain, tables, lead, foe_at, nrng) -> tuple[list, set]:
+    """The captors' camp (the first hour's captive, Expansion 6 D.4): their fire between you and them with bedrolls
+    round it, and the stake you were tied to at your back."""
+    T = tables.terrain.index
+    W, H = terrain.shape
+    fire = (max(1, min(W - 2, foe_at[0] - 2)), foe_at[1])
+    terrain[fire] = T["campfire"]
+    for dx, dy in ((0, -1), (1, 1), (0, 1), (1, -1)):
+        bx, by = fire[0] + dx, fire[1] + dy
+        if 0 <= bx < W and 0 <= by < H and tables.terrain.walk[terrain[bx, by]] and (bx, by) != foe_at:
+            terrain[bx, by] = T["bedroll"]
+    stake = (max(0, lead[0] - 1), lead[1])
+    if "horse_post" in T and stake != lead:
+        terrain[stake] = T["horse_post"]
+    return [(fire[0], fire[1], 4)], set()
+
+
+FIELDS = {"ford": _ford, "captors": _captors}  # a story's own battlefields (the hold step's `field`: Expansion 6 D.3)
 
 
 def _robbers(game, creatures) -> bool:

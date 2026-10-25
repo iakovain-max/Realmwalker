@@ -106,3 +106,13 @@ def cached_world(options: WorldOptions, tables):
     except OSError:
         pass
     return world
+
+
+def quiet_start(game):
+    """A new life with no opening (the first hour's crisis, summons or captive: tests/test_first_hour.py), for tests
+    of something else that begin from new_game."""
+    from realmwalker.game.story import beats
+
+    d = beats.director(game.world)
+    d["pending"] = d["opening"] = None
+    return game

@@ -1,0 +1,167 @@
+{
+  "_comment": "The first hour (Expansion 6 D.4, docs/ADVENTURES.md §5.12; game/story/opening.py): the beats a new life opens with. Words: {villain}, {home}, {town} (the town that asks), {start} (the start town), {where}, {gang}, {hook}.",
+  "beats": {
+    "opening_crisis": {
+      "family": "hook",
+      "picture": "here",
+      "title": [
+        "The Gate of {start}",
+        "{start}, Barred",
+        "A Town Afraid"
+      ],
+      "text": [
+        [
+          "You came in at the gate of {start} as the bell began, and it was barred behind you before you had gone twenty paces. Now the street is full of people who have stopped pretending. {hook}",
+          "The gate of {start} slams shut at your back, the bar dropped into its brackets by two men who do not look at you. Then the crowd, and the faces, and the one word everyone is saying. {hook}",
+          "You have picked a poor day to come to {start}. The gate is shut, the bell is going, and every door in the street has someone standing in it. {hook}",
+          "Nobody in {start} is working. They stand in knots in the street and talk low, and the gate behind you is barred in broad day. {hook}"
+        ],
+        [
+          "They look at your sword before they look at your face. Somebody has to say it, and an old voice does: \"Will you help us?\"",
+          "\"We've sent to the lord,\" someone says. \"The lord sent nobody.\" They are all looking at you now.",
+          "A woman with flour to the elbows pushes to the front. \"You've come from outside. You know how to use that. Will you?\""
+        ]
+      ],
+      "choices": [
+        {
+          "label": [
+            "\"I will.\" (A tale begins: the journal keeps it.)",
+            "\"Tell me where it is.\" (A tale begins: the journal keeps it.)"
+          ],
+          "ops": [["take_hook"]],
+          "result": [
+            "The crowd lets out its breath. Somebody presses a cup into your hand. Somebody else is already telling you everything at once.",
+            "They close round you, all talking, and for the first time today nobody in {start} is looking at the gate."
+          ]
+        },
+        {
+          "label": [
+            "\"Not today.\""
+          ],
+          "ops": [["decline_hook"]],
+          "result": [
+            "The faces close like doors. Nobody says anything. Nobody needs to.",
+            "\"No,\" someone says. \"No, why would you.\" The crowd breaks up, and leaves you standing alone in the street."
+          ]
+        }
+      ]
+    },
+    "opening_summons": {
+      "family": "hook",
+      "picture": "here",
+      "title": [
+        "A Letter with a Seal",
+        "The Summons",
+        "Sent For"
+      ],
+      "text": [
+        [
+          "The seal is {town}'s, pressed hard into cheap wax, and the hand that wrote it was in a hurry. {hook}",
+          "You read it twice. It is not addressed to you by name, but it was meant for someone like you, and you are the one holding it. {hook}",
+          "A rider in mud to the thigh found you before you had well set out, put a sealed letter in your hand, and was gone again. It is from {town}. {hook}",
+          "Somebody in {town} has heard of you, or of someone like you, and written in haste. {hook}"
+        ],
+        [
+          "At the foot of the page, in a different ink, one more line: \"Come {where}, and come soon.\"",
+          "There is no promise of money in it, which is how you know they mean it.",
+          "Whoever wrote it pressed hard enough on the last word to tear the paper."
+        ]
+      ],
+      "choices": [
+        {
+          "label": [
+            "Go to {town}. (A tale begins: the journal keeps it.)",
+            "Answer the summons. (A tale begins: the journal keeps it.)"
+          ],
+          "ops": [["take_hook"]],
+          "result": [
+            "You fold the letter and put it away carefully, like something that matters. {town} it is.",
+            "There is no one else they could have sent to. You know that, reading it. So you will go."
+          ]
+        },
+        {
+          "label": [
+            "Put the letter away. Not now."
+          ],
+          "ops": [["decline_hook"]],
+          "result": [
+            "You put the letter away unanswered. It is heavier than paper has any right to be.",
+            "Not now. Perhaps not ever. You tell yourself that someone else will go."
+          ]
+        }
+      ]
+    },
+    "opening_captive": {
+      "family": "hook",
+      "picture": "camp",
+      "title": [
+        "Taken",
+        "In the Hands of {gang}",
+        "Bound"
+      ],
+      "text": [
+        [
+          "You come round with your face in the dirt and your hands tied behind you to a stake. A fire, low. Men's voices, laughing about what you might fetch. You remember the road out of {start}, and then nothing. These are {gang}'s people, and you are their property now.",
+          "Your head is splitting. Your wrists are bound to something that does not give, and the smell is woodsmoke and horses. They took you on the road a mile out of {start}, and you never saw the blow. Somewhere by the fire someone says \"{gang} will want a look at this one.\"",
+          "Rope, tight, and the cold of the ground through your clothes. You are tied to a stake at the edge of an outlaws' camp, and the men round the fire belong to {gang}. They are arguing about whether to ransom you or sell you.",
+          "You wake bound. That is the first thing. The second is the fire, and the men round it, and the third is that they are {gang}'s, because they keep saying so, as if the name were a fortune. {start} is not far. It may as well be the moon."
+        ],
+        [
+          "Two of them are set to watch you. Neither is watching very hard. Your things are heaped by the fire, where they can see them and you can almost reach them.",
+          "Your pack is by the fire, and your blade is with it. They have not counted on you waking so soon.",
+          "Nobody has hurt you yet. That will change when {gang} comes."
+        ]
+      ],
+      "choices": [
+        {
+          "label": [
+            "Work at the knots, slowly, with your fingers."
+          ],
+          "check": {"skill": "sleight_of_hand", "dc": 12},
+          "success": [["opening_escape", "quiet"]],
+          "failure": [["opening_escape", "loud"]],
+          "result": [
+            "The knot gives, a strand at a time. You are free, and nobody has turned round. Your things are by the fire.",
+            "It takes an age and the skin off one wrist, but the rope comes away. They have not seen. Not yet."
+          ],
+          "fail_result": [
+            "The knot gives all at once and you lurch forward into the light, and someone shouts.",
+            "You are halfway free when one of them turns round. \"Oi!\""
+          ]
+        },
+        {
+          "label": [
+            "Strain at the stake until something breaks."
+          ],
+          "check": {"skill": "athletics", "dc": 13},
+          "success": [["opening_escape", "quiet"]],
+          "failure": [["opening_escape", "loud"]],
+          "result": [
+            "The stake was driven by a lazy man. It comes out of the ground with a wet sound and nobody hears it over their own laughing.",
+            "Something cracks, the rope or the wood, and you are loose. Not one of them looks round."
+          ],
+          "fail_result": [
+            "The stake comes out of the ground with a crack like a branch going, and every head turns.",
+            "You get loose, and the noise you make doing it brings them to their feet."
+          ]
+        },
+        {
+          "label": [
+            "Talk to the youngest of them. Quietly. About what {gang} pays."
+          ],
+          "check": {"skill": "deception", "dc": 13},
+          "success": [["opening_escape", "quiet"]],
+          "failure": [["opening_escape", "loud"]],
+          "result": [
+            "He listens. He comes closer, to listen better, and he loosens the rope to hear you, and then it is too late for him.",
+            "You talk until he believes there is gold in it for him if he cuts you loose. He does. The others are still at the fire."
+          ],
+          "fail_result": [
+            "He laughs, and calls the others over to hear it too. You are out of the rope by the time they come, but they come with blades.",
+            "\"Nice try.\" He kicks you, and you take his knife off his belt as he does it, and the rope with it. Now they are all coming."
+          ]
+        }
+      ]
+    }
+  }
+}

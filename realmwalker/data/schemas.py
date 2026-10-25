@@ -1538,6 +1538,11 @@ ADVENTURES = Obj({
     "words": Map(word_list(1, 400), optional=True),  # nested tables for the story's text (story/words.py)
     "epithets": Map(word_list(3, 40), optional=True),  # by tag
     "blueprints": Map(BLUEPRINT),
+    # the first hour (story/opening.py, D.4): crisis, summons, terror; `kinds` of threat it fits (none: any), `near`
+    # (the start town within the threat's reach or among its stakes), and extra weight by the hero's background
+    "openings": Map(Obj({"weight": Int(min=0, max=20), "kinds": List(Str(max_len=30), optional=True),
+                         "near": Bool(optional=True), "backgrounds": Map(Int(min=0, max=20), optional=True)}),
+                    optional=True),
 })
 
 BOSS = Obj({
