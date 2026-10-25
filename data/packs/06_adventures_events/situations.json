@@ -1,6 +1,7 @@
 {
   "_comment": "Situations (Expansion 6 C.6; game/story/situations.py, ADVENTURES.md §5.16, §6.7-6.10, §8.10). The predicaments are in situations.predicaments.json. Roots: what in a town can give rise to which predicaments. Meetings: how one is met, a scene of scenes.situations.json with the situation's roles cast in it. Turns: at most one a situation, fired at a time (forge, meet, take, half the clock, a good end).",
   "rarity": {"gap": [10, 20], "first": [0, 2], "per_town": 1, "per_great": 2, "near": 3, "turn_chance": 0.45},
+  "experience": {"sizes": {"small": ["moderate", 0.25], "fair": ["moderate", 0.5], "great": ["moderate", 1.0], "chapter": ["high", 1.0], "finale": ["high", 0.5]}, "no_fight": 1.25, "stories_only": 2.0},
   "roots": {
     "life:debt_due": ["promise_unkept", "precious_wrong_hands", "truth_buried"],
     "life:secret_debt": ["promise_unkept"],

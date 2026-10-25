@@ -125,6 +125,10 @@ def _chapter_check(game, adv: dict) -> None:
     journal(adv, ch["reveal"], day)
     game.say(f"<title>{esc(ch['title'])}</> <dim>is behind you.</> {esc(ch['reveal'])}", "story")
     game.cue("reveal")
+    from realmwalker.game.story import experience
+
+    for line in experience.award(game, "chapter", f"chapter/{adv['id']}/{adv['chapter']}"):  # (a high budget: C.8)
+        game.say(line, "good")
     beats.OPS["clock"](game, {"adv": adv["id"]}, -10)  # (a chapter done holds the villain's scheme a while)
     if int(adv["chapter"]) + 1 < len(adv["chapters"]):
         adv["chapter"] = int(adv["chapter"]) + 1

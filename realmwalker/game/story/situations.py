@@ -1531,24 +1531,12 @@ def _o_contact(game, sit, role, kind):
 
 @op("xp_story", "word")
 def _o_xp(game, sit, size):
-    """Experience from a story's end, by the encounter budget for the party's levels (C.8 adds the setting): a quarter
-    of a medium fight's budget for a small end, half for a fair one, the whole for a great one; more when no blood
-    was shed."""
-    from realmwalker.rules import encounter
-    from realmwalker.rules.progression import award_xp
+    """Experience from a story's end, by the encounter budget for the party's levels (story/experience.py, C.8): a
+    quarter of a moderate fight's budget for a small end, half for a fair one, the whole for a great one; more when no
+    blood was shed, twice as much under "Stories only"."""
+    from realmwalker.game.story import experience
 
-    if not game.party:
-        return []
-    levels = [c.level for c in game.party]
-    share = {"small": 0.25, "fair": 0.5, "great": 1.0}.get(size, 0.5)
-    xp = int(encounter.budget(game.tables, levels, "moderate") * share / len(levels))
-    if not goals.way_used(sit, "fight"):
-        xp = int(xp * 1.25)
-    rng = game.world.rng.child(f"situation/{sit['id']}/xp")
-    out = []
-    for c in game.party:
-        out += award_xp(c, xp, game.tables, rng)
-    return [f"<dim>(+{xp} experience each)</>"] + out
+    return experience.award(game, size, f"situation/{sit['id']}", no_fight=not goals.way_used(sit, "fight"))
 
 
 @op("shop", "role", "word", "int")

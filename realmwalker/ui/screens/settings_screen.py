@@ -6,7 +6,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 
 from realmwalker.config import ANIMATION_CHOICES, AUTOSAVE_CHOICES, COMPANION_CHOICES, MAP_ZOOMS, \
-    REACTION_CHOICES, TOWN_TIME_CHOICES, CREATURE_DETAIL_CHOICES, VERBOSITY_LEVELS, VOLUME_STEPS, WORLD_ZOOMS, Settings
+    REACTION_CHOICES, TOWN_TIME_CHOICES, EXPERIENCE_CHOICES, CREATURE_DETAIL_CHOICES, VERBOSITY_LEVELS, VOLUME_STEPS, WORLD_ZOOMS, Settings
 from realmwalker.ui import colors
 from realmwalker.ui.input import KeyEvent
 from realmwalker.ui.screens.base import ConfirmBox, Screen
@@ -72,6 +72,10 @@ class SettingsScreen(Screen):
                    lambda d: self._cycle("time_in_towns", TOWN_TIME_CHOICES, d),
                    "Flows: in a town the clock runs by itself, and its people walk about their day while you stand and "
                    "watch. Waits for you: time moves only when you do (as in the wild and underground, always)."),
+            Option("Experience", lambda: {"both": "Fights and stories", "stories": "Stories only"}[s.experience],
+                   lambda d: self._cycle("experience", EXPERIENCE_CHOICES, d),
+                   "Fights and stories: every foe beaten is worth experience, and so is a trouble seen through or a "
+                   "chapter of a tale. Stories only: fights give none, and the ends of stories give twice as much."),
             Option("Volume", lambda: f"{s.volume * 10}%", lambda d: self._volume("volume", d, "ui_click"),
                    "How loud the whole game is. Ctrl M, anywhere, turns all sound off and on again.",
                    level=lambda: s.volume),

@@ -25,6 +25,7 @@ REACTION_CHOICES = ("ask", "all", "auto")  # in a fight: ask before spending som
 ANIMATION_CHOICES = ("full", "calm", "off")
 CREATURE_DETAIL_CHOICES = ("full", "known")  # a creature's card: its whole stat block, or what the character knows
 TOWN_TIME_CHOICES = ("flows", "waits")  # in towns the clock runs by itself, or (the old way) only when you act
+EXPERIENCE_CHOICES = ("both", "stories")  # experience from fights and stories, or (the DMG's milestones) stories only
 VOLUME_STEPS = 10  # volumes are 0 (silent) to 10 (full)
 MAP_ZOOMS = (16, 24, 32, 48, 64)  # pixels per square on a close-up map
 WORLD_ZOOMS = (6, 12, 24, 36, 48)  # pixels per square of country (the map is painted at 12: these stay sharp)
@@ -73,6 +74,7 @@ class Settings:
     reactions: str = "ask"  # REACTION_CHOICES (rules/engine/reactions.py)
     creature_details: str = "full"  # CREATURE_DETAIL_CHOICES
     time_in_towns: str = "flows"  # TOWN_TIME_CHOICES: people walk their day while you stand and watch
+    experience: str = "both"  # EXPERIENCE_CHOICES (copied onto game.experience by the game screen)
     volume: int = 10  # everything (0-10)
     music_volume: int = 6
     effects_volume: int = 9
@@ -102,6 +104,8 @@ class Settings:
             self.creature_details = "full"
         if self.time_in_towns not in TOWN_TIME_CHOICES:
             self.time_in_towns = "flows"
+        if self.experience not in EXPERIENCE_CHOICES:
+            self.experience = "both"
         for name in ("volume", "music_volume", "effects_volume", "interface_volume"):
             setattr(self, name, max(0, min(VOLUME_STEPS, int(getattr(self, name)))))
         self.expansions_seen = sorted({str(e) for e in self.expansions_seen if isinstance(e, str)})

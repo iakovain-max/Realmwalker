@@ -163,6 +163,7 @@ class GameState:
         self._last_moment = -10**6  # the step count when street life was last remarked on
         self._last_weather: str | None = None  # the sky as it was, to notice when it turns
         self.verbosity = "normal"  # set from the player's settings by the game screen
+        self.experience = "both"  # "both" or "stories" (fights give none): set from the settings by the game screen
         self.animations = "full"  # likewise (the stage: with "off" a scene's movement completes at once)
         self.stage_fx: list[dict] = []  # things changing hands in a scene, for the close-up map (never saved)
         self.camera: dict | None = None  # a scene's focus {"to": [x, y], "n"} (never saved)
