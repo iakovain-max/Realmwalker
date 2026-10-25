@@ -733,6 +733,10 @@ def on_battle(game, result, actor=None) -> None:
         villain.on_fight(game, adventures(game.world)[aid], servants=min(1, h["servants"]),
                          lieutenants=h["lieutenants"])
     battle = getattr(game, "battle", None)
+    for f in getattr(battle, "fighters", ()):  # (its face known: the journal draws it, no longer a shadow, E.7)
+        tag = getattr(getattr(f, "creature", None), "story", None)
+        if tag and tag.get("role") == "villain" and tag.get("adv") in adventures(game.world):
+            villain.seen(game, adventures(game.world)[tag["adv"]])
     if result.outcome == "fled" and battle is not None:
         from realmwalker.game.story import defeat
 

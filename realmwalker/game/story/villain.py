@@ -115,6 +115,19 @@ def temper(game, adv: dict) -> dict:
     return game.tables.villains.get("tempers", {}).get((t or {}).get("villain", {}).get("temper") or "", {})
 
 
+SEEN_IN = ("villain_visit", "villain_hunt", "villain_dinner")  # beats in which it shows itself (E.7)
+
+
+def seen(game, adv: dict) -> None:
+    """The hero has seen it with their own eyes (a fight, a visit, its own table): adv["seen"] the day (the journal
+    draws its figure, not its shadow)."""
+    adv.setdefault("seen", int(game.moment.total_days))
+
+
+def known_face(adv: dict) -> bool:
+    return "seen" in adv or bool(adv.get("boss_dead") or adv.get("boss_taken")) or adv.get("state") != "active"
+
+
 def speaks(game, adv: dict) -> bool:
     """Whether it can write or talk: a beast never does, whatever its temper."""
     from realmwalker.world import threats
@@ -347,14 +360,14 @@ def _frame_town(game, adv: dict) -> int | None:
 
 # ---------------------------------------------------------------------------- the villain's hand (E.2)
 def hand(game, adv: dict | None) -> dict:
-    """The hand its letters are written in: its temper's (villains.json tempers `hand`: face, ink, seal), else a
+    """The hand its letters are written in: its temper's (villains.json tempers `hand`: face, ink, seal, sigil), else a
     villain's dark hand."""
     from realmwalker.game import letters
 
     h = dict(temper(game, adv).get("hand") or {}) if adv is not None else {}
     face = h.get("face", "dark")
     return {"hand": face if face in letters.HANDS else "dark", "ink": h.get("ink"),
-            "seal": h.get("seal") or list(letters.SEALS["dark"])}
+            "seal": h.get("seal") or list(letters.SEALS["dark"]), "sigil": h.get("sigil")}
 
 
 # ---------------------------------------------------------------------------- the invitation (E.2)

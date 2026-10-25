@@ -6,6 +6,7 @@
     "sign": {"files": ["sign_1.wav"], "group": "effects", "volume": 0.6, "pitch": 0.02, "cooldown": 5.0, "priority": 4, "about": "A threat's sign is heard"},
     "bell": {"files": ["bell_1.wav"], "group": "effects", "volume": 0.65, "pitch": 0.0, "cooldown": 4.0, "priority": 4, "about": "A town's bell rung in a scene (the stage)"},
     "villain": {"files": ["villain_1.wav"], "group": "effects", "volume": 0.8, "pitch": 0.0, "cooldown": 1.5, "priority": 6, "about": "A story's villain enters the fight, or turns at its second phase (its name across the battle mat)"},
+    "villain_move": {"files": ["villain_1.wav"], "group": "interface", "volume": 0.5, "pitch": 0.04, "cooldown": 3.0, "priority": 4, "about": "A villain's move reaches you: its omen, its letter, its people on the road (the beat opens; E.7)"},
     "horn": {"files": ["horn_1.wav"], "group": "effects", "volume": 0.75, "pitch": 0.02, "cooldown": 3.0, "priority": 5, "about": "A wave comes out of the dark on the night a place is held (D.5)"},
     "dead": {"files": ["dead_1.wav"], "group": "effects", "volume": 0.6, "pitch": 0.03, "cooldown": 6.0, "priority": 4, "about": "The Risen's dead stand at the edge of the camp's light (D.5)"},
     "seal": {"files": ["seal_1.wav"], "group": "interface", "volume": 0.6, "pitch": 0.05, "cooldown": 1.0, "priority": 3, "about": "A letter's seal broken and its page opened"}

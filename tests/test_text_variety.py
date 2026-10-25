@@ -218,3 +218,17 @@ def test_part_d_has_enough_ways_to_be_told(data):
                 short.append(f"opening beat {bid}: {len(beats[bid]['text'][0])} intros")
     assert set(letters(beats)), "the Risen's letter and the outlaws' warning are beats' letters"
     assert not short, "\n".join(short)
+
+
+def test_every_villain_move_has_its_tempers_voice(data):
+    """docs/ADVENTURES.md §9 (Expansion 6 E.7): every move's beat has >=2 first pages of its own for each temper that
+    makes the move, so a zealot's letter does not read like a cruel man's or a beast's test like a schemer's."""
+    villains, beats = _pack(data, "villains"), _pack(data, "beats")
+    short = []
+    for tid, temper in villains.get("tempers", {}).items():
+        for mid in temper.get("moves", {}):
+            move = villains["moves"][mid]
+            for bid in (move["beat"], move.get("disloyal")):
+                if bid and len((beats[bid].get("tempers") or {}).get(tid, [])) < 2:
+                    short.append(f"move {mid} (beat {bid}): {tid} has {len(beats[bid].get('tempers', {}).get(tid, []))}")
+    assert not short, "\n".join(short)

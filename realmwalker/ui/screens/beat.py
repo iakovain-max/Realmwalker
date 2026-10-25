@@ -30,10 +30,14 @@ def picture(canvas: Canvas, game, name: str, rect: tuple[float, float, float, fl
         return False
     spec = {"backdrop": backdrop, "figures": vignette.party_figures(game, 1),
             "seed": int((rec or {}).get("n", 0))}
-    if name == "lair":  # (at its own table: the villain across from you, E.2)
+    if name == "lair":  # (at its own table: the villain across from you, E.2; its hall kept as its temper keeps it, E.7)
         host = _host(game, rec)
         if host:
             spec["figures"] = spec["figures"] + [host]
+        adv = beats.adventure(game, rec or {})
+        props = vignette.HALL_PROPS.get(beats._villain(game, rec).get("temper") or "") if adv else None
+        if props:
+            spec["props"] = list(props)
     return vignette.compose(canvas, px, spec, canvas.now, game)
 
 
@@ -89,6 +93,8 @@ class BeatScreen(Screen):
         super().__init__(app)
         self.game = game
         self.rec = beats.pending(game)
+        if self.rec and game.tables.beats.get(self.rec["beat"], {}).get("family") == "villain":
+            self.sound_open = "villain_move"  # (its move reaches you: E.7)
         self.pages = beats.pages(game, self.rec) if self.rec else []
         self.page = 0
         self.result: list[str] | None = None

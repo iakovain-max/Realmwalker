@@ -1,0 +1,156 @@
+{
+  "_comment": "Expansion 6 E.7: each villain temper's own first page for the moves it makes (beats.py pages; tests/test_text_variety.py floors).",
+  "beats": {
+    "villain_nightmare": {"_merge": true, "tempers": {
+      "zealous": [
+        "{token_of} wakes at the hour of the night-bell, kneeling in the dark with both hands held out, and cannot say how they came there. In the dream a voice read aloud from a book, one sentence for every name {token_of} loves, and at the end held up {token} and said that it was already counted.",
+        "Nobody sleeps well. {token_of} dreams of {home} and a congregation without faces, all singing, and of {token} laid on an altar of black stone, and a voice saying that the offering is accepted. {token_of} wakes with the tune of the hymn still humming in the teeth.",
+        "{token_of} sits up with a cry and spits, as if to be rid of the taste of ash. The dream was a fire, patient and clean, and {villain_short} feeding it with the things {token_of} loves, one at a time, saying a blessing over each. {token} was the last, and it was not yet thrown."
+      ],
+      "cruel": [
+        "{token_of} wakes with a cry and a bitten tongue, and will not say why until the fire is built up. In the dream {villain_short} sat on {token_of}'s chest and turned {token} over in thick fingers, and told, in great detail and with some pleasure, what would be done to it, and to whoever held it last.",
+        "A scream in the dark, and it is {token_of}, sitting bolt upright with the blanket wrung into a rope. The dream was {home}: a yard, a post, {token} nailed up where all could see it, and a laughing voice counting down from ten. {token_of} woke at three.",
+        "{token_of} wakes sweating and sick and cannot be calmed for a long while. In the dream there was a smell of cellars, and the sound of someone breathing wetly, and {villain_short} dropping {token} into a bucket and saying, \"Pick it out, then.\""
+      ],
+      "proud": [
+        "{token_of} wakes in the black hour with a start, sure that someone has been standing over the bed. In the dream there was a long hall and a high seat, and {token_of} made to kneel at the foot of the steps while {villain_short} weighed {token} in one hand like a petty tribute and said, \"It will do for a start.\"",
+        "Nobody sleeps well. {token_of} dreams of {home} and a feast laid for a king, and of a voice from the high seat that never once looks down, and a herald who gets {token_of}'s name wrong, and {token} given to a dog to carry out.",
+        "A horn blows in {token_of}'s sleep, and {token_of} wakes shouting. The dream was a procession through a gate of bones, with {villain_short} riding at the head of it, and at the saddle-bow {token}, carried the way a conqueror carries a captured standard."
+      ],
+      "grieving": [
+        "{token_of} wakes weeping, and does not know it until someone says so. In the dream a quiet voice kept asking whether {token_of} had been loved, and held {token} very gently, and said, \"Mine was taken too.\"",
+        "Nobody sleeps well. {token_of} dreams of {home} in the grey before dawn, an empty hall laid for a feast no one will come to, and {villain_short} sitting in it with {token} held in both hands, rocking it the way one rocks a child.",
+        "The dream comes to {token_of} as soon as sleep does: a long walk across a frozen field, and {villain_short} ahead, never turning, with {token} in a hand that shakes. A voice says, so softly it hurts, \"Carry it for me. I am so tired of carrying it.\""
+      ]
+    }},
+    "villain_visit": {"_merge": true, "tempers": {
+      "zealous": [
+        "The fire gutters as if a door had been opened, and there is a figure kneeling just beyond its light, head bowed, hands joined. You did not hear it come. \"Do not rise,\" says {villain_short}, without looking up. \"I am praying for you. Someone should.\"",
+        "You wake to a smell of burnt incense and a pale shape at the foot of your bed, and a voice reading from a book you cannot see: your name, your road, the day you were born. \"It is all written down,\" says {villain_short}, and turns a page, \"and I wished to see the line made flesh.\"",
+        "A white light comes into the place from no source you can find, and in it stands {villain_short}, hands open and empty like a priest at a church door. \"You are not my enemy,\" says {villain_short}. \"You are a doubt, sent to be answered. Let us answer it together.\""
+      ],
+      "cunning": [
+        "Someone has set a second cup beside the dying fire and filled it, and the figure that put it there sits just beyond the light with its own cup raised. You did not hear it come. \"Drink or do not,\" says {villain_short}. \"It is not poisoned. I would not waste good poison on a first meeting.\"",
+        "You wake to the small sound of a coin being turned over and over, and a shape sitting on your pack as if it were a stool, tossing the coin from hand to hand. \"Forgive the hour,\" says {villain_short}. \"I thought it better you hear this from me than guess at it in the morning.\"",
+        "A thin smoke lifts off the embers into a shape you take at first for a trick of the light, and then it speaks. \"There is no need to wake the others,\" says {villain_short}, pleasantly. \"I have seen to it that they sleep. Sit. Let us be sensible.\""
+      ],
+      "proud": [
+        "The cold arrives first, and then a tall shape standing beyond the firelight, so still it might be a gate-post. You did not hear it come. \"You may remain seated,\" says {villain_short}. \"It is a courtesy. I will not offer another.\"",
+        "You wake to a crown of frost on the blanket and a figure at the foot of the bed looking about the room as a man looks about a stable. \"So this is where the one who troubles me sleeps,\" says {villain_short}. \"I had imagined something larger.\"",
+        "Mist comes in with the slow tread of a procession, and out of it steps {villain_short}, as if down from a dais, and halts at the very edge of the firelight and does not warm {his} hands. \"I do not walk to meet people,\" says {villain_short}. \"Take that as an honour. It will be the only one.\""
+      ],
+      "grieving": [
+        "You wake to the sound of someone weeping very quietly, and a shape sits at the edge of the firelight with its face in its hands. You did not hear it come. \"I am sorry,\" says {villain_short}, not looking up. \"I did not mean to wake you. I only wished to sit by a fire again.\"",
+        "The mist comes in low and slow, and in it stands {villain_short}, very straight, one hand held out before it, palm up, as if leading a child. \"You are the one they send now,\" says {villain_short}. \"You are so young. They were all so young.\"",
+        "Late, when the fire has fallen to embers, a shape is kneeling in the ashes beside it, letting a handful of cold grey dust run through its fingers. \"I had a hearth like this,\" says {villain_short}. \"I cannot remember the colour of the flame.\""
+      ]
+    }},
+    "villain_reprisal": {"_merge": true, "tempers": {
+      "zealous": [
+        "The news comes up the road with a pedlar who crosses himself twice before he will tell it. {helper} of {helper_town} was hanged from the chapel bell-rope at dawn, with a text burned into the beam above, and pinned to the shirt a page torn from a prayer-book, your name written on it under the word HERETIC.",
+        "A rider from {helper_town} gives it to you in a rush, and will not stay to eat. {helper} was tried in the church porch by men in white, and hanged from the lych-gate, so that all who went in to pray had to walk beneath. It was for giving shelter to the unclean, they say. Your name was read aloud.",
+        "A traveller from {helper_town} tells you, calmly, as one speaks of a harvest: {helper} was hanged at sunrise from an apple tree, and every bough was hung with strips of white cloth. It was done to cleanse the place of what you left behind in it. Nobody has dared to cut {helper} down."
+      ],
+      "cunning": [
+        "A letter reaches you by a carter, neat and unsealed. {helper} of {helper_town} was hanged from the bridge at first light, it says, after a short and orderly trial, and the writer regrets any distress. Below, in the same clear hand, a list of the others in {helper_town} who have spoken with you, with no comment beside the names.",
+        "You hear it from an innkeeper who has plainly been paid to say it and plainly wishes he had not been. {helper} of {helper_town} is dead, hanged from the bridge, and the reeve's men stood by and did nothing, and afterwards a purse of silver was found in the reeve's kitchen. This is how it will be done from now on: by the town's own hands.",
+        "The news reaches you in pieces, and the pieces fit together too neatly. {helper} of {helper_town} was hanged from the bridge, and the rope was bought in the market the day before, and the paper pinned to the body had your name on it in a clerk's hand, and not one person in {helper_town} saw anything. Whoever planned it planned it well."
+      ],
+      "cruel": [
+        "A carter tells it with his eyes on the road. {helper} of {helper_town} was hanged from the bridge, and not quickly: the drop was too short, and was meant to be. It lasted until the noon bell. A paper was nailed to the body, and on it, in letters as big as a man's hand, your name.",
+        "A rider from {helper_town} gives you the news at a gallop, and the look on his face says the rest. {helper} was made to watch the house emptied and the stock butchered in the yard, and then was hanged from the bridge and left for the dogs. A paper on the chest gave your name and nothing else.",
+        "You hear it from a man on the road who is drunk to keep from remembering it. {helper} of {helper_town} was strung up from the bridge at dawn, and the men who did it stayed to laugh and wager how long it would swing. They pinned your name to the coat before they went. The bridge is watched, and no one can take {helper} down."
+      ],
+      "proud": [
+        "A herald in a livery you do not know rides into sight, reins in, and reads from a scroll in a voice that carries. {helper} of {helper_town}, a commoner, has been judged guilty of aiding a rebel against the old law, and the sentence was carried out at dawn from the bridge. The scroll names you, and is sealed with black wax.",
+        "A rider from {helper_town}, grey in the face, says it as if he had learned the words by rote. {helper} was brought before an empty chair in the square, told the sentence by a voice no one saw speaking, and hanged from the bridge. A paper forbids any to take the body down until three suns have set. Your name is on it, and beside it the word Rebel.",
+        "You hear it in passing, from someone who does not wish to be asked twice. {helper} of {helper_town} has been hanged from the bridge under a banner, and a man read the charge to the crowd in a voice like a king's: that {helper} gave a hand to one who had refused to kneel. All of {helper_town} was made to watch, standing, with their hats in their hands."
+      ]
+    }},
+    "villain_strike": {"_merge": true, "tempers": {
+      "zealous": [
+        "A bell tolls somewhere ahead, and then a hymn goes up from both sides of the road in a hundred throats, and torches show among the trees. {villain_short}'s faithful come out singing, white sashes across their chests, and not one of them is afraid. This is no ambush. It is a sacrament.",
+        "A voice cries out the first line of a psalm, and the hedges answer with the second. They come at a steady walk, ahead and behind, {villain_short}'s servants, a blade in one hand and a knotted cord in the other. They mean you whole for the altar, if you will let them. Otherwise they will not mind.",
+        "A drum beats, slow and exact, and white banners rise above the hedgerows. {villain_short}'s people shout one word together, over and over, as they come: \"Cleanse! Cleanse!\" It sounds like a prayer. It is a charge."
+      ],
+      "cunning": [
+        "A single whistle, and then the road is not empty. There are more of them than you counted on, and they have come from precisely the places you would not have watched. {villain_short}'s people do not shout. They take their places as for a game that has been played before. On one side the line is thin, and you wonder whom that was made for.",
+        "The carter ahead of you pulls his wagon across the road and walks away, and that is the signal. {villain_short}'s servants step out of the ditches, fanned wide so that no two stand together, and not one of them is in a hurry. They have been paid well to be patient, and they are good at it.",
+        "A boy on the verge you took for a beggar lifts a hand, and the hedges open. {villain_short} has counted the ways you might run and put people on all but one of them, and the one left is long and open and in plain view of the crossbows. Nobody is shouting. It would only spoil things."
+      ],
+      "cruel": [
+        "They come howling from both sides, {villain_short}'s people, with hooks and clubs and a coil of rope swinging from a belt, and one of them carries a rusty saw. \"Keep one talking!\" someone shouts. \"{He} wants one of them talking at the end!\"",
+        "A horn blast, then a roar of laughter, and {villain_short}'s servants are in the hedges and the ditches on both sides, beating the posts with their weapons for the noise of it. They are enjoying themselves. One holds up a bloody shirt on a pole and shakes it at you like a flag.",
+        "The first sign is the crows going up, and then the sound of boots, and then they are on the road in front and behind, {villain_short}'s people, spreading out and grinning as they do it. \"No hurry, lads,\" one calls. \"We have all day, and they have only the one neck each.\""
+      ],
+      "proud": [
+        "A trumpet sounds from the hill, long and flat and wholly unhurried, and {villain_short}'s servants come down to the road in ranks, shields locked, as for a review. They do not charge. They advance at a stately walk, as if this were a ceremony, and you were the thing being ceremonially removed.",
+        "Banners go up on both sides of the road at once, black and gold and very old, and under them {villain_short}'s household troops form in two perfect lines. A voice you cannot see reads out over the ranks: \"By command, the trespassers are to be swept from the road.\" Swept, as dirt is.",
+        "The hedges rustle, and out of them in single file come {villain_short}'s servants, each halting at the edge of the road to bow to you, once, formally, before drawing. It is how the old law prescribes a killing be done. It is the most insulting thing that has ever been done to you."
+      ],
+      "grieving": [
+        "They come slowly, from both sides, without a sound, in grave-cloth or in mourning, and not one raises a weapon until the last has taken a place in the line. {villain_short}'s servants do what they have been told, the way mourners follow a coffin. Some of them are weeping.",
+        "A low drum, like a heartbeat slowed, and then one voice begins a lament in the hedge, and others take it up. {villain_short}'s people step into the road from both sides, singing, and the song is about a child. They do not stop singing when they draw.",
+        "They are standing in the road before you notice them, and behind you, a quiet crowd of {villain_short}'s servants, as if they had always been waiting there for you to come to them. Nobody speaks. The one at their head holds out empty hands, palms up, as if asking for something back, and then all the blades come out."
+      ]
+    }},
+    "villain_reprisal_fire": {"_merge": true, "tempers": {
+      "zealous": [
+        "There is smoke on the sky towards {helper_town}, white and straight, and later a priest on a donkey with the news: {helper}'s house was fired at midnight, with the doors barred from outside and a verse painted on the lintel. The singing outside went on, they say, until the roof fell.",
+        "A pillar of smoke stands over the road to {helper_town}, and under it you meet a woman walking away with a child on her hip. {helper}'s house is gone, she says, burned with the doors chained, and the men who did it knelt in the road while it burned, and prayed. Some of the neighbours knelt with them.",
+        "The smoke is a long smear on the wind, and a wandering friar from {helper_town} stops to tell you what it is. {helper}'s house, burned, with the sign of a lidless eye cut into the barred door beforehand. \"Purified,\" the friar says, in a voice from which all the colour has gone."
+      ],
+      "cruel": [
+        "There is smoke on the sky towards {helper_town}, black and greasy, and a carter with the rest of it: {helper}'s house was fired in the night with the doors barred from outside. The neighbours were made to stand in the lane and listen. Those who turned away were beaten and made to turn back.",
+        "You smell it before you see it, burnt thatch and worse, and then the smoke, rolling up black over the road to {helper_town}. A boy tells the rest with his hands over his ears: {helper}'s house, barred from outside, and the men who barred it sat on the garden wall passing a jug until the roof came in.",
+        "A smudge of smoke stands on the sky towards {helper_town}, and a farmer on the road still has the soot on him. {helper}'s house was burned in the night with the doors nailed shut. The men killed the cow in the yard first, he says, and hung it on the gate, and only then struck a light."
+      ]
+    }},
+    "villain_kidnap": {"_merge": true, "tempers": {
+      "zealous": [
+        "A boy from {helper_town} has run all night to find you, and gets the words out between breaths. Men in white came for {helper} before dawn, singing, he says, and knocked politely first, and when the door was opened they bowed and led {helper} away like a guest. They took the road to {home}, and the one who spoke called {helper} a chosen vessel.",
+        "A boy is waiting for you, grey with running, with a strip of white cloth clenched in his fist. He came all the way from {helper_town}. \"They took {helper},\" he gets out. \"They said it was an honour. They were praying. They put {helper} in a cart and went towards {home}.\"",
+        "He is a boy of ten or twelve, and he has run since midnight from {helper_town} with a candle-stub still burning in his fist. {helper} was taken out of bed, he tells you, by a dozen in white cloaks, who read a passage aloud in the doorway and did not hurry. They drove away with a hymn, towards {home}."
+      ],
+      "cruel": [
+        "A boy from {helper_town} has run all night to reach you, and there is blood on his face that is not all his. {helper} was dragged into the lane before dawn by men who were laughing, he says, and kicked up into a cart, and they took the road to {home} making a great deal of noise. They wanted it known.",
+        "A boy staggers into the light with a split lip and a swelling eye, his feet bleeding from the long run from {helper_town}. Four men came for {helper} before dawn, he says, bare-faced, and the one who gave the orders cuffed him down the steps for watching, and told him to be sure to tell you the way: {home}.",
+        "The boy who finds you is shaking too hard to speak at first, and when he does it comes out all at once. {helper} was taken from the house at {helper_town} in the dark by men who broke the door to do it, and killed the dog in the yard for the pleasure of it, and left by the road to {home} with {helper} bound hand and foot in a cart."
+      ]
+    }},
+    "villain_relic_moved": {"_merge": true, "tempers": {
+      "zealous": [
+        "Word comes from those who watch for you: a procession passed in the dark with its candles shaded, the faithful on their knees along the road, and the thing they carried borne under a white cloth. It was taken to {home}, and the road was swept clean behind it.",
+        "A shepherd saw them go by at midnight, chanting under their breath, a long line of white figures carrying a chest between them. Whoever met them was made to kneel with the face to the ground until they had passed. They went towards {home}.",
+        "You dream of a vast altar in a lightless hall, and of hands laying a bound thing on it, and a voice saying, with great joy, \"It is home.\" You wake knowing that {villain_short} has moved what binds {him}, and that it was carried to {home}."
+      ],
+      "proud": [
+        "Word comes from those who watch for you: something was carried out of its hiding place by night under a black canopy, on the shoulders of a dozen bearers who walked in step, as for a coronation. Heralds went ahead and told everything on the road to stand aside. It was taken to {home}.",
+        "A shepherd tells it, still pale: a line of riders in old harness came over the hill at midnight, and in the midst of them a litter, and on the litter something under a purple cloth that none dared look at. They did not hurry. They went towards {home}, as if to take possession of it.",
+        "You dream of a great hall hung with banners and a throne at its end, and of hands laying something on the steps before it, as one lays a crown at a king's feet. You wake knowing that {villain_short} has moved what binds {him} home to {home}, and is pleased."
+      ],
+      "grieving": [
+        "Word comes from those who watch for you: something was lifted out of its hiding place in the dark by people who walked softly and wept as they went, carrying it between them the way one carries a sleeping child. They took it to {home}.",
+        "A shepherd saw them pass at midnight: a small slow line with shaded lights, and something wrapped in a shawl carried at the middle. One of them was humming. They went towards {home}, and the dogs, which never stop barking, were quiet.",
+        "You dream of a grey hall with the fire long dead, and of hands setting something down on a bed, gently, and drawing a cover over it. You wake with wet eyes, knowing that {villain_short} has moved what binds {him} to {home}, and sat with it a long while before leaving."
+      ]
+    }},
+    "villain_gift": {"_merge": true, "tempers": {
+      "cunning": [
+        "There is a purse beside {hero}'s pack in the morning, fat and heavy, tied with a neat blue ribbon. Inside, good gold counted into stacks of ten, and a slip in a clerk's hand: a receipt, already made out in your name, for services not yet rendered. \"More to follow,\" it says, \"on the road away from {home}.\"",
+        "Whoever kept the last watch swears nobody passed, and yet there it is on the blanket: a small purse of good gold, the coins all of one year, and a note beneath. \"I am told you are expensive. I am happy to learn it by experiment. {villain_short}.\"",
+        "Beside your boots lies a purse you did not bring, heavy with gold, and tucked under its string a paper folded in three: a list, in a neat hand, of what you might buy with it. A farm. A passage across the sea. A long quiet. At the bottom: \"All of it again, if you are gone by the new moon. {villain_short}.\""
+      ],
+      "proud": [
+        "There is a purse beside {hero}'s pack in the morning, of stiff old velvet worked with a crest you cannot place, and inside it gold coins stamped with a face no one living remembers. A card in an ancient hand: \"The alms of {villain_short}. Take them, and be gone from this land.\"",
+        "At first light a man in livery no house here wears bows from the neck, holds out a purse in both hands, and is walking away before you have taken it. Heavy gold, stamped by the old mint of {home}. Pinned to the cloth, a line in a hand like carving: \"Consider it the fare to anywhere but here.\"",
+        "The purse lies on the ground by your pack on a folded cloth of purple, as an offering is laid on a tomb, and the knot has been tied by someone who has never tied one. Gold, a great deal. A note: \"{villain_short} sends to the one who has dared to trouble {him}, for this once, a gift. Do not mistake it for mercy.\""
+      ],
+      "grieving": [
+        "There is a purse beside {hero}'s pack in the morning, small and worn, tied with a black cord that has been knotted and unknotted many times. Inside, a little old gold, and a note in a shaking hand: \"It is all I have left that is worth anything. Please go home. I could not bear another.\" It is signed {villain_short}.",
+        "A stranger in a grey cloak leaves a parcel by the fire in the grey of the morning and is walking away before anyone thinks to stop them. In it, a purse of old coin, dull with age, and wound round it a strip of faded cloth with a few words on it: \"Take this to someone who is waiting for you. Do not come to {home}.\"",
+        "In the grey of the morning you find a purse set on the ground beside your sleeping place, very squarely, as if by one who measured it, and on it a pressed flower, dry as ash. Inside, coin so old the faces on it are worn smooth, and a slip: \"I once thought to buy back what was taken. It cannot be done. Perhaps you will have better use for it. {villain_short}.\""
+      ]
+    }}
+  }
+}

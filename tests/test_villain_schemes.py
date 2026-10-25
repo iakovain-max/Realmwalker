@@ -315,3 +315,21 @@ def test_one_it_took_is_freed_from_the_chains_in_its_hall(made, tables, monkeypa
                 and f.get("quest") == st["quest"])
     quests.free_captive(game, game.local, *spot)
     assert st["state"] == "done" and npc.alive and not npc.flags.get("captive")
+
+
+def test_each_temper_tells_its_moves_in_its_own_words(made, tables):
+    """Expansion 6 E.7: a move's beat opens with its villain's temper's own first page (beats.json `tempers`), and
+    its letters are sealed with that temper's sigil."""
+    game, adv, t = _tale(made, tables, "outlaw")
+    temper = t["villain"]["temper"]
+    beats.offer(game, "villain_strike", adv=adv["id"], where="road")
+    first = beats.pages(game, beats.pending(game))[0]
+    own = tables.beats["villain_strike"]["tempers"][temper]
+    assert "{" not in first
+    assert first not in [beats.tidy(x) for x in tables.beats["villain_strike"]["text"][0]]
+    assert len(own) >= 2
+    beats.director(game.world)["pending"] = None
+    beats.offer(game, "villain_letter", adv=adv["id"], where="camp")
+    beats.choose(game, beats.pending(game), 1)
+    rec = letters.records(game.world)[game.letter]
+    assert rec.get("sigil") == villain.temper(game, adv)["hand"]["sigil"]

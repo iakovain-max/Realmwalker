@@ -1489,6 +1489,7 @@ BEAT = Obj({
     "leaves": Str(max_len=30, optional=True),  # what it leaves at your camp, in the camp's picture (story.LEFT)
     "stage": Str(max_len=60, optional=True),  # at an inn, a scene (scenes.json) plays it on the town's map (E.2)
     "text": List(word_list(1, 600), min_items=1),  # pages, each a list of variants
+    "tempers": Map(word_list(1, 600), optional=True),  # a villain temper's own first page (Expansion 6 E.7)
     "choices": List(CHOICE, optional=True),
     "ops": ops_list(optional=True),  # what it does when it has no choices
 })
@@ -1620,7 +1621,9 @@ TEMPER = Obj({
     "speaks": Bool(),
     # (E.2) its own hand: the letters' face (letters.HANDS), ink and seal colours
     "hand": Obj({"face": Str(choices=["plain", "fine", "dark"]), "ink": List(Int(min=0, max=255), min_items=3,
-                max_items=3), "seal": List(Int(min=0, max=255), min_items=3, max_items=3)}, optional=True),
+                max_items=3), "seal": List(Int(min=0, max=255), min_items=3, max_items=3),
+                 # (E.7) what is pressed into its wax (game/letters.SIGILS)
+                 "sigil": Str(choices=["mark", "sun", "key", "skull", "crown", "tear"], optional=True)}, optional=True),
     "moves": Map(Int(min=0, max=100), min_items=1),  # move id: weight
     "first_words": word_list(6, 300),
     "omens": word_list(8, 300),

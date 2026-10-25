@@ -14,6 +14,41 @@ GROUPS = (("In hand", quests.LIVE), ("Finished", ("finished",)), ("Failed or giv
 TABS = ("Adventures", "Work", "People")
 ADVENTURES, WORK, PEOPLE = 0, 1, 2
 TALE_GROUPS = (("Under way", ("active",)), ("Ended", ("won", "lost", "abandoned", "orphaned")))
+PORTRAIT_COLS, PORTRAIT_ROWS = 12, 8  # the villain's figure beside its tale (E.7)
+SHADOW = (0.07, 0.06, 0.08)  # a villain not yet seen: its shape only
+
+
+def villain_portrait(canvas: Canvas, game, adv: dict, x: int, y: int, w: int, rows: int) -> bool:
+    """The tale's villain beside its page: a dark shape until the hero has seen it (villain.known_face), then its
+    own figure (Expansion 6 E.7). False when the tale has no villain to draw."""
+    from realmwalker.game.story import villain
+    from realmwalker.ui.gfx import dolls, theme
+    from realmwalker.ui.gfx.scene import Rect
+    from realmwalker.world import threats
+
+    t = threats.records(game.world).get(adv.get("threat"))
+    creature = ((t or {}).get("villain") or {}).get("creature")
+    if not creature or creature not in game.tables.creatures:
+        return False
+    atlas = canvas.gfx.atlas
+    parts = dolls.creature(creature, game.tables, f"villain/{t['id']}", atlas)
+    if not parts:
+        return False
+    cw, ch = canvas.cell_w, canvas.cell_h
+    px, py, pw, ph = x * cw, y * ch, w * cw, rows * ch
+    canvas.clear_cells(x, y, w, rows)
+    canvas.under(Rect(px, py, pw, ph, (40, 32, 30, 255), bottom=(16, 12, 12, 255)))
+    canvas.under(*theme.panel(px, py, pw, ph, "inset", ornaments=False))
+    tile = atlas.tile or 32
+    size = tile * max(1, int(min(pw - 12, ph - 12)) // tile)
+    known = villain.known_face(adv)
+    cmd = dolls.draw(atlas, parts, px + (pw - size) / 2, py + (ph - size) / 2, size,
+                     (1.0, 1.0, 1.0) if known else SHADOW)
+    if cmd is not None:
+        canvas.under(cmd)
+    canvas.hit(x, y, w, rows, tooltip="You have seen it with your own eyes." if known else
+               "You have not seen it yet: only what people say of it.")
+    return True
 
 
 def met_people(game) -> list:
@@ -398,7 +433,12 @@ class JournalScreen(Screen):
                                      trouble_lines(game, sel) if self.tab == ADVENTURES and "predicament" in sel else
                                      tale_lines(game, sel) if self.tab == ADVENTURES else details(game, sel))
                 self._shown = key
-            self.detail.render(canvas, dx, top, w - dx - 2, bottom - top)
+            text_w = w - dx - 2
+            if self.tab == ADVENTURES and "predicament" not in sel and text_w >= 40:
+                pw = PORTRAIT_COLS
+                if villain_portrait(canvas, game, sel, w - 2 - pw, top, pw, PORTRAIT_ROWS):
+                    text_w -= pw + 1
+            self.detail.render(canvas, dx, top, text_w, bottom - top)
         bx = canvas.button(2, h - 2, "Close", self.close, hotkey="Esc")
         bx = canvas.button(bx + 2, h - 2, TABS[(self.tab + 1) % len(TABS)],
                            lambda: self.handle_key(KeyEvent("tab")), hotkey="Tab")

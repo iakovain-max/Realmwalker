@@ -44,8 +44,10 @@ def parchment(w: int, h: int, seed: int = 3):
     return PImage.fromarray(np.clip(np.concatenate([img, a], axis=2), 0, 255).astype(np.uint8), "RGBA")
 
 
-@lru_cache(maxsize=2)
-def _seal():
+@lru_cache(maxsize=8)
+def _seal(sigil: str = "mark"):
+    """Wax (white, tinted by the seal's colour when drawn) with its sigil pressed in (letters.SIGILS: a villain's by
+    its temper, E.7)."""
     from PIL import Image as PImage, ImageDraw, ImageFilter
 
     im = PImage.new("RGBA", (96, 96), (0, 0, 0, 0))
@@ -54,8 +56,34 @@ def _seal():
            for a in np.linspace(0, math.tau, 40)]
     d.polygon(pts, fill=(255, 255, 255, 255))
     d.ellipse([22, 22, 74, 74], outline=(200, 200, 200, 255), width=3)
-    d.line([(36, 60), (48, 32), (60, 60)], fill=(190, 190, 190, 255), width=4)
-    d.line([(40, 52), (56, 52)], fill=(190, 190, 190, 255), width=3)
+    deep = (172, 172, 172, 255)  # (pressed in: darker than the wax around it)
+    if sigil == "sun":  # (the zealot's: a sun and its rays)
+        d.ellipse([39, 39, 57, 57], fill=deep)
+        for a in np.linspace(0, math.tau, 12, endpoint=False):
+            d.line([(48 + math.cos(a) * 12, 48 + math.sin(a) * 12), (48 + math.cos(a) * 21, 48 + math.sin(a) * 21)],
+                   fill=deep, width=3)
+    elif sigil == "key":  # (the schemer's: a key)
+        d.ellipse([30, 38, 46, 54], outline=deep, width=4)
+        d.line([(46, 46), (68, 46)], fill=deep, width=4)
+        d.line([(62, 46), (62, 56)], fill=deep, width=3)
+        d.line([(67, 46), (67, 54)], fill=deep, width=3)
+    elif sigil == "skull":  # (the cruel one's: a skull)
+        d.ellipse([34, 30, 62, 56], fill=deep)
+        d.rectangle([40, 52, 56, 64], fill=deep)
+        for ex in (41, 50):
+            d.ellipse([ex, 40, ex + 7, 47], fill=(236, 236, 236, 255))
+        for tx in (43, 48, 53):
+            d.line([(tx, 58), (tx, 64)], fill=(236, 236, 236, 255), width=2)
+    elif sigil == "crown":  # (the proud one's: a crown)
+        d.polygon([(32, 60), (32, 38), (40, 50), (48, 34), (56, 50), (64, 38), (64, 60)], fill=deep)
+        d.rectangle([32, 58, 64, 64], fill=(150, 150, 150, 255))
+    elif sigil == "tear":  # (the grieving one's: a falling tear)
+        d.polygon([(48, 28), (40, 48), (56, 48)], fill=deep)
+        d.ellipse([39, 40, 57, 60], fill=deep)
+        d.line([(36, 66), (60, 66)], fill=deep, width=3)
+    else:
+        d.line([(36, 60), (48, 32), (60, 60)], fill=(190, 190, 190, 255), width=4)
+        d.line([(40, 52), (56, 52)], fill=(190, 190, 190, 255), width=3)
     return im.filter(ImageFilter.GaussianBlur(0.6))
 
 
@@ -118,7 +146,9 @@ class LetterScreen(Screen):
                          shadow=False))
         s = size * 3.2
         r, g, b = rec.get("seal", (150, 40, 32))
-        canvas.over(Image("wax_seal", _seal, (px + margin * 0.6, py + ph - s - margin * 0.4, s, s), rgba=(r, g, b, 255)))
+        sigil = rec.get("sigil", "mark")
+        canvas.over(Image(("wax_seal", sigil), lambda: _seal(sigil), (px + margin * 0.6, py + ph - s - margin * 0.4, s, s),
+                          rgba=(r, g, b, 255)))
         hint = "Any key: put it away"
         canvas.over(Text(W / 2, py + ph + size * 0.9, hint, "prose", int(size * 0.8), (200, 190, 170, 220),
                          anchor="mt"))

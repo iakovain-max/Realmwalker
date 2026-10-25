@@ -4,7 +4,7 @@
     "cunning": {
       "speaks": true,
       "moves": {"outlaw_omen": 3, "outlaw_warning": 3, "outlaw_test": 2, "rumour": 2, "spy": 3, "token_letter": 2, "gift": 2, "visit": 1, "strike": 2, "hunt": 1, "reprisal": 1, "bargain": 3, "wedge": 3, "frame": 3, "invitation": 1},
-      "hand": {"face": "fine", "ink": [30, 44, 34], "seal": [44, 76, 52]},
+      "hand": {"face": "fine", "ink": [30, 44, 34], "seal": [44, 76, 52], "sigil": "key"},
       "first_words": [
         "\"I wondered when you'd come,\" says {villain}, and does not get up. \"Sit. We can do this the clever way, or the other way.\"",
         "\"Do come in,\" says {villain}, pouring two cups. \"Drink. We have been expecting you since the ford, and there is no hurry.\"",
@@ -30,7 +30,7 @@
     "cruel": {
       "speaks": true,
       "moves": {"outlaw_omen": 2, "outlaw_warning": 3, "outlaw_test": 3, "spy": 1, "sign": 1, "token_letter": 1, "nightmare": 1, "reprisal": 3, "strike": 3, "hunt": 2, "kidnap": 3, "reprisal_fire": 2, "frame": 1},
-      "hand": {"face": "dark", "ink": [74, 14, 12], "seal": [128, 24, 20]},
+      "hand": {"face": "dark", "ink": [74, 14, 12], "seal": [128, 24, 20], "sigil": "skull"},
       "first_words": [
         "\"You've cost me men,\" says {villain}. \"I'm going to take it out of you slowly.\"",
         "\"I hear you hurt my people,\" says {villain}. \"I will hurt yours. I have not yet decided which of them first.\"",

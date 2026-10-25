@@ -60,6 +60,10 @@ def offer(game, beat_id: str, *, adv: str | None = None, step: str | None = None
     d["pending"] = rec
     seen = d.setdefault("seen", {})
     seen[beat_id] = int(game.moment.total_days)
+    from realmwalker.game.story import villain
+
+    if beat_id in villain.SEEN_IN and adventure(game, rec) is not None:  # (it showed itself: E.7)
+        villain.seen(game, adventure(game, rec))
     return rec
 
 
@@ -81,7 +85,11 @@ def pages(game, rec: dict) -> list[str]:
     rng = rng_for(game, rec)
     tables = game.tables.adventures.get("words", {})
     words = words_for(game, rec)
-    return [tidy(textgen.fill(rng.choice(page), rng, tables, words)) for page in beat["text"]]
+    text = list(beat["text"])
+    own = (beat.get("tempers") or {}).get(_villain(game, rec).get("temper") or "")
+    if own:  # (a temper's own first page: a zealot's letter does not read like a cruel man's, E.7)
+        text[0] = own
+    return [tidy(textgen.fill(rng.choice(page), rng, tables, words)) for page in text]
 
 
 def title(game, rec: dict) -> str:
@@ -485,7 +493,8 @@ def _letter(game, rec, key: str, hand: str = "dark"):
         from realmwalker.game.story import villain
 
         own = villain.hand(game, adv)
-        lid = letters.write(game, sender=sender, lines=paragraphs, hand=own["hand"], seal=own["seal"], ink=own["ink"])
+        lid = letters.write(game, sender=sender, lines=paragraphs, hand=own["hand"], seal=own["seal"], ink=own["ink"],
+                            sigil=own["sigil"])
     else:
         lid = letters.write(game, sender=sender, lines=paragraphs, hand=letters.hand_for(hand))
     letters.give(game, lid)
