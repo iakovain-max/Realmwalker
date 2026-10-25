@@ -102,10 +102,75 @@ def make_boss(battle, f, template: dict, tier: int) -> None:
     d["morale"] = "fanatic"  # (at its end it stands and fights: law 5, and the tale's own words)
     if (d.get("boss_phase") or {}).get("kind") not in ("escape", "breaks_off"):
         d["holds_ground"] = True  # (never off the field by running, turned or frightened: only its escape phase, E.6)
+    _might(d, template.get("might") or {})
     f.cdef = d
     if f.creature is not None:
         f.creature.uses.pop("legendary_resistance", None)
         f.creature.uses.pop("legendary_actions", None)
+
+
+def _might(d: dict, might: dict) -> None:
+    """The template's might at its tier (E.6): harder to hit (`ac`), surer with its attacks and harder to resist
+    (`hit`: their bonus and save DCs), each blow heavier (`damage`: a die more of the blow's own type), more blows
+    (`multiattack`). The creature stands for the tier's foe, not for what it was in the book."""
+    if not might:
+        return
+    d["ac"] = int(d["ac"]) + int(might.get("ac", 0))
+    hit, more = int(might.get("hit", 0)), might.get("damage")
+    attacks = []
+    for a in d.get("attacks", ()):
+        a = dict(a)
+        if a.get("kind") in ("melee", "ranged") and not a.get("single_save"):
+            a["bonus"] = int(a.get("bonus", 0)) + hit
+            if more and a.get("damage"):
+                a["extra"] = list(a.get("extra") or ()) + [{"damage": more, "type": a.get("damage_type", "bludgeoning")}]
+        if a.get("dc"):
+            a["dc"] = int(a["dc"]) + hit
+        attacks.append(a)
+    d["attacks"] = attacks
+    if might.get("multiattack"):
+        d["multiattack"] = max(1, int(d.get("multiattack", 1) or 1)) + int(might["multiattack"])
+
+
+def strength(tables) -> dict:
+    return tables.adventures.get("strength") or {}
+
+
+def strengthen(game, adv: dict, creatures: list, rng) -> None:
+    """Fairness rule 1 (§5.8): the finale's band is set by its threat's tier, never by the hero's level or the land.
+    Its guards for the tier (adventures.finale.json strength: by threat kind) join the boss's own band until the band
+    is worth `share` of the High budget of a party of four (or more, if the party is bigger) at the tier's target
+    level, `most` of them at the most. With no keys it is beyond High (the boss's template is not counted); its
+    keys thin it (minions), surprise it, bring allies."""
+    from realmwalker.rules import encounter
+    from realmwalker.rules.creatures import spawn
+
+    spec = strength(game.tables)
+    t = _story().threat_of(game, adv)
+    guards = [g for g in ((spec.get("guards") or {}).get(t["kind"] if t else "", {}).get(str(adv["tier"])) or ())
+              if g in game.tables.creatures]
+    if not spec or not guards or not creatures:
+        return
+    size = max(4, len([c for c in game.party if c.alive]))
+    goal = float(spec.get("share", 1.0)) * encounter.budget(game.tables, [int(adv["target_level"])] * size,
+                                                            str(spec.get("difficulty", "high")))
+    worth = encounter.xp_of(game.tables, [c.def_id for c in creatures])
+    uid = max(int(c.uid) for c in creatures) + 1
+    xp = {g: int(game.tables.creatures[g]["xp"]) for g in guards}
+    while len(creatures) < int(spec.get("most", 8)) and worth < goal:
+        fits = sorted((g for g in guards if worth + xp[g] <= goal), key=lambda g: -xp[g])[:2]  # (the strongest)
+        g = rng.choice(fits or [min(guards, key=xp.get)])
+        c = spawn(game.tables, g, rng.child(f"guard{uid}"), uid, now=game.world.time)
+        c.story = {"adv": adv["id"], "role": "minion"}
+        creatures.append(c)
+        worth += xp[g]
+        uid += 1
+
+
+def _story():
+    from realmwalker.game import story
+
+    return story
 
 
 def prepare(battle, game) -> list[str]:
@@ -288,8 +353,11 @@ def _less_lr(battle, game, adv, boss, n: str = "-1") -> str:
 def _minions(battle, game, adv, boss, percent: str = "-50") -> str:
     from realmwalker.rules.combat import FOE
 
-    others = [f for f in battle.side(FOE) if f is not boss and f.state == "fighting"]
-    gone = others[: int(len(others) * abs(int(percent)) / 100)]
+    others = [f for f in battle.side(FOE) if f is not boss and f.state == "fighting"
+              and (story_of(f.creature) or {}).get("role", "minion") == "minion"]  # (a lieutenant has its own key)
+    n = int(len(others) * abs(int(percent)) / 100)
+    others.sort(key=lambda f: (-int(f.cdef.get("xp", 0)), f.id))
+    gone = (others[0::2] + others[1::2])[:n]  # (every other one, strongest first: half of each kind, E.6)
     for f in gone:
         f.state = "fled"
     return f"<good>Fewer of them than there would have been: {len(gone)} not here.</>" if gone else ""

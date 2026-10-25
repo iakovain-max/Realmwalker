@@ -1561,6 +1561,10 @@ ADVENTURES = Obj({
     # (E.5) what a retreat from a finale costs (story/defeat.py), and who takes the beaten alive at its end
     "retreat": Obj({"attention": Int(min=0, max=5), "ally_lost": Float(min=0, max=1)}, optional=True),
     "defeat": Obj({"tempers": List(Str(max_len=30)), "lock": Int(min=0, max=30)}, optional=True),
+    # (E.6) fairness rule 1: the finale's band set by its tier (story/finale.strengthen): guards by threat kind and
+    # tier join the boss's band until it is worth `share` of a party's `difficulty` budget at the target level
+    "strength": Obj({"difficulty": Str(choices=["low", "moderate", "high"]), "share": Float(min=0, max=5),
+                     "most": Int(min=1, max=16), "guards": Map(Map(List(Str(max_len=40))))}, optional=True),
 })
 
 GREAT_ATTACK = Obj({
@@ -1575,6 +1579,10 @@ GREAT_ATTACK = Obj({
     "warn": word_list(3, 300),  # said as it is marked ({name})
     "go": word_list(3, 300),  # said as it falls ({name})
 }, optional=True)
+# (E.6) a boss template's might at its tier (story/finale._might): AC, its attacks' bonus and DCs, a die more on each
+# blow, more blows
+MIGHT = Obj({"ac": Int(min=0, max=10, optional=True), "hit": Int(min=0, max=10, optional=True),
+             "damage": Str(max_len=20, optional=True), "multiattack": Int(min=0, max=4, optional=True)}, optional=True)
 BOSS = Obj({
     "tiers": TIER_BAND,
     "roles": List(Str(max_len=30), min_items=1),  # what it makes a boss of (a beast, a dead king, a captain...)
@@ -1592,7 +1600,9 @@ BOSS = Obj({
     # damage by tier), and its numbers at the tiers above (any of the keys here but `tiers`, `roles`, `by_tier`)
     "entrance": List(Str(max_len=300), min_items=3, optional=True),
     "great": GREAT_ATTACK,
+    "might": MIGHT,
     "by_tier": Map(Obj({"hp": Float(min=1, max=10, optional=True), "resistances": Int(min=0, max=5, optional=True),
+                        "might": MIGHT,
                         "actions": Int(min=0, max=5, optional=True),
                         "menu": List(Str(max_len=30), min_items=1, optional=True),
                         "great": GREAT_ATTACK, "entrance": List(Str(max_len=300), min_items=3, optional=True)}), optional=True),

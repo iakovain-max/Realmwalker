@@ -2,6 +2,11 @@
   "_comment": "The finale's retreat and defeat (Expansion 6 E.5, game/story/defeat.py): what a retreat from the last fight costs, the tempers of villains who take the beaten alive and the lock on the chest their things go into, and the words.",
   "retreat": {"attention": 1, "ally_lost": 0.34},
   "defeat": {"tempers": ["cruel", "proud", "cunning"], "lock": 12},
+  "strength": {"difficulty": "high", "share": 1.0, "most": 8, "guards": {
+    "risen": {"1": ["skeleton", "zombie", "ghoul"], "2": ["zombie", "skeleton", "wight"], "3": ["ghoul", "wight", "mummy"],
+              "4": ["wight", "mummy"]},
+    "outlaw": {"1": ["bandit", "bandit_archer", "thug"], "2": ["thug", "berserker", "bandit_captain"],
+               "3": ["berserker", "bandit_captain"], "4": ["berserker", "assassin"]}}},
   "words": {
     "rival_comes": [
       "With a shout, {who} come running onto the field to stand with you!",

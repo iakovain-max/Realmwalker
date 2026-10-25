@@ -119,7 +119,8 @@ def _local(game, lm, party, creatures, env, rng, *, actor, near, situation, numb
     field.cut_from = lm.key  # (its dead and blood are written back there: game/remains.py)
     if dressed is not None:
         field.lights = list(field.lights) + [tuple(x) for x in dressed["lights"] if tuple(x) not in field.lights]
-        field.__dict__["arena"] = dressed  # (the finale's arena: game/story/arenas.py)
+        if dressed["id"]:
+            field.__dict__["arena"] = dressed  # (the finale's arena: game/story/arenas.py)
         if dressed["fires"]:
             field.__dict__["fires"] = sorted(dressed["fires"])
             field.__dict__["village"] = bool(dressed.get("burning"))
@@ -309,7 +310,13 @@ def _finale_arena(game, lm, actor, terrain, lead, foe_at, rng) -> dict | None:
     out = arenas.lay(game, adv, lm.meta.get("style", ""), terrain, lead, foe_at, rng.numpy("arena-dress"))
     if out is not None:
         _connect(terrain, game.tables, lead, foe_at)
+    out = out or {"id": "", "lights": [], "fires": set(), "marks": {}}
+    mid = ((lead[0] + foe_at[0]) // 2, (lead[1] + foe_at[1]) // 2)
+    out["lights"] = list(out["lights"]) + [(foe_at[0], foe_at[1], FINALE_LIGHT[0]), (mid[0], mid[1], FINALE_LIGHT[1])]
     return out
+
+
+FINALE_LIGHT = (4, 3)  # (squares) a finale is never fought blind: its heart is lit, and the way to it (E.6, law 5)
 
 
 def _robbers(game, creatures) -> bool:

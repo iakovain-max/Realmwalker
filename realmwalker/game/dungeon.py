@@ -795,6 +795,10 @@ def populate(game, lm) -> None:
             story.tag_band(creatures, story_band["adv"], story_band["name"], story_band.get("role", "villain"),
                            story_band.get("step"))
             adv = story.adventures(game.world).get(story_band["adv"])
+            if not story_band.get("role") and adv is not None:
+                from realmwalker.game.story import finale
+
+                finale.strengthen(game, adv, creatures, rng.child("guards"))  # (set by its tier: E.6)
             if story_band.get("role") and adv is not None:
                 from realmwalker.game.story import lieutenants
 
