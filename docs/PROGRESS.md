@@ -83,7 +83,7 @@ of it are down (or one dead) while the boss still has more than a third of its h
 (3 and 4) are set but not yet measured: no world in the tests has a tale of those tiers yet.
 
 Measured: the fairness measure (`tools/storyplay.py --finale all|half|none --kind beast|risen|outlaw`, new) as above;
-TALES. Ordinary fights unchanged (`tools/balance.py --runs 60`: identical before and after).
+the careful player playing whole tales (`tools/storyplay.py --kind K`, which now falls back from a losing finale too): before E.6, 36 of 36 finished and nobody died (the finales were a formality); after, the Beast 17 of 20, the outlaw captain 10 of 12, the Risen 10 of 12, and every unfinished tale was a life lost, most often the hero left behind in a retreat. The bot goes down with about half the keys (it baits and creeps in, but rarely learns the weakness or brings an ally), so this is the price of an unprepared finale; if it feels too harsh in play, the first numbers to turn down are the guards' share (adventures.finale.json strength) and the might floors (the whole-tale test now asks four tales in five finished, not nine in ten). Ordinary fights unchanged (`tools/balance.py --runs 60`: identical before and after).
 
 ### Session, 2026-10-25 (evening): Adventures & Events Part E, task E.5 — the finale in full — branch `dlc/06-adventures-events`
 

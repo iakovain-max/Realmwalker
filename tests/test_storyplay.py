@@ -1,7 +1,9 @@
 """Storyplay (Expansion 6 A.11, docs/ADVENTURES.md §9): a careful party plays the Beast through on real roads, from
 its hook to its epilogue; Part A's measure is that it finishes in at least 90% of 20 runs. Part D's (D.5): the Risen
 and the Outlaw Lord the same, and a new life's opening begins a tale (`tools/storyplay.py --kind risen|outlaw`,
-`--openings`, 20 runs each; here six of each, the slow suite's share)."""
+`--openings`, 20 runs each; here six of each, the slow suite's share). Since E.6 the finale is a real fight set by
+the tier (the bot goes down with about half the keys, and falls back when it is going badly): a life can be lost there,
+so the bars are four in five (the fairness measure is tests/test_story_balance.py)."""
 
 import pytest
 
@@ -14,7 +16,8 @@ pytestmark = [pytest.mark.slow, pytest.mark.story]
 def test_the_beast_is_finished_nine_times_in_ten(data):
     runs = storyplay.play(20, tables=Tables(data))
     done = [r for r in runs if r.finished]
-    assert len(done) >= 18, "\n".join(f"{r.world} {r.threat}: {r.why or r.ending}" for r in runs if not r.finished)
+    assert len(done) >= 16, "\n".join(f"{r.world} {r.threat}: {r.why or r.ending}" for r in runs if not r.finished)
+    assert all(r.why == "the party died" for r in runs if not r.finished), "a tale is never stuck"
     assert all(r.ending == "slain" for r in done)
     assert sum(1 for r in done if r.fights >= 2) >= len(done) // 2, "most hunts reach the den and its finale"
 
@@ -23,7 +26,8 @@ def test_the_beast_is_finished_nine_times_in_ten(data):
 def test_part_ds_tales_are_finished(data, kind):
     runs = storyplay.play(6, tables=Tables(data), kind=kind)
     done = [r for r in runs if r.finished]
-    assert len(done) >= 5, "\n".join(f"{r.world} {r.threat}: {r.why or r.ending}" for r in runs if not r.finished)
+    assert len(done) >= 4, "\n".join(f"{r.world} {r.threat}: {r.why or r.ending}" for r in runs if not r.finished)
+    assert all(r.why == "the party died" for r in runs if not r.finished), "a tale is never stuck"
     assert all(r.ending not in ("doom", "abandoned") for r in done), [r.ending for r in done]
     assert all(r.fights >= 2 for r in done), "every tale is fought for"
 

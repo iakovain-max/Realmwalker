@@ -590,7 +590,7 @@ its phase is an escape/breaks_off; no_escape sets it. A finale field is lit (are
 halfway; the arena record only when an arena was laid). The Auto throws damaging flasks (tactics._throw_flask, THROW_BAR
 1.3 times the blows' worth). Data changed: the beast blueprint's weakness key + no_phase_two, the risen's name key
 frightened(2). Measures (48 lives): beast all 88% / none 38%, outlaw 88/38, risen 98/29; tiers 3-4 not measured (no
-test world has them). TALES. balance.py unchanged.
+test world has them). Whole tales (storyplay's Player now falls back at a finale through Finalist.battle; play_tale checks game.over before 'stuck'): before E.6 36/36 finished, 0 died; after beast 17/20, outlaw 10/12, risen 10/12, every miss a death (the bot holds about half the keys). test_storyplay's bars lowered to four in five (beast 16/20, D's tales 4/6), every miss a death and never a stuck tale. balance.py unchanged. Tests: tests/test_finale_strength.py (6), tests/test_story_balance.py (6, slow); test_tactics_coverage's boss test meets the boss hurt on odd seeds (the might floors put half its hit points beyond the arena party).
 E.5 (2026-10-25, realmwalker-a; one session for both halves): arenas `game/story/arenas.py` (ARENAS lay on the terrain
 before the Field is made: game/arena._finale_arena for a dungeon finale's band, via story.finale_band; CHANGES run at
 the second phase as a battle `phase_hooks` hook from bosses.after_damage; choice once in adv["finale"]["arena"] by the

@@ -335,7 +335,7 @@ def problems(game, adv: dict) -> list[str]:
     words = wordsmod.for_adventure(game, adv)
     words.setdefault("hook", adv["words"]["hook"])
     words.setdefault("goal", adv["chapters"][0]["goal"])
-    for k in ("who", "place", "night", "to"):  # (what Part D's steps give their own lines: story/deeds.say)
+    for k in ("who", "place", "night", "to", "n"):  # (what Part D's steps and the finale give their own lines)
         words.setdefault(k, k)
     tables = tb.adventures.get("words", {})
     rng = w.rng.child("storybook")

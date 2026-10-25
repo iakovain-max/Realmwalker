@@ -153,6 +153,11 @@ class Player:
         g = self.game
         b = g.battle
         enc = g.encounter
+        if b.__dict__.get("finale_of") and not isinstance(self, Finalist):  # (a careful party falls back there: E.6)
+            Finalist.battle(self)
+            if g.over is None:
+                self.recover()
+            return
         for f in b.side(PARTY):
             f.auto = True
         play_out(b, max_steps=6000)
@@ -1171,6 +1176,9 @@ def play_tale(p: Player, adv: dict, start_day: float, start_levels: int) -> Run:
         if not p.run.log or not p.run.log[-1].endswith(f"step {st['id']} ({st['kind']})"):
             p.note(f"step {st['id']} ({st['kind']})")
         p.act(adv, st)
+        if game.over is not None:
+            run.why = "the party died"
+            break
         if (st["id"], st["state"]) == before[:2] and game.world.time == before[2] and adv["state"] == "active":
             run.why = run.why or f"stuck at {st['id']} ({st['kind']})"
             break
@@ -1241,7 +1249,7 @@ class Finalist(Player):
         for _ in range(6000):
             if b.outcome is not None:
                 break
-            if not back and self.retreats and boss is not None and boss.active:
+            if not back and getattr(self, "retreats", True) and boss is not None and boss.active:
                 down = sum(1 for f in ours if f.state in ("down", "dead"))
                 dead = any(f.state == "dead" for f in ours)
                 if (down >= RETREAT_DOWN or dead) and boss.hp > RETREAT_BOSS * boss.max_hp:
