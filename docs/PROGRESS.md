@@ -46,6 +46,34 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-10-26 (small hours): Adventures & Events Part F, task F.2 — rivals — branch `dlc/06-adventures-events`
+
+- **Someone else wants it too.** About half of all tales now have a rival: a hero of the land with companions (a
+  living hero of the world's history, when there is one), a band of deserters, or a lord's son or daughter with paid
+  swords. You meet them a day or so into the tale, at an inn or at the next fire: drink with them, warn them off, or
+  say little and read them (you then learn when they will get there).
+- **They are racing you.** From the meeting their own clock runs, a week or two. If the tale has a thing to fetch
+  (the Risen's anchor) and you are slower, they get there first: the chest is forced and empty, and they are
+  drinking on it at the next inn. Pay their price, ask for it as a friend, take it from them, or let it go (that
+  part of the tale is lost; the rest goes on). If the prize is the villain's head, they go into its hall ahead of
+  you, and do not come out: you find them there, on the first level you come down to, their bones by the way in.
+  It is hurt from that fight, and the finale shows it.
+- **How they stand with you (from enemy to friend) decides how they show up.** A friend offers a truce: when you
+  face the villain, they come over the hill on the second round with their band. Neutral, they race you (offer a
+  truce, cut their girths by night, or ride your own road). Hostile, they rob you at the inn, and once the tale is
+  deep they sell your road to the villain: it knows you are coming, and you will not catch it unawares. An enemy
+  ambushes your camp at night (fight, talk them down, or throw them a purse). Under a truce, they may send for help
+  when they are in over their heads: ride to them and fight its servants beside them (and they owe you their life),
+  or refuse, and they are overrun.
+- The Journal shows them under "Rivals"; the epilogue tells what became of them.
+- Try it: take a tale, spend a night at an inn or camp a day after, and see who sits down with you.
+
+Decisions (Anton may want to change): a tale has a rival half the time or so (the Beast's six in ten); you meet them
+a day in; their race takes 7 to 13 days; something of theirs happens at most every three days, on half the nights;
+their price for the prize is 60, 150, 400 or 1000 gold by the tale's tier; a theft takes a quarter of your coin (at
+most that price); a band you refused holds out two days; one who died in its hall took a fifth of its hit points with
+them. The rival is not a townsperson you can visit: they ride, and you meet them in beats.
+
 ### Session, 2026-10-25 (night, later): Adventures & Events Part F, task F.1 — allies with stakes — branch `dlc/06-adventures-events`
 
 - **The ally comes with you.** When you win over a tale's ally (the hunter who knows what the Beast fears, the old

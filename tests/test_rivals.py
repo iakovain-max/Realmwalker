@@ -101,6 +101,14 @@ def test_every_rival_beat_reads_whole(made, tables, monkeypatch):
             assert _no_slots(text), (bid, text)
 
 
+def q_item(game, st):
+    return quests.by_id(game, st["quest"])["target"]["item"]
+
+
+def r_words(game, adv):
+    return rivals._words(game, adv)
+
+
 def _fetch_race(made, tables, monkeypatch):
     """A risen tale in its second chapter, its anchor's quest out, and a rival who got there first."""
     game, adv, _ = _tale(made, tables, "risen")
@@ -109,6 +117,7 @@ def _fetch_race(made, tables, monkeypatch):
     _meet(game, adv, r, 2)
     st = _step(adv, "fetch", 1)
     assert r["prize"] == st["id"], "the thing to fetch is the prize"
+    assert q_item(game, st) in r_words(game, adv)["prize"], "the meeting named it"
     r["due"] = int(game.moment.total_days)
     beats.director(game.world)["day"] = -1
     story.daily(game)
@@ -143,6 +152,15 @@ def test_they_reach_the_thing_first_and_you_take_it(made, tables, monkeypatch):
     _battle(game)
     assert r["state"] in ("slain", "gone") and not r["holds"]
     assert any(st["target"]["tag"] in it.tags for it in game.leader.inventory), "taken from them"
+
+
+def test_the_prize_is_offered_again_until_it_is_settled(made, tables, monkeypatch):
+    game, adv, r, st, q = _fetch_race(made, tables, monkeypatch)
+    _play(game, 2)  # (you go for it, and think better of it: the fight is not fought)
+    game.encounter = None
+    assert r["state"] == "ahead" and r["holds"]
+    r["last"] = int(game.moment.total_days) - 99
+    assert rivals.on_night(game, "camp") and beats.pending(game)["beat"] == "rival_prize"
 
 
 def test_they_reach_the_thing_first_and_you_let_it_go(made, tables, monkeypatch):
@@ -235,12 +253,14 @@ def test_the_plea_refused_leaves_them_overrun(made, tables, monkeypatch):
     game, adv, _ = _tale(made, tables, "risen")
     r = _with_rival(game, adv, monkeypatch, kind="noble", relation=1)
     r.update(state="truce", met=0)
+    adv["keys"].append("rival")
     beats.OPS["rival"](game, {"adv": adv["id"]}, "plea_refused")
     assert r["state"] == "pinned"
     r["pinned_until"] = int(game.moment.total_days) - 1
     beats.director(game.world)["day"] = -1
     story.daily(game)
     assert r["state"] == "dead" and r["fate"] == "overrun"
+    assert "rival" not in adv["keys"], "a truce with the dead holds nothing"
 
 
 def test_a_hostile_rival_robs_you_and_an_enemy_ambushes_you(made, tables, monkeypatch):
@@ -254,7 +274,8 @@ def test_a_hostile_rival_robs_you_and_an_enemy_ambushes_you(made, tables, monkey
     _play(game, 1)
     assert game.leader.money < 10000 and r["relation"] == -2
     r["last"] = -99
-    assert rivals.on_night(game, "camp")
+    assert not rivals.on_night(game, "camp"), "an ambush comes in the dark, not at dawn"
+    assert rivals.on_night(game, "camp", morning=False)
     assert beats.pending(game)["beat"] == "rival_ambush"
     _play(game, 0)
     assert game.encounter is not None and all(c.story["role"] == "rival" for c in game.encounter.creatures)

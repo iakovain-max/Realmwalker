@@ -38,7 +38,7 @@ BEATS = ("rival_meeting", "rival_race", "rival_truce", "rival_theft", "rival_sol
          "rival_prize", "rival_found_dead")
 THEFT = 0.25  # of the party's coin a theft takes (at most the tier's price)
 PLEA_DAYS = 2  # how long they hold out once pinned, waiting for you
-ARRIVE_ROUND = 2  # the round of the finale a rival under truce comes on
+ARRIVE_ROUND = 3  # the round of the finale a rival under truce comes on
 
 
 def spec(game) -> dict:
@@ -101,11 +101,16 @@ def decide(game, adv: dict) -> None:
     rec["band_words"] = textgen.fill(rng.choice(ks["band_words"]), rng, tables, _words(game, adv))
 
 
+def riding(world) -> set[int]:
+    """The hero figures of the history riding as a tale's rival (people.heroes_at_the_inn leaves them out)."""
+    advs = world.politics.get("adventures", {}).values()
+    return {int(a["rival"]["figure"]) for a in advs if a.get("rival") and a["rival"].get("figure") is not None}
+
+
 def _hero_figure(game):
     """A living hero of the history, free to ride (not at an inn as a townsperson, not another tale's rival)."""
     w = game.world
-    taken = {int((a.get("rival") or {}).get("figure")) for a in _story().adventures(w).values()
-             if (a.get("rival") or {}).get("figure") is not None}
+    taken = riding(w)
     pool = [f for f in w.figures.values() if f.alive and f.kind == "person" and f.job in ("adventurer", "hero")
             and f.id not in taken and (f.npc < 0 or f.npc not in w.npcs or not w.npcs[f.npc].alive)]
     return max(pool, key=lambda f: (f.fame, -f.id)) if pool else None
@@ -146,7 +151,7 @@ def prize_name(game, adv: dict) -> str:
     from realmwalker.game.story import words as wordsmod
 
     w = wordsmod.for_adventure(game, adv)
-    return f"the price on {w.get('villain_short', 'its')}'s head" if "villain_short" in w else "the prize"
+    return f"{w['villain_short']}'s head" if "villain_short" in w else "the prize"
 
 
 def price(game, adv: dict) -> int:
@@ -156,7 +161,7 @@ def price(game, adv: dict) -> int:
 
 def _prize_step(adv: dict) -> dict | None:
     rec = adv.get("rival") or {}
-    sid = rec.get("prize")
+    sid = rec.get("prize") or rec.get("will")
     if not sid or sid == "finale":
         return None
     return next((s for ch in adv["chapters"] for s in ch["steps"] if s["id"] == sid), None)
@@ -199,6 +204,10 @@ def daily(game) -> None:
         rec = live(adv)
         if rec is None:
             continue
+        if rec.get("helping") and game.encounter is None and getattr(game, "battle", None) is None:
+            rec["helping"] = False  # (the plea was never fought out: nobody came)
+            _overrun(game, adv, rec)
+            continue
         if rec["state"] == "pinned" and rec.get("pinned_until") is not None and today > int(rec["pinned_until"]):
             _overrun(game, adv, rec)
             continue
@@ -215,7 +224,7 @@ def daily(game) -> None:
 def _race(game, adv: dict, rec: dict, prize: str | None = None) -> None:
     lo, hi = spec(game)["clock"]["race_days"]
     rng = game.world.rng.child(f"rival-race/{adv['id']}/{_today(game)}")
-    rec["prize"] = prize or _pick_prize(game, adv)
+    rec["prize"] = prize or rec.pop("will", None) or _pick_prize(game, adv)
     rec["due"] = _today(game) + rng.randint(int(lo), int(hi))
 
 
@@ -245,8 +254,15 @@ def _arrives(game, adv: dict, rec: dict) -> None:
              "story")
 
 
+def _drop_key(adv: dict) -> None:
+    """A truce with the dead holds nothing: the key "rival" goes with them."""
+    if "rival" in adv["keys"]:
+        adv["keys"].remove("rival")
+
+
 def _overrun(game, adv: dict, rec: dict) -> None:
     rec["state"], rec["pinned_until"], rec["fate"] = "dead", None, "overrun"
+    _drop_key(adv)
     _figure_dies(game, adv, rec, "overrun on the road")
     _story().journal(adv, esc(_line(game, adv, "{rival_band} were overrun, waiting for you.")), _today(game))
     game.say(f"<warn>{esc(_line(game, adv, 'Word comes: {rival_band} were overrun where they stood. Nobody came.'))}</>",
@@ -261,8 +277,9 @@ def _figure_dies(game, adv: dict, rec: dict, cause: str) -> None:
 
 
 # ---------------------------------------------------------------------------- how they show up
-def on_night(game, where: str) -> bool:
-    """A night at camp or at the inn (story.on_night): the rival's next beat, if one is due. True when one waits."""
+def on_night(game, where: str, *, morning: bool = True) -> bool:
+    """A night at camp or at the inn (story.on_night): the rival's next beat, if one is due. True when one waits.
+    Only the ambush comes in the dark and breaks the rest; the rest wait for the morning (`morning`)."""
     from realmwalker.game.story import beats
 
     sp = spec(game)
@@ -275,11 +292,12 @@ def on_night(game, where: str) -> bool:
         if rec is None:
             continue
         if rec["state"] == "unmet":
-            if today - int(rec["made"]) >= int(clock["meet_after"]):
+            if morning and today - int(rec["made"]) >= int(clock["meet_after"]):
+                rec["will"] = _pick_prize(game, adv)  # (what the meeting names; the race takes it up)
                 return _offer(game, adv, rec, "rival_meeting", where)
             continue
-        if rec["state"] == "ahead":
-            if "rival_prize" not in rec["seen"]:
+        if rec["state"] == "ahead":  # (offered again, every few days, until it is settled)
+            if morning and "rival_prize" not in rec["seen"] or today - int(rec["last"]) >= int(clock["every"]):
                 return _offer(game, adv, rec, "rival_prize", where)
             continue
         if today - int(rec["last"]) < int(clock["every"]):
@@ -287,7 +305,7 @@ def on_night(game, where: str) -> bool:
         if not game.world.rng.child(f"rival-night/{adv['id']}/{today}").chance(float(clock["event_chance"])):
             continue
         beat = _due_beat(game, adv, rec, where)
-        if beat is not None:
+        if beat is not None and (beat == "rival_ambush") != morning:
             return _offer(game, adv, rec, beat, where)
     return False
 
@@ -298,18 +316,18 @@ def _due_beat(game, adv: dict, rec: dict, where: str) -> str | None:
 
     later = int(adv["chapter"]) >= 1 and not _in_finale(adv)
     seen, rel = rec["seen"], int(rec["relation"])
-    if rec["state"] == "truce" or rel >= 2:
+    if rec["state"] == "truce":
         if later and "rival_plea" not in seen and beats._minions(game, {"adv": adv["id"]}) is not None:
             return "rival_plea"
         return None
     if rec["state"] != "racing":
         return None
-    if rel >= 1:
-        return "rival_truce" if "rival_truce" not in seen else None
+    if rel >= 1:  # (they come to your fire to offer it)
+        return "rival_truce" if "rival_truce" not in seen and where == "camp" else None
     if rel == 0:
         return "rival_race" if "rival_race" not in seen else None
-    if later and not rec["sold"] and "rival_sold" not in seen and _villain_alive(game, adv):
-        return "rival_sold"
+    if later and not rec["sold"] and "rival_sold" not in seen and _villain_alive(game, adv) and where == "inn":
+        return "rival_sold"  # (heard in the common room)
     if rel <= -2 and where == "camp" and "rival_ambush" not in seen:
         return "rival_ambush"
     if where == "inn" and "rival_theft" not in seen and _coin(game) > 0:
@@ -417,14 +435,13 @@ def _rival_op(game, rec, what: str, n: int = 0):
         story.journal(adv, esc(_line(game, adv, "You met {rival_full}, who is after {prize} too.")), today)
     elif what == "relation":
         _relate(r, n)
-        if r["state"] == "racing" and int(r["relation"]) >= 2:
-            out += _rival_op(game, rec, "truce")
     elif what == "slow" and r.get("due") is not None:
         r["due"] = int(r["due"]) + int(n)
     elif what == "read" and r.get("due") is not None:
         from realmwalker.game.quests import when_text
 
-        out.append(f"<good>{esc(_line(game, adv, 'They will be at it'))} {esc(when_text(game, int(r['due'])))}.</>")
+        out.append(f"<good>{esc(_line(game, adv, '{rival} means to be at {prize}'))} "
+                   f"{esc(when_text(game, int(r['due'])))}.</>")
     elif what == "truce":
         r["state"], r["due"] = "truce", None
         r["relation"] = max(1, int(r["relation"]))
@@ -464,6 +481,12 @@ def _rival_op(game, rec, what: str, n: int = 0):
         r["pinned_until"] = today + PLEA_DAYS
         _relate(r, -1)
     elif what in ("buy", "give"):
+        from realmwalker.game import quests
+
+        q = _prize_quest(game, adv)
+        if q is None or q["done"] or q.get("state") not in quests.LIVE:
+            r["state"], r["holds"], r["fate"] = "gone", False, "prize"  # (too late for it: they keep it)
+            return [f"<warn>{esc(_line(game, adv, 'It is no use to you now. {rival} keeps it.'))}</>"]
         if what == "buy":
             from realmwalker.game.law import take_money
 
@@ -669,6 +692,7 @@ def on_battle(game, result) -> None:
             r["lost"] = int(r.get("lost", 0)) + (how == "dead")
         elif how == "dead":
             r["state"], r["fate"] = "slain", "slain"
+            _drop_key(adv)
             _figure_dies(game, adv, r, f"slain by {game.leader.name}")
     for aid in seen:
         adv = advs[aid]
@@ -688,13 +712,15 @@ def on_battle(game, result) -> None:
         if f.state == "dead":
             if is_leader and r["state"] in LIVE:
                 r["state"] = "dead"
-                r["fate"] = "fought" if r.get("fought") else "overrun"
+                r["fate"] = "fought" if r.get("fought") else "fell_beside"  # (at the finale, or at their plea)
+                _drop_key(adv)
                 _figure_dies(game, adv, r, "fell fighting beside " + game.leader.name)
             elif not is_leader:
                 r["lost"] = int(r.get("lost", 0)) + 1
+    stood = {aid for aid, _ in ((battle.__dict__.get("rival_allies") or {}) if battle is not None else {}).values()}
     for adv in _story().active(game):
         r = adv.get("rival")
-        if r and r.get("helping"):
+        if r and r.get("helping") and adv["id"] in stood:
             r["helping"] = False
             if r["state"] in LIVE and won:
                 _relate(r, 1)
@@ -718,11 +744,12 @@ def after_tale(game, adv: dict) -> None:
         r["fate"] = {"slain": "slain", "bought": "bought"}.get(r["state"]) or (
             "lair" if r.get("in_lair") else "overrun" if r["state"] == "dead" else
             ("fought" if r.get("fought") else "friend") if r["state"] == "truce" else
-            "prize" if r["state"] == "ahead" else "late" if adv["state"] == "won" and r["state"] == "racing" else
+            "prize" if r["state"] == "ahead" else "overrun" if r["state"] == "pinned" else "late" if adv["state"] == "won" and r["state"] == "racing" else
             "gone")
+    never_met = r.get("met") is None and not r.get("in_lair")
     if r["state"] in LIVE:
         r["state"] = "gone"
-    if r["state"] == "unmet" or r.get("met") is None and not r.get("in_lair"):
+    if never_met:
         return  # (never met: nothing to tell)
     rng = game.world.rng.child(f"rival-fate/{adv['id']}")
     text = _say(game, adv, sp["fates"].get(r["fate"], sp["fates"]["gone"]), rng)

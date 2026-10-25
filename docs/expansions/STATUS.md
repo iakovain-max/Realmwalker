@@ -569,12 +569,32 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part F, task F.2 (*rivals: bands with their own
-clocks - race, theft, ambush, truce, plea, sale to the villain, found dead (a scene in the lair) - and a relation from
--2 to 2*), on branch `dlc/06-adventures-events` (Part E is on main; F.1 on the branch). Read
-docs/expansions/06-adventures-events.md Part F, docs/ADVENTURES.md §5.6 (Rivals), game/story/stakes.py (F.1, the
-pattern: a record on the tale, beats by the fire, a fate in the epilogue), finale.py's `rival_arrives` key and
-`RIVAL_KIND` (a rival befriended already comes at a round), and the F.1 note below.
+Next session starts at: Expansion 6, **Adventures & Events**, Part F, task F.3 (*patrons' hidden motives (a betrayal
+at most once in a hero's life), traitors with at least two tells, innocents' fates; step kinds `deliver`,
+`infiltrate`*), on branch `dlc/06-adventures-events` (Part E is on main; F.1 and F.2 on the branch). Read
+docs/expansions/06-adventures-events.md Part F, docs/ADVENTURES.md §5.6 (Traitors) and §5.3 (patrons, innocents),
+game/story/stakes.py and rivals.py (the pattern: a record on the tale, beats by the fire, a fate in the epilogue),
+and the F.1 and F.2 notes below.
+F.2 (2026-10-26, realmwalker-a): `game/story/rivals.py` (docstring has it all). `adv["rival"]` (None: decided, no
+rival) {kind hero|deserters|noble, name, first, sex, figure (a living hero figure of the history, kind hero), child,
+who, band_words, relation -2..2, state unmet|racing|ahead|truce|pinned|dead|slain|gone|bought, made, met, due, prize
+(a fetch step id whose quest is out, else "finale"), last, seen [beats], lost (band killed), sold, holds, helping,
+pinned_until, in_lair, found, hurt, fought, fate}. Data adventures.rivals.json "rivals" (chance by blueprint, clock,
+kinds: leader/band by tier filling the party's "high" budget, most; fates), schema in ADVENTURES; beats.rivals.json
+(family "rival"). Hooks: story.daily -> `daily` (decide, race end `_arrives`: fetch -> quest target["rival"], chest
+empty in quests.on_chest, state ahead; finale -> dead in_lair, hurt = clock wounds; pinned past its day -> overrun),
+story.on_night -> `on_night` after stakes (meeting, prize, then by relation every `every` days at `event_chance`:
+plea (truce/2, chapter >= 1, villain has minions), truce (1), race (0), sold (<= -1, chapter >= 1), ambush (-2, camp),
+theft (inn)), story.on_descend -> `on_descend` (bones near the entry, beat rival_found_dead), story.on_battle ->
+`on_battle` (role "rival" bands: leader dead = slain; won = what they held is yours, gone; a plea's band beside you:
+won = truce; the harm count skips role "rival"), finale.prepare -> `to_battle` (a plea answered: their band as
+story_ally creatures) and, after the keys, `at_finale` (hurt, sold: env.surprised cleared, truce: they arrive on
+ARRIVE_ROUND), endings.finish -> `after_tale` (page "rival"). Op `rival` (met/relation/slow/read/truce/steal/
+recover/sold/fight/pay_off/plea_go/plea_refused/buy/give/let_go/search/honour); conditions `rival` (relation at
+least), `rival_price`. Key "rival" (words.KEY_WORDS). Journal "Rivals". Autoplay `_check_rivals`; story/check checks
+rivals.BEATS and the kinds' creatures. finale's old `rival_arrives` key and RIVAL_KIND stay for blueprints that name
+it (none do). No save format change in F.2 (F.5 bumps it). Not in F.2: the full forms' own rivals (F.5); a rival as a
+townsperson you can visit; a stolen thing already fetched (the theft takes coin).
 F.1 (2026-10-25, realmwalker-b): `game/story/stakes.py` (docstring has it all). The key "ally" (beats.OPS["key"], every
 road to it: recruit talk, the hunter's situation, story_learn's ally route) calls `stakes.join`: `adv["ally"]` {npc,
 stake, words {stake, confidence}, state joined|riding|taken|broke|home|fell|sworn, joined, told, crisis, held,

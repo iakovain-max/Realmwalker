@@ -596,9 +596,10 @@ def _hunter_situation(game, adv: dict, st: dict, town) -> None:
     situations.for_step(game, adv, st, npc, route="ally")
 
 
-def on_night(game, where: str) -> bool:
+def on_night(game, where: str, *, morning: bool = False) -> bool:
     """A night at camp or at the inn: the villain may answer you (a carcass at the camp's edge, a test by night), or a
-    choice that is due is put to you."""
+    choice that is due is put to you. `morning`: the rest is over (fight.rest's last call), and what would only have
+    broken it waits for now (a rival's beats but the ambush: F.2)."""
     from realmwalker.game.story import beats, villain
 
     if beats.pending(game) is not None:
@@ -615,7 +616,7 @@ def on_night(game, where: str) -> bool:
         return True
     from realmwalker.game.story import rivals
 
-    if rivals.on_night(game, where):  # (a rival met, racing, offering a truce, robbing or selling you: F.2)
+    if rivals.on_night(game, where, morning=morning):  # (a rival met, racing, offering a truce, robbing you: F.2)
         return True
     for adv in active(game):
         beat = villain.due_move(game, adv, where)

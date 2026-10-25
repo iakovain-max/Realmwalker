@@ -5,11 +5,11 @@
       "family": "rival", "picture": "here", "weight": 0,
       "title": ["Others on the same road", "{rival_full}", "Someone else wants it"],
       "text": [
-        ["There is a band at the next table, armed for more than the road, and their leader has been watching you since you sat down. At last {they} come{s} over with two cups. \"{rival_full},\" {they} say{s}. \"{rival_who}. And you're after {villain_short}. So am I.\"",
-         "Their fire is close enough to yours to share the dark. A figure comes over from it, hands open. \"{rival_full},\" {they} say{s}, sitting without asking. \"{rival_who}. We are going the same way, you and I, and for the same thing.\"",
-         "You are not the first to ask about {villain_short} here. \"Another lot came through,\" says the keeper, and points. {rival_full} raises a cup to you from across the room: {rival_who}, and not one to hide it."],
+        ["There is a band stopped for the night not far from you, armed for more than the road, and their leader has been watching you since you came. At last {they} come{s} over with a flask. \"{rival_full},\" {they} say{s}. \"{rival_who}. And you're after {villain_short}. So am I.\"",
+         "A figure comes over to you out of the dark, hands open, and sits without asking. \"{rival_full},\" {they} say{s}: {rival_who}. \"We are going the same way, you and I, and for the same thing.\"",
+         "You are not the first to ask about {villain_short} on this road. The others are close by tonight, and their leader comes to find you: {rival_full}, {rival_who}, and not one to hide it."],
         ["\"{prize},\" {rival} says. \"That's what I'm after. Whoever gets there first has it, and I mean it to be me. No hard feelings. Not yet.\"",
-         "\"There's only one {prize},\" {rival} says. \"I've a band to pay and a name to make, and I don't intend to come second. I thought you should hear that from me.\"",
+         "\"There's one prize in all this, and it's {prize},\" {rival} says. \"I've a band to pay and a name to make, and I don't intend to come second. I thought you should hear that from me.\"",
          "\"I'll be honest with you,\" {rival} says, \"because I'd want the same. I want {prize}. So do you. We'll see who's quicker.\""]
       ],
       "choices": [
@@ -190,7 +190,7 @@
       "text": [
         ["The news is all over the road: {rival_full} came out of the dark with {prize}, and is drinking on it at the next inn, and showing it to anyone who'll pay for a look.",
          "You find {rival_band} camped by the road with a fire and a cask, and {rival} sitting on a crate with {prize} on {their} knees. \"Too slow,\" {they} say{s}, almost kindly.",
-         "{rival} has it. {prize}. {They} came out of there a day before you, and {they} are not hiding it."],
+         "{rival} has it. {prize}. {They} came out of there a day before you, and {they} {are} not hiding it."],
         ["\"It's mine,\" {rival} says. \"But everything has a price.\"",
          "\"I know what it's worth to you,\" {rival} says. \"So let's talk about that.\"",
          "\"You want it,\" {rival} says. \"I can see it on your face. Make me an offer.\""]

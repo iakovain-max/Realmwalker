@@ -526,7 +526,10 @@ def heroes_at_the_inn(game, settlement, rng: RNG) -> None:
     slew a beast or found a lost treasure, with that story to tell (and a sword for hire)."""
     w = game.world
     home = f"S{settlement.id}"
-    heroes = [f for f in w.figures.values() if f.alive and f.kind == "person" and f.home == home
+    from realmwalker.game.story import rivals
+
+    away = rivals.riding(w)  # (riding as a tale's rival: Expansion 6 F.2)
+    heroes = [f for f in w.figures.values() if f.alive and f.kind == "person" and f.home == home and f.id not in away
               and f.job in ("adventurer", "hero") and (f.npc < 0 or f.npc not in w.npcs or not w.npcs[f.npc].alive)]
     if not heroes:
         return

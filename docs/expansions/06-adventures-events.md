@@ -363,7 +363,7 @@ ADVENTURES.md §5.4, §5.5, §5.8.
 ADVENTURES.md §5.3, §5.6, §5.7.
 - [x] F.1 Allies with stakes, join conditions (often a situation of their own) and three-beat arcs; the new bond
   `oath` (companions.json); the full party case (`Battle.add_ally`); their fates. Tests: `tests/test_cast.py`.
-- [ ] F.2 Rivals: bands with their own clocks (race, theft, ambush, truce, plea, sale to the villain, found dead – a
+- [x] F.2 Rivals: bands with their own clocks (race, theft, ambush, truce, plea, sale to the villain, found dead – a
   scene in the lair) and a relation from −2 to 2.
 - [ ] F.3 Patrons' hidden motives (a betrayal at most once in a hero's life), traitors with at least two tells,
   innocents' fates; step kinds `deliver`, `infiltrate`.

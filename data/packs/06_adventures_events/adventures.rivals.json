@@ -50,7 +50,7 @@
                   "{rival_full} died out there, alone with {their} band, waiting for you. Nobody blames you. Not aloud.",
                   "{rival_full} is dead, overrun where {they} had made {their} stand. You were asked, and you did not go."],
       "prize": ["{rival_full} rode off with {prize}, and sold it, or kept it, or lost it at dice; the tales disagree.",
-                "{rival_full} won that race. {They} still tell the story of it in the inns, and {they} tell it well.",
+                "{rival_full} won that race. {They} still tell{s} the story of it in the inns, and {they} tell{s} it well.",
                 "{prize} hangs on {rival_full}'s wall now, and {they} will show it to anyone who asks."],
       "bought": ["{rival_full} sold you {prize} and drank the price in {town}. {They} speak{s} well of you, which is something.",
                  "You paid {rival_full} for what you should have had for nothing. {They} took the silver with a grin, and {they} earned it."],
@@ -63,6 +63,9 @@
       "gone": ["{rival_full} gave it up in the end and rode away. You do not know where {they} went.",
                "{rival_full} was beaten to it, by you, and took it badly, and left.",
                "{rival_full} went home with nothing to show but the road. {They} will not forget your name."],
+      "fell_beside": ["{rival_full} sent for you when {they} needed you, and you came, and {they} died anyway, beside you, with {their} sword in {their} hand.",
+                      "{rival_full} fell in the fight you rode to, with you beside {them}. In {town} they say {they} died glad of the company.",
+                      "You came when {rival_full} called, and it was not enough. {They} died beside you, and you buried {them} where {they} fell."],
       "late": ["{rival_full} came to {home} the day after it was over, and found you had been first.",
                "{rival_full} rode in too late, saw what you had done, and rode out again without a word.",
                "{rival_full} heard how it ended from a stranger in an inn, and paid for the stranger's drink, and left."]
