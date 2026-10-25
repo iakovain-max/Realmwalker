@@ -100,6 +100,8 @@ def make_boss(battle, f, template: dict, tier: int) -> None:
     if template.get("great"):
         d["boss_great"] = great_at(template["great"], tier)
     d["morale"] = "fanatic"  # (at its end it stands and fights: law 5, and the tale's own words)
+    if (d.get("boss_phase") or {}).get("kind") not in ("escape", "breaks_off"):
+        d["holds_ground"] = True  # (never off the field by running, turned or frightened: only its escape phase, E.6)
     f.cdef = d
     if f.creature is not None:
         f.creature.uses.pop("legendary_resistance", None)
@@ -309,6 +311,7 @@ def _no_escape(battle, game, adv, boss, *args) -> str:
     if (d.get("boss_phase") or {}).get("kind") in ("escape", "breaks_off"):
         d.pop("boss_phase", None)
     d["morale"] = "fanatic"
+    d["holds_ground"] = True
     boss.cdef = d
     return ""
 

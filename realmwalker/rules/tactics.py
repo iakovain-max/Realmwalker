@@ -878,6 +878,9 @@ def flee(b: Battle, f: Fighter) -> None:
     if b.can_leave(f):
         b.do_leave(f)
         return
+    if (f.cdef or {}).get("holds_ground"):  # (a boss in its own den runs from what turned it, but never off the field)
+        _hold_back(b, f)
+        return
     if f.has_trait("nimble_escape") and f.bonus > 0:
         b.do_disengage(f, bonus=True)
     tree = b.move_tree(f, budget=600, risk=2.0)
@@ -893,6 +896,24 @@ def flee(b: Battle, f: Fighter) -> None:
     _walk_budget(b, f, path, tree)
     if b.current is f and f.active and b.can_leave(f):
         b.do_leave(f)
+
+
+def _hold_back(b: Battle, f: Fighter) -> None:
+    """Fleeing where it will not leave (a boss at its finale, E.6): a Dash to the square farthest from its foes it can
+    reach, then it cowers there."""
+    foes = [e for e in b.enemies_of(f) if e.standing]
+    if f.action > 0 and foes and f.speed > 0:
+        b.do_dash(f)
+        tree = b.move_tree(f, budget=f.move_left, risk=0.5)
+        occ = b.occupied_by_others(f)
+        spots = [sq for sq in tree if sq == (f.x, f.y) or grid.can_stop(sq, f.sq, occ)]
+        if spots:
+            far = lambda sq: min(grid.gap((sq[0], sq[1], f.sq), e.space) for e in foes)  # noqa: E731
+            goal = max(spots, key=lambda sq: (far(sq), -tree[sq].cost))
+            if goal != (f.x, f.y) and far(goal) > far((f.x, f.y)):
+                _walk_budget(b, f, grid.route(tree, goal), tree)
+    elif f.action > 0:
+        b.do_dodge(f)
 
 
 def _creature_magic(b: Battle, f: Fighter) -> None:

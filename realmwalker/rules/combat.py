@@ -2383,6 +2383,8 @@ class Battle:
         self._after_action(f)
 
     def can_leave(self, f: Fighter) -> bool:
+        if (f.cdef or {}).get("holds_ground"):  # (a story's boss at its finale: its own den, where it stands; Expansion 6 E.6)
+            return False
         return f.active and f.speed > 0 and f.move_left >= 5 and any(self.field.exits[c] for c in f.cells
                                                                       if self.field.in_bounds(*c))
 
