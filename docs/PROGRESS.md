@@ -33,7 +33,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Expansion 3, *Demigods & Magics*** (version 1.3.0) | ✅ Released (2026-10-17), branch `dlc/03-demigods-magics` |
 | **Expansion 4, *Steel & Shadows*** (version 1.4.0) | ✅ Released (2026-10-17), branch `dlc/04-steel-shadows` |
 | **Expansion 5, *Schools & Domains*** (version 1.5.0) | ✅ Released (2026-10-18), branch `dlc/05-schools-domains` |
-| **Expansion 6, *Adventures & Events*** (version 1.6.0) | Parts A-D on main (2026-10-25): the story engine and the Beast; the stage and pictures for stories; quests reborn as situations; the Risen, the Outlaw Lord and the first hour; Parts E-K to come |
+| **Expansion 6, *Adventures & Events*** (version 1.6.0) | Parts A-E on main (2026-10-25): the story engine and the Beast; the stage and pictures for stories; quests reborn as situations; the Risen, the Outlaw Lord and the first hour; villains who act and the finale in full; Parts F-K to come |
 | **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansions 1-5 released; Expansion 6 under way (see STATUS.md) |
 
 ---
@@ -45,6 +45,31 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-25 (night): Adventures & Events Part E, task E.7 — every villain in its own voice — **Part E merged into `main`**
+
+- **Words.** Each kind of villain now makes its moves in its own way. A zealot's letter comes folded like an
+  altar-cloth and smelling of incense; a schemer's spy is gone before you are sure you saw him; a cruel outlaw's
+  people shout what they will do to you; a proud dead king's herald reads out your offence; a grieving one leaves a
+  purse and begs you to go home. Every move every villain can make (77 of them across the six tempers) opens with
+  three openings written for that temper; the rest of the scene and its choices are as before. A beast never writes:
+  its moves are what it leaves and how it hunts.
+- **Pictures.** A villain's letter is sealed with its sign pressed into the wax: a sun for the zealot, a key for the
+  schemer, a skull for the cruel, a crown for the proud, a falling tear for the grieving. In the Journal, a tale shows
+  its villain beside its page as a black shape until you have seen it with your own eyes (it came to your camp, you
+  sat at its table, or you fought it); then its own figure. Its dinner hall is kept the way its temper would keep it
+  (an altar and braziers, books and a lectern, chains and a cage, banners and a throne, a tomb and candles).
+- **Sound.** A low sting as one of the villain's moves reaches you (its omen, its letter, its people on the road).
+- **Fixed:** the words "He" and "His" at the start of a sentence were never filled in (a line could read "{He} will
+  be glad"); they are now.
+- **Saves: format 23.** Old saves are refused with the friendly message; start a new world.
+- Try it: take a tale and let the villain's attention grow (do it harm); read its letters from the pack; open the
+  Journal (j) on the tale before and after it shows itself.
+
+Decisions (Anton may want to change): a temper's own words replace only a move's first page (the choices and what
+follows stay shared); the hero has "seen" the villain after its visit by night, its hunt, its dinner or any fight it
+stood in; the seals' signs and the halls' furniture are my choice per temper; the move's sting is the villain's
+entrance sound, quieter (not a new recording).
 
 ### Session, 2026-10-25 (evening, later): Adventures & Events Part E, task E.6 — the fairness measure — branch `dlc/06-adventures-events`
 

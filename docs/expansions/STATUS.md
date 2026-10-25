@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 06 Adventures & Events · Part E (villains who act; the finale in full) · branch dlc/06-adventures-events
+Current: 06 Adventures & Events · Part F (the cast and the Reading) · branch dlc/06-adventures-events
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -27,7 +27,10 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   favours and contacts; experience from stories; twenty vignettes; the Beast's witness and hunter as situations;
   saves format 21) · Part D (2026-10-25: the Risen and the Outlaw Lord from hook to epilogue, ten new kinds of step,
   the first hour of every new life; the dead at the camp's edge, the hideout and the barrow's halls shown; saves
-  format 22)
+  format 22) · Part E (2026-10-25: villains who act - attention, schemes staged on the map, letters in
+  their hands, lieutenants who remember, nemeses, escapes, returns and early ends; the finale in full - arenas,
+  phases, great attacks, every key, retreat and defeat, measured fair; every move in its temper's words, seals,
+  the villain's shadow in the journal; saves format 23)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
   adapted); Expansion 3: all 560 settled (223 done, 336 adapted, 1 omitted); Expansion 4: all 66 settled (36 done,
@@ -567,11 +570,21 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part E, task E.7 (*words for every move and temper
-(parallel; the floors of ADVENTURES.md §9); pictures (villain silhouettes for the journal, the letter's seals, the
-hall); sounds (`villain`); FORMAT_VERSION +1; verify; Part E to `main`*), on branch `dlc/06-adventures-events`. Read
-docs/expansions/06-adventures-events.md Part E, docs/ADVENTURES.md §9 (floors per family) and §5.4-5.5, the E.6, E.5
-and E.1-E.2 notes below, tests/test_text_variety.py, and game/story/villain.py's docstring.
+Next session starts at: Expansion 6, **Adventures & Events**, Part F, task F.1 (*allies with stakes, join
+conditions (often a situation of their own) and three-beat arcs; the new bond `oath` (companions.json); the full party
+case (`Battle.add_ally`); their fates; tests/test_cast.py*), on branch `dlc/06-adventures-events` (Part E is on main).
+Read docs/expansions/06-adventures-events.md Part F, docs/ADVENTURES.md §5.3 and §5.6, game/story/cast.py, the E.3 note
+below (a turned lieutenant as an ally waits for F) and rules/allies.py's `add_ally`.
+E.7 (2026-10-25, realmwalker-a): a beat's `tempers` {temper: [first-page variants]} replace its text[0] when its tale's
+villain has that temper (beats.pages); fragments beats.voices_a/b/c.json (`_merge`; named to sort after
+beats.villain.json: fragments merge in name order) give every move of every temper three (77 pairs; floor test
+test_every_villain_move_has_its_tempers_voice: two); story/check reports an unknown temper. Letters: `sigil`
+(letters.SIGILS mark/sun/key/skull/crown/tear; temper `hand.sigil`; villain.hand; drawn by letter._seal(sigil)).
+`villain.seen(game, adv)` sets adv["seen"] (beats.offer of villain.SEEN_IN: visit, hunt, dinner; story.on_battle for a
+fighter tagged villain); `villain.known_face`; the journal draws the villain's figure beside a tale
+(journal.villain_portrait: SHADOW tint until known). `vignette.HALL_PROPS` by temper replace the "lair" picture's
+props. Sound `villain_move` (villain_1.wav quieter) is a villain-family beat's sound_open. textgen's slot pattern takes
+a capital first letter ({He}, {His}, {They} in story words were never filled). FORMAT_VERSION 23.
 E.6 (2026-10-25, realmwalker-b): the fairness measure. `tools/storyplay.py --finale all|half|none --kind K` (Finalist,
 finale_once, finales): a tale forged and taken straight to its finale (chapter set to the last, adv["keys"] set,
 "means" with a weakness and the party carrying the best of its means), a party of four at the target level, rested,
@@ -1409,6 +1422,7 @@ casting time. A spell aimed at something chosen lists Subjects (game/divining.Su
 | 2026-10-18 | Schools & Domains Part D: the eleven wands, seven staffs and four rods of the DMG, one store of charges a thing | `dlc/05-schools-domains` |
 | 2026-10-18 | Schools & Domains Part E: crystal balls, the Enduring Spellbook, Enspelled Armor and Weapon, the Hat of Many Spells and the Hat of Wizardry, the Pearl of Power, the Ring of Spell Storing, the five robes, the Ruby of the War Mage; the icon; **released as v1.5.0** | `dlc/05-schools-domains` |
 | 2026-10-25 | Adventures & Events Part B: the stage and its scenes, pictures for stories, title cards and letters, marks stamped on towns, the fallen and graves, eavesdropping and tailing, live fire, signs on the world map, the Beast shown (the survivor, the hunter's note, the carcass at camp, the epilogue's pictures); saves format 20 | `dlc/06-adventures-events` |
+| 2026-10-25 | Adventures & Events Part E: villains who act (attention, moves by temper, spies and tokens, wrath; visits, letters, invitations, bargains, wedges, reprisals, frames, kidnaps; lieutenants, grudges and nemeses; escapes, anchors, returns, early ends) and the finale in full (arenas, phases, great attacks, every key, retreat and defeat, the fairness measure); every move in its temper's words; saves format 23 | `dlc/06-adventures-events` |
 
 ## Notes for the next session
 
