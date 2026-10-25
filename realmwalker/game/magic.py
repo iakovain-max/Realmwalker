@@ -490,6 +490,10 @@ def cast_on_road(game, caster, spell_id: str, target=None, slot_level: int | Non
     faded = scroll is not None and any("fade from the" in line for line in out[:1])  # (a scroll read and lost)
     if not refused and not faded:
         out += situations.on_magic(game, spell_id)  # (a curse lifted, a sickness cured: C.6)
+        if not hired:
+            from realmwalker.game.story import villain
+
+            villain.on_magic(game, int(slot_level or game.tables.spells[spell_id].get("level", 0)))  # (E.1)
     goals.notify(game, "magic")
     return out
 

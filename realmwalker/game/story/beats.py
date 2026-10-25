@@ -478,3 +478,91 @@ def _finish(game, rec, *args):
         if st["kind"] in ("finale", "slay"):
             st["state"] = "done"
     return endings.finish(game, adv)
+
+
+# ---------------------------------------------------------------------------- the villain's moves (E.1)
+@condition("villain.minions")
+def _villain_minions(game, rec, value) -> bool:
+    """Its kind has servants to send without it (threats.json kind `minions`)."""
+    return bool(_minions(game, rec)) == bool(value)
+
+
+def _minions(game, rec) -> str | None:
+    from realmwalker.world import threats
+
+    adv = adventure(game, rec)
+    t = threats.records(game.world).get(adv["threat"]) if adv else None
+    group = game.tables.threats["kinds"].get(t["kind"], {}).get("minions") if t else None
+    return group if group in game.tables.creatures.encounters else None
+
+
+@condition("villain.breaks_off")
+def _villain_breaks_off(game, rec, value) -> bool:
+    """Met before its finale, it breaks off when hurt (its boss template's `before`): it may come in person."""
+    from realmwalker.game.story import finale
+
+    adv = adventure(game, rec)
+    boss = finale.template_for(game.tables, adv) if adv and (adv.get("finale") or {}).get("template") in         game.tables.villains.get("bosses", {}) else None
+    return bool((boss or {}).get("before")) == bool(value)
+
+
+@op("strike")
+def _strike(game, rec, *args):
+    """Its servants in force (twice a band of its kind's `minions`), each with the story tag: a fight here and now."""
+    from realmwalker.game.encounters import make_encounter
+
+    group = _minions(game, rec)
+    if group is None or game.over is not None:
+        return []
+    rng = rng_for(game, rec).child("strike")
+    enc = make_encounter(game, group, rng)
+    enc.creatures += make_encounter(game, group, rng.child("more")).creatures
+    if not enc.creatures:
+        return []
+    for c in enc.creatures:
+        c.story = {"adv": rec.get("adv"), "role": "minion"}
+    game.encounter = enc
+    game.travel = None
+    return []
+
+
+@op("band")
+def _band(game, rec, group: str):
+    """A band of its servants (a test): a fight with the story tag, so that the villain hears of their deaths."""
+    from realmwalker.game.encounters import make_encounter
+
+    if group not in game.tables.creatures.encounters or game.over is not None:
+        return []
+    enc = make_encounter(game, group, rng_for(game, rec).child(f"band/{group}"))
+    for c in enc.creatures:
+        c.story = {"adv": rec.get("adv"), "role": "minion"}
+    game.encounter = enc
+    game.travel = None
+    return []
+
+
+@op("reprisal")
+def _reprisal(game, rec, how: str = "hanged"):
+    """One who helped you pays for it (villain.due_move chose them: adv["reprisal"]): dead, and the news goes out
+    from their town."""
+    from realmwalker.world import news
+
+    adv = adventure(game, rec)
+    npc = game.world.npcs.get(int(adv["reprisal"])) if adv and adv.get("reprisal") is not None else None
+    if npc is None or not npc.alive:
+        return []
+    words = words_for(game, rec)
+    npc.alive = False
+    npc.present = False
+    npc.flags["reprisal"] = {"adv": adv["id"], "how": how, "day": int(game.moment.total_days)}
+    adv.setdefault("reprisals", []).append(int(npc.id))
+    adv["reprisal"] = None
+    s = game.world.settlements[int(npc.settlement)]
+    news.add(game.world, f"{npc.name} of {s.name} was found {how}, and the word is that it was for helping "
+             f"{words.get('hero', 'a stranger')} against {words.get('villain', 'the dark')}.", s.x, s.y,
+             kind="crime", importance=3, places=[s.id])
+    if game.quests:
+        from realmwalker.game import quests
+
+        quests.on_npc_death(game, npc)
+    return []

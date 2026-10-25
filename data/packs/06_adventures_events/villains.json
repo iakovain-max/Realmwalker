@@ -3,10 +3,29 @@
   "attention": {
     "step": 1,
     "lieutenant": 2,
+    "servants": 1,
+    "great_magic": 1,
+    "great_level": 6,
     "fortnight": -1,
-    "max": 9,
+    "max": 5,
     "moves_apart_days": 2,
-    "per_chapter": 1
+    "per_chapter": 2,
+    "levels": [
+      "unaware",
+      "has heard of you",
+      "watching",
+      "testing",
+      "wrathful",
+      "obsessed"
+    ],
+    "chance": [
+      0.5,
+      0.6,
+      0.75,
+      1.0,
+      1.0,
+      1.0
+    ]
   },
   "tempers": {
     "bestial": {
@@ -14,7 +33,9 @@
       "moves": {
         "omen": 3,
         "carcass": 2,
-        "test": 1
+        "test": 1,
+        "sign": 2,
+        "hunt": 2
       },
       "first_words": [
         "It does not roar. It breathes, long and slow, and the sound fills the dark.",
@@ -34,6 +55,39 @@
         "The horses will not settle. They stare at the treeline with their ears flat.",
         "A trail of blood crossing the road, still wet, going nowhere you can see."
       ]
+    },
+    "zealous": {
+      "speaks": true,
+      "moves": {
+        "villain_omen": 3,
+        "sign": 3,
+        "letter": 2,
+        "rumour": 1,
+        "spy": 1,
+        "token_letter": 2,
+        "nightmare": 2,
+        "visit": 2,
+        "reprisal": 2,
+        "strike": 2
+      },
+      "first_words": [
+        "\"You have come,\" it says, as if it had sent for you. \"Good. Kneel, and it will be quicker.\"",
+        "\"Everything that is happening was promised long ago,\" it says. \"You are only the last line of the prophecy.\"",
+        "\"I do not hate you,\" it says. \"The fire does not hate the field. It only burns.\"",
+        "It lifts both hands, and its voice fills the place like a bell. \"Witness!\"",
+        "\"There is still time to be saved,\" it says, and it means it, and that is the worst of it.",
+        "\"You are an offering,\" it says gently. \"You were always going to be an offering.\""
+      ],
+      "omens": [
+        "A shrine by the road has been broken open, and its saint's face scratched out.",
+        "Someone has painted a sign in red on the milestone, an eye with no lid.",
+        "The bells of a chapel far off ring the hour wrong, and then fall silent.",
+        "A crowd of birds circles over the hills, always the same way round, and none of them lands.",
+        "A dead goat hangs from a roadside tree, its throat cut neatly and its blood caught in a bowl.",
+        "A beggar at the crossroads looks up as you pass and says your name, and then forgets he said it.",
+        "Candles burn in a ruined chapel at noon, and nobody is inside.",
+        "A child is singing a hymn you have never heard, and stops when you look at her."
+      ]
     }
   },
   "moves": {
@@ -41,21 +95,115 @@
       "beat": "beast_omen",
       "attention": [
         0,
-        9
+        5
       ]
     },
     "carcass": {
       "beat": "beast_carcass",
       "attention": [
         1,
-        9
+        5
       ]
     },
     "test": {
       "beat": "beast_test_night",
       "attention": [
         2,
-        9
+        5
+      ]
+    },
+    "villain_omen": {
+      "beat": "villain_omen",
+      "attention": [
+        0,
+        5
+      ]
+    },
+    "rumour": {
+      "beat": "villain_rumour",
+      "attention": [
+        1,
+        5
+      ],
+      "speaks": true
+    },
+    "spy": {
+      "beat": "villain_spy_seen",
+      "attention": [
+        1,
+        5
+      ],
+      "speaks": true,
+      "spy": true
+    },
+    "sign": {
+      "beat": "villain_sign",
+      "attention": [
+        2,
+        5
+      ]
+    },
+    "gift": {
+      "beat": "villain_gift",
+      "attention": [
+        2,
+        5
+      ],
+      "speaks": true
+    },
+    "letter": {
+      "beat": "villain_letter",
+      "attention": [
+        2,
+        5
+      ],
+      "speaks": true
+    },
+    "token_letter": {
+      "beat": "villain_token_letter",
+      "attention": [
+        1,
+        5
+      ],
+      "speaks": true,
+      "tailored": true
+    },
+    "nightmare": {
+      "beat": "villain_nightmare",
+      "attention": [
+        2,
+        5
+      ],
+      "speaks": true,
+      "tailored": true
+    },
+    "visit": {
+      "beat": "villain_visit",
+      "attention": [
+        3,
+        5
+      ],
+      "speaks": true
+    },
+    "reprisal": {
+      "beat": "villain_reprisal",
+      "attention": [
+        4,
+        5
+      ]
+    },
+    "strike": {
+      "beat": "villain_strike",
+      "attention": [
+        4,
+        5
+      ]
+    },
+    "hunt": {
+      "beat": "villain_hunt",
+      "attention": [
+        5,
+        5
       ]
     }
   },
@@ -208,5 +356,39 @@
         ]
       }
     ]
-  }
+  },
+  "wrath": {
+    "jump": 2,
+    "min": 3,
+    "weight": 3.0,
+    "days": 7,
+    "steps": [
+      "fetch",
+      "rescue"
+    ]
+  },
+  "spy": {
+    "dc": 12,
+    "tailored": 3.0,
+    "tokens": [
+      "a glove",
+      "a ribbon",
+      "a button off a coat",
+      "a handkerchief",
+      "a page torn from a journal",
+      "a comb with a few hairs still in it",
+      "a ring of plain brass",
+      "a lucky stone"
+    ],
+    "missing": [
+      "Later, {token_of} goes looking for {token}, and cannot find it anywhere.",
+      "Somewhere on the way {token_of} has lost {token}, or thinks so. Nobody saw anyone come near.",
+      "{token_of} turns the pack out twice that evening. {token} is gone, and nobody can say where.",
+      "It is only {token}, and {token_of} laughs about losing it. Nobody else laughs."
+    ]
+  },
+  "reprisal_roles": [
+    "witness",
+    "carter"
+  ]
 }

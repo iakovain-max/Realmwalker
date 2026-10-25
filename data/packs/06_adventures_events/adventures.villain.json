@@ -1,0 +1,17 @@
+{
+  "_comment": "The letters of any tale's villain (Expansion 6 E.1; beats.villain.json): its plain letter, and the one made with what its spy stole ({token}, {token_of}, {companion}). Paragraphs split by a blank line; signed by the villain (the beat op `letter`).",
+  "words": {
+    "villain_letter": [
+      "To the one who follows me,\n\nI know your name now, and the road you took to {town}, and the inn where you slept. I tell you this so that you understand how little you are hidden.\n\nThis is not your quarrel. Go home while it is still a home to go to.\n\n{villain}",
+      "To the stranger at {town},\n\nYou have been asking questions in my country. Every one of them has been answered to me before it was answered to you.\n\nI am patient, and I am not cruel without need. Do not give me need.\n\n{villain}",
+      "To the meddler,\n\nI have watched you a while. You are brave, I think, and you are foolish, and the two so often go together.\n\nThere is nothing at {home} for you but an ending. Choose another road.\n\n{villain}",
+      "To the one who will not leave,\n\nI have let you walk where you like. Do not think it was because I could not stop you.\n\nThe next time I write, it will not be to you.\n\n{villain}"
+    ],
+    "villain_token_letter": [
+      "To {hero},\n\nYou will know this. {token_of} carried it, and does not carry it now, and never noticed my friend close enough to take it.\n\nThat is how close I can come. Think on it, the next time {token_of} lies down to sleep.\n\n{villain}",
+      "To the one who sleeps so soundly,\n\nI send back what I took, so that you will know it was taken. {token}, of {token_of}'s. A small thing. Next time it will not be small.\n\nGo home, all of you, and keep each other close.\n\n{villain}",
+      "To {hero}, and to {token_of},\n\nI have held {token} in my hand, and through it I have seen a little of you both: your fears, and the names you call out in the night.\n\nI could have kept it. I would rather you knew.\n\n{villain}",
+      "To {hero},\n\n{token_of} has a careless way with small things. {token} was easy to take. A throat would not be much harder.\n\nI do not say this to frighten you. I say it so that you will choose well.\n\n{villain}"
+    ]
+  }
+}

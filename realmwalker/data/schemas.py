@@ -1445,6 +1445,7 @@ THREAT_KIND = Obj({
     "ask": Str(max_len=120, optional=True),  # what you say to a town's notable about it (the talk's hook choice)
     "learn_ask": Str(max_len=120, optional=True),  # asking someone who knows its secret ({villain})
     "band": Str(max_len=40, optional=True),  # its villain's band when the figure is no beast (story.villain_group)
+    "minions": Str(max_len=40, optional=True),  # its servants without it, sent in force (the strike move: E.1)
     "reach": Int(min=1, max=60),  # tiles round its home that its signs and effects touch
     "creature": Str(max_len=40, optional=True),  # what its villain fights as when the figure has no creature
     # the world's own ending of it: a weekly chance while it stirs (world/threats.ENDINGS), news from politics.json
@@ -1571,9 +1572,24 @@ WEAKNESS = Obj({"id": Str(max_len=30), "name": Str(max_len=60), "keys": List(Str
 VILLAINS = Obj({
     "attention": Obj({"step": Int(min=0, max=5), "lieutenant": Int(min=0, max=5), "fortnight": Int(min=-5, max=0),
                       "max": Int(min=1, max=20), "moves_apart_days": Int(min=0, max=30),
-                      "per_chapter": Int(min=0, max=10)}, optional=True),
+                      "per_chapter": Int(min=0, max=10),
+                      # (E.1: the rest of what it notices, the names of its levels, a move's chance by attention)
+                      "servants": Int(min=0, max=5, optional=True), "great_magic": Int(min=0, max=5, optional=True),
+                      "great_level": Int(min=1, max=9, optional=True),
+                      "levels": List(Str(max_len=30), min_items=2, optional=True),
+                      "chance": List(Float(min=0, max=1), min_items=1, optional=True)}, optional=True),
+    # a major setback: attention jumps, and its next move is one needing at least `min` (by `weight` times)
+    "wrath": Obj({"jump": Int(min=0, max=5), "min": Int(min=0, max=20), "weight": Float(min=0, max=20),
+                  "days": Int(min=1, max=60), "steps": List(Str(max_len=30))}, optional=True),
+    # its spy: seen by the party's best passive Perception against dc + attention; unseen, it steals a token
+    "spy": Obj({"dc": Int(min=1, max=30), "tailored": Float(min=0, max=20), "tokens": word_list(6, 80),
+                "missing": word_list(3, 300)}, optional=True),
+    "reprisal_roles": List(Str(max_len=30), optional=True),  # the cast who may pay for helping you
     "tempers": Map(TEMPER),
-    "moves": Map(Obj({"beat": Str(max_len=60), "attention": List(Int(min=0, max=20), min_items=2, max_items=2)})),
+    "moves": Map(Obj({"beat": Str(max_len=60), "attention": List(Int(min=0, max=20), min_items=2, max_items=2),
+                      "speaks": Bool(optional=True),  # it needs words: never a beast's, never the bestial's
+                      "tailored": Bool(optional=True),  # made with a token its spy stole (one move a token)
+                      "spy": Bool(optional=True)})),  # the spy: its beat plays only when it is seen
     "bosses": Map(BOSS),
     "weaknesses": Map(List(WEAKNESS, min_items=1)),  # by what the villain is (a creature type, or a creature id)
 })

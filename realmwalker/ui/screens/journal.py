@@ -99,6 +99,16 @@ def tale_lines(game, adv) -> str:
         n = len(th["scheme"]["stages"])
         clock = "".join("#" if i <= th["scheme"]["stage"] else "." for i in range(n))
         lines += ["", f"<title>Its time</> <danger>{clock}</> <dim>(when the last mark is filled, it has won)</>"]
+    if adv["state"] == "active" and not adv.get("boss_dead"):  # (how much the villain cares about you: E.1)
+        from realmwalker.game.story import villain
+
+        top = int(villain.spec(game)["max"])
+        att = max(0, min(top, int(adv.get("attention", 0))))
+        eye = "#" * att + "." * (top - att)
+        lines.append(f"<title>Its eye</> <warn>{eye}</> {esc(words.get('villain_short', 'it'))}: "
+                     f"{esc(villain.level(game, adv))}")
+        if (adv.get("token") or {}).get("used"):  # (once it has shown you what its spy took)
+            lines.append(f"<dim>It holds {esc(adv['token']['what'])}, {esc(adv['token']['of'])}'s.</>")
     if adv.get("journal"):
         lines += ["", "<title>Your notes</>"] + [f"<dim>{esc(j['text'])}</>" for j in adv["journal"][-6:]]
     if adv.get("ending"):

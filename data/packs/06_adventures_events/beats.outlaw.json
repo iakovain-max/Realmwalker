@@ -64,7 +64,7 @@
         ]
       ],
       "choices": [
-        {"label": ["Show them."], "ops": [["fight", "bandits"], ["attention", 1]],
+        {"label": ["Show them."], "ops": [["band", "bandits"], ["attention", 1]],
          "result": [
            "\"That's what I hoped you'd say,\" the man says, and draws.",
            "\"Good,\" says one of them. \"I was hoping.\" Steel comes out on all sides."
@@ -76,7 +76,7 @@
            "The silver goes into a bag, and the bag goes out of sight. They let you through with a nod, and you note the scar, the limp, the missing finger."
          ]},
         {"label": ["Talk your way past them."], "check": {"skill": "persuasion", "dc": 13},
-         "success": [["attention", 1]], "failure": [["fight", "bandits"]],
+         "success": [["attention", 1]], "failure": [["band", "bandits"]],
          "result": [
            "\"Tell your captain,\" you say, \"that I'll be paying my toll at {home}.\" They laugh, but they let you by.",
            "\"Let the captain name the price at {home},\" you say. One of them laughs, and then does not, and they stand aside."

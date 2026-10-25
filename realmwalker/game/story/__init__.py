@@ -104,7 +104,7 @@ def step_done(game, aid: str, sid: str | None) -> list[str]:
             beats.OPS["flag"](game, rec, what)
         elif kind == "lead":
             adv.setdefault("leads", []).append(what)
-    villain.notice(game, adv, int(villain.spec(game)["step"]))
+    villain.on_step(game, adv, st)
     _chapter_check(game, adv)
     game.dirty = True
     return []
@@ -663,7 +663,7 @@ def on_battle(game, result, actor=None) -> None:
     from realmwalker.game.story import deeds, endings, villain
 
     deeds.on_battle(game, result)  # (a step's band, a hold's wave: D.2)
-    seen = []
+    seen, harm = [], {}
     for c, how in [(c, "dead") for c in result.dead] + [(c, "taken") for c in getattr(result, "captives", [])] + \
             [(c, "fled") for c in getattr(result, "fled", [])]:
         tag = getattr(c, "story", None)
@@ -674,8 +674,15 @@ def on_battle(game, result, actor=None) -> None:
             continue
         if tag.get("role") == "villain":
             seen.append((adv, how))
-        elif tag.get("role") != "minion" and how == "dead":
-            villain.notice(game, adv, int(villain.spec(game)["lieutenant"]))
+        elif how == "dead":  # (its servants killed, once a fight; each lieutenant slain, and its wrath: E.1)
+            h = harm.setdefault(adv["id"], {"servants": 0, "lieutenants": 0})
+            h["servants" if tag.get("role") == "minion" else "lieutenants"] += 1
+    for aid, h in harm.items():
+        villain.on_fight(game, adventures(game.world)[aid], servants=min(1, h["servants"]),
+                         lieutenants=h["lieutenants"])
+    battle = getattr(game, "battle", None)
+    if battle is not None and int(getattr(battle, "great_magic", 0) or 0):
+        villain.on_magic(game, int(battle.great_magic))  # (great magic cast in its reach)
     for adv, how in seen:
         if how == "dead" or (how == "taken" and _villain_is_person(game, adv)):
             adv["boss_dead" if how == "dead" else "boss_taken"] = True  # (a lord of outlaws taken alive: D.3)

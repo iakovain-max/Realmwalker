@@ -627,6 +627,7 @@ class Battle:
         # What happened, for the battle screen to show (who moved where, who struck whom, hit or missed, damage,
         # healing, spells and their areas). Pure record: nothing in the rules reads it.
         self.events: list[dict] = []
+        self.great_magic = 0  # the highest level the party cast here (story/villain.on_magic: E.1)
         self.fighters: list[Fighter] = []
         self.zones: list[Zone] = []
         self.tokens: list[Token] = []
@@ -5314,6 +5315,8 @@ class Battle:
             return True  # (drunk by a Rod of Absorption or a Staff of the Magi: cast, and nothing comes of it)
         effects.cast(self, f, sid, spell, target, point, up=up, mod=mod, dc=dc, bonus=bonus, mult=mult, level=level,
                      slotted=slotted)
+        if f.side == PARTY and f.bond is None:  # (the party's greatest magic here, felt by a villain near: E.1)
+            self.great_magic = max(self.great_magic, int(level))
         if sid in ("light", "daylight"):
             from realmwalker.rules.engine.handlers import wonders
 

@@ -43,6 +43,18 @@ def for_adventure(game, adv: dict | None) -> dict:
         if temper.get("omens"):
             rng = w.rng.child(f"omen/{adv['id']}/{game.moment.total_days}")
             out["omen"] = rng.choice(temper["omens"])
+    out["companion"] = game.party[1].name.split()[0] if len(game.party) > 1 else out["hero"]
+    # (what its spy stole, and whose: a tailored move's words, E.1; only a stolen token makes one, the rest is for
+    # the storybook's reading)
+    token = adv.get("token") or {"what": "a glove", "of": out["companion"]}
+    out["token"], out["token_of"] = token["what"], token["of"]
+    out["helper"], out["helper_town"] = "one who helped you", "the town"
+    helper = w.npcs.get(int(adv["reprisal"])) if adv.get("reprisal") is not None else None
+    if helper is not None:  # (the one who pays for helping you: a reprisal's words)
+        out["helper"] = helper.name
+        sid = getattr(helper, "settlement", None)
+        out["helper_town"] = w.settlements[int(sid)].name if sid is not None and 0 <= int(sid) < len(
+            w.settlements) else "the town"
     for name, p in adv["places"].items():
         if places.exists(w, p):
             out[name] = places.name(w, p)

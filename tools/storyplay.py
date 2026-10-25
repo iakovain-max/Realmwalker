@@ -97,7 +97,8 @@ class Player:
             elif beats.director(g.world).get("card"):
                 beats.director(g.world)["card"] = None
             elif getattr(g, "finale", None):
-                self.note("the finale: Fight")
+                self.note("the finale: Fight (" + ", ".join(f"{c.hp}/{c.max_hp} hp L{c.level} ex{c.exhaustion}"
+                                                            for c in g.party if c.alive) + ")")
                 self.moment()
                 story.fight_finale(g)
                 if g.battle is None:

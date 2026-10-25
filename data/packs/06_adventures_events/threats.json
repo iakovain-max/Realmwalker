@@ -201,6 +201,7 @@
       "ask": "I hear the dead are walking here.",
       "learn_ask": "Who was {villain}? What holds {him} in the world?",
       "band": "barrow_wight",
+      "minions": "restless_dead",
       "reach": 30,
       "creature": "wight",
       "ends": {
@@ -352,6 +353,7 @@
       "ask": "I hear your roads are being bled.",
       "learn_ask": "Who in this town sells {villain} the caravans' days?",
       "band": "bandit_hideout",
+      "minions": "bandits",
       "reach": 18,
       "creature": "bandit_captain",
       "stages": [
