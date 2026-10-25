@@ -588,13 +588,16 @@ def place_people(game, settlement, rec: dict) -> None:
 
 
 # ---------------------------------------------------------------------------- forging
-def _weight(game, root: dict, pid: str) -> float:
-    """A root's weight, down by how often this hero has met the predicament and the root's kind (the variety)."""
+def _weight(game, root: dict, pid: str, sid: int) -> float:
+    """A root's weight, down by how often this hero has met the predicament and the root's kind, and by the town's own
+    troubles before (the variety)."""
     life = _life(game)
-    met = [s for s in records(game.world).values() if s.get("life") == life]
+    allsits = list(records(game.world).values())
+    met = [s for s in allsits if s.get("life") == life]
     same = sum(1 for s in met if s["predicament"] == pid)
     kind = sum(1 for s in met if s["root"].get("kind") == root["kind"])
-    return float(root.get("weight", 1.0)) / (1 + 2 * same) / (1 + 0.3 * kind)
+    here = sum(1 for s in allsits if s.get("town") == sid and s["predicament"] == pid)
+    return float(root.get("weight", 1.0)) / (1 + 2 * same) / (1 + 0.3 * kind) / (1 + 3 * here)
 
 
 def make(game, sid: int, root: dict | None = None, predicament: str | None = None) -> dict | None:
@@ -614,7 +617,7 @@ def make(game, sid: int, root: dict | None = None, predicament: str | None = Non
     for r in roots:
         for pid in table.get(r["key"], []):
             if pid in preds and (predicament is None or pid == predicament):
-                pool.append((r, pid, _weight(game, r, pid)))
+                pool.append((r, pid, _weight(game, r, pid, sid)))
     if predicament is not None and not pool and predicament in preds:
         pool = [(root or {"kind": "town", "key": "town"}, predicament, 1.0)]
     order = []
