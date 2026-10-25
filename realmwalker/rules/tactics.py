@@ -256,7 +256,8 @@ def _monster_turn(b: Battle, f: Fighter) -> None:
             not any(b.gap(f, e) <= 1 for e in b.enemies_of(f) if e.standing):
         f.bonus -= 1  # Aggressive (a bonus action to close in), or a troll's Charge (half its speed)
         f.move_left += f.speed if f.has_trait("aggressive") else f.speed // 2
-    if f.action > 0 or f.attacks_left > 0:  # (a boss's great attack took its action: E.5)
+    if (f.__dict__.get("great") or {}).get("last") != b.round or f.action > 0 or f.attacks_left > 0:
+        # (a boss's great attack fell at the start of this turn and took its action: no blows after it, E.5)
         _fight(b, f, plain, attacks=max(1, int(f.cdef.get("multiattack", 1))))
         _breath_with_blows(b, f)
         _hew(b, f)
