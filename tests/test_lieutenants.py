@@ -32,6 +32,9 @@ def _meet(game, adv, role):
             if other is not st and other["kind"] in ("defeat", "capture"):
                 other["met"] = int(game.moment.total_days)
     game.encounter = None
+    from realmwalker.game.story import beats
+
+    beats.director(game.world)["pending"] = None  # (the first hour's beat, if one was drawn, set aside)
     assert story.on_arrive(game) and game.encounter is not None, "the band waits there"
     enc = game.encounter
     game.encounter = None
@@ -188,5 +191,22 @@ def test_their_pages_in_the_epilogue_and_the_nemesis_promoted(made, tables):
     band = game.encounter.creatures
     game.encounter = None
     assert not lieutenants.on_travel(game), "not again at once"
-    story.on_battle(game, SimpleNamespace(outcome="victory", dead=list(band), captives=[], fled=[]))
+    if len(band) > 1:
+        story.on_battle(game, SimpleNamespace(outcome="fled", dead=list(band[1:]), captives=[], fled=[]))
+        assert nem[0]["state"] == "hunting" and nem[0]["lt"]["grudge"] == 1, "its men dead, it hunts on"
+    story.on_battle(game, SimpleNamespace(outcome="victory", dead=[head], captives=[], fled=[]))
     assert nem[0]["state"] == "slain"
+
+
+def test_a_villain_let_go_leaves_no_nemesis_and_the_dead_do_not_come_back(made, tables):
+    game, adv, t = _tale(made, tables, "outlaw")
+    raid = lieutenants.of(game, adv, "raiders")
+    raid["fate"], raid["grudge"] = "escaped", 2
+    adv["boss_taken"], adv["villain_fate"] = True, "spare"
+    endings.finish(game, adv)
+    assert not game.world.politics.get("nemeses"), "a villain spared keeps its own"
+    game, adv, t = _tale(made, tables, "outlaw")
+    raid = lieutenants.of(game, adv, "raiders")
+    raid["fate"] = "slain"
+    enc = _meet(game, adv, "raiders")
+    assert enc.creatures[0].name != lieutenants.full(raid) and "lt" not in enc.creatures[0].story

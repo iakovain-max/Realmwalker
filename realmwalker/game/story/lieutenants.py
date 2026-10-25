@@ -135,8 +135,8 @@ def on_spawn(game, adv: dict, role: str, creatures: list, rng) -> str:
     """A role's band is spawned: its head becomes the lieutenant (their creature, name and tag). Returns what is said
     when one who got away meets you again."""
     rec = of(game, adv, role)
-    if rec is None or not creatures:
-        return ""
+    if rec is None or not creatures or rec["fate"] not in FREE:
+        return ""  # (one slain, taken or turned does not come back at the head of a band)
     head = creatures[0]
     if rec.get("creature") and rec["creature"] in game.tables.creatures and head.def_id != rec["creature"]:
         from realmwalker.rules.creatures import spawn
@@ -161,7 +161,10 @@ def _dress(c, rec: dict, aid: str | None, role: str, i: int) -> None:
 
 
 def _record_of(game, tag: dict) -> tuple[dict | None, dict | None]:
-    """(the lieutenant's record, its adventure) from a creature's story tag; a nemesis has no adventure."""
+    """(the lieutenant's record, its adventure) from a creature's story tag; a nemesis has no adventure (its band's
+    minions are not the lieutenant)."""
+    if tag.get("role") == "minion":
+        return None, None
     if "nemesis" in tag:
         nem = game.world.politics.get("nemeses", [])
         i = int(tag["nemesis"])
@@ -341,7 +344,7 @@ def after_tale(game, adv: dict) -> None:
     if not sp or not pairs:
         return
     rng = game.world.rng.child(f"lt-epilogue/{adv['id']}")
-    fallen = bool(adv.get("boss_dead") or adv.get("boss_taken")) and adv.get("ending") != "bargained"
+    fallen = bool(adv.get("boss_dead") or adv.get("boss_taken")) and adv.get("ending") != "bargained" and         adv.get("villain_fate") not in ("spare", "rob")  # (a villain let go keeps its own)
     free = [rec for _, rec in pairs if rec["fate"] in ("met", "unmet", "escaped", "spared")]
     nem = sp["nemesis"]
     best = max(free, key=lambda r: (int(r.get("grudge", 0)), r["name"]), default=None)

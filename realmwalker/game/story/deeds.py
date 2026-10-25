@@ -88,7 +88,12 @@ def role_name(game, adv: dict, role: str) -> str | None:
     from realmwalker.game.story import cast
 
     entry = adv["cast"].get(role) or {}
-    return cast.describe(game, adv, role) if cast.person(game.world, entry) is not None or "lt" in entry else None
+    if "lt" in entry:  # (a band's lieutenant names it while they are still the villain's: E.3)
+        from realmwalker.game.story import lieutenants
+
+        rec = lieutenants.of(game, adv, role)
+        return lieutenants.full(rec) if rec is not None and rec["fate"] in lieutenants.FREE else None
+    return cast.describe(game, adv, role) if cast.person(game.world, entry) is not None else None
 
 
 def _place_words(game, place: dict) -> str:

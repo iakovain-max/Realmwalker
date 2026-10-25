@@ -135,9 +135,11 @@ def problems(tables) -> list[str]:
             for cid in lt.get("creature", []):
                 if creatures is not None and cid not in creatures:
                     out.append(f"{lw}: there is no creature '{cid}'.")
+            known = {g for ch in bp["chapters"] for st in ch["steps"] for g in st.get("gives", [])}
+            known |= {f"key:{k}" for k in bp["finale"].get("keys", {})}
             for g in lt.get("turns", []):
-                if g.partition(":")[0] not in ("clue", "key"):
-                    out.append(f"{lw}: one who turns gives a clue or a key, not '{g}'.")
+                if g.partition(":")[0] not in ("clue", "key") or g not in known:
+                    out.append(f"{lw}: one who turns gives a clue or a key the tale knows, not '{g}'.")
         fin = bp["finale"]
         if fin["template"] not in bosses:
             out.append(f"{where}: the finale's boss template '{fin['template']}' is not in villains.json.")

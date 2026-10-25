@@ -62,7 +62,7 @@
       "returns": [
         "{name} is back, with {scar}, and this time they came ready.",
         "It is {name} again. They have {scar} now, and a better blade, and they have been thinking about you.",
-        "\"Remember me?\" says {name}. You do. The {scar} is new.",
+        "\"Remember me?\" says {name}. You do. They did not have {scar} when you last met.",
         "{name} again, with {scar} and the look of someone who has rehearsed this."
       ],
       "spared_back": [
@@ -92,7 +92,7 @@
       ],
       "joins_grudge": [
         "{name} is there beside {villain}, with {scar} and a grudge worth more than the blade in their hand.",
-        "{name} pushes to the front when they see you. The {scar} you gave them is still red.",
+        "{name} pushes to the front when they see you, with {scar} you gave them still red.",
         "\"I told it you would come,\" says {name}, touching {scar}. \"I asked for you myself.\""
       ],
       "turncoat": [
@@ -102,7 +102,7 @@
       ],
       "nemesis": [
         "{name} steps out into the road ahead. {villain} is gone, and they have come to settle what is left between you.",
-        "There is a band across the road, and at its head {name}, with {scar}. \"They say you killed {villain},\" {short} says. \"Now there is only me.\"",
+        "There is a band across the road, and at its head {name}, with {scar}. \"They say you finished {villain},\" {short} says. \"Now there is only me.\"",
         "{name} has been waiting for you, a long time by the look of the camp. They have {villain}'s old company now, and one thing left to do.",
         "\"I said I would find you,\" says {name}, with {scar} pale in the light. The men behind them spread out."
       ],
