@@ -398,6 +398,42 @@ def made_sounds(folder: Path) -> dict[str, list[np.ndarray]]:
     out["sign"] = [room(fft_filter(sign, RATE, lp=3500), srng, wet=0.3, seconds=0.6)]
     out["bell"] = [town_bell()]
     out["villain"] = [villain_comes()]
+    out.update(part_d_sounds())
+    return out
+
+
+def part_d_sounds() -> dict[str, list[np.ndarray]]:
+    """Expansion 6 D.5, from their own seed so the sounds above stay as they were: a war horn as a hold's wave comes
+    out of the dark; the dead at the camp's edge (a long breath of cold air over a low, sour hum); a wax seal broken
+    and a letter unfolded."""
+    drng = np.random.default_rng(609)
+    out: dict[str, list[np.ndarray]] = {}
+    # The horn: a low brassy tone that swells, wavers and dies, rising a little into its note.
+    seconds = 1.6
+    t = np.arange(int(seconds * RATE)) / RATE
+    f = note("A2") * (0.94 + 0.06 * np.minimum(1.0, t / 0.18)) * (1 + 0.006 * np.sin(2 * np.pi * 5.2 * t))
+    phase = 2 * np.pi * np.cumsum(f) / RATE
+    tone = sum(np.sin(k * phase) / k ** 0.9 for k in range(1, 9))
+    swell = np.minimum(1.0, t / 0.25) * np.clip((seconds - t) / 0.5, 0.0, 1.0)
+    horn = fft_filter(tone * swell * 0.3, RATE, hp=70, lp=2200)
+    out["horn"] = [room(horn, drng, wet=0.35, seconds=0.9)]
+    # The dead: wind through a gap, swelling and sinking, and under it two low tones a half step apart.
+    seconds = 1.9
+    t = np.arange(int(seconds * RATE)) / RATE
+    breath = fft_filter(drng.normal(0, 1, len(t)), RATE, hp=180, lp=900) * np.sin(np.pi * t / seconds) ** 2 * 0.25
+    hum = (np.sin(2 * np.pi * 58.0 * t) + 0.8 * np.sin(2 * np.pi * 61.5 * t)) * np.sin(np.pi * t / seconds) * 0.18
+    out["dead"] = [room(breath + hum, drng, wet=0.4, seconds=0.5)]
+    # The seal: three dry cracks of wax, then the paper opened out.
+    crack = np.zeros(int(0.55 * RATE))
+    for at, amp in ((0.0, 1.0), (0.035, 0.6), (0.07, 0.45)):
+        n = int(0.012 * RATE)
+        burst = fft_filter(drng.normal(0, 1, n), RATE, hp=1800, lp=7000) * np.exp(-np.arange(n) / (0.003 * RATE))
+        i = int(at * RATE)
+        crack[i:i + n] += burst * amp
+    rustle_n = int(0.35 * RATE)
+    rustle = fft_filter(drng.normal(0, 1, rustle_n), RATE, hp=2500, lp=9000) *         np.sin(np.pi * np.arange(rustle_n) / rustle_n) * 0.18
+    crack[int(0.16 * RATE):int(0.16 * RATE) + rustle_n] += rustle
+    out["seal"] = [crack]
     return out
 
 

@@ -591,11 +591,14 @@ def on_night(game, where: str) -> bool:
                 p = game.player
                 beats.director(game.world)["left"] = {"what": left, "x": p.x, "y": p.y,
                                                       "day": int(game.moment.total_days)}
+                if left == "dead":
+                    game.cue("dead")  # (D.5)
             return True
     return False
 
 
-LEFT = ("carcass",)  # what a beat may leave at your camp (beats.json `leaves`; drawn by ui/gfx/scenes.camp)
+LEFT = ("carcass", "dead")  # what a beat may leave at your camp (beats.json `leaves`; drawn by ui/gfx/scenes.camp:
+#   the beast's carcass, the Risen's dead standing at the edge of the light)
 
 
 def left_at_camp(game) -> str | None:

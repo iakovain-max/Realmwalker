@@ -52,7 +52,8 @@ def backdrop_for(game, name: str | None, rec: dict | None = None) -> str | None:
     if name == "here":
         p = game.player
         if game.in_local and game.local is not None and game.local.kind == "dungeon":
-            return "barrow"
+            site = game.world.site_at(p.x, p.y)
+            return "hideout" if site is not None and vignette.is_hideout(game.world, site.id) else "barrow_hall"
         return vignette.for_place(game, {"tile": [p.x, p.y]})
     return None
 

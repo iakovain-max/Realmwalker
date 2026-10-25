@@ -40,6 +40,7 @@
     "risen_at_camp": {
       "family": "villain",
       "picture": "camp_night",
+      "leaves": "dead",
       "where": ["camp"],
       "time": ["night"],
       "when": {"villain.kind": "risen", "adventure": {"chapter": ["dead", "binds", "night"], "at_large": true}},

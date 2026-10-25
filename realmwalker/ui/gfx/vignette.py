@@ -3,7 +3,7 @@ words, an event on the road, a chapter's title card or an epilogue page. Show, d
 
     compose(canvas, rect, spec, now, game=None)   paint it in a pixel rect
     for_place(game, place)                         the backdrop for a story's place ({"site"|"settlement"|"tile"})
-    BACKDROPS                                      the fourteen kinds
+    BACKDROPS                                      the sixteen kinds
 
 A spec is {"backdrop": kind, "time": "day"|"dusk"|"night"|"dawn" (else the hour's light), "props": [sprite names],
 "figures": [doll parts lists], "fire": bool, "atmosphere": "mist"|"embers"|"ash"|"haze", "pan": bool}, or simply a
@@ -52,6 +52,12 @@ BACKDROPS = {
                       "feature/weapon_rack"], "fire": True, "sky": True},
     "sickroom": {"ground": "floor/planks_dark", "wall": "wall/white", "props": ["feature/bed", "feature/candles",
                  "feature/stool"], "sky": False},
+    # Expansion 6 D.5: the outlaws' hideout (their camp under the trees) and the halls under a barrow.
+    "hideout": {"far": "hills", "ground": "floor/dirt", "props": ["feature/bedroll", "feature/barrels",
+                "feature/weapon_rack", "feature/horse_post", "feature/crates"], "fire": True, "sky": True,
+                "trees": "tree/pine", "time": "dusk"},
+    "barrow_hall": {"ground": "floor/flagstone", "wall": "wall/stone_gray", "props": ["feature/sarcophagus",
+                    "feature/bones", "feature/candles", "feature/skull_post"], "sky": False, "atmosphere": "mist"},
 }
 SKIES = {"day": ((96, 130, 170), (176, 196, 210)), "dawn": ((70, 74, 110), (220, 160, 120)),
          "dusk": ((40, 36, 70), (190, 104, 70)), "night": ((8, 10, 24), (30, 34, 60))}
@@ -359,6 +365,8 @@ def for_place(game, place: dict | None) -> str:
         return {"inn": "inn", "hall": "hall", "temple": "hall"}.get(part, "square")
     if "site" in place:
         site = w.sites[int(place["site"])]
+        if is_hideout(w, site.id):
+            return "hideout"
         kind = getattr(site, "kind", "")
         if kind in ("barrow", "tomb", "crypt", "cave", "lair"):
             return "barrow"
@@ -373,6 +381,13 @@ def for_place(game, place: dict | None) -> str:
     if w.river[x, y] and not w.road[x, y]:
         return "ford"
     return "road"
+
+
+def is_hideout(world, site_id: int) -> bool:
+    """A living gang keeps its hideout at this site (the outlaws' camp, not the place's old stones)."""
+    from realmwalker.world import factions as fx
+
+    return any(g.site == site_id for g in fx.active_factions(world, "bandit_gang"))
 
 
 def party_figures(game, most: int = 3) -> list:
