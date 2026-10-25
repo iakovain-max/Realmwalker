@@ -482,10 +482,14 @@ def _magic_seen(game, caster) -> None:
 def cast_on_road(game, caster, spell_id: str, target=None, slot_level: int | None = None, scroll=None,
                  hired: bool = False, charge=None) -> list[str]:
     """See `_cast_on_road`; a spell cast may reach a situation's goal (a charm, Knock, a truth read: C.5)."""
+    refused = None if game.tables.spells[spell_id]["target"] == "dead_ally" else \
+        road_problem(game, caster, spell_id, target or caster, scroll=scroll, hired=hired, charge=charge)
     out = _cast_on_road(game, caster, spell_id, target, slot_level, scroll, hired, charge)
     from realmwalker.game.story import goals, situations
 
-    out += situations.on_magic(game, spell_id)  # (a curse lifted, a sickness cured: C.6)
+    faded = scroll is not None and any("fade from the" in line for line in out[:1])  # (a scroll read and lost)
+    if not refused and not faded:
+        out += situations.on_magic(game, spell_id)  # (a curse lifted, a sickness cured: C.6)
     goals.notify(game, "magic")
     return out
 

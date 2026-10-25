@@ -78,7 +78,7 @@
       "for": ["gone_where_not", "wrong_awaits_revenge", "stranger_not_himself", "guilty_protected"],
       "needs": ["asker"],
       "obstacle": {
-        "id": "lie",
+        "id": "lie_asker",
         "kind": "lie",
         "who": "asker",
         "note": ["{asker} is not telling you all of it."],
@@ -258,5 +258,35 @@
         "Someone has seen {lost} alive near {place_site}. The dead may not be dead."
       ]
     }
+  },
+  "talk": {
+    "ask": [
+      "You look troubled. What is it?",
+      "Is something wrong?",
+      "You keep looking at me. Do you want something?",
+      "What has happened here?",
+      "Tell me what the matter is."
+    ],
+    "take": [
+      "I will help you.",
+      "Leave it with me.",
+      "All right. I'll see what can be done.",
+      "I'll do it.",
+      "Say no more. I'll help."
+    ],
+    "refuse": [
+      "It is not my trouble.",
+      "I can't help you. I'm sorry.",
+      "Find someone else.",
+      "I have troubles enough of my own."
+    ],
+    "thanks": [
+      "Thank you. Thank you.",
+      "Gods keep you. I mean it.",
+      "I didn't dare hope. Thank you.",
+      "You don't know what this means.",
+      "Thank you. I'll not forget it."
+    ],
+    "refused": ["Then go. I will manage.", "I see. Well. I asked.", "Everyone says that.", "Of course. Why would you."]
   }
 }

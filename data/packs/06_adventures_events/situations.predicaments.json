@@ -130,7 +130,7 @@
           "id": "debt",
           "kind": "price",
           "who": "creditor",
-          "note": ["{asker} owes {creditor_full} {price_pay}, and cannot pay by {due}."],
+          "note": ["{asker} owes {creditor_full} {price_pay}, and cannot pay {by_due}."],
           "acts": [
             {
               "id": "pay",
@@ -209,13 +209,13 @@
       "meetings": ["shut_shop", "quarrel", "plea", "weeping"],
       "words": {
         "title": ["{asker}'s debt", "What {asker} owes", "A debt to {creditor}"],
-        "stakes": ["{asker}'s promise to {creditor}, due {due}", "{asker}'s debt to {creditor}"],
+        "stakes": ["{asker}'s promise to {creditor}", "{asker}'s debt to {creditor}"],
         "plea": [
           "I promised {creditor} the money {due}. I swore it, before witnesses. I don't have it. I'll lose everything, the house, the trade - everything.",
           "You'll think me a fool. I gave my word to {creditor}, and I can't keep it. {due}, they come for what I owe."
         ],
         "first": [
-          "{asker} owes {creditor} more than {asker} can pay, by {due}.",
+          "{asker} owes {creditor} more than {asker} can pay, {by_due}.",
           "{asker} promised {creditor} money {asker} does not have."
         ],
         "news_lapse": [
@@ -574,10 +574,11 @@
         "stakes": ["whether {asker} can prove the truth before {judge}", "{asker}'s claim against {rival}"],
         "plea": [
           "Everyone knows what was promised me. {rival} says it was never said. Somebody heard it - somebody must have. {judge} decides {due}.",
-          "It's mine by right, and I can't prove it. Help me prove it. Before {due}, before {judge}."
+          "It's mine by right, and I can't prove it. Help me prove it, {by_due}, before {judge}."
         ],
-        "first": ["{asker} must prove a truth before {judge} {due}, against {rival}."]
-      }
+        "first": ["{asker} must prove a truth before {judge}, {by_due}, against {rival}."]
+      },
+      "forge": [["dead_kin", "asker"]]
     },
     "innocent_accused": {
       "name": "An innocent accused",
@@ -691,16 +692,16 @@
         "ops": [["law", "accused", "hanged"], ["news", "news_lapse"]],
         "line": [
           "They hanged {accused} at dawn. {asker} was at the front of the crowd.",
-          "{accused} hanged, {due} as was said. Some say {culprit} was in the crowd, and did not look away."
+          "{accused} hanged, as was said. Some say {culprit} was in the crowd, and did not look away."
         ]
       },
       "clock": [6, 12],
       "meetings": ["stocks", "weeping", "plea", "crier"],
       "words": {
-        "title": ["{accused} accused", "The hanging {due}", "The wrong one"],
+        "title": ["{accused} accused", "The hanging in {town}", "The wrong one"],
         "stakes": [
-          "{accused}'s neck: {judge} hangs {accused_them} {due}",
-          "{accused}, to hang {due} for what {accused_they} did not do"
+          "{accused}'s neck: {judge} means to hang {accused_them}",
+          "{accused}, to hang for what {accused_they} did not do"
         ],
         "plea": [
           "They say {accused} did it. {accused} didn't. I know my own {accused_kin}. They hang {accused_them} {due}. Please. You can ask questions. You can make them listen.",
@@ -1137,7 +1138,8 @@
                 "A knot of hair under the step. Who would - oh."
               ],
               "fail_say": ["It's just bad luck. That's all it is."],
-              "note": ["The curse was laid with old marks on the house; it can be unsaid."]
+              "note": ["The curse was laid with old marks on the house; it can be unsaid."],
+              "pass": false
             },
             {
               "id": "rite",
@@ -1491,7 +1493,7 @@
         "stakes": ["{asker} and {beloved}, and whether {elder} will let them be", "a marriage {elder} forbids"],
         "plea": [
           "I love {beloved}. {elder} says I'll marry {beloved} over {elder_their} dead body - that I'll marry who I'm told. Help us. Or help us go.",
-          "{elder} has found out about {beloved} and me. {elder} wants me married to someone else by {due}."
+          "{elder} has found out about {beloved} and me. {elder} wants me married to someone else {by_due}."
         ],
         "first": ["{asker} loves {beloved}; {elder} forbids it."]
       }
@@ -1576,7 +1578,7 @@
         "title": ["{child}", "Taken by {band}", "{asker}'s {child_kin}"],
         "stakes": ["{child}, {asker}'s {child_kin}, held by {band} at {band_site}", "a child taken for ransom"],
         "plea": [
-          "They took {child}. {band}. They want more than I've ever seen in my life, by {due}, or... or I don't know. I don't know what they'll do.",
+          "They took {child}. {band}. They want more than I've ever seen in my life, {by_due}, or... or I don't know. I don't know what they'll do.",
           "My {child_kin}. {child} is only small. {band} have {child_them} at {band_site}."
         ],
         "first": ["{band} took {asker}'s {child_kin} {child} to {band_site}, for ransom."],
@@ -1942,12 +1944,12 @@
       "meetings": ["funeral", "weeping", "sermon"],
       "words": {
         "title": ["The rite for {dead}", "{dead}, unshriven", "No words for {dead}"],
-        "stakes": ["the rite for {dead}, before {due}", "whether {dead} is laid to rest as the gods ask"],
+        "stakes": ["the rite for {dead}", "whether {dead} is laid to rest as the gods ask"],
         "plea": [
-          "{priest} won't say the words over {dead}. Because of how {dead} lived, {priest} says. If the rite isn't said by {due}... you know what they say happens.",
+          "{priest} won't say the words over {dead}. Because of how {dead} lived, {priest} says. If the rite isn't said {by_due}... you know what they say happens.",
           "The rite. {dead} must have the rite, and {priest} refuses. Speak to {priest}. Please."
         ],
-        "first": ["{priest} will not say the rite for {dead}; {asker} needs it done by {due}."],
+        "first": ["{priest} will not say the rite for {dead}; {asker} needs it done {by_due}."],
         "news_lapse": ["In {town}, the dead went without their rite, and folk talk of omens."]
       },
       "forge": [["dead_kin", "asker"]]
@@ -1977,7 +1979,8 @@
                 "It's the old one's things. Taken from the grave by thieves and hidden out at {place_site}. That's what it wants.",
                 "It says one word, over and over: {place_site}."
               ],
-              "fail_say": ["I don't know what it wants! That's the horror of it."]
+              "fail_say": ["I don't know what it wants! That's the horror of it."],
+              "pass": false
             }
           ]
         }

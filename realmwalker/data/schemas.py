@@ -1656,6 +1656,7 @@ SITUATIONS = Obj({  # situations (game/story/situations.py, C.6)
     "rarity": Obj({"gap": DAY_SPAN, "first": DAY_SPAN, "per_town": Int(min=0, max=5), "per_great": Int(min=0, max=5),
                    "near": Int(min=0, max=12), "turn_chance": Float(min=0, max=1)}, optional=True),
     "roots": Map(List(Str(max_len=40), min_items=1), optional=True),
+    "talk": Map(word_list(2, 160), optional=True),  # ask, take, refuse, thanks, refused (a predicament may have its own)
     "meetings": Map(Obj({"scene": Str(max_len=40), "cast": Map(Str(max_len=30), min_items=1), "letter": Bool(optional=True)}),
                     optional=True),
     "turns": Map(Obj({"when": Str(max_len=10), "for": List(Str(max_len=40), min_items=1),

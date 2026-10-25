@@ -332,3 +332,40 @@ def test_forging_is_quick(life):
             sit["state"] = "done"
     if n:
         assert (time.perf_counter() - t0) / n < 0.05, "a situation is forged in a few milliseconds"
+
+
+def test_a_failed_check_may_be_tried_again_the_next_day(life):
+    game, town = life
+    sit = forced(game, town, "promise_unkept")
+    situations.met(game, sit)
+    talk(game, situations.asker(game, sit), "sit_take")
+    creditor = situations._npc(game, sit, "creditor")
+    conv = Conversation(game, creditor)
+    conv.check = lambda skill, dc: (False, "(failed)")
+    conv.choose(next(c for c in conv.menu() if c.id == "sit_act" and c.data["act"] == "wait"))
+    assert not any(c.data.get("act") == "wait" for c in Conversation(game, creditor).menu())
+    sit["tried"] = {k: v - 1 for k, v in sit["tried"].items()}  # (a day later)
+    assert any(c.data.get("act") == "wait" for c in Conversation(game, creditor).menu())
+
+
+def test_the_heirloom_in_the_pocket_is_the_one_in_the_words(life):
+    game, town = life
+    sit = forced(game, town, "precious_wrong_hands")
+    holder = situations._npc(game, sit, "holder")
+    it = next(i for i in holder.inventory if f"story:{sit['id']}" in i.tags)
+    assert it.name == sit["words"]["heirloom"]
+    assert not sit["words"]["heirloom"].startswith("The "), "a kept name keeps its own small letter"
+
+
+def test_an_ending_is_played_once(life):
+    game, town = life
+    sit = forced(game, town, "blood_owed")
+    situations.met(game, sit)
+    talk(game, situations.asker(game, sit), "sit_take")
+    sit["clock"]["due"] = int(game.moment.total_days)
+    situations.daily(game)
+    assert sit["state"] == "lapsed"
+    assert sit["ending"] == "lapsed"
+    marked = situations._npc(game, sit, "marked")
+    lm = goals._town_map(game, town.id)
+    assert sum(g["who"] == {"npc": marked.id} for g in lm.meta.get("graves", [])) == 1, "one grave, not two"

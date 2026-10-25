@@ -155,7 +155,7 @@
           "I did nothing. I did nothing!",
           "Ask anyone. I was home.",
           "Please. Please, I swear it.",
-          "Mother, tell them!"
+          "{asker}, tell them!"
         ]
       },
       "cast": ["accused", "asker"],

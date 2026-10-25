@@ -296,7 +296,8 @@ def _free(game, sit: dict, n, child: bool = False) -> bool:
     f = n.flags
     if not n.alive or f.get("story") or f.get("visitor") or f.get("companion") or f.get("escort") is not None:
         return False
-    if f.get("gone") or f.get("moved_on") or f.get("captive") or f.get("with_party") or f.get("law"):
+    if f.get("gone") or f.get("moved_on") or f.get("captive") or f.get("with_party") or \
+            f.get("law") in ("accused", "jailed", "hanged"):
         return False
     if n.job in ("wayfarer", "adventurer", "pilgrim") or (n.job == "child") != child:
         return False
@@ -381,7 +382,12 @@ def _make_person(game, s, job: str, name: str | None, sex: str | None, age: int 
         npc.age = int(age)
     npc.x, npc.y = home
     people.add(game.world, town, npc)
+    _MADE.append(npc.id)
     return npc
+
+
+_MADE: list[int] = []  # (people made while one situation is forged: taken away again if it fails)
+MAKES = ("kin", "tie", "stranger")
 
 
 def _life_of(n) -> dict:
@@ -396,6 +402,17 @@ KIN_JOB = {"son": "labourer", "daughter": "labourer", "brother": "labourer", "si
            "husband": "labourer", "wife": "labourer", "father": "labourer", "mother": "labourer"}
 KIN_SEX = {"son": "male", "brother": "male", "husband": "male", "father": "male", "daughter": "female",
            "sister": "female", "wife": "female", "mother": "female"}
+
+
+def _kin_age(kind: str, of, rng, young: bool = False) -> int:
+    """How old a kin is beside the one they are kin to: a parent a generation older, a child younger."""
+    if young:
+        return rng.randint(6, 12)
+    if kind in ("son", "daughter"):
+        return max(16, of.age - rng.randint(18, 30))
+    if kind in ("father", "mother"):
+        return of.age + rng.randint(18, 30)
+    return max(16, of.age + rng.randint(-6, 6))
 
 
 @bind("kin")
@@ -425,13 +442,14 @@ def _bind_kin(game, s, sit, spec, rng):
         name = forge(game.world, game.tables).given(of.culture, KIN_SEX.get(kind, "male"), rng,
                                                      avoid={t["name"] for t in lf["ties"]})
         t = {"kind": kind, "name": name, "npc": None, "figure": None, "state": "alive",
-             "age": rng.randint(6, 12) if spec.get("young") else
-             max(16, of.age - rng.randint(18, 30)) if kind in ("son", "daughter") else of.age}
+             "age": _kin_age(kind, of, rng, bool(spec.get("young")))}
         lf["ties"].append(t)
         named = [t]
     if not named:
         return None
     t = rng.choice(named)
+    if t.get("age") is None:
+        t["age"] = _kin_age(t["kind"], of, rng, bool(spec.get("young")))
     age = t.get("age")
     young = age is not None and int(age) < 14
     job = "child" if young else spec.get("job") or KIN_JOB.get(t["kind"], "labourer")
@@ -663,7 +681,10 @@ def _cast(game, s, root: dict, pid: str, qid: str, rng) -> dict | None:
            "goals": _story_tag(copy.deepcopy(spec["goals"]), qid), "obstacles": [], "turn": None, "meeting": None, "state": "latent",
            "ways": [], "flags": [], "used": [], "quest": None, "threat": root.get("threat"), "adventure": None,
            "ending": None, "tone": None, "made": today, "met": None, "life": None, "words": {}, "journal": []}
-    for role, rs in spec["roles"].items():
+    _MADE.clear()
+    first = [r for r, rs in spec["roles"].items() if rs["bind"] not in MAKES and rs.get("or") not in MAKES]
+    for role in first + [r for r in spec["roles"] if r not in first]:  # (those who make no one first)
+        rs = spec["roles"][role]
         entry = None
         for how in (rs["bind"], rs.get("or")):
             fn = BINDS.get(how) if how else None
@@ -672,7 +693,7 @@ def _cast(game, s, root: dict, pid: str, qid: str, rng) -> dict | None:
         if entry is None:
             if rs.get("optional"):
                 continue
-            _unbind(game, sit)
+            _undo(game, sit)
             return None
         sit["roles"][role] = entry
         n = game.world.npcs.get(entry["npc"]) if entry.get("npc") is not None else None
@@ -688,13 +709,38 @@ def _cast(game, s, root: dict, pid: str, qid: str, rng) -> dict | None:
     sit["clock"] = {"due": today + rng.randint(int(lo), int(hi)), "half": False}
     sit["meeting"] = _meeting(game, sit, spec, rng)
     if sit["meeting"] is None:
-        _unbind(game, sit)
+        _undo(game, sit)
         return None
+    sit["roles"] = {r: sit["roles"][r] for r in spec["roles"] if r in sit["roles"]}  # (the data's order)
     sit["turn"] = _pick_turn(game, sit, spec, rng)
+    _write_words(game, sit, rng, kept_only=True)  # (the heirloom's name, before it is put in a pocket)
     for op in spec.get("forge", []):  # (what is already so when it is forged: the lost one gone to the band)
         _op(game, sit, op)
     _write_words(game, sit, rng)
+    _MADE.clear()
     return sit
+
+
+def _undo(game, sit: dict) -> None:
+    """A forging that failed leaves nothing behind: its people let go, those it made taken away, its waiting roles
+    forgotten."""
+    from realmwalker.game import townlife
+
+    _unbind(game, sit)
+    w = game.world
+    for nid in _MADE:
+        n = w.npcs.pop(nid, None)
+        town = w.towns.get(n.settlement) if n is not None else None
+        if town is not None and nid in town.npcs:
+            town.npcs.remove(nid)
+        townlife.forget_person(nid)
+        for other in w.npcs.values():
+            for t in (other.flags.get("life") or {}).get("ties", []):
+                if t.get("npc") == nid:
+                    t["npc"] = None
+    _MADE.clear()
+    for key, recs in list(w.politics.get("story_people", {}).items()):
+        w.politics["story_people"][key] = [r for r in recs if r.get("sit") != sit["id"]]
 
 
 def _story_tag(t, qid: str):
@@ -736,9 +782,10 @@ def _meeting(game, sit: dict, spec: dict, rng) -> dict | None:
 
 def _pick_turn(game, sit: dict, spec: dict, rng) -> dict | None:
     turns = data(game).get("turns") or {}
+    ids = {ob["id"] for ob in sit["obstacles"]}
     fits = [tid for tid, t in sorted(turns.items()) if not tid.startswith("_") and sit["predicament"] in t.get("for", [])
             and all(r in sit["roles"] for r in t.get("needs", []))
-            and (not t.get("threat") or sit.get("threat"))]
+            and (not t.get("threat") or sit.get("threat")) and (t.get("obstacle") or {}).get("id") not in ids]
     if not fits or not rng.chance(_rarity(game)["turn_chance"]):
         return None
     return {"id": rng.choice(fits), "state": "hidden"}
@@ -781,14 +828,23 @@ def _name(game, rec: dict) -> tuple[str, str, str]:
     return name, name, name
 
 
+def _due_words(game, day: int, by: bool = False) -> str:
+    """When the clock runs out, in words: "tomorrow", "in 6 days" ("by tomorrow", "within 6 days")."""
+    left = day - _today(game)
+    if left <= 1:
+        return "by tomorrow" if by else "tomorrow"
+    return f"within {left} days" if by else f"in {left} days"
+
+
 def _values(game, sit: dict) -> dict:
     from realmwalker.game.people import pronouns
     from realmwalker.game.quests import when_text
 
     w = game.world
     s = w.settlements[sit["town"]]
-    out = {"town": s.name, "due": when_text(game, int(sit["clock"]["due"])), "you": game.leader.name.split()[0],
-           "dead": sit["root"].get("name") or "the dead"}
+    due = int(sit["clock"]["due"])
+    out = {"town": s.name, "due": _due_words(game, due), "by_due": _due_words(game, due, by=True),
+           "you": game.leader.name.split()[0], "dead": sit["root"].get("name") or "the dead"}
     for role, rec in sit["roles"].items():
         full, first, title = _name(game, rec)
         out[role] = first
@@ -834,11 +890,20 @@ def _fill(game, sit: dict, lines, key: str) -> str:
                                      _values(game, sit)))
 
 
-def _write_words(game, sit: dict, rng=None) -> None:
-    """The words met once, written at forging and kept: the title, the stakes, the plea, the journal's first line."""
+def _write_words(game, sit: dict, rng=None, kept_only: bool = False) -> None:
+    """The words met once, written at forging and kept: the things named (`keep`: the heirloom, the prize), the title,
+    the stakes, the plea, the journal's first line. A kept name keeps its own first letter ("the stall by the gate")."""
     spec = spec_of(game, sit)
     wd = spec.get("words", {})
-    for key in ["thing"] + list(wd.get("keep", [])) + ["title", "stakes", "plea", "first"]:
+    for key in wd.get("keep", []):
+        if wd.get(key) and key not in sit["words"]:
+            r = game.world.rng.child(f"situation/{sit['id']}/words/{key}")
+            tpl = r.choice(list(wd[key]))
+            text = textgen.fill(tpl, r, game.tables.adventures.get("words", {}), _values(game, sit))
+            sit["words"][key] = text[:1].lower() + text[1:] if tpl[:1].islower() else text
+    if kept_only:
+        return
+    for key in ("title", "stakes", "plea", "first"):
         if wd.get(key):
             sit["words"][key] = _fill(game, sit, wd[key], key)
 
@@ -862,13 +927,13 @@ def asker(game, sit: dict):
 
 
 def on_enter_town(game, s) -> None:
-    """Into a peopled town: a situation may be forged here (a natural moment), and one waiting here may be met."""
+    """Into a peopled town: a situation may be forged here (a natural moment). It is met a little later, by the town's
+    clock (`on_tick`), never on the step through the gate."""
     if due_here(game, s):
         town = game.world.towns.get(s.id)
         if town is not None and town.flags.get("sit_next") is None:
             _next_gap(game, s, game.world.rng.child(f"situation/first/{s.id}"), first=True)  # (not on the first step)
         maybe_forge(game, s)
-    _try_meet(game, s)
 
 
 def on_tick(game, lm, s) -> None:
@@ -894,6 +959,12 @@ def _try_meet(game, s) -> bool:
         cast = _meet_cast(game, sit)
         if len(cast) < len(m.get("cast", {})):
             continue
+        from realmwalker.game import townlife
+
+        folk = [game.world.npcs[i] for i in cast.values()]
+        if any(not n.alive or not n.present or townlife.asleep(game, n) for n in folk):
+            continue  # (they are about by day: the meeting waits for them)
+        _write_words(game, sit)
         words = {k: v for k, v in _values(game, sit).items() if isinstance(v, str)}
         words["hook"] = words.get("plea", "")
         a = asker(game, sit)
@@ -912,6 +983,7 @@ def met(game, sit: dict) -> None:
     """The situation is seen: it is in the hero's journal, as theirs."""
     if sit["state"] != "latent":
         return
+    _write_words(game, sit)  # (said now: the days left are today's)
     sit["state"] = "met"
     sit["met"] = _today(game)
     sit["life"] = _life(game)
@@ -967,13 +1039,20 @@ def _acts(game, sit: dict, npc) -> list[tuple[dict, dict | None]]:
     for a in spec.get("acts", []):
         if a.get("who") == role:
             out.append((a, None))
+    tried = sit.get("tried", {})
+    today = _today(game)
     return [(a, ob) for a, ob in out if f"{(ob or {}).get('id', '')}/{a['id']}" not in sit["used"]
+            and int(tried.get(f"{(ob or {}).get('id', '')}/{a['id']}", -1)) < today
             and all(_cond(game, sit, c) for c in a.get("needs", []))
             and not any(_cond(game, sit, c) for c in a.get("unless", []))]
 
 
 def _price(sit: dict, a: dict) -> int:
     return int(a.get("price", 0)) * int(sit.get("price_mult", 1))
+
+
+def _talk(game, key: str) -> list[str]:
+    return (data(game).get("talk") or {}).get(key) or ["..."]
 
 
 def talk_choices(conv) -> list:
@@ -990,12 +1069,12 @@ def talk_choices(conv) -> list:
         asks = role == spec.get("asks", "asker")
         wd = spec.get("words", {})
         if sit["state"] == "latent" and asks:
-            out.append(Choice("sit_ask", _fill(game, sit, wd.get("ask") or ["You look troubled. What is it?"], "ask"),
+            out.append(Choice("sit_ask", _fill(game, sit, wd.get("ask") or _talk(game, "ask"), "ask"),
                               data={"sit": sit["id"]}))
         elif sit["state"] == "met" and asks and "refused" not in sit["flags"]:
-            out.append(Choice("sit_take", _fill(game, sit, wd.get("take") or ["I will help you."], "take"),
+            out.append(Choice("sit_take", _fill(game, sit, wd.get("take") or _talk(game, "take"), "take"),
                               data={"sit": sit["id"]}))
-            out.append(Choice("sit_refuse", _fill(game, sit, wd.get("refuse") or ["It is not my trouble."], "refuse"),
+            out.append(Choice("sit_refuse", _fill(game, sit, wd.get("refuse") or _talk(game, "refuse"), "refuse"),
                               data={"sit": sit["id"]}))
         if sit["state"] != "taken":
             continue
@@ -1026,12 +1105,12 @@ def talk_choose(conv, choice) -> None:
         conv.npc_says(esc(sit["words"].get("plea") or _fill(game, sit, wd.get("plea"), "plea")))
         met(game, sit)
     elif choice.id == "sit_take":
-        conv.npc_says(esc(_fill(game, sit, wd.get("thanks") or ["Thank you. Thank you."], "thanks")))
+        conv.npc_says(esc(_fill(game, sit, wd.get("thanks") or _talk(game, "thanks"), "thanks")))
         for line in take(game, sit):
             conv.note(line)
     elif choice.id == "sit_refuse":
         sit["flags"].append("refused")
-        conv.npc_says(esc(_fill(game, sit, wd.get("refused") or ["Then go. I will manage."], "refused")))
+        conv.npc_says(esc(_fill(game, sit, wd.get("refused") or _talk(game, "refused"), "refused")))
         from realmwalker.game.people import change_disposition
 
         change_disposition(conv.npc, -5)
@@ -1042,7 +1121,8 @@ def talk_choose(conv, choice) -> None:
 
 
 def do_act(conv, sit: dict, aid: str, obid: str | None) -> None:
-    """An act with a person of the story: its price paid, its check rolled; then what passing it does."""
+    """An act with a person of the story: its check rolled, its price paid if it passed; then what passing it does.
+    A failed check may be tried again the next day."""
     from realmwalker.game.law import take_money
 
     game = conv.game
@@ -1061,8 +1141,10 @@ def do_act(conv, sit: dict, aid: str, obid: str | None) -> None:
     if price and ok:  # (paid only when it is taken: a haggle that fails costs nothing)
         take_money(game, price)
         conv.paid = True
-    if ok or not a.get("retry"):
+    if ok:
         sit["used"].append(key)
+    else:
+        sit.setdefault("tried", {})[key] = _today(game)  # (another day, another try)
     way = a.get("way") or ("pay" if price else "talk")
     if ok:
         said = _fill(game, sit, a.get("say"), f"say/{key}")
@@ -1188,6 +1270,10 @@ def _make_work(game, sit: dict) -> list[str]:
     if spec.get("item") and sit["words"].get(spec["item"]):  # (what the work brings back: the lost one's ring)
         q["target"]["item"] = q["words"]["item"] = sit["words"][spec["item"]]
     q["situation"] = sit["id"]
+    left = int(sit["clock"]["due"]) - _today(game)
+    if int(q["days"]) > left:  # (the work needs longer than the clock gave: the trouble waits for it)
+        sit["clock"]["due"] = _today(game) + int(q["days"])
+    q["days"] = int(sit["clock"]["due"]) - _today(game)
     out = quests.accept(game, q)
     sit["quest"] = q["id"]
     return out
@@ -1358,8 +1444,15 @@ def _o_dead_kin(game, sit, role):
     dead = next((t for t in ties if t.get("state") == "dead"), None)
     if dead is None:
         alive = [t for t in ties if t.get("state", "alive") == "alive" and lives.KIN_OF[t["kind"]] in ("parent", "spouse")]
-        if not alive:
-            return []
+        if not alive:  # (a parent the life never named, named now)
+            from realmwalker.world.names import forge
+
+            r = game.world.rng.child(f"situation/{sit['id']}/dead")
+            kind = r.choice(["father", "mother"])
+            name = forge(game.world, game.tables).given(n.culture, KIN_SEX[kind], r,
+                                                        avoid={t["name"] for t in lf.get("ties", [])})
+            alive = [{"kind": kind, "name": name, "npc": None, "figure": None, "state": "alive"}]
+            _life_of(n)["ties"].append(alive[0])
         dead = alive[0]
         dead["state"] = "dead"
         lives._grave(game, game.world.settlements[sit["town"]], {"name": dead["name"]})
@@ -1520,7 +1613,8 @@ def _o_standing(game, sit, n):
 def _story_item(game, sit, key: str):
     from realmwalker.rules.items import Item
 
-    name = _fill(game, sit, spec_of(game, sit).get("words", {}).get(key) or [key], f"item/{key}")
+    name = sit["words"].get(key) or _fill(game, sit, spec_of(game, sit).get("words", {}).get(key) or [key],
+                                          f"item/{key}")
     base = spec_of(game, sit).get("base", "gold_ring")
     base = base if base in game.tables.items else "gold_ring"
     return Item(uid=0, def_id=base, qty=1, made_at=game.world.time, name=name, tags=[f"story:{sit['id']}"])
@@ -1647,13 +1741,19 @@ def finish(game, sit: dict, e: dict, lapsed: bool = False) -> list[str]:
     if sit["state"] not in LIVE:
         return []
     out = []
-    out += _turn(game, sit, "end") if not lapsed and e.get("tone") == "good" else []
-    for o in e.get("ops", []):
-        out += _op(game, sit, o)
     sit["ending"] = e.get("id", "lapsed" if lapsed else "end")
     sit["tone"] = e.get("tone", "bitter")
     sit["state"] = "lapsed" if lapsed else ("failed" if sit["tone"] == "bitter" else "done")
     sit["ended"] = _today(game)
+    out += _turn(game, sit, "end") if not lapsed and e.get("tone") == "good" else []
+    for o in e.get("ops", []):
+        out += _op(game, sit, o)
+    forged = {o[1] for o in spec_of(game, sit).get("forge", []) if o[0] == "law"}
+    for role in sit["roles"]:
+        n = _npc(game, sit, role)
+        law = n.flags.get("law") if n is not None and n.alive else None
+        if law == "pardoned" or (law == "accused" and role in forged):
+            n.flags.pop("law", None)  # (it is over: the pardoned are simply free; the matter it began is closed)
     line = _fill(game, sit, e.get("line"), f"end/{sit['ending']}")
     if line:
         sit["journal"].append(line)
