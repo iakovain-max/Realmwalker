@@ -85,7 +85,9 @@ def no_flight(battle, game, adv: dict, f) -> str:
 
 def on_fled(game, adv: dict) -> None:
     """It got away from a fight before its finale: that was its one escape in this tale."""
-    if adv.get("escaped"):
+    from realmwalker.game.story import finale
+
+    if adv.get("escaped") or finale._is_finale(adv):
         return
     adv["escaped"] = {"day": int(game.moment.total_days)}
     lst = spec(game).get("escaped") or []
@@ -133,6 +135,8 @@ def is_early(game, adv: dict) -> bool:
     """Would the villain dead now be dead before its finale?"""
     from realmwalker.game.story import finale
 
+    if any(st["kind"] == "slay" for st in _story().open_steps(adv)):
+        return False  # (killed where the tale meant it to be: the beast at the bait)
     return adv["state"] == "active" and not adv.get("early") and not finale._is_finale(adv) and \
         _finale_step(adv) is not None and _finale_step(adv)["state"] == "open"
 
@@ -153,9 +157,12 @@ def begin(game, adv: dict) -> bool:
     adv["early"] = {"kind": kind, "day": int(game.moment.total_days), "chapters": len(adv["chapters"])}
     _unbind_finale(game, adv)
     words = spec(game).get("kinds", {}).get(kind, {})
+    dropped = set()
     for st in (ch or {}).get("steps", []):
         if st["state"] == "open":
             st["state"] = "done" if st["kind"] in ("slay", "finale") else "dropped"
+            dropped.add(st["id"])
+    game.quests[:] = [q for q in game.quests if not (q.get("adventure") == adv["id"] and q.get("step") in dropped)]
     if ch is not None:
         ch["state"] = "done"
     if kind == "cat_away":
@@ -231,7 +238,8 @@ def on_forge(game, adv: dict, t: dict) -> None:
         return
     r = spec(game)["returning"]
     adv["returning"] = {"times": int(rec["times"]), "from": rec["adv"]}
-    adv["attention"] = max(int(adv.get("attention", 0)), int(r["attention"]))
+    if rec.get("life") == adv["hero"]["life"]:  # (it remembers the one who put it down)
+        adv["attention"] = max(int(adv.get("attention", 0)), int(r["attention"]))
 
 
 def on_boss(battle, game, adv: dict, f) -> str:

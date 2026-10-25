@@ -94,8 +94,8 @@ def prepare(battle, game) -> list[str]:
         if not tag or tag.get("role") != "villain":
             continue
         adv = advs.get(tag.get("adv"))
-        if adv is None or adv.get("state") != "active":
-            continue
+        if adv is None or adv.get("state") != "active" or adv.get("boss_dead"):
+            continue  # (what was left of its band in its den, after it fell elsewhere, is no boss: E.4)
         battle.__dict__.setdefault("story_bosses", {})[f.id] = adv["id"]
         template = template_for(game.tables, adv)
         from realmwalker.game import story

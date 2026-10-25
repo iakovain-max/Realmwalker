@@ -151,6 +151,36 @@ def test_a_set_piece_never_met_passes_by_itself(made, tables, monkeypatch):
     assert st["state"] == "done" and adv["state"] == "won", "law 6: never stuck"
 
 
+def test_a_set_piece_slipped_without_a_fight_is_lived_through(made, tables, monkeypatch):
+    game, adv, t = _tale(made, tables, "outlaw")
+    _early_only(monkeypatch, tables, adv, "contingency")
+    _villain_dies(game, adv)
+    st = story.chapter(adv)["steps"][0]
+    beats.director(game.world)["card"] = None
+    deeds.endure(game, adv, st)
+    assert game.encounter is not None and st["fighting"] is not False
+    game.encounter = None  # (got past them: slipped away, talked, paid)
+    game.world.time += 1440
+    deeds.daily(game)
+    assert st["state"] == "done" and adv["state"] == "won", "law 6: an encounter left without a battle is lived through"
+
+
+def test_a_beast_is_it_and_a_planned_kill_is_no_early_end(made, tables, monkeypatch):
+    from realmwalker.game.story import words as wordsmod
+
+    game, adv, t = _tale(made, tables, "outlaw")
+    _step(adv, "finale")["state"] = "open"
+    story.chapter(adv)["steps"].append({"id": "x.slay", "kind": "slay", "state": "open", "optional": False,
+                                        "gives": [], "target": {}})
+    assert not early.is_early(game, adv), "killed at its slay step, as the tale meant"
+    fig = SimpleNamespace(kind="beast", name="the Grey", epithet="", slayer=-1, died=None, id=-1)
+    monkeypatch.setattr(threats, "villain_figure", lambda w, t: fig)
+    monkeypatch.setattr(wordsmod, "_beast_word", lambda game, fig: "wolf")
+    monkeypatch.setattr(wordsmod, "_victim", lambda w, fig: ("someone", "long ago"))
+    w = wordsmod.for_adventure(game, adv)
+    assert (w["he"], w["him"], w["his"]) == ("it", "it", "its")
+
+
 def test_nothing_left_behind_and_the_tale_ends_at_once(made, tables, monkeypatch):
     game, adv, t = _tale(made, tables, "outlaw")
     _early_only(monkeypatch, tables, adv, "cat_away")

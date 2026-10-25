@@ -20,6 +20,7 @@ def for_adventure(game, adv: dict | None) -> dict:
         out["villain"] = name
         out["villain_short"] = fig.name if fig is not None else name
         out["beast"] = _beast_word(game, fig) if fig is not None else "beast"
+        out.update({"he": "it", "him": "it", "his": "its", "He": "It", "His": "Its"})  # (a beast's; a person's below)
         victim = _victim(w, fig)
         out["victim"] = victim[0]
         out["victim_year"] = victim[1]

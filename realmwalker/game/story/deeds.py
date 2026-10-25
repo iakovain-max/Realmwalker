@@ -390,7 +390,7 @@ def endure(game, adv: dict, st: dict | None) -> list[str]:
     """The set piece's battle (the beat's op `endure`): a band of its group, every one of them tagged with the step."""
     if st is None or st["state"] != "open" or st["kind"] != "endure":
         return []
-    st["fighting"] = True
+    st["fighting"] = _today(game)
     _encounter(game, adv, st, "endure", st["target"]["group"], say(game, adv, "endure_here"))
     return []
 
@@ -473,10 +473,12 @@ def on_battle(game, result) -> None:
         else:
             _wave(game, adv, st)
     battle = getattr(game, "battle", None)
-    fought = {(f.creature.story or {}).get("step") for f in getattr(battle, "fighters", [])
+    fought = {((f.creature.story or {}).get("adv"), (f.creature.story or {}).get("step"))
+              for f in getattr(battle, "fighters", [])
               if getattr(f, "creature", None) is not None and getattr(f.creature, "story", None)}
     for adv, st in _open(game, ("endure",)):
-        if not st.get("fighting") or not (st["id"] in fought or (adv["id"], st["id"], "endure") in seen):
+        if st.get("fighting") in (None, False) or not ((adv["id"], st["id"]) in fought or
+                                                       (adv["id"], st["id"], "endure") in seen):
             continue
         st["fighting"] = False
         if result.outcome in ("defeat", "surrendered"):
@@ -558,7 +560,15 @@ def daily(game) -> None:
         if night is not None and _today(game) > int(night) + 1:  # (missed, or its waves left unfought)
             key = "hold_missed" if int(st.get("wave", 0)) == 0 else "hold_lost"
             step_failed(game, adv, st, say(game, adv, key, place=_place_words(game, st["target"]["place"])))
-    for adv, st in _open(game, ("endure",)):  # (never on the road nor at camp all that while: it passed you by)
+    for adv, st in _open(game, ("endure",)):  # (its band got past without a fight - slipped, talked, paid - is lived
+        fought = st.get("fighting")           # through; never on the road nor at camp all that while: it passed you by)
+        if fought not in (None, False) and _today(game) > int(fought) and game.encounter is None and \
+                game.battle is None:
+            st["fighting"] = False
+            line = say(game, adv, "endure_won")
+            story.journal(adv, line, _today(game))
+            story.step_done(game, adv["id"], st["id"])
+            continue
         due = st["target"].get("due")
         if due is not None and _today(game) > int(due) + ENDURE_WAIT and not st.get("fighting"):
             line = say(game, adv, "endure_passed")
