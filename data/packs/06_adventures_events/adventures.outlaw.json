@@ -181,7 +181,7 @@
         {
           "id": "pardoned",
           "if": ["flag:pardoned"],
-          "ops": [["outlaw_pardoned"], ["danger", "home", -1], ["history", "outlaw_parley", 2]],
+          "ops": [["outlaw_pardoned"], ["danger", "home", -1]],
           "pages": {
             "place": [
               "The wagons go out of {town} with no more guard than a boy and a dog now. Prices have come down by half.",
@@ -218,7 +218,7 @@
         {
           "id": "broken",
           "if": ["boss_dead"],
-          "ops": [["outlaw_broken"], ["danger", "home", -1], ["fame", 3], ["history", "outlaw_broken", 3]],
+          "ops": [["outlaw_broken"], ["danger", "home", -1], ["fame", 3]],
           "pages": {
             "place": [
               "{town} hung what was left of {gang}'s rag over the gate, upside down, and the carters spit on it as they pass.",
@@ -253,9 +253,46 @@
           }
         },
         {
+          "id": "spared",
+          "if": ["boss_taken", "flag:villain_spared"],
+          "ops": [["outlaw_broken"], ["danger", "home", -1], ["fame", 2]],
+          "pages": {
+            "place": [
+              "{town} heard that you let {villain} go, and did not know what to make of it. The roads are open, all the same.",
+              "There is no gallows in {town} this year. Some say that is a shame. The carters do not say anything; they drive.",
+              "{gang} is scattered, and its captain gone over the hills with nothing. {town} watches the hills, now and then.",
+              "The gang's hideout stands empty at {home}. The children of {town} dare each other to go up and touch the door."
+            ],
+            "patron": [
+              "{patron} paid what was promised, and then asked, very carefully, why the captain was not hanged.",
+              "\"Mercy,\" said {patron}, and turned the word over like a bad coin. \"Well. The roads are open.\"",
+              "{patron} wrote in the ledger: gang broken, captain let go. Then sat a long time looking at the second part.",
+              "{patron} will not say you were wrong. {patron} will not say you were right, either."
+            ],
+            "carter": [
+              "{carter} says a man who has been let go owes you a life, and that is worth more than a hanging.",
+              "{carter} drives the road to {dest} again, and looks at every stranger twice.",
+              "{carter} swears {villain_short} was seen at a fair in another country, selling horses, and looking old.",
+              "{carter} shrugged when told. \"Dead or gone, it's all one to the road.\""
+            ],
+            "suspect": [
+              "{suspect} was hanged at the crossroads. The town spared one, and would not spare two.",
+              "{suspect} fled {town} on the night the gang broke, and nobody went after them.",
+              "{suspect} was put out of {town} with the clothes on their back, and told never to come back.",
+              "{suspect} stood in the stocks for a week, and then was let go, and went."
+            ],
+            "hero": [
+              "You let {villain} go with nothing but {his} life. Whether that was mercy or folly, the years will tell.",
+              "{gang} is broken, and its captain gone. You chose not to hang {him}. You will remember the choice.",
+              "You beat {villain} and let {him} walk. Not everyone would have.",
+              "The gang is gone from the roads. Its captain is somewhere, owing you a life."
+            ]
+          }
+        },
+        {
           "id": "taken",
           "if": ["boss_taken"],
-          "ops": [["outlaw_broken"], ["danger", "home", -1], ["fame", 3], ["history", "outlaw_broken", 3]],
+          "ops": [["outlaw_broken"], ["danger", "home", -1], ["fame", 3]],
           "pages": {
             "place": [
               "{town} turned out to watch {villain} hang. Some cheered. More of them only watched.",

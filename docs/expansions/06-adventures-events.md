@@ -327,7 +327,7 @@ with an opening tale. ADVENTURES.md §5.12 (the first hour), §6.2.
   rally, hold (waves as successive battles with no rest, at a settlement or a road tile laid by `game/arena.build`, on
   a set night: the calendar's new moon if it has one, else "in N days"), rite, escort, confront – written on Part C's
   goal predicates where they fit, and able to carry a situation (§8.10); the Part D selectors.
-- [ ] D.3 The Risen and the Outlaw Lord, first forms, with all their words *(parallel)*; their scenes (the dead at
+- [x] D.3 The Risen and the Outlaw Lord, first forms, with all their words *(parallel)*; their scenes (the dead at
   the camp's edge by night; a warning nailed to your door; the inside man followed through the streets at midnight);
   their arenas (the ford at night with burning carts across the road, fire on the field; the hideout); their
   villains' minimal reactions (a letter in an old hand, as a page; a test on the road).

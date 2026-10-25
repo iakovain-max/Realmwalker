@@ -295,13 +295,27 @@ def test_the_hideout_in_a_real_fight_and_the_gang_broken(made, tables):
     assert adv["ending"] == "broken" and not gang.active and not fig.alive and t["state"] == "ended"
 
 
-def test_the_captain_taken_alive_hangs(made, tables):
+def test_the_captain_taken_alive_hangs_once_judged(made, tables):
     game, adv, t = _tale(made, tables, "outlaw")
     _open_chapter(game, adv, 2)
     fig = threats.villain_figure(game.world, t)
     boss = SimpleNamespace(story={"adv": adv["id"], "role": "villain"}, name=fig.full_name())
     story.on_battle(game, SimpleNamespace(outcome="victory", dead=[], captives=[boss], fled=[]))
+    assert adv["state"] == "active" and adv["boss_taken"], "the aftermath judges the captain first"
+    assert story.on_fate(game, boss, "capture") is None
     assert adv["ending"] == "taken" and not fig.alive and t["state"] == "ended"
+
+
+def test_the_captain_spared_lives_and_the_gang_is_broken(made, tables):
+    game, adv, t = _tale(made, tables, "outlaw")
+    _open_chapter(game, adv, 2)
+    fig = threats.villain_figure(game.world, t)
+    gang = threats.gang_of(game.world, t)
+    boss = SimpleNamespace(story={"adv": adv["id"], "role": "villain"}, name=fig.full_name())
+    story.on_battle(game, SimpleNamespace(outcome="victory", dead=[], captives=[boss], fled=[]))
+    story.on_fate(game, boss, "spare")
+    assert adv["ending"] == "spared" and fig.alive and not gang.active and t["state"] == "ended"
+    assert not any("hang" in p["text"] for p in adv["epilogue"] if p["about"] == "hero")
 
 
 def test_both_tales_pass_the_start_up_check(tables):

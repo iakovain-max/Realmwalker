@@ -17,7 +17,7 @@ from realmwalker.core import textgen
 CONDITIONS: dict[str, object] = {}
 PREFIXES: dict[str, object] = {}
 OPS: dict[str, object] = {}
-WON = ("slain", "laid_to_rest", "destroyed", "destroyed_for_now", "broken", "taken", "pardoned",
+WON = ("slain", "laid_to_rest", "destroyed", "destroyed_for_now", "broken", "taken", "spared", "pardoned",
        "redeemed")  # (endings the hero won)
 
 
@@ -333,6 +333,10 @@ def _lay(game, adv, kind: str, said: str) -> list[str]:
     remember(w, game.moment.year, "laid_to_rest", text, importance=3, sites=[site.id],
              figures=[fig.id] if fig is not None else [], player=True, data={"adventure": adv["id"]})
     _settle(game)
+    from realmwalker.game.story import words as wordsmod
+
+    said = textgen.fill(said, w.rng, {}, {k: v for k, v in wordsmod.for_adventure(game, adv).items()
+                                          if isinstance(v, str)})
     return [f"<good>{esc(name)} {said}</>"]
 
 
@@ -345,7 +349,7 @@ def _risen_laid(game, adv, *args) -> list[str]:
 @consequence("risen_destroyed")
 def _risen_destroyed(game, adv, *args) -> list[str]:
     """Destroyed with what bound him broken: he is gone for good."""
-    return _lay(game, adv, "destroyed", "is gone, and what bound him to the world is broken with him.")
+    return _lay(game, adv, "destroyed", "is gone, and what bound {him} to the world is broken with {him}.")
 
 
 def _gang(game, adv):
@@ -366,8 +370,9 @@ def _outlaw_broken(game, adv, *args) -> list[str]:
     if t is None or gang is None or not gang.active:
         return []
     site = game.world.sites[int(t["home"]["site"])] if "site" in t["home"] else None
-    if fig is not None and fig.alive and site is not None:
-        if adv.get("boss_taken"):
+    fate = adv.get("villain_fate")
+    if fig is not None and fig.alive and site is not None and fate not in ("spare", "rob"):  # (let go: they live)
+        if adv.get("boss_taken") and fate != "execute":
             pol = past._politics(game)
             pol.die(fig, f"hanged, taken alive by {game.leader.name}")
             fig.died_at = f"X{site.id}"

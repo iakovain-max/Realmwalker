@@ -24,14 +24,13 @@
           "A letter has been left for you where you would be sure to find it, and the seal on it is a crown pressed into dull black wax. The writing is a hand you could not read as a child, tall and slanting and very old."
         ]
       ],
-      "ops": [["letter", "risen_letter", "dead"]],
       "choices": [
-        {"label": ["Burn it."], "ops": [["flag", "burned_his_letter"]],
+        {"label": ["Burn it unread."], "ops": [["flag", "burned_his_letter"]],
          "result": [
            "The wax spits and the paper curls, and for a moment the smoke smells of a tomb. You keep the ash.",
            "The flame goes green at the edge and then white, and the smell is of old earth. By the time it is ash your hands have stopped shaking."
          ]},
-        {"label": ["Read it again, and keep it."], "ops": [["flag", "kept_his_letter"], ["clue", "villain"]],
+        {"label": ["Break the seal and read it."], "ops": [["letter", "risen_letter", "dead"], ["flag", "kept_his_letter"], ["clue", "villain"]],
          "result": [
            "You read it until you know the shape of {his} hand. It is a proud hand. It is afraid of nothing, except perhaps of being forgotten.",
            "You read it twice, slowly, and it is as if a cold hand were laid on your shoulder and left there. The pride in it is real, and so is the loneliness under the pride."
@@ -166,8 +165,8 @@
       "picture": "place",
       "text": [
         [
-          "The chronicle says it plainly: {villain} was killed by {slayer}, and not in a fair fight. {slayer}'s blood still runs in the best families of {town}, and {villain_short} has not forgotten it.",
-          "The roll is plain and the hand that wrote it was not kind: {villain} fell to {slayer} in {died_year} at a feast that was meant for peace. {slayer}'s line still holds land round {town}, and the dead have a long memory for who sat at that table.",
+          "The chronicle says it plainly: {villain} was killed by {slayer}, and not in a fair fight. The blood of {slayer} still runs in the best families of {town}, and {villain_short} has not forgotten it.",
+          "The roll is plain and the hand that wrote it was not kind: {villain} fell to {slayer} {died_year} at a feast that was meant for peace. The line of {slayer} still holds land round {town}, and the dead have a long memory for who sat at that table.",
           "Every record agrees on one thing: {slayer} did not win fairly. The families of {town} are proud of the deed and ashamed of how it was done, and {villain_short} knows both."
         ]
       ],

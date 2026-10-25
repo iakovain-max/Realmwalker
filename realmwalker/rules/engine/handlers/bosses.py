@@ -64,6 +64,7 @@ def _raise(battle, f, spec) -> None:
 
     cid = spec.get("creature", "skeleton")
     if cid not in battle.t.creatures or f.state != "fighting":
+        f.phased = False  # (not now: it comes when the boss stands and fights again)
         return
     line = battle.rng.choice(spec["lines"])
     battle.say(line, "danger")

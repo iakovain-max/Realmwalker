@@ -9,10 +9,10 @@
       "{witness} will only tell it by day, with the door open. \"My boy. Three winters in the ground. He passed the gate at midnight, and the dogs lay down with their noses under their paws. I said his name, and he did not stop.\""
     ],
     "risen_past": [
-      "{villain} died in {died_year}, killed by {slayer}, and was laid in {home} with {his} crown and {his} guard round {him}. The old songs say {he} swore to come back for what {he} lost. Someone has opened the barrow, and {he} has kept {his} word. {His} true name is cut on the stone under {his} feet; say it, and {he} will remember {he} is dead.",
-      "In {died_year} {slayer} brought {villain} down, and the people of {area} raised {home} over {him} and swore {his} name should be forgotten. It was scraped out of the records, but not off the stone. Two things hold {him}: the crown that went into the dark on {his} brow, and {his} true name, which only the stone remembers.",
-      "{villain} was the last of {his} line. {slayer} killed {him} in {died_year}, and the dead {king} was laid in {home} with the crown still on and a guard set to keep the door. {His} true name was cut on the stone so that a priest could call {him} to rest; that name is the key to {him}, and the crown is the chain.",
-      "The songs of {area} agree on little, but they agree that {villain} died in {died_year} at the hand of {slayer}, and was put into {home} still wearing {his} crown. The crown ties {him} to the world. {His} true name, which only the oldest stones remember, is what a priest would use to untie {him}."
+      "{villain} died {died_year}, killed by {slayer}, and was laid in {home} with {his} crown and {his} guard round {him}. The old songs say {he} swore to come back for what {he} lost. Someone has opened the barrow, and {he} has kept {his} word. {His} true name is cut on the stone under {his} feet; say it, and {he} will remember {he} is dead.",
+      "{villain} was brought down {died_year} by {slayer}, and the people of {area} raised {home} over {him} and swore {his} name should be forgotten. It was scraped out of the records, but not off the stone. Two things hold {him}: the crown that went into the dark on {his} brow, and {his} true name, which only the stone remembers.",
+      "{villain} was the last of {his} line. {He} was killed {died_year} by {slayer}, and the dead {king} was laid in {home} with the crown still on and a guard set to keep the door. {His} true name was cut on the stone so that a priest could call {him} to rest; that name is the key to {him}, and the crown is the chain.",
+      "The songs of {area} agree on little, but they agree that {villain} died {died_year} at the hand of {slayer}, and was put into {home} still wearing {his} crown. The crown ties {him} to the world. {His} true name, which only the oldest stones remember, is what a priest would use to untie {him}."
     ],
     "risen_letter": [
       "To the one who meddles,\n\nI was a {king} in this country when your people were herding goats in the hills. I have slept, and now I am awake, and I have not forgotten what was taken from me.\n\nGo home. This is not your quarrel, and you are only flesh.\n\n{villain}",
@@ -89,9 +89,9 @@
             "A bell rings in {town} at dusk, not for any service, but for warning. The living are to be indoors before the last of the light."
           ],
           "reveal": [
-            "Now you know the name they would not say in {town}: {villain}, who died in {died_year}, and someone has opened {his} barrow and woken {him} on purpose.",
+            "Now you know the name they would not say in {town}: {villain}, who died {died_year}, and someone has opened {his} barrow and woken {him} on purpose.",
             "Someone came with a spade and a book and opened the way, and the dead have been walking out of {home} ever since. The name they walk for is {villain}.",
-            "The nights have a shape now. Someone opened {home} from outside, and {villain} was waiting on the other side. {He} died in {died_year}, and {he} has not forgotten how.",
+            "The nights have a shape now. Someone opened {home} from outside, and {villain} was waiting on the other side. {He} died {died_year}, and {he} has not forgotten how.",
             "It is clear in your head now: a living hand, an old anger, and a long dead name. {villain} wants {town}, and the dead of the field are {his} first soldiers."
           ],
           "steps": [
@@ -192,7 +192,7 @@
         {
           "id": "laid_to_rest",
           "if": ["flag:laid"],
-          "ops": [["risen_laid"], ["danger", "home", -1], ["fame", 3], ["history", "risen_laid", 3]],
+          "ops": [["risen_laid"], ["danger", "home", -1], ["fame", 3]],
           "pages": {
             "place": [
               "{town} took the iron down from its doors at midsummer. The children go up past {home} to the berry bushes again, and nothing watches them.",
@@ -229,8 +229,7 @@
         {
           "id": "destroyed",
           "if": ["boss_dead", "key:anchor"],
-          "ops": [["risen_destroyed"], ["clear_site", "home"], ["danger", "home", -1], ["fame", 3],
-                  ["history", "risen_destroyed", 3]],
+          "ops": [["risen_destroyed"], ["clear_site", "home"], ["danger", "home", -1], ["fame", 3]],
           "pages": {
             "place": [
               "{town} burned what was left of {villain_short} on the green, and broke the crown with a smith's hammer, and threw the pieces in the river. Nobody sleeps badly in {town} now.",

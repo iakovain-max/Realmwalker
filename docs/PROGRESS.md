@@ -46,6 +46,38 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-10-25 (morning): Adventures & Events Part D, task D.3 — the Risen and the Outlaw Lord — branch `dlc/06-adventures-events`
+
+- Two new tales a town may ask you to take on, besides the Beast:
+  - **The Risen.** A dead king (or queen) of the history walks out of a barrow, and the dead of the country walk for
+    them. You hear it from someone who saw their own dead go by, read the old battlefield where the graves are open
+    from below, and bring the one who was taken back out of the barrow's upper hall. Then you learn who the king was
+    and their true name (from the temple's priest, the old soldier who stands with you, the chronicle of the field,
+    or the gods), fetch the crown that binds them from a crypt, deal with the cultists who woke them, and decide
+    whether the town hears the truth about the one who killed the king long ago. Last, you raise the town and hold
+    the ford on the night the dead come: wave after wave in the dark, with the carts burning across the road, the
+    grass catching, and the townsfolk you raised fighting beside you. Then either you lay the king to rest at the
+    barrow's door with the crown (no fight at all), or you go down and fight them in their hall, where at half their
+    strength the sarcophagi open and more of the dead climb out.
+  - **The Outlaw Lord.** A gang's captain bleeds the roads out of a town, and someone in the town sells them the
+    caravans' days. You walk a carter's wagon to the next town as bait, hear it from someone robbed, and take one of
+    the gang alive (who tells you the hideout's back way). Then you find the man in town: follow him at midnight
+    through the streets without being seen (creep with z), or watch the loading yard, or ask, or pray; face him with
+    it; and choose: parley or break them. At the hideout's door a parley can end it without a drop of blood (the gang
+    is pardoned through the lord), or you go in - by the back way, if you know it - and fight the captain, whose men
+    come running when the captain is hurt.
+- The villains answer you: the dead king writes to you in an old, proud hand (a letter you keep and can read again),
+  stands their dead at the edge of your firelight at night, and tests you on the road; the gang knifes a warning to
+  your door at the inn and stops you for a toll.
+- Each tale ends several ways: the king laid to rest, destroyed with their crown (gone for good), or destroyed
+  without it (back in a month or two); the gang pardoned, broken, or its captain hanged; or the villain wins.
+- In conversation you now ask each kind of trouble in its own words ("I hear the dead are walking here.").
+
+Decisions (Anton may want to change): the dead king's reach is 30 miles-of-map (barrows lie far from towns, and at 16
+their doom touched nobody); a threat with no town near it offers no tale; the rite needs the crown and a Religion
+check (DC 13), and a failed rite means the fight; the parley needs Persuasion DC 14; two of the militia fight beside
+you at the ford; the toll on the road is 5 gold; the hunter's story of the Beast stays the Beast's.
+
 ### Session, 2026-10-25 (morning): Adventures & Events Part D, task D.2 — ten new kinds of step for tales — branch `dlc/06-adventures-events`
 
 - Tales can now ask ten new things of you, all played with what the game already has: **rescue** someone held on an

@@ -131,8 +131,10 @@ def _militia(battle, game, advs: dict) -> list[str]:
         return []
     for i in range(MILITIA):
         c = spawn(game.tables, "guard", battle.rng.child(f"militia/{i}"), 9100 + i, now=int(battle.now or 0))
-        c.name = "a man of the militia" if i % 2 == 0 else "a woman of the militia"
-        battle.add_ally(c, leader, "story_ally")
+        if not c.named:
+            c.name = "militiaman" if i % 2 == 0 else "militiawoman"
+        f = battle.add_ally(c, leader, "story_ally")
+        f.auto = True  # (townsfolk fight as they can: you need not give them orders)
     return ["<good>The people you raised are here with you, spears and pitchforks and torches.</>"]
 
 

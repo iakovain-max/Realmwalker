@@ -565,14 +565,43 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part D, task D.3 (*the Risen and the Outlaw Lord,
-first forms, with all their words (parallel helpers); their scenes (the dead at the camp's edge by night; a warning
-nailed to your door; the inside man followed through the streets at midnight); their arenas (the ford at night with
-burning carts, fire on the field; the hideout); their villains' minimal reactions (a letter in an old hand, as a
-page; a test on the road)*), on branch `dlc/06-adventures-events`. Read docs/expansions/06-adventures-events.md Part
-D, ADVENTURES.md §6.2 (both blueprints in full), §7 (how storybook prints a tale) and the beast blueprint in
-data/packs/06_adventures_events/adventures.json as the finished example; tests/test_deeds.py has a test blueprint
-that uses every Part D step.
+Next session starts at: Expansion 6, **Adventures & Events**, Part D, task D.4 (*the opening, ADVENTURES.md §5.12:
+arriving into a crisis (the gate shut and a crowd at the mill), a summons (a letter), present terror (waking as the
+gang's captive), built on the threats near the start town and staged; `story.begin` offers it; tests
+tests/test_first_hour.py*), on branch `dlc/06-adventures-events`. Read docs/expansions/06-adventures-events.md Part
+D, ADVENTURES.md §5.12, story.begin and the three blueprints (adventures.json, adventures.risen.json,
+adventures.outlaw.json).
+D.3 (2026-10-25, realmwalker-b): the blueprints `risen` and `outlaw` as pack fragments (adventures.risen.json,
+adventures.outlaw.json; their beats beats.risen/outlaw.json; tempers proud/grieving and cunning/cruel, moves and boss
+templates in villains.risen/outlaw.json; scene midnight_tail in scenes.outlaw.json; Part D's step words, three a key,
+in adventures.deeds.json - deeds.DEFAULT_WORDS are now only fallbacks). Words of both by two sonnet helpers. Engine:
+threats.json kind `ask`/`learn_ask`/`band` (`story.asking`, `villain_group`); learn `answer` (`story.truth_told`, also
+for divination and talk) and any step's `note` (its journal line, filled at forging); selectors `skill(<skill>,
+<place>)` (a check route) and `tail(<role>)` (`story.on_town_tick` from townlife.tick: 23:00-03:00 on the person's
+town map, once a night, starts midnight_tail with `then` {adv, step, finishes}; stage._learn calls
+`story.learned_by_following`); beat condition `key`, ops `letter` (words table, hand; the page opens, kept in the pack)
+and `finish` (ends the tale with no finale: the rite, the parley); ending condition `boss_taken` (a living person
+villain taken alive ends the tale: story.on_battle), consequences risen_laid / risen_destroyed (`politics["laid"]`, the
+scar laid, history, threats.settle), outlaw_broken (past.den_leader_slain or hanged when taken, past.den_falls),
+outlaw_pardoned (Politics.fall, history, the realm's standing); WON has destroyed_for_now and taken; boss phase `raise`
+(`creature`, `count`: add_ally on the boss's side, kind "raised"); the hold's `field` -> PendingEncounter.field ->
+arena.FIELDS["ford"] (road, a shallow river with a ford, four carts across the road, fires; fire.on_battle_start
+lights a field's `fires`); finale._militia (two guards beside you in a hold's wave with the key militia); words
+slayer, died_year, gang, he/him/his/He/His/king/man; KEY_WORDS anchor, name, militia, ford, backway, inside;
+situations' inside `blueprints` (the hunter who will not hunt is the beast's); first words filled. forge.fitting:
+no stakes, no tale; the risen's reach 16 -> 30 (barrows lie 20-33 tiles from towns: none had stakes). Storybook:
+Part D steps printed, a tale checked only against its own word tables (another blueprint's prefix skipped), band
+roles. test_story_hooks ends the other kinds' threats (the beast's hooks were the only ones). tests/test_risen_outlaw.py
+(15). The fresh review's fixes: a villain taken alive waits for the aftermath (`adv["boss_taken"]`, `taken_day`;
+`story.on_fate` ends the tale by the fate: spare/rob -> ending "spared", the captain lives; execute -> "broken";
+capture/interrogate -> "taken", hanged; story.daily ends one never judged); `{slayer}` falls back to "those who
+wanted him/her dead" and `{died_year}` is a phrase ("in 812", "340 years before the Reckoning"), the data reworded
+(no "{slayer}'s", no "in {died_year}"); the letter is written only when its seal is broken (risen_letter's second
+choice); `asking` and `_lay` fill the villain's pronouns; bond kinds "story_ally" and "raised" (combat.FLESH_BONDS)
+die as anything dies and say his, not its; the militia are on Auto; one chronicle entry per ending (the
+consequences write it); a raise phase that could not happen is not spent. Not yet: storyplay and the autoplay bot have no moves for Part D's steps (D.5's measure needs them); no
+pictures for the new beats beyond "here"/"place"/"camp_night" (D.5); the dead left at the camp is a beat, not a
+picture (story.LEFT has only the carcass). No save format change. Checks: full suite, autoplay clean, smoke ok.
 D.2 (2026-10-25, realmwalker-a): Part D's step kinds in steps.py (bind; `Step.goal(st)`: a goal-language test that
 finishes a step however it was made true, for rescue free(who) when an npc, fetch holds(you, tag), escort at(who,
 to)) and their game side in the new `game/story/deeds.py` (docstring has the API): `setup(game, adv)` when a

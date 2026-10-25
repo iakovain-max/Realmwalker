@@ -168,7 +168,13 @@ def asking(game, adv: dict, key: str, default: str) -> str:
     """What the hero says of a tale's villain (threats.json kind `ask` / `learn_ask`), with its name."""
     t = threat_of(game, adv) if adv is not None else None
     text = game.tables.threats["kinds"].get((t or {}).get("kind", ""), {}).get(key) or default
-    return text.replace("{villain}", _villain_name(game, adv) if adv is not None else "it")
+    if adv is None:
+        return text.replace("{villain}", "it")
+    from realmwalker.core import textgen
+    from realmwalker.game.story import words as wordsmod
+
+    words = {k: v for k, v in wordsmod.for_adventure(game, adv).items() if isinstance(v, str)}
+    return textgen.fill(text, game.world.rng, {}, dict(words, villain=_villain_name(game, adv)))
 
 
 def tag_band(creatures: list, adv_id: str, name: str | None, role: str = "villain", step: str | None = None) -> None:
@@ -234,6 +240,10 @@ def daily(game) -> None:
         return
     d["day"] = today
     d["at"] = [int(game.player.x), int(game.player.y)]
+    for adv in active(game):  # (a villain taken alive whom no aftermath judged: the lord's justice, D.3)
+        if adv.get("boss_taken") and int(adv.get("taken_day", today)) < today:
+            for line in endings.finish(game, adv):
+                game.say(line, "story")
     from realmwalker.game.story import work
 
     work.daily(game)  # (commissions from the factions you serve: C.2)
@@ -492,7 +502,7 @@ def on_town_tick(game, lm, town) -> None:
     you follow (a learn step's `tail` route: the gang's man in town) slips out, and the scene of following them
     begins - once a night (D.3)."""
     hour = game.moment.hour
-    if not (hour >= 23 or hour < 3) or game.busy:
+    if not (hour >= 23 or hour < 3) or game.busy or not game.in_local:
         return
     from realmwalker.game.people import npcs_in
     from realmwalker.game.story import stage
@@ -658,6 +668,9 @@ def on_battle(game, result, actor=None) -> None:
             for st in open_steps(adv):
                 if st["kind"] in ("slay", "finale"):
                     st["state"] = "done"
+            if how == "taken":
+                adv["taken_day"] = int(game.moment.total_days)
+                continue  # (the aftermath judges the captain first: on_fate ends the tale with the fate chosen)
             for line in endings.finish(game, adv):
                 game.say(line, "story")
         else:
@@ -675,9 +688,22 @@ def _villain_is_person(game, adv: dict) -> bool:
 
 
 def on_fate(game, creature, fate: str) -> str | None:
-    """A story foe taken alive is judged in the aftermath (fight.decide_captive): what they tell, or None."""
-    from realmwalker.game.story import deeds
+    """A story foe taken alive is judged in the aftermath (fight.decide_captive): what they tell, or None. A tale's
+    villain taken alive ends the tale by the fate chosen: spared or robbed and let go (the codeword villain_spared),
+    else given to the lord's justice or put to death (D.3)."""
+    from realmwalker.game.story import beats, deeds, endings
 
+    tag = getattr(creature, "story", None) or {}
+    adv = adventures(game.world).get(tag.get("adv"))
+    if tag.get("role") == "villain" and adv is not None and adv["state"] == "active" and adv.get("boss_taken"):
+        adv["villain_fate"] = fate
+        if fate == "execute":  # (put to death where they knelt: the gang broken, as if they fell fighting)
+            adv["boss_taken"], adv["boss_dead"] = False, True
+        if fate in ("spare", "rob"):
+            beats.OPS["flag"](game, {"adv": adv["id"]}, "villain_spared")
+        for line in endings.finish(game, adv):
+            game.say(line, "story")
+        return None
     return deeds.on_fate(game, creature, fate)
 
 
