@@ -46,6 +46,34 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-10-25 (morning): Adventures & Events Part D, task D.1 — the risen and the outlaw lord as threats — branch `dlc/06-adventures-events`
+
+- Two new dangers live in the world beside the named beasts. **The risen**: a king or chieftain of the history
+  buried in a barrow deep enough for two levels wakes. Graves are found opened from below and dogs howl at the barrow;
+  then **the dead walk the roads at night** within a day or two of it (you meet them in the dark, with their own
+  words), the nearest village is **haunted** (fires at every gate, iron over the doors); then a hamlet **empties** as
+  its sleepers walk out to the barrow; and if nobody stops it, the dead march: a village is emptied and held by them,
+  and the country round grows more dangerous. **The outlaw lord**: every gang with a living captain is one. His men
+  take tolls on the roads (you meet them at the ford or behind a rope across the way), the nearest town's roads are
+  **bled** (a thin, dear market), the band grows bold and recruits, and at the end a town **pays the gang tribute**,
+  until the gang falls.
+- The world fights back: priests or a hermit may lay a risen king to rest on their own, the lords still hang gangs
+  (which ends their outlaw lord and lifts the tribute), and when a captain dies his band's new captain carries on his
+  scheme. Putting the barrow king down yourself, or breaking a gang, ends its threat at once.
+- New gangs that take to the roads while you play become outlaw lords too.
+- Their tales (chapters, the patron, the finale) come in D.2 and D.3: until then these threats move and end in the
+  world, but nobody yet asks you to take them on.
+
+Decisions (Anton may want to change): only barrows two levels deep make risen kings (so that the taken can be held
+above the king's hall, as the design wants), which means a risen threat is always tier 2 or more (a wight is too
+strong for a first-level band); the nearest battlefield within 32 tiles is remembered with the threat for the tale
+to use; the dead on the roads come only by night until the last stage; in a threat's reach there are two to three
+times as many meetings on the land at night (risen) or one and a half to two times as many (outlaw), the extra ones
+its bands; the gang's doom is a town paying tribute and a
+bigger band (a second hideout waits for Part G, which adds places); the world's own laying to rest is a 0.8% weekly
+chance. Because the world's budget of stirring threats is now shared by three kinds, fewer beasts stir at the start
+and notice boards show fewer beast pleas until D.3 gives the other two their tales (the first-day hook still comes).
+
 ### Session, 2026-10-25 (morning): Adventures & Events Part C, task C.10 — situations inside adventures, and the proof — **Part C merged into `main`**
 
 - **The Beast's hunt now runs through people's troubles.** The one who saw the beast may *not want to talk*: their

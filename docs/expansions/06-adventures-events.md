@@ -320,7 +320,7 @@ rarity and income measures pass. ADVENTURES.md §5.15–5.16, §6.7–6.11, §7,
 ### Part D – The Risen, the Outlaw Lord, and the opening
 *Done when*: both blueprints play end to end in their first forms, shown as well as told, and every new life starts
 with an opening tale. ADVENTURES.md §5.12 (the first hour), §6.2.
-- [ ] D.1 Threat kinds *risen* (from `tombs` and `scars`; the barrow at least two levels deep) and *outlaw lord* (from
+- [x] D.1 Threat kinds *risen* (from `tombs` and `scars`; the barrow at least two levels deep) and *outlaw lord* (from
   active gangs), with schemes, signs (as marks and scenes where they can be: the emptied hamlet, the dead on the road
   at night), bounded dooms and the world's own endings (politics already hangs gangs).
 - [ ] D.2 Step kinds rescue, fetch, defeat, capture (through `story.on_fate` from `fight.decide_captive`), recruit,

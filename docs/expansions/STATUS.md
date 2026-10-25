@@ -565,11 +565,36 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part D, task D.1 (*threat kinds risen and outlaw lord*:
-from `tombs` and `scars` (the barrow at least two levels deep) and from active gangs, with schemes, signs as marks and
-scenes, bounded dooms and the world's own endings), on branch `dlc/06-adventures-events`. Read
-docs/expansions/06-adventures-events.md Part D and ADVENTURES.md §5.1, §5.12, §6.2 first. Part D's steps (D.2) can
-carry a situation the way C.10's witness and hunter do (`situations.for_step`, predicaments with `inside`).
+Next session starts at: Expansion 6, **Adventures & Events**, Part D, task D.2 (*step kinds rescue, fetch, defeat,
+capture (through `story.on_fate` from `fight.decide_captive`), recruit, rally, hold, rite, escort, confront*, on Part C's
+goal predicates where they fit, able to carry a situation (§8.10), and the Part D selectors), on branch
+`dlc/06-adventures-events`. Read docs/expansions/06-adventures-events.md Part D, ADVENTURES.md §6.2 (the Risen and
+the Outlaw Lord in full), §8.5 (the generator and the steps) and game/story/steps.py first.
+D.1 (2026-10-25, realmwalker-a): threats.json kinds `risen` (from "tombs": `threats.risen_sources`, barrows with
+`dungeon.depth_for` >= 2 not in `politics["laid"]`; `source.scar` = `nearest_scar` within twice the reach or None;
+kind `creature` "wight", so always tier >= 2) and `outlaw` (from "gangs": `gang_sources`, active bandit_gang with a
+living leader and a site; `source.faction`; `gang_of(world, t)`; creature "bandit_captain"); both have `tempers: []`
+and `blueprints: []` until D.3 (so `forge.fitting` is empty, `_can_take` false: no hooks offered; `story.notices`
+now checks `_can_take` too). Stages: risen omens / walking (status haunted, roads restless_dead by night) / emptying
+(emptied "hamlet", danger 1) / march (doom: emptied "village" + haunted, danger 1); outlaw tolls / bleeding (status
+bled) / bold (op gang grow, danger 1, roads bandit_gang) / tribute (doom: op mark extorted, gang grow). New stage ops
+`mark` (a lasting mark, `by` = the gang's faction id, remembered in history) and `gang` ("grow": military, wealth, news
+threat_gang_grows); `emptied` takes which "nearest"/"hamlet"/"village" and passes over places already emptied. A
+stage's `roads` {group, night, boost, intro} (schema THREAT_STAGE) is read by `threats.on_the_road`/`road_words` from
+`encounters.roll_encounter` (chance x boost; the added share, 1 - 1/boost, is the threat's band with its words). A
+kind's `ends` {chance, outcome, text} is the world's own ending (`_ends_alone`, handlers in `threats.ENDINGS`: risen
+`_laid_by_others` writes `politics["laid"]`; news politics.json threat_laid). `villain_lives` (public now): risen while
+the tomb holds him and he is not laid; outlaw while his band is active (`_new_captain` hands the threat to a new
+leader); `gone_outcome` (laid, fallen, slain); `threats.settle(world, day)` ends them at once (called at the end of
+`past.on_battle`). `_recover` lifts `extorted` when its band falls. `Politics.new_gang` calls `seed_from(self,
+"outlaw", figure=, faction=)`. marks.json: haunted, bled, extorted (no world-map sign yet: D.5's pictures).
+story/check reports an unknown road band, kind creature, or an `ends` without handler or news. Autoplay
+`_check_threats` uses `villain_lives` and checks a risen's tomb and an outlaw's band. Tests: tests/test_threat_kinds.py
+(eight); test_threats' beast tests stir a beast when the shared budget left none stirring. For D.3: the talk choice
+"I hear something is killing your people." (story.talk_choices) is the beast's words - give each kind its own
+(a threats.json `ask` line); `story.villain_group` returns None for non-beasts (the risen's group is barrow_wight,
+the outlaw's bandit_hideout); the stages' `flavour` words (every kind's) are still not shown anywhere. No save
+format change in D.1 (D.5 bumps it for the part). Checks: quick suite green, autoplay clean.
 C.10 (2026-10-25, realmwalker-b): situations inside adventures: a predicament with `inside` {step, route, chance}
 (data situations.inside.json, meetings sit_turned_away / sit_hunter_yard in scenes.inside.json) is made only by
 `situations.for_step(game, adv, st, npc, route=)` (from story._show_tale for the witness step, `_hunter_situation`
