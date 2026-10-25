@@ -286,10 +286,10 @@ def test_one_who_joins_the_party_is_with_it(life):
         if hired is not None:
             break
     assert hired is not None, "somebody in this world will come along"
-    sit = situation(game, town, {"x": {"npc": hired.id}}, {"g": ["with_party", "x"], "h": ["not", ["at", "x",
-                                                                                                     "town_of(x)"]]})
+    sit = situation(game, town, {"x": {"npc": hired.id}}, {"g": ["with_party", "x"]})
     companions.hire(game, hired)
-    assert reached(sit) in ("pay", "talk") and reached(sit, "h") == reached(sit)
+    assert reached(sit) in ("pay", "talk")
+    assert goals.test(game, sit, ["at", "x", "town_of(x)"]), "one who walks with you is where you are"
 
 
 # ---------------------------------------------------------------------------- words, the law, the world
@@ -382,3 +382,48 @@ def test_a_reached_goal_is_told_to_whoever_listens(life):
     finally:
         goals.REACTIONS.pop()
     assert heard == [(sit["id"], "g", "favour")] and sit["ways"][0]["by"] == "talk"
+
+
+def test_a_band_is_dead_only_when_all_of_it_is(life):
+    game, town = life
+    sit = situation(game, town, {"gang": {"band": "the Red Hands"}}, {"g": ["dead", "gang"], "h": ["gone", "gang"]})
+    enc = make_encounter(game, "bandits", game.world.rng.child("goals/half"))
+    if len(enc.creatures) < 2:
+        enc.creatures = enc.creatures * 2
+    for c in enc.creatures:
+        c.story = {"situation": sit["id"], "role": "gang"}
+    battle = fight.start_battle(game, enc.creatures, enc.intro, title="Bandits")
+    foes = [f for f in battle.fighters if f.side == FOE]
+    foes[0].hp, foes[0].state = 0, "dead"
+    for f in foes[1:]:
+        f.state = "fled"
+    battle.outcome = "victory"
+    fight.finish_battle(game)
+    assert sit["roles"]["gang"].get("state") != "dead" and reached(sit) is None, "the rest of them ran"
+    if sit["roles"]["gang"].get("state") == "fled":
+        assert reached(sit, "h") == "fight"
+
+
+def test_a_door_forced_is_force_and_a_freed_captive_is_where_you_take_them(life):
+    from realmwalker.game import dungeon
+
+    game, town = life
+    lm = game.local
+    p = game.player
+    for c in game.party:
+        c.inventory = [it for it in c.inventory if it.def_id != "thieves_tools"]
+    sit = situation(game, town, {}, {"g": ["at", "you", {"settlement": town.id}]})
+    x, y = p.lx + 1, p.ly
+    dungeon.set_terrain(lm, x, y, "door_locked")
+    lm.features[(x, y)] = {"dc": -40}
+    assert dungeon.bump(game, x, y)
+    assert dungeon.terrain_id(game, lm, x, y) == "door_open" and reached(sit) == "force"
+
+    a, = folk(game, town, 1)
+    a.flags["captive"] = True
+    sit = situation(game, town, {"x": {"npc": a.id}}, {"g": ["at", "x", "home_of(x)"]})
+    lm.features[(1, 1)] = {"type": "captive", "npc": a.id, "name": a.name}
+    quests.free_captive(game, lm, 1, 1)
+    assert reached(sit) is None, "freed, but not home yet"
+    _step_into(game, lm.building_at(*a.home))
+    assert reached(sit) == "wait", "brought home"

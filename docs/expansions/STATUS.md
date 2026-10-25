@@ -584,6 +584,12 @@ leaving a building in `_move_local` (wait, sneak while sneaking), `dungeon.unloc
 `magic.cast_on_road` (magic), companions.hire/dismiss (party), `quests.free_captive` (a feature's `npc`: freed and
 `with_party`; force), `story.daily` (day: wait). Start-up: `check.problems` runs `goals.self_problems` and
 `goals.data_problems` (situations.json predicaments' `roles`/`places` and `goals` [{id, test}]). No save format change.
+Review fixes: a band role is "dead" only when every tagged member in the fight died (else taken/gone/fled, nothing
+while some still stand; `notify("battle", result=, battle=)` runs after the battle is closed); `listens` is worked out
+at each notify (a turn's new goal hears); one `with_party` is `at` wherever the hero is (a freed captive led home);
+a locked door's notice comes from `dungeon.bump` after it opens (sneak picked / force); `GameState.pick_up` notifies
+"item" (wait, or sneak). Open for C.6: `flags["with_party"]` of a freed captive is never cleared (clear it when they
+are home), `renown.flags["debts"]`/`["pardoned"]` and npc `gone`/`law` have no writers yet, no favour/companion ways.
 C.4 (2026-10-25, realmwalker-a): a life is `npc.flags["life"]` {ties [{kind (husband/wife/son/daughter/father/mother/
 brother/sister or lover/rival/creditor/patron/enemy), name, npc id|None, figure id|None, state alive/dead/levied,
 age?}], want, fear (ids in lives.json), secrets [{kind, to?, faction?, known}], things [{kind, words, state

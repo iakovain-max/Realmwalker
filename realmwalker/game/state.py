@@ -1366,6 +1366,9 @@ class GameState:
         self.cue("pickup")
         self.pass_seconds(LOCAL_STEP_SECONDS)
         self.dirty = True
+        from realmwalker.game.story import goals
+
+        goals.notify(self, "item", "sneak" if self.sneaking else "wait")  # (taken up from the ground or a chest: C.5)
         return len(pile)
 
     def drop(self, uid: int, qty: int | None = None) -> bool:

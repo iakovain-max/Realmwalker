@@ -403,13 +403,13 @@ def finish_battle(game) -> Aftermath:
         from realmwalker.game import story
 
         story.on_battle(game, result, actor)  # (a story's foes, by their tag: Expansion 6)
-        from realmwalker.game.story import goals
-
-        goals.notify(game, "battle", result=result)  # (a situation's goals: C.5)
     game.battle = None
     game.battle_actor = None
     game.aftermath = after
     game.dirty = True
+    from realmwalker.game.story import goals
+
+    goals.notify(game, "battle", result=result, battle=battle)  # (a situation's goals: C.5)
     return after
 
 

@@ -13,7 +13,9 @@ a path of the forge: `home_of(r)`, `work_of(r)`, `town_of(r)`. A thing: an item 
 ("story:<id>"). What the predicates read, besides the world's own records: a band role's `state` (dead, taken, fled,
 gone: set by `notify` from a fight's tags `{"situation", "role"}` and a captive's fate), `npc.flags` "captive" (held by
 captors), "law" (accused, jailed, pardoned, hanged; the people ops of C.6 write it), "gone" (moved away for good),
-"knows" (truths), "with_party"; the hero's truths `renown.flags["truths"]`, a situation's `flags` (codewords).
+"knows" (truths), "with_party" (one who walks with you is where you are); the hero's truths
+`renown.flags["truths"]` and debts `["debts"]` [{to, paid}], a situation's `flags` (codewords). The people ops and the
+situations of C.6 write what the game does not yet (an npc's law state, "gone", the hero's debts and pardon).
 
 `problems(test, roles=None)` checks a test against the whitelist (story/check.py runs it at start-up on every goal the
 data names). `notify(game, kind, way=None, **refs)` is the one call from the game: whenever something happens that
@@ -250,7 +252,9 @@ def p_at(game, sit, r, where) -> bool:
         return bool(game.in_local) and game.local is not None and game.local.kind == "settlement" and \
             _in_part(game, pl, game.local, p.lx, p.ly)
     if kind == "npc" and x is not None:
-        if not x.alive or _held(x) or x.flags.get("gone") or x.flags.get("moved_on") or _with_party(game, x):
+        if x.alive and _with_party(game, x):
+            return p_at(game, sit, "you", pl)  # (one who walks with you is where you are)
+        if not x.alive or _held(x) or x.flags.get("gone") or x.flags.get("moved_on"):
             return False
         if "settlement" not in pl or int(x.settlement) != int(pl["settlement"]):
             return False
@@ -526,7 +530,7 @@ def names(t) -> set[str]:
 
 
 def listens(goals: list[dict]) -> list[str]:
-    """The events a situation's goals may hear of (kept as `sit["listens"]` when it is forged)."""
+    """The events a situation's goals may hear of (worked out at each notify, so a goal a turn adds hears too)."""
     kinds = set()
     for g in goals:
         for name in names(g["test"]):
@@ -536,23 +540,36 @@ def listens(goals: list[dict]) -> list[str]:
 
 # ---------------------------------------------------------------------------- listening
 def _mark_bands(game, kind: str, refs: dict) -> None:
-    """A fight's tagged foes, and a captive's fate, settle the band roles they stand for."""
-    found = []
+    """A fight's tagged foes, and a captive's fate, settle the band roles they stand for. A band is dead only when
+    every one of it in the fight is dead; else taken if any was taken, fled if any fled (and none still stands)."""
+    sits = situations(game.world)
+    roles: dict[tuple, list[str]] = {}
     if kind == "battle" and refs.get("result") is not None:
         r = refs["result"]
-        found = [(c, "dead") for c in r.dead] + [(c, "taken") for c in getattr(r, "captives", [])] + \
-            [(c, "fled") for c in getattr(r, "fled", [])]
+        how = {id(c): "dead" for c in r.dead}
+        how.update({id(c): "taken" for c in getattr(r, "captives", [])})
+        how.update({id(c): "fled" for c in getattr(r, "fled", [])})
+        battle = refs.get("battle")
+        members = [f.creature for f in battle.fighters if getattr(f, "creature", None) is not None]             if battle is not None else list(r.dead) + list(getattr(r, "captives", [])) + list(getattr(r, "fled", []))
+        for c in members:
+            tag = getattr(c, "story", None) or {}
+            if tag.get("situation") in sits:
+                roles.setdefault((tag["situation"], tag.get("role")), []).append(how.get(id(c), "standing"))
     elif kind == "captive" and refs.get("creature") is not None:
         state = {"execute": "dead", "capture": "taken", "spare": "gone", "rob": "gone"}.get(refs.get("fate", ""))
-        if state:
-            found = [(refs["creature"], state)]
-    sits = situations(game.world)
-    for c, state in found:
-        tag = getattr(c, "story", None) or {}
-        sit = sits.get(tag.get("situation"))
-        rec = (sit or {}).get("roles", {}).get(tag.get("role"))
-        if isinstance(rec, dict) and rec.get("band") is not None and rec.get("state") != "dead":
-            rec["state"] = state
+        tag = getattr(refs["creature"], "story", None) or {}
+        if state and tag.get("situation") in sits:
+            roles[(tag["situation"], tag.get("role"))] = [state]
+    for (qid, role), states in roles.items():
+        rec = sits[qid].get("roles", {}).get(role)
+        if not isinstance(rec, dict) or rec.get("band") is None or rec.get("state") == "dead":
+            continue
+        if all(s == "dead" for s in states):
+            rec["state"] = "dead"
+        elif "standing" in states:
+            continue  # (some of them still hold the field: the band is about)
+        else:
+            rec["state"] = next(s for s in ("taken", "gone", "fled") if s in states)
 
 
 def notify(game, kind: str, way: str | None = None, **refs) -> list[tuple[str, str, str]]:
@@ -568,9 +585,7 @@ def notify(game, kind: str, way: str | None = None, **refs) -> list[tuple[str, s
     out = []
     today = _today(game)
     for sit in live(game):
-        if "listens" not in sit:
-            sit["listens"] = listens(sit.get("goals", []))
-        if kind not in sit["listens"] or not within_reach(game, sit):
+        if kind not in listens(sit.get("goals", [])) or not within_reach(game, sit):
             continue
         for g in sit.get("goals", []):
             if g.get("reached") is not None or not test(game, sit, g["test"]):
