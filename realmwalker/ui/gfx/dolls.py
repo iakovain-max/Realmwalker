@@ -246,12 +246,15 @@ NPC_KEPT = 4096
 def npc(npc, tables, atlas=None) -> list[Part]:
     """A townsperson dressed for their trade, in the manner of their people (kept by everything it is made from)."""
     atlas = atlas or _atlas()
-    key = (npc.id, npc.race, npc.sex, npc.age, npc.job, npc.culture, npc.flags.get("holding"),
+    key = (npc.id, npc.race, npc.sex, npc.age, npc.job, npc.culture, npc.flags.get("holding"), npc.flags.get("dress"),
            (npc.profile or {}).get("appearance", ""), id(tables), id(atlas))
     parts = _NPC_PARTS.get(key)
     if parts is None:
         fig = Figure(tables, npc.race, npc.sex, f"npc{npc.id}", looks_rules.of_npc(tables, npc))
-        fig.outfit(outfit_for(tables, npc.job, npc.culture, npc.sex))
+        spec = outfit_for(tables, npc.job, npc.culture, npc.sex)
+        if npc.flags.get("dress"):  # (mourning black: game/story/lives.py)
+            spec.update(_fig(tables)["outfits"].get(npc.flags["dress"], {}))
+        fig.outfit(spec)
         if npc.flags.get("holding"):  # (something they carry in a scene: a letter for you)
             fig.wear("held", npc.flags["holding"])
         parts = fig.parts(atlas)

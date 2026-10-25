@@ -165,6 +165,9 @@ def problems(tables) -> list[str]:
             for key in w["keys"]:
                 _key(f"villains.json: weakness {kind}/{w['id']}", key, out)
     out.extend(scene_problems(tables))
+    from realmwalker.game.story import lives
+
+    out.extend(lives.problems(tables))
     return out
 
 

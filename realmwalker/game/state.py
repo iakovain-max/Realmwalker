@@ -1208,7 +1208,13 @@ class GameState:
         return True
 
     def _walk_in(self, lm, building) -> None:
-        """Stepping into the common room of an inn: what the place is like, once per inn."""
+        """Stepping into the common room of an inn: what the place is like, once per inn. A shut shop's sign."""
+        if lm.kind == "settlement" and building.kind != "house":
+            from realmwalker.game.story import lives
+
+            shut = lives.walk_in(self, lm, building)
+            if shut:
+                self.say(shut, "story")
         if lm.kind != "settlement" or building.kind != "inn" or self.busy or not self.flavour():
             return
         s = self.world.settlement_at(self.player.x, self.player.y)

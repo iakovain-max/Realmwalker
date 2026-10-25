@@ -35,7 +35,12 @@ def choices(conv) -> list:
     game = conv.game
     out = []
     spec = economy.shop_spec(game, npc)
-    if spec is not None:
+    from realmwalker.game.story import lives
+
+    shut = lives.sign(game, npc) if spec is not None else None
+    if shut:
+        out.append(Choice("trade", f"Let me see your {spec['name']}.", False, "the shop is shut today"))
+    elif spec is not None:
         out.append(Choice("trade", f"Let me see your {spec['name']}."))
         shop = economy.shop_state(game, npc)
         if shop.get("haggle_day") != game.moment.total_days:

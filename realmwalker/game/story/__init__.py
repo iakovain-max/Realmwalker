@@ -210,6 +210,9 @@ def daily(game) -> None:
     from realmwalker.game.story import work
 
     work.daily(game)  # (commissions from the factions you serve: C.2)
+    from realmwalker.game.story import lives
+
+    lives.daily(game)  # (the week's life events in the towns near you: C.4)
     for adv in active(game):
         villain.quiet(game, adv)
         t = threat_of(game, adv)
@@ -370,8 +373,10 @@ def after_beat(game) -> None:
 
 def on_enter_town(game, settlement) -> None:
     """Into a town: a threat at its door that nobody has taken on may be offered by its people (once a week)."""
-    from realmwalker.game.story import beats
+    from realmwalker.game.story import beats, lives
     from realmwalker.world import threats
+
+    lives.ensure(game, settlement.id)  # (a town peopled before lives were kept)
 
     if beats.pending(game) is not None:
         return

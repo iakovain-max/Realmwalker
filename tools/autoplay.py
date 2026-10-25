@@ -883,6 +883,21 @@ def _check_quests(game, fail) -> None:
             if q["template"] != "defend" and (not q.get("danger") or
                                               q["danger"].get("group") not in game.tables.creatures.encounters):
                 fail(f"contract {rec['id']} in {s.name} names no real danger on its road")
+    events = game.tables.lives.get("events", {})  # (lives of townsfolk, C.4)
+    for npc in w.npcs.values():
+        lf = npc.flags.get("life")
+        if lf is None:
+            continue
+        for t in lf["ties"]:
+            if t.get("npc") is not None and t["npc"] not in w.npcs:
+                fail(f"{npc.name}'s {t['kind']} {t['name']} is tied to nobody")
+        for ev in lf["events"]:
+            if ev["kind"] not in events:
+                fail(f"{npc.name} lived an unknown event {ev['kind']!r}")
+        if npc.flags.get("dress") == "mourning" and not npc.flags.get("mourning_until"):
+            fail(f"{npc.name} wears black with no end to it")
+        if "{" in npc.profile.get("want", "") + npc.profile.get("secret", "") + npc.profile.get("fear", ""):
+            fail(f"{npc.name}'s words are unfilled")
     for q in game.quests:
         where = f"quest {q.get('id')} ({q.get('template')})"
         if q.get("template") not in game.tables.quests["templates"]:

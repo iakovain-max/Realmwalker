@@ -258,6 +258,11 @@ class Conversation:
         else:
             self.npc_says(self.fill(self.pick("tell_about_self")))
             self.note(story_note(npc, story))
+        from realmwalker.game.story import lives
+
+        for line in (lives.note(self.game, npc), lives.family_line(self.game, npc)):
+            if line:
+                self.note(line)
         if mood in ("friendly", "warm") and npc.profile.get("want"):
             self.note(f"What {npc.first_name} wants: {npc.profile['want']}.")
 
