@@ -100,6 +100,9 @@ def person_lines(game, npc) -> str:
         lines.append("<good>Travels with you.</>")
     elif npc.flags.get("recruit"):
         lines.append("<info>Looking for work: they would travel with you.</>")
+    from realmwalker.game.story import favours
+
+    lines += favours.person_lines(game, npc)  # (a favour owed, a contact: C.7)
     from realmwalker.game import quests as q
 
     work = [x for x in game.quests if x.get("giver") == npc.id]
@@ -216,9 +219,17 @@ class JournalScreen(Screen):
                 out += [("quest", s) for s in troubles]
             return out
         if self.tab == PEOPLE:
+            from realmwalker.game.story import favours
+
             out: list[tuple[str, object]] = []
+            friends = favours.people_rows(self.game)  # (favours owed and contacts first: C.7)
+            if friends:
+                out.append(("group", "Favours and contacts"))
+                out += [("quest", n) for n in friends]
             town = None
             for npc in met_people(self.game):
+                if npc in friends:
+                    continue
                 where = self.game.world.settlements[npc.settlement].name if 0 <= npc.settlement < \
                     len(self.game.world.settlements) else "elsewhere"
                 if where != town:

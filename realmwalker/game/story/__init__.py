@@ -26,7 +26,7 @@ HANDLER_MODULES = ("realmwalker.world.threats", "realmwalker.game.story.selector
                    "realmwalker.game.story.finale", "realmwalker.game.story.stage", "realmwalker.game.story.goals",
                    "realmwalker.game.story.situations")
 STORY_CHOICES = {"story_witness", "story_learn", "story_patron", "story_hook", "sit_ask", "sit_take", "sit_refuse",
-                 "sit_act"}  # (the last four: situations, C.6)
+                 "sit_act", "fav_call", "fav_hide", "contact_ask"}  # (situations, C.6; favours and contacts, C.7)
 
 
 def load_all() -> None:
@@ -221,6 +221,9 @@ def daily(game) -> None:
     from realmwalker.game.story import situations
 
     situations.daily(game)  # (clocks run out, turns at half time, a new trouble in a town near you: C.6)
+    from realmwalker.game.story import favours
+
+    favours.daily(game)  # (letters from your contacts, and their warnings: C.7)
     for adv in active(game):
         villain.quiet(game, adv)
         t = threat_of(game, adv)
@@ -388,6 +391,9 @@ def on_enter_town(game, settlement) -> None:
     from realmwalker.game.story import goals
 
     goals.notify(game, "town")  # (into its streets: a situation's goals, C.5)
+    from realmwalker.game.story import favours
+
+    favours.on_enter_town(game, settlement)  # (a contact's runner at the gate: C.7)
     from realmwalker.game.story import situations
 
     if beats.pending(game) is not None:
@@ -713,6 +719,9 @@ def talk_choices(conv) -> list:
     from realmwalker.game.story import situations
 
     out += situations.talk_choices(conv)
+    from realmwalker.game.story import favours
+
+    out += favours.call_choices(conv)  # (a favour called in, a contact's news: C.7)
     for t in threats.live(game.world):
         if t.get("adventure") is None and npc.notable and npc.settlement in t["stakes"][:6] and _can_take(game, t):
             out.append(Choice("story_hook", "I hear something is killing your people.", data={"threat": t["id"]}))
@@ -743,6 +752,11 @@ def talk_choose(conv, choice) -> None:
         from realmwalker.game.story import situations
 
         situations.talk_choose(conv, choice)
+        return
+    if cid in ("fav_call", "fav_hide", "contact_ask"):
+        from realmwalker.game.story import favours
+
+        favours.choose(conv, choice)
         return
     if cid == "story_hook":
         from realmwalker.world import threats

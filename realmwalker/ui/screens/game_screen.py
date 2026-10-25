@@ -240,7 +240,11 @@ class GameScreen(Screen):
     def talk(self, npc) -> None:
         from realmwalker.game import townlife
 
-        if townlife.asleep(self.game, npc):
+        from realmwalker.game.story import favours
+
+        if townlife.asleep(self.game, npc) and favours.opens_at_night(self.game, npc):
+            self.game.say(favours.knock_line(self.game, npc), "info")  # (a contact deals at night: C.7)
+        elif townlife.asleep(self.game, npc):
             who = npc.label()
             self.game.say(f"{who[:1].upper() + who[1:]} is asleep.", "system")
             return

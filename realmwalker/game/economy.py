@@ -244,8 +244,9 @@ def sell_price(game, npc: NPC, item: Item) -> tuple[int | None, str]:
         return None, "they can see it is made by magic, and will not touch it"
     if "stolen" in item.tags:
         from realmwalker.game.law import is_fence
+        from realmwalker.game.story import favours
 
-        if not is_fence(game, npc):
+        if not is_fence(game, npc) and not favours.is_kind(game, npc, "fence"):  # (a fence you know: C.7)
             return None, "they won't touch stolen goods"
     shop = shop_state(game, npc)
     settlement = game.world.settlements[npc.settlement]
