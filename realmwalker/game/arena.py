@@ -359,16 +359,20 @@ def _connect(terrain, tables, a, b) -> None:
         for (x, y) in frontier:
             for dx, dy in grid.DIRS8:
                 n = (x + dx, y + dy)
-                if 0 <= n[0] < W and 0 <= n[1] < H and n not in seen and walk[n]:
-                    seen.add(n)
-                    nxt.append(n)
+                if not (0 <= n[0] < W and 0 <= n[1] < H) or n in seen or not walk[n]:
+                    continue
+                if dx and dy and not walk[x + dx, y] and not walk[x, y + dy]:
+                    continue  # (no squeezing diagonally between two walls: grid.paths does not let anyone)
+                seen.add(n)
+                nxt.append(n)
         frontier = nxt
     if b in seen:
         return
-    steps = max(abs(b[0] - a[0]), abs(b[1] - a[1]))
-    for i in range(steps + 1):
-        x = round(a[0] + (b[0] - a[0]) * i / max(1, steps))
-        y = round(a[1] + (b[1] - a[1]) * i / max(1, steps))
+    # (along the one axis, then the other: a way dug corner to corner would still squeeze between walls)
+    sx = 1 if b[0] >= a[0] else -1
+    sy = 1 if b[1] >= a[1] else -1
+    cells = [(x, a[1]) for x in range(a[0], b[0] + sx, sx)] + [(b[0], y) for y in range(a[1], b[1] + sy, sy)]
+    for x, y in cells:
         if not walk[x, y]:
             terrain[x, y] = tables.terrain.index["ford" if "water" in tables.terrain.tags[int(terrain[x, y])] else "dirt"]
 

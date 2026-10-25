@@ -9,8 +9,8 @@ threat's next stage is due now); the villain's attention grows; and an ally who 
 **Defeat as content.** Beaten in its finale by a villain who keeps prisoners (adventures.json "defeat" `tempers`, and
 never a beast), the fallen are not killed: they wake in its cells (`on_defeat`, from fight.finish_battle's defeat
 branch, before robbers and death are asked). Everyone still breathing comes round at 1 hit point after hours senseless;
-their weapons, armour and money are taken and put in a locked chest in another room of the same level; the boss is
-whole again and its band no longer watchful; and the tale gains a step, "escape" (optional, so the tale never waits on
+their weapons, armour and money are taken and put in a locked chest in another room of the same level; the boss keeps
+the wounds you gave it (only a retreat lets it mend) and its band is no longer watchful; and the tale gains a step, "escape" (optional, so the tale never waits on
 it): get out of the place, done when the party leaves the site's map (`on_leave`, from GameState.leave_local).
 Nothing else is lost: the finale step stays open, so you can go back for the end. A villain takes you alive once in a
 tale (`adv["taken_alive"]`): the second time it does not trust its locks.
@@ -116,7 +116,7 @@ def on_defeat(game, battle, result, after) -> bool:
     if boss is None or not boss.active or not any(c.alive for c in game.party):
         return False
     adv["taken_alive"] = {"day": int(game.moment.total_days)}
-    _heal(boss)
+    # (it keeps the wounds you gave it: only a retreat gives it time to mend)
     actor = game.battle_actor
     if actor is not None:
         actor.alert = False  # (it has you in chains: it is not watching the door)

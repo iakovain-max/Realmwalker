@@ -3226,6 +3226,8 @@ class Battle:
         if not spots:
             return
         best = min(spots, key=lambda sq: self.gap_from(f, sq, near))
+        if self.gap_from(f, best, near) >= self.gap(f, near):
+            return  # (no nearer for it: a shuffle in place is no move, and would keep a stand-off from ending)
         f.creature.uses["legendary_actions"] = left - 1
         self.say(f"{f.the_name} moves out of turn. <dim>(Legendary Action)</>", "danger")
         self._event("legendary", by=f.id, what="move")
